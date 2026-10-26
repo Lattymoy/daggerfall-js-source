@@ -2,8 +2,8 @@
   {
     "name": "AUDITTESA2Z-Z2-the-number-behind-its-row",
     "file": "src/net/wire.js",
-    "old": "export const WORLD_WIDE_RELAY_MIN = 260;",
-    "new": "export const WORLD_WIDE_RELAY_MIN = 259;",
+    "old": "export const WORLD_WIDE_RELAY_MIN = 269;",
+    "new": "export const WORLD_WIDE_RELAY_MIN = 268;",
     "tests": [
       "test/net/audittesa2z_worldwide.test.js"
     ]
@@ -130,45 +130,48 @@
   },
   {
     "name": "AUDITTESA2Z-Z5-the-doors-zone-unread",
-    "file": "src/scenes/world.js",
-    "old": "    if (wildTeleportRefused() || veilRefused()) return false;",
-    "new": "    if (veilRefused()) return false;",
+    "file": "src/scenes/portalStoneHost.js",
+    "old": "    if (host.wildTeleportRefused() || host.veilRefused()) return false;",
+    "new": "    if (host.veilRefused()) return false;",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
   },
   {
     "name": "AUDITTESA2Z-Z5-the-picks-zone-unread",
-    "file": "src/scenes/world.js",
-    "old": "    if (wildTeleportRefused(pick.pixel) || veilRefused(pick.pixel)) return;   // AUDIT CAPTAIN'S SEA P6 - AUDIT TESA II Z5",
-    "new": "    if (veilRefused(pick.pixel)) return;   // AUDIT CAPTAIN'S SEA P6 - AUDIT TESA II Z5",
+    "file": "src/scenes/portalStoneHost.js",
+    "old": "    if (teleportRefused(pick.pixel)) return;   // AUDIT CAPTAIN'S SEA P6",
+    "new": "    if (teleportRefused(null)) return;   // AUDIT CAPTAIN'S SEA P6",
     "tests": [
       "test/systems/portal1_stone.test.js"
-    ]
+    ],
+    "note": "PORTAL-BAY (PIN MOVED): re-aimed by content - the pick asks the teleport's whole gate (teleportRefused); the mutant leaves its pixel unread, so a place in the zone goes"
   },
   {
     "name": "AUDITTESA2Z-Z5-the-steps-zone-unread",
-    "file": "src/scenes/world.js",
-    "old": "      if (worldMoveBusy() || _teleporting || wildTeleportRefused(g.dest?.pixel ?? null)) { hudFade.clearFade(); return; }",
-    "new": "      if (worldMoveBusy() || _teleporting) { hudFade.clearFade(); return; }",
+    "file": "src/scenes/portalStoneHost.js",
+    "old": "    if (teleportRefused(g.dest?.pixel ?? null)) return;",
+    "new": "    void teleportRefused;",
     "tests": [
       "test/systems/portal1_stone.test.js"
-    ]
+    ],
+    "note": "PORTAL-BAY (PIN MOVED): re-aimed by content - the step asks the teleport's whole gate BEFORE the black; the mutant asks none"
   },
   {
     "name": "AUDITTESA2Z-Z5-the-steps-pixel-unread",
-    "file": "src/scenes/world.js",
-    "old": "_teleporting || wildTeleportRefused(g.dest?.pixel ?? null)) {",
-    "new": "_teleporting || wildTeleportRefused(null)) {",
+    "file": "src/scenes/portalStoneHost.js",
+    "old": "if (teleportRefused(g.dest?.pixel ?? null)) return;",
+    "new": "if (teleportRefused(null)) return;",
     "tests": [
       "test/systems/portal1_stone.test.js"
-    ]
+    ],
+    "note": "PORTAL-BAY (PIN MOVED): re-aimed by content - the step's gate, its destination unread"
   },
   {
     "name": "AUDITTESA2Z-Z4-the-fill-unasked",
     "file": "src/systems/wild/wildZone.js",
-    "old": "  if (x1 >= 0) fillEnclosed(inside, width, height);",
-    "new": "  if (x1 < 0) fillEnclosed(inside, width, height);",
+    "old": "  if (x1 >= 0 && !exact) fillEnclosed(inside, width, height);",
+    "new": "  if (x1 < 0 && !exact) fillEnclosed(inside, width, height);",
     "tests": [
       "test/systems/wild/audittesa2z_zone.test.js"
     ]

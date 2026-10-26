@@ -1,0 +1,134 @@
+[
+ {
+  "name": "AUDIT-WE-L1-1-any-hello-rises",
+  "file": "src/net/superDungeon/sdLaw.js",
+  "old": "return (realm.raised ?? []).some(([x, at]) => x === sub && at >= d[1]) ? 'rise' : 'down';",
+  "new": "return 'rise';",
+  "tests": [
+   "test/net/superDungeon/auditwe_rez.test.js",
+   "test/net/superDungeon/sd12_onelife.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L1-1-unraised-admitted",
+  "file": "server/src/index.js",
+  "old": "if (lies === 'down') return SD_NO_BUSY;",
+  "new": "if (lies === 'down' && false) return SD_NO_BUSY;",
+  "tests": [
+   "test/net/superDungeon/auditwe_rez.test.js",
+   "test/net/superDungeon/sd12_onelife.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L1-1-raise-unchecked",
+  "file": "server/src/index.js",
+  "old": "if (!sdMayRaise(realm, a.sub, m.to, now, dungeonToRealm(a.pose.x, a.pose.y ?? 0, a.pose.z))) return;",
+  "new": "if (!realm) return;",
+  "tests": [
+   "test/net/superDungeon/auditwe_rez.test.js",
+   "test/net/superDungeon/sd12_onelife.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L1-1-raise-from-afar",
+  "file": "src/net/superDungeon/sdLaw.js",
+  "old": "Math.hypot(at[0] - d[2], at[2] - d[3]) > SD_REZ_REACH_M);",
+  "new": "Math.hypot(at[0] - d[2], at[2] - d[3]) > SD_REZ_REACH_M * 100);",
+  "tests": [
+   "test/net/superDungeon/auditwe_rez.test.js",
+   "test/net/superDungeon/sd12_onelife.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L1-1-the-lying-raise",
+  "file": "src/net/superDungeon/sdLaw.js",
+  "old": "realm.dead.includes(caster) || (realm.down ?? []).some(([x]) => x === caster)) return false;",
+  "new": "realm.dead.includes(caster)) return false;",
+  "tests": [
+   "test/net/superDungeon/auditwe_rez.test.js",
+   "test/net/superDungeon/sd12_onelife.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L1-1-raise-past-window",
+  "file": "src/net/superDungeon/sdLaw.js",
+  "old": "  if (!d || now - d[1] > SD_REZ_MS) return false;\n  return !(",
+  "new": "  if (!d) return false;\n  return !(",
+  "tests": [
+   "test/net/superDungeon/auditwe_rez.test.js",
+   "test/net/superDungeon/sd12_onelife.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L1-2-no-new-life",
+  "file": "server/src/index.js",
+  "old": "    if (f?.players?.[sub]) { bodyLife(f.players[sub], now, this._bodyLine().body); await this._sdFightSave(f, now, true); }\n",
+  "new": "",
+  "tests": [
+   "test/net/superDungeon/auditwe_rez.test.js",
+   "test/net/superDungeon/sd12_onelife.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L1-8-rise-before-refusal",
+  "file": "server/src/index.js",
+  "old": "if (lies === 'down') return SD_NO_BUSY;",
+  "new": "if (lies === 'down') return SD_NO_BUSY; if (lies === 'rise') await this._sdRose(realm, sub, now);",
+  "tests": [
+   "test/net/superDungeon/auditwe_rez.test.js",
+   "test/net/superDungeon/sd12_onelife.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L1-7-slice-forgets",
+  "file": "server/src/index.js",
+  "old": "    for (const [x] of lying.slice(0, Math.max(0, lying.length - SD_FIGHTERS_MAX))) await this._sdBury(realm, x, false);",
+  "new": "",
+  "tests": [
+   "test/net/superDungeon/auditwe_rez.test.js",
+   "test/net/superDungeon/sd12_onelife.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L1-5-two-minutes",
+  "file": "src/net/superDungeon/sdLaw.js",
+  "old": "export const SD_REZ_MS = 70_000;",
+  "new": "export const SD_REZ_MS = 120_000;",
+  "tests": [
+   "test/net/superDungeon/auditwe_rez.test.js",
+   "test/net/superDungeon/sd12_onelife.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L1-6-stamped-every-frame",
+  "file": "src/systems/superDungeon/sdSlots.js",
+  "old": "if (last?.s !== s) last = { s, at: clock() };",
+  "new": "last = { s, at: clock() };",
+  "tests": [
+   "test/net/superDungeon/auditwe_rez.test.js",
+   "test/net/superDungeon/sd12_onelife.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L1-1-old-raise-kept",
+  "file": "server/src/index.js",
+  "old": "    realm.raised = (realm.raised ?? []).filter(([x]) => x !== sub);   // a raise of an earlier death is not this one's\n",
+  "new": "",
+  "tests": [
+   "test/net/superDungeon/auditwe_rez.test.js",
+   "test/net/superDungeon/sd12_onelife.test.js"
+  ],
+  "equivalent": true,
+  "why": "Belt and braces, kept: sdDownWord reads a raise only at or after the death it answers (`at >= d[1]` - its own record, AUDIT-WE-L1-1-old-raise-counts, dies), so an earlier death's raise left in `raised` never rises the new one; the line keeps the list to the live raises."
+ },
+ {
+  "name": "AUDIT-WE-L1-1-old-raise-counts",
+  "file": "src/net/superDungeon/sdLaw.js",
+  "old": "x === sub && at >= d[1]) ? 'rise' : 'down';",
+  "new": "x === sub) ? 'rise' : 'down';",
+  "tests": [
+   "test/net/superDungeon/auditwe_rez.test.js",
+   "test/net/superDungeon/sd12_onelife.test.js"
+  ]
+ }
+]

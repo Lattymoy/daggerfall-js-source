@@ -1,214 +1,220 @@
 [
- {
-  "name": "IS-the-far-shore-water",
-  "file": "src/world/imperialCity.js",
-  "old": "  if (r <= I.isle || r >= I.lake) return true;",
-  "new": "  if (r <= I.isle) return true;",
-  "tests": [
-   "test/world/imperialscale.test.js",
-   "test/tesa11_imperial.test.js"
-  ]
- },
- {
-  "name": "IS-the-shore-a-district",
-  "file": "src/world/imperialCity.js",
-  "old": "  if (r >= I.lake) return SHORE;\n",
-  "new": "",
-  "tests": [
-   "test/world/imperialscale.test.js",
-   "test/tesa11_imperial.test.js"
-  ]
- },
- {
-  "name": "IS-the-open-cells-own",
-  "file": "src/world/imperialCity.js",
-  "old": "    if (land === 2 && district(r, c) === SHORE) return 'O';",
-  "new": "    if (false) return 'O';",
-  "tests": [
-   "test/world/imperialscale.test.js",
-   "test/tesa11_imperial.test.js"
-  ]
- },
- {
-  "name": "IS-the-codes-unpadded",
-  "file": "src/world/imperialCity.js",
-  "old": "export const imperialCode = (r, c) => `I${r.toString(36).padStart(2, '0')}${c.toString(36).padStart(2, '0')}`;",
-  "new": "export const imperialCode = (r, c) => `I${r.toString(36)}${c.toString(36)}`;",
-  "tests": [
-   "test/tesa11_imperial.test.js",
-   "test/tesa10_capitals.test.js"
-  ]
- },
- {
-  "name": "IS-the-bridge-to-the-edge",
-  "file": "src/world/imperialCity.js",
-  "old": "polar(I.bridge.b, I.lake + I.bridge.landing)];",
-  "new": "[-(HALF * BLOCK_M), 0]];",
-  "tests": [
-   "test/world/imperialscale.test.js",
-   "test/tesa11_imperial.test.js"
-  ]
- },
- {
-  "name": "IS-the-sand-unlaid",
-  "file": "src/world/imperialCity.js",
-  "old": "  if (r >= I.lake) return r < I.lake + 10 ? 1 : OPEN_TILE;",
-  "new": "  if (r >= I.lake) return OPEN_TILE;",
-  "tests": [
-   "test/tesa11_imperial.test.js"
-  ]
- },
- {
-  "name": "IS-the-least-unread",
-  "file": "src/world/imperialCity.js",
-  "old": "if ((count.get(d) ?? 0) >= NAMED_LEAST && (count.get(d) ?? 0) > (best ? count.get(best) : 0)) best = d;",
-  "new": "if ((count.get(d) ?? 0) > (best ? count.get(best) : 0)) best = d;",
-  "tests": [
-   "test/world/imperialscale.test.js",
-   "test/tesa11_imperial.test.js"
-  ]
- },
- {
-  "name": "IS-a-part-missed",
-  "file": "src/world/imperialCity.js",
-  "old": "[IMPERIAL_MODELS.whiteGoldTower]: (x0, z0, x1, z1) => rectPoint(x0, z0, x1, z1, [0, 0]) < IMPERIAL.tower.finR + 6,",
-  "new": "[IMPERIAL_MODELS.whiteGoldTower]: (x0, z0, x1, z1) => rectPoint(x0, z0, x1, z1, [0, 0]) < 0,",
-  "tests": [
-   "test/tesa11_imperial.test.js",
-   "test/world/imperialscale.test.js"
-  ]
- },
- {
-  "name": "IS-the-parts-uncarried",
-  "file": "src/world/imperialCity.js",
-  "old": "export const IMPERIAL_CARRY = Object.freeze(Object.fromEntries(IMPERIAL_PARTS.map((p) => [p.id, p.s])));",
-  "new": "export const IMPERIAL_CARRY = Object.freeze(Object.fromEntries(IMPERIAL_PARTS.map((p) => [p.id, 24])));",
-  "tests": [
-   "test/tesa11_imperial.test.js",
-   "test/tesalore_capitals.test.js"
-  ]
- },
- {
-  "name": "IS-the-box-cap-wrong",
-  "file": "src/world/imperialCity.js",
-  "old": "  if (box >= cap) return box;",
-  "new": "  if (box >= 0) return box;",
-  "tests": [
-   "test/tesa11_imperial.test.js",
-   "test/world/imperialscale.test.js",
-   "test/tesalore_capitals.test.js"
-  ]
- },
- {
-  "name": "IS-the-colosseum-way-narrow",
-  "file": "src/world/imperialCity.js",
-  "old": "(Math.abs(dz) < C.way / 2 && Math.abs(dx) > C.floor[0] - 2) || (Math.abs(dx) < C.way / 2 && Math.abs(dz) > C.floor[1] - 2)",
-  "new": "(Math.abs(dz) < 4 && Math.abs(dx) > C.floor[0] - 2) || (Math.abs(dx) < 4 && Math.abs(dz) > C.floor[1] - 2)",
-  "tests": [
-   "test/tesa11_imperial.test.js"
-  ]
- },
- {
-  "name": "IS-the-part-z-unturned",
-  "file": "src/world/capitalModels.js",
-  "old": "const p = m.positions, inRect = (x, zNorth) => x >= x0 && x < x1 && -zNorth >= z0 && -zNorth < z1;",
-  "new": "const p = m.positions, inRect = (x, zNorth) => x >= x0 && x < x1 && zNorth >= z0 && zNorth < z1;",
-  "tests": [
-   "test/world/imperialscale.test.js",
-   "test/tesa11_imperial.test.js"
-  ]
- },
- {
-  "name": "IS-the-doors-everywhere",
-  "file": "src/world/capitalModels.js",
-  "old": "  const doors = (m.doors ?? []).filter((d) => inRect(",
-  "new": "  const doors = (m.doors ?? []).filter((d) => true || inRect(",
-  "tests": [
-   "test/world/imperialscale.test.js"
-  ]
- },
- {
-  "name": "IS-the-parts-unregistered",
-  "file": "src/world/capitalModels.js",
-  "old": "  for (const part of IMPERIAL_PARTS) registerCustomModel(",
-  "new": "  for (const part of []) registerCustomModel(",
-  "tests": [
-   "test/world/imperialscale.test.js"
-  ]
- },
- {
-  "name": "IS-the-pictures-from-the-middle",
-  "file": "src/world/capitalModels.js",
-  "old": "axis === 1 ? [p[i] / metres - o[0], p[i + 2] / metres - o[2]] : axis === 0 ? [p[i + 2] / metres - o[2], -p[i + 1] / metres + o[1]] : [p[i] / metres - o[0], -p[i + 1] / metres + o[1]];",
-  "new": "axis === 1 ? [p[i] / metres, p[i + 2] / metres] : axis === 0 ? [p[i + 2] / metres, -p[i + 1] / metres] : [p[i] / metres, -p[i + 1] / metres];",
-  "tests": [
-   "test/world/imperialscale.test.js",
-   "test/tesalore_capitals.test.js"
-  ]
- },
- {
-  "name": "IS-the-garden-unpadded",
-  "file": "src/world/tamrielCapitals.js",
-  "old": "const w = cap.plan.length > 36 ? 2 : 1;",
-  "new": "const w = 1;",
-  "tests": [
-   "test/tesa10_capitals.test.js",
-   "test/audit_tesa.test.js"
-  ]
- },
- {
-  "name": "IS-the-open-cell-unnamed",
-  "file": "src/world/tamrielCapitals.js",
-  "old": "      else if (cell === 'O') out.push(TOWN_OUTLINE_BLOCK);   // TS5: open ground - the land's own (world/townOutline.js)\n",
-  "new": "",
-  "tests": [
-   "test/world/imperialscale.test.js",
-   "test/tesa11_imperial.test.js"
-  ]
- },
- {
-  "name": "IS-the-outskirts-unread",
-  "file": "src/world/tamrielCapitals.js",
-  "old": "  const at = capitalCentrePixel(0);\n  if (!at) return false;",
-  "new": "  const at = capitalCentrePixel(0);\n  if (at || !at) return false;",
-  "tests": [
-   "test/world/imperialscale.test.js"
-  ]
- },
- {
-  "name": "IS-the-city-in-its-outskirts",
-  "file": "src/world/tamrielCapitals.js",
-  "old": "  return d > (IMPERIAL_SPAN - 1) / 2 && Math.hypot(px - at.px, py - at.py) <= IMPERIAL_OUTSKIRTS;",
-  "new": "  return Math.hypot(px - at.px, py - at.py) <= IMPERIAL_OUTSKIRTS;",
-  "tests": [
-   "test/world/imperialscale.test.js"
-  ]
- },
- {
-  "name": "IS-the-round-unread",
-  "file": "src/world/townOutline.js",
-  "old": "isWall, round ? ROUND_OUTLINE : TOWN_OUTLINE);",
-  "new": "isWall, TOWN_OUTLINE);",
-  "tests": [
-   "test/world/imperialscale.test.js"
-  ]
- },
- {
-  "name": "IS-the-host-square-outskirts",
-  "file": "src/scenes/tamrielPlacesHost.js",
-  "old": "    const loc = outlineTownLocation(made, blockOf, { round: imperialOutskirts(px, py) });",
-  "new": "    const loc = outlineTownLocation(made, blockOf, { round: false });",
-  "tests": [
-   "test/world/imperialscale.test.js"
-  ]
- },
- {
-  "name": "IS-the-bridge-model-short",
-  "file": "src/world/capitalImperial.js",
-  "old": "x1 = bridgeLine(I)[1][0], xr = -I.isle,",
-  "new": "x1 = -(I.isle + 40), xr = -I.isle,",
-  "tests": [
-   "test/tesa11_imperial.test.js"
-  ]
- }
+  {
+    "name": "IS-the-far-shore-water",
+    "file": "src/world/imperialCity.js",
+    "old": "  if (r <= I.isle || r >= I.lake) return true;",
+    "new": "  if (r <= I.isle) return true;",
+    "tests": [
+      "test/world/imperialscale.test.js",
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "IS-the-shore-a-district",
+    "file": "src/world/imperialCity.js",
+    "old": "  if (r >= I.lake) return SHORE;\n",
+    "new": "",
+    "tests": [
+      "test/world/imperialscale.test.js",
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "IS-the-open-cells-own",
+    "file": "src/world/imperialCity.js",
+    "old": "if (land === 2 && d === SHORE) return 'O';",
+    "new": "if (false) return 'O';",
+    "tests": [
+      "test/world/imperialscale.test.js",
+      "test/tesa11_imperial.test.js"
+    ],
+    "note": "PIN MOVED (IC-GRAND): cellOf reads the district once (d)."
+  },
+  {
+    "name": "IS-the-codes-unpadded",
+    "file": "src/world/imperialCity.js",
+    "old": "export const imperialCode = (r, c) => `I${r.toString(36).padStart(2, '0')}${c.toString(36).padStart(2, '0')}`;",
+    "new": "export const imperialCode = (r, c) => `I${r.toString(36)}${c.toString(36)}`;",
+    "tests": [
+      "test/tesa11_imperial.test.js",
+      "test/tesa10_capitals.test.js"
+    ]
+  },
+  {
+    "name": "IS-the-bridge-to-the-edge",
+    "file": "src/world/imperialCity.js",
+    "old": "polar(I.bridge.b, I.lake + I.bridge.landing)];",
+    "new": "[-(HALF * BLOCK_M), 0]];",
+    "tests": [
+      "test/world/imperialscale.test.js",
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "IS-the-sand-unlaid",
+    "file": "src/world/imperialCity.js",
+    "old": "  if (r >= I.lake) return r < I.lake + 10 ? 1 : OPEN_TILE;",
+    "new": "  if (r >= I.lake) return OPEN_TILE;",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "IS-the-least-unread",
+    "file": "src/world/imperialCity.js",
+    "old": "if ((count.get(d) ?? 0) >= NAMED_LEAST && (count.get(d) ?? 0) > (best ? count.get(best) : 0)) best = d;",
+    "new": "if ((count.get(d) ?? 0) > (best ? count.get(best) : 0)) best = d;",
+    "tests": [
+      "test/world/imperialscale.test.js",
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "IS-a-part-missed",
+    "file": "src/world/imperialCity.js",
+    "old": "[IMPERIAL_MODELS.whiteGoldTower]: (x0, z0, x1, z1) => rectPoint(x0, z0, x1, z1, [0, 0]) < IMPERIAL.tower.plinthR + 6,",
+    "new": "[IMPERIAL_MODELS.whiteGoldTower]: (x0, z0, x1, z1) => rectPoint(x0, z0, x1, z1, [0, 0]) < 0,",
+    "tests": [
+      "test/tesa11_imperial.test.js",
+      "test/world/imperialscale.test.js"
+    ],
+    "note": "PIN MOVED (IC-GRAND, the owner's tower, 2026-10-26): re-aimed by content."
+  },
+  {
+    "name": "IS-the-parts-uncarried",
+    "file": "src/world/imperialCity.js",
+    "old": "export const IMPERIAL_CARRY = Object.freeze(Object.fromEntries(IMPERIAL_PARTS.map((p) => [p.id, p.s])));",
+    "new": "export const IMPERIAL_CARRY = Object.freeze(Object.fromEntries(IMPERIAL_PARTS.map((p) => [p.id, 24])));",
+    "tests": [
+      "test/tesa11_imperial.test.js",
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "IS-the-box-cap-wrong",
+    "file": "src/world/imperialCity.js",
+    "old": "  if (box >= cap) return box;",
+    "new": "  if (box >= 0) return box;",
+    "tests": [
+      "test/tesa11_imperial.test.js",
+      "test/world/imperialscale.test.js",
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "IS-the-colosseum-way-narrow",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "  if (cell === IMPERIAL_ARENA_CODE) return ARENA_OWN;\n",
+    "new": "",
+    "tests": [
+      "test/world/icgrand_arena.test.js",
+      "test/tesa11_imperial.test.js"
+    ],
+    "note": "PIN MOVED (IC-GRAND): the Colosseum retired with its ways (Daggerfall's arena block stands in its stead) - re-aimed at its successor, the arena's cell laid Daggerfall's own block."
+  },
+  {
+    "name": "IS-the-part-z-unturned",
+    "file": "src/world/capitalModels.js",
+    "old": "const p = m.positions, inRect = (x, zNorth) => x >= x0 && x < x1 && -zNorth >= z0 && -zNorth < z1;",
+    "new": "const p = m.positions, inRect = (x, zNorth) => x >= x0 && x < x1 && zNorth >= z0 && zNorth < z1;",
+    "tests": [
+      "test/world/imperialscale.test.js",
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "IS-the-doors-everywhere",
+    "file": "src/world/capitalModels.js",
+    "old": "  const doors = (m.doors ?? []).filter((d) => inRect(",
+    "new": "  const doors = (m.doors ?? []).filter((d) => true || inRect(",
+    "tests": [
+      "test/world/imperialscale.test.js"
+    ]
+  },
+  {
+    "name": "IS-the-parts-unregistered",
+    "file": "src/world/capitalModels.js",
+    "old": "  for (const part of [...IMPERIAL_PARTS, ...IMPERIAL_LOD_PARTS]) registerCustomModel(",
+    "new": "  for (const part of [...IMPERIAL_LOD_PARTS]) registerCustomModel(",
+    "tests": [
+      "test/world/imperialscale.test.js"
+    ]
+  },
+  {
+    "name": "IS-the-pictures-from-the-middle",
+    "file": "src/world/capitalModels.js",
+    "old": "axis === 1 ? [p[i] / metres - o[0], p[i + 2] / metres - o[2]] : axis === 0 ? [p[i + 2] / metres - o[2], p[i + 1] / metres - o[1]] : [p[i] / metres - o[0], p[i + 1] / metres - o[1]];",
+    "new": "axis === 1 ? [p[i] / metres, p[i + 2] / metres] : axis === 0 ? [p[i + 2] / metres, p[i + 1] / metres] : [p[i] / metres, p[i + 1] / metres];",
+    "note": "PIN MOVED (BLD): re-aimed by content - the same law (each coordinate from a whole number of pictures nearest the middle) on v rising up a wall, MeshReader's.",
+    "tests": [
+      "test/world/imperialscale.test.js",
+      "test/tesalore_capitals.test.js"
+    ]
+  },
+  {
+    "name": "IS-the-garden-unpadded",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "const w = planRows(cap) > 36 ? 2 : 1;",
+    "new": "const w = 1;",
+    "tests": [
+      "test/tesa10_capitals.test.js",
+      "test/audit_tesa.test.js"
+    ],
+    "note": "PIN MOVED (IC-GRAND): a plan's rows asked (planRows) - the Imperial City's plan is a law, not rows."
+  },
+  {
+    "name": "IS-the-open-cell-unnamed",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "      else if (cell === 'O') out.push(TOWN_OUTLINE_BLOCK);   // TS5: open ground - the land's own (world/townOutline.js)\n",
+    "new": "",
+    "tests": [
+      "test/world/imperialscale.test.js",
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "IS-the-outskirts-unread",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "  const at = capitalCentrePixel(0);\n  if (!at) return false;",
+    "new": "  const at = capitalCentrePixel(0);\n  if (at || !at) return false;",
+    "tests": [
+      "test/world/imperialscale.test.js"
+    ]
+  },
+  {
+    "name": "IS-the-city-in-its-outskirts",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "  return d > (IMPERIAL_SPAN - 1) / 2 && Math.hypot(px - at.px, py - at.py) <= IMPERIAL_OUTSKIRTS;",
+    "new": "  return Math.hypot(px - at.px, py - at.py) <= IMPERIAL_OUTSKIRTS;",
+    "tests": [
+      "test/world/imperialscale.test.js"
+    ]
+  },
+  {
+    "name": "IS-the-round-unread",
+    "file": "src/world/townOutline.js",
+    "old": "isWall, round ? ROUND_OUTLINE : TOWN_OUTLINE);",
+    "new": "isWall, TOWN_OUTLINE);",
+    "tests": [
+      "test/world/imperialscale.test.js"
+    ]
+  },
+  {
+    "name": "IS-the-host-square-outskirts",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "    const loc = outlineTownLocation(made, blockOf, { round: imperialOutskirts(px, py) });",
+    "new": "    const loc = outlineTownLocation(made, blockOf, { round: false });",
+    "tests": [
+      "test/world/imperialscale.test.js"
+    ]
+  },
+  {
+    "name": "IS-the-bridge-model-short",
+    "file": "src/world/capitalImperial.js",
+    "old": "x1 = bridgeLine(I)[1][0], xr = -I.isle,",
+    "new": "x1 = -(I.isle + 40), xr = -I.isle,",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  }
 ]

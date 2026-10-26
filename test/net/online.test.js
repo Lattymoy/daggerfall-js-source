@@ -22,7 +22,7 @@ import {
   POSE_HZ, HEARTBEAT_MS, WORLD_CELL, PEER_TIMEOUT_MS, BACKOFF_MIN_MS, BACKOFF_MAX_MS, DEFAULT_SERVER, SNAP_WORLD_UNITS, SNAP_SCENE_UNITS,
   slug, worldRoom, roomKeyFor, poseChanged, lerpPose, peerId, peerSecret, OnlineSession,
 } from '../../src/net/online.js';
-import { WORLD_CELL as WIRE_CELL, RANGE_PIXELS, PIXEL_UNITS, POSE_BOUND, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, roomOf, validPose, relayUrl, POSE_TS_MOD, GROUND_LAW, GRANT_HELLO_LAW } from '../../src/net/wire.js';
+import { WORLD_CELL as WIRE_CELL, RANGE_PIXELS, PIXEL_UNITS, POSE_BOUND, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, roomOf, validPose, relayUrl, POSE_TS_MOD, GROUND_LAW, GRANT_HELLO_LAW, CELL_HELLO_LAW } from '../../src/net/wire.js';
 import * as relay from '../../server/src/relay.js';
 import { composeLook, lookKey, peerStubEntity, alphaBounds, cropRgba, LOOK_ITEM_FIELDS, LOOK_GROUPS, PEER_ARCHIVE, PEER_HEIGHT, DOLLS_MAX, DOLL_RETRY_MS, RemotePlayers } from '../../src/net/remotePlayers.js';
 import { LOOK_GROUPS as WIRE_GROUPS, LOOK_ITEM_FIELDS as WIRE_FIELDS } from '../../src/net/wire.js';
@@ -106,7 +106,7 @@ test('ONLINE1: the pose - changed past a hair, eased between two with the yaw by
   assert.match(DEFAULT_SERVER, /^wss:\/\/daggerfall-online\./, 'the relay this port hosts');
 });
 
-test('ONLINE1: the session over a fake socket, on its own clock - hello on open, a pose at most POSE_HZ when moved and a heartbeat regardless, the welcome merged, join, pose, leave, a walk eased and a jump snapped, the silent peer hidden not dropped, the relay\'s frames checked (mutants: tick fed the frame\'s clock, a pose every frame, the welcome wiping the peers, a peer dropped for standing still)', () => {
+test('ONLINE1: the session over a fake socket, on its own clock - hello on open, a pose at most POSE_HZ when moved and a heartbeat when someone is here, the welcome merged, join, pose, leave, a walk eased and a jump snapped, the silent peer hidden not dropped, the relay\'s frames checked (mutants: tick fed the frame\'s clock, a pose every frame, the welcome wiping the peers, a peer dropped for standing still)', () => {
   const { FakeWS, sockets } = fakeSocketClass();
   let now = 1_700_000_000_000;   // Date.now()-sized: a tick(now) fed a rAF stamp would freeze everything
   const s = new OnlineSession({ url: 'wss://relay.test/', name: 'Mac', look: { race: 'Nord', gender: 'male', faceIndex: 2, items: [] }, id: 'mac-0001', secret: 'shh-shh-shh-0001', WebSocketImpl: FakeWS, now: () => now });
@@ -116,14 +116,17 @@ test('ONLINE1: the session over a fake socket, on its own clock - hello on open,
   assert.equal(s.sendPose(pose(1)), false, 'nothing goes before the socket opens');
   sockets[0].open();
   assert.equal(s.status, 'open'); assert.equal(s.statusLine(), null);
-  assert.deepEqual(sockets[0].sent[0], { t: 'hello', id: 'mac-0001', secret: 'shh-shh-shh-0001', name: 'Mac', look: { race: 'Nord', gender: 'male', faceIndex: 2, items: [] }, pose: { ...pose(1), ts: now % POSE_TS_MOD }, gl: GROUND_LAW, gv: GRANT_HELLO_LAW, ls: 1, fv: 1 }, 'PIN MOVED (STAFF-PANEL5-FREEZE: and that it shows the freeze screen); PIN MOVED (LEASE1, net/roomLease.js: and that it hands its hub\'s lease on, to a lease room); PIN MOVED (GRANT-DOOR, Spawn-Grants section 20: and the spawn grants it stands on, to a room whose foes ride): the hello carries the id, its secret and the latest pose - stamped with when it is said (SCALE2b) - and, to a cell, the ground this build stands on (PIN MOVED: GROUND-GATE, Field-Bugs-2026-10-17f)');
+  assert.deepEqual(sockets[0].sent[0], { t: 'hello', id: 'mac-0001', secret: 'shh-shh-shh-0001', name: 'Mac', look: { race: 'Nord', gender: 'male', faceIndex: 2, items: [] }, pose: { ...pose(1), ts: now % POSE_TS_MOD }, gl: GROUND_LAW, gv: GRANT_HELLO_LAW, cv: CELL_HELLO_LAW, ls: 1, fv: 1 }, 'PIN MOVED (COST-2 part two: and, to a cell, the cell law it stands on - test/net/cellrepartition.test.js); PIN MOVED (STAFF-PANEL5-FREEZE: and that it shows the freeze screen); PIN MOVED (LEASE1, net/roomLease.js: and that it hands its hub\'s lease on, to a lease room); PIN MOVED (GRANT-DOOR, Spawn-Grants section 20: and the spawn grants it stands on, to a room whose foes ride): the hello carries the id, its secret and the latest pose - stamped with when it is said (SCALE2b) - and, to a cell, the ground this build stands on (PIN MOVED: GROUND-GATE, Field-Bugs-2026-10-17f)');
   assert.equal(s.sendPose(pose(2)), false, 'SD-HELLO (PIN MOVED): nothing past the hello until the room welcomes the socket');
   sockets[0].receive({ t: 'welcome', id: 'mac-0001', peers: [] });   // SD-HELLO (PIN MOVED): welcomed - the pose's law below as it was
   assert.equal(s.sendPose(pose(2)), true); now += 20; assert.equal(s.sendPose(pose(3)), false, 'twenty ms later: throttled');
   now += 100; assert.equal(s.sendPose(pose(3)), true, 'a tenth of a second: sent'); now += 100; assert.equal(s.sendPose(pose(3)), false, 'unmoved: not sent');
   assert.equal(sockets[0].sent.filter((m) => m.t === 'pose').length, 2); assert.equal(POSE_HZ, 10);
-  now += HEARTBEAT_MS; assert.equal(s.sendPose(pose(3)), true, 'unmoved past the heartbeat: sent anyway - the socket\'s keepalive and the peers\' clock');
-  assert.equal(s.stats.poses, 3);
+  now += HEARTBEAT_MS; assert.equal(s.sendPose(pose(3)), false, 'alone in a cell: an unmoved heartbeat wakes nobody');
+  assert.equal(s.stats.poses, 2);
+  sockets[0].receive({ t: 'join', id: 'nye-0001', name: 'Nye', n: 2 });
+  assert.equal(s.sendPose(pose(3)), true, 'someone joined: the standing pose goes at once');
+  sockets[0].receive({ t: 'leave', id: 'nye-0001', n: 1 });
   // the roster, a join, a pose, easing, a leave - all on the session's clock, ticked with NO argument
   const far = pose(20 * PIXEL_UNITS);   // twenty pixels off: in the roster, past the relay's range
   sockets[0].receive({ t: 'welcome', id: 'mac-0001', peers: [{ id: 'bob-0001', name: 'Bob', look: {}, pose: pose(10) }, { id: 'zed-0001', name: 'Zed', look: {}, pose: far }, { id: 'mac-0001', name: 'me' }] });

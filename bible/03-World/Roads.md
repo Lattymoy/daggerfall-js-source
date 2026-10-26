@@ -945,6 +945,12 @@ three hashes again the same). A region built on the page's own thread,
 with no roads worker to build it (`world/tamrielRoadsClient.js`), steps
 it a budget a task.
 
+VOYAGER (2026-10-26, below): past the Bay the routes pay the land's law
+(the builder's `terrain`, `world/road/roadLand.js`), Cyrodiil's named
+roads are routed as `trunks`, the painter's seam draws the layer's roads
+as curves (`world/road/roadCurves.js`) and the verge measures from them;
+the Bay's build and the Bay's painting are untouched.
+
 ### FB1020c TRUNK-FIT - the trunk fits its room too (2026-10-20, a port departure)
 
 A player on the Discord: *"Fountain inside a tree in Crossleigh behind a house
@@ -995,3 +1001,216 @@ middle, 1.58 m off). DFU with Low Poly Trees stands the prefab whole
 `test/world/road/fb1020c_trunkfit.test.js` (4, the report on ARENA2); LPT-FIT's
 and VERGE1's pins stand as they were (the bake emits both tables, and the
 fit's own line is LPT-FIT's); mutants `tools/mutants/fb1020c_trunkfit.json`.
+
+## VOYAGER - the roads past the Bay follow the land, curve, and are walked as roads (2026-10-26, a port departure)
+
+KPbICA's spec on the DFO Online Core Discord (2026-10-25), forwarded by the owner 2026-10-26 - "VOYAGER: Procedural
+Road System": *"1) Roads should rely on landscape and should not be just 100km straights. Roads should circle around
+rivers, on the shoreline, around tall mountains and not through all this 2) Add slight curvatures for intersections and
+turns of the roads to make them more natural 2.1) Roads at current state does not behave like roads for Pathfinding
+system in Overworld view"*; and *"For Cyrodill I would suggest to use this detailed map"*. Its item 3 (the Imperial City's
+own streets round the White Tower) is the city plan's, not this record's. The Bay's roads are Basic Roads' as ever - his
+arrays, his painter, every byte the same - and the Bay's build is untouched: everything below is the land past the
+Bay's, where the network is the port's own (TESA14, `Arena-Provinces.md`).
+
+### VOYAGER1 - the land's law
+
+TESA14 routed past the Bay on the Bay's dials: the climb read raw off a pixel's one height byte, where the lattice's
++-2 a pixel is texture, not a hill, so a route wandered on noise and walked straight over a ridge as readily as round it.
+Now every route a region builds there pays the land's law (`roadLand.js:"export function landStep(t, cx, cy, nx, ny, len) {"`,
+its dials `roadLand.js:"export const VOYAGER_DIALS = Object.freeze({"`), handed to the builder as its `terrain`
+(`tamrielRoads.js:"const land = landForRoutes(heights, water, bay, MAP_W, MAP_H, VOYAGER_DIALS, (u, v) => landGrain(gx + u, gy + v));"`):
+
+- **The grade, squared**, on the height averaged over 5 x 5 pixels (a summed-area table, integer sums): a step costs its
+  length times 1 + gradeCost (1/16) x (rise a pixel)^2, the same up as down. A byte a pixel is about a 1% grade, so 4%
+  doubles a step and 8% is five of it: a road goes round a steep rise, takes the valley or the pass, and lays a long climb
+  across the slope.
+- **The height**: 3% more a byte over 40 - between two ways up, the lower col.
+- **The shore**: land with water among its eight neighbours costs 0.85 of itself - the flat strip round a lake or along a
+  river - and the heuristic is scaled with it (`roadNetwork.js:"const hScale = d.roadDiscount * (terrain ? Math.min(1, terrain.d.shoreCost) : 1);"`),
+  so it never overestimates.
+- **A ford**: water on a run of no more than FORD_SPAN (2) pixels, along a row, a column or a diagonal, with land a road
+  walks at both ends, is crossed at 12 a step on top of its length - a road crosses a river once, where it must, and the
+  roads after it take the same crossing; wider water is refused as before. No bridge model of its own: the painter paves
+  no water, so a ford's tile is the river's.
+- **The land's grain** (`roadLand.js:"export function landGrain(x, y) {"`): rough patches some kilometres across -
+  value noise on a 10-pixel lattice of integer hashes, taken where it runs over 0.5 and eased in to whole at 0.65,
+  nought over about half the land and whole over a quarter - a step up to 2.5 dearer. What one height byte cannot say of
+  819 m of ground: the woods, the fens, the broken ground a road-builder goes round on a plain. Measured on a plain
+  (routes 50 to 115 km): an even field of any strength leaves a least-cost road ruler-straight (sinuosity 1.06, 80% in
+  straight stretches of 25 km and more, the longest 106 km); the patches bend it (1.14, 40%, the longest 61 km).
+- **The wider box for a dear road** (`roadNetwork.js:"if (best && !(opts.terrain && !opts.stopOn && best.g > opts.terrain.d.widenAbove * Math.hypot(to.x - from.x, to.y - from.y))) return best.p;"`):
+  the box ladder (12, 40, 120 pixels) widened only on a failure, so a pass outside the first box was never seen while a
+  climb over the ridge inside it answered. A road (never a track: a track's spur asked it and the Jerall's region took
+  105 s) that costs more than twice its straight length asks the next box and keeps the cheaper.
+- Sums, products and Math.sqrt alone (the box's Math.hypot as the Bay's heuristic has it): the same roads on every
+  client. The account Worker bundles the builder, so the law is a module of its own the builder never imports
+  (`world/road/roadLand.js`; the builder calls `terrain.step`): the bundle's import graph is what it was.
+
+### VOYAGER2 - the curves
+
+Basic Roads draws each bit of a pixel's compass byte as a straight band from its centre to an edge or a corner
+(`BasicRoadsTexturing.cs` PaintPath, ported by ROADS 23), so every bend is a 45 or 90 degree kink at a pixel's centre and
+every junction a star. Past the Bay the roads are drawn by the port's own law (`world/road/roadCurves.js`):
+
+- **A way through** (two bits) is one quadratic curve from the one bit's edge point to the other's about the pixel's
+  centre - tangent to the step at both ends, so it meets the next pixel's curve with one heading, and straight (Basic
+  Roads' own band) where the bits are opposite. A 45-degree bend passes 0.125 of a pixel (102 m) inside the centre; a
+  staircase of steps reads as one gentle line.
+- **A junction** (three bits or more): every pair the road may run through with no more than a 45-degree turn is its
+  curve, a bit in no such pair (a T's stem) runs straight in, and the centre is paved round (JUNCTION_R, 2.5 tiles): a
+  road joining at 45 degrees merges as a Y, a crossroads is a small square with its corners rounded. **An end** runs
+  straight in to the centre.
+- **The painter** (`roadCurves.js:"export function paintCurvedPaths(tileData, tilemap, { px, py, road, track, byteAt, rect = null, paths = null, tdDim = CURVE_DIM + 1 }) {"`):
+  a road paves the tiles within ROAD_HALF (1 tile - two across, Basic Roads' width) of its curve with his road tile
+  turned and flipped to its lie, and wears the ground's corners to dirt over a 0.9-tile shoulder so the squares blend it
+  into the grass at any angle; a track wears its 0.75-tile half to dirt as the jungle's trails do; water is never paved;
+  a location's rect (or TS2's ring) is paved as his. A band that spills over an edge or a corner is painted in the next
+  pixel from its neighbour's byte (`curveField`), so the curves are seamless with no corner byte. A straight road is his
+  painter's to the byte (pinned). Rivers and streams are still his painter's, called after with no road.
+- **The seam** is one option at the kernel's call - the pixel and the layer's reader, past the Bay alone:
+  `terrainGen.js:"curve: arena ? { px, py, byteAt: arenaRoadByte } : null,   // VOYAGER2: past the Bay, the roads drawn as curves (world/road/roadCurves.js)"`.
+  The verge measures from the same curves (`roadBand.js:"const d = Math.min(r ? curveDistance(r, tx, tz) : Infinity, t ? curveDistance(t, tx, tz) : Infinity) * TILE_M - PATH_HALF_M;"`):
+  a bend's apex is on the road, the arms' old corner 86 m off it; a Bay pixel reads its crossing's join with its own byte.
+- Cost: a pixel's curves over grass 3.1-3.4 ms against 1.1-1.4 ms for his painter (2,048 dense synthetic pixels, load 30
+  on four cores), in the terrain worker's job, only on a pixel past the Bay with a road or a track.
+- Departure: `BasicRoadsTexturing.cs` PaintPath's straight bands, past the Bay alone - `Port-Ledger.md` A.
+
+### VOYAGER2.1 - the Overworld walks them as roads
+
+`10-UI/Travel-View.md` VOYAGER2.1: the route planner (`travelRoute.js` planRoute) read no road's byte past the Bay's table
+(TV-BEYOND), so a click past the Bay walked open ground (3.5 a step) beside a road it could walk at 1. Now `routeGround`
+carries the installed layer's reader (`travelRoute.js:"get pathsBeyond() { return pathsBeyond === arenaRoadByte && !arenaRoadsLayer() ? null : pathsBeyond; },"`)
+into every plan through the host's existing `...tvRouteGround()`: a road or a track past the Bay is its kind's step, and a
+crossing's join (TESA5) carries a Bay road out to them as one road. FREE mode (no roads handed) reads none.
+
+### VOYAGER-CYRODIIL - Cyrodiil's named roads
+
+The reference: the "Province of Cyrodiil, 3E 433" map (Natalia Dravarol, cartographer - another game's published art),
+named by KPbICA. Read as a REFERENCE for which road joins which cities and nothing else: the image is not in the
+repository, and nothing is traced or rendered from it. What it gave is the table
+(`cyrodiilRoads.js:"export const CYRODIIL_ROADS = Object.freeze(["`), the port's own data on the port's own geography
+(TAMRIEL1's cities where `arenaPlaces.js` stands them, the Imperial City the capital `tamrielCapitals.js` builds):
+
+| Road | Runs |
+|---|---|
+| Red Ring Road | round the Imperial City and Lake Rumare |
+| Gold Road | the ring - Skingrad - Kvatch - Anvil |
+| Black Road | the ring - Chorrol |
+| Silver Road | the ring - Bruma |
+| Orange Road | Chorrol - Bruma (taking the Silver Road's last stretch) |
+| Blue Road | the ring - Cheydinhal |
+| Yellow Road | the ring - the Niben's east bank (one point of its course, in the port's picture units) - Leyawiin |
+| Green Road | the ring - Bravil - Leyawiin |
+
+- **The ring** (`cyrodiilRoads.js:"export function ringPoints(ring, walkable, wet) {"`): twelve points on bearings
+  clockwise from north, each RING_SHORE_GAP (2) pixels short of the first water a ray from the city meets within
+  RING_REACH (80) past the span's half and RING_GAP (3) - Lake Rumare's inner shore, whatever shape the land gives the
+  lake; a bearing that meets none (the lake's open side) takes the radius between its nearest neighbours' that do, each
+  by the other's share of the turn; with no water about the city at all, the span's half and RING_GAP. Snapped to land,
+  joined point to point round (closed over a bearing with no land in reach); each of the city's gates to its nearest
+  point. On today's ground the lake is the ring of water round the city (IC-RING's "circle river type landmark") some
+  36 to 56 pixels out, open on the south, and the Red Ring Road runs between the city and it - where the first cut
+  looked for the lake's far shore within 40 pixels, found it on no northern bearing (the lake is 30 pixels and more
+  across) and drew a ring at the city's walls, broken on the north. The span and the gates are the city plan's own, read through its exports
+  (`tamrielRoadsHost.js:"export function cyrodiilTrunksFor(pixels, walkable) {"`: capitalSpan, capitalGates walked,
+  capitalCentrePixel) - none written here, so the plan moving its gates moves the roads with it.
+- **The roads out** start at the ring's point nearest the bearing of their first city and run city to city.
+- **The course** (`cyrodiilRoads.js:"export function courseLegs(a, b, { heightAt, walkable }) {"`): planned first on
+  4-pixel cells by the land's law at that scale (round a lake, through a pass) and cut along that plan every 60 pixels
+  into legs of no more than LEG_MAX (80), each snapped to land - so each leg's two ends lie in one region's grid. A plan
+  the first box (COARSE_MARGIN, 96 pixels past the two) cannot hold is asked over one three times as wide - the Silver
+  Road's from the ring to Bruma, where Lake Rumare's northern arm spans the first box whole - and with no coarse way at
+  all the straight way is cut as often: a region routes only a leg both of whose ends its grid holds, so a longer leg
+  was dropped unsaid (the first cut handed the Silver Road one leg of 329 pixels). Planned once by each roads' worker at
+  its init: 72 legs, the longest 63 pixels, in 13.0 s at a load of 30 on four cores (a warm boot from the cache makes no
+  worker).
+- **Routed** by the region whose core holds a leg's first end, after the towns' roads and before the tracks
+  (`roadNetwork.js:"for (const [a, b] of trunks ?? []) {"`), each leg whole: it takes the towns' roads at half price where
+  they run its way, so a named road threads the towns on its course - laid first, it cut a ruler-straight line across a
+  plain and the towns' roads merged into it. The legs are planned in the roads' worker on its own ground
+  (`tamrielRoadsWorker.js` init, planTrunkLegs) and carried in the region's inputs print, so the cache keys them.
+
+### The four hosts, the cache, online
+
+`scenes/world.js` is wired and grows no line: its roads' host (`scenes/tamrielRoadsHost.js`, HOST-SPLIT's shape) hands the
+named roads' spec to the build, the kernel's seam paints the curves, the verge reads them, and its Travel View ground
+(`tvRouteGround`) and the living world's (`_livingGround`) take the layer's reader by routeGround's default.
+`scenes/exterior.js` runs no tile pipeline; `scenes/worldModes.js` and `scenes/dungeonContext.js` paint no terrain and plan
+no Overworld route. TAMRIEL_ROADS_VERSION 4, and the land's dials and the named roads' legs in every region's print, so a
+warm cache rebuilds once. The build is pure and in one order: every client with the same release and files lays the same
+roads, nothing on the wire.
+
+### Measured (the freeware's data, `tools/tesaRoadsAtlas.mjs`, Cyrodiil's five regions, the relief on)
+
+| | TESA14's law | VOYAGER, no named roads | VOYAGER |
+|---|---|---|---|
+| road / track pixels | 52,988 / 108,976 | 54,728 / 111,169 | 56,994 / 111,266 |
+| unrouted, over water, on a capital | 0, 0, 0 | 0, 0, 0 | 0, 0 (no ford on today's ground), 0 |
+| places to serve on no path | 9 of 35,050 | 10 | 10 |
+| the longest straight run (one heading) | 18.8 km | 36.0 km (3 of 25 km and more) | 36.0 km (5 of 25 km and more, none of 50) |
+| ruler lines (every pixel within 1.5 of the chord) | the longest 37.1 km; 99 km in those of 25 km and more | 37.7 km; 125 km | 37.7 km; 234 km |
+| chains of 25 km and more: sinuosity | 1.311 | 1.352 | 1.316 |
+| road steps over 80 high | 14.96% | 14.93% | 14.73% |
+| named roads | none | none | 3,805 pixels, 72 legs, every one routed |
+| five regions' build, one core | 211.7 s (load 25) | 320.8 s (load 30) | 561.7 s (load 33) |
+
+TESA14's wander was the lattice's noise read as hills - it bent a road at random and walked it over a ridge as readily;
+VOYAGER's bends are the land's (round the grain's patches, the high ground, the lakes): the towns' roads alone are more
+sinuous than TESA14's and their ruler lines about as long. It lays longer straight stretches where the land is even -
+the named roads' long legs across the Heartlands' and the Nibenay's plains hold about half of the 234 km - nothing of
+50 km and more, none of the spec's 100 km. The build is dearer (the wider box, the named roads); the timings are one core
+of a machine eight other agents loaded to 25-33 and move by half run to run, so the measure of its cost is the work, not
+the clock: it runs on the roads' workers and the cache, off the page's thread as before.
+
+### Pins, mutants, open
+
+- Pins: `test/world/road/voyager1_land.test.js` (7: the dials; the land - the box, the shore, the fords, the kept ground;
+  the grain; a step's price; routes round a hill, through a pass, across a narrow river once, round a lake; the shore
+  kept; the regions on the law and their key), `test/world/road/voyager2_curves.test.js` (7: the curves, the distance, the
+  painter, the spill, the seam, the verge, the rect), `test/world/road/voyager_cyrodiil.test.js` (7: the table, the spec,
+  the ring's points, the legs, every road's legs, the builder's order, the host's read of the plan),
+  `test/systems/travel/voyager21_beyond.test.js` (5). Mutants: `tools/mutants/voyager.json`.
+- PIN MOVED (VOYAGER): TESA14's version (`test/tesa14_roads.test.js`), TESA4's verge (`test/tesa4_roads.test.js`), AUDIT
+  TESA II's step count (`test/world/audittesa2r_roads.test.js`), the jungle's roadside (`test/world/jungleroadside.test.js`),
+  the builder's heuristic and track call (`test/world/road/roads.test.js`), TESA-BIOME's print
+  (`test/world/tesabiome_biomes.test.js`); their mutant records re-aimed by content.
+- OPEN: (1) the Overworld's walk aims pixel centre to centre, so on a bend past the Bay the walker cuts up to 0.125 of a
+  pixel inside the painted curve (`roadCurves.js` curveApex is the point a curve-following leg would aim through - not
+  wired). (2) Switchbacks: the land's law lays a climb across the slope at the pixel's scale; a hairpin inside one pixel's
+  819 m is not drawn. (3) Rivers: the ground carries no river line past the Bay - a ford is any water run of two pixels or
+  less - so a river wider on the trace (the Niben, some 15 pixels) is gone round, never bridged; a river's own line from
+  the terrain's law (a byte a pixel, as Basic Roads' river array is the Bay's) would let a road bridge it where it is
+  narrowest.
+
+## RIVER-FORDS - the carved rivers crossed as fords (2026-10-26, the owner: "Take care of exclusions and gaps"; AUDIT RELEASE R1-3)
+
+`01-Overview/audits/Audit-Release-R1.md` R1-3: CYRODIIL-WATERS carves ten rivers inside the kernel, narrower than a pixel,
+and paints their channels water after the roads are painted; the roads' worker routed on the pixels' bytes, which carry
+no channel - 192 of 56,777 road pixels stood on a channel's pixel in five of Cyrodiil's regions (155 crossings, 37 along
+a river), priced as dry ground, and the water painted over the road at each. VOYAGER's OPEN (3) above, half of it.
+
+- **The price** (`world/road/roadLand.js` RIVER_FORD, riverFords, landStep): the regions' build reads the rivers' raster
+  over its grid (`world/tamriel/tamrielWaters.js` riverRaster - CYRODIIL-SHORES' "router's question", no reader took it)
+  as the land's `river` (`world/tamrielRoads.js` tamrielRegionSteps). A step onto a channel's pixel - or a diagonal through
+  the channel's corner between two of them - pays RIVER_FORD.cost (12, VOYAGER_DIALS' fordCost) a step and perM (0.05)
+  more for each metre of the channel's width there: a road crosses a river once, square to it, at its narrowest within
+  reach (a twenty-metre narrows four pixels off taken over a 400-metre reach), and never runs along it. The trunks of
+  Cyrodiil's named roads are planned on the pixels as before (`cyrodiilRoads.js` planTrunkLegs); the builder's own routes
+  between them pay the channels.
+- **The paint** (`world/tamriel/tamrielWaters.js` paintTamrielWaters, `world/terrain/terrainGen.js`): the channel's water is
+  laid on no corner of a tile the road painter wrote (GRASS-PATH1's `paths`) - the crossing's road kept, a ford.
+- **The version**: TAMRIEL_ROADS_VERSION 5 (4 since VOYAGER; 6 since ROAD-GAPS, the same release - `06-Systems/Travel-View.md`) - the roads past the Bay are laid again once. SMOOTH-LAND moved
+  GROUND_ROLL_VERSION to 4 in the same release, and a region's key carries both (`regionKey`), so a returning player lays
+  them once, not twice; ROAD-GAPS' crossings (`06-Systems/Travel-View.md`) change the build's inputs in the same release
+  too (its print), the same one rebuild.
+- **Measured** on the freeware, each region laid as the host lays it (`scenes/tamrielRoadsHost.js`, the worker's state
+  in-process): in Cyrodiil's (3, 5) and (2, 5) the road pixels on a channel's pixel went from 61 and 41 as VOYAGER laid them
+  (on the land before SMOOTH-LAND; 43 and 23 of them with the road's next pixel on the channel too - along it; (3, 6) on
+  this head's land without the fords 33, 23 along) to 26 and 20 (2 and 0 along) - a crossing each, the
+  rest of the river kept clear; the road pixels themselves 12,572 and 11,418 (the network the same size).
+- **Not done**: no bridge model stands at a crossing (the road's tiles over the channel are the ford); the Lower Niben
+  (320 to 460 m) is crossed where the routes must, at its price.
+- Pins `test/world/road/river_fords.test.js` (4, the last with ARENA2); mutants `tools/mutants/river_fords.json` (7, all
+  dead). PIN MOVED: TAMRIEL_ROADS_VERSION 4 -> 5 (`test/tesa14_roads.test.js`, `test/world/road/voyager1_land.test.js`),
+  VOYAGER1's version and step records re-aimed by content (`tools/mutants/voyager.json`, both dead); R1-3's cite re-aimed at the kernel's line.

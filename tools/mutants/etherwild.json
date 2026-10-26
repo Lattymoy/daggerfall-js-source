@@ -118,16 +118,6 @@
     ]
   },
   {
-    "name": "ETHER-WILD-companion-says-mountains",
-    "file": "src/systems/wild/wildZone.js",
-    "old": "until you leave {zone}.', { zone: zoneName(),",
-    "new": "until you leave {zone}.', { zone: WILD_NAME,",
-    "tests": [
-      "test/systems/wild/etherwild.test.js"
-    ],
-    "note": "RE-AIMED (WW-C2, bible/03-World/World-Wide.md WW-C): the sentence brings no article now."
-  },
-  {
     "name": "ETHER-WILD-death-forgets-ground",
     "file": "src/systems/wild/wildZone.js",
     "old": "kind: d.kind ?? _death?.kind ?? _kind ?? WILD_KIND } : null;",
@@ -195,24 +185,6 @@
     "file": "src/scenes/world.js",
     "old": "rows: crossingRows(way, { pvp: _onlineWorldSession() && !!online?.wildOk }),",
     "new": "rows: crossingRows(way, { pvp: true }),",
-    "tests": [
-      "test/systems/wild/etherwild.test.js"
-    ]
-  },
-  {
-    "name": "ETHER-WILD-hand-held-at-sea",
-    "file": "src/systems/naval/crewCompanions.js",
-    "old": "  if (!wildHere() || wildZoneKind() === ETHER_KIND) return false;",
-    "new": "  if (!wildHere()) return false;",
-    "tests": [
-      "test/systems/wild/etherwild.test.js"
-    ]
-  },
-  {
-    "name": "ETHER-WILD-pack-ashore-at-sea",
-    "file": "src/systems/naval/crewCompanions.js",
-    "old": "export const packStaysAshore = () => wildHere() && wildZoneKind() !== ETHER_KIND;",
-    "new": "export const packStaysAshore = () => wildHere();",
     "tests": [
       "test/systems/wild/etherwild.test.js"
     ]

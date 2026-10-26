@@ -99,7 +99,7 @@ export const CATEGORIES = Object.freeze([
     sec("weapons", "Weapons in hand", [
       "feat:weapon-glow", "feat:mod-weapon-widget", "feat:mod-shield-widget", "feat:mod-readied-spellcasting-hands", "feat:mod-diverse-weapons", "feat:bows-left-hand", "Enhancements/BowLeftHandWithSwitching"]),
     sec("morrowind", "With Morrowind data", [
-      "feat:mod-weapon-sheathing", "feat:steel-helm", "feat:mw-spell-effects", "feat:mw-body-motion", "feat:mw-npc-bodies", "feat:mw-billboard-look", "feat:mw-model-detail", "feat:npc-marks"]),
+      "feat:mod-weapon-sheathing", "feat:steel-helm", "feat:beast-footwear", "feat:beast-helmets", "feat:mw-spell-effects", "feat:mw-body-motion", "feat:mw-npc-bodies", "feat:mw-billboard-look", "feat:mw-model-detail", "feat:npc-marks"]),
     sec("aftermath", "Seeing & bleeding", [
       "feat:enhanced-combat-visuals", "feat:blood"]),
     sec("sea", "At sea", [
@@ -153,7 +153,7 @@ export const CATEGORIES = Object.freeze([
   ]),
   tab("audio", "Audio", [
     sec("volume", "Volume", [
-      "Controls/SoundVolume", "Controls/MusicVolume", "port:monsterVolume"]),
+      "Controls/SoundVolume", "Controls/MusicVolume", "port:monsterVolume", "port:companionVolume", "port:horseVolume", "port:animalVolume"]),
     sec("music", "Music", [
       "Audio/AlternateMusic", "Audio/SoundFont", "port:midiOut"]),
     sec("sounds", "Sounds", [

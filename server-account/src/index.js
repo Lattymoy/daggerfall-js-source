@@ -97,7 +97,8 @@
 //   POST /v1/eg/open     { rq, rh?, ew?, wg?, again? } -> { order, b, ez, keys, until, rh, at? }   (EG-PLAY: a key staked - or the day's Rehearsal - and the open order signed; idempotent on `rq`; EG-F: `ew` the start Redoubt, `wg` the Wager; AUDIT EG IV: `again` 1 the stake `rq` took asked after a lost answer - its order as of its `at`, none taken; refused guest 403, unproven 403, start 403 (`w`), rq/wager 400, live 409 (`b`), short 409 (`keys`), rehearsed 409, spent 409, none 404)
 //   POST /v1/eg/admit    { b } -> { order, b }   (EG-PLAY: a member's admission order; one live breach an account; refused guest 403, breach 400 (no stake opened it), spent 409 (its stake settled or its open window past), start 403 (`w`), live 409 (`b`))
 //   POST /v1/eg/claim    { receipt, character? } -> { recorded, q, b, w?, keys, ... }   (EG-PLAY: an `e1` - a Redoubt taken, a member's end, a void; EG-E1: a Redoubt's `paid`, `again`, `marks`, `deed`, `embers`, `purse`, `weir`, `pity`, an end's `rl`; EG-ZF: an end's `board`, the member's standing - { k: 'descent', br, rank } or { k: 'depths', rank }; EG-E2: `honours`, the titles a Redoubt newly granted)
-//   POST /v1/eg/sink     { piece } -> { ok, piece, week, purse }   (EG-E1: the Broker's Panoply piece, once a week for 20 embers - guest 403, piece 400, bought / short 409)
+//   POST /v1/eg/sink     { piece, rid? } -> { ok, piece, week, purse, again? }   (EG-E1: the Broker's Panoply piece, once a week for 20 embers - guest 403, piece 400, bought / short 409; AUDIT FB1024: `rid` the press's request id - fenced 409, rid 400, `again` the same press asked again)
+//   POST /v1/broker/settle { rid, nonce } -> { held: false } | { held: true, kind, item, by, week?, ...wardrobe }   (AUDIT FB1024, BROKER-RID: a Broker sale whose answer was lost, asked after by its request id - the sale it wrote, or the id fenced; `by` the first ask's nonce; guest 403, rid 400)
 //   POST /v1/eg/board    {} -> { ok, season, descent: { alone, few, company }, depths, deepest, proclamation, best }   (EG-E2: the Elite Breach's three boards - egHonours.js)
 //   POST /v1/eg/find     { tier } -> { found, keys, asks }   (EG-E3: a dungeon elite's find - 'super' | 'elite' | 'regular', the service's die, 6 asks a tier a day, 2 keys a week)
 //   POST /v1/eg/starts   { subs } -> { starts: { [sub]: [w, ..., 0] | null }, keys, rehearsal, rk }   (EG-F: the start window's preflight - which starts each member may make)
@@ -281,6 +282,7 @@ import { claimKetch, ketchRecordOf } from './ketch.js';   // KETCH: the Ketchmas
 import { egKeysOf, openEg, admitEg, claimEg, rollWeirKey, findEg, egFirstSay, egGateWeir, egGateWeirAnswer } from './eg.js';   // EG-PLAY: the Elite Breach - the Weir Keys, the open, the admission, the claim; EG-E3: a dungeon elite's find
 import { egBoardOf, withEgHonours } from './egHonours.js';   // EG-E2: the Elite Breach's boards, and Spire Champion on the row
 import { egSink } from './egEconomy.js';   // EG-E1: the Broker's Panoply sink
+import { settleBrokerSale } from './brokerSales.js';   // AUDIT FB1024 (BROKER-RID): a Broker sale asked after by its request id
 import { startsEg } from './egStarts.js';   // EG-F: the start window's preflight
 import { claimLamp } from './lamp.js';
 import { festivalOf, findFestival, buyFestival, festivalTown, setOffering, fillOffering, takeInOffering, takeFromOffering, FEST_STATUS } from './festival.js';   // WITCH1: the Witches' Festival   // LAMP-KEEPER II: I Love Lamp, laid on the row
@@ -348,6 +350,7 @@ import { SESSION_PASS_HEADER } from '../../src/net/sessionPassLaw.js';   // SESS
 import { PROGRESS_ROUTES, seatRefusalOf, progressConfig, progressRoom, progressSpent } from './progress.js';   // INT16-INT17: a progression claim's seat, and the play that pays for it
 import { isGzip, gzipSizeOf, gunzipText, REALM_TEXT_MAX_BYTES } from '../../src/net/realm/realmSaveCodec.js';   // REALM-GZIP: a save rides packed
 import { tradeRealm, REALM_TRADE_BODY_MAX } from './realmTrade.js';   // REALM P2.1: a trade, settled here
+import { wildInsure, wildPolicies } from './wildInsure.js';   // WILD-INSURE (2026-10-26): a policy on a piece of gear, written against its premium off the record
 import { wildFall, wildCollect, wildReclaim, wildEscrows } from './wild.js';   // INT9: a death in the open zone's drop, taken off the record; MAC (2026-10-14): its killer's piece in escrow - collected, taken back, listed
 import { listLineages, putLineage, realmDie, realmRaise, realmWed, listUnions, LINEAGE_BODY_MAX } from './legacy.js';   // LEGACY7: Project Legacy's lines and the tombstone; REZ-BLOODLINE AUDIT R1: a Resurrect inside its hold
 import { measured, heartbeatPartsOf } from './metrics.js';   // SCALE1: every request counted (Workers Analytics Engine); AUDIT SCALE II A-3: a heartbeat's parts, of the body the route read
@@ -437,7 +440,7 @@ const overloaded = (origin) => {
 const JUDGE_STATUS = Object.freeze({ 'trade-held': 409, 'record-unjudged': 409, 'piece-dupe': 409, 'piece-claimed': 409, 'piece-legacy': 409 });
 /** INT9: a death's drop's refusals - no key to verify or sign with 503, a receipt not the caller's 403, the fallen's own
  *  grace or the room's falls 409; the record's own (REALM_STATUS) after them, a bad shape 400 (the default). */
-const WILD_STATUS = Object.freeze({ 'no-gate-key': 503, 'no-signing-key': 503, 'not-yours': 403, grace: 409, 'fallen-frozen': 409, nonce: 400, 'no-escrow': 404, 'escrow-wait': 409, 'escrow-late': 409, 'escrow-moved': 409, 'escrow-collected': 409, 'escrow-returned': 409, 'sea-prize-moved': 409, 'sea-prize-realm': 403 });   // MAC (2026-10-14): the escrow's; SHIP-PVP: a prize's
+const WILD_STATUS = Object.freeze({ 'no-gate-key': 503, 'no-signing-key': 503, 'not-yours': 403, grace: 409, 'fallen-frozen': 409, nonce: 400, 'no-escrow': 404, 'escrow-wait': 409, 'escrow-late': 409, 'escrow-moved': 409, 'escrow-collected': 409, 'escrow-returned': 409, 'sea-prize-moved': 409, 'sea-prize-realm': 403, 'insure-held': 409, 'insure-full': 409, 'insure-piece': 409, 'realm-gold': 409 });   // MAC (2026-10-14): the escrow's; SHIP-PVP: a prize's; WILD-INSURE: a policy's
 /** HOME-RENT: a room's refusals - a bad shape 400 (the default). */
 const RENT_STATUS = Object.freeze({
   ...JUDGE_STATUS,
@@ -540,6 +543,7 @@ const EG_STATUS = Object.freeze({
   guest: 403, 'not-yours': 403, unproven: 403,
   live: 409, short: 409, rehearsed: 409, spent: 409, capped: 409,   // EG-E3: a find past its day's asks
   bought: 409,   // EG-E1: the week's Panoply piece already bought
+  fenced: 409,   // AUDIT FB1024 (BROKER-RID): a press whose request id a settle fenced first
   start: 403,   // EG-F: a start the account may not make (no carries)
   none: 404,   // AUDIT EG IV (lane3 #1): an open asked again (`again`) whose request id took no key
 });
@@ -623,6 +627,7 @@ const PROF_STATUS = Object.freeze({
   'prof-lapidary': 403,   // PROF10: a Siege-cracked Gem is set as a gem by a Lapidary alone - a skill's door, as the Sculptor's
   // PROF12: a transmutation is a Transmuter's (a skill's door); a cauldron DFU's law answers with no such potion, a bad piece's id;
   // no such piece, another's; one listed, on the road or set down; one that makes no Essence
+  'prof-embers': 409,   // DAEDRIC-SMELT: the Daedric smelt's embers, the account's purse short
   'prof-transmuter': 403, 'bad-brew': 400, 'bad-piece': 400, 'prof-no-piece': 404, 'prof-not-yours': 403, 'prof-piece-busy': 409, 'prof-no-essence': 409,
   // AUDIT PROF-541 B2: a realm character's disenchant moves its record - a piece the record does not hold, and the record's own words
   'prof-piece-gone': 409, 'realm-needed': 400, lease: 409, seq: 409, 'no-realm-character': 404, 'no-data': 404, 'no-storage': 503,
@@ -1381,6 +1386,17 @@ const service = {
         return json({ error: r.error, ...(r.why ? { why: r.why } : {}), ...(Number.isSafeInteger(r.wait) ? { wait: r.wait } : {}) }, WILD_STATUS[r.error] ?? REALM_STATUS[r.error] ?? 400, origin);
       }
 
+      if ((path === '/v1/wild/insure' || path === '/v1/wild/policies') && request.method === 'POST') {
+        // WILD-INSURE (2026-10-26, wildInsure.js): a policy on a piece of gear, written as an act on the record against its
+        // premium - kept from a fall at another player's hand while in force, and spent by it - and the policies in force
+        // for the character's tab
+        const wctx = { ...ctx, bucket: env.SAVES };
+        const r = path === '/v1/wild/insure' ? await wildInsure(wctx, who.player, body) : await wildPolicies(wctx, who.player, body);
+        if (!('error' in r)) return json(r, 200, origin);
+        if (r.error === 'seq') return json({ error: 'seq', seq: r.seq }, 409, origin);
+        return json({ error: r.error }, WILD_STATUS[r.error] ?? REALM_STATUS[r.error] ?? 400, origin);
+      }
+
       if ((path === '/v1/sea/wreck' || path === '/v1/sea/prize/collect' || path === '/v1/sea/prize/reclaim') && request.method === 'POST') {
         // SHIP-PVP (2026-10-22, bible/03-World/Eltheric-Ocean.md SHIP-PVP): a ship wrecked at another captain's guns, against
         // the wreck the relay signed (src/net/wild/wildReceipt.js `n1`, the gate's key: her captain's own tab with its
@@ -1767,14 +1783,17 @@ const service = {
                 : path === '/v1/homes/decor/batch' ? await commitDecorBatch(hctx, who.player, body)   // DECOR-BATCH
                   : path === '/v1/homes/decor/use' ? await decorUse(hctx, who.player, body)   // DECOR-ACCESS
                     : await removeDecor(hctx, who.player, body);
-          forgetYards(body?.mapId);   // YARD-SHED: the town's kept yards let go, whatever the write did
-          await settleYards(ctx.db, body?.mapId).catch((e) => console.warn('[yards] the town not built', e?.message ?? e));   // YARD-SNAP: and built again (the clock builds one this misses)
+          if (path !== '/v1/homes/decor/use') {   // a chest's list, settle or release moves no yard
+            forgetYards(body?.mapId);   // YARD-SHED: the town's kept yards let go, whatever the write did
+            await settleYards(ctx.db, body?.mapId).catch((e) => console.warn('[yards] the town not built', e?.message ?? e));   // YARD-SNAP: and built again (the clock builds one this misses)
+          }
           if (!('error' in r)) return json(r, 200, origin);
           const said = realmNo(r);
           if (said) return said;
-          const status = r.error === 'decor-cap' || r.error === 'yard-cap' || r.error === 'decor-taken' || r.error === 'guild-treasury-full' || r.error === 'vendor-stocked' || r.error === 'decor-rev' || r.error === 'decor-holds' || r.error === 'decor-shut' || r.error === 'decor-held' ? 409   // GUILD1d: a hall piece's half back, into a full treasury; HOME-VENDOR: a stocked trader stays; DECOR-BATCH: a stale revision, or a chest that still holds goods; DECOR-ACCESS: shut, or the good is already held
+          const status = r.error === 'decor-cap' || r.error === 'yard-cap' || r.error === 'decor-taken' || r.error === 'guild-treasury-full' || r.error === 'vendor-stocked' || r.error === 'decor-rev' || r.error === 'decor-holds' || r.error === 'decor-shut' || r.error === 'decor-held' || r.error === 'decor-busy' ? 409   // GUILD1d: a hall piece's half back, into a full treasury; HOME-VENDOR: a stocked trader stays; DECOR-BATCH: a stale revision, or a chest that still holds goods; DECOR-ACCESS: shut, held, or open to someone else
             : r.error === 'decor-rate' ? 429
-              : r.error === 'no-home' || r.error === 'no-decor' ? 404 : 400;
+              : r.error === 'no-home' || r.error === 'no-decor' ? 404
+                : r.error === 'no-storage' || r.error === 'server' ? 503 : 400;
           return no(r.error, status, origin);
         }
         if (path.startsWith('/v1/homes/rooms/')) {
@@ -2230,9 +2249,17 @@ const service = {
         // WB9g: THE BROKER'S INSIGNIA, BOUGHT (accounts.js buyInsignia - one UPDATE, the account's closed gates paying).
         // 403 for a guest (the credential is good, the sale is not theirs to keep); 409 for one owned or one the gates
         // cannot pay - the row is as it was, and the answer says why (`purse`, `price` for `short`).
-        const r = await buyInsignia(ctx, await withSeatTitles(ctx, who.player, env), env, body.item);   // AUDIT SEATS-3 E2: and so does this one
-        if (r.error) return r.error === 'short' ? json({ error: 'short', purse: r.purse, price: r.price }, 409, origin) : no(r.error, r.error === 'guest' ? 403 : r.error === 'owned' ? 409 : 400, origin);
+        const r = await buyInsignia(ctx, await withSeatTitles(ctx, who.player, env), env, body.item, body.rid ?? null);   // AUDIT SEATS-3 E2: and so does this one; AUDIT FB1024: its request id
+        if (r.error) return r.error === 'short' ? json({ error: 'short', purse: r.purse, price: r.price }, 409, origin) : no(r.error, r.error === 'guest' ? 403 : r.error === 'owned' || r.error === 'fenced' ? 409 : 400, origin);
         return json(r, 200, origin);
+      }
+
+      if (path === '/v1/broker/settle' && request.method === 'POST') {
+        // AUDIT FB1024 (BROKER-RID, brokerSales.js): A BROKER SALE ASKED AFTER BY ITS REQUEST ID - the row it wrote answers
+        // (an insignia's with the wardrobe, the account's own), or the id is fenced; 403 a guest, 400 a bad id or nonce
+        const r = await settleBrokerSale(ctx, who.player, body);
+        if ('error' in r) return no(r.error, r.error === 'guest' ? 403 : 400, origin);
+        return json(r.held && r.kind === 'insignia' ? { ...r, ...accountWardrobe(await withSeatTitles(ctx, who.player, env), env, nowS) } : r, 200, origin);
       }
 
       if (path === '/v1/mod/mute' && request.method === 'POST') {

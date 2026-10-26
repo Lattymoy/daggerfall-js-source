@@ -14,7 +14,11 @@ import { createMarketBook, MARKET_KEPT_TEXT } from '../../src/net/marketBook.js'
 import { realmGoldAct } from '../../src/systems/realmSaves.js';
 import { createProfBook } from '../../src/net/profBook.js';
 import { storesRows, storesSplit, GOLD_GOODS_LINE } from '../../src/ui/professions/profPages.js';
-import { createMarketTab, priceText, listableUnits, SPOILED_DISH_WHY } from '../../src/ui/marketTab.js';
+import { createMarketTab, priceText, listableUnits, SPOILED_DISH_WHY, CHANGED_PIECE_WHY } from '../../src/ui/marketTab.js';
+import { mintPiece } from '../../src/systems/smithItems.js';   // AUDIT MAKER-RARE B2: a Masterwork of your own make
+import { MASTERWORK } from '../../src/net/recipeLaw.js';
+import { applyEnchantments } from '../../src/systems/enchanting.js';
+import { enchantmentSettings } from '../../src/systems/enchantmentCatalogue.js';
 import { accountRefusalText } from '../../src/net/accountClient.js';
 import { courierFee, roadPixels, goldText, goldSaleOf } from '../../src/net/marketLaw.js';
 import { MARK_WORTH_GOLD } from '../../src/net/marksLaw.js';
@@ -93,7 +97,9 @@ test('GOLD-MARKET book: the service\'s no gives the gold back and lets the buy g
     const s2 = realmSide(1000);
     const storage = memStorage();
     let online = false;
-    const d2 = { account: () => 'acct-1', buy: async () => (online ? (landed ? sold({ repeat: true, piece: { provenance: PROV, recipe: 'dagger:iron', quality: 1, seed: 7, wear: 1000 } }) : sold({ piece: { provenance: PROV, recipe: 'dagger:iron', quality: 1, seed: 7, wear: 1000 } })) : { ok: false, error: 'offline' }) };
+    // VENDOR-LOST: the repeat of a sale made before the join names no sequence, as the service answers it - the record has
+    // not moved since the join read it (a repeat that names one is the settle's own sale, landed: fb1025_vendorlost.test.js)
+    const d2 = { account: () => 'acct-1', buy: async () => (online ? (landed ? sold({ repeat: true, realm: undefined, piece: { provenance: PROV, recipe: 'dagger:iron', quality: 1, seed: 7, wear: 1000 } }) : sold({ piece: { provenance: PROV, recipe: 'dagger:iron', quality: 1, seed: 7, wear: 1000 } })) : { ok: false, error: 'offline' }) };
     const b2 = createMarketBook({ door: d2, storage, character: () => 'realm-1', sleep: noWait, realm: s2.realm, wallet: s2.wallet });
     const minted = [];
     const k = await b2.buy({ region: DF, listing: 'G1', units: 5, max: 400, hubs: HUBS, currency: 'gold' }, (p) => minted.push(p));
@@ -301,19 +307,20 @@ test('GOLD-MARKET wiring: the host gives the market book the realm act over the 
   assert.match(src('server-account/src/service.js'), /'\/v1\/market\/gold',/);
 });
 
-test('AUDIT PROF-541 R2-C7: a dish of your own make spoiled since it was cooked lists neither way - the Crafted list leaves it out (its record mints it fresh: smithItems.js asMinted), and the pack\'s list says why, never "list it as a crafted piece"', async () => {
+test('AUDIT PROF-541 R2-C7: a dish of your own make spoiled since it was cooked lists neither way - the Crafted list leaves it out (its record mints it fresh: smithItems.js asMinted), and the pack\'s list says why, never "list it as a crafted piece"; AUDIT MAKER-RARE B2: and so does a Masterwork of your own make enchanted at the item maker since', async () => {
   const fresh = { templateIndex: 531, name: 'Bread', provenance: 'aaaaaaaaaaaaaaaa' };
   const spoiled = { templateIndex: 531, name: 'Bread', provenance: 'bbbbbbbbbbbbbbbb', foodStage: 2 };
+  const enchanted = applyEnchantments(mintPiece({ recipe: 'cuirass:daedric', quality: MASTERWORK, seed: 1, maker: 'X' }, 'cccccccccccccccc'), [enchantmentSettings('StrengthensArmor', -1)]);
   const book = {
     state: { open: true, balance: 100, road: [], counts: {}, goldHeld: 0 }, pending: 0, cached: () => null, goldOk: true, purse: () => 500,
-    read: async () => ({ ok: true, data: { rows: [], orders: [], ways: { [fresh.provenance]: 'yours', [spoiled.provenance]: 'yours' } } }),
+    read: async () => ({ ok: true, data: { rows: [], orders: [], ways: { [fresh.provenance]: 'yours', [spoiled.provenance]: 'yours', [enchanted.provenance]: 'yours' } } }),
     settle: async () => ({ ok: true, settled: 0 }),
   };
   let root = null;
   const m = {
     book, stores: () => new Map(), region: DF, regionName: 'Daggerfall', regionNameOf: () => 'Daggerfall', hubs: HUBS, name: (k) => k, countName: (k) => k,
     pieces: () => [], take: () => true, putBack: () => {}, mint: () => {}, pieceName: () => 'a piece', weavers: [], stock: async () => ({ ok: true }),
-    goods: () => [fresh, spoiled].map((item) => ({ item, name: item.name, why: null })), good: () => null, goodName: (r) => (r.foodStage ? 'Mouldy Bread' : 'Bread'),
+    goods: () => [fresh, spoiled, enchanted].map((item) => ({ item, name: item.name, why: null })), good: () => null, goodName: (r) => (r.foodStage ? 'Mouldy Bread' : r.name),
   };
   const tab = createMarketTab(m, { busy: () => false, run: async (start) => start(), rerender: () => draw(), nowS: () => 0, alive: () => true });
   function draw() { root?.remove?.(); root = tab.body(); document.body.append(root); }
@@ -322,6 +329,6 @@ test('AUDIT PROF-541 R2-C7: a dish of your own make spoiled since it was cooked 
   await new Promise((r) => setTimeout(r, 0));
   const what = [...root.querySelectorAll('select')].find((x) => x.getAttribute('aria-label') === 'What to list');
   what.value = 'item'; what.onchange();
-  assert.ok(root.textContent.includes(`Not for the market: Bread (made by you. List it as a crafted piece); Mouldy Bread (${SPOILED_DISH_WHY}).`), root.textContent);
+  assert.ok(root.textContent.includes(`Not for the market: Bread (made by you. List it as a crafted piece); Mouldy Bread (${SPOILED_DISH_WHY}); ${enchanted.name} (${CHANGED_PIECE_WHY}).`), root.textContent);   // PIN MOVED (AUDIT MAKER-RARE B2): the enchanted Masterwork beside them
   root.remove();
 });

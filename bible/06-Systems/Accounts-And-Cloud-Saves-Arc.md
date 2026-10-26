@@ -6052,3 +6052,107 @@ city, stands no boss floor. bootWorld takes ten logical lines (36,255 at the mer
   Every other record aimed at the files this slice changed (109) is dead.
 - Left, said: not seen in a running game client against a deployed service (the client's pin runs the whole road over
   the real Worker); the Lost and Found's own words are English, as the developers' post is.
+
+## NIRNROOT-SAGE — Blob-Marley's own: the Nirnroot Sage, its glyph and Sage's Smoke (2026-10-26, world268, acct194)
+
+For the in-game account BLOB-MARLEY (Discord Blob-Marley), an Immortal backer, his custom aura worked out with
+SirMcMobdon: "a cloud of billowing smoke with nirnroots circling around me", and his final idea, "billowing smoke,
+circling nirn roots around midsection, small glowing green runes encircling feet". Asked, the owner named the title
+**Nirnroot Sage**, its glyph **a nirnroot sprig**, and the grant's handle **Blob-Marley**. WIKIMAID's law throughout -
+Daggerfall Unity has no accounts, titles, glyphs or auras, so there is no DFU member to read or depart from.
+
+- **The grant** (`server-account/src/titles.js`): `NIRNROOT_SAGE_HANDLES = "Blob-Marley"` (`server-account/wrangler.toml`)
+  grants the title, its glyph (`TIER_GLYPH.nirnrootsage`) and the aura (`TIER_AURA.nirnrootsage: 'sagesmoke'`) together,
+  case-folded, read off the config at every ask - TITLE-N's handle-list law. Taking the handle off the list takes all
+  three on the next token. A near name (`BlobMarley`, `Blob Marley`, the HOURS-FIRST account `Nirnroot`) is another
+  account and holds none of it.
+- **The vocabulary** (`src/net/identityToken.js`, in the relay bundle): `nirnrootsage` last in TITLES and GLYPHS,
+  `sagesmoke` last in AURAS. A relay before it refuses a token carrying them, so the relay is **world268** (world267 on its branch, renumbered past KETCH-WORDS at the merge) and the account
+  service **acct194**: THE RELAY FIRST, then the account service, then the site. Every token acct194 mints for Blob-Marley
+  carries the glyph whether or not he wears anything, so an account deployed first would shut him out of every room until
+  the relay landed (CRYSTAL-FIST AUDIT A1).
+- **The face** (`src/ui/playerBadge.js`, `NIRN_*`): five colours named once - a nirnroot's LEAF `#2e9e57`, its GLOW
+  `#7affb0` (the title's one colour, 62 from the nearest title's, the Disciple's teal - greener and brighter than every
+  green a title wears), the smoke's pale HAZE `#e2f0e8`, the DEEP green of the veins `#12391f` and the SMOKE's own grey
+  `#8a9a90`. "Nirnroot Sage" is drawn leaf into glow into haze, edged in black as every gradient title with a light end
+  is; the account card's button and the glyph in the glow. THE GLYPH: a nirnroot - a slender stem out of two broad leaves
+  at its foot, a narrower pair up the stem (the right one higher, as a plant grows) and the nirnroot's bulb at its top -
+  ONE outline, filled, never crossing itself (the aura's nirnroots are this path, filled even-odd), in M, L, Q and Z
+  alone; over it TWO DETAILS (`glyphDetails`): a vein down each leaf in the deep green, and the bulb's glowing heart in the
+  haze. `Y` on the classic face, the sprig. "Nirnroot Sage" on the account card in every drafted language (the title over
+  his head is never translated, so the label matches it). Seen in Chromium at 13 to 128 px over a night sky, a day sky,
+  stone, grass and snow: the bulb and the leaves read from 13 px, the veins from 24.
+- **The look** (`src/render/auraRing.js`, the fifteenth: `AURA_LOOK.sagesmoke`, kind 14, drawn PREMULTIPLIED - `shade`,
+  so the smoke COVERS what is behind it and a nirnroot stays green over a lit floor; the runes' light and the nirnroots'
+  glow are added):
+  - THE RUNES, the ground: SAGE_RUNES (10) small runes in the Oblivion Ward's alphabet (`runeD`, SAGE_SCRIPT the Sage's
+    own words) at SAGE_RUNE_R (0.6 m) round the feet, at SAGE_RUNE_SCALE (0.65) of the ward's size - about 0.18 m each -
+    lit pale at the heart, the glow's green about it, a leaf-green halo; turning slowly, a light passing round them that
+    lights each in turn; a fine line of the glow out from them and one in; drawn round from behind the wearer as it
+    kindles, as the ward is. Under them THE SHADE the smoke lays at the feet - the deep green, rolling across the ground
+    (a lattice in metres, never the angle's, which would pinch to spokes at the middle), thickest at the feet and gone
+    past the runes.
+  - THE LOW SMOKE, the wall, the pass's strip at the runes: smoke rolling up round the boots, the runes' green on its foot
+    and the smoke's grey above, gone by the knee (SAGE_WALL_H, 0.5 m) - thick where the eye looks along the strip, thin
+    where it looks across it (the radiance's shell), so the boots stay seen; and the runes' light rising off the ring,
+    gone by the shin. Kindled up.
+  - THE SMOKE AND THE NIRNROOTS, the third draw - SAGE_CARDS (21) cards:
+    - SAGE_PUFFS (16) puffs of smoke billowing up about the body, each rising for its life (4, 5 or 6 s by its number)
+      off a place round the feet, fast at first and slowing as it spreads, curling round the body, drifting out
+      (SAGE_PUFF_DRIFT) and growing from 0.3 m to 1.05 m as it climbs past the crown (SAGE_SMOKE_H, 2.1 m); then off
+      another place. Each a round billow, lumpy at its edge and gone at its card's round (never cut there), lit from above
+      - the haze on its crown over the smoke's grey - and, young, the runes' green on its belly; at its thickest
+      SAGE_PUFF_A (0.62) of a cover, so the body stays seen through the cloud.
+    - SAGE_ROOTS (5) nirnroots circling the midsection - the badge's own sprig (`GLYPH_PATH.nirnrootsage` and its two
+      details, cut by `glyphEdges` and filled in the shader), leaf green at its foot into its glow at the bulb, a soft
+      green glow about it - evenly round an orbit SAGE_ROOT_R (0.55 m) out at the waist (SAGE_ROOT_Y, 1 m), twelve times
+      round over the clock, bobbing, swaying a little about their stems and tilting as they bob; upright cards square to
+      the eye about the vertical. They come up one after another as it kindles.
+    - ONE LAW ON EVERY GPU (CRYSTAL-FIST AUDIT A2): where every card is, its size and what it is are node's
+      (`sagePuff`, `sageRoot`, `sageCardsInto`), handed over each frame (`uSage`, `uSageLook`) FARTHEST FIRST from the
+      eye - nothing in the pass writes depth, so a near nirnroot is laid over a far puff and a near puff over a far
+      nirnroot.
+    - THE WEARER'S OWN EYE: a puff nearer the eye than SAGE_NEAR (0.6 m) is not drawn and one past 1.6 m is whole, so the
+      wearer's own first person is never smoked out - the smoke at their feet (1.5 m and more below the eye) stays.
+  - Every rate whole over the clock (`sageRatesWhole`), every puff's life too and its flights wrapped with the clock, so
+    the smoke meets itself at the wrap.
+- **The hosts** - THE FOUR HOSTS: no host changed. `scenes/world.js` draws every look through the pass by its key;
+  `scenes/worldModes.js` and `scenes/dungeonContext.js` draw through world.js's pass; `scenes/exterior.js` draws no
+  aura - FLAGGED, unchanged.
+- **Collections** (`src/ui/collections/wardrobeCatalogue.js`, `10-UI/Collections.md` section 3): the title, the glyph and
+  the aura, each `bestowed` and each naming the other two it comes with; Sage's Smoke's look in words
+  (`coll.look.sagesmoke`), drafted in all 25 languages beside the other auras' looks (`tools/l10nInSession.mjs`), the
+  account card's "Nirnroot Sage" in the 21 that carry the WikiMaid's.
+- **Seen** in headless Chromium's WebGL2 (`tools/auraProbe.mjs`, 101/101 - Sage's Smoke's eight): it compiles, links and
+  draws with no GL error; from above the runes glow green round the feet; every nirnroot stands where node's law has it,
+  round the waist, glowing green; the smoke greys what is behind it at every thick puff; from the wearer's own eye no
+  smoke lies over the view ahead; no jump at the wrap; nothing before it kindles. THE PROBE ITSELF: since AURA-SPLIT a
+  comment written mid-line inside its page's script ended the `window.probe` object early, so the page never ran and
+  every check timed out; the comment stands on its own line now, and the probe takes a browser of the machine's own
+  (`CHROMIUM`, as `brokerProbe.mjs` does).
+- Pins: `test/net/nirnrootsage.test.js` (17) - the vocabulary and the face (each colour apart from every title's by more
+  than 40); the glyph's shape (one outline that never crosses itself, the bulb, the leaves, the veins inside the leaves,
+  the heart inside the bulb); the grant (case-folded, off the list, a guest, the other lists' holders and near names); the
+  service end to end; the token and the relay (world268); the name over a head, the glyph's SVG with its two details, the
+  account card's rules; the classic face's letters along the gradient; the look; the smoke's law (the rise, the growth,
+  the drift, the curl, the next flight elsewhere, the wrap); the nirnroots' law (the orbit, the spacing, the bob, the sway,
+  coming up one after another); every card at once (farthest first, the near fade, the kindle); a nirnroot RUN, a puff
+  RUN, the ground RUN, the wall RUN, the cards' vertex half RUN; the draw (premultiplied, node's cards handed on the
+  wearer's own clock). `tools/mutants/nirnrootsage.json` (59, all dead). PIN MOVED: the relay's pins to world268 (43 files
+  and the relay law's row, `test/net/relayversion.test.js`) and the account's to acct194 (20 files, the history
+  `auditscale2_acct.test.js` holds among them), crediting NIRNROOT-SAGE; the vocabulary's positional and whole-list pins in
+  `aegis`, `chap4c_titles`, `chap6e_titles`, `crystalfist`, `egeco_honours`, `hoursfirst`, `primarch`, `seraphwings`,
+  `serpent5_honours`, `shadowcloak`, `titlen`, `wikimaid`, `acc3titles`, `lampkeeper2`, `ql12_claim`, `sd9c_turning`,
+  `witch1_law` and `star8_frostfall`; Collections' recorded catalogue (`collections2`); the hard-coded English ratchet
+  (`l10n4_hardcoded`, playerBadge.js 36 to 37 - the title's words, as every title's); and AUDIT ATTACH A1's tripwires
+  (`auditattach`): every glyph at once now takes the widest place socket to 1151 bytes and a dungeon instance's to 1206 -
+  1152 and 1207 now, by the new word's bytes, 897 still under the runtime's 2048 (the WikiMaid's note stands: glyphs as
+  their places in GLYPHS would buy some 170 bytes back, a relay-wide change for its own slice). Re-aimed by content, each
+  dead: thirty-three records that quote the lists this extends (in `aegis.json`, `crystalfist.json`, `herald.json`,
+  `hoursfirst.json`, `penitent.json`, `primarch.json`, `sd9c.json`, `seraphwings.json`, `shadowcloak.json`,
+  `shadowfang.json` and `wikimaid.json`), the relay's version record (`soc1.json`) and the account's (`hackedgold`,
+  `bal9`, `crafthold` twice, `nameas`, `br5`, `fb1004d_knight_house`, `tech1`, `wb14g` and `gatekeys`). WIKIMAID-depth-nearest-first stays aimed at the warren's one site (the smoke's own sort is written apart, MUT-AIM).
+- Left as they are, said: not seen in a running game client - the probe and the interpreter are its readers; the
+  nirnroots and the puffs are cards square to the eye, so straight down from overhead a nirnroot is edge on; a close
+  third-person camera thins the nearest puffs as the first person's rule reaches it; like every aura it stands on a
+  wearer turned beast and on a rider.

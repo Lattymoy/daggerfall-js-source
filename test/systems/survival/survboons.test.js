@@ -26,6 +26,10 @@ import { onlineForcedPref } from '../../../src/systems/online/onlineLane.js';
 import { setPref, _resetForTests } from '../../../src/systems/uiPrefs.js';
 import { CLIMATES } from '../../../src/formats/mapsFile.js';
 import { RACES } from '../../../src/systems/races.js';
+import { setWorldMinutes, ownMinutes } from '../../../src/systems/worldTick.js';
+import { setTutorialHandler, _resetTutorialTriggerForTests } from '../../../src/systems/tutorials.js';
+import { createEquipTable } from '../../../src/characters/equipTable.js';
+import { fakeDom } from '../../invdrag.mjs';
 
 // ═══ SURV-BOONS (2026-10-12): THE FOURTH TIER ═════════════════════════
 //
@@ -413,7 +417,7 @@ test('SURV-BOONS: the strip and the page - the boons are green tiles on their ow
   assert.ok(survivalStatusLines(camper, 1).includes(STATUS_TEXT.warmedByFire), 'by the fire in a blizzard: "The fire keeps the cold at bay."');
 });
 
-test('SURV-BOONS: the sheet explains the points - the Stats side\'s Boons rows in Boons alone (AUDIT SURV-BOONS C13); the first-need tutorial waits for a need, not a boon, and its page and the credits name the tier (C2, C9)', () => {
+test('SURV-BOONS: the sheet explains the points - the Stats side\'s Boons rows in Boons alone (AUDIT SURV-BOONS C13); the first-need page and the credits name the tier (C2, C9)', () => {
   const e = restedBody();
   run(e, 481, 481, INDOORS, BOONS);
   setPref(SURVIVAL_PREF, 'boons');
@@ -423,11 +427,37 @@ test('SURV-BOONS: the sheet explains the points - the Stats side\'s Boons rows i
   setPref(SURVIVAL_PREF, 'casual');
   assert.deepEqual(boonStatRows(e), [], 'another tier: none');
   assert.match(read('src/ui/statsCard.js'), /const boonRows = boonStatRows\(entity\);\n {2}if \(boonRows\.length\) \{\n {4}const bn = section\('Boons', 14\);/);
-  assert.match(read('src/ui/enhanced/enhancedHud.js'), /if \(needs\.some\(\(c\) => c\.level !== 'boon'\)\) noteFirstUse\('survival'\);/, 'a boon is no felt need');
+  // PIN MOVED (CHARGEN-TUT): the first-need page waits for a need, not a boon - driven through the HUD in the next test
   const page = TUTORIALS.find((t) => t.id === 'survival');
   assert.deepEqual(page.body, [
     'You need food, water, warmth and sleep. Signs at the left edge of the screen show what you lack, and on Boons what you have earned.',   // PIN MOVED (AUDIT C&C S13): where the tiles stand; VOICE1: plain words
     'Survival can be Off, Boons (the default), Casual or Hard, set under Settings > Features. On Boons, needs that are met give bonuses. On Hard, neglected needs hurt you and can make you ill.',   // PIN MOVED (BOONS-DEFAULT; VOICE1)
   ]);
   assert.match(read('src/ui/credits.js'), /There are four tiers in Settings: Off, Boons \(the default: neglect costs nothing, and staying fed, watered and rested gives bonuses\), Casual/);   // PIN MOVED (AUDIT C&C S8): the drink's swing is taken in Boons too
+});
+
+test('SURV-BOONS C2 / CHARGEN-TUT: the HUD asks for the first-need page on a made character\'s felt need - never on a boon, and never on the stand-in the HUD draws under the character-creation wizard', async () => {
+  const dom = fakeDom({ w: 1440, h: 900 });
+  const prev = { doc: globalThis.document, w: globalThis.innerWidth, h: globalThis.innerHeight, minutes: ownMinutes() };
+  globalThis.document = dom.doc; globalThis.innerWidth = dom.w; globalThis.innerHeight = dom.h;
+  const { drawEnhancedHud, destroyEnhancedHud } = await import('../../../src/ui/enhanced/enhancedHud.js');
+  const asked = [];
+  setTutorialHandler((id) => { asked.push(id); return true; });
+  try {
+    setPref(SURVIVAL_PREF, 'boons');
+    setWorldMinutes(480);   // the clock the HUD reads (ownMinutes), at the minute restedBody wakes
+    const hudBody = (e) => Object.assign(e, { magicka: 0, maxMagicka: 10, equip: createEquipTable(), lightSource: null });
+    const starving = (extra = {}) => hudBody(body({ survival: { ...newSurvival(480), lastAte: 480 - NEED.STARVING_AT }, ...extra }));
+    drawEnhancedHud(starving(), 0, 0, {});
+    assert.deepEqual(asked, [], 'the stand-in under the wizard (no chargenDone) is starving, and nobody is told');
+    drawEnhancedHud(hudBody(restedBody({ chargenDone: true })), 0, 0, {});
+    assert.deepEqual(asked, [], 'a made character fed, watered and rested on Boons: a boon is no felt need');
+    drawEnhancedHud(starving({ chargenDone: true }), 0, 0, {});
+    assert.deepEqual(asked, ['survival'], 'a made character\'s felt need asks for the page');
+  } finally {
+    destroyEnhancedHud();
+    _resetTutorialTriggerForTests();
+    setWorldMinutes(prev.minutes);
+    globalThis.document = prev.doc; globalThis.innerWidth = prev.w; globalThis.innerHeight = prev.h;
+  }
 });

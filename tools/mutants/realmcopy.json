@@ -1,0 +1,47 @@
+[
+  {
+    "name": "REALM-COPY-the-copy-never-marked",
+    "file": "src/systems/offlineCopy.js",
+    "old": "  markRealmCopy(copy);\n",
+    "new": "",
+    "tests": [
+      "test/systems/realm_copy_mark.test.js"
+    ]
+  },
+  {
+    "name": "REALM-COPY-the-mark-dropped-by-the-save",
+    "file": "src/systems/save/save.js",
+    "old": "  'realmCopy',\n",
+    "new": "",
+    "tests": [
+      "test/systems/realm_copy_mark.test.js"
+    ]
+  },
+  {
+    "name": "REALM-COPY-an-older-copy-unseen",
+    "file": "src/systems/realmCopyMark.js",
+    "old": "if (save.realmCopy || save.saveName === REALM_COPY_SAVE_NAME) ids.add(save.characterId);",
+    "new": "if (save.realmCopy) ids.add(save.characterId);",
+    "tests": [
+      "test/systems/realm_copy_mark.test.js"
+    ]
+  },
+  {
+    "name": "REALM-COPY-the-copys-button-live",
+    "file": "src/ui/enhanced/bringOnlineButton.js",
+    "old": "  if (realmCopy) return { label: t('menu.online.realmCopyOffline', 'Copied from online: offline only'), offlineOnly: true };",
+    "new": "  if (realmCopy) return { label: t('menu.online.realmCopyOffline', 'Copied from online: offline only'), offlineOnly: false };",
+    "tests": [
+      "test/systems/realm_copy_mark.test.js"
+    ]
+  },
+  {
+    "name": "REALM-COPY-the-pane-ignores-the-button",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "        disabled: !who || button.offlineOnly,",
+    "new": "        disabled: !who,",
+    "tests": [
+      "test/systems/auditset_c.test.js"
+    ]
+  }
+]

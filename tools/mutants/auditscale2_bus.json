@@ -22,8 +22,8 @@
   {
     "name": "AUDIT-SCALE2-R2-1-secret-unkept",
     "file": "server/src/index.js",
-    "old": "if (secret && (kept !== secret || !this._secrets.has(a.id))) {",
-    "new": "if (false) {",
+    "old": "if (secret && (kept !== secret || !this._secrets.has(a.id))) this._secrets.set(a.id, secret);   // the id's secret rides the socket",
+    "new": "if (false) this._secrets.set(a.id, secret);   // the id's secret rides the socket",
     "tests": [
       "test/net/auditscale2_bus.test.js"
     ],

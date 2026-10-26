@@ -62,7 +62,7 @@
   {
     "name": "FAST-road-rect-dropped",
     "file": "src/world/road/roadPainter.js",
-    "old": "        && !(locationRect && x > locationRect.xMin && x < locationRect.xMax && y > locationRect.yMin && y < locationRect.yMax)\n",
+    "old": "\n        && !(locationRect && x > locationRect.xMin && x < locationRect.xMax && y > locationRect.yMin && y < locationRect.yMax)",
     "new": "",
     "tests": [
       "test/world/terrain/grasspath.test.js",

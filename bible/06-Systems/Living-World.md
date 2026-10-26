@@ -396,12 +396,15 @@ link with the ship AI at ports" - LW3's trips kept to the land; a port's travell
   with their merchant. The cycle's own dice ('sea'), apart from the road's, so a cycle that does not sail is the trip it
   always was.
 - **Where.** A port a lane of the Bay runs to from theirs (`world.lanesFrom`: the far port, the lane's length in
-  metres): the bigger and the nearer the likelier (a pilgrim's a temple town's). Lanes are the Bay's own - the ones its
+  metres): the bigger and the nearer the likelier (a pilgrim's a temple town's). Lanes are the Bay's own (WW7-7, `03-World/World-Wide.md`: a port town past the Bay's the lanes past it) - the ones its
   packets sail (LW5) - so a passage can reach a port beyond any road's `TRIP_REACH_PX`.
 - **When.** Out from the dock on a morning tide (`SEA_TIDE_H`, 6 to 9 o'clock); the crossing at `SEA_PACE_X` (3) a
   walker's pace, by night as by day; the stay (the job's `STAY_DAYS`); home on a later morning's tide, the same hour
   (a ship turns round overnight at the least). The whole passage inside the cycle: a lane too long for it gives way to
-  the longest shorter lane that fits; none that fits (or no lane at all), the road's trip it always was.
+  the longest shorter lane that fits; none that fits (or no lane at all), the road's trip it always was. WW7-11
+  (`03-World/World-Wide.md`; the owner: *"Make them longer"*): a FAR lane's passage (past the Bay or across its edge) takes
+  the whole cycles it needs, set out at the first cycle of its traveller's block of long passages (`voyageBlock`), and the
+  cycles it spends at sea make no trip of their own; the Bay's lanes keep a cycle a passage, to the byte.
 - **At sea, never on the road.** A passage is `sea` while it sails, out and home, and `stay` between - never `out` or
   `back`, so no road, Overworld mark or roadside fight shows it (it has no way under it). Its party is a caravan's
   like any trip's: a merchant's sellswords and the joiners of the day (LW3) take the same ship.
@@ -2072,3 +2075,19 @@ Pinned by `test/systems/livingWorld/tonetaste.test.js` (4: the law over every gr
 courtship, the talk's door); pins moved by intent, each a PIN MOVED note (`legacy5_marriage`, `lw7_deeds`,
 `lwfix2_watch`, `lw8_indoors`); `tools/mutants/tonetaste.json` (11, all dead) and six LW7/LW8 records re-aimed at the
 taste, dead.
+
+## IC-GRAND - a town of quarters (2026-10-26)
+
+The owner, walking the Imperial City: "Seems like NPCs arent navigating the entirety of the city". A capital's slice is
+cut from one city at its pixel's lines, so its walkers' grid holds pieces of several of the city's street nets (a
+district wall whose gate stands in the next slice parts it), and the town walked the one its most doors open onto - the
+others' people stayed in. A capital's slice is now A TOWN OF QUARTERS (`src/systems/livingWorld/places.js:"export function quartersOf(nav, doors, streets, main) {"`):
+every component QUARTER_MIN of its buildings open onto is the town's (its net the union) and each a quarter - the town's
+places over its own street alone (`quarters`, `quarterAt`). Its people are each quarter's own (`census.js` quarterCensus:
+the town's own quarter's as townCensus mints them - households, watch, travellers - each other quarter's households of
+its buildings alone, on the 'q' roll and slots of their own, QUARTER_SLOTS), and each one's day is planned over its
+home's quarter (`livingTown.js` `_placesFor` - a lodger's over its tavern's; a patron's errands and a browser's doors its
+quarter's), so every walk of a day runs on one street. A Bay town asks no quarters: one town, one net, as the field's law
+above keeps it (no pin of a Bay town moved). The Imperial City's own blocks' homes are world/imperialHomes.js's
+(bible/03-World/Arena-Provinces.md IC-GRAND). Pinned in `test/world/icgrand_living.test.js`; mutants in
+`tools/mutants/icgrand_people.json`.

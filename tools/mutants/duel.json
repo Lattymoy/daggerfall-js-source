@@ -218,8 +218,8 @@
   {
     "name": "DUEL1-the-round-s-entry-not-handed-on",
     "file": "src/systems/effects.js",
-    "old": "sinks.hurt(n, { fromPlayer: !a.caster || !!a.caster.isPlayer, bundleDuel: !!a.bundleDuel, round: true });",
-    "new": "sinks.hurt(n, { fromPlayer: !a.caster || !!a.caster.isPlayer, round: true });",
+    "old": "sinks.hurt(n, { fromPlayer: !a.caster || !!a.caster.isPlayer, bundleDuel: !!a.bundleDuel, round: true, element: a.element ?? null });",
+    "new": "sinks.hurt(n, { fromPlayer: !a.caster || !!a.caster.isPlayer, round: true, element: a.element ?? null });",
     "tests": [
       "test/combat/duel_combat.test.js"
     ]

@@ -22,6 +22,7 @@
 // in the player's language) read it. DOMAIN4 adds the provinces' crowns.
 // ═══════════════════════════════════════════════════════════════════
 import { CROWN_SEAT_REGIONS } from './townSeatLaw.js';
+import { kingdomSeatName } from './kingdomLaw.js';   // AUDIT TESA III E2-2: a castle's city, its crown's seat
 import { GUILD_RANK_MASTER } from './guild/guildLaw.js';
 import { HOME_SALE_SHARE } from './homeLaw.js';   // a hall's share, one home
 import { CASTLE_MAP_IDS } from './instanceRoom.js';   // AUDIT DOMAINS R2: the castles the relay admits a guild to
@@ -44,6 +45,11 @@ export const castleRegionOk = (r) => Number.isSafeInteger(r) && Object.prototype
 /** AUDIT DOMAINS R2: is `key` (a crown seat's, as the registry confirmed it) a castle the relay admits a guild to - a crown
  *  city's own dungeon (net/instanceRoom.js CASTLE_MAP_IDS)? A castle sold at any other would be a room no member enters. */
 export const castleKeyOk = (key) => CASTLE_MAP_IDS.includes(key);
+/** AUDIT TESA III E2-2 (bible/01-Overview/audits/Audit-Tesa-III-E2.md): THE CITY A REGION'S CASTLE STANDS IN - its crown's
+ *  seat (net/kingdomLaw.js kingdomSeatName): Daggerfall, Wayrest and Sentinel the Bay's (their regions' own names), and past
+ *  the Bay the province's capital - Solitude, Mournhold, Alinor, Falinesti, Torval, Helstrom - where the Guild window named
+ *  the province itself: "Castle Skyrim", its door "in Sumurset Isle". Null for a region that keeps none. */
+export const castleCityOf = (r) => (castleRegionOk(r) ? kingdomSeatName(CROWN_SEAT_REGIONS[r]) : null);
 /** The regions that keep a castle, in order. */
 export const CASTLE_REGIONS = Object.freeze(Object.keys(CROWN_SEAT_REGIONS).map(Number).sort((a, b) => a - b));
 /** What comes home of `paid` when the castle is given up - rounded down. */

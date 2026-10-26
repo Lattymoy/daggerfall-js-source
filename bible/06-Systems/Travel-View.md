@@ -535,7 +535,10 @@ the traveller is (A1); the governor holds under what the MOD asked - a ring walk
 never the spinner's x30 (A2, `travelAsked`); a road journey resets the ring walk's
 path-crossing watch that stopped it at the first pixel middle (A3); every other journey
 clears the view's route, and a stopped SPOT journey is over (A4); a click in a town's margin
-that falls on the neighbour pixel still takes the town (A5, the 3x3 asked).
+that falls on the neighbour pixel still takes the town (A5, the 3x3 asked). (OW-TOWN-ROUND, 2026-10-23: the town's
+journey is asked at its MIDDLE alone - a click elsewhere on it is a spot walked round the town, unless it is the
+middle, a fine-move click or the traveller stands in the town; with Travel Options' places alone, a click anywhere on
+it still takes the town - AUDIT UPDATE T1/T2.)
 
 **TV3 - the travellers (C1-C6).** A welcome resets what the relay holds of me - a new socket's
 attachment holds nothing (C1); a CLEAR is always said, even over the room's budget, or a
@@ -2072,7 +2075,8 @@ past the Alik'r).** The planner's search box was clamped to the map, and TAMRIEL
 past one edge turned the box inside out and its typed arrays threw; one end past it began the route on the box's far
 side. The box's bounds are the map and the two ends now (`systems/travel/travelRoute.js` `planRoute`); `routeGround` asks the
 host's `beyond` for the ground past its table (kept a pixel at a time, `BEYOND_CACHE_MAX`) where it called it all the
-sea; `apart` leaves an end past the table to the search; a step past the table reads no road's byte. The host hands it
+sea; `apart` leaves an end past the table to the search; a step past the table reads no road's byte of the Bay's table (it
+reads the roads past the Bay's own layer since VOYAGER2.1, below). The host hands it
 `tvWater`'s own answer, which is the ground's where TAMRIEL2 composed the reader and the sea off the map where it did
 not (`scenes/world.js`). The record, and the wire's half: `01-Overview/bugs/Field-Bugs-2026-10-09.md` TV-BEYOND;
 `test/systems/travel/fb1009_beyond.test.js`, `tools/mutants/fb1009_beyond.json`.
@@ -2654,9 +2658,9 @@ band's x20 no reason, the ground's lower cap the reason - `ow_lead`, `ow_loadowe
 ### IC-PACE - the Imperial City's streets at sixty (2026-10-26, the owner)
 
 The owner, on the tamriel branch: *"For the Imperial City specifically, the travel speed should be 60x instead of 5"*.
-TS5 made the Imperial City forty-nine pixels (5.7 km across, `03-World/Town-Shapes.md` TS5), all of it a town's
-streets, and OW-TOWN-WALK held every journey and the keys' travel there to x5 - a quarter of an hour of real time to
-cross it. Its streets are still walked as a town's (the way, the gates, the steering); only the clock's ceiling is the
+TS5 made the Imperial City forty-nine pixels (5.7 km across, `03-World/Town-Shapes.md` TS5), and IC-GRAND 625 (20.48
+km, `03-World/Arena-Provinces.md`), all of it a town's streets, and OW-TOWN-WALK held every journey and the keys' travel
+there to x5 - at forty-nine pixels already a quarter of an hour of real time to cross it. Its streets are still walked as a town's (the way, the gates, the steering); only the clock's ceiling is the
 city's own:
 - **The ceiling** (`systems/travel/townWalk.js` IMPERIAL_PACE_MAX, 60 - the dials' own top on a road).
 - **The town's pace** (`scenes/townWalkHost.js` paceAt): the Imperial City's on every one of its slices
@@ -2666,7 +2670,8 @@ city's own:
   own town's pace (a way that says none, TOWN_PACE_MAX); the forecast asks it the same.
 - **The keys' travel** (`scenes/world.js` tvTownPace, where `tvInTown` was): the governor holds the clock to the pace the
   town answers, none out of a town.
-Pinned: `test/systems/travel/icpace.test.js` (5); `tools/mutants/icpace.json` (9, all dead). PINS MOVED: `ow_townwalk`
+Pinned: `test/systems/travel/icpace.test.js` (5; PIN MOVED at the merge of IC-GRAND: its 625 slices, the pixel past its
+edge thirteen from its centre); `tools/mutants/icpace.json` (9, all dead). PINS MOVED: `ow_townwalk`
 (the host's wiring), `audit_owrevisited_walk` (`townPace` answers the pace), and the governor's mounts (`ow6_slowdown`,
 `ow_lead`, `ow_loadowed`, `ow_queueowed`, `ow_toggle`, `tv_wasd`, `fb0929d_toroads`: `tvTownPace` for `tvInTown` and
 TOWN_PACE_MAX); `ow_townwalk.json` and `audit_owrevisited_walk.json` re-aimed by content, all dead.
@@ -2819,3 +2824,673 @@ a pond, is its harbor's sea).
 **The four hosts.** No host changed: the world host's journey asks `planRoute` as before (`travelViewRouteTo`, its
 `tvSeaAsk`), and the lanes are the planner's. `scenes/exterior.js` sails nowhere; `scenes/worldModes.js` and
 `scenes/dungeonContext.js` stand no sea. Ledger A (START2).
+
+## VOYAGER2.1 - the roads past the Bay walked as roads (2026-10-26, KPbICA's spec, forwarded by the owner)
+
+KPbICA: *"Roads at current state does not behave like roads for Pathfinding system in Overworld view"*. Measured first:
+past the Bay's table every step of `planRoute`'s search was `open` (3.5 a step, ROUTE_COST) - TV-BEYOND's step read no
+road's byte there, rightly, since the Bay's arrays end at the table - so a click to a town past the Bay walked the field
+straight across beside the road TESA14 had built, and a road's crossing onto the Bay (TESA5's join) was open ground
+from the Bay's edge.
+
+- **The law** (`systems/travel/travelRoute.js`): `routeGround` carries the reader of the installed layer of the roads past
+  the Bay (`travelRoute.js:"get pathsBeyond() { return pathsBeyond === arenaRoadByte && !arenaRoadsLayer() ? null : pathsBeyond; },"`
+  - `world/arenaRoads.js` arenaRoadByte, none while no layer is installed, so a plan with no roads past the Bay reads
+  nothing), and `planRoute` hands it to the search only when it walks roads (`travelRoute.js:"const beyond = roads || tracks ? pathsBeyond : null;"`
+  - FREE mode, which hands no road, reads none). A step past the table, or within JOIN_DEPTH of its edge where a
+  crossing's join carries a Bay road out, asks the layer (`stepKind`'s beyondKind: the road's bit out of the one pixel and
+  its back bit into the other, the Bay's own byte ORed with its join on the table): a road's step 1, a track's 1.6, as on
+  the Bay. The legs fold a road past the Bay as one run (`routeLegs`, unchanged).
+- **The host** grows no line: `scenes/world.js`'s `tvRouteGround()` is already spread into every Overworld plan, and the
+  living world's ground (`_livingGround`) takes the same default (its trips stay on the Bay, AUDIT TESA III E1-3).
+- **The four hosts**: `scenes/world.js` as above; `scenes/exterior.js`, `scenes/worldModes.js` and
+  `scenes/dungeonContext.js` plan no Overworld route.
+- **Measured** (the pins' grids): a town past the Bay reached by the road round, not the field across; a plan along a
+  road past the Bay priced a road's (where it walked the open ground beside it at three and a half times it); the
+  crossing, the Bay's road to its edge and its join past it, walked as one road.
+- **OPEN**: the walk aims pixel middle to pixel middle (OW-ROAD-TRUE's lane), and past the Bay a road is drawn as a curve
+  (`03-World/Roads.md` VOYAGER2), so on a bend the walker cuts up to 0.125 of a pixel inside it; the curve's apex is
+  `roadCurves.js` curveApex, not wired into the lane.
+- Pins `test/systems/travel/voyager21_beyond.test.js` (5); mutants `tools/mutants/voyager.json` (VOYAGER2.1's). PIN
+  MOVED: none; TV-BEYOND's road-byte record re-aimed by content (`tools/mutants/fb1009_beyond.json`).
+
+## ROAD-BEYOND - a journey past the Bay planned by its roads, in a bounded spend (2026-10-26, the owner)
+
+The owner: *"road travel in the overworld needs to work properly outside of tamriel for overworld travel. I dont think it
+works currently"* - everywhere in Tamriel past the Iliac Bay's table, and the Bay still as it was.
+
+**Measured first**, through the host's own wiring: `routeGround` built as `scenes/world.js` tvRouteGround builds it (the
+climate, the composed ground's heights, WATER_BYTE, its `beyond` from tvWater), Hazelnut's arrays in ROADS mode, the
+places past the Bay where `world/arenaPlaces.js` stands them, and the roads past the Bay laid region by region as
+`scenes/tamrielRoadsHost.js` lays them (all 48 regions, the regions' worker state driven in-process). Two faults, and
+their cost:
+
+- **THE BOX STOPPED AT AN END PAST THE TABLE.** `planRoute`'s bounds (TV-BEYOND) are the map and the two ends, so past the
+  table no rung reached beyond the farther end's own row and column. The Imperial City's ground is closed by Lake Rumare
+  to its north, east and west, and its way out runs south of its own row: the Imperial City to Bruma, to Chorrol, to
+  Cheydinhal and to Mournhold were **no way** (a breadth-first walk of the same ground joins them).
+- **THE LADDER FLOODED THE FIELD.** Its A* prices the heuristic at a road's step (1) and the field at 3.5, so a long plan
+  past the Bay expanded every field near its line - capped at 200,000 cells a rung (the whole map's rung never is on the
+  Bay; past it no rung is the whole map) and four rungs over. Plans of 300 to 1,400 pixels took **1 to 24 seconds**, and
+  Kvatch to Leyawiin, Skingrad to Riften were **no way** after 20 and 24 seconds - their routes past the spend.
+
+**What holds now** (`systems/travel/travelRoute.js`; a plan with both ends on the table is the Bay's, unchanged):
+
+- **The roads first** (`searchByRoad`). A plan with an end past the table, handed the roads (ROADS mode, the layer
+  installed - VOYAGER2.1's `beyond`) and walking the land (no boat, or one to hand with a goal ashore), searches the roads
+  and tracks alone - the Bay's arrays on the table, the layer past it, stepKind's law and TV2's prices (a road 1, a track
+  1.6) - with the open ground (3.5) walked only about its two ends: BY_ROAD_REACH (24 pixels), or out past the nearest
+  road or track to an end in the wilds (within BY_ROAD_SEEK, 96). Its cells are kept by pixel (no table's edge), a step
+  away from the ends leaves by a road's or a track's edge (no other neighbour is asked), it leans on its goal by
+  BY_ROAD_GREED (1.25: a way at most a quarter dearer than the roads' cheapest), and it gives up after
+  BY_ROAD_MAX_EXPANSIONS cells (100,000). **TV2's law kept**: a way by the roads dearer than the straight walk across
+  the field (`ROUTE_COST.open` a step) is asked of the ladder too, and the cheaper kept.
+- **The ladder past the table** (no way by the roads, FREE, a crossing): its box reaches `margin` past an end beyond the
+  table (`reachOf` - the Imperial City walks out south of its lake), no rung wider than BEYOND_MARGIN (240 pixels: the
+  whole map's rung there allotted a box of millions of cells for a spend that walks a hundred thousand), its whole spend
+  BEYOND_MAX_EXPANSIONS cells (100,000) over every rung, and a plan with no road, track or boat in it leans on the
+  field's own price (`hCost` 3.5: the straight walk, a few cells a pixel). A plan by the roads that neither found walks
+  across country (the FREE plan's own) - never "no way" for a field the spend did not reach. So a plan past the Bay
+  expands at most 100,000 + 2 x 100,000 cells, an op count the pins hold (`tally`), never a clock.
+- `routeGround`'s keep of the ground past the table is keyed by number (`beyondKey`) and holds 2^18 answers.
+
+**The journeys** (the merged head's ground and places, the layer as the 48 regions lay it; one machine, four cores
+shared with other builds - load average about 25, so every time here is several times an idle machine's; under it
+AUDIT STARTS V4/V7's timing pin (a voyage planned in under a second and a half) fails before this change and after it -
+its slowest voyage 3.2 s on the head's planner, 2.4 s on this one; START2's three seconds passes run alone):
+
+| from | to | before: way, road share, time | after: way, road share, cells, time |
+| --- | --- | --- | --- |
+| Daggerfall | Wayrest (the Bay) | 767 px, 100%, 1.5 s | the same plan, 1.3 s |
+| Daggerfall | Elinhir (the Bay to Hammerfell past it) | 1,442 px, 99%, 3.3 s | 1,943 px, 100%, 55,600 cells, 1.1 s |
+| Sentinel | Kvatch (the Bay to Cyrodiil) | 1,707 px, 98%, 19.6 s | 1,871 px, 100%, 38,600 cells, 0.9 s |
+| Imperial City | Bruma | **no way**, 1.0 s | 511 px, 97%, 4,800 cells, 0.07 s |
+| Imperial City | Kvatch | 441 px, 97%, 1.6 s | 441 px, 97%, 1,900 cells, 0.13 s |
+| Kvatch | Leyawiin | **no way**, 20.3 s | 1,225 px, 100%, 25,700 cells, 0.64 s |
+| Bruma | Leyawiin | 1,058 px, 100%, 17.0 s | 1,067 px, 100%, 1,700 cells, 0.02 s |
+| Whiterun | Riften (Skyrim) | 665 px, 97%, 8.4 s | 757 px, 100%, 18,400 cells, 0.40 s |
+| Solitude | Whiterun | 474 px, 93%, 3.4 s | 580 px, 100%, 4,900 cells, 0.06 s |
+| Mournhold | Tear (Morrowind) | 446 px, 95%, 4.7 s | 498 px, 98%, 8,600 cells, 0.14 s |
+| Ald'ruhn | Vivec (Vvardenfell) | 229 px, 90%, 1.0 s | 232 px, 99%, 1,600 cells, 0.03 s |
+| Dragonstar | Elinhir (Hammerfell) | 457 px, 99%, 4.7 s | 633 px, 100%, 3,800 cells, 0.07 s |
+| Rimmen | Senchal (Elsweyr) | 630 px, 97%, 4.5 s | 711 px, 100%, 12,700 cells, 0.30 s |
+| Stormhold | Gideon (Black Marsh) | 461 px, 96%, 5.8 s | 503 px, 99%, 6,200 cells, 0.14 s |
+| Silvenar | Elden Root (Valenwood) | 491 px, 99%, 5.9 s | 527 px, 98%, 10,900 cells, 0.36 s |
+| Alinor | Cloudrest (Summerset) | 487 px, 94%, 8.7 s | 578 px, 98%, 9,500 cells, 0.43 s |
+| Skingrad | Riften (Cyrodiil to Skyrim) | **no way**, 24.4 s | 1,110 px, 100%, 24,500 cells, 0.68 s |
+| Imperial City | Mournhold (Cyrodiil to Morrowind) | **no way**, 0.16 s | 1,550 px, 98%, 45,900 cells, 1.6 s |
+| Elinhir | Kvatch (Hammerfell to Cyrodiil) | 630 px, 97%, 9.4 s | 725 px, 100%, 11,100 cells, 0.34 s |
+| the wild (2200, 800) | Imperial City | 205 px, 87%, 1.0 s | 207 px, 88%, 4,500 cells, 0.35 s |
+| the wild (1700, 400) | Chorrol | 233 px, 97%, 1.3 s | 293 px, 100%, 4,800 cells, 0.29 s |
+| Mournhold | Ebonheart (Vvardenfell, over the Inner Sea) | no way, 4.4 s | no way, 200,000 cells, 3.7 s |
+
+**The walk**: a plan's legs (`routeLegs`) walked by the real Travel Options (`createTravelOptions`, its autopilot, a body
+flown along each frame's drive - `audit_owrevisited_walk.test.js`'s rig): the Imperial City to Bruma (109 legs) and
+Dragonstar to Elinhir (87) arrived at their places, never more than a pixel off the planned route's pixels. Nothing in
+the walk asks the Bay's table.
+
+- **The four hosts**: none grows - `scenes/world.js`'s journeys ask `planRoute` with `...tvRouteGround()` as before;
+  `scenes/exterior.js`, `scenes/worldModes.js` and `scenes/dungeonContext.js` plan no Overworld route. Nothing crosses
+  the wire: a route is each player's own plan (the party walks its leader's - TV8 - as before).
+- **The departure, named**: DFU has no Overworld and no planner (Travel Options' follow walks Hazelnut's bytes); TV2 is
+  our own. Past the Bay a journey by the roads is the roads' way within a quarter of their cheapest, where TV2's ladder
+  is the cheapest of all - so a gap in the roads far from both ends is walked round by the roads, not stepped across the
+  field: Dragonstar to Elinhir is 633 pixels by the road (cost 720) where the old plan stepped five pixels across a gap
+  in the road there (457, cost 543), Daggerfall to Elinhir 2,284 where it was 1,781. Within the same law's limit (the
+  roads' way dearer than the straight walk across the field) the ladder is asked and the cheaper kept.
+- **OPEN**: a refusal past the Bay (an island with no boat to hand: Mournhold to Ebonheart) spends the whole 300,000
+  cells before it says so, a few seconds on a loaded machine - a land's pieces past the Bay (`apart`'s, the Bay's alone
+  today) would say it at once. And the roads' search does not bridge a gap in the roads past the Bay; the regions'
+  roads that leave one (Hammerfell's at (1154, 233)) are the roads' build's to join (`03-World/Roads.md`).
+- Pins `test/systems/travel/road_beyond.test.js` (10, the last with ARENA2: the Imperial City to Bruma and Bruma to
+  Leyawiin on the freeware's own ground); mutants `tools/mutants/road_beyond.json` (13, all dead). PIN MOVED: none;
+  no record displaced (`mutantdrift`).
+
+## FAST-REFUSAL - no way by land past the Bay said at once (2026-10-26, the owner: "Take care of exclusions and gaps")
+
+ROAD-BEYOND bounded a plan past the Bay by a count of cells; a refusal spent all of it (300,000 cells, 1 to 4 seconds on a
+loaded machine) before it said "no way". The Bay's own refusals are its land's pieces (`routeGround` `apart`, AUDIT OW4
+J3); past the table there were none.
+
+- **The pieces** (`systems/travel/landPieces.js` apartPastBay). The land past the Bay is the trace's smooth law
+  (`world/tamriel/tamrielLand.js` landLaw): a point is land only in a square of the picture's centres with a land
+  centre at a corner (a square of four sea centres is the sea whole). Two neighbouring pixels stand in one square or in
+  two that touch, so their squares' land centres lie within PIECE_REACH (2) centres of each other: the trace's land
+  centres joined to every one within two are pieces no way on land crosses between. The Bay's own ground, its seam and
+  its blend (`tamrielGround.js` SEAM_PX, BLEND_PX) are one piece with every centre within BAY_PAD (3) of the Bay's
+  rectangle - the Bay's land is Daggerfall's, not the trace's. Made once a land (the trace's object and the fit's
+  numbers), 64,000 centres and a dozen joins each - milliseconds; every ask after it is a lookup. An end whose square
+  holds no land centre (the sea, an isle the trace does not draw) is in no piece known here and is never refused.
+- **The plan** (`planRoute`): an end past the table, no boat in the search (THE MERGE: a crossing is none of the land's
+  pieces), the host's ground handing its pieces (`apart`) - two ends in pieces that share none is `null` before a cell
+  is expanded. Alinor to the Imperial City: refused in a millisecond, where it spent the whole count.
+- **CLOSED by EXACT-PIECES (below)**: a split finer than the trace's grid is not a piece here. Mournhold to Ebonheart is one: Ebonheart's ground
+  (some 200,000 pixels and more) is cut from the mainland's (4,000,000 flooded, Ebonheart never reached) by water
+  narrower than two of the picture's centres, so the trace joins them and the plan still spends its count (1.8 s, load
+  average 25) before it refuses. Exact pieces need the ground's own pixels labelled - the roads' regions read every
+  pixel of the land as they are laid (`world/tamrielRoads.js`), the place to label them. The coordinator's other way -
+  the plan's search run in slices across frames (a per-frame count of cells, the view saying it is planning until the
+  plan lands, the plan the same as the one call's) - needs the hosts' journeys to wait on a plan, and was not built in
+  the day: a refusal of this kind is 200,000 cells, 1.8 to 3.7 seconds measured at load averages of 20 to 40 on four
+  shared cores (no idle machine was to be had to measure it unloaded). CLOSED by PLAN-SLICES (below): the plan is made
+  a slice of cells a frame.
+- The four hosts: none changes. Pins `test/systems/travel/fast_refusal.test.js` (4, the last with ARENA2); mutants
+  `tools/mutants/fast_refusal.json` (6, all dead).
+
+## EXACT-PIECES - the land's pieces at the pixel, so every water-cut pair is refused at once (2026-10-26, the owner: "No band aids")
+
+FAST-REFUSAL's OPEN, closed: its pieces are the trace's, and a strait narrower than two of the picture's centres is one
+piece there. Mournhold to Ebonheart is one such pair - labelled whole on the freeware (the frame's 4,960 x 3,100 pixels by
+the planner's own water law, 31 pieces), Mournhold stands on the mainland's and Ebonheart on another - and the plan spent
+its whole count (200,000 cells) before it said "no way".
+
+- **The law** (`world/tamrielLandPieces.js` labelLand): the planner refuses a step onto water and a diagonal between two
+  waters, so a diagonal with a dry pixel beside it is two steps through that pixel - two dry pixels are one piece where
+  dry pixels side by side (FOUR-connected) join them. A region's core labelled so, its rows as runs (a few thousand runs a
+  region where there are 240,000 pixels), and its RING - whether each pixel just outside the core is dry.
+- **Where** (`world/tamrielRoads.js` regionLand, tamrielRegionSteps): the roads' regions read every pixel of their grids as
+  they are laid, so each labels its core off the bytes it has just read (the Bay's own pixels read there too, the Bay's
+  byte its water law as the planner's is) and its answer and its cache entry carry the labels beside its layer
+  (`world/tamrielRoadsWorker.js`, `world/tamrielRoadsClient.js`). The build now lays every region whose core meets the
+  Bay's table as well as every one with land past it (`regionWanted`: the Bay's west and its middle are labelled; their
+  roads are the Bay's network's, none laid there). TAMRIEL_ROADS_VERSION 7 - the same release's one rebuild.
+- **The joins** (`systems/travel/landPieces.js` resetExactPieces, addExactPieces, apartExact, handed by
+  `scenes/tamrielRoadsHost.js` as each region lands): a region's pieces joined to its landed neighbours' where a dry pixel
+  of one stands beside a dry pixel of the other across their edge; a dry pixel of its edge beside a dry ring pixel in a
+  core the build lays nothing in (the sea as the build sees it), or past the lattice, joined to the one UNKNOWN piece,
+  which is never told apart from anything. The answer is the union's, whatever order the regions land in.
+- **The refusal** (`planRoute`): once every region of the build has landed with its labels, an end past the table, no
+  boat, the host's ground handing its pieces - two ends whose pieces share none (an end on the water stands on its dry
+  neighbours' pieces; an end in no landed region is never refused) is `null` before a cell is expanded. On the freeware:
+  Mournhold to Ebonheart refused with no cell expanded (where it spent 200,000); Mournhold to Vivec, the Imperial City to
+  Bruma and Daggerfall to Kvatch not; Alinor to the Imperial City and Daggerfall to Alinor apart (FAST-REFUSAL's too).
+  Until the build has landed whole, FAST-REFUSAL's trace pieces answer what they can.
+- The four hosts: none changes (the roads host is wired by the places host, `scenes/tamrielPlacesHost.js`, as before).
+  Nothing crosses the wire.
+- Pins `test/systems/travel/exact_pieces.test.js` (4, the last with ARENA2 - every region the build lays, labelled as it
+  labels them); mutants `tools/mutants/exact_pieces.json` (13, all dead). PIN MOVED (EXACT-PIECES): TAMRIEL_ROADS_VERSION
+  6 -> 7 (`test/tesa14_roads.test.js`, `test/world/road/voyager1_land.test.js`, `test/world/road/river_fords.test.js`), a
+  region's steps one more (the labelling's, `test/world/audittesa2r_roads.test.js` R8); VOYAGER1's version record and
+  TESA15's two records on the worker's message and the cache's hit re-aimed by content (each dead).
+
+## PLAN-SLICES - a journey's plan made a slice of cells a frame, never one long task (2026-10-26, the owner: "No band aids")
+
+FAST-REFUSAL's other OPEN, closed: the planner ran as one call, and a plan that found no way, or a long one past the Bay,
+spent its whole count inside one frame (a refusal past the Bay 200,000 cells; a voyage by the sea lanes up to 393,000;
+the Bay's own FREE walk with no road, the whole map's rung - AUDIT OW5 J3 never cuts it short).
+
+- **The planner a generator** (`systems/travel/travelRoute.js` planRouteSteps): planRoute's own body, and the box's
+  search, the roads' search and the sea lanes (their two floods and their A*) inside it, yield every PLAN_YIELD_CELLS
+  (1,024) cells; the floods and the lanes now count their cells in the plan's `tally` too. `planRoute`, `searchByRoad` and
+  `planSeaLanes` are the same generators run to their end (`drainPlan`) - every caller that asks them is unchanged.
+- **The slicer** (`systems/travel/planSlices.js`): the world host's two journeys (`scenes/world.js` travelViewRouteTo,
+  travelViewWalkTo - each `return planJourney(() => { ... })`) run through it, and the host's `planRoute` is its own
+  (`planRouteSliced`, imported under the planner's name). A
+  plan asked inside a journey runs a slice of PLAN_FRAME_CELLS (20,000) cells at once: the Bay's short plans, and most
+  past it, end inside that slice and the journey goes on in the same call as it always did. A plan its slice does not
+  finish throws PLAN_PENDING out of the journey before any of it is done (the host's journeys ask their plans first),
+  the journey answers "taken up", the Travel View's readout says `Planning the way...` (`scenes/travelView.js`, while
+  `planning()`, through the text core: `travelView.planning`), and the plan goes on a slice a frame; when it lands the journey's function runs again from its start,
+  each plan it had already asked answered at once (keyed by its goal and its ask - never its start, which a traveller
+  still walking moves), and goes on. A journey begun while one is planning takes its place.
+- **The same plan**: the slice's answer is the generator run to its end - planRoute's own. Measured on the freeware
+  against the planner before the generators: Daggerfall to Wayrest, Daggerfall to Sentinel (FREE), the Imperial City to
+  Bruma, Kvatch to Leyawiin, Whiterun to Riften, Mournhold to Ebonheart, Alinor to the Imperial City, Daggerfall to
+  Elinhir, Ald'ruhn to Vivec (FREE) and Wayrest to Daggerfall with a boat to hand: ten of ten the same plan, pixel for
+  pixel, and the same sliced (1 to 14 slices).
+- **The wall clock's pins re-pinned by cells** (PIN MOVED, PLAN-SLICES): AUDIT STARTS V4/V7's "each planned in under a
+  second and a half" and START2's "under three seconds" were wall-clock bounds - flakes on a shared runner (both failed
+  at load averages of 20 to 40, the planner unchanged), and a plan is no longer one task. They hold each voyage's cells
+  now: VOYAGE_CELLS_MAX 450,000 (measured 392,822 and 393,363 - some twenty slices).
+- **The host**: bootWorld grows no line - OWS2's two asks of the planner (tvMooredDry, tvSeaAsk) moved out to
+  `systems/travel/seaAsk.js` under the same names, and its ceiling lowered to the count measured on the merged head,
+  35,888 (`test/scenes/hostceiling.test.js`). The four hosts: `scenes/world.js` as above; `scenes/exterior.js`,
+  `scenes/worldModes.js` and `scenes/dungeonContext.js` plan no Overworld route. Nothing crosses the wire.
+- **Not sliced**: a plan asked outside the two journeys (the living world's ways, the passage host's own checks) is the
+  one call's, as before; a journey's "no way" said after its plans is said when they land.
+- Pins `test/systems/travel/plan_slices.test.js` (7); mutants `tools/mutants/plan_slices.json` (10, all dead). PIN MOVED
+  (PLAN-SLICES): the four harnesses that lift the host's journeys (`ow5_audit`, `fb0929d_toroads`, `tv6_dungeons`,
+  `passagehost`) hand them the slicer and the two moved asks; AUDIT STARTS V5's and ROAD-BEYOND's records re-aimed by
+  content.
+
+## ROAD-GAPS - the roads past the Bay joined where they meet (2026-10-26, the owner: "Take care of exclusions and gaps")
+
+ROAD-BEYOND's record left OPEN a gap in the roads past the Bay, Hammerfell's at (1154, 233): Dragonstar to Elinhir walked
+633 pixels round by the roads where the head's planner had stepped five pixels across the field (457). Measured again:
+
+- **That gap was the layer's, not the build's.** ROAD-BEYOND's journeys ran on the merged head's ground with a roads
+  layer laid before SMOOTH-LAND moved the coasts (GROUND_ROLL_VERSION 3); at (1155, 232) - (1158, 236) that layer's road
+  stands on what is now water (the ground's byte 0), and the planner never steps a road onto water. Laid again on the
+  head's land (regions (2, 3) and (2, 4), as the host lays them), the road there is dry and whole: Dragonstar to Elinhir
+  is 455 pixels, every step a road's. The stale layer stood 2,519 of its 747,052 path pixels on the new water; a player
+  never sees one (the regions' key carries GROUND_ROLL_VERSION, so every region is laid again on the land it stands on).
+- **The gaps that are the build's: where the Bay's roads meet the land past it** (`world/arenaRoads.js` arenaJoins,
+  JOIN_SPACING). The Bay brings eighteen roads to its north, south and east edges (a road running along an edge one),
+  and TESA5 stood seven crossings for them: a crossing took every road within JOIN_SPACING (60 pixels, 49 km) of the
+  last along the edge, so the other eleven ended at the edge with the land going on past it, and a journey off the Bay
+  walked the field from their ends to the next crossing's road. JOIN_SPACING is 12 now (10 km): fourteen crossings on
+  the freeware's Bay - seven north, five south, two east - each a gate the regions' build routes to (TESA5's law
+  unchanged: the road nearest the edge, its run out to the gate on land), 47 join pixels on the Bay where there were 19.
+
+- **The gaps inside a region's own network** (`world/road/roadGaps.js` linkGaps, `world/tamrielRoads.js`
+  tamrielRegionSteps). A region's build routes its places a route at a time, and some of what it lays stands as pieces
+  no bit joins to the rest - on Hammerfell's two regions laid fresh, 339 pieces, 52 pairs of them (20 pixels and more
+  each) within three pixels of each other: a village's tracks a pixel off the road they were meant for, two roads' ends
+  side by side. The build now links them: the region's network as one graph by its bits, its pieces, and each path
+  pixel of the region's core in reading order linked to the nearest pixel of another piece within LINK_GAP (3) whose
+  straight way is dry land the build walks (no water it refuses, no pixel it routes round, no other path between) - a
+  road where both ends are roads, else a track. Laid again: 173 pieces, 2 pairs within three pixels (the two regions'
+  seam - each region links its own network alone, the same on every client whatever order the regions land in).
+
+**Measured** on Hammerfell's (2, 3) and (2, 4), laid on the head's land as the host lays them, before the links and
+after: Dragonstar to Elinhir 455 pixels by the road either way (3,100 cells), Grecher to Dragonstar 725 and Bourner to
+Elinhir 456, every step a road's or a track's. A plan from the Bay into Hammerfell needs the regions past the Bay's east
+edge laid too ((1, 3), (1, 4)); a build of the whole continent with the links and the fourteen crossings was not run
+here (four builds at a load average near 40 took over three minutes a region) - ROAD-BEYOND's journeys stand on the 48
+regions as laid before them.
+
+- The four hosts: none changes (the crossings are the roads host's inputs, `scenes/tamrielRoadsHost.js`, as before).
+  Nothing crosses the wire: each client lays its roads from its own files, the same for every player.
+- TAMRIEL_ROADS_VERSION 6 (RIVER-FORDS moved it to 5 in this release; the links and the crossings change what a region
+  lays): the roads past the Bay are laid again once - the same one rebuild as SMOOTH-LAND's GROUND_ROLL_VERSION 4.
+- Pins `test/world/road/road_gaps.test.js` (2); mutants `tools/mutants/road_gaps.json` (8: 7 dead, 1 recorded
+  equivalent - a path pixel on the way is itself a nearer candidate). PIN MOVED (ROAD-GAPS): `test/tesa5_join.test.js`
+  JOIN_SPACING 60 -> 12, the synthetic edge's runs re-spaced, the freeware's fourteen crossings and 47 join pixels;
+  TAMRIEL_ROADS_VERSION 5 -> 6 (`test/tesa14_roads.test.js`, `test/world/road/voyager1_land.test.js`,
+  `test/world/road/river_fords.test.js`); TESA5's spacing record and VOYAGER1's version record re-aimed by content.
+
+## MID-RING and FAR-FIELD - the horizon in layers, out to the mountains 300 km off (2026-10-26, the owner)
+
+The owner: "we need to find a way to expand the overworld view distance without killing performance. Currently tiles
+visibly load in with distance". And BREATHTAKER 1 of KPbICA's spec, through the owner: "render landscapes and landforms
+way further than actual distance to load. To see the mountain from 300km for example by rendering it's simplified
+version".
+
+**What stood past the streamed grid.** The grid (Land View 5: 4.5 km round the traveller) and then the far ring alone
+(EV8, `render/farRing.js`): a vertex a map pixel, 819 m apart, at the byte's macro height - the large heightmap's noise
+and the ground's own left out - its land closed into the sky over 16.8-28.0 km (RING_RIM_START..RING_RIM_END). So a
+pixel the stream built stood up out of a flat-faceted lowland as it landed, every hill at once (the owner's "tiles
+visibly load in"), and nothing at all stood past 28 km.
+
+**The layers, by distance** - each drawn in the far ring's one pass at the far plane (PERF2: after the ground; depth
+tested, never written, so each shows only where everything nearer drew nothing), farthest first so a nearer layer is
+painted over a farther one (`FarRingRenderer.draw`):
+
+| layer | cells | reach | its ground |
+|---|---|---|---|
+| the streamed grid | 128 a pixel (6.4 m) | Land View (4.5 km at 5) | the pixel's whole build |
+| THE MIDDLE RING (`render/midRing.js`) | 8 a pixel (102.4 m) | MID_RADIUS 14 pixels (11.9 km to its corner's edge) | the stream's own kernel at whole samples |
+| the far ring (EV8) | 1 a pixel (819 m) | 48 pixels (39 km) | the byte's macro height (`ringHeight`) |
+| THE FAR FIELD (`render/farField.js`) | 1 a FAR_CELL of 8 pixels (6.55 km) | FAR_RADIUS 60 cells (393 km) | a cell's highest byte, the far ring's law |
+
+- **The middle ring** (`world/terrain/midRingGrid.js`, built on the terrain worker - never on the frame). Each vertex is
+  the pixel's own kernel (`terrainSampler.js` sampleKernel: the small heightmap's bicubic, the large one's, the ground
+  noise, the ocean's floor, and with the Landforms row the landforms' shaping) at a whole sample - the ground the stream
+  will build there, coarse - so a pixel built lands on the hills already standing. A pixel's seam samples are its
+  neighbour's first (the kernel's own seam law), read once. Its colour is the far ring's (overworldTint at the pixel
+  centres, read bilinearly: the two rings one field of colour), its light, haze, sea and clouds' shadows the far ring's
+  program. Where the stream has built a pixel the ring leaves it out by RUNS of its ordered index list (a built pixel
+  cuts a run; the buffer is never rewritten for it), and the far ring is holed for the middle ring's whole footprint -
+  the sea's fill inside the hole stays the streamed grid's (FAR-SEA1), since the middle ring has its own sea.
+- **Its rim eases onto the far ring** - a geomorph in the rings' one vertex program (`aCoarse`, the far ring's surface
+  under each middle-ring vertex through the far ring's own triangles; `uMorph`): over MID_MORPH_START..MID_MORPH_END
+  (7.4-9.0 km, Chebyshev from the traveller - the haze's own point, `renderer.focus`) its ground slides onto the far
+  ring's, so where the far ring takes over the two are one surface, and the band moves with the traveller, never with
+  a rebuild (MID_MORPH_END is the rim the traveller's farthest drift from its base still leaves: MID_RADIUS -
+  MID_REBUILD_DRIFT pixels).
+- **The far field** (BREATHTAKER 1). The heightmap a cell at a time - FAR_SAMPLES (nine pixels a cell, the highest
+  kept: a range's silhouette is its peaks', none lost to a 6.5 km average) off the heightmap's own reader,
+  `woods.getHeightMapValue` (the Bay's bytes, the continent's authored ground past them, the Eltheric Ocean's - the reader
+  every kernel reads), its height the far ring's own law (`ringHeightAt`, the landforms' lift with the row and the
+  continent's past the Bay - BREATHTAKER2 below), its sea where
+  more than half its samples are at the sea's floor or its centre is the ocean's climate. It reads the terrain's law
+  and holds no copy of it: when the ground's generation changes (BREATHTAKER 2-3) the far field shows the change. A vertex
+  a cell on the cell's own centre, world-fixed - a rebuild (every FAR_REBUILD_DRIFT cells, 13 km) adds cells at the rim,
+  past the haze, and moves none. The far ring's footprint is left to it (`farFieldOrder`'s `covered`).
+- **The haze runs on.** While the far field stands the rings' rim law closes over FAR_RIM_START..FAR_RIM_END (217-361
+  km) instead of 16.8-28.0 km, and the rings' lens reaches FAR_LENS_FAR (600 km); the land holds the far ring's 85% haze
+  (RING_HAZE_HOLD) all the way out, so a range is a pale silhouette, as distance makes it - a range 2 km high 300 km off
+  stands some 0.4 degrees over the horizon (no curvature is drawn): a few pixels of the 65-degree lens, as it would be. Weather (an EXPONENTIAL row) stands every ring down, as ever.
+- **Why geometry and not sprites.** The spec asks for "multilayered 2D sprite composition". The far field is that
+  layered composition built as geometry: 14,641 vertices in one draw cost less than the impostor cards it would take to
+  show the same ranges, and they stay still where a card does not (a card re-baked as the traveller moves shimmers;
+  these vertices are world-fixed). The layers by distance are the table above.
+- **A just-built pixel eases out of the ring's tint** (`render/pixelFade.js`, a leaf). The ring showed the pixel's shape
+  in the far ring's tint a frame before its build, and the build laid the ground's own tiles over it at once: the shape
+  held but the colour popped. A pixel published PIXEL_FADE_RING (2) or more from the traveller carries its arrival and
+  its centre's tint (`scenes/pixelBuild.js`, enhanced lane, middle ring on), and both lanes' ground programs mix the tint
+  over its tiles by a smoothstep share over PIXEL_FADE_MS (1.2 s) - a colour, never a discard, so the ground keeps its
+  early depth test (GROUND-LAST). The renderer uploads the share only while it moves (`_terrainFade`).
+
+**How the frame pays for it.** The heights, the far field's bytes and its cells' climates past the Bay are the terrain
+worker's (`terrainGenWorker.js` 'midring', 'farfield'), asked a band at a time (HORIZON_BAND_ROWS: 4 pixel rows, 16 cell
+rows; the next band posted as the last lands) so the stream's own pixel jobs run between bands, and kept by pixel and cell
+across rebuilds (HORIZON_KEPT: 4,096 pixels and 32,768 cells, each book two of its grounds - one 8,192-entry book for
+both let every far cell go before the next rebuild asked it again; let go whenever what they read moves). A far cell's
+climate past the Bay is read there (`world/terrain/farClimate.js`) as the main thread's reader reads it (the continent's, `groundClimateIndex`; on the
+Bay and in the Eltheric Ocean's box FAR_CLIMATE_ASK, the main thread's own map): measured on the freeware's ground, the
+continent's first climate read works its biomes out in some 150 ms and a cold centre costs some 16 microseconds after,
+so a first far field read on this thread ran a step of its build to 196 ms. One ask at a time per layer; the ask stands
+until its ground is laid, and an answer for a base let go is dropped. On this thread a landed ground's vertices are laid
+a step at a time (the middle ring MID_ROWS_A_STEP 12 rows, its tints a row of 31 pixel centres; the far field
+FAR_CELLS_A_STEP 32 cells, its normals FAR_NORMAL_ROWS 8 rows) under HORIZON_BUDGET_MS (2 ms a frame, one step at the
+least), and the painter's order is written once a pixel (the middle ring) or a cell (the far field) the traveller
+crosses. Measured in node on this shared four-core machine, loaded to 30 runnable threads (the figures rank; they are not
+a player's): the far field's 474 steps on the freeware's ground with the worker's climates, 28-53 ms in all, p95 0.04-0.16
+ms a step (its longest steps, 6-150 ms, the machine's preemption: they moved from run to run); a middle ring's vertices
+64 ms in all; a middle ring's order 1.6-7.9 ms a pixel crossed, the far field's 2.2-2.5 ms a cell (its cells walked off
+one list of offsets sorted once - sorting the cells each crossing was 16-30 ms); the runs 0.07 ms. On the worker a cold
+far field is 0.3-1.7 s (the continent's authored ground some 6 microseconds a pixel, nine pixels a cell), 80-190 ms warm;
+a cold middle ring 0.15-0.8 s of kernel without the landforms, a rebuild after three pixels' drift some 170 new pixels of
+its 841. The GPU: the middle ring 54,289 vertices and 107,648 triangles in a handful of runs, the far field 14,641
+vertices and some 28,500 triangles in one draw, their buffers 2.4 MB and 0.6 MB; their fragments only where nothing
+nearer stands.
+
+**The doors.** `?midring=off` and `?farfield=off` (read once as the ring is made) stand either layer down - the far ring
+then holes and closes as before - and with no worker (`?terrainthread=off`, a dead one) neither is asked: the client
+answers null, never computes them on this thread. `tools/horizonProbe.mjs` photographs one view with the layers and
+with both doors shut (the A/B in one tree; the probes' read is `__horizonRings`, behind the shot gate - AUDIT ANTICHEAT
+A2 - and let go with the ring).
+
+**A city's skyline** (the Imperial City at some 20 km, stream A): the hook is FAR-LANDMARK, below.
+
+A departure from Daggerfall Unity (its terrain ends at its TerrainDistance, its far view a flat fog; no layer past it):
+Port-Ledger row MID-RING. Proof: `test/render/midring.test.js` (10: the heights against the kernel's own samples with
+the landforms and without; the vertices' frame, tints, sea and their ease's ground; the painter's order and its runs;
+the mesh; the far ring's asks, stepped laying, hole, ease and origins; the worker's bands and kept pixels, the client's
+bands, its errors and the worker's death; the wiring; the pixel's ease out of the tint; the far field's vertices and
+order; the far ring's far field, its rim, its lens and its drift; the worker's climates and the client's far bands; the
+steps' sizes), `tools/mutants/midring.json` (88, all dead). PIN
+MOVED: `test/ui/farring.test.js`, `test/render/el1_enhancedlighting.test.js`, `test/render/owhorizon.test.js` (the host's
+line: the far ring handed the terrain's client), `test/render/boot2.test.js` (the boot's reach 86: `render/pixelFade.js`,
+a leaf the renderer reads), `test/scenes/perfcol2.test.js` (the ocean holes' pits moved out of bootWorld for the room),
+`test/world/terrain/terrainworker.test.js` (the worker's imports: the horizon's grounds, the landforms and a far cell's climate). The four hosts: `scenes/world.js` wires it (the far ring handed the terrain's client, one
+logical line; HOST-SPLIT made the room - `01-Overview/Host-Split.md` MID-RING); `scenes/exterior.js`,
+`scenes/worldModes.js` and `scenes/dungeonContext.js` draw no far ring.
+
+## BREATHTAKER2 ON THE HORIZON, THE RIVERS' WATER, FAR-LANDMARK (2026-10-26, the coordinator, after stream G's terrain)
+
+The coordinator: "render/farRing.js ringHeight still ignores G's new lift above byte 127 ... so the far ring and far
+field show the old squashed peaks - read the land through G's law ... rather than a copy, for the far ring, the middle
+ring's coarse surface and the far field; pin it"; "check the overworld's far field shows a wide river where it should";
+"Build the city-skyline hook you proposed ... with a pinned test landmark, so stream A can hand in the Imperial City's
+silhouette".
+
+**BREATHTAKER2 on the horizon.** A pixel's macro height is `ringHeightAt(x, y, byte, relief, fade)`
+(`render/farRing.js`): `ringHeight` with the continent's share at the byte's node, `byteBeyond(x, y)`
+(`world/landforms.js` - 0 on the Bay, its seam band and the Eltheric Ocean's box), so `reliefByteHeight` carries stream
+G's lift past byte 127 (CONTINENT_LIFT; G's figures: 15.6 m a byte, Skyrim's spine 3,131 m) exactly as the streamed
+kernel does. It is G's function, called; no copy of the law. Four readers take it: the far ring's grid (both relief
+branches, the clamped pixel's and the own-ground's), the far field's cells (at each cell's centre pixel, the far field's
+`heightOf(byte, x, y)`), the middle ring's eased rim (its `coarse` is the far ring's grid under each vertex), and the
+travel view's ground past the built grid (`scenes/world.js` tvSceneOf, so the plates and veils stand on the peaks the
+ring shows and are not buried in them). With the Landforms row off every reader stands the plain law, as the kernel does.
+
+**The rivers' water on the horizon.** G's rivers and lakes (`world/tamriel/tamrielWaters.js` waterAt) are water in the
+streamed ground, so the middle ring marks them as its sea marks its own (the far ring's water look on those vertices):
+`world/terrain/farClimate.js` midRingWet asks waterAt at each of a pixel's samples on the terrain worker, beside the
+heights, and the flags are kept with them by pixel (26-37 ms a ring on the worker, measured on the freeware's ground; the
+Bay and its seam band never asked - G's law runs no water there). On the freeware's trace the Lower Niben, some 419 m
+across, stands three samples wide at the middle ring's 102.4 m. The far ring (819 m a vertex) and the far field (6.55
+km a cell) are coarser than any river G carves - a river there would be one vertex's blot, stepping a cell at a time as
+the traveller moves - so they draw none: a wide river shows out to the middle ring's rim (some 12 km) and the hills
+beyond it go on. Checked by the pins and on the freeware's trace in node; not seen in a running frame (every browser
+probe of the world page on this shared machine was killed for memory).
+
+**FAR-LANDMARK - a silhouette on the horizon** (`render/farLandmarks.js`; stream A's Imperial City at some 20 km):
+
+```js
+const handle = farRing.addLandmark({
+  px, py,                 // the map pixel it stands on
+  mesh: {
+    positions,            // Float32Array, x y z a vertex: x east and z north from pixel (px, py)'s south-west corner,
+                          //   world units (TERRAIN_SIZE a pixel); y the world's own height (the streamed ground's)
+    indices,              // optional Uint16Array | Uint32Array triangles (sequential when absent)
+    normals,              // optional Float32Array (made from the faces when absent)
+    colors,               // optional Uint8Array, rgb 0-255 a vertex (LANDMARK_GREY when absent)
+  },
+  key,                    // optional name
+});
+handle.remove();          // lets it go, every buffer with it
+```
+
+`landmarkBox({ x, z, w, d, y, h, color })` makes a box (a tower, a run of wall: ten triangles, the floor open) in the
+same frame - the pins' landmark, and the part a silhouette is built of. The far ring's program draws it: its light, its
+haze, its clouds' shadows; never eased (`uMorph` off for it), its sea attribute off. While the stream has built pixel
+(px, py) it stands down - the city's own models stand there - so a city wider than one pixel hands one landmark a pixel,
+each the silhouette's part over its own pixel.
+
+How it is ordered: the far pass stands at the far plane (`depthRange(1, 1)`, depth tested against the world's, never
+written - AUDIT FAR-SEA1 P1), so its layers are put in front of one another by the painter's order. The far ring's cells
+are now written farthest first from the traveller's pixel too (`writeRingCells`, a list of offsets sorted once, each
+cell's distance kept), the middle ring's pixels and the far field's cells already were. A landmark takes its place by its
+distance: the far field, the ring's cells farther than it, the landmark, the nearer cells and the sea's fill, then the
+middle ring's pixels cut the same way at a landmark inside its footprint (`MidRingMesh.drawRange`). Its own triangles are
+sorted farthest first from the traveller each pixel the traveller crosses (`FarLandmark.reorder`: one sort of its
+triangles, uploaded), so a tower behind a wall is drawn before the wall.
+
+A departure from the proposal it was asked for ("the far-plane pass's own depth sub-range with depth writes"): no depth
+range of its own. The world's lens writes depths up to its far plane, within a few 24-bit steps of 1.0 for the distant
+ground, so any range [r, 1] the far pass wrote into would sort a far hill in front of the world's own far ground there,
+and the world's framebuffers carry no stencil to keep the two apart. The painter's order is the pass's law already and
+holds for a landmark at the cost of one sort of its triangles a pixel crossed. Its limit: a landmark's triangles are
+ordered among themselves by their centres, so two parts that interpenetrate can draw in the wrong order from some angles
+- a silhouette of boxes and walls, seen from kilometres off, is the case it is built for.
+
+Proof: `test/render/farlandmark.test.js` (the height law at the pixel, the grid's and the far cell's; the far field
+under the Landforms row; the ring's cells farthest first with the hole left out; a landmark between the ring's cells at
+its distance, at its pixel's origin, never eased, its triangles farthest first, two in sequence, one nearer than every
+cell after the ring, every draw with its own array bound, stood down where built, let go; the middle ring cut at a
+landmark, its ease put back), `test/ui/mapwaters.test.js` (the middle ring's water and the client's bands; with ARENA2,
+the Lower Niben), `tools/mutants/farlandmark.json` (24, all dead). PIN MOVED: `test/scenes/tv3_travellers.test.js`,
+`test/world/terrain/auditlandforms.test.js`, `test/render/farsea1.test.js` (the travel view's ground past the grid at its
+pixel); `test/world/tamriel3.test.js` (the waters' ask follows the trace to the worker); `test/render/la_cost.test.js`
+(LA-COST1's law classes `_tFade`, the pixel fade's last-uploaded share, a GL-state shadow beside `_tSnowOn`: the terrain's
+frame block forgets it, `_terrainFade` uploads it per draw, and `_installWorldSet` looks its location up again with the
+set's programs). Daggerfall Unity has no layer past its TerrainDistance to put a landmark in: Port-Ledger row MID-RING.
+
+**The first landmarks handed in: the Imperial City's** (stream A, `03-World/Arena-Provinces.md` IC-GRAND, "The city from
+afar"): `scenes/capitalSkyline.js`, wired through `scenes/tamrielSweepsHost.js` (the world host hands it `farRing`),
+hands one landmark a slice of the city's 625 (`world/imperialImpostor.js` imperialLandmarkMesh - 259 stand something, 76
+triangles on the median) while the traveller is within the ring's radius and the span's half of its centre, a 3 ms budget
+a frame, each stood on the ring's own ground at its pixel - `FarRingRenderer.groundAt(px, py)`, the ring's grid read at
+the pixel's centre (IC-GRAND's one line in this file), null before a build or off the grid, so a slice there waits for
+the ring to move. Pinned in `test/world/icgrand_lod.test.js` and `tools/mutants/icgrand.json`.
+
+## FAR-FLORA - the woods past the streamed grid (2026-10-26, the owner)
+
+The owner: "I really want to improve the draw distance without impacting performance, its better but the graphical
+fidelty farther out is still not to my liking", and then: "on top of distant view, no flora/trees show. Its just a plain
+green flat texture. No band aids for any of this".
+
+**What the far views drew** (measured on the freeware's ground, the game's own far pass in one headless Chromium on
+SwiftShader, at 4359d3fed0 - `FarRingRenderer` with both lanes' programs and the stepped laying; the streamed grid not
+drawn). The middle ring had 54,289 vertices and 107,648 triangles, the far ring 9,409 and 16,864 outside the middle ring's
+footprint, and the far field 14,641 and 28,558. That is some 153,000 triangles in three draws plus the middle ring's runs,
+3.5 MB on the GPU. Every land vertex was `overworldTint`, one skin colour a climate with rock over byte 64 and PEAKS1's
+snow, and every tree stopped at the streamed grid's edge, 4.5 km out at Land View 5: the owner's "plain green flat
+texture" and its tree line.
+
+**The woods by the near law** (`world/terrain/floraCover.js`, worker-safe). The streamed grid stands its trees a tile at a
+time (`terrainNature.js` layoutNature: FOREST1's field and chances, or DFU's scatter with Real forests off and on a desert).
+`midRingFloraPixel` reads the same law at each of the middle ring's samples (102.4 m, every 16th tile), on the terrain
+worker beside the heights and kept by the pixel with them:
+- the forest field at the sample's own world tile (`forestAt`);
+- the ground classes `tileDataAt` lays at four corners a quarter-step about it;
+- a corner grows nothing under the beach line or on a face over `MAX_STEEPNESS`.
+`treesPerTile` lays the climate on where the vertex is built:
+- with the woods' law, FOREST1's chance by the field and the ground's share (`forestTiles`);
+- else DFU's chances by tile, the WOODS byte's elevation scale, `DESERT_NATURE_SCALE`, and the share of the archive's 31
+  records that are Trees.
+`canopyCover` turns that into the share of the ground the crowns hide seen from afar: one minus the chance a line across
+the woods meets no crown, at FLORA.grazing crowns' widths. The far ring (819 m) and the far field (6.55 km) stand past the
+field's waves, so they take the law's expectation, `expectedTrees`: FOREST1's 45% wooded land on grass. The middle ring
+eases its own woods, and the ground's shares, onto that expectation over MID_FLORA_EASE, the geomorph's band. So where the
+far ring takes the ground over, it takes the woods over too.
+
+**In the trees' own art** (`render/farFlora.js`). A climate's Trees are its summer nature archive's Tree records
+(`TREE_RECORDS`).
+- Colour: the mean of their opaque texels, weighted by each picture's texels. The picture is the one drawn near: a decoded
+  replacement first (Vanilla Enhanced's), else the classic record through the pipeline's `classicRgba`
+  (`textureDeriveContext`, a new export of `systems/textureReplacement.js`). FAR-TREES (below) moved the canopy's mix into
+  the program, under the flats' own light.
+- Height: their billboards' mean (`scaledBillboardSize`). The canopy stands at FLORA.lift of it times the cover, so a
+  wood's edge stands up and its normals lean.
+- The ground under the canopy is the near ground's own three tiles (`groundArt`: DIRT 1, GRASS 2, STONE 3 of the climate's
+  ground archive) mixed by their shares. The far views take FLORA.ground's shares, measured over 200,000 corners of the
+  Bay's land: 5.4% dirt, 92.7% grass and 1.9% stone.
+- Read once an archive, off the frame. Until a climate's art is read its woods are not drawn; the book's `version` moves
+  when one lands, and the far ring, the middle ring and the far field are built again with it.
+- On the freeware's classic art TEXTURE.504's Trees are rgb (62, 68, 44), 11.8 m high and 9.2 m wide.
+
+**The grain** (`render/horizonHaze.js` FLORA_GLSL, both lanes' far-ring programs). A vertex's canopy rides location 5
+(`aCanopy`, four normalized bytes since FAR-TREES: its cover and the trees' art; the middle ring, the far ring and the far
+field upload it, and a landmark leaves it off at the attribute's constant, no cover). `floraGrain` darkens and lightens the
+canopy about its colour with two value noises on the world's own metres: crowns at
+FLORA_CROWN_M (9 m, FOREST1's half a Tree a 6.4 m tile) and groves at FLORA_GROVE_M (46 m). Each fades out as its cells
+fall under a fragment (`fwidth`), so it never shimmers and a far wood is its mean.
+
+**The knob.** The woods stand at Land View FLORA_MIN_LAND_VIEW (4) and up: Medium, High and Ultra
+(`systems/graphicsPresets.js`). Low's 3 keeps the far views of before: no woods asked of the worker, no attribute, the
+grain one uniform test (`uFlora.x` 0). `?farflora=off` stands them down.
+
+**The cost.**
+- GPU: four bytes a vertex since FAR-TREES (one at this slice), 313 KB across the three layers. The fragment shader gains
+  eight hashed corners, two smoothsteps and two `fwidth`s, and the flats' light beside the ground's.
+- The worker: a pixel's woods 0.48-0.90 ms beside its heights' 0.34-0.50 ms (node, the synthetic world, this machine
+  loaded to 30 runnable threads). A cold middle ring is some 0.4-0.7 s more there; a rebuild's 170 new pixels some 80-150 ms.
+- This thread: the middle ring's laying, warm, is 37 ms against 23 ms without the woods. It is spread over 89 steps against
+  70 (`midRingVertexSteps` lays half as many rows a step with them), p95 0.37 ms a step under HORIZON_BUDGET_MS. The far
+  ring's grid, rebuilt every 12 pixels' drift, reads one `floraOf` and one cover a vertex; the far field one a cell, in its
+  steps.
+
+**Seen.** The game's own far pass on the freeware's ground, in one headless Chromium (a scratch bench of the session's,
+not committed), A/B in one tree by `?farflora=off`. From 350 m over Cyrodiil's Nibenay valley and over the Bay's north
+coast, the plain green has become FOREST1's woods: dark crowned patches with fields and dirt between them out to the
+middle ring's rim, and the woods' mean beyond. Skyrim's foothills over the Jerall stand over PEAKS1's line and are white
+either way. The images are the session's, never the repo's (Port-Doctrine).
+
+**Not done, and named.**
+- The woods past the grid are a canopy, not trees: the instanced billboard band from the game's own tree art, crossfaded
+  with the near flats' cut, is the next lever (BILLBOARD BAND).
+- The art is the summer archive's; the near flats' season (and Seasons of the Iliac Bay's) is not followed past the grid.
+  PEAKS1's snow whitens the woods over its line as it whitens the ground.
+- A town's clearing and a place's pull (FOREST1 `placesPull`) are not read past the grid: a town's own pixel there is the
+  woods' law.
+- The jungle's own layout (BANTHA1 `jungleLayout`) and the graht-oaks stand as their climate's Trees (Rainforest's
+  TEXTURE.500).
+
+A departure from Daggerfall Unity, which has no ground past its TerrainDistance: Port-Ledger row FAR-FLORA. Proof:
+`test/render/farflora.test.js` (9 tests: the sample against the near law's own field and classes, the beach and the face;
+the trees a tile grows under both laws and the cover; a vertex's ground and canopy; the middle ring's woods - its pixel,
+its lift into its normals, its ease and its ground's, its step; the far ring's and the far field's; the knob, the job, the
+rebuild on art, `groundAt` the ground's, the kill door; the worker's answer and the client's bands; the art's means and the
+book; the program's attribute and grain in every lane), `tools/mutants/farflora.json` (46, all dead).
+PIN MOVED:
+- `test/render/midring.test.js`: the middle ring's ask carries `flora`.
+- `test/render/farsea1.test.js`: the classic ring's land line under the canopy (moved again by FAR-TREES, the mix).
+- `test/render/audit_farsea1.test.js`: the evaluator takes FLORA_GLSL, off.
+- `test/world/terrain/terrainworker.test.js`: the worker imports `floraCover.js`.
+Displaced mutant records re-aimed by content (each killed again):
+- `midring.json`'s four asks' drifts and its transfer;
+- `icgrand.json`'s `groundAt` column;
+- `peaks1.json`'s ring whiten.
+The four hosts: `scenes/world.js` builds and draws the far ring as before (no line changed); `scenes/exterior.js`,
+`scenes/worldModes.js` and `scenes/dungeonContext.js` draw no far ring.
+
+## FAR-TREES - the near trees carried past the streamed grid (2026-10-26, the owner, through the coordinator)
+
+The owner: "on top of distant view, no flora/trees show. Its just a plain green flat texture. No band aids for any of
+this". The coordinator: the billboard band from the game's own tree art, crossfaded with the near flats, so the tree line
+at the grid's edge is gone. The owner held the release for it.
+
+**What stood at the grid's edge.** The streamed grid stands every Tree of its pixels: FOREST1's woods, or DFU's scatter.
+Past its two nearest rings only the tall flats draw, every Tree among them (`world/flatDistance.js`). Past its edge, 4.5
+km out at Land View 5, the far views stood FAR-FLORA's canopy alone (above). Seen from over the grid, the trees stopped in
+a line and a smooth wood of their colour began. Where the stream still owed a pixel inside the grid, the same line ran
+round the hole.
+
+**The band** (`render/farTrees.js`). Two sets of pixels make it (`bandPixels`):
+- the ring of pixels past the grid (BAND_RING, 1);
+- every pixel inside the grid the stream has not built (its `built` map, read at each pixel the traveller crosses).
+Each band pixel stands its own trees. The pixel's layout runs on the terrain worker (`world/terrain/floraCover.js`
+`bandTreesPixel`): its kernel samples with the landforms the worker holds, its ground classes and their squares, and the
+nature's own `layoutNature`. That is FOREST1 with the switch, else DFU's scatter, which a desert always takes; the result
+is kept to the archive's Tree records. So a band tree is the very flat the built pixel will stand: its own dice, its
+place, its record and its size. The band is drawn in the far ring's pass at the far plane, so a built pixel's ground (and
+its own flats) cover the band's trees by depth. When the stream builds a pixel nothing moves.
+
+**What a band pixel leaves out** (named, each a tree or a few where the built pixel differs):
+- a location's clearing and flattening;
+- the roads' paint and their track mask;
+- a World of Daggerfall site;
+- a neighbour climate's tiles at a border (ECOTONE1);
+- the jungle's own layout and the graht-oaks (BANTHA1, GRAHT1);
+- the season's art: the summer archive's pictures, as FAR-FLORA's.
+
+**The crossfade, both sides by one rim.** Over BAND_FADE (0.5 to 1.45 pixels past the grid's radius, Chebyshev from the
+centre of the pixel the band was laid round), two things happen together:
+- the band's trees dither out: a byte a tree, `treeHash`, against a smoothstep;
+- the far ring's program lays the canopy back over the ground (`uCanopyBand`, `uCanopyFrom`: under the band its own
+  trees stand on the ground, and the canopy's colour would count them twice).
+From the grid's edge outward, the trees stand at the near law's density, thin over the band ring, and hand over to the
+canopy as it comes in. The near flats needed no fade of their own: the band continues them tree for tree, at the same
+places, so the grid's edge is no edge. The coordinator's permission to give the billboard program a distance fade
+(render/renderer.js) was not used, and renderer.js is untouched.
+
+**The canopy, lit as the trees are.** FAR-FLORA's canopy colour moved into the program. A vertex's canopy is now four
+bytes at location 5: its cover, then the trees' art (`plantCanopy`). The ground's colour stays the vertex's own. Both
+lanes' far-ring programs mix the two by the cover: the ground under its own light, and the canopy under the flats' light
+(`horizonHaze.js` `floraLight`: the ambient and half the moon, half the sun under the clouds' shadow - renderer.js BB_FS's
+`uTint` and `uBBSun`), grained (`floraGrain`). A far wood is therefore the aggregate of the band's trees, which take the
+same light (`farTrees.js` TREE_LIGHT), and FLORA.shade, the canopy's stand-in for the flats' light, is gone. PEAKS1's snow
+whitens the canopy's colour as it whitens the ground's: a mix of the two whitened is the mix whitened.
+
+**How it is drawn.** One draw of points, by the band's own program (classic, the lane's, and the classic-shadow lane's look
+over the lane's - `treesFsFor`):
+- **The sprite.** A tree is a screen square the side of its billboard's larger extent, projected through the pass's lens
+  and the world viewport's height, standing on its foot.
+- **The picture.** The record's own, laid bottom-centred into a TREE_LAYER (64) layer of one mipmapped array texture
+  (`layerPicture`, up to TREE_LAYERS 48). It is the picture drawn near: a decoded replacement, else the classic record
+  (`farFlora.js` `pipelinePictures`).
+- **Cutout, light and haze.** Cut out at the flats' own 0.5, lit by `floraLight`, hazed as the far ring is.
+- **Sub-pixel trees.** A tree under a pixel is drawn by its share of one (its byte against its area), so a far wood keeps
+  its coverage and never becomes a blot of one-pixel points.
+- **Placement.** The instances sit in the band's frame (`bandInstanceSteps`: x east and z north from the base pixel's
+  south-west corner), 16 bytes each: x, y, z, the layer and the dither byte.
+
+**The knob and the doors.** The band stands with the woods: Land View FLORA_MIN_LAND_VIEW (4) and up, with a terrain
+worker. Low's 3 asks nothing, lays nothing and draws nothing. `?fartrees=off` stands the band down and leaves the canopy;
+`?farflora=off` stands both down.
+
+**The cost.**
+- **Points.** The band's are the near law's own count, about 3,600 Trees a pixel on the freeware's Cyrodiil (612,326 over
+  the bench's 169 pixels). Land View 5's ring of 48 pixels is about 175,000 points, 2.8 MB, one draw. The grid's unbuilt
+  pixels add their own until built.
+- **The GPU.** Each point is one vertex: a matrix and a few comparisons. Each fragment of it is one texture fetch, the
+  light and the haze. Trees at the band's distance are 1-3 pixels, so the band is some hundreds of thousands of
+  fragments, most of them under the built ground's depth and rejected before the shader.
+- **The worker.** About 40 ms a pixel: the kernel 30, the tiles 7, the layout 5 (node, the synthetic world, this loaded
+  machine). The work is kept by the pixel in the horizon's book, asked BAND_PIXELS_AN_ASK (4) pixels an ask, the next as
+  the last lands, so the stream's own jobs run between them. A cold band is about 2 s there; a pixel crossed asks its new
+  ring's 13 or so.
+- **This thread.** At each pixel crossed the instances are laid one pixel per step under the far ring's
+  HORIZON_BUDGET_MS. They are uploaded one 512 KB slice per step (UPLOAD_SLICE) into a buffer of their own, and swapped in
+  whole when the last slice is up. The atlas is written once per archive. Nothing is per frame beyond the draw.
+
+**Seen** (the game's own far pass on the freeware's ground, the scratch bench of FAR-FLORA). No streamed grid is drawn
+there, so the bench stands the grid's own trees by the same law; that is the stand-in, named. From 900 m over the grid's
+north edge in Cyrodiil, the near trees alone stop in a line. With the band they run on a ring and thin into the woods'
+canopy, with no line. From the travel view's eye the forests read as forests out to the band, and as their canopy past
+it.
+
+A departure from Daggerfall Unity, whose trees end with its streamed terrain: Port-Ledger row FAR-FLORA. Proof:
+- `test/render/fartrees.test.js` (8): the band's pixels; a pixel's trees against the stream's own layout under both
+  laws; the instances' frame, layer and bytes; the layer picture; the book - its asks, the archive, the art once, the
+  steps, the slices, the swap, the draw, the rim, dispose; the worker's band and the client's asks; the programs; the far
+  ring's gate, knob, draw and the canopy's crossfade.
+- `tools/mutants/fartrees.json` (40, all dead).
+PIN MOVED: `test/render/farsea1.test.js` (the classic ring's land line, the canopy's mix) and `test/render/farflora.test.js`
+(FAR-FLORA's own pins: the canopy four bytes, its colour in the program). The four hosts: `scenes/world.js` builds and draws
+the far ring as before (no line changed); `scenes/exterior.js`, `scenes/worldModes.js` and `scenes/dungeonContext.js` draw
+no far ring.

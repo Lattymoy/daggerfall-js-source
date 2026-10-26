@@ -306,13 +306,13 @@ export const CITIES = Object.freeze([
 ].map((c) => Object.freeze(c)));
 
 /** NIBEN-SEA (2026-10-26, bible/03-World/Tamriel.md NIBEN-SEA; the owner: "The port that connects to the imperial city
- *  should allow for AI/player ship voyages through this canal"): THE WATERFRONT CANAL - the Imperial City's harbour (TESA11's
- *  Waterfront, on its isle's south shore) cut through to its lake's arm (ui/tamrielTrace.js NIBEN_COURSE), which the
- *  picture's pixels lay a little short of the city's edge. `city` the city it serves (CITIES' entry, the province's
- *  capital), `span` its pixels a side
- *  (world/imperialCity.js IMPERIAL_SPAN - pinned equal; this module reads no city's plan), `half` the canal's pixels
- *  either side of the city's middle column, `reach` the most pixels it runs south of the city's edge to the water. */
-export const WATERFRONT_CANAL = Object.freeze({ city: CITIES.find((c) => c.capital && c.province === 'Imperial'), span: 7, half: 1, reach: 24 });
+ *  should allow for AI/player ship voyages through this canal"): THE WATERFRONT CANAL - the Imperial City's harbour, on
+ *  its south edge below the Waterfront, cut through to its lake's arm (ui/tamrielTrace.js NIBEN_COURSE), which the
+ *  picture's pixels lay short of the city's edge. `city` the city it serves (CITIES' entry, the province's capital),
+ *  `span` its pixels a side (world/imperialCity.js IMPERIAL_SPAN - IC-GRAND's twenty-five, pinned equal; this module reads
+ *  no city's plan), `half` the canal's pixels either side of the city's middle column, `reach` the most pixels it runs
+ *  south of the city's edge to the water. */
+export const WATERFRONT_CANAL = Object.freeze({ city: CITIES.find((c) => c.capital && c.province === 'Imperial'), span: 25, half: 1, reach: 24 });
 
 // ── THE TOPOLOGY ─────────────────────────────────────────────────
 

@@ -12,8 +12,11 @@
 //     colour (world/jungle/jungleHaze.js) - and what it hides (`hides`, the world host's pixel gate - its one caller; AUDIT BANTHA1 HAZE-10);
 //   - VALENWOOD-CANOPY: THE CLOSED CANOPY, each exterior frame's too (in `haze`, before the haze's own switch) - its share at
 //     the camera's eye off the canopy zones' own field, under the canopy's top, eased (world/jungle/jungleCanopy.js); the
-//     sky's ceiling of leaves (`sky.setCanopy`, render/canopySky.js), the fog's colour dimmed under it, and its weight
-//     (`canopy`) for the world host's light.
+//     fog's colour dimmed under it, the leaves the water mirrors (`sky.setCanopy`), and its weight (`canopy`) for the world
+//     host's light;
+//   - GRAHT1: THE GRAHT-OAKS that close it (scenes/grahtHost.js, `graht` - built where the canopy's zones are, `?graht=off`
+//     offline its kill door): the job carries the canopy field's 3x3 (`canopy`), where the terrain worker stands them, and
+//     their host culls them by this host's haze (`hides`).
 // The four hosts: scenes/world.js WIRED - the streamed world, the one host that stands terrain nature; and
 // scenes/exterior.js (the fixed city), scenes/worldModes.js (interiors), scenes/dungeonContext.js (dungeons) - FLAGGED: none stands the wilderness the jungle grows in
 // (a fixed city's flats are its location's, an interior and a dungeon stand none), and each beginFrame of theirs clears
@@ -28,7 +31,8 @@ import {
   JUNGLE_HAZE, hazeShare, hazeDayFactor, hazeWeatherFactor, hazeDrift, createHazeState, stepHaze, hazeUniforms, fogColorWith,
   hazeSkyUniform, hazeHides,
 } from '../world/jungle/jungleHaze.js';
-import { canopyShare, canopyUnder, createCanopyState, stepCanopy, canopyFog, canopyUniforms, JUNGLE_CANOPY } from '../world/jungle/jungleCanopy.js';   // VALENWOOD-CANOPY
+import { canopyShare, canopyUnder, createCanopyState, stepCanopy, canopyFog, canopyLeaves, JUNGLE_CANOPY } from '../world/jungle/jungleCanopy.js';   // VALENWOOD-CANOPY
+import { createGrahtHost, grahtOaksOn } from './grahtHost.js';   // GRAHT1: the graht-oaks that close the canopy
 
 /**
  * @param {{ renderer: any, maps: any, mapWidth: number, mapHeight: number, stateOf: () => any, builtOf: () => Map<string, any>,
@@ -74,9 +78,9 @@ export function createJungleHost({ renderer, maps, mapWidth, mapHeight, stateOf,
   const _t = [0, 0, 0], _eye = [0, 0, 0], _abs = [0, 0, 0], _nine = new Array(9), _floorNine = new Array(9);
   const _floor = { px: NaN, py: NaN, field: /** @type {any} */ (null), nine: /** @type {any[]|null} */ (null) };   // BANTHA2: floorClaims' last pixel and its 3x3
   const _w = { px: 0, py: 0, lx: 0, lz: 0 };
-  // VALENWOOD-CANOPY: the canopy's eased state, its eye in the world's frame, the eye's height over its ground, its uniforms
-  const cs = createCanopyState(), _cNine = new Array(9), _cEye = [0, 0, 0], cu = new Float32Array(8);
-  let cOver = 0, canopySent = false;
+  // VALENWOOD-CANOPY: the canopy's eased state, its eye in the world's frame, the eye's height over its ground, its leaves
+  const cs = createCanopyState(), _cNine = new Array(9), _cEye = [0, 0, 0], cu = new Float32Array(4);
+  let canopySent = false;
   let clock = 0;
   /** the pixel a scene point stands in and where in it (m, x east and z north - the layout's frame), in one scratch
    *  (AUDIT BANTHA1 HOST-8: no frame allocates) - read before the next ask */
@@ -118,22 +122,27 @@ export function createJungleHost({ renderer, maps, mapWidth, mapHeight, stateOf,
     renderer.setJungleHaze(null); sky?.setHazeSky?.(null);
     return fogColor;
   };
+  /** WHETHER THE HAZE HIDES a box this frame (the host's `hides`, below - and the graht-oaks', each its own box). */
+  const hidesBox = (box, t) => u[4] >= 0.5 && !!box && hazeHides(u, _eye, box, t);
+  /** GRAHT1: the graht-oaks' host, where the canopy's zones are and the door is open (scenes/grahtHost.js) */
+  const graht = canopyAt && grahtOaksOn() ? createGrahtHost({ renderer, hides: hidesBox, breathe }) : null;
   /** VALENWOOD-CANOPY: the canopy's share at the camera's eye (`eye`, the scene's) - its zones' field, under the canopy's top -
    *  eased over `dt` (world/jungle/jungleCanopy.js stepCanopy). */
   const canopyStep = (eye, dt) => {
     if (!canopyAt) return;
     const w = where(eye[0], eye[2]);
     const nine = jungleNine(canopyNow(), w.px, w.py, _cNine);
-    cOver = eye[1] - heightAt(eye[0], eye[2]);
+    const over = eye[1] - heightAt(eye[0], eye[2]);
     _cEye[0] = w.px * PIXEL_M + w.lx; _cEye[1] = eye[1]; _cEye[2] = -w.py * PIXEL_M + w.lz;
-    stepCanopy(cs, { dt, eye: _cEye, target: nine ? canopyShare(jungleDepthAt(w.px, w.py, nine, w.lx, w.lz)) * canopyUnder(cOver) : 0 });
+    stepCanopy(cs, { dt, eye: _cEye, target: nine ? canopyShare(jungleDepthAt(w.px, w.py, nine, w.lx, w.lz)) * canopyUnder(over) : 0 });
   };
-  /** VALENWOOD-CANOPY: the frame's fog colour `c` (the host's own, written in place) dimmed under the leaves, and the sky's
-   *  ceiling lit by it (`sky.setCanopy`, render/canopySky.js) - or the ceiling taken down where the canopy has gone. */
+  /** VALENWOOD-CANOPY: the frame's fog colour `c` (the host's own, written in place) dimmed under the leaves, and the leaves
+   *  lit by it handed to the sky for the water to mirror (`sky.setCanopy`, world/jungle/jungleCanopy.js canopyLeaves) - or
+   *  taken back where the canopy has gone. GRAHT1: the leaves overhead are the graht-oaks' own - no ceiling is drawn. */
   const canopied = (c, sky) => {
     if (!(cs.w > 0) || !c) { if (canopySent) { sky?.setCanopy?.(null); canopySent = false; } return c; }
     canopyFog(c, cs.w, c);
-    sky?.setCanopy?.(canopyUniforms(cs.w, c, cs.eye[0], cs.eye[2], cOver, cu));
+    sky?.setCanopy?.(canopyLeaves(cs.w, c, cu));
     canopySent = true;
     return c;
   };
@@ -147,11 +156,12 @@ export function createJungleHost({ renderer, maps, mapWidth, mapHeight, stateOf,
   };
   return {
     door,
-    /** THE TERRAIN JOB'S JUNGLE for a pixel - `{ nine, hidden }` (its 3x3 of distances, and whether its location is a
-     *  place the woods hide), or null where the jungle cannot reach. */
+    /** THE TERRAIN JOB'S JUNGLE for a pixel - `{ nine, hidden, canopy }` (its 3x3 of distances, whether its location is a
+     *  place the woods hide, and GRAHT1: the canopy field's 3x3 where a canopy closes near it and the graht-oaks stand -
+     *  null else), or null where the jungle cannot reach. */
     job(px, py, hidden = false) {
       const nine = jungleNine(fieldNow(), px, py);
-      return nine ? { nine, hidden: !!hidden } : null;
+      return nine ? { nine, hidden: !!hidden, canopy: graht ? jungleNine(canopyNow(), px, py) : null } : null;
     },
     /** How deep in the jungle a scene point stands (m, negative outside; -Infinity far from it). */
     depthAt(x, z) {
@@ -213,10 +223,9 @@ export function createJungleHost({ renderer, maps, mapWidth, mapHeight, stateOf,
     /** WHETHER THE HAZE HIDES a box this frame - pixel-local `box` ([x0, y0, z0, x1, y1, z1]) at its translation `t`:
      *  every point of it sends less than JUNGLE_HAZE.cull of its light through the haze (world/jungle/jungleHaze.js
      *  hazeHides - AUDIT BANTHA1 HOST-4: the haze alone), read off the uniforms as last sent. */
-    hides(box, t) {
-      if (!(u[4] >= 0.5) || !box) return false;
-      return hazeHides(u, _eye, box, t);
-    },
+    hides: hidesBox,
+    /** GRAHT1: the graht-oaks' host (scenes/grahtHost.js) - null off the canopy's zones or with `?graht=off`. */
+    graht,
     /** VALENWOOD-CANOPY: the canopy's weight this frame, 0..1 - the world host's light leans by it (world/jungle/
      *  jungleCanopy.js canopyLight, canopyKey, canopyMoon); 0 off its zones. */
     get canopy() { return cs.w; },

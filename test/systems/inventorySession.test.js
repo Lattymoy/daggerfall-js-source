@@ -9,7 +9,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  hasCart, openState, remoteTarget, planWagonToggle, closeSession,
+  hasCart, openState, remoteTarget, planWagonToggle, closeSession, holdChestSave,
   WAGON_REFUSAL, NO_WAGON_TEXT, EXIT_TOO_FAR_TEXT,
   SMALL_CART_TEMPLATE, WAGON_ACCESS_DISTANCE,
 } from '../../src/systems/inventorySession.js';
@@ -150,4 +150,20 @@ test('U57: the classic window runs this module rather than a second reading', ()
   assert.ok(!/templateIndex === SMALL_CART_TEMPLATE/.test(s), 'a second reading of the cart check survives');
   assert.ok(!/this\.hooks\.onDrop\?\.\(/.test(s), 'the window still mints the drop pile itself');
   assert.ok(!/hooks\.dungeon\?\.inside && this\._hasCart/.test(s), 'CheckWagonAccess is still inline');
+});
+
+test('a second close while a chest is saving does not finish the window', async () => {
+  const gate = { saving: false, saved: false };
+  let release = null;
+  let finishes = 0;
+  const loot = { busy: 'Saving the chest...', finish: () => new Promise((r) => { release = r; }) };
+  const close = () => { if (holdChestSave(gate, loot, close)) return; finishes += 1; };
+  close();
+  close();
+  assert.equal(finishes, 0);
+  release();
+  await new Promise((r) => setTimeout(r, 0));
+  assert.equal(finishes, 1);
+  close();
+  assert.equal(finishes, 2, 'once the save has answered, a close finishes');
 });

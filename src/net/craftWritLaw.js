@@ -23,9 +23,14 @@
 //    the record the goods).
 //    A looted or bought bottle fills nothing a brew of its own does not stand behind.
 //  - DISHES AND KITS: the pieces themselves, by provenance - each the filling character's make (products.char_id), the
-//    account's still (a sold one is its buyer's), never walled to gold (products.bought_with - AUDIT CRAFT-WRITS T2: a
-//    piece of goods bought for silver is its maker's all the same), on no listing, road or home, and in the record's pack
-//    loose; their rows go with them.
+//    account's still (a sold one is its buyer's), never bought back with gold (products.bought_with 'gold' with loose 0 -
+//    AUDIT CRAFT-WRITS T2: a piece of goods bought for silver is its maker's all the same), on no listing, road or home,
+//    and in the record's pack loose; their rows go with them.
+//  - ANY-GOODS (FIELD BUGS 2026-10-26, the owner: "Crafting writs should work with even store bought ingredients. I hate
+//    this"): WHATEVER THE GOODS. A brew or a piece made of goods from the pack - looted, or bought with gold at a shop
+//    (AUDIT BAG-CRAFT A1's loose units) - fills a writ as one of gathered or silver-bought goods does: the make is the
+//    service's act, and what it was made of no longer asked. Before, migration 0145's `witnessed` and the gold wall kept
+//    them out, and the card said "0 brewed by you" over a brew that had paid its XP.
 //  - Never a potion wholly of the Apothecaries' goods (Water Breathing, Levitation - alchemyLaw brewFirstPays): silver
 //    bought at the counter and brewed would come back as more silver with no hand's work between.
 //
@@ -44,7 +49,7 @@
 import { POTIONS, potionById, brewFirstPays, ingredientKeys } from './alchemyLaw.js';
 import { DISHES, recipeById, RECIPES } from './recipeLaw.js';
 import { material } from './nodeLaw.js';
-import { TIER_RANKS, topTierOf, professionName, COUNTER_ONLY } from './professionLaw.js';
+import { TIER_RANKS, topTierOf, professionName, COUNTER_ONLY, EMBER_MADE } from './professionLaw.js';   // DAEDRIC-SMELT: the ember's metal
 import { renownRate } from './renown.js';
 import { gateHash } from './gate/gateLaw.js';
 import { GUILD_FACTION_IDS, DIVINES } from '../systems/guild/guildFactions.js';
@@ -90,8 +95,11 @@ export const CRAFT_GUILDS = Object.freeze({
 /** The potions a writ may ask: DFU's twenty less the two made wholly of the Apothecaries' goods. */
 export const WRIT_POTIONS = Object.freeze(POTIONS.filter((p) => brewFirstPays(p)));
 /** The Repair Kits a writ may ask - every metal's (recipeLaw `kit:<metal>`) that can be made: AUDIT CRAFT-WRITS E4 - never
- *  one of a metal nothing yields (marketLaw UNYIELDED, the Daedric ingot), a writ no smith could fill. */
-export const WRIT_KITS = Object.freeze(RECIPES.filter((r) => r.product === 'kit' && !r.inputs.some((i) => UNYIELDED.includes(i.key))));
+ *  one of a metal nothing yields (marketLaw UNYIELDED), a writ no smith could fill. DAEDRIC-SMELT (Professions-Arc.md
+ *  section 53): nor one of a metal only the ember makes (professionLaw EMBER_MADE, the Daedric ingot - smelted now, where
+ *  E4 found it unmade): a writ pays its inputs' worth (costOf), and the ember spent is the account's purse, no Stores good
+ *  it could price - so the Fighters Guild asks the Daedric kit of no one, as before. */
+export const WRIT_KITS = Object.freeze(RECIPES.filter((r) => r.product === 'kit' && !r.inputs.some((i) => UNYIELDED.includes(i.key) || EMBER_MADE.includes(i.key))));
 
 /**
  * A writ's product, by its key: `potion:<id>` (alchemyLaw POTIONS), `dish:<id>` (recipeLaw DISHES - either herb's
@@ -329,10 +337,11 @@ export function craftHeldText(/** @type {{ kind: string }} */ w, /** @type {{ pa
     ? t('prof.craftWrit.heldPotion', '{made, number} brewed by you, {pack, number} in your pack', { made: h.made, pack: h.pack })
     : t('prof.craftWrit.heldPiece', '{made, number} of your own in your pack', { made: h.made });
 }
-/** Why Deliver waits, said on its title: what is short. */
+/** Why Deliver waits, said on its title: what is short. A potion is brewed at an alchemy station (FIELD BUGS 2026-10-26):
+ *  a potion maker anywhere else is the client's mix (POTION-DOOR), which the service never sees. */
 export function craftShortText(/** @type {{ kind: string, qty: number }} */ w, /** @type {{ pack: number, made: number }} */ h) {
   if (w.kind === 'potion') {
-    if (h.made < w.qty) return t('prof.craftWrit.shortBrew', 'Brew {n, number} more yourself - found or bought bottles do not count', { n: w.qty - h.made });
+    if (h.made < w.qty) return t('prof.craftWrit.shortBrew', 'Brew {n, number} more yourself at an alchemy station - found or bought bottles do not count', { n: w.qty - h.made });
     return t('prof.craftWrit.shortCarry', 'Carry {n, number} more of these bottles in your pack', { n: w.qty - h.pack });
   }
   return t('prof.craftWrit.shortMake', 'Make {n, number} more yourself - pieces you bought or sold do not count', { n: w.qty - h.made });

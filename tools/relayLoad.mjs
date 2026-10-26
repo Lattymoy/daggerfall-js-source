@@ -8,7 +8,7 @@
 // d1Load.mjs's: questionBook, runBook), and .github/workflows/relay-load.yml asks them with the deploy's token, by hand.
 // It writes nothing.
 //
-//   node tools/relayLoad.mjs --sql <name> [hours]   one question's SQL (kinds | windows | crowds | fulls | storage)
+//   node tools/relayLoad.mjs --sql <name> [hours]   one question's SQL (kinds | windows | crowds | fulls | storage | levels | moves)
 //   node tools/relayLoad.mjs --names                the questions' names, one a line
 //   node tools/relayLoad.mjs --table <name> <file>  an answer (the SQL API's JSON) as a Markdown table
 //   node tools/relayLoad.mjs --hours [hours]        the window a run asks (an empty input is one hour)
@@ -81,7 +81,13 @@ const windowHours = (h) => Math.min(loadHours(h), WINDOW_HOURS_MAX);
  * - storage (FIELD BUGS 2026-10-21c, the rooms' resets: 877 "Internal error in Durable Object storage caused object to
  *   be reset" on the evening of 2026-10-20, cause not found): the forty room-windows that wrote storage most - when,
  *   which kind, its reads and writes and the sockets it held - so a night of resets is read beside the rooms that were
- *   writing then (the resets themselves are Workers Observability's, not this dataset's).
+ *   writing then (the resets themselves are Workers Observability's, not this dataset's);
+ * - levels (COST-2 part two, bible/11-Multiplayer/Scale-Arc.md): the cells' objects by their node's level (blob11: 0 a
+ *   fine cell, 1-4 a coarse node, '' a relay before COST-2 or a room woken by its alarm alone) - the room-windows each
+ *   level was awake (over 12 an hour: its objects awake on the mean), the sockets and the most one held, the sockets
+ *   refused full, the poses and the sends - so the seed's before and after are read side by side;
+ * - moves (COST-2 part two): the cell directory's moves made and moves its nodes' rows blocked (blob12, blob13), over the
+ *   points that carry them (`blob12 != ''`: a relay before part two wrote none).
  */
 export const QUESTIONS = Object.freeze([
   ['kinds', 'The rooms by kind (sends, most first)', ['kind', 'room_windows', 'peak', 'hellos', 'busy', 'room_full', 'refused', 'drops', 'poses', 'sends', 'sends_per_pose', 'mb_out', 'storage'],
@@ -94,6 +100,10 @@ export const QUESTIONS = Object.freeze([
     (h) => `SELECT blob1 AS kind, ${B.fulls} AS fulls, ${B.fullDrops} AS full_drops, ${B.held} AS held, ${B.heldSent} AS held_sent, ${B.heldGone} AS held_gone, IF(${B.heldSent} > 0, ${B.heldMs} / ${B.heldSent}, 0.0) AS wait_ms, ${B.beats} AS beats, ${B.hitDrops} AS hit_drops FROM ${DATASET} WHERE ${since(h)} AND blob6 != '' GROUP BY kind ORDER BY fulls DESC LIMIT 40`],
   ['storage', 'The room-windows that wrote storage most (writes, most first)', ['stamp', 'kind', 'writes', 'reads', 'room_sockets', 'room_peak'],
     (h) => `SELECT timestamp AS stamp, blob1 AS kind, double11 AS writes, double10 AS reads, double2 AS room_sockets, double15 AS room_peak FROM ${DATASET} WHERE ${since(h)} ORDER BY writes DESC LIMIT 40`],
+  ['levels', 'The cells by their node\'s level (COST-2: 0 a 16-pixel cell, 1-4 a coarse node)',['kind', 'level', 'room_windows', 'sockets', 'peak', 'room_full', 'poses', 'sends'],
+    (h) => `SELECT blob1 AS kind, blob11 AS level, ${W.n} AS room_windows, ${W.sockets} AS sockets, MAX(double15) AS peak, ${W.full} AS room_full, ${W.poses} AS poses, ${W.sends} AS sends FROM ${DATASET} WHERE ${since(h)} AND blob1 = 'world' GROUP BY kind, level ORDER BY level LIMIT 10`],
+  ['moves', 'The cell directory\'s moves (COST-2 part two)',['kind', 'points', 'moves', 'blocked'],
+    (h) => `SELECT blob1 AS kind, ${W.n} AS points, SUM(_sample_interval * toUInt32(blob12)) AS moves, SUM(_sample_interval * toUInt32(blob13)) AS blocked FROM ${DATASET} WHERE ${since(h)} AND blob1 = 'cells' AND blob12 != '' GROUP BY kind LIMIT 1`],
 ]);
 
 const book = questionBook(QUESTIONS);

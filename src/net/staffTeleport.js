@@ -4,7 +4,8 @@
 import { privateInteriorOf } from './privateInterior.js';
 import { boatUid, readSailingCabin } from './boatIdentity.js';
 import { instanceOfWord, instanceOf, instanceWord } from './instanceRoom.js';   // INSTANCES (the audit): a place's instance, where the player stands in one
-import { validPartyPose, gatePixelOk } from './wire.js';   // STAFF-PANEL5-FOLLOW: a where note, as the hub keeps it; WW2: a gate's pixel, its lane's map
+import { validPartyPose, gatePixelOk, worldPixelOk } from './wire.js';   // STAFF-PANEL5-FOLLOW: a where note, as the hub keeps it; WW2: a gate's pixel, its lane's map; AUDIT RELEASE R2-1: the world's pixel
+import { GATE_COURTS_MAX } from './gate/gateCourts.js';   // AUDIT GATE-COURTS C6: a court's number on a staff landing - gateCourts.js imports nothing
 import { t } from '../systems/textManager.js';   // STAFF-PANEL5-FOLLOW-FIX: a finished /tp's line in the player's language (L10N4)
 export const STAFF_TP_RELAY_MIN = 159;   // world156 now belongs to upstream's arena; unpublished local candidates through 158 are superseded by the combined law.
 export const STAFF_TP_TIMEOUT_MS = 8000;
@@ -20,7 +21,11 @@ const token = (v) => typeof v === 'string' && /^[a-zA-Z0-9_-]{1,64}$/.test(v);
 const finite = (v) => Number.isFinite(v) && Math.abs(v) <= 1e9;
 const integer = (v, max = 0xffffffff) => Number.isSafeInteger(v) && v >= 0 && v <= max;
 const point = (v, length = 3) => Array.isArray(v) && v.length === length && v.every(finite);
-const pixel = (v) => v && integer(v.x, 999) && integer(v.y, 499);
+/** AUDIT RELEASE R2-1 (bible/01-Overview/audits/Audit-Release-R2.md): a destination's map pixel is the WORLD's (net/wire.js
+ *  worldPixelOk - the Bay's map and every province past it, TAMRIEL2's streamed land), not the Bay's 0..999 x 0..499 - staff
+ *  could not /tp to a player past the Bay (Cyrodiil's open zone among them): the target's game answered `unavailable`, and a
+ *  where note there was a note this build "could not place". */
+const pixel = (v) => v && worldPixelOk(v.x) && worldPixelOk(v.y);
 const label = (v) => typeof v === 'string' && v.trim().length > 0 && v.length <= 64 && !/[\x00-\x1f\x7f]/.test(v);
 /** INSTANCES (the audit): the instance a building or a dungeon destination stands in (net/instanceRoom.js instanceWord's
  *  `<owner>.<epoch>`) - staff land in the player's own room, which admits staff, never its public twin; absent, public. */
@@ -76,7 +81,8 @@ export function validStaffDestination(d) {
   if (d.kind === 'gate') {
     const g = d.gate;
     if (!g || !integer(g.day) || !gatePixelOk(g.day, g.px, g.py) || !point(g.spot, 2) || (g.near != null && g.near !== '' && !label(g.near))) return null;   // WW2: a gate past the Bay stands on a world pixel
-    return { ...out, gate: { day: g.day, px: g.px, py: g.py, spot: [...g.spot], near: g.near ?? '' } };
+    if (g.c != null && !integer(g.c, GATE_COURTS_MAX - 1)) return null;   // AUDIT GATE-COURTS C6: the court the player stands in
+    return { ...out, gate: { day: g.day, px: g.px, py: g.py, spot: [...g.spot], near: g.near ?? '', ...(g.c ? { c: g.c } : {}) } };
   }
   if (d.kind === 'abyss') {
     const a = d.abyss;
@@ -175,7 +181,7 @@ export function staffDestinationKey(d) {
   const site = `${d.kind}:${d.pixel.x},${d.pixel.y}`;
   if (d.kind === 'interior') return `${site}:${JSON.stringify(d.sailingCabin ? [d.sailingCabin.uid, d.sailingCabin.hull, d.sailingCabin.origin, d.cabinOwner] : [d.door, staffLayout(d.layout)])}:${d.privateRoom ?? ''}:${d.ins ?? ''}`;   // INSTANCES: and its instance - the same door, another room
   if (d.kind === 'dungeon') return `${site}:${d.mapId}:${d.locationKey ?? ''}:${d.ins ?? ''}:${d.whole ? 'w' : ''}`;
-  if (d.kind === 'gate') return `gate:${d.gate.day}`;
+  if (d.kind === 'gate') return `gate:${d.gate.day}.${d.gate.c ?? 0}`;
   if (d.kind === 'abyss') return `${site}:${d.abyss.PitMapX},${d.abyss.PitMapY}:${d.abyss.TemplateRegionIndex},${d.abyss.TemplateLocationIndex}`;
   return site;
 }

@@ -197,11 +197,13 @@ test('TESA2 the map: where a host stands the places, each inked place carries th
   const pick = held.slice(held.indexOf('  _pickAt(sx, sy) {'), held.indexOf('  _renderSearch(entries) {'));
   // PIN MOVED (TESA-NO-FAST): a portal's end on the teleport map alone - the travel map makes no journey past the Bay
   assert.match(pick, /if \(this\._tamriel && !this\._zoneMap && this\.teleportationTravel\) \{/);
-  assert.match(pick, /if \(city\?\.pixel\) \{\n\s+this\._select\(\{ coords: true, x: city\.pixel\.x \+ 0\.5, y: city\.pixel\.y \+ 0\.5, colorIndex: -1, kind: 'coords', name: city\.name, summary: null, mapId: null, arena: true \}\);\n\s+this\._openPanel\('teleport'\);/);
+  // PIN MOVED (PORTAL-ANYWHERE, bible/06-Systems/Portal-Stone.md): the portal's end is the city with a pixel, else - on the
+  // Portal Stone's map alone (`portalLandPastBay`) - the land under the press (systems/travel/pastBayTravel.js portalLandAt)
+  assert.match(pick, /const end = city\?\.pixel \? city : this\.deps\.portalLandPastBay \? portalLandAt\(Math\.floor\(mx\), Math\.floor\(my\)\) : null;\n\s+if \(end\) \{\n\s+this\._select\(\{ coords: true, x: end\.pixel\.x \+ 0\.5, y: end\.pixel\.y \+ 0\.5, colorIndex: -1, kind: 'coords', name: end\.name, summary: null, mapId: null, arena: true \}\);\n\s+this\._openPanel\('teleport'\);/);
   assert.ok(pick.indexOf('// TESA2') < pick.indexOf('// WILD2'), 'before the zone\'s and the coordinates\' own arms');
   assert.match(held, /if \(selected\.coords\) return \{ pixel: \{ x: Math\.floor\(selected\.x\), y: Math\.floor\(selected\.y\) \}, name: selected\.name \};/, 'the journey is to its pixel, by its name');
   // PIN MOVED (AUDIT TESA II M7, M14): the cursor off the city the press would take (_pastBayHover: tamrielCityAt as the sheet inks)
-  assert.match(held, /cursor: this\.teleportationTravel && past\.city\?\.pixel \? 'pointer' : ''/);
+  assert.match(held, /cursor: this\.teleportationTravel && \(past\.city\?\.pixel \|\| \(this\.deps\.portalLandPastBay && portalLandAt\(px, py\)\)\) \? 'pointer' : ''/);   // PIN MOVED (PORTAL-ANYWHERE): and on the stone's map its land
   assert.match(held, /city: at\.on === 'city' \? tamrielCityAt\(mx, my, this\._view, ink, \{ filters: this\.filters, continent \}\) : null/);
   // WW7-6: a seat past the Bay answers with its card, as the Bay's (SEAT-TIP) - off the city the press would take
   assert.match(held, /const seat = past\.city\?\.mapId != null \? this\.deps\.seatAt\?\.\(\{ mapId: past\.city\.mapId \}\) \?\? null : null;/);
@@ -217,15 +219,15 @@ test('TESA2 the host: offline on the land beyond the Bay it stands the places - 
   const fn = w.slice(w.indexOf('  function arenaLocationAt(px, py) {'), w.indexOf('\n  }\n', w.indexOf('  function arenaLocationAt(px, py) {')) + 4);   // PIN MOVED (HOST-SPLIT, at the merge of main): the place law is scenes/tamrielPlacesHost.js's, its live names through host
   assert.match(fn, /if \(place && had\.arena\.provinceIndex === place\.provinceIndex && had\.arena\.id === place\.id && had\.arena\.port === !!place\.port\) return had;[^\n]*\n\s+host\._locIndexGen \+= 1;\n\s+locationIndex\.delete\(key\);/,   // PIN MOVED (TESA6): a city made a port is cloned again
     'one clone a pixel, and out of the index when its place goes');
-  assert.match(fn, /const regionIndex = maps\.getRegionIndexAt\(px, py\);\n\s+const loc = outlineTownLocation\(synthesizeArenaLocation\(template, place, \{ regionIndex, regionName: REGION_NAMES\[regionIndex\], politic: 128 \+ regionIndex, climate: getWorldClimateSettings\(maps\.getClimateIndex\(px, py\)\) \}\), blockOf, \{ round: imperialOutskirts\(px, py\) \}\);/);   // PIN MOVED (TOWN-SHAPES TS3): laid as its own outline of blocks (townoutline); TS5: round in the Imperial City's outskirts
+  assert.match(fn, /const regionIndex = maps\.getRegionIndexAt\(px, py\);\n\s+const loc = outlineTownLocation\(synthesizeArenaLocation\(template, place, \{ regionIndex, regionName: REGION_NAMES\[regionIndex\], politic: 128 \+ regionIndex, climate: townClimateAt\(px, py, getWorldClimateSettings\(maps\.getClimateIndex\(px, py\)\)\) \}\), blockOf, \{ round: imperialOutskirts\(px, py\) \}\);/);   // PIN MOVED (TOWN-SHAPES TS3): laid as its own outline of blocks (townoutline); TS5: round in the Imperial City's outskirts; PIN MOVED (URBANIZER U1): its buildings in its province's set (world/urban/townLook.js townClimateAt)
   assert.match(fn, /locationIndex\.set\(key, loc\);\n\s+return loc;/);
   assert.match(w, /location: dfLocation \? dfLocation\.name : null,\n\s+arenaSlot: dfLocation\?\.arena \?\? null,\n/, 'the built pixel keeps its Arena slot - beside, never over, the colosseum\'s `arena` (ARENA2)');
-  assert.equal((w.slice(w.indexOf('    built.set(key, {'), w.indexOf('    });', w.indexOf('    built.set(key, {'))).match(/^\s+arena: /gm) ?? []).length, 1, 'the colosseum\'s origin is the entry\'s one `arena`');
+  assert.equal((w.slice(w.indexOf('    swap.publish(px, py, key, made, {'), w.indexOf('    });', w.indexOf('    swap.publish(px, py, key, made, {'))).match(/^\s+arena: /gm) ?? []).length, 1, 'the colosseum\'s origin is the entry\'s one `arena`');
   const sweep = w.slice(w.indexOf('  function sweepArenaPixels() {'), w.indexOf('\n  }\n', w.indexOf('  function sweepArenaPixels() {')) + 4);   // PIN MOVED (HOST-SPLIT, at the merge of main): the sweeps are scenes/tamrielSweepsHost.js's - the function's own end, read whole
   assert.match(sweep, /if \(now === _swept\.arena\) return;/);
   assert.match(sweep, /if \(onTheBay\(p\.px, p\.py\)\) continue;/);
   assert.match(sweep, /if \(\(place \? `\$\{place\.provinceIndex\}\|\$\{place\.id\}\|\$\{!!place\.port\}` : null\) !== \(p\.arenaSlot \? `\$\{p\.arenaSlot\.provinceIndex\}\|\$\{p\.arenaSlot\.id\}\|\$\{!!p\.arenaSlot\.port\}` : null\)\) again\.push/, 'PIN MOVED (TESA6): and its port');
-  assert.match(sweep, /for \(const k of again\) destroyPixel\(k\.px, k\.py, \{ collectLoose: false \}\);\n\s+host\.queue\.push\(\.\.\.again\.sort\(nearestFirstFrom\(host\.state\.current\)\)\);/);
+  assert.match(sweep, /if \(!again\.length\) return;\n\s+swap\.rebuild\(again\);/);   // PIN MOVED (IC-SWAP-BEHIND): built again behind its view, or torn down and queued nearest first (scenes/swapBehind.js rebuild)
   assert.match(w, /if \(_arenaTemplates && !building\) sweepArenaPixels\(\);/);
   const WAIT = "if ((_arenaTemplates || _countryTemplates || _capitalBase) && params.has('load')) await Promise.race([arenaTraced, new Promise((r) => setTimeout(r, ARENA_LOAD_WAIT_MS))]);";
   assert.ok(w.includes(WAIT), 'PIN MOVED (TESA12: the trace alone - no data to wait for; AUDIT-TESA A7-1: one wait for everything past the Bay) a load waits for the trace');
@@ -256,11 +258,21 @@ test('TESA2 with ARENA2: on the player\'s own trace all 283 places past the Bay 
   // PIN MOVED (AUDIT-TESA A7-2): a capital's place stands on the capital the port built (TESA10's pin); TESA12: a port on
   // its shore (tesa6_ports); every other under its own point
   const { capitalPin, CAPITALS } = await import('../src/world/tamrielCapitals.js');
+  // PIN MOVED (SMOOTH-LAND, test/world/smoothland.test.js): under its own point where the land's smooth law puts that pixel
+  // on its own province's land - else (its point by a coast or a border the smooth law moved off the picture's pixel
+  // corners) on the nearest pixel of its own land, a few pixels off
+  const { provinceKeyBeyondBay } = await import('../src/world/tamriel/tamrielLand.js');
+  let off = 0;
   for (const p of px.stood) {
     if (p.pinned) { const at = capitalPin(p); assert.ok(at && CAPITALS.some((c) => c.name === p.name), p.name); assert.deepEqual([p.bx, p.by], [at.px, at.py], p.name); continue; }
     if (p.port) continue;
-    const [x, y] = pictureToBay(p.px, p.py); assert.deepEqual([p.bx, p.by], [Math.floor(x), Math.floor(y)], p.name);
+    const [x, y] = pictureToBay(p.px, p.py), fx = Math.floor(x), fy = Math.floor(y);
+    assert.equal(provinceKeyBeyondBay(p.bx, p.by), p.province, `${p.name} on its own land`);
+    if (provinceKeyBeyondBay(fx, fy) === p.province) { assert.deepEqual([p.bx, p.by], [fx, fy], p.name); continue; }
+    off++;
+    assert.ok(Math.hypot(p.bx - fx, p.by - fy) <= 8, `${p.name}: ${p.bx - fx}, ${p.by - fy} off its point`);
   }
+  assert.equal(off, 8, 'eight places a few pixels off their point - every other under it');
   const maps = new MapsFile();
   maps.load(await fetchBytes('MAPS.BSA'), await fetchBytes('CLIMATE.PAK'), await fetchBytes('POLITIC.PAK'));
   const rows = [];

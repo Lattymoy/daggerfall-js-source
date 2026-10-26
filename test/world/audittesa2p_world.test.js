@@ -82,19 +82,19 @@ test('AUDIT TESA II P7 THE LIVE LIST: a provider\'s rows read again whenever its
   assert.deepEqual(places.sources(), []);
 });
 
-test('AUDIT TESA II P7/P13 (ARENA2) THE ROWS PAST THE BAY on the freeware\'s trace: every capital\'s every slice (the Imperial City\'s forty-nine) and every other place a template clones, never a capital\'s pinned place twice; the 28 ports; on the registry each a town of its province\'s area - its people named by its province\'s bank, not its region\'s number read as an area (mutants: the slices; the pinned kept; the port\'s word; the area)', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
+test('AUDIT TESA II P7/P13 (ARENA2) THE ROWS PAST THE BAY on the freeware\'s trace: every capital\'s every slice (the Imperial City\'s six hundred and twenty-five - PIN MOVED, IC-GRAND; TS5\'s forty-nine) and every other place a template clones, never a capital\'s pinned place twice; the 28 ports; on the registry each a town of its province\'s area - its people named by its province\'s bank, not its region\'s number read as an area (mutants: the slices; the pinned kept; the port\'s word; the area)', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
   await freewareTrace();
   const t = arenaTemplates(gameRows());
   const px = arenaPixels();
   const rows = pastBayPlaceRows({ pixels: px, templateOf: (p) => arenaTemplateOf(t, p), capitals: true });
   const slices = CAPITALS.reduce((n, c) => n + capitalSpan(c) ** 2, 0);
   const pinned = px.stood.filter((p) => p.pinned).length;
-  assert.deepEqual([rows.length, slices, pinned], [px.stood.length - pinned + slices, 55, 7], 'the slices, and the stood places but the pinned');   // PIN MOVED (TS5): the Imperial City seven pixels a side
+  assert.deepEqual([rows.length, slices, pinned], [px.stood.length - pinned + slices, 631, 7], 'the slices, and the stood places but the pinned');   // PIN MOVED (TS5): the Imperial City seven pixels a side; PIN MOVED (IC-GRAND): twenty-five (625 and the other six capitals' six)
   const ic = CAPITALS.findIndex((c) => c.name === 'Imperial City'), at = capitalPin({ name: CAPITALS[ic].name, province: CAPITALS[ic].province });
   const icRows = rows.filter((r) => isCapitalPlaceId(r.mapId) && (r.mapId & 0x7ffff) % 16 === ic);   // capitalPlaceId: k + 16 a slice
   assert.equal(icRows.find((r) => r.px === at.px && r.py === at.py)?.mapId, capitalPlaceId(ic, 0), 'the centre its capital\'s own id');
-  const span = capitalSpan(CAPITALS[ic]), h = (span - 1) / 2;   // PIN MOVED (TS5): seven a side
-  assert.equal(icRows.length, 49, 'the Imperial City\'s forty-nine');
+  const span = capitalSpan(CAPITALS[ic]), h = (span - 1) / 2;   // PIN MOVED (TS5): seven a side; PIN MOVED (IC-GRAND): twenty-five
+  assert.equal(icRows.length, 625, 'the Imperial City\'s six hundred and twenty-five');
   assert.deepEqual(icRows.map((r) => [r.px - at.px, r.py - at.py]).sort(), Array.from({ length: span * span }, (_, s) => [s % span - h, Math.floor(s / span) - h]).sort());
   assert.ok(icRows.every((r) => r.type === LOCATION_TYPES.TownCity && r.w === 8 && r.h === 8));
   for (const p of px.stood.filter((q) => q.pinned)) assert.ok(!rows.some((r) => r.mapId === arenaPlaceId(p)), `${p.name} stands as its capital alone`);

@@ -537,7 +537,7 @@ test('AUDIT STARTS P11/W5 the quest layer\'s start seam: a start\'s site id name
   let latchedDuring = null;
   const host = {
     params: new URLSearchParams(), maps: { getLocation: () => null }, blocks: { getBlockByName: () => null },
-    startLairAt: (start, usable) => { asked.push([start.key, typeof usable]); return lair; },
+    provinceQuestPlaces: { startLairAt: (start, usable) => { asked.push([start.key, typeof usable]); return lair; } },   // PIN MOVED (AUDIT RELEASE R2-5, hostseam): the start lair rides the places past the Bay
     _respawnAtSite: async () => { latchedDuring = host._respawning; },
   };
   const { questWorld: qw } = createQuestWorld(host);
@@ -556,6 +556,8 @@ test('AUDIT STARTS P11/W5 the quest layer\'s start seam: a start\'s site id name
 // ── the sea lanes ────────────────────────────────────────────────
 
 const VOYAGE = { start: 'sea', goal: 'land', voyage: true, again: false };
+/** PIN MOVED (PLAN-SLICES): the most cells a voyage's plan spends (its floods, its lanes and its landfall - travelRoute.js `tally`). */
+const VOYAGE_CELLS_MAX = 450000;   // measured 392,822 and 393,363 (the two floods and the lanes): some twenty frames at PLAN_FRAME_CELLS
 /** A ladder that says it was climbed. */
 const ladder = (rungs = [6, 20, 60]) => { const seen = { climbed: false }; return { seen, margins: { [Symbol.iterator]: () => { seen.climbed = true; return rungs[Symbol.iterator](); } } }; };
 const stepsSailed = (plan, isWater) => {
@@ -701,8 +703,8 @@ test('AUDIT STARTS V4/V7 on the freeware\'s Tamriel: from the nearest open water
     assert.equal(ports.length, 28);
     const home = openWaterNear(t.dp, t.rg.isWater);
     assert.ok(home, 'Daggerfall\'s harbor');
-    let slowest = 0;
-    const timed = (f, to) => { const t0 = performance.now(); const plan = planRoute(f, to, { ...t.rg, sea: VOYAGE }); slowest = Math.max(slowest, performance.now() - t0); return plan; };
+    let most = 0;   // PIN MOVED (PLAN-SLICES): a plan's cells, an op count - the journey's plan is made a slice of PLAN_FRAME_CELLS a frame, and a clock on a shared runner is a flake
+    const timed = (f, to) => { const tally = { n: 0 }; const plan = planRoute(f, to, { ...t.rg, sea: VOYAGE, tally }); most = Math.max(most, tally.n); return plan; };
     const ashoreOnce = (plan, name) => {
       const fall = plan.kinds.indexOf('landfall');
       assert.ok(fall > 0 && plan.kinds.slice(0, fall).every((k) => k === 'sea') && !plan.kinds.slice(fall + 1).some((k) => k === 'sea' || k === 'landfall'), `${name}: sailed, then ashore once`);
@@ -723,7 +725,7 @@ test('AUDIT STARTS V4/V7 on the freeware\'s Tamriel: from the nearest open water
       const beside = t.rg.isWater(port.x, port.y) && !t.rg.isWater(end.x, end.y) && Math.max(Math.abs(end.x - port.x), Math.abs(end.y - port.y)) <= VOYAGE_LANDFALL_PX;
       assert.ok(onIt || beside, `${p.name}: ashore at it (${end.x},${end.y} for ${port.x},${port.y})`);
     }
-    assert.ok(slowest < 1500, `the slowest plan ${slowest.toFixed(0)} ms`);
+    assert.ok(most <= VOYAGE_CELLS_MAX, `the largest plan ${most} cells`);
   } finally { setArenaStanding(false); t.reset(); }
 });
 

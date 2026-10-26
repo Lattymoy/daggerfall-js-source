@@ -21,6 +21,7 @@ import { wildInside, wildNear, wildRingAt, maskWorldBox } from '../../../src/sys
 import { cyrodiilMask } from '../../../src/systems/wild/cyrodiilZone.js';
 import { wildRisePicks } from '../../../src/systems/wild/wildDeath.js';
 import { HAS_ARENA2, loadMaps } from '../../arena1Data.mjs';
+import { hostText } from '../../hostText.mjs';
 
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const FELL = { r: '0123456789ab', by: 'peer-0002', room: 'world:400,120', at: 1 };
@@ -60,7 +61,7 @@ test('AUDIT FOE-KEEPS H1 THE KILL IS THE REFEREE\'S WORD, WHENEVER IT COMES: hea
 });
 
 test('AUDIT FOE-KEEPS H1 H2 H4 THE HOST: the referee\'s fall goes to the zone\'s word, never a window the first dead frame must meet; the rise skips the usual tenth at a kill and rises out of the zone at one whose death found no room; a take is a kill; a Resurrect after a kill spares nothing it did not (mutants: the window back; the rise reading the screen\'s name; the take no kill; the Resurrect reading the stated loss)', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');   // PIN MOVED (HOST-SPLIT): my take's answer in scenes/wildDropHost.js, read with its host
   assert.ok(w.includes('      wildDeathAtHand({ r: g.r, by: g.by, room, at: Date.now() }, peerName(g.by));'), 'my fall, the referee\'s word, kept beside the kill');
   assert.ok(!/_wildFell\b/.test(w), 'no second copy of the fall in the host');
   assert.ok(w.includes('    const fell = wildFallHeard();'), 'the first dead frame reads any fall since the last rise');
@@ -82,8 +83,8 @@ test('AUDIT FOE-KEEPS O1 H5 O4 O5 N6 THE WORDS: a foe\'s death says nothing drop
   assert.deepEqual(page().body, [
     // PIN MOVED (WORLD-WIDE folded into TESA, #1184): the zone Cyrodiil, in English and German alike
     'Players may fight one another in Cyrodiil and on the open Eltheric Ocean, where monsters are tougher and spoils richer.',
-    'If another player kills you there, your bag drops (your cart too, if with you) with a tenth of your gold, and they may take one worn item. Any other death costs the usual tenth.',
-  ]);
+    'If another player kills you there, your bag drops with a tenth of your gold, and they may take one worn item. Your cart, companions\' packs and insured gear are kept. Any other death costs the usual tenth.',
+  ]);   // PIN MOVED (STORE-KEEPS, WILD-INSURE, 2026-10-26): the cart and the packs are storage, kept; insured gear kept - PIN MOVED (TUT1): "companions' packs", the page under sixty words
   tm.patchLocaleTable('de', 'Port_Strings', tm.loadStringTableCsv(rd('locales/de/Port_Strings.csv')));
   try {
     tm.setLocale('de');
@@ -226,7 +227,7 @@ test('AUDIT FOE-KEEPS LETTERS-TENTH (the owner left it to the audit: "Your choic
   const keep = (it) => it.uid === '00000000000000c4';
   const e = sheet(), twin = sheet();
   const d = takeWildDeath(e, -1, keep, null, { letters: true });
-  assert.deepEqual(d.gold, { purse: 100, cart: 0, letters: { '00000000000000c1': 5_000 } });
+  assert.deepEqual(d.gold, { purse: 100, letters: { '00000000000000c1': 5_000 } });   // PIN MOVED (STORE-KEEPS): no cart's share to say
   assert.deepEqual(d.taken.map((it) => [it.group, it.stackCount]), [['Currency', 100 + 5_000]], 'one pile: the purse\'s tenth and the letter\'s - no letter taken');
   assert.deepEqual(e.items.map((it) => it.value), [45_000, 7, 9_000, 20_000], 'the letter lowered by its tenth, the rest whole, every one still in the wallet');
   // the game's own take: exactly that, by the letter's id
@@ -244,7 +245,7 @@ test('AUDIT FOE-KEEPS LETTERS-TENTH (the owner left it to the audit: "Your choic
   assert.deepEqual(od.taken.filter((it) => it.uid).map((it) => [it.uid, it.value]), [['00000000000000c1', 50_000], ['00000000000000c2', 7]], 'dropped whole');
   // my game says the word
   assert.equal(WILD_FALL_LETTERS, 1);
-  assert.equal(wildFallWords(false, null, null).letters, WILD_FALL_LETTERS);
+  assert.equal(wildFallWords().letters, WILD_FALL_LETTERS);   // PIN MOVED (STORE-KEEPS): the words carry no wagon
 });
 
 test('AUDIT FOE-KEEPS LETTERS-TENTH THROUGH THE SERVICE: the fallen\'s own ask with the word takes the letter\'s tenth off the record and answers it by the letter\'s id; asked again, the same; without the word, the letter whole; a seizure - which no game applies - takes the tenth (mutants: the service\'s word unread; the answer\'s letters unsaid; a seizure taking it whole)', async () => {

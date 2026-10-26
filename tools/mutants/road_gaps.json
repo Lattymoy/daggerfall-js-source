@@ -1,0 +1,76 @@
+[
+  {
+    "name": "ROAD-GAPS-the-gap-wider",
+    "file": "src/world/road/roadGaps.js",
+    "old": "export const LINK_GAP = 3;",
+    "new": "export const LINK_GAP = 4;",
+    "tests": [
+      "test/world/road/road_gaps.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-GAPS-one-piece-linked-to-itself",
+    "file": "src/world/road/roadGaps.js",
+    "old": "        if (root[j] < 0 || find(i) === find(j)) continue;",
+    "new": "        if (root[j] < 0) continue;",
+    "tests": [
+      "test/world/road/road_gaps.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-GAPS-a-road-to-a-track-a-road",
+    "file": "src/world/road/roadGaps.js",
+    "old": "        const kind = net.roads[i] && net.roads[j] ? net.roads : net.tracks;",
+    "new": "        const kind = net.roads[i] || net.roads[j] ? net.roads : net.tracks;",
+    "tests": [
+      "test/world/road/road_gaps.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-GAPS-through-a-path",
+    "file": "src/world/road/roadGaps.js",
+    "old": "        if (way.slice(1, -1).some(([a, b]) => blocked(a, b) || root[b * W + a] >= 0) || way.some(([a, b]) => blocked(a, b))) continue;",
+    "new": "        if (way.some(([a, b]) => blocked(a, b))) continue;",
+    "tests": [
+      "test/world/road/road_gaps.test.js"
+    ],
+    "equivalent": true,
+    "why": "A path pixel on the straight way within LINK_GAP is a nearer candidate itself: another piece's is linked to first (nearest first), and the source's own piece's - a bend of its own road nearer the target - links from there when its turn in reading order comes. The pieces end the same; the check keeps a link from being laid across the source's own road, a second band of bits through it."
+  },
+  {
+    "name": "ROAD-GAPS-over-the-water",
+    "file": "src/world/road/roadGaps.js",
+    "old": "        if (way.slice(1, -1).some(([a, b]) => blocked(a, b) || root[b * W + a] >= 0) || way.some(([a, b]) => blocked(a, b))) continue;",
+    "new": "        if (way.slice(1, -1).some(([a, b]) => root[b * W + a] >= 0)) continue;",
+    "tests": [
+      "test/world/road/road_gaps.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-GAPS-any-core",
+    "file": "src/world/road/roadGaps.js",
+    "old": "      if (root[i] < 0 || !owns(u, v)) continue;",
+    "new": "      if (root[i] < 0) continue;",
+    "tests": [
+      "test/world/road/road_gaps.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-GAPS-the-pieces-unjoined-after",
+    "file": "src/world/road/roadGaps.js",
+    "old": "        for (const [a, b] of way) { const k = b * W + a; if (root[k] < 0) root[k] = k; join(i, k); }\n",
+    "new": "",
+    "tests": [
+      "test/world/road/road_gaps.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-GAPS-unwired",
+    "file": "src/world/tamrielRoads.js",
+    "old": "  const linked = linkGaps(net, MAP_W, MAP_H, {",
+    "new": "  const linked = 0 && linkGaps(net, MAP_W, MAP_H, {",
+    "tests": [
+      "test/world/road/road_gaps.test.js"
+    ]
+  }
+]

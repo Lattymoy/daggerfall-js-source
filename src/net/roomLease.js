@@ -34,10 +34,10 @@
 import { _b64url, ID_RE } from './identityToken.js';
 import { isSocialRoom, LEASE_WIRE_MAX } from './wire.js';
 
-/** How often a game asks its hub for a lease. */
-export const LEASE_MS = 30_000;
-/** A lease's life, seconds - three asks, so one lost on the way costs nothing. */
-export const LEASE_LIFE_S = 90;
+/** How often a game asks its hub for a lease, and only while the hub's welcome says the lease door is on. */
+export const LEASE_MS = 120_000;
+/** A lease's life, seconds - two asks and a margin, so one lost on the way costs nothing. */
+export const LEASE_LIFE_S = 300;
 /** The fewest ms between two lease frames a room reads from one socket (an ask minted, or a lease checked) - an honest game
  *  says one every LEASE_MS. */
 export const LEASE_FRAME_MIN_MS = 5_000;

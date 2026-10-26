@@ -21,7 +21,7 @@ Every one of these is a standing call of Mac's, and no slice moves it:
 
 1. **The source sets the odds, never the player** (`Loot-Rarity.md`, LR1). A signature drop steers WHICH Legendary a
    source's kind of foe yields, never whether; the drought multiplies the source's OWN Legendary chance, so a rat's
-   stays a rat's; a champion is a source, stronger because it is.
+   stays a rat's; a champion is a source, stronger because it is. LOOT-GATE (2026-10-25, Dudey; Port-Ledger A LOOT-GATE) departs from it: the roller's level now holds Rare and Legendary back for a young character. Recorded by AUDIT UPDATE (`01-Overview/audits/Audit-Update-2026-10-25.md` U1) as OPEN for Mac's ruling - this law is his standing call. The gate's levels and factors are never published (CLAUDE.md LOOT-GATE).
 2. **Shops and quest rewards do not roll** (LR1). The Reforge is a service on a piece the player already owns; no
    shelf is stocked, nothing is rolled for sale.
 3. **A craft reaches Rare at most** (`Professions-Arc.md` law 7). Nothing here makes a Legendary: an imprinted Rare
@@ -188,8 +188,11 @@ more and a quarter again. LOOT7's Rare-or-better guarantee is gone. The numbers 
 `06-Systems/Searchables.md`.
 
 **Online.** A dungeon's foes are its layout's, built on every client from the location (the elite's way): the
-champion and its trait are a HASH of the location and the marker, so every client stands the same champion with no
-wire word. A foe in the street or a building is its owner's: the owner's hash says it, and the foe record carries its trait
+champion and its trait are a HASH of the location and the marker, so every client marks the same foe with no wire
+word. CHAMP-BASE (2026-10-25, `01-Overview/bugs/Field-Bugs-2026-10-25b.md`): each client stands the mark at its own
+build's level, and a class foe is built at its builder's, so a character under level 3 stands no champion there; the
+room's shared base of the body asks the mark at the room's level (`scenes/roomLootHost.js` `roomBodyBase`), one base
+for everyone. A foe in the street or a building is its owner's: the owner's hash says it, and the foe record carries its trait
 (`cp`, sent only when set) to every puppet, which wears the same scaling, so a puppet's blow resolved on my side is a
 champion's. Said so: when a dying owner hands a street foe over, its carried loot does not travel (the hand-over's
 own law), so a champion adopted mid-fight carries none.
@@ -197,7 +200,9 @@ own law), so a champion adopted mid-fight carries none.
 ## 10. LOOT8 - the drought
 
 Bad-luck protection. Every eligible piece (a weapon, armour, jewellery - LR1's eligibility) the player TAKES from a
-body or a pile below Legendary adds one to the character's drought; a Legendary or better taken empties it. At every
+body or a pile below Legendary adds one to the character's drought; a Legendary or better taken empties it. (LOOT-GATE,
+2026-10-25: a young character's takes below Legendary add nothing, so no pity builds while the gate holds the top tiers
+back - and a Legendary taken still empties it, AUDIT UPDATE L6.) At every
 source door, the Legendary threshold is multiplied by `1 + 0.2 x floor(drought / 25)`, at most x3 - after 25 pieces
 x1.2, after 250 x3 - and never above the Rare threshold (the ladder never inverts). Counted at the TAKE because a
 body's loot is rolled when its foe is spawned (`hostCombat.spawnEnemyLoot`): counting the rolls would fill the
@@ -552,8 +557,10 @@ damage door, so a shield, a ward and a death save see it as any hurt; never a pe
 
 **Who.** A dungeon's: `markDungeonChampions` marks the layout's records by an FNV hash of the location id and the
 marker's index - one in fourteen (`CHAMPION_PER_MILLE` 70; CHAMP-RATE, was 50), its trait from the hash's high bits - so every client
-stands the same champions with no wire word, and a mark rides its record through a rebuild. Every build arm of
-`applyEliteScaling` stands it, an elite dungeon's onto the elite's scaling. A quest's foe is never in the layout. The
+marks the same records with no wire word, and a mark rides its record through a rebuild. Every build arm of
+`applyEliteScaling` stands it, an elite dungeon's onto the elite's scaling, at the build's level (CHAMP-BASE: a class
+foe's is its builder's, and a room's shared base asks the mark again at the room's - `championTraitFor`, the gate's one
+home). A quest's foe is never in the layout. The
 street's: an ordinary encounter's foe (`capped` - never a quest's, a summons, a placed camp's or a replacement) is
 `rollStreetChampion`'s - the same mixer over where it stands, its type and the pool's count of them, NEVER a draw:
 the pool's stream (its loot, its kit) draws as it did, and a seeded test's street stands the same foes every run
@@ -749,6 +756,21 @@ doubling price, every line's press), `tech1_roster` (a technique's line not offe
 `tools/mutants/affixlines.json` (36, all dead); `loot9.json` re-aimed (three records whose law was inverted renamed and
 aimed at the new one; LOOT9-carried-kind-again equivalent as recorded - its guard is belt-and-braces beside the draw's
 weights); AUDIT LOOT II A4 pinned from its other side (a gem's kind free for the piece's own lines).
+
+**NAME-KEPT (FIELD BUGS 2026-10-25i item 1; SaberGGaming again: "if you've renamed your item it will revert it back
+into its original name"; reworked by AUDIT FB1025i A1-A5)**: the reforge named a Magic or Rare piece again from its
+TEMPLATE (`rarityName`), so a name the Item Maker gave (RenameItem) was lost, a Masterwork's own name ("Silver Ring"
+under its maker's mark) took the ladder's words its mint withholds, and a crafted jewel lost its metal and gem. The law
+now (`lootRarity.js` linesName): a name is the ladder's - at most one of its tier's prefix words and one of its suffix
+words around the piece's BASE, read off the piece (a crafted jewel's recipe name, a Masterwork's bare template, else the
+RRI word and the template; an older save's bare template besides) - or it is the piece's own and stands. The ladder's is
+built again from the piece's own lines (a set gem's never - AUDIT GEM), a Masterwork's base alone. The first cut parsed
+a name by the lines it had: a curse's line added after the name, an unset gem's word, an older reforge's damage and a
+partial rename ("Porter's Pride") each came out wrong (the audit's A1-A5). The Imbue keeps a name of the piece's own too
+(`reforge.js` imbuePiece - a questline's named reward), and a load gives a crafted piece the old law broke its own
+base's name back (`repairCraftedNames`, in save.js repairItemLists; never a found piece - a curse's line is added after
+its name by design). `test/systems/loot/fb1025i_namekept.test.js` (9), `tools/mutants/fb1025i_namekept.json` (14: 13
+dead, 1 equivalent as recorded).
 
 ### LOOT10 - the codex, and the imprint (2026-10-01)
 

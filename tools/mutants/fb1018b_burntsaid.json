@@ -21,9 +21,9 @@
   },
   {
     "name": "BURNT-SAID-host-unwired",
-    "file": "src/scenes/world.js",
-    "old": "claimed, held, burnt: d.burnt ? n : 0, letters: out });",
-    "new": "claimed, held });",
+    "file": "src/scenes/wildDropHost.js",
+    "old": "claimed, held, burnt: d.burnt ? n : 0, letters: out, insured, shield: d.shield === true });",
+    "new": "claimed, held, insured, shield: d.shield === true });",
     "tests": [
       "test/systems/fb1018b_burntsaid.test.js"
     ],
@@ -31,7 +31,7 @@
   },
   {
     "name": "BURNT-SAID-risen-old-line",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/wildDropHost.js",
     "old": "townTalk.say(d.burnt ? zoneWord('burntLate', seaRoomOf(room) ? ETHER_KIND : null)() : zoneWord('dropLate', seaRoomOf(room) ? ETHER_KIND : null));",
     "new": "townTalk.say(zoneWord('dropLate', seaRoomOf(room) ? ETHER_KIND : null));",
     "tests": [

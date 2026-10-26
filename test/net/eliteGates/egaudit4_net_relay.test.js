@@ -141,6 +141,7 @@ test('AUDIT EG IV lane3 #2 THE ROOM\'S HELLO HANDS WHAT THE HUB DOES NOT HOLD YE
     refuseIf((id, path) => path === EG_INTERNAL_RCPT);   // the hub does not take the room's tell
     R.room._eg.mem['acct-ann'].recall = 0;   // her recall spent: her fall is final, her end owed while Mac plays on
     await R.raw(annWs, JSON.stringify({ t: 'eg', k: 'fell' }));
+    await R.raw(annWs, JSON.stringify({ t: 'eg', k: 'yield' }));   // PIN MOVED (AUDIT WORLD-EVENTS L1-4): a death lies down first - the fall given in to
     const [r] = rcpts(annWs);
     assert.deepEqual([readEgReceipt(r)?.q, readEgReceipt(r)?.why], ['x', 'fall'], 'her end, handed on her socket');
     assert.equal(R.room._eg.rq.length, 1, 'owed to the hub');

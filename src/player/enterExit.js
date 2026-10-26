@@ -399,7 +399,7 @@ export function floorLanding(collider, pos, maxDist = 10, extraHeight = 0) {
 export const OPEN_GROUND_RINGS = Object.freeze([0, 4, 8, 16, 32, 64, 128, 256]);
 /** UNSTUCK-OUT: the spacing of the spots on a ring (metres along it), and the body's points asked of the solids. */
 export const OPEN_GROUND_STEP = 8;
-export function openGroundNear(collider, x, z, { rings = OPEN_GROUND_RINGS, step = OPEN_GROUND_STEP, dry = null } = {}) {
+export function openGroundNear(collider, x, z, { rings = OPEN_GROUND_RINGS, step = OPEN_GROUND_STEP, dry = null, level = false } = {}) {
   for (const r of rings) {
     const n = r === 0 ? 1 : Math.max(8, Math.round((2 * Math.PI * r) / step));
     for (let i = 0; i < n; i++) {
@@ -407,12 +407,40 @@ export function openGroundNear(collider, x, z, { rings = OPEN_GROUND_RINGS, step
       const px = x + r * Math.cos(a), pz = z + r * Math.sin(a);
       const h = collider.heightAt?.(px, pz);
       if (!Number.isFinite(h) || (dry && !dry(h))) continue;
+      if (level && !levelGroundAt(collider, px, pz, h)) continue;   // PORTAL-ANYWHERE: and, where asked, no cliff
       if (heldInSolid(collider, [px, h, pz])) continue;
       if (collider.sphereOverlaps([px, h + CAPSULE_HEIGHT / 2, pz], CAPSULE_RADIUS)) continue;
       return [px, h, pz];
     }
   }
   return null;
+}
+/** PORTAL-ANYWHERE (bible/06-Systems/Portal-Stone.md; the owner, 2026-10-26: "Anywhere on land"): LEVEL GROUND - the
+ *  terrain LANDING_LEVEL_REACH out on each of four sides of a spot within LANDING_STEEP of its floor (`floor`, the feet's
+ *  height): a cliff's face or its lip, or the top of a rock standing over the terrain, is none (metres). */
+export const LANDING_LEVEL_REACH = 2;
+export const LANDING_STEEP = 1.5;
+export function levelGroundAt(collider, x, z, floor) {
+  for (const [dx, dz] of [[LANDING_LEVEL_REACH, 0], [-LANDING_LEVEL_REACH, 0], [0, LANDING_LEVEL_REACH], [0, -LANDING_LEVEL_REACH]]) {
+    const h = collider.heightAt?.(x + dx, z + dz);
+    if (!Number.isFinite(h) || Math.abs(h - floor) > LANDING_STEEP) return false;
+  }
+  return true;
+}
+/** PORTAL-ANYWHERE: SAFE GROUND for an arrival no place's start markers stand (a Portal Stone's portal to bare land past
+ *  the Bay - DFU's PositionPlayerToLocation "fail back to terrain origin"): feet `feet` at or above the water's height
+ *  `seaY` (the sea's floor, a lake's bed, is no ground), on level ground (levelGroundAt), and open - no static solid
+ *  holding the feet or the head, the torso's sphere clear (openGroundNear's own law). */
+export function safeGroundAt(collider, feet, seaY) {
+  if (!(feet[1] >= seaY)) return false;
+  if (!levelGroundAt(collider, feet[0], feet[2], feet[1])) return false;
+  if (heldInSolid(collider, feet)) return false;
+  return !collider.sphereOverlaps([feet[0], feet[1] + CAPSULE_HEIGHT / 2, feet[2]], CAPSULE_RADIUS);
+}
+/** PORTAL-ANYWHERE: where it is not, the nearest that is - openGroundNear's rings out from (`x`, `z`), each spot dry
+ *  above `seaY` and level as well as open - or null (none within the last ring: the arrival keeps its own landing). */
+export function safeGroundNear(collider, x, z, seaY) {
+  return openGroundNear(collider, x, z, { dry: (floor) => floor >= seaY, level: true });
 }
 /** UNSTUCK-OUT: whether a body standing with its feet at `feet` is held by a static solid (its feet or its head).
  *  DECOR-CLEAR (player/lateSolid.js): `height`, the body's own - a crouched one's head is lower. */

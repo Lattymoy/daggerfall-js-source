@@ -51,7 +51,13 @@ export const TOWN_WALL = Object.freeze({ piece: 25.6, run: 2, marker: Object.fre
  *  low 20 bits of its map id (Arena's places: 500000 and up). */
 export const townWallBlockName = (mapId) => `TESW${((mapId >>> 0) & 0xfffff).toString(36).toUpperCase()}.RMB`;
 export const townWallBlockIndex = (mapId) => 1000000 + ((mapId >>> 0) & 0xfffff);
-export const townWallModelId = (mapId) => 3000000 + ((mapId >>> 0) & 0xfffff);
+/** AUDIT RELEASE R1-1: where the walls' model ids run - 1,000,000 to 2,048,575, under every other run of the port's own
+ *  models (the capitals' 910xxx below it; IC-GRAND's families at 3,000,000 and 3,100,000, world/imperialBlocks.js; URBANIZER's
+ *  fabrics from 5,000,000, world/urban/townFabricStand.js). At 3,000,000 a Bay city's wall (43 of the 410, Knightston's
+ *  3,013,420 among them) answered for one of the Imperial City's cells: a model registered by its id wins over a family's,
+ *  and the pipeline keeps one mesh an id (scenes/dataPipeline.js gpuMeshes). */
+export const TOWN_WALL_MODEL_BASE = 1000000;
+export const townWallModelId = (mapId) => TOWN_WALL_MODEL_BASE + ((mapId >>> 0) & 0xfffff);
 
 // ---------------------------------------------------------------- the line
 
@@ -579,6 +585,16 @@ export function townWallCellsOf(dfLocation) {
   return wall ? (kept.cells ??= townWallCells(wall, kept.w, kept.h)) : null;
 }
 
+/** URBANIZER U3 (world/urban/townFabricStand.js fabricEnds): a city's wall's gates as its wall was registered this session -
+ *  each gate piece's middle and its outward normal (`at`, `out`: the carrier's metres, the location's - its carrier is the
+ *  south-west cell) - or null for a town with no wall of its own. @param {any} dfLocation */
+export function townWallGatesOf(dfLocation) {
+  const held = _walls.get((dfLocation?.mapTableData?.mapId ?? -1) >>> 0);
+  if (!held || !dfLocation.outline?.walled) return null;
+  const wall = held.of();
+  return wall ? wall.pieces.filter((p) => p.model === WALL_MODELS.gate).map((p) => Object.freeze({ at: p.at, out: p.out })) : null;
+}
+
 /**
  * TS6: THE WALL ON A CITY'S TOWN MAP - its blocks (the town map's `[{ x, y, autoMap }]`) each with its wall's cells laid in
  * Daggerfall's wall byte, a copy (the bytes the walk grid carves are the cache's, never touched - ui/exteriorAutomapWindow.js
@@ -599,6 +615,13 @@ export function wallOnTownMap(blocks, cells, w) {
     return bytes ? { ...b, autoMap: bytes } : b;
   });
 }
+
+/** AUDIT TESA III E1-2: ONE BLOCK'S TOWN-MAP BYTES WITH ITS CITY'S WALL LAID - wallOnTownMap's copy for the block at (bx, by),
+ *  else its own bytes (no wall of the city's own, or none of it in this block). A host that carves its walk grid off its
+ *  blocks' bytes alone (scenes/exterior.js, the fixed-city bench: CityNavigation.setBlockData shuts every cell not 0)
+ *  shuts the wall with them - TS7 opened every Bay city's ring on the door's read, its wall bytes with it.
+ *  @param {any} dfLocation @param {number} bx @param {number} by @param {?Uint8Array} autoMap */
+export const wallLaidBytes = (dfLocation, bx, by, autoMap) => wallOnTownMap([{ x: bx, y: by, autoMap }], townWallCellsOf(dfLocation), dfLocation?.exterior?.exteriorData?.width ?? 0)[0].autoMap;
 
 /** TS6: and its walkers - no cell of its wall walked, a gate's neither (Daggerfall's gate blocks carve theirs shut).
  *  @param {{ grid: Uint8Array }} nav @param {?Uint8Array} cells */

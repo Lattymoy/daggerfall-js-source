@@ -99,7 +99,8 @@ export const VENDOR_TEXT = Object.freeze({
  *   mode 'board': { region, regionName, read() -> {ok,data:{rows},error}, nameOf(item), townOf(map), waypoint(row) -> bool,
  *                   waypointKey() -> 'map:key'|null, clearWaypoint() }
  *   mode 'stall': { owner, own, read() -> {ok,data:{vendor,rows},error}, nameOf(item), purse() -> gold|null,
- *                   buy(row) -> {ok,text}, take(row) -> {ok,text}, goods() -> [{item, why?}], put(goodItem, price) -> {ok,text} }
+ *                   buy(row) -> {ok,text}, take(row) -> {ok,text}, goods() -> [{item, why?}], put(goodItem, price) -> {ok,text},
+ *                   settle?() -> {ok,settled,refused} - the market book's kept acts, settled as the stall opens }
  * `ui` the window's: { busy(), run(start), rerender(), nowS(), alive() }.
  * @param {any} v @param {{ busy: () => boolean, run: (start: () => Promise<any>) => Promise<void>, rerender: () => void, nowS: () => number, alive: () => boolean }} ui
  */
@@ -119,6 +120,21 @@ export function createVendorTab(v, ui) {
     st.data = r?.ok ? r.data : st.data;
     st.error = r?.ok ? null : (r?.error ?? 'server');
     ui.rerender();
+  }
+  /** VENDOR-LOST (FIELD BUGS 2026-10-25): THE STALL OPENED SETTLES THE MARKET BOOK'S KEPT ACTS, beside its read, through
+   *  the window's one door (Buy waits for it). A buy whose answer never came is kept, and the session it was lost in
+   *  ended; asked again here, its piece is collected into the pack (net/marketBook.js settle) - at the stall its buyer
+   *  comes back to. Only the Market tab settled before, so a trader's piece waited on the service for good. */
+  function open() {
+    if (stall && v.settle) {
+      ui.run(async () => {
+        const r = await v.settle();
+        if (r?.settled) load();
+        const refused = (r?.refused ?? []).find(Boolean);
+        return { ok: !!r?.ok && !refused, text: refused ? accountRefusalText(refused) : '' };
+      });
+    }
+    return load();
   }
   /** An act through the window's one door, the tab read again on its answer. */
   const act = (start) => ui.run(async () => {
@@ -247,5 +263,5 @@ export function createVendorTab(v, ui) {
     return box;
   }
 
-  return { body, open: load, load, state: st };
+  return { body, open, load, state: st };
 }

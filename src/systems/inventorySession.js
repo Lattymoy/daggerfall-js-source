@@ -37,6 +37,7 @@ import { STORAGE_CONTEXT } from './horse/horseCartLaw.js';   // HCC: the storage
 import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { BAG_CAPACITY, BAG_WORDS, hasBag } from '../net/bagLaw.js';   // BAG1: the Materials Bag, a second list as the wagon is
 import { activeWagonItem } from './wagon/wagonKinds.js';   // CART-SLOT: the Cart cell shows the wagon driven
+import { wildStoreRefusal } from './wild/wildStoreLock.js';   // AUDIT PVP-EASE L2-1: the combat lock on storing (a leaf - the account Worker bundles this law)
 
 /** ItemGroups.Transportation.Small_cart's template index. */
 export const SMALL_CART_TEMPLATE = 93;
@@ -183,6 +184,15 @@ export function groundRefusalOf(deps = {}, state = {}) {
   if (state.usingWagon || state.usingBag || state.chooseOne) return null;   // BAG1: the bag is no floor
   if (deps.loot && !deps.loot.playerOwned) return null;
   return deps.dropRefusal?.() ?? null;
+}
+
+/** AUDIT PVP-EASE L2-1 (the owner chose "Combat lock"): the word against STORING, asked only when the destination is
+ *  storage no death in the open zone takes - the wagon, or a list the host marks `storage` (a companion's pack, a ship's
+ *  hold, a chest) - never the ground, a corpse, a merchant or a choose-one list; the host's own word if it has one, else
+ *  the zone's combat lock (systems/wild/wildStoreLock.js wildStoreRefusal). Taking out is never asked. Null: stored. */
+export function storeRefusalOf(deps = {}, state = {}) {
+  if (state.chooseOne || (!state.usingWagon && deps.loot?.storage !== true)) return null;
+  return deps.storeRefusal ? deps.storeRefusal() ?? null : wildStoreRefusal();
 }
 
 /** COMPANION-WEIGHT (2026-10-01): the destination's own weight limit when it is a storage with one - a companion's pack
@@ -342,6 +352,35 @@ export function planBagToggle(deps = {}, state = {}) {
  * end of a close handler - it has to run on a HAND-OFF too, where the
  * window is being replaced rather than closed.
  */
+/** The chest's own save, if closing it has to wait for the service. Null when the window can go at once. */
+export function lootFinish(loot) {
+  const pending = loot?.finish?.();
+  return pending && typeof pending.then === 'function' ? pending : null;
+}
+
+/** A veil over the game until `lootFinish` settles. Returns the remover. */
+export function chestSaveVeil(text) {
+  if (typeof document === 'undefined' || !document.body) return () => {};
+  const veil = document.createElement('div');
+  veil.setAttribute('data-chest-save', '');
+  veil.textContent = text || 'Saving...';
+  veil.style.cssText = 'position:fixed;inset:0;z-index:39;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);color:#e8dcc0;font:18px serif;pointer-events:all';
+  document.body.append(veil);
+  return () => veil.remove();
+}
+
+/** A second close while the chest is saving does nothing. The real close runs once the save has answered. */
+export function holdChestSave(gate, loot, again) {
+  if (gate?.saving) return true;
+  if (gate?.saved) return false;
+  const pending = lootFinish(loot);
+  if (!pending) return false;
+  gate.saving = true;
+  const clear = chestSaveVeil(loot?.busy);
+  pending.finally(() => { clear(); gate.saving = false; gate.saved = true; again(); });
+  return true;
+}
+
 export function closeSession(deps = {}, state = {}) {
   const loot = deps.loot;
   const icon = state.dropIcon ?? null;

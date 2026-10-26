@@ -49,7 +49,7 @@ test('CLOTH-GEMS law: A MATERIAL KEY A GRADE - the thirty-two graded gems, `gem:
 });
 
 test('CLOTH-GEMS law: THE LOOSE DOOR ALONE - a graded gem is a material a station spends and a withdrawal gives back, and in no market\'s catalogue, no writ\'s choice and no Stores form a pack listing is refused for (mutants: a graded key in MINED_KEYS, the wall lost)', () => {
-  assert.deepEqual(LOOSE_ONLY_KEYS, GRADED_GEMS.map((g) => g.key));
+  assert.deepEqual(LOOSE_ONLY_KEYS, [...GRADED_GEMS.map((g) => g.key), 'part:daedra-heart']);   // PIN MOVED (DAEDRIC-SMELT, Professions-Arc.md section 53): and the Daedra's Heart - loot's word, no door of the service counts one
   assert.ok(LOOSE_ONLY_KEYS.every((k) => looseOnly(k) && withdrawable(k) && !MINED_KEYS.includes(k)));
   assert.equal(looseOnly('gem:ruby'), false, 'DFU\'s own gems are the veins\', every door\'s');
   const catalogue = marketCatalogue().map((m) => m.key);

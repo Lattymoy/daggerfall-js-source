@@ -36,11 +36,13 @@ import { WORLD_MAP_TILE_DIM, sampleHeight } from './terrainTiles.js';   // AUDIT
 import { ecotoneOwner, ECOTONE_REACH } from '../ecotone.js';   // ECOTONE1: which climate owns a tile at a border
 import { tileDistance } from '../townShape.js';   // TS6: a town's clearing round its own outline
 
-const MAX_STEEPNESS = 50;
+export const MAX_STEEPNESS = 50;   // FAR-FLORA: and the far views' woods (world/terrain/floraCover.js) - one home
 export const SLOPE_SINK_RATIO = 70;   // BANTHA1: and the jungle's (world/terrain/jungleNature.js)
-const BASE_CHANCE_ON_DIRT = 0.2;
-const BASE_CHANCE_ON_GRASS = 0.9;
-const BASE_CHANCE_ON_STONE = 0.05;
+export const BASE_CHANCE_ON_DIRT = 0.2;
+export const BASE_CHANCE_ON_GRASS = 0.9;
+export const BASE_CHANCE_ON_STONE = 0.05;
+/** DefaultTerrainNature's desert scale on every chance (FAR-FLORA reads it too). */
+export const DESERT_NATURE_SCALE = 0.25;
 export const NATURE_CLEARANCE = 4;   // BANTHA1: and the jungle's
 const CLIMATE_TYPE_DESERT = 0; // DFLocation.ClimateBaseType.Desert
 
@@ -327,7 +329,7 @@ function dfuScatter(heightmapData, tilemapData, opts) {
 
   let elevationScale = opts.rawWorldHeight / 128;
   elevationScale = Math.min(1.0, Math.max(0.4, elevationScale));
-  const climateScale = opts.climateType === CLIMATE_TYPE_DESERT ? 0.25 : 1.0;
+  const climateScale = opts.climateType === CLIMATE_TYPE_DESERT ? DESERT_NATURE_SCALE : 1.0;
   const chanceOnDirt = BASE_CHANCE_ON_DIRT * elevationScale * climateScale;
   const chanceOnGrass = BASE_CHANCE_ON_GRASS * elevationScale * climateScale;
   const chanceOnStone = BASE_CHANCE_ON_STONE * elevationScale * climateScale;

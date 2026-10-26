@@ -14,7 +14,8 @@
 //     their lowest vertex like a prop. DFU places them like any model.
 //   - IsBadInteriorModel: DFU's classic-data repair table - 27 block/record
 //     combos where a misplaced model 31000 overlaps stairs and traps the
-//     player upstairs. Filtered identically.
+//     player upstairs. Filtered only at the misplaced spot (FIELD BUGS
+//     2026-10-25 BAD-CELL), so a town pack's own 31000 in a listed room stands.
 //   - Flats: position (X, -Y, Z) * scale, billboard bottom-anchored.
 //     Editor flats (archive 199) are kept as markers but hidden from the
 //     render list, exactly as DFU spawns-then-hides them. Light flats
@@ -115,9 +116,21 @@ const BAD_INTERIOR_MODEL_RECORDS = new Map([
   [1278, [1, 2, 3, 4]],   // CUSTGA05.RMB
 ]);
 
-/** Verbatim DaggerfallInterior.IsBadInteriorModel. */
-export function isBadInteriorModel(blockIndex, recordIndex, modelIdNum) {
-  if (modelIdNum !== BAD_MODEL_ID) return false;
+/** FIELD BUGS 2026-10-25 BAD-CELL: where the misplaced 31000 stands in Daggerfall's own data - the same record
+ *  position in every one of the table's 60 records (BLOCKS.BSA, measured with ARENA2). */
+const BAD_MODEL_SPOT = Object.freeze({ xPos: 192, yPos: -192, zPos: 64 });
+
+/**
+ * DaggerfallInterior.IsBadInteriorModel, narrowed to the model it repairs. DFU drops EVERY 31000 of a listed
+ * block/record. FIELD BUGS 2026-10-25 BAD-CELL (our departure): only the one standing at the misplaced spot. A town
+ * pack that rebuilds a listed room (Beautiful Cities rebuilds seven) stands its own 31000 elsewhere, a ground-floor
+ * room cell, and dropping it left a hole a player fell through. Daggerfall's own records drop exactly what DFU drops.
+ * @param {number} blockIndex @param {number} recordIndex
+ * @param {{ modelIdNum: number, xPos: number, yPos: number, zPos: number }} obj the record's 3D object
+ */
+export function isBadInteriorModel(blockIndex, recordIndex, obj) {
+  if (obj.modelIdNum !== BAD_MODEL_ID) return false;
+  if (obj.xPos !== BAD_MODEL_SPOT.xPos || obj.yPos !== BAD_MODEL_SPOT.yPos || obj.zPos !== BAD_MODEL_SPOT.zPos) return false;
   const records = BAD_INTERIOR_MODEL_RECORDS.get(blockIndex);
   return records !== undefined && records.includes(recordIndex);
 }
@@ -164,7 +177,7 @@ export function layoutInterior(dfBlock, blockIndex, recordIndex, getModel) {
   // AddModels.
   for (const obj of recordData.interior.block3dObjectRecords) {
     // Filter out bad interior models.
-    if (isBadInteriorModel(blockIndex, recordIndex, obj.modelIdNum)) continue;
+    if (isBadInteriorModel(blockIndex, recordIndex, obj)) continue;
 
     const model = getModel(obj.modelIdNum);
     // NEVER TRAPS: getModel resolves through getGpuMesh, which returns

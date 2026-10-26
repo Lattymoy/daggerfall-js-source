@@ -1,0 +1,163 @@
+// @ts-check
+// ═══════════════════════════════════════════════════════════════════
+// FAR-FLORA (2026-10-26, the owner: "on top of distant view, no flora/trees show. Its just a plain green flat texture.
+// No band aids for any of this"; bible/06-Systems/Travel-View.md FAR-FLORA): THE WOODS PAST THE STREAMED GRID, BY THE
+// NEAR LAW. The streamed grid stands its trees one tile at a time (world/terrain/terrainNature.js layoutNature: FOREST1's
+// field and chances, or DFU's own scatter with the Real forests switch off); past its edge the middle ring and the far
+// views stood the bare ground in one climate tint, so the woods ended in a line 4.5 km out. This module is the same law
+// read where the far views stand a vertex - how many Trees a tile of the near ground grows there - and what that many
+// crowns hide of the ground seen from afar (the canopy's cover, the share the far views paint in the trees' own art and
+// raise to their own height: render/midRing.js, render/farRing.js, render/farField.js).
+//
+// AT A MIDDLE-RING SAMPLE (102.4 m, every 16th tile): the forest field (FOREST1's forestAt, the world tile's own number),
+// and the ground classes at four of the tiles about it (DFU's tileDataAt: the sea, the beach's dirt, the Perlin's
+// dirt/grass/stone - the very classes the near layout reads the chances by), a corner that grows nothing (the sea, the
+// beach line, a face over MAX_STEEPNESS) counted as none. The climate is not asked here (the Bay's climate is the main
+// thread's map): its share - the woods' law or DFU's scatter, the desert's quarter, the archive's Tree records - is laid
+// on by `treesPerTile` where the vertex is built.
+//
+// WORKER-SAFE: pure, node-tested modules only (the terrain worker runs `midRingFloraPixel` beside the heights).
+// ═══════════════════════════════════════════════════════════════════
+
+import { forestAt, FOREST, TREE_RECORDS, MAX_STEEPNESS, BASE_CHANCE_ON_DIRT, BASE_CHANCE_ON_GRASS, BASE_CHANCE_ON_STONE, DESERT_NATURE_SCALE, layoutNature, isTreeRecord } from './terrainNature.js';
+import { tileDataAt, WORLD_MAP_TILE_DIM, WATER, generateTileData, assignTiles } from './terrainTiles.js';
+import { STREAMING_TERRAIN_SCALE, SCALED_BEACH_ELEVATION, TERRAIN_SIZE, HEIGHTMAP_DIMENSION, generateSamples } from './terrainSampler.js';
+
+/**
+ * THE DIALS (one place).
+ *  - `dfu`: DefaultTerrainNature's chances by tile record (terrainNature.js BASE_CHANCE_ON_DIRT/GRASS/STONE, their one
+ *    home) - the scatter with the Real forests switch off, and on a desert.
+ *  - `desert`: the desert's scale on every chance (terrainNature.js DESERT_NATURE_SCALE).
+ *  - `steep`: no tree stands on a face steeper than this (degrees - terrainNature.js MAX_STEEPNESS).
+ *  - `woodShare`: how much of the land FOREST1's field makes woods (its record: "about 45% of the land is forest") - the
+ *    far ring's and the far field's expectation, whose vertices stand 819 m and 6.55 km apart, past the field's waves.
+ *  - `grazing`: how many crowns' widths of ground a crown hides seen from afar - the eye looks across the woods, not down
+ *    into them, so the trunks' gaps close.
+ *  - `lift`: the canopy's surface over the ground, a share of the trees' own height (crowns are not columns).
+ *  - `ground`: the near ground's classes as tileDataAt lays them over the land (dirt 1, grass 2, stone 3 - the shares
+ *    measured over 200,000 corners of the Bay's land, 2026-10-26): the far ring's and the far field's ground, whose
+ *    vertices stand past the Perlin's 20-tile wave.
+ */
+export const FLORA = Object.freeze({
+  dfu: Object.freeze({ 1: BASE_CHANCE_ON_DIRT, 2: BASE_CHANCE_ON_GRASS, 3: BASE_CHANCE_ON_STONE }),
+  desert: DESERT_NATURE_SCALE,
+  steep: MAX_STEEPNESS,
+  woodShare: 0.45,
+  grazing: 2.2,
+  lift: 0.7,
+  ground: Object.freeze({ 1: 0.054, 2: 0.927, 3: 0.019 }),
+});
+
+/** The bytes a sample's answer packs, one each: the forest field, and the shares of its corners that are dirt, grass and
+ *  stone (the rest grow nothing) - x255. */
+export const FLORA_WOOD = 0, FLORA_DIRT = 8, FLORA_GRASS = 16, FLORA_STONE = 24;
+/** A sample's four corners, in tiles from it (a quarter of the 16-tile step each way: the Perlin's 20-tile wave read
+ *  across the sample's own patch, not at one corner of it), kept inside its pixel's 129 corners. */
+const CORNERS = Object.freeze([[-4, -4], [4, -4], [-4, 4], [4, 4]]);
+const TAN_STEEP = Math.tan(FLORA.steep * Math.PI / 180);
+
+/**
+ * One middle-ring pixel's flora: (sub + 1) x (sub + 1) samples, row j (north) by column i (east) - midRingPixel's own
+ * lattice - each a Uint32 packing [wood, dirt, grass, stone] (FLORA_* shifts). `heights` the pixel's own samples
+ * (midRingPixel's, world units), `px`, `py` the pixel.
+ * @param {ArrayLike<number>} heights @param {number} px @param {number} py @param {number} [sub]
+ */
+export function midRingFloraPixel(heights, px, py, sub = 8) {
+  const w = sub + 1, step = WORLD_MAP_TILE_DIM / sub, cell = TERRAIN_SIZE / sub, out = new Uint32Array(w * w);
+  const toSample = 1 / STREAMING_TERRAIN_SCALE;   // world units back to the sample's own height (sampleHeight's)
+  const h = (i, j) => heights[Math.max(0, Math.min(sub, j)) * w + Math.max(0, Math.min(sub, i))];
+  for (let j = 0; j <= sub; j++) {
+    for (let i = 0; i <= sub; i++) {
+      const hh = h(i, j);
+      const gx = (h(i + 1, j) - h(i - 1, j)) / (2 * cell), gz = (h(i, j + 1) - h(i, j - 1)) / (2 * cell);
+      const steep = gx * gx + gz * gz > TAN_STEEP * TAN_STEEP;
+      const n = [0, 0, 0, 0];
+      for (const [dx, dy] of CORNERS) {
+        const x = Math.min(WORLD_MAP_TILE_DIM, Math.max(0, i * step + dx)), y = Math.min(WORLD_MAP_TILE_DIM, Math.max(0, j * step + dy));
+        const height = hh * toSample;
+        if (steep || height < SCALED_BEACH_ELEVATION) continue;   // natureStandsAt's: the beach line, the face
+        const c = tileDataAt(height, x, y, px, py);
+        if (c !== WATER) n[c]++;
+      }
+      const wood = forestAt(px * WORLD_MAP_TILE_DIM + Math.min(127, i * step), -py * WORLD_MAP_TILE_DIM + Math.min(127, j * step));
+      const b = (v) => Math.round(Math.min(1, Math.max(0, v)) * 255);
+      out[j * w + i] = (b(wood) << FLORA_WOOD | b(n[1] / 4) << FLORA_DIRT | b(n[2] / 4) << FLORA_GRASS | b(n[3] / 4) << FLORA_STONE) >>> 0;
+    }
+  }
+  return out;
+}
+
+/** A packed sample's [wood, dirt, grass, stone], 0..1. */
+export function unpackFlora(v) {
+  return [((v >>> FLORA_WOOD) & 255) / 255, ((v >>> FLORA_DIRT) & 255) / 255, ((v >>> FLORA_GRASS) & 255) / 255, ((v >>> FLORA_STONE) & 255) / 255];
+}
+
+/**
+ * THE NEAR LAW'S TREES A TILE where a sample stands: `wood` the forest field, `dirt`, `grass`, `stone` the shares of its
+ * ground; `spec` the climate's (floraSpec): with the woods' law (FOREST1: the switch, not a desert, an archive with a Tree
+ * table) a Tree's chance by the field and the ground's share (terrainNature.js forestTiles); else DFU's scatter - the
+ * ground's chance, the WOODS byte's elevation scale (`byte`), the desert's quarter, and the share of its 31 records that
+ * are Trees. Pure.
+ * @param {number} wood @param {number} dirt @param {number} grass @param {number} stone
+ * @param {{ forests: boolean, desert: boolean, treeShare: number }} spec @param {number} [byte]
+ */
+export function treesPerTile(wood, dirt, grass, stone, spec, byte = 128) {
+  if (!spec || !(spec.treeShare > 0)) return 0;
+  if (spec.forests) {
+    const g = FOREST.ground;
+    return (FOREST.plainTree + (FOREST.forestTree - FOREST.plainTree) * wood) * (g[1] * dirt + g[2] * grass + g[3] * stone);
+  }
+  const d = FLORA.dfu, elevation = Math.min(1, Math.max(0.4, byte / 128));
+  return (d[1] * dirt + d[2] * grass + d[3] * stone) * elevation * (spec.desert ? FLORA.desert : 1) * spec.treeShare;
+}
+
+/** The climate's flora as the near law reads it: `natureArchive` its summer nature archive, `desert` its base type the
+ *  desert's, `forests` the Real forests switch. Pure. */
+export function floraSpec(natureArchive, desert, forests) {
+  const trees = TREE_RECORDS[natureArchive];
+  if (!trees) return { forests: false, desert, treeShare: 0 };
+  return { forests: !!forests && !desert, desert, treeShare: (forests && !desert) ? 1 : trees.length / 31 };
+}
+
+/** THE CANOPY'S COVER: the share of the ground `trees` a tile's crowns hide from afar, each `crownM` metres across - one
+ *  minus the chance a line across the woods meets no crown (FLORA.grazing widths). Pure. */
+export function canopyCover(trees, crownM) {
+  if (!(trees > 0)) return 0;
+  const tile = (TERRAIN_SIZE / WORLD_MAP_TILE_DIM) ** 2;
+  return 1 - Math.exp(-trees * FLORA.grazing * crownM * crownM * (Math.PI / 4) / tile);
+}
+
+/** THE GROUND A TREE STANDS ON, at a far vertex: not a face steeper than FLORA.steep (its normal's y `ny`), not under the
+ *  beach line (`h` the sample's own height, sampleHeight's: unscaled) - natureStandsAt's two tests. Pure. */
+export const standsTrees = (ny, h) => ny >= COS_STEEP && h >= SCALED_BEACH_ELEVATION;
+const COS_STEEP = Math.cos(FLORA.steep * Math.PI / 180);
+
+/** A far vertex's canopy where the field is past its resolution (the far ring, the far field): the woods' share of the
+ *  land (FLORA.woodShare) on grass, read through the same law. Pure. */
+export const expectedTrees = (spec, byte) => treesPerTile(FLORA.woodShare, 0, 1, 0, spec, byte);
+
+
+/**
+ * FAR-TREES (the band past the grid, render/farTrees.js): A PIXEL'S TREES AS THE STREAM WOULD STAND THEM - the pixel's own
+ * kernel samples (terrainSampler.js generateSamples, with the landforms the worker holds), its ground classes and their
+ * squares (terrainTiles.js generateTileData, assignTiles) and the nature's own layout (terrainNature.js layoutNature:
+ * FOREST1's woods with the switch, DFU's scatter without it or on a desert), kept to its Tree records: the very flats a
+ * built pixel stands (its own dice, a tile at a time), so where the stream builds the pixel its trees land where the
+ * band's stood. What it leaves out is a built pixel's own: a location's clearing and flattening, the roads' paint, a World
+ * of Daggerfall site, a neighbour's climate at a border, the jungle's own layout. Answers `[x, y, z, record]` a tree, in
+ * the pixel's own frame (x east, z north from its south-west corner; y the ground's height, world units).
+ * @param {{ woods: any, px: number, py: number, archive: number, climateType: number, forests: boolean, landforms?: any }} o
+ */
+export function bandTreesPixel({ woods, px, py, archive, climateType, forests, landforms = null }) {
+  const samples = generateSamples(woods, px, py, HEIGHTMAP_DIMENSION, landforms);
+  const tilemap = new Uint8Array(WORLD_MAP_TILE_DIM * WORLD_MAP_TILE_DIM);
+  assignTiles(generateTileData(samples, px, py), tilemap, true);
+  const flats = layoutNature(samples, tilemap, {
+    mapPixelX: px, mapPixelY: py, rawWorldHeight: woods.getHeightMapValue(px, py), climateType, locationRect: null,
+    forests: forests ? { archive, pois: [] } : null,
+  });
+  const trees = flats.filter((f) => isTreeRecord(archive, f.record));
+  const out = new Float32Array(trees.length * 4);
+  trees.forEach((f, k) => { out[k * 4] = f.x; out[k * 4 + 1] = f.y; out[k * 4 + 2] = f.z; out[k * 4 + 3] = f.record; });
+  return out;
+}

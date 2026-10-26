@@ -335,7 +335,7 @@ test('OH-B Iliac Puddle No More\'s half of the API: OnSeafloorBuilt before OnFlo
   assert.match(src, /if \(!force && this\.isSeafloorCurrent\(entry\)\) return;/);
   const world = hostText('src/scenes/world.js');
   assert.match(world, /onSeafloorBuilt: \(e\) => oceanHoles\?\.seafloorBuilt\(e\)/);
-  assert.match(world, /if \(host\.oceanHoles\) host\.oceanHoles\.promoted\(built\.get\(key\)\);/, 'OnTerrainPromoted after the sea\'s own promote');
+  assert.match(world, /if \(host\.oceanHoles\) host\.oceanHoles\.promoted\(built\.get\(pkey\)\);/, 'OnTerrainPromoted after the sea\'s own promote');   // PIN MOVED (IC-SWAP-BEHIND): the entry under the pixel's own key
   assert.match(world, /if \(oceanHoles\) oceanHoles\.destroyed\(p\);/);
 });
 

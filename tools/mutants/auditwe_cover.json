@@ -1,0 +1,178 @@
+[
+ {
+  "name": "AUDIT-WE-L6-9-dungeon-striker-half-unwired",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "    if (fromPlayer && !peer) damage = strikeTraits(foe.entity, damage,",
+  "new": "    if (false) damage = strikeTraits(foe.entity, damage,",
+  "tests": [
+   "test/scenes/bosstraits_hosts.test.js",
+   "test/scenes/auditwe_traits.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L6-9-dungeon-owner-half-unwired",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "    damage = bossTakeAt(foe.entity, damage, _whole || bypassShield,",
+  "new": "    damage = ((d) => d)(damage, foe.entity, _whole || bypassShield,",
+  "tests": [
+   "test/scenes/bosstraits_hosts.test.js",
+   "test/scenes/auditwe_traits.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L6-9-the-lords-swing-unresisted",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "      landOnBoss(boss, bossStrikeAt(boss.entity, damage, 'melee', playerWeapon.strikingWeapon, null, false, (n) => hurtPlayer(n)), HIT_KINDS.Melee);",
+  "new": "      landOnBoss(boss, damage, HIT_KINDS.Melee);",
+  "tests": [
+   "test/scenes/bosstraits_hosts.test.js",
+   "test/scenes/auditwe_traits.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L6-9-the-lords-arrow-unresisted",
+  "file": "src/scenes/dungeonContext.js",
+  "old": "landOnBoss(boss, bossStrikeAt(boss.entity, d, 'arrow', null, null, false, (n) => hurtPlayer(n)",
+  "new": "landOnBoss(boss, ((x) => x)(d, 'arrow', null, null, false, (n) => hurtPlayer(n)",
+  "tests": [
+   "test/scenes/bosstraits_hosts.test.js",
+   "test/scenes/auditwe_traits.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L6-9-the-court-law-unasked",
+  "file": "src/scenes/world.js",
+  "old": "    setCourtRules(madeRuleHere('regen') === 'held');",
+  "new": "    setCourtRules(false);",
+  "tests": [
+   "test/systems/auditwe_rules.test.js",
+   "test/world/gate/wbx_gate_fixes.test.js",
+   "test/ui/hud/eventrules_tile.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L6-9-the-spell-unheld",
+  "file": "src/systems/effects.js",
+  "old": "const held = regenShare(n, 'spell', target);",
+  "new": "const held = n;",
+  "tests": [
+   "test/systems/auditwe_rules.test.js",
+   "test/world/gate/wbx_gate_fixes.test.js",
+   "test/ui/hud/eventrules_tile.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L6-9-the-ring-unheld",
+  "file": "src/systems/enchantments.js",
+  "old": "entity.health + regenShare(1, 'item', entity));",
+  "new": "entity.health + 1);",
+  "tests": [
+   "test/systems/auditwe_rules.test.js",
+   "test/world/gate/wbx_gate_fixes.test.js",
+   "test/ui/hud/eventrules_tile.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L6-9-the-career-unheld",
+  "file": "src/systems/passiveSpecials.js",
+  "old": "const held = regenerate ? regenShare(REGENERATE_AMOUNT, 'career', entity) : 0;",
+  "new": "const held = regenerate ? REGENERATE_AMOUNT : 0;",
+  "tests": [
+   "test/systems/auditwe_rules.test.js",
+   "test/world/gate/wbx_gate_fixes.test.js",
+   "test/ui/hud/eventrules_tile.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L6-9-the-hours-fallen-unflagged",
+  "file": "src/scenes/world.js",
+  "old": "legacyHost?.raisable() === false || !hourRezOpen() ? { fg: 1 } : {}",
+  "new": "legacyHost?.raisable() === false ? { fg: 1 } : {}",
+  "tests": [
+   "test/net/superDungeon/sd12_onelife.test.js",
+   "test/systems/legacy/fb1016b_rezbloodline.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L6-9-the-refugees-unnamed",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "    const rf = out.filter((r) => r.d !== 1 && src.get(r)?.refugee).map((r) => r.i);",
+  "new": "    const rf = [];",
+  "tests": [
+   "test/scenes/auditwe_wire.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L6-9-the-refugees-hostile-at-a-reader",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "|| shipmate || refugees.has(r.i),",
+  "new": "|| shipmate,",
+  "tests": [
+   "test/scenes/auditwe_wire.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L6-9-the-judge-told-a-foe",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "|| crew.has(r.i) || refugees.has(r.i), boss:",
+  "new": "|| crew.has(r.i), boss:",
+  "tests": [
+   "test/scenes/auditwe_wire.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L6-9-the-puppet-leader-plain",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "    if (f.entity.eliteFoe && r.rl === 1) promoteRaidLeader(f.entity, { own: false, name: raidLeaderNameOf(f.mobileType) });",
+  "new": "    if (false) promoteRaidLeader(f.entity, { own: false, name: raidLeaderNameOf(f.mobileType) });",
+  "tests": [
+   "test/scenes/auditwe_wire.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L6-9-the-sites-unwired",
+  "file": "src/scenes/world.js",
+  "old": "sites: () => raidSites,",
+  "new": "sites: () => null,",
+  "tests": [
+   "test/systems/raid5_kinds.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L6-9-the-word-unsent",
+  "file": "src/scenes/world.js",
+  "old": "if (rk) frame.rk = rk; if (ro) frame.ro = ro;",
+  "new": "if (rk) frame.rk = rk;",
+  "tests": [
+   "test/systems/raid5_kinds.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L6-9-the-held-thanks-unread",
+  "file": "src/scenes/world.js",
+  "old": "typeof entry.hd === 'boolean' ? entry.hd : raidWasHeld(c.w))",
+  "new": "false)",
+  "tests": [
+   "test/systems/raid5_kinds.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L6-9-the-extra-piece-rolled-first",
+  "file": "src/systems/raidSpoils.js",
+  "old": "  const pieces = [{ item, tier: item.rarity ?? tier }];   // a Legendary",
+  "new": "  if (held) magicOrBetter(rolls, RAID_SPOILS_SOURCE);\n  const pieces = [{ item, tier: item.rarity ?? tier }];   // a Legendary",
+  "tests": [
+   "test/systems/raid5_kinds.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L6-9-the-record-silent",
+  "file": "src/scenes/exteriorFoes.js",
+  "old": "...(bossTraitsOf(f.entity).length ? { bt: bossTraitMask(f.entity.bossTraits) } : {}), ",
+  "new": "",
+  "tests": [
+   "test/scenes/bosstraits_hosts.test.js",
+   "test/scenes/auditwe_traits.test.js"
+  ]
+ }
+]

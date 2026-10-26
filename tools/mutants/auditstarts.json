@@ -29,20 +29,22 @@
   {
     "name": "AUDIT-STARTS-U2-every-place-a-portal",
     "file": "src/ui/heldMap.js",
-    "old": "const portal = !!tamrielInkFor(this._model)?.cities?.some((c) => c.pixel?.x === px && c.pixel?.y === py);",
+    "old": "const portal = !!tamrielInkFor(this._model)?.cities?.some((c) => c.pixel?.x === px && c.pixel?.y === py) || (!!this.deps.portalLandPastBay && !!portalLandAt(px, py));",
     "new": "const portal = true;",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
-    ]
+    ],
+    "note": "PORTAL-ANYWHERE (PIN MOVED): re-aimed by content - a quest's place is a portal's end at a city, or (the stone's map) on the land"
   },
   {
     "name": "AUDIT-STARTS-U2-no-city-a-portal",
     "file": "src/ui/heldMap.js",
-    "old": "const portal = !!tamrielInkFor(this._model)?.cities?.some((c) => c.pixel?.x === px && c.pixel?.y === py);",
+    "old": "const portal = !!tamrielInkFor(this._model)?.cities?.some((c) => c.pixel?.x === px && c.pixel?.y === py) || (!!this.deps.portalLandPastBay && !!portalLandAt(px, py));",
     "new": "const portal = false;",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
-    ]
+    ],
+    "note": "PORTAL-ANYWHERE (PIN MOVED): re-aimed by content - a quest's place is a portal's end at a city, or (the stone's map) on the land"
   },
   {
     "name": "AUDIT-STARTS-U4-zone-press-picks-alone",
@@ -517,8 +519,8 @@
   {
     "name": "AUDIT-STARTS-V5-no-wider-box",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "const sailed = planSeaLanes(from, to, opts) ?? planSeaLanes(from, to, { ...opts, laneMargin: LANE_MARGIN_WIDE });",
-    "new": "const sailed = planSeaLanes(from, to, opts);",
+    "old": "const sailed = (yield* planSeaLanesSteps(from, to, opts)) ?? (yield* planSeaLanesSteps(from, to, { ...opts, laneMargin: LANE_MARGIN_WIDE }));",
+    "new": "const sailed = (yield* planSeaLanesSteps(from, to, opts));",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]

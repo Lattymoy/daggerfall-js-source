@@ -759,7 +759,6 @@ test('AUDIT NAV1 (the presentation) THE PAD AT THE GUNS: the readout names the p
   assert.deepEqual(navalPadPrompts(layoutModel(), codes).at(-1), [[codes.board], 'Hold fire'], 'laid, with nothing in reach: still the hold');
   assert.deepEqual(board('board'), [[codes.board], 'Board The Red Wake']);
   assert.deepEqual(board('hold'), [[codes.board], "Open The Red Wake's hold"]);
-  assert.deepEqual(board('heave'), [[codes.board], 'Heave to']);
   assert.deepEqual(board('yard'), [[codes.board], 'The shipwright']);
   assert.deepEqual(navalPadPrompts(layoutModel(), { aim: codes.aim }), [[[codes.aim], 'Let go: fire']], 'a row only for a bound button');
   assert.equal(navalHudText(layoutModel({ aiming: false, aim: null }), { aim: 'RT', board: 'A', brace: 'LB' }).plate.hint, 'Hold RT to aim - LB: brace');

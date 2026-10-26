@@ -54,7 +54,8 @@ Legendary).
 ## The source sets the odds, never the player
 
 Unleveled Loot's whole point is that the world does not scale to you,
-and the ladder keeps that law. `rollRarity(source)` draws once in
+and the ladder keeps that law. (LOOT-GATE (2026-10-25, Dudey; Port-Ledger A LOOT-GATE) departs from it: the roller's level now holds Rare and Legendary back for a young character. Recorded by AUDIT UPDATE (`01-Overview/audits/Audit-Update-2026-10-25.md` U1) as OPEN for Mac's ruling - this law is his standing call. The gate's levels and factors are never published (CLAUDE.md LOOT-GATE). The source's thresholds are
+still computed as below; the gate only scales the Rare and Legendary ones, never Magic.) `rollRarity(source)` draws once in
 [0, 1000) against three thresholds - Legendary first, then Rare, then
 Magic - computed by `rarityChances` from:
 
@@ -525,3 +526,16 @@ Pinned: `test/systems/affixlines_reforge.test.js` (the distribution over 10,000 
 either law, the mint version, the Exalted's, curse's and reforge's draws at their lines' shares); `lr1_lootrarity` (a
 Rare named as its lines fall, the old law's both parts), `fb1013e_craftprocs` (the last pass pinned at its own version),
 `auditloot2` (A6's fixture, A7's sample), the seeded spoils and the hoard (`fb1003b_aethericmaker`'s Gatecleaver seed 17 -> 2, `serpentset`'s golden to seed 6 - seed 2's amulet was "Porter's"), `loot14_wardrobe`'s goldens and the fixed streams of `disc29_rarity`, `auditcc_ui` and `fb0929d_accompare` moved with it. `tools/mutants/affixlines.json` (36, all dead); every record whose pins moved judged again - 490, 485 dead, 5 equivalent as recorded (craft4's four, and loot9's LOOT9-carried-kind-again: a carried kind without params weighs no line in the draw), none alive.
+
+## MAKER-RARE (FIELD BUGS 2026-10-26) - THE ITEM MAKER TAKES A RARE
+
+The owner: "You cant enchant masterwork/rare armor". A Rare's flavour is one of DFU's catalogue enchantments, so DFU's
+item maker - which lists no enchanted item (AddFilteredItem) - kept every Rare off its list, found or a Masterwork. Now
+an identified Rare whose rows are the ladder's own (its group's flavour, a curse's drawback) is taken with them kept at
+the head of the maker's lists and costing none of its points, the maker's own rows after them costing as ever
+(`enchanting.js` rareKeeps, keptEnchantments). An unidentified Rare stays out - the maker would identify it for nothing
+- a Legendary keeps DFU's refusal with the artifacts, and with the ladder switched off the maker is DFU's, as a garment
+and a Masterwork are DFU's off (AUDIT LOOT II A9). The temple's lift takes the curse's own row, never one the maker laid: a bound soul's forced set may
+hold the drawback's very kind (`lootCurse.js` liftCurse; AUDIT MAKER-RARE A1). A departure (Port-Ledger A, THE ITEM MAKER
+TAKES A RARE); the record and its audit are `01-Overview/bugs/Field-Bugs-2026-10-26.md`.
+`test/systems/fb1026_makerrare.test.js`.

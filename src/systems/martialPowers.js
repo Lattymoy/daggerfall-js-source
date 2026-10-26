@@ -60,7 +60,7 @@ import { pendingPlayerBlow } from './sigil/sigilSetPowers.js';   // the door's o
 import { healMine } from './playerHeal.js';
 import { playerDoor, oweFoe } from './playerDoor.js';
 import { foeGroup, TOLL_REFUND_S } from './loot/lootPowers.js';   // the loot's one foe group (a class foe is a man - AUDIT SCHOOLS L1 H2); its felling bound (AUDIT MARTIAL L1 M1)
-import { regenBarred } from './courtRules.js';   // WBX6: the Deadlands keep no regeneration (AUDIT MARTIAL L3 F3)
+import { regenShare } from './courtRules.js';   // WBX6 / EVENT-RULES: a made level holds regeneration (AUDIT MARTIAL L3 F3)
 import { maxFatigue } from './statMods.js';
 import { showFollowUp } from '../ui/hitNumbers.js';   // a follow-up's own number (ROSE-SEEN)
 import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';
@@ -248,11 +248,11 @@ export function martialHurt(entity, { before = 0, after = 0, saved = false } = {
   healMine(entity, (entity.maxHealth * N.standFirm.heal) / 100);
   say(t('martial.say.standFirm', 'Stand Firm: you hold your ground.'));
 }
-/** THE ROUND: Grit - a little health and fatigue back, each round; the health none in the court (WBX6 courtRules.js - a
- *  regeneration, as a career's Regenerate Health is: AUDIT MARTIAL L3 F3). */
+/** THE ROUND: Grit - a little health and fatigue back, each round; the health held in a made level (WBX6 / EVENT-RULES
+ *  courtRules.js - a regeneration, as a career's Regenerate Health is: AUDIT MARTIAL L3 F3). */
 export function martialRound(entity) {
   if (awakeMartialId(entity) !== 'brawler') return;
-  if (entity.health > 0 && entity.health < entity.maxHealth && !regenBarred()) healMine(entity, (entity.maxHealth * N.grit.health) / 100);
+  if (entity.health > 0 && entity.health < entity.maxHealth) { const held = regenShare((entity.maxHealth * N.grit.health) / 100, 'grit', entity); if (held > 0) healMine(entity, held); }
   fatigueMine(entity, N.grit.fatigue);
 }
 /** MY KILL: War Rhythm, Bloodlust, Tireless - and Felling Strike's heal, for a foe it landed on that a kill of mine

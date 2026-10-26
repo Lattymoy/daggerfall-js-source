@@ -1,0 +1,677 @@
+[
+  {
+    "name": "G-1-normal-not-unit",
+    "file": "src/world/jungle/grahtOakMesh.js",
+    "old": "nx /= l; ny /= l; nz /= l;",
+    "new": "nx /= l; ny /= l;",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-2-faces-inward",
+    "file": "src/world/jungle/grahtOakMesh.js",
+    "old": "if (dot(cross(sub3(b, a), sub3(c, a)), out) >= 0) quad(s, a, b, c, d, ua, ub, uc, ud);",
+    "new": "if (dot(cross(sub3(b, a), sub3(c, a)), out) < 0) quad(s, a, b, c, d, ua, ub, uc, ud);",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-3-masses-inward",
+    "file": "src/world/jungle/grahtOakMesh.js",
+    "old": "return dot(cr, A) >= 0 ? [a, b, c] : [a, c, b];",
+    "new": "return dot(cr, A) >= 0 ? [a, c, b] : [a, b, c];",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-4-no-flare",
+    "file": "src/world/jungle/grahtOakMesh.js",
+    "old": "+ t.flare * Math.exp(-yy / t.flareH);",
+    "new": "+ t.flare * Math.exp(-yy / t.flareH) * 0;",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-5-fin-profile",
+    "file": "src/world/jungle/grahtOakMesh.js",
+    "old": "const out = r0 + (f.reach - r0) * Math.pow(1 - u, 1.7);",
+    "new": "const out = r0 + (f.reach - r0) * Math.pow(1 - u, 1.2);",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-6-top-flattened",
+    "file": "src/world/jungle/grahtOakMesh.js",
+    "old": "const y = d[1] < 0 ? d[1] * GRAHT_SHAPE.blob.under : d[1];",
+    "new": "const y = d[1] > 0 ? d[1] * GRAHT_SHAPE.blob.under : d[1];",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-7-far-forks",
+    "file": "src/world/jungle/grahtOakMesh.js",
+    "old": "if (D.forks) for (const f of L.forks)",
+    "new": "if (true) for (const f of L.forks)",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-8-no-cards",
+    "file": "src/world/jungle/grahtOakMesh.js",
+    "old": "if (D.cards) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-9-far-unmerged",
+    "file": "src/world/jungle/grahtOakMesh.js",
+    "old": "const blobs = D.merged ? mergedBlobs(sk) : sk.blobs;",
+    "new": "const blobs = sk.blobs;",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-10-trunk-sides",
+    "file": "src/world/jungle/grahtOakMesh.js",
+    "old": "trunkSides: 16, limbSides: 6",
+    "new": "trunkSides: 15, limbSides: 6",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-11-jitter",
+    "file": "src/world/jungle/grahtOakMesh.js",
+    "old": "under: 0.62, jitter: 0.14 }",
+    "new": "under: 0.62, jitter: 0.4 }",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-12-fewer-limbs",
+    "file": "src/world/jungle/grahtOakMesh.js",
+    "old": "count: Object.freeze([7, 8]), from",
+    "new": "count: Object.freeze([5, 6]), from",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-13-small-masses",
+    "file": "src/world/jungle/grahtOakMesh.js",
+    "old": "r: Object.freeze([16, 24])",
+    "new": "r: Object.freeze([10, 15])",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-20-cell",
+    "file": "src/world/jungle/grahtOaks.js",
+    "old": "  cell: 16,",
+    "new": "  cell: 8,",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-21-inset",
+    "file": "src/world/jungle/grahtOaks.js",
+    "old": "inset: Object.freeze([0.3, 0.7]),",
+    "new": "inset: Object.freeze([0.2, 0.8]),",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-22-occupancy",
+    "file": "src/world/jungle/grahtOaks.js",
+    "old": "  occupancy: 0.9,",
+    "new": "  occupancy: 0.5,",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-23-share-unread",
+    "file": "src/world/jungle/grahtOaks.js",
+    "old": "if (draw(wx, wz, S + 2) >= GRAHT.occupancy * share(mx, mz)) continue;",
+    "new": "if (draw(wx, wz, S + 2) >= GRAHT.occupancy) continue;",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-24-ground-unasked",
+    "file": "src/world/jungle/grahtOaks.js",
+    "old": "if (!growsOn(y * tiles + x)) { ok = false; break; }",
+    "new": "if (false) { ok = false; break; }",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-25-foot-halved",
+    "file": "src/world/jungle/grahtOaks.js",
+    "old": "if (dx * dx + dz * dz > reach * reach) continue;",
+    "new": "if (dx * dx + dz * dz > reach * reach * 0.25) continue;",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-26-bury-unasked",
+    "file": "src/world/jungle/grahtOaks.js",
+    "old": "hi - lo > GRAHT.bury * scale",
+    "new": "hi - lo > GRAHT.bury * scale * 9",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-27-trails-unasked",
+    "file": "src/world/jungle/grahtOaks.js",
+    "old": "|| !trailOk(mx, mz, foot)) continue;",
+    "new": ") continue;",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-28-raised",
+    "file": "src/world/jungle/grahtOaks.js",
+    "old": "- GRAHT.sink, mz, draw(wx, wz, S + 5)",
+    "new": "+ GRAHT.sink, mz, draw(wx, wz, S + 5)",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-29-steep-unasked",
+    "file": "src/world/jungle/grahtOaks.js",
+    "old": "if (steepAt(ti0)) continue;",
+    "new": "if (false) continue;",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-30-uphill",
+    "file": "src/world/jungle/grahtOaks.js",
+    "old": "Math.min(lo, ground(mx, mz))",
+    "new": "ground(mx, mz)",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-31-no-trunk-mask",
+    "file": "src/world/jungle/grahtOaks.js",
+    "old": "if (d2 <= core * core) mask[y * tiles + x] = 2;",
+    "new": "if (d2 <= core * core) mask[y * tiles + x] = 1;",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-32-no-foot-mask",
+    "file": "src/world/jungle/grahtOaks.js",
+    "old": "else if (d2 <= foot * foot && mask[y * tiles + x] === 0) mask[y * tiles + x] = 1;",
+    "new": "else if (false) mask[y * tiles + x] = 1;",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-33-foot-mask-halved",
+    "file": "src/world/jungle/grahtOaks.js",
+    "old": "const foot = m.foot * s + tileM * 0.5, core",
+    "new": "const foot = m.foot * s * 0.5 + tileM * 0.5, core",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-34-trunk-body-flared",
+    "file": "src/world/jungle/grahtOaks.js",
+    "old": "r: m.trunk * s, h: (m.crownFrom + 4) * s",
+    "new": "r: m.ground * s, h: (m.crownFrom + 4) * s",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-35-bodies-unturned",
+    "file": "src/world/jungle/grahtOaks.js",
+    "old": "c: [x + (c * bx + sn * bz) * s, y, z + (-sn * bx + c * bz) * s]",
+    "new": "c: [x + (c * bx - sn * bz) * s, y, z + (sn * bx + c * bz) * s]",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-36-fin-bodies-short",
+    "file": "src/world/jungle/grahtOaks.js",
+    "old": "d < g.out - 1; d += GRAHT_FIN_STEP",
+    "new": "d < g.out - 6; d += GRAHT_FIN_STEP",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-38-lod-edge",
+    "file": "src/world/jungle/grahtOaks.js",
+    "old": "export const grahtLodOf = (d) => (d < GRAHT.lod[0] ? 0",
+    "new": "export const grahtLodOf = (d) => (d <= GRAHT.lod[0] ? 0",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-40-canopy-share-whole",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "share: (mx, mz) => canopyShare(jungleDepthAt(px, py, jg.canopy, mx, mz)),",
+    "new": "share: () => 1,",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-41-canopy-on-foot",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "|| g2Of[ti] > TAN_MAX_SQ || onFoot?.[ti]) continue;",
+    "new": "|| g2Of[ti] > TAN_MAX_SQ) continue;",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-42-young-on-foot",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "if (!ground || onFoot?.[ti]) continue;",
+    "new": "if (!ground) continue;",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-43-floor-in-trunk",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "if (!ground || taken[ti] || onFoot?.[ti] === 2) continue;",
+    "new": "if (!ground || taken[ti]) continue;",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-44-pairs-on-foot",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "&& !onFoot[ty * tDim + tx])(pairTile(",
+    "new": "&& true)(pairTile(",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-45-canopy-unasked",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "const graht = jg.canopy ? grahtSites({",
+    "new": "const graht = false ? grahtSites({",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-50-kernel-no-canopy",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "net: roads, canopy: jungle.canopy ?? null } : null });",
+    "new": "net: roads, canopy: null } : null });",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-60-fog-unculled",
+    "file": "src/scenes/grahtHost.js",
+    "old": "if (dh - R > reach) continue;   // past the fog, wholly",
+    "new": "if (false) continue;   // past the fog, wholly",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-61-view-unculled",
+    "file": "src/scenes/grahtHost.js",
+    "old": "< -rad) { inside = false; break; }",
+    "new": "< -rad * 1e9) { inside = false; break; }",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-62-haze-unculled",
+    "file": "src/scenes/grahtHost.js",
+    "old": "if (hides(_box, _t)) continue;",
+    "new": "if (false) continue;",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-63-no-well",
+    "file": "src/scenes/grahtHost.js",
+    "old": "if (focus && crownBlocks(eye, focus, x, y, z, m, s)) continue;",
+    "new": "if (false) continue;",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-64-lod-scale",
+    "file": "src/scenes/grahtHost.js",
+    "old": "grahtLodOf(Math.hypot(dh, y - ey) / s)",
+    "new": "grahtLodOf(Math.hypot(dh, y - ey) * s)",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-65-scatter",
+    "file": "src/scenes/grahtHost.js",
+    "old": "scratch[dst + c] = tmp[src + c];",
+    "new": "scratch[src + c] = tmp[src + c];",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-66-casters-farthest",
+    "file": "src/scenes/grahtHost.js",
+    "old": "while (at > 0 && castBuf[(at - 1) * CAST] > d)",
+    "new": "while (at > 0 && castBuf[(at - 1) * CAST] < d)",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-67-casters-first-met",
+    "file": "src/scenes/grahtHost.js",
+    "old": "if (castN === K && d >= castBuf[(K - 1) * CAST]) return;",
+    "new": "if (castN === K) return;",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-68-caster-unturned",
+    "file": "src/scenes/grahtHost.js",
+    "old": "M[0] = c; M[1] = 0; M[2] = -sn;",
+    "new": "M[0] = c; M[1] = 0; M[2] = sn;",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-69-casters-unreached",
+    "file": "src/scenes/grahtHost.js",
+    "old": "if (cd < GRAHT_DRAW.castReach + R) castIn(",
+    "new": "if (true) castIn(",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-70-fog-start",
+    "file": "src/scenes/grahtHost.js",
+    "old": "if (mode === 1) return r._fogRange?.[1] > 0 ? r._fogRange[1] : Infinity;",
+    "new": "if (mode === 1) return r._fogRange?.[1] > 0 ? r._fogRange[0] : Infinity;",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-71-well-whole",
+    "file": "src/scenes/grahtHost.js",
+    "old": "R = m.crownR * s * GRAHT_DRAW.well;",
+    "new": "R = m.crownR * s;",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-72-well-unheighted",
+    "file": "src/scenes/grahtHost.js",
+    "old": "t0 = Math.max(0, Math.min(a, b)); t1 = Math.min(1, Math.max(a, b));",
+    "new": "t0 = 0; t1 = 1;",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-73-keep-unasked",
+    "file": "src/scenes/grahtHost.js",
+    "old": "if (keep(raw[i], raw[i + 2]))",
+    "new": "if (true)",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-74-made-after-teardown",
+    "file": "src/scenes/grahtHost.js",
+    "old": "if (destroyed) return;",
+    "new": "if (false) return;",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-75-pictures-kept",
+    "file": "src/scenes/grahtHost.js",
+    "old": "for (const t of texes ?? []) renderer.releaseAtlasTexture(t);",
+    "new": "for (const t of []) renderer.releaseAtlasTexture(t);",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-76-casters-kept",
+    "file": "src/scenes/grahtHost.js",
+    "old": "for (const m of casters ?? []) renderer.destroyMesh(m);",
+    "new": "for (const m of []) renderer.destroyMesh(m);",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-77-cards-cast",
+    "file": "src/scenes/grahtHost.js",
+    "old": "n = m.subs[0][1] + m.subs[1][1];",
+    "new": "n = m.subs[0][1] + m.subs[1][1] + m.subs[2][1];",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-78-solids-cut",
+    "file": "src/scenes/grahtHost.js",
+    "old": "alpha: GRAHT_SUBS[i] === 'cards' ? 1 : 0",
+    "new": "alpha: 1",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-79-solids-two-sided",
+    "file": "src/scenes/grahtHost.js",
+    "old": "cull: GRAHT_SUBS[i] === 'cards' ? 0 : 2",
+    "new": "cull: 0",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-80-wrong-slot",
+    "file": "src/scenes/grahtHost.js",
+    "old": "renderer.setLowPolyTrees(frameOut.runs.length ? frameOut : null, GRAHT_SLOT);",
+    "new": "renderer.setLowPolyTrees(frameOut.runs.length ? frameOut : null, 1);",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-81-handed-over",
+    "file": "src/scenes/grahtHost.js",
+    "old": "radius: 1e9, band: 1",
+    "new": "radius: 1e0, band: 1",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-82-off-online",
+    "file": "src/scenes/grahtHost.js",
+    "old": "return !(pageParam('graht', search) === 'off' && !isOnlinePage(search));",
+    "new": "return !(pageParam('graht', search) === 'off');",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-83-breathless",
+    "file": "src/scenes/grahtHost.js",
+    "old": "meshes.push(grahtOakMesh(v, l)); await breathe();",
+    "new": "meshes.push(grahtOakMesh(v, l));",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-90-job-no-canopy",
+    "file": "src/scenes/jungleHost.js",
+    "old": "canopy: graht ? jungleNine(canopyNow(), px, py) : null",
+    "new": "canopy: null",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-91-no-host",
+    "file": "src/scenes/jungleHost.js",
+    "old": "const graht = canopyAt && grahtOaksOn() ? createGrahtHost(",
+    "new": "const graht = canopyAt && false ? createGrahtHost(",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-95-unframed",
+    "file": "src/scenes/treesHost.js",
+    "old": "jungle?.graht?.frame(pixels, eye, planes);   // GRAHT1",
+    "new": "void 0;   // GRAHT1",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-96-no-bodies",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "if (grahtStood) coverItems.push(...grahtStood.bodies);",
+    "new": "if (grahtStood) void 0;",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-97-unkept",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "(x, z) => !pointNearGate(gateClear, px, py, x, z, WOD_FLAT_GATE_CLEAR_M) && !insideRocks(pixelRocks, x, z)) ?? null;",
+    "new": "(x, z) => true) ?? null;",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-98-unheld",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "grahtOaks: grahtStood?.set ?? null,",
+    "new": "grahtOaks: null,",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-99-canopy-the-emergents",
+    "file": "src/world/jungle/jungleCanopy.js",
+    "old": "  height: 80,",
+    "new": "  height: 34,",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "G-100-crowns-thin",
+    "file": "src/world/jungle/jungleCanopy.js",
+    "old": "  above: 110,",
+    "new": "  above: 18,",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "G-101-leaves-unheld",
+    "file": "src/world/jungle/jungleCanopy.js",
+    "old": "  out[3] = clamp01(w);\n  return out;\n}\n\n/** The sky the water",
+    "new": "  out[3] = w;\n  return out;\n}\n\n/** The sky the water",
+    "tests": [
+      "test/world/valenwood_canopy.test.js"
+    ]
+  },
+  {
+    "name": "G-102-the-edges-refused",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "(jg.canopy && GRAHT_LAND_RECORDS.includes(record))",
+    "new": "(jg.canopy && false)",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-103-water-edges-land",
+    "file": "src/world/jungle/grahtOaks.js",
+    "old": "createLookupTable().subarray(16)",
+    "new": "createLookupTable().subarray(0)",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-104-the-foot-on-the-flats-ground",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "    growsOn: (ti) => footOf[ti] > 0,",
+    "new": "    growsOn: (ti) => groundOf[ti] > 0,",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-105-an-edge-tile-s-slope-unread",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "      g2Of[ti] = g2;\n      if (!ground) continue;",
+    "new": "      if (!ground) continue;\n      g2Of[ti] = g2;",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  }
+]

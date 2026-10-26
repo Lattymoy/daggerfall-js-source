@@ -1,0 +1,149 @@
+[
+  {
+    "name": "VENDORLOST-the-sale-looked-up-after-the-record",
+    "file": "server-account/src/market.js",
+    "old": "    if (landed === true && side.error === 'seq' && side.seq === Number(realm.seq) + 1) oneOn = side.seq;\n    else if (side.error) return side;",
+    "new": "    if (side.error) return side;",
+    "tests": [
+      "test/net/fb1025_vendorlost.test.js"
+    ]
+  },
+  {
+    "name": "VENDORLOST-landed-unread",
+    "file": "server-account/src/market.js",
+    "old": "if (landed === true && side.error === 'seq' && side.seq === Number(realm.seq) + 1) oneOn = side.seq;",
+    "new": "if (side.error === 'seq' && side.seq === Number(realm.seq) + 1) oneOn = side.seq;",
+    "tests": [
+      "test/net/fb1025_vendorlost.test.js"
+    ]
+  },
+  {
+    "name": "VENDORLOST-one-on-taken-for-any-move",
+    "file": "server-account/src/market.js",
+    "old": "side.error === 'seq' && side.seq === Number(realm.seq) + 1) oneOn = side.seq;",
+    "new": "side.error === 'seq' && side.seq > Number(realm.seq)) oneOn = side.seq;",
+    "tests": [
+      "test/net/fb1025_vendorlost.test.js"
+    ]
+  },
+  {
+    "name": "VENDORLOST-the-repeat-without-the-record-s-sequence",
+    "file": "server-account/src/market.js",
+    "old": "if (prior) return answer(prior, { repeat: true, ...(oneOn ? { realm: { seq: oneOn } } : {}) });",
+    "new": "if (prior) return answer(prior, { repeat: true });",
+    "tests": [
+      "test/net/fb1025_vendorlost.test.js"
+    ]
+  },
+  {
+    "name": "VENDORLOST-one-on-with-no-sale-sold-again",
+    "file": "server-account/src/market.js",
+    "old": "  if (oneOn) return { error: 'seq', seq: oneOn };   // one on, and no sale of this id: a move this tab never made\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1025_vendorlost.test.js"
+    ]
+  },
+  {
+    "name": "VENDORLOST-the-batch-s-catch-answering-seq",
+    "file": "server-account/src/market.js",
+    "old": "    if (first) return answer(first, { repeat: true, realm: { seq: moved.seq } });\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1025_vendorlost.test.js"
+    ]
+  },
+  {
+    "name": "VENDORLOST-landed-never-sent",
+    "file": "src/net/marketBook.js",
+    "old": "call: (/** @type {any} */ at) => door.buy({ ...entry.body, realm: at, landed: true }),",
+    "new": "call: (/** @type {any} */ at) => door.buy({ ...entry.body, realm: at }),",
+    "tests": [
+      "test/net/fb1025_vendorlost.test.js"
+    ]
+  },
+  {
+    "name": "VENDORLOST-a-landed-repeat-unpaid",
+    "file": "src/net/marketBook.js",
+    "old": "if (!a?.data?.repeat || a?.data?.realm) w.pay(cost);",
+    "new": "if (!a?.data?.repeat) w.pay(cost);",
+    "tests": [
+      "test/net/fb1025_vendorlost.test.js",
+      "test/net/goldmarket_client.test.js"
+    ]
+  },
+  {
+    "name": "VENDORLOST-every-repeat-paid",
+    "file": "src/net/marketBook.js",
+    "old": "if (!a?.data?.repeat || a?.data?.realm) w.pay(cost);",
+    "new": "w.pay(cost);",
+    "tests": [
+      "test/net/fb1025_vendorlost.test.js",
+      "test/net/goldmarket_client.test.js"
+    ]
+  },
+  {
+    "name": "VENDORLOST-the-delivery-left",
+    "file": "src/net/marketBook.js",
+    "old": "const dn = r.data?.sale?.kind === 'item' && r.data.sale.here ? r.data.delivery?.id : null;",
+    "new": "const dn = null;",
+    "tests": [
+      "test/net/fb1025_vendorlost.test.js"
+    ]
+  },
+  {
+    "name": "VENDORLOST-the-road-kept-after-a-collect",
+    "file": "src/net/marketBook.js",
+    "old": "    if (r?.ok) { forget(); offRoad(delivery); }",
+    "new": "    if (r?.ok) { forget(); }",
+    "tests": [
+      "test/net/fb1025_vendorlost.test.js"
+    ]
+  },
+  {
+    "name": "VENDORLOST-a-piece-s-road-kept",
+    "file": "src/net/marketBook.js",
+    "old": "if (r.ok) { settled++; offRoad(d.id); } else if (!r.kept) refused.push(r.error);",
+    "new": "if (r.ok) { settled++; } else if (!r.kept) refused.push(r.error);",
+    "tests": [
+      "test/net/fb1025_vendorlost.test.js"
+    ]
+  },
+  {
+    "name": "VENDORLOST-the-stall-never-settling",
+    "file": "src/ui/vendor/vendorTab.js",
+    "old": "return { body, open, load, state: st };",
+    "new": "return { body, open: load, load, state: st };",
+    "tests": [
+      "test/net/fb1025_vendorlost.test.js",
+      "test/ui/homevendor_ui.test.js"
+    ]
+  },
+  {
+    "name": "VENDORLOST-the-board-settling-too",
+    "file": "src/ui/vendor/vendorTab.js",
+    "old": "    if (stall && v.settle) {\n",
+    "new": "    if (v.settle) {\n",
+    "tests": [
+      "test/net/fb1025_vendorlost.test.js"
+    ]
+  },
+  {
+    "name": "VENDORLOST-a-refusal-unsaid",
+    "file": "src/ui/vendor/vendorTab.js",
+    "old": "text: refused ? accountRefusalText(refused) : '' };",
+    "new": "text: '' };",
+    "tests": [
+      "test/net/fb1025_vendorlost.test.js"
+    ]
+  },
+  {
+    "name": "VENDORLOST-the-host-handing-no-settle",
+    "file": "src/scenes/vendorHost.js",
+    "old": "        settle: () => marketBook.settle(marketMint, marketPutBack, marketDrop),   // VENDOR-LOST: a kept buy's piece collected as the stall opens\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1025_vendorlost.test.js"
+    ]
+  }
+]

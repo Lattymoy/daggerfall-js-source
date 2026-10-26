@@ -210,7 +210,7 @@ export function _resetWorldDataReplacement({ assets = true } = {}) {
   regions = new Map(); locations = new Map(); blocks = new Map(); buildings = new Map();
   nextBlockIndex = 0; newBlockNames = new Map(); newBlockIndices = new Map(); _blocksFile = null;
   _refused.clear(); _quietLocations = false; _doorLatched = null;
-  if (assets) { _assets.clear(); _portBlocks.clear(); _locationEdits.length = 0; _layers.length = 0; }   // IT1: the layers with the assets
+  if (assets) { _assets.clear(); _portBlocks.clear(); _blockFamilies.length = 0; _locationEdits.length = 0; _layers.length = 0; }   // IT1: the layers with the assets
 }
 
 // ---- ARENA1: THE PORT'S OWN WORLD DATA - not a mod's, so behind no switch ----
@@ -234,10 +234,37 @@ export function registerPortBlockOf(name, make, index) {
   _portBlocks.set(name, { index, make, block: null });
   return true;
 }
-const portBlockByIndex = (index) => { for (const [name, b] of _portBlocks) if (b.index === index) return name; return null; };
+/** IC-GRAND (bible/03-World/Arena-Provinces.md IC-GRAND): BLOCK FAMILIES - a run of the port's own blocks answered by one
+ *  law: `indexOf(name)` its fixed index or -1, `nameOf(index)` its name or null, `make(name, blocksFile)` the block itself
+ *  (or its JSON) - built when first read and kept a bounded number at a time (an LRU, `keep`), so the Imperial City's
+ *  forty thousand cells register no block up front and hold only the ones near the player. Asked after the blocks
+ *  registered one by one. */
+const _blockFamilies = [];
+/** @param {{ indexOf: (name: string) => number, nameOf: (index: number) => string | null, make: (name: string, blocksFile: any) => any, keep?: number }} f */
+export function registerPortBlockFamily(f) {
+  if (!f || typeof f.indexOf !== 'function' || typeof f.nameOf !== 'function' || typeof f.make !== 'function') return false;
+  _blockFamilies.push({ ...f, keep: Math.max(1, f.keep ?? 512), cache: new Map() });
+  return true;
+}
+const familyIndex = (name) => { for (const f of _blockFamilies) { const i = f.indexOf(name); if (i >= 0) return i; } return -1; };
+const familyName = (index) => { for (const f of _blockFamilies) { const n = f.nameOf(index); if (n) return n; } return null; };
+function familyBlock(name) {
+  for (const f of _blockFamilies) {
+    const index = f.indexOf(name);
+    if (index < 0) continue;
+    if (f.cache.has(name)) { const b = f.cache.get(name); f.cache.delete(name); f.cache.set(name, b); return b; }
+    const made = f.make(name, _blocksFile);
+    const block = made && (made.rmbBlock || made.rdbBlock) ? made : made ? blockFromJson(made, index) : null;
+    f.cache.set(name, block);
+    if (f.cache.size > f.keep) f.cache.delete(f.cache.keys().next().value);
+    return block;
+  }
+  return null;
+}
+const portBlockByIndex = (index) => { for (const [name, b] of _portBlocks) if (b.index === index) return name; return familyName(index); };
 function portBlock(name) {
   const b = _portBlocks.get(name);
-  if (!b) return null;
+  if (!b) return familyBlock(name);
   b.block ??= b.make ? b.make(_blocksFile) : blockFromJson(typeof b.json === 'function' ? b.json() : b.json, b.index);   // AUDIT-TESA A6-2: a block built when first read
   return b.block;
 }
@@ -418,7 +445,7 @@ function addNewDFLocationVariant(locationIndex, locationVariantKey, variantLocat
 }
 
 // ---- the new block indices (:312-340, :531-573) ----
-export const getNewDFBlockIndex = (blockName) => _portBlocks.get(blockName)?.index ?? newBlockIndices.get(blockName) ?? -1;   // ARENA1: a port block first
+export const getNewDFBlockIndex = (blockName) => _portBlocks.get(blockName)?.index ?? (familyIndex(blockName) >= 0 ? familyIndex(blockName) : null) ?? newBlockIndices.get(blockName) ?? -1;   // ARENA1: a port block first; IC-GRAND: or a family's
 export const getNewDFBlockName = (block) => portBlockByIndex(block) ?? newBlockNames.get(block) ?? null;
 function assignBlockIndices(dfLocation) {
   if (!_blocksFile) return false;   // ContentReader/BlockFileReader null: nothing assigned, and the region is not cached
@@ -443,7 +470,7 @@ function assignNextIndex(blockName) {
  *  with its RMB buildings replaced where a building file says so; null
  *  when the mod ships none. */
 export function getDFBlockReplacementData(block, blockName) {
-  if (blockName && _portBlocks.has(blockName)) return portBlock(blockName);   // ARENA1: the port's own, behind no door
+  if (blockName && (_portBlocks.has(blockName) || familyIndex(blockName) >= 0)) return portBlock(blockName);   // ARENA1: the port's own, behind no door; IC-GRAND: a family's too
   if (!worldDataOn() || !blockName) return null;
   const variant = getBlockVariantHere(blockName);
   const blockKey = `${blockName}${variant}`;

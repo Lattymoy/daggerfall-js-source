@@ -134,7 +134,9 @@ test('V2e: the transfer arm is the WORLD host\'s, and survives worldModes\' re-r
     'wireInfectionVideos passes the arm through to setInfectionHost');
   const w = read('src/scenes/world.js');
   assert.ok(w.includes('function transferToCemeteryArm()'), 'the world host implements it');
-  assert.ok(w.includes('randomCemeteryLocationIndex(mapTable)'), 'over the pure pick');
+  // PIN MOVED (AUDIT RELEASE R2-6): the pick moved into scenes/vampireCrypt.js (HOST-SPLIT) - the Bay's arm the same pure pick, past the Bay the province's own
+  assert.ok(w.includes('vampireCryptPixel(playerTravelPixel(), _questRegionIndex(), maps, worldPlaces)'), 'the host asks the crypt module');
+  assert.ok(read('src/scenes/vampireCrypt.js').includes('randomCemeteryLocationIndex(mapTable, roll)'), 'over the pure pick');
   assert.ok(w.includes("(modes?.mode ?? 'exterior') !== 'exterior'"), 'interior/dungeon modes skip loudly');
   assert.ok(w.includes('_lastEncMinutes = Math.floor(playerTicker.ownMinutes);'),
     'PreventEnemySpawns parity - the player is the monster in the crypt');

@@ -186,6 +186,30 @@ The 35 allocation mutants over the ten suites and ALLOC-RACE's own three
 (`tools/mutants/allocrace.json`: the settle dropped from the list, the settle
 that waits for nothing, a suite's own list again): 38 dead.
 
+S7 kept failing after the settle (2026-10-25: pull requests 1220 and 1224
+read "look: 20.29" and "marks: 17.32", and neither touched the arena). The
+settle fixed a different failure. 17.32 is not the lower tier (a late
+compiler reads 2452): it is optimised code of another shape. Each child
+compiles its own shape and keeps it for its whole life. Which calls V8
+inlines under `remnantPose` turns on the feedback its background compiler
+reads, and when it reads it turns on the load. A shape that leaves a fresh
+number at a call's edge boxes it on each frame that makes the call:
+`keepInArena`'s on the Remnant's walking frames (the inlining trace shows it
+out of line), and in the 17.32 shape one more on every frame (the sampling
+heap profiler finds it in `remnantPose`'s own frame). All eight windows of
+such a child read the same, so more windows, a longer warm-up or more `gc()`
+cannot move it. A warm-up of every path over every
+fight state before the first window made the shape more common, not less.
+With sixteen children at once (Node 24 on 16 cores; CI runs 22, whose
+failures read the same 17.32), 11 runs of S7 in 128 failed, five of them at
+17.32, and a fresh child of the same code read 0.03. S7 now reads each path
+in fresh children until it reads clean, three at most, and its least reading
+counts: the least of the windows, carried across compilations. A list, an
+array or a closure made a frame shows in every shape. S7's three allocation
+mutants died in five runs of five, and the hands' mutant read 31.7 bytes a
+frame or more in each of 32 children. Under the same load 0 runs of S7 in 128
+failed. The other measuring suites still read one child each.
+
 Two tiers per module:
 1. **Synthetic fixtures** - in-memory data built inside the test. Always run;
    CI stays green with no game data (88 pass, 49 skip).

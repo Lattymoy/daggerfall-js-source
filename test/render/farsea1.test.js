@@ -89,7 +89,9 @@ test('FAR-SEA1: every ring shader - classic, the lane, the classic-shadow lane -
     for (const l of lines) { const i = text.indexOf(l); assert.ok(i > at, `${name}: '${l}' in its place`); at = i; }
   };
   // AUDIT FAR-SEA1 C1: the whole output line, and the sea's line between the light and it - inverted or dead, it fails
-  order(classicFs, ['float sun = ringSun();', 'vec3 lit = vColor * (uAmbient + uSunColor * (sun * diff) + uMoonColor * (uMoonScale * mdiff));',
+  // PIN MOVED (FAR-FLORA, 2026-10-26): the ground's light and the canopy's (horizonHaze.js floraLight, grained) mixed by its
+  // cover - the ground's alone off the woods (vFlora 0)
+  order(classicFs, ['float sun = ringSun();', 'vec3 lit = mix(vColor * (uAmbient + uSunColor * (sun * diff) + uMoonColor * (uMoonScale * mdiff)), vCanopy * floraLight(uAmbient, uSunColor, sun, uMoonColor, uMoonScale) * floraGrain(vWorld.xz), vFlora);',
     'float sea = vSea * uSeaLook;', 'if (sea > 0.0) lit = mix(lit, ringSea(uAmbient, uSunColor, uMoonColor, sun), sea);',
     'outColor = vec4(mix(lit, uFogColor, ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, uHazeHold))), 1.0);'], 'classic');   // BANTHA1: the jungle's haze over the horizon's
   // the lane: its ground through the tonemap into display space, the sea in the water's own space from the light as given
@@ -304,7 +306,7 @@ test('FAR-SEA1: the world host - the ring takes the water\'s sky, body and eye, 
   // one home for the sea's climate: Iliac Puddle No More's sea and the ring's sea read the same archive
   assert.equal((w.match(/snowCover\.arrayOf\(seaGroundArchive\(\)\)/g) || []).length, 2, 'the open sea and the ring\'s sea, one body');   // AUDIT PRECIP GROUND-2 (PIN MOVED)
   assert.equal((w.match(/renderer\.tileArrays\.get\(seaGroundArchive\(\)\)/g) || []).length, 0, 'never the bare set, which the snow lane does not upload');
-  assert.match(w, /import \{ FarRingRenderer, ringDisabled, ringHeight, RING_HAZE_HOLD, BuiltPixels \} from '\.\.\/render\/farRing\.js';/);   // PIN MOVED (OW-HORIZON, 2026-10-20): and the built pixels the ring's hole is keyed by
+  assert.match(w, /import \{ FarRingRenderer, ringDisabled, ringHeightAt, RING_HAZE_HOLD, BuiltPixels \} from '\.\.\/render\/farRing\.js';/);   // PIN MOVED (OW-HORIZON, 2026-10-20): and the built pixels the ring's hole is keyed by; PIN MOVED (BREATHTAKER2 on the horizon): the height at its pixel, the continent's lift with it
   // THE FOUR HOSTS: the fixed city draws the water and no ring, the interiors and the dungeons neither - none sets it
   for (const f of ['src/scenes/exterior.js', 'src/scenes/dungeonContext.js', 'src/scenes/worldModes.js', 'src/tools/waterLab.js']) assert.ok(!rd(f).includes('setSeaHaze'), `${f}: the world's fog alone`);
   // the lens reads back the world's far plane

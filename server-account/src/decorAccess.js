@@ -6,6 +6,7 @@
 import { accountKind, displayName } from './accounts.js';
 import { CHAR_ID_RE } from './service.js';
 import { homeMapIdOk, homeBuildingKeyOk } from '../../src/net/homeLaw.js';
+import { homeSceneName } from '../../src/net/homeScene.js';
 import { DECOR_ID_RE } from '../../src/net/decorLaw.js';
 import { OWNS } from './decor.js';
 import { dropIfUnnamed, dropObjects, getRealmBlob, mustChange, prepareRealmRecord, realmActFirst, realmSaveTextOf, realmSideOf, recordMovedOf, REALM_ID_RE } from './realm.js';
@@ -35,8 +36,6 @@ async function pieceKind(db, mapId, buildingKey, id, kind) {
   if (kind === 'station' && !place?.station) return null;
   return place;
 }
-
-const sceneName = (mapId, buildingKey) => `DaggerfallInterior [MapID=${mapId}, BuildingKey=${buildingKey}]`;
 
 // shortcut: a chest left open past this can be opened by someone else; refresh the hold from the window when a sort runs longer
 const HOLD_S = 180;
@@ -227,9 +226,13 @@ async function moveChest(ctx, player, { mapId, buildingKey, character, id, kind,
   const prep = await prepareRealmRecord(ctx, player.id, side.at, (live) => {
     if (moving.length) clearPiece(live, id);
     if (pour.length) {
-      const name = sceneName(mapId, buildingKey);
+      // HOME-POUR: the home's own scene, the one the owner's client reads for it. The building's scene is a stranger's
+      // visit: the client never reads it for its own home, and the next world move clears it.
+      const name = homeSceneName(mapId, buildingKey);
       live.sceneCache ??= { scenes: [] };
       if (!Array.isArray(live.sceneCache.scenes)) live.sceneCache.scenes = [];
+      if (!Array.isArray(live.sceneCache.permanentScenes)) live.sceneCache.permanentScenes = [];
+      if (!live.sceneCache.permanentScenes.includes(name)) live.sceneCache.permanentScenes.push(name);
       let scene = live.sceneCache.scenes.find((s) => s?.sceneName === name);
       if (!scene) { scene = { sceneName: name }; live.sceneCache.scenes.push(scene); }
       const there = new Set(goodsIn(live, id).map((it) => it?.uid));

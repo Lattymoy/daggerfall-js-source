@@ -73,9 +73,23 @@ DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from `TerrainHelper.SetLo
   as DFU's ramp keeps it, so a neighbour's ground meets it). A rect without an outline (a capital) takes DFU's blend as
   before and answers its average.
 - **Its copies** follow by the same rect: the Deep Waters bake's water test, the landforms' lift (`landformLiftField`,
-  its difference field flattened on the outline with DFU's own samples as its land), the classic pass.
+  its difference field flattened on the outline with DFU's own samples as its land), the classic pass. AUDIT TESA III
+  E1-4 (2026-10-26, `01-Overview/audits/Audit-Tesa-III-E1.md`): the bake's did not - its rows were the rect's four numbers
+  (`deepWatersClient.js` deepWatersLocationRects, `deepWatersBakeCache.js` rectsLookup), so it blended DFU's way and called
+  the sea TS2 keeps land: 453,230 samples at 262 of the Bay's 339 coastal location pixels, the seafloor before them shaped
+  against the old rect's coastline (up to 27 m off at the default depth). A row now carries the outline, the key its
+  bytes, BAKE_GENERATOR_VERSION 2. The Eltheric isles' bake read its templates' rects, while each clone stands its own
+  outline (seeded by its own map id) - 3 of 60 sampled port isles, 564 samples: it now draws each isle's outline and the
+  rect cut under it off its template's basis under the isle's own id (`terrainTiles.js` locationOutlineBasis,
+  outlineOfBasis, rectOfBasis; `03-World/Deep-Waters.md`).
 - **The road's ring** (`townRoadRing`, `roadPainter.js`): the mod's "Paint roads around locations" paves the tiles off the
-  town's ground within two and a half of it - its outline's ring, where it paved the rect's padding.
+  town's ground within two and a half of it - its outline's ring, where it paved the rect's padding. AUDIT TESA III E1-1
+  (FIXED 2026-10-26, the roads' stream): the painter's FAST-SUITE guard passed by every tile off the centre cross, the
+  diagonals and the rect - proven against the rect's law alone - and the ring lies past the rect, so 82% of it was never
+  paved (259,606 of 1,451,249 ring tiles over the Bay's 3,444 towns; a road's stubs where its arms cross it); and the ring
+  paved the sea where TS2 keeps it (2,670 ring tiles over water). Now the guard passes no ring tile, the ring paves no
+  water and `smoothRoadHeights` keeps off it (`roadPainter.js:"&& !locationRect?.ring?.[i]) continue;"`): the
+  whole dry ring paved (the audit page's record).
 - Measured on the freeware: Daggerfall stands within its walls as before (its rect 11..116, its tiles' histogram
   unchanged, its ground 0.166139 for DFU's 0.166147 - its own land's mean); Antelibuton keeps its sea (thousands of water
   samples where DFU's blend left about 240); Gothway Garden's outline wanders on every side. The corpus' stamped tiles
@@ -143,8 +157,9 @@ DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from DFU's wall ring - th
   the grid's middle - a gate crowding the one before (four lengths) slid on along the wall, one crowding the first slid
   back; between gates runs of whole lengths of wall (445) in chords of two, each stretched to its chord; a tower (444) at
   every chord's end, square to the line's bend. Every piece's outside faces out.
-- **The model** (townWallModel): every piece one model of the city's own (`world/customModels.js`, id 3,000,000 and its
-  map id's low 20 bits), composed of the player's own ARCH3D pieces (needs 444, 445, 446) - turned so its local +z is its
+- **The model** (townWallModel): every piece one model of the city's own (`world/customModels.js`, id 1,000,000 and its
+  map id's low 20 bits - AUDIT RELEASE R1-1, `01-Overview/audits/Audit-Release-R1.md`: at 3,000,000 a Bay city's wall shared
+  an id with one of IC-GRAND's city cells), composed of the player's own ARCH3D pieces (needs 444, 445, 446) - turned so its local +z is its
   outward normal and its +x along the line (no mirror), stretched along its length - so it collides and draws as any model.
 - **The carrier** (standTownWall, townWallBlockJson): a block of the city's own (`TESW<low 20 bits in base 36>.RMB`, index
   1,000,000 and the same bits) in its south-west cell: open ground, the wall's model at its corner, and a start marker
@@ -169,7 +184,9 @@ Tests `test/world/townwalls.test.js`. Mutants `tools/mutants/townwalls.json`. PI
 ## 7. TS5 - the Imperial City at seven pixels, round (BUILT)
 
 The owner, asked how large: *"7x7 pixels"* - seven map pixels a side, 5.73 km across (a pixel 819.2 m); asked again
-(*"7x7 km?"*): seven pixels, the plan 5.7 km a side, its city wall 3.9 km across.
+(*"7x7 km?"*): seven pixels, the plan 5.7 km a side, its city wall 3.9 km across. SUPERSEDED in its measures by IC-GRAND
+(`03-World/Arena-Provinces.md` IC-GRAND, 2026-10-26, the owner: *"Lets do 20km"*): twenty-five pixels, 20.48 km a side,
+its city wall 13.8 km across, its outskirts fifty pixels out - every law below the same at the new span.
 
 - **The wheel 2.17 times out** (`world/imperialCity.js` IMPERIAL_SPAN 7, IMPERIAL): the city wall 1950 m from the middle
   (TESA11's 900), the palace wall 650, Green Emperor Way 548-574, the tombs (twelve) at 416, the isle's shore 2200; each
@@ -243,7 +260,8 @@ DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from `DefaultTerrainNatur
   keeps nature off the tiles within `NATURE_CLEARANCE` (DFU's 4) of it, by the true distance - round, never a square cut
   about it; a rect without one (a capital, a World of Daggerfall site) keeps its rect widened by 4 as DFU does. Every reader
   asks it: DFU's scatter, its border law (ECOTONE1's dfuTiles), the gathering nodes' stand (natureStandsAt), the forests,
-  the jungle.
+  the jungle, its trails (`world/jungle/jungleTrails.js` cornerCleared - AUDIT TESA III E1-5: they had kept off the rect,
+  running on over the outline's margin past it) and Valenwood's graht-oaks (`03-World/Graht-Oaks.md`).
 - **DFU's stream kept** (dfuScatter): DFU walks one stream across the pixel and draws for no tile of the rect, so a tile of
   the rect off the clearing stands what DFU's law would there on the tile's own dice (dfuTiles, as ECOTONE1 lays a
   neighbour's tile) - every flat past the rect is DFU's own, but those on the town's ground past its rect (its outline's
@@ -262,6 +280,13 @@ DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from `DefaultTerrainNatur
   never cross it (shutTownWall - its gates shut, as Daggerfall's gate blocks carve theirs); its town map draws it in
   Daggerfall's wall byte (0x18, WALLAA00-11's) over a copy of each block's bytes (wallOnTownMap,
   `scenes/exteriorAutomapToggle.js`). Measured over every third city: every wall closed on its walk grid, 0.23 ms a city.
+  THE FOUR HOSTS (AUDIT TESA III E1-2, 2026-10-26): the streaming host (`scenes/world.js`, through `pixelBuild.js` and
+  `exteriorAutomapToggle.js`) and the fixed-city bench (`scenes/exterior.js`, `?exterior` / `?region&loc`) - the bench had
+  been left out, and TS7 opens every Bay city's ring on the door's read, so its Daggerfall drew no wall at all on its town
+  map (11,064 wall-byte cells before TS7, 0 after) and its walkers crossed every one of the wall's 12,513 cells. It now
+  draws the wall (wallOnTownMap) and carves its walk grid off each block's bytes with the wall laid in
+  (`townWalls.js` wallLaidBytes); the interiors (`scenes/worldModes.js`) and the dungeons (`scenes/dungeonContext.js`)
+  stand no street.
 
 Tests `test/world/townfollow.test.js`. Mutants `tools/mutants/townfollow.json`. PINS MOVED: `test/world/terrain/terrain.test.js`
 (Daggerfall's environs: 1237 flats -> 808), `test/ui/town/arena_townmap.test.js` (the streaming host's town map rows through

@@ -205,9 +205,9 @@ test('TAMRIEL4 ink on the trace: the coast stays within half a picture pixel of 
   assert.ok(!ch.coast.flat().some((p) => { const [px, py] = toPic(p); return Math.abs(px - 40) < 1e-6 && Math.abs(py - 30) < 1e-6; }), 'the corner is drawn round, not square');
   const round = ch.coast.flat().filter((p) => { const [px, py] = toPic(p); return Math.hypot(px - 40.5, py - 30.5) < 1.2; }).length;
   assert.ok(round >= 4, `${round} points round the corner: a curve, not the contour's one 45-degree cut`);
-  const toLine = (ex, ey) => {
+  const toLine = (ex, ey, chains = ch.coast) => {
     let d = Infinity;
-    for (const c of ch.coast) for (let i = 0; i + 1 < c.length; i++) {
+    for (const c of chains) for (let i = 0; i + 1 < c.length; i++) {
       const [ax, ay] = toPic(c[i]), [bx, by] = toPic(c[i + 1]), dx = bx - ax, dy = by - ay, l2 = dx * dx + dy * dy;
       const t = l2 > 0 ? Math.max(0, Math.min(1, ((ex - ax) * dx + (ey - ay) * dy) / l2)) : 0;
       d = Math.min(d, Math.hypot(ax + dx * t - ex, ay + dy * t - ey));
@@ -218,7 +218,9 @@ test('TAMRIEL4 ink on the trace: the coast stays within half a picture pixel of 
     for (const end of [b[0], b[b.length - 1]]) {
       const [ex, ey] = toPic(end);
       const atCoast = toLine(ex, ey);
-      const atJunction = ch.borders.some((o) => o !== b && [o[0], o[o.length - 1]].some((q) => Math.hypot(q.x - end.x, q.y - end.y) < 1e-6));
+      // PIN MOVED (SMOOTH-LAND, test/world/smoothland.test.js): where three provinces meet off the coast (Cyrodiil's two
+      // neighbours at its corner) a border ends on the line of the border that goes on through the meeting - the zone's
+      const atJunction = ch.borders.some((o) => o !== b && ([o[0], o[o.length - 1]].some((q) => Math.hypot(q.x - end.x, q.y - end.y) < 1e-6) || toLine(ex, ey, [o]) < 1e-6));
       assert.ok(atCoast < 0.06 || atJunction, `a border's end ON the coast's line or at a meeting of borders: ${ex}, ${ey} (${atCoast})`);
     }
   }
@@ -265,7 +267,7 @@ test('TAMRIEL4 by source: the trace closes the lines and the dabs after the rema
   assert.match(read('src/scenes/world.js'), /% of its cells and \$\{fit \? Math\.round\(\(100 \* fit\.seam\) \/ fit\.edge\) : 0\}% of its edge agreeing`\);/);
 });
 
-test('TAMRIEL4 with ARENA2: the player\'s own picture - no strait down any border, the painting\'s three enclosed waters and nothing else (PIN MOVED, NIBEN-SEA: Lake Rumare and the Niben the sea\'s), 26,598 land pixels; the Bay fitted at (38, 57) x15.5 with 190 of its 192 edge cells agreeing', { skip: HAVE_ARENA2 ? false : 'ARENA2_PATH not set' }, async () => {
+test('TAMRIEL4 with ARENA2: the player\'s own picture - no strait down any border, the painting\'s three enclosed waters and nothing else (PIN MOVED, NIBEN-SEA: Lake Rumare and the Niben the sea\'s), 26,599 land pixels; the Bay fitted at (38, 57) x15.5 with 190 of its 192 edge cells agreeing', { skip: HAVE_ARENA2 ? false : 'ARENA2_PATH not set' }, async () => {
   const { ImgFile } = await import('../../src/formats/imgFile.js');
   const { DFPalette } = await import('../../src/formats/dfPalette.js');
   const { WoodsFile } = await import('../../src/formats/woodsFile.js');
@@ -276,9 +278,9 @@ test('TAMRIEL4 with ARENA2: the player\'s own picture - no strait down any borde
   const pal = new DFPalette(); pal.load(f('MAP.PAL'), 'MAP.PAL');
   const pk = new ImgFile(); pk.load(f('TAMRIEL2.IMG'), 'TAMRIEL2.IMG');
   const t = traceTamrielPicture(pk.getDFBitmap(), pic.getDFBitmap(), paletteReader(pal));
-  // PIN MOVED (NIBEN-SEA, ui/tamrielTrace.js openNiben): 26,598 land pixels (26,636 before the Niben's course, 38 of them,
+  // PIN MOVED (NIBEN-SEA, ui/tamrielTrace.js openNiben): 26,599 land pixels (26,636 before the Niben's course, 37 of them,
   // was opened), and Lake Rumare's two pieces and the Niben no holes - the sea's, down the river to the Topal Bay
-  assert.equal(t.land.reduce((n, v) => n + v, 0), 26598);
+  assert.equal(t.land.reduce((n, v) => n + v, 0), 26599);
   const holes = pieces(t.land.map((v) => 1 - v), t.w, t.h).filter((p) => !p.edge).map((p) => p.cells.length).sort((a, b) => a - b);
   assert.deepEqual(holes, [15, 20, 281], 'Hammerfell\'s two lakes, the Inner Sea');
   // no strait: every pixel between two provinces' land is land - PIN MOVED (NIBEN-SEA): but the Niben's own course, whose

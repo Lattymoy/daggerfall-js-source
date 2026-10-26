@@ -101,7 +101,9 @@ test('AUDIT WW F5: EVERY GATE\'S LINES ON ITS OWN CARD - the Bay\'s gate and a l
   assert.equal(lane?.phase, 'omen');
   const w = src('src/scenes/world.js');
   assert.equal(w.match(/say: \(text, n\) => eventNotice\('gate', text, gateLineId\(n\)\),/g)?.length, 2, 'the omen\'s lines and the rite\'s');
-  assert.match(w, /top: f\.top \}\), gateLineId\(day\)\); \},/);
+  // PIN MOVED (AUDIT RELEASE R3, the merge of main into TESA): the fall's line GATE-COURTS' (a court's own line, the night's
+  // with its courts - the word whole), still on its own gate's card
+  assert.match(w, /\(f\.c != null \? courtFellLine : fellLine\)\(\{ \.\.\.f, near: [^\n]*?boss: gateBossOf\(day\)\.name \}\), gateLineId\(day\)\); \},/);
   assert.doesNotMatch(wholeWorld(), /eventNotice\('gate', [^,()]+\)/, 'no gate line id-less');   // PIN MOVED (AUDIT TESA II K6): the host whole
   assert.match(src('src/scenes/riteHost.js'), /say\(RITE_TEXT\.broken\(\{ near: C\.near, by: b\.by, n: b\.n \}\), C\.day\);/);
 });
@@ -109,21 +111,23 @@ test('AUDIT WW F5: EVERY GATE\'S LINES ON ITS OWN CARD - the Bay\'s gate and a l
 test('AUDIT WW F7: THE LIVING WORLD\'S LANES ARE MADE AGAIN WHEN THE WORLD MOVES - a port town\'s lanes and a port\'s berths when the world\'s lanes are a new list (a province\'s ports registered) or the places\' generation moves; the host\'s hideouts by both generations (mutants: the lanes\' list kept; the generation kept; the hideouts\' generation the roads\' alone)', () => {
   const port = (id, px, py) => ({ id, px, py });
   const bayA = { mapId: (3 << 20) | 100200, px: 200, py: 100, port: true }, bayB = { mapId: (3 << 20) | 110300, px: 300, py: 110, port: true };
-  const far = { mapId: 7001, px: 1600, py: -400, port: true };
-  const idA = bayA.mapId & 0xfffff, idB = bayB.mapId & 0xfffff, idFar = PORT_ID_WORLD + worldPixelKey(far.px, far.py);
-  const towns = new Map([[idA, bayA], [idB, bayB], [idFar, far]]);
+  const far = { mapId: 7001, px: 1600, py: -400, port: true }, bayC = { mapId: (3 << 20) | 120400, px: 400, py: 120, port: true };
+  const idA = bayA.mapId & 0xfffff, idB = bayB.mapId & 0xfffff, idC = bayC.mapId & 0xfffff, idFar = PORT_ID_WORLD + worldPixelKey(far.px, far.py);
+  const towns = new Map([[idA, bayA], [idB, bayB], [idC, bayC], [idFar, far]]);
   let list = [{ key: 'ab', a: port(idA, 200, 100), b: port(idB, 300, 110) }], gen = 1, sailors = 0;
   const lanes = createLivingLanes({ lanes: () => list, way: () => ({ len: 7, pts: [{ x: 0, z: 0 }, { x: 7, z: 0 }] }), townOfPort: (id) => towns.get(id) ?? null, sailorsOf: () => { sailors++; return []; }, generation: () => gen });
   assert.deepEqual(lanes.from(bayA).map((l) => l.to.mapId), [bayB.mapId]);
   const book = lanes.berths(idFar);
   assert.equal(lanes.berths(idFar), book, 'kept while nothing moved');
-  list = [...list, { key: 'af', a: port(idA, 200, 100), b: port(idFar, far.px, far.py) }];   // a province's port: a new list
-  assert.deepEqual(lanes.from(bayA).map((l) => l.to.mapId), [bayB.mapId, far.mapId], 'the lane past the Bay joins');
+  // PIN MOVED (WW7-7, bible/03-World/World-Wide.md): a lane keeps to its side of the Bay's edge - the new list's lane
+  // is the Bay's (bayC), and one to a port past the Bay is no Bay town's (WW3 lays none: the Bay's lanes join its ports)
+  list = [...list, { key: 'ac', a: port(idA, 200, 100), b: port(idC, 400, 120) }, { key: 'af', a: port(idA, 200, 100), b: port(idFar, far.px, far.py) }];   // a new list
+  assert.deepEqual(lanes.from(bayA).map((l) => l.to.mapId), [bayB.mapId, bayC.mapId], 'the new lane joins; the one over the edge none');
   assert.notEqual(lanes.berths(idFar), book, 'the berths made again');
   const kept = lanes.berths(idFar);
-  towns.set(idFar, { ...far, name: 'Solitude' });
+  towns.set(idC, { ...bayC, name: 'Wayrest' });
   gen = 2;
-  assert.equal(lanes.from(bayA)[1].to.name, 'Solitude', 'the places moved: the far port\'s town as it stands now');
+  assert.equal(lanes.from(bayA)[1].to.name, 'Wayrest', 'the places moved: the far port\'s town as it stands now');
   assert.notEqual(lanes.berths(idFar), kept);
   assert.equal(sailors, 3, 'the sailors asked again each time');
   const w = src('src/scenes/world.js');

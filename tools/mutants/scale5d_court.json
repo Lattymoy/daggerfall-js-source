@@ -2,8 +2,8 @@
   {
     "name": "SCALE5d2-copy-past-the-last",
     "file": "src/net/hubShards.js",
-    "old": "export const COURT_COPY_RE = /^(gate:(?:0|[1-9]\\d{0,8}))#([1-7])$/;",
-    "new": "export const COURT_COPY_RE = /^(gate:(?:0|[1-9]\\d{0,8}))#([1-9])$/;",
+    "old": "export const COURT_COPY_RE = /^(gate:(?:0|[1-9]\\d{0,8})(?:\\.(?:[1-9]|1[0-5]))?)#([1-7])$/;",
+    "new": "export const COURT_COPY_RE = /^(gate:(?:0|[1-9]\\d{0,8})(?:\\.(?:[1-9]|1[0-5]))?)#([1-9])$/;",
     "tests": [
       "test/net/scale5d_court.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "SCALE5d2-leading-zero",
     "file": "src/net/hubShards.js",
-    "old": "export const COURT_COPY_RE = /^(gate:(?:0|[1-9]\\d{0,8}))#([1-7])$/;",
-    "new": "export const COURT_COPY_RE = /^(gate:\\d+)#([1-7])$/;",
+    "old": "export const COURT_COPY_RE = /^(gate:(?:0|[1-9]\\d{0,8})(?:\\.(?:[1-9]|1[0-5]))?)#([1-7])$/;",
+    "new": "export const COURT_COPY_RE = /^(gate:\\d+(?:\\.(?:[1-9]|1[0-5]))?)#([1-7])$/;",
     "tests": [
       "test/net/scale5d_court.test.js"
     ],

@@ -23,7 +23,7 @@
 //
 // Not a DFU member. Ledger A (KETCH).
 import { identity } from '../../world/mat4.js';
-import { buildKetchShip, buildKetchParts, buildKetchGround, KT_GROUND, KT_CAGE, KT_LODESTONE, KT_LAMP, KT_LID_Y } from '../../world/ketch/ketchModel.js';
+import { buildKetchShip, buildKetchParts, buildKetchGround, KT_GROUND, KT_CAGE, KT_LODESTONE, KT_LAMP, KT_LID_Y, KT_HOUSE } from '../../world/ketch/ketchModel.js';
 import { ketchArt, resolveKetchArt, KT_ARCHIVE, KT_REC } from '../../world/ketch/ketchArt.js';
 import { DFPalette } from '../../formats/dfPalette.js';
 import { hammerHeadY, hazardState, hazardStrike, sectionPose } from '../../world/ketch/ketchPose.js';
@@ -33,8 +33,9 @@ import { ketchHourLight, ketchLightRecord, KT_TRI } from '../../world/ketch/ketc
 import { KT_GROUP, pvsGroupsAt } from '../../world/ketch/ketchStates.js';
 import {
   KT_HAMMER, KT_STEAM, KT_ARCS, KT_LIFT, KT_CRADLES, KT_BRIDGE_CRADLES, KT_SOCKETS, KT_RESONATORS, KT_BRIDGE, KT_HOLD, KT_GALLERY, KT_SECTIONS,
-  KT_ENGINE, KT_HATCH, KT_HOLD_HATCH, KT_FORK_RING, KT_GANGWAY, KT_WAIST, KT_ANCHOR, liftYAt, deckToDungeon, dungeonToDeck, deckZoneAt, sectionAt,
+  KT_ENGINE, KT_HATCH, KT_HOLD_HATCH, KT_FORK_RING, KT_GANGWAY, KT_WAIST, KT_ANCHOR, KT_COURSE, KT_ARRIVE, liftYAt, deckToDungeon, dungeonToDeck, deckZoneAt, sectionAt,
 } from '../../net/ketch/ketchDeck.js';
+import { castBackTo, spanAt } from '../../world/superDungeon/sdSteps.js';   // AUDIT KETCH II L2-4: the Sailwalk's checkpoint, for a body off it on the lid or the roof
 import { KT_STAGE } from '../../net/ketch/ketchLaw.js';
 import { KW_SECTION_WARN_MS } from '../../net/ketch/ketchWarden.js';
 import { MOONLIGHT, moonlightTerm, skyState } from '../../render/enhancedSky.js';
@@ -491,6 +492,19 @@ export function ketchOnLid(x, y, z) {
   return (x >= W.x0 && x <= W.x1 && z >= W.z0 && z <= W.z1) || (x >= A.x0 && x <= A.x1 && z >= A.z0 && z <= A.z1);
 }
 
+/** AUDIT KETCH II L4-2: IS A BODY STANDING ON THE ENGINE HOUSE'S ROOF? Solid since KETCH-FIX, and reached by a climb over the
+ *  main top's aft net: a body ran its ridge to the bridge past the whole Sailwalk (the step law believes a crossing the
+ *  course's length), or off its eave into the void, which cast it on to the Sailwalk's last checkpoint. It is the sky's, as
+ *  the lid is. Deck metres. Pure. */
+export function ketchOnRoof(x, y, z) {
+  return Math.abs(x) <= KT_HOUSE.x + 0.4 && z >= KT_HOUSE.z0 - 0.4 && z <= KT_HOUSE.z1 + 0.4 && y >= KT_HOUSE.eave - 0.3 && y <= KT_HOUSE.ridge + 0.6;
+}
+/** AUDIT KETCH II L2-4: WHERE THE LID'S AND THE ROOF'S CAST-BACK STANDS A BODY whose last ground was `safe` on part `zone` (deck
+ *  metres): there, off the main top too; off the Sailwalk, its span's checkpoint (the Steps' own); with none, where a crew
+ *  arrives. The Steps' void moves a body itself - nothing moved one on the lid, so off the main top or the Sailwalk it stood
+ *  there, a cast-back's cost a frame, to 1 HP. Pure. */
+export const ketchSkyLanding = (safe, zone) => (safe && zone === 'sailwalk' ? castBackTo(spanAt(safe[2], KT_COURSE), KT_COURSE) : safe ? [...safe] : [KT_ARRIVE.x, KT_ARRIVE.y, KT_ARRIVE.z]);
+
 export function createKetchDeckHost({ renderer, host, wm, moon = ketchMoonNow }) {
   let deck = null, deckCtx = null;
   const onShip = () => wm.mode === 'dungeon' && isKetchShip(wm.dungeonLoc);
@@ -505,8 +519,9 @@ export function createKetchDeckHost({ renderer, host, wm, moon = ketchMoonNow })
   // over its rail) is caught back to the last ground the body stood on off the course - the Ketch's line and cost
   { const own = host.sdCastBack; host.sdCastBack = (...a) => (onShip() ? castBack() : own?.(...a)); }
   let safe = null, safeZone = null;
-  function castBack() {
-    const at = safe && safeZone !== 'sailwalk' && safeZone !== 'top' ? safe : null;
+  /** `own`: nothing else moved the body (the lid, the roof) - it is always stood somewhere (ketchSkyLanding). */
+  function castBack(own = false) {
+    const at = safe && safeZone !== 'sailwalk' && safeZone !== 'top' ? safe : own ? ketchSkyLanding(safe, safeZone) : null;
     if (at) wm.place(deckToDungeon(at[0], at[1] + 0.2, at[2]));
     K()?.castBack?.();
   }
@@ -532,8 +547,10 @@ export function createKetchDeckHost({ renderer, host, wm, moon = ketchMoonNow })
       ctx.sdStepsRide = (dt, body, live = true) => {
         const k = K(), now = k?.now?.() ?? Date.now(), t = k?.clock?.() ?? now / 1000;
         deck?.pose(k?.voyage?.() ?? null, t, now, body, k?.carried?.() ?? NONE);
-        if (live && body?.grounded && body.pos) { const p = dungeonToDeck(body.pos[0], body.pos[1], body.pos[2]); if (ketchOnLid(p[0], p[1], p[2])) castBack(); }   // KETCH-FIX: the lid is the sky's
-        if (live) noteGround(body);
+        // KETCH-FIX: the lid is the sky's - AUDIT KETCH II L4-2: and the engine house's roof; a body there never its last ground
+        const p = live && body?.grounded && body.pos ? dungeonToDeck(body.pos[0], body.pos[1], body.pos[2]) : null;
+        if (p && (ketchOnLid(p[0], p[1], p[2]) || ketchOnRoof(p[0], p[1], p[2]))) castBack(true);
+        else if (live) noteGround(body);
         return ride ? ride(dt, body, live) : null;
       };
       ctx.addActivationTargets?.(() => K()?.targets?.() ?? NONE);

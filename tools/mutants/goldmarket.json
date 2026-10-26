@@ -203,7 +203,7 @@
   {
     "name": "GOLDMARKET-book-repeat-pays",
     "file": "src/net/marketBook.js",
-    "old": "if (!a?.data?.repeat) w.pay(cost);",
+    "old": "if (!a?.data?.repeat || a?.data?.realm) w.pay(cost);",
     "new": "w.pay(cost);",
     "tests": [
       "test/net/goldmarket_client.test.js"

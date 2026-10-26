@@ -881,6 +881,14 @@ Roads network, in scratch, with the slice's own functions:
   that moves only on the real data (a World of Daggerfall site, a location's
   blend) is outside it, and its slice names the bump itself. The room's
   memory (WORLD1) holds dungeon and building places only, no exterior height.
+- TWO BELIEFS IN ONE ROOM (GROUND-AGREE and GATE-AGREE, 2026-10-24,
+  `01-Overview/bugs/Field-Bugs-2026-10-24b.md`). One build, two grounds: a pixel
+  was levelled by what its client believed as it built it - whether a spawned
+  dungeon stood there (each client's clocks), and which breach arches' clearings
+  refused a World of Daggerfall site at its pick (each client's own word of a
+  stranger's arch). Both now shape the ground by what every client computes
+  alike - the spawn's roll alive or dead, every pick held or not - and only what
+  stands follows the belief. The print does not read spawns or clearings.
 - A RECORD BY A PATH, ACROSS A CHANGE OF THE ROW (THE SAVES, above): the mod's
   SmoothRoads smooths DFU's own road and not the landforms' level bed, so a
   record on a road from before the row lands within 1.6 m over or 2.0 m under
@@ -979,6 +987,20 @@ this page, each above where it lives:
   and its edge row (I4, J1), the retry's window (G3), the read side (H1), the
   snow deck (I6) and a road's bench on DFU's own cliff (I1) - RESIDUES; the
   real data re-measured with every fix in - ON THE REAL WOODS.WLD.
+
+## PAST THE BAY (BREATHTAKER, 2026-10-26)
+
+Everything above is the Bay's, and the Bay keeps it to the bit. Past the Bay's seam (SEAM_PX) the land is the
+continent's (`03-World/Tamriel.md` BREATHTAKER):
+
+- The lift goes on past the 7-bit top (continentLift), under LANDFORM_CEILING by construction (CONTINENT_CEILING).
+- The climate hills give way to the continent's own landforms (`world/tamriel/tamrielLandforms.js`), over a ramp of 8
+  pixels past the seam. Both ease beside the roads (LANDFORM7) and carve into the painted water's valleys (AUDIT
+  LANDFORMS III C1) as the hills do.
+- Cyrodiil's rivers and lakes are carved into it (`world/tamriel/tamrielWaters.js`, the shaper's last step: the
+  channel level at its surface, never raising the land).
+
+The shaper's samples stay one function of world position, every seam one number from both pixels.
 
 ## Pins
 

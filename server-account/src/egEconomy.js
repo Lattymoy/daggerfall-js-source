@@ -51,6 +51,7 @@ import { arenaWeekOf, arenaSeasonOf, arenaSeasonEndsS, ARENA_SEASON_S } from '..
 import { egValkRedoubt, egSpoilsPasses, egPanoplyHit, egEmbersOf, egSpoilsSeed, EG_PANOPLY_PITY, EG_VALK_KEY_ODDS, EG_SINK_EMBERS, EG_PANOPLY_IDS } from '../../src/net/eliteGates/egPay.js';
 import { egStrikeStatement, egStrikeAnswer, deedStatements, deedEvent, deedAnswer } from './marks.js';
 import { EMBERS_EARNED_SQL } from './accounts.js';
+import { brokerRidOk, brokerSaleOf, brokerSaleWrite, brokerRidFreeSql } from './brokerSales.js';   // AUDIT FB1024 (BROKER-RID): a press by its request id
 
 const int = (v) => (Number.isSafeInteger(Number(v)) ? Number(v) : 0);
 const hex = (b) => [...b].map((x) => x.toString(16).padStart(2, '0')).join('');
@@ -197,7 +198,9 @@ export async function egSinkOf({ db, nowS }, player) {
  * THE BROKER'S PANOPLY SINK - one piece of the buyer's choosing (`body.piece`, one of EG_PANOPLY_IDS), once an account an
  * arena week, for EG_SINK_EMBERS out of the purse the insignia spend. Answers `{ ok, piece, week, purse }` (the purse
  * after), or `{ error }`: `guest` (a guest row is one storage clear from gone - the insignia's reasoning), `piece` (not a
- * Panoply piece), `bought` (this week's taken - `piece` which), `short` (`purse` and `price`).
+ * Panoply piece), `bought` (this week's taken - `piece` which), `short` (`purse` and `price`). AUDIT FB1024 (BROKER-RID):
+ * `body.rid`, where it is sent, is the press's request id - written beside the sale (brokerSales.js), refused `fenced` where
+ * a settle fenced it first, `rid` where it is not one; the same id asked again answers its sale again (`again`).
  * @param {{ db: any, nowS: number }} ctx @param {{ id: string, handle?: string|null }} player @param {any} body
  */
 export async function egSink({ db, nowS }, player, body) {
@@ -205,17 +208,25 @@ export async function egSink({ db, nowS }, player, body) {
   const piece = body?.piece;
   if (typeof piece !== 'string' || !EG_PANOPLY_IDS.includes(piece)) return { error: 'piece' };
   const week = arenaWeekOf(nowS);
+  const rid = body?.rid ?? null;
+  if (rid !== null && !brokerRidOk(rid)) return { error: 'rid' };
   // ONE STATEMENT DECIDES: the price spent where the purse covers it and the week has no piece yet - and the week's row
-  // written by that write alone (two sales pressed at once spend once and take one piece)
+  // written by that write alone (two sales pressed at once spend once and take one piece); AUDIT FB1024: and, a press with
+  // a request id, where the id has no row (a fence, or this press already sold), its row written by that write too
   const [took] = await db.batch([
     db.prepare(`UPDATE players SET insignia_spent = insignia_spent + ?3, last_seen = ?4
       WHERE id = ?1
         AND NOT EXISTS (SELECT 1 FROM eg_sink WHERE account = ?1 AND wk = ?2)
-        AND ${EMBERS_EARNED_SQL} - insignia_spent >= ?3
-      RETURNING insignia_spent`).bind(player.id, week, EG_SINK_EMBERS, nowS),
+        AND ${EMBERS_EARNED_SQL} - insignia_spent >= ?3${rid ? `
+        AND ${brokerRidFreeSql('?1', '?5')}` : ''}
+      RETURNING insignia_spent`).bind(player.id, week, EG_SINK_EMBERS, nowS, ...(rid ? [rid] : [])),
     db.prepare('INSERT INTO eg_sink (account, wk, piece, at) SELECT ?1, ?2, ?3, ?4 WHERE changes() > 0').bind(player.id, week, piece, nowS),
+    ...(rid ? [brokerSaleWrite(db, { account: player.id, rid, kind: 'panoply', item: piece, nowS })] : []),
   ]);
   if (!took?.results?.[0]) {
+    const sold = rid ? await brokerSaleOf(db, player.id, rid) : null;
+    if (sold?.kind === 'fence') return { error: 'fenced' };
+    if (sold?.kind === 'panoply') return { ok: true, piece: sold.item, week: arenaWeekOf(sold.at), purse: await purseOf(db, player.id), again: true };
     const had = await egSinkOf({ db, nowS }, player);
     if (had.piece) return { error: 'bought', piece: had.piece };
     return { error: 'short', purse: await purseOf(db, player.id), price: EG_SINK_EMBERS };

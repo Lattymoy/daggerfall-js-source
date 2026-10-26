@@ -67,6 +67,7 @@ test('AUDIT-TESA A6-1: every capital carries start markers - editor flats on its
   for (const cap of CAPITALS) {
     assert.ok(cap.markers?.length >= 3, cap.key);
     assert.equal(capitalSliceCarriers(cap).get(capitalCentre(cap)), capitalCarrier(cap), `${cap.key}: its own slice's carrier the anchor's`);
+    if (cap.family) continue;   // PIN MOVED (IC-GRAND): the Imperial City's blocks a family on the world-data door - its slices' markers pinned on its carriers there (test/world/icgrand_lod.test.js)
     // PIN MOVED (AUDIT TESA II C7): every slice's carrier its slice's markers - the capital's own on its own slice's
     const carriers = new Set();
     for (const [s, code] of capitalSliceCarriers(cap)) {
@@ -126,6 +127,7 @@ test('AUDIT-TESA A6-2: a capital\'s gardens are its own blocks - each cell\'s, n
   assert.equal(new Set(all.map((b) => b.name)).size, all.length, 'names apart');
   CAPITALS.forEach((cap, k) => {
     assert.match(cap.tag, /^[A-Z]{2}$/);
+    if (cap.family) return;   // PIN MOVED (IC-GRAND): the Imperial City lays no garden (its park and courts the fabric's own ground)
     const names = capitalBlockNames(cap.plan, k, new Map([...new Set(cap.plan.flat())].map((c) => [c, [`${c}AA00.RMB`]])));
     cap.plan.forEach((row, r) => row.forEach((cell, x) => {
       if (cell !== 'G') return;
@@ -135,7 +137,8 @@ test('AUDIT-TESA A6-2: a capital\'s gardens are its own blocks - each cell\'s, n
       assert.ok(all.some((b) => b.name === name), `${name} registered`);
     }));
   });
-  assert.ok(!capitalBlockNames(CAPITALS[0].plan, 0, new Map([...new Set(CAPITALS[0].plan.flat())].map((c) => [c, [`${c}AA00.RMB`]]))).includes(CAPITAL_BLOCKS.garden), 'the shared garden none of theirs');
+  const { imperialSlicePlan } = await import('../src/world/imperialCity.js');   // PIN MOVED (IC-GRAND): the plan by its law, its centre's slice
+  assert.ok(!capitalBlockNames(imperialSlicePlan(312), 0, new Map([...new Set(imperialSlicePlan(312).flat())].map((c) => [c, [`${c}AA00.RMB`]])), undefined, [96, 96]).includes(CAPITAL_BLOCKS.garden), 'the shared garden none of theirs');
   // built when read: a footprint asked of no capital until one of its blocks is, and of each once
   const asked = [];
   const lazy = capitalPortBlocks({ footprint: (cap) => { asked.push(cap.key); return (x, z) => Math.abs(x) < 3 && Math.abs(z) < 3; } });
@@ -181,7 +184,8 @@ test('AUDIT-TESA A6-2: where a capital\'s models stand - a wall over a garden or
   installCapitals({ addTextures: () => 0 });
   const open = (fp, a, b) => { for (let k = 0; k <= 60; k++) if (fp(a[0] + ((b[0] - a[0]) * k) / 60, a[1] + ((b[1] - a[1]) * k) / 60)) return false; return true; };
   const fp = Object.fromEntries(CAPITALS.map((c) => [c.key, capitalFootprint(c)]));
-  // PIN MOVED (TESA11): the Imperial City's city wall's four gates and its palace wall's six, walled between
+  // PIN MOVED (TESA11): the Imperial City's city wall's four gates and its palace wall's six, walled between; PIN MOVED
+  // (IC-GRAND): its nine gates at twenty-five pixels
   const R = IMPERIAL.cityWall.r, rp = IMPERIAL.palaceWall.r;
   for (const b of IMPERIAL.cityWall.gates) assert.ok(open(fp['imperial-city'], polar(b, R - 8), polar(b, R + 8)), `the Imperial City's gate at ${b}`);
   assert.ok(!open(fp['imperial-city'], polar(50, R - 8), polar(50, R + 8)), 'its wall between');
@@ -204,6 +208,7 @@ test('AUDIT-TESA A6-2: where a capital\'s models stand - a wall over a garden or
   const blocks = capitalPortBlocks({ footprint: (cap) => fp[cap.key] });
   let crossed = 0;
   for (const cap of CAPITALS) {
+    if (cap.family) continue;   // PIN MOVED (IC-GRAND): the Imperial City's blocks closed by their slice's footprint on the door (test/world/icgrand_lod.test.js)
     cap.plan.forEach((row, r) => row.forEach((cell, cx) => {
       const own = Object.hasOwn(cap.blocks, cell) ? cap.blocks[cell] : null;
       if (cell !== 'G' && !own) return;
@@ -354,8 +359,8 @@ test('AUDIT-TESA A6-3: no landmark stands in one of Daggerfall\'s blocks a capit
       for (let i = 0; i < p.length; i += 3) {
         const x = p[i], y = p[i + 1], z = -p[i + 2];
         if (y < 0.5 || y > 30) continue;
-        const cx = Math.floor(x / BLOCK_M + AX), r = Math.floor(z / BLOCK_M + AR), cell = cap.plan[r]?.[cx];
-        if (!cell || cell === 'L' || cell === 'G' || Object.hasOwn(cap.blocks, cell)) continue;
+        const cx = Math.floor(x / BLOCK_M + AX), r = Math.floor(z / BLOCK_M + AR), cell = cap.cellAt ? cap.cellAt(r, cx) : cap.plan[r]?.[cx];   // PIN MOVED (IC-GRAND): the Imperial City's plan by its law
+        if (!cell || cell === 'L' || cell === 'G' || cell === 'O' || (cap.family ? /^I[0-9a-z]{4}$/.test(cell) : Object.hasOwn(cap.blocks, cell))) continue;
         const lx = x - (cx - AX) * BLOCK_M, lz = z - (r - AR) * BLOCK_M, depth = Math.min(lx, BLOCK_M - lx, lz, BLOCK_M - lz);
         assert.ok(depth <= 0.51, `${cap.key} model ${id} ${depth.toFixed(2)} m into ${cell} at ${cx},${r}`);
       }
@@ -374,7 +379,7 @@ test('AUDIT-TESA A6-4: an inland capital lays no wet CUST block - each kind that
   assert.deepEqual(names.get('CUST').length, 3, 'the list handed untouched');
   assert.deepEqual(dryKinds(new Map([['CUST', ['CUSTAA00.RMB']]]), (n) => blocks[n]).get('CUST'), ['CUSTAA00.RMB'], 'all wet: the list whole');
   assert.equal(dryKinds(null, () => null), null);
-  assert.match(read('src/world/tamrielCapitals.js'), /const blockNames = capitalBlockNames\(plan, k, cap\.shore \? ctx\.names : dryKinds\(ctx\.names, ctx\.blockOf\), cap\.blocks, many \? \[sx \* 8, sy \* 8\] : \[0, 0\]\);/, 'PIN MOVED (TESA11): a slice\'s');
+  assert.match(read('src/world/tamrielCapitals.js'), /const blockNames = capitalBlockNames\(plan, k, cap\.shore \? ctx\.names : dryKinds\(ctx\.names, ctx\.blockOf\), \(cell\) => ownBlockOf\(cap, cell\), many \? \[sx \* 8, sy \* 8\] : \[0, 0\]\);/, 'PIN MOVED (TESA11): a slice\'s; PIN MOVED (IC-GRAND): the own blocks by their law (the Imperial City\'s a family\'s)');
   void synthesizeCapitalLocation;
 });
 

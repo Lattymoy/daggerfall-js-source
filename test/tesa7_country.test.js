@@ -265,6 +265,7 @@ function host({ water = new Set(), roads = new Set(), wet = new Set(), templates
     const _pastBay = { countryRoll: null };   // PIN MOVED (HOST-SPLIT, at the merge of main): the place law is scenes/tamrielPlacesHost.js's, its live names through host
     const provinceKeyBeyondBay = (x) => (x < 3000 ? 'skyrim' : null), provinceNameBank = (k) => (k === 'skyrim' ? 2 : null), getNameBankOfRegion = () => 0;
     const REGION_NAMES = { 23: 'Wrothgarian Mountains' }, getWorldClimateSettings = (c) => ({ worldClimate: c });
+    const townClimateAt = (x, y, settings) => settings;   // PIN MOVED (URBANIZER U1): the province's set laid over the zone's - its own test's (urban1_look)
     const host = { _locIndexGen: 0 };
     const outlineTownLocation = (loc) => loc, blockOf = null, imperialOutskirts = () => false;   // PIN MOVED (TOWN-SHAPES TS3): the clone laid as its outline - its own test's (townoutline); TS5: round in the Imperial City's outskirts
     ${src}

@@ -20,6 +20,11 @@ import { etherWoods } from '../ethericSea.js';   // ETHER-SEA: the Eltheric Ocea
 import { setTamrielTrace } from '../tamriel/tamrielLand.js';   // TAMRIEL3: the picture's own land
 import { setTamrielFit } from '../tamriel/tamrielFrame.js';
 import { generatePixelTerrain, restrideGrid } from './terrainGen.js';   // PERF-EXT26: and a built pixel's grid at another stride
+import { buildMidRingHeights, buildFarFieldBytes, midRingPixel, farFieldCell } from './midRingGrid.js';   // MID-RING: the middle ring's ground, off the frame; FAR-FIELD: and the far field's
+import { farCellClimate, midRingWet, DRY } from './farClimate.js';   // FAR-FIELD: a far cell's climate past the Bay, worked out here; MAP-WATERS: a middle-ring pixel's rivers
+import { midRingFloraPixel, bandTreesPixel } from './floraCover.js';   // FAR-FLORA: the near law's woods at the middle ring's samples; FAR-TREES: a band pixel's own trees
+import { lawWatersInk } from '../tamriel/watersInk.js';   // MAP-WATERS: the map's copy of the waters the kernel carves, compiled here
+import { createLandforms } from '../landforms.js';
 import { buildRoadsFromSettlements } from '../roadsProducer.js';   // AUDIT ROADS F2
 import { cachedNetwork, roadsCacheKey } from '../roadsCache.js';   // ROADS 19
 import { setArenaRoads, arenaRoadsLayer, unpackArenaRoads, mergeArenaRoads } from '../arenaRoads.js';   // TESA4/TESA14: the roads past the Bay
@@ -30,10 +35,32 @@ let roads = null;   // ROADS 3
 let sites = null;   // LANDFORM4: the game's own locations the landforms pull the ground to (landforms.js landformSites)
 let climates = null;   // LANDFORM6: the world's climates, the land each wears (landforms.js landformClimates)
 let pendingRoads = null;   // ROADS 19: the cache lookup in flight
+/** MID-RING / FAR-FIELD: the horizon's grounds kept a pixel (a cell) at a time across their rebuilds - a ring drifted
+ *  three pixels asks some 170 new pixels of its 841, a far field drifted three cells some 1,100 new cells of its 14,641 -
+ *  and let go whenever what they read moves (a new reader, network, table or trace: every message but a job). Each its
+ *  own book, bounded past two of its grounds (a book smaller than one ground's walk would let go of every entry before
+ *  the next rebuild asked it again): the one asked longest ago let go first. */
+export const HORIZON_KEPT = Object.freeze({ mid: 4096, far: 32768 });
+const keptBook = (limit) => {
+  const book = new Map();
+  const take = (key, make) => {
+    let v = book.get(key);
+    if (v) { book.delete(key); book.set(key, v); return v; }
+    v = make();
+    book.set(key, v);
+    while (book.size > limit) book.delete(book.keys().next().value);
+    return v;
+  };
+  take.clear = () => book.clear();
+  take.size = () => book.size;
+  return take;
+};
+const keptMid = keptBook(HORIZON_KEPT.mid), keptFar = keptBook(HORIZON_KEPT.far);
 globalThis.onmessage = (ev) => handle(ev.data ?? {});
 
 function handle(m) {
   try {
+    if (m.t === 'init' || m.t === 'roads' || m.t === 'landform-tables' || m.t === 'tamriel') { keptMid.clear(); keptFar.clear(); }   // MID-RING: what the grounds read moved
     if (m.t === 'init') {
       const w = new WoodsFile();
       if (!w.load(m.woodsBytes)) throw new Error('WOODS.WLD failed to load in the terrain worker');
@@ -48,6 +75,8 @@ function handle(m) {
     if (m.t === 'landform-tables') { sites = m.sites ?? null; climates = m.climates ?? null; return; }
     // TAMRIEL3: the picture's own land and the Bay's fit, as the host's modules hold them
     if (m.t === 'tamriel') { setTamrielTrace(m.trace ?? null); setTamrielFit(m.fit ?? null); dropGroundCache(); return; }
+    // MAP-WATERS: the held map's rivers and lakes - the law this worker compiles for its carve anyway, packed and moved
+    if (m.t === 'waters') { const { ink, transfer } = lawWatersInk(); globalThis.postMessage({ t: 'watersInk', ink }, transfer); return; }
     // ROADS 3: the network arrives ONCE, after init, and rides every job
     // from then on. null clears it (a new game with a different archive).
     // AUDIT ROADS F2: the network is BUILT HERE, not shipped here. The
@@ -95,6 +124,12 @@ function handle(m) {
     // along the network, so it waits for the one the pixel was cut along.
     if (m.t === 'grid' && m.landform && pendingRoads) { pendingRoads.then(() => handle(m)); return; }
     if (m.t === 'grid') { answerGrid(m); return; }
+    // MID-RING: the middle ring's heights, by id as a grid is - the landforms' wait for the network theirs is cut along
+    if (m.t === 'midring' && m.landform && pendingRoads) { pendingRoads.then(() => handle(m)); return; }
+    if (m.t === 'midring') { answerMidRing(m); return; }
+    if (m.t === 'farfield') { answerFarField(m); return; }   // FAR-FIELD: the heightmap alone - no network to wait for
+    if (m.t === 'floraband' && m.landform && pendingRoads) { pendingRoads.then(() => handle(m)); return; }   // FAR-TREES: the landforms the roads shape, as the stream's
+    if (m.t === 'floraband') { answerFloraBand(m); return; }   // FAR-TREES: the band's trees past the grid
     // ROADS 19: a job that arrives while the network is still loading
     // waits for it, so no chunk is ever generated roadless.
     if (m.t === 'job' && pendingRoads) { pendingRoads.then(() => handle(m)); return; }
@@ -124,6 +159,60 @@ function answerArenaRoads(m) {
   const layer = m.reset || !arenaRoadsLayer() ? { roads: new Map(), tracks: new Map(), join: new Map() } : arenaRoadsLayer();
   if (m.layer) mergeArenaRoads(layer, unpackArenaRoads(m.layer));
   setArenaRoads(layer);
+}
+
+/** MID-RING (render/midRing.js): the middle ring's heights round {baseX, baseY} - the kernel's own at whole samples
+ *  (world/terrain/midRingGrid.js), the landforms' where the job carries the row, on this worker's own network and tables
+ *  - TRANSFERRED back under the job's id. A failure answers `midError`: the client answers null and the far ring stands. */
+function answerMidRing(m) {
+  try {
+    if (!woods) throw new Error('terrain worker got a middle ring before init');
+    const landforms = m.landform ? createLandforms({ woods, roads, sites, climates }) : null;
+    const pixel = (px, py) => keptMid(`${px},${py},${m.sub},${m.landform ? 1 : 0}`, () => midRingPixel(woods, px, py, m.sub, landforms));
+    const heights = buildMidRingHeights({ woods, baseX: m.baseX, baseY: m.baseY, radius: m.radius, sub: m.sub, landforms, rows: m.rows ?? null, pixel });
+    // MAP-WATERS: and where stream G's rivers and lakes stand in it - sent only when one does
+    let anyWet = false;
+    const wetPixel = (px, py) => { const v = keptMid(`w${px},${py},${m.sub}`, () => midRingWet(px, py, m.sub)); if (v !== DRY) anyWet = true; return v; };
+    const wet = buildMidRingHeights({ woods, baseX: m.baseX, baseY: m.baseY, radius: m.radius, sub: m.sub, rows: m.rows ?? null, pixel: wetPixel, Kind: Uint8Array });
+    // FAR-FLORA: and the woods the near law grows at each sample (world/terrain/floraCover.js), kept by the pixel as its heights are
+    const flora = m.flora ? buildMidRingHeights({ woods, baseX: m.baseX, baseY: m.baseY, radius: m.radius, sub: m.sub, rows: m.rows ?? null, pixel: (px, py) => keptMid(`f${px},${py},${m.sub},${m.landform ? 1 : 0}`, () => midRingFloraPixel(pixel(px, py), px, py, m.sub)), Kind: /** @type {any} */ (Uint32Array) }) : null;
+    const moved = [heights.buffer, ...(anyWet ? [wet.buffer] : []), ...(flora ? [flora.buffer] : [])];
+    globalThis.postMessage({ t: 'mid', id: m.id, heights, wet: anyWet ? wet : null, flora }, moved);
+  } catch (e) {
+    globalThis.postMessage({ t: 'midError', id: m.id, message: e?.message ?? String(e) });
+  }
+}
+
+/** FAR-FIELD (render/farField.js): the far field's cells round {baseCX, baseCY} - each its highest byte and its count of
+ *  the sea's floor, off this worker's own reader (world/terrain/midRingGrid.js buildFarFieldBytes) - TRANSFERRED back
+ *  under the job's id; a failure answers `farError`, and the far ring closes into the sky as it always did. */
+function answerFarField(m) {
+  try {
+    if (!woods) throw new Error('terrain worker got a far field before init');
+    const cellAt = (cx, cy) => keptFar(`${cx},${cy},${m.cell},${m.seaByte}`, () => farFieldCell(woods, cx, cy, m.cell, m.seaByte, farCellClimate));
+    const { high, low, clim } = buildFarFieldBytes({ woods, baseCX: m.baseCX, baseCY: m.baseCY, radius: m.radius, cell: m.cell, seaByte: m.seaByte, rows: m.rows ?? null, cellAt });
+    globalThis.postMessage({ t: 'far', id: m.id, high, low, clim }, [high.buffer, low.buffer, clim.buffer]);
+  } catch (e) {
+    globalThis.postMessage({ t: 'farError', id: m.id, message: e?.message ?? String(e) });
+  }
+}
+
+/** FAR-TREES (render/farTrees.js): THE BAND'S TREES - each pixel of `pixels` ([px, py, nature archive, climate type] four
+ *  a pixel) its own trees as the stream would stand them (world/terrain/floraCover.js bandTreesPixel), kept by the pixel
+ *  in the horizon's book and answered as copies, TRANSFERRED; a failure answers `bandError`, and the band waits. */
+function answerFloraBand(m) {
+  try {
+    if (!woods) throw new Error('terrain worker got a band before init');
+    const landforms = m.landform ? createLandforms({ woods, roads, sites, climates }) : null;
+    const trees = [];
+    for (let k = 0; k + 3 < m.pixels.length; k += 4) {
+      const [px, py, archive, climateType] = [m.pixels[k], m.pixels[k + 1], m.pixels[k + 2], m.pixels[k + 3]];
+      trees.push(keptMid(`t${px},${py},${archive},${climateType},${m.forests ? 1 : 0},${m.landform ? 1 : 0}`, () => bandTreesPixel({ woods, px, py, archive, climateType, forests: !!m.forests, landforms })).slice());
+    }
+    globalThis.postMessage({ t: 'band', id: m.id, trees }, trees.map((t) => t.buffer));
+  } catch (e) {
+    globalThis.postMessage({ t: 'bandError', id: m.id, message: e?.message ?? String(e) });
+  }
 }
 
 /** PERF-EXT26: STREAM1's promotion, off the frame - {id, px, py, stride,

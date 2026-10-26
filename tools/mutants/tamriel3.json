@@ -137,8 +137,8 @@
   {
     "name": "TAMRIEL3-a-malformed-trace-is-installed",
     "file": "src/world/tamriel/tamrielLand.js",
-    "old": "if (!trace || !trace.land || !trace.province || trace.w * trace.h !== trace.land.length) { _trace = null; _version++; return; }",
-    "new": "if (!trace || !trace.land || !trace.province) { _trace = null; _version++; return; }",
+    "old": "if (!trace || !trace.land || !trace.province || trace.w * trace.h !== trace.land.length) { _trace = null; _version++; for (const fn of _heard) fn(null); return; }",
+    "new": "if (!trace || !trace.land || !trace.province) { _trace = null; _version++; for (const fn of _heard) fn(null); return; }",
     "tests": [
       "test/world/tamriel3.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "TAMRIEL3-the-version-stands-still",
     "file": "src/world/tamriel/tamrielLand.js",
-    "old": "  _version++;\n}",
-    "new": "}",
+    "old": "  _version++;\n  for (const fn of _heard) fn(_trace);\n}",
+    "new": "  for (const fn of _heard) fn(_trace);\n}",
     "tests": [
       "test/world/tamriel3.test.js"
     ]
@@ -155,19 +155,21 @@
   {
     "name": "TAMRIEL3-the-sea-has-a-province",
     "file": "src/world/tamriel/tamrielLand.js",
-    "old": "    if (!_trace.land[i]) return null;\n",
-    "new": "    ;\n",
+    "old": "      if (land[i]) label[(y + PAD) * W + x + PAD] =",
+    "new": "      if (land[i] || true) label[(y + PAD) * W + x + PAD] =",
     "tests": [
-      "test/world/tamriel3.test.js"
+      "test/world/tamriel3.test.js",
+      "test/world/smoothland.test.js"
     ]
   },
   {
     "name": "TAMRIEL3-off-the-grid-is-a-province",
     "file": "src/world/tamriel/tamrielLand.js",
-    "old": "if (x < 0 || y < 0 || x >= _trace.w || y >= _trace.h) return null;",
-    "new": "if (x < 0 || y < 0) return null;",
+    "old": "if (!(px >= 0 && py >= 0 && px < L.w && py < L.h)) return 0;",
+    "new": "if (!(px >= 0 && py >= 0)) return 0;",
     "tests": [
-      "test/world/tamriel3.test.js"
+      "test/world/tamriel3.test.js",
+      "test/world/smoothland.test.js"
     ]
   },
   {
@@ -209,8 +211,8 @@
   {
     "name": "TAMRIEL3-the-fit-forgets-the-scale",
     "file": "src/world/tamriel/tamrielLand.js",
-    "old": "for (const ppu of ppus) {",
-    "new": "for (const ppu of ppus.slice(0, 1)) {",
+    "old": "  for (let q = 0; q < ppus.length; q++) {",
+    "new": "  for (let q = 0; q < 1; q++) {",
     "tests": [
       "test/world/tamriel3.test.js"
     ]
@@ -269,34 +271,18 @@
       "test/world/tamriel3.test.js"
     ]
   },
-  {
-    "name": "TAMRIEL3-a-border-where-the-province-stays",
-    "file": "src/ui/tamrielInk.js",
-    "old": "if (x + 1 < w && land[i + 1] && province[i + 1] !== province[i]) segs.push([x + 1, y, x + 1, y + 1]);",
-    "new": "if (x + 1 < w && land[i + 1] && province[i + 1] !== province[i]) segs.push([x + 1, y, x + 1, y + 1]); else if (x + 1 < w && land[i + 1]) segs.push([x + 1, y, x + 1, y + 1]);",
-    "tests": [
-      "test/world/tamriel3.test.js"
-    ]
-  },
+  
   {
     "name": "TAMRIEL3-the-southern-border-edge-is-dropped",
-    "file": "src/ui/tamrielInk.js",
-    "old": "if (y + 1 < h && land[i + w] && province[i + w] !== province[i]) segs.push([x, y + 1, x + 1, y + 1]);",
-    "new": "if (false) segs.push([x, y + 1, x + 1, y + 1]);",
-    "tests": [
-      "test/world/tamriel3.test.js"
-    ]
-  },
-  {
-    "name": "TAMRIEL3-the-coast-is-not-simplified",
-    "file": "src/ui/tamrielInk.js",
-    "old": ".map((c) => chaikinCapped(simplifyChain(c, COAST_SIMPLIFY_PX), SMOOTH_PASSES, COAST_CUT_PX));",
-    "new": ".map((c) => simplifyChain(c, COAST_SIMPLIFY_PX));",
+    "file": "src/world/tamriel/tamrielLines.js",
+    "old": "    if (d !== c) { crossing(bottom, bx, by + 1, 1, 0, d, c); E.push(",
+    "new": "    if (false) { crossing(bottom, bx, by + 1, 1, 0, d, c); E.push(",
     "tests": [
       "test/world/tamriel3.test.js",
-      "test/ui/tamriel4.test.js"
+      "test/world/smoothland.test.js"
     ]
   },
+  
   {
     "name": "TAMRIEL3-a-label-for-a-province-with-no-land",
     "file": "src/ui/tamrielInk.js",

@@ -8,6 +8,18 @@
 
 Newest first.
 
+**2026-10-26 - AUDIT PVP-EASE.** The owner: *"Can we audit this"*, of PVP-EASE, the open PvP overhaul, the day it was
+written. Four cold lanes on a frozen worktree, each reproducing every finding with a probe on the real code; 21 reported,
+16 defects, all fixed. Paid: a cell crossed and a room woken from its sleep granted a fresh minute of safe passage (the
+hub's carry was a struck fighter's alone, read within the mend); the repeat shield measured by when a fall was carried, so
+a killer holding a receipt half an hour took the second kill whole; policies on pieces long gone shut the insurer's door
+for good; the game's policy book read once, for an id the save had not loaded yet; ships' guns blind to safe passage; the
+grace's end said outside the zone; a tutorial row in twelve languages still saying the cart drops. The owner's four calls:
+a combat lock on storing for a minute after a player's blow (storage open anywhere had made the drop optional), a policy
+spent only when it saved its piece, any take from remains ends safe passage, and every rise in the zone grants it. 39
+mutants, all dead. Relay world270, account acct196 (world269 and acct195 on its branch, renumbered past the TESA fold's
+at its fold into #1184). Record: `audits/Audit-PvP-Ease.md` (AUDIT PVP-EASE).
+
 **2026-10-25 - AUDIT STARTS.** The owner: *"Audit this and ensure its perfect"*, of the alternate starts (START1-START3,
 pull request #1216). Five cold lanes on a frozen head - the quest layer, the world host, the voyages, the page and the
 map, the pins - each given the asks and the files and never the record's conclusions; 51 reported, 45 defects. Paid: the
@@ -21,6 +33,16 @@ voyage back from Daggerfall to six ports, each refusal a freeze of seconds (and 
 doubled article, Bulgarian's names, the writ's row off the picker; and twelve pins that could not fail. Each fixed and
 pinned red, with a mutant. 61 mutants, all dead. Record: `Audit-Starts.md` (AUDIT STARTS).
 
+**2026-10-26 - AUDIT KETCH II.** The owner: *"Can you audit the airship raid. Its a buggy mess"*, of the Sky-Ketch on
+main after the four slices that followed AUDIT KETCH. Five cold lanes, each reproducing every finding with a probe on the
+real code; 36 reported, 30 defects. Paid: nobody could board (the page ran her sky aboard alone, a slice's misplaced
+`else`), and a fall from a fallen section of the bridge's ring landed in her shut belly; the tracker said the Watch was
+waiting through its last two waves; the room never heard a heal before the bridge; the lid's cast-back stood nobody
+anywhere, a cost a frame to 1 HP; the Sailwalk skipped over the engine house's roof; the Pellet cap a page's and a room's
+and spent before the bosses; constructs' health read off who posed last; Sentries out over the bow's nets, stacked two to a
+post and never firing when chased; twenty minutes after she weighs anchor shorter than a voyage, and a fight lost before a
+solo could climb back. 26 fixed and pinned red, each with a mutant (33, all dead); two left with their reasons; the solo's
+pace the owner's to set. Relay world266. Record: `audits/Audit-Ketch-II.md` (AUDIT KETCH II).
 **2026-10-25 - AUDIT FB-FEEDBACK-1024 (AIM-ENDS, FERRY-CLEAR, DECOR-USE, PERK-TRIAL).** The owner: *"Audit"*, of the
 branch's four slices for the Discord's feature-feedback (2026-10-24). Four cold lanes on a frozen snapshot, each given the
 ask and the files and never the record's conclusions; each lane built its own harness over the real code (the naval

@@ -145,8 +145,10 @@ import { tamrielFrameInBay, inBay } from '../world/tamriel/tamrielFrame.js';
 import { tamrielLandVersion } from '../world/tamriel/tamrielLand.js';   // TAMRIEL3: the trace's version, in the static key
 import { arenaPlacesVersion } from '../world/arenaPlaces.js';   // TESA1: the places' version past the Bay, beside it
 import { arenaRoadsVersion } from '../world/arenaRoads.js';   // TESA13: and the roads past the Bay, landing while it stands (AUDIT TESA II M9: the tick's word)
-import { pastBayPlacesVersion } from '../world/pastBayPlaces.js';   // TESA15: and the places the roads' regions laid
+import { pastBayPlacesVersion } from '../world/pastBayPlaces.js';
+import { portalLandAt } from '../systems/travel/pastBayTravel.js';   // PORTAL-ANYWHERE: the land a Portal Stone's portal reaches past the Bay   // TESA15: and the places the roads' regions laid
 import { createTamrielTiles } from './tamrielTiles.js';   // TESA15: the land past the Bay's paint, kept a tile at a time
+import { pageHas } from '../systems/pageQuery.js';   // MAP-WHOLE: the load probe's door behind the shot gate
 import { NOTE_MAX_CHARACTERS } from '../systems/automap/automap.js';
 /** PLUS-MAP: the 3D map's tool glyphs - line drawings in the button's own colour (currentColor). */
 const TOOL_SVG = (d) => `<svg class="hmtoolicon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter">${d}</svg>`;
@@ -798,6 +800,10 @@ export class HeldMapWindow {
       save: this.getTravelMapSaveData(),
     });
     globalThis.__heldMap = this._probeFn;
+    // MAP-WHOLE (tools/heldMapLoadProbe.mjs): a view set as a zoom or a pan sets it, and how the last paint left the sheet -
+    // its milliseconds, whether a tile past the Bay is still owed, and the tiles' own count of what they showed
+    this._loadFn = { view: (v) => this._setView(v), state: () => ({ phase: this._phase, view: { ...this._view }, paintMs: this._paintMs ?? 0, dirty: !!this._dirty, owed: !!this._pastBayTiles?.stats?.().owed, tiles: this._pastBayTiles?.stats?.() ?? null }) };
+    if (pageHas('shot')) globalThis.__heldMapLoad = this._loadFn;   // behind the shot gate (AUDIT ANTICHEAT A2)
   }
 
   // ── THE CLASSIC WINDOW'S CONTRACT, kept ────────────────────────
@@ -1100,6 +1106,7 @@ export class HeldMapWindow {
     // ownership-checked: a second window minted after this one owns
     // the surface now, and an unconditional delete would blind it
     if (globalThis.__heldMap === this._probeFn) delete globalThis.__heldMap;
+    if (globalThis.__heldMapLoad === this._loadFn) delete globalThis.__heldMapLoad;
   }
 
   /** closeTravelWindows' tail: teardown, done, one-shots cleared,
@@ -1962,6 +1969,7 @@ export class HeldMapWindow {
    *  strip's layout and every law above are exercised without it. */
   _paint() {
     this._dirty = false;
+    const paintAt = performance.now();   // MAP-WHOLE: the paint's milliseconds, the load probe's read
     const canvas = this._chrome?.ink;
     const ctx = canvas?.getContext?.('2d');
     const sheet = this._sheet;
@@ -2052,6 +2060,7 @@ export class HeldMapWindow {
       ctx.restore();
     }
     if (this._bandShown !== band) { this._bandShown = band; this._chrome.band.textContent = band; }
+    this._paintMs = performance.now() - paintAt;
   }
 
   /** THE HANDS, in paper pixels: each THUMB_ZONE divided into PAPER's
@@ -3421,7 +3430,7 @@ export class HeldMapWindow {
    *  the cities - U2), else picked and named alone. Null while the sheet shows no land past the Bay. */
   _pastBayPick(px, py, name) {
     if (!this._tamriel || !Number.isInteger(px) || !Number.isInteger(py)) return null;
-    const portal = !!tamrielInkFor(this._model)?.cities?.some((c) => c.pixel?.x === px && c.pixel?.y === py);
+    const portal = !!tamrielInkFor(this._model)?.cities?.some((c) => c.pixel?.x === px && c.pixel?.y === py) || (!!this.deps.portalLandPastBay && !!portalLandAt(px, py));   // PORTAL-ANYWHERE: on the stone's map any land
     return { coords: true, x: px + 0.5, y: py + 0.5, colorIndex: -1, kind: 'coords', name: String(name ?? ''), summary: null, mapId: null, arena: true, pastBay: true, portal };
   }
 
@@ -4019,7 +4028,7 @@ export class HeldMapWindow {
       // WW7-6: a seat past the Bay answers with its card, as the Bay's (SEAT-TIP)
       const seat = past.city?.mapId != null ? this.deps.seatAt?.({ mapId: past.city.mapId }) ?? null : null;
       const tip = seat ? readTip(seatTipOf(seat), { textMax: SEAT_TIP_TEXT_MAX, linesMax: TOWN_TIP_LINES_MAX }) : ore;
-      return { label: past.label, cursor: this.teleportationTravel && past.city?.pixel ? 'pointer' : '', ...(tip ? { tip } : {}) };   // TESA2: a place the stone's portal reaches points (TESA-NO-FAST: on the teleport map alone)
+      return { label: past.label, cursor: this.teleportationTravel && (past.city?.pixel || (this.deps.portalLandPastBay && portalLandAt(px, py))) ? 'pointer' : '', ...(tip ? { tip } : {}) };   // PORTAL-ANYWHERE: and on the stone's map its land   // TESA2: a place the stone's portal reaches points (TESA-NO-FAST: on the teleport map alone)
     }
     // the raw politic read, range-checked - the classic window's own
     // region-under-cursor law; the sea answers nothing
@@ -4065,8 +4074,11 @@ export class HeldMapWindow {
     if (this._tamriel && !this._zoneMap && this.teleportationTravel) {
       const [mx, my] = toMap(this._view, sx, sy);
       const city = tamrielCityAt(mx, my, this._view, tamrielInkFor(this._model), { filters: this.filters, continent: onContinent(this._view.scale, this._bayFit()) });   // AUDIT TESA II M7: a city the sheet inks
-      if (city?.pixel) {
-        this._select({ coords: true, x: city.pixel.x + 0.5, y: city.pixel.y + 0.5, colorIndex: -1, kind: 'coords', name: city.name, summary: null, mapId: null, arena: true });
+      // PORTAL-ANYWHERE (bible/06-Systems/Portal-Stone.md; the owner: "Anywhere on land"): on the Portal Stone's map
+      // (`portalLandPastBay`) bare land past the Bay is a portal's end too, named by its province - the guild's keeps TESA13's
+      const end = city?.pixel ? city : this.deps.portalLandPastBay ? portalLandAt(Math.floor(mx), Math.floor(my)) : null;
+      if (end) {
+        this._select({ coords: true, x: end.pixel.x + 0.5, y: end.pixel.y + 0.5, colorIndex: -1, kind: 'coords', name: end.name, summary: null, mapId: null, arena: true });
         this._openPanel('teleport');
         return;
       }

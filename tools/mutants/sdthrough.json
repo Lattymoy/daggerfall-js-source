@@ -192,8 +192,8 @@
   {
     "name": "SD-THROUGH-a-returner-never-tells",
     "file": "server/src/index.js",
-    "old": "{ this._sdTellIn(s, rec, now); return null; }   // SD-THROUGH",
-    "new": "{ return null; }   // SD-THROUGH",
+    "old": "await this._sdRose(realm, sub, now); this._sdTellIn(s, rec, now); return null; }",
+    "new": "await this._sdRose(realm, sub, now); return null; }",
     "tests": [
       "test/net/superDungeon/sdthrough_relay.test.js"
     ],

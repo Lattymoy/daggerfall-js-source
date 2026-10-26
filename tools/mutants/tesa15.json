@@ -94,8 +94,8 @@
   {
     "name": "TESA15-a-place-on-theirs",
     "file": "src/world/tamrielRoads.js",
-    "old": " && !theirs.has(`${p.x},${p.y}`)).sort((a, b) => a.y - b.y || a.x - b.x);\n  return",
-    "new": ").sort((a, b) => a.y - b.y || a.x - b.x);\n  return",
+    "old": " && !theirs.has(`${p.x},${p.y}`)).sort((a, b) => a.y - b.y || a.x - b.x);\n  const trunkPath",
+    "new": ").sort((a, b) => a.y - b.y || a.x - b.x);\n  const trunkPath",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
       "test/tesa14_roads.test.js"
@@ -104,8 +104,8 @@
   {
     "name": "TESA15-the-places-unordered",
     "file": "src/world/tamrielRoads.js",
-    "old": ".sort((a, b) => a.y - b.y || a.x - b.x);\n  return { roads, tracks, places:",
-    "new": ";\n  return { roads, tracks, places:",
+    "old": ".sort((a, b) => a.y - b.y || a.x - b.x);\n  const trunkPath",
+    "new": ";\n  const trunkPath",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
       "test/tesa14_roads.test.js"
@@ -114,8 +114,8 @@
   {
     "name": "TESA15-the-places-unposted",
     "file": "src/world/tamrielRoadsWorker.js",
-    "old": "layer, places: placed, stats: out.stats",
-    "new": "layer, stats: out.stats",
+    "old": "layer, places: placed, land, stats: out.stats",
+    "new": "layer, land, stats: out.stats",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
       "test/tesa14_roads.test.js"
@@ -134,8 +134,8 @@
   {
     "name": "TESA15-the-cache-s-places-dropped",
     "file": "src/world/tamrielRoadsClient.js",
-    "old": "{ cached: true }, unpackPastBayPlaces(hit.places));",
-    "new": "{ cached: true }, []);",
+    "old": "{ cached: true }, unpackPastBayPlaces(hit.places), hit.land ?? null);",
+    "new": "{ cached: true }, [], hit.land ?? null);",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
       "test/tesa14_roads.test.js"
@@ -264,12 +264,13 @@
   {
     "name": "TESA15-a-track-dot-a-road-s",
     "file": "src/ui/tamrielInk.js",
-    "old": "      const pen = pathPen(kind, 'far'), w = pen.width, p = passOf(ctx, job, pen.style);",
-    "new": "      const pen = pathPen(kind, 'far'), w = 1, p = passOf(ctx, job, pen.style);",
+    "old": "      const pen = pathPen(kind, 'far'), w = pen.width;",
+    "new": "      const pen = pathPen(kind, 'far'), w = 1;",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
       "test/tesa13_mapink.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (MAP-WHOLE): the pass is made after the pen, rasterised or a path."
   },
   {
     "name": "TESA15-a-glyph-cut",
@@ -305,12 +306,13 @@
   {
     "name": "TESA15-the-word-unread",
     "file": "src/ui/tamrielTiles.js",
-    "old": "        if (!t || t.word !== word || t.job) {",
-    "new": "        if (!t || t.job) {",
+    "old": "        if (!t || t.word !== word || t.job) t = turn(t, x0, y0, span, level, word, opts);",
+    "new": "        if (!t || t.job) t = turn(t, x0, y0, span, level, word, opts);",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
       "test/tesa13_mapink.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (MAP-WHOLE): a tile's turn is one helper the base's tiles share."
   },
   {
     "name": "TESA15-the-key-unread",
@@ -377,12 +379,13 @@
   {
     "name": "TESA15-no-stand-in",
     "file": "src/ui/tamrielTiles.js",
-    "old": "        else stand(ctx, view, dpr, key, n, x0, y0, span);\n",
+    "old": "        else if (stand(ctx, view, dpr, key, n, x0, y0, span)) stood++;\n",
     "new": "",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
       "test/tesa13_mapink.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (MAP-WHOLE): the stand-in answers whether it stood, the draw counting it."
   },
   {
     "name": "TESA15-no-fallback",

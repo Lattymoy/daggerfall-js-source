@@ -616,6 +616,8 @@ test('START2 LONG-VOYAGE (travelRoute.js planSeaLanes): a booked voyage whose po
 // ── the game's own Tamriel ───────────────────────────────────────
 
 const ARENA2 = process.env.ARENA2_PATH;
+/** PIN MOVED (PLAN-SLICES): the most cells a voyage's plan spends (its floods, its lanes and its landfall - travelRoute.js `tally`). */
+const VOYAGE_CELLS_MAX = 450000;   // measured 392,822 and 393,363 (the two floods and the lanes): some twenty frames at PLAN_FRAME_CELLS
 const HAVE = !!ARENA2 && ['MAPS.BSA', 'BLOCKS.BSA', 'WOODS.WLD', 'TMAP00I0.IMG', 'TAMRIEL2.IMG', 'ART_PAL.COL'].every((f) => existsSync(join(ARENA2, f)));
 const skipReal = HAVE ? false : 'ARENA2_PATH not set or missing - real-data validation skipped';
 
@@ -712,15 +714,15 @@ test('START2 on the freeware\'s Tamriel: a voyage from every port past the Bay t
       // every port past the Bay - the provinces' starts' ways home among them - from the water about it a voyage reaches
       const ports = arenaPixels().stood.filter((p) => p.port);
       assert.equal(ports.length, 28, 'TESA12\'s 28 ports');
-      let slowest = 0;
+      let most = 0;   // PIN MOVED (PLAN-SLICES): a plan's cells, an op count, never a clock (a flake on a shared runner)
       for (const p of ports) {
         let routed = null;
         for (let dy = -3; dy <= 3 && !routed; dy++) for (let dx = -3; dx <= 3 && !routed; dx++) {
           const f = { x: p.bx + dx, y: p.by + dy };
           if (!rg.isWater(f.x, f.y)) continue;
-          const t0 = performance.now();
-          const plan = planRoute(f, dp, { ...rg, sea: voyage });
-          slowest = Math.max(slowest, performance.now() - t0);
+          const tally = { n: 0 };
+          const plan = planRoute(f, dp, { ...rg, sea: voyage, tally });
+          most = Math.max(most, tally.n);
           if (plan) routed = plan;
         }
         assert.ok(routed, `${p.province} ${p.name}: a voyage to Daggerfall`);
@@ -729,7 +731,7 @@ test('START2 on the freeware\'s Tamriel: a voyage from every port past the Bay t
         assert.ok(fall > 0 && routed.kinds.slice(0, fall).every((k) => k === 'sea') && !routed.kinds.slice(fall + 1).some((k) => k === 'sea' || k === 'landfall'), `${p.name}: sailed, then ashore once`);
       }
       assert.ok(STARTS.slice(1).filter((s) => s.key !== 'Imperial').every((s) => ports.some((p) => p.province === s.province)), 'every province start but the Imperial Province\'s has a port of its own');
-      assert.ok(slowest < 3000, `the slowest plan ${slowest.toFixed(0)} ms`);
+      assert.ok(most <= VOYAGE_CELLS_MAX, `the largest plan ${most} cells`);
     } finally { setArenaStanding(false); }
   } finally { t.reset(); }
 });
@@ -762,8 +764,10 @@ test('START2 the world host wires the start host (scenes/startsHost.js) and grow
   assert.match(W, /questInitAtGameStart\(r\.startKey\);/);
   assert.match(W, /if \(realmNew\) starts\.settled\.then\(realmBirth\)\.catch\(/);
   assert.match(W, /writ: starts\.writ \}\);/);
-  assert.match(W, /lairLocationAt, nearestTownOf, startLairAt, tamrielPlaceName \} = createTamrielPlaces\(/);   // PIN MOVED (TESA x AUDIT TESA II): P2's nearest town beside it
-  assert.match(W, /questSiteMovedHere, startLairAt, talkBuildingCompassDirection/);
+  assert.match(W, /lairLocationAt, nearestTownOf, provinceQuestPlaces, tamrielPlaceName \} = createTamrielPlaces\(/);   // PIN MOVED (TESA x AUDIT TESA II): P2's nearest town beside it; PIN MOVED (AUDIT RELEASE R2-5): the start lair rides the places past the Bay
+  assert.match(W, /playerTravelPixel, provinceQuestPlaces, questSiteMovedHere, talkBuildingCompassDirection/);   // PIN MOVED (AUDIT RELEASE R2-5)
+  assert.match(rd('src/scenes/tamrielPlacesHost.js'), /refresh: registerTamrielPlaces, startLairAt,/);
+  assert.match(rd('src/scenes/questWorld.js'), /const startLairAt = provinceQuestPlaces\?\.startLairAt;/);   // PIN MOVED (AUDIT RELEASE R2-5, hostseam): the places' own, no host read the game never hands
   const Q = rd('src/scenes/questWorld.js');
   assert.match(Q, /startSiteOfId: \(id\) => \{\n\s+const start = startOfSiteId\(id\);\n\s+const loc = start \? startLairAt\?\.\(start, \(l\) => dungeonItemMarkerCount\(\(name\) => blocks\.getBlockByName\(name\), questSized\(l\)\) > 0\) : null;\n\s+return loc \? questSized\(loc\) : null;/);
   assert.match(rd('src/scenes/exterior.js'), /questBridge\.initAtGameStart\(HAND_START_QUEST\);/);

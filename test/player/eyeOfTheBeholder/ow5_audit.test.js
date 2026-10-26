@@ -13,6 +13,8 @@ import { nearDungeons, dungeonToFind, dungeonApproach, pixelBox, NATIVE_PER_M, T
 import { chaseStep as raiderChaseStep, RAIDER_CONTACT_M, RAIDER_CONTACT_PLAY_M, NATIVE_PIXEL as RAID_NATIVE_PIXEL } from '../../../src/systems/seaRaiders.js';
 import { AUTO_TOGGLE } from '../../../src/player/eyeOfTheBeholder/eotbBillboard.js';
 import { planRoute, routeLegs, crossesWater } from '../../../src/systems/travel/travelRoute.js';
+import { planJourney } from '../../../src/systems/travel/planSlices.js';   // PIN MOVED (PLAN-SLICES): the walk runs through the slicer
+import { tvMooredDry } from '../../../src/systems/travel/seaAsk.js';   // PIN MOVED (PLAN-SLICES): out of the host
 
 const WORLD = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
 // PIN MOVED (HOST-SPLIT 1, 2026-10-15): the Overworld's marks left world.js for scenes/travelViewMarks.js
@@ -255,8 +257,9 @@ function walkRig({ sea = () => false, means = null } = {}) {
     tvSeaMeans: () => means, dryLine: (a, b, w) => !w(b.x, b.y) && !w(a.x, a.y), tvSeaAsk: (m, goal) => (m ? { start: m.start, again: m.again, goal } : null),
     tvSeaBegin: (m, kinds) => armed.push([m?.how ?? null, crossesWater(kinds)]), tvSeaNoWay: () => said.push('no way'), crossesWater,
     travelPathUsesRoads: () => true, TRAVEL_PATH_TEXT: { fellBack: 'fell back' },   // OW-PATH: the Roads mode, the default
+    planJourney, tvMooredDry,   // PIN MOVED (PLAN-SLICES): the walk's runner, and the moored law out of the host (systems/travel/seaAsk.js)
   };
-  const host = mount(env, `${fnSource('tvMooredDry')}\n${fnSource('travelViewWalkTo')}\nreturn travelViewWalkTo;`);
+  const host = mount(env, `${fnSource('travelViewWalkTo')}\nreturn travelViewWalkTo;`);
   return { walkTo: host, begun, armed, said };
 }
 

@@ -374,6 +374,23 @@ so the finding and the panel's audit row are its record. No hold is lifted. The 
 `test/server/staffsetbank.test.js` over the real Worker, the game's own bank table and the panel's own profile read;
 `tools/mutants/staff-set-bank.json` (31, dead).
 
+GUILD-LETTER-FIX (2026-10-25, a player's level 10 vampire: the Dark Brotherhood's tally at InviteSent, no letter
+pending, The Acceptance Test nowhere in the save; mob: "do it") added a fifth, the Staff Panel's alone:
+`/v1/staff/fix/letter { id, ticket, guild, op, note }`, an Admin's (`staffRealm.js`), the review's `letter` act
+(`review.js letterAct`) over `repairLaw.js applyGuildLetter`. DFU parks the crime-guild tally and clears its clock before
+the initiation quest starts, and a quest that will not parse answers nothing, so a letter whose quest could not be made
+spent the invitation for good; the game now parks only a quest that started (`crimeGuilds.js` DB-LETTER, a departure:
+a failed start is stamped again as a fresh letter), and staff mend a character it already caught. `send` (`db` the
+Brotherhood, `tg` the Thieves Guild) sets the tally at the guild's target and the letter due, so the game's own
+`handleStartingCrimeGuildQuests` sends it the next minute the player is outside - refused to a member in either
+membership book (`letter-member`, the vampire's book too), a save still holding the initiation quest, running, ended and
+kept or waiting (`letter-quest`), or a letter already on its way (`letter-pending`). `cancel` parks the tally with none
+pending (`letter-none` when there is nothing to call off). The repair's machinery: once a ticket, its `realm_repairs` row
+naming the guild's faction below nothing (-108, -42: below BANK_SET_FACTION, no migration) and the act as its flag, the
+record seized one sequence on, the act among the findings; no gold moves. Folded into acct186 before it shipped. Pinned
+by `test/server/staffguildletter.test.js` and `test/systems/crimeguilds.test.js`; `tools/mutants/guildletterfix.json`
+(12, dead) and `tools/mutants/dbletter.json` (4, dead).
+
 STAFF-GIVE (2026-10-24, mob: "add yes we will work on add as well", the card's pick "Pick from the item list", "include
 enchants") is Remove from a player's twin, an Admin's: `/v1/staff/item/catalogue` (the game's item list - each template
 with its groups and whether it stacks, a weapon's and an armour's materials, the item maker's enchantments with their
@@ -505,11 +522,35 @@ shelf's fix - each finding reproduced over the real code before it counted. What
 
 Not changed, and why: a deploy runs the migration a moment before the new Worker serves, and an old Worker's
 checkpoint in that window can lift a migrated hold early - the new one's first checkpoint holds it again from
-`held_until`; a locked copy is locked for good (no route clears `item_dupes` - the owner's call is the piece, not a
-term); the dungeon's legacy piles and bodies were not re-traced past the find; a claim costs its maker nothing now (a contested
+`held_until`; a locked copy is locked for good (the owner's call is the piece, not a term) - save a record's copy of its
+own lifted by staff's purge with `keep` (COPY-LIFT, below); the dungeon's legacy piles and bodies were not re-traced past the find; a claim costs its maker nothing now (a contested
 claim is no strike - the owner's call), so a player who reads a piece's key off the wire and shows the same piece with
 it stops that piece moving for the grace (`DUPE_GRACE_S`, five minutes) each time, and takes nothing - its own copy
 locked.
+
+**COPY-LIFT (FIELD BUGS 2026-10-25i, Giljabrar: "I placed 89 rare/legendary items in a chest ... they were all 'Realm
+Locked'").** The decorator's Discard wrote a home's chests back as they stood when its draft opened
+(`scenes/decor/decorTool.js` CHEST-DRAFT): a piece taken out since stood in the chest and the pack, a key shown twice in
+one record - and in #1223's build a Discard in another room's decorator (a ship's, a caravan's, an offline house's)
+stood the home's pieces there in place of that room's own, with its chests and its own-things record: a copy of
+everything the chests held and of each own thing standing in the home, and the other room's own things lost (in no
+record: staff give one back fresh, Add an item, on the player's word). Such a pair is repaired by staff's purge with
+`keep: true`: one of each kept - of the record's own lists first (its pack before a room's chest), the first of the print
+its ledger row holds - and every other copy destroyed wherever the save holds it, the places the checkpoint never reads
+with them: a deserter revenant's take, a pile on the ground, a shop's shelf, a dungeon's chest
+(`staffRealm.js:"export function copiesOfKeys(save, keySet) {"`, said as `hidden`), and of a piece it lifts, the
+account's chests'. A `twice` copy is lifted in the same batch only where the act itself leaves the record one - its
+batch destroys a copy of it, or staff's Remove took one off the character and keeps it - its row the record's own, held
+and unclaimed and of the piece kept, no other record's copy known, and no trail check or one that found it innocent
+(`ledger.js:"export async function ownCopiesLiftable(db, char, pieces) {"`); the `dupe` finding and the answer's
+`lifted` say what the batch took, and a checkpoint landing between the act's read and its seizure refuses it `seq`. No
+checkpoint lifts a copy (AUDIT FB1025i): the record a checkpoint shows is the lists it holds, and a copy moved where it
+lists nothing - a revenant's take (RVN8: a deserter's split, `splitPack`, and a kill's, `pickTaken` - neither takes a
+realm-locked piece now, `revenant.js:"&& !isRealmLocked(item)"`), a counter or the ground under a modified client -
+and brought back after would leave the other one trading. Open: a copy sold at a counter before the keep is gone from
+the save - nothing the act can count, so nothing lifts on that word; the sale's gold stays, and the piece bought back is
+a second of one, locked again by the checkpoint that shows both. Pinned by `test/server/fb1025i_chestlock.test.js` and
+`staffpanel3realm.test.js`; `tools/mutants/fb1025i_chestlock.json`.
 
 ### 4b. The audit (2026-10-09, Mac: "Lets do a comprehensive audit on this")
 
@@ -679,19 +720,19 @@ receipt's carrier); `scenes/dungeonContext.js` and `scenes/worldModes.js` NO DUE
   room that restarted, and a full room's oldest is signed, never forgotten.
 - **The drop.** `/v1/wild/fall` takes it off the fallen's JUDGED record by ONE law (`systems/wild/wildDropLaw.js`
   takeWildDeath): the killer's worn piece first (`wildPickOf` - the piece the offer showed, else none), then a tenth of
-  the purse and of the cart's coin (FOE-KEEPS, 2026-10-24: it was half), then the bag's and the cart's drop BY WORTH (a bag of junk ahead of them kept the gold and
-  the valuables), fitted to one remains, every record within `WILD_RECORD_BYTES_MAX`, the rest put back where it came
-  from; the record's lit light follows its piece. CART-AWAY (FIELD BUGS 2026-10-15d; Mac, 2026-10-15: "if its parked
-  outside the zone nothing should be lost" - `11-Multiplayer/Wild-Zone.md` section 4): the cart's coin and its drop only
-  while the wagon is with the fallen. The zone's mask is the client's, so the fallen's own tab says its wagon is away
-  (`cart` 0 - `systems/wild/wildCart.js` wildCartAway), and the service takes the word only where the record it keeps says
-  the wagon is parked, stabled or none by its mode (`wildDropLaw.js:"export function wildCartMayBeAway"`) - never a
-  record that drives it, leads it or stands it beside them; a seizure takes no word, and a tab that says none drops the
-  cart as before. The service answers what it took as the game finds it again (`took`,
+  the purse (FOE-KEEPS, 2026-10-24: it was half), then the bag's drop BY WORTH (a bag of junk ahead of them kept the gold
+  and the valuables), fitted to one remains, every record within `WILD_RECORD_BYTES_MAX`, the rest put back where it came
+  from; the record's lit light follows its piece. STORE-KEEPS (2026-10-26, `11-Multiplayer/Wild-Zone.md` section 4): the
+  cart and the companions' packs are storage no death takes - CART-AWAY's word (FIELD BUGS 2026-10-15d: the cart's coin
+  and its drop while the wagon was with the fallen, on the fallen tab's word held to its record's mode) and
+  COMPANION-DROP's packs retired with it. WILD-INSURE (Wild-Zone.md section 4b): a piece under a policy the service wrote
+  against its premium (`wild_insurance`), in force at the fall's signing, is kept as a piece the ledger bars is, and the
+  fall spends it; REPEAT-SHIELD (4c): a fall by the same killer inside half an hour takes nothing. The service answers what it took as the game finds it again (`took`,
   `gold` - wildTookOf), and the fallen's game takes out EXACTLY that (`wildTakeTook` - it ran the law again without the
   ledger's word, and took what the service kept). The fallen's own act at its tab's `at` (`realmGoldAct`, its answer
   needed: checkpointed as it will rise, the service asked, the room named), or its killer's SEIZURE once
-  `WILD_FALL_GRACE_S` (30 s) has gone by (the record moved where it stands, its lease cleared, a dead record never), laid
+  `WILD_FALL_GRACE_S` (30 s) has gone by - at once since WILD-REJOIN where the fall was signed with its fallen gone from
+  the room (`g` 1, `11-Multiplayer/Wild-Zone.md` section 4) - (the record moved where it stands, its lease cleared, a dead record never), laid
   where the body fell and asked again on a word that says nothing. Once a fall (`wild_falls`, by the remains' id): a
   second asking is answered the first's records and THE SAME ORDER, issued at its first minting for its first room (`oi`,
   `wm`) and good its minute alone - and, for the fallen's own tab, where its record stands. A death to a foe has no
@@ -860,9 +901,9 @@ real drawHud on both skins); `tools/mutants/duel_bar.json`.
 - A crafted piece the fallen takes back from its own remains is written down as its copy: it wears it, and never trades
   it (the craft's key cannot be minted afresh as an id is).
 - A pick at a piece the fallen no longer wears (it changed between the offer and the receipt) takes none.
-- Where a parked wagon stands (CART-AWAY) is the fallen's word, held to its record's mode alone: the wagon's record is
-  the player's own, so a client that writes its wagon parked off the zone keeps a cart it drove in, and rises with that
-  record. A seizure, its carrier holding neither the record nor the mask, takes the cart wherever it stood.
+- CART-AWAY's limit (the fallen's word on where its wagon stood) retired with STORE-KEEPS: no death takes the cart.
+- A policy (WILD-INSURE) is the service's and never the record's, so no client can write one it did not pay for; one in
+  force only past `WILD_INSURE_SETTLE_S`, against the relay's own signing, so none is written on the death screen.
 - A relay before world185 knows no `wref`, no `zone` and no `dref`: a client meets it fighting nobody and duelling
   nobody. A client from before world185 still open in a tab sends the zone's retired words (WILD1's `result` and
   `gave`) and the duel's own resolve, which the new relay refuses - it is closed for them until it reloads. The deploy

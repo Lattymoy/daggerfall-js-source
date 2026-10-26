@@ -860,7 +860,8 @@ test('BLOOD1b: EVERY splash site hands its blow over, so the rate ladder actuall
   // REVENANT-FATE: the nineteenth and twentieth - an execution's burst (exteriorFoes.js executionBurst, dungeonContext.js
   // dungeonFateFrame), a blow of mine and the heaviest there is.
   // ARENA4: the twenty-first - a swing of mine that met my opponent on a relay's sand (dungeonContext.js swingOnRival), their blood.
-  // LW7: the twenty-second - a traveller of the living world's roads struck down (world.js livingStrikeRoad), the civilian's own rung, LETHAL_HIT.
+  // LW7: the twenty-second - a traveller of the living world's roads struck down (world.js livingStrikeRoad; scenes/livingWorld/roadStrike.js
+  // since FIELD BUGS 2026-10-25i ROAD-SPARE), the civilian's own rung, LETHAL_HIT.
   // WILD1: the twenty-third - a strike of mine that landed on a fair player of the open zone (world.js wildResultIn), their blood.
   assert.equal(sites.length, 23, `twenty-three splash sites across six files - PEERFX1/PEERFX2's two are the sixteenth and seventeenth, WB11c's swing on his host the eighteenth, REVENANT-FATE's two executions the nineteenth and twentieth, LW7's road the twenty-second, WILD1's open zone the last (found ${sites.length})`);
   for (const [f, args] of sites) {
@@ -2366,7 +2367,7 @@ test('BLOOD1 AUDIT 3: a mark on streamed terrain lies on the DRAWN ground, and t
   assert.match(world, /return surfaceHeightAt\(p\.samples, lx, lz, p\._stride \?\? 1\) \+ t\[1\];/, 'the drawn ground is the grass placer’s own sampler, on the pixel the point is in');
   // the ray walk: one translation array a bucket, and no boxed origin
   // (HOST-SPLIT 2: the buckets are laid by the pixel build, src/scenes/pixelBuild.js, which reads the state live - host.state)
-  assert.equal((world.match(/\(\(o\) => \(\) => host\.state\.pixelTranslation\(px, py, o\)\)\(\[0, 0, 0\]\)/g) ?? []).length, 8, 'every bucket translation reuses its own array');   // FIELD BUGS 2026-10-13e HILL-SEAT (PIN MOVED): the eighth is a block's hill pads, solid in the pixel's bucket   // GOTHWAY-BOARDS: the seventh is a Gothway Garden board's mesh (one a board), the patch's own   // TACT1: the sixth is the pixel's cover, in the pixel's own frame   // WOD2: the fourth is World of Daggerfall's models, whose sites open the pixel's bucket (a location's pixel never has one); WOD4: the fifth is the camp at Privateer's Hold's
+  assert.equal((world.match(/\(\(o\) => \(\) => host\.state\.pixelTranslation\(px, py, o\)\)\(\[0, 0, 0\]\)/g) ?? []).length, 9, 'every bucket translation reuses its own array');   // PIN MOVED (URBANIZER U3): the ninth is a town past the Bay's fabric, solid in its pixel's bucket   // FIELD BUGS 2026-10-13e HILL-SEAT (PIN MOVED): the eighth is a block's hill pads, solid in the pixel's bucket   // GOTHWAY-BOARDS: the seventh is a Gothway Garden board's mesh (one a board), the patch's own   // TACT1: the sixth is the pixel's cover, in the pixel's own frame   // WOD2: the fourth is World of Daggerfall's models, whose sites open the pixel's bucket (a location's pixel never has one); WOD4: the fifth is the camp at Privateer's Hold's
   assert.doesNotMatch(world, /\(\) => (?:host\.)?state\.pixelTranslation\(px, py\)[,)]/, 'no bucket allocates a translation per call');   // AUDIT HOST-SPLIT 2, the second read: the build's spelling too
   const col = read('src/player/collider.js');
   const box = col.slice(col.indexOf('export function segmentHitsBox('), col.indexOf('\n}', col.indexOf('export function segmentHitsBox(')));

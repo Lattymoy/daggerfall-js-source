@@ -427,7 +427,7 @@
   {
     "name": "OPEN-HAND-the-warden-claim-without-it",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    damage += takeOwed(boss.entity);   // FIELD BUGS 2026-10-12g OPEN-HAND",
+    "old": "    damage += bossStrikeAt(boss.entity, takeOwed(boss.entity), 'melee', playerWeapon.strikingWeapon, null, false, null);   // AUDIT WORLD-EVENTS L2-2: resisted as the swing it follows was; FIELD BUGS 2026-10-12g OPEN-HAND",
     "new": "    // FIELD BUGS 2026-10-12g OPEN-HAND",
     "tests": [
       "test/systems/fb1012g_openhand.test.js",

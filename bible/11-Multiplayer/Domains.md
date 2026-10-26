@@ -211,7 +211,10 @@ Considered and NOT done:
   to the door, and a socket let in as the castle's guild is marked (`ig`, the guild it came in as). The moment its
   attachment wears another guild or none - a removal or a disbanding carried in, a join elsewhere, a shard's hello: every
   road writes the attachment through `_setAttach` - it is refused out (`_instanceGuildOut`, deferred so the write's caller
-  finishes first, once a socket).
+  finishes first, once a socket). AUDIT TESA III E2-4 (`01-Overview/audits/Audit-Tesa-III-E2.md`): `GUILD_INSTANCE_RELAY_MIN`
+  is held to the LAW row of `test/net/relayversion.test.js` that names DOMAIN2 (`domain2_castles.test.js`), as the
+  world-wide gates are to theirs - main's live world260 is THE FOLD, which admits no guild, so a renumber that left the
+  literal behind would offer castles to relays that refuse their members.
 - **The door** (`systems/instancePlaces.js` instanceOffer's `castle` row, `scenes/instanceDoor.js`): at the castle's
   dungeon door, where my guild keeps that castle and my relay admits a guild (`online.guildInstanceOk`), the popup offers
   **Your guild's castle** beside the public castle ("Enter the shared castle, or your guild's own? Only your guild's

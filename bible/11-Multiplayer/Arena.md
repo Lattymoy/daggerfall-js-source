@@ -1088,3 +1088,37 @@ elsewhere; a session no welcome can answer (terminal) shuts them with "The serve
 loading" for ever (`scenes/arena/arenaOnline.js` `shut`, `shutText`). And the window before the board shows nothing of the
 save's on its Ladder page or its ladder card either (A1): the ten tiers as the law has them, nobody's climb on them
 ("Not loaded"), the card no bout and no purse.
+
+## IC-GRAND record (2026-10-26) - Daggerfall's arena in the Imperial City
+
+The owner (Mac, 2026-10-25): *"The arena in daggerfall needs to replace the collisium we currently have in IC. Dont
+remove it from daggerfall."* (`03-World/Arena-Provinces.md` IC-GRAND has the city round it.)
+
+- **Kamer's work, used again - with his permission as ARENA1 recorded it** ("we have Kamer's permission", 2026-10-02):
+  the Imperial City's Arena District lays the SAME port block Daggerfall's cell (4, 3) does - ARENADAG.RMB, cut out of his
+  DFARENA.RMB (`vendor/daggerfall-arena/`, tools/daggerfallArenaExtract.mjs) - so his colosseum (864102, 93% his own
+  modelling), his 118 props, his 29 lights, his ground and automap, the 43600 stair and ARENA1's gate people stand there
+  as they stand in Daggerfall. Nothing is copied: one block (index 900100), one model, one undercroft record law; the
+  city's plan names the block for the cell (`world/tamrielCapitals.js` ARENA_OWN, `external`), the world-data door serves
+  it. TESA11's Colosseum of the port's own (model 910205, `buildColosseum`, `colosseumGate`, its stands' closed law) is
+  gone - its pins retired with it (test/tesa11_imperial.test.js, test/world/audittesa2c_capitals.test.js C5).
+- **Where**: the Arena District's heart cell - bearing 90, 4.6 km out, where the district's grand avenue meets the
+  middle ring road (`world/imperialCity.js` IMPERIAL.arena, `imperialArenaCell`); the fabric keeps a street round it
+  (`world/imperialFabric.js` CLEAR.arena). Built far (past the player's ring) it stands as it is, its cell not one of
+  the far view's.
+- **The undercroft's door there too**: the hosts' door law asked "is this Daggerfall city?" (`isArenaCity`); it asks
+  "does this place stand the arena?" now (`world/arena/arenaCity.js` standsArena - Daggerfall city, or a grid that lays
+  the arena's block), so the 43600 stair in the Imperial City's arena takes the player down to Kamer's 32 blocks under
+  that place (`undercroftLocation(city)`, its own record a city). `scenes/world.js` arenaDoorTarget; `scenes/exterior.js`
+  stands nothing past the Bay and keeps `isArenaCity`.
+- **The stage**: a built pixel whose grid lays the block is an arena's (`scenes/pixelBuild.js` arenaOrigin - any city's,
+  as it was): the stage, the Herald's place and the bouts' floor the same law there.
+- **Daggerfall keeps its own**: cell (4, 3), its edit (`standArenaInLocation`, Daggerfall alone), its strip of the old
+  block's named buildings, its moved deeds - untouched.
+- **RECORDED, the owner's to decide**: (1) the gate's people are ARENA1's - the Herald for the Court of Daggerfall (595),
+  the wardens the Royal Guard (372), the recruiters and the bookmaker the People of Daggerfall (518) - and they stand so
+  in the Imperial City (the block is one); an Imperial Herald is a faction choice. (2) The relay's arena rooms (the hall,
+  the hour's exhibition, a bout's) are not keyed by city: both arenas meet in the same rooms. Nothing on the relay or the
+  account moved (no RELAY_VERSION or ACCOUNT_VERSION bump); a city's own rooms would be a relay slice.
+- **Pins**: `test/world/icgrand_arena.test.js`; PIN MOVED `test/world/arena/arena1_undercroft.test.js` (`standsArena`)
+  and `test/world/arena/arena1_city.test.js` (the door's family name before its gate).

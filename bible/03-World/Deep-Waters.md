@@ -39,6 +39,33 @@ compares the two cell for cell; they agree to within the Perlin departure
 (Port-Ledger A: Ken Perlin's reference noise where Unity's Mathf.PerlinNoise
 stood - the author's bake is a little wetter at the coast).
 
+A COASTAL TOWN'S BLEND IS ITS OUTLINE'S (AUDIT TESA III E1-4, 2026-10-26;
+`01-Overview/audits/Audit-Tesa-III-E1.md`). TOWN-SHAPES TS2 flattens a town to
+its own outline and keeps the sea past its margin (`03-World/Town-Shapes.md`),
+where DFU's rect blend lifted the sea in the rect into land - and the bake was
+handed the rect's four numbers alone, so it blended DFU's way: at 262 of the
+Bay's 339 coastal location pixels it called 453,230 samples of the streamed
+sea land, and shaped the seafloor before them against the old rect's coastline
+(up to 27 m off at the default Water Depth). Each row now carries the rect's
+outline (`deepWatersClient.js` deepWatersLocationRects; `rectsLookup` hands it
+to `pixelWaterSampler`'s blend), the key fingerprints its bytes, and
+BAKE_GENERATOR_VERSION is 2, so no bake kept from before is read. The mod's own
+file knows no TS2, so the DW-A oracle's agreement now departs at those pixels
+too (its bounds hold room for it; not run here - no `DW_BAKE_FILE`). The
+Eltheric isles' half (fixed by the terrain stream, the same day): the isles'
+bake had read its templates' rects alone, while each isle's clone stands its
+own outline, seeded by its own map id. `etherPlaceRects` keeps each template's
+outline BASIS once (`terrainTiles.js` locationOutlineBasis: its grid's occupied
+tiles and the tiles it stamps, packed a bit a tile, 2,737 distinct of 7,538
+templates, 2.15 MB on the freeware data), and `etherRectAt` draws the isle's
+outline and the rect cut under it off that basis under the isle's own id
+(`outlineOfBasis`, `rectOfBasis` - locationShapeField is the same basis under
+the location's own id). Over 120 port and ruin isles about Veilhaven the bake's
+outline and bounds are the clone's at every one, and the bake's water against
+the streamed ground went from 3,691 samples off (13 isles) to none. The isles'
+bake is built as it is asked and kept in memory alone, so no cache's version
+moves.
+
 THE FRAME (ETHER-DEEP, 2026-10-12; `03-World/Eltheric-Ocean.md`). The mod knows
 one map, IsValidMapPixel's 1000 x 500, and clamps every query to it. The
 port's bake answers a FRAME of pixels - its planes indexed and its cells
@@ -747,10 +774,12 @@ the worker reads it). On the Bay's own pixels, the Bay's bake's fully reached pi
   the start, instead of the border's.
 
 **The sea carries no detail** (`tamrielGround.js` `tamrielLargeMap`). The first build carved nothing. The continent's
-large-map detail, a lattice hash of 0 to 9, stood over its sea as well as its land, and lifted the seabed into the beach
-line's reach: not one pixel of the continent's sea was the sea to the bound (`classifyPixel`), every one mixed. WOODS.WLD's
-own sea carries none (0 over 406 of 411 sampled Bay sea pixels, 1 the most). The continent's sea now carries none either,
-and its open water is the sea to the bound.
+large-map detail, a lattice hash of 0 to 9 (BREATHTAKER3's `LARGE_SWELL` since, `03-World/Tamriel.md`), stood over its sea
+as well as its land, and lifted the seabed into the beach line's reach: not one pixel of the continent's sea was the sea
+to the bound (`classifyPixel`), every one mixed. WOODS.WLD's own sea carries none (0 over 406 of 411 sampled Bay sea
+pixels, 1 the most). The continent's sea now carries none either, and its open water is the sea to the bound. The swell's
+kept pixels now read the land, so `dropGroundCache` (every thread's, when a picture lands) drops them with the ground's
+bytes.
 
 **Both threads, and no host line.** The continent's bake waits on the trace, which lands after the world mounts. So:
 - the bakes have room for it (`etherWatersBake.js` `worldBakes`'s `continent`, `DeepWatersBakes.setTamriel`, its rows
@@ -770,14 +799,17 @@ cut. The Ocean Holes' pits stay the Bay's, as they were.
 
 ### Pins
 
-- `test/world/deepWater/tamriel_deep.test.js` (6): the seeded flood; the bake (the open sea at the planes' cap, the lake
+- `test/world/deepWater/tamriel_deep.test.js` (7): the large map following the land (none at sea, its kept pixels
+  dropped with the ground's); the seeded flood; the bake (the open sea at the planes' cap, the lake
   unseeded, the coast nearer, the Bay's pixels the Bay's bake's, no class kept off its slot); the frames and the routing
   (rows by their mark, set when the trace lands); the client and the worker's word; the host (handed once a picture, held
   before, held where the land past the Bay does not stream); and on the player's own files the Topal Bay, the Niben, the
-  canal, Hammerfell's lake and a coast's pixel.
+  canal (under IC-GRAND's twenty-five pixels, at Bay row 676), Hammerfell's lake and a coast's pixel.
 - PIN MOVED: `test/world/tamriel2.test.js` (the large map's detail on the land, none at sea);
-  `test/world/deepWater/ether_deep.test.js` (the host's and the worker's lines carry the continent's word).
-- Mutants: `tools/mutants/tamrieldeep.json` (18, all dead). Re-aimed by content, all dead: `ether_deep.json`'s
+  `test/world/deepWater/ether_deep.test.js` and `test/world/audittesa3e1_ether.test.js` (the host's, the client's and the
+  worker's lines carry the continent's word).
+- Mutants: `tools/mutants/tamrieldeep.json` (19, all dead; TDEEP-detail-at-sea re-aimed onto the swell at the merge of
+  BREATHTAKER3, and TDEEP-swell-cache-kept added). Re-aimed by content, all dead: `ether_deep.json`'s
   ED-rows-misrouted, ED-bay-alone, ED-routing-bay, ED-client-unsaid, ED-client-no-ether, ED-worker-raw, ED-host-bay-gate,
   ED-host-any-pixel, ED-host-bay-climates and ED-host-unsaid; `audit_etherow.json`'s AEOW-T-ether-takes-bay-rows,
   AEOW-T-evict-ether-kept and AEOW-T-evict-bay-kept; `audittesa2p.json`'s P12-flood-four-ways (pictureLakes' new home).

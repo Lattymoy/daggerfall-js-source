@@ -30,6 +30,7 @@ import { generateBuildingName, BUILDING_TYPES } from '../../src/world/buildingNa
 import { PlayerNotebook } from '../../src/systems/notebook.js';
 import { expandMacros } from '../../src/systems/talk/talkSession.js';
 import { createTownTalk } from '../../src/scenes/townTalk.js';
+import { createPartyArrival } from '../../src/systems/party/partyArrival.js';   // PARTY-FOLLOW: the journey's arrival line is the party arrival's
 import { questLetterName, shownItemName } from '../../src/systems/item/itemInfo.js';
 import { templateByIndex } from '../../src/systems/item/itemTemplates.js';
 import { setSpellRecordsByIndex, shownSpellName } from '../../src/systems/loot/loot.js';
@@ -323,9 +324,10 @@ test('L10N3e scenes: the arrival line after a teleport or a journey (world.js, t
     for (const k of Object.keys(n)) { const v = n[k]; if (Array.isArray(v)) v.forEach(walk); else if (v && typeof v.type === 'string') walk(v); }
   })(host('world.js').ast);
   assert.equal(says.length, 2, 'the teleport\'s arrival and the journey\'s');
+  const arrivalLines = createPartyArrival({ besideLanding: () => null, supportedLanding: () => null, sync: () => {}, waiting: () => {} });
   const arrive = (pick) => says.map((call) => {
     const said = [];
-    mount(`${call};\nreturn null;`, { pick, beside: null, townTalk: { say: (t) => said.push(t) }, getLocalizedLocationName: tm.getLocalizedLocationName });
+    mount(`${call};\nreturn null;`, { pick, beside: null, partyArrival: false, partyLanding: arrivalLines, townTalk: { say: (t) => said.push(t) }, getLocalizedLocationName: tm.getLocalizedLocationName });
     return said[0];
   });
   const city = { name: 'Daggerfall', region: 'Daggerfall', mapId: DAGGERFALL_MAP_ID };

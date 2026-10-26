@@ -136,7 +136,7 @@
 //   NAV-H x AUDIT NAV1 (the helm), the sea fight's seams (optional; the mod has no hurt):
 //   wayScale(underSail) -> 0..1                   the share of her way her hurts leave (moveSpeed)
 //   sailRefused() -> text | null                  why no sail will set (RaiseSails refuses with it)
-//   brake() -> m/s^2 | 0                          a heave-to's brake: her way comes off at this, whatever her own rate
+//   brake() -> m/s^2 | 0                          the grapples' haul brake (BOARD-MAGNET): her way comes off at this, whatever her own rate
 //   drift(boat) -> [x, 0, z] | null               SERPENT1: a world m/s carried on the sea's current under her (the sea
 //                                                serpent's maelstrom pulling her in, a blow's throw) - the port's own
 //   gale(boat) -> { wind, turn } | null           SERPENT4: a gale about her (the sea serpent's waters): under the
@@ -315,8 +315,9 @@ export const PLACE_RAISED_TEXT = 'This water is above sea level. Place the ship 
 export const IRONS_TELL_DEG = 40;
 export const IRONS_TELL_WAY = 0.4;
 /** AUDIT NAV1/AUDIT 2 XA5 (2026-10-06): the most the port's `brake` seam takes her way off at (m/s^2) - the one bound the
- *  sea fight's heave-to sizes its own brake by (scenes/naval/navalHost.js heaveToDecel), where the runtime capped it at 20 and the
- *  heave-to asked up to 47 in a storm, and its ship ran past the one she hove to beside. */
+ *  sea fight sizes its own brake by (BOARD-MAGNET: the grapples' haul, systems/naval/navalBoarding.js haulBrake; it was the
+ *  heave-to's, which asked up to 47 in a storm where the runtime capped it at 20, and its ship ran past the one she hove to
+ *  beside). */
 export const CSA_BRAKE_MAX = 20;
 export const IRONS_TELL_S = 2;
 export const IRONS_TEXT = 'In irons: the wind is dead ahead. Strike sail and row to turn.';
@@ -716,9 +717,9 @@ export function createComeSailAwayRuntime(deps) {
   // kept for good, no sail, oar or rudder to take them off.
   let helmHanded = null;
   const responsive = () => helmHanded ?? handed();
-  /** moveAccel: the rate below - or, while the sea fight brakes her (AUDIT NAV1, the helm: a heave-to), its own
-   *  `brake` (m/s^2, the port's seam; the mod has none), whatever her own rate, CSA_BRAKE_MAX at the most: a heave-to's
-   *  brake is the sea fight's number, not a multiple of a rate the Ship handling choice moves. */
+  /** moveAccel: the rate below - or, while the sea fight brakes her (BOARD-MAGNET: the grapples' haul; AUDIT NAV1's
+   *  heave-to before it), its own `brake` (m/s^2, the port's seam; the mod has none), whatever her own rate, CSA_BRAKE_MAX
+   *  at the most: the sea fight's number, not a multiple of a rate the Ship handling choice moves. */
   function moveAccel() {
     const brake = Number(deps.brake?.() ?? 0);
     return brake > 0 ? f(Math.min(CSA_BRAKE_MAX, brake)) : moveAccelOwn();
@@ -2858,19 +2859,22 @@ export function createComeSailAwayRuntime(deps) {
       if (allBoat.AudioSourceFast.volume > 0) allBoat.AudioSourceFast.volume = loopVolume();
     }
   }
-  /** The Audio section as Start's LoadSettings read it - the runtime is made at Start, before any boat. */
-  let lastAudioSetting = setting('Audio.SoundVolume', 1);
+  /** The loops' volume as Start's LoadSettings read it - the runtime is made at Start, before any boat. */
+  let lastLoopVolume = loopVolume();
   /** LoadSettings' Audio arm (846-850): the mod's settings are read live, so the host asks every frame whether the
-   *  section changed - `HasChanged("Audio")` - and UpdateAudioSource runs when it did. */
+   *  section changed - `HasChanged("Audio")` - and UpdateAudioSource runs when it did. SOUND-LIVE (a departure,
+   *  2026-10-23): a change of the game's Sound Volume runs it too - the mod reads that only as a loop starts, so a
+   *  boat's loops kept the old level for the rest of the voyage. */
   function checkSettings() {
-    const v = setting('Audio.SoundVolume', 1);
-    if (v === lastAudioSetting) return;
-    lastAudioSetting = v;
+    const v = loopVolume();
+    if (v === lastLoopVolume) return;
+    lastLoopVolume = v;
     UpdateAudioSource();
   }
   /** The oars' three animation events (6603-6685), each through the rudder's listener: at the helm only; every oar's
    *  splash played after its start delay; and at the first time scale the rudder's own AudioSource - the Trireme's
-   *  alone carries one - plays the stroke's clip. */
+   *  alone carries one - plays the stroke's clip. SOUND-LIVE (a departure, 2026-10-23): at SoundVolume x the mod's
+   *  own, as the loops are - the mod's plain PlayOneShot reads neither, so the stroke ignored every volume. */
   function OarEvent_In() { oarEvent(f(0.4), 2); }
   function OarEvent_Sweep() { oarEvent(0, 3); }
   function OarEvent_Out() { oarEvent(f(0.1), 4); }
@@ -2885,7 +2889,7 @@ export function createComeSailAwayRuntime(deps) {
     }
     if (state.timeScaleIndex === 0) {
       const component = boat.RudderObject?.getComponent?.('AudioSource');
-      if (component != null) deps.audio?.oneShot?.(component, nodeOf(boat.GameObject, component), AUDIO_CLIPS[clip], 1);   // component.PlayOneShot(audioClips[clip])
+      if (component != null) deps.audio?.oneShot?.(component, nodeOf(boat.GameObject, component), AUDIO_CLIPS[clip], loopVolume());   // component.PlayOneShot(audioClips[clip]) - SOUND-LIVE: at loopVolume, not 1
     }
   }
   /** PlaySlow (6527-6536). */

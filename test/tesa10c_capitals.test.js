@@ -18,6 +18,7 @@ import { customModelFor } from '../src/world/customModels.js';
 import { CITIES } from '../src/world/tamriel/tamrielGeography.js';
 import { provinceKeyBeyondBay } from '../src/world/tamriel/tamrielLand.js';
 import { setTamrielFit, inBay } from '../src/world/tamriel/tamrielFrame.js';
+import { URBAN_ARCHIVE, URBAN_ART } from '../src/world/urban/urbanRecords.js';   // URBANIZER U2
 
 afterEach(() => setTamrielFit(null));
 
@@ -27,7 +28,8 @@ const bounds = (m) => { const lo = [Infinity, Infinity, Infinity], hi = [-Infini
 const sane = (m) => {
   assert.ok(m.positions.every(Number.isFinite) && m.uvs.every(Number.isFinite));
   for (let i = 0; i < m.normals.length; i += 3) assert.ok(Math.abs(Math.hypot(m.normals[i], m.normals[i + 1], m.normals[i + 2]) - 1) < 1e-4, 'unit normals');
-  assert.ok(m.subMeshes.every((s) => s.textureArchive === CAPITAL_ARCHIVE && Object.values(CAPITAL_ART).includes(s.textureRecord)));
+  // PIN MOVED (URBANIZER U2): a landmark's pictures the capitals' own or the towns' (cut stone, brick, half-timbering)
+  assert.ok(m.subMeshes.every((s) => (s.textureArchive === CAPITAL_ARCHIVE && Object.values(CAPITAL_ART).includes(s.textureRecord)) || (s.textureArchive === URBAN_ARCHIVE && Object.values(URBAN_ART).includes(s.textureRecord))));
   assert.equal(m.subMeshes.reduce((n, s) => n + s.primitiveCount * 3, 0), m.indices.length);
 };
 /** Does the segment p-q cross any face of the model (Moller-Trumbore)? */
@@ -108,7 +110,8 @@ test('TESA10c the port blocks: every capital\'s own after the lake and the garde
   assert.equal(new Set(b.map((x) => x.name)).size, b.length);
   assert.deepEqual(b.map((x) => x.index), b.map((_, i) => CAPITAL_BLOCK_INDEX + i));
   const ring = (c) => c.plan.flatMap((row, r) => row.map((x, cx) => x === 'L' && onCapitalRing(c, cx, r))).filter(Boolean).length;
-  assert.equal(b.length, 2 + CAPITALS.reduce((n, c) => n + Object.keys(c.blocks).length + c.plan.flat().filter((x) => x === 'G').length + ring(c), 0), 'AUDIT-TESA A6-2: and every capital\'s gardens after them; AUDIT TESA II C1: and its ring\'s lakes');
+  // PIN MOVED (IC-GRAND, test/world/icgrand_lod.test.js): the Imperial City's blocks a family on the door, none here
+  assert.equal(b.length, 2 + CAPITALS.filter((c) => !c.family).reduce((n, c) => n + Object.keys(c.blocks).length + c.plan.flat().filter((x) => x === 'G').length + ring(c), 0), 'AUDIT-TESA A6-2: and every capital\'s gardens after them; AUDIT TESA II C1: and its ring\'s lakes');
   const tile = (key, dx, dz) => capOf(key).blocks[Object.keys(capOf(key).blocks)[0]].tile(dx, dz);
   const closed = (key, dx, dz) => capOf(key).blocks[Object.keys(capOf(key).blocks)[0]].closed(dx, dz);
   assert.deepEqual([tile('alinor', 0, ALINOR.quay.edge - 1), tile('alinor', 0, ALINOR.quay.edge + 1)], [3, 0]);

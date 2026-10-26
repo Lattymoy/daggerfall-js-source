@@ -139,7 +139,7 @@ test('TS4 standing a wall: the outlined city\'s south-west cell its carrier, the
   assert.deepEqual(b.rmbBlock.miscFlatObjectRecords.map((f) => [f.textureArchive, f.textureRecord, f.xPos, f.zPos]), [[199, 10, 400, 800 - 4096]]);
   assert.ok(b.rmbBlock.fldHeader.groundData.groundTiles.flat().every((t) => t.textureRecord >= 56), 'open ground');
   assert.equal(townWallBlockName(((0xa7 << 20) | 500007) >>> 0), 'TESWAPT3.RMB');
-  assert.deepEqual([townWallBlockIndex(((0xa7 << 20) | 500007) >>> 0), townWallModelId(((0xa7 << 20) | 500007) >>> 0)], [1500007, 3500007]);
+  assert.deepEqual([townWallBlockIndex(((0xa7 << 20) | 500007) >>> 0), townWallModelId(((0xa7 << 20) | 500007) >>> 0)], [1500007, 1500007]);   // PIN MOVED (AUDIT RELEASE R1-1): the walls' models under IC-GRAND's families (test/world/auditrelease_r1.test.js)
   assert.ok(townWallBlockIndex(0xfffff) > TOWN_OUTLINE_BLOCK_INDEX);
   assert.deepEqual([isGateBlock('WALLAA08.RMB'), isGateBlock('WALLAA11.RMB'), isGateBlock('WALLAA04.RMB')], [true, true, false]);
   // a synthetic walled city stood: one block of houses in the middle of a 3 x 3 ring, its gates on two sides

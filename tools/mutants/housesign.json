@@ -1,0 +1,74 @@
+[
+  {
+    "name": "HOUSESIGN-the-house-test-dropped",
+    "file": "src/world/houseSigns.js",
+    "old": "  return isHouseType(buildingType);",
+    "new": "  return true;",
+    "tests": [
+      "test/world/housesign.test.js"
+    ]
+  },
+  {
+    "name": "HOUSESIGN-the-house-for-sale-dropped",
+    "file": "src/world/houseSigns.js",
+    "old": "export const isHouseType = (buildingType) => buildingType === BUILDING_TYPES.HouseForSale || isResidence(buildingType);",
+    "new": "export const isHouseType = (buildingType) => isResidence(buildingType);",
+    "tests": [
+      "test/world/housesign.test.js"
+    ]
+  },
+  {
+    "name": "HOUSESIGN-the-sign-range-closed",
+    "file": "src/world/houseSigns.js",
+    "old": "modelIdNum <= SHOP_SIGN_LAST_MODEL;",
+    "new": "modelIdNum < SHOP_SIGN_LAST_MODEL;",
+    "tests": [
+      "test/world/housesign.test.js"
+    ]
+  },
+  {
+    "name": "HOUSESIGN-the-farthest-door-kept",
+    "file": "src/world/houseSigns.js",
+    "old": "      nearestDistance = distance;\n",
+    "new": "",
+    "tests": [
+      "test/world/housesign.test.js"
+    ]
+  },
+  {
+    "name": "HOUSESIGN-the-reach-widened",
+    "file": "src/world/houseSigns.js",
+    "old": "export const SIGN_REACH_M = 8;",
+    "new": "export const SIGN_REACH_M = 9;",
+    "tests": [
+      "test/world/housesign.test.js"
+    ]
+  },
+  {
+    "name": "HOUSESIGN-a-building-model-asked",
+    "file": "src/world/houseSigns.js",
+    "old": "  if (placed.recordIndex != null) return false;\n",
+    "new": "",
+    "tests": [
+      "test/world/housesign.test.js"
+    ]
+  },
+  {
+    "name": "HOUSESIGN-the-door-type-ignored",
+    "file": "src/world/houseSigns.js",
+    "old": "      if (door.type !== DOOR_TYPE.BUILDING) continue;\n",
+    "new": "",
+    "tests": [
+      "test/world/housesign.test.js"
+    ]
+  },
+  {
+    "name": "HOUSESIGN-the-door-placed-on-the-wrong-axis",
+    "file": "src/world/houseSigns.js",
+    "old": "      const doorZ = m[2] * cx + m[6] * cy + m[10] * cz + m[14];",
+    "new": "      const doorZ = m[2] * cx + m[6] * cy + m[10] * cz + m[13];",
+    "tests": [
+      "test/world/housesign.test.js"
+    ]
+  }
+]

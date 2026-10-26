@@ -1,56 +1,119 @@
 [
   {
-    "name": "ROAD-BEYOND-the-grid-unread",
-    "file": "src/world/terrain/terrainGen.js",
-    "old": "    const at = (m) => (m && onGrid ? m[i] : 0);",
-    "new": "    const at = (m) => (m ? m[i] : 0);",
+    "name": "ROAD-BEYOND-the-box-stops-at-the-end",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  const reachOf = (margin) => (past ? {",
+    "new": "  const reachOf = (margin) => (false ? {",
     "tests": [
-      "test/roadbeyond.test.js"
+      "test/systems/travel/road_beyond.test.js"
     ]
   },
   {
-    "name": "ROAD-BEYOND-the-west-edge-open",
-    "file": "src/world/terrain/terrainGen.js",
-    "old": "    const onGrid = px >= 0 && px < MAP_W;",
-    "new": "    const onGrid = px < MAP_W;",
+    "name": "ROAD-BEYOND-no-roads-first",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  if (past && beyond && (!sea || (sea.start === 'land' && sea.goal !== 'sea'))) {",
+    "new": "  if (false) {",
     "tests": [
-      "test/roadbeyond.test.js"
+      "test/systems/travel/road_beyond.test.js"
     ]
   },
   {
-    "name": "ROAD-BEYOND-the-east-edge-open",
-    "file": "src/world/terrain/terrainGen.js",
-    "old": "    const onGrid = px >= 0 && px < MAP_W;",
-    "new": "    const onGrid = px >= 0;",
+    "name": "ROAD-BEYOND-the-ladder-unspent",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "    const left = past ? Math.min(cap, BEYOND_MAX_EXPANSIONS - (tally.n - spent)) : cap;",
+    "new": "    const left = cap;",
     "tests": [
-      "test/roadbeyond.test.js"
+      "test/systems/travel/road_beyond.test.js"
     ]
   },
   {
-    "name": "ROAD-BEYOND-the-corner-east-wraps",
-    "file": "src/world/road/roadPainter.js",
-    "old": "  const east = x + 1 >= 0 && x + 1 < w ? mask[y * w + x + 1] : 0;",
-    "new": "  const east = x + 1 < w ? mask[y * w + x + 1] : 0;",
+    "name": "ROAD-BEYOND-the-field-priced-a-road",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  const hCost = past && !roads && !tracks && !sea ? ROUTE_COST.open : ROUTE_COST.road;",
+    "new": "  const hCost = ROUTE_COST.road;",
     "tests": [
-      "test/roadbeyond.test.js"
+      "test/systems/travel/road_beyond.test.js"
     ]
   },
   {
-    "name": "ROAD-BEYOND-the-corner-west-wraps",
-    "file": "src/world/road/roadPainter.js",
-    "old": "  const west = x > 0 && x <= w ? mask[y * w + x - 1] : 0;",
-    "new": "  const west = x > 0 ? mask[y * w + x - 1] : 0;",
+    "name": "ROAD-BEYOND-no-walk-across-country",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  if (!best && past && (roads || tracks) && !sea) return yield* planRouteSteps(",
+    "new": "  if (false) return yield* planRouteSteps(",
     "tests": [
-      "test/roadbeyond.test.js"
+      "test/systems/travel/road_beyond.test.js"
     ]
   },
   {
-    "name": "ROAD-BEYOND-the-edge-pixel-shut",
-    "file": "src/world/road/roadPainter.js",
-    "old": "  const west = x > 0 && x <= w ? mask[y * w + x - 1] : 0;",
-    "new": "  const west = x > 0 && x < w ? mask[y * w + x - 1] : 0;",
+    "name": "ROAD-BEYOND-the-ends-open-ground-everywhere",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "      if (kind < 0 || (kind === 2 && !near(nx, ny))) continue;",
+    "new": "      if (kind < 0) continue;",
     "tests": [
-      "test/roadbeyond.test.js"
+      "test/systems/travel/road_beyond.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-BEYOND-the-seek-unasked",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  const rf = Math.max(BY_ROAD_REACH, nearest(from) + 2), rt = Math.max(BY_ROAD_REACH, nearest(to) + 2);",
+    "new": "  const rf = BY_ROAD_REACH, rt = BY_ROAD_REACH;",
+    "tests": [
+      "test/systems/travel/road_beyond.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-BEYOND-the-step-leaves-by-any-edge",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "if (closed.has(n) || (!(here & STEP_BIT[d]) && !near(nx, ny))) continue;",
+    "new": "if (closed.has(n)) continue;",
+    "tests": [
+      "test/systems/travel/road_beyond.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-BEYOND-the-search-unbounded",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "    if (tally) tally.n++;\n    if (++expanded > maxExpansions) return null;\n    const { x: cx",
+    "new": "    if (tally) tally.n++;\n    const { x: cx",
+    "tests": [
+      "test/systems/travel/road_beyond.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-BEYOND-no-layer-still-searched",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  if (!beyond) return null;\n  const pathAt",
+    "new": "  const pathAt",
+    "tests": [
+      "test/systems/travel/road_beyond.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-BEYOND-the-rung-unbounded",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "    const margin = past ? Math.min(rung, BEYOND_MARGIN) : rung;",
+    "new": "    const margin = rung;",
+    "tests": [
+      "test/systems/travel/road_beyond.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-BEYOND-the-dearer-road-kept",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "    if (byRoad && byRoad.cost <= ROUTE_COST.open * octile(from, to)) return byRoad;",
+    "new": "    if (byRoad) return byRoad;",
+    "tests": [
+      "test/systems/travel/road_beyond.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-BEYOND-no-greed",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "open.push(ng + BY_ROAD_GREED * h(nx, ny), n);",
+    "new": "open.push(ng + h(nx, ny), n);",
+    "tests": [
+      "test/systems/travel/road_beyond.test.js"
     ]
   }
 ]

@@ -41,7 +41,10 @@
 import {
   addItem, canHoldAmount, effectiveUnitWeightInKg, totalWeight, isSummoned,
   splitStack, GOLD_PIECE_WEIGHT_KG, goldPiecesOf, addGoldPieces, isGoldPieces, tellTaken,
+  findExistingStack, goldStack,
 } from '../inventory.js';
+import { LOOT_STACK_MAX } from '../loot/loot.js';   // GOLD-WIRE: the most one stack rides the room's word in
+import { isRoomCarried } from '../loot/roomCarriedList.js';   // GOLD-WIRE: whether the room's word carries the list a drop lands in
 import { isMap, isLightSource, isSpellbook } from '../useItem.js';   // AUDIT 26 F156/F157: the map interception + the lit-torch clear; KEEP-SPELLBOOK
 import { cannotRemoveItemText } from '../createItem.js';
 // AUDIT 26: DaggerfallEntity.MaxEncumbrance, enchantment allowance and
@@ -113,6 +116,8 @@ export const REFUSAL = Object.freeze({
    *  rather than clamped (:1272-1300), and the field simply does not
    *  take it. */
   badAmount: { reason: 'badAmount', text: null },
+  /** GOLD-WIRE: the gold pile in a container the room's word carries holds LOOT_STACK_MAX already (sharedGoldRoom). */
+  sharedGoldFull: { reason: 'sharedGoldFull', get text() { return sharedGoldFullText(); } },
 });
 
 /**
@@ -181,6 +186,29 @@ export function keepsQuestItem(entity, res) {
     .some((l) => Array.isArray(l) && l.some((it) => it?.questItem && it.questUID === uid && it.questSymbol?.name === name));
 }
 
+/**
+ * FIELD BUGS 2026-10-25i HEART-KEPT (AUDIT FB1025i B1): WHERE A QUEST'S OWN RECORD `dfItem` STANDS IN `items` - the
+ * host's playerHasItem and removeItemFromPlayer (scenes/world.js). DFU looks it up by its UID
+ * (ItemCollection.Contains(DaggerfallUnityItem) and RemoveItem, ItemCollection.cs:157-163 and :278-287), and the port's
+ * item IS its UID: the record itself. A load restores the pack's copy and the resource's record apart (AUDIT 24), so a
+ * copy of the same quest and symbol stands for it - but never a FOE'S CLONE (`questClone`, quest/foe.js
+ * getClonedItemQueue), which CloneAll gave a UID of its own. Q0C4XY04 gives its heart to each of four kinds as it is
+ * hurt (GiveItem.cs:117-121 takes the quest's own record from the pack): read by quest and symbol alone, the heart the
+ * player had taken off the first body was pulled out of the pack onto the second kind, and the witches had nothing to
+ * take. `clones` widens the match to a clone when no own copy stands - Item.Dispose's sweep, the port's (a quest that
+ * ends takes back what its foes gave as well; DFU's RemoveItem leaves a clone to the load's orphan sweep). -1 for none.
+ * @param {any[]} items @param {any} dfItem @param {{ clones?: boolean }} [opts]
+ */
+export function heldQuestRecordIndex(items, dfItem, { clones = false } = {}) {
+  const list = Array.isArray(items) ? items : [];
+  const direct = list.indexOf(dfItem);
+  if (direct >= 0) return direct;
+  if (!dfItem?.questItem) return -1;
+  const same = (it) => !!it?.questItem && it.questUID === dfItem.questUID && it.questSymbol?.name === dfItem.questSymbol?.name;
+  const own = list.findIndex((it) => same(it) && !it.questClone);
+  return own >= 0 || !clones ? own : list.findIndex(same);
+}
+
 /** MakePermanent over the pack's copies of a quest's item `sym` (item.js's sync) - the host's `makeHeldQuestItemsPermanent`,
  *  out of bootWorld (HOST-SPLIT) beside its quest-item kin. */
 export function makeHeldQuestItemsPermanent(entity, uid, sym) {
@@ -226,6 +254,17 @@ export const wagonFullGoldText = (n) => formatText(localizedText('wagonFullGold'
  *  refuses in its own words, the port's: DFU has no companion to name. */
 export const packFullText = (name) => `${name || 'Your companion'} cannot carry any more.`;
 export const packFullGoldText = (name, n) => `${name || 'Your companion'} could only carry ${n} gold pieces.`;
+/** GOLD-WIRE (FIELD BUGS 2026-10-25b): a container the room's word carries (loot/roomCarriedList.js) takes coin up to the
+ *  room left on the gold stack it lands on, in its own words - the port's: DFU has no other player to share one with. */
+export const sharedGoldText = (n) => t('items.gold.sharedRoom', 'Only {n, number} more gold pieces fit here. Everyone here shares this container, and one pile of gold in it holds no more than {max, number}.', { n, max: LOOT_STACK_MAX });
+export const sharedGoldFullText = () => t('items.gold.sharedFull', 'No more gold fits here. Everyone here shares this container, and one pile of gold in it holds no more than {max, number}.', { max: LOOT_STACK_MAX });
+/** GOLD-WIRE: how much more gold the stack a drop lands on may take in a list the room's word carries. The drop's addItem
+ *  merges the coin into findExistingStack's answer, and a stack past LOOT_STACK_MAX - the most one stack rides the room's
+ *  word in - made that word unreadable to everyone else in the room (portalStone.js portalStoneRoom's law, for coin). */
+export function sharedGoldRoom(remote) {
+  const onto = findExistingStack(remote, goldStack(1));
+  return Math.max(0, LOOT_STACK_MAX - (onto ? (onto.stackCount ?? 1) : 0));
+}
 /** AUDIT ECON C5: a storage whose keeper is gone (a quickload under his window that left him aboard) takes nothing - what
  *  it took would go into a list nothing keeps. */
 export const packGoneText = (name) => `${name || 'Your companion'} is no longer with you.`;
@@ -243,11 +282,17 @@ const packRefuses = (capacity, item, units, remote) => !!capacity.gone || canHol
  * read, because a screen holding an entity and a screen holding only
  * an item list both ask this.
  *
+ * GOLD-WIRE: `shared` - the room's word carries `remote` (by default,
+ * whether it is marked so) - clamps the amount to the room left on the
+ * gold stack it lands on (sharedGoldRoom), with a box that names it, as
+ * the wagon does. The port's own: DFU has no shared container.
+ *
  * @returns {{ok:true, amount:number, notice:string|null}
  *          |{ok:false, refusal:object, notice:string|null}}
  */
-export function planDropGold(text, { carried = 0, usingWagon = false, remote = [], groundRefusal = null, capacity = null, wagonKg = WAGON_KG_LIMIT } = {}) {
+export function planDropGold(text, { carried = 0, usingWagon = false, remote = [], shared = isRoomCarried(remote), groundRefusal = null, storeRefusal = null, capacity = null, wagonKg = WAGON_KG_LIMIT } = {}) {
   if (groundRefusal && !usingWagon) return { ok: false, refusal: { reason: 'ground', text: groundRefusal }, notice: null };   // HOUSE-DROP: gold on a floor that refuses it
+  if (storeRefusal) return { ok: false, refusal: { reason: 'store', text: storeRefusal }, notice: null };   // AUDIT PVP-EASE L2-1: the combat lock (inventorySession.js storeRefusalOf)
   // A numeric field of 8 opening on "0": anything that is not a run of
   // digits is not a number, and 0 fails the range below.
   const asked = /^[0-9]+$/.test(String(text)) ? Number(text) : 0;
@@ -260,6 +305,12 @@ export function planDropGold(text, { carried = 0, usingWagon = false, remote = [
     const amount = Math.min(asked, canCarry);
     if (amount < 1) return { ok: false, refusal: packFull(capacity), notice };
     return { ok: true, amount, notice };
+  }
+  if (!usingWagon && shared) {
+    const room = sharedGoldRoom(remote);
+    const amount = Math.min(asked, room);
+    if (amount < 1) return { ok: false, refusal: REFUSAL.sharedGoldFull, notice: sharedGoldFullText() };
+    return { ok: true, amount, notice: asked > room ? sharedGoldText(room) : null };
   }
   if (!usingWagon) return { ok: true, amount: asked, notice: null };
   // :1296-1303 - the 750kg headroom in COINS, and the box names it.
@@ -289,13 +340,16 @@ export function planDropGold(text, { carried = 0, usingWagon = false, remote = [
  * @returns {{ok:false, refusal:object}|{ok:true, amount:number, sound:'click'}}
  */
 export function planStore(item, {
-  remote = [], usingWagon = false, chooseOne = null, getQuest = null, dryRun = false, groundRefusal = null, capacity = null, bagLoaded = false, wagonKg = WAGON_KG_LIMIT,
+  remote = [], usingWagon = false, chooseOne = null, getQuest = null, dryRun = false, groundRefusal = null, storeRefusal = null, capacity = null, bagLoaded = false, wagonKg = WAGON_KG_LIMIT,
 } = {}) {
   if (!item) return { ok: false, refusal: REFUSAL.missing };
   if (bagLoaded && isBagItem(item)) return { ok: false, refusal: REFUSAL.bagLoaded };   // BAG1
   // HOUSE-DROP (2026-09-27): the ground itself refuses - the window hands the host's word (inventorySession
   // groundRefusalOf) only when the destination IS the ground, so a wagon, a chest and a trade are untouched
   if (groundRefusal) return { ok: false, refusal: { reason: 'ground', text: groundRefusal } };
+  // AUDIT PVP-EASE L2-1 (the owner chose "Combat lock"): storage no zone death takes refuses a fighter fresh from a fight -
+  // the window hands it (inventorySession.js storeRefusalOf) only when the destination IS such storage
+  if (storeRefusal) return { ok: false, refusal: { reason: 'store', text: storeRefusal } };
   if (item.group === 'Transportation') return { ok: false, refusal: REFUSAL.transport };
   if (isKeptSpellbook(item) && !usingWagon) return { ok: false, refusal: REFUSAL.spellbook };   // KEEP-SPELLBOOK: the own wagon takes it, nothing else
   if (isSummoned(item)) return { ok: false, refusal: REFUSAL.summoned };

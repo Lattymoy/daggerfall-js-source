@@ -693,6 +693,9 @@ const _decoded = new Map();   // textureKey -> { width, height, colors } in getC
  *  build asked without one is refused (its classic art is not here). */
 let _deriveContext = null;
 export function setTextureDeriveContext(ctx) { _deriveContext = ctx ?? null; }
+/** FAR-FLORA: the pipeline's classic reads, for a reader of the player's art outside a build (render/farFlora.js: the trees'
+ *  colour and size on the horizon) - null until a pipeline is up. */
+export const textureDeriveContext = () => _deriveContext;
 /** DS1: a built picture may carry the classic record scale it is to be
  *  sized by (`scale: { width, height }`, TextureFile.getScale's shape) - a
  *  stand-in for a classic sprite stands as big as that sprite does. */

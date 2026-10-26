@@ -446,11 +446,12 @@ the heightmap says how high that land stands.
   dropped. Both the relief's law and the authored law floor there, and in the blend band past the Bay's seam the
   trace's land does too.
 
-  The coast is the trace's to the pixel. On the freeware data, every one of the 14,833,216 pixels past the Bay's blend
-  has its land or sea as the trace has it (WOODS' sea at 3 and under), and no land pixel stands at or under the beach
-  line. The only land at or under it past the Bay is 56 pixels of the seam band, which is the Bay's own clamped read
-  (THE BAY IS NOT MOVED BY A BYTE). Skyrim's spine stands at 176, the Jerall at 120-140, Vvardenfell's cone at 123,
-  the Valus at 128, Summerset's heart at 103; the plains 12-40.
+  The coast is the trace's to the pixel (but by Cyrodiil's lakes: CYRODIIL-SHORES, below - and since SMOOTH-LAND, below,
+  every coast the land's smooth law's, the pin moved with it). On the freeware data, every
+  one of the 14,833,216 pixels past the Bay's blend has its land or sea as the trace has it (WOODS' sea at 3 and under),
+  and no land pixel stands at or under the beach line. The only land at or under it past the Bay is 56 pixels of the
+  seam band, which is the Bay's own clamped read (THE BAY IS NOT MOVED BY A BYTE). Skyrim's spine stands at 176, the
+  Jerall at 120-140, Vvardenfell's cone at 123, the Valus at 128, Summerset's heart at 103; the plains 12-40.
 - **The peaks follow it** (`tamrielBiomes.js` biomeAtPicture, `tamrielRelief.js` peaksLine and namedSummit;
   `03-World/Tamriel-Biomes.md` Recorded choice 14). Where the relief stands:
   - a province's peaks zone is its highest PEAKS_SHARE (8%) of land **past the Bay** by the relief (AUDIT TESA II G11:
@@ -526,79 +527,407 @@ never reached the city, no port stood on it, and no voyage or packet could sail 
 **The course** (`ui/tamrielTrace.js` `NIBEN_COURSE`, `nibenCells`, `openNiben`, run after `fillSpecks`; `niben` false
 skips it - the relief's bake, `tools/bakeTamrielRelief.mjs`, fits the owner's heightmap to the painting's own coasts). Each run is a
 row or a column of picture pixels from one corner to the next:
-- the city's own arm of the lake, from the isle's south shore down to the ring's bottom piece;
+- the city's own arm of the lake, from a pixel below the isle's south shore down to the ring's bottom piece (the isle's
+  last pixel stays land, under IC-GRAND's twenty-five - `03-World/Arena-Provinces.md`; the canal cuts the rest);
 - the ring's lower arc, east under the label;
 - the ring's east side, down to the Upper Niben and the bay's head;
 - the Lower Niben, the painted line from the bay's tail to the Topal Bay.
 
 The ring's west stays land. That is the isle's way to the mainland: Talos Bridge, the city's one gate. The course opens
 only on a 320 x 200 picture whose every join (`NIBEN_JOINS`: the ring's two pieces, the bay's head and tail, the sea off
-the river's mouth) is water. Any other picture is left as it traced. On the freeware this opens 38 pixels, leaving
-26,598 land pixels. The enclosed waters left are Hammerfell's two lakes and the Inner Sea (4-connected), or Hammerfell's
+the river's mouth) is water. Any other picture is left as it traced. On the freeware this opens 37 pixels, leaving
+26,599 land pixels (the boot's kept trace is traced again: `world/tamriel/tamrielBootCache.js` BOOT_CACHE_VERSION 2, and
+the painting's own coasts, `niben` false, are never kept). The enclosed waters left are Hammerfell's two lakes and the Inner Sea (4-connected), or Hammerfell's
 two alone (`pictureLakes`, 8-connected). The Lower Niben runs on Elsweyr's border with the Imperial Province, a river
 one pixel wide between two provinces' land. It is the one such strait the trace keeps; TAMRIEL4's closeBorderLines reads
 every other one as a border. Everything that reads the trace follows: the held map's coast, the streamed ground (the
 course is the sea's - its height 0, the Ocean's climate), the relief's mask, the places' shores, and the open sea that
-the ports, the board and the lanes ask (AUDIT TESA II P12's lakes are now Hammerfell's alone).
+the ports, the board and the lanes ask (AUDIT TESA II P12's lakes are now Hammerfell's alone). SMOOTH-LAND's one law
+reads the opened trace as it reads the rest: the course is a picture pixel of sea, its shores the law's smooth contour.
+CYRODIIL-WATERS' Lower Niben (`world/tamriel/tamrielWaters.js`, a carved river 320-460 m wide) runs down the same reach;
+the reach is the sea's now, a picture pixel wide, and the river's carve only ever lowers, so it reaches its water as
+before (`test/world/breathtaker.test.js`), and NAMED_WATERS still names the reach the Lower Niben.
 
 **The Waterfront canal** (`world/tamriel/tamrielGeography.js` `WATERFRONT_CANAL`, `world/tamriel/tamrielLand.js`
-`waterfrontCanal`, `canalAt`). The city's arm of the lake is a picture pixel south of the city's own, and the city's
-seven pixels sit in the middle of that picture pixel. So the arm's water starts four Bay pixels short of the city's
-south edge. The canal cuts those four pixels at the Bay's scale. It runs from the row past the span to the last row
-before the trace's water, along the city's middle column and one column either side: Bay pixels 2068-2070 by 662-665 on
-the freeware's fit. `provinceKeyAt` answers null inside it, so the ground, the climate and every reader of the land see
-it as sea.
+`waterfrontCanal`, `canalAt`). The city's arm of the lake starts two picture pixels south of the city's own, and
+IC-GRAND's twenty-five pixels (`span`, pinned to `world/imperialCity.js` IMPERIAL_SPAN) end inside the one between. So
+the arm's water starts short of the city's south edge, and the canal cuts the rest at the Bay's scale. It runs from the
+row past the span to the last row before the water, along the city's middle column and one column either side: Bay
+pixels 2068-2070 by 671-683 on the freeware's fit (the arm's end rounded by the smooth law). It reads the land's own law
+(`landLabelAt`, never `provinceKeyAt`), so it ends where every reader's water begins. `provinceKeyAt` answers null inside
+it, so the ground, the climate and every reader of the land see it as sea.
 
 There is no canal when:
 - the city's span is not all its province's land at its point (the capitals' own law would stand it elsewhere);
 - the water meets the city's edge (nothing to cut);
 - no water lies within `reach` (24).
 
-The canal is read off the trace's own pixels and kept for a trace and a fit, the same on every thread.
+The canal is kept for a trace and a fit, the same on every thread.
 
-**The harbour.** The Imperial City's port is its Waterfront's slice, the bottom row's middle (`world/tamrielCapitals.js`
-`harbour`, `capitalHarbourSlice`, `capitalCanalOpen`; `world/pastBayRows.js`). That slice is a port where the canal meets
-it. Every other capital's harbour is its centre, as before. A capital's harbour is named for its capital: the Waterfront
-is the "Imperial City" on the boards (`world/worldWide/worldPorts.js`).
+**The harbour.** The Imperial City's port is the middle slice of its span's bottom row, below the Waterfront district
+(`world/tamrielCapitals.js` `harbour`, `capitalHarbourSlice`, `capitalCanalOpen`; `world/pastBayRows.js`): Bay pixel
+(2069, 670) on the freeware. That slice is a port where the canal meets it. Every other capital's harbour is its centre,
+as before. A capital's harbour is named for its capital: it is the "Imperial City" on the boards
+(`world/worldWide/worldPorts.js`).
 
 **The packets.** The city lies some 850 pixels of river from the Topal Bay and a thousand from the nearest port of the
 sea, past the lanes' own reach (BEYOND_LANE_MAX_PX, 400). A harbour up a canal therefore runs its packets
 `CANAL_PORT_REACH_PX` (1200, the port's `reach`; `systems/naval/seaLanes.js` laneNetwork). Its way runs up to twice that
 (`scenes/naval/worldLanes.js` `beyondPathPx`), and the lane's `near` test uses the same bound. The city's roadstead lies
-on the canal, which is a picture pixel of land, so its way puts out from the picture's sea beside it (`seaFrom`). The
-world's lane water holds that first leg. On the freeware this gives the city one packet lane, to Senchal, 1,017 km down
-the Niben and across the Topal Bay. Its other nearest, Winterhold, has no way.
+on the canal, which is a picture pixel of land, so its way puts out from the picture's sea beside it - SMOOTH-LAND's
+`moorCell`, which took the law this arc had written as `seaFrom` (a cell within two whose leg the world's lane water
+holds). On the freeware this gives the city two packet lanes: to Senchal, 995 km down the Niben and across the Topal Bay,
+and to Torval, 1,555 km.
 
 **The voyage.** The voyage planner (`systems/travel/travelRoute.js` planSeaLanes) floods the water at the Bay's scale.
-The canal and the course are both water to it. A voyage from the Topal Bay lands at the Waterfront's slice: 872 pixels
+The canal and the course are both water to it. A voyage from the Topal Bay lands at the harbour's slice: 848 pixels
 on the freeware.
 
 **The zone** (`systems/wild/cyrodiilZone.js` `provinceWaterAt`). AUDIT TESA II Z4 made the zone take what it encloses,
 so Lake Rumare and the Niben were the zone's. Joined to the sea, they would no longer be enclosed. The sea would reach up
-the river to the city's isle, and the city would fall into The Borderlands. The rule now: a water pixel whose nearest
-land on both sides of a row or a column (within PROVINCE_WATER_REACH, 12) is the Imperial Province's is the zone's. The
-Waterfront canal counts too. The river's last reach, between Elsweyr's banks, does not. The city stands in The Heart, as
-Z4 pins it.
+the river to the city's isle, and the city would fall into The Borderlands. The rule now: a pixel the land's law calls water
+(`provinceKeyAt`'s null) whose nearest land on the picture on both sides of a row or a column (within
+PROVINCE_WATER_REACH, 12) is the Imperial Province's is the zone's. The Waterfront canal counts too: its picture pixel is
+the province's land between its own. The river's last reach, between Elsweyr's banks, does not. The city stands in The
+Heart, as Z4 pins it.
 
-**Not done, and why.** A boat sails the Niben and the canal to the city's edge. The city's own lake (TS5's ring, inside
-its seven pixels) is the location's ground, flattened to the city's height, so a boat does not cross from the canal
-onto it. Voyages and packets land at the Waterfront's slice.
+ZONE-LINE's outline (`zoneLineSteps`) is the law's own lines wherever the zone changes - the coast, a border. Where the
+zone's water meets the sea's, the law has no line: one label's water on both sides. So that square is the zone's own
+marching case, a DAM: each edge it crosses at the law's crossing where the labels differ and at its middle where they do
+not, its pieces `kind` 'water'. The dam is the red line's, the fog's cut and the zone map's ring alone. It is never the
+held map's coast or border, and never a piece the ink leaves off for the zone (`keys`). On the freeware the outline
+crosses the Niben where its banks turn Elsweyr's.
+
+**Not done, and why.** A boat sails the Niben and the canal to the city's edge. The city's own lake (IC-GRAND's, inside
+its twenty-five pixels, out to 10 km) is the location's ground, flattened to the city's height, so a boat does not cross
+from the canal onto it, nor reach the Waterfront's piers. Voyages and packets land at the harbour's slice.
 
 ### Pins
 
-- `test/world/nibensea.test.js` (9): the course (its runs, its joins, the opening and its guard); the canal (its box,
+- `test/world/nibensea.test.js` (10): the course (its runs, its joins, the opening and its guard); the canal (its box,
   the land's key and the ground on it, the four nulls); the harbour (the slice, the canal's word, the other capitals' as
-  before); the port's name and reach; the lanes' reach and the way's cap; the way off the canal; the zone's water; and on
-  the player's own files the joined Niben, the port, the lane to Senchal and the voyage.
-- PIN MOVED: `test/ui/tamriel4.test.js` (26,598 land pixels, three holes, the course exempt from the strait sweep);
+  before); the port's name and reach; the lanes' reach and the way's cap; the way off the canal; the zone's water; the
+  zone's line across its water (every chain closed, the centre rule, the dam the red line's alone); and on the player's
+  own files the joined Niben, the painting's trace never kept, the port, the lane to Senchal and the voyage.
+- PIN MOVED: `test/ui/tamriel4.test.js` (26,599 land pixels, three holes, the course exempt from the strait sweep);
+  `test/systems/wild/zoneline.test.js` (the zone the province's law and its own water); `test/world/bootcache.test.js`
+  (the laws' prints under BOOT_CACHE_VERSION 2);
   `test/world/audittesa2p_world.test.js` (P12: two lakes, Lake Rumare the sea's; P7: 29 ports, the city's its
   Waterfront); `test/world/tamrielrelief.test.js` (the relief's bake reads the painting's own coasts -
   `preloadTamrielTrace`'s `niben` false: the owner's heightmap is laid on the painting, and the player's trace masks the
   river on it at load, so the module is the same to the byte).
-- Mutants: `tools/mutants/nibensea.json` (22, all dead). Re-aimed by content, all dead: `audittesa2g.json`'s
+- Mutants: `tools/mutants/nibensea.json` (24, all dead). At the merge of SMOOTH-LAND, IC-GRAND and ZONE-LINE:
+  CANAL-province-unread and ZONE-water-unasked re-aimed by content; WAY-roadstead-held-to-picture and WAY-leg-unasked
+  retired with `seaFrom` (`smoothland.json`'s SMOOTH-LAND-LANES-the-mooring-refused and -the-moorings-leg-unasked hold
+  `moorCell`, and name this file's test too); ZONE-dam-unbuilt, ZONE-dam-the-laws, ZONE-water-by-the-picture and
+  BOOT-the-bake-kept added. Re-aimed by content, all dead: `audittesa2g.json`'s
   AUDITTESA2G-G2-the-bake-reads-its-own-output; `audittesa2p.json`'s
   P7-capital-port-unsaid, P7-near-the-bays, P7-near-no-margin and P7-port-region-unsaid; `sealanes.json`'s
   NET-three-neighbours and NET-reach-short; `tamriel3.json`'s TAMRIEL3-the-sea-has-a-province; `tesa6.json`'s
   TESA6-a-crown-past-the-bay; `wwc2.json`'s WWC2-a-cell-by-its-corner.
 
 Section A, NIBEN-SEA (OURS: DFU stops at the Bay's edge; the land past it, its water and its ports are the port's own).
+
+## PEAKS - the ranges snow-capped (2026-10-26)
+
+The owner: *"The world of daggerfall mountains need to be completely redesigned from the ground up with more integration
+into the terrian, snow capped, and properly place throughout tamriel."* The ranges' measure, their snow caps by zone
+(PEAKS1) and their own shape (PEAKS2) are `Peaks.md`.
+
+## BREATHTAKER - the land below the heightmap's grain, and Cyrodiil's waters (2026-10-26)
+
+KPbICA's spec, forwarded by the owner (BREATHTAKER 2 and 3): *"Make sure that we create landscapes based on the
+Tamriel's heightmap"*, *"Make small landscapes that can't be seen on a Tamriel's heightmap more diverse. Now it's just a
+very monotonous noise"*. And for Cyrodiil: *"For Cyrodill I would suggest to use this detailed map"*.
+
+- **It is the same heightmap.** KPbICA's screenshot is a shaded-relief render (dark is high, the water blue) of the map
+  `src/assets/tamriel/source/tamriel-heightmap.png` holds as brightness (TAMRIEL-RELIEF). The coasts, the isles, the
+  Inner Sea round Vvardenfell, the Niben and Lake Rumare, and the bright ranges are the same. The repository's copy
+  stays the source, and nothing new ships of it.
+- **Measured before** (the freeware's trace; the probes are local):
+  - **The macro is the heightmap's.** Pearson 0.997 and RMSE 45 m on a grid of four points a picture unit, the
+    terrain's composed byte against the heightmap's own brightness through the bake's curve. Within
+    RELIEF_COAST_REACH of the coast the land stands a mean 42 m under it. That is TAMRIEL-RELIEF's ease off the
+    water, and it is kept (a residue, below).
+  - **The tops were squashed.** The relief's bytes run to 180, but the lift is level past WOODS' 7-bit top (127). So a
+    byte past it rose 10 m, against 20 m under it. That was 8.3% of Skyrim's land and 6.1% of Cyrodiil's: the High
+    Peaks and the Jerall stood as plateaus.
+  - **Under the heightmap's grain was noise.** Below about 10 km the ground's shape correlated with nothing (0.12). It
+    was the large map's lattice hash (a bump of up to 45 m every 273 m, the same everywhere) under the Bay's climate
+    hills, so every country wore the same mottle.
+- **BREATHTAKER2 - THE LIFT GOES ON PAST THE 7-BIT TOP, PAST THE BAY** (`world/landforms.js` continentLift,
+  CONTINENT_LIFT, CONTINENT_CEILING, byteBeyond; reliefByteHeight's `beyond`):
+  - Past the Bay's seam the lift goes on at 0.56 from byte 127 to 180, and is level after. A byte past 127 now rises
+    15.6 m, where it rose 10. Skyrim's spine (176) stands at 3,131 m, where it stood at 2,856; byte 180 at 3,193 m.
+  - CONTINENT_CEILING (2,913.5 units) is under LANDFORM_CEILING (2,915.25) by construction, so the ceiling the
+    snowpack, the far ring and the saves count is still the world's.
+  - It comes in over the landforms' ramp past the seam. The Bay's bytes are the old law, to the bit.
+  - `byteBeyond(x, y)` is the share at a pixel's byte node: what a byte read off the map takes, so it stands where the
+    streamed ground does.
+- **BREATHTAKER3 - THE CONTINENT'S OWN LANDFORMS** (`world/tamriel/tamrielLandforms.js`; `world/landforms.js` landAt
+  past the seam). Past the Bay's seam they take the climate hills' place, coming in over TAMRIEL_LANDFORM_DIALS.ramp
+  (8 pixels). The Eltheric Ocean's box is not the continent (`continentPixel`): its isles keep their own climates' hills
+  (AUDIT CAPTAIN'S SEA G3), and none of this reaches them. The kernel's two terms stay the macro, so the shape at the heightmap's grain is the heightmap's. Under it:
+  - **Families, mixed by zone.** Each zone of `tamrielBiomes.js` (ZONE_LANDS, or its climate's - CLIMATE_LANDS)
+    weights nine families: rolling hills, ridges and valleys along the slope, foothills, mesas and buttes, dunes,
+    drumlins (the north's ice), karst cones and sinkholes, marsh hummocks, and broken ground.
+  - **The land's own say.** A steep, high flank is ridges and valleys, a flank lower down foothills, the north's
+    lowland drumlins. A slow variety field trades a zone's shapes in patches, and a region field sets how hard the land
+    rolls.
+  - **The accents.** Terraces and escarpments where a steady slope or a plateau's rim steps (more where the zone
+    steps), gullies down a flank (badlands where it is dry), and outcrops on the uplands and the ridges.
+  - **Every shape centred on its own mean** (LANDFORM_CENTRES, measured), so the mix keeps the macro. Clipped softly
+    to TAMRIEL_TOP (260 units), and eased over the land's height above the knee as the hills are, so no landform is
+    taller than the land under it.
+  - **Pure in its world position.** The slow fields are read on a lattice of NODE samples (Catmull-Rom, C1, so the
+    hill-shade shows no cells), through a fine table four samples apart. A ghost row off the table reads the same four
+    entries, made there, so every seam is one number from both pixels.
+  - **No engine approximation** (AUDIT LANDFORMS III A8's sweep holds the file). The frames' directions are six fixed
+    angles with exact cosines.
+  - **The large map past the Bay is a swell.** `tamrielGround.js` tamrielLargeMap: LARGE_SWELL, a slow Perlin field
+    about the old mean, never a byte between neighbours, where the lattice hash stepped up to nine.
+  - **After.** The ground's mean against the heightmap per pixel (400 pixels past the Bay, each tree against its own
+    byte law): Pearson 0.9989 against HEAD's 0.9990, RMSE 37.8 m against 37.4 m, bias 23.1 m against 23.5 m. Relief
+    inside a pixel: median 15.7 m both, 90th percentile 30.5 m against 27.7 m. The macro is kept, and the shapes
+    under it are each country's own: Elsweyr's mesas and buttes, the Reach's and the Heartlands' karst, the Jerall's
+    ridges with rocky flanks and foothills, Colovia's stepped plateau, Skyrim's drumlins. Valenwood rolls gently, and
+    Black Marsh is a flat of hummocks and hollows.
+  - **The cost.** CPU on a loaded machine, 99 pixels past the Bay: the kernel 19.6 to 22.7 ms a pixel (median, 1.16x),
+    the whole job 28.3 to 36.6 ms (1.29x).
+- **CYRODIIL-WATERS - THE RIVERS AND LAKES PAST THE BAY** (`world/tamriel/tamrielWaters.js`):
+  - **The source.** WATERS_SOURCE: KPbICA's reference map of Cyrodiil ("Province of Cyrodiil, 3E 433, Natalia
+    Dravarol, Cartographer" - another game's published art). Each river's source, mouth and the towns it passes were
+    read off it by eye and laid on our frame by the province's cities. Each course was then followed down OUR relief's
+    drainage (a priority flood from the trace's water, the D8 receivers) and simplified to picture units. The image is
+    in no commit, and nothing is traced or rendered from it.
+  - **The waters.** Ten rivers - the Corbolo (out of Lake Arrius into Niben Bay), the Reed and Lake Poppad's outflow
+    into it, the Silverfish (out of Lake Canulus), the Panther into the Lower Niben, the Lower Niben (Niben Bay to
+    Topal Bay), the White Rose (across the West Weald into Lake Rumare), the Larsius, the Strid and the Brena - and
+    three lakes: Arrius, Poppad and Canulus. The Upper Niben, Niben Bay, Lake Rumare and Topal Bay are the trace's own
+    water, named by NAMED_WATERS.
+  - **Departure from the reference: our relief wins.** Laid on our trace, the reference's western courses climbed
+    ridges 400-600 m high. The West Weald and Colovia drain east to Lake Rumare in our relief (the White Rose), so the
+    Strid and the Brena are the valleys that do run west.
+  - **The law.** A river is a dense line, meandering a few widths either side, its width growing to its mouth. Its
+    surface is the macro ground along it less an incision, never rising downstream: a lake's outflow starts at the
+    lake's level, a tributary comes down to its river's surface over its last 1.5 km and meets it there, and nothing
+    is under the knee's floor. A
+    lake is a wandering ellipse, level at its lowest shore. The carve, inside the shaper, lays the channel level at
+    the surface with valley walls rising to the land (the landforms faded into them), and only ever lowers. The paint
+    (`terrainGen.js`) makes the channel's and the lake's corners water to the tile classifier, never inside a
+    location's rect, so the marching squares lay the shore and the water's sheet draws (WATER-NEXT).
+  - **No water reaches a capital** - none of the Imperial City's 49 slices in Lake Rumare, nor a pixel round any
+    capital - **nor a place past the Bay's pixel** (pinned, on the freeware's trace).
+  - **The interface.** Bay pixel coordinates, fractional, y south; lengths and levels in metres, in the terrain's own
+    frame. Deterministic and pure, and the terrain worker holds the same module:
+    - `tamrielWaters()` - the compiled law (`rivers[]`: key, name, into, from, `pts` (x, y pairs), `width`, `level`,
+      `n`; `lakes[]`: key, name, `at`, `ring`, `level`, `shore`, `box`), compiled once a trace and a fit (about 0.4 s),
+      or null with no trace;
+    - `waterAt(x, y)` - `{ kind: 'river' | 'lake' | 'sea', key, name, level }` or null;
+    - `riverAt(x, y)` - the nearest river within its valley: `{ key, name, distance, half, valley, level }`;
+    - `riverCrossings(ax, ay, bx, by)` - every channel a straight run crosses, in order: `{ key, name, at, t, width,
+      level }`, the roads' question;
+    - `watersIn(x0, y0, x1, y1)` - the rivers' and lakes' keys whose carve reaches a box;
+    - **for a router stepping a pixel at a time** (a channel is narrower than a pixel, so the bytes never show one):
+      `riverPixel(px, py)` - the river whose channel crosses a Bay pixel, `{ key, name, dir, width, level }`, `dir` the
+      way its water runs as the roads' compass (`world/road/roadNetwork.js` DIR, N 128 ... NW 1), `width` the widest of
+      it there in metres - and `riverRaster(x0, y0, w, h)`, a box's `dir` (0 none) and `width`, row-major, in one pass;
+    - `CARVED_RIVERS` (AUDIT TESA III: `RIVERS` was tamrielGeography.js's name too), `LAKES`, `NAMED_WATERS`, `WATER_DIALS`, `WATERS_SOURCE`.
+  - **A river reaches its water.** Where its last point stands on the land (the smooth shores below move a shore a few
+    pixels), its line runs on along its last leg into the water (WATER_DIALS.mouthReach, 8 pixels at most).
+- **CYRODIIL-SHORES - THE LAKES' SHORES, SMOOTH** (SUPERSEDED the same day by SMOOTH-LAND, below: every coast and
+  border past the Bay one smooth law, the lakes' among them; kept here as the record) (`world/tamriel/tamrielGround.js`
+  lakeShores, lakeShoreAt, LAKE_SHORE - gone now; the stream for the roads asked it: "the lakes (Lake Rumare's ring, the
+  Niben) are blocky picture-pixel rasters"):
+  - **Why.** The trace's water is the picture's, and a pixel of it is 15.5 of the map's. Lake Rumare's ring and the
+    Niben stood as staircases of 12.7 km blocks on the map, on the ground, in the far view and to the roads.
+  - **Which water.** The trace's lakes (water no way of water joins to the picture's edge - `arenaPlaces.js`
+    pictureLakes' reading) that touch Cyrodiil's land.
+  - **The shore.** The 0 contour of the lake's signed distance: the chamfer field each way, read bilinear between the
+    picture's pixel centres, so every picture pixel's centre keeps its own side. It is wandered by two Perlin octaves
+    (0.3 and 0.09 of a picture unit), never enough to pinch a channel a pixel wide.
+  - **What a pixel becomes.** A land pixel the contour gives the lake is water (byte 0). A lake's pixel it gives the
+    land is the beach (SHORE_BYTE) and wears the climate of the land beside it.
+  - **What it leaves.** The sea's coasts and every other province's lakes are the trace's to the pixel.
+  - **On the freeware.** Inside Cyrodiil's box 1,135 pixels went from land to lake and 1,428 from lake to land. No
+    place's pixel and no capital's slice (nor a pixel round one) changed its side (pinned): the Imperial City's 7 x 7
+    and its own lake (IMPERIAL.lake past City Isle, `world/imperialCity.js`) stand as they stood.
+  - **The roads are laid again.** Every reader of the bytes takes the shore: the roads, the far view and the held map.
+    `world/tamrielRoads.js` GROUND_ROLL_VERSION moves to 3, so every client's cached roads are laid again on it. Its
+    fixture has no Cyrodiil lake, so the laws' fingerprint stands under 3 as under 2.
+- **Residues, named:**
+  - The coast's ease (RELIEF_COAST_REACH, a picture unit) is TAMRIEL-RELIEF's and unchanged. Moving it moves every
+    place's, road's and port's ground past the Bay.
+  - The trace's own inland lakes are holes at sea level, with the land round them standing high. They are the
+    picture's water and the kernel's.
+  - The far ring (`render/farRing.js` ringHeight) still reads reliefByteHeight with no `beyond`. Past byte 127 the
+    horizon stands the old squashed tops until it passes `byteBeyond(x, y)` (the far view's lane).
+  - The held map draws the trace's water and not yet these rivers (`tamrielWaters()` is there for it).
+
+### Pins
+
+- **`test/world/breathtaker.test.js` (13, the waters' four on the freeware's trace, gated on ARENA2):**
+  - the lift: its law, the ceiling, and the Bay's bytes to the bit;
+  - the continent's share: the seam band, the ramp, every side, byteBeyond, and the Eltheric Ocean's box none of it;
+  - the soft clip;
+  - each shape's centre;
+  - the landforms: bound by TAMRIEL_TOP and by the land, one function of world position across lattices and ghost
+    rows, every zone's palette;
+  - the large map's swell;
+  - the waters: every river down to its water, no capital and no place reached, the queries, the rivers' pixels and
+    raster, and the carve and the paint. The ground's seams hold across a river's pixels, across the Bay's own edge and
+    the ramp, and in five countries;
+  - the shores (PIN MOVED, SMOOTH-LAND: the fixture's test is `test/world/smoothland.test.js`'s now): on the freeware, a
+    place's and a capital's pixel the law's side, and the shore the law gave the land wears the land's climate.
+- **PIN MOVED (CYRODIIL-SHORES):** `test/world/tamrielrelief.test.js` (the coast the trace's to the pixel, but by
+  Cyrodiil's lakes their smooth shore), `test/world/tamriel3.test.js` (the ground's import of the lakes' field),
+  `test/world/audittesa2r_roads.test.js` (GROUND_ROLL_VERSION 3's fingerprint).
+- **The A8 sweep** (`test/world/terrain/auditlandforms3.test.js` GROUND) reads `tamrielLandforms.js`,
+  `tamrielWaters.js` and `tamrielGround.js` too.
+- **Mutants:** `tools/mutants/breathtaker.json` (35, all dead). Re-aimed by content, each judged again and dead:
+  `tools/mutants/auditlandforms.json`'s AUDIT-LANDFORMS-D-lift-of-whole-height (the line that now holds the lift),
+  `tamriel2.json`'s TAMRIEL2-the-sea-wears-a-climate and `tesabiome.json`'s TESA-BIOME-21-ground-province
+  (tamrielClimateAt's two arms, the lakes' new shore read between them). SMOOTH-LAND (below) retired the five
+  CYRODIIL-SHORES records with their code (30 left) and put the two climate records back on tamrielClimateAt's one arm.
+
+Section A, BREATHTAKER and CYRODIIL-WATERS (OURS: DFU stops at the Bay's edge; the land past it is the port's own).
+
+## SMOOTH-LAND - every coast and border past the Bay one smooth law, to the map's pixel (2026-10-26)
+
+The owner, asked whether to smooth the sea coasts and the province borders: "Whatever is most detailed". The land past
+the Bay was the trace's picture read a pixel at a time - a picture pixel 15.5 of the map's - so every coast and border
+was a staircase of 12.7 km steps: on the ground, in a pixel's province (theatreAt, provinceKeyAt), under the places and
+the ports, in the zone and on every map. The held map drew a smoothed coast beside that staircase (TAMRIEL4's corner
+cut) - a line no law followed - and CYRODIIL-SHORES smoothed Cyrodiil's lakes alone, their own way. Now one law answers
+all of it, and every line the maps draw is its edge.
+
+- **THE LAW** (`tamrielLand.js:"export function landLaw(trace)"`, `landLabelAt`; dials `SMOOTH_LAND` reach 2, clamp 1,
+  passes 3). The land, and each province, is a mask of the picture's pixel centres. Its outline is the marching squares'
+  contour over the centres - an edge between a centre of the mask and one off it crossed at its middle, a saddle's two
+  of the mask kept apart (a strait on the diagonal stays open) - linked into rings and cut at its corners by Chaikin's
+  rule three times. Each centre within two pixels of a mixed square stands at its signed distance from that outline
+  (held to one pixel; past the reach, the clamp's), and the field is read between the centres by Catmull-Rom's cubic:
+  through every centre's own value, a straight run's distance kept exactly, and its slope continuous across the
+  squares' edges, so a line passes from one square to the next with no corner. Where a mask holds two opposite centres
+  of a square alone (a saddle), its two others stand at the clamp, so the cubic's reach never joins the two across it.
+  A point is land where the land's distance stands over 0 (the waterline itself the sea's); its province is the one of
+  its square's four centres whose own distance stands highest there (a tie the lower id; one province alone about it,
+  that one). Bound by construction: every picture centre keeps its own label, and a square of four centres one label is
+  that label whole (answered at once - most of the frame). A land pixel naming no province is land of none
+  (`NO_PROVINCE`): the coast's, never a province's. The sea has a distance of its own (the land's, turned) for the
+  points where a coast meets a border.
+- **THE LINES** (`tamrielLines.js:"export function lawLines(trace)"`, LINE_BISECT 10). A line is where the law's label
+  changes between two map pixels' centres. Each crossing is found on its edge by halving it ten times against the law
+  itself - a coast's by the land's own side, a border's by the two provinces' own distances - so a point is the law's
+  boundary to a thousandth of a pixel. A square of two labels joins its two crossings (a saddle by the law at its
+  middle). Where three labels meet, every crossing runs to one point (`junction`): a border meeting a coast ends on the
+  coast's own chord where the two provinces' distances are equal, so the coast runs on through it straight; three
+  provinces meet at their crossings' middle. Three labels whose twice-held one lies on a diagonal are two lines past each
+  other where the law's middle holds it, else the other two meet between its corners at two points with a line between
+  them. Each piece knows the two pixels it divides (`side`). The continent's walk visits only the map squares in the
+  picture's squares of mixed centres, and passes a square of one label without making it; `square(bx, by)` makes one
+  the first time it is asked.
+- **ITS READERS, WITHOUT A COPY.** provinceKeyAt and so provinceKeyBeyondBay, theatreAt and the regions, the climates and
+  the biomes; the ground's bytes (`tamrielGround.js:"export function authoredHeightByte"` - its relief eased from the
+  smooth waterline by the law's own distance, `coastDepthAt`); the places (`arenaPlaces.js` pictureSea, and a place
+  stands on a pixel whose centre the law gives its own province); the lanes (`worldLanes.js` pictureSeaMask: a cell's
+  water the law's at its centre, which keeps the picture's own side - and `moorCell`: a roadstead on the law's sea
+  whose cell's centre is land leaves from the nearest open-sea cell within MOOR_REACH (2) it reaches straight on the lane
+  water); the held map (`tamrielInk.js` tracedChains: the law's coast and border pieces, thinned by INK_THIN, a quarter
+  of a map pixel, with Cyrodiil's left to the zone); and the zone (`cyrodiilZone.js` zoneLineOf: the law's own pieces
+  the zone changes across, each a coast or a border by what lies past the zone) - so a map pixel is the zone's exactly
+  when its middle lies inside the red line, and the red line, the fog's cut, the zone map's edge and the province's
+  own line are one. The roads' cache key moves (`world/tamrielRoads.js` GROUND_ROLL_VERSION 4), so every client's cached
+  roads are laid again on the new ground.
+- **THE BAY IS NOT MOVED BY A BYTE.** The law answers past the Bay only (the Bay's own pixels answer the Bay); the seam
+  band is the Bay's own clamped read and the blend beyond it eases into the law's ground as before.
+- **CYRODIIL-SHORES IS FOLDED INTO IT** (BREATHTAKER, above): its lakes' own shore (`lakeShores`, `lakeShoreAt`) and the
+  held map's own lake ink (`lakeShoreChains`, `LAKE_INK_SS`) are gone - a lake's shore is the law's like any coast.
+
+**Measured on the freeware's picture** (its fit 589, 883.5 at 15.5; the frame's 4,960 x 3,100 map pixels, each at its
+centre, against the picture's own law before):
+
+- **Staircases left: 0.** A staircase's corner - a corner of the labels on a picture pixel's corner with straight legs
+  of eight map pixels each way - stood 1,820 times; none stands. The law's own coast lines turn at most 14.6 degrees
+  from one map pixel's piece to the next (39,184 points), its borders at most 48 where three provinces meet; on the whole
+  continent 51,568 squares hold two labels and 14 three, none a saddle or a diagonal's three.
+- **Pixels that changed:** 25,210 from the sea to the land, 27,787 from the land to the sea, 15,857 from one province to
+  another - each within a pixel of the picture's own edge.
+- **Places:** all 283 stand, every one on its own province's land by the law and every port beside its sea. 34 stand on
+  another pixel than before, none lost and none across a border: 23 ports onto the smooth shore, 3 capitals (Solitude,
+  Alinor, Torval), and 8 inland places whose own pixel the law gave the sea or a neighbour (each a few pixels to its
+  own land; the farthest of the 34, 14). Of the 21 lanes past the Bay 19 find a way, as before.
+- **The zone:** a map pixel the zone's exactly when its middle lies inside the red line - 0 of Cyrodiil's box's
+  3,486,060 apart; no zone pixel on another province's land.
+- **The cost** (this shared machine, CPU): the law's build 65 ms a trace (about 300 ms the first time a thread runs it);
+  a map pixel's province 127 ns over the frame, the picture's own law 88; the continent's lines 500 ms, the zone's mask
+  280 ms and its line 200 ms; the held map's first traced ink about 1.5 s where it was 0.5, once a trace - made in idle
+  time since AUDIT RELEASE R4-7, below.
+- **AUDIT RELEASE R4-7 - THE HELD MAP'S LINES MADE IN IDLE TIME** (`01-Overview/audits/Audit-Release-R4.md` R4-7: the
+  map's first open held the page 2.1-3.3 s on a loaded machine, some 1 s unloaded - the continent's walk, Cyrodiil's
+  line, the linking). The three are steps now, one code path walked whole or a budget at a time: the walk a picture
+  square of mixed centres a step (`tamrielLines.js` lawLines `steps`), Cyrodiil's line a row of the mask's cells and
+  ZONE_LINE_STEP (4,096) candidate squares a step (`cyrodiilZone.js` zoneLineSteps), the linking LINK_STEP (2,048) pieces
+  a step (`linkSteps`), a chain's thinning and a province's label a step each (`tamrielInk.js:"export function* tracedSteps(trace) {"`).
+  When a trace lands on the page (`tamrielLand.js` onTamrielTrace), `startTracedJob` walks them TRACED_SLICE_STEPS (24)
+  steps a slice of `requestIdleCallback`, into the one keep `tracedChains` reads (a trace, its fit, its land's version and
+  the zone's mask) - so the map's first open takes them made, the same object; opened before the job ends, it walks the
+  rest whole, as before. A trace that moves on stops its job. No idle callbacks (node, the workers), no job. The chains
+  are byte for byte the whole walk's (pinned).
+- **AUDIT RELEASE R4-7 - THE LAW MADE AS IT IS READ** (its third proposal: the law's own first build, 0.15-0.29 s warm
+  and about a second cold, landed in the task that first asks a province - the trace's landing - on the page and in each
+  worker). `landLaw` now builds the labels, the squares' labels, the near centres and each field's held saddle centres -
+  every field's centres at the clamp on their own side - and makes a field's true distances a tile of LAW_TILE (16) x 16
+  centres at a time, the first time a read needs one (`at`: the tiles under the cubic's sixteen centres, at most four a
+  field); a field's outline is made with its first tile. A read in a square of one label makes none. The values are the
+  eager build's, whatever tile or order made them (pinned bit for bit, made whole and in reverse). On the freeware's
+  picture: the build 28-83 ms (it was 0.15-1.6 s), 2,000 scattered reads 35-257 ms, the worst one read 6-104 ms (the
+  first, making the land's outline cold), the rest made whole 33-69 ms - 3,003 tiles in all. The R4-7 idle job's walk
+  makes the coast's tiles as it goes.
+
+Recorded:
+
+- **Departure from TAMRIEL3/TAMRIEL4 (the coast the trace's to the pixel).** The picture's pixel centres keep their
+  side; between them the land is the law's smooth outline. The trace and its fit are unchanged.
+- **A small feature is the law's at its curvature.** A lone picture pixel is an islet 0.46 of a pixel across its
+  middle, round to two hundredths; a convex corner is cut a quarter of a pixel along its diagonal, a concave one filled
+  as much. The ink thins a straight run to its ends and keeps a curve's points within a quarter of a map pixel.
+- **Places moved, not held.** "No place moved" and "no place in the sea or across a border" part on 34 places whose
+  own pixel the smooth law gives the sea or a neighbour; they stand lawfully on the nearest pixel of their own land (the
+  places' own snap, `standArenaPixels`), never in the sea.
+- **The roads' and the far view's.** The roads take the new ground through their cache key; the far field and the rings
+  read the ground (`06-Systems/Travel-View.md`), no copy of the law.
+
+### Pins
+
+- **`test/world/smoothland.test.js` (8, one gated on ARENA2):** the law (every centre its own, a square of one label
+  whole, a straight run on the pixels' edge, a staircase's diagonal one straight line, a convex corner cut and a concave
+  one filled to their measure, a lone pixel round, a strait open, the waterline the sea's, a tie the lower id's, far off
+  the picture the sea); its distance (the waterline 0, the clamp, the sea's off the picture, none without a trace, one
+  law from a copy of its arrays bit for bit); the lines (every crossing on the law's own edge, the centre rule for the
+  coast and each province over every map pixel, three borders meeting at one point and each border's ends on a coast's,
+  no corner sharper than 30 degrees); a saddle and the diagonal's two cases at one map pixel a picture pixel; its readers
+  (provinceKeyBeyondBay, theatreAt, the places' sea, the ground's bytes, the lanes' cells, the zone and its line's centre
+  rule, the held map's ink the law's points within a quarter of a pixel); a lane's mooring; and on the freeware's
+  picture no staircase left, the law's lines' sharpest turns, every place on its own land and every port by its sea.
+- **PIN MOVED (SMOOTH-LAND):** `test/world/tamrielrelief.test.js` (the coast the law's; the ease from the smooth
+  waterline; the strait's channel the law's own, wider than its reach), `test/world/tamriel3.test.js` (the ground's
+  import; the ink's points), `test/ui/tamriel4.test.js` (a border's end on the line of the border that goes on through a
+  meeting of three), `test/ui/mapwaters.test.js` (a lake's shore the law's), `test/systems/wild/zoneline.test.js` (the
+  province's ink the zone's line on a small picture laid east of the Bay), `test/tesa10_capitals.test.js` (Solitude on a
+  rounded corner, five map pixels east), `test/tesa2_arena.test.js` (8 inland places a few pixels off their point, on
+  their own land), `test/world/breathtaker.test.js` (CYRODIIL-SHORES folded in), `test/world/audittesa2r_roads.test.js`
+  (GROUND_ROLL_VERSION 4's fingerprint).
+- **Mutants:** `tools/mutants/smoothland.json` (50: 45 dead - R4-7's seven among them, the job unheard, a slice the whole,
+  the keep dropped, the walk's and the linking's steps lost, a moved trace walked on, the landing unheard - and 5
+  equivalent as recorded - the saddle's pairing under the
+  hold, the near mask's and the walk's margins, the moored cell's centre past a straightened leg). Re-aimed by content, all
+  judged again and dead: `audittesa2g.json`'s G4 ease,
+  `tamrielrelief.json`'s the-coast-not-eased, `audittesa2p.json`'s P7-lakes-sailed (equivalent, as recorded),
+  `tamriel3.json`'s three on the law and the lines, `zoneline.json`'s eight on the ink's filter, the lines' meetings and
+  the zone's own, `tamriel2.json`'s and `tesabiome.json`'s tamrielClimateAt records (back on its one arm). Retired with
+  the code they held: `breathtaker.json`'s five CYRODIIL-SHORES, `mapwaters.json`'s four on the lake ink, `tamriel3.json`'s
+  two and `tamriel4.json`'s one on TAMRIEL4's corner cut and its border staircase, `zoneline.json`'s two on `cutCoast`'s
+  half-sides and the old line's own fill (the mask's fill is `audittesa2z.json`'s).
+
+Section A, SMOOTH-LAND (OURS: DFU stops at the Bay's edge; the land past it is the port's own).

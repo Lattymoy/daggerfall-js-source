@@ -1,7 +1,7 @@
 [
   {
     "name": "TESA10-lane-lair",
-    "file": "src/world/tamrielCapitals.js",
+    "file": "src/world/capitalLane.js",
     "old": "export const CAPITAL_LANE = 0x341;",
     "new": "export const CAPITAL_LANE = 0x340;",
     "tests": [
@@ -19,7 +19,7 @@
   },
   {
     "name": "TESA10-is-id-low-bit",
-    "file": "src/world/tamrielCapitals.js",
+    "file": "src/world/capitalLane.js",
     "old": "=== CAPITAL_LANE && ((Number(id) >>> 0) & 0x80000) !== 0;",
     "new": "=== CAPITAL_LANE;",
     "tests": [
@@ -452,8 +452,8 @@
   {
     "name": "TESA10-host-no-slot",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "    const loc = synthesizeCapitalLocation(at, { base: _capitalBase, names: _capitalNames, blockOf: (name) => blocks.getBlockByName(name), px, py, arena: slot,",
-    "new": "    const loc = synthesizeCapitalLocation(at, { base: _capitalBase, names: _capitalNames, blockOf: (name) => blocks.getBlockByName(name), px, py, arena: null,",
+    "old": "    return synthesizeCapitalLocation(at, { base: _capitalBase, names: _capitalNames, blockOf: (name) => blocks.getBlockByName(name), px, py, arena: slot,",
+    "new": "    return synthesizeCapitalLocation(at, { base: _capitalBase, names: _capitalNames, blockOf: (name) => blocks.getBlockByName(name), px, py, arena: null,",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "TESA10-host-politic",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "      where: { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: getWorldClimateSettings(maps.getClimateIndex(px, py)) } });",
-    "new": "      where: { regionIndex, regionName: REGION_NAMES[regionIndex], politic: regionIndex, climate: getWorldClimateSettings(maps.getClimateIndex(px, py)) } });",
+    "old": "      where: { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: at.k === 0 ?",
+    "new": "      where: { regionIndex, regionName: REGION_NAMES[regionIndex], politic: regionIndex, climate: at.k === 0 ?",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]
@@ -515,7 +515,7 @@
   {
     "name": "TESA10-sweep-not-queued",
     "file": "src/scenes/tamrielSweepsHost.js",
-    "old": "    host.queue.push(...again.sort(nearestFirstFrom(host.state.current)));\n    console.log(`[capitals]",
+    "old": "    swap.rebuild(again);   // IC-SWAP-BEHIND: behind its view\n    console.log(`[capitals]",
     "new": "    console.log(`[capitals]",
     "tests": [
       "test/tesa10_capitals.test.js"
@@ -596,11 +596,12 @@
   {
     "name": "TESA10b-own-blocks-none",
     "file": "src/world/tamrielCapitals.js",
-    "old": "      else if (Object.hasOwn(own, cell)) out.push(own[cell].name);",
-    "new": "      else if (cell === '') out.push(own[cell].name);",
+    "old": "      else if (mine) out.push(mine.name);",
+    "new": "      else if (cell === '') out.push(mine.name);",
     "tests": [
       "test/tesa10_capitals.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (IC-GRAND): the own block asked of a law (ownOf) where it was looked up in cap.blocks."
   },
   {
     "name": "TESA10b-anchor-unflipped",

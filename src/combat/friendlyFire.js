@@ -20,8 +20,16 @@
 /** Whether `t` (a pool's foe) is a shipmate: an ally of the player's, alive, on a ship's deck. */
 export const isShipmate = (t) => !!t && (t.deckBoat != null || t.shipmate === true) && !t.dead && t.entity?.team === 'PlayerAlly';
 
-/** Whether the player's own harm passes `t` by: a town's defender, or a shipmate. */
-export const sparedByPlayer = (t) => !!t && (t.defender === true || isShipmate(t));
+/** AUDIT WORLD-EVENTS L4-5: whether `t` is one of a raid's refugees (RAID5's Exodus, scenes/raidSitesHost.js) - the
+ *  player's ally, alive, walking to the square: spared as a shipmate is (one blow turned one on the player, and one
+ *  fireball at the raiders on it counted it lost). */
+export const isRefugee = (t) => !!t && t.refugee === true && !t.dead && t.entity?.team === 'PlayerAlly';
+
+/** Whether the player's own SWING passes `t` by: a shipmate, or a refugee (a defender keeps the watch's own law). */
+export const sparedBySwing = (t) => isShipmate(t) || isRefugee(t);
+
+/** Whether the player's own harm passes `t` by: a town's defender, a shipmate, or a refugee. */
+export const sparedByPlayer = (t) => !!t && (t.defender === true || sparedBySwing(t));
 
 /** ARENA-TEAMS (FIELD BUGS 2026-10-04e, Discord: "The multiple npc arena fights will target each other despite being
  *  on the same team"): two fighters of ONE bout on ONE side (characters/enemy/enemyTargets.js boutGate's `entity.bout`) - the

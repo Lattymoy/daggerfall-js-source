@@ -9,6 +9,7 @@
 
 import { CLOUD_SHADOW_GLSL, cloudFarOf } from './cloudShadow.js';   // EE5 / VC4: the cloud shadow's reader - VC6c's one home, shared with the air pass's shafts; OW-HORIZON: and the ground past its square
 import { BAYER_GLSL, DISSOLVE_GLSL } from './orderedDither.js';   // SHIP-FADE: the mesh shader's dissolve over the port's one bayer4
+import { pixelFadeShare } from './pixelFade.js';   // MID-RING: a just-built pixel's tint, eased out (a leaf)
 import { LPT_FS_HEAD, LPT_FS_KEEP, LPT_FS_TEXEL } from './lowPolyTreesGlsl.js';   // LPT1: a low-poly tree's fragment half, both lanes' billboard shaders
 import { FOG_GLSL } from './fogGlsl.js';
 import { WINDFALL_SWAY_GLSL, windfallLawOn, swayShare } from './windfallSway.js';   // WINDFALL1: Windfall's vertex wind - the flora's lean while the mod is on
@@ -1014,10 +1015,12 @@ uniform int uFogMode;
 uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
+uniform vec4 uFadeTint;   // MID-RING: a just-built pixel's tint (rgb) and its share left (a) - render/pixelFade.js
 out vec4 outColor;
 ${FOG_GLSL}
 ${ecotoneGlsl()}
 ${snowCoverGlsl()}
+${snowCapGlsl('', SNOW_TILE_M)}
 ${WATER_BED_GLSL}
 // DFU's HLSL float2x2 initializers are row-major; GLSL mat2 is
 // column-major, so these are the TRANSPOSES of the shader source
@@ -1061,8 +1064,10 @@ void main() {
   vec4 ew = ecoWeights(vLocalXZ);   // ECOTONE1: the border's shares, once (AUDIT PRECIP GROUND-6: the snow crosses it by the same)
   tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share
   float snowC = snowCover(vLocalXZ, vWorldPos.y, gx, gy);   // PRECIP4: the snow the ground keeps (the bed below reads it too)
+  snowC = snowFace(tex, snowC, vLocalXZ, vWorldPos.y, normalize(vNormal), tuv, gx, gy);   // PEAKS1: a steep face over the cap's line is bare rock (render/snowCapGlsl.js)
   tex = snowGround(tex, ew, snowC, vec3(tuv, float(layer)), gx, gy);
   ${waterBedMix()}
+  tex = mix(tex, uFadeTint.rgb, uFadeTint.a);   // MID-RING: out of the middle ring's tint, a just-built pixel's
   vec3 n = normalize(vNormal);
   float diff = max(dot(n, uLightDir), 0.0);
   // EE5: the deck's field, sampled where this ground's ray to the sun
@@ -1147,6 +1152,7 @@ export function terrainClipFs(fs) {
 }
 
 const ZERO_CONTACT = new Float32Array(4);   // EL8: the contact params with the air off
+const ZERO_TINT = new Float32Array(3);   // MID-RING: no pixel easing in
 /** BLOOD1b: a billboard quad's four corners, ONE copy. `createBillboardBatch`
  *  bakes them and `moveBillboardBatch` rewrites them, and the two disagreeing
  *  about the winding would tear every moved quad. */
@@ -1562,7 +1568,8 @@ import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's q
 import { SKIN_PAL_ROW, SKIN_PALETTE_UNIT } from './skinPalette.js';   // MWNPC1: the GPU skin's palette shape
 import { lightIdsOf, lightList, packLight } from './lightId.js';   // LIGHT-ID: each light's identity, lifted off its list for the shadow pass (and the flash packed through the seam)
 import { ecotoneGlsl, ECO_UNITS } from './ecotoneGlsl.js';   // ECOTONE1: the ground's share of its neighbours - the chunk, and the units their tile sets bind on
-import { snowCoverGlsl, TWIN_LAYERS, SNOW_LINES_UNIT } from './snowCoverGlsl.js';   // PRECIP4: the snow the ground keeps - the chunk, a twin set's summer half, the frame's lines' unit
+import { snowCoverGlsl, TWIN_LAYERS, SNOW_LINES_UNIT, SNOW_TILE_M } from './snowCoverGlsl.js';   // PRECIP4: the snow the ground keeps - the chunk, a twin set's summer half, the frame's lines' unit
+import { snowCapGlsl } from './snowCapGlsl.js';   // PEAKS1: a steep face over the cap's line is bare rock
 import { SNOW_VS, snowTerrainFs, SNOW_UNITS, SNOW_LAYER, snowSurfaceRise } from './snowfallGlsl.js';   // SNOWFALL1: the mod's snow surface, lit as the ground is
 import { GLOW_SPRITE_VS, GLOW_SPRITE_FS, GLOW_FIELD_VS, GLOW_FIELD_FS, GLOW_FIELDS_MAX, GLOW_REACH_MAX, glowFieldReach, GLOW_MESH_FS, GLOW_CLOCK_PERIOD, GLOW_CHARGE_PULL, GLOW_DRAWS_MAX, GLOW_DEPTH_FLOOR, glowUnit, glowMeshVs, glowRingDraws } from './weaponGlowGlsl.js';   // WEAPON-GLOW1: a weapon's element, drawn
 const SNOW_UNIT_LIST = Object.entries(SNOW_UNITS);   // AUDIT ENVIRONS P1: the five pictures' units, listed once
@@ -2496,6 +2503,8 @@ export class Renderer {
     this.tUPointColors = gl.getUniformLocation(this.terrainProgram, 'uPointColors');
     this.tUIndirect = gl.getUniformLocation(this.terrainProgram, 'uIndirect');
     this.tUIndirectColor = gl.getUniformLocation(this.terrainProgram, 'uIndirectColor');
+    this.tUFadeTint = gl.getUniformLocation(this.terrainProgram, 'uFadeTint');   // MID-RING: a just-built pixel's tint
+    this._tFade = -1;
     this._bbFog = this._fogLocs(this.bbProgram);
     this._terrainFog = this._fogLocs(this.terrainProgram);
     this.bbUProj = gl.getUniformLocation(this.bbProgram, 'uProj');
@@ -7588,6 +7597,22 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._activeTexture(gl.TEXTURE0);
   }
 
+  /** MID-RING (render/pixelFade.js PIXEL_FADE_MS): the terrain draw's tint - a surface the stream has just built carries its
+   *  arrival and its tint, and its share left is uploaded (in the program's own space: the lane's linear); every other draw
+   *  is whole (0), uploaded only when the last was not. A surface whose ease is done drops its stamp. */
+  _terrainFade(surface) {
+    const from = surface?._fadeFrom;
+    let share = 0;
+    if (from != null) {
+      share = pixelFadeShare(from, performance.now());
+      if (!(share > 0)) { surface._fadeFrom = null; share = 0; }
+    }
+    if (share === 0 && this._tFade === 0) return;
+    const c = share > 0 ? this._c3(surface._fadeTint) : ZERO_TINT;
+    this.gl.uniform4f(this.tUFadeTint, c[0], c[1], c[2], share);
+    this._tFade = share;
+  }
+
   /** FAR-CLIP1: the set's terrain CLIP program (terrainClipFs) - built
    *  from the set's own terrain shader the first time it is asked for, and
    *  kept with the set (PERF-WARM's on-demand kind: a page that never draws
@@ -7848,6 +7873,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       this._uploadEl('terrain');   // EL1
       gl.uniform1i(this.tUTileArr, 0);
       gl.uniform1i(this.tUTilemap, 2);
+      this._tFade = -1;   // MID-RING: the pixel tint's whole, with the frame's block
       for (let k = 0; k < ECO_UNITS.length; k++) gl.uniform1i(this.tEco.arr[k], ECO_UNITS[k]);   // ECOTONE1
       // AUDIT PRECIP GROUND-7: the frame's snow - its lines on their unit, its frame; the switch itself a draw's (below)
       const sf = this._snowFrame;
@@ -7869,6 +7895,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     }
     this._activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, tilemapTex);
+    this._terrainFade(surface);   // MID-RING: a just-built pixel's tint, its share left
     // ECOTONE1: a border pixel's neighbours - their sets on units 3-5 (shadowed: a frame's border pixels share them) and
     // the three uniforms that say which wears which; any other pixel sets the one switch off, once while it stays off
     const snowOn = !!(snow && this._snowFrame && this._snowTex);   // PRECIP4: this draw's snow, on a frame that has it

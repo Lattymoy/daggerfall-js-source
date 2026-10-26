@@ -154,8 +154,9 @@ test('AUDIT 68 S22-door-repeated-block-identity: the second instance of a shared
   const resolve = lift(WORLD, '    buildingDataForDoor: (hit) => {', '\n    },');
   // ARENA1: the door's location and exit group are arenaDoorTarget's (the pixel's town, or the arena's undercroft) - lifted too
   const arenaTarget = lift(WORLD, '  function arenaDoorTarget(e) {', '\n  }');
+  // PIN MOVED (IC-GRAND, test/world/icgrand_arena.test.js): the stair asks standsArena (Daggerfall's, or a grid laying its block)
   const { homeTownBlocks } = await import('../../src/systems/online/onlineHomes.js');   // HOME-PRICE: the door's building carries its town's size
-  const host = new Function('buildingDoors', 'state', 'locationIndex', 'built', 'setLastLocationKeyTo', 'buildingDataForDoor', 'townTalk', 'isUndercroftDoor', 'DOOR_TYPE', 'isArenaCity', 'undercroftLocation', '_undercrofts', 'homeTownBlocks',
+  const host = new Function('buildingDoors', 'state', 'locationIndex', 'built', 'setLastLocationKeyTo', 'buildingDataForDoor', 'townTalk', 'isUndercroftDoor', 'DOOR_TYPE', 'standsArena', 'undercroftLocation', '_undercrofts', 'homeTownBlocks',
     `${shifted}\n${arenaTarget}\nreturn ({\n${targets}\n${resolve}\n});`)(
     buildingDoors, { pixelTranslation: () => [500, 0, -300] }, new Map([['4,4', dfLoc]]),
     new Map([['4,4', { locBlocks: loc.blocks, locOrigin }]]), () => {}, talk.buildingDataForDoor, { directory: [] },
@@ -242,7 +243,7 @@ test('AUDIT 68 S22-teleport-reentry: F11 during a fast travel\'s build is refuse
       const at = WORLD.indexOf(`  ${fn}`);
       assert.ok(at > 0, fn);
       const body = WORLD.slice(WORLD.indexOf('{\n', at) + 2);
-      assert.match(body, /^ {4}if \(worldMoveBusy\(\)\) return;/, `${fn}: the busy question is the first statement`);
+      assert.match(body, /^ {4}if \(worldMoveBusy\(\)\) return( false)?;/, `${fn}: the busy question is the first statement`);   // PIN MOVED (PORTAL-BAY): teleportTo answers whether it arrived
     }
   });
 });
@@ -274,12 +275,14 @@ test('AUDIT 68 S22-roads-retry-crash: a network that failed to build is not "kno
     assert.equal(w.hasRoads, true);
   } finally { console.warn = warn; }
   // the host's arm, lifted: the second paint without the network is KEPT, and the builder returns it
-  const arm = lift(WORLD, '    if (!withRoads && terrainGen.hasRoads) {', '    const entry = built.get(key);');
+  // PIN MOVED (IC-SWAP-BEHIND): the first paint goes back through the swap's mark (scenes/swapBehind.js - behind its view, which
+  // stands; the switch off, torn down), the entry read under the pixel's own key
+  const arm = lift(WORLD, '    if (!withRoads && terrainGen.hasRoads) {', '    const entry = built.get(pkey);');
   const built = new Map([['3,4', { px: 3, py: 4 }]]);
   const torn = [];
-  const run = (roadsRetry) => new Function('withRoads', 'terrainGen', 'roadsRetry', 'destroyPixel', 'buildPixelNow', 'built', 'key', 'px', 'py', 'console',
-    `${arm}\n    return entry;`)(false, { hasRoads: true }, roadsRetry, (x, y) => { torn.push(`${x},${y}`); built.delete(`${x},${y}`); },
-    () => 'rebuilt', built, '3,4', 3, 4, { warn() {} });
+  const run = (roadsRetry) => new Function('withRoads', 'terrainGen', 'roadsRetry', 'swap', 'buildPixelNow', 'built', 'key', 'pkey', 'px', 'py', 'console',
+    `${arm}\n    return entry;`)(false, { hasRoads: true }, roadsRetry, { mark: (x, y) => { torn.push(`${x},${y}`); } },
+    () => 'rebuilt', built, '3,4', '3,4', 3, 4, { warn() {} });
   assert.equal(run(true)?.px, 3, 'kept as painted - the entry is still there to publish');
   assert.deepEqual(torn, []);
   assert.equal(run(false), 'rebuilt', 'the first roadless paint still goes back once');

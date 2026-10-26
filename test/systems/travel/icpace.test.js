@@ -1,6 +1,6 @@
 // IC-PACE (2026-10-26, the owner: "For the Imperial City specifically, the travel speed should be 60x instead of 5";
-// bible/06-Systems/Travel-View.md IC-PACE): a journey through the Imperial City's streets - every one of its forty-nine
-// slices (TS5) - runs its clock to IMPERIAL_PACE_MAX, where every other town's streets hold it to TOWN_PACE_MAX. The
+// bible/06-Systems/Travel-View.md IC-PACE): a journey through the Imperial City's streets - every one of its 625
+// slices (IC-GRAND; TS5's forty-nine) - runs its clock to IMPERIAL_PACE_MAX, where every other town's streets hold it to TOWN_PACE_MAX. The
 // streets are still walked as a town's; only the ceiling is the city's own. Pinned on the host's pace (scenes/
 // townWalkHost.js paceAt, townPace, townWay), the journey's street (systems/travel/travelOptions.js) and the keys' travel
 // (scenes/world.js).
@@ -27,13 +27,13 @@ test('IC-PACE the ceilings: a town five times a walk, the Imperial City sixty (m
   assert.equal(IMPERIAL_PACE_MAX, 60);
 });
 
-test('IC-PACE the city\'s own pixels: every one of its forty-nine slices the city\'s pace; the pixel past its edge, another capital\'s and a town of the Bay a town\'s (mutants: the slices unread; every capital the city\'s)', () => {
+test('IC-PACE the city\'s own pixels: every one of its 625 slices the city\'s pace; the pixel past its edge, another capital\'s and a town of the Bay a town\'s (mutants: the slices unread; every capital the city\'s)', () => {
   setTamrielFit(FIT);
   const span = capitalSpanPixels(0);
-  assert.equal(span.length, 49);
+  assert.equal(span.length, 625);   // PIN MOVED (IC-GRAND): twenty-five a side, where TS5 stood it on seven
   for (const { x, y } of span) assert.equal(paceAt(x, y), IMPERIAL_PACE_MAX, `slice (${x}, ${y})`);
   const at = capitalCentrePixel(0);
-  assert.equal(paceAt(at.px + 4, at.py), TOWN_PACE_MAX, 'a pixel past its edge');
+  assert.equal(paceAt(at.px + 13, at.py), TOWN_PACE_MAX, 'a pixel past its edge');
   const solitude = capitalPixel(CAPITALS.find((c) => c.key === 'solitude'));
   assert.ok(solitude, 'Solitude stands');
   assert.equal(paceAt(solitude.px, solitude.py), TOWN_PACE_MAX, 'another capital\'s');

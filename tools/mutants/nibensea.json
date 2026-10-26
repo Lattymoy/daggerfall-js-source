@@ -75,8 +75,8 @@
   {
     "name": "CANAL-province-unread",
     "file": "src/world/tamriel/tamrielLand.js",
-    "old": "    return c && px >= c.p0 && px < c.p1 && py >= c.q0 && py < c.q1 ? null : (PROVINCE_OF_ID[_trace.province[i]] ?? null);",
-    "new": "    return PROVINCE_OF_ID[_trace.province[i]] ?? null;",
+    "old": "    if (c && px >= c.p0 && px < c.p1 && py >= c.q0 && py < c.q1) return null;",
+    "new": "    if (false && c) return null;",
     "tests": [
       "test/world/nibensea.test.js"
     ]
@@ -146,24 +146,6 @@
     ]
   },
   {
-    "name": "WAY-roadstead-held-to-picture",
-    "file": "src/scenes/naval/worldLanes.js",
-    "old": "    if (sea(x, y)) return [x, y];\n    let best = null, bd = Infinity;",
-    "new": "    if (sea(x, y) || true) return sea(x, y) ? [x, y] : null;\n    let best = null, bd = Infinity;",
-    "tests": [
-      "test/world/nibensea.test.js"
-    ]
-  },
-  {
-    "name": "WAY-leg-unasked",
-    "file": "src/scenes/naval/worldLanes.js",
-    "old": "      if (d < bd && sea(nx, ny) && holdsNative(native([px, py]), native([nx + 0.5, ny + 0.5]))) { bd = d; best = [nx, ny]; }",
-    "new": "      if (d < bd && sea(nx, ny)) { bd = d; best = [nx, ny]; }",
-    "tests": [
-      "test/world/nibensea.test.js"
-    ]
-  },
-  {
     "name": "ZONE-one-bank-enough",
     "file": "src/systems/wild/cyrodiilZone.js",
     "old": "  return (bank(-1, 0) && bank(1, 0)) || (bank(0, -1) && bank(0, 1));",
@@ -184,10 +166,11 @@
   {
     "name": "ZONE-water-unasked",
     "file": "src/systems/wild/cyrodiilZone.js",
-    "old": "theatreAt(x, y) === CYRODIIL_THEATRE || provinceWaterAt(x, y);",
-    "new": "theatreAt(x, y) === CYRODIIL_THEATRE;",
+    "old": "pixelIn: (x, y) => theatreAt(x, y) === CYRODIIL_THEATRE || provinceWaterAt(x, y) });",
+    "new": "pixelIn: (x, y) => theatreAt(x, y) === CYRODIIL_THEATRE });",
     "tests": [
-      "test/systems/wild/audittesa2z_zone.test.js"
+      "test/systems/wild/audittesa2z_zone.test.js",
+      "test/systems/wild/zoneline.test.js"
     ]
   },
   {
@@ -197,6 +180,44 @@
     "new": "palette: pal, relief: false })",
     "tests": [
       "test/world/tamrielrelief.test.js"
+    ]
+  },
+  {
+    "name": "ZONE-dam-unbuilt",
+    "file": "src/systems/wild/cyrodiilZone.js",
+    "old": "      dam(bx, by, [ia, ib, ic, id]);\n      continue;",
+    "new": "      continue;",
+    "tests": [
+      "test/world/nibensea.test.js",
+      "test/systems/wild/zoneline.test.js"
+    ]
+  },
+  {
+    "name": "ZONE-dam-the-laws",
+    "file": "src/systems/wild/cyrodiilZone.js",
+    "old": "    if ((ia !== ib && one(bx, by, bx + 1, by))",
+    "new": "    if (false && (ia !== ib && one(bx, by, bx + 1, by))",
+    "tests": [
+      "test/world/nibensea.test.js",
+      "test/systems/wild/zoneline.test.js"
+    ]
+  },
+  {
+    "name": "ZONE-water-by-the-picture",
+    "file": "src/systems/wild/cyrodiilZone.js",
+    "old": "  if (provinceKeyAt(qx, qy) !== null) return false;",
+    "new": "  if (provinceKeyAt(qx, qy) !== null && false) return false;",
+    "tests": [
+      "test/world/nibensea.test.js"
+    ]
+  },
+  {
+    "name": "BOOT-the-bake-kept",
+    "file": "src/ui/tamrielTrace.js",
+    "old": "  const store = niben ? bootStore(indexedDBRef) : null;",
+    "new": "  const store = bootStore(indexedDBRef);",
+    "tests": [
+      "test/world/nibensea.test.js"
     ]
   }
 ]

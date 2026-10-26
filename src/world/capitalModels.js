@@ -8,15 +8,19 @@
 // installCapitals (scenes/modWorldData.js, beside installArena - behind no switch, as the arena's block is): the port
 // blocks on the world-data door, the models on the model door (climate-free: the white stone is white in every climate),
 // the pictures on the texture door.
-import { registerCustomModel, customModelFor } from './customModels.js';
+import { registerCustomModel, customModelFor, registerCustomModelFamily } from './customModels.js';
 import { MeshBuilder } from './detStandIns.js';
-import { registerPortBlock, registerPortBlockOf, installWorldDataReplacement } from '../formats/worldData/worldDataReplacement.js';
+import { registerPortBlock, registerPortBlockOf, installWorldDataReplacement, registerPortBlockFamily } from '../formats/worldData/worldDataReplacement.js';
 import { CASTLE_BLOCKS, castleBlockOf } from './capitalCastles.js';   // WW7-4
 import { addVendorTextures } from '../systems/textureReplacement.js';
-import { CAPITAL_MODELS, capitalPortBlocks, BLOCK_M } from './tamrielCapitals.js';
-import { IMPERIAL_PARTS, imperialSliceRect } from './imperialCity.js';   // TS5: the Imperial City's landmarks carried in parts
+import { CAPITALS, CAPITAL_MODELS, capitalPortBlocks, BLOCK_M, portBlockJson, miscModelAt, startMarkerAt, inCapitalRim, CAPITAL_NO_GROUND } from './tamrielCapitals.js';
+import { IMPERIAL_PARTS, IMPERIAL_MODELS, IMPERIAL_SLICE_PARTS, IMPERIAL_SPAN, IMPERIAL_LOD_PARTS, imperialSliceRect } from './imperialCity.js';   // TS5: the Imperial City's landmarks carried in parts
+import { imperialBlockJson, imperialBlockIndex, imperialBlockName, imperialModelBuild, isFabricModelId, isSkylineId, imperialBlockOf } from './imperialBlocks.js';
+import { withFabricBuildings } from './imperialFabricBuildings.js';   // BLD: the fabric's buildings entered
+import { imperialPrebuilt } from './imperialPrebuild.js';   // IC-GRAND's perf pass: what its worker made   // IC-GRAND: its blocks and its fabric's models, families
+import { imperialArt } from './imperialArt.js';   // IC-GRAND: the fabric's walls' pictures
 import { CAPITAL_ARCHIVE, CAPITAL_ART } from './capitalShapes.js';
-import { buildImperialTower, buildPalaceWall, buildEmperorsTombs, buildCityWall, buildDistrictWalls, buildColosseum, buildTempleOfTheOne, buildTalosStatue, buildImperialPrison, buildArcaneUniversity, buildWaterfront, buildTalosBridge, buildNineDivines } from './capitalImperial.js';   // TESA11
+import { buildImperialTower, buildImperialTowerLod, buildImperialPalaceLod, buildPalaceWall, buildEmperorsTombs, buildCityWall, buildDistrictWalls, buildTempleOfTheOne, buildTalosStatue, buildImperialPrison, buildArcaneUniversity, buildWaterfront, buildTalosBridge, buildNineDivines, buildImperialPalace, buildPalaceGardens, nearRect } from './capitalImperial.js';   // TESA11
 import { buildSolitudeArch, buildBluePalace, buildSolitudeWall, buildCastleDour, buildSolitudeDocks } from './capitalSolitude.js';
 import { buildMournholdPlaza, buildHighFane, buildMournholdPalace, buildGreatBazaar, buildMournholdWall } from './capitalMournhold.js';
 import { buildAlinorPalace, buildAlinorHarbour, buildAlinorWall, buildAlinorBridges } from './capitalAlinor.js';
@@ -25,6 +29,9 @@ import { buildManePalace, buildTwoMoonsTemple, buildTorvalQuay, buildTorvalWall,
 import { buildXanmeer, buildHist, buildHelstromWalks, buildPalisade } from './capitalHelstrom.js';
 
 export { CAPITAL_ARCHIVE, CAPITAL_ART };
+/** URBANIZER (world/urban/urbanArt.js): the painting laws below, lent to the towns' own pictures - one home, at vanilla's
+ *  detail (TESA-LORE). */
+export const CAPITAL_PAINT = Object.freeze({ rng, noise, ramp, painted, masonry, shingles, lengths, cells, grain01 });
 
 // ---------------------------------------------------------------- the pictures
 
@@ -52,9 +59,9 @@ function noise(seed, n, S = CAPITAL_ART_SIZE) {
 }
 const mix = (a, b, t) => { const k = Math.min(1, Math.max(0, t)); return [0, 1, 2].map((i) => Math.round(a[i] + (b[i] - a[i]) * k)); };
 /** A picture by a texel's colour law - `{width, height, data}` (the texture door's shape, world/ships/galleonArt.js's). */
-function picture(fn, S = CAPITAL_ART_SIZE) {
-  const img = { width: S, height: S, data: new Uint8Array(S * S * 4) };
-  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) { const c = fn(x, y); const i = (y * S + x) * 4; img.data[i] = c[0]; img.data[i + 1] = c[1]; img.data[i + 2] = c[2]; img.data[i + 3] = 255; }
+function picture(fn, S = CAPITAL_ART_SIZE, H = S) {   // IC-GRAND: H, a picture taller than wide (vanilla's 64 x 128 wall)
+  const img = { width: S, height: H, data: new Uint8Array(S * H * 4) };
+  for (let y = 0; y < H; y++) for (let x = 0; x < S; x++) { const c = fn(x, y); const i = (y * S + x) * 4; img.data[i] = c[0]; img.data[i + 1] = c[1]; img.data[i + 2] = c[2]; img.data[i + 3] = 255; }
   return img;
 }
 // TESA-LORE (the owner: "ensure all new textures your adding fall in line with the detail of vanilla textures. Same
@@ -83,13 +90,13 @@ function ramp(stops, n = 28) {
 }
 /** A painted picture: `tone(x, y)` a value in [0, 1] (or [value, the ramp's index] where it paints from several ramps),
  *  plus the texel's grain, dithered onto its ramp's shades. */
-function painted(ramps, tone, { seed = 1, grain = 0.06 } = {}) {
+function painted(ramps, tone, { seed = 1, grain = 0.06, w = CAPITAL_ART_SIZE, h = w } = {}) {
   const R = Array.isArray(ramps[0][0]) ? ramps : [ramps];
   return picture((x, y) => {
     const v = tone(x, y), [t, k] = Array.isArray(v) ? v : [v, 0], shades = R[k];
     const d = (BAYER[(y & 3) * 4 + (x & 3)] + 0.5) / 16 - 0.5, g = (grain01(seed, x, y) - 0.5) * 2 * grain;
     return shades[Math.min(shades.length - 1, Math.max(0, Math.floor((t + g) * (shades.length - 1) + 0.5 + d)))];
-  });
+  }, w, h);
 }
 /** Lengths of random size in [lo, hi] that sum to `total` exactly (a course's stones, a wall's courses) - the last
  *  folded into the one before where it would fall short. */
@@ -215,6 +222,10 @@ export function capitalArt() {
     if (s === 0) return 0.22;
     return 0.62 - Math.abs(s - 3) * 0.05 + (node === 0 ? 0.18 : node === 1 ? -0.16 : 0) + (stalk(x, y) - 0.5) * 0.16;
   }, { seed: 0x8302, grain: 0.05 }));
+  // IC-GRAND: a fountain's water - deep blue-green under a broken shimmer of the sky
+  const swell = noise(0x8401, 4), glint = noise(0x8402, 16);
+  out.set(CAPITAL_ART.water, painted(ramp([[14, 40, 52], [30, 72, 88], [56, 108, 122], [104, 156, 166], [168, 204, 208]]), (x, y) => 0.36 + (swell(x, y) - 0.5) * 0.5 + (glint(x, y) > 0.7 ? 0.28 : 0), { seed: 0x8403, grain: 0.07 }));
+  imperialArt(out, { painted, ramp, masonry, noise });   // IC-GRAND: the Imperial City's street walls, by the same kit
   return out;
 }
 
@@ -236,7 +247,10 @@ const RANK = Object.freeze([1, 0, 2]);
  * model's middle (the University 2.4 km out had drifted to 40.5 texels a metre). AUDIT TESA II C14: the plane is its face's - the
  * normal both halves of a quad carry, and a quad's second half on its first's plane wherever that turns it at least as much
  * (1/sqrt(3) of it, the bound above) - so a quad is never mapped on two planes, a seam down its diagonal (230 planar quads
- * were: a face at 45 degrees, or a cone's sliver half, rounded each its own way).
+ * were: a face at 45 degrees, or a cone's sliver half, rounded each its own way). BLD (2026-10-26): v RISES up a wall,
+ * MeshReader's own law (v = -(texel row / height): 46,324 of the 46,856 wall triangles of the freeware's 434 house
+ * models), because every picture reaches the GL bottom-up (formats/color32Order.js) - it had fallen, so every capital's
+ * masonry stood on its head, its stones lit from below (world/imperialFabricModels.js's walls, BLD, the same finding).
  * @param {{ positions: ArrayLike<number>, indices: ArrayLike<number>, normals?: ArrayLike<number> }} m @param {number} [metres]
  */
 export function vanillaTexels(m, metres = CAPITAL_TEXEL_METRES) {
@@ -264,7 +278,7 @@ export function vanillaTexels(m, metres = CAPITAL_TEXEL_METRES) {
     }
     first = second ? null : { t, a, axis };
     for (const i of [a, b, c]) {
-      const [u, w] = axis === 1 ? [p[i] / metres - o[0], p[i + 2] / metres - o[2]] : axis === 0 ? [p[i + 2] / metres - o[2], -p[i + 1] / metres + o[1]] : [p[i] / metres - o[0], -p[i + 1] / metres + o[1]];
+      const [u, w] = axis === 1 ? [p[i] / metres - o[0], p[i + 2] / metres - o[2]] : axis === 0 ? [p[i + 2] / metres - o[2], p[i + 1] / metres - o[1]] : [p[i] / metres - o[0], p[i + 1] / metres - o[1]];
       uvs[(i / 3) * 2] = u;
       uvs[(i / 3) * 2 + 1] = w;
     }
@@ -382,7 +396,6 @@ export function installCapitals({ addTextures = addVendorTextures } = {}) {
     [CAPITAL_MODELS.tombs]: () => buildEmperorsTombs(),
     [CAPITAL_MODELS.cityWall]: () => buildCityWall(),
     [CAPITAL_MODELS.districtWalls]: () => buildDistrictWalls(),
-    [CAPITAL_MODELS.colosseum]: () => buildColosseum(),
     [CAPITAL_MODELS.templeOfTheOne]: () => buildTempleOfTheOne(),
     [CAPITAL_MODELS.talosStatue]: () => buildTalosStatue(),
     [CAPITAL_MODELS.prison]: () => buildImperialPrison(),
@@ -390,6 +403,8 @@ export function installCapitals({ addTextures = addVendorTextures } = {}) {
     [CAPITAL_MODELS.waterfront]: () => buildWaterfront(),
     [CAPITAL_MODELS.talosBridge]: () => buildTalosBridge(),
     [CAPITAL_MODELS.nineDivines]: () => buildNineDivines(),   // TESA-LORE
+    [CAPITAL_MODELS.imperialPalace]: () => buildImperialPalace(),   // IC-GRAND: the palace at the tower's foot, the gardens
+    [CAPITAL_MODELS.palaceGardens]: () => buildPalaceGardens(),
     [CAPITAL_MODELS.solitudeArch]: () => buildSolitudeArch(),
     [CAPITAL_MODELS.bluePalace]: () => buildBluePalace(),
     [CAPITAL_MODELS.solitudeWall]: () => buildSolitudeWall(),
@@ -416,12 +431,93 @@ export function installCapitals({ addTextures = addVendorTextures } = {}) {
     [CAPITAL_MODELS.palisade]: () => buildPalisade(),
   };
   for (const [id, build] of Object.entries(builds)) registerCustomModel(Number(id), () => vanillaTexels(northward(build())), () => true, { climateFree: true });   // TESA-LORE: at vanilla's texel density
-  // TS5: the Imperial City's landmarks carried in parts, each its slice's share of the whole (drawn once)
-  for (const part of IMPERIAL_PARTS) registerCustomModel(part.id, () => modelPart(customModelFor(part.base), imperialSliceRect(part.s)), () => true, { climateFree: true });
+  // TS5: the Imperial City's landmarks carried in parts, each its slice's share of the whole (drawn once) - IC-GRAND: a long
+  // wall's part built of its runs near its slice alone (imperialPartBuild: the city wall is 43 km round)
+  // IC-FOOTPRINT-OFF-THREAD: a part the city's worker made taken first (world/imperialPrebuild.js)
+  for (const part of [...IMPERIAL_PARTS, ...IMPERIAL_LOD_PARTS]) registerCustomModel(part.id, () => imperialPrebuilt()?.takeModel(part.id) ?? imperialPartModel(part.id), () => true, { climateFree: true });   // IC-TOWER-LOD: and the coarse ones a far view stands
+  installImperialFamilies();   // IC-GRAND: its blocks, near and far, and its fabric's models
   let made = null;
   const pictureOf = (record) => (made ??= capitalArt()).get(record) ?? null;
   addTextures(Object.values(CAPITAL_ART).map((record) => ({ archive: CAPITAL_ARCHIVE, record, frame: 0, standIn: true, fileName: `capital-${CAPITAL_ARCHIVE}_${record}`, build: async () => pictureOf(record) })));
   return true;
 }
 /** Test seam. */
-export function _resetCapitals() { _installed = false; }
+export function _resetCapitals() { _installed = false; _footprints.clear(); }
+
+// ---------------------------------------------------------------- IC-GRAND: the Imperial City's families
+
+/** How far past a part's slice a run of a long wall is asked (its towers' and its thickness's reach). */
+export const PART_MARGIN = 40;
+/** The landmarks whose whole is too long to build for one part: each built of its runs near the part's square. */
+const PART_BUILDS = Object.freeze({
+  [IMPERIAL_MODELS.palaceWall]: (only) => buildPalaceWall(undefined, only),
+  [IMPERIAL_MODELS.cityWall]: (only) => buildCityWall(undefined, only),
+  [IMPERIAL_MODELS.districtWalls]: (only) => buildDistrictWalls(undefined, only),
+  [IMPERIAL_MODELS.waterfront]: (only) => buildWaterfront(undefined, only),
+  [IMPERIAL_MODELS.palaceGardens]: (only) => buildPalaceGardens(undefined, only),   // IC-GRAND: 264 monuments over 4 km
+});
+/** IC-GRAND: A LANDMARK'S PART'S SOURCE - a long wall's runs near the part's square (its pictures laid as the whole's are,
+ *  world/capitalModels.js vanillaTexels), else the whole landmark (customModelFor's, built once). modelPart then keeps the
+ *  triangles whose middles stand in the square, as it always has. */
+export function imperialPartBuild(base, rect) {
+  const only = PART_BUILDS[base];
+  return only ? vanillaTexels(northward(only(nearRect(rect, PART_MARGIN)))) : customModelFor(base);
+}
+/** How many of the city's blocks, fabric models and skylines are kept built (the door's and the registry's LRUs). */
+export const IMPERIAL_KEEP = Object.freeze({ blocks: 1024, fabric: 768, skylines: 192, footprints: 48 });
+/** The landmarks' parts by their model id - IC-TOWER-LOD: the coarse ones too (`of` the part each stands for). */
+const PART_OF = new Map([...IMPERIAL_PARTS, ...IMPERIAL_LOD_PARTS].map((p) => [p.id, p]));
+/** IC-TOWER-LOD: the coarse landmarks whole, at vanilla's texel density as the whole's - built once. */
+const LOD_WHOLE = Object.freeze({ [IMPERIAL_MODELS.whiteGoldTower]: buildImperialTowerLod, [IMPERIAL_MODELS.imperialPalace]: buildImperialPalaceLod });
+const _lodWholes = new Map();
+const lodWhole = (base) => { if (!_lodWholes.has(base)) _lodWholes.set(base, vanillaTexels(northward(LOD_WHOLE[base]()))); return _lodWholes.get(base); };
+/** Is a model id one of the landmarks' parts. @param {number} id */
+export const isImperialPartId = (id) => PART_OF.has(id);
+/** IC-FOOTPRINT-OFF-THREAD: A LANDMARK'S PART'S MODEL - its slice's square of its source (imperialPartBuild), as the model
+ *  door builds it; null for an id no part's. The page's model door and the city's worker (world/imperialPrebuildWorker.js)
+ *  build it alike. @param {number} id */
+export function imperialPartModel(id) {
+  const part = PART_OF.get(id);
+  if (!part) return null;
+  return modelPart('of' in part ? lodWhole(part.base) : imperialPartBuild(part.base, imperialSliceRect(part.s)), imperialSliceRect(part.s));
+}
+/** The slices' footprints lately made, IMPERIAL_KEEP.footprints of them. @type {Map<number, ?((x: number, z: number) => boolean)>} */
+const _footprints = new Map();
+/**
+ * THE LANDMARKS' FOOTPRINT OF A SLICE (capitalFootprint over the parts of the slice and its eight neighbours - a wall's
+ * face across a slice's edge closes the ground on both sides), kept a few dozen at a time; null where no part stands.
+ * IC-FOOTPRINT-OFF-THREAD: the city's worker lays it on the blocks it makes (its parts built there, on its own model
+ * door), so a slice's first block no longer builds its and its neighbours' parts and walks their faces on the page's
+ * thread (0.03-0.43 s a slice in IC-GRAND's perf pass, the centre's the most); a block the page makes itself lays it here.
+ * @param {number} s
+ */
+export function imperialSliceFootprint(s) {
+  if (_footprints.has(s)) return /** @type {any} */ (_footprints.get(s));
+  const sx = s % IMPERIAL_SPAN, sy = Math.floor(s / IMPERIAL_SPAN), models = [];
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const x = sx + dx, y = sy + dy; if (x >= 0 && y >= 0 && x < IMPERIAL_SPAN && y < IMPERIAL_SPAN) models.push(...IMPERIAL_SLICE_PARTS[y * IMPERIAL_SPAN + x]); }
+  const fp = models.length ? capitalFootprint({ models }) : null;
+  _footprints.set(s, fp);
+  if (_footprints.size > IMPERIAL_KEEP.footprints) _footprints.delete(/** @type {number} */ (_footprints.keys().next().value));
+  return fp;
+}
+/**
+ * IC-GRAND: THE IMPERIAL CITY'S FAMILIES, on their doors once: its blocks (world/imperialBlocks.js - a cell's own block, its
+ * far view, the plan's ring of lake), handed the door's writers, the rim's test and the landmarks' footprint of a slice
+ * (imperialSliceFootprint); its fabric's models (solid) and its slices' skylines (no collider).
+ */
+function installImperialFamilies() {
+  const IC = CAPITALS.find((c) => c.family);
+  if (!IC) return;
+  const deps = { portBlockJson, miscModelAt, startMarkerAt, footprintOf: imperialSliceFootprint, anchorMarkers: IC.markers, noGround: CAPITAL_NO_GROUND,
+    rim: (r, c, x, z) => inCapitalRim(IC, c * BLOCK_M + x, (r + 1) * BLOCK_M - z) };
+  // IC-GRAND's perf pass: a block or a model the city's worker made is taken, else made on this thread as before
+  // (world/imperialPrebuild.js) - IC-FOOTPRINT-OFF-THREAD: the worker's block its landmarks' footprint laid there
+  const make = (name, blocksFile) => {
+    const b = imperialBlockOf(name), pre = b && b.kind !== 'lake' ? imperialPrebuilt()?.takeBlock(name) : null;
+    return withFabricBuildings(pre ?? imperialBlockJson(name, deps), name, blocksFile);   // BLD: its buildings' records, doors and donors' interiors
+  };
+  const model = (id) => { const pre = imperialPrebuilt()?.takeModel(id); return pre !== undefined ? pre : imperialModelBuild(id); };
+  registerPortBlockFamily({ indexOf: imperialBlockIndex, nameOf: imperialBlockName, make, keep: IMPERIAL_KEEP.blocks });
+  registerCustomModelFamily({ owns: isFabricModelId, build: model, keep: IMPERIAL_KEEP.fabric, climateFree: true });
+  registerCustomModelFamily({ owns: isSkylineId, build: model, keep: IMPERIAL_KEEP.skylines, climateFree: true, solid: false });
+}

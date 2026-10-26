@@ -210,7 +210,13 @@ the voice page was; `test/systems/questlines/qlvoice.test.js` holds them to it).
   machine's own state; nothing the layer keeps decides what a player sees but its LATCHES (below).
 - **The latches** (`qlLaw.js` observe). What the machine showed once stays shown: an objective opened stays open, one
   done stays done though its script clears its task, a branch's first choice stands, the outcome settles once. A
-  script that clears a task to re-arm it never takes back a line the player has read.
+  script that clears a task to re-arm it never takes back a line the player has read. A BINDING MENDED READS ITS LINE
+  AGAIN, ONCE (FIELD BUGS 2026-10-25i HEART-TAKEN, AUDIT FB1025i B4): a slice that rebinds an objective a player may
+  already hold latched names a mend on it (`reread`, an id the sheet law checks), and a state that has not taken that
+  mend - an older save, a party copy from an older build - forgets that objective's latch at its first read (`qlLaw.js`
+  observe; the journal reads it unlatched before then) and takes the mend (`qlState.js` `reread`), so the mended binding
+  decides it; a fresh state takes every mend at its first read. Q0C4XY04, N0B00Y06, R0C20Y07 and S0000503 carry
+  `fb1025i`: their lines had been struck on DFU's `clicked item`, which a look at a body's row fires.
 - **The text** names resources with the script's own symbols (`_house_`, `__house_`, `=monster_`), read through the
   machine's macros quietly (`src/ui/quest/questLens.js` quietText), in the player's language where a pack has it.
 - **Shape.** `optional`; `group`; `any` (alternatives, joined by "or"); `mark` (the place the objective is about - the

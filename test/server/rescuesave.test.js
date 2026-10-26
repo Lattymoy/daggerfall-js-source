@@ -26,6 +26,7 @@ import {
   readUnsent, keepUnsent, forgetUnsent, claimUnsent, sweepUnsent, realmSaveWithHeld, packUnsent, unpackUnsent,
   REALM_UNSENT_PACK_OVER, REALM_UNSENT_PACKED,
   REALM_UNSENT_PREFIX, REALM_UNSENT_GRACE_MS, REALM_HELD_FIELD, REALM_RESTORED_TEXT,
+  readStranded, realmStrandedText,
 } from '../../src/systems/realmSaves.js';
 import { offlineCopyOf } from '../../src/systems/offlineCopy.js';
 import { REALM_TEXT_MAX_BYTES } from '../../src/net/realm/realmSaveCodec.js';
@@ -194,7 +195,7 @@ test('RESCUE-SAVE: THE ORDINARY CLOSE, the other order - the keepalive leave lan
   assert.equal(boot.snap.level, 14);
 });
 
-test('RESCUE-SAVE: A RECORD MOVED PAST THE COPY - another device played on and saved - drops it unread: the service\'s save is played', async () => {
+test('RESCUE-SAVE: A RECORD MOVED PAST THE COPY - another device played on and saved - never plays it: the service\'s save is played, and the copy whose put failed is set aside, said once (STRANDED)', async () => {
   const acct = await account();
   const dev = acct.device();
   const c = await joined(acct, dev);
@@ -208,7 +209,17 @@ test('RESCUE-SAVE: A RECORD MOVED PAST THE COPY - another device played on and s
   const boot = await openRealmBoot({ io: dev.io, id: c.id });
   assert.equal(boot.restored, undefined);
   assert.equal(boot.snap.level, 13);
-  assert.equal(readUnsent(dev.storage, c.id), null, 'dropped');
+  assert.equal(readUnsent(dev.storage, c.id), null, 'no longer the copy a join plays');
+  // PIN MOVED (STRANDED, FIELD BUGS 2026-10-25 - guild standing and quests reset): it was deleted here, unread, with
+  // everything played since the last save that landed. A copy whose put failed is set aside, and the world says so
+  assert.equal(boot.stranded, true);
+  assert.equal(readStranded(dev.storage, c.id)?.text, JSON.stringify(save(20, 1)), 'the copy, whole, under its own key');
+  assert.equal(readStranded(dev.storage, c.id)?.seq, 1, 'with the sequence it followed');
+  const again = await openRealmBoot({ io: dev.io, id: c.id });
+  assert.equal(again.stranded, undefined, 'said once');
+  assert.equal(again.snap.level, 13, 'never played');
+  sweepUnsent(dev.storage, (await realmList(dev.io)).characters, null);
+  assert.ok(readStranded(dev.storage, c.id), 'kept through a join and the door\'s sweep');
 });
 
 test('RESCUE-SAVE: a put that lands with a newer save waiting keeps that one, at the sequence the service now holds', async () => {
@@ -281,6 +292,10 @@ test('RESCUE-SAVE: the world host says it once the world stands - only for a cop
   const w = src('src/scenes/world.js');
   const said = w.indexOf('if (realmBoot?.restored && realmBoot.missed) townTalk.say(REALM_RESTORED_TEXT);');
   assert.ok(said > 0, 'the host says the restore');
+  const strandedSaid = w.indexOf('if (realmBoot?.stranded) townTalk.say(realmStrandedText());');
+  assert.ok(strandedSaid > 0 && Math.abs(strandedSaid - said) < 400, 'STRANDED: and a copy set aside, beside it');
+  assert.match(realmStrandedText(), /may hold progress/i, 'may: a put whose answer was lost may have landed');
+  assert.ok(w.includes('if (realmSession) watchRealmUnsaved(realmSession, { say: (text) => townTalk.say(text) });'), 'SAVES-SAID: the host has the session\'s failing saves said (online/realmUnsavedNotice.js)');
   assert.ok(Math.abs(said - w.indexOf('if (realmRefused) townTalk.say(REALM_OFFLINE_TEXT);')) < 400, 'beside REALM P1.3\'s own boot word');
   assert.match(REALM_RESTORED_TEXT, /this device kept it/i);
 });
@@ -531,7 +546,7 @@ test('AUDIT RESCUE-SAVE A6: a put that lands costs the device nothing; one unans
   assert.equal(REALM_UNSENT_GRACE_MS, 1_500);
 });
 
-test('AUDIT RESCUE-SAVE A7: the Online door drops a copy of the account\'s own character that its record has moved past, and keeps one it has not - and another account\'s', async () => {
+test('AUDIT RESCUE-SAVE A7: the Online door drops a copy of the account\'s own character that its record has moved past (one whose put failed is the join\'s - STRANDED), and keeps one it has not - and another account\'s', async () => {
   const acct = await account();
   const dev = acct.device();
   const c = await joined(acct, dev);
@@ -543,11 +558,23 @@ test('AUDIT RESCUE-SAVE A7: the Online door drops a copy of the account\'s own c
   const rows = (await realmList(dev.io)).characters;
   assert.equal(sweepUnsent(dev.storage, rows), 0, 'the record still stands where the copy follows');
   assert.ok(readUnsent(dev.storage, c.id));
+  // STRANDED: the sweep leaves a missed copy whatever its sequence, so the law is held on an ordinary close's copy too
+  const missedCopy = readUnsent(dev.storage, c.id);
+  keepUnsent(dev.storage, c.id, missedCopy.seq, missedCopy.text);
+  assert.equal(sweepUnsent(dev.storage, rows), 0, 'an ordinary close\'s copy where the record stands is kept too');
+  assert.equal(readUnsent(dev.storage, c.id)?.missed, false);
+  keepUnsent(dev.storage, c.id, missedCopy.seq, missedCopy.text, { missed: true });
   const other = acct.device();
   const theirs = await openRealmBoot({ io: other.io, id: c.id });
   const os = sessionOf(other, c.id, theirs);
   await os.checkpoint(JSON.stringify(save(20, 1)));
   await os.leave({ keepalive: true });   // played there, and left (a row still playing is its tab's - AUDIT 2 B6)
+  // PIN MOVED (STRANDED): this copy's put failed (offline), so the door leaves it for the join, which reads the realm's
+  // save before it sets the copy aside or drops it
+  assert.equal(sweepUnsent(dev.storage, (await realmList(dev.io)).characters), 0, 'a copy whose put failed is the join\'s');
+  assert.equal(readUnsent(dev.storage, c.id)?.missed, true);
+  // ...and a copy no put of which failed (an ordinary close, whose put usually landed) goes as before
+  keepUnsent(dev.storage, c.id, 1, JSON.stringify(save(13, 1)));
   assert.equal(sweepUnsent(dev.storage, (await realmList(dev.io)).characters), 1);
   assert.equal(readUnsent(dev.storage, c.id), null);
   assert.ok(readUnsent(dev.storage, stranger), 'not listed: not the door\'s to drop');
@@ -811,4 +838,134 @@ test('RESCUE-PACK: a packed copy that will not open is dropped at the join, and 
   assert.equal(boot.restored, undefined);
   assert.equal(boot.snap.level, 12, 'the service\'s');
   assert.equal(readUnsent(dev.storage, c.id), null);
+});
+
+// ═══ STRANDED (FIELD BUGS 2026-10-25: "Guild standing dropped from 100 brotherhood and mages 98 because i logged into ═
+// the browser not exe"; "all quests are gone and standings reset") - bible/06-Systems/Realm-Arc.md SAVES-SAID ═════════
+
+test('STRANDED: a copy whose put LANDED with its answer lost is the realm\'s save - dropped at the join, never set aside', async () => {
+  const acct = await account();
+  const dev = acct.device();
+  const c = await joined(acct, dev);
+  dev.door.plan = ['lose-answer'];
+  await c.session.checkpoint(JSON.stringify(save(14, 5)));
+  assert.equal(c.row().seq, 2, 'it landed');
+  assert.equal(readUnsent(dev.storage, c.id)?.missed, true, 'and the session cannot know it');
+  await c.session.leave({ keepalive: true });
+  const boot = await openRealmBoot({ io: dev.io, id: c.id });
+  assert.equal(boot.stranded, undefined);
+  assert.equal(boot.snap.level, 14, 'the realm\'s save is the copy');
+  assert.equal(readStranded(dev.storage, c.id), null);
+  assert.equal(readUnsent(dev.storage, c.id), null);
+});
+
+test('STRANDED: the one way it is wrong, named - a put that landed unanswered, then a save from another device, sets the copy aside although the realm took it', async () => {
+  const acct = await account();
+  const dev = acct.device();
+  const c = await joined(acct, dev);
+  dev.door.plan = ['lose-answer'];
+  await c.session.checkpoint(JSON.stringify(save(14, 5)));
+  await c.session.leave({ keepalive: true });
+  const other = acct.device();
+  const theirs = await openRealmBoot({ io: other.io, id: c.id });
+  assert.equal(theirs.snap.level, 14, 'the other device plays what landed');
+  await sessionOf(other, c.id, theirs).checkpoint(JSON.stringify(save(15, 5)));
+  const boot = await openRealmBoot({ io: dev.io, id: c.id });
+  assert.equal(boot.stranded, true, 'the realm\'s save is no longer the copy - so the word says "may"');
+  assert.equal(boot.snap.level, 15);
+});
+
+test('STRANDED: an ordinary close\'s copy (its put cut off, never refused) behind the record is dropped at the join - its put usually landed', async () => {
+  const acct = await account();
+  const dev = acct.device();
+  let shown = true;
+  const c = await joined(acct, dev, undefined, { hidden: () => !shown });
+  shown = false;
+  dev.door.plan = ['hang'];
+  void c.session.checkpoint(JSON.stringify(save(14, 2000)));
+  assert.equal(readUnsent(dev.storage, c.id)?.missed, false);
+  await c.session.leave({ keepalive: true });
+  const other = acct.device();
+  const theirs = await openRealmBoot({ io: other.io, id: c.id });
+  await sessionOf(other, c.id, theirs).checkpoint(JSON.stringify(save(13, 9)));
+  const boot = await openRealmBoot({ io: dev.io, id: c.id });
+  assert.equal(boot.stranded, undefined);
+  assert.equal(readStranded(dev.storage, c.id), null);
+  assert.equal(readUnsent(dev.storage, c.id), null);
+});
+
+test('STRANDED: a join that cannot read the realm\'s save keeps the copy behind the record for the next join, which sets it aside', async () => {
+  const acct = await account();
+  const dev = acct.device();
+  const c = await joined(acct, dev);
+  dev.door.plan = ['offline'];
+  await c.session.checkpoint(JSON.stringify(save(20, 1)));
+  await c.session.leave({ keepalive: true });
+  const other = acct.device();
+  const theirs = await openRealmBoot({ io: other.io, id: c.id });
+  await sessionOf(other, c.id, theirs).checkpoint(JSON.stringify(save(13, 9)));
+  const saves = acct.env.SAVES;
+  acct.env.SAVES = null;   // the service's storage away: the save cannot be read
+  const failed = await openRealmBoot({ io: dev.io, id: c.id });
+  acct.env.SAVES = saves;
+  assert.equal(failed.ok, false);
+  assert.equal(readUnsent(dev.storage, c.id)?.missed, true, 'not dropped before the realm\'s save was read');
+  const boot = await openRealmBoot({ io: dev.io, id: c.id });
+  assert.equal(boot.stranded, true);
+  assert.equal(readStranded(dev.storage, c.id)?.text, JSON.stringify(save(20, 1)));
+});
+
+test('STRANDED: a long life\'s packed copy is set aside packed, and opens to the save', async () => {
+  const acct = await account();
+  const dev = acct.device();
+  const c = await joined(acct, dev);
+  const text = longSave(33);
+  dev.door.plan = ['offline'];
+  await c.session.checkpoint(text);
+  await settle();   // packed off the frame
+  assert.ok(readUnsent(dev.storage, c.id)?.packed);
+  await c.session.leave({ keepalive: true });
+  const other = acct.device();
+  const theirs = await openRealmBoot({ io: other.io, id: c.id });
+  await sessionOf(other, c.id, theirs).checkpoint(JSON.stringify(save(13, 9)));
+  const boot = await openRealmBoot({ io: dev.io, id: c.id });
+  assert.equal(boot.stranded, true);
+  const kept = readStranded(dev.storage, c.id);
+  assert.equal(kept.text, null);
+  assert.ok(kept.packed.startsWith(REALM_UNSENT_PACKED));
+  assert.equal(await unpackUnsent(kept.packed), text);
+});
+
+test('STRANDED: the player\'s own delete takes the set-aside copy with the character', async () => {
+  const acct = await account();
+  const dev = acct.device();
+  const c = await joined(acct, dev);
+  dev.door.plan = ['offline'];
+  await c.session.checkpoint(JSON.stringify(save(20, 1)));
+  await c.session.leave({ keepalive: true });
+  const other = acct.device();
+  const theirs = await openRealmBoot({ io: other.io, id: c.id });
+  const os = sessionOf(other, c.id, theirs);
+  await os.checkpoint(JSON.stringify(save(13, 9)));
+  await os.leave({ keepalive: true });
+  assert.equal((await openRealmBoot({ io: dev.io, id: c.id })).stranded, true);
+  assert.equal((await realmDelete(dev.io, c.id)).ok, true);
+  assert.equal(readStranded(dev.storage, c.id), null);
+});
+
+test('STRANDED with SEAT-SAVES: a tab still playing when another device joined its character is refused `lease` at its next save - its copy kept, the session sent to the door, and its own device\'s next join sets the copy aside', async () => {
+  const acct = await account();
+  const dev = acct.device();
+  const c = await joined(acct, dev);
+  const other = acct.device();
+  const theirs = await openRealmBoot({ io: other.io, id: c.id });   // the browser joins while the desktop app still plays
+  const refused = await c.session.checkpoint(JSON.stringify(save(16, 3)));
+  assert.equal(refused.ok, false);
+  assert.deepEqual(c.lost, ['lease'], 'to the door');
+  assert.deepEqual({ ...readUnsent(dev.storage, c.id), at: null }, { seq: 1, text: JSON.stringify(save(16, 3)), at: null, missed: true }, 'kept, marked');
+  await sessionOf(other, c.id, theirs).checkpoint(JSON.stringify(save(13, 9)));
+  const boot = await openRealmBoot({ io: dev.io, id: c.id });
+  assert.equal(boot.snap.level, 13, 'the realm\'s save is played');
+  assert.equal(boot.stranded, true);
+  assert.equal(readStranded(dev.storage, c.id)?.text, JSON.stringify(save(16, 3)));
 });

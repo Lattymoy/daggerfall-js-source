@@ -34,6 +34,7 @@ import { inBay } from '../tamriel/tamrielFrame.js';
 import { applyPicks } from '../worldOfDaggerfall/wodLocationLoader.js';   // WOD2: World of Daggerfall's smoothing arms
 import { createLandforms } from '../landforms.js';   // LANDFORM1-3: the port's own terrain, inside the kernel
 import { waterBedOf, bedHalo, bedNearEdge } from '../water/waterBed.js';   // AUDIT WATER-NEXT P1: the bed under the water, carved with the grid; F2: across its seams
+import { paintTamrielWaters } from '../tamriel/tamrielWaters.js';   // CYRODIIL-WATERS: the rivers and lakes past the Bay laid in as water
 
 /**
  * The whole CPU side of one streamed pixel, in buildPixel's own order:
@@ -66,10 +67,11 @@ import { waterBedOf, bedHalo, bedNearEdge } from '../water/waterBed.js';   // AU
  *   is pulled to (the client's, never the job's: it rides beside the woods and the network).
  * @param {?Uint8Array} [job.climates] - LANDFORM6: landforms.js landformClimates, the land each climate wears (the
  *   client's, beside the sites).
- * @param {?{nine:number[], hidden?:boolean}} [job.jungle] - BANTHA1: the
+ * @param {?{nine:number[], hidden?:boolean, canopy?:?number[]}} [job.jungle] - BANTHA1: the
  *   jungle's field about this pixel (world/jungle/jungleRegion.js jungleNine)
  *   and whether its location is one the woods hide; null where the jungle
  *   cannot reach or its row is off (world/terrain/jungleNature.js jungleLayout).
+ *   GRAHT1: `canopy` the canopy field's 3x3 where a canopy closes near it - its graht-oaks stand.
  * @param {?{nature:number[], type:number[]}} [job.ecotone] - ECOTONE1: the
  *   3x3 of pixels' climates about this one (world/terrain/terrainNature.js
  *   layoutNature's `ecotone`), null with the Blended climates row off or
@@ -81,7 +83,8 @@ import { waterBedOf, bedHalo, bedNearEdge } from '../water/waterBed.js';   // AU
  *   positions: Float32Array, normals: Float32Array,
  *   tilemapBytes: Uint8Array, avg: number, paths: ?Uint8Array,
  *   nature: Array<{record:number,x:number,y:number,z:number}>, beach: ?Float32Array,
- *   roadside: Array<any>}} `roadside` JUNGLE-ROADSIDE's pairs (world/jungle/jungleRoadside.js standPairs)
+ *   roadside: Array<any>, graht: ?Float32Array}} `roadside` JUNGLE-ROADSIDE's pairs (world/jungle/jungleRoadside.js standPairs);
+ *   `graht` GRAHT1's graht-oaks (world/jungle/grahtOaks.js grahtSites, GRAHT_TREE_FLOATS a tree - empty where none stands)
  */
 /** AUDIT TESA II C2: THE SEA'S FLOOR - the kernel's own clamp (sampleKernel: no ground under SCALED_OCEAN_ELEVATION), where
  *  every sea's water tile stands: a shore capital's ground, so its harbour is that water (it stood the city's average, 16
@@ -167,6 +170,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
       river: at(roads.rivers), stream: at(roads.streams), water: !!roads.water,
       corners: { road: c(roads.roads) | arenaCorners('roads'), track: c(roads.tracks) | arenaCorners('tracks'), river: c(roads.rivers), stream: c(roads.streams) },
       paths,   // GRASS-PATH1
+      curve: arena ? { px, py, byteAt: arenaRoadByte } : null,   // VOYAGER2: past the Bay, the roads drawn as curves (world/road/roadCurves.js)
     });
     // ROADS 10: the ground under the road is smoothed - after the paint,
     // before the grid is built from the samples. The network carries the
@@ -175,6 +179,9 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
     if (roads.smooth !== false) smoothRoadHeights(samples, tilemap, 129, hasLocation ? locationRect : null);   // AUDIT 51: the mod skips the rect
     if (roads.smooth !== false && classic) smoothRoadHeights(classic, tilemap, 129, locationRect);   // AUDIT LANDFORMS II H2: DFU's own samples as its nature reads them
   }
+  // CYRODIIL-WATERS: past the Bay the rivers' channels and the lakes the landforms carved are water to the squares (never
+  // a location's own rect) - their shore laid by assignTiles, their sheet on the level ground (world/tamriel/tamrielWaters.js)
+  if (landforms && !inBay(px, py)) paintTamrielWaters(tileData, px, py, hasLocation ? locationRect : null, undefined, paths);   // RIVER-FORDS: a road's tiles kept
   // JUNGLE-TRAILS: the jungle's own trails worn into its corners before the squares run - dirt they blend, every tile
   // they touch kept as a track's is (world/jungle/jungleTrails.js); the heights never moved
   if (jungle) paths = paintJungleTrails(tileData, tilemap, paths, { px, py, nine: jungle.nine, whole: jungleWhole(jungle.nine), rect: hasLocation ? locationRect : null });
@@ -225,11 +232,12 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   // BANTHA1: the jungle over the pixel's own layout - its tiles laid again by the jungle's law, its clearings FOREST1's
   // places, its trees off the tracks as a forest's are; AUDIT BANTHA1 PERF-6: a pixel the jungle owns whole lays no
   // layout of its own - every flat of it would be dropped
-  const { flats: nature, pairs: roadside } = jungleLayout(jungle && jungleWhole(jungle.nine) ? [] : layoutNature(samples, tilemap, natureOpts), samples, tilemap,
-    { ...natureOpts, jungle: jungle ? { nine: jungle.nine, pois: placesFor(jungle.hidden), paths, net: roads } : null });   // JUNGLE-ROADSIDE: and the network, its pairs astride the roads
+  const { flats: nature, pairs: roadside, graht } = jungleLayout(jungle && jungleWhole(jungle.nine) ? [] : layoutNature(samples, tilemap, natureOpts), samples, tilemap,
+    { ...natureOpts, jungle: jungle ? { nine: jungle.nine, pois: placesFor(jungle.hidden), paths, net: roads, canopy: jungle.canopy ?? null } : null });   // JUNGLE-ROADSIDE: and the network, its pairs astride the roads; GRAHT1: and the canopy's field, its graht-oaks
   return { samples, tilemap, positions: grid.positions, normals: grid.normals, bed: grid.bed, tilemapBytes, avg, nature,
     paths,   // GRASS-PATH1: null when no network was present, as `withRoads` says, and no jungle trail ran (JUNGLE-TRAILS)
     roadside,   // JUNGLE-ROADSIDE: the jungle's roadside pairs (jungleLayout's), beside the flats - [] where none stands
+    graht,   // GRAHT1: Valenwood's graht-oaks (jungleLayout's), beside the flats - empty where none stands
     // ROADS 25: whether a network was PRESENT when this pixel was painted.
     // The network loads asynchronously and the world starts building at
     // once, so the first pixels can be painted with none - and were then

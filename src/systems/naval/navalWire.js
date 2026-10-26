@@ -73,6 +73,15 @@
 //       seed (navalHost.js harbourFrame's: her port's, the day's, her berth's), the last NAVAL_WIRE_GONE, said on by
 //       every reader: no player stands her at her berth again that day, nor holds a copy of her (an older build's word
 //       says none, and its reader ignores this one)
+//   r - WW7-8 (2026-10-26, the owner: "Same for ships"; bible/03-World/World-Wide.md WW7-8): the ships of `s` named PAST THE
+//       BAY, each [n, region, area] - her region where it is a province's (WW-R's 62 and up: `s` says the Bay's alone, -1
+//       past it, for an older build's door refuses a whole word with any other), else -1; and the area her names were
+//       drawn in where it is a province's district (world/worldWide/worldGrid.js - her captain and hands a Nord's in
+//       Skyrim's waters, systems/naval/shipNameBank.js), else -1. `s`'s -1 was read as "the reader's own waters", and the
+//       reader's waters are not hers: a packet named by her home port's people (Solitude's) met in Morrowind's, a crown's
+//       ship of the Bay's region named by the province's people she was met in, two players either side of the line where
+//       the nearest port changes - each called her and her captain otherwise than her stander did. An older build's word
+//       says none, and its reader ignores this one
 //   `k`, `m` and `l` are keys of their own because an older build's door checks every field of `s` and `p` by count: it
 //   passes a word with them whole and reads none of them, and a newer door reads an older build's word as saying none.
 //   Nor are theirs counted: a newer build's longer entry reads as its first fields, never the whole word refused.
@@ -91,19 +100,19 @@
 // stander's world while all of it happened in another's. AUDIT NAV1 (online #15): the frame with `k` and no hurt is a
 // CASK's - `k` a cask of your sea my boat sailed through, and with `a` 1 your ANSWER, that it is mine: its owner answers
 // the first claim and lets the cask go, the claimer draws its lot only on the answer, so one cask is one haul whoever
-// else reached it. RAM-BOARD (AUDIT 2026-10-17): a ram's blow carries `u`, the seconds it fouls her (navalFoul.js
-// foulSaid), so her stander's AI holds her way and she is boarded as she stands on every screen.
+// else reached it. BOARD-MAGNET (2026-10-26): the ram is gone, and with it a ram's foul (`u`, RAM-BOARD's) - an older
+// build's blow that still says one is taken as the blow alone.
 
 import { POSE_BOUND, POSE_Y_BOUND } from '../../net/wire.js';
 import { SHIP_CLASSES, CROWNS } from './navalShips.js';
 import { LOT_KEYS, SALVAGE_LOT, isSalvage } from './navalPlunder.js';
 import { NOTORIETY } from './navalLaw.js';
 import { DENSITY_KEYS } from './navalDirector.js';
-import { BAY_REGION_COUNT } from '../../formats/mapsTables.js';   // WW-R: the Bay's regions, the wire's
+import { BAY_REGION_COUNT, CYRODIIL_REGION } from '../../formats/mapsTables.js';   // WW-R: the Bay's regions, the wire's; WW7-8: the provinces' after them, `r`'s
+import { BAY_AREA_COUNT, AREA_COUNT } from '../../world/worldWide/worldGrid.js';   // WW7-8: a province's district, the area her names were drawn in
 import { HULL_NAMES, HULL_VARIANT_COUNTS } from '../comeSailAway/comeSailAwayBoat.js';
 import { TEMPERS } from './navalAI.js';
 import { SHOT_CODES, SHOT_ORDER } from './shotKinds.js';
-import { FOUL_SAID_MAX } from './navalFoul.js';   // RAM-BOARD: the most a ram's blow may say it fouls her
 
 /** The radius within which players stand one sea between them (m): a ship's fighting reach and then some. */
 export const NAVAL_SHARE_RADIUS = 1200;
@@ -148,7 +157,7 @@ const U32 = 0xffffffff;
  *   gone?: number[], laid?: string[] }} view
  */
 export function navalWireRecord(view, toWire = (p) => p) {
-  const s = [], v = [], b = [], k = [], d = [], e = [], o = [];
+  const s = [], v = [], b = [], k = [], d = [], e = [], o = [], r = [];
   for (const sh of view?.ships ?? []) {
     if (s.length >= NAVAL_WIRE_SHIPS) break;
     const cls = SHIP_CLASSES.findIndex((c) => c.id === sh.classId);
@@ -161,6 +170,8 @@ export function navalWireRecord(view, toWire = (p) => p) {
     const temper = TEMPER_CODES.indexOf(sh.temper);
     if (temper >= 0) k.push([sh.n | 0, temper, Math.max(0, MODE_CODES.indexOf(sh.mode)), Number.isInteger(sh.struckTo) && sh.struckTo >= 0 && sh.struckTo <= 0xffff ? sh.struckTo : -1]);
     if (sh.deep) d.push(sh.n | 0);   // AUDIT CAPTAIN'S SEA D8
+    const named = pastBayNaming(sh);   // WW7-8: named past the Bay - her province and her waters' area
+    if (named) r.push([sh.n | 0, ...named]);
   }
   for (const vo of view?.volleys ?? []) {
     if (v.length >= NAVAL_WIRE_VOLLEYS) break;
@@ -192,6 +203,7 @@ export function navalWireRecord(view, toWire = (p) => p) {
   if (d.length) out.d = d;
   if (e.length) out.e = e;
   if (o.length) out.o = o;
+  if (r.length) out.r = r;
   const me = view?.me;
   if (me) out.p = [pct(me.hull), me.crippled ? 1 : 0, me.boarders === false ? 0 : 1];
   // AUDIT GN-G3: my boat's laid broadsides - a bit a side (SIDE_CODES), said only while one is
@@ -209,6 +221,29 @@ export function navalWireRecord(view, toWire = (p) => p) {
   const q = (view?.gone ?? []).filter((x) => int(x, 0, U32)).slice(-NAVAL_WIRE_GONE);   // AUDIT PASSAGE B5
   if (q.length) out.q = q;
   return s.length || v.length || b.length || out.p || out.n || out.t !== undefined || out.f || out.w || out.l || out.g || out.q ? out : null;
+}
+
+/** WW7-8: a province's region (WW-R: 62 to 70) - `r`'s, never `s`'s. @param {any} x */
+const provinceRegionOk = (x) => int(x, BAY_REGION_COUNT, CYRODIIL_REGION);
+/** WW7-8: a province's district's area (world/worldWide/worldGrid.js) - `r`'s. @param {any} x */
+const provinceAreaOk = (x) => int(x, BAY_AREA_COUNT, AREA_COUNT - 1);
+/** WW7-8: what `r` says of a ship - [region, area], each -1 where it is no province's - or null for a ship named on the
+ *  Bay (`s` says it whole). @param {{ region?: any, area?: any }} sh */
+export function pastBayNaming(sh) {
+  const region = provinceRegionOk(sh?.region) ? sh.region : -1, area = provinceAreaOk(sh?.area) ? sh.area : -1;
+  return region < 0 && area < 0 ? null : [region, area];
+}
+/** WW7-8: the `r` key through the door - a Map from a ship's number to her province's region and her names' area; null
+ *  when malformed (the word fails whole). */
+function validNaming(raw) {
+  const out = new Map();
+  if (raw === undefined) return out;
+  if (!Array.isArray(raw) || raw.length > NAVAL_WIRE_SHIPS) return null;
+  for (const w of raw) {
+    if (!Array.isArray(w) || w.length !== 3 || !int(w[0], 0, 0xffff) || !(w[1] === -1 || provinceRegionOk(w[1])) || !(w[2] === -1 || provinceAreaOk(w[2])) || (w[1] === -1 && w[2] === -1)) return null;
+    out.set(w[0], { region: w[1], area: w[2] });
+  }
+  return out;
 }
 
 /** AUDIT NAV2 F1/F3/F5: the captains' key through the door - a Map from a ship's number to her temper, her captain's
@@ -323,6 +358,16 @@ export function validNavalRecord(raw) {
   if (!Array.isArray(deepShips) || deepShips.length > NAVAL_WIRE_SHIPS || !deepShips.every((x) => int(x, 0, 0xffff))) return null;
   if (!Array.isArray(deepCasks) || deepCasks.length > NAVAL_WIRE_CASKS || !deepCasks.every((x) => int(x, 0, U32))) return null;
   for (const sh of ships) if (deepShips.includes(sh.n)) sh.deep = true;
+  // WW7-8: the ships named past the Bay - her province's region where `s` said -1, and the area her names were drawn in
+  // (an older build's word says none: the reader's own waters, as before)
+  const naming = validNaming(raw.r);
+  if (!naming) return null;
+  for (const sh of ships) {
+    const nm = naming.get(sh.n);
+    if (!nm) continue;
+    if (sh.region < 0 && nm.region >= 0) sh.region = nm.region;
+    sh.area = nm.area;
+  }
   for (const c of casks) if (c.lot !== SALVAGE_LOT && deepCasks.includes(c.id)) c.deep = true;
   // SHOT-KINDS: the volleys' loads (an older build's word says none - their bores' own)
   const loaded = raw.o ?? [];
@@ -338,26 +383,23 @@ export const navalRecordKey = (rec) => (rec ? JSON.stringify(rec) : '');
 /**
  * The blow's `nv`, as its striker sends it - `fire` true (a ball's), 'barrel' or false; `grapple` (AUDIT NAV1, online)
  * a grapple of my ship `n` on the player it goes to, no hurt; `cask` (AUDIT NAV1, online #15) a cask of theirs my boat
- * sailed through, no hurt - and with `answer`, their word that it is mine; `foul` (RAM-BOARD, AUDIT 2026-10-17) the
- * seconds a ram's blow fouls her (navalFoul.js foulSaid; `u`, whole seconds, 1 to FOUL_SAID_MAX) - an older build's
- * reader takes the blow and leaves the foul.
+ * sailed through, no hurt - and with `answer`, their word that it is mine.
  * @param {string} to
  * @param {{ n: number, hull?: number, sail?: number, crew?: number, fire?: boolean | 'barrel', zone?: string, grapple?: boolean,
- *   cask?: number | null, answer?: boolean, foul?: number }} blow
+ *   cask?: number | null, answer?: boolean }} blow
  */
-export function navalHitData(to, { n, hull = 0, sail = 0, crew = 0, fire = false, zone = 'hull', grapple = false, cask = null, answer = false, foul = 0 }) {
+export function navalHitData(to, { n, hull = 0, sail = 0, crew = 0, fire = false, zone = 'hull', grapple = false, cask = null, answer = false }) {
   const nv = { n: n | 0, h: Math.round(hull), s: Math.round(sail), c: crew | 0, f: fire === 'barrel' ? 2 : fire ? 1 : 0, z: zone === 'rig' ? 1 : zone === 'holed' ? 2 : 0 };
-  if (foul > 0 && !grapple && cask == null) nv.u = Math.max(1, Math.min(FOUL_SAID_MAX, Math.round(foul)));
   if (grapple) nv.g = 1;
   if (cask != null) { nv.k = cask >>> 0; if (answer) nv.a = 1; }
   return { to, nv };
 }
 
 /**
- * A blow on a ship I stand, through the door: bounded numbers, a known zone - a ram's with its foul (`u`, seconds) - or a
- * grapple (`g` 1, no hurt), or a cask's claim (`k`, no hurt) or its answer (`k` with `a` 1). Null for anything else.
+ * A blow on a ship I stand, through the door: bounded numbers, a known zone - or a grapple (`g` 1, no hurt), or a
+ * cask's claim (`k`, no hurt) or its answer (`k` with `a` 1). Null for anything else.
  * @returns {{ n: number, hull: number, sail: number, crew: number, fire: boolean | 'barrel', zone: string, grapple: boolean,
- *   cask: number | null, answer: boolean, foul: number } | null}
+ *   cask: number | null, answer: boolean } | null}
  */
 export function validNavalHit(data) {
   const nv = data?.nv;
@@ -367,9 +409,8 @@ export function validNavalHit(data) {
   if (nv.g !== undefined && (nv.g !== 1 || nv.h || nv.s || nv.c || nv.f)) return null;   // a grapple carries no hurt
   if (nv.k !== undefined && (!int(nv.k, 0, U32) || nv.g !== undefined || nv.h || nv.s || nv.c || nv.f)) return null;   // nor a cask's word
   if (nv.a !== undefined && (nv.a !== 1 || nv.k === undefined)) return null;   // an answer is a cask's
-  if (nv.u !== undefined && (!int(nv.u, 1, FOUL_SAID_MAX) || nv.g !== undefined || nv.k !== undefined)) return null;   // a foul is a blow's
   return {
     n: nv.n, hull: nv.h, sail: nv.s, crew: nv.c, fire: nv.f === 2 ? 'barrel' : nv.f === 1, zone: ['hull', 'rig', 'holed'][nv.z], grapple: nv.g === 1,
-    cask: nv.k ?? null, answer: nv.a === 1, foul: nv.u ?? 0,
+    cask: nv.k ?? null, answer: nv.a === 1,
   };
 }

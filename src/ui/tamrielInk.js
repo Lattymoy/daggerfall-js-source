@@ -33,7 +33,7 @@ import {
 import { pictureToBay, bayToPicture, inBay, BAY_W, BAY_H, tamrielFit, tamrielFrameInBay } from '../world/tamriel/tamrielFrame.js';
 // TAMRIEL3: the picture's own land where the world host traced it (world/tamriel/tamrielLand.js) - the coast, the borders and
 // the provinces' places come off the trace, the authored shape stands where there is none
-import { tamrielTrace, tamrielLandVersion, provinceKeyAt, PROVINCE_OF_ID } from '../world/tamriel/tamrielLand.js';
+import { tamrielTrace, tamrielLandVersion, provinceKeyAt, PROVINCE_OF_ID, onTamrielTrace } from '../world/tamriel/tamrielLand.js';
 // TESA1: the places past the Bay where the trace stands them (world/arenaPlaces.js; TESA12: the port's own)
 import { arenaPlaces, arenaPlacesVersion, arenaPixels, arenaStanding } from '../world/arenaPlaces.js';
 import { capitalPin, capitalsStanding, capitalsVersion, capitalPlaceId, CAPITALS } from '../world/tamrielCapitals.js';   // TESA10d: a capital's pixel on the map, Arena or none; WW7-6: its seat's key
@@ -41,7 +41,7 @@ import { arenaPlaceId } from '../world/arenaLocations.js';   // WW7-6: a place's
 import { seatMapMark } from '../net/townSeatLaw.js';   // WW7-6: how a seat is marked, the Bay's own law
 import { arenaRoadsLayer, arenaRoadTiles, arenaRoadTilePixels, arenaRoadsVersion, beyondKey, beyondPixel, ROAD_TILE, roadTileKey } from '../world/arenaRoads.js';
 import { DIR, DIR_DELTA } from '../world/road/roadNetwork.js';   // TESA15: a pixel's steps, as the far view draws them   // TESA13: the roads past the Bay, as the kernels paint them; TESA15: a tile at a time
-import { pastBayPlacesStamp } from '../world/pastBayPlaces.js';   // TESA15: the places the roads' regions laid, a bin at a time
+import { pastBayPlacesStamp, pastBayPlacesVersion } from '../world/pastBayPlaces.js';   // TESA15: the places the roads' regions laid, a bin at a time
 import { getPixelColorIndex } from './travel/travelMapWindow.js';   // TESA13: a place's classic bucket, under the map's filters
 import { LOCATION_TYPES } from '../formats/mapsFile.js';   // AUDIT TESA II M7: a place past the Bay's type, the Bay's own
 import { locationTypeName } from '../systems/travel/travelOptions.js';   // TESA13: MacroHelper.LocationTypeName - a place's kind in words
@@ -49,7 +49,11 @@ import { makeNoise, octaveNoise } from './intro/introMap.js';   // the intro's o
 import { PEN, NAME_FACE, HALO_PEN, FAR_TRACK_PEN, penOf, pathPen, PATH_KINDS, penSolid, toPaper, paintGlyph, paintSeatRing, markReach, roundCorners, inkChain, spacedName, boundarySegments, linkSegments, pathChains, strokePaths, zoomBand, BAND_MARKS, markKind } from './ink/inkMap.js';
 import { HUB_CAPITALS } from '../systems/region/regionHubs.js';   // REGION-LINES: the Bay's three kingdoms' capitals, with every province's
 import { simplifyChain } from './overworldModel.js';   // TAMRIEL3: the coast's chain thinned as the overworld's are
+import { stampSquare, coveragePixels, clearCoverage, penRgb } from './inkRaster.js';   // MAP-WHOLE: the continent's dots rasterised by hand
 import { labelPoint } from './provinceMap.js';   // TAMRIEL3: a province's name hangs where the chargen's map hangs it
+import { cyrodiilMask, zoneLineSteps } from '../systems/wild/cyrodiilZone.js';   // ZONE-LINE: Cyrodiil's outline is the zone's law's to draw
+import { watersInk, watersInkVersion } from '../world/tamriel/watersInk.js';   // MAP-WATERS: stream G's rivers and lakes past the Bay (the worker's copy), inked
+import { lawLines, linkSteps, segKey, drain } from '../world/tamriel/tamrielLines.js';   // SMOOTH-LAND: the land's own lines
 
 /** @typedef {{ x: number, y: number }} Pt */
 /** TESA13: the host's atlas's answer (world/tamrielAtlas.js placesIn) - the places on a rectangle's pixels. */
@@ -307,7 +311,9 @@ export const SMOOTH_PASSES = 3;
  *  and the border stay within about half a picture pixel of the traced land (one pixel is 15 km). */
 export const COAST_SIMPLIFY_PX = 0.4;
 export const COAST_CUT_PX = 0.75;
-/** TAMRIEL4: how far a border's end is moved onto the coast, picture pixels. */
+/** TAMRIEL4: how far a border's end is moved onto the coast, picture pixels. (SMOOTH-LAND: the ink draws the land's own
+ *  smooth law's lines now - tracedChains - so the picture contour below, its cut and this snap draw nothing; kept, with
+ *  their pins, as TAMRIEL4's reading of the picture.) */
 export const BORDER_SNAP_PX = 1.5;
 
 /**
@@ -372,61 +378,94 @@ export function chaikinCapped(chain, passes = SMOOTH_PASSES, maxCut = Infinity) 
   return pts;
 }
 
-/** A border's open ends moved onto the nearest point of the coast's line within BORDER_SNAP_PX (picture units in and
- *  out) - its nearest point on any of the coast's segments, so a straight shore with no vertex near still takes it. */
-function snapEnds(chain, coast, reach = BORDER_SNAP_PX, segmentsNear = null) {
-  if (chain.length < 2 || (chain[0].x === chain[chain.length - 1].x && chain[0].y === chain[chain.length - 1].y)) return chain;
-  const near = (p) => {
-    let best = null, bd = reach;
-    const each = (a, b) => {
-      const dx = b.x - a.x, dy = b.y - a.y, l2 = dx * dx + dy * dy;
-      const t = l2 > 0 ? Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / l2)) : 0;
-      const q = { x: a.x + dx * t, y: a.y + dy * t }, d = Math.hypot(q.x - p.x, q.y - p.y);
-      if (d < bd) { bd = d; best = q; }
-    };
-    if (segmentsNear) for (const [a, b] of segmentsNear(p)) each(a, b);
-    else for (const c of coast) for (let i = 0; i + 1 < c.length; i++) each(c[i], c[i + 1]);
-    return best ?? p;
-  };
-  const out = chain.slice();
-  out[0] = near(out[0]);
-  out[out.length - 1] = near(out[out.length - 1]);
-  return out;
-}
-
 /** TAMRIEL3: the picture's coast and borders as chains in Bay coordinates, and each province's name at its clearest
- *  point (provinceMap labelPoint). TAMRIEL4: the coast is the land's contour (contourSegments) linked and smoothed
- *  (chaikinCapped) - a shore at the picture's own resolution, no staircase; a border runs where two land pixels change
- *  province, its staircase simplified at a third of a pixel and smoothed with its ends kept, and each end that reaches
- *  the sea moved onto the coast's own line (snapEnds) - so the dashed border meets the shore it divides.
+ *  point (provinceMap labelPoint). SMOOTH-LAND (2026-10-26, bible/03-World/Tamriel.md SMOOTH-LAND; the owner: "Whatever is
+ *  most detailed"): the coast and the borders are the land's own smooth law's lines (world/tamriel/tamrielLines.js
+ *  lawLines - where its label changes between two map pixels' centres, at the map's own pixel), thinned by INK_THIN map
+ *  pixels with their ends kept; Cyrodiil's outline is the zone's line (systems/wild/cyrodiilZone.js zoneLineOf - the same
+ *  crossings, its runs in place of the province's own pieces there, `keys`), so a neighbour's coast and border end on it.
+ *  TAMRIEL4's picture contour (contourSegments, chaikinCapped) and its staircase borders are no longer drawn.
  *  @param {{ w: number, h: number, land: Uint8Array, province: Uint8Array }} trace */
 export function tracedChains(trace) {
+  return drain(tracedSteps(trace));
+}
+/** AUDIT RELEASE R4-7: the traced chains a trace, its fit, its land's version and the zone's mask made them for - one, so
+ *  the held map's open takes what the idle job made. @type {WeakMap<object, { key: string, mask: any, value: any }>} */
+const _traced = new WeakMap();
+/**
+ * tracedChains as steps (AUDIT RELEASE R4-7): the law's walk a picture square a step (tamrielLines.js steps), the zone's
+ * line (cyrodiilZone.js zoneLineSteps), the linking (linkSteps), a chain's thinning and a province's label a step each -
+ * the same chains, kept for the trace (`_traced`), whether walked whole or a budget at a time.
+ * @param {{ w: number, h: number, land: Uint8Array, province: Uint8Array }} trace
+ * @returns {Generator<undefined, { coast: Pt[][], borders: Pt[][], labels: Array<{ key: string, px: number, py: number }> }, unknown>}
+ */
+export function* tracedSteps(trace) {
+  const f = tamrielFit(), key = `${f.ox}:${f.oy}:${f.ppu}:${tamrielLandVersion()}`, zoneMask = cyrodiilMask();
+  const kept = _traced.get(trace);
+  if (kept && kept.key === key && kept.mask === zoneMask) return kept.value;
   const { w, h, land, province } = trace;
-  const ppu = tamrielFit().ppu;
-  const toBay = (seg) => seg.map((p) => { const [x, y] = pictureToBay(p.x, p.y); return { x, y }; });
-  const coastPic = linkSegments(contourSegments((x, y) => land[y * w + x] === 1, w, h)).map((c) => chaikinCapped(simplifyChain(c, COAST_SIMPLIFY_PX), SMOOTH_PASSES, COAST_CUT_PX));
-  const coast = coastPic.map((c) => simplifyChain(toBay(c), ppu * 0.05));
-  const segs = [];
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const i = y * w + x;
-      if (!land[i]) continue;
-      if (x + 1 < w && land[i + 1] && province[i + 1] !== province[i]) segs.push([x + 1, y, x + 1, y + 1]);
-      if (y + 1 < h && land[i + w] && province[i + w] !== province[i]) segs.push([x, y + 1, x + 1, y + 1]);
-    }
-  }
-  const borders = linkSegments(segs).map((c) => simplifyChain(toBay(chaikinCapped(snapEnds(simplifyChain(c, COAST_SIMPLIFY_PX), coastPic), SMOOTH_PASSES, COAST_CUT_PX)), ppu * 0.05));
+  const lines = lawLines(trace);
+  yield* lines.steps();
+  const zone = zoneMask ? yield* zoneLineSteps(trace, zoneMask) : null;
+  const { segs } = lines.all();
+  /** @param {'coast'|'border'} kind */
+  const own = function* (kind) {
+    const chains = yield* linkSteps(segs.filter((s) => s.kind === kind && !zone?.keys.has(segKey(s))), lines.points);
+    const out = [];
+    for (const c of chains) { out.push(simplifyChain(c, INK_THIN)); if (c.length > 256) yield; }
+    return out;
+  };
+  const coast = yield* own('coast'), borders = yield* own('border');
   const labels = [];
-  for (const [id, key] of Object.entries(PROVINCE_OF_ID)) {
+  for (const [id, pkey] of Object.entries(PROVINCE_OF_ID)) {
     const mask = new Uint8Array(w * h);
     let n = 0;
     for (let i = 0; i < mask.length; i++) if (land[i] && province[i] === Number(id)) { mask[i] = 1; n++; }
     if (!n) continue;
     const [lx, ly] = labelPoint(mask, w, h);
-    labels.push({ key, px: lx, py: ly });
+    labels.push({ key: pkey, px: lx, py: ly });
+    yield;
   }
-  return { coast, borders, labels };
+  const value = { coast: zone ? coast.concat(zone.coast) : coast, borders: zone ? borders.concat(zone.borders) : borders, labels };
+  _traced.set(trace, { key, mask: zoneMask, value });
+  return value;
 }
+
+/** AUDIT RELEASE R4-7: how many steps of tracedSteps the idle job takes in one slice of the page's idle time - each step
+ *  a picture square's map squares, LINK_STEP pieces, a chain's thinning or a province's label (some milliseconds at
+ *  most), so a slice stays well under a frame's worth of 100 ms. */
+export const TRACED_SLICE_STEPS = 24;
+/** The idle job's scheduler: `requestIdleCallback` on a page, none in node (a test sets its own; null stops it). */
+let _schedule = /** @type {((run: () => void) => void)|null} */ (typeof globalThis.requestIdleCallback === 'function' ? (run) => globalThis.requestIdleCallback(() => run()) : null);
+export function setTracedScheduler(fn) { _schedule = fn; }
+/**
+ * AUDIT RELEASE R4-7: THE HELD MAP'S LINES MADE IN IDLE TIME. When a trace lands on the page (tamrielLand.js
+ * onTamrielTrace), its traced chains - the continent's walk, Cyrodiil's line, the linking and thinning - are made
+ * TRACED_SLICE_STEPS steps a slice of idle time, into the one keep tracedChains reads; the map's first open then takes
+ * them made. A trace that moves on stops the job (the next one starts its own). Returns the job's state for its pins.
+ * @param {{ w: number, h: number, land: Uint8Array, province: Uint8Array }} trace
+ */
+export function startTracedJob(trace) {
+  const job = { slices: 0, steps: 0, done: false };
+  if (!_schedule || !trace) return job;
+  /** @type {Generator<undefined, any, unknown>|null} */
+  let gen = null;
+  const slice = () => {
+    if (tamrielTrace() !== trace) return;   // another trace landed: its own job makes its chains
+    gen ??= tracedSteps(trace);
+    job.slices++;
+    for (let n = 0; n < TRACED_SLICE_STEPS; n++) {
+      job.steps++;
+      if (gen.next().done) { job.done = true; return; }
+    }
+    _schedule?.(slice);
+  };
+  _schedule(slice);
+  return job;
+}
+onTamrielTrace((trace) => { if (trace) startTracedJob(trace); });
+/** SMOOTH-LAND: how far (map pixels) the ink's own lines are thinned - a quarter of a pixel, so a line stands on the law. */
+export const INK_THIN = 0.25;
 
 /** TAMRIEL3: an authored city on the traced land of its own province - where it stands, or the nearest such pixel
  *  within CITY_SNAP_PX, or null (left off). On the authored shape every city already stands in its province. */
@@ -672,7 +711,7 @@ export function pastBayStamp(x0, y0, x1, y1) {
       p = Math.max(p, pastBayPlacesStamp(tx, ty));
     }
   }
-  return `${r}|${p}`;
+  return `${r}|${p}|${watersInkVersion()}`;   // MAP-WATERS: and the waters' install - the rivers are the trace's and the fit's
 }
 
 /** TESA13: THE COUNTRYSIDE'S AND THE LAIRS' MARKS IN A VIEW - each place the host's atlas holds on the view's pixels
@@ -835,7 +874,7 @@ export const MARK_REACH_PX = 10;
  * @param {CanvasRenderingContext2D} ctx @param {{ox:number,oy:number,scale:number}} view
  * @param {{ paperW: number, paperH: number, band?: string, continent?: boolean, filters?: any, inks?: any,
  *   placesIn?: ?PlacesIn, frame?: ?{ x0: number, y0: number, w: number, h: number } }} opts
- * @param {?{ scratch: () => any }} [job]
+ * @param {?{ scratch: () => any, coverage?: () => any, pixels?: () => Uint8ClampedArray }} [job] - MAP-WHOLE: `coverage` the job's mask and `pixels` its RGBA, the continent's dots rasterised by hand (ui/inkRaster.js)
  */
 export function paintPastBay(ctx, view, opts, job = null) {
   const it = pastBayJob(ctx, view, opts, job);
@@ -850,6 +889,10 @@ export function paintPastBay(ctx, view, opts, job = null) {
  *  one tile was a path of 302,205 rects (the freeware's network, the contain view at one device pixel a point). */
 export const PAST_BAY_STEP = 2048;
 export const PAST_BAY_MARKS_STEP = 512;
+/** MAP-WHOLE: a rasterised dot's share of a step against a path's rect - a few typed-array writes where the canvas walked
+ *  a sub-path (measured on a CPU canvas: 300,000 dots 28 ms against 370-1,500 ms); a step of the raster is eight times
+ *  PAST_BAY_STEP dots. */
+export const RASTER_STEP_SHARE = 1 / 8;
 /** A translucent pass laid down: the scratch it was laid on solid, at the pen's alpha, whole. */
 function layDown(ctx, target, alpha) {
   ctx.save();
@@ -867,6 +910,29 @@ function passOf(ctx, job, style) {
   target.lineJoin = 'round';
   return { target, style: solid, alpha };
 }
+/**
+ * MAP-WHOLE (ui/inkRaster.js): a dots pass RASTERISED - the job's coverage mask (its own, ui/tamrielTiles.js) and its
+ * scratch, where the canvas can take pixels (a 2D context with putImageData; anything else paints its paths as before).
+ * `stamp` lays the pass's shapes in paper pixels (dpr the scratch's own: its canvas's width over the paper's), `lay`
+ * puts the mask on the scratch in the pen's solid colour and lays the scratch down at its alpha - the one fill or stroke
+ * the pass was (layDown).
+ */
+function rasterPass(ctx, job, style, paperW) {
+  const cov = job?.coverage?.();
+  if (!cov) return null;
+  const target = job.scratch();
+  if (typeof target?.putImageData !== 'function' || typeof ImageData === 'undefined' || !(target.canvas?.width > 0)) return null;
+  clearCoverage(cov);
+  const d = target.canvas.width / paperW, { alpha } = penSolid(style), rgb = penRgb(style);
+  return {
+    dot: (x, y, w) => stampSquare(cov, x * d, y * d, w * d),
+    lay: () => {
+      if (cov.any) target.putImageData(new ImageData(/** @type {Uint8ClampedArray<ArrayBuffer>} */ (coveragePixels(cov, rgb, job.pixels?.())), cov.w, cov.h), 0, 0);
+      layDown(ctx, target, alpha);
+    },
+  };
+}
+
 /** The paint as steps (paintPastBay): the roads and the tracks a pass a kind, then the marks' halos and their glyphs. */
 function* pastBayJob(ctx, view, opts, job) {
   const { paperW, paperH } = opts;
@@ -879,12 +945,31 @@ function* pastBayJob(ctx, view, opts, job) {
   // whole install moves every tile's word, and the tile's paint is begun again)
   let layer = arenaRoadsLayer();
   const fresh = () => (layer = arenaRoadsLayer());
+  // MAP-WATERS: stream G's rivers and lakes first, under the roads (a bridge's road over its river), a tile's paint like
+  // the rest - off the worker's copy (world/tamriel/watersInk.js), so the law's compile is never the map's
+  const waters = watersInk();
+  if (waters) { paintWaters(ctx, view, paperW, paperH, waters); if (job) yield; }
   if (band === 'far' && view.scale < DOTS_BELOW) {
     // out on the continent each pixel a dot of the far pen's width (DOTS_BELOW), the tracks under the roads
     const s = view.scale;
     for (const kind of /** @type {const} */ (['tracks', 'roads'])) {
       if (filters[kind] || !layer) continue;
-      const pen = pathPen(kind, 'far'), w = pen.width, p = passOf(ctx, job, pen.style);
+      const pen = pathPen(kind, 'far'), w = pen.width;
+      const ras = rasterPass(ctx, job, pen.style, paperW);
+      if (ras) {   // MAP-WHOLE: each pixel's dot a square of the mask, the pass laid once
+        let n = 0, walked = _walked;
+        for (let ty = Math.floor(view.oy / ROAD_TILE); ty <= Math.floor(y1 / ROAD_TILE); ty++) {
+          for (let tx = Math.floor(view.ox / ROAD_TILE); tx <= Math.floor(x1 / ROAD_TILE); tx++) {
+            const at = tileDots(layer, tx, ty)[kind];
+            for (let i = 0; i < at.length; i += 2) ras.dot((at[i] - view.ox) * s, (at[i + 1] - view.oy) * s, w);
+            n += at.length / 2;
+            if (n * RASTER_STEP_SHARE + _walked - walked >= step) { n = 0; walked = _walked; yield; if (!fresh()) return; }
+          }
+        }
+        ras.lay();
+        continue;
+      }
+      const p = passOf(ctx, job, pen.style);
       p.target.fillStyle = p.style;
       p.target.beginPath();
       let n = 0, walked = _walked;
@@ -935,6 +1020,81 @@ function* pastBayJob(ctx, view, opts, job) {
       }
     }
   }
+}
+
+/** MAP-WATERS: a river's width on the map, paper pixels - its metres at the view's scale, in steps of `step` (so a river's
+ *  runs are few), never under `min` (a hairline out on the continent) nor over `max`; `wash` the shore's shade round it. */
+export const RIVER_PEN = Object.freeze({ min: 0.9, step: 0.5, max: 14, wash: 2.5 });
+const PIXEL_M = 819.2;
+/** A river's runs at a scale: its centre line cut where its width's step changes - `{ width, chain }`, the chain the run's
+ *  points ({x, y}, Bay coordinates) with its neighbours' shared ends. Kept a river and a scale at a time. */
+const _runs = new WeakMap();
+export function riverRuns(river, scale) {
+  let byScale = _runs.get(river);
+  if (!byScale) _runs.set(river, byScale = new Map());
+  let runs = byScale.get(scale);
+  if (runs) return runs;
+  runs = [];
+  let cur = null;
+  for (let i = 0; i < river.n; i++) {
+    const p = { x: river.pts[2 * i], y: river.pts[2 * i + 1] };
+    const w = Math.min(RIVER_PEN.max, Math.max(RIVER_PEN.min, Math.round((river.width[i] / PIXEL_M) * scale / RIVER_PEN.step) * RIVER_PEN.step));
+    if (!cur) { cur = { width: w, chain: [p] }; runs.push(cur); continue; }
+    if (w !== cur.width) { cur.chain.push(p); cur = { width: w, chain: [p] }; runs.push(cur); continue; }   // the point a step changes at ends one run and opens the next
+    cur.chain.push(p);
+  }
+  // thinned to a third of a paper pixel: a river's points stand some 100 m apart, forty to a paper pixel out on the continent
+  for (const run of runs) if (run.chain.length > 2) run.chain = simplifyChain(run.chain, 0.35 / scale);
+  byScale.set(scale, runs);
+  return runs;
+}
+/** MAP-WATERS: stream G's waters (world/tamriel/watersInk.js - the law's rivers and lakes) in the shore's hand - the wash
+ *  round each river's run, then its line at its width; a lake's ring as the coast is drawn - those whose box the view
+ *  reaches. */
+function paintWaters(ctx, view, paperW, paperH, waters) {
+  const { stroke } = penOf(ctx, view, paperW, paperH);
+  const s = view.scale, seen = watersInView(view, paperW, paperH, waters);
+  for (const r of seen.rivers) {
+    const runs = riverRuns(r, s);
+    for (const run of runs) stroke([run.chain], Math.max(RIVER_PEN.wash, run.width * 2 + 1), PEN.wash);
+    for (const run of runs) stroke([run.chain], run.width, PEN.line);
+  }
+  const lakes = seen.lakes.map(lakeChainOf);
+  if (!lakes.length) return;
+  stroke(lakes, Math.max(3, s * 1.6), PEN.wash);   // the coast's own hand (paintTamrielInk)
+  stroke(lakes, 1.3, PEN.line);
+}
+/** MAP-WATERS: the rivers and lakes whose box (Bay pixels) the view reaches, a pixel's slack round it - the rest not
+ *  walked at all (a river's runs are made a scale at a time, riverRuns). */
+export function watersInView(view, paperW, paperH, waters) {
+  const x1 = view.ox + paperW / view.scale, y1 = view.oy + paperH / view.scale;
+  const off = (b) => b[0] > x1 + 1 || b[2] < view.ox - 1 || b[1] > y1 + 1 || b[3] < view.oy - 1;
+  return { rivers: waters.rivers.filter((r) => !off(boxOf(r.pts, r.n))), lakes: waters.lakes.filter((l) => !off(boxOf(l, l.length / 2))) };
+}
+const _boxes = new WeakMap(), _lakes = new WeakMap();
+function boxOf(pts, n) {
+  let b = _boxes.get(pts);
+  if (b) return b;
+  b = [Infinity, Infinity, -Infinity, -Infinity];
+  for (let i = 0; i < n; i++) { const x = pts[2 * i], y = pts[2 * i + 1]; if (x < b[0]) b[0] = x; if (y < b[1]) b[1] = y; if (x > b[2]) b[2] = x; if (y > b[3]) b[3] = y; }
+  _boxes.set(pts, b);
+  return b;
+}
+const lakeChainOf = (ring) => { let c = _lakes.get(ring); if (!c) _lakes.set(ring, c = ringChain(ring)); return c; };
+/** A lake's ring (Bay coordinates, x y pairs) as a closed chain. */
+export function ringChain(ring) {
+  const out = [];
+  for (let i = 0; i < ring.length; i += 2) out.push({ x: ring[i], y: ring[i + 1] });
+  if (out.length) out.push({ ...out[0] });
+  return out;
+}
+
+/** MAP-WHOLE (ui/tamrielTiles.js BASE_SCALE): the base's paint - the continent's whole frame out on the continent, under
+ *  the view's own filters and hues (its key is theirs), its words read again when the roads' installs or the places'
+ *  adds move. */
+export function baseOf(past, ink) {
+  if (!ink.frame) return null;
+  return { key: `far|1|${JSON.stringify(past.filters)}|${JSON.stringify(past.inks)}`, paint: { ...past, band: 'far', continent: true }, frame: ink.frame, version: `${arenaRoadsVersion()}|${pastBayPlacesVersion()}|${watersInkVersion()}` };
 }
 
 /** REGION-LINES: the provinces' line (PROVINCE_PEN) - halo, then the stroke, solid. */
@@ -1001,7 +1161,7 @@ export function paintTamrielInk(ctx, view, ink, opts) {
   // them (ui/tamrielTiles.js, paintPastBay's paint a tile at a time), or painted here where it keeps none
   const past = { paperW, paperH, band, continent, filters: opts.filters ?? {}, inks: opts.inks ?? null, placesIn: opts.placesIn ?? null, frame: ink.frame };
   if (!part || part === 'roads') {
-    if (opts.tiles) opts.tiles.draw(ctx, view, { paperW, paperH, dpr: opts.dpr ?? 1, key: `${band}|${continent ? 1 : 0}|${JSON.stringify(past.filters)}|${JSON.stringify(past.inks)}`, paint: past, ...(opts.settling ? { budgetMs: 0, force: false } : {}) });
+    if (opts.tiles) opts.tiles.draw(ctx, view, { paperW, paperH, dpr: opts.dpr ?? 1, key: `${band}|${continent ? 1 : 0}|${JSON.stringify(past.filters)}|${JSON.stringify(past.inks)}`, paint: past, ...(opts.settling ? { budgetMs: 0, force: false } : {}), base: baseOf(past, ink) });
     else paintPastBay(ctx, view, past);
   }
   if (part && part !== 'over') { ctx.restore(); return true; }

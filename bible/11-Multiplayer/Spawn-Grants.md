@@ -424,8 +424,9 @@ The owner: GRANT1 ships with it, and the law **measures from its deploy**. Relay
   reads it, waiting on the hub only at a cell's first ask and asking again at most every GRANT_CFG_TTL_MS (five minutes),
   since every cell a player roams asks and the hub is every tab's. A staff `off` reaches a client at its next ask (`off`).
 - **The measure** (`net/grantMeasure.js`): each cell folds its asks per account and kind - asks, members, the bucket's and
-  the ceiling's refusals - and the most live members it held, and posts the window every GRANT_MEASURE_MS (ten minutes)
-  or at GRANT_MEASURE_ROWS rows, signed over `grant-measure1\n` with the relay's key, to GRANT_FEED_URL (the chat feed's
+  the ceiling's refusals - and the most live members it held, and posts the window at the first fold once it is
+  GRANT_MEASURE_MS (ten minutes) old, at GRANT_MEASURE_ROWS rows, or when the cell's last socket leaves (GRANT-SLEEP,
+  section 22 - never on a timer), signed over `grant-measure1\n` with the relay's key, to GRANT_FEED_URL (the chat feed's
   door: never awaited, never retried, through the ACCOUNTS binding). The account service keeps a window once
   (`server-account/src/grants.js`, POST /v1/mod/grant-feed, migration 0131_grant_measure) and a developer reads it:
   `node tools/realmReview.mjs grants [days]` - per kind, an account's asks an hour (quantiles, most), what the buckets and
@@ -767,3 +768,35 @@ receipt already, so no new route. Pins: `test/server/grantcase_own.test.js` (4).
 `tools/mutants/foebounds.json`. Relay world223, account service acct158 - deploy the service with or before the relay;
 nothing else orders them.
 
+## 22. GRANT-SLEEP: no timer holds a cell awake (2026-10-25)
+
+Mac, 2026-10-25, of the land past the Bay: "ensuring this new integration doesnt implode the server or insanely skyrocket
+our server cost". The relay's bill was read first (Cloudflare's GraphQL `durableObjectsPeriodicGroups`, active time per
+object, named through `durableObjectsInvocationsAdaptiveGroups`):
+
+- **Measured.** On 2026-10-15, before GRANT2's deploy, 7,033 of the day's interiors and 1,385 of its dungeons were
+  awake under a minute in all. On 2026-10-20 those were 916 and 151, none of either was awake between one minute and
+  two, and 648 dungeons were awake exactly ten minutes (171 and 129 the minutes either side); world, dungeon and interior rooms went from 0.40 to 2.0 million GB-s a
+  day (2026-10-15 to 10-21) while their CPU rose a third. Section 12's window armed a ten-minute `setTimeout` at its
+  first fold, and a Durable Object with a timer pending does not hibernate.
+- **Built.** The window posts at the first fold once it is GRANT_MEASURE_MS old (`net/grantMeasure.js`
+  grantMeasureDue), at its bound as before, and when the room's last socket leaves (`server/src/index.js`
+  `_grantDrained`, from `_leave`'s drain) - so a cell sleeps the moment nothing is pending. The window is lost when a cell
+  hibernates with players in it and asks nothing for ten minutes - the sample's loss this section already accepted for
+  an evicted cell; a live grant it forgets is signed again at its renewal (AUDIT GRANT A8). A drained cell's window now
+  reaches the service where the runtime's idle eviction lost it before: more batches, each a few rows.
+- **Why it matters past the Bay.** The timer cost scaled with the CELLS A PLAYER CROSSES, not with players: every cell
+  asked in was ten minutes awake. Tamriel's map is 6000 by 3750 pixels to the Bay's 1000 by 500.
+
+Pins: `test/net/sleepcost.test.js` (two of its four); `tools/mutants/sleepcost.json` (six of its nine, all dead). No
+frame changes and no client change; it rides relay world260.
+
+**AUDIT TESA III E2-1 (2026-10-26, `01-Overview/audits/Audit-Tesa-III-E2.md`): THE GATE OUTLIVES THE SLEEP.** The window
+was not all a sleep forgot: the gate - each account's bucket per kind, the live grants the ceiling counts, the counter,
+the askers - lived in memory beside it, and the timer had held it for a grant's whole life. With nothing pending, a client
+that held its frames back for the runtime's idle span woke the cell with every bucket full and the ceiling empty (a Greater
+Giant's third call refused, then granted; 170 members live, 1 counted). The gate is kept in the cell's storage now
+(`net/grantLaw.js` grantGateKept and grantGateOf; `server/src/index.js` `_grantGateKeep` after each ask that can move it,
+`_grantGateLoad` once an instance life, a woken strip kicking it) - one row written an ask, no timer, the key let go once
+nothing binds; the measure's window alone stays memory's sample. Main's HIBERNATE (world263) forgets the gate the same way,
+and the merge carries the fix to it. Pins `test/net/audittesa3e2_grantgate.test.js`; mutants `tools/mutants/audittesa3e2.json`.

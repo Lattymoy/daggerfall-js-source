@@ -215,11 +215,13 @@
   {
     "name": "P4-unwired",
     "file": "src/scenes/world.js",
-    "old": "const j = pastBayJourney(playerTravelPixel(), to, online?.wildOk ? wildMapMask() : null, wildJourney({",
-    "new": "const j = ((z) => z)(wildJourney({",
+    "old": "const wildTravelGate = (to, spoken = 0, law = pastBayJourney) => {",
+    "new": "const wildTravelGate = (to, spoken = 0, law = (_f, _t, _m, z) => z) => {",
     "tests": [
-      "test/scenes/audittesa2p_hosts.test.js"
-    ]
+      "test/scenes/audittesa2p_hosts.test.js",
+      "test/systems/portalbay_stone.test.js"
+    ],
+    "note": "PORTAL-BAY (PIN MOVED): re-aimed by content - the journey's law past the Bay is the gate's default third argument now (a teleport hands teleportJourney); the mutant leaves the journeys' default unasked"
   },
   {
     "name": "P6-mask-kept",
@@ -314,39 +316,44 @@
   {
     "name": "P7-asker-unguarded",
     "file": "src/scenes/livingWorld/livingIndex.js",
-    "old": "    if (!livingRoams({ px, py })) return NONE_NEAR;",
-    "new": "",
+    "old": "const t = livingSide(p) === LIVING_SIDES.bay ? recOf(p) : null;",
+    "new": "const t = recOf(p);",
     "tests": [
-      "test/scenes/audittesa2p_hosts.test.js",
-      "test/world/worldWide/ww1_world.test.js"
-    ]
+      "test/world/worldWide/ww7_people.test.js"
+    ],
+    "note": "Re-aimed by content (WW7-7, bible/03-World/World-Wide.md): P7's guard lifted - a pixel of the Bay has the Bay's places alone near it, never one past the edge."
   },
   {
     "name": "P7-places-unfiltered",
     "file": "src/scenes/livingWorld/livingIndex.js",
-    "old": "const t = livingRoams(p) ? recOf(p) : null;",
-    "new": "const t = recOf(p);",
+    "old": "      if (livingSide(p) !== side || capitalStreet(p)) continue;   // WW7-11: a capital one town, its centre\n",
+    "new": "      if (capitalStreet(p)) continue;   // WW7-11: a capital one town, its centre\n",
     "tests": [
-      "test/scenes/audittesa2p_hosts.test.js"
-    ]
+      "test/world/worldWide/ww7_people.test.js",
+      "test/world/worldWide/ww7_cross.test.js"
+    ],
+    "note": "Re-aimed by content (WW7-7; WW7-9): each side's listed places in its own bins (livingIndex.js binsOf) - a pixel past the Bay has the land past the Bay's own, the Bay's only across the edge."
   },
   {
     "name": "P7-bands-past-the-bay",
     "file": "src/scenes/livingWorld/livingIndex.js",
-    "old": "if (theatreOfArea(area | 0) === BAY_THEATRE) for",
-    "new": "if (true) for",
+    "old": "const t = p.area === (area | 0) ? townOf(p) : null;",
+    "new": "const t = townOf(p);",
     "tests": [
-      "test/world/worldWide/ww1_world.test.js"
-    ]
+      "test/world/worldWide/ww7_people.test.js"
+    ],
+    "note": "Re-aimed by content (WW7-7): a province's district's bands keep its own area's towns (a district a border cuts is two areas)."
   },
   {
     "name": "P7-lanes-from-past-the-bay",
     "file": "src/scenes/livingWorld/livingLanes.js",
-    "old": "      if (!livingRoams(town)) return [];",
-    "new": "",
+    "old": "return w && to && (livingSide(to) === livingSide(town) || !!l.cross) ? [{ to, len: w.len, key: l.key, ...(far ? { far: true } : {}) }] : [];",
+    "new": "return w && to ? [{ to, len: w.len, key: l.key, ...(far ? { far: true } : {}) }] : [];",
     "tests": [
-      "test/scenes/audittesa2p_hosts.test.js"
-    ]
+      "test/world/worldWide/auditww.test.js",
+      "test/world/worldWide/ww7_people.test.js"
+    ],
+    "note": "Re-aimed by content (WW7-7; WW7-9): a town's lanes run to a port of its own side of the Bay's edge, or across it on a crossing lane - never another lane across."
   },
   {
     "name": "P7-reach-the-bays",
@@ -405,8 +412,8 @@
   {
     "name": "P7-lakes-sailed",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "&& !land[y * w + x] && !lakes[y * w + x]",
-    "new": "&& !land[y * w + x]",
+    "old": "=== 0 && !lakes[y * w + x]",
+    "new": "=== 0",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ],

@@ -165,11 +165,12 @@
   {
     "name": "WW1-index-stale",
     "file": "src/scenes/livingWorld/livingIndex.js",
-    "old": "    if (g === gen) return;",
-    "new": "    if (g === gen || gen >= 0) return;",
+    "old": "    if (g === gen && e === epoch && l === told) return;",
+    "new": "    if ((g === gen && e === epoch && l === told) || gen >= 0) return;",
     "tests": [
       "test/world/worldWide/ww1_world.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW7-7; WW7-9): the books kept by the registry's generation, the roads past the Bay's build and its regions landed."
   },
   {
     "name": "WW1-index-area-the-region",
@@ -219,11 +220,12 @@
   {
     "name": "WW1-host-index-unwired",
     "file": "src/scenes/world.js",
-    "old": "  const livingIndex = createLivingIndex({ places: worldPlaces,",
-    "new": "  const livingIndex = createLivingIndex({ places: createWorldPlaces(),",
+    "old": "= createLivingTrips({ places: worldPlaces,",
+    "new": "= createLivingTrips({ places: createWorldPlaces(),",
     "tests": [
       "test/world/worldWide/ww1_world.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW7-7): the index made in scenes/livingWorld/livingTrips.js, the host handing the registry."
   },
   {
     "name": "WW1-host-pixel-builder",

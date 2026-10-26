@@ -211,8 +211,14 @@ test('DOMAIN2 THE LAW OF THE ROOM: a guild\'s digest is its own hash domain - ne
   assert.deepEqual(CASTLE_MAP_IDS.slice(0, 3), [6634853, 630439035, 1291010263], 'Sentinel, Wayrest and Daggerfall - measured on the freeware: the crown seats\' own keys, each a main-story dungeon');
   for (const k of CASTLE_MAP_IDS.slice(0, 3)) assert.ok(MAIN_STORY_DUNGEON_IDS.has(k));
   assert.deepEqual([castleKeyOk(630439035), castleKeyOk(5023), castleKeyOk('630439035')], [true, false, false]);
-  assert.equal(GUILD_INSTANCE_RELAY_MIN, 260);   // PIN MOVED: world260, the castle's relay (world255 on its branch, renumbered past KETCH's at the merge, then past main's world256 to world259)
-  assert.deepEqual([relaySupportsGuildInstances('world259'), relaySupportsGuildInstances('world260'), relaySupportsGuildInstances(RELAY_VERSION)], [false, true, true]);
+  // PIN MOVED (AUDIT TESA III E2-4, bible/01-Overview/audits/Audit-Tesa-III-E2.md): the castle's relay is the LAW row of
+  // test/net/relayversion.test.js that names DOMAIN2, as AUDIT TESA II Z2 holds the world-wide gates to theirs - a literal
+  // here beside the literal in instanceRoom.js let a renumber leave the gate on a number the live relay holds with no
+  // guild arm (main's world260 is THE FOLD), so a castle's members were offered a door that refused them
+  const law = readFileSync(new URL('./relayversion.test.js', import.meta.url), 'utf8');
+  const named = [...law.matchAll(/^ {2}world(\d+): '[0-9a-f]{64}',\s+\/\/[^\n]*\bDOMAIN2\b/gm)].map((m) => Number(m[1]));
+  assert.deepEqual(named, [GUILD_INSTANCE_RELAY_MIN], 'the castle\'s relay gate is the one row that names DOMAIN2 - a merge that renumbers the row moves it');
+  assert.deepEqual([relaySupportsGuildInstances(`world${GUILD_INSTANCE_RELAY_MIN - 1}`), relaySupportsGuildInstances(`world${GUILD_INSTANCE_RELAY_MIN}`), relaySupportsGuildInstances(RELAY_VERSION)], [false, true, true]);
 });
 
 test('DOMAIN2 AT THE RELAY: a castle\'s room admits its guild\'s members by their token\'s guild; another guild, no guild and a member\'s party guest are refused before anything is written; a member who leaves the guild while inside is refused out (mutants: the hello\'s guild; the mark; the refusal out)', async () => {
@@ -245,7 +251,9 @@ test('DOMAIN2 THE DOOR: the castle\'s dungeon door offers "Your guild\'s castle"
   // AUDIT DOMAINS C4: nine rows at most - the door's keys are 1-9; a castle, a quest of mine and a full party's seven partners
   const seven = Array.from({ length: 7 }, (_, i) => ({ name: `P${i}`, acct: `a${i}`, owner: castle.owner, epoch: `0000000${i}` }));
   const nine = instanceOffer({ online: true, instanceOk: true, questHere: true, partners: seven, castle: { owner: castle.owner, epoch: castle.epoch } });
-  assert.deepEqual([nine.length, INSTANCE_ROWS_MAX, nine.at(-1).name], [9, 9, 'P5']);
+  // PIN MOVED (AUDIT RELEASE R3-4, the merge of main into TESA): main's order - the party's rooms before mine - under this
+  // bound: six partners, then my own row on the ninth key (unbounded, my row was the tenth no key chose)
+  assert.deepEqual([nine.length, INSTANCE_ROWS_MAX, nine.at(-2).name, nine.at(-1).kind], [9, 9, 'P5', 'mine']);
   let mine = { guild: G, epoch: 'aabbccdd', key: CASTLE_WAYREST, region: 23 };
   const door = createInstanceDoor({ online: () => true, instanceOk: () => true, castle: () => mine });
   const site = { ...dungeonSite({ mapTableData: { mapId: CASTLE_WAYREST }, name: 'Wayrest' }), relaid: false };

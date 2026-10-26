@@ -101,8 +101,8 @@
   {
     "name": "MARKET-AUDIT2-collect-refusal-unsaid",
     "file": "src/net/marketBook.js",
-    "old": "          if (r.ok) settled++; else if (!r.kept) refused.push(r.error);",
-    "new": "          if (r.ok) settled++;",
+    "old": "          if (r.ok) { settled++; offRoad(d.id); } else if (!r.kept) refused.push(r.error);",
+    "new": "          if (r.ok) { settled++; offRoad(d.id); }",
     "tests": [
       "test/systems/marketaudit2.test.js"
     ]

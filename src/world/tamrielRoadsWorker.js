@@ -8,7 +8,8 @@
 // height bytes, the trace and the fit). The host's client (world/tamrielRoadsClient.js) keeps several of these busy,
 // the nearest regions first.
 //
-//   init   { woodsBytes, trace, fit, spec, nodes, obstacles, gates, held, lattice }  the build's inputs (world/tamrielRoads.js)
+//   init   { woodsBytes, trace, fit, spec, nodes, obstacles, gates, held, lattice, trunks }  the build's inputs
+//          (world/tamrielRoads.js; `trunks` VOYAGER-CYRODIIL's spec, its legs planned here - road/cyrodiilRoads.js)
 //   build  { id, i, j }  ->  region { id, i, j, layer (packArenaRoads), places (packPastBayPlaces - TESA15), stats, ms }
 //                            or { id, i, j, error }
 //
@@ -28,6 +29,9 @@ import { packArenaRoads } from './arenaRoads.js';
 import { packPastBayPlaces } from './pastBayPlaces.js';
 import { MAP_W, MAP_H, drainSteps } from './road/roadNetwork.js';
 import { regionOf, tamrielRegionSteps, rollTypeAt } from './tamrielRoads.js';
+import { planTrunkLegs } from './road/cyrodiilRoads.js';   // VOYAGER-CYRODIIL: the named roads' legs
+import { inBay } from './tamriel/tamrielFrame.js';
+import { WATER_BYTE } from './roadsProducer.js';
 
 /** The worker's state over its messages - a function, so node drives it without a worker. */
 export function createRoadsWorkerState() {
@@ -44,10 +48,11 @@ export function createRoadsWorkerState() {
         places.push(...atlas.placesIn(region.gx, y, region.gx + MAP_W, Math.min(region.gy + MAP_H, y + ATLAS_TILE)));
         yield;
       }
-      const out = yield* tamrielRegionSteps({ region, places, nodes: inputs.nodes, obstacles: inputs.obstacles, gates: inputs.gates, held: inputs.held ?? [], heightAt: inputs.heightAt });
+      const out = yield* tamrielRegionSteps({ region, places, nodes: inputs.nodes, obstacles: inputs.obstacles, gates: inputs.gates, held: inputs.held ?? [], heightAt: inputs.heightAt, trunks: inputs.trunkLegs });
       const layer = packArenaRoads({ ...out, join: new Map() }), placed = packPastBayPlaces(out.places);
-      return { msg: { t: 'region', id: m.id, i: m.i, j: m.j, layer, places: placed, stats: out.stats, ms: Date.now() - t0 },
-        xfer: [layer.keys.buffer, layer.roads.buffer, layer.tracks.buffer, layer.joinKeys.buffer, layer.join.buffer, placed.keys.buffer, placed.types.buffer] };
+      const land = out.land;   // EXACT-PIECES: the core's land's pieces, as runs (world/tamrielLandPieces.js)
+      return { msg: { t: 'region', id: m.id, i: m.i, j: m.j, layer, places: placed, land, stats: out.stats, ms: Date.now() - t0 },
+        xfer: [layer.keys.buffer, layer.roads.buffer, layer.tracks.buffer, layer.joinKeys.buffer, layer.join.buffer, placed.keys.buffer, placed.types.buffer, land.rowStart.buffer, land.runLen.buffer, land.runLabel.buffer, land.ring.buffer] };
     } catch (e) {
       return { msg: { t: 'region', id: m.id, i: m.i, j: m.j, error: e?.message ?? String(e) }, xfer: [] };
     }
@@ -68,7 +73,12 @@ export function createRoadsWorkerState() {
         // past the Bay the climate is the province's (the Bay's own pixels are never asked: they are its network's)
         const typeAt = rollTypeAt(m.spec, { climateAt: groundClimateIndex(() => -1), heightAt, ground: createCountryGround(ground) });
         atlas = createTamrielAtlas((x, y) => { const type = typeAt(x, y); return type === null ? null : { type, name: '' }; }, () => [0]);
-        inputs = { ...m, heightAt };
+        // VOYAGER-CYRODIIL: the named roads' legs, planned once on this ground (world/road/cyrodiilRoads.js) - a road stands
+        // on land past the Bay and on no capital's pixel
+        const held = new Set((m.obstacles ?? []).map((o) => `${o.x},${o.y}`));
+        const wet = (x, y) => !inBay(x, y) && heightAt(x, y) <= WATER_BYTE;
+        const walkable = (x, y) => !inBay(x, y) && heightAt(x, y) > WATER_BYTE && !held.has(`${x},${y}`);
+        inputs = { ...m, heightAt, trunkLegs: planTrunkLegs(m.trunks ?? null, { heightAt, walkable, wet }) };
         return;
       }
       if (m.t === 'build') {
@@ -80,6 +90,8 @@ export function createRoadsWorkerState() {
     steps,
     /** The rolled places on a rectangle's pixels, as a build reads them - for the tools and the pins. */
     placesIn: (x0, y0, x1, y1) => atlas?.placesIn(x0, y0, x1, y1) ?? [],
+    /** VOYAGER-CYRODIIL: the named roads' legs this init planned - for the tools and the pins. */
+    trunkLegs: () => inputs?.trunkLegs ?? [],
   };
 }
 

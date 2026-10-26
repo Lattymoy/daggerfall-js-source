@@ -445,7 +445,7 @@ test('TELL1: every door asks the poise door where it writes DFU\'s knock, passes
   assert.match(d, /damageFoe\(foe, damage, playerFeet, lookDir, \{ weapon: playerWeapon\.strikingWeapon \}\);/);
   assert.match(d, /hurting: f\.ai\.hurtKnock \|\| f\.ai\.staggered \|\| !!_pb\?\.staggered,/);   // PIN MOVED (TELL8: and the host's stagger on its puppet)
   assert.match(d, /hurt: \(n, o\) => damageFoe\(f, n, null, null, \{ kind: 'spell', fromPlayer: o\?\.fromPlayer \?\? fromPlayer, whole: !!o\?\.whole, round: !!o\?\.round, element: o\?\.element \?\? null \}\),/);   // PIN MOVED (RVN3: a landing's element)
-  assert.match(rd('src/systems/effects.js'), /sinks\.hurt\(n, \{ fromPlayer: !a\.caster \|\| !!a\.caster\.isPlayer, bundleDuel: !!a\.bundleDuel, round: true \}\);/, 'a round says it is one');
+  assert.match(rd('src/systems/effects.js'), /sinks\.hurt\(n, \{ fromPlayer: !a\.caster \|\| !!a\.caster\.isPlayer, bundleDuel: !!a\.bundleDuel, round: true, element: a\.element \?\? null \}\);/, 'a round says it is one');   // PIN MOVED (BOSS-TRAITS): and its element
   for (const [file, re] of [
     ['src/scenes/world.js', /cityGuards\.hurtGuard\(f, d, player\.pos, m\.dir, \{ kind: 'arrow' \}\)/],
     ['src/scenes/exterior.js', /cityGuards\.hurtGuard\(f, d, player\.pos, m\.dir, \{ kind: 'arrow' \}\)/],

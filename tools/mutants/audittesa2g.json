@@ -137,8 +137,8 @@
   {
     "name": "AUDITTESA2G-G4-the-ease-from-the-centres",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "Math.max(0, coastDistanceAt(px, py) - 0.5) / RELIEF_COAST_REACH",
-    "new": "Math.max(0, coastDistanceAt(px, py)) / RELIEF_COAST_REACH",
+    "old": "Math.max(0, /** @type {number} */ (coastDepthAt(px, py))) / RELIEF_COAST_REACH",
+    "new": "Math.max(0, /** @type {number} */ (coastDepthAt(px, py)) + 0.5) / RELIEF_COAST_REACH",
     "tests": [
       "test/world/tamrielrelief.test.js"
     ]

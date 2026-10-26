@@ -26,6 +26,10 @@
 // roads.
 // ═══════════════════════════════════════════════════════════════════
 import { roadNetworkSteps, drainSteps, MAP_W, MAP_H, DIR_DELTA, ROAD_DIALS, ROAD_TYPES } from './road/roadNetwork.js';   // AUDIT TESA II R8: a step at a time
+import { VOYAGER_DIALS, landForRoutes, landGrain, riverFords } from './road/roadLand.js';   // VOYAGER1: the land's law; RIVER-FORDS: the channels' crossings
+import { linkGaps } from './road/roadGaps.js';   // ROAD-GAPS: a region's networks joined where they meet
+import { labelLand } from './tamrielLandPieces.js';   // EXACT-PIECES: the land's pieces at the pixel
+import { riverRaster } from './tamriel/tamrielWaters.js';   // RIVER-FORDS (AUDIT RELEASE R1-3): the carved rivers, the router's question
 import { inBay } from './tamriel/tamrielFrame.js';
 import { beyondKey } from './arenaRoads.js';
 import { WATER_BYTE } from './roadsProducer.js';
@@ -36,7 +40,7 @@ import { lairStandsAt, lairPlanned, lairBlockCount } from './tamrielDungeons.js'
 import { BIOMES_VERSION } from './tamriel/tamrielBiomes.js';   // AUDIT TESA-BIOME Z3: the zones' law decides each pixel's climate, so its places
 
 /** The regions' law's version - its cache's key moves with it. */
-export const TAMRIEL_ROADS_VERSION = 3;   // TESA15: a region's places in its answer, Arena's dungeons routed round; AUDIT TESA II R7 and R9: a gate stepped by every region that routes onto it, the crossings' runs held
+export const TAMRIEL_ROADS_VERSION = 7;   // EXACT-PIECES: a region's land's pieces in its answer; ROAD-GAPS: a region's networks linked where they meet; RIVER-FORDS (AUDIT RELEASE R1-3): the carved rivers crossed as fords; TESA15: a region's places in its answer, Arena's dungeons routed round; AUDIT TESA II R7 and R9: a gate stepped by every region that routes onto it, the crossings' runs held; VOYAGER1: the land's law (the grade, the height, the shore, the fords), VOYAGER-CYRODIIL: the named roads' legs
 /**
  * AUDIT TESA II R6: THE VERSION OF THE LAWS PAST THE BAY A REGION'S BUILD RUNS that no input of the print carries - the
  * ground's height (world/tamriel/tamrielGround.js: the authored law, the relief's, the seam's blend, the lattice hash; the
@@ -47,7 +51,7 @@ export const TAMRIEL_ROADS_VERSION = 3;   // TESA15: a region's places in its an
  * high fails that pin until this moves with it and the fingerprint is recorded again. The zones' climate is
  * BIOMES_VERSION's, in the print.
  */
-export const GROUND_ROLL_VERSION = 2;   // 1 the laws as AUDIT TESA II found them; 2 its lane G's beach-line floor (BIOMES_VERSION 5)
+export const GROUND_ROLL_VERSION = 4;   // 1 the laws as AUDIT TESA II found them; 2 its lane G's beach-line floor (BIOMES_VERSION 5); 3 CYRODIIL-SHORES: Cyrodiil's lakes' smooth shores; 4 SMOOTH-LAND: every coast and border the land's smooth law (world/tamriel/tamrielLand.js landLabelAt)
 /** How far, Bay pixels, a region's grid reaches past its core on every side: past the road builder's reach for a road's
  *  neighbours (ROAD_DIALS.roadReach, 70) and a track's (trackLink, 24), so an edge a region owns has both ends in view. */
 export const REGION_APRON = 100;
@@ -83,6 +87,21 @@ export function regionHasLand(region, heightAt) {
   return false;
 }
 /**
+ * EXACT-PIECES (world/tamrielLandPieces.js): A REGION'S LAND - its core's dry pixels by the Overworld planner's water law
+ * (the ground's byte over WATER_BYTE, the Bay's own on the Bay), four-connected, as runs. `heightAt` the ground's byte.
+ * @param {ReturnType<typeof regionOf>} region @param {(x: number, y: number) => number} heightAt
+ */
+export function regionLand(region, heightAt) {
+  const { x0, y0 } = region.core;
+  return labelLand((u, v) => heightAt(x0 + u, y0 + v) > WATER_BYTE, REGION_CORE_W, REGION_CORE_H);
+}
+/** EXACT-PIECES: the regions a build lays - every one with land past the Bay, and every one whose core meets the Bay's own
+ *  table (its land's pieces are the Bay's: they are labelled with the rest; its roads are the Bay's network's, none laid). */
+export function regionWanted(region, heightAt) {
+  const { x0, y0, x1, y1 } = region.core;
+  return (x0 < MAP_W && x1 > 0 && y0 < MAP_H && y1 > 0) || regionHasLand(region, heightAt);
+}
+/**
  * The regions to build, nearest a point first (their cores' middles; ties in the lattice's order) - every one with land.
  * @param {ReturnType<typeof regionLattice>} lattice @param {(region: ReturnType<typeof regionOf>) => boolean} hasLand
  * @param {{ x: number, y: number }} from
@@ -111,8 +130,9 @@ export const REGION_STEP_ROWS = 25;
  * @param {{ region: ReturnType<typeof regionOf>, places: Array<{ x: number, y: number, type: number }>,
  *   nodes: Array<{ x: number, y: number, type: number }>, obstacles: Array<{ x: number, y: number }>,
  *   gates: Array<{ x: number, y: number, into: readonly number[] }>, held?: Array<{ x: number, y: number }>,
- *   heightAt: (x: number, y: number) => number, dials?: object }} o
- * @returns {{ roads: Map<number, number>, tracks: Map<number, number>, places: Array<{ x: number, y: number, type: number }>, stats: object }}
+ *   heightAt: (x: number, y: number) => number, dials?: object, trunks?: number[][][] }} o VOYAGER-CYRODIIL: `trunks` the named roads'
+ *   legs (world/road/cyrodiilRoads.js planTrunkLegs), each [a, b] in Bay pixels
+ * @returns {{ roads: Map<number, number>, tracks: Map<number, number>, land: ReturnType<typeof labelLand>, places: Array<{ x: number, y: number, type: number }>, stats: object }}
  */
 export function buildTamrielRegion(o) {
   return drainSteps(tamrielRegionSteps(o));
@@ -126,14 +146,14 @@ export function buildTamrielRegion(o) {
  * @param {Parameters<typeof buildTamrielRegion>[0]} o
  * @returns {Generator<void, ReturnType<typeof buildTamrielRegion>, void>}
  */
-export function* tamrielRegionSteps({ region, places, nodes, obstacles, gates, held = [], heightAt, dials = {} }) {
+export function* tamrielRegionSteps({ region, places, nodes, obstacles, gates, held = [], heightAt, dials = {}, trunks = [] }) {
   const { gx, gy } = region;
   const inGrid = (x, y) => x >= gx && y >= gy && x < gx + MAP_W && y < gy + MAP_H;
-  const heights = new Uint8Array(MAP_W * MAP_H), water = new Uint8Array(MAP_W * MAP_H);
+  const heights = new Uint8Array(MAP_W * MAP_H), water = new Uint8Array(MAP_W * MAP_H), bay = new Uint8Array(MAP_W * MAP_H);
   for (let v = 0; v < MAP_H; v++) {
     for (let u = 0; u < MAP_W; u++) {
       const x = gx + u, y = gy + v, i = v * MAP_W + u;
-      if (inBay(x, y)) { water[i] = 1; continue; }   // the Bay's own ground is its own network's
+      if (inBay(x, y)) { water[i] = 1; bay[i] = 1; continue; }   // the Bay's own ground is its own network's (VOYAGER1: no ford's)
       const h = heightAt(x, y);
       heights[i] = h;
       water[i] = h <= WATER_BYTE ? 1 : 0;
@@ -160,10 +180,31 @@ export function* tamrielRegionSteps({ region, places, nodes, obstacles, gates, h
   // asked): the builder is order-bound - each route merges into the ones before it - and every client lays the same roads
   const ordered = places.filter((p) => inGrid(p.x, p.y) && !inBay(p.x, p.y) && !taken.has(`${p.x},${p.y}`)).sort((a, b) => a.y - b.y || a.x - b.x);
   for (const p of ordered) locations.push({ x: p.x - gx, y: p.y - gy, type: p.type });
+  // EXACT-PIECES: the core's land labelled off the bytes just read (the Bay's own pixels read here - the build reads none)
+  const pieces = regionLand(region, (x, y) => (inBay(x, y) ? heightAt(x, y) : heights[(y - gy) * MAP_W + (x - gx)]));
+  yield;   // a step
+  // VOYAGER1: the land the routes are costed on (road/roadLand.js landForRoutes - the smoothed height, the shore, the fords,
+  // the grain);
+  // a ford is water a route may cross, at its price
+  const land = landForRoutes(heights, water, bay, MAP_W, MAP_H, VOYAGER_DIALS, (u, v) => landGrain(gx + u, gy + v));
+  // RIVER-FORDS (AUDIT RELEASE R1-3): the carved rivers' channels over the grid, each crossing priced as a ford's
+  // (road/roadLand.js RIVER_FORD) - a road crosses once, square to the river, where it is narrowest
+  land.river = riverFords(riverRaster(gx, gy, MAP_W, MAP_H));
+  yield;   // a step
+  // VOYAGER-CYRODIIL: the named roads' legs both of whose ends the grid holds (the builder routes a leg its own core's)
+  const legs = trunks.filter(([a, b]) => inGrid(a[0], a[1]) && inGrid(b[0], b[1])).map(([a, b]) => [{ x: a[0] - gx, y: a[1] - gy }, { x: b[0] - gx, y: b[1] - gy }]);
   const net = yield* roadNetworkSteps({
     locations, dials, obstacles: blocked,
-    heightAt: (u, v) => heights[v * MAP_W + u], isWater: (u, v) => water[v * MAP_W + u] === 1,
+    heightAt: (u, v) => heights[v * MAP_W + u], isWater: (u, v) => water[v * MAP_W + u] === 1 && land.ford[v * MAP_W + u] === 0,
     owns: (n) => inCore(region, n.x + gx, n.y + gy),
+    terrain: land, trunks: legs,
+  });
+  // ROAD-GAPS: the pieces of the region's own network that stand within LINK_GAP of each other linked (road/roadGaps.js) -
+  // over dry land, round what the routes go round, the core's pixels in reading order
+  const routedRound = new Set(blocked.map((o) => o.y * MAP_W + o.x));
+  const linked = linkGaps(net, MAP_W, MAP_H, {
+    blocked: (u, v) => (water[v * MAP_W + u] === 1 && land.ford[v * MAP_W + u] === 0) || routedRound.has(v * MAP_W + u),
+    owns: (u, v) => inCore(region, u + gx, v + gy),
   });
   const roads = new Map(), tracks = new Map();
   for (let v = 0; v < MAP_H; v++) {
@@ -184,7 +225,8 @@ export function* tamrielRegionSteps({ region, places, nodes, obstacles, gates, h
     gated++;
   }
   const standing = places.filter((p) => inCore(region, p.x, p.y) && !inBay(p.x, p.y) && !theirs.has(`${p.x},${p.y}`)).sort((a, b) => a.y - b.y || a.x - b.x);
-  return { roads, tracks, places: standing.map((p) => ({ x: p.x, y: p.y, type: p.type })), stats: { ...net.stats, places: locations.length, obstacles: blocked.length, gated } };
+  const trunkPath = (/** @type {any} */ (net.stats).trunkPath ?? []).map((v, k) => v + (k % 2 ? gy : gx));   // VOYAGER-CYRODIIL: the named roads' pixels, Bay pixels
+  return { roads, tracks, land: pieces, places: standing.map((p) => ({ x: p.x, y: p.y, type: p.type })), stats: { ...net.stats, trunkPath, places: locations.length, obstacles: blocked.length, gated, linked } };
 }
 
 // ── THE ROLL, CARRIED ───────────────────────────────────────────
@@ -241,7 +283,7 @@ export const regionPrefix = (region) => `tamriel-roads:${region.i},${region.j}:`
 /** AUDIT TESA II R10: the keys TESA14 and TESA15 wrote (`tamriel-roads:v2:...`) - none is read again. */
 export const LEGACY_REGION_KEYS = Object.freeze(['tamriel-roads:v', 'tamriel-roads:v\uffff']);
 /** The print of a build's inputs - one string, the same on every client that would lay the same roads. */
-export function inputsPrint({ woodsBytes, fit, trace, spec, nodes, obstacles, gates, held = [] }) {
+export function inputsPrint({ woodsBytes, fit, trace, spec, nodes, obstacles, gates, held = [], trunks = null }) {
   let h = 2166136261 >>> 0;
   const mix = (v) => { h = Math.imul(h ^ (v >>> 0), 16777619) >>> 0; };
   // AUDIT TESA II R6: every byte of WOODS.WLD's height map (the boot's smoothing writes it in place - roadsCache.js
@@ -252,7 +294,7 @@ export function inputsPrint({ woodsBytes, fit, trace, spec, nodes, obstacles, ga
   for (let i = 0; i < heights.length; i++) mix(heights[i]);
   if (trace) for (let i = 0; i < trace.land.length; i++) if (trace.land[i]) mix(i * 977 + trace.province[i]);
   if (trace?.relief) for (let i = 0; i < trace.relief.length; i++) mix(trace.relief[i] + 256);   // TAMRIEL-RELIEF: the heights the roads are costed on
-  const text = JSON.stringify([spec, nodes, obstacles, gates, held, ROAD_DIALS, BIOMES_VERSION]);   // AUDIT TESA-BIOME Z3: a region cached under an older zones' law is built again
+  const text = JSON.stringify([spec, nodes, obstacles, gates, held, ROAD_DIALS, BIOMES_VERSION, VOYAGER_DIALS, trunks]);   // AUDIT TESA-BIOME Z3: a region cached under an older zones' law is built again; VOYAGER1: and under other dials of the land's law; VOYAGER-CYRODIIL: and other named roads
   for (let i = 0; i < text.length; i++) mix(text.charCodeAt(i));
   return `${woodsBytes.length}:${fit ? `${fit.ox},${fit.oy},${fit.ppu}` : 'none'}:${h.toString(36)}`;
 }

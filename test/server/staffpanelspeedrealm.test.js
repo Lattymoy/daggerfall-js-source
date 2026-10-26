@@ -162,7 +162,7 @@ test('STAFF-PANEL-SPEED: trade holds in 2 trips, where they were 3 - the read an
 test('STAFF-PANEL-SPEED: the economy in 2 trips, where it was 4 - its batch, the guilds\' list and the audit row together; the market stream in 3, where it was 6 - its sources with the audit row, then its flags\' reads and both usual prices together (mutants: each fold undone)', async () => {
   const s = await stand();
   const econ = await s.trips('/v1/staff/econ/economy');
-  assert.deepEqual([econ.body.richest.characters.map((c) => c.name), econ.body.richest.guilds.map((g) => g.name), econ.body.gold.held.market, econ.body.marks.minted], [['Alda', 'Brond'], ['Wolves'], 300, { patron: 50 }]);
+  assert.deepEqual([econ.body.richest.characters.map((c) => c.name), econ.body.richest.guilds.map((g) => g.name), econ.body.gold.held.market, econ.body.gold.leftOut.market, econ.body.marks.minted], [[], ['Wolves'], 0, 300, { patron: 50 }]);   // ECON-LEFT-OUT: Alda and Brond are held - off the richest, their market gold said apart
   assert.equal(s.rows('economy-read'), 1);
   assert.ok(econ.trips <= 2, `economy: ${econ.trips} trips`);
   const stream = await s.trips('/v1/staff/econ/stream');

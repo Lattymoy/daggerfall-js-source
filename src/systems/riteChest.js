@@ -14,6 +14,7 @@ import { applyRarity } from './loot/lootRarity.js';
 import { goldStack } from './inventory.js';
 import { sigilParty } from './sigil/sigil.js';
 import { registerModSaveData } from './modSaveData.js';
+import { DAEDRA_HEART } from '../net/professionLaw.js';   // DAEDRIC-SMELT: the heart's one row (ONE DFU MEMBER, ONE EXPORT)
 
 /** Gold a level of the opener's, the low and high of the roll. */
 export const RITE_CHEST_GOLD = Object.freeze([20, 40]);
@@ -26,8 +27,9 @@ export const RITE_REAGENTS = Object.freeze([
 ]);
 export const RITE_REAGENTS_MIN = 2;
 export const RITE_REAGENTS_MAX = 4;
-/** A reagent drawn is a Daedra's Heart this often. */
-export const RITE_HEART = Object.freeze({ templateIndex: 53, group: 'CreatureIngredients1' });
+/** A reagent drawn is a Daedra's Heart this often - DFU's own (CreatureIngredients1 53), the Stores' row of it since
+ *  DAEDRIC-SMELT: the Daedric smelt takes it at the forge, loose (bible/06-Systems/Professions-Arc.md section 53). */
+export const RITE_HEART = Object.freeze({ templateIndex: DAEDRA_HEART.templateIndex, group: DAEDRA_HEART.group });
 export const RITE_HEART_CHANCE = 0.08;
 /** A piece of Dagon's Brand, one chest in this many. */
 export const RITE_BRAND_IN = 20;

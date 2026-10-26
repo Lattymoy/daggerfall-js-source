@@ -2,7 +2,7 @@
   {
     "name": "ENDLESS-the-restock-unwired",
     "file": "src/scenes/worldModes.js",
-    "old": "      restockEndless(shelf.items, staged);   // ENDLESS-STOCK",
+    "old": "      restockEndless(shelf.items, staged, shelf === interiorCtx?.shelves?.[0] ? interiorBuilding?.buildingType : null);   // ENDLESS-STOCK",
     "new": "      // ENDLESS-STOCK",
     "tests": [
       "test/systems/fb1004_endless.test.js"
@@ -11,7 +11,7 @@
   {
     "name": "ENDLESS-the-keyed-list-unwired",
     "file": "src/scenes/worldModes.js",
-    "old": "    restockEndless(shelf.items, [it]);   // ENDLESS-STOCK: the keyed list's purchase, as the counter's\n",
+    "old": "    restockEndless(shelf.items, [it], shelf === interiorCtx?.shelves?.[0] ? interiorBuilding?.buildingType : null);   // ENDLESS-STOCK: the keyed list's purchase, as the counter's (ENDLESS-ARROWS: its shop's quiver, the counter's shelf alone - AUDIT UPDATE E2)\n",
     "new": "",
     "tests": [
       "test/systems/fb1004_endless.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "ENDLESS-endless-offline",
     "file": "src/systems/shopStock.js",
-    "old": "  if (!Array.isArray(shelfItems) || !isOnlinePage()) return 0;",
-    "new": "  if (!Array.isArray(shelfItems)) return 0;",
+    "old": "  if (!isOnlinePage()) return n;",
+    "new": "  if (!isOnlinePage() && false) return n;",
     "tests": [
       "test/systems/fb1004_endless.test.js"
     ]

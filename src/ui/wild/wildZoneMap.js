@@ -21,7 +21,7 @@
 // Built once a mask, on a canvas of its own (as the fog is); nothing is computed per frame but the plaques' places.
 // ═══════════════════════════════════════════════════════════════════
 import {
-  WILD_RINGS, WILD_NAME, wildRingAt, wildRingChains, wildRingAnchors, wildRingName, wildRingBonus, wildEdgeChains, ringOfCell, maskWorld, maskWorldBox,
+  WILD_RINGS, WILD_NAME, wildRingAt, wildRingChains, wildRingAnchors, wildRingName, wildRingBonus, wildEdgeChains, wildOutline, ringOfCell, maskWorld, maskWorldBox,
 } from '../../systems/wild/wildZone.js';
 import { t } from '../../systems/textManager.js';   // AUDIT TESA II M5: the legend's new words, through the text core
 import { ZONE_SAFE_TEXT } from '../../systems/wild/zoneSafe.js';   // ZONE-SAFE: the settlements' peace, among the zone's laws
@@ -132,6 +132,12 @@ export function smoothContour(chain, { step = 0.6, relax = 10, cuts = 1 } = {}) 
   return out;
 }
 
+/** THE ZONE'S DRAWN EDGE - the red line, the fog's cut, the zone map's outer ring and its wash (ui/wild/wildMapInk.js
+ *  wildInk, zoneMapInk): ZONE-LINE (Wild-Zone.md section 27) - a zone kept to the pixel (Cyrodiil's) is drawn on its own
+ *  line, never smoothed off it (systems/wild/wildZone.js wildOutline: the province's outline, one line with the
+ *  province's own on the held map); a zone of whole cells is its edge smoothed (SMOOTHZONE). */
+export const zoneLine = (mask) => (mask?.bits ? wildOutline(mask) : wildEdgeChains(mask).map((c) => smoothContour(c, { step: 0.6 * (mask?.cell ?? 1) })));
+
 const _cache = new WeakMap();
 /** The rings as a canvas, each deeper ring's line, the zone's edge and the plaques' anchors - built once a mask. */
 export function zoneMapInk(mask, doc = globalThis.document) {
@@ -152,7 +158,7 @@ export function zoneMapInk(mask, doc = globalThis.document) {
   const box = /** @type {{x0:number,y0:number,x1:number,y1:number}} */ (maskWorldBox(mask));
   const ink = {
     canvas, x0: box.x0, y0: box.y0, w: box.x1 - box.x0 + 1, h: box.y1 - box.y0 + 1,
-    lines, edge: wildEdgeChains(mask).map((c) => smoothContour(c, { step })), anchors: wildRingAnchors(mask),
+    lines, edge: zoneLine(mask), anchors: wildRingAnchors(mask),   // ZONE-LINE: the red line's own
   };
   _cache.set(mask, ink);
   return ink;
@@ -404,7 +410,7 @@ export const ZONE_RULES = Object.freeze([
   'Other players can attack you. Only your party and guild are shown on your maps here.',
   'Foes are four times as strong, elites and champions included.',
   'Two Greater Giants roam every reach, each shown on the map.',
-  'If another player kills you, what you carry drops and lies there for 10 minutes. Potions, torches and the camp kit are kept.',   // FOE-KEEPS: a foe's kill drops nothing
+  'If another player kills you, what you carry drops and lies there for 10 minutes. Potions, torches, the camp kit, your cart, your companions\' packs and insured gear are kept.',   // FOE-KEEPS: a foe's kill drops nothing; STORE-KEEPS and WILD-INSURE: storage and insured gear are kept
   'Travel here is slower: at most 20x in the wilds, 40x on the roads.',
 ]);
 /** AUDIT TESA II M5: THE ZONE MAP'S OWN WORDS past the Wrothgarian zone's - Cyrodiil's travel law, and what the map says

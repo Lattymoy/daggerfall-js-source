@@ -16,6 +16,7 @@ import { dayTurnMs } from '../net/dayTurn.js';   // DAY-TURN: this page's moment
 import { isEconTown } from '../net/townEconLaw.js';
 import { accountTowns, accountRefusalText } from '../net/accountClient.js';
 import { appStorage } from '../systems/appStorage.js';
+import { inBay } from '../world/tamriel/tamrielFrame.js';   // WW7-10: a Bay port's lanes the Bay's
 
 /** AUDIT TOWN-ECON 2 LIV-8: the market bands kept, a town a living-world day. */
 export const MARKET_BANDS_MAX = 4096;
@@ -40,15 +41,25 @@ export function createTownEconHost({ locAt = () => null, portLanes = () => null,
   clockHeard = () => true, seatsHeard = () => true, onBandsReady = () => {}, regionHere = () => null, ...reading }) {
   const towns = door !== undefined ? door : reading.online() ? accountTowns({ fetch: (u, i) => globalThis.fetch(u, i), storage }) : null;
   const book = towns ? createTownEconBook({ door: towns, storage, me: towns.me, isTownPixel: (x, y) => isEconTown(locAt(x, y)?.locationType), relayNowS: () => (clockHeard() ? Math.floor(reading.nowMs() / 1000) : null), turnMs: dayTurnMs() }) : null;   // DAY-TURN
-  /** SEA-TRADE: a port's sea lanes by its map pixel, counted once the map's lanes stand (a lane at each of its two ports). */
-  let laneCounts = null;
+  /** SEA-TRADE: a port's sea lanes by its map pixel, counted once the map's lanes stand (a lane at each of its two ports).
+   *  WW7-10 (bible/03-World/World-Wide.md): the world's lanes (scenes/naval/worldLanes.js `all`), counted again whenever
+   *  they move (the lanes past the Bay are made again as the world's ports do); a Bay port's are the Bay's alone - a lane
+   *  across the edge is no Bay port's, so its economy is every client's whatever land it stands - and a port past the Bay's
+   *  every lane it runs, past the Bay and across its edge. */
+  /** @type {Map<string, number>} */ let laneCounts = new Map();
+  /** @type {any} */ let countedOf = null;
   const lanesAt = (/** @type {number} */ px, /** @type {number} */ py) => {
-    if (!laneCounts) {
-      let lanes = null;
-      try { lanes = portLanes(); } catch { lanes = null; }   // the map unread, or the host's lanes not yet stood
-      if (!lanes?.length) return 0;
+    let lanes = null;
+    try { lanes = portLanes(); } catch { lanes = null; }   // the map unread, or the host's lanes not yet stood
+    if (lanes !== countedOf) {
+      countedOf = lanes;
       laneCounts = new Map();
-      for (const l of lanes) for (const p of [l.a, l.b]) { const k = `${p.px},${p.py}`; laneCounts.set(k, (laneCounts.get(k) ?? 0) + 1); }
+      for (const l of lanes ?? []) {
+        for (const [p, q] of [[l.a, l.b], [l.b, l.a]]) {
+          if (inBay(p.px, p.py) && !inBay(q.px, q.py)) continue;   // WW7-10: the Bay's end of a lane across the edge
+          const k = `${p.px},${p.py}`; laneCounts.set(k, (laneCounts.get(k) ?? 0) + 1);
+        }
+      }
     }
     return laneCounts.get(`${px},${py}`) ?? 0;
   };

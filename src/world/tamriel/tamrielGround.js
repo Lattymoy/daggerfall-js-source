@@ -26,13 +26,14 @@
 // over RELIEF_COAST_REACH, the lattice hash on it - and the authored ranges are the law only without a trace.
 // ═══════════════════════════════════════════════════════════════════
 import { rangeLift } from './tamrielGeography.js';
-import { provinceKeyAt, coastDistanceAt, tamrielTrace } from './tamrielLand.js';   // TAMRIEL3: the picture's own land where it is traced, the authored shape else
+import { provinceKeyAt, coastDistanceAt, coastDepthAt, tamrielTrace } from './tamrielLand.js';   // TAMRIEL3: the picture's own land where it is traced, the authored shape else; SMOOTH-LAND: its smooth law and waterline
 import { bayToPicture, inBay, BAY_W, BAY_H, tamrielFrameInBay, tamrielFit } from './tamrielFrame.js';
 import { CLIMATES, regionOfTheatre } from '../../formats/mapsTables.js';
 import { tamrielBiomeAt } from './tamrielBiomes.js';   // TESA-BIOME: each province's zones, each its own climate and air
 import { reliefStands, reliefAt, RELIEF_COAST_REACH, RELIEF_FLOOR } from './tamrielRelief.js';   // TAMRIEL-RELIEF: the owner's heightmap on the trace
 import { theatreAt } from '../worldWide/worldGrid.js';   // WW-R: a province's land is its region's
 import { WATER_BYTE } from '../roadsProducer.js';   // AUDIT TESA II R1: the beach line the land stands over - one constant
+import { perlinNoise } from '../perlin.js';   // BREATHTAKER3: the large map's swell
 
 /** The height law's bytes (WOODS' own units: byte * 8 metres; the sea at 3 and under). AUDIT TESA II R1/G12: the shore - the
  *  least any land past the Bay stands, the relief's and the authored law's alike - is one over the beach line every
@@ -71,7 +72,7 @@ export function groundHash(x, y, salt = 0x51ed) {
 export function authoredHeightByte(px, py, noise = 0) {
   if (!provinceKeyAt(px, py) || straitAt(px, py)) return 0;
   if (reliefStands()) {
-    const ease = Math.min(1, Math.max(0, coastDistanceAt(px, py) - 0.5) / RELIEF_COAST_REACH);
+    const ease = Math.min(1, Math.max(0, /** @type {number} */ (coastDepthAt(px, py))) / RELIEF_COAST_REACH);   // SMOOTH-LAND: off the smooth waterline (the law's own distance)
     const h = SHORE_BYTE + Math.max(0, reliefAt(px, py) - SHORE_BYTE) * ease + noise;
     return Math.max(Math.round(SHORE_BYTE + (RELIEF_FLOOR - SHORE_BYTE) * ease), Math.min(255, Math.round(h)));   // never under the shore, nor inland under the floor
   }
@@ -110,7 +111,7 @@ const _bytes = new Map();
 const cacheKey = (x, y) => (x + 8192) * 32768 + (y + 8192);
 /** For the pins: the cache's size, and a way to drop it. */
 export const groundCacheSize = () => _bytes.size;
-export const dropGroundCache = () => _bytes.clear();
+export const dropGroundCache = () => { _bytes.clear(); _large.clear(); };   // TAMRIEL-DEEP: the large map reads the land too
 
 /** THE AUTHORED HEIGHT at a Bay-coordinate pixel beyond the Bay (integers), with the lattice noise, cached. Asked of
  *  a pixel on the Bay it still answers the authored law - the composition below is what chooses. */
@@ -143,20 +144,32 @@ export function climateNeighbourIn(px, py, x, y) {
   return x >= f.x0 && y >= f.y0 && x < f.x0 + f.w && y < f.y0 + f.h;
 }
 
-/** The large map's 5 x 5 of detail for a pixel beyond the Bay - data[x][y] as WoodsFile.getLargeMapData shapes it: a
- *  lattice hash of small bytes (0..9; the kernel scales them by NOISE_MAP_SCALE), deterministic in the pixel. TAMRIEL-DEEP
- *  (bible/03-World/Deep-Waters.md): none at sea, as WOODS.WLD's own sea carries none (0 over 406 of 411 sampled Bay sea
- *  pixels, 1 the most) - the hash's detail lifted the seabed past the Bay into the beach line's reach, so not one pixel
- *  of the continent's sea was the sea to the Deep Waters bake's bound (world/deepWater/deepWatersBake.js classifyPixel). */
+/** The large map's 5 x 5 of detail for a pixel beyond the Bay - data[x][y] as WoodsFile.getLargeMapData shapes it: small
+ *  bytes (0..9; the kernel scales them by NOISE_MAP_SCALE), deterministic in the pixel. BREATHTAKER3: a smooth swell about
+ *  the old mean (LARGE_SWELL: its wavelength in the large map's own cells, its swing), where it was a lattice hash - a
+ *  bump of up to 45 m every 273 m (the kernel reads three of its five cells a pixel), the same everywhere: the "very monotonous noise" a walker saw past the Bay. The land's
+ *  own shapes are the landforms' (world/tamriel/tamrielLandforms.js). TAMRIEL-DEEP (bible/03-World/Deep-Waters.md): none
+ *  at sea, as WOODS.WLD's own sea carries none (0 over 406 of 411 sampled Bay sea pixels, 1 the most) - the detail lifted
+ *  the seabed past the Bay into the beach line's reach, so not one pixel of the continent's sea was the sea to the Deep
+ *  Waters bake's bound (world/deepWater/deepWatersBake.js classifyPixel). */
+export const LARGE_SWELL = Object.freeze({ wave: 11, swing: 2.5, mean: 4.5 });
+/** @type {Map<number, Uint8Array[]>} the swell's pixels, kept (a kernel reads nine a pixel, a neighbour's again) */
+const _large = new Map();
 export function tamrielLargeMap(x, y) {
-  const sea = tamrielHeightByte(x, y) === 0, data = [];
+  const k = cacheKey(x, y), hit = _large.get(k);
+  if (hit) return hit;
+  const data = [], { wave, swing, mean } = LARGE_SWELL, sea = tamrielHeightByte(x, y) === 0;
   for (let ix = 0; ix < 5; ix++) {
     const col = new Uint8Array(5);
-    if (!sea) for (let iy = 0; iy < 5; iy++) col[iy] = Math.floor(groundHash(x * 5 + ix, y * 5 + iy, 0x2545) * 10);
+    if (!sea) for (let iy = 0; iy < 5; iy++) col[iy] = Math.round(mean + swing * (2 * perlinNoise((x * 5 + ix) / wave + 0.37, (y * 5 + iy) / wave + 0.61) - 1));
     data.push(col);
   }
+  if (_large.size >= LARGE_CACHE_MAX) _large.clear();
+  _large.set(k, data);
   return data;
 }
+/** The swell's kept pixels before they are dropped whole. */
+const LARGE_CACHE_MAX = 16384;
 
 /**
  * THE COMPOSITION: a WoodsFile with the continent round it. A prototype child of the Bay's own reader, so every

@@ -456,7 +456,7 @@ test('STAFF-EVENT: the client\'s word and the relay\'s frame - a staff word pars
   assert.match(online, /m\.t === 'sev'/);
   assert.match(online, /relaySupportsStaffEvents/);
   assert.match(online, /r\.k === 'st' \|\| r\.k === 'bd' \|\| r\.k === 'rc' \? isCellRoom\(room\)/, 'THE REWARD: the board and my receipt from the place\'s cell alone');
-  assert.match(rd('src/scenes/world.js'), /onRaidReceipt: \(r, c\) => \{ \(c\?\.v \? grantStaffSpoils\(raidSpoils, spoilsLock, c, /, 'THE REWARD: an event\'s receipt rolls its spoils into the pack');
+  assert.match(rd('src/scenes/world.js'), /onRaidReceipt: \(r, c, held\) => \{ \(c\?\.v \? grantStaffSpoils\(raidSpoils, spoilsLock, c, /, 'THE REWARD: an event\'s receipt rolls its spoils into the pack');   // PIN MOVED (AUDIT WORLD-EVENTS L3-14): a raid's receipt carries whether its town was held
   assert.ok(validStaffEvent(EV));
   // mob 2026-10-24: a city said as a city, anything else as an area
   assert.equal(staffAttackLine({ locationIndex: -1, locationName: 'Road', regionIndex: 3, staff: { b: 7 } }), 'The area of Road is under attack!');

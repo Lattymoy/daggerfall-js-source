@@ -656,8 +656,8 @@
   {
     "name": "REZ-BLOODLINE-world-the-pose-says-nothing",
     "file": "src/scenes/world.js",
-    "old": "...(legacyHost?.raisable() === false ? { fg: 1 } : {}),",
-    "new": "...({}),",
+    "old": "...(legacyHost?.raisable() === false || !hourRezOpen() ? { fg: 1 } : {}),",
+    "new": "...(!hourRezOpen() ? { fg: 1 } : {}),",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ]

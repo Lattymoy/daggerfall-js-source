@@ -1,0 +1,238 @@
+[
+  {
+    "name": "AUDIT-WE-L2-1-the-peers-spell-unresisted",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "hurt: (n, o) => damageFoe(f, bossStrikeAt(f.entity, n, 'spell', null, o?.element ?? null, !!o?.whole, null), null, null, { fromPlayer: true, peer: true, peerId: from,",
+    "new": "hurt: (n, o) => damageFoe(f, n, null, null, { fromPlayer: true, peer: true, peerId: from,",
+    "tests": [
+      "test/scenes/auditwe_traits.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L2-2-the-rounds-unresisted",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "tickActiveEffects(e, counting(got, e), rolls);",
+    "new": "tickActiveEffects(e, counting(got), rolls);",
+    "tests": [
+      "test/scenes/auditwe_traits.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L2-4-the-ward-fixed",
+    "file": "src/systems/bossTraits.js",
+    "old": "const wardMax = (entity) => Math.max(1, Math.round((entity?.maxHealth || 1) * WARD_SHARE));",
+    "new": "const wardMax = (entity) => Math.max(1, Math.round(100 * WARD_SHARE));",
+    "tests": [
+      "test/scenes/auditwe_traits.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L2-5-a-fall-warded",
+    "file": "src/systems/bossTraits.js",
+    "old": "  if (!traits.length || whole || !blow || !(damage > 0)) return { damage, ward: 0, broke: false };",
+    "new": "  if (!traits.length || whole || !(damage > 0)) return { damage, ward: 0, broke: false };",
+    "tests": [
+      "test/scenes/auditwe_traits.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L2-5-any-wound-starting-the-wrath",
+    "file": "src/systems/bossTraits.js",
+    "old": "  if (mine) { bossTraitsTick(entity, nowS);",
+    "new": "  if (true) { bossTraitsTick(entity, nowS);",
+    "tests": [
+      "test/scenes/auditwe_traits.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L2-5-the-tick-never-turning",
+    "file": "src/systems/bossTraits.js",
+    "old": "  return bossWrathDue(entity, nowS) ? 'wrath' : null;",
+    "new": "  return null;",
+    "tests": [
+      "test/scenes/auditwe_traits.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L2-5-the-cool-ignored",
+    "file": "src/systems/bossTraits.js",
+    "old": "  if (nowS - (entity.bossFoughtS ?? entity.bossWrathFrom) > WRATH_COOL_S) { entity.bossWrathFrom = null; return null; }\n",
+    "new": "",
+    "tests": [
+      "test/scenes/auditwe_traits.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L2-5-the-pause-counted",
+    "file": "src/systems/bossTraits.js",
+    "old": "  if (_clockAt != null && !paused) _clockS +=",
+    "new": "  if (_clockAt != null) _clockS +=",
+    "tests": [
+      "test/scenes/auditwe_traits.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L2-6-the-drop-never-given",
+    "file": "src/systems/eliteFoes.js",
+    "old": "  if (own) grantEliteLoot(entity, entity.level);",
+    "new": "",
+    "tests": [
+      "test/scenes/auditwe_traits.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L2-7-the-share-unsent",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": " ...(f.entity?.bossWard ? { bv: bossWardShare(f.entity) } : {}),",
+    "new": "",
+    "tests": [
+      "test/scenes/auditwe_traits.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L2-7-the-share-unread",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "f.entity.bossWardShown = r.bv / 100; }",
+    "new": "}",
+    "tests": [
+      "test/scenes/auditwe_traits.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L2-11-the-mask-untrimmed",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "bossTraitsOfMask(r.bt, r.rl === 1 ? 2 : 1)",
+    "new": "bossTraitsOfMask(r.bt)",
+    "tests": [
+      "test/scenes/auditwe_traits.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L2-8-the-heir-unwarded",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    standBossWard(f.entity, bossClockS());   // AUDIT WORLD-EVENTS L2-8: a warded foe taken over keeps a ward - its owner's last share, regrowing from here\n",
+    "new": "",
+    "tests": [
+      "test/scenes/auditwe_traits.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L2-9-the-traits-unsaved",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        ...(bossTraitsOf(f.entity).length ? { traits: bossTraitMask(f.entity.bossTraits),",
+    "new": "        ...(false ? { traits: bossTraitMask(f.entity.bossTraits),",
+    "tests": [
+      "test/scenes/auditwe_traits.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L2-9-the-save-unread",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        if (Number.isInteger(sf.traits) && f.entity.eliteFoe) restoreTraits(f.entity, sf);",
+    "new": "",
+    "tests": [
+      "test/scenes/auditwe_traits.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L2-10-the-zeroing-curbed",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    damage = bossTakeAt(f.entity, damage, _whole || bypassShield, bossClockS(),",
+    "new": "    damage = bossTakeAt(f.entity, damage, _whole, bossClockS(),",
+    "tests": [
+      "test/scenes/auditwe_traits.test.js"
+    ],
+    "equivalent": true,
+    "why": "belt-and-braces: a SetHealth(0) arrives as fromPlayer false with no striker (zeroFoeHealth), so L2-5's blow gate already passes it whole; the `|| bypassShield` keeps it whole should a player's door ever zero a foe"
+  },
+  {
+    "name": "AUDIT-WE-L2-13-the-number-unretold",
+    "file": "src/scenes/foeTraitsHost.js",
+    "old": "  if (d !== damage) retellHit(entity, d, t('bossTraits.tag.resisted', 'Resisted'));",
+    "new": "",
+    "tests": [
+      "test/scenes/auditwe_traits.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L2-14-any-two-of-eight",
+    "file": "src/systems/bossTraits.js",
+    "old": "  return [pick(ELEMENT_TRAITS), pick(RELAY_BOSS_BLOW_TRAITS)];",
+    "new": "  return rollBossTraits(2, r, RELAY_BOSS_TRAITS);",
+    "tests": [
+      "test/scenes/auditwe_traits.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L2-3-the-wrath-unsent",
+    "file": "src/scenes/foeTraitsHost.js",
+    "old": "  if (entity.bossWrath) out.bw = 1;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/auditwe_traits.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L2-3-the-own-lane-plain",
+    "file": "src/scenes/foeTraitsHost.js",
+    "old": "  if (seeded && entity.eliteFoe) { out.z = 1; out.bt = bossTraitMask(entity.bossTraits); }\n",
+    "new": "",
+    "tests": [
+      "test/scenes/auditwe_traits.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L2-7-the-joiners-ward-kept",
+    "file": "src/scenes/foeTraitsHost.js",
+    "old": "giveBossTraits(entity, bossTraitsOfMask(r.bt, entity.raidLeader ? 2 : 1), { own: false });",
+    "new": "giveBossTraits(entity, bossTraitsOfMask(r.bt, entity.raidLeader ? 2 : 1), { own: true });",
+    "tests": [
+      "test/scenes/auditwe_traits.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L2-7-the-drawn-copy-keeps-its-ward",
+    "file": "src/scenes/foeTraitsHost.js",
+    "old": "/ 100; entity.bossWard = undefined; }",
+    "new": "/ 100; }",
+    "tests": [
+      "test/scenes/auditwe_traits.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L5-4-the-lords-bare",
+    "file": "src/scenes/foeTraitsHost.js",
+    "old": "  if (!q?.lord || !q.entity || bossTraitsOf(q.entity).length) return;",
+    "new": "  if (true || !q.entity || bossTraitsOf(q.entity).length) return;",
+    "tests": [
+      "test/scenes/auditwe_traits.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L5-6-the-rules-never-told",
+    "file": "src/scenes/foeTraitsHost.js",
+    "old": "  for (const l of bossTraitsTaught(entity)) say?.(l);\n",
+    "new": "",
+    "tests": [
+      "test/scenes/auditwe_traits.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L5-6-told-every-blow",
+    "file": "src/systems/bossTraits.js",
+    "old": "    if (_taught.has(id)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/auditwe_traits.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L5-12-the-word-twice",
+    "file": "src/ui/hud/hudFoeTarget.js",
+    "old": "const titled = (e, base) => foeTitle(e, base, { traits: false });",
+    "new": "const titled = (e, base) => foeTitle(e, base);",
+    "tests": [
+      "test/scenes/auditwe_traits.test.js"
+    ]
+  }
+]

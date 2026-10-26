@@ -137,8 +137,8 @@ test('TR3/MAC-K3: the host door - grounded and outdoors only, and EVERY host tha
   assert.match(rig, /if \(art && isRiding\(player\.transportMode\) && !ridePaused && !mwViewHides\(\)\.horse\) \{/);   // AUDIT-EOTB2: and not under the Eye Of The Beholder body, which draws the rider with the horse
   // The loop is a REAL channel, not an optional-chained no-op, and the
   // clip is the CLASSIC one, literally: the enhanced 3D horse that once
-  // swapped mod clips into this expression was removed whole (2026-09-04).
-  assert.match(rig, /audio\.setLoop\('riding', r\.playing \? SOUND\[r\.clip\] : null, \{ volume: r\.volume, pitch: r\.pitch \}\);/);
+  // swapped mod clips into this expression was removed whole (2026-09-04). HORSE-VOL: its volume under Horse Volume.
+  assert.match(rig, /audio\.setLoop\('riding', r\.playing \? SOUND\[r\.clip\] : null, \{ volume: r\.volume \* horse, pitch: r\.pitch \}\);/);
   assert.match(read('src/systems/audio.js'), /setLoop\(name, clip, \{ volume = 1, pitch = 1 \} = \{\}\) \{/);
 
   // THE POPULATION, derived: every host that builds a rig must open on

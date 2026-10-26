@@ -761,7 +761,7 @@ export function createEgFight({ renderer = null, gl = null, getTexture = null, u
     // you see meets him, never passes through it); it stands where the sprite's feet are drawn
     if (!b.fellAt && b.hp > 0 && (b.fl & (EG_FL.friend | EG_FL.hidden)) === 0) {
       // FIELD BUGS 2026-10-18f RELAY-SHARE: its stand-in reads its health as the relay says it - `hp` of its whole, refilled below
-      d.target ??= { i: b.i, feet: [0, 0, 0], height: 2, radius: 0.6, entity: hostStandIn({ mobile: look.mobile, name: look.name }, b.i, () => wordShare(d.target?.hp, d.target?.m), myBlowX), mobile: look.mobile, name: look.name, m: b.max, hp: b.hp };
+      d.target ??= { i: b.i, feet: [0, 0, 0], height: 2, radius: 0.6, entity: hostStandIn({ mobile: look.mobile, name: look.name }, b.i, () => wordShare(d.target?.hp, d.target?.m), myBlowX), mobile: look.mobile, name: look.name, lord: !!look.lord, m: b.max, hp: b.hp };   // AUDIT WORLD-EVENTS L5-4: `lord` - a Spire lord carries its traits (scenes/foeTraitsHost.js hostLordTraits)
       d.target.feet[0] = d.at[0]; d.target.feet[1] = centre[1] + y; d.target.feet[2] = d.at[2];
       d.target.height = (look.lord ? 2.2 : EG_LEGION_KINDS[b.k]?.h ?? 2) * (look.lord ? look.drawn / 1.2 : 1); d.target.radius = look.lord ? Math.max(0.8, (1.8 * look.scale) / 3) : EG_LEGION_KINDS[b.k]?.r ?? 0.6; d.target.m = b.max; d.target.hp = b.hp;
       turnStandIn(d.target, b);   // FIELD BUGS 2026-10-18f TURNED-BLOW: a blow from where I stand, on it as it stands, that the relay will refuse is turned here too

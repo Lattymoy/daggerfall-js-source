@@ -285,7 +285,7 @@ test('WW3 the living world\'s ports by the one number: a port town past the Bay 
   assert.equal(index.townOfPort(maskMapId(0x7fffff)), null, 'never by a masked id past the Bay');
 });
 
-test('WW3 the wiring: the world host stands the world\'s ports off the registry and its lanes off them, asks them for the port test, the nearest port, the board\'s list and the harbour past the Bay, hands the waters\' area to the sea, the Bay\'s lanes alone to the serpent and the sea trade, and the raiders the world\'s sea; the naval host names her by her waters\' people (mutants: the lanes\' book, the port test past the Bay, the board\'s list, the area unsaid, the raiders\' ground)', () => {
+test('WW3 the wiring: the world host stands the world\'s ports off the registry and its lanes off them, asks them for the port test, the nearest port, the board\'s list and the harbour past the Bay, hands the waters\' area to the sea, the world\'s lanes to the serpent (WW7-12) and the sea trade, and the raiders the world\'s sea; the naval host names her by her waters\' people (mutants: the lanes\' book, the port test past the Bay, the board\'s list, the area unsaid, the raiders\' ground)', () => {
   const w = src('src/scenes/world.js');
   assert.match(w, /const worldPorts = createWorldPorts\(\{ places: worldPlaces, openSea, land: tamrielLandVersion, regionAt: \(x, y\) => maps\.getRegionIndexAt\(x, y\) \}\);/);
   assert.match(w, /const worldLanes = createWorldLanes\(\{ mapDict: \(\) => mapDict, maps, portIds: PORT_LOCATION_IDS, ports: worldPorts, bayOpen: laneOpen, bayOpenNative: laneOpenNative, water: tvWater, beyond: \(\) => tamrielLand \}\);/);
@@ -298,15 +298,16 @@ test('WW3 the wiring: the world host stands the world\'s ports off the registry 
   assert.match(w, /if \(_navalPortList\) return worldPorts\.withBay\(_navalPortList\);/);
   assert.match(w, /_navalPortList = \[\.\.\.out\.values\(\)\];\n\s*return worldPorts\.withBay\(_navalPortList\);/);
   assert.match(w, /region: _questRegionIndex\(\), area: worldPorts\.seaAreaAt\(p\.x, p\.y\),/);
-  assert.match(w, /return findSerpentSite\(day, \{ lanes: worldLanes\.bay\(\), wayOf: worldLanes\.way, open: laneOpen \}\);/);
-  assert.match(w, /portLanes: \(\) => \(_lanesReady && mapDict \? worldLanes\.bay\(\) : null\) \}\);/);
+  assert.match(w, /return worldSerpentSite\(day, worldLanes, serpentLink\.toldAt\);/);   // PIN MOVED (WW7-12): every lane of the world, or the hub's word
+  assert.match(w, /portLanes: \(\) => \(_lanesReady && mapDict \? worldLanes\.all\(\) : null\) \}\);/);   // PIN MOVED (WW7-10): the world's lanes, a Bay port's the Bay's (townEconHost.js lanesAt)
   assert.match(w, /if \(!onWorldSea\(px, py, tamrielLand\) \|\| maps\.getClimateIndex\(px, py\) !== CLIMATES\.Ocean\) return false;/);
   assert.match(w, /return onWorldSea\(px, py, tamrielLand\) && tvWater\(px, py\);/);
   assert.match(w, /classId: p\.cls\.id, region: p\.region, area: lane\.a\.area \?\? -1,/);
   assert.match(src('src/scenes/livingWorld/livingLanes.js'), /const id = portIdOf\(town\);/);   // PIN MOVED (AUDIT WW F7): a town's lanes the living lanes' book's
   assert.equal((w.match(/maskMapId\(/g) ?? []).length, 0, 'no port keyed by a masked id in the host');
   const n = src('src/scenes/naval/navalHost.js');
-  assert.match(n, /watersShipNames\(cls, spec\.seed, region, crown, spec\.area \?\? \(spec\.region >= 0 \? -1 : w\.area \?\? -1\)\)/, 'her home port\'s waters, else the waters she is met in - a Bay ship\'s her region\'s');   // PIN MOVED (AUDIT TESA II K7): the names built beside watersFolk, out of the host's scope
+  assert.match(n, /watersShipNames\(cls, spec\.seed, region, crown, area\)/, 'her home port\'s waters, else the waters she is met in - a Bay ship\'s her region\'s');
+  assert.match(n, /const namesArea = \(spec, w\) => spec\.area \?\? \(\(spec\.region \?\? -1\) >= 0 \? -1 : w\.area \?\? -1\);/, 'PIN MOVED (WW7-8): the area the module\'s namesArea, kept on her entry for the wire');   // PIN MOVED (AUDIT TESA II K7): the names built beside watersFolk, out of the host's scope
   assert.match(n, /const watersShipNames = \(cls, seed, region, crown, area\) => shipNames\(cls, seed, \{ regionIndex: region, crown, bank: shipNameBank\(region, area\) \}\);/);
   assert.match(n, /\.\.\.watersFolk\(where\(\)\), record: saved\?\.mates \?\? null \}\);/);   // PIN MOVED (AUDIT WW F12): the waters read once
   assert.match(n, /const watersFolk = \(w\) => \(\{ regionIndex: w\.region \?\? 17, bank: shipNameBank\(w\.region \?\? 17, w\.area \?\? -1\) \}\);/);

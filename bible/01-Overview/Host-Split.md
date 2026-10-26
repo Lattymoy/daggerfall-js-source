@@ -638,3 +638,102 @@ loops each frame (`csaAudioFrame`, AudioSource.Play's loops on Come Sail Away's 
 ceiling at it (`test/scenes/hostceiling.test.js`). AUDIT STARTS (2026-10-25, `audits/Audit-Starts.md`): 36,180 ->
 36,179 - its fixes went into the start host (`startsHost.js` restored, resumesAt, the land's wait, the machine's
 restores), and the host's own lines are three questions it asks of it: the two load doors' and the online wake's.
+
+## MID-RING's wiring - the ocean holes' pits out of bootWorld (2026-10-26)
+
+MID-RING (`06-Systems/Travel-View.md` MID-RING and FAR-FIELD) puts the middle ring and the far field in the far ring's
+own renderer (`render/farRing.js`, `render/midRing.js`, `render/farField.js`), so the host's share is one option: the
+far ring handed the terrain's client (`mid: terrainGen`), whose worker builds both - one logical line, and `bootWorld`
+stood at its ceiling (36,116). No raise. A cut that nothing writes went out instead: the ocean holes' pits
+(`ohCreatePit`, `ohDestroyPit`, their identity matrix, and the miasma's import with them) to
+`scenes/oceanHolesPits.js` `createOceanHolesPits`, by `tools/hostMove.mjs`, verbatim - the collider by value, the
+state read live through the host (`get state()`), and its callers (the ocean holes' host) run after the construction.
+`bootWorld` 36,116 -> 36,093 logical lines (24 out, 1 in), and the ceiling at it (`test/scenes/hostceiling.test.js`).
+The one pin that quoted the moved line reads it through the host's text now (`perfcol2`, PIN MOVED), and the tool
+re-aimed the mutant records over it (`oh.json`, `perfcol2.json`).
+
+## IC-GRAND x FAR-LANDMARK wiring - the far ring handed to the sweeps (2026-10-26)
+
+The Imperial City hands its far silhouette to stream B's FAR-LANDMARK hook from `scenes/capitalSkyline.js`, constructed and
+swept by `scenes/tamrielSweepsHost.js` (the capitals' sweep, already asked on the frame). The host's share is the ring itself:
+`get farRing() { return farRing; }` in the sweeps' host object - an entry and its return, two logical lines - and
+`bootWorld` stood at its ceiling (36,062) after the streams' merge. RAISED to 36,064 with the reason beside the row
+(`test/scenes/hostceiling.test.js`): the two lines are the wiring, nothing of the behaviour; the one cut near them
+(`arenaDoorTarget`, which IC-GRAND touched) is quoted by text in five pins and two mutant records, a move that would
+re-aim all of them for two lines. A later cut that moves code out lowers it again.
+
+## IC-SWAP-BEHIND - every rebuild's tail out of bootWorld (2026-10-26)
+
+Every rebuild of a standing pixel ended in the same four lines in `bootWorld` (and three times more in the sweeps' host):
+the player's own pixel held, each torn down with its loose objects kept, queued nearest first. The swap that builds a
+rebuild behind the view that stands (`scenes/swapBehind.js` rebuild - `bible/03-World/Arena-Provinces.md` IC-GRAND, "Built
+behind the view that stands") owns that tail now: made where the sweeps' host is (`scenes/tamrielSweepsHost.js`, which
+hands it back), each sweep's tail one call. The host's share is the swap's wiring - the collider, the door list and its
+generation (a getter and a setter) handed to the sweeps - and two names in its build's door (`swap.owes`, `swap.failed`).
+`bootWorld` 35,894 -> 35,869 logical lines on the branch's merged host, its ceiling at it
+(`test/scenes/hostceiling.test.js`). The far ring's skyline is handed the two names it reads, live, so the seam law sees
+them (`test/tooling/hostseam.test.js`).
+
+## WW7-12 - the serpent's site hands the lanes' book whole (2026-10-26)
+
+The serpent's site rolled over the world's lanes (`bible/03-World/World-Wide.md` WW7-12) asks the world's lanes' book for
+four things (`whole`, `all`, `way`, `open`) and the hub's word for a fifth: handed as an object of entries in `bootWorld`
+it would have cost two logical lines over the three the Bay's `{ lanes, wayOf, open }` already did, so the host hands the
+book itself (`worldSerpentSite(day, worldLanes, serpentLink.toldAt)` - `systems/serpent/serpentSite.js` reads it).
+`bootWorld` 36,064 -> 36,061 logical lines, and the ceiling at it (`test/scenes/hostceiling.test.js`; `hostsplit.json`
+re-aimed by content).
+## VENDOR-LOST's move - the home traders out of bootWorld (FIELD BUGS 2026-10-25)
+VENDOR-LOST (`01-Overview/bugs/Field-Bugs-2026-10-25g.md`) had a trader's stall settle the market book as it opens: two
+logical lines of wiring in the stall's host object, inside `bootWorld`. The block they belonged to - the home traders'
+thirteen members (the stall `openHomeVendorWindow`, the board's Vendors tab `vendorBoardHost`, `vendorBuy`, `vendorTake`,
+`vendorPut`, `vendorReachable` and the Vendor page's helpers) - wrote nothing of the host's and was used in three places,
+so it moved verbatim instead, by `tools/hostMove.mjs`, to `src/scenes/vendorHost.js` (`createVendorHost(host)`), and the
+wiring lives there. `bootWorld` 36,389 (main's, at the merge) -> 36,251 logical lines, its ceiling down to what stands. No
+pin read the moved code's text; the stall's settle is held by a test that builds the vendor host and opens a stall
+(`fb1025_vendorlost.test.js`). The tool wrote Windows absolute paths into the module's imports on this machine; they were
+set back to the host's relative ones by hand.
+## PARTY-FOLLOW's move - the party arrival out of bootWorld (2026-10-25)
+PARTY-FOLLOW (`06-Systems/Online-Arc.md`) changes how a follower lands beside the party leader: it waits for a spot
+beside them before taking the place's own arrival, and says when it took it. That law stood in `bootWorld` - the
+waiting callback inside `fastTravelTo`'s teleport, the `partyBesideLanding` frame conversion beside `_teleportToPixel`,
+and the arrival line's choice - and other open pull requests touch `world.js` too. It went out rather than changing
+there: `systems/party/partyArrival.js`, beside `waitForPartyArrival` whose wait it drives, written as a module the host
+wires (fishHost.js's shape, not a verbatim move - its new behaviour is in it). `createPartyArrival` is the law over its
+seams (a test runs it with fakes); `createPartyArrivalHost` binds it to the host's streaming state, collider and sea.
+The host keeps one construction (`partyLanding`), one `land(pick, fallback)` and one `arrivalLine`. `bootWorld`
+36,387 -> 36,384 logical lines, its ceiling 36,389 -> 36,384. The pins that quoted the moved code run the module now
+(`partyArrivalTransaction.test.js`, `partyBoatTeleportFix.test.js`, `l10n3e_scenes.test.js`; `partytravel.test.js`
+pins only the wiring), and three mutant records were re-aimed there.
+## WILD-REJOIN's move - the seizure's frame out of bootWorld (2026-10-25)
+WILD-REJOIN (`01-Overview/bugs/Field-Bugs-2026-10-25h.md`) wires a page that comes back while its fall is still down, and
+`bootWorld` stood one logical line under its ceiling (36,386 of 36,387). The move came first, by `tools/hostMove.mjs`:
+`wildSeizeFrame` - the killer's carry of a fall's receipt, one member that writes nothing of the host's - went verbatim to
+`src/scenes/wildSeizeHost.js` (`createWildSeizeHost(host)`): five names by value (`_wildSeize`, `campToWire`, `player`,
+`wildAccount`, `wildDeposit`), two live (`online`, `wildRemains`), the frame returned. 17 logical lines freed
+(36,386 -> 36,369); WILD-REJOIN's wiring took them back (36,386), the decisions in `systems/wild/wildRejoin.js`. The
+ceiling stays. Two pins quote the moved spelling (`host.online`): `test/net/int9_wild_ref.test.js` through `hostText`,
+`test/systems/fb1015_cartaway.test.js` by the module's own path. The change the slice made to the frame (the 'grace'
+word of an older account service asked again once) came after the move, in the module.
+WILD-REJOIN BODY (2026-10-25, the owner's rule for every open pull request: the hosts are wiring). The zone death's body
+record - `{ p, room, dungeon, px }`, where the remains of a death are laid - was composed twice in `bootWorld`: at the
+first dead frame (the death mark) and where a page that came back is told it is down (the referee's place). Two copies of
+one shape drift (Home.md, THE ONE CONSTRUCTION SEAM), so the record is `systems/wild/wildRejoin.js` `bodyAt(p, room)`,
+handed the player's hall and pixel through the module's `place` handle, and both sites call it. 4 logical lines out
+(36,387 -> 36,383); the ceiling comes down by them (36,389 -> 36,385). Pinned by `wildrejoin.test.js` THE BODY RECORD,
+three more records in `tools/mutants/wildrejoin.json`.
+
+## PORTAL-BAY - the Portal Stone's door, pick and step out of bootWorld (2026-10-26)
+
+The stone's teleport past the Bay (`06-Systems/Portal-Stone.md` PORTAL-BAY) needed its gate asked at the pick and at the
+step, before the black, and teleportTo's answer read - new behaviour in the stone's own code, which stood in `bootWorld`.
+The five members went out first, verbatim, by `tools/hostMove.mjs`: `portalHoldNow`, `portalDoorRefusal`,
+`openPortalStone`, `standPortal` and `portalArrive` to `scenes/portalStoneHost.js` `createPortalStoneHost` - seventeen
+names by value (teleportTo a hoisted function declaration among them), eight live (`_teleporting`, the gates declared
+below - `veilRefused`, `wildTeleportRefused` - and the travel's state), `_foesFullAt` written through the host; its two
+callers above the construction (the portals' `onEnter`, the pack's `openPortal`) are closures run after it. Then the
+change, in the module: its gate (`teleportRefused`) and the arrival's answer; in the host, one live entry
+(`wildTravelGate`), teleportTo's `return true` and the gate's third argument. `bootWorld` 36,061 -> 36,011 logical lines on
+its branch; merged with the branch head (the merge of main, relay world269), 35,894 -> 35,844, and the ceiling at it
+(`test/scenes/hostceiling.test.js`, its mutant re-aimed under it). The tool re-aimed eighteen mutant records over the moved lines
+(`portal1.json`, `audittesa2z.json`, `auditcaptsea.json`, `egmade.json`); the pins that cut the members from world.js's
+text cut them from the module's (`portal1_stone.test.js`, `egmade_law.test.js`, PIN MOVED).

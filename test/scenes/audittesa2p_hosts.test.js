@@ -11,7 +11,7 @@ import { join } from 'node:path';
 import { createZoneHalls } from '../../src/scenes/zoneHallsHost.js';
 import { createWorldPlaces } from '../../src/world/worldWide/worldPlaces.js';
 import { createLivingLanes } from '../../src/scenes/livingWorld/livingLanes.js';
-import { livingRoams } from '../../src/scenes/livingWorld/livingIndex.js';
+import { livingSide, LIVING_SIDES } from '../../src/scenes/livingWorld/livingIndex.js';   // PIN MOVED (WW7-7): P7's livingRoams lifted
 import { portIdOf } from '../../src/world/worldWide/worldPorts.js';
 import { createWorldLanes, beyondLaneWay, worldLaneWater, BEYOND_LANE_MAX_PX, BEYOND_LANE_PATH_PX, LANE_NEAR_PX } from '../../src/scenes/naval/worldLanes.js';
 import { laneNetwork, LANE_PATH_PX, LANE_MAX_PX, LANE_STRAIGHT_STEPS } from '../../src/systems/naval/seaLanes.js';
@@ -189,16 +189,20 @@ test('AUDIT TESA II Z7/Z9 (ARENA2) THE DAY\'S HALLS ON THE FREEWARE\'S WORLD: th
   assert.ok([...reads.values()].every((n) => n <= 1), 'a pixel\'s plateau read once a session');
 });
 
-test('AUDIT TESA II P7 THE LIVING WORLD HELD TO THE BAY: a town past the Bay is the registry\'s record, never a lane\'s traveller - its port\'s lanes none; the Bay\'s as before (mutants: the guard dropped; the Bay\'s refused)', () => {
+// PIN MOVED (WW7-7, bible/03-World/World-Wide.md - the owner, 2026-10-26: "Yes travellers to need to travel everywhere. Same
+// for ships."): P7 held the living world to the Bay until WW7; WW7-7 lifts it - each trip keeps to its own side of the Bay's
+// edge (scenes/livingWorld/livingIndex.js livingSide), and a town past the Bay sails its travellers on the lanes past it
+test('AUDIT TESA II P7 -> WW7-7 THE LIVING WORLD ON BOTH SIDES OF THE BAY\'S EDGE: a town past the Bay a lane\'s traveller as a Bay port\'s is - its port\'s lanes past the Bay, a Bay port\'s the Bay\'s; the sides the Bay\'s and the land past it (mutants: the side law; a lane over the edge)', () => {
   const bay = { mapId: 7, px: 200, py: 199, port: true }, windhelm = { mapId: (0x341 << 20), px: 2215, py: -371, port: true };
-  assert.deepEqual([livingRoams(bay), livingRoams(windhelm), livingRoams({ px: 999, py: 499 }), livingRoams({ px: 1000, py: 0 })], [true, false, true, false]);
+  assert.deepEqual([livingSide(bay), livingSide(windhelm), livingSide({ px: 999, py: 499 }), livingSide({ px: 1000, py: 0 })], [LIVING_SIDES.bay, LIVING_SIDES.beyond, LIVING_SIDES.bay, LIVING_SIDES.beyond]);
   const lane = (a, b) => ({ key: `${a.id}-${b.id}`, a, b });
   const A = { id: 199200 }, B = { id: 199225 };
   const wh = { mapId: (0x341 << 20) | 0x80000, px: 2215, py: -371, port: true }, so = { mapId: (0x341 << 20) | 0x80001, px: 1700, py: -420, port: true };
   const C = { id: portIdOf(wh) }, E = { id: portIdOf(so) };   // two ports past the Bay, a lane between them (WW3's)
-  const ll = createLivingLanes({ lanes: () => [lane(A, B), lane(C, E)], way: () => ({ len: 5000 }), townOfPort: (id) => ({ mapId: id }), sailorsOf: () => [], generation: () => 0 });
+  const towns = new Map([[A.id, { mapId: A.id, px: 200, py: 199 }], [B.id, { mapId: B.id, px: 225, py: 199 }], [C.id, wh], [E.id, so]]);
+  const ll = createLivingLanes({ lanes: () => [lane(A, B), lane(C, E)], way: () => ({ len: 5000 }), townOfPort: (id) => towns.get(id) ?? null, sailorsOf: () => [], generation: () => 0 });
   assert.deepEqual(ll.from({ mapId: 199200, px: 200, py: 199 }).map((l) => l.to.mapId), [199225], 'a Bay port\'s lane');
-  assert.deepEqual(ll.from(wh), [], 'past the Bay: none, though its packets sail');
+  assert.deepEqual(ll.from(wh).map((l) => l.to.mapId), [so.mapId], 'past the Bay: its own lane, its travellers aboard');
 });
 
 test('AUDIT TESA II P7 THE LANES PAST THE BAY: their own reach and their own near - a Bay lane listed within half its longest way and LANE_NEAR_PX of a port, one past the Bay within the ellipse its roadsteads bound for a way of BEYOND_LANE_PATH_PX; the book\'s net past the Bay at BEYOND_LANE_MAX_PX (mutants: the Bay\'s margin; the ellipse\'s; the reach the Bay\'s)', () => {
@@ -342,6 +346,9 @@ test('AUDIT TESA II P2/P3/P4 THE WIRING: the world\'s nearest town (scenes/tamri
   assert.match(W, /const town = etherSea && inEther\(px\.x, px\.y\) \? wildRiseSite\(px\) : nearestTownOf\(px, \(hit\) => hit\.kind === 'city' && !\(_zm && wildNear\(_zm, hit\.mapPixel\.x, hit\.mapPixel\.y\)\)\);/, '/unstuck');
   assert.match(W, /const town = nearestTownOf\(px\);\n\s+if \(town\) land = town\.mapPixel;/, 'the rise past the Bay');
   assert.doesNotMatch(W, /nearestTownPastTheBay|TOWN_RISE_REACH|nearestSafeLocationAnywhere\(maps, px, \(hit\)/, 'no second law');
-  assert.match(W, /const j = pastBayJourney\(playerTravelPixel\(\), to, online\?\.wildOk \? wildMapMask\(\) : null, wildJourney\(\{/, 'every journey\'s gate');
+  // PIN MOVED (PORTAL-BAY, bible/06-Systems/Portal-Stone.md): the gate's law past the Bay is its third argument - a journey's
+  // pastBayJourney unless a teleport hands its own (pastBayTravel.js teleportJourney: teleportTo, Recall, a stone's pick and step)
+  assert.match(W, /const wildTravelGate = \(to, spoken = 0, law = pastBayJourney\) => \{/, 'every journey\'s gate: the journey\'s law unless told');
+  assert.match(W, /const j = law\(playerTravelPixel\(\), to, online\?\.wildOk \? wildMapMask\(\) : null, wildJourney\(\{/, 'asked after the zone\'s own');
   assert.ok(W.indexOf('const zoneHalls = createZoneHalls(') < W.indexOf('createTamrielPlaces('), 'the halls stand before the places host hands them the rolls (BOOT-TDZ)');
 });

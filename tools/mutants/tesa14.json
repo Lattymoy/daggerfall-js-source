@@ -119,8 +119,8 @@
   {
     "name": "TESA14-the-bay-a-regions",
     "file": "src/world/tamrielRoads.js",
-    "old": "      if (inBay(x, y)) { water[i] = 1; continue; }",
-    "new": "      if (false) { water[i] = 1; continue; }",
+    "old": "      if (inBay(x, y)) { water[i] = 1; bay[i] = 1; continue; }",
+    "new": "      if (false) { water[i] = 1; bay[i] = 1; continue; }",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "TESA14-the-print-blind-to-the-nodes",
     "file": "src/world/tamrielRoads.js",
-    "old": "JSON.stringify([spec, nodes, obstacles, gates, held, ROAD_DIALS, BIOMES_VERSION])",
-    "new": "JSON.stringify([spec, ROAD_DIALS, BIOMES_VERSION])",
+    "old": "JSON.stringify([spec, nodes, obstacles, gates, held, ROAD_DIALS, BIOMES_VERSION, VOYAGER_DIALS, trunks])",
+    "new": "JSON.stringify([spec, ROAD_DIALS, BIOMES_VERSION, VOYAGER_DIALS, trunks])",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -399,8 +399,8 @@
   {
     "name": "TESA14-a-gate-in-the-water",
     "file": "src/scenes/tamrielRoadsHost.js",
-    "old": "      const walkable = (x, y) => !inBay(x, y) && heightAt(x, y) > WATER_BYTE && !capitalOnPixel(x, y);",
-    "new": "      const walkable = (x, y) => !inBay(x, y) && !capitalOnPixel(x, y);",
+    "old": "    const walkable = (x, y) => !inBay(x, y) && heightAt(x, y) > WATER_BYTE && !capitalOnPixel(x, y);",
+    "new": "    const walkable = (x, y) => !inBay(x, y) && !capitalOnPixel(x, y);",
     "tests": [
       "test/tesa14_roads.test.js",
       "test/world/audittesa2r_roads.test.js"

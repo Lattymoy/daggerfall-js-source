@@ -344,7 +344,7 @@ test('FOREST1: the world host reads the switch once at its mount and hands the k
   // PIN MOVED (ECOTONE1, 2026-10-07): and its climate - a border's tree is a neighbour climate's, its stump that one's
   assert.match(w, /wood: f\.wood \?\? 0, base, archive \} : null;/, 'AUDIT F3: a tree flat carries its wood to Logging');
   assert.match(w, /const forests = realForestsOn\(\);/);
-  assert.match(w, /forests: forests \? \{ archive: climate\.natureArchive, hidden: FOREST_HIDDEN_LOCATION_TYPES\.has\(dfLocation\?\.mapTableData\?\.locationType\) \} : null,/);
+  assert.match(w, /forests: forests \? \{ archive: climate\.natureArchive, hidden: FOREST_HIDDEN_LOCATION_TYPES\.has\(groundLocation\?\.mapTableData\?\.locationType\) \} : null,/);   // PIN MOVED (GROUND-AGREE): the ground's place
   assert.equal((w.match(/realForestsOn\(/g) ?? []).length, 1, 'once, not a pixel at a time');
   // the Tree table has one home; Logging reads the same one
   assert.equal(HOST_TREE_RECORDS, TREE_RECORDS);

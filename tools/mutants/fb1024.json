@@ -1,0 +1,360 @@
+[
+ {
+  "name": "DARK1-the-ctx-forgets-the-dark",
+  "file": "src/scenes/hostEnchant.js",
+  "old": "    inDarkness: () => playerInDarkness(),",
+  "new": "",
+  "tests": [
+   "test/systems/fb1024_darkregen.test.js"
+  ]
+ },
+ {
+  "name": "DARK1-the-dark-is-the-sun",
+  "file": "src/systems/passiveSpecials.js",
+  "old": "export const playerInDarkness = (nowMinutes = null) => (_host !== null || nowMinutes !== null) && !playerInSunlight(nowMinutes);",
+  "new": "export const playerInDarkness = (nowMinutes = null) => (_host !== null || nowMinutes !== null) && playerInSunlight(nowMinutes);",
+  "tests": [
+   "test/systems/fb1024_darkregen.test.js"
+  ]
+ },
+ {
+  "name": "DARK1-the-dark-is-the-night-alone",
+  "file": "src/systems/passiveSpecials.js",
+  "old": "export const playerInDarkness = (nowMinutes = null) => (_host !== null || nowMinutes !== null) && !playerInSunlight(nowMinutes);",
+  "new": "export const playerInDarkness = (nowMinutes = null) => (_host !== null || nowMinutes !== null) && !isDayFromMinutes(nowMinutes ?? _host?.now?.() ?? 0);",
+  "tests": [
+   "test/systems/fb1024_darkregen.test.js"
+  ]
+ },
+ {
+  "name": "DARK2-headless-reads-midnight",
+  "file": "src/systems/passiveSpecials.js",
+  "old": "export const playerInDarkness = (nowMinutes = null) => (_host !== null || nowMinutes !== null) && !playerInSunlight(nowMinutes);",
+  "new": "export const playerInDarkness = (nowMinutes = null) => !playerInSunlight(nowMinutes);",
+  "tests": [
+   "test/systems/fb1024_darkregen.test.js"
+  ]
+ },
+ {
+  "name": "BUF1-the-theme-back-to-interactive",
+  "file": "src/systems/introTheme.js",
+  "old": "      return Ctor ? new Ctor({ latencyHint: 'playback' }) : null;",
+  "new": "      return Ctor ? new Ctor({ latencyHint: 'interactive' }) : null;",
+  "tests": [
+   "test/systems/fb1024_themebuffer.test.js"
+  ]
+ },
+ {
+  "name": "BUF1-the-theme-no-hint",
+  "file": "src/systems/introTheme.js",
+  "old": "      return Ctor ? new Ctor({ latencyHint: 'playback' }) : null;",
+  "new": "      return Ctor ? new Ctor() : null;",
+  "tests": [
+   "test/systems/fb1024_themebuffer.test.js"
+  ]
+ },
+ {
+  "name": "RID1-insignia-lost-taken-for-refusal",
+  "file": "src/systems/sigil/sigilBroker.js",
+  "old": "  if (insigniaUnheard(r)) {\n    const s = await askAfter(settle, rid);\n    if (!s) return oweSale({ kind: 'insignia'",
+  "new": "  if (false) {\n    const s = await askAfter(settle, rid);\n    if (!s) return oweSale({ kind: 'insignia'",
+  "tests": [
+   "test/systems/fb1024_embersowed.test.js",
+   "test/net/wb9g_insignia.test.js"
+  ]
+ },
+ {
+  "name": "RID1-panoply-unheard-refunded-blind",
+  "file": "src/systems/sigil/sigilBroker.js",
+  "old": "    if (!s) return oweSale({ kind: 'panoply', id: piece, embers: EG_SINK_EMBERS, rid, account }, items, save);",
+  "new": "    if (!s) r = { ok: false, error: 'offline' };",
+  "tests": [
+   "test/systems/fb1024_embersowed.test.js"
+  ]
+ },
+ {
+  "name": "RID1-insignia-unheard-refunded-blind",
+  "file": "src/systems/sigil/sigilBroker.js",
+  "old": "    if (!s) return oweSale({ kind: 'insignia', id: offer.id, embers: offer.price, rid, account }, items, save);",
+  "new": "    if (!s) r = { ok: false, error: 'offline' };",
+  "tests": [
+   "test/systems/fb1024_embersowed.test.js"
+  ]
+ },
+ {
+  "name": "RID1-no-session-taken-for-unheard",
+  "file": "src/systems/sigil/sigilBroker.js",
+  "old": "export const insigniaUnheard = (r) => !r?.ok && r?.error !== 'no-session' && !(Number.isFinite(r?.status) && r.status < 500);",
+  "new": "export const insigniaUnheard = (r) => !r?.ok && !(Number.isFinite(r?.status) && r.status < 500);",
+  "tests": [
+   "test/systems/fb1024_embersowed.test.js"
+  ]
+ },
+ {
+  "name": "RID1-signed-out-owed",
+  "file": "src/systems/sigil/sigilBroker.js",
+  "old": "  if (!row.account) { addItem(items, Object.assign(sigilStone(), { stackCount: row.embers })); return { ok: false, error: 'no-session' }; }",
+  "new": "  if (false) { return { ok: false, error: 'no-session' }; }",
+  "tests": [
+   "test/systems/fb1024_embersowed.test.js"
+  ]
+ },
+ {
+  "name": "RID1-cap-after-the-take",
+  "file": "src/systems/sigil/sigilBroker.js",
+  "old": "export async function insigniaSale(offer, { items, buy, settle, save, account, rid = mintBrokerRid() }) {\n  if (_owed.length >= OWED_MAX) return { ok: false, error: 'unheard' };   // what is owed settles first - nothing taken\n",
+  "new": "export async function insigniaSale(offer, { items, buy, settle, save, account, rid = mintBrokerRid() }) {\n",
+  "tests": [
+   "test/systems/fb1024_embersowed.test.js"
+  ]
+ },
+ {
+  "name": "RID2-every-ask-handed-the-piece",
+  "file": "src/systems/sigil/sigilBroker.js",
+  "old": "  const mine = a.data.by === nonce || (_lost.get(rid) ?? []).includes(a.data.by);",
+  "new": "  const mine = true;",
+  "tests": [
+   "test/systems/fb1024_embersowed.test.js"
+  ]
+ },
+ {
+  "name": "RID2-a-lost-ask-forgotten",
+  "file": "src/systems/sigil/sigilBroker.js",
+  "old": "    if (insigniaUnheard(a)) lostAsk(rid, nonce);\n",
+  "new": "",
+  "tests": [
+   "test/systems/fb1024_embersowed.test.js"
+  ]
+ },
+ {
+  "name": "RID2-any-account-settles",
+  "file": "src/systems/sigil/sigilBroker.js",
+  "old": "  for (const row of _owed.filter((o) => o.account === me && !_asking.has(o.rid))) {",
+  "new": "  for (const row of _owed.filter((o) => !_asking.has(o.rid))) {",
+  "tests": [
+   "test/systems/fb1024_embersowed.test.js"
+  ]
+ },
+ {
+  "name": "RID2-two-asks-of-one-sale",
+  "file": "src/systems/sigil/sigilBroker.js",
+  "old": "  for (const row of _owed.filter((o) => o.account === me && !_asking.has(o.rid))) {",
+  "new": "  for (const row of _owed.filter((o) => o.account === me)) {",
+  "tests": [
+   "test/systems/fb1024_embersowed.test.js"
+  ]
+ },
+ {
+  "name": "RID2-the-pack-read-before-the-ask",
+  "file": "src/systems/sigil/sigilBroker.js",
+  "old": "export async function settleOwedSales({ settle, account, items, save, mint }) {\n  const me = account();",
+  "new": "export async function settleOwedSales({ settle, account, items: itemsNow, save, mint }) {\n  const me = account();\n  const pack0 = itemsNow(); const items = () => pack0;",
+  "tests": [
+   "test/systems/fb1024_embersowed.test.js"
+  ]
+ },
+ {
+  "name": "RID2-fenced-keeps-the-embers",
+  "file": "src/systems/sigil/sigilBroker.js",
+  "old": "      } else if (!s.held && live) addItem(items(), Object.assign(sigilStone(), { stackCount: live.embers }));",
+  "new": "      } else if (!s.held && live) void live;",
+  "tests": [
+   "test/systems/fb1024_embersowed.test.js"
+  ]
+ },
+ {
+  "name": "RID2-held-no-piece",
+  "file": "src/systems/sigil/sigilBroker.js",
+  "old": "        addItem(items(), it);\n      } else if",
+  "new": "        void it;\n      } else if",
+  "tests": [
+   "test/systems/fb1024_embersowed.test.js"
+  ]
+ },
+ {
+  "name": "RID2-settled-unsaved",
+  "file": "src/systems/sigil/sigilBroker.js",
+  "old": "      _lost.delete(row.rid);\n      save();",
+  "new": "      _lost.delete(row.rid);",
+  "tests": [
+   "test/systems/fb1024_embersowed.test.js"
+  ]
+ },
+ {
+  "name": "RID3-the-price-unchecked",
+  "file": "src/systems/sigil/sigilBroker.js",
+  "old": "&& o.embers > 0 && o.embers === owedPrice(o.kind, o.id) &&",
+  "new": "&& o.embers > 0 &&",
+  "tests": [
+   "test/systems/fb1024_embersowed.test.js"
+  ]
+ },
+ {
+  "name": "RID3-a-duplicate-id-kept",
+  "file": "src/systems/sigil/sigilBroker.js",
+  "old": "!seen.has(o.rid) && seen.add(o.rid)",
+  "new": "seen.add(o.rid)",
+  "tests": [
+   "test/systems/fb1024_embersowed.test.js"
+  ]
+ },
+ {
+  "name": "RID3-the-newest-dropped",
+  "file": "src/systems/sigil/sigilBroker.js",
+  "old": ".slice(-OWED_MAX).map(owedRow)",
+  "new": ".slice(0, OWED_MAX).map(owedRow)",
+  "tests": [
+   "test/systems/fb1024_embersowed.test.js"
+  ]
+ },
+ {
+  "name": "RID3-not-saved",
+  "file": "src/systems/sigil/sigilBroker.js",
+  "old": "  getSaveData: () => brokerOwed(),",
+  "new": "  getSaveData: () => [],",
+  "tests": [
+   "test/systems/fb1024_embersowed.test.js"
+  ]
+ },
+ {
+  "name": "RID3-owed-unsaved",
+  "file": "src/systems/sigil/sigilBroker.js",
+  "old": "  _owed = [..._owed, row];\n  save();",
+  "new": "  _owed = [..._owed, row];",
+  "tests": [
+   "test/systems/fb1024_embersowed.test.js"
+  ]
+ },
+ {
+  "name": "RID4-no-fence",
+  "file": "server-account/src/brokerSales.js",
+  "old": "    db.prepare(\"INSERT INTO broker_sales (account, rid, kind, item, at) VALUES (?1, ?2, 'fence', NULL, ?3) ON CONFLICT (account, rid) DO NOTHING\").bind(player.id, rid, nowS),",
+  "new": "    db.prepare('SELECT 1'),",
+  "tests": [
+   "test/server/fb1024_brokersales.test.js",
+   "test/systems/fb1024_embersowed.test.js"
+  ]
+ },
+ {
+  "name": "RID4-the-latest-ask-as-by",
+  "file": "server-account/src/brokerSales.js",
+  "old": "asked_by = COALESCE(asked_by, ?3)",
+  "new": "asked_by = ?3",
+  "tests": [
+   "test/server/fb1024_brokersales.test.js",
+   "test/systems/fb1024_embersowed.test.js"
+  ]
+ },
+ {
+  "name": "RID4-a-fence-answered-held",
+  "file": "server-account/src/brokerSales.js",
+  "old": "  if (!row || row.kind === 'fence') return { held: false };",
+  "new": "  if (!row) return { held: false };",
+  "tests": [
+   "test/server/fb1024_brokersales.test.js",
+   "test/systems/fb1024_embersowed.test.js"
+  ]
+ },
+ {
+  "name": "RID4-any-string-an-id",
+  "file": "server-account/src/brokerSales.js",
+  "old": "export const brokerRidOk = (rid) => typeof rid === 'string' && BROKER_RID_RE.test(rid);",
+  "new": "export const brokerRidOk = (rid) => typeof rid === 'string';",
+  "tests": [
+   "test/server/fb1024_brokersales.test.js"
+  ]
+ },
+ {
+  "name": "RID4-the-guard-always-free",
+  "file": "server-account/src/brokerSales.js",
+  "old": "export const brokerRidFreeSql = (acc, rid) => `NOT EXISTS (SELECT 1 FROM broker_sales WHERE account = ${acc} AND rid = ${rid})`;",
+  "new": "export const brokerRidFreeSql = (acc, rid) => `${rid} = ${rid}`;",
+  "tests": [
+   "test/server/fb1024_brokersales.test.js",
+   "test/systems/fb1024_embersowed.test.js"
+  ]
+ },
+ {
+  "name": "RID4-panoply-row-unwritten",
+  "file": "server-account/src/egEconomy.js",
+  "old": "    ...(rid ? [brokerSaleWrite(db, { account: player.id, rid, kind: 'panoply', item: piece, nowS })] : []),\n",
+  "new": "",
+  "tests": [
+   "test/server/fb1024_brokersales.test.js",
+   "test/systems/fb1024_embersowed.test.js"
+  ]
+ },
+ {
+  "name": "RID4-panoply-asked-again-sold-again",
+  "file": "server-account/src/egEconomy.js",
+  "old": "    if (sold?.kind === 'panoply') return { ok: true, piece: sold.item, week: arenaWeekOf(sold.at), purse: await purseOf(db, player.id), again: true };\n",
+  "new": "",
+  "tests": [
+   "test/server/fb1024_brokersales.test.js"
+  ]
+ },
+ {
+  "name": "RID4-panoply-fence-unsaid",
+  "file": "server-account/src/egEconomy.js",
+  "old": "    if (sold?.kind === 'fence') return { error: 'fenced' };\n",
+  "new": "",
+  "tests": [
+   "test/server/fb1024_brokersales.test.js",
+   "test/systems/fb1024_embersowed.test.js"
+  ]
+ },
+ {
+  "name": "RID4-insignia-row-unwritten",
+  "file": "server-account/src/accounts.js",
+  "old": "    ...(rid ? [brokerSaleWrite(db, { account: player.id, rid, kind: 'insignia', item: offer.id, nowS })] : []),\n",
+  "new": "",
+  "tests": [
+   "test/server/fb1024_brokersales.test.js"
+  ]
+ },
+ {
+  "name": "RID4-insignia-asked-again-owned",
+  "file": "server-account/src/accounts.js",
+  "old": "  if (had?.kind === 'insignia' && had.item === offer.id) return",
+  "new": "  if (false) return",
+  "tests": [
+   "test/server/fb1024_brokersales.test.js"
+  ]
+ },
+ {
+  "name": "RID4-insignia-wardrobe-unsaid",
+  "file": "server-account/src/index.js",
+  "old": "        return json(r.held && r.kind === 'insignia' ? { ...r, ...accountWardrobe(await withSeatTitles(ctx, who.player, env), env, nowS) } : r, 200, origin);",
+  "new": "        return json(r, 200, origin);",
+  "tests": [
+   "test/server/fb1024_brokersales.test.js"
+  ]
+ },
+ {
+  "name": "RID4-client-any-id",
+  "file": "src/net/insignia.js",
+  "old": "export const BROKER_RID_RE = /^b[a-z0-9]{15,31}$/;",
+  "new": "export const BROKER_RID_RE = /^.*$/;",
+  "tests": [
+   "test/server/fb1024_brokersales.test.js"
+  ]
+ },
+ {
+  "name": "RID5-host-insignia-unsettled",
+  "file": "src/scenes/world.js",
+  "old": "const r = await brokerOwed.settled(() => readAccount(io));",
+  "new": "const r = await readAccount(io);",
+  "tests": [
+   "test/systems/fb1024_embersowed.test.js"
+  ]
+ },
+ {
+  "name": "RID5-host-no-account",
+  "file": "src/scenes/world.js",
+  "old": "secret: ses.secret, account: ses.id ?? null } : null;",
+  "new": "secret: ses.secret } : null;",
+  "tests": [
+   "test/systems/fb1024_embersowed.test.js"
+  ]
+ }
+]

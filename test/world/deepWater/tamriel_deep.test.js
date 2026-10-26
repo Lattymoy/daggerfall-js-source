@@ -18,7 +18,7 @@ import {
 } from '../../../src/world/deepWater/deepWatersBake.js';
 import { DeepWatersBakes, ETHER_FRAME, worldBakes, waterFrameOf } from '../../../src/world/etherWatersBake.js';
 import { TamrielWatersBake, TAMRIEL_ROW, TAMRIEL_CELL_PX, tamrielWaterFrame, pictureOpenSeaAt } from '../../../src/world/tamrielWatersBake.js';
-import { groundWoods, dropGroundCache } from '../../../src/world/tamriel/tamrielGround.js';
+import { groundWoods, dropGroundCache, tamrielLargeMap } from '../../../src/world/tamriel/tamrielGround.js';
 import { setTamrielTrace, tamrielTrace, IMPERIAL_ID } from '../../../src/world/tamriel/tamrielLand.js';
 import { setTamrielFit, pictureToBay, inBay } from '../../../src/world/tamriel/tamrielFrame.js';
 import { loadDeepWatersBake, openDeepWaters } from '../../../src/world/deepWater/deepWatersClient.js';
@@ -54,6 +54,21 @@ function picture() {
 }
 const bayPixel = (px, py) => pictureToBay(px + 0.5, py + 0.5).map(Math.floor);
 const emptyBay = () => new DeepWatersBake({ woods: RAW, global: { state: new Uint8Array(500000), classes: new Uint8Array(500000), partialIndex: new Int32Array(0), partialBits: new Uint8Array(0) } });
+
+test('TAMRIEL-DEEP the large map follows the land: a pixel\'s detail none where the trace lays sea, kept while it stands and dropped with the ground\'s cache when a picture lands (mutants: the swell\'s cache kept)', () => {
+  setTamrielFit(FIT);
+  const [x, y] = bayPixel(100, 100);
+  setTamrielTrace(picture());
+  dropGroundCache();
+  const land = tamrielLargeMap(x, y);
+  assert.ok(land.some((col) => col.some((v) => v > 0)), 'detail on the land');
+  assert.equal(tamrielLargeMap(x, y), land, 'kept');
+  const sea = picture();
+  sea.land.fill(0); sea.province.fill(0);
+  setTamrielTrace(sea);
+  dropGroundCache();   // as every thread does when a picture lands (terrainGenWorker, deepWatersWorker, tamrielRoadsWorker)
+  assert.ok(tamrielLargeMap(x, y).every((col) => col.every((v) => v === 0)), 'the same pixel at sea: none');
+});
 
 test('TAMRIEL-DEEP the flood seeded: from the pixels `seedAt` names, whole, through the candidates - a pool beyond land unreached, where the border\'s flood reached both (mutants: the seeds the border\'s still; a seed\'s candidates unset)', () => {
   const classes = [PIXEL_SEA, PIXEL_SEA, PIXEL_LAND, PIXEL_SEA, PIXEL_SEA, PIXEL_SEA];
@@ -193,7 +208,7 @@ test('TAMRIEL-DEEP (ARENA2): on the player\'s own picture the Topal Bay is carve
   b.prepare(2441, 1500);
   assert.equal(b.sampleDistanceMeters(2441, 1500, 0.5, 0.5), BAKE_DISTANCE_CAP * BAKE_DISTANCE_SCALE_METERS);
   assert.ok(all(2160, 720) && all(2300, 1000), 'Lake Rumare\'s ring and the Niben');
-  assert.ok(all(2069, 663), 'the Waterfront canal');
+  assert.ok(all(2069, 676), 'the Waterfront canal');   // under IC-GRAND's twenty-five (bible/03-World/Tamriel.md NIBEN-SEA)
   assert.ok(none(1216, 224), 'Hammerfell\'s lake');
   assert.ok(!all(2441, 1441) && !none(2441, 1441), 'the coast\'s pixel part sea');
   assert.ok(TAMRIEL_CELL_PX >= 16);

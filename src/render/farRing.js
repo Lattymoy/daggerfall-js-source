@@ -72,13 +72,32 @@
 
 import { SCALED_OCEAN_ELEVATION, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
 import { overworldTint, isWaterPixel, BASE_HEIGHT_SCALE } from '../ui/overworldModel.js';   // FAR-SEA1: and the overworld's own water rule, for the ring's sea
-import { reliefByteHeight, cliffFadeAt, CLIFF_REACH } from '../world/landforms.js';   // LANDFORM1: the landforms' lift on a pixel's byte; AUDIT LANDFORMS II I1: faded beside the sea
+import { reliefByteHeight, cliffFadeAt, CLIFF_REACH, byteBeyond } from '../world/landforms.js';   // LANDFORM1: the landforms' lift on a pixel's byte; AUDIT LANDFORMS II I1: faded beside the sea; BREATHTAKER2: and its continuation past the 7-bit top, past the Bay
 import { perspective, mirrorProjectionX } from '../world/mat4.js';
 import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
-import { RING_SEA_GLSL } from './horizonHaze.js';   // FAR-SEA1: the horizon's haze and the sea's own look, one text for the ring (both lanes) and the sea
+import { RING_SEA_GLSL, FLORA_GLSL, FLORA_CROWN_M, FLORA_GROVE_M } from './horizonHaze.js';   // FAR-SEA1: the horizon's haze and the sea's own look, one text for the ring (both lanes) and the sea
 import { RING_CLOUD_GLSL, cloudFarOf } from './cloudShadow.js';   // OW-HORIZON: the clouds' shadows on the ring, as on the ground beside it
 import { RING_HAZE_GLSL } from './hazeGlsl.js';   // BANTHA1: the jungle's haze over the ring, both lanes' one text (render/hazeGlsl.js)
 import { WATER_F0, WATER_TINT } from './waterSurface.js';   // FAR-SEA1: the water's own Fresnel; AUDIT FAR-SEA1 L1: and its tint
+import { MidRingMesh, midRingVertexSteps, midRingDisabled, plantCanopy, layGround } from './midRing.js';   // MID-RING: the kernel's own ground between the grid and this ring
+import { MID_RADIUS, MID_SUB, MID_REBUILD_DRIFT, FAR_CELL, FAR_RADIUS, FAR_REBUILD_DRIFT, FAR_CLIMATE_ASK } from '../world/terrain/midRingGrid.js';
+import { FarFieldMesh, farFieldVertexSteps, farFieldDisabled, cellOffsets, FAR_RIM_START, FAR_RIM_END, FAR_LENS_FAR } from './farField.js';   // FAR-FIELD: the land past this ring
+import { FarLandmark, landmarkDistance } from './farLandmarks.js';   // FAR-LANDMARK: a city's silhouette in this pass's painter's order
+import { SCALED_OCEAN_ELEVATION as OCEAN_Y, BASE_HEIGHT_SCALE as BYTE_SCALE } from '../world/terrain/terrainSampler.js';
+import { CLIMATES } from '../formats/mapsFile.js';   // FAR-FIELD: a cell's centre on the ocean's climate is the sea
+import { pageHas } from '../systems/pageQuery.js';
+import { expectedTrees, standsTrees, FLORA } from '../world/terrain/floraCover.js';   // FAR-FLORA: the near law's woods, where the field is past the vertices' reach
+import { createFloraArt, floraDisabled, FLORA_MIN_LAND_VIEW } from './farFlora.js';   // FAR-FLORA: the trees' own art
+import { FarTreesBand, farTreesDisabled } from './farTrees.js';   // FAR-TREES: the near trees carried past the grid
+import { capLineOfPixel, capShare, whiten } from '../world/peaks/snowcap.js';   // PEAKS1: the summits' snow on the horizon   // MID-RING: the probes' read stands behind the shot gate (AUDIT ANTICHEAT A2)
+/** MID-RING: the band (metres, Chebyshev from the traveller) over which the middle ring's ground eases onto the far
+ *  ring's - ending where the traveller's farthest drift from its base still leaves its rim (MID_RADIUS - MID_REBUILD_DRIFT
+ *  pixels: the far ring's ground there whatever the base), two pixels wide. */
+export const MID_MORPH_END = (MID_RADIUS - MID_REBUILD_DRIFT) * TERRAIN_SIZE;
+export const MID_MORPH_START = MID_MORPH_END - 2 * TERRAIN_SIZE;
+/** MID-RING / FAR-FIELD: a frame's share of the horizon's builds (milliseconds) - a landed ground's vertices laid a step of
+ *  rows at a time (render/midRing.js midRingVertexSteps, render/farField.js farFieldVertexSteps), one step at the least. */
+export const HORIZON_BUDGET_MS = 2;
 
 /** Ring radius in map pixels around the base - ~39 km of horizon. */
 export const RING_RADIUS = 48;
@@ -97,8 +116,13 @@ export const RING_RIM_START = RING_RIM_END * 0.6;
  *  landforms' lift on it - world/landforms.js reliefByteHeight, the same lift the streamed kernel puts on the byte's own
  *  small-heightmap term - so the horizon stands the massifs the ground it hands over to stands; `fade`, the byte node's
  *  own cliffFadeAt beside the sea (AUDIT LANDFORMS II I1), as the kernel fades it. */
-export const ringHeight = (byte, relief = false, fade = 1) =>
-  (relief ? reliefByteHeight(byte, fade) : Math.max(byte * BASE_HEIGHT_SCALE, SCALED_OCEAN_ELEVATION)) * STREAMING_TERRAIN_SCALE;
+export const ringHeight = (byte, relief = false, fade = 1, beyond = 0) =>
+  (relief ? reliefByteHeight(byte, fade, beyond) : Math.max(byte * BASE_HEIGHT_SCALE, SCALED_OCEAN_ELEVATION)) * STREAMING_TERRAIN_SCALE;
+/** BREATHTAKER2 (CYRODIIL-RELIEF, stream G): a pixel's macro height as the stream's ground stands it - ringHeight with the
+ *  continent's share at its byte node (world/landforms.js byteBeyond: 0 on the Bay and its seam, past it the lift that
+ *  goes on over the 7-bit top, CONTINENT_LIFT) - so the far ring, the middle ring's eased rim and the far field stand
+ *  Skyrim's and the Jerall's peaks at the streamed ground's height, never a copy of the law. */
+export const ringHeightAt = (x, y, byte, relief = false, fade = 1) => ringHeight(byte, relief, fade, relief ? byteBeyond(x, y) : 0);
 /** FAR-SEA1: the ring's sea level - a vertex standing here over a water pixel is the sea (after ringHeight: a const). */
 const RING_SEA_Y = ringHeight(0);
 
@@ -124,37 +148,35 @@ const RING_SEA_Y = ringHeight(0);
  * @param {?((x: number, y: number) => boolean)} [o.pastOwn] - AUDIT CAPTAIN'S SEA G6: whether `byteAt` answers a pixel past
  *   the map with its own ground (the continent's, the Eltheric Ocean's) rather than the clamp - its cliffs then faded at its
  *   own pixel; null: every pixel past the map it is handed
+ * @param {?((x: number, y: number) => number)} [o.snowAt] - PEAKS1: a pixel's cap line (m above the sea - ringSnowAt), or
+ *   null for no cap: a vertex over it whitened by its height and its slope (world/peaks/snowcap.js capShare)
+ * @param {?((climate: number) => ?{ spec: any, art: any, ground: any })} [o.floraOf] - FAR-FLORA: a climate's flora (render/farFlora.js
+ *   floraOf), or null for none: a land vertex's woods the near law's expectation (floraCover.js expectedTrees - the field's
+ *   waves are under its 819 m), in the trees' art and raised to their height; `flora` its cover (0-255) and `ground` the
+ *   heights under the canopy
  */
-export function buildFarRingGrid({ heightBytes, mapWidth, mapHeight, climateAt, baseX, baseY, radius = RING_RADIUS, relief = false, byteAt: byteAtPast = null, climatePast = null, pastOwn = null }) {
+export function buildFarRingGrid({ heightBytes, mapWidth, mapHeight, climateAt, baseX, baseY, radius = RING_RADIUS, relief = false, byteAt: byteAtPast = null, climatePast = null, pastOwn = null, snowAt = null, floraOf = null }) {
   const side = radius * 2 + 1;
   const positions = new Float32Array(side * side * 3);
   const normals = new Float32Array(side * side * 3);
   const colors = new Uint8Array(side * side * 3);
   const sea = new Uint8Array(side * side);   // FAR-SEA1: 255 where the vertex is the sea - a water pixel at the sea's own height
+  const flora = floraOf ? new Uint8Array(side * side * 4) : null, ground = floraOf ? new Float32Array(side * side) : null;   // FAR-FLORA: the canopy (render/midRing.js plantCanopy's four bytes) and the ground under it
   const clampX = (x) => Math.max(0, Math.min(mapWidth - 1, x));
   const clampY = (y) => Math.max(0, Math.min(mapHeight - 1, y));
-  // TAMRIEL2: past the map the host may hand the continent's own bytes (world/tamriel/tamrielGround.js groundWoods); the map's
-  // bytes stay the buffer's, read as ever - the clamp is the host's edge-of-the-world when it hands none
-  const byteAt = byteAtPast
-    ? (x, y) => (x >= 0 && y >= 0 && x < mapWidth && y < mapHeight ? heightBytes[y * mapWidth + x] : byteAtPast(x, y))
-    : (x, y) => heightBytes[clampY(y) * mapWidth + clampX(x)];
-  // ETHER-SEA: and the climate past the map, where the host hands one (the Eltheric Ocean's isles wear their own; the clamp
-  // read the Bay's edge's there, and an isle stood in the edge's climate)
-  const climateOf = climatePast
-    ? (x, y) => (x >= 0 && y >= 0 && x < mapWidth && y < mapHeight ? climateAt(x, y) : climatePast(x, y))
-    : (x, y) => climateAt(clampX(x), clampY(y));
+  const { byteAt, climateOf } = ringReaders({ heightBytes, mapWidth, mapHeight, climateAt, byteAt: byteAtPast, climatePast });
   // AUDIT LANDFORMS II I1: each node's lift faded beside the sea as the kernel fades it - from the same clamped bytes.
   // AUDIT CAPTAIN'S SEA G6: where the host hands the ground past the map, a node there faded at its OWN pixel (the clamped
   // corner's fade, 1, stood every isle on the horizon with its whole lift) - off the bytes read once into a grid padded
   // by the fade's reach (the composed read is a law's, not an array's: 49 reads a node, five nodes a vertex)
-  let heightOf = relief ? (x, y) => ringHeight(byteAt(x, y), true, cliffFadeAt(byteAt, clampX(x), clampY(y))) : (x, y) => ringHeight(byteAt(x, y));
+  let heightOf = relief ? (x, y) => ringHeightAt(x, y, byteAt(x, y), true, cliffFadeAt(byteAt, clampX(x), clampY(y))) : (x, y) => ringHeight(byteAt(x, y));
   if (relief && byteAtPast) {
     const pad = radius + 1 + CLIFF_REACH, gside = 2 * pad + 1, gx0 = baseX - pad, gy0 = baseY - pad;
     const grid = new Uint8Array(gside * gside);
     for (let j = 0; j < gside; j++) for (let i = 0; i < gside; i++) grid[j * gside + i] = byteAt(gx0 + i, gy0 + j);
     const gridByte = (x, y) => grid[(y - gy0) * gside + (x - gx0)];
     const own = (x, y) => (x >= 0 && y >= 0 && x < mapWidth && y < mapHeight) || !pastOwn || pastOwn(x, y);
-    heightOf = (x, y) => ringHeight(gridByte(x, y), true, own(x, y) ? cliffFadeAt(gridByte, x, y) : cliffFadeAt(byteAt, clampX(x), clampY(y)));
+    heightOf = (x, y) => ringHeightAt(x, y, gridByte(x, y), true, own(x, y) ? cliffFadeAt(gridByte, x, y) : cliffFadeAt(byteAt, clampX(x), clampY(y)));
   }
   let o = 0;
   for (let j = 0; j < side; j++) {
@@ -176,11 +198,49 @@ export function buildFarRingGrid({ heightBytes, mapWidth, mapHeight, climateAt, 
       const climate = climateOf(px, py);
       const tint = overworldTint(climate, byte);
       colors[o] = tint[0]; colors[o + 1] = tint[1]; colors[o + 2] = tint[2];
+      if (ground) ground[o / 3] = positions[o + 1];
       if (isWaterPixel(climate, byte) && Math.abs(positions[o + 1] - RING_SEA_Y) < 1e-3) sea[o / 3] = 255;
+      else {
+        if (floraOf && standsTrees(normals[o + 1], byte * BASE_HEIGHT_SCALE)) {   // FAR-FLORA: the near law's beach line and face
+          const f = floraOf(climate);
+          if (f) {
+            layGround(colors, o, f.ground, FLORA.ground[1], FLORA.ground[2], FLORA.ground[3]);   // the near ground's own tiles, by the law's mean shares
+            positions[o + 1] += plantCanopy(flora, o / 3, expectedTrees(f.spec, byte), f.art);
+          }
+        }
+        if (snowAt) {
+          const share = capShare(positions[o + 1] - RING_SEA_Y, normals[o + 1], snowAt(px, py));
+          whiten(colors, o, share);   // PEAKS1
+          if (flora?.[(o / 3) * 4]) whiten(flora, (o / 3) * 4 + 1, share);   // FAR-FLORA: and the canopy under it
+        }
+      }
       o += 3;
     }
   }
-  return { positions, normals, colors, sea, side };
+  return { positions, normals, colors, sea, side, flora, ground };
+}
+
+/** PEAKS1: the cap line the horizon's snow reads at a pixel (world/peaks/snowcap.js capLineOfPixel on the ring's own climate
+ *  reader), with the Landforms row (`relief`) - none without it: the classic ground's horizon stays its own. */
+export const ringSnowAt = (inputs) => (inputs.relief ? ((climateOf) => (x, y) => capLineOfPixel(x, y, climateOf))(ringReaders(inputs).climateOf) : null);
+
+/**
+ * A pixel's height byte and climate as the ring reads them (buildFarRingGrid; MID-RING's tints the same, render/midRing.js):
+ * TAMRIEL2: past the map the host may hand the continent's own bytes (world/tamriel/tamrielGround.js groundWoods); the
+ * map's bytes stay the buffer's, read as ever - the clamp is the host's edge-of-the-world when it hands none. ETHER-SEA:
+ * and the climate past the map, where the host hands one (the Eltheric Ocean's isles wear their own; the clamp read the
+ * Bay's edge's there, and an isle stood in the edge's climate).
+ */
+export function ringReaders({ heightBytes, mapWidth, mapHeight, climateAt, byteAt: byteAtPast = null, climatePast = null }) {
+  const clampX = (x) => Math.max(0, Math.min(mapWidth - 1, x));
+  const clampY = (y) => Math.max(0, Math.min(mapHeight - 1, y));
+  const byteAt = byteAtPast
+    ? (x, y) => (x >= 0 && y >= 0 && x < mapWidth && y < mapHeight ? heightBytes[y * mapWidth + x] : byteAtPast(x, y))
+    : (x, y) => heightBytes[clampY(y) * mapWidth + clampX(x)];
+  const climateOf = climatePast
+    ? (x, y) => (x >= 0 && y >= 0 && x < mapWidth && y < mapHeight ? climateAt(x, y) : climatePast(x, y))
+    : (x, y) => climateAt(clampX(x), clampY(y));
+  return { byteAt, climateOf };
 }
 
 /**
@@ -256,6 +316,23 @@ function writeRingCells(out, hole) {
   const { baseX, baseY, radius = RING_RADIUS } = hole;
   const side = radius * 2 + 1;
   let o = 0;
+  // FAR-LANDMARK: THE PAINTER'S ORDER - with the traveller's pixel (`from`), the cells farthest first from it (their
+  // centres, a pixel corner each: the far field's offsets, sorted once), each cell's distance (map pixels) into `dist` -
+  // so a nearer hill is drawn over a farther one, and a landmark takes its place between them (render/farLandmarks.js)
+  if (hole.from) {
+    const [fx, fy] = hole.from, offs = cellOffsets(radius + RING_REBUILD_DRIFT + 2);
+    let c = 0;
+    for (let t = 0; t < offs.length; t += 2) {
+      const px = fx + offs[t], py = fy + offs[t + 1], i = px - baseX + radius, j = py - baseY + radius;
+      if (i < 0 || j < 0 || i >= side - 1 || j >= side - 1 || inHole(px, py, hole)) continue;
+      const i0 = j * side + i, i1 = i0 + 1, i2 = i0 + side, i3 = i2 + 1;
+      out[o++] = i0; out[o++] = i2; out[o++] = i3;
+      out[o++] = i0; out[o++] = i3; out[o++] = i1;
+      if (hole.dist) hole.dist[c] = Math.hypot(offs[t] + 0.5, offs[t + 1] + 0.5);
+      c++;
+    }
+    return o;
+  }
   for (let j = 0; j < side - 1; j++) {
     const py = baseY - radius + j;
     for (let i = 0; i < side - 1; i++) {
@@ -348,6 +425,12 @@ layout(location=0) in vec3 aPos;
 layout(location=1) in vec3 aNormal;
 layout(location=2) in vec3 aColor;
 layout(location=3) in float aSea;   // FAR-SEA1: 1 at the sea's vertices
+layout(location=4) in float aCoarse;   // MID-RING: the far ring's own height under a middle ring's vertex
+layout(location=5) in vec4 aCanopy;    // FAR-FLORA: x the canopy's cover, yzw its colour - (0, 0, 0, 1) where no array is bound: none
+uniform vec4 uCanopyBand;   // FAR-TREES: x, y the band's dither (metres, Chebyshev from uCanopyFrom) - the canopy over it, its trees under it; z 1 while the band stands
+uniform vec3 uCanopyFrom;
+uniform vec3 uMorph;      // MID-RING: x, y the band (metres, Chebyshev from uMorphFrom) its ground eases onto the far ring's over; z 1 to ease
+uniform vec3 uMorphFrom;  // the traveller (the haze's own point, else the eye)
 uniform mat4 uProj;
 uniform mat4 uView;
 uniform vec3 uOrigin;
@@ -360,10 +443,24 @@ out float vDist;
 out float vSea;
 out vec3 vWorld;     // the sea's point, for its facing to the eye (world space: the frame's light directions are too)
 out vec3 vSeaBody;   // the water's own body: its texel averaged by the mip chain, tinted - waterSurface.js's body, one fetch a vertex
+out float vFlora;
+out vec3 vCanopy;
 void main() {
   vec3 world = aPos + uOrigin;
+  // MID-RING: toward its rim the middle ring's ground eases onto the far ring's surface under it, by the traveller's own
+  // distance - so where the far ring takes over the two are one surface, and the band moves with the traveller, not with
+  // the ring's rebuilds
+  if (uMorph.z > 0.5) {
+    vec2 d = abs(world.xz - uMorphFrom.xz);
+    world.y = mix(aPos.y, aCoarse, smoothstep(uMorph.x, uMorph.y, max(d.x, d.y))) + uOrigin.y;
+  }
   vNormal = aNormal;
+  // FAR-FLORA: the canopy's share of the ground, its cover - FAR-TREES: under the band, whose own trees stand there, none
+  // (the band's trees dither out over the same metres as the canopy comes in); the program mixes it (FLORA_GLSL)
+  vec2 cb = abs(world.xz - uCanopyFrom.xz);
+  vFlora = aCanopy.x * (uCanopyBand.z > 0.5 ? smoothstep(uCanopyBand.x, uCanopyBand.y, max(cb.x, cb.y)) : 1.0);
   vColor = aColor;
+  vCanopy = aCanopy.yzw;
   vSea = aSea;
   vWorld = world;
   vSeaBody = textureLod(uSeaTiles, vec3(0.5, 0.5, 0.0), 8.0).rgb * uSeaTint;
@@ -393,6 +490,7 @@ uniform float uHazeHold;
 ${RING_SEA_GLSL}
 ${RING_CLOUD_GLSL}
 ${RING_HAZE_GLSL}
+${FLORA_GLSL}
 out vec4 outColor;
 void main() {
   // PERF2: at the far plane - under LEQUAL it draws only where the streamed world did not, and over the sky. AUDIT
@@ -402,7 +500,8 @@ void main() {
   float diff = max(dot(n, uLightDir), 0.0);
   float mdiff = max(dot(n, uMoonDir), 0.0);
   float sun = ringSun();   // OW-HORIZON: the clouds' shadow where their map knows the ground, the far law past it
-  vec3 lit = vColor * (uAmbient + uSunColor * (sun * diff) + uMoonColor * (uMoonScale * mdiff));
+  // FAR-FLORA: the canopy over the ground by its cover, lit as the trees are near (horizonHaze.js floraLight) and grained
+  vec3 lit = mix(vColor * (uAmbient + uSunColor * (sun * diff) + uMoonColor * (uMoonScale * mdiff)), vCanopy * floraLight(uAmbient, uSunColor, sun, uMoonColor, uMoonScale) * floraGrain(vWorld.xz), vFlora);
   // FAR-SEA1: the sea is the water's own (AUDIT FAR-SEA1 L1/L2: its body, its light, its glints) - the land pays nothing for it
   float sea = vSea * uSeaLook;
   if (sea > 0.0) lit = mix(lit, ringSea(uAmbient, uSunColor, uMoonColor, sun), sea);
@@ -436,13 +535,42 @@ export class FarRingRenderer {
    *  one with a switch - and decodes the scene colours draw() takes.
    *  OW-HORIZON: `opts.renderer`, the renderer the world is drawn by - its lane (when no `lane` is handed), and each
    *  frame its focus (the point the world's fog is measured from) and its cloud deck, so the ring hazes and shades
-   *  as the ground beside it does. */
+   *  as the ground beside it does. MID-RING: `opts.mid`, the terrain's client (world/terrain/terrainGenClient.js midRing) -
+   *  the middle ring's heights are asked of its worker, and the ring stands between the streamed grid and this one. */
   constructor(gl, opts = {}) {
     this.gl = gl;
     this.renderer = opts.renderer ?? null;
+    this._midSource = opts.mid && !midRingDisabled() ? opts.mid : null;
+    this._mid = null;           // MID-RING: its mesh, once a ring's heights have landed
+    this._midAsk = null;        // the base a request is out for ("x,y"), or null
+    this._midGen = 0;           // a request's generation: one answered after a newer one is let go
+    this._inputs = null;        // the grid's inputs (build's), the middle ring's tints read through them
+    this._farSource = opts.mid && !farFieldDisabled() ? opts.mid : null;   // FAR-FIELD: the far field's cells, asked of the same worker
+    this._far = null; this._farAsk = null; this._farGen = 0;
+    this._work = [];            // the horizon's landed grounds still being laid: { it, done }, a frame's share at a time
+    /** @type {?Float32Array} */ this._midOrigin = null;   // the middle ring's and the far field's origins, made once
+    /** @type {FarLandmark[]} */ this._landmarks = [];   // FAR-LANDMARK: the silhouettes handed in (addLandmark)
+    /** @type {?Float32Array} */ this._lmOrigin = null;
+    /** @type {?Float32Array} */ this._ringDist = null;   // each written cell's distance from the traveller's pixel
+    /** @type {any} */ this._builtNow = null;
+    /** @type {?Float32Array} */ this._farOrigin = null;
+    this._now = opts.now ?? (() => performance.now());
+    // FAR-FLORA: the trees' art (render/farFlora.js) - `opts.flora` a book of one's own (a test's), null for none; by
+    // default the pipeline's, unless `?farflora=off`. The woods stand at Land View FLORA_MIN_LAND_VIEW and up (the knob).
+    this._flora = opts.flora !== undefined ? opts.flora : (floraDisabled() ? null : createFloraArt());
+    this._floraRadius = 0;      // the streamed radius the woods were last judged by (punchHole's)
+    this._floraVersion = -1;    // the book's version this ring's grid was built with
+    // the probes' read (tools/horizonProbe.mjs): which of the horizon's layers stand, and round which bases - let go by
+    // the ring that set it (dispose)
+    this._statsFn = () => this.horizonStats();
+    if (pageHas('shot')) globalThis.__horizonRings = this._statsFn;
     this.lane = opts.lane ?? this.renderer?.lightingLane ?? null;
     this._dec = new Float32Array(3);
     const p = buildProgram(gl, VS, this.lane ? this.lane.farRingFs : FS, 'far ring');
+    // FAR-TREES: the band past the grid - with the woods (the knob's), a worker to lay it, and not `?fartrees=off`
+    this._band = this._flora && opts.mid && !farTreesDisabled() ? new FarTreesBand(gl, { source: opts.mid, lane: this.lane }) : null;
+    this._bandOrigin = new Float32Array(3);
+    this._bandLight = [new Float32Array(3), new Float32Array(3), new Float32Array(3)];
     this.program = p;
     this.u = {};
     for (const name of ['uProj', 'uView', 'uOrigin', 'uLightDir', 'uAmbient', 'uSunScale', 'uSunColor',
@@ -451,7 +579,9 @@ export class FarRingRenderer {
       'uSkyZenith', 'uSkyHorizon', 'uSeaF0', 'uSeaLook',   // FAR-SEA1: the sea's sky, its Fresnel, and whether it has one
       'uEye', 'uSeaTiles', 'uSeaTint', 'uSeaAmbient', 'uSeaSunColor', 'uSeaMoonColor',   // AUDIT FAR-SEA1 L1: the water's body, its light (the lane's in the water's own space)
       'uELExposure', 'uAdapt', 'uJungleHaze', 'uHazeEye',   // BANTHA1: the jungle's haze and the eye it is measured from
-      'uHazeFrom', 'uCloudShadowMap', 'uCloudShadowRect', 'uCloudShadowFar', 'uCloudFar']) {   // OW-HORIZON: the fog's focus, the clouds' map and its far law
+      'uHazeFrom', 'uCloudShadowMap', 'uCloudShadowRect', 'uCloudShadowFar', 'uCloudFar',   // OW-HORIZON: the fog's focus, the clouds' map and its far law
+      'uMorph', 'uMorphFrom',   // MID-RING: the middle ring's ease onto this one
+      'uFlora', 'uCanopyBand', 'uCanopyFrom']) {   // FAR-FLORA: the woods on, and their crowns' and groves' spacing; FAR-TREES: the band's crossfade
       this.u[name] = gl.getUniformLocation(p, name);
     }
     this.vao = null;
@@ -472,7 +602,13 @@ export class FarRingRenderer {
   /** (Re)build the vertex grid around `base` and punch the hole (`built`: punchHole's). */
   build(gridInputs, holeX, holeY, holeRadius, built = null) {
     const gl = this.gl;
-    const { positions, normals, colors, sea } = buildFarRingGrid(gridInputs);
+    this._inputs = gridInputs;   // MID-RING: the middle ring's tints are read the way this grid's are
+    this._readers = null;   // FAR-TREES: the band's climate reader, made again for these inputs
+    this._floraRadius = holeRadius;
+    const floraOf = this._floraOf();   // FAR-FLORA: the woods, with the knob's Land View
+    this._floraVersion = floraOf ? /** @type {any} */ (this._flora).version : -1;
+    const { positions, normals, colors, sea, side, flora, ground } = buildFarRingGrid({ ...gridInputs, snowAt: ringSnowAt(gridInputs), floraOf });   // PEAKS1: the summits white
+    this._ringY = { positions, ground, side, baseX: gridInputs.baseX, baseY: gridInputs.baseY, radius: gridInputs.radius ?? RING_RADIUS };   // MID-RING: this ring's heights at the pixel centres (its canopy's: its ease's ground); FAR-FLORA: and the ground under it
     this.baseX = gridInputs.baseX; this.baseY = gridInputs.baseY;
     this.dispose(false);
     const vao = gl.createVertexArray();
@@ -489,6 +625,7 @@ export class FarRingRenderer {
     buf(normals, 1, gl.FLOAT, false);
     buf(colors, 2, gl.UNSIGNED_BYTE, true);
     buf(sea, 3, gl.UNSIGNED_BYTE, true, 1);   // FAR-SEA1
+    if (flora) buf(flora, 5, gl.UNSIGNED_BYTE, true, 4);   // FAR-FLORA: the canopy's cover and colour
     this._sea = sea;
     this._indexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._indexBuffer);
@@ -504,14 +641,21 @@ export class FarRingRenderer {
    *  keeps every pixel it has not built the ring's (inHole) - asked again whenever its keys change: a pixel built or
    *  dropped. A plain Map (no `changes`) is keyed by its size. */
   punchHole(holeX, holeY, holeRadius, built = null) {
-    const key = `${holeX},${holeY},${holeRadius},${built ? (built.changes ?? built.size) : -1}`;
+    this._floraRadius = holeRadius;   // FAR-FLORA: the knob's Land View, as the frame has it
+    const mid = this._midFrame(holeX, holeY, built);   // MID-RING: the middle ring asked for, ordered and cut first
+    const key = `${holeX},${holeY},${holeRadius},${built ? (built.changes ?? built.size) : -1},${mid ? `${mid.baseX},${mid.baseY},${mid.radius}` : '-'}`;
     if (!this._built || key === this._holeKey) return;
     const gl = this.gl;
-    const hole = { baseX: this.baseX, baseY: this.baseY, holeX, holeY, holeRadius, built: built ? footprintBuilt(built, holeX, holeY, holeRadius) : null };
+    this._builtNow = built;   // FAR-LANDMARK: a landmark whose pixel the stream has built stands down
+    const from = [holeX, holeY], dist = (this._ringDist ??= new Float32Array((RING_RADIUS * 2) ** 2));   // FAR-LANDMARK: the cells by distance
+    const grid = { baseX: this.baseX, baseY: this.baseY, holeX, holeY, holeRadius, built: built ? footprintBuilt(built, holeX, holeY, holeRadius) : null, from, dist };
+    // MID-RING: with the middle ring standing, this ring's hole is its footprint whole (it stands there, built pixel or
+    // none); the sea's fill stays the streamed grid's, the built pixels the middle ring leaves to the stream
+    const hole = mid ? { baseX: this.baseX, baseY: this.baseY, holeX: mid.baseX, holeY: mid.baseY, holeRadius: mid.radius, built: null, from, dist } : grid;
     const side = RING_RADIUS * 2 + 1;
     const out = new Uint32Array((side - 1) * (side - 1) * 6);   // AUDIT FAR-SEA1 P4: one buffer - the hole's cells are the fill's room
     const ringN = writeRingCells(out, hole);
-    const cells = seaFillCells({ ...hole, sea: this._sea });   // FAR-SEA1: the sea inside the hole, after the ring, farthest first
+    const cells = seaFillCells({ ...grid, sea: this._sea });   // FAR-SEA1: the sea inside the streamed grid's hole, after the ring, farthest first
     const fillN = writeSeaFill(out, ringN, cells, side);
     gl.bindVertexArray(this.vao);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._indexBuffer);
@@ -522,6 +666,233 @@ export class FarRingRenderer {
     this._fillReach = Float32Array.from(cells, (c) => c[0]);
     this._holeX = holeX; this._holeY = holeY;
     this._holeKey = key;
+  }
+
+  /**
+   * MID-RING: the middle ring's turn of a frame (punchHole's) - its heights asked of the terrain's worker for the
+   * traveller's pixel when it has none or the traveller has drifted MID_REBUILD_DRIFT from its base (one ask at a time; an
+   * answer for a base let go is dropped), its painter's order written for the traveller's pixel, and its runs cut where
+   * the stream has built. Answers the mesh while it stands, else null (the far ring's hole is then the grid's, as before).
+   */
+  _midFrame(curX, curY, built) {
+    this._workFrame();   // the grounds landed: a frame's share of their vertices laid
+    this._farFrame(curX, curY);   // FAR-FIELD: the land past this ring, its own turn
+    if (this._band && this._inputs && this._floraOf()) {   // FAR-TREES: the band's turn - with the woods, the knob's Land View
+      this._readers ??= ringReaders(this._inputs);
+      this._band.frame({ curX, curY, radius: this._floraRadius, built, climateOf: this._readers.climateOf, forests: /** @type {any} */ (this._flora).forests ?? true, landform: !!this._inputs.relief, work: this._work });
+    }
+    if (!this._midSource || !this._inputs) return null;
+    const mid = this._mid;
+    const drift = mid ? Math.max(Math.abs(curX - mid.baseX), Math.abs(curY - mid.baseY)) : Infinity;
+    if ((drift > MID_REBUILD_DRIFT || this._floraStale(mid)) && this._midAsk === null) this._askMid(curX, curY);   // FAR-FLORA: and a tree's art landed since
+    if (!mid?.built) return null;
+    mid.reorder(curX, curY);
+    mid.cut(built ? (k) => built.has(k) : () => false, built ? (built.changes ?? built.size) : -1);
+    return mid;
+  }
+
+  /** FAR-FLORA: the climate's flora the far views build with - the book's floraOf while the woods stand (a book, not
+   *  `?farflora=off`, Land View FLORA_MIN_LAND_VIEW and up), else null. */
+  _floraOf() {
+    const book = this._flora;
+    return book && this._floraRadius >= FLORA_MIN_LAND_VIEW ? (climate) => book.floraOf(climate) : null;
+  }
+
+  /** FAR-FLORA: whether a layer built with the book at `layer.floraVersion` is owed a build with the art landed since (or
+   *  with the woods turned on or off by the knob). */
+  _floraStale(layer) {
+    if (!layer) return false;
+    const now = this._floraOf() ? /** @type {any} */ (this._flora).version : -1;
+    return (layer.floraVersion ?? -1) !== now;
+  }
+
+  /** MID-RING / FAR-FIELD: the frame's share of the grounds' builds - steps until HORIZON_BUDGET_MS is spent, one at the
+   *  least; a build whose generation was let go is dropped. */
+  _workFrame() {
+    const t0 = this._now();
+    let stepped = false;
+    while (this._work.length && (!stepped || this._now() - t0 < HORIZON_BUDGET_MS)) {
+      const w = this._work[0], r = w.it.next();
+      stepped = true;
+      if (r.done) { this._work.shift(); w.done(r.value); }
+    }
+  }
+
+  /** FAR-FIELD: the far field's turn - asked for the traveller's cell when it has none or they drifted FAR_REBUILD_DRIFT
+   *  cells from its base (one ask at a time), and ordered for their cell and this ring's footprint. */
+  _farFrame(curX, curY) {
+    if (!this._farSource || !this._inputs || !this._built) return;
+    const ccx = Math.floor(curX / FAR_CELL), ccy = Math.floor(curY / FAR_CELL), far = this._far;
+    const drift = far ? Math.max(Math.abs(ccx - far.baseCX), Math.abs(ccy - far.baseCY)) : Infinity;
+    if ((drift > FAR_REBUILD_DRIFT || this._floraStale(far)) && this._farAsk === null) this._askFar(ccx, ccy);   // FAR-FLORA: and a tree's art landed since
+    if (!far?.built) return;
+    const R = RING_RADIUS, bx = this.baseX, by = this.baseY;
+    far.reorder(ccx, ccy, `${bx},${by}`, { x0: bx - R + 0.5, x1: bx + R + 0.5, y0: by - R + 0.5, y1: by + R + 0.5 });   // this ring's vertices' span
+  }
+
+  /** FAR-FIELD: the far field's cells asked of the worker round (baseCX, baseCY); built into its mesh when they land - its
+   *  height the far ring's law on a cell's highest byte, its tint this ring's at the cell's centre. */
+  _askFar(baseCX, baseCY) {
+    const gen = ++this._farGen, inputs = this._inputs, floraOf = this._floraOf();
+    const floraVersion = floraOf ? /** @type {any} */ (this._flora).version : -1;
+    this._farAsk = `${baseCX},${baseCY}`;
+    const seaByte = Math.floor(OCEAN_Y / BYTE_SCALE);   // isWaterPixel's byte arm: byte x 8 at or under the ocean's floor
+    Promise.resolve(this._farSource.farField?.({ baseCX, baseCY, radius: FAR_RADIUS, cell: FAR_CELL, seaByte }) ?? null).then((answer) => {
+      if (gen !== this._farGen) return;
+      if (!answer?.high || !this.gl) { this._farAsk = null; return; }   // the ask stands until its ground is laid
+      const { climateOf } = ringReaders(inputs);
+      // a cell's climate the worker's where it read one (past the Bay: the continent's biomes, worked out off the frame),
+      // else this ring's own reader's
+      const clim = answer.clim ?? null, climAt = (x, y, v) => (clim && clim[v] !== FAR_CLIMATE_ASK ? clim[v] : climateOf(x, y));
+      const it = farFieldVertexSteps({
+        high: answer.high, low: answer.low, baseCX, baseCY,
+        heightOf: (byte, x, y) => ringHeightAt(x, y, byte, !!inputs.relief),   // BREATHTAKER2: the continent's lift at the cell's centre
+        tintAt: (x, y, byte, v) => overworldTint(climAt(x, y, v), byte),
+        oceanAt: (x, y, v) => climAt(x, y, v) === CLIMATES.Ocean,
+        seaY: RING_SEA_Y,
+        snowAt: inputs.relief ? (x, y, v) => capLineOfPixel(x, y, () => climAt(x, y, v)) : null,   // PEAKS1: a range white 300 km off
+        floraAt: floraOf ? (x, y, byte, v) => floraOf(climAt(x, y, v)) : null,   // FAR-FLORA: the woods' expectation in the trees' art
+      });
+      // one ask at a time and it stands until laid, so no newer ask can come while this is laid; a dispose drops the work
+      this._work.push({ it, done: (v) => {
+        this._farAsk = null;
+        (this._far ??= new FarFieldMesh(this.gl)).build(v, { baseCX, baseCY });
+        this._far.floraVersion = floraVersion;
+      } });
+    }, (e) => { if (gen === this._farGen) this._farAsk = null; console.warn('[ring] the far field failed', e?.message ?? e); });
+  }
+
+  /** MID-RING: one ring's heights asked of the worker round (baseX, baseY); built into the mesh when they land. */
+  _askMid(baseX, baseY) {
+    const gen = ++this._midGen, inputs = this._inputs, floraOf = this._floraOf();
+    const floraVersion = floraOf ? /** @type {any} */ (this._flora).version : -1;
+    this._midAsk = `${baseX},${baseY}`;
+    const job = { baseX, baseY, radius: MID_RADIUS, sub: MID_SUB, landform: !!inputs.relief, flora: !!floraOf };   // FAR-FLORA: the near law's woods beside the heights
+    Promise.resolve(this._midSource.midRing?.(job) ?? null).then((answer) => {
+      if (gen !== this._midGen) return;   // a newer ask, or the renderer disposed
+      if (!answer?.heights || !this.gl) { this._midAsk = null; return; }   // the ask stands until its ground is laid
+      const { byteAt, climateOf } = ringReaders(inputs);
+      const tintAt = (x, y) => overworldTint(climateOf(x, y), byteAt(x, y));
+      const g = this._ringY;   // a pixel centre's height on this ring - world-fixed, whichever base the grid was built round
+      const ringAt = (x, y) => {
+        const i = x - g.baseX + g.radius, j = y - g.baseY + g.radius;
+        return i >= 0 && j >= 0 && i < g.side && j < g.side ? g.positions[(j * g.side + i) * 3 + 1] : RING_SEA_Y;
+      };
+      const floraAt = floraOf ? (x, y) => ({ ...floraOf(climateOf(x, y)), byte: byteAt(x, y) }) : null;   // FAR-FLORA: the climate's woods and the WOODS byte
+      const it = midRingVertexSteps({ heights: answer.heights, baseX, baseY, radius: MID_RADIUS, sub: MID_SUB, tintAt, seaY: RING_SEA_Y, ringAt, wet: answer.wet ?? null, snowAt: ringSnowAt(inputs), flora: answer.flora ?? null, floraAt });   // PEAKS1: and its summits' snow   // MAP-WATERS: G's rivers as water
+      this._work.push({ it, done: (v) => {   // as the far field's: one ask, standing until laid; a dispose drops the work
+        this._midAsk = null;
+        (this._mid ??= new MidRingMesh(this.gl)).build(v, { baseX, baseY, radius: MID_RADIUS, sub: MID_SUB, curX: baseX, curY: baseY });
+        this._mid.floraVersion = floraVersion;
+        this._holeKey = '';   // the far ring's hole is the new footprint's
+      } });
+    }, (e) => { if (gen === this._midGen) this._midAsk = null; console.warn('[ring] the middle ring failed', e?.message ?? e); });
+  }
+
+  /**
+   * FAR-LANDMARK: A SILHOUETTE ON THE HORIZON - `mesh` in map pixel (px, py)'s own frame (render/farLandmarks.js
+   * FarLandmark: x east and z north from its south-west corner, y the world's own heights; `indices`, `normals`, `colors`
+   * optional), drawn in this pass by this ring's program - its light, its haze, its clouds' shadows - in the painter's
+   * order at its distance from the traveller, while the stream has not built pixel (px, py) (the city's own models stand
+   * there then). Answers a handle whose `remove()` lets it go.
+   * @param {{ px: number, py: number, mesh: { positions: Float32Array, indices?: ?(Uint16Array | Uint32Array), normals?: ?Float32Array, colors?: ?Uint8Array }, key?: string }} o
+   */
+  addLandmark({ px, py, mesh, key }) {
+    const lm = new FarLandmark(this.gl, { px, py, mesh, key });
+    this._landmarks.push(lm);
+    return { landmark: lm, remove: () => { const k = this._landmarks.indexOf(lm); if (k >= 0) this._landmarks.splice(k, 1); lm.dispose(); } };
+  }
+  /** IC-GRAND x FAR-LANDMARK: this ring's ground at map pixel (px, py)'s centre - the world's own height its vertex stands
+   *  at (a landmark's foot: scenes/capitalSkyline.js) - or null before a build or off its grid. */
+  groundAt(px, py) {
+    const g = this._ringY;
+    if (!g) return null;
+    const i = px - g.baseX + g.radius, j = py - g.baseY + g.radius;
+    return i >= 0 && j >= 0 && i < g.side && j < g.side ? (g.ground ? g.ground[j * g.side + i] : g.positions[(j * g.side + i) * 3 + 1]) : null;   // FAR-FLORA: the ground, never the canopy over it
+  }
+
+  /** FAR-LANDMARK: the landmarks this frame draws - not on a built pixel - farthest first, each ordered for the traveller. */
+  _landmarksNow() {
+    if (!this._landmarks.length || this._holeX == null) return [];
+    const cx = this._holeX, cy = this._holeY, built = this._builtNow;
+    const out = [];
+    for (const lm of this._landmarks) {
+      if (built?.has?.(`${lm.px},${lm.py}`)) continue;
+      lm.reorder(cx, cy);
+      out.push({ lm, d: landmarkDistance(lm.px, lm.py, cx, cy) });
+    }
+    return out.sort((a, b) => b.d - a.d);
+  }
+
+  /** FAR-LANDMARK: one landmark drawn at its pixel's origin (this ring's moved by the pixels between), never eased. */
+  _drawLandmark(lm, origin) {
+    const gl = this.gl, o = this._lmOrigin ??= new Float32Array(3);
+    o[0] = origin[0] + (lm.px - this.baseX) * TERRAIN_SIZE; o[1] = origin[1]; o[2] = origin[2] - (lm.py - this.baseY) * TERRAIN_SIZE;
+    gl.uniform3f(this.u.uMorph, 0, 0, 0);
+    lm.draw(this.u.uOrigin, o);
+  }
+
+  /** FAR-LANDMARK: this ring's cells (farthest first, `_ringDist`) cut at each landmark's distance - the farther cells, the
+   *  landmark, on - then the rest and the sea's fill; answers the landmarks nearer than every cell (the middle ring's). */
+  _ringWithLandmarks(lms, fill, origin) {
+    const gl = this.gl, cells = this.ringCount / 6, dist = /** @type {Float32Array} */ (this._ringDist);
+    let at = 0;
+    const near = [];
+    for (const e of lms) {
+      let lo = at, hi = cells;   // the first cell nearer than the landmark (the distances fall)
+      while (lo < hi) { const m = (lo + hi) >> 1; if (dist[m] >= e.d) lo = m + 1; else hi = m; }
+      if (lo >= cells) { near.push(e); continue; }
+      if (lo > at) gl.drawElements(gl.TRIANGLES, (lo - at) * 6, gl.UNSIGNED_INT, at * 24);
+      this._drawLandmark(e.lm, origin);
+      gl.uniform3f(this.u.uOrigin, origin[0], origin[1], origin[2]);
+      gl.bindVertexArray(this.vao);
+      at = lo;
+    }
+    gl.drawElements(gl.TRIANGLES, (cells - at) * 6 + 6 * fill, gl.UNSIGNED_INT, at * 24);
+    return near;
+  }
+
+  /** FAR-LANDMARK: the middle ring's runs cut at each near landmark's distance (its pixels farthest first, MidRingMesh's
+   *  order), the landmark drawn between them, its ease off for it. */
+  _midWithLandmarks(mid, o, near, origin) {
+    const gl = this.gl;
+    let at = 0;
+    for (const e of near) {
+      const k = mid.order.findIndex((p) => p.d < e.d), to = k < 0 ? mid.total : mid.order[k].at;
+      mid.drawRange(this.u.uOrigin, o, at, to);
+      this._drawLandmark(e.lm, origin);
+      gl.uniform3f(this.u.uMorph, MID_MORPH_START, MID_MORPH_END, 1);
+      at = to;
+    }
+    mid.drawRange(this.u.uOrigin, o, at, mid.total);
+  }
+
+  /** FAR-TREES: the band drawn by its own program, in this pass's state - this ring's lens, its haze and its light (the
+   *  lane's decoded as this ring's are), at its base pixel's origin (this ring's moved by the pixels between). */
+  _drawBand(view, origin, f) {
+    const gl = this.gl, b = /** @type {FarTreesBand} */ (this._band), d = b.drawn, o = this._bandOrigin;
+    o[0] = origin[0] + (d.baseX - this.baseX) * TERRAIN_SIZE; o[1] = origin[1]; o[2] = origin[2] - (d.baseY - this.baseY) * TERRAIN_SIZE;
+    const [a, s, m] = this._bandLight, dec = (c, out) => (this.lane ? this.lane.decode3(c, out) : (out.set(c), out));
+    const farSun = cloudFarOf(f.deck);
+    b.draw({
+      proj: this._proj, view, origin: o, radius: this._floraRadius, viewportH: this.renderer?.worldViewportPx?.[3] ?? gl.drawingBufferHeight,
+      hazeFrom: this.renderer?.focus ?? NO_FOCUS, ambient: dec(f.ambient, a), sunScale: f.sunScale, sunColor: dec(f.sunColor, s),
+      moonScale: f.moonScale, moonColor: dec(f.moonColor ?? FLAT_WHITE, m), fogColor: f.fogColor, fogStart: f.fogStart, fogEnd: f.fogEnd,
+      rimStart: f.farField ? FAR_RIM_START : RING_RIM_START, rimEnd: f.farField ? FAR_RIM_END : RING_RIM_END, hold: RING_HAZE_HOLD,
+      haze: f.haze ?? NO_HAZE, hazeEye: f.hazeEye, cloudFar: farSun, cloudRect: f.deck?.map ? f.deck.rect : NO_RECT, cloudUnit: RING_CLOUD_UNIT, exposure: f.exposure,
+    });
+  }
+
+  /** MID-RING / FAR-FIELD: which of the horizon's layers stand (the probes' read): the far ring's base, the middle ring's
+   *  base and runs, the far field's base cell and cells drawn, and the grounds still being laid. */
+  horizonStats() {
+    return {
+      far: this._built ? { baseX: this.baseX, baseY: this.baseY, ring: this.ringCount / 6 } : null,
+      mid: this._mid?.built ? { baseX: this._mid.baseX, baseY: this._mid.baseY, runs: this._mid.runs.length } : null,
+      field: this._far?.built ? { baseCX: this._far.baseCX, baseCY: this._far.baseCY, cells: this._far.count / 6 } : null,
+      laying: this._work.length, asking: [this._midAsk, this._farAsk].filter(Boolean).length, landmarks: this._landmarks.length,
+      trees: this._band ? this._band.count : null,   // FAR-TREES: the band's trees drawn
+    };
   }
 
   /** EL4: a 1x1 image holding the multiplier 1 (the log encoding's midpoint), for a lane frame with no adaptation image. */
@@ -540,7 +911,8 @@ export class FarRingRenderer {
    *  re-centre (build() again) rather than just re-punch. */
   needsRebuild(px, py) {
     return !this._built
-      || Math.max(Math.abs(px - this.baseX), Math.abs(py - this.baseY)) > RING_REBUILD_DRIFT;
+      || Math.max(Math.abs(px - this.baseX), Math.abs(py - this.baseY)) > RING_REBUILD_DRIFT
+      || this._floraStale({ floraVersion: this._floraVersion });   // FAR-FLORA: a tree's art landed since the grid was built
   }
 
   /**
@@ -552,8 +924,9 @@ export class FarRingRenderer {
     skyZenith = null, skyHorizon = null, eye = null, worldProj = null, seaTiles = null, seaTint = null, haze = null, hazeEye = null }) {   // BANTHA1: the jungle's haze and its eye; FAR-SEA1: the sky the sea reflects (the water's); AUDIT FAR-SEA1: the eye and the world's lens the fill is counted from (P1), the water's tiles and tint (L1)
     if (!this._built || !this.indexCount) return;
     const gl = this.gl;
-    const far = (RING_RADIUS + 1) * TERRAIN_SIZE * 1.5;
-    const projKey = `${fovY},${aspect}`;
+    const farField = this._far?.built ? this._far : null;   // FAR-FIELD: the land past this ring, while it stands
+    const far = farField ? FAR_LENS_FAR : (RING_RADIUS + 1) * TERRAIN_SIZE * 1.5;
+    const projKey = `${fovY},${aspect},${far}`;
     if (projKey !== this._projKey) {
       this._proj = mirrorProjectionX(perspective(fovY, aspect, 40, far));
       this._projKey = projKey;
@@ -588,9 +961,15 @@ export class FarRingRenderer {
     // topped out at ~0.885 and tall ring terrain terminated against
     // the sky as a faint unblended straight edge at the four cardinal
     // directions; only the corners actually dissolved.
-    gl.uniform1f(this.u.uRimStart, RING_RIM_START);
-    gl.uniform1f(this.u.uRimEnd, RING_RIM_END);
+    gl.uniform1f(this.u.uRimStart, farField ? FAR_RIM_START : RING_RIM_START);   // FAR-FIELD: the land runs on past this ring to the far field's rim
+    gl.uniform1f(this.u.uRimEnd, farField ? FAR_RIM_END : RING_RIM_END);
     gl.uniform1f(this.u.uHazeHold, RING_HAZE_HOLD);
+    gl.uniform3f(this.u.uFlora, this._floraOf() ? 1 : 0, FLORA_CROWN_M, FLORA_GROVE_M);   // FAR-FLORA: the crowns' grain while the woods stand
+    // FAR-TREES: under the band its own trees stand, the canopy over its dithered rim - measured from the band's base pixel
+    const bandOn = !!(this._band?.count && this._floraOf()), bd = this._band?.drawn;
+    const cf = this._band?.canopyFade ?? [0, 1];
+    gl.uniform4f(this.u.uCanopyBand, bandOn ? (this._floraRadius + cf[0]) * TERRAIN_SIZE : 0, bandOn ? (this._floraRadius + cf[1]) * TERRAIN_SIZE : 1, bandOn ? 1 : 0, 0);
+    gl.uniform3f(this.u.uCanopyFrom, bandOn ? origin[0] + (bd.baseX - this.baseX + 0.5) * TERRAIN_SIZE : 0, 0, bandOn ? origin[2] - (bd.baseY - this.baseY) * TERRAIN_SIZE + 0.5 * TERRAIN_SIZE : 0);
     gl.uniform4fv(this.u.uJungleHaze, haze ?? NO_HAZE);   // BANTHA1: the jungle's haze (renderer.setJungleHaze) - off ([1].x 0) when none is handed
     gl.uniform3fv(this.u.uHazeEye, hazeEye ?? eye ?? FLAT_UP);
     // OW-HORIZON: the haze from where the world's fog is measured - the travel view's traveller (renderer.setFocus), the
@@ -640,9 +1019,34 @@ export class FarRingRenderer {
     gl.depthMask(false);
     gl.depthRange(1, 1);   // AUDIT FAR-SEA1 P1: every fragment at the far plane by the viewport, so the test runs BEFORE the shader
     gl.disable(gl.CULL_FACE);
+    const lms = this._landmarksNow();   // FAR-LANDMARK: the silhouettes standing, farthest first (ordered before any array is bound)
     gl.bindVertexArray(this.vao);
-    gl.drawElements(gl.TRIANGLES, this.ringCount + 6 * fill, gl.UNSIGNED_INT, 0);   // FAR-SEA1: the sea inside the hole is the range's tail - its farthest cells first
+    gl.uniform3f(this.u.uMorph, 0, 0, 0);   // MID-RING: the far ring is its own ground
+    if (farField) {   // FAR-FIELD: the farthest first - the painter's order the three layers keep
+      const o = this._farOrigin ??= new Float32Array(3);
+      o[0] = origin[0] + (farField.baseCX * FAR_CELL - this.baseX) * TERRAIN_SIZE; o[1] = origin[1]; o[2] = origin[2] - (farField.baseCY * FAR_CELL - this.baseY) * TERRAIN_SIZE;
+      farField.draw(this.u.uOrigin, o);
+      gl.uniform3f(this.u.uOrigin, origin[0], origin[1], origin[2]);
+      gl.bindVertexArray(this.vao);
+    }
+    if (!lms.length) gl.drawElements(gl.TRIANGLES, this.ringCount + 6 * fill, gl.UNSIGNED_INT, 0);   // FAR-SEA1: the sea inside the hole is the range's tail - its farthest cells first
+    const near = lms.length ? this._ringWithLandmarks(lms, fill, origin) : lms;
     gl.bindVertexArray(null);
+    // MID-RING: the middle ring over it, in the same pass - its base's origin is this ring's moved by the bases' pixels, its
+    // rim eased onto this ring by the traveller's distance (the haze's own point: the travel view's traveller, else the eye)
+    const mid = this._mid;
+    if (mid?.built) {
+      const o = this._midOrigin ??= new Float32Array(3);
+      o[0] = origin[0] + (mid.baseX - this.baseX) * TERRAIN_SIZE; o[1] = origin[1]; o[2] = origin[2] - (mid.baseY - this.baseY) * TERRAIN_SIZE;
+      const focus = this.renderer?.focus, from = focus && focus[3] > 0.5 ? focus : (eye ?? o);
+      gl.uniform3f(this.u.uMorphFrom, from[0], from[1], from[2]);
+      gl.uniform3f(this.u.uMorph, MID_MORPH_START, MID_MORPH_END, 1);
+      if (!near.length) mid.draw(this.u.uOrigin, o);
+      else this._midWithLandmarks(mid, o, near, origin);
+    } else {
+      for (const { lm } of near) this._drawLandmark(lm, origin);   // no middle ring: the near ones after this ring
+    }
+    if (this._band?.count && this._floraOf()) this._drawBand(view, origin, { ambient, sunScale, sunColor, moonScale, moonColor, fogColor, fogStart, fogEnd, exposure, haze, hazeEye: hazeEye ?? eye ?? FLAT_UP, farField: !!farField, deck: this.renderer?.cloudShadow ?? null });   // FAR-TREES: the near trees past the grid, nearest of the pass
     gl.depthRange(0, 1);
     gl.enable(gl.CULL_FACE);
     gl.depthMask(true);
@@ -655,6 +1059,11 @@ export class FarRingRenderer {
   /** Free the GL objects (every allocation has an owner). */
   dispose(whole = true) {
     const gl = this.gl;
+    if (whole) { this._midGen++; this._midAsk = null; this._mid?.dispose(); this._mid = null; }   // MID-RING: an answer still out is let go
+    if (whole) { this._farGen++; this._farAsk = null; this._far?.dispose(); this._far = null; this._work = []; }   // FAR-FIELD: the same, and any ground still being laid
+    if (whole && globalThis.__horizonRings === this._statsFn) delete globalThis.__horizonRings;   // the probes' read, if it is still this ring's
+    if (whole) { for (const lm of this._landmarks) lm.dispose(); this._landmarks = []; }   // FAR-LANDMARK: the silhouettes it was handed
+    if (whole && this._band) { this._band.dispose(); this._band = null; }   // FAR-TREES: the band's buffers, its atlas, its program
     for (const b of this.buffers) gl.deleteBuffer(b);
     this.buffers = [];
     if (this.vao) gl.deleteVertexArray(this.vao);

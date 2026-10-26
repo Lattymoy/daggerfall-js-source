@@ -23,6 +23,7 @@ import { authoredHeightByte, tamrielHeightByte, tamrielClimateAt, dropGroundCach
 import { tamrielBiomeAt } from '../../src/world/tamriel/tamrielBiomes.js';   // TESA-BIOME: the zones the climate reads
 import { rasterizeTamriel, PROVINCE_NONE } from '../../src/world/tamriel/tamrielRaster.js';
 import { tracedChains, placeCity, buildTamrielInk, tamrielInkFor, CITY_SNAP_PX } from '../../src/ui/tamrielInk.js';
+import { zoneLineOf } from '../../src/systems/wild/cyrodiilZone.js';   // ZONE-LINE: the Imperial Province's line
 import { RACE_TEMPLATES } from '../../src/systems/races.js';
 import { TerrainGenClient } from '../../src/world/terrain/terrainGenClient.js';
 import { tamrielTraceOn } from '../../src/scenes/shared.js';
@@ -306,7 +307,13 @@ test('TAMRIEL3 ink: tracedChains links the land mask\'s pixel edges into coast c
   setTamrielTrace(trace);
   setTamrielFit({ ox: 50 * 18, oy: 40 * 18, ppu: 18 });
   const ch = tracedChains(trace);
-  assert.equal(ch.coast.length, 4, `${ch.coast.length} coast chains: one continent (Breton, the Imperial Province, Nord and Redguard joined), two lakes, the pond`);
+  // PIN MOVED (ZONE-LINE, bible/11-Multiplayer/Wild-Zone.md section 27): the Imperial Province's own coast is the open zone's
+  // line - the continent's coast (Breton, the Imperial Province, Nord and Redguard joined) in two pieces ending on the
+  // province's corners, the line's two coast runs (its north and south shores), two lakes, the pond
+  assert.equal(ch.coast.length, 7, `${ch.coast.length} coast chains: the continent's two pieces, the Imperial Province's two shores, two lakes, the pond`);
+  const zone = zoneLineOf(trace);
+  assert.equal(zone.coast.length, 2);
+  for (const run of zone.coast) assert.ok(ch.coast.includes(run), 'the zone\'s shore the ink\'s');
   for (const c of ch.coast) for (const p of c) {
     const [px, py] = bayToPicture(p.x, p.y);
     assert.ok(px >= 39 && px <= 281 && py >= 29 && py <= 151, 'every coast point on the lands\' outline');
@@ -320,8 +327,12 @@ test('TAMRIEL3 ink: tracedChains links the land mask\'s pixel edges into coast c
   assert.deepEqual(ch.labels.map((l) => l.key).sort(), ['Hammerfell', 'HighRock', 'Imperial', 'Skyrim']);
   const hr = ch.labels.find((l) => l.key === 'HighRock');
   assert.ok(hr.px > 60 && hr.px < 120 && hr.py > 40 && hr.py < 80, 'the label deep in its land');
+  // PIN MOVED (SMOOTH-LAND, test/world/smoothland.test.js): the coast the land's smooth law's own line at the map's pixel -
+  // a straight run thinned to its ends, a corner a curve of its points (the zone's own runs whole)
   const pts = ch.coast.reduce((n, c) => n + c.length, 0);
-  assert.ok(pts < 120, `${pts} points: rectangles, the staircase simplified to their corners (unsimplified, near a thousand)`);
+  assert.ok(pts > 200 && pts < 2500, `${pts} points: the rectangles' runs thinned, their corners curves`);
+  const run = ch.coast.flat().filter((p) => { const [px, py] = bayToPicture(p.x, p.y); return Math.abs(py - 30) < 0.01 && px > 60 && px < 120; });
+  assert.ok(run.length <= 2, `the north coast's straight run between its ends (${run.length} points on it)`);
 });
 
 test('TAMRIEL3 ink: placeCity keeps a city on its own province\'s land, moves one within CITY_SNAP_PX onto it, leaves one further off; and on the authored shape every city stands where it is', () => {
@@ -385,7 +396,10 @@ test('TAMRIEL3 worker: setTamriel sets the trace and the fit on the host\'s modu
   assert.equal(groundCacheSize(), 0, 'the ground\'s cache dropped: every byte it held was the authored shape\'s');
   assert.equal(tamrielTrace().land, trace.land, 'set here');
   assert.deepEqual(tamrielFit(), { ox: 900, oy: 720, ppu: 18 });
-  const last = posted[posted.length - 1];
+  // PIN MOVED (MAP-WATERS): the trace's message is no longer the last - the waters' ask follows it, the map's copy of
+  // the law compiled on the far side once the trace stands there (answered 'watersInk')
+  assert.deepEqual(posted[posted.length - 1], { m: { t: 'waters' }, t: undefined }, 'the waters asked after the trace');
+  const last = posted[posted.length - 2];
   assert.equal(last.m.t, 'tamriel');
   assert.deepEqual(last.m.fit, { ox: 900, oy: 720, ppu: 18 });
   assert.equal(last.m.trace.w, W); assert.equal(last.m.trace.h, H);
@@ -394,7 +408,7 @@ test('TAMRIEL3 worker: setTamriel sets the trace and the fit on the host\'s modu
   assert.equal(last.m.trace.dist, undefined, 'the field is remade on the far side');
   c.setTamriel({ trace: null, fit: null });
   assert.equal(tamrielTrace(), null); assert.equal(tamrielFit().ppu, PIXELS_PER_PICTURE_UNIT);
-  assert.deepEqual(posted[posted.length - 1], { m: { t: 'tamriel', trace: null, fit: null }, t: [] });
+  assert.deepEqual(posted[posted.length - 2], { m: { t: 'tamriel', trace: null, fit: null }, t: [] });
   const bare = new TerrainGenClient({ woods: { getHeightMapValue: () => 0 }, woodsBytes: null });
   bare.setTamriel({ trace, fit: { ox: 1, oy: 2, ppu: 18 } });
   assert.equal(tamrielFit().ox, 1, 'the fallback kernel\'s own state, no worker');
@@ -433,7 +447,7 @@ test('TAMRIEL3 host: the world host traces the two files after the travel art, f
   const held = read('src/ui/heldMap.js');
   assert.match(held, /tamrielLandVersion\(\),   \/\/ TAMRIEL3/, 'the sheet repaints when the trace lands');
   const ground = read('src/world/tamriel/tamrielGround.js');
-  assert.match(ground, /import \{ provinceKeyAt, coastDistanceAt, tamrielTrace \} from '\.\/tamrielLand\.js';/);   // PIN MOVED (TESA x AUDIT TESA II): the trace's straits ask whether it stands
+  assert.match(ground, /import \{ provinceKeyAt, coastDistanceAt, coastDepthAt, tamrielTrace \} from '\.\/tamrielLand\.js';/);   // PIN MOVED (TESA x AUDIT TESA II): the trace's straits ask whether it stands; PIN MOVED (SMOOTH-LAND): the land's smooth law and its waterline, CYRODIIL-SHORES' lakes folded into it
   assert.ok(!/\bprovinceAt\(|\bcoastDistance\(/.test(ground), 'the ground reads the land module, never the authored rings directly');
   const raster = read('src/world/tamriel/tamrielRaster.js');
   assert.match(raster, /import \{ provinceKeyAt \} from '\.\/tamrielLand\.js';/);

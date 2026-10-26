@@ -79,9 +79,6 @@ const HOMONYMS = new Map([
   ['regionOf', "a staff map's region of a traveller (net/staffMap.js) vs the roads past the Bay's region of a map pixel (world/tamrielRoads.js)"],
   ['arenaStanding', "the season book's arena standing of a player (systems/seasonBook.js) vs whether Arena's places stand past the Bay (world/arenaPlaces.js)"],
   ['levelOf', "the captain's tree's level of a star (systems/naval/captainTree.js) vs a tile's zoom level on the held map past the Bay (ui/tamrielTiles.js)"],
-  // TESA (AUDIT TESA II, lane R's R2): a capital's gate walks out for ground the roads reach, as main's gates had a reach of
-  // their own - none a DFU member, each read in its own folder, four of a different unit each.
-  ['GATE_REACH', "a gate's fire box's ray reach, metres (scenes/gate/gatePool.js) vs how far a capital's gate walks out for the roads' ground, map pixels (world/tamrielCapitals.js)"],
 ]);
 
 test('audit24 wave24: no symbol is DECLARED in two modules without a reason', async () => {
@@ -192,8 +189,7 @@ test('audit24 wave24: the duplicate-declaration count does not grow', () => {
   // above; their modules export nothing else the galleon's do. 44 at GROUND-BOLT (#1195, fixed at CREW-TRADE's merge of main,
   // where main's deploy had gone red on it), the same deliberate edit: groundAt and groundHit, two things each, recorded
   // in HOMONYMS above. 47 at the merge of main into TESA (the Arena arc), the same deliberate edit: regionOf, arenaStanding
-  // and levelOf, two things each, recorded in HOMONYMS above. 48 at the TESA field fixes (#1321), the same deliberate edit:
-  // GATE_REACH, two things, recorded in HOMONYMS above (the arc's branch had grown it unrecorded).
+  // and levelOf, two things each, recorded in HOMONYMS above.
   const files = walk('src/');
   const decl = new Map();
   for (const f of files) {
@@ -204,8 +200,8 @@ test('audit24 wave24: the duplicate-declaration count does not grow', () => {
     }
   }
   const dupes = [...decl.entries()].filter(([, v]) => v.size > 1);
-  assert.ok(dupes.length <= 48,
-    `${dupes.length} symbols are declared in more than one module (the ratchet is 48):\n  `
+  assert.ok(dupes.length <= 47,
+    `${dupes.length} symbols are declared in more than one module (the ratchet is 47):\n  `
     + dupes.map(([n, v]) => `${n}  ${[...v].join(' ')}`).join('\n  '));
 });
 

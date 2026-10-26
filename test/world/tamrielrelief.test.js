@@ -13,7 +13,7 @@ import {
   decodeRelief, maskRelief, reliefStands, reliefAt, peaksLine, namedSummit, RELIEF_SCALE, RELIEF_COAST_REACH, RELIEF_FLOOR, PEAKS_SHARE,
   PEAKS_FLOOR, NAMED_SEEK, NAMED_REACH,
 } from '../../src/world/tamriel/tamrielRelief.js';
-import { setTamrielTrace, coastDistanceAt } from '../../src/world/tamriel/tamrielLand.js';
+import { setTamrielTrace, coastDistanceAt, coastDepthAt } from '../../src/world/tamriel/tamrielLand.js';
 import { setTamrielFit } from '../../src/world/tamriel/tamrielFrame.js';
 import { authoredHeightByte, SHORE_BYTE, straitAt, STRAIT_PX } from '../../src/world/tamriel/tamrielGround.js';
 import { biomeAtPicture, PEAKS_SEEK } from '../../src/world/tamriel/tamrielBiomes.js';
@@ -95,14 +95,15 @@ test('TAMRIEL-RELIEF the height: where the trace carries the relief the land sta
     assert.ok(Math.abs(peak - Math.round(reliefAt(235.2, 54.2))) <= 0, `Vvardenfell's cone (${peak})`);
     assert.ok(peak > 100 && peak !== authored, 'the heightmap, not the authored law');
     assert.ok(Math.abs(authoredHeightByte(260.2, 70.2, 1.6) - authoredHeightByte(260.2, 70.2) - 2) <= 0, 'the noise added');
-    // AUDIT TESA II G4: the coast's ease is the WATERLINE's - the sea field reads a pixel's centre, so the waterline reads
-    // 0.5 (a land pixel by the sea 1): a land point a fraction of RELIEF_COAST_REACH in from the waterline stands that
-    // fraction up from the shore, and the waterline the shore itself
+    // AUDIT TESA II G4: the coast's ease is the WATERLINE's - a land point a fraction of RELIEF_COAST_REACH in from the
+    // waterline stands that fraction up from the shore, and the waterline the shore itself. PIN MOVED (SMOOTH-LAND,
+    // test/world/smoothland.test.js): the waterline the land's own smooth one, its distance the law's (coastDepthAt: 0
+    // at it), where the trace's sea field read 0.5 at the picture pixel's edge
     assert.deepEqual([RELIEF_COAST_REACH, RELIEF_FLOOR, SHORE_BYTE, WATER_BYTE], [1, 8, 6, 5]);
-    assert.ok(Math.abs(coastDistanceAt(200.001, 70.5) - 0.5) < 0.01, 'the waterline reads half a pixel');
+    assert.ok(Math.abs(coastDistanceAt(200.001, 70.5) - 0.5) < 0.01 && Math.abs(coastDepthAt(200.001, 70.5)) < 0.01, 'the waterline on a straight run the pixel\'s edge, the law\'s 0');
     assert.equal(authoredHeightByte(200.001, 70.5), SHORE_BYTE, 'the shore at the waterline');
     for (const px of [200.3, 200.7]) {
-      const py = 70.2, ease = Math.min(1, (coastDistanceAt(px, py) - 0.5) / RELIEF_COAST_REACH);
+      const py = 70.2, ease = Math.min(1, coastDepthAt(px, py) / RELIEF_COAST_REACH);
       assert.ok(ease > 0 && ease < 1, `${px} inside the ease`);
       assert.equal(authoredHeightByte(px, py), Math.max(Math.round(SHORE_BYTE + (RELIEF_FLOOR - SHORE_BYTE) * ease), Math.round(SHORE_BYTE + (reliefAt(px, py) - SHORE_BYTE) * ease)), `${px}: eased from the waterline`);
     }
@@ -128,7 +129,10 @@ test('TESA x AUDIT TESA II a strait at a corner: where two of the trace\'s sea p
     assert.equal(straitAt(2 + 1.4 * u, 2 - 1.4 * u), true, 'within the reach of the corner');
     assert.equal(straitAt(2 + 1.6 * u, 2), false, 'past it');
     assert.equal(authoredHeightByte(2 + u, 2 - u), 0, 'its land the sea\'s');
-    assert.ok(authoredHeightByte(2 + 2 * u, 2 - 2 * u) > WATER_BYTE, 'the shore past it the land\'s');
+    // PIN MOVED (SMOOTH-LAND, test/world/smoothland.test.js): the land's smooth law opens the strait itself, wider than its
+    // own reach - its corners cut a third of a picture pixel along the diagonal - and the shore past that the land's
+    assert.equal(authoredHeightByte(2 + 2 * u, 2 - 2 * u), 0, 'the smooth law\'s channel');
+    assert.ok(authoredHeightByte(2 + 8 * u, 2 - 8 * u) > WATER_BYTE, 'the shore past it the land\'s');
     assert.equal(straitAt(1, 2), false, 'a corner of one sea pixel stays land');
     land[1 * w + 2] = 0;   // a third sea at the corner: no strait to open, the sea already round it
     setTamrielTrace({ w, h, land, province });
@@ -220,14 +224,14 @@ test('TAMRIEL-RELIEF the wiring, by source: the data its own chunk (no static im
   assert.match(client, /\.\.\.\(t\.relief \? \[t\.relief\.buffer\] : \[\]\)/);
   assert.match(read('src/scenes/tamrielRoadsHost.js'), /const trace = tamrielTrace\(\), fit = tamrielFit\(\);/, 'the roads worker takes the installed trace whole');
   assert.match(read('src/world/tamrielRoads.js'), /if \(trace\?\.relief\) for \(let i = 0; i < trace\.relief\.length; i\+\+\) mix\(trace\.relief\[i\] \+ 256\);/);   // PIN MOVED (AUDIT TESA II R6): every cell
-  assert.match(read('src/world/tamriel/tamrielGround.js'), /if \(reliefStands\(\)\) \{\n\s+const ease = Math\.min\(1, Math\.max\(0, coastDistanceAt\(px, py\) - 0\.5\) \/ RELIEF_COAST_REACH\);/);   // AUDIT TESA II G4 (PIN MOVED): the waterline's ease
+  assert.match(read('src/world/tamriel/tamrielGround.js'), /if \(reliefStands\(\)\) \{\n\s+const ease = Math\.min\(1, Math\.max\(0, \/\*\* @type \{number\} \*\/ \(coastDepthAt\(px, py\)\)\) \/ RELIEF_COAST_REACH\);/);   // AUDIT TESA II G4 (PIN MOVED, and again SMOOTH-LAND): the waterline's ease, the smooth law's own distance
   assert.match(read('src/world/tamriel/tamrielBiomes.js'), /export const BIOMES_VERSION = 5;/);   // IC-RING moved it on; AUDIT TESA II (PIN MOVED) on again
   assert.ok(existsSync(join(ROOT, SOURCE)), 'the owner\'s heightmap is committed as the bake\'s source');
 });
 
 const ARENA2 = process.env.ARENA2_PATH;
 const HAVE = !!ARENA2 && ['TMAP00I0.IMG', 'TAMRIEL2.IMG', 'MAP.PAL', 'ART_PAL.COL', 'WOODS.WLD', 'MAPS.BSA', 'CLIMATE.PAK', 'POLITIC.PAK'].every((f) => existsSync(join(ARENA2, f)));
-test('TAMRIEL-RELIEF with ARENA2: the bake re-run is the module byte for byte, on the fit the world host makes; the module is not the trace (AUDIT TESA II G1 - its own land is the heightmap\'s, and the trace\'s mask laid here gives the cells the module once carried); on the player\'s own trace the relief stands, the coast is the trace\'s to the pixel and every land pixel past the blend stands over the beach line (R1); the coasts never a cliff at the water (G4); the peaks near their ranges (G5: Deshaan\'s heart none of the Velothi\'s); Skyrim\'s summit in the High Peaks and Vvardenfell\'s Red Mountain', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
+test('TAMRIEL-RELIEF with ARENA2: the bake re-run is the module byte for byte, on the fit the world host makes; the module is not the trace (AUDIT TESA II G1 - its own land is the heightmap\'s, and the trace\'s mask laid here gives the cells the module once carried); on the player\'s own trace the relief stands, the coast is the land\'s smooth law\'s (SMOOTH-LAND) and every land pixel past the blend stands over the beach line (R1); the coasts never a cliff at the water (G4); the peaks near their ranges (G5: Deshaan\'s heart none of the Velothi\'s); Skyrim\'s summit in the High Peaks and Vvardenfell\'s Red Mountain', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
   const fetchBytes = async (n) => new Uint8Array(readFileSync(join(ARENA2, n)));
   const { DFPalette } = await import('../../src/formats/dfPalette.js');
   const { preloadTamrielTrace } = await import('../../src/ui/tamrielTrace.js');
@@ -262,21 +266,25 @@ test('TAMRIEL-RELIEF with ARENA2: the bake re-run is the module byte for byte, o
     assert.equal(trace.relief.filter((v) => v).length, 4 * trace.land.reduce((n, v) => n + v, 0), 'four cells a land pixel');
     setTamrielTrace(trace);
     assert.equal(reliefStands(), true);
-    // the coast the trace's to the pixel, and AUDIT TESA II R1: every land pixel past the blend over the beach line the roads,
+    // the coast the land's smooth law's, and AUDIT TESA II R1: every land pixel past the blend over the beach line the roads,
     // the places and the gates call water at or under - every pixel of the frame; G4: no shore a cliff at the water
     const g = groundWoods(woods), f = tamrielFrameInBay();
     let bad = 0, wet = 0, cliff = 0, blendWet = 0, straits = 0;
     for (let y = Math.ceil(f.y0); y < f.y0 + f.h; y++) for (let x = Math.ceil(f.x0); x < f.x0 + f.w; x++) {
       const d = bayEdgeDistance(x, y);
       if (d <= SEAM_PX) continue;   // the seam band: the Bay's own clamped read (THE BAY IS NOT MOVED BY A BYTE)
-      const [qx, qy] = bayToPicture(x + 0.5, y + 0.5), strait = straitAt(qx, qy), land = !!provinceKeyAt(qx, qy) && !strait, v = g.getHeightMapValue(x, y);   // TESA x AUDIT TESA II: a traced strait's corner the sea's
+      // PIN MOVED (SMOOTH-LAND, test/world/smoothland.test.js): every coast the land's smooth law's (provinceKeyAt) - the
+      // trace's own side at each of its pixels' centres, a smooth waterline between them; CYRODIIL-SHORES' lakes' own
+      // shore folded into it
+      const [qx, qy] = bayToPicture(x + 0.5, y + 0.5), strait = straitAt(qx, qy), v = g.getHeightMapValue(x, y);   // TESA x AUDIT TESA II: a traced strait's corner the sea's
+      const land = !!provinceKeyAt(qx, qy) && !strait;
       if (d <= SEAM_PX + BLEND_PX) { if (land && v <= WATER_BYTE) blendWet++; continue; }
       if (strait) straits++;
       if ((v > 3) !== land) bad++;
       if (land && v <= WATER_BYTE) wet++;
       if (land && v > 40 && (g.getHeightMapValue(x + 1, y) === 0 || g.getHeightMapValue(x - 1, y) === 0 || g.getHeightMapValue(x, y + 1) === 0 || g.getHeightMapValue(x, y - 1) === 0)) cliff++;
     }
-    assert.equal(bad, 0, 'land where the trace has land, sea where it has sea - and at its straits\' corners');
+    assert.equal(bad, 0, 'land where the land\'s smooth law has land, sea where it has sea - and at the trace\'s straits\' corners');
     assert.ok(straits > 0, `the trace's diagonal straits open (${straits} pixels; Ebonheart's water to the sea among them)`);
     assert.equal(wet, 0, 'no land pixel past the blend at or under the beach line');
     assert.equal(blendWet, 0, 'nor in the blend toward the Bay (an edge at sea had blended the trace\'s land under it)');

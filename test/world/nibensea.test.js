@@ -21,7 +21,9 @@ import { laneNetwork } from '../../src/systems/naval/seaLanes.js';
 import { beyondLaneWay, beyondPathPx, BEYOND_LANE_MAX_PX, BEYOND_LANE_PATH_PX } from '../../src/scenes/naval/worldLanes.js';
 import { beyondPorts, CANAL_PORT_REACH_PX } from '../../src/world/worldWide/worldPorts.js';
 import { createWorldPlaces } from '../../src/world/worldWide/worldPlaces.js';
-import { provinceWaterAt, PROVINCE_WATER_REACH } from '../../src/systems/wild/cyrodiilZone.js';
+import { provinceWaterAt, PROVINCE_WATER_REACH, cyrodiilMask, zoneLineOf } from '../../src/systems/wild/cyrodiilZone.js';
+import { wildInside } from '../../src/systems/wild/wildZone.js';
+import { tracedChains } from '../../src/ui/tamrielInk.js';
 import { CLIMATES, LOCATION_TYPES } from '../../src/formats/mapsFile.js';
 import { NATIVE_PIXEL } from '../../src/systems/seaRaiders.js';
 
@@ -86,44 +88,46 @@ function lakeBelow(row) {
 test('NIBEN-SEA THE WATERFRONT CANAL: from the row past the Imperial City\'s span to the last before the trace\'s water, its middle column and one either side; null where the water meets the city\'s edge, where none is within reach, where its span is not all its province\'s land, and with no trace (mutants: the span unread; the reach unbounded; the edge\'s own water a canal)', () => {
   assert.equal(WATERFRONT_CANAL.span, IMPERIAL_SPAN, 'the city\'s own span');
   assert.equal(WATERFRONT_CANAL.city, CITIES.find((c) => c.name === 'Imperial City'), 'the Imperial City\'s');
-  lakeBelow(100);   // the freeware's own: the city at (2069, 658), the picture's row 100 from Bay row 666
+  lakeBelow(101);   // the freeware's own: the city at (2069, 658), its span to row 670, the picture's row 101 from Bay row 682
   const c = waterfrontCanal();
-  assert.deepEqual([c?.x0, c?.x1, c?.y0, c?.y1], [2068, 2070, 662, 665]);
-  for (let y = 660; y <= 667; y++) for (let x = 2066; x <= 2072; x++) {
-    const inside = x >= 2068 && x <= 2070 && y >= 662 && y <= 665;
+  assert.deepEqual([c?.x0, c?.x1, c?.y0, c?.y1], [2068, 2070, 671, 681]);
+  for (let y = 669; y <= 683; y++) for (let x = 2066; x <= 2072; x++) {
+    const inside = x >= 2068 && x <= 2070 && y >= 671 && y <= 681;
     assert.equal(canalAt(x, y), inside, `(${x}, ${y})`);
-    if (y < 666) assert.equal(provinceKeyBeyondBay(x, y), inside ? null : 'Imperial', `(${x}, ${y}) the province's but on the canal`);
+    if (y < 682) assert.equal(provinceKeyBeyondBay(x, y), inside ? null : 'Imperial', `(${x}, ${y}) the province's but on the canal`);
   }
-  assert.equal(provinceKeyAt(...bayToPicture(2069.5, 663.5)), null, 'the picture point on it the sea');
-  assert.equal(provinceKeyAt(...bayToPicture(2071.5, 663.5)), 'Imperial', 'the bank beside it the land\'s');
+  assert.equal(provinceKeyAt(...bayToPicture(2069.5, 676.5)), null, 'the picture point on it the sea');
+  assert.equal(provinceKeyAt(...bayToPicture(2071.5, 676.5)), 'Imperial', 'the bank beside it the land\'s');
   // the ground and the climate: the sea's
-  assert.equal(tamrielHeightByte(2069, 663), 0);
-  assert.equal(tamrielClimateAt(2069, 663), CLIMATES.Ocean);
-  assert.ok(tamrielHeightByte(2071, 663) > 0);
-  lakeBelow(99);   // the city's own picture pixel water: its span is not all land
+  assert.equal(tamrielHeightByte(2069, 676), 0);
+  assert.equal(tamrielClimateAt(2069, 676), CLIMATES.Ocean);
+  assert.ok(tamrielHeightByte(2071, 676) > 0);
+  lakeBelow(100);   // the picture's row 100 under the city's span: its span is not all land
   assert.equal(waterfrontCanal(), null, 'no city to cut it to');
-  // seven Bay pixels a picture pixel, the city's point a row's middle: its span's last row in the picture's row 99, the next
-  // in row 100 - the water at its edge, nothing to cut; the water a row lower, the canal the row 100 under the span
+  // twenty-six Bay pixels a picture pixel: the city's span ends on the picture's row 100's top edge - the water there at
+  // its edge, nothing to cut
   setTamrielTrace(picture((x, y) => y >= 100));
-  setTamrielFit({ ox: 0, oy: 0, ppu: 7 });
+  setTamrielFit({ ox: 0, oy: 0, ppu: 26 });
   assert.equal(waterfrontCanal(), null, 'the water at its edge: nothing to cut');
+  // twenty-two: the span's next row in the picture's row 100, the water from row 101 - the canal the rows between
   setTamrielTrace(picture((x, y) => y >= 101));
+  setTamrielFit({ ox: 0, oy: 0, ppu: 22 });
   const d = waterfrontCanal();
-  assert.deepEqual([d?.x0, d?.x1, d?.y0, d?.y1], [1199, 1201, 700, 706], 'the canal the row\'s seven pixels under the span');
+  assert.deepEqual([d?.x0, d?.x1, d?.y0, d?.y1], [3772, 3774, 2202, 2221], 'the canal the twenty rows under the span');
   setTamrielTrace(picture((x, y) => y >= 101 || (x === 171 && y === 99)));   // the city's own pixel water, the row under it land
   assert.equal(waterfrontCanal(), null, 'its span water: no city, no canal under it');
-  lakeBelow(102);   // the water past the reach (picture row 102 from Bay row 697)
+  lakeBelow(102);   // the water past the reach (picture row 102 from Bay row 698)
   assert.equal(waterfrontCanal(), null, `none within ${WATERFRONT_CANAL.reach}`);
   setTamrielTrace(null);
   assert.equal(waterfrontCanal(), null, 'no trace, no canal');
 });
 
-test('NIBEN-SEA THE CITY\'S HARBOUR: the Imperial City\'s port its Waterfront\'s slice, on its span\'s south edge - open where its canal meets it; every other capital\'s its centre, as before (mutants: the harbour the centre; the canal unasked)', () => {
+test('NIBEN-SEA THE CITY\'S HARBOUR: the Imperial City\'s port the middle slice of its span\'s south edge, below the Waterfront - open where its canal meets it; every other capital\'s its centre, as before (mutants: the harbour the centre; the canal unasked)', () => {
   const ic = CAPITALS.findIndex((c) => c.key === 'imperial-city');
   const n = IMPERIAL_SPAN, r = (n - 1) / 2;
   assert.equal(capitalHarbourSlice(CAPITALS[ic]), (n - 1) * n + r, 'the bottom row\'s middle');
   for (const cap of CAPITALS.filter((c) => c.key !== 'imperial-city')) assert.equal(capitalHarbourSlice(cap), capitalCentre(cap), cap.name);
-  lakeBelow(100);
+  lakeBelow(101);
   assert.deepEqual(capitalCentrePixel(ic), { px: 2069, py: 658 });
   assert.equal(capitalCanalOpen(ic), true);
   for (const k of CAPITALS.keys()) if (k !== ic) assert.equal(capitalCanalOpen(k), false, CAPITALS[k].name);
@@ -132,13 +136,13 @@ test('NIBEN-SEA THE CITY\'S HARBOUR: the Imperial City\'s port its Waterfront\'s
 });
 
 test('NIBEN-SEA THE PORT: a capital\'s harbour named for its capital and running its packets CANAL_PORT_REACH_PX; a town\'s port its own name and the lanes\' reach (mutants: the name the slice\'s; the reach unset)', () => {
-  lakeBelow(100);
+  lakeBelow(101);
   const places = createWorldPlaces();
   places.register('t', [
-    { mapId: 1, name: 'Waterfront District', px: 2069, py: 661, type: LOCATION_TYPES.TownCity, port: true },
-    { mapId: 2, name: 'Some Town', px: 2100, py: 667, type: LOCATION_TYPES.TownCity, port: true },
+    { mapId: 1, name: 'Lake Rumare', px: 2069, py: 670, type: LOCATION_TYPES.TownCity, port: true },
+    { mapId: 2, name: 'Some Town', px: 2100, py: 681, type: LOCATION_TYPES.TownCity, port: true },
   ]);
-  const ports = beyondPorts(places, (x, y) => canalAt(x, y) || y >= 666);
+  const ports = beyondPorts(places, (x, y) => canalAt(x, y) || y >= 682);
   assert.deepEqual(ports.map((p) => [p.name, p.reach ?? null]), [['Imperial City', CANAL_PORT_REACH_PX], ['Some Town', null]]);
   assert.ok(CANAL_PORT_REACH_PX > BEYOND_LANE_MAX_PX);
 });
@@ -153,16 +157,16 @@ test('NIBEN-SEA THE LANES: a port\'s own reach links it past the lanes\' (each p
 });
 
 test('NIBEN-SEA A WAY OFF THE CANAL: a roadstead on the canal (land on the picture) puts out from the picture\'s sea beside it, the leg to it held by the world\'s water; none where that leg is land (mutants: the roadstead held to the picture; the leg unasked)', () => {
-  lakeBelow(100);
-  const sea = (x, y) => canalAt(x, y) || y >= 666;
+  lakeBelow(101);
+  const sea = (x, y) => canalAt(x, y) || y >= 682;
   const native = (x, y) => sea(Math.floor(x / NATIVE_PIXEL), 499 - Math.floor(y / NATIVE_PIXEL));
-  const lane = { a: { road: { x: 2069, y: 662 } }, b: { road: { x: 2069, y: 760 } } };
+  const lane = { a: { road: { x: 2069, y: 672 } }, b: { road: { x: 2069, y: 770 } } };
   const way = beyondLaneWay(lane, native);
   assert.ok(way, 'a way');
   const first = way.pts[0];
-  assert.deepEqual([Math.round(first.x / NATIVE_PIXEL * 2) / 2, Math.round((500 - first.z / NATIVE_PIXEL) * 2) / 2], [2069.5, 662.5], 'from the roadstead itself');
+  assert.deepEqual([Math.round(first.x / NATIVE_PIXEL * 2) / 2, Math.round((500 - first.z / NATIVE_PIXEL) * 2) / 2], [2069.5, 672.5], 'from the roadstead itself');
   assert.equal(beyondLaneWay(lane, (x, y) => native(x, y) && !canalAt(Math.floor(x / NATIVE_PIXEL), 499 - Math.floor(y / NATIVE_PIXEL))), null, 'the canal dry: no way');
-  assert.equal(beyondLaneWay({ a: { road: { x: 2080, y: 662 } }, b: lane.b }, native), null, 'a roadstead off both');
+  assert.equal(beyondLaneWay({ a: { road: { x: 2080, y: 672 } }, b: lane.b }, native), null, 'a roadstead off both');
 });
 
 test('NIBEN-SEA THE ZONE\'S WATER: a water pixel with the Imperial Province\'s land its nearest on both sides of a row or a column is the province\'s; one with another province\'s on a side, or none within reach, is not; the canal is (mutants: one bank enough; another province\'s bank the province\'s)', () => {
@@ -181,7 +185,50 @@ test('NIBEN-SEA THE ZONE\'S WATER: a water pixel with the Imperial Province\'s l
   assert.equal(provinceWaterAt(...at(150, 100)), false, 'land is no water');
 });
 
-test('NIBEN-SEA (ARENA2): on the player\'s own picture the Niben joins Lake Rumare to the Topal Bay - Hammerfell\'s two lakes the only ones left; the Imperial City\'s Waterfront a port of the sea named for it, with a lane down the Niben to Senchal and a voyage from the Topal Bay landing at it', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
+test('NIBEN-SEA THE ZONE\'S LINE ACROSS ITS WATER: where the zone\'s own water meets the sea\'s (a river leaving the province\'s banks) the outline crosses it - every chain closed, a pixel the zone\'s exactly when its middle lies inside the line, the dam the red line\'s alone (never the held map\'s coast or border, never a piece the ink leaves off) (mutants: the dam unbuilt; the dam\'s squares the law\'s)', () => {
+  // the province's land with a river down its middle (column 5), its banks the province's for three rows and Elsweyr's
+  // for two, out to the sea
+  const rows = ['............', '.9999999999.', '.9999.99999.', '.9999.99999.', '.9999.99999.', '.7777.77777.', '.7777.77777.', '............'];
+  const w = rows[0].length, h = rows.length, land = new Uint8Array(w * h), province = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const c = rows[y][x]; if (c !== '.') { land[y * w + x] = 1; province[y * w + x] = Number(c); } }
+  const trace = { w, h, land, province };
+  setTamrielFit({ ox: -2000, oy: 0, ppu: 16 });   // the picture east of the Bay
+  setTamrielTrace(trace);
+  const m = /** @type {any} */ (cyrodiilMask());
+  const at = (px, py) => pictureToBay(px + 0.5, py + 0.5).map(Math.floor);
+  assert.equal(wildInside(m, ...at(5, 3)), true, 'the river between the province\'s banks the zone\'s');
+  assert.equal(wildInside(m, ...at(5, 6)), false, 'between Elsweyr\'s, not');
+  const line = zoneLineOf(trace, m);
+  assert.ok(line.chains.length >= 1);
+  for (const c of line.chains) assert.deepEqual(c[0], c.at(-1), 'closed');
+  // the centre rule over the zone's box: inside the line (even-odd, a row at a pixel's middle) exactly when the zone's
+  const rowsAt = new Map();
+  for (const c of line.chains) for (let i = 0; i + 1 < c.length; i++) {
+    const p = c[i], q = c[i + 1];
+    if (p.y === q.y) continue;
+    const lo = Math.min(p.y, q.y), hi = Math.max(p.y, q.y);
+    for (let y = Math.ceil(lo - 0.5); y + 0.5 < hi; y++) if (y + 0.5 >= lo) (rowsAt.get(y) ?? rowsAt.set(y, []).get(y)).push(p.x + ((q.x - p.x) * (y + 0.5 - p.y)) / (q.y - p.y));
+  }
+  const [x0, y0] = pictureToBay(0, 0), [x1, y1] = pictureToBay(w, h);
+  let off = 0, zone = 0;
+  for (let y = Math.floor(y0); y < Math.ceil(y1); y++) {
+    const xs = (rowsAt.get(y) ?? []).sort((a, b) => a - b);
+    let k = 0;
+    for (let x = Math.floor(x0); x < Math.ceil(x1); x++) { while (k < xs.length && xs[k] <= x + 0.5) k++; const v = wildInside(m, x, y); zone += v ? 1 : 0; if ((k % 2 === 1) !== v) off++; }
+  }
+  assert.ok(zone > 0);
+  assert.equal(off, 0, 'a pixel the zone\'s exactly when its middle lies inside the line');
+  // the dam the red line's alone: the held map's coast and borders hold every run of the outline's coast and borders, and
+  // the ink leaves nothing off for it
+  const ink = tracedChains(trace);
+  for (const run of line.coast) assert.ok(ink.coast.includes(run));
+  for (const run of line.borders) assert.ok(ink.borders.includes(run));
+  const drawn = (c) => c.reduce((n, p, i) => n + (i ? Math.hypot(p.x - c[i - 1].x, p.y - c[i - 1].y) : 0), 0);
+  const red = line.chains.reduce((n, c) => n + drawn(c), 0), runs = [...line.coast, ...line.borders].reduce((n, c) => n + drawn(c), 0);
+  assert.ok(red - runs > 10 && red - runs < 20, `the dam across the river, a picture pixel wide (${(red - runs).toFixed(1)} map pixels)`);
+});
+
+test('NIBEN-SEA (ARENA2): on the player\'s own picture the Niben joins Lake Rumare to the Topal Bay - Hammerfell\'s two lakes the only ones left, the painting\'s own coasts never kept by the boot (mutant: the bake\'s trace kept); the Imperial City\'s Waterfront a port of the sea named for it, with a lane down the Niben to Senchal and a voyage from the Topal Bay landing at it', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
   globalThis.atob ??= (s) => Buffer.from(s, 'base64').toString('binary');
   const bytes = (n) => new Uint8Array(readFileSync(join(/** @type {string} */ (ARENA2), n)));
   const { DFPalette } = await import('../../src/formats/dfPalette.js');
@@ -197,6 +244,13 @@ test('NIBEN-SEA (ARENA2): on the player\'s own picture the Niben joins Lake Ruma
   const { WATER_BYTE } = await import('../../src/world/roadsProducer.js');
   const pal = new DFPalette(); pal.load(bytes('ART_PAL.COL'), 'ART_PAL.COL');
   const trace = await preloadTamrielTrace({ fetchBytes: async (n) => bytes(n), palette: pal });
+  // the painting's own coasts (the relief's bake) are never kept: the boot's store is not asked for them
+  let asked = 0;
+  const store = new Proxy({}, { get: () => { asked++; return undefined; } });
+  const painted = await preloadTamrielTrace({ fetchBytes: async (n) => bytes(n), palette: pal, relief: false, niben: false, indexedDBRef: store });
+  assert.equal(asked, 0, 'the store unasked');
+  assert.equal(painted.cacheKey, undefined);
+  assert.equal(painted.land.reduce((a, v) => a + v, 0) - trace.land.reduce((a, v) => a + v, 0), nibenCells().length, 'the course land on it');
   setTamrielTrace(trace);
   setTamrielFit(FIT);
   const lakes = pictureLakes(trace);
@@ -210,12 +264,12 @@ test('NIBEN-SEA (ARENA2): on the player\'s own picture the Niben joins Lake Ruma
   places.register('tesa', pastBayPlaceRows({ pixels: arenaPixels(), templateOf: () => ({ exterior: { exteriorData: { width: 1, height: 1 } } }), capitals: true }));
   const ports = createWorldPorts({ places, openSea: (x, y) => water(x, y) && !pastBayLakeAt(x, y) }).list();
   const ic = ports.find((p) => p.name === 'Imperial City');
-  assert.deepEqual([ic?.px, ic?.py, ic?.reach], [2069, 661, CANAL_PORT_REACH_PX], 'the Waterfront\'s slice');
+  assert.deepEqual([ic?.px, ic?.py, ic?.reach], [2069, 670, CANAL_PORT_REACH_PX], 'the harbour\'s slice, the middle of the city\'s south edge');
   const lane = laneNetwork(ports, lw.open, BEYOND_LANE_MAX_PX).find((l) => [l.a.id, l.b.id].includes(ic.id) && [l.a.name, l.b.name].includes('Senchal'));
   assert.ok(lane, 'a lane to Senchal');
   const way = beyondLaneWay(lane, lw.openNative);
   assert.ok(way && way.len > 800_000, `down the Niben (${way ? Math.round(way.len / 1000) : 0} km)`);
   const voyage = planSeaLanes({ x: 2350, y: 1470 }, { x: ic.px, y: ic.py }, { isWater: (x, y) => ground.getHeightMapValue(x, y) <= WATER_BYTE, sea: { start: 'sea', voyage: true } });
   assert.ok(voyage, 'a voyage from the Topal Bay');
-  assert.deepEqual(voyage.pixels.at(-1), { x: ic.px, y: ic.py }, 'ashore at the Waterfront');
+  assert.deepEqual(voyage.pixels.at(-1), { x: ic.px, y: ic.py }, 'ashore at the harbour');
 });

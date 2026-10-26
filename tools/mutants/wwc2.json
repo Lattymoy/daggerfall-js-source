@@ -1,9 +1,9 @@
 [
   {
     "name": "WWC2-a-cell-by-its-corner",
-    "file": "src/systems/wild/cyrodiilZone.js",
-    "old": "inZone(ox + cx * cell + mid, oy + cy * cell + mid)",
-    "new": "inZone(ox + cx * cell, oy + cy * cell)",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "const m = Math.floor(cell / 2), midBit = m * cell + m;",
+    "new": "const m = Math.floor(cell / 2), midBit = 0;",
     "tests": [
       "test/world/worldWide/wwc2_zone.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "WWC2-the-chains-left-on-the-grid",
     "file": "src/systems/wild/wildZone.js",
-    "old": "    if (chain.length > 1) chains.push(chain.map((p) => { const [wx, wy] = maskWorld(mask, p.x, p.y); return { x: wx, y: wy }; }));",
-    "new": "    if (chain.length > 1) chains.push(chain);",
+    "old": "  }, (x, y) => maskWorld(mask, x, y));",
+    "new": "  }, (x, y) => [x, y]);",
     "tests": [
       "test/systems/wild1_zone.test.js",
       "test/world/worldWide/wwc2_zone.test.js"

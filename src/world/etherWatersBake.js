@@ -22,7 +22,10 @@
 //   RECTS     - an isle's place (world/etherPlaces.js: a port's town, a ruin's dungeon) blends its pixel's ground as a
 //               classic location's (the streamed build's own order), so its pixel is sampled with its template's rect -
 //               the rects the host reads off the templates once (`etherPlaceRects`), picked by the place's own law
-//               (etherTemplateOf: the same template every client clones).
+//               (etherTemplateOf: the same template every client clones) - and AUDIT TESA III E1-4: with the ISLE'S OWN
+//               OUTLINE (TOWN-SHAPES TS2), drawn off the template's outline basis under the isle's own map id
+//               (etherPlaceId), its rect cut under it, as the clone's streamed build draws them. The bake had blended the
+//               template's rect DFU's way.
 // Pure and worker-safe (formats/ and world/ alone): the Deep Waters worker and this thread build the same planes, and
 // a pixel the worker built hands its 3 x 3's back with its geometry (exportPlanes, `sea` and `cls` beside the planes)
 // so this thread's queries never flood a cell twice.
@@ -31,7 +34,8 @@ import {
   DeepWatersBake, BAY_FRAME, inFrame, floodSteps, classifyPixel, coarseCandidateBits, pixelWaterSampler, PIXEL_MIXED, PIXEL_SEA, PIXEL_LAND,
 } from './deepWater/deepWatersBake.js';
 import { ETHER_BOX, ISLE_CELL_PX, etherCellOf, etherFrame, isleAt } from './ethericSea.js';
-import { etherTemplateOf } from './etherPlaces.js';
+import { etherTemplateOf, etherPlaceId } from './etherPlaces.js';
+import { outlineOfBasis, rectOfBasis } from './terrain/terrainTiles.js';   // AUDIT TESA III E1-4: an isle's outline off its template's basis
 import { TAMRIEL_ROW } from './tamrielWatersBake.js';   // TAMRIEL-DEEP: the continent's rows routed to its bake
 
 /** The Eltheric Ocean's frame: its box, as the stream holds it (world/ethericSea.js etherFrame). */
@@ -43,27 +47,62 @@ const ALL8 = new Uint8Array(8).fill(0xff);
 const NONE8 = new Uint8Array(8);
 
 /**
- * THE PLACES' RECTS off their templates: `{ towns, havens, ruins }`, each the template list's (world/etherPlaces.js
- * etherTemplates) rect by rect - `rectOf(template)` SetLocationTiles' answer, `[xMin, xMax, yMin, yMax]`.
+ * THE PLACES' RECTS off their templates: `{ towns, havens, ruins, bases }`, each the template list's (world/etherPlaces.js
+ * etherTemplates) rect by rect - `rectOf(template)` SetLocationTiles' answer, `[xMin, xMax, yMin, yMax, basis]` - and AUDIT
+ * TESA III E1-4: `basis` the index in `bases` of its outline's basis (terrainTiles.js locationOutlineBasis, riding on the
+ * rect's `shape`), -1 for none; `bases` each distinct basis once (the templates name 384 blocks between them), its tiles a
+ * bit apiece - the isles' bake draws each isle's outline off it (etherRectAt).
  * @param {{ towns?: any[], havens?: any[], ruins?: any[] } | null} templates
- * @param {(template: any) => { xMin: number, xMax: number, yMin: number, yMax: number }} rectOf
+ * @param {(template: any) => { xMin: number, xMax: number, yMin: number, yMax: number, shape?: any }} rectOf
  */
 export function etherPlaceRects(templates, rectOf) {
-  const rows = (list) => (list ?? []).map((t) => { const r = rectOf(t); return [r.xMin, r.xMax, r.yMin, r.yMax]; });
-  return { towns: rows(templates?.towns), havens: rows(templates?.havens), ruins: rows(templates?.ruins) };
+  const bases = [], seen = new Map();
+  const pack = (a) => { const bits = new Uint8Array((a.length + 7) >> 3); for (let i = 0; i < a.length; i++) if (a[i]) bits[i >> 3] |= 1 << (i & 7); return bits; };
+  const basisIndex = (b) => {
+    if (!b) return -1;
+    const bits = pack(b.padded), stamp = pack(b.stamp);
+    const key = `${b.PW},${b.PH},${b.walled ? 1 : 0},${b.x0},${b.y0},${b.clear}:${bits.join(',')}:${stamp.join(',')}`;
+    let k = seen.get(key);
+    if (k === undefined) { seen.set(key, k = bases.length); bases.push({ PW: b.PW, PH: b.PH, walled: b.walled, x0: b.x0, y0: b.y0, clear: b.clear, bits, stamp }); }
+    return k;
+  };
+  const rows = (list) => (list ?? []).map((t) => { const r = rectOf(t); return [r.xMin, r.xMax, r.yMin, r.yMax, basisIndex(r.shape?.basis ?? null)]; });
+  return { towns: rows(templates?.towns), havens: rows(templates?.havens), ruins: rows(templates?.ruins), bases };
+}
+
+/** AUDIT TESA III E1-4: an isle's rect and outline, drawn off its template's packed basis under the isle's own map id - the
+ *  clone's (etherPlaces.js synthesizeEtherLocation stands it under etherPlaceId; setLocationTiles cuts its rect under it,
+ *  terrainTiles.js rectOfBasis) - kept for the last ISLE_SHAPES_KEPT isles. */
+const ISLE_SHAPES_KEPT = 64;
+/** @type {Map<string, any>} */
+const _isleRects = new Map();
+function isleRect(basis, isle) {
+  const k = `${isle.key}|${basis.PW},${basis.PH},${basis.x0},${basis.y0}`;
+  let r = _isleRects.get(k);
+  if (r) return r;
+  const unpack = (bits) => { const a = new Uint8Array(basis.PW * basis.PH); for (let i = 0; i < a.length; i++) a[i] = (bits[i >> 3] >> (i & 7)) & 1; return a; };
+  const b = { padded: unpack(basis.bits), stamp: unpack(basis.stamp), PW: basis.PW, PH: basis.PH, walled: basis.walled, x0: basis.x0, y0: basis.y0, clear: basis.clear };
+  r = rectOfBasis(b, outlineOfBasis(b, etherPlaceId(isle)));
+  if (_isleRects.size >= ISLE_SHAPES_KEPT) _isleRects.delete(/** @type {string} */ (_isleRects.keys().next().value));
+  _isleRects.set(k, r);
+  return r;
 }
 
 /**
  * The rect a pixel's place blends, or null: an isle's centre pixel whose kind stands a place, its rect the one its
- * template's own pick names (etherTemplateOf over the rects, list for list).
- * @param {{ towns: number[][], havens: number[][], ruins: number[][] } | null} rects
+ * template's own pick names (etherTemplateOf over the rects, list for list) - AUDIT TESA III E1-4: with the isle's own
+ * outline (`shape`) where its template has one, so the bake's blend (deepWatersBake.js pixelWaterSampler) is the clone's
+ * streamed build's.
+ * @param {{ towns: number[][], havens: number[][], ruins: number[][], bases?: any[] } | null} rects
  */
 export function etherRectAt(rects) {
   return (px, py) => {
     const isle = rects ? isleAt(px, py) : null;
     if (!isle || isle.px !== px || isle.py !== py) return null;
     const r = etherTemplateOf(rects, isle);
-    return r ? { xMin: r[0], xMax: r[1], yMin: r[2], yMax: r[3] } : null;
+    if (!r) return null;
+    const basis = r[4] >= 0 ? rects?.bases?.[r[4]] : null;
+    return basis ? isleRect(basis, isle) : { xMin: r[0], xMax: r[1], yMin: r[2], yMax: r[3] };
   };
 }
 

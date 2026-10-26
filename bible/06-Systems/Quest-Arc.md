@@ -5335,7 +5335,9 @@ once), never the session. The audit24 CTX_PENDING table lost its
 addFace/dropFace rows - removing a row means mounting it.
 
 Pins: 12 in `test/systems/quest/escortfaces.test.js`. Campaign: 13 mutants, 13
-killed.
+killed. QUEST-SHELF-FACES (2026-10-25) added a 13th: a quest set aside shows no
+faces (its section, below). ESCORT-TOUCH-ROW (2026-10-25) added two more: the
+column starts below a touch screen's top row (its section, below).
 
 ## RW1 - THE QUESTCOMPLETE LOOT WINDOW (2026-08-28)
 
@@ -6665,6 +6667,48 @@ a quest up carried its letter, its package, its body part until they took it up 
   once - so the quest can still be finished. The journal says so ("Its item is back in your pack.").
 - Pinned by `test/systems/quest/questshelf.test.js` (QUEST-SHELF-DROP) and `tools/mutants/questshelf.json`.
 
+## ESCORT-TOUCH-ROW - the escort faces start below a touch screen's top row (2026-10-25)
+
+QUEST-SHELF-FACES' phone pass (Edge, phone emulation, on main): at HUD scale 1 - a phone upright (390x664) and on its
+side (844x390) - the touch layer's dial (`ui/touch/touch.js`, 16 to 64 CSS px from the top left) stood over the
+escort column's first face (FE1, startY 36, 48 px), and about half the portrait was hidden. The iPad (1180x820, scale 3)
+was clear: its column starts at 108.
+
+- **The rule** (`ui/hud/hudEscortFaces.js escortStartY`): the column starts at DFU's startY (36) unless the touch
+  layer's top row reaches lower; then one ESCORT_TOUCH_AIR (8 CSS px) under that row, rounded up into the HUD's own
+  units. The row is MEASURED where it stands, as the status widget measures it (`ui/enhanced/enhancedHud.js`
+  STAT_ABOVE): the lowest bottom edge of the `.dftouch-btn` presses that cross the column's width and start above the
+  screen's middle. So a notched phone's safe-area inset counts, the presses at the foot never do, and with no touch
+  layer (a mouse, a pad) DFU's place stands. It is measured every ESCORT_MEASURE_EVERY (30) frames and at once on a new
+  window size, as a rotation moves the row.
+- **The status widget follows**: `escortFacesBottom` reports the moved column, so the enhanced HUD's widget keeps
+  below it (hud.js `escortBottomPx`).
+- A RECORDED DEPARTURE (Port-Ledger A, TI1's row): DFU has no touch layer, so its startY never meets one.
+- Pinned by `test/systems/quest/escortfaces.test.js` (ESCORT-TOUCH-ROW: the drawn face's top at the three sizes, with and
+  without the row, a press at the foot or beside the column moving nothing; and `escortStartY`'s arithmetic) and
+  `tools/mutants/escorttouchrow.json` (3, all dead).
+
+## QUEST-SHELF-FACES - an abandoned quest's escort face is hidden, kept (2026-10-25)
+
+A player: *"I was unable to complete the Acolyte Quest where you escort the Oracle, I ended up abandoning the quest and
+now I am stuck with the Oracle's portrait in my UI."* N0B21Y14's `_S.03_` runs `add _oracle_ face` as the Oracle joins
+you. The HUD's escort column (FE1, `ui/hud/hudEscortFaces.js`) loses a face by DropFace or by the quest-end sweep
+(`escortQuestEnded`, raised by `tombstoneQuest`). QUEST-SHELF's Abandon is neither, so the face stood for as long as the
+quest was set aside, and it rode the save.
+
+- **Hidden, not dropped.** The column leaves out every face whose quest is set aside before its layout, so the faces
+  under it close up as they do when one drops (`shownColumn`, read by `drawEscortFaces` and by the enhanced HUD's
+  `escortFacesBottom`). The faces list is unchanged: it is saved as it is, and the face is shown again the moment the
+  quest is reclaimed. A drop would lose it for good, because `reclaimQuest` restores the quest from its own envelope and
+  never runs its `add face` again. A save that already carries the stuck face loads hidden, with no migration.
+- **The question is the bridge's.** `setEscortQuestAway` is handed `isShelved` over the bridge's own machine
+  (`scenes/quest/questBridge.js`), the one panel asking the page's one bridge as `setMacroWorld` does. No host grows.
+- A DEPARTURE only as QUEST-SHELF is one (Port-Ledger A, its row): DFU has no abandon, so its faces never meet a quest
+  set aside. The face of a quest that ends is still DFU's sweep.
+- Pinned by `test/systems/quest/escortfaces.test.js` (QUEST-SHELF-FACES, a real quest set aside and reclaimed through a
+  bare bridge) and `tools/mutants/questshelffaces.json` (2, both dead). UI3's `the-escorts-top-for-their-bottom` record
+  (`tools/mutants/ui3.json`) was re-aimed by content to the new loop, and still dies.
+
 ## NO-ASKS-AGAIN - a No that leads nowhere asks again, on the next click (2026-10-13, FIELD BUGS 2026-10-13e)
 
 The batch's record: `01-Overview/bugs/Field-Bugs-2026-10-13e.md`, report 6.
@@ -6857,3 +6901,148 @@ restart replaying the Totem's reward, an old save offering steps the story went 
 counted, a questline choice answered twice) - each fixed and pinned red on the snapshot, or left with its reason, in the
 record's own section; `auditqa3_story.test.js`, `auditqa3_share.test.js`, `auditqa3_life.test.js`,
 `tools/mutants/auditqa3_*.json`.
+
+## AUDIT RELEASE R2-5 - A PROVINCE'S REGION: a quest giver past the Bay sends the player across their province (2026-10-26)
+
+The owner, before the release that carries TESA: *"expand our world seamlessly. All systems should be integrated
+precisely"*. Audit lane R2 found the gap (`01-Overview/audits/Audit-Release-R2.md` R2-5, its proposal taken here).
+DFU draws a remote site from the questor's region's MAPS.BSA rows: Place.SelectRemoteTownSite (:790-870),
+SelectRemoteDungeonSite (:880-935) and SelectRemoteLocationExteriorSite (:940-985), ported whole at
+`src/systems/quest/place.js:"_selectRemoteTownSite(world, requiredBuildingType) {"`. A province's region (62..70, WW-R) has
+no MAPS.BSA rows, so every quest that wanted another town or a dungeon threw at its parse, and DFU's own catch answered
+for it. A guild's Get Quest had no work, a social giver the same, and a Daedra summoned past the Bay "has no task for you
+in this region. You keep your gold." That held in every province, so past the Bay no quest left town.
+
+**THE LAW.** The quest layer's maps (`src/scenes/questWorld.js`, the `Object.create(maps)` it already wrapped for the
+smaller-dungeon law) answer a province's region from `src/scenes/quest/questProvinceSites.js:"export function createQuestProvinceSites("`:
+
+- **Its towns** are the theatre's listed places on the world's registry (`world/worldWide/worldPlaces.js` inTheatre,
+  `world/pastBayRows.js`): the capitals' slices and the model's cities, towns and villages that stand a location. A
+  place is kept where the politic map reads its pixel as this region, which is the region its clone carries. They come
+  in the registry's order, the same on every client.
+- **Its dungeons** are the province's lairs (`world/tamrielDungeons.js`, TESA8). The table takes the nearest
+  PROVINCE_LAIR_COUNT (12) within PROVINCE_LAIR_REACH (66 pixels, a Bay region's span) of the questor, on the pixels where
+  the build stands them: no capital, Arena place or countryside place first, the same pixel test as START2's start lairs
+  (`scenes/tamrielPlacesHost.js` lairFree). A lair is a pixel's roll, and a province holds thousands; some 250 stand
+  within a Bay region's span, each read a few milliseconds. So a table reads at most PROVINCE_LAIR_ROLLS (16) cells,
+  nearest first, kept or not, and a cell once read is kept. **The coordinator's bound:** the first table at a pixel had
+  been about 1.8 s in one main-thread task when a player asked for work. It is now bounded by count, and the bound is
+  pinned. (16 lairs and 40 first rolls at R2-5; R2-5d made the bound the pixel's alone; R2-5e set it beside the
+  countryside's.)
+- **Its countryside** (R2-5e, below): the nearest hamlets, villages, farms, homes, inns and temples.
+- **Each row** is DFU's MapTable shape: mapId, locationType, dungeonType, and the longitude and latitude its pixel reads
+  back. So NEARBY-QUESTS' reach measures it like a Bay row. `getLocation(r, i)` is the place the build stands there
+  (`tamrielPlacesHost.js` provinceQuestPlaces.standAt: a capital, an Arena place, the countryside, a lair - the pixel
+  build's own order and the same object). Its building keys and its dungeon's blocks are the ones the player meets. Where
+  its pixel now stands another place, it is null, and the dart misses. `readClassicLocation` is null past the Bay,
+  because the town mods took nothing there. `currentLocationIndex` is the questor's own row, which a remote draw sets aside.
+- **A name the table does not hold** is found by the site that names it. That covers a lair drawn from another pixel, a
+  session after the draw, and a party member's copy of the quest. A quest's site past the Bay carries its own pixel
+  (START3 `worldPixel`), and the place standing there under that name and map id joins the table. So a site resolves
+  after a save's load and a relog as it did at its draw. The lookup is `placeByName`'s last word too, so
+  discoverLocation, the clocks' travel time and the respawn at a site find it.
+
+So DFU's draw runs unchanged over the province: the building types a town must have (the MAPS directory's pre-check,
+then the block walk; a town without the kind is refused as DFU refuses it), the dungeon types and their retry as any
+dungeon, the markers and MARKERLESS-DRAW, the house fallback, and the smaller-dungeon law (questSized over getLocation).
+START3's marks, the street compass and the journal's find already read the site's pixel, and a Skyrim questor's courier
+walks to another town of Skyrim (TESA-NO-FAST).
+
+**THE IMPERIAL CITY, A DESTINATION SLICE BY SLICE (R2-5b).** The owner, the same day: *"Take care of exclusions and
+gaps."* At first the city was left out. Its 625 slices are 625 locations under fourteen names, and DFU's name lookup
+(DFRegion.MapNameLookup, a name to one index) reads them as fourteen.
+
+- **Quest names.** Each slice now has a quest name of its own (`capitalQuestNames`): its district's name, plus ", quarter
+  N" where the district spans several slices, N its rank among them by slice index. A quest name is a key, the same in
+  every language and session. It is shown through getLocalizedLocationName, as every place's name is.
+- **One name everywhere in the quest layer.** The quest layer sees every slice location under its quest name: `questView`
+  (a shallow copy, its record the build's own) over the table's rows and over the questor's own location (questWorld.js
+  `_questLoc`). So a site drawn in a slice, local or remote, names that slice alone.
+- **Left out by the plan alone** (`isUnsitedSlice`, the same on every client whatever has been built):
+  - the centre slice, the White-Gold Tower's grounds, where no building stands;
+  - a shore capital's harbour sea;
+  - the 367 slices the plan names after none of its districts (`PLAN_FILL_NAMES`, imperialSliceName's own last arm: its
+    isle, lake and shore - none stands a building).
+- **The rest are rows.** That leaves 257 slices, of which 96 stand no building today (the palace grounds, the prison, a
+  district's edge). Each is a row whose dart misses, as DFU's dart misses a town without the building.
+
+**A CAPITAL IS ONE TOWN: THE CENTRE'S LOCAL SITES (R2-5c).** The same owner's word. A questor in a capital slice with no
+building of the asked kind - the Imperial City's centre, the White-Gold Tower's grounds, holds none at all - threw at a
+`local` site ("Could not find local site ... in Cyrodiil/Imperial City"): a Mages Guild or a commoner standing there had
+no work. The city is one town (WW7-11 capitalStreet), so a local site the questor's slice cannot give is taken in the
+city's nearest slice that can (`src/systems/quest/place.js:"_citySites(world, location, p2, p3) {"` over
+`capitalSlicesNear`: the capital's other slices nearest first, a tie by slice index - the same on every client - the
+slices no site stands in left out, each stood only as the search reaches it), by SetupLocalSite's own search there (its
+house fallback with it), and marked a near site (the travel map is shown it). The same for any capital of several
+slices whose questor's slice lacks the kind. Its name is the slice's quest name (R2-5b). Not a DFU member: Daggerfall's
+towns are one location each.
+
+**THE PARSE'S COST, MADE IN IDLE TIME (R2-5d).** A draw reads a town by standing it. On the Bay that is a MAPS.BSA record
+(cheap, read once). Past the Bay it is a place the build makes, some 20 ms each the first time (an Imperial City slice
+14-21 ms, a Skyrim town 19 ms, measured on the freeware). A temple's `remote house2` asked in the Imperial City tried
+its pools' slices one by one and took 20 s. The build keeps a place once stood, so
+`src/scenes/quest/questProvinceWarm.js:"export function createProvinceWarm("` stands the questor's province's table in
+idle time while the player is in that province:
+
+- **Nearest first, bounded by count.** At most WARM_PER_TICK (2) places a tick are stood for the first time, nearest the
+  player first (`requestIdleCallback`; a wait while on the Bay or once all is stood).
+- **The draw is untouched.** The same table, the same darts and the same site on every client; a warm cache only makes it
+  fast.
+- **The tables' own bounds count every cell or pixel they read, cached or not.** So a table is the pixel's alone: a warm
+  client had read further than a cold one, and that is fixed.
+
+On the freeware, with each province made ready first, no giver's parse stood a place for the first time (pinned: the
+world's index does not grow while asking for work). Skyrim and Morrowind parsed in 30-630 ms on a machine at a load
+average of 25 on 4 cores.
+
+**STILL OPEN:** the Imperial City. Its draws walk the blocks of many stood slices for a kind (`_collectQuestSitesOfBuildingType`
+over each pool's slices), and at that load an IC parse took 0.1-18 s even made ready. The centre's local search, not
+made ready, took 279 s for a Mages Guild hall that only the Arcane University holds. A slice's sites by kind, kept per
+location, is the next bound.
+
+**THE COUNTRYSIDE, A DESTINATION (R2-5e).** At first a province's table held its listed towns alone. The countryside's
+hamlets, villages, farms, homes, inns and temples (TESA7) are a pixel's roll and no list. The listed towns are few and far
+apart, so a courier's town was often hundreds of pixels off: NEARBY-QUESTS' reach found none, and DFU's darts went
+province-wide. Now the table holds the countryside's places nearest the questor
+(`src/scenes/tamrielPlacesHost.js:"function countryNear(px, py, reach, count = Infinity, rolls = Infinity) {"`):
+
+- **Which places.** PROVINCE_COUNTRY_COUNT (16) within PROVINCE_COUNTRY_REACH (24 pixels). Each is on a pixel the build
+  stands it on (no capital or Arena place there), and each is DFU's MapTable row.
+- **Bounded by count, the same on every client.** The pixels are read nearest first. Of those the roll may stand a place
+  on (countryMayStandAt, no plateau), at most PROVINCE_COUNTRY_ROLLS (32) are rolled whole (a plateau, about 1 ms, kept a
+  pixel), whatever was read before. The lairs' bound is the same, now 12 within 66 pixels and at most 16 cells read, so the
+  first table at a pixel stays under the 100 ms a task may take.
+- **One name, one row.** A table lists a name once (the listed towns first), so a site's name names one place.
+
+So a courier's town is near, as on the Bay.
+
+**THE DEPARTURE** (Port-Ledger A, R2-5). DFU has no provinces. The draws are DFU's, but the table's contents are ours:
+the nearest lairs where a Bay region lists every dungeon, the nearest countryside places where it lists every home
+(R2-5e), the Imperial City's slices under quest names of their own and its unbuilt ones left out (R2-5b), a capital one
+town for a local site (R2-5c), a name once a table, and the held site's pixel. Every Bay region's draw is MAPS.BSA's to
+the byte (pinned).
+
+**END TO END, on the freeware** (`test/systems/quest/auditrelease_r25_freeware.test.js`, `test/systems/quest/r25World.mjs`). The
+places host stands the world past the Bay in Node from ARENA2 (the trace on the freeware's fit, the game's own rows,
+templates and blocks, the registry), and the quest layer and a real QuestMachine run over it, with NEARBY-QUESTS on as the
+game's default has it. A second quest layer at the same pixel (a party member's game) draws every site the same under
+the same roll. The givers: the Fighters Guild (M0B00Y07), the Mages Guild (N0B00Y06), a temple (C0B00Y00), a
+commoner (A0C00Y00) and a Daedra (Azura T0C00Y00, Hircine X0C00Y00) at Solitude, Mournhold, and the Imperial City's
+Arena District, Arcane University and Temple District slices. Every one offers its quest. For every remote site:
+
+- It is a place the build stands in the giver's province, on its own pixel.
+- It is found by its name.
+- Its mark is on the held map.
+- Its building stands in its town, or its markers are its dungeon's as the build lays it.
+- The foe or item the quest puts there at its start is placed when the player arrives (sceneMount.js
+  addQuestResourceObjects).
+
+Each saved quest is then loaded again with the world's index forgotten and the player on the Bay, and every site is the
+same place. A Fighters Guild in Daggerfall still draws the Bay's own places. A wider probe (every quest of every guild,
+temple and social list, and all sixteen Daedra, at the three capitals) parsed all twenty Fighters Guild quests at
+Solitude, all sixteen Daedra in Morrowind and Cyrodiil, and nearly every list at Mournhold. Every failure seen was a local
+site or the probe's missing questor click, never a remote site.
+
+Not checked here: the running game (no browser). That covers the parse's frame time in a live boot, where each dart
+stands a town's clone the first time (a parse measured 0.1-1.4 s in Node), and a party's shared copy over the wire,
+whose sites resolve by the held-site lookup above.

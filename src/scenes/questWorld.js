@@ -6,7 +6,7 @@ import { changeLegalRep, legalRepOf } from '../systems/court.js';
 import { currentWeather } from '../systems/weather/weatherSim.js';
 import { discoverLocation } from '../systems/discovery.js';
 import { dungeonLocationFor } from '../world/smallerDungeons.js';
-import { dungeonItemMarkerCount } from '../systems/quest/place.js';   // START2: a start dungeon holds a quest item's marker
+import { dungeonItemMarkerCount, townSitesIndex } from '../systems/quest/place.js';   // START2: a start dungeon holds a quest item's marker
 import { startOfSiteId } from '../systems/starts/starts.js';   // START2: a start's own site
 import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
 import { entityOccupancy, heldSpots, holdSpotWhile, mintQuestFoeWave, partnerStandsQuestFoes, placeFoeEnv, questFoeGender } from './quest/questFoeHost.js';
@@ -24,16 +24,36 @@ import { localizedText } from '../systems/textManager.js';
 import { PLACE_FOE_DEFAULTS, placeFoeFreely } from '../systems/quest/sceneMount.js';
 import { playerEntity } from '../characters/playerEntity.js';
 import { REGION_RACES } from '../formats/mapsFile.js';
+import { REGION_NAMES, isProvinceRegion } from '../formats/mapsTables.js';   // AUDIT RELEASE R2-4: a province's region's name past the Bay
 import { spellRecordOfIndex } from '../systems/loot/loot.js';
+import { createQuestProvinceSites, machineSites, questView } from './quest/questProvinceSites.js';   // AUDIT RELEASE R2-5: a province's region
+import { createProvinceWarm, idleSchedule } from './quest/questProvinceWarm.js';
+import { imperialBlockOf } from '../world/imperialBlocks.js';   // AUDIT RELEASE R2-5f: a block the city makes holds no building   // AUDIT RELEASE R2-5d: its places made ready in idle time
 
 /** @param {any} host */
 export function createQuestWorld(host) {
   const {
-    NAVAL_DECK_BODY_R, _musicInLocationRect, _questLoc, _questRegionIndex, _questStore, _regionFaction,
+    NAVAL_DECK_BODY_R, _musicInLocationRect, _questLoc: hostQuestLoc, _questRegionIndex, _questStore, _regionFaction,
     _respawnAtSite, arenaCityPixel, arenaCityStage, blocks, built, cam, collider, exteriorFoePool, exteriorFoes,
-    homeLayoutsOnline, maps, navalDeckBody, onlineHomes, params, pipeline, placeByName, player, playerTravelOrigin,
-    playerTravelPixel, questSiteMovedHere, startLairAt, talkBuildingCompassDirection, townTalk, walkMode, weatherOverride
+    homeLayoutsOnline, maps, navalDeckBody, onlineHomes, params, pipeline, placeByName: bayPlaceByName, player, playerTravelOrigin,
+    playerTravelPixel, provinceQuestPlaces, questSiteMovedHere, talkBuildingCompassDirection, townTalk, walkMode, weatherOverride
   } = host;
+  /** PlayerGPS.CurrentLocation as the quest layer reads it - AUDIT RELEASE R2-5b: a capital's slice under its quest name
+   *  (scenes/quest/questProvinceSites.js questView), so a site drawn in it, local or remote, names that slice alone. */
+  const _questLoc = () => questView(hostQuestLoc?.());
+  /** START2: a province's start lair (scenes/tamrielPlacesHost.js startLairAt) - AUDIT RELEASE R2-5: handed on with the places past the Bay. */
+  const startLairAt = provinceQuestPlaces?.startLairAt;
+  /** AUDIT RELEASE R2-5 (scenes/quest/questProvinceSites.js): A PROVINCE'S REGION - the places past the Bay a quest given
+   *  there draws its remote sites from, the questor's pixel the lairs' reach, every quest's sites the name lookup's last
+   *  word. Absent (the fixed bench, a host past no land), MAPS.BSA's alone, as before. */
+  const provinces = provinceQuestPlaces ? createQuestProvinceSites({ ...provinceQuestPlaces, origin: () => playerTravelOrigin?.() ?? null, heldSites: () => machineSites(host.questBridge?.machine),
+    sitesIndexOf: (loc) => townSitesIndex(questWorld, loc) }) : null;   // AUDIT RELEASE R2-5f: a slice's sites by kind, read by the quest layer's own walk
+  /** A place by its region's name and its own (AUDIT-TESA A2-1's, the host's) - AUDIT RELEASE R2-5: and a province's, never
+   *  stood this session (another town of the province, a lair). */
+  const placeByName = (rn, ln) => bayPlaceByName(rn, ln) ?? provinces?.locationByName(rn, ln) ?? null;
+  /** AUDIT RELEASE R2-5d (scenes/quest/questProvinceWarm.js): the questor's province's places stood in the browser's idle
+   *  time, WARM_PER_TICK a tick, so asking for work there stands none for the first time. */
+  createProvinceWarm({ provinces, regionNow: () => _questRegionIndex(), origin: () => playerTravelOrigin?.() ?? null, schedule: provinces ? idleSchedule() : null }).start();
   /** A dungeon as the quest layer's maps hand it on (AUDIT 28 W4, below: the smaller-dungeon law) - its two location
    *  doors' and START2's start seam's one sizing. The page flag off `params`, not `onlineOn` - that const is declared
    *  far below, and a quest parsed at chargen asks for its dungeon before it is ("Parsing quest FAILED! Cannot access
@@ -54,10 +74,15 @@ export function createQuestWorld(host) {
     // machine the same way - another quest's link on the same dungeon
     // wins there too).
     maps: Object.create(maps, {
-      getLocation: { value: (r, l) => questSized(maps.getLocation(r, l)) },   // INSTANCES: online a quest's markers are chosen on the dungeon whole - its instance's layout (bible/11-Multiplayer/Instances.md)   // AUDIT WORLD34 B2: online, the room's one layout (SD-ONLINE: the world's size for it)
+      // AUDIT RELEASE R2-5: a province's region (62..70) the places past the Bay (scenes/quest/questProvinceSites.js) - no
+      // MAPS.BSA record of its own (readClassicLocation: the town mods took nothing there)
+      getRegion: { value: (r) => (provinces && isProvinceRegion(r) ? provinces.getRegion(r) : maps.getRegion(r)) },
+      readClassicLocation: { value: (r, l) => (isProvinceRegion(r) ? null : maps.readClassicLocation(r, l)) },
+      getLocation: { value: (r, l) => questSized(provinces && isProvinceRegion(r) ? provinces.getLocation(r, l) : maps.getLocation(r, l)) },   // INSTANCES: online a quest's markers are chosen on the dungeon whole - its instance's layout (bible/11-Multiplayer/Instances.md)   // AUDIT WORLD34 B2: online, the room's one layout (SD-ONLINE: the world's size for it)
       getLocationByName: { value: (rn, ln) => questSized(placeByName(rn, ln)) },   // AUDIT-TESA A2-1: the clock's travel time to a site past the Bay
     }),
     getBlock: (name) => blocks.getBlockByName(name),
+    noBuildingBlock: (name) => !!imperialBlockOf(name),   // AUDIT RELEASE R2-5f: the Imperial City's own cells hold no building (tamrielCapitals.js synthesizeCapitalLocation's law)
     // START2 (systems/starts/starts.js): A START'S OWN SITE - a province's start dungeon, which no MAPS.BSA table holds
     // (quest/place.js _setupFixedLocation asks it for a start's site id): the first of its candidates whose dungeon, as
     // the quest layer's maps size it (the smaller-dungeon law, as getLocation above), has a quest item's marker for the
@@ -75,8 +100,12 @@ export function createQuestWorld(host) {
     // PIXEL (in or out of the walls); IsPlayerInLocationRect is the
     // music director's own live rect flag.
     currentLocation: () => _questLoc(),
+    provinceSites: provinces,   // AUDIT RELEASE R2-5d: the quest layer's provinces (the warmer's, the suite's)
+    capitalSlicesNear: (loc, admits) => provinces?.capitalSlicesNear(loc, admits) ?? [],   // AUDIT RELEASE R2-5c: a capital one town - its other slices, nearest first; R2-5f: those whose sites index admits the kind
+    siteIndexRefuses: (r, i, gives) => provinces?.siteIndexRefuses(r, i, gives) ?? false,   // AUDIT RELEASE R2-5f: a slice's dart missed unstood
     currentRegionIndex: () => _questRegionIndex(),
-    currentLocationIndex: () => _questLoc()?.locationIndex ?? -1,
+    // AUDIT RELEASE R2-5: past the Bay the location's row in its province's table (a remote draw sets the questor's own aside)
+    currentLocationIndex: () => { const r = _questRegionIndex(); return provinces && isProvinceRegion(r) ? provinces.locationIndexOf(r, _questLoc()) : _questLoc()?.locationIndex ?? -1; },
     // M-X: the macro table's world reads. legalRepNow feeds %ltn's
     // fourteen bands; currentLocationType feeds %ct/%cn2. The talk
     // getters (%fa/%fe/%fpc...), lordNameForFaction and oldLeaderFate
@@ -140,7 +169,7 @@ export function createQuestWorld(host) {
     // Place.SetupSites' residence filter (Place.cs:1196):
     // DaggerfallBankManager.IsHouseOwned reads the CURRENT region's
     // owned-house slot (:140-148) - banking.js's own law, H1's home.
-    isHouseOwned: (buildingKey) => isHouseOwned(playerEntity.houses ?? [], _questRegionIndex(), buildingKey),
+    isHouseOwned: (buildingKey) => isHouseOwned(playerEntity.houses ?? [], _questRegionIndex(), buildingKey, _questLoc()?.mapTableData?.mapId ?? null),   // AUDIT RELEASE R2-9: the town asking
     // HOME1: nor a player's online home - a quest must not send its player into a house its owner keeps shut. FIELD BUGS 2026-10-14 QUEST-HOME: in ANY town - the boot's read of every town's homes beside the towns this page has asked (systems/online/onlineHomes.js homeStands); the asked towns alone left every remote residence unguarded.
     isPlayerHome: (mapId, buildingKey) => onlineHomes?.homeStands(mapId, buildingKey) ?? false,
     // QUEST-HOME (Mac, 2026-10-15: "Close both"): a site chosen again because its building became a player's home - its
@@ -178,7 +207,11 @@ export function createQuestWorld(host) {
       && ((e.subType ?? 0) & 0xff) === ((effect.subType ?? 0) & 0xff)),
     currentClimateIndex: () => maps.getClimateIndex(playerTravelPixel().x, playerTravelPixel().y),
     currentLocationType: () => _questLoc()?.mapTableData?.locationType ?? null,
-    currentRegionName: () => maps.getRegion(_questRegionIndex())?.name ?? '',
+    // AUDIT RELEASE R2-4 (bible/01-Overview/audits/Audit-Release-R2.md): PlayerGPS.CurrentRegionName - the loaded region's
+    // name on the Bay (an empty region's '' as DFU's empty DFRegion), and past it the province's region's (WW-R), which no
+    // MAPS.BSA record holds: '' there kept every NPC past the Bay from knowing a quest's place or person there (the place's
+    // site names its province - scenes/tamrielPlacesHost.js), and "Where am I?" in a lair said "in ."
+    currentRegionName: () => { const r = _questRegionIndex(); return maps.getRegion(r)?.name ?? (isProvinceRegion(r) ? REGION_NAMES[r] : ''); },
     isPlayerInLocationRect: () => _musicInLocationRect(),
     // F114: the bridge declares this hook as GetPlayerTravelPosition
     // "incl. its on-ship arm" (machine.js's ctx doc) and its one

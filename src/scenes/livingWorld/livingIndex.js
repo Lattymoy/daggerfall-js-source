@@ -16,23 +16,54 @@
 //  - A DUNGEON is a place of a diver's kind (LW6: a labyrinth, a keep, a ruin, a graveyard).
 //  - NEAR is a square of pixels about one (Chebyshev), sorted by map id - kept by (pixel, reach) as OW-HITCH kept it,
 //    under the world's key.
+//  - WW7-7 (2026-10-26, the owner: "Yes travellers to need to travel everywhere. Same for ships."): TWO SIDES OF THE
+//    BAY'S EDGE (`livingSide`). Near, a town's travellers' ends, an area's bands: each the asker's own side's - the Bay's
+//    places for a pixel of the Bay, the land past the Bay's for a pixel past it. The Bay is every client's, the land past
+//    it only the clients that stand it (TAMRIEL2's switch is a player's own, online too): a Bay town that sent its people
+//    past the edge would send them on one client and not the next, so the Bay's living world is the one it always was,
+//    whatever a client stands, and the land past the Bay's is every client's that stands it.
+//  - WW7-7: PAST THE BAY, BY THE ROADS' PLACES. The registry's pixel providers (the countryside, the lairs) are found by
+//    place - its `near` asks each pixel of the square through their rolls, ~110 microseconds a pixel past the Bay (77 ms a
+//    square of eighteen on the freeware's data), where the Bay's rows are listed. The roads past the Bay rolled every place
+//    of the land to lay their roads to them (world/pastBayPlaces.js, TESA15: the same roll, every region's); past the Bay
+//    a square is its listed places and the roads' places in it, each found on the registry (`at`, its own pixel) - the
+//    walk's answer, place for place (pinned with ARENA2), a hundred times cheaper. So a square past the Bay is asked only
+//    once the roads past the Bay are whole (`beyond.epoch()`: 0 while a region is still to land, and none is near), and its
+//    books are made again whenever they are laid again (the epoch moves; the generation with it).
+//  - WW7-9 (2026-10-26, the coordinator: "travellers need to travel everywhere" - across the Bay's edge too, and the land
+//    past the Bay waking region by region): A SQUARE IS KNOWN ONCE THE LAND PAST THE BAY UNDER IT IS LAID (`beyond.landedIn`
+//    - every region of the roads past the Bay whose layer and places reach it landed: TESA14's host); the epoch is the
+//    roads' build (it moves as they are laid again), and a region landing makes the squares and the areas asked again
+//    (`beyond.landed()` - a count that moves) without moving the generation: a square known stays what it was. AND ACROSS
+//    THE EDGE: a square that holds both sides holds both sides' places - a Bay town by the edge has the towns past it near,
+//    a town past the edge the Bay's - once the land past the Bay under it is laid, on a client that stands that land (none
+//    stands it: no `beyond`, and the Bay's squares are the Bay's alone, to the byte).
+//  - WW7-11 (2026-10-26, the coordinator at IC-GRAND's merge: the Imperial City's 625 slices are places - "keep your near
+//    lists and wake bounded over them"): A CAPITAL IS ONE TOWN TO THE LIVING WORLD - its centre's (world/pastBayRows.js:
+//    the capital's own name, map id and port). Its other slices are its STREETS (`capitalStreet`): no square, no area and
+//    no town's list past the Bay names one, so a town near the Imperial City has one more town near it, never 625, and a
+//    traveller bound for the city walks to its centre; a street's own record still stands for a reader on it (`townAt`).
 // ═══════════════════════════════════════════════════════════════════
 import { LOCATION_TYPES } from '../../formats/mapsFile.js';
 import { livingNearKey, LIVING_NEAR_KEPT } from '../../systems/livingWorld/trips.js';
 import { portIdOf } from '../../world/worldWide/worldPorts.js';   // WW3: a port's one number, the Bay's masked id or the world's key
-import { inBay } from '../../world/tamriel/tamrielFrame.js';
-import { theatreOfArea, BAY_THEATRE } from '../../world/worldWide/worldGrid.js';
+import { inBay, BAY_W, BAY_H } from '../../world/tamriel/tamrielFrame.js';
+import { inEther } from '../../world/ethericSea.js';
+import { theatreOfArea, districtOfArea, inWorldGrid, BAY_THEATRE, DISTRICT_PX, WORLD_PIXEL_SPAN } from '../../world/worldWide/worldGrid.js';
+import { isCapitalPlaceId, capitalPlaceId } from '../../world/tamrielCapitals.js';   // WW7-11: a capital's slices (IC-GRAND)
 
-/** AUDIT TESA II P7: WHERE THE LIVING WORLD'S PEOPLE GO - the Bay's theatre alone, until WW7 (bible/03-World/World-Wide.md):
- *  the places past the Bay are the registry's now (world/pastBayRows.js), each a town's record (townAt, townOfId,
- *  townOfPort, towns - its residents named and its port known), but never a trip's end, a dive's or a band's town - the
- *  ways' planner (systems/livingWorld/ways.js createWayBook, over the host's roads and ground) reads the Bay's, so a
- *  traveller set out from Windhelm would walk the Bay's. `townsNear`, `dungeonsNear` and `townsIn` answer the Bay's
- *  places alone, asked from the Bay alone, and a town past the Bay sails no traveller (livingLanes.js from).
- *  @param {{ px: number, py: number }} p */
-export const livingRoams = (p) => inBay(p.px, p.py);
+/** WW7-7: THE SIDES OF THE BAY'S EDGE a trip keeps to - the Bay's (every client's), the land past it (the clients that
+ *  stand it), none (the Eltheric Ocean's box, off the world's grid: no living world there). */
+export const LIVING_SIDES = Object.freeze({ none: -1, bay: 0, beyond: 1 });
+/** WW7-7: the side of the Bay's edge a place or a pixel is on. @param {{ px: number, py: number }} p */
+export const livingSide = (p) => (inBay(p.px, p.py) ? LIVING_SIDES.bay : inWorldGrid(p.px, p.py) && !inEther(p.px, p.py) ? LIVING_SIDES.beyond : LIVING_SIDES.none);
+/** WW7-11: is a place one of a capital's STREETS - a slice of it but its centre (world/tamrielCapitals.js capitalPlaceId:
+ *  its capital in the id's low four bits, its slice's ordinal above them, the centre's 0)? @param {{ mapId: number }} p */
+export const capitalStreet = (p) => isCapitalPlaceId(p.mapId) && p.mapId >>> 0 !== capitalPlaceId(p.mapId & 0xf);
+/** WW7-7: a square past the Bay's listed places are kept in bins this many pixels a side. */
+export const BEYOND_BIN_PX = 64;
 
-/** AUDIT TESA II P7: what a pixel past the Bay has near it for a trip - none. */
+/** What a pixel has near it for a trip while its side's places are not known - none. */
 const NONE_NEAR = Object.freeze([]);
 
 /** LW6: the dungeons an adventurer dives - the game's own rows of a dungeon's kind, each with its dungeon's type. */
@@ -40,10 +71,18 @@ export const LIVING_DIVE_TYPES = /** @type {Set<number>} */ (new Set([LOCATION_T
 
 /**
  * @param {{ places: import('../../world/worldWide/worldPlaces.js').WorldPlaces, populated: (type: number) => boolean,
- *   peopleAt: (px: number, py: number) => number|undefined }} o
+ *   peopleAt: (px: number, py: number) => number|undefined,
+ *   beyond?: { epoch: () => number, placesIn: (x0: number, y0: number, x1: number, y1: number) => Array<{ x: number, y: number }>,
+ *     landedIn?: (x0: number, y0: number, x1: number, y1: number) => boolean, landed?: () => number } | null }} o
+ *   WW7-7 `beyond` the land past the Bay's: `epoch` the roads past the Bay's (0 before they are first laid, else a stamp
+ *   that moves when they are laid again), `placesIn` the places they rolled on x0 <= x < x1, y0 <= y < y1
+ *   (world/pastBayPlaces.js pastBayPlacesIn); WW7-9 `landedIn` whether the land past the Bay on such a box is laid whole
+ *   (TESA14's host), `landed` a count that moves as each region lands. None: no place past the Bay is ever near.
  */
-export function createLivingIndex({ places, populated, peopleAt }) {
-  let gen = -1;
+export function createLivingIndex({ places, populated, peopleAt, beyond = null }) {
+  let gen = -1, epoch = -1, stamp = 0, told = -1;
+  /** WW7-7: the listed places past the Bay, in BEYOND_BIN_PX bins. @type {Map<number, any[]>|null} */ let bins = null;
+  /** WW7-9: the Bay's listed places, in BEYOND_BIN_PX bins - a square past the edge's. @type {Map<number, any[]>|null} */ let bayBins = null;
   /** @type {Map<number, any>} */ const townById = new Map();
   /** @type {Map<number, any>} */ const dungeonById = new Map();
   /** @type {Map<number, any>|null} */ let towns = null;
@@ -53,11 +92,61 @@ export function createLivingIndex({ places, populated, peopleAt }) {
   /** @type {Map<number, any[]>} */ const townsNearKept = new Map();
   /** @type {Map<number, any[]>} */ const dungeonsNearKept = new Map();
   const fresh = () => {
-    const g = places.generation();
-    if (g === gen) return;
-    gen = g;
-    towns = null; dungeons = null; byPort = null;
-    townById.clear(); dungeonById.clear(); byArea.clear(); townsNearKept.clear(); dungeonsNearKept.clear();
+    const g = places.generation(), e = beyond?.epoch() ?? 0, l = beyond?.landed?.() ?? 0;
+    if (g === gen && e === epoch && l === told) return;
+    if (g === gen && e === epoch) { told = l; byArea.clear(); townsNearKept.clear(); dungeonsNearKept.clear(); return; }   // WW7-9: a region landed - the squares asked again, nothing known moved
+    if (g !== gen) { towns = null; dungeons = null; byPort = null; townById.clear(); dungeonById.clear(); }
+    gen = g; epoch = e; told = l; stamp++;
+    bins = null; bayBins = null;
+    byArea.clear(); townsNearKept.clear(); dungeonsNearKept.clear();
+  };
+  /** WW7-9: whether the land past the Bay on a box is laid whole (a box of the Bay's alone always is). */
+  const known = (/** @type {number} */ x0, /** @type {number} */ y0, /** @type {number} */ x1, /** @type {number} */ y1) => !!beyond && !!epoch && (beyond.landedIn?.(x0, y0, x1, y1) ?? true);
+  /** WW7-9: the listed places of a side in BEYOND_BIN_PX bins. @param {number} side */
+  const binsOf = (side) => {
+    const out = new Map();
+    for (const p of places.all()) {
+      if (livingSide(p) !== side || capitalStreet(p)) continue;   // WW7-11: a capital one town, its centre
+      const k = Math.floor(p.py / BEYOND_BIN_PX) * 65536 + Math.floor(p.px / BEYOND_BIN_PX);
+      let bin = out.get(k);
+      if (!bin) out.set(k, (bin = []));
+      bin.push(p);
+    }
+    return out;
+  };
+  /** The binned places on x0 <= x < x1, y0 <= y < y1 into `got`, by key. */
+  const fromBins = (/** @type {Map<number, any[]>} */ b, /** @type {Map<number, any>} */ got, /** @type {number} */ x0, /** @type {number} */ y0, /** @type {number} */ x1, /** @type {number} */ y1) => {
+    for (let by = Math.floor(y0 / BEYOND_BIN_PX); by <= Math.floor((y1 - 1) / BEYOND_BIN_PX); by++) {
+      for (let bx = Math.floor(x0 / BEYOND_BIN_PX); bx <= Math.floor((x1 - 1) / BEYOND_BIN_PX); bx++) {
+        for (const p of b.get(by * 65536 + bx) ?? NONE_NEAR) if (p.px >= x0 && p.px < x1 && p.py >= y0 && p.py < y1) got.set(p.key, p);
+      }
+    }
+  };
+  /** WW7-7: the places on x0 <= x < x1, y0 <= y < y1 past the Bay, each once - the listed, then the roads' found on the
+   *  registry - or none while the roads past the Bay are not whole. */
+  const beyondIn = (/** @type {number} */ x0, /** @type {number} */ y0, /** @type {number} */ x1, /** @type {number} */ y1) => {
+    if (!beyond || !known(x0, y0, x1, y1)) return NONE_NEAR;
+    bins ??= binsOf(LIVING_SIDES.beyond);
+    /** @type {Map<number, import('../../world/worldWide/worldPlaces.js').WorldPlace>} */ const got = new Map();
+    fromBins(bins, got, x0, y0, x1, y1);
+    for (const q of beyond.placesIn(x0, y0, x1, y1)) {
+      const p = places.at(q.x, q.y);
+      if (p && livingSide(p) === LIVING_SIDES.beyond && !capitalStreet(p)) got.set(p.key, p);
+    }
+    return [...got.values()];
+  };
+  /** WW7-9: the places across the Bay's edge from a pixel of `side` on x0 <= x < x1, y0 <= y < y1 - for a pixel of the Bay
+   *  the land past it's (beyondIn's), for one past it the Bay's listed places - once the land past the Bay there is
+   *  known; none where the box keeps to its own side. */
+  const acrossIn = (/** @type {number} */ side, /** @type {number} */ x0, /** @type {number} */ y0, /** @type {number} */ x1, /** @type {number} */ y1) => {
+    const bay = x0 < BAY_W && x1 > 0 && y0 < BAY_H && y1 > 0, past = !(x0 >= 0 && y0 >= 0 && x1 <= BAY_W && y1 <= BAY_H);
+    if (!bay || !past || !beyond) return NONE_NEAR;
+    if (side === LIVING_SIDES.bay) return beyondIn(x0, y0, x1, y1);
+    if (side !== LIVING_SIDES.beyond || !known(x0, y0, x1, y1)) return NONE_NEAR;
+    bayBins ??= binsOf(LIVING_SIDES.bay);
+    /** @type {Map<number, any>} */ const got = new Map();
+    fromBins(bayBins, got, x0, y0, x1, y1);
+    return [...got.values()];
   };
   /** A place's town record - the same object every time it is asked this generation - or null for no town. */
   const townOf = (/** @type {import('../../world/worldWide/worldPlaces.js').WorldPlace|null} */ p) => {
@@ -101,20 +190,23 @@ export function createLivingIndex({ places, populated, peopleAt }) {
   /** @param {typeof townOf} recOf @param {Map<number, any[]>} kept */
   const nearOf = (recOf, kept) => (/** @type {number} */ px, /** @type {number} */ py, /** @type {number} */ r) => {
     fresh();
-    if (!livingRoams({ px, py })) return NONE_NEAR;   // AUDIT TESA II P7: no trip sets out from past the Bay either
+    const side = livingSide({ px, py });
     const key = livingNearKey(px, py, r);   // OW-HITCH
     let got = kept.get(key);
     if (got) return got;
     got = [];
-    for (const p of places.near(px, py, r)) { const t = livingRoams(p) ? recOf(p) : null; if (t) got.push(t); }   // AUDIT TESA II P7: the Bay's alone (livingRoams)
+    if (side === LIVING_SIDES.bay) { for (const p of places.near(px, py, r)) { const t = livingSide(p) === LIVING_SIDES.bay ? recOf(p) : null; if (t) got.push(t); } }   // WW7-7: the Bay's alone for a pixel of the Bay
+    else if (side === LIVING_SIDES.beyond) for (const p of beyondIn(px - r, py - r, px + r + 1, py + r + 1)) { const t = recOf(p); if (t) got.push(t); }   // WW7-7: past the Bay its own, by the roads' places (none before they are whole); past the Veil none
+    for (const p of acrossIn(side, px - r, py - r, px + r + 1, py + r + 1)) { const t = recOf(p); if (t) got.push(t); }   // WW7-9: and the other side's, across the edge, once the land there is laid
     got.sort((a, b) => a.mapId - b.mapId);
     if (kept.size > LIVING_NEAR_KEPT) kept.clear();
     kept.set(key, got);
     return got;
   };
   return {
-    /** The registry's generation the books were made at moves - a reader keeping trips keeps them by it. */
-    generation: () => places.generation(),
+    /** The registry's generation the books were made at moves - a reader keeping trips keeps them by it. WW7-7: and the
+     *  roads past the Bay's epoch - a stamp that moves with either. */
+    generation: () => { fresh(); return stamp; },
     /** Every listed town, by its world pixel key. */
     towns: townsIndex,
     /** The town on a pixel, or null. @param {number} px @param {number} py */
@@ -125,7 +217,17 @@ export function createLivingIndex({ places, populated, peopleAt }) {
     townsIn: (area) => {
       fresh();
       let got = byArea.get(area | 0);
-      if (!got) { got = []; if (theatreOfArea(area | 0) === BAY_THEATRE) for (const p of places.inArea(area | 0)) { const t = townOf(p); if (t) got.push(t); } byArea.set(area | 0, got); }   // AUDIT TESA II P7: a band's towns the Bay's alone (livingRoams)
+      if (!got) {
+        got = [];
+        const d = districtOfArea(area | 0);
+        if (theatreOfArea(area | 0) === BAY_THEATRE) { for (const p of places.inArea(area | 0)) { const t = townOf(p); if (t) got.push(t); } }
+        else if (d) {   // WW7-7: a province's district - its towns by the roads' places (never its 9,216 pixels through the rolls)
+          const x0 = d[0] * DISTRICT_PX - WORLD_PIXEL_SPAN, y0 = d[1] * DISTRICT_PX - WORLD_PIXEL_SPAN;
+          for (const p of beyondIn(x0, y0, x0 + DISTRICT_PX, y0 + DISTRICT_PX)) { const t = p.area === (area | 0) ? townOf(p) : null; if (t) got.push(t); }
+          got.sort((a, b) => a.mapId - b.mapId);
+        }
+        byArea.set(area | 0, got);
+      }
       return got;
     },
     /** The towns within `r` pixels, sorted by map id. */

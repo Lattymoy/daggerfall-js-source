@@ -32,12 +32,12 @@
   {
     "name": "HOURSFIRST-another-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden' });",
-    "new": "firsthour: 'hourbreaker', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden' });",
+    "old": "firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage' });",
+    "new": "firsthour: 'hourbreaker', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage' });",
     "tests": [
       "test/net/hoursfirst.test.js"
     ],
-    "note": "The First Hour's button would wear the Hourbreaker's gold, not its own title's rose gold. WIKIMAID (re-aimed by content)."
+    "note": "The First Hour's button would wear the Hourbreaker's gold, not its own title's rose gold. WIKIMAID (re-aimed by content). NIRNROOT-SAGE (re-aimed by content): the list it quotes gained the Nirnroot Sage's word."
   },
   {
     "name": "HOURSFIRST-the-gradient-turned",
