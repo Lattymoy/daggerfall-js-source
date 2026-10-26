@@ -2636,31 +2636,33 @@ ground tiles, 2 KB against a ~220 KB rebuilt JSON (as a structured clone) whose 
 
 **Measured.** The real-GPU probe (`dfo-verify/tools/perf/hitchProbe.mjs`, Daggerfall city 15:00, `&shot&fly`), base
 `9aa6bc4662` and this branch on the same server and scene, each on a fresh browser profile: a first launch, then the
-second launch below. Inclusive ms over the boot, second launch:
+second launch below (the head: this branch's last commit, `final-second`). Inclusive ms over the boot, second launch:
 
 | item | base | head |
 |---|---:|---:|
-| walks' ground tiles (`getDFBlockReplacementData`) | 1,283 | 184 |
-| town's trips (`townTrips`) | 459 | 247-283 |
-| ...the land's pieces folded | (in the above) | 0 (pair 1) / 147 (pair 2, a miss) |
+| walks' ground tiles (`getDFBlockReplacementData`) | 1,283 | 226 |
+| town's trips (`townTrips`) | 459 | 275 |
+| ...the land's pieces folded | (in the above) | 0 |
 | port sites | 228 | 0 |
-| ship models | 219 | 8 |
+| ship models | 219 | 9 |
 | rig sprite decode (main thread) | 200 | 7 |
 | ships' pictures | 145 | 4 |
 | Bay fit | 145 | 0 (+18 its stamp) |
 
-Frames over 100 ms after the first world frame: base 6, 1,042 ms; head 3, 604 ms (pair 1: 3, 492 ms). That metric starts
-after most of these stalls - the world's first frame lands at ~26-35 s, after the boot's own long frames - so from the
-boot's first world-host frame: base 17 frames, 7,168 ms, the longest 2,746 ms; head 13 frames, 4,046 ms, the longest
-1,242 ms. The first launch fills the store for ~80 ms of main thread beyond the base's (the stamps, ~30 ms; the clones
-written, ~40 ms) - the work itself runs as before. Pair 1 found the door's stamp in registration order (the packs
-register as their fetches end, so the walks' tiles missed on the second launch); fixed, pair 2 measured it.
+Frames over 100 ms after the first world frame: base 6, 1,042 ms; head 6, 863 ms - the frames left are quest start's
+and the wagons' art (not kept) and two that are the frame's own and a collection. That metric starts after most of
+these stalls - the world's first frame lands at ~26-35 s, after the boot's own long frames - so from the boot's first
+world-host frame: base 17 frames, 7,168 ms, the longest 2,746 ms; head 17 frames, 4,826 ms, the longest 1,459 ms. The
+first launch fills the store for ~80 ms of main thread beyond the base's (the stamps, ~30 ms; the clones written,
+~40 ms) - the work itself runs as before. Two earlier head pairs: pair 1 found the door's stamp in registration order
+(the packs register as their fetches end, so the walks' tiles missed on the second launch); pair 2, with that fixed,
+missed the land's pieces once (162 ms) - the network the first way is asked on was not the one the last launch kept,
+which a miss pays at the old cost, never with a wrong answer. The final pair hit every record.
 
-Left: the land's pieces missed in pair 2 - the network the first way is asked on is not always the one the last launch
-kept, so the key differs (a miss is the old cost, never a wrong answer); quest start (59-97 ms) and the wagons' art
-(34-60 ms) are under 100 ms; the town's trips keep ~250 ms of lives and routes, which read the save.
-Runs: `E:/git-repos/travddm/dfo-verify/tools/perf/first-visit-2026-10-25/` (`base-cold`, `base-second`, `head1-first`,
-`head1-second`, `head-first`, `head-second`; each `boot.json` and `boot.cpuprofile`).
+Left: quest start (54-97 ms) and the wagons' art (34-60 ms) are under 100 ms; the town's trips keep ~250-280 ms of lives
+and routes, which read the save.
+Runs: `E:/git-repos/travddm/dfo-verify/tools/perf/first-visit-2026-10-25/` (`base-cold`, `base-second`, `head1-*`,
+`head-*`, `final-first`, `final-second`; each `boot.json` and `boot.cpuprofile`).
 
 Pins: `test/world/terrain/fv_groundtiles.test.js` (4), `test/systems/travel/fv_landpieces.test.js` (3),
 `test/world/fv_portsites.test.js` (2), `test/systems/comeSailAway/fv_shipbuilds.test.js` (2),
