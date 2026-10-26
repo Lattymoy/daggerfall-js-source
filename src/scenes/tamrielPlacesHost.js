@@ -21,6 +21,7 @@ import { outlineTownLocation, townOutlineBlockJson } from '../world/townOutline.
 import { standTownWall } from '../world/townWalls.js';   // TOWN-SHAPES TS4: a city past the Bay walled on its outline
 import { startLairSites } from '../systems/starts/startSite.js';
 import { pastBayPlaceRows, PAST_BAY_SOURCE } from '../world/pastBayRows.js';   // AUDIT TESA II P7: the places past the Bay on the world's registry
+import { pastBayPlacesIn } from '../world/pastBayPlaces.js';   // WW7-7: a pixel the roads past the Bay rolled a place on is dry
 import { nearestSafePlace } from '../systems/deathRespawn.js';   // AUDIT TESA II P2/P3: the nearest town of the world
 
 /** @param {any} host */
@@ -68,8 +69,11 @@ export function createTamrielPlaces(host) {
   const lairRatesNow = () => (_pastBay.lairRates ??= countryRates(_lairCounts, bayLandNow(), LAIR_TYPES));   // TESA8: the lairs' over the same land
   const _countryGround = _countryTemplates ? createCountryGround(host.woods) : null;
   /** TESA14: the world the roll reads past the Bay - the climate, the ground's bytes and its dry plateau - and the two
-   *  rolls' own rates and templates, made at the first ask (the rates read the Bay's land once). */
-  const _pastBayAt = { climateAt: (x, y) => maps.getClimateIndex(x, y), heightAt: (x, y) => host.woods.getHeightMapValue(x, y), ground: (x, y) => _countryGround(x, y) };
+   *  rolls' own rates and templates, made at the first ask (the rates read the Bay's land once). WW7-7 (bible/03-World/
+   *  World-Wide.md): a pixel the roads past the Bay rolled a place on (world/pastBayPlaces.js - their workers' roll, the one
+   *  roll, its plateau read there) is dry: its plateau is not summed again (the dear part - a 129 x 129 kernel, ~1 ms a
+   *  place; the living world's squares past the Bay ask sixty places at a time). The same answer, read once. */
+  const _pastBayAt = { climateAt: (x, y) => maps.getClimateIndex(x, y), heightAt: (x, y) => host.woods.getHeightMapValue(x, y), ground: (x, y) => pastBayPlacesIn(x, y, x + 1, y + 1).length > 0 || _countryGround(x, y) };
   /** TESA7: THE COUNTRYSIDE'S ROLL ON A PIXEL PAST THE BAY - world/tamrielCountry.js countryStandsAt (its kind and
    *  template on dry ground clear of the sea's edge; TESA14: a road no longer takes its pixel, the places are the roads'
    *  own nodes and obstacles), named off its province's people (world/tamrielPeople.js, the clamp's region's where it has

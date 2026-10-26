@@ -118,16 +118,14 @@ import { LIVING_WORLD_VENDOR } from '../systems/livingWorld/relations.js';   // 
 import { characterRelations } from '../systems/livingWorld/regardClock.js';   // FIELD BUGS 2026-10-21d REGARD-OWN: counted in the character's own days
 import { friendCards } from '../systems/livingWorld/friendWord.js';   // AUDIT FB1021d RO-4: a friend made, named for the HUD
 import { firstNameOf } from '../systems/livingWorld/lines.js';
-import { travellerRoster, mintResident } from '../systems/livingWorld/census.js';   // LW3: a town's travellers, off its MAPS row alone; LW4: a newcomer to a place the road emptied
-import { townTrips, visitorsOf as tripVisitorsOf, awayOf as tripAwayOf, placeCycle, setsOut, newsOf, paceScale, NEWS_DAYS, diversAt, cycleOf, handsOn, nativeDry, divesIn, TRIP_REACH_PX } from '../systems/livingWorld/trips.js';   // LW3: the roads, pure; LW4: the places' cycles, the town's news; LW7: a townsperson's cycle, a trip's hand deaths; LW-DRY: the ground a party stops on
-import { createDryGround } from '../world/dryGround.js';   // LW-DRY: the height map's own dry ground, every client's alike
+import { mintResident } from '../systems/livingWorld/census.js';   // LW4: a newcomer to a place the road emptied (LW3's travellers: scenes/livingWorld/livingTrips.js)
+import { townTrips, visitorsOf as tripVisitorsOf, awayOf as tripAwayOf, placeCycle, setsOut, newsOf, paceScale, NEWS_DAYS, diversAt, cycleOf, handsOn, divesIn, TRIP_REACH_PX } from '../systems/livingWorld/trips.js';   // LW3: the roads, pure; LW4: the places' cycles, the town's news; LW7: a townsperson's cycle, a trip's hand deaths
 import { placeAt, turnKey } from '../systems/livingWorld/lives.js';   // LW4: who holds a traveller's place
 import { peoplePage, residentOfId, regardBadge } from '../systems/livingWorld/people.js';   // LW7c: the chronicle's People page; AUDIT FB1010 C1: a betrothed as the census mints them
 import { troubleOf, troubledTrip } from '../systems/livingWorld/trouble.js';   // LW4: trouble on the road
 import { foeWord } from '../systems/livingWorld/lines.js';   // LW4: a foe's word for the town's talk and a mark
 import { berthOf, sailorAt, crewsAshore } from '../systems/livingWorld/portCrews.js';   // LW5: the Bay's sailors
 import { createLivingLanes } from './livingWorld/livingLanes.js';   // AUDIT WW F7: the lanes' books, made again when the world moves
-import { createWayBook } from '../systems/livingWorld/ways.js';   // LW3: the travellers' ways, planned by the living world itself
 import { createLivingRoads } from './livingWorld/livingRoads.js';   // LW3: the parties on the road near the player
 import { createRoadTeams } from '../world/road/roadTeams.js';   // LW10: their horses and wagons
 import { createCaravanHost, travellerOf, tripOfId } from './caravanHost.js';   // LW11: the caravan's door
@@ -139,7 +137,7 @@ import { createWorldPlaces } from '../world/worldWide/worldPlaces.js';   // WW1:
 import { pastBayJourney } from '../systems/travel/pastBayTravel.js';   // AUDIT TESA II P4: no journey into the land past the Bay
 import { bayPlaceRows, BAY_SOURCE } from '../world/worldWide/bayPlaces.js';   // WW1: the game's own rows, the registry's first provider
 import { createTownTable } from '../world/worldWide/townTable.js';   // WW7: a town by its map id, the Bay's and the registry's
-import { createLivingIndex } from './livingWorld/livingIndex.js';   // WW1: the living world's towns and dungeons, off the registry
+import { createLivingTrips } from './livingWorld/livingTrips.js';   // WW1: the living world's towns and dungeons, off the registry; WW7-7: its trips' world, everywhere
 import { createWorldPorts, portIdOf, portIdOfLocation, COMPASS_WAYS } from '../world/worldWide/worldPorts.js';   // WW3: the world's ports past the Bay, off the registry
 import { createWorldLanes, onWorldSea } from './naval/worldLanes.js';   // WW3: the Bay's packet lanes and the sea's past it, one book
 import { stockShopShelf } from '../systems/shopStock.js';   // LW11: a caravan's counter, the shops' own roll
@@ -3192,47 +3190,13 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     (_personTexLoad ??= Promise.all(personArchives.map(async (a) => personTex.set(a, await getTexture(a))))
       .catch((e) => { _personTexLoad = null; throw e; }));
 
-  // LW3 (bible/06-Systems/Living-World.md): THE LIVING WORLD'S ROADS. The trips are pure (systems/livingWorld/trips.js);
-  // their world is this host's: the towns - the game's OWN rows (a mod's addition stands on one client and not another),
-  // the populated types, each as its MAPS row says it (its blocks, its climate's people, its region, its port) - and the
-  // way between two, the Travel Options planner's on Hazelnut's roads (the follow key's and the static's own: his bytes
-  // or none), asked once a pair in ONE direction (the lower map id first, the other its reverse) so every client walks
-  // the same way, a few a frame. A traveller's trip of a cycle never changes, so the book keeps every one it has made.
-  // WW1: the towns and the dungeons are the world's registry's (scenes/livingWorld/livingIndex.js) - the Bay's rows, and
-  // whatever a provider past the Bay stands - filed by the world's own key, grouped by AREA (the region on the Bay)
-  const livingIndex = createLivingIndex({ places: worldPlaces, populated: populatesWanderingNpcs, peopleAt: (px, py) => getWorldClimateSettings(maps.getClimateIndex(px, py))?.people });
+  // LW3 (bible/06-Systems/Living-World.md): THE LIVING WORLD'S ROADS - the trips' world (its towns, the registry's - WW1 -
+  // its ways, its rosters, its ground) and the trips' memo: scenes/livingWorld/livingTrips.js (HOST-SPLIT). WW7-7
+  // (bible/03-World/World-Wide.md): and the land past the Bay lived in - its towns' trips wait on the roads past the Bay
+  // laid whole (`pastTheBay`, TESA14's host), then walk them; a trip keeps to its own side of the Bay's edge
+  const { index: livingIndex, ways: livingWays, world: livingTripWorld, memo: _livingTripMemo, memoFresh: livingMemoFresh } = createLivingTrips({ places: worldPlaces, populated: populatesWanderingNpcs,
+    peopleAt: (px, py) => getWorldClimateSettings(maps.getClimateIndex(px, py))?.people, maps, woods, roads: () => terrainGen.roads(), marketBandOf: townEcon.marketBandOf, pastTheBay: _tamrielRoads });
   const livingTownAt = livingIndex.townAt;
-  const livingTownsNear = livingIndex.townsNear;
-  const livingDungeonsNear = livingIndex.dungeonsNear;
-  // the ways: the living world's own planner (livingWorld/ways.js) on the drawn roads and the game's own ground - never a
-  // player's attached massifs (TO-ROADS: the host plans the player's journeys alone). WW7: and the land past the Bay
-  // walked as the player's planner walks it (TV-BEYOND's `beyond`: the ground's own dry pixels there); the roads past the
-  // Bay are not yet a planner's (neither's). AUDIT TESA III E1-3: no trip sets out past the Bay yet - the living world's
-  // trips, dives and bands keep to the Bay's theatre (livingWorld/livingIndex.js livingRoams, AUDIT TESA II P7, kept at
-  // the TESA x AUDIT TESA II merge), so no way is asked there; lifting it is the owner's call (World-Wide.md WW7-2)
-  let _livingGround = null;
-  const livingWays = createWayBook({
-    roads: () => terrainGen.roads(),
-    ground: () => (_livingGround ??= routeGround((px, py) => maps.getClimateIndex(px, py), (px, py) => woods.getHeightMapValue(px, py), WATER_BYTE, 1000, 500, (px, py) => (!!woods.isTamrielGround || !!woods.etherLaw?.(px, py)) && woods.getHeightMapValue(px, py) > WATER_BYTE)),
-  });
-  const livingRouteOf = (a, b) => livingWays.wayOf(a, b);
-  const _livingRosters = new WeakMap();   // WW7: by the town's record - a registry's generation (TESA's places landing) a new record, so a roster made off a bare one before them is made again
-  /** @type {((nx: number, nz: number) => boolean) | null} */
-  let _livingDry = null;
-  const livingTripWorld = {
-    townsNear: livingTownsNear,
-    routeOf: livingRouteOf,
-    rosterOf: (t) => { let r = _livingRosters.get(t); if (!r) { r = travellerRoster(t); _livingRosters.set(t, r); } return r; },
-    templeTown: (t) => t.type === LOCATION_TYPES.ReligionTemple || t.blocks >= 9,
-    dungeonsNear: livingDungeonsNear,   // LW6: an adventurer's dives
-    dryAt: (nx, nz) => (_livingDry ??= nativeDry(createDryGround(woods)))(nx, nz),   // LW-DRY: a party's camp, halt and fallen on dry ground
-    townsIn: livingIndex.townsIn, marketBandOf: townEcon.marketBandOf,   // LW12: a region's towns, its bands' legs (WW1: an area's - the region on the Bay); TOWN-ECON TE3: a market town's band on a day
-  };
-  const _livingTripMemo = new Map();
-  let _livingWaysSeen = 0, _livingPlacesSeen = 0;
-  /** AUDIT-B8: the trips' memo kept to its bound and to the network's generation by every reader (the roads', the deep's
-   *  and the towns' - only the towns' asked it, and a long stay below grew it unbounded). */
-  const livingMemoFresh = () => { if (_livingTripMemo.size > 40000 || livingWays.generation !== _livingWaysSeen || livingIndex.generation() !== _livingPlacesSeen) { _livingTripMemo.clear(); _livingWaysSeen = livingWays.generation; _livingPlacesSeen = livingIndex.generation(); } };   // WW1: and a provider's places come or go - a town's trips read the towns near it
   // LW4: THE LIVES AND THE TROUBLE (lives.js, trouble.js) - who holds each traveller's place in a cycle (the census's
   // newcomer after a death on the road; nobody while the place stands empty) and what befalls each party, read over the
   // character's own turns of fate (relations.js); each kept in a book, made again when a turn is made or a save loaded
@@ -18461,7 +18425,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   }
 
   const { installTownProbes } = createTownProbes({   // HOST-SPLIT: src/scenes/townProbes.js
-    _crimeResponse, built, cam, cityGuards, droppedLoot, minuteNow, state, townTalk, weaponRig,
+    _crimeResponse, built, cam, cityGuards, droppedLoot, livingRoadsOf, minuteNow, state, townTalk, weaponRig,   // WW7-7: the road's parties for the probe
   });
 
   // P3-P6 mode machine (worldModes.js, extracted at P7): the frame

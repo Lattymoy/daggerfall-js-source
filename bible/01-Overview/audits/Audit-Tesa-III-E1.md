@@ -31,7 +31,7 @@ same at every site it changed (`AUDIT TESA III E1-<n>`).
 |---|---|---|---|
 | E1-1 | MED | TS2's road ring is mostly never paved, and where it is paved at a shore town it can pave the sea | OPEN - ROUTED to the roads' stream (`src/world/road/roadPainter.js`), the fix proven on a copy |
 | E1-2 | LOW | The fixed-city bench (`?exterior`) draws no wall on a Bay city's town map and walks its people through the wall | FIXED, pinned (4 mutants) |
-| E1-3 | MED | WW7-1/WW7-2's record says travellers, caravans, outlaws and divers live past the Bay; the merge kept P7's guard and none do | FIXED (the record); lifting the guard is the owner's call |
+| E1-3 | MED | WW7-1/WW7-2's record says travellers, caravans, outlaws and divers live past the Bay; the merge kept P7's guard and none do | FIXED (the record); the guard lifted on the owner's call (WW7-7, 2026-10-26) |
 | E1-4 | MED | The Deep Waters bake blends a coastal town's rect DFU's way while the streamed ground follows TS2's outline - the seafloor before 262 Bay towns shaped against a coastline that is gone | FIXED for the Bay, pinned (4 mutants); the Eltheric isles' half OPEN, routed |
 | E1-5 | LOW | The jungle's trails keep off a town's rect, not its outline | NOT REPRODUCED - a hypothesis, recorded |
 
@@ -72,17 +72,18 @@ Daggerfall, Wayrest and Sentinel shut on every wall cell). Mutants: `tools/mutan
 
 ### E1-3 - the living world past the Bay, as recorded (MED, FIXED in the record)
 
-`livingIndex.js:"export const livingRoams = (p) => inBay(p.px, p.py);"`. AUDIT TESA II P7 held the living world's trips,
+`livingIndex.js`'s `export const livingRoams = (p) => inBay(p.px, p.py);` (as it stood at 79ca20e8d1). AUDIT TESA II P7 held the living world's trips,
 dives and bands to the Bay "until WW7" - its ways' planner read only the Bay's ground. WW7-2 (on TESA, before the merge)
 taught the planner the land past the Bay, and WW7-1's record says travellers, caravans, outlaws, divers, carried word and
 hideouts find a town there. The TESA x AUDIT TESA II merge kept P7's guard (`townsNear`, `dungeonsNear`, `townsIn` the Bay's
 alone; `livingLanes.js` from: no traveller sails from past the Bay) and recorded nothing of it, so WW7-2's ways are asked by
 no trip, and the record and the host's comment said otherwise. Verified: the merged pins themselves (`ww1_world.test.js` "no
 trip from past the Bay", `audittesa2p_hosts.test.js` P7) pass on this head. FIXED: `03-World/World-Wide.md` WW7-1, WW7-2 and
-its stage row, and `world.js:"const livingWays = createWayBook({"`'s comment, say what the code does. Whether to lift the
-guard - WW7's own aim ("fully integrate our living world into the entirety of tamriel") - is the owner's call and a slice of
-its own: the trips' cost past the Bay, the roads past it (no planner's), and a room whose clients stand the land differently
-are unmeasured.
+its stage row, and the world host's comment on its ways, said what the code did. The owner's call, 2026-10-26: *"Yes
+travellers to need to travel everywhere. Same for ships."* - WW7-7 lifted the guard (`03-World/World-Wide.md` WW7-7), the
+three this record left unmeasured each measured there: the trips' cost past the Bay (the squares by the roads' places, the
+ways on a bounded window, a tile of ground a frame), the roads past it (the planner walks them), and a room whose clients
+stand the land differently (a trip keeps to its own side of the Bay's edge, and past it waits on the roads laid whole).
 
 ### E1-4 - the Deep Waters bake against TS2's ground (MED, FIXED for the Bay)
 
