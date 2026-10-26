@@ -1829,8 +1829,13 @@ mutants `tools/mutants/icbld.json`). The doors, the interiors and the lights fol
   (the skylines) take the same law.
 - **Seen**: the scratch's GL-faithful rasterizer (the pictures in color32 order, REPEAT, backfaces culled), before and
   after, of an arcade front, a timber street and the gables and party walls over a block.
-- **Found beside it, its own record below**: `world/capitalModels.js` vanillaTexels lays every capital landmark's
-  pictures (and URBANIZER's yard and dead-end walls) with the same inverted sign - masonry lit from below.
+- **The capitals' own walls, the same finding**: `world/capitalModels.js` vanillaTexels - the box projection every
+  capital landmark's pictures are laid by (the Imperial City's, Solitude's and the rest, URBANIZER's pictures on those past
+  the Bay), and URBANIZER's yard and dead-end walls and woodpiles (`world/urban/townFabricModel.js`) - laid v falling up
+  a wall too: their masonry stood on its head, each stone lit on its bottom edge. v rises now (pinned with the fabric's;
+  `test/tesalore_capitals.test.js`'s quad PIN MOVED; IS-the-pictures-from-the-middle re-aimed by content). URBANIZER's
+  towns otherwise show neither symptom: their buildings are Daggerfall's own models on its own layouts (MeshReader's law,
+  its own windows), re-dressed in their province's climate set.
 
 ## MAP-WHOLE - the map past the Bay whole from its first frames (2026-10-26)
 

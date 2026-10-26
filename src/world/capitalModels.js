@@ -246,7 +246,10 @@ const RANK = Object.freeze([1, 0, 2]);
  * model's middle (the University 2.4 km out had drifted to 40.5 texels a metre). AUDIT TESA II C14: the plane is its face's - the
  * normal both halves of a quad carry, and a quad's second half on its first's plane wherever that turns it at least as much
  * (1/sqrt(3) of it, the bound above) - so a quad is never mapped on two planes, a seam down its diagonal (230 planar quads
- * were: a face at 45 degrees, or a cone's sliver half, rounded each its own way).
+ * were: a face at 45 degrees, or a cone's sliver half, rounded each its own way). BLD (2026-10-26): v RISES up a wall,
+ * MeshReader's own law (v = -(texel row / height): 46,324 of the 46,856 wall triangles of the freeware's 434 house
+ * models), because every picture reaches the GL bottom-up (formats/color32Order.js) - it had fallen, so every capital's
+ * masonry stood on its head, its stones lit from below (world/imperialFabricModels.js's walls, BLD, the same finding).
  * @param {{ positions: ArrayLike<number>, indices: ArrayLike<number>, normals?: ArrayLike<number> }} m @param {number} [metres]
  */
 export function vanillaTexels(m, metres = CAPITAL_TEXEL_METRES) {
@@ -274,7 +277,7 @@ export function vanillaTexels(m, metres = CAPITAL_TEXEL_METRES) {
     }
     first = second ? null : { t, a, axis };
     for (const i of [a, b, c]) {
-      const [u, w] = axis === 1 ? [p[i] / metres - o[0], p[i + 2] / metres - o[2]] : axis === 0 ? [p[i + 2] / metres - o[2], -p[i + 1] / metres + o[1]] : [p[i] / metres - o[0], -p[i + 1] / metres + o[1]];
+      const [u, w] = axis === 1 ? [p[i] / metres - o[0], p[i + 2] / metres - o[2]] : axis === 0 ? [p[i + 2] / metres - o[2], p[i + 1] / metres - o[1]] : [p[i] / metres - o[0], p[i + 1] / metres - o[1]];
       uvs[(i / 3) * 2] = u;
       uvs[(i / 3) * 2 + 1] = w;
     }

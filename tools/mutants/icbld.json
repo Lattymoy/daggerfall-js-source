@@ -79,5 +79,14 @@
     "tests": [
       "test/world/icbld_fabric.test.js"
     ]
+  },
+  {
+    "name": "BLD-capital-masonry-upside-down",
+    "file": "src/world/capitalModels.js",
+    "old": "axis === 0 ? [p[i + 2] / metres - o[2], p[i + 1] / metres - o[1]] : [p[i] / metres - o[0], p[i + 1] / metres - o[1]]",
+    "new": "axis === 0 ? [p[i + 2] / metres - o[2], -p[i + 1] / metres + o[1]] : [p[i] / metres - o[0], -p[i + 1] / metres + o[1]]",
+    "tests": [
+      "test/world/icbld_fabric.test.js"
+    ]
   }
 ]

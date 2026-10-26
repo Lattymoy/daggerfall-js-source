@@ -443,7 +443,9 @@ test('TESA-LORE vanilla\'s texel density on every capital model (the freeware\'s
   const full = CAPITAL_ART_SIZE / CAPITAL_TEXEL_METRES;
   assert.ok(Math.abs(full - 40) < 1e-9, 'a 64-texel picture across 1.6 m');
   const quad = vanillaTexels({ positions: [0, 0, 0, 2, 0, 0, 2, 3, 0], indices: [0, 1, 2] });
-  assert.deepEqual([...quad.uvs].map((v) => +v.toFixed(4)), [0, 0, 1.25, 0, 1.25, -1.875], 'a wall facing z: x across, y up (negative v, MeshReader\'s)');
+  // PIN MOVED (BLD): v RISES up the wall - MeshReader's law (v = -(texel row / height)); it had fallen, every capital's
+  // masonry upside down on the GL's bottom-up pictures
+  assert.deepEqual([...quad.uvs].map((v) => +v.toFixed(4)), [0, 0, 1.25, 0, 1.25, 1.875], 'a wall facing z: x across, y up (v rising up it, MeshReader\'s)');
   _resetCapitals();
   installCapitals({ addTextures: () => 0 });
   let faces = 0;

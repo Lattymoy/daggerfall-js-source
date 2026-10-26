@@ -3,7 +3,7 @@
 // original layouts"; bible/03-World/Arena-Provinces.md IC-GRAND, BLD) - THE FABRIC'S BUILDINGS AS THE GL DRAWS THEM,
 // pinned: every wall's picture right side up on every facing, as the GL samples it; no window under the ground, over an
 // eave, on a gable or on a party wall, none cut at a wall's end, a balcony on a floor, every wall's foot under the ground
-// and no building over another.
+// and no building over another; the capitals' own walls (vanillaTexels) right side up too.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fabricCell, outwardOf, inQuad, STOREY } from '../../src/world/imperialFabric.js';
@@ -12,7 +12,9 @@ import { FACADE_PLAIN, FACADE_WINDOW, FACADE_TEXELS } from '../../src/world/impe
 import { MeshBuilder } from '../../src/world/detStandIns.js';
 import { IMPERIAL_CELLS, IMPERIAL_SECTORS, polar, imperialCell } from '../../src/world/imperialCity.js';
 import { CAPITAL_ART, CAPITAL_ARCHIVE } from '../../src/world/capitalShapes.js';
-import { capitalArt } from '../../src/world/capitalModels.js';
+import { capitalArt, installCapitals, _resetCapitals } from '../../src/world/capitalModels.js';
+import { CAPITAL_MODELS } from '../../src/world/tamrielCapitals.js';
+import { customModelFor } from '../../src/world/customModels.js';
 import { toColor32Order } from '../../src/formats/color32Order.js';
 import { BLOCK_M } from '../../src/world/spawnedDungeons.js';
 
@@ -194,4 +196,25 @@ test('BLD NO BUILDING OVER ANOTHER - no two of the fabric\'s buildings share gro
     assert.ok(a < 0.05, `plots ${p.key} and ${o.key} share ${a.toFixed(2)} m2`);
   }
   assert.ok(pairs > 10000, `the pairs read (${pairs})`);
+});
+
+test('BLD THE CAPITALS\' WALLS RIGHT SIDE UP - world/capitalModels.js vanillaTexels (every capital landmark\'s pictures, and URBANIZER\'s yard and dead-end walls) lays v RISING up every vertical face, MeshReader\'s law, so a stone is lit on its top as it is painted (mutant: v falling up the wall)', () => {
+  _resetCapitals();
+  installCapitals({ addTextures: () => 0 });
+  let faces = 0;
+  for (const id of Object.values(CAPITAL_MODELS)) {
+    const m = customModelFor(id);
+    for (let t = 0; t < m.indices.length; t += 3) {
+      const ix = [m.indices[t], m.indices[t + 1], m.indices[t + 2]], P = ix.map((i) => [m.positions[i * 3], m.positions[i * 3 + 1], m.positions[i * 3 + 2]]);
+      const e1 = P[1].map((x, k) => x - P[0][k]), e2 = P[2].map((x, k) => x - P[0][k]);
+      const n = [e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]], l = Math.hypot(...n);
+      if (l < 1e-4 || Math.abs(n[1]) / l > 1e-3) continue;   // a vertical face
+      const pair = [[0, 1], [0, 2], [1, 2]].find(([a, b]) => Math.abs(P[a][1] - P[b][1]) > 0.3 && Math.hypot(P[a][0] - P[b][0], P[a][2] - P[b][2]) < 1e-3);   // two corners one over the other
+      if (!pair) continue;
+      const [a, b] = pair, rise = (m.uvs[ix[a] * 2 + 1] - m.uvs[ix[b] * 2 + 1]) / (P[a][1] - P[b][1]);
+      assert.ok(rise > 0, `model ${id}: a wall's picture upside down (dv/dy ${rise})`);
+      faces++;
+    }
+  }
+  assert.ok(faces > 5000, `the walls read (${faces})`);
 });
