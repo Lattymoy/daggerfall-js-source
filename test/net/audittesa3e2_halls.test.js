@@ -18,11 +18,19 @@ const T = 1e12;
 const quiet = async (fn) => { const keep = { info: console.info, warn: console.warn, log: console.log }; console.info = console.warn = console.log = () => {}; try { return await fn(); } finally { Object.assign(console, keep); } };
 const hall = (i) => `${1000 + (i % 3000)},${-2000 - Math.floor(i / 3000)}`;
 
-test('E2-5 the law: an account stands in one hall - going into another leaves the one the record still held it in, which counts empty from then (mutants: the one hall unkept)', () => {
+test('E2-5 the law: an account stands in one hall - going into another leaves the one the record still held it in, which counts empty from then; and is one body - a death in another hall takes the crows over its last remains, unless another\'s lie there (mutants: the one hall unkept; the crows kept a death)', () => {
   const st = L.wdunEmpty();
   for (let i = 0; i < 5; i++) assert.equal(L.wdunEnter(st, 'acct-a', hall(i), T + i * 1000).ok, true);
   assert.deepEqual(Object.keys(st.inside), [hall(4)], 'one hall');
   for (let i = 0; i < 4; i++) assert.equal(st.empty[hall(i)], T + (i + 1) * 1000, 'each left as the next was entered');
+  // one body an account: a death in another hall takes the crows over the last one's, unless another's remains lie there
+  L.wdunDie(st, 'acct-c', hall(20), T, T + 600_000);
+  L.wdunDie(st, 'acct-d', hall(21), T, T + 600_000);
+  L.wdunDie(st, 'acct-c', hall(22), T + 1000, T + 601_000);
+  L.wdunDie(st, 'acct-e', hall(21), T + 1000, T + 601_000);
+  L.wdunDie(st, 'acct-d', hall(23), T + 2000, T + 602_000);
+  assert.deepEqual(Object.keys(st.crows).sort(), [hall(21), hall(22), hall(23)].sort(), 'acct-c\'s first hall\'s crows went with its way back; acct-e\'s remains keep hall 21\'s');
+  assert.deepEqual(Object.keys(st.piles).sort(), ['acct-c', 'acct-d', 'acct-e']);
   L.wdunEnter(st, 'acct-b', hall(4), T + 9000);
   L.wdunEnter(st, 'acct-a', hall(7), T + 9500);
   assert.deepEqual(st.inside[hall(4)], { 'acct-b': T + 9000 }, 'a hall another stands in is not emptied');

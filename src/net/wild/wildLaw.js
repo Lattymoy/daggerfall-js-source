@@ -272,6 +272,10 @@ export function wdunLeave(st, acct, h, now) {
  *  circle the hall until the last remains in it go. */
 export function wdunDie(st, acct, h, now, until = now + WILD_REMAINS_MS) {
   wdunLeave(st, acct, h, now);
+  // AUDIT TESA III E2-5: ONE BODY AN ACCOUNT - its way back is its last remains alone (`piles` holds one), so the crows
+  // over the hall of the remains before go with them unless another's lie there: a word a death, in hall after hall,
+  // kept a crow over each for everyone online (and the game reads 128)
+  if (st.piles[acct] && st.piles[acct].h !== h) wdunGone(st, acct, now);
   st.piles[acct] = { h, until };
   st.crows[h] = Math.max(st.crows[h] ?? 0, until);
 }

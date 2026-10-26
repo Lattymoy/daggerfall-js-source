@@ -113,7 +113,10 @@ and `out` over made-up halls - 1,000 writes of the record, 500 halls in each of 
 (47 KB after 500 s, growing without end). After: 50 writes, 64 halls, 32 locks (5 KB), every `in` answered.
 - **An account stands in one hall** (`src/net/wild/wildLaw.js:"export function wdunEnter"`): going into a hall leaves
   any other the record still held it in, which counts empty from then - a crash or a lost `out` no longer keeps a body
-  in two halls, and the halls one account stands in are one, never one a word.
+  in two halls, and the halls one account stands in are one, never one a word. And it is ONE BODY (`wdunDie`): its way
+  back is its last remains alone (`piles` held one already), so a death in another hall takes the crows over the hall
+  of the remains before, unless another's lie there - a `die` word in hall after hall kept a crow over each, told to
+  everyone online (the game reads 128 of them).
 - **An account brings at most WDUN_NEW_HALLS_MAX (64) halls into the record a day**
   (`server/src/index.js:"const meter = (m.k === 'in' || m.k === 'die') && wdunNewHall(st, h)"`, the hub's meter by
   account, in memory, `wdunMeterOf`): a hall the record holds nothing of, past the count, is answered as a fresh hall's
@@ -152,9 +155,9 @@ Relay `world260` re-hashed in place (below).
 renewal and the strip after a wake, the storage it costs); `test/net/audittesa3e2_castles.test.js` (2: the castle's
 city, the window's and the service's words). PIN MOVED (AUDIT TESA III E2-4): `test/net/domain2_castles.test.js` (the
 castle's relay gate held to the LAW row that names DOMAIN2). Mutants `tools/mutants/audittesa3e2.json` (20, all dead).
-E2-5: `test/net/audittesa3e2_halls.test.js` (7: one hall an account, every map to its count and the meters, the counts,
+E2-5: `test/net/audittesa3e2_halls.test.js` (7: one hall and one body an account, every map to its count and the meters, the counts,
 the widest full record's bytes, a socket's thousand words over made-up halls, the owed write and the drain, an account's
-sockets one bucket); `tools/mutants/audittesa3e2_halls.json` (26, all dead).
+sockets one bucket); `tools/mutants/audittesa3e2_halls.json` (27, all dead).
 
 ## Versions
 

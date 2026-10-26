@@ -10,6 +10,16 @@
     "note": "an account stands in every hall it ever named"
   },
   {
+    "name": "E2-5-crows-kept-a-death",
+    "file": "src/net/wild/wildLaw.js",
+    "old": "  if (st.piles[acct] && st.piles[acct].h !== h) wdunGone(st, acct, now);\n",
+    "new": "",
+    "tests": [
+      "test/net/audittesa3e2_halls.test.js"
+    ],
+    "note": "a crow over every hall an account claimed a death in"
+  },
+  {
     "name": "E2-5-acct-locks-uncapped",
     "file": "src/net/wild/wildLaw.js",
     "old": "  for (const halls of Object.values(st.locks)) moved = capBy(halls, WDUN_ACCT_LOCKS_MAX, (u) => u) || moved;\n",
