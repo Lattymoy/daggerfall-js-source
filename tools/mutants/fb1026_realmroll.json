@@ -63,6 +63,15 @@
     ]
   },
   {
+    "name": "ROLL-STOP-never-said",
+    "file": "src/net/npcRollTracker.js",
+    "old": "  if (text) say(text);\n",
+    "new": "",
+    "tests": [
+      "test/net/rollUnheard.test.js"
+    ]
+  },
+  {
     "name": "SEAT-SAVES-seat-loss-saves-nothing",
     "file": "src/systems/online/onlineCheckpointClock.js",
     "old": "      if (!session || session.lost) return;\n      checkpoint();",

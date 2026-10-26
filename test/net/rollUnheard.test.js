@@ -9,7 +9,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { ROLL_CLAIM_MS, rollKeptOf, rollUnheardOf } from '../../src/net/npcChapterLaw.js';
-import { createRollTracker, rollStopText, ROLL_STOPPED_TEXT, ROLL_STOPS } from '../../src/net/npcRollTracker.js';
+import { createRollTracker, rollStopText, sayRollStop, ROLL_STOPPED_TEXT, ROLL_STOPS } from '../../src/net/npcRollTracker.js';
 import { accountRoll, SESSION_KEY, accountRefusalText } from '../../src/net/accountClient.js';
 import { standService, sessionStorageOf } from '../accountDb.mjs';
 import { seatRealm } from '../realmSeat.mjs';
@@ -162,4 +162,17 @@ test('a stopped Roll is said to the player, but for the switch, a lease and a fa
   for (const error of ROLL_STOPS.filter((e) => !['chapters-closed', 'lease', 'dead', 'roll-seed', 'roll-claim'].includes(e))) {
     assert.equal(rollStopText(error), ROLL_STOPPED_TEXT, error);
   }
+});
+
+test('the host says the stop through sayRollStop: the words where there are any, nothing where there are none', () => {
+  const said = [];
+  const warn = console.warn;
+  console.warn = () => {};
+  try {
+    sayRollStop('auth', (text) => said.push(text));
+    sayRollStop('chapters-closed', (text) => said.push(text));
+  } finally {
+    console.warn = warn;
+  }
+  assert.deepEqual(said, [ROLL_STOPPED_TEXT]);
 });

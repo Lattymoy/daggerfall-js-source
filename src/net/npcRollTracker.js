@@ -115,6 +115,13 @@ export function rollStopText(error) {
   return t('realm.roll.stopped', ROLL_STOPPED_TEXT);
 }
 
+/** The Roll's stop, said to the player where rollStopText has words for it, and to the console always. */
+export function sayRollStop(/** @type {string} */ error, /** @type {(text: string) => void} */ say) {
+  const text = rollStopText(error);
+  if (text) say(text);
+  console.warn('[roll] the Roll stopped:', error);
+}
+
 /** A claim's own id: twelve random bytes, hex. */
 export function rollRid(rand = (b) => globalThis.crypto.getRandomValues(b)) {
   const b = rand(new Uint8Array(12));
