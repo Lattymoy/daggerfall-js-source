@@ -1,0 +1,231 @@
+[
+  {
+    "name": "BM-a-sound-ship-boardable",
+    "file": "src/systems/naval/navalBoarding.js",
+    "old": "export const boardableState = (ship) => !!ship && !ship.boarded && ship.damage.state === 'struck';",
+    "new": "export const boardableState = (ship) => !!ship && !ship.boarded && ship.damage.state !== 'sunk';",
+    "tests": [
+      "test/systems/naval/boardmagnet.test.js"
+    ]
+  },
+  {
+    "name": "BM-the-clearance-dropped",
+    "file": "src/systems/naval/navalBoarding.js",
+    "old": "  const off = side * Math.max(anchor.beam + ship.beam + BERTH_GAP, (anchor.halfWidth ?? anchor.beam) + (ship.halfWidth ?? ship.beam) + HULL_CLEAR);",
+    "new": "  const off = side * (anchor.beam + ship.beam + BERTH_GAP);",
+    "tests": [
+      "test/systems/naval/boardmagnet.test.js"
+    ]
+  },
+  {
+    "name": "BM-the-middles-dropped",
+    "file": "src/systems/naval/navalBoarding.js",
+    "old": "  return { pos, yaw, beam: b.beam, halfWidth: b.halfWidth, midZ: hullMid(b) };",
+    "new": "  return { pos, yaw, beam: b.beam, halfWidth: b.halfWidth, midZ: 0 };",
+    "tests": [
+      "test/systems/naval/boardmagnet.test.js"
+    ]
+  },
+  {
+    "name": "BM-the-brake-halved",
+    "file": "src/systems/naval/navalBoarding.js",
+    "old": "export const haulBrake = (v, most = Infinity) => Math.min(most, Math.max(0, Number(v) || 0) / GRAPPLE_S);",
+    "new": "export const haulBrake = (v, most = Infinity) => Math.min(most, Math.max(0, Number(v) || 0) / (2 * GRAPPLE_S));",
+    "tests": [
+      "test/systems/naval/boardmagnet.test.js",
+      "test/systems/auditships_sail.test.js",
+      "test/systems/comeSailAway/auditships2_sail.test.js"
+    ]
+  },
+  {
+    "name": "BM-the-haul-blind-to-the-berth-moving",
+    "file": "src/systems/naval/navalBoarding.js",
+    "old": "    haul(to, anchor, dt) {\n      b.to = to;",
+    "new": "    haul(to, anchor, dt) {\n      to = b.to;",
+    "tests": [
+      "test/systems/naval/boardmagnet.test.js"
+    ]
+  },
+  {
+    "name": "BM-the-way-gate-back",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "  function boardingGap(boat, e, pose = boatPose(boat)) {\n    if (!boardableState(e.ship) || !e.boat) return null;",
+    "new": "  function boardingGap(boat, e, pose = boatPose(boat)) {\n    if (Math.hypot(pose.velocity[0], pose.velocity[2]) > 2.5) return null;\n    if (!boardableState(e.ship) || !e.boat) return null;",
+    "tests": [
+      "test/systems/naval/boardmagnet.test.js"
+    ]
+  },
+  {
+    "name": "BM-the-berth-where-the-lines-went-over",
+    "file": "src/scenes/naval/navalHaul.js",
+    "old": "      return b.haul(berth(b.boat, b.from, hull, b.lie), anchorOf(b.boat), dt);",
+    "new": "      return b.haul(b.to, anchorOf(b.boat), dt);",
+    "tests": [
+      "test/systems/naval/boardmagnet.test.js"
+    ]
+  },
+  {
+    "name": "BM-the-brake-unset",
+    "file": "src/scenes/naval/navalHaul.js",
+    "old": "      b.brake = haulBrake(Math.hypot(v[0], v[2]), CSA_BRAKE_MAX);",
+    "new": "      b.brake = 0;",
+    "tests": [
+      "test/systems/naval/boardmagnet.test.js"
+    ]
+  },
+  {
+    "name": "BM-the-sails-left-set",
+    "file": "src/scenes/naval/navalHaul.js",
+    "old": "      if (csa()?.state?.sailPosition > 0) csa().LowerSails?.();\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/boardmagnet.test.js"
+    ]
+  },
+  {
+    "name": "BM-driven-on-while-hauling",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (haul.hauling(boarding)) return 0;   // BOARD-MAGNET (navalHaul.js): the grapples hauling - nothing driving her on\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/boardmagnet.test.js"
+    ]
+  },
+  {
+    "name": "BM-the-brake-held-through-the-fight",
+    "file": "src/scenes/naval/navalHaul.js",
+    "old": "const hauling = (b) => !!b && b.phase === 'grapple' && !!b.boat && b.boat === myBoat();",
+    "new": "const hauling = (b) => !!b && !!b.boat && b.boat === myBoat();",
+    "tests": [
+      "test/systems/naval/boardmagnet.test.js"
+    ]
+  },
+  {
+    "name": "BM-the-reach-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    return d > BOARD_RANGE * statScale(deps.captain?.stats?.(), 'reach') ? null : d;",
+    "new": "    return d > BOARD_RANGE ? null : d;",
+    "tests": [
+      "test/systems/naval/boardmagnet.test.js",
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "BM-the-stars-reach-nothing",
+    "file": "src/systems/naval/captainTree.js",
+    "old": "['c_ram1', 'small', { reach: 0.15 }], ['c_irons', 'notable', { reach: 0.25, boarders: 1 }]",
+    "new": "['c_ram1', 'small', { boarders: 0 }], ['c_irons', 'notable', { boarders: 1 }]",
+    "tests": [
+      "test/systems/naval/boardmagnet.test.js"
+    ]
+  },
+  {
+    "name": "BM-the-word-boarded",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "state: e.ship.boarded && e.ship.damage.state === SHIP_STATES.struck ? 'boarded'",
+    "new": "state: e.ship.boarded && (e.ship.damage.state === SHIP_STATES.struck || e.ship.damage.state === SHIP_STATES.afloat) ? 'boarded'",
+    "tests": [
+      "test/systems/naval/boardmagnet.test.js"
+    ]
+  },
+  {
+    "name": "BM-the-mode-unsaid",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "mode: e.ship.boarded ? 'boarded' : e.ship.mode, struckTo:",
+    "new": "mode: e.ship.mode, struckTo:",
+    "tests": [
+      "test/systems/naval/boardmagnet.test.js"
+    ]
+  },
+  {
+    "name": "BM-the-readers-mode",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "e.ship.boarded = (w.state === 'boarded' || cap?.mode === 'boarded') && boarding?.shipId !== id;",
+    "new": "e.ship.boarded = w.state === 'boarded' && boarding?.shipId !== id;",
+    "tests": [
+      "test/systems/naval/boardmagnet.test.js"
+    ]
+  },
+  {
+    "name": "BM-an-old-builds-foul-refused",
+    "file": "src/systems/naval/navalWire.js",
+    "old": "  if (nv.a !== undefined && (nv.a !== 1 || nv.k === undefined)) return null;   // an answer is a cask's\n",
+    "new": "  if (nv.a !== undefined && (nv.a !== 1 || nv.k === undefined)) return null;   // an answer is a cask's\n  if (nv.u !== undefined) return null;\n",
+    "tests": [
+      "test/systems/naval/boardmagnet.test.js"
+    ]
+  },
+  {
+    "name": "BM-AUDIT-the-lie-unkept",
+    "file": "src/scenes/naval/navalHaul.js",
+    "old": "      b.lie = to.side ? { side: to.side, same: to.same } : null;",
+    "new": "      b.lie = null;",
+    "tests": [
+      "test/systems/naval/boardmagnet.test.js"
+    ]
+  },
+  {
+    "name": "BM-AUDIT-the-lie-unread",
+    "file": "src/systems/naval/navalBoarding.js",
+    "old": "  const same = lie?.same ?? Math.cos(ship.yaw - anchor.yaw) >= 0;",
+    "new": "  const same = Math.cos(ship.yaw - anchor.yaw) >= 0;",
+    "tests": [
+      "test/systems/naval/boardmagnet.test.js"
+    ]
+  },
+  {
+    "name": "BM-AUDIT-the-helm-held-only-under-a-brake",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (haul.hauling(boarding)) return 0;",
+    "new": "    if (haul.brake(boarding) > 0) return 0;",
+    "tests": [
+      "test/systems/naval/boardmagnet.test.js"
+    ]
+  },
+  {
+    "name": "BM-AUDIT-the-lane-dropped",
+    "file": "src/systems/naval/navalBoarding.js",
+    "old": "  const da = clamp(a1 - a0, -step, step);\n  step -= Math.abs(da);",
+    "new": "  const da = clamp(a1 - a0, -step, step);",
+    "tests": [
+      "test/systems/naval/boardmagnet.test.js"
+    ]
+  },
+  {
+    "name": "BM-AUDIT-the-push-dropped",
+    "file": "src/systems/naval/navalBoarding.js",
+    "old": "    if (!push) break;\n    pos = [pos[0] + push[0], pos[1], pos[2] + push[1]];",
+    "new": "    if (!push || push) break;\n    pos = [pos[0] + push[0], pos[1], pos[2] + push[1]];",
+    "tests": [
+      "test/systems/naval/boardmagnet.test.js"
+    ]
+  },
+  {
+    "name": "BM-AUDIT-the-push-at-the-bare-hull",
+    "file": "src/systems/naval/navalBoarding.js",
+    "old": "  grown.hl += HULL_CLEAR; grown.hw += HULL_CLEAR;\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/boardmagnet.test.js"
+    ]
+  },
+  {
+    "name": "BM-AUDIT-the-haul-never-waits",
+    "file": "src/systems/naval/navalBoarding.js",
+    "old": "(b.t >= GRAPPLE_S - 1e-9 && b.arrived) || b.t >= HAUL_MAX_S",
+    "new": "b.t >= GRAPPLE_S - 1e-9 || b.t >= HAUL_MAX_S",
+    "tests": [
+      "test/systems/naval/boardmagnet.test.js",
+      "test/systems/naval/nav_d_boarding.test.js"
+    ]
+  },
+  {
+    "name": "BM-AUDIT-the-haul-unbounded-in-time",
+    "file": "src/systems/naval/navalBoarding.js",
+    "old": "      b.at = !anchor || b.t + d >= HAUL_MAX_S ?",
+    "new": "      b.at = !anchor ?",
+    "tests": [
+      "test/systems/naval/boardmagnet.test.js"
+    ]
+  }
+]

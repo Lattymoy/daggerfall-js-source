@@ -4020,8 +4020,8 @@
   "by": "claude-in-session"
  },
  "captain.page.what": {
-  "en": "54e802db9291",
-  "tr": "9c2ebce091af",
+  "en": "03ad937a1ea7",
+  "tr": "2571ffb3111c",
   "by": "claude-in-session"
  },
  "captain.page.xp": {
@@ -4045,8 +4045,8 @@
   "by": "claude-in-session"
  },
  "captain.sky.commanderLore": {
-  "en": "893073d44302",
-  "tr": "4f9c56465b16",
+  "en": "36a2974b8078",
+  "tr": "dbd8aed1e3a0",
   "by": "claude-in-session"
  },
  "captain.sky.forget": {
@@ -4229,14 +4229,14 @@
   "tr": "9d4ef58d681d",
   "by": "claude-in-session"
  },
+ "captain.star.cLines": {
+  "en": "f1a93eb6b27c",
+  "tr": "88ee6c5be1c7",
+  "by": "claude-in-session"
+ },
  "captain.star.cLong": {
   "en": "7f00be2aaba9",
   "tr": "f3373bcec364",
-  "by": "claude-in-session"
- },
- "captain.star.cRam1": {
-  "en": "f2bceba2da26",
-  "tr": "6b7b8a310825",
   "by": "claude-in-session"
  },
  "captain.star.cRel1": {
@@ -4374,11 +4374,6 @@
   "tr": "0fe39d4fe2fb",
   "by": "claude-in-session"
  },
- "captain.stat.foul": {
-  "en": "255ad7a52b43",
-  "tr": "56d5f518b1f6",
-  "by": "claude-in-session"
- },
  "captain.stat.grape": {
   "en": "65ebf7109946",
   "tr": "5b7d3ca1585f",
@@ -4404,9 +4399,9 @@
   "tr": "152e70de0142",
   "by": "claude-in-session"
  },
- "captain.stat.ram": {
-  "en": "1dad7f14298f",
-  "tr": "7bafdc4a30fb",
+ "captain.stat.reach": {
+  "en": "30222f041d63",
+  "tr": "fc836fe0e217",
   "by": "claude-in-session"
  },
  "captain.stat.reload": {
@@ -12915,8 +12910,8 @@
   "by": "claude-in-session"
  },
  "growth.captain.lead": {
-  "en": "dd2b2e579bc1",
-  "tr": "8799686b8676",
+  "en": "34f459d40399",
+  "tr": "039acc7c57f0",
   "by": "claude-in-session"
  },
  "growth.captain.none": {
@@ -21527,31 +21522,6 @@
  "naval.fleet.openSeaSummon": {
   "en": "7ac61afe3515",
   "tr": "295796341cba",
-  "by": "claude-in-session"
- },
- "naval.foul.board": {
-  "en": "e37b0bf0d16b",
-  "tr": "3dd2e7e247d0",
-  "by": "claude-in-session"
- },
- "naval.foul.heave": {
-  "en": "8b572af57f86",
-  "tr": "d90ef057de93",
-  "by": "claude-in-session"
- },
- "naval.foul.heaving": {
-  "en": "e998d8ff0989",
-  "tr": "fb2c20c41f33",
-  "by": "claude-in-session"
- },
- "naval.foul.leave": {
-  "en": "1a3ae6a1622f",
-  "tr": "889e1f61a226",
-  "by": "claude-in-session"
- },
- "naval.foul.rammed": {
-  "en": "a03b73b2a678",
-  "tr": "5cdc352775b8",
   "by": "claude-in-session"
  },
  "naval.gun.secs": {

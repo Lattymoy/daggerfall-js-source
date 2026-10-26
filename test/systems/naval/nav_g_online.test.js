@@ -123,7 +123,7 @@ test('NAV-G a peer\'s word through the door, whole or not at all: my own word co
 test('NAV-G a blow on a ship another stands: the striker sends the directed hit frame - the ship, her hurts, a fire (a ball\'s 1, a barrel\'s 2 - AUDIT NAV1), the zone - and the stander\'s door takes only bounded numbers, a known fire and a known zone; AUDIT NAV1 (online): no board claims - a ship boarded is taken over at the grapple, never marked in her stander\'s world - and a GRAPPLE (my ship alongside your boat) carries no hurt (mutants: the ceiling, the zone\'s codes, a grapple with a hurt)', () => {
   const d = navalHitData('ann', { n: 7, hull: 33.4, sail: 5.6, crew: 2, fire: true, zone: 'holed' });
   assert.deepEqual(d, { to: 'ann', nv: { n: 7, h: 33, s: 6, c: 2, f: 1, z: 2 } });
-  assert.deepEqual(validNavalHit(d), { n: 7, hull: 33, sail: 6, crew: 2, fire: true, zone: 'holed', grapple: false, cask: null, answer: false, foul: 0 });   // RAM-BOARD (AUDIT 2026-10-17): a blow says no foul
+  assert.deepEqual(validNavalHit(d), { n: 7, hull: 33, sail: 6, crew: 2, fire: true, zone: 'holed', grapple: false, cask: null, answer: false });
   // AUDIT NAV1 (online #15): a cask's claim, and its owner's answer
   const k = navalHitData('ann', { n: 0, cask: 4000000000 }), a = navalHitData('bob', { n: 0, cask: 9, answer: true });
   assert.deepEqual([k.nv.k, k.nv.a, a.nv.k, a.nv.a], [4000000000, undefined, 9, 1]);

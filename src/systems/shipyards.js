@@ -75,7 +75,7 @@ export function shipSpec(hull) {
   for (const bt of batteriesOf(hull)) { if (bt.gun === 'barrel') barrels = true; else guns += bt.muzzles.length; }
   return {
     hull, name: HULL_NAMES[hull] ?? 'Boat', length: Math.round((b.bowZ - b.aftZ) * 10) / 10, beam: Math.round(b.halfWidth * 20) / 10,
-    crew: b.crew, hands: playerCrewCount(hull, b.crew), guns, barrels, hullHp: b.hullHp, sailHp: b.sailHp, ram: !!b.ram,
+    crew: b.crew, hands: playerCrewCount(hull, b.crew), guns, barrels, hullHp: b.hullHp, sailHp: b.sailHp,
     parts: PARTS_HULLS.includes(hull), price: HULL_PRICES[hull] ?? 0, line: HULL_LINES[hull] ?? '',
   };
 }
