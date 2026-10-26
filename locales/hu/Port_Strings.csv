@@ -2749,7 +2749,7 @@ tutorials.skyKetch.body2,"Vigyél étercellákat a gépezethez. Ha eltalálnak, 
 tutorials.skyKetch.title,"Az Égi Bárka"
 tutorials.skyKetch.trigger,"Amikor először szállsz fel a horgonyfelvonóval az Égi Bárkára."
 tutorials.wildZone.body1,"Cyrodiilban és a nyílt {word}-óceánon a játékosok harcolhatnak egymással; a szörnyek erősebbek, a zsákmány gazdagabb."
-tutorials.wildZone.body2,"Ha ott egy másik játékos megöl, leesik a zsákod (és a szekered, ha veled van) az aranyad egytizedével, és ő elvehet egy viselt tárgyat. Bármely más halál a szokásos egytizedbe kerül."
+tutorials.wildZone.body2,"Ha ott egy másik játékos megöl, leesik a zsákod az aranyad egytizedével, és ő elvehet egy viselt tárgyat. A szekered, a társaid csomagjai és a biztosított felszerelésed megmaradnak. Bármely más halál a szokásos egytizedbe kerül."
 wagon.upkeep.boons.failing,"A(z) {name} szétesik. Egy Szekérudvar vagy egy Szekérjavító készlet megjavítja."
 wagon.upkeep.boons.rickety,"A(z) {name} rozoga. Egy Szekérudvar megjavíthatja."
 wild.death.kept,"Semmi sem esett le. Csak ha egy másik játékos öl meg, ejted el, amit viszel."

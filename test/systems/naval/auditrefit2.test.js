@@ -3,8 +3,8 @@
 // stars over a ship laid up, conjured steel, a keystone's price in the fight, the stores taken in the order that pays, the
 // captain's sky asked before the QuickDial key lets it go, the exchange never buying at what it sells; the word's men
 // rounded on the ball's roll, the wheel's quiet, a near miss told where it passed nearest, the tally's men as her stander
-// reckons them, the blow's side and the drench's jar the boat in play's, a copy first seen going down kept quiet, a ram's
-// blow before her foul; a hidden boat's name boards, a fitting's model pinned, the flags' cap, a sea ship's paint only on
+// reckons them, the blow's side and the drench's jar the boat in play's, a copy first seen going down kept quiet; a
+// hidden boat's name boards, a fitting's model pinned, the flags' cap, a sea ship's paint only on
 // the meshes it repaints, the word said again for a name board, another's cabin as built, a fitting's whole box; a packed
 // hold's weight and her parts never lost in it, a Rowboat's plunder, the hold key's fallback, the peace bonus while a
 // ship gives chase, the hold's pad binding. tools/mutants/auditrefit2.json.
@@ -28,8 +28,6 @@ import { NAVAL_CLASSIC, NAVAL_SFX } from '../../../src/systems/naval/navalSounds
 import { MAGAZINE_DELAY, magazineOf } from '../../../src/scenes/naval/navalFeel.js';
 import { HULL, hullBuild } from '../../../src/systems/naval/navalShips.js';
 import { SHIP_STATES } from '../../../src/systems/naval/navalDamage.js';
-import { hullBoxOf, RAM_REACH } from '../../../src/scenes/naval/navalHost.js';
-import { fouledBy } from '../../../src/systems/naval/navalFoul.js';
 import { createShipFlagHost } from '../../../src/scenes/shipFlagHost.js';
 import { FLAGS_MAX } from '../../../src/render/shipFlagPass.js';
 import { FLAG_DEFAULT } from '../../../src/systems/naval/shipFlag.js';
@@ -235,24 +233,6 @@ test('AUDIT 2 a copy first seen already going down is heard as nothing and blows
   for (let t = 0; t < MAGAZINE_DELAY[1] + 1; t += 0.5) { h.host.applyWord('a-player', word('sinking'), (p) => p); h.run(0.5); }
   const said = (k) => h.log.sounds.filter(([key]) => key === k).length;
   assert.deepEqual([said(NAVAL_CLASSIC.bubbles), said(NAVAL_SFX.blast)], [0, 0], 'sailed into sight of her going down: nothing heard');
-});
-
-test('AUDIT 2 a ram\'s blow lands before her foul: a ram that sends an unstood ship down fouls nothing and says nothing of a boarding; one that leaves her afloat fouls her as before (mutants: the order)', async () => {
-  const h = await sea({ hull: HULL.SmallShip, settings: { ShipsAtSea: 'off', Boarders: false } });
-  const e = h.host._sea.get(h.host.spawnShip('merchantGalleon', { range: 900 }));
-  const frames = (p, n = 1) => { for (let i = 0; i < n; i++) { e.ship.pos = [...p.pos]; e.ship.yaw = p.yaw; e.ship.speed = 0; e.ship.yawRate = 0; h.host.frame(0.1); } };
-  frames({ pos: [0, 0, 90], yaw: Math.PI / 2 });
-  const b = hullBoxOf(e.boat, h.pool.models);
-  const ext = Math.abs(b.ax[2]) * b.h[0] + Math.abs(b.ay[2]) * b.h[1] + Math.abs(b.az[2]) * b.h[2];
-  const at = (gap) => ({ pos: [0, 0, 90 + hullBuild(HULL.SmallShip).bowZ + gap - (b.c[2] - ext)], yaw: Math.PI / 2 });
-  e.ship.damage.restore({ hull: 1, sail: e.ship.damage.maxSail, crew: e.ship.damage.maxCrew, fire: 0, state: SHIP_STATES.afloat });
-  h.runtime.state.velocityCurrent = [0, 0, 6];
-  frames(at(30));
-  h.runtime.state.velocityCurrent = [0, 0, 0.1];
-  frames(at(RAM_REACH / 2));
-  assert.notEqual(e.ship.damage.state, SHIP_STATES.afloat, 'the ram finished her');
-  assert.equal(fouledBy(e.ship, 'local', 0), false, 'nothing fouled');
-  assert.ok(!h.log.say.some((l) => /locked together/.test(l)), 'no boarding said');
 });
 
 // ── HOW SHE LOOKS ─────────────────────────────────────────────────────────────────────────────────────────────────

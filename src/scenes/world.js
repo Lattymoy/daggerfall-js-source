@@ -711,7 +711,7 @@ import { createNavalCrew, CREW_RANGE, CREW_KEEP } from './naval/navalCrew.js';  
 import { asleepHour } from '../systems/naval/shipWatch.js';   // SHIP-WATCH: the crews' sleeping hours
 import { crewRoster, crewCount } from '../systems/naval/crewLife.js';
 import { createCrewAshore } from './crewAshore.js';   // CREW-COMPANIONS: the party ashore, stood in every place
-import { revenantParty, setRetinuePlayer, setRetinueListener, setRetinueBodies, revenantsWithYou, leaveRefusal, isRevenantCompanionKey, revenantIdOfKey, applySwornStrength, sendRevenantAway, forgetSwornMember, swornFightStep, swornFightWon, devotedWithYou } from '../systems/revenant/revenantCompanions.js';   // REVENANT-COMPANION: the sworn, stood by the same layer
+import { revenantParty, setRetinuePlayer, setRetinueListener, setRetinueBodies, revenantsWithYou, isRevenantCompanionKey, revenantIdOfKey, applySwornStrength, sendRevenantAway, forgetSwornMember, swornFightStep, swornFightWon, devotedWithYou } from '../systems/revenant/revenantCompanions.js';   // REVENANT-COMPANION: the sworn, stood by the same layer
 import { registerCompanionCount, registerCompanionRoster, companionsWithYou, COMPANION_SLOTS } from '../systems/companionSlots.js';   // COMPANION-SLOTS: the crew's hands ashore counted with the sworn
 import { PERSONALITIES } from '../systems/revenant/revenantPersonality.js';   // REVENANT-COMPANION: the party card's word for one
 import { hullBuild } from '../systems/naval/navalShips.js';   // LIVING CREW: a room's boat's crew, her hull's own
@@ -924,7 +924,7 @@ import { partyRosterSource, localRosterSource, guildRosterSource, placedRosterSo
 import { partyCompassPoints } from '../ui/partyMapMarks.js';   // COMPASS-PARTY: the party's points on the compass
 import { SocialState, accountId, accountSecret } from '../net/social.js';   // SOC2: the friends and the party, as the hub says them; the account the hub's hello carries; SOC3: and the two colours a name wears in the DOM - my party's green, a friend's blue
 import { SOCIAL_ROOM, PARTY_SEND_MS, chatRegionRoom, relaySupportsRite, relaySupportsCage } from '../net/wire.js';   // CHAT-CHAN: a region's channel
-import { cellRoomOfWire, seaVaultRoomId, seaRoomOf } from '../net/wire.js';   // HCC-PARK: the cell a parked team's anchor stands in; AUDIT SEA VENTURES D7, D8: a vault's own room
+import { cellRoomOfWire, seaVaultRoomId } from '../net/wire.js';   // HCC-PARK: the cell a parked team's anchor stands in; AUDIT SEA VENTURES D7, D8: a vault's own room
 import { parkKeyOf } from '../net/wire.js';   // WAGONS2-VISIT: my caravan's room is named by my park key
 import { caravanRoomOf, caravanKeyOf } from '../net/privateInterior.js';   // WAGONS2-VISIT: a caravan's own room
 import { CARAVAN_TEXT } from '../systems/caravanRoom.js';   // WAGONS2 (FINAL AUDIT): a caravan's save that cannot come back, said
@@ -979,11 +979,11 @@ import { wildHallPicks, wildHallAt, wildHallTemplateOk } from '../systems/wild/w
 import { setWildHere, wildHere, isWildRegion, WILD_REGION, wildInside, wildNear, setWildDeath, wildDeath, wildDeathAtHand, wildDeathKill, wildFallHeard, WILD_TEXT, WILD_DEATH_HOLD_S, WILD_NAME, ZONE_WATCH_SCALE } from '../systems/wild/wildZone.js';
 import { createPartyTruce } from '../systems/wild/wildZone.js';   // PARTY-TRUCE (FIELD BUGS 2026-10-09b)
 import { settledAt, zoneSafe, zoneSafeFrame, ZONE_SAFE_TEXT } from '../systems/wild/zoneSafe.js';   // ZONE-SAFE (the owner, 2026-10-25: "All cities should be considered safe zones"): a settlement's streets are peace
-import { GREATER_GIANT_CALL, GREATER_GIANT_CALL_AT } from '../systems/wild/wildZone.js';   // GREATER-GIANT
+import { GREATER_GIANT_CALL, GREATER_GIANT_CALL_AT, noteWildBlow } from '../systems/wild/wildZone.js';   // GREATER-GIANT; AUDIT PVP-EASE L2-1: the combat lock's blow
 import { wildRing, wildRingAt, wildRingName, wildRingBonus, wildZoneKind, zoneWord, zoneRingName, setWildMask, wildMask, WILD_RINGS, wildJourney, WILD_GIANT, WILD_GIANT_CHANCE, WILD_GIANT_MAX, WILD_STRANGER_M, WILD_STRANGER_SEE_M, WILD_STRANGER_SLOW_M, WILD_STRANGER_RGBA } from '../systems/wild/wildZone.js';   // WILD2: the four rings; WILD3: the journeys
 import { etherWildRingAt, etherRisePort, etherRiseSite, etherInPeace, ETHER_KIND, ETHER_WILD_TEXT } from '../systems/wild/etherWild.js';   // ETHER-WILD: the Eltheric Ocean past Veilhaven's peace, an open PvP zone
 import { createSeaVentures, seaStormShown } from './seaVenturesHost.js';   // SEA VENTURES: the sea's vaults, its events, its bounties and boards - wired here, held there
-import { wildTakeTook, wildPacks, wornOffer, wildRecord, wildChunks, wildSpawnSpot, wildFallWords, wildTookAny, wildRisePicks } from '../systems/wild/wildDeath.js';   // CART-AWAY (FIELD BUGS 2026-10-15d): my wagon away from my death keeps its cargo - and COMPANION-DROP's word that my game reads my companions' packs, one call (wildFallWords)
+import { wornOffer, wildRecord, wildChunks, wildSpawnSpot, wildRisePicks } from '../systems/wild/wildDeath.js';   // WILD1: the worn offer, the deposit's chunks, the rise
 import { readWildReceipt, wildFallGraceS } from '../net/wild/wildReceipt.js';   // INT9: the relay's fall, carried to the service
 import { WILD_REF, wildKin, sameGuild } from '../net/wild/wildRef.js';   // INT9: the zone referee's numbers (its mend, for the HUD); MAC (2026-10-14): and its kin, one law with the referee's
 import { createWildFight } from '../net/wild/wildFight.js';
@@ -1220,6 +1220,9 @@ import { createVendorHost } from './vendorHost.js';   // HOST-SPLIT
 import { createWildSeizeHost } from './wildSeizeHost.js';   // HOST-SPLIT
 import { createWildRejoin } from '../systems/wild/wildRejoin.js';   // WILD-REJOIN: a fall that outlives its page
 import { createPortalStoneHost } from './portalStoneHost.js';   // HOST-SPLIT
+import { createWildDropHost } from './wildDropHost.js';   // HOST-SPLIT
+import { createWildInsureBook, setWildInsureBook } from '../net/wild/wildInsureBook.js';   // WILD-INSURE: my policies on my gear
+import { createWildGrace } from '../systems/wild/wildGrace.js';   // ZONE-GRACE: safe passage, as the referee says it
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -7729,7 +7732,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const col = modes?.sailingCabin ? collider : csaModeCollider();   // CABIN-HULL (FIELD BUGS 2026-10-03b, Regi: "i got into my boats interior and then got out and i'm in the void"): below deck the fleet stays afloat OUTSIDE (keepExteriorBoats) - in the street's collider, never the room's. The cabin is built at her own root, so her decks stood in the room as floors and walls (the ladder's box and the helm's rows within reach of a press), and the deck the way out lands on had gone with the room
     const want = new Set();
     const peers = (modes?.mode ?? 'exterior') === 'exterior' || modes?.sailingCabin ? csa.peerBoats : [];   // CABIN-HULL: and every peer's, below deck as on deck; FIELD BUGS 2026-10-01b (Mac: "Players aren't colliding with other players' boats and can't stand on board"): ANOTHER PLAYER'S BOAT STANDS IN MY COLLIDER AS MINE DOES - every one that stands, her hull and her deck's furniture, aboard her or not. CSA-K stood one only while I was aboard it (PR-WAGON1's "Others' wagons don't block", which Mac's word sets aside for boats): her hull was walked and swum through and her deck no floor to step, climb or come up onto (scenes/comeSailAway/comeSailAwayAboard.js: standing on her is aboard her). THE FOUR HOSTS: on the street alone, this host's - a building's frame (worldModes.js) and a dungeon's (dungeonContext.js) stand no one's boat, and the standalone street (exterior.js) has no peers
-    for (const boat of peers.length ? [...csaColliderBoats(), ...peers] : csaColliderBoats()) {   // NAV-H: and the sea's ships near enough to board and to ram
+    for (const boat of peers.length ? [...csaColliderBoats(), ...peers] : csaColliderBoats()) {   // NAV-H: and the sea's ships near enough to board
       if (!boat.GameObject?.activeSelf) continue;
       const id = csaBoatId(boat);
       let i = 0;
@@ -8328,7 +8331,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     hudText: (text, seconds) => townTalk.say(text, seconds),
     wayScale: (underSail) => naval?.wayScale(underSail) ?? 1,   // AUDIT NAV1 (the helm): her hurts in her way - the canvas left, a wreck's oars
     sailRefused: () => naval?.sailRefused() ?? null,   // ...and no sail on a wreck or a rig shot away, said once
-    brake: () => naval?.brake() ?? 0,   // ...and a heave-to's brake beside a struck ship
+    brake: () => naval?.brake() ?? 0,   // ...and BOARD-MAGNET's: her way off while the grapples haul a ship alongside
     // PEACE-WAY (systems/comeSailAway/peaceWay.js): her way out of a fight - no enemy near (this runtime's own word, below),
     // no boarding, no broadside laid
     peaceWay() { return (this._peace ??= heldPeaceWay(() => peaceWayOf({ enemies: !!this.enemiesNearby() || !!naval?.threats?.().some((t) => t.chasing), boarding: !!naval?.boarding, aiming: !!naval?.aiming })))(); },   // held a PEACE_HOLD_S - AUDIT 2: a ship that has sighted me and comes on is a fight past HOSTILE_NEAR_M too (a raider's lookout is 1,000 m: I outran her at 1.15)
@@ -10542,7 +10545,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // the sworn the mirror has with the player (and the naval arc switched back on counts its hands again): past the
     // slots, the one most lately sworn steps away to wait
     if (companionsWithYou() > COMPANION_SLOTS) {
-      const last = revenantsWithYou().filter((r) => !leaveRefusal(r)).sort((a, b) => (b.swornAt ?? 0) - (a.swornAt ?? 0))[0];   // COMPANION-DROP: never the one at my side in the open zone
+      const last = revenantsWithYou().sort((a, b) => (b.swornAt ?? 0) - (a.swornAt ?? 0))[0];
       if (last && sendRevenantAway(last.id, { byYou: false })) townTalk.say(`Your companions are full. ${last.name} steps away to wait.`);   // RVN11: the slots' hold, never the player's sending (no loyalty lost)
     }
     try { revenantCompanionBarks(); } catch { /* a bark is no frame's business */ }
@@ -21520,6 +21523,14 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const duelNear = (peerId) => { const b = duelBody(peerId); return !!b && tradeDistance(player.feetAt(), b.feet) <= DUEL_RANGE_M; };
   const duelAccount = accountDuels({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() });
   const wildAccount = accountWild({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() });   // INT9: a death in the open zone's drop
+  // WILD-INSURE (2026-10-26, net/wild/wildInsureBook.js): my policies - the pack's card writes one and the drop's answer
+  // spends them. Written online for a realm character, outside the zone; paid as the Firmament's respec pays (the record's
+  // act, the wallet reserved first)
+  const wildInsure = createWildInsureBook({ door: wildAccount, realm: realmSession ? { act: (o) => realmGoldAct({ ...o, session: realmSession, checkpoint: () => onlineCheckpoint() }) } : null,
+    wallet: realmWallet, character: () => realmSession?.id ?? null, region: () => _questRegionIndex() ?? 0, inZone: () => wildHere(), now: () => Date.now() + _sharedOffsetMs });   // AUDIT PVP-EASE L4-1, L4-5: the joined character, the shared clock
+  setWildInsureBook(wildInsure);
+  wildInsure.read();
+  const wildGrace = createWildGrace({ me: () => online?.id ?? null, say: (l) => { setMidScreenText(l); townTalk.say(l); } });   // ZONE-GRACE (systems/wild/wildGrace.js)
   const _duelSent = new Map();   // my blow's number -> { kind, weapon } - what it was
   let _duelLastWeapon = null;    // INT8: the weapon of my last strike - the referee's word on it names no number
   let _duelFoe = null;      // my opponent as the HUD's target bar reads a foe ({ entity: { name, health, maxHealth }, dead })
@@ -22430,6 +22441,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const wildHpIn = (g) => {
     const me = online?.id ?? '';
     if (g.by !== me && g.to !== me) return;
+    noteWildBlow();   // AUDIT PVP-EASE L2-1: a blow landed, mine or on me - storing locked (wildZone.js WILD_STORE_LOCK_MS)
     const foeId = g.by === me ? g.to : g.by;
     const mine = g.h.find((x) => x[0] === me), theirs = g.h.find((x) => x[0] === foeId);
     _wildVit = { mine: mine ? [mine[1], mine[2]] : (_wildVit?.mine ?? null), foe: theirs ? { id: foeId, hp: theirs[1], max: theirs[2] } : null, at: Date.now() };
@@ -22497,6 +22509,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     else if (g.k === 'fell') wildFellIn(g, room);
     else if (g.k === 'down') wildDownIn(g, room);
     else if (g.k === 'rc') wildRcIn(g, room);
+    else if (g.k === 'grace') wildGrace.heard(g);   // ZONE-GRACE: safe passage, the referee's word
     else seaVentures.wref(g, room);   // SHIP-PVP: the open sea's guns - a shot landed, a wreck (its room boarded), a wreck signed
   };
 
@@ -22574,44 +22587,14 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     } catch (e) { console.error('[wild] the death checkpoint failed', e); return false; } finally { playerEntity.health = hp; }
   };
   const _wildTaking = new Set();   // the falls whose drop this tab has asked for (a receipt said twice is one act)
-  /**
-   * INT9: MY DROP, TAKEN OFF MY RECORD BY THE ACCOUNT SERVICE (server-account/src/wild.js) - against the fall the relay
-   * signed (`rc`; FOE-KEEPS: a death to a foe drops nothing, and asks none). The record's own act (systems/realmSaves.js
-   * realmGoldAct): checkpointed as it will rise, the service asked - naming the room my remains will lie in - and on its answer EXACTLY
-   * WHAT IT TOOK taken out of my pack (systems/wild/wildDropLaw.js wildTakeTook - AUDIT INT9: this game ran the law again
-   * without the ledger's word, and took what the service kept), the room given the service's records on its order
-   * (wildDeposit). The answer is needed: a landed act whose answer was lost ends the session, and the join reads the record.
-   */
-  const wildTakeDrop = (rc, room) => {
-    const key = readWildReceipt(rc)?.r;
-    const body = _wildBody;
-    const lay = room ?? body?.room ?? null;
-    if (!key || !realmSession || realmSession.lost || !lay || _wildTaking.has(key)) return;
-    _wildTaking.add(key);
-    if (_wildTaking.size > 32) _wildTaking.delete(_wildTaking.values().next().value);
-    realmGoldAct({
-      session: realmSession,
-      checkpoint: () => wildDeathCheckpoint(),
-      needsAnswer: true,
-      call: (at) => wildAccount.fall({ receipt: rc, realm: at, room: lay, ...(online?.wildCollectAt?.(lay) ? { collect: 1 } : {}), ...wildFallWords(hccOn(), hccRuntime.getSaveData(), cyrodiilMask()) }),   // MAC (2026-10-14): my killer's piece into escrow where its room signs the collect; CART-AWAY (Mac, 2026-10-15): my wagon's word - parked off the zone, stabled or none, the cart keeps its cargo (systems/wild/wildCart.js); COMPANION-DROP (AUDIT FB1019f B2): and that my game reads my companions' packs, without which the service hands me no take of them (systems/wild/wildDeath.js wildFallWords)
-      apply: (a) => wildDropTaken(a?.data ?? null, body, lay),
-    }).catch((e) => console.warn('[wild] the drop failed', e?.message ?? e));
-  };
-  /** The service's answer to my drop: what it took off my record goes out of my pack (a worn piece unequipped), the death
-   *  screen says what fell - or, risen since, a line says it - and the records go to the room on the service's order. */
-  const wildDropTaken = (d, body, room) => {
-    if (!d) return;
-    const out = wildTakeTook(playerEntity, d.took, d.gold, (it) => { if (isEquipped(it)) unequipItem(playerEntity, it); }, wildPacks(naval?.companions?.party, revenantsWithYou()));   // COMPANION-DROP: and out of my companions' packs at my side, as the service took them
-    const n = Array.isArray(d.items) ? d.items.length : 0;
-    const dd = wildDeath();
-    const claimed = d.wi === 0 && out.length && d.took?.[0] ? itemLongName(out[0]) : null;
-    // MAC (2026-10-14, the two-phase handoff): the piece my killer claimed is in the service's escrow until they collect it
-    const held = d.wi === 0 && !!d.escrow?.r;
-    if (dd) setWildDeath({ killer: dd.killer, kill: true, dropped: d.order ? n : 0, claimed, held, burnt: d.burnt ? n : 0, letters: out });   // BURNT-SAID (FIELD BUGS 2026-10-18b): a held record's drop said, and the letters by their worth
-    else if (wildTookAny(out, d.gold)) townTalk.say(d.burnt ? zoneWord('burntLate', seaRoomOf(room) ? ETHER_KIND : null)() : zoneWord('dropLate', seaRoomOf(room) ? ETHER_KIND : null));   // AUDIT SEA VENTURES C7: in the words of the ground the fall was on   // AUDIT INT9: a receipt that found me risen - AUDIT FB1019f B5: a companion's coin alone said too (systems/wild/wildDeath.js wildTookAny)
-    if (held) wildEscrow.held(d.escrow, { killer: dd?.killer ?? null, name: claimed });
-    if (d.order && n && body) wildDeposit({ r: d.r, items: d.items, o: d.order, p: body.p, room, mine: body });
-  };
+  const { wildTakeDrop } = createWildDropHost({   // HOST-SPLIT: src/scenes/wildDropHost.js
+    _wildTaking, realmSession, townTalk, wildAccount, wildDeathCheckpoint, wildInsure,
+    get _wildBody() { return _wildBody; },
+    get naval() { return naval; },
+    get online() { return online; },
+    get wildDeposit() { return wildDeposit; },
+    get wildEscrow() { return wildEscrow; },
+  });
   // PVP-ESCROW's two sides (scenes/wildEscrowHost.js - HOST-SPLIT, FIELD BUGS 2026-10-15c)
   const wildEscrow = createWildEscrowHost({ townTalk, session: realmSession, modes: () => modes, wildAccount, checkpoint: () => onlineCheckpoint() });
   /** THE DEPOSIT - the service's records to the room, chunk by chunk on the wild frames' own pace, each chunk carrying its
@@ -22670,7 +22653,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // has gone (its fall is signed at once), or a moment - a ghost there held the room's world as its host
     _wildGhostEndAt = isCellRoom(online.room) ? null : Date.now() + WILD_GHOST_HOLD_MS;
     if (fell) {
-      const worn = isCellRoom(online.room) ? wornOffer(playerEntity.items) : [];
+      const worn = isCellRoom(online.room) ? wornOffer(playerEntity.items) : [];   // AUDIT PVP-EASE L2-2: an insured piece offered as any - a pick of one lands on nothing, its policy spent
       if (worn.length) wildFight.offerWorn(fell.by, fell.r, worn.map(wildRecord));
     }
     return true;
@@ -22731,6 +22714,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const seaRing = _onlineWorldSession() && !!online?.wildOk && etherSea && playerSpawned ? etherWildRingAt(playerTravelPixel()?.x, playerTravelPixel()?.y) : 0;   // ETHER-WILD: the sea past Veilhaven's peace, its band the ring
     const here = seaRing > 0 || (_onlineWorldSession() && !!online?.wildOk && playerSpawned && (() => { const px = playerTravelPixel(); return !!px && wildRingAt(px.x, px.y) > 0; })());   // WW-C2: Cyrodiil's mask (the Wrothgarian cut retired)
     if (_wildTruce.frame(social?.partyPeers?.() ?? new Set(), Date.now()).length && here) townTalk.say(zoneWord('truce'));   // PARTY-TRUCE
+    wildGrace.frame(here);   // ZONE-GRACE: my safe passage run out, said - out of the zone, forgotten (AUDIT PVP-EASE L3-7)
     if (playerEntity.health > 0 && !modes?.deathUp?.()) {
       // WILD2: the ring under my feet (a building's or a dungeon's: its door's pixel) - 1 the outer, 4 the heart
       let ring = 0;
@@ -32648,7 +32632,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           paused: _overlayHeld,
         });
         // GUN-HOLD: Activate while the guns are laid holds fire (navalHost.js holdFire, the bow's own cancel) - before the
-        // click casts a readied spell or the helm's ladder boards, heaves to or opens the yard
+        // click casts a readied spell or the helm's ladder boards or opens the yard
         const useEdge = !travelView?.active && pressed(latch.edge, keys, 'Interact');   // AUDIT OW5 V2: never from under the travel view - its ray is the hidden head's (a door took the traveller inside, a townsperson opened talk); KB1: the Interact ACTION (E by default, Mac's call) - it was a raw `KeyE` beside DFU's E-AbortSpell, and one press did both
         // AUDIT NAV2 F31: and Interact - the readout's own "E: hold fire" - holds it too, spent before a patch or the ladder:
         // E went to the ladder, whose naval arm grappled a struck ship in reach with the guns still laid, and the release

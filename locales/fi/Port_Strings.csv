@@ -2955,7 +2955,7 @@ tutorials.skyKetch.body2,"Kanna eetterikennoja koneelle. Osuma saa sinut pudotta
 tutorials.skyKetch.title,"Taivasketsi"
 tutorials.skyKetch.trigger,"Kun nouset ensimmäistä kertaa ankkurihissillä Taivasketsiin."
 tutorials.wildZone.body1,"Cyrodiilissa ja avoimella {word}-valtamerellä pelaajat voivat taistella toisiaan vastaan; hirviöt ovat kovempia ja saaliit rikkaampia."
-tutorials.wildZone.body2,"Jos toinen pelaaja tappaa sinut siellä, laukkusi putoaa (ja kärrysi, jos ne ovat mukana) kymmenesosan kanssa kullastasi, ja hän voi ottaa yhden yllesi puetun esineen. Muu kuolema maksaa tavallisen kymmenesosan."
+tutorials.wildZone.body2,"Jos toinen pelaaja tappaa sinut siellä, laukkusi putoaa kymmenesosan kanssa kullastasi, ja hän voi ottaa yhden yllesi puetun esineen. Kärrysi, seuralaistesi reput ja vakuutetut varusteet säilyvät. Muu kuolema maksaa tavallisen kymmenesosan."
 wagon.upkeep.boons.failing,"{name} on hajoamassa. Vaunupiha tai Vaunujen korjaussarja korjaa sen."
 wagon.upkeep.boons.rickety,"{name} on huojuva. Vaunupiha voi korjata sen."
 wild.death.kept,"Mitään ei pudonnut. Pudotat tavarasi vain, jos toinen pelaaja tappaa sinut."

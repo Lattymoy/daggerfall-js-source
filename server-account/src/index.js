@@ -350,6 +350,7 @@ import { SESSION_PASS_HEADER } from '../../src/net/sessionPassLaw.js';   // SESS
 import { PROGRESS_ROUTES, seatRefusalOf, progressConfig, progressRoom, progressSpent } from './progress.js';   // INT16-INT17: a progression claim's seat, and the play that pays for it
 import { isGzip, gzipSizeOf, gunzipText, REALM_TEXT_MAX_BYTES } from '../../src/net/realm/realmSaveCodec.js';   // REALM-GZIP: a save rides packed
 import { tradeRealm, REALM_TRADE_BODY_MAX } from './realmTrade.js';   // REALM P2.1: a trade, settled here
+import { wildInsure, wildPolicies } from './wildInsure.js';   // WILD-INSURE (2026-10-26): a policy on a piece of gear, written against its premium off the record
 import { wildFall, wildCollect, wildReclaim, wildEscrows } from './wild.js';   // INT9: a death in the open zone's drop, taken off the record; MAC (2026-10-14): its killer's piece in escrow - collected, taken back, listed
 import { listLineages, putLineage, realmDie, realmRaise, realmWed, listUnions, LINEAGE_BODY_MAX } from './legacy.js';   // LEGACY7: Project Legacy's lines and the tombstone; REZ-BLOODLINE AUDIT R1: a Resurrect inside its hold
 import { measured, heartbeatPartsOf } from './metrics.js';   // SCALE1: every request counted (Workers Analytics Engine); AUDIT SCALE II A-3: a heartbeat's parts, of the body the route read
@@ -439,7 +440,7 @@ const overloaded = (origin) => {
 const JUDGE_STATUS = Object.freeze({ 'trade-held': 409, 'record-unjudged': 409, 'piece-dupe': 409, 'piece-claimed': 409, 'piece-legacy': 409 });
 /** INT9: a death's drop's refusals - no key to verify or sign with 503, a receipt not the caller's 403, the fallen's own
  *  grace or the room's falls 409; the record's own (REALM_STATUS) after them, a bad shape 400 (the default). */
-const WILD_STATUS = Object.freeze({ 'no-gate-key': 503, 'no-signing-key': 503, 'not-yours': 403, grace: 409, 'fallen-frozen': 409, nonce: 400, 'no-escrow': 404, 'escrow-wait': 409, 'escrow-late': 409, 'escrow-moved': 409, 'escrow-collected': 409, 'escrow-returned': 409, 'sea-prize-moved': 409, 'sea-prize-realm': 403 });   // MAC (2026-10-14): the escrow's; SHIP-PVP: a prize's
+const WILD_STATUS = Object.freeze({ 'no-gate-key': 503, 'no-signing-key': 503, 'not-yours': 403, grace: 409, 'fallen-frozen': 409, nonce: 400, 'no-escrow': 404, 'escrow-wait': 409, 'escrow-late': 409, 'escrow-moved': 409, 'escrow-collected': 409, 'escrow-returned': 409, 'sea-prize-moved': 409, 'sea-prize-realm': 403, 'insure-held': 409, 'insure-full': 409, 'insure-piece': 409, 'realm-gold': 409 });   // MAC (2026-10-14): the escrow's; SHIP-PVP: a prize's; WILD-INSURE: a policy's
 /** HOME-RENT: a room's refusals - a bad shape 400 (the default). */
 const RENT_STATUS = Object.freeze({
   ...JUDGE_STATUS,
@@ -1383,6 +1384,17 @@ const service = {
         if (!('error' in r)) return json(r, 200, origin);
         if (r.error === 'seq') return json({ error: 'seq', seq: r.seq }, 409, origin);
         return json({ error: r.error, ...(r.why ? { why: r.why } : {}), ...(Number.isSafeInteger(r.wait) ? { wait: r.wait } : {}) }, WILD_STATUS[r.error] ?? REALM_STATUS[r.error] ?? 400, origin);
+      }
+
+      if ((path === '/v1/wild/insure' || path === '/v1/wild/policies') && request.method === 'POST') {
+        // WILD-INSURE (2026-10-26, wildInsure.js): a policy on a piece of gear, written as an act on the record against its
+        // premium - kept from a fall at another player's hand while in force, and spent by it - and the policies in force
+        // for the character's tab
+        const wctx = { ...ctx, bucket: env.SAVES };
+        const r = path === '/v1/wild/insure' ? await wildInsure(wctx, who.player, body) : await wildPolicies(wctx, who.player, body);
+        if (!('error' in r)) return json(r, 200, origin);
+        if (r.error === 'seq') return json({ error: 'seq', seq: r.seq }, 409, origin);
+        return json({ error: r.error }, WILD_STATUS[r.error] ?? REALM_STATUS[r.error] ?? 400, origin);
       }
 
       if ((path === '/v1/sea/wreck' || path === '/v1/sea/prize/collect' || path === '/v1/sea/prize/reclaim') && request.method === 'POST') {

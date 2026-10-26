@@ -410,7 +410,7 @@ export const ZONE_RULES = Object.freeze([
   'Other players can attack you. Only your party and guild are shown on your maps here.',
   'Foes are four times as strong, elites and champions included.',
   'Two Greater Giants roam every reach, each shown on the map.',
-  'If another player kills you, what you carry drops and lies there for 10 minutes. Potions, torches and the camp kit are kept.',   // FOE-KEEPS: a foe's kill drops nothing
+  'If another player kills you, what you carry drops and lies there for 10 minutes. Potions, torches, the camp kit, your cart, your companions\' packs and insured gear are kept.',   // FOE-KEEPS: a foe's kill drops nothing; STORE-KEEPS and WILD-INSURE: storage and insured gear are kept
   'Travel here is slower: at most 20x in the wilds, 40x on the roads.',
 ]);
 /** AUDIT TESA II M5: THE ZONE MAP'S OWN WORDS past the Wrothgarian zone's - Cyrodiil's travel law, and what the map says

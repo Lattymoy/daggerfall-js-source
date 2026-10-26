@@ -87,9 +87,9 @@ test('HOUSE-DROP by source: the building\'s refusal is a VISITOR\'s in someone e
   assert.match(rd('src/combat/weapon/weaponRig.js'), /createHandheldTorches\(\{ audio, say, torches, dropRefusal \}\)/);
   const nat = rd('src/ui/native/nativeInventory.js'), enh = rd('src/ui/enhanced/enhancedInventory.js');
   assert.equal((nat.match(/groundRefusal: groundRefusalOf\(this\.hooks, \{ usingWagon: this\.usingWagon, chooseOne: this\.chooseOne \}\)/g) ?? []).length, 2, 'the classic window: the item and the gold');
-  assert.match(nat, /if \(!plan\.ok\) \{ if \(plan\.refusal\?\.reason === 'ground'\) this\._refuse\(plan\.refusal\); return; \}/, 'and the gold\'s refusal is said');
+  assert.match(nat, /if \(!plan\.ok\) \{ if \(plan\.refusal\?\.reason === 'ground' \|\| plan\.refusal\?\.reason === 'store'\) this\._refuse\(plan\.refusal\); return; \}/, 'and the gold\'s refusal is said');   // PIN MOVED (AUDIT PVP-EASE L2-1): and the combat lock's
   assert.equal((enh.match(/groundRefusal: groundRefusalOf\(deps, session\)/g) ?? []).length, 6, 'the enhanced skin: every store plan, its dry runs, the gold and Stash all (LOOT-BULK)');
-  assert.match(enh, /else if \(!plan\.ok && plan\.refusal\?\.reason === 'ground'\) notice = plan\.refusal\.text;/);
+  assert.match(enh, /else if \(!plan\.ok && \(plan\.refusal\?\.reason === 'ground' \|\| plan\.refusal\?\.reason === 'store'\)\) notice = plan\.refusal\.text;/);   // PIN MOVED (AUDIT PVP-EASE L2-1): and the combat lock's
 });
 
 // ---- AUDIT (the pre-merge audit, 2026-09-27, Mac: "Audit before we merge"): the torch's two refusals, driven through the

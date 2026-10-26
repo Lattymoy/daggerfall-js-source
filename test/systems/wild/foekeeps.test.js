@@ -18,6 +18,7 @@ import { setWildDeath, wildDeathLines, WILD_TEXT } from '../../../src/systems/wi
 import { ETHER_WILD_TEXT } from '../../../src/systems/wild/etherWild.js';
 import { ZONE_RULES } from '../../../src/ui/wild/wildZoneMap.js';
 import * as tm from '../../../src/systems/textManager.js';
+import { hostText } from '../../hostText.mjs';
 
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const mk = (o) => mintCondition(setItemFields({ material: 0, flags: 0, variant: 0, message: 0, stackCount: 1, ...o }));
@@ -26,16 +27,16 @@ const gem = () => mk({ group: 'Gems', templateIndex: 0 });
 const coin = (n) => ({ group: 'Currency', templateIndex: 0, stackCount: n });
 const books = (list) => list.filter((it) => it.group === 'MiscItems' && it.templateIndex === TEMPLATES.Spellbook).length;
 
-test('FOE-KEEPS THE SHARE (wildDropLaw.js WILD_GOLD_LOSS, takeWildGold): a kill in the zone drops a tenth of the purse - the usual death\'s own share, one number at both ends - and a tenth of the cart\'s coin and of each companion\'s; nine tenths stay (mutants: the share half again; the divisor apart from the share; a share rounded up - AUDIT FOE-KEEPS P2: every coin the pins held was a multiple of ten)', () => {
+test('FOE-KEEPS THE SHARE (wildDropLaw.js WILD_GOLD_LOSS, takeWildGold): a kill in the zone drops a tenth of the purse - the usual death\'s own share, one number at both ends; nine tenths stay - and, STORE-KEEPS, nothing of the cart\'s coin nor a companion\'s (mutants: the share half again; the divisor apart from the share; a share rounded up - AUDIT FOE-KEEPS P2: every coin the pins held was a multiple of ten)', () => {
   assert.equal(WILD_GOLD_LOSS, DEATH_GOLD_FRACTION, 'the usual death\'s share');
   assert.equal(WILD_GOLD_DIVISOR, DEATH_GOLD_DIVISOR);
   assert.equal(WILD_GOLD_LOSS, 1 / WILD_GOLD_DIVISOR, 'the share and its divisor one number');
-  const pack = { f: 'crew:1:Hand', items: [coin(307)] };
   const e = { goldPieces: 1009, items: [], wagonItems: [coin(455)] };
-  const pile = takeWildGold(e, { packs: [pack] });
-  assert.equal(pile.stackCount, 100 + 45 + 30, 'one pile: the purse\'s tenth, the cart\'s and his - each floored');
+  const pile = takeWildGold(e);
+  // PIN MOVED (STORE-KEEPS, 2026-10-26): the purse's tenth alone - the cart's coin and a companion's are storage
+  assert.equal(pile.stackCount, 100, 'one pile: the purse\'s tenth, floored');
   assert.equal(1009 - e.goldPieces, deathGoldLoss(1009), 'the purse pays what any death pays');
-  assert.deepEqual([e.goldPieces, e.wagonItems[0].stackCount, pack.items[0].stackCount], [909, 410, 277], 'nine tenths and the odd coins stay');
+  assert.deepEqual([e.goldPieces, e.wagonItems[0].stackCount], [909, 455], 'nine tenths and the odd coins stay, and the cart\'s whole');
   const poor = { goldPieces: 9, items: [], wagonItems: [] };
   assert.equal(takeWildGold(poor), null, 'under ten gold, nothing to drop');
   assert.equal(poor.goldPieces, 9);
@@ -44,12 +45,11 @@ test('FOE-KEEPS THE SHARE (wildDropLaw.js WILD_GOLD_LOSS, takeWildGold): a kill 
 test('FOE-KEEPS THE SPELLBOOK (wildDropLaw.js wildCanLose): no death in the zone takes a spellbook - in the bag, the cart or a companion\'s pack, even at another player\'s hand - while what may change hands drops beside it (mutants: the spellbook loseable)', () => {
   assert.equal(wildCanLose(book()), false, 'the spellbook is kept');
   assert.equal(wildCanLose(gem()), true, 'a gem is not');
-  const pack = { f: 'crew:1:Hand', items: [book(), gem()] };
   const e = { goldPieces: 1000, items: [book(), gem()], wagonItems: [book(), gem()] };
-  const d = takeWildDeath(e, -1, () => false, null, { cart: true, packs: [pack] });
+  const d = takeWildDeath(e, -1);
   assert.equal(books(d.taken), 0, 'none taken');
-  assert.deepEqual([books(e.items), books(e.wagonItems), books(pack.items)], [1, 1, 1], 'each where it was carried');
-  assert.equal(d.taken.filter((it) => it.group === 'Gems').length, 3, 'the gems dropped - the death took what it may');
+  assert.deepEqual([books(e.items), books(e.wagonItems)], [1, 1], 'each where it was carried');
+  assert.equal(d.taken.filter((it) => it.group === 'Gems').length, 1, 'the bag\'s gem dropped - the death took what it may');   // PIN MOVED (STORE-KEEPS): the cart's and a pack's are storage
 });
 
 test('AUDIT FOE-KEEPS P4 THE WORDS READ WHEN SAID: the mountains\' entry and chip are the text core\'s at the moment they are read, so a language chosen after the module loaded speaks them (mutants: either read once, at import)', () => {
@@ -81,7 +81,7 @@ test('FOE-KEEPS THE WORDS (wildZone.js WILD_TEXT, etherWild.js ETHER_WILD_TEXT, 
 });
 
 test('FOE-KEEPS THE HOST (world.js wildDeathBegin, wildTakeDrop, the online respawn): a death to a foe asks no drop - the first dead frame shows my worn pieces to a killer and asks nothing else, and the drop is asked against a receipt alone; the rise pays the usual tenth unless a player\'s kill (mutants: the drop asked at a foe\'s death; the tenth skipped at any death in the zone; a drop asked with no receipt)', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');   // PIN MOVED (HOST-SPLIT): wildTakeDrop in scenes/wildDropHost.js, read with its host
   const begin = /const wildDeathBegin = \(\) => \{[\s\S]*?\n {2}\};/.exec(w)?.[0] ?? '';
   assert.ok(begin.includes('if (worn.length) wildFight.offerWorn(fell.by, fell.r, worn.map(wildRecord));'), 'the fixture: the first dead frame');
   assert.ok(!begin.includes('wildTakeDrop('), 'no drop asked at the death itself - a kill\'s waits on the relay\'s receipt');

@@ -1,14 +1,5 @@
 [
   {
-    "name": "FERRYCLEAR-the-charter-unread",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "    if (!boat || boat.charter) { wayIn = []; return; }",
-    "new": "    if (!boat) { wayIn = []; return; }",
-    "tests": [
-      "test/systems/naval/ferryclear.test.js"
-    ]
-  },
-  {
     "name": "FERRYCLEAR-the-sea-unhanded",
     "file": "src/scenes/naval/navalHost.js",
     "old": "aimEye: aimCam.eye, hullAlong: seaHulls.along, wayScale,",

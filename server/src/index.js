@@ -259,7 +259,7 @@ import { riteNear, riteHeard, riteStands, cageStands, RITE_HELPERS_MAX } from '.
 import { isSiegeRoom, newFighter, armsOk, SIEGE_HIT, ROYAL_RING, isSiegeNpcId, siegeNpcFoe, siegeNpcPose, siegeNpcFell, siegeNpcInReach, siegeNpcProvoked, refereeBlow, refereeCast, refereeStep, siegeHeld, siegeNextWave, siegeRise, SIEGE_WAVE_MS, SIEGE_FIGHTERS_MAX, SIEGE_SPECTATORS_MAX, SIEGE_OPENS_MS, SIEGE_TICK_MS, siegeNextBeat, fieldOf, newBattle, battleStep, honoured, siegeCampPose, siegeFieldFrame, isBattleRoom, isRoyalRoom, battleOfRoom, royalAsk, royalAccept, royalMarks, royalMayStrike, royalStepOk, royalEnd, royalStep, royalLadder, royalNextBeat, ROYAL_RC_KEEP, siegePlaceFree, siegeReturn, royalPrune, worksOf, refereeWorkBlow, siegeWaveMs, siegeRamDown, siegeBreach, SIEGE_WORK_IDS, SIEGE_GATEHOUSE, SIEGE_RAM, siegeGroundOf, siegeOffGround, siegeStepLevel, royalLevel, SIEGE_HEIGHT_M } from '../../src/net/siege/siegeRef.js';   // PVP-REF: a siege's referee - siegeRef.js imports nothing, so the worker's graph stays flat   // SEAT2a: and its battle   // AUDIT-SEATS T3/R5: a side's places, a fighter's return, a tourney's records   // SEAT2b part two (b): the works in battle
 import { mintSiegeReceipt, SIEGE_RECEIPT_TTL_S, mintRoyalReceipt } from '../../src/net/siege/siegeReceipt.js';   // SEAT2a: the relay's fourth signature - a fighter's result and Honours
 import { newDuelRef, duelNote, duelOpen, duelBoutOf, duelBlow, duelPose, duelEnd, duelForfeit, duelStep, duelVitals } from '../../src/net/duel/duelRef.js';   // INT8: the duel refereed
-import { newWildRef, wildZone, wildPose, wildBlow, wildKin, sameGuild, wildPick, wildSigned, wildStep, wildVitals, wildGone, wildCarry, wildCarryOf, wildSignNow, wildCredit, wildFallOf, wildDownWord, WILD_FALL_PREFIX, WILD_REF } from '../../src/net/wild/wildRef.js';   // INT9: the open zone refereed
+import { newWildRef, wildZone, wildPose, wildBlow, wildKin, sameGuild, wildPick, wildSigned, wildStep, wildVitals, wildGone, wildCarry, wildCarryOf, wildSignNow, wildCredit, wildFallOf, wildDownWord, wildGraceLeft, wildGraceTaken, WILD_GRACE, WILD_FALL_PREFIX, WILD_REF } from '../../src/net/wild/wildRef.js';   // INT9: the open zone refereed
 import { mintWildReceipt, mintWildCollect, mintSeaWreck, WILD_RECEIPT_TTL_S, SEA_WRECK_TTL_S } from '../../src/net/wild/wildReceipt.js';   // INT9: a fall, signed; MAC (2026-10-14): and a killer's collect; SHIP-PVP: and a wreck
 import { seaHelm, seaShot, seaBoard, seaStep, seaGone, seaCarry, seaWreckOf, SEA_WRECK_PREFIX, SEA_REF } from '../../src/net/sea/seaRef.js';
 /** AUDIT SEA VENTURES A8: a signed word owed an account that is away (a fall's receipt, a wreck's) kept in the room's storage
@@ -5177,7 +5177,7 @@ export class Room {
     followLeft(this, ws, a);   // STAFF-PANEL5-FOLLOW: a spectator gone, or a followed account's last socket here
     // INT9 (AUDIT): a fighter whose last socket here went is out of the zone (a closed tab kept its `zone` for good, and a
     // room of them refused every newcomer)
-    if (a.sub && this._wildRef && ![...this._all()].some(([w, b]) => w !== ws && b.id && b.sub === a.sub)) { wildGone(this._wildRef, a.sub, Date.now()); seaGone(this._wildRef, a.sub, Date.now()); }   // SHIP-PVP: and her ship off the guns (AUDIT SEA VENTURES F1/A1: her bar kept)
+    if (a.sub && this._wildRef && ![...this._all()].some(([w, b]) => w !== ws && b.id && b.sub === a.sub)) { wildGone(this._wildRef, a.sub, Date.now()); seaGone(this._wildRef, a.sub, Date.now()); this._wildLeaveCarry(a, Date.now()); }   // SHIP-PVP: and her ship off the guns (AUDIT SEA VENTURES F1/A1: her bar kept)
     this._looks.delete(a.id);
     if (!last) this._secrets.set(a.id, null);   // SCALE2b: the kept copy goes with the stored one (a drain's sweep clears both)
     this._raidTownsUp.delete(ws);   // SCALE2b: an upload its socket never finished goes with it
@@ -11176,6 +11176,7 @@ export class Room {
         this._wildFan({ t: 'wild', k: 'rm', r: d.r, i: d.i, n });
       }
       this._send(ws, JSON.stringify({ t: 'wild', k: 'cr', r: d.r, i: d.i, cr: rec.wc }));
+      this._wildGraceTake(a, now);   // AUDIT PVP-EASE L3-4: a take ends safe passage
       if (ask === 'mint' && remainsSpent(rec)) this._wildFan({ t: 'wild', k: 'gone', r: d.r });
       return;
     }
@@ -11195,6 +11196,7 @@ export class Room {
     if (remainsEmpty(rec)) this._wdunTellGone(rec.os);
     await this.state.storage.put(wildRemainsKey(rec.r), rec);
     this._send(ws, JSON.stringify({ t: 'wild', k: 'got', r: d.r, i: d.i, it: got.it }));
+    this._wildGraceTake(a, now);   // AUDIT PVP-EASE L3-4 (the owner: "Any take ends passage"): its own remains or another's
     this._wildFan({ t: 'wild', k: 'rm', r: d.r, i: d.i, n: got.n });
     if (remainsSpent(rec)) this._wildFan({ t: 'wild', k: 'gone', r: d.r });
   }
@@ -11227,9 +11229,11 @@ export class Room {
     if (!a.sub || (z === 1 && !a.ci)) return;
     const st = await this._wildSt();
     if (z !== 1 && died) await this._wildCredit(st, a, now);   // AUDIT FOE-KEEPS E2: a death within the kill credit of a player's blow
-    const was = st.fighters.get(a.sub);
+    const was = st.fighters.get(a.sub), graceWas = was?.graceUntil ?? -Infinity, wasIn = !!was?.zone;
     const carry = z === 1 && (!was || !was.zone) ? await this._wildCarryAsk(a.sub) : null;
-    const x = wildZone(st, a.sub, { id: a.id, lv: a.lv, ci: a.ci ?? '', carry }, z === 1, a.pose, now);
+    const x = wildZone(st, a.sub, { id: a.id, lv: a.lv, ci: a.ci ?? '', carry, died }, z === 1, a.pose, now);
+    if (x && x.graceUntil > now && x.graceUntil !== graceWas) this._wildGraceSay(a, x.graceUntil - now);   // ZONE-GRACE: safe passage begun, or carried in
+    if (x && (x.zone !== wasIn || died)) this._wildCarryPut(a.sub, this._zoneCarry(st, a.sub, now, a.key));   // AUDIT PVP-EASE L3-1: an entry, a leave and a death, at the hub
     if (x && carry?.sea) x.seaCarry = carry.sea;   // AUDIT SEA VENTURES F1/A1: her ship's bar too, for her next helm word (seaRef.js seaHelm)
     if (z === 1) this._wildDownSay(st, a.sub, now);   // WILD-REJOIN: before the owed receipt, so the game is dead when it takes its drop
     const owed = await this._wildOwedOf(a.sub, now), sk = this._siegeSocketOf(a.sub);
@@ -11285,18 +11289,44 @@ export class Room {
     const rid = [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
     const res = wildBlow(st, a.sub, tb.sub, { d: d.d, r, held, wa: a.wa ?? null, kin, rid, room: a.key }, now);   // SEA-BOUNTY: the room it fell in
     if (res.evicted) await this._wildSign(res.evicted, now);   // INT9 (AUDIT): a full room's oldest fall, signed without its pick - never forgotten
+    if (res.graceEnded || res.why === 'grace') this._wildGraceBlow(a, tb, st, res, now);   // ZONE-GRACE
     if (!res.ok || !res.dealt) return;
     const word = JSON.stringify({ t: 'wref', k: 'hp', by: a.id, to: tb.id, d: res.dealt, r, h: wildVitals(st, a.sub, tb.sub) });
     this._send(target[0], word);
     const mine = this._siegeSocketOf(a.sub);
     if (mine) this._send(mine[0], word);
-    this._wildCarryPut(tb.sub, this._zoneCarry(st, tb.sub, now));   // INT9 (AUDIT): the bar it carries into the next room
+    this._wildCarryPut(tb.sub, this._zoneCarry(st, tb.sub, now, a.key));   // INT9 (AUDIT): the bar it carries into the next room
     if (!res.fell) return;
     try { await this.state.storage.put(`${WILD_FALL_PREFIX}${rid}`, res.fall); } catch (e) { console.warn('[wild] fall kept failed', e?.message ?? e); }
     this._wildFan({ t: 'wref', k: 'fell', id: tb.id, by: a.id, r: rid });
     // INT9 (AUDIT): a building's or a dungeon's room searches no body (the worn offer is the open country's) - its fall is
     // signed at once, never a minute later with the fallen gone from it
     if (!isCellRoom(a.key)) { const f = wildSignNow(st, rid); if (f) await this._wildSign(f, now); }
+  }
+  /** ZONE-GRACE (2026-10-26, the owner chose "Entry/rise grace" - wildRef.js WILD_GRACE): A FIGHTER'S SAFE PASSAGE SAID TO
+   *  THE ROOM (`wref` `grace`: its id and the ms it has left; 0, ended by its own blow). */
+  _wildGraceSay(a, ms) { this._wildFan({ t: 'wref', k: 'grace', id: a.id, ms: Math.max(0, Math.min(WILD_GRACE.ms, Math.ceil(ms))) }); }
+  /** ZONE-GRACE: a blow's word on safe passage - the striker's ended by its own blow, said to the room; a blow the struck
+   *  one's kept off, said to the striker alone (`n` 1, with the ms it has left). */
+  _wildGraceBlow(a, tb, st, res, now) {
+    if (res.graceEnded) { this._wildGraceSay(a, 0); this._wildCarryPut(a.sub, this._zoneCarry(st, a.sub, now, a.key)); }   // AUDIT PVP-EASE L3-5: ended at the hub too
+    if (res.why !== 'grace') return;
+    const mine = this._siegeSocketOf(a.sub);
+    if (mine) this._send(mine[0], JSON.stringify({ t: 'wref', k: 'grace', id: tb.id, ms: wildGraceLeft(st, tb.sub, now), n: 1 }));
+  }
+  /** AUDIT PVP-EASE L3-4 (the owner: "Any take ends passage"): a socket that took from a remains - its own or another's -
+   *  loses its safe passage, said to the room and kept at the hub. */
+  _wildGraceTake(a, now) {
+    const st = this._wildRef;
+    if (!st || !a.sub || !wildGraceTaken(st, a.sub, now)) return;
+    this._wildGraceSay(a, 0);
+    this._wildCarryPut(a.sub, this._zoneCarry(st, a.sub, now, a.key));
+  }
+  /** AUDIT PVP-EASE L3-1: a fighter's socket gone from the room (wildGone) - its leave kept at the hub, so the next room it
+   *  stands in reads a crossing, never an entry. */
+  _wildLeaveCarry(a, now) {
+    const x = this._wildRef?.fighters.get(a.sub);
+    if (x && !x.zone) this._wildCarryPut(a.sub, this._zoneCarry(this._wildRef, a.sub, now, a.key));
   }
   /** THE KILLER'S PICK of a fall of its own (`w`, and `t`/`m` what the offer showed there): the fall signed with it. */
   async _wildPickWord(a, d, now) {
@@ -11391,6 +11421,7 @@ export class Room {
     // KIN, as a blow's (wildKin): a duel's two and one guild read here, the party and its truce asked of the hub only when neither is
     const kin = wildKin({ guilds: [a.gi, tb.gi], duel: !!bout && (bout.a.sub === tb.sub || bout.b.sub === tb.sub) }) || wildKin({ party: await this._wdunKinOf(a.sub, tb.sub, now) });
     const res = seaShot(st, a.sub, tb.sub, { d: d.d, s: d.s, f: d.f === 1, kin, rid: this._wildRid(), room: a.key }, now);
+    if (res.graceEnded || res.why === 'grace') this._wildGraceBlow(a, tb, st, res, now);   // AUDIT PVP-EASE L3-3: safe passage, as a blow's
     if (!res.ok || !(res.frac > 0 || res.sail > 0 || res.fire)) return;
     // AUDIT SEA VENTURES A3: what landed rounded DOWN, her bar left rounded UP - a share rounded up was a thousandth of her
     // bar for a one-point word (ten words a second: her game lost three times the purse); the bar left lays the rest
@@ -11398,7 +11429,7 @@ export class Room {
     this._send(target[0], word);
     const mine = this._siegeSocketOf(a.sub);
     if (mine) this._send(mine[0], word);
-    if (res.dealt > 0) this._wildCarryPut(tb.sub, this._zoneCarry(st, tb.sub, now));   // F1/A1: her ship's bar into the next room
+    if (res.dealt > 0) this._wildCarryPut(tb.sub, this._zoneCarry(st, tb.sub, now, a.key));   // F1/A1: her ship's bar into the next room
     if (res.wreck || res.evicted) await this._seaWrecked(res, now);
   }
   /** A SHIP WRECKED (seaRef.js): kept in the room's storage while her killer may board her, the room's alarm armed for when
@@ -11443,9 +11474,9 @@ export class Room {
   }
   /** What a fighter carries into the next room: its bar (wildRef.js wildCarry) and its ship's (seaRef.js seaCarry - AUDIT SEA
    *  VENTURES F1/A1: a cell's line was a whole ship), one word at the hub (its newest wins). */
-  _zoneCarry(st, sub, now) {
+  _zoneCarry(st, sub, now, rk = '') {
     const c = wildCarry(st, sub, now);
-    return c ? { ...c, sea: seaCarry(st, sub) } : null;
+    return c ? { ...c, sea: seaCarry(st, sub), ...(rk ? { rk } : {}) } : null;   // AUDIT PVP-EASE L3-1: the room that said it
   }
   /** INT9 (AUDIT): A FIGHTER'S BAR, KEPT AT THE HUB (wildRef.js wildCarry) - unawaited, as a remains' going is told. */
   _wildCarryPut(sub, carry) {
@@ -11477,6 +11508,9 @@ export class Room {
     const c = wildCarryOf(body.put);
     if (!c) return json({ error: 'bad vit' }, 400);
     const had = this._wildVits.get(sub);
+    // AUDIT PVP-EASE L3-1: a leave said by a room the fighter has already left for another (its socket closed after it
+    // stood in the next) is no leave - the next room's word stands
+    if (had?.in === 1 && c.in !== 1 && had.rk && c.rk && had.rk !== c.rk) return json({ ok: true });
     if (!had || had.at <= c.at) {
       this._wildVits.delete(sub);
       if (this._wildVits.size >= 4096) this._wildVits.delete(this._wildVits.keys().next().value);

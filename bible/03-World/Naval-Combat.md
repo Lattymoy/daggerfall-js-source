@@ -71,12 +71,16 @@ carries its row instead. It stands on three things the port already had:
   crosshair, from the run-out until her balls are down. That is the moment to brace, or to turn out of her arc.
 - **The tally**: once your volley's last ball is down, the line under the aim counts it - how many struck, how many
   below her waterline, how many through her rigging.
-- **Interact boards** (E): a ship that has struck her colours within BOARD_RANGE of the helm, the way under
-  BOARD_SPEED - the grapples fly, she is hauled alongside, and you go over her rail. RAM-BOARD (2026-10-17,
-  `03-World/Naval-Refit.md`): or one your stem has rammed - FOULED for FOUL_S, her way held, boarded as she stands
-  ("Fouled - E: board her") against her whole crew. On foot (swimming up, or from a
+- **Interact boards** (E): a ship that has struck her colours within BOARD_RANGE of the helm - BOARD-MAGNET
+  (2026-10-26, `03-World/Naval-Refit.md`): at any way - the grapples fly, your canvas is struck and your way comes off
+  over the haul (`haulBrake`), she is hauled alongside your ship as it lies each frame - out to her berth's lane and
+  along it, round your hull and never through it (AUDIT BOARD-MAGNET, `drawHaul`) - side by side where you come to
+  rest, and you go over her rail. On foot (swimming up, or from a
   deck alongside) the same press within FOOT_BOARD_M of her side with the look on her. The target card and the plate's
-  hint say the key ("Colours struck - E: board her"). Too fast beside her, the same press HEAVES TO (AUDIT NAV1): the
+  hint say the key ("Colours struck - E: board her"). Retired by BOARD-MAGNET, and kept here as their record: RAM-BOARD
+  (2026-10-17) - one your stem had rammed was FOULED for FOUL_S, her way held, boarded as she stood ("Fouled - E: board
+  her") against her whole crew; and the way under BOARD_SPEED that boarding asked - too fast beside her, the same press
+  HEAVED TO (AUDIT NAV1): the
   sails struck and her way taken off at Come Sail Away's `brake` - HEAVE_TO_DECEL (HELM-WAY), or at a way past HELM-WAY's
   what brings her under BOARD_SPEED within HEAVE_TO_M (AUDIT SHIPS A3, `heaveToDecel`) - until she is under BOARD_SPEED,
   HEAVE_TO_S at most ("Colours struck - E: heave to", then "heaving to"). AUDIT SHIPS 2 XA5 (2026-10-06): the brake never
@@ -1482,12 +1486,11 @@ followers; all of this is the port's own, over CREW-COMPANIONS.
   `giveItems`), what will not go in into my pack - past its weight if it must, said ("more than you can carry") - his
   gold to my purse. Never thrown away. Realm customs and the account service's first save count his pack as the hold
   (`net/realm/realmGoldLaw.js stashedItemLists`). **COMPANION-DROP (FIELD BUGS 2026-10-19f; the owner, 2026-10-19:
-  "Bag drops; no send-off in zone")**: in the open zone his pack is at stake with mine - a death there drops it as it
-  drops my bag and my cart (`11-Multiplayer/Wild-Zone.md` section 4, `wildDropLaw.js:"export function wildPacks"`: he is
-  ashore, so he is where I fall). So there he is never sent back aboard (`crewCompanions.js:"export function heldAtSide"`,
-  the host's one line in `companionPress`, said in the zone's words), and a pack he gives up there - knocked out, fallen
-  from her roster - goes into my pack, never her hold (`crewCompanions.js:"export const packStaysAshore = () =>"`, the
-  host's `stowPack`): nothing he carries leaves the zone but at my side. **COMPANION-WEIGHT (2026-10-01, the field: "make the crew companions
+  "Bag drops; no send-off in zone")** put his pack at stake with mine in the open zone, and so held him at my side
+  there and sent a pack he gave up there into my pack; **STORE-KEEPS (2026-10-26; the owner: "Make it where you cant
+  lose your wagon/horse or anything stored on death")** made his pack storage no death takes (`11-Multiplayer/Wild-Zone.md`
+  section 4), and he is sent back aboard - his pack to her hold - in the zone as anywhere; nothing is stowed in his pack
+  for a minute after a player's blow (AUDIT PVP-EASE's combat lock). **COMPANION-WEIGHT (2026-10-01, the field: "make the crew companions
   have a balanced inventory weight")**: it carries what a person of his strength can - DFU's MaxEncumbrance over his
   body's live strength (`systems/naval/crewCompanions.js packCapacityKg`: 1.5 kg a point and any weight allowance -
   67-97 kg by his class's strength, a Bard's 45 67 and a Warrior's 60 90, more under a Fortify of mine). The storage

@@ -29,7 +29,7 @@
   {
     "name": "NAV-D-the-side-fixed",
     "file": "src/systems/naval/navalBoarding.js",
-    "old": "  const side = d[0] * r[0] + d[2] * r[2] >= 0 ? 1 : -1;",
+    "old": "  const side = lie?.side ?? (d[0] * r[0] + d[2] * r[2] >= 0 ? 1 : -1);",
     "new": "  const side = 1;",
     "tests": [
       "test/systems/naval/nav_d_boarding.test.js"
@@ -38,8 +38,8 @@
   {
     "name": "NAV-D-the-gap-dropped",
     "file": "src/systems/naval/navalBoarding.js",
-    "old": "  const off = side * (anchor.beam + ship.beam + BERTH_GAP);",
-    "new": "  const off = side * (anchor.beam + ship.beam);",
+    "old": "  const off = side * Math.max(anchor.beam + ship.beam + BERTH_GAP,",
+    "new": "  const off = side * Math.max(anchor.beam + ship.beam,",
     "tests": [
       "test/systems/naval/nav_d_boarding.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "NAV-D-the-long-way-round",
     "file": "src/systems/naval/navalBoarding.js",
-    "old": "  const dy = wrapAngle(to.yaw - from.yaw);",
-    "new": "  const dy = to.yaw - from.yaw;",
+    "old": "  const dy = wrapAngle(to.yaw - at.yaw);",
+    "new": "  const dy = to.yaw - at.yaw;",
     "tests": [
       "test/systems/naval/nav_d_boarding.test.js"
     ]

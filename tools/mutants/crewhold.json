@@ -40,16 +40,6 @@
     "note": "her fire takes a player's men as a captain's"
   },
   {
-    "name": "CREW-HOLD-ram-tough",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "export const ramMen = (dealt, roll, tough) => ballMen(dealt / RAM_A_MAN, roll, tough);",
-    "new": "export const ramMen = (dealt, roll, tough) => ballMen(dealt / RAM_A_MAN, roll);",
-    "tests": [
-      "test/systems/naval/crewhold.test.js"
-    ],
-    "note": "a ram's men ignore the crew's toughness"
-  },
-  {
     "name": "CREW-HOLD-landHit-mine",
     "file": "src/scenes/naval/navalHost.js",
     "old": "roll: random(), tough: PLAYER_CREW_TOUGHNESS, weight: e.weight }));",

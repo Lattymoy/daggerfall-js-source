@@ -27,6 +27,7 @@
 import { t } from '../textManager.js';
 import { isLetterOfCredit } from '../peerWord.js';   // BURNT-SAID: the letters a death took, by their worth
 import { CYRODIIL_REGION } from '../../formats/mapsTables.js';   // WW-C2: the zone's region, one home
+import { WILD_STORE_LOCK_MS, noteWildBlow, wildStoreRefusal, storeLockedText } from './wildStoreLock.js';   // AUDIT PVP-EASE L2-1: the combat lock
 
 /** WW-C2: Cyrodiil - the Imperial Province's region past the Bay (formats/mapsTables.js CYRODIIL_REGION); the
  *  Wrothgarian Mountains' 16 retired. */
@@ -120,6 +121,10 @@ export function setWildHere(on, ring = 0, kind = WILD_KIND) {
 }
 /** Does the player stand in the zone now? (The foe pools ask at a spawn, the loot rolls at a death.) */
 export const wildHere = () => _here;
+
+// AUDIT PVP-EASE L2-1: THE COMBAT LOCK on storing - a leaf of its own (wildStoreLock.js: the inventory's law asks it, and
+// the account Worker bundles that law), re-exported here for the zone's readers.
+export { WILD_STORE_LOCK_MS, noteWildBlow, wildStoreRefusal };
 /** The ring the player stands in (1 the outer, 4 the heart), 0 outside. */
 export const wildRing = () => _ring;
 /** ETHER-WILD: the ground of the zone the player stands in - 'wroth' or 'ether' - or null outside every zone. */
@@ -644,13 +649,24 @@ export const WILD_TEXT = Object.freeze({
   travelWait: (min) => `The carriages of ${WILD_NAME} run every ten minutes. The next leaves in ${min} minute${min === 1 ? '' : 's'}.`,
   travelPoor: (fee) => `A journey inside ${WILD_NAME} costs ${fee.toLocaleString('en-US')} gold here.`,
   travelPaid: (fee) => `You pay ${fee.toLocaleString('en-US')} gold for the Imperial road.`,
-  // COMPANION-DROP (FIELD BUGS 2026-10-19f; the owner: "Bag drops; no send-off in zone"): a companion at my side drops his
-  // pack with mine, so none is sent off from inside the zone (the teleport's own refusal, said of a companion), nothing of
-  // mine reaches one waiting outside it, and one carried off knocked out leaves what it carries with me - through the
-  // text core (L10N4), read when they are said
-  companionStays: (name) => t('wild.companion.stays', '{name} stays at your side until you leave {zone}.', { zone: zoneName(), name: name || t('wild.companion.yours', 'your companion') }),
-  companionAway: (name) => t('wild.companion.away', '{name} is waiting outside {zone}. Come out to hand over gear.', { zone: zoneName(), name: name || t('wild.companion.yoursFirst', 'Your companion') }),
-  companionLeft: (name, n) => t('wild.companion.left', '{name} hands you {n, plural, one {# item} other {# items}} before leaving.', { zone: zoneName(), name: name || t('wild.companion.yoursFirst', 'Your companion'), n }),
+  // WILD-INSURE (2026-10-26, the owner: "being able to insure gear on death"; asked, "Kept, policy spent" at "20% of
+  // worth" - systems/wild/wildInsureLaw.js): the pack's card and menu (net/wild/wildInsureBook.js) and the death screen -
+  // through the text core (L10N4), read when they are said
+  insureAct: (gold) => t('wild.insure.act', 'Insure ({gold} gold)', { gold: Number(gold).toLocaleString('en-US') }),
+  insuredLine: () => t('wild.insure.line', 'Insured. A player\'s kill in an open PvP zone will not take it, and the policy is spent when it saves this piece.'),
+  insuredSoon: (min) => t('wild.insure.soon', 'Insured. The policy takes effect in {min, plural, one {# minute} other {# minutes}}.', { min }),
+  insureDone: (gold) => t('wild.insure.done', 'Insured for {gold} gold. The policy takes effect in two minutes.', { gold: Number(gold).toLocaleString('en-US') }),
+  insureInZone: () => t('wild.insure.inZone', 'No one writes insurance inside an open PvP zone. Insure your gear before you go in.'),
+  insureOffline: () => t('wild.insure.offline', 'Insurance is written online, for a realm character.'),
+  deathInsured: (n) => (n > 0 ? t('wild.death.insured', 'Insurance kept {n, plural, one {# piece} other {# pieces}} of your gear. Each policy that saved a piece is spent.', { n }) : ''),
+  // REPEAT-SHIELD (2026-10-26, the owner chose "Repeat-kill shield"): a kill by the same hand inside half an hour takes nothing
+  deathShield: () => t('wild.death.shield', 'The same player killed you less than half an hour ago, so nothing was taken.'),
+  // ZONE-GRACE (2026-10-26, the owner chose "Entry/rise grace" - systems/wild/wildGrace.js): safe passage, begun, ended, and
+  // a blow of mine it kept off
+  graceOn: (s) => t('wild.grace.on', 'Safe passage: no player can harm you for {s, plural, one {# second} other {# seconds}}, or until you attack one.', { s }),
+  graceOff: () => t('wild.grace.off', 'Your safe passage has ended. Other players can attack you.'),
+  storeLocked: (s) => storeLockedText(s),   // AUDIT PVP-EASE L2-1 (wildStoreLock.js)
+  graceKept: (s) => t('wild.grace.kept', 'That player is under safe passage for {s, plural, one {# more second} other {# more seconds}}.', { s }),
   // WILD2: the rings
   ring: (r) => `${wildRingName(r)}: ${wildRingBonus(r)}.`,
   ringCross: (r, deeper) => `${deeper ? 'Deeper' : 'Back out'} - ${wildRingName(r)}: ${wildRingBonus(r)}.`,
@@ -717,7 +733,8 @@ let _killed = false;
 /** My fall, the referee's word (`wref` `fell`): `{ r, by, room, at }` - kept here beside the kill it makes (it was the world
  *  host's `_wildFell`), until the death ends. */
 let _fell = null;
-/** The world host's word at a death in the zone - `{ killer, dropped, claimed, held, burnt, letters }` (the killer's name or
+/** The world host's word at a death in the zone - `{ killer, dropped, claimed, held, burnt, letters, insured, shield }` (the
+ *  last two: WILD-INSURE's count of pieces my policies kept, and REPEAT-SHIELD's word that nothing was taken) (the killer's name or
  *  null, how many things were left where the body fell, the worn piece the killer took - `held`: MAC (2026-10-14), held in
  *  escrow until they collect it - BURNT-SAID: how many were taken and laid nowhere, a held record's, and `letters` the
  *  pieces the death took out of the pack, of which the letters of credit are counted, and `served` the seconds it lay
@@ -730,7 +747,7 @@ export function setWildDeath(d) {
   if (!d) { _killed = false; _fell = null; }
   else if (d.kill === true || (typeof d.killer === 'string' && d.killer)) _killed = true;
   _death = d ? { killer: typeof d.killer === 'string' && d.killer ? d.killer : null, kill: _killed, dropped: Math.max(0, d.dropped | 0), claimed: typeof d.claimed === 'string' && d.claimed ? d.claimed : null, held: d.held === true,
-    burnt: Math.max(0, d.burnt | 0), letters: wildLettersOf(d.letters), kind: d.kind ?? _death?.kind ?? _kind ?? WILD_KIND } : null;   // ETHER-WILD: the ground it fell on, for its words
+    burnt: Math.max(0, d.burnt | 0), letters: wildLettersOf(d.letters), insured: Math.max(0, d.insured | 0), shield: d.shield === true, kind: d.kind ?? _death?.kind ?? _kind ?? WILD_KIND } : null;   // ETHER-WILD: the ground it fell on, for its words; WILD-INSURE and REPEAT-SHIELD: what kept
   if (_death) _death.served = served;
 }
 /** BURNT-SAID: the letters of credit among `items` - how many, and the gold they stand for. AUDIT FOE-KEEPS LETTERS-TENTH:
@@ -746,6 +763,7 @@ export const wildDeath = () => _death;
 export function wildDeathAtHand(/** @type {any} */ fell, /** @type {string | null | undefined} */ name) {
   _fell = fell ?? _fell;
   _killed = true;
+  noteWildBlow(Date.now() + WILD_STORE_LOCK_MS);   // AUDIT PVP-EASE L2-1: the take is a pick's minute behind the fall - a Resurrect inside it stores nothing first
   if (_death) _death = { ..._death, kill: true, killer: _death.killer ?? (typeof name === 'string' && name ? name : null) };
 }
 /** AUDIT FOE-KEEPS H1: whether this death was a kill (the rise pays the usual tenth only when it was not). */
@@ -755,6 +773,8 @@ export const wildFallHeard = () => _fell;
 /** The death screen's lines for a death in the zone (empty for any other). */
 export function wildDeathLines(d = _death) {
   if (!d) return [];
-  return [d.killer || d.kill ? (d.claimed ? (d.held ? WILD_TEXT.deathHeld : WILD_TEXT.deathClaim)(d.killer, d.claimed) : WILD_TEXT.deathPvp(d.killer)) : WILD_TEXT.deathKept(), WILD_TEXT.deathDrop(d.dropped),
+  const head = d.shield ? WILD_TEXT.deathShield()   // REPEAT-SHIELD: no claim, no drop - said in their place
+    : d.killer || d.kill ? (d.claimed ? (d.held ? WILD_TEXT.deathHeld : WILD_TEXT.deathClaim)(d.killer, d.claimed) : WILD_TEXT.deathPvp(d.killer)) : WILD_TEXT.deathKept();
+  return [head, WILD_TEXT.deathDrop(d.dropped), WILD_TEXT.deathInsured(d.insured ?? 0),
     WILD_TEXT.deathBurnt(d.burnt ?? 0), WILD_TEXT.deathLetters(d.letters?.n ?? 0, d.letters?.gold ?? 0), WILD_TEXT.deathLettersTenth(d.letters?.tenth ?? 0), zoneWord('deathHold', d.kind ?? WILD_KIND)].filter(Boolean);
 }

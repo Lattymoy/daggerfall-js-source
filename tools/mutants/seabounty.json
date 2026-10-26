@@ -895,8 +895,8 @@
   {
     "name": "SEA-BOUNTY-fall-no-kill",
     "file": "server-account/src/wild.js",
-    "old": "    ...seaKillSteps(ctx.db, sea, ctx.nowS),\n",
-    "new": "",
+    "old": "    // batch that writes the fall, or neither lands\n    ...seaKillSteps(ctx.db, sea, ctx.nowS),\n",
+    "new": "    // batch that writes the fall, or neither lands\n",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]

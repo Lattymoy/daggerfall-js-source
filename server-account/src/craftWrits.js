@@ -7,11 +7,11 @@
 //
 //   craftWritBoard   the Work tab's read (/v1/writs/list, beside the Court's): the account's three writs of the UTC day,
 //                    posted on the first read of the day by any of its realm characters (AUDIT CRAFT-WRITS E1), each with
-//                    what the reading character holds toward it - a potion writ its witnessed brews not yet given to a
+//                    what the reading character holds toward it - a potion writ its brews not yet given to a
 //                    writ, a dish or kit writ the pieces of its own make that may go
 //   deliverCraftWrit /v1/writs/craft { character, id, rid, realm, pieces? }: the writ filled whole, in ONE batch - the
 //                    goods out of the realm record (prepareRealmRecord, guarded), the decision (the writ open and the
-//                    account's, today's, the account under its three, the balance with room, the goods witnessed), the
+//                    account's, today's, the account under its three, the balance with room, the goods its own), the
 //                    pieces' rows gone, the pay struck (`craft-writ`, a mint), the XP to the craft's track under the
 //                    crafter's limit, the Renown to the character, and the guild's standing on its Roll (a hall writ's
 //                    statements, CHAP2a) while the Chapters are the account's
@@ -46,21 +46,24 @@ const recipesOf = (/** @type {string} */ product) => {
   return p.kind === 'dish' ? COOKING_RECIPES.filter((r) => r.product === p.id).map((r) => r.id) : [p.key];
 };
 
-/** SQL: the potions of `potion` a character's WITNESSED brews made (migration 0145 - none of a cauldron's units loose)
- *  that no crafting writ it filled has taken yet. `p`, `c` the player's and the character's SQL; `potion` the recipe's name's,
+/** SQL: the potions of `potion` a character's brews made that no crafting writ it filled has taken yet - EVERY brew a
+ *  station made for it, its cauldron's goods from wherever they came (ANY-GOODS, FIELD BUGS 2026-10-26, the owner:
+ *  "Crafting writs should work with even store bought ingredients" - migration 0145's `witnessed` is no longer asked).
+ *  `p`, `c` the player's and the character's SQL; `potion` the recipe's name's,
  *  `product` the writ's - BOUND, never a column: AUDIT CRAFT-WRITS S1 - written as `craft_writs.product` inside the
  *  decision's UPDATE, SQLite read it as the subquery's own row's, and every writ the character had filled, of any
  *  product, was taken from its brews. */
-export const brewedLeftSql = (p, c, potion, product) => `(COALESCE((SELECT SUM(count) FROM prof_brews WHERE player = ${p} AND char_id = ${c} AND potion = ${potion} AND witnessed = 1), 0)
+export const brewedLeftSql = (p, c, potion, product) => `(COALESCE((SELECT SUM(count) FROM prof_brews WHERE player = ${p} AND char_id = ${c} AND potion = ${potion}), 0)
   - COALESCE((SELECT SUM(qty) FROM craft_writs WHERE player = ${p} AND filled_char = ${c} AND product = ${product} AND filled_at IS NOT NULL), 0))`;
 
 /** SQL: a crafted piece (`pv`, a provenance's SQL) that may fill a writ - the account's (a sold one is its buyer's), this
- *  character's make (`c` - a piece bought on the market keeps its maker's), never walled to gold (a loose-made piece's
- *  mark, AUDIT BAG-CRAFT A1), of an answering recipe (`recipes`, a JSON array's SQL), on no listing, auction, road or
- *  home, nor on its way back. AUDIT CRAFT-WRITS T2: `bought_with` 'marks' is a piece made of goods bought for silver too
- *  (AUDIT PROF-541 B7) - every Repair Kit's Cured Leather the smith's counter sells - so only gold's wall refuses. */
+ *  character's make (`c` - a piece bought on the market keeps its maker's), of an answering recipe (`recipes`, a JSON
+ *  array's SQL), on no listing, auction, road or home, nor on its way back - and never BOUGHT with gold since (a gold
+ *  purchase's wall: `bought_with` 'gold' with `loose` 0, migration 0142). ANY-GOODS (FIELD BUGS 2026-10-26): a piece made
+ *  of goods from the pack (looted, or bought with gold - AUDIT BAG-CRAFT A1's wall, `loose` 1) fills a writ as any other
+ *  of its make. AUDIT CRAFT-WRITS T2: `bought_with` 'marks' is a piece made of goods bought for silver (AUDIT PROF-541 B7). */
 const pieceOkSql = (p, c, pv, recipes) => `EXISTS (SELECT 1 FROM products pk WHERE pk.provenance = ${pv} AND pk.owner = ${p} AND pk.char_id = ${c}
-    AND pk.listed = 0 AND pk.bought_with IS NOT 'gold' AND pk.recipe IN (SELECT value FROM json_each(${recipes}))
+    AND pk.listed = 0 AND (pk.bought_with IS NOT 'gold' OR pk.loose = 1) AND pk.recipe IN (SELECT value FROM json_each(${recipes}))
     AND EXISTS (SELECT 1 FROM prof_crafts cr WHERE cr.player = ${p} AND (cr.provenance = pk.provenance OR cr.provenance2 = pk.provenance))
     AND NOT EXISTS (SELECT 1 FROM market_listings WHERE provenance = pk.provenance AND state = 'open')
     AND NOT EXISTS (SELECT 1 FROM market_auctions WHERE provenance = pk.provenance AND state = 'open')
@@ -94,11 +97,8 @@ async function postCraftWrits(db, player, character, day) {
 const craftWritsToday = async (db, player, day) => Number((await db.prepare('SELECT COUNT(*) AS n FROM craft_writs WHERE player = ?1 AND day = ?2 AND filled_at IS NOT NULL')
   .bind(player, day).first())?.n ?? 0);
 
-/** A writ as the Work tab reads it, with what `character` holds toward it: `brewed` a potion writ's witnessed brews not
- *  yet given, `pieces` a dish or kit writ's pieces of its make that may go (their provenance ids). FIELD BUGS 2026-10-26
- *  LOOSE-SAID: and what it made that can never go, so the card can say why - `looseBrewed` the potions of the writ's
- *  brewed since its day began that were no witness (a cauldron that spent loose units, alchemy.js `witnessed`),
- *  `loosePieces` the pieces of its make walled to gold (`bought_with` 'gold' - made of loose goods), newest first. */
+/** A writ as the Work tab reads it, with what `character` holds toward it: `brewed` a potion writ's brews not yet given,
+ *  `pieces` a dish or kit writ's pieces of its make that may go (their provenance ids). */
 async function craftWritView(db, player, row, character) {
   const p = craftProductOf(row.product);
   const view = {
@@ -108,17 +108,12 @@ async function craftWritView(db, player, row, character) {
   };
   if (row.filled_at != null || !p) return view;
   if (p.kind === 'potion') {
-    const r = await db.prepare(`SELECT ${brewedLeftSql('?1', '?2', '?3', '?4')} AS n,
-      COALESCE((SELECT SUM(count) FROM prof_brews WHERE player = ?1 AND char_id = ?2 AND potion = ?3 AND witnessed = 0 AND at >= ?5), 0) AS loose`)
-      .bind(player, character, p.id, row.product, Number(row.day) * DAY_S).first();
-    return { ...view, brewed: Math.max(0, Number(r?.n ?? 0)), looseBrewed: Math.max(0, Number(r?.loose ?? 0)) };
+    const r = await db.prepare(`SELECT ${brewedLeftSql('?1', '?2', '?3', '?4')} AS n`).bind(player, character, p.id, row.product).first();
+    return { ...view, brewed: Math.max(0, Number(r?.n ?? 0)) };
   }
-  const recipes = JSON.stringify(recipesOf(row.product));
   const { results = [] } = await db.prepare(`SELECT pr.provenance FROM products pr WHERE pr.owner = ?1 AND pr.char_id = ?2 AND pr.recipe IN (SELECT value FROM json_each(?3))
-    AND ${pieceOkSql('?1', '?2', 'pr.provenance', '?3')} ORDER BY pr.made_at DESC, pr.rowid DESC LIMIT ?4`).bind(player, character, recipes, CRAFT_PIECES_SHOWN).all();
-  const { results: walled = [] } = await db.prepare(`SELECT provenance FROM products WHERE owner = ?1 AND char_id = ?2 AND bought_with = 'gold' AND listed = 0
-    AND recipe IN (SELECT value FROM json_each(?3)) ORDER BY made_at DESC, rowid DESC LIMIT ?4`).bind(player, character, recipes, CRAFT_PIECES_SHOWN).all();
-  return { ...view, pieces: results.map((x) => String(x.provenance)), loosePieces: walled.map((x) => String(x.provenance)) };
+    AND ${pieceOkSql('?1', '?2', 'pr.provenance', '?3')} ORDER BY pr.made_at DESC, pr.rowid DESC LIMIT ?4`).bind(player, character, JSON.stringify(recipesOf(row.product)), CRAFT_PIECES_SHOWN).all();
+  return { ...view, pieces: results.map((x) => String(x.provenance)) };
 }
 
 /**
@@ -152,7 +147,7 @@ async function craftAnswer(db, player, row, nowS, extra = {}) {
  * count exactly. Asked of the realm record first (realm.js realmActFirst - a lost answer is read by where it stands);
  * refused: a writ that is not this account's (`no-writ`), gone with its day (`writ-expired`), filled already
  * (`craft-writ-filled`), the day's three
- * filled (`craft-writ-cap`), a balance with no room (`marks-full`), too few witnessed brews (`craft-unbrewed`), pieces that
+ * filled (`craft-writ-cap`), a balance with no room (`marks-full`), too few brews of its own (`craft-unbrewed`), pieces that
  * are not of the character's own unsold make or not the writ's (`craft-pieces`), goods the record does not hold loose
  * (`craft-goods-gone`). Filled once: asked again, its row answers (`repeat`).
  */
@@ -189,7 +184,7 @@ export async function deliverCraftWrit(ctx, player, env, { character, id, rid, r
   const nonce = mintId(rand);
   const cap = craftCapSql('?1', '?2', w.track);
   const filled = 'EXISTS (SELECT 1 FROM craft_writs WHERE id = ?5 AND n = ?6)';
-  // the goods witnessed: a potion writ's count in the character's brews not yet given (?11 its product, bound - S1); a
+  // the goods its own: a potion writ's count in the character's brews not yet given (?11 its product, bound - S1); a
   // piece writ's every piece its own (?11 the answering recipes)
   const goodsOk = p.kind === 'potion'
     ? `${brewedLeftSql('?1', '?2', '?10', '?11')} >= craft_writs.qty`
@@ -197,7 +192,7 @@ export async function deliverCraftWrit(ctx, player, env, { character, id, rid, r
   const batch = [
     ...prep.steps,
     // THE DECISION: the writ open and the account's, today's; the account under its three; the balance with room for
-    // the pay; the goods witnessed - and the XP what the craft's track can take under the crafter's limit; its filler
+    // the pay; the goods its own - and the XP what the craft's track can take under the crafter's limit; its filler
     // this character
     db.prepare(`UPDATE craft_writs SET filled_at = ?3, filled_char = ?2, rid = ?4, n = ?6, goods = ?12,
         xp_given = MAX(0, MIN(xp, ${cap} - COALESCE((SELECT xp FROM prof_tracks WHERE player = ?1 AND char_id = ?2 AND profession = craft_writs.track), 0)))
