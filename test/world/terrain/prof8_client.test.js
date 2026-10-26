@@ -3,6 +3,7 @@
 // the kind in the gathering host (the cast only with a net in the net's water, its key and its ground, the plan and its
 // words, Foraging's refusals, the day's schools on water and a cast landing in one, the species named, a trophy once);
 // the meter; the book's day; the page; the host's wiring. bible/06-Systems/Professions-Arc.md 5.2, 30.
+import { actBand } from '../../../src/net/professionLaw.js';   // AUDIT GATHER F6: the net's band on its tug
 import '../../chargenDom.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -248,7 +249,7 @@ test('PROF8 kind: the plan (the page\'s rank, the ground\'s words - CAP-OFF: no 
     w = world();
     const a = k.start(cast, plan, { entity, rank, specs, keyLabel: () => 'E' });
     assert.equal(a.act.state.kind, 'fish');
-    assert.ok(Math.abs(a.act.state.tugS - tugWindow(true)) < 1e-9, 'an Angler\'s tug');
+    assert.ok(Math.abs(a.act.state.tugS - tugWindow(true) * actBand(0)) < 1e-9, 'an Angler\'s tug - PIN MOVED (AUDIT GATHER F6): at the net\'s attribute band, FORAGE0 14.5\'s "600 ms x the band" (a character of no stats the lowest, x0.85)');
     assert.deepEqual([a.harvest, a.profession, a.label, a.ask], ['fish', 'fishing', 'E', { climate: WOODS, region: 17 }]);
     assert.equal(a.tool, NET);
     assert.deepEqual(k.tally(), { n: 5 });   // PIN MOVED (CAP-OFF): the account's day against no cap - it was { n: 5, cap: 40 }

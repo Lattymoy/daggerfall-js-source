@@ -148,8 +148,8 @@
   {
     "name": "NAV1H-the-last-frames-hulls",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "    buildOne();\n    const eye = deps.look?.()?.origin ?? deps.feet();   // AUDIT NAV1 (#17): her rigging's life by her range from it\n    for (const e of [...sea.values()]) fadeStep(e, total);   // SHIP-FADE\n    shipDecks.hold(sea.values());   // SEA-DECK: each deck as it stood, before she is posed\n    for (const e of sea.values()) poseShip(e, total, seaY, eye);\n    shipDecks.frame(sea.values(), deps.deck, dt > 0 ? total / dt : 1);   // SEA-DECK: and the one aboard carried by her move\n    knowStep();   // SPYGLASS: what this frame teaches me of each ship\n    siteStep(boat);   // CAPT-BOARD: the held contracts' waters, and a delivery's berth\n    if (clock - lastHailCheck >= SAIL_HO_CHECK_S) { lastHailCheck = clock; hailSails(boat); }   // AUDIT NAV1 (#14)\n    // the ram and the aim, on the hulls as this frame stands them (AUDIT NAV1: both read the last frame's, a ship's way\n    // behind - my stem where it is, her planking where it was)\n    checkRams(boat);\n    stepHeaveTo(boat);\n    poseMyFires(total);\n    feel.frame(total, (en) => (sea.get(en.id) === en && en.ship.damage.state === SHIP_STATES.sinking ? [en.ship.pos[0], seaY + 1.5, en.ship.pos[2]] : null));   // COMBAT-FEEL: magazines due, my hull's smoke\n    aim = null; aimHit = null;\n    if (aiming && boat) {\n      const side = lookSide(boat);\n      if (side) { aim = lookAim(boat, side); aimHit = aimStrikes(aim); }\n      // GALLEON: laid - her shutters up, her guns out. AUDIT GN-G8: a battery reloading is not laid - its guns stay in to\n      // load (they stood run out through a 9 s reload)\n      if ((side === 'starboard' || side === 'port') && myBoatState(boat).guns.ready(side)) galleonGuns.lay(boat, side, clock);\n    } else if (!boat) aiming = false;\n",
-    "new": "    aim = null; aimHit = null;\n    if (aiming && boat) {\n      const side = lookSide(boat);\n      if (side) { aim = lookAim(boat, side); aimHit = aimStrikes(aim); }\n      // GALLEON: laid - her shutters up, her guns out. AUDIT GN-G8: a battery reloading is not laid - its guns stay in to\n      // load (they stood run out through a 9 s reload)\n      if ((side === 'starboard' || side === 'port') && myBoatState(boat).guns.ready(side)) galleonGuns.lay(boat, side, clock);\n    } else if (!boat) aiming = false;\n    buildOne();\n    const eye = deps.look?.()?.origin ?? deps.feet();   // AUDIT NAV1 (#17): her rigging's life by her range from it\n    for (const e of [...sea.values()]) fadeStep(e, total);   // SHIP-FADE\n    shipDecks.hold(sea.values());   // SEA-DECK: each deck as it stood, before she is posed\n    for (const e of sea.values()) poseShip(e, total, seaY, eye);\n    shipDecks.frame(sea.values(), deps.deck, dt > 0 ? total / dt : 1);   // SEA-DECK: and the one aboard carried by her move\n    knowStep();   // SPYGLASS: what this frame teaches me of each ship\n    siteStep(boat);   // CAPT-BOARD: the held contracts' waters, and a delivery's berth\n    if (clock - lastHailCheck >= SAIL_HO_CHECK_S) { lastHailCheck = clock; hailSails(boat); }   // AUDIT NAV1 (#14)\n    checkRams(boat);\n    stepHeaveTo(boat);\n    poseMyFires(total);\n    feel.frame(total, (en) => (sea.get(en.id) === en && en.ship.damage.state === SHIP_STATES.sinking ? [en.ship.pos[0], seaY + 1.5, en.ship.pos[2]] : null));   // COMBAT-FEEL: magazines due, my hull's smoke\n",
+    "old": "    buildOne();\n    const eye = deps.look?.()?.origin ?? deps.feet();   // AUDIT NAV1 (#17): her rigging's life by her range from it\n    for (const e of [...sea.values()]) fadeStep(e, total);   // SHIP-FADE\n    shipDecks.hold(sea.values());   // SEA-DECK: each deck as it stood, before she is posed\n    for (const e of sea.values()) poseShip(e, total, seaY, eye);\n    shipDecks.frame(sea.values(), deps.deck, dt > 0 ? total / dt : 1);   // SEA-DECK: and the one aboard carried by her move\n    knowStep();   // SPYGLASS: what this frame teaches me of each ship\n    siteStep(boat);   // CAPT-BOARD: the held contracts' waters, and a delivery's berth\n    if (clock - lastHailCheck >= SAIL_HO_CHECK_S) { lastHailCheck = clock; hailSails(boat); }   // AUDIT NAV1 (#14)\n    poseMyFires(total);\n    feel.frame(total, (en) => (sea.get(en.id) === en && en.ship.damage.state === SHIP_STATES.sinking ? [en.ship.pos[0], seaY + 1.5, en.ship.pos[2]] : null));   // COMBAT-FEEL: magazines due, my hull's smoke\n    // the aim, on the hulls as this frame stands them (AUDIT NAV1: it read the last frame's, a ship's way behind)\n    aim = null; aimHit = null;\n    if (aiming && boat) {\n      const side = lookSide(boat);\n      if (side) { aim = lookAim(boat, side); aimHit = aimStrikes(aim); }\n      // GALLEON: laid - her shutters up, her guns out. AUDIT GN-G8: a battery reloading is not laid - its guns stay in to\n      // load (they stood run out through a 9 s reload)\n      if ((side === 'starboard' || side === 'port') && myBoatState(boat).guns.ready(side)) galleonGuns.lay(boat, side, clock);\n    } else if (!boat) aiming = false;\n",
+    "new": "    // the aim, on the hulls as this frame stands them (AUDIT NAV1: it read the last frame's, a ship's way behind)\n    aim = null; aimHit = null;\n    if (aiming && boat) {\n      const side = lookSide(boat);\n      if (side) { aim = lookAim(boat, side); aimHit = aimStrikes(aim); }\n      // GALLEON: laid - her shutters up, her guns out. AUDIT GN-G8: a battery reloading is not laid - its guns stay in to\n      // load (they stood run out through a 9 s reload)\n      if ((side === 'starboard' || side === 'port') && myBoatState(boat).guns.ready(side)) galleonGuns.lay(boat, side, clock);\n    } else if (!boat) aiming = false;\n    buildOne();\n    const eye = deps.look?.()?.origin ?? deps.feet();   // AUDIT NAV1 (#17): her rigging's life by her range from it\n    for (const e of [...sea.values()]) fadeStep(e, total);   // SHIP-FADE\n    shipDecks.hold(sea.values());   // SEA-DECK: each deck as it stood, before she is posed\n    for (const e of sea.values()) poseShip(e, total, seaY, eye);\n    shipDecks.frame(sea.values(), deps.deck, dt > 0 ? total / dt : 1);   // SEA-DECK: and the one aboard carried by her move\n    knowStep();   // SPYGLASS: what this frame teaches me of each ship\n    siteStep(boat);   // CAPT-BOARD: the held contracts' waters, and a delivery's berth\n    if (clock - lastHailCheck >= SAIL_HO_CHECK_S) { lastHailCheck = clock; hailSails(boat); }   // AUDIT NAV1 (#14)\n    poseMyFires(total);\n    feel.frame(total, (en) => (sea.get(en.id) === en && en.ship.damage.state === SHIP_STATES.sinking ? [en.ship.pos[0], seaY + 1.5, en.ship.pos[2]] : null));   // COMBAT-FEEL: magazines due, my hull's smoke\n",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -450,105 +450,6 @@
     "file": "src/ui/naval/navalHud.js",
     "old": "  const bracePress = touch ? 'hold Brace' : `${braceKey}: brace`;",
     "new": "  const bracePress = `${braceKey}: brace`;",
-    "tests": [
-      "test/systems/naval/navaudit_helm.test.js"
-    ]
-  },
-  {
-    "name": "NAV1H-the-old-point",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "    const stem = [pose.position[0] + fwd[0] * build.bowZ, pose.position[1] + 1, pose.position[2] + fwd[2] * build.bowZ];",
-    "new": "    const stem = [pose.position[0] + fwd[0] * (build.beam || 2) * 2.4, pose.position[1] + 1, pose.position[2] + fwd[2] * (build.beam || 2) * 2.4];",
-    "tests": [
-      "test/systems/naval/navaudit_helm.test.js"
-    ]
-  },
-  {
-    "name": "NAV1H-the-way-forgotten",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "    const way = wayIn.reduce((m, w) => Math.max(m, w.v), 0);",
-    "new": "    const way = wayIn.at(-1)?.v ?? 0;",
-    "tests": [
-      "test/systems/naval/navaudit_helm.test.js"
-    ]
-  },
-  {
-    "name": "NAV1H-the-memory-unbounded",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "    while (wayIn.length && clock - wayIn[0].t > RAM_MEMORY_S) wayIn.shift();\n",
-    "new": "",
-    "tests": [
-      "test/systems/naval/navaudit_helm.test.js"
-    ]
-  },
-  {
-    "name": "NAV1H-her-way-unread",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "    const speed = way - (her[0] * fwd[0] + her[2] * fwd[2]);",
-    "new": "    const speed = way;",
-    "tests": [
-      "test/systems/naval/navaudit_helm.test.js"
-    ]
-  },
-  {
-    "name": "NAV1H-the-closing-ungated",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "      const speed = way - (her[0] * fwd[0] + her[2] * fwd[2]);   // closing: a ship sailing on ahead of the stem takes less of it\n      if (speed < RAM_SPEED) continue;\n",
-    "new": "      const speed = way - (her[0] * fwd[0] + her[2] * fwd[2]);   // closing: a ship sailing on ahead of the stem takes less of it\n",
-    "tests": [
-      "test/systems/naval/navaudit_helm.test.js"
-    ]
-  },
-  {
-    "name": "NAV1H-the-way-not-spent",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "      wayIn = [];   // the way spent on her\n",
-    "new": "",
-    "tests": [
-      "test/systems/naval/navaudit_helm.test.js"
-    ]
-  },
-  {
-    "name": "NAV1H-the-recoil-plain",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "(galley ? 1 / GALLEY_RAM : BOW_RECOIL)",
-    "new": "(galley ? 1 / GALLEY_RAM : 1)",
-    "tests": [
-      "test/systems/naval/navaudit_helm.test.js"
-    ]
-  },
-  {
-    "name": "NAV1H-the-recoil-unbraced",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": " * (st?.guns.braced ? BRACE_TAKEN : 1);\n      st?.damage.apply({ hull: Math.round(back)",
-    "new": ";\n      st?.damage.apply({ hull: Math.round(back)",
-    "tests": [
-      "test/systems/naval/navaudit_helm.test.js"
-    ]
-  },
-  {
-    "name": "NAV1H-the-ram-cooldown-dropped",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "      if (!e.boat || e.ship.damage.state === SHIP_STATES.sunk || clock - e.ramAt < RAM_COOLDOWN_S) continue;\n      const box = hullBox(e.boat);\n      if (!box || !insideGrown(box, stem, RAM_REACH)) continue;",
-    "new": "      if (!e.boat || e.ship.damage.state === SHIP_STATES.sunk) continue;\n      const box = hullBox(e.boat);\n      if (!box || !insideGrown(box, stem, RAM_REACH)) continue;",
-    "tests": [
-      "test/systems/naval/navaudit_helm.test.js"
-    ]
-  },
-  {
-    "name": "NAV1H-the-galley-no-ram",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "      const dealt = Math.round(speed * RAM_DAMAGE * (galley ? GALLEY_RAM : 1) * statScale(deps.captain?.stats?.(), 'ram'));   // CAPTAIN-TREE: her captain's ram\n      effects.hit(stem,",
-    "new": "      const dealt = Math.round(speed * RAM_DAMAGE * statScale(deps.captain?.stats?.(), 'ram'));   // CAPTAIN-TREE: her captain's ram\n      effects.hit(stem,",
-    "tests": [
-      "test/systems/naval/navaudit_helm.test.js"
-    ]
-  },
-  {
-    "name": "NAV1H-the-ram-before-the-poses",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "    shipDecks.hold(sea.values());   // SEA-DECK: each deck as it stood, before she is posed\n    for (const e of sea.values()) poseShip(e, total, seaY, eye);\n    shipDecks.frame(sea.values(), deps.deck, dt > 0 ? total / dt : 1);   // SEA-DECK: and the one aboard carried by her move\n    knowStep();   // SPYGLASS: what this frame teaches me of each ship\n    siteStep(boat);   // CAPT-BOARD: the held contracts' waters, and a delivery's berth\n    if (clock - lastHailCheck >= SAIL_HO_CHECK_S) { lastHailCheck = clock; hailSails(boat); }   // AUDIT NAV1 (#14)\n    // the ram and the aim, on the hulls as this frame stands them (AUDIT NAV1: both read the last frame's, a ship's way\n    // behind - my stem where it is, her planking where it was)\n    checkRams(boat);\n",
-    "new": "    checkRams(boat);\n    shipDecks.hold(sea.values());   // SEA-DECK: each deck as it stood, before she is posed\n    for (const e of sea.values()) poseShip(e, total, seaY, eye);\n    shipDecks.frame(sea.values(), deps.deck, dt > 0 ? total / dt : 1);   // SEA-DECK: and the one aboard carried by her move\n    knowStep();   // SPYGLASS: what this frame teaches me of each ship\n    siteStep(boat);   // CAPT-BOARD: the held contracts' waters, and a delivery's berth\n    if (clock - lastHailCheck >= SAIL_HO_CHECK_S) { lastHailCheck = clock; hailSails(boat); }   // AUDIT NAV1 (#14)\n",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -859,8 +760,8 @@
   {
     "name": "NAV1H-the-yard-a-ship-to-board",
     "file": "src/ui/naval/navalHud.js",
-    "old": "`open ${model.board.name}'s hold` : model.board.kind === 'yard' ? model.board.name\n",
-    "new": "`open ${model.board.name}'s hold`\n",
+    "old": "`open ${model.board.name}'s hold` : model.board.kind === 'yard' ? model.board.name : `board ${model.board.name}`}`",
+    "new": "`open ${model.board.name}'s hold` : `board ${model.board.name}`}`",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -925,87 +826,6 @@
     "file": "src/ui/enhanced/enhancedChunk.js",
     "old": "  () => import('../naval/navalYardWindow.js'),   // AUDIT NAV1: the shipwright's - a port's, after a fight\n",
     "new": "",
-    "tests": [
-      "test/systems/naval/navaudit_helm.test.js"
-    ]
-  },
-  {
-    "name": "NAV1H-the-refusal-silent",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "    const hv = nb || pr || boarding ? null : heaveFor(boat);",
-    "new": "    const hv = null;",
-    "tests": [
-      "test/systems/naval/navaudit_helm.test.js"
-    ]
-  },
-  {
-    "name": "NAV1H-the-heave-unpressed",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "      if (fast) { startHeaveTo(fast, boat); return true; }   // AUDIT NAV1: too fast to board her - heave to\n",
-    "new": "",
-    "tests": [
-      "test/systems/naval/navaudit_helm.test.js"
-    ]
-  },
-  {
-    "name": "NAV1H-the-sails-left-set",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "    const r = csa();\n    if (r?.state?.sailPosition > 0) r.LowerSails?.();\n    deps.say?.(`Heave to!",
-    "new": "    const r = csa();\n    void r;\n    deps.say?.(`Heave to!",
-    "tests": [
-      "test/systems/naval/navaudit_helm.test.js"
-    ]
-  },
-  {
-    "name": "NAV1H-the-brake-unwired",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "  const brake = () => (enabled && heaveTo && myBoat() ? heaveTo.decel : 0);",
-    "new": "  const brake = () => 0;",
-    "tests": [
-      "test/systems/naval/navaudit_helm.test.js"
-    ]
-  },
-  {
-    "name": "NAV1H-driven-on-while-heaving",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "    if (heaveTo) return 0;   // heaving to: nothing driving her on\n",
-    "new": "",
-    "tests": [
-      "test/systems/naval/navaudit_helm.test.js"
-    ]
-  },
-  {
-    "name": "NAV1H-the-heave-held-past-its-end",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "    if (slow || clock > heaveTo.until || !e || !boardableState(e.ship, myId(), clock)) heaveTo = null;   // RAM-BOARD: struck, or fouled by me",
-    "new": "    if (slow) heaveTo = null;",
-    "tests": [
-      "test/systems/naval/navaudit_helm.test.js"
-    ]
-  },
-  {
-    "name": "NAV1H-the-heave-unstepped",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "    stepHeaveTo(boat);\n",
-    "new": "",
-    "tests": [
-      "test/systems/naval/navaudit_helm.test.js"
-    ]
-  },
-  {
-    "name": "NAV1H-the-heaving-card-unsaid",
-    "file": "src/ui/naval/navalHud.js",
-    "old": "    if (mine && board.kind === 'heave') return { text: board.heaving ? 'Colors struck, heaving to' : `Colors struck - ${key}: heave to`, kind: 'board' };\n",
-    "new": "",
-    "tests": [
-      "test/systems/naval/navaudit_helm.test.js"
-    ]
-  },
-  {
-    "name": "NAV1H-the-heave-hint-a-boarding",
-    "file": "src/ui/naval/navalHud.js",
-    "old": "        : model.board.kind === 'heave' ? `heave to beside ${model.board.name}` : `board ${model.board.name}`}`)",
-    "new": " : `board ${model.board.name}`}`)",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]

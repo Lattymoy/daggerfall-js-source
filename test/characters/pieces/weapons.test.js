@@ -25,9 +25,9 @@ test('weapons: verbatim DFU data pins - and the one condition pool WEAPON-POOL d
   assert.deepEqual([...weightMultipliersByMaterial], [4, 5, 4, 4, 3, 4, 4, 2, 4, 5]);
   assert.deepEqual([...valueMultipliersByMaterial], [1, 2, 4, 8, 16, 32, 64, 128, 256, 512]);
   assert.deepEqual([...conditionMultipliersByMaterial], [4, 6, 6, 8, 12, 16, 20, 24, 28, 32]);
-  // FormulaHelper min/max, every weapon.
-  const MIN = { Dagger: 1, Tanto: 1, Wakazashi: 1, Shortsword: 1, Broadsword: 1, Staff: 1, Mace: 1, Longsword: 2, Claymore: 2, Battle_Axe: 2, War_Axe: 2, Flail: 2, Saber: 3, Katana: 3, Dai_Katana: 3, Warhammer: 3, Short_Bow: 4, Long_Bow: 4, Arrow: 0 };
-  const MAX = { Dagger: 6, Tanto: 8, Shortsword: 8, Staff: 8, Wakazashi: 10, Broadsword: 12, Saber: 12, Battle_Axe: 12, Mace: 12, Flail: 14, Longsword: 16, Katana: 16, War_Axe: 16, Short_Bow: 16, Claymore: 18, Warhammer: 18, Long_Bow: 18, Dai_Katana: 21, Arrow: 0 };
+  // FormulaHelper min/max, every weapon. BAL-ARCHERY: both bows are one point over those rows at each end.
+  const MIN = { Dagger: 1, Tanto: 1, Wakazashi: 1, Shortsword: 1, Broadsword: 1, Staff: 1, Mace: 1, Longsword: 2, Claymore: 2, Battle_Axe: 2, War_Axe: 2, Flail: 2, Saber: 3, Katana: 3, Dai_Katana: 3, Warhammer: 3, Short_Bow: 5, Long_Bow: 5, Arrow: 0 };
+  const MAX = { Dagger: 6, Tanto: 8, Shortsword: 8, Staff: 8, Wakazashi: 10, Broadsword: 12, Saber: 12, Battle_Axe: 12, Mace: 12, Flail: 14, Longsword: 16, Katana: 16, War_Axe: 16, Short_Bow: 17, Claymore: 18, Warhammer: 18, Long_Bow: 19, Dai_Katana: 21, Arrow: 0 };
   for (const [name, idx] of Object.entries(WEAPONS)) {
     assert.equal(weaponMinDamage(idx), MIN[name], `min ${name}`);
     assert.equal(weaponMaxDamage(idx), MAX[name], `max ${name}`);
@@ -62,14 +62,14 @@ test('weapons: verbatim DFU data pins - and the one condition pool WEAPON-POOL d
   assert.equal(c.isOneHanded, false);
   assert.equal(c.minDamage, 2); assert.equal(c.maxDamage, 18);
   assert.equal(c.weightInKg, 9.5);
-  // Bows (129/130, 2H): dmg 4-16 / 4-18; Daedric weights via the full
+  // Bows (129/130, 2H): dmg 5-17 / 5-19 (BAL-ARCHERY: +1); Daedric weights via the full
   // chain trunc(base*4) * 5 -> /4 -> half-even round -> /4:
   // 1kg -> 1.25kg, 1.5kg -> 2kg.
   const sb = buildWeapon(WEAPONS.Short_Bow, WEAPON_MATERIALS.Daedric);
   const lb = buildWeapon(WEAPONS.Long_Bow, WEAPON_MATERIALS.Daedric);
   assert.equal(sb.isOneHanded, false); assert.equal(lb.isOneHanded, false);
-  assert.equal(sb.minDamage, 4); assert.equal(sb.maxDamage, 16);
-  assert.equal(lb.minDamage, 4); assert.equal(lb.maxDamage, 18);
+  assert.equal(sb.minDamage, 5); assert.equal(sb.maxDamage, 17);
+  assert.equal(lb.minDamage, 5); assert.equal(lb.maxDamage, 19);
   assert.equal(sb.weightInKg, 1.25); assert.equal(lb.weightInKg, 2);
   // Arrow (131): ammunition - no damage of its own, 0.25kg at any tier
   // (the quarter-kg chain collapses: half-even round(1.25) = 1).

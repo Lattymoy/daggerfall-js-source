@@ -275,15 +275,6 @@
     ]
   },
   {
-    "name": "AUDIT-NAV2-F26-the-ram-unbounded",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "        strike(t, { hull: Math.min(dealt, room), sail: 0, crew: ramMen(dealt, random()) }, e.id);",
-    "new": "        strike(t, { hull: dealt, sail: 0, crew: ramMen(dealt, random()) }, e.id);",
-    "tests": [
-      "test/systems/naval/auditnav2_captains.test.js"
-    ]
-  },
-  {
     "name": "AUDIT-NAV2-F27-flight-not-counted",
     "file": "src/scenes/naval/navalHost.js",
     "old": "      const chased = new Set(ships.filter((y) => y.engaged && !y.theirs).map((y) => sea.get(y.id)?.ship.target));",

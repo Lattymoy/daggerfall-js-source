@@ -502,7 +502,7 @@
   {
     "name": "AUDITGF-R7-the-climb-floor",
     "file": "src/net/peer/peerGather.js",
-    "old": "export const PEER_GATHER_CUE_MS = 100;",
+    "old": "export const PEER_GATHER_CUE_MS = 75;",
     "new": "export const PEER_GATHER_CUE_MS = 150;",
     "tests": [
       "test/systems/audit_gatherfeel.test.js"

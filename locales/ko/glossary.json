@@ -413,5 +413,15 @@
  "unwagered (an Elite Breach run with no Wager)": "내기 없이",
  "By chance (Collections chip: a random roll)": "확률 획득",
  "the sprout (the new account's glyph)": "새싹 문양",
- "Offered by {giver} (a questline's giver, last in the sentence)": "의뢰인: {giver}"
+ "Offered by {giver} (a questline's giver, last in the sentence)": "의뢰인: {giver}",
+ "Lockpick": "자물쇠 따개",
+ "pin": "핀",
+ "binding pin": "걸리는 핀",
+ "spool": "스풀 핀",
+ "false set": "가짜 고정",
+ "Auto attempt": "자동 시도",
+ "Gentle work": "간편 작업",
+ "Lockpicking": "자물쇠 따기",
+ "Glint": "반짝임",
+ "Outline": "윤곽선"
 }

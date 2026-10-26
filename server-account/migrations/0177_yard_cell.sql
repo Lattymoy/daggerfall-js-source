@@ -3,7 +3,7 @@
 --   npx wrangler d1 migrations apply daggerfall-accounts --remote
 --
 -- Applied exactly once through the `d1_migrations` ledger, which the deploy runs (ACC1-CI). Deploy this service
--- (acct195) with the site; the relay redeploys as world269 (net/homeLaw.js is in its import graph).
+-- (acct196) with the site; the relay redeploys as world269 (net/homeLaw.js is in its import graph).
 --
 -- YARD-SNAP (0136) kept each town's yard rows as one row, and YARD-TOWN (0175) bounded a town at 6,500 pieces because
 -- that is what one D1 row holds - a storage limit shown to players as a rule. Every write rebuilt the whole town and

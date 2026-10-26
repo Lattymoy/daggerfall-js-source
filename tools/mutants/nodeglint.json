@@ -452,8 +452,8 @@
   {
     "name": "NODE-GLINT-the-clock-unwrapped",
     "file": "src/render/nodeGlint.js",
-    "old": "pass.draw(list, renderer, t % 60, reduced(t))",
-    "new": "pass.draw(list, renderer, t, reduced(t))",
+    "old": "pass.draw(list, renderer, t % 60, reduced(t), look())",
+    "new": "pass.draw(list, renderer, t, reduced(t), look())",
     "tests": [
       "test/scenes/nodeglint.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "NODE-GLINT-reduced-motion-unread",
     "file": "src/render/nodeGlint.js",
-    "old": "pass.draw(list, renderer, t % 60, reduced(t))",
-    "new": "pass.draw(list, renderer, t % 60, false)",
+    "old": "pass.draw(list, renderer, t % 60, reduced(t), look())",
+    "new": "pass.draw(list, renderer, t % 60, false, look())",
     "tests": [
       "test/scenes/nodeglint.test.js"
     ]

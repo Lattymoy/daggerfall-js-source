@@ -605,7 +605,7 @@ test('AUDIT GATHER-FEEL R5/R7/F4: the tables the record states, by their numbers
   assert.equal(GATHER_SOUND.THRASH_SLIP_GAIN, 1.35);
   assert.ok(GATHER_SOUND.THRASH_SLIP_GAIN > 1, 'slipping: louder');
   assert.deepEqual([GATHER_SOUND.PLIP_MIN_S, GATHER_SOUND.PLIP_MAX_S, GATHER_SOUND.PITCH_JITTER], [2.2, 5.5, 0.05]);
-  assert.equal(PEER_GATHER_CUE_MS, 1000 / POSE_HZ, 'one pose at the top rate - no floor of the climb\'s');
+  assert.equal(PEER_GATHER_CUE_MS, 0.75 * 1000 / POSE_HZ, 'three quarters of a pose at the top rate - no floor of the climb\'s; PIN MOVED (AUDIT GATHER F8): a whole pose dropped honest beats measured a frame early');
   assert.match(src('src/scenes/mineHost.js'), /\* @param \{\{ dungeon: number, day: number, climate: number, confirmed\?: boolean,\n \*   wall: \(marker: number, bearing: number\) => \(number\[\]\|null\) \}\} p\n \*\/\nexport function standDungeonVeins\(/, 'its doc on it, its parameters typed');
 });
 

@@ -6,7 +6,7 @@
 // bound was the size of one D1 row, not a rule of the game; every write rebuilt the whole town, and every caller read
 // the whole town every minute.
 //
-// A CELL is one RMB block of one town (net/yardCellLaw.js yardCellOf). Migration 0176 keeps, for each cell that ever
+// A CELL is one RMB block of one town (net/yardCellLaw.js yardCellOf). Migration 0177 keeps, for each cell that ever
 // stood a yard piece:
 //   home_yard_cell_ver   its version, moved by the database on every yard row written (triggers), and `built`, the
 //                        version its row was last built at - a partial index on `ver <> built` is how the clock finds
@@ -39,7 +39,7 @@ export const cellRowsSql = (/** @type {string} */ town, /** @type {string} */ ce
     ORDER BY building_key, placed_at, id LIMIT ${YARD_CELL_PIECES_MAX}`;
 
 /** The build's shape: its read whole and its bound. A deploy that changes it marks every cell stale in its own
- *  migration (`UPDATE home_yard_cell_ver SET built = 0`), so the clock finds them by the index. Migration 0176 builds
+ *  migration (`UPDATE home_yard_cell_ver SET built = 0`), so the clock finds them by the index. Migration 0177 builds
  *  every cell in this shape; its literal is pinned to this. */
 export const YARD_CELL_SHAPE = shapeOf('yard cell: [columns...] each, NULL past the bound', cellRowsSql('?', '?'), KEPT_BOARD_MAX_BYTES);
 

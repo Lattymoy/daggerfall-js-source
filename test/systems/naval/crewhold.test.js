@@ -1,7 +1,7 @@
 // CREW-HOLD and GALLEON-WEIGHT (2026-10-06, Mac: "Crew depletes too fast"; "The galleon has less cannons, so it needs a
 // buff to account for that") - A PLAYER'S CREW STANDS TWICE WHAT A CAPTAIN'S DOES, AND A PLAYER'S GALLEON THROWS SIX GUNS'
 // WEIGHT FROM HER FIVE PORTS (bible/03-World/Naval-Combat.md). The men every blow on a player's ship takes - a ball's, her
-// fire's, a galley's ram's, the serpent's - over PLAYER_CREW_TOUGHNESS, the captains' crews as they were; her broadside's
+// fire's, the serpent's - over PLAYER_CREW_TOUGHNESS, the captains' crews as they were; her broadside's
 // weight of metal from her guns to each ball's hit and the captains' reckoning of her fire, the captains' galleons as they
 // were tuned. Each pin failed on the build before it. tools/mutants/crewhold.json.
 import { test } from 'node:test';
@@ -10,7 +10,6 @@ import { readFileSync } from 'node:fs';
 
 import { SHIP_TOUGHNESS, PLAYER_CREW_TOUGHNESS, playerBatteryWeight, shipBatteryWeight, setShipStanding, setGalleonStanding, hullBuild, MOD_SMALL_SHIP_BUILD, GUNS, HULL, SHIP_CLASSES, batteryOf, classById } from '../../../src/systems/naval/navalShips.js';
 import { ballMen, playerMen, shotDamage, createShipDamage, HOLED_BONUS, WATERLINE_BAND } from '../../../src/systems/naval/navalDamage.js';
-import { ramMen, RAM_A_MAN } from '../../../src/scenes/naval/navalHost.js';
 import { fightingPower, classPower, strikeTime, hitShare, layMin, rangeOfHull, TURN_PER_VOLLEY } from '../../../src/systems/naval/navalAI.js';
 import { volleyLaunches, reloadSeconds } from '../../../src/systems/naval/navalGunnery.js';
 import { createShotField } from '../../../src/systems/naval/navalShots.js';
@@ -22,7 +21,7 @@ const ROLLS = Array.from({ length: 1000 }, (_, i) => (i + 0.5) / 1000);
 const mean = (f) => ROLLS.reduce((sum, r) => sum + f(r), 0) / ROLLS.length;
 const near = (a, b, eps, msg) => assert.ok(Math.abs(a - b) < eps, `${msg ?? ''} ${a} against ${b}`);
 
-test('CREW-HOLD the law: a player\'s crew stands twice what a captain\'s does - a ball\'s, a ram\'s and the serpent\'s men over PLAYER_CREW_TOUGHNESS on her ship, over SHIP_TOUGHNESS on a captain\'s, whole men on the roll; her hull and canvas the gun\'s either way (mutants: the toughness, the ball\'s, the ram\'s)', () => {
+test('CREW-HOLD the law: a player\'s crew stands twice what a captain\'s does - a ball\'s and the serpent\'s men over PLAYER_CREW_TOUGHNESS on her ship, over SHIP_TOUGHNESS on a captain\'s, whole men on the roll; her hull and canvas the gun\'s either way (mutants: the toughness, the ball\'s)', () => {
   assert.equal(PLAYER_CREW_TOUGHNESS, 2 * SHIP_TOUGHNESS);
   for (const men of [1, 2, 3, 4]) {
     near(mean((r) => ballMen(men, r)), men / SHIP_TOUGHNESS, 2e-3, `a captain's crew, ${men} men a blow:`);
@@ -38,8 +37,6 @@ test('CREW-HOLD the law: a player\'s crew stands twice what a captain\'s does - 
       assert.deepEqual([mine.hull, mine.sail], [theirs.hull, theirs.sail], `${gun} ${zone}: her timbers and canvas as a captain's`);
     }
   }
-  near(mean((r) => ramMen(200, r, PLAYER_CREW_TOUGHNESS)), 200 / RAM_A_MAN / PLAYER_CREW_TOUGHNESS, 2e-3, 'a galley\'s ram on her');
-  near(mean((r) => ramMen(200, r)), 200 / RAM_A_MAN / SHIP_TOUGHNESS, 2e-3, 'a ram on a captain\'s, as it was');
 });
 
 test('CREW-HOLD her fire: the same sixteen fires burned out take a captain\'s crew ten men and a player\'s five - her timbers and canvas alike (mutants: the player\'s wound)', () => {
@@ -146,12 +143,11 @@ test('GALLEON-WEIGHT the captains\' reckoning: a player\'s galleon makes a ship 
   assert.equal(strikeTime(classPower(classById('pirateBrig')), target), strikeTime(fightingPower({ ...classPower(classById('pirateBrig')) }), target), 'a captain\'s as tuned');
 });
 
-test('CREW-HOLD and GALLEON-WEIGHT on the host, by source: a captain\'s ball on my boat takes her men as a player\'s crew stands them and strikes with its weight; a galley\'s ram on my boat; the serpent\'s blow through playerMen; my volley and a peer\'s own boat\'s carry the weight, a captain\'s none (SHIPS-2: but a captain\'s carrack\'s, the mod\'s seven); my boat\'s measure a player\'s (mutants: each seam)', () => {
+test('CREW-HOLD and GALLEON-WEIGHT on the host, by source: a captain\'s ball on my boat takes her men as a player\'s crew stands them and strikes with its weight; the serpent\'s blow through playerMen; my volley and a peer\'s own boat\'s carry the weight, a captain\'s none (SHIPS-2: but a captain\'s carrack\'s, the mod\'s seven); my boat\'s measure a player\'s (mutants: each seam)', () => {
   const n = src('scenes/naval/navalHost.js');
   assert.match(n, /const hurt = dueOnHull\(shotDamage\(gun, zone, \{ braced: st\.guns\.braced, roll: random\(\), tough: PLAYER_CREW_TOUGHNESS, weight: e\.weight \}\)\);/, 'a ball on my boat');   // PIN MOVED (SEA-SET): under the Tidemail's Captain's Due
   assert.match(n, /const hurt = shotDamage\(gun, zone, \{ roll: random\(\), weight: e\.weight \}\);/, 'a ball on a captain\'s ship: her men a captain\'s');
   assert.match(n, /hull: gun\.hull \* \(e\.weight \?\? 1\) \* \(0\.85 \+ 0\.3 \* random\(\)\)/, 'a ball in the serpent');
-  assert.match(n, /st\.damage\.apply\(\{ hull: Math\.round\(dealt \* captainsDue\(\)\.hull\), sail: 0, crew: ramMen\(dealt, random\(\), PLAYER_CREW_TOUGHNESS\) \}, clock\);/, 'a galley\'s ram on my boat');   // PIN MOVED (SEA-SET): her hull under the Tidemail's Captain's Due, her men as the ram takes them
   assert.match(n, /const men = playerMen\(hurt\.crew \?\? 0, random\(\)\);\n\s+const change = st\.damage\.apply\(\{ \.\.\.hurt, crew: men,/, 'the serpent\'s blow');
   // SHIPS-2: by navalShips.js shipBatteryWeight - a player's ship's weight, a captain's carrack's the mod's seven
   assert.match(n, /const weight = shipBatteryWeight\(hull, solution\.side, isMine\(shooter\)\);[^\n]*\n\s+const launches = volleyLaunches\([^\n]*\{ skill, carry: pose\.velocity, weight \}\);/, 'my volley');

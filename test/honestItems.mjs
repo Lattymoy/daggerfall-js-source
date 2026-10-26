@@ -32,6 +32,7 @@ async function load(path) {
 
 const LOOT = await load('../src/systems/loot/loot.js');
 const LR = await load('../src/systems/loot/lootRarity.js');
+const LCURSE = await load('../src/systems/loot/lootCurse.js');   // AUDIT MAKER-RARE A1: the temple's lift, after the item maker
 const TECH_ROSTER = await load('../src/combat/technique/techniqueRoster.js');   // TECH1: a piece's technique family
 const PREFS = await load('../src/systems/uiPrefs.js');
 const SIGIL = await load('../src/systems/sigil/sigil.js');
@@ -240,7 +241,7 @@ function craftMagicDef(records) {
  *  magic items, one row each, and the twenty-three artifacts, as readMagicDef answers them. PIN MOVED (INT1's audit,
  *  2026-10-09): the sweep minted its magic from sixty-four invented records of one to three rows of any kind - shapes no
  *  MAGIC.DEF holds, which the item law now proves against DFU's table. */
-function fakeMagicTemplates() {
+export function fakeMagicTemplates() {
   return MAGIC_DEF.readMagicDef(craftMagicDef(DFU_MAGIC_ITEMS));
 }
 
@@ -975,6 +976,32 @@ function runItemMaker(run, seedsOf, S, crafted, minted) {
       const item = copyItem(base);
       if (!makerTakes(item)) continue;
       one(makerSession(item, seeded(hashOf(`jewel${n++}`)), { souls, owner: newPlayer(), picks: 6 }));
+    }
+  });
+  // MAKER-RARE (FIELD BUGS 2026-10-26): an identified Rare - a loot door's or a Masterwork - taken with the rows its ladder
+  // rolled kept and riding free (enchanting.js rareKeeps). AUDIT MAKER-RARE C3: a spread of them and EVERY cursed one the
+  // doors minted (a spread alone held three); A1: and each cursed piece the maker made, its curse lifted at the temple after
+  // - a bound soul's forced row of the drawback's kind once took the lift's place, and the law held the piece
+  const enchantedCursed = [];
+  run('enchanting.applyEnchantments (an identified Rare, found, cursed or a Masterwork, its ladder\'s rows kept)', (one) => {
+    let n = 0;
+    const rares = [...minted, ...crafted.map((c) => c.item)].filter((it) => it?.rarity === 'rare');
+    for (const base of [...spread(rares.filter((it) => !LR.isCursed(it)), 400), ...rares.filter((it) => LR.isCursed(it))]) {
+      const item = copyItem(base);
+      item.isIdentified = true;   // the Mages Guild's identify, first
+      if (!makerTakes(item)) continue;
+      const made = makerSession(item, seeded(hashOf(`rare${n++}`)), { souls, owner: newPlayer(), picks: 6 });
+      if (!made) continue;
+      one(made);
+      if (LR.isCursed(made)) enchantedCursed.push(made);
+    }
+  });
+  run('lootCurse.liftCurse (a cursed Rare the item maker enchanted, lifted after)', (one) => {
+    for (const made of enchantedCursed) {
+      const owner = newPlayer();
+      const item = copyItem(made);
+      owner.items.push(item);
+      if (LCURSE.liftCurse(item, owner)?.ok) one(item);
     }
   });
   run('enchanting.applyEnchantments (found Magic and common pieces the window lists)', (one) => {

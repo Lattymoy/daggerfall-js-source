@@ -247,6 +247,7 @@ export const MAGIC_ITEMS_ENUM_TEMPLATE = 0;
 import { BOOK_TEMPLATE, createRegularMagicItem, createRandomPotion, randomlyAddPotionRecipe, getMagicItemTemplates, createRandomWeapon, createRandomArmor, createRandomClothing } from './loot/loot.js';   // G4: the guild shelves' two minters (AUDIT 26 F129/F130: + the recipe arm and the registry)
 import { SPELLBOOK_TEMPLATE_INDEX } from './spell/spellMaker.js';   // G4: one home for MiscItems 132
 import { restItemsStock } from './rest/restItems.js';   // REST6: the Bedroll, the Ember Jar, Firewood and the draughts
+import { isLockpick, ensureEndlessLockpicks, restockLockpicks } from './lockpick/lockpickItem.js';   // LOCKPICK: the counter's endless picks
 import { provisionsStock, campfireStock, createSurvivalItem, isSurvivalItem, isCampfireKit, TEMPLATE as SURVIVAL_TEMPLATE, ensureEndlessProvisions, ENDLESS_RATIONS_STACK } from './survival/items.js';   // SURV2: the general store's provisions shelf   // REST2: and online the Campfire alone, the arc Off
 import { sharedClockOn } from './worldTick.js';
 import { healingShelfCount, mintHealingPotion } from './healingSupply.js';   // POTION-COMMON: the shelf's Potions of Healing
@@ -318,7 +319,7 @@ export const stockSearched = (container, today) => Number.isFinite(container?.op
  *  same with campfires"): the rows a shop never sells out of - the Materials Bag and the Campfire. ENDLESS PROVISIONS
  *  (2026-10-04, Mac: "rations should be available in stores where it makes sense and unlimited as well"): and Rations. */
 const isRations = (item) => isSurvivalItem(item) && item.templateIndex === SURVIVAL_TEMPLATE.Rations;
-export const isEndlessStock = (item) => isBagItem(item) || (isSurvivalItem(item) && isCampfireKit(item)) || isRations(item);
+export const isEndlessStock = (item) => isBagItem(item) || (isSurvivalItem(item) && isCampfireKit(item)) || isRations(item) || isLockpick(item);   // LOCKPICK: and the counter's picks
 /** ENDLESS-STOCK: a purchase's endless rows put back on the shelf they were bought from - a fresh one for each (neither
  *  stacks), minted as the shelf mints it (worldModes.js commitTrade's Buy). Only a purchase restocks: a row taken from a
  *  closed shop's shelf is stolen, and stays gone. Online alone; and online no shop buys one back (shopBuysItem), so the only
@@ -329,6 +330,7 @@ export function restockEndless(shelfItems, bought, buildingType = null) {
   let n = restockArrows(shelfItems, bought, buildingType);
   // AUDIT ENDLESS-STOCK F4: online alone, as the bag is - offline a shelf sells out as Daggerfall's does
   if (!isOnlinePage()) return n;
+  n += restockLockpicks(shelfItems, (bought ?? []).filter(isLockpick).reduce((k, it) => k + Math.max(1, Math.trunc(it.stackCount ?? 1)), 0));   // AUDIT LOCKPICK B4: what the purchase took
   for (const it of bought ?? []) {
     if (!isEndlessStock(it)) continue;
     if (isRations(it)) {
@@ -338,6 +340,7 @@ export function restockEndless(shelfItems, bought, buildingType = null) {
       else { const r = createSurvivalItem(SURVIVAL_TEMPLATE.Rations, { stackCount: ENDLESS_RATIONS_STACK }); if (r) { addItem(shelfItems, r); n++; } }
       continue;
     }
+    if (isLockpick(it)) continue;   // LOCKPICK: stood back above, by what the purchase took
     const fresh = isBagItem(it)
       ? mintCondition(setItemFields({ group: 'UselessItems2', templateIndex: BAG_TEMPLATE }))
       : createSurvivalItem(SURVIVAL_TEMPLATE.Campfire);
@@ -548,6 +551,10 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
   // every tier, Climates & Calories Off and offline too - after DFU's draws, from no roll. Online a purchase stands them
   // again (restockEndless); offline they sell out until the day's restock, as the rest of the shelf does (ENDLESS-STOCK F4)
   if (shelfIndex === 0 && (buildingType === BUILDING_TYPES.GeneralStore || buildingType === BUILDING_TYPES.PawnShop)) ensureEndlessProvisions(items);
+  // LOCKPICK (bible/06-Systems/Lockpicking.md section 2): and a stack of lockpicks - a lock needs one - from no roll, so DFU's
+  // draws above stand as they were; online a purchase stands it whole again (restockEndless), offline it sells out until the
+  // day's restock
+  if (shelfIndex === 0 && (buildingType === BUILDING_TYPES.GeneralStore || buildingType === BUILDING_TYPES.PawnShop)) ensureEndlessLockpicks(items);
   // SHOP-ARROWS (above): a quiver on the counter of every shop that sells weapons - after DFU's draws, from no roll; minted
   // as the shelf mints its own (CreateWeapon's arrow arm, its stack roll answered by a constant), so the two are one stack
   // ENDLESS-ARROWS: a General Store's a full quiver at any quality (merged into DFU's drawn arrows as SHOP-ARROWS' is)

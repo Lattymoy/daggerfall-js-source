@@ -7790,7 +7790,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const col = modes?.sailingCabin ? collider : csaModeCollider();   // CABIN-HULL (FIELD BUGS 2026-10-03b, Regi: "i got into my boats interior and then got out and i'm in the void"): below deck the fleet stays afloat OUTSIDE (keepExteriorBoats) - in the street's collider, never the room's. The cabin is built at her own root, so her decks stood in the room as floors and walls (the ladder's box and the helm's rows within reach of a press), and the deck the way out lands on had gone with the room
     const want = new Set();
     const peers = (modes?.mode ?? 'exterior') === 'exterior' || modes?.sailingCabin ? csa.peerBoats : [];   // CABIN-HULL: and every peer's, below deck as on deck; FIELD BUGS 2026-10-01b (Mac: "Players aren't colliding with other players' boats and can't stand on board"): ANOTHER PLAYER'S BOAT STANDS IN MY COLLIDER AS MINE DOES - every one that stands, her hull and her deck's furniture, aboard her or not. CSA-K stood one only while I was aboard it (PR-WAGON1's "Others' wagons don't block", which Mac's word sets aside for boats): her hull was walked and swum through and her deck no floor to step, climb or come up onto (scenes/comeSailAway/comeSailAwayAboard.js: standing on her is aboard her). THE FOUR HOSTS: on the street alone, this host's - a building's frame (worldModes.js) and a dungeon's (dungeonContext.js) stand no one's boat, and the standalone street (exterior.js) has no peers
-    for (const boat of peers.length ? [...csaColliderBoats(), ...peers] : csaColliderBoats()) {   // NAV-H: and the sea's ships near enough to board and to ram
+    for (const boat of peers.length ? [...csaColliderBoats(), ...peers] : csaColliderBoats()) {   // NAV-H: and the sea's ships near enough to board
       if (!boat.GameObject?.activeSelf) continue;
       const id = csaBoatId(boat);
       let i = 0;
@@ -8389,7 +8389,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     hudText: (text, seconds) => townTalk.say(text, seconds),
     wayScale: (underSail) => naval?.wayScale(underSail) ?? 1,   // AUDIT NAV1 (the helm): her hurts in her way - the canvas left, a wreck's oars
     sailRefused: () => naval?.sailRefused() ?? null,   // ...and no sail on a wreck or a rig shot away, said once
-    brake: () => naval?.brake() ?? 0,   // ...and a heave-to's brake beside a struck ship
+    brake: () => naval?.brake() ?? 0,   // ...and BOARD-MAGNET's: her way off while the grapples haul a ship alongside
     // PEACE-WAY (systems/comeSailAway/peaceWay.js): her way out of a fight - no enemy near (this runtime's own word, below),
     // no boarding, no broadside laid
     peaceWay() { return (this._peace ??= heldPeaceWay(() => peaceWayOf({ enemies: !!this.enemiesNearby() || !!naval?.threats?.().some((t) => t.chasing), boarding: !!naval?.boarding, aiming: !!naval?.aiming })))(); },   // held a PEACE_HOLD_S - AUDIT 2: a ship that has sighted me and comes on is a fight past HOSTILE_NEAR_M too (a raider's lookout is 1,000 m: I outran her at 1.15)
@@ -8678,7 +8678,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  when it opened. */
   let _profPicker = null;
   const profChoose = (rows, pick) => {
-    if (!listPickerArtLoaded() || _profPicker) return false;
+    if (!listPickerArtLoaded() || (_profPicker && gamePaused())) return false;   // AUDIT GATHER F4: a picker the slot replaced (the death screen over it) never answered - with no window up it is gone, not open
     const close = () => { if (_profPicker) { modes?.closeWindow?.(_profPicker); _profPicker = null; } };
     const win = new ListPickerWindow({ backdrop: 'none', items: rows, onPick: (i) => { close(); pick(i); }, onCancel: close });
     if (!modes?.mountWindow?.(win)) return false;
@@ -33213,7 +33213,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           paused: _overlayHeld,
         });
         // GUN-HOLD: Activate while the guns are laid holds fire (navalHost.js holdFire, the bow's own cancel) - before the
-        // click casts a readied spell or the helm's ladder boards, heaves to or opens the yard
+        // click casts a readied spell or the helm's ladder boards or opens the yard
         const useEdge = !travelView?.active && pressed(latch.edge, keys, 'Interact');   // AUDIT OW5 V2: never from under the travel view - its ray is the hidden head's (a door took the traveller inside, a townsperson opened talk); KB1: the Interact ACTION (E by default, Mac's call) - it was a raw `KeyE` beside DFU's E-AbortSpell, and one press did both
         // AUDIT NAV2 F31: and Interact - the readout's own "E: hold fire" - holds it too, spent before a patch or the ladder:
         // E went to the ladder, whose naval arm grappled a struck ship in reach with the guns still laid, and the release
