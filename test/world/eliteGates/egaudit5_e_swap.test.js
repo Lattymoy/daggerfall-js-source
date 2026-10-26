@@ -66,7 +66,7 @@ function rig(workerFactory) {
   const wm = new Function('createEgGroundLook', 'host', 'renderer', 'isEgHall', 'createEgSwap', 'identity', 'realmArt', 'SD_REALM_ARCHIVE', 'buildEgCircleModel', 'egCircleColliderTris', 'egCircleLights', 'egCircleSpecs', 'egGateParts', 'EG_TEXT', 'egBandOfCircle', 'egBandArt', 'egBandArchive', 'buildEgLookModel', 'createEgOccluders', 'EG_BAND_RECORDS', 'egBeatTellDown', 'egSpecGive', 'st',
     `let mode = 'dungeon', dungeonLoc = st.loc, dungeonCtx = null;\nconst wm = { get mode() { return mode; }, get dungeonLoc() { return dungeonLoc; }, get dungeonCtx() { return dungeonCtx; } };\n${src.replace('const egSwap = createEgSwap();', 'const egSwap = createEgSwap({ workerFactory: st.worker });')}\nreturn { standEgHall, egPrebuild, egSwapCircle, egBandsDown, set ctx(c) { dungeonCtx = c; }, set mode(m) { mode = m; } };`)(
     createEgGroundLook, { egGateOpen: () => false }, renderer, (l) => !!l?.egBreach, createEgSwap, identity, realmArt, SD_REALM_ARCHIVE, buildEgCircleModel, egCircleColliderTris, egCircleLights, egCircleSpecs, egGateParts, EG_TEXT, egBandOfCircle, paintSpy, egBandArchive, buildEgLookModel, createEgOccluders, EG_BAND_RECORDS, egBeatTellDown, giveSpy, st);
-  const ctx = { dynamicDraws: [], collider: new Collider(() => -Infinity), addActivationNamer() {}, addTeardown() {}, egRecircle() {} };
+  const ctx = { dynamicDraws: [], collider: new Collider(() => -Infinity), addActivationTargets() {}, addActivationNamer() {}, addTeardown() {}, egRecircle() {} };
   wm.ctx = ctx;
   return { wm, ctx, ups, painted, given, st };
 }

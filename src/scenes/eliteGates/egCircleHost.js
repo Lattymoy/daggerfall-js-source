@@ -31,6 +31,7 @@ export function createEgCircleHost({ renderer, host, wm }) {
    *  Redoubt's way home a target the press takes. EG-ZN: the circle's occluders handed to their dither pass with it.
    *  EG-ZP: and the whole circle let go with the context it stands in (egCircleDown). */
   const EG_BUCKET = 'eg:hall';
+  const NO_TARGETS = Object.freeze([]);   // a hall with no spoils on its floor stands no targets
   let _egMesh = null, _egMeshKey = '', _egArt = false, _egLamps = [], _egLookMesh = null;
   const _egBands = new Set();   // EG-G2: the bands whose dress is up this breach (EG-ZN: freed at its end - egBandsDown)
   /** AUDIT EG V (L6-9): the records of each band's dress up this breach, by band - a band is whole once every one of
@@ -144,6 +145,13 @@ export function createEgCircleHost({ renderer, host, wm }) {
       const parts = egGateParts(spec);
       if (parts) egGateStand(ctx, spec.h, parts);   // EG-H3: the one gate stand (the swap's too)
     }
+    // FIELD BUGS 2026-10-26 (a player: "I can't pick up any of the loot, and I have to leave the breach and claim 20+
+    // pieces through the mailbox"): A REDOUBT'S SPOILS ON THE HALL'S FLOOR, PRESSED - the Hour's way (worldModes.js
+    // standSdRealm), the court's and the Ketch's. EG-E threw them into the Hour's pool and routed the press there
+    // (world.js floorPool), but no hall stood their targets, so the ray never met one and every piece lay until the
+    // next Redoubt's throw or the way out mailed it (LOST-SPOILS). The swap keeps this context, and these with it.
+    ctx.addActivationTargets(() => host.spoilTargets?.() ?? NO_TARGETS);
+    ctx.addActivationNamer((key) => (typeof key === 'string' && key.startsWith('spoil') ? host.spoilName?.(key) ?? null : null));
     ctx.addActivationNamer((key) => (typeof key === 'string' && key.startsWith('exit:') ? { title: EG_TEXT.wayHome } : null));   // the Redoubt's way home is the level's one exit door, stood by the outer host (before the dungeon exit's own namer)
   }
   /** EG-LOOK: THE CIRCLE'S FRAME - its portcullises (egGatesFrame), and its ruin and its band's wreck placed about `eye`

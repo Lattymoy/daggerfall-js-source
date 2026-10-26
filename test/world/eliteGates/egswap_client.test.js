@@ -162,7 +162,7 @@ function swapRig({ workerFactory = () => syncWorker() } = {}) {
   const dynamicDraws = [];
   const dc = new Function('createEgSpan', 'egSpanCollider', 'renderer', 'audio', 'dfLocation', 'dynamicDraws', 'collider', 'opts', '_egHall',
     `${dcSrc}\nreturn { egSpanRide, egRecircle, get egSpan() { return egSpan; } };`)(createEgSpan, egSpanCollider, renderer, null, loc, dynamicDraws, collider, { sdClock: () => 10 }, true);
-  const ctx = { dynamicDraws, collider, addActivationNamer() {}, egRecircle: (r) => dc.egRecircle(r) };
+  const ctx = { dynamicDraws, collider, addActivationTargets() {}, addActivationNamer() {}, egRecircle: (r) => dc.egRecircle(r) };
   const host = { egGateOpen: () => false };
   // PIN MOVED (EG-ZN): the circle's occluders' dither pass stands in the same source (scenes/eliteGates/egOcclude.js), and the band
   // dress's records it frees at the breach's end

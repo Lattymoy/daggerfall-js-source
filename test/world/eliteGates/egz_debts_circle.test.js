@@ -50,7 +50,7 @@ const TD_RUN = lineOf(DESTROY, (l) => l.includes('_teardowns.splice(0)'), 'the r
 
 /** A context as the dungeon host builds one, for what the circle reads of it: its draws, its collider, its namers, and
  *  its teardowns run by its own destroy(). */
-const contextOf = () => new Function('Collider', 'console', `${TD_DECL}\nconst dynamicDraws = [], collider = new Collider(() => -Infinity);\nreturn { dynamicDraws, collider, addActivationNamer() {},\n${TD_ADD}\ndestroy() {\n${TD_RUN}\n} };`)(Collider, console);
+const contextOf = () => new Function('Collider', 'console', `${TD_DECL}\nconst dynamicDraws = [], collider = new Collider(() => -Infinity);\nreturn { dynamicDraws, collider, addActivationTargets() {}, addActivationNamer() {},\n${TD_ADD}\ndestroy() {\n${TD_RUN}\n} };`)(Collider, console);
 
 /** The mode machine's circle, its own source, over a counting renderer that logs every free and upload in order and
  *  checks, at each free, that the circle's slots are already empty. */

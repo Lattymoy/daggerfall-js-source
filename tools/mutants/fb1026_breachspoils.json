@@ -1,0 +1,29 @@
+[
+  {
+    "name": "BREACH-SPOILS-the-targets-not-stood",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "    ctx.addActivationTargets(() => host.spoilTargets?.() ?? NO_TARGETS);\n",
+    "new": "",
+    "tests": [
+      "test/scenes/eliteGates/fb1026_breachspoils.test.js"
+    ]
+  },
+  {
+    "name": "BREACH-SPOILS-the-namer-not-stood",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "    ctx.addActivationNamer((key) => (typeof key === 'string' && key.startsWith('spoil') ? host.spoilName?.(key) ?? null : null));\n",
+    "new": "",
+    "tests": [
+      "test/scenes/eliteGates/fb1026_breachspoils.test.js"
+    ]
+  },
+  {
+    "name": "BREACH-SPOILS-the-namer-names-every-key",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "typeof key === 'string' && key.startsWith('spoil') ? host.spoilName?.(key) ?? null : null",
+    "new": "typeof key === 'string' ? host.spoilName?.(key) ?? { title: key } : null",
+    "tests": [
+      "test/scenes/eliteGates/fb1026_breachspoils.test.js"
+    ]
+  }
+]

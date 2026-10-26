@@ -85,7 +85,7 @@ function hostRig() {
   const region = between(EC, "  const EG_BUCKET = 'eg:hall';", '  // ── EG-H3 end');
   const pass = between(WM, '  function egOccludeFrame(mwv, dt) {', '  /** EG-PLAY: A BODY STOOD ELSEWHERE IN THE CIRCLE');
   const loc = { egBreach: '0123456789abcdef', egSeed: STACKS.seed, egCircle: egCircleOfHall(STACKS.h), egGeo: 0, dungeon: { recordElement: { header: { locationId: 0x7ffff300 } } } };
-  const ctx = { dynamicDraws: [], collider: new Collider(() => -Infinity), addActivationNamer() {}, texRemap: null };
+  const ctx = { dynamicDraws: [], collider: new Collider(() => -Infinity), addActivationTargets() {}, addActivationNamer() {}, texRemap: null };
   const st = { mode: 'dungeon', witness: false, feet: [0, 0, 0] };
   const host = { egGateOpen: () => false, egWitness: () => st.witness };
   const player = { bodyFeetAt: () => st.feet, feetAt: () => st.feet };
