@@ -18,7 +18,7 @@ import { toColor32 } from '../formats/color32Order.js';
 /** The facades whose ramp 1 is glass. */
 export const LIT_FACADES = Object.freeze(['facadeOchre', 'facadeBrick', 'facadeWhite', 'facadeStone', 'facadeTimber', 'groundShop'].map((k) => CAPITAL_ART[k]));
 /** The ramp a facade's glass is painted in (world/imperialArt.js: GLASS, its window's second ramp). */
-export const GLASS_RAMP = 1;
+export const FACADE_GLASS_RAMP = 1;
 let _masks = null;
 /** Each lit facade's glass (record -> { width, height, data }: the painting's rows, top first - white the glass). */
 function masks() {
@@ -36,7 +36,7 @@ function masks() {
     const { tone, w, h } = tones.get(record), data = new Uint8Array(w * h * 4);
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
       const v = tone(x, y);
-      if (Array.isArray(v) && v[1] === GLASS_RAMP) data.fill(255, (y * w + x) * 4, (y * w + x) * 4 + 4);
+      if (Array.isArray(v) && v[1] === FACADE_GLASS_RAMP) data.fill(255, (y * w + x) * 4, (y * w + x) * 4 + 4);
     }
     _masks.set(record, Object.freeze({ width: w, height: h, data }));
   }
