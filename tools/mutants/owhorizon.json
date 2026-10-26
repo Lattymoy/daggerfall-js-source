@@ -275,8 +275,8 @@
   {
     "name": "OWH-the-deck-carries-no-far",
     "file": "src/scenes/shared.js",
-    "old": "Object.assign(enhancedSky.cloudShadow, clouds.shadow, { far: farCoverSun() });",
-    "new": "Object.assign(enhancedSky.cloudShadow, clouds.shadow);",
+    "old": "Object.assign(enhancedSky.cloudShadow, cloudsShown.shadow, { far: farCoverSun() });",
+    "new": "Object.assign(enhancedSky.cloudShadow, cloudsShown.shadow);",
     "tests": [
       "test/render/owhorizon.test.js",
       "test/render/vc7b_shafts.test.js"

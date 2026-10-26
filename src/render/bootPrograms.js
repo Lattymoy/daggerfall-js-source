@@ -52,7 +52,7 @@ export function outdoorPasses(search) {
   const enhancedSky = isEnhanced() && skyDoor !== 'classic' && !!getPref('enhancedEnvironments');
   // scenes/shared.js:"const dynamicOn = enhancedLane && (skyDoor === 'dynamic' || (skyDoor === null && modSetting('dynamic-skies', 'Enabled')));"
   const dynamicSky = enhancedSky && (skyDoor === 'dynamic' || (skyDoor === null && !!modSetting('dynamic-skies', 'Enabled')));
-  // scenes/shared.js:"const clouds = enhancedLane && cloudsDoor !== 'off'"
+  // scenes/shared.js:"const cloudArrival = enhancedLane && cloudsDoor !== 'off'"
   const clouds = enhancedSky && pageParam('clouds', search) !== 'off';
   // scenes/world.js:"const labGrass = isEnhanced() && getPref('enhancedEnvironments') && grassDensity > 0 && pageParam('grass') !== 'off'"
   const grass = isEnhanced() && !!getPref('enhancedEnvironments') && Number(getPref('grassDensity')) > 0 && pageParam('grass', search) !== 'off';

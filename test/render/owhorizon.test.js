@@ -257,7 +257,7 @@ test('OW-HORIZON the host\'s wiring: the fog row and the lens through the view\'
   assert.equal((r.match(/gl\.getUniformLocation\([^,]+, 'uCloudShadowFar'\)\]/g) ?? []).length, 6, 'every program\'s pair a triple - the terrain, the mesh, the character, the flats, the decal and the ground\'s snow');
   assert.match(r, /cloud: \[u\('uCloudShadowMap'\), u\('uCloudShadowRect'\), u\('uCloudShadowFar'\)\],/, 'the water\'s too');
   const sh = rd('src/scenes/shared.js');
-  assert.match(sh, /Object\.assign\(enhancedSky\.cloudShadow, clouds\.shadow, \{ far: farCoverSun\(\) \}\);/);
-  assert.match(sh, /if \(!clouds\) return this\.sunFactor\(\);\s*\n\s*return farCoverSun\(\);/, 'the ring\'s dim and the deck\'s far one law');
+  assert.match(sh, /Object\.assign\(enhancedSky\.cloudShadow, cloudsShown\.shadow, \{ far: farCoverSun\(\) \}\);/);
+  assert.match(sh, /if \(!cloudsShown\) return this\.sunFactor\(\);\s*\n\s*return farCoverSun\(\);/, 'the ring\'s dim and the deck\'s far one law');
   assert.ok(RING_RIM_START < TV_HAZE_END);
 });
