@@ -400,7 +400,9 @@ test('MID-RING the stream\'s new pixel eases out of the middle ring\'s tint: sta
   assert.match(R, /gl\.uniform1i\(this\.tUTilemap, 2\);\n\s*this\._tFade = -1;/, 'the frame\'s block makes the next draw upload it again');
   // the build stamps it on the enhanced lane, the middle ring standing
   const P = readFileSync('src/scenes/pixelBuild.js', 'utf8');
-  assert.match(P, /if \(isEnhanced\(\) && !midRingDisabled\(\)\) stampPixelFade\(terrain, px, py, host\.state\.current, overworldTint\(maps\.getClimateIndex\(px, py\), host\.woods\.getHeightMapValue\(px, py\)\), performance\.now\(\)\);[^\n]*\n\s*if \(_building\.get\(key\) === made\) _building\.delete\(key\);[^\n]*\n\s*built\.set\(key, \{/, 'stamped as the build publishes, before the ledger is handed over (BUILD-FAIL1\'s two lines kept together)');
+  // PIN MOVED (IC-SWAP-BEHIND, scenes/swapBehind.js): a view swapped in from behind one that stood takes no fade (`key === pkey`:
+  // built under its pixel's own key), and the entry is published through the swap
+  assert.match(P, /if \(key === pkey && isEnhanced\(\) && !midRingDisabled\(\)\) stampPixelFade\(terrain, px, py, host\.state\.current, overworldTint\(maps\.getClimateIndex\(px, py\), host\.woods\.getHeightMapValue\(px, py\)\), performance\.now\(\)\);[^\n]*\n\s*if \(_building\.get\(key\) === made\) _building\.delete\(key\);[^\n]*\n\s*swap\.publish\(px, py, key, made, \{/, 'stamped as the build publishes, before the ledger is handed over (BUILD-FAIL1\'s two lines kept together)');
 });
 
 test('FAR-FIELD the far field: a vertex a cell on its centre (the far ring\'s frame), its height the far ring\'s law on its highest byte or the sea\'s where most of it is the sea or its centre the ocean\'s climate; its cells farthest first from the traveller\'s, the far ring\'s footprint left to it (mutant: the frame, the sea\'s majority, the order, the hole)', async () => {

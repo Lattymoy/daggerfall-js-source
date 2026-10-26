@@ -371,7 +371,7 @@
   {
     "name": "BF1-throw-frees-nothing",
     "file": "src/scenes/world.js",
-    "old": "      .catch((e) => { releaseFailedBuild(key); throw e; })   // BUILD-FAIL1\n",
+    "old": "      .catch((e) => { releaseFailedBuild(swap.failed(px, py) ?? key); throw e; })   // BUILD-FAIL1; IC-SWAP-BEHIND: a build behind its view frees under its own key, the view standing\n",
     "new": "",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"

@@ -39,6 +39,7 @@ import { hash32 } from '../src/world/spawnedDungeons.js';
 import { LOCATION_TYPES, mapPixelToLongitudeLatitude } from '../src/formats/mapsFile.js';
 import { capitalsOn } from '../src/scenes/shared.js';
 import { hostText } from './hostText.mjs';   // HOST-SPLIT (at the merge of main): the world host read whole - its pixel build stands in scenes/pixelBuild.js
+import { createSwapBehind } from '../src/scenes/swapBehind.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 import { URBAN_ARCHIVE, URBAN_ART } from '../src/world/urban/urbanRecords.js';   // URBANIZER U2
@@ -341,7 +342,7 @@ test('TESA10 the host\'s ask: the capital on its pixel stood once, its region th
 test('TESA10 the sweep: on the frame, when the fit moves, every built pixel past the Bay whose capital came or went is built again, nearest first - the Bay\'s own pixels never; a fit unmoved sweeps nothing', () => {
   assert.match(W, /if \(_capitalBase && !building\) sweepCapitalPixels\(\);/);
   const sweep = lift('  function sweepCapitalPixels() {');
-  const run = (cop, tf, tlv, otb, rolled = false) => new Function('capitalOnPixel', 'tamrielFit', 'tamrielLandVersion', 'onTheBay', 'rolled', `
+  const run = (cop, tf, tlv, otb, rolled = false) => new Function('capitalOnPixel', 'tamrielFit', 'tamrielLandVersion', 'onTheBay', 'rolled', 'createSwapBehind', `
     const built = new Map([['2069,658', { px: 2069, py: 658 }], ['2300,600', { px: 2300, py: 600 }], ['5,5', { px: 5, py: 5 }], ['1315,495', { px: 1315, py: 495 }]]);
     const locationIndex = new Map([['2069,658', { capital: { k: 0 } }]]), destroyed = [], queue = [], state = { current: { x: 2069, y: 658 } };
     const walkMode = false, playerSpawned = false, nearestFirstFrom = () => () => 0, destroyPixel = (x, y) => destroyed.push(x + ',' + y);
@@ -350,8 +351,12 @@ test('TESA10 the sweep: on the frame, when the fit moves, every built pixel past
     const sweepCapitalLod = () => {};   // PIN MOVED (IC-GRAND): the Imperial City's near and far asked first - its own pins, test/world/icgrand_lod.test.js
     const capitalSkyline = { sweep: () => {} };   // PIN MOVED (IC-GRAND x FAR-LANDMARK): and its landmarks on the far ring - the same pins
     const capitalPrebuild = { sweep: () => {} };   // PIN MOVED (IC-GRAND's perf pass): and its worker told the slices coming - test/world/icgrand_prebuild.test.js
+    // PIN MOVED (IC-SWAP-BEHIND): the sweep's tail is the swap's (scenes/swapBehind.js rebuild) - here with its switch off, each
+    // pixel torn down and queued as it was; behind its standing view, test/scenes/swapbehind.test.js
+    const swap = createSwapBehind({ built, destroyPixel, collider: { hold() {} }, buildingDoors: [], doorsMoved() {}, queue, nearestFirst: nearestFirstFrom, state,
+      walkMode: () => walkMode, playerSpawned: () => playerSpawned, seasonHold: (k) => { host._seasonHoldKey = k; }, off: () => true });
     ${sweep}
-    return { sweep: sweepCapitalPixels, destroyed, queue };`)(cop, tf, tlv, otb, rolled);
+    return { sweep: sweepCapitalPixels, destroyed, queue };`)(cop, tf, tlv, otb, rolled, createSwapBehind);
   setTamrielFit({ ox: 38 * 15.5, oy: 57 * 15.5, ppu: 15.5 });
   const h = run(capitalOnPixel, () => tamrielFitNow(), () => tamrielLandVersion(), inBay);
   // AUDIT-TESA A7-1: with the countryside standing, the land's moving builds again every pixel past the Bay it rolls -

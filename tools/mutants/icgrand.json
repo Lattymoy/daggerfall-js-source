@@ -238,7 +238,7 @@
   {
     "name": "IC-GRAND-sweep-every-frame",
     "file": "src/scenes/tamrielSweepsHost.js",
-    "old": "    if (at === _lod.at && host.built.size === _lod.size) return;",
+    "old": "    if (at === _lod.at && host.built.size === _lod.size && swap.swaps === _lod.swaps) return;",
     "new": "    if (false) return;",
     "tests": [
       "test/world/icgrand_lod.test.js"
@@ -247,8 +247,8 @@
   {
     "name": "IC-GRAND-sweep-near-at-the-tail",
     "file": "src/scenes/tamrielSweepsHost.js",
-    "old": "    host.queue.unshift(...near.sort(nearestFirstFrom(cur)));",
-    "new": "    host.queue.push(...near.sort(nearestFirstFrom(cur)));",
+    "old": "    swap.rebuild(near, { front: true });",
+    "new": "    swap.rebuild(near);",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]

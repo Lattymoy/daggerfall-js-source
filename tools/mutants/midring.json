@@ -578,8 +578,8 @@
   {
     "name": "PIXEL-FADE-stamped-with-the-door-shut",
     "file": "src/scenes/pixelBuild.js",
-    "old": "if (isEnhanced() && !midRingDisabled()) stampPixelFade(",
-    "new": "if (isEnhanced() && midRingDisabled()) stampPixelFade(",
+    "old": "if (key === pkey && isEnhanced() && !midRingDisabled()) stampPixelFade(",
+    "new": "if (key === pkey && isEnhanced() && midRingDisabled()) stampPixelFade(",
     "tests": [
       "test/render/midring.test.js"
     ]

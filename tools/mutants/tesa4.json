@@ -137,7 +137,7 @@
   {
     "name": "TESA4-in-flight-unasked",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    if (built.has(key) && arenaRoadsStale(built.get(key), terrainGen.arenaRoadsLanded, arenaRoadsLayer())) _arenaRoadsStale.add(key);   // TESA4: posted before a layer that landed while it built\n",
+    "old": "    if (built.has(pkey) && arenaRoadsStale(built.get(pkey), terrainGen.arenaRoadsLanded, arenaRoadsLayer())) _arenaRoadsStale.add(pkey);   // TESA4: posted before a layer that landed while it built\n",
     "new": "",
     "tests": [
       "test/tesa4_roads.test.js"

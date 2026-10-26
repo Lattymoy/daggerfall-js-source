@@ -1619,10 +1619,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const again = [];
     for (const [, p] of [...built]) if (!p.withRoads) again.push({ px: p.px, py: p.py });
     if (!again.length) return;
-    const under = `${state.current.x},${state.current.y}`;
-    if (walkMode && playerSpawned && again.some((k) => `${k.px},${k.py}` === under)) _seasonHoldKey = under;
-    for (const k of again) destroyPixel(k.px, k.py, { collectLoose: false });
-    queue.push(...again.sort(nearestFirstFrom(state.current)));
+    swap.rebuild(again);   // IC-SWAP-BEHIND: each built again behind its standing view (scenes/swapBehind.js)
     console.log(`[roads] ${again.length} pixel(s) built before the network landed - rebuilt with roads`);
   }
   (basicRoadsOn ? loadModRoads() : Promise.resolve(null)).then((his) => {
@@ -1720,10 +1717,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       else if (!inFlight.has(k)) _wodLate.delete(k);   // not standing: it builds on the list as it is now
     }
     if (!again.length) return;
-    const under = `${state.current.x},${state.current.y}`;
-    if (walkMode && playerSpawned && again.some((k) => `${k.px},${k.py}` === under)) _seasonHoldKey = under;
-    for (const k of again) destroyPixel(k.px, k.py, { collectLoose: false });   // a rebuild the reference never makes: the carry keeps the markers
-    queue.push(...again.sort(nearestFirstFrom(state.current)));
+    swap.rebuild(again);   // a rebuild the reference never makes: the carry keeps the markers; IC-SWAP-BEHIND: behind its view
     console.log(`[wod] ${again.length} pixel(s) named by a region that landed late - built again on the list in its order`);
   }
   // SD2b: THE HOLLOW'S PIXEL, BUILT AGAIN when it rises or goes on ground that already stands (scenes/superDungeon/sdHost.js stand and
@@ -1737,17 +1731,15 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       else if (!inFlight.has(k)) _sdLate.delete(k);   // not standing: it builds on the index as it is now
     }
     if (!again.length) return;
-    const under = `${state.current.x},${state.current.y}`;
-    if (walkMode && playerSpawned && again.some((k) => `${k.px},${k.py}` === under)) _seasonHoldKey = under;
-    for (const k of again) destroyPixel(k.px, k.py, { collectLoose: false });
-    queue.push(...again.sort(nearestFirstFrom(state.current)));
+    swap.rebuild(again);   // IC-SWAP-BEHIND: behind its view
   }
-  const { _arenaRoadsStale, arenaJoinLand, arenaRoadsLanded, arenaRoadsStale, sweepArenaPixels, sweepArenaRoads, sweepCapitalPixels } = createTamrielSweeps({   // HOST-SPLIT: src/scenes/tamrielSweepsHost.js
+  const { swap, _arenaRoadsStale, arenaJoinLand, arenaRoadsLanded, arenaRoadsStale, sweepArenaPixels, sweepArenaRoads, sweepCapitalPixels } = createTamrielSweeps({   // HOST-SPLIT: src/scenes/tamrielSweepsHost.js
     destroyPixel, maps,
     get _countryTemplates() { return _countryTemplates; },
     get _lairTemplates() { return _lairTemplates; },
     get _seasonHoldKey() { return _seasonHoldKey; }, set _seasonHoldKey(v) { _seasonHoldKey = v; },
     get built() { return built; },
+    get collider() { return collider; }, get buildingDoors() { return buildingDoors; }, get doorGeneration() { return doorGeneration; }, set doorGeneration(v) { doorGeneration = v; },   // IC-SWAP-BEHIND (scenes/swapBehind.js): the doors a view swapped in brings, and their generation
     get farRing() { return farRing; },   // IC-GRAND x FAR-LANDMARK: the Imperial City's landmarks on its pass (scenes/capitalSkyline.js)
     get inFlight() { return inFlight; },
     get locationIndex() { return locationIndex; },
@@ -1776,10 +1768,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const clear = _gateClearNow();
     const again = gateClearSweep.step(clear, built).map((p) => ({ px: p.px, py: p.py }));
     if (!again.length) return;
-    const under = `${state.current.x},${state.current.y}`;
-    if (walkMode && playerSpawned && again.some((k) => `${k.px},${k.py}` === under)) _seasonHoldKey = under;
-    for (const k of again) destroyPixel(k.px, k.py, { collectLoose: false });   // the carry keeps the markers, as the late sweep's
-    queue.push(...again.sort(nearestFirstFrom(state.current)));
+    swap.rebuild(again);   // the carry keeps the markers, as the late sweep's; IC-SWAP-BEHIND: behind its view
     console.log(`[gate] ${again.length} pixel(s) built again for the breach's clearing${clear ? ` (${clear.key})` : ''}`);
   }
   // EV8: the far province ring - enhanced only (the 1:1 lane keeps the
@@ -5684,13 +5673,13 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
 
   async function buildPixel(px, py) {
     const key = `${px},${py}`;
-    if (built.has(key)) return built.get(key);
+    if (built.has(key) && !swap.owes(key)) return built.get(key);   // IC-SWAP-BEHIND: one owed a build behind its view is built
     let flying = inFlight.get(key);
     if (flying) return flying;
     const _dwLoc = !!_locationToBuild(px, py);   // AUDIT OW5b D2   // DW-D: DeepWaterRuntime's activeLocationLoads - OnCreateLocationGameObject ...
     if (_dwLoc) dwLocationLoadBegan(performance.now() / 1000);
     flying = buildPixelNow(px, py)
-      .catch((e) => { releaseFailedBuild(key); throw e; })   // BUILD-FAIL1
+      .catch((e) => { releaseFailedBuild(swap.failed(px, py) ?? key); throw e; })   // BUILD-FAIL1; IC-SWAP-BEHIND: a build behind its view frees under its own key, the view standing
       .finally(() => inFlight.delete(key))
       .finally(() => { if (_dwLoc) dwLocationLoadEnded(); });   // ... OnUpdateLocationGameObject (the build settled, either way)
     inFlight.set(key, flying);
@@ -5773,7 +5762,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     seasons, siegeFieldsByTown, snowCover, snowfall, standPixelNpcs, standWodPile, strideFor, terrainGen, tileSide,
     townEcon, townPlacesFor, townSeats, verges, waterOn, waterSheetOf, wod, wodForgetPeerSites, wodOpened, wodPathsPoint,
     worldHeight,
-    provinceAt, arenaRoadsStale, _arenaRoadsStale,   // TESA: the province past the Bay, the Arena roads' stale law and its set
+    provinceAt, arenaRoadsStale, _arenaRoadsStale, swap,   // TESA: the province past the Bay, the Arena roads' stale law and its set; IC-SWAP-BEHIND: a rebuild built behind its view
     get _gateClearNow() { return _gateClearNow; },
     get _homeLookV() { return _homeLookV; }, set _homeLookV(v) { _homeLookV = v; },
     get _lookPreviewGen() { return _lookPreviewGen; },
@@ -5976,10 +5965,16 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  UNLOADS terrain for a season change (DaggerfallLocation re-skins
    *  what already stands), so the loose-object sweep below - which is
    *  the unload's CollectLooseObjects and nothing else - sits out. */
-  function destroyPixel(px, py, { collectLoose = true } = {}) {
+  function destroyPixel(px, py, { collectLoose = true, carried = false, carryOnly = false } = {}) {
     const key = `${px},${py}`;
     const p = built.get(key);
     if (!p) return;
+    // IC-SWAP-BEHIND (scenes/swapBehind.js): a rebuild's World of Daggerfall carry - its markers and its Hold, which the
+    // build after it adopts BEFORE it publishes - taken first; alone (`carryOnly`) where the view stands while its rebuild
+    // builds behind it, and not again (`carried`) when that view goes at the swap. The rest of its carry (the rubble, the
+    // pools - read after the publish) is taken at the teardown, as ever
+    if (!collectLoose && !carried && (p.wodSpawners || p.privateersHold)) carryWodSite(p, key, { hold: p.privateersHold?.state ?? null });   // WOD3/WOD4
+    if (carryOnly) return;
     if (p.water) { renderer.destroyWaterSurface(p.water); p.water = null; }   // WATER-AUDIT: before the buffers it rides go
     renderer.destroyMesh(p.terrain);
     if (p.staticBatch) { renderer.destroyMesh(p.staticBatch); p.staticBatch = null; }   // PERF4
@@ -6023,8 +6018,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         const piles = droppedLoot.takePixel(key, (pile) => pile.unsaved && !pile.owner).map((pile) => ({ items: pile.items, local: [pile.pos[0] - t[0], pile.pos[1] - t[1], pile.pos[2] - t[2]], archive: pile.archive, record: pile.record }));   // DW-E5: the site's own piles - a spawner's (the sunken loot's) die with the pixel below
         carryWodSite(p, key, { piles });
       }
-    } else {
-      if (p.wodSpawners || p.privateersHold) carryWodSite(p, key, { hold: p.privateersHold?.state ?? null });
     }
     // P2-slice (items-2): a loose pile dies WITH its pixel - the
     // reference's mid-session collection sweep (CollectLooseObjects);
@@ -6232,22 +6225,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const skin = keys.length ? null : _reskin.runSkin(built, state.current);
     if (skin) { building = true; skin.finally(() => { building = false; }); }
     if (!keys.length) return;
-    // ...and the hold is armed BEFORE the ground goes, on the pixel
-    // the streamer says the player is standing on (the same pixel the
-    // nearest-first rebuild below puts back first) - and only if that pixel is one of the ones going down, since a re-skin that leaves it standing takes no ground from under him.
-    if (walkMode && playerSpawned && keys.includes(`${state.current.x},${state.current.y}`)) _seasonHoldKey = `${state.current.x},${state.current.y}`;
-    for (const key of keys) {
-      const [bx, by] = key.split(',').map(Number);
-      destroyPixel(bx, by, { collectLoose: false });
-    }
-    // Nearest-first, the load list's own order (StreamingWorldState
-    // ._loadList): the pixel under the player comes back first.
-    const rebuild = keys.map((key) => {
-      const [px, py] = key.split(',').map(Number);
-      return { px, py };
-    }).sort(nearestFirstFrom(state.current));
-    queue.push(...rebuild);
-    console.log(`[season] ${season === SEASON.Winter ? 'winter' : 'summer'} - re-skinning ${rebuild.length} pixels`);
+    // ...each built again behind its standing view (IC-SWAP-BEHIND, scenes/swapBehind.js rebuild) - or, the switch off, torn
+    // down with the hold armed BEFORE the ground goes on the pixel the streamer says the player is standing on - and
+    // queued nearest-first, the load list's own order (StreamingWorldState._loadList): the pixel under the player first.
+    swap.rebuild(keys.map((key) => { const [px, py] = key.split(',').map(Number); return { px, py }; }));
+    console.log(`[season] ${season === SEASON.Winter ? 'winter' : 'summer'} - re-skinning ${keys.length} pixels`);
   }
 
   status(`building player pixel ${startPixel.x},${startPixel.y}`);
@@ -10924,9 +10906,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // BOOT-TDZ2: the boot's first build publishes before they are declared, and the network lands inside it on most
   // boots, so read from the publish they were a dead zone (the boot died on `droppedLoot`: AUDIT LANDFORMS II K1).
   // Nothing lies on the ground before this.
-  rideGround = (t, key, moved) => {
+  rideGround = (t, key, moved, behind = false) => {   // IC-SWAP-BEHIND: `behind` - the view swapped in from behind the one the player stood on, unheld
     for (const ride of [droppedLoot.groundMoved, droppedTorches.groundMoved, camps.groundMoved, exteriorFoes.groundMoved, cityGuards.groundMoved]) ride?.(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE, moved);
-    if (_seasonHoldKey === key && walkMode && playerSpawned && player.grounded) player.pos[1] += moved(player.pos[0], player.pos[2]);
+    if ((_seasonHoldKey === key || (behind && key === `${state.current.x},${state.current.y}`)) && walkMode && playerSpawned && player.grounded) player.pos[1] += moved(player.pos[0], player.pos[2]);
   };
 
   // ═══ ARENA2 (2026-10-02, Mac: "Players can choose to watch AI fights ... and climb esclating tiers of opponents";
@@ -15390,7 +15372,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       _locIndexGen += 1;   // AUDIT OW4 D5: a reader keeping a list off the index sees the change
       if (built.has(pixelKey)) {
         const [px, py] = pixelKey.split(',').map(Number);
-        destroyPixel(px, py, { collectLoose: false });
+        swap.mark(px, py);   // IC-SWAP-BEHIND: built again behind its view
         queue.push({ px, py });
         rebuilt++;
       }

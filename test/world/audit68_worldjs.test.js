@@ -275,12 +275,14 @@ test('AUDIT 68 S22-roads-retry-crash: a network that failed to build is not "kno
     assert.equal(w.hasRoads, true);
   } finally { console.warn = warn; }
   // the host's arm, lifted: the second paint without the network is KEPT, and the builder returns it
-  const arm = lift(WORLD, '    if (!withRoads && terrainGen.hasRoads) {', '    const entry = built.get(key);');
+  // PIN MOVED (IC-SWAP-BEHIND): the first paint goes back through the swap's mark (scenes/swapBehind.js - behind its view, which
+  // stands; the switch off, torn down), the entry read under the pixel's own key
+  const arm = lift(WORLD, '    if (!withRoads && terrainGen.hasRoads) {', '    const entry = built.get(pkey);');
   const built = new Map([['3,4', { px: 3, py: 4 }]]);
   const torn = [];
-  const run = (roadsRetry) => new Function('withRoads', 'terrainGen', 'roadsRetry', 'destroyPixel', 'buildPixelNow', 'built', 'key', 'px', 'py', 'console',
-    `${arm}\n    return entry;`)(false, { hasRoads: true }, roadsRetry, (x, y) => { torn.push(`${x},${y}`); built.delete(`${x},${y}`); },
-    () => 'rebuilt', built, '3,4', 3, 4, { warn() {} });
+  const run = (roadsRetry) => new Function('withRoads', 'terrainGen', 'roadsRetry', 'swap', 'buildPixelNow', 'built', 'key', 'pkey', 'px', 'py', 'console',
+    `${arm}\n    return entry;`)(false, { hasRoads: true }, roadsRetry, { mark: (x, y) => { torn.push(`${x},${y}`); } },
+    () => 'rebuilt', built, '3,4', '3,4', 3, 4, { warn() {} });
   assert.equal(run(true)?.px, 3, 'kept as painted - the entry is still there to publish');
   assert.deepEqual(torn, []);
   assert.equal(run(false), 'rebuilt', 'the first roadless paint still goes back once');

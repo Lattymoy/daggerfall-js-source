@@ -125,7 +125,7 @@ export function createPixelBuild(host) {
     seasons, siegeFieldsByTown, snowCover, snowfall, standPixelNpcs, standWodPile, strideFor, terrainGen, tileSide,
     townEcon, townPlacesFor, townSeats, verges, waterOn, waterSheetOf, wod, wodForgetPeerSites, wodOpened, wodPathsPoint,
     worldHeight,
-    provinceAt, arenaRoadsStale, _arenaRoadsStale   // TESA: the province past the Bay, the Arena roads' stale law and its set
+    provinceAt, arenaRoadsStale, _arenaRoadsStale, swap   // IC-SWAP-BEHIND: a rebuild built behind its view (scenes/swapBehind.js); TESA: the province past the Bay, the Arena roads' stale law and its set
   } = host;
   // ROCK-CLEAR (FIELD BUGS 2026-10-19f): the world collider's one gate - every solid the build files below goes through
   // it, so a part standing round the body (a neighbour's mountain reaching into the body's pixel, a pixel built round a
@@ -231,7 +231,9 @@ export function createPixelBuild(host) {
   }
   async function buildPixelNow(px, py, { roadsRetry = false } = {}) {
     breather.reset();   // PERF7
-    const key = `${px},${py}`, pipeline = holdPixel(key), { getGpuMesh, uploadRecord, uploadRecordFrame } = pipeline;   // FIELD BUGS 2026-10-04d PLACE-LRU: THE PIXEL'S HOLD, the host's three doors and `pipeline` itself shadowed for the whole build - its models, its flats and their frames, its climate's and its homes' swaps (remapSubMeshes / homeLookRemap take this `pipeline`) are held for THIS pixel, released by destroyPixel (or BUILD-FAIL1's ledger), and freed once no standing or kept place holds them. The mills' parts stay the host's (getWindmillMeshes, pinned): millParts outlives every pixel
+    // IC-SWAP-BEHIND (scenes/swapBehind.js): `key` the build's own (its buckets, cover, gates, hold and ledger - the behind
+    // key while its pixel's view stands), `pkey` the pixel's (what stands in `built`, its carries, its stale sets)
+    const pkey = `${px},${py}`, key = swap.keyFor(px, py), pipeline = holdPixel(key), { getGpuMesh, uploadRecord, uploadRecordFrame } = pipeline;   // FIELD BUGS 2026-10-04d PLACE-LRU: THE PIXEL'S HOLD, the host's three doors and `pipeline` itself shadowed for the whole build - its models, its flats and their frames, its climate's and its homes' swaps (remapSubMeshes / homeLookRemap take this `pipeline`) are held for THIS pixel, released by destroyPixel (or BUILD-FAIL1's ledger), and freed once no standing or kept place holds them. The mills' parts stay the host's (getWindmillMeshes, pinned): millParts outlives every pixel
     const made = {};   // BUILD-FAIL1: this build's ledger, until publish hands it to the entry
     _building.set(key, made);
     const dfLocation = capitalBuildView(_locationToBuild(px, py), px, py, host.state.current) || null;   // SPAWNED-DUNGEONS1: an empty pixel may stand one (AUDIT OW5b D2: a spawn the index holds asked its clocks); IC-GRAND: a slice of the Imperial City far from the player its far view (world/tamrielCapitals.js capitalBuildView)
@@ -653,7 +655,7 @@ export function createPixelBuild(host) {
             if (dfLocation.hasDungeon) for (const d of cpu.doors) if (d.type === DOOR_TYPE.DUNGEON_ENTRANCE) pixelDungeonDoors.push({ door: doorCornersOf(d, local), box, normal: doorNormalOf(d, local), arena: b.blockName === ARENA_BLOCK });   // CASTLE-GATE (AUDIT G1: its outward normal; AUDIT PRE-MERGE 1003 W7: the undercroft's stair, no castle's - castleEntranceOf passes it over)
             for (const door of staticDoors) {
               host.doorGeneration += 1;   // WORLD-HOVER: a pixel's doors arriving
-              buildingDoors.push({
+              (key === pkey ? buildingDoors : (made.doors ??= [])).push({   // IC-SWAP-BEHIND: staged on its ledger while it builds behind
                 door, pixelKey: key, dfBlock: b.dfBlock, blockX: b.x, blockY: b.y,   // LW2: the block's grid cell, so a door names its building (makeBuildingKey)
                 // A1: the season a door carries INSIDE is the
                 // interior's own constant, never the world's.
@@ -864,7 +866,7 @@ export function createPixelBuild(host) {
           town: livingTown,
           buildings: buildingSummaries(dfLocation.exterior?.buildings ?? [], loc.blocks, { locationIndex: dfLocation.locationIndex ?? 0, locationName: dfLocation.name })
             .map((b) => ({ key: b.buildingKey, type: b.buildingType, quality: b.quality, factionId: b.factionId })).concat(cityHomesOf(dfLocation).buildings),   // IC-GRAND: the fabric's homes (world/imperialHomes.js)
-          doors: buildingDoors.filter((d) => d.pixelKey === key && d.blockX != null).map((d) => {
+          doors: (made.doors ?? buildingDoors).filter((d) => d.pixelKey === key && d.blockX != null).map((d) => {
             const m = d.door.matrix, c = d.door.centre, n = d.door.normal;
             return {
               key: makeBuildingKey(d.blockX, d.blockY, d.recordIndex),
@@ -1387,14 +1389,14 @@ export function createPixelBuild(host) {
       gates: pixelGates.map((g) => ({ box: g.entry?._box })), boards: pixelBoards, bounty: pixelBoardSplit, centre: townCentreOf(pixelHomeFrames),
       tier: seatTier, castle: castleGate,
     }) : null;
-    if (siegeField) siegeFieldsByTown.set(dfLocation.mapTableData?.mapId, { key, px, py, field: siegeField });
+    if (siegeField) siegeFieldsByTown.set(dfLocation.mapTableData?.mapId, { key: pkey, px, py, field: siegeField });
     const snowSeen = snowRec?.done(models.length > 0 || dfLocation != null) ?? null;
-    const wodKept = adoptWodCarry(key, wodSpawners, privateersHold);
+    const wodKept = adoptWodCarry(pkey, wodSpawners, privateersHold);
     const wodLife = wodKept.life ?? {};   // L1-3: this terrain's identity - kept across a rebuild or a pool, new on a promote
-    if (!wodKept.life) wodForgetPeerSites(key);   // AUDIT WOD7: a fresh promote's markers are its own again
-    if (isEnhanced() && !midRingDisabled()) stampPixelFade(terrain, px, py, host.state.current, overworldTint(maps.getClimateIndex(px, py), host.woods.getHeightMapValue(px, py)), performance.now());   // MID-RING: the stream's new pixel eases out of the middle ring's tint
+    if (!wodKept.life) wodForgetPeerSites(pkey);   // AUDIT WOD7: a fresh promote's markers are its own again
+    if (key === pkey && isEnhanced() && !midRingDisabled()) stampPixelFade(terrain, px, py, host.state.current, overworldTint(maps.getClimateIndex(px, py), host.woods.getHeightMapValue(px, py)), performance.now());   // MID-RING: the stream's new pixel eases out of the middle ring's tint
     if (_building.get(key) === made) _building.delete(key);   // BUILD-FAIL1: the entry owns them from here
-    built.set(key, {
+    swap.publish(px, py, key, made, {   // IC-SWAP-BEHIND: published - behind, the old view down and this one's woken in the same step
       staticBatch,   // PERF4: the merged static models, drawn with the pixel matrix; null when the pixel has none
       // AUDIT-TO1 B2: DaggerfallTerrain.MapData.locationRect - the tile
       // rect setLocationTiles answered, with its extraClearance, which is
@@ -1469,15 +1471,15 @@ export function createPixelBuild(host) {
       avgY: dfLocation ? avg * worldHeight : 0,
       capitalLod: capitalViewOf(dfLocation),   // IC-GRAND: the view a slice of the Imperial City was built in (scenes/tamrielSweepsHost.js sweepCapitalLod)
     });
-    if (deepWaters) deepWaters.published(built.get(key), dwResult);   // DW-B: the near promote stands with the pixel, or the pixel waits its turn
-    if (dwDecor) dwDecor.onPromote(built.get(key));   // DW-E2: UnderwaterDecorations.HandlePromote, after the floor builder's (the subscription order)
-    if (host.oceanHoles) host.oceanHoles.promoted(built.get(key));   // OH-B: DaggerfallTerrain.OnPromoteTerrainData -> OceanHoles.OnTerrainPromoted (its dependant, subscribed after both of the sea's)
-    snowfall.promoted(built.get(key));   // SNOWFALL1: OnPromoteTerrainData -> DynamicSnowController.HandleTerrainPromoted - its blanket to make, the nearer tiers over it again
-    const dwRubbleKept = _dwRubbleCarry.get(key);   // AUDIT DW-F: a rebuilt pixel's rubble, on the entry that stands now
-    if (dwRubbleKept) { _dwRubbleCarry.delete(key); const e = built.get(key); for (const r of dwRubbleKept) r.entry = e; _dwRubble.set(e, dwRubbleKept); }
-    host.gatherHost?.onBuilt(built.get(key));   // PROF1/PROF2: the day's patches, veins and boulders, stood in the pixel's own list
-    for (const pile of wodKept.piles ?? []) standWodPile(key, wodLife, pile);   // AUDIT BRANCH (WoD) L1-3: the pooled terrain's piles, where they lay
-    gateClearSweep.published(key, gateClear?.key);   // GATE-CLEAR: built against a clearing the sweep has moved on from - asked again
+    if (deepWaters) deepWaters.published(built.get(pkey), dwResult);   // DW-B: the near promote stands with the pixel, or the pixel waits its turn
+    if (dwDecor) dwDecor.onPromote(built.get(pkey));   // DW-E2: UnderwaterDecorations.HandlePromote, after the floor builder's (the subscription order)
+    if (host.oceanHoles) host.oceanHoles.promoted(built.get(pkey));   // OH-B: DaggerfallTerrain.OnPromoteTerrainData -> OceanHoles.OnTerrainPromoted (its dependant, subscribed after both of the sea's)
+    snowfall.promoted(built.get(pkey));   // SNOWFALL1: OnPromoteTerrainData -> DynamicSnowController.HandleTerrainPromoted - its blanket to make, the nearer tiers over it again
+    const dwRubbleKept = _dwRubbleCarry.get(pkey);   // AUDIT DW-F: a rebuilt pixel's rubble, on the entry that stands now
+    if (dwRubbleKept) { _dwRubbleCarry.delete(pkey); const e = built.get(pkey); for (const r of dwRubbleKept) r.entry = e; _dwRubble.set(e, dwRubbleKept); }
+    host.gatherHost?.onBuilt(built.get(pkey));   // PROF1/PROF2: the day's patches, veins and boulders, stood in the pixel's own list
+    for (const pile of wodKept.piles ?? []) standWodPile(pkey, wodLife, pile);   // AUDIT BRANCH (WoD) L1-3: the pooled terrain's piles, where they lay
+    gateClearSweep.published(pkey, gateClear?.key);   // GATE-CLEAR: built against a clearing the sweep has moved on from - asked again
     // GRASS-STALE1 (2026-09-19, Discord: "grass is flying and not on the
     // ground" around graveyards and other POIs): this pixel's own
     // samples may have just been flattened toward its location's avgY
@@ -1513,7 +1515,7 @@ export function createPixelBuild(host) {
       const t = host.state.pixelTranslation(px, py);
       host.hccGroundMoved(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE);
     }
-    if (built.has(key) && arenaRoadsStale(built.get(key), terrainGen.arenaRoadsLanded, arenaRoadsLayer())) _arenaRoadsStale.add(key);   // TESA4: posted before a layer that landed while it built
+    if (built.has(pkey) && arenaRoadsStale(built.get(pkey), terrainGen.arenaRoadsLanded, arenaRoadsLayer())) _arenaRoadsStale.add(pkey);   // TESA4: posted before a layer that landed while it built
     // AUDIT LANDFORMS II G1/G2: A REBUILD CARRIES WHAT LIES ON ITS GROUND. The road network's landing (ROADS 25) cuts the
     // landforms' roads and channels metres into a pixel built before it - 14% of the network's samples move, up to 30 m
     // on the Menevia escarpment - and a late World of Daggerfall pack or the gate's clearing flattens one. The pools'
@@ -1522,10 +1524,10 @@ export function createPixelBuild(host) {
     // the new samples less the old (TERRAIN-SCALE1's law); and the player the hold held over this pixel, on their feet,
     // rides it too - put back where they stood, they fell the cut (28.7 m, 118 HP, at the worst); a fall under way is
     // their own (FALL-KEPT).
-    const groundWas = _groundBefore.get(key);
+    const groundWas = _groundBefore.get(pkey);
     if (groundWas) {
-      _groundBefore.delete(key);
-      const now = built.get(key).samples, t = host.state.pixelTranslation(px, py);
+      _groundBefore.delete(pkey);
+      const now = built.get(pkey).samples, t = host.state.pixelTranslation(px, py);
       const groundIn = (smp, x, z) => {   // heightAt's own read: bilinear over the pixel's samples, pixel-local
         const fx = Math.max(0, Math.min(TERRAIN_SIZE, x - t[0])) / heightCell, fz = Math.max(0, Math.min(TERRAIN_SIZE, z - t[2])) / heightCell;
         const ix = Math.min(HEIGHTMAP_DIMENSION - 2, Math.floor(fx)), iz = Math.min(HEIGHTMAP_DIMENSION - 2, Math.floor(fz)), sx = fx - ix, sz = fz - iz;
@@ -1533,7 +1535,7 @@ export function createPixelBuild(host) {
         return (at(ix, iz) * (1 - sx) * (1 - sz) + at(ix + 1, iz) * sx * (1 - sz) + at(ix, iz + 1) * (1 - sx) * sz + at(ix + 1, iz + 1) * sx * sz) * worldHeight;
       };
       const moved = (x, z) => groundIn(now, x, z) - groundIn(groundWas, x, z);
-      host.rideGround?.(t, key, moved);
+      host.rideGround?.(t, pkey, moved, key !== pkey);   // IC-SWAP-BEHIND: the pixel's own key; behind, the player on the view swapped out rides it unheld
     }
     if (homeTown) host._homeLookV = -1;   // HOME-LOOK (AUDIT): a town's pixel stood after the registry moved is painted by the next refresh
     // AUDIT-TO1 B3: the second hook. BOOT-TDZ2: THE MOD IS ASKED FIRST,
@@ -1555,7 +1557,7 @@ export function createPixelBuild(host) {
     // cannot see a pixel that was not published yet, so this build asks
     // for the re-skin itself - the same publish-time re-check the
     // terrain ring class runs below.
-    if (seasons && seasonsGen !== seasons.generation) _reskin.mark(key);   // ROAD-H H3: ITS key, not the grid
+    if (seasons && seasonsGen !== seasons.generation) _reskin.mark(pkey);   // ROAD-H H3: ITS key, not the grid (IC-SWAP-BEHIND: the pixel's, never the build's behind it)
     // ROADS 25: a pixel that was already in flight when the network landed
     // was painted without it and arrives AFTER the sweep. It goes straight
     // back for a rebuild - the worker has the network by now, since the
@@ -1575,12 +1577,12 @@ export function createPixelBuild(host) {
     // down too and then read its entry, throwing out of every build.
     if (!withRoads && terrainGen.hasRoads) {
       if (!roadsRetry) {
-        destroyPixel(px, py, { collectLoose: false });
+        swap.mark(px, py);   // IC-SWAP-BEHIND: built again behind the roadless view
         return buildPixelNow(px, py, { roadsRetry: true });
       }
       console.warn(`[roads] pixel ${key} painted without the network twice - kept as painted`);
     }
-    const entry = built.get(key); pipeline.settle();   // FIELD BUGS 2026-10-04d PLACE-LRU: the pixel stands (published above with its hold, `placeHold`, which destroyPixel releases) - the keep of its last visit goes, with what only that visit held (a re-skin's old season, a rebuild's old layout)
+    const entry = built.get(pkey); pipeline.settle();   // FIELD BUGS 2026-10-04d PLACE-LRU: the pixel stands (published above with its hold, `placeHold`, which destroyPixel releases) - the keep of its last visit goes, with what only that visit held (a re-skin's old season, a rebuild's old layout)
     // AUDIT EV F-SIM2: the ring class was chosen at job-send time and
     // the player may have crossed during the worker round trip - and
     // the pixelChanged restride sweep cannot see an unpublished pixel.
@@ -1593,7 +1595,7 @@ export function createPixelBuild(host) {
     // 0.11 ms and settles now, because a pixel left at stride 1 in the
     // far ring costs every frame until it is spent.
     if (wantStride !== entry._stride) {
-      if (wantStride === 1) host.restridePending.set(key, entry);
+      if (wantStride === 1) host.restridePending.set(pkey, entry);   // IC-SWAP-BEHIND: the pixel's key
       else restrideTerrain(entry, wantStride);
     }
     // E3: RMBLayout's THIRD act on an exterior StaticNPC, and the stand

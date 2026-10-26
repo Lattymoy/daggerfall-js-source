@@ -662,6 +662,18 @@ swept by `scenes/tamrielSweepsHost.js` (the capitals' sweep, already asked on th
 (`arenaDoorTarget`, which IC-GRAND touched) is quoted by text in five pins and two mutant records, a move that would
 re-aim all of them for two lines. A later cut that moves code out lowers it again.
 
+## IC-SWAP-BEHIND - every rebuild's tail out of bootWorld (2026-10-26)
+
+Every rebuild of a standing pixel ended in the same four lines in `bootWorld` (and three times more in the sweeps' host):
+the player's own pixel held, each torn down with its loose objects kept, queued nearest first. The swap that builds a
+rebuild behind the view that stands (`scenes/swapBehind.js` rebuild - `bible/03-World/Arena-Provinces.md` IC-GRAND, "Built
+behind the view that stands") owns that tail now: made where the sweeps' host is (`scenes/tamrielSweepsHost.js`, which
+hands it back), each sweep's tail one call. The host's share is the swap's wiring - the collider, the door list and its
+generation (a getter and a setter) handed to the sweeps - and two names in its build's door (`swap.owes`, `swap.failed`).
+`bootWorld` 35,894 -> 35,869 logical lines on the branch's merged host, its ceiling at it
+(`test/scenes/hostceiling.test.js`). The far ring's skyline is handed the two names it reads, live, so the seam law sees
+them (`test/tooling/hostseam.test.js`).
+
 ## WW7-12 - the serpent's site hands the lanes' book whole (2026-10-26)
 
 The serpent's site rolled over the world's lanes (`bible/03-World/World-Wide.md` WW7-12) asks the world's lanes' book for

@@ -580,6 +580,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
       tileArray: (archive) => h.hold('tile', archive),
       release: () => h.release(),
       settle: () => h.settle(),
+      rekey: (to) => h.rekey(to),   // IC-SWAP-BEHIND: a view built behind its pixel's, its pixel's from the swap
     };
   }
 

@@ -1834,6 +1834,45 @@ and a far block's carrier standing them (`imperialBlocks.js` imperialFarPartId; 
 A near view stands the whole. Pinned in `test/world/icgrand_lod.test.js` (IC-TOWER-LOD: every corner of the coarse
 prisms a corner of the silhouette and of the coarse model alike); `tools/mutants/icgrand.json` IC-TOWER-LOD-* (6).
 
+BUILT BEHIND THE VIEW THAT STANDS - IC-SWAP-BEHIND (2026-10-26, the owner walking the city: "Weird pop in issues in the
+city when moving"; "No band aids for any of this" - the release held for it). The cause: every rebuild of a standing
+pixel tore it down and then queued its build (`scenes/tamrielSweepsHost.js` sweepCapitalLod, a slice going near or far;
+and every other rebuild of the stream - a season's re-skin, the roads or a region landing late, the breach's clearing,
+Arena's places, the capitals, a layout's change, the build's own roadless retry), so for the build's whole length -
+breathed at a few milliseconds a frame: seconds - the pixel stood nothing: its ground the far ring's coarse cell at the
+far plane, its buildings the horizon's silhouette, until the new view landed (and a slice going far was queued at the
+stream's tail). Now the view that stands STAYS until the one built behind it is published
+(`src/scenes/swapBehind.js:"export function createSwapBehind(host) {"`), for every pixel's rebuild:
+- MARK: a rebuild of a standing pixel takes the carry its build reads before it publishes - World of Daggerfall's markers
+  and its Hold (`scenes/world.js` destroyPixel's `carryOnly`) - and leaves the view standing; the rest of its carry (the
+  deep water's rubble, the ground the landforms' pools ride) is taken at the swap's teardown, as ever, never twice
+  (`carried`).
+- BUILD: the build lays its own under the BEHIND key (`<px>,<py>#b`, `scenes/pixelBuild.js` `key`; its pixel's identity
+  `pkey` - what stands in `built`, its carries, its stale sets, its re-skin and restride, its siege field, its gathering
+  nodes): its collider bucket and its gates' HELD (`player/collider.js` hold - in no query, no filing, no bounds), its
+  cover held (`ai/cover.js`), its place hold and its ledger its own, its doors staged on its ledger, never the world's.
+  Neither buffer's collider nor door keys ever meet.
+- PUBLISH: one step, no frame between - the old view down (its buckets, cover, gates and doors under the pixel's own key),
+  the new one's woken under the pixel's own key (`collider.wake`: its bucket and its gates', their cover, its withheld
+  late parts - `player/lateSolid.js` rename), its staged doors into the world's list, its place hold the pixel's
+  (`scenes/placeHolds.js` rekey - so the old view's keep, the rebuild's old layout, is settled by it as a rebuild's always
+  was, and the pixel keeps one keep), the new entry published. Never a frame with neither view, never one with both. No fade from the middle ring's tint on a view swapped in (MID-RING's is a
+  new pixel's). The player on the view swapped out rides the ground's move as the season hold's player does
+  (`scenes/world.js` rideGround - the roads' landing cuts up to 30 m) - and no hold is armed behind a standing view: its
+  ground never goes.
+- A build behind that fails lets its own go and leaves the view standing; a pixel marked again while its build is under
+  way is built once more after the publish; one streamed out meanwhile is built as ever. The city's sweep leaves a slice
+  owed a build behind to the view it is built in, and walks again on every swap (a view swapped in moves no set's size).
+- THE KILL SWITCH: `?swapbehind=off` - every rebuild as it was, torn down then built.
+The hosts' own rebuild tails went into the swap's `rebuild` (HOST-SPLIT: bootWorld 35,894 -> 35,869 logical lines, its
+ceiling re-measured; `bible/01-Overview/Host-Split.md` IC-SWAP-BEHIND). Pinned by state in
+`test/scenes/swapbehind.test.js` (the collider holding a view built behind; the swap's mark, build, publish, failure,
+again and switch over a real Collider; every host's rebuild through it), `test/world/terrain/auditlandforms.test.js` (the
+player and the pools riding a swap), `test/world/terrain/terrainscale1.test.js` (a build behind that throws),
+`test/world/icgrand_lod.test.js` THE SWEEP and `test/world/worldOfDaggerfall/audit_wod_branch.test.js` WOD6 (a late
+region's pixels behind their views); `tools/mutants/swapbehind.json`. Not yet proved in a browser (the shared machine's
+memory, IC-PROBE-AFTER): the coordinator will say when the machine frees.
+
 IN THE GAME AFTER: not measured today - the shared machine's memory cgroup took the probe's browser in its boot or its jump on five of the six runs after the before one (the sixth stopped by its own time limit, still booting) (the kernel's OOM killer, the renderer at 3.6-5.4 GB among the other streams' browsers and tests, load 25-38); the in-game before above stands, the after is node's (IC-PROBE-AFTER below). The in-game shots of the streets, the roofs, the Palace District, the city's arena and the far landmarks at a clear noon with the boot's pages put away (the probe's SHOTS: each slice built with the frame held, then shot) were not taken for the same reason; the city was seen in the scratch's rasterizer instead (its palace, gardens, tombs, gatehouses, the new tower from 3.6 km and from its foot, the courts, the squares' fountains and the Arboretum's orchards).
 
 OPEN - THE NAMED FOLLOW-UPS (IC-GRAND, at the release of 2026-10-26; none half-done in the code):
