@@ -446,7 +446,10 @@ else Foraging's Fish (1605). A **trophy** is the species' own Deep Waters templa
   and Immersive Footsteps' and Better Ambience's where they are on.
 - Weather and the hour matter: the net fills fastest in the first and last daylight hours (07:00-07:59 and 17:00-17:59 -
   a bonus; ANY-HOUR: the wilderness no longer closes at night); rain wets the herbs (the steady window -20%); a storm
-  drives the fish deep (longer waits, bigger fish).
+  drives the fish deep (longer waits, bigger fish). AS BUILT (AUDIT GATHER, section 55): the rain BUILT at last (F7 -
+  rain or thunder falling on the player, `herbHost.js` herbsWet, `HERB_ACT.wet` 0.8); the storm's longer wait built
+  (`waitMult`, doubled in thunder); its bigger fish NOT BUILT, named - the service reads no weather, and a storm's word
+  is the client's.
 
 ## 6. Nodes
 
@@ -3231,10 +3234,14 @@ asked). What sections 5.2, 6 and 3.3 left open for PROF8, DECIDED here, and what
   water tile - a pixel with no water stands none; stood as three of Foraging's Fish item's own world picture on the water
   (1605's template, DFU's TEXTURE.211 - as an herb patch stands its plant's; FOUND: not Deep Waters' fish, which the port
   draws from the mod's own pictures), and said in the prompt's words ("a school rises 14 m north"). Never a target: a cast that lands within 10 m of one is a school's haul - the act's report names it (0 or 1),
-  the service reads nothing else of it (`netOf`), and the day's forty bound it.
+  the service reads nothing else of it (`netOf`), and the day's forty bound it. CAP-OFF (section 40) lifted the forty from
+  the hauls and never from the school - every haul could claim one; AUDIT GATHER F3 (section 55) bounds the school
+  again, to an account's first forty hauls of the day (`professionLaw.js` SCHOOL_HAULS_DAY), the hauls themselves
+  uncapped.
 - **The act** (5.2; `systems/fishAct.js`): E starts it and, held, winds the net (0.3-1.5 s, 3-12 m); let go, it flies;
   the wait (5-30 s, halved at 07:00 and 17:00 on the game clock, doubled in thunder); the tug - a new press of E, or
-  attack, inside 600 ms (an Angler's 840), the phone buzzing where the touch layer's haptics are on; the haul - the net's
+  attack, inside 600 ms (an Angler's 840; x the net's attribute band, FORAGE0 14.4-14.5 - AUDIT GATHER F6, section 55,
+  where it was the tension band's alone), the phone buzzing where the touch layer's haptics are on; the haul - the net's
   weight wanders the bar, E held raises the tension band (20% of the bar at Novice to 30% at Master, the net's
   attribute pair - Intelligence and Agility, Foraging's own - widening it), let go it falls; the weight kept inside for 6 s
   (OPEN) fills a full net; 2 s outside in all, or 20 s unfilled, and it comes in plain. A missed tug is a plain net,
@@ -3311,7 +3318,8 @@ and nothing in the world set a node apart from the ground about it. DECIDED here
   sheen, the ring retired; the glow lights a node with none (a body drawn as a 3D character).
 - **Not built, named**: the held map's node marks (section 21's "the held map marks the patches and veins a character
   has worked before" - still as PROF1 and PROF2 left it); no setting turns the glow or the marks off (the professions'
-  own switch does).
+  own switch does). RESOURCE-HIGHLIGHTS (section 54, 2026-10-26) made the LOOK a setting - the glint, NODE-OUTLINE's
+  ring, or both; still none turns them off.
 - **Pinned**: `test/scenes/nodemarks.test.js` (19); `tools/nodeGlowProbe.mjs` compiles, links and draws the glow in a real WebGL2
   context over a stand-in node and wall, and through the world host's own pass with the renderer's typed camera, and
   reads the frame back (14 checks). Mutants: `tools/mutants/nodemarks.json` (58, all dead).
@@ -4999,7 +5007,7 @@ the slice wires a line into (`scenes/world.js`, `scenes/dungeonContext.js`, `net
 (`test/tooling/mutantdrift.test.js`), and those on the lines the slice moved were re-aimed and judged above.
 Ledger A (PROFESSIONS, GATHER-FEEL II).
 
-## 46. NODE-OUTLINE - a node ringed along its own picture (BUILT 2026-10-19; the ring RETIRED 2026-10-20 by NODE-GLINT, section 47)
+## 46. NODE-OUTLINE - a node ringed along its own picture (BUILT 2026-10-19; the ring RETIRED 2026-10-20 by NODE-GLINT, section 47; BACK 2026-10-26 as a setting, RESOURCE-HIGHLIGHTS, section 54)
 
 NODE-GLINT (section 47) took the ring away and kept the rest - the pictures, the mask and the pass's seams - and its module, test,
 probe and mutants live on under its names (`render/nodeGlint.js`, `test/scenes/nodeglint.test.js`, `tools/nodeGlintProbe.mjs`,
@@ -5100,7 +5108,8 @@ DECIDED and BUILT (`render/nodeGlint.js` - section 46's module, moved; its pictu
   no pass of its own (its glow is SENSE1's); `scenes/worldModes.js` lights none in a building (`nodeMarksAt` answers none
   there); `scenes/exterior.js`, the fixed-city bench, stands no gathering host and no node. Never under the travel view.
 - **Not a setting.** The owner's word was the glint itself; section 31's "no setting turns the glow or the marks off"
-  stands.
+  stands. RESOURCE-HIGHLIGHTS (section 54) made the look one - the glint by default, NODE-OUTLINE's ring back beside it as
+  an option.
 - **Pinned**: `test/scenes/nodeglint.test.js` (11 - section 46's three on the pictures carried); `tools/nodeGlintProbe.mjs`
   compiles and links both programs in a real WebGL2 context, draws a herb flat of a two-flat batch and a 3D tree of
   crossed cards through the pass and reads the frames back (21 checks: over 24 moments of the glints' lives the herb and
@@ -6053,6 +6062,113 @@ The report (SaberGGaming, through the owner): no Daedric Ingot could be had, and
   cheap in code, but the spoils' order and pictures are pinned by WB5, WB9f, WB12d, WB14g, CARDS-6, GEM2, GILDED2 and
   SET6's floors, so it is a slice of its own; the Gate pays hearts today through the faithful's chest. 4.7's gate-touched
   ground, where a heart is skinned from any foe, is still PROF2b's.
+
+## 54. RESOURCE-HIGHLIGHTS - NODE-OUTLINE's ring back, as the player's choice (BUILT 2026-10-26)
+
+The owner: **"Reintroduce resource highlights as an option"**. FACT: NODE-OUTLINE (section 46) ringed a node along its
+own picture in its profession's compass colour; NODE-GLINT (section 47) retired the ring a day later, after "a lot of
+players dont like how its not immersive", and lit the picture with glints and a sheen instead - and sections 31 and 47
+both said no setting chose. The ring was the plainer find (a line round the shape, as bright at midnight as at noon);
+the glint the quieter look. DECIDED and BUILT (`render/nodeGlint.js`):
+
+- **The row.** Settings, Gameplay, *Climbing & gathering*: **Resource highlights** (`systems/features.js`
+  `resource-highlights`, group Sight, beside Foraging) - **Glint** (the default, the owner's choice of 2026-10-20),
+  **Outline** (section 46's ring) or **Both**. The player's own pref (`resourceHighlights`, `online: 'player'` - each
+  player's look, never the realm's), read by the pass every frame (`createNodeGlintPass`'s `look`, `highlightLook`), so
+  a change lands at once. An unknown tier (an old pref, a typo) is the glints.
+- **The ring, as it shipped.** Section 46's own law and numbers - a fragment outside the silhouette within `OUTLINE_PX`
+  (2.5 px at 1080 rows, never under `OUTLINE_PX_MIN` 1.5) of it, 16 taps (`OUTLINE_TAPS` 8 directions at the width and
+  half of it), in the compass colour at `OUTLINE_ALPHA` 0.95 breathing `OUTLINE_BREATH` 12% at `OUTLINE_BREATH_HZ` a
+  quarter hertz (whole over the glow's 60 s clock, `glintRatesWhole`; still under reduced motion), at the depth of the
+  silhouette it borders stood `OUTLINE_RING_BACK` 0.08 m behind it - a wall before the node hides it, the ground behind
+  shows it, it never draws over the node - fogged, hazed and under the sea's murk as a surface's colour is
+  (`dwWaterFog`). Kindled and faded with distance by the glow's law, sixteen at most, the node an act works quiet - all
+  as the glints are.
+- **One pass, one mask.** The ring is the pass's third program (`NODE_RING_VS`, `NODE_RING_FS`; `NODE_GLINT_PROGRAMS`
+  three, started ahead of the build as SHADER-STALL starts every pass's), reading the depth atlas the glints read - one
+  quad a node more, blended (SRC_ALPHA, ONE_MINUS_SRC_ALPHA) against the world's depth and never writing it. Both draws
+  the ring, then the glints over it. Section 46's ring had a module of its own; this one has none - the mask is shared.
+- **A texel a pixel, or never over the node.** The ring alone takes its own width's room round a node (section 46's),
+  not the glints' rays' (up to 16 px), so more nodes hold their tile a texel a pixel. A node too near to (its rectangle
+  past 256 pixels) is FITTED into its tile, a texel coarser than a pixel - and a texel is its centre's sample, so a pixel
+  of the picture's edge could fall in an empty one and be ringed over (the real-WebGL2 probe: 3 px on a near tree's edge
+  row under Outline, 18 under Both). FOUND and FIXED here, a gap section 46 shipped with: on a fitted tile a fragment is
+  the node's if any of the four texel centres round it is, and the ring reaches half a texel further.
+- **Departures, named.** The ring is NOT scaled by GLINT-LIGHT's light where the node stands (section 47): a highlight
+  chosen to find nodes is as plain at midnight as at noon. The glow (section 31) is unchanged under every tier - a node
+  with no picture (a body drawn as a 3D character, SENSE1's finds) keeps its card. Still no setting turns the marks off
+  (section 31: the professions' own switch does).
+- **The four hosts** (17.1): the streaming world wires the pass as before (`scenes/world.js`
+  `const nodeGlintPass = createNodeGlintPass(renderer);` - the choice is the pass's own to read, no host grew); a
+  dungeon's draw is the same pass through its `lateWorldDraw`; a building lights none (`nodeMarksAt`); the fixed city
+  stands no node.
+- **AUDIT GATHER F9 rides here** (section 55): a build that fails lets every program go.
+- **Pinned**: `test/scenes/resourcehighlights.test.js` (6 - the row, the looks and the ring's numbers by value, its
+  programs, the draw over a recording GL in each look - a near node's width fitted to its tile, the program disposed -
+  the pass reading the pref each frame, F9); `tools/nodeGlintProbe.mjs` (7 checks added, in a real WebGL2: the outline
+  draws with no GL error and hands the baseline back, the ring round the herb's and the tree's pictures and never over
+  them, within its width of the herb and the neighbour flat unringed, in Herbalism's orchid, a wall hiding it, Both -
+  the glints on the picture and the ring round it, and the ring round the tree FITTED into its tile never over a
+  picture: 0 px, where the four-texel rule taken away leaves 18). Mutants: `tools/mutants/resourcehighlights.json` (24,
+  all dead).
+  PIN MOVED: `test/scenes/nodeglint.test.js` (the pass's programs deleted at dispose, two to three);
+  `test/systems/features.test.js` (FT0's ids, FT15's budget); `test/systems/l10n4_hardcoded.test.js` (`nodeGlint.js`'s
+  count, the ring's program label). AUDIT LOCKPICK D4 (`01-Overview/audits/Audit-Lockpick.md`): the ring's GL state and
+  its every uniform asserted in node, each node its own rectangle and tile - they had no pin there.
+
+## 55. AUDIT GATHER - the harvesting and gathering systems read cold (2026-10-26)
+
+The owner: **"Audit the harvesting and gathering systems ensuring perfection and that nothing is broken"**. Three lanes
+read the tree cold at 70d9210c4, each its own worktree and each finding proven by a script before it was named: THE LAW
+AND THE SERVICE (harvest, XP, the Stores, the bag, the Motherlodes - driven through the real Worker over node:sqlite,
+`test/accountDb.mjs`); THE CLIENT'S ACTS AND HOSTS (`scenes/gatherHost.js` and its kinds through `test/gatherRig.mjs` -
+a fuzz of 200 seeds x 400 random steps: presses, attacks, E held and let go, Esc, walking off, answers ok, `stores-full`
+and `node-taken`: no node asked twice, wear always equal to the harvests asked, nothing left standing, nothing thrown);
+FORAGING, THE MARKS AND THE PEERS (Foraging's Use offline and online, `foragingWait` fuzzed 6,000 runs, the compass, the
+glow and the glint - `tools/nodeGlintProbe.mjs` 33 of 33 in a real WebGL2 - and the peers' acts on the wire). The lanes'
+own tests: 171, 131 and 133, all passing. No HIGH; one MEDIUM; nine LOW. Every one FIXED and pinned.
+
+| | Finding | Fix |
+| --- | --- | --- |
+| F1 MEDIUM | A CARRIED harvest that landed with its answer lost, asked again after the realm's judge held the character (`trade-held`) or another device took the account's seat (`progress-seat`), was refused at the service's door (INT16's seat check runs before the route looks the rid up) and let go - nothing minted, the units still counted carried, and the next cut erased them. Materials-Bag.md 7: "a carried harvest is never let go unminted". | `net/profBook.js` `SEAT_REFUSALS`: a carried harvest so refused is kept and asked again with its own rid until the seat answers it - as made if it landed, refused if not. A harvest not carried (nothing to mint) is the service's no, as before. AUDIT LOCKPICK D1: kept only once an earlier ask went unanswered (`seatHeld` - `h.tries > 0`: a FIRST ask refused at the seat never landed, so it is the service's no, never "will be counted"), and asked again five minutes apart (`PROF_SEAT_RETRY_MS`), not on the pump's quick steps. |
+| F2 LOW | A Motherlode could be struck up to `HARVEST_EARLY_S` (60 s) before it rose on the service's clock - both checks read the act's end, the client's word - taking a slot, the ore and the silver before an honest client saw it. | `server-account/src/motherlodes.js`: risen on the service's clock too, at the door and in the strike's insert (`?15`, the insert's guard recorded equivalent - the door reads the same clock first). |
+| F3 LOW | The haul's school is the client's word; section 30 took it so because the day's forty bounded it, and CAP-OFF (section 40) lifted the forty and never the school - a lying client claimed one every haul (+117% a haul, a Netter's +183%, past 5.1's +50%). | `professionLaw.js` `SCHOOL_HAULS_DAY` 40: a school's fish on an account's first forty SCHOOLS of the day alone; the hauls themselves uncapped. AUDIT LOCKPICK D2: it bounded the first forty HAULS, so an honest angler's first school after forty plain hauls (twenty minutes at the net) earned nothing - against this row's own reasoning. A haul whose school counted says so on its row (`node_harvests.school`, migration 0176, account acct195 before the site), and `professions.js` counts those. |
+| F4 LOW | The profession list (two harvests ready at a node, the classic skin or touch) replaced by the death screen kept its name and never answered - every list after it refused, and E started the first harvest for the rest of the session. | `scenes/world.js` profChoose: a picker held with no window up is gone, not open. |
+| F5 LOW | An act begun on day D's node and finished after 00:00 UTC played to its end, wore the tool and was refused (`prof-day`). A body lapsed and a cast re-keyed of their own; a patch, a vein, a boulder, a tree and a dungeon vein did not. | `scenes/gatherHost.js`: at the day's turn an act on yesterday's node ends - nothing asked, nothing worn, the stop said, and why (`ACT_GONE_LINE`, through `t()` - AUDIT LOCKPICK C14: it said "stopped early" and no reason). AUDIT LOCKPICK D3: a Motherlode's act ends as its lode sinks - its key (`mlode:`) is no node key, so this never saw it, and a strike played past the close (as late as 23:58 UTC) wore the Pick-Axe for a refusal. |
+| F6 LOW | The Fishing-Net's attribute band widened the haul's tension band and not the tug's window - FORAGE0 14.4-14.5's "within 600 ms x the band". | `systems/fishAct.js`: the tug's window x the band. |
+| F7 LOW | 5.3's "rain wets the herbs (the steady window -20%)" was never built and never named unbuilt. | BUILT: `HERB_ACT.wet` 0.8; `scenes/herbHost.js` `herbsWet` - rain or thunder falling on the player, WET-FALL's one truth (`fallingWeather`), never the sim's word over a dry spell. 5.3's storm: the longer wait built, the bigger fish NOT BUILT, named there. |
+| F8 LOW | Another player's gathering beats were dropped one in two at 75 Hz (100 of 199; 119 of 199 at 144 Hz, 333 of 399 at 60 Hz with a frame's jitter): the floor was a whole pose, measured on the receiver's own frames, a frame either side of it. | `net/peer/peerGather.js` `PEER_GATHER_CUE_MS` 75 - three quarters of a pose: at steady play-out every honest beat heard at any refresh, a flipping stream still held to one a 75 ms. AUDIT LOCKPICK D6: a peer played out faster to catch up (`net/online.js` rateFor, up to `PLAY_RATE_MAX` 2) hears 100 of 199 at x1.5 and x2 - named, not changed: a beat is a sound, and a catching-up pose is already behind it. |
+| F9 LOW | The glint's build failing leaked a GL program for the session - the mask's when the light's link failed, and every started program from the pass's catch. | `render/nodeGlint.js`: the constructor deletes what it built; the pass's catch releases what it started (`releasePrograms`). |
+| F10 LOW | The glow's shimmer took `pow` of a negative base - undefined in GLSL ES 3.00 (8.2), NaN where a driver takes exp2(y log2 x). Not reproduced on SwiftShader. | `render/nodeGlow.js`: squared by hand. |
+
+- **Checked and sound** (the lanes' own words, shortened): node keys round-trip in one spelling and both ends keep one UTC
+  day; once a day a node by the table's key, the rid answered "repeat"; every follow-on write keyed by its request's
+  nonce; the acts' reports inside the honest bound everywhere but the school (F3) - the Basket and the hide x1.5 at
+  most, a bruise -1, the clean finish's arithmetic equal both ends; XP and Appendix B's every number as the law holds
+  them; the Stores' CHECKs and the withdrawal's order; the Motherlode's one a day, twenty and Watch; every act completes
+  and none twice; every drop (Esc, walking off, a window, death, a transition, the travel view, a dungeon left, the
+  professions shut, the pixel torn down) ends an act with nothing asked or worn; the timers in seconds and clamped;
+  every crack, chunk and batch owned and freed; Foraging's Use in the IL's order, its wear only when its quest started;
+  the loot hooks silent with the switch off; the marks in the exterior and a dungeon alone, a gone node's none every
+  frame; the glint and the glow handing the baseline back; the peers' wire bounds and a first sight replaying nothing.
+- **Traced, not a defect**: a body stamped by one character skinned by another loaded in the same session - a load
+  sweeps the loose foes (`exteriorFoes.clearLive`, AUDIT 39) and stands the save's copies, new entities, and the stamps
+  are a WeakMap keyed by the entity, so no stamp survives a load (`createBodyStamps`' `clear` has no caller and needs
+  none); and a body is the client's word to the service in any case (PROF0 6).
+- **NOT CHANGED, named.** (1) Online with Foraging off, the shops still stock the Spade as one of "the six tools"
+  (`systems/foraging/foragingInstall.js`), and no profession act takes it - its Use online is none. Law 6 says six; its
+  reason ("the professions' acts need them") does not cover the Spade. The owner's to decide. (2) F1's pattern on the
+  crafting routes the seat also guards (`/v1/prof/smelt`, `craft`, `brew`, `disenchant`, `temper` - `server-account/src/progress.js`
+  PROGRESS_ROUTES): another lane's, not traced here. A Stores withdrawal is not a progression route and is never refused
+  at the seat. (3) F1's service half - answering a rid that already has a row before the seat is asked - is not built:
+  the client's half closes it, and INT16's door stays whole. (4) 5.3's bigger fish in a storm (F7's row).
+- **Pinned**: `test/systems/auditgather.test.js` (7 - F1, F4 to F8, F10), `test/net/auditgather_service.test.js` (2 - F2,
+  F3), F9 in `test/scenes/resourcehighlights.test.js` (section 54). AUDIT LOCKPICK lane D (`01-Overview/audits/Audit-Lockpick.md`):
+  F1 rewritten (D1), F3 by schools (D2), D3's own Motherlode test, F2's bound a second past the rise and F5's meter and
+  the Basket's glints (D5); mutants `tools/mutants/auditlockpick.json` AUDITLOCK-D*. PIN MOVED (each its own note): AUDIT GATHER-FEEL
+  R7's floor (`test/systems/audit_gatherfeel.test.js`, `0.75 * 1000 / POSE_HZ`), PROF8's tug (`test/world/terrain/prof8_client.test.js`,
+  x the band), PROF1's steady window (`test/systems/foraging/prof1_law.test.js`, `HERB_ACT`'s `wet`). Mutants:
+  `tools/mutants/auditgather.json` (17 - 16 dead, the insert's guard equivalent as recorded).
 
 ## Appendix A - a day of a gatherer
 

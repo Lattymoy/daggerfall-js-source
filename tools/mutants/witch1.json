@@ -595,8 +595,8 @@
   {
     "name": "WITCH1-AUDIT-the-enhanced-card-silent",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "|| isFestivalFace(item) ? { survival:",
-    "new": " ? { survival:",
+    "old": "|| isFestivalFace(item) || isLockpick(item) ? { survival:",
+    "new": "|| isLockpick(item) ? { survival:",
     "tests": [
       "test/systems/festival/witch1_wares.test.js"
     ],

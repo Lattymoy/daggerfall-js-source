@@ -28,6 +28,11 @@ section 44, GATHER-FEEL), built by `tools/gatherSfx.mjs` from the same kit and t
 parry, a splash and a lock's click, which the acts borrowed; it has no axe in wood, no pick on stone, no leaves and no
 tree coming down.
 
+The `lock-*.wav` files are ours outright as well: the lockpicking minigame's tumblers - a pin lifted, a free pin
+springing back, a pin set, a spool's false set, a slip and a pick snapping (bible/06-Systems/Lockpicking.md, LOCKPICK),
+built by `tools/lockSfx.mjs` from the same kit and the same bake. DAGGER.SND has the picked lock's chime, which the world
+still plays as a lock opens; it has no tumblers.
+
 The `horse-*.wav` files are ours outright as well: the horse's snorts, blows, breaths and spook, and its hooves on grass,
 in snow and in water (bible/08-Audio/Audio.md HORSE-VOICE), built by `tools/horseSfx.mjs` from the same kit and the same
 bake. DAGGER.SND has one neigh, two clops on hard ground and the cart; it has no snort, no breath and no hoof on soft
@@ -125,6 +130,13 @@ over 5 kHz, which DAGGER.SND's format cannot hold. **Source and license: to be f
 | `gather-clean.wav` | gathering: a clean finish | `tools/gatherSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - two soft bell notes a fourth apart (E6, A6) (GATHER-FEEL) |
 | `gather-haul.wav` | gathering: the goods into the bag | `tools/gatherSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a leather satchel's thump, its flap, the goods settling (GATHER-FEEL) |
 | `gather-rank.wav` | gathering: a rank risen | `tools/gatherSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - three bell notes rising (C6, E6, G6) and a fourth above them (GATHER-FEEL) |
+| `lock-tick-1.wav` | lockpicking: the pick lifting a pin | `tools/lockSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a tiny steel tick on brass and the pin's short ring (LOCKPICK) |
+| `lock-tick-2.wav` | lockpicking: the pick lifting a pin (the other) | `tools/lockSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the same, a breath lower - two, so no lift is the one just heard (LOCKPICK) |
+| `lock-spring.wav` | lockpicking: a free pin springing back | `tools/lockSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a light ting and the spring's short buzz (LOCKPICK) |
+| `lock-set.wav` | lockpicking: a pin set at the shear line | `tools/lockSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a crisp click, the plug giving a hair (LOCKPICK) |
+| `lock-false.wav` | lockpicking: a spool pin's false set | `tools/lockSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a dull clunk and the plug turning back against the tension (LOCKPICK) |
+| `lock-slip.wav` | lockpicking: the pick slipping off a pin | `tools/lockSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a thin steel scrape (LOCKPICK) |
+| `lock-snap.wav` | lockpicking: the pick snapping | `tools/lockSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a sharp crack, and the broken tip ringing as it falls and lands (LOCKPICK) |
 | `horse-snort-1.wav` | horse: a snort | `tools/horseSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a forceful breath out through the nose's two bands (300 Hz, 1.6 kHz), fluttering at ~32 Hz |
 | `horse-snort-2.wav` | horse: a snort | `tools/horseSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the same, a shade lower and longer |
 | `horse-snort-3.wav` | horse: a snort | `tools/horseSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the same, a shade higher and shorter |

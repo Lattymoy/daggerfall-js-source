@@ -22,6 +22,7 @@
 //   Basket's (FORAGE0 14.3); the machine is systems/herbAct.js; the
 //   Sickle's steady hand draws DFU's Tanto in the hand.
 // ═══════════════════════════════════════════════════════════════════
+import { fallingWeather } from '../systems/weather/weatherSim.js';   // AUDIT GATHER F7: rain wets the herbs
 import { herbPatches, nodeKey, HERB_TABLES } from '../net/nodeLaw.js';
 import { tierOpen, TIER_RANKS, actBand, PROF_RANK_MAX, herbKey, storesFullIn, goneIn, fullWordsIn, GROUND_WHERE, GROUND_WHERE_WORDS } from '../net/professionLaw.js';
 import { natureStandsAt, insideRocks } from '../world/terrain/terrainNature.js';
@@ -115,6 +116,11 @@ export function patchPlan({ patch, taken, counting, basket, rank, sickle, basket
 /** The Sickle in the hand for the steady hand's length (FORAGE0 14.2): DFU's own Tanto, its idle frame. */
 export const SICKLE_HAND = Object.freeze({ group: 'Weapons', templateIndex: 114, material: 0 });
 
+/** AUDIT GATHER F7 (Professions-Arc 5.3, section 55): rain wets the herbs - rain or thunder falling on the player (WET-FALL's
+ *  one truth, systems/weather/weatherSim.js fallingWeather: the street's word, never the sim's over a dry spell) narrows the
+ *  steady hand's window (HERB_ACT.wet). */
+export const herbsWet = (weather = fallingWeather().word) => weather === 'rain' || weather === 'thunder';
+
 /**
  * HERBALISM'S KIND in the gathering host (scenes/gatherHost.js): its patches, their pictures, the plan, the act.
  * @param {{ book: any }} deps
@@ -175,7 +181,7 @@ export function herbKind({ book }) {
       const tool = plan.harvest === 'food' ? foragingToolIn(entity, FT.Basket) : common ? null : foragingToolIn(entity, FT.Sickle);
       const r = rank('herbalism');
       return {
-        act: createHerbAct({ kind, band: actBand(liveStat(entity, 'intelligence')), botanist: book.track('herbalism').specs?.[50] === 'botanist', master: r >= PROF_RANK_MAX, gentle: getPref('gentleActs') === true }),
+        act: createHerbAct({ kind, band: actBand(liveStat(entity, 'intelligence')), botanist: book.track('herbalism').specs?.[50] === 'botanist', master: r >= PROF_RANK_MAX, gentle: getPref('gentleActs') === true, wet: herbsWet() }),
         // STEADY-SAID (AUDIT 2026-10-01 part four): the steady hand's key, which E's start must hold to the end - the meter
         // said "hold still" and nothing of the key, and a tap of E ended the act with nothing taken (the Sickle's Use
         // holds it itself: no key to name)

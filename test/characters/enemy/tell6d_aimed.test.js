@@ -144,7 +144,7 @@ test('TELL6d: the pools loose it and the hosts weigh it - the locked bearing and
   assert.match(ex, /onArrow\(from, dir, f, _atPlayer \? null : _at, aimedArrowMeta\(shot\)\);/);
   const dg = rd('src/scenes/dungeonContext.js');
   assert.match(dg, /fireArrow\(from, dir, f\.entity\.weapon, false, f, _atPlayer \? null : _at, null, aimedArrowMeta\(shot\)\);/);
-  assert.match(dg, /const step = MISSILE_SPEED \* \(m\.speedScale \?\? 1\) \* dt;/);
+  assert.match(dg, /const step = \(m\.arrow && !m\.flatArchive \? ARROW_FLIGHT_SPEED : MISSILE_SPEED\) \* \(m\.speedScale \?\? 1\) \* dt;/);
   for (const host of ['src/scenes/exterior.js', 'src/scenes/world.js', 'src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) {
     assert.match(rd(host), /blowInfo: m\.aimed \? aimedBlowInfo\(m\) : null,/, `${host}: its arrow's weight`);
   }
