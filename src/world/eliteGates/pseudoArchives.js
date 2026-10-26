@@ -92,6 +92,7 @@ export const PSEUDO_ARCHIVES = Object.freeze([
   N(38302, 'world/starfall/starglassArt.js', 'STARGLASS_ARCHIVE', 'port', 'Starglass, the glass a held star leaves (STAR7)'),
   N(38311, 'world/ketch/ketchArt.js', 'KT_ARCHIVE', 'port', 'the Sky-Ketch Mzunthar - its decks, hull, brass, the land below and its puffs (KETCH)'),
   N(38400, 'world/capitalShapes.js', 'CAPITAL_ARCHIVE', 'port', "the capitals past the Bay - their stone, roofs, domes and statues, painted at run time (TESA10, TESA-LORE)"),
+  N(38500, 'world/urban/urbanRecords.js', 'URBAN_ARCHIVE', 'port', "the towns' fabric past the Bay - brick, half-timbering, ashlar and each province's paving, painted at run time (URBANIZER)"),
   N(38990, 'tools/abyssLab.js', 'LAB_ARCHIVE', 'port', "the abyss lab's walls and floor"),
   N(56790, 'world/townStandIns.js', 'TOWN_CLUTTER_ARCHIVE', 'data', "the towns' clutter Daggerfall's blocks name"),
   N(112358, 'systems/handheldTorches.js', 'DROPPED_ARCHIVE', 'mod', 'Handheld Torches: a dropped torch'),

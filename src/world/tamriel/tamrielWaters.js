@@ -66,7 +66,7 @@ export const LAKES = Object.freeze([
  *  spring); `into` 'water' (the trace's - a sea, Lake Rumare, Niben Bay, Topal Bay) or a river's key; `width` metres at the
  *  source and the mouth; `pts` picture units, source to mouth. A river with no `name` is a stream the reference does not
  *  name (held map: unnamed). */
-export const RIVERS = Object.freeze([
+export const CARVED_RIVERS = Object.freeze([
   { key: 'corbolo', name: 'Corbolo River', from: 'arrius', into: 'water', width: [24, 130],
     pts: [[196.62, 86.2], [196.69, 87.15], [197.41, 87.94], [197.25, 89.29], [197.32, 90], [196.37, 91.23], [195.73, 92.65], [195.65, 93.23], [195.71, 93.87], [196.16, 94.77], [196.16, 95.23], [196.67, 95.81], [196.56, 96.39], [196.77, 97.23], [197.38, 98.45], [196.32, 100.39], [195.89, 102.19], [195.56, 102.9], [195.55, 103.42], [194.67, 104.84], [194.6, 105.61], [194.18, 106.39], [193.99, 107.42], [193.34, 108.52], [193.25, 109.94], [192.99, 110.97], [192.45, 111.94], [192.46, 112.9], [192.03, 114], [191.2, 115.2], [190.0, 115.55], [188.94, 116]] },
   { key: 'silverfish', name: 'Silverfish River', from: 'canulus', into: 'water', width: [24, 110],
@@ -202,7 +202,7 @@ function compile(version) {
   /** @type {Map<string, typeof lakes[number]>} */
   const lakeOf = new Map(lakes.map((l) => [l.key, l]));
   const rivers = [], riverOf = new Map();
-  for (const R of RIVERS) {
+  for (const R of CARVED_RIVERS) {
     const ctl = R.pts.map(([px, py]) => pictureToBay(px, py));
     const [w0, w1] = R.width;
     const stepPx = Math.min(D.stepMax, Math.max(D.stepMin, D.step * (w0 + w1) / 2)) / PIXEL_M;
