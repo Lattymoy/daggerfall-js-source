@@ -41,7 +41,7 @@ test('REAL-GPU: the run judges itself - a software renderer, a phase that drew n
 
 /** A profile of three nodes - root, frame, buildProgram - and the marker the probe aligns by, sampled every 10 ms. */
 function profileOf(sampleNames) {
-  const fn = (id, functionName, children = []) => ({ id, callFrame: { functionName, url: functionName.startsWith('(') ? '' : 'http://localhost/src/render/glProgram.js', lineNumber: 10 * id }, children });
+  const fn = (id, functionName, children = []) => ({ id, callFrame: { functionName, url: functionName.startsWith('(') ? '' : 'http://localhost/src/fixture/linkFixture.js', lineNumber: 10 * id }, children });
   const nodes = [fn(1, '(root)', [2, 3, 5, 6]), fn(2, 'frame', [4]), fn(3, '(idle)'), fn(4, 'buildProgram'), fn(5, '__realGpuAlign'), fn(6, '(garbage collector)')];
   const idOf = { root: 1, frame: 2, idle: 3, build: 4, align: 5, gc: 6 };
   return { nodes, samples: sampleNames.map((n) => idOf[n]), timeDeltas: sampleNames.map(() => 10000), startTime: 0 };
@@ -54,7 +54,7 @@ test('REAL-GPU: a long frame is attributed to the code that ran inside it, on th
   const phase = analysePhase(profile, 1000, [[1030, 8], [1080, 50.5], [1090, 8]], 40);
   assert.equal(phase.aligned, true);
   assert.equal(phase.hitches.length, 1);
-  assert.equal(phase.hitches[0].inclusive[0][0], 'buildProgram src/render/glProgram.js:41');
+  assert.equal(phase.hitches[0].inclusive[0][0], 'buildProgram src/fixture/linkFixture.js:41');
   assert.ok(phase.hitches[0].kinds.script >= 40, 'its time is the build\'s');
   assert.ok(phase.share.idle > 0 && phase.share.script > 0);
   const unaligned = analysePhase(profileOf(['idle', 'build']), null, [[100, 500]], 40);
@@ -70,8 +70,8 @@ test('REAL-GPU: the frame figures and the boot\'s own - the first world frame, t
     gapsRaw: [[25000, 20000], [30000, 16], [31000, 150], [40000, 200], [60000, 400]],
     firstFrame: 30000,
     compileLog: [
-      { fn: 'getProgramParameter', ms: 1500, at: 6000, by: ['link render/glProgram.js:45:6', 'buildProgram render/glProgram.js:128:36', 'new VolumetricClouds render/volumetricClouds.js:1482:25'] },
-      { fn: 'getProgramParameter', ms: 500, at: 31000, by: ['buildProgram render/glProgram.js:128:36', 'new FoeTelegraphPass render/foeTelegraph.js:183:20'] },
+      { fn: 'getProgramParameter', ms: 1500, at: 6000, by: ['link fixture/linkFixture.js:45:6', 'buildProgram fixture/linkFixture.js:128:36', 'new SkyFixture fixture/skyFixture.js:1482:25'] },
+      { fn: 'getProgramParameter', ms: 500, at: 31000, by: ['buildProgram fixture/linkFixture.js:128:36', 'new FoeFixture fixture/foeFixture.js:183:20'] },
     ],
   });
   assert.equal(boot.firstFrameS, 30);
@@ -79,7 +79,7 @@ test('REAL-GPU: the frame figures and the boot\'s own - the first world frame, t
   assert.equal(boot.over100Play, 2);
   assert.equal(boot.sumOver100PlayS, 0.35);
   assert.deepEqual(boot.glWaitS, { total: 2, beforeFirstFrame: 1.5, afterFirstFrame: 0.5 });
-  assert.match(boot.byCaller[0][1], /new VolumetricClouds/);
+  assert.match(boot.byCaller[0][1], /new SkyFixture/);
 });
 
 test('REAL-GPU: the readers - time inside buildProgram by caller, a whole phase by function', () => {
