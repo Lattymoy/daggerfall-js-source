@@ -25,6 +25,7 @@
 // reaches the town's edge, which is what a road does.
 
 import { DIR } from './roadNetwork.js';
+import { RING } from '../townShape.js';   // TS9: a town's ring's codes (terrain/terrainTiles.js townRoadRing)
 
 export const TILE = Object.freeze({
   water: 0, dirt: 1, grass: 2, stone: 3,
@@ -75,6 +76,10 @@ export const RIVER_TILES = Object.freeze([
   [0, 0, 0, 0], [0, 6, 21, 31], [0, 0, 0, 0], [0, 5, 20, 30], [0, 7, 22, 32], [0, 5, 20, 30],
 ]);
 const CARD_INN = 0, CARD_OUT = 1, DIAG_INN = 2, DIAG_OUT = 3, DIAG_GAP = 4, ICORNER = 5;
+/** TS9: a ring's half tile by its code (terrainTiles.js RING) - [rotate, flip] that turn the diagonal's edge so its road
+ *  lies toward that corner, as the mod's own flanks turn it (a NE-SW road's flank at x = y + 1, its road north and west:
+ *  flip; at x + 1 = y, south and east: neither; a NW-SE road's, north and east: rotate; south and west: both). */
+const RING_HALF = Object.freeze({ [RING.NW]: [false, true], [RING.NE]: [true, false], [RING.SE]: [false, false], [RING.SW]: [true, true] });
 
 const DIM = 128;
 const MID_LO = 63, MID_HI = 64;
@@ -126,6 +131,7 @@ export function paintRoads(tileData, tilemap, roadMask, trackMask, locationRect 
   const ctx = { tilemap, i: 0, x: 0, y: 0, ground: 0, rect: locationRect, paths };
   for (let y = 0; y < DIM; y++) {
     for (let x = 0; x < DIM; x++) {
+      const i = y * DIM + x;
       // FAST-SUITE: A TILE NO PAINTER CAN REACH is passed by. Every arm, cap, ring, gap, elbow and river join below
       // lies on the pixel's centre cross (x or y within MID_LO-1..MID_HI+1 - a river join two out, at MID_LO-2 or
       // MID_HI+2, has its other coordinate on the cross), on its two diagonals (x-y, or the mirror's, within 2 - the
@@ -135,8 +141,8 @@ export function paintRoads(tileData, tilemap, roadMask, trackMask, locationRect 
       // map, water on and off: `node tools/roadGuardProof.mjs` (103,487 real-map cases, none differing).
       if (!(x >= MID_LO - 1 && x <= MID_HI + 1) && !(y >= MID_LO - 1 && y <= MID_HI + 1)
         && Math.abs(x - y) > 2 && Math.abs(DIM - 1 - x - y) > 2
-        && !(locationRect && x > locationRect.xMin && x < locationRect.xMax && y > locationRect.yMin && y < locationRect.yMax)) continue;
-      const i = y * DIM + x;
+        && !(locationRect && x > locationRect.xMin && x < locationRect.xMax && y > locationRect.yMin && y < locationRect.yMax)
+        && !locationRect?.ring?.[i]) continue;   // TS9: and a town's ring, which runs past its rect
       if (tilemap[i] !== 0) continue;   // a location's own tile, or already painted
       // AUDIT 51: NO RECT SKIP. The mod does not skip the location rect;
       // a location's own tiles are non-zero and stop every painter by
@@ -244,11 +250,15 @@ function paintPath(ctx, T, m, corners) {
   // non-zero and untouched; the band between them and the rect's edge
   // becomes road.
   // TOWN-SHAPES: round a town with an outline, its ring (terrainTiles.js townRoadRing) - where the rect's padding was
-  if (m && ctx.rect && T === ROAD_TILES && (ctx.rect.ring ? ctx.rect.ring[ctx.i] === 1 : x > ctx.rect.xMin && x < ctx.rect.xMax && y > ctx.rect.yMin && y < ctx.rect.yMax)) {
+  if (m && ctx.rect && T === ROAD_TILES && (ctx.rect.ring ? ctx.rect.ring[ctx.i] === RING.road : x > ctx.rect.xMin && x < ctx.rect.xMax && y > ctx.rect.yMin && y < ctx.rect.yMax)) {
     ctx.tilemap[ctx.i] = 46;
     if (ctx.paths) ctx.paths[ctx.i] = 1;   // GRASS-PATH1
     return true;
   }
+  // TS9: and its angled edges blended - a half tile, the diagonal's own edge (DIAG_OUT), its road toward the ring; never
+  // over the sea nor over a road an arm laid here
+  const half = m && ctx.rect?.ring && T === ROAD_TILES ? RING_HALF[ctx.rect.ring[ctx.i]] : null;
+  if (half && !has && ctx.ground !== TILE.water) return tile(ctx, T[DIAG_OUT], half[0], half[1]);
   // Map pixel corners: a neighbour's diagonal brushes this pixel's corner
   if (corners && T[DIAG_OUT]) {
     if ((corners & DIR.NW) && x === DIM - 1 && y === DIM - 1) has = tile(ctx, T[DIAG_OUT], true, false) || has;

@@ -110,8 +110,8 @@
  {
   "name": "TS-the-square-ring",
   "file": "src/world/road/roadPainter.js",
-  "old": "(ctx.rect.ring ? ctx.rect.ring[ctx.i] === 1 : x > ctx.rect.xMin",
-  "new": "(false ? ctx.rect.ring[ctx.i] === 1 : x > ctx.rect.xMin",
+  "old": "(ctx.rect.ring ? ctx.rect.ring[ctx.i] === RING.road : x > ctx.rect.xMin",
+  "new": "(false ? ctx.rect.ring[ctx.i] === RING.road : x > ctx.rect.xMin",
   "tests": [
    "test/world/terrain/townshapes.test.js"
   ]

@@ -33,7 +33,7 @@ import { perlinNoise } from '../perlin.js';
 import { UMRandom } from '../../formats/umRandom.js';
 import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, SCALED_OCEAN_ELEVATION, SCALED_BEACH_ELEVATION } from './terrainSampler.js';
 import { worldDataDoor } from '../../formats/worldData/worldDataDoor.js';   // BOOT-RECTS: whether a layout pin stands where a walk reads
-import { townTiles, townShapeField, townRound, tileDistance, shapeFieldDistance, isWallCarrier, TOWN_SHAPE, WALL_ROUND } from '../townShape.js';   // TOWN-SHAPES: a town's ground its own outline
+import { townTiles, townShapeField, townRound, tileDistance, shapeFieldDistance, isWallCarrier, TOWN_SHAPE, WALL_ROUND, RING } from '../townShape.js';   // TOWN-SHAPES: a town's ground its own outline
 
 /** MeshReader.cs:487: an RMB ground record at or past this is a random marker, not a tile of the set (the tileset has
  *  56 records). AUDIT WATER-NEXT m8: ONE home - the stamp below, rmbLayout.js buildGroundTilemap, the fixed town's
@@ -450,10 +450,30 @@ export function unstampOffShape(tilemapData, shape, mask) {
   for (let i = 0; i < mask.length; i++) if (shape[i] && !mask[i]) tilemapData[i] = 0;
 }
 /** TOWN-SHAPES: the ring a road paves round a town (the mod's "Paint roads around locations", roadPainter.js): the tiles off
- *  its ground within two and a half of it - its outline's, where the rect's padding was. */
+ *  its ground within two and a half of it - its outline's, where the rect's padding was (RING.road). TS9 (2026-10-26, the
+ *  owner: "Roads around the city arent properly blended when they are angled"): where the outline runs at an angle the
+ *  ring's edges stood as stairs of whole tiles. Each step is blended with the road's own diagonal edge, as a diagonal
+ *  road's flanks are: a tile off the ring and off the town's ground with the ring on two sides at a corner and neither on
+ *  the other two (a step's notch, outside) takes a half tile with its road toward that corner, and a ring tile with the
+ *  town's ground on two sides at a corner and the ring on the other two (a step's corner, inside) takes one with its road
+ *  away from it - so a 45-degree stair is one straight edge. */
 export function townRoadRing(mask) {
   const D = WORLD_MAP_TILE_DIM, dist = tileDistance(mask, D, D), ring = new Uint8Array(D * D);
-  for (let i = 0; i < ring.length; i++) ring[i] = !mask[i] && dist[i] <= 2.5 ? 1 : 0;
+  for (let i = 0; i < ring.length; i++) ring[i] = !mask[i] && dist[i] <= 2.5 ? RING.road : 0;
+  const on = (a, x, y) => x >= 0 && y >= 0 && x < D && y < D && a[y * D + x] !== 0;
+  const isRing = (x, y) => on(ring, x, y) && ring[y * D + x] === RING.road, isTown = (x, y) => on(mask, x, y);
+  // a corner by its two sides (y north): [north or south, east or west, its code]
+  const corners = [[1, -1, RING.NW], [1, 1, RING.NE], [-1, 1, RING.SE], [-1, -1, RING.SW]];
+  const half = new Uint8Array(D * D);
+  for (let y = 0; y < D; y++) for (let x = 0; x < D; x++) {
+    const i = y * D + x;
+    for (const [ny, ex, code] of corners) {
+      const sides = (f) => [f(x, y + ny), f(x + ex, y)], others = (f) => [f(x, y - ny), f(x - ex, y)];
+      if (!ring[i] && !mask[i] && sides(isRing).every(Boolean) && !others(isRing).some(Boolean) && !others(isTown).some(Boolean)) half[i] = code;
+      else if (ring[i] && sides(isTown).every(Boolean) && others(isRing).every(Boolean)) half[i] = corners[(corners.findIndex((c) => c[2] === code) + 2) % 4][2];
+    }
+  }
+  for (let i = 0; i < ring.length; i++) if (half[i]) ring[i] = half[i];
   return ring;
 }
 

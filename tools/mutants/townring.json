@@ -1,0 +1,74 @@
+[
+  {
+    "name": "TS9-guard-unwidened",
+    "file": "src/world/road/roadPainter.js",
+    "old": "yMax)\n        && !locationRect?.ring?.[i]) continue;",
+    "new": "yMax)) continue;",
+    "tests": [
+      "test/world/terrain/townring.test.js"
+    ]
+  },
+  {
+    "name": "TS9-notches-unblended",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "      if (!ring[i] && !mask[i] && sides(isRing).every(Boolean) && !others(isRing).some(Boolean) && !others(isTown).some(Boolean)) half[i] = code;",
+    "new": "      if (false) half[i] = code;",
+    "tests": [
+      "test/world/terrain/townring.test.js"
+    ]
+  },
+  {
+    "name": "TS9-corners-unblended",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "      else if (ring[i] && sides(isTown).every(Boolean) && others(isRing).every(Boolean))",
+    "new": "      else if (false)",
+    "tests": [
+      "test/world/terrain/townring.test.js"
+    ]
+  },
+  {
+    "name": "TS9-corner-toward-the-town",
+    "file": "src/world/terrain/terrainTiles.js",
+    "old": "=== code) + 2) % 4][2];",
+    "new": "=== code) + 0) % 4][2];",
+    "tests": [
+      "test/world/terrain/townring.test.js"
+    ]
+  },
+  {
+    "name": "TS9-notch-turned",
+    "file": "src/world/road/roadPainter.js",
+    "old": "[RING.NW]: [false, true]",
+    "new": "[RING.NW]: [false, false]",
+    "tests": [
+      "test/world/terrain/townring.test.js"
+    ]
+  },
+  {
+    "name": "TS9-halves-unpainted",
+    "file": "src/world/road/roadPainter.js",
+    "old": "  if (half && !has && ctx.ground !== TILE.water) return tile(ctx, T[DIAG_OUT], half[0], half[1]);",
+    "new": "",
+    "tests": [
+      "test/world/terrain/townring.test.js"
+    ]
+  },
+  {
+    "name": "TS9-half-over-the-sea",
+    "file": "src/world/road/roadPainter.js",
+    "old": "  if (half && !has && ctx.ground !== TILE.water) return",
+    "new": "  if (half && !has) return",
+    "tests": [
+      "test/world/terrain/townring.test.js"
+    ]
+  },
+  {
+    "name": "TS9-half-over-an-arm",
+    "file": "src/world/road/roadPainter.js",
+    "old": "  if (half && !has && ctx.ground !== TILE.water) return",
+    "new": "  if (half && ctx.ground !== TILE.water) return",
+    "tests": [
+      "test/world/terrain/townring.test.js"
+    ]
+  }
+]

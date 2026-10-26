@@ -31,6 +31,7 @@ and take organic ground, walls and shores round them.
 | TS6 | trees, walkers and the town map follow the outline | BUILT (below) |
 | TS7 | the Bay's walled cities walled on their outline; what stood at Daggerfall's gates at the new gates; a town's yards on its own ground | BUILT (below) |
 | TS8 | a bend's tower the corner tower's body alone - no stub of wall into the town or out past the wall | BUILT (below) |
+| TS9 | the road's ring painted whole, its angled edges blended | BUILT (below) |
 
 **DEPLOY RULE**: TS3 ships in the same release as WW7-5 (homes past the Bay, `bible/03-World/World-Wide.md` WW7-5): a home
 past the Bay is bought only in a town's final outline, so no block a home stands in is ever left out.
@@ -343,3 +344,33 @@ survives on the branch's base as here (its pin no longer reaches the carrier's s
 
 The owner's next words on the same walls - *"walls cant be climbed over"* - were the enhanced climb's, not the walls':
 `03-World/Parkour-Arc.md` CLIMB-CREST.
+
+## 11. TS9 - the road's ring whole, its angled edges blended (BUILT)
+
+The owner, on the tamriel branch: *"Roads around the city arent properly blended when they are angled"*. TS2 moved the
+mod's "Paint roads around locations" ring from the rect's padding onto the outline (`townRoadRing`: the tiles off the
+town's ground within two and a half of it). Rendered on the freeware's tiles (Gothway Garden, and Gallobrugh's template
+walled past the Bay on the same pixel), two faults:
+
+- **The ring in pieces.** The painter passes by every tile it cannot reach (FAST-SUITE's guard: off the pixel's centre
+  cross, its two diagonals and the location RECT). The outline's ring runs outside the rect - a walled city's ground is its
+  round and its apron, a Bay town's margin wanders past its blocks - so its tiles were passed by, but where the cross
+  and the diagonals ran through them: the ring stood as a bar across each road into the town and a stub at each
+  diagonal. The guard now lets a ring tile through (`roadPainter.js` paintRoads: `locationRect.ring`), and the ring is
+  painted whole.
+- **Its stairs.** Where the outline runs at an angle, the ring's edges were stairs of whole road tiles (46), where the
+  mod's own diagonal roads blend theirs with the diagonal's edge (DIAG_OUT: 47 over dirt, 55 over grass) on their flanks.
+  `townRoadRing` now codes the half tiles (`RING`, `world/townShape.js`): a tile off the ring and off the town's ground
+  with the ring on two sides at a corner and neither on the other two (a step's notch, outside) takes a half with its
+  road toward that corner; a ring tile with the town's ground on two sides at a corner and the ring on the other two (a
+  step's corner, inside) one with its road away - so a 45-degree stair is one straight edge each side, as a diagonal
+  road's is. The painter turns each as the mod turns its flanks (RING_HALF: a NE-SW road's flank with its road north and
+  west is flipped, south and east as it stands; a NW-SE road's north and east rotated, south and west both - pinned
+  against the mod's own flanks), never over the sea (its tile kept) nor over a road an arm laid there; GRASS-PATH1's mask
+  takes it as a path.
+
+DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): the mod paves its rect's padding square and whole; the outline's
+ring (TS2) is blended where it runs at an angle. Tests `test/world/terrain/townring.test.js` (3, its last on ARENA2: both
+towns' rings painted whole, their angled edges blended). Mutants `tools/mutants/townring.json` (8, all dead). PINS MOVED:
+`test/world/terrain/townshapes.test.js` (the ring's whole tiles by their code); `townshapes.json` TS-the-square-ring and
+`fastsuite_roads.json` FAST-road-rect-dropped re-aimed by content (dead).
