@@ -17984,14 +17984,29 @@
   "tr": "2ab3de8c7993",
   "by": "claude-in-session"
  },
- "menu.realm.strandedCopied": {
-  "en": "87348d418b72",
-  "tr": "0b7056764ce5",
+ "menu.realm.strandedAsk": {
+  "en": "878ad5daa5c6",
+  "tr": "68583fbe1f48",
   "by": "claude-in-session"
  },
- "menu.realm.strandedCopy": {
-  "en": "9611aad71d82",
-  "tr": "0c34916fcf01",
+ "menu.realm.strandedBody": {
+  "en": "18165e62b34f",
+  "tr": "1ddbb7cefd82",
+  "by": "claude-in-session"
+ },
+ "menu.realm.strandedCopied": {
+  "en": "5477256d8217",
+  "tr": "b96010f8c9f8",
+  "by": "claude-in-session"
+ },
+ "menu.realm.strandedNote": {
+  "en": "3a27f11585aa",
+  "tr": "dc0cf52f6318",
+  "by": "claude-in-session"
+ },
+ "menu.realm.strandedRecover": {
+  "en": "43a870077e3d",
+  "tr": "4fe15edf3628",
   "by": "claude-in-session"
  },
  "menu.realm.undo": {
@@ -30030,8 +30045,8 @@
   "by": "claude-in-session"
  },
  "realm.strandedWayBack": {
-  "en": "2ec051e75c77",
-  "tr": "e3333d55883a",
+  "en": "77703caf5c81",
+  "tr": "c3abb59c329f",
   "by": "claude-in-session"
  },
  "realm.unsaved.notSent": {

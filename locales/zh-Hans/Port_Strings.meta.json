@@ -2629,14 +2629,29 @@
   "tr": "27d2980258b0",
   "by": "claude-in-session"
  },
- "menu.realm.strandedCopied": {
-  "en": "87348d418b72",
-  "tr": "a072d3a637b6",
+ "menu.realm.strandedAsk": {
+  "en": "878ad5daa5c6",
+  "tr": "6823744f2909",
   "by": "claude-in-session"
  },
- "menu.realm.strandedCopy": {
-  "en": "9611aad71d82",
-  "tr": "24fec742775d",
+ "menu.realm.strandedBody": {
+  "en": "18165e62b34f",
+  "tr": "8cbb43d8f400",
+  "by": "claude-in-session"
+ },
+ "menu.realm.strandedCopied": {
+  "en": "5477256d8217",
+  "tr": "cd5e2d729d4b",
+  "by": "claude-in-session"
+ },
+ "menu.realm.strandedNote": {
+  "en": "3a27f11585aa",
+  "tr": "490b6e60a230",
+  "by": "claude-in-session"
+ },
+ "menu.realm.strandedRecover": {
+  "en": "43a870077e3d",
+  "tr": "79748ca1c6e5",
   "by": "claude-in-session"
  },
  "mods.eyeOfTheBeholder.Graphics.LayeredGear.description": {
@@ -3310,8 +3325,8 @@
   "by": "claude-in-session"
  },
  "realm.strandedWayBack": {
-  "en": "2ec051e75c77",
-  "tr": "ba0d44c8e7f3",
+  "en": "77703caf5c81",
+  "tr": "f9660e7b1019",
   "by": "claude-in-session"
  },
  "realm.unsaved.notSent": {

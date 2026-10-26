@@ -1084,7 +1084,7 @@ export const REALM_RESTORED_TEXT = 'Your last save had not reached the realm whe
  *  because the character was played on elsewhere since - in the player's language. "May": a put whose answer was lost
  *  may have landed after all. And where it can be had again: the Online door copies it as an offline character
  *  (systems/online/strandedCopy.js). */
-export const realmStrandedText = () => `${t('realm.stranded', 'This device kept a save of this character that did not reach the realm, and the character was played somewhere else since. That save may hold progress you do not have now. It is set aside on this device, not played.')} ${t('realm.strandedWayBack', 'To keep it, choose Copy set-aside save to offline on this character at the Online door.')}`;
+export const realmStrandedText = () => `${t('realm.stranded', 'This device kept a save of this character that did not reach the realm, and the character was played somewhere else since. That save may hold progress you do not have now. It is set aside on this device, not played.')} ${t('realm.strandedWayBack', 'To keep it, recover it from this character\u2019s tile at the Online door.')}`;
 /** Said once the world stands, when an online boot carried no realm character (a stale address, a local save). */
 export const REALM_OFFLINE_TEXT = 'Online characters live in the realm now, so this one plays offline. Use the Online door to bring it in. You can do this once.';
 

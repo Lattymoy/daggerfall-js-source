@@ -598,6 +598,9 @@ select, input, textarea { font: inherit; }
    joins it, because that is the question actually being asked. */
 @media (max-width: 860px), (pointer: coarse) {
   .shell { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; }
+  /* A tile's notice (ui/saveTile.js notice - STRANDED's way back) wears the backup line's compact button at a desk,
+     and a thumb's here */
+  .svnotice .act { min-height: 44px; }
   .side { display: contents; }
   .brand { padding: 22px 20px 16px; background: var(--ink); }
   .brand h1 { font-size: 27px; }

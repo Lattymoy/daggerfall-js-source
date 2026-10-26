@@ -1013,7 +1013,7 @@ test('STRANDED: THE WAY BACK - the set-aside save becomes a new offline characte
   const dev = acct.device();
   const c = await strandedOn(acct, dev);
   assert.equal(hasStranded(dev.storage, c.id), true, 'the Online door offers it');
-  assert.match(realmStrandedText(), /Copy set-aside save to offline/, 'and the world\'s word says where');
+  assert.match(realmStrandedText(), /recover it from this character.s tile at the Online door/, 'and the world\'s word says where');
   assert.deepEqual(await copyStrandedToOffline({ storage: dev.storage, id: c.id, name: 'SwordsmanEB' }), { ok: true });
   const slots = [...enumerateSaves(dev.storage).info].filter(([, info]) => info.saveName === REALM_COPY_SAVE_NAME);
   assert.equal(slots.length, 1, 'one new offline character');

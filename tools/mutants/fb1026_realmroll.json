@@ -196,5 +196,32 @@
     "tests": [
       "test/server/rescuesave.test.js"
     ]
+  },
+  {
+    "name": "STRANDED-notice-among-the-buttons",
+    "file": "src/ui/saveTile.js",
+    "old": "    const bar = el('div', 'svcloud is-only svnotice');",
+    "new": "    const bar = el('div', 'acts');",
+    "tests": [
+      "test/ui/savetile.test.js"
+    ]
+  },
+  {
+    "name": "STRANDED-notice-press-copies-at-once",
+    "file": "src/ui/enhanced/strandedNotice.js",
+    "old": "onClick: () => ask(strandedAskTitle(name), strandedAskBody(name), label, recover) }",
+    "new": "onClick: () => recover() }",
+    "tests": [
+      "test/ui/enhanced/strandedNotice.test.js"
+    ]
+  },
+  {
+    "name": "STRANDED-notice-never-busy",
+    "file": "src/ui/enhanced/strandedNotice.js",
+    "old": "disabled: busy,",
+    "new": "disabled: false,",
+    "tests": [
+      "test/ui/enhanced/strandedNotice.test.js"
+    ]
   }
 ]

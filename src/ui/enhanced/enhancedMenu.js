@@ -126,6 +126,7 @@ import {
 import { applyCustoms, customsLines, crossLeveling, LEVELING_CROSS_LINE } from '../../systems/realmCustoms.js';   // REALM P1.5: an offline character comes in once, through customs
 import { REALM_COPY_SAVE_NAME, realmCopyIds } from '../../systems/realmCopyMark.js';   // a copy of a realm character never comes in
 import { copyStrandedToOffline, hasStranded } from '../../systems/online/strandedCopy.js';   // STRANDED: a save set aside, back as an offline character
+import { strandedNotice } from './strandedNotice.js';   // STRANDED: and said on its tile
 import { bringOnlineButton } from './bringOnlineButton.js';
 import { createRealmLine } from '../../systems/legacy/realmLine.js';   // HOUSE-WAITS (FIELD BUGS 2026-10-09f): the account's lines, read at the door
 import { loadFamily } from '../../systems/legacy/store.js';
@@ -1357,11 +1358,11 @@ function realmCard(who) {
       const save = realmRowAsSave(row, { dateText: (sec) => new Date(sec * 1000).toLocaleDateString() });
       grid.append(saveTile(document, save, {
         face: loadFace(save, { scale: 2, copy: true }),
+        // STRANDED: progress this device kept that never reached the realm - said apart from the tile's buttons, with its way back
+        notice: hasStranded(appStorage(), row.id) ? strandedNotice({ name: row.name, busy: realmBusy, ask, recover: () => copyStrandedOffline(row) }) : null,
         actions: [
           { label: save.unfinished ? t('menu.realm.neverSaved', 'Never saved') : t('menu.realm.play', 'Play'), primary: true, disabled: realmBusy || save.unfinished, onClick: () => { _pickedRealmId = row.id; onAction('online'); } },
           { label: t('menu.realm.copyOffline', 'Copy to offline'), disabled: realmBusy || save.unfinished, onClick: () => copyToOffline(row) },
-          // STRANDED: a save this device set aside for the character has its way back, as a new offline character
-          ...(hasStranded(appStorage(), row.id) ? [{ label: t('menu.realm.strandedCopy', 'Copy set-aside save to offline'), disabled: realmBusy, onClick: () => copyStrandedOffline(row) }] : []),
           // HOUSE-LOSS (2026-09-29, Mac: "GarySoup lost his house and furniture"): a character brought in whose first save
           // never landed is UNDONE, never deleted - its delete took the home customs had carried, and it could never come
           // in again. The undo gives back its home, its guild place and its customs (realm.js undoRealm).
@@ -1474,7 +1475,7 @@ function copyToOffline(row) {
 /** STRANDED: the save this device set aside for a realm character, copied as a new offline character and dropped from the
  *  device (systems/online/strandedCopy.js). Nothing played on the copy goes back. */
 function copyStrandedOffline(row) {
-  return realmAct(() => copyStrandedToOffline({ storage: appStorage(), id: row.id, name: row.name }), () => [t('menu.realm.strandedCopied', 'The save this device set aside for {name} is copied as a new offline character. Nothing you play on the copy comes back online.', { name: row.name })]);
+  return realmAct(() => copyStrandedToOffline({ storage: appStorage(), id: row.id, name: row.name }), () => [t('menu.realm.strandedCopied', '{name}\u2019s unsaved progress is now a new offline character. Nothing you play on the copy comes back online.', { name: row.name })]);
 }
 
 // UXB1-E (2026-09-25, the UX backlog: "Add a 'sync from server' option so players can ensure their offline play
