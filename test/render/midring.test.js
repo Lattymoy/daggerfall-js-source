@@ -269,3 +269,47 @@ test('MID-RING the wiring: the world host hands the far ring the terrain\'s clie
   const ring = readFileSync('src/render/farRing.js', 'utf8');
   assert.match(ring, /gl\.drawElements\(gl\.TRIANGLES, this\.ringCount \+ 6 \* fill[^\n]*\n[\s\S]*?mid\.draw\(this\.u\.uOrigin, o\);[\s\S]*?gl\.depthRange\(0, 1\);/, 'after the far ring, before the depth range is put back');
 });
+
+test('MID-RING the stream\'s new pixel eases out of the middle ring\'s tint: stamped past the near rings, its share a smoothstep to nought over PIXEL_FADE_MS, mixed over its tiles by both lanes\' ground programs with no discard, uploaded only while it moves and its stamp dropped when done (mutant: the ring, the curve, the mix, the upload, the drop)', async () => {
+  const { PIXEL_FADE_MS, PIXEL_FADE_RING, pixelFadeShare, stampPixelFade } = await import('../../src/render/pixelFade.js');
+  assert.deepEqual([PIXEL_FADE_MS, PIXEL_FADE_RING], [1200, 2]);
+  assert.equal(pixelFadeShare(100, 100), 1);
+  assert.equal(pixelFadeShare(100, 100 + PIXEL_FADE_MS / 2), 0.5);
+  assert.ok(Math.abs(pixelFadeShare(0, PIXEL_FADE_MS / 4) - (1 - (0.0625 * 3 - 2 * 0.015625))) < 1e-12, 'a smoothstep, not a line');
+  assert.equal(pixelFadeShare(0, PIXEL_FADE_MS), 0);
+  const near = {}, far = {};
+  assert.equal(stampPixelFade(near, 11, 10, { x: 10, y: 10 }, [255, 0, 51], 5), false, 'the next pixel stands at once');
+  assert.deepEqual(near, {});
+  assert.equal(stampPixelFade(far, 12, 9, { x: 10, y: 10 }, [255, 0, 51], 5), true);
+  assert.deepEqual(far, { _fadeFrom: 5, _fadeTint: [1, 0, 0.2] });
+  // both lanes' ground programs: the tint over the tiles after the bed, no discard (GROUND-LAST's early depth test)
+  const { EL_TERRAIN_FS } = await import('../../src/render/enhancedLighting.js');
+  const R = readFileSync('src/render/renderer.js', 'utf8');
+  const classic = R.slice(R.indexOf('const TERRAIN_FS = `'), R.indexOf('}`;', R.indexOf('const TERRAIN_FS = `')));
+  for (const [name, fs] of [['classic', classic], ['lane', EL_TERRAIN_FS]]) {
+    assert.match(fs, /uniform vec4 uFadeTint;/, name);
+    assert.match(fs, /tex = snowGround\(tex[\s\S]*?tex = mix\(tex, uFadeTint\.rgb, uFadeTint\.a\);[^\n]*\n\s*vec3 n = normalize\(vNormal\);/, `${name}: over the tiles, after the snow and the bed, before the light`);
+    assert.doesNotMatch(fs.replace(/\/\/[^\n]*/g, ''), /\bdiscard\b/, `${name}: no discard`);
+  }
+  // the upload: once whole a frame's block, the share while it moves, the stamp dropped when the share is spent
+  const { Renderer } = await import('../../src/render/renderer.js');
+  const ups = [];
+  const self = { gl: { uniform4f: (...a) => ups.push(a) }, tUFadeTint: 'loc', _tFade: -1, _c3: (c) => c };
+  const fade = Renderer.prototype._terrainFade;
+  fade.call(self, {});
+  fade.call(self, {});
+  assert.deepEqual(ups, [['loc', 0, 0, 0, 0]], 'whole: uploaded once, then held');
+  const s = { _fadeFrom: performance.now(), _fadeTint: [0.5, 0.25, 0.125] };
+  fade.call(self, s);
+  assert.equal(ups.length, 2);
+  assert.deepEqual(ups[1].slice(0, 4), ['loc', 0.5, 0.25, 0.125]);
+  assert.ok(ups[1][4] > 0.9, 'just arrived: nearly all tint');
+  s._fadeFrom -= PIXEL_FADE_MS + 1;
+  fade.call(self, s);
+  assert.equal(s._fadeFrom, null, 'spent: the stamp dropped');
+  assert.deepEqual(ups.at(-1), ['loc', 0, 0, 0, 0]);
+  assert.match(R, /gl\.uniform1i\(this\.tUTilemap, 2\);\n\s*this\._tFade = -1;/, 'the frame\'s block makes the next draw upload it again');
+  // the build stamps it on the enhanced lane, the middle ring standing
+  const P = readFileSync('src/scenes/pixelBuild.js', 'utf8');
+  assert.match(P, /if \(isEnhanced\(\) && !midRingDisabled\(\)\) stampPixelFade\(terrain, px, py, host\.state\.current, overworldTint\(maps\.getClimateIndex\(px, py\), host\.woods\.getHeightMapValue\(px, py\)\), performance\.now\(\)\);[^\n]*\n\s*built\.set\(key, \{/);
+});

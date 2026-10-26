@@ -51,6 +51,9 @@ import { insideRocks, rockFootprint } from '../world/terrain/terrainNature.js';
 import { isClimateFreeModel, NO_CLIMATE_REMAP } from '../world/customModels.js';
 import { isDrySourceFlat, isWaterSourceFlat, WATER_SOURCE_MODELS } from '../systems/survival/items.js';
 import { isEnhanced } from '../systems/uiSkin.js';
+import { stampPixelFade } from '../render/pixelFade.js';   // MID-RING: a pixel built past the near rings eases out of the middle ring's tint
+import { midRingDisabled } from '../render/midRing.js';
+import { overworldTint } from '../ui/overworldModel.js';
 import { isHearthFlat } from '../systems/survival/hearth.js';
 import { isPortTown } from '../systems/portPlaces.js';
 import { isStandFlat, standFlatId, standFlatRecord } from '../world/standFlats.js';
@@ -1347,6 +1350,7 @@ export function createPixelBuild(host) {
     const wodLife = wodKept.life ?? {};   // L1-3: this terrain's identity - kept across a rebuild or a pool, new on a promote
     if (!wodKept.life) wodForgetPeerSites(key);   // AUDIT WOD7: a fresh promote's markers are its own again
     if (_building.get(key) === made) _building.delete(key);   // BUILD-FAIL1: the entry owns them from here
+    if (isEnhanced() && !midRingDisabled()) stampPixelFade(terrain, px, py, host.state.current, overworldTint(maps.getClimateIndex(px, py), host.woods.getHeightMapValue(px, py)), performance.now());   // MID-RING: the stream's new pixel eases out of the middle ring's tint
     built.set(key, {
       staticBatch,   // PERF4: the merged static models, drawn with the pixel matrix; null when the pixel has none
       // AUDIT-TO1 B2: DaggerfallTerrain.MapData.locationRect - the tile

@@ -483,6 +483,8 @@ export class FarRingRenderer {
     this._far = null; this._farAsk = null; this._farGen = 0;
     this._work = [];            // the horizon's landed grounds still being laid: { it, done }, a frame's share at a time
     this._now = opts.now ?? (() => performance.now());
+    // the probes' read (tools/horizonProbe.mjs): which of the horizon's layers stand, and round which bases
+    globalThis.__horizonRings = () => this.horizonStats();
     this.lane = opts.lane ?? this.renderer?.lightingLane ?? null;
     this._dec = new Float32Array(3);
     const p = buildProgram(gl, VS, this.lane ? this.lane.farRingFs : FS, 'far ring');
@@ -665,6 +667,17 @@ export class FarRingRenderer {
         this._holeKey = '';   // the far ring's hole is the new footprint's
       } });
     }, (e) => { if (gen === this._midGen) this._midAsk = null; console.warn('[ring] the middle ring failed', e?.message ?? e); });
+  }
+
+  /** MID-RING / FAR-FIELD: which of the horizon's layers stand (the probes' read): the far ring's base, the middle ring's
+   *  base and runs, the far field's base cell and cells drawn, and the grounds still being laid. */
+  horizonStats() {
+    return {
+      far: this._built ? { baseX: this.baseX, baseY: this.baseY, ring: this.ringCount / 6 } : null,
+      mid: this._mid?.built ? { baseX: this._mid.baseX, baseY: this._mid.baseY, runs: this._mid.runs.length } : null,
+      field: this._far?.built ? { baseCX: this._far.baseCX, baseCY: this._far.baseCY, cells: this._far.count / 6 } : null,
+      laying: this._work.length, asking: [this._midAsk, this._farAsk].filter(Boolean).length,
+    };
   }
 
   /** EL4: a 1x1 image holding the multiplier 1 (the log encoding's midpoint), for a lane frame with no adaptation image. */
