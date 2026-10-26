@@ -511,6 +511,12 @@ the heightmap says how high that land stands.
 
 Section A, TAMRIEL-RELIEF (OURS: DFU stops at the Bay's edge; the land past it is the port's own).
 
+## PEAKS - the ranges snow-capped (2026-10-26)
+
+The owner: *"The world of daggerfall mountains need to be completely redesigned from the ground up with more integration
+into the terrian, snow capped, and properly place throughout tamriel."* The ranges' measure, their snow caps by zone
+(PEAKS1) and their own shape (PEAKS2) are `Peaks.md`.
+
 ## BREATHTAKER - the land below the heightmap's grain, and Cyrodiil's waters (2026-10-26)
 
 KPbICA's spec, forwarded by the owner (BREATHTAKER 2 and 3): *"Make sure that we create landscapes based on the

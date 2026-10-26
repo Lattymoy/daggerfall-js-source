@@ -169,7 +169,9 @@ test('PRECIP4 BOTH TERRAIN PROGRAMS: the border\'s weights once, the snow\'s cov
   const r = read('src/render/renderer.js');
   const classic = r.slice(r.indexOf('const TERRAIN_FS = `'), r.indexOf('}`;', r.indexOf('const TERRAIN_FS = `')));
   for (const [name, fs] of [['classic', classic], ['lane', EL_TERRAIN_FS]]) {
-    assert.match(fs, /\n {2}vec4 ew = ecoWeights\(vLocalXZ\);[^\n]*\n {2}tex = ecotone\(tex, ew, vec3\(tuv, float\(layer\)\), gx, gy\);[^\n]*\n {2}float snowC = snowCover\(vLocalXZ, vWorldPos\.y, gx, gy\);[^\n]*\n {2}tex = snowGround\(tex, ew, snowC, vec3\(tuv, float\(layer\)\), gx, gy\);\n/, `${name}: after the border`);
+    // PIN MOVED (PEAKS1, bible/03-World/Peaks.md): the bare face sheds the cover between the cover and the ground's snow - a
+    // steep face over the cap's line is rock (render/snowCapGlsl.js); the cover is still read once, after the border
+    assert.match(fs, /\n {2}vec4 ew = ecoWeights\(vLocalXZ\);[^\n]*\n {2}tex = ecotone\(tex, ew, vec3\(tuv, float\(layer\)\), gx, gy\);[^\n]*\n {2}float snowC = snowCover\(vLocalXZ, vWorldPos\.y, gx, gy\);[^\n]*\n {2}snowC = snowFace\(tex, snowC, vLocalXZ, vWorldPos\.y, normalize\(vNormal\), tuv, gx, gy\);[^\n]*\n {2}tex = snowGround\(tex, ew, snowC, vec3\(tuv, float\(layer\)\), gx, gy\);\n/, `${name}: after the border`);
     const bed = Math.max(fs.indexOf('vec2 bedK = bedCover(data, tileUV, vec3(tuv, float(layer)), gx, gy, snowC);'), fs.indexOf('${waterBedMix()}'));   // the lane's text evaluated, the classic's its source
     assert.ok(bed > 0 && fs.indexOf('tex = snowGround(') < bed, `${name}: before the bed, which reads its cover`);
   }
