@@ -187,7 +187,9 @@
     "tests": [
       "test/net/lonesleep.test.js"
     ],
-    "note": "someone in my own room unread by the session"
+    "note": "someone in my own room unread by the session",
+    "equivalent": true,
+    "why": "every member of my own room is a peer as well (`_member` and the pose arm stand each one in `peers`), so `othersHere` > 0 is `peers.size` > 0 already - HIBERNATE's own words kept, never a second law"
   },
   {
     "name": "LONE-SLEEP-alone-any-room",
