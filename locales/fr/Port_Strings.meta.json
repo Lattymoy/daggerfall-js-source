@@ -13134,6 +13134,16 @@
   "tr": "1807fbfc85dd",
   "by": "claude-in-session"
  },
+ "features.quickLoot.lockAlways": {
+  "en": "bafac09b7034",
+  "tr": "5415ae933bbe",
+  "by": "claude-in-session"
+ },
+ "features.quickLoot.lockAlwaysGroup": {
+  "en": "fccb9ea10f83",
+  "tr": "d351a5390433",
+  "by": "claude-in-session"
+ },
  "features.quickLoot.note": {
   "en": "b1f409208ec7",
   "tr": "5888d5ad811c",
@@ -16812,6 +16822,21 @@
  "inventory.junkRules.spellbook": {
   "en": "1013fff657b4",
   "tr": "3b234609e57e",
+  "by": "claude-in-session"
+ },
+ "inventory.lockAlways.line": {
+  "en": "4fc96df061d6",
+  "tr": "981c42dbaa76",
+  "by": "claude-in-session"
+ },
+ "inventory.lockAlways.start": {
+  "en": "bafac09b7034",
+  "tr": "d10ada977492",
+  "by": "claude-in-session"
+ },
+ "inventory.lockAlways.stop": {
+  "en": "02517cc97e13",
+  "tr": "2f5cdabf5fe3",
   "by": "claude-in-session"
  },
  "inventory.quest.item": {
@@ -20652,6 +20677,11 @@
  "menu.features.keysNote": {
   "en": "913bcf69cb59",
   "tr": "c9696f3b3d53",
+  "by": "claude-in-session"
+ },
+ "menu.features.lockNone": {
+  "en": "5ce7a836fa54",
+  "tr": "66d8ceb006b8",
   "by": "claude-in-session"
  },
  "menu.features.modules": {

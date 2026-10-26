@@ -158,6 +158,7 @@ import { setCard, setStrip, markSetFrame } from '../setCard.js';   // SET5: a se
 import { setIdOf, setById, setLines, setSigilLines } from '../../systems/sigil/sigilSets.js';   // CARD-FIT U4/U10: a set piece and its sigil in a line each
 import { isLocked, toggleLocked, lockRefuses, lockedText, LOCKED_LINE } from '../../systems/item/itemLock.js';   // LOCK1
 import { isJunk, toggleJunk, lockLiftsJunk, JUNK_LINE } from '../../systems/item/itemJunk.js';   // LOOT18
+import { isAlwaysLocked, toggleAlwaysLock } from '../../systems/item/lockRules.js';   // LOCK-RULES: Always lock - a name locked for every copy (this import also registers the rule with the lock)
 import { canJunk, isJunkNow, isAlwaysJunk, toggleAlwaysJunk } from '../../systems/item/junkRules.js';   // JUNK-RULES: any piece the pack may let go of, and Always junk
 import { buildJunkBatchPanel } from './junkBatchPanel.js';   // BATCH-JUNK: a category marked in one press
 import { isBound, boundLine, boundRefusesPut, boundText, isPackOnly, packOnlyText } from '../../systems/item/itemBound.js';   // SS1: a bound piece says so on its card   // SS3: and goes nowhere but the wagon and the player's own storage
@@ -3523,7 +3524,7 @@ function infoCard(picked, side, ready = render, { body = false, own = true } = {
   // what it has drunk toward the next (ui/sigilCard.js); the tier list above no longer carries it as three more lines
   { const sb = sigilCard(picked); if (sb) into.append(sb); }
   { const set = setCard(picked, deps.entity, itemLongName); if (set) into.append(set); }   // SET5: its set - the places worn, the stage, its tiers (ui/setCard.js)
-  if (isLocked(picked)) into.append(el('p', 'lockline', LOCKED_LINE));   // LOCK1
+  if (isLocked(picked)) into.append(el('p', 'lockline', isAlwaysLocked(picked) ? t('inventory.lockAlways.line', 'Always locked: every one of these stays in your pack - it will not be dropped, sold or traded.') : LOCKED_LINE));   // LOCK1; LOCK-RULES: and the always-locked one's
   if (isJunkNow(picked)) into.append(el('p', 'boundline junkline', isAlwaysJunk(picked) ? t('inventory.junkAlways.line', 'Always junk: every one of these you find is junk, and Sell junk puts it on the counter.') : JUNK_LINE));   // LOOT18: the lock's line style, without its padlock; JUNK-RULES: and the always-junk one
   const bline = boundLine(picked);   // AUDIT AUTO-HOLD: a piece the realm locked says so in its own words
   if (bline) into.append(el('p', 'boundline', bline));   // SS1: the lock's line style, without its padlock
@@ -3713,15 +3714,25 @@ function itemActs(picked, side, { qty = true } = {}) {
   // LOCK1: the lock, on the card and in the right-click menu alike (both are built from this row); the card stays up
   // so the padlock is seen to close
   if (side === 'local') {
-    const k = el('button', 'act', isLocked(picked) ? 'Unlock' : 'Lock');
-    k.onclick = () => { toggleLocked(picked); lockLiftsJunk(picked); notice = null; render(); };   // LOOT18: locked, its junk mark lifted
-    acts.append(k);
+    // LOCK-RULES: a name that is always locked offers its way out alone - Lock, Unlock and the junk buttons could not undo it
+    if (isAlwaysLocked(picked)) {
+      const al = el('button', 'act', t('inventory.lockAlways.stop', 'Stop always lock'));
+      al.onclick = () => { toggleAlwaysLock(picked); notice = null; render(); };
+      acts.append(al);
+    } else {
+      const k = el('button', 'act', isLocked(picked) ? 'Unlock' : 'Lock');
+      k.onclick = () => { toggleLocked(picked); lockLiftsJunk(picked); notice = null; render(); };   // LOOT18: locked, its junk mark lifted
+      acts.append(k);
+      const al = el('button', 'act', t('inventory.lockAlways.start', 'Always lock'));
+      al.onclick = () => { toggleAlwaysLock(picked); notice = null; render(); };
+      acts.append(al);
+    }
   }
   // LOOT18 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 10): JUNK, beside the lock - gear in the pack, not
   // worn; a shop's Sell junk puts every such piece on its counter, and quick loot's take-all leaves one where it lies
   // JUNK-RULES: any piece the pack may let go of (not only gear - a book, a potion, an ingredient, a misc item), and ALWAYS JUNK: this
   // name is junk for every copy, now and when it is looted next. A name that is always junk offers its way out alone
-  if (side === 'local' && !line.equipped && canJunk(picked)) {
+  if (side === 'local' && !line.equipped && canJunk(picked) && !isAlwaysLocked(picked)) {
     if (!isAlwaysJunk(picked)) {
       const j = el('button', 'act', isJunk(picked) ? 'Not junk' : 'Junk');
       j.onclick = () => { toggleJunk(picked); notice = null; render(); };

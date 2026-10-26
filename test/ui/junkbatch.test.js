@@ -88,7 +88,7 @@ test('JUNK-RULES the row: Always junk is a names list part of the Quick loot row
   assert.ok(c.parts.some((p) => p.key === 'junkAlways' && p.list === 'names'));
   assert.deepEqual(c.also.find((a) => a.key === 'junkAlways').initial, []);
   const inv = rd('src/ui/enhanced/enhancedInventory.js');
-  assert.match(inv, /if \(side === 'local' && !line\.equipped && canJunk\(picked\)\) \{/, 'any piece the pack may let go of');
+  assert.match(inv, /if \(side === 'local' && !line\.equipped && canJunk\(picked\) && !isAlwaysLocked\(picked\)\) \{/, 'any piece the pack may let go of (and no name always locked)');
   assert.match(inv, /isAlwaysJunk\(picked\) \? t\('inventory\.junkAlways\.stop', 'Stop always junk'\) : t\('inventory\.junkAlways\.start', 'Always junk'\)/);
   assert.match(inv, /const junkMany = el\('button', 'act junkbtn'/, 'Batch junk beside Batch salvage, shown whether or not a piece would break');
   assert.match(inv, /if \(isJunkNow\(item\)\) node\.dataset\.junk = '';/);

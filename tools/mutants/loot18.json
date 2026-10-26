@@ -74,8 +74,8 @@
   {
     "name": "LOOT18-a-worn-piece-junked",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "  if (side === 'local' && !line.equipped && canJunk(picked)) {",
-    "new": "  if (side === 'local' && canJunk(picked)) {",
+    "old": "  if (side === 'local' && !line.equipped && canJunk(picked) && !isAlwaysLocked(picked)) {",
+    "new": "  if (side === 'local' && canJunk(picked) && !isAlwaysLocked(picked)) {",
     "tests": [
       "test/systems/loot18_seen.test.js"
     ]

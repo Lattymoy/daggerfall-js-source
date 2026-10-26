@@ -794,3 +794,15 @@ the mark was gear's alone, one item at a time, and slow to set). `systems/item/j
   junk**. `canJunkInBatch` is `canJunk` and not locked - a sweep never lifts a padlock (the single press does, as it always
   did); the count says how many were passed over and why.
 Pins: `test/ui/junkbatch.test.js`. Mutants: `tools/mutants/junk.json` (8, all dead); `loot18.json` and `batchsalvage.json` records re-aimed by content.
+
+**LOCK-RULES: Always lock** (a player's ask: a menu button to lock an item for good). `systems/item/lockRules.js` is the law.
+- The card's **Always lock** puts the piece's NAME on a list (the player's pref `lockAlways`). Every piece of that name is locked, now and
+  when it is looted next, and nothing is written on the piece.
+- `isLocked` (`itemLock.js`, which imports nothing) asks the list through a resolver that `lockRules.js` registers. Every window that
+  already honours the lock (Drop, a counter, a trade, Sell junk, the batch sweeps) honours the name with nothing else changed. The answer
+  is kept per piece until the list changes, and an empty list answers at once.
+- The lock is the stronger word. Always lock takes the name off Always junk and lifts the piece's junk mark. A name always locked offers
+  **Stop always lock** alone on its card, as Lock, Unlock and the junk buttons could not undo it.
+- The names list shows in the Quick loot row's drawer, under "Always lock", with a remove for each. The rule is installed at the entry by a
+  dynamic import (`main.js`, so the entry's static reach is unchanged).
+Pins: `test/ui/lockrules.test.js`. Mutants: `tools/mutants/lockrules.json`.
