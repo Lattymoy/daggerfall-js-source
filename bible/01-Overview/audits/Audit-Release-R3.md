@@ -137,6 +137,18 @@ before the merge.
   content). On the merged tree: lint, types and `npm run build` exit 0; the bible's gates, the ratchets, hostceiling and
   relayversion green; the merge's own 213 test files in six chunks green but `staffpanel5bench` (a timing bench at a load
   of 20 on four cores - green alone).
+- **The second merge** (`r3-release`, main 70d9210c41): NIRNROOT-SAGE (#1315) took world268 and acct194 on main, so
+  TESA is **world269** and **acct195** (migrations 0176-0179 unmoved). 80 conflicts, the pins by the tool once its V2
+  rule read one number both sides took as a renumber too; by hand the glyph vocabulary (main's sprig in its place, the
+  province crowns after it - names travel by name, so the order is shape; the vocabulary pins composed), the instance
+  door (main's QUEST-FIRST public row last, under the nine keys), the attachment widths measured (1221, 1276), and
+  `server-account/wrangler.toml` - both sides had written `acct194`, so git took it silently: set it to the release's
+  number by hand (rule V4 again). Lint, types, `npm run build` and the moved gates green.
+- **To re-hash the release's row after a later relay change on the branch** (a slice that re-hashed the branch's
+  world260 in place - E2-5 and R2-7, staff events past the Bay): on the merge, edit the one row
+  `test/net/relayversion.test.js` names `world269` (never a row of main's), put its old hash in its "re-hashed in place,
+  undeployed - bytes <old>... before it: <slice>" note, and paste the hash `node --test test/net/relayversion.test.js`
+  prints as `<new version>`.
 - **Account acct194** (acct189 on the branch), past main's acct189 DAEDRIC-SMELT + DEEP-OPEN to acct193 COPY-LIFT.
 - **Migrations 0176-0179** (`seat_gifts`, `guild_castles`, `domain_witness`, `world_books`), past main's 0174 and 0175.
   Checked: neither of main's touches the seven tables 0179 rebuilds (0174 creates `broker_sales`; 0175 has no DDL), so
@@ -226,4 +238,5 @@ On `r3-release-trial` (main a981d29c84, the branch through d80b5c9d23):
 | R3-4 | Low | `src/systems/instancePlaces.js:"const mine = questHere"` | Main's party-first door order under the branch's nine-key bound: at a castle with seven partners and a quest of mine, my own row became the tenth, which no key chooses. | Fixed in the merge; `domain2_castles` PIN MOVED; `release_r3.json` R3-4. |
 | R3-5 | Medium | `server/src/index.js:"if (!court) { this._gateFells.set(lane, fell);"` | GATE-COURTS x WW2 in the hub's kill: either side taken whole loses the other's law (main's: every lane's fall written as the Bay's; the branch's: a court's kill collapsing the gate for the night's other courts and a rite receipt over a court's). | Composed in the merge; pinned by `test/net/release_r3.test.js` (a lane's fall on its own key, never the Bay's; a court's kill on none) and `gatecourts`; `release_r3.json` R3-5-*. |
 | R3-7 | Critical | `src/world/spawnGroundPlace.js:"const mask = zoneMask?.() ?? null;"` | Main's GROUND-AGREE module (`world/spawnGroundPlace.js`, new on main) imports `wildMaskOf` from `systems/wild/wildZone.js`, which TESA no longer exports (WW-C2: the zone is Cyrodiil whole, past the Bay). git merges both files cleanly and eslint passes; the module fails to link, and `scenes/world.js` - which imports it - with it: the streaming world does not boot. `npm run types` alone named it. | Fixed in the merge: the zone's mask is the host's (`zoneMask`, `scenes/world.js` hands `cyrodiilMask` - one wiring entry, bootWorld 35,896 measured); `fb1024_groundagree` PIN MOVED (its zone built by `buildWildMask`; its source pin reads IC-GRAND's `capitalBuildView`). |
+| R3-8 | Medium | `test/systems/legacy/auditlegacy3.test.js:"const crowns = /^crown("` | AUDIT LEGACY III O11 failed on the branch and on the merge (948 of 864): WW7-3's seven province crowns joined GLYPHS, so every claim at once beside a house at its bounds is past the hello's body bound. Measured: without the house it is 848 (the token 938 of 1024), and the mint already leaves a house unsaid past either bound (`server-account/src/index.js`) - so no token is refused and nobody is locked out; a holder of every glyph and a house at its bounds goes online with the house unshown. On main (no province crowns) the house fits: 855. | The pin moved on the merge (PIN MOVED): the house dropped past the bound, the made token inside both, the house beside every claim but the province crowns. |
 | R3-6 | Info | `account-deploy.yml` "Apply migrations" | The migrations apply before the service waits on the relay; for this release that is safe (additive tables, wider CHECKs), and the order is recorded above for the next release whose migration is not. | Recorded. |
