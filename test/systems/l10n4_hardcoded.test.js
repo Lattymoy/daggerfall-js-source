@@ -198,7 +198,7 @@ const HARDCODED = {
   'src/render/eliteGates/egStairPass.js': 2,
   'src/render/enhancedLighting.js': 4,
   'src/render/enhancedSky.js': 1,
-  'src/render/farRing.js': 1,
+  'src/render/farTrees.js': 2,   // FAR-TREES: its fragment stages' head and body - GLSL the scan reads as prose (`in vec3`), as every pass's; no word a player reads
   'src/render/foeTelegraph.js': 1,
   'src/render/gate/gateFx.js': 3,
   'src/render/gate/gatePass.js': 7,
