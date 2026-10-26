@@ -95,7 +95,10 @@ const craftWritsToday = async (db, player, day) => Number((await db.prepare('SEL
   .bind(player, day).first())?.n ?? 0);
 
 /** A writ as the Work tab reads it, with what `character` holds toward it: `brewed` a potion writ's witnessed brews not
- *  yet given, `pieces` a dish or kit writ's pieces of its make that may go (their provenance ids). */
+ *  yet given, `pieces` a dish or kit writ's pieces of its make that may go (their provenance ids). FIELD BUGS 2026-10-26
+ *  LOOSE-SAID: and what it made that can never go, so the card can say why - `looseBrewed` the potions of the writ's
+ *  brewed since its day began that were no witness (a cauldron that spent loose units, alchemy.js `witnessed`),
+ *  `loosePieces` the pieces of its make walled to gold (`bought_with` 'gold' - made of loose goods), newest first. */
 async function craftWritView(db, player, row, character) {
   const p = craftProductOf(row.product);
   const view = {
@@ -105,12 +108,17 @@ async function craftWritView(db, player, row, character) {
   };
   if (row.filled_at != null || !p) return view;
   if (p.kind === 'potion') {
-    const r = await db.prepare(`SELECT ${brewedLeftSql('?1', '?2', '?3', '?4')} AS n`).bind(player, character, p.id, row.product).first();
-    return { ...view, brewed: Math.max(0, Number(r?.n ?? 0)) };
+    const r = await db.prepare(`SELECT ${brewedLeftSql('?1', '?2', '?3', '?4')} AS n,
+      COALESCE((SELECT SUM(count) FROM prof_brews WHERE player = ?1 AND char_id = ?2 AND potion = ?3 AND witnessed = 0 AND at >= ?5), 0) AS loose`)
+      .bind(player, character, p.id, row.product, Number(row.day) * DAY_S).first();
+    return { ...view, brewed: Math.max(0, Number(r?.n ?? 0)), looseBrewed: Math.max(0, Number(r?.loose ?? 0)) };
   }
+  const recipes = JSON.stringify(recipesOf(row.product));
   const { results = [] } = await db.prepare(`SELECT pr.provenance FROM products pr WHERE pr.owner = ?1 AND pr.char_id = ?2 AND pr.recipe IN (SELECT value FROM json_each(?3))
-    AND ${pieceOkSql('?1', '?2', 'pr.provenance', '?3')} ORDER BY pr.made_at DESC, pr.rowid DESC LIMIT ?4`).bind(player, character, JSON.stringify(recipesOf(row.product)), CRAFT_PIECES_SHOWN).all();
-  return { ...view, pieces: results.map((x) => String(x.provenance)) };
+    AND ${pieceOkSql('?1', '?2', 'pr.provenance', '?3')} ORDER BY pr.made_at DESC, pr.rowid DESC LIMIT ?4`).bind(player, character, recipes, CRAFT_PIECES_SHOWN).all();
+  const { results: walled = [] } = await db.prepare(`SELECT provenance FROM products WHERE owner = ?1 AND char_id = ?2 AND bought_with = 'gold' AND listed = 0
+    AND recipe IN (SELECT value FROM json_each(?3)) ORDER BY made_at DESC, rowid DESC LIMIT ?4`).bind(player, character, recipes, CRAFT_PIECES_SHOWN).all();
+  return { ...view, pieces: results.map((x) => String(x.provenance)), loosePieces: walled.map((x) => String(x.provenance)) };
 }
 
 /**

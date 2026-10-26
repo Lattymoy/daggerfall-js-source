@@ -985,17 +985,11 @@ hull loops and its oars, never instead of them:
   a full gale, breathing with the gust. AUDIT SOUNDSCAPE S6: the first cut's levels, a third of these, sat 16 to 24 dB
   under the mod's own hull loops on the same bus, under 500 Hz where both live; now a moderate sea reads about -38 dBFS
   at the ear and a gale about -34, beside DFU's rain loop's -40, still well under the mod's loops (-24 at the helm).
-- **Her way and her sails**: my helm's word at my helm; a boat I ride and do not steer - another player's - says them
-  by her own going (her root's speed, eased over 0.6 s, a step past 40 m/s a recentre or a snap, never her way) and her
-  masts' Animators (S4: a passenger heard her lying still and furled at six knots); a deck off any helm lies still.
-- **The events**: a wave SLAPPING her hull as a swell crests (0.72 rising), on her port or starboard side 2.5 to 4 m
-  off and under the rail, and in a heavy sea a second on her other side on its heels; the TIMBERS working (a mean gap
-  of 16 s in a calm to 3.2 s in a storm, drawn exponentially) and the ROPES in their blocks only with sail set (12 s in
-  a breeze to 3.5 in a gale; re-armed as the sails go up - S10); the canvas LUFFING aloft every 1.2 to 3.5 s while she
-  lies head to wind or has sail set and no way (under 0.8 m/s in more than a 0.25 wind), never sooner than 1.2 s after
-  the last flap however the law flickers (S8); SPRAY over her bow at a crest past 2.5 m/s through a sea over 0.3; GULLS
-  by day out of rain, storm and snow while land is within two map pixels, one every 7 to 26 s 25 to 70 m off over the
-  water, three calls in ten followed by a second; and THE WATCH BELLS (`watchBells`): each half hour of the world's
+- **Her way**: my helm's word at my helm; a boat I ride and do not steer - another player's - says it by her own going
+  (her root's speed, eased over 0.6 s, a step past 40 m/s a recentre or a snap, never her way - S4: a passenger heard
+  her lying still at six knots); a deck off any helm lies still.
+- **The events**: GULLS by day out of rain, storm and snow while land is within two map pixels, one every 7 to 26 s 25
+  to 70 m off over the water, three calls in ten followed by a second; and THE WATCH BELLS (`watchBells`): each half hour of the world's
   clock crossed at its own pace, one bell at the half hour after a watch begins (the watches turning at 0, 4, 8, 12, 16
   and 20 o'clock), one more each half hour, eight as it ends, struck in pairs (0.42 s within a pair, 1.15 s between) on
   Daggerfall's own bell (DAGGER.SND 107, the arena's call and the naval host's struck colours) at 1.22, on her deck 3 m
@@ -1003,8 +997,12 @@ hull loops and its oars, never instead of them:
   a dial (S9: online a crossing's dial moves no shared clock, and its bells fell silent at a pace the clock never ran):
   none past 0.5 (two and a half times DFU's 12 to 1, so Come Sail Away's x5 rings none), none for a jump of the clock (a
   load, a rest, a journey), never twice within a minute of real time, and midnight's eight across the minute's wrap.
-- Her bow, her sides and her bell are HERS, off her heading, never the camera's (S3: looking astern put the spray
-  astern, and the bell turned with the head); with no heading to be had, the ear's forward. Every event aboard is played
+- **DECK-QUIET** (2026-10-26, the owner: "Remove all deck at sea"): the deck's own one-shots are gone - a wave slapping
+  her hull at a crest, the timbers working, the ropes in their blocks, the canvas luffing and the spray over her bow -
+  with their eleven clips and the laws that timed them (S8's luff gap and S10's ropes with them). The beds, the gulls
+  and the bells stay; Come Sail Away's own loops and oars are untouched.
+- Her bell is HERS, off her heading, never the camera's (S3: the bell turned with the head); with no heading to be had,
+  the ear's forward. Every event aboard is played
   `far` (`audio.js` play3d), its offset from the ear held while it sounds, so it rides with the deck. The first frame
   aboard plays nothing: every clock is seeded a gap away. A pause holds every clock - the bells' strokes due across one
   fall at their own spacing after it, where the first cut rang them all on the unpause frame, 15 dB over one (S1).
@@ -1040,9 +1038,9 @@ the Alik'r as in a Wrothgarian pass), never instead of them:
   reach.
 - A pause holds every clock - the wild's voices, the waves, the smith's bouts and every call queued (W7).
 
-THE CLIPS. Seventeen of the port's own (`tools/soundscapeSfx.mjs` -> `public/sfx/{sea,shore,wild}-*.wav`: the hull's
-slaps, the timbers' and the ropes' creaks, the canvas, the spray, a wave breaking, two owls, two wolves - the
-gathering's pieces moved into the shared kit for them, `tools/sfxSynth.mjs`, the gathering's thirty-six clips byte for
+THE CLIPS. Six of the port's own (`tools/soundscapeSfx.mjs` -> `public/sfx/{shore,wild}-*.wav`: a wave breaking, two
+owls, two wolves - eleven more, the deck's, went with DECK-QUIET - the gathering's pieces moved into the shared kit for
+them, `tools/sfxSynth.mjs`, the gathering's thirty-six clips byte for
 byte as before); and thirteen CC0 recordings from OpenGameArt baked by `tools/soundscapeSfxInstall.mjs` (six gulls by
 Rango Mango, a crow by fvcalderan, four frogs by EZduzziteh - each croak, cut out of its take mid-sound, eased in over
 4 ms and out over 15 so neither edge clicks (W12, `tools/sndify.mjs` bake `edges`) - two anvils by VishwaJai and
@@ -1054,7 +1052,7 @@ again; asked every frame with nothing to do it makes nothing (S7, H2, H6). Level
 peaks, the laws' gains, the levels measured through the engine); none of these sounds has been heard by ear.
 
 Pins: `test/systems/soundscape/seaair.test.js` (10), `soundbeds.test.js` (3), `soundjobs.test.js` (5),
-`worldair.test.js` (10), `test/scenes/soundscapehost.test.js` (10); `tools/mutants/soundscape.json` (135, all dead).
+`worldair.test.js` (10), `test/scenes/soundscapehost.test.js` (10); `tools/mutants/soundscape.json` (126, all dead).
 The audit: `01-Overview/audits/Audit-Soundscape.md`.
 
 ## SEA-SCORE (2026-10-24): a helm heard - the sea's own songs

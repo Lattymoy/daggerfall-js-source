@@ -679,7 +679,7 @@ select, input, textarea { font: inherit; }
    wizard: its rail is a readout and its phone strip is its own (below).
    TALL-TOUCH (2026-10-13, Discord #bug-reports, on an ASUS ROG Xbox Ally X: "it's impossible to configure the game
    settings because of a huge game logo that won't minimize or go away"). NOT ONLY A SHORT ONE: ANY LANDSCAPE SCREEN.
-   The stack sizes the logo by the screen's WIDTH (59.5% of it, at the mark's 1.63:1), so held sideways it stands at
+   The stack sizes the logo by the screen's WIDTH (59.5% of it, at BR5's 1.63:1; BR6's 43.4% is that height), so held sideways it stands at
    least half the height at any size - 1280x720 (a 1080p handheld at Windows' 150%) drew it ~470 px of 720 and left
    the Settings pane a strip. The 560 px ceiling caught the AYN Thor and missed the Ally. So every landscape screen
    600 px wide or more that the stack would take - a touch screen of any height, or a window narrowed under 860 px -
@@ -2363,20 +2363,24 @@ ${badgeCss()}
    HEIGHT it had, so nothing above or below it moves: the door's old mark
    stood 540 x 769/2112 tall, and the same height at the new ratio is
    540 x 769/2112 x 526/322 = 321px wide (84vw -> 50vw; the short landscape
-   screen's 394px -> 234, 56vw -> 33.3vw). */
-.px-wordmark:has(.brand-logo) { width: min(321px, 50vw); line-height: 0; flex-shrink: 0; }
+   screen's 394px -> 234, 56vw -> 33.3vw).
+   BR6: the dragon mark is 1232 x 1034 (1.19:1), painted to its edges too;
+   the same heights at its ratio are 540 x 769/2112 x 1232/1034 = 234px
+   (36.4vw), and the short landscape screen's 171px (24.3vw). */
+.px-wordmark:has(.brand-logo) { width: min(234px, 36.4vw); line-height: 0; flex-shrink: 0; }
 .brand-logo { display: block; width: 100%; height: auto; object-fit: contain;
   image-rendering: auto; }
 /* BR5: the masthead's mark spent 769/2112 of the column's width in height
    (BR4's file less its empty rows); the DFO mark spends the same height at
    769/2112 x 526/322 = 59.5% of the width, centred. No margin pulls
-   anything up any more - the file has no empty rows. */
-.brand-home .brand-logo { width: 59.5%; margin: 0 auto; }
+   anything up any more - the file has no empty rows. BR6: the dragon
+   mark's 1.19:1 spends that height at 769/2112 x 1232/1034 = 43.4%. */
+.brand-home .brand-logo { width: 43.4%; margin: 0 auto; }
 .brand-home { display: block; width: 100%; border: 0; padding: 0; background: transparent; cursor: pointer; }
 .brand-home:focus-visible { outline: 2px solid var(--brass); outline-offset: 6px; }
 .shell .brand h1:has(.brand-logo) { line-height: 0; }
 @media (max-height: 560px) and (min-width: 600px) {
-  .px-wordmark:has(.brand-logo) { width: min(234px, 33.3vw); }   /* BR4: INTRO2's 430px, at the same height; BR5: BR4's 394px, at the same height */
+  .px-wordmark:has(.brand-logo) { width: min(171px, 24.3vw); }   /* BR4: INTRO2's 430px, at the same height; BR5 and BR6: BR4's 394px, at the same height */
 }
 .px-wordmark small { display: block; font-family: ${PIXEL_STACK};
   font-size: 16px; letter-spacing: 0.5em; text-indent: 0.5em;
@@ -2512,7 +2516,7 @@ ${badgeCss()}
 /* SUPPORT1: ON THE FRONT DOOR THE CAPTION IS BOUNDED IN PIXELS. Its two lines' 14ch and 22ch are the font's - up to
    158px in Pixelify Sans - and a reach that is the font's cannot be the band's (THE CORNERS' BAND, below). 140px keeps
    "No character yet" whole (123px) and holds the mark's reach to 234px, so the band ended at 1007 under BR4's 540px
-   mark and a 1024x768 door still fit without a scroll (BR5's 321px mark ends it at 788); a character's longer line
+   mark and a 1024x768 door still fit without a scroll (BR5's 321px mark ended it at 788, BR6's 234px at 701); a character's longer line
    ends in its ellipsis three letters sooner. */
 .px-home:not(.px-over) .px-profilename { max-width: min(14ch, 140px); }
 .px-home:not(.px-over) .px-profilesub { max-width: min(22ch, 140px); }
@@ -2975,12 +2979,12 @@ ${SUPPORT_MARKS_CSS}
    clear of the corner marks over a game. With a mark in each top corner, the door's stage starts below them wherever
    the wordmark is wide enough to reach under either: the asks reach 122px in (18, their 98, the Plus frame's 6), the
    profile 234 (18, its 58px portrait, the 12px gap, its caption's 140px bound, the frame's 6), and
-   (vw - min(321px, 50vw)) / 2 is less than 234 at every width under 789 (BR5: BR4's min(540px, 84vw) took it to
-   1008) - and on a phone, where the marks stand 10px in and the caption is hidden, always. Measured rather than argued: tools/supportAsksProbe.mjs maps the logo's own
+   (vw - min(234px, 36.4vw)) / 2 is less than 234 at every width under 702 (BR6: BR5's min(321px, 50vw) took it to
+   789, BR4's min(540px, 84vw) to 1008) - and on a phone, where the marks stand 10px in and the caption is hidden, always. Measured rather than argued: tools/supportAsksProbe.mjs maps the logo's own
    opaque pixels onto the screen across 192 sizes, a caption at its bound among them. The band costs height, and where
    the door no longer fits it scrolls (DOOR-FIT, above); its foot keeps the one-row foot's 68px, so the last row can be
    scrolled clear of About and Screenshots. */
-@media (min-width: 481px) and (max-width: 788px) {
+@media (min-width: 481px) and (max-width: 701px) {
   .px-home:not(.px-over) > .px-stage:not(.px-acctstage) { padding: 84px 24px 76px; }
 }
 @media (max-width: 480px) {

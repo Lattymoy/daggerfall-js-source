@@ -410,6 +410,15 @@ CRYSTAL_FIST_HANDLES = "Flylighter"
 # behind them. A list that grants an aura (titles.js TIER_AURA); taking the
 # handle off takes all three on the next token.
 WIKIMAID_HANDLES = "SylviaBun"
+# NIRNROOT-SAGE (2026-10-26, for Blob-Marley, an Immortal backer - his final
+# idea: "billowing smoke, circling nirn roots around midsection, small glowing
+# green runes encircling feet"): Nirnroot Sage - the title in a nirnroot's
+# deep green into its glow into the pale of its smoke, the nirnrootsage glyph
+# (a nirnroot sprig, its leaves and its glowing bud) and Sage's Smoke, smoke
+# billowing up about the body, nirnroots circling the waist and green runes
+# glowing in a ring round the feet. A list that grants an aura (titles.js
+# TIER_AURA); taking the handle off takes all three on the next token.
+NIRNROOT_SAGE_HANDLES = "Blob-Marley"
 # PATREON-LINK (2026-10-01, Mac: "With patron and having to manually hand
 # out titles. Im running into a workflow where its really hard to keep up
 # with it"; asked, "Patreon auto-link"): A PATRON'S TITLE FOLLOWS THEIR

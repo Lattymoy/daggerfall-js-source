@@ -32,17 +32,21 @@ export function createCraftWritHost({ player, session, checkpoint, saved, book }
     /**
      * WHAT THE CHARACTER HOLDS TOWARD A WRIT: `pack` its goods in the pack that may go, `made` what the service counts as
      * its own (a potion writ's witnessed brews not yet given, a piece writ's own pieces in the pack), `ready` whether
-     * both cover the count.
+     * both cover the count. FIELD BUGS 2026-10-26 LOOSE-SAID: `loose` what it made that never counts - a potion writ's
+     * brews today of loose goods (the service's `looseBrewed`), a piece writ's pieces in the pack walled to gold
+     * (`loosePieces`) - so the card says why.
      * @param {any} w
      */
     held(w) {
       if (w?.kind === 'potion') {
         const pack = craftGoodsHeld(player()?.items ?? [], w);
         const made = Math.max(0, Number(w.brewed) || 0);
-        return { pack, made, ready: pack >= w.qty && made >= w.qty };
+        return { pack, made, loose: Math.max(0, Number(w.looseBrewed) || 0), ready: pack >= w.qty && made >= w.qty };
       }
       const made = piecesOf(w).length;
-      return { pack: craftGoodsHeld(player()?.items ?? [], w), made, ready: made >= w.qty };
+      const walled = new Set(Array.isArray(w?.loosePieces) ? w.loosePieces : []);
+      const loose = (player()?.items ?? []).filter((it) => walled.has(it?.provenance) && pieceOf(it, w.product)).length;
+      return { pack: craftGoodsHeld(player()?.items ?? [], w), made, loose, ready: made >= w.qty };
     },
     /**
      * A WRIT DELIVERED: its goods picked from the pack as the service picks them from the record (craftWritLaw.js

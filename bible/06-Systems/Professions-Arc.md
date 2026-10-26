@@ -5495,7 +5495,13 @@ model is not re-run here. RECORDED for the owner: if the Marks minted outrun the
   standing with the Mages Guild"), its time left, what the reading character holds ("3 brewed by you, 5 in your pack"),
   and **Deliver** - waiting, with its reason on its title, in its name for a reader and on the card (a phone has no
   hover), where something is short or the day's three are filled (AUDIT CRAFT-WRITS C8: the day's three were said on the
-  title alone). A press says the guild's thanks and marks its card filled at once, before the list read again comes back
+  title alone). FIELD BUGS 2026-10-26 LOOSE-SAID (`01-Overview/bugs/Field-Bugs-2026-10-26.md`; #bug-reports: "I brewed
+  the 7 heal true potions myself and its showing like I haven't made any"): the reason names what the character MADE
+  that never counts - the board reads a potion writ's brews of it since the writ's day began that were no witness
+  (`looseBrewed`) and a piece writ's pieces of its make walled to gold (`loosePieces`), and the card says "4 potions you
+  brewed today were made with looted or gold-bought ingredients, which never count" where it said "0 brewed by you"
+  alone; with none, the brew is asked "at an alchemy station" (a potion maker anywhere else is the client's mix,
+  POTION-DOOR, section 52.3). A press says the guild's thanks and marks its card filled at once, before the list read again comes back
   (C1: a second press meanwhile asked the service again); the balance and the Renown are taken as a Court writ's
   (`onTaken`). The realm's silence and a character changed before the answer are said in their own words (C6), every
   other refusal the service's.

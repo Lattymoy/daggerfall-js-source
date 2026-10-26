@@ -138,6 +138,7 @@ export const TITLE_TEXT = Object.freeze({
   // earned by an account's Hearth Offerings giving 25 cakes; both held for good
   witchwarden: 'Witchwarden',
   hearthkeeper: 'Hearthkeeper',
+  nirnrootsage: 'Nirnroot Sage',   // NIRNROOT-SAGE (2026-10-26, for Blob-Marley, an Immortal backer): Blob-Marley's own, the owner's word for it
 });
 
 /** WB9g (2026-09-30, Mac: "an animated burning ground aura that circles the ground where your character stands"): AN
@@ -157,6 +158,7 @@ export const AURA_TEXT = Object.freeze({
   firstlight: 'Firstlight',   // EG-E2: First of the Spire's dawn-white ring, granted with the title by name
   lilacwarren: 'Lilac Warren',   // WIKIMAID: the WikiMaid's rabbits hopping round the feet on a ring of lilac light, granted with the title
   witchfire: 'Witchfire',   // WITCH1: a coven's green fire round the feet, tallow candles in its ring, bought from a Wyrd Sister
+  sagesmoke: "Sage's Smoke",   // NIRNROOT-SAGE: smoke billowing about the Nirnroot Sage, nirnroots circling the waist, green runes round the feet, granted with the title
 });
 
 /** SHADOW-FANG (2026-09-26, Mac): "SirMcMobdon gets a brand new
@@ -277,6 +279,20 @@ export const WITCH_GLOW = Object.freeze([0.835, 0.976, 0.69, 1]);     // #d5f9b0
 export const HEARTH_TALLOW = Object.freeze([1, 0.745, 0.431, 1]);     // #ffbe6e
 /** WITCH1: Witchfire's motes - the coven's violet, rising off the green (render/auraRing.js WITCH_RGB). */
 export const WITCH_VIOLET = Object.freeze([0.71, 0.42, 0.94, 1]);     // #b56bf0
+/** NIRNROOT-SAGE (2026-10-26, for Blob-Marley, an Immortal backer: "a cloud of billowing smoke with nirnroots circling
+ *  around me", then "billowing smoke, circling nirn roots around midsection, small glowing green runes encircling feet").
+ *  No colour was named; the aura is a nirnroot's and its runes are asked GREEN, so the title, its glyph and the aura are
+ *  one family: a nirnroot's LEAF green; its GLOW, the luminous mint a nirnroot gives off in the dark and the runes' light
+ *  - the title's one colour, 62 from the nearest title's (the Disciple's teal), greener and brighter than every green a
+ *  title wears; the HAZE, the pale of the smoke where the light catches it, the gradient's end and the bud's heart; the
+ *  DEEP green of the leaves' veins and the shade under the smoke; and the SMOKE's own grey, a breath of the green in it
+ *  (render/auraRing.js SAGE_RGB reads all five from here). "Nirnroot Sage" is drawn leaf into glow into haze, and edged in
+ *  black, as every gradient title with a light end is. */
+export const NIRN_LEAF = Object.freeze([0.18, 0.62, 0.341, 1]);      // #2e9e57
+export const NIRN_GLOW = Object.freeze([0.478, 1, 0.69, 1]);         // #7affb0
+export const NIRN_HAZE = Object.freeze([0.886, 0.941, 0.91, 1]);     // #e2f0e8
+export const NIRN_DEEP = Object.freeze([0.071, 0.224, 0.122, 1]);    // #12391f
+export const NIRN_SMOKE = Object.freeze([0.541, 0.604, 0.565, 1]);   // #8a9a90
 
 /** A title's colour, RGBA 0..1 - the same shape SOC4's PARTY_GREEN is
  *  in, so `nameLayer.cssRgba` turns it into CSS and `drawText` takes it
@@ -381,6 +397,7 @@ export const TITLE_RGBA = Object.freeze({
   skyfarer: Object.freeze([0.345, 0.847, 1, 1]),           // #58d8ff - the open sky's blue, brighter than her ring (#7cc4ff), which stood 32 from the Chaptermaster's: a title reads apart from every other title by more than 40
   witchwarden: WITCH_FIRE,     // WITCH1: the coven's green - the colour a face that cannot draw a gradient uses
   hearthkeeper: HEARTH_TALLOW,   // WITCH1: the tallow's amber
+  nirnrootsage: NIRN_GLOW,   // NIRNROOT-SAGE: a nirnroot's glow - the colour a face that cannot draw a gradient uses, and the glyph's
 });
 
 /** SHADOW-FANG: A TITLE DRAWN AS A GRADIENT - its stops, RGBA 0..1, left
@@ -398,6 +415,7 @@ export const TITLE_GRADIENT = Object.freeze({
   coilbreaker: Object.freeze([COIL_SEA, COIL_TIDE, COIL_FOAM]),   // SERPENT5: the open sea into the tide into the foam
   wikimaid: Object.freeze([WARREN_AMETHYST, WARREN_LILAC, WARREN_BLUSH]),   // WIKIMAID: "Wiki" in the warren's amethyst, "Maid" into a rabbit's blush
   witchwarden: Object.freeze([WITCH_MOSS, WITCH_FIRE, WITCH_GLOW]),   // WITCH1: the moor's moss into the coven's fire into its heart
+  nirnrootsage: Object.freeze([NIRN_LEAF, NIRN_GLOW, NIRN_HAZE]),   // NIRNROOT-SAGE: "Nirnroot" out of the leaf into its glow, "Sage" into the smoke's haze
 });
 
 /** PENITENT: THE EDGE A GRADIENT TITLE WEARS, where it is not the title's
@@ -415,6 +433,7 @@ export const TITLE_EDGE = Object.freeze({
   coilbreaker: Object.freeze([0, 0, 0, 1]),   // SERPENT5: its foam end is near white - edged in black, as Penitent's
   wikimaid: Object.freeze([0, 0, 0, 1]),   // WIKIMAID: its blush end is pale - edged in black, as Penitent's and the Aegis's
   witchwarden: Object.freeze([0, 0, 0, 1]),   // WITCH1: its heart end is pale - edged in black, as the WikiMaid's
+  nirnrootsage: Object.freeze([0, 0, 0, 1]),   // NIRNROOT-SAGE: its haze end is pale - edged in black, as the Witchwarden's
 });
 
 /** A glyph's colour. The sprout is green because Mac said green; the
@@ -445,6 +464,7 @@ export const GLYPH_RGBA = Object.freeze({
   primarch: TITLE_RGBA.primarch,       // PRIMARCH: the cross in the title's light gold - GA00250: "with the same color of the name"
   crystalfist: TITLE_RGBA.crystalfist, // CRYSTAL-FIST: the three slashes in the title's purple - the reference's own
   wikimaid: TITLE_RGBA.wikimaid,       // WIKIMAID: the rabbit in the title's lilac - the maid's frill is its detail, below
+  nirnrootsage: TITLE_RGBA.nirnrootsage,   // NIRNROOT-SAGE: the sprig in the title's glow - its veins and the bud's heart are its details, below
 });
 
 /** SHADOW-FANG: A GLYPH FILLED WITH A GRADIENT - its title's two stops,
@@ -483,6 +503,13 @@ export const GLYPH_DETAIL = Object.freeze({
     Object.freeze({ path: 'M4.3 8.6L4.6 7.4Q5 6.4 5.9 6.9Q6.5 6 7.3 6.5Q8 5.7 8.7 6.5Q9.5 6 10.1 6.9Q11 6.4 11.4 7.4L11.7 8.6Q8 7.4 4.3 8.6Z', rgba: WARREN_FRILL }),
     Object.freeze({ path: 'M4.3 8.6Q8 7.4 11.7 8.6L11.8 9.4Q8 8.2 4.2 9.4ZM6.1 10.1Q6.75 10.1 6.75 10.8Q6.75 11.5 6.1 11.5Q5.45 11.5 5.45 10.8Q5.45 10.1 6.1 10.1ZM9.9 10.1Q10.55 10.1 10.55 10.8Q10.55 11.5 9.9 11.5Q9.25 11.5 9.25 10.8Q9.25 10.1 9.9 10.1ZM7.4 12.4L8.6 12.4L8 13.1Z', rgba: WARREN_PLUM }),
   ]),
+  // NIRNROOT-SAGE: TWO DETAILS, in order: the four leaves' veins, a midrib along each from the stem to near its tip, in
+  // the deep green; and the bud's HEART, its glowing middle, in the haze. Four slivers and an oval, none crossing another,
+  // so the aura's nirnroots (render/auraRing.js, cut by glyphEdges and filled even-odd) draw them as the badge does.
+  nirnrootsage: Object.freeze([
+    Object.freeze({ path: 'M7 14.1Q3.9 12.7 1.4 11.6Q3.9 13.1 7 14.5ZM7.4 9.75Q4.9 8.6 2.9 7.6Q4.9 9 7.4 10.1ZM9 8.55Q11.2 6.8 13.2 5.45Q11.4 7.2 9 8.95ZM9 13.9Q12.2 12.2 14.8 10.85Q12.4 12.7 9 14.3Z', rgba: NIRN_DEEP }),
+    Object.freeze({ path: 'M8.3 1.35Q9.4 1.35 9.4 2.8Q9.4 4.25 8.3 4.25Q7.2 4.25 7.2 2.8Q7.2 1.35 8.3 1.35Z', rgba: NIRN_HAZE }),
+  ]),
 });
 /** WIKIMAID: A GLYPH'S DETAILS AS A LIST - one shape (the wolf's eye, the penitent's sword, the aegis's tendrils) or
  *  several in their order (the WikiMaid's ears, lace and face), so every face that draws a glyph walks one shape the same
@@ -512,6 +539,7 @@ export const GLYPH_MARK = Object.freeze({
   primarch: 't',      // PRIMARCH: a cross with its foot turned, as the reference's footrest
   crystalfist: '\\',  // CRYSTAL-FIST: a slash the way the reference's three fall, down to the right
   wikimaid: 'V',      // WIKIMAID: the rabbit's two ears, up
+  nirnrootsage: 'Y',  // NIRNROOT-SAGE: a sprig - its stem, and a leaf up each side
 });
 
 /** The printable range the classic font covers. ACC1d-MARK's own bound,
@@ -585,12 +613,18 @@ export const GLYPH_PATH = Object.freeze({
   // and its face are GLYPH_DETAIL's. Seen in Chromium at 13 to 64 px over a night sky, a day sky, stone, grass and snow:
   // the ears and the lace read from 13 px.
   wikimaid: 'M3.6 8.6Q4.3 7 5 6.5Q3.6 3 4.6 0.7Q5.3 0.1 6 0.8Q7.3 3.4 7.1 6.2Q8 6 8.9 6.2Q8.7 3.4 10 0.8Q10.7 0.1 11.4 0.7Q12.4 3 11 6.5Q11.7 7 12.4 8.6Q13.4 10.6 12.6 12.8Q11 15.2 8 15.2Q5 15.2 3.4 12.8Q2.6 10.6 3.6 8.6Z',
+  // NIRNROOT-SAGE (2026-10-26, for Blob-Marley - the owner: "Nirnroot sprig"): A NIRNROOT - a slender stem rising out of two
+  // broad leaves at its foot, a narrower pair up the stem (the right one higher, as a plant grows), and at its top the
+  // nirnroot's bulb, the glow it is known by. One outline, filled, never crossing itself, in M, L, Q and Z alone - the
+  // aura's nirnroots are this path (render/auraRing.js glyphEdges, filled even-odd). Seen in Chromium at 13 to 128 px over
+  // a night sky, a day sky, stone, grass and snow: the bulb and the leaves read from 13 px; the veins from 24.
+  nirnrootsage: 'M7.3 15.6Q3.2 15.6 0.6 11.4Q4 10.6 7.4 13L7.5 10.8Q4.6 10.9 2.4 7.4Q5 7.2 7.6 9L7.7 5.6Q5.7 4.9 6.1 2.8Q6.6 0.5 8.3 0.4Q10 0.5 10.5 2.8Q10.9 4.9 8.9 5.6L8.9 7.9Q11.2 5.6 13.8 5.2Q12 8.8 8.9 9.6L8.9 12.6Q12.2 10 15.4 10.6Q13.2 15.4 8.7 15.6Z',
 });
 
 /** Is this glyph DRAWN as an outline rather than filled? The sprout is
  *  a shape and the brackets are strokes; said here so the layer does
  *  not have to know which is which by name. */
-export const GLYPH_STROKE = Object.freeze({ sprout: true, dev: true, mod: true, dm: true, disciple: true, apostle: true, hierophant: true, shadowfang: false, penitent: true, herald: true, tower: false, crownDF: false, crownWR: false, crownSN: false, laurel: true, aegis: true, primarch: false, crystalfist: false, wikimaid: false });   // WIKIMAID: the rabbit filled; SEAT1c: the seats' four filled; ARENA4: the laurel's branches stroked; AEGIS: the pillars and the ring stroked; PRIMARCH: the cross filled; CRYSTAL-FIST: the slashes filled
+export const GLYPH_STROKE = Object.freeze({ sprout: true, dev: true, mod: true, dm: true, disciple: true, apostle: true, hierophant: true, shadowfang: false, penitent: true, herald: true, tower: false, crownDF: false, crownWR: false, crownSN: false, laurel: true, aegis: true, primarch: false, crystalfist: false, wikimaid: false, nirnrootsage: false });   // NIRNROOT-SAGE: the sprig filled; WIKIMAID: the rabbit filled; SEAT1c: the seats' four filled; ARENA4: the laurel's branches stroked; AEGIS: the pillars and the ring stroked; PRIMARCH: the cross filled; CRYSTAL-FIST: the slashes filled
 
 /**
  * The title a peer wears, ready to draw: `{ key, text, rgba }`, or
@@ -706,7 +740,7 @@ export const badgeClass = (kind, key) => `${kind}-${key}`;
  *  the Gatebreaker's, the Oblivion Ward the Aegis of Oblivion's, the Golden Radiance the Primarch's (PRIMARCH), the Holo
  *  Shadow Cloak the Shadow Fang's black and crimson (SHADOW-CLOAK), the Seraph Wings the Founder's gold - the wings' own, where
  *  the developer's paint is a red (SERAPH-WINGS), the Crystal Resonance the Crystal Fist's purple (CRYSTAL-FIST). A pin walks AURA_TEXT and requires an entry. */
-export const AURA_PAINT = Object.freeze({ dagonfire: 'gatebreaker', oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden' });   // WITCH1: Witchfire in the Witchwarden's green   // WIKIMAID: the Lilac Warren in the WikiMaid's amethyst into blush; HOURS-FIRST: The First Hour in Hour's First's rose gold; SERPENT5: The Maelstrom in the Coilbreaker's sea; EG-E2: the Spire's three each in its title's paint
+export const AURA_PAINT = Object.freeze({ dagonfire: 'gatebreaker', oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage' });   // NIRNROOT-SAGE: Sage's Smoke in the Nirnroot Sage's leaf into glow into haze   // WITCH1: Witchfire in the Witchwarden's green   // WIKIMAID: the Lilac Warren in the WikiMaid's amethyst into blush; HOURS-FIRST: The First Hour in Hour's First's rose gold; SERPENT5: The Maelstrom in the Coilbreaker's sea; EG-E2: the Spire's three each in its title's paint
 /** SHADOW-FANG: `titlePaint`'s properties as CSS declarations, the colour
  *  left to the button (its border is drawn in it) - so a gradient title's
  *  word on the card is the SAME paint as over a head, not a second one. */

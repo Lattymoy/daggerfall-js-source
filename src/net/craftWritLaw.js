@@ -332,11 +332,24 @@ export function craftHeldText(/** @type {{ kind: string }} */ w, /** @type {{ pa
     ? t('prof.craftWrit.heldPotion', '{made, number} brewed by you, {pack, number} in your pack', { made: h.made, pack: h.pack })
     : t('prof.craftWrit.heldPiece', '{made, number} of your own in your pack', { made: h.made });
 }
-/** Why Deliver waits, said on its title: what is short. */
-export function craftShortText(/** @type {{ kind: string, qty: number }} */ w, /** @type {{ pack: number, made: number }} */ h) {
+/** Why Deliver waits, said on its title: what is short. FIELD BUGS 2026-10-26 LOOSE-SAID (#bug-reports, "Crafting writs
+ *  not accepting": "I brewed the 7 heal true potions myself and its showing like I haven't made any"): where the character
+ *  made the goods of loose units (`h.loose` - looted, or bought with gold: the service never saw them, so they fill no
+ *  writ, section 49.2's WITNESSED WHOLE), it says so - the card said "0 brewed by you" over a brew that had paid its XP.
+ *  A potion is brewed at an alchemy station: a potion maker anywhere else is the client's mix (POTION-DOOR). */
+export function craftShortText(/** @type {{ kind: string, qty: number }} */ w, /** @type {{ pack: number, made: number, loose?: number }} */ h) {
+  const loose = Math.max(0, h.loose ?? 0);
   if (w.kind === 'potion') {
-    if (h.made < w.qty) return t('prof.craftWrit.shortBrew', 'Brew {n, number} more yourself - found or bought bottles do not count', { n: w.qty - h.made });
+    if (h.made < w.qty && loose > 0) {
+      return t('prof.craftWrit.shortBrewLoose', '{loose, plural, one {A potion you brewed today was} other {# potions you brewed today were}} made with looted or gold-bought ingredients, which never count - brew {n, number} more from ingredients you gathered or bought from the Apothecaries',
+        { loose, n: w.qty - h.made });
+    }
+    if (h.made < w.qty) return t('prof.craftWrit.shortBrew', 'Brew {n, number} more yourself at an alchemy station - found or bought bottles do not count', { n: w.qty - h.made });
     return t('prof.craftWrit.shortCarry', 'Carry {n, number} more of these bottles in your pack', { n: w.qty - h.pack });
+  }
+  if (h.made < w.qty && loose > 0) {
+    return t('prof.craftWrit.shortMakeLoose', '{loose, plural, one {One piece in your pack was} other {# pieces in your pack were}} made with looted or gold-bought goods, which never count - make {n, number} more from goods you gathered or bought with silver',
+      { loose, n: w.qty - h.made });
   }
   return t('prof.craftWrit.shortMake', 'Make {n, number} more yourself - pieces you bought or sold do not count', { n: w.qty - h.made });
 }

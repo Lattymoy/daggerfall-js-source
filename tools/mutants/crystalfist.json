@@ -62,12 +62,12 @@
   {
     "name": "CRYSTALFIST-the-glyph-stroked",
     "file": "src/ui/playerBadge.js",
-    "old": "primarch: false, crystalfist: false, wikimaid: false });",
-    "new": "primarch: false, crystalfist: true, wikimaid: false });",
+    "old": "primarch: false, crystalfist: false, wikimaid: false, nirnrootsage: false });",
+    "new": "primarch: false, crystalfist: true, wikimaid: false, nirnrootsage: false });",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
-    "note": "Stroked, the slashes are outlines of themselves - the reference is filled. WIKIMAID (re-aimed by content)."
+    "note": "Stroked, the slashes are outlines of themselves - the reference is filled. WIKIMAID (re-aimed by content). NIRNROOT-SAGE (re-aimed by content): the list it quotes gained the Nirnroot Sage's word."
   },
   {
     "name": "CRYSTALFIST-the-words",
@@ -92,12 +92,12 @@
   {
     "name": "CRYSTALFIST-the-resonances-button",
     "file": "src/ui/playerBadge.js",
-    "old": "seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden' });",
-    "new": "seraphwings: 'founder', resonance: 'aegis', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden' });",
+    "old": "seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage' });",
+    "new": "seraphwings: 'founder', resonance: 'aegis', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage' });",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
-    "note": "The resonance's button in the Aegis's violets, not the Crystal Fist's purple. WIKIMAID (re-aimed by content)."
+    "note": "The resonance's button in the Aegis's violets, not the Crystal Fist's purple. WIKIMAID (re-aimed by content). NIRNROOT-SAGE (re-aimed by content): the list it quotes gained the Nirnroot Sage's word."
   },
   {
     "name": "CRYSTALFIST-the-card-label",
@@ -133,43 +133,43 @@
   {
     "name": "CRYSTALFIST-the-glyphs-word",
     "file": "server-account/src/titles.js",
-    "old": "primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid' });",
-    "new": "primarch: 'primarch', crystalfist: 'disciple', wikimaid: 'wikimaid' });",
+    "old": "primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage' });",
+    "new": "primarch: 'primarch', crystalfist: 'disciple', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage' });",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
-    "note": "The title held, the Disciple's glyph carried for it. WIKIMAID (re-aimed by content)."
+    "note": "The title held, the Disciple's glyph carried for it. WIKIMAID (re-aimed by content). NIRNROOT-SAGE (re-aimed by content): the list it quotes gained the Nirnroot Sage's word."
   },
   {
     "name": "CRYSTALFIST-the-aura-not-granted",
     "file": "server-account/src/titles.js",
-    "old": "shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren' });",
-    "new": "shadowfang: 'shadowcloak', wikimaid: 'lilacwarren' });",
+    "old": "shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
+    "new": "shadowfang: 'shadowcloak', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
-    "note": "The title and the glyph granted, the resonance not. WIKIMAID (re-aimed by content): the WikiMaid's warren after it on the line, the Crystal Fist's entry still the one dropped."
+    "note": "The title and the glyph granted, the resonance not. WIKIMAID (re-aimed by content): the WikiMaid's warren after it on the line, the Crystal Fist's entry still the one dropped. NIRNROOT-SAGE (re-aimed by content): the list it quotes gained the Nirnroot Sage's word."
   },
   {
     "name": "CRYSTALFIST-the-wrong-aura-granted",
     "file": "server-account/src/titles.js",
-    "old": "shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren' });",
-    "new": "shadowfang: 'shadowcloak', crystalfist: 'oblivionward', wikimaid: 'lilacwarren' });",
+    "old": "shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
+    "new": "shadowfang: 'shadowcloak', crystalfist: 'oblivionward', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
-    "note": "Sureme's ward granted to Flylighter. WIKIMAID (re-aimed by content)."
+    "note": "Sureme's ward granted to Flylighter. WIKIMAID (re-aimed by content). NIRNROOT-SAGE (re-aimed by content): the list it quotes gained the Nirnroot Sage's word."
   },
   {
     "name": "CRYSTALFIST-the-vocabularys-aura",
     "file": "src/net/identityToken.js",
-    "old": "'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire']);   // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): WITCHFIRE last - a coven's green fire licking round the feet, tallow candles burning in its ring and their motes rising violet; bought from a Wyrd Sister for Soul Cakes (server-account/src/titles.js, `fest_wares`), held for good;   // WIKIMAID (2026-10-17, for SylviaBun: \"a purple aura with bunnies\"): THE LILAC WARREN last - rabbits hopping round the feet on a ring of lilac light, their prints fading behind them; the WikiMaid's own, granted with its title by name, never sold;",
-    "new": "'shadowcloak', 'seraphwings', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire']);   // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): WITCHFIRE last - a coven's green fire licking round the feet, tallow candles burning in its ring and their motes rising violet; bought from a Wyrd Sister for Soul Cakes (server-account/src/titles.js, `fest_wares`), held for good;   // WIKIMAID (2026-10-17, for SylviaBun: \"a purple aura with bunnies\"): THE LILAC WARREN last - rabbits hopping round the feet on a ring of lilac light, their prints fading behind them; the WikiMaid's own, granted with its title by name, never sold;",
+    "old": "'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke']);   // NIRNROOT-SAGE (2026-10-26, for Blob-Marley: \"billowing smoke, circling nirn roots around midsection, small glowing green runes encircling feet\"): SAGE'S SMOKE last - smoke billowing up about the body, nirnroots circling the waist, green runes glowing round the feet; the Nirnroot Sage's own, granted with its title by name, never sold;   // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): WITCHFIRE last - a coven's green fire licking round the feet, tallow candles burning in its ring and their motes rising violet; bought from a Wyrd Sister for Soul Cakes (server-account/src/titles.js, `fest_wares`), held for good;   // WIKIMAID (2026-10-17, for SylviaBun: \"a purple aura with bunnies\"): THE LILAC WARREN last - rabbits hopping round the feet on a ring of lilac light, their prints fading behind them; the WikiMaid's own, granted with its title by name, never sold;",
+    "new": "'shadowcloak', 'seraphwings', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke']);   // NIRNROOT-SAGE (2026-10-26, for Blob-Marley: \"billowing smoke, circling nirn roots around midsection, small glowing green runes encircling feet\"): SAGE'S SMOKE last - smoke billowing up about the body, nirnroots circling the waist, green runes glowing round the feet; the Nirnroot Sage's own, granted with its title by name, never sold;   // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): WITCHFIRE last - a coven's green fire licking round the feet, tallow candles burning in its ring and their motes rising violet; bought from a Wyrd Sister for Soul Cakes (server-account/src/titles.js, `fest_wares`), held for good;   // WIKIMAID (2026-10-17, for SylviaBun: \"a purple aura with bunnies\"): THE LILAC WARREN last - rabbits hopping round the feet on a ring of lilac light, their prints fading behind them; the WikiMaid's own, granted with its title by name, never sold;",
     "tests": [
       "test/net/crystalfist.test.js",
       "test/net/relayversion.test.js"
     ],
-    "note": "The token's vocabulary without the resonance: no relay admits it, no account may wear it. WIKIMAID (re-aimed by content)."
+    "note": "The token's vocabulary without the resonance: no relay admits it, no account may wear it. WIKIMAID (re-aimed by content). NIRNROOT-SAGE (re-aimed by content): the list it quotes gained the Nirnroot Sage's word."
   },
   {
     "name": "CRYSTALFIST-the-look-kind",

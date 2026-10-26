@@ -129,7 +129,7 @@ CREATE TABLE home_yard_cells (
   live without a rollback. Nothing builds a town row any more; the old triggers still move the town's version, so
   acct192's read (the rows as they stand where the built row is behind) stays correct if the service is rolled back.
   YC3 drops them.
-- **The number.** 0176 and acct195 (acct193 when this was written, renumbered past COPY-LIFT and the wild death) are the next free ones on main. #1184 carries 0174-0177 and acct189 on its
+- **The number.** 0176 and acct195 (acct193 when this was written, renumbered past main's COPY-LIFT and NIRNROOT-SAGE) are the next free ones on main. #1184 carries 0174-0177 and acct189 on its
   branch and renumbers at its merge, as its own pages say; whichever lands second renumbers.
 
 ### 3.3 Writes
@@ -466,7 +466,7 @@ Each slice is its own pull request, opened as a draft and made ready only after 
 
 ## 10. YC1 - built (2026-10-26)
 
-The service and the client of section 3, in one release (acct195, migration 0176; acct193 on its branch, renumbered past COPY-LIFT and the wild death at the merge). Departures from the plan above are
+The service and the client of section 3, in one release (acct195, migration 0176; acct193 on its branch, renumbered past main's COPY-LIFT and NIRNROOT-SAGE at the merges). Departures from the plan above are
 named in the second list.
 
 - **The law both ends read**: `src/net/yardCellLaw.js` - `yardCellOf`, the request's shape (`yardCellAskOf`, at most
@@ -482,7 +482,7 @@ named in the second list.
   nearest first on `YARD_STAND_BUDGET_MS`. The town-full sentence left `net/accountClient.js` and every language.
 - **The deploy's smoke** (`account-deploy.yml`): the cell route read off a cell D1 built, the old route's 410 asked until
   this deploy answers it, the kept cells asked of D1 itself.
-- **The relay redeploys** as world268 (world266 on the branch, renumbered past AUDIT KETCH II and KETCH-WORDS): `net/homeLaw.js`, where HOME_TOWN_MAX lives, is in its import graph. No relay behaviour moves.
+- **The relay redeploys** as world269 (world266 on the branch, renumbered past AUDIT KETCH II, KETCH-WORDS and NIRNROOT-SAGE): `net/homeLaw.js`, where HOME_TOWN_MAX lives, is in its import graph. No relay behaviour moves.
 
 Departures from the plan:
 
