@@ -41,7 +41,7 @@ finding there would be routed, not fixed - none was. The code says what each fix
 | R2-2 | MED | An Elite Breach opened past the Bay staked its Weir Key (or the day's Rehearsal) and never sent its `open`: the wire refused the arch's site, and the key came back by its void a minute later | FIXED and pinned |
 | R2-3 | LOW | GRAVE-PARTY's own field bug, past the Bay: a lair's headstone there was owed to no cell, so a partymate searched it again | FIXED and pinned |
 | R2-4 | MED | The quest layer's region name was `''` past the Bay: no NPC there knew a quest's place or person there (START3's province starts among them), and "Where am I?" in a lair said "in ." | FIXED and pinned |
-| R2-5 | MED | A quest giver past the Bay has no remote site to give: every quest that wants another town or a dungeon parses to no work (a guild's "no work", a Daedra's "no task here, keep your gold") | RECORDED - the owner's design (proposal below) |
+| R2-5 | MED | A quest giver past the Bay has no remote site to give: every quest that wants another town or a dungeon parses to no work (a guild's "no work", a Daedra's "no task here, keep your gold") | TAKEN - the proposal built, FIXED and pinned (below) |
 | R2-6 | LOW | A vampire turned past the Bay is not carried to a cemetery (the region's MAPS rows are the transfer's search) | FIXED and pinned (the second pass) |
 | R2-7 | LOW | A staff event cannot be staged past the Bay: its place's pixel is the Bay's (`staffEventLaw.js`), the place picker lists no province's places, and the event runs as a raid, which is the Bay's until WW6 | FIXED and pinned for an area's event (the second pass); a town's own event past the Bay recorded as WW6's |
 | R2-8 | LOW | A POI (the builder's tool) stands on the Bay's map alone: its law, its id `py * 1000 + px` and its feed's key | FIXED and pinned (the second pass) - no stored id moves, no migration |
@@ -98,7 +98,7 @@ quests whose every site is past the Bay - and "Where am I?" underground formatte
 province's region's name past the Bay now; on the Bay the loaded region's, and an empty Bay region's `''` as DFU's empty
 DFRegion. (The fixed bench, `scenes/exterior.js`, keeps its own - it stands no land past the Bay.)
 
-### R2-5 - a quest giver past the Bay (RECORDED - the owner's design)
+### R2-5 - a quest giver past the Bay (TAKEN - the proposal built, FIXED and pinned)
 
 `src/systems/quest/place.js:"_selectRemoteTownSite(world, requiredBuildingType) {"`. A remote site is drawn from the
 questor's region's MAPS.BSA rows (Place.SelectRemoteTownSite, SelectRemoteDungeonSite, SelectRemoteLocationExteriorSite);
@@ -113,6 +113,16 @@ province's region from the world's registry - `getRegion(62..70)` a DFRegion of 
 Skyrim questor's courier goes to another town of Skyrim and its dungeon to a lair of Skyrim, walked (TESA-NO-FAST). The
 smaller-dungeon law and the START3 `worldPixel` already carry a site past the Bay. The owner decides whether quests past
 the Bay are the province's own (this) or stay local-only until the arc that writes them.
+TAKEN (2026-10-26, the coordinator for the owner: the proposal, as written): `scenes/quest/questProvinceSites.js` builds
+it - the theatre's listed towns on its politic region, its nearest lairs (16 within a Bay region's span, at most 40
+first rolls a table - the coordinator's bound on the one task a quest offer adds), a name the table misses found by
+the site's own pixel (START3); the Imperial City at first left out, then a destination slice by slice under
+a quest name of its own (R2-5b, the owner: "Take care of exclusions and gaps"). DFU's three draws
+run over it unchanged. End to end on the freeware: a Fighters Guild, a Mages Guild, a temple, a commoner and a Daedra
+at Solitude, Mournhold and the Imperial City each offer work whose remote sites are built places of that province, on
+the held map by their pixel, their targets placed on arrival, the same places after a load from the Bay; the Bay's
+draw unchanged. `06-Systems/Quest-Arc.md` "AUDIT RELEASE R2-5"; Port-Ledger A; `test/systems/quest/auditrelease_r25.test.js`;
+`tools/mutants/questsites.json`.
 
 ### R2-6 - a vampire's crypt past the Bay (FIXED, the second pass)
 
@@ -254,7 +264,8 @@ row names the bytes before it); the account service reads the same law (no versi
 - The running game past the Bay (no browser here): a staff /tp landing in Cyrodiil, an arch raised in Skyrim and its
   halls entered and left, a lair's headstone searched by two partymates, a START3 province start's "tell me about".
   Each is pinned at its law and its session; the scene halves are the code they always were.
-- The quest machine past the Bay end to end (R2-5): its failure is read from the code (`offerFlow.js` - the parse's
+- The quest machine past the Bay end to end (R2-5) - since driven in Node over the freeware when the proposal was
+  taken (above); in the running game still not. At the audit: its failure is read from the code (`offerFlow.js` - the parse's
   catch, `_failGetQuestMessage`), not driven through a guild hall past the Bay.
 - Every system the sweep did not name above was read only as far as its region and pixel reads; the categories the
   coordinator listed are all covered by a verdict here.

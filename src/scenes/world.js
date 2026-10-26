@@ -2706,7 +2706,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     locationIndex.set(key, loc);
     return loc;
   }
-  const { _tamrielRoads, arenaLocationAt, arenaWarm, capitalLocationAt, countryLocationAt, lairLocationAt, nearestTownOf, startLairAt, tamrielPlaceName } = createTamrielPlaces({   // HOST-SPLIT: src/scenes/tamrielPlacesHost.js; WW7: arenaWarm registers TESA's places
+  const { _tamrielRoads, arenaLocationAt, arenaWarm, capitalLocationAt, countryLocationAt, lairLocationAt, nearestTownOf, provinceQuestPlaces, tamrielPlaceName } = createTamrielPlaces({   // HOST-SPLIT: src/scenes/tamrielPlacesHost.js; WW7: arenaWarm registers TESA's places
     _arenaTemplates, _capitalBase, _capitalNames, _countryCounts, _countryTemplates, _lairCounts, _lairPools,
     _lairTemplates, arenaJoinLand, arenaRoadsLanded, arenaStands, blocks, locationIndex, maps, tamrielLand, terrainGen,
     townSeats, woodsBytes, worldPlaces, zoneHalls,   // AUDIT TESA II P7: the places past the Bay on the world's registry; Z7: the rolls the zone's halls keep off
@@ -18652,7 +18652,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     NAVAL_DECK_BODY_R, _musicInLocationRect, _questLoc, _questRegionIndex, _questStore, _regionFaction,
     _respawnAtSite, arenaCityPixel, arenaCityStage, blocks, built, cam, collider, exteriorFoePool, exteriorFoes,
     homeLayoutsOnline, maps, navalDeckBody, onlineHomes, params, pipeline, placeByName, player, playerTravelOrigin,
-    playerTravelPixel, questSiteMovedHere, startLairAt, talkBuildingCompassDirection, townTalk, walkMode, weatherOverride,
+    playerTravelPixel, provinceQuestPlaces, questSiteMovedHere, talkBuildingCompassDirection, townTalk, walkMode, weatherOverride,   // AUDIT RELEASE R2-5: the places past the Bay (a province's region; START2's start lair among them)
     get _homeLayoutsApplied() { return _homeLayoutsApplied; },
     get _liveSharer() { return _liveSharer; },
     get _locationRevealedByMapItem() { return _locationRevealedByMapItem; },
