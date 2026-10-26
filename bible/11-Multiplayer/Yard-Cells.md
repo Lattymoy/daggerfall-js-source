@@ -524,7 +524,8 @@ the relay in local workerd - `tools/loadHarness.mjs` standServices; two runs):
   A registered account's realm character placed a piece at its home in the eastern blocks (column 5, row 4) through the
   service's own place route (answered 200). The game was loaded again, and the home's yard stood with that piece in it.
   Done in both runs.
-- **The landing.** The cell route was held until the town had settled, then let go, and every frame after was timed.
+- **The landing: the target is not met.** Section 3.5 aimed for no landing frame longer than YARD-TOWN's measured 33
+  ms; these runs show 38-62 ms. The cell route was held until the town had settled, then let go, and every frame after was timed.
   Run 1: the longest frame was 54 ms at a 6 ms budget, 38 ms at 3 ms and 46 ms at 10 ms (2, 3 and 7 frames over 33 ms).
   Run 2 (the request asked again from where the player stood): 62 ms at 3 ms (26 frames over 33 ms) and 54 ms at 2 ms
   (7). Every yard (515-526) stood within about one second each time. YARD-TOWN measured 38-63 ms for a city of 4,000 at
@@ -536,4 +537,16 @@ the relay in local workerd - `tools/loadHarness.mjs` standServices; two runs):
   not register in a Playwright Edge); YC1 does not change it.
 - **Not shown in the game**: the nearest-first order - the whole town stood inside one half-second sample.
 
-**Still to run**: check 2 (two clients on the local relay) and check 3 (a build from before YC1 answered 410).
+**Check 2, two clients, in the running game: PASS** (2026-10-26, the same setup, #1304 at a7b8e26e92). Two registered
+accounts' realm characters stood online in Daggerfall's city. B stood by a western home; A's home was 449 m east, in cell
+1287.
+
+- Before A's write, B polled every 60 s with the 8 cells in its reach, and both polls of the unchanged town were answered
+  with no cell.
+- A placed a piece through the place route (200). B's next poll was answered with exactly one cell, 1287, holding the new
+  piece, and B's page stood it 61 s after the placement.
+- Two runs before this one showed nothing, and they confirmed a skip that works as designed. The intro's and the
+  tutorial's pages were still up, and the game holds its pause latch while one is (`overlayUp`), so B never polled. Put
+  away with a key each, as a player puts them away, the polls ran.
+
+**Still to run**: check 3 (a build from before YC1 answered 410).
