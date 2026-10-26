@@ -27,6 +27,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { appStorage } from '../appStorage.js';
 import { FRIEND_CSS } from '../../net/social.js';   // OW-KIN: the friends' blue is the chat's own
+import { dungeonTypeShown } from './travelViewDungeonFilters.js';   // OW-DUNGEON-TYPES: the dungeon tiers and sizes switched off
 
 export const TV_FILTER_GROUPS = Object.freeze(['towns', 'distant', 'dungeons', 'enemies', 'travellers', 'gathering']);
 export const TV_FILTER_STORE_KEY = 'dfjs.overworld.filters';
@@ -199,6 +200,7 @@ export function markShown(m, f = travelViewFilters(), w = travelViewWho()) {
   if (g != null && f[g] === false) return false;
   if (g === 'travellers' && !playerShown(m, w)) return false;
   if (g === 'gathering' && w.nodeKm != null && Number.isFinite(m?.dist) && m.dist > w.nodeKm) return false;
+  if (g === 'dungeons' && !dungeonTypeShown(m?.dtier, m?.dsize)) return false;   // OW-DUNGEON-TYPES: a found dungeon's tier and size, switched off (a lair carries neither)
   return true;
 }
 
