@@ -1765,7 +1765,22 @@ slice at load 5 (the centre slice the most: the tower's 7.7k triangles and the p
 the worst unit of the city's own left on the page. The rest of a slice's build is the stream's own (its uploads, its
 colliders, its yards' and walkers' places - about 2 s of the page's thread a slice in the profile), a breath at a time.
 The worker's own heap over the jump's list (the centre and two rings, 2,192 pieces): 61 MB of modules and 47 MB of its
-fabric's caches; what it hands the page, 22 MB of blocks held until taken. IN THE GAME AFTER: see the next paragraph.
+fabric's caches; what it hands the page, 22 MB of blocks held until taken. IN THE GAME AFTER: not measured today - the shared machine's memory cgroup took the probe's browser in its boot or its jump on five of the six runs after the before one (the sixth stopped by its own time limit, still booting) (the kernel's OOM killer, the renderer at 3.6-5.4 GB among the other streams' browsers and tests, load 25-38); the in-game before above stands, the after is node's (IC-PROBE-AFTER below). The in-game shots of the streets, the roofs, the Palace District, the city's arena and the far landmarks at a clear noon with the boot's pages put away (the probe's SHOTS: each slice built with the frame held, then shot) were not taken for the same reason; the city was seen in the scratch's rasterizer instead (its palace, gardens, tombs, gatehouses, the new tower from 3.6 km and from its foot, the courts, the squares' fountains and the Arboretum's orchards).
+
+OPEN - THE NAMED FOLLOW-UPS (IC-GRAND, at the release of 2026-10-26; none half-done in the code):
+- **IC-FOOTPRINT-OFF-THREAD**: a slice's landmarks' footprint (its first block on the page: 0.03-0.43 s here, the centre
+  slice the most) made on the city's worker too - it needs the landmarks' parts there (world/capitalModels.js's builders
+  in the worker's graph), or the footprint shipped with the parts.
+- **IC-STREAM-SHARE**: the stream's own share of a near slice - its uploads, its colliders over ~100k triangles of
+  fabric, the yards' model boxes - about 2 s of the page's thread a slice, a breath at a time; a slice's fabric merged
+  into fewer, larger models would cut the colliders' and the uploads' units.
+- **IC-PROBE-AFTER**: the probe's BUILDS run with the worker standing, on a machine of its own - here the shared memory
+  cgroup took the browser (the probe's and the other streams') on every run but the before one this afternoon.
+- **IC-TOWER-LOD**: the tower's 7.7k triangles and the palace's 15.6k stand whole in the centre slice; past the stream they
+  are the far landmark's few prisms.
+- **IC-PALACE-PATHS**: the gardens' paths and walks are laid at the ground's own resolution (6.4 m tiles), stepped on a
+  diagonal - a path model of its own would smooth them.
+- **IC-SQUARES**: the Market's squares stand their fountain alone - stalls, trees and benches round it are owed.
 
 TESA11, IC-RING and TS5 read on: the pixel law the same (the nearest centre all of whose 625 pixels are the Imperial
 Province's land, on the trace's isle inside Lake Rumare's ring); the flatten the same (every slice to the centre's
