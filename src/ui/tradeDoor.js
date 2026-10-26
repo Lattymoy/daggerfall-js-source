@@ -99,7 +99,10 @@ function enhancedTradeOverlay(hooks) {
     draw() { /* DOM, not canvas */ },
     dispose() { close(); },
   };
-  hooks.owner = overlay;   // COVERED-KEYS: the window the counter's keys are gated on (ui/windowStack.js listenWindowKeys)
+  // BOX-ON-TOP: the view hears every key on the window before any host does; while a box stands over the counter (a
+  // tutorial page, the magicka refusal) the keys are the box's - Enter would run the counter's action again, Escape
+  // would close the counter under the box. COVERED-KEYS: the gate is the one key door's (ui/windowStack.js listenWindowKeys).
+  hooks.owner = overlay;
 
   mountEnhancedChunk({
     load: () => import('./enhanced/enhancedTrade.js'),

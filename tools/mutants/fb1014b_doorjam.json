@@ -67,8 +67,8 @@
   {
     "name": "DOORJAM-8-the-walk-sweeps-its-full-height",
     "file": "src/characters/enemy/enemyMotor.js",
-    "old": "    const r = this.collider.move(this.feet, dxm, dy, dzm, this.controllerHeight, true, FOE_KEEPS_FLOOR);",
-    "new": "    const r = this.collider.move(this.feet, dxm, dy, dzm, this.height, true, FOE_KEEPS_FLOOR);",
+    "old": "    const r = this.collider.move(this.feet, dxm, dy, dzm, this.controllerHeight, true, FOE_KEEPS_FLOOR, false, this.isGrounded);",
+    "new": "    const r = this.collider.move(this.feet, dxm, dy, dzm, this.height, true, FOE_KEEPS_FLOOR, false, this.isGrounded);",
     "tests": [
       "test/characters/enemy/fb1014b_doorjam.test.js"
     ]

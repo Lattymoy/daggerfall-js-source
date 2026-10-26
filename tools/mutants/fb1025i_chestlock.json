@@ -1,0 +1,665 @@
+[
+  {
+    "name": "FB1025I-CHEST-DRAFT-DISCARD-WRITES-THE-CHESTS",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    pool.setOwn?.(d.owns);",
+    "new": "    pool.setItems?.(d.items);\n    pool.setOwn?.(d.owns);",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ],
+    "why": "a stand-in for the field bug: the Discard writes the chests' record over with a picture the draft no longer takes (setItems of nothing) - every chest the room has emptied, what each held lost. The bug's own shape is two sites - the open's picture (openDraft) and the Discard's write-back - which one record cannot carry; AUDIT FB1025i E5 ran it by hand over this pin file (the 'items: pool.itemsSnapshot()' picture and its setItems): three pins fail - the report's, the stored-since and the own-thing-stored-since"
+  },
+  {
+    "name": "FB1025I-CHEST-DRAFT-STAGED-CHEST-GOODS-LOST",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "        for (const it of pool.itemsOf?.(p.id)?.splice(0) ?? []) deps.packGive?.(it);\n",
+    "new": "",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ],
+    "why": "a chest the draft stood and Discard takes away keeps what was put in it, under an id no piece stands for",
+    "note": "AUDIT FB1025i E6 (PIN MOVED): the give-back is a block with its line now; re-aimed by content."
+  },
+  {
+    "name": "FB1025I-CHEST-DRAFT-STAGED-CHEST-GOODS-TWICE",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "pool.itemsOf?.(p.id)?.splice(0) ?? []",
+    "new": "pool.itemsOf?.(p.id)?.slice(0) ?? []",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ],
+    "why": "the goods given to the pack AND left in the chest's record - a pair of each"
+  },
+  {
+    "name": "FB1025I-CHEST-DRAFT-OWN-STOOD-AGAIN",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "      if (got) { pool.keepOwn?.(m.id, got); continue; }\n      pool.takeOwn?.(m.id);\n",
+    "new": "      if (got) { pool.keepOwn?.(m.id, got); continue; }\n",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ],
+    "why": "the shape that shipped: an own thing taken down and stored since stands again beside the chest's",
+    "note": "AUDIT FB1025i E1 (PIN MOVED): packIn is the ordered journal (moves); the shipped shape - its record restored by the draft's picture of the room's own and left standing - re-aimed there."
+  },
+  {
+    "name": "FB1025I-CHEST-DRAFT-OWN-NEVER-AGAIN",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "      if (got) { pool.keepOwn?.(m.id, got); continue; }",
+    "new": "      if (got) { pool.takeOwn?.(m.id); continue; }",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ],
+    "why": "an own thing the draft took down and still in the pack is pulled out of it by Discard and stood nowhere - lost",
+    "note": "AUDIT FB1025i E1 (PIN MOVED): re-aimed at the journal."
+  },
+  {
+    "name": "FB1025I-CHEST-DRAFT-PACKIN-NO-PIECE",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "d?.moves.push({ op: 'in', id: piece.id,",
+    "new": "d?.moves.push({ op: 'in', id: null,",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ],
+    "why": "the take-down journalled under no piece: Discard keeps the thing under no id, beside the draft's picture of it under its own - two of it in the room's record",
+    "note": "AUDIT FB1025i E1 (PIN MOVED): re-aimed at the journal."
+  },
+  {
+    "name": "FB1025I-E1-IN-UNPAIRED",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "      if (m.op === 'in' && d.moves.some((o, j) => j < i && o.op === 'out' && o.id === m.id)) continue;\n",
+    "new": "",
+    "why": "AUDIT FB1025i E1: a thing the draft set down and took down again is taken out of the pack by Discard and kept under a piece no one stands - the gem lost",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "FB1025I-E1-OUT-UNPAIRED",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "      if (m.op === 'out' && d.moves.some((o, j) => j > i && o.op === 'in' && o.id === m.id)) continue;\n",
+    "new": "",
+    "why": "AUDIT FB1025i E1: a thing the draft set down and took down again is given back by Discard on top of itself - one ruby of three given again to the stack it joined, four",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "FB1025I-E1-GIVE-ANSWERS-ITSELF",
+    "file": "src/systems/decor/decorPack.js",
+    "old": "    return addItem(entity().items, item);",
+    "new": "    addItem(entity().items, item);\n    return item;",
+    "why": "AUDIT FB1025i E1: the pack's door answers the thing it was handed, not the stack it joined - a Discard cannot find the ruby taken down, and its piece goes down for good",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "FB1025I-E1-IN-JOURNALS-ITSELF",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "item: deps.packGive?.(item) ?? item });",
+    "new": "item }); deps.packGive?.(item);",
+    "why": "AUDIT FB1025i E1: the take-down journals the record it gave, not the stack it joined",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "FB1025I-E3-PIECE-STANDS",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "      pool.takeOwn?.(m.id);\n      pool.remove(m.id);\n",
+    "new": "      pool.takeOwn?.(m.id);\n",
+    "why": "AUDIT FB1025i E3: a piece whose thing is gone from the pack stands again over nothing - a free piece of it, and Confirm never takes it down",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "FB1025I-E3-FORGOTTEN",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "      still.push(m);\n",
+    "new": "",
+    "why": "AUDIT FB1025i E3: the failed take-down leaves the journal - a second Discard stands the piece again with the draft's picture of the thing, a second of it beside the chest's",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "FB1025I-E3-SILENT",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "      deps.say?.(t('decor.tool.discardNotInPack', '{name} is no longer in your pack, or is worn. Confirm takes its piece down.', { name: itemLongName(m.item) || DECOR_KINDS.decor }));",
+    "new": "",
+    "why": "AUDIT FB1025i E3: a piece that does not stand again after Discard, and nothing said why (re-aimed by content: the line through t())",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "FB1025I-E9-WORN-PULLED",
+    "file": "src/systems/decor/decorPack.js",
+    "old": "    if (!pack.includes(item) || item?.equipSlot != null) return null;",
+    "new": "    if (!pack.includes(item)) return null;",
+    "why": "AUDIT FB1025i E9: a weapon taken down and put on since is pulled out of the pack by Discard while it is worn - stood in the room and in its wearer's hand",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "FB1025I-E2-NO-ACT",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "      const act = kind === 'storage' ? deps.realm?.() : null;",
+    "new": "      const act = null;",
+    "why": "AUDIT FB1025i E2: a staged chest's Access asked with no act - never moved, never kept",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "FB1025I-E2-REALM-NULL",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "call: (/** @type {any} */ at) => deps.homeDecor.use({ ...body, realm: at }) })",
+    "new": "call: () => deps.homeDecor.use({ ...body, realm: null }) })",
+    "why": "AUDIT FB1025i E2: the act's checkpoint taken and the ask not naming it - the service refuses to move what the chest holds",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "FB1025I-E2-GOODS-KEPT-BOTH",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "apply: (/** @type {any} */ a) => keepChestGoods(id, a),",
+    "new": "apply: () => {},",
+    "why": "AUDIT FB1025i E2: the goods moved into the service's bin and left in the save's chest - two of each",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "FB1025I-E6-SILENT",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "        deps.say?.(t('decor.tool.discardGaveBack', 'What the {name} held is back in your pack.', { name: entryOf(p).name }));",
+    "new": "",
+    "why": "AUDIT FB1025i E6: what a staged chest held handed to the pack by Discard, and nothing said (re-aimed by content: the line through t())",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "FB1025I-E8-UNASKED",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (!(interiorHome || _seatHallVisit)) returnUnstood(interiorDecor, placed, decorPackGive, say);\n",
+    "new": "",
+    "why": "AUDIT FB1025i E8: a save's room restored with its strays kept under pieces it never stands again - a draft left by the door loses what it set down",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "FB1025I-E8-OWN-KEPT",
+    "file": "src/systems/decor/decorPack.js",
+    "old": "  const back = [...own, ...(room.takeUnserved?.(pieces) ?? [])];",
+    "new": "  const back = [...(room.takeUnserved?.(pieces) ?? [])];",
+    "why": "AUDIT FB1025i E8: the owner's own things under an unstood piece stay there",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "FB1025I-E8-GOODS-KEPT",
+    "file": "src/systems/decor/decorPack.js",
+    "old": "  const back = [...own, ...(room.takeUnserved?.(pieces) ?? [])];",
+    "new": "  const back = [...own];",
+    "why": "AUDIT FB1025i E8: a staged chest's goods under an unstood piece stay there",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "FB1025I-E8-SILENT",
+    "file": "src/systems/decor/decorPack.js",
+    "old": "  if (back.length) say?.(",
+    "new": "  if (!back.length) say?.(",
+    "why": "AUDIT FB1025i E8: things handed back to the pack at the door, and nothing said",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "FB1025I-EXPLOIT-CHECKPOINT-LIFTS",
+    "file": "server-account/src/ledger.js",
+    "old": "[...shown.keys()].filter((k) => copiesKnown.has(k))",
+    "new": "[...shown.keys()].filter((k) => copiesKnown.has(k) && (shown.get(k)?.n ?? 0) > 1)",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ],
+    "why": "AUDIT FB1025i: the checkpoint's word lifting a copy - a duper's copy moved where the record lists nothing, and the piece it leaves trades"
+  },
+  {
+    "name": "FB1025I-COPY-LIFT-ANY-KIND",
+    "file": "server-account/src/ledger.js",
+    "old": "d.kind = 'twice' AND (d.trail_found",
+    "new": "(d.trail_found",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ],
+    "why": "a craft's copy, or one found before the census said how, lifted"
+  },
+  {
+    "name": "FB1025I-COPY-LIFT-COPIER",
+    "file": "server-account/src/ledger.js",
+    "old": "AND (d.trail_found IS NULL OR d.trail_found = 'innocent')",
+    "new": "",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ],
+    "note": "AUDIT FB1025i lane F (PIN MOVED): the trail term reads innocent alone now (F7)."
+  },
+  {
+    "name": "FB1025I-COPY-LIFT-ROW-ANOTHERS",
+    "file": "server-account/src/ledger.js",
+    "old": "AND u.char_id = ?1 AND u.state",
+    "new": "AND u.state",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ],
+    "why": "a piece another record holds, lifted on this one"
+  },
+  {
+    "name": "FB1025I-COPY-LIFT-ROW-GONE",
+    "file": "server-account/src/ledger.js",
+    "old": "u.state = 'held' AND u.claim_char",
+    "new": "u.claim_char",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "FB1025I-COPY-LIFT-CLAIMED",
+    "file": "server-account/src/ledger.js",
+    "old": " AND u.claim_char IS NULL",
+    "new": "",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "FB1025I-COPY-LIFT-ELSEWHERE",
+    "file": "server-account/src/ledger.js",
+    "old": "\n  AND NOT EXISTS (SELECT 1 FROM item_dupes o WHERE o.uid = d.uid AND o.char_id != ?1)",
+    "new": "",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ],
+    "why": "a piece another record also holds a copy of, lifted here"
+  },
+  {
+    "name": "FB1025I-COPY-LIFT-OTHER-PIECE",
+    "file": "server-account/src/ledger.js",
+    "old": "if (row.fp === fpOf.get(row.uid)) out.push(row.uid);",
+    "new": "out.push(row.uid);",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "FB1025I-COPY-LIFT-UNGUARDED",
+    "file": "server-account/src/ledger.js",
+    "old": "uid IN (${m}) AND EXISTS (SELECT 1 FROM item_dupes d JOIN item_uids u ON u.uid = d.uid\n    WHERE d.uid = item_dupes.uid AND d.char_id = ?1 AND ${OWN_COPY_SQL})",
+    "new": "uid IN (${m})",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ],
+    "why": "the lift no longer asks the law again in its own statement"
+  },
+  {
+    "name": "FB1025I-COPY-LIFT-NONE",
+    "file": "server-account/src/ledger.js",
+    "old": "(!keys.length ? [] : [",
+    "new": "(true ? [] : [",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js",
+      "test/server/staffpanel3realm.test.js"
+    ],
+    "why": "a locked copy stays locked for good - the reporter's pieces never come back"
+  },
+  {
+    "name": "FB1025I-COPY-LIFT-FINDING-SILENT",
+    "file": "server-account/src/ledger.js",
+    "old": "json_object('lifted', json((SELECT json_group_array(uid) FROM (SELECT uid FROM (${LIFTING_SQL}) LIMIT 40))), 'count',",
+    "new": "json_object('count',",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js",
+      "test/server/staffpanel3realm.test.js"
+    ],
+    "note": "AUDIT FB1025i lane F (PIN MOVED): the finding is written by the law in SQL now (F2)."
+  },
+  {
+    "name": "FB1025I-KEEP-IGNORED",
+    "file": "server-account/src/staffRealm.js",
+    "old": "const keep = body.keep === true;",
+    "new": "const keep = false;",
+    "tests": [
+      "test/server/staffpanel3realm.test.js"
+    ],
+    "why": "the purge takes both of a pair - the reporter's 89 pieces destroyed"
+  },
+  {
+    "name": "FB1025I-KEEP-NONE-KEPT",
+    "file": "server-account/src/staffRealm.js",
+    "old": "        const kept = keep ? keptOf(k, e.all) : null;   // COPY-LIFT: one of each stays\n",
+    "new": "        const kept = null;\n",
+    "tests": [
+      "test/server/staffpanel3realm.test.js"
+    ],
+    "note": "AUDIT FB1025i lane F (PIN MOVED): the seizure keeps keptOf's copy now (F1, F6)."
+  },
+  {
+    "name": "FB1025I-KEEP-LEDGER-ROWS-GONE",
+    "file": "server-account/src/staffRealm.js",
+    "old": "i < keys.length && !keep; i += 80",
+    "new": "i < keys.length; i += 80",
+    "tests": [
+      "test/server/staffpanel3realm.test.js"
+    ],
+    "why": "a keep drops the ledger's row of a piece the record still holds, and every mark - a claim's copy unlocked by staff's hand"
+  },
+  {
+    "name": "FB1025I-KEEP-CHEST-OF-NONE",
+    "file": "server-account/src/staffRealm.js",
+    "old": "const binKeys = keep ? lifts : keys;",
+    "new": "const binKeys = keys;",
+    "tests": [
+      "test/server/staffpanel3realm.test.js"
+    ],
+    "note": "AUDIT FB1025i lane F (PIN MOVED): a keep empties the chests of what it lifts alone (F5)."
+  },
+  {
+    "name": "FB1025I-KEEP-EXTRA-MISCOUNTED",
+    "file": "server-account/src/staffRealm.js",
+    "old": "const extra = held - found.size;",
+    "new": "const extra = held;",
+    "tests": [
+      "test/server/staffpanel3realm.test.js"
+    ],
+    "note": "AUDIT FB1025i lane F (PIN MOVED): counted over every copy the save holds (F1)."
+  },
+  {
+    "name": "FB1025I-KEEP-SEIZES-FOR-NOTHING",
+    "file": "server-account/src/staffRealm.js",
+    "old": "if (!keys.length || (keep && !extra && !bins && !lifts.length))",
+    "new": "if (!keys.length)",
+    "tests": [
+      "test/server/staffpanel3realm.test.js"
+    ]
+  },
+  {
+    "name": "FB1025I-KEEP-LIFT-ONLY-REFUSED",
+    "file": "server-account/src/staffRealm.js",
+    "old": " && !lifts.length))",
+    "new": "))",
+    "tests": [
+      "test/server/staffpanel3realm.test.js"
+    ],
+    "why": "a pair one copy of which staff already took could never be lifted"
+  },
+  {
+    "name": "FB1025I-KEEP-LIFT-UNWIRED",
+    "file": "server-account/src/staffRealm.js",
+    "old": "    steps.push(...ownCopyLiftSteps(db, row.id, lifts, nowS));   // COPY-LIFT: lifted with the act that left one\n",
+    "new": "",
+    "tests": [
+      "test/server/staffpanel3realm.test.js"
+    ]
+  },
+  {
+    "name": "LF-KEEP-HOLDS-LAST-PRINT",
+    "file": "server-account/src/staffRealm.js",
+    "old": "all.find((it) => ledgerPrintOf(it) === prints.get(k)) ?? all[0];",
+    "new": "all.findLast((it) => ledgerPrintOf(it) === prints.get(k)) ?? all.at(-1);",
+    "why": "the keep keeps the LAST copy - the chest's stale one, the pack's destroyed (AUDIT FB1025i lane F's survivor: the lift once asked the last copy's print while the keep kept the first; one keptOf answers both now)",
+    "tests": [
+      "test/server/staffpanel3realm.test.js",
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "LF-TRAIL-UNCLEAR-NOT-LIFTED",
+    "file": "server-account/src/ledger.js",
+    "old": "AND (d.trail_found IS NULL OR d.trail_found = 'innocent')",
+    "new": "AND (d.trail_found IS NULL OR d.trail_found != 'copier')",
+    "why": "AUDIT FB1025i F7 (lane F's survivor): a copy whose trail check found it 'unclear' lifted - staff's to settle first, found innocent",
+    "tests": [
+      "test/server/staffpanel3realm.test.js",
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "LF-LIFT-FINDING-ALWAYS",
+    "file": "server-account/src/ledger.js",
+    "old": "(!keys.length ? [] : [",
+    "new": "(false ? [] : [",
+    "why": "AUDIT FB1025i F2 (lane F's survivor): a keep that lifts nothing still puts the lift's statements in its batch",
+    "tests": [
+      "test/server/staffpanel3realm.test.js",
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "LF-KEEP-SEIZE-LAST-KEPT",
+    "file": "server-account/src/staffRealm.js",
+    "old": "  for (const list of possessedItemLists(save)) for (const it of list) note(it, true);",
+    "new": "  for (const list of possessedItemLists(save).reverse()) for (const it of list) note(it, true);",
+    "why": "the record's lists read last first - the chest's copy kept, the pack's destroyed",
+    "tests": [
+      "test/server/staffpanel3realm.test.js",
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "LF-KEEP-SEQ-UNGUARDED",
+    "file": "server-account/src/staffRealm.js",
+    "old": "    if (body.seq !== row.seq) return said(act, row.player, detail, { error: 'seq' });\n    const seized = await seizeRealmRecord(c, row.player, row.id, (s) => {\n      const doomed = [];",
+    "new": "    const seized = await seizeRealmRecord(c, row.player, row.id, (s) => {\n      const doomed = [];",
+    "why": "the purge acts on a record that moved since staff looked",
+    "tests": [
+      "test/server/staffpanel3realm.test.js",
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "LF-BIN-ANY-HOME",
+    "file": "server-account/src/staffRealm.js",
+    "old": "h.building_key = decor_bin.building_key AND h.player = ?1)`).bind(row.player, ...part));",
+    "new": "h.building_key = decor_bin.building_key AND (h.player = ?1 OR 1))`).bind(row.player, ...part));",
+    "why": "a chest in a home this account does not own loses its copy",
+    "tests": [
+      "test/server/staffpanel3realm.test.js",
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "LF-ELSEWHERE-CLAIM-IGNORED",
+    "file": "server-account/src/ledger.js",
+    "old": "AND NOT EXISTS (SELECT 1 FROM item_dupes o WHERE o.uid = d.uid AND o.char_id != ?1)",
+    "new": "AND NOT EXISTS (SELECT 1 FROM item_dupes o WHERE o.uid = d.uid AND o.char_id != ?1 AND o.kind != 'claim')",
+    "why": "another record's 'claim' copy no longer bars the lift",
+    "tests": [
+      "test/server/staffpanel3realm.test.js",
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "LF-F1-WALK-LISTS-ONLY",
+    "file": "server-account/src/staffRealm.js",
+    "old": "  if (save && typeof save === 'object') walk(save);\n",
+    "new": "",
+    "why": "AUDIT FB1025i F1: the keep reads the record's lists alone - a copy in a deserter's take or on the ground waits out the lift and comes back live",
+    "tests": [
+      "test/server/staffpanel3realm.test.js",
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "LF-F1-LIFT-UNDESTROYED",
+    "file": "server-account/src/staffRealm.js",
+    "old": "const asked = [...found].filter(([k, e]) => e.all.length > 1 || (inBins.get(k) ?? 0) > 0 || taken.has(k));",
+    "new": "const asked = [...found];",
+    "why": "AUDIT FB1025i F1: a lift on the save's word that it shows the piece once - the copy sold at a counter freed the other",
+    "tests": [
+      "test/server/staffpanel3realm.test.js",
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "LF-F1-LIFT-BINS-IGNORED",
+    "file": "server-account/src/staffRealm.js",
+    "old": " || (inBins.get(k) ?? 0) > 0 || taken.has(k));",
+    "new": " || taken.has(k));",
+    "why": "AUDIT FB1025i F1: a pair whose copy lies in the account's chest is never lifted though the act destroys it",
+    "tests": [
+      "test/server/staffpanel3realm.test.js",
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "LF-F1-LIFT-EVIDENCE-IGNORED",
+    "file": "server-account/src/staffRealm.js",
+    "old": " || taken.has(k));",
+    "new": ");",
+    "why": "AUDIT FB1025i F1: a pair one copy of which staff took could never be lifted",
+    "tests": [
+      "test/server/staffpanel3realm.test.js",
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "LF-F1-EVIDENCE-RETURNED",
+    "file": "server-account/src/staffRealm.js",
+    "old": "AND kind = 'player' AND state = 'kept' AND key IN",
+    "new": "AND kind = 'player' AND key IN",
+    "why": "AUDIT FB1025i F1: a copy staff put back counted as one they keep - the lift on a piece the player let go since",
+    "tests": [
+      "test/server/staffpanel3realm.test.js",
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "LF-F1-EVIDENCE-ANOTHERS",
+    "file": "server-account/src/staffRealm.js",
+    "old": "SELECT DISTINCT key FROM staff_evidence WHERE char_id = ?1 AND kind = 'player'",
+    "new": "SELECT DISTINCT key FROM staff_evidence WHERE (char_id = ?1 OR 1) AND kind = 'player'",
+    "why": "AUDIT FB1025i F1: a copy staff took off ANOTHER character counted as this one's",
+    "tests": [
+      "test/server/staffpanel3realm.test.js",
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "LF-F1-HIDDEN-MISCOUNTED",
+    "file": "server-account/src/staffRealm.js",
+    "old": "const hidden = held - listed;",
+    "new": "const hidden = 0;",
+    "why": "AUDIT FB1025i F1: the copies the record lists nowhere not said",
+    "tests": [
+      "test/server/staffpanel3realm.test.js",
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "LF-F1-LISTED-UNCOUNTED",
+    "file": "server-account/src/staffRealm.js",
+    "old": "    if (inList) e.listed++;\n",
+    "new": "",
+    "why": "AUDIT FB1025i F1: every copy said hidden, the record's own lists' among them",
+    "tests": [
+      "test/server/staffpanel3realm.test.js",
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "LF-F1-REVENANT-TAKES-LOCKED",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "  && !isRealmLocked(item)   // AUDIT FB1025i F1: nor a piece the realm locked\n",
+    "new": "",
+    "why": "AUDIT FB1025i F1: a revenant takes a realm-locked piece onto its record, a list the checkpoint's ledger never reads",
+    "tests": [
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "LF-F5-BINS-OF-EVERY-KEPT",
+    "file": "server-account/src/staffRealm.js",
+    "old": "const binKeys = keep ? lifts : keys;",
+    "new": "const binKeys = keep ? [...found.keys()] : keys;",
+    "why": "AUDIT FB1025i F5: a keep empties the chests of every piece it keeps - a claim's holder's real piece, deposited there, destroyed beside the record's copy",
+    "tests": [
+      "test/server/staffpanel3realm.test.js",
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "LF-F3-UNGUARDED",
+    "file": "server-account/src/staffRealm.js",
+    "old": "    if (seized.seq !== row.seq + 1) { await dropObjects(c.bucket, [seized.key]); return said(act, row.player, detail, { error: 'seq' }); }\n",
+    "new": "",
+    "why": "AUDIT FB1025i F3: a checkpoint landed between the read and the seizure, and the purge seized the record it never counted",
+    "tests": [
+      "test/server/staffpanel3realm.test.js",
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "LF-F3-OBJECT-KEPT",
+    "file": "server-account/src/staffRealm.js",
+    "old": "{ await dropObjects(c.bucket, [seized.key]); return said(act, row.player, detail, { error: 'seq' }); }",
+    "new": "{ return said(act, row.player, detail, { error: 'seq' }); }",
+    "why": "AUDIT FB1025i F3: the refused seizure's object left in the bucket, named by no row",
+    "tests": [
+      "test/server/staffpanel3realm.test.js",
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "LF-F2-LIFTED-ASKED",
+    "file": "server-account/src/staffRealm.js",
+    "old": "const lifted = keep ? await liftedOf(db, row.id, lifts) : [];",
+    "new": "const lifted = lifts;",
+    "why": "AUDIT FB1025i F2: the answer says lifted what the law asked, not what the batch lifted",
+    "tests": [
+      "test/server/staffpanel3realm.test.js",
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "LF-F2-FINDING-ASKED",
+    "file": "server-account/src/ledger.js",
+    "old": "FROM realm_characters c WHERE c.id = ?1 AND EXISTS (${LIFTING_SQL})`)",
+    "new": "FROM realm_characters c WHERE c.id = ?1`)",
+    "why": "AUDIT FB1025i F2: a lift of none still writes a 'dupe' finding",
+    "tests": [
+      "test/server/staffpanel3realm.test.js",
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "LF-F2-FINDING-OF-THE-ASK",
+    "file": "server-account/src/ledger.js",
+    "old": "WHERE d.char_id = ?1 AND ${OWN_COPY_SQL} AND d.uid IN (SELECT value FROM json_each(?4))`;",
+    "new": "WHERE d.char_id = ?1 AND d.uid IN (SELECT value FROM json_each(?4))`;",
+    "why": "AUDIT FB1025i F2: the finding says lifted every key asked, the law's own statement refusing some",
+    "tests": [
+      "test/server/staffpanel3realm.test.js",
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  },
+  {
+    "name": "LF-F6-FIRST-WHATEVER-PRINT",
+    "file": "server-account/src/staffRealm.js",
+    "old": "all.find((it) => ledgerPrintOf(it) === prints.get(k)) ?? all[0];",
+    "new": "all[0];",
+    "why": "AUDIT FB1025i F6: the first copy kept whatever it is - a key shown first on another piece keeps that one, destroys the ledger's own, and its lift is refused",
+    "tests": [
+      "test/server/staffpanel3realm.test.js",
+      "test/server/fb1025i_chestlock.test.js"
+    ]
+  }
+]
