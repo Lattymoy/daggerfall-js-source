@@ -26,16 +26,19 @@ import { playerEntity } from '../characters/playerEntity.js';
 import { REGION_RACES } from '../formats/mapsFile.js';
 import { REGION_NAMES, isProvinceRegion } from '../formats/mapsTables.js';   // AUDIT RELEASE R2-4: a province's region's name past the Bay
 import { spellRecordOfIndex } from '../systems/loot/loot.js';
-import { createQuestProvinceSites, machineSites } from './quest/questProvinceSites.js';   // AUDIT RELEASE R2-5: a province's region
+import { createQuestProvinceSites, machineSites, questView } from './quest/questProvinceSites.js';   // AUDIT RELEASE R2-5: a province's region
 
 /** @param {any} host */
 export function createQuestWorld(host) {
   const {
-    NAVAL_DECK_BODY_R, _musicInLocationRect, _questLoc, _questRegionIndex, _questStore, _regionFaction,
+    NAVAL_DECK_BODY_R, _musicInLocationRect, _questLoc: hostQuestLoc, _questRegionIndex, _questStore, _regionFaction,
     _respawnAtSite, arenaCityPixel, arenaCityStage, blocks, built, cam, collider, exteriorFoePool, exteriorFoes,
     homeLayoutsOnline, maps, navalDeckBody, onlineHomes, params, pipeline, placeByName: bayPlaceByName, player, playerTravelOrigin,
     playerTravelPixel, provinceQuestPlaces, questSiteMovedHere, talkBuildingCompassDirection, townTalk, walkMode, weatherOverride
   } = host;
+  /** PlayerGPS.CurrentLocation as the quest layer reads it - AUDIT RELEASE R2-5b: a capital's slice under its quest name
+   *  (scenes/quest/questProvinceSites.js questView), so a site drawn in it, local or remote, names that slice alone. */
+  const _questLoc = () => questView(hostQuestLoc?.());
   /** START2: a province's start lair (scenes/tamrielPlacesHost.js startLairAt) - AUDIT RELEASE R2-5: handed on with the places past the Bay. */
   const startLairAt = host.startLairAt ?? provinceQuestPlaces?.startLairAt;
   /** AUDIT RELEASE R2-5 (scenes/quest/questProvinceSites.js): A PROVINCE'S REGION - the places past the Bay a quest given

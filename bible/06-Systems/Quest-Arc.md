@@ -6902,10 +6902,23 @@ dungeon, the markers and MARKERLESS-DRAW, the house fallback, and the smaller-du
 START3's marks, the street compass and the journal's find already read the site's pixel, and a Skyrim questor's courier
 walks to another town of Skyrim (TESA-NO-FAST).
 
-**THE IMPERIAL CITY IS LEFT OUT** (`isImperialCitySlice`). Its 625 slices are being rebuilt today by their own stream
-(IC-GRAND, `world/imperialCity.js` and its kin, read here and not edited). A slice far from the player stands its far view
-(capitalBuildView). One city of many locations under a few names is one name to DFU's lookup. A questor in it still gives
-work: its local sites are its own slice's, and its remote ones are another place of Cyrodiil.
+**THE IMPERIAL CITY, A DESTINATION SLICE BY SLICE (R2-5b).** The owner, the same day: *"Take care of exclusions and
+gaps."* At first the city was left out. Its 625 slices are 625 locations under fourteen names, and DFU's name lookup
+(DFRegion.MapNameLookup, a name to one index) reads them as fourteen.
+
+- **Quest names.** Each slice now has a quest name of its own (`capitalQuestNames`): its district's name, plus ", quarter
+  N" where the district spans several slices, N its rank among them by slice index. A quest name is a key, the same in
+  every language and session. It is shown through getLocalizedLocationName, as every place's name is.
+- **One name everywhere in the quest layer.** The quest layer sees every slice location under its quest name: `questView`
+  (a shallow copy, its record the build's own) over the table's rows and over the questor's own location (questWorld.js
+  `_questLoc`). So a site drawn in a slice, local or remote, names that slice alone.
+- **Left out by the plan alone** (`isUnsitedSlice`, the same on every client whatever has been built):
+  - the centre slice, the White-Gold Tower's grounds, where no building stands;
+  - a shore capital's harbour sea;
+  - the 367 slices the plan names after none of its districts (`PLAN_FILL_NAMES`, imperialSliceName's own last arm: its
+    isle, lake and shore - none stands a building).
+- **The rest are rows.** That leaves 257 slices, of which 96 stand no building today (the palace grounds, the prison, a
+  district's edge). Each is a row whose dart misses, as DFU's dart misses a town without the building.
 
 **THE DEPARTURE** (Port-Ledger A, R2-5). DFU has no provinces. The draws are DFU's, but the table's contents are ours:
 the nearest lairs where a Bay region lists every dungeon, none of the countryside's hamlets or homes (a pixel's roll and

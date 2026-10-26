@@ -18,10 +18,19 @@
 //    PROVINCE_LAIR_REACH, on the pixels the build stands them (no capital, Arena place or countryside place first). A lair
 //    is a pixel's roll and a province holds thousands (some 250 within a Bay region's span, each read a few milliseconds),
 //    so the table holds the nearest, and a table's first read rolls at most PROVINCE_LAIR_ROLLS cells (the rest kept).
-//  - THE IMPERIAL CITY IS LEFT OUT (isImperialCitySlice): its 625 slices are rebuilt today by their own stream (IC-GRAND -
-//    world/imperialCity.js and its kin), a slice far from the player stands its far view (capitalBuildView), and one
-//    city's slices are many locations of one name, which DFU's name lookup reads as one. A questor IN it still gives work:
-//    its local sites are its own slice's (START3), its remote ones another place of Cyrodiil.
+//  - A CAPITAL OF MANY SLICES IS A DESTINATION SLICE BY SLICE (the owner, 2026-10-26: "Take care of exclusions and gaps";
+//    R2-5b): the Imperial City's 625 slices (TESA11, IC-GRAND) are 625 locations under fourteen names, which DFU's name
+//    lookup (DFRegion.MapNameLookup, a name to one index) reads as fourteen. Each slice is its row under a QUEST NAME of
+//    its own (capitalQuestNames: its district's name, and where the district spans several slices ", quarter N" - N its
+//    rank among them by slice index), the same on every client and in every session, so a site in one slice is never read
+//    as another's. The quest layer sees every slice location under that name (questView: the location shallow-copied, its
+//    name the quest name; questWorld.js currentLocation), so a site drawn in one, local or remote, keeps it. Left out
+//    by the plan alone (isUnsitedSlice), the same on every client whatever has been built: the centre slice (the White-Gold
+//    Tower's grounds, no building stands there; its castle's halls are the capital's own, WW7-4), a shore capital's harbour
+//    sea (capitalDims `sea`), and the slices the plan names after none of its districts (PLAN_FILL_NAMES: its isle, lake and
+//    shore - 367 slices, none standing a building). Of the 257 left, 96 stand none today (the palace grounds, the prison,
+//    a district's edge - measured on the freeware at IC-GRAND's merge): each a row whose dart misses, as DFU's dart misses a
+//    town without the building.
 // Each row is DFU's MapTable shape (mapId, locationType, dungeonType, the longitude and latitude its pixel reads back -
 // formats/mapsFile.js mapPixelToLongitudeLatitude), so NEARBY-QUESTS' reach measures it. getLocation(r, i) is the place's
 // built location (scenes/tamrielPlacesHost.js standQuestSite: the build's own order and the same object, its building
@@ -37,8 +46,8 @@
 // Not a DFU member: DFU has no provinces. Ledger A (R2-5).
 // ═══════════════════════════════════════════════════════════════════
 import { REGION_NAMES, isProvinceRegion, theatreOfRegion } from '../../formats/mapsTables.js';
-import { mapPixelToLongitudeLatitude } from '../../formats/mapsFile.js';
-import { capitalOnPixel } from '../../world/tamrielCapitals.js';
+import { mapPixelToLongitudeLatitude, longitudeLatitudeToMapPixel } from '../../formats/mapsFile.js';
+import { CAPITALS, capitalOnPixel, capitalSliceName, capitalDims, capitalCentre } from '../../world/tamrielCapitals.js';
 
 /** How far, map pixels (the travel reckoning's longest axis), a province's lairs are drawn from the questor: a Bay region's
  *  span (systems/quest/questReach.js - level 15's reach, "about a region"). */
@@ -50,8 +59,61 @@ export const PROVINCE_LAIR_COUNT = 16;
  *  offer past the Bay may add as one task, bounded (the coordinator, 2026-10-26). A cell already read costs nothing. */
 export const PROVINCE_LAIR_ROLLS = 40;
 
-/** Is a pixel one of the Imperial City's slices (world/tamrielCapitals.js CAPITALS[0]) - never a quest's remote site. */
-export const isImperialCitySlice = (/** @type {number} */ px, /** @type {number} */ py) => capitalOnPixel(px, py)?.k === 0;
+/** R2-5b: the names the Imperial City's plan gives a slice that holds none of its districts (world/imperialCity.js
+ *  imperialSliceName's own last arm - its isle, its lake, its shore): no building of the city stands in one (measured on the
+ *  freeware at IC-GRAND's merge: 367 slices, none). */
+export const PLAN_FILL_NAMES = Object.freeze(['City Isle', 'Lake Rumare', 'Rumare Shore']);
+/** R2-5b: is a pixel a slice of a capital of many that no site may stand in - its centre (the Imperial City's White-Gold
+ *  Tower: no building stands there), its harbour's sea (capitalDims `sea`: a shore capital's water), or a slice its plan
+ *  names after none of its districts (PLAN_FILL_NAMES). A law of the plan alone: the same on every client, nothing built. */
+export function isUnsitedSlice(/** @type {number} */ px, /** @type {number} */ py) {
+  const at = capitalOnPixel(px, py);
+  if (!at || !manySlices(at.cap)) return false;
+  return at.s === capitalCentre(at.cap) || (capitalDims(at.cap).sea ?? []).includes(at.s) || PLAN_FILL_NAMES.includes(capitalSliceName(at.cap, at.s));
+}
+/** Is a capital laid over several pixels (TESA11: the Imperial City's square; a shore capital's land and harbour). */
+const manySlices = (/** @type {any} */ cap) => { const D = capitalDims(cap); return D.w * D.h > 1; };
+/** @type {Map<number, Map<number, string>>} */
+const _questNames = new Map();
+/** R2-5b: A CAPITAL'S SLICES' QUEST NAMES - slice index to name: its district's name (capitalSliceName), and where the
+ *  district spans several slices ", quarter N", N its rank among them by slice index. A key, the same in every language
+ *  and session (a site's name is how it is found again); shown through getLocalizedLocationName as every place's name.
+ *  @param {number} k */
+export function capitalQuestNames(k) {
+  let names = _questNames.get(k);
+  if (names) return names;
+  const cap = CAPITALS[k], D = capitalDims(cap);
+  const of = [], count = new Map();
+  for (let s = 0; s < D.w * D.h; s++) { const d = capitalSliceName(cap, s); of.push(d); count.set(d, (count.get(d) ?? 0) + 1); }
+  const rank = new Map();
+  names = new Map();
+  of.forEach((d, s) => {
+    const r = (rank.get(d) ?? 0) + 1;
+    rank.set(d, r);
+    names.set(s, count.get(d) > 1 ? `${d}, quarter ${r}` : d);
+  });
+  _questNames.set(k, names);
+  return names;
+}
+/** R2-5b: the quest name of the capital slice a pixel stands, or null (no capital of many slices there). */
+export function sliceQuestName(/** @type {number} */ px, /** @type {number} */ py) {
+  const at = capitalOnPixel(px, py);
+  return at && manySlices(at.cap) ? capitalQuestNames(at.k).get(at.s) ?? null : null;
+}
+/** @type {WeakMap<object, any>} */
+const _views = new WeakMap();
+/** R2-5b: A LOCATION AS THE QUEST LAYER SEES IT - a capital slice under its quest name (a shallow copy, kept per location:
+ *  its record, blocks and buildings the build's own), any other location itself. @param {any} loc */
+export function questView(loc) {
+  const t = loc?.capital ? loc.mapTableData : null;
+  if (!t) return loc;
+  const p = longitudeLatitudeToMapPixel(t.longitude, t.latitude);
+  const name = sliceQuestName(p.x, p.y);
+  if (!name || name === loc.name) return loc;
+  let v = _views.get(loc);
+  if (v?.name !== name) { v = { ...loc, name }; _views.set(loc, v); }
+  return v;
+}
 
 /**
  * A MapTable row for a place past the Bay.
@@ -111,8 +173,8 @@ export function createQuestProvinceSites({ worldPlaces, regionAt, standAt, lairs
     const rows = [], ids = new Set();
     const add = (/** @type {any} */ row) => { if (!ids.has(row.mapId)) { ids.add(row.mapId); rows.push(row); } };
     for (const p of worldPlaces.inTheatre(theatreOfRegion(r))) {
-      if (regionAt(p.px, p.py) !== r || isImperialCitySlice(p.px, p.py)) continue;
-      add(provinceRow(p));
+      if (regionAt(p.px, p.py) !== r || isUnsitedSlice(p.px, p.py)) continue;
+      add(provinceRow({ ...p, name: sliceQuestName(p.px, p.py) ?? p.name }));   // R2-5b: a slice under its quest name
     }
     if (o && Number.isFinite(o.x) && Number.isFinite(o.y)) {
       for (const l of lairsNear(o.x, o.y, PROVINCE_LAIR_REACH, PROVINCE_LAIR_COUNT, PROVINCE_LAIR_ROLLS)) if (regionAt(l.px, l.py) === r) add(provinceRow(l));
@@ -129,7 +191,7 @@ export function createQuestProvinceSites({ worldPlaces, regionAt, standAt, lairs
     const row = isProvinceRegion(r) ? tableOf(r)?.mapTable?.[i] : null;
     if (!row) return null;
     const loc = standAt(row.px, row.py);
-    return loc && (loc.mapTableData?.mapId >>> 0) === row.mapId ? loc : null;
+    return loc && (loc.mapTableData?.mapId >>> 0) === row.mapId ? questView(loc) : null;   // R2-5b: a slice under its quest name
   }
   /** The site a quest holds of this name in this region, carried by its pixel, joined to the table (and to every table
    *  of the region made after); its index, or undefined. */
@@ -137,7 +199,7 @@ export function createQuestProvinceSites({ worldPlaces, regionAt, standAt, lairs
     for (const sd of heldSites()) {
       const p = sd?.worldPixel;
       if (sd?.regionIndex !== r || sd.locationName !== name || !p) continue;
-      const loc = standAt(p.x, p.y);
+      const loc = questView(standAt(p.x, p.y));
       if (!loc || loc.name !== name || (loc.mapTableData?.mapId >>> 0) !== (sd.mapId >>> 0)) continue;
       const row = provinceRow({ mapId: sd.mapId, name, px: p.x, py: p.y, type: loc.mapTableData?.locationType ?? 0, dungeonType: loc.mapTableData?.dungeonType ?? 0 });
       if (!found.has(r)) found.set(r, new Map());

@@ -7,10 +7,10 @@
 import '../../modsOff.js';
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { createQuestProvinceSites, provinceRow, machineSites, PROVINCE_LAIR_REACH, PROVINCE_LAIR_COUNT, PROVINCE_LAIR_ROLLS, isImperialCitySlice } from '../../../src/scenes/quest/questProvinceSites.js';
+import { createQuestProvinceSites, provinceRow, machineSites, PROVINCE_LAIR_REACH, PROVINCE_LAIR_COUNT, PROVINCE_LAIR_ROLLS, isUnsitedSlice, PLAN_FILL_NAMES, capitalQuestNames, sliceQuestName, questView } from '../../../src/scenes/quest/questProvinceSites.js';
 import { createQuestWorld } from '../../../src/scenes/questWorld.js';
 import { createWorldPlaces } from '../../../src/world/worldWide/worldPlaces.js';
 import { REGION_NAMES } from '../../../src/formats/mapsTables.js';
@@ -18,7 +18,7 @@ import { LOCATION_TYPES, MapsFile, longitudeLatitudeToMapPixel } from '../../../
 import { SITE_TYPES } from '../../../src/systems/quest/place.js';
 import { setTamrielTrace } from '../../../src/world/tamriel/tamrielLand.js';
 import { setTamrielFit } from '../../../src/world/tamriel/tamrielFrame.js';
-import { CAPITALS, capitalPixel, setCapitalsStanding } from '../../../src/world/tamrielCapitals.js';
+import { CAPITALS, capitalPixel, capitalOnPixel, capitalSpanPixels, capitalSliceName, setCapitalsStanding } from '../../../src/world/tamrielCapitals.js';
 import { QUEST_REACH_TUNING } from '../../../src/systems/quest/questReach.js';
 
 const SKYRIM = 64, CYRODIIL = 70;
@@ -113,12 +113,37 @@ test('R2-5 a name the table does not hold is found by the site that names it - i
   assert.deepEqual([...machineSites(null)], []);
 });
 
-test('R2-5 the Imperial City\'s slices are never a remote site (its own stream rebuilds them today; one city of 625 locations is one name to DFU\'s lookup) - a questor in it still draws another place of Cyrodiil; Solitude, one slice, is Skyrim\'s (mutants: the slices kept; every capital left out)', () => {
+test('R2-5b the Imperial City is a destination slice by slice: each of its 625 slices a quest name of its own (its district, and ", quarter N" by slice index where the district spans several), the same every time; every slice a row of Cyrodiil\'s table under it but the centre (no building stands there); the quest layer sees a slice\'s location under it; Solitude, one slice, its own name (mutants: the quarters unnumbered; the centre kept; every slice left out; the view unnamed)', () => {
   setTamrielTrace(null); setTamrielFit(null); setCapitalsStanding(true);   // the authored shape and fit, as the suite runs
   const ic = capitalPixel(CAPITALS[0]), sol = capitalPixel(CAPITALS[1]);
-  assert.equal(isImperialCitySlice(ic.px, ic.py), true);
-  assert.equal(isImperialCitySlice(ic.px + 3, ic.py - 2), true, 'a slice off its centre');
-  assert.equal(isImperialCitySlice(sol.px, sol.py), false);
+  const names = capitalQuestNames(0);
+  assert.equal(names.size, 625);
+  assert.equal(new Set(names.values()).size, 625, 'no two slices one name');
+  assert.equal(names.get(312), 'Imperial City', 'the centre, one of its name, plain');
+  const temple = [...names.entries()].filter(([, n]) => n.startsWith('Temple District, quarter '));
+  assert.ok(temple.length > 1, 'a district over several slices numbered');
+  assert.deepEqual(temple.map(([, n]) => Number(n.split(' ').pop())), temple.map((_, i) => i + 1), 'ranked by slice index');
+  assert.equal(capitalQuestNames(0), names, 'kept');
+  assert.equal(isUnsitedSlice(ic.px, ic.py), true, 'the centre');
+  assert.equal(isUnsitedSlice(ic.px + 3, ic.py - 2), false, 'a district slice');
+  assert.equal(isUnsitedSlice(sol.px, sol.py), false, 'a capital of one slice');
+  // the plan's fills (its isle, lake and shore - imperialSliceName's last arm, read here so a rename there fails here)
+  const fills = [...capitalSpanPixels(0)].filter(({ x, y }) => PLAN_FILL_NAMES.includes(capitalSliceName(CAPITALS[0], capitalOnPixel(x, y).s)));
+  assert.equal(fills.length > 300 && fills.every(({ x, y }) => isUnsitedSlice(x, y)), true, `${fills.length} fill slices left out`);
+  const IC_SRC = readFileSync(new URL('../../../src/world/imperialCity.js', import.meta.url), 'utf8');
+  assert.match(IC_SRC, /for \(const d of \['City Isle', 'Lake Rumare', SHORE\]\)/);
+  assert.match(IC_SRC, /const SHORE = 'Rumare Shore'/);
+  assert.equal([...capitalSpanPixels(0)].filter(({ x, y }) => !isUnsitedSlice(x, y)).length, 257, 'the slices a site may stand in');
+  assert.equal(sliceQuestName(sol.px, sol.py), null);
+  const q = sliceQuestName(ic.px - 3, ic.py + 2);
+  assert.ok(q && q === names.get(capitalOnPixel(ic.px - 3, ic.py + 2).s));
+  const slice = { ...townAt({ name: capitalOnPixel(ic.px - 3, ic.py + 2).cap.name, mapId: 0xa9000002, px: ic.px - 3, py: ic.py + 2, regionIndex: CYRODIIL }), capital: { k: 0 } };
+  slice.name = 'Temple District';
+  const view = questView(slice);
+  assert.equal(view.name, q, 'the quest layer reads the slice under its quest name');
+  assert.equal(view.exterior, slice.exterior, 'its record the build\'s own');
+  assert.equal(questView(slice), view, 'one view a location');
+  assert.equal(questView(whiterunAt()), questView(whiterunAt()).valueOf(), 'any other location itself');
   const bravil = townAt({ name: 'Bravil', mapId: 0xa7000003, px: ic.px + 60, py: ic.py + 20, regionIndex: CYRODIIL });
   const registry = createWorldPlaces();
   registry.register('tesa', [
@@ -127,10 +152,19 @@ test('R2-5 the Imperial City\'s slices are never a remote site (its own stream r
     { mapId: bravil.mapTableData.mapId, name: 'Bravil', px: ic.px + 60, py: ic.py + 20, type: LOCATION_TYPES.TownCity },
     { mapId: 0xa9000003, name: 'Solitude', px: sol.px, py: sol.py, type: LOCATION_TYPES.TownCity },
   ]);
-  const p = createQuestProvinceSites({ worldPlaces: registry, regionAt: (x, y) => (y < 0 ? SKYRIM : CYRODIIL), standAt: () => bravil, origin: () => ({ x: ic.px, y: ic.py }) });
-  assert.deepEqual(p.getRegion(CYRODIIL).mapNames, ['Bravil'], 'Cyrodiil\'s remote places: not the Imperial City\'s slices');
+  const p = createQuestProvinceSites({ worldPlaces: registry, regionAt: (x, y) => (y < 0 ? SKYRIM : CYRODIIL), standAt: (x) => (x === ic.px - 3 ? slice : bravil), origin: () => ({ x: ic.px, y: ic.py }) });
+  const cyr = p.getRegion(CYRODIIL);
+  assert.deepEqual(cyr.mapNames, [q, 'Bravil'], 'Cyrodiil\'s remote places: the district slice under its quest name, not the centre');
+  assert.equal(p.getLocation(CYRODIIL, 0).name, q, 'the slice as the draw reads it');
+  assert.equal(p.locationByName('Cyrodiil', q).mapTableData.mapId, 0xa9000002, 'found again by its quest name');
+  assert.equal(p.locationByName('Cyrodiil', 'Temple District'), null, 'the district\'s name alone names no slice');
+  // a slice's site held by a quest, its row in no table: found by its pixel under its quest name
+  const held = [{ regionIndex: CYRODIIL, locationName: q, mapId: 0xa9000002, worldPixel: { x: ic.px - 3, y: ic.py + 2 } }];
+  const bare = createQuestProvinceSites({ worldPlaces: createWorldPlaces(), regionAt: () => CYRODIIL, standAt: (x) => (x === ic.px - 3 ? slice : null), heldSites: () => held });
+  assert.equal(bare.locationByName('Cyrodiil', q)?.name, q, 'the held slice found under its quest name');
   assert.deepEqual(p.getRegion(SKYRIM).mapNames, ['Solitude']);
 });
+const whiterunAt = (() => { const w = townAt({ name: 'Whiterun', mapId: 0xa7000001, px: 1700, py: -420 }); return () => w; })();
 
 test('R2-5 the quest layer\'s maps answer a province\'s region from the provinces and every other from MAPS.BSA, unchanged: the Bay\'s region, location, classic record and name lookup as before (pinned), a province\'s none of MAPS.BSA\'s; the questor\'s own place is its row there (mutants: the province arm dropped; the Bay\'s handed to it)', () => {
   const maps = Object.create(MapsFile.prototype);
@@ -233,6 +267,10 @@ test('R2-5 with ARENA2: a Fighters Guild, a Mages Guild, a temple, a social give
     const sitesOf = (q) => [...q.resources.values()].filter((x) => x.isPlace).map((x) => `${x.symbol.name}=${x.siteDetails?.mapId}:${x.siteDetails?.buildingKey}`);
     assert.deepEqual(sitesOf(again), sitesOf(quest), `${where} ${name}: the same draw`);
     quiet(() => { L.machine.startQuestImmediate(quest); quest.update(); });   // its start-up task runs at its first update
+    // every site past the Bay, local ones too (R2-5b/c: a capital's slice under its quest name), found again by its name
+    for (const x of [...quest.resources.values()].filter((y) => y.isPlace && y.siteDetails?.worldPixel)) {
+      assert.equal(L.questWorld.maps.getLocationByName(x.siteDetails.regionName, x.siteDetails.locationName)?.mapTableData.mapId, x.siteDetails.mapId, `${where} ${name} ${x.symbol.name} -> ${x.siteDetails.locationName}: found by its name`);
+    }
     const r = REGION_NAMES.indexOf(province);
     const remote = [...quest.resources.values()].filter((x) => x.isPlace && x.scope === 'remote');
     assert.ok(remote.length, `${name}: a site that leaves town`);
@@ -244,7 +282,7 @@ test('R2-5 with ARENA2: a Fighters Guild, a Mages Guild, a temple, a social give
       assert.equal(sd.regionName, province);
       assert.ok(sd.worldPixel && !inBay(sd.worldPixel.x, sd.worldPixel.y), `${at}: its own pixel past the Bay (START3)`);
       assert.equal(world.maps.getRegionIndexAt(sd.worldPixel.x, sd.worldPixel.y), r, `${at}: the politic map's ${province}`);
-      const stood = standAt(sd.worldPixel.x, sd.worldPixel.y);
+      const stood = questView(standAt(sd.worldPixel.x, sd.worldPixel.y));   // R2-5b: a capital slice under its quest name
       assert.ok(stood?.loaded && stood.name === sd.locationName && stood.mapTableData.mapId === sd.mapId, `${at}: the place the build stands on its pixel`);
       assert.equal(L.questWorld.maps.getLocationByName(sd.regionName, sd.locationName)?.mapTableData.mapId, sd.mapId, `${at}: found by its name`);
       assert.equal(readQuestMarks(() => [{ px: sd.worldPixel.x, py: sd.worldPixel.y }], { width: 1000, height: 500 }, tamrielFrameInBay()).length, 1, `${at}: its mark on the held map`);
@@ -268,6 +306,8 @@ test('R2-5 with ARENA2: a Fighters Guild, a Mages Guild, a temple, a social give
       if (name === 'T0C00Y00' || name === 'M0B00Y07') kept.push({ where, province, data: L.machine.getSaveData(), uid: quest.uid });
     }
   }
+  // R2-5b: the Imperial City a destination - a remote site drawn in one of its district slices, under its quest name
+  assert.ok(table.some((row) => / \| Cyrodiil .*: [A-Za-z ]+ District, quarter \d+ \(building\)/.test(row)), 'a site in a district slice of the Imperial City');
   // the lairs' work at a new questor's pixel, bounded
   lairsNear(2600, 200, PROVINCE_LAIR_REACH, PROVINCE_LAIR_COUNT, PROVINCE_LAIR_ROLLS);
   assert.ok(lairsNear.rolled <= PROVINCE_LAIR_ROLLS, `${lairsNear.rolled} first rolls`);
@@ -280,7 +320,7 @@ test('R2-5 with ARENA2: a Fighters Guild, a Mages Guild, a temple, a social give
     quiet(() => L.machine.restoreSaveData(structuredClone(data)));
     const q = L.machine.getQuest(uid);
     assert.ok(q, `${where}: the quest loaded`);
-    for (const place of [...q.resources.values()].filter((x) => x.isPlace && x.scope === 'remote')) {
+    for (const place of [...q.resources.values()].filter((x) => x.isPlace && x.siteDetails?.worldPixel)) {   // R2-5b: its local sites too (a capital slice's under its quest name)
       const sd = place.siteDetails;
       // the region's name lookup first, as quest/place.js siteTown and fitSiteToBuild and questRepair.js's re-lay read it
       const idx = L.questWorld.maps.getRegion(sd.regionIndex).mapNameLookup.get(sd.locationName);

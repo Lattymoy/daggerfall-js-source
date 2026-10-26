@@ -116,7 +116,8 @@ the Bay are the province's own (this) or stay local-only until the arc that writ
 TAKEN (2026-10-26, the coordinator for the owner: the proposal, as written): `scenes/quest/questProvinceSites.js` builds
 it - the theatre's listed towns on its politic region, its nearest lairs (16 within a Bay region's span, at most 40
 first rolls a table - the coordinator's bound on the one task a quest offer adds), a name the table misses found by
-the site's own pixel (START3), the Imperial City's slices left out (its stream rebuilds them today). DFU's three draws
+the site's own pixel (START3); the Imperial City at first left out, then a destination slice by slice under
+a quest name of its own (R2-5b, the owner: "Take care of exclusions and gaps"). DFU's three draws
 run over it unchanged. End to end on the freeware: a Fighters Guild, a Mages Guild, a temple, a commoner and a Daedra
 at Solitude, Mournhold and the Imperial City each offer work whose remote sites are built places of that province, on
 the held map by their pixel, their targets placed on arrival, the same places after a load from the Bay; the Bay's
