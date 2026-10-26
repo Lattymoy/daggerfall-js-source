@@ -14,7 +14,7 @@
 // they run on across their neighbours.
 import { MeshBuilder } from './detStandIns.js';
 import { CAPITAL_ART, art, robedFigure } from './capitalShapes.js';
-import { fabricCell, fabricMasses, outwardOf, STOREY, BAY, LEDGE_Y, PARAPET, STACK_STEP, STACK_DEPTH, STACK_RUN, YARD_WALL, SHED, PAVEMENT, STATUE, streetKind } from './imperialFabric.js';
+import { fabricCell, fabricMasses, outwardOf, STOREY, BAY, LEDGE_Y, PARAPET, STACK_STEP, STACK_DEPTH, STACK_RUN, YARD_WALL, SHED, WELL, SQUARE_FOUNTAIN, PAVEMENT, STATUE, streetKind } from './imperialFabric.js';
 import { sewerCoversIn, sewerBranchesIn, IMPERIAL_SEWERS } from './imperialSewers.js';
 import { BLOCK_M } from './spawnedDungeons.js';
 import { IMPERIAL_CELLS, imperialSliceRect, imperialClassic, imperialSlicePlan, imperialCellRect, IMPERIAL_SPAN, imperialDistrictAt } from './imperialCity.js';
@@ -155,6 +155,37 @@ function buildStatue(mb, at, seed) {
     mb.tri(marble, P(0), P(1), P(2), N);
   }
 }
+/** IC-GRAND: A YARD'S WELL - its round kerb of stone (eight sides), two timber posts and a little pitched roof over it. */
+function buildWell(mb, at) {
+  const [x, z] = at, stone = T('wallStone'), timber = T('timber'), roof = T('roof'), n = 8, r = WELL.r;
+  for (let i = 0; i < n; i++) {
+    const a0 = (i / n) * Math.PI * 2, a1 = ((i + 1) / n) * Math.PI * 2, am = (a0 + a1) / 2;
+    const p0 = [x + Math.cos(a0) * r, z + Math.sin(a0) * r], p1 = [x + Math.cos(a1) * r, z + Math.sin(a1) * r];
+    wallFace(mb, stone, p0, p1, -0.2, WELL.h, [Math.cos(am), Math.sin(am)], WELL.h, PIC * 2);
+    mb.tri(stone, W(x, WELL.h, z), W(p0[0], WELL.h, p0[1]), W(p1[0], WELL.h, p1[1]), [0, 1, 0]);
+  }
+  for (const side of [1, -1]) post(mb, timber, x + side * (r + 0.1), z, 0.18, 0, WELL.roofH);
+  const e = r + 0.5, y0 = WELL.roofH, y1 = WELL.roofH + 0.7;
+  for (const side of [1, -1]) {
+    const a = [x - e, z + side * 0.9], b = [x + e, z + side * 0.9];
+    mb.quad(roof, W(a[0], y0, a[1]), W(b[0], y0, b[1]), W(b[0], y1, z), W(a[0], y1, z), WN(0, 0.79, side * 0.62));
+  }
+}
+/** IC-GRAND: A SQUARE'S FOUNTAIN - an octagonal basin's kerb, its water, a column with a bowl on it. */
+function buildSquareFountain(mb, at) {
+  const [x, z] = at, stone = T('wallStone'), marble = T('marble'), n = 8, r = SQUARE_FOUNTAIN.r, k = 0.7;
+  for (let i = 0; i < n; i++) {
+    const a0 = (i / n) * Math.PI * 2, a1 = ((i + 1) / n) * Math.PI * 2, am = (a0 + a1) / 2, c = Math.cos(am), s = Math.sin(am);
+    const p0 = [x + Math.cos(a0) * r, z + Math.sin(a0) * r], p1 = [x + Math.cos(a1) * r, z + Math.sin(a1) * r];
+    const q0 = [x + Math.cos(a0) * (r - 0.4), z + Math.sin(a0) * (r - 0.4)], q1 = [x + Math.cos(a1) * (r - 0.4), z + Math.sin(a1) * (r - 0.4)];
+    wallFace(mb, stone, p0, p1, -0.2, k, [c, s], k, PIC * 2);
+    wallFace(mb, stone, q1, q0, 0.1, k, [-c, -s], k, PIC * 2);
+    mb.quad(stone, W(p0[0], k, p0[1]), W(p1[0], k, p1[1]), W(q1[0], k, q1[1]), W(q0[0], k, q0[1]), [0, 1, 0]);
+    mb.tri(T('water'), W(x, 0.45, z), W(q0[0], 0.45, q0[1]), W(q1[0], 0.45, q1[1]), [0, 1, 0]);
+  }
+  post(mb, marble, x, z, 0.6, 0, SQUARE_FOUNTAIN.h);
+  post(mb, marble, x, z, 1.8, SQUARE_FOUNTAIN.h - 0.4, SQUARE_FOUNTAIN.h);
+}
 /** A SEWER'S COVER in the street: a manhole's iron disc, or a grate at the kerb, a hair proud of the ground. */
 function buildCover(mb, cv) {
   const tex = T('dark'), r = cv.kind === 'manhole' ? IMPERIAL_SEWERS.coverR : 0.45, n = cv.kind === 'manhole' ? 8 : 4, y = 0.03;
@@ -180,6 +211,8 @@ export function fabricCellModel(r, c) {
   for (const y of L.yards) freeWall(mb, stone, y.a, y.b, YARD_WALL.t, -0.3, YARD_WALL.h);
   for (const d of L.deadEnds) freeWall(mb, stone, d.a, d.b, 0.6, -0.3, 2.4);
   for (const s of L.sheds) { post(mb, timber, s[0], s[1], SHED.w, -0.3, SHED.h); }
+  for (const w of L.wells) buildWell(mb, w);   // IC-GRAND: the yards' wells and the squares' fountains
+  for (const f of L.fountains) buildSquareFountain(mb, f);
   L.statues.forEach((s, i) => buildStatue(mb, s, (r * 977 + c * 131 + i) >>> 0));
   const [x0, z0, x1, z1] = imperialCellRect(r, c);
   for (const cv of sewerCoversIn(x0, z0, x1, z1)) buildCover(mb, cv);
@@ -192,7 +225,7 @@ export function fabricCellModel(r, c) {
  *  asked without building it. */
 export function fabricCellHasModel(r, c) {
   const L = fabricCell(r, c);
-  if (L.plots.length || L.stacks.length || L.bridges.length || L.yards.length || L.deadEnds.length || L.sheds.length || L.statues.length) return true;
+  if (L.plots.length || L.stacks.length || L.bridges.length || L.yards.length || L.deadEnds.length || L.sheds.length || L.statues.length || L.wells.length || L.fountains.length) return true;
   const [x0, z0, x1, z1] = imperialCellRect(r, c);
   return sewerCoversIn(x0, z0, x1, z1).length > 0;
 }

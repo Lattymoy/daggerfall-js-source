@@ -10,12 +10,12 @@
 // model's origin the city's middle on its ground (world/capitalModels.js turns them northward). Shapes of the port's own
 // on the canon - no game data, no other game's mesh.
 import { MeshBuilder } from './detStandIns.js';
-import { CAPITAL_ART, art, taper, ring, ledge, cap, wallRun, merlons, gatedRun, roundTower, squareTower, hall, pyramid, gableRoof, dome, blob, limb, darkDoor, entranceDoor, translated, corner, framed, robedFigure } from './capitalShapes.js';
-import { IMPERIAL, IMPERIAL_SECTORS, polar, prisonAt, universityTowerAt, universityHallAt, watchTowersAt, divinesAt, divinePlinths, bridgeLine, prisonGates, universityGates, tombAt } from './imperialCity.js';
+import { CAPITAL_ART, art, taper, ring, ledge, cap, wallRun, merlons, gatedRun, roundTower, squareTower, hall, pyramid, gableRoof, dome, blob, limb, darkDoor, entranceDoor, translated, corner, framed, robedFigure, outward } from './capitalShapes.js';
+import { IMPERIAL, IMPERIAL_SECTORS, polar, prisonAt, universityTowerAt, universityHallAt, watchTowersAt, divinesAt, divinePlinths, bridgeLine, prisonGates, universityGates, tombAt, palaceCorners, palaceGates, imperialGeo, STATUE_PLINTH } from './imperialCity.js';
 
 const MARBLE = art(CAPITAL_ART.marble), GOLD = art(CAPITAL_ART.gold), STONE = art(CAPITAL_ART.wallStone), BRIDGE = art(CAPITAL_ART.bridgeStone);
 const DARK = art(CAPITAL_ART.dark), SLATE = art(CAPITAL_ART.blueSlate), ROOF = art(CAPITAL_ART.roof), TIMBER = art(CAPITAL_ART.timber);
-const BRONZE = art(CAPITAL_ART.bronze);
+const BRONZE = art(CAPITAL_ART.bronze), WATER = art(CAPITAL_ART.water);
 const unit = (v) => { const l = Math.hypot(...v) || 1; return v.map((x) => x / l); };
 
 // ---------------------------------------------------------------- the White-Gold Tower and Green Emperor Way
@@ -78,12 +78,25 @@ function ringRuns(r, step, gates, halfDeg) {
 
 /**
  * THE PALACE WALL round Green Emperor Way: a ring of `sides` runs at its radius, merlons out, a gate to each district (its
- * sector's middle) with a turret either side.
+ * sector's middle) with a turret either side. IC-GRAND (the coordinator's review: "walls/gates of the palace wall
+ * dressed"): each gate a gatehouse - a marble arch over it from `gateH` to above the wall's walk, a gilt frieze along its
+ * top and the Empire's dragon's gilt crest over its middle, both faces.
  */
 export function buildPalaceWall(W = IMPERIAL.palaceWall, only = ANY) {
   const mb = new MeshBuilder(), gates = IMPERIAL_SECTORS.map(([, b]) => b + 30), half = gateDeg(W.gate + 0.5, W.r);
   for (const [p, q] of ringRuns(W.r, 360 / W.sides, gates, half)) if (only(p, q)) { wallRun(mb, STONE, p, q, W.thick, W.h); merlons(mb, STONE, p, q, W.thick, W.h); }
   for (const g of gates) for (const side of [1, -1]) { const [x, z] = polar(g + side * (half + gateDeg(W.towerR * 2 + 1, W.r)), W.r); if (only([x, z], [x, z])) roundTower(mb, x, z, W.towerR, W.towerH, { sides: 12 }); }
+  for (const g of gates) {
+    const a = polar(g + half, W.r), c = polar(g - half, W.r);
+    if (!only(a, c)) continue;
+    const [ux, uz] = polar(g, 1), P = framed(...polar(g, W.r), [ux, uz]), t = W.thick / 2 + 0.6, wd = W.gate / 2 + 0.25, top = W.h + 3;
+    obox(mb, MARBLE, P, -t, t, -wd, wd, W.gateH, top);   // the arch's mass over the gate
+    obox(mb, GOLD, P, -t - 0.2, t + 0.2, -wd - 0.2, wd + 0.2, top, top + 0.8);   // its gilt frieze
+    for (const f of [1, -1]) {   // the crest, a gilt pediment over each face's middle
+      const a0 = P(f * (t + 0.25), -4, top + 0.8), a1 = P(f * (t + 0.25), 4, top + 0.8), ap = P(f * (t + 0.25), 0, top + 4.2);
+      mb.tri(GOLD, a0, a1, ap, [ux * f, 0, uz * f]);
+    }
+  }
   return mb.build();
 }
 /** IC-GRAND: every run a wall builder lays, when it is asked for the whole (a part's builder asks only the runs near its
@@ -93,20 +106,149 @@ export const ANY = () => true;
 /** IC-GRAND: a test of a run (two points, map frame) within `margin` of a rectangle [x0, z0, x1, z1] - a part's own. */
 export const nearRect = ([x0, z0, x1, z1], margin) => (p, q) => Math.max(p[0], q[0]) > x0 - margin && Math.min(p[0], q[0]) < x1 + margin && Math.max(p[1], q[1]) > z0 - margin && Math.min(p[1], q[1]) < z1 + margin;
 
-/** THE EMPERORS' TOMBS on Green Emperor Way's lawns: a ring of marble mausolea, each its stepped pyramid and its gilt cap,
- *  its door toward the tower. */
-export function buildEmperorsTombs(T = IMPERIAL.tombs) {
-  const mb = new MeshBuilder();
-  for (let i = 0; i < T.n; i++) {
-    const [x, z] = tombAt(i);
-    hall(mb, MARBLE, x, z, T.w + 2, T.w + 2, -1, 0.6, 0.25);
-    hall(mb, MARBLE, x, z, T.w, T.w, 0.6, T.h, 0.25);
-    pyramid(mb, MARBLE, x, z, T.w + 1, T.w + 1, T.h, T.w * 0.55);
-    mb.box(GOLD, [x, T.h + T.w * 0.55 + 0.6, z], [1.2, 1.2, 1.2], 0.5);
-    // the door, on the face toward the tower
-    const [ux, uz] = unit([-x, -z]), axis = Math.abs(ux) > Math.abs(uz) ? [Math.sign(ux), 0] : [0, Math.sign(uz)];
-    darkDoor(mb, DARK, x + axis[0] * (T.w / 2), z + axis[1] * (T.w / 2), 2.6, 5, axis);
+/** IC-GRAND: A BOX IN A FRAME OF ITS OWN - `P` a framed() frame, [f0, f1] forward, [s0, s1] across, [y0, y1] up: its four
+ *  sides and its top. */
+function obox(mb, tex, P, f0, f1, s0, s1, y0, y1) {
+  const mid = P((f0 + f1) / 2, (s0 + s1) / 2, (y0 + y1) / 2), q = [[f0, s0], [f1, s0], [f1, s1], [f0, s1]];
+  for (let e = 0; e < 4; e++) {
+    const [fa, sa] = q[e], [fb, sb] = q[(e + 1) & 3], a = P(fa, sa, y0), b = P(fb, sb, y0), c = P(fb, sb, y1);
+    mb.quad(tex, a, b, c, P(fa, sa, y1), outward(a, b, c, mid));
   }
+  mb.quad(tex, P(f0, s0, y1), P(f1, s0, y1), P(f1, s1, y1), P(f0, s1, y1), [0, 1, 0]);
+}
+/** IC-GRAND: a hipped roof in a frame (obox's) - its eaves the rectangle at y0, its ridge `h` above along the longer way. */
+function hipRoof(mb, tex, P, f0, f1, s0, s1, y0, h) {
+  const fm = (f0 + f1) / 2, sm = (s0 + s1) / 2, alongS = s1 - s0 >= f1 - f0, k = Math.min(f1 - f0, s1 - s0) / 2, mid = P(fm, sm, y0);
+  const r0 = alongS ? P(fm, s0 + k, y0 + h) : P(f0 + k, sm, y0 + h), r1 = alongS ? P(fm, s1 - k, y0 + h) : P(f1 - k, sm, y0 + h);
+  const A = P(f0, s0, y0), B = P(f1, s0, y0), C = P(f1, s1, y0), D = P(f0, s1, y0);
+  const faces = alongS ? [[B, C, r1, r0], [D, A, r0, r1], [A, B, r0], [C, D, r1]] : [[A, B, r1, r0], [C, D, r0, r1], [B, C, r1], [D, A, r0]];
+  for (const f of faces) {
+    const n = outward(f[0], f[1], f[2], mid);
+    if (f.length === 4) mb.quad(tex, f[0], f[1], f[2], f[3], n); else mb.tri(tex, f[0], f[1], f[2], n);
+  }
+}
+/** IC-GRAND: a pyramid in a frame (obox's), its eaves the rectangle at y0, its apex `h` above. */
+function opyramid(mb, tex, P, f0, f1, s0, s1, y0, h) {
+  const q = [[f0, s0], [f1, s0], [f1, s1], [f0, s1]], top = P((f0 + f1) / 2, (s0 + s1) / 2, y0 + h), mid = P((f0 + f1) / 2, (s0 + s1) / 2, y0);
+  for (let e = 0; e < 4; e++) { const a = P(q[e][0], q[e][1], y0), b = P(q[(e + 1) & 3][0], q[(e + 1) & 3][1], y0); mb.tri(tex, a, b, top, outward(a, b, top, mid)); }
+}
+
+/** THE EMPERORS' TOMBS: a ring of marble mausolea, each its stepped pyramid and its gilt cap. IC-GRAND (the coordinator's
+ *  review: "the emperors' tombs as real monuments along the way"): on Green Emperor Way's inner verge, each turned to face
+ *  it - its podium and its steps, its cella, a portico of `columns` under its entablature before its door, its stepped
+ *  pyramid over all and its gilt cap. */
+export function buildEmperorsTombs(T = IMPERIAL.tombs) {
+  const mb = new MeshBuilder(), w = T.w / 2, pd = T.podium, deep = 6;
+  for (let i = 0; i < T.n; i++) {
+    const [x, z] = tombAt(i), P = framed(x, z, unit([x, z]));
+    obox(mb, MARBLE, P, -w - pd, w + pd, -w - pd, w + pd, -1, 0.6);   // the podium
+    obox(mb, MARBLE, P, -w - pd / 2, w + pd / 2, -w - pd / 2, w + pd / 2, 0.6, 1.2);   // its step
+    obox(mb, MARBLE, P, -w, w - deep, -w, w, 1.2, T.h);   // the cella
+    obox(mb, MARBLE, P, w - deep, w, -w, w, T.h - 2.2, T.h);   // the portico's entablature
+    for (let k = 0; k < T.columns; k++) {   // its columns
+      const sc = -w + 1.6 + (k * (2 * w - 3.2)) / (T.columns - 1), [cx, , cz] = P(w - 1.4, sc, 0);
+      translated(mb, cx, 0, cz, () => taper(mb, MARBLE, 8, 0.85, 1.2, 0.7, T.h - 2.2, { vRepeat: 4 }));
+    }
+    obox(mb, GOLD, P, w - 0.3, w + 0.05, -w, w, T.h - 1.6, T.h - 0.8);   // a gilt band on the entablature
+    for (const [y0, k] of [[T.h, 0], [T.h + 2.4, 2.5]]) obox(mb, MARBLE, P, -w - 0.5 + k, w + 0.5 - k, -w - 0.5 + k, w + 0.5 - k, y0, y0 + 2.4);   // the pyramid's steps
+    opyramid(mb, MARBLE, P, -w + 4.5, w - 4.5, -w + 4.5, w - 4.5, T.h + 4.8, T.w * 0.42);
+    const [gx, , gz] = P(0, 0, 0);
+    mb.box(GOLD, [gx, T.h + 4.8 + T.w * 0.42 + 0.6, gz], [1.6, 1.6, 1.6], 0.5);
+    const [dx, , dz] = P(w - deep, 0, 0), face = unit([x, z]);
+    darkDoor(mb, DARK, dx, dz, 3.4, 6.5, face, 1.2);   // its door under the portico
+  }
+  return mb.build();
+}
+
+/**
+ * IC-GRAND (the coordinator's review of the renders: "the palace at the tower's foot"): THE IMPERIAL PALACE - a ring of
+ * marble wings round the tower's plaza (`sides` of them, `r0` to `r1`), two storeys of windows on each face, hipped roofs
+ * of slate; a gate through each wing a palace gate faces (`gate` wide, `gateH` high), a gilt pediment over it on both
+ * faces; a domed pavilion at each corner - its octagonal drum to `pavilionH`, a gilt band and a gilt dome.
+ */
+export function buildImperialPalace(I = IMPERIAL) {
+  const P0 = I.palace, mb = new MeshBuilder(), n = P0.sides, step = 360 / n, gates = new Set(palaceGates().map((g) => ((g % 360) + 360) % 360));
+  const fw = (P0.r1 - P0.r0) / 2, len = P0.r1 * Math.tan(Math.PI / n), rm = (P0.r0 + P0.r1) / 2;
+  for (let k = 0; k < n; k++) {
+    const b = k * step, face = polar(b, 1), P = framed(...polar(b, rm), face), gate = gates.has(b), gw = P0.gate / 2;
+    for (const [s0, s1] of gate ? [[-len, -gw], [gw, len]] : [[-len, len]]) obox(mb, MARBLE, P, -fw, fw, s0, s1, -2, P0.h);
+    if (gate) {
+      obox(mb, MARBLE, P, -fw, fw, -gw, gw, P0.gateH, P0.h);   // the gate's lintel
+      for (const f of [1, -1]) {
+        const a0 = P(f * (fw + 0.3), -gw - 6, P0.h), a1 = P(f * (fw + 0.3), gw + 6, P0.h), ap = P(f * (fw + 0.3), 0, P0.h + 9);
+        mb.tri(GOLD, a0, a1, ap, [face[0] * f, 0, face[1] * f]);
+      }
+    }
+    obox(mb, GOLD, P, -fw - 0.4, fw + 0.4, -len, len, P0.h - 0.8, P0.h);   // the cornice, gilt
+    hipRoof(mb, SLATE, P, -fw - 0.6, fw + 0.6, -len, len, P0.h, 7);
+    // the windows: two storeys, a window every six metres on both faces, none over the gate
+    for (const f of [1, -1]) for (let sc = -len + 8; sc <= len - 8; sc += 6) {
+      if (gate && Math.abs(sc) < gw + 4) continue;
+      for (const y of [5, 13]) {
+        const nrm = [face[0] * f, 0, face[1] * f], fo = f * (fw + 0.05);
+        mb.quad(DARK, P(fo, sc - 1.2, y), P(fo, sc + 1.2, y), P(fo, sc + 1.2, y + 4.4), P(fo, sc - 1.2, y + 4.4), nrm);
+      }
+    }
+  }
+  for (const [x, z] of palaceCorners(I)) {
+    translated(mb, x, 0, z, () => {
+      taper(mb, MARBLE, 8, P0.pavilionR, -2, P0.pavilionR, P0.pavilionH, { vRepeat: 6 });
+      ledge(mb, GOLD, 8, P0.pavilionR + 0.6, P0.pavilionR - 1.5, P0.pavilionH, P0.pavilionH + 1.2);
+    });
+    dome(mb, GOLD, x, P0.pavilionH + 1.2, z, P0.domeR, P0.domeR * 0.9, { n: 12, rings: 4 });
+    mb.box(GOLD, [x, P0.pavilionH + 1.2 + P0.domeR * 0.9 + 1.5, z], [0.9, 3, 0.9], 0.5);
+  }
+  return mb.build();
+}
+
+/** IC-GRAND: an emperor's statue at (x, z) facing `face` - its marble plinth, its cornice and its figure of bronze in its
+ *  robes, crowned in gold (`pose` its arms': robedFigure's, at a few sides fewer - two hundred and forty of them). */
+function emperorStatue(mb, x, z, face, pose) {
+  const P = framed(x, z, face), h = STATUE_PLINTH / 2, y = 2.4, k = 1.05;
+  obox(mb, MARBLE, P, -h, h, -h, h, -0.5, y);
+  obox(mb, MARBLE, P, -h - 0.2, h + 0.2, -h - 0.2, h + 0.2, y, y + 0.3);
+  translated(mb, x, y + 0.3, z, () => {
+    taper(mb, BRONZE, 6, 1.0 * k, 0, 0.55 * k, 3.4 * k, { vRepeat: 3 });   // the robe
+    taper(mb, BRONZE, 6, 0.55 * k, 3.4 * k, 0.72 * k, 4.3 * k, { vRepeat: 2 });   // the chest to the shoulders
+    taper(mb, BRONZE, 6, 0.36 * k, 4.3 * k, 0.4 * k, 5.2 * k, { vRepeat: 2 });   // the head
+    taper(mb, GOLD, 6, 0.44 * k, 5.2 * k, 0.48 * k, 5.6 * k, { vRepeat: 1 });   // the crown
+  });
+  const yb = y + 0.3, sh = (side) => P(0, side * 0.7 * k, yb + 4.1 * k);
+  const hand = pose === 1 ? (side) => (side > 0 ? P(0.2 * k, 0.9 * k, yb + 6.4 * k) : P(0.25 * k, -0.8 * k, yb + 2.8 * k))
+    : pose === 2 ? (side) => P(0.6 * k, side * 1.4 * k, yb + 5.8 * k)
+      : (side) => P(0.7 * k, side * 0.32 * k, yb + 3.1 * k);
+  for (const side of [1, -1]) limb(mb, BRONZE, sh(side), hand(side), 0.24 * k, 0.17 * k, { n: 4 });
+}
+/** IC-GRAND: a fountain at (x, z) - its marble basin `r` round (its kerb, its water), a pedestal and two bowls, a gilt
+ *  finial. */
+function fountain(mb, x, z, r) {
+  const n = 12, kerb = 0.9, rim = 0.8;
+  translated(mb, x, 0, z, () => {
+    taper(mb, MARBLE, n, r, -0.5, r, kerb, { vRepeat: 2 });
+    ring(mb, MARBLE, n, r - rim, r, kerb);
+    taper(mb, MARBLE, 6, 1.1, 0, 0.8, 2.4, { vRepeat: 2 });   // the pedestal
+    taper(mb, MARBLE, 8, 0.8, 2.2, 3.2, 2.9, { vRepeat: 1 });   // the great bowl
+    ring(mb, WATER, 8, 0.01, 3.2, 2.9);
+    taper(mb, MARBLE, 6, 0.45, 2.9, 0.35, 4.6, { vRepeat: 2 });
+    taper(mb, MARBLE, 6, 0.35, 4.5, 1.4, 5.0, { vRepeat: 1 });   // the small bowl
+    taper(mb, GOLD, 6, 0.3, 5.0, 0.01, 6.4, { vRepeat: 1 });
+  });
+  for (let i = 0; i < n; i++) {   // the basin's inner face, toward its middle, and its water
+    const [ax, , az] = corner(n, i, r - rim, 0), [bx, , bz] = corner(n, i + 1, r - rim, 0), am = ((i + 0.5) / n) * Math.PI * 2;
+    mb.quad(MARBLE, [x + ax, 0.4, z + az], [x + bx, 0.4, z + bz], [x + bx, kerb, z + bz], [x + ax, kerb, z + az], [-Math.cos(am), 0, -Math.sin(am)]);
+    mb.tri(WATER, [x, 0.4, z], [x + ax, 0.4, z + az], [x + bx, 0.4, z + bz], [0, 1, 0]);
+  }
+}
+/**
+ * IC-GRAND (the coordinator's review: "Green Emperor Way's gardens and paths ... trees and statuary"): THE PALACE
+ * GARDENS' MONUMENTS - a fountain where each garden path crosses each ring walk, and the emperors' statues along every path
+ * facing it (the paths, the walks and the rows of trees are the ground's - world/imperialCity.js imperialTile and
+ * imperialTree). A part asks only the ones near its square (world/capitalModels.js imperialPartBuild).
+ */
+export function buildPalaceGardens(I = IMPERIAL, only = ANY) {
+  const mb = new MeshBuilder(), g = imperialGeo(I);
+  for (const [x, z] of g.fountains) if (only([x, z], [x, z])) fountain(mb, x, z, I.gardens.fountainR);
+  g.statues.forEach(([x, z, fx, fz], i) => { if (only([x, z], [x, z])) emperorStatue(mb, x, z, [fx, fz], i % 3); });
   return mb.build();
 }
 

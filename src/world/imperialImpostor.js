@@ -9,7 +9,7 @@
 //
 // The city's metres (x east, z south, y up from its ground) - the anchor's frame; a landmark's frame is its pixel's (x
 // east and z north from its south-west corner).
-import { IMPERIAL, IMPERIAL_CELLS, IMPERIAL_SPAN, IMPERIAL_SECTORS, polar, imperialLand, imperialDistrictAt, imperialGeo, imperialRoadAt, bridgeLine, PALACE } from './imperialCity.js';
+import { IMPERIAL, IMPERIAL_CELLS, IMPERIAL_SPAN, IMPERIAL_SECTORS, polar, imperialLand, imperialDistrictAt, imperialGeo, imperialRoadAt, bridgeLine, PALACE, palaceCorners } from './imperialCity.js';
 import { hoodAt, STOREY } from './imperialFabric.js';
 import { BLOCK_M } from './spawnedDungeons.js';
 
@@ -97,6 +97,11 @@ export function impostorQuads(out = [], slice = null) {
   prism(0, 0, 8, T.galleryR, T.shaftTop, T.galleryR, T.galleryTop, C.gold);
   prism(0, 0, 8, T.crownR0, T.galleryTop, T.crownR1, T.crownTop, C.marble, false);
   prism(0, 0, 8, T.crownR1, T.crownTop, 0, T.spireTop, C.gold, false);
+  // IC-GRAND: the palace round its foot - its wings under their slate, its pavilions' drums and gilt domes; the tombs
+  const PL = I.palace, pc = palaceCorners(I), wc = pc.map((_, k) => polar(180 / PL.sides + (k * 360) / PL.sides, (PL.r0 + PL.r1) / 2 / Math.cos(Math.PI / PL.sides)));
+  wc.forEach((a, k) => { run(a, wc[(k + 1) % wc.length], PL.r1 - PL.r0, PL.h, C.marble); run(a, wc[(k + 1) % wc.length], (PL.r1 - PL.r0) * 0.5, PL.h + 6, C.blueSlate); });
+  for (const [x, z] of pc) { prism(x, z, 8, PL.pavilionR, 0, PL.pavilionR, PL.pavilionH, C.marble, false); prism(x, z, 8, PL.domeR, PL.pavilionH, 0, PL.pavilionH + PL.domeR, C.gold, false); }
+  for (const [x, z] of g.tombs) box(x - I.tombs.w / 2, z - I.tombs.w / 2, x + I.tombs.w / 2, z + I.tombs.w / 2, 0, I.tombs.h + 10, C.marble);
   // the walls: the palace's and the city's rings (their gates open), the district walls' runs, the watch towers
   const gateAt = (gates, w, r) => (b) => gates.some((q) => Math.abs(((b - q + 540) % 360) - 180) < ((w / r) * 180) / Math.PI);
   ring(I.palaceWall.r, 96, I.palaceWall.thick, I.palaceWall.h, C.stone, gateAt(IMPERIAL_SECTORS.map(([, b]) => b + 30), I.palaceWall.gate * 4, I.palaceWall.r));

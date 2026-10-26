@@ -45,6 +45,7 @@ import { portIdOf } from '../../world/worldWide/worldPorts.js';   // WW3: a port
 import { inBay, BAY_W, BAY_H } from '../../world/tamriel/tamrielFrame.js';
 import { inEther } from '../../world/ethericSea.js';
 import { theatreOfArea, districtOfArea, inWorldGrid, BAY_THEATRE, DISTRICT_PX, WORLD_PIXEL_SPAN } from '../../world/worldWide/worldGrid.js';
+import { capitalSliceAside } from '../../world/tamrielCapitals.js';   // IC-GRAND: the Imperial City one town, its centre's
 
 /** WW7-7: THE SIDES OF THE BAY'S EDGE a trip keeps to - the Bay's (every client's), the land past it (the clients that
  *  stand it), none (the Eltheric Ocean's box, off the world's grid: no living world there). */
@@ -142,6 +143,7 @@ export function createLivingIndex({ places, populated, peopleAt, beyond = null }
   /** A place's town record - the same object every time it is asked this generation - or null for no town. */
   const townOf = (/** @type {import('../../world/worldWide/worldPlaces.js').WorldPlace|null} */ p) => {
     if (!p || !populated(p.type)) return null;
+    if (capitalSliceAside(p.mapId)) return null;   // IC-GRAND: a family capital's slice but its centre a part of its city, no town of its own - 625 slices were 625 cities in each other's trip reach, 50 s of a frame's trips
     let t = townById.get(p.mapId);
     if (!t) {
       t = {

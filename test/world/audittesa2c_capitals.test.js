@@ -216,7 +216,11 @@ test('AUDIT TESA II C5: the Imperial City\'s closed law asks its fixed points wo
   const I = IMPERIAL;
   const plain = (x, z) => {   // the law as it stood, every point worked at every call
     if (Math.hypot(x, z) < I.tower.plinthR + 1) return true;
-    for (let i = 0; i < I.tombs.n; i++) { const [tx, tz] = polar(22.5 + i * (360 / I.tombs.n), I.tombs.r); if (Math.abs(x - tx) < I.tombs.w / 2 + 0.5 && Math.abs(z - tz) < I.tombs.w / 2 + 0.5) return true; }
+    // PIN MOVED (IC-GRAND's palace district): each tomb's podium in its own frame, turned to face Green Emperor Way
+    for (let i = 0; i < I.tombs.n; i++) {
+      const b = ((22.5 + i * (360 / I.tombs.n)) * Math.PI) / 180, [tx, tz] = polar(22.5 + i * (360 / I.tombs.n), I.tombs.r), f = (x - tx) * Math.sin(b) - (z - tz) * Math.cos(b), s = (x - tx) * Math.cos(b) + (z - tz) * Math.sin(b);
+      if (Math.abs(f) < I.tombs.w / 2 + I.tombs.podium && Math.abs(s) < I.tombs.w / 2 + I.tombs.podium) return true;
+    }
     // PIN MOVED (IC-GRAND): the Colosseum's stands retired with it (Daggerfall's arena's block closes its own); the Elven
     // Gardens' pool closed
     const [qx, qz] = polar(I.pool.b, I.pool.r);

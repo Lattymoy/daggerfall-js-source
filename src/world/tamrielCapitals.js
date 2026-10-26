@@ -262,6 +262,16 @@ export const capitalSliceOrdinal = (cap, s) => { const c = capitalCentre(cap); r
 /** TESA11: a slice's name - the centre's the capital's. */
 export const capitalSliceName = (cap, s) => (s === capitalCentre(cap) ? cap.name : (cap.sliceName ? cap.sliceName(s) : cap.sliceNames?.[s]) ?? cap.name);
 export const isCapitalPlaceId = (id) => ((Number(id) >>> 20) & 0xfff) === CAPITAL_LANE && ((Number(id) >>> 0) & 0x80000) !== 0;
+/** IC-GRAND x the living world (bible/03-World/Arena-Provinces.md IC-GRAND, "The living world"): is a place id a family
+ *  capital's slice other than its centre - a part of the Imperial City, no town of its own to the living world. Its 625
+ *  slices stood 625 cities of 64 blocks within each other's trip reach (systems/livingWorld/trips.js TRIP_REACH_PX), every
+ *  one's trips the others' visitors: 50 s of a frame's script when the first of them was peopled. The centre's place
+ *  (ordinal 0) is the city's one town. */
+export const capitalSliceAside = (id) => {
+  if (!isCapitalPlaceId(id)) return false;
+  const v = (Number(id) >>> 0) & 0x7ffff;
+  return !!CAPITALS[v % 16]?.family && Math.floor(v / 16) !== 0;
+};
 /** AUDIT TESA II C2: is a capital's slice its harbour's sea (its plan's eight rows all water but the sea's own block). */
 const isSeaSlice = (cap, s) => (capitalDims(cap).sea ?? []).includes(s);
 

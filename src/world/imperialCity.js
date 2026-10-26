@@ -51,10 +51,25 @@ export const IMPERIAL = Object.freeze({
    *  under TS5's 1360 - a shaft 70 m across would not carry that), its foundation 180 m across, its shaft 70 m across at
    *  its foot and 60 m at its gallery, its fins out to the foundation's edge; its door a man's. */
   tower: Object.freeze({ plinthR: 90, plinthH: 30, shaftR0: 35, shaftR1: 30, shaftTop: 560, band: 70, galleryR: 40, galleryTop: 590, crownR0: 33, crownR1: 25, crownTop: 650, spireTop: 760, finR: 88, finTop: 300, finThick: 8, door: 8 }),
-  /** The tower's plaza of stone, Green Emperor Way's ring road, and the emperors' tombs on its lawns. */
+  /** The tower's plaza of stone, Green Emperor Way's ring road, and the emperors' tombs. IC-GRAND (the coordinator's review
+   *  of the renders: "the emperors' tombs as real monuments along the way"): each a marble mausoleum on its podium, `w`
+   *  square and `h` to its cornice, its portico of `columns` toward the Way and a paved walk (`walk` wide) out to it - on
+   *  the Way's inner verge, its forecourt between (TESA11's sixteen-metre tombs stood on the lawns 1.4 km out). */
   plaza: 300,
   way: Object.freeze({ r0: 2140, r1: 2180 }),
-  tombs: Object.freeze({ r: 1400, n: 24, w: 16, h: 12 }),
+  tombs: Object.freeze({ r: 2080, n: 24, w: 26, h: 18, podium: 3, columns: 6, walk: 10 }),
+  /** IC-GRAND (the same review: "the palace at the tower's foot"): THE IMPERIAL PALACE round the tower's plaza - a ring of
+   *  `sides` marble wings between `r0` and `r1` (their inner and outer faces' distances from the middle), `h` to their
+   *  eaves under roofs of slate, a gate `gate` wide and `gateH` high through each wing that faces a palace gate, a domed
+   *  pavilion (`pavilionR`, to `pavilionH`, its dome `domeR`) at each corner, a paved terrace `terrace` round it. */
+  palace: Object.freeze({ r0: 312, r1: 352, h: 24, sides: 12, gate: 26, gateH: 16, pavilionR: 14, pavilionH: 34, domeR: 12, terrace: 14 }),
+  /** IC-GRAND (the same review: "Green Emperor Way's gardens and paths ... trees and statuary"): THE PALACE GARDENS - a
+   *  paved path out from the palace's terrace to the Way every `every` degrees (`path` wide; those on a district's bearing
+   *  run on through its palace gate), ring walks round the tower (`walks`, `walk` wide), a fountain where a path crosses a
+   *  walk (its basin `fountainR`, a paved round `round` past it), the emperors' statues along every path (`statueEvery`
+   *  apart, `statueOff` out from its middle on either side) and its rows of trees beyond them (`rowOff` out, a tree every
+   *  `rowEvery`), groves between. */
+  gardens: Object.freeze({ every: 30, path: 14, walks: Object.freeze([900, 1500]), walk: 8, fountainR: 9, round: 6, statueEvery: 160, statueOff: 9.5, rowOff: 16, rowEvery: 12.8 }),
   /** The palace wall round the Palace District, a gate to each district (its sector's middle, its avenue's head). */
   palaceWall: Object.freeze({ r: 2300, thick: 8, h: 20, towerR: 8, towerH: 30, gate: 16, gateH: 13, sides: 360 }),
   /** The city wall, a tower every `towerEvery` degrees, its gates (`gates`: bearings - each district's avenue's, the
@@ -127,6 +142,7 @@ export const IMPERIAL_MODELS = Object.freeze({
   whiteGoldTower: 910200, palaceWall: 910201, tombs: 910202, cityWall: 910203, districtWalls: 910204,
   templeOfTheOne: 910206, talosStatue: 910207, prison: 910208, university: 910209, waterfront: 910210, talosBridge: 910211,
   nineDivines: 910212,   // TESA-LORE
+  imperialPalace: 910213, palaceGardens: 910214,   // IC-GRAND: the palace at the tower's foot, Green Emperor Way's gardens
 });
 
 // ---------------------------------------------------------------- the geometry
@@ -340,8 +356,61 @@ export function imperialReserved(x0, z0, x1, z1, I = IMPERIAL) {
 /** The University's tower (its compound's north-east corner, inside its wall) and its domed hall (the south-west). */
 export const universityTowerAt = (I = IMPERIAL) => { const [x, z] = polar(I.university.b, I.university.r); return [x + I.university.half * 0.55, z - I.university.half * 0.55]; };
 export const universityHallAt = (I = IMPERIAL) => { const [x, z] = polar(I.university.b, I.university.r); return [x - I.university.half * 0.5, z + I.university.half * 0.5]; };
-/** The emperors' tombs on their ring: the i-th's middle (the first at 22.5 degrees, then evenly round). */
+/** The emperors' tombs on their ring: the i-th's middle (the first at 22.5 degrees, then evenly round) - IC-GRAND: each
+ *  facing out to Green Emperor Way, two either side of every garden path's end. */
 export const tombAt = (i, I = IMPERIAL) => polar(22.5 + i * (360 / I.tombs.n), I.tombs.r);
+/** IC-GRAND: a point in a tomb's own frame - [out toward the Way, along the ring clockwise] from its middle. */
+export const tombFrame = (x, z, i, I = IMPERIAL) => {
+  const b = rad(22.5 + i * (360 / I.tombs.n)), [tx, tz] = tombAt(i, I), dx = x - tx, dz = z - tz;
+  return [dx * Math.sin(b) - dz * Math.cos(b), dx * Math.cos(b) + dz * Math.sin(b)];
+};
+/** IC-GRAND: the tomb nearest a point by its bearing (they stand hundreds of metres apart on their ring). */
+export const nearestTomb = (x, z, I = IMPERIAL) => ((Math.round((imperialBearing(x, z) - 22.5) / (360 / I.tombs.n)) % I.tombs.n) + I.tombs.n) % I.tombs.n;
+/** IC-GRAND: THE PALACE'S CORNERS - its pavilions' middles, on its wings' outer corners (standing out past them), a
+ *  corner between each two wings (the first at half a wing's bearing). */
+export const palaceCorners = (I = IMPERIAL) => {
+  const P = I.palace, n = P.sides, rc = P.r1 / Math.cos(Math.PI / n);
+  return Array.from({ length: n }, (_, k) => polar(180 / n + (k * 360) / n, rc));
+};
+/** IC-GRAND: the palace's gates - the bearings of the wings a palace gate faces (each district's avenue's). */
+export const palaceGates = () => IMPERIAL_SECTORS.map(([, b]) => b + 30);
+/** IC-GRAND: is a point inside the palace's walls - a wing (but its gate's passage) or a pavilion. */
+export function inPalace(x, z, I = IMPERIAL) {
+  const P = I.palace, r = Math.hypot(x, z);
+  if (r < P.r0 - 1 || r > P.r1 / Math.cos(Math.PI / P.sides) + P.pavilionR + 1) return false;
+  const step = 360 / P.sides, b = imperialBearing(x, z), mid = Math.round(b / step) * step, d = rad(b - mid);
+  const across = r * Math.cos(d), along = r * Math.sin(d);
+  for (const [cx, cz] of palaceCorners(I)) if (Math.hypot(x - cx, z - cz) < P.pavilionR + 0.5) return true;
+  if (across < P.r0 - 0.5 || across > P.r1 + 0.5) return false;
+  return !(palaceGates().some((g) => Math.abs((((mid - g) % 360) + 360) % 360) < 1e-6) && Math.abs(along) < P.gate / 2 - 0.5);
+}
+/** IC-GRAND: the garden paths' bearings - one every `gardens.every` degrees from north. */
+export const gardenPaths = (I = IMPERIAL) => Array.from({ length: Math.round(360 / I.gardens.every) }, (_, k) => k * I.gardens.every);
+/** IC-GRAND: a point's distance across the nearest garden path's middle line, and that path's bearing - Infinity off
+ *  their run (from the palace's terrace to the Way). */
+export function gardenPathDistance(x, z, I = IMPERIAL) {
+  const r = Math.hypot(x, z), G = I.gardens, b = imperialBearing(x, z), pb = (Math.round(b / G.every) * G.every) % 360;
+  if (r < I.palace.r1 || r > I.way.r0) return [Infinity, pb];
+  return [Math.abs(r * Math.sin(rad(b - pb))), pb];
+}
+/** IC-GRAND: THE FOUNTAINS - one where each garden path crosses each ring walk. */
+export const palaceFountains = (I = IMPERIAL) => I.gardens.walks.flatMap((w) => gardenPaths(I).map((b) => polar(b, w)));
+/** IC-GRAND: THE EMPERORS' STATUES - along every garden path, `statueEvery` apart from the palace's terrace (60 m out) to
+ *  short of the Way, `statueOff` out on either side, each `[x, z, fx, fz]` facing the path; none on a fountain's round. */
+const statuesFrom = (I = IMPERIAL) => I.palace.r1 + I.palace.terrace + 60;
+/** Does a statue stand `r` out along its path (short of the Way, off a fountain's round)? */
+const statueStands = (r, I = IMPERIAL) => r < I.way.r0 - 40 && !I.gardens.walks.some((w) => Math.abs(r - w) < I.gardens.fountainR + I.gardens.round + 6);
+export function palaceStatues(I = IMPERIAL) {
+  const G = I.gardens, out = [];
+  for (const b of gardenPaths(I)) {
+    const [ux, uz] = polar(b, 1), nx = -uz, nz = ux;
+    for (let r = statuesFrom(I); r < I.way.r0 - 40; r += G.statueEvery) {
+      if (!statueStands(r, I)) continue;
+      for (const side of [1, -1]) out.push([ux * r + nx * G.statueOff * side, uz * r + nz * G.statueOff * side, -nx * side, -nz * side]);
+    }
+  }
+  return out;
+}
 /** The prison's Bastion (the compound's middle). */
 export const prisonAt = (I = IMPERIAL) => polar(I.prison.b, I.prison.r);
 /** AUDIT TESA II C5: THE CITY'S FIXED POINTS, worked once a set of measures. */
@@ -355,6 +424,7 @@ export function imperialGeo(I = IMPERIAL) {
       divines: divinesAt(I), plinths: divinePlinths(I), prison: prisonAt(I), uni: polar(I.university.b, I.university.r), uniTower: universityTowerAt(I), uniHall: universityHallAt(I),
       ways: [...causewayLines(I), bridgeLine(I)], bridge: bridgeLine(I), walls: districtWallLines(I), avenues: avenueLines(I), wallGates: districtWallGates(I),
       arena: imperialArenaAt(I),
+      fountains: palaceFountains(I), statues: palaceStatues(I),   // IC-GRAND: the palace gardens'
     });
     _geo.set(I, g);
   }
@@ -486,7 +556,7 @@ export function imperialTile(x, z, I = IMPERIAL) {
   const r = Math.hypot(x, z);
   if (r >= I.lake) return r < I.lake + 10 ? 1 : OPEN_TILE;   // TS5: the far shore's sand, then the land's own
   if (r < I.plaza || (r >= I.way.r0 && r <= I.way.r1)) return 3;
-  if (r < I.palaceWall.r - 6) return 2;
+  if (r < I.palaceWall.r - 6) return palaceGround(x, z, r, I);
   if (Math.abs(r - I.palaceWall.r) <= 10 || Math.abs(r - I.cityWall.r) <= 18) return 3;
   const G = imperialGeo(I);   // AUDIT TESA II C5
   if (Math.hypot(x - G.pool[0], z - G.pool[1]) < I.pool.r0) return 0;   // IC-GRAND: the Elven Gardens' pool
@@ -497,6 +567,25 @@ export function imperialTile(x, z, I = IMPERIAL) {
   if (d === 'City Isle' || d === 'Prison District') return 2;
   return -1;
 }
+/** IC-GRAND: THE PALACE DISTRICT'S GROUND inside Green Emperor Way - stone under the palace and its terrace, the garden
+ *  paths, the ring walks, the fountains' rounds, the tombs' podiums and their walks out to the Way; grass the rest. */
+function palaceGround(x, z, r, I = IMPERIAL) {
+  const G = I.gardens;
+  if (r < I.palace.r1 / Math.cos(Math.PI / I.palace.sides) + I.palace.pavilionR + I.palace.terrace) return 3;
+  if (r > I.way.r1) return 2;
+  if (gardenPathDistance(x, z, I)[0] < G.path / 2) return 3;
+  for (const w of G.walks) {
+    if (Math.abs(r - w) < G.walk / 2) return 3;
+    if (Math.abs(r - w) < G.fountainR + G.round) for (const b of gardenPaths(I)) { const [fx, fz] = polar(b, w); if (Math.hypot(x - fx, z - fz) < G.fountainR + G.round) return 3; }
+  }
+  const T = I.tombs;
+  if (r > T.r - T.w && r < I.way.r0 + 1) {
+    const [f, s] = tombFrame(x, z, nearestTomb(x, z, I), I);
+    if (Math.abs(s) < T.w / 2 + T.podium && f > -T.w / 2 - T.podium && f < T.w / 2 + T.podium) return 3;   // the podium
+    if (Math.abs(s) < T.walk / 2 && f >= 0) return 3;   // its walk out to the Way
+  }
+  return 2;
+}
 /** The closed ground at a point, the landmarks' (the walkers' navgrid; world/capitalModels.js capitalFootprint closes every
  *  face that stands): the solids' insides - the tower's plinth, the tombs, the Temple, the statue's plinth, the Divines'
  *  plinths (TESA-LORE), the Bastion, the University's tower and hall, IC-GRAND the Elven Gardens' pool. */
@@ -504,7 +593,9 @@ export function imperialClosed(x, z, I = IMPERIAL) {
   const r = Math.hypot(x, z);
   if (r < I.tower.plinthR + 1) return true;
   const G = imperialGeo(I);   // AUDIT TESA II C5: the points worked once, each ring of them asked only near its own radius
-  if (Math.abs(r - I.tombs.r) < I.tombs.w) for (const [tx, tz] of G.tombs) if (Math.abs(x - tx) < I.tombs.w / 2 + 0.5 && Math.abs(z - tz) < I.tombs.w / 2 + 0.5) return true;
+  // IC-GRAND: the nearest tomb's podium, in its own frame (turned to face the Way)
+  if (Math.abs(r - I.tombs.r) < I.tombs.w) { const [f, s] = tombFrame(x, z, nearestTomb(x, z, I), I); if (Math.abs(f) < I.tombs.w / 2 + I.tombs.podium && Math.abs(s) < I.tombs.w / 2 + I.tombs.podium) return true; }
+  if (r < I.palaceWall.r && palaceClosed(x, z, r, G, I)) return true;   // IC-GRAND: the palace, the fountains, the statues
   const T = I.temple, [tx, tz] = G.temple;
   if (Math.abs(x - tx) < T.w / 2 + 0.5 && Math.abs(z - tz) < T.l / 2 + 0.5) return true;
   const [sx, sz] = G.statue;
@@ -520,19 +611,49 @@ export function imperialClosed(x, z, I = IMPERIAL) {
   if (Math.hypot(x - ux, z - uz) < I.university.spireR + 1 || (Math.abs(x - hx) < I.university.hall / 2 + 0.5 && Math.abs(z - hz) < I.university.hall / 2 + 0.5)) return true;
   return false;
 }
+/** IC-GRAND: the Palace District's closed ground - the palace's wings and pavilions, the fountains' basins, the statues'
+ *  plinths (each asked only near its own ring or its own row). */
+function palaceClosed(x, z, r, G, I = IMPERIAL) {
+  if (r < I.palace.r1 / Math.cos(Math.PI / I.palace.sides) + I.palace.pavilionR + 1 && inPalace(x, z, I)) return true;
+  const F = I.gardens;
+  if (F.walks.some((w) => Math.abs(r - w) < F.fountainR + 1)) for (const [fx, fz] of G.fountains) if (Math.hypot(x - fx, z - fz) < F.fountainR + 0.5) return true;
+  return statueAt(x, z, I);
+}
+/** IC-GRAND: is a point on an emperor's statue's plinth - in its path's frame, the nearest of its row's (palaceStatues). */
+function statueAt(x, z, I = IMPERIAL) {
+  const G = I.gardens, [dp, pb] = gardenPathDistance(x, z, I), lim = STATUE_PLINTH / 2 + 0.5;
+  if (Math.abs(dp - G.statueOff) >= lim) return false;
+  const along = Math.hypot(x, z) * Math.cos(rad(imperialBearing(x, z) - pb)), r0 = statuesFrom(I), k = Math.round((along - r0) / G.statueEvery), rk = r0 + k * G.statueEvery;
+  return k >= 0 && statueStands(rk, I) && Math.abs(along - rk) < lim;
+}
+/** IC-GRAND: an emperor's statue's plinth, a side, and its height and its figure's (world/capitalImperial.js). */
+export const STATUE_PLINTH = 2.8;
 /** TS5: a tile record no stamp lays (world/terrain/terrainTiles.js GROUND_RECORD_LIMIT 56 and up) - the land's own. */
 export const OPEN_TILE = 63;
 /** The climate's own trees (scenery records - world/tamrielCapitals.js's gardens'). */
 export const IMPERIAL_TREES = Object.freeze([12, 15, 16, 18]);
-/** A tree at a tile's centre, the landmarks' lawns' - or -1: on Green Emperor Way's lawns one in seven, the isle's one in
- *  ten - grass alone, clear of the tombs and the plaza (the city's courts and its park are world/imperialFabric.js's). */
+/** A tree at a tile's centre, the landmarks' lawns' - or -1: the isle's one in ten; IC-GRAND, the Palace District's
+ *  gardens (palaceTree) - grass alone, clear of the tombs and the palace (the city's courts and its park are
+ *  world/imperialFabric.js's). */
 export function imperialTree(x, z, I = IMPERIAL) {
   if (imperialTile(x, z, I) !== 2) return -1;
   const r = Math.hypot(x, z), d = imperialDistrictAt(x, z, I);
-  const every = d === PALACE ? (r > I.plaza + 10 && Math.abs(r - I.tombs.r) > I.tombs.w ? 7 : 0) : d === 'City Isle' ? 10 : 0;
-  if (!every) return -1;
-  const h = hash32(SALT, Math.floor(x), Math.floor(z), 9);
-  return h % every === 0 ? IMPERIAL_TREES[(h >>> 3) % IMPERIAL_TREES.length] : -1;
+  const h = hash32(SALT, Math.floor(x), Math.floor(z), 9), pick = IMPERIAL_TREES[(h >>> 3) % IMPERIAL_TREES.length];
+  if (d === PALACE) return palaceTree(x, z, r, h, I) ? pick : -1;
+  return d === 'City Isle' && h % 10 === 0 ? pick : -1;
+}
+/** IC-GRAND: THE PALACE GARDENS' TREES - a row either side of every garden path `rowOff` out (a tree every `rowEvery`
+ *  along it) and either side of each ring walk; groves in the lawns between (one tile in three where the grove noise
+ *  stands); a lone tree one in forty elsewhere - none within a tomb's width of their ring, nor round the palace. */
+function palaceTree(x, z, r, h, I = IMPERIAL) {
+  const G = I.gardens, half = 3.2;
+  if (r < I.palace.r1 + I.palace.pavilionR * 2 + I.palace.terrace + 20 || r > I.way.r0 - 4 || Math.abs(r - I.tombs.r) < I.tombs.w) return false;
+  const [dp, pb] = gardenPathDistance(x, z, I);
+  if (Math.abs(dp - G.rowOff) < half) return Math.floor(Math.abs(r * Math.cos(rad(imperialBearing(x, z) - pb))) / G.rowEvery) % 2 === 0;
+  for (const w of G.walks) if (Math.abs(Math.abs(r - w) - G.rowOff) < half) return dp > G.path && Math.floor((imperialBearing(x, z) * rad(1) * w) / G.rowEvery) % 2 === 0;
+  if (dp < G.rowOff + half || G.walks.some((w) => Math.abs(r - w) < G.rowOff + half)) return false;   // the verges kept open
+  const grove = Math.sin(x / 83) * Math.sin(z / 79) + Math.sin((x - z) / 131) * 0.5;
+  return grove > 0.7 ? h % 3 === 0 : h % 40 === 0;
 }
 
 // ---------------------------------------------------------------- TS5: the slices' names and the landmarks' parts
@@ -602,6 +723,9 @@ const EXTENTS = Object.freeze({
   },
   [IMPERIAL_MODELS.talosBridge]: (x0, z0, x1, z1) => { const [a, b] = bridgeLine(); return segRect(a, b, x0, z0, x1, z1, IMPERIAL.bridge.w + 6) < IMPERIAL.bridge.w + 6; },
   [IMPERIAL_MODELS.nineDivines]: (x0, z0, x1, z1) => rectPoint(x0, z0, x1, z1, divinesAt()) < IMPERIAL.divines.court + 8,
+  // IC-GRAND: the palace round the tower's plaza; the gardens' fountains and statues where they stand
+  [IMPERIAL_MODELS.imperialPalace]: (x0, z0, x1, z1) => rectPoint(x0, z0, x1, z1, [0, 0]) < IMPERIAL.palace.r1 / Math.cos(Math.PI / IMPERIAL.palace.sides) + IMPERIAL.palace.pavilionR + 6,
+  [IMPERIAL_MODELS.palaceGardens]: (x0, z0, x1, z1) => imperialGeo().fountains.some((p) => rectPoint(x0, z0, x1, z1, p) < IMPERIAL.gardens.fountainR + 4) || imperialGeo().statues.some((p) => rectPoint(x0, z0, x1, z1, p) < STATUE_PLINTH + 2),
 });
 /** A part's model id: the landmark's slot (its id less the first's) and its slice - IC-GRAND: 1,024 a slot (TS5's 64 held
  *  forty-nine slices; a slot holds 625 now). */
