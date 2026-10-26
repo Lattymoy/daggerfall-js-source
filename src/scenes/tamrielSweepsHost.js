@@ -10,6 +10,7 @@ import { nearestFirstFrom } from '../world/streamingWorld.js';
 import { inBay as onTheBay, tamrielFit } from '../world/tamriel/tamrielFrame.js';
 import { tamrielLandVersion } from '../world/tamriel/tamrielLand.js';
 import { WATER_BYTE } from '../world/roadsProducer.js';
+import { createCapitalSkyline } from './capitalSkyline.js';   // IC-GRAND x FAR-LANDMARK: the Imperial City on the far ring's horizon
 
 /** @param {any} host */
 export function createTamrielSweeps(host) {
@@ -45,6 +46,7 @@ export function createTamrielSweeps(host) {
    *  and province are the land's) - all but Arena's places, sweepArenaPixels' own. */
   function sweepCapitalPixels() {
     sweepCapitalLod();   // IC-GRAND
+    capitalSkyline.sweep();   // IC-GRAND x FAR-LANDMARK: its silhouette past the stream, a slice a landmark
     const fit = tamrielFit(), land = tamrielLandVersion();
     if (fit === _swept.capital && land === _swept.capitalLand) return;
     const moved = _swept.capital !== null;   // the first frame's ask is the fit the pixels were built by
@@ -70,8 +72,11 @@ export function createTamrielSweeps(host) {
    *  along a pixel's edge builds nothing twice. Asked on the frame, but walked only when the player's pixel or the built set
    *  moves - the built pixels alone (the stream's few dozen), never the city's 625 slices: each built pixel whose view is
    *  not the one it is built in now is built again, the ones coming near first (at the queue's head, nearest first - the
-   *  far ring and the city's skyline stand in the hole while it builds, render/cityImpostor.js), the ones going far last. */
+   *  far ring and the city's landmarks stand in the hole while it builds, scenes/capitalSkyline.js), the ones going far
+   *  last. */
   const _lod = { at: null, size: -1 };
+  /** IC-GRAND x FAR-LANDMARK: the city's landmarks on the far ring (`host.farRing`, null on the classic skin). */
+  const capitalSkyline = createCapitalSkyline(host);
   function sweepCapitalLod() {
     const cur = host.state.current, at = cur ? `${cur.x},${cur.y}` : null;
     if (at === _lod.at && host.built.size === _lod.size) return;
@@ -114,5 +119,5 @@ export function createTamrielSweeps(host) {
     for (const k of again) destroyPixel(k.px, k.py, { collectLoose: false });
     host.queue.push(...again.sort(nearestFirstFrom(host.state.current)));
   }
-  return { _arenaRoadsStale, arenaJoinLand, arenaRoadsLanded, arenaRoadsStale, sweepArenaPixels, sweepArenaRoads, sweepCapitalPixels, sweepCapitalLod };
+  return { _arenaRoadsStale, arenaJoinLand, arenaRoadsLanded, arenaRoadsStale, sweepArenaPixels, sweepArenaRoads, sweepCapitalPixels, sweepCapitalLod, capitalSkyline };
 }

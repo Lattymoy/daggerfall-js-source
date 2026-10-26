@@ -1,14 +1,14 @@
 // @ts-check
 // IC-GRAND (bible/03-World/Arena-Provinces.md IC-GRAND) - THE IMPERIAL CITY FROM AFAR: twenty kilometres of city outrun the
 // stream (its land view a few pixels each way, the world's far plane 6 km), so from the city wall the White-Gold Tower,
-// 8.4 pixels off, stood nowhere. The city's impostor stands where nothing of the stream does: the far ring's pass draws
-// it (render/farRing.js, render/ringImpostors.js) at the far plane, so every pixel the stream has built paints over it,
-// and its slices the stream has built are left out of it - the tower, the walls, the landmarks and a mass a cell for the
-// streets' buildings (each its district's height and colours, world/imperialFabric.js's styles), Lake Rumare round the
-// isle. Coarse by law: a box a cell, its fronts towards the eye's pixel alone, painted far to near (the pass writes no
-// depth) - re-ordered as the eye's pixel or the built set moves, never a frame.
+// 8.4 pixels off, stood nowhere. The city's silhouette stands where nothing of the stream does: one landmark a slice
+// handed to the far ring (render/farLandmarks.js FAR-LANDMARK, stream B's hook - its pass draws it in its painter's order,
+// and a slice the stream has built stands down; scenes/capitalSkyline.js hands them in) - the tower, the walls, the
+// landmarks and the streets' buildings as a few masses a slice (each its neighbourhood's height and colours, world/
+// imperialFabric.js's styles). Coarse by law: tens of triangles a slice where only streets stand.
 //
-// The city's metres (x east, z south, y up from its ground) - the anchor's frame; the ring's frame is +z north.
+// The city's metres (x east, z south, y up from its ground) - the anchor's frame; a landmark's frame is its pixel's (x
+// east and z north from its south-west corner).
 import { IMPERIAL, IMPERIAL_CELLS, IMPERIAL_SPAN, IMPERIAL_SECTORS, polar, imperialLand, imperialDistrictAt, imperialGeo, imperialRoadAt, bridgeLine, PALACE } from './imperialCity.js';
 import { hoodAt, STOREY } from './imperialFabric.js';
 import { BLOCK_M } from './spawnedDungeons.js';
@@ -36,12 +36,12 @@ export function impostorSliceAt(x, z) {
 }
 
 /**
- * THE IMPOSTOR'S QUADS, onto `out`: each `{ v: four corners [x, y, z], n: its outward normal, c: its colour, sea: 1 on the
- * lake, ground: 1 under everything (the lake), s: its slice, mid: its middle }` - `rows` the cell rows whose masses it
- * lays (null: the landmarks, the walls and the lake alone).
- * @param {any[]} out @param {[number, number] | null} rows
+ * THE SILHOUETTE'S QUADS, onto `out`: each `{ v: four corners [x, y, z], n: its outward normal, c: its colour, sea: 1 on the
+ * lake, ground: 1 under everything (the lake), s: its slice, mid: its middle }` - `slice` the slice whose streets' masses it
+ * lays (sliceMasses), null the landmarks, the walls and the lake alone.
+ * @param {any[]} out @param {number | null} slice
  */
-export function impostorQuads(out = [], rows = [0, IMPERIAL_CELLS]) {
+export function impostorQuads(out = [], slice = null) {
   const quad = (v, n, c, { sea = 0, ground = 0, at = null } = {}) => {
     const m = at ?? [(v[0][0] + v[2][0]) / 2, (v[0][2] + v[2][2]) / 2];
     out.push({ v, n, c, sea, ground, s: impostorSliceAt(m[0], m[1]), mid: [(v[0][0] + v[1][0] + v[2][0] + v[3][0]) / 4, (v[0][1] + v[1][1] + v[2][1] + v[3][1]) / 4, (v[0][2] + v[1][2] + v[2][2] + v[3][2]) / 4] });
@@ -82,7 +82,7 @@ export function impostorQuads(out = [], rows = [0, IMPERIAL_CELLS]) {
     }
   };
   const I = IMPERIAL, g = imperialGeo(), C = IMPOSTOR_COLOURS, W = I.waterfront, [tx, tz] = g.temple, P = I.temple;
-  if (rows) return cellQuads(out, rows, box, { I, g, C, W, tx, tz, P });
+  if (slice != null) return sliceMasses(out, slice, box, { I, g, C, W, tx, tz, P });
   // the lake round the isle (the ground's, first), the docks' reach where the Waterfront stands out into it
   for (let i = 0; i < 120; i++) {
     const b0 = i * 3, b1 = b0 + 3, inner = (b) => (b >= W.b0 && b <= W.b1 ? W.r1 : I.isle);
@@ -124,10 +124,16 @@ export function impostorQuads(out = [], rows = [0, IMPERIAL_CELLS]) {
   for (let k = 0; k < bn; k++) run([ba[0] + ((bb[0] - ba[0]) * k) / bn, ba[1] + ((bb[1] - ba[1]) * k) / bn], [ba[0] + ((bb[0] - ba[0]) * (k + 1)) / bn, ba[1] + ((bb[1] - ba[1]) * (k + 1)) / bn], I.bridge.w, I.bridge.deck, C.stone);
   return out;
 }
-/** The streets' masses of cell rows [r0, r1) onto `out` (impostorQuads' `box`). */
-function cellQuads(out, [r0, r1], box, { I, g, C, W, tx, tz, P }) {
-  // the streets' buildings: a mass a cell of its neighbourhood's height and colours, off the landmarks, the roads and the
-  // lake (the Arboretum's park a tree clump where one stands; the Palace District's lawns none)
+/** A park's clump of trees, metres tall, as the far view stands it. */
+const PARK_TOP = 15;
+/**
+ * A SLICE'S STREETS AS A FEW MASSES onto `out` (impostorQuads' `box`): each of its 8 x 8 cells keyed by what stands on it
+ * - its neighbourhood's walls, roof and height (a storey at a time, its eave and its roof's rise), a park's grove (a 2 x 2
+ * of cells, one in two), or nothing (the landmarks' grounds, the roads, the walls, the lake, the Palace District's lawns) - and
+ * the cells of one key merged into rectangles (greedy, row by row, as wide and then as deep as the key runs), each a box
+ * inset IMPOSTOR_INSET from its outer edges: a district's slice a handful of boxes, ten triangles each.
+ */
+function sliceMasses(out, s, box, { I, g, C, W, tx, tz, P }) {
   const clear = (x, z) => {
     const rr = Math.hypot(x, z);
     if (rr < I.palaceWall.r + 40 || Math.abs(rr - I.cityWall.r) < 60 || !imperialLand(x, z)) return false;
@@ -137,109 +143,73 @@ function cellQuads(out, [r0, r1], box, { I, g, C, W, tx, tz, P }) {
     for (const [p, half] of [[g.prison, I.prison.half], [g.uni, I.university.half]]) if (Math.max(Math.abs(x - p[0]), Math.abs(z - p[1])) < half + 40) return false;
     return !g.walls.some(([a, b]) => { const t = Math.max(0, Math.min(1, ((x - a[0]) * (b[0] - a[0]) + (z - a[1]) * (b[1] - a[1])) / ((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2))); return Math.hypot(x - a[0] - t * (b[0] - a[0]), z - a[1] - t * (b[1] - a[1])) < 50; });
   };
-  for (let r = r0; r < r1; r++) {
-    for (let c = 0; c < IMPERIAL_CELLS; c++) {
-      const x = (c - HALF + 0.5) * B, z = (r - HALF + 0.5) * B;
-      if (Math.hypot(x, z) > W.r1 + B || !clear(x, z)) continue;
-      const h = hoodAt(x, z);
-      if (!h) continue;
-      const j = (k) => (u01(r, c, k) - 0.5) * 10, x0 = x - B / 2 + IMPOSTOR_INSET + j(1), z0 = z - B / 2 + IMPOSTOR_INSET + j(2), x1 = x + B / 2 - IMPOSTOR_INSET + j(3), z1 = z + B / 2 - IMPOSTOR_INSET + j(4);
-      if (h.kind === 'park') { if (u01(r, c, 5) < 0.55) box(x0 + 8, z0 + 8, x1 - 8, z1 - 8, 0, 12 + u01(r, c, 6) * 6, C.leaves); continue; }
-      const storeys = h.k[0] + u01(r, c, 7) * (h.k[1] - h.k[0]), top = storeys * STOREY + (u01(r, c, 8) < h.gable ? 2.4 : 0.9);
-      box(x0, z0, x1, z1, 0, top, C[h.style.walls[0]] ?? C.stone, C[h.style.roof] ?? C.roof);
+  const sx = s % IMPERIAL_SPAN, sy = Math.floor(s / IMPERIAL_SPAN);
+  /** @type {Array<?string>} */ const key = new Array(64).fill(null);
+  const spec = new Map();
+  for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++) {
+    const r = sy * 8 + i, c = sx * 8 + j, x = (c - HALF + 0.5) * B, z = (r - HALF + 0.5) * B;
+    if (Math.hypot(x, z) > W.r1 + B || !clear(x, z)) continue;
+    const h = hoodAt(x, z);
+    if (!h) continue;
+    if (h.kind === 'park') {
+      if (u01(r >> 1, c >> 1, 5) >= 0.5) continue;   // a grove a 2 x 2 of cells, one in two
+      key[i * 8 + j] = 'park';
+      spec.set('park', { top: PARK_TOP, wall: C.leaves, roof: C.leaves });
+      continue;
     }
+    const storeys = Math.round((h.k[0] + h.k[1]) / 2), gable = h.gable >= 0.5, k = `${h.style.walls[0]}|${h.style.roof}|${storeys}|${gable ? 1 : 0}`;
+    key[i * 8 + j] = k;
+    if (!spec.has(k)) spec.set(k, { top: storeys * STOREY + (gable ? 2.4 : 0.9), wall: C[h.style.walls[0]] ?? C.stone, roof: C[h.style.roof] ?? C.roof });
+  }
+  const used = new Uint8Array(64);
+  for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++) {
+    const k = key[i * 8 + j];
+    if (!k || used[i * 8 + j]) continue;
+    let w = 1, d = 1;
+    while (j + w < 8 && !used[i * 8 + j + w] && key[i * 8 + j + w] === k) w++;
+    for (; i + d < 8; d++) { let row = true; for (let q = j; q < j + w; q++) if (used[(i + d) * 8 + q] || key[(i + d) * 8 + q] !== k) { row = false; break; } if (!row) break; }
+    for (let a = i; a < i + d; a++) for (let q = j; q < j + w; q++) used[a * 8 + q] = 1;
+    const { top, wall, roof } = /** @type {{ top: number, wall: number[], roof: number[] }} */ (spec.get(k));
+    const c0 = sx * 8 + j, r0 = sy * 8 + i;
+    box((c0 - HALF) * B + IMPOSTOR_INSET, (r0 - HALF) * B + IMPOSTOR_INSET, (c0 + w - HALF) * B - IMPOSTOR_INSET, (r0 + d - HALF) * B - IMPOSTOR_INSET, 0, top + (u01(s, i, j, 9) - 0.5) * 2, wall, roof);
   }
   return out;
 }
-/** How many cell rows a step of the impostor's making lays (a few milliseconds' worth). */
-export const IMPOSTOR_ROWS_A_STEP = 4;
+
+/** The landmarks' quads by their slice - the tower, the walls, the landmarks (the lake left to the ground the far ring
+ *  draws) - made once. @type {?Map<number, any[]>} */
+let _landmarks = null;
+const landmarksOf = (s) => {
+  if (!_landmarks) {
+    _landmarks = new Map();
+    for (const q of impostorQuads([], null)) if (!q.sea && !q.ground && q.s >= 0) { const l = _landmarks.get(q.s); if (l) l.push(q); else _landmarks.set(q.s, [q]); }
+  }
+  return _landmarks.get(s) ?? [];
+};
 /**
- * THE IMPOSTOR, MADE A STEP AT A TIME (the landmarks first, then IMPOSTOR_ROWS_A_STEP cell rows a step - the ring's pass
- * steps it a frame, so its making is never one long frame): `step()` true once it is whole; then `mesh()` - its vertices,
- * four a quad, in the ring's frame about the anchor (the city's middle on its ground; +z north): positions, normals,
- * colours (bytes) and the sea's flag (255 on the lake) - and `order(ex, ey, ez, built)`: the ground's quads first, then
- * every quad whose face turns to the eye (the city's metres, x east, z south, y up), farthest first in bands of
- * IMPOSTOR_BAND metres (the pass writes no depth - the nearer paints over), a pair of triangles each; a quad of a slice
- * `built(s)` says the stream stands left out.
+ * ONE SLICE'S SILHOUETTE (FAR-LANDMARK's mesh, render/farLandmarks.js): the landmarks whose middles stand in slice `s` and
+ * its streets' masses, in its pixel's frame - x east and z north from its south-west corner, metres (TERRAIN_SIZE a pixel),
+ * y up from its ground (the host lifts it onto the ground the far ring stands there) - four vertices a quad, two
+ * triangles; null where nothing stands (the lake, the open shore).
+ * @param {number} s
+ * @returns {?{ positions: Float32Array, normals: Float32Array, colors: Uint8Array, indices: Uint16Array | Uint32Array }}
  */
-export const IMPOSTOR_BAND = 8;
-export function createImperialImpostor() {
-  const quads = [];
-  let row = -1, made = null;
-  const step = () => {
-    if (made) return true;
-    if (row < 0) { impostorQuads(quads, null); row = 0; return false; }
-    impostorQuads(quads, [row, Math.min(IMPERIAL_CELLS, row + IMPOSTOR_ROWS_A_STEP)]);
-    row += IMPOSTOR_ROWS_A_STEP;
-    if (row < IMPERIAL_CELLS) return false;
-    const n = quads.length, mid = new Float32Array(n * 3), nrm = new Float32Array(n * 3), slice = new Int16Array(n), ground = new Uint8Array(n);
-    quads.forEach((p, i) => { mid.set(p.mid, i * 3); nrm.set(p.n, i * 3); slice[i] = p.s; ground[i] = p.ground; });
-    made = { quads: n, mid, nrm, slice, ground, mesh: meshOf(quads) };
-    quads.length = 0;
-    return true;
-  };
-  const order = (ex, ey, ez, built) => {
-    if (!made) return new Uint32Array(0);
-    const { quads: n, mid, nrm, slice, ground } = made, keep = new Uint8Array(IMPERIAL_SPAN * IMPERIAL_SPAN);
-    for (let s = 0; s < keep.length; s++) keep[s] = built(s) ? 0 : 1;
-    const bands = Math.ceil((2 * IMPERIAL.lake * Math.SQRT2) / IMPOSTOR_BAND) + 1, count = new Uint32Array(bands + 1), band = new Int32Array(n);
-    let grounds = 0;
-    for (let i = 0; i < n; i++) {
-      band[i] = -1;
-      if (slice[i] >= 0 && !keep[slice[i]]) continue;
-      if (ground[i]) { band[i] = bands; grounds++; continue; }
-      const dx = mid[i * 3] - ex, dy = mid[i * 3 + 1] - ey, dz = mid[i * 3 + 2] - ez;
-      if (nrm[i * 3 + 1] < 0.9 && dx * nrm[i * 3] + dy * nrm[i * 3 + 1] + dz * nrm[i * 3 + 2] >= 0) continue;   // a side turned away (a roof always kept: the eye may stand above it)
-      band[i] = Math.max(0, bands - 1 - Math.min(bands - 1, Math.floor(Math.sqrt(dx * dx + dy * dy + dz * dz) / IMPOSTOR_BAND)));   // farthest the lowest
-      count[band[i]]++;
-    }
-    // the ground first, then the bands far to near (a counting sort - the order's cost a pass over the quads)
-    const start = new Uint32Array(bands + 1);
-    let total = grounds;
-    for (let b = 0; b < bands; b++) { start[b] = total; total += count[b]; }
-    const out = new Uint32Array(total * 6);
-    let g = 0;
-    for (let i = 0; i < n; i++) {
-      const b = band[i];
-      if (b < 0) continue;
-      const o = (b === bands ? g++ : start[b]++) * 6, v = i * 4;
-      out[o] = v; out[o + 1] = v + 1; out[o + 2] = v + 2; out[o + 3] = v; out[o + 4] = v + 2; out[o + 5] = v + 3;
-    }
-    return out;
-  };
-  return { step, order, mesh: () => made?.mesh ?? null, get ready() { return !!made; } };
-}
-/** The quads' vertices, four a quad (createImperialImpostor's mesh). */
-function meshOf(q) {
-  const n = q.length;
-  const positions = new Float32Array(n * 12), normals = new Float32Array(n * 12), colors = new Uint8Array(n * 12), sea = new Uint8Array(n * 4);
-  q.forEach((p, i) => {
-    const l = Math.hypot(p.n[0], p.n[1], p.n[2]) || 1;
+export function imperialLandmarkMesh(s) {
+  const quads = [...landmarksOf(s), ...impostorQuads([], s)];
+  if (!quads.length) return null;
+  const sx = s % IMPERIAL_SPAN, sy = Math.floor(s / IMPERIAL_SPAN), ox = (sx - IMPERIAL_SPAN / 2) * PIXEL, oz = (sy - IMPERIAL_SPAN / 2 + 1) * PIXEL;
+  const n = quads.length, positions = new Float32Array(n * 12), normals = new Float32Array(n * 12), colors = new Uint8Array(n * 12);
+  const indices = n * 4 <= 65536 ? new Uint16Array(n * 6) : new Uint32Array(n * 6);
+  quads.forEach((q, i) => {
+    const l = Math.hypot(q.n[0], q.n[1], q.n[2]) || 1;
     for (let k = 0; k < 4; k++) {
       const o = (i * 4 + k) * 3;
-      positions[o] = p.v[k][0]; positions[o + 1] = p.v[k][1]; positions[o + 2] = -p.v[k][2];
-      normals[o] = p.n[0] / l; normals[o + 1] = p.n[1] / l; normals[o + 2] = -p.n[2] / l;
-      colors[o] = p.c[0]; colors[o + 1] = p.c[1]; colors[o + 2] = p.c[2];
-      sea[i * 4 + k] = p.sea ? 255 : 0;
+      positions[o] = q.v[k][0] - ox; positions[o + 1] = q.v[k][1]; positions[o + 2] = oz - q.v[k][2];
+      normals[o] = q.n[0] / l; normals[o + 1] = q.n[1] / l; normals[o + 2] = -q.n[2] / l;
+      colors[o] = q.c[0]; colors[o + 1] = q.c[1]; colors[o + 2] = q.c[2];
     }
+    const v = i * 4;
+    indices.set([v, v + 1, v + 2, v, v + 2, v + 3], i * 6);
   });
-  return { positions, normals, colors, sea, quads: n };
-}
-/**
- * THE CITY'S RING IMPOSTOR (render/ringImpostors.js): `anchor()` the city's centre pixel (null while the capitals do not
- * stand), its reach the span's half, its making and its order createImperialImpostor's - the eye's offset and the built
- * pixels read in the slices' own terms (a slice s at the anchor's pixel plus its column and row less the half).
- * @param {() => ({ px: number, py: number } | null)} anchor
- */
-export function imperialRingImpostor(anchor) {
-  const imp = createImperialImpostor(), R = (IMPERIAL_SPAN - 1) / 2;
-  return Object.freeze({
-    anchor, reach: R,
-    step: () => imp.step(),
-    mesh: () => imp.mesh(),
-    order: (dx, dy, dz, builtAt) => {
-      const at = anchor();
-      return at ? imp.order(dx, dy, -dz, (s) => builtAt(at.px + (s % IMPERIAL_SPAN) - R, at.py + Math.floor(s / IMPERIAL_SPAN) - R)) : new Uint32Array(0);
-    },
-  });
+  return { positions, normals, colors, indices };
 }

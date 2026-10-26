@@ -4,7 +4,7 @@
 // CITY NEAR AND FAR, pinned: its blocks and its fabric's models families made when first asked and kept a few hundred at a
 // time; a slice within a pixel of the player built near, the rest far (its skyline, no collider, no walker); the sweep that
 // builds a slice again when its view moves, walking only the built pixels and only when the player's pixel or the built set
-// moves; the city past the stream's reach on the far ring's pass.
+// moves; the city past the stream's reach on the far ring's pass (FAR-LANDMARK: a landmark a slice).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -13,13 +13,13 @@ import {
   NEAR_RING, NEAR_SLACK, IMPERIAL_BLOCK_INDEX, imperialBlockIndex, imperialBlockName, imperialOwnName, imperialFarName, imperialLakeName, imperialViewName,
   imperialFabricModelId, imperialSkylineId, isFabricModelId, isSkylineId, imperialBlockJson, imperialOwnLaws, imperialOpenAt, sliceOfCell,
 } from '../../src/world/imperialBlocks.js';
-import { IMPERIAL, IMPERIAL_SPAN, IMPERIAL_CELLS, imperialSlicePlan, imperialCodeCell, IMPERIAL_ARENA_CODE } from '../../src/world/imperialCity.js';
+import { IMPERIAL, IMPERIAL_SPAN, IMPERIAL_CELLS, imperialSlicePlan, imperialCodeCell, IMPERIAL_ARENA_CODE, polar } from '../../src/world/imperialCity.js';
 import { installCapitals, _resetCapitals, IMPERIAL_KEEP } from '../../src/world/capitalModels.js';
 import { customModelFor, isSolidModel, registerCustomModelFamily, _resetCustomModels } from '../../src/world/customModels.js';
 import { registerPortBlockFamily, getDFBlockReplacementData, getNewDFBlockIndex, getNewDFBlockName, _resetWorldDataReplacement, installWorldDataReplacement } from '../../src/formats/worldData/worldDataReplacement.js';
-import { createImperialImpostor, imperialRingImpostor, impostorSliceAt, IMPOSTOR_ROWS_A_STEP } from '../../src/world/imperialImpostor.js';
-import { registerRingImpostor, ringImpostors, _resetRingImpostors } from '../../src/render/ringImpostors.js';
+import { impostorSliceAt, impostorQuads, imperialLandmarkMesh } from '../../src/world/imperialImpostor.js';
 import { FarRingRenderer } from '../../src/render/farRing.js';
+import { createCapitalSkyline, SKYLINE_REACH, SKYLINE_BUDGET_MS } from '../../src/scenes/capitalSkyline.js';
 import { createTamrielSweeps } from '../../src/scenes/tamrielSweepsHost.js';
 import { locationStartMarkers } from '../../src/world/locationEntrance.js';
 import { collectBlockFlats } from '../../src/world/rmbFlats.js';
@@ -172,95 +172,97 @@ test('IC-GRAND THE BUILD - a pixel built as its view (the location the index hol
   assert.match(pb, /capitalLod: capitalViewOf\(dfLocation\),/);
 });
 
-test('IC-GRAND THE CITY FROM AFAR - the impostor on the far ring\'s pass: the tower to its spire, the walls, the landmarks, a mass a cell of the streets\' buildings, the lake; made IMPOSTOR_ROWS_A_STEP rows a step; ordered from the eye\'s pixel - the lake first, then the faces turned to the eye far to near - leaving out every slice the stream has built (mutants: a built slice drawn; near before far; a back face drawn)', () => {
-  const imp = createImperialImpostor();
-  let steps = 1;
-  while (!imp.step()) steps++;
-  assert.equal(steps, 1 + IMPERIAL_CELLS / IMPOSTOR_ROWS_A_STEP + 0, 'the landmarks a step, then the rows');
-  const m = imp.mesh();
-  let top = -Infinity;
-  for (let i = 1; i < m.positions.length; i += 3) top = Math.max(top, m.positions[i]);
-  assert.equal(top, IMPERIAL.tower.spireTop, 'the tower its top');
-  assert.ok(m.quads > 20000 && m.quads < 120000, `${m.quads} quads`);
-  const none = () => false, all = imp.order(0, 2, 0, none);
-  assert.equal(all.length % 6, 0);
-  const allBuilt = imp.order(0, 2, 0, () => true);
-  assert.equal(allBuilt.length, 0, 'every slice built: nothing - the city and its lake all stand on its slices');
-  // far to near from the eye: the distance of each solid quad's middle never grows along the order
-  const P = m.positions, mid = (q) => { let x = 0, y = 0, z = 0; for (let k = 0; k < 4; k++) { x += P[(q * 4 + k) * 3]; y += P[(q * 4 + k) * 3 + 1]; z += P[(q * 4 + k) * 3 + 2]; } return [x / 4, z / 4, y / 4]; };
-  const eye = [0, 3000], order = imp.order(eye[0], 2, -eye[1], none), quads = [];
-  for (let i = 0; i < order.length; i += 6) quads.push(order[i] / 4);
-  const solids = quads.filter((q) => !m.sea[q * 4]);
-  for (let i = 1; i < solids.length; i++) {
-    const a = mid(solids[i - 1]), b = mid(solids[i]), da = Math.hypot(a[0] - eye[0], a[1] - eye[1], a[2] - 2), db = Math.hypot(b[0] - eye[0], b[1] - eye[1], b[2] - 2);
-    assert.ok(db <= da + 40, `near before far at ${i}: ${da.toFixed(0)} then ${db.toFixed(0)}`);
-  }
-  const dist = (q) => { const c = mid(q); return Math.hypot(c[0] - eye[0], c[1] - eye[1], c[2] - 2); };
-  assert.ok(dist(solids[0]) > dist(solids[solids.length - 1]) + 5000, 'the farthest first, the nearest last');
-  assert.ok(quads.slice(0, 50).every((q) => m.sea[q * 4] === 255), 'the lake first');
-  // no side turned away from the eye drawn (a roof kept: the eye may stand over it)
-  const N3 = m.normals;
-  for (const q of solids) {
-    const v = q * 4 * 3, n = [N3[v], N3[v + 1], N3[v + 2]], c = mid(q);
-    if (n[1] >= 0.9) continue;
-    assert.ok((c[0] - eye[0]) * n[0] + (c[2] - 2) * n[1] + (c[1] - eye[1]) * n[2] < 0, `a side turned away drawn: quad ${q}`);
-  }
-  // a slice built: its quads out
-  const s = impostorSliceAt(0, 0);
-  assert.equal(s, CENTRE);
-  const noCentre = imp.order(0, 2, 0, (q) => q === CENTRE);
-  assert.ok(noCentre.length < all.length, 'the centre built: the tower out');
-  // the ring's door: an impostor registered once, the city's anchored on its centre pixel, its slices the pixels round it
-  _resetRingImpostors();
-  const ring = imperialRingImpostor(() => ({ px: 500, py: 400 }));
-  assert.equal(registerRingImpostor(ring), true);
-  assert.equal(registerRingImpostor(ring), false);
-  assert.deepEqual(ringImpostors(), [ring]);
-  assert.equal(ring.reach, (N - 1) / 2);
-  let asked = new Set();
-  const ordered = imperialRingImpostor(() => ({ px: 500, py: 400 }));
-  while (!ordered.step());
-  ordered.order(0, 2, 0, (px, py) => { asked.add(`${px},${py}`); return false; });
-  assert.ok(asked.has('488,388') && asked.has('512,412') && !asked.has('487,400'), 'its slices the pixels about its anchor');
-  asked = null;
-  _resetRingImpostors();
+// PIN MOVED (IC-GRAND x FAR-LANDMARK, at the merge of the streams' head): the city from afar was an impostor of IC-GRAND's own
+// on the far ring's pass (render/ringImpostors.js, its order a counting sort); stream B's FAR-LANDMARK hook draws a
+// silhouette a pixel in the ring's painter's order now (render/farLandmarks.js), and the city hands one in a slice.
+test('IC-GRAND THE CITY FROM AFAR - its silhouette a landmark a slice (render/farLandmarks.js FAR-LANDMARK): the centre\'s the tower to its spire in its pixel\'s middle; each slice\'s landmarks and its streets as a few masses (a key a cell - its neighbourhood\'s walls, roof and height - merged into rectangles), tens of triangles; in its pixel\'s frame, x east and z north from its south-west corner; none where nothing stands (mutants: the masses unmerged; the frame\'s z south)', () => {
+  const meshes = Array.from({ length: N * N }, (_, s) => imperialLandmarkMesh(s));
+  const tris = meshes.filter(Boolean).map((m) => m.indices.length / 3).sort((a, b) => a - b);
+  assert.ok(tris.length > 200 && tris.length < 400, `${tris.length} slices stand something`);
+  assert.equal(meshes[0], null, 'a corner of the open shore: nothing');
+  assert.ok(tris[tris.length >> 1] <= 100 && tris.reduce((a, b) => a + b, 0) < 30000, `tens of triangles a slice (the median ${tris[tris.length >> 1]})`);
+  // the centre: the tower to its spire's tip, over its pixel's middle
+  const c = meshes[CENTRE];
+  let top = -Infinity, at = null;
+  for (let i = 0; i < c.positions.length; i += 3) if (c.positions[i + 1] > top) { top = c.positions[i + 1]; at = [c.positions[i], c.positions[i + 2]]; }
+  assert.equal(top, IMPERIAL.tower.spireTop);
+  assert.ok(Math.abs(at[0] - 409.6) < 1 && Math.abs(at[1] - 409.6) < 1, `the spire over the pixel's middle: ${at}`);
+  // the frame: the Temple of the One's dome (bearing 210, 4.4 km - south-west, its slice 434) where its pixel holds it, z north
+  const T = IMPERIAL.temple, s = impostorSliceAt(...polar(T.b, T.r)), m = meshes[s], hi = [];
+  for (let i = 0; i < m.positions.length; i += 3) if (m.positions[i + 1] > T.h + 16) hi.push([m.positions[i], m.positions[i + 2]]);
+  const [tx, tz] = polar(T.b, T.r), sx = s % N, sy = Math.floor(s / N);
+  const want = [tx - (sx - N / 2) * 8 * B, (sy - N / 2 + 1) * 8 * B - tz], mean = hi.reduce((a, p) => [a[0] + p[0] / hi.length, a[1] + p[1] / hi.length], [0, 0]);
+  assert.ok(hi.length && Math.hypot(mean[0] - want[0], mean[1] - want[1]) < 2, `the dome at ${mean} (${want})`);
+  // merged: a slice's streets a handful of boxes (one a rectangle of cells of one key), never a box a cell
+  const boxes = [];
+  for (let q = 0; q < N * N; q++) { const quads = impostorQuads([], q); if (quads.length) boxes.push(quads.filter((u) => u.n[1] === 1).length); }
+  boxes.sort((a, b) => a - b);
+  assert.ok(boxes[boxes.length >> 1] <= 8 && boxes[boxes.length - 1] <= 20, `boxes a slice: the median ${boxes[boxes.length >> 1]}, the most ${boxes[boxes.length - 1]}`);
+  assert.ok(impostorQuads([], null).every((q) => q.s >= 0 || q.sea), 'every landmark in a slice');
 });
 
-test('IC-GRAND THE FAR RING DRAWS THE IMPOSTORS - stepped a frame, uploaded once whole, ordered again only when the eye\'s pixel or the built pixels under it move, drawn after the ring\'s ground at the same far plane about its anchor on the ring\'s ground; dropped out of reach (mutants: ordered every frame; drawn before the ground; never dropped)', () => {
-  const src = read('src/render/farRing.js');
-  assert.match(src, /punchHole\(holeX, holeY, holeRadius, built = null\) \{\n\s+this\._impostorFrame\(holeX, holeY, built\);/);
-  assert.match(src, /gl\.drawElements\(gl\.TRIANGLES, this\.ringCount \+ 6 \* fill, gl\.UNSIGNED_INT, 0\);[^\n]*\n\s+this\._drawImpostors\(origin\);/);
-  // a renderer of fakes: the GL a recorder
-  const calls = [], gl = new Proxy({}, { get: (t, k) => (typeof k === 'string' && /^[A-Z_]+$/.test(k) ? k : (...a) => { calls.push([k, ...a]); return { k }; }) });
+test('IC-GRAND THE CITY ON THE HORIZON - the sweep hands the far ring one landmark a slice (its addLandmark), a budget a frame, the nearest the traveller first, each stood on the ground the ring stands at its pixel (groundAt) and made once; let go out of SKYLINE_REACH, on another ring or when the ring disposed them; a slice off the ring\'s grid waits for it to move; none on the classic skin (mutants: never let go; stood at nought; all at once; far first; the wait forgotten; a disposed ring kept; unwired; the ring\'s ground by column for row)', () => {
+  const ground = (px, py) => 40 + (px - 500) * 2 + (py - 400) * 0.5;
+  const ringOf = (g = ground) => {
+    const r = { baseX: 500, baseY: 400, added: [], removed: 0, groundAt: g };
+    r.addLandmark = ({ px, py, mesh, key }) => { const h = { landmark: { vao: {}, px, py, mesh, key }, remove: () => { r.removed++; h.landmark.vao = null; } }; r.added.push(h); return h; };
+    return r;
+  };
+  const stand = Array.from({ length: N * N }, (_, s) => !!imperialLandmarkMesh(s)).filter(Boolean).length;
+  let t = 0;
+  const host = { farRing: ringOf(), state: { current: { x: 500, y: 400 } } };
+  const sk = createCapitalSkyline(host, { now: () => (t += 1), centre: () => ({ px: 500, py: 400 }) });
+  const settle = () => { for (let i = 0; i < 2000; i++) { sk.sweep(); if (!sk.owed) break; } };   // bounded: a mutant never settles
+  sk.sweep();
+  const first = host.farRing.added;
+  assert.ok(first.length >= 1 && first.length < SKYLINE_BUDGET_MS, 'a budget\'s worth a frame');
+  assert.deepEqual([first[0].landmark.key, first[0].landmark.px, first[0].landmark.py], [`imperial:${CENTRE}`, 500, 400], 'the nearest first');
+  settle();
+  assert.equal(first.length, stand, 'every slice that stands something, one landmark each');
+  for (const h of first) {
+    const { px, py, mesh } = h.landmark;
+    let lo = Infinity;
+    for (let i = 1; i < mesh.positions.length; i += 3) lo = Math.min(lo, mesh.positions[i]);
+    assert.ok(Math.abs(lo - ground(px, py)) < 1e-3, `${px},${py} on the ring's ground (${lo})`);
+  }
+  // out of reach: every one let go; back: handed in again
+  host.state.current = { x: 500 + SKYLINE_REACH + 1, y: 400 };
+  sk.sweep();
+  assert.deepEqual([host.farRing.removed, sk.count], [stand, 0], 'out of reach: let go');
+  host.state.current = { x: 500, y: 400 };
+  settle();
+  assert.equal(sk.count, stand);
+  // the ring disposed them with itself (a whole dispose): let go and handed in again
+  for (const h of host.farRing.added) h.landmark.vao = null;
+  const before = host.farRing.added.length;
+  sk.sweep();
+  assert.ok(host.farRing.added.length > before, 'handed in again');
+  // another ring: the old one's let go, the new one handed them
+  const old = host.farRing;
+  host.farRing = ringOf();
+  sk.sweep();
+  assert.equal(old.added.filter((h) => h.landmark.vao).length, 0, 'the old ring\'s let go');
+  settle();
+  assert.equal(host.farRing.added.length, stand);
+  // off the ring's grid: waiting, handed in when the ring moves
+  const part = ringOf((px, py) => (px > 505 ? null : ground(px, py)));
+  host.farRing = part;
+  settle();
+  assert.ok(sk.waiting > 0 && part.added.length < stand, 'the slices off its grid wait');
+  part.groundAt = ground;
+  part.baseX = 501;
+  settle();
+  assert.deepEqual([part.added.length, sk.waiting], [stand, 0], 'handed in once the ring moved');
+  // the classic skin: no ring, nothing asked
+  host.farRing = null;
+  assert.doesNotThrow(() => sk.sweep());
+  assert.equal(sk.count, 0);
+  // wired: the capitals' sweep asks it on the frame, the world host hands its ring
+  assert.match(read('src/scenes/tamrielSweepsHost.js'), /function sweepCapitalPixels\(\) \{\n\s+sweepCapitalLod\(\);[^\n]*\n\s+capitalSkyline\.sweep\(\);/);
+  assert.match(read('src/scenes/world.js'), /createTamrielSweeps\(\{[^\n]*\n(?:\s+[^\n]*\n){0,12}?\s+get farRing\(\) \{ return farRing; \},/);
+  // the ring's ground at a pixel's centre: its own grid, row by row
   const r = Object.create(FarRingRenderer.prototype);
-  Object.assign(r, { gl, _imp: new Map(), _ground: { positions: new Float32Array(97 * 97 * 3).fill(5), side: 97 }, baseX: 480, baseY: 400, u: { uOrigin: 'uOrigin' } });
-  let orders = 0, stepped = 0, at = { px: 500, py: 400 };
-  _resetRingImpostors();
-  registerRingImpostor({ anchor: () => at, reach: 12, step: () => ++stepped >= 2, mesh: () => ({ positions: new Float32Array(12), normals: new Float32Array(12), colors: new Uint8Array(12), sea: new Uint8Array(4) }), order: () => { orders++; return new Uint32Array(6); } });
-  const built = new Map([['1,1', {}]]);
-  built.changes = 1;
-  r._impostorFrame(500, 400, built);
-  assert.equal(r._imp.size, 0, 'not whole yet');
-  r._impostorFrame(500, 400, built);
-  assert.equal(r._imp.size, 1, 'uploaded once whole');
-  assert.equal(orders, 1);
-  r._impostorFrame(500, 400, built);
-  assert.equal(orders, 1, 'nothing moved: not ordered');
-  built.changes = 2;
-  r._impostorFrame(500, 400, built);
-  assert.equal(orders, 1, 'the built set moved, none under it: not ordered');
-  built.set('500,400', {}); built.changes = 3;
-  r._impostorFrame(500, 400, built);
-  assert.equal(orders, 2, 'a pixel under it built: ordered');
-  r._impostorFrame(501, 400, built);
-  assert.equal(orders, 3, 'the eye\'s pixel moved: ordered');
-  calls.length = 0;
-  r._drawImpostors([10, 20, 30]);
-  const origin = calls.find((c) => c[0] === 'uniform3f');
-  assert.deepEqual(origin.slice(2), [10 + (500 - 480 + 0.5) * 819.2, 20 + 5, 30 - (400 - 400 - 0.5) * 819.2], 'about its anchor pixel\'s middle on the ring\'s ground');
-  assert.ok(calls.some((c) => c[0] === 'drawElements'));
-  at = { px: 9000, py: 400 };
-  r._impostorFrame(501, 400, built);
-  assert.equal(r._imp.size, 0, 'out of reach: dropped');
-  _resetRingImpostors();
+  assert.equal(r.groundAt(10, 20), null, 'before a build');
+  r._ringY = { positions: Float32Array.from({ length: 27 }, (_, i) => (i % 3 === 1 ? 100 * Math.floor(i / 9) + Math.floor((i % 9) / 3) : 0)), side: 3, baseX: 10, baseY: 20, radius: 1 };
+  assert.deepEqual([r.groundAt(11, 19), r.groundAt(9, 21), r.groundAt(10, 20), r.groundAt(12, 20)], [2, 200, 101, null]);
 });

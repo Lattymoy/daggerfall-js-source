@@ -13,13 +13,10 @@ import { MeshBuilder } from './detStandIns.js';
 import { registerPortBlock, registerPortBlockOf, installWorldDataReplacement, registerPortBlockFamily } from '../formats/worldData/worldDataReplacement.js';
 import { CASTLE_BLOCKS, castleBlockOf } from './capitalCastles.js';   // WW7-4
 import { addVendorTextures } from '../systems/textureReplacement.js';
-import { CAPITALS, CAPITAL_MODELS, capitalPortBlocks, BLOCK_M, portBlockJson, miscModelAt, startMarkerAt, inCapitalRim, CAPITAL_NO_GROUND, capitalCentrePixel } from './tamrielCapitals.js';
+import { CAPITALS, CAPITAL_MODELS, capitalPortBlocks, BLOCK_M, portBlockJson, miscModelAt, startMarkerAt, inCapitalRim, CAPITAL_NO_GROUND } from './tamrielCapitals.js';
 import { IMPERIAL_PARTS, IMPERIAL_MODELS, IMPERIAL_SLICE_PARTS, IMPERIAL_SPAN, imperialSliceRect } from './imperialCity.js';   // TS5: the Imperial City's landmarks carried in parts
 import { imperialBlockJson, imperialBlockIndex, imperialBlockName, imperialModelBuild, isFabricModelId, isSkylineId } from './imperialBlocks.js';   // IC-GRAND: its blocks and its fabric's models, families
 import { imperialArt } from './imperialArt.js';   // IC-GRAND: the fabric's walls' pictures
-import { imperialRingImpostor } from './imperialImpostor.js';   // IC-GRAND: the city from afar, on the far ring's pass
-import { registerRingImpostor } from '../render/ringImpostors.js';
-import { capitalsOn } from '../scenes/shared.js';
 import { CAPITAL_ARCHIVE, CAPITAL_ART } from './capitalShapes.js';
 import { buildImperialTower, buildPalaceWall, buildEmperorsTombs, buildCityWall, buildDistrictWalls, buildTempleOfTheOne, buildTalosStatue, buildImperialPrison, buildArcaneUniversity, buildWaterfront, buildTalosBridge, buildNineDivines, nearRect } from './capitalImperial.js';   // TESA11
 import { buildSolitudeArch, buildBluePalace, buildSolitudeWall, buildCastleDour, buildSolitudeDocks } from './capitalSolitude.js';
@@ -480,6 +477,4 @@ function installImperialFamilies() {
   registerPortBlockFamily({ indexOf: imperialBlockIndex, nameOf: imperialBlockName, make: (name) => imperialBlockJson(name, deps), keep: IMPERIAL_KEEP.blocks });
   registerCustomModelFamily({ owns: isFabricModelId, build: (id) => imperialModelBuild(id), keep: IMPERIAL_KEEP.fabric, climateFree: true });
   registerCustomModelFamily({ owns: isSkylineId, build: (id) => imperialModelBuild(id), keep: IMPERIAL_KEEP.skylines, climateFree: true, solid: false });
-  const k = CAPITALS.indexOf(IC);
-  registerRingImpostor(imperialRingImpostor(() => (capitalsOn() ? capitalCentrePixel(k) : null)));   // the city past the stream's reach - where the capitals stand
 }

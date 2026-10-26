@@ -651,3 +651,13 @@ state read live through the host (`get state()`), and its callers (the ocean hol
 `bootWorld` 36,116 -> 36,093 logical lines (24 out, 1 in), and the ceiling at it (`test/scenes/hostceiling.test.js`).
 The one pin that quoted the moved line reads it through the host's text now (`perfcol2`, PIN MOVED), and the tool
 re-aimed the mutant records over it (`oh.json`, `perfcol2.json`).
+
+## IC-GRAND x FAR-LANDMARK wiring - the far ring handed to the sweeps (2026-10-26)
+
+The Imperial City hands its far silhouette to stream B's FAR-LANDMARK hook from `scenes/capitalSkyline.js`, constructed and
+swept by `scenes/tamrielSweepsHost.js` (the capitals' sweep, already asked on the frame). The host's share is the ring itself:
+`get farRing() { return farRing; }` in the sweeps' host object - an entry and its return, two logical lines - and
+`bootWorld` stood at its ceiling (36,062) after the streams' merge. RAISED to 36,064 with the reason beside the row
+(`test/scenes/hostceiling.test.js`): the two lines are the wiring, nothing of the behaviour; the one cut near them
+(`arenaDoorTarget`, which IC-GRAND touched) is quoted by text in five pins and two mutant records, a move that would
+re-aim all of them for two lines. A later cut that moves code out lowers it again.

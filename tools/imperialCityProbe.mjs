@@ -60,7 +60,8 @@ page.setDefaultTimeout(600000);   // a shot waits for a frame, and SwiftShader o
 // a renderer the machine's memory took (an OOM kill) answers no evaluate again - said, and the run ends
 page.on('crash', () => { console.log('  the page crashed (its renderer gone - out of memory?)'); process.exit(3); });
 // RADIUS=n: the land view's distance (world/landView.js - the Features row's pref), the same for a before and an after
-if (process.env.RADIUS) await page.addInitScript((r) => { try { const k = 'dagger.ui.v1'; const o = JSON.parse(localStorage.getItem(k) || '{}'); o.landViewDistance = r; localStorage.setItem(k, JSON.stringify(o)); } catch { /* none */ } }, Number(process.env.RADIUS));
+// and the tutorial's popups off (systems/uiPrefs.js tutorialPopups) - a page over the shot is no view of the city
+await page.addInitScript((r) => { try { const k = 'dagger.ui.v1'; const o = JSON.parse(localStorage.getItem(k) || '{}'); if (r) o.landViewDistance = r; o.tutorialPopups = false; localStorage.setItem(k, JSON.stringify(o)); } catch { /* none */ } }, Number(process.env.RADIUS ?? 0));
 const errors = [];
 page.on('pageerror', (e) => errors.push(String(e.stack ?? e.message)));
 page.on('console', (m) => { const t = m.text(); if (m.type() === 'error' && !/CURSOR\.IMG|status of 404|ERR_CERT/.test(t)) errors.push(`[console] ${t.slice(0, 300)}`); if (/^\[(capitals|imperial)\]/.test(t)) console.log(`  console: ${t.slice(0, 200)}`); });
@@ -92,6 +93,7 @@ const at = await (async () => {
 })();
 if (!at) throw new Error('the Imperial City never stood (no centre pixel)');
 console.log(`booted in ${((Date.now() - t0) / 1000).toFixed(0)} s; the Imperial City's centre pixel ${at.px},${at.py}`);
+await page.addStyleTag({ content: '#fps-counter { visibility: hidden !important; }' });   // its numbers read (__fpsStats), its card off the shots
 // Daggerfall's own arena, as it stands, before the jump (window.__arena: the stage's centre, the scene's frame) - the eye
 // north-west of it looking south-east (the camera's forward is (sin yaw, cos yaw) east and north)
 const dfArena = await ev(() => window.__arena?.()?.centre ?? null);

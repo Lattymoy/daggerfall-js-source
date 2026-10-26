@@ -1607,21 +1607,28 @@ when first read; the city past the stream's reach is drawn on the far ring's pas
   when first read under its fixed index (own, far, lake: 2,000,000 / 2,100,000 / 2,200,000 plus the cell) and kept an
   LRU (IMPERIAL_KEEP: 1024 blocks, 768 fabric models, 192 skylines, 48 slices' footprints); a long wall's part is built
   of its runs near its slice alone (`imperialPartBuild`: the city wall is 43 km round, 179k triangles whole).
-- **The city from afar** (`world/imperialImpostor.js`, `render/ringImpostors.js`, `render/farRing.js`): from the city wall
-  the tower is 8.4 pixels off - past the stream (its land view a few pixels each way) and the world's 6 km far plane. An
-  impostor on the far ring's pass draws what the stream does not: the tower, the walls, the landmarks, a mass a cell of
-  the streets' buildings (its district's height and colours), Lake Rumare round the isle - 61,043 quads, made four cell
-  rows a frame, ordered from the eye's pixel (the lake first, then the faces turned to the eye far to near in 8 m bands,
-  a counting sort: 2-3 ms) only when the eye's pixel or the built pixels under it move, every slice the stream has built
-  left out. At the far plane, as the ring is: every pixel the stream draws paints over it. Enhanced skin alone (the
-  ring's own lane).
+- **The city from afar** (`world/imperialImpostor.js` imperialLandmarkMesh, `scenes/capitalSkyline.js`; stream B's
+  FAR-LANDMARK hook, `render/farLandmarks.js` and `06-Systems/Travel-View.md`): from the city wall the tower is 8.4 pixels
+  off - past the stream (its land view a few pixels each way) and the world's 6 km far plane. The far ring draws a
+  silhouette a pixel where the stream has built none, in its own painter's order, light and haze; the city hands it one a
+  slice - the landmarks whose middles stand in it (the tower to its spire, the walls and their towers, the temple, the
+  compounds, the bridge) and its streets as a few masses (each cell keyed by its neighbourhood's walls, roof and height a
+  storey at a time - a park's groves a 2 x 2 of cells one in two - the cells of a key merged into rectangles, a box each:
+  six on the median slice, seventeen at the most). 259 of the 625 slices stand something (the lake and the open shore
+  none), 76 triangles on the median, 19.4k in all; each stood on the ground the ring stands at its pixel (FarRingRenderer
+  `groundAt`, the ring's own grid). Handed in while the traveller is within SKYLINE_REACH (the ring's 48 pixels and the
+  span's half) of the centre pixel, a 3 ms budget a frame and the nearest first, each made once; let go out of reach, on
+  another ring or when the ring disposed them; a slice off the ring's grid waits for it to move. Enhanced skin alone (the
+  ring's own lane). AT THE MERGE OF THE STREAMS' HEAD (2026-10-26) this replaced IC-GRAND's own impostor pass on the ring
+  (`render/ringImpostors.js`, 61k quads in a counting sort, retired): one hook for every far silhouette, stream B's.
 
 Measured in node on this machine (four cores shared with five other streams, load 17-30 - the times are relative): the
 plan a slice 0.3-17 ms when first asked (all 625: 0.7-0.8 s; TS5's whole 56 x 56 plan at load was 100-125 ms); an own
 block 40-480 ms, its slice's carrier (its footprint and its markers) 0.4-1.1 s (1.1-1.5 s before the markers' search
 was made lazy); a far block 1-3 ms; a cell's fabric model 27 ms on the mean (the worst 140-250 ms), a slice's 57-64
-cells 1.3-1.7 s and 86-112k triangles; a slice's skyline 0.2-0.5 s, 3.5-7k triangles; the impostor's making 2.1 s over
-fifty-one steps (the worst 280 ms), its order 2-16 ms; the pictures 0.24-0.29 s once.
+cells 1.3-1.7 s and 86-112k triangles; a slice's skyline 0.2-0.5 s, 3.5-7k triangles; the far landmarks' meshes 0.23-0.29 s
+for all 625 (the slowest slice 14-16 ms, under the sweep's 3 ms budget a frame mostly two or three a frame); the
+pictures 0.24-0.29 s once.
 
 TESA11, IC-RING and TS5 read on: the pixel law the same (the nearest centre all of whose 625 pixels are the Imperial
 Province's land, on the trace's isle inside Lake Rumare's ring); the flatten the same (every slice to the centre's
@@ -2042,12 +2049,16 @@ untouched, other capitals as they are); the families (the indices, the door's LR
 city's installed, a far block closing nothing); every slice's arrivals on its carrier and the rim on the family's blocks
 (PIN MOVED here from `test/audit_tesa.test.js` A6-1 and `test/world/audittesa2c_capitals.test.js` C1); the sweep (walked
 only when the pixel or the set moves, near at the head, far at the tail); the build's view, its far gates and the
-collider's word; the impostor (its steps, the tower its top, the built slices out, the lake first, far to near, no side
-turned away); the far ring's hooks (stepped, uploaded once, ordered only when the eye's pixel or the pixels under it move,
-drawn after the ground about its anchor, dropped out of reach). `test/world/icgrand_arena.test.js` (4): the Colosseum
+collider's word; the city from afar (PIN MOVED at the merge of the streams' head - the impostor's two pins retired with
+it: a landmark a slice, the tower to its spire over the centre pixel's middle, the temple's dome where its pixel's frame
+holds it with z north, the masses merged - six boxes a slice on the median - none on the lake); the city on the horizon
+(handed one a slice, a budget a frame, the nearest first, on the ring's ground at its pixel, let go out of reach, on
+another ring and when the ring disposed them, a slice off the grid waiting for it to move, none on the classic skin; the
+sweep wired and the world host's ring handed; the ring's `groundAt` row by row). `test/world/icgrand_arena.test.js` (4): the Colosseum
 gone; Daggerfall's arena in the Arena District's heart cell, the same port block, the fabric off it, the district's
 avenue and ring road at it; its stair the undercroft's door (`standsArena`); Daggerfall keeps its own (cell (4, 3), the
-edit Daggerfall's alone, the gate people's factions recorded). Mutants `tools/mutants/icgrand.json` (40). PINS MOVED
+edit Daggerfall's alone, the gate people's factions recorded). Mutants `tools/mutants/icgrand.json` (44: the impostor's six retired with it at the merge, ten for the far landmarks).
+PINS MOVED
 (IC-GRAND): `test/tesa11_imperial.test.js` (the plan by its law at 200 x 200, the Palace District, 625 slices, the
 pixel law twelve a side, every slice's location and the arena's one, the ground's laws at the new wheel and the
 Arboretum's grass the fabric's, the port blocks on the family's door and the parts, the tower to the spec, the walls at

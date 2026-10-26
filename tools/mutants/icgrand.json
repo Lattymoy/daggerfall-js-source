@@ -1,42 +1,398 @@
 [
-  { "name": "IC-GRAND-roof-step-past-the-reach", "file": "src/world/imperialFabric.js", "old": "export const ROOF_STEP = 1.6;", "new": "export const ROOF_STEP = 2.4;", "tests": ["test/world/icgrand_fabric.test.js"] },
-  { "name": "IC-GRAND-alley-past-the-leap", "file": "src/world/imperialFabric.js", "old": "export const ALLEY = 3.2;", "new": "export const ALLEY = 3.6;", "tests": ["test/world/icgrand_fabric.test.js"] },
-  { "name": "IC-GRAND-parapet-over-a-vault", "file": "src/world/imperialFabric.js", "old": "export const PARAPET = 0.9;", "new": "export const PARAPET = 1.3;", "tests": ["test/world/icgrand_fabric.test.js"] },
-  { "name": "IC-GRAND-walk-two-half-storeys", "file": "src/world/imperialFabric.js", "old": "const step = Math.floor(u01(seed, 9, n) * 3) - 1;", "new": "const step = Math.floor(u01(seed, 9, n) * 5) - 2;", "tests": ["test/world/icgrand_fabric.test.js"] },
-  { "name": "IC-GRAND-ring-order-reversed", "file": "src/world/imperialFabric.js", "old": "for (const [a, b] of pieces(Ls - 2 * D, st.front[0], st.front[1], seed, 6)) rects.push(", "new": "for (const [a, b] of pieces(Ls - 2 * D, st.front[0], st.front[1], seed, 6).reverse()) rects.push(", "tests": ["test/world/icgrand_fabric.test.js"] },
-  { "name": "IC-GRAND-no-yard", "file": "src/world/imperialFabric.js", "old": "  if (court) {\n    const cw = Ls - 2 * D", "new": "  if (!court) {\n    const cw = Ls - 2 * D", "tests": ["test/world/icgrand_fabric.test.js"] },
-  { "name": "IC-GRAND-no-dead-end", "file": "src/world/imperialFabric.js", "old": "hash32(seed, 23, e) % 3 !== 0", "new": "hash32(seed, 23, e) % 3 !== 9", "tests": ["test/world/icgrand_fabric.test.js"] },
-  { "name": "IC-GRAND-no-bridge", "file": "src/world/imperialFabric.js", "old": "hash32(seed, 43, p.key, e) % 4 !== 0", "new": "hash32(seed, 43, p.key, e) % 4 !== 9", "tests": ["test/world/icgrand_fabric.test.js"] },
-  { "name": "IC-GRAND-no-statue", "file": "src/world/imperialFabric.js", "old": "if (hash32(h.seed, 51, i, j) % 3 !== 0) return;", "new": "if (hash32(h.seed, 51, i, j) % 3 !== 9) return;", "tests": ["test/world/icgrand_fabric.test.js"] },
-  { "name": "IC-GRAND-bay-a-storey", "file": "src/world/imperialFabric.js", "old": "export const BAY = 1.6;", "new": "export const BAY = 3.2;", "tests": ["test/world/icgrand_fabric.test.js"] },
-  { "name": "IC-GRAND-no-main-street", "file": "src/world/imperialFabric.js", "old": "w < 10 ? 'side' : 'main'", "new": "w < 99 ? 'side' : 'main'", "tests": ["test/world/icgrand_fabric.test.js"] },
-  { "name": "IC-GRAND-one-neighbourhood-a-district", "file": "src/world/imperialFabric.js", "old": "const key = di * 100 + ring * 10 + half;", "new": "const key = di * 100 + ring * 0 + 0;", "tests": ["test/world/icgrand_fabric.test.js"] },
-  { "name": "IC-GRAND-branch-under-an-alley", "file": "src/world/imperialFabric.js", "old": "if (!(line.w > ALLEY + 0.01)) continue;", "new": "if (!(line.w > 0)) continue;", "tests": ["test/world/icgrand_sewers.test.js"] },
-  { "name": "IC-GRAND-facade-square", "file": "src/world/imperialArt.js", "old": "export const FACADE_TEXELS = Object.freeze({ w: 64, h: 128 });", "new": "export const FACADE_TEXELS = Object.freeze({ w: 64, h: 64 });", "tests": ["test/world/icgrand_fabric.test.js"] },
-  { "name": "IC-GRAND-sewer-uphill", "file": "src/world/imperialSewers.js", "old": "headDepth: 5, MAIN_FALL: 1 / 500,", "new": "headDepth: 5, MAIN_FALL: -1 / 500,", "tests": ["test/world/icgrand_sewers.test.js"] },
-  { "name": "IC-GRAND-ring-drop-unread", "file": "src/world/imperialSewers.js", "old": "const dJoin = radialDepthAt(ring.r) - S.RING_DROP,", "new": "const dJoin = radialDepthAt(ring.r) - 0,", "tests": ["test/world/icgrand_sewers.test.js"] },
-  { "name": "IC-GRAND-culvert-to-dry-land", "file": "src/world/imperialSewers.js", "old": "  return polar(b, r - 4);", "new": "  return polar(b, r - 400);", "tests": ["test/world/icgrand_sewers.test.js"] },
-  { "name": "IC-GRAND-manholes-spaced-twice", "file": "src/world/imperialSewers.js", "old": "s < len; s += S.manholeEvery) {", "new": "s < len; s += S.manholeEvery * 2) {", "tests": ["test/world/icgrand_sewers.test.js"] },
-  { "name": "IC-GRAND-grate-off-the-road", "file": "src/world/imperialSewers.js", "old": "out.push({ at: [p[0] + n[0] * side * (w / 2 - S.gateOut),", "new": "out.push({ at: [p[0] + n[0] * side * (w / 2 + S.gateOut),", "tests": ["test/world/icgrand_sewers.test.js"] },
-  { "name": "IC-GRAND-near-slack-unread", "file": "src/world/tamrielCapitals.js", "old": "return d <= NEAR_RING || (was === 'near' && d <= NEAR_RING + NEAR_SLACK);", "new": "return d <= NEAR_RING || (d <= NEAR_RING + NEAR_SLACK);", "tests": ["test/world/icgrand_lod.test.js"] },
-  { "name": "IC-GRAND-near-ring-two", "file": "src/world/imperialBlocks.js", "old": "export const NEAR_RING = 1;", "new": "export const NEAR_RING = 2;", "tests": ["test/world/icgrand_lod.test.js"] },
-  { "name": "IC-GRAND-arena-far", "file": "src/world/imperialBlocks.js", "old": "if (cell === 'L' || cell === 'O' || cell === IMPERIAL_ARENA_CODE) return near;", "new": "if (cell === 'L' || cell === 'O') return near;", "tests": ["test/world/icgrand_lod.test.js"] },
-  { "name": "IC-GRAND-view-made-anew", "file": "src/world/tamrielCapitals.js", "old": "  let v = _views.get(loc);\n  if (!v) {", "new": "  let v = _views.get(loc);\n  if (true) {", "tests": ["test/world/icgrand_lod.test.js"] },
-  { "name": "IC-GRAND-skyline-solid", "file": "src/world/capitalModels.js", "old": "climateFree: true, solid: false });", "new": "climateFree: true, solid: true });", "tests": ["test/world/icgrand_lod.test.js"] },
-  { "name": "IC-GRAND-block-keep-unbounded", "file": "src/formats/worldData/worldDataReplacement.js", "old": "    if (f.cache.size > f.keep) f.cache.delete(f.cache.keys().next().value);", "new": "    if (false) f.cache.delete(f.cache.keys().next().value);", "tests": ["test/world/icgrand_lod.test.js"] },
-  { "name": "IC-GRAND-model-keep-unbounded", "file": "src/world/customModels.js", "old": "  if (f.cache.size > f.keep) f.cache.delete(f.cache.keys().next().value);", "new": "  if (false) f.cache.delete(f.cache.keys().next().value);", "tests": ["test/world/icgrand_lod.test.js"] },
-  { "name": "IC-GRAND-sweep-every-frame", "file": "src/scenes/tamrielSweepsHost.js", "old": "    if (at === _lod.at && host.built.size === _lod.size) return;", "new": "    if (false) return;", "tests": ["test/world/icgrand_lod.test.js"] },
-  { "name": "IC-GRAND-sweep-near-at-the-tail", "file": "src/scenes/tamrielSweepsHost.js", "old": "    host.queue.unshift(...near.sort(nearestFirstFrom(cur)));", "new": "    host.queue.push(...near.sort(nearestFirstFrom(cur)));", "tests": ["test/world/icgrand_lod.test.js"] },
-  { "name": "IC-GRAND-far-slice-yards", "file": "src/scenes/pixelBuild.js", "old": "const yardTown = !farView && isYardTown(dfLocation)", "new": "const yardTown = isYardTown(dfLocation)", "tests": ["test/world/icgrand_lod.test.js"] },
-  { "name": "IC-GRAND-impostor-built-drawn", "file": "src/world/imperialImpostor.js", "old": "if (slice[i] >= 0 && !keep[slice[i]]) continue;", "new": "if (false) continue;", "tests": ["test/world/icgrand_lod.test.js"] },
-  { "name": "IC-GRAND-impostor-near-first", "file": "src/world/imperialImpostor.js", "old": "band[i] = Math.max(0, bands - 1 - Math.min(bands - 1,", "new": "band[i] = Math.max(0, 0 + Math.min(bands - 1,", "tests": ["test/world/icgrand_lod.test.js"] },
-  { "name": "IC-GRAND-impostor-back-face", "file": "src/world/imperialImpostor.js", "old": "dz * nrm[i * 3 + 2] >= 0) continue;", "new": "dz * nrm[i * 3 + 2] >= 1e9) continue;", "tests": ["test/world/icgrand_lod.test.js"] },
-  { "name": "IC-GRAND-ring-orders-on-any-build", "file": "src/render/farRing.js", "old": "      if (mark === st.key) continue;", "new": "      if (false) continue;", "tests": ["test/world/icgrand_lod.test.js"] },
-  { "name": "IC-GRAND-ring-impostor-undrawn", "file": "src/render/farRing.js", "old": "    this._drawImpostors(origin);   // IC-GRAND: after the ground they stand on, at the same far plane", "new": "    // IC-GRAND: after the ground they stand on, at the same far plane", "tests": ["test/world/icgrand_lod.test.js"] },
-  { "name": "IC-GRAND-ring-impostor-never-dropped", "file": "src/render/farRing.js", "old": "{ if (st) this._dropImpostor(imp); continue; }", "new": "{ continue; }", "tests": ["test/world/icgrand_lod.test.js"] },
-  { "name": "IC-GRAND-arena-daggerfall-alone", "file": "src/world/arena/arenaCity.js", "old": "export const standsArena = (loc) => isArenaCity(loc) || !!loc?.exterior", "new": "export const standsArena = (loc) => isArenaCity(loc) || !loc?.exterior", "tests": ["test/world/icgrand_arena.test.js"] },
-  { "name": "IC-GRAND-arena-any-city", "file": "src/world/arena/arenaCity.js", "old": "export const standsArena = (loc) => isArenaCity(loc) ||", "new": "export const standsArena = (loc) => true ||", "tests": ["test/world/icgrand_arena.test.js"] },
-  { "name": "IC-GRAND-arena-cell-moved", "file": "src/world/imperialCity.js", "old": "arena: Object.freeze({ b: 90, r: 4600 }),", "new": "arena: Object.freeze({ b: 91, r: 4600 }),", "tests": ["test/world/icgrand_arena.test.js"] },
-  { "name": "IC-GRAND-arena-block-a-copy", "file": "src/world/tamrielCapitals.js", "old": "const ARENA_OWN = Object.freeze({ name: ARENA_BLOCK, external: true });", "new": "const ARENA_OWN = Object.freeze({ name: 'ARENACPY.RMB', external: true });", "tests": ["test/world/icgrand_arena.test.js"] },
-  { "name": "IC-GRAND-colosseum-model-back", "file": "src/world/imperialCity.js", "old": "  nineDivines: 910212,   // TESA-LORE", "new": "  nineDivines: 910212, colosseum: 910205,   // TESA-LORE", "tests": ["test/world/icgrand_arena.test.js"] }
+  {
+    "name": "IC-GRAND-roof-step-past-the-reach",
+    "file": "src/world/imperialFabric.js",
+    "old": "export const ROOF_STEP = 1.6;",
+    "new": "export const ROOF_STEP = 2.4;",
+    "tests": [
+      "test/world/icgrand_fabric.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-alley-past-the-leap",
+    "file": "src/world/imperialFabric.js",
+    "old": "export const ALLEY = 3.2;",
+    "new": "export const ALLEY = 3.6;",
+    "tests": [
+      "test/world/icgrand_fabric.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-parapet-over-a-vault",
+    "file": "src/world/imperialFabric.js",
+    "old": "export const PARAPET = 0.9;",
+    "new": "export const PARAPET = 1.3;",
+    "tests": [
+      "test/world/icgrand_fabric.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-walk-two-half-storeys",
+    "file": "src/world/imperialFabric.js",
+    "old": "const step = Math.floor(u01(seed, 9, n) * 3) - 1;",
+    "new": "const step = Math.floor(u01(seed, 9, n) * 5) - 2;",
+    "tests": [
+      "test/world/icgrand_fabric.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-ring-order-reversed",
+    "file": "src/world/imperialFabric.js",
+    "old": "for (const [a, b] of pieces(Ls - 2 * D, st.front[0], st.front[1], seed, 6)) rects.push(",
+    "new": "for (const [a, b] of pieces(Ls - 2 * D, st.front[0], st.front[1], seed, 6).reverse()) rects.push(",
+    "tests": [
+      "test/world/icgrand_fabric.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-no-yard",
+    "file": "src/world/imperialFabric.js",
+    "old": "  if (court) {\n    const cw = Ls - 2 * D",
+    "new": "  if (!court) {\n    const cw = Ls - 2 * D",
+    "tests": [
+      "test/world/icgrand_fabric.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-no-dead-end",
+    "file": "src/world/imperialFabric.js",
+    "old": "hash32(seed, 23, e) % 3 !== 0",
+    "new": "hash32(seed, 23, e) % 3 !== 9",
+    "tests": [
+      "test/world/icgrand_fabric.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-no-bridge",
+    "file": "src/world/imperialFabric.js",
+    "old": "hash32(seed, 43, p.key, e) % 4 !== 0",
+    "new": "hash32(seed, 43, p.key, e) % 4 !== 9",
+    "tests": [
+      "test/world/icgrand_fabric.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-no-statue",
+    "file": "src/world/imperialFabric.js",
+    "old": "if (hash32(h.seed, 51, i, j) % 3 !== 0) return;",
+    "new": "if (hash32(h.seed, 51, i, j) % 3 !== 9) return;",
+    "tests": [
+      "test/world/icgrand_fabric.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-bay-a-storey",
+    "file": "src/world/imperialFabric.js",
+    "old": "export const BAY = 1.6;",
+    "new": "export const BAY = 3.2;",
+    "tests": [
+      "test/world/icgrand_fabric.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-no-main-street",
+    "file": "src/world/imperialFabric.js",
+    "old": "w < 10 ? 'side' : 'main'",
+    "new": "w < 99 ? 'side' : 'main'",
+    "tests": [
+      "test/world/icgrand_fabric.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-one-neighbourhood-a-district",
+    "file": "src/world/imperialFabric.js",
+    "old": "const key = di * 100 + ring * 10 + half;",
+    "new": "const key = di * 100 + ring * 0 + 0;",
+    "tests": [
+      "test/world/icgrand_fabric.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-branch-under-an-alley",
+    "file": "src/world/imperialFabric.js",
+    "old": "if (!(line.w > ALLEY + 0.01)) continue;",
+    "new": "if (!(line.w > 0)) continue;",
+    "tests": [
+      "test/world/icgrand_sewers.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-facade-square",
+    "file": "src/world/imperialArt.js",
+    "old": "export const FACADE_TEXELS = Object.freeze({ w: 64, h: 128 });",
+    "new": "export const FACADE_TEXELS = Object.freeze({ w: 64, h: 64 });",
+    "tests": [
+      "test/world/icgrand_fabric.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-sewer-uphill",
+    "file": "src/world/imperialSewers.js",
+    "old": "headDepth: 5, MAIN_FALL: 1 / 500,",
+    "new": "headDepth: 5, MAIN_FALL: -1 / 500,",
+    "tests": [
+      "test/world/icgrand_sewers.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-ring-drop-unread",
+    "file": "src/world/imperialSewers.js",
+    "old": "const dJoin = radialDepthAt(ring.r) - S.RING_DROP,",
+    "new": "const dJoin = radialDepthAt(ring.r) - 0,",
+    "tests": [
+      "test/world/icgrand_sewers.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-culvert-to-dry-land",
+    "file": "src/world/imperialSewers.js",
+    "old": "  return polar(b, r - 4);",
+    "new": "  return polar(b, r - 400);",
+    "tests": [
+      "test/world/icgrand_sewers.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-manholes-spaced-twice",
+    "file": "src/world/imperialSewers.js",
+    "old": "s < len; s += S.manholeEvery) {",
+    "new": "s < len; s += S.manholeEvery * 2) {",
+    "tests": [
+      "test/world/icgrand_sewers.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-grate-off-the-road",
+    "file": "src/world/imperialSewers.js",
+    "old": "out.push({ at: [p[0] + n[0] * side * (w / 2 - S.gateOut),",
+    "new": "out.push({ at: [p[0] + n[0] * side * (w / 2 + S.gateOut),",
+    "tests": [
+      "test/world/icgrand_sewers.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-near-slack-unread",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "return d <= NEAR_RING || (was === 'near' && d <= NEAR_RING + NEAR_SLACK);",
+    "new": "return d <= NEAR_RING || (d <= NEAR_RING + NEAR_SLACK);",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-near-ring-two",
+    "file": "src/world/imperialBlocks.js",
+    "old": "export const NEAR_RING = 1;",
+    "new": "export const NEAR_RING = 2;",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-arena-far",
+    "file": "src/world/imperialBlocks.js",
+    "old": "if (cell === 'L' || cell === 'O' || cell === IMPERIAL_ARENA_CODE) return near;",
+    "new": "if (cell === 'L' || cell === 'O') return near;",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-view-made-anew",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "  let v = _views.get(loc);\n  if (!v) {",
+    "new": "  let v = _views.get(loc);\n  if (true) {",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-skyline-solid",
+    "file": "src/world/capitalModels.js",
+    "old": "climateFree: true, solid: false });",
+    "new": "climateFree: true, solid: true });",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-block-keep-unbounded",
+    "file": "src/formats/worldData/worldDataReplacement.js",
+    "old": "    if (f.cache.size > f.keep) f.cache.delete(f.cache.keys().next().value);",
+    "new": "    if (false) f.cache.delete(f.cache.keys().next().value);",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-model-keep-unbounded",
+    "file": "src/world/customModels.js",
+    "old": "  if (f.cache.size > f.keep) f.cache.delete(f.cache.keys().next().value);",
+    "new": "  if (false) f.cache.delete(f.cache.keys().next().value);",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-sweep-every-frame",
+    "file": "src/scenes/tamrielSweepsHost.js",
+    "old": "    if (at === _lod.at && host.built.size === _lod.size) return;",
+    "new": "    if (false) return;",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-sweep-near-at-the-tail",
+    "file": "src/scenes/tamrielSweepsHost.js",
+    "old": "    host.queue.unshift(...near.sort(nearestFirstFrom(cur)));",
+    "new": "    host.queue.push(...near.sort(nearestFirstFrom(cur)));",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-far-slice-yards",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "const yardTown = !farView && isYardTown(dfLocation)",
+    "new": "const yardTown = isYardTown(dfLocation)",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-arena-daggerfall-alone",
+    "file": "src/world/arena/arenaCity.js",
+    "old": "export const standsArena = (loc) => isArenaCity(loc) || !!loc?.exterior",
+    "new": "export const standsArena = (loc) => isArenaCity(loc) || !loc?.exterior",
+    "tests": [
+      "test/world/icgrand_arena.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-arena-any-city",
+    "file": "src/world/arena/arenaCity.js",
+    "old": "export const standsArena = (loc) => isArenaCity(loc) ||",
+    "new": "export const standsArena = (loc) => true ||",
+    "tests": [
+      "test/world/icgrand_arena.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-arena-cell-moved",
+    "file": "src/world/imperialCity.js",
+    "old": "arena: Object.freeze({ b: 90, r: 4600 }),",
+    "new": "arena: Object.freeze({ b: 91, r: 4600 }),",
+    "tests": [
+      "test/world/icgrand_arena.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-arena-block-a-copy",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "const ARENA_OWN = Object.freeze({ name: ARENA_BLOCK, external: true });",
+    "new": "const ARENA_OWN = Object.freeze({ name: 'ARENACPY.RMB', external: true });",
+    "tests": [
+      "test/world/icgrand_arena.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-colosseum-model-back",
+    "file": "src/world/imperialCity.js",
+    "old": "  nineDivines: 910212,   // TESA-LORE",
+    "new": "  nineDivines: 910212, colosseum: 910205,   // TESA-LORE",
+    "tests": [
+      "test/world/icgrand_arena.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-skyline-masses-unmerged",
+    "file": "src/world/imperialImpostor.js",
+    "old": "    while (j + w < 8 && !used[i * 8 + j + w] && key[i * 8 + j + w] === k) w++;\n",
+    "new": "",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-skyline-frame-z-south",
+    "file": "src/world/imperialImpostor.js",
+    "old": "positions[o + 2] = oz - q.v[k][2];",
+    "new": "positions[o + 2] = q.v[k][2] - oz + PIXEL;",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-skyline-never-let-go",
+    "file": "src/scenes/capitalSkyline.js",
+    "old": "{ if (handles.size || owed.length) drop(); ring = fr; }",
+    "new": "{ ring = fr; }",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-skyline-stood-at-nought",
+    "file": "src/scenes/capitalSkyline.js",
+    "old": "mesh: lifted(mesh, y)",
+    "new": "mesh: lifted(mesh, 0)",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-skyline-all-at-once",
+    "file": "src/scenes/capitalSkyline.js",
+    "old": "while (owed.length && now() - t0 < SKYLINE_BUDGET_MS) {",
+    "new": "while (owed.length) {",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-skyline-far-first",
+    "file": "src/scenes/capitalSkyline.js",
+    "old": "      .sort((a, b) => Math.hypot(",
+    "new": "      .sort((b, a) => Math.hypot(",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-skyline-wait-forgotten",
+    "file": "src/scenes/capitalSkyline.js",
+    "old": "{ owed.push(...waiting); waiting = []; }",
+    "new": "{ waiting = []; }",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-skyline-disposed-kept",
+    "file": "src/scenes/capitalSkyline.js",
+    "old": " || (first && !first.landmark.vao)",
+    "new": "",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-skyline-unwired",
+    "file": "src/scenes/tamrielSweepsHost.js",
+    "old": "    capitalSkyline.sweep();",
+    "new": "    void capitalSkyline;",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-ring-ground-column-for-row",
+    "file": "src/render/farRing.js",
+    "old": "g.positions[(j * g.side + i) * 3 + 1] : null;",
+    "new": "g.positions[(i * g.side + j) * 3 + 1] : null;",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  }
 ]

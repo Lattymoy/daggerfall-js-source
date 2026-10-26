@@ -1738,6 +1738,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     get _lairTemplates() { return _lairTemplates; },
     get _seasonHoldKey() { return _seasonHoldKey; }, set _seasonHoldKey(v) { _seasonHoldKey = v; },
     get built() { return built; },
+    get farRing() { return farRing; },   // IC-GRAND x FAR-LANDMARK: the Imperial City's landmarks on its pass (scenes/capitalSkyline.js)
     get inFlight() { return inFlight; },
     get locationIndex() { return locationIndex; },
     get playerSpawned() { return playerSpawned; },

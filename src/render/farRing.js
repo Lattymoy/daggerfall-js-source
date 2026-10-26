@@ -718,6 +718,14 @@ export class FarRingRenderer {
     this._landmarks.push(lm);
     return { landmark: lm, remove: () => { const k = this._landmarks.indexOf(lm); if (k >= 0) this._landmarks.splice(k, 1); lm.dispose(); } };
   }
+  /** IC-GRAND x FAR-LANDMARK: this ring's ground at map pixel (px, py)'s centre - the world's own height its vertex stands
+   *  at (a landmark's foot: scenes/capitalSkyline.js) - or null before a build or off its grid. */
+  groundAt(px, py) {
+    const g = this._ringY;
+    if (!g) return null;
+    const i = px - g.baseX + g.radius, j = py - g.baseY + g.radius;
+    return i >= 0 && j >= 0 && i < g.side && j < g.side ? g.positions[(j * g.side + i) * 3 + 1] : null;
+  }
 
   /** FAR-LANDMARK: the landmarks this frame draws - not on a built pixel - farthest first, each ordered for the traveller. */
   _landmarksNow() {
