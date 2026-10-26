@@ -58,7 +58,9 @@ test('ARENA1 undercroft: the stair is a dungeon entrance of the arena\'s block; 
 test('ARENA1 undercroft: the hosts hand the stair the undercroft and an exit group of its own; underground the quest location is the undercroft', () => {
   const w = read('src/scenes/world.js');
   assert.match(w, /\.\.\.arenaDoorTarget\(e\),/);
-  assert.match(w, /if \(!isUndercroftDoor\(e, DOOR_TYPE\.DUNGEON_ENTRANCE\) \|\| !isArenaCity\(city\)\) return \{ dfLocation: city, group: e\.pixelKey \};/);
+  // PIN MOVED (IC-GRAND): the stair of any place that lays the arena's block - Daggerfall, and the Imperial City's Arena
+  // District (world/arena/arenaCity.js standsArena; test/world/icgrand_arena.test.js)
+  assert.match(w, /if \(!isUndercroftDoor\(e, DOOR_TYPE\.DUNGEON_ENTRANCE\) \|\| !standsArena\(city\)\) return \{ dfLocation: city, group: e\.pixelKey \};/);
   assert.match(w, /return \{ dfLocation: u, group: `\$\{e\.pixelKey\}:undercroft` \};/);
   assert.match(w, /const under = modes\?\.mode === 'dungeon' \? modes\?\.dungeonLocation : null;\n\s*if \(isArenaUndercroft\(under\)\) return under;/);
   const e = read('src/scenes/exterior.js');

@@ -3018,3 +3018,11 @@ pixel); `test/world/tamriel3.test.js` (the waters' ask follows the trace to the 
 (LA-COST1's law classes `_tFade`, the pixel fade's last-uploaded share, a GL-state shadow beside `_tSnowOn`: the terrain's
 frame block forgets it, `_terrainFade` uploads it per draw, and `_installWorldSet` looks its location up again with the
 set's programs). Daggerfall Unity has no layer past its TerrainDistance to put a landmark in: Port-Ledger row MID-RING.
+
+**The first landmarks handed in: the Imperial City's** (stream A, `03-World/Arena-Provinces.md` IC-GRAND, "The city from
+afar"): `scenes/capitalSkyline.js`, wired through `scenes/tamrielSweepsHost.js` (the world host hands it `farRing`),
+hands one landmark a slice of the city's 625 (`world/imperialImpostor.js` imperialLandmarkMesh - 259 stand something, 76
+triangles on the median) while the traveller is within the ring's radius and the span's half of its centre, a 3 ms budget
+a frame, each stood on the ring's own ground at its pixel - `FarRingRenderer.groundAt(px, py)`, the ring's grid read at
+the pixel's centre (IC-GRAND's one line in this file), null before a build or off the grid, so a slice there waits for
+the ring to move. Pinned in `test/world/icgrand_lod.test.js` and `tools/mutants/icgrand.json`.

@@ -1,34 +1,30 @@
 // @ts-check
 // TESA11 (bible/03-World/Arena-Provinces.md TESA11) - THE IMPERIAL CITY'S LANDMARKS: the port's own models of the city's
-// canon (world/imperialCity.js IMPERIAL says where each stands) - the White-Gold Tower, 680 m to its spire, on Green
-// Emperor Way among the emperors' tombs inside the palace wall; the city wall round the six districts, a tower every ten
-// degrees, its four gates and (TESA-LORE) its six watch towers where the district walls meet it; the walls between the
-// districts; the Arena District's Colosseum; the Temple of the One; the dragon of Talos Plaza; the Arboretum's Nine Divines
-// (TESA-LORE); the Imperial Prison and its Bastion; the Arcane University and its Arch-Mage's tower; the Waterfront's quay,
-// piers and light; Talos Bridge. In metres, drawn as the map reads (+z south), every model's origin the
-// city's middle on its ground (world/capitalModels.js turns them northward). Shapes of the port's own on the canon - no
-// game data, no other game's mesh.
+// canon (world/imperialCity.js IMPERIAL says where each stands) - the White-Gold Tower in the Palace District among the
+// emperors' tombs inside the palace wall; the city wall round the six districts, a tower every `towerEvery` degrees, its
+// gates and (TESA-LORE) its six watch towers where the district walls meet it; the walls between the districts, their
+// gates on the ring roads; the Temple of the One; the dragon of Talos Plaza; the Arboretum's Nine Divines (TESA-LORE); the
+// Imperial Prison and its Bastion; the Arcane University and its Arch-Mage's tower; the Waterfront's quay, piers and
+// light; Talos Bridge. IC-GRAND: the Arena District's Colosseum of the port's own retired - Daggerfall's arena, Kamer's
+// colosseum's block (world/arena/arenaCity.js), stands in its stead. In metres, drawn as the map reads (+z south), every
+// model's origin the city's middle on its ground (world/capitalModels.js turns them northward). Shapes of the port's own
+// on the canon - no game data, no other game's mesh.
 import { MeshBuilder } from './detStandIns.js';
 import { CAPITAL_ART, art, taper, ring, ledge, cap, wallRun, merlons, gatedRun, roundTower, squareTower, hall, pyramid, gableRoof, dome, blob, limb, darkDoor, entranceDoor, translated, corner, framed, robedFigure } from './capitalShapes.js';
-import { IMPERIAL, IMPERIAL_SECTORS, polar, prisonAt, universityTowerAt, universityHallAt, colosseumGate, watchTowersAt, divinesAt, divinePlinths, bridgeLine, prisonGates, universityGates } from './imperialCity.js';
+import { IMPERIAL, IMPERIAL_SECTORS, polar, prisonAt, universityTowerAt, universityHallAt, watchTowersAt, divinesAt, divinePlinths, bridgeLine, prisonGates, universityGates, tombAt } from './imperialCity.js';
 
 const MARBLE = art(CAPITAL_ART.marble), GOLD = art(CAPITAL_ART.gold), STONE = art(CAPITAL_ART.wallStone), BRIDGE = art(CAPITAL_ART.bridgeStone);
 const DARK = art(CAPITAL_ART.dark), SLATE = art(CAPITAL_ART.blueSlate), ROOF = art(CAPITAL_ART.roof), TIMBER = art(CAPITAL_ART.timber);
-const SAND = art(CAPITAL_ART.sandstone), OCHRE = art(CAPITAL_ART.ochre), BRONZE = art(CAPITAL_ART.bronze);
+const BRONZE = art(CAPITAL_ART.bronze);
 const unit = (v) => { const l = Math.hypot(...v) || 1; return v.map((x) => x / l); };
-/** A face's unit normal from three of its corners, turned to face `hint`'s way. */
-const faceNormal = (a, b, c, hint) => {
-  const u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], v = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
-  const n = unit([u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]);
-  return n[0] * hint[0] + n[1] * hint[1] + n[2] * hint[2] < 0 ? n.map((q) => -q) : n;
-};
 
 // ---------------------------------------------------------------- the White-Gold Tower and Green Emperor Way
 
 /**
- * THE WHITE-GOLD TOWER: an octagonal plinth 172 m across, a tapering shaft banded in gold every `band` metres, eight
- * buttress fins at its corners from the plinth's edge to `finTop`, a gallery, the crown above it and a gilt spire to
- * 680 m; the palace's door at its foot on the east, toward the Market and the Arena.
+ * THE WHITE-GOLD TOWER: an octagonal plinth (its foundation, `plinthR` out), a tapering shaft banded in gold every `band`
+ * metres, eight buttress fins at its corners from the plinth's edge to `finTop`, a gallery, the crown above it and a gilt
+ * spire to `spireTop`; the palace's door at its foot on the east, toward the Market and the Arena. IC-GRAND (the team's
+ * spec): slim - a foundation 180 m across, a shaft 70 m across at its foot, 760 m to the spire's tip.
  */
 export function buildImperialTower(T = IMPERIAL.tower) {
   const mb = new MeshBuilder(), n = 8, phase = Math.PI / 8;
@@ -84,19 +80,25 @@ function ringRuns(r, step, gates, halfDeg) {
  * THE PALACE WALL round Green Emperor Way: a ring of `sides` runs at its radius, merlons out, a gate to each district (its
  * sector's middle) with a turret either side.
  */
-export function buildPalaceWall(W = IMPERIAL.palaceWall) {
+export function buildPalaceWall(W = IMPERIAL.palaceWall, only = ANY) {
   const mb = new MeshBuilder(), gates = IMPERIAL_SECTORS.map(([, b]) => b + 30), half = gateDeg(W.gate + 0.5, W.r);
-  for (const [p, q] of ringRuns(W.r, 360 / W.sides, gates, half)) { wallRun(mb, STONE, p, q, W.thick, W.h); merlons(mb, STONE, p, q, W.thick, W.h); }
-  for (const g of gates) for (const side of [1, -1]) { const [x, z] = polar(g + side * (half + gateDeg(W.towerR * 2 + 1, W.r)), W.r); roundTower(mb, x, z, W.towerR, W.towerH, { sides: 12 }); }
+  for (const [p, q] of ringRuns(W.r, 360 / W.sides, gates, half)) if (only(p, q)) { wallRun(mb, STONE, p, q, W.thick, W.h); merlons(mb, STONE, p, q, W.thick, W.h); }
+  for (const g of gates) for (const side of [1, -1]) { const [x, z] = polar(g + side * (half + gateDeg(W.towerR * 2 + 1, W.r)), W.r); if (only([x, z], [x, z])) roundTower(mb, x, z, W.towerR, W.towerH, { sides: 12 }); }
   return mb.build();
 }
+/** IC-GRAND: every run a wall builder lays, when it is asked for the whole (a part's builder asks only the runs near its
+ *  square - world/capitalModels.js imperialPartBuild). */
+/** @type {(p: number[], q: number[]) => boolean} */
+export const ANY = () => true;
+/** IC-GRAND: a test of a run (two points, map frame) within `margin` of a rectangle [x0, z0, x1, z1] - a part's own. */
+export const nearRect = ([x0, z0, x1, z1], margin) => (p, q) => Math.max(p[0], q[0]) > x0 - margin && Math.min(p[0], q[0]) < x1 + margin && Math.max(p[1], q[1]) > z0 - margin && Math.min(p[1], q[1]) < z1 + margin;
 
 /** THE EMPERORS' TOMBS on Green Emperor Way's lawns: a ring of marble mausolea, each its stepped pyramid and its gilt cap,
  *  its door toward the tower. */
 export function buildEmperorsTombs(T = IMPERIAL.tombs) {
   const mb = new MeshBuilder();
   for (let i = 0; i < T.n; i++) {
-    const b = 22.5 + i * (360 / T.n), [x, z] = polar(b, T.r);
+    const [x, z] = tombAt(i);
     hall(mb, MARBLE, x, z, T.w + 2, T.w + 2, -1, 0.6, 0.25);
     hall(mb, MARBLE, x, z, T.w, T.w, 0.6, T.h, 0.25);
     pyramid(mb, MARBLE, x, z, T.w + 1, T.w + 1, T.h, T.w * 0.55);
@@ -132,65 +134,50 @@ export function watchTower(mb, x, z, W = IMPERIAL.cityWall) {
  * it; TESA-LORE: a watch tower where each district wall meets it, in the ten-degree tower's stead (the North, North-East,
  * South-East, South, South-West and North-West Watch Towers).
  */
-export function buildCityWall(W = IMPERIAL.cityWall) {
+export function buildCityWall(W = IMPERIAL.cityWall, only = ANY) {
   const mb = new MeshBuilder(), half = gateDeg(W.gate, W.r), watch = new Set(IMPERIAL_SECTORS.map(([, b]) => b));
-  for (const [p, q] of ringRuns(W.r, W.towerEvery, W.gates, half)) { wallRun(mb, STONE, p, q, W.thick, W.h); merlons(mb, STONE, p, q, W.thick, W.h); }
-  for (let b = 0; b < 360; b += W.towerEvery) if (!watch.has(b) && W.gates.every((g) => Math.abs(((b - g + 540) % 360) - 180) > half + gateDeg(W.towerR * 2 + 4, W.r))) { const [x, z] = polar(b, W.r); roundTower(mb, x, z, W.towerR, W.towerH); }
-  for (const [x, z] of watchTowersAt()) watchTower(mb, x, z, W);
+  for (const [p, q] of ringRuns(W.r, W.towerEvery, W.gates, half)) if (only(p, q)) { wallRun(mb, STONE, p, q, W.thick, W.h); merlons(mb, STONE, p, q, W.thick, W.h); }
+  for (let b = 0; b < 360; b += W.towerEvery) if (!watch.has(b) && W.gates.every((g) => Math.abs(((b - g + 540) % 360) - 180) > half + gateDeg(W.towerR * 2 + 4, W.r))) { const [x, z] = polar(b, W.r); if (only([x, z], [x, z])) roundTower(mb, x, z, W.towerR, W.towerH); }
+  for (const [x, z] of watchTowersAt()) if (only([x, z], [x, z])) watchTower(mb, x, z, W);
   for (const g of W.gates) {
     const a = polar(g + half, W.r), c = polar(g - half, W.r);
-    translated(mb, 0, W.gateH, 0, () => wallRun(mb, STONE, a, c, W.thick, W.h - W.gateH, 0));
-    for (const side of [1, -1]) { const [x, z] = polar(g + side * (half + gateDeg(W.towerR + 1, W.r)), W.r); roundTower(mb, x, z, W.towerR, W.towerH + 6); }
+    if (only(a, c)) translated(mb, 0, W.gateH, 0, () => wallRun(mb, STONE, a, c, W.thick, W.h - W.gateH, 0));
+    for (const side of [1, -1]) { const [x, z] = polar(g + side * (half + gateDeg(W.towerR + 1, W.r)), W.r); if (only([x, z], [x, z])) roundTower(mb, x, z, W.towerR, W.towerH + 6); }
   }
   return mb.build();
 }
 
-/** THE WALLS BETWEEN THE DISTRICTS: at each sector's edge from the palace wall to the city wall, a gate at the middle. */
-export function buildDistrictWalls(I = IMPERIAL) {
+/** THE WALLS BETWEEN THE DISTRICTS: at each sector's edge from the palace wall to the city wall, a gate at each share of
+ *  its length `gates` names (IC-GRAND: the three ring roads cross it there), a lintel over each. */
+export function buildDistrictWalls(I = IMPERIAL, only = ANY) {
   const mb = new MeshBuilder(), D = I.districtWall;
+  // a run in pieces of RUN_PIECE metres, so a part asks only the pieces near its square
+  const run = (a, c) => {
+    const len = Math.hypot(c[0] - a[0], c[1] - a[1]), n = Math.max(1, Math.ceil(len / RUN_PIECE));
+    for (let k = 0; k < n; k++) {
+      const p = [a[0] + ((c[0] - a[0]) * k) / n, a[1] + ((c[1] - a[1]) * k) / n], q = [a[0] + ((c[0] - a[0]) * (k + 1)) / n, a[1] + ((c[1] - a[1]) * (k + 1)) / n];
+      if (only(p, q)) { wallRun(mb, STONE, p, q, D.thick, D.h); merlons(mb, STONE, p, q, D.thick, D.h); }
+    }
+  };
   for (const [, b] of IMPERIAL_SECTORS) {
-    const p = polar(b, I.palaceWall.r + I.palaceWall.thick / 2 + 0.5), q = polar(b, I.cityWall.r - I.cityWall.thick / 2 - 0.5);
-    const len = Math.hypot(q[0] - p[0], q[1] - p[1]);
-    gatedRun(mb, STONE, p, q, D.thick, D.h, len / 2, D.gate, D.gateH);
+    const r0 = I.palaceWall.r + I.palaceWall.thick / 2 + 0.5, r1 = I.cityWall.r - I.cityWall.thick / 2 - 0.5;
+    // the gates by their metres out from the city's middle (the shares of the palace-to-city wall's length, as the law's)
+    const at = D.gates.map((t) => I.palaceWall.r + (I.cityWall.r - I.palaceWall.r) * t);
+    let from = r0;
+    for (const g of at) {
+      run(polar(b, from), polar(b, g - D.gate / 2));
+      const ga = polar(b, g - D.gate / 2), gb = polar(b, g + D.gate / 2);
+      if (only(ga, gb)) translated(mb, 0, D.gateH, 0, () => wallRun(mb, STONE, ga, gb, D.thick, D.h - D.gateH, 0));
+      from = g + D.gate / 2;
+    }
+    run(polar(b, from), polar(b, r1));
   }
   return mb.build();
 }
+/** IC-GRAND: a district wall's run is laid in pieces this long. */
+const RUN_PIECE = 102.4;
 
 // ---------------------------------------------------------------- the districts' landmarks
-
-/**
- * THE COLOSSEUM of the Arena District: an elliptical drum of three tiers of arches, its stands sloping down inside to the
- * sand of its floor behind the floor's wall; a way in on each axis through the stands.
- */
-export function buildColosseum(C = IMPERIAL.colosseum) {
-  const mb = new MeshBuilder(), [cx, cz] = polar(C.b, C.r), n = 64, tierH = C.h / C.tiers;
-  const P = (a, sx, sz, y) => [cx + Math.cos(a) * C.rx * sx, y, cz + Math.sin(a) * C.rz * sz];
-  const F = (a, y) => [cx + Math.cos(a) * C.floor[0], y, cz + Math.sin(a) * C.floor[1]];
-  const inner = 0.82, gateAt = (a) => { const m = P(a, 0.9, 0.9, 0); return colosseumGate(m[0] - cx, m[2] - cz, C); };
-  for (let i = 0; i < n; i++) {
-    const a0 = (i / n) * Math.PI * 2, a1 = ((i + 1) / n) * Math.PI * 2, am = (a0 + a1) / 2, gate = gateAt(am);
-    const nOut = unit([Math.cos(am) / C.rx, 0, Math.sin(am) / C.rz]);
-    for (let t = 0; t < C.tiers; t++) {
-      const y0 = t * tierH, y1 = y0 + tierH;
-      if (t === 0 && gate) { mb.quad(SAND, P(a0, 1, 1, y0 + tierH * 0.8), P(a1, 1, 1, y0 + tierH * 0.8), P(a1, 1, 1, y1), P(a0, 1, 1, y1), nOut); continue; }
-      mb.quad(SAND, P(a0, 1, 1, t === 0 ? -3 : y0), P(a1, 1, 1, t === 0 ? -3 : y0), P(a1, 1, 1, y1), P(a0, 1, 1, y1), nOut, [[0, 0], [1, 0], [1, -tierH / 6], [0, -tierH / 6]]);
-      // the tier's arch, a dark face a hair proud
-      const m0 = (a0 * 0.78 + a1 * 0.22), m1 = (a0 * 0.22 + a1 * 0.78), e = 1.004;
-      mb.quad(DARK, P(m0, e, e, y0 + 0.6), P(m1, e, e, y0 + 0.6), P(m1, e, e, y0 + tierH * 0.72), P(m0, e, e, y0 + tierH * 0.72), nOut);
-    }
-    mb.quad(SAND, P(a0, 1, 1, C.h), P(a1, 1, 1, C.h), P(a1, inner, inner, C.h), P(a0, inner, inner, C.h), [0, 1, 0]);
-    if (gate) continue;
-    // the stands: from the top's inner edge down to the floor's wall, facing up and in
-    const top0 = P(a0, inner, inner, C.h), top1 = P(a1, inner, inner, C.h), low0 = F(a0, 4), low1 = F(a1, 4);
-    const run = Math.hypot(top0[0] - low0[0], top0[2] - low0[2]);
-    mb.quad(SAND, low0, low1, top1, top0, faceNormal(low0, low1, top1, [-Math.cos(am), 1, -Math.sin(am)]), [[0, 0], [1, 0], [1, -run / 4], [0, -run / 4]]);
-    // the floor's wall, facing in
-    mb.quad(STONE, F(a0, 0), F(a1, 0), F(a1, 4), F(a0, 4), unit([-Math.cos(am) / C.floor[0], 0, -Math.sin(am) / C.floor[1]]));
-  }
-  // the sand
-  for (let i = 0; i < n; i++) { const a0 = (i / n) * Math.PI * 2, a1 = ((i + 1) / n) * Math.PI * 2; mb.tri(OCHRE, [cx, 0.05, cz], F(a0, 0.05), F(a1, 0.05), [0, 1, 0]); }
-  return mb.build();
-}
 
 /**
  * THE TEMPLE OF THE ONE in the Temple District: its nave north to south, a gabled roof of slate, the drum and the gilt dome
@@ -340,13 +327,14 @@ export function buildArcaneUniversity(U = IMPERIAL.university) {
 
 /** THE WATERFRONT on the lake's south shore: its quay along the shore, its piers out over the water on their posts, and
  *  the light at the end of the third. */
-export function buildWaterfront(W = IMPERIAL.waterfront) {
-  const mb = new MeshBuilder(), step = 2;
+export function buildWaterfront(W = IMPERIAL.waterfront, only = ANY) {
+  const mb = new MeshBuilder(), step = 0.5;
   for (let b = W.b0; b < W.b1 - 1e-9; b += step) {
     const p = polar(Math.min(W.b1, b + step), W.r1), q = polar(b, W.r1);
-    wallRun(mb, STONE, p, q, 3, W.deck, 4, 3);
+    if (only(p, q)) wallRun(mb, STONE, p, q, 3, W.deck, 4, 3);
   }
   W.piers.forEach((b, i) => {
+    if (!only(polar(b, W.r1 - 1), polar(b, W.pierTo))) return;
     const [ux, uz] = polar(b, 1), from = W.r1 - 1, len = W.pierTo - from, c = polar(b, from + len / 2);
     const tx = -uz, tz = ux;
     // the deck: a box along its bearing (its corners round its axis), on posts every 6 m

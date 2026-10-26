@@ -2,11 +2,12 @@
   {
     "name": "TESA11-span-two",
     "file": "src/world/imperialCity.js",
-    "old": "export const IMPERIAL_SPAN = 7;",
-    "new": "export const IMPERIAL_SPAN = 5;",
+    "old": "export const IMPERIAL_SPAN = 25;",
+    "new": "export const IMPERIAL_SPAN = 23;",
     "tests": [
       "test/tesa11_imperial.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (IC-GRAND): twenty-five pixels (the owner: \"Lets do 20km\")."
   },
   {
     "name": "TESA11-market-west",
@@ -47,11 +48,14 @@
   {
     "name": "TESA11-shore-a-house",
     "file": "src/world/imperialCity.js",
-    "old": "    if (land === 1 || !mix || imperialReserved(x0, z0, x1, z1)) return imperialCode(r, c);",
-    "new": "    if (!mix || imperialReserved(x0, z0, x1, z1)) return imperialCode(r, c);",
+    "old": "if (land === 1 || !mix || imperialReserved(x0, z0, x1, z1, I) || !tradeCell(r, c, d, I)) return imperialCode(r, c);",
+    "new": "if (!mix || imperialReserved(x0, z0, x1, z1, I) || !tradeCell(r, c, d, I)) return imperialCode(r, c);",
     "tests": [
       "test/tesa11_imperial.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (IC-GRAND): the trade's cells asked too (tradeCell).",
+    "equivalent": true,
+    "why": "At twenty-five pixels (IC-GRAND, measured 2026-10-26: the whole plan with and without the guard, 0 of its 40,000 cells differ) no cell holding a shore can be one of Daggerfall's: the isle's shore is City Isle's (no trade), the Waterfront's quay and the compounds' grounds are reserved, the far shore is Rumare Shore's; the guard holds the law where a measure moves a trade's district onto a shore."
   },
   {
     "name": "TESA11-wall-band-unreserved",
@@ -76,23 +80,25 @@
   {
     "name": "TESA11-colosseum-unreserved",
     "file": "src/world/imperialCity.js",
-    "old": "  if (x1 >= cc[0] - C.rx - 6 && x0 <= cc[0] + C.rx + 6 && z1 >= cc[1] - C.rz - 6 && z0 <= cc[1] + C.rz + 6) return true;",
+    "old": "  if (r === ar && c === ac) return IMPERIAL_ARENA_CODE;\n",
     "new": "",
     "tests": [
       "test/tesa11_imperial.test.js",
-      "test/audit_tesa.test.js"
-    ]
+      "test/world/icgrand_arena.test.js"
+    ],
+    "note": "PIN MOVED (IC-GRAND): the Colosseum retired - re-aimed at its successor, the arena's cell kept for Daggerfall's block."
   },
   {
     "name": "TESA11-no-signature",
     "file": "src/world/imperialCity.js",
-    "old": "    if (cells.length && !cells.some(([, , cell]) => cell === kind)) rows[cells[0][0]][cells[0][1]] = kind;",
+    "old": "  if (sig && heart && signatureCell(d, I)?.[0] === r && signatureCell(d, I)?.[1] === c) return sig;\n",
     "new": "",
     "tests": [
       "test/tesa11_imperial.test.js"
     ],
     "equivalent": true,
-    "why": "At seven pixels every district already draws its signature kind off the hash (measured 2026-10-25: Market 40 GENR, Arena 15 FIGH, Temple 34 TEMP, Talos Plaza 14 BANK, Elven Gardens 17 TVRN, Waterfront 1 THIE, Arcane University 3 MAGE), so dropping the fallback lays the same plan byte for byte; the line guards a measure where a district's hash misses its kind (the Waterfront holds one)."
+    "why": "At twenty-five pixels (IC-GRAND, measured 2026-10-26) every district draws its signature kind off the hash elsewhere too - without the line the plan holds Market 23 GENR, Arena 10 FIGH, Temple 32 TEMP, Talos Plaza 13 BANK, Elven Gardens 24 TVRN, Waterfront 15 THIE, Arcane University 14 MAGE (one fewer each, the University's and the Waterfront's the same) - so every pin of a district's signature holds; the line guards a measure where a district's hash misses its kind.",
+    "note": "PIN MOVED (IC-GRAND): the signature laid on its heart's nearest trade cell (signatureCell)."
   },
   {
     "name": "TESA11-tile-lake-grass",
@@ -116,12 +122,14 @@
   },
   {
     "name": "TESA11-colosseum-gates-shut",
-    "file": "src/world/imperialCity.js",
-    "old": "  if (e <= 1.02 && f > 1) return !colosseumGate(x - cx, z - cz, C);",
-    "new": "  if (e <= 1.02 && f > 1) return true;",
+    "file": "src/world/imperialFabric.js",
+    "old": "[g.arena, B / 2 + C.arena]",
+    "new": "[g.arena, B / 2]",
     "tests": [
+      "test/world/icgrand_arena.test.js",
       "test/tesa11_imperial.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (IC-GRAND): the Colosseum and its gates retired - re-aimed at its successor's way in, the street the fabric leaves round the arena's cell."
   },
   {
     "name": "TESA11-plinth-open",
@@ -145,20 +153,23 @@
   {
     "name": "TESA11-slice-names-shifted",
     "file": "src/world/imperialCity.js",
-    "old": "    if (s === centre) return 'Imperial City';",
-    "new": "    if (s === centre - 1) return 'Imperial City';",
+    "old": "  if (s === centre) name = 'Imperial City';",
+    "new": "  if (s === centre - 1) name = 'Imperial City';",
     "tests": [
       "test/tesa11_imperial.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (IC-GRAND): the names worked when first asked."
   },
   {
     "name": "TESA11-colosseum-carried-centre",
     "file": "src/world/imperialCity.js",
-    "old": "[IMPERIAL_MODELS.colosseum]: (x0, z0, x1, z1) => rectBox(x0, z0, x1, z1, polar(IMPERIAL.colosseum.b, IMPERIAL.colosseum.r),",
-    "new": "[IMPERIAL_MODELS.colosseum]: (x0, z0, x1, z1) => rectBox(x0, z0, x1, z1, [0, 0],",
+    "old": "return [Math.floor(z / BLOCK_M + HALF), Math.floor(x / BLOCK_M + HALF)]; };",
+    "new": "return [Math.floor(x / BLOCK_M + HALF), Math.floor(z / BLOCK_M + HALF)]; };",
     "tests": [
-      "test/tesa11_imperial.test.js"
-    ]
+      "test/tesa11_imperial.test.js",
+      "test/world/icgrand_arena.test.js"
+    ],
+    "note": "PIN MOVED (IC-GRAND): the Colosseum retired - re-aimed at its successor, the arena's cell read off its point (row from south, column from east)."
   },
   {
     "name": "TESA11-ordinal-centre-one",
@@ -172,11 +183,12 @@
   {
     "name": "TESA11-centre-named-district",
     "file": "src/world/tamrielCapitals.js",
-    "old": "export const capitalSliceName = (cap, s) => (s === capitalCentre(cap) ? cap.name : cap.sliceNames?.[s] ?? cap.name);",
-    "new": "export const capitalSliceName = (cap, s) => (cap.sliceNames?.[s] ?? cap.name);",
+    "old": "(cap.sliceName ? cap.sliceName(s) : cap.sliceNames?.[s]) ?? cap.name);",
+    "new": "(cap.sliceNames?.[s]) ?? cap.name);",
     "tests": [
       "test/tesa11_imperial.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (IC-GRAND): the slices' names a law (sliceName); the centre's own name is held twice (here and imperialSliceName's centre), so the record aims at the slices' names read from the city's law."
   },
   {
     "name": "TESA11-ids-shared",
@@ -220,29 +232,32 @@
   {
     "name": "TESA11-slice-whole-plan",
     "file": "src/world/tamrielCapitals.js",
-    "old": "  const plan = many ? cap.plan.slice(sy * 8, sy * 8 + 8).map((row) => row.slice(sx * 8, sx * 8 + 8)) : cap.plan;",
-    "new": "  const plan = many ? cap.plan.slice(0, 8).map((row) => row.slice(0, 8)) : cap.plan;",
+    "old": "const plan = cap.slicePlan ? cap.slicePlan(s) :",
+    "new": "const plan = cap.slicePlan ? cap.slicePlan(capitalCentre(cap)) :",
     "tests": [
       "test/tesa11_imperial.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (IC-GRAND): the Imperial City's slice plan asked of its law (slicePlan)."
   },
   {
     "name": "TESA11-hash-local",
     "file": "src/world/tamrielCapitals.js",
-    "old": "cap.blocks, many ? [sx * 8, sy * 8] : [0, 0]);",
-    "new": "cap.blocks, [0, 0]);",
+    "old": "(cell) => ownBlockOf(cap, cell), many ? [sx * 8, sy * 8] : [0, 0]);",
+    "new": "(cell) => ownBlockOf(cap, cell), [0, 0]);",
     "tests": [
       "test/tesa11_imperial.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (IC-GRAND): the own blocks a law of a code."
   },
   {
     "name": "TESA11-seeds-shared",
     "file": "src/world/tamrielCapitals.js",
-    "old": "  const buildings = capitalBuildings(blockNames, ctx.blockOf, k, mapId, 64 * so);",
-    "new": "  const buildings = capitalBuildings(blockNames, ctx.blockOf, k, mapId);",
+    "old": "ctx.blockOf, k, mapId, 64 * so);",
+    "new": "ctx.blockOf, k, mapId);",
     "tests": [
       "test/tesa11_imperial.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (IC-GRAND): a family's blocks read for no building."
   },
   {
     "name": "TESA11-flatten-at-own",
@@ -340,58 +355,65 @@
   {
     "name": "TESA11-tower-short",
     "file": "src/world/imperialCity.js",
-    "old": "crownTop: 1096, spireTop: 1360,",
-    "new": "crownTop: 1096, spireTop: 1200,",
+    "old": "crownTop: 650, spireTop: 760,",
+    "new": "crownTop: 650, spireTop: 700,",
     "tests": [
       "test/tesa11_imperial.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (IC-GRAND): the team's spec - 760 m, over 500."
   },
   {
     "name": "TESA11-gate-shut",
     "file": "src/world/capitalImperial.js",
-    "old": "  for (const [p, q] of ringRuns(W.r, W.towerEvery, W.gates, half)) {",
-    "new": "  for (const [p, q] of ringRuns(W.r, W.towerEvery, [], half)) {",
+    "old": "ringRuns(W.r, W.towerEvery, W.gates, half)",
+    "new": "ringRuns(W.r, W.towerEvery, [], half)",
     "tests": [
       "test/tesa11_imperial.test.js",
       "test/audit_tesa.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (IC-GRAND): a part's builder asks only its runs (only)."
   },
   {
     "name": "TESA11-no-lintel",
     "file": "src/world/capitalImperial.js",
-    "old": "    translated(mb, 0, W.gateH, 0, () => wallRun(mb, STONE, a, c, W.thick, W.h - W.gateH, 0));",
+    "old": "    if (only(a, c)) translated(mb, 0, W.gateH, 0, () => wallRun(mb, STONE, a, c, W.thick, W.h - W.gateH, 0));\n",
     "new": "",
     "tests": [
       "test/tesa11_imperial.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (IC-GRAND): a part's builder asks only its runs (only)."
   },
   {
     "name": "TESA11-palace-gates-shut",
     "file": "src/world/capitalImperial.js",
-    "old": "  for (const [p, q] of ringRuns(W.r, 360 / W.sides, gates, half)) { wallRun(mb, STONE, p, q, W.thick, W.h); merlons(mb, STONE, p, q, W.thick, W.h); }",
-    "new": "  for (const [p, q] of ringRuns(W.r, 360 / W.sides, [], half)) { wallRun(mb, STONE, p, q, W.thick, W.h); merlons(mb, STONE, p, q, W.thick, W.h); }",
+    "old": "ringRuns(W.r, 360 / W.sides, gates, half)",
+    "new": "ringRuns(W.r, 360 / W.sides, [], half)",
     "tests": [
       "test/tesa11_imperial.test.js",
       "test/audit_tesa.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (IC-GRAND): a part's builder asks only its runs (only)."
   },
   {
     "name": "TESA11-district-gate-shut",
     "file": "src/world/capitalImperial.js",
-    "old": "    gatedRun(mb, STONE, p, q, D.thick, D.h, len / 2, D.gate, D.gateH);",
-    "new": "    wallRun(mb, STONE, p, q, D.thick, D.h);",
+    "old": "      run(polar(b, from), polar(b, g - D.gate / 2));",
+    "new": "      run(polar(b, from), polar(b, g + D.gate / 2));",
     "tests": [
       "test/tesa11_imperial.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (IC-GRAND): the district walls laid in pieces, their gates where the ring roads cross - the run up to a gate laid through it."
   },
   {
     "name": "TESA11-colosseum-sealed",
-    "file": "src/world/capitalImperial.js",
-    "old": "      if (t === 0 && gate) { mb.quad(SAND, P(a0, 1, 1, y0 + tierH * 0.8), P(a1, 1, 1, y0 + tierH * 0.8), P(a1, 1, 1, y1), P(a0, 1, 1, y1), nOut); continue; }",
-    "new": "",
+    "file": "src/scenes/world.js",
+    "old": "|| !standsArena(city)) return { dfLocation: city, group: e.pixelKey };",
+    "new": "|| !standsArena(null)) return { dfLocation: city, group: e.pixelKey };",
     "tests": [
-      "test/tesa11_imperial.test.js"
-    ]
+      "test/world/icgrand_arena.test.js",
+      "test/world/arena/arena1_undercroft.test.js"
+    ],
+    "note": "PIN MOVED (IC-GRAND): the Colosseum and its gates retired - re-aimed at its successor's way in, the arena's stair to the undercroft wherever its block stands (standsArena)."
   },
   {
     "name": "TESA11-bridge-short",
@@ -414,10 +436,11 @@
   {
     "name": "TESA11-piers-ashore",
     "file": "src/world/imperialCity.js",
-    "old": "piers: Object.freeze([166, 172, 178, 184, 190, 196]), pierTo: 2560,",
-    "new": "piers: Object.freeze([166, 172, 178, 184, 190, 196]), pierTo: 2300,",
+    "old": "piers: Object.freeze(Array.from({ length: 21 }, (_, i) => 160 + i * 2)), pierTo: 8450,",
+    "new": "piers: Object.freeze(Array.from({ length: 21 }, (_, i) => 160 + i * 2)), pierTo: 7800,",
     "tests": [
       "test/tesa11_imperial.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (IC-GRAND): the Waterfront at twenty-five pixels - its piers short of the isle's shore (7900 m)."
   }
 ]

@@ -122,6 +122,7 @@ test('URBANIZER U3 the pixel build\'s wiring by source: the fabric planned as th
   assert.match(stand, /const local = trs\(locLocal\[0\], locLocal\[1\], locLocal\[2\], 0, 0, 0\)/);
   assert.match(stand, /addStatic\(cpuF, local, false\); entry\._batched = true;/);
   assert.match(stand, /late\.add\(key, cpuF\.positions, cpuF\.indices, local,/);
-  assert.ok(pb.indexOf('      if (fabric) {') < pb.indexOf('if (populatesWanderingNpcs(dfLocation.mapTableData.locationType)) {'), 'before the walkers');
+  // PIN MOVED (IC-GRAND, test/world/icgrand_lod.test.js): the walkers' gate asks the Imperial City's far view first (`!farView &&`)
+  assert.ok(pb.indexOf('      if (fabric) {') < pb.indexOf('if (!farView && populatesWanderingNpcs(dfLocation.mapTableData.locationType)) {'), 'before the walkers');
   assert.match(rd('src/scenes/modWorldData.js'), /installTownOutline\(\);[^\n]*\n\s+installUrbanArt\(\);/);
 });

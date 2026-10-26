@@ -57,7 +57,9 @@ import { provinceKeyBeyondBay, tamrielLandVersion } from './tamriel/tamrielLand.
 import { CITIES } from './tamriel/tamrielGeography.js';   // AUDIT TESA II C15: a capital's point TAMRIEL1's city's, one home
 import { tamrielHeightByte } from './tamriel/tamrielGround.js';   // AUDIT TESA II (lane R's R2): a gate the roads can reach
 import { WATER_BYTE } from './roadsProducer.js';
-import { IMPERIAL_CITY_PLAN, IMPERIAL_DISTRICTS, IMPERIAL_BLOCKS, IMPERIAL_MODELS, IMPERIAL_CARRY, IMPERIAL_SLICE_NAMES, IMPERIAL_SPAN, IMPERIAL_PARTS, IMPERIAL_OUTSKIRTS, imperialSliceMarkers } from './imperialCity.js';   // TESA11: the Imperial City over nine pixels; TS5 over forty-nine
+import { IMPERIAL_MODELS, IMPERIAL_CARRY, IMPERIAL_SPAN, IMPERIAL_CELLS, IMPERIAL_PARTS, IMPERIAL_OUTSKIRTS, IMPERIAL_ARENA_CODE, imperialSlicePlan, imperialSliceName, imperialDistrictOfCell, imperialCodeCell, imperialCell } from './imperialCity.js';   // TESA11: the Imperial City over nine pixels; TS5 over forty-nine; IC-GRAND over 625, its plan a slice at a time
+import { imperialSliceMarkers, imperialOwnName, imperialAnchorCarrier, imperialSliceCarrier, imperialViewName, imperialBlockOf, NEAR_RING, NEAR_SLACK } from './imperialBlocks.js';   // IC-GRAND: its blocks a family, near and far
+import { ARENA_BLOCK } from './arena/arenaCity.js';   // IC-GRAND: Daggerfall's arena in the Arena District
 import { TOWN_OUTLINE_BLOCK } from './townOutline.js';   // TS5: the open ground past the Imperial City's lake
 import { unwalledLocation } from './townShape.js';   // TS7: a Bay city's own grid
 import {
@@ -103,7 +105,21 @@ export { CAPITAL_RIM_M, CAPITAL_RIM_TILES };
  *  the location's rect, so Daggerfall's blend reaches it). */
 export const CAPITAL_NO_GROUND = 0xff;
 
-export { IMPERIAL_CITY_PLAN, IMPERIAL_DISTRICTS, IMPERIAL_BLOCKS };   // TESA11: world/imperialCity.js's
+/** IC-GRAND: A CAPITAL'S PLAN, ASKED - its rows and columns, a cell, an own block of a cell's code: a plan of its own rows
+ *  (every capital but one), or (the Imperial City's, forty thousand cells) its `cells` a side and its laws (`cellAt`,
+ *  `ownBlock`), worked a slice at a time. */
+export const planRows = (cap) => cap.plan?.length ?? cap.cells;
+export const planCols = (cap) => cap.plan?.[0]?.length ?? cap.cells;
+export const planCell = (cap, r, c) => (cap.plan ? cap.plan[r]?.[c] ?? null : cap.cellAt(r, c));
+export const ownBlockOf = (cap, cell) => (cap.ownBlock ? cap.ownBlock(cell) : Object.hasOwn(cap.blocks ?? {}, cell) ? cap.blocks[cell] : null);
+/** IC-GRAND: the Imperial City's own block of a cell's code - its own (`TESA<code>.RMB`), or Daggerfall's arena's block in the
+ *  Arena District - or null. */
+const imperialOwnBlock = (cell) => {
+  if (cell === IMPERIAL_ARENA_CODE) return ARENA_OWN;
+  const rc = imperialCodeCell(cell);
+  return rc ? { name: imperialOwnName(rc[0], rc[1]) } : null;
+};
+const ARENA_OWN = Object.freeze({ name: ARENA_BLOCK, external: true });
 /** A plan's cells: 'L' the lake, 'G' a garden, a code of the capital's own blocks, else a classic block's kind (its
  *  name's first four letters). Rows north to south (as a map reads - the grid's rows the other way), cells west to east
  *  (its x). */
@@ -196,11 +212,13 @@ const capital = (o) => Object.freeze({ ...o, at: cityAt(o.name) });
  *  last eight rows), the land its own. */
 const SEA_SOUTH = Object.freeze({ w: 1, h: 2, mx: 0, my: 0, sea: Object.freeze([1]) });
 export const CAPITALS = Object.freeze([
-  capital({ key: 'imperial-city', tag: 'IC', name: 'Imperial City', province: 'Imperial', shore: false, plan: IMPERIAL_CITY_PLAN, districts: IMPERIAL_DISTRICTS,
-    span: IMPERIAL_SPAN, sliceNames: IMPERIAL_SLICE_NAMES, carry: IMPERIAL_CARRY,   // TESA11: nine pixels, each slice its district's; TS5: forty-nine, each landmark carried in parts
+  capital({ key: 'imperial-city', tag: 'IC', name: 'Imperial City', province: 'Imperial', shore: false, plan: null, districtOf: imperialDistrictOfCell,
+    // IC-GRAND: its plan asked a cell and a slice at a time (`cells` a side), its own blocks a family on the door (world/imperialBlocks.js)
+    cells: IMPERIAL_CELLS, cellAt: imperialCell, slicePlan: imperialSlicePlan, ownBlock: imperialOwnBlock, family: true,
+    span: IMPERIAL_SPAN, sliceName: imperialSliceName, carry: IMPERIAL_CARRY,   // TESA11: nine pixels, each slice its district's; TS5: forty-nine, each landmark carried in parts; IC-GRAND: 625
     sliceMarkers: imperialSliceMarkers,   // AUDIT TESA II C7: every slice its own start markers (each worked when first read)
     gates: Object.freeze(['W']),   // TESA14: Talos Bridge, west to the mainland
-    anchor: Object.freeze([IMPERIAL_SPAN * 4, IMPERIAL_SPAN * 4]), markers: Object.freeze([[220, 0], [-220, 0], [0, 220], [0, -220]]), blocks: IMPERIAL_BLOCKS, models: Object.freeze(IMPERIAL_PARTS.map((p) => p.id)), drawn: Object.freeze(Object.values(IMPERIAL_MODELS)) }),   // TS5: its markers on the plaza round the greater tower; its landmarks' parts the slices' models, the whole ones drawn once
+    anchor: Object.freeze([IMPERIAL_SPAN * 4, IMPERIAL_SPAN * 4]), markers: Object.freeze([[220, 0], [-220, 0], [0, 220], [0, -220]]), blocks: null, models: Object.freeze(IMPERIAL_PARTS.map((p) => p.id)), drawn: Object.freeze(Object.values(IMPERIAL_MODELS)) }),   // TS5: its markers on the plaza round the tower; its landmarks' parts the slices' models, the whole ones drawn once
   capital({ key: 'solitude', tag: 'SO', name: 'Solitude', province: 'Skyrim', shore: true, plan: SOLITUDE_PLAN, districts: SOLITUDE_DISTRICTS,
     sea: Object.freeze(['N', 'W']),   // AUDIT TESA II C9: the plan's water - the Sea of Ghosts north, the Karth west
     gates: Object.freeze(['S']),   // TESA14: the main gate south (the north gate is the docks')
@@ -242,7 +260,7 @@ export const capitalSpan = (cap) => capitalDims(cap).w;
 export const capitalCentre = (cap) => { const D = capitalDims(cap); return D.my * D.w + D.mx; };
 export const capitalSliceOrdinal = (cap, s) => { const c = capitalCentre(cap); return s === c ? 0 : 1 + (s < c ? s : s - 1); };
 /** TESA11: a slice's name - the centre's the capital's. */
-export const capitalSliceName = (cap, s) => (s === capitalCentre(cap) ? cap.name : cap.sliceNames?.[s] ?? cap.name);
+export const capitalSliceName = (cap, s) => (s === capitalCentre(cap) ? cap.name : (cap.sliceName ? cap.sliceName(s) : cap.sliceNames?.[s]) ?? cap.name);
 export const isCapitalPlaceId = (id) => ((Number(id) >>> 20) & 0xfff) === CAPITAL_LANE && ((Number(id) >>> 0) & 0x80000) !== 0;
 /** AUDIT TESA II C2: is a capital's slice its harbour's sea (its plan's eight rows all water but the sea's own block). */
 const isSeaSlice = (cap, s) => (capitalDims(cap).sea ?? []).includes(s);
@@ -432,18 +450,18 @@ export function cityBlockNames(rows) {
 
 /** A capital's own block of a `kind` at its plan's (cx, r) - TESA11: base 36, a 24-cell plan's rows and columns one
  *  character each; TS5: two past 36 cells. */
-const capitalCellName = (kind) => (cap, cx, r) => { const w = cap.plan.length > 36 ? 2 : 1; return `TES${kind}${cap.tag}${r.toString(36).padStart(w, '0')}${cx.toString(36).padStart(w, '0')}.RMB`; };
+const capitalCellName = (kind) => (cap, cx, r) => { const w = planRows(cap) > 36 ? 2 : 1; return `TES${kind}${cap.tag}${r.toString(36).padStart(w, '0')}${cx.toString(36).padStart(w, '0')}.RMB`; };
 /** AUDIT-TESA A6-2: a capital's garden at its plan's (cx, r) - a block of its own, so the walls a capital's models raise
  *  over it close its ground and keep its trees off them (capitalPortBlocks' `footprint`). */
 export const capitalGardenName = capitalCellName('G');
 /** AUDIT TESA II C1: is the plan's cell (cx, r) on its outer ring - the only cells the rim reaches (it is under a block). */
-export const onCapitalRing = (cap, cx, r) => r === 0 || cx === 0 || r === cap.plan.length - 1 || cx === cap.plan[0].length - 1;
+export const onCapitalRing = (cap, cx, r) => r === 0 || cx === 0 || r === planRows(cap) - 1 || cx === planCols(cap) - 1;
 /** AUDIT TESA II C1: a capital's lake or sea at its plan's outer ring - a block of its own, so its rim leaves the land's
  *  own ground there (the shared lake laid water to the pixel's edge). */
 export const capitalLakeName = capitalCellName('L');
 /** AUDIT TESA II C1: IS A POINT OF THE PLAN IN ITS RIM (`x` east and `z` south of the plan's north-west corner, metres) -
  *  within CAPITAL_RIM_M of its outer edge: the span's outer sides, never a seam between its own slices. */
-export const inCapitalRim = (cap, x, z) => x < CAPITAL_RIM_M || z < CAPITAL_RIM_M || x > cap.plan[0].length * BLOCK_M - CAPITAL_RIM_M || z > cap.plan.length * BLOCK_M - CAPITAL_RIM_M;
+export const inCapitalRim = (cap, x, z) => x < CAPITAL_RIM_M || z < CAPITAL_RIM_M || x > planCols(cap) * BLOCK_M - CAPITAL_RIM_M || z > planRows(cap) * BLOCK_M - CAPITAL_RIM_M;
 
 /** TESA11: the kinds a cell falls back to where the game's cities lay none of its own (a release short of one). */
 const FALLBACK_KINDS = Object.freeze(['RESI', 'GENR']);
@@ -452,15 +470,17 @@ const FALLBACK_KINDS = Object.freeze(['RESI', 'GENR']);
  *  cell's kind off the cell's hash (its plan column and row) - the kind's fallbacks where it has none, null where they
  *  have none either. TESA11: `at` the plan's cell the given plan's first cell is (a slice's), the hash and the gardens
  *  the whole plan's. */
-export function capitalBlockNames(plan, k, names, own = CAPITALS[k]?.blocks ?? {}, at = [0, 0]) {
+export function capitalBlockNames(plan, k, names, own = CAPITALS[k] ? (cell) => ownBlockOf(CAPITALS[k], cell) : {}, at = [0, 0]) {
   const out = [], [x0, r0] = at;
+  // IC-GRAND: `own` a capital's blocks by code, or its law of a code (the Imperial City's)
+  const ownOf = typeof own === 'function' ? own : (cell) => (Object.hasOwn(own ?? {}, cell) ? own[cell] : null);
   for (let r = plan.length - 1; r >= 0; r--) {
     for (let x = 0; x < plan[r].length; x++) {
-      const cell = plan[r][x];
+      const cell = plan[r][x], mine = ownOf(cell);
       if (cell === 'L') out.push(CAPITALS[k] && onCapitalRing(CAPITALS[k], x0 + x, r0 + r) ? capitalLakeName(CAPITALS[k], x0 + x, r0 + r) : CAPITAL_BLOCKS.lake);   // AUDIT TESA II C1: its rim's
       else if (cell === 'O') out.push(TOWN_OUTLINE_BLOCK);   // TS5: open ground - the land's own (world/townOutline.js)
       else if (cell === 'G') out.push(CAPITALS[k] ? capitalGardenName(CAPITALS[k], x0 + x, r0 + r) : CAPITAL_BLOCKS.garden);   // AUDIT-TESA A6-2: its own
-      else if (Object.hasOwn(own, cell)) out.push(own[cell].name);
+      else if (mine) out.push(mine.name);
       else {
         const list = [cell, ...FALLBACK_KINDS].map((kind) => names?.get(kind)).find((l) => l?.length);
         if (!list) return null;
@@ -540,6 +560,7 @@ const GARDEN_TREES = Object.freeze([12, 15, 16, 18]);
 /** The code of a capital's own block that carries its models: the first in its plan's order whose square has the
  *  anchor on it (its edge or its corner), or null. */
 export function capitalCarrier(cap) {
+  if (cap.family) { const k = imperialAnchorCarrier(); return k ? planCell(cap, k[0], k[1]) : null; }   // IC-GRAND: worked by its own law
   const [ax, ar] = cap.anchor;
   for (let r = 0; r < cap.plan.length; r++) {
     for (let cx = 0; cx < cap.plan[r].length; cx++) {
@@ -550,9 +571,14 @@ export function capitalCarrier(cap) {
   return null;
 }
 /** TESA11: each slice's carrier - the first of its own blocks in the plan's order, the centre's the anchor's
- *  (capitalCarrier) - by slice index. */
+ *  (capitalCarrier) - by slice index. IC-GRAND: the Imperial City's, of the slices its landmarks stand in (a slice of no
+ *  landmark carries nothing but its fabric's own, world/imperialBlocks.js). */
 export function capitalSliceCarriers(cap) {
   const D = capitalDims(cap), first = new Map([[capitalCentre(cap), capitalCarrier(cap)]]);   // the centre's the anchor's
+  if (cap.family) {
+    for (const s of new Set(Object.values(cap.carry ?? {}))) if (!first.has(s)) { const k = imperialSliceCarrier(s); if (k) first.set(s, planCell(cap, k[0], k[1])); }
+    return first;
+  }
   cap.plan.forEach((row, r) => row.forEach((cell, cx) => {
     const s = Math.floor(r / 8) * D.w + Math.floor(cx / 8);
     if (Object.hasOwn(cap.blocks, cell) && !first.has(s)) first.set(s, cell);
@@ -615,6 +641,7 @@ export function capitalPortBlocks({ footprint = null } = {}) {
     };
   };
   for (const cap of CAPITALS) {
+    if (cap.family) continue;   // IC-GRAND: the Imperial City's blocks are a family on the door (world/imperialBlocks.js, world/capitalModels.js installCapitals)
     const carriers = capitalModelCarriers(cap), slices = capitalSliceCarriers(cap), D = capitalDims(cap);
     cap.plan.forEach((row, r) => row.forEach((cell, cx) => {
       const own = Object.hasOwn(cap.blocks, cell) ? cap.blocks[cell] : null;
@@ -640,6 +667,7 @@ export function capitalPortBlocks({ footprint = null } = {}) {
     }));
   }
   for (const cap of CAPITALS) {
+    if (cap.family) continue;
     cap.plan.forEach((row, r) => row.forEach((cell, cx) => {
       if (cell !== 'G') return;
       const name = capitalGardenName(cap, cx, r);
@@ -651,6 +679,7 @@ export function capitalPortBlocks({ footprint = null } = {}) {
   }
   // AUDIT TESA II C1: each capital's lake and sea at its plan's outer ring, its own - its rim the land's
   for (const cap of CAPITALS) {
+    if (cap.family) continue;
     cap.plan.forEach((row, r) => row.forEach((cell, cx) => {
       if (cell !== 'L' || !onCapitalRing(cap, cx, r)) return;
       const name = capitalLakeName(cap, cx, r);
@@ -702,13 +731,14 @@ export function dryKinds(names, blockOf) {
 export function synthesizeCapitalLocation({ cap, k, s = capitalCentre(cap) }, ctx) {
   // TESA11: a capital over several pixels - the slice's eight-by-eight of the plan, its hash and its gardens the plan's
   const D = capitalDims(cap), sx = s % D.w, sy = Math.floor(s / D.w), so = capitalSliceOrdinal(cap, s), many = D.w * D.h > 1;
-  const plan = many ? cap.plan.slice(sy * 8, sy * 8 + 8).map((row) => row.slice(sx * 8, sx * 8 + 8)) : cap.plan;
+  const plan = cap.slicePlan ? cap.slicePlan(s) : many ? cap.plan.slice(sy * 8, sy * 8 + 8).map((row) => row.slice(sx * 8, sx * 8 + 8)) : cap.plan;   // IC-GRAND: its slice's, asked
   const width = plan[0].length, height = plan.length;
-  const blockNames = capitalBlockNames(plan, k, cap.shore ? ctx.names : dryKinds(ctx.names, ctx.blockOf), cap.blocks, many ? [sx * 8, sy * 8] : [0, 0]);   // AUDIT-TESA A6-4
+  const blockNames = capitalBlockNames(plan, k, cap.shore ? ctx.names : dryKinds(ctx.names, ctx.blockOf), (cell) => ownBlockOf(cap, cell), many ? [sx * 8, sy * 8] : [0, 0]);   // AUDIT-TESA A6-4
   if (!blockNames || !ctx.base) return null;
   const mapId = capitalPlaceId(k, so);
   const ll = mapPixelToLongitudeLatitude(ctx.px, ctx.py);
-  const buildings = capitalBuildings(blockNames, ctx.blockOf, k, mapId, 64 * so);
+  // IC-GRAND: a family's own blocks hold no building - never read (built) for the list
+  const buildings = capitalBuildings(blockNames, cap.family ? (name) => (imperialBlockOf(name) ? null : ctx.blockOf(name)) : ctx.blockOf, k, mapId, 64 * so);
   const castle = so === 0 ? capitalCastleDungeon(k, mapId) : null;   // WW7-4: the centre's - the capital's own - its castle's halls
   const where = ctx.where ?? {};
   const base = ctx.base;
@@ -737,7 +767,45 @@ export function synthesizeCapitalLocation({ cap, k, s = capitalCentre(cap) }, ct
   };
 }
 
-/** The district a cell of a capital's grid belongs to, or null. */
+/** The district a cell of a capital's grid belongs to, or null - IC-GRAND: the Imperial City's by its law. */
 export function capitalDistrict(cap, x, y) {
-  return districtAt(cap?.districts, x, y);
+  return cap?.districtOf ? cap.districtOf(x, y) : districtAt(cap?.districts, x, y);
 }
+
+// ---------------------------------------------------------------- IC-GRAND: near and far
+
+/** IC-GRAND: is a capital's slice on (px, py) built near, the player on `current` - within NEAR_RING (world/imperialBlocks.js)
+ *  of the player's pixel; `was` the view it stands in (a near one keeps near NEAR_SLACK further). Only a family capital's
+ *  slices are ever far. */
+export function capitalNear(px, py, current, was = null) {
+  const d = Math.max(Math.abs(px - (current?.x ?? px)), Math.abs(py - (current?.y ?? py)));
+  return d <= NEAR_RING || (was === 'near' && d <= NEAR_RING + NEAR_SLACK);
+}
+const _views = new WeakMap();
+/**
+ * IC-GRAND: THE LOCATION A PIXEL IS BUILT AS - a family capital's slice far from the player (capitalNear) its far view: every
+ * cell but the lake's, the open shore's and the arena's its far block (world/imperialBlocks.js imperialViewName), no
+ * building, no dungeon, `capital.lod` 'far' - the index's location untouched (its buildings, its quests, its map are the
+ * near one's); every other location as it is (a near slice's `capital.lod` reads 'near' through capitalViewOf).
+ * @param {any} loc @param {number} px @param {number} py @param {{ x: number, y: number } | null} current
+ */
+export function capitalBuildView(loc, px, py, current) {
+  const cap = loc?.capital ? CAPITALS[loc.capital.k] : null;
+  if (!cap?.family || capitalNear(px, py, current)) return loc;
+  let v = _views.get(loc);
+  if (!v) {
+    const ed = loc.exterior.exteriorData, D = capitalDims(cap), s = loc.capital.s, sx = s % D.w, sy = Math.floor(s / D.w);
+    // the grid's order: rows from the south (capitalBlockNames') - grid row y is the slice's plan row (7 - y)
+    const blockNames = ed.blockNames.map((near, i) => imperialViewName(sy * 8 + (7 - Math.floor(i / 8)), sx * 8 + (i % 8), near, true));
+    v = Object.freeze({
+      ...loc, hasDungeon: false, dungeon: null,
+      exterior: { ...loc.exterior, buildings: [], exteriorData: { ...ed, blockNames, buildingCount: 0 } },
+      capital: Object.freeze({ ...loc.capital, lod: 'far' }),
+    });
+    _views.set(loc, v);
+  }
+  return v;
+}
+/** IC-GRAND: the view a built location stands in - 'far', 'near' (a family capital's slice built near), or null (none of a
+ *  family capital's). */
+export const capitalViewOf = (loc) => (loc?.capital && CAPITALS[loc.capital.k]?.family ? loc.capital.lod ?? 'near' : null);

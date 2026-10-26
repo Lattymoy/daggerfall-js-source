@@ -104,7 +104,9 @@ test('SPAWNED-DUNGEONS: templates are real non-main-story dungeons, one-block ex
 test('SPAWNED-DUNGEONS by source: ONE choke point (buildPixelNow), online-only off the page params, wrapped, never a fresh roll per load', async () => {
   const { readFileSync } = await import('node:fs');
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /const dfLocation = _locationToBuild\(px, py\) \|\| null;/, 'the build asks what stands (AUDIT OW5b D2)');
+  // PIN MOVED (IC-GRAND, test/world/icgrand_lod.test.js): the ask's answer through capitalBuildView - a far slice of the
+  // Imperial City its far view, every other location as it stands
+  assert.match(w, /const dfLocation = capitalBuildView\(_locationToBuild\(px, py\), px, py, host\.state\.current\) \|\| null;/, 'the build asks what stands (AUDIT OW5b D2)');
   assert.match(w, /function _locationToBuild\(px, py\) \{[\s\S]{0,1000}?return loc \|\| spawnedDungeonAt\(px, py\);\n  \}/, 'a real location always wins; only an empty pixel is asked');   // PIN MOVED (TESA8): 600 -> 640, past the Bay the lair's ask after the country's; PIN MOVED (TESA10): 640 -> 700; 700 -> 800 at the merge of main into TESA (main's ether place beside the arc's), a capital's before them; PIN MOVED (AUDIT TESA II P1): 800 -> 1000, online the zone's hall of the day first past the Bay
   const i = w.indexOf('const spawnedDungeonAt = (px, py) => {');
   const fn = w.slice(i, w.indexOf('\n  };\n', i));

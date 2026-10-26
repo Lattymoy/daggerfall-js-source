@@ -85,11 +85,12 @@
   {
     "name": "AUDIT-TESA-II-C1-piers-into-the-rim",
     "file": "src/world/imperialCity.js",
-    "old": "piers: Object.freeze([166, 172, 178, 184, 190, 196]), pierTo: 2560,",
-    "new": "piers: Object.freeze([166, 172, 178, 184, 190, 196]), pierTo: 2810,",
+    "old": "piers: Object.freeze(Array.from({ length: 21 }, (_, i) => 160 + i * 2)), pierTo: 8450,",
+    "new": "piers: Object.freeze(Array.from({ length: 21 }, (_, i) => 160 + i * 2)), pierTo: 10180,",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (IC-GRAND): the Waterfront at twenty-five pixels - its piers to 8450 m, the rim's inner edge 10,169.6 m."
   },
   {
     "name": "AUDIT-TESA-II-C1-solitude-east-wall-in-the-rim",
@@ -313,12 +314,13 @@
   },
   {
     "name": "AUDIT-TESA-II-C7-outside-the-wall",
-    "file": "src/world/imperialCity.js",
-    "old": "from = inside.length ? inside : open, picks",
-    "new": "from = open, picks",
+    "file": "src/world/imperialBlocks.js",
+    "old": "const best = nearest(inside, side, picks) ?? nearest(lattice, side, picks);",
+    "new": "const best = nearest(lattice, side, picks);",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (IC-GRAND): the slices' markers moved to world/imperialBlocks.js sliceMarkersOf and are found lazily, inside the wall first."
   },
   {
     "name": "AUDIT-TESA-II-C8-json-kept-beside-the-block",

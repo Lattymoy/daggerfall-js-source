@@ -40,7 +40,7 @@ import { attachGamepad, GLASS_PAD_ZOOM } from '../ui/gamepadInput.js';   // GP1:
 import { BlocksFile } from '../formats/blocksFile.js';
 import { bindWorldDataBlocks } from '../formats/worldData/worldDataReplacement.js';   // RR3b
 import { customModelFor, hasCustomModel, customModelNeeds, classicModelIdOf } from '../world/customModels.js';   // ARENA1: RuntimeMaterials' ApplyClimate 0 - the colosseum wears its own pictures; AUDIT MERCHANT-YARDS G1: the yards measure the registered models
-import { isUndercroftDoor, undercroftLocation, isArenaUndercroft, isArenaCity, inArenaCell, ARENA_REGION, ARENA_LOCATION, ARENA_BLOCK, ARENA_GATE_PEOPLE } from '../world/arena/arenaCity.js';   // ARENA1: the undercroft's stair and its record, the city's cell; ARENA2: the colosseum's block in a built pixel, the Herald's place; ARENA-MAP: its name on the town map
+import { isUndercroftDoor, undercroftLocation, isArenaUndercroft, standsArena, inArenaCell, ARENA_REGION, ARENA_LOCATION, ARENA_BLOCK, ARENA_GATE_PEOPLE } from '../world/arena/arenaCity.js';   // ARENA1: the undercroft's stair and its record, the city's cell; ARENA2: the colosseum's block in a built pixel, the Herald's place; ARENA-MAP: its name on the town map
 import { isFurnishing } from '../systems/decor/decorFurnish.js';   // ARENA2: a moved house's furniture back among the furnishings
 import { createArenaBouts } from './arena/arenaBouts.js';   // ARENA2: the bout on this screen - its law over real bodies, its crowd, its HUD
 import { createArenaSound } from '../systems/arena/arenaSound.js';   // ARENA2: the crowd, heard - built from DAGGER.SND's own voices
@@ -1738,6 +1738,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     get _lairTemplates() { return _lairTemplates; },
     get _seasonHoldKey() { return _seasonHoldKey; }, set _seasonHoldKey(v) { _seasonHoldKey = v; },
     get built() { return built; },
+    get farRing() { return farRing; },   // IC-GRAND x FAR-LANDMARK: the Imperial City's landmarks on its pass (scenes/capitalSkyline.js)
     get inFlight() { return inFlight; },
     get locationIndex() { return locationIndex; },
     get playerSpawned() { return playerSpawned; },
@@ -18475,7 +18476,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const _undercrofts = new WeakMap();
   function arenaDoorTarget(e) {
     const city = locationIndex.get(e.pixelKey);
-    if (!isUndercroftDoor(e, DOOR_TYPE.DUNGEON_ENTRANCE) || !isArenaCity(city)) return { dfLocation: city, group: e.pixelKey };
+    if (!isUndercroftDoor(e, DOOR_TYPE.DUNGEON_ENTRANCE) || !standsArena(city)) return { dfLocation: city, group: e.pixelKey };   // IC-GRAND: the Imperial City's arena's stair too
     let u = _undercrofts.get(city);
     if (!u) { u = undercroftLocation(city); _undercrofts.set(city, u); }
     return { dfLocation: u, group: `${e.pixelKey}:undercroft` };

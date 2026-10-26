@@ -12,11 +12,12 @@
   {
     "name": "TESA-LORE-prison-gate-old",
     "file": "src/world/imperialCity.js",
-    "old": "gates: Object.freeze([45, 135, 172, 270])",
-    "new": "gates: Object.freeze([12, 135, 172, 270])",
+    "old": "gates: Object.freeze([30, 45, 90, 135, 150, 195, 210, 270, 330])",
+    "new": "gates: Object.freeze([30, 12, 90, 135, 150, 195, 210, 270, 330])",
     "tests": [
       "test/tesalore_capitals.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (IC-GRAND): the city wall's gates every district's avenue's too."
   },
   {
     "name": "TESA-LORE-prison-carried-north",
@@ -30,20 +31,22 @@
   {
     "name": "TESA-LORE-watch-towers-unbuilt",
     "file": "src/world/capitalImperial.js",
-    "old": "  for (const [x, z] of watchTowersAt()) watchTower(mb, x, z, W);\n",
+    "old": "  for (const [x, z] of watchTowersAt()) if (only([x, z], [x, z])) watchTower(mb, x, z, W);\n",
     "new": "",
     "tests": [
       "test/tesalore_capitals.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (IC-GRAND): a part's builder asks only its towers (only)."
   },
   {
     "name": "TESA-LORE-watch-towers-low",
     "file": "src/world/imperialCity.js",
-    "old": "watchR: 20, watchH: 76",
-    "new": "watchR: 20, watchH: 40",
+    "old": "watchR: 26, watchH: 100",
+    "new": "watchR: 26, watchH: 40",
     "tests": [
       "test/tesalore_capitals.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (IC-GRAND): the wall at 38 m, its towers 52, its watch towers 100."
   },
   {
     "name": "TESA-LORE-court-unpaved",

@@ -22,12 +22,13 @@
  {
   "name": "IS-the-open-cells-own",
   "file": "src/world/imperialCity.js",
-  "old": "    if (land === 2 && district(r, c) === SHORE) return 'O';",
-  "new": "    if (false) return 'O';",
+  "old": "if (land === 2 && d === SHORE) return 'O';",
+  "new": "if (false) return 'O';",
   "tests": [
    "test/world/imperialscale.test.js",
    "test/tesa11_imperial.test.js"
-  ]
+  ],
+  "note": "PIN MOVED (IC-GRAND): cellOf reads the district once (d)."
  },
  {
   "name": "IS-the-codes-unpadded",
@@ -101,12 +102,14 @@
  },
  {
   "name": "IS-the-colosseum-way-narrow",
-  "file": "src/world/imperialCity.js",
-  "old": "(Math.abs(dz) < C.way / 2 && Math.abs(dx) > C.floor[0] - 2) || (Math.abs(dx) < C.way / 2 && Math.abs(dz) > C.floor[1] - 2)",
-  "new": "(Math.abs(dz) < 4 && Math.abs(dx) > C.floor[0] - 2) || (Math.abs(dx) < 4 && Math.abs(dz) > C.floor[1] - 2)",
+  "file": "src/world/tamrielCapitals.js",
+  "old": "  if (cell === IMPERIAL_ARENA_CODE) return ARENA_OWN;\n",
+  "new": "",
   "tests": [
+   "test/world/icgrand_arena.test.js",
    "test/tesa11_imperial.test.js"
-  ]
+  ],
+  "note": "PIN MOVED (IC-GRAND): the Colosseum retired with its ways (Daggerfall's arena block stands in its stead) - re-aimed at its successor, the arena's cell laid Daggerfall's own block."
  },
  {
   "name": "IS-the-part-z-unturned",
@@ -149,12 +152,13 @@
  {
   "name": "IS-the-garden-unpadded",
   "file": "src/world/tamrielCapitals.js",
-  "old": "const w = cap.plan.length > 36 ? 2 : 1;",
+  "old": "const w = planRows(cap) > 36 ? 2 : 1;",
   "new": "const w = 1;",
   "tests": [
    "test/tesa10_capitals.test.js",
    "test/audit_tesa.test.js"
-  ]
+  ],
+  "note": "PIN MOVED (IC-GRAND): a plan's rows asked (planRows) - the Imperial City's plan is a law, not rows."
  },
  {
   "name": "IS-the-open-cell-unnamed",
