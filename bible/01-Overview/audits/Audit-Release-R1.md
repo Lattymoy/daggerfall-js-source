@@ -163,7 +163,9 @@ it RING_GAP past the span (the ring's own rule with no water) now that the lake 
 - The 35 files of the last day's work that read ARENA2 (the hosts', the bands', the zone's three - `audittesa2z_zone`,
   `zoneline`, `zonesafe` - the roads', the ports', the Arena District's, the capitals', the zones', the world's, E1's, the
   Bay's walls, the relief, the town shapes, the biomes, the town outlines and walls, URBANIZER's fabric and the world-wide
-  ones), on 367cf11766 with ARENA2: 366 of 366, none skipped.
+  ones), on 367cf11766 with ARENA2: 366 of 366, none skipped. Again on this lane's head with SMOOTH-LAND merged
+  (ad2a8d71de), with `breathtaker`, SMOOTH-LAND's `smoothland` and this audit's pins beside them: 389 of 389, none
+  skipped (AUDIT TESA II C1's capitals pin some 30 minutes of it at a load of 20).
 - `test/world/breathtaker.test.js`: 13 of 13 (the waters' four on the freeware's trace among them).
 - The tests that read `travelRoute.js` (18 files, R1-2's reach): 256 of 258. The two that fail are wall-clock bounds,
   AUDIT STARTS V4/V7's "under a second and a half" (the slowest 8,741 ms) and START2's voyages' "under three seconds"
