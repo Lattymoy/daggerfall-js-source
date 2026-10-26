@@ -4,10 +4,11 @@ name: Account database load
 # takes forever to load"; the owner: "do whatever is the most detailed") - WHAT IS FILLING THE ONE DATABASE, READ BY THE
 # OPERATOR. Run it by hand from the Actions tab; the run's summary carries two readings, each from the database's own
 # side of things:
-#   1. D1's query insights - the statements that took the most of the database's time over the window (wrangler d1
-#      insights; the window rounds up to the day it allows);
+#   1. D1's query insights - the statements that took the most of the database's time over the window, or read or
+#      wrote the most rows (the sort_by input; wrangler d1 insights; the window rounds up to the day it allows);
 #   2. the service's own metrics (server-account/src/metrics.js, every request and cron firing one Analytics Engine
-#      point) - the D1 wait by route, minute by minute, the clock's jobs, and every answer that was not a 2xx.
+#      point) - the D1 wait by route, minute by minute, the clock's jobs, every answer that was not a 2xx, and the rows
+#      written by route and tables.
 # The questions are tools/d1Load.mjs's, tested in test/server/d1load.test.js - not written again here. It READS ONLY.
 
 on:
@@ -18,6 +19,17 @@ on:
         required: false
         default: "1"
         type: string
+      # COST-0 (2026-10-24: D1 read some 7.4 billion rows a day): what the insights rank the statements by - their time
+      # (the default), the rows they read, or the rows they wrote
+      sort_by:
+        description: "Rank D1's statements by (time, reads or writes)."
+        required: false
+        default: "time"
+        type: choice
+        options:
+          - time
+          - reads
+          - writes
 
 permissions:
   contents: read
@@ -41,6 +53,7 @@ jobs:
       # The input reaches the scripts as ENVIRONMENT, never pasted into them (account-recovery.yml's law); the tool
       # refuses anything but whole hours.
       HOURS: ${{ inputs.hours }}
+      SORT_BY: ${{ inputs.sort_by }}
     steps:
       - uses: actions/checkout@v4
 
@@ -80,12 +93,17 @@ jobs:
         working-directory: server-account
         run: |
           set -uo pipefail
+          # COST-0: only a ranking the choice input offers reaches wrangler (an empty input is time's)
+          case "${SORT_BY:-time}" in
+            time|reads|writes) sort="${SORT_BY:-time}" ;;
+            *) echo "::warning::not a ranking: ${SORT_BY} - the insights are skipped"; exit 0 ;;
+          esac
           period=1d
           [ "$HOURS" -gt 24 ] 2>/dev/null && period=7d
-          if out=$($WRANGLER d1 insights "$DB_NAME" --sort-type sum --sort-by time --limit 30 --timePeriod "$period" --json 2>/tmp/insights.err); then
-            echo "$out" | jq -r --arg p "$period" '"**D1 query insights - the statements that took the most time (\($p))**", "",
-              "| total ms | runs | avg ms | avg rows read | statement |", "|---:|---:|---:|---:|---|",
-              (.[] | "| \(.totalDurationMs // .sumDurationMs // "" | tostring) | \(.numberOfTimesRun // .count // "" | tostring) | \(.avgDurationMs // "" | tostring) | \(.avgRowsRead // "" | tostring) | `\((.query // "") | gsub("[|`\n]"; " ") | .[0:300])` |"),
+          if out=$($WRANGLER d1 insights "$DB_NAME" --sort-type sum --sort-by "$sort" --limit 30 --timePeriod "$period" --json 2>/tmp/insights.err); then
+            echo "$out" | jq -r --arg p "$period" --arg s "$sort" '"**D1 query insights - the statements ranked by \($s), summed (\($p))**", "",
+              "| total ms | runs | avg ms | avg rows read | total rows read | total rows written | statement |", "|---:|---:|---:|---:|---:|---:|---|",
+              (.[] | "| \(.totalDurationMs // .sumDurationMs // "" | tostring) | \(.numberOfTimesRun // .count // "" | tostring) | \(.avgDurationMs // "" | tostring) | \(.avgRowsRead // "" | tostring) | \(.totalRowsRead // .sumRowsRead // "" | tostring) | \(.totalRowsWritten // .sumRowsWritten // "" | tostring) | `\((.query // "") | gsub("[|`\n]"; " ") | .[0:300])` |"),
               ""' >> "$GITHUB_STEP_SUMMARY" || echo "::warning::the insights answer was not in the shape expected"
           else
             echo "::warning::wrangler d1 insights was refused - $(head -c 400 /tmp/insights.err)"

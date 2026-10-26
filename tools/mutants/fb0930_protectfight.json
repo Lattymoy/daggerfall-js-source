@@ -38,20 +38,22 @@
   {
     "name": "PROTECT-FIGHT-the-world-host-fight-unwired",
     "file": "src/scenes/world.js",
-    "old": "    fightHere: () => areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]),   // PROTECT-FIGHT: under the protection, a fight spares the street's walkers\n",
+    "old": "    fightHere: () => fightNear([...cityGuards.guards, ...exteriorFoes.foes], player.pos),   // PROTECT-FIGHT: under the protection, a fight spares the street's walkers - AUDIT FB1025i D3: a fight near me, a peer's foes too (encounters.js fightNear)\n",
     "new": "",
     "tests": [
       "test/scenes/fb0930_protectfight.test.js"
-    ]
+    ],
+    "note": "AUDIT FB1025i D3 (re-aimed by content): the fight is encounters.js fightNear"
   },
   {
     "name": "PROTECT-FIGHT-the-city-host-fight-unwired",
     "file": "src/scenes/exterior.js",
-    "old": "    fightHere: () => areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]),   // PROTECT-FIGHT: world.js's twin\n",
+    "old": "    fightHere: () => fightNear([...cityGuards.guards, ...exteriorFoes.foes], player.pos),   // PROTECT-FIGHT: world.js's twin (AUDIT FB1025i D3: encounters.js fightNear)\n",
     "new": "",
     "tests": [
       "test/scenes/fb0930_protectfight.test.js"
-    ]
+    ],
+    "note": "AUDIT FB1025i D3 (re-aimed by content): the fight is encounters.js fightNear"
   },
   {
     "name": "PROTECT-FIGHT-the-city-host-trample-unfiltered",

@@ -115,7 +115,7 @@ test('AUDIT CARDS-4 M relay: the sweep forgets a spent stake only past the void\
   await r.state.storage.put('cstake:bbbbbbbbbbbbbbbbbbbb', nowS() - reach - DAY - 60);
   await r.state.storage.put('cashout:acct-old', [{ j: 'cccccccccccccccccccc', receipt: 'x', e: nowS() - 1 }]);
   await r.state.storage.put('cashout:acct-live', [{ j: 'dddddddddddddddddddd', receipt: 'x', e: nowS() + 60 }]);
-  await r.room._sweep();
+  await r.room._sweep(ROOM);
   assert.notEqual(r.store.get('cstake:aaaaaaaaaaaaaaaaaaaa'), undefined, 'still within a void\'s reach and a day: remembered');
   assert.equal(r.store.get('cstake:bbbbbbbbbbbbbbbbbbbb'), undefined, 'past it: forgotten');
   assert.equal(r.store.get('cashout:acct-old'), undefined);

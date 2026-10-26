@@ -62,8 +62,8 @@
   {
     "name": "TV2-legs-ignore-the-ground",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "    const same = next && !(rings[i + 1]?.length) && next.x - pixels[i].x === dx && next.y - pixels[i].y === dy && (kinds[i] ?? 'open') === kind;",
-    "new": "    const same = next && !(rings[i + 1]?.length) && next.x - pixels[i].x === dx && next.y - pixels[i].y === dy;",
+    "old": "&& next.x - pixels[i].x === dx && next.y - pixels[i].y === dy && (kinds[i] ?? 'open') === kind;",
+    "new": "&& next.x - pixels[i].x === dx && next.y - pixels[i].y === dy;",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -382,8 +382,8 @@
   {
     "name": "AUDIT-DEEP-T2-8-coordinates-forbidden",
     "file": "src/scenes/world.js",
-    "old": "if (travelOptions?.settings?.targetCoordsAllowed === false) tvSay(TRAVEL_VIEW_TEXT.placesOnly); else travelViewWalkTo(hit.point, pix);",
-    "new": "travelViewWalkTo(hit.point, pix);",
+    "old": "if (travelOptions?.settings?.targetCoordsAllowed === false) tvSay(TRAVEL_VIEW_TEXT.placesOnly); else travelViewWalkTo(hit.point, pix, { outside: !middle && !fineMoveHeld(e) });",
+    "new": "travelViewWalkTo(hit.point, pix, { outside: !middle && !fineMoveHeld(e) });",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],

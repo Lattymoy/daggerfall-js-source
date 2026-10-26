@@ -42,7 +42,7 @@
   {
     "name": "GRANT-SLEEP-drain-silent",
     "file": "server/src/index.js",
-    "old": "this._metricsTick(true); this._grantDrained(); }",
+    "old": "this._metricsTick(true); void flushAtDrain(this); }",
     "new": "this._metricsTick(true); }",
     "tests": [
       "test/net/sleepcost.test.js"
@@ -51,9 +51,9 @@
   },
   {
     "name": "GRANT-SLEEP-drain-posts-nothing",
-    "file": "server/src/index.js",
-    "old": "    if (this._grants && (this._grants.w.rows.size || this._grants.w.tallies.size)) void this._grantFlush();\n",
-    "new": "    if (this._grants && this._grants.w.tallies.size) void this._grantFlush();\n",
+    "file": "server/src/drainWindows.js",
+    "old": "  if (grants && (grants.timer || grants.w?.rows.size || grants.w?.tallies.size)) posts.push(room._grantFlush());\n",
+    "new": "  if (grants && (grants.timer || grants.w?.tallies.size)) posts.push(room._grantFlush());\n",
     "tests": [
       "test/net/sleepcost.test.js"
     ],

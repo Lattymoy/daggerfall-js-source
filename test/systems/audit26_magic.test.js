@@ -281,7 +281,8 @@ test('audit26 F067: the identify SPELL refuses on magicka and never reaches the 
   // stays staged for a caster who comes back with the points - and the
   // window learns that only from the commit's answer. The law the pin
   // guards is unchanged: nothing identified, nothing spent, no tally.
-  assert.match(commit, /townTalk\?\.say\?\.\(notEnoughSpellPointsText\(\)\);\s*\n\s*surfacePlayer\(\);\s*\n\s*return false;/,
+  // BOX-ON-TOP: said in a box over the window (DaggerfallTradeWindow.cs:962), not on the HUD line the window hides
+  assert.match(commit, /messageBox\(notEnoughSpellPointsText\(\)\);[^\n]*\n\s*surfacePlayer\(\);\s*\n\s*return false;/,
     'the refusal turns back the WHOLE pass');
 
   // the tally is ConfirmTrade's, so the spell arm returns before it

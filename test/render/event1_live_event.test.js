@@ -135,7 +135,7 @@ test('EVENT1 relay: a player who joins mid-event reads it off the hub welcome (`
   assert.deepEqual(ofType(late, 'welcome')[0].ev, { kind: 'dread', at }, 'the late joiner is told');
   // everyone leaves: the room drains (its sweep runs), the object sleeps and wakes - the event stands
   await r.drop(dev); await r.drop(late);
-  await r.room._sweep();
+  await r.room._sweep(CHAT_WORLD_ROOM);
   r.wake();
   assert.equal(r.store.get(EVENT_KEY)?.kind, 'dread', 'a quiet night does not end it');
   const back = r.connect();

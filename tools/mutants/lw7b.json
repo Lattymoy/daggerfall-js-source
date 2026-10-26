@@ -200,8 +200,8 @@
   {
     "name": "LW7b-friend-died-unmade",
     "file": "src/scenes/roadStands.js",
-    "old": "          } else deps.died(s.res, t);   // fallen at the player's side",
-    "new": "          } else void 0;   // fallen at the player's side",
+    "old": "          else deps.died(s.res, t);   // fallen at the player's side",
+    "new": "          else void 0;   // fallen at the player's side",
     "tests": [
       "test/scenes/lw7b_beyond.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "LW7b-host-died-unwired",
     "file": "src/scenes/world.js",
-    "old": "      slay: livingRoadSlay, died: livingDied,",
-    "new": "      slay: livingRoadSlay, died: () => {},",
+    "old": "      slay: livingRoadSlay, killed: livingKilled, died: livingDied,",
+    "new": "      slay: livingRoadSlay, killed: livingKilled, died: () => {},",
     "tests": [
       "test/scenes/lw7b_beyond.test.js"
     ]

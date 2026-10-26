@@ -45,8 +45,10 @@ test('AUDIT ATTACH A1: the WIDEST attachment a place socket carries - the widest
   // (the glyph list 185 of them, as words); still 1018 under the runtime's 2048. The next field is measured against
   // this; storing the glyphs as their places in GLYPHS rather than their words would buy back some 170 bytes if the
   // half is to be held again.
+  // PIN MOVED (HIBERNATE): 1136, from 1080 - the id's secret (`sc`) rides the attachment, so a wake can ask it without a storage read
   // PIN MOVED (WW7-3): the provinces' seven crowns in "every glyph" (+70 bytes) - 1148, still 900 under the runtime's 2048
-  assert.ok(bytes <= 1160, `the widest place attachment is ${bytes} bytes - about half the runtime's 2048 at most, so the next field is measured with room to spare`);
+  // PIN MOVED (TESA x MAIN, the merge of main into TESA): both, 1206 measured - the seven crowns (+70) and the secret (+56)
+  assert.ok(bytes <= 1206, `the widest place attachment is ${bytes} bytes - about half the runtime's 2048 at most, so the next field is measured with room to spare`);
   assert.ok(bytes > 500, `and it is the wide one: ${bytes} bytes`);
 }));
 
@@ -62,8 +64,10 @@ test('AUDIT ATTACH A1 (AUDIT FB1018D L4-4): THE WIDEST DUNGEON INSTANCE SOCKET -
   const bytes = JSON.stringify(me.att).length;
   // SEAT-LIVE's stamps (two thirteen-digit times) and the instance's longer key: 1086 at its widest, past the building's
   // 1056 - a dungeon instance's ceiling of its own, still about half. PIN MOVED (LEASE1): 1135, from 1100 - the lease's three numbers
+  // PIN MOVED (HIBERNATE): 1191, from 1135 - the same secret on a dungeon instance's wider key
   // PIN MOVED (WW7-3): the seven crowns' 70 bytes - 1203, 845 under the runtime's 2048
-  assert.ok(bytes <= 1215, `the widest dungeon instance attachment is ${bytes} bytes`);
+  // PIN MOVED (TESA x MAIN, the merge of main into TESA): both, 1261 measured - the crowns and the secret on the wider key
+  assert.ok(bytes <= 1261, `the widest dungeon instance attachment is ${bytes} bytes`);
 }));
 
 // Each arm's flood, at one instant: `passes` frames through the bucket, then a strike a frame (`key`), closed past `max`.

@@ -2,15 +2,15 @@
   {
     "name": "RAID2-words-past-four",
     "file": "src/world/raidShared.js",
-    "old": "    if (out.length >= RAID_WORDS_MAX) break;\n",
-    "new": "",
+    "old": "    if (out.length >= RAID_WORDS_MAX) break;\n    if (!Array.isArray(e) || e.length !== 3) continue;\n",
+    "new": "    if (!Array.isArray(e) || e.length !== 3) continue;\n",
     "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-word-twice-for-a-raid",
     "file": "src/world/raidShared.js",
-    "old": "if (!raidLikeKey(key) || seen.has(key)) continue;",
-    "new": "if (!raidLikeKey(key)) continue;",
+    "old": "if (!raidLikeKey(key) || seen.has(key)) continue;\n    if (!Number.isInteger(n) || n < 0",
+    "new": "if (!raidLikeKey(key)) continue;\n    if (!Number.isInteger(n) || n < 0",
     "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
@@ -121,8 +121,8 @@
   {
     "name": "RAID2-ally-built-as-the-watch",
     "file": "src/scenes/exteriorFoes.js",
-    "old": ", allied: (r.t === KNIGHT_CITYWATCH_ID && allied.has(r.i)) || shipmate, champion: cp })",
-    "new": ", allied: shipmate, champion: cp })",
+    "old": ", allied: (r.t === KNIGHT_CITYWATCH_ID && allied.has(r.i)) || shipmate || refugees.has(r.i), champion: cp })",
+    "new": ", allied: shipmate || refugees.has(r.i), champion: cp })",
     "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
@@ -142,7 +142,7 @@
   {
     "name": "RAID2-word-unheard",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "    if (data.rk !== undefined) _onRaids?.(from, data.rk, _now());",
+    "old": "    if (data.rk !== undefined || data.ro !== undefined) _onRaids?.(from, data.rk, _now(), data.ro);",
     "new": "",
     "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
@@ -191,8 +191,8 @@
   {
     "name": "RAID2-election-skipped",
     "file": "src/systems/raidingParties.js",
-    "old": "  if (sharedClockOn() && !runsRaid(raid)) { cancelPending(); return 'standing-by'; }",
-    "new": "  if (sharedClockOn() && false) { cancelPending(); return 'standing-by'; }",
+    "old": "  if (sharedClockOn() && !runsRaid(raid)) { cancelPending(); letGoAllies(raidKey(raid)); return 'standing-by'; }",
+    "new": "  if (sharedClockOn() && false) { cancelPending(); letGoAllies(raidKey(raid)); return 'standing-by'; }",
     "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
@@ -226,35 +226,35 @@
   {
     "name": "RAID2-taken-raiders-uncounted",
     "file": "src/systems/raidingParties.js",
-    "old": "  for (const f of h.ownRaidFoes?.() ?? []) if (!_live.some((e) => e.foe === f)) _live.push({ foe: f, key: f.raidKey, kind: 'raider', boss: tookStaffBoss(f), routed: false, counted: false });\n",
+    "old": "  for (const f of h.ownRaidFoes?.() ?? []) if (!_live.some((e) => e.foe === f)) _live.push({ foe: f, key: f.raidKey, kind: 'raider', boss: tookStaffBoss(f), leader: !!f.entity?.raidLeader, routed: false, counted: false });   // AUDIT WORLD-EVENTS L3-5: a leader taken over is the leader\n",
     "new": "",
     "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-raider-untagged-at-its-stand",
     "file": "src/systems/raidingParties.js",
-    "old": "    if (kind !== 'defender') foe.raidKey = p.key;   // RAID2: it rides my frame tagged with its raid\n",
-    "new": "",
+    "old": "if (fights) { foe.raidKey = p.key; aimRaider(raid, foe); }",
+    "new": "if (fights) { aimRaider(raid, foe); }",
     "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-claim-kept-out-of-town",
     "file": "src/systems/raidingParties.js",
-    "old": "  if (!raid) { cancelPending(); _myClaims.clear(); return 'idle'; }",
-    "new": "  if (!raid) { cancelPending(); return 'idle'; }",
+    "old": "  if (!raid) { cancelPending(); for (const key of _myClaims.keys()) letGoAllies(key); _myClaims.clear(); return 'idle'; }",
+    "new": "  if (!raid) { cancelPending(); for (const key of _myClaims.keys()) letGoAllies(key); return 'idle'; }",
     "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-host-word-unsent",
     "file": "src/scenes/world.js",
-    "old": "if (cell) { const rk = raidWireWord(); if (rk) frame.rk = rk; }",
-    "new": "if (cell) { const rk = null; if (rk) frame.rk = rk; }",
+    "old": "if (cell) { const rk = raidWireWord(), ro = raidObjWord(); if (rk) frame.rk = rk;",
+    "new": "if (cell) { const rk = null, ro = raidObjWord(); if (rk) frame.rk = rk;",
     "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-host-word-unheard",
     "file": "src/scenes/world.js",
-    "old": "    exteriorFoes.setOnRaids((from, rk, at) => raidPeerWord(from, rk, at));",
+    "old": "    exteriorFoes.setOnRaids((from, rk, at, ro) => raidPeerWord(from, rk, at, ro));",
     "new": "    exteriorFoes.setOnRaids(() => 0);",
     "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },

@@ -103,7 +103,7 @@ test('SCALE2c a relay deploy\'s wave: every socket the page holds - the cell, it
   assert.equal(p.opened(), 3, 'still held, a moment before the slot');
   p.advance(1);
   assert.equal(p.opened(), 6, 'at the slot - half of the ten seconds 500 online take at the hub\'s gate - all three reopen together');
-  assert.deepEqual(p.sockets.slice(3).map((ws) => ws.url.split('/room/')[1]).sort(), ['chat:world', 'world:2,12', 'world:3,12']);
+  assert.deepEqual(p.sockets.slice(3).map((ws) => ws.url.split('?')[0].split('/room/')[1]).sort(), ['chat:world', 'world:2,12', 'world:3,12']);
 });
 
 test('SCALE2c a lone drop, a busy refusal, and a drop with the network gone are no wave - back at the old retry (mutants: one drop a wave; a busy close a drop; the browser\'s word unread)', () => {

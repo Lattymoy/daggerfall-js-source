@@ -782,9 +782,10 @@ first), so nobody fought and the gate stood its whole schedule.
 The gate does not move; the rock yields, ROADS-CLEAR's shape
 (`world/gate/gateClearance.js`, read by `scenes/world.js`):
 - a camp, fort, shrine, ruin, cave or nature spot whose objects (grown by the
-  road test's 8 m site margin) reach the gate's 24 m clearing is refused at its
-  pick, after the road test - a `continue`, so a later instance may take the
-  pixel;
+  road test's 8 m site margin) reach the gate's 24 m clearing stands none of
+  them - every model, flat, light, animal and marker - and keeps its pick: the
+  pick is the road test's alone, and the kernel levels its ground whether its
+  objects stand or not (GATE-AGREE, below);
 - a rock field's or mountain's piece - or any other model - whose own mesh box
   reaches the clearing is not stood (no mesh, no collider), and a flat whose
   base is within it (2 m more);
@@ -799,6 +800,19 @@ The faithful's circle (WB12d, `11-Multiplayer/World-Bosses.md` 19 D) is a second
 clearing of the gate's day, RITE_CLEAR_M (20 m) about the circle the day's law
 places (`riteLocalOf`): the same refusals, so no boulder stands through the altar,
 the braziers or the faithful's tents (AUDIT WB12d G12).
+
+GATE-AGREE (2026-10-24, `01-Overview/bugs/Field-Bugs-2026-10-24b.md`): A CLEARING
+NEVER MOVES THE GROUND. The gate's clearing became a set - every Elite Breach arch
+(EG-F) and every fallen star (STAR-CLEAR) - and a stranger's arch is each client's
+own word: believed only near its opener, two to a cell. A site refused at its
+pick took its levelled ground with it (`applyPicks` levels only what was picked)
+and let a later instance take the pixel, so a client that believed an arch stood
+on other ground than one that did not, and each saw the other and its foes sunk
+or floating outside the portals. The pick is the road's alone now; the clearing
+asks each pick after it is made (`scenes/pixelBuild.js` `wodHeld`), and a held
+site keeps its pick and its level ground and stands nothing. The sweep still
+builds a pixel again as a clearing comes or goes - for its objects, never its
+ground.
 
 Online alone: the gate is online's, and online this mod is the room's, forced
 on (`systems/online/onlineLane.js`) - so every client that sees a gate stands the same

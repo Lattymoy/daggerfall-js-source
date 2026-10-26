@@ -93,8 +93,8 @@
   {
     "name": "FB0929-the-enhanced-offer-drops-the-pieces",
     "file": "src/ui/enhanced/enhancedTrade.js",
-    "old": "  const price = getTradePrice(mode, c, ctx.quality ?? 0, ctx.skills ?? {}, pieces, resale);",
-    "new": "  const price = getTradePrice(mode, c, ctx.quality ?? 0, ctx.skills ?? {}, undefined, resale);",
+    "old": "  return getTradePrice(mode, lot.cost, ctx.quality ?? 0, ctx.skills ?? {}, lot.pieces, lot.resale);",
+    "new": "  return getTradePrice(mode, lot.cost, ctx.quality ?? 0, ctx.skills ?? {}, undefined, lot.resale);",
     "tests": ["test/systems/fb0929_min_price.test.js"]
   },
   {

@@ -280,8 +280,8 @@ test('CSA-G: the oars\' events on the vendored Rowboat - rowing, its Rudder Rowi
   assert.deepEqual(s.out.audio.filter((e) => e[0] === 'oneShot'), [], 'no AudioSource on this rudder');
 });
 
-test('CSA-G: the Trireme\'s strokes are heard - its rudder\'s own AudioSource (spatial 0.9, pitch 1.5) plays Oars_In, Oars_Sweep and Oars_Out as its clip\'s events pass - but only at the first time scale', () => {
-  const s = scene({ held: ['MoveForwards'] });
+test('CSA-G: the Trireme\'s strokes are heard - its rudder\'s own AudioSource (spatial 0.9, pitch 1.5) plays Oars_In, Oars_Sweep and Oars_Out as its clip\'s events pass - but only at the first time scale; SOUND-LIVE: at SoundVolume x the mod\'s own, as the loops are (mutant: the mod\'s plain 1 back)', () => {
+  const s = scene({ held: ['MoveForwards'], soundVolume: 0.8, settings: { 'Audio.SoundVolume': 0.5 } });
   const boat = s.place(3);
   const src = boat.RudderObject.getComponent('AudioSource');
   assert.deepEqual([src.m_Volume, src.m_Pitch, src.MinDistance, src.MaxDistance], [1, 1.5, 1, 500]);
@@ -292,7 +292,7 @@ test('CSA-G: the Trireme\'s strokes are heard - its rudder\'s own AudioSource (s
   assert.ok(heard.length >= 3, `${heard.length}`);
   for (const e of heard) {
     assert.ok([AUDIO_CLIPS[2], AUDIO_CLIPS[3], AUDIO_CLIPS[4]].includes(e[1]), e[1]);
-    assert.equal(e[2], 1);
+    assert.equal(e[2], f(f(0.8) * f(0.5)), 'both volumes, not the mod\'s plain 1');
     assert.equal(e[3], 'RudderObject');
   }
   heard.forEach((e, i) => assert.equal(e[1], ['Oars_In', 'Oars_Sweep', 'Oars_Out'][i % 3], `stroke ${i}: its clip (In at 0, Sweep at a quarter, Out at five eighths - the trireme's stroke opens on its time-0 event)`));
@@ -358,8 +358,9 @@ test('CSA-G: a boat\'s two loops as Unity keeps them - both stop as its object g
   assert.equal(fast.volume, 1, 'the fast loop at its AudioSource\'s first volume');
 });
 
-test('CSA-G: UpdateAudioSource - on a change of the mod\'s Audio volume every loop still heard takes SoundVolume x the new one and a loop faded to nothing stays there; no change, no update', () => {
-  const s = scene({ soundVolume: 0.8, settings: { 'Audio.SoundVolume': 1 } });
+test('CSA-G: UpdateAudioSource - on a change of the mod\'s Audio volume every loop still heard takes SoundVolume x the new one and a loop faded to nothing stays there; no change, no update; SOUND-LIVE: a change of the game\'s SoundVolume runs it too (mutant: the mod\'s section alone watched)', () => {
+  const o = { soundVolume: 0.8, settings: { 'Audio.SoundVolume': 1 } };
+  const s = scene(o);
   const boat = s.place(1);
   for (let i = 0; i < 5; i++) s.rt.endOfFrame();   // the placement's fade run out
   boat.AudioSourceFast.volume = 0;
@@ -370,6 +371,10 @@ test('CSA-G: UpdateAudioSource - on a change of the mod\'s Audio volume every lo
   s.rt.checkSettings();
   assert.equal(boat.AudioSourceSlow.volume, f(f(0.8) * f(0.5)));
   assert.equal(boat.AudioSourceFast.volume, 0, 'a silent loop stays silent');
+  o.soundVolume = 0.4;
+  s.rt.checkSettings();
+  assert.equal(boat.AudioSourceSlow.volume, f(f(0.4) * f(0.5)), 'the game\'s slider moved mid-voyage: the loop follows it');
+  assert.equal(boat.AudioSourceFast.volume, 0, 'and a silent loop stays silent');
 });
 
 test('CSA-G: the HUD\'s message clocks count game time - the mid-screen text holds its delay in game seconds, the popup lines run out in them (DaggerfallHUD.cs:262, PopupText.cs:56-59: Time.deltaTime, which the time scale scales)', () => {

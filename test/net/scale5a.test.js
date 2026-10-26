@@ -438,11 +438,11 @@ test('SCALE5a the leave knows the room drained without a filtered copy of every 
     const r = fakeRoom('chat:world');
     const ws = r.connect(); tick(25);
     await r.hello(ws, 'peer-0001', null, { tokenSub: 'player-1', cl: 1 });
-    r.store.set('secret:peer-stray', 'left behind by an unclean close');
+    r.store.set('party:stray', { id: 'stray', leader: 'player-1', members: ['player-1'], invites: [], away: {}, at: 1 });
     ws.close = function (code, reason) { this.closed = { code, reason }; };   // the runtime keeps listing it until the close completes
     r.room._refuse(ws, 'bad frame');
     await r.room._reap();
     assert.ok(r.sockets.includes(ws), 'still listed');
-    assert.equal(r.store.has('secret:peer-stray'), false, 'the drain swept what an unclean close left behind');
+    assert.equal(r.store.has('party:stray'), false, 'the drain swept the party an unclean close left behind');
   });
 });

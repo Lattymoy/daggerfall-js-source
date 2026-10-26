@@ -187,8 +187,8 @@
   {
     "name": "LEASE1-the-ask-unpaced",
     "file": "src/net/online.js",
-    "old": "if (this.leaseOk && this.status === 'open' && isSocialRoom(this.room) && now - this._leaseAskAt >= LEASE_MS",
-    "new": "if (this.leaseOk && this.status === 'open' && isSocialRoom(this.room)",
+    "old": "if (this.leaseOk && (this.leaseDoor || this._leaseOnce) && this.status === 'open' && isSocialRoom(this.room) && now - this._leaseAskAt >= LEASE_MS",
+    "new": "if (this.leaseOk && (this.leaseDoor || this._leaseOnce) && this.status === 'open' && isSocialRoom(this.room)",
     "why": "the hub asked every tick",
     "tests": [
       "test/net/lease1.test.js"
@@ -207,12 +207,13 @@
   {
     "name": "LEASE1-a-halo-skipped",
     "file": "src/net/online.js",
-    "old": "    try { ws = this._leased(new this._WS(`${this.url}/room/${room}`), room); } catch {",
+    "old": "    try { ws = this._leased(new this._WS(`${this.url}/room/${room}${of}`), room); } catch {",
     "new": "    try { ws = new this._WS(`${this.url}/room/${room}`); } catch {",
     "why": "a halo never handed the lease",
     "tests": [
       "test/net/lease1.test.js"
-    ]
+    ],
+    "note": "COST-2 3a (re-aimed by content: the cell-scoped law reads the socket's cover)."
   },
   {
     "name": "LEASE1-a-lease-from-any-room",
@@ -716,6 +717,16 @@
     "why": "past every wait a closed socket reads as live: its frames are heard after its leave",
     "tests": [
       "test/net/lease1.test.js"
+    ]
+  },
+  {
+    "name": "HIBERNATE-halo-peer-heartbeat-dropped",
+    "file": "src/net/online.js",
+    "old": "this.othersHere === 0 && this.peers.size === 0 &&",
+    "new": "this.othersHere === 0 &&",
+    "why": "alone in my cell beside a cell with a player, standing still sends no heartbeat and that player loses me",
+    "tests": [
+      "test/net/halothin.test.js"
     ]
   }
 ]

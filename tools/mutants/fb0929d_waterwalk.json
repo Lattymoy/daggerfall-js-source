@@ -47,8 +47,8 @@
   {
     "name": "WW-LID-H-the-path-is-asked-from-the-feet",
     "file": "src/player/collider.js",
-    "old": "this.raycast([feet[0], entryY + CAPSULE_RADIUS + axis - SKIN, feet[2]], UP, feet[1] - entryY + SKIN)",
-    "new": "this.raycast([feet[0], entryY, feet[2]], UP, feet[1] - entryY + SKIN)",
+    "old": "this.raycast([feet[0], entryY + CAPSULE_RADIUS + axis - SKIN, feet[2]], UP, feet[1] - entryY + SKIN, BODY_RAY)",
+    "new": "this.raycast([feet[0], entryY, feet[2]], UP, feet[1] - entryY + SKIN, BODY_RAY)",
     "tests": [
       "test/world/fb0929d_waterwalk.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WW-LID-H-the-ray-starts-on-the-head's-centre",
     "file": "src/player/collider.js",
-    "old": "entryY + CAPSULE_RADIUS + axis - SKIN, feet[2]], UP, feet[1] - entryY + SKIN)",
-    "new": "entryY + CAPSULE_RADIUS + axis, feet[2]], UP, feet[1] - entryY)",
+    "old": "entryY + CAPSULE_RADIUS + axis - SKIN, feet[2]], UP, feet[1] - entryY + SKIN, BODY_RAY)",
+    "new": "entryY + CAPSULE_RADIUS + axis, feet[2]], UP, feet[1] - entryY, BODY_RAY)",
     "tests": [
       "test/world/fb0929d_waterwalk.test.js"
     ]

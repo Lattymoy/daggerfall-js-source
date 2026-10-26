@@ -134,6 +134,13 @@ test('INT11 THE CENSUS: a death the fight saw noted on the count; alive again is
   assert.equal(bodyCensus(g, [{ sub: 'a', dead: false }], T + 10 * BODY_RISE_MS, LINE, true, { lives: false })[0].dead, true);
   assert.equal(g.players.a.bd.dd, T, 'never a new life');
   assert.equal(bodyCensus(g, [{ sub: 'a', dead: false }], T + 10 * BODY_RISE_MS, LINE, false, { lives: false })[0].dead, false, 'unenforced, the census as it was');
+  // SD-REZ (EVENT-RULES): asked of each body - the Hour's raised alone rise, after BODY_RISE_MS as any new life
+  const h = { players: { a: {}, b: {} } };
+  const raised = (sub) => sub === 'a';
+  bodyCensus(h, [{ sub: 'a', dead: true }, { sub: 'b', dead: true }], T, LINE, true, { lives: raised });
+  assert.deepEqual(bodyCensus(h, [{ sub: 'a', dead: false }, { sub: 'b', dead: false }], T + 10 * BODY_RISE_MS, LINE, true, { lives: raised }).map((x) => x.dead), [false, true], 'the raised rises; the other stays down');
+  assert.equal(h.players.a.bd.dd, null, 'a new life');
+  assert.equal(h.players.b.bd.dd, T);
   // bodyLife
   const l = { stoodMs: 1 }; bodyStruck(l, 1, T, LINE); bodyLife(l, T + 5, LINE);
   assert.deepEqual([l.bd.v, l.bd.dn, l.bd.w], [1, false, 1]);

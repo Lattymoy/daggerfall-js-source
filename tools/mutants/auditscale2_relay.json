@@ -252,12 +252,12 @@
   {
     "name": "AS2-R3-8-arm-no-layer",
     "file": "server/src/index.js",
-    "old": "m.data.r && cell === here ? a.ly | 0 : undefined",
+    "old": "m.data.r && atCover(here, cell) ? a.ly | 0 : undefined",
     "new": "undefined",
     "tests": [
       "test/net/auditscale2_relay.test.js"
     ],
-    "note": "the park arm names no layer"
+    "note": "COST-2 3a (re-aimed by content: the cell-scoped law reads the socket's cover). the park arm names no layer"
   },
   {
     "name": "AS2-R3-8-layer-unkept",

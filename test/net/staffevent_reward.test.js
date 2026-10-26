@@ -33,7 +33,7 @@ function fought(words, killer, fallAt) {
   return led;
 }
 
-test('THE REWARD: earned by three kills or by standing half the run - never a guest; the board most kills first, the killing blow before an equal count, ten at most', () => {
+test('THE REWARD: earned by three kills alone (REWARD-KILLS: a stand no longer) - never a guest; the board most kills first, the killing blow before an equal count, ten at most', () => {
   const late = T0 + 600_000;
   const words = [
     ['acctA', 'Ana', 9, T0 + 10_000], ['acctB', 'Bo', 4, T0 + 20_000], ['acctC', 'Cy', 4, T0 + 30_000],
@@ -52,7 +52,7 @@ test('THE REWARD: earned by three kills or by standing half the run - never a gu
   stand.bd = 1;
   foldStaffWord(stand, EV, 'acctS', 'Sal', { n: 0, bu: 1, fb: 0 }, T0 + 60_000);
   foldStaffWord(stand, EV, 'acctS', 'Sal', { n: 0, bu: 1, bk: 1, fb: 0 }, T0 + 60_000);
-  assert.deepEqual(staffEventEarned(stand).map((x) => x.acct), ['acctS'], 'stood the run with no kills: earned; one word and one kill: not');
+  assert.deepEqual(staffEventEarned(stand).map((x) => x.acct), [], 'REWARD-KILLS (mob 2026-10-25, card "Kills only (3+)"): stood the run with no kills - earns nothing now; one word and one kill: not');
   assert.equal(stand.a.acctS.t, 16, 'a word a tick');
   // ten on the board, the rest earned past it (rank 0)
   const many = fought(Array.from({ length: 14 }, (_, i) => [`acct${i}`, `P${i}`, STAFF_EVENT_EARN_KILLS + i, T0 + 1000 + i * STAFF_EVENT_KILL_MS * 40]), 'acct0', late);

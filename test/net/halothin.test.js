@@ -102,7 +102,11 @@ test('HALO-THIN the session: my own cell hears every pose; each halo its first, 
   clock.t += 1000 / POSE_HZ;
   s.sendPose({ ...pose, mv: 0 });
   for (const ws of sockets.slice(1)) { const h = poses(ws); assert.equal(h.length, 6); assert.equal(h[5].mv, 0, 'where I stopped'); }
-  // standing: the heartbeat, through every socket
+  // HIBERNATE: standing with nobody anywhere - my cell or a halo - sends no heartbeat
+  clock.t += HEARTBEAT_MS;
+  assert.equal(s.sendPose({ ...pose, mv: 0 }), false, 'alone, standing: no heartbeat');
+  // standing with a peer in a halo (nobody in my own cell): the heartbeat, through every socket - the halo's player keeps me
+  quiet(() => sockets[1].receive({ t: 'join', id: 'ann-0002', name: 'Ann' }));
   clock.t += HEARTBEAT_MS;
   s.sendPose({ ...pose, mv: 0 });
   for (const ws of sockets) assert.equal(poses(ws).at(-1).ts, poses(sockets[0]).at(-1).ts, 'the heartbeat, everywhere');

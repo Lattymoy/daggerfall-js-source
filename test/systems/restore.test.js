@@ -250,7 +250,7 @@ test('RESTORE B: the join answers the offline id a customs character came from, 
   // the client carries it through the boot's join (systems/realmSaves.js openRealmBoot)
   const saves = src('src/systems/realmSaves.js');
   assert.match(saves, /const \{ lease, seq, bytes, origin = null \} = joined\.data \?\? \{\};/);
-  assert.match(saves, /return \{ ok: true, snap, lease, seq: got\.seq \?\? seq, origin: typeof origin === 'string' \? origin : null, gzip: joined\.data\?\.gzip === true \};/);   // REALM-GZIP: and the join's word that the service opens a packed save
+  assert.match(saves, /return \{ ok: true, snap, lease, seq: got\.seq \?\? seq, origin: typeof origin === 'string' \? origin : null, gzip: joined\.data\?\.gzip === true, \.\.\.\(stranded \? \{ stranded: true \} : \{\}\) \};/);   // REALM-GZIP: and the join's word that the service opens a packed save (PIN MOVED, STRANDED: and a copy set aside)
   // ...and world.js gives back right after the realm's one parse, before the Test Room's check reads it
   const world = src('src/scenes/world.js');
   const parse = world.indexOf('if (realmBoot) { bootSnapRead = realmBoot.snap; realmBoot.snap = null; }');

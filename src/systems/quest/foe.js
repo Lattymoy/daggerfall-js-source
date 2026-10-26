@@ -162,10 +162,16 @@ export class Foe extends QuestResource {
 
   /** GetClonedItemQueue (Foe.cs:254-265): null when empty, else a
    *  clone per item - "Original item UIDs will remain on Foe in
-   *  their item queue." */
+   *  their item queue." FIELD BUGS 2026-10-25i HEART-KEPT (AUDIT FB1025i
+   *  B1): CloneAll gives each clone a UID of its own, so the record the
+   *  player takes off a body is never the quest's own under
+   *  Contains(DaggerfallUnityItem) - the port's item IS its UID, and a
+   *  quest item's copy is found by its quest and symbol (a load restores
+   *  the two apart), so a clone says it is one (`questClone`,
+   *  itemTransfer.js heldQuestRecordIndex). */
   getClonedItemQueue() {
     if (!this.itemQueueCount) return null;
-    return this.itemQueue.map((it) => ({ ...it }));
+    return this.itemQueue.map((it) => (it?.questItem ? { ...it, questClone: true } : { ...it }));
   }
 
   setResource(line) {

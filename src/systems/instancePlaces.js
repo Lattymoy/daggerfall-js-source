@@ -109,16 +109,22 @@ export const questDungeonWhole = ({ online, instanceOk, questHere }) => !!(onlin
  * the door offers what the relay admits and nothing it would refuse. `ownerOf(acct)` is a member's owner digest
  * (instanceOwnerOf, the page's work). Answers [{ acct, name, owner, epoch }], one row a room, named by its owner (who may
  * stand elsewhere); my own rooms are not here - I am not among `members` (the door's own row is mine).
+ * WIPE-RETURN (a field report, 2026-10-25: "Upon Death in an instance, party members and host will desync even if
+ * everyone dies and goes back in"): `stood` - the instance room the relay last joined ME to (net/instanceRoom.js
+ * instanceOf's `{ base, owner, epoch }`, scenes/instanceDoor.js poseWord) - is one more room, after every room a member
+ * stands in, under the same law. A party that falls together respawns at the door (world.js respawnOnlinePlayer) with
+ * no pose naming its room, and its members walked into rooms apart.
  * @param {any[]|null|undefined} members
  * @param {string|null|undefined} base
  * @param {(acct: string) => string|null} [ownerOf]
+ * @param {{ base: string, owner: string, epoch: string }|null} [stood]
  */
-export function partnerInstances(members, base, ownerOf = () => null) {
+export function partnerInstances(members, base, ownerOf = () => null, stood = null) {
   const out = [];
   if (typeof base !== 'string' || !base) return out;
   const list = members ?? [];
-  for (const m of list) {
-    const r = m?.p && m.online !== false ? instanceOf(m.p.ins) : null;
+  const rooms = [...list.map((m) => (m?.p && m.online !== false ? instanceOf(m.p.ins) : null)), stood];
+  for (const r of rooms) {
     if (!r || r.base !== base || out.some((o) => o.owner === r.owner && o.epoch === r.epoch)) continue;
     const owner = list.find((o) => typeof o?.acct === 'string' && ownerOf(o.acct) === r.owner);
     if (owner) out.push({ acct: owner.acct, name: typeof owner.name === 'string' ? owner.name : '', owner: r.owner, epoch: r.epoch });
@@ -127,11 +133,13 @@ export function partnerInstances(members, base, ownerOf = () => null) {
 }
 
 /**
- * WHAT THE DOOR OFFERS - null for no popup (the door opens on the public room, as it always did), else the rows:
+ * WHAT THE DOOR OFFERS - null for no popup (the door opens on the public room, as it always did), else the rows, in
+ * this order:
  *   { kind: 'public' }                              the place's shared room - never Privateer's Hold online (HOLD-ONCE)
+ *   { kind: 'join', name, acct, owner, epoch }      a party member's instance standing here now, or the one I last stood
+ *                                                   in here (partnerInstances' `stood`, WIPE-RETURN)
  *   { kind: 'mine' }                                my instance - a quest of mine names the place, or the Hold
- *   { kind: 'join', name, acct, owner, epoch }      a party member's instance standing here now
- *   { kind: 'castle', owner, epoch }                DOMAIN2: my guild's own castle (bible/11-Multiplayer/Domains.md 6) -
+ *   { kind: 'castle', owner, epoch }             DOMAIN2: my guild's own castle (bible/11-Multiplayer/Domains.md 6) -
  *                                                   `castle` the door's `{ owner, epoch }`, the guild's digest and the
  *                                                   epoch the guild's view names
  * Offline, or at a relay that keeps no instance, there is nothing to choose. A place with no instance to offer has no
@@ -144,10 +152,13 @@ export function instanceOffer({ online, instanceOk, isHold = false, questHere = 
   const rows = [];
   if (!isHold) rows.push({ kind: 'public' });
   if (castle?.owner && castle?.epoch) rows.push({ kind: 'castle', owner: castle.owner, epoch: castle.epoch });
-  if (questHere || isHold) rows.push({ kind: 'mine' });
+  // The party's rooms come before mine: a member who holds a copy of the quest has an instance of their own, which is
+  // another room, and taking the first instance row by habit after a death split them from the party.
   // AUDIT DOMAINS C4: the door's keys are 1-9 - a castle's row beside the public, my own and a full party's seven partners
   // made a tenth no key chose; a partner past the ninth row is not offered (one at most: the seventh, at a castle's door
-  // a quest of mine names)
-  for (const p of (partners ?? []).slice(0, Math.max(0, INSTANCE_ROWS_MAX - rows.length))) rows.push({ kind: 'join', name: p.name, acct: p.acct, owner: p.owner, epoch: p.epoch });
+  // a quest of mine names). At the merge of main into TESA: main's order, TESA's bound - my own row keeps its key.
+  const mine = questHere || isHold;
+  for (const p of (partners ?? []).slice(0, Math.max(0, INSTANCE_ROWS_MAX - rows.length - (mine ? 1 : 0)))) rows.push({ kind: 'join', name: p.name, acct: p.acct, owner: p.owner, epoch: p.epoch });
+  if (mine) rows.push({ kind: 'mine' });
   return rows.length > (isHold ? 0 : 1) ? rows : null;
 }

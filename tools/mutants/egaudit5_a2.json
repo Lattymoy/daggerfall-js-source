@@ -196,8 +196,8 @@
   {
     "name": "EGA5A2-memento-no-place",
     "file": "src/net/eliteGates/egBrain.js",
-    "old": "const where = at ?? (m.pose && m.pose.h === B.h ? m.pose : null);",
-    "new": "const where = at;",
+    "old": "  // absent, a `fell` with no pose, the count's fall off another hall's trail) lies at the member's last pose in this hall\n  const where = at ?? (m.pose && m.pose.h === B.h ? m.pose : null);",
+    "new": "  // absent, a `fell` with no pose, the count's fall off another hall's trail) lies at the member's last pose in this hall\n  const where = at;",
     "tests": [
       "test/net/eliteGates/egaudit5_a2.test.js"
     ],

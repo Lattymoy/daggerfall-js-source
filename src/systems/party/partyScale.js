@@ -133,6 +133,17 @@ export function foeFighters(foe, now) {
   return partySizeOf(n);
 }
 
+/** BOSS-HIT-SHARE: how many players are fighting `foe` at `now` - foeFighters' window, counted to `max` rather than the
+ *  party's seats (a staff event's crowd is forty and more). At least one. */
+export function foeFightersUpTo(foe, now, max) {
+  const key = _obj(foe);
+  const m = key ? _fighters.get(key) : null;
+  if (!m || !Number.isFinite(now)) return 1;
+  let n = 0;
+  for (const at of m.values()) if (now - at <= PARTY_FIGHT_WINDOW_MS) n++;
+  return Math.max(1, Math.min(max, n));
+}
+
 /** `amount` over `t`, kept whole by a remainder carried in `carry` for `key` (none kept without a key). */
 function weighDown(carry, key, amount, t) {
   const exact = amount / t + (key ? carry.get(key) ?? 0 : 0);

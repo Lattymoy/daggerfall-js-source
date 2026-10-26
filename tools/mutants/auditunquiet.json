@@ -222,8 +222,8 @@
   {
     "name": "AUQ-D3-legendary-forced",
     "file": "src/systems/revenant/revenant.js",
-    "old": "if (rolls() < L.legendaryChance + L.legendaryPerRank * rk) {",
-    "new": "if (rolls() < L.legendaryChance + L.legendaryPerRank * rk || rk >= REVENANT_MAX_RANK) {",
+    "old": "if (rolls() < (L.legendaryChance + L.legendaryPerRank * rk) * (at == null ? 1 : legendaryGate(at))) {",
+    "new": "if (rolls() < (L.legendaryChance + L.legendaryPerRank * rk) * (at == null ? 1 : legendaryGate(at)) || rk >= REVENANT_MAX_RANK) {",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js",
       "test/systems/revenant/unquiet.test.js"

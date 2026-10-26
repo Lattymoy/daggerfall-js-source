@@ -12,7 +12,7 @@
 //   WBX3 the loot line               render/spoilsGlow.js, scenes/spoilsPool.js (the item's own sprite), ui/item/itemIconColor32.js
 //   WBX4 his damage and his mark     net/gate/gateBrain.js `base`, net/gate/gateStrike.js strikeDamage; render/gate/gateTelegraph.js mark
 //   WBX5 the phases                  net/gate/gateBrain.js PHASE_TURN, the leap, the meteor, the spokes, the burning ground
-//   WBX6 no regeneration, no wear    systems/courtRules.js; combat/formulas.js damageEquipment and the stand-in's spareGear
+//   WBX6 regeneration held, no wear  systems/courtRules.js (EVENT-RULES: held, not off); combat/formulas.js damageEquipment and the stand-in's spareGear
 //   WBX7 the soul trap               scenes/hostMagic.js, scenes/dungeonContext.js spellOnBoss, the court's roll at his fall
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -40,7 +40,7 @@ import { bossBarModel, BOSS_BAR_TEXT } from '../../../src/ui/gate/gateBossBar.js
 import { createSpoilsPool, iconSize, SPOILS_ICON_ARCHIVE, SPOILS_ICON_MAX_M, SPOILS_ICON_M_PER_PX } from '../../../src/scenes/spoilsPool.js';
 import { lineHeight } from '../../../src/render/spoilsGlow.js';
 import { itemIconKey, itemIconColor32 } from '../../../src/ui/item/itemIconColor32.js';
-import { setCourtRules, regenBarred } from '../../../src/systems/courtRules.js';
+import { setCourtRules, courtRulesHurt, regenHeldNow, regenPausedMs, regenShare, REGEN_HELD_SHARE, REGEN_HELD_HURT_MS } from '../../../src/systems/courtRules.js';
 import { applySpell } from '../../../src/systems/effects.js';
 import { passiveSpecialsMagicRound, REGENERATE_AMOUNT, REGENERATE_PER_ROUNDS } from '../../../src/systems/passiveSpecials.js';
 import { REGENERATION_FLAGS } from '../../../src/systems/specialAdvantages.js';
@@ -426,28 +426,45 @@ test('WBX5 the leap on the screen: he stands through its wind-up, crosses the ai
 
 // ═══ WBX6 ═══════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-test('WBX6 no regeneration in the court: the Regenerate effect\'s round and a career\'s Regenerate Health heal nothing while the court\'s laws stand, and heal again the moment they are down; a Heal is no regeneration (mutants: the switch ignored; the heal barred too)', () => {
+test('WBX6 / EVENT-RULES regeneration HELD in the court: the Regenerate effect\'s round and a career\'s Regenerate Health heal half while the court\'s laws stand (the fraction carried round to round), nothing for REGEN_HELD_HURT_MS after the player loses health, and all again the moment the laws are down; a foe\'s own Regenerate is halved and never paused by the player\'s hurt; a Heal is no regeneration (mutants: the switch ignored; the share whole; the pause unread; the pause on a foe; the fraction dropped)', () => {
   // effects.test.js's own Regenerate: 4 a round, three rounds, the first at the cast
   const reg = { type: 18, subType: 255, magnitudeBaseLow: 4, magnitudeBaseHigh: 4, magnitudeLevelBase: 0, magnitudeLevelHigh: 0, magnitudePerLevel: 0, durationBase: 3, durationMod: 0, durationPerLevel: 0 };
-  const run = () => { const healed = []; const e = { health: 10, maxHealth: 100, activeEffects: [] }; applySpell({ element: 4, rangeType: 0, effects: [reg] }, 1, e, { heal: (n) => healed.push(n) }, () => 0); return healed; };
+  const run = (isPlayer = true) => { const healed = []; const e = { isPlayer, health: 10, maxHealth: 100, activeEffects: [] }; applySpell({ element: 4, rangeType: 0, effects: [reg] }, 1, e, { heal: (n) => healed.push(n) }, () => 0); return healed; };
+  const T = 1_000_000;
   try {
     setCourtRules(false);
-    const outside = run();
-    assert.deepEqual(outside, [4], 'outside the court it heals, at the cast');
-    setCourtRules(true);
-    assert.equal(regenBarred(), true);
-    assert.deepEqual(run(), [], 'in the court: nothing');
+    assert.deepEqual(run(), [4], 'outside the court it heals, at the cast');
+    assert.equal(regenHeldNow(), false);
+    setCourtRules(true, T);
+    assert.equal(regenHeldNow(), true);
+    assert.equal(regenPausedMs(), 0, 'not hurt: no pause');
+    assert.deepEqual(run(), [4 * REGEN_HELD_SHARE], 'in the court: half');
+    setCourtRules(true, T + 100); courtRulesHurt({ before: 50, after: 40 });   // a blow lands (AUDIT WORLD-EVENTS L1-10: told at the hurt door)
+    assert.equal(regenPausedMs(), REGEN_HELD_HURT_MS, 'the pause starts at the hurt');
+    assert.deepEqual(run(), [], 'just hurt: nothing');
+    assert.deepEqual(run(false), [2], 'a foe\'s own: halved, never paused by my hurt');
+    setCourtRules(true, T + 100 + REGEN_HELD_HURT_MS - 1);
+    assert.deepEqual(run(), [], 'still inside the pause');
+    setCourtRules(true, T + 100 + REGEN_HELD_HURT_MS);
+    assert.equal(regenPausedMs(), 0);
+    assert.deepEqual(run(), [2], 'past it: half again');
+    setCourtRules(true, T + 100 + REGEN_HELD_HURT_MS + 10); courtRulesHurt({ before: 40, after: 45 });   // healed - no hurt
+    assert.equal(regenPausedMs(), 0, 'a heal is no hurt');
     const healed = [];
     const me = { isPlayer: true, career: { regeneration: REGENERATION_FLAGS.general }, health: 5, maxHealth: 50 };
-    passiveSpecialsMagicRound(me, { nowMinutes: REGENERATE_PER_ROUNDS * 3, sinks: { heal: (n) => healed.push(n) } });
-    assert.deepEqual(healed, [], 'a career\'s regeneration: nothing');
+    for (let k = 1; k <= 4; k++) passiveSpecialsMagicRound(me, { nowMinutes: REGENERATE_PER_ROUNDS * k, sinks: { heal: (n) => healed.push(n) } });
+    assert.equal(healed.reduce((a, b) => a + b, 0), REGENERATE_AMOUNT * 4 * REGEN_HELD_SHARE, 'a career\'s regeneration: half, its fractions carried');
+    assert.equal(regenShare(1, 'item'), 0, 'a +1 held: nothing this round...');
+    assert.equal(regenShare(1, 'item'), 1, '...and one the next - +1 every other round');
     setCourtRules(false);
+    healed.length = 0;
     passiveSpecialsMagicRound(me, { nowMinutes: REGENERATE_PER_ROUNDS * 3, sinks: { heal: (n) => healed.push(n) } });
-    assert.deepEqual(healed, [REGENERATE_AMOUNT], 'and again the moment the court is gone');
+    assert.deepEqual(healed, [REGENERATE_AMOUNT], 'and whole the moment the court is gone');
+    assert.equal(regenShare(3, 'item'), 3);
   } finally { setCourtRules(false); }
-  assert.match(read('src/systems/enchantments.js'), /if \(round % REGEN_PER_ROUNDS !== 0 \|\| regenBarred\(\)\) return;/, 'a RegensHealth enchantment: nothing');
-  assert.match(read('src/systems/effects.js'), /if \(n > 0 && sinks\.heal && !regenBarred\(\)\) sinks\.heal\(n\);/);
-  assert.match(hostText('src/scenes/world.js'), /\n    setCourtRules\(madeRuleHere\('regen'\) === 'off'\);/, 'the frame sets it, every frame');   // PIN MOVED (EG-H2, Elite-Gates.md section 24): the made level's law (systems/madeLevel.js) - the court's row, the Hour's and the Spire's
+  assert.match(read('src/systems/enchantments.js'), /entity\.health = Math\.min\(entity\.maxHealth, entity\.health \+ regenShare\(1, 'item', entity\)\);/, 'a RegensHealth enchantment: held (PIN MOVED - AUDIT WORLD-EVENTS L1-9: on its own body)');
+  assert.match(read('src/systems/effects.js'), /if \(n > 0 && sinks\.heal\) \{ const held = regenShare\(n, 'spell', target\); if \(held > 0\) sinks\.heal\(held\); \}/);   // PIN MOVED - AUDIT WORLD-EVENTS L1-9
+  assert.match(hostText('src/scenes/world.js'), /\n    setCourtRules\(madeRuleHere\('regen'\) === 'held'\);/, 'the frame sets it, every frame (PIN MOVED - AUDIT WORLD-EVENTS L1-10: the pause is the hurt door\'s, no longer my health\'s fall)');   // PIN MOVED (EG-H2, Elite-Gates.md section 24): the made level's law (systems/madeLevel.js) - the court's row, the Hour's and the Spire's; EVENT-RULES: held, not off
 });
 
 test('WBX6 no wear on the blows at him: his stand-in carries spareGear, and damageEquipment spares the weapon and the struck armour for it alone - every other foe wears the gear as DFU\'s does (mutants: the stand-in unflagged; the spare for everyone)', () => {

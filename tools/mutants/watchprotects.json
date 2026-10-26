@@ -92,8 +92,8 @@
   {
     "name": "WATCH-PROTECTS-team-chain",
     "file": "src/characters/enemy/enemyTargets.js",
-    "old": "    if (bout !== true && !civilian && !star) {",
-    "new": "    if (bout !== true && !star) {",
+    "old": "    if (bout !== true && !civilian && !star && !goal) {",
+    "new": "    if (bout !== true && !star && !goal) {",
     "tests": [
       "test/systems/livingWorld/watchprotects_watch.test.js"
     ],

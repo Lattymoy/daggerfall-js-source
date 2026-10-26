@@ -121,8 +121,12 @@ export const STAFF_STATUS = Object.freeze({
   'not-developer': 403, 'no-realm-character': 404, 'no-clean': 409, 'service-moved': 409, dead: 409, 'repair-no-faction': 409, 'repair-not-set': 409,
   seq: 409, 'mend-not-negative': 409, 'mend-moved': 409, 'repair-ticket': 409, 'no-data': 409, 'no-storage': 503, 'market-gone': 409, 'bad-listing': 400,
   'staff-note': 400, 'staff-reason': 400, 'staff-remove-pending': 409, 'staff-no-piece': 409, 'staff-trail': 409, 'staff-evidence': 404, 'staff-evidence-gone': 409,
+  'no-dupes': 409,   // STAFF-PURGE-DUPES: this character has no copy marks to destroy
   // STAFF-SET-BANK (net/repairLaw.js applyBankSet): a record that keeps no Empire account, and a bank not the total staff read
   'bank-none': 409, 'bank-moved': 409,
+  // GUILD-LETTER-FIX (net/repairLaw.js applyGuildLetter): a member already, the initiation quest still held, a letter on
+  // its way, no letter to call off
+  'letter-member': 409, 'letter-quest': 409, 'letter-pending': 409, 'letter-none': 409,
   // STAFF-GIVE (staffGive.js): a template, group, material or count the item list does not take; an enchantment the item
   // maker does not cost, or too many; a gift the item law would find
   'staff-item-template': 400, 'staff-item-enchant': 400, 'staff-item-unlawful': 409,

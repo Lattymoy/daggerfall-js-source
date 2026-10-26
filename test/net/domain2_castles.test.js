@@ -251,7 +251,9 @@ test('DOMAIN2 THE DOOR: the castle\'s dungeon door offers "Your guild\'s castle"
   // AUDIT DOMAINS C4: nine rows at most - the door's keys are 1-9; a castle, a quest of mine and a full party's seven partners
   const seven = Array.from({ length: 7 }, (_, i) => ({ name: `P${i}`, acct: `a${i}`, owner: castle.owner, epoch: `0000000${i}` }));
   const nine = instanceOffer({ online: true, instanceOk: true, questHere: true, partners: seven, castle: { owner: castle.owner, epoch: castle.epoch } });
-  assert.deepEqual([nine.length, INSTANCE_ROWS_MAX, nine.at(-1).name], [9, 9, 'P5']);
+  // PIN MOVED (AUDIT RELEASE R3-4, the merge of main into TESA): main's order - the party's rooms before mine - under this
+  // bound: six partners, then my own row on the ninth key (unbounded, my row was the tenth no key chose)
+  assert.deepEqual([nine.length, INSTANCE_ROWS_MAX, nine.at(-2).name, nine.at(-1).kind], [9, 9, 'P5', 'mine']);
   let mine = { guild: G, epoch: 'aabbccdd', key: CASTLE_WAYREST, region: 23 };
   const door = createInstanceDoor({ online: () => true, instanceOk: () => true, castle: () => mine });
   const site = { ...dungeonSite({ mapTableData: { mapId: CASTLE_WAYREST }, name: 'Wayrest' }), relaid: false };

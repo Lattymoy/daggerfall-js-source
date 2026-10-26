@@ -425,8 +425,8 @@
   {
     "name": "PT-follows-before-arrival",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (!arrived && waited < TRIP_FOLLOW_MS) return;",
-    "new": "if (waited < 0) return;",
+    "old": "if (!arrived && !roundLeft && !seatQuiet) return;",
+    "new": "if (false) return;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "PT-window-follows-for-ever",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (waited >= 2 * TRIP_FOLLOW_MS) { follow = null;",
-    "new": "if (false) { follow = null;",
+    "old": "if (waited >= 2 * TRIP_FOLLOW_MS) leaveBehind(f);",
+    "new": "if (false) leaveBehind(f);",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -452,7 +452,7 @@
   {
     "name": "PT-follows-a-leader-who-stayed",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (p && !there && p.tv?.at !== f.at) { follow = null;",
+    "old": "if (roundLeft && atDeparture && !there) { follow = null;",
     "new": "if (false) { follow = null;",
     "tests": [
       "test/systems/party/partytravel.test.js"
@@ -595,11 +595,11 @@
   },
   {
     "name": "PT-host-never-beside",
-    "file": "src/scenes/world.js",
-    "old": "beside = partyBesideLanding(target, pick.besideSeat);",
+    "file": "src/systems/party/partyArrival.js",
+    "old": "beside = target ? seams.besideLanding(target, pick.besideSeat ?? 0) : null;",
     "new": "beside = null;",
     "tests": [
-      "test/systems/party/partytravel.test.js"
+      "test/systems/partyArrivalTransaction.test.js"
     ]
   },
   {

@@ -365,6 +365,7 @@ test('STAFF-PANEL5-FREEZE-FIX A SILENT BUS STOPS NO LEASE (round two, a review: 
       assert.ok(!R.room._up.some((ev) => ev[1] === 'f' && ev[2] === '{"t":"lease"}'), 'and never handed up');
       // the cell, its door on: the bus's lease lapsed, its socket is heard in nothing; behind a pass, heard - frozen still
       clock += 95_000;
+      cell.room._setAttach(cs, { ...cell.room._attach(cs), ld: Math.floor(clock / 1000) - 1 });   // HIBERNATE: LEASE_LIFE_S (300) outlives a token's MAX_TTL_S, so the bus's lease is lapsed by hand - the early token below must still be live
       await cell.raw(cs, JSON.stringify({ t: 'pose', p: { ...P0, yaw: 1 } }));
       assert.notEqual(cell.room._attach(cs).pose?.yaw, 1, 'the control: lapsed, unheard');
       await ask(wv);

@@ -15,8 +15,12 @@
 // WHO DECIDES. A dungeon's foes are its LAYOUT's, built on every client
 // from the location (the elite's way): `markDungeonChampions` marks the
 // layout's records by a HASH of the location and the marker, so every
-// client stands the same champion with no wire word, and the mark rides
-// the record (`src`) through a rebuild or a respawn. A foe in the street
+// client marks the same records with no wire word, and the mark rides
+// the record (`src`) through a rebuild or a respawn. Each client stands a
+// mark at its own build's level, and a class foe is built at its builder's
+// level, so a player under CHAMPION_MIN_LEVEL stands no champion there; a
+// room's shared base asks the mark again at the room's level
+// (CHAMP-BASE, scenes/roomLootHost.js roomBodyBase). A foe in the street
 // or a building is its OWNER's: `rollStreetChampion` hashes it, and the foe
 // record carries its trait (`cp`, net/wire.js validFoeRecord) to every
 // puppet, which wears the same scaling - a puppet's blow resolved on my
@@ -103,19 +107,28 @@ export function rollStreetChampion(feet = null, mobileType = 0) {
 /** Tests only: the street's count back to none. */
 export function _resetStreetChampionsForTests() { _streetN = 0; }
 
+/** The trait a champion's mark stands as on this entity, or null - applyChampion's gate: no trait, a foe under
+ *  CHAMPION_MIN_LEVEL, the city watch, an ally, or the switch off. CHAMP-BASE (bible/01-Overview/bugs/Field-Bugs-2026-10-25b.md):
+ *  a class foe stands at its builder's level, so a room's shared base asks it again at the room's
+ *  (scenes/roomLootHost.js roomBodyBase). */
+export function championTraitFor(entity, traitIndex) {
+  if (!entity || !Number.isInteger(traitIndex) || !lootRarityOn()) return null;
+  const t = CHAMPION_TRAITS[traitIndex];
+  if (!t || (entity.level | 0) < CHAMPION_MIN_LEVEL) return null;
+  if (entity.mobileType === KNIGHT_CITY_WATCH || entity.team === 'PlayerAlly' || entity.mobileTeam === 'PlayerAlly') return null;
+  return t;
+}
+
 /**
  * MAKE IT A CHAMPION - on its entity, in place, right after the entity is built and BEFORE its loot is rolled (the loot
  * reads the mark): its trait, twice its health (the Stalwart's half again more), its blows a quarter harder (the
  * Mighty's half again more) multiplied onto whatever `damageScale` it has (an elite's double stands under it), the
- * Swift's Speed. Nothing for no trait, a foe under CHAMPION_MIN_LEVEL, the city watch, an ally, or with the switch off.
- * Answers whether it stood as one. UNQUIET: `own` - one of this pool's own (never a puppet, its owner's word): its mark
- * drawn (systems/revenant/unquietMark.js).
+ * Swift's Speed. Nothing where championTraitFor answers none. Answers whether it stood as one. UNQUIET: `own` - one of
+ * this pool's own (never a puppet, its owner's word): its mark drawn (systems/revenant/unquietMark.js).
  */
 export function applyChampion(entity, traitIndex, { own = true } = {}) {
-  if (!entity || !Number.isInteger(traitIndex) || !lootRarityOn()) return false;
-  const t = CHAMPION_TRAITS[traitIndex];
-  if (!t || (entity.level | 0) < CHAMPION_MIN_LEVEL) return false;
-  if (entity.mobileType === KNIGHT_CITY_WATCH || entity.team === 'PlayerAlly' || entity.mobileTeam === 'PlayerAlly') return false;
+  const t = championTraitFor(entity, traitIndex);
+  if (!t) return false;
   entity.champion = t.id;
   const hp = CHAMPION_HEALTH * (t.health ?? 1);
   entity.maxHealth = Math.max(1, Math.round((entity.maxHealth ?? 1) * hp));

@@ -237,7 +237,7 @@
   {
     "name": "RAID4-world-receipt-unqueued",
     "file": "src/scenes/world.js",
-    "old": " : raidClaims?.add(r, characterIdOf(playerEntity), typeof playerEntity?.name === 'string' ? playerEntity.name : null, playerEntity?.level ?? 1)); },",
+    "old": " : raidClaims?.add(r, characterIdOf(playerEntity), typeof playerEntity?.name === 'string' ? playerEntity.name : null, playerEntity?.level ?? 1, held === true)); },",
     "new": " : null); },",
     "tests": [
       "test/net/raid4_rewards.test.js"

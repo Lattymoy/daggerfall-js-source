@@ -147,7 +147,7 @@ test('KG5 THE STORED TABLE, CHECKED WHEN THE ROOM LOADS IT (AUDIT KG A4): a tabl
   // the sweep: a room drained of everyone - nobody's win
   r.store.set('gambit', kept);
   r.wake();
-  await r.room._sweep();
+  await r.room._sweep(ROOM);
   assert.equal(r.store.get('gambit'), undefined, 'every seat stood, the table forgotten');
 }));
 

@@ -48,11 +48,13 @@ test('PROTECT-FIGHT the law: under the protection, a fight spares the street\'s 
   } finally { setValue('MeleeAttacks', 'MeleeAttackFriendlyProtection', true); }
 });
 
-test('PROTECT-FIGHT the hosts: both street hosts ask the rest\'s own AreEnemiesNearby over both street pools, and both riding tramples ask the walkers\' and the defenders\' rule (mutants: a host\'s fight unwired; the fixed-city host\'s trample unfiltered)', () => {
+test('PROTECT-FIGHT the hosts: both street hosts ask the fight near the player (AUDIT FB1025i D3: encounters.js fightNear, the rest\'s own AreEnemiesNearby or a hostile foe in the band) over both street pools, and both riding tramples ask the walkers\' and the defenders\' rule (mutants: a host\'s fight unwired; the fixed-city host\'s trample unfiltered)', () => {
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const s = rd(f);
     const make = s.slice(s.indexOf('const cityGuards = createCityGuards({'), s.indexOf('\n  });', s.indexOf('const cityGuards = createCityGuards({')));
-    assert.match(make, /\n {4}fightHere: \(\) => areEnemiesNearby\(\[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\]\),/, `${f}: the fight is the rest's own`);
+    // PIN MOVED (AUDIT FB1025i D3): the fight is its own law - the rest's answer, or a hostile foe in the classic band of my
+    // feet whatever its target, a peer's too (encounters.js fightNear; test/systems/livingWorld/fb1025i_roadspare.test.js)
+    assert.match(make, /\n {4}fightHere: \(\) => fightNear\(\[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\], player\.pos\),/, `${f}: the fight near the player`);
     assert.match(s, /livePersons: \(\) => _livePersons\.filter\(\(seat\) => !cityGuards\.playerSparesPerson\(seat\.person\)\),/, `${f}: the trample passes the spared walkers by`);
     assert.match(s, /guards: \(\) => cityGuards\.guards\.filter\(\(g\) => !cityGuards\.playerSpares\(g\)\)/, `${f}: and the spared defenders`);
   }

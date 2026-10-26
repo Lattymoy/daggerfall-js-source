@@ -2325,6 +2325,10 @@ THE WARDROBE (C).
   now. wardrobe.js beastWorn drops them from an NPC's worn list in the build
   (peerBuildOpts), which covers every producer's look: the wardrobe's, the
   watch's plate and a foe's own table. A player's look is never asked.
+  RETIRED by BEAST-BOOTS (2026-10-24, `02-Formats/Morrowind-Rules.md`): beastWorn
+  is gone, and a beast NPC's helm and boots reach the composer as a player's
+  do, drawn as the viewer's Beast Footwear and Beast Helmets switches choose
+  (mwItemMap.js beastCut; As worn by default).
 
 THE PROOF (E).
 - E1 was D1.

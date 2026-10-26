@@ -32,6 +32,9 @@ import { renownFoeStruck, renownFoeDied } from '../../../src/net/renownTracker.j
 import { reportPlayerKill } from '../../../src/systems/playerKills.js';   // SET2: the kill door's third word, in the harness's scope
 import { ROOM_LOOT_OFF } from '../../roomLootOff.mjs';   // PIN MOVED (PARTY-LOOT): the room's seams with no room
 import { appliedOwnerTm } from '../../../src/net/ownerClock.js';   // PIN MOVED (OWNER-CLOCK): the stream door copies its frame's owner clock beside the feet - a free name of the mount
+import { strikeTraits, traitWire, traitWireKey, readTraitWire, traitsAuthority, traitsFrame } from '../../../src/scenes/foeTraitsHost.js';   // AUDIT WORLD-EVENTS: the dungeon host's trait doors, in the mounted scope
+import { bossClockS } from '../../../src/systems/bossTraits.js';
+const TRAIT_DOORS = { strikeTraits, traitWire, traitWireKey, readTraitWire, traitsAuthority, traitsFrame, bossClockS };
 
 // ═══ AUDIT SURV-TIERS, THE THIRD PASS (2026-09-23) ═══════════════════
 //
@@ -503,7 +506,7 @@ test('CORPSE-FOOD, mounted: the dungeon\'s own `applyFoeRecord` rolls a joiner\'
   const { isIliacCard } = await import('../../../src/systems/iliac/iliacItems.js');
   // KG-SET: the bear's card drops on a roll (Math.random's, at its death) - pinned to drop, so the run is one run (CI drew
   // it, and the meat check below read the card as a stray item)
-  const state = { ...ROOM_LOOT_OFF, appliedOwnerTm, validFoeRecord, addCorpseFood, stampWonWeapons, rollCorpseKit, dropFoeCard: (/** @type {any} */ e, /** @type {any} */ o = {}) => dropFoeCard(e, { ...o, rolls: () => 0 }), capFoeLoot, liveStat: () => 50, playerEntity: {}, foes: [], _layoutFoes: 1, _retyping: new Set(), retypeFoe: async () => false, console, renownFoeDied, reportPlayerKill };   // RENOWN1: the stream's death asks whether I fought it
+  const state = { ...ROOM_LOOT_OFF, ...TRAIT_DOORS, appliedOwnerTm, validFoeRecord, addCorpseFood, stampWonWeapons, rollCorpseKit, dropFoeCard: (/** @type {any} */ e, /** @type {any} */ o = {}) => dropFoeCard(e, { ...o, rolls: () => 0 }), capFoeLoot, liveStat: () => 50, playerEntity: {}, foes: [], _layoutFoes: 1, _retyping: new Set(), retypeFoe: async () => false, console, renownFoeDied, reportPlayerKill };   // RENOWN1: the stream's death asks whether I fought it
   const scope = new Proxy(state, { has: (t, k) => k !== '__s', get: (t, k) => (k === Symbol.unscopables ? undefined : (k in t ? t[k] : globalThis[k])) });
   const { applyFoeRecord } = new Function('__s', `with (__s) { const setFoeDead = (f, d) => { f.dead = !!d; }; ${fn} return { applyFoeRecord }; }`)(scope);
   const bear = { mobileType: MOBILE_TYPES.GrizzlyBear, dead: false, entity: { mobileType: MOBILE_TYPES.GrizzlyBear, basics: { affinity: 'Animal' }, health: 5, items: [] }, ai: { feet: [0, 0, 0], yaw: 0, moving: false, isHostile: true } };

@@ -50,6 +50,7 @@ import { validPartyPose, validPartyFrame } from '../../../src/net/wire.js';
 import { RemotePlayers } from '../../../src/net/remotePlayers.js';
 import { createPlayerMagic } from '../../../src/scenes/hostMagic.js';
 import { LOCATION_TYPES } from '../../../src/formats/mapsFile.js';
+import { sendRaiseWord } from '../../../src/net/raiseWord.js';   // AUDIT WORLD-EVENTS L1-1: the Resurrect door's word to a room that keeps the death (none on the street)
 
 const rd = (f) => readFileSync(new URL(`../../../${f}`, import.meta.url), 'utf8');
 const settle = async () => { for (let i = 0; i < 80; i++) await new Promise((r) => { setTimeout(r, 0); }); };
@@ -198,6 +199,7 @@ async function party({ model = MODELS.bloodline, online = true, ear = true } = {
     social: { acct: 'acct-ysolde', others: () => r.ysoldeHears ?? [] }, modes: { sdRealmSlot: () => null, clearDeath() {} },
     legacyHost: r.host, madeRuleHere, rezSnapshot, rezFor, reviveForPlay, playerEntity: r.e, RESURRECT_HEALTH_PCT, RESURRECT_TEXT, DeathScreen,
     statedDeathLoss, stateDeathLoss, townTalk: r.townTalk, wildGhostEnd: () => {}, wildDeathKill: () => false, forgetLastSlew: () => {}, player: { stopAutorun() {} },
+    hourRezOpen: () => true, _sdFallen: { rise() {} },   // SD-REZ (EVENT-RULES): no Hour here - a Resurrect is always open, and a rise lets no slot go
   };
   r.ysolde = v;
   const frame = mount(`${fnOf('resurrectInPlace')}\n${fnOf('closeDeathScreen')}\nreturn () => { ${REZ_FRAME} };`, v);
@@ -216,7 +218,7 @@ async function party({ model = MODELS.bloodline, online = true, ear = true } = {
   const c = {
     social: { acct: 'acct-bran', party: { members: [{ acct: 'acct-ysolde', name: 'Ysolde' }, { acct: 'acct-bran', name: 'Bran' }] }, others: () => r.branHears ?? [], accountOfPeer: () => 'acct-ysolde' },
     remotePlayers: rp, onlineToScene: (p) => [p.x, p.y, p.z], cam: { pos: [0, 0.9, 0] }, peerName: () => 'Ysolde',
-    _rezOut: null, _partyComposedAt: 0, RESURRECT_HOLD_MS,
+    _rezOut: null, _partyComposedAt: 0, RESURRECT_HOLD_MS, sendRaiseWord, online: { room: 'world:10,20' },   // PIN MOVED (AUDIT WORLD-EVENTS L1-1): the door says the raise to a made level's room; a street's keeps no death
   };
   r.bran = c;
   const { fallenTargetPick, raiseFallenDoor } = mount(`${declOf('fallenTargetPick')}\n${declOf('raiseFallenDoor')}\nreturn { fallenTargetPick, raiseFallenDoor };`, c);

@@ -1,0 +1,152 @@
+[
+  {
+    "name": "YARDTOWN-town-unasked",
+    "file": "server-account/src/decor.js",
+    "old": "      AND ${TOWN_ROOM_SQL(S)} AND ${ruleSql}${pvSql}`)",
+    "new": "      AND ${ruleSql}${pvSql}`)",
+    "tests": [
+      "test/server/yard_town.test.js"
+    ],
+    "note": "the placement never asks the town's yards: a piece past the bound written and never served"
+  },
+  {
+    "name": "YARDTOWN-every-town",
+    "file": "server-account/src/decor.js",
+    "old": "(SELECT COUNT(*) FROM ${S.table} WHERE map_id = ? AND yard = 1) < ?)`;",
+    "new": "(SELECT COUNT(*) FROM ${S.table} WHERE map_id >= 0 * ? AND yard = 1) < ?)`;",
+    "tests": [
+      "test/server/yard_town.test.js"
+    ],
+    "note": "every town's yards counted against one town's bound"
+  },
+  {
+    "name": "YARDTOWN-room-counted",
+    "file": "server-account/src/decor.js",
+    "old": "`(? = 0 OR (SELECT COUNT(*) FROM ${S.table} WHERE map_id = ? AND yard = 1) < ?)`;",
+    "new": "`(? = -1 OR (SELECT COUNT(*) FROM ${S.table} WHERE map_id = ? AND yard = 1) < ?)`;",
+    "tests": [
+      "test/server/yard_town.test.js"
+    ],
+    "note": "a room's piece refused for the town's yards"
+  },
+  {
+    "name": "YARDTOWN-word-lost",
+    "file": "server-account/src/decor.js",
+    "old": "DECOR_YARDS_TOWN_MAX ? 'yard-town-full' : 'yard-cap';",
+    "new": "DECOR_YARDS_TOWN_MAX ? 'yard-cap' : 'yard-cap';",
+    "tests": [
+      "test/server/yard_town.test.js"
+    ],
+    "note": "the town's yards full said as the yard's own cap"
+  },
+  {
+    "name": "YARDTOWN-word-lost-paid",
+    "file": "server-account/src/decor.js",
+    "old": "?.owns ? await capWord(db, S, mapId, out) : 'no-home'),",
+    "new": "?.owns ? (out ? 'yard-cap' : 'decor-cap') : 'no-home'),",
+    "tests": [
+      "test/server/yard_town.test.js"
+    ],
+    "note": "a piece paid on the record refused in the yard's word"
+  },
+  {
+    "name": "YARDTOWN-word-lost-free",
+    "file": "server-account/src/decor.js",
+    "old": "  return { error: await capWord(db, S, mapId, out) };",
+    "new": "  return { error: out ? 'yard-cap' : 'decor-cap' };",
+    "tests": [
+      "test/server/yard_town.test.js"
+    ],
+    "note": "a free piece refused in the yard's word"
+  },
+  {
+    "name": "YARDTOWN-bound-past-row",
+    "file": "src/net/decorLaw.js",
+    "old": "export const DECOR_YARDS_TOWN_MAX = 6_500;",
+    "new": "export const DECOR_YARDS_TOWN_MAX = 7_500;",
+    "tests": [
+      "test/server/yard_town.test.js"
+    ],
+    "note": "a bound past what a built row keeps: the widest town read every time"
+  },
+  {
+    "name": "YARDTOWN-client-word",
+    "file": "src/net/accountClient.js",
+    "old": "{ max: DECOR_YARDS_TOWN_MAX }),   // YARD-TOWN",
+    "new": "{ max: DECOR_YARD_CAP }),   // YARD-TOWN",
+    "tests": [
+      "test/server/yard_town.test.js"
+    ],
+    "note": "the client names a yard's cap for the town's"
+  },
+  {
+    "name": "YARDTOWN-backfill-shape",
+    "file": "server-account/migrations/0175_yard_town.sql",
+    "old": "  SELECT v.map_id, v.ver, '05361a66', (SELECT CASE",
+    "new": "  SELECT v.map_id, v.ver, 'none', (SELECT CASE",
+    "tests": [
+      "test/server/yard_snap.test.js"
+    ],
+    "note": "0175's towns built in no shape - every town read as its rows stand until the clock reaches it"
+  },
+  {
+    "name": "YARDTOWN-backfill-bound",
+    "file": "server-account/migrations/0175_yard_town.sql",
+    "old": "ORDER BY building_key, placed_at, id LIMIT 6500)))",
+    "new": "ORDER BY building_key, placed_at, id LIMIT 2000)))",
+    "tests": [
+      "test/server/yard_snap.test.js"
+    ],
+    "note": "0175's towns built at the old bound"
+  },
+  {
+    "name": "YARDTOWN-backfill-kept",
+    "file": "server-account/migrations/0175_yard_town.sql",
+    "old": "  ON CONFLICT (map_id) DO UPDATE SET built = excluded.built, shape = excluded.shape, rows = excluded.rows;",
+    "new": "  ON CONFLICT (map_id) DO NOTHING;",
+    "tests": [
+      "test/server/yard_snap.test.js"
+    ],
+    "note": "0136's rows kept as they were: every town another shape at the deploy"
+  },
+  {
+    "name": "YARDTOWN-budget-unasked",
+    "file": "src/scenes/homeYards.js",
+    "old": "          if (stands <= 0 && !y.kept && cur?.yard !== y) { behind = true; continue; }",
+    "new": "          if (false) { behind = true; continue; }",
+    "tests": [
+      "test/scenes/yardtown.test.js"
+    ],
+    "note": "a town's every yard stood in one frame"
+  },
+  {
+    "name": "YARDTOWN-budget-unspent",
+    "file": "src/scenes/homeYards.js",
+    "old": "          stands--;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/yardtown.test.js"
+    ],
+    "note": "the frame's stands never spent"
+  },
+  {
+    "name": "YARDTOWN-own-waits",
+    "file": "src/scenes/homeYards.js",
+    "old": "stands <= 0 && !y.kept && cur?.yard !== y",
+    "new": "stands <= 0 && cur?.yard !== y",
+    "tests": [
+      "test/scenes/yardtown.test.js"
+    ],
+    "note": "the owner's own yard waits behind the strangers'"
+  },
+  {
+    "name": "YARDTOWN-next-frame-unsynced",
+    "file": "src/scenes/homeYards.js",
+    "old": "    if (syncIn <= 0) syncIn = sync() ? 0 : YARD_SYNC_S;",
+    "new": "    if (syncIn <= 0) syncIn = (sync(), YARD_SYNC_S);",
+    "tests": [
+      "test/scenes/yardtown.test.js"
+    ],
+    "note": "a town not yet stood waits half a second a few yards"
+  }
+]

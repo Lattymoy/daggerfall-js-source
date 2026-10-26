@@ -72,3 +72,17 @@ export function insigniaRefusal(offer, { held, stones, online }) {
   if (!(stones >= offer.price)) return 'stones';
   return null;
 }
+
+/**
+ * AUDIT FB1024 (2026-10-25; bible/01-Overview/bugs/Field-Bugs-2026-10-24.md, BROKER-RID): A BROKER SALE'S REQUEST ID. Each
+ * press of the Broker's insignia or her Panoply piece carries one (`rid`) - the service writes it beside the sale it
+ * makes (server-account/src/brokerSales.js), so a press whose answer was lost is asked after by its own id, never by
+ * what else the account holds: the id names this sale, or the service FENCES it (no request of that id writes after).
+ */
+export const BROKER_RID_RE = /^b[a-z0-9]{15,31}$/;
+/** A request id: `b` and fifteen of base 36, from the handed-in randomness (crypto's by default). */
+export function mintBrokerRid(rand = (b) => globalThis.crypto.getRandomValues(b)) {
+  const b = new Uint8Array(15);
+  rand(b);
+  return `b${[...b].map((x) => (x % 36).toString(36)).join('')}`;
+}

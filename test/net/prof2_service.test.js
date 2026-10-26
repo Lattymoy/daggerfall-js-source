@@ -147,7 +147,7 @@ test('PROF2 service: a boulder quarried - Rough Stone 3-5; a clean finish, or a 
 
 // ─── A DUNGEON'S VEIN ────────────────────────────────────────────────
 
-test('PROF2 service: a dungeon\'s vein - no hours underground; tier 3 until the dungeon is witnessed; three accounts a week old confirm it; the pixels read says so', async () => {
+test('PROF2 service: a dungeon\'s vein - no hours underground; its whole deep table before the dungeon is witnessed (DEEP-OPEN: tier 3 until then, once); three accounts a week old confirm it; the pixels read says so', async () => {
   const s = await stand();
   const mac = await s.seated('Mac');
   s.setXp(mac, xpForRank(99));   // room on the track: the answer's XP is what was credited (AUDIT 29 A14)
@@ -156,7 +156,10 @@ test('PROF2 service: a dungeon\'s vein - no hours underground; tier 3 until the 
   clock(secondAt(today() * DAY + 60, 2));
   const r = await s.call('/v1/prof/harvest', deep(mac, 0), mac.secret);
   assert.equal(r.status, 200, JSON.stringify(r.body));
-  assert.deepEqual([r.body.material, r.body.xp], ['metal:silver', harvestXp(3, 99, false)], 'unconfirmed: the least a deep vein is - Silver, tier 3');
+  // PIN MOVED (DEEP-OPEN, Professions-Arc.md section 53; the owner: "FULL ORE TABLE"): unconfirmed, the deep table's own draw -
+  // it was the least a deep vein is, Silver at tier 3
+  const un = dungeonVeins({ dungeon: id, day: today(), climate: MOUNTAIN, confirmed: false })[0];
+  assert.deepEqual([r.body.material, r.body.xp], [un.material, harvestXp(un.tier, 99, false)], 'unconfirmed: the whole table\'s draw');
   // three witnesses a week registered
   for (const h of ['Wit1', 'Wit2', 'Wit3']) {
     const w = await s.seated(h);
@@ -252,7 +255,7 @@ test('PROF2 service: a smelt - two Iron an Iron Ingot, the inputs spent bought f
   assert.deepEqual([again.body.repeat, again.body.count], [true, 5]);
   assert.equal(s.xpOf(mac, 'smithing'), 50, 'once');
   assert.deepEqual((await s.call('/v1/prof/smelt', { ...body, rid: rid(), count: 2 }, mac.secret)).body, { error: 'stores-short' }, 'two Iron left: one ingot');
-  assert.deepEqual((await s.call('/v1/prof/smelt', { ...body, rid: rid(), recipe: 'ingot:daedric' }, mac.secret)).body, { error: 'bad-recipe' });
+  assert.deepEqual((await s.call('/v1/prof/smelt', { ...body, rid: rid(), recipe: 'ingot:warforged' }, mac.secret)).body, { error: 'bad-recipe' }, 'PIN MOVED (DAEDRIC-SMELT): the Daedric ingot is smelted now - the Warforged, a siege\'s Spoils, is no forge\'s');
   assert.deepEqual((await s.call('/v1/prof/smelt', { ...body, rid: rid(), count: SMELT_MAX + 1 }, mac.secret)).body, { error: 'bad-qty' });
   // two inputs: Brass of a Copper and a Tin, the product bought where either input's unit was
   s.give(mac, 'metal:copper', 'own', 4);

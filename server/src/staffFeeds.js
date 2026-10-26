@@ -110,11 +110,7 @@ const netBegin = (/** @type {number} */ w, /** @type {any} */ m) => ({ w, slot: 
 const netPeaks = (s) => { s.p10 = Math.max(s.p10, s.c10); s.pb10 = Math.max(s.pb10, s.b10); s.p60 = Math.max(s.p60, s.c60); s.pb60 = Math.max(s.pb60, s.b60); };
 /** Over a limit: a busy 10 s, or a refusal, junk or a close since the window began. Pure. */
 export const netHot = (/** @type {any} */ s, /** @type {any} */ m) => s.p10 >= NET_HOT.frames10 || s.pb10 >= NET_HOT.bytes10 || (m.nr | 0) > s.nr0 || (m.junk | 0) > s.j0 || (m.nc | 0) > s.c0;
-/** The room's post armed for the end of the window under way (a hot row or monster in it). @param {any} room @param {number} now */
-function netArm(room, now) {
-  const W = netOf(room);
-  if (!W.timer) W.timer = setTimeout(() => { void staffNetFlush(room); }, (Math.floor(now / NET_FEED_MS) + 1) * NET_FEED_MS + NET_SLACK_MS - now);
-}
+/** A hot window posts on the next frame after it ends, or when the room drains - never a timer that keeps the object awake. */
 
 /**
  * A FRAME IN (index.js webSocketMessage, before its door): counted for its socket - its kind, its bytes, its slot. A
@@ -126,7 +122,8 @@ export function staffNetFrame(room, ws, message, now) {
   if (!on(room.env?.STAFF_NET_FEED_URL)) return;
   const m = room._meterOf(ws);
   const w = Math.floor(now / NET_FEED_MS);
-  if (m.nf && m.nf.w !== w) netFold(room, m, room._attach(ws));
+  const rolled = !!(m.nf && m.nf.w !== w);
+  if (rolled) netFold(room, m, room._attach(ws));
   const s = (m.nf ??= netBegin(w, m));
   const slot = Math.floor(now / SLOT_MS);
   if (slot !== s.slot) {
@@ -138,7 +135,11 @@ export function staffNetFrame(room, ws, message, now) {
   const bytes = typeof message === 'string' ? message.length : (/** @type {any} */ (message)?.byteLength ?? 0);
   s.c10++; s.c60++; s.n++; s.b10 += bytes; s.b60 += bytes; s.b += bytes;
   s.k[kindOf(message)]++;
-  if (!s.hot && (s.c10 >= NET_HOT.frames10 || s.b10 >= NET_HOT.bytes10 || netHot(s, m))) { s.hot = true; netArm(room, now); }
+  if (!s.hot && (s.c10 >= NET_HOT.frames10 || s.b10 >= NET_HOT.bytes10 || netHot(s, m))) { s.hot = true; netOf(room); }   // the window exists for the drain's flush; nothing is armed
+  if (rolled) {
+    const W = room._staffNet;
+    if (W && (W.rows.size || W.foes.size || W.retry)) void staffNetFlush(room, now);
+  }
 }
 
 /** A CLOSE for "too many ..." (index.js _refuse): counted on the socket's meters, its words kept. @param {any} room @param {any} ws @param {unknown} why */
@@ -222,15 +223,14 @@ export function staffFoesSeen(room, a, data, now, lane) {
       else row.r++;
     }
   }
-  if (foeHot(row)) netArm(room, now);
 }
 /** RECORDS THE RELAY STRIPPED for their health (index.js _grantRelayTally - FOE-BOUNDS): counted on the sender's row. @param {any} room @param {any} a @param {number} n @param {number} now */
 export function staffFoesStripped(room, a, n, now) {
+  void now;
   if (!on(room.env?.STAFF_NET_FEED_URL)) return;
   const row = foeRow(room, a, true);
   if (!row) return;
   row.x += n;
-  netArm(room, now);
 }
 
 /** Most urgent first: closes, then refusals and junk, then the busiest 10 s. */
@@ -258,18 +258,14 @@ export async function staffNetFlush(room, now = Date.now()) {
   })() : null;
   W.rows = new Map(); W.foes = new Map(); W.from = 0;
   if (!on(url) || (!batch && !W.retry)) return false;
-  return send(room, W, url, batch, () => netArm(room, Date.now()));
+  return send(room, W, url, batch, () => {});
 }
 
 // ═══ BOT CHECK: REACTIONS ═════════════════════════════════════════════════════════════════════════════════════════
 
 /** The room's episodes: the open ones by socket, the finished ones waiting, the window's start, its timer. */
 const reactOf = (/** @type {any} */ room) => (room._staffReact ??= { open: new Map(), openN: 0, rows: [], from: 0, q: null, timer: null, retry: null });
-/** The room's tick armed: aged episodes closed, the window posted once it has waited. @param {any} room */
-function reactArm(room) {
-  const R = reactOf(room);
-  if (!R.timer) R.timer = setTimeout(() => { R.timer = null; void staffReactTick(room); }, REACT_EPISODE_MS);
-}
+/** Episodes close on the next pose or when the socket leaves - no timer holding the object for the episode. */
 
 /**
  * A NATURAL ENCOUNTER'S GRANT MINTED (index.js _grantMintAsk): its asker's episode opened - the spawn moment its clock
@@ -287,18 +283,17 @@ export function staffReactAsk(room, ws, a, gr, now) {
   R.open.set(ws, mine);
   R.openN++;
   R.q ??= a.key;
-  reactArm(room);
 }
 
 /**
  * A POSE TAKEN (index.js _poseFrame) from a socket with an open episode: what moved since its last, timed from the ask -
- * each first once. A pose past the episode's length closes it unread.
+ * each first once. A pose past the episode's length closes it unread. A due window posts on any pose: the timer that
+ * posted it is gone, and a room still playing after its last episode would otherwise keep the rows until it drained.
  * @param {any} room @param {any} ws @param {any} p the pose as the door took it (net/wire.js validPose) @param {number} now
  */
 export function staffReactPose(room, ws, p, now) {
   const mine = room._staffReact?.open.get(ws);
-  if (!mine) return;
-  for (const e of [...mine]) {
+  if (mine) for (const e of [...mine]) {
     const t = now - e.t0;
     if (t > REACT_EPISODE_MS) { reactClose(room, ws, e, now); continue; }
     const q = e.last, at = e.at;
@@ -316,6 +311,8 @@ export function staffReactPose(room, ws, p, now) {
     e.last = p;
     if (p.dd) { at.dd = t; reactClose(room, ws, e, now); }
   }
+  const R = room._staffReact;
+  if (R && (R.rows.length || R.retry) && R.from && now - R.from >= REACT_FEED_MS) void staffReactFlush(room, now);
 }
 
 /** An episode finished: out of the open, its row waiting - posted at the batch's bound. @param {any} room @param {any} ws @param {any} e @param {number} now */
@@ -342,7 +339,6 @@ export async function staffReactTick(room, now = Date.now()) {
   const R = reactOf(room);
   for (const [ws, mine] of [...R.open]) for (const e of [...mine]) if (now - e.t0 >= REACT_EPISODE_MS) reactClose(room, ws, e, now);
   if ((R.rows.length || R.retry) && now - R.from >= REACT_FEED_MS) await staffReactFlush(room, now);
-  if (R.openN || R.rows.length || R.retry) reactArm(room);
 }
 
 /** THE WINDOW POSTED - the finished episodes, to REACTION_FEED_URL. Answers whether it went. @param {any} room @param {number} [now] */
@@ -353,7 +349,7 @@ export async function staffReactFlush(room, now = Date.now()) {
   R.from = R.rows.length ? now : 0;
   const url = room.env?.REACTION_FEED_URL;
   if (!on(url) || (!rows.length && !R.retry)) return false;
-  const went = await send(room, R, url, rows.length ? { v: REACT_FEED_V, id: randomId(), at: now, q: R.q, rows } : null, () => reactArm(room));
+  const went = await send(room, R, url, rows.length ? { v: REACT_FEED_V, id: randomId(), at: now, q: R.q, rows } : null, () => {});
   R.from ||= R.retry ? now : 0;   // STAFF-PANEL5-FEEDS-FIX: a failed batch waits a window to go again, the net feed's pace - a failing service is not asked every minute
   return went;
 }

@@ -9,8 +9,9 @@
 //   - every ONLINE_CHECKPOINT_MS of real time the character is saved, quietly, to every slot the exit save writes;
 //   - a trade's goods leaving the pack, coming back or arriving are saved at once, so the giver's loss is on disk
 //     before the frame that hands the goods over is sent.
-// Refused where the exit save is (a tab out of the seat; the death screen, where exitAutosaveNames answers no slot) and
-// while a duel is in play (its borrowed health and spells are not the character's). Offline nothing changes.
+// Refused where the exit save is (a tab out of the seat, for a slot save - a realm character's lease decides instead,
+// checkpointAllowed below; the death screen, where exitAutosaveNames answers no slot) and while a duel is in play (its
+// borrowed health and spells are not the character's). Offline nothing changes.
 //
 // PROF-SAVE (2026-09-29, Mac's choice: "Board now, rest after fixes" - the fix before Marks and the professions open):
 // AND A PROFESSIONS ACT THAT CHANGES THE SAVE IS SAVED AT ONCE, as a trade is. A withdrawal from the Stores, a craft's
@@ -41,14 +42,36 @@ export const ONLINE_CHECKPOINT_MS = 300_000;
  * checkpoint wrote the moved clock under it - the load then re-anchored every marker to it and the span was never
  * walked (a sentence's spells never ran out, its 112-day drift never paid; a dungeon rest's loan reminders lost). DFU
  * can save only once Update has caught up. The last checkpoint stands; the next is written when the walk has been.
- * @param {{ online?: boolean, spawned?: boolean, seatOut?: boolean, duel?: boolean, walkWaiting?: boolean }} at
+ *
+ * A tab out of the seat still saves a realm character (`realm`). The seat decides who is in the rooms, not whose save
+ * lands: the service takes a realm checkpoint only under the lease of the tab that joined the character last, so a tab
+ * the character was taken from is refused there and sent to the door. Refusing it here left a tab whose seat went to
+ * another tab, window or device playing on with nothing saved at all - not even the device's copy - and a crash or a
+ * close lost every minute since (FIELD BUGS 2026-10-25, guild standing and quests reset). A slot save has no lease, so
+ * a tab out of the seat still writes none.
+ * @param {{ online?: boolean, spawned?: boolean, seatOut?: boolean, duel?: boolean, walkWaiting?: boolean, realm?: boolean }} at
  */
-export function checkpointAllowed({ online = false, spawned = false, seatOut = false, duel = false, walkWaiting = false } = {}) {
-  return !!online && !!spawned && !seatOut && !duel && !walkWaiting;
+export function checkpointAllowed({ online = false, spawned = false, seatOut = false, duel = false, walkWaiting = false, realm = false } = {}) {
+  const seatAllows = !seatOut || realm;
+  return !!online && !!spawned && seatAllows && !duel && !walkWaiting;
 }
 
 /** Whether the periodic checkpoint is due, `nowMs` and `lastMs` on one clock. */
 export const checkpointDue = (/** @type {number} */ nowMs, /** @type {number} */ lastMs) => Number.isFinite(nowMs) && nowMs - lastMs >= ONLINE_CHECKPOINT_MS;
+
+/**
+ * The periodic checkpoint, when it is due. A realm session runs it through its idle door, which may answer a save that
+ * says nothing new without a put (realmSaves.js `idle`). Answers whether one was due.
+ * @param {number} nowMs @param {number} lastMs
+ * @param {{ idle?: (run: () => unknown) => unknown } | null} session
+ * @param {() => unknown} checkpoint
+ */
+export function checkpointWhenDue(nowMs, lastMs, session, checkpoint) {
+  if (!checkpointDue(nowMs, lastMs)) return false;
+  if (session?.idle) session.idle(checkpoint);
+  else checkpoint();
+  return true;
+}
 
 /**
  * A trade pack (systems/tradePack.js) whose every change of the pack is checkpointed: `take` (the goods out, before the

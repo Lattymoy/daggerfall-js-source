@@ -147,7 +147,7 @@ test('EVENTS1 THE RAIDS ON IT, FROM raidTimerList: the nearest two under way or 
     raidRec({ locationIndex: 10, locationName: 'Later', startMinute: AT(610) + EVENT_SOON_MS / 5000 + 1, endMinute: AT(900), px: 250 }),
   ]);
   const list = d.list();
-  assert.deepEqual(Object.keys(list[0]).sort(), ['done', 'endMs', 'key', 'n', 'name', 'px', 'py', 'region', 'startMs', 'tg', 'type'].sort(), 'the producer\'s shape');
+  assert.deepEqual(Object.keys(list[0]).sort(), ['done', 'endMs', 'key', 'kind', 'n', 'name', 'obj', 'px', 'py', 'region', 'startMs', 'tg', 'type'].sort(), 'the producer\'s shape (RAID5: its kind and its objective\'s words with it)');
   assert.equal(list[0].key, raidKey(raidRec({ locationName: 'Here' })));
   const m = eventBoardModel({ now: OPEN, pixel: HERE, region: 'Daggerfall', raids: list }, { max: 20 });
   const raids = of(m.all, 'raid');

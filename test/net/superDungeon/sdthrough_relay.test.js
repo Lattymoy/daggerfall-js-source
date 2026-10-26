@@ -222,8 +222,8 @@ test('SD-THROUGH NEVER IN THE COLLAPSE: a returner after the hub\'s word of the 
 test('SD-THROUGH the relay by source: the hub\'s door routed; the realm tells from its admission\'s two exits, unawaited, in Room methods of their own - never in `_message`; the owed tell on the realm\'s alarm before its fight\'s beat; the hub moves its record by the law (mutants: awaited; inside _message; the alarm unwired)', () => {
   const R = read('server/src/index.js');
   assert.match(R, /if \(path === SD_INTERNAL_IN\) return this\._sdInInternal\(request\);/);
-  assert.match(R, /if \(sub && realm\.in\.includes\(sub\)\) \{ this\._sdTellIn\(s, rec, now\); return null; \}/, 'a returner\'s admission');
-  assert.match(R, /await this\.state\.storage\.put\(SD_REALM_KEY, realm\); \}\n\s*this\._sdTellIn\(s, rec, now\);[^\n]*\n\s*return null;/, 'a newcomer\'s');
+  assert.match(R, /if \(sub && realm\.in\.includes\(sub\)\) \{ if \(lies === 'rise'\) await this\._sdRose\(realm, sub, now\); this\._sdTellIn\(s, rec, now\); return null; \}/, 'a returner\'s admission');   // PIN MOVED (AUDIT WORLD-EVENTS L1-8): a rise kept as it is let in
+  assert.match(R, /await this\.state\.storage\.put\(SD_REALM_KEY, realm\); \}\n(?:\s*if \(lies === 'rise'\) await this\._sdRose\(realm, sub, now\);[^\n]*\n)?\s*this\._sdTellIn\(s, rec, now\);[^\n]*\n\s*return null;/, 'a newcomer\'s');   // PIN MOVED (AUDIT WORLD-EVENTS L1-8): a rise kept as it is let in
   assert.doesNotMatch(R, /await this\._sdTellIn\(/, 'a hello never waits on it');
   const msg = R.slice(R.indexOf('  async _message(ws, message) {'), R.indexOf('\n  }\n', R.indexOf('  async _message(ws, message) {')));
   assert.ok(msg.length > 1000 && !/_sdTellIn|_sdInBeat|sdEnter\(/.test(msg), 'never in the dispatcher');

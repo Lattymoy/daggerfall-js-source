@@ -23,7 +23,8 @@ import { ARTIFACTS, SPECIAL_ARTIFACT_HANDLERS, onPlayerStruckByEnemy, registerFo
 import { ENCHANTMENT_TYPES as T } from '../../src/formats/magicDef.js';
 import { MOBILE_TYPES } from '../../src/characters/mobile/mobileTypes.js';
 import { killIfAnyLiveStatZero } from '../../src/systems/statMods.js';
-import { isPrivateQuestFoe } from '../../src/scenes/quest/questFoeHost.js';   // CURSE-SYNC: the handover's word for a quest's foe
+import { isPrivateQuestFoe } from '../../src/scenes/quest/questFoeHost.js';
+import { promoteStaffBoss } from '../../src/systems/eliteFoes.js';   // BOSS-EXACT: a staff event's mini boss   // CURSE-SYNC: the handover's word for a quest's foe
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
@@ -178,6 +179,61 @@ test('AUDIT PSCALE1 outdoors, driven - WHOEVER FIGHTS IT: my foe is as tough as 
   blowFrom(owner, troll, 'me', 0);
   owner.healFoe(troll, 20);
   assert.equal(troll.entity.health, 58, 'twenty against four is eight');
+  // BOSS-EXACT (mob 2026-10-25: "the rat isnt takeing any dmage"): a staff event's mini boss keeps the exact health staff
+  // typed - four fighting it, every blow and heal lands whole (its blows at me still weigh by them: partyHit)
+  const boss = await owner.spawnFoe(0, [20, 0, 20], { feetGiven: true });
+  promoteStaffBoss(boss.entity, { hp: 10000 });
+  for (const p of peers) blowFrom(owner, boss, p.id, 0);
+  blowFrom(owner, boss, 'me', 20);
+  assert.equal(boss.entity.health, 9980, 'four fighting the mini boss: a blow of twenty takes twenty');
+  owner.applyHit('bob-0002', { i: boss.seq, dmg: 24, kind: 'melee', k: 'world:3,12' });
+  assert.equal(boss.entity.health, 9956, 'and a peer\'s blow its 24');
+  owner.healFoe(boss, 10);
+  assert.equal(boss.entity.health, 9966, 'a heal its own ten');
+  assert.equal(owner.partyHit(10, boss), 13, 'its blow at me still four fighters\'');
+  // BOSS-BIG-HIT (mob 2026-10-25: "magic hits 10 of thousands"): a peer's blow past the bound lands on the mini boss at the
+  // bound - it was refused whole; any other foe still refuses it
+  boss.entity.maxHealth = 1e8; boss.entity.health = 20000;   // a share far past every number below (BOSS-HIT-SHARE's own pins follow)
+  assert.equal(owner.applyHit('bob-0002', { i: boss.seq, dmg: 45000, kind: 'melee', k: 'world:3,12' }), true, 'a blow of 45,000 on the mini boss lands');
+  assert.equal(boss.entity.health, 10000, 'as 10,000');
+  // BOSS-SPELL-WARD (mob: "use crazy spell reduction on mini bosses like 90%", "of all spell damage"): a tenth of every spell -
+  // a peer's, mine, a round, and a whole-health one never kills
+  owner.applyHit('bob-0002', { i: boss.seq, dmg: 45000, kind: 'spell', k: 'world:3,12' });
+  assert.equal(boss.entity.health, 9000, 'a peer\'s spell of 45,000: 10,000 at the bound, a tenth of it');
+  owner.damageFoe(boss, 50, null, null, { fromPlayer: true, kind: 'spell' });
+  assert.equal(boss.entity.health, 8995, 'my own spell of 50 takes 5');
+  owner.damageFoe(boss, 3, null, null, { fromPlayer: true, kind: 'spell', round: true });
+  assert.equal(boss.entity.health, 8994, 'a round of 3 takes its 1, never nothing');
+  owner.damageFoe(boss, boss.entity.health, null, null, { fromPlayer: true, kind: 'spell', whole: true });
+  assert.ok(!boss.dead && boss.entity.health === 8095, 'a Disintegrate takes a tenth of its health - no kill');
+  boss.raidKey = 's.ev1abc';   // a staff event's raider, as raidingParties tags its boss
+  const seen = createExteriorFoes(rig());
+  const toOwner = [];
+  netted(seen, { self: 'eve-0005', hits: toOwner, peers: [{ id: 'mac-0001', feet: [20, 0, 20] }] });
+  seen.applyFoes('mac-0001', owner.foesFrame(true)); await settle();
+  const bossPup = seen.foes.find((x) => x.puppet === 'mac-0001' && x.seq === boss.seq);
+  assert.ok(bossPup?.entity?.staffBoss, 'the boss stands as a puppet');
+  seen.damageFoe(bossPup, 400, [20, 0, 20], null, { fromPlayer: true, kind: 'spell' });
+  assert.equal(toOwner.at(-1)?.dmg, 400, 'a puppet sends its owner the spell whole - the owner cuts it, once');
+  // BOSS-HIT-SHARE (mob: "needs to scal with players", "1% per heaslth with 40 player ins much", "magfic and melee"): one hit
+  // takes at most 1% of its maximum split among everyone fighting it - a blade's and a spell's alike, mine and a peer's
+  const crowd = await owner.spawnFoe(0, [24, 0, 24], { feetGiven: true });
+  promoteStaffBoss(crowd.entity, { hp: 100000 });
+  blowFrom(owner, crowd, 'me', 5000);
+  assert.equal(crowd.entity.health, 99000, 'alone: a blow of 5,000 takes 1%');
+  for (let i = 0; i < 39; i++) blowFrom(owner, crowd, `p${i}-00${String(i).padStart(2, '0')}`, 0);
+  blowFrom(owner, crowd, 'me', 5000);
+  assert.equal(crowd.entity.health, 98975, 'forty fighting: 25 - a four-hundredth of its maximum');
+  owner.applyHit('bob-0002', { i: crowd.seq, dmg: 9000, kind: 'spell', k: 'world:3,12' });
+  assert.equal(crowd.entity.health, 98951, 'a peer\'s spell its share too - forty-one now: 24');
+  owner.damageFoe(crowd, 10, null, null, { fromPlayer: true });
+  assert.equal(crowd.entity.health, 98941, 'a blow under its share lands whole');
+  // BOSS-BAR (mob: "the bar never moved"): past the wire's bound the record says the same share of it, so a reader's bar falls
+  const big = await owner.spawnFoe(0, [22, 0, 22], { feetGiven: true });
+  promoteStaffBoss(big.entity, { hp: 1000000 });
+  big.entity.health = 750000;
+  const br = owner.foesFrame(true).f.find((r) => r.i === big.seq);
+  assert.deepEqual([br.h, br.k], [75000, 100000], 'three quarters left reads three quarters');
   // DOORS-2: Namira's reflection through the foe's own door - its death, its fighters
   const wearer = { ...playerEntity(), equip: { slots: { Ring0: { name: 'Artifact', currentCondition: 800, maxCondition: 800, enchantments: [{ type: T.SpecialArtifactEffect, param: ARTIFACTS.RingOfNamira }] } } } };
   const zombie = await owner.spawnFoe(0, [18, 0, 18], { feetGiven: true });

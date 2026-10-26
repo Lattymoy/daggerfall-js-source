@@ -272,8 +272,8 @@
   {
     "name": "LOOT5-the-sap-the-same-when-low",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "    healMine(entity, (entity.maxHealth * (share(entity) < 0.5 ? hist.low : hist.pct)) / 100);",
-    "new": "    healMine(entity, (entity.maxHealth * hist.pct) / 100);",
+    "old": "regenShare((entity.maxHealth * (share(entity) < 0.5 ? hist.low : hist.pct)) / 100, 'hist', entity)",
+    "new": "regenShare((entity.maxHealth * hist.pct) / 100, 'hist', entity)",
     "tests": [
       "test/systems/loot5_powers.test.js"
     ]

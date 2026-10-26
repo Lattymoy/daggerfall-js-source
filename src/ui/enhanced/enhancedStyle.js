@@ -679,7 +679,7 @@ select, input, textarea { font: inherit; }
    wizard: its rail is a readout and its phone strip is its own (below).
    TALL-TOUCH (2026-10-13, Discord #bug-reports, on an ASUS ROG Xbox Ally X: "it's impossible to configure the game
    settings because of a huge game logo that won't minimize or go away"). NOT ONLY A SHORT ONE: ANY LANDSCAPE SCREEN.
-   The stack sizes the logo by the screen's WIDTH (59.5% of it, at the mark's 1.63:1), so held sideways it stands at
+   The stack sizes the logo by the screen's WIDTH (59.5% of it, at BR5's 1.63:1; BR6's 43.4% is that height), so held sideways it stands at
    least half the height at any size - 1280x720 (a 1080p handheld at Windows' 150%) drew it ~470 px of 720 and left
    the Settings pane a strip. The 560 px ceiling caught the AYN Thor and missed the Ally. So every landscape screen
    600 px wide or more that the stack would take - a touch screen of any height, or a window narrowed under 860 px -
@@ -944,7 +944,9 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 
    AUDIT INV2 A7: THE LADDER, walked rather than eyeballed. Every
    z-index literal in src/ and index.html: the doors' hosts are 11-14,
-   the boot error and three bottom sheets are 20, enhancedChunk's "the
+   the boot error and three bottom sheets are 20, the layer a message box
+   lays over an open enhanced window to take its clicks is 29 (BOX-ON-TOP,
+   ui/boxClickCatcher.js), enhancedChunk's "the
    game was updated" scrim is 30, the notice stack (ENH-NOTICE1; AUDIT
    ENH-NOTICE3 A7 lifted it off a tie with that scrim) is 31, the asset
    picker is 40 (and test/scenes/mwattach.test.js holds that it outranks
@@ -1060,6 +1062,18 @@ img.fit { image-rendering: pixelated; }   /* AUDIT UI A1: a fitted picture drawn
   font: inherit; font-size: 15px; font-variant-numeric: tabular-nums;
 }
 .goldfield input:focus-visible { outline: none; border-color: var(--brass); }
+/* GOLD-ALL: the verb and its "all", stacked in the 44px the box beside them already stands - one column of two equal
+   rows, so both presses are one size (the wider word's width, each half the box's height) and the floating field grows
+   neither taller nor wider (each keeps the kit's 104px, the one Stow's width before). They are the pack's own presses, at the Gold button's
+   12px; the pack's 2px word shadow is halved for the smaller face. */
+.goldfield .goldacts { display: grid; grid-template-columns: max-content; grid-template-rows: 1fr 1fr; gap: 4px;
+  flex: 0 0 auto; height: 44px; }
+.goldfield .goldacts .act { min-height: 0; height: auto; margin: 0; padding: 0 12px; box-sizing: border-box;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  font-size: 12px; line-height: 1; white-space: nowrap; }
+.pack-shell .goldfield .goldacts .act { text-shadow: 1px 1px 0 rgba(0,0,0,0.85); }
+.pack-shell .goldfield .goldacts .act.primary, .pack-shell .goldfield .goldacts .act:hover,
+.pack-shell .goldfield .goldacts .act:focus-visible { text-shadow: 1px 1px 0 rgb(93,77,12); }
 /* DISC25-F: the card's how-many field - a stack's split, beside the button that moves it */
 .qtyfield { display: inline-flex; align-items: center; gap: 6px; color: var(--dim); font-size: 12px; }
 .qtyfield input {
@@ -2349,20 +2363,24 @@ ${badgeCss()}
    HEIGHT it had, so nothing above or below it moves: the door's old mark
    stood 540 x 769/2112 tall, and the same height at the new ratio is
    540 x 769/2112 x 526/322 = 321px wide (84vw -> 50vw; the short landscape
-   screen's 394px -> 234, 56vw -> 33.3vw). */
-.px-wordmark:has(.brand-logo) { width: min(321px, 50vw); line-height: 0; flex-shrink: 0; }
+   screen's 394px -> 234, 56vw -> 33.3vw).
+   BR6: the dragon mark is 1232 x 1034 (1.19:1), painted to its edges too;
+   the same heights at its ratio are 540 x 769/2112 x 1232/1034 = 234px
+   (36.4vw), and the short landscape screen's 171px (24.3vw). */
+.px-wordmark:has(.brand-logo) { width: min(234px, 36.4vw); line-height: 0; flex-shrink: 0; }
 .brand-logo { display: block; width: 100%; height: auto; object-fit: contain;
   image-rendering: auto; }
 /* BR5: the masthead's mark spent 769/2112 of the column's width in height
    (BR4's file less its empty rows); the DFO mark spends the same height at
    769/2112 x 526/322 = 59.5% of the width, centred. No margin pulls
-   anything up any more - the file has no empty rows. */
-.brand-home .brand-logo { width: 59.5%; margin: 0 auto; }
+   anything up any more - the file has no empty rows. BR6: the dragon
+   mark's 1.19:1 spends that height at 769/2112 x 1232/1034 = 43.4%. */
+.brand-home .brand-logo { width: 43.4%; margin: 0 auto; }
 .brand-home { display: block; width: 100%; border: 0; padding: 0; background: transparent; cursor: pointer; }
 .brand-home:focus-visible { outline: 2px solid var(--brass); outline-offset: 6px; }
 .shell .brand h1:has(.brand-logo) { line-height: 0; }
 @media (max-height: 560px) and (min-width: 600px) {
-  .px-wordmark:has(.brand-logo) { width: min(234px, 33.3vw); }   /* BR4: INTRO2's 430px, at the same height; BR5: BR4's 394px, at the same height */
+  .px-wordmark:has(.brand-logo) { width: min(171px, 24.3vw); }   /* BR4: INTRO2's 430px, at the same height; BR5 and BR6: BR4's 394px, at the same height */
 }
 .px-wordmark small { display: block; font-family: ${PIXEL_STACK};
   font-size: 16px; letter-spacing: 0.5em; text-indent: 0.5em;
@@ -2498,7 +2516,7 @@ ${badgeCss()}
 /* SUPPORT1: ON THE FRONT DOOR THE CAPTION IS BOUNDED IN PIXELS. Its two lines' 14ch and 22ch are the font's - up to
    158px in Pixelify Sans - and a reach that is the font's cannot be the band's (THE CORNERS' BAND, below). 140px keeps
    "No character yet" whole (123px) and holds the mark's reach to 234px, so the band ended at 1007 under BR4's 540px
-   mark and a 1024x768 door still fit without a scroll (BR5's 321px mark ends it at 788); a character's longer line
+   mark and a 1024x768 door still fit without a scroll (BR5's 321px mark ended it at 788, BR6's 234px at 701); a character's longer line
    ends in its ellipsis three letters sooner. */
 .px-home:not(.px-over) .px-profilename { max-width: min(14ch, 140px); }
 .px-home:not(.px-over) .px-profilesub { max-width: min(22ch, 140px); }
@@ -2961,12 +2979,12 @@ ${SUPPORT_MARKS_CSS}
    clear of the corner marks over a game. With a mark in each top corner, the door's stage starts below them wherever
    the wordmark is wide enough to reach under either: the asks reach 122px in (18, their 98, the Plus frame's 6), the
    profile 234 (18, its 58px portrait, the 12px gap, its caption's 140px bound, the frame's 6), and
-   (vw - min(321px, 50vw)) / 2 is less than 234 at every width under 789 (BR5: BR4's min(540px, 84vw) took it to
-   1008) - and on a phone, where the marks stand 10px in and the caption is hidden, always. Measured rather than argued: tools/supportAsksProbe.mjs maps the logo's own
+   (vw - min(234px, 36.4vw)) / 2 is less than 234 at every width under 702 (BR6: BR5's min(321px, 50vw) took it to
+   789, BR4's min(540px, 84vw) to 1008) - and on a phone, where the marks stand 10px in and the caption is hidden, always. Measured rather than argued: tools/supportAsksProbe.mjs maps the logo's own
    opaque pixels onto the screen across 192 sizes, a caption at its bound among them. The band costs height, and where
    the door no longer fits it scrolls (DOOR-FIT, above); its foot keeps the one-row foot's 68px, so the last row can be
    scrolled clear of About and Screenshots. */
-@media (min-width: 481px) and (max-width: 788px) {
+@media (min-width: 481px) and (max-width: 701px) {
   .px-home:not(.px-over) > .px-stage:not(.px-acctstage) { padding: 84px 24px 76px; }
 }
 @media (max-width: 480px) {
@@ -3508,6 +3526,12 @@ ${paceControlsCss('tview')}
 .hud-foe { display: none; flex-direction: column; align-items: center; gap: 4px; }
 .hud-foe.on { display: flex; }
 .hud-foename { font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; }
+/* BOSS-TRAITS (bible/05-Combat/Boss-Traits.md): a hard foe's traits under its name, and its ward - a pale blue sheen over
+   its health from the left, its share of the whole */
+.hud-foetraits { display: none; margin-top: -3px; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #a9c8ff; }
+.hud-foe.traited .hud-foetraits { display: block; }
+.hud-foeward { position: absolute; left: 0; top: 0; bottom: 0; width: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(214,232,255,0.85) 0 1px, rgba(120,170,255,0.6) 1px calc(100% - 1px), rgba(60,96,170,0.7) calc(100% - 1px)); }
 .hud-track { position: relative; width: min(320px, 46vw); height: 10px;
   background: rgba(10,12,17,0.75); border: 2px solid rgba(125,116,96,0.55); }
 .hud-fill { display: block; height: 100%; width: 100%; background: #d98074; }

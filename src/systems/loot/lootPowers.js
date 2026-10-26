@@ -56,6 +56,8 @@ import { registerCastSpeedMod } from '../castSpeed.js';   // CAST-SPEED: the cas
 import { registerSpellPowerMod, registerSpellPierceMod } from '../spell/spellPower.js';   // BAL9c: potency and the arcane three's doors onto a damage spell
 import { hasSpecialAbility, SPECIAL_ABILITY, restIgnoresNoRegen } from '../rest/rest.js';   // BAL9c: a career that cannot regenerate magicka, rest's own gate
 import { registerPlayerBlowLanded, pendingPlayerBlow, REACH_RISE_M, registerSpireRedoubt, spireRoomNow } from '../sigil/sigilSetPowers.js';   // EG-ZH: the Spire's recovery - the breach the player stands in, and the Redoubt's door
+import { registerRollerLevel } from './lootLevelGate.js';   // LOOT-GATE
+import { effectiveLevel } from '../mentorMode.js';   // LOOT-GATE: Mentor Mode's level when it is on
 import { playerDoor, paidBack, oweFoe } from '../playerDoor.js';   // BAL5: a blow paid back never kills; OPEN-HAND: a follow-up owed to a relay's body
 import { showFollowUp } from '../../ui/hitNumbers.js';   // FIELD BUGS 2026-10-15e ROSE-SEEN: a follow-up's own number
 import { careerTolerance, EFFECT_FLAGS } from '../spellcast.js';
@@ -78,6 +80,7 @@ import { SKILLS } from '../skills.js';
 import { friendlyProtected } from '../../combat/playerWeapon.js';
 import { KNIGHT_CITY_WATCH } from '../../characters/mobile/mobileTypes.js';
 import { healthShare } from '../../combat/healthShare.js';   // FIELD BUGS 2026-10-18f RELAY-SHARE: a body's share of its health, the one law
+import { regenShare } from '../courtRules.js';   // AUDIT WORLD-EVENTS L1-3: Hist-Sap is a natural regeneration - a made level holds it
 
 /** All the thorns a wearer's pieces sum to, at most, a blow. BAL5 (bible/05-Combat/Balance-Arc.md section 11): 10, the
  *  top of a Legendary line's band and a Legendary sear's own most - it was 25, a whole endgame swing paid back on every
@@ -568,7 +571,7 @@ export function lootRound(entity) {
   if (!mine(entity)) return;
   const hist = powerKind(entity, 'regen');
   if (hist && entity.maxHealth > 0 && entity.health > 0 && entity.health < entity.maxHealth) {
-    healMine(entity, (entity.maxHealth * (share(entity) < 0.5 ? hist.low : hist.pct)) / 100);
+    { const held = regenShare((entity.maxHealth * (share(entity) < 0.5 ? hist.low : hist.pct)) / 100, 'hist', entity); if (held > 0) healMine(entity, held); }   // AUDIT WORLD-EVENTS L1-3: a natural regeneration - held in a made level (systems/courtRules.js)
   }
   // BAL9c: the Wellspring of Artaeum - a share of my magicka, more under half; never for a career that cannot regenerate
   // it (NoRegenSpellPoints), where rest's own gate holds it back (offline - REST-MANA1: online every career's comes back)
@@ -632,6 +635,7 @@ registerPlayerKillListener(LOOT_POWERS, lootKill);
 registerAbsorptionChance(LOOT_POWERS, lootAbsorbChance);
 registerMagicRoundHook(LOOT_POWERS, lootRound);
 registerLegendaryFind(LOOT_POWERS, lootFind);
+registerRollerLevel(() => { const me = playerDoor()?.player?.(); return me ? effectiveLevel(me) : null; });   // LOOT-GATE: the live player's level (Mentor Mode's when on) holds the top tiers back - none before a host publishes its door, so a bare roll (a test, a tool) rolls at its source alone
 registerEntityFold(LOOT_POWERS, wardrobeFold);   // LOOT15
 registerSpireRedoubt(LOOT_POWERS, lootRedoubtTaken);   // EG-ZH: Divine Grace and the Vigil recover at a Redoubt in a breach
 

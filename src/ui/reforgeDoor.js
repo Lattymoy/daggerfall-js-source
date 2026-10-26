@@ -8,6 +8,7 @@
 // either skin). A page with no document answers null. One stands at a time.
 import { mountEnhancedChunk } from './enhanced/enhancedChunk.js';
 import { registerOverlay } from './enhanced/enhancedOverlays.js';
+import { imbuePiece } from '../systems/reforge.js';   // LOOT-GATE: the Imbue, on the payer the host hands in
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 
 /** The overlay standing now, or null. */
@@ -64,7 +65,8 @@ export function createReforgeOverlay(deps) {
   _open = overlay;
   mountEnhancedChunk({
     load: () => import('./reforgeWindow.js'),
-    mount: ({ mountReforgeWindow }) => { view = mountReforgeWindow(host, { ...deps, onExit: close }); },
+    // LOOT-GATE: the Imbue on the host's own payer, unless the host hands its own (the hosts do not grow)
+    mount: ({ mountReforgeWindow }) => { view = mountReforgeWindow(host, { imbue: (it) => imbuePiece(it, deps.payer()), ...deps, onExit: close }); },
     alive: () => !fired, host, onDismiss: () => { close(); }, label: 'reforge',
   });
   return overlay;

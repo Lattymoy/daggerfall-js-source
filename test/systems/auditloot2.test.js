@@ -442,7 +442,7 @@ test('AUDIT LOOT II C1: a honed made piece is no longer what its record mints - 
 test('AUDIT LOOT II C5: a sold piece\'s junk mark ends at the shelf - both of the host\'s sales', () => {
   const wm = read('src/scenes/worldModes.js');
   // PIN MOVED (FIELD BUGS 2026-10-16b STOLEN-GOODS): a sold piece lands through landSold (the shelf for an honest piece)
-  const pushes = [...wm.matchAll(/landSold\(shelf\.items, it\);[^\n]*\n\s*setJunk\(it, false\);/g)];
+  const pushes = [...wm.matchAll(/landSoldAt\(shelf\.items, it, shelf === interiorCtx\?\.shelves\?\.\[0\] \? interiorBuilding\?\.buildingType : null\);[^\n]*\n\s*setJunk\(it, false\);/g)];   // PIN MOVED (AUDIT UPDATE II B2): through shopStock.js landSoldAt - an arrow sold at a General Store's counter is never shelved
   assert.equal(pushes.length, 2, 'the counter\'s sale and the keyed shelf\'s');
   assert.match(wm, /import \{ setJunk \} from '\.\.\/systems\/item\/itemJunk\.js';/);
 });

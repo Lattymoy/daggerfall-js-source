@@ -213,7 +213,7 @@ test('LOOT10: the pages - the Codex alone from the pack, the Imprint at the guil
     });
     try {
       const shell = one(host, 'reforge-shell');
-      assert.deepEqual(kids(shell, 'reforge-tab').map((t) => t.dataset.page), ['reforge', 'salvage', 'imprint', 'codex', 'scry', 'sockets'], 'the guild\'s four - PIN MOVED (LOOT19, bible/06-Systems/Loot-II-Arc.md section 11): and its scryers\' page, the fifth; (LOOT20, section 12) its sockets\', the sixth');
+      assert.deepEqual(kids(shell, 'reforge-tab').map((t) => t.dataset.page), ['reforge', 'imbue', 'salvage', 'imprint', 'codex', 'scry', 'sockets'], 'the guild\'s four - PIN MOVED (LOOT-GATE: the Imbue, second) - PIN MOVED (LOOT19, bible/06-Systems/Loot-II-Arc.md section 11): and its scryers\' page, the fifth; (LOOT20, section 12) its sockets\', the sixth');
       // AUDIT MENU-ORDER U5: a refused imprint - pressed, it says why and imprints nothing
       const gold = me.goldPieces;
       me.goldPieces = 0;

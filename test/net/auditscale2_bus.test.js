@@ -12,6 +12,9 @@ import assert from 'node:assert/strict';
 
 import { fakeRooms } from '../fakeRoom.mjs';
 import * as H from '../../src/net/hubShards.js';
+/** COST-1: these pins hold a region's channel SPLIT - the way back, the relay's REGION_SHARDS - so their worlds name every region, and a region's shard is asked of the same split (a region's channel is whole by default: test/net/cost1_regions.test.js). */
+const SPLIT_VARS = { REGION_SHARDS: 'all' };
+const SPLIT = H.regionsSharded(SPLIT_VARS.REGION_SHARDS);
 import { SOCIAL_ROOM, GATE_BRAIN_V } from '../../src/net/wire.js';
 import { mintOrder, mintGuildOutOrder } from '../../src/net/identityToken.js';
 import { gateTimes, gateRoomKey } from '../../src/net/gate/gateLaw.js';
@@ -35,7 +38,7 @@ async function world(fn) {
   Date.now = () => clock;
   try {
     return await quiet(async () => {
-      const W = fakeRooms({ now: () => clock });
+      const W = fakeRooms({ now: () => clock, vars: SPLIT_VARS });
       const bus = W.room(SOCIAL_ROOM);
       const settle = async () => {
         for (let i = 0; i < 6; i++) {
@@ -76,7 +79,7 @@ async function court(fn, { start = TT.openAt + 1000 } = {}) {
   Date.now = () => clock;
   try {
     return await quiet(async () => {
-      const W = fakeRooms({ now: () => clock });
+      const W = fakeRooms({ now: () => clock, vars: SPLIT_VARS });
       const F = W.room(KEY);
       const copy = (k) => W.room(`${KEY}#${k}`);
       const settle = async () => {
@@ -104,7 +107,8 @@ test('AUDIT SCALE II R2-1 R2-2 R2-12: the id\'s secret is the bus\'s to ask - a 
     const mal = await link('mallory', SOCIAL_ROOM, { peer: `peer-${v}`, secret: 'mallorys-own-secret', hs: undefined });
     assert.equal(mal.closed?.reason, 'id taken', 'a hello on the bus with the id and another secret');
     assert.equal(victim.closed, null, 'the player\'s socket on its shard stands (it was closed `replaced`, for good)');
-    assert.equal(await bus.store.get(`secret:peer-${v}`), `secret-of-peer-${v}`, 'the bus keeps the id\'s secret, as the hub always did');
+    assert.equal(await bus.room._secretOf(`peer-${v}`), `secret-of-peer-${v}`, 'the bus keeps the id\'s secret on the socket');
+    assert.equal(await bus.store.get(`secret:peer-${v}`), undefined, 'and not in storage');
     const squat = await link(w, H.hubOfSubject(`acct-${w}`), { peer: `peer-${v}`, secret: 'squatters-own' });
     assert.equal(squat.closed?.reason, 'id taken', 'a hello on another shard with the id - the bus closes it there');
     assert.deepEqual(holders(bus, `peer-${v}`), [`v:acct-${v}`], 'one holder of the id: the player');
@@ -118,11 +122,11 @@ test('AUDIT SCALE II R2-1 R2-2 R2-12: the id\'s secret is the bus\'s to ask - a 
   await world(async ({ W, link }) => {
     const [v] = namesOnShards(1);
     const bus = 'chat:region.5';
-    const victim = await link(v, H.shardOf(bus, `acct-${v}`));
+    const victim = await link(v, H.shardOf(bus, `acct-${v}`, SPLIT));
     const mal = await link('mallory', bus, { peer: `peer-${v}`, secret: 'mallorys-own-secret', hs: undefined });
     assert.equal(mal.closed?.reason, 'id taken', 'a region\'s bus the same');
     assert.equal(victim.closed, null);
-    assert.equal(await W.room(bus).store.get(`secret:peer-${v}`), `secret-of-peer-${v}`);
+    assert.equal(await W.room(bus).room._secretOf(`peer-${v}`), `secret-of-peer-${v}`);
   });
 });
 

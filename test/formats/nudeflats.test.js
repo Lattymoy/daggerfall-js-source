@@ -112,7 +112,7 @@ test('NUDE-FLATS, the Morrowind body: a woman\'s bare chest wears the plainest s
   assert.deepEqual(ids(wear([{ kind: 'clothing', templateIndex: 154, name: 'Casual Cloak' }], true, false)), ['b_shirt', 'b_sleeve', 'daggerfall_cloak'], 'the cloak, the shirt under it');
   assert.equal(MODESTY_SHIRT.name, 'Short Shirt');
   // the switch at the build: the viewer's own setting, the one the classic doll reads
-  assert.match(src('src/combat/fpArm.js'), /: composeWornModest\(\{ pieces: armor \?\? \[\], armors: armors \?\? \[\], clothes: clothes \?\? \[\], bodyPool: parts, female, colourOf, helmStyle \}, showNudity\(\)\);/);   // MW-STEEL1: and the Steel Helm switch
+  assert.match(src('src/combat/fpArm.js'), /: composeWornModest\(\{ pieces: armor \?\? \[\], armors: armors \?\? \[\], clothes: clothes \?\? \[\], bodyPool: parts, female, colourOf, helmStyle, beast, beastWear \}, showNudity\(\)\);/);   // MW-STEEL1: and the Steel Helm switch; BEAST-BOOTS: and the race's Beast flag
 });
 
 test('NUDE-FLATS by source: every host that draws a person asks drawnFlat, and the person keeps the flat they were born as', () => {

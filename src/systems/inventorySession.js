@@ -342,6 +342,35 @@ export function planBagToggle(deps = {}, state = {}) {
  * end of a close handler - it has to run on a HAND-OFF too, where the
  * window is being replaced rather than closed.
  */
+/** The chest's own save, if closing it has to wait for the service. Null when the window can go at once. */
+export function lootFinish(loot) {
+  const pending = loot?.finish?.();
+  return pending && typeof pending.then === 'function' ? pending : null;
+}
+
+/** A veil over the game until `lootFinish` settles. Returns the remover. */
+export function chestSaveVeil(text) {
+  if (typeof document === 'undefined' || !document.body) return () => {};
+  const veil = document.createElement('div');
+  veil.setAttribute('data-chest-save', '');
+  veil.textContent = text || 'Saving...';
+  veil.style.cssText = 'position:fixed;inset:0;z-index:39;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);color:#e8dcc0;font:18px serif;pointer-events:all';
+  document.body.append(veil);
+  return () => veil.remove();
+}
+
+/** A second close while the chest is saving does nothing. The real close runs once the save has answered. */
+export function holdChestSave(gate, loot, again) {
+  if (gate?.saving) return true;
+  if (gate?.saved) return false;
+  const pending = lootFinish(loot);
+  if (!pending) return false;
+  gate.saving = true;
+  const clear = chestSaveVeil(loot?.busy);
+  pending.finally(() => { clear(); gate.saving = false; gate.saved = true; again(); });
+  return true;
+}
+
 export function closeSession(deps = {}, state = {}) {
   const loot = deps.loot;
   const icon = state.dropIcon ?? null;

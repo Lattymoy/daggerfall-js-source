@@ -472,6 +472,62 @@ test('STAFF-PANEL3-ECON: the economy - where the service holds gold, the Marks, 
   assert.deepEqual(s.audits('economy-read').map((x) => JSON.parse(x.detail).days), [ECON_DAYS_DEFAULT, ECON_DAYS_MAX, 1]);
 });
 
+test('ECON-LEFT-OUT and ECON-WORTH: a banned account\'s and a held character\'s gold is kept out of the economy and said apart; the worth of the rest, split purse, bank and items (mutants: the ban ignored; the hold ignored; a hold past its time on the dead kept out; the split dropped)', async () => {
+  const db = d1();
+  const t = 1_800_000_000;
+  const fx = fixtures(db._raw, t);
+  const raw = db._raw;
+  const [ok, banned, holder] = [fx.player('Alda'), fx.player('Brond'), fx.player('Cyra')];
+  raw.prepare('UPDATE players SET banned_until = ? WHERE id = ?').run(t + DAY, banned);
+  const lapsed = fx.player('Dorn');
+  raw.prepare('UPDATE players SET banned_until = ? WHERE id = ?').run(t - 1, lapsed);   // a ban over is no ban
+  const idOf = (name) => raw.prepare('SELECT id FROM realm_characters WHERE name = ?').get(name).id;
+  fx.character(ok, 'Good', RICH_FLOOR + 10);
+  fx.character(banned, 'Banned', RICH_FLOOR * 9);
+  fx.character(holder, 'Held', RICH_FLOOR * 8);
+  fx.character(holder, 'Free', RICH_FLOOR + 5);   // the same account's other character, not held: counted
+  fx.character(lapsed, 'Lapsed', RICH_FLOOR + 1);
+  fx.character(ok, 'Unweighed', null);   // the judge never weighed it: worth its gold, no items
+  raw.prepare("UPDATE realm_characters SET held = 'dupe', held_at = ? WHERE id = ?").run(t - 60, idOf('Held'));
+  const census = (name, tally) => raw.prepare('INSERT INTO item_census (char_id, player, tally, seq, at) VALUES (?, (SELECT player FROM realm_characters WHERE id = ?), ?, 1, ?)')
+    .run(idOf(name), idOf(name), JSON.stringify(tally), t - 60);
+  census('Good', { g: 1000, b: 400, t113: 2 });
+  census('Banned', { g: 50_000, b: 0 });
+  census('Held', { g: 70_000, b: 10 });
+  census('Free', { g: 300 });   // a tally from before the split: purse and bank one figure
+  census('Lapsed', { g: 20, b: 5 });
+  census('Unweighed', { g: 40, b: 0 });
+  const mg = raw.prepare('INSERT INTO market_gold (player, char_id, gold) VALUES (?, ?, ?)');
+  mg.run(ok, idOf('Good'), 11); mg.run(banned, idOf('Banned'), 1000); mg.run(holder, idOf('Held'), 2000); mg.run(holder, idOf('Free'), 3);
+  const home = raw.prepare("INSERT INTO homes (map_id, building_key, player, char_id, owner_name, region, price, bought_at, rent_due) VALUES (?, 1, ?, ?, 'x', 1, 1, 1, ?)");
+  home.run(1, ok, idOf('Good'), 7); home.run(2, banned, idOf('Banned'), 70);
+  const hour = t - (t % 3600);
+  const wh = raw.prepare('INSERT INTO realm_wealth_hours (char_id, hour, player, level, gain, loss) VALUES (?, ?, ?, 10, ?, ?)');
+  wh.run(idOf('Good'), hour, ok, 5, 1); wh.run(idOf('Banned'), hour, banned, 900_000, 0); wh.run(idOf('Held'), hour, holder, 800_000, 3);
+
+  const e = await economy(db, t, 7);
+  assert.equal(e.gold.held.market, 11 + 3, 'the banned and the held character\'s market gold kept out');
+  assert.equal(e.gold.held.rent, 7);
+  assert.deepEqual(e.gold.inGames, { gain: 5, loss: 1 }, 'their hours kept out');
+  assert.deepEqual(e.richest.characters.map((c) => c.name), ['Good', 'Free', 'Lapsed'], 'the banned and the held off the list; a lapsed ban counted');
+  assert.deepEqual(e.gold.leftOut, { market: 3000, rent: 70, worth: RICH_FLOOR * 17, characters: 2 });
+  const total = (RICH_FLOOR + 10) + (RICH_FLOOR + 5) + (RICH_FLOOR + 1) + 40;
+  assert.deepEqual(e.gold.worth, { total, characters: 4, purse: (1000 - 400) + (20 - 5) + 40, bank: 405, unsplit: 300, items: total - 1360 });
+  assert.equal(e.gold.worth.purse + e.gold.worth.bank + e.gold.worth.unsplit + e.gold.worth.items, total, 'the parts make the whole');
+
+  // a law hold whose time ran out on a character that can checkpoint no more stands no more (realm.js holdStandsSql): counted again
+  const db2 = d1();
+  const fx2 = fixtures(db2._raw, t);
+  const p2 = fx2.player('Eld');
+  fx2.character(p2, 'Gone', RICH_FLOOR + 3);
+  db2._raw.prepare("UPDATE realm_characters SET held = 'law', held_until = ?, law_sig = NULL WHERE name = 'Gone'").run(t - 10);
+  const gone = db2._raw.prepare("SELECT id FROM realm_characters WHERE name = 'Gone'").get().id;
+  db2._raw.prepare('INSERT INTO market_gold (player, char_id, gold) VALUES (?, ?, 9)').run(p2, gone);
+  assert.equal((await economy(db2, t, 7)).gold.held.market, 0, 'alive and held: kept out');
+  db2._raw.prepare('UPDATE realm_characters SET dead_at = ? WHERE id = ?').run(t - 5, gone);
+  assert.equal((await economy(db2, t + ECON_KEEP_S, 7)).gold.held.market, 9, 'dead, its law hold out of time: no hold stands');
+});
+
 test('STAFF-PANEL3-ECON: a heavy answer is read once and kept - the economy two trips cold and none warm, until its minutes run out', async () => {
   const db = d1();
   const fx = fixtures(db._raw, 1_800_000_000);

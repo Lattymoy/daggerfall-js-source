@@ -26,7 +26,7 @@ import {
   KT_ANCHOR, KT_WAIST, KT_GALLERY, KT_LANDING, KT_HOLD, KT_HATCH, KT_HOLD_HATCH, KT_QUARTER_WALL, KT_ANCHOR_LIFT, KT_LIFT, KT_MAIN_TOP, KT_YARD,
   KT_LINE, KT_LINE_LAND, KT_RAIL_R, railRuns, KT_GUN_ZS, KT_GUN_DEPTH, KT_COURSE, KT_COURSE_SPEC, KT_GANGWAY, KT_BRIDGE, KT_HELM, KT_CONSOLE, KT_RESONATORS, KT_BRIDGE_CRADLES, KT_SECTIONS, sectionAt, KT_CABIN,
   KT_CABIN_DOOR, KT_VAULT, KT_STERN_LIFT, KT_WAIST_COVER, KT_WARDEN_POSTS, KT_ENGINE, KT_SOCKETS, KT_CRADLES, KT_VENTS, KT_HAMMER, KT_STEAM,
-  KT_ARCS, KT_DECK_H, KT_MAIN_MAST, deckToDungeon,
+  KT_ARCS, KT_DECK_H, KT_MAIN_MAST, KT_BOW, deckToDungeon,
 } from '../../net/ketch/ketchDeck.js';
 import { faces } from '../gate/gateModel.js';
 import { ketchKit, packKetchFaces, packKetchHit, KT_TILE_M } from './ketchKit.js';
@@ -234,12 +234,13 @@ export function buildKetchShip() {
     const j = (i + 1) % outline.length, a = outline[i], b = outline[j], c = bilge[i], d = bilge[j], e = keel[i], g = keel[j];
     const out = [(a[0] + b[0]) / 2 - cxz[0], 0, (a[1] + b[1]) / 2 - cxz[1]];
     K.quad(R.hull, [a[0], B.h, a[1]], [b[0], B.h, b[1]], [d[0], KT_HULL.bilge, d[1]], [c[0], KT_HULL.bilge, c[1]], out);
-    // KETCH-FIX (2026-10-25): her sides solid below her deck, in their own plane, and her bilge to her keel - drawn only, a
-    // body down her side passed through into the void between the gun deck's walls and the hull and stood on the hold's
-    // ceiling (its top never drawn). Never the bow's run the anchor-lift's cage rides up through; above the deck the
-    // bulwarks stand
+    // KETCH-FIX (2026-10-25): her sides solid below her deck, in their own plane - drawn only, a body down her side passed
+    // through into the void between the gun deck's walls and the hull and stood on the hold's ceiling (its top never drawn).
+    // Never the bow's run the anchor-lift's cage rides up through; above the deck the bulwarks stand. AUDIT KETCH II L4-1:
+    // her bilge to her keel drawn only again - shut, the hull under the bridge was a bowl, and a body on a section of the
+    // ring that fell landed in it, 15 to 20 m down in the dark, short of the void's cast-back and with no way up
     if (hullRunSolid(a, b)) { const k = (B.h + T) / (B.h - KT_HULL.bilge), pa = [a[0] + (c[0] - a[0]) * k, a[1] + (c[1] - a[1]) * k], pb = [b[0] + (d[0] - b[0]) * k, b[1] + (d[1] - b[1]) * k]; K.quad(null, [pa[0], -T, pa[1]], [pb[0], -T, pb[1]], [d[0], KT_HULL.bilge, d[1]], [c[0], KT_HULL.bilge, c[1]], out, null, true); }
-    K.quad(R.hull, [c[0], KT_HULL.bilge, c[1]], [d[0], KT_HULL.bilge, d[1]], [g[0], KT_HULL.keel, g[1]], [e[0], KT_HULL.keel, e[1]], [out[0], -0.8, out[2]], null, hullRunSolid(a, b));
+    K.quad(R.hull, [c[0], KT_HULL.bilge, c[1]], [d[0], KT_HULL.bilge, d[1]], [g[0], KT_HULL.keel, g[1]], [e[0], KT_HULL.keel, e[1]], [out[0], -0.8, out[2]]);
     // the rub-rail: gilt, a hand's width proud of the hull at KT_HULL.rub
     const lift = (p, k) => { const L = Math.hypot(p[0] - cxz[0], p[1] - cxz[1]) || 1; return [p[0] + ((p[0] - cxz[0]) / L) * k, p[1] + ((p[1] - cxz[1]) / L) * k]; };
     const ra = lift(a, 0.08), rb = lift(b, 0.08);
@@ -253,7 +254,7 @@ export function buildKetchShip() {
     }
   }
   // the keel's foot and the keel fin
-  K.fan(R.hull, keel.slice().reverse(), KT_HULL.keel, [0, -1, 0], true);   // KETCH-FIX: her bottom shut too (it starts aft of the anchor-lift, z 8)
+  K.fan(R.hull, keel.slice().reverse(), KT_HULL.keel, [0, -1, 0]);   // AUDIT KETCH II L4-1: drawn only - a fall inside her goes on to the void's cast-back
   K.quad2(R.hull, [0, KT_HULL.keel, 14], [0, KT_HULL.keel, 214], [0, KT_HULL.fin, 196], [0, KT_HULL.fin, 30], [1, 0, 0]);
   // THE FLIPPERS: two great sail-vanes out from the hull's sides under the engine house, and two at the stern
   for (const s of [-1, 1]) {
@@ -274,7 +275,7 @@ export function buildKetchShip() {
   K.pipe(R.iron, [0, 9, 1.5], [0, 9, KT_ANCHOR_LIFT.z], 0.2, 6);
 
   // ── THE ANCHOR DECK AND THE WAIST ─────────────────────────────────────────────────────────────────────────────
-  const bow = [[-4, 0], [4, 0], [8, 6], [KT_ANCHOR.x1, KT_ANCHOR.z1], [KT_ANCHOR.x0, KT_ANCHOR.z1], [-8, 6]];
+  const W0 = KT_BOW, bow = [[-W0.tip, 0], [W0.tip, 0], [W0.beam, W0.at], [KT_ANCHOR.x1, KT_ANCHOR.z1], [KT_ANCHOR.x0, KT_ANCHOR.z1], [-W0.beam, W0.at]];   // net/ketch/ketchDeck.js KT_BOW - the Watch walks its edge (AUDIT KETCH II L4-4)
   K.fan(R.deck, bow, 0, [0, 1, 0], true);
   const shaft = [KT_LIFT.x - KT_LIFT.half, KT_LIFT.x + KT_LIFT.half, KT_LIFT.z - KT_LIFT.half, KT_LIFT.z + KT_LIFT.half];
   const hatch = [KT_HATCH.x0, KT_HATCH.x1, KT_HATCH.z0, KT_HATCH.z1];
@@ -285,7 +286,9 @@ export function buildKetchShip() {
   for (const s of [-1, 1]) K.quad(R.deck, [s * KT_HOUSE.x, 0, KT_HOUSE.z0], [s * KT_WAIST.x1, 0, KT_HOUSE.z0], [s * KT_WAIST.x1, 0, KT_HOUSE.z1], [s * KT_HOUSE.x, 0, KT_HOUSE.z1], [0, 1, 0], null, true);
   K.fan(R.deck, ketchAftDeck(), 0, [0, 1, 0], true);
   // the bulwarks and the nets: round the bow and down both sides to the quarter wall (and on, outboard of the house)
-  const fore = [[KT_WAIST.x0, 179], [KT_WAIST.x0, KT_WAIST.z0], [KT_ANCHOR.x0, KT_ANCHOR.z1], [-8, 6], [-4, 0], [4, 0], [8, 6], [KT_ANCHOR.x1, KT_ANCHOR.z1], [KT_WAIST.x1, KT_WAIST.z0], [KT_WAIST.x1, 179]];
+  // AUDIT KETCH II L4-7: down each side to where it meets the bridge's disc (z 179 left a 0.84 m gap a body walked off through)
+  const meet = KT_BRIDGE.z - Math.sqrt(KT_BRIDGE.r * KT_BRIDGE.r - KT_WAIST.x1 * KT_WAIST.x1);
+  const fore = [[KT_WAIST.x0, meet], [KT_WAIST.x0, KT_WAIST.z0], [KT_ANCHOR.x0, KT_ANCHOR.z1], [-W0.beam, W0.at], [-W0.tip, 0], [W0.tip, 0], [W0.beam, W0.at], [KT_ANCHOR.x1, KT_ANCHOR.z1], [KT_WAIST.x1, KT_WAIST.z0], [KT_WAIST.x1, meet]];
   bulwark(K, fore, 0, [0, 30]);
   // THE LID (the collider's alone): over the Anchor Deck and the waist at KT_LID_Y, the lift's tower left open
   K.fan(null, bow, KT_LID_Y, [0, -1, 0], true);
@@ -419,17 +422,19 @@ export function buildKetchShip() {
     K.pipe(R.copper, [E.x + s * 1.6, hy + E.h, E.z - 1], [E.x + s * 1.6, hc, E.z - 1], 0.45, 10);
     K.pipe(R.copper, [E.x + s * 2.4, hy + 3, E.z - 1.8], [s * (HD.x1 - 0.5), hy + 3, E.z - 1.8], 0.3, 8);
   }
-  K.pipe(R.iron, [E.x - E.r - 0.2, hy + 2.8, E.z], [E.x - E.r - 1.2, hy + 2.8, E.z], 0.3, 8);
-  K.cyl(R.gear, E.x - E.r - 1.4, E.z, 2.2, hy + 0.6, hy + 0.6, 1);   // placeholder face never seen (a disc of no height)
+  K.pipe(R.iron, [E.x, hy + 2.8, E.z - E.r - 0.2], [E.x, hy + 2.8, E.z - E.r - 1.2], 0.3, 8);   // its axle (AUDIT KETCH II L4-9: on the fore face with it)
+  K.cyl(R.gear, E.x, E.z - E.r - 1.4, 2.2, hy + 0.6, hy + 0.6, 1);   // placeholder face never seen (a disc of no height)
   // the flywheel: a gear's face standing beside the drum, starboard side, turning on its axle (its face drawn both ways)
   {
-    const fx = E.x - E.r - 1.3, fy = hy + 2.8, fr = 2.4, n = 20;
+    // AUDIT KETCH II L4-9: on the drum's fore face, where no socket stands - on its west face it cut through socket 1 and the
+    // cell set in it, drawn only; a thin solid now, as it is seen
+    const fz = E.z - E.r - 1.3, fy = hy + 2.8, fr = 2.4, n = 20;
     for (let k = 0; k < n; k++) {
       const a0 = (k / n) * Math.PI * 2, a1 = ((k + 1) / n) * Math.PI * 2;
-      const P = (a) => [fx, fy + Math.sin(a) * fr, E.z + Math.cos(a) * fr];
+      const P = (a) => [E.x + Math.cos(a) * fr, fy + Math.sin(a) * fr, fz];
       const uv = (a) => [0.5 + Math.cos(a) / 2, 0.5 + Math.sin(a) / 2];
-      K.tri(R.gear, [fx, fy, E.z], P(a0), P(a1), [0.5, 0.5], uv(a0), uv(a1), [-1, 0, 0]);
-      K.tri(R.gear, [fx, fy, E.z], P(a0), P(a1), [0.5, 0.5], uv(a0), uv(a1), [1, 0, 0]);
+      K.tri(R.gear, [E.x, fy, fz], P(a0), P(a1), [0.5, 0.5], uv(a0), uv(a1), [0, 0, -1], true);
+      K.tri(R.gear, [E.x, fy, fz], P(a0), P(a1), [0.5, 0.5], uv(a0), uv(a1), [0, 0, 1], true);
     }
   }
   // its seven sockets: copper pedestals on the ring, each a brass cup a cell stands in
