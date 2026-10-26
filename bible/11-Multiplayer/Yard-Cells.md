@@ -68,12 +68,15 @@ the buildings in it (section 3.5). A town therefore has at most 65 cells: 64 blo
 
 What a cell holds is bounded by the game:
 
-- A block has at most 32 building records (BLOCKS.BSA's fixed list; 25 is the most any block uses).
+- A block of Daggerfall's has at most 32 building records (BLOCKS.BSA's fixed list; 25 is the most any block uses).
 - A yard holds at most `DECOR_YARD_CAP` (60) pieces.
 - So a cell holds at most 32 x 60 = 1,920 pieces. At the widest row the yard's law allows (216 bytes), that is about
   415 KB - under a quarter of `KEPT_BOARD_MAX_BYTES` (1.5 MB). A cell's built row never passes the kept bound unless a
-  block's record list grows past 115, which BLOCKS.BSA's format does not allow. A test pins this with the format's 32,
+  block holds more than 115 buildings, which BLOCKS.BSA's format does not allow. A test pins this with the format's 32,
   so it needs no ARENA2.
+- **Not yet shown for blocks the port builds itself.** #1184's capitals stand blocks of their own (section 4.1), which
+  BLOCKS.BSA does not hold. Their building count is bounded only by the key's record byte (256), and 256 x 60 pieces
+  would pass the kept bound. YC1 must show they hold at most 32 (section 4.1, gap 1).
 
 ### 3.2 Schema (migration 0176_yard_cell, account service acct193)
 
@@ -178,6 +181,9 @@ held, the request and the merge; `homeYards.js` keeps the standing, the lots and
   one request with their versions. A poll of an unchanged town is a list of versions out and an empty list back.
 - **Memory follows reach.** A cell that leaves reach (with a margin, so a step back does not ask again) is dropped with
   its yards. What a client holds depends on how much it can reach, not on how large the town is.
+- **Nearest first across towns.** The cells in reach are ranked by distance across every town whose homes are in reach,
+  not within one town. Where towns meet - above all the Imperial City's slices (section 4.1) - the nearest yards
+  belong to the next town. The asking is ranked the same way: one request per town, sent nearest town first.
 - **Nearest first, on a time budget.** The yards that wait to be stood are stood nearest first, while the frame's
   standing time is under a budget, and always at least one a frame. The budget is set at the build by YARD-TOWN's own
   method (Daggerfall's city on a local build, the live yards and a filled town given by the probe, the longest frame
@@ -204,15 +210,15 @@ Read on #1184's branch (draft, head `ccr-b2e6795e-z6ckz1`) on 2026-10-26: its `w
 `world/tamrielCountry.js`, `world/tamrielCapitals.js`, `net/homeLaw.js`, and its pages `03-World/World-Wide.md`,
 `03-World/Arena-Provinces.md`, `03-World/Town-Shapes.md` and `03-World/Tamriel.md`. None of these is on main yet.
 
-- **Building keys do not change.** Arena's places and the countryside are clones of MAPS.BSA templates, and a capital
-  is cut into slices of at most 8 x 8 blocks of Bay RMB blocks. Town-Shapes.md on the branch says the grid, its blocks
-  and every building key are Daggerfall's. Block x and y stay under 8 and the record index stays inside a block's list,
-  so `cell = building_key >> 8` holds past the Bay. No key needs widening.
+- **Building keys do not change.** Arena's places and the countryside are clones of MAPS.BSA templates. Town-Shapes.md
+  on the branch says their grid, their blocks and every building key are Daggerfall's. A capital is cut into slices of
+  at most 8 x 8 blocks, some of them Daggerfall's and some the port's own (`TESA<tag><code>.RMB`, section 4.1). In
+  every case block x and y stay under 8 and the key keeps its form, so `cell = building_key >> 8` holds past the Bay. No
+  key needs widening. What a capital's own block holds is the one bound not yet shown (section 4.1, gap 1).
 - **Map ids stay 32-bit, in new lanes.** Arena's places take `(0xA7 << 20) | (500000 + n)`; the countryside takes lanes
   0x300-0x33F with 0x80000 set; lairs 0x340; capital slices 0x341, each slice its own location and its own map id. Bay
   ids stay under 500,000 in their low 20 bits, so none collides. `home_yard_cell_ver` and `home_yard_cells` key on the
-  same `map_id INTEGER` the homes use, so a new lane needs no yard change. The branch's sources disagree on how many
-  slices the Imperial City has; the plan depends only on each slice being its own map id of at most 8 x 8 blocks.
+  same `map_id INTEGER` the homes use, so a new lane needs no yard change.
 - **Homes past the Bay are buyable when #1184 deploys** (WW7-5 on the branch: `HOME_REGION_MAX` 61 to 70, and the
   online purchase path checks no place kind). The branch does not touch yards or decor, so those homes get yards
   through this design unchanged.
@@ -222,6 +228,40 @@ Read on #1184's branch (draft, head `ccr-b2e6795e-z6ckz1`) on 2026-10-26: its `w
   index instead of every town. The two current offenders are named in section 1: `yardWrites` and the clock's scan.
 - **One migration.** Because the keys do not change, adding Tamriel needs no second yard migration: its towns' cells
   are made by the triggers the first time a yard piece is placed there.
+
+### 4.1 The Imperial City
+
+Read in Town-Shapes.md on #1184's branch, section 7 (TS5, BUILT): the city is seven map pixels a side, a plan of 56 x 56
+blocks about 5.7 km across, its city wall 3.9 km across. Each pixel's 8 x 8 blocks are one slice, its own location and
+its own map id: 49 slices. Of the plan's 3,136 cells, 1,003 are the city's own blocks, 625 Daggerfall's, 134 gardens,
+820 open ground and 554 lake. A city of another size (7 km by 5 km would be about nine pixels by seven) is another count of
+slices, each still at most 8 x 8 blocks, so nothing in this plan depends on the city's size.
+
+What the design does for it:
+
+- **Each player is sent what is near.** Today the unit is a whole slice. A player near a slice's corner is within
+  `YARD_ASK_M` of up to four slices and downloads each whole every minute. With cells, a player is sent the blocks with
+  homes within reach, from whichever slices they lie in, and after the first load only the blocks that changed.
+- **No slice is full.** Today's 6,500 would apply to each slice, and the dense centre slices would meet it first. It
+  goes (section 3.3).
+- **A write rebuilds one block**, not a slice of up to 64.
+- **The isolate's memory holds.** 49 slices are 49 towns to today's per-town structures. The kept answers bounded by
+  bytes, and no map that grows by town, hold whatever the slice count.
+
+The three gaps the city shows, each closed in the slice named:
+
+1. **What a city block holds (YC1).** The city's own blocks are the port's, not BLOCKS.BSA's, so the 32-record bound of
+   section 3.1 is not shown for them. The capitals' block builder was not among the files read for this plan. YC1 adds a
+   test, run over every capital's own blocks as #1184 builds them, that no block holds more than 32 building records.
+   If a block must hold more, YC1 bounds the cell row by the key's 256 records instead: it splits the kept row of such a
+   cell in parts (each part's text under `KEPT_BOARD_MAX_BYTES`) and still serves the cell as one answer. The plan
+   does not raise the yard's 60 or cut a block.
+2. **Nearest first across slices (YC2).** At a slice's edge the nearest yards belong to the next slice. Section 3.5
+   ranks the cells, the requests and the standing across every town in reach; the YC2 client test stands the yards of
+   two neighbouring towns in one order by distance.
+3. **The city's homes answer (D2).** A yard stands only for a home in its town's homes answer, at most `HOME_TOWN_MAX`
+   (512) a town. Nobody has counted the homes of a dense city slice. YC1 measures the most buildings in any capital
+   slice as #1184 builds them, and D2 (section 6) takes that count into its bound.
 
 ## 5. Other work on the same ground
 
@@ -244,13 +284,13 @@ yard, YARD-SNAP, YARD-TOWN, decor, home yard and "town full".
 
 A yard stands only for a home the town's homes answer lists (`homeYards.js` sync reads `homes.homeAt`). That answer
 lists at most `HOME_TOWN_MAX` (512) homes, in building-key order (`homes.js`). Wayrest has 506 houses (section 2),
-guild halls are homes too, and the capital slices past the Bay are not measured. A town past 512 homes would hide the
-yards (and the doors) of its eastern blocks - the same fault YARD-TOWN fixed for the yards.
+guild halls are homes too, and the capital slices past the Bay are not measured (section 4.1, gap 3). A town past 512
+homes would hide the yards (and the doors) of its eastern blocks - the same fault YARD-TOWN fixed for the yards.
 
 **Recommendation:** a slice of its own after YC2, with the same shape as this plan: the homes answer by cell and by
-version. Until then, raise `HOME_TOWN_MAX` to the most buildings a town can hold (64 blocks x 32 records = 2,048, the
-format's bound) and correct its comment, so no town the game can make is cut. That raise is one constant and its test;
-it can ride YC1 if the owner prefers.
+version. Until then, raise `HOME_TOWN_MAX` to the most buildings a town can hold - 64 blocks x 32 records = 2,048 for
+Daggerfall's blocks, or more if section 4.1's gap 1 finds a capital block past 32 - and correct its comment, so no town
+the game can make is cut. That raise is one constant and its test; it can ride YC1 if the owner prefers.
 
 ## 7. Risks
 
@@ -281,7 +321,10 @@ it can ride YC1 if the owner prefers.
 - The UPDATE trigger moves both cells when a home's rows move to another key.
 - The old route: the town's cells concatenated, cut at 6,500, in building-key order.
 - The client module (`yardCells.js`), run with fakes: only cells with listed homes within reach asked, nearest first;
-  versions sent; a cell that leaves reach dropped; standing nearest first under the budget.
+  versions sent; a cell that leaves reach dropped; standing nearest first under the budget; two neighbouring towns'
+  yards (two Imperial City slices) stood in one order by distance.
+- Over #1184's capitals as built (once #1184 is on main, or against its branch before): no capital's own block holds
+  more than 32 building records, and the most buildings in any capital slice, for D2 (section 4.1, gaps 1 and 3).
 - Mutation records for the new tests, as YARD-TOWN's `tools/mutants/yard_town.json`.
 
 **In the running game (YC2, when a slot is free):**
@@ -293,12 +336,14 @@ it can ride YC1 if the owner prefers.
 - **Two clients.** Two characters in one town on a local relay and account service. A places a piece in a far cell; B
   sees it within a poll and its kept answer's 30 s. B's network log shows its poll answer carries that one cell, and an
   unchanged poll carries none.
+- **The Imperial City, once #1184 is on main.** Stand at a corner where four slices meet, with yard pieces placed in
+  each: the yards stand nearest first across the slices, and the polls carry only the blocks in reach.
 
 ## 9. The slices
 
 | Slice | What | Deploy |
 |---|---|---|
-| YC1 | Migration 0176 (cell tables, triggers, backfill), `settleYardCell`, the stale clock, the cell route, the per-cell kept answers, the town cap removed, the old route answered from cells | account service acct193, before the site |
+| YC1 | Migration 0176 (cell tables, triggers, backfill), `settleYardCell`, the stale clock, the cell route, the per-cell kept answers, the town cap removed, the old route answered from cells, the capital blocks' record count shown (section 4.1) | account service acct193, before the site |
 | YC2 | The client module `yardCells.js`, nearest-first standing on a time budget, the refusal text removed | the site, after YC1 is live |
 | YC3 | The old route removed; `home_yards`, `home_yards_ver` and their triggers dropped | account service, after YC2 has been live without a rollback and the old route's log is empty |
 | D2 | The town's homes answer by cell (section 6), if the owner approves | its own slice |
