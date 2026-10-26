@@ -153,12 +153,12 @@ test('PERF-COL2: the world host marks every streamed pixel\'s bucket as riding i
   // host.state - and a provider the host lays itself reads it as state: the census counts both spellings, or a bucket
   // the host lays unmarked goes uncounted (AUDIT HOST-SPLIT 2, the second read)
   const pix = lines.filter((l) => /\(\(o\) => \(\) => (?:host\.)?state\.pixelTranslation\(px, py, o\)\)\(\[0, 0, 0\]\)/.test(l) && !l.includes('collider.cover.add(') && !l.includes('const coverT = '));   // AUDIT BANTHA1 TREE-1: the cover's provider made once for its slices
-  assert.equal(pix.length, 7, 'the seven pixel-translation providers a bucket takes (the cover index is no bucket)');   // PIN MOVED (FIELD BUGS 2026-10-13e HILL-SEAT): the seventh is a block's hill pads, solid in the pixel's bucket
+  assert.equal(pix.length, 8, 'the eight pixel-translation providers a bucket takes (the cover index is no bucket)');   // PIN MOVED (URBANIZER U3): the eighth is a town past the Bay's fabric, solid in its pixel's bucket   // PIN MOVED (FIELD BUGS 2026-10-13e HILL-SEAT): the seventh is a block's hill pads, solid in the pixel's bucket
   for (const l of pix) assert.match(l, /onFloatingFrame\((host\.)?state, \(\(o\) => \(\) => \1state\.pixelTranslation\(px, py, o\)\)\(\[0, 0, 0\]\)\)/, `marked: ${l.trim().slice(0, 120)}`);
   assert.ok(w.includes('collider.addMesh(h.bucket, pos, idx, _ohIdentity, onFloatingFrame(state, () => state.pixelTranslation(entry.px, entry.py, o)));'), 'the ocean holes\' bucket marked');
   const marks = (w.match(/onFloatingFrame\(/g) ?? []).length;
   assert.ok(w.includes('ride = onFloatingFrame(state, () => state.pixelTranslation(px, py, o)); _poiRides.set(k, ride);'), 'a POI\'s parts\' buckets marked - one provider a pixel (scenes/poiHost.js riding)');   // POI-2
-  assert.equal(marks, 7 + 1 + 1, 'and nothing else marked (a boat, a wagon, a gate\'s own mover ride no pixel)');   // PIN MOVED (FIELD BUGS 2026-10-13e HILL-SEAT): the pads' bucket provider; PIN MOVED (POI-2): a POI's, riding the pixel it stands on
+  assert.equal(marks, 8 + 1 + 1, 'and nothing else marked (a boat, a wagon, a gate\'s own mover ride no pixel)');   // PIN MOVED (FIELD BUGS 2026-10-13e HILL-SEAT): the pads' bucket provider; PIN MOVED (POI-2): a POI's, riding the pixel it stands on; PIN MOVED (URBANIZER U3): a town's fabric's
   // AUDIT: the two hosts that lay a pixel's bucket of their own are handed the frame, and mark with it
   assert.ok(w.includes('    collider, pixelTranslation: (px, py, o) => state.pixelTranslation(px, py, o), floatingFrame: () => state,'), 'Deep Waters handed the frame');
   assert.ok(w.includes('    pixelTranslation: (px, py) => state.pixelTranslation(px, py), floatingFrame: () => state,'), 'the bounty farms handed the frame');

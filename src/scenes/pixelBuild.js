@@ -36,6 +36,7 @@ import { footRectsAt } from './homeYards.js';
 import { FOREST_HIDDEN_LOCATION_TYPES, populatesWanderingNpcs } from './shared.js';
 import { getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrain/terrainTiles.js';
 import { townWalkShut } from '../world/townWalls.js';   // TS6: a town's walkers on its own ground, never through its wall; TS7: and its yards
+import { townFabricFor, fabricWalkShut } from '../world/urban/townFabricStand.js';   // URBANIZER U3: a town past the Bay's streets, yards and dead ends
 import { getNameBankOfRegion } from '../characters/nameHelper.js';
 import { getStaticDoors } from '../world/staticDoors.js';
 import { getWorldClimateSettings, LOCATION_TYPES } from '../formats/mapsFile.js';
@@ -295,7 +296,7 @@ export function createPixelBuild(host) {
       jungle: jungle ? jungle.job(px, py, FOREST_HIDDEN_LOCATION_TYPES.has(dfLocation?.mapTableData?.locationType)) : null,
       landform,   // LANDFORM1-3: the shaped ground, cut along the kernel's own network
     });
-    const walkShut = dfLocation ? townWalkShut(dfLocation, townGround) : null;   // TS6-TS7: its walkers' and its yards' ground the town's own, off its wall
+    const walkShut = dfLocation ? fabricWalkShut(townWalkShut(dfLocation, townGround), dfLocation) : null;   // TS6-TS7: its walkers' and its yards' ground the town's own, off its wall; URBANIZER U3: and off its fences and dead ends' walls
     // DW-B: HandlePromote's synchronous arm - a pixel beside the player's is
     // promoted now, on the Deep Waters worker while this build lays out, and
     // published with its seafloor (awaited below); every other one is
@@ -451,6 +452,7 @@ export function createPixelBuild(host) {
       setLastLocationKeyTo(dfLocation.regionIndex, dfLocation.locationIndex ?? 0);   // AUDIT-RR F32: WorldDataVariants' last key is THIS location's before its blocks are read - DFU reads the DFLocation right before RMBLayout (MapsFile.cs:999 sets it); the boot index here read every location and left the key on the last
       const loc = layoutLocation(dfLocation, maps, blocks, { enhanced: isEnhanced(), windmills: windmillsOn() });   // WM3: the pack's own switch
       locBlocks = loc.blocks;
+      const fabric = await townFabricFor(dfLocation, loc.blocks, { px, py, breathe: () => breather.breathe() });   // URBANIZER U3 (world/urban/townFabricStand.js): planned before its yards and its walkers are placed
       const lefayExitDoors = [];   // HOLD-MONUMENT (AUDIT FIVE-ASKS B1): the Hold's dungeon-entrance doors as its blocks stand them - its way out
       // MERCHANT-YARDS: the town's open ground, clear of its buildings, roads and lots; SHIPYARDS: and a port town's seaward
       // ground, on what the yards left - one pass (AUDIT SHIPYARDS L3-3: the yards' and the port's each asked it whole)
@@ -763,6 +765,22 @@ export function createPixelBuild(host) {
             late.add(key, cpuB.positions, cpuB.indices, local, { translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])) });   // PERF-COL2: riding the floating origin
             pixelBoards.push({ box, local, extra: true });
           }
+        }
+      }
+
+      // URBANIZER U3 (world/urban/townFabricModel.js): the town's own fabric - its main streets' setts and pavements, its side
+      // streets' cobbles, its yards' fences and walls, its dead ends' walls, its woodpiles - one model at its origin, merged
+      // and solid as its blocks' are, its Daggerfall pieces in the town's climate
+      if (fabric) {
+        const gpuF = await getGpuMesh(fabric.modelId, () => breather.breathe()), cpuF = cpuModels.get(fabric.modelId);
+        if (gpuF && cpuF) {
+          await remapSubMeshes(gpuF.subMeshes, texRemap, townClimateArchive, pipeline, townClimateBase);
+          const local = trs(locLocal[0], locLocal[1], locLocal[2], 0, 0, 0), box = transformedAabb(archAabb(fabric.modelId, cpuF.positions), local);
+          unionBox(box);
+          const entry = { gpu: gpuF, local, _box: box, _order: fabric.modelId };
+          models.push(entry);
+          if (cpuF.normals && cpuF.uvs) { addStatic(cpuF, local, false); entry._batched = true; }
+          late.add(key, cpuF.positions, cpuF.indices, local, { translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])) });
         }
       }
 

@@ -39,6 +39,7 @@ import { capitalsOn } from '../src/scenes/shared.js';
 import { hostText } from './hostText.mjs';   // HOST-SPLIT (at the merge of main): the world host read whole - its pixel build stands in scenes/pixelBuild.js
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
+import { URBAN_ARCHIVE, URBAN_ART } from '../src/world/urban/urbanRecords.js';   // URBANIZER U2
 afterEach(() => setTamrielFit(null));
 
 // ── THE ID, THE PIXEL, THE PIN ──────────────────────────────────
@@ -221,7 +222,8 @@ const bounds = (m) => { const lo = [Infinity, Infinity, Infinity], hi = [-Infini
 const sane = (m) => {
   assert.ok(m.positions.every(Number.isFinite) && m.uvs.every(Number.isFinite));
   for (let i = 0; i < m.normals.length; i += 3) assert.ok(Math.abs(Math.hypot(m.normals[i], m.normals[i + 1], m.normals[i + 2]) - 1) < 1e-4, 'unit normals');
-  assert.ok(m.subMeshes.every((s) => s.textureArchive === CAPITAL_ARCHIVE && Object.values(CAPITAL_ART).includes(s.textureRecord)));
+  // PIN MOVED (URBANIZER U2): a landmark's pictures the capitals' own or the towns' (cut stone, brick, half-timbering)
+  assert.ok(m.subMeshes.every((s) => (s.textureArchive === CAPITAL_ARCHIVE && Object.values(CAPITAL_ART).includes(s.textureRecord)) || (s.textureArchive === URBAN_ARCHIVE && Object.values(URBAN_ART).includes(s.textureRecord))));
   assert.equal(m.subMeshes.reduce((n, s) => n + s.primitiveCount * 3, 0), m.indices.length);
   for (let t = 0; t < m.indices.length; t += 3) {
     const P = (k) => [0, 1, 2].map((a) => m.positions[m.indices[t + k] * 3 + a]);

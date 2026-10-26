@@ -6,6 +6,7 @@
 // model's origin Solitude's anchor on its ground. Shapes of the port's own in the spirit of the city's look - never another
 // game's mesh. No game data.
 import { MeshBuilder } from './detStandIns.js';
+import { urbanArt } from './urban/urbanRecords.js';   // URBANIZER U2: the towns' own cut stone and half-timbering
 import {
   CAPITAL_ART, art, taper, translated, wallRun, merlons, gatedRun, roundTower, pyramid, gableRoof, hall, crenels, squareTower,
   darkDoor, entranceDoor, jitter, rockColumn, outward,
@@ -14,6 +15,10 @@ import { SOLITUDE } from './tamrielCapitals.js';
 
 const MARBLE = art(CAPITAL_ART.marble), GOLD = art(CAPITAL_ART.gold), ROOF = art(CAPITAL_ART.roof), BRIDGE = art(CAPITAL_ART.bridgeStone);
 const DARK = art(CAPITAL_ART.dark), ROCK = art(CAPITAL_ART.rock), BLUE = art(CAPITAL_ART.blueSlate), TIMBER = art(CAPITAL_ART.timber), NORD = art(CAPITAL_ART.nordStone);
+/** URBANIZER U2 (world/urban/urbanArt.js): Castle Dour's keep and the Emperor's Tower in dressed stone, the warehouse's
+ *  timber framing over plaster on a stone ground storey WAREHOUSE_PLINTH high (metres). */
+const ASHLAR = urbanArt('ashlar'), HALF_TIMBER = urbanArt('halfTimber');
+export const WAREHOUSE_PLINTH = 3;
 
 /** The arch's deck height at x: from the stack's top down to the terrace's. */
 export const archTop = (x, A = SOLITUDE.arch) => A.topW + (A.topE - A.topW) * ((x - A.from) / (A.to - A.from));
@@ -137,12 +142,12 @@ export function buildCastleDour(S = SOLITUDE) {
   wallRun(mb, NORD, se, ne, C.thick, C.h); merlons(mb, NORD, se, ne, C.thick, C.h);
   for (const [x, z] of [ne, nw, sw, se]) squareTower(mb, x, z, C.tower, C.towerH, { wall: NORD, roof: ROOF, roofH: 8 });
   const K = S.keep, kx = C.x + K.dx, kz = C.z + K.dz;
-  hall(mb, NORD, kx, kz, K.w, K.d, -3, K.h);
-  gableRoof(mb, ROOF, NORD, kx, kz, K.d, K.w, K.h, K.roof, { alongX: false });
+  hall(mb, ASHLAR, kx, kz, K.w, K.d, -3, K.h);   // URBANIZER U2: the keep in dressed stone, its curtain the rubble round it
+  gableRoof(mb, ROOF, ASHLAR, kx, kz, K.d, K.w, K.h, K.roof, { alongX: false });
   darkDoor(mb, DARK, kx - K.w / 2, kz, 3.6, 5.5, [-1, 0]);
   for (const sx of [1, -1]) for (const sz of [1, -1]) squareTower(mb, kx + sx * K.w / 2, kz + sz * K.d / 2, 6, K.h + 6, { wall: NORD, roof: ROOF, roofH: 5 });   // TESA-LORE: its corner turrets
   const E = S.emperorsTower;
-  squareTower(mb, C.x + E.dx, C.z + E.dz, E.s, E.h, { wall: NORD, roof: ROOF, roofH: E.roof });
+  squareTower(mb, C.x + E.dx, C.z + E.dz, E.s, E.h, { wall: ASHLAR, roof: ROOF, roofH: E.roof });   // URBANIZER U2: dressed stone
   return mb.build();
 }
 
@@ -159,8 +164,9 @@ export function buildSolitudeDocks(S = SOLITUDE) {
     for (let z = D.edge - 4; z > D.pierTo; z -= 8) for (const s of [1, -1]) mb.box(TIMBER, [x + s * (D.pierW / 2 - 0.5), (D.deck - 0.4 - 3) / 2, z], [0.6, D.deck - 0.4 + 3, 0.6], 0.5);
   }
   const H = D.warehouse;
-  hall(mb, NORD, H.x, H.z, H.w, H.d, -1, H.h);
-  gableRoof(mb, ROOF, TIMBER, H.x, H.z, H.w, H.d, H.h, H.roof);
+  hall(mb, NORD, H.x, H.z, H.w, H.d, -1, WAREHOUSE_PLINTH);   // URBANIZER U2: a stone ground storey, timber framing over plaster above it
+  hall(mb, HALF_TIMBER, H.x, H.z, H.w, H.d, WAREHOUSE_PLINTH, H.h);
+  gableRoof(mb, ROOF, HALF_TIMBER, H.x, H.z, H.w, H.d, H.h, H.roof);
   darkDoor(mb, DARK, H.x, H.z + H.d / 2, 5, 5, [0, 1]);
   darkDoor(mb, DARK, H.x, H.z - H.d / 2, 5, 5, [0, -1]);
   return mb.build();
