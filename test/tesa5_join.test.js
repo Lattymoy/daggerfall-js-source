@@ -46,21 +46,21 @@ function bayWith(points) {
 const everywhere = () => true;
 
 test('TESA5 the crossings: a Bay road within JOIN_DEPTH of an edge, one crossing a run of the edge (runs nearer than JOIN_SPACING one), at the road nearest the edge - of those the nearest the run\'s middle - its gate JOIN_OUT straight past it, on all four edges; never a track; none where the run crosses water (mutant: the depth, the spacing, the nearest, the middle, the gate\'s reach, the land)', () => {
-  assert.deepEqual([JOIN_DEPTH, JOIN_SPACING, JOIN_OUT], [8, 60, 8]);
+  assert.deepEqual([JOIN_DEPTH, JOIN_SPACING, JOIN_OUT], [8, 12, 8]);   // PIN MOVED (ROAD-GAPS): JOIN_SPACING 60 -> 12
   const bay = bayWith([
     [300, 3], [310, 2],                                   // one run: the nearer road, at 310
     ...Array.from({ length: 41 }, (_, i) => [400 + i, 1]),   // a road along the edge, 400-440: its middle
     [500, 8],                                             // too deep
     [700, 0, DIR.N | DIR.S, 'tracks'],                    // a track: never a crossing
-    [800, 1], [859, 1],                                   // 59 apart: one run
-    [920, 1],                                             // 61 past 859: its own
+    [800, 1], [811, 1],                                   // 11 apart: one run (PIN MOVED, ROAD-GAPS: 59 at JOIN_SPACING 60)
+    [823, 1],                                             // 12 past 811: its own
     [600, 497],                                           // the south edge
     [3, 100],                                             // the west edge
     [995, 200],                                           // the east edge
   ]);
   const joins = arenaJoins(bay, everywhere);
   assert.deepEqual(joins.map((j) => [j.side, j.meet, j.gate]), [
-    ['N', [310, 2], [310, -8]], ['N', [420, 1], [420, -8]], ['N', [800, 1], [800, -8]], ['N', [920, 1], [920, -8]],
+    ['N', [310, 2], [310, -8]], ['N', [420, 1], [420, -8]], ['N', [800, 1], [800, -8]], ['N', [823, 1], [823, -8]],
     ['S', [600, 497], [600, 507]],
     ['W', [3, 100], [-8, 100]],
     ['E', [995, 200], [1007, 200]],
@@ -69,7 +69,7 @@ test('TESA5 the crossings: a Bay road within JOIN_DEPTH of an edge, one crossing
   assert.deepEqual(joins.find((j) => j.side === 'E').run.map(([x]) => x), [995, 996, 997, 998, 999, 1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007]);
   // the land: a crossing whose run crosses water, past the Bay or on it, stands not
   const wet = arenaJoins(bay, (x, y) => !(x === 420 && y === -5) && !(x === 310 && y === 1));
-  assert.deepEqual(wet.filter((j) => j.side === 'N').map((j) => j.meet[0]), [800, 920]);
+  assert.deepEqual(wet.filter((j) => j.side === 'N').map((j) => j.meet[0]), [800, 823]);
 });
 
 test('TESA5 the drawing: a crossing\'s run - its Bay pixels the layer\'s join, the step on both ends of each; its pixels past the Bay the roads\'; no Bay pixel among the roads, none past it in the join (mutant: the join\'s keep, the run unstamped)', () => {
@@ -211,7 +211,7 @@ test('TESA5 the host: the crossings found on the Bay\'s own network with the lan
 
 const ARENA2 = process.env.ARENA2_PATH;
 const HAVE = !!ARENA2 && ['TMAP00I0.IMG', 'TAMRIEL2.IMG', 'ART_PAL.COL', 'WOODS.WLD', 'MAPS.BSA', 'CLIMATE.PAK', 'POLITIC.PAK'].every((f) => existsSync(pathJoin(ARENA2, f)));
-test('TESA5 with ARENA2: on Basic Roads\' own network seven crossings - three north, three south, one east, none west (the Eltheric) - 19 join pixels on the Bay', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
+test('TESA5 with ARENA2: on Basic Roads\' own network fourteen crossings - seven north, five south, two east, none west (the Eltheric) - 47 join pixels on the Bay - PIN MOVED (ROAD-GAPS): seven and 19 at JOIN_SPACING 60', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
   const { DFPalette } = await import('../src/formats/dfPalette.js');
   const { preloadTamrielTrace } = await import('../src/ui/tamrielTrace.js');
   const { setTamrielTrace } = await import('../src/world/tamriel/tamrielLand.js');
@@ -234,8 +234,8 @@ test('TESA5 with ARENA2: on Basic Roads\' own network seven crossings - three no
     const bay = { roads: new Uint8Array(readFileSync(new URL('../vendor/roads-hazelnut/roadData.bytes', import.meta.url))) };
     const land = (x, y) => (inBay(x, y) ? !isWaterPixel(maps.getClimateIndex(x, y), g.getHeightMapValue(x, y)) : g.getHeightMapValue(x, y) > WATER_BYTE);
     const joins = arenaJoins(bay, land);
-    assert.deepEqual(joins.map((j) => j.side), ['N', 'N', 'N', 'S', 'S', 'S', 'E']);
-    assert.equal(joinLayer(joins).join.size, 19);
+    assert.deepEqual(joins.map((j) => j.side), ['N', 'N', 'N', 'N', 'N', 'N', 'N', 'S', 'S', 'S', 'S', 'S', 'E', 'E']);
+    assert.equal(joinLayer(joins).join.size, 47);
     // PIN MOVED (TESA14): the network a gate is on is a region's now - test/tesa14_roads.test.js lays one on this data
   } finally { setTamrielTrace(null); setTamrielFit(null); }
 });

@@ -2924,6 +2924,82 @@ the walk asks the Bay's table.
   Leyawiin on the freeware's own ground); mutants `tools/mutants/road_beyond.json` (13, all dead). PIN MOVED: none;
   no record displaced (`mutantdrift`).
 
+## FAST-REFUSAL - no way by land past the Bay said at once (2026-10-26, the owner: "Take care of exclusions and gaps")
+
+ROAD-BEYOND bounded a plan past the Bay by a count of cells; a refusal spent all of it (300,000 cells, 1 to 4 seconds on a
+loaded machine) before it said "no way". The Bay's own refusals are its land's pieces (`routeGround` `apart`, AUDIT OW4
+J3); past the table there were none.
+
+- **The pieces** (`systems/travel/landPieces.js` apartPastBay). The land past the Bay is the trace's smooth law
+  (`world/tamriel/tamrielLand.js` landLaw): a point is land only in a square of the picture's centres with a land
+  centre at a corner (a square of four sea centres is the sea whole). Two neighbouring pixels stand in one square or in
+  two that touch, so their squares' land centres lie within PIECE_REACH (2) centres of each other: the trace's land
+  centres joined to every one within two are pieces no way on land crosses between. The Bay's own ground, its seam and
+  its blend (`tamrielGround.js` SEAM_PX, BLEND_PX) are one piece with every centre within BAY_PAD (3) of the Bay's
+  rectangle - the Bay's land is Daggerfall's, not the trace's. Made once a land (the trace's object and the fit's
+  numbers), 64,000 centres and a dozen joins each - milliseconds; every ask after it is a lookup. An end whose square
+  holds no land centre (the sea, an isle the trace does not draw) is in no piece known here and is never refused.
+- **The plan** (`planRoute`): an end past the table, no boat in the search (THE MERGE: a crossing is none of the land's
+  pieces), the host's ground handing its pieces (`apart`) - two ends in pieces that share none is `null` before a cell
+  is expanded. Alinor to the Imperial City: refused in a millisecond, where it spent the whole count.
+- **OPEN**: a split finer than the trace's grid is not a piece here. Mournhold to Ebonheart is one: Ebonheart's ground
+  (some 200,000 pixels and more) is cut from the mainland's (4,000,000 flooded, Ebonheart never reached) by water
+  narrower than two of the picture's centres, so the trace joins them and the plan still spends its count (1.8 s, load
+  average 25) before it refuses. Exact pieces need the ground's own pixels labelled - the roads' regions read every
+  pixel of the land as they are laid (`world/tamrielRoads.js`), the place to label them. The coordinator's other way -
+  the plan's search run in slices across frames (a per-frame count of cells, the view saying it is planning until the
+  plan lands, the plan the same as the one call's) - needs the hosts' journeys to wait on a plan, and was not built in
+  the day: a refusal of this kind is 200,000 cells, 1.8 to 3.7 seconds measured at load averages of 20 to 40 on four
+  shared cores (no idle machine was to be had to measure it unloaded).
+- The four hosts: none changes. Pins `test/systems/travel/fast_refusal.test.js` (4, the last with ARENA2); mutants
+  `tools/mutants/fast_refusal.json` (6, all dead).
+
+## ROAD-GAPS - the roads past the Bay joined where they meet (2026-10-26, the owner: "Take care of exclusions and gaps")
+
+ROAD-BEYOND's record left OPEN a gap in the roads past the Bay, Hammerfell's at (1154, 233): Dragonstar to Elinhir walked
+633 pixels round by the roads where the head's planner had stepped five pixels across the field (457). Measured again:
+
+- **That gap was the layer's, not the build's.** ROAD-BEYOND's journeys ran on the merged head's ground with a roads
+  layer laid before SMOOTH-LAND moved the coasts (GROUND_ROLL_VERSION 3); at (1155, 232) - (1158, 236) that layer's road
+  stands on what is now water (the ground's byte 0), and the planner never steps a road onto water. Laid again on the
+  head's land (regions (2, 3) and (2, 4), as the host lays them), the road there is dry and whole: Dragonstar to Elinhir
+  is 455 pixels, every step a road's. The stale layer stood 2,519 of its 747,052 path pixels on the new water; a player
+  never sees one (the regions' key carries GROUND_ROLL_VERSION, so every region is laid again on the land it stands on).
+- **The gaps that are the build's: where the Bay's roads meet the land past it** (`world/arenaRoads.js` arenaJoins,
+  JOIN_SPACING). The Bay brings eighteen roads to its north, south and east edges (a road running along an edge one),
+  and TESA5 stood seven crossings for them: a crossing took every road within JOIN_SPACING (60 pixels, 49 km) of the
+  last along the edge, so the other eleven ended at the edge with the land going on past it, and a journey off the Bay
+  walked the field from their ends to the next crossing's road. JOIN_SPACING is 12 now (10 km): fourteen crossings on
+  the freeware's Bay - seven north, five south, two east - each a gate the regions' build routes to (TESA5's law
+  unchanged: the road nearest the edge, its run out to the gate on land), 47 join pixels on the Bay where there were 19.
+
+- **The gaps inside a region's own network** (`world/road/roadGaps.js` linkGaps, `world/tamrielRoads.js`
+  tamrielRegionSteps). A region's build routes its places a route at a time, and some of what it lays stands as pieces
+  no bit joins to the rest - on Hammerfell's two regions laid fresh, 339 pieces, 52 pairs of them (20 pixels and more
+  each) within three pixels of each other: a village's tracks a pixel off the road they were meant for, two roads' ends
+  side by side. The build now links them: the region's network as one graph by its bits, its pieces, and each path
+  pixel of the region's core in reading order linked to the nearest pixel of another piece within LINK_GAP (3) whose
+  straight way is dry land the build walks (no water it refuses, no pixel it routes round, no other path between) - a
+  road where both ends are roads, else a track. Laid again: 173 pieces, 2 pairs within three pixels (the two regions'
+  seam - each region links its own network alone, the same on every client whatever order the regions land in).
+
+**Measured** on Hammerfell's (2, 3) and (2, 4), laid on the head's land as the host lays them, before the links and
+after: Dragonstar to Elinhir 455 pixels by the road either way (3,100 cells), Grecher to Dragonstar 725 and Bourner to
+Elinhir 456, every step a road's or a track's. A plan from the Bay into Hammerfell needs the regions past the Bay's east
+edge laid too ((1, 3), (1, 4)); a build of the whole continent with the links and the fourteen crossings was not run
+here (four builds at a load average near 40 took over three minutes a region) - ROAD-BEYOND's journeys stand on the 48
+regions as laid before them.
+
+- The four hosts: none changes (the crossings are the roads host's inputs, `scenes/tamrielRoadsHost.js`, as before).
+  Nothing crosses the wire: each client lays its roads from its own files, the same for every player.
+- TAMRIEL_ROADS_VERSION 6 (RIVER-FORDS moved it to 5 in this release; the links and the crossings change what a region
+  lays): the roads past the Bay are laid again once - the same one rebuild as SMOOTH-LAND's GROUND_ROLL_VERSION 4.
+- Pins `test/world/road/road_gaps.test.js` (2); mutants `tools/mutants/road_gaps.json` (8: 7 dead, 1 recorded
+  equivalent - a path pixel on the way is itself a nearer candidate). PIN MOVED (ROAD-GAPS): `test/tesa5_join.test.js`
+  JOIN_SPACING 60 -> 12, the synthetic edge's runs re-spaced, the freeware's fourteen crossings and 47 join pixels;
+  TAMRIEL_ROADS_VERSION 5 -> 6 (`test/tesa14_roads.test.js`, `test/world/road/voyager1_land.test.js`,
+  `test/world/road/river_fords.test.js`); TESA5's spacing record and VOYAGER1's version record re-aimed by content.
+
 ## MID-RING and FAR-FIELD - the horizon in layers, out to the mountains 300 km off (2026-10-26, the owner)
 
 The owner: "we need to find a way to expand the overworld view distance without killing performance. Currently tiles
