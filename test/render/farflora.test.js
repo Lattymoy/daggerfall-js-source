@@ -18,7 +18,8 @@ import { midRingVertices, plantCanopy, layGround, MID_FLORA_EASE, MidRingMesh } 
 import { farFieldVertices } from '../../src/render/farField.js';
 import { FarRingRenderer, buildFarRingGrid, ringHeight } from '../../src/render/farRing.js';
 import { opaqueMean, treeArt, groundArt, createFloraArt, floraDisabled, FLORA_MIN_LAND_VIEW, GROUND_RECORDS } from '../../src/render/farFlora.js';
-import { FLORA_GLSL, FLORA_CROWN_M, FLORA_GROVE_M } from '../../src/render/horizonHaze.js';
+import { FLORA_GLSL, FLORA_LIGHT_GLSL, FLORA_CROWN_M, FLORA_GROVE_M } from '../../src/render/horizonHaze.js';
+import { capShare, SNOWCAP } from '../../src/world/peaks/snowcap.js';
 import { EL_FAR_RING_FS } from '../../src/render/enhancedLighting.js';
 import { classicShadowLane } from '../../src/render/classicShadowLane.js';
 import { syntheticWoodsBytes } from '../landformWorld.mjs';
@@ -33,7 +34,7 @@ const GROUND = Object.freeze({ dirt: [200, 0, 0], grass: [0, 200, 0], stone: [0,
 const WOODS_SPEC = floraSpec(504, false, true);
 
 function fakeGl() {
-  const log = { draws: [], u3: [], attribs: [], buffers: [] };
+  const log = { draws: [], u3: [], u4: [], attribs: [], buffers: [] };
   let n = 0;
   const gl = new Proxy({
     TRIANGLES: 4, UNSIGNED_SHORT: 5123, UNSIGNED_INT: 5125, ARRAY_BUFFER: 1, ELEMENT_ARRAY_BUFFER: 2, FLOAT: 3, UNSIGNED_BYTE: 6, STATIC_DRAW: 7, DYNAMIC_DRAW: 8,
@@ -42,6 +43,7 @@ function fakeGl() {
     vertexAttribPointer: (loc, size, type, normalized) => log.attribs.push([loc, size, type, normalized]),
     drawElements: (mode, count) => log.draws.push(count),
     uniform3f: (loc, x, y, z) => log.u3.push([loc, x, y, z]),
+    uniform4f: (loc, x, y, z, w) => log.u4.push([loc, x, y, z, w]),
     getUniformLocation: (p, name) => name,
     getShaderParameter: () => true, getProgramParameter: () => true,
   }, { get: (t, k) => (k in t ? t[k] : () => {}) });
@@ -49,7 +51,7 @@ function fakeGl() {
 }
 
 test('FAR-FLORA the near law at a middle-ring sample: the forest field at its world tile, the ground classes tileDataAt lays at four corners about it, none under the beach line or on a face over 50 degrees; packed four bytes (mutant: the tile, the field\'s sign, a corner, the beach, the face, the packing)', () => {
-  assert.deepEqual(JSON.parse(JSON.stringify(FLORA)), { dfu: { 1: 0.2, 2: 0.9, 3: 0.05 }, desert: 0.25, steep: 50, woodShare: 0.45, grazing: 2.2, lift: 0.7, shade: 0.78, ground: { 1: 0.054, 2: 0.927, 3: 0.019 } });
+  assert.deepEqual(JSON.parse(JSON.stringify(FLORA)), { dfu: { 1: 0.2, 2: 0.9, 3: 0.05 }, desert: 0.25, steep: 50, woodShare: 0.45, grazing: 2.2, lift: 0.7, ground: { 1: 0.054, 2: 0.927, 3: 0.019 } });
   assert.deepEqual([FLORA_WOOD, FLORA_DIRT, FLORA_GRASS, FLORA_STONE], [0, 8, 16, 24]);
   const sub = 8, w = sub + 1, px = 398, py = 251;
   const flat = new Float32Array(w * w).fill(300);   // well over the beach line, level
@@ -98,16 +100,15 @@ test('FAR-FLORA the trees a tile grows: FOREST1\'s chance by the field and the g
   assert.equal(expectedTrees(WOODS_SPEC, 128), treesPerTile(0.45, 0, 1, 0, WOODS_SPEC, 128), 'the far views: the woods\' share of the land on grass');
 });
 
-test('FAR-FLORA a vertex\'s canopy and its ground: the near ground\'s tiles by their shares, then the trees\' art in their shade by the cover, raised to their height; no art no woods (mutant: the mix, the shade, the lift, the cover byte)', () => {
-  const c = Uint8Array.from([100, 100, 100]), out = new Uint8Array(1);
+test('FAR-FLORA a vertex\'s canopy and its ground: the near ground\'s tiles by their shares; the canopy four bytes - its cover and the trees\' own art - raised to their height; no art no woods (mutant: the mix, the vertex\'s bytes, the lift, the cover byte)', () => {
+  const c = new Uint8Array(8);
   const cover = canopyCover(0.4, ART.w);
-  const lift = plantCanopy(c, 0, 0.4, ART, out, 0);
+  const lift = plantCanopy(c, 1, 0.4, ART);
   assert.ok(Math.abs(lift - cover * ART.h * FLORA.lift) < 1e-9, 'the canopy over the ground');
-  assert.deepEqual([...c], [0, 1, 2].map((k) => Math.round(100 + (ART.rgb[k] * FLORA.shade - 100) * cover)));
-  assert.equal(out[0], Math.round(cover * 255));
-  const bare = Uint8Array.from([100, 100, 100]);
-  assert.equal(plantCanopy(bare, 0, 0.4, null, out, 0), 0);
-  assert.deepEqual([...bare, out[0]], [100, 100, 100, 0], 'no art read: the ground stands bare');
+  assert.deepEqual([...c], [0, 0, 0, 0, Math.round(cover * 255), ...ART.rgb], 'the second vertex\'s: its cover, then the art');
+  const bare = new Uint8Array(4).fill(9);
+  assert.equal(plantCanopy(bare, 0, 0.4, null), 0);
+  assert.deepEqual([...bare], [0, 9, 9, 9], 'no art read: no cover');
   const g = Uint8Array.from([9, 9, 9]);
   layGround(g, 0, GROUND, 0.25, 0.5, 0.25);
   assert.deepEqual([...g], [50, 100, 50]);
@@ -139,19 +140,25 @@ test('FAR-FLORA the middle ring\'s woods: each vertex its sample\'s trees in its
   const at = (gx, gz) => gz * side + gx;
   const woodsV = at(5, 5), plainV = at(3, 1);
   const wantWood = canopyCover(FOREST.forestTree, ART.w), wantPlain = canopyCover(FOREST.plainTree, ART.w);
-  assert.equal(v.flora[woodsV], Math.round(wantWood * 255), 'the woods\' cover');
-  assert.equal(v.flora[plainV], Math.round(wantPlain * 255), 'a plain\'s');
+  assert.equal(v.flora[woodsV * 4], Math.round(wantWood * 255), 'the woods\' cover');
+  assert.equal(v.flora[plainV * 4], Math.round(wantPlain * 255), 'a plain\'s');
   assert.equal(v.flora[0], 0, 'the sea grows none');
   assert.ok(Math.abs(v.positions[woodsV * 3 + 1] - (100 + wantWood * ART.h * FLORA.lift)) < 1e-4, 'raised to the canopy');
   assert.equal(v.positions[1], Math.fround(seaY), 'the sea stays at its floor');
-  assert.deepEqual([...v.colors.subarray(woodsV * 3, woodsV * 3 + 3)], [0, 1, 2].map((k) => Math.round(GROUND.grass[k] + (ART.rgb[k] * FLORA.shade - GROUND.grass[k]) * wantWood)), 'the grass tile under the trees\' art');
+  assert.deepEqual([...v.colors.subarray(woodsV * 3, woodsV * 3 + 3)], GROUND.grass, 'the grass tile under the trees (the program lays the canopy)');
+  assert.deepEqual([...v.flora.subarray(woodsV * 4 + 1, woodsV * 4 + 4)], ART.rgb, 'the canopy the trees\' art');
   assert.deepEqual([...v.colors.subarray(0, 3)], [7, 7, 7], 'the sea keeps its tint');
   // a vertex reads its own pixel's climate: the art in the south-east pixel (51, 61) alone
   const one = midRingVertices({ heights, baseX: bx, baseY: by, radius, sub, tintAt: () => [7, 7, 7], seaY, flora: new Uint32Array(side * side).fill(pack(1, 1)), floraAt: (px, py) => ({ spec: WOODS_SPEC, art: px === 51 && py === 61 ? ART : null, ground: GROUND, byte: 128 }) });
-  assert.ok(one.flora[at(5, 1)] > 0 && one.flora[at(1, 5)] === 0, 'east and south: its own pixel\'s');
+  assert.ok(one.flora[at(5, 1) * 4] > 0 && one.flora[at(1, 5) * 4] === 0, 'east and south: its own pixel\'s');
   const { gl, log } = fakeGl();
   new MidRingMesh(gl).build(v, { baseX: bx, baseY: by, radius, sub, curX: bx, curY: by });
-  assert.deepEqual(log.attribs.find((a) => a[0] === 5), [5, 1, 6, true], 'the cover a normalized byte at location 5');
+  assert.deepEqual(log.attribs.find((a) => a[0] === 5), [5, 4, 6, true], 'the canopy four normalized bytes at location 5');
+  // PEAKS1's snow whitens the ring's canopy as it whitens its ground
+  const snowy = midRingVertices({ heights, baseX: bx, baseY: by, radius, sub, tintAt: () => [7, 7, 7], seaY, flora, floraAt, snowAt: () => 0 });
+  const sv = woodsV, ssh = capShare(heights[sv] - seaY, snowy.normals[sv * 3 + 1], 0);
+  assert.ok(ssh > 0.5);
+  assert.deepEqual([...snowy.flora.subarray(sv * 4 + 1, sv * 4 + 4)], ART.rgb.map((c, k2) => Math.round(c + (SNOWCAP.rgb[k2] - c) * ssh)), 'the middle ring\'s canopy whitened');
   // the normals are the canopy's: the woods' edge tilts them
   const lifted = Float32Array.from({ length: side * side }, (_, k) => v.positions[k * 3 + 1]);
   const n = midRingNormals(lifted, side, sub);
@@ -161,7 +168,7 @@ test('FAR-FLORA the middle ring\'s woods: each vertex its sample\'s trees in its
   const R = 12, S1 = 1, side2 = midRingSide(R, S1);
   const h2 = new Float32Array(side2 * side2).fill(100), f2 = new Uint32Array(side2 * side2).fill(pack(1, 1));
   const v2 = midRingVertices({ heights: h2, baseX: 0, baseY: 0, radius: R, sub: S1, tintAt: () => [7, 7, 7], seaY, flora: f2, floraAt: () => ({ spec: WOODS_SPEC, art: ART, ground: GROUND, byte: 128 }) });
-  const cov = (dx) => v2.flora[R * side2 + (R + dx)];   // a vertex dx pixels east of the base's corner, on its row
+  const cov = (dx) => v2.flora[(R * side2 + (R + dx)) * 4];   // a vertex dx pixels east of the base's corner, on its row
   const exp = canopyCover(expectedTrees(WOODS_SPEC, 128), ART.w);
   assert.equal(cov(0), Math.round(wantWood * 255), 'inside the band: the field\'s');
   assert.equal(cov(12), Math.round(exp * 255), 'past it: the far ring\'s expectation');
@@ -196,15 +203,23 @@ test('FAR-FLORA the far ring\'s and the far field\'s woods: the law\'s expectati
   assert.equal(plain.ground, null);
   const side = g.side, at = (px, py) => (py - 20 + 12) * side + (px - 20 + 12);
   const k = at(20, 20), cover = canopyCover(expectedTrees(WOODS_SPEC, 40), ART.w);
-  assert.equal(g.flora[k], Math.round(cover * 255));
+  assert.equal(g.flora[k * 4], Math.round(cover * 255));
+  assert.deepEqual([...g.flora.subarray(k * 4 + 1, k * 4 + 4)], ART.rgb, 'the canopy the trees\' art');
   assert.equal(g.ground[k], plain.positions[k * 3 + 1], 'the ground under the canopy');
   assert.ok(Math.abs(g.positions[k * 3 + 1] - (plain.positions[k * 3 + 1] + cover * ART.h * FLORA.lift)) < 1e-3, 'the canopy over it');
   const want = [0, 1, 2].map((c) => Math.round((GROUND.dirt[c] * 0.054 + GROUND.grass[c] * 0.927 + GROUND.stone[c] * 0.019) / 1));
-  assert.deepEqual([...g.colors.subarray(k * 3, k * 3 + 3)], [0, 1, 2].map((c) => Math.round(want[c] + (ART.rgb[c] * FLORA.shade - want[c]) * cover)), 'the tiles by the law\'s shares, then the trees');
-  assert.equal(g.flora[at(20, 30)], 0, 'the sea');
+  assert.deepEqual([...g.colors.subarray(k * 3, k * 3 + 3)], want, 'the tiles by the law\'s shares');
+  assert.equal(g.flora[at(20, 30) * 4], 0, 'the sea');
   assert.equal(g.sea[at(15, 20)], 0);
-  assert.equal(g.flora[at(15, 20)], 0, 'the beach');
-  assert.ok(g.flora[at(25, 20)] > 0 && g.flora[at(24, 20)] > 0, 'a ridge and its flank under the law (central differences over 1,638 m: 26 degrees)');
+  assert.equal(g.flora[at(15, 20) * 4], 0, 'the beach');
+  assert.ok(g.flora[at(25, 20) * 4] > 0 && g.flora[at(24, 20) * 4] > 0, 'a ridge and its flank under the law (central differences over 1,638 m: 26 degrees)');
+  // PEAKS1's snow whitens the canopy as it whitens the ground (a mix of the two whitened is the mix whitened)
+  const snowy = buildFarRingGrid({ ...inputs, relief: false, floraOf, snowAt: () => 0 });
+  const sk = at(20, 20), sh = capShare(snowy.ground[sk] - ringHeight(0), snowy.normals[sk * 3 + 1], 0);
+  assert.ok(sh > 0.5, `under the line (${sh})`);
+  const wh = (c, k2) => Math.round(c + (SNOWCAP.rgb[k2] - c) * sh);
+  assert.deepEqual([...snowy.colors.subarray(sk * 3, sk * 3 + 3)], want.map(wh), 'the ground whitened');
+  assert.deepEqual([...snowy.flora.subarray(sk * 4 + 1, sk * 4 + 4)], ART.rgb.map(wh), 'and the canopy with it');
   // the two tests a far vertex stands a tree by: the face (FLORA.steep) and the beach line (the byte's own height)
   const cos = Math.cos((50 * Math.PI) / 180);
   assert.deepEqual([standsTrees(cos + 1e-6, 100), standsTrees(cos - 1e-6, 100), standsTrees(1, SCALED_BEACH_ELEVATION), standsTrees(1, SCALED_BEACH_ELEVATION - 0.01)], [true, false, true, false]);
@@ -218,6 +233,10 @@ test('FAR-FLORA the far ring\'s and the far field\'s woods: the law\'s expectati
   const fc = canopyCover(expectedTrees(WOODS_SPEC, 60), ART.w);
   assert.ok(Math.abs(f1.positions[1] - (f0.positions[1] + fc * ART.h * FLORA.lift)) < 1e-3);
   assert.equal(f1.flora[0], Math.round(fc * 255));
+  assert.deepEqual([...f1.flora.subarray(1, 4)], ART.rgb);
+  const f2 = farFieldVertices({ ...base, floraAt: () => ({ spec: WOODS_SPEC, art: ART, ground: GROUND }), snowAt: () => 0 });
+  const fsh = capShare(f0.positions[1] - ringHeight(0), f2.normals[1], 0);
+  assert.deepEqual([...f2.flora.subarray(1, 4)], ART.rgb.map((c, k2) => Math.round(c + (SNOWCAP.rgb[k2] - c) * fsh)), 'the far field\'s canopy whitened');
   assert.equal(f0.flora, null);
 });
 
@@ -242,7 +261,8 @@ test('FAR-FLORA the far ring\'s knob and its builds: the woods at Land View 4 an
   const med = ring(4);
   assert.equal(med.asks[0].flora, true);
   assert.deepEqual(med.log.u3.find((u) => u[0] === 'uFlora'), ['uFlora', 1, FLORA_CROWN_M, FLORA_GROVE_M]);
-  assert.deepEqual(med.log.attribs.find((a) => a[0] === 5), [5, 1, 6, true], 'the cover a normalized byte at location 5');
+  assert.deepEqual(med.log.attribs.find((a) => a[0] === 5), [5, 4, 6, true], 'the canopy four normalized bytes at location 5');
+  assert.deepEqual(med.log.u4.find((u) => u[0] === 'uCanopyBand'), ['uCanopyBand', 0, 1, 0, 0], 'no band: the canopy everywhere');
   assert.equal(med.r.needsRebuild(100, 100), false, 'built with the book as it stands');
   version = 1;   // a tree's art landed
   assert.equal(med.r.needsRebuild(100, 100), true, 'built again with it');
@@ -328,27 +348,32 @@ test('FAR-FLORA the canopy\'s art: the opaque texels\' mean over every Tree reco
   assert.equal(none.version, 0, 'no pipeline: nothing asked yet');
 });
 
-test('FAR-FLORA the program: the canopy\'s cover at location 5 into vFlora, and every ring lane\'s land under floraShade - 1 off the woods or with the grain off, crowns and groves about 1 near, faded to 1 where they fall under a fragment (mutant: the attribute, the lanes\' multiply, the off test, the fade)', () => {
+test('FAR-FLORA the program: the canopy\'s four bytes at location 5, its share by the band\'s crossfade, and every ring lane\'s land the ground\'s light and the canopy\'s - the flats\' light, grained - mixed by the cover; the grain 1 off, crowns and groves about 1 near, faded to 1 where they fall under a fragment (mutant: the attribute, the share, the lanes\' mix, the flats\' light, the off test, the fade)', () => {
   const fr = readFileSync('src/render/farRing.js', 'utf8');
-  assert.ok(fr.includes('layout(location=5) in float aFlora;') && fr.includes('vFlora = aFlora;'));
+  assert.ok(fr.includes('layout(location=5) in vec4 aCanopy;'));
+  assert.ok(fr.includes('vFlora = aCanopy.x * (uCanopyBand.z > 0.5 ? smoothstep(uCanopyBand.x, uCanopyBand.y, max(cb.x, cb.y)) : 1.0);') && fr.includes('vCanopy = aCanopy.yzw;') && fr.includes('vColor = aColor;'));
   const classicFs = fr.slice(fr.indexOf('const FS = `#version 300 es'));
-  assert.ok(classicFs.includes('${FLORA_GLSL}') && classicFs.includes('vec3 lit = vColor * floraShade(vWorld.xz) * ('));
+  const MIX = 'vCanopy * floraLight(uAmbient, uSunColor, sun, uMoonColor, uMoonScale) * floraGrain(vWorld.xz), vFlora);';
+  assert.ok(classicFs.includes('${FLORA_GLSL}') && classicFs.includes(`vec3 lit = mix(vColor * (uAmbient + uSunColor * (sun * diff) + uMoonColor * (uMoonScale * mdiff)), ${MIX}`));
   for (const fs of [EL_FAR_RING_FS, classicShadowLane().farRingFs]) {
-    assert.ok(fs.includes('float floraShade(vec2 xz)') && fs.includes('vec3 lit = elDecode(vColor) * floraShade(vWorld.xz) * ('), 'the lanes');
+    assert.ok(fs.includes('float floraGrain(vec2 xz)') && fs.includes(`vec3 lit = mix(elDecode(vColor) * (uAmbient + uSunColor * (sun * diff) + uMoonColor * (uMoonScale * mdiff)), ${MIX.replace('vCanopy', 'elDecode(vCanopy)')}`), 'the lanes');
   }
+  // the flats' light: the ambient, half the moon, half the sun (render/renderer.js BB_FS's uTint and uBBSun)
+  const fl = glslFunctions(`${FLORA_LIGHT_GLSL}\nuniform float uK;\nvec3 run() { return floraLight(vec3(0.1, 0.2, 0.3), vec3(1.0, 0.8, 0.6), 0.9, vec3(0.5, 0.5, 1.0), 0.4); }`, { uK: 0 });
+  const got = fl.run(), want = [0.1 + 0.5 * 0.2 + 0.45, 0.2 + 0.5 * 0.2 + 0.8 * 0.45, 0.3 + 1.0 * 0.2 + 0.6 * 0.45];
+  assert.ok(got.every((g, k) => Math.abs(g - want[k]) < 1e-9), `${got} against ${want}`);
   const near = [];
-  for (let k = 0; k < 40; k++) near.push(shadeAt(1, [1, FLORA_CROWN_M, FLORA_GROVE_M], [k * 3.7, k * 5.3], 0.01));
+  for (let k = 0; k < 40; k++) near.push(grainAt([1, FLORA_CROWN_M, FLORA_GROVE_M], [k * 3.7, k * 5.3], 0.01));
   assert.ok(near.some((s) => s < 0.9) && near.some((s) => s > 1.1) && near.every((s) => s > 0.5 && s < 1.5), `crowns and groves near: ${near.map((s) => s.toFixed(2))}`);
-  assert.equal(shadeAt(0, [1, FLORA_CROWN_M, FLORA_GROVE_M], [3, 5], 0.01), 1, 'off the woods');
-  assert.equal(shadeAt(1, [0, FLORA_CROWN_M, FLORA_GROVE_M], [3, 5], 0.01), 1, 'the grain off');
-  assert.equal(shadeAt(1, [1, FLORA_CROWN_M, FLORA_GROVE_M], [3, 5], 10), 1, 'far: faded to the woods\' mean');
+  assert.equal(grainAt([0, FLORA_CROWN_M, FLORA_GROVE_M], [3, 5], 0.01), 1, 'the grain off');
+  assert.equal(grainAt([1, FLORA_CROWN_M, FLORA_GROVE_M], [3, 5], 10), 1, 'far: faded to the woods\' mean');
 });
 
-/** floraShade evaluated with fwidth a constant (the evaluator's derivative of a uniform is 0: the screen's rate is
+/** floraGrain evaluated with fwidth a constant (the evaluator's derivative of a uniform is 0: the screen's rate is
  *  handed as the cells' size a fragment). */
-function shadeAt(vFlora, uFlora, xz, fw) {
+function grainAt(uFlora, xz, fw) {
   const src = FLORA_GLSL.replace(/fwidth\([cg]\)/g, `vec2(${fw.toFixed(6)})`)
-    + '\nuniform vec2 uXz;\nfloat run() { return floraShade(uXz); }';
-  const fns = glslFunctions(src, { vFlora, uFlora, uXz: xz });
+    + '\nuniform vec2 uXz;\nfloat run() { return floraGrain(uXz); }';
+  const fns = glslFunctions(src, { uFlora, uXz: xz, uFloraUnused: 0 });
   return fns.run();
 }

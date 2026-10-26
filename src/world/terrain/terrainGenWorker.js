@@ -22,7 +22,7 @@ import { setTamrielFit } from '../tamriel/tamrielFrame.js';
 import { generatePixelTerrain, restrideGrid } from './terrainGen.js';   // PERF-EXT26: and a built pixel's grid at another stride
 import { buildMidRingHeights, buildFarFieldBytes, midRingPixel, farFieldCell } from './midRingGrid.js';   // MID-RING: the middle ring's ground, off the frame; FAR-FIELD: and the far field's
 import { farCellClimate, midRingWet, DRY } from './farClimate.js';   // FAR-FIELD: a far cell's climate past the Bay, worked out here; MAP-WATERS: a middle-ring pixel's rivers
-import { midRingFloraPixel } from './floraCover.js';   // FAR-FLORA: the near law's woods at the middle ring's samples
+import { midRingFloraPixel, bandTreesPixel } from './floraCover.js';   // FAR-FLORA: the near law's woods at the middle ring's samples; FAR-TREES: a band pixel's own trees
 import { lawWatersInk } from '../tamriel/watersInk.js';   // MAP-WATERS: the map's copy of the waters the kernel carves, compiled here
 import { createLandforms } from '../landforms.js';
 import { buildRoadsFromSettlements } from '../roadsProducer.js';   // AUDIT ROADS F2
@@ -128,6 +128,8 @@ function handle(m) {
     if (m.t === 'midring' && m.landform && pendingRoads) { pendingRoads.then(() => handle(m)); return; }
     if (m.t === 'midring') { answerMidRing(m); return; }
     if (m.t === 'farfield') { answerFarField(m); return; }   // FAR-FIELD: the heightmap alone - no network to wait for
+    if (m.t === 'floraband' && m.landform && pendingRoads) { pendingRoads.then(() => handle(m)); return; }   // FAR-TREES: the landforms the roads shape, as the stream's
+    if (m.t === 'floraband') { answerFloraBand(m); return; }   // FAR-TREES: the band's trees past the grid
     // ROADS 19: a job that arrives while the network is still loading
     // waits for it, so no chunk is ever generated roadless.
     if (m.t === 'job' && pendingRoads) { pendingRoads.then(() => handle(m)); return; }
@@ -192,6 +194,24 @@ function answerFarField(m) {
     globalThis.postMessage({ t: 'far', id: m.id, high, low, clim }, [high.buffer, low.buffer, clim.buffer]);
   } catch (e) {
     globalThis.postMessage({ t: 'farError', id: m.id, message: e?.message ?? String(e) });
+  }
+}
+
+/** FAR-TREES (render/farTrees.js): THE BAND'S TREES - each pixel of `pixels` ([px, py, nature archive, climate type] four
+ *  a pixel) its own trees as the stream would stand them (world/terrain/floraCover.js bandTreesPixel), kept by the pixel
+ *  in the horizon's book and answered as copies, TRANSFERRED; a failure answers `bandError`, and the band waits. */
+function answerFloraBand(m) {
+  try {
+    if (!woods) throw new Error('terrain worker got a band before init');
+    const landforms = m.landform ? createLandforms({ woods, roads, sites, climates }) : null;
+    const trees = [];
+    for (let k = 0; k + 3 < m.pixels.length; k += 4) {
+      const [px, py, archive, climateType] = [m.pixels[k], m.pixels[k + 1], m.pixels[k + 2], m.pixels[k + 3]];
+      trees.push(keptMid(`t${px},${py},${archive},${climateType},${m.forests ? 1 : 0},${m.landform ? 1 : 0}`, () => bandTreesPixel({ woods, px, py, archive, climateType, forests: !!m.forests, landforms })).slice());
+    }
+    globalThis.postMessage({ t: 'band', id: m.id, trees }, trees.map((t) => t.buffer));
+  } catch (e) {
+    globalThis.postMessage({ t: 'bandError', id: m.id, message: e?.message ?? String(e) });
   }
 }
 

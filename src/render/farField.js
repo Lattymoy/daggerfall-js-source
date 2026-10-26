@@ -78,7 +78,7 @@ export function* farFieldVertexSteps({ high, low, baseCX, baseCY, radius = FAR_R
   const positions = new Float32Array(n * 3), normals = new Float32Array(n * 3), colors = new Uint8Array(n * 3), sea = new Uint8Array(n);
   const bx = baseCX * cell, by = baseCY * cell, half = cell / 2, majority = (FAR_SAMPLES.length ** 2) / 2;
   const caps = snowAt ? new Float32Array(n) : null;   // PEAKS1: each cell's cap line
-  const flora = floraAt ? new Uint8Array(n) : null, lift = floraAt ? new Float32Array(n) : null;   // FAR-FLORA: the canopy's cover and lift
+  const flora = floraAt ? new Uint8Array(n * 4) : null, lift = floraAt ? new Float32Array(n) : null;   // FAR-FLORA: the canopy (render/midRing.js plantCanopy's four bytes) and its lift
   for (let j = 0; j < side; j++) {
     for (let i = 0; i < side; i++) {
       const v = j * side + i, o = v * 3;
@@ -97,7 +97,7 @@ export function* farFieldVertexSteps({ high, low, baseCX, baseCY, radius = FAR_R
         const f = floraAt && high[v] * BYTE_SCALE >= SCALED_BEACH_ELEVATION ? floraAt(px, py, high[v], v) : null;   // FAR-FLORA: over the beach line; lifted after the normals (the cell's ground's)
         if (f) {
           layGround(colors, o, f.ground, FLORA.ground[1], FLORA.ground[2], FLORA.ground[3]);   // the near ground's own tiles, by the law's mean shares
-          lift[v] = plantCanopy(colors, o, expectedTrees(f.spec, high[v]), f.art, flora, v);
+          lift[v] = plantCanopy(flora, v, expectedTrees(f.spec, high[v]), f.art);
         }
       }
     }
@@ -112,6 +112,7 @@ export function* farFieldVertexSteps({ high, low, baseCX, baseCY, radius = FAR_R
       const l = Math.hypot(nx, ny, nz), o = (j * side + i) * 3;
       normals[o] = nx / l; normals[o + 1] = ny / l; normals[o + 2] = nz / l;
       if (caps && !sea[j * side + i]) whiten(colors, o, capShare(positions[o + 1] - seaY, normals[o + 1], caps[j * side + i]));   // PEAKS1
+      if (caps && flora?.[(j * side + i) * 4]) whiten(flora, (j * side + i) * 4 + 1, capShare(positions[o + 1] - seaY, normals[o + 1], caps[j * side + i]));   // FAR-FLORA: the canopy under the same snow
     }
   }
   if (lift) for (let v = 0; v < n; v++) positions[v * 3 + 1] += lift[v];   // FAR-FLORA: the canopy over the ground the normals read
@@ -203,7 +204,7 @@ export class FarFieldMesh {
     buf(v.normals, 1, gl.FLOAT, false);
     buf(v.colors, 2, gl.UNSIGNED_BYTE, true);
     buf(v.sea, 3, gl.UNSIGNED_BYTE, true, 1);
-    if (v.flora) buf(v.flora, 5, gl.UNSIGNED_BYTE, true, 1);   // FAR-FLORA: the canopy's cover
+    if (v.flora) buf(v.flora, 5, gl.UNSIGNED_BYTE, true, 4);   // FAR-FLORA: the canopy's cover and colour
     this.indexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
     this.buffers.push(this.indexBuffer);

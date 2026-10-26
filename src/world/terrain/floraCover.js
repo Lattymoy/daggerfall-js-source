@@ -19,9 +19,9 @@
 // WORKER-SAFE: pure, node-tested modules only (the terrain worker runs `midRingFloraPixel` beside the heights).
 // ═══════════════════════════════════════════════════════════════════
 
-import { forestAt, FOREST, TREE_RECORDS, MAX_STEEPNESS, BASE_CHANCE_ON_DIRT, BASE_CHANCE_ON_GRASS, BASE_CHANCE_ON_STONE, DESERT_NATURE_SCALE } from './terrainNature.js';
-import { tileDataAt, WORLD_MAP_TILE_DIM, WATER } from './terrainTiles.js';
-import { STREAMING_TERRAIN_SCALE, SCALED_BEACH_ELEVATION, TERRAIN_SIZE } from './terrainSampler.js';
+import { forestAt, FOREST, TREE_RECORDS, MAX_STEEPNESS, BASE_CHANCE_ON_DIRT, BASE_CHANCE_ON_GRASS, BASE_CHANCE_ON_STONE, DESERT_NATURE_SCALE, layoutNature, isTreeRecord } from './terrainNature.js';
+import { tileDataAt, WORLD_MAP_TILE_DIM, WATER, generateTileData, assignTiles } from './terrainTiles.js';
+import { STREAMING_TERRAIN_SCALE, SCALED_BEACH_ELEVATION, TERRAIN_SIZE, HEIGHTMAP_DIMENSION, generateSamples } from './terrainSampler.js';
 
 /**
  * THE DIALS (one place).
@@ -34,8 +34,6 @@ import { STREAMING_TERRAIN_SCALE, SCALED_BEACH_ELEVATION, TERRAIN_SIZE } from '.
  *  - `grazing`: how many crowns' widths of ground a crown hides seen from afar - the eye looks across the woods, not down
  *    into them, so the trunks' gaps close.
  *  - `lift`: the canopy's surface over the ground, a share of the trees' own height (crowns are not columns).
- *  - `shade`: a wood seen from afar is its crowns' lit faces and the shade between and under them - its colour the trees'
- *    art (each billboard's own painted texels) darkened by that shade.
  *  - `ground`: the near ground's classes as tileDataAt lays them over the land (dirt 1, grass 2, stone 3 - the shares
  *    measured over 200,000 corners of the Bay's land, 2026-10-26): the far ring's and the far field's ground, whose
  *    vertices stand past the Perlin's 20-tile wave.
@@ -47,7 +45,6 @@ export const FLORA = Object.freeze({
   woodShare: 0.45,
   grazing: 2.2,
   lift: 0.7,
-  shade: 0.78,
   ground: Object.freeze({ 1: 0.054, 2: 0.927, 3: 0.019 }),
 });
 
@@ -139,3 +136,28 @@ const COS_STEEP = Math.cos(FLORA.steep * Math.PI / 180);
  *  land (FLORA.woodShare) on grass, read through the same law. Pure. */
 export const expectedTrees = (spec, byte) => treesPerTile(FLORA.woodShare, 0, 1, 0, spec, byte);
 
+
+/**
+ * FAR-TREES (the band past the grid, render/farTrees.js): A PIXEL'S TREES AS THE STREAM WOULD STAND THEM - the pixel's own
+ * kernel samples (terrainSampler.js generateSamples, with the landforms the worker holds), its ground classes and their
+ * squares (terrainTiles.js generateTileData, assignTiles) and the nature's own layout (terrainNature.js layoutNature:
+ * FOREST1's woods with the switch, DFU's scatter without it or on a desert), kept to its Tree records: the very flats a
+ * built pixel stands (its own dice, a tile at a time), so where the stream builds the pixel its trees land where the
+ * band's stood. What it leaves out is a built pixel's own: a location's clearing and flattening, the roads' paint, a World
+ * of Daggerfall site, a neighbour's climate at a border, the jungle's own layout. Answers `[x, y, z, record]` a tree, in
+ * the pixel's own frame (x east, z north from its south-west corner; y the ground's height, world units).
+ * @param {{ woods: any, px: number, py: number, archive: number, climateType: number, forests: boolean, landforms?: any }} o
+ */
+export function bandTreesPixel({ woods, px, py, archive, climateType, forests, landforms = null }) {
+  const samples = generateSamples(woods, px, py, HEIGHTMAP_DIMENSION, landforms);
+  const tilemap = new Uint8Array(WORLD_MAP_TILE_DIM * WORLD_MAP_TILE_DIM);
+  assignTiles(generateTileData(samples, px, py), tilemap, true);
+  const flats = layoutNature(samples, tilemap, {
+    mapPixelX: px, mapPixelY: py, rawWorldHeight: woods.getHeightMapValue(px, py), climateType, locationRect: null,
+    forests: forests ? { archive, pois: [] } : null,
+  });
+  const trees = flats.filter((f) => isTreeRecord(archive, f.record));
+  const out = new Float32Array(trees.length * 4);
+  trees.forEach((f, k) => { out[k * 4] = f.x; out[k * 4 + 1] = f.y; out[k * 4 + 2] = f.z; out[k * 4 + 3] = f.record; });
+  return out;
+}

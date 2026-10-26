@@ -54,16 +54,17 @@ export const MID_ROWS_A_STEP = 12;
 export const MID_FLORA_EASE = Object.freeze([MID_RADIUS - MID_REBUILD_DRIFT - 2, MID_RADIUS - MID_REBUILD_DRIFT]);
 
 /**
- * FAR-FLORA: A VERTEX'S WOODS - the canopy's cover (0..1), the colour under it (`rgb` written in place at `o`, toward the
- * trees' own art in the shade between their crowns, FLORA.shade, by the cover) and the canopy's lift (world units) - from the trees a tile grows there (`trees`,
- * floraCover.js treesPerTile) and the climate's art (render/farFlora.js treeArt: `{ rgb, h, w }`). None without art.
- * Pure. @returns {number} the lift
+ * FAR-FLORA: A VERTEX'S WOODS - written into `canopy` at vertex `k` as four bytes: the canopy's cover (0-255: the share of
+ * the ground its crowns hide, from the trees a tile grows there, `trees` - floraCover.js treesPerTile - and the climate's
+ * art, render/farFlora.js treeArt `{ rgb, h, w }`) and its colour, the trees' art. The far ring's program lays it over
+ * the ground's by the cover, lit as the flats are (horizonHaze.js floraLight) - FAR-TREES: but under the band, whose trees
+ * stand there themselves. None without art. Answers the canopy's lift (world units). Pure.
  */
-export function plantCanopy(colors, o, trees, art, out = null, k = 0) {
-  const cover = art ? canopyCover(trees, art.w) : 0;
-  if (out) out[k] = Math.round(cover * 255);
+export function plantCanopy(canopy, k, trees, art) {
+  const cover = art ? canopyCover(trees, art.w) : 0, o = k * 4;
+  canopy[o] = Math.round(cover * 255);
   if (!(cover > 0)) return 0;
-  for (let c = 0; c < 3; c++) colors[o + c] = Math.round(colors[o + c] + (art.rgb[c] * FLORA.shade - colors[o + c]) * cover);
+  for (let c = 0; c < 3; c++) canopy[o + 1 + c] = Math.round(art.rgb[c]);
   return cover * art.h * FLORA.lift;
 }
 
@@ -125,7 +126,7 @@ export function* midRingVertexSteps({ heights, baseX, baseY, radius = MID_RADIUS
   const capAt = caps ? new Float32Array(side * side) : null;   // PEAKS1: each vertex's cap line, the centres' bilinear
   // FAR-FLORA: the canopy's cover a vertex (the shader's crowns), the ground under the canopy's lift (the normals' and the
   // positions' height), and each pixel's climate flora read once
-  const woods = flora && floraAt ? new Uint8Array(side * side) : null, lifted = woods ? new Float32Array(heights) : heights;
+  const woods = flora && floraAt ? new Uint8Array(side * side * 4) : null, lifted = woods ? new Float32Array(heights) : heights;
   const pixFlora = woods ? new Array(n * n) : null;
   const floraOfPixel = (pi, pj) => (pixFlora[pj * n + pi] ??= withExpected(floraAt(baseX - radius + pi, baseY + radius - pj)));
   const rowsAStep = woods ? MID_ROWS_A_STEP / 2 : MID_ROWS_A_STEP;   // the woods' rows twice the work: half as many a step
@@ -160,7 +161,7 @@ export function* midRingVertexSteps({ heights, baseX, baseY, radius = MID_RADIUS
           const trees = treesPerTile(((p >>> FLORA_WOOD) & 255) / 255, dirt, grass, stone, f.spec, f.byte) * (1 - ease) + f.expected * ease;
           const g = FLORA.ground;   // the ground's shares eased toward the near law's mean as the woods are
           layGround(colors, o, f.ground, dirt + (g[1] - dirt) * ease, grass + (g[2] - grass) * ease, stone + (g[3] - stone) * ease);
-          lifted[v] = heights[v] + plantCanopy(colors, o, trees, f.art, woods, v);
+          lifted[v] = heights[v] + plantCanopy(woods, v, trees, f.art);
           positions[o + 1] = lifted[v];
         }
       }
@@ -170,7 +171,14 @@ export function* midRingVertexSteps({ heights, baseX, baseY, radius = MID_RADIUS
   for (let z0 = 0; z0 < side; z0 += MID_ROWS_A_STEP) {
     yield;
     midRingNormals(lifted, side, sub, normals, z0, Math.min(side, z0 + MID_ROWS_A_STEP));   // FAR-FLORA: the canopy's own
-    if (capAt) for (let v = z0 * side; v < Math.min(side, z0 + MID_ROWS_A_STEP) * side; v++) if (!sea[v]) whiten(colors, v * 3, capShare(heights[v] - seaY, normals[v * 3 + 1], capAt[v]));   // PEAKS1
+    if (capAt) {
+      for (let v = z0 * side; v < Math.min(side, z0 + MID_ROWS_A_STEP) * side; v++) {
+        if (sea[v]) continue;
+        const share = capShare(heights[v] - seaY, normals[v * 3 + 1], capAt[v]);
+        whiten(colors, v * 3, share);   // PEAKS1
+        if (woods?.[v * 4]) whiten(woods, v * 4 + 1, share);   // FAR-FLORA: the canopy under the same snow (whiten is a mix: the mix of the two whitened is the mix whitened)
+      }
+    }
   }
   return { positions, normals, colors, sea, coarse, side, flora: woods };
 }
@@ -287,7 +295,7 @@ export class MidRingMesh {
     buf(v.colors, 2, gl.UNSIGNED_BYTE, true);
     buf(v.sea, 3, gl.UNSIGNED_BYTE, true, 1);
     buf(v.coarse, 4, gl.FLOAT, false, 1);   // the far ring's surface under it (render/farRing.js VS: the ease)
-    if (v.flora) buf(v.flora, 5, gl.UNSIGNED_BYTE, true, 1);   // FAR-FLORA: the canopy's cover (the program's crowns); off, its constant 0
+    if (v.flora) buf(v.flora, 5, gl.UNSIGNED_BYTE, true, 4);   // FAR-FLORA: the canopy's cover and colour (the program lays it); off, its constant (0, 0, 0, 1): none
     this.indexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
     this.buffers.push(this.indexBuffer);

@@ -135,10 +135,10 @@
     ]
   },
   {
-    "name": "FAR-FLORA-the-shade",
+    "name": "FAR-FLORA-the-canopy-art",
     "file": "src/render/midRing.js",
-    "old": "(art.rgb[c] * FLORA.shade - colors[o + c]) * cover",
-    "new": "(art.rgb[c] - colors[o + c]) * cover",
+    "old": "canopy[o + 1 + c] = Math.round(art.rgb[c]);",
+    "new": "canopy[o + 1 + c] = Math.round(art.rgb[c] * 0.5);",
     "tests": [
       "test/render/farflora.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "FAR-FLORA-the-cover-byte",
     "file": "src/render/midRing.js",
-    "old": "if (out) out[k] = Math.round(cover * 255);",
-    "new": "if (out) out[k] = 255;",
+    "old": "canopy[o] = Math.round(cover * 255);",
+    "new": "canopy[o] = 255;",
     "tests": [
       "test/render/farflora.test.js"
     ]
@@ -218,8 +218,35 @@
   {
     "name": "FAR-FLORA-the-attribute",
     "file": "src/render/midRing.js",
-    "old": "if (v.flora) buf(v.flora, 5, gl.UNSIGNED_BYTE, true, 1);",
-    "new": "if (v.flora) buf(v.flora, 5, gl.UNSIGNED_BYTE, false, 1);",
+    "old": "if (v.flora) buf(v.flora, 5, gl.UNSIGNED_BYTE, true, 4);",
+    "new": "if (v.flora) buf(v.flora, 5, gl.UNSIGNED_BYTE, false, 4);",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-mid-snow-canopy",
+    "file": "src/render/midRing.js",
+    "old": "if (woods?.[v * 4]) whiten(woods, v * 4 + 1, share);",
+    "new": "if (woods?.[v * 4]) whiten(woods, v * 4 + 1, 0);",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-ring-snow-canopy",
+    "file": "src/render/farRing.js",
+    "old": "if (flora?.[(o / 3) * 4]) whiten(flora, (o / 3) * 4 + 1, share);",
+    "new": "if (flora?.[(o / 3) * 4]) whiten(flora, (o / 3) * 4 + 1, 0);",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-field-snow-canopy",
+    "file": "src/render/farField.js",
+    "old": "whiten(flora, (j * side + i) * 4 + 1, capShare(",
+    "new": "whiten(flora, (j * side + i) * 4 + 2, capShare(",
     "tests": [
       "test/render/farflora.test.js"
     ]
@@ -290,17 +317,44 @@
   {
     "name": "FAR-FLORA-the-ring-attribute",
     "file": "src/render/farRing.js",
-    "old": "if (flora) buf(flora, 5, gl.UNSIGNED_BYTE, true, 1);",
-    "new": "if (flora) buf(flora, 4, gl.UNSIGNED_BYTE, true, 1);",
+    "old": "if (flora) buf(flora, 5, gl.UNSIGNED_BYTE, true, 4);",
+    "new": "if (flora) buf(flora, 4, gl.UNSIGNED_BYTE, true, 4);",
     "tests": [
       "test/render/farflora.test.js"
     ]
   },
   {
-    "name": "FAR-FLORA-the-classic-multiply",
+    "name": "FAR-FLORA-the-canopy-share",
     "file": "src/render/farRing.js",
-    "old": "vec3 lit = vColor * floraShade(vWorld.xz) * (",
-    "new": "vec3 lit = vColor * (",
+    "old": "smoothstep(uCanopyBand.x, uCanopyBand.y, max(cb.x, cb.y)) : 1.0);",
+    "new": "1.0 - smoothstep(uCanopyBand.x, uCanopyBand.y, max(cb.x, cb.y)) : 1.0);",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-canopy-band-on",
+    "file": "src/render/farRing.js",
+    "old": "bandOn ? 1 : 0, 0);",
+    "new": "0, 0);",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-canopy-from",
+    "file": "src/render/farRing.js",
+    "old": "origin[0] + (bd.baseX - this.baseX + 0.5) * TERRAIN_SIZE",
+    "new": "origin[0] + (bd.baseX - this.baseX) * TERRAIN_SIZE",
+    "tests": [
+      "test/render/fartrees.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-classic-mix",
+    "file": "src/render/farRing.js",
+    "old": "floraGrain(vWorld.xz), vFlora);\n",
+    "new": "floraGrain(vWorld.xz), 0.0);\n",
     "tests": [
       "test/render/farflora.test.js"
     ]
@@ -389,8 +443,17 @@
   {
     "name": "FAR-FLORA-the-off-test",
     "file": "src/render/horizonHaze.js",
-    "old": "if (uFlora.x < 0.5 || vFlora <= 0.0) return 1.0;",
-    "new": "if (vFlora <= 0.0) return 1.0;",
+    "old": "if (uFlora.x < 0.5) return 1.0;",
+    "new": "if (uFlora.x < -0.5) return 1.0;",
+    "tests": [
+      "test/render/farflora.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FLORA-the-flats-light",
+    "file": "src/render/horizonHaze.js",
+    "old": "return ambient + moonColor * (moonScale * 0.5) + sunColor * (sun * 0.5);",
+    "new": "return ambient + moonColor * (moonScale * 0.5) + sunColor * sun;",
     "tests": [
       "test/render/farflora.test.js"
     ]
@@ -405,10 +468,10 @@
     ]
   },
   {
-    "name": "FAR-FLORA-the-lane-multiply",
+    "name": "FAR-FLORA-the-lane-mix",
     "file": "src/render/enhancedLighting.js",
-    "old": "vec3 lit = elDecode(vColor) * floraShade(vWorld.xz) * (",
-    "new": "vec3 lit = elDecode(vColor) * (",
+    "old": "elDecode(vCanopy) * floraLight(uAmbient, uSunColor, sun, uMoonColor, uMoonScale) * floraGrain(vWorld.xz), vFlora);",
+    "new": "elDecode(vCanopy) * floraGrain(vWorld.xz), vFlora);",
     "tests": [
       "test/render/farflora.test.js"
     ]

@@ -3269,8 +3269,8 @@ far ring takes the ground over, it takes the woods over too.
 (`TREE_RECORDS`).
 - Colour: the mean of their opaque texels, weighted by each picture's texels. The picture is the one drawn near: a decoded
   replacement first (Vanilla Enhanced's), else the classic record through the pipeline's `classicRgba`
-  (`textureDeriveContext`, a new export of `systems/textureReplacement.js`). The canopy is that colour in FLORA.shade, the
-  shade between and under the crowns.
+  (`textureDeriveContext`, a new export of `systems/textureReplacement.js`). FAR-TREES (below) moved the canopy's mix into
+  the program, under the flats' own light.
 - Height: their billboards' mean (`scaledBillboardSize`). The canopy stands at FLORA.lift of it times the cover, so a
   wood's edge stands up and its normals lean.
 - The ground under the canopy is the near ground's own three tiles (`groundArt`: DIRT 1, GRASS 2, STONE 3 of the climate's
@@ -3280,9 +3280,10 @@ far ring takes the ground over, it takes the woods over too.
   when one lands, and the far ring, the middle ring and the far field are built again with it.
 - On the freeware's classic art TEXTURE.504's Trees are rgb (62, 68, 44), 11.8 m high and 9.2 m wide.
 
-**The grain** (`render/horizonHaze.js` FLORA_GLSL, both lanes' far-ring programs). A vertex's cover rides location 5
-(`aFlora`, a normalized byte; the middle ring, the far ring and the far field upload it, and a landmark leaves it off at 0).
-`floraShade` darkens and lightens the canopy about its colour with two value noises on the world's own metres: crowns at
+**The grain** (`render/horizonHaze.js` FLORA_GLSL, both lanes' far-ring programs). A vertex's canopy rides location 5
+(`aCanopy`, four normalized bytes since FAR-TREES: its cover and the trees' art; the middle ring, the far ring and the far
+field upload it, and a landmark leaves it off at the attribute's constant, no cover). `floraGrain` darkens and lightens the
+canopy about its colour with two value noises on the world's own metres: crowns at
 FLORA_CROWN_M (9 m, FOREST1's half a Tree a 6.4 m tile) and groves at FLORA_GROVE_M (46 m). Each fades out as its cells
 fall under a fragment (`fwidth`), so it never shimmers and a far wood is its mean.
 
@@ -3291,8 +3292,8 @@ fall under a fragment (`fwidth`), so it never shimmers and a far wood is its mea
 grain one uniform test (`uFlora.x` 0). `?farflora=off` stands them down.
 
 **The cost.**
-- GPU: one byte a vertex, 78 KB across the three layers. The fragment shader gains eight hashed corners, two smoothsteps
-  and two `fwidth`s on the woods; elsewhere one test.
+- GPU: four bytes a vertex since FAR-TREES (one at this slice), 313 KB across the three layers. The fragment shader gains
+  eight hashed corners, two smoothsteps and two `fwidth`s, and the flats' light beside the ground's.
 - The worker: a pixel's woods 0.48-0.90 ms beside its heights' 0.34-0.50 ms (node, the synthetic world, this machine
   loaded to 30 runnable threads). A cold middle ring is some 0.4-0.7 s more there; a rebuild's 170 new pixels some 80-150 ms.
 - This thread: the middle ring's laying, warm, is 37 ms against 23 ms without the woods. It is spread over 89 steps against
@@ -3324,7 +3325,7 @@ rebuild on art, `groundAt` the ground's, the kill door; the worker's answer and 
 book; the program's attribute and grain in every lane), `tools/mutants/farflora.json` (46, all dead).
 PIN MOVED:
 - `test/render/midring.test.js`: the middle ring's ask carries `flora`.
-- `test/render/farsea1.test.js`: the classic ring's land line under `floraShade`.
+- `test/render/farsea1.test.js`: the classic ring's land line under the canopy (moved again by FAR-TREES, the mix).
 - `test/render/audit_farsea1.test.js`: the evaluator takes FLORA_GLSL, off.
 - `test/world/terrain/terrainworker.test.js`: the worker imports `floraCover.js`.
 Displaced mutant records re-aimed by content (each killed again):
@@ -3333,3 +3334,100 @@ Displaced mutant records re-aimed by content (each killed again):
 - `peaks1.json`'s ring whiten.
 The four hosts: `scenes/world.js` builds and draws the far ring as before (no line changed); `scenes/exterior.js`,
 `scenes/worldModes.js` and `scenes/dungeonContext.js` draw no far ring.
+
+## FAR-TREES - the near trees carried past the streamed grid (2026-10-26, the owner, through the coordinator)
+
+The owner: "on top of distant view, no flora/trees show. Its just a plain green flat texture. No band aids for any of
+this". The coordinator: the billboard band from the game's own tree art, crossfaded with the near flats, so the tree line
+at the grid's edge is gone. The owner held the release for it.
+
+**What stood at the grid's edge.** The streamed grid stands every Tree of its pixels: FOREST1's woods, or DFU's scatter.
+Past its two nearest rings only the tall flats draw, every Tree among them (`world/flatDistance.js`). Past its edge, 4.5
+km out at Land View 5, the far views stood FAR-FLORA's canopy alone (above). Seen from over the grid, the trees stopped in
+a line and a smooth wood of their colour began. Where the stream still owed a pixel inside the grid, the same line ran
+round the hole.
+
+**The band** (`render/farTrees.js`). Two sets of pixels make it (`bandPixels`):
+- the ring of pixels past the grid (BAND_RING, 1);
+- every pixel inside the grid the stream has not built (its `built` map, read at each pixel the traveller crosses).
+Each band pixel stands its own trees. The pixel's layout runs on the terrain worker (`world/terrain/floraCover.js`
+`bandTreesPixel`): its kernel samples with the landforms the worker holds, its ground classes and their squares, and the
+nature's own `layoutNature`. That is FOREST1 with the switch, else DFU's scatter, which a desert always takes; the result
+is kept to the archive's Tree records. So a band tree is the very flat the built pixel will stand: its own dice, its
+place, its record and its size. The band is drawn in the far ring's pass at the far plane, so a built pixel's ground (and
+its own flats) cover the band's trees by depth. When the stream builds a pixel nothing moves.
+
+**What a band pixel leaves out** (named, each a tree or a few where the built pixel differs):
+- a location's clearing and flattening;
+- the roads' paint and their track mask;
+- a World of Daggerfall site;
+- a neighbour climate's tiles at a border (ECOTONE1);
+- the jungle's own layout and the graht-oaks (BANTHA1, GRAHT1);
+- the season's art: the summer archive's pictures, as FAR-FLORA's.
+
+**The crossfade, both sides by one rim.** Over BAND_FADE (0.5 to 1.45 pixels past the grid's radius, Chebyshev from the
+centre of the pixel the band was laid round), two things happen together:
+- the band's trees dither out: a byte a tree, `treeHash`, against a smoothstep;
+- the far ring's program lays the canopy back over the ground (`uCanopyBand`, `uCanopyFrom`: under the band its own
+  trees stand on the ground, and the canopy's colour would count them twice).
+From the grid's edge outward, the trees stand at the near law's density, thin over the band ring, and hand over to the
+canopy as it comes in. The near flats needed no fade of their own: the band continues them tree for tree, at the same
+places, so the grid's edge is no edge. The coordinator's permission to give the billboard program a distance fade
+(render/renderer.js) was not used, and renderer.js is untouched.
+
+**The canopy, lit as the trees are.** FAR-FLORA's canopy colour moved into the program. A vertex's canopy is now four
+bytes at location 5: its cover, then the trees' art (`plantCanopy`). The ground's colour stays the vertex's own. Both
+lanes' far-ring programs mix the two by the cover: the ground under its own light, and the canopy under the flats' light
+(`horizonHaze.js` `floraLight`: the ambient and half the moon, half the sun under the clouds' shadow - renderer.js BB_FS's
+`uTint` and `uBBSun`), grained (`floraGrain`). A far wood is therefore the aggregate of the band's trees, which take the
+same light (`farTrees.js` TREE_LIGHT), and FLORA.shade, the canopy's stand-in for the flats' light, is gone. PEAKS1's snow
+whitens the canopy's colour as it whitens the ground's: a mix of the two whitened is the mix whitened.
+
+**How it is drawn.** One draw of points, by the band's own program (classic, the lane's, and the classic-shadow lane's look
+over the lane's - `treesFsFor`):
+- **The sprite.** A tree is a screen square the side of its billboard's larger extent, projected through the pass's lens
+  and the world viewport's height, standing on its foot.
+- **The picture.** The record's own, laid bottom-centred into a TREE_LAYER (64) layer of one mipmapped array texture
+  (`layerPicture`, up to TREE_LAYERS 48). It is the picture drawn near: a decoded replacement, else the classic record
+  (`farFlora.js` `pipelinePictures`).
+- **Cutout, light and haze.** Cut out at the flats' own 0.5, lit by `floraLight`, hazed as the far ring is.
+- **Sub-pixel trees.** A tree under a pixel is drawn by its share of one (its byte against its area), so a far wood keeps
+  its coverage and never becomes a blot of one-pixel points.
+- **Placement.** The instances sit in the band's frame (`bandInstanceSteps`: x east and z north from the base pixel's
+  south-west corner), 16 bytes each: x, y, z, the layer and the dither byte.
+
+**The knob and the doors.** The band stands with the woods: Land View FLORA_MIN_LAND_VIEW (4) and up, with a terrain
+worker. Low's 3 asks nothing, lays nothing and draws nothing. `?fartrees=off` stands the band down and leaves the canopy;
+`?farflora=off` stands both down.
+
+**The cost.**
+- **Points.** The band's are the near law's own count, about 3,600 Trees a pixel on the freeware's Cyrodiil (612,326 over
+  the bench's 169 pixels). Land View 5's ring of 48 pixels is about 175,000 points, 2.8 MB, one draw. The grid's unbuilt
+  pixels add their own until built.
+- **The GPU.** Each point is one vertex: a matrix and a few comparisons. Each fragment of it is one texture fetch, the
+  light and the haze. Trees at the band's distance are 1-3 pixels, so the band is some hundreds of thousands of
+  fragments, most of them under the built ground's depth and rejected before the shader.
+- **The worker.** About 40 ms a pixel: the kernel 30, the tiles 7, the layout 5 (node, the synthetic world, this loaded
+  machine). The work is kept by the pixel in the horizon's book, asked BAND_PIXELS_AN_ASK (4) pixels an ask, the next as
+  the last lands, so the stream's own jobs run between them. A cold band is about 2 s there; a pixel crossed asks its new
+  ring's 13 or so.
+- **This thread.** At each pixel crossed the instances are laid one pixel per step under the far ring's
+  HORIZON_BUDGET_MS. They are uploaded one 512 KB slice per step (UPLOAD_SLICE) into a buffer of their own, and swapped in
+  whole when the last slice is up. The atlas is written once per archive. Nothing is per frame beyond the draw.
+
+**Seen** (the game's own far pass on the freeware's ground, the scratch bench of FAR-FLORA). No streamed grid is drawn
+there, so the bench stands the grid's own trees by the same law; that is the stand-in, named. From 900 m over the grid's
+north edge in Cyrodiil, the near trees alone stop in a line. With the band they run on a ring and thin into the woods'
+canopy, with no line. From the travel view's eye the forests read as forests out to the band, and as their canopy past
+it.
+
+A departure from Daggerfall Unity, whose trees end with its streamed terrain: Port-Ledger row FAR-FLORA. Proof:
+- `test/render/fartrees.test.js` (8): the band's pixels; a pixel's trees against the stream's own layout under both
+  laws; the instances' frame, layer and bytes; the layer picture; the book - its asks, the archive, the art once, the
+  steps, the slices, the swap, the draw, the rim, dispose; the worker's band and the client's asks; the programs; the far
+  ring's gate, knob, draw and the canopy's crossfade.
+- `tools/mutants/fartrees.json` (40, all dead).
+PIN MOVED: `test/render/farsea1.test.js` (the classic ring's land line, the canopy's mix) and `test/render/farflora.test.js`
+(FAR-FLORA's own pins: the canopy four bytes, its colour in the program). The four hosts: `scenes/world.js` builds and draws
+the far ring as before (no line changed); `scenes/exterior.js`, `scenes/worldModes.js` and `scenes/dungeonContext.js` draw
+no far ring.

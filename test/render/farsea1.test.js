@@ -89,8 +89,9 @@ test('FAR-SEA1: every ring shader - classic, the lane, the classic-shadow lane -
     for (const l of lines) { const i = text.indexOf(l); assert.ok(i > at, `${name}: '${l}' in its place`); at = i; }
   };
   // AUDIT FAR-SEA1 C1: the whole output line, and the sea's line between the light and it - inverted or dead, it fails
-  // PIN MOVED (FAR-FLORA, 2026-10-26): the land's colour under its woods' crowns (horizonHaze.js floraShade - 1 off the woods)
-  order(classicFs, ['float sun = ringSun();', 'vec3 lit = vColor * floraShade(vWorld.xz) * (uAmbient + uSunColor * (sun * diff) + uMoonColor * (uMoonScale * mdiff));',
+  // PIN MOVED (FAR-FLORA, 2026-10-26): the ground's light and the canopy's (horizonHaze.js floraLight, grained) mixed by its
+  // cover - the ground's alone off the woods (vFlora 0)
+  order(classicFs, ['float sun = ringSun();', 'vec3 lit = mix(vColor * (uAmbient + uSunColor * (sun * diff) + uMoonColor * (uMoonScale * mdiff)), vCanopy * floraLight(uAmbient, uSunColor, sun, uMoonColor, uMoonScale) * floraGrain(vWorld.xz), vFlora);',
     'float sea = vSea * uSeaLook;', 'if (sea > 0.0) lit = mix(lit, ringSea(uAmbient, uSunColor, uMoonColor, sun), sea);',
     'outColor = vec4(mix(lit, uFogColor, ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, uHazeHold))), 1.0);'], 'classic');   // BANTHA1: the jungle's haze over the horizon's
   // the lane: its ground through the tonemap into display space, the sea in the water's own space from the light as given

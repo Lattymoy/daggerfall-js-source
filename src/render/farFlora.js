@@ -20,7 +20,7 @@ import { TREE_RECORDS } from '../world/terrain/terrainNature.js';
 import { floraSpec } from '../world/terrain/floraCover.js';
 import { getWorldClimateSettings, CLIMATE_BASE_TYPES } from '../formats/mapsFile.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
-import { textureDeriveContext, decodedTexture } from '../systems/textureReplacement.js';
+import { textureDeriveContext, decodedTexture, decodedTextureTopDown } from '../systems/textureReplacement.js';
 
 /** The least Land View the far woods stand at (systems/graphicsPresets.js: Low 3, Medium 4, High 5, Ultra 6). */
 export const FLORA_MIN_LAND_VIEW = 4;
@@ -103,6 +103,22 @@ export function pipelineRead() {
   };
 }
 
+/** FAR-TREES: the pipeline's pictures as the band's atlas lays them - `picture(archive, record)` top-down rgba ({ width,
+ *  height, data }: a decoded replacement's, else the classic record's) and `size(archive, record)` its billboard - or null
+ *  while no pipeline is up. */
+export function pipelinePictures() {
+  const ctx = textureDeriveContext();
+  if (!ctx) return null;
+  const read = /** @type {NonNullable<ReturnType<typeof pipelineRead>>} */ (pipelineRead());
+  return {
+    picture: async (a, r) => {
+      const swap = decodedTextureTopDown(a, r, 0);
+      return swap?.rgba ? { width: swap.width, height: swap.height, data: swap.rgba } : ctx.classicRgba(a, r, 0);
+    },
+    size: read.size,
+  };
+}
+
 /**
  * THE BOOK: a climate's flora as the far views build it - `floraOf(climate)`: `{ spec, art, ground }` (world/terrain/
  * floraCover.js floraSpec on its summer nature archive, treeArt's answer for that archive and groundArt's for its ground
@@ -121,6 +137,8 @@ export function createFloraArt({ read = pipelineRead, forests = () => true } = {
   };
   return {
     get version() { return version; },
+    /** The Real forests switch the book reads its climates by (FAR-TREES: the band's layout asks it too). */
+    get forests() { return !!forests(); },
     /** @param {number} climate a CLIMATE.PAK value */
     floraOf(climate) {
       let s = specs.get(climate);
