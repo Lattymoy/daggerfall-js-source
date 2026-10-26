@@ -26,6 +26,12 @@ finding there would be routed, not fixed - none was. The code says what each fix
   the Imperial City (2344, 881) east of it, Alinor (-150, 1912) west and south - every axis past the Bay's rectangle once.
   Each finding's pin builds its fixture there, through the producer the game runs (the wire's own projection, the relay's
   parse, a real `OnlineSession` over the fake socket, the quest layer `createQuestWorld` makes, the talk's `TopicTree`).
+- **SMOOTH-LAND landed mid-audit** (ad2a8d71de, merged in): the provinces' labels are the land's law now
+  (`world/tamriel/tamrielLand.js` landLaw), and land that names no province is NO_PROVINCE - which `theatreAt` would read
+  as the sea's theatre, and the politic map then as POLITIC.PAK's off-map answer (a region of the Bay's by the clamp).
+  Measured on the freeware's own picture (ARENA2, the fit (38, 57) x 15.5), every map pixel of the frame past the Bay:
+  5,989,200 land pixels, none of them without a theatre. Every finding here reads the region through the theatre, and
+  every pin and probe was run again on the merged head.
 
 ## The findings
 
