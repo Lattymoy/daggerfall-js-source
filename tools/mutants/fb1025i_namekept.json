@@ -1,0 +1,143 @@
+[
+  {
+    "name": "NAME-KEPT-the-old-law",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  if (tier !== 'legendary') item.name = linesName(item, tier);",
+    "new": "  if (tier !== 'legendary') item.name = rarityName(item, tier, item.affixes.filter((a) => a?.gem == null));",
+    "tests": [
+      "test/systems/loot/fb1025i_namekept.test.js"
+    ],
+    "note": "the reforge names the piece again from its template, as before"
+  },
+  {
+    "name": "NAME-KEPT-own-name-lost",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  return ladderBuilt(was, was?.rarity, was?.name) ? ladderName(item, tier) : was?.name;",
+    "new": "  return ladderName(item, tier);",
+    "tests": [
+      "test/systems/loot/fb1025i_namekept.test.js"
+    ],
+    "note": "a name of the piece's own named by the ladder anyway"
+  },
+  {
+    "name": "NAME-KEPT-any-prefix",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "(pre === '' || (pre.endsWith(' ') && slotWords(tier, 'prefix').has(pre.slice(0, -1))))",
+    "new": "(true)",
+    "tests": [
+      "test/systems/loot/fb1025i_namekept.test.js"
+    ],
+    "note": "a name with anything before its base read as the ladder's"
+  },
+  {
+    "name": "NAME-KEPT-any-suffix",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "(suf === '' || (suf.startsWith(' ') && slotWords(tier, 'suffix').has(suf.slice(1))))",
+    "new": "(true)",
+    "tests": [
+      "test/systems/loot/fb1025i_namekept.test.js"
+    ],
+    "note": "a name with anything after its base read as the ladder's"
+  },
+  {
+    "name": "NAME-KEPT-jewel-base-out",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  if (r?.kind === 'jewel') return r.name;\n",
+    "new": "",
+    "tests": [
+      "test/systems/loot/fb1025i_namekept.test.js"
+    ],
+    "note": "a crafted jewel built on its template - its metal and gem lost"
+  },
+  {
+    "name": "NAME-KEPT-mark-takes-words",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "const ladderName = (item, tier) => (markNamed(item) ? ladderBase(item) : ",
+    "new": "const ladderName = (item, tier) => (false ? ladderBase(item) : ",
+    "tests": [
+      "test/systems/loot/fb1025i_namekept.test.js"
+    ],
+    "note": "a Masterwork given the ladder's words its mark withholds"
+  },
+  {
+    "name": "NAME-KEPT-band-of-magic",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "words.add(k.word(BAND[tier] ?? 0, p));",
+    "new": "words.add(k.word(0, p));",
+    "tests": [
+      "test/systems/loot/fb1025i_namekept.test.js"
+    ],
+    "note": "a Rare's words read as a Magic's"
+  },
+  {
+    "name": "NAME-KEPT-bare-template-unread",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  for (const base of new Set([ladderBase(item), templateByIndex(item?.templateIndex)?.name])) {",
+    "new": "  for (const base of new Set([ladderBase(item)])) {",
+    "tests": [
+      "test/systems/loot/fb1025i_namekept.test.js"
+    ],
+    "note": "an older reforge's name on the bare template read as the piece's own"
+  },
+  {
+    "name": "NAME-KEPT-gem-words-name",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "nameAround(ladderBase(item) ?? '', tier, item.affixes.filter((a) => a?.gem == null))",
+    "new": "nameAround(ladderBase(item) ?? '', tier, item.affixes)",
+    "tests": [
+      "test/systems/loot/fb1025i_namekept.test.js"
+    ],
+    "note": "a set gem's word names the piece (AUDIT GEM)"
+  },
+  {
+    "name": "NAME-KEPT-repair-found-pieces",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "!Array.isArray(it.affixes) || !recipeById(it.recipe) || !Object.isExtensible(it)) continue;",
+    "new": "!Array.isArray(it.affixes) || !Object.isExtensible(it)) continue;",
+    "tests": [
+      "test/systems/loot/fb1025i_namekept.test.js"
+    ],
+    "note": "the load repairs a found piece's name - a cursed one's, by design without its curse's word"
+  },
+  {
+    "name": "NAME-KEPT-repair-uncounted",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    it.name = name;\n    n++;",
+    "new": "    it.name = name;",
+    "tests": [
+      "test/systems/loot/fb1025i_namekept.test.js"
+    ],
+    "note": "the repair says nothing done"
+  },
+  {
+    "name": "NAME-KEPT-imbue-renames",
+    "file": "src/systems/reforge.js",
+    "old": "    if (item.rarity === tier) item.name = linesName(item, tier, was);",
+    "new": "",
+    "tests": [
+      "test/systems/loot/fb1025i_namekept.test.js"
+    ],
+    "note": "the Imbue names a questline's reward from its template"
+  },
+  {
+    "name": "NAME-KEPT-load-unrepaired",
+    "file": "src/systems/save/save.js",
+    "old": "    const n = repairCraftedNames(list);",
+    "new": "    const n = 0;",
+    "tests": [
+      "test/systems/loot/fb1025i_namekept.test.js"
+    ],
+    "note": "the load never repairs the old law's names"
+  },
+  {
+    "name": "NAME-KEPT-masterwork-rri-base",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  return markNamed(item) ? template : rriVariantWord(item) + template;",
+    "new": "  return rriVariantWord(item) + template;",
+    "tests": [
+      "test/systems/loot/fb1025i_namekept.test.js"
+    ],
+    "equivalent": true,
+    "why": "parity with mintPiece, which names a Masterwork on its bare template: the Roleplay & Realism: Items word is '' with the mods off (test/modsOff.js), so no pin can tell the two; kept so a Masterwork's RRI armour is not renamed at its first reforge or load"
+  }
+]

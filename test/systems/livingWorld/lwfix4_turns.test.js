@@ -163,7 +163,7 @@ test('LW-FIX4 one struck down on the road is never stood again (the roads\' part
   const stands = createRoadStands({
     spawn: (type, feet, o) => { spawned++; const rec = { dead: false, entity: {}, o }; pool.add(rec); return rec; },
     remove: (rec) => pool.delete(rec), inPool: (rec) => pool.has(rec), ready: () => true, sceneOf: (x, z) => [x / 40, 0, z / 40],
-    relations: () => rel, slay: (res) => slain.add(res.id), died: () => {}, deadAt: (res) => slain.has(res.id), fighting: () => false,
+    relations: () => rel, slay: (res) => slain.add(res.id), killed: () => {}, died: () => {}, deadAt: (res) => slain.has(res.id), fighting: () => false,
   });
   const res = { id: 'L9.t4', name: 'Bo Reed', cls: 140, level: 9 };
   rel.note(res.id, 'slain', Math.floor((5000 - 240) / 1440));
@@ -171,7 +171,7 @@ test('LW-FIX4 one struck down on the road is never stood again (the roads\' part
   stands.frame(cands, { x: 0, z: 0 }, 5000);
   return Promise.resolve().then(() => {
     assert.equal(spawned, 1, 'drew on the player');
-    stands.stands()[0].rec.dead = true; stands.stands()[0].rec.corpse = true;   // PIN MOVED (AUDIT LW-III): killed, a corpse
+    stands.stands()[0].rec.dead = true; stands.stands()[0].rec.corpse = true; stands.stands()[0].rec.killedBy = 'player';   // PIN MOVED (AUDIT LW-III): killed, a corpse; PIN MOVED (AUDIT FB1025i D2): by the player's hand
     stands.frame(cands, { x: 0, z: 0 }, 5001);
     assert.ok(slain.has(res.id), 'struck down');
     stands.frame(cands, { x: 0, z: 0 }, 5001.1);
@@ -194,7 +194,7 @@ test('LW-FIX4 the streaming host: the trips\' fate the dice\'s (`fated`, the tro
   assert.match(w, /livingTripWorld\.fated = \(res, k\) => livingPlaceOf\(res, k\)\.diced;/);
   assert.match(w, /diced: \(res, trip\) => livingTripPlace\(res, trip\)\.diced,/);
   assert.equal((w.match(/died: livingDied,/g) ?? []).length, 3, 'the stands\', the fights\' and the dives\'');
-  assert.match(w, /slay: livingRoadSlay, died: livingDied,\n\s*deadAt: livingDeadAt,/, 'the stands ask the hands\' dead');   // PIN MOVED (LW11): the road's slay, its report beside the turn
+  assert.match(w, /slay: livingRoadSlay, killed: livingKilled, died: livingDied,[^\n]*\n\s*deadAt: livingDeadAt,/, 'the stands ask the hands\' dead');   // PIN MOVED (LW11): the road's slay, its report beside the turn
   assert.match(w, /owner: \(feet\) => amGroupRollOwner\(online\?\.id \?\? null, player\.feetAt\(\), \(peersNear\(\) \?\? \[\]\)\.filter\(\(p\) => Math\.hypot\(p\.feet\[0\] - feet\[0\], p\.feet\[2\] - feet\[2\]\) <= LIVE_M\), Infinity\),/);
   assert.match(w, /const livingMemoFresh = \(\) => \{ if \(_livingTripMemo\.size > 40000 \|\| livingWays\.generation !== _livingWaysSeen\) \{ _livingTripMemo\.clear\(\); _livingWaysSeen = livingWays\.generation; \} \};/);
   assert.equal((w.match(/livingMemoFresh\(\);/g) ?? []).length, 6, 'the towns\', the roads\' frame, the rooms\' frame (AUDIT-E2), the divers\', the remains\' and the carried word\'s (LW16: PIN MOVED)');

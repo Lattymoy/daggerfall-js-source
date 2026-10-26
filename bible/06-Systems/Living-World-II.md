@@ -424,7 +424,15 @@ Mac: "caravans ... that can be assaulted, protected or traded with". The law is 
     pickpocket sets is put back as it stood before it, because the report is the road's charge (AUDIT LW-II-2 C15:
     `townTalk.js activate` keeps the flag before the pickpocket; the road's door cleared every crime that stood);
   - a traveller struck down (LW7's `livingStrikeRoad`, a stood armed one, a fight the player started): Murder, naming
-    them;
+    them. FIELD BUGS 2026-10-25i ROAD-SPARE: never one the street's law spares (`cityGuards.js playerSparesPerson`:
+    Protect Bystanders while enemies are near, or a raid) - the swing stops on them and nothing is reported. Before it, a
+    swing at an escort's attacker just past the reach struck the caravan's merchant down, and the Murder charged at the
+    town (-20) had the watch stopping the player for 600 gold (`scenes/livingWorld/roadStrike.js`, the strike the host's
+    `livingStrikeRoad` is) - the likely cause of the report, not a proven one (the reporter's save was not read; A0C00Y17's
+    watch branch refused, DFU's own `legal repute -20`, ends at the same fine and stands). AUDIT FB1025i D2: a stood
+    traveller (LW7b) another hand cut down - a beast, a peer, an ally - is no deed of the player's and is not reported
+    (`roadStands.js`, the pool's `killedBy`); D3: the fight that spares is a fight near the player, a party member's foes
+    too (`encounters.js fightNear`);
   - a hold-up (4.4): Theft.
 - **WHERE IT LANDS** (`reportAt`): the minute the party next reaches a town - the one it set out for on the way out,
   home on the way back or once it has turned; a hunter's, whose way out ends in the wild, home (AUDIT LW-II-2 R9). The

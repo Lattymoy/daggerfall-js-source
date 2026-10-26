@@ -9,7 +9,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { standService } from '../accountDb.mjs';
-import { seatRealm, freshSave, recordOf, realmJoinAt } from '../realmSeat.mjs';
+import { seatRealm, freshSave, recordOf, realmJoinAt, layRecord } from '../realmSeat.mjs';
 import { staffWords, STAFF_SESSION_HEADER } from '../../server-account/src/staff.js';
 import {
   REALM_ROUTES, REALM_PAGE, EVIDENCE_KEEP_S, GAINS_KEEP_MS, HOME_WATCH, holdUrgency, takeOut, gainsRanked,
@@ -723,4 +723,194 @@ test('STAFF-PURGE-DUPES: one confirm destroys every copy marked on the character
   assert.equal(s.row(chest.id).lease, null);
   assert.equal(s.raw.prepare('SELECT 1 FROM decor_bin WHERE map_id = 33').get(), undefined);
   assert.equal(s.raw.prepare('SELECT 1 FROM item_dupes WHERE char_id = ?').get(chest.id), undefined);
+});
+
+test('STAFF-PURGE-DUPES keep (FIELD BUGS 2026-10-25i COPY-LIFT): one confirm keeps one of each marked piece - the pack\'s before a chest\'s - and destroys only its copies, a chest\'s of a kept piece too; the copy of its own is lifted in the same batch, said, and every other mark stands through the next checkpoint', async () => {
+  const s = await stand();
+  const a = 'a200000000000001';   // the pair the decorator's Discard made: in the pack and in the home's chest
+  const b = 'b200000000000002';   // a claim's copy, held once
+  const c = 'c200000000000003';   // a mark whose piece only a chest holds
+  const scene = { sceneName: 'OnlineHome [MapID=11, BuildingKey=11]', decorItems: { c1: [piece(a)] } };
+  const t = await s.seat('Paired', freshSave({ name: 'Paired', items: [piece(a), piece(b)], sceneCache: { permanentScenes: [scene.sceneName], scenes: [scene] } }));
+  assert.deepEqual({ ...s.raw.prepare('SELECT kind FROM item_dupes WHERE uid = ? AND char_id = ?').get(a, t.id) }, { kind: 'twice' }, 'the checkpoint locked the pair');
+  s.raw.prepare("INSERT INTO item_dupes (uid, char_id, at, kind) VALUES (?, ?, ?, 'claim')").run(b, t.id, nowS());
+  s.raw.prepare("INSERT INTO item_dupes (uid, char_id, at, kind) VALUES (?, ?, ?, 'claim')").run(c, t.id, nowS());
+  s.raw.prepare("INSERT INTO homes (map_id, building_key, player, char_id, owner_name, region, entry, price, bought_at) VALUES (11, 11, ?, ?, 'Paired', 17, 'private', 1, 1)").run(s.row(t.id).player, t.id);
+  for (const k of [a, c]) s.raw.prepare("INSERT INTO decor_bin (map_id, building_key, piece_id, uid, item) VALUES (11, 11, 'chest', ?, '{}')").run(k);
+  const pre = await s.admin('/v1/staff/item/purge-dupes', { id: t.id, keep: true });
+  assert.equal(pre.status, 200, JSON.stringify(pre.body));
+  assert.deepEqual([pre.body.dupes, pre.body.held, pre.body.extra, pre.body.bins, pre.body.lifts, pre.body.keep], [3, 3, 1, 1, 1, true], 'one copy in the record, one in a chest, one copy of its own to lift');
+  const r = await s.admin('/v1/staff/item/purge-dupes', { id: t.id, keep: true, confirm: true, reason: 'duplicated', note: 'the decorator\'s Discard', seq: pre.body.seq });
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  assert.deepEqual(r.body.lifted, [a]);
+  assert.deepEqual(s.raw.prepare('SELECT uid FROM item_dupes WHERE char_id = ? ORDER BY uid').all(t.id).map((x) => x.uid), [b, c], 'lifted with the act that left one - the claim\'s and the chest\'s marks stand');
+  assert.deepEqual(JSON.parse(s.raw.prepare("SELECT detail FROM realm_findings WHERE char_id = ? AND kind = 'dupe' ORDER BY id DESC LIMIT 1").get(t.id).detail), { lifted: [a], count: 1 });
+  const save = recordOf(s.env, t.id);
+  assert.deepEqual(save.items.map((i) => i.uid), [a, b], 'the pack keeps one of each');
+  assert.deepEqual(save.sceneCache.scenes[0].decorItems.c1, [], 'the chest\'s copy goes');
+  assert.deepEqual(s.raw.prepare('SELECT uid FROM decor_bin WHERE map_id = 11 ORDER BY uid').all().map((x) => x.uid), [c], 'a kept piece\'s chest copy goes, a piece the record holds none of stays the chest\'s');
+  assert.equal(s.raw.prepare('SELECT 1 AS y FROM item_uids WHERE uid = ? AND char_id = ?').get(a, t.id)?.y, 1, 'the ledger\'s row stays the record\'s');
+  assert.equal(s.row(t.id).lease, null, 'the record seized');
+  assert.deepEqual([s.staffFindings(t.id).at(-1).keep, s.staffFindings(t.id).at(-1).lifts], [true, 1]);
+  await realmJoinAt(s.env, t.who.secret, t.id);
+  const next = await s.put(t.who, t.id, save);
+  assert.equal(next.status, 200, JSON.stringify(next.body));
+  assert.deepEqual(next.body.locked, [b], 'the piece kept trades; the claim\'s still locked');
+  assert.deepEqual(s.raw.prepare('SELECT uid FROM item_dupes WHERE char_id = ? ORDER BY uid').all(t.id).map((x) => x.uid), [b, c]);
+  const again = await s.admin('/v1/staff/item/purge-dupes', { id: t.id, keep: true });
+  assert.deepEqual([again.body.extra, again.body.bins, again.body.lifts], [0, 0, 0]);
+  assert.deepEqual(await s.admin('/v1/staff/item/purge-dupes', { id: t.id, keep: true, confirm: true, reason: 'duplicated', note: 'again', seq: again.body.seq }),
+    { status: 409, body: { error: 'no-dupes' } }, 'a keep with no copy to destroy is refused - never a seizure for nothing');
+  // a pair one copy of which staff already took - Remove from a player, its trail checked (AUDIT FB1025i F1: the real
+  // producer, staff_evidence keeping the copy): nothing to destroy, the lift alone
+  const d = 'd200000000000004';
+  const h = await s.seat('Halved', freshSave({ name: 'Halved', items: [piece(d), piece(d)] }));
+  assert.equal((await s.admin('/v1/staff/contested/trail', { uid: d, char: h.id, found: 'innocent', note: 'the decorator' })).status, 200);
+  const tk = await s.admin('/v1/staff/item/take', { id: h.id, key: d });
+  const took = await s.admin('/v1/staff/item/take', { id: h.id, key: d, confirm: true, trail: true, reason: 'duplicated', note: 'one of the pair', seq: tk.body.seq });
+  assert.equal(took.status, 200, JSON.stringify(took.body));
+  assert.deepEqual(recordOf(s.env, h.id).items.map((i) => i.uid), [d], 'one copy left, the other kept by staff');
+  const halved = await s.admin('/v1/staff/item/purge-dupes', { id: h.id, keep: true });
+  assert.deepEqual([halved.body.extra, halved.body.bins, halved.body.lifts], [0, 0, 1]);
+  const lift = await s.admin('/v1/staff/item/purge-dupes', { id: h.id, keep: true, confirm: true, reason: 'duplicated', note: 'the copy was taken', seq: halved.body.seq });
+  assert.deepEqual([lift.status, lift.body.lifted], [200, [d]], 'lifted by the act');
+  assert.equal(s.raw.prepare('SELECT 1 FROM item_dupes WHERE char_id = ?').get(h.id), undefined);
+  // AUDIT FB1025i F1: one the PLAYER let go - sold at a counter, the service never told - is no copy the act can count:
+  // the save's word that it shows the piece once lifts nothing
+  const e = 'd200000000000005';
+  const sold = await s.seat('Sold', freshSave({ name: 'Sold', items: [piece(e), piece(e)] }));
+  assert.equal((await s.put(sold.who, sold.id, freshSave({ name: 'Sold', goldPieces: 140, items: [piece(e)] }))).body.locked[0], e, 'one copy left, locked still');
+  s.raw.prepare("INSERT INTO staff_evidence (id, kind, player, char_id, key, reason, note, by_id, at, until) VALUES ('ev-other', 'player', 'p-other', 'r-other', ?, 'duplicated', 'a copy off another character', 'staff', ?, ?)").run(e, nowS(), nowS() + 3600);   // staff took one of it off ANOTHER character: no copy of this one's
+  const soldPre = await s.admin('/v1/staff/item/purge-dupes', { id: sold.id, keep: true });
+  assert.deepEqual([soldPre.body.extra, soldPre.body.bins, soldPre.body.lifts], [0, 0, 0]);
+  assert.deepEqual(await s.admin('/v1/staff/item/purge-dupes', { id: sold.id, keep: true, confirm: true, reason: 'duplicated', note: 'sold one', seq: soldPre.body.seq }),
+    { status: 409, body: { error: 'no-dupes' } });
+  assert.equal(s.raw.prepare('SELECT kind FROM item_dupes WHERE uid = ? AND char_id = ?').get(e, sold.id)?.kind, 'twice', 'locked still');
+  // ...nor one staff took and PUT BACK: the evidence returned is no copy kept
+  const g = 'd200000000000006';
+  const back = await s.seat('PutBack', freshSave({ name: 'PutBack', items: [piece(g), piece(g)] }));
+  assert.equal((await s.admin('/v1/staff/contested/trail', { uid: g, char: back.id, found: 'innocent', note: 'the decorator' })).status, 200);
+  const btk = await s.admin('/v1/staff/item/take', { id: back.id, key: g });
+  const bt = await s.admin('/v1/staff/item/take', { id: back.id, key: g, confirm: true, trail: true, reason: 'duplicated', note: 'one of the pair', seq: btk.body.seq });
+  assert.equal(bt.status, 200, JSON.stringify(bt.body));
+  s.raw.prepare("UPDATE staff_evidence SET state = 'returned' WHERE id = ?").run(bt.body.evidence);   // put back - and let go again since
+  assert.equal((await s.admin('/v1/staff/item/purge-dupes', { id: back.id, keep: true })).body.lifts, 0);
+  // AUDIT FB1025i F1: a pair whose second copy the account's shared chest holds (its Access moved the chest's goods into
+  // the service's bin): the act destroys the chest's, so it lifts
+  const f = 'd200000000000007';
+  const binned = await s.seat('Binned', freshSave({ name: 'Binned', items: [piece(f), piece(f)] }));
+  s.raw.prepare("INSERT INTO homes (map_id, building_key, player, char_id, owner_name, region, entry, price, bought_at) VALUES (55, 55, ?, ?, 'Binned', 17, 'private', 1, 1)").run(s.row(binned.id).player, binned.id);
+  s.raw.prepare("INSERT INTO decor_bin (map_id, building_key, piece_id, uid, item) VALUES (55, 55, 'chest', ?, ?)").run(f, JSON.stringify(piece(f)));
+  assert.equal((await s.put(binned.who, binned.id, freshSave({ name: 'Binned', items: [piece(f)] }))).status, 200, 'the other in the bin');
+  const bpre = await s.admin('/v1/staff/item/purge-dupes', { id: binned.id, keep: true });
+  assert.deepEqual([bpre.body.extra, bpre.body.bins, bpre.body.lifts], [0, 1, 1]);
+  const blift = await s.admin('/v1/staff/item/purge-dupes', { id: binned.id, keep: true, confirm: true, reason: 'duplicated', note: 'the chest\'s copy', seq: bpre.body.seq });
+  assert.deepEqual([blift.status, blift.body.lifted], [200, [f]]);
+  assert.equal(s.raw.prepare('SELECT count(*) AS n FROM decor_bin WHERE uid = ?').get(f).n, 0, 'the chest\'s copy destroyed');
+});
+
+for (const [where, hide, lies] of [
+  ['a deserter revenant\'s take (revenant.js RVN8 splitPack)', (it) => ({ modData: { Revenant: { list: [{ id: 'rv1', sworn: false, defeated: false, took: [it] }] } } }), (save) => save.modData.Revenant.list[0].took],
+  ['a pile on the ground', (it) => ({ world: { piles: [{ items: [it] }] } }), (save) => save.world.piles[0].items],
+]) {
+  test(`STAFF-PURGE-DUPES keep (AUDIT FB1025i F1): a copy of the pair moved to ${where} - where the record lists nothing - is found by the keep and destroyed with the rest, the one kept lifted; the copy never comes back live`, async () => {
+    const s = await stand();
+    const a = 'a210000000000001';
+    const t = await s.seat('Duper', freshSave({ name: 'Duper', items: [piece(a), piece(a)] }));
+    assert.deepEqual((await s.put(t.who, t.id, freshSave({ name: 'Duper', items: [piece(a)], ...hide(piece(a)) }))).body.locked, [a], 'one copy hidden: locked still');
+    const pre = await s.admin('/v1/staff/item/purge-dupes', { id: t.id, keep: true });
+    assert.deepEqual([pre.body.held, pre.body.hidden, pre.body.extra, pre.body.lifts], [2, 1, 1, 1], 'the hidden copy counted, and destroyed');
+    const r = await s.admin('/v1/staff/item/purge-dupes', { id: t.id, keep: true, confirm: true, reason: 'duplicated', note: 'the decorator', seq: pre.body.seq });
+    assert.deepEqual([r.status, r.body.lifted, r.body.hidden], [200, [a], 1]);
+    const save = recordOf(s.env, t.id);
+    assert.deepEqual([save.items.map((i) => i.uid), lies(save)], [[a], []], 'the record\'s kept; the hidden one gone');
+    await realmJoinAt(s.env, t.who.secret, t.id);
+    assert.deepEqual((await s.put(t.who, t.id, save)).body.locked, [], 'the one kept trades');
+    assert.deepEqual((await s.put(t.who, t.id, freshSave({ name: 'Duper', items: [piece(a), piece(a)] }))).body.locked, [a], 'a second of it shown again: a copy, locked');
+  });
+}
+
+test('STAFF-PURGE-DUPES keep (AUDIT FB1025i F1): a triple - the pack, a home\'s chest and a pile on the ground - keeps the pack\'s, destroys the other two, and lifts', async () => {
+  const s = await stand();
+  const a = 'a210000000000002';
+  const scene = { sceneName: 'OnlineHome [MapID=11, BuildingKey=11]', decorItems: { c1: [piece(a)] } };
+  const t = await s.seat('Triple', freshSave({ name: 'Triple', items: [piece(a)], sceneCache: { permanentScenes: [scene.sceneName], scenes: [scene] }, world: { piles: [{ items: [piece(a)] }] } }));
+  const pre = await s.admin('/v1/staff/item/purge-dupes', { id: t.id, keep: true });
+  assert.deepEqual([pre.body.held, pre.body.hidden, pre.body.extra, pre.body.lifts], [3, 1, 2, 1]);
+  const r = await s.admin('/v1/staff/item/purge-dupes', { id: t.id, keep: true, confirm: true, reason: 'duplicated', note: 'three of one', seq: pre.body.seq });
+  assert.deepEqual([r.status, r.body.lifted], [200, [a]]);
+  const save = recordOf(s.env, t.id);
+  assert.deepEqual([save.items.map((i) => i.uid), save.sceneCache.scenes[0].decorItems.c1, save.world.piles[0].items], [[a], [], []]);
+});
+
+test('STAFF-PURGE-DUPES keep (AUDIT FB1025i F6): the copy kept is the ledger\'s own piece - a key shown first on another piece keeps the piece its row was first seen as, destroys the other, and lifts', async () => {
+  const s = await stand();
+  const k = 'f210000000000001';
+  const real = piece(k);
+  const other = { ...applyRarity(createWeapon(120, 1, seeded(90)), 'rare', seeded(91)), uid: k };
+  const t = await s.seat('Printed', freshSave({ name: 'Printed', items: [real, real] }));
+  layRecord(s.env, t.id, freshSave({ name: 'Printed', items: [other, real] }));   // the other piece first
+  const pre = await s.admin('/v1/staff/item/purge-dupes', { id: t.id, keep: true });
+  assert.deepEqual([pre.body.extra, pre.body.lifts], [1, 1], 'the ledger\'s piece kept, so its lift asked');
+  const r = await s.admin('/v1/staff/item/purge-dupes', { id: t.id, keep: true, confirm: true, reason: 'duplicated', note: 'two of one key', seq: pre.body.seq });
+  assert.deepEqual([r.status, r.body.lifted], [200, [k]]);
+  assert.deepEqual(recordOf(s.env, t.id).items.map((i) => i.templateIndex), [real.templateIndex], 'the other piece destroyed');
+});
+
+test('STAFF-PURGE-DUPES keep (AUDIT FB1025i F5): a claim\'s copy, its holder\'s real piece deposited in the account\'s shared chest - the keep lifts nothing, so it destroys nothing there: refused, the chest\'s piece kept', async () => {
+  const s = await stand();
+  const k = 'e210000000000001';
+  const P = await s.seat('Giver', freshSave({ name: 'Giver', items: [piece(k)] }));
+  const C = await s.seat('Taker', freshSave({ name: 'Taker', items: [piece(k)] }));
+  s.raw.prepare('UPDATE item_uids SET claim_char = NULL, claim_at = NULL WHERE uid = ?').run(k);
+  s.raw.prepare("INSERT INTO item_dupes (uid, char_id, at, kind, first_char, claimant) VALUES (?, ?, ?, 'claim', ?, ?)").run(k, C.id, nowS(), P.id, C.id);
+  assert.equal((await s.put(P.who, P.id, freshSave({ name: 'Giver', items: [] }))).status, 200, 'the holder lets it go - into the chest');
+  s.raw.prepare("INSERT INTO homes (map_id, building_key, player, char_id, owner_name, region, entry, price, bought_at) VALUES (44, 44, ?, ?, 'Taker', 17, 'private', 1, 1)").run(s.row(C.id).player, C.id);
+  s.raw.prepare("INSERT INTO decor_bin (map_id, building_key, piece_id, uid, item) VALUES (44, 44, 'chest', ?, ?)").run(k, JSON.stringify(piece(k)));
+  const pre = await s.admin('/v1/staff/item/purge-dupes', { id: C.id, keep: true });
+  assert.deepEqual([pre.body.held, pre.body.extra, pre.body.bins, pre.body.lifts], [1, 0, 0, 0]);
+  assert.deepEqual(await s.admin('/v1/staff/item/purge-dupes', { id: C.id, keep: true, confirm: true, reason: 'duplicated', note: 'fix my locked piece', seq: pre.body.seq }),
+    { status: 409, body: { error: 'no-dupes' } });
+  assert.equal(s.raw.prepare('SELECT count(*) AS n FROM decor_bin WHERE uid = ?').get(k).n, 1, 'the real piece stays the chest\'s');
+});
+
+test('STAFF-PURGE-DUPES keep (AUDIT FB1025i F2): a peer\'s claim landing between the keep\'s ask and its batch - the lift\'s own statement refuses, and neither the answer nor the record says lifted', async () => {
+  const s = await stand();
+  const a = 'a210000000000003';
+  const t = await s.seat('Paired', freshSave({ name: 'Paired', items: [piece(a), piece(a)] }));
+  const peer = await s.seat('Peer');
+  const pre = await s.admin('/v1/staff/item/purge-dupes', { id: t.id, keep: true });
+  assert.equal(pre.body.lifts, 1);
+  const lifts = () => s.raw.prepare("SELECT count(*) AS n FROM realm_findings WHERE char_id = ? AND kind = 'dupe' AND detail LIKE '%\"lifted\"%'").get(t.id).n;
+  const realBatch = s.env.DB.batch.bind(s.env.DB);
+  s.env.DB.batch = async (list) => {
+    if (list.length > 4) { s.env.DB.batch = realBatch; s.raw.prepare('UPDATE item_uids SET claim_char = ?, claim_at = ? WHERE uid = ?').run(peer.id, nowS(), a); }   // the peer's checkpoint commits first
+    return realBatch(list);
+  };
+  const r = await s.admin('/v1/staff/item/purge-dupes', { id: t.id, keep: true, confirm: true, reason: 'duplicated', note: 'the decorator', seq: pre.body.seq });
+  s.env.DB.batch = realBatch;
+  assert.deepEqual([r.status, r.body.extra, r.body.lifted], [200, 1, []], 'the copy destroyed, the lift refused - and not said');
+  assert.ok(s.raw.prepare('SELECT 1 AS y FROM item_dupes WHERE uid = ? AND char_id = ?').get(a, t.id), 'locked still');
+  assert.equal(lifts(), 0, 'no finding says lifted');
+});
+
+test('STAFF-PURGE-DUPES (AUDIT FB1025i F3): a checkpoint landing between the act\'s read of the record and its seizure - refused seq, the record as the checkpoint left it, the seizure\'s object dropped', async () => {
+  const s = await stand();
+  const a = 'a210000000000004', b = 'b210000000000004';
+  const t = await s.seat('Mover', freshSave({ name: 'Mover', items: [piece(a), piece(a)] }));
+  const pre = await s.admin('/v1/staff/item/purge-dupes', { id: t.id, keep: true });
+  const before = new Set(s.env.SAVES._map.keys());
+  const realGet = s.env.SAVES.get.bind(s.env.SAVES);
+  s.env.SAVES.get = async (key) => {
+    const out = await realGet(key);
+    s.env.SAVES.get = realGet;   // the act's own read of the record done: a checkpoint lands before the seizure reads the row
+    assert.equal((await s.put(t.who, t.id, freshSave({ name: 'Mover', items: [piece(a), piece(a), piece(b, 12)] }))).status, 200);
+    return out;
+  };
+  const r = await s.admin('/v1/staff/item/purge-dupes', { id: t.id, keep: true, confirm: true, reason: 'duplicated', note: 'the decorator', seq: pre.body.seq });
+  s.env.SAVES.get = realGet;
+  assert.deepEqual(r, { status: 409, body: { error: 'seq' } });
+  assert.deepEqual(recordOf(s.env, t.id).items.map((i) => i.uid), [a, a, b], 'nothing seized');
+  assert.notEqual(s.row(t.id).lease, null, 'the seat the player\'s still');
+  assert.deepEqual([...s.env.SAVES._map.keys()].filter((key) => !before.has(key) && key !== s.row(t.id).obj), [], 'the seizure\'s object dropped');
 });

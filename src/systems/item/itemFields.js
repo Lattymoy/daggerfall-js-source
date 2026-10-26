@@ -110,6 +110,7 @@ export const ITEM_FIELDS = Object.freeze({
   questItem: bool(),
   questUID: int({ min: 0 }),
   questSymbol: rec((s) => typeof s.name === 'string'),
+  questClone: bool(),   // HEART-KEPT (FIELD BUGS 2026-10-25i): a foe's clone of a quest's item (quest/foe.js getClonedItemQueue) - CloneAll's UID of its own
   // the port's own (loot rarity, LR1-LR4)
   rarity: oneOf(RARITY_ORDER),
   legendary: str(),

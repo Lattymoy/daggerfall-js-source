@@ -318,7 +318,7 @@ import { preloadMessageBoxArt } from '../ui/messageBox.js';
 import { nativeMetrics, pointToNative } from '../ui/native/nativePanel.js';
 import { templateByIndex, itemBaseValue } from '../systems/item/itemTemplates.js';
 import { questLetterName, itemLongName, shownItemName } from '../systems/item/itemInfo.js';   // ResolveItemLongName's quest-letter arm; DECOR2a: an own item's name; L10N3e: an item's name as shown
-import { applyTransfer } from '../systems/item/itemTransfer.js';   // DECOR2a: one's own item leaves the pack as a drop does
+import { createDecorPack, returnUnstood } from '../systems/decor/decorPack.js';   // DECOR2a/2b: the owner's own things' doors (AUDIT FB1025i E1); E8: a save's room's strays
 import { decorItemName, decorOwnBackLine } from '../systems/decor/decorItems.js';   // DECOR2a: an own item's piece named from its numbers
 import { isFurnishing, furnishingDeliveredLine, ownBackLines } from '../systems/decor/decorFurnish.js';   // DECOR2b: furniture delivered, never carried
 import { useDecorPiece } from '../systems/decor/decorUse.js';   // DECOR-USE: a placed bed slept in, a placed fire cooked on
@@ -5007,6 +5007,9 @@ export function createWorldModes(host) {
     if (interiorHome || _seatHallVisit) interiorDecor.keep(placed); else interiorDecor.set(placed);   // SEAT-HALL (AUDIT SEATS-3 C2: the visit's latch)
     interiorDecor.setItems(data.decorItems);
     interiorDecor.setOwn(data.decorOwn);   // DECOR2a
+    // AUDIT FB1025i E8: a room whose pieces are the save's gives back what its record kept under pieces it no longer stands
+    // - a draft left by the door, not discarded (systems/decor/decorPack.js returnUnstood); an online home's list does its own
+    if (!(interiorHome || _seatHallVisit)) returnUnstood(interiorDecor, placed, decorPackGive, say);
     // BASE-HIDE: what the owner took out of the offline house's or ship's own furniture; an online home's comes from the
     // account service with its pieces (loadHomeDecor), and the save's own record for the building is kept to go back
     if (interiorHome || _seatHallVisit) (_keptHidden = (data.hiddenBase ?? []).filter((k) => !String(k).startsWith('intdoor:')), interiorCtx.base?.roomDoors?.apply?.(data.hiddenBase)); else (interiorCtx.base?.setHidden(data.hiddenBase ?? []), interiorCtx.base?.roomDoors?.apply?.(data.hiddenBase));
@@ -5384,34 +5387,9 @@ export function createWorldModes(host) {
     sceneCache().permanent.delete(name);
     return back;
   }
-  /** DECOR2a: ONE OF THE PLAYER'S OWN THINGS OUT OF THE PACK, to stand in a room - one of a stack, moved as a drop
-   *  moves it (itemTransfer.js applyTransfer: a lit torch stops lighting the player, a stack splits one off) - or null
-   *  when it is no longer carried. */
-  function decorPackTake(item) {
-    if (isFurnishing(item)) {   // DECOR2b: a delivered piece leaves the deliveries whole
-      const list = decorHome(item);
-      const i = list.indexOf(item);
-      if (i < 0) return null;
-      list.splice(i, 1);
-      return item;
-    }
-    const pack = playerEntity.items ?? [];
-    if (!pack.includes(item)) return null;
-    return applyTransfer(item, { ok: true, amount: 1 }, pack, [], { entity: playerEntity, fromLocal: true }) ?? null;
-  }
-  /** DECOR2a: one of the player's own things back where it lives - taken down, or its room sold: the pack, or (DECOR2b)
-   *  a piece of furniture delivered again. */
-  function decorPackGive(item) {
-    if (isFurnishing(item)) { decorHome(item).push(item); return; }
-    playerEntity.items ??= [];
-    addItem(playerEntity.items, item);
-  }
-  /** DECOR2b: where one of the player's own things lives while it stands nowhere - the pack, or the furnisher's
-   *  deliveries (the save's `furnishings`: a bed is never carried). */
-  function decorHome(item) {
-    if (isFurnishing(item)) return (playerEntity.furnishings ??= []);
-    return (playerEntity.items ??= []);
-  }
+  // DECOR2a/DECOR2b: the owner's own things' doors - where one lives, one out to stand, one back (systems/decor/decorPack.js;
+  // AUDIT FB1025i E1: out of the host, so the decorator's pins stand on them)
+  const { decorHome, decorPackTake, decorPackGive } = createDecorPack(() => playerEntity);
   /** DECOR2b: FURNITURE BOUGHT (or stolen) - delivered, not carried, and said once for the lot. */
   function decorDeliver(items) {
     if (!items.length) return;
