@@ -71,9 +71,13 @@ yaw, scale, variant), as the roadside pairs do.
   Every draw is a hash of the site's world tile (`tileDraw`), so a tree stands where it stands on every client, the
   worker and the main thread; its variant, its scale (0.84-1.2) and its turn are its own draws.
 - **What it never stands on.** Its whole FOOT - every tile whose middle lies within its buttresses' reach at its scale
-  (and half a tile) - on ground the jungle grows on (the layout's `groundOf`): no road, track or trail tile (the road
-  painter's `paths`, the jungle's trails worn into them), no place's rect or clearing (a town's, a dungeon's, a shrine's,
-  a site's), no water, no beach, nothing past DFU's 50 degrees; off the jungle's trails at its reach (`trailClear`); its
+  (and half a tile) - on land the jungle keeps (the layout's `footOf`): DFU's dirt, grass and stone and the edges between
+  them (`GRAHT_LAND_RECORDS`, the marching squares' records past the water's - where the jungle's own flats grow on the
+  three alone, DFU's law; a foot held to them stood on 59% of the Bay's whole jungle's drawn sites, 34.2 trees a pixel of
+  57.6, and on 92% over the edges, 52.9 - measured on the freeware, and seen in game: the canopy stood open); no road,
+  track or trail tile (the road painter's `paths`, the jungle's trails worn into them), no place's rect or clearing (a
+  town's, a dungeon's, a shrine's, a site's), no tile with water in it, no beach, nothing past DFU's 50 degrees; off the
+  jungle's trails at its reach (`trailClear`); its
   trunk's own tile no steeper than the jungle trees' 34 degrees; and the ground under its foot no rougher than
   GRAHT.bury (16 m at its scale). A town's trees stand round it, never in it; their crowns reach over its edge, and over
   the roads cut through the forest.
@@ -171,12 +175,13 @@ the sky is the graht-oaks' crowns - procedural trees of the port's own, drawn by
 the renderer's handedness measured, its three submeshes, its masses' push (a seventh of a mass's radius) measured, the
 same on every run, the LODs' faces golden and their crowns one; the measures golden, colossal over the jungle, a trunk over 20 m across, the drawn tree its measures', the largest
 foot inside its cell's inset; where they stand - a whole canopy's sites mostly stood, none without the canopy, thinning to
-its line, every foot off a track, a place's rect and water, at the lowest ground under it, off the trails, no trunk on a
+its line, every foot off a track, a place's rect and water - over the edges between dirt, grass and stone as over grass, never
+over water's, the flats still on the three alone - at the lowest ground under it, off the trails, no trunk on a
 steep step, every draw the world tile's; the storeys and the roadside pairs off their feet, the floor off their trunks,
 the jungle as it stood without them; the sky from the floor (rays against the drawn LOD 0 over a 3 x 3 of whole canopy
 pixels: over 86% covered overhead and under 99%, over 92% lower); the bodies on the drawn buttresses; the pictures; the
 host (the stand and its keep, the GPU on the slice clock, the runs, the instances uploaded (the trees met out of their runs' order), the culls, the well, the
 casters nearest first and capped, the teardown, a teardown mid-making); the well and the fog's reach exactly; the GPU's
 pack; the wiring. `test/world/valenwood_canopy.test.js`'s law, host and wiring pins moved with it (PIN MOVED, GRAHT1),
-and `test/render/volumetricClouds.test.js`'s sky span. `tools/mutants/graht1.json` (71); `tools/mutants/valenwoodcanopy.json`
+and `test/render/volumetricClouds.test.js`'s sky span. `tools/mutants/graht1.json` (75); `tools/mutants/valenwoodcanopy.json`
 re-aimed by content (31).

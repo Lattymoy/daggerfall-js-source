@@ -10,7 +10,7 @@ import {
   grahtOakMesh, grahtSkeleton, grahtTrunkRadius, icosphere, GRAHT_VARIANTS, GRAHT_LODS, GRAHT_SUBS, GRAHT_DETAIL, GRAHT_SHAPE,
 } from '../../src/world/jungle/grahtOakMesh.js';
 import {
-  GRAHT, GRAHT_MEASURES, GRAHT_FOOT_MAX, GRAHT_TREE_FLOATS, GRAHT_FIN_BODY_R, grahtSites, grahtFootMask, grahtBodies, grahtLodOf,
+  GRAHT, GRAHT_MEASURES, GRAHT_FOOT_MAX, GRAHT_TREE_FLOATS, GRAHT_FIN_BODY_R, GRAHT_LAND_RECORDS, grahtSites, grahtFootMask, grahtBodies, grahtLodOf,
 } from '../../src/world/jungle/grahtOaks.js';
 import { barkPicture, leavesPicture, cardsPicture, mipChain, GRAHT_ART } from '../../src/render/grahtOakArt.js';
 import { createGrahtHost, grahtOaksOn, packGrahtMeshes, crownBlocks, fogReach, GRAHT_SLOT, GRAHT_DRAW } from '../../src/scenes/grahtHost.js';
@@ -154,7 +154,7 @@ test('GRAHT1: the measures - each variant\'s height, crown, trunk and foot off i
   assert.deepEqual([grahtLodOf(0), grahtLodOf(GRAHT.lod[0] - 1), grahtLodOf(GRAHT.lod[0]), grahtLodOf(GRAHT.lod[1] - 1), grahtLodOf(GRAHT.lod[1])], [0, 0, 1, 1, 2]);
 });
 
-test('GRAHT1: where they stand - the canopy\'s zones whole stand GRAHT.occupancy of the sites, none without the canopy, thinning to none at its line; every foot wholly on ground the jungle grows on (off a track, a place\'s rect, water), at the lowest ground under it; every draw the world tile\'s', () => {
+test('GRAHT1: where they stand - the canopy\'s zones whole stand GRAHT.occupancy of the sites, none without the canopy, thinning to none at its line; every foot wholly on land (DFU\'s dirt, grass and stone and the edges between them - off a track, a place\'s rect, water), at the lowest ground under it; every draw the world tile\'s (mutants: the edges refused; water\'s edges land; the foot read on the flats\' ground; an edge tile\'s slope unread)', () => {
   const flat = ground();
   let n = 0, sites = 0;
   for (let px = 1600; px < 1606; px++) {
@@ -186,6 +186,19 @@ test('GRAHT1: where they stand - the canopy\'s zones whole stand GRAHT.occupancy
     const wet = ground({ water: 40 });
     for (const [x, , z, , s, v] of treesOf(layout(wet, px).graht)) assert.ok(z - GRAHT_MEASURES[v].foot * s > 40 * TILE, 'no foot in the water');
   }
+  // the land a foot covers: DFU's dirt, grass and stone and every edge between them, never one with water - where the
+  // jungle's own flats grow on the three alone (a foot held to them stood on 59% of the Bay's whole jungle's sites)
+  assert.deepEqual([...GRAHT_LAND_RECORDS], [1, 2, 3, 10, 11, 12, 15, 16, 17, 51, 53]);
+  const edges = [10, 11, 12, 51, 15, 16, 17, 53], wetEdges = [5, 6, 7, 48];
+  const mixed = ground(), shore = ground();
+  for (let y = 1; y < 128; y += 4) for (let x = 1; x < 128; x += 4) { mixed.tm[y * 128 + x] = edges[(x + y) % edges.length]; shore.tm[y * 128 + x] = wetEdges[(x + y) % wetEdges.length]; }
+  let onGrass = 0, onEdges = 0;
+  for (let px = 1600; px < 1604; px++) {
+    onGrass += layout(flat, px).graht.length; onEdges += layout(mixed, px).graht.length;
+    assert.equal(layout(shore, px).graht.length, 0, 'every foot over an edge of water stands none');
+    for (const f of layout(mixed, px).flats) assert.ok([1, 2, 3].includes(mixed.tm[Math.floor(f.z / TILE) * 128 + Math.floor(f.x / TILE)] & 0x3f), 'the jungle\'s own flats on dirt, grass and stone alone');
+  }
+  assert.ok(onGrass > 100 && onEdges === onGrass, `a foot over the edges between dirt, grass and stone stands as on grass (${onEdges / GRAHT_TREE_FLOATS} of ${onGrass / GRAHT_TREE_FLOATS})`);
   // ground too rough under the foot stands none; the lowest under the foot on a slope
   const rough = ground({ rise: (a) => a * 0.0016 });   // 26 degrees: a foot's ground rises 22 m across it
   assert.equal(layout(rough, 1600).graht.length, 0, 'ground rougher under a foot than GRAHT.bury stands none');
@@ -207,6 +220,8 @@ test('GRAHT1: where they stand - the canopy\'s zones whole stand GRAHT.occupancy
   for (let px = 1600; px < 1616; px++) for (const [x] of treesOf(layout(ridge, px).graht)) { const tx = Math.floor(x / TILE); if (tx === 55 || tx === 56) onRidge++; if (tx >= 52 && tx <= 59) near++; }
   assert.equal(onRidge, 0, 'no trunk on the step');
   assert.ok(near > 10, 'beside it, trees whose feet span it');
+  for (let y = 0; y < 128; y++) { ridge.tm[y * 128 + 55] = 11; ridge.tm[y * 128 + 56] = 11; }   // the step an edge of dirt and grass: its slope read all the same
+  for (let px = 1600; px < 1616; px++) for (const [x] of treesOf(layout(ridge, px).graht)) { const tx = Math.floor(x / TILE); assert.ok(tx !== 55 && tx !== 56, 'no trunk on a steep edge tile'); }
   // every draw the world tile's: the same trees on every call, and a pixel's own
   assert.deepEqual(layout(flat, 1603).graht, layout(flat, 1603).graht);
   assert.notDeepEqual(layout(flat, 1603).graht, layout(flat, 1604).graht);

@@ -111,8 +111,8 @@
   {
     "name": "BANTHA1-the-track-ignored",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "      if (!ground || paths?.[ti]) continue;",
-    "new": "      if (!ground) continue;",
+    "old": "      if (!(ground || (jg.canopy && GRAHT_LAND_RECORDS.includes(record))) || paths?.[ti]) continue;",
+    "new": "      if (!(ground || (jg.canopy && GRAHT_LAND_RECORDS.includes(record)))) continue;",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]

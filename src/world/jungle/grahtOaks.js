@@ -14,9 +14,10 @@
 //     sites at a whole canopy, thinning to none at the canopy's line (world/jungle/jungleCanopy.js canopyShare, the
 //     light's own share - the trees ARE the canopy). Every draw a hash of the site's world tile (terrainNature.js
 //     tileDraw): the same tree on every client, the worker and the main thread.
-//   - WHAT IT NEVER STANDS ON. Its FOOT - the buttresses' reach at its scale (grahtMeasures foot) - wholly on ground
-//     the jungle grows on (the layout's own `groundOf`: no road, track or trail - the road painter's `paths` and the
-//     jungle's own trails - no place's rect or clearing, no water, no beach, nothing past DFU's 50 degrees), the trunk's
+//   - WHAT IT NEVER STANDS ON. Its FOOT - the buttresses' reach at its scale (grahtMeasures foot) - wholly on land the
+//     jungle keeps (the layout's `footOf`: DFU's dirt, grass and stone and the edges between them, GRAHT_LAND_RECORDS;
+//     no road, track or trail - the road painter's `paths` and the jungle's own trails - no place's rect or clearing, no
+//     water, no beach, nothing past DFU's 50 degrees), the trunk's
 //     own tile no steeper than the jungle trees' 34, and the ground under the foot no rougher than GRAHT.bury - where it
 //     stands at the lowest ground under its foot (sunk, never floating: the uphill buttresses go into the slope). A
 //     town's trees stand round it, never in it; their crowns reach over its edge and over the roads cut through them.
@@ -27,6 +28,7 @@
 //   - ITS LOD (grahtLodOf): by the distance over the tree's scale - LOD 0 near, LOD 1 to GRAHT.lod[1], LOD 2 past it.
 // ═══════════════════════════════════════════════════════════════════
 import { grahtSkeleton, grahtTrunkRadius, finSection, GRAHT_VARIANTS } from './grahtOakMesh.js';
+import { createLookupTable } from '../terrain/terrainTiles.js';
 
 /** The graht-oaks' numbers, in one place. Tiles are DFU's (6.4 m); metres else. */
 export const GRAHT = Object.freeze({
@@ -91,13 +93,22 @@ export const GRAHT_MEASURES = Object.freeze(Array.from({ length: GRAHT_VARIANTS 
 /** The largest foot any tree stands (m) - the reach a site's tests and the storeys' mask look out to. */
 export const GRAHT_FOOT_MAX = Math.max(...GRAHT_MEASURES.map((m) => m.foot)) * GRAHT.scale[1];
 
+/**
+ * THE LAND A FOOT MAY COVER: every tile record DFU's marching squares make of dirt, grass and stone - their transitions
+ * too (world/terrain/terrainTiles.js createLookupTable, its rings past the water's: 1-3, 10-12, 15-17, 51, 53) - never one
+ * with water in it (0, 5-7, 48). The jungle's own flats grow on the three alone (jungleNature.js JUNGLE.ground, DFU's
+ * law); a buttress lies over the edge between two of them, where a foot held to them stood on 59% of the sites the
+ * occupancy drew (the Bay's whole jungle, measured on the freeware: 34.2 a pixel of 57.6) and the canopy opened.
+ */
+export const GRAHT_LAND_RECORDS = Object.freeze([...new Set(Array.from(createLookupTable().subarray(16), (v) => v & 0x3f))].sort((a, b) => a - b));
+
 /** A tree's LOD at `d` metres from the eye over its scale. */
 export const grahtLodOf = (d) => (d < GRAHT.lod[0] ? 0 : d < GRAHT.lod[1] ? 1 : 2);
 
 /**
  * A PIXEL'S GRAHT-OAKS - its trees, GRAHT_TREE_FLOATS each (pixel-local), on the lattice of its world tiles from
  * (ox, oz) (its first tile, FOREST1's frame). `share(mx, mz)` the canopy's share at a point (0..1); `growsOn(ti)` a tile
- * the jungle grows on (the layout's groundOf); `steepAt(ti)` a tile past the trees' steepest; `ground(mx, mz)` the
+ * a foot may cover (the layout's footOf - GRAHT_LAND_RECORDS); `steepAt(ti)` a tile past the trees' steepest; `ground(mx, mz)` the
  * ground's height (m); `trailOk(mx, mz, r)` no trail within r; `draw(wx, wz, salt)` the world tile's own dice. `tiles`
  * a pixel's side in tiles, `tileM` a tile in metres.
  * @param {{ ox: number, oz: number, tiles: number, tileM: number, share: (x: number, z: number) => number,
@@ -118,7 +129,7 @@ export function grahtSites({ ox, oz, tiles, tileM, share, growsOn, steepAt, grou
       const foot = GRAHT_MEASURES[variant].foot * scale;
       const ti0 = Math.floor(tz) * tiles + Math.floor(tx);
       if (steepAt(ti0)) continue;
-      // the whole foot on ground the jungle grows on: every tile whose middle lies within the foot (and a half tile)
+      // the whole foot on land a foot may cover: every tile whose middle lies within the foot (and a half tile)
       const reach = foot + tileM * 0.5, rt = Math.ceil(reach / tileM);
       let ok = true, lo = Infinity, hi = -Infinity;
       for (let y = Math.max(0, Math.floor(tz) - rt); y <= Math.min(tiles - 1, Math.floor(tz) + rt) && ok; y++) {

@@ -51,7 +51,7 @@ import { jungleDepthAt, jungleShare, JUNGLE_EDGE, JUNGLE_WANDER_MAX } from '../j
 import { JUNGLE_ARCHIVE, JUNGLE_SPECIES, JUNGLE_MEASURES } from '../jungle/jungleModels.js';
 import { trailClear, trailsReach } from '../jungle/jungleTrails.js';
 import { standPairs, JUNGLE_ROADSIDE } from '../jungle/jungleRoadside.js';   // JUNGLE-ROADSIDE: the owner's pairs astride the roads
-import { grahtSites, grahtFootMask } from '../jungle/grahtOaks.js';   // GRAHT1: Valenwood's graht-oaks, the storey over the canopy
+import { grahtSites, grahtFootMask, GRAHT_LAND_RECORDS } from '../jungle/grahtOaks.js';   // GRAHT1: Valenwood's graht-oaks, the storey over the canopy
 import { canopyShare } from '../jungle/jungleCanopy.js';   // GRAHT1: where the canopy's zones close it - the light's own share
 import { ecoNoise, ecoOrigin } from '../ecotone.js';
 
@@ -279,14 +279,14 @@ export function jungleLayout(own, heightmapData, tilemapData, opts) {
   // the places' pull) - its glade's light alone (AUDIT BANTHA1 LAY-3), and how far it lies in a place's fields (`openOf`:
   // a town's ring is open ground - no canopy, no young trees, no palms - never the jungle's thickest light gap)
   const groundOf = new Float32Array(tDim * tDim), g2Of = new Float32Array(tDim * tDim), lightOf = new Float32Array(tDim * tDim);
-  const gladeOf = new Float32Array(tDim * tDim), openOf = new Float32Array(tDim * tDim);
+  const gladeOf = new Float32Array(tDim * tDim), openOf = new Float32Array(tDim * tDim), footOf = new Uint8Array(tDim * tDim);
   const glade = gladeField(px, py);
   for (let y = 0; y < tDim; y++) {
     for (let x = 0; x < tDim; x++) {
       const ti = y * tDim + x;
       if (!mine[ti]) continue;
-      const ground = JUNGLE.ground[tilemapData[ti] & 0x3f];
-      if (!ground || paths?.[ti]) continue;
+      const record = tilemapData[ti] & 0x3f, ground = JUNGLE.ground[record];
+      if (!(ground || (jg.canopy && GRAHT_LAND_RECORDS.includes(record))) || paths?.[ti]) continue;   // GRAHT1: a buttress lies on any land tile
       if (clear.some((r) => natureCleared(r, x, y))) continue;
       const hl = at(Math.max(0, x - 1), y), hr = at(Math.min(hDim - 1, x + 1), y);
       const hd = at(x, Math.max(0, y - 1)), hu = at(x, Math.min(hDim - 1, y + 1));
@@ -296,8 +296,10 @@ export function jungleLayout(own, heightmapData, tilemapData, opts) {
       const hx = Math.min(hDim - 1, Math.max(0, Math.trunc(hDim * (x / tDim))));
       const hy = Math.min(hDim - 1, Math.max(0, Math.trunc(hDim * (y / tDim))));
       if (sampleHeight((opts.beach ?? heightmapData)[hy + hx * hDim]) < SCALED_BEACH_ELEVATION) continue;   // the beach line, as every flat's
-      groundOf[ti] = ground;
+      footOf[ti] = 1;   // GRAHT1: ground a graht-oak's foot may cover - land, its slope read
       g2Of[ti] = g2;
+      if (!ground) continue;   // ...where the jungle's own flats grow on DFU's dirt, grass and stone alone
+      groundOf[ti] = ground;
       const closed = smoothstep(JUNGLE.glade.edge[0], JUNGLE.glade.edge[1], glade(x, y)), pull = placesPull(pois, x, y);
       lightOf[ti] = 1 - Math.min(1, Math.max(0, closed + pull));
       gladeOf[ti] = 1 - closed;
@@ -310,13 +312,13 @@ export function jungleLayout(own, heightmapData, tilemapData, opts) {
   // own gate, world/jungle/jungleTrails.js trailClear); the palms and the floor keep off its tiles (`paths`, above)
   const trails = whole || trailsReach(jg.nine);
   const onTrail = (ti, mx, mz, species, js) => trails && share[ti] >= 1 && !trailClear(px, py, mx, mz, JUNGLE_MEASURES[species].foot * js);
-  // GRAHT1: THE GRAHT-OAKS, stood first where the canopy's zones close it - each foot wholly on ground the jungle grows on,
+  // GRAHT1: THE GRAHT-OAKS, stood first where the canopy's zones close it - each foot wholly on land the jungle keeps (footOf),
   // off the trails at its reach, at the lowest ground under it (world/jungle/grahtOaks.js grahtSites); `onFoot` the tiles
   // their feet hold (1) and their trunks (2), which every storey below and every pair keeps off (the floor off a trunk)
   const graht = jg.canopy ? grahtSites({
     ox, oz, tiles: tDim, tileM: scale, draw: tileDraw,
     share: (mx, mz) => canopyShare(jungleDepthAt(px, py, jg.canopy, mx, mz)),
-    growsOn: (ti) => groundOf[ti] > 0,
+    growsOn: (ti) => footOf[ti] > 0,
     steepAt: (ti) => g2Of[ti] > TAN_MAX_SQ,
     ground: (mx, mz) => groundAt(heightmapData, mx, mz),
     trailOk: (mx, mz, reach) => !trails || trailClear(px, py, mx, mz, reach),

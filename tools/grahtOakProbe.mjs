@@ -55,7 +55,7 @@ const idle = async () => { await page.waitForFunction(() => window.__streamIdle?
 /** put away every page the welcome tour or a notice holds up (a click or any key reads one) */
 const dismiss = async () => {
   for (let i = 0; i < 16; i++) {
-    if (!(await ev(() => /click or press any key/i.test(document.body.innerText)))) return;
+    if (!(await ev(() => /click or press (any|a) key/i.test(document.body.innerText)))) return;
     await page.keyboard.press('Space');
     await frames(3);
   }

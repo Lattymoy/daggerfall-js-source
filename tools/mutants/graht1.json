@@ -637,5 +637,41 @@
     "tests": [
       "test/world/valenwood_canopy.test.js"
     ]
+  },
+  {
+    "name": "G-102-the-edges-refused",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "(jg.canopy && GRAHT_LAND_RECORDS.includes(record))",
+    "new": "(jg.canopy && false)",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-103-water-edges-land",
+    "file": "src/world/jungle/grahtOaks.js",
+    "old": "createLookupTable().subarray(16)",
+    "new": "createLookupTable().subarray(0)",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-104-the-foot-on-the-flats-ground",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "    growsOn: (ti) => footOf[ti] > 0,",
+    "new": "    growsOn: (ti) => groundOf[ti] > 0,",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
+  },
+  {
+    "name": "G-105-an-edge-tile-s-slope-unread",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "      g2Of[ti] = g2;\n      if (!ground) continue;",
+    "new": "      if (!ground) continue;\n      g2Of[ti] = g2;",
+    "tests": [
+      "test/world/graht1_oaks.test.js"
+    ]
   }
 ]
