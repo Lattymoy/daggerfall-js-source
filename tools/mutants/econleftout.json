@@ -1,0 +1,62 @@
+[
+  {
+    "name": "ECON-LEFT-OUT-the-ban-ignored",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "`(COALESCE(${p}.banned_until, 0) > ${Math.floor(nowS)} OR ",
+    "new": "`(0 OR ",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ],
+    "note": "a banned account's gold counted again"
+  },
+  {
+    "name": "ECON-LEFT-OUT-the-hold-ignored",
+    "file": "server-account/src/staffEconomy.js",
+    "old": " OR COALESCE(${holdStandsSql(c, String(Math.floor(nowS)))}, 0))`;",
+    "new": ")`;",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ],
+    "note": "a held character's gold counted again"
+  },
+  {
+    "name": "ECON-LEFT-OUT-any-hold-stands",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "COALESCE(${holdStandsSql(c, String(Math.floor(nowS)))}, 0)",
+    "new": "COALESCE(c.held IS NOT NULL, 0)",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ],
+    "note": "a dead character's law hold out of its time kept out for good"
+  },
+  {
+    "name": "ECON-WORTH-the-split-dropped",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "WHEN json_type(i.tally, '$.b') IS NULL",
+    "new": "WHEN 0",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ],
+    "note": "a tally from before the split read as all purse"
+  },
+  {
+    "name": "ECON-WORTH-the-unweighed-unworthed",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "COALESCE(c.wealth, CAST(json_extract(i.tally, '$.g') AS INTEGER), 0)",
+    "new": "COALESCE(c.wealth, 0)",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ],
+    "note": "a character the judge never weighed worth nothing"
+  },
+  {
+    "name": "ECON-WORTH-the-bank-share-dropped",
+    "file": "server-account/src/staffCensus.js",
+    "old": "b: Math.min(Number.MAX_SAFE_INTEGER, banks) };",
+    "new": "};",
+    "tests": [
+      "test/server/staffpanel4census.test.js"
+    ],
+    "note": "the tally no longer says its banks' share"
+  }
+]

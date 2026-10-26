@@ -1538,8 +1538,8 @@
   {
     "name": "DW-E4-managed-culled",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      if (!f.placed && !f.managed && _playerDist > _cullAt",
-    "new": "      if (!f.placed && _playerDist > _cullAt",
+    "old": "      if (!f.placed && !f.managed && !f.refugee && _playerDist > _cullAt",
+    "new": "      if (!f.placed && !f.refugee && _playerDist > _cullAt",
     "tests": [
       "test/scenes/dwe_enemies.test.js"
     ]

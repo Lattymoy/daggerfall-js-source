@@ -238,6 +238,7 @@ export function mountFpsCounter({ enabled = () => true, raf = (typeof requestAni
   return {
     el,
     tick,
+    last: () => last,   // GPU-TRAIL (render/gpuTrail.js): the last second's numbers, a new object each second - the crash trail's frames
     dispose() {
       live = false; if (handle && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(handle); el.remove();
       if (typeof document.removeEventListener === 'function') document.removeEventListener('visibilitychange', onVisibility);   // FB1018D HITCH-KEEP

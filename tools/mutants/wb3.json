@@ -394,7 +394,8 @@
     "old": "    if (f?.players[sub]) return null;",
     "new": "    if (f?.players[sub] && false) return null;",
     "tests": [
-      "test/net/gate/wb3_gate_room.test.js"
+      "test/net/gate/wb3_gate_room.test.js",
+      "test/net/gate/gatecourts.test.js"
     ]
   },
   {
@@ -456,7 +457,7 @@
   {
     "name": "WB3-the-hub-told-nothing",
     "file": "server/src/index.js",
-    "old": "    if (!(await this._gateTellHub({ d: f.day, at: f.fell.at, top: f.fell.top, n: f.fell.n, rc: Object.entries(f.rc ?? {}), here: f.here ?? [] }))) return;",
+    "old": "    if (!(await this._gateTellHub({ d: f.day, c: cn, ...(cs ? { cs } : {}), at: f.fell.at, top: f.fell.top, n: f.fell.n, rc: Object.entries(f.rc ?? {}), here: f.here ?? [] }))) return;",
     "new": "    if (!(await this._gateTellHub(null))) return;",
     "tests": [
       "test/net/gate/wb3_gate_room.test.js"
@@ -474,8 +475,8 @@
   {
     "name": "WB3-the-wake-forgets",
     "file": "server/src/index.js",
-    "old": "      const v = await this.state.storage.get('gatefight');\n      this._fight = v && typeof v === 'object' ? v : null;",
-    "new": "      const v = await this.state.storage.get('gatefight-not');\n      this._fight = v && typeof v === 'object' ? v : null;",
+    "old": "      const got = await this.state.storage.get(['gatefight', 'gatebook']);",
+    "new": "      const got = await this.state.storage.get(['gatefight-not', 'gatebook']);",
     "tests": [
       "test/net/gate/wb3_gate_room.test.js"
     ],
@@ -484,8 +485,8 @@
   {
     "name": "WB3-the-storage-kept",
     "file": "server/src/index.js",
-    "old": "    if (now >= end) { this._fight = null; await this.state.storage.delete('gatefight'); return true; }",
-    "new": "    if (now >= end) { this._fight = null; return true; }",
+    "old": "    if (now >= end) { this._fight = null; await this.state.storage.delete('gatefight'); await this._gateBookDrop(); return true; }",
+    "new": "    if (now >= end) { this._fight = null; await this._gateBookDrop(); return true; }",
     "tests": [
       "test/net/gate/wb3_gate_room.test.js"
     ]

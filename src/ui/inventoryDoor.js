@@ -39,7 +39,7 @@ import { isEnhanced } from '../systems/uiSkin.js';
 import { mountEnhancedChunk } from './enhanced/enhancedChunk.js';   // MENU1: the one lazy-chunk door
 import { registerOverlay } from './enhanced/enhancedOverlays.js';   // PX28: Tab puts it away
 import { NativeInventoryWindow, inventoryArtLoaded } from './native/nativeInventory.js';
-import { closeSession } from '../systems/inventorySession.js';
+import { closeSession, holdChestSave } from '../systems/inventorySession.js';
 import { immersiveFootsteps } from '../systems/immersiveFootsteps.js';   // AUDIT-IF F5: the enhanced skin's close refreshes the mod's armour slots too
 import { racialSuppressInventory } from '../systems/lycanthropy.js';   // DISC10-E L3: GetSuppressInventory, in the window itself
 import { messageBox } from '../systems/notify.js';   // DISC10-E L3: DaggerfallUI.MessageBox, the refusal's voice
@@ -137,9 +137,10 @@ function enhancedInventoryOverlay(deps) {
   host.style.cssText = 'position:fixed;inset:0;z-index:13;background:transparent;overflow:hidden;overflow:clip';
   document.body.append(host);
   let unregister = () => {};   // PX28: Tab must be able to put the pack away
+  const gate = { saving: false, saved: false };
 
   const close = () => {
-    if (fired) return;
+    if (fired || holdChestSave(gate, deps.loot, close)) return;
     unregister();
     // THE PILE IS READ BEFORE THE UNMOUNT, which clears the view's
     // state. A drop that mints nothing is not a visible bug - it looks

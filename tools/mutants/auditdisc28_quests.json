@@ -151,7 +151,7 @@
   {
     "name": "AD28Q-K1-host-owns-nothing",
     "file": "src/scenes/world.js",
-    "old": "return !isEtherPlaceId(id) && !isArenaPlaceId(id) && !isCountryPlaceId(id) && isHouseOwned(playerEntity.houses ?? [], _questRegionIndex(), buildingKey); },",
+    "old": "return !isEtherPlaceId(id) && !isArenaPlaceId(id) && !isCountryPlaceId(id) && isHouseOwned(playerEntity.houses ?? [], _questRegionIndex(), buildingKey, id); },",
     "new": "return false; },",
     "tests": [
       "test/systems/quest/auditdisc28_quests.test.js"

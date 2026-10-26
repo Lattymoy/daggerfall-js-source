@@ -12,6 +12,7 @@ import { serviceDestination } from '../../src/systems/guild/guildServiceFlow.js'
 import { applySpell } from '../../src/systems/effects.js';
 import { buildCustomSpell, blankEffectSettings } from '../../src/systems/spell/spellMaker.js';
 import { effectByKey } from '../../src/systems/spell/spellEffects.js';
+import { calculateCastCost, registerSpellCostMod } from '../../src/systems/spellcost.js';
 import { HOLIDAYS } from '../../src/systems/holidays.js';
 
 const ench = () => [{ type: 0, param: 1 }];
@@ -134,6 +135,52 @@ test('X7 spell: the cast REFUNDS its own cost, floored at 5, and lands on nobody
   assert.equal(onFoe.identify, undefined);
   assert.deepEqual(foe.activeEffects, []);
   assert.equal(effectByKey('40,255').ported, true);
+});
+
+test('the refund, and so the window\'s charge, is what the cast spent on Identify - a cost discount included', () => {
+  // A player's cast is priced with the port's cost modifiers (an awake Wardwright pays 20% less for Thaumaturgy).
+  // The refund once ignored them: the cast spent 146, the window then charged 183, and a caster whose pool held
+  // less than 183 could cast Identify but never identify anything.
+  const player = () => ({
+    isPlayer: true, stats: { luck: 50, willpower: 50 }, skills: [], activeEffects: [], level: 17, maxMagicka: 160,
+  });
+  const identifySlot = { type: 40, subType: 255, settings: { ...blankEffectSettings(), chanceBase: 1, chanceMod: 6, chancePerLevel: 1 } };
+  const identifySpell = buildCustomSpell({ slots: [identifySlot], rangeType: 0 });
+  const cast = (spell, caster) => applySpell(spell, 17, caster, {}, () => 0.5, { entity: caster }, {});
+
+  const undiscounted = cast(identifySpell, player()).identify.refund;
+  assert.equal(undiscounted, calculateCastCost(identifySpell, player()).sp, 'with no modifier the two prices agree');
+
+  registerSpellCostMod('identify-refund-test', (_entity, sp) => sp * 0.8);
+  try {
+    const caster = player();
+    const castPrice = calculateCastCost(identifySpell, caster).sp;
+    assert.ok(castPrice < undiscounted, 'the modifier made the cast cheaper');
+    assert.ok(castPrice <= caster.maxMagicka && undiscounted > caster.maxMagicka,
+      'the fixture is the failing case: the cast fits the pool and the undiscounted price does not');
+    const identify = cast(identifySpell, caster).identify;
+    assert.equal(identify.refund, castPrice, 'the refund is the discounted price the cast spent');
+    assert.ok(identify.refund <= caster.maxMagicka, 'so the window charges no more than a full pool holds');
+
+    // A bundle refunds the Identify effect's share alone; the effect bundled with it stays paid (Identify.cs:50-56).
+    const bundled = buildCustomSpell({
+      slots: [identifySlot, { type: 39, subType: 0, settings: { ...blankEffectSettings() } }],
+      rangeType: 0,
+    });
+    assert.equal(cast(bundled, player()).identify.refund, castPrice);
+    assert.ok(calculateCastCost(bundled, player()).sp > castPrice, 'the bundle as a whole costs more');
+  } finally {
+    registerSpellCostMod('identify-refund-test', null);
+  }
+
+  // A modifier may take a cast under 5 points; the refund still keeps Identify.cs:54-55's floor of 5.
+  registerSpellCostMod('identify-refund-test', () => 1);
+  try {
+    assert.equal(calculateCastCost(identifySpell, player()).sp, 1);
+    assert.equal(cast(identifySpell, player()).identify.refund, 5);
+  } finally {
+    registerSpellCostMod('identify-refund-test', null);
+  }
 });
 
 test('X7: the service destination is no longer a FLAGGED null', () => {

@@ -1,0 +1,156 @@
+[
+  {
+    "name": "WILD-REJOIN-the-margin-unread",
+    "file": "src/net/wild/wildRef.js",
+    "old": "  if (left < WILD_DOWN_SAY_MIN_MS) return null;",
+    "new": "  if (left <= 0) return null;",
+    "tests": ["test/systems/wild/wildrejoin.test.js"]
+  },
+  {
+    "name": "WILD-REJOIN-the-bodys-place-dropped",
+    "file": "src/net/wild/wildRef.js",
+    "old": "  return { ...word, r: body.r, ...where };",
+    "new": "  return word;",
+    "tests": ["test/systems/wild/wildrejoin.test.js"]
+  },
+  {
+    "name": "WILD-REJOIN-the-kind-unknown",
+    "file": "src/net/wire.js",
+    "old": "export const WILD_REF_KINDS = Object.freeze(['hp', 'fell', 'rc', 'hull', 'wreck', 'wc', 'down']);",
+    "new": "export const WILD_REF_KINDS = Object.freeze(['hp', 'fell', 'rc', 'hull', 'wreck', 'wc']);",
+    "tests": ["test/systems/wild/wildrejoin.test.js"]
+  },
+  {
+    "name": "WILD-REJOIN-the-bound-off-the-rise",
+    "file": "src/net/wire.js",
+    "old": "  if (!intIn(m.ms, 1, WILD_DOWN_MS_MAX)) return null;",
+    "new": "  if (!intIn(m.ms, 1, 1_000_000)) return null;",
+    "tests": ["test/systems/wild/wildrejoin.test.js"]
+  },
+  {
+    "name": "WILD-REJOIN-a-place-with-no-id",
+    "file": "src/net/wire.js",
+    "old": "  if (m.r === undefined && m.p === undefined) return { k: 'down', ms: m.ms };",
+    "new": "  if (m.r === undefined) return { k: 'down', ms: m.ms };",
+    "tests": ["test/systems/wild/wildrejoin.test.js"]
+  },
+  {
+    "name": "WILD-REJOIN-the-gone-word-unsigned",
+    "file": "src/net/wild/wildReceipt.js",
+    "old": "  const fallenGone = g === 1 ? { g: 1 } : {};",
+    "new": "  const fallenGone = {};",
+    "tests": ["test/systems/wild/wildrejoin.test.js"]
+  },
+  {
+    "name": "WILD-REJOIN-the-grace-for-every-fall",
+    "file": "src/net/wild/wildReceipt.js",
+    "old": "export const wildFallGraceS = (claims) => (claims?.g === 1 ? 0 : WILD_FALL_GRACE_S);",
+    "new": "export const wildFallGraceS = () => WILD_FALL_GRACE_S;",
+    "tests": ["test/systems/wild/wildrejoin.test.js", "test/net/int9_wild_ref.test.js"]
+  },
+  {
+    "name": "WILD-REJOIN-any-g-read",
+    "file": "src/net/wild/wildReceipt.js",
+    "old": "  if (c.g !== undefined && c.g !== 1) return false;   // WILD-REJOIN: the fallen gone from the room, or unsaid\n",
+    "new": "",
+    "tests": ["test/systems/wild/wildrejoin.test.js"]
+  },
+  {
+    "name": "WILD-REJOIN-g-for-every-fall",
+    "file": "server/src/index.js",
+    "old": "    const fallenGone = this._siegeSocketOf(fall.fallen) ? 0 : 1;",
+    "new": "    const fallenGone = 1;",
+    "tests": ["test/systems/wild/wildrejoin.test.js"]
+  },
+  {
+    "name": "WILD-REJOIN-the-down-word-unsaid",
+    "file": "server/src/index.js",
+    "old": "    if (z === 1) this._wildDownSay(st, a.sub, now);",
+    "new": "    void 0;",
+    "tests": ["test/systems/wild/wildrejoin.test.js"]
+  },
+  {
+    "name": "WILD-REJOIN-the-receipt-said-first",
+    "file": "server/src/index.js",
+    "old": "    if (z === 1) this._wildDownSay(st, a.sub, now);   // WILD-REJOIN: before the owed receipt, so the game is dead when it takes its drop\n    const owed = await this._wildOwedOf(a.sub, now), sk = this._siegeSocketOf(a.sub);\n    if (owed && sk) { for (const w of owed) this._send(sk[0], JSON.stringify(w)); this._wildOwed?.delete(a.sub); this._wildOwedKeep(a.sub); }\n",
+    "new": "    const owed = await this._wildOwedOf(a.sub, now), sk = this._siegeSocketOf(a.sub);\n    if (owed && sk) { for (const w of owed) this._send(sk[0], JSON.stringify(w)); this._wildOwed?.delete(a.sub); this._wildOwedKeep(a.sub); }\n    if (z === 1) this._wildDownSay(st, a.sub, now);\n",
+    "tests": ["test/systems/wild/wildrejoin.test.js"]
+  },
+  {
+    "name": "WILD-REJOIN-a-page-that-knows-its-death-killed-again",
+    "file": "src/systems/wild/wildRejoin.js",
+    "old": "      if (!alive || now() - ownDeathAt < WILD_REJOIN_KNOWN_MS) return null;",
+    "new": "      if (!alive) return null;",
+    "tests": ["test/systems/wild/wildrejoin.test.js"]
+  },
+  {
+    "name": "WILD-REJOIN-the-death-taken-twice",
+    "file": "src/systems/wild/wildRejoin.js",
+    "old": "      waiting = null;\n      return death;",
+    "new": "      return death;",
+    "tests": ["test/systems/wild/wildrejoin.test.js"]
+  },
+  {
+    "name": "WILD-REJOIN-the-served-time-lost-to-a-later-word",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "Number(d.served ?? _death?.served) || 0",
+    "new": "Number(d.served) || 0",
+    "tests": ["test/systems/wild/wildrejoin.test.js"]
+  },
+  {
+    "name": "WILD-REJOIN-the-screens-full-two-minutes",
+    "file": "src/ui/deathScreen.js",
+    "old": "WILD_DEATH_HOLD_S - (this.wild.served ?? 0) : ONLINE_RESPAWN_SECONDS",
+    "new": "WILD_DEATH_HOLD_S : ONLINE_RESPAWN_SECONDS",
+    "tests": ["test/systems/wild/wildrejoin.test.js"]
+  },
+  {
+    "name": "WILD-REJOIN-the-subscribers-told-again",
+    "file": "src/characters/playerEntity.js",
+    "old": "  surfacePlayer();\n  _deathPresenter?.(entity);",
+    "new": "  surfacePlayer();\n  hearDeath(entity);\n  _deathPresenter?.(entity);",
+    "tests": ["test/systems/wild/wildrejoin.test.js"]
+  },
+  {
+    "name": "WILD-REJOIN-the-presenter-skipped",
+    "file": "src/characters/playerEntity.js",
+    "old": "  surfacePlayer();\n  _deathPresenter?.(entity);",
+    "new": "  surfacePlayer();",
+    "tests": ["test/systems/wild/wildrejoin.test.js"]
+  },
+  {
+    "name": "WILD-REJOIN-the-grace-word-dropped",
+    "file": "src/scenes/wildSeizeHost.js",
+    "old": "        else if (a?.error === 'grace' && !s.graceWaited) _wildSeize.set(r, { ...s, due: Date.now() + (WILD_FALL_GRACE_S + 5) * 1000, graceWaited: true });",
+    "new": "        else void 0;",
+    "tests": ["test/systems/wild/wildrejoin.test.js"]
+  },
+  {
+    "name": "WILD-REJOIN-the-grace-waited-for-ever",
+    "file": "src/scenes/wildSeizeHost.js",
+    "old": "a?.error === 'grace' && !s.graceWaited)",
+    "new": "a?.error === 'grace')",
+    "tests": ["test/systems/wild/wildrejoin.test.js"]
+  },
+  {
+    "name": "WILD-REJOIN-the-hall-dropped",
+    "file": "src/systems/wild/wildRejoin.js",
+    "old": "dungeon: here.dungeon ?? null,",
+    "new": "dungeon: null,",
+    "tests": ["test/systems/wild/wildrejoin.test.js"]
+  },
+  {
+    "name": "WILD-REJOIN-the-pixel-dropped",
+    "file": "src/systems/wild/wildRejoin.js",
+    "old": "px: here.px ?? null };",
+    "new": "px: null };",
+    "tests": ["test/systems/wild/wildrejoin.test.js"]
+  },
+  {
+    "name": "WILD-REJOIN-the-callers-array-kept",
+    "file": "src/systems/wild/wildRejoin.js",
+    "old": "return { p: [...p], room,",
+    "new": "return { p, room,",
+    "tests": ["test/systems/wild/wildrejoin.test.js"]
+  }
+]

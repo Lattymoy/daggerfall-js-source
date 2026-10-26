@@ -22,6 +22,7 @@ import { srand } from '../../src/formats/dfRandom.js';
 import { dungeonFirePlan } from '../../src/world/dungeon/dungeonFires.js';
 import { dungeonTier } from '../../src/systems/dungeon/dungeonTier.js';
 import { applyChampion } from '../../src/systems/champions.js';
+import { eliteTraits } from '../../src/systems/bossTraits.js';   // BOSS-TRAITS: the host's build arm draws an elite's trait
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const DC = read('src/scenes/dungeonContext.js');
@@ -34,8 +35,8 @@ const fnSrc = (name) => {
 /** The host's applyEliteScaling and eliteLootOpts, run over the real laws. */
 function hostScale() {
   const body = `${fnSrc('eliteLootOpts')}\n${fnSrc('applyEliteScaling')}\nreturn { eliteLootOpts, applyEliteScaling };`;
-  return new Function('promoteEliteFoe', 'scaleSuperFoe', 'applyChampion', 'SUPER_LOOT_OPTS', 'ELITE_LOOT_DROP_MULT', 'ELITE_LOOT_QUALITY_MULT', 'ELITE_HEALTH_SCALE', 'ELITE_DAMAGE_SCALE', '_wildDungeon', '_wildRing', 'wildLootOpts', body)(
-    promoteEliteFoe, scaleSuperFoe, applyChampion, SUPER_LOOT_OPTS, ELITE_LOOT_DROP_MULT, ELITE_LOOT_QUALITY_MULT, ELITE_HEALTH_SCALE, ELITE_DAMAGE_SCALE, false, 0, (o) => o);   // WILD1: a dungeon out of the open zone
+  return new Function('promoteEliteFoe', 'scaleSuperFoe', 'applyChampion', 'SUPER_LOOT_OPTS', 'ELITE_LOOT_DROP_MULT', 'ELITE_LOOT_QUALITY_MULT', 'ELITE_HEALTH_SCALE', 'ELITE_DAMAGE_SCALE', '_wildDungeon', '_wildRing', 'wildLootOpts', 'eliteTraits', body)(
+    promoteEliteFoe, scaleSuperFoe, applyChampion, SUPER_LOOT_OPTS, ELITE_LOOT_DROP_MULT, ELITE_LOOT_QUALITY_MULT, ELITE_HEALTH_SCALE, ELITE_DAMAGE_SCALE, false, 0, (o) => o, eliteTraits);   // BOSS-TRAITS: an elite's trait, off the pick's seed   // WILD1: a dungeon out of the open zone
 }
 const foe = (over = {}) => ({ maxHealth: 60, health: 60, level: 10, mobileType: 20, team: 'Monster', ...over });
 

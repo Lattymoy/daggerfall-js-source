@@ -168,11 +168,12 @@
   {
     "name": "SD7B-the-breath-over-the-Beat",
     "file": "src/scenes/superDungeon/sdSteps.js",
-    "old": "if (g.push && inBreath(rz, course) && dt > 0)",
-    "new": "if (g.push && spanAt(rz, course) >= 1 && dt > 0)",
+    "old": "if (g.push && onLine && inBreath(rz, course) && dt > 0)",
+    "new": "if (g.push && onLine && spanAt(rz, course) >= 1 && dt > 0)",
     "tests": [
       "test/world/superDungeon/sd7b_steps.test.js"
-    ]
+    ],
+    "note": "AUDIT KETCH II (re-aimed by content): the breath inside its course's band (the Hour's everywhere)."
   },
   {
     "name": "SD7B-the-breath-always-snapped",
@@ -195,20 +196,22 @@
   {
     "name": "SD7B-the-wind-every-frame",
     "file": "src/scenes/superDungeon/sdSteps.js",
-    "old": "if (g.warn && span === 2 && lastWarned !== gust) {",
-    "new": "if (g.warn && span === 2) {",
+    "old": "if (g.warn && onLine && span === 2 && lastWarned !== gust) {",
+    "new": "if (g.warn && onLine && span === 2) {",
     "tests": [
       "test/world/superDungeon/sd7b_steps.test.js"
-    ]
+    ],
+    "note": "AUDIT KETCH II (re-aimed by content)."
   },
   {
     "name": "SD7B-the-wind-everywhere",
     "file": "src/scenes/superDungeon/sdSteps.js",
-    "old": "if (g.warn && span === 2 && lastWarned",
-    "new": "if (g.warn && span >= 0 && lastWarned",
+    "old": "if (g.warn && onLine && span === 2 && lastWarned",
+    "new": "if (g.warn && onLine && span >= 0 && lastWarned",
     "tests": [
       "test/world/superDungeon/sd7b_steps.test.js"
-    ]
+    ],
+    "note": "AUDIT KETCH II (re-aimed by content)."
   },
   {
     "name": "SD7B-no-tick",

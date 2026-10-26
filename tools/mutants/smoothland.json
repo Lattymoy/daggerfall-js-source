@@ -98,8 +98,8 @@
   {
     "name": "SMOOTH-LAND-the-waterline-the-lands",
     "file": "src/world/tamriel/tamrielLand.js",
-    "old": "if (!(cubic(L.S, W, ix, iy, fx, fy) > 0)) return 0;",
-    "new": "if (!(cubic(L.S, W, ix, iy, fx, fy) >= 0)) return 0;",
+    "old": "if (!(at(L, L.FS, ix, iy, fx, fy) > 0)) return 0;",
+    "new": "if (!(at(L, L.FS, ix, iy, fx, fy) >= 0)) return 0;",
     "tests": [
       "test/world/smoothland.test.js"
     ]
@@ -170,8 +170,8 @@
   {
     "name": "SMOOTH-LAND-the-seas-own-distance-the-lands",
     "file": "src/world/tamriel/tamrielLand.js",
-    "old": "T[0] = S.map((v) => -v);",
-    "new": "T[0] = S;",
+    "old": "f0[y * W + x] = -FS.f[y * W + x];",
+    "new": "f0[y * W + x] = FS.f[y * W + x];",
     "tests": [
       "test/world/smoothland.test.js"
     ]
@@ -464,6 +464,42 @@
     "file": "src/world/tamriel/tamrielLand.js",
     "old": "  for (const fn of _heard) fn(_trace);\n}",
     "new": "}",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "R4-7-LAW-the-build-makes-every-tile",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "  L = { W, H, w, h, label, S, uni, T, TW, FS, F, materialize, tilesMade, fieldOf:",
+    "new": "  materialize();\n  L = { W, H, w, h, label, S, uni, T, TW, FS, F, materialize, tilesMade, fieldOf:",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "R4-7-LAW-the-held-centres-computed",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "if (!near[i] || held[i]) continue;",
+    "new": "if (!near[i]) continue;",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "R4-7-LAW-the-covers-reach-short",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "ty <= Math.floor((iy + 2) / LAW_TILE); ty++) {",
+    "new": "ty <= Math.floor((iy + 1) / LAW_TILE); ty++) {",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "R4-7-LAW-a-tile-left-unmarked",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "      done[ty * TW + tx] = 1; F.made++;",
+    "new": "      F.made++;",
     "tests": [
       "test/world/smoothland.test.js"
     ]

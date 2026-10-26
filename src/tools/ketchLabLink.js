@@ -12,7 +12,7 @@
 //   ?bk=&nd=            the engine's banked cells and its need (its sockets the first `bk`)
 //   ?lo=<id>:<s>,...    loose cells, each its seconds until it is lost, laid down the hold's aisle
 //   ?carry=<n>          cells carried by the crew
-//   ?wv=0-3             the Watch's wave
+//   ?wv=0-5             the Watch's wave (AUDIT KETCH II L5-6: KT_WATCH_WAVES - 0-3 before KETCH-LONGER)
 //   ?fight=<name>       the Warden's fight (KT_LAB_FIGHTS), with its companions: &age=<s> since it woke (fell, for
 //                       `fell`); &wt=<share> of a blow's wind-up done; &rs=a,b,c,d the resonators (1 true); &da=<s> the
 //                       Discord's mark this far off; &su=<s> stunned this much longer; &st=<s> the song this far in;
@@ -22,8 +22,8 @@
 //                       without it), forks raised - at stage 4 each stands its fight (`sections`, `song`)
 //
 // A tools page's: nothing of it ships in the game's own entry. Ledger A (KETCH).
-import { KT_STAGE } from '../net/ketch/ketchLaw.js';
-import { KT_BRIDGE, KT_HOLD, KT_WARDEN_HOME } from '../net/ketch/ketchDeck.js';
+import { KT_STAGE, KT_WATCH_WAVES } from '../net/ketch/ketchLaw.js';
+import { KT_BRIDGE, KT_HOLD, KT_WARDEN_HOME, engineNeeds } from '../net/ketch/ketchDeck.js';
 import { newWardenFight, joinWarden, wardenStateOf, KW_BLOWS, KW_BODY, KW_FAST, KW_ID, KW_OPENING_MS, KW_SECTION_GONE_MS } from '../net/ketch/ketchWarden.js';
 import { egBlowOf, egFloorWindup, shDisc, shLaneAt, shCone, shRing, shAll } from '../net/eliteGates/egShape.js';
 import { KT_CRADLE_BACK_MS } from '../net/ketch/ketchBrain.js';
@@ -125,14 +125,14 @@ export function ketchLabWire(search, now) {
   if (fight && sg < KT_STAGE.bridge) sg = KT_STAGE.bridge;
   const now0 = Math.round(now);
   const cr = list(p.get('cr')), br = list(p.get('br'));
-  const nd = clamp(Math.round(num(p.get('nd'), 5)), 0, 7);
+  const nd = clamp(Math.round(num(p.get('nd'), engineNeeds(KT_LAB_CREW))), 0, 7);   // AUDIT KETCH II L5-6: the engine's appetite for the lab's crew (5 was KETCH-LONGER's before)
   const bk = clamp(Math.round(num(p.get('bk'), sg > KT_STAGE.engine ? nd : sg === KT_STAGE.engine ? 3 : 0)), 0, nd);
   const lo = pairs(p.get('lo')).slice(0, 32).map(([id, s], j) => [clamp(Math.round(id), 1, 1e9), -3 + 2 * (j % 4), KT_HOLD.y, 114 + 3 * Math.floor(j / 4), now0 + Math.round(Math.max(0, s) * 1000)]);
   const carry = clamp(Math.round(num(p.get('carry'), 0)), 0, KT_LAB_CREW);
   const crew = Array.from({ length: KT_LAB_CREW }, (_, k) => [`lab${k}`, `Lab ${k}`]);
   const ws = fight ? labFight(p, fight, now0) : null;
   return {
-    k: 'st', n: 1, sg, sga: Math.max(0, now0 - AGO), cr: crew, bd: [], mv: [], bl: [], wv: clamp(Math.round(num(p.get('wv'), 0)), 0, 3),
+    k: 'st', n: 1, sg, sga: Math.max(0, now0 - AGO), cr: crew, bd: [], mv: [], bl: [], wv: clamp(Math.round(num(p.get('wv'), 0)), 0, KT_WATCH_WAVES),
     cl: {
       cr: Array.from({ length: 6 }, (_, j) => spotAt(cr[j] ?? (j === 2 ? 10 : 1), now0)),
       br: Array.from({ length: 2 }, (_, j) => spotAt(br[j] ?? 1, now0)),

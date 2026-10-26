@@ -430,6 +430,14 @@ registered custom pieces or the player's level: the WB5 spoils read the player's
 must not. The record of what a character bought rides that character's SAVE, not the device, so it travels with the
 pack it describes: a save from before a sale holds its stones and its unmarked offer alike.
 
+**What "Bought" says** (FIELD BUGS 2026-10-25i BOUGHT-YOURS; #bug-reports, "Can't buy this piece": "I did dismantle the
+other chest i bought days ago, but still i cant buy this one"). A Legendary wears its base record's name, so a name comes
+back on another day under another set: The Warden, a chest, was Malacath's on 2026-10-22 and Mora's on 2026-10-25. A
+mark is its offer's own id, the day in it, so an older sale never blocks today's and a dismantle frees nothing (SS5).
+The refusal said "Bought today", which a player holding the older Warden read as "you have one already", and a second
+press after a sale said it over the sale's own word. It says whose sale it was now: "You bought this one today. You can
+buy each piece once a day." (`systems/sigil/sigilBroker.js` BROKER_REFUSALS).
+
 **The price in gold** (AUDIT SET D2, D5; re-measured at SS2; closed at SS4). A stone sold as a gem of 5,000 (the WB5
 spoils' record). What it bought resold for more: over two thousand days of stock (days 0 to 1,999 of the shared clock, the
 Regalia's fire at +10 a piece), 6,926 of value a stone spent - a set's armour 7,751 a stone, the Regalia 8,265, a set

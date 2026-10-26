@@ -9,7 +9,7 @@ way (8, 9).
 | 2 | casting again adds to the effect's timer instead of resetting it - Light at 613 (Doctor Bill) | DFU's own law: an incumbent effect's `AddState` stacks the new cast's rounds onto it (audit F12, `systems/effects.js`) | not a port bug - kept |
 | 3 | the first open of overworld travel freezes, and frames fall the longer one travels (Shabalako) | the Overworld's first frame started all twelve dungeon-model loads at once; their climate pictures were uploaded pinned and never freed; Snowfall sampled and uploaded its snow round the traveller under a view that draws none | fixed (TV-BURST, TV-PIN, TV-SNOW) |
 | 4 | the game freezes opening chat, the wagon (EvoAva) | nothing in opening chat or the wagon is heavy; the likeliest hitch found is every save re-packing Snowfall's whole track field (80-90 ms at its limit), online every two minutes, plus clean snow masks swept twice a second | partly fixed (TV-SAVE, TV-REFILL) - the windows' own freeze not reproduced |
-| 5 | Knightspire's tavern sign hangs on a residence (DarkScorpyon) | the game's own data: block TVRNAM00 record 0 is a tavern's model with a tavern's interior and sign, typed House2 in the block's building list, which is where DFU reads a building's type | not a port bug - kept (SIGN-HOUSE) |
+| 5 | Knightspire's tavern sign hangs on a residence (DarkScorpyon) | the game's own data: block TVRNAM00 record 0 is a tavern's model with a tavern's interior and sign, typed House2 in the block's building list, which is where DFU reads a building's type | not a port bug - kept (SIGN-HOUSE); taken down 2026-10-25 (HOUSE-SIGN) |
 | 6 | a torch cannot be placed before my own door, but can before a stranger's (Shiki_Eternal) | the yard measured a house as the box round its models; Hammerfell's houses are L-shaped or stand an outside stair, and their doors open onto open ground inside that box | fixed (HOME-FOOT) |
 | 7 | `TypeError: Cannot read properties of undefined (reading 'velocity')` at `poseAhead`, on a ship's deck (Cruor) | a peer's word dropped a boat between two frames; the peek read the place it no longer names | fixed (PEEK-WORD) |
 | 8 | "if i bug the game outside of the bay i can become invisible to everyone and everyone becomes invisible to me" - "i relogged and im still invisible" (maya) | not a bug to find a way into: TAMRIEL2 streams the land past the Bay, and the wire still held the Bay - a pose past 1024 pixels refused and the socket closed on it, a cell west or north of the Bay no cell any halo reached | fixed (TV-BEYOND, world181 - the relay first) |
@@ -118,7 +118,18 @@ houses, `03-World/Beautiful-Towns.md`) and `TVRNAS07` record 8 - the author's by
 a building's type from the block's list and a door's key from its record, as DFU does (`world/rmbLayout.js`,
 `systems/talk/talkTopics.js`), and stands a shop sign as an ordinary scene model tied to no building, as DFU does. Of
 BLOCKS.BSA's 249 tavern signs, 244 hang at a tavern's door. Making that house a tavern would be a departure from DFU,
-and would get no name: the town's MAPS.BSA list names one tavern per tavern record. Nothing changed.
+and would get no name: the town's MAPS.BSA list names one tavern per tavern record. Nothing changed. The call came
+on 2026-10-25: HOUSE-SIGN (the owner: "remove the shop signs outside of buildings when the building is actually a
+house and not a shop"). A shop's sign now belongs to the building whose door is nearest it within 8 m, and a
+house's sign (House1-House4, or a house for sale) does not stand (`world/houseSigns.js`, asked by both town hosts:
+`scenes/pixelBuild.js` for the world, `scenes/exterior.js`; an interior or a dungeon stands no shop's sign). Of
+BLOCKS.BSA's 668 signs, six come down, all at a House2's door: TVRNAM00 record 0 (43727), ARMRAM01 record 10 (43746),
+ARMRAM03 record 14 (43736), BANKAS01 record 0 (43708), BOOKAL01 record 18 (43754) and FURNAL03 record 1 (43731); the
+box round each house's models names the same house. The door ties, not the box: wherever the two disagree, the door's
+building is the one of the sign's own trade. A sign past 8 m from every door stands - the two on a big tavern's side
+wall 19 m from its door (GENRAS02, CLOTAM01), and MAGEAA13's, 14.8 m from a house. A world-data block is asked by the
+same rule, since the served block carries the mod's type; Beautiful Villages' TVRNAS04, TVRNAS06 and TVRNAS07 were not
+measured. Both skins. `test/world/housesign.test.js` (5); `tools/mutants/housesign.json` (8, all dead); Port-Ledger A.
 
 ## PEEK-WORD: a peer's boat that her word no longer names (7)
 

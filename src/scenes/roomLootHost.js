@@ -4,6 +4,7 @@
 // use as `host.<name>` - as the code read them where it was.
 import { addGoldPieces, addItem, isGoldPieces, stacksWith } from '../systems/inventory.js';
 import { asTheRoom } from '../systems/online/onlineLane.js';
+import { withRollerLevel } from '../systems/loot/lootLevelGate.js';   // AUDIT UPDATE L1: the room's base at the room's level
 import { baseSignature, bonusSpent, carriedBase, claimOf, claimWord, composeRoomView, isPersonalLoot, isRoomBaseKind, isRoomWord, judgeRoomClaim, legacyCounts, legacyDelta, legacySig, markPersonal, mergeRoomWord, pieceCount, recentAnswers, roomEmptied, ROOM_ANSWERS_KEPT, ROOM_BASE_FIND, ROOM_BASE_LUCK, ROOM_BASE_MAX, ROOM_BASE_QUARTERS, ROOM_CLAIM_TIMEOUT_MS, ROOM_CLAIMS_MAX, ROOM_PUT_RESAY_MS, ROOM_TAKEN_TEXT, roomBaseGender, roomBaseLevel, roomClaimId, roomClaimOrder, roomContainerName, roomRoller, roomState, roomTermsBeat, roomWord, sameRoomTerms, seededRolls, settleBonusSpent, validRoomWord } from '../systems/roomLoot.js';
 import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
 import { grantEliteLoot } from '../systems/eliteFoes.js';
@@ -11,6 +12,7 @@ import { isDeepPileKey } from '../systems/rest/restItems.js';
 import { isEquipped, unequipItem } from '../systems/equip.js';
 import { CLAIM_KEEP_MS, CLAIMS_KEPT_MAX } from '../systems/loot/claimLedger.js';
 import { LOOT_LIST_MAX, validLootList } from '../systems/loot/loot.js';
+import { markRoomCarried } from '../systems/loot/roomCarriedList.js';
 import { SEARCH_COOLDOWN_MINUTES, SEARCH_LOOT_MAX } from '../systems/searchables.js';
 import { SEARCH_FOREIGN_PER_OBJECT } from './searchRoom.js';
 import { sharedClassicMinutes } from '../net/wire.js';
@@ -21,6 +23,7 @@ import { rollCorpseKit } from '../systems/foeLootCap.js';
 import { rollRoomBonus, spawnEnemyLoot, wildLootAfter } from './hostCombat.js';
 import { setMidScreenText } from '../ui/midScreenText.js';
 import { stampWonWeapons } from '../systems/loot/lootRarity.js';
+import { championTraitFor } from '../systems/champions.js';   // a body's champion mark, judged at the room's level
 import { wildPileMore } from '../systems/wild/wildZone.js';
 import { seaPileMore } from '../systems/sea/seaSpoils.js';
 
@@ -48,7 +51,9 @@ export function createRoomLoot(host) {
   const _roomComposed = new Map();  // canon -> the base the container's list was last composed from
   const _roomUnbornAt = new Map();  // canon -> when the sweep first found the container born with no terms (its own clock)
   const _roomPending = new Map();   // canon -> a word that came before its body fell here
-  const _roomNextGen = new Map();   // canon -> the generation a pile's respawn rolls next (the room's emptying stamp)
+  const _roomNextGen = new Map();   // canon -> the generation the container's next mint takes at least (a pile's respawn: the room's emptying stamp; a stale memory word: one past its own)
+  /** canon -> the generation of a memory word this build could not match, kept until this client holds the seat. */
+  const staleMemory = new Map();
   const _roomSeen = new Map();      // canon -> { list, at }: the shared pieces its list held at its last compose (a take is read against it)
   const _roomMine = new Map();      // claim id -> this player's own claim or put the host has not answered (or a claim that timed out, still answered late)
   const _roomWon = new Set();       // `canon#g|place` this player's claims were granted - a sibling claim's refusal is then no news
@@ -125,7 +130,8 @@ export function createRoomLoot(host) {
   }
   /** THE BASE: a container's chain on the room's dice and the room's terms, computed here as on every client in the
    *  room (cached for one set of terms). Rolled AS THE ROOM (onlineLane.js asTheRoom): every mod at its shipped
-   *  default. Answers `{ name, terms, items, full, rejects, lootCap, h }`. */
+   *  default. Answers `{ name, terms, items, full, rejects, lootCap, champion, h }` - `champion` the trait id the base
+   *  rolled a body as, or null. */
   function rollRoomBase(canon, terms) {
     if (isCarried(canon)) {   // OUTDOOR-LOOT: a find's base is the searcher's roll, carried with the state - never computed
       const st = _roomState.get(canon);
@@ -144,13 +150,15 @@ export function createRoomLoot(host) {
     const rolls = seededRolls(name);
     const gender = roomBaseGender(name);
     const rejects = [];
-    let items = [], lootCap = null;
-    asTheRoom(() => {
+    let items = [], lootCap = null, champion = null;
+    // AUDIT UPDATE L1: and at the room's level - every LOOT-GATE under it (the corpse door, the kit, an elite's and a
+    // revenant's share) reads terms.lv, never this client's own player, so every client rolls the one base
+    asTheRoom(() => withRollerLevel(terms.lv, () => {
       if (h.pile) items = roomPileBase(h, terms, rolls, gender);
-      else ({ items, lootCap } = roomBodyBase(h.foe, terms, rolls, gender, rejects));
-    });
+      else ({ items, lootCap, champion } = roomBodyBase(h.foe, terms, rolls, gender, rejects));
+    }));
     if (items.length > ROOM_BASE_MAX) items.length = ROOM_BASE_MAX;
-    const rec = { name, terms: { ...terms }, items, full: items.map((it) => (Number.isInteger(it?.stackCount) ? it.stackCount : null)), rejects, lootCap, h: baseSignature(items) };
+    const rec = { name, terms: { ...terms }, items, full: items.map((it) => (Number.isInteger(it?.stackCount) ? it.stackCount : null)), rejects, lootCap, champion, h: baseSignature(items) };
     _roomBase.set(canon, rec);
     _roomBonus.delete(canon);
     return rec;
@@ -167,15 +175,24 @@ export function createRoomLoot(host) {
   }
   /** A body's base: SetEnemyCareer's whole loot chain (spawnEnemyLoot) and its death's (the kit's ladder, the sigils at
    *  the fight's count, OnEnemyDeath's subscribers and the cap), run over the fallen foe's own entity on the room's
-   *  dice and terms - a class foe at the party's level, as SetEnemyCareer stands one at the player's - and handed back
-   *  without touching what the foe wore or fought with. `rejects` receives what PLAIN-LOOT's keep let go. */
+   *  dice and terms - a class foe at the party's level, as SetEnemyCareer stands one at the player's, and its champion
+   *  mark judged at that level - and handed back without touching what the foe wore or fought with. `rejects` receives
+   *  what PLAIN-LOOT's keep let go. */
   function roomBodyBase(f, terms, rolls, gender, rejects) {
     const e = f.entity;
-    const saved = { items: e.items, weapon: e.weapon, armorValues: e.armorValues, equip: e.equip, level: e.level };
+    const saved = { items: e.items, weapon: e.weapon, armorValues: e.armorValues, equip: e.equip, level: e.level, champion: e.champion, lootCap: e.lootCap };
     const roller = roomRoller(terms.lv, gender);
     const o = { rolls, quarters: ROOM_BASE_QUARTERS, luck: ROOM_BASE_LUCK, find: ROOM_BASE_FIND };
     try {
       if (e.isClass) e.level = terms.lv;
+      // The build judged the champion mark at this player's own level, so a level-2 player's copy of a marked class foe
+      // is no champion. Judged again here at the room's level, every client rolls the same base; otherwise the plain
+      // copy draws PLAIN-LOOT's keep dice a champion skips, and the host's word about the body reads as another build's.
+      // An elite foe is never a champion, as applyEliteScaling stands it.
+      e.champion = e.eliteFoe ? undefined : championTraitFor(e, f.src?.champion)?.id;
+      // A plain copy's build stamped its own loot cap, and a champion's chain stamps none; the base's record must carry
+      // the cap its own chain stamps, because the player's bonus reads it.
+      e.lootCap = undefined;
       e.items = [];
       e.equip = undefined;   // the base's kit is laid on a table of its own, never over the one the foe wore
       spawnEnemyLoot(e, f.mobileType, ENEMY_BASICS[f.mobileType], roller, { ...eliteLootOpts(f.src), where: 'dungeon', ...o, rejects });
@@ -184,9 +201,9 @@ export function createRoomLoot(host) {
       rollCorpseKit(e, o);
       stampWonWeapons(e.items, terms.n ?? 1, { rolls });
       raiseEnemyDeath(e, { ...o, level: terms.lv, room: true });   // `room`: the room's base, every client's - no kill (systems/eliteGates/egFind.js asks at the kill)
-      return { items: e.items, lootCap: Number.isInteger(e.lootCap) ? e.lootCap : null };
+      return { items: e.items, lootCap: Number.isInteger(e.lootCap) ? e.lootCap : null, champion: e.champion ?? null };
     } finally {
-      e.items = saved.items; e.weapon = saved.weapon; e.armorValues = saved.armorValues; e.equip = saved.equip; e.level = saved.level;
+      Object.assign(e, saved);
     }
   }
   /** THE BONUS: this player's own layer over a base - on dice seeded by the base's name and the CHARACTER, at their
@@ -204,7 +221,7 @@ export function createRoomLoot(host) {
     const f = h?.foe ?? null;
     const pieces = rollRoomBonus({   // hostCombat.js: the knobs' one home, at this player's own stage and Luck
       rolls: seededRolls(key), player: playerEntity, pile: !!h?.pile, deepPile: !!h?.pile && isDeepPileKey(host.lootKey), rejects: base.rejects,
-      basics: f ? ENEMY_BASICS[f.mobileType] : null, mobileType: f?.mobileType ?? null, champion: f?.entity?.champion ?? null,
+      basics: f ? ENEMY_BASICS[f.mobileType] : null, mobileType: f?.mobileType ?? null, champion: base.champion ?? null,
       level: f ? (f.entity.isClass ? base.terms.lv : f.entity.level) : base.terms.lv, lootCap: base.lootCap, baseItems: base.items, fighters: base.terms.n ?? 1,
     });
     for (const it of pieces) markPersonal(it);
@@ -239,6 +256,7 @@ export function createRoomLoot(host) {
     const { list: out, seen } = composeRoomView(base.items, base.full, st, bonus.pieces.filter((_, i) => !spent.has(i)), pending);
     list.length = 0;
     list.push(...out);
+    markRoomCarried(list);   // GOLD-WIRE: a gold drop into it stops at the most one stack rides the room's word in
     bonus.composed = true;
     bonus.list = list;
     _roomComposed.set(canon, { base, list });
@@ -358,7 +376,21 @@ export function createRoomLoot(host) {
     if (!h.search) {
       const base = rollRoomBase(canon, w);
       if (!base) return 0;
-      if (w.h && w.h !== base.h) { host._lootSeen.add(canon); host._lootUnreadable.add(canon); return 0; }   // another build's base: never landed as a list (M2's word)
+      if (w.h && w.h !== base.h) {
+        // A word the room's memory hands back (no speaker) was this room's own: an earlier visit's, often this
+        // player's on the build before an update, or at a level the base no longer reads. Its takes name places in a
+        // list this build does not roll, so the host starts the container over one generation on - a newer
+        // generation beats the old terms on every client - rather than lock it for the visit. A live peer's word,
+        // and the memory's on a client that is not the host, stay another build's word.
+        if (from == null) staleMemory.set(canon, w.g);
+        if (from == null && host._authority && !bodyRebuilding(h)) {
+          restartStaleContainer(canon);
+          return 0;
+        }
+        host._lootSeen.add(canon);
+        host._lootUnreadable.add(canon);
+        return 0;
+      }
     }
     const { state, changed, answered } = mergeRoomWord(st, w);
     const reborn = state !== st;
@@ -646,6 +678,31 @@ export function createRoomLoot(host) {
   function roomTakeSeat() {
     if (!roomLootOn()) return;
     for (const [canon, st] of [..._roomState]) if (st.claims.size) roomJudge(canon, st, roomClaimOrder);
+    // A memory word that landed before the seat was this client's is started over now, unless a readable word
+    // has come for the container since.
+    for (const canon of [...staleMemory.keys()]) {
+      if (_roomState.has(canon)) staleMemory.delete(canon);
+      else if (!bodyRebuilding(roomBaseHolder(canon))) restartStaleContainer(canon);
+    }
+  }
+  /** A body still being rebuilt as the memory's species is the CORPSE-GOLD path (dungeonContext.js applyWorld): its
+   *  word lands again once the rebuild stands, and is judged then - never started over from the copy it replaces. */
+  function bodyRebuilding(holder) {
+    return !!holder?.foe && host._retyping.has(foes.indexOf(holder.foe));
+  }
+  /** Lets go of a stale memory word: the container is unborn again, and its next mint (the sweep's, or a body's
+   *  birth) takes the generation after the stale word's, so the fresh terms beat the old ones wherever they are held. */
+  function restartStaleContainer(canon) {
+    const staleGeneration = staleMemory.get(canon) ?? 0;
+    staleMemory.delete(canon);
+    host._lootUnreadable.delete(canon);
+    _roomUnbornAt.delete(canon);
+    _roomNextGen.set(canon, Math.max(_roomNextGen.get(canon) ?? 0, staleGeneration + 1));
+  }
+  /** A body's generation at its mint: its death, or past a stale memory word's when one was let go. */
+  function bodyGeneration(canon, f) {
+    const death = Number.isFinite(f._diedAt) ? f._diedAt : 0;
+    return Math.max(death, _roomNextGen.get(canon) ?? 0);
   }
   /** THE CLAIMS' FRAME: every room container's takes and puts read (the host's verdicts said, anyone else's claims), a
    *  claim with no verdict past ROOM_CLAIM_TIMEOUT_MS let go - its piece back in the list, its verdict still landed if it
@@ -716,7 +773,7 @@ export function createRoomLoot(host) {
     const pend = _roomPending.get(canon);
     if (pend) { _roomPending.delete(canon); landRoomWord(canon, pend.rec, pend.from); }
     if (_roomState.has(canon)) { composeRoomContainer(canon); return; }
-    if (host._authority && !host._roomMintHold) { mintRoomTerms(canon, Number.isFinite(f._diedAt) ? f._diedAt : 0); return; }
+    if (host._authority && !host._roomMintHold) { mintRoomTerms(canon, bodyGeneration(canon, f)); return; }
     f.entity.items.length = 0;   // UNBORN holds nothing: this copy's own roll is no reader's (LOOT11's light, Hunting's body key, the save); the sweep counts its wait from here (mintUnbornRoom)
   }
   /** OUTDOOR-LOOT: a search find the room lets go at its hour (WORLD8's sweep), once it is emptied. Answers whether `h` (the canon's
@@ -733,6 +790,7 @@ export function createRoomLoot(host) {
     _roomState.delete(canon); _roomBase.delete(canon); _roomBonus.delete(canon); _roomComposed.delete(canon);
     _roomUnbornAt.delete(canon); _roomPending.delete(canon); _roomSeen.delete(canon);
     _roomSees.delete(canon); _roomSearcher.delete(canon); _roomStale.delete(canon);
+    staleMemory.delete(canon);
   }
   /** THE SWEEP'S HALF (once a second, beside WORLD8's): every room container standing here with no terms gets them -
    *  the host's at once for a body, after ROOM_TERMS_WAIT_HOST_MS for a pile (the room's memory comes first); another
@@ -754,7 +812,7 @@ export function createRoomLoot(host) {
       if (!lootableBody(f)) continue;
       const canon = roomCanonOfFoe(f);
       if (!canon || _roomState.has(canon) || host._lootUnreadable.has(canon) || canon === host._lootOpenKey) continue;
-      if (host._authority || due(canon)) mintRoomTerms(canon, Number.isFinite(f._diedAt) ? f._diedAt : 0);
+      if (host._authority || due(canon)) mintRoomTerms(canon, bodyGeneration(canon, f));
     }
   }
   return { _roomBase, _roomMine, _roomNextGen, _roomState, composeRoomContainer, forgetRoomContainer, holderList, isRoomBaseContainer, landRoomWord, letFindGo, lootBuiltOf, mintUnbornRoom, roomBaseHolder, roomBodyBorn, roomCanonOfFoe, roomClaimTick, roomGive, roomLootOn, roomRecordOf, roomRecordsOf, roomSayNow, roomSettle, roomTakeSeat, roomUnborn, searchFound, settleRoomBonus };

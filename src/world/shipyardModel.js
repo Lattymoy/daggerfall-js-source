@@ -249,6 +249,7 @@ export function crewSignBox() {
   return [x - 0.15, y - h / 2 - 0.1, z - w / 2 - 0.1, x + 0.15, y + h / 2 + 0.1, z + w / 2 + 0.1];
 }
 function crewSign(f) {
+  f.hang(true);   // FIELD BUGS 2026-10-25i SIGN-PASS: a board hung from the eaves is drawn, never solid, as the gate's (signboard)
   const { w, h, t } = SIGN_BOARD, A = SHIPYARD.hall, x = A.x0 - 0.15, yMid = A.frontH - 0.25 - h / 2, zMid = (A.z0 + A.z1) / 2;
   const x0 = x - t / 2, x1 = x + t / 2, y0 = yMid - h / 2, y1 = yMid + h / 2, z0 = zMid - w / 2, z1 = zMid + w / 2;
   f.quad(R.signCrew, [x0, y1, z1], [x0, y1, z0], [x0, y0, z0], [x0, y0, z1], [0, 0], [1, 0], [1, 1], [0, 1], [-1, 0, 0]);
@@ -259,6 +260,7 @@ function crewSign(f) {
   f.quad(R.wood, [x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0], e, g, g, e, [0, 0, -1]);
   f.quad(R.wood, [x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1], e, g, g, e, [0, 0, 1]);
   for (const rz of [z0 + 0.12, z1 - 0.12]) box(f, R.iron, x - 0.015, y1, rz - 0.015, x + 0.015, A.frontH, rz + 0.015);
+  f.hang(false);
 }
 function crewHall(f) {
   const A = SHIPYARD.hall, W = 0.15;

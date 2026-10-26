@@ -246,7 +246,7 @@ test('ELITE-RARE: an elite\'s extra Rare is half a champion\'s blue at its level
     assert.equal(eliteRareChance(+lv), 0.5 * (1 - (1 - blue) ** 2));
     assert.ok(Math.abs(eliteRareChance(+lv) - w) < 0.001, `L${lv}: ${eliteRareChance(+lv)}`);
   }
-  assert.match(readFileSync('src/systems/eliteFoes.js', 'utf8'), /if \(rolls\(\) < eliteRareChance\(lv\)\)/);
+  assert.match(readFileSync('src/systems/eliteFoes.js', 'utf8'), /if \(rolls\(\) < eliteRareChance\(lv\) \* \(at == null \? 1 : rareGate\(at\)\)\)/);   // PIN MOVED (LOOT-GATE): the roller's level holds it back
 });
 
 test('SLAUGHTER-BOX (FIELD BUGS 2026-10-15c, the Discord: "Random encounter from box - Slaughter fish"): a chest\'s or a crate\'s foe is never one of the roster\'s water species - it stands on the dry floor beside the box; a roster of swimmers alone wakes the grave\'s undead; the species are RDBLayout\'s three, the Aquatic ones of EnemyBasics, one home (mutants: the filter dropped; one species out of the set; the wild halls\' own copy back)', () => {

@@ -12,7 +12,7 @@ import { mineKind } from '../src/scenes/mineHost.js';
 import { herbKind } from '../src/scenes/herbHost.js';
 import { createGatherHost, aimAt } from '../src/scenes/gatherHost.js';
 import { createProfBook } from '../src/net/profBook.js';
-import { veins, trees, utcDayOfMs } from '../src/net/nodeLaw.js';
+import { veins, trees, utcDayOfMs, dungeonVeins } from '../src/net/nodeLaw.js';
 import { setForagingHost } from '../src/systems/foraging/foragingInstall.js';
 import { FT } from '../src/systems/foraging/foragingLaw.js';
 import { HEIGHTMAP_DIMENSION, TERRAIN_SIZE } from '../src/world/terrain/terrainSampler.js';
@@ -35,6 +35,13 @@ export const tick = () => new Promise((r) => setImmediate(r));
 export const memStorage = () => { const m = new Map(); return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)) }; };
 export const WOODS = 231, GLENUMBRA = 59, PX = 405;
 export const NOON = 20500 * 86_400 + 43_200;
+/** The rigs' dungeon: nobody has vouched for it, and its first vein on the rig's day is Silver, tier 3 - what Mining 25
+ *  works. PIN MOVED (DEEP-OPEN, bible/06-Systems/Professions-Arc.md section 53): such a dungeon draws its whole deep table
+ *  now - every vein was Silver, and 1234's first is no longer - so it is the first from 1234 whose first vein is. */
+export const DEEP_DUNGEON = (() => {
+  for (let id = 1234; id < 6000; id++) if (dungeonVeins({ dungeon: id, day: utcDayOfMs(NOON * 1000), climate: WOODS, confirmed: false })[0]?.material === 'metal:silver') return id;
+  throw new Error('no dungeon whose first vein is Silver');
+})();
 export const OUTDOORS = { inside: false, insideDungeon: false, insideCastle: false, locationType: 0xffff, inLocationRect: false, hour: 12, climate: WOODS, region: GLENUMBRA, enemiesNear: false, carriedWeight: 0, maxEncumbrance: 100, swimming: false, exteriorWater: 'None' };
 
 /** The renderer GATHER-FEEL stood its flats on: a batch is its archive, record and centres - and GATHER-FEEL II's chunks

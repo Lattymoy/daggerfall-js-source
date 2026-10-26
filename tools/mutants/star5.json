@@ -128,8 +128,8 @@
  {
   "name": "STAR5-the-team-chain",
   "file": "src/characters/enemy/enemyTargets.js",
-  "old": "if (bout !== true && !civilian && !star) {",
-  "new": "if (bout !== true && !civilian) {",
+  "old": "if (bout !== true && !civilian && !star && !goal) {",
+  "new": "if (bout !== true && !civilian && !goal) {",
   "tests": [
    "test/systems/starfall/star5_defense.test.js"
   ]

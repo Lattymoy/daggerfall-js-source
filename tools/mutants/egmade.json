@@ -29,8 +29,8 @@
   {
     "name": "EGMADE-the-hour-unwarded",
     "file": "src/systems/madeLevel.js",
-    "old": "regen: 'off', levitate: 'banned',\n    runLeap: 'refused', resurrect: 'refused', death: 'final'",
-    "new": "regen: 'off', levitate: null,\n    runLeap: 'refused', resurrect: 'refused', death: 'final'",
+    "old": "regen: 'held', levitate: 'banned',\n    runLeap: 'refused', death: 'final'",
+    "new": "regen: 'held', levitate: null,\n    runLeap: 'refused', death: 'final'",
     "tests": [
       "test/systems/eliteGates/egmade_law.test.js"
     ]
@@ -120,7 +120,7 @@
   {
     "name": "EGMADE-the-court-law-asked-again",
     "file": "src/scenes/world.js",
-    "old": "setCourtRules(madeRuleHere('regen') === 'off');",
+    "old": "setCourtRules(madeRuleHere('regen') === 'held');",
     "new": "setCourtRules(modes?.gateArenaDay?.() != null);",
     "tests": [
       "test/systems/eliteGates/egmade_law.test.js",
@@ -160,8 +160,8 @@
   {
     "name": "EGMADE-a-resurrect-in-the-hour",
     "file": "src/scenes/world.js",
-    "old": "const rez = social?.acct && madeRuleHere('resurrect') !== 'refused' ? rezFor(",
-    "new": "const rez = social?.acct ? rezFor(",
+    "old": "const rez = social?.acct && madeRuleHere('resurrect') !== 'refused' && hourRezOpen() ? rezFor(",
+    "new": "const rez = social?.acct && hourRezOpen() ? rezFor(",
     "tests": [
       "test/systems/eliteGates/egmade_law.test.js",
       "test/net/superDungeon/sd12_onelife.test.js"

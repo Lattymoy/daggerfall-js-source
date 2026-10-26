@@ -39,6 +39,9 @@
 //                            and what the character is owed given as one letter of credit (net/repairLaw.js), the
 //                            repair's way and once a ticket with it - and the law's hold lifted when the purse was all
 //                            it held on (`realm-findings` says the purse a mend is reckoned from)
+//   `letter`                 GUILD-LETTER-FIX (2026-10-25, mob: "do it"): a crime guild's letter sent again or called off
+//                            (net/repairLaw.js applyGuildLetter), the repair's way and once a ticket with it - the Staff
+//                            Panel's act alone (staffRealm.js /v1/staff/fix/letter), no door here
 //   `bank`                   STAFF-SET-BANK (2026-10-23, mob: "we need a set bank setting"): a character's bank, still the
 //                            total staff read, set to the gold they name (net/repairLaw.js), the repair's way and once a
 //                            ticket with it - the Staff Panel's act alone (staffRealm.js /v1/staff/fix/bank), no door here
@@ -52,7 +55,7 @@
 import { isDeveloper } from './titles.js';
 import { REALM_ID_RE, REALM_PLAYING_S, realmSaveTextOf, dropObjects, seizeRealmRecord, dropIfUnnamed, mustChange } from './realm.js';
 import { budgetConfig, budgetConfigOf, forgetBudgetConfig, BUDGET_DEFAULT, FAUCET_KINDS, faucetStatement } from './budget.js';   // AUDIT LW-II-2 S6: and the service's own faucets; SUMMON-REPAIR: a refund is one
-import { repairOf, applyRepair, purseMendOf, applyPurseMend, bankSetOf, applyBankSet } from '../../src/net/repairLaw.js';   // SUMMON-REPAIR: the repair's law, the tool's too; PURSE-MEND: the mend's; STAFF-SET-BANK: the bank set's
+import { repairOf, applyRepair, purseMendOf, applyPurseMend, bankSetOf, applyBankSet, guildLetterOf, applyGuildLetter, GUILD_LETTERS, GUILD_LETTER_OPS } from '../../src/net/repairLaw.js';   // SUMMON-REPAIR: the repair's law, the tool's too; PURSE-MEND: the mend's; STAFF-SET-BANK: the bank set's
 import { lawSigOf } from './verdict.js';   // PURSE-MEND: the signature the purse's finding stands under
 import { isHandleShaped } from '../../src/net/handleShape.js';   // SUMMON-REPAIR: an account named by its handle
 import { wealthOf, goldOf } from './judge.js';   // STAFF-SET-BANK: and a bank's gold as the judge counts it
@@ -94,7 +97,10 @@ const bankAnswer = (/** @type {any} */ r, /** @type {boolean} */ repeat) => ({
  *  set's names BANK_SET_FACTION, below every faction a repair or a mend names - no migration: every row written before it
  *  reads as the kind it was. */
 export const BANK_SET_FACTION = -1;
-const rowKindOf = (/** @type {any} */ r) => (r.faction === 0 ? 'mend' : r.faction === BANK_SET_FACTION ? 'bank' : 'repair');
+/** GUILD-LETTER-FIX: a letter fix's row names its guild's faction below nothing (-108 the Brotherhood's, -42 the Thieves
+ *  Guild's) and its act as the `flag` (GUILD_LETTER_OPS) - below BANK_SET_FACTION, so no row before it reads as one. */
+export const letterRowFaction = (/** @type {'db' | 'tg'} */ guild) => -GUILD_LETTERS[guild].faction;
+const rowKindOf = (/** @type {any} */ r) => (r.faction === 0 ? 'mend' : r.faction === BANK_SET_FACTION ? 'bank' : r.faction < BANK_SET_FACTION ? 'letter' : 'repair');
 /** PURSE-MEND: the law finding's signature a purse below nothing stands under alone (verdict.js lawSigOf over the judge's
  *  `gold` - judge.js characterFindings). */
 export const PURSE_SIG = lawSigOf([{ code: 'gold' }]);
@@ -120,7 +126,8 @@ const rowOf = (/** @type {any} */ db, /** @type {unknown} */ id) => (typeof id =
  * (409: the record moved while the repair was written - ask again), PURSE-MEND's 'mend-not-negative' (409: the record's
  * purse is not below nothing), 'mend-moved' (409: not the purse the mend was reckoned from) and 'repair-ticket' (409: the
  * ticket names another kind of act on this character), STAFF-SET-BANK's 'bank-none' (409: the record keeps no Empire
- * account) and 'bank-moved' (409: not the bank total staff read), or the act's answer.
+ * account) and 'bank-moved' (409: not the bank total staff read), GUILD-LETTER-FIX's 'letter-member', 'letter-quest',
+ * 'letter-pending' and 'letter-none' (409, applyGuildLetter's words), or the act's answer.
  * @param {any} ctx @param {any} player @param {any} env @param {string} act @param {any} body
  */
 export async function reviewAct(ctx, player, env, act, body = {}) {
@@ -211,6 +218,7 @@ export async function reviewAct(ctx, player, env, act, body = {}) {
   if (act === 'repair') return repairAct(ctx, row, by, note, body);
   if (act === 'mend') return mendAct(ctx, row, by, note, body);   // PURSE-MEND
   if (act === 'bank') return bankAct(ctx, row, by, note, body);   // STAFF-SET-BANK
+  if (act === 'letter') return letterAct(ctx, row, by, note, body);   // GUILD-LETTER-FIX
   if (act === 'rollback') {
     if (row.dead_at != null) return { error: 'dead' };
     if (!row.clean_obj || !bucket) return { error: 'no-clean' };
@@ -248,7 +256,7 @@ export async function reviewAct(ctx, player, env, act, body = {}) {
  * back), the staff finding (who, the note, the ticket, what was mended and given) and the gold as the service's own
  * faucet, `repair`. The answer is the row as it landed (`answer`), with the hold its character stands under.
  * STAFF-SET-BANK: the bank set runs it too (`bank`) - the bank's gold moved either way, witnessed the same.
- * @param {any} ctx @param {any} row the character's row @param {'repair' | 'mend' | 'bank'} kind @param {string} ticket
+ * @param {any} ctx @param {any} row the character's row @param {'repair' | 'mend' | 'bank' | 'letter'} kind @param {string} ticket
  * @param {(save: any) => string | null} change @param {(seq: number) => any[]} steps @param {(r: any, repeat: boolean) => any} answer
  */
 async function staffMend(ctx, row, kind, ticket, change, steps, answer) {
@@ -362,6 +370,38 @@ async function bankAct(ctx, row, by, note, body) {
     staffFinding(db, row, nowS, { act: 'bank', by, note, ticket: set.ticket, was: set.was, gold: set.gold, from: row.seq, to: seq }),
     ...(up > 0 ? [faucetStatement(db, 'repair', Math.floor(nowS / 3600), up)] : []),
   ], bankAnswer);
+}
+
+/** GUILD-LETTER-FIX: a letter fix's row, as its answer says it - the guild, the act, the tally it found. */
+const letterAnswer = (/** @type {any} */ r, /** @type {boolean} */ repeat) => ({
+  ok: true, repeat, ticket: r.ticket, seq: r.seq, guild: r.faction === letterRowFaction('db') ? 'db' : 'tg',
+  op: r.flag === GUILD_LETTER_OPS.cancel ? 'cancel' : 'send', was: r.was, held: r.held_now ?? null, by: r.by_handle, at: r.at,
+});
+
+/**
+ * GUILD-LETTER-FIX (2026-10-25, mob: a player's Dark Brotherhood letter that never came, "do it"): A CRIME GUILD'S LETTER
+ * SENT AGAIN OR CALLED OFF BY STAFF (net/repairLaw.js applyGuildLetter) - `{ ticket, guild, op }` as the body names them,
+ * checked by the law - the repair's machinery (staffMend): the record seized one sequence on, so the playing tab's next
+ * checkpoint is refused and its next join plays the fixed record, which sends the letter the next minute it is outside.
+ * Its row in `realm_repairs` names the guild's faction below nothing (letterRowFaction) and the act as its `flag`, `was`
+ * the tally it found; no gold moves.
+ * @param {any} ctx @param {any} row the character's row @param {string} by @param {string | null} note @param {any} body
+ */
+async function letterAct(ctx, row, by, note, body) {
+  const { db, nowS } = ctx;
+  const fix = guildLetterOf(body);
+  if (!fix) return { error: 'body' };
+  let was = 0;
+  return staffMend(ctx, row, 'letter', fix.ticket, (save) => {
+    const r = applyGuildLetter(save, fix);
+    if (typeof r === 'string') return r;
+    was = r.was;
+    return null;
+  }, (seq) => [
+    db.prepare('INSERT INTO realm_repairs (char_id, ticket, player, by_handle, at, faction, flag, was, gold, seq, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)')
+      .bind(row.id, fix.ticket, row.player, by, nowS, letterRowFaction(fix.guild), GUILD_LETTER_OPS[fix.op], was, seq, note),
+    staffFinding(db, row, nowS, { act: 'letter', by, note, ticket: fix.ticket, guild: fix.guild, op: fix.op, was, from: row.seq, to: seq }),
+  ], letterAnswer);
 }
 
 /** AUDIT INT14: THE RANKS OF `n` ROWS - each of MEASURE_QUANTILES and the most, every one read by its rank in order (`at`,

@@ -123,9 +123,9 @@ test('WB4b the seams, by source: the dungeon context meets him as a foe-shaped b
   assert.match(dc, /const boss = gateBossBody\(\);\n\s*if \(boss\) \{ boss\._backFacing = foeDeps\.isBackFacing\(boss\.ai\.yaw, boss\.ai\.feet, playerFeet\); live\.push\(boss\); \}\n\s*const canSee = \(f\) => \{\n\s*if \(f === boss\) return bossSight\(eye, inViewFn, boss\);/, 'the swing sees him by his skin');
   assert.match(dc, /if \(foe === boss\) \{ hitEnemy = true; swingOnBoss\(boss, damage, lookDir\); continue; \}/);
   assert.match(dc, /const \{ point: p, dist \} = bossReach\(eye, boss\.ai\);/);
-  assert.match(dc, /landOnBoss\(boss, damage, HIT_KINDS\.Melee\);/);
+  assert.match(dc, /landOnBoss\(boss, bossStrikeAt\(boss\.entity, damage, 'melee', playerWeapon\.strikingWeapon, null, false, \(n\) => hurtPlayer\(n\)\), HIT_KINDS\.Melee\);/);   // PIN MOVED (BOSS-TRAITS): the number resisted first (systems/bossTraits.js)
   // PIN MOVED (AUDIT FB1018f L3-7): a shaft his ward turns says its word ("Warded") beside the ward's ring
-  assert.match(dc, /if \(boss && missileHitsCapsule\(m\.pos, boss\.ai\.feet, boss\.ai\.height, boss\.ai\.radius\)\) \{\n\s*if \(boss\.warded\) \{ wardTurns\(boss\); reportPlayerAttack\(\{ hit: true, damage: 0, target: boss\.entity \}\); \}[^\n]*\n\s*else playerArrowHitFoe\(m, boss, \{[^\n]*dealDamage: \(t, d\) => landOnBoss\(boss, d, HIT_KINDS\.Shaft\) \}\);/, 'a shaft meets his whole body');
+  assert.match(dc, /if \(boss && missileHitsCapsule\(m\.pos, boss\.ai\.feet, boss\.ai\.height, boss\.ai\.radius\)\) \{\n\s*if \(boss\.warded\) \{ wardTurns\(boss\); reportPlayerAttack\(\{ hit: true, damage: 0, target: boss\.entity \}\); \}[^\n]*\n\s*else playerArrowHitFoe\(m, boss, \{[^\n]*dealDamage: \(t, d\) => landOnBoss\(boss, bossStrikeAt\(boss\.entity, d, 'arrow', null, null, false, \(n\) => hurtPlayer\(n\)\), HIT_KINDS\.Shaft\) \}\);/, 'a shaft meets his whole body');   // PIN MOVED (BOSS-TRAITS): resisted first
   // PIN MOVED (FIELD BUGS 2026-10-19f STAND-IN-WHOLE, HOST-SPLIT): his spell door left the context for scenes/gate/standInSpell.js
   // (one door for him, his crystals, his host and my opponent), wired with his body and his door
   assert.match(dc, /createStandInSpell\(\{[^]*?boss: gateBossBody,[^]*?landOnBoss, landOnCrystal, landOnHost, landOnRival, nextArenaQ,/);
@@ -135,7 +135,7 @@ test('WB4b the seams, by source: the dungeon context meets him as a foe-shaped b
   assert.match(sis, /const went = land\(body, dealt, HIT_KINDS\.Spell\);/);   // PIN MOVED (FIELD BUGS 2026-10-19f BOSS-DOT)
   assert.match(dc, /castAtBoss: opts\.gateBoss \? \(sp, caster\) => spellOnBoss\(sp, caster\) : null,/);   // PIN MOVED (AUDIT SCHOOLS L2 F4): and the cast's wrapper
   // PIN MOVED (FIELD BUGS 2026-10-12g OPEN-HAND): a follow-up the blow owes him rides its one claim, taken first
-  assert.match(dc, /function landOnBoss\(boss, damage, r\) \{\n\s*damage \+= takeOwed\(boss\.entity\);[^\n]*\n\s*if \(boss\.warded\) \{ wardTurns\(boss\); return false; \}\n\s*return sdRemnant \? sdRemnant\.hit\(\{ d: damage, r \}\) : !!opts\.onBossHit\?\.\(\{ d: damage, r \}\);/);   // PIN MOVED (SD8c): the Remnant's in the Hour
+  assert.match(dc, /function landOnBoss\(boss, damage, r\) \{\n\s*damage \+= (?:takeOwed\(boss\.entity\)|bossStrikeAt\(boss\.entity, takeOwed\(boss\.entity\), 'melee', playerWeapon\.strikingWeapon, null, false, null\));[^\n]*\n\s*if \(boss\.warded\) \{ wardTurns\(boss\); return false; \}\n\s*return sdRemnant \? sdRemnant\.hit\(\{ d: damage, r \}\) : !!opts\.onBossHit\?\.\(\{ d: damage, r \}\);/);   // PIN MOVED (SD8c): the Remnant's in the Hour
   const hm = read('src/scenes/hostMagic.js');
   // WBX7: the harmful families - and a Soul Trap, which met nobody before (it passed straight through him)
   assert.match(hm, /function bossMarksFor\(sp\) \{\n\s*if \(!bossMark \|\| !castAtBoss \|\| !sp \|\| !\(duelSpellOf\(sp\) \|\| \(sp\.effects \?\? \[\]\)\.some\(\(e\) => e && isSoulTrapEffect\(e\)\) \|\| spellSways\(sp\)\)\) return \[\];/, 'the harmful families, a soul trap - and WB8a: a sway, refused at him');

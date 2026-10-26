@@ -82,7 +82,7 @@ import { MOD_SETTINGS } from '../systems/modSettings.js';
 import { walkSpeed, runSpeed } from '../player/motor.js';   // GetBaseSpeed's walk arm, the bob's baseSpeed
 export { createRecoil, createScreenShake, shakeNoise, GUN_FEEL } from '../combat/gun/gunFeel.js';   // FIELD-GUN6: the one home
 export { MUZZLE_CURVE, muzzleGlow } from '../combat/gun/gunFeel.js';   // FIELD-GUN13: the flash's curve, the same way
-import { muzzleGlow } from '../combat/gun/gunFeel.js';
+import { muzzleGlow, THUNDERLOCK_MUZZLE_CURVE } from '../combat/gun/gunFeel.js';
 export { widgetTransformRect };
 
 // FIELD-GUN12: placeSprite moved to combat/gun/gunPlacement.js, which
@@ -91,6 +91,12 @@ export { widgetTransformRect };
 // PISTOL-PORT: THE MACHINE IS THE GAME'S NOW (combat/gun/gunMachine.js) - the Dwarven Pistolet fires on it - and this lab
 // reads it back, gunSheet.js's arrow.
 export { createGunMachine } from '../combat/gun/gunMachine.js';
+
+// THUNDERLOCK-LAB (2026-10-25): the page draws the owner's seven-frame strip, cut as the game cuts it
+// (combat/thunderlockArt.js), and lights the room on the Thunderlock's own curve (gunFeel.js THUNDERLOCK_MUZZLE_CURVE).
+export { thunderlockFrames, THUNDERLOCK_STRIP } from '../combat/thunderlockArt.js';
+/** The room's light off the strip's flash: the Thunderlock's curve while the page's machine fires, 0 otherwise. */
+export const labThunderlockLight = (state, frame) => (state === 'Firing' ? THUNDERLOCK_MUZZLE_CURVE[frame] ?? 0 : 0);
 
 /**
  * The muzzle light. The flash is on frames 1-2 of the sheet

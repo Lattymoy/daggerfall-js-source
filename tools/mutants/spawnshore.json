@@ -32,9 +32,9 @@
   },
   {
     "name": "SHORE-overworld-ungated",
-    "file": "src/scenes/world.js",
-    "old": "if (maps.getClimateIndex(px, py) === CLIMATES.Ocean || !_spawnGround(px, py) || tvSpawnGone(px, py)) return null;",
-    "new": "if (maps.getClimateIndex(px, py) === CLIMATES.Ocean || tvSpawnGone(px, py)) return null;",
+    "file": "src/world/spawnGroundPlace.js",
+    "old": "    if (!plateauDry(px, py)) return null;\n",
+    "new": "",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js",
       "test/world/terrain/spawnshore.test.js"

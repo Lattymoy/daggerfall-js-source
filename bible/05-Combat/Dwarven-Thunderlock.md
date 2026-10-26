@@ -2216,3 +2216,29 @@ so nothing is healed. `healGap` stays the answer for a doll layer that has no pi
   content onto the laws the game runs: `fieldgun17.json` 10-12 (`flashBodyPoint`; record 11's equivalence went with the
   brightness weighting, so the campaign is 18 dead and 1 equivalent), `gilded1.json`'s hand and alpha,
   `fieldgunmwaudit.json` F1 and `pistolet.json`'s resting pistol (the curve argument). Each run once and dead.
+
+## THUNDERLOCK-LAB (2026-10-25): the lab draws the new sprite
+
+The owner: *"Can you insert the new thunderlock sprite into the prototype so I can adjust it"*. `gun-proto.html` now
+draws the owner's seven-frame strip (`public/art/thunderlock-frames.png`) instead of the old six-frame sheet.
+
+- **The cut is the game's.** `thunderlockFrames`, `THUNDERLOCK_STRIP` and `labThunderlockLight` reach the page
+  through `src/tools/gunLab.js`. The page cuts at a fixed stride with the 1-bit alpha, and uses the canvas as both
+  anchor and union.
+- **The defaults are the game's pose.** The panel opens at size 50 (the game's 160 of 320) and raise -5 (seated the
+  kick's height under the screen). FIELD-GUN8 (`test/systems/thunderlock.test.js`) holds those two to
+  `THUNDERLOCK_ART` now, not to `GUN_FEEL`'s old-sheet numbers.
+- **The cycle has seven frames.** The page's machine runs seven frames, and the hit slider reaches frame 7. The room
+  is lit on `THUNDERLOCK_MUZZLE_CURVE`.
+- **Gone from the panel:** the old sheet's controls, which were the idle-pose switch, the key and the chroma.
+  `tools/gunProtoProbe.mjs` now checks the strip's seven frames.
+
+## THUNDERLOCK-PLACE (2026-10-26): the owner's placement, off the lab
+
+The owner, after adjusting the new sprite in the gun lab: *"placement: 0.085 Offset, 44 size, -11 raise"*. The game now
+uses those three numbers. `THUNDERLOCK_ART` (`src/combat/thunderlockArt.js`) holds them as `widthPct` 0.44, `offset`
+0.085 and `raise` -11. The art's `pose` carries all three, and `weaponRig.js` `drawThunderlock` already reads
+`pose.offset`. The records' scale is derived from the width (0.44 x 320 / 160), so the records are drawn at the size the
+pose gives them. The canvas used to take 160 of the surface's 320 and sat the kick's 5 below the screen's foot; at -11
+the foot sits deeper still, so the shot's kick never shows the cut. The lab (`gun-proto.html`) opens on the same three
+numbers, and FIELD-GUN8 holds the lab and the game equal.

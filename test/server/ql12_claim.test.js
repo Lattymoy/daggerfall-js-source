@@ -566,7 +566,7 @@ test('QL12 THE ROUTE (AUDIT FIVE-ASKS A1\'s lesson): /v1/ql/claim is listed, beh
 
 test('QL12 THE VOCABULARY: the six join TITLES last, in QL_TITLES\' order; a registered row holds each by its bit and a guest none; their words; their colours - each its own, more than 40 from every title\'s; a title\'s loot banner (mutants: the order; the guest; a word)', () => {
   // PIN MOVED (STAR8): the five and the Starwarden of the Thirteenth of Frostfall, its bit the sixth (63 every one)
-  assert.deepEqual([...TITLES.slice(-9, -3), TITLES.at(-1)] /* PIN MOVED (WITCH1): Witchwarden and Hearthkeeper joined the list last */ /* PIN MOVED (KETCH): the Skyfarer, the questlines' seventh, after the festival's two */, [...QL_TITLES]);
+  assert.deepEqual([...TITLES.slice(-10, -4), TITLES.at(-2)] /* PIN MOVED (NIRNROOT-SAGE): the Nirnroot Sage joined the list last */ /* PIN MOVED (WITCH1): Witchwarden and Hearthkeeper joined the list last */ /* PIN MOVED (KETCH): the Skyfarer, the questlines' seventh, after the festival's two */, [...QL_TITLES]);
   assert.deepEqual([...QL_TITLES], ['doorwarden', 'covenbane', 'weirwalker', 'hourwitness', 'satakalwitness', 'starwarden', 'skyfarer']);   // PIN MOVED (KETCH): the Sky-Ketch's Skyfarer, its bit the seventh (127 every one)
   for (const t of QL_TITLES) {
     assert.deepEqual(titlesHeld({ handle: 'Mac', ql_titles: qlTitleBit(t) }, {}), [t], `${t} by its bit alone`);

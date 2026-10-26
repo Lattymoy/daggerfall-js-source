@@ -92,7 +92,11 @@ test('LR5: the switch - ON by default (the ladder is the port\'s own game), forc
   // turns it red for nothing. The claim is that the note names the three tiers in
   // order, not that it punctuates them a particular way.
   assert.match(row.note, /Magic\b[\s\S]*Rare\b[\s\S]*Legendary\b/, 'the note names the ladder, in order');
-  assert.match(row.note, /never your level/, 'and the source law');
+  // PIN MOVED (AUDIT UPDATE L8): LOOT-GATE holds the top tiers back by the roller's level - the note says so in its own
+  // words and never its numbers (CLAUDE.md LOOT-GATE: no level, factor or chance in anything a player reads)
+  assert.match(row.note, /what you killed, where, and your luck/, 'and the source law');
+  assert.match(row.note, /rarer early on and becomes more common as you grow/, 'and the gate, in the words it may be told in');
+  assert.doesNotMatch(row.note, /\d/, 'and no number of it');
   assert.match(row.note, /unidentified/, 'and the identify loop');
   assert.deepEqual(checkFeatures(FEATURES), []);
   off();
@@ -416,12 +420,12 @@ test('LR1: rollLootRarity - off or sourceless returns the DFU list untouched; on
 test('LR1: four hosts - every list a host mints rolls at its source, and the pile\'s tier is the dungeon\'s', () => {
   const dc = read('src/scenes/dungeonContext.js');
   assert.equal((dc.match(/spawnEnemyLoot\(entity, e\.mobileType, basics, D\.playerEntity, \{ \.\.\.eliteLootOpts\(e\), where: 'dungeon' \}\)/g) ?? []).length, 2, 'both dungeon spawn arms, through the one seam (RF2), whose corpse door is LR4\'s');
-  assert.match(dc, /rollLootRarity\(items, \{ \.\.\.pileSource\(dungeonRarityTier\(dfLocation\.mapTableData\.dungeonType\)\), qualityMult: _superTier \? SUPER_LOOT_QUALITY_MULT : elite \? ELITE_LOOT_QUALITY_MULT : 1, family: dungeonFamily\(dfLocation\.mapTableData\.dungeonType\) \}, \{ luck, rolls, find \}\)/, 'the treasure piles at the dungeon\'s tier (LOOT6: and its kind\'s family)');   // PIN MOVED (PARTY-LOOT): the roll's own Luck, dice and finders   // SD4a (PIN MOVED): a Super dungeon's quality before the Elite's
+  assert.match(dc, /rollLootRarity\(items, \{ \.\.\.pileSource\(dungeonRarityTier\(dfLocation\.mapTableData\.dungeonType\)\), qualityMult: _superTier \? SUPER_LOOT_QUALITY_MULT : elite \? ELITE_LOOT_QUALITY_MULT : 1, family: dungeonFamily\(dfLocation\.mapTableData\.dungeonType\) \}, \{ luck, rolls, find, level \}\)/, 'the treasure piles at the dungeon\'s tier (LOOT6: and its kind\'s family)');   // PIN MOVED (LOOT-GATE): the pile's roll names its own level (a room's base its own, else the player's)   // PIN MOVED (PARTY-LOOT): the roll's own Luck, dice and finders   // SD4a (PIN MOVED): a Super dungeon's quality before the Elite's
   assert.match(read('src/scenes/exteriorFoes.js'), /spawnEnemyLoot\(entity, mobileType, basics, playerEntity, (?:wild \? wildLootOpts\(\{ rolls \}, wildRing\(\)\) : )?\{ rolls \}\)/, 'the exterior foes, off the same stream (WILD1: the open zone\'s ring multiplies its odds)');
   assert.match(read('src/scenes/cityGuards.js'), /spawnEnemyLoot\(entity, GUARD_MOBILE_TYPE, basics, playerEntity, \{ rolls: rand \}\)/, 'the watch');
   // PIN MOVED (RENOWN-LOOT): a plain foe's ladder read at the roller's Renown (foeLootCap.js plainFoeRarityWeights - LOOT-EASE's own at four quarters)
-  assert.match(read('src/scenes/hostCombat.js'), /rollCorpseLoot\(entity, basics, \{ rolls, luck, find, qualityMult: lootQualityMult, weights: plain\?\.plainLadder \? plainFoeRarityWeights\(ease\) : null \}\);/, 'the corpse door, in the one seam (RF2; FOE-CAP: a plain foe\'s ladder beside it)');   // PIN MOVED (PARTY-LOOT): the caller's Luck and finders, the roller's own by default
-  assert.match(read('src/scenes/interiorContext.js'), /rollLootRarity\(addPileLootExtras\(generateLootItems\(lootKey, \{ level, gender \}\), lootKey, Math\.random, \{ locationIndex: locationType, luck, level \}\), pileSource\(INTERIOR_RARITY_TIER\), \{ luck \}\)/, 'a tavern\'s pile');
+  assert.match(read('src/scenes/hostCombat.js'), /rollCorpseLoot\(entity, basics, \{ rolls, luck, find, qualityMult: lootQualityMult, weights: plain\?\.plainLadder \? plainFoeRarityWeights\(ease\) : null, level: effectiveLevel\(player\) \}\);/, 'the corpse door, in the one seam (RF2; FOE-CAP: a plain foe\'s ladder beside it)');   // PIN MOVED (AUDIT UPDATE L4): and its roller's level (LOOT-GATE)   // PIN MOVED (PARTY-LOOT): the caller's Luck and finders, the roller's own by default
+  assert.match(read('src/scenes/interiorContext.js'), /rollLootRarity\(addPileLootExtras\(generateLootItems\(lootKey, \{ level, gender \}\), lootKey, Math\.random, \{ locationIndex: locationType, luck, level \}\), pileSource\(INTERIOR_RARITY_TIER\), \{ luck, level \}\)/, 'a tavern\'s pile');   // PIN MOVED (AUDIT UPDATE L4): and the player's level (LOOT-GATE)
   assert.match(read('src/scenes/worldModes.js'), /luck: liveStat\(playerEntity, 'luck'\),   \/\/ LR1/, 'the interior host hands its luck in');
   // the reads, at DFU's own read sites
   const f = read('src/combat/formulas.js');

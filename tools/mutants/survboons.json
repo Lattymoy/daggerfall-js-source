@@ -585,8 +585,8 @@
   {
     "name": "SURVBOONS-the-drink-lost-in-boons",
     "file": "src/systems/survival/status.js",
-    "old": "    if (drunk) out.push(drunk);\n    for (const id",
-    "new": "    for (const id",
+    "old": "    if (drunk) out.push(drunk);\n    if (mealChip) out.push(mealChip);\n    for (const id",
+    "new": "    if (mealChip) out.push(mealChip);\n    for (const id",
     "why": "AUDIT SURV-BOONS C6: the drink's chip gone in Boons",
     "tests": [
       "test/systems/survival/survboons.test.js"
@@ -727,9 +727,19 @@
   {
     "name": "SURVBOONS-tutorial-on-a-boon",
     "file": "src/ui/enhanced/enhancedHud.js",
-    "old": "if (needs.some((c) => c.level !== 'boon')) noteFirstUse('survival');",
-    "new": "if (needs.length) noteFirstUse('survival');",
+    "old": "if (vitals?.chargenDone && needs.some((c) => c.level !== 'boon')) noteFirstUse('survival');",
+    "new": "if (vitals?.chargenDone && needs.length) noteFirstUse('survival');",
     "why": "AUDIT SURV-BOONS C2: a fresh Boons character met the first-need page in its first minute",
+    "tests": [
+      "test/systems/survival/survboons.test.js"
+    ]
+  },
+  {
+    "name": "CHARGEN-TUT-tutorial-on-the-stand-in",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "if (vitals?.chargenDone && needs.some((c) => c.level !== 'boon')) noteFirstUse('survival');",
+    "new": "if (needs.some((c) => c.level !== 'boon')) noteFirstUse('survival');",
+    "why": "CHARGEN-TUT: the first-need page stood over the character-creation wizard, where no click could put it away",
     "tests": [
       "test/systems/survival/survboons.test.js"
     ]

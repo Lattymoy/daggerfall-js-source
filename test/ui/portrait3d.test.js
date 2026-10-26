@@ -315,10 +315,13 @@ test('PORTRAIT3D: a live character\'s head key - the data\'s stamp and the helm 
     assert.equal(playerHeadKey({}), '7|-', 'an identity: no helm');
     const slots = [];
     slots[12] = { templateIndex: CLASSIC_ARMOR_TEMPLATE.Helm, material: ARMOR_MATERIAL.Steel };
-    assert.equal(playerHeadKey({ equip: { slots } }), `7|${CLASSIC_ARMOR_TEMPLATE.Helm}/${ARMOR_MATERIAL.Steel}/closed`);
+    assert.equal(playerHeadKey({ equip: { slots } }), `7|${CLASSIC_ARMOR_TEMPLATE.Helm}/${ARMOR_MATERIAL.Steel}/closed/worn`);
     setPref('mwSteelHelm', 'open');
-    try { assert.equal(playerHeadKey({ equip: { slots } }), `7|${CLASSIC_ARMOR_TEMPLATE.Helm}/${ARMOR_MATERIAL.Steel}/open`, 'the visor raised, another head'); }
+    try { assert.equal(playerHeadKey({ equip: { slots } }), `7|${CLASSIC_ARMOR_TEMPLATE.Helm}/${ARMOR_MATERIAL.Steel}/open/worn`, 'the visor raised, another head'); }
     finally { setPref('mwSteelHelm', 'closed'); }
+    setPref('mwBeastHelm', 'hidden');   // BEAST-BOOTS: a beast's helm hidden is another head too
+    try { assert.equal(playerHeadKey({ equip: { slots } }), `7|${CLASSIC_ARMOR_TEMPLATE.Helm}/${ARMOR_MATERIAL.Steel}/closed/hidden`, 'the Beast Helmets switch, another head'); }
+    finally { setPref('mwBeastHelm', 'worn'); }
     _setHeadDataForTests(STORE(8));
     assert.equal(playerHeadKey({}), '8|-', 'another generation, another key');
   } finally { _setHeadDataForTests(null); }

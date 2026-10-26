@@ -282,7 +282,7 @@ test('OW-TOWN-RING: a route through a town\'s pixel walks its ring - no leg aime
 
 test('OW-TOWN-RING: the host rings every location on the way (the build\'s own tile rect, from the blocks when the pixel is not built), and Travel Options walks the ring point to point - no ring point skipped on a resume, none taken for a road join', () => {
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /const legs = routeLegs\(plan\.pixels, plan\.kinds, \{ ringAt: tvRingAt \}\);/);
+  assert.match(w, /const legs = routeLegs\(plan\.pixels, plan\.kinds, \{ ringAt: tvRingAt \}, end && \[state\.worldCoords\(player\.pos\), end\]\);/);   // PIN MOVED (OW-TOWN-ROUND): a spot's own two ends rung too
   assert.match(w, /const r = built\.get\(key\)\?\.locationRect \?\? setLocationTiles\(loc, maps, blocks, new Uint8Array\(128 \* 128\)\);/, 'the build\'s rect, or the same law over the location\'s blocks');
   assert.match(w, /rects = locationRectsOf\(o\.x, o\.z, \{ x: r\.xMin, y: r\.yMin, width: r\.xMax - r\.xMin, height: r\.yMax - r\.yMin \}, loc\.mapTableData\.locationType === LOCATION_TYPES\.TownCity, hasCustomLocationPosition\(loc\)\);/, 'Travel Options\' own rects');
   const t = rd('src/systems/travel/travelOptions.js');

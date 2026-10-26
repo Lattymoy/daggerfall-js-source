@@ -1,0 +1,56 @@
+[
+  {
+    "name": "FB1025-HORSEWAKE-no-call-on-the-word",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    if (elsewhere) callTeamToLanding();\n",
+    "new": "",
+    "tests": [
+      "test/systems/horse/fb1025_horsewake.test.js"
+    ]
+  },
+  {
+    "name": "FB1025-HORSEWAKE-called-on-every-load",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    if (elsewhere) callTeamToLanding();\n",
+    "new": "    callTeamToLanding();\n",
+    "tests": [
+      "test/systems/horse/fb1025_horsewake.test.js"
+    ]
+  },
+  {
+    "name": "FB1025-HORSEWAKE-journey-not-forced",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "  function callTeamToLanding() {\n    forceNextFastTravel();\n",
+    "new": "  function callTeamToLanding() {\n",
+    "tests": [
+      "test/systems/horse/fb1025_horsewake.test.js"
+    ]
+  },
+  {
+    "name": "FB1025-HORSEWAKE-no-departure",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    forceNextFastTravel();\n    handlePreFastTravel();\n",
+    "new": "    forceNextFastTravel();\n",
+    "tests": [
+      "test/systems/horse/fb1025_horsewake.test.js"
+    ]
+  },
+  {
+    "name": "FB1025-HORSEWAKE-no-arrival-the-force-left-armed",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    handlePreFastTravel();\n    handlePostFastTravel();\n  }",
+    "new": "    handlePreFastTravel();\n  }",
+    "tests": [
+      "test/systems/horse/fb1025_horsewake.test.js"
+    ]
+  },
+  {
+    "name": "FB1025-HORSEWAKE-host-drops-the-word",
+    "file": "src/scenes/world.js",
+    "old": "if (hccRecord) hccRuntime.restoreSaveData(hccRecord, { elsewhere: csaElsewhere });",
+    "new": "if (hccRecord) hccRuntime.restoreSaveData(hccRecord);",
+    "tests": [
+      "test/player/hcc_hosts.test.js"
+    ]
+  }
+]

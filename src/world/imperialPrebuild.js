@@ -8,14 +8,14 @@
 // their own (world/imperialPrebuildWorker.js) for the slices the player is coming near, nearest first, in the order the
 // pixel's build asks them, and handed to the world-data door and the models' family as they are asked
 // (world/capitalModels.js): what the worker has made is taken; what it has not is made on the page's thread, as before -
-// the same work, the same answer. The landmarks' footprint (the cells their faces stand in - capitalModels.js
-// capitalFootprint, over models the page's thread holds) is laid on a taken block here (imperialBlockFootprint): the
-// worker makes its blocks without it.
+// the same work, the same answer. IC-FOOTPRINT-OFF-THREAD: the landmarks' parts a slice stands are made there too, and
+// the worker lays the landmarks' footprint (the cells their faces stand in - capitalModels.js imperialSliceFootprint,
+// over the parts it builds on its own model door) on the blocks it makes: a taken block is the page's own to the byte.
 //
 // Pure but for the client's own registry (setImperialPrebuild / imperialPrebuilt) - the worker imports the work's half.
-import { IMPERIAL_SPAN, IMPERIAL_ARENA_CODE, imperialSlicePlan, imperialCodeCell } from './imperialCity.js';
-import { imperialOwnName, imperialFarName, imperialFabricModelId, imperialSkylineId, imperialBlockOf, imperialBlockJson, imperialModelBuild, isCarrier } from './imperialBlocks.js';
-import { CAPITALS, portBlockJson, miscModelAt, startMarkerAt, inCapitalRim, CAPITAL_NO_GROUND, CAPITAL_CLOSED_BYTE, tileCentre, autoCentre, BLOCK_M } from './tamrielCapitals.js';
+import { IMPERIAL_SPAN, IMPERIAL_ARENA_CODE, IMPERIAL_SLICE_PARTS, imperialSlicePlan, imperialCodeCell, imperialFarPartId } from './imperialCity.js';
+import { imperialOwnName, imperialFarName, imperialFabricModelId, imperialSkylineId, imperialBlockJson, imperialModelBuild, isCarrier } from './imperialBlocks.js';
+import { CAPITALS, portBlockJson, miscModelAt, startMarkerAt, inCapitalRim, CAPITAL_NO_GROUND, BLOCK_M } from './tamrielCapitals.js';
 
 const B = BLOCK_M;
 
@@ -23,6 +23,8 @@ const B = BLOCK_M;
  * A SLICE'S WORK, in the order its pixel's build asks it (its blocks in its location's order - rows from the south - then
  * its models): near, each own cell's block and its fabric's model; far, every cell's far block but the lake's, the open
  * shore's and the arena's (world/imperialBlocks.js imperialViewName's) and, on its carrier, its skyline.
+ * IC-FOOTPRINT-OFF-THREAD: either way the landmarks' parts its carrier stands, first of its models (IC-TOWER-LOD: a far
+ * view's the tower's and the palace's coarse ones).
  * `{ kind: 'block', name }` or `{ kind: 'model', id }`.
  * @param {number} s @param {boolean} near
  * @returns {Array<{ kind: 'block', name: string } | { kind: 'model', id: number }>}
@@ -40,15 +42,17 @@ export function sliceWork(s, near) {
       if (own && isCarrier(r, c)) models.push({ kind: 'model', id: imperialSkylineId(s) });
     }
   }
-  return [...blocks, ...models];
+  return [...blocks, ...IMPERIAL_SLICE_PARTS[s].map((id) => /** @type {{ kind: 'model', id: number }} */ ({ kind: 'model', id: near ? id : imperialFarPartId(id) })), ...models];   // IC-TOWER-LOD: a far view's coarse
 }
 
-/** The world-data door's writers and the city's own rim and markers - world/capitalModels.js installImperialFamilies's,
- *  but the landmarks' footprint (none: laid on the page's thread, imperialBlockFootprint). */
-export function prebuildDeps() {
+/** The world-data door's writers and the city's own rim and markers - world/capitalModels.js installImperialFamilies's;
+ *  the landmarks' footprint and the parts' models the caller's (the worker's: capitalModels.js imperialSliceFootprint and
+ *  imperialPartModel - none by default).
+ *  @param {(s: number) => any} [footprintOf] @param {((id: number) => any) | null} [partModel] */
+export function prebuildDeps(footprintOf = () => null, partModel = null) {
   const IC = CAPITALS.find((c) => c.family);
   return {
-    portBlockJson, miscModelAt, startMarkerAt, footprintOf: () => null, anchorMarkers: IC?.markers ?? [], noGround: CAPITAL_NO_GROUND,
+    portBlockJson, miscModelAt, startMarkerAt, footprintOf, partModel, anchorMarkers: IC?.markers ?? [], noGround: CAPITAL_NO_GROUND,
     rim: (/** @type {number} */ r, /** @type {number} */ c, /** @type {number} */ x, /** @type {number} */ z) => !!IC && inCapitalRim(IC, c * B + x, (r + 1) * B - z),
   };
 }
@@ -58,35 +62,13 @@ export function prebuildDeps() {
  * @param {{ kind: 'block', name: string } | { kind: 'model', id: number }} w @param {ReturnType<typeof prebuildDeps>} deps
  */
 export function makeWork(w, deps) {
-  if (w.kind === 'model') return imperialModelBuild(w.id) ?? null;
+  if (w.kind === 'model') return deps.partModel?.(w.id) ?? imperialModelBuild(w.id) ?? null;
   const json = imperialBlockJson(w.name, deps);
   if (json?.RmbBlock?.FldHeader) json.RmbBlock.FldHeader.AutoMapData = Uint8Array.from(json.RmbBlock.FldHeader.AutoMapData);
   return json;
 }
 /** A made model's buffers, to hand across without a copy. */
 export const modelTransfers = (m) => (m ? [m.positions, m.normals, m.uvs, m.indices].filter((a) => a?.buffer).map((a) => a.buffer) : []);
-
-/**
- * THE LANDMARKS' FOOTPRINT LAID ON A MADE BLOCK (its JSON, in place): every automap cell and every tree's tile whose
- * middle a landmark's face stands in (`fp`, the slice's - the city's metres) closed and bare - what imperialBlockJson lays
- * when it is handed the footprint itself. A lake's block, an own one; a far one closes nothing.
- * @param {any} json @param {string} name @param {((x: number, z: number) => boolean) | null} fp
- */
-export function imperialBlockFootprint(json, name, fp) {
-  const b = imperialBlockOf(name), fh = json?.RmbBlock?.FldHeader;
-  if (!b || !fp || !fh || b.kind === 'far') return json;
-  const ox = (b.c - IMPERIAL_SPAN * 4) * B, oz = (b.r + 1 - IMPERIAL_SPAN * 4) * B;
-  for (let ay = 0; ay < 64; ay++) for (let ax = 0; ax < 64; ax++) {
-    const [x, z] = autoCentre(ax, ay);
-    if (fp(ox + x, oz - z)) fh.AutoMapData[ay * 64 + ax] = CAPITAL_CLOSED_BYTE;
-  }
-  const scenery = fh.GroundData.GroundScenery;
-  for (let ty = 0; ty < 16; ty++) for (let tx = 0; tx < 16; tx++) {
-    const [x, z] = tileCentre(tx, ty);
-    if (scenery[ty * 16 + tx].TextureRecord >= 0 && fp(ox + x, oz - z)) scenery[ty * 16 + tx].TextureRecord = -1;
-  }
-  return json;
-}
 
 /** THE PAGE'S CLIENT (world/imperialPrebuildClient.js), once one stands - the door and the family ask it. */
 let _client = /** @type {?{ takeBlock: (name: string) => any, takeModel: (id: number) => any, made: (key: string) => void }} */ (null);

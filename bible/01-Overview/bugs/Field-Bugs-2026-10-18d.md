@@ -65,7 +65,7 @@ Mutants: `tools/mutants/fb1018d_crafthowto.json` (30, all dead).
 
 NOT PROVEN. Measured in Node over the real modules, on a 4-core container one and a half to two times slower than a
 gaming desktop (scripts, not committed):
-- the online realm checkpoint, every 120 s (`world.js:"if (checkpointDue(now, _checkpointAt)) {"`): at 4.37 MB (the
+- the online realm checkpoint, every 120 s (`world.js:"checkpointWhenDue(now, _checkpointAt, realmSession, () => onlineCheckpoint());   // SCALE2b"`): at 4.37 MB (the
   size of the largest field save we hold) about 48 ms in one frame and another 33 ms in a later task once the put
   lands; about 9 ms at a typical 600 KB. A known hitch that grows with the save (Performance-Next.md), but its cadence
   is fixed, and the report's is not;

@@ -50,8 +50,9 @@ export function createRoadsWorkerState() {
       }
       const out = yield* tamrielRegionSteps({ region, places, nodes: inputs.nodes, obstacles: inputs.obstacles, gates: inputs.gates, held: inputs.held ?? [], heightAt: inputs.heightAt, trunks: inputs.trunkLegs });
       const layer = packArenaRoads({ ...out, join: new Map() }), placed = packPastBayPlaces(out.places);
-      return { msg: { t: 'region', id: m.id, i: m.i, j: m.j, layer, places: placed, stats: out.stats, ms: Date.now() - t0 },
-        xfer: [layer.keys.buffer, layer.roads.buffer, layer.tracks.buffer, layer.joinKeys.buffer, layer.join.buffer, placed.keys.buffer, placed.types.buffer] };
+      const land = out.land;   // EXACT-PIECES: the core's land's pieces, as runs (world/tamrielLandPieces.js)
+      return { msg: { t: 'region', id: m.id, i: m.i, j: m.j, layer, places: placed, land, stats: out.stats, ms: Date.now() - t0 },
+        xfer: [layer.keys.buffer, layer.roads.buffer, layer.tracks.buffer, layer.joinKeys.buffer, layer.join.buffer, placed.keys.buffer, placed.types.buffer, land.rowStart.buffer, land.runLen.buffer, land.runLabel.buffer, land.ring.buffer] };
     } catch (e) {
       return { msg: { t: 'region', id: m.id, i: m.i, j: m.j, error: e?.message ?? String(e) }, xfer: [] };
     }

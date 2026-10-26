@@ -241,7 +241,8 @@ or the room can open one - a door open when they were stood moved all three, a c
   client already understands: *"The Rift will not take you yet."* / *"The Hour has closed."* During the collapse it
   refuses a newcomer and admits again whoever went through it, as the realm keeps them - remembered on the device, the
   last eight Hours (SD11c: a reload forgot them, and the Rift shut on its own fighters). One who died in its Hour is
-  refused for good: *"The Hour will not take you back."* (SD-ONELIFE). Its plaque counts its Hour under its own row
+  refused for good: *"The Hour will not take you back."* (SD-ONELIFE) - unless a friend's Resurrect, which the realm
+  records, raised it inside the body's minute (SD-REZ). Its plaque counts its Hour under its own row
   (`world/superDungeon/sdDungeon.js` `sdRiftCount`): *Fades in 1d 22h*, its last day by the second - the Timers' own words, as its
   banner says it (SD20e T6) - *Collapses in 2:31* in its collapse (SD11f: a Hollow unbeaten closed on everyone in it with no count anywhere inside).
 - **The Return** - a small portal of pale light beside it: it carries the player back to the dungeon's entrance (the
@@ -725,6 +726,7 @@ gate's, a battle's, an arena's) write their own socket and never run in `sd:<s>`
 | SD10 | the collapse, the readouts, the audit |
 | SD11 | AUDIT SD II |
 | SD-ONELIFE | one life a Hollow |
+| SD-REZ | one life, unless a friend calls it back (EVENT-RULES) |
 | SD13-SD19 | the detail past the gates: the score, the voice, the air and the motes, the arena read, the blows seen, the body moved, the marks, the Hollow's presence |
 | SD20 | AUDIT SD III |
 | SD-ALONE | no companion through the Rift |
@@ -2260,7 +2262,7 @@ good. You wake before the Abyss Dungeon's door."*) and is final for that Hollow 
   (`world/superDungeon/sdDungeon.js` `sdRiftWord`'s `fallen`) and says the realm's words before the step, found or collapsing, though
   I went through.
 - **No Resurrect in the Hour.** A body raised in place would stand in a fight its death has left; the death's way out
-  is the Hour's.
+  is the Hour's. RETIRED by SD-REZ (2026-10-25, below): a friend's Resurrect inside the body's minute raises it.
 
 What a fallen fighter earned stands: a part in the Remnant's kill is on its receipt (SD9a's law, the gate's), and the
 spoils thrown are the world's.
@@ -2276,6 +2278,47 @@ kept - `_sdFallen`, the death block's first statement - and the Rift asked with 
 in the Hour); `scenes/worldModes.js` FLAGGED - the death and its door are the mode machine's as in any dungeon, worded by
 the world host's respawn; `scenes/dungeonContext.js` FLAGGED - the Rift's refusal is its word off the outer host
 (`superRift`), unchanged; `scenes/exterior.js` FLAGGED - the `?exterior` bench is offline: no Hour to die in.
+
+### SD-REZ - shipped 2026-10-25 (one life, unless a friend calls it back - EVENT-RULES)
+
+The owner, 2026-10-25: *"A lot of people are unhappy with the world event restrictions"*; asked what to relax, *"Resurrect
+allowed"* - in the Hour, the Spire and the Sky-Ketch. SD-ONELIFE's "No Resurrect in the Hour" is retired; its one life
+stands for a death nobody answers:
+
+- **The realm keeps a death DOWN first** (`server/src/index.js` `_sdMarkFallenAt`): the account is kept as
+  `[sub, at, x, z]` - where its dying pose fell, the realm's metres - in the realm's `down` beside `dead` for `SD_REZ_MS`
+  (`net/superDungeon/sdLaw.js`: the body's minute and the page's ten seconds for its hello - AUDIT WORLD-EVENTS L1-5: it
+  said two minutes, and a friend's screen keeps a body `CORPSE_MS`, the death screen stands `ONLINE_RESPAWN_SECONDS`, both
+  60 s - pinned equal). A death the list cannot hold is buried, never forgotten (L1-7).
+- **The raise is the realm's to record** (AUDIT WORLD-EVENTS L1-1 - any hello inside the window was a rise, a friend's
+  spell or not: a second device or a cleared store walked back into the Hour): a living fighter of the realm casting
+  Resurrect at the body says so to it (`sd` `rz`, `net/raiseWord.js` from the world host's Resurrect door; `_sdRaise` -
+  `sdMayRaise`: the caster admitted, neither down nor dead, within `SD_REZ_REACH_M` of where the body fell, inside the
+  window), kept in `raised`. A hello of a down account is its RISE only once raised (`sdDownWord` -> `'rise'`); one nobody
+  raised is held at the door (`'down'` -> busy: its page asks again, the raise's word a moment behind it) and buried past
+  the window. A rise comes off `down` and `raised` only once the door has let it in (`_sdRose`, L1-8 - it was erased
+  before the door's refusals), and is a NEW LIFE on the count (`bodyLife`, L1-2 - the dying pose leaves with its socket, so
+  the count never stamped the death, and under enforcement it fell the raised again every BODY_TELL_MS). Past the window
+  - read at the next death and at the next hello - a death is buried (`_sdBury`): into `dead`, past the list under its
+  own key as before, and refused for good with SD_NO_FALLEN's words.
+- **The count raises only the raised** (`net/bossBody.js` `bodyCensus`, its `lives` asked of each body): a body the
+  relay's count has fallen comes back to the fight only where its account rose in the realm; any other stays dead to the
+  Remnant's brain, as SD-ONELIFE had it.
+- **The page asks only for a raise** (`systems/superDungeon/sdSlots.js`): the slot I die in is kept as before, its death's
+  moment stamped once (AUDIT WORLD-EVENTS L1-6 - the world host adds it every frame of the death screen, and the window
+  never shut); a friend's Resurrect in the Hour I fell in lets it go again (`rise`), and only inside the realm's window
+  less ten seconds (`mayRise`, `SD_REZ_PAGE_SLACK_MS` - a rise asked at the edge would reach a realm that has buried it).
+  The made level's tile says the minute ("within 60 seconds"). The world host's
+  Resurrect door asks `hourRezOpen()` (`scenes/world.js`) - always, but in the Hour I fell in past that window. A fallen
+  fighter who takes the death screen's way out keeps the slot, and the Rift refuses it as before.
+
+Pins: `test/net/superDungeon/sd12_onelife.test.js` (the window, the rise, the burial, the page's half);
+`test/net/superDungeon/auditwe_rez.test.js` (the raise recorded, held at the door, the new life, the minute, the stamp, the
+burial past the list - AUDIT WORLD-EVENTS); PINS MOVED -
+`test/net/int12_body_relay.test.js` (a death is `down`, not `dead`), `test/net/sd3_relay.test.js` (the realm's record keeps
+`down`), `test/net/superDungeon/sd20a_fight.test.js` (the census's `lives` the raised); `tools/mutants/eventrules.json`.
+THE FOUR HOSTS: `scenes/world.js` WIRED (the rise, the door); `scenes/dungeonContext.js`, `scenes/worldModes.js` and
+`scenes/exterior.js` as SD-ONELIFE's.
 
 ### SD13 - shipped 2026-10-07 (the Score of the Hour)
 

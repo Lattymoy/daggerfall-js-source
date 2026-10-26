@@ -18,6 +18,7 @@ import { nativeMetrics } from './native/nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxArtLoaded } from './messageBox.js';   // U11
 import { InputMessageBoxWindow } from './inputMessageBox.js';   // CM3: the one DaggerfallInputMessageBox
 import { noticeDraw, noticeRelease } from './enhanced/enhancedNotice.js';   // ENH-NOTICE1: the enhanced skin's panel
+import { catchBoxClicks, releaseBoxClicks } from './boxClickCatcher.js';   // BOX-ON-TOP: over an enhanced window the box takes the click
 
 /** DaggerfallInputMessageBox maxCharacters. */
 export const MAX_INPUT = 20;
@@ -103,7 +104,7 @@ export class ActionTextBox {
    *  so a box swapped for a window slid out NOTICE_WATCHDOG_MS late,
    *  over the window that replaced it. Same release `input` runs, and
    *  a no-op on the classic skin. */
-  dispose() { this.onClose = null; noticeRelease(this); }
+  dispose() { this.onClose = null; noticeRelease(this); releaseBoxClicks(this); }
 
   /** ST1: DaggerfallMessageBox.AddNextMessageBox - dismissing this
    *  box shows the next box's rows in its place, and only the LAST
@@ -118,6 +119,7 @@ export class ActionTextBox {
     // ENH-NOTICE1: the panel leaves with the box. A no-op on the
     // classic skin (no panel was ever keyed to this box).
     noticeRelease(this);
+    releaseBoxClicks(this);   // BOX-ON-TOP: ...and so does the layer that took its clicks
     // SEARCH1: the close's one callback, once, after this dismissal has returned to its host
     const cb = this.onClose;
     this.onClose = null;
@@ -132,6 +134,7 @@ export class ActionTextBox {
   click() { this.input(); return true; }
 
   draw(renderer, canvas, font, s) {
+    catchBoxClicks(this);   // BOX-ON-TOP: drawn as the top over an enhanced window, the box takes the screen's clicks
     // ENH-NOTICE1: on the enhanced skin the rows go to the slide-in
     // panel (ui/enhanced/enhancedNotice.js) and nothing is painted here. The
     // box is still the box - modal, chained, click-anywhere.

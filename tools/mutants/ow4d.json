@@ -221,9 +221,9 @@
   },
   {
     "name": "OW4D4-stand-at-sea",
-    "file": "src/scenes/world.js",
-    "old": "if (maps.getClimateIndex(px, py) === CLIMATES.Ocean || !_spawnGround(px, py) || tvSpawnGone(px, py)) return null;",
-    "new": "if (tvSpawnGone(px, py)) return null;",
+    "file": "src/world/spawnGroundPlace.js",
+    "old": "    if (maps.getClimateIndex(px, py) === CLIMATES.Ocean) return null;\n",
+    "new": "",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js"
     ],
@@ -231,9 +231,9 @@
   },
   {
     "name": "OW4D4-stand-expired",
-    "file": "src/scenes/world.js",
-    "old": "if (maps.getClimateIndex(px, py) === CLIMATES.Ocean || !_spawnGround(px, py) || tvSpawnGone(px, py)) return null;",
-    "new": "if (maps.getClimateIndex(px, py) === CLIMATES.Ocean || !_spawnGround(px, py)) return null;",
+    "file": "src/world/spawnGroundPlace.js",
+    "old": "    if (clocks && spawnGone(px, py)) return null;\n",
+    "new": "",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js"
     ],
@@ -241,9 +241,9 @@
   },
   {
     "name": "OW4D4-stand-on-a-road",
-    "file": "src/scenes/world.js",
-    "old": "return roads && !pathFreePixel(roads, px, py) ? null : _spawnCloneAt(px, py);",
-    "new": "return _spawnCloneAt(px, py);",
+    "file": "src/world/spawnGroundPlace.js",
+    "old": "    if (roads && !pathFreePixel(roads, px, py)) return null;\n",
+    "new": "",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js"
     ],
@@ -251,9 +251,9 @@
   },
   {
     "name": "OW4D4-stand-before-roads",
-    "file": "src/scenes/world.js",
-    "old": "return roads && !pathFreePixel(roads, px, py) ? null : _spawnCloneAt(px, py);",
-    "new": "return !roads || !pathFreePixel(roads, px, py) ? null : _spawnCloneAt(px, py);",
+    "file": "src/world/spawnGroundPlace.js",
+    "old": "if (roads && !pathFreePixel(roads, px, py)) return null;",
+    "new": "if (!roads || !pathFreePixel(roads, px, py)) return null;",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js"
     ],

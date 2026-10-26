@@ -142,8 +142,8 @@
   {
     "name": "OW-TOWN-RING-fold-through-town",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "    const same = next && !(rings[i + 1]?.length) && next.x",
-    "new": "    const same = next && next.x",
+    "old": "    const same = next && !(rings[i + 1]?.length) && !(i + 1",
+    "new": "    const same = next && !(i + 1",
     "tests": [
       "test/world/worldOfDaggerfall/ow_wod.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "OW-TOWN-RING-host-no-ring",
     "file": "src/scenes/world.js",
-    "old": "    const legs = routeLegs(plan.pixels, plan.kinds, { ringAt: tvRingAt });",
-    "new": "    const legs = routeLegs(plan.pixels, plan.kinds);",
+    "old": "    const legs = routeLegs(plan.pixels, plan.kinds, { ringAt: tvRingAt }, end && [state.worldCoords(player.pos), end]);",
+    "new": "    const legs = routeLegs(plan.pixels, plan.kinds, {}, end && [state.worldCoords(player.pos), end]);",
     "tests": [
       "test/world/worldOfDaggerfall/ow_wod.test.js"
     ],

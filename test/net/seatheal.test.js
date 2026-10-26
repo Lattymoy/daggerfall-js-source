@@ -15,6 +15,9 @@ import { renownFoeStruck, renownFoeDied } from '../../src/net/renownTracker.js';
 import { reportPlayerKill } from '../../src/systems/playerKills.js';   // SET2: the kill door's third word, in the harness's scope
 import { createSeatClock } from '../../src/net/seatLive.js';   // PIN MOVED (FIELD BUGS 2026-10-18d SEAT-LIVE): the seat heard is the clock's - the page's own absence spends none of it
 import { appliedOwnerTm } from '../../src/net/ownerClock.js';   // PIN MOVED (OWNER-CLOCK): the stream door copies its frame's owner clock beside the feet - a free name of the mount
+import { strikeTraits, traitWire, traitWireKey, readTraitWire, traitsAuthority, traitsFrame } from '../../src/scenes/foeTraitsHost.js';   // AUDIT WORLD-EVENTS: the dungeon host's trait doors, in the mounted scope
+import { bossClockS } from '../../src/systems/bossTraits.js';
+const TRAIT_DOORS = { strikeTraits, traitWire, traitWireKey, readTraitWire, traitsAuthority, traitsFrame, bossClockS };
 
 const rd = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
 const D = rd('src/scenes/dungeonContext.js');
@@ -60,7 +63,7 @@ function joiner() {
   `;
   // CORPSE-FOOD (2026-09-23): the stream's first word of a death rolls this joiner's copy of the body its food - stood
   // down here, where the seat is the subject (survtiers3.test.js mounts that arm)
-  const ctx = new Function('__s', `with (__s) { ${ctxBody} }`)(scoped({ foes, validFoeRecord, appliedOwnerTm, retypeFoe: (...a) => hooks.retype(...a), console, rollCorpseKit: () => [], addCorpseFood: () => 0, dropFoeCard: () => null, capFoeLoot: () => [], stampWonWeapons: () => 0, liveStat: () => 50, playerEntity: null, renownFoeStruck, renownFoeDied, reportPlayerKill }));   // PIN MOVED (AUDIT CARDS-6 A3): the copy door's card stood down too
+  const ctx = new Function('__s', `with (__s) { ${ctxBody} }`)(scoped({ ...TRAIT_DOORS, foes, validFoeRecord, appliedOwnerTm, retypeFoe: (...a) => hooks.retype(...a), console, rollCorpseKit: () => [], addCorpseFood: () => 0, dropFoeCard: () => null, capFoeLoot: () => [], stampWonWeapons: () => 0, liveStat: () => 50, playerEntity: null, renownFoeStruck, renownFoeDied, reportPlayerKill }));   // PIN MOVED (AUDIT CARDS-6 A3): the copy door's card stood down too
 
   const applyDungeonFoesLine = mustMatch(M, /applyDungeonFoes\(id, data[^)]*\) \{[^\n]*\},/, 'worldModes.applyDungeonFoes');
   const setDungeonAuthorityLine = mustMatch(M, /setDungeonAuthority\(on\) \{[^\n]*\},/, 'worldModes.setDungeonAuthority');

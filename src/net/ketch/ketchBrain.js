@@ -3,7 +3,7 @@
 // (server/src/index.js `_kt*`): the crew it has taken, the stage it stands at, its constructs, its aether cells and its
 // bridge's fight. Pure - the moment and a [0,1) source handed in, frames out - so a test runs a voyage whole.
 //
-//   THE BOARDING WATCH (the waist): three waves of constructs - spheres; spheres and sentries; the Watch-Captain and
+//   THE BOARDING WATCH (the waist): KT_WATCH_WAVES waves of constructs (five, KETCH-LONGER) - spheres; spheres and sentries; the Watch-Captain and
 //     spheres - each rising KT_WAVE_GAP_MS after the last is down, the first when a member steps into the waist (or
 //     KT_WATCH_WAIT_MS after the first boarded). The last down: THE HATCH OPENS.
 //   THE GALLERY OF HAMMERS (the gun deck): its hammers and steam lanes run on the shared clock (net/ketch/ketchDeck.js
@@ -58,7 +58,7 @@ export function watchWave(w, n) {
 export const KT_CELL_LIES_MS = 15_000;
 export const KT_CRADLE_BACK_MS = 28_000;   // KETCH-LONGER: 20 s before
 export const KT_BRIDGE_CRADLE_BACK_MS = 12_000;
-/** THE SPIDERS: two from the vents every this long while the engine starves, at most 3 + the crew alive at once. */
+/** THE SPIDERS: two from the vents every this long while the engine starves, at most spidersMaxFor the crew alive at once. */
 export const KT_SPIDER_EVERY_MS = 6000;   // KETCH-LONGER: 9 s before
 export const KT_SPIDERS_AT_ONCE = 2;
 export const spidersMaxFor = (n) => 5 + Math.max(1, Math.min(KT_CREW_MAX, n | 0));   // KETCH-LONGER: 3 + the crew before
@@ -176,9 +176,12 @@ export function freePlace(V, sub, now) {
 function livingCrew(V, bodies) {
   return bodies.filter((b) => !b.dead && V.players[b.sub]).map((b) => ({ ...b, zone: deckZoneAt(b.x, b.y, b.z), carry: !!V.cells.carry[b.sub] }));
 }
-/** The crew this voyage counts as aboard - seen in the last KT_POSE_FRESH_MS - and their mean level. */
+/** The crew this voyage counts as aboard - seen in the last KT_PLACE_KEEP_MS, the time its place is kept whatever else (a
+ *  reload, a death and the anchor-lift again) - and their mean level. AUDIT KETCH II L1-3: seen in the last KT_POSE_FRESH_MS
+ *  before, so seven of a crew stepped off 25 s before the Watch's last fall had the Hammer Wardens born at their eighth's
+ *  one low share, and stepped back on. */
 function aboard(V, now) {
-  const list = V.crew.filter((s) => now - (V.players[s]?.seenAt ?? 0) <= KT_POSE_FRESH_MS);
+  const list = V.crew.filter((s) => now - (V.players[s]?.seenAt ?? 0) <= KT_PLACE_KEEP_MS);
   const n = Math.max(1, list.length), lv = list.length ? list.reduce((t, s) => t + V.players[s].lv, 0) / list.length : 1;
   return { n, lv };
 }
@@ -248,7 +251,7 @@ export function stepVoyage(V, now, bodies, rng) {
   const out = [];
   const dt = Math.min(STEP_MAX_MS, Math.max(0, now - V.lastTickAt));
   V.lastTickAt = now;
-  for (const b of bodies) { const p = V.players[b.sub]; if (p) { p.seenAt = now; if (!b.dead) p.stoodMs += dt; } }
+  for (const b of bodies) { const p = V.players[b.sub]; if (p) { p.seenAt = now; if (!b.dead) p.stoodMs += dt; p.lay = b.dead ? (p.lay?.at ? { ...p.lay, x: b.x, y: b.y, z: b.z } : { x: b.x, y: b.y, z: b.z, at: now }) : null; } }   // AUDIT WORLD-EVENTS L1-4: where a member lies down, and since when (a raise's mark)
   const live = livingCrew(V, bodies);
   // a carrier fallen, or out of the floor its cell is of, lets it go
   for (const b of bodies) {
@@ -302,7 +305,7 @@ function stageBeat(V, now, live, rng, out) {
     if (!W.some((B) => B.h > 0)) { toStage(V, KT_STAGE.engine, now, out); V.cells.need = engineNeeds(n); V.spidersAt = now + KT_SPIDER_EVERY_MS / 2; cellsFrame(V, out); }
   } else if (V.sg === KT_STAGE.engine) {
     if (V.cells.banked >= V.cells.need) {
-      for (const B of V.bodies) if (B.floor === 'hold' && B.h > 0) { B.h = 0; B.downAt = now; out.push({ k: 'dn', o: B.id, n: '', at: now }); }
+      for (const B of V.bodies) if (B.floor === 'hold' && B.h > 0) { B.h = 0; B.downAt = now; out.push({ k: 'dn', o: B.id, n: '', sw: 1, at: now }); }
       toStage(V, KT_STAGE.sailwalk, now, out);
     } else if (now >= V.spidersAt) {
       V.spidersAt = now + KT_SPIDER_EVERY_MS;
@@ -324,14 +327,14 @@ function stageBeat(V, now, live, rng, out) {
     }
     if (f.lost) {
       // A FIGHT LOST: the bridge's constructs go, the Warden stands at its helm again, the next `in` is fresh
-      for (const B of V.bodies) if (B.floor === 'bridge' && B.h > 0) { B.h = 0; B.downAt = now; out.push({ k: 'dn', o: B.id, n: '', at: now }); }
+      for (const B of V.bodies) if (B.floor === 'bridge' && B.h > 0) { B.h = 0; B.downAt = now; out.push({ k: 'dn', o: B.id, n: '', sw: 1, at: now }); }
       for (const sub of Object.keys(V.cells.carry)) if (V.cells.carry[sub].on === 'bridge') dropCell(V, sub, null, now, 'lost', out);
       V.cells.lo = V.cells.lo.filter((l) => l.on !== 'bridge');
       V.wf = null;
       out.push({ k: 'wl', at: now });
     } else if (f.fell && !V.fell) {
       V.fell = { at: f.fell.at, top: f.fell.top, n: f.fell.n };
-      for (const B of V.bodies) if (B.h > 0) { B.h = 0; B.downAt = now; out.push({ k: 'dn', o: B.id, n: '', at: now }); }
+      for (const B of V.bodies) if (B.h > 0) { B.h = 0; B.downAt = now; out.push({ k: 'dn', o: B.id, n: '', sw: 1, at: now }); }
       V.cells.carry = {}; V.cells.lo = [];
       cellsFrame(V, out);   // AUDIT SHIP 6: the hands emptied said
       toStage(V, KT_STAGE.vault, now, out);
@@ -454,7 +457,30 @@ export function voyageWord(V, sub, m, pose, now, rng) {
     return out;
   }
   if (m.k === 'drop' || m.k === 'hurt') { dropCell(V, sub, at, now, m.k === 'hurt' ? 'struck' : 'let', out); return out; }
+  if (m.k === 'rz') {   // AUDIT WORLD-EVENTS L1-4: a crewmate's Resurrect at a member lying down (ketchRaise)
+    const r = ketchRaise(V, sub, m.to, at, now);
+    if (r) out.push(r);
+    return out;
+  }
   return out;
+}
+/**
+ * AUDIT WORLD-EVENTS L1-4 - RAISE BEFORE THE FALL (the owner, asked what Resurrect means on the Sky-Ketch: "Raise before the
+ * fall"; bible/11-Multiplayer/Sky-Ketch.md): a member whose death the ship catches lies DOWN on the deck where it fell for
+ * KT_DOWN_MS (its page holds its body there, dying - scenes/ketch/ketchClient.js), for a crewmate's Resurrect at it: the
+ * caster alive aboard, within KT_REZ_REACH_M of the body, the body down inside the window. Answers the word that raises it
+ * (`rez`, to it and named for all) or null. Past the window the fall is the page's own, as ever (out of the sky).
+ */
+export const KT_DOWN_MS = 60_000;
+export const KT_REZ_REACH_M = 10;
+/** The health the raised stands at (systems/resurrect.js RESURRECT_HEALTH_PCT - pinned equal). */
+export const KT_REZ_PCT = 0.3;
+export function ketchRaise(V, sub, to, at, now) {
+  const c = V.players[sub], p = V.players[to];
+  if (!c || !p || sub === to || !at || !p.lay || now - p.lay.at > KT_DOWN_MS) return null;
+  if (Math.hypot(at.x - p.lay.x, at.z - p.lay.z) > KT_REZ_REACH_M || Math.abs((at.y ?? 0) - (p.lay.y ?? 0)) > 3) return null;
+  p.lay = null;
+  return { k: 'rez', s: to, n: p.name, by: c.name, at: now };
 }
 
 /** THE WHOLE SHIP as the wire says it (`st`): its voyage, its stage, its crew (account, name), its bodies and their walks,

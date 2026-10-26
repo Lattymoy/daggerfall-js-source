@@ -92,7 +92,7 @@
  {
   "name": "AUDIT-NAV2-F55-the-door-lands-the-players-harm-on-a-shipmate",
   "file": "src/scenes/exteriorFoes.js",
-  "old": "if (f.dead || (fromPlayer && !peer && isShipmate(f))) return;",
+  "old": "if (f.dead || (fromPlayer && !peer && sparedBySwing(f))) return;",
   "new": "if (f.dead) return;",
   "tests": [
    "test/scenes/auditnav2_combat.test.js"
@@ -101,8 +101,8 @@
  {
   "name": "AUDIT-NAV2-F55-the-door-guard-deaf-to-provenance",
   "file": "src/scenes/exteriorFoes.js",
-  "old": "if (f.dead || (fromPlayer && !peer && isShipmate(f))) return;",
-  "new": "if (f.dead || (!peer && isShipmate(f))) return;",
+  "old": "if (f.dead || (fromPlayer && !peer && sparedBySwing(f))) return;",
+  "new": "if (f.dead || (!peer && sparedBySwing(f))) return;",
   "tests": [
    "test/scenes/auditnav2_combat.test.js"
   ]
@@ -110,8 +110,8 @@
  {
   "name": "AUDIT-NAV2-F55-the-door-guard-deaf-to-a-peer",
   "file": "src/scenes/exteriorFoes.js",
-  "old": "if (f.dead || (fromPlayer && !peer && isShipmate(f))) return;",
-  "new": "if (f.dead || (fromPlayer && isShipmate(f))) return;",
+  "old": "if (f.dead || (fromPlayer && !peer && sparedBySwing(f))) return;",
+  "new": "if (f.dead || (fromPlayer && sparedBySwing(f))) return;",
   "tests": [
    "test/scenes/auditnav2_combat.test.js"
   ]

@@ -23,7 +23,7 @@ const friend = (rel, id) => { rel.note(id, 'saved', DAY); rel.note(id, 'helped',
 
 /** A stands layer over a mock pool. */
 function standRig({ ready = true, fighting = false } = {}) {
-  const pool = new Set(), spawned = [], removed = [], said = [], slays = [], dieds = [];
+  const pool = new Set(), spawned = [], removed = [], said = [], slays = [], dieds = [], killeds = [];
   const can = { ready, fighting, refuse: false };
   const rel = createRelations();
   const stands = createRoadStands({
@@ -31,10 +31,10 @@ function standRig({ ready = true, fighting = false } = {}) {
     remove: (rec) => { pool.delete(rec); removed.push(rec); },
     inPool: (rec) => pool.has(rec),
     ready: () => can.ready, sceneOf: (nx, nz) => [nx / 40, 0, nz / 40],
-    relations: () => rel, slay: (res, t, seen) => slays.push({ res, t, seen }), died: (res, t) => dieds.push({ res, t }),
+    relations: () => rel, slay: (res, t, seen) => slays.push({ res, t, seen }), killed: (res, t) => killeds.push({ res, t }), died: (res, t) => dieds.push({ res, t }),   // AUDIT FB1025i D2: another hand's kill (fb1025i_roadspare.test.js)
     fighting: () => can.fighting, say: (t) => said.push(t),
   });
-  return { stands, pool, spawned, removed, said, slays, dieds, rel, can };
+  return { stands, pool, spawned, removed, said, slays, dieds, killeds, rel, can };
 }
 const ADA = { id: 'L9.t1', name: 'Ada Lark', cls: null };
 const BO = { id: 'L9.t4', name: 'Bo Reed', cls: 140, level: 9, sex: 'male' };
@@ -76,7 +76,7 @@ test('LW7b an armed enemy draws: a member who counts the player HOSTILE within D
   await settle();
   assert.equal(far.spawned.length, 0, 'past DRAW_M, from the sky, nothing able to stand, nowhere');
   // cut down: slain, seen, their party's living turned; the body the pool's own
-  rec.dead = true; rec.corpse = true;   // PIN MOVED (AUDIT LW-III): killed as the pool kills - dead, a corpse
+  rec.dead = true; rec.corpse = true; rec.killedBy = 'player';   // PIN MOVED (AUDIT LW-III): killed as the pool kills - dead, a corpse; PIN MOVED (AUDIT FB1025i D2): by the player's own hand, as the pool's death door names it
   rig.stands.frame([], HERE, T + 2);
   assert.deepEqual(rig.slays, [{ res: BO, t: T + 2, seen: true }]);
   assert.equal(rig.rel.regard(CY.id, DAY), Math.max(-100, EVENTS.struck + EVENTS.slain), 'their party turned against the player');
@@ -92,7 +92,7 @@ test('LW7b an armed enemy draws: a member who counts the player HOSTILE within D
   await settle();
   cull.spawned[0].dead = true;
   cull.stands.frame([], HERE, T + 1);
-  assert.deepEqual(cull.slays, [], 'culled: no slaying');
+  assert.deepEqual([cull.slays, cull.killeds, cull.dieds], [[], [], []], 'culled: no slaying - nor, AUDIT FB1025i D2, another hand\'s kill: no death at all, back with their party');
   assert.ok(!cull.stands.stood(BO.id), 'and the stand over');
   // let go: the player gone past KEEP_M, nothing able to stand
   const go = standRig();
@@ -309,7 +309,7 @@ test('LW7b the streaming host: the stands on the roads (the pool\'s loose transi
   const w = rd('src/scenes/world.js');
   assert.match(w, /stands: createRoadStands\(\{\n\s*spawn: \(type, feet, o\) => exteriorFoes\.spawnFoe\(type, feet, \{ allied: o\.allied, yaw: o\.yaw, gender: o\.gender, level: o\.level, loose: true, transient: true, managed: true \}\),/);   // PIN MOVED (AUDIT LW-III): managed - its KEEP_M lets them go, never the cull
   // PIN MOVED (LW11): the road's slay - the hand's turn and the road's report of it
-  assert.match(w, /slay: livingRoadSlay, died: livingDied,\n\s*deadAt: livingDeadAt,[^\n]*\n\s*fighting: \(\) => hccThreats\(\)\.some\(\(q\) => Math\.hypot\(q\[0\] - player\.pos\[0\], q\[2\] - player\.pos\[2\]\) <= FIGHT_NEAR_M\),\n\s*say: \(text\) => townTalk\.say\(text\),/);
+  assert.match(w, /slay: livingRoadSlay, killed: livingKilled, died: livingDied,[^\n]*\n\s*deadAt: livingDeadAt,[^\n]*\n\s*fighting: \(\) => hccThreats\(\)\.some\(\(q\) => Math\.hypot\(q\[0\] - player\.pos\[0\], q\[2\] - player\.pos\[2\]\) <= FIGHT_NEAR_M\),\n\s*say: \(text\) => townTalk\.say\(text\),/);
   // PIN MOVED (LEGACY5): a courtship of the fallen's ends first
   assert.match(w, /const livingDied = \(res, t\) => \{ (?:legacyHost\?\.residentDied\(res\.id\); )?livingRelations\.turn\('died', turnKey\(res, livingCycleOf\(res, Math\.floor\(\(t - 240\) \/ 1440\)\)\), \{ t, who: res\.name \}\); \};/);
   assert.match(w, /spawnFoe: \(type, feet, o\) => d\.spawnLooseFoe\(type, feet, \{ yawRad: o\.yaw, allied: false, gender: o\.gender, level: o\.level \}\),/);

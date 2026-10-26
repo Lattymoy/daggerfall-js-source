@@ -180,7 +180,16 @@ test('AUDIT LEGACY III O11: THE TOKEN\'S BODY BOUND IS ONE - the relay\'s hello 
   };
   const house = { hn: 'H'.repeat(HOUSE_NAME_MAX), hc: 'G'.repeat(HOUSE_GIVEN_MAX), hb: 1, hg: HOUSE_GEN_MAX };
   // INT7: and the arms (`wa`, at their widest) - every claim the realm signs, the house still inside the hello's bound
-  const widest = await mintToken({ ...every, ...house, ci: `r${'f'.repeat(20)}`, wa: [TOKEN_ARMS_TOP_MAX, 1] }, kp.privateKey, { subtle, nowS });
+  // PIN MOVED (AUDIT RELEASE R3-8, bible/01-Overview/audits/Audit-Release-R3.md): WW7-3's seven province crowns joined the
+  // glyphs, so every claim at once - every glyph, a crown of each province's too - beside a house at its bounds is 948,
+  // past the hello's 864: the mint then leaves the house unsaid (the rule this test reads below), and the token it makes
+  // is the one checked here. Without the province crowns the house still fits beside every other claim (855).
+  const crowns = /^crown(SK|MW|SU|VW|EW|BM|CY)$/;
+  const arms = { ci: `r${'f'.repeat(20)}`, wa: [TOKEN_ARMS_TOP_MAX, 1] };
+  assert.ok(tokenBodyOf(await mintToken({ ...every, ...house, ...arms }, kp.privateKey, { subtle, nowS })).length > TOKEN_BODY_MAX, 'every glyph and a house: past the hello - the mint leaves the house unsaid');
+  const bay = tokenBodyOf(await mintToken({ ...every, g: GLYPHS.filter((g) => !crowns.test(g)), ...house, ...arms }, kp.privateKey, { subtle, nowS })).length;
+  assert.ok(bay <= TOKEN_BODY_MAX, `the house beside every claim but the province crowns (${bay} of ${TOKEN_BODY_MAX})`);
+  const widest = await mintToken({ ...every, ...arms }, kp.privateKey, { subtle, nowS });   // what the mint makes of every claim and a house
   const body = tokenBodyOf(widest).length;
   assert.ok(body > 640, `past the old bound (${body})`);
   assert.ok(body <= TOKEN_BODY_MAX, `every claim, a house at its bounds and the character inside the hello (${body} of ${TOKEN_BODY_MAX})`);

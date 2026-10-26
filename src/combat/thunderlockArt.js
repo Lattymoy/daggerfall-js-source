@@ -110,18 +110,19 @@ export function gildFrame(rgba, keep) {
  *     to the others by its canvas, so they are cut at a fixed stride: no key, no badge gutter, no crop to content.
  *   - NATIVE SIZE, THE CANVAS THE ANCHOR. A frame is a WEAPON*.CIF record's size and the owner placed the gun in it, both
  *     forearms leaving through its foot, so the canvas is what is seated on the screen's corner (AlignRight), at
- *     THUNDERLOCK_ART.scale design pixels a texel - 160 of the surface's 320, where the old sheet's gun took 0.49.
+ *     THUNDERLOCK_ART.widthPct of the surface's width (THUNDERLOCK-PLACE, 2026-10-26: the owner's 44 off the lab, where
+ *     the canvas first took 160 of 320), THUNDERLOCK_ART.offset in from the corner.
  *   - THE 1-BIT CUT at THUNDERLOCK_ART.alphaCut (the screen quad discards under 0.5), made once, here.
  *   - SEATED, NEVER STRETCHED (the owner, of a first cut that carried the forearms on below the foot: "Why is it
  *     stretched at the bottom. You need to place it correctly"): the frames are drawn exactly as drawn, and the canvas is
- *     seated the kick's height (GUN_FEEL.kick) below the screen's foot - Weapon Widget's transform never lifts the foot
- *     off the screen (its floor), and the shot's kick, applied after it, lifts it at most that far - so the cut never
- *     shows and nothing is invented under it.
+ *     seated at least the kick's height (GUN_FEEL.kick) below the screen's foot - Weapon Widget's transform never lifts
+ *     the foot off the screen (its floor), and the shot's kick, applied after it, lifts it at most that far - so the cut
+ *     never shows and nothing is invented under it. THUNDERLOCK-PLACE: the owner's -11 seats it deeper than that.
  *   - GILDED: the GUN's brass, found on EVERY frame (thunderlockGildKeep) - the shot kicks the gun inside the canvas;
  *     ENCHANTED: the shimmer on the gun and what is drawn bright, the hands left be (thunderlockShimmer).
  */
 export { THUNDERLOCK_STRIP };
-export const THUNDERLOCK_ART = Object.freeze({ scale: 1, raise: -GUN_FEEL.kick, alphaCut: 128 });
+export const THUNDERLOCK_ART = Object.freeze({ widthPct: 0.44, scale: 0.44 * 320 / THUNDERLOCK_STRIP.cellW, offset: 0.085, raise: -11, alphaCut: 128 });   // THUNDERLOCK-PLACE (the owner, off the lab: 0.085 offset, 44 size, -11 raise)
 const hsl = (d, o) => {
   const r = d[o] / 255, g = d[o + 1] / 255, b = d[o + 2] / 255;
   const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, dl = mx - mn;
@@ -219,6 +220,6 @@ export async function loadThunderlockArt(renderer, { fetch: fetchStrip = null, d
     native: { w: union.w, h: union.h },   // the glow's field is laid in the textures' own texels (AUDIT PISTOLET B4's law)
     // FIELD-GUN17: where the barrel ends, as fractions of the UNION box
     muzzle,
-    pose: { widthPct: anchorW / 320, raise: THUNDERLOCK_ART.raise },
+    pose: { widthPct: THUNDERLOCK_ART.widthPct, raise: THUNDERLOCK_ART.raise, offset: THUNDERLOCK_ART.offset },
   };
 }

@@ -39,6 +39,7 @@
 import { WORLD_CELL, sharedClassicMinutes, cellOfRoom, OW_BAND_ID_RE, OW_RAIDER_ID_RE, OW_WORD_IDS_MAX, OW_WORD_ROWS_MAX, OW_CELL_SPENT_MAX, OW_CELL_ROWS_MAX, owWireRow, OW_CELL_GRAVES_MAX, OW_GRAVE_ACCT_MAX, OW_GRAVE_ACCT_ROWS_MAX, owGraveIn, owGraveOut, NAME_MAX } from './wire.js';
 import { gateHash, GATE_DAY_MINUTES } from './gate/gateLaw.js';   // the spawned dungeons' hash (world/spawnedDungeons.js hash32) - the relay's one copy; a game day's minutes
 import { RAID_SLACK_MINUTES } from './raid/raidLaw.js';   // ten real seconds of two clocks' skew (WORLD5)
+import { isCoarseNode, nodeBounds } from './cellTree.js';   // COST-2 (b): a coarse node's square, the ledger's bound for a socket of it
 
 export { OW_WORD_IDS_MAX, OW_WORD_ROWS_MAX, OW_CELL_SPENT_MAX, OW_CELL_ROWS_MAX, OW_CELL_GRAVES_MAX };
 
@@ -125,10 +126,11 @@ export function owIdPixel(id) {
 // ═══ THE CELL ════════════════════════════════════════════════════════════════════════════════════
 
 /** A cell room's pixel square widened by OW_CELL_MARGIN_PX on every side - `[x0, x1) x [y0, y1)`, map pixels - or null
- *  for a key that is no cell (net/wire.js cellOfRoom, WORLD_CELL: the cell law's one home). @param {unknown} roomKey */
+ *  for a key that is no cell (net/wire.js cellOfRoom, WORLD_CELL: the cell law's one home). COST-2 (b): or a coarse
+ *  node's (net/cellTree.js), the square a socket of it covers, widened the same. @param {unknown} roomKey */
 export function owCellSquare(roomKey) {
   const c = cellOfRoom(roomKey);
-  if (!c) return null;
+  if (!c) { const b = isCoarseNode(roomKey) ? nodeBounds(roomKey) : null; return b && { x0: b.x0 - OW_CELL_MARGIN_PX, y0: b.y0 - OW_CELL_MARGIN_PX, x1: b.x1 + OW_CELL_MARGIN_PX, y1: b.y1 + OW_CELL_MARGIN_PX }; }
   return { x0: c[0] * WORLD_CELL - OW_CELL_MARGIN_PX, y0: c[1] * WORLD_CELL - OW_CELL_MARGIN_PX, x1: (c[0] + 1) * WORLD_CELL + OW_CELL_MARGIN_PX, y1: (c[1] + 1) * WORLD_CELL + OW_CELL_MARGIN_PX };
 }
 const inSquare = (s, x, y) => !!s && Number.isFinite(x) && Number.isFinite(y) && x >= s.x0 && x < s.x1 && y >= s.y0 && y < s.y1;

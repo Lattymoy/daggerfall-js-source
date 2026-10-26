@@ -1,0 +1,120 @@
+[
+  {
+    "name": "FB1025-DOORVOID-open-past-the-seal",
+    "file": "src/world/actionSystem.js",
+    "old": "    if (o.sealed) {\n      if (byPlayer) this.onSealedDoor?.(o);\n      return false;\n    }",
+    "new": "    if (false) {\n      if (byPlayer) this.onSealedDoor?.(o);\n      return false;\n    }",
+    "tests": [
+      "test/world/fb1025_doorvoid.test.js"
+    ]
+  },
+  {
+    "name": "FB1025-DOORVOID-activation-spends-the-spell",
+    "file": "src/world/actionSystem.js",
+    "old": "if (o.kind === 'door' && o.sealed) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/world/fb1025_doorvoid.test.js"
+    ]
+  },
+  {
+    "name": "FB1025-DOORVOID-bash-bursts-the-seal",
+    "file": "src/world/actionSystem.js",
+    "old": "    if (o.sealed) return false;   // DOOR-VOID: struck, heard, and never burst\n",
+    "new": "",
+    "tests": [
+      "test/world/fb1025_doorvoid.test.js"
+    ]
+  },
+  {
+    "name": "FB1025-DOORVOID-restore-stands-it-open",
+    "file": "src/world/actionSystem.js",
+    "old": "      if (o.sealed) return;   // DOOR-VOID: shut whatever a save from before the seal, or a peer, says\n",
+    "new": "",
+    "tests": [
+      "test/world/fb1025_doorvoid.test.js"
+    ]
+  },
+  {
+    "name": "FB1025-DOORVOID-only-a-near-side-floor-seals",
+    "file": "src/world/interior/doorsToNowhere.js",
+    "old": "    if (near === far) continue;",
+    "new": "    if (!near || far) continue;",
+    "tests": [
+      "test/world/fb1025_doorvoid.test.js"
+    ]
+  },
+  {
+    "name": "FB1025-DOORVOID-the-lip-is-a-floor",
+    "file": "src/world/interior/doorsToNowhere.js",
+    "old": "export const DOOR_SIDE_STEP = 1.0;",
+    "new": "export const DOOR_SIDE_STEP = 0.4;",
+    "tests": [
+      "test/world/fb1025_doorvoid.test.js"
+    ]
+  },
+  {
+    "name": "FB1025-DOORVOID-through-is-always-z",
+    "file": "src/world/interior/doorsToNowhere.js",
+    "old": "const through = hi[0] - lo[0] < hi[2] - lo[2] ? 0 : 2;",
+    "new": "const through = 2;",
+    "tests": [
+      "test/world/fb1025_doorvoid.test.js"
+    ]
+  },
+  {
+    "name": "FB1025-DOORVOID-reach-past-the-pit",
+    "file": "src/world/interior/doorsToNowhere.js",
+    "old": "DOOR_FLOOR_REACH + RAY_LIFT, skip",
+    "new": "2 * DOOR_FLOOR_REACH + RAY_LIFT, skip",
+    "tests": [
+      "test/world/fb1025_doorvoid.test.js"
+    ]
+  },
+  {
+    "name": "FB1025-DOORVOID-the-build-seals-nothing",
+    "file": "src/scenes/interiorContext.js",
+    "old": "  sealDoorsToNowhere(actions);\n",
+    "new": "",
+    "tests": [
+      "test/world/fb1025_doorvoid.test.js"
+    ]
+  },
+  {
+    "name": "FB1025-DOORVOID-the-player-is-not-told",
+    "file": "src/scenes/interiorContext.js",
+    "old": "actions.onSealedDoor = () => setMidScreenText(sealedDoorText());",
+    "new": "actions.onSealedDoor = () => {};",
+    "tests": [
+      "test/world/fb1025_doorvoid.test.js"
+    ]
+  },
+  {
+    "name": "FB1025-DOORVOID-the-owner-takes-it-out",
+    "file": "src/systems/decor/decorInteriorDoors.js",
+    "old": "object.kind === 'door' && !object.special && !object.sealed",
+    "new": "object.kind === 'door' && !object.special",
+    "tests": [
+      "test/world/fb1025_doorvoid.test.js"
+    ]
+  },
+  {
+    "name": "FB1025-BADCELL-every-31000-of-a-listed-room",
+    "file": "src/world/interior/interiorLayout.js",
+    "old": "  if (obj.xPos !== BAD_MODEL_SPOT.xPos || obj.yPos !== BAD_MODEL_SPOT.yPos || obj.zPos !== BAD_MODEL_SPOT.zPos) return false;\n",
+    "new": "",
+    "tests": [
+      "test/world/fb1025_doorvoid.test.js",
+      "test/world/interior.test.js"
+    ]
+  },
+  {
+    "name": "FB1025-BADCELL-the-spot-read-in-plan-alone",
+    "file": "src/world/interior/interiorLayout.js",
+    "old": "obj.xPos !== BAD_MODEL_SPOT.xPos || obj.yPos !== BAD_MODEL_SPOT.yPos || obj.zPos",
+    "new": "obj.xPos !== BAD_MODEL_SPOT.xPos || obj.zPos",
+    "tests": [
+      "test/world/interior.test.js"
+    ]
+  }
+]

@@ -1,0 +1,122 @@
+[
+  {
+    "name": "HORSE-VOL-unclamped",
+    "file": "src/systems/monsterVolume.js",
+    "old": "Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 1; };",
+    "new": "Number.isFinite(v) ? v : 1; };",
+    "tests": ["test/systems/volume_sliders.test.js"],
+    "why": "a row's pref past 1 or under 0 played as it stood"
+  },
+  {
+    "name": "HORSE-VOL-zero-unset",
+    "file": "src/systems/monsterVolume.js",
+    "old": "{ const v = Number(getPref(key));",
+    "new": "{ const v = Number(getPref(key)) || 1;",
+    "tests": ["test/systems/volume_sliders.test.js"],
+    "why": "a muted row read as unset: full volume at 0%"
+  },
+  {
+    "name": "ANIMAL-VOL-swapped",
+    "file": "src/systems/animalAmbience.js",
+    "old": "a.sound === SOUND.AnimalHorse ? horseVolume() : animalVolume()",
+    "new": "a.sound === SOUND.AnimalHorse ? animalVolume() : horseVolume()",
+    "tests": ["test/systems/volume_sliders.test.js"],
+    "why": "a town's horse on Animal Volume, its dogs on Horse Volume"
+  },
+  {
+    "name": "ANIMAL-VOL-flat",
+    "file": "src/systems/animalAmbience.js",
+    "old": "a.sound === SOUND.AnimalHorse ? horseVolume() : animalVolume()",
+    "new": "1",
+    "tests": ["test/systems/volume_sliders.test.js"],
+    "why": "the animal flats at full whatever either row says"
+  },
+  {
+    "name": "HORSE-VOL-own-neigh-full",
+    "file": "src/player/mountRig.js",
+    "old": "audio.playOneShot(SOUND.AnimalHorse, RIDING_VOLUME_SCALE * horse);",
+    "new": "audio.playOneShot(SOUND.AnimalHorse, RIDING_VOLUME_SCALE);",
+    "tests": ["test/systems/volume_sliders.test.js"],
+    "why": "the bug asked about: the mount's neigh past the row"
+  },
+  {
+    "name": "HORSE-VOL-own-hooves-full",
+    "file": "src/player/mountRig.js",
+    "old": "else audio.setLoop('riding', r.playing ? SOUND[r.clip] : null, { volume: r.volume * horse, pitch: r.pitch });",
+    "new": "else audio.setLoop('riding', r.playing ? SOUND[r.clip] : null, { volume: r.volume, pitch: r.pitch });",
+    "tests": ["test/systems/volume_sliders.test.js"],
+    "why": "DFU's riding loop past the row"
+  },
+  {
+    "name": "HORSE-VOL-own-voiced-hooves-full",
+    "file": "src/player/mountRig.js",
+    "old": "hoofClipFor(r.clip, surfaceKind?.()) : null, { volume: r.volume * horse, pitch: r.pitch });",
+    "new": "hoofClipFor(r.clip, surfaceKind?.()) : null, { volume: r.volume, pitch: r.pitch });",
+    "tests": ["test/systems/volume_sliders.test.js"],
+    "why": "HORSE-VOICE's hooves on the ground past the row"
+  },
+  {
+    "name": "HORSE-VOL-own-voices-full",
+    "file": "src/player/mountRig.js",
+    "old": "s.volume * RIDING_VOLUME_SCALE * ridingVolumeScale() * horse, s.pitch);",
+    "new": "s.volume * RIDING_VOLUME_SCALE * ridingVolumeScale(), s.pitch);",
+    "tests": ["test/systems/volume_sliders.test.js"],
+    "why": "HORSE-VOICE's snorts, breath, whinny and spook past the row - the mount's whinny among them"
+  },
+  {
+    "name": "HORSE-VOL-peer-hooves-full",
+    "file": "src/net/remotePlayers.js",
+    "old": "volume: out.volume * horse, pitch",
+    "new": "volume: out.volume, pitch",
+    "tests": ["test/systems/volume_sliders.test.js"],
+    "why": "a peer's riding loop past the row"
+  },
+  {
+    "name": "HORSE-VOL-peer-neigh-full",
+    "file": "src/net/remotePlayers.js",
+    "old": "at, RIDING_VOLUME_SCALE * horse, PEER_SOUND_PROFILE",
+    "new": "at, RIDING_VOLUME_SCALE, PEER_SOUND_PROFILE",
+    "tests": ["test/systems/volume_sliders.test.js"],
+    "why": "a peer's neigh past the row"
+  },
+  {
+    "name": "HORSE-VOL-warden-heave-full",
+    "file": "src/scenes/world.js",
+    "old": " * (what === 'heave' ? horseVolume() : 1))",
+    "new": ")",
+    "tests": ["test/systems/volume_sliders.test.js"],
+    "why": "the Wagon Warden's lifted team neighs past the row"
+  },
+  {
+    "name": "HORSE-VOL-row-on-another-key",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "volumeRow('horseVolume', t(",
+    "new": "volumeRow('animalVolume', t(",
+    "tests": ["test/systems/volume_sliders.test.js"],
+    "why": "the Horse Volume row drawn on Animal Volume's pref"
+  },
+  {
+    "name": "SOUND-LIVE-unwatched",
+    "file": "src/systems/audio.js",
+    "old": "key === 'SoundVolume') this._relevel();",
+    "new": "key === 'MusicVolume') this._relevel();",
+    "tests": ["test/systems/volume_sliders.test.js"],
+    "why": "the bug: a loop already playing deaf to the slider (and the music's slider moving the effects)"
+  },
+  {
+    "name": "SOUND-LIVE-no-ramp",
+    "file": "src/systems/audio.js",
+    "old": " g.linearRampToValueAtTime(v, t + 0.05); }",
+    "new": " }",
+    "tests": ["test/systems/volume_sliders.test.js"],
+    "why": "the master held where it was, never reaching the new level"
+  },
+  {
+    "name": "SOUND-LIVE-oar-stroke-plain",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "AUDIO_CLIPS[clip], loopVolume());",
+    "new": "AUDIO_CLIPS[clip], 1);",
+    "tests": ["test/systems/comeSailAway/csa_time_audio.test.js"],
+    "why": "the Trireme's stroke back to the mod's plain PlayOneShot, deaf to every volume"
+  }
+]

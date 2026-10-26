@@ -112,7 +112,7 @@ test('CAP-OFF the service: past every old day at once - a character\'s sixty in 
     assert.equal((await skin(MOB.Rat)).status, 200, 'a hide below the rare');
 
     // KEPT: the veins in dungeons nobody has vouched for - four, the fifth refused, past every old day of Mining
-    setXp('mining', xpForRank(25));
+    setXp('mining', xpForRank(70));   // PIN MOVED (DEEP-OPEN, Professions-Arc.md section 53): such a vein draws the whole deep table, tiers 3-6
     for (let i = 0; i < DEEP_UNCONFIRMED_PER_DAY; i++) {
       const r = await harvest({ node: dveinKey({ dungeon: 888000 + i, day, slot: 0 }), kind: 'ore', climate: MOUNTAIN, region: WAYREST, act: {} });
       assert.equal(r.status, 200, JSON.stringify(r.body));

@@ -1,0 +1,12 @@
+[
+  {
+    "name": "SELLSHOWN-footer-raw-cost",
+    "file": "src/ui/enhanced/enhancedTrade.js",
+    "old": "Buy, tradeGoldText(lotPrice(lot))), fig(",
+    "new": "Buy, tradeGoldText(lot.cost)), fig(",
+    "tests": [
+      "test/ui/sellshown.test.js"
+    ],
+    "note": "SELL-SHOWN: the footer back on the lot's raw cost"
+  }
+]

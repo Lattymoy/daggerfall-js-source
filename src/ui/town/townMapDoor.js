@@ -117,5 +117,6 @@ export function townSheetBag(deps = {}) {
     homesVersion: deps.townHomesVersion ?? null,
     questBuildings: deps.townQuestBuildings ?? null,   // GUIDE8's Town tier (AUDIT DELVE): the buildings a quest's journal names here
     title: deps.locationName ?? '',
+    imperial: deps.imperialSlice ?? null,   // IC-TOWNMAP: the Imperial City's slice the player stands in - the sheet draws the city (ui/town/imperialSheet.js)
   };
 }

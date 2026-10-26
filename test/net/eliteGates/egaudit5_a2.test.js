@@ -370,6 +370,7 @@ test('AUDIT EG V L3-22 A FALL LEAVES ITS MEMENTO WHERE THE MEMBER LAST STOOD (se
   egBlow(T.B, 'acct-1', { k: 'hit', i: rift.i, q: 1, d: 10, r: 0 }, { sx: tsp.x0 + at3.x, y: 0, z: at3.z }, T.now());
   assert.deepEqual(T.B.mem['acct-1'].pose, { x: at3.x, z: at3.z, h: T.B.h });
   egWord(T.B, 'acct-1', { k: 'fell' }, null, T.now(), T.rng);
+  egWord(T.B, 'acct-1', { k: 'yield' }, null, T.now(), T.rng);   // PIN MOVED (AUDIT WORLD-EVENTS L1-4): down where it last stood first - the fall given in to
   assert.deepEqual(T.B.mementos.map((q) => [q.x, q.z]), [[at3.x, at3.z]]);
   assert.equal(EG_ABSENT_TRIAL_MS, 180_000);
   assert.equal(S.bad() + T.bad(), 0);

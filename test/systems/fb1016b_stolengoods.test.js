@@ -357,11 +357,13 @@ test('STOLEN-GOODS the court: every guilty exit takes them - a fine paid with no
 test('STOLEN-GOODS wired (worldModes.js, by source): both sale arms land a piece through landSold - the counter\'s commitTrade and the keyed doSell - and neither pushes onto the shelf; the shut shop\'s shelf and a stranger\'s cupboard are loot targets marked stolen, a cupboard of one\'s own is not; the enhanced card says what the mark means (mutants: either arm shelving, either target unmarked)', () => {
   const wm = src('src/scenes/worldModes.js');
   const sellArm = wm.slice(wm.indexOf("} else if (mode === 'Sell' || mode === 'SellMagic') {"), wm.indexOf("} else if (mode === 'Repair') {"));
-  assert.match(sellArm, /for \(const it of staged\) \{\n\s+const i = playerEntity\.items\.indexOf\(it\);\n\s+if \(i >= 0\) playerEntity\.items\.splice\(i, 1\);\n\s+landSold\(shelf\.items, it\);/, 'the counter');
+  assert.match(sellArm, /for \(const it of staged\) \{\n\s+const i = playerEntity\.items\.indexOf\(it\);\n\s+if \(i >= 0\) playerEntity\.items\.splice\(i, 1\);\n\s+landSoldAt\(shelf\.items, it, shelf === interiorCtx\?\.shelves\?\.\[0\] \? interiorBuilding\?\.buildingType : null\);/, 'the counter');   // PIN MOVED (AUDIT UPDATE II B2): through shopStock.js landSoldAt - an arrow sold at a General Store's counter is never shelved
   const doSell = wm.slice(wm.indexOf('function doSell(shelf, it) {'), wm.indexOf('function itemValue(it)'));
-  assert.match(doSell, /playerEntity\.items\.splice\(playerEntity\.items\.indexOf\(it\), 1\);\n\s+landSold\(shelf\.items, it\);/, 'the keyed list');
+  assert.match(doSell, /playerEntity\.items\.splice\(playerEntity\.items\.indexOf\(it\), 1\);\n\s+landSoldAt\(shelf\.items, it, shelf === interiorCtx\?\.shelves\?\.\[0\] \? interiorBuilding\?\.buildingType : null\);/, 'the keyed list');   // PIN MOVED (AUDIT UPDATE II B2): through shopStock.js landSoldAt - an arrow sold at a General Store's counter is never shelved
   for (const [name, body] of [['the counter', sellArm], ['the keyed list', doSell]]) assert.doesNotMatch(body, /shelf\.items\.push\(/, `${name} pushes nothing onto the shelf`);
-  assert.match(wm, /import \{ landSold \} from '\.\.\/systems\/stolenGoods\.js';/);
+  // PIN MOVED (AUDIT UPDATE II B2): the sale arms land through shopStock.js landSoldAt, which is landSold's own door
+  assert.match(wm, /landSoldAt \} from '\.\.\/systems\/shopStock\.js';/);
+  assert.match(readFileSync(new URL('../../src/systems/shopStock.js', import.meta.url), 'utf8'), /import \{ landSold \} from '\.\/stolenGoods\.js';[^\n]*\n[\s\S]*export function landSoldAt\(shelfItems, item, buildingType = null\) \{\n  if \(endlessArrowsAt\(buildingType\) && isShelfArrow\(item\)\) return false;\n  return landSold\(shelfItems, item\);\n\}/);
   const shelfArm = wm.slice(wm.indexOf('function openShelf'), wm.indexOf('function openMerchantSell'));
   // PIN MOVED (AUDIT S1): each target hands over the owner's keeping, taken as the window opens - the one Set the mark and
   // the theft's own law (the shelf's tally, the cupboard's basket) read

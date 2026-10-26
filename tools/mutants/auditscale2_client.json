@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-SCALE2-R3-10-halo-at-the-place",
     "file": "src/net/online.js",
-    "old": ": (this._halo.get(room)?.ly ?? 0);\n      try { ws = this._leased(new this._WS(",
-    "new": ": 0;\n      try { ws = this._leased(new this._WS(",
+    "old": ": (this._halo.get(room)?.ly ?? 0);\n      try { ws = loneAhead(this, this._leased(new this._WS(",
+    "new": ": 0;\n      try { ws = loneAhead(this, this._leased(new this._WS(",
     "tests": [
       "test/net/auditscale2_client.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "AUDIT-SCALE2-R3-10-layer-unasked",
     "file": "src/net/online.js",
-    "old": "      try { ws = this._leased(new this._WS(`${this.url}/room/${room}${isLayered(room) && ly > 0 ? `?ly=${ly}` : ''}`), room); } catch { continue; }",
-    "new": "      try { ws = this._leased(new this._WS(`${this.url}/room/${room}`), room); } catch { continue; }",
+    "old": "      try { ws = loneAhead(this, this._leased(new this._WS(`${this.url}/room/${room}${isLayered(room) && ly > 0 ? `?ly=${ly}` : ''}`), room), room); } catch { continue; }",
+    "new": "      try { ws = loneAhead(this, this._leased(new this._WS(`${this.url}/room/${room}`), room), room); } catch { continue; }",
     "tests": [
       "test/net/auditscale2_client.test.js"
     ],

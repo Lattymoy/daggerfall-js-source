@@ -152,8 +152,8 @@
   {
     "name": "STAFF-SET-BANK-a-bank-row-read-as-a-repair",
     "file": "server-account/src/review.js",
-    "old": "r.faction === BANK_SET_FACTION ? 'bank' : 'repair'",
-    "new": "'repair'",
+    "old": "r.faction === BANK_SET_FACTION ? 'bank' : r.faction < BANK_SET_FACTION ? 'letter' : 'repair'",
+    "new": "r.faction < BANK_SET_FACTION ? 'letter' : 'repair'",
     "why": "a bank set's row is a bank set's: its ticket asked again answers it",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -284,8 +284,8 @@
   {
     "name": "STAFF-SET-BANK-the-route-unlisted",
     "file": "server-account/src/staffRealm.js",
-    "old": "'/v1/staff/fix/mend', '/v1/staff/fix/bank', '/v1/staff/gains',",
-    "new": "'/v1/staff/fix/mend', '/v1/staff/gains',",
+    "old": "'/v1/staff/fix/mend', '/v1/staff/fix/bank', '/v1/staff/fix/letter', '/v1/staff/gains',",
+    "new": "'/v1/staff/fix/mend', '/v1/staff/fix/letter', '/v1/staff/gains',",
     "why": "the panel's bank door is the realm doors'",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -324,8 +324,8 @@
   {
     "name": "STAFF-SET-BANK-the-service-route-unlisted",
     "file": "server-account/src/service.js",
-    "old": "'/v1/staff/fix/mend', '/v1/staff/fix/bank', '/v1/staff/gains',",
-    "new": "'/v1/staff/fix/mend', '/v1/staff/gains',",
+    "old": "'/v1/staff/fix/mend', '/v1/staff/fix/bank', '/v1/staff/fix/letter', '/v1/staff/gains',",
+    "new": "'/v1/staff/fix/mend', '/v1/staff/fix/letter', '/v1/staff/gains',",
     "why": "the service routes the bank door",
     "tests": [
       "test/server/staffsetbank.test.js"

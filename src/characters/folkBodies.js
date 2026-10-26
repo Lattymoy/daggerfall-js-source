@@ -89,7 +89,7 @@ export function folkLookOf(person, race, seed) {
   // TOWNSFOLK_OUTFITS), in its colours; the person in them their own (the hint's walk: their head, their hair, their
   // body's key). A picture of the other sex than the walker (never rolled - PERSON_TEXTURES keeps them apart) is not
   // theirs to wear, nor is one a beast race stands in (a resident's) - its boots on no Khajiit's or Argonian's feet,
-  // as Morrowind dresses none (wardrobe.js beastWorn): the wardrobe dresses them, barefoot.
+  // as Morrowind dresses none: the wardrobe dresses them, and the figure draws what a beast wears of it (BEAST-BOOTS).
   const own = townsfolkOutfitOf(person.archive);
   if (own && spriteSex(person.archive) === gender && !WARDROBE_BEAST_RACES.includes(race)) return { race, gender, faceIndex, items: [], npc: npcHint(seed, 0), outfit: own.id };
   const { role, cut } = FOLK_DRESS[gender][folkVariant(person.archive, race)];

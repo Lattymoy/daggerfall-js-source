@@ -669,7 +669,7 @@
   {
     "name": "AUDIT-CRAFT-WRITS-E4-daedric-asked",
     "file": "src/net/craftWritLaw.js",
-    "old": " && !r.inputs.some((i) => UNYIELDED.includes(i.key))",
+    "old": " && !r.inputs.some((i) => UNYIELDED.includes(i.key) || EMBER_MADE.includes(i.key))",
     "new": "",
     "tests": [
       "test/net/craftwrits_law.test.js"

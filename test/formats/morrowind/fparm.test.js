@@ -1728,7 +1728,7 @@ test('MW-D29: shadows trim the skin - whole slots gone, single sides kept on the
 test('MW-D29: the thread is unbroken - the menu reads the equip table, the build wears it', () => {
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
   // NUDE-FLATS: through the upper weld's door (composeWornModest composes, then welds a bare woman's chest)
-  assert.match(arm, /composeWornModest\(\{ pieces: armor \?\? \[\], armors: armors \?\? \[\], clothes: clothes \?\? \[\], bodyPool: parts, female, colourOf, helmStyle \}, showNudity\(\)\)/);   // MW-STEEL1: and the Steel Helm switch
+  assert.match(arm, /composeWornModest\(\{ pieces: armor \?\? \[\], armors: armors \?\? \[\], clothes: clothes \?\? \[\], bodyPool: parts, female, colourOf, helmStyle, beast, beastWear \}, showNudity\(\)\)/);   // MW-STEEL1: and the Steel Helm switch; BEAST-BOOTS: and the race's Beast flag
   assert.match(arm, /const armors = esmBytes\.flatMap\(\(e\) => walk\(e, 'armors', armorRecords\)\);/);
   assert.match(arm, /const clothes = esmBytes\.flatMap\(\(e\) => walk\(e, 'clothes', clothingRecords\)\);/);
   // MW-D31: ONE composition serves both rigs - buildFpArm composes,

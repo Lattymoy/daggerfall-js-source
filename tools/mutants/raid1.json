@@ -240,8 +240,8 @@
   {
     "name": "RAID1-leaving-keeps-the-spawn",
     "file": "src/systems/raidingParties.js",
-    "old": "if (!raid) { cancelPending(); _myClaims.clear(); return 'idle'; }",
-    "new": "if (!raid) { _myClaims.clear(); return 'idle'; }",
+    "old": "  if (!raid) { cancelPending(); for (const key of _myClaims.keys()) letGoAllies(key); _myClaims.clear(); return 'idle'; }",
+    "new": "  if (!raid) { for (const key of _myClaims.keys()) letGoAllies(key); _myClaims.clear(); return 'idle'; }",
     "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
@@ -324,8 +324,8 @@
   {
     "name": "RAID1-a-death-counted-twice",
     "file": "src/systems/raidingParties.js",
-    "old": "    e.counted = true;\n",
-    "new": "",
+    "old": "    if (!e.foe.dead || e.counted) continue;\n    e.counted = true;\n",
+    "new": "    if (!e.foe.dead || e.counted) continue;\n",
     "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
@@ -366,14 +366,14 @@
   {
     "name": "RAID1-fix6-a-raid-still-on-swept",
     "file": "src/systems/raidingParties.js",
-    "old": "if (e.kind === 'raider' && e.routed && !e.foe.dead",
-    "new": "if (e.kind === 'raider' && !e.foe.dead",
+    "old": "if ((e.kind === 'raider' || e.kind === 'refugee') && e.routed && !e.foe.dead",
+    "new": "if ((e.kind === 'raider' || e.kind === 'refugee') && !e.foe.dead",
     "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {
     "name": "RAID1-fix6-never-routed",
     "file": "src/systems/raidingParties.js",
-    "old": "  for (const e of _live) if (e.key === key && e.kind === 'raider') e.routed = true;\n",
+    "old": "  for (const e of _live) if (e.key === key && (e.kind === 'raider' || e.kind === 'refugee')) e.routed = true;   // RAID5: and its refugees\n",
     "new": "",
     "tests": ["test/systems/raid1_raidingParties.test.js"]
   },

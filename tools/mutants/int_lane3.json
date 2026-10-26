@@ -172,7 +172,7 @@
   {
     "name": "INT11-ONE-LIFE-RISES",
     "file": "src/net/bossBody.js",
-    "old": "      if (!lives) return enforce ? { ...x, dead: true } : x;\n",
+    "old": "      if (!(typeof lives === 'function' ? lives(x.sub) : lives)) return enforce ? { ...x, dead: true } : x;\n",
     "new": "",
     "tests": [
       "test/net/int11_body.test.js"

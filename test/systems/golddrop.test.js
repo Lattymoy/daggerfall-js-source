@@ -54,11 +54,15 @@ function withPack(fn, { deps = {}, items = () => [DAGGER()], gold = 1287, setup 
       input.oninput();
       f.onsubmit({ preventDefault() {} });
     };
-    /** The field's own submit, as the player reads it (AUDIT GOLD-DROP 5). */
-    const submit = () => field()?.children.find((c) => c.tagName === 'BUTTON')?.textContent ?? null;
+    /** The field's own submit, as the player reads it (AUDIT GOLD-DROP 5). PIN MOVED (GOLD-ALL): it stands in the
+     *  field's stack of presses now, over its "all" (`.goldacts`). */
+    const acts = () => field()?.children.find((c) => c.classList?.contains('goldacts')) ?? null;
+    const submit = () => acts()?.children.find((c) => c.tagName === 'BUTTON' && c.type === 'submit')?.textContent ?? null;
+    /** GOLD-ALL: the field's "all" press. */
+    const all = () => acts()?.children.find((c) => c.classList?.contains('goldall')) ?? null;
     /** A button of the window, by its word (the fake's selectors are one element's classes, never a descendant's). */
     const act = (word) => host.querySelectorAll('.act').find((b) => b.textContent === word) ?? null;
-    try { return fn({ dom, host, e, view, button, field, give, submit, act }); } finally { view.unmount(); }
+    try { return fn({ dom, host, e, view, button, field, give, submit, all, act }); } finally { view.unmount(); }
   });
 }
 const isGold = (it) => it.group === 'Currency' && it.templateIndex === GOLD_TEMPLATE;
@@ -326,7 +330,8 @@ test('GOLD-DROP: by source - the button rides the pack\'s footer and its field t
   assert.match(s, /const verb = `\$\{GOLD_VERB\[remote\?\.kind\] \?\? 'Drop'\} gold`;/);
   assert.match(s, /const give = el\('button', `act goldbtn\$\{goldEntry != null \? ' primary' : ''\}`, verb\);/);
   assert.match(s, /if \(giving && goldEntry != null\) bar\.append\(goldField\(\)\);/);
-  assert.match(s, /const go = el\('button', 'act primary', GOLD_VERB\[remote\?\.kind\] \?\? 'Drop'\);/);
+  // PIN MOVED (GOLD-ALL): the verb said once, the field's press and its "all" both named by it
+  assert.match(s, /const verb = GOLD_VERB\[remote\?\.kind\] \?\? 'Drop';\n\s*const acts = el\('div', 'goldacts'\);\n\s*const go = el\('button', 'act primary goldgo', verb\);/);
 });
 
 // AUDIT GOLD-DROP 1 (2026-09-27, the audit of GOLD-DROP): ON A PHONE THE BUTTON WAS OFF THE SCREEN. The footer is one
@@ -597,4 +602,70 @@ test('AUDIT2 GOLD-DROP 2: ONE FLOATER AT A TIME - the field opening puts an item
     }, { setup: listening, deps: { onExit: () => { exits++; } },
       items: () => [DAGGER(), DAGGER(), { name: 'Ring', templateIndex: 135, group: 'Jewellery', stackCount: 1 }] });
   } finally { globalThis.location = prev; _resetForTests(); }
+});
+
+// GOLD-ALL (2026-10-23, the owner: "Stow all button under stow make stow smaller button and add the stow all button ...
+// with stow all i mean the money amount"): THE WHOLE PURSE IN ONE PRESS. The field's verb stands over its "all" - Stow
+// and Stow all over the wagon, Store and Store all over storage, Drop and Drop all on the ground - and the "all" moves
+// every coin the purse holds, clamped by the wagon's room as a typed amount is, and said; an empty purse's "all" is
+// greyed. Both presses are the kit's `.act` in one stack (`.goldacts`), so Enhanced Plus and the DFO Grimoire dress
+// paint them as every press.
+test('GOLD-ALL: the field stacks its verb over "<verb> all", and the "all" moves the whole purse - into the wagon, the chest or onto the ground - clamped by the wagon\'s room and said; an empty purse greys it (mutants: the typed amount moved; no clamp; the "all" on an empty purse)', () => {
+  const chest = [];
+  const wagon = [];
+  withPack(({ e, button, submit, all, act }) => {
+    act('Wagon').onclick();
+    button().onclick();
+    assert.equal(submit(), 'Stow');
+    assert.equal(all()?.textContent, 'Stow all', 'under the verb, its all');
+    all().onclick();
+    assert.deepEqual([e.goldPieces, wagon.filter(isGold).map((i) => i.stackCount)], [0, [1287]], 'every coin in the purse, into the wagon');
+  }, { deps: { loot: { items: () => chest, storage: true }, wagonItems: () => wagon }, items: () => [DAGGER(), CART()] });
+  withPack(({ e, button, all }) => {
+    button().onclick();
+    assert.equal(all()?.textContent, 'Store all');
+    all().onclick();
+    assert.deepEqual([e.goldPieces, chest.filter(isGold).map((i) => i.stackCount)], [0, [1287]], 'and into the player\'s own storage');
+  }, { deps: { loot: { items: () => chest, storage: true } } });
+  const full = [{ ...DAGGER(), name: 'Anvil', weightInKg: 749.9 }];
+  withPack(({ e, button, all, act }) => {
+    act('Wagon').onclick();
+    button().onclick();
+    all().onclick();
+    assert.deepEqual([e.goldPieces, full.filter(isGold).map((i) => i.stackCount)], [100000 - 40, [40]], 'the wagon takes what it can hold');
+    assert.equal(noticeNow(), 'Your wagon could only hold 40 gold pieces.', 'and says so');
+  }, { deps: { loot: { items: () => [], storage: true }, wagonItems: () => full }, items: () => [DAGGER(), CART()], gold: 100000 });
+  withPack(({ button, all }) => {
+    button().onclick();
+    assert.equal(all()?.disabled, true, 'nothing in the purse: the all is greyed');
+  }, { gold: 0 });
+  withPack(({ button, all }) => {   // AUDIT UPDATE E3: one coin is a purse - the all is live for it
+    button().onclick();
+    assert.equal(all()?.disabled, false, 'a purse of one coin: the all stands');
+  }, { gold: 1 });
+});
+
+test('GOLD-ALL: by the sheets - the two presses one column of two equal rows inside the box\'s 44px (the field grows by nothing), each the kit\'s press at the Gold button\'s 12px; the DFO Grimoire dress writes them in its face at no height of their own', async () => {
+  const s = src('src/ui/enhanced/enhancedStyle.js');
+  assert.match(s, /\.goldfield \.goldacts \{ display: grid; grid-template-columns: max-content; grid-template-rows: 1fr 1fr; gap: 4px;\n\s*flex: 0 0 auto; height: 44px; \}/);
+  assert.match(s, /\.goldfield \.goldacts \.act \{ min-height: 0; height: auto; margin: 0; padding: 0 12px;[^}]*font-size: 12px;/);
+  assert.match(s, /\.goldfield input \{\n\s*flex: 1 1 90px; min-width: 0; min-height: 44px;/, 'the box they stand beside is 44px');
+  const g = src('src/ui/grimoireDress.js');
+  assert.match(g, /\$\{G\} \.goldfield \.goldacts \.act \{ min-height: 0 !important;[^\n]*font-size: 16px !important; line-height: 1 !important;/);
+});
+
+// AUDIT UPDATE II (2026-10-25, bible/01-Overview/audits/Audit-Update-II-2026-10-25.md) B1
+test('AUDIT UPDATE II B1: no gold into a store that settles its own pieces - the hall\'s shared chest (decorGrants.js openSharedChest, `loot.commit`) shows no gold field and keeps the purse whole; a store without one still takes it (mutants: the commit unasked; the press ungated)', () => {
+  const chest = [];
+  withPack(({ e, button, act }) => {
+    act('Storage')?.onclick?.();
+    assert.equal(button(), null, 'no "Store gold" over the shared chest');
+    assert.deepEqual([e.goldPieces, chest.filter(isGold).length], [5000, 0], 'the purse whole');
+  }, { deps: { loot: { items: () => chest, storage: true, title: 'Chest', commit: async () => false, closed: () => {} } }, gold: 5000 });
+  const own = [];
+  withPack(({ e, button, all }) => {
+    button().onclick();
+    all().onclick();
+    assert.deepEqual([e.goldPieces, own.filter(isGold).map((i) => i.stackCount)], [0, [5000]], 'the player\'s own storage takes the purse');
+  }, { deps: { loot: { items: () => own, storage: true } }, gold: 5000 });
 });
