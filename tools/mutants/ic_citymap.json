@@ -1,0 +1,146 @@
+[
+  {
+    "name": "IC-TOWNMAP3-the-slices-corner-lost",
+    "file": "src/ui/town/imperialSheet.js",
+    "old": "  const offX = sx * IC_SLICE_PX, offY = sy * IC_SLICE_PX;\n",
+    "new": "  const offX = 0, offY = 0;\n",
+    "tests": [
+      "test/ui/town/ic_citymap.test.js"
+    ]
+  },
+  {
+    "name": "IC-TOWNMAP3-the-slices-rows-unflipped",
+    "file": "src/ui/town/imperialSheet.js",
+    "old": "    return { ...p, x: offX + p.x, y: offY + (fieldH - 1) - p.y };\n",
+    "new": "    return { ...p, x: offX + p.x, y: offY + p.y };\n",
+    "tests": [
+      "test/ui/town/ic_citymap.test.js"
+    ]
+  },
+  {
+    "name": "IC-TOWNMAP3-the-bags-slice-dropped",
+    "file": "src/ui/town/townMapDoor.js",
+    "old": "    imperial: deps.imperialSlice ?? null,",
+    "new": "    imperial: null,",
+    "tests": [
+      "test/ui/town/ic_citymap.test.js"
+    ]
+  },
+  {
+    "name": "IC-TOWNMAP3-the-host-hands-no-slice",
+    "file": "src/scenes/exteriorAutomapToggle.js",
+    "old": "      imperialSlice: capitalViewOf(dfLoc) ? dfLoc.capital.s : null,",
+    "new": "      imperialSlice: null,",
+    "tests": [
+      "test/ui/town/ic_citymap.test.js"
+    ]
+  },
+  {
+    "name": "IC-TOWNMAP3-the-city-sheet-never-made",
+    "file": "src/ui/town/townSheet.js",
+    "old": "  if (deps.imperial != null) return createImperialSheet(deps, createTownSheet);\n",
+    "new": "  void createImperialSheet;\n",
+    "tests": [
+      "test/ui/town/ic_citymap.test.js"
+    ]
+  },
+  {
+    "name": "IC-TOWNMAP3-a-district-unnamed",
+    "file": "src/ui/town/imperialSheet.js",
+    "old": "  const sectorLabels = IMPERIAL_SECTORS.map(",
+    "new": "  const sectorLabels = IMPERIAL_SECTORS.slice(1).map(",
+    "tests": [
+      "test/ui/town/ic_citymap.test.js"
+    ]
+  },
+  {
+    "name": "IC-TOWNMAP3-the-labels-zoom-gate-reversed",
+    "file": "src/ui/town/imperialSheet.js",
+    "old": "    if (view.scale < l.zoom) continue;\n",
+    "new": "    if (view.scale >= l.zoom) continue;\n",
+    "tests": [
+      "test/ui/town/ic_citymap.test.js"
+    ]
+  },
+  {
+    "name": "IC-TOWNMAP3-the-caret-not-drawn",
+    "file": "src/ui/town/imperialSheet.js",
+    "old": "        paintCaret(ctx, x, y, p.yaw ?? 0, { fill: TOWN_PEN.caret, halo: TOWN_PEN.halo });\n",
+    "new": "        void x; void y;\n",
+    "tests": [
+      "test/ui/town/ic_citymap.test.js"
+    ]
+  },
+  {
+    "name": "IC-TOWNMAP3-the-plan-built-at-every-paint",
+    "file": "src/ui/town/imperialSheet.js",
+    "old": "  if (icPlanCache) return icPlanCache;\n",
+    "new": "  if (icPlanCache && icPlanBuilds < 0) return icPlanCache;\n",
+    "tests": [
+      "test/ui/town/ic_citymap.test.js"
+    ]
+  },
+  {
+    "name": "IC-TOWNMAP3-the-fabric-built-at-any-zoom",
+    "file": "src/ui/town/imperialSheet.js",
+    "old": "  const fabricPending = () => wantFabric && fabric.size",
+    "new": "  const fabricPending = () => true && fabric.size",
+    "tests": [
+      "test/ui/town/ic_citymap.test.js"
+    ]
+  },
+  {
+    "name": "IC-TOWNMAP3-the-whole-district-in-one-tick",
+    "file": "src/ui/town/imperialSheet.js",
+    "old": "    tick() { if (fabricPending()) buildFabric(IC_FABRIC_PER_TICK); },",
+    "new": "    tick() { if (fabricPending()) buildFabric(Infinity); },",
+    "tests": [
+      "test/ui/town/ic_citymap.test.js"
+    ]
+  },
+  {
+    "name": "IC-TOWNMAP3-another-districts-cells",
+    "file": "src/ui/town/imperialSheet.js",
+    "old": "        if (!imperialCodeCell(imperialCell(r, c) ?? '') || imperialCellDistrict(r, c) !== district) continue;",
+    "new": "        if (!imperialCodeCell(imperialCell(r, c) ?? '')) continue;",
+    "tests": [
+      "test/ui/town/ic_citymap.test.js"
+    ]
+  },
+  {
+    "name": "IC-TOWNMAP3-the-fabric-not-drawn",
+    "file": "src/ui/town/imperialSheet.js",
+    "old": "paintFabricCell(ctx, env.view, f);\n",
+    "new": "void f;\n",
+    "tests": [
+      "test/ui/town/ic_citymap.test.js"
+    ]
+  },
+  {
+    "name": "IC-TOWNMAP3-find-me-off-the-player",
+    "file": "src/ui/town/imperialSheet.js",
+    "old": "      return viewCentredOn(p.x, p.y, Math.min(",
+    "new": "      return viewCentredOn(p.x, p.y + 64, Math.min(",
+    "tests": [
+      "test/ui/town/ic_citymap.test.js"
+    ]
+  },
+  {
+    "name": "IC-TOWNMAP3-the-slice-drawn-at-every-zoom",
+    "file": "src/ui/town/imperialSheet.js",
+    "old": "      if (env.view.scale >= IC_FABRIC_ZOOM) {\n",
+    "new": "      if (env.view.scale >= 0) {\n",
+    "tests": [
+      "test/ui/town/ic_citymap.test.js"
+    ]
+  },
+  {
+    "name": "IC-TOWNMAP3-the-pointers-district-crossed",
+    "file": "src/ui/town/imperialSheet.js",
+    "old": "imperialDistrictAt(u * WORLD_PER_PX - IC_HALF_M, v * WORLD_PER_PX - IC_HALF_M)",
+    "new": "imperialDistrictAt(v * WORLD_PER_PX - IC_HALF_M, u * WORLD_PER_PX - IC_HALF_M)",
+    "tests": [
+      "test/ui/town/ic_citymap.test.js"
+    ]
+  }
+]
