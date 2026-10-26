@@ -77,7 +77,7 @@ export function ownClause(line, prefix, v) {
 }
 
 /** The note a renumbered clause carries: where it stood and what it passed. */
-export const renumberNote = (prefix, was, theirs) => `${prefix}${was} on its branch, renumbered past ${prefix}${was}-${prefix}${theirs} on main at the merge`;
+export const renumberNote = (prefix, was, theirs) => `${prefix}${was} on its branch, renumbered past ${was === theirs ? `${prefix}${was}` : `${prefix}${was}-${prefix}${theirs}`} on main at the merge`;
 
 /**
  * ONE PIN LINE, merged: main's line (its whole history) with its asserted version moved to `next` and the branch's own
@@ -86,7 +86,7 @@ export const renumberNote = (prefix, was, theirs) => `${prefix}${was} on its bra
 export function mergePinLine(ours, theirs, prefix, next) {
   const was = assertedIn(ours, prefix) ?? newestIn(ours.match(/PIN MOVED: \w+/)?.[0] ?? '', prefix);
   const mine = assertedIn(theirs, prefix) ?? newestIn(theirs.match(/PIN MOVED: \w+/)?.[0] ?? '', prefix);
-  if (was == null || mine == null || was === mine) return null;
+  if (was == null || mine == null || ours === theirs) return null;   // one number both sides is a renumber too, when main took the branch's own (the second merge: world268 both)
   let line = theirs.replace(new RegExp(`(["'\\\\^])${prefix}${mine}(["'\\\\$])`), `$1${prefix}${next}$2`);
   const clause = ownClause(ours, prefix, was);
   const tag = `PIN MOVED: ${prefix}${mine}, `;

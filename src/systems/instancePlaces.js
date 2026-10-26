@@ -144,21 +144,29 @@ export function partnerInstances(members, base, ownerOf = () => null, stood = nu
  *                                                   epoch the guild's view names
  * Offline, or at a relay that keeps no instance, there is nothing to choose. A place with no instance to offer has no
  * popup; the Hold with none still answers (its public room refused, the door says so).
+ * QUEST-FIRST (FIELD BUGS 2026-10-26, #bug-reports, "The Masoleum of Darkivaron bugged": "an area (up the elevator in the
+ * large central space) is missing ... this one is in a Main Quest to slay a specific Mummy"): where a quest of mine names
+ * the place and the world lays its public room smaller (`relaid` - scenes/instanceDoor.js dungeonSite), Public is the
+ * LAST row: that room stands none of the quest's things (questMountsHere) and lacks the blocks they stand in, so the
+ * first row taken by habit is a room the quest can be done in - the party's, then mine.
  */
 /** AUDIT DOMAINS C4: the most rows the door offers - its keys are Digit1-Digit9 (scenes/instanceDoor.js). */
 export const INSTANCE_ROWS_MAX = 9;
-export function instanceOffer({ online, instanceOk, isHold = false, questHere = false, partners = [], castle = null }) {
+export function instanceOffer({ online, instanceOk, isHold = false, questHere = false, relaid = false, partners = [], castle = null }) {
   if (!online || !instanceOk) return null;
   const rows = [];
-  if (!isHold) rows.push({ kind: 'public' });
+  const publicLast = questHere && relaid;
+  if (!isHold && !publicLast) rows.push({ kind: 'public' });
   if (castle?.owner && castle?.epoch) rows.push({ kind: 'castle', owner: castle.owner, epoch: castle.epoch });
   // The party's rooms come before mine: a member who holds a copy of the quest has an instance of their own, which is
   // another room, and taking the first instance row by habit after a death split them from the party.
   // AUDIT DOMAINS C4: the door's keys are 1-9 - a castle's row beside the public, my own and a full party's seven partners
   // made a tenth no key chose; a partner past the ninth row is not offered (one at most: the seventh, at a castle's door
   // a quest of mine names). At the merge of main into TESA: main's order, TESA's bound - my own row keeps its key.
-  const mine = questHere || isHold;
-  for (const p of (partners ?? []).slice(0, Math.max(0, INSTANCE_ROWS_MAX - rows.length - (mine ? 1 : 0)))) rows.push({ kind: 'join', name: p.name, acct: p.acct, owner: p.owner, epoch: p.epoch });
+  // QUEST-FIRST (main): where the quest's dungeon is laid smaller (`relaid`) the public room goes last - its key kept too.
+  const mine = questHere || isHold, lastPublic = !isHold && publicLast;
+  for (const p of (partners ?? []).slice(0, Math.max(0, INSTANCE_ROWS_MAX - rows.length - (mine ? 1 : 0) - (lastPublic ? 1 : 0)))) rows.push({ kind: 'join', name: p.name, acct: p.acct, owner: p.owner, epoch: p.epoch });
   if (mine) rows.push({ kind: 'mine' });
+  if (lastPublic) rows.push({ kind: 'public' });
   return rows.length > (isHold ? 0 : 1) ? rows : null;
 }

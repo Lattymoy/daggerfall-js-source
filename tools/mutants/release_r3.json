@@ -2,7 +2,7 @@
   {
     "name": "R3-1-world-wide-on-the-fold",
     "file": "src/net/wire.js",
-    "old": "export const WORLD_WIDE_RELAY_MIN = 268;",
+    "old": "export const WORLD_WIDE_RELAY_MIN = 269;",
     "new": "export const WORLD_WIDE_RELAY_MIN = 260;",
     "tests": ["test/net/audittesa2z_worldwide.test.js"],
     "note": "the world-wide gates left at TESA's old number - main's world260 is THE FOLD, which reads no pixel past the Bay"
@@ -10,7 +10,7 @@
   {
     "name": "R3-1-castle-on-the-fold",
     "file": "src/net/instanceRoom.js",
-    "old": "export const GUILD_INSTANCE_RELAY_MIN = 268;",
+    "old": "export const GUILD_INSTANCE_RELAY_MIN = 269;",
     "new": "export const GUILD_INSTANCE_RELAY_MIN = 260;",
     "tests": ["test/net/domain2_castles.test.js"],
     "note": "the castle's gate left on THE FOLD's world260, which keeps no guild arm"

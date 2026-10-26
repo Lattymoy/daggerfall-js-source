@@ -120,8 +120,8 @@ test('TITLE-N grants: the Dungeon Master is SquidKamer\'s alone and Disciple is 
   assert.equal(v('HIEROPHANT_HANDLES'), '', 'nobody yet');
   // AUDIT B8 (SHADOW-FANG): the whole list, not a prefix of it - and every list's title and glyph IN the token's closed
   // vocabulary: one outside it makes mintToken throw, and /v1/auth/token a 500 for every handle on that list
-  assert.deepEqual(Object.keys(TIER_LISTS), [...NEW_TITLES, 'shadowfang', 'penitent', 'herald', 'aegis', 'primarch', 'crystalfist', 'wikimaid'], 'TITLE-N\'s four, then SHADOW-FANG\'s, then PENITENT\'s, then HERALD\'s, then AEGIS\'s, then PRIMARCH\'s, then CRYSTAL-FIST\'s, then WIKIMAID\'s (PIN MOVED)');
-  assert.deepEqual(Object.values(TIER_GLYPH), [...NEW_GLYPHS, 'shadowfang', 'penitent', 'herald', 'aegis', 'primarch', 'crystalfist', 'wikimaid']);   // WIKIMAID's last (PIN MOVED); CRYSTAL-FIST's before it
+  assert.deepEqual(Object.keys(TIER_LISTS), [...NEW_TITLES, 'shadowfang', 'penitent', 'herald', 'aegis', 'primarch', 'crystalfist', 'wikimaid', 'nirnrootsage'], 'TITLE-N\'s four, then SHADOW-FANG\'s, then PENITENT\'s, then HERALD\'s, then AEGIS\'s, then PRIMARCH\'s, then CRYSTAL-FIST\'s, then WIKIMAID\'s, then NIRNROOT-SAGE\'s (PIN MOVED)');
+  assert.deepEqual(Object.values(TIER_GLYPH), [...NEW_GLYPHS, 'shadowfang', 'penitent', 'herald', 'aegis', 'primarch', 'crystalfist', 'wikimaid', 'nirnrootsage']);   // NIRNROOT-SAGE's last (PIN MOVED); WIKIMAID's last (PIN MOVED); CRYSTAL-FIST's before it
   for (const t of Object.keys(TIER_LISTS)) assert.ok(TITLES.includes(t), `${t}: a title the token may carry`);
   for (const g of Object.values(TIER_GLYPH)) assert.ok(GLYPHS.includes(g), `${g}: a glyph the token may carry`);
   const env = { DUNGEON_MASTER_HANDLES: v('DUNGEON_MASTER_HANDLES'), DISCIPLE_HANDLES: v('DISCIPLE_HANDLES'), APOSTLE_HANDLES: 'Paul', HIEROPHANT_HANDLES: 'Pope, Other' };
