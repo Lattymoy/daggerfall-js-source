@@ -315,7 +315,7 @@ test('BOSS-SPOT (mob 2026-10-25: "spawn it on the highest lvl player", "or large
   assert.ok(rd('src/scenes/world.js').includes("peerFeetInTown: () => [[online?.id ?? '', player.feetAt(), playerEntity.level ?? 1], ...(peersNear() ?? [])"), 'me first, with my level');
 });
 
-test('STAFF-EVENT PACKS: monsters stood in packs of 3-5 of any of the kinds picked, each led from anywhere around me, its pack around its leader, to the 25 cap in 20-45 s', async () => {
+test('STAFF-EVENT PACKS: monsters stood in packs of 3-5 of any of the kinds picked, each led from anywhere around me, its pack around its leader, to the 25 cap in 7-15 s (PACK-FAST: was 20-45)', async () => {
   const { at, log, h } = rig();
   restoreRaidSaveData({ lastSelectedDay: DAY, raids: [] });
   setSharedClock(() => at.now);
@@ -325,9 +325,9 @@ test('STAFF-EVENT PACKS: monsters stood in packs of 3-5 of any of the kinds pick
   raidRelayWord({ k: 'sev', sev: { k: 'ev', l: [{ ...EV, n: 100, mt: [7, 12, 21] }] } }, 'social');
   let secs = 0;
   while (log.raiders.length < MAX_RAID_ENEMIES && secs < 200) { frame(0.05); await tick(); secs += 0.05; }
-  assert.ok(secs >= STAFF_PACK_FILL_MIN_S && secs <= STAFF_PACK_FILL_MAX_S + 2, `the 25 stood in 20-45 s (${secs.toFixed(1)} s, a frame a stand on top)`);
-  assert.deepEqual([STAFF_PACK_FILL_MIN_S, STAFF_PACK_FILL_MAX_S], [20, 45]);
-  for (const roll of [() => 0, () => 0.999]) {   // the pace's ends, a last pack either size: the gaps before it inside 20-45 s
+  assert.ok(secs >= STAFF_PACK_FILL_MIN_S && secs <= STAFF_PACK_FILL_MAX_S + 2, `the 25 stood in 7-15 s (${secs.toFixed(1)} s, a frame a stand on top)`);
+  assert.deepEqual([STAFF_PACK_FILL_MIN_S, STAFF_PACK_FILL_MAX_S], [7, 15]);
+  for (const roll of [() => 0, () => 0.999]) {   // the pace's ends, a last pack either size: the gaps before it inside 7-15 s
     const pace = staffPackPaceS(roll);
     for (const last of [1, STAFF_PACK_MIN, STAFF_PACK_MAX]) {   // the cap may cut the last pack to one
       const t = staffPackGapS(pace, MAX_RAID_ENEMIES - last);   // every pack's gap but the last's, summed
@@ -468,4 +468,18 @@ test('STAFF-EVENT: the client\'s word and the relay\'s frame - a staff word pars
   assert.match(staffEndLine({ ...city, bossDown: 1 }), /^The .+ has fallen\. The city of Gothway Garden is safe\.$/);
   assert.equal(staffEndLine({ ...city, bossDown: 0 }), 'The attack on the city of Gothway Garden is over.');
   assert.equal(staffAttackLine({ ...city, staff: { b: 7, ct: 0 } }), 'The area of Gothway Garden is under attack!', 'a named place that is no town (a dungeon, a temple) is an area');
+});
+
+test('PACK-OPEN (mob 2026-10-26: "make sure they dont spawn in houses", "or building"): a spot held in a solid or under a roof is refused, and the loose stand tries again', async () => {
+  const { raidSpotOpen, RAID_SPOT_ROOF_M } = await import('../../src/player/enterExit.js');
+  const { standLooseFoe } = await import('../../src/scenes/hostEnchant.js');
+  const col = (inside, roof) => ({ insideSolid: () => inside, raycast: (o, d) => (d[1] > 0 && roof ? 5 : Infinity) });
+  assert.equal(raidSpotOpen(col(false, false), { x: 0, y: 0, z: 0 }), true, 'open street');
+  assert.equal(raidSpotOpen(col(true, false), { x: 0, y: 0, z: 0 }), false, 'inside a closed shell');
+  assert.equal(raidSpotOpen(col(false, true), { x: 0, y: 0, z: 0 }), false, 'a roof overhead');
+  assert.equal(RAID_SPOT_ROOF_M, 30);
+  const src = rd('src/scenes/world.js');
+  assert.ok(src.includes('spotOk: (s) => raidSpotOpen(collider, s),   // PACK-OPEN'), 'the raid/event stand asks it');
+  assert.match(rd('src/scenes/hostEnchant.js'), /if \(spot && spotOk && !spotOk\(spot\)\) spot = null;/);
+  assert.equal(typeof standLooseFoe, 'function');
 });

@@ -63,8 +63,11 @@ export const LOOSE_FOE_PLACE_ATTEMPTS = 12;
  *  than its own signature defaults.
  *
  *  `spawn(mobileType, pos, { yawRad, allied })` is the host's own pool
- *  door - the placement is shared, the pool never is. */
-export function standLooseFoe({ collider, feet, yawRad, fovDegrees, foes, spawn },
+ *  door - the placement is shared, the pool never is.
+ *
+ *  PACK-OPEN (mob 2026-10-26: "make sure they dont spawn in houses", "or building"): `spotOk(spot)`, a host's own say
+ *  on a spot the law found - a refused one is another attempt, as a spot the law found none of. */
+export function standLooseFoe({ collider, feet, yawRad, fovDegrees, foes, spawn, spotOk = null },
   mobileType, { allied = false, lineOfSightCheck = true, minDistance = 4, maxDistance = 20, attempts = LOOSE_FOE_PLACE_ATTEMPTS } = {}) {   // AUDIT-RR F4: CreateFoeSpawner's own distances and its attempt budget ride in (GameObjectHelper.cs:1314 - the defaults are its own)
   if (!feet || !collider || !spawn) return null;
   const pending = heldSpots(collider);
@@ -80,6 +83,7 @@ export function standLooseFoe({ collider, feet, yawRad, fovDegrees, foes, spawn 
   let spot = null;
   for (let i = 0; i < attempts && !spot; i++) {
     spot = placeFoeFreely(env, { minDistance, maxDistance, lineOfSightCheck });
+    if (spot && spotOk && !spotOk(spot)) spot = null;   // PACK-OPEN
   }
   if (!spot) return null;
   // FinalizeFoe (FoeSpawner.cs:210-226): a FLYING foe lifts 1.5 from

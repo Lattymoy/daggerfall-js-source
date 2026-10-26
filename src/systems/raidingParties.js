@@ -1157,8 +1157,9 @@ export const STAFF_PACK_FAR_MIN = 20;
 export const STAFF_PACK_FAR_MAX = 60;
 export const STAFF_PACK_NEAR = 6;
 export const STAFF_PACK_STEP_S = 0.15;
-export const STAFF_PACK_FILL_MIN_S = 20;
-export const STAFF_PACK_FILL_MAX_S = 45;
+// PACK-FAST (mob 2026-10-26: "wayy slowwwwwww", "needt to be x3"): three times the pace - 20-45 s was 7-15 s.
+export const STAFF_PACK_FILL_MIN_S = 7;
+export const STAFF_PACK_FILL_MAX_S = 15;
 /** A pack's gap after it: its share of the event's pace (`paceS`). The first pack comes at once, so the cap stands when
  *  all but its last pack - 1 to 5, the cap cutting it short - have had their gaps. @param {number} paceS @param {number} size */
 export const staffPackGapS = (paceS, size) => paceS * size / (MAX_RAID_ENEMIES - 1);
