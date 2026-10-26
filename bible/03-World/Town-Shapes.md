@@ -32,6 +32,7 @@ and take organic ground, walls and shores round them.
 | TS7 | the Bay's walled cities walled on their outline; what stood at Daggerfall's gates at the new gates; a town's yards on its own ground | BUILT (below) |
 | TS8 | a bend's tower the corner tower's body alone - no stub of wall into the town or out past the wall | BUILT (below) |
 | TS9 | the road's ring painted whole, its angled edges blended | BUILT (below) |
+| TS10 | the roads painted through a town's ground its grid's roads - no yard on one | BUILT (below) |
 
 **DEPLOY RULE**: TS3 ships in the same release as WW7-5 (homes past the Bay, `bible/03-World/World-Wide.md` WW7-5): a home
 past the Bay is bought only in a town's final outline, so no block a home stands in is ever left out.
@@ -374,3 +375,29 @@ ring (TS2) is blended where it runs at an angle. Tests `test/world/terrain/townr
 towns' rings painted whole, their angled edges blended). Mutants `tools/mutants/townring.json` (8, all dead). PINS MOVED:
 `test/world/terrain/townshapes.test.js` (the ring's whole tiles by their code); `townshapes.json` TS-the-square-ring and
 `fastsuite_roads.json` FAST-road-rect-dropped re-aimed by content (dead).
+
+## 12. TS10 - no yard on a painted road (BUILT)
+
+The owner, on the tamriel branch: *"Sometimes locations like the horse stable, etc can be placed on pathways"*. A town's
+yards (the Stable, the Wagon Yard, the joinery - MERCHANT-YARDS, CARP-YARD - and a port's places) are placed on its walk
+grid off every road cell, a road cell being one its block's own ground tile lays as road (CityNavigation's weight 15 for
+46, 47, 55). But the roads the TERRAIN paints through a town's ground stand on cells its blocks lay as open land: an arm
+of the pixel's road or track across a cell a town past the Bay leaves open (TS3, `TESAOPEN.RMB`: record 63, weight 7),
+or across a Bay city's old wall ring (TS7). Measured over every twelfth city and town past the Bay on a pixel with roads
+every way (N, S, E, W, NE, SW): 8 of 373 yards stood on a painted road (Ripwark's Wagon Yard on 82 of its cells).
+
+- **The paving** (`world/townWalls.js` paveOnGrid, PATH_WEIGHT): every open cell of a town's grid whose terrain tile the
+  road painter wrote - GRASS-PATH1's `paths` mask, the painter's own record (a track's dirt reads as the land's by its
+  record alone) - is a road of the grid (weight 15, CityNavigation's for a road tile; a building's cell stays shut, a
+  walker's flag kept). A yard keeps off it and may face it, as it keeps off and faces the town's own streets.
+- **The walk** (`townWalkShut`, its third argument): the pixel's walk shut paves its terrain job's paths
+  (`scenes/pixelBuild.js`), for its walkers and its yards alike - the walkers take a painted road as a street. Its `key`
+  names the paths it read, so a town's places (`scenes/world.js` townPlacesFor's memo) are placed again when its pixel is
+  built again once the roads land (ROADS 25's rebuild), never kept from the roadless build.
+- Measured again: 0 of the 373 on a painted road, every one of them still placed.
+
+DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from CityNavigation.SetRMBData's weights, which read a block's own
+ground tile alone - a road the terrain painted on a town's ground is its grid's road. Tests `test/world/townpaths.test.js`
+(5, its last on ARENA2). Mutants `tools/mutants/townpaths.json` (8, all dead). PINS MOVED: `test/world/townfollow.test.js`
+(the walk shut reads the paths and paves them between its ground and its wall); `townfollow.json` TF-the-wall-unwired and
+TF-the-ground-unshut re-aimed by content (dead).

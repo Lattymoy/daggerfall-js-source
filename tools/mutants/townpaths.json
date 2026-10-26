@@ -1,0 +1,74 @@
+[
+  {
+    "name": "TS10-unpaved",
+    "file": "src/world/townWalls.js",
+    "old": "    if (paths) paveOnGrid(nav, paths, origin);\n",
+    "new": "",
+    "tests": [
+      "test/world/townpaths.test.js"
+    ]
+  },
+  {
+    "name": "TS10-closed-opened",
+    "file": "src/world/townWalls.js",
+    "old": "paths[tx + ty * D] && nav.grid[i] >> 4)",
+    "new": "paths[tx + ty * D])",
+    "tests": [
+      "test/world/townpaths.test.js"
+    ]
+  },
+  {
+    "name": "TS10-flag-lost",
+    "file": "src/world/townWalls.js",
+    "old": "nav.grid[i] = (PATH_WEIGHT << 4) | (nav.grid[i] & 0xf);",
+    "new": "nav.grid[i] = PATH_WEIGHT << 4;",
+    "tests": [
+      "test/world/townpaths.test.js"
+    ]
+  },
+  {
+    "name": "TS10-paths-unread",
+    "file": "src/world/townWalls.js",
+    "old": "if (tx >= 0 && tx < D && paths[tx + ty * D] && nav.grid[i] >> 4)",
+    "new": "if (tx >= 0 && tx < D && nav.grid[i] >> 4)",
+    "tests": [
+      "test/world/townpaths.test.js"
+    ]
+  },
+  {
+    "name": "TS10-weight-not-a-road",
+    "file": "src/world/townWalls.js",
+    "old": "export const PATH_WEIGHT = 15;",
+    "new": "export const PATH_WEIGHT = 14;",
+    "tests": [
+      "test/world/townpaths.test.js"
+    ]
+  },
+  {
+    "name": "TS10-key-blind",
+    "file": "src/world/townWalls.js",
+    "old": "  shut.key = `shut|${ground ? 'ground' : ''}|${paths ? h.toString(36) : ''}`;",
+    "new": "  shut.key = 'shut';",
+    "tests": [
+      "test/world/townpaths.test.js"
+    ]
+  },
+  {
+    "name": "TS10-host-unwired",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "townWalkShut(dfLocation, townGround, paths)",
+    "new": "townWalkShut(dfLocation, townGround)",
+    "tests": [
+      "test/world/townpaths.test.js"
+    ]
+  },
+  {
+    "name": "TS10-memo-blind",
+    "file": "src/scenes/world.js",
+    "old": "|${shut?.key ?? (shut ? 'shut' : '')}`;",
+    "new": "|${shut ? 'shut' : ''}`;",
+    "tests": [
+      "test/world/townpaths.test.js"
+    ]
+  }
+]

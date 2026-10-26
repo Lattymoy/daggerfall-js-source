@@ -606,10 +606,47 @@ export function shutTownWall(nav, cells) {
   if (cells) for (let i = 0; i < cells.length; i++) if (cells[i]) nav.grid[i] = 0;
 }
 
+/** TS10: a road cell's weight on a town's grid - CityNavigation.GetTileWeight's for a road tile (46, 47, 55: "Roads are
+ *  great!", world/city/cityNavigation.js tileWeight - pinned equal), the weight a yard reads as a road. */
+export const PATH_WEIGHT = 15;
+/**
+ * TS10 (2026-10-26, the owner: "Sometimes locations like the horse stable, etc can be placed on pathways"): A TOWN'S
+ * PAINTED PATHS ON ITS GRID. A town's grid weighs each cell by its own block's ground tile (CityNavigation.SetRMBData), and
+ * a yard keeps off the road cells it reads there - but the roads the terrain painted through the town's ground (an arm
+ * of the pixel's road or track across a cell a town past the Bay leaves open - TS3 - or a Bay city's old wall ring, TS7)
+ * stand on cells its blocks lay as open land: a Stable, a Wagon Yard or a joinery stood on them (8 of 373 yards over every
+ * twelfth city and town past the Bay on a pixel with roads every way, measured). Every open cell whose terrain tile the
+ * road painter wrote (`paths`, GRASS-PATH1's mask - the painter alone knows a track's dirt from the land's) is a road of
+ * the grid: a yard stands beside it, never on it, and the walkers take it as they take the town's own streets.
+ * @param {{width: number, height: number, grid: Uint8Array}} nav @param {Uint8Array} paths 128 x 128, x + y * 128
+ * @param {{x: number, y: number}} tilePos the grid's south-west tile (getLocationTerrainTileOrigin)
+ */
+export function paveOnGrid(nav, paths, tilePos) {
+  const D = 128;
+  for (let gy = 0; gy < nav.height; gy++) {
+    const ty = tilePos.y + (gy >> 2);
+    if (ty < 0 || ty >= D) continue;
+    for (let gx = 0; gx < nav.width; gx++) {
+      const tx = tilePos.x + (gx >> 2), i = gy * nav.width + gx;
+      if (tx >= 0 && tx < D && paths[tx + ty * D] && nav.grid[i] >> 4) nav.grid[i] = (PATH_WEIGHT << 4) | (nav.grid[i] & 0xf);
+    }
+  }
+}
 /** TS7: A TOWN'S WALK SHUT - its walkers' grid and its yards' ground (world/merchantYards/merchantYardSites.js townGroundOf)
  *  shut past its ground (shutOffGround; `ground` the terrain job's townGround - null, none shut) and on its wall
- *  (shutTownWall). @param {any} dfLocation @param {?Uint8Array} ground */
-export const townWalkShut = (dfLocation, ground) => (nav) => {
-  if (ground) shutOffGround(nav, ground, getLocationTerrainTileOrigin(dfLocation));
-  shutTownWall(nav, townWallCellsOf(dfLocation));
+ *  (shutTownWall); TS10: the paths the terrain painted on its ground its roads (paveOnGrid; `paths` the job's - null,
+ *  none). Its `key` says what it reads, for a memo of what was placed on it (scenes/world.js townPlacesFor): a pixel built
+ *  again once the roads land places its yards again. @param {any} dfLocation @param {?Uint8Array} ground
+ *  @param {?Uint8Array} [paths] */
+export const townWalkShut = (dfLocation, ground, paths = null) => {
+  const shut = (nav) => {
+    const origin = getLocationTerrainTileOrigin(dfLocation);
+    if (ground) shutOffGround(nav, ground, origin);
+    if (paths) paveOnGrid(nav, paths, origin);
+    shutTownWall(nav, townWallCellsOf(dfLocation));
+  };
+  let h = 0x811c9dc5;   // FNV-1a over the painted tiles' indices
+  if (paths) for (let i = 0; i < paths.length; i++) if (paths[i]) h = Math.imul(h ^ i, 0x01000193) >>> 0;
+  shut.key = `shut|${ground ? 'ground' : ''}|${paths ? h.toString(36) : ''}`;
+  return shut;
 };

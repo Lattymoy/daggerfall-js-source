@@ -119,8 +119,8 @@
  {
   "name": "TF-the-wall-unwired",
   "file": "src/world/townWalls.js",
-  "old": "  shutTownWall(nav, townWallCellsOf(dfLocation));\n};",
-  "new": "};",
+  "old": "    shutTownWall(nav, townWallCellsOf(dfLocation));\n  };",
+  "new": "  };",
   "tests": [
    "test/world/townfollow.test.js"
   ]
@@ -236,7 +236,7 @@
  {
   "name": "TF-the-ground-unshut",
   "file": "src/world/townWalls.js",
-  "old": "  if (ground) shutOffGround(nav, ground, getLocationTerrainTileOrigin(dfLocation));",
+  "old": "    if (ground) shutOffGround(nav, ground, origin);",
   "new": "",
   "tests": [
    "test/world/townfollow.test.js"
