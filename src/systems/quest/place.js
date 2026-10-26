@@ -675,7 +675,8 @@ export class Place extends QuestResource {
    *  capital the questor stands in, nearest first (world.capitalSlicesNear - scenes/quest/questProvinceSites.js): the first
    *  that has sites, `{ found, houseFallback }`, or null (no capital of many slices, or none has the kind). */
   _citySites(world, location, p2, p3) {
-    for (const slice of world.capitalSlicesNear?.(location) ?? []) {
+    // AUDIT RELEASE R2-5f: only a slice whose sites index can give the kind is stood and searched (siteIndexGives)
+    for (const slice of world.capitalSlicesNear?.(location, (index) => siteIndexGives(index, p2, p3)) ?? []) {
       const r = this._searchTownSites(world, slice, p2, p3);
       if (r.found.length) return r;
     }
@@ -855,6 +856,9 @@ export class Place extends QuestResource {
   /** One dart's landing (SelectRemoteTownSite's loop body from the location load on, lifted verbatim so the darts and
    *  NEARBY-QUESTS' pools share it): the site set and true, or false and nothing drawn. */
   _tryTownLocation(world, regionIndex, locationIndex, requiredBuildingType) {
+    // AUDIT RELEASE R2-5f: a capital slice whose sites index holds no building of the kind is the miss its walk would be,
+    // known before it stands (scenes/quest/questProvinceSites.js siteIndexRefuses) - the same draw, the slice unstood
+    if (world.siteIndexRefuses?.(regionIndex, locationIndex, (index) => this._dartIndexGives(index, requiredBuildingType))) return false;
     const location = world.maps.getLocation(regionIndex, locationIndex);
     if (!location?.loaded) return false;
 
@@ -1163,24 +1167,16 @@ export class Place extends QuestResource {
    *  buildingKey }. The search asks the rest (the owners, the quests, the markers); AUDIT QA2's supply the markers
    *  alone. */
   *_townBuildingsOfType(location, blocks, buildingType, guildHallFaction) {
-    const merged = mergeNamedBuildings(location.exterior.buildings, blocks.filter((b) => b.dfBlock), { locationIndex: location.locationIndex ?? 0 });   // AUDIT-RR F34: the replacement seed is NameSeed + LocationIndex here too (RMBLayout.cs:669)
-    for (const b of blocks) {
-      if (!b.dfBlock) continue;
-      const list = merged.get(b) ?? [];
-      const count = Math.min(list.length, blockBuildingCount(b.dfBlock) ?? list.length);
-      for (let i = 0; i < count; i++) {
-        const summary = list[i];
-        let wildcardFound = false;
-        if (buildingType === BT_ALL_VALID) wildcardFound = VALID_BUILDING_TYPES.includes(summary.buildingType);
-        else if (buildingType === BT_ANY_HOUSE) wildcardFound = VALID_HOUSE_TYPES.includes(summary.buildingType);
-        else if (buildingType === BT_ANY_SHOP) wildcardFound = VALID_SHOP_TYPES.includes(summary.buildingType);
-        if (summary.buildingType !== buildingType && !wildcardFound) continue;
-        if (FACTION_HELD.includes(summary.buildingType)
-          && !(guildHallFaction === 0 || summary.factionId === guildHallFaction)) continue;
-        if (summary.factionId === DARK_BROTHERHOOD_FACTION || summary.factionId === THIEVES_GUILD_FACTION) continue;
-        yield { b, i, summary, buildingKey: makeBuildingKey(b.x, b.y, i) };
-      }
-    }
+    for (const x of townBuildings(location, blocks)) if (buildingAdmits(x.summary, buildingType, guildHallFaction)) yield x;   // AUDIT RELEASE R2-5f: the walk and its law, each one home
+  }
+
+  /** AUDIT RELEASE R2-5f: whether a town's sites index (townSitesIndex) holds a building this Place's dart could take -
+   *  _tryTownLocation's own kinds for `requiredBuildingType`, its law no quest or owner changes. */
+  _dartIndexGives(index, requiredBuildingType) {
+    if (requiredBuildingType === BT_ANY_HOUSE) return indexAdmits(index, BT_ANY_HOUSE, this.p3);
+    if (this.p2 === -1 && this.p3 === 0) return indexAdmits(index, BT_ALL_VALID, this.p3);
+    if (this.p2 === -1 && this.p3 === 1) return indexAdmits(index, BT_ANY_HOUSE, this.p3);
+    return indexAdmits(index, this.p2, this.p3);
   }
 
   _isBuildingAssigned(activeQuestSites, parentQuestPlaces, location, summary, buildingKey) {
@@ -1581,6 +1577,64 @@ export function classicBlockGrid(location) {
   return blocks;
 }
 
+/**
+ * AUDIT RELEASE R2-5f (the owner holding the release for "proper fixes"): EVERY BUILDING OF A TOWN'S BLOCKS -
+ * CollectQuestSitesOfBuildingType's walk (Place.cs:1335-1392) before its kind: the location's directory merged with each
+ * block's records (GetCompleteBuildingData's draw), each building as { b, i, summary, buildingKey }.
+ */
+export function* townBuildings(location, blocks) {
+  const merged = mergeNamedBuildings(location.exterior.buildings, blocks.filter((b) => b.dfBlock), { locationIndex: location.locationIndex ?? 0 });   // AUDIT-RR F34: the replacement seed is NameSeed + LocationIndex here too (RMBLayout.cs:669)
+  for (const b of blocks) {
+    if (!b.dfBlock) continue;
+    const list = merged.get(b) ?? [];
+    const count = Math.min(list.length, blockBuildingCount(b.dfBlock) ?? list.length);
+    for (let i = 0; i < count; i++) yield { b, i, summary: list[i], buildingKey: makeBuildingKey(b.x, b.y, i) };
+  }
+}
+/** AUDIT RELEASE R2-5f: whether a building (its summary's type and faction) answers a search of `buildingType` - the
+ *  wildcards (all valid, any house, any shop), the guild hall's and the temple's faction (FACTION_HELD), never the Dark
+ *  Brotherhood's or the Thieves Guild's. CollectQuestSitesOfBuildingType's own test, one home. */
+export function buildingAdmits(summary, buildingType, guildHallFaction) {
+  let wildcardFound = false;
+  if (buildingType === BT_ALL_VALID) wildcardFound = VALID_BUILDING_TYPES.includes(summary.buildingType);
+  else if (buildingType === BT_ANY_HOUSE) wildcardFound = VALID_HOUSE_TYPES.includes(summary.buildingType);
+  else if (buildingType === BT_ANY_SHOP) wildcardFound = VALID_SHOP_TYPES.includes(summary.buildingType);
+  if (summary.buildingType !== buildingType && !wildcardFound) return false;
+  if (FACTION_HELD.includes(summary.buildingType) && !(guildHallFaction === 0 || summary.factionId === guildHallFaction)) return false;
+  return summary.factionId !== DARK_BROTHERHOOD_FACTION && summary.factionId !== THIEVES_GUILD_FACTION;
+}
+/** AUDIT RELEASE R2-5f: whether a building's interior holds a quest marker (EnumerateBuildingQuestMarkers' records - the
+ *  editor flat archive's spawn or item) - ValidateQuestMarkers' answer, no marker made. */
+export function buildingHasQuestMarker(blockData, recordIndex) {
+  for (const obj of blockData?.rmbBlock?.subRecords?.[recordIndex]?.interior?.blockFlatObjectRecords ?? []) {
+    if (obj.textureArchive === EDITOR_FLAT_ARCHIVE && (obj.textureRecord === SPAWN_MARKER_RECORD || obj.textureRecord === ITEM_MARKER_RECORD)) return true;
+  }
+  return false;
+}
+/**
+ * AUDIT RELEASE R2-5f: A TOWN'S SITES BY KIND - every building of it a search could ever take: one with a quest marker,
+ * as `{ buildingType, factionId, buildingKey }` (townBuildings' walk, its markers). The law no quest or owner changes, so it
+ * is the town's whole life (a capital slice's: scenes/quest/questProvinceSites.js keeps one a slice); a search reads the
+ * rest (the owners, the quests) when it stands the town the index chose.
+ */
+export function townSitesIndex(world, location) {
+  const out = [];
+  if (!location?.exterior?.exteriorData) return out;
+  for (const { b, i, summary, buildingKey } of townBuildings(location, townBlockGrid(world, location))) {
+    if (buildingHasQuestMarker(b.dfBlock, i)) out.push(Object.freeze({ buildingType: summary.buildingType, factionId: summary.factionId ?? 0, buildingKey }));
+  }
+  return Object.freeze(out);
+}
+/** AUDIT RELEASE R2-5f: whether a sites index holds a building a search of `buildingType` (its hall's faction) takes. */
+export const indexAdmits = (index, buildingType, guildHallFaction) => (index ?? []).some((s) => buildingAdmits(s, buildingType, guildHallFaction));
+/** AUDIT RELEASE R2-5f: whether a sites index can give SetupLocalSite's search (_searchTownSites) of `p2`/`p3` - its kinds,
+ *  and where a house kind finds none, any house. */
+export function siteIndexGives(index, p2, p3) {
+  const kind = p2 === -1 && p3 === 0 ? BT_ALL_VALID : p2 === -1 && p3 === 1 ? BT_ANY_HOUSE : p2 === -1 && p3 === 2 ? BT_ANY_SHOP : p2;
+  if (indexAdmits(index, kind, p3)) return true;
+  return p2 >= BT_HOUSE1 && p2 <= BT_HOUSE6 && indexAdmits(index, BT_ANY_HOUSE, p3);
+}
+
 export function townBlockGrid(world, location) {
   const width = location.exterior.exteriorData.width;
   const height = location.exterior.exteriorData.height;
@@ -1588,7 +1642,10 @@ export function townBlockGrid(world, location) {
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const blockName = world.maps.getRmbBlockName(location, x, y);
-      const dfBlock = world.getBlock(blockName);
+      // AUDIT RELEASE R2-5f: a capital's own generated cell holds no building (world/tamrielCapitals.js
+      // synthesizeCapitalLocation's own law) - never made for a walk: the Imperial City's made each of its cells' blocks
+      // afresh, about a second a slice, and a search over its slices took minutes
+      const dfBlock = location.capital && world.noBuildingBlock?.(blockName) ? null : world.getBlock(blockName);
       blocks.push({ dfBlock, x, y });
     }
   }

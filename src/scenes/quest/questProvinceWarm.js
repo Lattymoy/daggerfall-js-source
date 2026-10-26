@@ -28,7 +28,7 @@ let liveWarm = 0;
 
 /**
  * The warmer.
- * @param {{ provinces: { getRegion: (r: number) => any, getLocation: (r: number, i: number) => any },
+ * @param {{ provinces: { getRegion: (r: number) => any, getLocation: (r: number, i: number) => any, sliceIndexAt?: (px: number, py: number) => any },
  *   regionNow: () => number, origin: () => ?{ x: number, y: number },
  *   schedule?: ((tick: () => void) => void) | null }} deps `provinces` the quest layer's (scenes/quest/questProvinceSites.js),
  *   `regionNow` the questor's region, `origin` the questor's pixel, `schedule` the host's idle door (null: ticks are the
@@ -59,6 +59,7 @@ export function createProvinceWarm({ provinces, regionNow, origin, schedule = nu
       if (!row || warmed.has(row.mapId)) continue;
       warmed.add(row.mapId);
       provinces.getLocation(r, i);
+      provinces.sliceIndexAt?.(row.px, row.py);   // R2-5f: a capital slice's sites by kind, read while it is warm
       if (++stood >= WARM_PER_TICK) break;
     }
     return stood;

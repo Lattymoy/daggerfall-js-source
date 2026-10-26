@@ -130,9 +130,13 @@ export function questView(loc) {
  * the same on every client), each as the quest layer sees it (questView), stood only as a search reaches it (a generator);
  * none past the slices no site may stand in (isUnsitedSlice), none for any other location. A local site the questor's own
  * slice cannot give is the city's (quest/place.js _citySites).
+ * R2-5f: with `admits`, a slice whose sites index (`indexAt` - quest/place.js townSitesIndex, kept a slice) cannot give
+ * the search's kind is passed over unstood: a search stands the slices it picks, no more (`picked` counts them).
  * @param {any} loc @param {(px: number, py: number) => any} standAt
+ * @param {((index: readonly any[]) => boolean) | null} [admits] @param {(px: number, py: number) => readonly any[]} [indexAt]
+ * @param {{ picked: number }} [count]
  */
-export function* capitalSlicesNear(loc, standAt) {
+export function* capitalSlicesNear(loc, standAt, admits = null, indexAt = () => [], count = { picked: 0 }) {
   const t = loc?.capital ? loc.mapTableData : null;
   if (!t) return;
   const p = longitudeLatitudeToMapPixel(t.longitude, t.latitude);
@@ -146,6 +150,8 @@ export function* capitalSlicesNear(loc, standAt) {
   }
   others.sort((a, b) => a.d - b.d || a.s - b.s);
   for (const q of others) {
+    if (admits && !admits(indexAt(q.x, q.y))) continue;
+    count.picked++;
     const l = standAt(q.x, q.y);
     if (l?.loaded && l.capital) yield questView(l);
   }
@@ -176,7 +182,21 @@ export function provinceRow(p) {
  *   (the quest layer's playerPixel); `heldSites` every quest's site details (the machine's); `refresh` the places'
  *   registry brought up to date (tamrielPlacesHost.js registerTamrielPlaces)
  */
-export function createQuestProvinceSites({ worldPlaces, regionAt, standAt, lairsNear = () => [], countryNear = () => [], origin = () => null, heldSites = () => [], refresh = () => {} }) {
+export function createQuestProvinceSites({ worldPlaces, regionAt, standAt, lairsNear = () => [], countryNear = () => [], origin = () => null, heldSites = () => [], refresh = () => {}, sliceAt = () => null, sitesIndexOf = () => [] }) {
+  /** R2-5f: A CAPITAL SLICE'S SITES BY KIND, kept a slice (by its pixel) for the session - quest/place.js townSitesIndex over
+   *  the slice as the build stands it, read off its clone where it has not stood (`sliceAt`, scenes/tamrielPlacesHost.js
+   *  capitalSliceAt): the law no quest or owner changes, the same on every client. @type {Map<string, readonly any[]>} */
+  const sliceIndexes = new Map();
+  const count = { picked: 0 };
+  /** @param {number} px @param {number} py */
+  const sliceIndexAt = (px, py) => {
+    const k = `${px},${py}`;
+    let index = sliceIndexes.get(k);
+    if (!index) { const loc = sliceAt(px, py); index = loc ? sitesIndexOf(questView(loc)) : Object.freeze([]); sliceIndexes.set(k, index); }
+    return index;
+  };
+  /** Is row `row` a slice of a capital of many. @param {any} row */
+  const sliceRow = (row) => !!row && sliceQuestName(row.px, row.py) != null;
   /** @type {Map<number, { key: string, region: any }>} */
   const tables = new Map();
   /** the rows a name lookup found by a site's pixel, by region: name -> row (kept across tables) */
@@ -256,7 +276,17 @@ export function createQuestProvinceSites({ worldPlaces, regionAt, standAt, lairs
     getLocation,
     indexOfName,
     /** R2-5c: the capital's other slices nearest a slice location (capitalSlicesNear over the build's places). @param {any} loc */
-    capitalSlicesNear: (loc) => capitalSlicesNear(loc, standAt),
+    capitalSlicesNear: (/** @type {any} */ loc, /** @type {any} */ admits = null) => capitalSlicesNear(loc, standAt, admits, sliceIndexAt, count),
+    /** R2-5f: a capital slice's sites by kind (kept), by its pixel. */
+    sliceIndexAt,
+    /** R2-5f: whether row `i` of a province's table is a capital slice whose sites index `gives` refuses - a dart's miss
+     *  known before the slice stands; false for every other row (a town, a lair, the countryside: its own walk decides). */
+    siteIndexRefuses(/** @type {number} */ r, /** @type {number} */ i, /** @type {(index: readonly any[]) => boolean} */ gives) {
+      const row = isProvinceRegion(r) ? tableOf(r)?.mapTable?.[i] : null;
+      return sliceRow(row) && !gives(sliceIndexAt(row.px, row.py));
+    },
+    /** R2-5f: how many capital slices a search has picked to stand (the count's pin). */
+    picked: () => count.picked,
     /** MapsFile.GetLocationByName for a province's region: the place, or null (any other region: null). */
     locationByName(/** @type {string} */ regionName, /** @type {string} */ locationName) {
       const r = REGION_NAMES.indexOf(regionName);

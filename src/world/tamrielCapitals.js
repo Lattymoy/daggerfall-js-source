@@ -697,13 +697,21 @@ export function capitalPortBlocks({ footprint = null } = {}) {
 /** AUDIT-TESA A6-4: the kinds of Daggerfall's city blocks that can carry a canal or a quay's water (CUST - a town on the
  *  water's), and how many water tiles (record 0) make a block wet. */
 const WET_KINDS = Object.freeze(['CUST']);
+/** AUDIT RELEASE R2-5f: dryKinds' answer, kept a names list. @type {WeakMap<Map<string, string[]>, Map<string, string[]>>} */
+const _dryKept = new WeakMap();
 const WET_TILES = 8;
 /** AUDIT-TESA A6-4: AN INLAND CAPITAL'S BLOCKS - each wet kind's list (`names`) kept to its dry blocks (`blockOf(name)`'s
  *  ground holds fewer than WET_TILES water tiles), so no canal runs out of a city on no water (Mournhold's did); the
  *  list whole where none of it is dry. */
 export function dryKinds(names, blockOf) {
   if (!names) return names;
+  // AUDIT RELEASE R2-5f: kept a names list - every inland slice asked it again, each wet kind's every block read again
+  // (BlocksFile keeps one block at a time): 17 of a slice's 20 ms (measured on the freeware). The blocks a name serves are
+  // the session's (the world-data door is latched for the game), so the answer is too.
+  const kept = _dryKept.get(names);
+  if (kept) return kept;
   const out = new Map(names);
+  _dryKept.set(names, out);
   for (const kind of WET_KINDS) {
     const list = names.get(kind);
     if (!list?.length) continue;
