@@ -322,8 +322,8 @@
   {
     "name": "SMOOTH-LAND-INK-the-zones-pieces-drawn-again",
     "file": "src/ui/tamrielInk.js",
-    "old": "linkPieces(segs.filter((s) => s.kind === kind && !zone?.keys.has(segKey(s))), lines.points)",
-    "new": "linkPieces(segs.filter((s) => s.kind === kind), lines.points)",
+    "old": "linkSteps(segs.filter((s) => s.kind === kind && !zone?.keys.has(segKey(s))), lines.points)",
+    "new": "linkSteps(segs.filter((s) => s.kind === kind), lines.points)",
     "tests": [
       "test/systems/wild/zoneline.test.js",
       "test/world/smoothland.test.js"
@@ -404,5 +404,68 @@
     ],
     "equivalent": true,
     "why": "the straightening runs from the roadstead past the cell it moors off wherever the picture's sea and the lane water hold the line, as on every lane of the fixtures and the freeware's; the cell's centre stands in the chain for the leg the lane water refuses"
+  },
+  {
+    "name": "R4-7-the-job-unheard",
+    "file": "src/ui/tamrielInk.js",
+    "old": "onTamrielTrace((trace) => { if (trace) startTracedJob(trace); });",
+    "new": "",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "R4-7-a-slice-the-whole",
+    "file": "src/ui/tamrielInk.js",
+    "old": "for (let n = 0; n < TRACED_SLICE_STEPS; n++) {",
+    "new": "for (let n = 0; n < Infinity; n++) {",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "R4-7-the-keep-dropped",
+    "file": "src/ui/tamrielInk.js",
+    "old": "  _traced.set(trace, { key, mask: zoneMask, value });",
+    "new": "",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "R4-7-the-walks-step-lost",
+    "file": "src/world/tamriel/tamrielLines.js",
+    "old": "        yield;\n      }\n    }\n    whole = ",
+    "new": "      }\n    }\n    whole = ",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "R4-7-the-linkings-index-step-lost",
+    "file": "src/world/tamriel/tamrielLines.js",
+    "old": "if ((i + 1) % LINK_STEP === 0) yield;",
+    "new": "if (false) yield;",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "R4-7-the-moved-trace-walked-on",
+    "file": "src/ui/tamrielInk.js",
+    "old": "if (tamrielTrace() !== trace) return;",
+    "new": "if (false) return;",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "R4-7-the-landing-unheard",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "  for (const fn of _heard) fn(_trace);\n}",
+    "new": "}",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
   }
 ]

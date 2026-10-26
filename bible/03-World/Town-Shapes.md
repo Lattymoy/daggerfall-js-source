@@ -154,8 +154,9 @@ DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from DFU's wall ring - th
   the grid's middle - a gate crowding the one before (four lengths) slid on along the wall, one crowding the first slid
   back; between gates runs of whole lengths of wall (445) in chords of two, each stretched to its chord; a tower (444) at
   every chord's end, square to the line's bend. Every piece's outside faces out.
-- **The model** (townWallModel): every piece one model of the city's own (`world/customModels.js`, id 3,000,000 and its
-  map id's low 20 bits), composed of the player's own ARCH3D pieces (needs 444, 445, 446) - turned so its local +z is its
+- **The model** (townWallModel): every piece one model of the city's own (`world/customModels.js`, id 1,000,000 and its
+  map id's low 20 bits - AUDIT RELEASE R1-1, `01-Overview/audits/Audit-Release-R1.md`: at 3,000,000 a Bay city's wall shared
+  an id with one of IC-GRAND's city cells), composed of the player's own ARCH3D pieces (needs 444, 445, 446) - turned so its local +z is its
   outward normal and its +x along the line (no mirror), stretched along its length - so it collides and draws as any model.
 - **The carrier** (standTownWall, townWallBlockJson): a block of the city's own (`TESW<low 20 bits in base 36>.RMB`, index
   1,000,000 and the same bits) in its south-west cell: open ground, the wall's model at its corner, and a start marker

@@ -85,7 +85,8 @@ import { FarFieldMesh, farFieldVertexSteps, farFieldDisabled, cellOffsets, FAR_R
 import { FarLandmark, landmarkDistance } from './farLandmarks.js';   // FAR-LANDMARK: a city's silhouette in this pass's painter's order
 import { SCALED_OCEAN_ELEVATION as OCEAN_Y, BASE_HEIGHT_SCALE as BYTE_SCALE } from '../world/terrain/terrainSampler.js';
 import { CLIMATES } from '../formats/mapsFile.js';   // FAR-FIELD: a cell's centre on the ocean's climate is the sea
-import { pageHas } from '../systems/pageQuery.js';   // MID-RING: the probes' read stands behind the shot gate (AUDIT ANTICHEAT A2)
+import { pageHas } from '../systems/pageQuery.js';
+import { capLineOfPixel, capShare, whiten } from '../world/peaks/snowcap.js';   // PEAKS1: the summits' snow on the horizon   // MID-RING: the probes' read stands behind the shot gate (AUDIT ANTICHEAT A2)
 /** MID-RING: the band (metres, Chebyshev from the traveller) over which the middle ring's ground eases onto the far
  *  ring's - ending where the traveller's farthest drift from its base still leaves its rim (MID_RADIUS - MID_REBUILD_DRIFT
  *  pixels: the far ring's ground there whatever the base), two pixels wide. */
@@ -144,8 +145,10 @@ const RING_SEA_Y = ringHeight(0);
  * @param {?((x: number, y: number) => boolean)} [o.pastOwn] - AUDIT CAPTAIN'S SEA G6: whether `byteAt` answers a pixel past
  *   the map with its own ground (the continent's, the Eltheric Ocean's) rather than the clamp - its cliffs then faded at its
  *   own pixel; null: every pixel past the map it is handed
+ * @param {?((x: number, y: number) => number)} [o.snowAt] - PEAKS1: a pixel's cap line (m above the sea - ringSnowAt), or
+ *   null for no cap: a vertex over it whitened by its height and its slope (world/peaks/snowcap.js capShare)
  */
-export function buildFarRingGrid({ heightBytes, mapWidth, mapHeight, climateAt, baseX, baseY, radius = RING_RADIUS, relief = false, byteAt: byteAtPast = null, climatePast = null, pastOwn = null }) {
+export function buildFarRingGrid({ heightBytes, mapWidth, mapHeight, climateAt, baseX, baseY, radius = RING_RADIUS, relief = false, byteAt: byteAtPast = null, climatePast = null, pastOwn = null, snowAt = null }) {
   const side = radius * 2 + 1;
   const positions = new Float32Array(side * side * 3);
   const normals = new Float32Array(side * side * 3);
@@ -188,11 +191,16 @@ export function buildFarRingGrid({ heightBytes, mapWidth, mapHeight, climateAt, 
       const tint = overworldTint(climate, byte);
       colors[o] = tint[0]; colors[o + 1] = tint[1]; colors[o + 2] = tint[2];
       if (isWaterPixel(climate, byte) && Math.abs(positions[o + 1] - RING_SEA_Y) < 1e-3) sea[o / 3] = 255;
+      else if (snowAt) whiten(colors, o, capShare(positions[o + 1] - RING_SEA_Y, normals[o + 1], snowAt(px, py)));   // PEAKS1
       o += 3;
     }
   }
   return { positions, normals, colors, sea, side };
 }
+
+/** PEAKS1: the cap line the horizon's snow reads at a pixel (world/peaks/snowcap.js capLineOfPixel on the ring's own climate
+ *  reader), with the Landforms row (`relief`) - none without it: the classic ground's horizon stays its own. */
+export const ringSnowAt = (inputs) => (inputs.relief ? ((climateOf) => (x, y) => capLineOfPixel(x, y, climateOf))(ringReaders(inputs).climateOf) : null);
 
 /**
  * A pixel's height byte and climate as the ring reads them (buildFarRingGrid; MID-RING's tints the same, render/midRing.js):
@@ -551,7 +559,7 @@ export class FarRingRenderer {
   build(gridInputs, holeX, holeY, holeRadius, built = null) {
     const gl = this.gl;
     this._inputs = gridInputs;   // MID-RING: the middle ring's tints are read the way this grid's are
-    const { positions, normals, colors, sea, side } = buildFarRingGrid(gridInputs);
+    const { positions, normals, colors, sea, side } = buildFarRingGrid({ ...gridInputs, snowAt: ringSnowAt(gridInputs) });   // PEAKS1: the summits white
     this._ringY = { positions, side, baseX: gridInputs.baseX, baseY: gridInputs.baseY, radius: gridInputs.radius ?? RING_RADIUS };   // MID-RING: this ring's heights at the pixel centres, its ease's ground
     this.baseX = gridInputs.baseX; this.baseY = gridInputs.baseY;
     this.dispose(false);
@@ -672,6 +680,7 @@ export class FarRingRenderer {
         tintAt: (x, y, byte, v) => overworldTint(climAt(x, y, v), byte),
         oceanAt: (x, y, v) => climAt(x, y, v) === CLIMATES.Ocean,
         seaY: RING_SEA_Y,
+        snowAt: inputs.relief ? (x, y, v) => capLineOfPixel(x, y, () => climAt(x, y, v)) : null,   // PEAKS1: a range white 300 km off
       });
       // one ask at a time and it stands until laid, so no newer ask can come while this is laid; a dispose drops the work
       this._work.push({ it, done: (v) => {
@@ -696,7 +705,7 @@ export class FarRingRenderer {
         const i = x - g.baseX + g.radius, j = y - g.baseY + g.radius;
         return i >= 0 && j >= 0 && i < g.side && j < g.side ? g.positions[(j * g.side + i) * 3 + 1] : RING_SEA_Y;
       };
-      const it = midRingVertexSteps({ heights: answer.heights, baseX, baseY, radius: MID_RADIUS, sub: MID_SUB, tintAt, seaY: RING_SEA_Y, ringAt, wet: answer.wet ?? null });   // MAP-WATERS: G's rivers as water
+      const it = midRingVertexSteps({ heights: answer.heights, baseX, baseY, radius: MID_RADIUS, sub: MID_SUB, tintAt, seaY: RING_SEA_Y, ringAt, wet: answer.wet ?? null, snowAt: ringSnowAt(inputs) });   // PEAKS1: and its summits' snow   // MAP-WATERS: G's rivers as water
       this._work.push({ it, done: (v) => {   // as the far field's: one ask, standing until laid; a dispose drops the work
         this._midAsk = null;
         (this._mid ??= new MidRingMesh(this.gl)).build(v, { baseX, baseY, radius: MID_RADIUS, sub: MID_SUB, curX: baseX, curY: baseY });

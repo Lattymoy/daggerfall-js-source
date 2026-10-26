@@ -28,7 +28,8 @@ import { FABRIC_CELLS, fabricGrid, planSteps } from './townFabric.js';
 import { townFabricModel, townFabricModelSliced, FABRIC_PIECES } from './townFabricModel.js';
 import { styleOf } from './urbanRecords.js';
 
-/** The fabric's model ids: past every other custom model's (the capitals' 910xxx, TS4's walls' 3,000,000 + 20 bits). */
+/** The fabric's model ids: past every other custom model's (the capitals' 910xxx, TS4's walls' 1,000,000 + 20 bits - AUDIT
+ *  RELEASE R1-1 - and IC-GRAND's families at 3,000,000 and 3,100,000). */
 export const TOWN_FABRIC_MODEL_BASE = 5000000;
 /** How many towns' plans and models are kept. */
 export const TOWN_FABRIC_KEEP = 24;

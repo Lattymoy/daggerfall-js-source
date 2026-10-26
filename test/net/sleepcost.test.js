@@ -26,8 +26,15 @@ function longTimers(t) {
   t.after(() => { globalThis.setTimeout = real; });
   return armed;
 }
-/** The posts a `void`ed flush owes, let land. */
-const landed = async (posts, n) => { for (let i = 0; i < 200 && posts.length < n; i++) await new Promise((r) => setImmediate(r)); };
+/** The posts a `void`ed flush owes, let land - AUDIT RELEASE R3-2: every post the cell has STARTED, awaited until none is in
+ *  flight (a condition, never a count of turns: 200 setImmediate rounds lost the signed post under a loaded machine, 1 run
+ *  in 3 at a load of 13 on four cores). A post never started is nothing to wait for - the fold or the drain that would owe
+ *  it starts it before its handler returns (index.js _grantFold, _grantDrained). */
+function flushesOf(r) {
+  const flying = new Set(), flush = r.room._grantFlush;
+  r.room._grantFlush = function grantFlushWatched(...a) { const p = flush.apply(this, a); flying.add(p); void p.finally(() => flying.delete(p)); return p; };
+  return async () => { while (flying.size) await Promise.allSettled([...flying]); };
+}
 
 /** A cell room with the relay's receipt key and the measure's door, one player helloed into it at P0. */
 async function cell(t) {
@@ -39,11 +46,12 @@ async function cell(t) {
   r.env.GRANT_FEED_URL = 'https://accounts.example/v1/mod/grant-feed';
   const posts = [];
   r.env.ACCOUNTS = { fetch: async (req) => { posts.push({ sig: req.headers.get(GRANT_MEASURE_SIG_HEADER), body: new Uint8Array(await req.arrayBuffer()) }); return new Response('{}', { status: 202 }); } };
+  const landed = flushesOf(r);
   const ws = r.connect();
   await r.hello(ws, 'peer-0001', P0, { lv: 7, charLevel: 12 });
   const ask = (kind, n, id) => r.raw(ws, JSON.stringify({ t: 'grant', k: 'mint', id, kind, n }));
   const rows = async (i) => { const o = await openGrantMeasure(posts[i].body, posts[i].sig, kp.publicKey, { subtle, nowMs: now }); assert.ok(o.ok, JSON.stringify(o)); return o.batch.rows.map((x) => [x.k, x.asks]); };
-  return { r, ws, ask, posts, rows, tick: (ms) => { now += ms; } };
+  return { r, ws, ask, posts, rows, landed, tick: (ms) => { now += ms; } };
 }
 
 test('GRANT-SLEEP the law: a window is owed its post once it holds anything and is GRANT_MEASURE_MS old, never sooner, never empty (mutants: never due; due at once)', () => {
@@ -61,24 +69,24 @@ test('GRANT-SLEEP the cell: an ask arms no timer; the first fold once the window
   assert.deepEqual(armed, [], 'nothing pending - the cell may hibernate');
   c.tick(GRANT_MEASURE_MS - 1);
   await c.ask('enc', 1, 2);
-  await landed(c.posts, 1);
+  await c.landed();
   assert.equal(c.posts.length, 0, 'not yet owed');
   c.tick(1);
   await c.ask('enc', 1, 3);
-  await landed(c.posts, 1);
+  await c.landed();
   assert.equal(c.posts.length, 1, 'owed, and posted by the fold that found it so');
   assert.deepEqual(await c.rows(0), [['enc', 3]]);
   await c.ask('camp', 5, 4);
-  await landed(c.posts, 2);
+  await c.landed();
   assert.equal(c.posts.length, 1, 'a new window, not yet owed');
   await c.r.drop(c.ws);
-  await landed(c.posts, 2);
+  await c.landed();
   assert.equal(c.posts.length, 2, 'the drained cell posts its window before it sleeps');
   assert.deepEqual(await c.rows(1), [['camp', 1]]);
   assert.deepEqual(armed, [], 'and never a timer');
   const idle = await cell(t);
   await idle.r.drop(idle.ws);
-  await landed(idle.posts, 1);
+  await idle.landed();
   assert.equal(idle.posts.length, 0, 'nothing measured, nothing sent');
   assert.doesNotMatch(src('server/src/index.js'), /setTimeout\([^;]*_grantFlush/, 'no timer posts the window');
 });

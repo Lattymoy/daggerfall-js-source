@@ -511,6 +511,12 @@ the heightmap says how high that land stands.
 
 Section A, TAMRIEL-RELIEF (OURS: DFU stops at the Bay's edge; the land past it is the port's own).
 
+## PEAKS - the ranges snow-capped (2026-10-26)
+
+The owner: *"The world of daggerfall mountains need to be completely redesigned from the ground up with more integration
+into the terrian, snow capped, and properly place throughout tamriel."* The ranges' measure, their snow caps by zone
+(PEAKS1) and their own shape (PEAKS2) are `Peaks.md`.
+
 ## BREATHTAKER - the land below the heightmap's grain, and Cyrodiil's waters (2026-10-26)
 
 KPbICA's spec, forwarded by the owner (BREATHTAKER 2 and 3): *"Make sure that we create landscapes based on the
@@ -738,7 +744,22 @@ centre, against the picture's own law before):
   3,486,060 apart; no zone pixel on another province's land.
 - **The cost** (this shared machine, CPU): the law's build 65 ms a trace (about 300 ms the first time a thread runs it);
   a map pixel's province 127 ns over the frame, the picture's own law 88; the continent's lines 500 ms, the zone's mask
-  280 ms and its line 200 ms; the held map's first traced ink about 1.5 s where it was 0.5, once a trace.
+  280 ms and its line 200 ms; the held map's first traced ink about 1.5 s where it was 0.5, once a trace - made in idle
+  time since AUDIT RELEASE R4-7, below.
+- **AUDIT RELEASE R4-7 - THE HELD MAP'S LINES MADE IN IDLE TIME** (`01-Overview/audits/Audit-Release-R4.md` R4-7: the
+  map's first open held the page 2.1-3.3 s on a loaded machine, some 1 s unloaded - the continent's walk, Cyrodiil's
+  line, the linking). The three are steps now, one code path walked whole or a budget at a time: the walk a picture
+  square of mixed centres a step (`tamrielLines.js` lawLines `steps`), Cyrodiil's line a row of the mask's cells and
+  ZONE_LINE_STEP (4,096) candidate squares a step (`cyrodiilZone.js` zoneLineSteps), the linking LINK_STEP (2,048) pieces
+  a step (`linkSteps`), a chain's thinning and a province's label a step each (`tamrielInk.js:"export function* tracedSteps(trace) {"`).
+  When a trace lands on the page (`tamrielLand.js` onTamrielTrace), `startTracedJob` walks them TRACED_SLICE_STEPS (24)
+  steps a slice of `requestIdleCallback`, into the one keep `tracedChains` reads (a trace, its fit, its land's version and
+  the zone's mask) - so the map's first open takes them made, the same object; opened before the job ends, it walks the
+  rest whole, as before. A trace that moves on stops its job. No idle callbacks (node, the workers), no job. The chains
+  are byte for byte the whole walk's (pinned). **Not moved (a follow-up, named): the law's own first build**
+  (`landLaw`, 0.15-0.29 s warm, about a second cold on a loaded machine) still lands in the task that first asks a
+  province - the trace's landing; R4-7's third proposal, the law built a step at a time from the landing, is the next
+  piece.
 
 Recorded:
 
@@ -773,7 +794,9 @@ Recorded:
   rounded corner, five map pixels east), `test/tesa2_arena.test.js` (8 inland places a few pixels off their point, on
   their own land), `test/world/breathtaker.test.js` (CYRODIIL-SHORES folded in), `test/world/audittesa2r_roads.test.js`
   (GROUND_ROLL_VERSION 4's fingerprint).
-- **Mutants:** `tools/mutants/smoothland.json` (43: 38 dead, 5 equivalent as recorded - the saddle's pairing under the
+- **Mutants:** `tools/mutants/smoothland.json` (50: 45 dead - R4-7's seven among them, the job unheard, a slice the whole,
+  the keep dropped, the walk's and the linking's steps lost, a moved trace walked on, the landing unheard - and 5
+  equivalent as recorded - the saddle's pairing under the
   hold, the near mask's and the walk's margins, the moored cell's centre past a straightened leg). Re-aimed by content, all
   judged again and dead: `audittesa2g.json`'s G4 ease,
   `tamrielrelief.json`'s the-coast-not-eased, `audittesa2p.json`'s P7-lakes-sailed (equivalent, as recorded),

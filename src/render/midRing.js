@@ -29,6 +29,7 @@
 
 import { TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
 import { MID_RADIUS, MID_SUB, midRingSide, midRingNormals } from '../world/terrain/midRingGrid.js';
+import { capShare, whiten } from '../world/peaks/snowcap.js';   // PEAKS1: the summits' snow
 
 /** ?midring=off - the middle ring's kill door (the far ring stands as before), read once as the ring is made. */
 export function midRingDisabled(search = globalThis.location?.search) {
@@ -57,12 +58,14 @@ export function runHorizonSteps(it) {
  * the sea's floor (`seaY`), and `coarse` - the far ring's surface under the vertex (`ringAt(px, py)` a pixel centre's
  * height on that ring, through its own triangles), the ground its rim eases onto. Whole (midRingVertices), or a step
  * of MID_ROWS_A_STEP rows at a time (midRingVertexSteps: the frame's share of a rebuild).
- * @param {{ heights: Float32Array, baseX: number, baseY: number, radius?: number, sub?: number, tintAt: (px: number, py: number) => ArrayLike<number>, seaY: number, ringAt?: ?((px: number, py: number) => number), wet?: ?Uint8Array }} o
+ * PEAKS1: `snowAt(px, py)` a pixel centre's cap line (m above the sea - render/farRing.js ringSnowAt), bilinear between the
+ * centres as the tints are; a vertex over it whitened by its height and its normal (world/peaks/snowcap.js capShare).
+ * @param {{ heights: Float32Array, baseX: number, baseY: number, radius?: number, sub?: number, tintAt: (px: number, py: number) => ArrayLike<number>, seaY: number, ringAt?: ?((px: number, py: number) => number), wet?: ?Uint8Array, snowAt?: ?((px: number, py: number) => number) }} o
  */
 export const midRingVertices = (o) => runHorizonSteps(midRingVertexSteps(o));
 
 /** midRingVertices a step of rows at a time - its answer the generator's own. @param {Parameters<typeof midRingVertices>[0]} o */
-export function* midRingVertexSteps({ heights, baseX, baseY, radius = MID_RADIUS, sub = MID_SUB, tintAt, seaY, ringAt = null, wet = null }) {
+export function* midRingVertexSteps({ heights, baseX, baseY, radius = MID_RADIUS, sub = MID_SUB, tintAt, seaY, ringAt = null, wet = null, snowAt = null }) {
   const side = midRingSide(radius, sub), n = 2 * radius + 1, cell = TERRAIN_SIZE / sub;
   const positions = new Float32Array(side * side * 3);
   const coarse = new Float32Array(side * side);   // the far ring's surface under each vertex (its ease's ground)
@@ -72,14 +75,16 @@ export function* midRingVertexSteps({ heights, baseX, baseY, radius = MID_RADIUS
   const colors = new Uint8Array(side * side * 3);
   const sea = new Uint8Array(side * side);
   // the pixel centres' tints, one row of padding round the footprint (a vertex at its rim reads past it)
-  const tw = n + 2, tints = new Uint8Array(tw * tw * 3);
+  const tw = n + 2, tints = new Uint8Array(tw * tw * 3), caps = snowAt ? new Float32Array(tw * tw) : null;
   for (let tj = 0; tj < tw; tj++) {
     if (tj) yield;
     for (let ti = 0; ti < tw; ti++) {
       const t = tintAt(baseX - radius - 1 + ti, baseY + radius + 1 - tj), o = (tj * tw + ti) * 3;
       tints[o] = t[0]; tints[o + 1] = t[1]; tints[o + 2] = t[2];
+      if (caps) caps[tj * tw + ti] = snowAt(baseX - radius - 1 + ti, baseY + radius + 1 - tj);   // PEAKS1
     }
   }
+  const capAt = caps ? new Float32Array(side * side) : null;   // PEAKS1: each vertex's cap line, the centres' bilinear
   for (let gz = 0; gz < side; gz++) {
     if (gz && gz % MID_ROWS_A_STEP === 0) yield;
     // the pixel centres' lattice: centre k (0 the padding's) at gz = (k - 1) * sub + sub / 2
@@ -94,6 +99,7 @@ export function* midRingVertexSteps({ heights, baseX, baseY, radius = MID_RADIUS
       for (let k = 0; k < 3; k++) {
         colors[o + k] = Math.round((tints[a + k] * (1 - wx) + tints[b + k] * wx) * (1 - wz) + (tints[c + k] * (1 - wx) + tints[d + k] * wx) * wz);
       }
+      if (capAt) capAt[v] = (caps[a / 3] * (1 - wx) + caps[b / 3] * wx) * (1 - wz) + (caps[c / 3] * (1 - wx) + caps[d / 3] * wx) * wz;
       // the far ring's own triangles over the four centres (render/farRing.js writeRingCells: i0 i2 i3 and i0 i3 i1, its
       // rows running south - here u east and v south from the north-west centre)
       if (ringAt) {
@@ -108,6 +114,7 @@ export function* midRingVertexSteps({ heights, baseX, baseY, radius = MID_RADIUS
   for (let z0 = 0; z0 < side; z0 += MID_ROWS_A_STEP) {
     yield;
     midRingNormals(heights, side, sub, normals, z0, Math.min(side, z0 + MID_ROWS_A_STEP));
+    if (capAt) for (let v = z0 * side; v < Math.min(side, z0 + MID_ROWS_A_STEP) * side; v++) if (!sea[v]) whiten(colors, v * 3, capShare(heights[v] - seaY, normals[v * 3 + 1], capAt[v]));   // PEAKS1
   }
   return { positions, normals, colors, sea, coarse, side };
 }
