@@ -643,8 +643,8 @@
   {
     "name": "IC-GRAND-palace-unseen",
     "file": "src/world/imperialImpostor.js",
-    "old": "const PL = I.palace, pc = palacePillars(I), wc = palaceCorners(I).map(",
-    "new": "const PL = I.palace, pc = [], wc = [].map(",
+    "old": "  const PLod = imperialPalaceLod(I);",
+    "new": "  const PLod = { runs: [], prisms: [] };",
     "tests": [
       "test/world/icgrand_palace.test.js"
     ]
@@ -886,7 +886,7 @@
   {
     "name": "IC-FOOTPRINT-parts-unmade",
     "file": "src/world/imperialPrebuild.js",
-    "old": "...IMPERIAL_SLICE_PARTS[s].map((id) => /** @type {{ kind: 'model', id: number }} */ ({ kind: 'model', id })), ",
+    "old": "...IMPERIAL_SLICE_PARTS[s].map((id) => /** @type {{ kind: 'model', id: number }} */ ({ kind: 'model', id: near ? id : imperialFarPartId(id) })), ",
     "new": "",
     "tests": [
       "test/world/icgrand_prebuild.test.js"
@@ -913,11 +913,67 @@
   {
     "name": "IC-FOOTPRINT-part-square-unread",
     "file": "src/world/capitalModels.js",
-    "old": "return part ? modelPart(imperialPartBuild(part.base, imperialSliceRect(part.s)), imperialSliceRect(part.s)) : null;",
-    "new": "return part ? imperialPartBuild(part.base, imperialSliceRect(part.s)) : null;",
+    "old": "return modelPart('of' in part ? lodWhole(part.base) : imperialPartBuild(part.base, imperialSliceRect(part.s)), imperialSliceRect(part.s));",
+    "new": "return 'of' in part ? lodWhole(part.base) : imperialPartBuild(part.base, imperialSliceRect(part.s));",
     "tests": [
       "test/world/icgrand_prebuild.test.js",
       "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "IC-TOWER-LOD-far-view-whole",
+    "file": "src/world/imperialBlocks.js",
+    "old": "const models = [...parts.map(imperialFarPartId), ...(carrier",
+    "new": "const models = [...parts, ...(carrier",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "IC-TOWER-LOD-worker-far-whole",
+    "file": "src/world/imperialPrebuild.js",
+    "old": "({ kind: 'model', id: near ? id : imperialFarPartId(id) })",
+    "new": "({ kind: 'model', id })",
+    "tests": [
+      "test/world/icgrand_lod.test.js",
+      "test/world/icgrand_prebuild.test.js"
+    ]
+  },
+  {
+    "name": "IC-TOWER-LOD-coarse-other-sides",
+    "file": "src/world/capitalImperial.js",
+    "old": "    taper(mb, LOD_ART[t.mat], t.n, t.r0, t.y0 === 0 ? -3 : t.y0, t.r1, t.y1, { vRepeat: 8 });",
+    "new": "    taper(mb, LOD_ART[t.mat], t.n + 1, t.r0, t.y0 === 0 ? -3 : t.y0, t.r1, t.y1, { vRepeat: 8 });",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "IC-TOWER-LOD-silhouette-off-its-list",
+    "file": "src/world/imperialImpostor.js",
+    "old": "  for (const t of imperialTowerLod(I.tower)) prism(0, 0, t.n, t.r0,",
+    "new": "  for (const t of imperialTowerLod(I.tower)) prism(0, 0, t.n + 1, t.r0,",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "IC-TOWER-LOD-palace-runs-thick",
+    "file": "src/world/capitalImperial.js",
+    "old": "    obox(mb, LOD_ART[w.mat], P, -w.t / 2, w.t / 2, -len / 2, len / 2,",
+    "new": "    obox(mb, LOD_ART[w.mat], P, -w.t, w.t, -len / 2, len / 2,",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "IC-TOWER-LOD-coarse-unregistered",
+    "file": "src/world/capitalModels.js",
+    "old": "for (const part of [...IMPERIAL_PARTS, ...IMPERIAL_LOD_PARTS]) registerCustomModel(",
+    "new": "for (const part of IMPERIAL_PARTS) registerCustomModel(",
+    "tests": [
+      "test/world/icgrand_lod.test.js",
+      "test/world/icgrand_prebuild.test.js"
     ]
   }
 ]

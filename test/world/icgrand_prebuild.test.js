@@ -13,7 +13,7 @@ import { createPrebuildWorkerState, DONE_KEEP } from '../../src/world/imperialPr
 import { createImperialPrebuild } from '../../src/world/imperialPrebuildClient.js';
 import { createCapitalPrebuild, prebuildWanted, PREBUILD_REACH } from '../../src/scenes/capitalPrebuild.js';
 import { imperialBlockJson, imperialModelBuild, imperialOwnName, imperialFarName, imperialFabricModelId, imperialSkylineId, NEAR_RING } from '../../src/world/imperialBlocks.js';
-import { IMPERIAL_SPAN, IMPERIAL_SLICE_PARTS, IMPERIAL_ARENA_CODE, imperialSlicePlan, imperialCodeCell, polar } from '../../src/world/imperialCity.js';
+import { IMPERIAL_SPAN, IMPERIAL_SLICE_PARTS, IMPERIAL_ARENA_CODE, imperialSlicePlan, imperialCodeCell, polar, imperialFarPartId } from '../../src/world/imperialCity.js';
 import { installCapitals, _resetCapitals, capitalFootprint, imperialPartModel } from '../../src/world/capitalModels.js';
 import { customModelFor } from '../../src/world/customModels.js';
 import { getDFBlockReplacementData, getNewDFBlockIndex, _resetWorldDataReplacement } from '../../src/formats/worldData/worldDataReplacement.js';
@@ -50,7 +50,7 @@ test('IC-GRAND OFF THE PAGE\'S THREAD - a slice\'s pieces in the order its build
   const pp = IMPERIAL_SLICE_PARTS[PALACE], pn = sliceWork(PALACE, true), pf = sliceWork(PALACE, false), firstModel = (l) => l.findIndex((w) => w.kind === 'model');
   assert.ok(pp.length >= 1, 'the Palace District\'s landmarks');
   assert.deepEqual(pn.slice(firstModel(pn), firstModel(pn) + pp.length).map((w) => w.id), pp, 'near: the parts first of its models');
-  assert.deepEqual(pf.slice(firstModel(pf), firstModel(pf) + pp.length).map((w) => w.id), pp, 'far: the parts first of its models');
+  assert.deepEqual(pf.slice(firstModel(pf), firstModel(pf) + pp.length).map((w) => w.id), pp.map(imperialFarPartId), 'far: the parts first of its models (IC-TOWER-LOD: the coarse ones)');
   assert.deepEqual(near, [...own.map(([r, c]) => ({ kind: 'block', name: imperialOwnName(r, c) })), ...parts, ...own.map(([r, c]) => ({ kind: 'model', id: imperialFabricModelId(r, c) }))]);
   const farCells = [];
   for (let i = 0; i < 64; i++) { const pr = 7 - Math.floor(i / 8), pc = i % 8; if (!['L', 'O', IMPERIAL_ARENA_CODE].includes(plan[pr][pc])) farCells.push([sy * 8 + pr, sx * 8 + pc]); }

@@ -13,7 +13,7 @@
 // over the parts it builds on its own model door) on the blocks it makes: a taken block is the page's own to the byte.
 //
 // Pure but for the client's own registry (setImperialPrebuild / imperialPrebuilt) - the worker imports the work's half.
-import { IMPERIAL_SPAN, IMPERIAL_ARENA_CODE, IMPERIAL_SLICE_PARTS, imperialSlicePlan, imperialCodeCell } from './imperialCity.js';
+import { IMPERIAL_SPAN, IMPERIAL_ARENA_CODE, IMPERIAL_SLICE_PARTS, imperialSlicePlan, imperialCodeCell, imperialFarPartId } from './imperialCity.js';
 import { imperialOwnName, imperialFarName, imperialFabricModelId, imperialSkylineId, imperialBlockJson, imperialModelBuild, isCarrier } from './imperialBlocks.js';
 import { CAPITALS, portBlockJson, miscModelAt, startMarkerAt, inCapitalRim, CAPITAL_NO_GROUND, BLOCK_M } from './tamrielCapitals.js';
 
@@ -23,7 +23,8 @@ const B = BLOCK_M;
  * A SLICE'S WORK, in the order its pixel's build asks it (its blocks in its location's order - rows from the south - then
  * its models): near, each own cell's block and its fabric's model; far, every cell's far block but the lake's, the open
  * shore's and the arena's (world/imperialBlocks.js imperialViewName's) and, on its carrier, its skyline.
- * IC-FOOTPRINT-OFF-THREAD: either way the landmarks' parts its carrier stands, first of its models.
+ * IC-FOOTPRINT-OFF-THREAD: either way the landmarks' parts its carrier stands, first of its models (IC-TOWER-LOD: a far
+ * view's the tower's and the palace's coarse ones).
  * `{ kind: 'block', name }` or `{ kind: 'model', id }`.
  * @param {number} s @param {boolean} near
  * @returns {Array<{ kind: 'block', name: string } | { kind: 'model', id: number }>}
@@ -41,7 +42,7 @@ export function sliceWork(s, near) {
       if (own && isCarrier(r, c)) models.push({ kind: 'model', id: imperialSkylineId(s) });
     }
   }
-  return [...blocks, ...IMPERIAL_SLICE_PARTS[s].map((id) => /** @type {{ kind: 'model', id: number }} */ ({ kind: 'model', id })), ...models];
+  return [...blocks, ...IMPERIAL_SLICE_PARTS[s].map((id) => /** @type {{ kind: 'model', id: number }} */ ({ kind: 'model', id: near ? id : imperialFarPartId(id) })), ...models];   // IC-TOWER-LOD: a far view's coarse
 }
 
 /** The world-data door's writers and the city's own rim and markers - world/capitalModels.js installImperialFamilies's;

@@ -322,3 +322,62 @@ test('IC-GRAND THE CITY ON THE HORIZON - the sweep hands the far ring one landma
   r._ringY = { positions: Float32Array.from({ length: 27 }, (_, i) => (i % 3 === 1 ? 100 * Math.floor(i / 9) + Math.floor((i % 9) / 3) : 0)), side: 3, baseX: 10, baseY: 20, radius: 1 };
   assert.deepEqual([r.groundAt(11, 19), r.groundAt(9, 21), r.groundAt(10, 20), r.groundAt(12, 20)], [2, 200, 101, null]);
 });
+
+// IC-TOWER-LOD (2026-10-26, the owner walking the city: "Weird pop in issues in the city when moving") - THE TOWER AND THE
+// PALACE COARSE, THE HORIZON'S OWN: the far ring's silhouette and a far view's model are made of one list each
+// (world/imperialCity.js imperialTowerLod, imperialPalaceLod), so the stream taking the tower over from the horizon at its
+// edge changes nothing of its shape; a near view stands the whole.
+test('IC-TOWER-LOD THE TOWER AND THE PALACE COARSE, THE HORIZON\'S OWN - a far view stands the tower\'s and the palace\'s coarse parts (imperialFarPartId; the worker makes those), a near view the whole\'s; the coarse models are imperialTowerLod\'s prisms and imperialPalaceLod\'s runs, every corner of them a corner of the far ring\'s silhouette and of the coarse model alike; a tenth of the whole\'s triangles or fewer (mutants: the far view whole; the worker\'s far parts whole; the coarse tower of other sides; the silhouette off its list; the palace\'s runs thick)', async () => {
+  const { IMPERIAL_LOD_PARTS, IMPERIAL_PARTS, IMPERIAL_SLICE_PARTS, imperialFarPartId, imperialTowerLod, imperialPalaceLod, IMPERIAL_MODELS } = await import('../../src/world/imperialCity.js');
+  const { buildImperialTowerLod, buildImperialPalaceLod, buildImperialTower, buildImperialPalace } = await import('../../src/world/capitalImperial.js');
+  const { sliceWork, prebuildDeps } = await import('../../src/world/imperialPrebuild.js');
+  const { imperialBlockJson: blockJson, imperialFarName, imperialOwnName, imperialAnchorCarrier } = await import('../../src/world/imperialBlocks.js');
+  // the ids: a coarse part for each of the tower's and the palace's parts, past every part's, none another's
+  const whole = new Set(IMPERIAL_PARTS.map((p) => p.id));
+  assert.ok(IMPERIAL_LOD_PARTS.length >= 2);
+  for (const p of IMPERIAL_LOD_PARTS) {
+    assert.ok(!whole.has(p.id) && p.id >= 940000 && p.id < 960000, `${p.id} a run of its own`);
+    assert.equal(imperialFarPartId(p.of), p.id);
+    assert.ok([IMPERIAL_MODELS.whiteGoldTower, IMPERIAL_MODELS.imperialPalace].includes(p.base));
+  }
+  const other = IMPERIAL_PARTS.find((p) => p.base === IMPERIAL_MODELS.cityWall);
+  assert.equal(imperialFarPartId(other.id), other.id, 'any other landmark\'s part as it is');
+  // the centre's carrier: far, the coarse tower and palace; near, the whole's
+  const centre = (N * N - 1) / 2, [cr, cc] = imperialAnchorCarrier(), deps = prebuildDeps();
+  const idsOf = (json) => json.RmbBlock.Misc3dObjectRecords.map((m) => m.ModelIdNum);
+  const far = idsOf(blockJson(imperialFarName(cr, cc), deps)), near = idsOf(blockJson(imperialOwnName(cr, cc), deps));
+  const lodHere = IMPERIAL_LOD_PARTS.filter((p) => p.s === centre);
+  assert.ok(lodHere.length >= 1, 'the tower\'s part in the centre');
+  for (const p of lodHere) { assert.ok(far.includes(p.id) && !far.includes(p.of), `far: ${p.id} for ${p.of}`); assert.ok(near.includes(p.of) && !near.includes(p.id), `near: the whole's ${p.of}`); }
+  assert.deepEqual(sliceWork(centre, false).filter((w) => w.kind === 'model' && lodHere.some((p) => p.id === w.id)).length, lodHere.length, 'the worker makes the far view\'s coarse parts');
+  // on the model door: each coarse part its slice's square of the coarse whole, a part of the whole's triangles
+  const { installCapitals, _resetCapitals } = await import('../../src/world/capitalModels.js');
+  const { customModelFor } = await import('../../src/world/customModels.js');
+  _resetCapitals();
+  installCapitals({ addTextures: () => 0 });
+  for (const p of lodHere) {
+    const m = customModelFor(p.id), w = customModelFor(p.of);
+    assert.ok(m && m.indices.length > 0 && m.indices.length * 5 < w.indices.length, `${p.id} on the door, coarse (${m?.indices.length / 3} of ${w.indices.length / 3})`);
+  }
+  _resetCapitals();
+  // one list: every corner of the coarse tower's prisms a vertex of the silhouette's centre (its pixel's frame) and of the
+  // coarse model (its own frame: x east, z south)
+  const has = (pos, [x, y, z]) => { for (let i = 0; i < pos.length; i += 3) if (Math.abs(pos[i] - x) < 1e-2 && Math.abs(pos[i + 1] - y) < 1e-2 && Math.abs(pos[i + 2] - z) < 1e-2) return true; return false; };
+  const sil = imperialLandmarkMesh(centre).positions, ox = (centre % N - N / 2) * 8 * 102.4, oz = (Math.floor(centre / N) - N / 2 + 1) * 8 * 102.4;
+  const tl = buildImperialTowerLod().positions;
+  for (const t of imperialTowerLod()) for (let i = 0; i < t.n; i++) for (const [r, y] of [[t.r0, t.y0], [t.r1, t.y1]]) {
+    if (r === 0) continue;
+    const a = (i / t.n) * Math.PI * 2, x = Math.cos(a) * r, z = Math.sin(a) * r;
+    assert.ok(has(sil, [x - ox, y, oz - z]), `the silhouette's tower at ${x.toFixed(1)},${y},${z.toFixed(1)}`);
+    assert.ok(has(tl, [x, y === 0 ? -3 : y, z]), `the coarse tower at ${x.toFixed(1)},${y},${z.toFixed(1)}`);
+  }
+  const pl = buildImperialPalaceLod().positions;
+  for (const w of imperialPalaceLod().runs) {
+    const len = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]), n = [-(w.b[1] - w.a[1]) / len, (w.b[0] - w.a[0]) / len];
+    for (const e of [w.a, w.b]) for (const f of [1, -1]) assert.ok(has(pl, [e[0] + (f * n[0] * w.t) / 2, w.h, e[1] + (f * n[1] * w.t) / 2]), `the coarse palace's ${w.mat} run's corner`);
+  }
+  // a tenth of the whole's triangles or fewer
+  const tris = (m) => m.indices.length / 3;
+  assert.ok(tris(buildImperialTowerLod()) * 10 <= tris(buildImperialTower()), `the tower ${tris(buildImperialTowerLod())} of ${tris(buildImperialTower())}`);
+  assert.ok(tris(buildImperialPalaceLod()) * 10 <= tris(buildImperialPalace()), `the palace ${tris(buildImperialPalaceLod())} of ${tris(buildImperialPalace())}`);
+});
