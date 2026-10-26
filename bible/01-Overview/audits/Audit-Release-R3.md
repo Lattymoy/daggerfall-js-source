@@ -101,6 +101,10 @@ and the gates caught, each now a rule for the redo:
   relay's bundle hash walks the imports in it.
 - A version pin written as a regex literal (`assert.match(ACCOUNT_VERSION, /^acct193$/ ...)`: the prof9, prof10 and
   prof12 service pins) - the tool's V2 rule reads that spelling now.
+- `test/tooling/citeanchor.test.js` (CA1) reads every `wire.js` anchor as ambiguous while the index still holds the
+  file's three conflict stages: run it after `git add`, never before.
+- `npm run build` links every module the page loads - the check, beside `npm run types`, that a name one side removed is
+  not imported by the other's (R3-7's kind). Run it on the merged tree before the merge commit.
 - A pin that named main's newest relay as a literal (`test/net/audittesa2z_worldwide.test.js`, "the row before it", 259)
   fails at every merge that passes a new main row: it reads `WORLD_WIDE_RELAY_MIN - 1` now (PIN MOVED), so the redo
   finds nothing to move. The mutation run says so first - its baseline refuses a record whose tests fail unmutated.
@@ -130,7 +134,9 @@ before the merge.
   row - the trial's world266 moved to world268 past main's own world266 AUDIT KETCH II and world267 KETCH-WORDS, its
   hash the pin's). Beyond the conflicts: the gates' numbers 266 -> 268 (V4) and AUDIT RELEASE R4's timer census moved
   onto main's HIBERNATE (the staff panel's two timers gone: twelve sites, PIN MOVED; its two mutants re-aimed by
-  content).
+  content). On the merged tree: lint, types and `npm run build` exit 0; the bible's gates, the ratchets, hostceiling and
+  relayversion green; the merge's own 213 test files in six chunks green but `staffpanel5bench` (a timing bench at a load
+  of 20 on four cores - green alone).
 - **Account acct194** (acct189 on the branch), past main's acct189 DAEDRIC-SMELT + DEEP-OPEN to acct193 COPY-LIFT.
 - **Migrations 0176-0179** (`seat_gifts`, `guild_castles`, `domain_witness`, `world_books`), past main's 0174 and 0175.
   Checked: neither of main's touches the seven tables 0179 rebuilds (0174 creates `broker_sales`; 0175 has no DDL), so
