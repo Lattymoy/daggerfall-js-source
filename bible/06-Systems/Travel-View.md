@@ -2829,6 +2829,98 @@ from the Bay's edge.
 - Pins `test/systems/travel/voyager21_beyond.test.js` (5); mutants `tools/mutants/voyager.json` (VOYAGER2.1's). PIN
   MOVED: none; TV-BEYOND's road-byte record re-aimed by content (`tools/mutants/fb1009_beyond.json`).
 
+## ROAD-BEYOND - a journey past the Bay planned by its roads, in a bounded spend (2026-10-26, the owner)
+
+The owner: *"road travel in the overworld needs to work properly outside of tamriel for overworld travel. I dont think it
+works currently"* - everywhere in Tamriel past the Iliac Bay's table, and the Bay still as it was.
+
+**Measured first**, through the host's own wiring: `routeGround` built as `scenes/world.js` tvRouteGround builds it (the
+climate, the composed ground's heights, WATER_BYTE, its `beyond` from tvWater), Hazelnut's arrays in ROADS mode, the
+places past the Bay where `world/arenaPlaces.js` stands them, and the roads past the Bay laid region by region as
+`scenes/tamrielRoadsHost.js` lays them (all 48 regions, the regions' worker state driven in-process). Two faults, and
+their cost:
+
+- **THE BOX STOPPED AT AN END PAST THE TABLE.** `planRoute`'s bounds (TV-BEYOND) are the map and the two ends, so past the
+  table no rung reached beyond the farther end's own row and column. The Imperial City's ground is closed by Lake Rumare
+  to its north, east and west, and its way out runs south of its own row: the Imperial City to Bruma, to Chorrol, to
+  Cheydinhal and to Mournhold were **no way** (a breadth-first walk of the same ground joins them).
+- **THE LADDER FLOODED THE FIELD.** Its A* prices the heuristic at a road's step (1) and the field at 3.5, so a long plan
+  past the Bay expanded every field near its line - capped at 200,000 cells a rung (the whole map's rung never is on the
+  Bay; past it no rung is the whole map) and four rungs over. Plans of 300 to 1,400 pixels took **1 to 24 seconds**, and
+  Kvatch to Leyawiin, Skingrad to Riften were **no way** after 20 and 24 seconds - their routes past the spend.
+
+**What holds now** (`systems/travel/travelRoute.js`; a plan with both ends on the table is the Bay's, unchanged):
+
+- **The roads first** (`searchByRoad`). A plan with an end past the table, handed the roads (ROADS mode, the layer
+  installed - VOYAGER2.1's `beyond`) and walking the land (no boat, or one to hand with a goal ashore), searches the roads
+  and tracks alone - the Bay's arrays on the table, the layer past it, stepKind's law and TV2's prices (a road 1, a track
+  1.6) - with the open ground (3.5) walked only about its two ends: BY_ROAD_REACH (24 pixels), or out past the nearest
+  road or track to an end in the wilds (within BY_ROAD_SEEK, 96). Its cells are kept by pixel (no table's edge), a step
+  away from the ends leaves by a road's or a track's edge (no other neighbour is asked), it leans on its goal by
+  BY_ROAD_GREED (1.25: a way at most a quarter dearer than the roads' cheapest), and it gives up after
+  BY_ROAD_MAX_EXPANSIONS cells (100,000). **TV2's law kept**: a way by the roads dearer than the straight walk across
+  the field (`ROUTE_COST.open` a step) is asked of the ladder too, and the cheaper kept.
+- **The ladder past the table** (no way by the roads, FREE, a crossing): its box reaches `margin` past an end beyond the
+  table (`reachOf` - the Imperial City walks out south of its lake), no rung wider than BEYOND_MARGIN (240 pixels: the
+  whole map's rung there allotted a box of millions of cells for a spend that walks a hundred thousand), its whole spend
+  BEYOND_MAX_EXPANSIONS cells (100,000) over every rung, and a plan with no road, track or boat in it leans on the
+  field's own price (`hCost` 3.5: the straight walk, a few cells a pixel). A plan by the roads that neither found walks
+  across country (the FREE plan's own) - never "no way" for a field the spend did not reach. So a plan past the Bay
+  expands at most 100,000 + 2 x 100,000 cells, an op count the pins hold (`tally`), never a clock.
+- `routeGround`'s keep of the ground past the table is keyed by number (`beyondKey`) and holds 2^18 answers.
+
+**The journeys** (the merged head's ground and places, the layer as the 48 regions lay it; one machine, four cores
+shared with other builds - load average about 25, so every time here is several times an idle machine's; under it
+AUDIT STARTS V4/V7's timing pin (a voyage planned in under a second and a half) fails before this change and after it -
+its slowest voyage 3.2 s on the head's planner, 2.4 s on this one; START2's three seconds passes run alone):
+
+| from | to | before: way, road share, time | after: way, road share, cells, time |
+| --- | --- | --- | --- |
+| Daggerfall | Wayrest (the Bay) | 767 px, 100%, 1.5 s | the same plan, 1.3 s |
+| Daggerfall | Elinhir (the Bay to Hammerfell past it) | 1,442 px, 99%, 3.3 s | 1,943 px, 100%, 55,600 cells, 1.1 s |
+| Sentinel | Kvatch (the Bay to Cyrodiil) | 1,707 px, 98%, 19.6 s | 1,871 px, 100%, 38,600 cells, 0.9 s |
+| Imperial City | Bruma | **no way**, 1.0 s | 511 px, 97%, 4,800 cells, 0.07 s |
+| Imperial City | Kvatch | 441 px, 97%, 1.6 s | 441 px, 97%, 1,900 cells, 0.13 s |
+| Kvatch | Leyawiin | **no way**, 20.3 s | 1,225 px, 100%, 25,700 cells, 0.64 s |
+| Bruma | Leyawiin | 1,058 px, 100%, 17.0 s | 1,067 px, 100%, 1,700 cells, 0.02 s |
+| Whiterun | Riften (Skyrim) | 665 px, 97%, 8.4 s | 757 px, 100%, 18,400 cells, 0.40 s |
+| Solitude | Whiterun | 474 px, 93%, 3.4 s | 580 px, 100%, 4,900 cells, 0.06 s |
+| Mournhold | Tear (Morrowind) | 446 px, 95%, 4.7 s | 498 px, 98%, 8,600 cells, 0.14 s |
+| Ald'ruhn | Vivec (Vvardenfell) | 229 px, 90%, 1.0 s | 232 px, 99%, 1,600 cells, 0.03 s |
+| Dragonstar | Elinhir (Hammerfell) | 457 px, 99%, 4.7 s | 633 px, 100%, 3,800 cells, 0.07 s |
+| Rimmen | Senchal (Elsweyr) | 630 px, 97%, 4.5 s | 711 px, 100%, 12,700 cells, 0.30 s |
+| Stormhold | Gideon (Black Marsh) | 461 px, 96%, 5.8 s | 503 px, 99%, 6,200 cells, 0.14 s |
+| Silvenar | Elden Root (Valenwood) | 491 px, 99%, 5.9 s | 527 px, 98%, 10,900 cells, 0.36 s |
+| Alinor | Cloudrest (Summerset) | 487 px, 94%, 8.7 s | 578 px, 98%, 9,500 cells, 0.43 s |
+| Skingrad | Riften (Cyrodiil to Skyrim) | **no way**, 24.4 s | 1,110 px, 100%, 24,500 cells, 0.68 s |
+| Imperial City | Mournhold (Cyrodiil to Morrowind) | **no way**, 0.16 s | 1,550 px, 98%, 45,900 cells, 1.6 s |
+| Elinhir | Kvatch (Hammerfell to Cyrodiil) | 630 px, 97%, 9.4 s | 725 px, 100%, 11,100 cells, 0.34 s |
+| the wild (2200, 800) | Imperial City | 205 px, 87%, 1.0 s | 207 px, 88%, 4,500 cells, 0.35 s |
+| the wild (1700, 400) | Chorrol | 233 px, 97%, 1.3 s | 293 px, 100%, 4,800 cells, 0.29 s |
+| Mournhold | Ebonheart (Vvardenfell, over the Inner Sea) | no way, 4.4 s | no way, 200,000 cells, 3.7 s |
+
+**The walk**: a plan's legs (`routeLegs`) walked by the real Travel Options (`createTravelOptions`, its autopilot, a body
+flown along each frame's drive - `audit_owrevisited_walk.test.js`'s rig): the Imperial City to Bruma (109 legs) and
+Dragonstar to Elinhir (87) arrived at their places, never more than a pixel off the planned route's pixels. Nothing in
+the walk asks the Bay's table.
+
+- **The four hosts**: none grows - `scenes/world.js`'s journeys ask `planRoute` with `...tvRouteGround()` as before;
+  `scenes/exterior.js`, `scenes/worldModes.js` and `scenes/dungeonContext.js` plan no Overworld route. Nothing crosses
+  the wire: a route is each player's own plan (the party walks its leader's - TV8 - as before).
+- **The departure, named**: DFU has no Overworld and no planner (Travel Options' follow walks Hazelnut's bytes); TV2 is
+  our own. Past the Bay a journey by the roads is the roads' way within a quarter of their cheapest, where TV2's ladder
+  is the cheapest of all - so a gap in the roads far from both ends is walked round by the roads, not stepped across the
+  field: Dragonstar to Elinhir is 633 pixels by the road (cost 720) where the old plan stepped five pixels across a gap
+  in the road there (457, cost 543), Daggerfall to Elinhir 2,284 where it was 1,781. Within the same law's limit (the
+  roads' way dearer than the straight walk across the field) the ladder is asked and the cheaper kept.
+- **OPEN**: a refusal past the Bay (an island with no boat to hand: Mournhold to Ebonheart) spends the whole 300,000
+  cells before it says so, a few seconds on a loaded machine - a land's pieces past the Bay (`apart`'s, the Bay's alone
+  today) would say it at once. And the roads' search does not bridge a gap in the roads past the Bay; the regions'
+  roads that leave one (Hammerfell's at (1154, 233)) are the roads' build's to join (`03-World/Roads.md`).
+- Pins `test/systems/travel/road_beyond.test.js` (10, the last with ARENA2: the Imperial City to Bruma and Bruma to
+  Leyawiin on the freeware's own ground); mutants `tools/mutants/road_beyond.json` (13, all dead). PIN MOVED: none;
+  no record displaced (`mutantdrift`).
+
 ## MID-RING and FAR-FIELD - the horizon in layers, out to the mountains 300 km off (2026-10-26, the owner)
 
 The owner: "we need to find a way to expand the overworld view distance without killing performance. Currently tiles
