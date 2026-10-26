@@ -11,7 +11,8 @@ import { join } from 'node:path';
 import { PROVINCE_LAIR_REACH, PROVINCE_LAIR_COUNT, PROVINCE_LAIR_ROLLS, sliceQuestName, questView } from '../../../src/scenes/quest/questProvinceSites.js';
 import { REGION_NAMES } from '../../../src/formats/mapsTables.js';
 import { longitudeLatitudeToMapPixel } from '../../../src/formats/mapsFile.js';
-import { SITE_TYPES } from '../../../src/systems/quest/place.js';
+import { SITE_TYPES, Place, siteIndexGives } from '../../../src/systems/quest/place.js';
+import { Symbol as QuestSymbol } from '../../../src/systems/quest/symbol.js';
 import { QUEST_REACH_TUNING } from '../../../src/systems/quest/questReach.js';
 import { createProvinceWarm, WARM_PER_TICK } from '../../../src/scenes/quest/questProvinceWarm.js';
 
@@ -197,4 +198,124 @@ test('R2-5 with ARENA2: a Fighters Guild, a Mages Guild, a temple, a social give
     table.push(`| Fighters Guild | the Bay (Daggerfall) | M0B00Y07 | ${place.symbol.name}: ${place.siteDetails.locationName} (${place.siteDetails.regionName}) | yes | MAPS.BSA | - | - |`);
   }
   console.log(['| giver | province | quest | site | resolves | marker | placed on arrival | parse |', '|---|---|---|---|---|---|---|---|', ...table].join('\n'));
+});
+
+// ─── WITH ARENA2: THE IMPERIAL CITY'S SLICES' SITES INDEX (R2-5f), COLD AT THE CENTRE ─────────────────────
+
+/** Quests-Places' town rows (p1 0): random, house, shop, each building type, the guild halls by faction. */
+const TOWN_ROWS = [[-1, 0], [-1, 1], [-1, 2], ...Array.from({ length: 24 }, (_, t) => (t === 11 ? [[11, 0], [11, 40], [11, 41]] : [[t, 0]])).flat()];
+
+test('R2-5f with ARENA2: the Imperial City\'s slices\' sites index - cold at the centre, a Mages Guild\'s (N0B20Y02) and a commoner\'s (A0C00Y06) local sites the city gives stand one slice a search, the one the index picks (the stands equal the slices picked: 2 and 3), the draw the walk\'s over every slice nearest first, which stands far more; a temple\'s remote house2 in the Temple District stands only slices whose index holds one, the same draw as darts that stand every slice they land on; none of the city\'s own cells made for a walk; every slice a site may stand in read off its clone before it stands, the clone the slice the build then stands and its index the search\'s own answer there for each town row of Quests-Places (mutants: the city\'s admit; the dart\'s refusal; the index and the count not handed on; the seams - the index, the refusal, the slice read; the slice read off its stood self, or stood; its Arena slot)', { skip: HAVE ? false : 'ARENA2_PATH not set (or a file missing) - the freeware end to end skipped', timeout: 900_000 }, async () => {
+  const { standWorldPastBay, questLayerAt } = await import('./r25World.mjs');
+  const { loadTables, questSource } = await import('../../qlSources.mjs');
+  const { imperialBlockOf } = await import('../../../src/world/imperialBlocks.js');
+  const { capitalSpanPixels, capitalPixel, CAPITALS } = await import('../../../src/world/tamrielCapitals.js');
+  const { isUnsitedSlice } = await import('../../../src/scenes/quest/questProvinceSites.js');
+  loadTables();
+  QUEST_REACH_TUNING.override = true;   // NEARBY-QUESTS, as the game's default has it
+  after(() => { QUEST_REACH_TUNING.override = null; });
+  const world = await standWorldPastBay(ARENA2);   // its own: no slice of the city stood, no index read
+  const pqp = world.places.provinceQuestPlaces;
+  // what the quest layer stands and makes: a slice's stands by whom (the city's search, or anything else), the city's own cells
+  let inCity = 0;
+  const cityStands = [], sliceStands = [], ownMade = [];
+  const blocks = Object.create(world.blocks, { getBlockByName: { value: (name) => { if (imperialBlockOf(name)) ownMade.push(name); return world.blocks.getBlockByName(name); } } });
+  const counted = { ...world, blocks, places: { ...world.places, provinceQuestPlaces: { ...pqp, standAt: (x, y) => {
+    if (sliceQuestName(x, y) != null) (inCity ? cityStands : sliceStands).push(`${x},${y}`);
+    return pqp.standAt(x, y);
+  } } } };
+  /** The quest layer's city search, its stands told apart: every step of the generator is the city's. */
+  const watchCity = (qw) => {
+    const raw = qw.capitalSlicesNear;
+    qw.capitalSlicesNear = (loc, admits) => {
+      const it = raw(loc, admits)[Symbol.iterator]();
+      const step = (fn) => { inCity++; try { return fn(); } finally { inCity--; } };
+      return { [Symbol.iterator]: () => ({ next: () => step(() => it.next()), return: (v) => step(() => it.return?.(v) ?? { done: true, value: v }) }) };
+    };
+  };
+  /** The walk as before R2-5f: every slice nearest first stood and searched, every dart's slice stood and walked. */
+  const unindexed = (qw) => { const raw = qw.capitalSlicesNear; qw.capitalSlicesNear = (loc) => raw(loc); qw.siteIndexRefuses = () => false; };
+  const quiet = (fn) => { const w = console.warn, l = console.log; console.warn = () => {}; console.log = () => {}; try { return fn(); } finally { console.warn = w; console.log = l; } };
+  const seeded = (seed) => () => { seed = (seed * 1103515245 + 12345) >>> 0; return seed / 4294967296; };
+  const sitesOf = (q) => [...q.resources.values()].filter((x) => x.isPlace).map((x) => `${x.symbol.name}=${x.siteDetails?.mapId}:${x.siteDetails?.buildingKey}`);
+  const parse = async (at, location, name, factionID, prep) => {
+    const L = await questLayerAt(counted, { pixel: { x: at[0], y: at[1] }, location });
+    prep(L.questWorld);
+    L.machine.setLastNPCClicked({ hash: 1, mapID: location.mapTableData.mapId, nameSeed: 7, buildingKey: 0, factionID, gender: 0 });
+    cityStands.length = 0; sliceStands.length = 0; ownMade.length = 0;
+    const quest = quiet(() => L.machine.parseQuestForLists(questSource(name, true), factionID, { rolls: seeded(name.length * 31 + at[0]) }));
+    assert.ok(quest, `${name} is offered at ${location.name}`);
+    return { L, quest, city: cityStands.length, slices: new Set(sliceStands), made: ownMade.length };
+  };
+  // COLD AT THE CENTRE (no building stands there): each local site the city gives stands the one slice its search picked
+  const centre = pqp.standAt(2069, 658);
+  assert.equal(centre?.exterior?.buildings?.length, 0, 'the centre stands no building');
+  for (const [name, factionID, sites] of [['N0B20Y02', 40, 2], ['A0C00Y06', 0, 3]]) {
+    const { L, quest, city, made } = await parse([2069, 658], centre, name, factionID, watchCity);
+    const fromCity = [...quest.resources.values()].filter((x) => x.isPlace && x.siteDetails?.nearSite && x.siteDetails.worldPixel && sliceQuestName(x.siteDetails.worldPixel.x, x.siteDetails.worldPixel.y) != null);
+    assert.equal(fromCity.length, sites, `${name}: its local sites the city gave`);
+    assert.equal(L.questWorld.provinceSites.picked(), sites, `${name}: one slice picked a search`);
+    assert.equal(city, L.questWorld.provinceSites.picked(), `${name}: the stands equal the slices picked`);
+    assert.equal(made, 0, `${name}: none of the city's own cells made for a walk`);
+    // the same draw as the walk over every slice, nearest first, that stands each it reads
+    const before = await parse([2069, 658], centre, name, factionID, (qw) => { watchCity(qw); unindexed(qw); });
+    assert.deepEqual(sitesOf(before.quest), sitesOf(quest), `${name}: the same draw`);
+    assert.ok(before.city > city * 4, `${name}: the walk without the index stood ${before.city} slices, the index ${city}`);
+  }
+  // A REMOTE DART on a slice whose index holds no building of its kind misses unstood: a temple's remote house2, from the
+  // Temple District
+  {
+    const temple = pqp.standAt(2066, 660);
+    const { L, quest, slices, made } = await parse([2066, 660], temple, 'C0B00Y00', 0, () => {});
+    const house = [...quest.resources.values()].find((x) => x.isPlace && x.scope === 'remote');
+    assert.ok(slices.size > 0, 'the darts landed on slices of the city');
+    for (const k of slices) {
+      const [x, y] = k.split(',').map(Number);
+      assert.ok(siteIndexGives(L.questWorld.provinceSites.sliceIndexAt(x, y), house.declaredSiteLaw().p2, 0), `${sliceQuestName(x, y)} stood: its index holds a house2 (or any house, its fallback)`);
+    }
+    assert.equal(made, 0, 'none of the city\'s own cells made for a walk');
+    const before = await parse([2066, 660], temple, 'C0B00Y00', 0, unindexed);
+    assert.deepEqual(sitesOf(before.quest), sitesOf(quest), 'the same draw');
+    assert.ok(before.slices.size > slices.size, `the darts without the index stood ${before.slices.size} slices, with it ${slices.size}`);
+  }
+  // EVERY SLICE A SITE MAY STAND IN, in a world of its own (none of them stood): read off its clone before it stands (nothing
+  // stood), the clone the slice the build then stands, and its index the search's own answer there for every town row
+  const fresh = await standWorldPastBay(ARENA2), fq = fresh.places.provinceQuestPlaces;
+  const L = await questLayerAt(fresh, { pixel: { x: 2069, y: 658 }, location: fq.standAt(2069, 658) });
+  const qw = L.questWorld;
+  const place = new Place(null);
+  place.symbol = new QuestSymbol('_site_');
+  let cold = 0, gives = 0;
+  const same = (clone, stood, at) => {
+    assert.equal(clone.name, stood.name, `${at}: its name`);
+    assert.equal(clone.mapTableData.mapId, stood.mapTableData.mapId, `${at}: its map id`);
+    assert.deepEqual(clone.exterior.exteriorData.blockNames, stood.exterior.exteriorData.blockNames, `${at}: its blocks`);
+    assert.deepEqual(clone.exterior.buildings, stood.exterior.buildings, `${at}: its directory`);
+    assert.deepEqual(clone.arena ?? null, stood.arena ?? null, `${at}: its Arena slot`);
+  };
+  for (const { x, y } of capitalSpanPixels(0)) {
+    if (isUnsitedSlice(x, y)) continue;
+    const at = `${sliceQuestName(x, y)} @ ${x},${y}`, size = fresh.locationIndex.size;
+    assert.equal(fresh.locationIndex.has(`${x},${y}`), false, `${at}: not stood yet`);
+    const index = qw.provinceSites.sliceIndexAt(x, y);
+    const clone = fq.sliceAt(x, y);
+    assert.equal(fresh.locationIndex.size, size, `${at}: read, not stood`);
+    const stood = fq.standAt(x, y);
+    assert.notEqual(clone, stood, `${at}: read off a clone`);
+    same(clone, stood, at);
+    assert.equal(fq.sliceAt(x, y), stood, `${at}: once stood, the stood slice`);
+    cold++;
+    for (const [p2, p3] of TOWN_ROWS) {
+      const found = place._searchTownSites(qw, questView(stood), p2, p3).found.length > 0;
+      assert.equal(siteIndexGives(index, p2, p3), found, `${at} ${p2}/${p3}: the index is the search's answer`);
+      if (found) gives++;
+    }
+  }
+  assert.equal(cold, 257, 'every slice a site may stand in (R2-5b), read cold');
+  assert.ok(gives > 500, `${gives} (slice, row) pairs give a site`);
+  // a capital of one slice: its clone carries its Arena place's slot as the build stands it
+  const sol = capitalPixel(CAPITALS[1]);
+  const solClone = fq.sliceAt(sol.px, sol.py);
+  assert.ok(solClone.arena, 'Solitude stands its Arena city\'s slot');
+  same(solClone, fq.standAt(sol.px, sol.py), 'Solitude');
 });

@@ -118,12 +118,16 @@ it - the theatre's listed towns on its politic region, its nearest lairs (12 wit
 cells read a table - the coordinator's bound on the one task a quest offer adds) and countryside places (16 within 24
 pixels, R2-5e), the places made ready in idle time (R2-5d), a capital one town for a local site (R2-5c), a name the table misses found by
 the site's own pixel (START3); the Imperial City at first left out, then a destination slice by slice under
-a quest name of its own (R2-5b, the owner: "Take care of exclusions and gaps"). DFU's three draws
+a quest name of its own (R2-5b, the owner: "Take care of exclusions and gaps"), its slices searched through a sites index
+kept a slice, so a search stands only the slices whose index holds its kind and the city's own cells are never made for
+a walk (R2-5f: the centre's Mages Guild had taken 154-279 s cold; each local site the city gives now stands one slice). DFU's three draws
 run over it unchanged. End to end on the freeware: a Fighters Guild, a Mages Guild, a temple, a commoner and a Daedra
 at Solitude, Mournhold and the Imperial City each offer work whose remote sites are built places of that province, on
 the held map by their pixel, their targets placed on arrival, the same places after a load from the Bay; the Bay's
-draw unchanged. `06-Systems/Quest-Arc.md` "AUDIT RELEASE R2-5"; Port-Ledger A; `test/systems/quest/auditrelease_r25.test.js`;
-`tools/mutants/questsites.json`.
+draw unchanged. `06-Systems/Quest-Arc.md` "AUDIT RELEASE R2-5"; Port-Ledger A; `test/systems/quest/auditrelease_r25.test.js`,
+`test/systems/quest/auditrelease_r25f.test.js` and `test/systems/quest/auditrelease_r25_freeware.test.js`;
+`tools/mutants/questsites.json`. Still open from R2-5f, at the fold with BLD-3: the city's fabric buildings stand in the
+cells the walk skips, so no quest site lands in one (Quest-Arc R2-5f).
 
 ### R2-6 - a vampire's crypt past the Bay (FIXED, the second pass)
 
