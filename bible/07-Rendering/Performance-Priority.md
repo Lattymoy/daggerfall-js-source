@@ -2905,6 +2905,10 @@ frame wherever A has built them by then (every launch measured here) for 0.6 ms 
 whichever frame A builds the clouds in. The one check before turning D on by default is the whole sweep's frame on a
 slow GPU and under a storm. Until the owner says so, D stays behind `?cloudsweep=whole` and A ships alone.
 
+**Decided** (the owner, 2026-10-26: "Keep A as the default with D behind the flag; revisit D after a slow-GPU and
+storm-sky check"). A ships. D stays behind `?cloudsweep=whole`, off by default. It is revisited once two checks are
+in: the whole first sweep's frame on a slow GPU, and under a storm sky (a 32-frame pace under cells).
+
 **Measured.** BOOT-COMPILE's setup: Edge in a visible window, i9-12900KF + RTX 5080, ANGLE D3D11, the dev server,
 Daggerfall city at 15:00, a fresh profile each launch (cold), a throwaway boot after each server start. Base: P1's head
 `26ffc9849f`; head: this branch at `ef301b0eb5`, the same change on that base (the branch was rebased after the runs
