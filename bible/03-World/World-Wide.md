@@ -125,9 +125,10 @@ populated, peopleAt })`:
   OW-HITCH's `livingNearKey` (now the world's key plus the reach's multiple of WORLD_PIXEL_KEYS - the first key held half
   a map past the Bay and folded two pixels of the land past it into one). `townAt`, `townOfId`, `townsIn(area)`,
   `townOfPort`, `dungeonOfId`, and `generation` - the host's trip memo is made again when a provider's places come or
-  go (`livingMemoFresh`), as it is when the roads move. WW7-7 (below): each answers the asker's own side of the Bay's
-  edge (`livingSide`) - the Bay's places for a pixel of the Bay, and past it, once the roads past the Bay are laid whole,
-  its listed places and the places the roads rolled.
+  go (`livingMemoFresh`), as it is when the roads move. WW7-7 and WW7-9 (below): each answers its own side of the Bay's
+  edge (`livingSide`) - the Bay's places for a pixel of the Bay, and past it, once the land under the square is laid,
+  its listed places and the places the roads rolled - and across the edge the other side's, where the land past the Bay
+  stands and is laid there.
 - The pixel builder's town is the index's (`livingTownAt`), so a town a provider stands past the Bay is a LivingTown's
   record the moment it is built.
 
@@ -366,8 +367,8 @@ of the world's, so the bound is the law's (Port-Ledger).
   shape) the walk is the Bay's scale's, within LANE_PATH_PX, and may cross the Bay's water. A player is near a lane past
   the Bay within the ellipse its two roadsteads bound for a way of BEYOND_LANE_PATH_PX (`near`).
 - **One book**: `all()` the Bay's lanes and then the world's, each lane's way kept once (`way`) - the feed of packets
-  about the player, the living world's sailors and crews ashore, and the passage by sea read it. SEA-TRADE's port lanes
-  and the serpent read the Bay's (`bay()`): the Watch ticks are the Bay's until WW7.
+  about the player, the living world's sailors and crews ashore, and the passage by sea read it. The serpent reads the
+  Bay's (`bay()`, WW4); SEA-TRADE's port lanes the world's (WW7-10: a Bay port's the Bay's alone).
 - **The lane search on the world's grid** (`systems/naval/seaLanes.js lanePixels`): keyed by the world's key and bounded
   by the grid, so a lane past the map's edge is walked as the Bay's are - pinned step for step against the Bay's search
   as it was.
@@ -398,7 +399,6 @@ stander did.
 
 - **The crowns.** A ship past the Bay flies the nearest Bay crown's colours and a crime at sea is charged as on the Bay
   until the provinces are regions (WW-R).
-- **SEA-TRADE's Watch ticks** read the Bay's lanes (`net/watchReceipt.js watchPixelOk` is the Bay's - WW7).
 - **The serpent** sails the Bay's lanes (WW4).
 - **Deep Waters** (the sea floor's bake) is the Bay's - WOODS.WLD's own bathymetry; past the Bay a ship's draft is the
   streamed water's.
@@ -773,6 +773,8 @@ and the seats are derived off MAPS.BSA's rows alone, behind laws bounded to the 
 | WW7-6 | the seats on the map past the Bay | BUILT (below) |
 | WW7-7 | the living world's people everywhere: every trip past the Bay, on the roads and the lanes past it | BUILT (below) |
 | WW7-8 | the ships named past the Bay: every reader names a ship as her stander did | BUILT (below) |
+| WW7-9 | the living world across the Bay's edge, the land past the Bay waking a region at a time | BUILT (below) |
+| WW7-10 | the lanes across the Bay's edge, and the sea's trade past the Bay | BUILT (below) |
 
 ### WW7-1 - TESA's places in the registry (BUILT)
 
@@ -929,15 +931,11 @@ traveller's, a caravan's, a patrol's round, a noble's procession, a minstrel's, 
 adventurer's dive and a band's legs - sets out from and ends at a town wherever one stands, by land on the roads past the
 Bay and by sea on the lanes past it.
 
-- **A trip keeps to its own side of the Bay's edge** (`scenes/livingWorld/livingIndex.js` livingSide: the Bay's, the land
-  past it, none in the Eltheric Ocean's box). The Bay is every client's; the land past it only the clients that stand it -
-  TAMRIEL2's switch is a player's own, online too - and LW0's law is that every client walks the same people with nothing
-  sent. A Bay town whose travellers went past the edge would send them on one client and not the next, so a pixel of the
-  Bay has the Bay's places alone near it, a pixel past it the land past the Bay's alone, a lane runs a town's travellers to
-  a port of its own side (`livingLanes.js` from), and a way over the edge is none (`ways.js` wayOf). The Bay's living world
-  is the one it was, to the byte, whatever a client stands. DEPARTURE (named; DFU's world is the Bay): no traveller crosses
-  the Bay's edge - the crossings' roads (TESA5) and the sea between the Bay's ports and those past it are walked by players
-  alone.
+- **The sides of the Bay's edge** (`scenes/livingWorld/livingIndex.js` livingSide: the Bay's, the land past it, none in the
+  Eltheric Ocean's box). The Bay is every client's; the land past it only the clients that stand it - TAMRIEL2's switch is
+  a player's own, online too - and LW0's law is that every client walks the same people with nothing sent. WW7-7 kept each
+  trip to its own side; WW7-9 (below) takes it across where the land past the Bay stands and is laid, the Bay's living
+  world the one it was, to the byte, where it does not.
 - **The towns near past the Bay, by the roads' places.** Measured on the freeware's data, the registry's `near` past the Bay
   walks a square's pixels through the countryside's and the lairs' rolls: 77 ms for a square of eighteen (the Bay's: about
   one), most of it the places' own plateaus (a 129 x 129 kernel, ~1 ms a place). The roads past the Bay rolled every place
@@ -958,19 +956,16 @@ Bay and by sea on the lanes past it.
   pair whose tiles wait waits, as a pair unasked does; PERF-WAYS1's floor and time are shared with the Bay's pairs. Measured
   (ARENA2, a region of Skyrim's west laid as the roads' workers lay it): 24 of 24 pairs routed, 61% of their steps on the
   roads past the Bay, each equal to a single wide ask; a way 29 ms with its tiles read cold, ~1 ms warm.
-- **Every trip past the Bay waits on the roads past the Bay laid whole** (`scenes/livingWorld/livingTrips.js`
-  pastTheBayEpoch: none of TESA14's regions still to land and the layer installed - its version the epoch, 0 until then; the
-  trips' world's `waiting`, which `trips.js` ownTrip answers undefined for, as for a way not yet asked). The regions land
-  nearest their player first, so a town half-way through the build knows the towns near one client and not the next; once
-  whole, every client that stands the land past the Bay plans every trip alike (TESA-ONLINE: the same inputs, the same roads
-  and places). The books past the Bay are the epoch's: laid again (the places past the Bay moved), every square and every
-  way past the Bay is asked again, the index's generation moves, and with it the trips' memo, the hideouts' book and the
-  trips' kept choices (`trips.js` roadChoices, templesNear - kept by the world's generation now).
+- **Every trip past the Bay waits on the roads past the Bay** (the trips' world's `waiting`, which `trips.js` ownTrip
+  answers undefined for, as for a way not yet asked): the regions land nearest their player first, so a town half-way
+  through the build knows the towns near one client and not the next. WW7-9 (below) wakes it a region at a time, on the
+  roads' host's own word. The books past the Bay are the roads' build's: laid again (the places past the Bay moved), every
+  square and every way past the Bay is asked again, the index's generation moves, and with it the trips' memo, the
+  hideouts' book and the trips' kept choices (`trips.js` roadChoices, templesNear - kept by the world's generation now).
 - **By sea**: a port town past the Bay sails its travellers on its lanes (LW5b's passage over the lanes past the Bay - WW3's,
   P7's BEYOND_LANE_MAX_PX of 400), and its sailors crew its packets (LW5's berths read the world's lanes). SEA_PACE_X stays
-  three: a lane past the Bay is some ten of the Bay's long (a port's two nearest a median 325 pixels off), so at it a passage
-  past the Bay fits a pilgrim's twenty days and seldom a merchant's seven - as long as the packets sail it on the shared
-  clock.
+  three: a lane past the Bay is some ten of the Bay's long (a port's two nearest a median 325 pixels off), so a passage
+  past the Bay fits a pilgrim's twenty days more often than a merchant's seven (measured: WW7-10).
 - **Online**: nothing crosses the wire (LW0 decision 2) - every trip past the Bay is a pure function of the registry's places,
   the roads past the Bay, the ground, a seed and the clock, as the Bay's are. TESA-ONLINE's divergence holds and no wider: a
   player without Arena's places stands other roads and places past the Bay, and so other people there.
@@ -980,11 +975,7 @@ Bay and by sea on the lanes past it.
   written). THE FOUR HOSTS: `scenes/world.js` wired; `scenes/exterior.js`, `scenes/worldModes.js` and
   `scenes/dungeonContext.js` run no living world of their own (WW1's record: their residents and divers are the world
   host's).
-- **Recorded**: the living world past the Bay wakes once every region of the roads past the Bay has landed (48 on the
-  freeware's continent, ~20 s each on a roads' worker the first boot, read from the cache after); a word of each region
-  landed from the roads' host (its `onRegion`, which `tamrielRoadsHost.js` keeps to itself) would let the land about the
-  player wake first, the regions that can touch a pair's window known - the roads' stream's file, asked for. The countryside
-  past the Bay is as dense as the Bay's (a square of eighteen about 25 towns past the Bay held 2 to 107, most 20 to 70, where a Bay one holds 19 to 99), so the
+- **Recorded**: the countryside past the Bay is as dense as the Bay's (a square of eighteen about 25 towns past the Bay held 2 to 107, most 20 to 70, where a Bay one holds 19 to 99), so the
   trips' ranges are the Bay's.
 
 ### WW7-8 - the ships named past the Bay (BUILT, 2026-10-26)
@@ -1013,8 +1004,8 @@ was called otherwise on another player's screen, her captain and her hands with 
   bundles any module this slice moved.
 - **Recorded**: the crowns stay the Bay's three - a navy ship past the Bay sails for the nearest Bay crown and a crime at sea
   there is charged as on the Bay (`navalShips.js` CROWNS, the wire's `n` by their rows): seven more crowns' navies are the
-  wire's, the law's and the save's shape, the owner's to call. The serpent's lanes are WW4's; SEA-TRADE's port lanes (the
-  town economy's Watch ticks, `townEconHost.js` portLanes) read the Bay's lanes, an economy's and not a ship's.
+  wire's, the law's and the save's shape, the owner's to call. The serpent's lanes are WW4's. SEA-TRADE's port lanes are
+  the world's since WW7-10 (below).
 
 ### Pins and mutants (WW7-7, WW7-8)
 
@@ -1035,6 +1026,142 @@ lane the Bay's; one over the edge none), `lw3_roads.test.js`, `lw6_deep.test.js`
 names' area the module's `namesArea`). Mutant records re-aimed by content: `audittesa2p.json` (P7's four, now the sides'
 filters, the district's area and the lanes' side), `ww1.json` (two), `lw3.json`, `lwdry.json`, `ww7.json` (WW7-2's walk, now
 the window planner's wiring), `perfways1.json` (two), `captwaters.json`, `ethership.json`, `audittesa2k.json` - all dead.
+
+### WW7-9 - across the Bay's edge, a region at a time (BUILT, 2026-10-26)
+
+The owner's *"travellers need to travel everywhere"* again, on the follow-up to WW7-7: the trips across the Bay's edge,
+and the land past the Bay waking a region at a time where it waited for every region of the build.
+
+- **The roads past the Bay's word, a region at a time** (`scenes/tamrielRoadsHost.js`, TESA14's host - its stream
+  finished, the word added here): `build()` the build's number (moving as a build starts: the layer and the places reset),
+  `onRegion(fn)` each region landed, told with its GRID - its core and REGION_APRON about it, the builder's own 1000 x 500,
+  the pixels its layer may reach (a region's roads run on into its neighbours' aprons, and the layers are OR'd) - and
+  `landedIn(x0, y0, x1, y1)`: a box's land past the Bay is the build's whole once every region with land whose grid meets a
+  pixel of it past the Bay has landed. A box of the Bay's own always is (no region lays a road on the Bay); one past it
+  never before a build; every one once the cache has been asked of every region and none is pending (a region that failed
+  is let go, as the whole build's word let it go). A build's start answers before its cache is asked, so "none pending" is
+  no word until it has been.
+- **A place waits on the land about it** (`scenes/livingWorld/livingTrips.js` `waiting`): a place of either side waits while
+  the land past the Bay within LIVING_WAKE_PX of it (80 - TRIP_REACH_PX, a way's BEYOND_FAR_PX window, INN_REACH_PX: every
+  square its trips read, every way's window and its inns lie inside it) is still being laid. A Bay town deep in the Bay
+  never waits; one by its edge waits until the land past the edge is laid; a town past the Bay as before, but a region at
+  a time; past the Veil none. An area's bands wait too (`waitingArea`: a province's district and LIVING_AREA_WAKE_PX about
+  it - its legs' ways and a hideout off one; `systems/livingWorld/outlaws.js` hideoutsOf asks again), and so do the readers
+  of a waiting place (`systems/livingWorld/trips.js` visitorsOf and innGuestsOf answer undefined; diversAt, divesIn and
+  fallenIn pending): a reader's answer for a place whose towns near were half known was kept short (the visitors' book,
+  the told news) and never asked again. WW7-7's whole build's word (`pastTheBayEpoch`, every one of the 48 regions on the
+  freeware's continent) is retired: the land about a place stands on two to six regions' grids, so the living world about
+  the player wakes once the nearest few have landed - a minute or two on the first boot, at once from the cache after -
+  where it waited for all 48 (853 s on two workers in the running game, 2026-10-26, the regions 6 to 72 s each).
+- **Nothing known moves as the regions land.** A place that woke never waits again until the roads are laid again: every
+  square, way and tile it read was its build's whole when read. The index's squares are asked again as each region lands
+  (`landed()`, a count - a square half laid was asked short) without moving the index's generation (no trip is made
+  again); the window planner lets go the tiles a region's grid reaches (`drop`); the way book keeps its ways by the build
+  (a new build: every way past and across the Bay asked again, the generation moving).
+- **Across the edge** (`livingIndex.js` acrossIn): where the land past the Bay stands, a square that holds both sides holds
+  both sides' places once the land past the Bay in it is laid - a Bay town by the edge has the towns past it near, a town
+  past the edge the Bay's listed places - so a traveller of either sets out across it by its trips' own laws (the ranges,
+  the temples, the markets, the dives, the bands' areas their own). The way (`systems/livingWorld/ways.js` farWayOf's
+  `cross`, `systems/livingWorld/beyondWays.js` plan's `cross`) is the window planner's with the window's Bay pixels the
+  Bay's own ground: the drawn network's roads with the crossings' joins over them (TESA5: a run's Bay pixels are the layer's
+  `join`, read as the Travel Options planner reads them - VOYAGER2.1), its tracks, and the Bay's table's water; past the
+  edge the roads past the Bay as before. So it walks the Bay's road out by a crossing's gate and on along the roads past the
+  Bay (pinned: a road all the way over the edge with the join, the open ground at the edge without it). A tile holding a Bay
+  pixel is read apart for a pair across, and read again when another network is drawn; the ways across are kept apart and
+  asked again with it (the generation moving). With no land past the Bay a pair across has no way, as before.
+- **By sea** across the edge (`livingLanes.js` from): a port town's passage may ride a crossing lane (WW7-10) to a port of
+  the other side.
+- **Online.** Where the land past the Bay does not stand (no roads past the Bay's host: no `beyond`, no square or way across,
+  no crossing lane, no wait) the Bay's living world is the one it was, to the byte. Where it stands, a Bay town by the edge
+  waits while the land past it is laid, so two clients that both stand it walk it alike once both have laid it. TESA-ONLINE's
+  divergence holds and now reaches the Bay's edge: a player without the land past the Bay walks other people in a Bay town
+  beside it. Nothing crosses the wire (LW0 decision 2); no relay or account law moved.
+- **HOST-SPLIT**: no host grew. `scenes/world.js` hands the roads past the Bay's host to the trips' world as WW7-7 did (its
+  town economy's lanes line names the world's lanes - WW7-10); `tamrielRoadsHost.js` is the module the host wires. THE
+  FOUR HOSTS: the world host wired; `scenes/exterior.js`, `scenes/worldModes.js` and `scenes/dungeonContext.js` run no
+  living world of their own.
+- DEPARTURE (named, OURS - Ledger A): DFU's living world is the Bay's; here it runs over the continent and across the Bay's
+  edge.
+
+### WW7-10 - the lanes across the edge, and the sea's trade past the Bay (BUILT, 2026-10-26)
+
+"Same for ships": WW7-8 found every kind of ship already sailing past the Bay. What stayed the Bay's: no lane joined a Bay
+port to a port past it - the Bay's lanes keep to its water, the ones past it to the picture's sea (beyondLaneWay leaves the
+Bay's rectangle out) - so no packet sailed between them and no traveller took passage; and SEA-TRADE's harbour term counted
+the Bay's lanes alone.
+
+- **The Bay's mouths** (`scenes/naval/worldLanes.js` bayMouths): each edge pixel of the Bay's lane water whose run straight
+  out is the world's lane water to the first picture cell clear of the Bay's rectangle, that cell the picture's open sea
+  (`pictureSeaMask` - beyondLaneWay's own, now its own export; AUDIT TESA III: `pictureSea` was arenaPlaces.js's one-pixel question's name too), within MOUTH_RUN_PX (16: at the freeware's fit the south
+  edge's run clears the rectangle at 12). On the freeware's data 854: the north edge's 218 (its western 217 pixels), the
+  south's 138, the west's 498, the east's none.
+- **Its seaward water** (baySeaward): every Bay lane pixel a boat sails to from a mouth (SEA-LANES' step: eight neighbours,
+  no corner cut past land) - 179,924 pixels on the freeware's map. A lake's harbour (FIELD BUGS 2026-10-14 INLAND-PORTS: 331
+  of the map's lake pixels carry the Ocean climate) and a cove the map's water never joins to the sea are not.
+- **The crossing lanes** (crossLanes): each port past the Bay runs packets to its LANE_NEIGHBOURS nearest of the Bay's ports
+  whose roadstead is seaward, within BEYOND_LANE_MAX_PX - SEA-LANES' own law read from the side past the Bay alone, so no Bay
+  port's own nearest move and no Bay lane changes. On the freeware's data six: Northpoint to Knightshope and the Rat and
+  Priest Hostel, Hegathe to the Mole and Giant Tavern and Tsetudax, Gilane to the Ruins of Mhoghton Orchard and the Nest of
+  Helloth (Travel Options' own port list - its taverns and ruins are ports, as on the Bay). Their nearest Bay ports by the
+  crow's flight (Greenhouse Manor, Castle Wickhart, Kaluhbia, Bergama) stand on water the Bay's never joins to the sea:
+  the seaward test's reason.
+- **A crossing lane's way** (crossLaneWay): two legs - an A* over the Bay's lane water from the Bay port's roadstead to the
+  first mouth it reaches, leaning to the far roadstead (so the mouth that leaves the least sea past it), no longer than
+  CROSS_BAY_PATH_PX (400), straightened over the world's lane water; then beyondLaneWay's, at the picture's scale, from the
+  mouth's pixel out to the far roadstead. On the freeware's data every leg is on the lane water and off the lakes, the six
+  175 to 378 km, 133 ms the six, each kept once; the mouths and the seaward water are worked once a session (about half a
+  second on the freeware's coasts) on the first ask of the world's lanes with a picture standing.
+- **One book** (`createWorldLanes`): `cross()` the crossing lanes; `all()` the Bay's, then the ones past it, then the
+  crossing - so the feed of packets about the player, the living world's berths and sailors and the passages read them. A
+  player is near one within the ellipse of its longest way (CROSS_LANE_PATH_PX = CROSS_BAY_PATH_PX + MOUTH_RUN_PX +
+  BEYOND_LANE_PATH_PX). Made again as the world's ports or the picture move; none without a picture (no mouth is known). A
+  crossing lane's packets are named by her home port's region, as any packet's (`lane.a`, the Bay port).
+- **The sea's trade past the Bay** (`scenes/townEconHost.js` lanesAt, over `worldLanes.all()`): a port's lanes are counted
+  off the world's lanes and counted again when they move (once a session before - and the lanes past the Bay are made again
+  as the ports move). A Bay port counts the Bay's alone - a lane across the edge is no Bay port's, so the Bay's economies,
+  their Prosperity, counters and exchange prices, stay every client's whatever land it stands - and a port past the Bay
+  counts every lane it runs, past the Bay and across. The Watch's ticks that vouch a dealing already stood past the Bay
+  (WW7-5's `watchPixelOk`).
+- **What the crowns, the serpent and SEA_PACE_X mean for "ships everywhere"** (recorded):
+  - **The crowns** keep no ship to the Bay. A navy ship past the Bay sails there (the director's ring, the packets' LANE_NAVY
+    share), flying the nearest Bay crown's colours, and a crime at sea there is charged as on the Bay: the crowns'
+    allegiance and law (`systems/naval/navalShips.js` CROWNS, the wire's `n`, the save's crowns) - a different system;
+    seven provinces' navies are the owner's call (WW-R).
+  - **The serpent** (WW4) is a monster of the Bay's lanes, no ship: its site is rolled over the Bay's lanes in their order
+    (`systems/serpent/serpentSite.js`, and the relay's serpent with it), so moving it onto the world's lanes would move the
+    Bay's serpent for every client that stands the land past the Bay, and the relay's law with it - WW4's own.
+  - **SEA_PACE_X** (3) is a passenger's pace (LW5b: three times a walker's, by night as by day), no ship's - a packet sails at
+    her class's cruise on the shared clock - so it keeps no ship to the Bay. What keeps passages past the Bay rare is their
+    length against the travellers' cycles (CYCLE_DAYS: a merchant's seven days, a pilgrim's twenty). Measured on the
+    freeware's lanes at the calendar's pace, of the 19 ways past the Bay (37 to 633 km) 2 fit a merchant's cycle or an
+    adventurer's, 11 a pilgrim's, 1 a courier's or a pedlar's; of the six crossing lanes (175 to 378 km) the two to Hegathe
+    a pilgrim's. A faster passage would outsail the packets she rides, and a longer cycle for a far port is LW3's cycle
+    law - both the owner's call.
+- **No relay change**: nothing of the lanes, the passages or the counts crosses the wire; neither Worker bundles a module
+  this slice moved.
+
+### Pins and mutants (WW7-9, WW7-10)
+
+`test/world/worldWide/ww7_cross.test.js` (13, one with ARENA2): the roads past the Bay's word (the build, the Bay's box,
+before a build, the grids and their aprons, told, a build begun again, the cache asked and nothing pending) and a box
+across the edge waiting on its land past the Bay alone; the index across the edge (no land past the Bay, to the byte;
+unlaid none; laid, both sides; a landing asks the squares again and moves no generation); the way book across (the lower
+id first, the network's wait, its own book, the build); the window planner across (the Bay's road and its join, its track,
+its water, a pair past the Bay off the Bay, the land's word, the tiles let go, another network); the trips' world (the box,
+the sides, the district, a region's word, a pair across, the land off); the readers that wait; the mouths and the seaward
+water; the crossing lanes and their ways; the book; a passage across; the sea's trade; with ARENA2 the freeware's six and
+their passages' fit. Mutants `tools/mutants/ww7_cross.json` (78, all dead).
+
+PINS MOVED (WW7-9): `ww7_people.test.js` (a square of the Bay holds the towns past the edge once laid, a square past it
+the Bay's; a pair over the edge across; the word the roads' host's own), `lw3_roads.test.js` and `ww7_places.test.js` (the
+table made once - `groundOf`); (WW7-10) `ww3_sea.test.js`, `townecon.test.js`, `townecon_sea.test.js` (the world's lanes,
+counted once while they stand). Mutant records re-aimed by content: `audittesa2p.json` (P7-places-unfiltered - each side's
+bins; P7-lanes-from-past-the-bay - a lane to its own side or a crossing's), `ww1.json` (WW1-index-stale), `ww3.json`
+(WW3-the-book-without-the-beyond), `ww7_people.json` (nine) - all dead. Retired with the code they mutated:
+`ww7_people.json` WW7-7-epoch-the-pending-unread and WW7-7-epoch-the-layer-unread (the whole build's word is gone; the
+roads' host's `landedIn` holds its law - `ww7_cross.json`'s WW7-9-host records), and `townecon4.json`
+TOWNECON4-host-lanes-cached-empty (its guard is gone: the counts follow the lanes' own identity, so an answer before they
+stand counts none and they are counted again once they do - WW7-10-trade's records hold it).
 
 ## TESA x AUDIT TESA II (2026-10-25, the merge)
 

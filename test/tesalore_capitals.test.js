@@ -5,12 +5,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  IMPERIAL, IMPERIAL_SECTORS, IMPERIAL_SLICE_NAMES, IMPERIAL_MODELS, IMPERIAL_CARRY, IMPERIAL_CITY_PLAN, IMPERIAL_BLOCKS, polar, imperialBearing,
+  IMPERIAL, IMPERIAL_SECTORS, imperialSliceName, IMPERIAL_MODELS, IMPERIAL_CARRY, imperialCell, imperialCodeCell, polar, imperialBearing,
   imperialDistrictAt, imperialTile, imperialClosed, imperialTree, prisonAt, watchTowersAt, divinesAt, divinePlinths, IMPERIAL_SPAN, IMPERIAL_CELLS,
   imperialPartId, causewayLines,
 } from '../src/world/imperialCity.js';
 import { CAPITALS, CAPITAL_MODELS, BLOCK_M, capitalModelCarriers, capitalDistrict, SOLITUDE, SOLITUDE_PLAN, SOLITUDE_BLOCKS } from '../src/world/tamrielCapitals.js';
-import { buildCityWall, buildNineDivines } from '../src/world/capitalImperial.js';
+import { buildCityWall, buildNineDivines, nearRect } from '../src/world/capitalImperial.js';
+import { imperialOwnLaws } from '../src/world/imperialBlocks.js';   // IC-GRAND: a cell's own laws (the fabric's ground with the landmarks')
 import { buildCastleDour, buildBluePalace } from '../src/world/capitalSolitude.js';
 import { MOURNHOLD, MOURNHOLD_PLAN, MOURNHOLD_DISTRICTS, MOURNHOLD_BLOCKS } from '../src/world/capitalPlans.js';
 import { buildMournholdPlaza, buildHighFane, buildMournholdPalace, buildGreatBazaar } from '../src/world/capitalMournhold.js';
@@ -61,7 +62,10 @@ const IC = capOf('imperial-city'), B = BLOCK_M, HALF = IMPERIAL_CELLS / 2;
 /** The slice (from the north-west, a row of IMPERIAL_SPAN) and the plan's cell a point of the city stands in. PIN MOVED
  *  (TOWN-SHAPES TS5): seven pixels a side, the anchor the plan's middle. */
 const sliceAt = (x, z) => Math.floor((z + HALF * B) / (8 * B)) * IMPERIAL_SPAN + Math.floor((x + HALF * B) / (8 * B));
-const cellAt = (x, z) => IMPERIAL_CITY_PLAN[Math.floor(z / B + HALF)][Math.floor(x / B + HALF)];
+const cellAt = (x, z) => imperialCell(Math.floor(z / B + HALF), Math.floor(x / B + HALF));   // PIN MOVED (IC-GRAND): the plan by its law
+const isOwn = (cell) => !!imperialCodeCell(cell);
+/** IC-GRAND: the city wall's runs near a point alone (a long wall's part is built so - world/capitalModels.js imperialPartBuild). */
+const wallNear = ([x, z], m = 80) => buildCityWall(undefined, nearRect([x - m, z - m, x + m, z + m], 40));
 /** TS5: a landmark carried in its parts - its part in slice `s` (world/imperialCity.js IMPERIAL_PARTS). */
 const partIn = (base, s) => imperialPartId(base, s);
 
@@ -71,14 +75,17 @@ test('TESA-LORE the Imperial City\'s Prison on the isle\'s north-eastern shore (
   assert.equal(imperialDistrictAt(px, pz), 'Prison District');
   const s = sliceAt(px, pz);   // PIN MOVED (TS5): the north-east pixel of seven a side
   assert.ok(s % IMPERIAL_SPAN > (IMPERIAL_SPAN - 1) / 2 && Math.floor(s / IMPERIAL_SPAN) < (IMPERIAL_SPAN - 1) / 2, 'the north-east pixel');
-  assert.equal(IMPERIAL_SLICE_NAMES[s], 'Prison District');
+  // PIN MOVED (IC-GRAND): its compound 600 m across over the corner of four slices of twenty-five a side - a slice of it
+  // named for it (the rest the Market District's or the isle's, whichever holds the more)
+  const h = IMPERIAL.prison.half, slices = [[-h, -h], [h, -h], [h, h], [-h, h]].map(([dx, dz]) => sliceAt(px + dx, pz + dz));
+  assert.ok(slices.some((q) => imperialSliceName(q) === 'Prison District'), slices.map(imperialSliceName).join());
   assert.equal(IMPERIAL_CARRY[partIn(IMPERIAL_MODELS.prison, s)], s);
   const carrier = capitalModelCarriers(IC).get(partIn(IMPERIAL_MODELS.prison, s));
-  const at = IMPERIAL_CITY_PLAN.flatMap((row, r) => row.map((cell, c) => [cell, c, r])).find(([cell]) => cell === carrier);
-  assert.ok(at && Object.hasOwn(IMPERIAL_BLOCKS, carrier) && Math.floor(at[2] / 8) * IMPERIAL_SPAN + Math.floor(at[1] / 8) === s, `carried in its pixel: ${carrier}`);
+  const at = imperialCodeCell(carrier);
+  assert.ok(at && Math.floor(at[0] / 8) * IMPERIAL_SPAN + Math.floor(at[1] / 8) === s, `carried in its pixel: ${carrier}`);
   const W = IMPERIAL.cityWall;
   assert.ok(W.gates.includes(IMPERIAL.prison.b), 'a gate on its bearing');
-  assert.equal(crosses(buildCityWall(), P3(IMPERIAL.prison.b, W.r - 10, W.gateH / 2), P3(IMPERIAL.prison.b, W.r + 10, W.gateH / 2)), false, 'open');
+  assert.equal(crosses(wallNear(polar(IMPERIAL.prison.b, W.r)), P3(IMPERIAL.prison.b, W.r - 10, W.gateH / 2), P3(IMPERIAL.prison.b, W.r + 10, W.gateH / 2)), false, 'open');
   // PIN MOVED (TS5 with AUDIT TESA II C3): the causeway from the wall's gate to the compound's own gate - off its bearing on
   // seven pixels, where the compound's half is a sixth of the way out
   const [[ax, az], [bx, bz]] = causewayLines()[0];
@@ -86,16 +93,16 @@ test('TESA-LORE the Imperial City\'s Prison on the isle\'s north-eastern shore (
 });
 
 test('TESA-LORE the Imperial City\'s watch towers: one where each district wall meets the city wall (the North, North-East, South-East, South, South-West and North-West Watch Towers between the districts they border), standing over the wall\'s other towers; their ground the city\'s own', () => {
-  const W = IMPERIAL.cityWall, wall = buildCityWall();
-  sane(wall);
+  const W = IMPERIAL.cityWall;
+  sane(wallNear(polar(0, W.r)));
   assert.deepEqual(watchTowersAt(), IMPERIAL_SECTORS.map(([, b]) => polar(b, W.r)));
   assert.ok(W.watchR > W.towerR && W.watchH > W.towerH + W.towerR * 1.4);
   const over = W.towerH + W.towerR * 1.4 + 4;   // past the ten-degree towers' cones
   for (const [, b] of IMPERIAL_SECTORS) {
-    assert.equal(crosses(wall, P3(b, W.r - W.watchR - 2, over), P3(b, W.r + W.watchR + 2, over)), true, `the watch tower at ${b}`);
-    assert.equal(crosses(wall, P3(b + 10, W.r - W.watchR - 2, over), P3(b + 10, W.r + W.watchR + 2, over)), false, `none at ${b + 10}`);
+    assert.equal(crosses(wallNear(polar(b, W.r)), P3(b, W.r - W.watchR - 2, over), P3(b, W.r + W.watchR + 2, over)), true, `the watch tower at ${b}`);
+    assert.equal(crosses(wallNear(polar(b + 10, W.r)), P3(b + 10, W.r - W.watchR - 2, over), P3(b + 10, W.r + W.watchR + 2, over)), false, `none at ${b + 10}`);
     const [x, z] = polar(b, W.r);
-    for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) assert.ok(Object.hasOwn(IMPERIAL_BLOCKS, cellAt(x + dx * (W.watchR + 1), z + dz * (W.watchR + 1))), `its foot on the city's own at ${b}`);
+    for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) assert.ok(isOwn(cellAt(x + dx * (W.watchR + 1), z + dz * (W.watchR + 1))), `its foot on the city's own at ${b}`);
   }
 });
 
@@ -119,9 +126,11 @@ test('TESA-LORE the Arboretum\'s Nine Divines (UESP: "statues of the Nine Divine
   assert.ok(m.positions[top] > D.talosPlinthH + D.talos + 3 && Math.hypot(m.positions[top - 1] - cx, m.positions[top + 1] - cz) < D.talosPlinth, 'Talos\'s blade the top, over the middle');
   for (const [x, z] of plinths) assert.ok(!crosses(m, [x, D.plinthH + D.figure + 1.5, z - 4], [x, D.plinthH + D.figure + 1.5, z + 4]), 'the eight below him');
   assert.equal(imperialTile(cx, cz), 3, 'the court paved');
-  assert.equal(imperialTile(...polar(D.b, D.r + D.court + 12)), 2, 'the park round it');
+  // PIN MOVED (IC-GRAND): off the Arboretum's avenue and its ring road, both of which cross the court (its heart)
+  const a = ((D.b - 45) * Math.PI) / 180, [px, pz] = [cx + Math.sin(a) * (D.court + 12), cz - Math.cos(a) * (D.court + 12)];
+  assert.equal(imperialOwnLaws(Math.floor(pz / B + HALF), Math.floor(px / B + HALF)).tile(px, pz), 2, 'the park round it (PIN MOVED, IC-GRAND: its grass the cell\'s own laws\' - the landmarks\' tile says none there, the Arboretum\'s ground the fabric\'s)');
   for (let x = cx - D.court + 2; x < cx + D.court - 2; x += 3.2) for (let z = cz - D.court + 2; z < cz + D.court - 2; z += 3.2) if (Math.hypot(x - cx, z - cz) < D.court - 2) assert.equal(imperialTree(x, z), -1);
-  for (const [dx, dz] of [[0, 0], [D.court - 4, 0], [0, D.court - 4], [-(D.court - 4), 0], [0, -(D.court - 4)]]) assert.ok(Object.hasOwn(IMPERIAL_BLOCKS, cellAt(cx + dx, cz + dz)), 'the court the city\'s own');
+  for (const [dx, dz] of [[0, 0], [D.court - 4, 0], [0, D.court - 4], [-(D.court - 4), 0], [0, -(D.court - 4)]]) assert.ok(isOwn(cellAt(cx + dx, cz + dz)), 'the court the city\'s own');
   assert.ok(IC.drawn.includes(IMPERIAL_MODELS.nineDivines) && CAPITAL_MODELS.nineDivines === IMPERIAL_MODELS.nineDivines);   // PIN MOVED (TS5): drawn whole, carried in parts
   assert.ok(IC.models.includes(partIn(IMPERIAL_MODELS.nineDivines, sliceAt(cx, cz))));
   assert.equal(IMPERIAL_CARRY[partIn(IMPERIAL_MODELS.nineDivines, sliceAt(cx, cz))], sliceAt(cx, cz), 'carried in its pixel');
@@ -400,25 +409,27 @@ test('TESA-LORE Helstrom in the heart-mud (UESP: "the marsh of Helstrom is very 
  *  its row, its luminance's spread - and, for its tiling, the mean |dL| across its wrap (its last column to its first,
  *  its last row to its first) beside the strongest across any of its inner columns and rows (a joint, a seam of its own):
  *  a picture that does not tile shows a seam stronger than any it paints. */
-const detail = (px, S = CAPITAL_ART_SIZE) => {
-  const L = (i) => 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2], at = (x, y) => ((y % S) * S + (x % S)) * 4;
-  const set = new Set(), cols = new Float64Array(S), rows = new Float64Array(S);
+const detail = (px, S = CAPITAL_ART_SIZE, H = S) => {   // IC-GRAND: H, a picture taller than wide (vanilla's 64 x 128 wall)
+  const L = (i) => 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2], at = (x, y) => ((y % H) * S + (x % S)) * 4;
+  const set = new Set(), cols = new Float64Array(S), rows = new Float64Array(H);
   let hf = 0, s = 0, s2 = 0;
-  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+  for (let y = 0; y < H; y++) for (let x = 0; x < S; x++) {
     const i = at(x, y), l = L(i), dx = Math.abs(l - L(at(x + 1, y))), dy = Math.abs(l - L(at(x, y + 1)));
-    set.add((px[i] << 16) | (px[i + 1] << 8) | px[i + 2]); hf += dx; s += l; s2 += l * l; cols[x] += dx / S; rows[y] += dy / S;
+    set.add((px[i] << 16) | (px[i + 1] << 8) | px[i + 2]); hf += dx; s += l; s2 += l * l; cols[x] += dx / H; rows[y] += dy / S;
   }
-  const n = S * S, m = s / n;
-  return { colours: set.size, hf: hf / n, std: Math.sqrt(s2 / n - m * m), seam: [cols[S - 1], rows[S - 1]], inner: [Math.max(...cols.slice(0, S - 1)), Math.max(...rows.slice(0, S - 1))] };
+  const n = S * H, m = s / n;
+  return { colours: set.size, hf: hf / n, std: Math.sqrt(s2 / n - m * m), seam: [cols[S - 1], rows[H - 1]], inner: [Math.max(...cols.slice(0, S - 1)), Math.max(...rows.slice(0, H - 1))] };
 };
+/** IC-GRAND: the Imperial City's street walls, a storey each - vanilla's 64 x 128 wall (world/imperialArt.js). */
+const TALL = new Set(['facadeOchre', 'facadeBrick', 'facadeWhite', 'facadeStone', 'facadeTimber', 'groundShop', 'groundArcade']);
 
 test('TESA-LORE the capitals\' pictures at vanilla\'s detail (the owner: "fall in line with the detail of vanilla textures. Same resolution and all"): each 64 x 64 - the width of Daggerfall\'s wall and ground textures - and each but the doors\' dark within the freeware\'s own band (its 475 such textures, the tenth to the ninetieth percentile): 16 to 84 colours, a texel 5.4 to 18.4 from the next, a spread of 11.3 to 41.6; every one tiling without a seam', () => {
   const art = capitalArt();
   assert.equal(CAPITAL_ART_SIZE, 64);
   for (const [name, record] of Object.entries(CAPITAL_ART)) {
-    const img = art.get(record);
-    assert.deepEqual([img.width, img.height], [64, 64], name);
-    const d = detail(img.data);
+    const img = art.get(record), h = TALL.has(name) ? 128 : 64;   // PIN MOVED (IC-GRAND): the street walls 64 x 128, vanilla's own wall's
+    assert.deepEqual([img.width, img.height], [64, h], name);
+    const d = detail(img.data, 64, h);
     if (name !== 'dark') {
       assert.ok(d.colours >= 16 && d.colours <= 84, `${name}: ${d.colours} colours`);
       assert.ok(d.hf >= 5.4 && d.hf <= 18.4, `${name}: ${d.hf.toFixed(1)} from texel to texel`);
@@ -444,6 +455,8 @@ test('TESA-LORE vanilla\'s texel density on every capital model (the freeware\'s
       const e1 = P[1].map((x, k) => x - P[0][k]), e2 = P[2].map((x, k) => x - P[0][k]);
       const wa = Math.hypot(e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]) / 2;
       if (wa < 0.01) continue;
+      // PIN MOVED (IC-GRAND): a sliver under 5 cm on a side read off float32 kilometres out (a cone's tip 2.3 km from the middle) is no face to measure
+      if (Math.min(Math.hypot(...e1), Math.hypot(...e2), Math.hypot(...P[2].map((x, k) => x - P[1][k]))) < 0.05) continue;
       const ta = Math.abs((U[1][0] - U[0][0]) * (U[2][1] - U[0][1]) - (U[2][0] - U[0][0]) * (U[1][1] - U[0][1])) / 2, dens = Math.sqrt(ta / wa);
       assert.ok(dens >= full * Math.sqrt(1 / Math.sqrt(3)) - 0.05 && dens <= full + 0.05, `model ${id}: ${dens.toFixed(2)} texels a metre`);
       faces++;

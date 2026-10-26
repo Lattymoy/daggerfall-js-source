@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { BAY_CASTLE_HALLS, CAPITAL_CASTLE_HALLS, CASTLE_BLOCKS, CASTLE_BLOCK_INDEX, CASTLE_DUNGEON_TYPE, capitalCastleBlocks, capitalCastleDungeon, castleBlockName, castleKeeps, castleBlockOf } from '../../../src/world/capitalCastles.js';
-import { CAPITALS, CAPITAL_MODELS, capitalPlaceId, synthesizeCapitalLocation, capitalSpan, capitalPortBlocks } from '../../../src/world/tamrielCapitals.js';
+import { CAPITALS, CAPITAL_MODELS, capitalPlaceId, synthesizeCapitalLocation, capitalSpan, capitalPortBlocks, ownBlockOf } from '../../../src/world/tamrielCapitals.js';
 import { IMPERIAL_MODELS } from '../../../src/world/imperialCity.js';
 import { buildImperialTower } from '../../../src/world/capitalImperial.js';
 import { buildBluePalace } from '../../../src/world/capitalSolitude.js';
@@ -85,7 +85,9 @@ test('WW7-4 the port\'s block made of another: registered at its own index, made
 test('WW7-4 the castle is the capital\'s centre\'s dungeon: its blocks, its map id its dungeon\'s id, a crown castle\'s type; no other slice one; never shrunk online (mutants: every slice a castle; the castle shrunk)', () => {
   // tesa10_capitals.test.js's fixture: a town row, every plan's classic kinds two blocks each, each block one named house
   const base = { name: 'Base', regionIndex: 1, mapTableData: { mapId: 5, locationType: 0, dungeonType: 0 }, exterior: { exteriorData: { blockNames: ['X'], width: 1, height: 1 }, buildings: [] }, climate: { worldClimate: 230 }, hasDungeon: false, dungeon: null };
-  const kinds = [...new Set(CAPITALS.flatMap((cap) => cap.plan.flat().filter((c) => c !== 'L' && c !== 'G' && !Object.hasOwn(cap.blocks, c))))];
+  // PIN MOVED (IC-GRAND): the Imperial City's plan a law, read a slice at a time; its own blocks by its law
+  const planOf = (cap) => cap.plan ?? Array.from({ length: capitalSpan(cap) ** 2 }, (_, s) => cap.slicePlan(s)).flat();
+  const kinds = [...new Set(CAPITALS.flatMap((cap) => planOf(cap).flat().filter((c) => c !== 'L' && c !== 'G' && c !== 'O' && !ownBlockOf(cap, c))))];
   const names = new Map(kinds.map((c) => [c, [`${c}AA00.RMB`, `${c}AA01.RMB`]]));
   const fh = { rmbBlock: { fldHeader: { numBlockDataRecords: 1, buildingDataList: [{ buildingType: 9, factionId: 0, quality: 5 }] } } };
   const ctx = (px) => ({ base, names, blockOf: (nm) => (nm.startsWith('TES') ? null : fh), px, py: 50 });

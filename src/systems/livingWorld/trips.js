@@ -137,6 +137,7 @@ export const DRY_STEP_N = 80;
  *   dryAt?: (nx: number, nz: number) => boolean,
  *   marketBandOf?: (town: LwTown, day: number) => (string | null),
  *   waiting?: (town: LwTown) => boolean,
+ *   waitingArea?: (area: number) => boolean,
  *   generation?: () => number,
  * }} TripWorld - the host's: towns near a pixel (the game's own rows, populated); the planner's way between two towns
  *   (undefined while it is being asked, null for none); a town's travellers (census.js travellerRoster). LW4: who holds
@@ -1286,6 +1287,7 @@ export function awayOf(res, trips) {
  * @returns {{ res: Resident, trip: Trip, inT: number, outT: number, yaw: number, dock: boolean }[] | undefined}
  */
 export function visitorsOf(town, day, world, o) {
+  if (world.waiting?.(town)) return undefined;   // WW7-9: its towns near not yet known - its visitors wait with them
   const D0 = day * DAY_MIN + DAY_START_MIN, D1 = D0 + DAY_MIN;
   const out = [];
   let pending = false;
@@ -1323,6 +1325,7 @@ const firstMinute = (a, b, ok) => {
  * @returns {{ res: Resident, trip: Trip, inT: number, outT: number, yaw: number, dock: boolean }[] | undefined}
  */
 export function innGuestsOf(inn, day, world, o) {
+  if (world.waiting?.(inn)) return undefined;   // WW7-9: its towns near not yet known
   const D0 = day * DAY_MIN + DAY_START_MIN, D1 = D0 + DAY_MIN;
   const out = [];
   const seen = new Set();
@@ -1506,7 +1509,8 @@ export const DEEP_REMAINS_MIN = 3 * DAY_MIN;
 export function fallenIn(dungeon, t, world, o) {
   /** @type {Map<string, { key: string, res: Resident, trip: Trip, t: number }>} */
   const found = new Map();
-  let pending = false;
+  let pending = !!world.waiting?.(dungeon);   // WW7-9: its towns near not yet known - pending, and none read
+  if (pending) return { remains: [], pending };
   for (const town of world.townsNear(dungeon.px ?? 0, dungeon.py ?? 0, TRIP_REACH_PX)) {
     // a trip is its town's within a day of its end: read back over the days the remains lie
     for (let back = 0; back * DAY_MIN <= DEEP_REMAINS_MIN + DAY_MIN; back++) {
@@ -1533,7 +1537,8 @@ export function fallenIn(dungeon, t, world, o) {
  */
 export function diversAt(dungeon, t, world, o) {
   const divers = [];
-  let pending = false;
+  let pending = !!world.waiting?.(dungeon);   // WW7-9: its towns near not yet known - pending, and none read
+  if (pending) return { divers, pending };
   for (const town of world.townsNear(dungeon.px ?? 0, dungeon.py ?? 0, TRIP_REACH_PX)) {
     const trips = townTrips(town, t, world, o);
     if (trips === undefined) { pending = true; continue; }
@@ -1556,7 +1561,8 @@ export function diversAt(dungeon, t, world, o) {
 export function divesIn(dungeon, t0, t1, world, o) {
   /** @type {Map<string, Trip>} */
   const found = new Map();
-  let pending = false;
+  let pending = !!world.waiting?.(dungeon);   // WW7-9: its towns near not yet known - pending, and none read
+  if (pending) return { dives: [], pending };
   for (const town of world.townsNear(dungeon.px ?? 0, dungeon.py ?? 0, TRIP_REACH_PX)) {
     for (let back = 0; t1 - back * DAY_MIN >= t0 - DAY_MIN; back++) {
       const trips = townTrips(town, t1 - back * DAY_MIN, world, o);

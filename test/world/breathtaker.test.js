@@ -276,7 +276,7 @@ test('CYRODIIL-WATERS with ARENA2: every river runs down to its water - its surf
   }
 });
 
-test('CYRODIIL-WATERS with ARENA2: no water reaches a capital - no slice of one, nor a pixel round it (the Imperial City\'s 7 x 7 on its isle in Lake Rumare - its lake world/imperialCity.js IMPERIAL.lake past its isle, the trace\'s own water round that) - nor a place past the Bay\'s pixel (mutants: a river laid through a town)', { skip }, async () => {
+test('CYRODIIL-WATERS with ARENA2: no water reaches a capital - no slice of one, nor a pixel round it (the Imperial City\'s 25 x 25 - PIN MOVED, IC-GRAND; TS5\'s 7 x 7 - on its isle in Lake Rumare - its lake world/imperialCity.js IMPERIAL.lake past its isle, the trace\'s own water round that) - nor a place past the Bay\'s pixel (mutants: a river laid through a town)', { skip }, async () => {
   const { law } = await world();
   const TC = await import('../../src/world/tamrielCapitals.js');
   const AP = await import('../../src/world/arenaPlaces.js');
@@ -296,7 +296,9 @@ test('CYRODIIL-WATERS with ARENA2: no water reaches a capital - no slice of one,
       assert.ok(d > IMPERIAL.lake, `${r.key}'s valley ${d.toFixed(0)} m from the city's middle, inside its lake (${IMPERIAL.lake} m)`);
     }
   }
-  assert.ok(lakeR < 3.5, 'the city\'s lake inside its span');
+  // PIN MOVED (IC-GRAND, bible/03-World/Arena-Provinces.md IC-GRAND): the span's half its own - 12.5 pixels at twenty-five
+  // (TS5's 3.5 at seven), the lake's far shore 10 km (12.2 pixels)
+  assert.ok(lakeR < TC.capitalDims(TC.CAPITALS.find((c) => c.key === 'imperial-city')).w / 2, 'the city\'s lake inside its span');
   let n = 0;
   for (const key of AP.arenaPixels().byPixel.keys()) { const [x, y] = key.split(',').map(Number); assert.ok(!touched(x, y), `a place's pixel ${key}`); n++; }
   assert.ok(n > 200, `the places stand (${n})`);

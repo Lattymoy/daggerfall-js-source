@@ -405,7 +405,8 @@ arcs. Online only: offline there is no town economy, and the exchange and the la
   made once off the map) adds TOWN_SEA_LANE (2), TOWN_SEA_LANES_MAX (3) of them at most - a busy port +6, a world term
   as the size and the cycle are, the same for every client. The host counts them once the lanes stand
   (`scenes/townEconHost.js` lanesAt; BOOT-TDZ II: before, the map unread or the lanes' bindings not yet declared, it
-  answers none and asks again). The card says "Its harbour brings trade." where no raid, Edict or players' share is
+  answers none and asks again). WW7-10 (`03-World/World-Wide.md`): the world's lanes, counted again as they move - a port
+  past the Bay counts its lanes past the Bay and across the edge, a Bay port the Bay's alone (its economy every client's). The card says "Its harbour brings trade." where no raid, Edict or players' share is
   nearer (`townReasonLine`).
 - **The exchange at its town's prices** (`systems/naval/tradeGoods.js` exchangeOf's `town`; `townEconLaw.js`
   townExchangeFactors): what the port's exchange sells a captain at the town's asking factor, what it pays at its paying
@@ -446,7 +447,8 @@ arcs. Online only: offline there is no town economy, and the exchange and the la
   the lanes' ships; the captain's ledger.
 - **Pinned**: `test/systems/naval/townecon_sea.test.js` (5: the law, the exchange, no loop out of it, the harbour office,
   the host module), the dealing's claim in `test/server/townecon_service.test.js` and its book in
-  `test/net/townecon_client.test.js`; `node tools/mutate.mjs tools/mutants/townecon4.json`: 28 mutants, 28 dead.
+  `test/net/townecon_client.test.js`; `node tools/mutate.mjs tools/mutants/townecon4.json`: 28 mutants, 28 dead (27 since
+  WW7-10 retired TOWNECON4-host-lanes-cached-empty with the guard it mutated: `03-World/World-Wide.md` WW7-10).
 
 ## 9. AUDIT TOWN-ECON 2 (2026-10-18)
 

@@ -422,11 +422,12 @@
   {
     "name": "AUDIT-TESA-A6-4-canals-inland",
     "file": "src/world/tamrielCapitals.js",
-    "old": "const blockNames = capitalBlockNames(plan, k, cap.shore ? ctx.names : dryKinds(ctx.names, ctx.blockOf), cap.blocks,",
-    "new": "const blockNames = capitalBlockNames(plan, k, ctx.names, cap.blocks,",
+    "old": "capitalBlockNames(plan, k, cap.shore ? ctx.names : dryKinds(ctx.names, ctx.blockOf), (cell) => ownBlockOf(cap, cell),",
+    "new": "capitalBlockNames(plan, k, ctx.names, (cell) => ownBlockOf(cap, cell),",
     "tests": [
       "test/audit_tesa.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (IC-GRAND): the own blocks a law of a code (ownBlockOf) where they were cap.blocks."
   },
   {
     "name": "AUDIT-TESA-A6-4-puddle-a-canal",

@@ -646,7 +646,8 @@ test('AUDIT BRANCH (WoD) m4: a sweep while a rebuild is in flight is heard - the
   h.sweep(100, 100);   // a load at the same spot, the rebuild still in flight
   assert.equal(h.publish(100, 100, [[10, 5, 10]]).wodSpawners[0].spawner.active, true, 'fresh, as ClearStreamingWorld re-promotes');
   assert.doesNotMatch(WORLD, /const carried = wodCarry\.get\(key\) \?\? null;   \/\/ WOD3\/WOD4: what a rebuild/, 'no build reads the carry at its start');
-  assert.match(WORLD, /    const wodKept = adoptWodCarry\(key, wodSpawners, privateersHold\);\n    const wodLife = wodKept\.life \?\? \{\};[^\n]*\n    if \(!wodKept\.life\) wodForgetPeerSites\(key\);[^\n]*\n    if \(_building\.get\(key\) === made\) _building\.delete\(key\);[^\n]*\n    built\.set\(key, \{/, 'nothing awaited between the adoption and built.set (BUILD-FAIL1\'s hand-over and WOD7\'s forget are the lines between)');
+  // PIN MOVED (MID-RING, found at IC-GRAND's merge of the streams' head): the pixel's fade stamped between, as synchronous
+  assert.match(WORLD, /    const wodKept = adoptWodCarry\(key, wodSpawners, privateersHold\);\n    const wodLife = wodKept\.life \?\? \{\};[^\n]*\n    if \(!wodKept\.life\) wodForgetPeerSites\(key\);[^\n]*\n(?:    if \(isEnhanced\(\) && !midRingDisabled\(\)\) stampPixelFade\([^\n]*\n)?    if \(_building\.get\(key\) === made\) _building\.delete\(key\);[^\n]*\n    built\.set\(key, \{/, 'nothing awaited between the adoption and built.set (BUILD-FAIL1\'s hand-over, WOD7\'s forget and MID-RING\'s fade are the lines between)');
 });
 
 test('AUDIT BRANCH (WoD) m2: a rebuild of a pixel that had a site re-reads its grass - Basic Roads can forbid a site stood before its data landed', () => {

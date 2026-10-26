@@ -324,12 +324,13 @@
   {
     "name": "P7-places-unfiltered",
     "file": "src/scenes/livingWorld/livingIndex.js",
-    "old": "        if (livingSide(p) !== LIVING_SIDES.beyond) continue;\n",
+    "old": "      if (livingSide(p) !== side) continue;\n",
     "new": "",
     "tests": [
-      "test/world/worldWide/ww7_people.test.js"
+      "test/world/worldWide/ww7_people.test.js",
+      "test/world/worldWide/ww7_cross.test.js"
     ],
-    "note": "Re-aimed by content (WW7-7): a pixel past the Bay has the land past the Bay's places alone near it (its listed bins), never the Bay's."
+    "note": "Re-aimed by content (WW7-7; WW7-9): each side's listed places in its own bins (livingIndex.js binsOf) - a pixel past the Bay has the land past the Bay's own, the Bay's only across the edge."
   },
   {
     "name": "P7-bands-past-the-bay",
@@ -344,13 +345,13 @@
   {
     "name": "P7-lanes-from-past-the-bay",
     "file": "src/scenes/livingWorld/livingLanes.js",
-    "old": "return w && to && livingSide(to) === livingSide(town) ? [{ to, len: w.len, key: l.key }] : [];",
+    "old": "return w && to && (livingSide(to) === livingSide(town) || !!l.cross) ? [{ to, len: w.len, key: l.key }] : [];",
     "new": "return w && to ? [{ to, len: w.len, key: l.key }] : [];",
     "tests": [
       "test/world/worldWide/auditww.test.js",
       "test/world/worldWide/ww7_people.test.js"
     ],
-    "note": "Re-aimed by content (WW7-7): a town past the Bay sails its lanes, each to a port of its own side of the Bay's edge."
+    "note": "Re-aimed by content (WW7-7; WW7-9): a town's lanes run to a port of its own side of the Bay's edge, or across it on a crossing lane - never another lane across."
   },
   {
     "name": "P7-reach-the-bays",

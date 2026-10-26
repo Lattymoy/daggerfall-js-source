@@ -45,7 +45,8 @@ export function createLivingLanes({ lanes, way, townOfPort, sailorsOf, generatio
     count,
     /** A port town's lanes `[{ to, len, key }]` - the far port's town and the lane's length. WW7-7: wherever the town
      *  stands (a town past the Bay sails its travellers on the lanes past it, as a Bay port's on the Bay's), each lane's far
-     *  town on the town's own side of the Bay's edge. */
+     *  town on the town's own side of the Bay's edge - WW7-9: or across it on a lane that crosses it (scenes/naval/
+     *  worldLanes.js crossLanes: made only where the land past the Bay stands, so a client without it sails the Bay's). */
     from(town) {
       const n = fresh();
       let got = from.get(town.mapId);
@@ -53,7 +54,7 @@ export function createLivingLanes({ lanes, way, townOfPort, sailorsOf, generatio
         const id = portIdOf(town);   // WW3: a port's one number - the Bay's masked id, the world's key past it
         got = n.filter((l) => l.a.id === id || l.b.id === id).flatMap((l) => {
           const w = way(l), to = townOfPort(l.a.id === id ? l.b.id : l.a.id);
-          return w && to && livingSide(to) === livingSide(town) ? [{ to, len: w.len, key: l.key }] : [];   // WW7-7: past the Bay as on it - a lane to a port of its own side
+          return w && to && (livingSide(to) === livingSide(town) || !!l.cross) ? [{ to, len: w.len, key: l.key }] : [];   // WW7-7: past the Bay as on it - a lane to a port of its own side; WW7-9: or one across the edge
         });
         from.set(town.mapId, got);
       }

@@ -10,12 +10,12 @@ import { join } from 'node:path';
 import { createWorldPlaces } from '../../../src/world/worldWide/worldPlaces.js';
 import { createLivingIndex, livingSide, LIVING_SIDES } from '../../../src/scenes/livingWorld/livingIndex.js';
 import { createLivingLanes } from '../../../src/scenes/livingWorld/livingLanes.js';
-import { createLivingTrips, pastTheBayEpoch } from '../../../src/scenes/livingWorld/livingTrips.js';
+import { createLivingTrips } from '../../../src/scenes/livingWorld/livingTrips.js';
 import { createWayBook, WAYS_PER_FRAME } from '../../../src/systems/livingWorld/ways.js';
 import { createBeyondWays, BEYOND_TILE, BEYOND_TILES_PER_FRAME, BEYOND_NEAR_PX, BEYOND_FAR_PX, BEYOND_NEAR_MARGINS, BEYOND_FAR_MARGINS } from '../../../src/systems/livingWorld/beyondWays.js';
 import { ownTrip, roadChoices, templesNear, townTrips } from '../../../src/systems/livingWorld/trips.js';
 import { planRoute } from '../../../src/systems/travel/travelRoute.js';
-import { beyondKey, setArenaRoads, arenaRoadsVersion } from '../../../src/world/arenaRoads.js';
+import { beyondKey, setArenaRoads } from '../../../src/world/arenaRoads.js';
 import { DIR } from '../../../src/world/road/roadNetwork.js';
 import { areaOfDistrict, districtOf, DISTRICT_PX, WORLD_PIXEL_SPAN, BAY_AREA_COUNT, THEATRE_KEYS } from '../../../src/world/worldWide/worldGrid.js';
 import { inBay } from '../../../src/world/tamriel/tamrielFrame.js';
@@ -83,14 +83,17 @@ test('WW7-7 THE INDEX PAST THE BAY: a square past the Bay is none while the road
   const g0 = w.idx.generation();
   w.setEpoch(1);
   assert.notEqual(w.idx.generation(), g0, 'the roads laid: the generation moves');
-  const near = w.idx.townsNear(500, -3, 6).map((t) => t.mapId);
+  // PIN MOVED (WW7-9, bible/03-World/World-Wide.md): the square's own side the walk's, and across the edge the Bay's in it
+  const all = w.idx.townsNear(500, -3, 6).map((t) => t.mapId), near = all.filter((id) => id !== 10 && id !== 11);
   assert.deepEqual(w.asked.sort(), ['496,-8', '501,-9', '502,-5'], 'the provider asked at the roads\' places alone - no walk of the square');
   const walk = w.places.near(500, -3, 6).filter((p) => !inBay(p.px, p.py) && populated(p.type)).map((p) => p.mapId).sort((a, b) => a - b);
   assert.deepEqual(near, walk, 'the walk\'s answer, place for place');
   assert.deepEqual(near, [20, 21, 3000 + 502 * 7 + 65, 3000 + 496 * 7 + 104].sort((a, b) => a - b), 'the listed and the rolled');
-  assert.ok(!near.includes(10) && !near.includes(11), 'never the Bay\'s, though they lie within the square');
-  assert.deepEqual(w.idx.dungeonsNear(500, -3, 8).map((d) => [d.dungeonType, d.dungeon]), [[10, true]], 'a lair the roads rolled: a dive\'s');
-  assert.deepEqual(w.idx.townsNear(500, 1, 6).map((t) => t.mapId), [10, 11], 'a square of the Bay: the Bay\'s alone, the land past the edge never');
+  assert.deepEqual(all.filter((id) => id === 10 || id === 11), [10, 11], 'and the Bay\'s within the square, across the edge');
+  assert.deepEqual(w.idx.dungeonsNear(500, -3, 8).map((d) => [d.dungeonType, d.dungeon]), [[4, true], [10, true]], 'a lair the roads rolled: a dive\'s (PIN MOVED, WW7-9: and the Bay\'s keep across the edge)');
+  // PIN MOVED (WW7-9, bible/03-World/World-Wide.md): a square of the Bay by the edge holds the towns past it once the land
+  // there is laid (the land past the Bay standing - with none, the Bay's alone: ww7_cross.test.js)
+  assert.deepEqual(w.idx.townsNear(500, 1, 6).map((t) => t.mapId), [10, 11, 20, 3000 + 502 * 7 + 65], 'a square of the Bay: the Bay\'s, and the land past the edge\'s in it');
   assert.deepEqual(w.idx.dungeonsNear(500, 1, 4).map((d) => d.mapId), [12]);
   // the roads laid again: a place gone from them - the books made again
   const kept = w.idx.townsNear(500, -3, 6);
@@ -98,7 +101,7 @@ test('WW7-7 THE INDEX PAST THE BAY: a square past the Bay is none while the road
   w.say(w.roadsPlaces.filter((q) => q.x !== 502));
   assert.equal(w.idx.townsNear(500, -3, 6), kept, 'the same epoch, the same book');
   w.setEpoch(2);
-  assert.deepEqual(w.idx.townsNear(500, -3, 6).map((t) => t.mapId), [20, 21, 3000 + 496 * 7 + 104], 'laid again: asked again');
+  assert.deepEqual(w.idx.townsNear(500, -3, 6).map((t) => t.mapId), [10, 11, 20, 21, 3000 + 496 * 7 + 104], 'laid again: asked again');
 });
 
 test('WW7-7 A PROVINCE\'S DISTRICT\'S BANDS: an area past the Bay\'s towns are its district\'s by the roads\' places, its own area\'s alone (a district a border cuts is two areas), in map-id order - none while the roads are unsaid; a Bay region\'s as before (mutants: the area\'s filter; the district\'s arm)', () => {
@@ -136,8 +139,10 @@ test('WW7-7 THE WAY BOOK PAST THE BAY: a pair past the Bay waits while the roads
   assert.deepEqual(ab.pixels, [{ x: 1200, y: -40 }, { x: 1210, y: -45 }], 'from the town asked first');
   assert.deepEqual(book.wayOf(B, A).pixels, [{ x: 1210, y: -45 }, { x: 1200, y: -40 }]);
   assert.equal(farAsked.length, 1, 'kept');
-  assert.equal(book.wayOf(Bay, A), null, 'over the edge: none');
-  assert.equal(book.wayOf(A, Bay), null);
+  // PIN MOVED (WW7-9): over the edge the window planner's too, across it (ww7_cross.test.js) - never the Bay's planner's
+  assert.ok(book.wayOf(Bay, A), 'over the edge: across');
+  assert.deepEqual(farAsked.at(-1), [990, 10, 1200, -40], 'the lower id first');
+  farAsked.pop();
   assert.deepEqual(bayAsked, [], 'nor the Bay\'s planner asked of it');
   book.wayOf(Bay, { mapId: 2, px: 995, py: 12 });
   assert.equal(bayAsked.length, 1, 'a Bay pair the Bay\'s planner\'s');
@@ -264,30 +269,23 @@ test('WW7-7 THE TRIPS WAIT: a town the world says waits answers every trip undef
 
 // ─── 5. THE TRIPS' WORLD (scenes/livingWorld/livingTrips.js) ──────
 
-test('WW7-7 THE LAND PAST THE BAY\'S WORD: the roads past the Bay\'s epoch is their layer\'s version once none is still to land and the layer stands, else 0; the trips\' world waits a town past the Bay while it is 0 and none of the Bay\'s; its generation the index\'s (mutants: the pending; the layer; the wait\'s side; the wait\'s word)', () => {
-  assert.equal(pastTheBayEpoch(null, () => ({}), () => 9), 0, 'no land past the Bay');
-  assert.equal(pastTheBayEpoch({ pending: () => 2 }, () => ({}), () => 9), 0, 'a region still to land');
-  assert.equal(pastTheBayEpoch({ pending: () => 0 }, () => null, () => 9), 0, 'no layer yet');
-  assert.equal(pastTheBayEpoch({ pending: () => 0 }, () => ({}), () => 9), 9, 'whole');
-  let pending = 3;
+test('WW7-7 THE LAND PAST THE BAY\'S WORD: the trips\' world waits a town past the Bay while the roads past the Bay about it are unlaid, never a Bay town deep in the Bay; its generation the index\'s, moving as the roads are laid again (PIN MOVED, WW7-9: the word the roads\' host\'s own, a region at a time - its build and its regions landed, ww7_cross.test.js; the whole build\'s epoch retired) (mutants: the wait\'s side; the wait\'s word)', () => {
+  let build = 0, laid = false;
   setArenaRoads(null);
-  const trips = createLivingTrips({ places: createWorldPlaces(), populated, peopleAt: () => 0, maps: { getClimateIndex: () => 0 }, woods: { getHeightMapValue: () => 0 }, roads: () => null, pastTheBay: { pending: () => pending } });
-  const far = { mapId: 1, px: 1200, py: -40 }, bay = { mapId: 2, px: 200, py: 40 };
-  assert.deepEqual([trips.world.waiting(far), trips.world.waiting(bay)], [true, false], 'unsaid: the town past the Bay waits, the Bay\'s never');
+  const trips = createLivingTrips({ places: createWorldPlaces(), populated, peopleAt: () => 0, maps: { getClimateIndex: () => 0 }, woods: { getHeightMapValue: () => 0 }, roads: () => null,
+    pastTheBay: { build: () => build, landedIn: (x0, y0, x1, y1) => (x0 >= 0 && y0 >= 0 && x1 <= 1000 && y1 <= 500) || (!!build && laid), onRegion: () => {} } });
+  const far = { mapId: 1, px: 1200, py: -40 }, bay = { mapId: 2, px: 200, py: 240 };
+  assert.deepEqual([trips.world.waiting(far), trips.world.waiting(bay)], [true, false], 'unlaid: the town past the Bay waits, the Bay\'s never');
   const g = trips.world.generation();
-  setArenaRoads({ roads: new Map(), tracks: new Map() });
-  pending = 0;
-  try {
-    assert.equal(trips.world.waiting(far), false, 'whole: it sets out');
-    assert.notEqual(trips.world.generation(), g, 'the generation moves with the word');
-    assert.equal(trips.world.generation, trips.index.generation);
-    assert.ok(arenaRoadsVersion() > 0);
-  } finally { setArenaRoads(null); }
+  build = 1; laid = true;
+  assert.equal(trips.world.waiting(far), false, 'laid: it sets out');
+  assert.notEqual(trips.world.generation(), g, 'the generation moves with the build');
+  assert.equal(trips.world.generation, trips.index.generation);
   const w = hostText('src/scenes/world.js');
   assert.match(w, /, marketBandOf: townEcon\.marketBandOf, pastTheBay: _tamrielRoads \}\);/, 'the host hands the roads past the Bay\'s host');
   assert.ok(w.indexOf('const { _tamrielRoads,') < w.indexOf('= createLivingTrips({'), 'made before it');
   assert.doesNotMatch(w, /livingRoams|createLivingIndex\(|createWayBook\(/, 'the host builds neither the index nor the ways');
-  assert.match(rd('src/scenes/livingWorld/livingTrips.js'), /const index = createLivingIndex\(\{ places, populated, peopleAt, beyond: pastTheBay \? \{ epoch, placesIn: pastBayPlacesIn \} : null \}\);/);
+  assert.match(rd('src/scenes/livingWorld/livingTrips.js'), /const index = createLivingIndex\(\{ places, populated, peopleAt, beyond: pastTheBay \? \{ epoch, placesIn: pastBayPlacesIn, landedIn, landed: \(\) => landed \} : null \}\);/);   // PIN MOVED (WW7-9)
 });
 
 test('WW7-7 THE ROLL PAST THE BAY READS A ROADS\' PLACE AS DRY: a pixel the roads past the Bay rolled a place on stands on dry ground without its plateau summed again (the same answer: the roads\' workers rolled it on that plateau) (mutant: the vouch dropped)', () => {
