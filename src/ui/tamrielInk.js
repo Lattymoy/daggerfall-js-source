@@ -33,7 +33,7 @@ import {
 import { pictureToBay, bayToPicture, inBay, BAY_W, BAY_H, tamrielFit, tamrielFrameInBay } from '../world/tamriel/tamrielFrame.js';
 // TAMRIEL3: the picture's own land where the world host traced it (world/tamriel/tamrielLand.js) - the coast, the borders and
 // the provinces' places come off the trace, the authored shape stands where there is none
-import { tamrielTrace, tamrielLandVersion, provinceKeyAt, PROVINCE_OF_ID } from '../world/tamriel/tamrielLand.js';
+import { tamrielTrace, tamrielLandVersion, provinceKeyAt, PROVINCE_OF_ID, onTamrielTrace } from '../world/tamriel/tamrielLand.js';
 // TESA1: the places past the Bay where the trace stands them (world/arenaPlaces.js; TESA12: the port's own)
 import { arenaPlaces, arenaPlacesVersion, arenaPixels, arenaStanding } from '../world/arenaPlaces.js';
 import { capitalPin, capitalsStanding, capitalsVersion, capitalPlaceId, CAPITALS } from '../world/tamrielCapitals.js';   // TESA10d: a capital's pixel on the map, Arena or none; WW7-6: its seat's key
@@ -51,9 +51,9 @@ import { HUB_CAPITALS } from '../systems/region/regionHubs.js';   // REGION-LINE
 import { simplifyChain } from './overworldModel.js';   // TAMRIEL3: the coast's chain thinned as the overworld's are
 import { stampSquare, coveragePixels, clearCoverage, penRgb } from './inkRaster.js';   // MAP-WHOLE: the continent's dots rasterised by hand
 import { labelPoint } from './provinceMap.js';   // TAMRIEL3: a province's name hangs where the chargen's map hangs it
-import { zoneLineOf } from '../systems/wild/cyrodiilZone.js';   // ZONE-LINE: Cyrodiil's outline is the zone's law's to draw
+import { cyrodiilMask, zoneLineSteps } from '../systems/wild/cyrodiilZone.js';   // ZONE-LINE: Cyrodiil's outline is the zone's law's to draw
 import { watersInk, watersInkVersion } from '../world/tamriel/watersInk.js';   // MAP-WATERS: stream G's rivers and lakes past the Bay (the worker's copy), inked
-import { lawLines, linkPieces, segKey } from '../world/tamriel/tamrielLines.js';   // SMOOTH-LAND: the land's own lines
+import { lawLines, linkSteps, segKey, drain } from '../world/tamriel/tamrielLines.js';   // SMOOTH-LAND: the land's own lines
 
 /** @typedef {{ x: number, y: number }} Pt */
 /** TESA13: the host's atlas's answer (world/tamrielAtlas.js placesIn) - the places on a rectangle's pixels. */
@@ -387,22 +387,83 @@ export function chaikinCapped(chain, passes = SMOOTH_PASSES, maxCut = Infinity) 
  *  TAMRIEL4's picture contour (contourSegments, chaikinCapped) and its staircase borders are no longer drawn.
  *  @param {{ w: number, h: number, land: Uint8Array, province: Uint8Array }} trace */
 export function tracedChains(trace) {
+  return drain(tracedSteps(trace));
+}
+/** AUDIT RELEASE R4-7: the traced chains a trace, its fit, its land's version and the zone's mask made them for - one, so
+ *  the held map's open takes what the idle job made. @type {WeakMap<object, { key: string, mask: any, value: any }>} */
+const _traced = new WeakMap();
+/**
+ * tracedChains as steps (AUDIT RELEASE R4-7): the law's walk a picture square a step (tamrielLines.js steps), the zone's
+ * line (cyrodiilZone.js zoneLineSteps), the linking (linkSteps), a chain's thinning and a province's label a step each -
+ * the same chains, kept for the trace (`_traced`), whether walked whole or a budget at a time.
+ * @param {{ w: number, h: number, land: Uint8Array, province: Uint8Array }} trace
+ * @returns {Generator<undefined, { coast: Pt[][], borders: Pt[][], labels: Array<{ key: string, px: number, py: number }> }, unknown>}
+ */
+export function* tracedSteps(trace) {
+  const f = tamrielFit(), key = `${f.ox}:${f.oy}:${f.ppu}:${tamrielLandVersion()}`, zoneMask = cyrodiilMask();
+  const kept = _traced.get(trace);
+  if (kept && kept.key === key && kept.mask === zoneMask) return kept.value;
   const { w, h, land, province } = trace;
-  const lines = lawLines(trace), zone = zoneLineOf(trace);
+  const lines = lawLines(trace);
+  yield* lines.steps();
+  const zone = zoneMask ? yield* zoneLineSteps(trace, zoneMask) : null;
   const { segs } = lines.all();
-  const own = (/** @type {'coast'|'border'} */ kind) => linkPieces(segs.filter((s) => s.kind === kind && !zone?.keys.has(segKey(s))), lines.points).map((c) => simplifyChain(c, INK_THIN));
-  const coast = own('coast'), borders = own('border');
+  /** @param {'coast'|'border'} kind */
+  const own = function* (kind) {
+    const chains = yield* linkSteps(segs.filter((s) => s.kind === kind && !zone?.keys.has(segKey(s))), lines.points);
+    const out = [];
+    for (const c of chains) { out.push(simplifyChain(c, INK_THIN)); if (c.length > 256) yield; }
+    return out;
+  };
+  const coast = yield* own('coast'), borders = yield* own('border');
   const labels = [];
-  for (const [id, key] of Object.entries(PROVINCE_OF_ID)) {
+  for (const [id, pkey] of Object.entries(PROVINCE_OF_ID)) {
     const mask = new Uint8Array(w * h);
     let n = 0;
     for (let i = 0; i < mask.length; i++) if (land[i] && province[i] === Number(id)) { mask[i] = 1; n++; }
     if (!n) continue;
     const [lx, ly] = labelPoint(mask, w, h);
-    labels.push({ key, px: lx, py: ly });
+    labels.push({ key: pkey, px: lx, py: ly });
+    yield;
   }
-  return { coast: zone ? coast.concat(zone.coast) : coast, borders: zone ? borders.concat(zone.borders) : borders, labels };
+  const value = { coast: zone ? coast.concat(zone.coast) : coast, borders: zone ? borders.concat(zone.borders) : borders, labels };
+  _traced.set(trace, { key, mask: zoneMask, value });
+  return value;
 }
+
+/** AUDIT RELEASE R4-7: how many steps of tracedSteps the idle job takes in one slice of the page's idle time - each step
+ *  a picture square's map squares, LINK_STEP pieces, a chain's thinning or a province's label (some milliseconds at
+ *  most), so a slice stays well under a frame's worth of 100 ms. */
+export const TRACED_SLICE_STEPS = 24;
+/** The idle job's scheduler: `requestIdleCallback` on a page, none in node (a test sets its own; null stops it). */
+let _schedule = /** @type {((run: () => void) => void)|null} */ (typeof globalThis.requestIdleCallback === 'function' ? (run) => globalThis.requestIdleCallback(() => run()) : null);
+export function setTracedScheduler(fn) { _schedule = fn; }
+/**
+ * AUDIT RELEASE R4-7: THE HELD MAP'S LINES MADE IN IDLE TIME. When a trace lands on the page (tamrielLand.js
+ * onTamrielTrace), its traced chains - the continent's walk, Cyrodiil's line, the linking and thinning - are made
+ * TRACED_SLICE_STEPS steps a slice of idle time, into the one keep tracedChains reads; the map's first open then takes
+ * them made. A trace that moves on stops the job (the next one starts its own). Returns the job's state for its pins.
+ * @param {{ w: number, h: number, land: Uint8Array, province: Uint8Array }} trace
+ */
+export function startTracedJob(trace) {
+  const job = { slices: 0, steps: 0, done: false };
+  if (!_schedule || !trace) return job;
+  /** @type {Generator<undefined, any, unknown>|null} */
+  let gen = null;
+  const slice = () => {
+    if (tamrielTrace() !== trace) return;   // another trace landed: its own job makes its chains
+    gen ??= tracedSteps(trace);
+    job.slices++;
+    for (let n = 0; n < TRACED_SLICE_STEPS; n++) {
+      job.steps++;
+      if (gen.next().done) { job.done = true; return; }
+    }
+    _schedule?.(slice);
+  };
+  _schedule(slice);
+  return job;
+}
+onTamrielTrace((trace) => { if (trace) startTracedJob(trace); });
 /** SMOOTH-LAND: how far (map pixels) the ink's own lines are thinned - a quarter of a pixel, so a line stands on the law. */
 export const INK_THIN = 0.25;
 

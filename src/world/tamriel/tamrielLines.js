@@ -175,8 +175,10 @@ export function lawLines(trace) {
   };
   /** @type {{ segs: Seg[], squares: Square[] }|null} */
   let whole = null;
-  const all = () => {
-    if (whole) return whole;
+  /** AUDIT RELEASE R4-7: the continent's walk as steps - one picture square of mixed centres a step (its map squares
+   *  labelled and made, some (ppu + 3)^2 of them), so a caller walks it a budget at a time (ui/tamrielInk.js's idle
+   *  job) or whole (`all`); one walk either way, its result the same. */
+  function* walkSteps() {
     /** @type {Square[]} */
     const squares = [];
     const seen = new Set();
@@ -201,15 +203,31 @@ export function lawLines(trace) {
           }
           [up, down] = [down, up];
         }
+        yield;
       }
     }
     whole = { squares, segs: squares.flatMap((s) => s.segs) };
-    return whole;
+  }
+  /** @type {Generator<undefined, void, unknown>|null} */
+  let walker = null;
+  /** The walk's steps, one generator a trace and fit: whoever advances it advances it for all. */
+  const steps = () => (walker ??= walkSteps());
+  const all = () => {
+    if (!whole) drain(steps());
+    return /** @type {{ segs: Seg[], squares: Square[] }} */ (whole);
   };
-  const value = { label, square, points, all };
+  const value = { label, square, points, all, steps, done: () => whole !== null };
   _lines.set(trace, { key, value });
   return value;
 }
+
+/** AUDIT RELEASE R4-7: run a generator of steps to its end and hand back what it returns. @template T
+ *  @param {Generator<unknown, T, unknown>} gen @returns {T} */
+export function drain(gen) {
+  for (;;) { const r = gen.next(); if (r.done) return r.value; }
+}
+/** AUDIT RELEASE R4-7: how many pieces the linking walks between two steps. */
+export const LINK_STEP = 2048;
 
 /** A piece's own key (its two ends, in order). @param {Seg} s */
 export const segKey = (s) => (s.a < s.b ? `${s.a}|${s.b}` : `${s.b}|${s.a}`);
@@ -221,9 +239,18 @@ export const segKey = (s) => (s.a < s.b ? `${s.a}|${s.b}` : `${s.b}|${s.a}`);
  * @param {Seg[]} segs @param {Map<number, Pt>} points @returns {Pt[][]}
  */
 export function linkPieces(segs, points) {
+  return drain(linkSteps(segs, points));
+}
+/** linkPieces as steps (AUDIT RELEASE R4-7): a step every LINK_STEP pieces indexed or walked - the same chains.
+ *  @param {Seg[]} segs @param {Map<number, Pt>} points @returns {Generator<undefined, Pt[][], unknown>} */
+export function* linkSteps(segs, points) {
   /** @type {Map<number, number[]>} */
   const at = new Map();
-  segs.forEach((s, i) => { for (const id of [s.a, s.b]) { const l = at.get(id); if (l) l.push(i); else at.set(id, [i]); } });
+  for (let i = 0; i < segs.length; i++) {
+    const s = segs[i];
+    for (const id of [s.a, s.b]) { const l = at.get(id); if (l) l.push(i); else at.set(id, [i]); }
+    if ((i + 1) % LINK_STEP === 0) yield;
+  }
   const used = new Uint8Array(segs.length), chains = [];
   const walk = (/** @type {number} */ i, /** @type {number} */ from) => {
     const ids = [from];
@@ -239,9 +266,17 @@ export function linkPieces(segs, points) {
     }
     return ids.map((id) => ({ ...(/** @type {Pt} */ (points.get(id))) }));
   };
+  let walked = 0;
+  const run = (/** @type {number} */ i, /** @type {number} */ from) => { const c = walk(i, from); chains.push(c); walked += c.length; };
   // the open runs first, from every end that is not a plain link (one piece, or three and more)
-  for (const [id, list] of at) if (list.length !== 2) for (const i of list) if (!used[i]) chains.push(walk(i, id));
+  for (const [id, list] of at) {
+    if (list.length !== 2) for (const i of list) if (!used[i]) run(i, id);
+    if (walked >= LINK_STEP) { walked = 0; yield; }
+  }
   // then the rings
-  for (let i = 0; i < segs.length; i++) if (!used[i]) chains.push(walk(i, segs[i].a));
+  for (let i = 0; i < segs.length; i++) {
+    if (!used[i]) run(i, segs[i].a);
+    if (walked >= LINK_STEP) { walked = 0; yield; }
+  }
   return chains;
 }

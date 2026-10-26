@@ -14,9 +14,9 @@ import {
   SMOOTH_LAND, PROVINCE_OF_ID,
 } from '../../src/world/tamriel/tamrielLand.js';
 import { setTamrielFit, pictureToBay, bayToPicture } from '../../src/world/tamriel/tamrielFrame.js';
-import { lawLines, linkPieces, squareEnds, segKey, LINE_BISECT } from '../../src/world/tamriel/tamrielLines.js';
-import { tracedChains, INK_THIN } from '../../src/ui/tamrielInk.js';
-import { cyrodiilMask, zoneLineOf } from '../../src/systems/wild/cyrodiilZone.js';
+import { lawLines, linkPieces, linkSteps, squareEnds, segKey, LINE_BISECT, LINK_STEP } from '../../src/world/tamriel/tamrielLines.js';
+import { tracedChains, tracedSteps, startTracedJob, setTracedScheduler, INK_THIN, TRACED_SLICE_STEPS } from '../../src/ui/tamrielInk.js';
+import { cyrodiilMask, zoneLineOf, ZONE_LINE_STEP } from '../../src/systems/wild/cyrodiilZone.js';
 import { wildInside } from '../../src/systems/wild/wildZone.js';
 import { authoredHeightByte } from '../../src/world/tamriel/tamrielGround.js';
 import { pictureSea } from '../../src/world/arenaPlaces.js';
@@ -321,6 +321,48 @@ test('SMOOTH-LAND a lane\'s mooring: a roadstead on the law\'s sea whose picture
   assert.deepEqual(moorCell(qx, qy, sea, native, (a, b) => !(b.x === 35.5 && b.z === 24.5)), [34, 25], 'the next where the nearest\'s leg crosses land');
   assert.equal(moorCell(12.5, 15.5, sea, native, () => true), null, 'no sea within reach');
   assert.deepEqual(moorCell(32.5, 13.5, sea, native, () => true), [32, 11], 'two cells off');
+});
+
+// AUDIT RELEASE R4-7 (bible/01-Overview/audits/Audit-Release-R4.md): the held map's first open held the page a second and
+// more for the continent's lines, Cyrodiil's line and the linking - now made in idle time as the trace lands
+test('SMOOTH-LAND (AUDIT RELEASE R4-7) the held map\'s lines in idle time: a trace landing on the page starts the job, which makes the traced chains TRACED_SLICE_STEPS steps a slice - byte for byte the whole walk\'s - into the keep the map\'s open then takes; a step\'s work bounded (a picture square\'s map squares, LINK_STEP pieces); a trace that moves on stops its job; no scheduler, no job (mutants: the job unheard; a slice the whole; the keep dropped; the walk\'s step, the linking\'s; the moved trace walked on)', () => {
+  assert.deepEqual([TRACED_SLICE_STEPS, LINK_STEP, ZONE_LINE_STEP], [24, 2048, 4096]);
+  const queue = [];
+  setTracedScheduler((run) => queue.push(run));
+  try {
+    const t = install();
+    assert.equal(queue.length, 1, 'the landing schedules the job');
+    let slices = 0;
+    while (queue.length) { queue.shift()(); slices++; }
+    assert.ok(slices > 5, `${slices} slices of idle time, not one`);
+    const made = tracedChains(tamrielTrace());
+    assert.equal(tracedChains(tamrielTrace()), made, 'the map\'s open takes what the job made');
+    assert.ok(lawLines(tamrielTrace()).done());
+    // byte for byte the whole walk's: the same arrays under a fresh trace object, walked whole
+    const whole = tracedChains({ w: t.w, h: t.h, land: t.land, province: t.province });
+    assert.equal(JSON.stringify(made), JSON.stringify(whole));
+    // a step's work: the walk's a picture square's map squares, its points no more than four a square of it
+    const fresh = { w: t.w, h: t.h, land: Uint8Array.from(t.land), province: Uint8Array.from(t.province) }, lines = lawLines(fresh), walk = lines.steps();
+    let steps = 0, most = 0;
+    for (;;) { const before = lines.points.size, r = walk.next(); if (r.done) break; steps++; most = Math.max(most, lines.points.size - before); }
+    assert.ok(steps > 100 && most <= 4 * (16 + 4) ** 2, `${steps} steps, the most points one made ${most}`);
+    const segs = lines.all().segs, link = linkSteps(segs, lines.points);
+    let linkYields = 0;
+    while (!link.next().done) linkYields++;
+    assert.deepEqual([segs.length, linkYields], [2369, 2], 'linking its 2,369 pieces in two steps - one in the index, one in the walk');
+    let traced = 0;
+    for (const g = tracedSteps({ ...fresh }); !g.next().done;) traced++;
+    assert.ok(traced > steps, 'the traced chains\' steps take the walk\'s');
+    // a trace that moves on: the first's job stops unwalked, the next's makes its own
+    const a = tamrielTrace(), jobA = startTracedJob(a);
+    install();
+    while (queue.length) queue.shift()();
+    assert.deepEqual([jobA.slices, jobA.done], [0, false], 'the moved trace\'s job never walked');
+    // no scheduler (node, or a page without idle callbacks): the landing starts nothing, the open walks whole
+    setTracedScheduler(null);
+    install();
+    assert.equal(queue.length, 0);
+  } finally { setTracedScheduler(null); }
 });
 
 // ── WITH ARENA2: THE FREEWARE'S OWN PICTURE ───────────────────────
