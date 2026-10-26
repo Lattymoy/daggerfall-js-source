@@ -185,17 +185,6 @@ export const FIRST_VISIT_COMPUTATIONS = Object.freeze({
 /** Every kept answer's pin, by its cache's name. */
 export const firstVisitPins = (root = ROOT) => Object.fromEntries(Object.entries(FIRST_VISIT_COMPUTATIONS).map(([name, c]) => [name, computationPin({ ...c, root })]));
 
-/** Every file a pin reads, absolute - what the dev server watches to serve the pins anew. */
-export function firstVisitPinFiles(root = ROOT) {
-  const out = new Set();
-  for (const c of Object.values(FIRST_VISIT_COMPUTATIONS)) {
-    const { seen, data } = computationReach({ ...c, root });
-    for (const k of seen.keys()) out.add(resolve(root, k.slice(0, k.indexOf('#'))));
-    for (const f of data) out.add(resolve(root, f));
-  }
-  return out;
-}
-
 if (isMain(import.meta.url)) {
   for (const [name, pin] of Object.entries(firstVisitPins())) console.log(`${name.padEnd(12)} ${pin}`);
 }

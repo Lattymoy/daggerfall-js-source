@@ -6,14 +6,12 @@
 // that keeps answers and yields a pin for each; a cache with no pin throws, never keys on undefined; no pin reads the
 // pins themselves; the pin moves with the code the answer comes from (a declaration a root reaches, across imports; a
 // shipped data file it reads) and with nothing else (a comment, a line break, a declaration no root reaches); it is the
-// same on every OS (CRLF and LF, either path separator); the dev server serves the pins anew when a file they read
-// changes; and writing an answer sweeps its scope's older keys, so the store does not grow across updates.
+// same on every OS (CRLF and LF, either path separator); the dev server computes the pins for each page load; and writing an answer sweeps its scope's older keys, so the store does not grow across updates.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync, rmSync, mkdirSync, readFileSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, sep } from 'node:path';
-import { EventEmitter } from 'node:events';
 import { fileURLToPath } from 'node:url';
 import { computationPin, computationReach, FIRST_VISIT_COMPUTATIONS, firstVisitPins } from '../../../tools/computationPin.mjs';
 import { pinsSource, firstVisitPinsPlugin, PINS_PATH } from '../../../scripts/firstVisitPins.mjs';
@@ -126,22 +124,13 @@ test('FIRST-VISIT REFRESH: the same pin on every OS - the same tokens with CRLF 
   } finally { lf.done(); crlf.done(); }
 });
 
-test('FIRST-VISIT REFRESH: the dev server serves the pins as the walk computes them, and anew when a file a pin reads changes - a dev edit is a new key, as an update is; another file\'s change leaves them (mutants: the file on disk served; nothing invalidated)', () => {
+test('FIRST-VISIT REFRESH: the dev server serves the pins as the walk computes them, under each page load\'s own URL - so a dev edit is a new key at the next load, as an update is - and answers for no other module (mutants: the file on disk served; a load URL\'s query not matched; a native path not matched)', () => {
   const plugin = firstVisitPinsPlugin();
-  plugin.configResolved({ root: ROOT });
+  plugin.configResolved({ root: ROOT, command: 'serve' });
   assert.equal(plugin.load(join(ROOT, 'src/other.js')), null);
-  const served = plugin.load(join(ROOT, PINS_PATH).split(sep).join('/'));
-  assert.equal(served, pinsSource(firstVisitPins()));
-  const invalidated = [];
-  const watcher = new EventEmitter();
-  // the module graph as Vite keeps it: forward-slash ids, the pins beside a module of no pin (mutant: the pins found by a
-  // native path - a backslash on Windows, which no id holds)
-  const pinsModule = { id: `${join(ROOT, PINS_PATH).split(sep).join('/')}?v=1` }, other = { id: `${join(ROOT, 'src/main.js').split(sep).join('/')}` };
-  plugin.configureServer({ watcher, moduleGraph: { idToModuleMap: new Map([[pinsModule.id, pinsModule], [other.id, other]]), invalidateModule: (m) => invalidated.push(m === pinsModule ? 'pins' : m.id) } });
-  watcher.emit('change', join(ROOT, 'src/world/tamriel/tamrielLand.js'));
-  assert.deepEqual(invalidated, ['pins'], 'a file the Bay fit reads');
-  watcher.emit('change', join(ROOT, 'src/main.js'));
-  assert.deepEqual(invalidated, ['pins'], 'a file no pin reads');
+  const want = pinsSource(firstVisitPins());
+  assert.equal(plugin.load(`${join(ROOT, PINS_PATH).split(sep).join('/')}?load=1700000000000`), want, 'a page load\'s own URL, as Vite keys it');
+  assert.equal(plugin.load(join(ROOT, PINS_PATH)), want, 'the native path');
 });
 
 /** The player's store, with the sweep the real one makes (dataSource.js sweepDerived over staleKey). */

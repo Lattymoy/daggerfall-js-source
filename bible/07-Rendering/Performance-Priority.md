@@ -2626,8 +2626,8 @@ A cache's version is not the build's tag and not a number anyone bumps: it is th
 tokens - a comment or a line break moves nothing - and any shipped data the computation reads), GENERATED. The pins live
 in `src/firstVisitPins.js`, gitignored: `npm install` / `npm ci` write it (`postinstall`, `scripts/firstVisitPins.mjs`),
 so every checkout and CI job has it before lint, the types or a test; every Vite build writes it at its start and bundles
-the pins it computed then (`firstVisitPinsPlugin`, a `vite.config.js` plugin); and the dev server answers with the pins
-as they stand, computed anew when a file a pin reads changes, so a dev edit is a new key as a deployed update is. A cache
+the pins it computed then (`firstVisitPinsPlugin`, a `vite.config.js` plugin); and the dev server computes the pins for
+each page load (the store asks under a URL of the load's own), so a dev edit is a new key as a deployed update is. A cache
 reads its pin through `firstVisitStore.js firstVisitPin`, which throws when there is none - never a key on undefined. So
 an update that changes a computation refreshes that cache for every player on their next launch, and one that does not
 keeps it. Each key leads with its scope; writing an answer deletes every other key of its scope
@@ -2650,7 +2650,7 @@ through a value handed in at run time (a registry, a callback) is not followed, 
 name the mod loader, the arena, the carriages' layer and the shipped world data beside the door. Held by
 `test/systems/firstVisit/fv_versions.test.js`: every cache that keeps answers asks a pin and every pin is generated; a
 missing pin throws; no pin reads the pins; the pin's moves (the code reached, the data read) and non-moves (a comment, an
-unreached declaration); the same pin across CRLF and LF and either path separator; the dev server's recompute. The rig's sprites need no record: they are fetched and decoded in the shipped pack's decode workers
+unreached declaration); the same pin across CRLF and LF and either path separator; the dev server's pins for each load. The rig's sprites need no record: they are fetched and decoded in the shipped pack's decode workers
 (`vanillaEnhancedPack.js decodeServedPng`), the worn armour's strips through `layeredArmor.js decodeLayered`'s `picture`.
 A departure from the proposal: it named the block rebuild itself (pack and block); what the walks read of a block is its
 ground tiles, 2 KB against a ~220 KB rebuilt JSON (as a structured clone) whose structured clone reads back at ~0.7x the rebuild's cost
