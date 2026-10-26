@@ -1130,16 +1130,27 @@ Chromium draws on its software renderer (WARP, 2 fps). So Vulkan is the player's
   `fileStorage.cjs` readPref, as FPS-VSYNC reads VSync) and answers `use-gl=angle` and `use-angle=vulkan`. `main.cjs`
   appends them beside FPS-VSYNC's. A failure on record in `config.json` (`graphicsBackendFailure`) holds the launch on
   the default. The module reads `config.json` itself: `main.cjs` defines CONFIG_FILE after the switches are appended.
-- **The guard.** watchBackend, once the first window has loaded: a launch that took the switches reads
-  `app.getGPUInfo('complete')` (10 s deadline, then 'basic'). A software renderer (`Basic Render Driver`, `WARP`,
-  `SwiftShader`, `llvmpipe` in the renderer string; WARP as a word), a renderer that does not name the chosen backend
-  (ANGLE started on another one: `use-angle=d3d9` drew on the card as `Direct3D9Ex`, which gives the page no WebGL2
-  context, with every feature status "enabled" - Electron 42's Chromium reports no WebGL2 status), or the GPU
-  process gone within the first minute (its own `child-process-gone` listener) writes the record, shows a one-button
-  notice ("Vulkan could not start on this graphics card"), and `app.relaunch()`es. The relaunch has no switches,
-  because the record holds it. `app.exit` skips `will-quit`, so the guard first flushes the GPU-gone entry that
-  GPU-TRAIL-LOST holds back for crash.log (`beforeExit`). A GPU process lost after the first minute is crash.log's
-  alone.
+- **The guard.** watchBackend, on a launch that took the switches. Each of these four checks fails the launch:
+  1. Chromium's renderer. Once the first window has loaded, `app.getGPUInfo('complete')` (10 s deadline, then
+     'basic'). It fails on a software renderer (`Basic Render Driver`, `WARP`, `SwiftShader`, `llvmpipe` in the
+     renderer string; WARP as a word), or on a renderer that does not name the chosen backend (ANGLE started on another
+     one).
+  2. The game page's own WebGL2 context. The game page's preload asks the shell (`dagger:backend-probe`) and, on an
+     armed launch only, makes one `canvas.getContext('webgl2')` before any game script runs, reads its unmasked
+     renderer, loses the context again, and reports (`dagger:backend-webgl2`, heard from the game window only). It
+     fails on no WebGL2 context, a software renderer, or a renderer that does not name the backend. This is the check
+     that catches a backend that draws on the card but gives the page no WebGL2: `use-angle=d3d9` draws as
+     `Direct3D9Ex`, and Electron 42's Chromium reports no WebGL2 feature status to read instead.
+  3. The game page's silence. The clock starts when the game window is made; no report within 60 s
+     (`PAGE_REPORT_TIMEOUT_MS`) fails the launch, so a hung or blank page cannot leave a player on a broken backend.
+     The first report counts; a reload's is ignored.
+  4. The GPU process gone within the first minute (its own `child-process-gone` listener). One lost after the first
+     minute is crash.log's alone.
+
+  A failure writes the record, shows a one-button notice ("Vulkan could not start on this graphics card"), and
+  `app.relaunch()`es, once. The relaunch has no switches, because the record holds it. `app.exit` skips `will-quit`,
+  so the guard first flushes the GPU-gone entry that GPU-TRAIL-LOST holds back for crash.log (`beforeExit`). A launch
+  that passes check 2 logs `[shell] GPU-BACKEND: vulkan up - the game page's WebGL2 renderer: ...`.
 - **The record's key and the retry.** The key is the physical GPU and its driver, `vvvv:dddd@driver`. A launch that fell
   to WARP cannot see the card: Chromium then lists only ANGLE's synthetic `0xffff` "SwANGLE" device. So its record is
   written with `gpu: null`, and the next launch, on D3D11, keys it with the card it runs on. The record also keeps the
@@ -1149,8 +1160,10 @@ Chromium draws on its software renderer (WARP, 2 fps). So Vulkan is the player's
   (DA13's channel) keeps the Chromium, so it keeps the record. Retrying takes two starts, and the record stops a
   relaunch loop. The pref itself is a file in `<userData>/Prefs`, and the record is in `<userData>/config.json`.
   Updates do not touch userData (BR1), so both survive them.
-- **The probe's door.** `DAGGER_GRAPHICS_BACKEND=metal` names a backend for one launch over the pref. ANGLE's Metal
-  backend cannot start on Windows, and Chromium falls to WARP, as a failed Vulkan would. `gl`, which failed in Edge
+- **The probe's door.** `DAGGER_GRAPHICS_BACKEND` names a backend for one launch over the pref; the pref itself names
+  only `vulkan`. `metal`: ANGLE's Metal backend cannot start on Windows, and Chromium falls to WARP, as a failed
+  Vulkan would. `d3d9`: draws on the card under its own name, so check 1 passes, but the page gets no WebGL2 context -
+  it forces check 2 alone. `gl`, which failed in Edge
   ("Initialization of all (0) EGL display types failed"), STARTS in the app: `ANGLE (NVIDIA Corporation, NVIDIA
   GeForce RTX 5080/PCIe/SSE2, OpenGL 4.5.0)`.
 
