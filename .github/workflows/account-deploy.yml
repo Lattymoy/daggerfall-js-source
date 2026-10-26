@@ -150,6 +150,7 @@ on:
       - "src/net/sea/seaSeasonLaw.js"
       - "src/net/sea/seaPrizeLaw.js"
       - "src/systems/wild/wildDropLaw.js"
+      - "src/systems/wild/wildInsureLaw.js"
       - "src/systems/wild/wildLeaf.js"
       - "src/systems/item/itemKinds.js"
       - "src/net/gate/gateMods.js"

@@ -23,6 +23,7 @@ import { wildTakeTook } from '../../src/systems/wild/wildDeath.js';
 import { setWildDeath, wildDeathLines, wildLettersOf, WILD_TEXT } from '../../src/systems/wild/wildZone.js';
 import { worldRoom } from '../../src/net/wire.js';
 import { mintWildReceipt } from '../../src/net/wild/wildReceipt.js';
+import { hostText } from '../hostText.mjs';
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const CELL = worldRoom(520, 110);
@@ -91,8 +92,8 @@ test('BURNT-SAID THE WORDS AND THE HOST: one letter, none, a forged worth; world
   setWildDeath({ killer: 'Ria', dropped: 3 });
   assert.deepEqual(wildDeathLines(), ['Ria may claim one piece of your worn gear.', '3 things you carried lie where you fell, for ten minutes.', 'In the mountains the dead wait two minutes.'], 'a death with no letters reads as it did');
   setWildDeath(null);
-  const w = rd('src/scenes/world.js');
-  assert.ok(w.includes('if (dd) setWildDeath({ killer: dd.killer, kill: true, dropped: d.order ? n : 0, claimed, held, burnt: d.burnt ? n : 0, letters: out });'), 'the host hands the burnt count and the pieces taken out');   // PIN MOVED (AUDIT FOE-KEEPS H1): my take is a kill
+  const w = hostText('src/scenes/world.js');   // PIN MOVED (HOST-SPLIT): my drop's answer in scenes/wildDropHost.js, read with its host
+  assert.ok(w.includes('if (dd) setWildDeath({ killer: dd.killer, kill: true, dropped: d.order ? n : 0, claimed, held, burnt: d.burnt ? n : 0, letters: out, insured, shield: d.shield === true });'), 'the host hands the burnt count and the pieces taken out');   // PIN MOVED (AUDIT FOE-KEEPS H1): my take is a kill; PIN MOVED (WILD-INSURE, REPEAT-SHIELD): and what kept
   // PIN MOVED (AUDIT SEA VENTURES C7): in the words of the ground the fall was on (zoneWord - the mountains' are WILD_TEXT's)
   assert.ok(w.includes("townTalk.say(d.burnt ? zoneWord('burntLate', seaRoomOf(room) ? ETHER_KIND : null)() : zoneWord('dropLate', seaRoomOf(room) ? ETHER_KIND : null));"), 'risen: the held case said its own way');
   assert.match(WILD_TEXT.burntLate(), /trading is frozen, so it was lost\.$/);

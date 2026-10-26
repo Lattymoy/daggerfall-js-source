@@ -1889,6 +1889,21 @@
   "tr": "557050099543",
   "by": "claude-in-session"
  },
+ "account.refusal.insureFull": {
+  "en": "e8d97e52b1d5",
+  "tr": "cb9d4e23e022",
+  "by": "claude-in-session"
+ },
+ "account.refusal.insureHeld": {
+  "en": "64c96c2fe0a8",
+  "tr": "4af41907664b",
+  "by": "claude-in-session"
+ },
+ "account.refusal.insurePiece": {
+  "en": "f5f540ddc52a",
+  "tr": "875bd248b1ea",
+  "by": "claude-in-session"
+ },
  "account.refusal.joined": {
   "en": "2d9d30b8e647",
   "tr": "8c85471573ff",
@@ -35545,8 +35560,8 @@
   "by": "claude-in-session"
  },
  "tutorials.wildZone.body2": {
-  "en": "3c759d3b73f2",
-  "tr": "6c4967892dd8",
+  "en": "c328297349a1",
+  "tr": "6128d65d3d87",
   "by": "claude-in-session"
  },
  "wagon.upkeep.boons.failing": {
@@ -35559,31 +35574,6 @@
   "tr": "0331aa5fe2ab",
   "by": "claude-in-session"
  },
- "wild.companion.away": {
-  "en": "488eae2a81a1",
-  "tr": "c21b3c315dd5",
-  "by": "claude-in-session"
- },
- "wild.companion.left": {
-  "en": "4b3bcdd7b011",
-  "tr": "4266030b107a",
-  "by": "claude-in-session"
- },
- "wild.companion.stays": {
-  "en": "137d146989f7",
-  "tr": "31adc60c4fef",
-  "by": "claude-in-session"
- },
- "wild.companion.yours": {
-  "en": "370154673ec6",
-  "tr": "7aba5e725caa",
-  "by": "claude-in-session"
- },
- "wild.companion.yoursFirst": {
-  "en": "d601a60c609f",
-  "tr": "87484e01ca7a",
-  "by": "claude-in-session"
- },
  "wild.death.burnt": {
   "en": "e09fab03f61e",
   "tr": "0f80b39458c2",
@@ -35592,6 +35582,11 @@
  "wild.death.burntLate": {
   "en": "05a7c22ebbdc",
   "tr": "b2182c417c99",
+  "by": "claude-in-session"
+ },
+ "wild.death.insured": {
+  "en": "dd39374771df",
+  "tr": "d206e256b006",
   "by": "claude-in-session"
  },
  "wild.death.kept": {
@@ -35607,6 +35602,11 @@
  "wild.death.lettersTenth": {
   "en": "2f66ddbe7b5b",
   "tr": "73d20b02ea0b",
+  "by": "claude-in-session"
+ },
+ "wild.death.shield": {
+  "en": "a0bb6c5a792b",
+  "tr": "f8beb913deb6",
   "by": "claude-in-session"
  },
  "wild.escrow.collectLate": {
@@ -35657,6 +35657,51 @@
  "wild.escrow.heldTakenAnon": {
   "en": "d57b9aca004f",
   "tr": "ef2e0ab0c489",
+  "by": "claude-in-session"
+ },
+ "wild.grace.kept": {
+  "en": "bc7b923ccc6f",
+  "tr": "f5e986eda1f3",
+  "by": "claude-in-session"
+ },
+ "wild.grace.off": {
+  "en": "251b891cc598",
+  "tr": "4f819554fddc",
+  "by": "claude-in-session"
+ },
+ "wild.grace.on": {
+  "en": "5a7aaef29315",
+  "tr": "2cbd860ee267",
+  "by": "claude-in-session"
+ },
+ "wild.insure.act": {
+  "en": "b55d49df1791",
+  "tr": "e5271c8bb90e",
+  "by": "claude-in-session"
+ },
+ "wild.insure.done": {
+  "en": "dcf011b556ed",
+  "tr": "f409f3e43541",
+  "by": "claude-in-session"
+ },
+ "wild.insure.inZone": {
+  "en": "0933e40866ac",
+  "tr": "3dfe49782df8",
+  "by": "claude-in-session"
+ },
+ "wild.insure.line": {
+  "en": "993784cd95a5",
+  "tr": "b5a744bcbf8b",
+  "by": "claude-in-session"
+ },
+ "wild.insure.offline": {
+  "en": "62d7db0ba127",
+  "tr": "e7da91aeb9ee",
+  "by": "claude-in-session"
+ },
+ "wild.insure.soon": {
+  "en": "6d890c484928",
+  "tr": "5894d2dcbd0c",
   "by": "claude-in-session"
  },
  "wild.zone.chipTip": {

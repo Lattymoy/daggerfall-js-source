@@ -677,9 +677,9 @@ its "+75% loot" English.
   open sea"): since FOE-KEEPS a death to a foe there costs a tenth and rises at the nearest freeport, so a Fleet Summon
   after it was the sea's free hop for captain, ship and hold, past the waters where another captain takes a third of a
   boarded hold - no Summon and no Send away into, out of or about the open sea while it is a PvP zone, the player's
-  waters or hers past the peace (`fleetHost.js:"const openSea = !!w.sea && ("`, the host's `where().sea`). Sail her. A WAGON parked on the open sea's ground (an isle's) is with its
-  owner at a death there, as one in the mountains is (`wildCart.js:"return !wildInside(mask, p.x, p.y) && !(etherWildRingAt(p.x, p.y) > 0);"`
-  - AUDIT SEA VENTURES C4: it counted as away, and its cargo never dropped).
+  waters or hers past the peace (`fleetHost.js:"const openSea = !!w.sea && ("`, the host's `where().sea`). Sail her. A WAGON parked on the open sea's ground (an isle's) was with its
+  owner at a death there, as one in the mountains was (AUDIT SEA VENTURES C4: it had counted as away, and its cargo never
+  dropped) - until STORE-KEEPS (2026-10-26, Wild-Zone.md section 4) made every cart storage no death takes.
 - STRANGERS: every other player past the Veil outside my party and my guild is unseen on the maps
   (`wildHidesPlayer` - near the zone is the whole sea, the peace too, as the mountains' band is), a red "Stranger"
   helm on the Overworld within 1.5 km, said within 600 m, no name over their heads, and a journey slowed by them
@@ -691,8 +691,8 @@ its "+75% loot" English.
   (`world.js:"if (!loading && (wildTeleportRefused(boatPixelOf(boat)) || veilRefused(boatPixelOf(boat)))) return true;"`
   - AUDIT SEA VENTURES C1: Transport > Ship's carried a captain from a Bay town's bank onto her boat a hundred leagues
   past the Veil, and back, past every refusal).
-- THE COMPANIONS: a hand ashore and a sworn one at the side drop their packs with the player's (COMPANION-DROP); one
-  revenant at the side, refused in the sea's words ("Only one revenant may walk at your side on the open Eltheric
+- THE COMPANIONS: a hand ashore's pack and a sworn one's pack and kit are storage no death takes (STORE-KEEPS,
+  2026-10-26 - COMPANION-DROP had them drop with the player's); one revenant at the side, refused in the sea's words ("Only one revenant may walk at your side on the open Eltheric
   Ocean." - AUDIT SEA VENTURES C7).
 - THE PARTY: a party left past the peace keeps the zone's ten minutes' truce, said in the sea's words; and a party's
   walk that leads onto the open sea warns as one into the mountains does (`zoneWord('walkInto', ETHER_KIND)` - AUDIT SEA
@@ -711,14 +711,12 @@ its "+75% loot" English.
 - NO PACE CAP. The mountains' x20 / x40 (`WILD_PACE_CAP`) is never set at sea (`world.js:"setPaceZoneCap(wildHere() && wildZoneKind() !== ETHER_KIND"`):
   the sea's leagues are its own price (the Abyss is an hour at the helm's top speed), and a stranger near still holds
   a journey (STRANGER-PACE).
-- A HAND ASHORE GOES BACK ABOARD. COMPANION-DROP's "no send-off in zone" is the mountains' (the owner, 2026-10-19):
-  at sea a hand is sent back to her boat and a hand knocked out gives his pack to her hold
-  (`crewCompanions.js:"export function heldAtSide"`, `packStaysAshore`) - the boat's hold is the sea's own shelter, open
-  from anywhere already (CARGO-ANYWHERE, Wild-Zone.md section 4's open door), and a captain a hundred leagues out could
-  otherwise never send her hands home short of Veilhaven. A sworn one at the side stays, as in the mountains: the
-  roster's "away" is no hold.
-- THE HOLD IS KEPT. A boat on the zone's water keeps her hold through a death there (Wild-Zone.md section 4, "Open for
-  the owner") - at sea, where most of what a captain carries is in it, the larger share of the shelter. A death still
+- A HAND ASHORE GOES BACK ABOARD. COMPANION-DROP's "no send-off in zone" was the mountains' (the owner, 2026-10-19):
+  at sea a hand was sent back to her boat and a hand knocked out gave his pack to her hold - the boat's hold the sea's
+  own shelter, open from anywhere already (CARGO-ANYWHERE). STORE-KEEPS (2026-10-26) retired the rule with the pack's
+  drop it served: on either ground a hand goes back aboard, and a sworn one is sent away, as anywhere.
+- THE HOLD IS KEPT. A boat on the zone's water keeps her hold through a death there (Wild-Zone.md section 4 - storage,
+  since STORE-KEEPS, as the cart and the companions' packs are) - at sea, where most of what a captain carries is in it, the larger share of the shelter. A death still
   takes none of it; a SHIP WRECKED AT ANOTHER CAPTAIN'S GUNS AND BOARDED gives up a share of it (SHIP-PVP, below - her
   best piece always, and more of her best while they come to a third of what she could give - AUDIT SEA VENTURES F3:
   "up to a third" was the promise, and her best piece alone may be all she carries; never a locked, bound or classic
@@ -1000,7 +998,7 @@ the box, and harmless so: the relay referees no fall there.
 **THE SERVICE** (`server-account/src/seaBounty.js`; tables `migrations/0146_sea_bounty.sql`; the law both ends read,
 `src/net/sea/seaBountyLaw.js`):
 
-- THE KILL is written in the fall's OWN batch (`server-account/src/wild.js:"...seaKillSteps(ctx.db, sea, ctx.nowS),"`):
+- THE KILL is written in the fall's OWN batch (`server-account/src/wild.js:"// SEA-BOUNTY (seaBounty.js): a fall at sea at another's hand - the bounties on the fallen claimed for its killer, in the"` - and REPEAT-SHIELD's, a fall that takes nothing, writes it too):
   `sea_kills` once by the remains' id; every bounty standing on the fallen character claimed by that fall (guarded by
   no kill of it written yet, so two tabs racing one fall claim once); their sum OWED to the killer's character
   (`sea_bounty_owed`). A fall asked again answers from its first row and writes nothing.

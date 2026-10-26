@@ -785,7 +785,7 @@ test('SHIP-PVP the seams by source: the naval host\'s guns asked and its seams b
   assert.match(sea, /send: \(d, o\) => deps\.cell\?\.\(\)\?\.sendWild\?\.\(d, o\) === true,/);
   const w = src('src/scenes/world.js');
   assert.match(w, /cell: \(\) => online, foe: \(id\) => wildIsStranger\(id, online\?\.drawable\?\.\(\)\?\.find\(\(d\) => d\.id === id\)\?\.gt\),/);
-  assert.match(w, /else if \(g\.k === 'rc'\) wildRcIn\(g, room\);\n\s+else seaVentures\.wref\(g, room\);/);
+  assert.match(w, /else if \(g\.k === 'rc'\) wildRcIn\(g, room\);\n\s+else if \(g\.k === 'grace'\) wildGrace\.heard\(g\);[^\n]*\n\s+else seaVentures\.wref\(g, room\);/);   // PIN MOVED (ZONE-GRACE, 2026-10-26): safe passage's word before the sea's
   const on = src('src/net/online.js');
   assert.match(on, /this\.seaPvpOk = relaySupportsSeaPvp\(relayV\);/);
   assert.match(on, /if \(SEA_PVP_KINDS\.includes\(d\.k\) && !this\._seaPvpOn\(ws\)\) return false;/);

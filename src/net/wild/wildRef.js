@@ -26,6 +26,13 @@
 //     systems/wild/wildDropLaw.js wornOffer); then the relay signs the fall (net/wild/wildReceipt.js `f1`) and hands it to both, and
 //     the account service takes the drop and that piece off the fallen's judged record against it.
 //
+//   - SAFE PASSAGE (ZONE-GRACE, 2026-10-26 - the owner: "making the experience more palatable while retaining its
+//     punishment"; asked, "Entry/rise grace"): for WILD_GRACE.ms after a fighter enters the zone or rises from its fall,
+//     no player's blow or cast lands on it, and its own blow or cast on a player ends it at once. An entry grants it only
+//     to one that has been away from the zone WILD_GRACE.awayMs and in no fight for WILD_GRACE.fightMs - so a step out
+//     and back is no way out of a fight, and a cell crossed inside the zone (a new room's fighter, its carry fresh) is no
+//     entry (its carry is a word of a moment ago); the grace rides the carry into the next room.
+//
 // Pure: no clock (every `now` an argument), no socket, no storage - the relay's room keeps the state in its memory
 // (DECIDED, the duel's: a room that restarts mid-fight forgets it; a fall already signed is the service's to settle).
 // ═════════════════════════════════════════════════════════════════════
@@ -41,6 +48,10 @@ import { SIEGE_HIT, newFighter, refereeBlow, refereeCast, refereeStep } from '..
  *  and falls a room keeps; AUDIT FOE-KEEPS E2: how recent a fair player's blow names them the killer of a death the
  *  referee did not see (systems/wild/wildZone.js WILD_KILL_CREDIT_MS, pinned equal - "the player who brought you down"). */
 export const WILD_REF = Object.freeze({ mendMs: 30_000, pickMs: 60_000, truceMs: 10 * 60_000, riseMs: 120_000, jumpMs: 2_000, fightersMax: 200, fallsMax: 64, creditMs: 10_000 });
+
+/** ZONE-GRACE (2026-10-26, the owner chose "Entry/rise grace"): safe passage's length (the owner's sixty seconds), and what
+ *  an entry asks first - away from the zone this long, and no blow landed by or on the fighter this long. */
+export const WILD_GRACE = Object.freeze({ ms: 60_000, awayMs: 30_000, fightMs: 60_000 });
 
 /** MAC'S DECISION (2026-10-14, "Guildmates are friends"): ONE GUILD - two guilds' marks, each present and the same. A
  *  mark is the relay's verified guild id (the token's `gi`) or a client's guild tag (`gt` - a tag is one guild's alone,
@@ -79,14 +90,16 @@ export function wildZone(st, sub, { id, lv = 1, ci = '', carry = null }, z, pose
     if (!z) return null;
     if (st.fighters.size >= WILD_REF.fightersMax) for (const [k, v] of st.fighters) if (!v.zone && !v.down) { st.fighters.delete(k); break; }
     if (st.fighters.size >= WILD_REF.fightersMax) return null;
-    x = { id, ci: ci || '', f: newFighter(lv, now), pose: pose ? { x: pose.x, y: Number.isFinite(pose.y) ? pose.y : 0, z: pose.z } : null, poseAt: now, zone: false, zoneAt: now, outAt: -Infinity, struckAt: -Infinity, down: false, downAt: -Infinity, jumpAt: -Infinity };
+    x = { id, ci: ci || '', f: newFighter(lv, now), pose: pose ? { x: pose.x, y: Number.isFinite(pose.y) ? pose.y : 0, z: pose.z } : null, poseAt: now, zone: false, zoneAt: now, outAt: -Infinity, struckAt: -Infinity, down: false, downAt: -Infinity, jumpAt: -Infinity, fightAt: -Infinity, graceUntil: -Infinity };
     takeCarry(x, carry, now);
     st.fighters.set(sub, x);
   } else if (z && !x.zone && carry && carry.at > x.outAt) takeCarry(x, carry, now);   // it fought in another room since it left this one
   x.id = id; if (ci) x.ci = ci;
-  if (z && x.down && now - x.downAt >= WILD_REF.riseMs) { x.f = newFighter(lv, now); x.down = false; x.struckAt = -Infinity; }
+  if (z && x.down && now - x.downAt >= WILD_REF.riseMs) { x.f = newFighter(lv, now); x.down = false; x.struckAt = -Infinity; x.graceUntil = now + WILD_GRACE.ms; }   // ZONE-GRACE: a rise
   if (z && !x.zone) {
     if (now - x.outAt >= WILD_REF.riseMs && !x.down) { x.f.hp = x.f.max; x.struckAt = -Infinity; }
+    // ZONE-GRACE: an entry - away long enough, and out of every fight long enough
+    if (!x.down && now - x.outAt >= WILD_GRACE.awayMs && now - Math.max(x.fightAt, x.struckAt) >= WILD_GRACE.fightMs) x.graceUntil = Math.max(x.graceUntil, now + WILD_GRACE.ms);
     x.zoneAt = now;
   }
   if (!z && x.zone) x.outAt = now;
@@ -99,6 +112,7 @@ export function wildZone(st, sub, { id, lv = 1, ci = '', carry = null }, z, pose
 function takeCarry(x, carry, now) {
   if (!carry || !Number.isFinite(carry.at) || !(now - carry.at < Math.max(WILD_REF.mendMs, carry.down ? WILD_REF.riseMs : 0))) return;
   x.outAt = carry.at;   // it fought elsewhere a moment ago - never away from the zone
+  if (Number.isFinite(carry.gr) && carry.gr > now) x.graceUntil = carry.gr;   // ZONE-GRACE: the safe passage it had there
   if (carry.down && now - carry.downAt < WILD_REF.riseMs) { x.down = true; x.downAt = carry.downAt; x.f.down = true; x.f.hp = 0; return; }
   if (Number.isFinite(carry.hp) && carry.hp < x.f.max) { x.f.hp = Math.max(1, Math.min(x.f.max, Math.trunc(carry.hp))); x.struckAt = carry.at; }
 }
@@ -109,7 +123,8 @@ function takeCarry(x, carry, now) {
 export function wildCarryOf(v) {
   if (!v || typeof v !== 'object' || !Number.isFinite(v.at) || !Number.isFinite(v.hp) || !Number.isFinite(v.max)) return null;
   const sea = v.sea && typeof v.sea === 'object' && Number.isFinite(v.sea.h) && Number.isFinite(v.sea.at) ? { h: Math.max(0, Math.min(1, v.sea.h)), at: v.sea.at } : null;
-  return { hp: Math.max(0, Math.trunc(v.hp)), max: Math.max(1, Math.trunc(v.max)), down: v.down === true, downAt: Number.isFinite(v.downAt) ? v.downAt : 0, at: v.at, ...(sea ? { sea } : {}) };
+  const grace = Number.isFinite(v.gr) ? { gr: v.gr } : {};   // ZONE-GRACE
+  return { hp: Math.max(0, Math.trunc(v.hp)), max: Math.max(1, Math.trunc(v.max)), down: v.down === true, downAt: Number.isFinite(v.downAt) ? v.downAt : 0, at: v.at, ...grace, ...(sea ? { sea } : {}) };
 }
 
 /** INT9 (AUDIT): A FALL WAITING ON ITS PICK is kept in the room's storage under this prefix (a relay object that restarts
@@ -129,8 +144,17 @@ export function wildGone(st, sub, now) {
   if (x && x.zone) { x.zone = false; x.outAt = now; }
 }
 
-/** What a fighter CARRIES out of this room (the hub keeps it for the next room it stands in): its vitality and its fall. */
-export const wildCarry = (st, sub, now) => { const x = st.fighters.get(sub); return x ? { hp: Math.max(0, x.f.hp), max: x.f.max, down: x.down, downAt: Number.isFinite(x.downAt) ? x.downAt : 0, at: now } : null; };
+/** What a fighter CARRIES out of this room (the hub keeps it for the next room it stands in): its vitality and its fall -
+ *  ZONE-GRACE: and its safe passage (`gr`), so a cell crossed ends none. A crossing is never an entry: a carry is a word
+ *  of a moment ago (takeCarry's `outAt`), never WILD_GRACE.awayMs, so the next room grants no fresh one. */
+export const wildCarry = (st, sub, now) => {
+  const x = st.fighters.get(sub);
+  if (!x) return null;
+  const grace = x.graceUntil > now ? { gr: x.graceUntil } : {};
+  return { hp: Math.max(0, x.f.hp), max: x.f.max, down: x.down, downAt: Number.isFinite(x.downAt) ? x.downAt : 0, at: now, ...grace };
+};
+/** ZONE-GRACE: how long a fighter's safe passage has left, ms - 0 for none. */
+export const wildGraceLeft = (/** @type {any} */ st, /** @type {string} */ sub, /** @type {number} */ now) => { const x = st.fighters.get(sub); return x && x.graceUntil > now ? Math.ceil(x.graceUntil - now) : 0; };
 
 /** A FIGHTER'S POSE (`{ x, y, z }`, the world frame): believed at a run the referee allows (refereeStep, on the fighter's
  *  own carried allowance); past it - a gallop, a respawn, a teleport - believed too, and the fighter JUMPED: it strikes
@@ -154,7 +178,8 @@ const mend = (x, now) => { if (!x.down && now - x.struckAt >= WILD_REF.mendMs &&
  * that both stand in the zone, neither down, never kin; judged by the referee (a strike on the weapon `held` its look
  * carries and the arms `wa` its token signs; a cast, `r` SIEGE_HIT.Spell, to its harm's most and rate). A fall makes the
  * fall record (`r` the remains' id the caller minted) - its killer the striker, `room` the room that refereed it (SEA-BOUNTY:
- * signed into its receipt, `m`). Answers `{ ok, dealt, fell, fall, why }`.
+ * signed into its receipt, `m`). ZONE-GRACE: a striker under safe passage loses it (`graceEnded`), and a struck one under it
+ * takes nothing (`why` 'grace'). Answers `{ ok, dealt, fell, fall, why, graceEnded? }`.
  * @param {any} st @param {string} by @param {string} to
  * @param {{ d?: number, r?: number, held?: any, wa?: any, kin?: boolean, rid?: string, room?: string }} o
  * @param {number} now
@@ -166,16 +191,20 @@ export function wildBlow(st, by, to, { d = 0, r = SIEGE_HIT.Melee, held = null, 
   if (a.down || t.down) return { ok: false, dealt: 0, fell: false, fall: null, why: 'down' };
   if (kin) return { ok: false, dealt: 0, fell: false, fall: null, why: 'kin' };
   if (now - a.jumpAt < WILD_REF.jumpMs) return { ok: false, dealt: 0, fell: false, fall: null, why: 'jump' };
+  // ZONE-GRACE: my blow on a fair player ends my safe passage; theirs keeps them from it
+  const graceEnded = a.graceUntil > now;
+  if (graceEnded) a.graceUntil = -Infinity;
+  if (t.graceUntil > now) return { ok: false, dealt: 0, fell: false, fall: null, why: 'grace', graceEnded };
   mend(a, now); mend(t, now);
   const res = r === SIEGE_HIT.Spell
     ? refereeCast(a.f, t.f, { from: a.pose, at: t.pose, d }, now)
     : refereeBlow(a.f, t.f, { from: a.pose, at: t.pose, held, d, r, wa }, now);
-  if (!res.ok || !res.dealt) return { ok: res.ok, dealt: 0, fell: false, fall: null, why: res.why };
-  t.struckAt = now;
+  if (!res.ok || !res.dealt) return { ok: res.ok, dealt: 0, fell: false, fall: null, why: res.why, graceEnded };
+  t.struckAt = now; a.fightAt = now; t.fightAt = now;   // ZONE-GRACE: a fight, for an entry's ask
   t.by = { sub: by, at: now, room: typeof room === 'string' ? room : '' };   // AUDIT FOE-KEEPS E2: the last fair player's blow
-  if (!res.fell) return { ok: true, dealt: res.dealt, fell: false, fall: null, why: null };
+  if (!res.fell) return { ok: true, dealt: res.dealt, fell: false, fall: null, why: null, graceEnded };
   const { fall, evicted } = fallOf(st, rid, to, t, by, a, room, now);
-  return { ok: true, dealt: res.dealt, fell: true, fall, evicted, why: null };
+  return { ok: true, dealt: res.dealt, fell: true, fall, evicted, why: null, graceEnded };
 }
 
 /** A fighter `t` (account `to`) down at `a`'s hand (account `by`): its fall record under `rid` (the caller's), the room

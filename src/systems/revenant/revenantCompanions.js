@@ -23,7 +23,7 @@
 //    here (a fight won at my side, swornFightWon; an errand home, once an errand, returnFromErrand), its sky set from the
 //    page (setSwornStars - never abroad), and read where its numbers are: its health and blows (applySwornStrength), its
 //    loyalty's losses and its rests (each site below).
-import { wildHere, WILD_TEXT, zoneWord } from '../wild/wildZone.js';   // PVPDUNGEONS (the owner: "Only 1 revenant allowed to summon in the zone"); COMPANION-DROP: the zone's words
+import { wildHere, zoneWord } from '../wild/wildZone.js';   // PVPDUNGEONS (the owner: "Only 1 revenant allowed to summon in the zone")
 // PVPDUNGEONS: how many sworn revenants may stand at the player's side in the open zone - COMPANION-DROP: and which ones
 // (wildSwornAtSide), so the zone stands the ones whose packs drop; the drop's law reads the same leaf (wildLeaf.js - no
 // imports, so standing a revenant never pulls the drop law's graph, the item law among it, into a client's)
@@ -83,14 +83,11 @@ export const retinue = () => swornRevenants().slice().sort((a, b) => b.rank - a.
 export const revenantsWithYou = () => swornRevenants().filter((r) => stateOf(r) === 'with');
 /** The sworn sent away, or resting after a fall. */
 export const revenantsAway = () => swornRevenants().filter((r) => stateOf(r) !== 'with');
-/** COMPANION-DROP (FIELD BUGS 2026-10-19f; the owner, 2026-10-19: "Bag drops; no send-off in zone"): THE SWORN AT THE
- *  PLAYER'S SIDE - every one walking with them, and in the open zone the ones it stands (wildDropLaw.js wildSwornAtSide:
- *  the first WILD_REVENANTS_MAX - the rest wait outside it). A death in the zone drops their packs and kits with mine
- *  (wildDropLaw.js wildPacks), so none of them leaves my side there (leaveRefusal). */
+/** THE SWORN AT THE PLAYER'S SIDE - every one walking with them, and in the open zone the ones it stands
+ *  (wildLeaf.js wildSwornAtSide: the first WILD_REVENANTS_MAX - PVPDUNGEONS; the rest wait outside it). COMPANION-DROP
+ *  (FIELD BUGS 2026-10-19f) had a death there drop their packs and kits, and so kept them at my side; STORE-KEEPS
+ *  (2026-10-26) made every pack storage no death takes, and a sworn one comes and goes in the zone as anywhere. */
 export const swornAtYourSide = () => (wildHere() ? wildSwornAtSide(revenantsWithYou()) : revenantsWithYou());
-/** COMPANION-DROP: why a sworn one may not leave my side now - sent away or on an errand - or null: the one at my side in
- *  the open zone stays (the zone's teleport refusal, said of a companion). */
-export const leaveRefusal = (r) => (wildHere() && swornAtYourSide().includes(r) ? WILD_TEXT.companionStays(r.name) : null);
 registerCompanionCount('revenant', () => revenantsWithYou().length);
 
 /** May the player spare one more - a place in the retinue? */
@@ -169,7 +166,6 @@ export function callRevenant(id, now) {
 export function sendRevenantAway(id, { now = Math.floor(ownMinutes()), byYou = true } = {}) {
   const r = revenantRecord(_player, id);
   if (!r?.sworn || stateOf(r) !== 'with') return false;
-  if (leaveRefusal(r)) return false;   // COMPANION-DROP: never from my side inside the open zone - by me or by the slots' hold
   revenantCompanionUpdate(_player, id, (c) => {
     c.state = 'away';
     if (!byYou) return;
@@ -197,25 +193,11 @@ export function releaseRevenant(id) {
   return out;
 }
 /** A sworn one's things into my own pack: every item, its gold to my purse (never a Currency row) - the player's own, no
- *  loot word (a release's, and COMPANION-DROP's in the zone). */
+ *  loot word (a release's). */
 function handBack(items) {
   _player.items ??= [];
   for (const it of items) { if (isGoldPieces(it)) addGoldPieces(_player, it.stackCount ?? 1); else addItem(_player.items, it); }
 }
-/** COMPANION-DROP (FIELD BUGS 2026-10-19f; the owner, 2026-10-19: "Bag drops; no send-off in zone"): THE ONE AT MY SIDE
- *  CARRIED OFF INSIDE THE OPEN ZONE (knocked out - the party's knock) hands me its pack and its kit before it goes, said:
- *  a death there drops them with mine, and carried off with it they would rest outside the zone's reach. The crew's hand
- *  does the same through his host (crewCompanions.js packStaysAshore). Answers how many items. */
-function leftWithYou(r) {
-  if (!_player || !wildHere() || !swornAtYourSide().includes(r)) return 0;
-  const items = [...(r.companion?.items ?? []), ...gearItems(r.companion?.gear)];
-  if (!items.length) return 0;
-  revenantCompanionUpdate(_player, r.id, (c) => { c.items = []; c.gear = {}; });
-  handBack(items);
-  try { popupMessage(WILD_TEXT.companionLeft(r.name, items.length)); } catch { /* a word is nobody's failure */ }
-  return items.length;
-}
-
 // ── RVN-ERRAND (bible/06-Systems/Revenants.md section 42): a sworn one abroad ──────────────
 const sayErrand = (ev) => { try { revenantSay(ev, popupMessage); } catch { /* a word is nobody's failure */ } };
 /** How many of the sworn are abroad now. */
@@ -226,7 +208,7 @@ export function errandRefusal(r, now) {
   if (stateOf(r) === 'errand') return t('rvn.errand.no.abroad', 'It is already abroad.');
   if (stateOf(r) === 'resting' && now < restUntil(r, now)) return t('rvn.errand.no.resting', 'Still recovering.');
   if (revenantsAbroad().length >= ERRAND.MAX) return t('rvn.errand.no.most', '{n} of your sworn are abroad already, the most allowed at once.', { n: ERRAND.MAX });
-  return leaveRefusal(r);   // COMPANION-DROP: never from my side inside the open zone
+  return null;
 }
 /** SENT ON AN ERRAND to `place` (an ERRAND_PLACES key) for `venture`: it leaves (through its portal, if it stood at the
  *  player's side) and is back at the errand's minute. Answers the refusal's words, or null. `seed` the haul's draw (the
@@ -337,7 +319,6 @@ export function giveSwornGear(id, item, { kindName = null } = {}) {
   const key = gearKeyOf(item);
   const why = gearRefusal(r, item, { kindName });
   if (why) return why;
-  if (wildHere() && !swornAtYourSide().includes(r)) return WILD_TEXT.companionAway(r.name);   // COMPANION-DROP: one waiting outside the zone - my piece would leave it
   if (equipTableOf(_player).includes(item)) return t('rvn.gear.no.worn', 'You are wearing it.');
   const pack = _player.items ?? [];
   const at = pack.indexOf(item);
@@ -477,7 +458,6 @@ export function revenantParty({ onWake = null } = {}) {
     knock(boat, id, now) {
       const r = revenantRecord(_player, id);
       if (!r?.sworn || stateOf(r) !== 'with') return false;
-      leftWithYou(r);   // COMPANION-DROP: carried off inside the zone, what it carries stays with me
       revenantCompanionUpdate(_player, id, (c) => { c.state = 'resting'; c.until = now + rvnRestMinutes(r, REVENANT_REST_MIN); c.health = null; c.loyalty = movedLoyalty(c.loyalty, rvnLoyaltyMove(r, LOYALTY.KNOCKED, c)); });   // RVN11: a fall -8 - RVN-STARS: its rest and its loss as its sky bears them
       forgetSwornMember(id);
       return true;

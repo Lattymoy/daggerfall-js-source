@@ -15,7 +15,6 @@ import { setWildHere, wildHere, wildRing, wildZoneKind, zoneWord, zoneName, zone
 import { ETHER_BOX, VEIL_X, LEAGUE_PX, BANDS, veilhaven, landfall, ETHER_SEA_NAME } from '../../../src/world/ethericSea.js';
 import { synthesizeEtherLocation } from '../../../src/world/etherPlaces.js';
 import { crossingRows, questionRows, ROW_CHARS } from '../../../src/systems/naval/etherCrossing.js';
-import { heldAtSide, packStaysAshore } from '../../../src/systems/naval/crewCompanions.js';
 
 const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 /** A pixel well north of Veilhaven, where only the depth decides. */
@@ -79,7 +78,6 @@ test('ETHER-WILD: the live flag carries its ground - the zone\'s words are the s
     // PIN MOVED (AUDIT SEA VENTURES C7): the truce is the sea's own now - a word the sea does not say its own way is still the mountains'
     assert.equal(zoneWord('truce'), ETHER_WILD_TEXT.truce());
     assert.equal(zoneWord('noFight'), WILD_TEXT.noFight, 'a word the sea does not say its own way is the mountains\'');
-    assert.match(WILD_TEXT.companionStays('Bran'), /until you leave the Eltheric Ocean/, 'a companion held at my side says the sea');
     assert.equal(zoneWord('leave', ETHER_KIND), ETHER_WILD_TEXT.leave(), 'the words of the ground left, asked by name');
     // the mountains
     setWildHere(true, 1);
@@ -88,7 +86,6 @@ test('ETHER-WILD: the live flag carries its ground - the zone\'s words are the s
     assert.equal(zoneRingName(1), 'The Foothills');
     assert.equal(zoneWord('enter'), WILD_TEXT.enter);
     assert.equal(zoneWord('ring')(1), WILD_TEXT.ring(1));
-    assert.match(WILD_TEXT.companionStays('Bran'), /until you leave the Wrothgarian Mountains/);
     // outside every zone
     setWildHere(false, 3, ETHER_KIND);
     assert.equal(wildZoneKind(), null, 'no ground outside the zone');
@@ -172,18 +169,9 @@ test('ETHER-WILD: the crossing says what lies past the peace, online alone; at s
   assert.deepEqual(questionRows('  '), []);
   assert.deepEqual(crossingRows('home', { pvp: true }), crossingRows('home'), 'the way home warns of nothing');
   assert.match(src('src/scenes/world.js'), /rows: crossingRows\(way, \{ pvp: _onlineWorldSession\(\) && !!online\?\.wildOk \}\)/, 'online, past a relay that raises the zone');
-  const said = [];
-  try {
-    setWildHere(true, 3, ETHER_KIND);
-    assert.equal(heldAtSide('Bran', (l) => said.push(l)), false, 'at sea: sent back aboard');
-    assert.equal(packStaysAshore(), false, 'at sea: to her hold');
-    setWildHere(true, 3);
-    assert.equal(heldAtSide('Bran', (l) => said.push(l)), true, 'in the mountains: he stays');
-    assert.equal(packStaysAshore(), true);
-    assert.deepEqual(said, [WILD_TEXT.companionStays('Bran')]);
-    setWildHere(false);
-    assert.equal(heldAtSide('Bran'), false);
-  } finally { setWildHere(false); }
+  // PIN MOVED (STORE-KEEPS, 2026-10-26): a hand ashore was held at my side in the mountains (COMPANION-DROP) and sent back
+  // aboard at sea; his pack is storage no death takes now, and he is sent back aboard from either ground
+  assert.ok(!src('src/systems/naval/crewCompanions.js').includes('heldAtSide'), 'no ground holds him');
 });
 
 test('ETHER-WILD: a street foe past the Veil is the zone\'s to FOE-BOUNDS, read from Veilhaven\'s peace too; /unstuck at sea walks to the nearest freeport, never a Bay town across the Veil', () => {

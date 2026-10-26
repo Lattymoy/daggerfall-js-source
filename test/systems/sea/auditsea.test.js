@@ -51,8 +51,8 @@ import { BANDS, VEIL_X, LEAGUE_PX, etherBandAt } from '../../../src/world/etheri
 import { legendById } from '../../../src/systems/naval/etherShips.js';
 import { SHIP_STATES } from '../../../src/systems/naval/navalDamage.js';
 import { etherInPeace, etherWildRingAt, etherRisePort, ETHER_PEACE_PX, ETHER_RISE_PX, ETHER_KIND, ETHER_WILD_TEXT } from '../../../src/systems/wild/etherWild.js';
-import { zoneWord, WILD_TEXT, wildMaskOf, WILD_REGION } from '../../../src/systems/wild/wildZone.js';
-import { wildCartAway } from '../../../src/systems/wild/wildCart.js';
+import { zoneWord, WILD_TEXT } from '../../../src/systems/wild/wildZone.js';
+import { takeWildDeath } from '../../../src/systems/wild/wildDropLaw.js';   // STORE-KEEPS: C4 retired - no death takes the cart
 import { WAGON_MODE } from '../../../src/systems/horse/horseCartLaw.js';
 import { worldCoordToMapPixel } from '../../../src/world/streamingWorld.js';
 import { veilhaven, islesNear, inEther, inVeil } from '../../../src/world/ethericSea.js';
@@ -61,6 +61,7 @@ import * as tm from '../../../src/systems/textManager.js';
 import { etherWayWord, etherRingBonus } from '../../../src/systems/wild/etherWild.js';
 import { standService } from '../../accountDb.mjs';
 import { seatRealm, recordOf } from '../../realmSeat.mjs';
+import { hostText } from '../../hostText.mjs';
 
 const { subtle } = globalThis.crypto;
 const RC = 'r00000000000000000a01', RK = 'r00000000000000000a02';
@@ -855,7 +856,7 @@ test('AUDIT SEA VENTURES C2: Veilhaven\'s peace holds the way home - her own row
   }
 });
 
-test('AUDIT SEA VENTURES C1, C3, C4, C5/F2: the linked bank cabin is a teleport like any - never into, out of or about the open sea, nor across the Veil; a party\'s walk onto the open sea warns as one into the mountains does; a wagon parked on the open sea\'s ground is with its owner at a death there; a death past the Veil rises at the nearest freeport, however far (mutants: the cabin\'s refusals, the walk, the cart, the rise)', () => {
+test('AUDIT SEA VENTURES C1, C3, C4, C5/F2: the linked bank cabin is a teleport like any - never into, out of or about the open sea, nor across the Veil; a party\'s walk onto the open sea warns as one into the mountains does; a wagon parked on the open sea\'s ground keeps its cargo through a death there, as every wagon does since STORE-KEEPS; a death past the Veil rises at the nearest freeport, however far (mutants: the cabin\'s refusals, the walk, the cart, the rise)', () => {
   const w = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
   const cab = w.slice(w.indexOf('async function enterLinkedBankCabin('), w.indexOf('async function boardOrDisembark('));
   const refuse = cab.indexOf('if (!loading && (wildTeleportRefused(boatPixelOf(boat)) || veilRefused(boatPixelOf(boat)))) return true;');
@@ -864,19 +865,16 @@ test('AUDIT SEA VENTURES C1, C3, C4, C5/F2: the linked bank cabin is a teleport 
   assert.match(w, /const wildWalkRow = \(x, y\) => \{ const m = wildMask\(\); return !online\?\.wildOk \? null : etherSea && etherWildRingAt\(x, y\) > 0 \? zoneWord\('walkInto', ETHER_KIND\) : m && wildNear\(m, x, y\) \? WILD_TEXT\.walkInto : null; \};/);
   assert.equal(zoneWord('walkInto', ETHER_KIND), ETHER_WILD_TEXT.walkInto());
   assert.match(zoneWord('walkInto', ETHER_KIND), /open Eltheric Ocean past Veilhaven's peace, an open PvP zone/);
-  // C4: a wagon parked on the open sea's ground is with its owner; one parked outside every zone is away
-  const blob = (x, y) => { const dx = (x - 520) / 38, dy = (y - 110) / 24; return dx * dx + dy * dy < 1; };
-  const mask = wildMaskOf({ getRegionIndexAt: (x, y) => (blob(x, y) ? WILD_REGION : 3), getLocationByName: () => null });
+  // C4 (PIN MOVED, STORE-KEEPS 2026-10-26): a wagon parked on the open sea's ground was WITH its owner at a death there
+  // (CART-AWAY's word), and its cargo taken. No death takes the cart now, wherever it is parked - the open sea's isle too
   const parked = (px) => ({ Mode: WAGON_MODE.Deployed, WorldX: px.x * 32768 + 16384, WorldZ: (499 - px.y) * 32768 + 16384 });
   const h = veilhaven(), isle = islesNear(h.px - 300, h.py, 40).find((i) => i.kind === 'wild' || i.kind === 'ruin');
   const at = { x: isle.px, y: isle.py };
   assert.deepEqual(worldCoordToMapPixel(parked(at).WorldX, parked(at).WorldZ), at);
   assert.ok(etherWildRingAt(at.x, at.y) > 0);
-  assert.equal(wildCartAway(parked(at), mask), false, 'on the open sea: with its owner');
-  assert.equal(wildCartAway(parked({ x: 200, y: 300 }), mask), true, 'in the Bay: away');
-  let heart = null;
-  for (let i = 0; i < mask.inside.length && !heart; i++) if (mask.inside[i]) heart = { x: i % mask.width, y: Math.floor(i / mask.width) };
-  assert.equal(wildCartAway(parked(heart), mask), false, 'in the mountains: with its owner, as ever');
+  const fallen = { goldPieces: 100, items: [], wagonItems: [{ group: 'Weapons', templateIndex: 120, material: 0 }, { group: 'Currency', templateIndex: 0, stackCount: 400 }] };
+  const d = takeWildDeath(fallen, -1);
+  assert.deepEqual([d.from, fallen.wagonItems.length, fallen.wagonItems[1].stackCount], [['gold'], 2, 400], 'the purse\'s tenth, and the cart whole');
   // C5/F2: the nearest freeport, by distance, however far - Veilhaven only when she is the nearest
   for (const [x, y] of [[6900, -5108], [7699, -4976], [7000, -5400], [6950, -4800], [7500, -5600]]) {
     const port = etherRisePort(x, y);
@@ -901,7 +899,7 @@ test('AUDIT SEA VENTURES C6, C7: the open sea says its own words - /unstuck outd
   assert.match(sea('dropLate'), /when you died at sea/);
   assert.match(sea('burntLate')(), /when you died at sea .* frozen/);
   assert.equal(sea('quiet'), 'You are out of the open Eltheric Ocean\'s PvP zone. No player may attack you here.');
-  const w = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
+  const w = hostText('src/scenes/world.js');   // PIN MOVED (HOST-SPLIT): the risen word in scenes/wildDropHost.js, read with its host
   assert.match(w, /say\(zoneWord\('unstuckOut'\)\); return true; \}/);
   assert.match(w, /townTalk\.say\(zoneWord\('truce'\)\);/);
   assert.match(w, /townTalk\.say\(d\.burnt \? zoneWord\('burntLate', seaRoomOf\(room\) \? ETHER_KIND : null\)\(\) : zoneWord\('dropLate', seaRoomOf\(room\) \? ETHER_KIND : null\)\);/);

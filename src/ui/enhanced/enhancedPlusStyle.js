@@ -2178,6 +2178,9 @@ ${ARENA_WINDOW_CSS}
    words, in the lock's line style without the padlock, muted. */
 .pack-shell [data-junk] .tile > *, .trade-shell [data-junk] .tile > *, .ptrade-shell [data-junk] .tile > * { opacity: 0.5; filter: grayscale(0.7); }
 .card .junkline, .pack-shell .card p.junkline { color: #a89f88; }
+/* WILD-INSURE (net/wild/wildInsureBook.js): an insured piece's card says so in the lock's line style, in the green the
+   comparison block reads as better */
+.card .insuredline, .pack-shell .card p.insuredline { color: #74d9a0; }
 `;
 
 /** AUDIT MERGE-PLUS D3: the lane's words on Stone's light grey (ONLINE_DRESS_CSS, last) - each 4.5:1 or better over

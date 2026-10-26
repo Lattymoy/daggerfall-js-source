@@ -856,6 +856,9 @@ const REFUSAL_WORDS = {
   'firm-rate': () => t('account.refusal.firmRate', 'Too many changes this hour. Try again later.'),
   'firm-stale': () => t('account.refusal.firmStale', 'Your stars changed in another session. Check them and try again.'),
   'firm-respec-empty': () => t('account.refusal.firmRespecEmpty', 'Nothing is learned yet.'),
+  'insure-held': () => t('account.refusal.insureHeld', 'That piece is already insured.'),   // WILD-INSURE (server-account/src/wildInsure.js)
+  'insure-full': () => t('account.refusal.insureFull', 'You already hold as many policies as the insurers will write. One is spent each time it saves its piece.'),
+  'insure-piece': () => t('account.refusal.insurePiece', 'That piece cannot be insured. Only gear the realm tracks (Magic and up, enchanted, artifacts, crafted) that a death in the zone could take.'),
   'repair-no-faction': () => t('account.refusal.repairNoFaction', 'That character\'s record holds no such faction, so nothing was repaired.'),   // SUMMON-REPAIR: the review's repair (tools/realmReview.mjs)
   'repair-not-set': () => t('account.refusal.repairNotSet', 'That faction does not have that flag on this character, so nothing was repaired. Check that it is the right character.'),   // SUMMON-REPAIR: a repair aimed at the wrong character mends nothing
   'mend-not-negative': () => t('account.refusal.mendNotNegative', 'That character\'s gold is not below zero, so nothing was mended. Check that it is the right character.'),   // PURSE-MEND: the review's mend (tools/realmReview.mjs)
@@ -1797,11 +1800,16 @@ export const wildFallAsk = (io, body) => call(io, '/v1/wild/fall', body);
 export const wildCollectAsk = (io, body) => call(io, '/v1/wild/collect', body);
 export const wildReclaimAsk = (io, body) => call(io, '/v1/wild/reclaim', body);
 export const wildEscrowsAsk = (io, body) => call(io, '/v1/wild/escrows', body);
+/** WILD-INSURE (2026-10-26 - server-account/src/wildInsure.js): policies written on pieces of gear (`{ realm, keys, region }`
+ *  - the record's `at`, the pieces' ledger keys, the bank the shortfall is paid from) - answers `{ policies, gold, realm }` -
+ *  and the character's policies in force (`{ character }`) - answers `{ policies }`. */
+export const wildInsureAsk = (io, body) => call(io, '/v1/wild/insure', body);
+export const wildPoliciesAsk = (io, body) => call(io, '/v1/wild/policies', body);
 /** INT9: the zone's calls, bound to this device's stored session (the duels' way). */
 export function accountWild({ fetch, storage }) {
   const io = () => { const s = storedSession(storage); return s ? { fetch, base: serviceBase(storage), secret: s.secret } : null; };
   const on = (/** @type {(io: any, body: any) => Promise<any>} */ ask) => async (/** @type {any} */ body) => { const i = io(); return i ? ask(i, body) : { ok: false, error: 'no-session' }; };
-  return { fall: on(wildFallAsk), collect: on(wildCollectAsk), reclaim: on(wildReclaimAsk), escrows: on(wildEscrowsAsk) };
+  return { fall: on(wildFallAsk), collect: on(wildCollectAsk), reclaim: on(wildReclaimAsk), escrows: on(wildEscrowsAsk), insure: on(wildInsureAsk), policies: on(wildPoliciesAsk) };
 }
 
 /** WB5b: the kill receipt the relay signed for this account, carried to

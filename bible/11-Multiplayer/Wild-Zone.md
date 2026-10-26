@@ -45,6 +45,16 @@ are new: the halls (PVPDUNGEONS), the Greater Giants (ZONE-GIANTS and its passes
 (PVPUNSTUCK), the maps' later ink, the mountains walkable everywhere (MOUNTAINS WALKABLE) and the test build's switch
 (TESTBUILD). The asks that rode in with it but are not the zone's are section 21.
 
+PVP-EASE (2026-10-26). The owner: "Overhauling the open PvP to be a bit more palatable, being able to insure gear on
+death. Make it where you cant lose your wagon/horse or anything stored on death. And just overall making the experience
+more palatable while retaining its punishment". Asked, the owner chose: insurance that KEEPS the piece and is spent by
+the death ("Kept, policy spent") at "20% of worth"; "Wagon + companions' packs" as the storage no death takes (the horse
+and the wagon themselves never dropped - `WILD_NEVER_GROUPS`' Transportation); and, of the softenings offered, the
+"Repeat-kill shield" and the "Entry/rise grace" (not the bag's drop capped). Four slices, one change: STORE-KEEPS
+(section 4 - the cart and the packs storage), WILD-INSURE (section 4b), REPEAT-SHIELD (section 4c) and ZONE-GRACE
+(section 3b). What still punishes: the bag's drop, a tenth of the purse and of each letter, the killer's one worn piece,
+the two minutes down and the rise outside the zone.
+
 ## 1. What the zone is
 
 The owner's CUT of the Wrothgarian Mountains, not the whole region: every map pixel the politic map gives to region 16
@@ -120,8 +130,8 @@ the fall as a blow's (`wildRef.js:"export function wildCredit"`, `server/src/ind
 said to the room, signed after the killer's pick or at once where no body is searched, and taken as any kill is. Since
 FOE-KEEPS a death to a foe drops nothing, so a player losing a fight denied its winner everything by dying to a foe, a
 fall or the sea first (lane E: brought to 28 of 320 by 18 blows, a fall and nothing dropped). The worn pick waits on the
-first dead frame's offer, so a credited kill takes the bag, the cart, the companions' packs and the tenths, never a
-worn piece. A relay before world254 drops `dd` and credits nobody. Kin is one law at both ends (`wildRef.js:"export function wildKin"`): the
+first dead frame's offer, so a credited kill takes the bag and the tenths (STORE-KEEPS: the cart and the companions'
+packs too, until it), never a worn piece. A relay before world254 drops `dd` and credits nobody. Kin is one law at both ends (`wildRef.js:"export function wildKin"`): the
 referee asks it of every blow and cast, a duel's two and one guild read off the two sockets' verified guilds, the party
 and its truce asked of the hub only when neither is (`server/src/index.js:"const kin = wildKin({ duel: duelKin, guilds: [a.gi, tb.gi] })"`),
 and every client door asks it of its targets, a guild by the tags the relay stamps - a tag is one guild's alone
@@ -140,6 +150,28 @@ posts. And the watch is ten times as strong there (the owner: "Guards in the cit
 `ZONE_WATCH_SCALE` (`wildZone.js:"export const ZONE_WATCH_SCALE"`) through the street host's `guardScale`
 (`world.js:"guardScale: () =>"`) - a watchman's health and every blow it lands (`cityGuards.js:"the zone's watch"`).
 
+## 3b. Safe passage (ZONE-GRACE)
+
+ZONE-GRACE (2026-10-26, PVP-EASE above; the owner chose "Entry/rise grace"): FOR SIXTY SECONDS AFTER A FIGHTER ENTERS THE
+ZONE OR RISES FROM A FALL, NO PLAYER'S BLOW OR CAST LANDS ON IT, and its own blow or cast on a player ends it at once
+(`WILD_GRACE`, `wildRef.js:"export const WILD_GRACE"`). It is the referee's, like every other law of the fight: a blow on a
+fighter under it is refused (`wildBlow`'s `grace`), and a striker under it loses it as its blow is judged
+(`graceEnded`). AN ENTRY GRANTS IT ONLY TO ONE AWAY AND QUIET: away from the zone `WILD_GRACE.awayMs` (30 s) and in no
+fight - a blow it landed or took - for `WILD_GRACE.fightMs` (60 s), so a step over the edge and back is no way out of a
+fight (`wildRef.js:"// ZONE-GRACE: an entry - away long enough, and out of every fight long enough"`). A CELL CROSSED IS NO
+ENTRY: the next room's fighter is made with the hub's carry, a word of a moment ago (never `awayMs` away), which carries
+the passage it had (`gr`) - `wildCarry`, `takeCarry`. A RISE always grants it: a fallen standing again after
+`WILD_REF.riseMs` (a kill rises outside the zone and is granted it again at its entry; a death to a foe rises inside, at
+its ring's town - section 4).
+
+The relay says it (`server/src/index.js:"_wildGraceSay(a, ms) {"`): a passage begun or carried in, to the room
+(`wref` `grace`, the fighter's id and the ms it has left), ended by its own blow (`ms` 0), and a blow it kept off to the
+striker alone (`n` 1, `_wildGraceBlow`) - new Room methods, `_message` untouched. The wire takes the word
+(`wire.js:"export const WILD_GRACE_MS_MAX"`, pinned equal), and the game says it to its player
+(`systems/wild/wildGrace.js`): mine begun, once (a crossing's carried word is not said again), mine ended - by my blow or
+run out on the zone's frame - and a blow of mine kept off a stranger, once in `WILD_GRACE_SAY_MS`. world268. Not a DFU
+member: Daggerfall Unity has no other players.
+
 ## 4. A death in the zone
 
 FOE-KEEPS (2026-10-24, the owner: "I feel like the eltheric sea can be too punishing. I dont want people to lose
@@ -149,7 +181,7 @@ mountains and on the open sea (section 24) alike. A death to a foe - a monster, 
 the fallen keeps the bag, the cart, the companions' packs and every worn piece, and pays the usual death's tenth of the
 purse at the rise, as a death outside the zone does (DEATH-PENALTY; `world.js:"wildKilled = wildDeathKill()"`).
 The first dead frame asks no drop (`world.js:"const wildDeathBegin"`), the fallen's tab asks one only against the
-relay's signed fall (`world.js:"const key = readWildReceipt(rc)?.r;"`), and the account service refuses a foe's fall,
+relay's signed fall (`wildDropHost.js:"const key = readWildReceipt(rc)?.r;"`), and the account service refuses a foe's fall,
 nothing moved (`foe`, `server-account/src/wild.js:"return { error: 'foe' }"`) - so a tab from before the word takes
 nothing either - and, its own rise skipping the usual tenth at any death in the zone, pays nothing until it reloads
 (AUDIT FOE-KEEPS L2, H3, P5, E4: left - a deploy's window, the gain the player's); a foe's fall the service took before the
@@ -179,8 +211,8 @@ Either death, at the first dead frame, while the room is still the player's (`wi
   the rise (200 of 1,000 where the rule is 100), under "You keep what you carry". The rise and a Resurrect read the kill
   (`world.js:"wildKilled = wildDeathKill()"`; a Resurrect after a kill spares nothing it did not), and a death whose
   first dead frame found no room rises out of the zone as a kill's does.
-- DROPPED, AT ANOTHER PLAYER'S HAND ALONE (FOE-KEEPS, above): every other thing in the bag and - while the wagon is
-  with them (CART-AWAY, below) - in the cart, into the
+- DROPPED, AT ANOTHER PLAYER'S HAND ALONE (FOE-KEEPS, above): every other thing in the bag - never the cart's nor a
+  companion's (STORE-KEEPS, below), never a piece a policy keeps (WILD-INSURE, section 4b) - into the
   room's remains (section 5). INT9: TAKEN OFF THE RECORD BY THE ACCOUNT SERVICE (`server-account/src/wild.js`,
   `/v1/wild/fall`), never handed over by the fallen's game:
   the fallen's tab asks as an act on its record (checkpointed as it will rise; the law
@@ -190,8 +222,8 @@ Either death, at the first dead frame, while the room is still the player's (`wi
   `wildDropLaw.js:"export function wildTakeTook"`) and its `remains` order over them for that room, the same order each
   asking, good its minute; and the tab deposits them on it - the room keeps nothing else (INT9's audit: each valuable
   piece under a fresh id, the id it had the fallen's own copy). WILD GOLD: and a tenth of the gold - `WILD_GOLD_LOSS` (0.1,
-  FOE-KEEPS: the usual death's share, pinned equal to `DEATH_GOLD_FRACTION`; it was 0.5) of the purse and, while the
-  wagon is with them, of the cart's gold stack, as ONE pile record in the same remains
+  FOE-KEEPS: the usual death's share, pinned equal to `DEATH_GOLD_FRACTION`; it was 0.5) of the purse (STORE-KEEPS: the
+  cart's gold stack paid its tenth beside it, until it), as ONE pile record in the same remains
   (`takeWildGold`, `wildDropLaw.js:"export function takeWildGold"`),
   for anyone to take; the usual death penalty is not taken on top (`world.js:"const goldLost ="`). LETTERS-DROP (the
   owner: "letter of credits should be dropped"): a letter of credit is the one piece the wallet holds that the death
@@ -209,79 +241,31 @@ Either death, at the first dead frame, while the room is still the player's (`wi
   `01-Overview/bugs/Field-Bugs-2026-10-18b.md`): the death screen names the letters a death took by their worth
   (`wildZone.js:"deathLetters: (n, gold) =>"`), and a held record's drop - taken and laid nowhere (Integrity-Arc, Lane
   1's freeze) - is said as lost, where it was said as nothing at all (`wildZone.js:"deathBurnt: (n) =>"`).
-- CART-AWAY (FIELD BUGS 2026-10-15d; MAC'S DECISION, 2026-10-15, asked "If parked outside of the pvp zone in the
-  wrothgarian mountains, can it be lost?": "Yeah, if its parked outside the zone nothing should be lost"): THE CART'S
-  SHARE ONLY WHEN THE WAGON IS WITH THEM. Where it stands is the Horse Cart and Cargo record's
-  (`horseCartLaw.js:"export function newSaveData"`, the save's modData). WITH THEM: driven, beside them on foot (the
-  mod's WithPlayer never sent away - its next door parks it there), following, or parked (Deployed) on a map pixel of
-  the zone. AWAY: parked on any other pixel - the band about the zone (`wildNear`) is not the zone, no blow lands and
-  nothing drops there - stabled (WithPlayer with WAGON-STABLED's word, `03-World/Holdings.md`), or no wagon. Away, the
-  death takes nothing of the cart, neither a piece nor its gold's share (`takeWildDeath`'s `cart` option, and
-  `wildDropCandidates`' and `takeWildGold`'s); the bag, the purse and the killer's piece go as ever. THE TRUST: the
-  zone's mask is the map files', which the account service does not hold, so the fallen's own tab SAYS its wagon is away
-  (`cart` 0 on `/v1/wild/fall`, `src/systems/wild/wildCart.js` wildCartAway over the record the save writes and
-  `wildMaskOf`; with the mod switched off the wagon is Daggerfall's own, which goes where its owner goes), and the
-  service honours the word only where the record it keeps agrees by its mode
-  (`wildDropLaw.js:"export function wildCartMayBeAway"`: parked, stabled or none - never driven, following or beside
-  them unstabled; `server-account/src/wild.js:"const away = !seize"`), so a tab cannot keep a cart its own record says it
-  drives. A seizure honours no word - its carrier holds neither the record nor the mask - and a tab from before the word
-  says none: both take the cart as before. A fall asked again answers its first take whatever is said, so the fallen's
-  own ask, made first, is what its killer's seizure is answered too. Its limit is section 22's.
-- COMPANION-DROP (FIELD BUGS 2026-10-19f, a player's private report; THE OWNER'S DECISION, 2026-10-19, asked whether
-  a companion's bag drops in the zone and whether one may be sent off from inside it: "Bag drops; no send-off in
-  zone"): A COMPANION AT THE FALLEN'S SIDE DROPS WHAT HE CARRIES WITH THEIRS. The law read the pack and the cart and
-  never a companion, so a companion's pack (COMPANION-KIT, `03-World/Naval-Combat.md`) and a sworn revenant's pack and
-  kit (`06-Systems/Revenants.md` sections 13 and 40) lay outside the drop - and sending him off stowed them outside
-  the zone. CART-AWAY's law, for the companions: storage WITH the player drops, storage outside the zone keeps. AT THE
-  SIDE: every crew hand ashore - he walks with the player through every door, so he is where they fall (with the naval
-  arc switched off too: his record still says ashore, and he comes back ashore with it, as the mod-off wagon goes where
-  its owner goes) - and the sworn walking with them, in the zone the first `WILD_REVENANTS_MAX` the record lists, the one
-  the zone stands (`wildLeaf.js:"export const wildSwornAtSide = (list) =>"`; the party stands the same one,
-  `revenantCompanions.js:"export const swornAtYourSide = () =>"`); the rest wait outside the zone, and one away, resting
-  or abroad is away. Each pack at the side is read as the cart is (`wildDropLaw.js:"export function wildPacks"`): its
-  pieces join the drop by worth through the same `wildCanLose` - a letter drops (LETTERS-DROP), a bound, quest, wallet
-  or kept-back piece and the consumables stay - its coin's share joins the one gold pile, and what a full remains will
-  not take goes back to its own pack. DECIDED here, named: a sworn one's KIT (RVN-GEAR) drops as its pack does - its
-  pieces are the player's own, given from the pack and taken back at will, worn by the companion and never by the
-  player, so the player's own worn law (kept on a death to a foe, the killer's one pick) is not theirs. THE RECORD
-  DECIDES, NO WORD: the service reads who is at the side off the record it keeps
-  (`wildDropLaw.js:"export const wildPacksOf = (save) =>"` - the sea's `party`, the feud's `list`), its answer naming
-  each piece's pack (`from`: `crew:<boat>:<name>`, `sworn:<id>`, `kit:<id>`, `WILD_PACK`) and each pack's coin share
-  (`gold.packs`); the fallen's game takes exactly that out of its own live lists (`wildTakeTook`'s `packs` -
-  `world.js:"const out = wildTakeTook(playerEntity"`), and a piece whose pack is not there is left, never another
-  list's piece of the same marks. AND ONLY A GAME THAT SAYS IT READS THE PACKS IS HANDED A TAKE OF THEM (AUDIT FB1019f
-  B2): the fallen's own ask carries `packs` 1 (`wildDropLaw.js:"export const WILD_FALL_PACKS = 1;"`, said beside the
-  wagon's word by `wildDeath.js:"export const wildFallWords = (on, rec, mask) =>"`). A game from before the word read
-  every piece not the cart's as the bag's and no pack's coin, so handed a take of a pack it stripped a piece of the bag
-  bearing his piece's marks - a worn one too - and kept his piece and his coin where the record had dropped them, his
-  coin twice at its next checkpoint. A take of a pack asked without the word is refused in the old build's word
-  (`not-found`, "The game may need updating"), nothing moved
-  (`server-account/src/wild.js:"if (!packsRead && wildTakesPacks(drop)) return 'not-found';"`); a take that touches no
-  pack is that tab's as ever. Never a smaller take: a word that shrank the drop would let any tab keep its companions'
-  packs by leaving it out. A fall at another's hand so refused is taken whole by its killer's seizure past the grace,
-  which honours no word and which no game applies (the fallen plays a record that moved under it); a death to a foe
-  drops nothing at all (FOE-KEEPS, above). NO
-  SEND-OFF IN THE ZONE: a hand ashore is never sent back aboard from inside it
-  (`crewCompanions.js:"export function heldAtSide"`, the boat's picker), nor the sworn one at the side sent away or on an
-  errand (`revenantCompanions.js:"export const leaveRefusal = (r) =>"`; the roster says it, and the slots' hold sends
-  another) - said plainly (`WILD_TEXT.companionStays`: "Bran stays at your side
-  until you leave the Wrothgarian Mountains."); nothing of mine is given as
-  kit to a sworn one waiting outside the zone (`WILD_TEXT.companionAway`). CARRIED OFF IN THE ZONE: a hand knocked out or
-  fallen from her roster gives his pack up into the player's pack, never her hold
-  (`crewCompanions.js:"export const packStaysAshore = () =>"`, the host's stowPack), and the sworn one at the side knocked
-  out hands its pack and kit to the player before it goes, said once (`WILD_TEXT.companionLeft`) - so nothing a companion
-  carries leaves the zone but at the player's side. A desertion or a betrayal there (RVN11b/c) keeps its split as ever:
-  what it keeps is its own, won back only by felling it. ACCOUNT DEPLOY: the law is the Worker's leaf (section 8).
-  Two doors that are no companion's still keep the same shelter, both left open as the owner's call
-  (`01-Overview/bugs/Field-Bugs-2026-10-19f.md` COMPANION-DROP, "Open for the owner"):
-  - CARGO-ANYWHERE's hold door (`src/scenes/holdDoor.js`; the owner, 2026-10-17: "Cargo should be able to be accessed
-    at any time", `03-World/Naval-Refit.md`) opens a ship's hold from anywhere, the zone included: a piece stowed there
-    from inside the zone is outside the drop, as a companion's pack was.
-  - A boat placed on the zone's water keeps her hold through a death there, where CART-AWAY drops a cart parked on the
-    zone's ground. (SHIP-PVP, 2026-10-22 - `03-World/Eltheric-Ocean.md` SHIP-PVP: in the open sea a SHIP wrecked at
-    another captain's guns and boarded gives up a share of her hold to her killer - a wreck, never a death.)
+- STORE-KEEPS (2026-10-26, PVP-EASE above; the owner: "Make it where you cant lose your wagon/horse or anything stored on
+  death"; asked, "Wagon + companions' packs"): THE CART AND EVERY COMPANION'S PACK ARE STORAGE, AND NO DEATH TAKES THEM -
+  neither a piece nor a share of their coin, wherever the wagon stands and whoever stands at the side (`takeWildDeath`:
+  the bag, the purse and the letters' tenth alone). The horse and the wagon themselves never dropped (Transportation is
+  one of `WILD_NEVER_GROUPS`). It retired two laws, kept here as their record:
+  - CART-AWAY (FIELD BUGS 2026-10-15d; Mac, 2026-10-15: "if its parked outside the zone nothing should be lost") took the
+    cart's cargo and a tenth of its coin while the wagon was WITH the fallen - driven, beside them, following or parked
+    on the zone's ground - on the fallen tab's word that it was away (`cart` 0, `systems/wild/wildCart.js`, removed) held to
+    its record's mode (`wildCartMayBeAway`, removed). The service reads no `cart` word now; a tab from before it still
+    says one, and nothing reads it.
+  - COMPANION-DROP (FIELD BUGS 2026-10-19f; the owner, 2026-10-19: "Bag drops; no send-off in zone") dropped a crew hand's
+    pack ashore and the sworn one at the side's pack and kit with the bag, and so kept them at the side: no send-off from
+    inside the zone, nothing given as kit to a sworn one waiting outside, and one knocked out there handing what it
+    carried into the player's own pack (`heldAtSide`, `packStaysAshore`, `leaveRefusal`, `leftWithYou` and the three
+    `WILD_TEXT.companion*` words, all removed). With nothing of theirs to drop, a companion comes and goes in the zone as
+    anywhere - a hand knocked out there gives his pack to her hold, a sworn one rests with its pack and kit - and the
+    zone still stands one sworn one at the side (PVPDUNGEONS, `wildSwornAtSide`). The service's refusal of a pack's take
+    to a tab that did not say `packs` 1 went with it: no take of a pack is made. The lists at the side stay named
+    (`wildPacks`, `WILD_PACK`) for the one reader left: a fall taken before STORE-KEEPS and asked again is answered its
+    first take, and the fallen's game takes a pack's piece out of that pack alone (`wildTakeTook`).
+  The two doors COMPANION-DROP left open for the owner close with it: a piece stowed in a ship's hold from inside the
+  zone (CARGO-ANYWHERE) and a boat's hold on the zone's water are storage too.
 - WORN: kept on a death to a foe. At another player's hand, in the open country (a cell room), the killer may take
-  ONE worn piece: the fallen's game shows the list (`worn`, under the fall's id), the killer's body window picks
+  ONE worn piece - never one a policy keeps (WILD-INSURE, section 4b: the offer leaves it out at both ends): the fallen's
+  game shows the list (`worn`, under the fall's id), the killer's body window picks
   (`pick`, INT9: to the relay, in the room that refereed the fall, within `WILD_REF.pickMs`, naming what the offer
   showed there), and the relay signs the fall with it. MAC'S DECISION (2026-10-14, "Yes, build it" - THE TWO-PHASE
   HANDOFF): the fallen loses that piece only once the killer has it. The service takes it off the fallen's record INTO
@@ -342,6 +326,51 @@ Either death, at the first dead frame, while the room is still the player's (`wi
   (`forceNextFastTravel`, spent by the journey's `handlePreFastTravel`/`handlePostFastTravel` pair - a waiting team is
   called first), the player stood clear of every other body and facing open ground for the team behind
   (`wildSpawnSpot`).
+
+## 4b. Insured gear (WILD-INSURE)
+
+WILD-INSURE (2026-10-26, PVP-EASE above; the owner: "being able to insure gear on death"; asked, "Kept, policy spent" at
+"20% of worth"): A POLICY ON A PIECE OF GEAR KEEPS IT FROM A KILL IN THE ZONE, AND THE KILL SPENDS IT. The law is one leaf
+both ends read (`src/systems/wild/wildInsureLaw.js`):
+
+- WHAT MAY BE INSURED: a piece the ledger follows (`ledgerKeyOf` - Magic tier and up, a DFU magic item or artifact, a
+  crafted piece: the policy names it by that key, as the ledger does) that a death could take (`wildCanLose`), carried
+  in the pack or worn. Never a letter of credit (coin, which pays its tenth), never a piece kept anyway.
+- ITS PREMIUM: a fifth of the piece's worth (`itemWorth`, the judge's measure), rounded up - `WILD_INSURE_DIVISOR` -
+  paid as every realm act pays (`payFromSave`: the purse, its letters, the bank). Five deaths' premiums buy it again.
+- WRITTEN BY THE ACCOUNT SERVICE, NEVER THE RECORD (`server-account/src/wildInsure.js`, `/v1/wild/insure`; migration
+  0176, `wild_insurance`): a policy a game could write onto its own piece is one it never paid for. The premium comes off
+  the record where its tab says it stands and the rows are written in the same batch (each guarded - `mustChange`), or
+  neither lands; a piece under a policy in force, a plain piece, a piece not carried and a premium the record cannot pay
+  are refused, nothing moved. A character holds `WILD_INSURE_MAX` (32) at once, `WILD_INSURE_ASK_MAX` (8) an ask.
+  `/v1/wild/policies` lists them for its tab.
+- IN FORCE `WILD_INSURE_SETTLE_S` (120 s) AFTER IT IS WRITTEN, against the fall's own signing (the receipt's `i`): the
+  killer has `WILD_REF.pickMs` to pick and the fall is signed after it, so a policy written on the death screen keeps from
+  nothing (`wildPolicyInForce`). The game writes one only outside the zone (`insureInZone`), where the walk in is longer.
+- AT A KILL (`server-account/src/wild.js:"const insured = wildInsuredBy(policies.filter((p) => wildPolicyInForce(Number(p.at), fallAt)).map((p) => String(p.key)));"`):
+  a piece under a policy in force is kept as a piece the ledger bars is - never in the killer's offer (`wornOffer`'s
+  `insured`, the same at both ends: the first dead frame's offer leaves it out,
+  `world.js:"const worn = isCellRoom(online.room) ? wornOffer(playerEntity.items, wildInsure.insured()) : [];"`), never
+  taken by a pick an older tab's offer showed, never dropped, never asked of the ledger; and EVERY POLICY ON A PIECE THE
+  FALLEN CARRIED OR WORE IS SPENT in the fall's own batch (`wildPoliciesSpent`; `spent_r`, `spent_at`). The answer names
+  the keys kept (`insured`); the fallen's game forgets those policies and its death screen says how many pieces insurance
+  kept (`WILD_TEXT.deathInsured`). A death to a foe takes nothing and spends nothing (FOE-KEEPS); nor does a shielded
+  kill (section 4c).
+- THE GAME (`net/wild/wildInsureBook.js`): the character's policies read once a character and again when stale, written
+  as the record's act with the wallet reserved first (the Firmament respec's way - a refusal gives back exactly what it
+  took); the pack's card says a piece is insured and when its policy takes effect (`lineOf`, the green `insuredline`) and
+  offers Insure (its premium) beside the piece's own acts - the Enhanced Plus pack's card and its right-click menu
+  (`ui/enhanced/enhancedInventory.js`).
+
+## 4c. The same hand twice (REPEAT-SHIELD)
+
+REPEAT-SHIELD (2026-10-26, PVP-EASE above; the owner chose the "Repeat-kill shield"): A KILL BY THE SAME HAND INSIDE HALF
+AN HOUR TAKES NOTHING. A fall whose killer felled the same character within `WILD_REPEAT_S` (30 min, any fall the service
+wrote - so a killer camping a rise keeps the shield up for as long as they camp) takes no worn piece, no bag and no
+gold, spends no policy and moves no record (`server-account/src/wild.js:"async function wildShielded("`); it is written as a
+fall all the same (`tk.shield`, its sea kill's bounties with it - a bounty is its setter's gold, never the fallen's) and
+answered `shield`, so the death screen says it (`WILD_TEXT.deathShield`). Another hand takes as ever. Read by migration
+0176's `idx_wild_falls_pair`.
 
 ## 5. The remains
 
@@ -495,6 +524,16 @@ record had dropped them (the coin twice at its next checkpoint). So the service 
 nothing moved, in the old build's word (`not-found`); a take that touches no pack is taken for it as ever. Its fall at
 another's hand is taken whole by its killer's seizure past the grace; its death to a foe drops nothing at all
 (FOE-KEEPS, section 4). A service from before it never takes a pack and never reads the word, so the two deploy in either order.
+
+PVP-EASE (2026-10-26, sections 3b, 4, 4b and 4c) is one relay frame and an account deploy with a migration. STORE-KEEPS
+moves no wire: the service stops taking the cart and the packs and reads neither word (`cart`, `packs`), which every tab
+from before it still sends; this game stops saying `cart`. WILD-INSURE is migration 0176 (`wild_insurance`, and
+REPEAT-SHIELD's `idx_wild_falls_pair`), two routes (`/v1/wild/insure`, `/v1/wild/policies`), a new leaf on
+`account-deploy.yml`'s list (`src/systems/wild/wildInsureLaw.js`) and the fall answer's `insured` and `shield` - acct194,
+the migration applied before the Worker that reads it, as the deploy runs them. A tab from before it reads neither field
+and takes out exactly what the service took (nothing of an insured piece, nothing at all under the shield). ZONE-GRACE is
+the relay's (world268): the referee's law and a `wref` kind, `grace`; a client from before it drops the word it does not
+know. The account service and the relay deploy in either order.
 
 ## 9. The journeys (WILD3, PVPTIERS)
 
@@ -954,11 +993,19 @@ Pinned by `test/systems/wild/fb1009b_partytruce.test.js` and `test/systems/trave
 - A piece in escrow comes back only when its fallen plays again (its tab takes it back - there is no clock that moves a
   record nobody plays); until then it is the escrow's, in no record. A fallen character deleted or dead for good while
   one is held has no record to take it back into, and it stays the escrow's.
-- CART-AWAY (section 4): where a parked wagon stands is the fallen's own word, held to its record's mode alone. The
-  wagon's record is the player's own (whose horse and wagon stand where is never the service's), so a modified client
-  that writes its wagon parked off the zone keeps a cart it drove in - and rises with that record, the wagon parked where
-  it wrote. A fallen whose tab never asks is seized with its cart taken wherever it stood; and an ask that finds its
-  fallen already risen meets a hitched team the rise called to follow, with them: the cart is taken.
+- WILD-INSURE (section 4b): a policy names its piece by the ledger's key, so a plain piece (no key) is never insured, and
+  a policy follows its piece only while this character carries it - one traded away and back finds its policy as it
+  left it. The classic face's pack (the native window) offers no Insure act; the Enhanced Plus pack and its right-click
+  menu do. The card's line is the game's read of the policies (once a character, again after ten minutes): one written on
+  another device shows there on the next read, and the service's answer at a fall is the truth either way.
+- REPEAT-SHIELD (section 4c): the fallen's game still shows its worn offer to a repeat killer at the first dead frame (it
+  does not know the shield until the service answers), so that killer's pick lands on nothing. The shield is the
+  killer's account's: one killer on two accounts is two hands.
+- ZONE-GRACE (section 3b): safe passage keeps off players' blows and casts alone - a foe's are its own, and a ship's guns
+  at sea (SHIP-PVP, `03-World/Eltheric-Ocean.md`) are the sea referee's, which reads no passage. The hub keeps the carry in
+  memory alone, so a hub restarted forgets a passage carried across a cell (the fighter enters the next cell with none).
+  A relay from before world268 grants none, and a client from before it hears the words as a kind it does not know -
+  its blows are refused without a line.
 
 ## 23. What the suite caught (WILD-SUITE, 2026-10-08)
 
@@ -990,11 +1037,11 @@ I, the Reaches II, the Deep Aether III, the Abyss IV, at `WILD_RING_LOOT` as the
   (`setWildHere(on, ring, kind)`, `wildZoneKind` - 'wroth' or 'ether'): every law of sections 2-11 reads the flag and
   so stands at sea unchanged - the fights and the referee, the foes and their loot by the ring, the packs, the death's
   drop, the remains and the worn pick, the wait, the strangers and the maps' hiding, the zone watch in a freeport's
-  streets, the companions' drop, no teleport. An isle's ruin is the zone's by its band at its own pixel
+  streets, no teleport - and since PVP-EASE (2026-10-26) safe passage, insurance and the repeat shield. An isle's ruin is the zone's by its band at its own pixel
   (`wildRingAtPlace`, now `etherWild.js`'s, read by `dungeonContext.js:"const _wildRingRaw = isOnlinePage()"`).
 - ITS WORDS are its ground's: `registerZoneWords` (the sea's, registered by its own module so this leaf imports nothing
   of it), `zoneWord`, `zoneName`, `zoneRingName` - the crossing of the zone and of a ring, the HUD tile and its tip, a
-  companion held at the side ("until you leave the Eltheric Ocean"), and the death's wait (the death keeps the ground
+  and the death's wait (the death keeps the ground
   it fell on, `setWildDeath`'s `kind`). A word the sea does not say its own way is `WILD_TEXT`'s. AUDIT SEA VENTURES C3,
   C6, C7: the sea says its own of every word the zone's law asks at sea - a party's walk into it, `/unstuck` outdoors,
   a second revenant, a party left, a drop answered after the rise (by the room the fall was in), and the zone gone while
@@ -1002,9 +1049,9 @@ I, the Reaches II, the Deep Aether III, the Abyss IV, at `WILD_RING_LOOT` as the
   words go through the text core (`wild.zone.*`).
 - WHAT THE SEA KEEPS ITS OWN: no pace cap (its leagues are its price; STRANGER-PACE still holds a journey); the rise at
   the nearest freeport however far, never the Bay's maps' nearest town (`wildRiseSite`'s first line - AUDIT SEA VENTURES
-  C5/F2: past 60 px it rose at Veilhaven); a hand ashore goes back aboard (her hold the sea's shelter - section 4's open
-  door); no giants. As the mountains', a wagon on the zone's ground is with its owner (C4), and the linked bank cabin is
-  a teleport refused (C1). Eltheric-Ocean.md ETHER-WILD names each.
+  C5/F2: past 60 px it rose at Veilhaven); no giants. As the mountains', the linked bank cabin is a teleport refused
+  (C1); a wagon on the open sea's ground was with its owner at a death there (C4) until STORE-KEEPS made every cart
+  storage. Eltheric-Ocean.md ETHER-WILD names each.
 - ITS HALLS ARE THE DAY'S VAULTS OF THE DEEP (SEA-VAULTS, 2026-10-22): four ruin isles of the Deep Aether and three of the
   Abyss a day keep section 13's door - the hub's lock, the way back, the reset and its epoch, the crows - keyed
   `"e<cx>,<cy>"` (`wdunHall` reads both forms; `wdunRoomKey` a room lane of its own, `SEA_VAULT_LANE` - AUDIT SEA
@@ -1035,12 +1082,13 @@ and `test/systems/talk/audit24_onehome.test.js`; `tools/mutants/wildsuite.json`;
 killer's worn piece theirs whoever the fallen's guild or party counts them, end to end over the game's own pieces):
 `test/systems/fb1014_pvploot.test.js`, `tools/mutants/fb1014_pvploot.json`. Mac's two decisions of 2026-10-14 - guildmates kin,
 the two-phase handoff - end to end through the real relay room, account service and clients:
-`test/systems/fb1014_pvpescrow.test.js`, `tools/mutants/fb1014_pvpescrow.json`. CART-AWAY (Mac, 2026-10-15 - the cart's share
-only while the wagon is with them; through the real drop law, the real Horse Cart and Cargo runtime's records, the zone's
-own mask and the real account service): `test/systems/fb1015_cartaway.test.js`, `tools/mutants/fb1015_cartaway.json` (20, all
-dead). COMPANION-DROP (the owner, 2026-10-19 - a companion at the side drops what he carries, none sent off from inside the
-zone; through the real drop law, the real naval host's party, the real feud's sworn and the real account service):
-`test/systems/fb1019f_companiondrop.test.js`, `tools/mutants/fb1019f_companiondrop.json`. FOE-KEEPS (a death to a foe drops
+`test/systems/fb1014_pvpescrow.test.js`, `tools/mutants/fb1014_pvpescrow.json`. STORE-KEEPS (the cart and the companions'
+packs never taken - PIN MOVED from CART-AWAY's and COMPANION-DROP's pins, in their own files: through the real drop law, the
+real Horse Cart and Cargo runtime's records in every way a wagon stands, the real naval host's party, the real feud's
+sworn and the real account service): `test/systems/fb1015_cartaway.test.js`, `test/systems/fb1019f_companiondrop.test.js`,
+`tools/mutants/storekeeps.json`. WILD-INSURE and REPEAT-SHIELD (the law, the real account service, the book and the words):
+`test/systems/wild/wildinsure.test.js`, `tools/mutants/wildinsure.json`. ZONE-GRACE (the law, the real relay room, the wire
+and the client's words): `test/net/zonegrace.test.js`, `tools/mutants/zonegrace.json`. FOE-KEEPS (a death to a foe drops
 nothing; a kill's tenth): `test/systems/wild/foekeeps.test.js`, int9's FOE-KEEPS THE SERVICE, `tools/mutants/foekeeps.json`.
 AUDIT FOE-KEEPS (`01-Overview/audits/Audit-Foe-Keeps.md`): `test/systems/wild/auditfoekeeps.test.js`,
 `test/net/auditfoekeeps_relay.test.js`, `tools/mutants/auditfoekeeps.json`. WILD-REJOIN (`01-Overview/bugs/Field-Bugs-2026-10-25h.md`):

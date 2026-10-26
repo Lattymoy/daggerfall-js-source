@@ -372,8 +372,8 @@
   {
     "name": "AUDIT-SEA-F1-hub-drops-the-ship",
     "file": "src/net/wild/wildRef.js",
-    "old": "at: v.at, ...(sea ? { sea } : {}) };",
-    "new": "at: v.at };",
+    "old": "at: v.at, ...grace, ...(sea ? { sea } : {}) };",
+    "new": "at: v.at, ...grace };",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -713,15 +713,6 @@
     ]
   },
   {
-    "name": "AUDIT-SEA-C4-sea-cart-away",
-    "file": "src/systems/wild/wildCart.js",
-    "old": "return !wildInside(mask, p.x, p.y) && !(etherWildRingAt(p.x, p.y) > 0);",
-    "new": "return !wildInside(mask, p.x, p.y);",
-    "tests": [
-      "test/systems/sea/auditsea.test.js"
-    ]
-  },
-  {
     "name": "AUDIT-SEA-C5-first-reach-alone",
     "file": "src/systems/wild/etherWild.js",
     "old": "    if (r > far) return h;",
@@ -768,7 +759,7 @@
   },
   {
     "name": "AUDIT-SEA-C7-drop-the-hills",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/wildDropHost.js",
     "old": "zoneWord('dropLate', seaRoomOf(room) ? ETHER_KIND : null));",
     "new": "zoneWord('dropLate', null));",
     "tests": [
