@@ -86,38 +86,43 @@ export const FAR_SAMPLES = Object.freeze([1, 4, 6]);
 /** Vertices a side of the far field - a vertex a cell, on the cell's own centre (world-fixed: a rebuild moves none). */
 export const farFieldSide = (radius = FAR_RADIUS) => 2 * radius + 1;
 
-/** A cell's [highest byte, samples at the sea's floor] off the heightmap's own reader (`woods.getHeightMapValue` - the
- *  stream's ground past the Bay and the Eltheric Ocean's, as every kernel reads it; the clamp at the map's edge where the
- *  reader has none) at FAR_SAMPLES - the cell's own, so a worker keeps it by the cell across the field's rebuilds. */
-export function farFieldCell(woods, cx, cy, cell = FAR_CELL, seaByte = 0) {
+/** A cell's climate left to the main thread's own reader (farFieldCell's third answer where the worker has none). */
+export const FAR_CLIMATE_ASK = 255;
+
+/** A cell's [highest byte, samples at the sea's floor, its centre's climate] off the heightmap's own reader
+ *  (`woods.getHeightMapValue` - the stream's ground past the Bay and the Eltheric Ocean's, as every kernel reads it; the
+ *  clamp at the map's edge where the reader has none) at FAR_SAMPLES, and `climateAt` at the centre pixel (FAR_CLIMATE_ASK
+ *  where it answers none, or none is handed) - the cell's own, so a worker keeps it by the cell across the rebuilds. */
+export function farFieldCell(woods, cx, cy, cell = FAR_CELL, seaByte = 0, climateAt = null) {
   let m = 0, n = 0;
   for (const v of FAR_SAMPLES) for (const u of FAR_SAMPLES) {
     const b = woods.getHeightMapValue(cx * cell + u, cy * cell + v);
     if (b > m) m = b;
     if (b <= seaByte) n++;
   }
-  return [m, n];
+  const c = climateAt ? climateAt(Math.floor(cx * cell + cell / 2), Math.floor(cy * cell + cell / 2)) : FAR_CLIMATE_ASK;
+  return [m, n, c];
 }
 
 /**
  * The far field's cells round (baseCX, baseCY) - cell (cx, cy) the pixels [cx * cell, cx * cell + cell) both ways - row
  * by row from the north-west (the far ring's own order: rows run south): each cell's highest sample and how many of its
- * samples are the sea's floor (`low`: at or under the byte the ocean clamps; FAR_SAMPLES.length ** 2 a cell). `rows` a
- * band [j0, j1) of the field's rows (a worker answers it a band at a time); `cellAt` a cell's answer (farFieldCell, or a
- * worker's kept copy).
- * @param {{ woods: any, baseCX: number, baseCY: number, radius?: number, cell?: number, seaByte?: number, rows?: ?[number, number], cellAt?: (cx: number, cy: number) => number[] }} o
- * @returns {{ high: Uint8Array, low: Uint8Array }}
+ * samples are the sea's floor (`low`: at or under the byte the ocean clamps; FAR_SAMPLES.length ** 2 a cell), and its
+ * centre's climate (`clim`, FAR_CLIMATE_ASK where the reader `climateAt` answers none). `rows` a band [j0, j1) of the
+ * field's rows (a worker answers it a band at a time); `cellAt` a cell's answer (farFieldCell, or a worker's kept copy).
+ * @param {{ woods: any, baseCX: number, baseCY: number, radius?: number, cell?: number, seaByte?: number, rows?: ?[number, number], climateAt?: ?((x: number, y: number) => number), cellAt?: (cx: number, cy: number) => number[] }} o
+ * @returns {{ high: Uint8Array, low: Uint8Array, clim: Uint8Array }}
  */
-export function buildFarFieldBytes({ woods, baseCX, baseCY, radius = FAR_RADIUS, cell = FAR_CELL, seaByte = 0, rows = null, cellAt = (cx, cy) => farFieldCell(woods, cx, cy, cell, seaByte) }) {
+export function buildFarFieldBytes({ woods, baseCX, baseCY, radius = FAR_RADIUS, cell = FAR_CELL, seaByte = 0, rows = null, climateAt = null, cellAt = (cx, cy) => farFieldCell(woods, cx, cy, cell, seaByte, climateAt) }) {
   const side = farFieldSide(radius), [j0, j1] = rows ?? [0, side];
-  const high = new Uint8Array((j1 - j0) * side), low = new Uint8Array((j1 - j0) * side);
+  const high = new Uint8Array((j1 - j0) * side), low = new Uint8Array((j1 - j0) * side), clim = new Uint8Array((j1 - j0) * side);
   for (let j = j0; j < j1; j++) {
     for (let i = 0; i < side; i++) {
-      const [m, n] = cellAt(baseCX - radius + i, baseCY - radius + j);
-      high[(j - j0) * side + i] = m; low[(j - j0) * side + i] = n;
+      const [m, n, c] = cellAt(baseCX - radius + i, baseCY - radius + j), o = (j - j0) * side + i;
+      high[o] = m; low[o] = n; clim[o] = c;
     }
   }
-  return { high, low };
+  return { high, low, clim };
 }
 
 /** The ring's normals off its heights by central differences at its own cell (one-sided at its rim) - the streamed

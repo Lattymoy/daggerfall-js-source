@@ -40,11 +40,13 @@ export function midRingDisabled(search = globalThis.location?.search) {
 export const MID_SEA_EPS = 0.01;
 
 /** How many of the ring's vertex rows a step of its build lays (midRingVertexSteps) - the frame's share of a rebuild is
- *  a few such steps (render/farRing.js HORIZON_BUDGET_MS), never the whole 54,289 vertices in one frame. */
-export const MID_ROWS_A_STEP = 24;
+ *  a few such steps (render/farRing.js HORIZON_BUDGET_MS), never the whole 54,289 vertices in one frame; a step about a
+ *  millisecond on a loaded machine. Its tints a row of pixel centres a step: a centre past the Bay the stream has not read
+ *  is the continent's biome asked for the first time (some 40 microseconds). */
+export const MID_ROWS_A_STEP = 12;
 
 /** A stepped build run whole: its generator's answer. */
-export function runSteps(it) {
+export function runHorizonSteps(it) {
   for (;;) { const r = it.next(); if (r.done) return r.value; }
 }
 
@@ -57,7 +59,7 @@ export function runSteps(it) {
  * of MID_ROWS_A_STEP rows at a time (midRingVertexSteps: the frame's share of a rebuild).
  * @param {{ heights: Float32Array, baseX: number, baseY: number, radius?: number, sub?: number, tintAt: (px: number, py: number) => ArrayLike<number>, seaY: number, ringAt?: ?((px: number, py: number) => number) }} o
  */
-export const midRingVertices = (o) => runSteps(midRingVertexSteps(o));
+export const midRingVertices = (o) => runHorizonSteps(midRingVertexSteps(o));
 
 /** midRingVertices a step of rows at a time - its answer the generator's own. @param {Parameters<typeof midRingVertices>[0]} o */
 export function* midRingVertexSteps({ heights, baseX, baseY, radius = MID_RADIUS, sub = MID_SUB, tintAt, seaY, ringAt = null }) {
@@ -72,6 +74,7 @@ export function* midRingVertexSteps({ heights, baseX, baseY, radius = MID_RADIUS
   // the pixel centres' tints, one row of padding round the footprint (a vertex at its rim reads past it)
   const tw = n + 2, tints = new Uint8Array(tw * tw * 3);
   for (let tj = 0; tj < tw; tj++) {
+    if (tj) yield;
     for (let ti = 0; ti < tw; ti++) {
       const t = tintAt(baseX - radius - 1 + ti, baseY + radius + 1 - tj), o = (tj * tw + ti) * 3;
       tints[o] = t[0]; tints[o + 1] = t[1]; tints[o + 2] = t[2];

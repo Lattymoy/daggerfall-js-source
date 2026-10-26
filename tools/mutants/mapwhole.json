@@ -205,5 +205,14 @@
     "tests": [
       "test/ui/mapwhole.test.js"
     ]
+  },
+  {
+    "name": "MAP-WHOLE-probe-door-ungated",
+    "file": "src/ui/heldMap.js",
+    "old": "if (pageHas('shot')) globalThis.__heldMapLoad = this._loadFn;",
+    "new": "globalThis.__heldMapLoad = this._loadFn;",
+    "tests": [
+      "test/tree/probegate.test.js"
+    ]
   }
 ]

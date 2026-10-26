@@ -10,6 +10,7 @@
 //
 // Run:  ARENA2_PATH=/home/claude/dfdata/arena2 SHOTS=<dir> node tools/horizonProbe.mjs
 //   REGION=Wayrest LOC=Knightstale TOD=12:00  PORT=5182  W=960 H=540  LAND=5 (the streamed radius)  CHROMIUM=<browser>
+//   HEAP_MB=<the page's old space, MB: a shared machine's memory>
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 import { existsSync, mkdirSync } from 'node:fs';
@@ -30,7 +31,7 @@ const QUERY = `world&region=${encodeURIComponent(REGION)}&loc=${encodeURICompone
 
 const server = await createServer({ root: ROOT, server: { port: PORT, strictPort: true, hmr: false, watch: null }, logLevel: 'silent' });
 await server.listen();
-const browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {}), args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required', '--disable-renderer-backgrounding', '--disable-background-timer-throttling'] });
+const browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {}), args: [...(process.env.HEAP_MB ? [`--js-flags=--max-old-space-size=${process.env.HEAP_MB}`] : []), '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--autoplay-policy=no-user-gesture-required', '--disable-renderer-backgrounding', '--disable-background-timer-throttling'] });
 const results = [];
 for (const [arm, doors] of [['layers', ''], ['before', '&midring=off&farfield=off']]) {
   const page = await browser.newPage({ viewport: { width: W, height: H } });

@@ -1514,7 +1514,7 @@ The owner: *"The held map still struggles to load everything at once"*.
   words are read again only when the roads' installs or the places' adds move (`base.version`), never counted against
   TILES_KEPT, and let go with the window. A frame that settles (`settling`: budget 0) paints none of it, as it paints
   none of the view's.
-- **The probe's read** (`stats()`, `__heldMapLoad`): each draw's tiles - wanted, painted, stood in for and HOLES (owed
+- **The probe's read** (`stats()`, `__heldMapLoad` - behind the shot gate, AUDIT ANTICHEAT A2): each draw's tiles - wanted, painted, stood in for and HOLES (owed
   with nothing to show) - and the window's paint's milliseconds; `tools/heldMapLoadProbe.mjs` sets a list of views (the
   continent, far, mid, near, home and a wheel's zoom out and in) in the real game and counts the frames to COMPLETE (the
   first with nothing owed) and the holes on the way.
@@ -1522,7 +1522,7 @@ The owner: *"The held map still struggles to load everything at once"*.
 Proof: `test/ui/mapwhole.test.js` (4: the mask - its edge rule, the union, the share, the word sum; the dots rasterised,
 one put a pass at the pen's alpha, a canvas with no pixels as before; the base - painted first, the stand-in under every
 tile owed, its words by its version, kept apart and let go on close, the window's base; a job's mask pooled),
-`tools/mutants/mapwhole.json` (23, all dead). PIN MOVED: `test/tesa15_mapfidelity.test.js` (the window's tiles' draw
+`tools/mutants/mapwhole.json` (24, all dead). PIN MOVED: `test/tesa15_mapfidelity.test.js` (the window's tiles' draw
 hands the base). The four hosts: the held map is the world host's alone (`ui/heldMap.js`); `scenes/exterior.js`,
 `scenes/worldModes.js` and `scenes/dungeonContext.js` open no map past the Bay.
 

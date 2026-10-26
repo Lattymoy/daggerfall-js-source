@@ -10,11 +10,12 @@ import { readFileSync } from 'node:fs';
 import { WoodsFile } from '../../src/formats/woodsFile.js';
 import { generateSamples, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE } from '../../src/world/terrain/terrainSampler.js';
 import { createLandforms } from '../../src/world/landforms.js';
-import { buildMidRingHeights, midRingNormals, midRingSide, midRingPixel, midRingBandRows, buildFarFieldBytes, farFieldCell, FAR_SAMPLES, MID_RADIUS, MID_SUB, MID_REBUILD_DRIFT } from '../../src/world/terrain/midRingGrid.js';
+import { buildMidRingHeights, midRingNormals, midRingSide, midRingPixel, midRingBandRows, buildFarFieldBytes, farFieldCell, FAR_SAMPLES, FAR_CLIMATE_ASK, MID_RADIUS, MID_SUB, MID_REBUILD_DRIFT } from '../../src/world/terrain/midRingGrid.js';
 import { midRingVertices, midRingOrder, midRingRuns, MidRingMesh, midRingDisabled, MID_SEA_EPS } from '../../src/render/midRing.js';
 import { FarRingRenderer, ringHeight, RING_RADIUS, HORIZON_BUDGET_MS, MID_MORPH_START, MID_MORPH_END } from '../../src/render/farRing.js';
 import { TerrainGenClient, HORIZON_BAND_ROWS } from '../../src/world/terrain/terrainGenClient.js';
 import { syntheticWoodsBytes, network } from '../landformWorld.mjs';
+import { tamrielClimateAt } from '../../src/world/tamriel/tamrielGround.js';
 
 const H = HEIGHTMAP_DIMENSION, WORLD = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;
 const woods = new WoodsFile();
@@ -177,7 +178,11 @@ test('MID-RING the far ring asks the middle ring of the terrain\'s worker once, 
   let frames = 0;
   ring._now = (() => { let t = 0; return () => (t += HORIZON_BUDGET_MS); })();
   while (!ring._mid?.built && frames < 100) { ring.punchHole(201, 150, 5, built); frames++; }
-  assert.ok(frames > 5 && frames < 100 && ring._mid.built, `the ring's vertices laid over ${frames} frames, a step of rows a frame`);
+  // the fake clock spends the budget in one step: a frame a step - the tints a row of 31 centres a step (30), the vertices
+  // MID_ROWS_A_STEP rows (19 more), their normals the same (20), and the last
+  const { MID_ROWS_A_STEP } = await import('../../src/render/midRing.js');
+  const steps = 2 * MID_RADIUS + 2 + Math.ceil(side / MID_ROWS_A_STEP) - 1 + Math.ceil(side / MID_ROWS_A_STEP) + 1;
+  assert.ok(MID_ROWS_A_STEP === 12 && frames >= steps - 1 && frames < 200 && ring._mid.built, `the ring's vertices laid over ${frames} frames, a step of rows a frame (${steps} steps)`);
   ring.punchHole(201, 150, 5, built);
   assert.ok(ring.ringCount < before, `the far ring holed for the middle ring's footprint (${ring.ringCount} < ${before})`);
   const cells = (2 * RING_RADIUS) ** 2 - (2 * MID_RADIUS) ** 2;
@@ -203,9 +208,16 @@ test('MID-RING the far ring asks the middle ring of the terrain\'s worker once, 
   // past the drift: asked again; an answer for a base let go is dropped
   ring.punchHole(200 + MID_REBUILD_DRIFT + 1, 150, 5, built);
   assert.equal(asks.length, 2);
-  assert.equal(typeof globalThis.__horizonRings, 'function', 'the probes\' read');
+  assert.equal(globalThis.__horizonRings, undefined, 'no shot page: no probe door (AUDIT ANTICHEAT A2)');
+  const page = globalThis.location;
+  globalThis.location = /** @type {any} */ ({ search: '?world&shot' });
+  try {
+    const probed = new FarRingRenderer(fakeGl().gl, {});
+    assert.equal(typeof globalThis.__horizonRings, 'function', 'the probes\' read, behind the shot gate');
+    probed.dispose();
+    assert.equal(globalThis.__horizonRings, undefined, 'let go with the ring');
+  } finally { globalThis.location = page; }
   ring.dispose();
-  assert.equal(globalThis.__horizonRings, undefined, 'let go with the ring');
   answer({ heights: new Float32Array(side * side) });
   await new Promise((r) => setTimeout(r, 0));
   for (let k = 0; k < 100; k++) ring.punchHole(204, 150, 5, built);
@@ -229,7 +241,11 @@ test('MID-RING / FAR-FIELD the worker\'s grounds: by id and by band, transferred
   const side = midRingSide(1, 2);
   const whole = buildMidRingHeights({ woods, baseX: 398, baseY: 251, radius: 1, sub: 2 });
   try {
-    await import('../../src/world/terrain/terrainGenWorker.js');
+    const { HORIZON_KEPT } = await import('../../src/world/terrain/terrainGenWorker.js');
+    // each ground's book holds two of its grounds: one smaller than a ground's walk lets every entry go before the next
+    // rebuild asks it again (the far field's 14,641 cells through one 8,192-entry book)
+    const { farFieldSide } = await import('../../src/world/terrain/midRingGrid.js');
+    assert.ok(HORIZON_KEPT.mid >= 2 * (2 * MID_RADIUS + 1) ** 2 && HORIZON_KEPT.far >= 2 * farFieldSide() ** 2, JSON.stringify(HORIZON_KEPT));
     globalThis.onmessage({ data: { t: 'init', woodsBytes: syntheticWoodsBytes() } });
     globalThis.onmessage({ data: { t: 'midring', id: 9, baseX: 398, baseY: 251, radius: 1, sub: 2, landform: false, rows: [1, 3] } });
     const a = posted.find((p) => p.m.t === 'mid');
@@ -243,7 +259,8 @@ test('MID-RING / FAR-FIELD the worker\'s grounds: by id and by band, transferred
     globalThis.onmessage({ data: { t: 'farfield', id: 11, baseCX: 40, baseCY: 25, radius: 2, cell: 8, seaByte: 3, rows: [0, 5] } });   // a slope: every row its own
     const f = posted.at(-1);
     assert.equal(f.m.t, 'far');
-    assert.deepEqual(f.t, [f.m.high.buffer, f.m.low.buffer]);
+    assert.deepEqual(f.t, [f.m.high.buffer, f.m.low.buffer, f.m.clim.buffer]);
+    assert.ok(f.m.clim.every((c) => c === FAR_CLIMATE_ASK), 'no continent installed here: every climate the main thread\'s to read');
     const ref = buildFarFieldBytes({ woods, baseCX: 40, baseCY: 25, radius: 2, cell: 8, seaByte: 3 });
     assert.deepEqual([[...f.m.high], [...f.m.low]], [[...ref.high], [...ref.low]]);
     const [m0, n0] = farFieldCell(woods, 38, 23, 8, 3);
@@ -251,8 +268,29 @@ test('MID-RING / FAR-FIELD the worker\'s grounds: by id and by band, transferred
     for (const v of FAR_SAMPLES) for (const u of FAR_SAMPLES) { const byte = woods.getHeightMapValue(38 * 8 + u, 23 * 8 + v); m = Math.max(m, byte); if (byte <= 3) n++; }
     assert.deepEqual([m0, n0], [m, n], 'a cell: its samples\' highest byte and how many are the sea\'s floor');
     assert.equal(ref.high[0], m0, 'the north-west cell first');
+    // a cell's climate the reader's at its centre pixel, where one is handed
+    const asked = [];
+    const withClim = buildFarFieldBytes({ woods, baseCX: 40, baseCY: 25, radius: 2, cell: 8, seaByte: 3, climateAt: (x, y) => { asked.push([x, y]); return 200 + ((x + y) % 50); } });
+    assert.deepEqual(asked[0], [38 * 8 + 4, 23 * 8 + 4], 'the north-west cell\'s centre pixel');
+    assert.equal(withClim.clim[6], 200 + ((39 * 8 + 4 + 24 * 8 + 4) % 50));
     for (let j = 0; j < 5; j++) for (let i = 0; i < 5; i++) assert.equal(ref.high[j * 5 + i], farFieldCell(woods, 38 + i, 23 + j, 8, 3)[0], `cell ${i},${j}: rows run south`);
     assert.notEqual(ref.high[0], ref.high[20], 'the slope the rows are told apart by');
+    // the far cells' climates past the Bay are the worker's, read as the main thread's reader reads them (the continent's,
+    // its trace installed by 'tamriel'); on the Bay, and with no continent installed, the main thread's to read
+    const climOf = (baseCX, baseCY) => {
+      globalThis.onmessage({ data: { t: 'farfield', id: 20, baseCX, baseCY, radius: 2, cell: 8, seaByte: 3 } });
+      return posted.at(-1).m.clim;
+    };
+    assert.ok(climOf(150, -20).every((c) => c === FAR_CLIMATE_ASK), 'past the Bay, no continent: asked');
+    const land = new Uint8Array(320 * 200), province = new Uint8Array(320 * 200);
+    for (let y = 20; y < 80; y++) for (let x = 110; x < 210; x++) { land[y * 320 + x] = 1; province[y * 320 + x] = 3; }   // Skyrim, as tesa6's rig
+    globalThis.onmessage({ data: { t: 'tamriel', trace: { w: 320, h: 200, land, province }, fit: { ox: 400, oy: 500, ppu: 10 } } });
+    try {
+      const past = climOf(150, -20);
+      assert.equal(past[0], tamrielClimateAt(148 * 8 + 4, -22 * 8 + 4) & 255, 'the continent\'s climate at the cell\'s centre');
+      assert.ok(past.every((c) => c !== FAR_CLIMATE_ASK));
+      assert.ok(climOf(40, 25).every((c) => c === FAR_CLIMATE_ASK), 'on the Bay: the main thread\'s own map');
+    } finally { globalThis.onmessage({ data: { t: 'tamriel', trace: null, fit: null } }); }
   } finally { globalThis.onmessage = was.on; globalThis.postMessage = was.post; }
   // the pixel kept: a second ring over the same pixels asks the kernel no more
   let made = 0;
@@ -289,6 +327,19 @@ test('MID-RING / FAR-FIELD the worker\'s grounds: by id and by band, transferred
   const p2 = client.midRing(job);
   w.onmessage({ data: { t: 'midError', id: sent.at(-1).id, message: 'x' } });
   assert.equal(await p2, null);
+  // the far field a band of FAR rows at a time, its three answers assembled
+  const pf = client.farField({ baseCX: 0, baseCY: 0, radius: 10, cell: 8, seaByte: 3 }), fside = 21;
+  for (let k = 0; k < 4; k++) {
+    const at = sent.filter((x) => x.t === 'farfield').at(-1);
+    if (!at || at.done) break;
+    at.done = true;
+    const rows = at.rows[1] - at.rows[0], fill = (b) => new Uint8Array(rows * fside).fill(b + at.rows[0]);
+    w.onmessage({ data: { t: 'far', id: at.id, high: fill(0), low: fill(100), clim: fill(200) } });
+    await new Promise((r) => setTimeout(r, 0));
+  }
+  assert.deepEqual(sent.filter((x) => x.t === 'farfield').map((x) => x.rows), [[0, HORIZON_BAND_ROWS.far], [HORIZON_BAND_ROWS.far, fside]]);
+  const ff = await pf;
+  assert.deepEqual([ff.high[0], ff.low[0], ff.clim[0], ff.high[16 * fside], ff.low[16 * fside], ff.clim[16 * fside]], [0, 100, 200, 16, 116, 216]);
   const p3 = client.farField({ baseCX: 0, baseCY: 0, radius: 2, cell: 8, seaByte: 3 });
   w.onerror({ message: 'gone' });
   assert.equal(await p3, null, 'the worker died: no far field');
@@ -348,7 +399,7 @@ test('MID-RING the stream\'s new pixel eases out of the middle ring\'s tint: sta
   assert.match(R, /gl\.uniform1i\(this\.tUTilemap, 2\);\n\s*this\._tFade = -1;/, 'the frame\'s block makes the next draw upload it again');
   // the build stamps it on the enhanced lane, the middle ring standing
   const P = readFileSync('src/scenes/pixelBuild.js', 'utf8');
-  assert.match(P, /if \(isEnhanced\(\) && !midRingDisabled\(\)\) stampPixelFade\(terrain, px, py, host\.state\.current, overworldTint\(maps\.getClimateIndex\(px, py\), host\.woods\.getHeightMapValue\(px, py\)\), performance\.now\(\)\);[^\n]*\n\s*built\.set\(key, \{/);
+  assert.match(P, /if \(isEnhanced\(\) && !midRingDisabled\(\)\) stampPixelFade\(terrain, px, py, host\.state\.current, overworldTint\(maps\.getClimateIndex\(px, py\), host\.woods\.getHeightMapValue\(px, py\)\), performance\.now\(\)\);[^\n]*\n\s*if \(_building\.get\(key\) === made\) _building\.delete\(key\);[^\n]*\n\s*built\.set\(key, \{/, 'stamped as the build publishes, before the ledger is handed over (BUILD-FAIL1\'s two lines kept together)');
 });
 
 test('FAR-FIELD the far field: a vertex a cell on its centre (the far ring\'s frame), its height the far ring\'s law on its highest byte or the sea\'s where most of it is the sea or its centre the ocean\'s climate; its cells farthest first from the traveller\'s, the far ring\'s footprint left to it (mutant: the frame, the sea\'s majority, the order, the hole)', async () => {
@@ -398,11 +449,21 @@ test('FAR-FIELD the far ring asks the far field of the worker, lays it a frame\'
   ring.build(inputs, 200, 150, 5, new Map());
   assert.deepEqual(asks.map((a) => [a.baseCX, a.baseCY, a.radius, a.cell, a.seaByte]), [[25, 18, 60, 8, 3]], 'the traveller\'s cell, the sea\'s byte isWaterPixel\'s');
   const n = farFieldSide() ** 2;
-  answer({ high: new Uint8Array(n).fill(90), low: new Uint8Array(n) });
+  // the worker's climates where it read them (the ocean's for the first row), this ring's own reader's where it asks
+  const clim = new Uint8Array(n).fill(FAR_CLIMATE_ASK);
+  clim.fill(223, 0, farFieldSide());
+  answer({ high: new Uint8Array(n).fill(90), low: new Uint8Array(n), clim });
   await new Promise((r) => setTimeout(r, 0));
   let frames = 0;
-  while (!ring.horizonStats().field && frames < 100) { ring.punchHole(200, 150, 5, new Map()); frames++; }
-  assert.ok(frames > 2 && ring.horizonStats().field, `laid over ${frames} frames`);
+  while (!ring.horizonStats().field && frames < 2000) { ring.punchHole(200, 150, 5, new Map()); frames++; }
+  // a frame a step under the fake clock: FAR_CELLS_A_STEP cells a step (a cold centre past the Bay is the continent's
+  // biome worked out), then FAR_NORMAL_ROWS rows of normals a step
+  const { FAR_CELLS_A_STEP, FAR_NORMAL_ROWS } = await import('../../src/render/farField.js');
+  const steps = Math.ceil(n / FAR_CELLS_A_STEP) + Math.ceil(farFieldSide() / FAR_NORMAL_ROWS);
+  assert.ok(FAR_CELLS_A_STEP === 32 && FAR_NORMAL_ROWS === 8 && frames >= steps - 1 && ring.horizonStats().field, `laid over ${frames} frames (${steps} steps)`);
+  const pos = log.buffers.map((b) => b[1]).find((d) => d instanceof Float32Array && d.length === n * 3);
+  assert.equal(pos[1], Math.fround(ringHeight(0)), 'the worker\'s ocean: the sea');
+  assert.equal(pos[farFieldSide() * 3 + 1], Math.fround(ringHeight(90)), 'asked of this ring\'s reader (no ocean): the land');
   ring.punchHole(200, 150, 5, new Map());
   log.draws.length = 0; u1.length = 0;
   ring.draw(new Float32Array(16), { origin: [0, 0, 0], lightDir: [0, 1, 0], ambient: [0, 0, 0], sunScale: 1, sunColor: [1, 1, 1], fogColor: [0, 0, 0], fogEnd: 1, fovY: 1, aspect: 1 });

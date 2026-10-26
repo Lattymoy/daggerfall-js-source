@@ -326,11 +326,11 @@ export class TerrainGenClient {
    */
   farField(job) {
     if (!this._worker) return Promise.resolve(null);
-    const side = farFieldSide(job.radius), high = new Uint8Array(side * side), low = new Uint8Array(side * side);
+    const side = farFieldSide(job.radius), high = new Uint8Array(side * side), low = new Uint8Array(side * side), clim = new Uint8Array(side * side);
     return this._bands('farfield', job, side, HORIZON_BAND_ROWS.far, (m, j0, j1) => {
       if (!m?.high) return false;
-      high.set(m.high, j0 * side); low.set(m.low, j0 * side);
-      return j1 === side ? { high, low } : true;
+      high.set(m.high, j0 * side); low.set(m.low, j0 * side); clim.set(m.clim, j0 * side);
+      return j1 === side ? { high, low, clim } : true;
     });
   }
 
@@ -339,7 +339,7 @@ export class TerrainGenClient {
     if (!resolve) return;
     this._mids.delete(m.id);
     if (m.t === 'midError' || m.t === 'farError') console.warn('[terrain] worker horizon failed -', m.message);
-    resolve(m.t === 'mid' ? { heights: m.heights } : m.t === 'far' ? { high: m.high, low: m.low } : null);
+    resolve(m.t === 'mid' ? { heights: m.heights } : m.t === 'far' ? { high: m.high, low: m.low, clim: m.clim } : null);
   }
 
   _gridAnswer(m) {

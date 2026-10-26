@@ -15,12 +15,12 @@
 
 import { packNature, natureBuffers } from './natureWire.js';   // AUDIT BANTHA1 PERF-2
 import { WoodsFile } from '../../formats/woodsFile.js';
-import { groundWoods, dropGroundCache } from '../tamriel/tamrielGround.js';   // TAMRIEL2: the ground beyond the Bay
-import { etherWoods } from '../ethericSea.js';   // ETHER-SEA: the Eltheric Ocean's ground
-import { setTamrielTrace } from '../tamriel/tamrielLand.js';   // TAMRIEL3: the picture's own land
-import { setTamrielFit } from '../tamriel/tamrielFrame.js';
+import { groundWoods, dropGroundCache, tamrielClimateAt } from '../tamriel/tamrielGround.js';   // TAMRIEL2: the ground beyond the Bay; FAR-FIELD: a far cell's climate past it, worked out here
+import { etherWoods, inEtherLaw } from '../ethericSea.js';   // ETHER-SEA: the Eltheric Ocean's ground
+import { setTamrielTrace, tamrielTrace } from '../tamriel/tamrielLand.js';   // TAMRIEL3: the picture's own land
+import { setTamrielFit, inBay } from '../tamriel/tamrielFrame.js';
 import { generatePixelTerrain, restrideGrid } from './terrainGen.js';   // PERF-EXT26: and a built pixel's grid at another stride
-import { buildMidRingHeights, buildFarFieldBytes, midRingPixel, farFieldCell } from './midRingGrid.js';   // MID-RING: the middle ring's ground, off the frame; FAR-FIELD: and the far field's
+import { buildMidRingHeights, buildFarFieldBytes, midRingPixel, farFieldCell, FAR_CLIMATE_ASK } from './midRingGrid.js';   // MID-RING: the middle ring's ground, off the frame; FAR-FIELD: and the far field's
 import { createLandforms } from '../landforms.js';
 import { buildRoadsFromSettlements } from '../roadsProducer.js';   // AUDIT ROADS F2
 import { cachedNetwork, roadsCacheKey } from '../roadsCache.js';   // ROADS 19
@@ -33,23 +33,31 @@ let sites = null;   // LANDFORM4: the game's own locations the landforms pull th
 let climates = null;   // LANDFORM6: the world's climates, the land each wears (landforms.js landformClimates)
 let pendingRoads = null;   // ROADS 19: the cache lookup in flight
 /** MID-RING / FAR-FIELD: the horizon's grounds kept a pixel (a cell) at a time across their rebuilds - a ring drifted
- *  three pixels asks some 170 new pixels of its 841 - and let go whenever what they read moves (a new reader, network,
- *  table or trace: every message but a job). Bounded: the one asked longest ago let go first. */
-const HORIZON_KEPT = 8192;
-const horizonKept = new Map();
-const keptHorizon = (key, make) => {
-  let v = horizonKept.get(key);
-  if (v) { horizonKept.delete(key); horizonKept.set(key, v); return v; }
-  v = make();
-  horizonKept.set(key, v);
-  while (horizonKept.size > HORIZON_KEPT) horizonKept.delete(horizonKept.keys().next().value);
-  return v;
+ *  three pixels asks some 170 new pixels of its 841, a far field drifted three cells some 1,100 new cells of its 14,641 -
+ *  and let go whenever what they read moves (a new reader, network, table or trace: every message but a job). Each its
+ *  own book, bounded past two of its grounds (a book smaller than one ground's walk would let go of every entry before
+ *  the next rebuild asked it again): the one asked longest ago let go first. */
+export const HORIZON_KEPT = Object.freeze({ mid: 4096, far: 32768 });
+const keptBook = (limit) => {
+  const book = new Map();
+  const take = (key, make) => {
+    let v = book.get(key);
+    if (v) { book.delete(key); book.set(key, v); return v; }
+    v = make();
+    book.set(key, v);
+    while (book.size > limit) book.delete(book.keys().next().value);
+    return v;
+  };
+  take.clear = () => book.clear();
+  take.size = () => book.size;
+  return take;
 };
+const keptMid = keptBook(HORIZON_KEPT.mid), keptFar = keptBook(HORIZON_KEPT.far);
 globalThis.onmessage = (ev) => handle(ev.data ?? {});
 
 function handle(m) {
   try {
-    if (m.t === 'init' || m.t === 'roads' || m.t === 'landform-tables' || m.t === 'tamriel') horizonKept.clear();   // MID-RING: what the grounds read moved
+    if (m.t === 'init' || m.t === 'roads' || m.t === 'landform-tables' || m.t === 'tamriel') { keptMid.clear(); keptFar.clear(); }   // MID-RING: what the grounds read moved
     if (m.t === 'init') {
       const w = new WoodsFile();
       if (!w.load(m.woodsBytes)) throw new Error('WOODS.WLD failed to load in the terrain worker');
@@ -153,12 +161,20 @@ function answerMidRing(m) {
   try {
     if (!woods) throw new Error('terrain worker got a middle ring before init');
     const landforms = m.landform ? createLandforms({ woods, roads, sites, climates }) : null;
-    const pixel = (px, py) => keptHorizon(`m${px},${py},${m.sub},${m.landform ? 1 : 0}`, () => midRingPixel(woods, px, py, m.sub, landforms));
+    const pixel = (px, py) => keptMid(`${px},${py},${m.sub},${m.landform ? 1 : 0}`, () => midRingPixel(woods, px, py, m.sub, landforms));
     const heights = buildMidRingHeights({ woods, baseX: m.baseX, baseY: m.baseY, radius: m.radius, sub: m.sub, landforms, rows: m.rows ?? null, pixel });
     globalThis.postMessage({ t: 'mid', id: m.id, heights }, [heights.buffer]);
   } catch (e) {
     globalThis.postMessage({ t: 'midError', id: m.id, message: e?.message ?? String(e) });
   }
+}
+
+/** FAR-FIELD: a far cell's climate where this worker reads it as the main thread's own reader does - past the Bay, the
+ *  continent's (world/tamriel/tamrielGround.js groundClimateIndex, its trace installed here by 'tamriel'), outside the
+ *  Eltheric Ocean's box (whose law the main thread holds); FAR_CLIMATE_ASK elsewhere, the main thread's to read. A first
+ *  read past the Bay works the continent's biomes out (some 150 ms, once) - here, not on the frame. */
+function farClimateAt(x, y) {
+  return tamrielTrace() && !inBay(x, y) && !inEtherLaw(x, y) ? tamrielClimateAt(x, y) & 255 : FAR_CLIMATE_ASK;
 }
 
 /** FAR-FIELD (render/farField.js): the far field's cells round {baseCX, baseCY} - each its highest byte and its count of
@@ -167,9 +183,9 @@ function answerMidRing(m) {
 function answerFarField(m) {
   try {
     if (!woods) throw new Error('terrain worker got a far field before init');
-    const cellAt = (cx, cy) => keptHorizon(`f${cx},${cy},${m.cell},${m.seaByte}`, () => farFieldCell(woods, cx, cy, m.cell, m.seaByte));
-    const { high, low } = buildFarFieldBytes({ woods, baseCX: m.baseCX, baseCY: m.baseCY, radius: m.radius, cell: m.cell, seaByte: m.seaByte, rows: m.rows ?? null, cellAt });
-    globalThis.postMessage({ t: 'far', id: m.id, high, low }, [high.buffer, low.buffer]);
+    const cellAt = (cx, cy) => keptFar(`${cx},${cy},${m.cell},${m.seaByte}`, () => farFieldCell(woods, cx, cy, m.cell, m.seaByte, farClimateAt));
+    const { high, low, clim } = buildFarFieldBytes({ woods, baseCX: m.baseCX, baseCY: m.baseCY, radius: m.radius, cell: m.cell, seaByte: m.seaByte, rows: m.rows ?? null, cellAt });
+    globalThis.postMessage({ t: 'far', id: m.id, high, low, clim }, [high.buffer, low.buffer, clim.buffer]);
   } catch (e) {
     globalThis.postMessage({ t: 'farError', id: m.id, message: e?.message ?? String(e) });
   }

@@ -245,7 +245,7 @@
   {
     "name": "FAR-FIELD-ocean-climate-ignored",
     "file": "src/render/farField.js",
-    "old": "const wet = low[v] > majority || oceanAt(px, py);",
+    "old": "const wet = low[v] > majority || oceanAt(px, py, v);",
     "new": "const wet = low[v] > majority;",
     "tests": [
       "test/render/midring.test.js"
@@ -254,8 +254,8 @@
   {
     "name": "FAR-FIELD-sea-tint-land",
     "file": "src/render/farField.js",
-    "old": "tintAt(px, py, wet ? 0 : high[v])",
-    "new": "tintAt(px, py, high[v])",
+    "old": "tintAt(px, py, wet ? 0 : high[v], v)",
+    "new": "tintAt(px, py, high[v], v)",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -641,8 +641,8 @@
   {
     "name": "HORIZON-worker-mid-key-no-row",
     "file": "src/world/terrain/terrainGenWorker.js",
-    "old": "keptHorizon(`m${px},${py},",
-    "new": "keptHorizon(`m${px},",
+    "old": "keptMid(`${px},${py},",
+    "new": "keptMid(`${px},",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -650,8 +650,8 @@
   {
     "name": "HORIZON-worker-far-key-no-row",
     "file": "src/world/terrain/terrainGenWorker.js",
-    "old": "keptHorizon(`f${cx},${cy},",
-    "new": "keptHorizon(`f${cx},",
+    "old": "keptFar(`${cx},${cy},",
+    "new": "keptFar(`${cx},",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -661,6 +661,133 @@
     "file": "src/world/terrain/terrainGenWorker.js",
     "old": "landforms, rows: m.rows ?? null, pixel });",
     "new": "landforms, rows: null, pixel });",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "HORIZON-worker-far-book-one-ground",
+    "file": "src/world/terrain/terrainGenWorker.js",
+    "old": "export const HORIZON_KEPT = Object.freeze({ mid: 4096, far: 32768 });",
+    "new": "export const HORIZON_KEPT = Object.freeze({ mid: 4096, far: 8192 });",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-worker-climate-dropped",
+    "file": "src/render/farRing.js",
+    "old": "climAt = (x, y, v) => (clim && clim[v] !== FAR_CLIMATE_ASK ? clim[v] : climateOf(x, y))",
+    "new": "climAt = (x, y, v) => climateOf(x, y)",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-cell-climate-at-its-corner",
+    "file": "src/world/terrain/midRingGrid.js",
+    "old": "climateAt(Math.floor(cx * cell + cell / 2), Math.floor(cy * cell + cell / 2))",
+    "new": "climateAt(cx * cell, cy * cell)",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-clim-unassembled",
+    "file": "src/world/terrain/terrainGenClient.js",
+    "old": "high.set(m.high, j0 * side); low.set(m.low, j0 * side); clim.set(m.clim, j0 * side);",
+    "new": "high.set(m.high, j0 * side); low.set(m.low, j0 * side);",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-clim-not-answered",
+    "file": "src/world/terrain/terrainGenClient.js",
+    "old": "m.t === 'far' ? { high: m.high, low: m.low, clim: m.clim }",
+    "new": "m.t === 'far' ? { high: m.high, low: m.low, clim: new Uint8Array(m.high.length) }",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-worker-climate-untraced",
+    "file": "src/world/terrain/terrainGenWorker.js",
+    "old": "return tamrielTrace() && !inBay(x, y) && !inEtherLaw(x, y) ? tamrielClimateAt(x, y) & 255 : FAR_CLIMATE_ASK;",
+    "new": "return !inBay(x, y) && !inEtherLaw(x, y) ? tamrielClimateAt(x, y) & 255 : FAR_CLIMATE_ASK;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-worker-climate-on-the-bay",
+    "file": "src/world/terrain/terrainGenWorker.js",
+    "old": "return tamrielTrace() && !inBay(x, y) && !inEtherLaw(x, y) ? tamrielClimateAt(x, y) & 255 : FAR_CLIMATE_ASK;",
+    "new": "return tamrielTrace() && !inEtherLaw(x, y) ? tamrielClimateAt(x, y) & 255 : FAR_CLIMATE_ASK;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-worker-climate-unasked",
+    "file": "src/world/terrain/terrainGenWorker.js",
+    "old": "() => farFieldCell(woods, cx, cy, m.cell, m.seaByte, farClimateAt));",
+    "new": "() => farFieldCell(woods, cx, cy, m.cell, m.seaByte));",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-clim-copied",
+    "file": "src/world/terrain/terrainGenWorker.js",
+    "old": "[high.buffer, low.buffer, clim.buffer]",
+    "new": "[high.buffer, low.buffer]",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "HORIZON-probe-door-ungated",
+    "file": "src/render/farRing.js",
+    "old": "if (pageHas('shot')) globalThis.__horizonRings = this._statsFn;",
+    "new": "globalThis.__horizonRings = this._statsFn;",
+    "tests": [
+      "test/render/midring.test.js",
+      "test/tree/probegate.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-steps-by-the-row",
+    "file": "src/render/farField.js",
+    "old": "if (v && v % FAR_CELLS_A_STEP === 0) yield;",
+    "new": "if (v && v % (FAR_CELLS_A_STEP * 64) === 0) yield;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-normals-whole",
+    "file": "src/render/farField.js",
+    "old": "if (j % FAR_NORMAL_ROWS === 0) yield;",
+    "new": "if (j === 0) yield;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-tints-whole",
+    "file": "src/render/midRing.js",
+    "old": "    if (tj) yield;\n",
+    "new": "",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-rows-a-step-doubled",
+    "file": "src/render/midRing.js",
+    "old": "export const MID_ROWS_A_STEP = 12;",
+    "new": "export const MID_ROWS_A_STEP = 24;",
     "tests": [
       "test/render/midring.test.js"
     ]

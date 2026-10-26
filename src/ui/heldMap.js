@@ -147,6 +147,7 @@ import { arenaPlacesVersion } from '../world/arenaPlaces.js';   // TESA1: the pl
 import { arenaRoadsVersion } from '../world/arenaRoads.js';   // TESA13: and the roads past the Bay, landing while it stands (AUDIT TESA II M9: the tick's word)
 import { pastBayPlacesVersion } from '../world/pastBayPlaces.js';   // TESA15: and the places the roads' regions laid
 import { createTamrielTiles } from './tamrielTiles.js';   // TESA15: the land past the Bay's paint, kept a tile at a time
+import { pageHas } from '../systems/pageQuery.js';   // MAP-WHOLE: the load probe's door behind the shot gate
 import { NOTE_MAX_CHARACTERS } from '../systems/automap/automap.js';
 /** PLUS-MAP: the 3D map's tool glyphs - line drawings in the button's own colour (currentColor). */
 const TOOL_SVG = (d) => `<svg class="hmtoolicon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" stroke-linejoin="miter">${d}</svg>`;
@@ -801,7 +802,7 @@ export class HeldMapWindow {
     // MAP-WHOLE (tools/heldMapLoadProbe.mjs): a view set as a zoom or a pan sets it, and how the last paint left the sheet -
     // its milliseconds, whether a tile past the Bay is still owed, and the tiles' own count of what they showed
     this._loadFn = { view: (v) => this._setView(v), state: () => ({ phase: this._phase, view: { ...this._view }, paintMs: this._paintMs ?? 0, dirty: !!this._dirty, owed: !!this._pastBayTiles?.stats?.().owed, tiles: this._pastBayTiles?.stats?.() ?? null }) };
-    globalThis.__heldMapLoad = this._loadFn;
+    if (pageHas('shot')) globalThis.__heldMapLoad = this._loadFn;   // behind the shot gate (AUDIT ANTICHEAT A2)
   }
 
   // ── THE CLASSIC WINDOW'S CONTRACT, kept ────────────────────────

@@ -80,10 +80,11 @@ import { RING_CLOUD_GLSL, cloudFarOf } from './cloudShadow.js';   // OW-HORIZON:
 import { RING_HAZE_GLSL } from './hazeGlsl.js';   // BANTHA1: the jungle's haze over the ring, both lanes' one text (render/hazeGlsl.js)
 import { WATER_F0, WATER_TINT } from './waterSurface.js';   // FAR-SEA1: the water's own Fresnel; AUDIT FAR-SEA1 L1: and its tint
 import { MidRingMesh, midRingVertexSteps, midRingDisabled } from './midRing.js';   // MID-RING: the kernel's own ground between the grid and this ring
-import { MID_RADIUS, MID_SUB, MID_REBUILD_DRIFT, FAR_CELL, FAR_RADIUS, FAR_REBUILD_DRIFT } from '../world/terrain/midRingGrid.js';
+import { MID_RADIUS, MID_SUB, MID_REBUILD_DRIFT, FAR_CELL, FAR_RADIUS, FAR_REBUILD_DRIFT, FAR_CLIMATE_ASK } from '../world/terrain/midRingGrid.js';
 import { FarFieldMesh, farFieldVertexSteps, farFieldDisabled, FAR_RIM_START, FAR_RIM_END, FAR_LENS_FAR } from './farField.js';   // FAR-FIELD: the land past this ring
 import { SCALED_OCEAN_ELEVATION as OCEAN_Y, BASE_HEIGHT_SCALE as BYTE_SCALE } from '../world/terrain/terrainSampler.js';
 import { CLIMATES } from '../formats/mapsFile.js';   // FAR-FIELD: a cell's centre on the ocean's climate is the sea
+import { pageHas } from '../systems/pageQuery.js';   // MID-RING: the probes' read stands behind the shot gate (AUDIT ANTICHEAT A2)
 /** MID-RING: the band (metres, Chebyshev from the traveller) over which the middle ring's ground eases onto the far
  *  ring's - ending where the traveller's farthest drift from its base still leaves its rim (MID_RADIUS - MID_REBUILD_DRIFT
  *  pixels: the far ring's ground there whatever the base), two pixels wide. */
@@ -486,7 +487,7 @@ export class FarRingRenderer {
     // the probes' read (tools/horizonProbe.mjs): which of the horizon's layers stand, and round which bases - let go by
     // the ring that set it (dispose)
     this._statsFn = () => this.horizonStats();
-    globalThis.__horizonRings = this._statsFn;
+    if (pageHas('shot')) globalThis.__horizonRings = this._statsFn;
     this.lane = opts.lane ?? this.renderer?.lightingLane ?? null;
     this._dec = new Float32Array(3);
     const p = buildProgram(gl, VS, this.lane ? this.lane.farRingFs : FS, 'far ring');
@@ -631,11 +632,14 @@ export class FarRingRenderer {
       if (gen !== this._farGen) return;
       if (!answer?.high || !this.gl) { this._farAsk = null; return; }   // the ask stands until its ground is laid
       const { climateOf } = ringReaders(inputs);
+      // a cell's climate the worker's where it read one (past the Bay: the continent's biomes, worked out off the frame),
+      // else this ring's own reader's
+      const clim = answer.clim ?? null, climAt = (x, y, v) => (clim && clim[v] !== FAR_CLIMATE_ASK ? clim[v] : climateOf(x, y));
       const it = farFieldVertexSteps({
         high: answer.high, low: answer.low, baseCX, baseCY,
         heightOf: (byte) => ringHeight(byte, !!inputs.relief),
-        tintAt: (x, y, byte) => overworldTint(climateOf(x, y), byte),
-        oceanAt: (x, y) => climateOf(x, y) === CLIMATES.Ocean,
+        tintAt: (x, y, byte, v) => overworldTint(climAt(x, y, v), byte),
+        oceanAt: (x, y, v) => climAt(x, y, v) === CLIMATES.Ocean,
         seaY: RING_SEA_Y,
       });
       // one ask at a time and it stands until laid, so no newer ask can come while this is laid; a dispose drops the work

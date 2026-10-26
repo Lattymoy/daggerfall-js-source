@@ -2849,7 +2849,7 @@ painted over a farther one (`FarRingRenderer.draw`):
 - **The haze runs on.** While the far field stands the rings' rim law closes over FAR_RIM_START..FAR_RIM_END (217-361
   km) instead of 16.8-28.0 km, and the rings' lens reaches FAR_LENS_FAR (600 km); the land holds the far ring's 85% haze
   (RING_HAZE_HOLD) all the way out, so a range is a pale silhouette, as distance makes it - a range 2 km high 300 km off
-  stands about half a degree over the horizon. Weather (an EXPONENTIAL row) stands every ring down, as ever.
+  stands some 0.4 degrees over the horizon (no curvature is drawn): a few pixels of the 65-degree lens, as it would be. Weather (an EXPONENTIAL row) stands every ring down, as ever.
 - **Why geometry and not sprites.** The spec asks for "multilayered 2D sprite composition". The far field is that
   layered composition built as geometry: 14,641 vertices in one draw cost less than the impostor cards it would take to
   show the same ranges, and they stay still where a card does not (a card re-baked as the traveller moves shimmers;
@@ -2861,25 +2861,35 @@ painted over a farther one (`FarRingRenderer.draw`):
   over its tiles by a smoothstep share over PIXEL_FADE_MS (1.2 s) - a colour, never a discard, so the ground keeps its
   early depth test (GROUND-LAST). The renderer uploads the share only while it moves (`_terrainFade`).
 
-**How the frame pays for it.** The heights and the far field's bytes are the terrain worker's (`terrainGenWorker.js`
-'midring', 'farfield'), asked a band at a time (HORIZON_BAND_ROWS: 4 pixel rows, 16 cell rows; the next band posted as
-the last lands) so the stream's own pixel jobs run between bands, and kept by pixel and cell across rebuilds
-(HORIZON_KEPT, 8,192; let go whenever what they read moves). One ask at a time per layer; the ask stands until its ground
-is laid, and an answer for a base let go is dropped. On this thread a landed ground's vertices are laid a step of rows at
-a time (MID_ROWS_A_STEP 24, FAR_ROWS_A_STEP 16) under HORIZON_BUDGET_MS (2 ms a frame, one step at the least), and the
-painter's order is written once a pixel (the middle ring) or a cell (the far field) the traveller crosses. Measured in
-node on this shared four-core machine, loaded (the figures rank; they are not a player's): a middle ring's vertices
-64 ms in all, laid over some twenty frames; the far field's 38 ms; a middle ring's order 1.6-7.9 ms a pixel crossed, the
-far field's 2.2-2.5 ms a cell (its cells walked off one list of offsets sorted once - sorting the cells each crossing was
-16-30 ms); the runs 0.07 ms. On the worker a cold middle ring is some 100-150 ms of kernel, a rebuild after three pixels'
-drift some 170 new pixels of its 841. The GPU: the middle ring 54,289 vertices and 107,648 triangles in a handful of
-runs, the far field 14,641 vertices and some 28,500 triangles in one draw, their buffers 2.4 MB and 0.6 MB; their
-fragments only where nothing nearer stands.
+**How the frame pays for it.** The heights, the far field's bytes and its cells' climates past the Bay are the terrain
+worker's (`terrainGenWorker.js` 'midring', 'farfield'), asked a band at a time (HORIZON_BAND_ROWS: 4 pixel rows, 16 cell
+rows; the next band posted as the last lands) so the stream's own pixel jobs run between bands, and kept by pixel and cell
+across rebuilds (HORIZON_KEPT: 4,096 pixels and 32,768 cells, each book two of its grounds - one 8,192-entry book for
+both let every far cell go before the next rebuild asked it again; let go whenever what they read moves). A far cell's
+climate past the Bay is read there as the main thread's reader reads it (the continent's, `groundClimateIndex`; on the
+Bay and in the Eltheric Ocean's box FAR_CLIMATE_ASK, the main thread's own map): measured on the freeware's ground, the
+continent's first climate read works its biomes out in some 150 ms and a cold centre costs some 16 microseconds after,
+so a first far field read on this thread ran a step of its build to 196 ms. One ask at a time per layer; the ask stands
+until its ground is laid, and an answer for a base let go is dropped. On this thread a landed ground's vertices are laid
+a step at a time (the middle ring MID_ROWS_A_STEP 12 rows, its tints a row of 31 pixel centres; the far field
+FAR_CELLS_A_STEP 32 cells, its normals FAR_NORMAL_ROWS 8 rows) under HORIZON_BUDGET_MS (2 ms a frame, one step at the
+least), and the painter's order is written once a pixel (the middle ring) or a cell (the far field) the traveller
+crosses. Measured in node on this shared four-core machine, loaded to 30 runnable threads (the figures rank; they are not
+a player's): the far field's 474 steps on the freeware's ground with the worker's climates, 28-53 ms in all, p95 0.04-0.16
+ms a step (its longest steps, 6-150 ms, the machine's preemption: they moved from run to run); a middle ring's vertices
+64 ms in all; a middle ring's order 1.6-7.9 ms a pixel crossed, the far field's 2.2-2.5 ms a cell (its cells walked off
+one list of offsets sorted once - sorting the cells each crossing was 16-30 ms); the runs 0.07 ms. On the worker a cold
+far field is 0.3-1.7 s (the continent's authored ground some 6 microseconds a pixel, nine pixels a cell), 80-190 ms warm;
+a cold middle ring 0.15-0.8 s of kernel without the landforms, a rebuild after three pixels' drift some 170 new pixels of
+its 841. The GPU: the middle ring 54,289 vertices and 107,648 triangles in a handful of runs, the far field 14,641
+vertices and some 28,500 triangles in one draw, their buffers 2.4 MB and 0.6 MB; their fragments only where nothing
+nearer stands.
 
 **The doors.** `?midring=off` and `?farfield=off` (read once as the ring is made) stand either layer down - the far ring
 then holes and closes as before - and with no worker (`?terrainthread=off`, a dead one) neither is asked: the client
 answers null, never computes them on this thread. `tools/horizonProbe.mjs` photographs one view with the layers and
-with both doors shut (the A/B in one tree; the probes' read is `__horizonRings`, let go with the ring).
+with both doors shut (the A/B in one tree; the probes' read is `__horizonRings`, behind the shot gate - AUDIT ANTICHEAT
+A2 - and let go with the ring).
 
 **A city's skyline** (the Imperial City at some 20 km, stream A): not built here. The hook is a layer of the same pass -
 a landmark's low-poly silhouette handed to the far ring, drawn by its program between the far field and the far ring in
@@ -2891,9 +2901,11 @@ Port-Ledger row MID-RING. Proof: `test/render/midring.test.js` (10: the heights 
 the landforms and without; the vertices' frame, tints, sea and their ease's ground; the painter's order and its runs;
 the mesh; the far ring's asks, stepped laying, hole, ease and origins; the worker's bands and kept pixels, the client's
 bands, its errors and the worker's death; the wiring; the pixel's ease out of the tint; the far field's vertices and
-order; the far ring's far field, its rim, its lens and its drift), `tools/mutants/midring.json` (74, all dead). PIN
+order; the far ring's far field, its rim, its lens and its drift; the worker's climates and the client's far bands; the
+steps' sizes), `tools/mutants/midring.json` (88, all dead). PIN
 MOVED: `test/ui/farring.test.js`, `test/render/el1_enhancedlighting.test.js`, `test/render/owhorizon.test.js` (the host's
 line: the far ring handed the terrain's client), `test/render/boot2.test.js` (the boot's reach 86: `render/pixelFade.js`,
-a leaf the renderer reads), `test/scenes/perfcol2.test.js` (the ocean holes' pits moved out of bootWorld for the room). The four hosts: `scenes/world.js` wires it (the far ring handed the terrain's client, one
+a leaf the renderer reads), `test/scenes/perfcol2.test.js` (the ocean holes' pits moved out of bootWorld for the room),
+`test/world/terrain/terrainworker.test.js` (the worker's imports: the horizon's grounds and the landforms). The four hosts: `scenes/world.js` wires it (the far ring handed the terrain's client, one
 logical line; HOST-SPLIT made the room - `01-Overview/Host-Split.md` MID-RING); `scenes/exterior.js`,
 `scenes/worldModes.js` and `scenes/dungeonContext.js` draw no far ring.

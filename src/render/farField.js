@@ -22,12 +22,12 @@
 // THE HAZE. The far ring's law (render/horizonHaze.js horizonHaze: the world fog's ramp held at RING_HAZE_HOLD), its rim
 // closed over the far field's (FAR_RIM_START..FAR_RIM_END) while the far field stands - the far ring no longer closes into
 // the sky at 28 km, the land runs on at the hold's 15% to the far field's rim. A range 2 km high 300 km off stands about
-// half a degree over the horizon.
+// 0.4 degrees over the horizon (no curvature is drawn) - a few pixels of a 65-degree lens.
 // ═══════════════════════════════════════════════════════════════════
 
 import { TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
 import { FAR_CELL, FAR_RADIUS, FAR_REBUILD_DRIFT, FAR_SAMPLES, farFieldSide } from '../world/terrain/midRingGrid.js';
-import { runSteps } from './midRing.js';
+import { runHorizonSteps } from './midRing.js';
 
 /** The far field's rim: its nearest edge with the base drifted FAR_REBUILD_DRIFT cells toward it (the far ring's own
  *  RING_RIM_END law), and the haze closed into the sky over its outer two fifths. */
@@ -47,15 +47,21 @@ export function farFieldDisabled(search = globalThis.location?.search) {
  * base cell's north-west pixel (x east, z north: x = (corner x - baseX) S, z = (baseY + 1 - corner y) S - the far ring's
  * frame), each vertex its cell's centre; its height `heightOf(byte)` (the far ring's law), or the sea's `seaY` where the
  * cell is the sea (more than half its samples at the sea's floor, or the ocean's climate at its centre); its colour
- * `tintAt(px, py, byte)` at the centre pixel; normals by central differences over the field.
+ * `tintAt(px, py, byte, v)` at the centre pixel (`v` the vertex: the worker's answers for it); normals by central
+ * differences over the field.
  * @param {{ high: Uint8Array, low: Uint8Array, baseCX: number, baseCY: number, radius?: number, cell?: number,
- *   heightOf: (byte: number) => number, tintAt: (px: number, py: number, byte: number) => ArrayLike<number>,
- *   oceanAt: (px: number, py: number) => boolean, seaY: number }} o
+ *   heightOf: (byte: number) => number, tintAt: (px: number, py: number, byte: number, v: number) => ArrayLike<number>,
+ *   oceanAt: (px: number, py: number, v: number) => boolean, seaY: number }} o
  */
-export const farFieldVertices = (o) => runSteps(farFieldVertexSteps(o));
+export const farFieldVertices = (o) => runHorizonSteps(farFieldVertexSteps(o));
 
-/** How many of the far field's rows a step of its build lays (the frame's share of a rebuild). */
-export const FAR_ROWS_A_STEP = 16;
+/** How many of the far field's cells a step of its build lays (the frame's share of a rebuild) - by cells, not rows: a
+ *  cell's tint and sea read its centre's climate, and a centre past the Bay asked for the first time is the continent's
+ *  biome worked out (some 40 microseconds, a cold row of 121 up to 12 ms; measured on the freeware's ground, a first
+ *  far field's steps of sixteen rows ran to 196 ms). Kept by the biomes' own cache after (tamrielBiomes.js). */
+export const FAR_CELLS_A_STEP = 32;
+/** How many of the far field's rows of normals a step lays (some 1,000 vertices: under a millisecond). */
+export const FAR_NORMAL_ROWS = 8;
 
 /** farFieldVertices a step of rows at a time - its answer the generator's own. @param {Parameters<typeof farFieldVertices>[0]} o */
 export function* farFieldVertexSteps({ high, low, baseCX, baseCY, radius = FAR_RADIUS, cell = FAR_CELL, heightOf, tintAt, oceanAt, seaY }) {
@@ -63,24 +69,24 @@ export function* farFieldVertexSteps({ high, low, baseCX, baseCY, radius = FAR_R
   const positions = new Float32Array(n * 3), normals = new Float32Array(n * 3), colors = new Uint8Array(n * 3), sea = new Uint8Array(n);
   const bx = baseCX * cell, by = baseCY * cell, half = cell / 2, majority = (FAR_SAMPLES.length ** 2) / 2;
   for (let j = 0; j < side; j++) {
-    if (j && j % FAR_ROWS_A_STEP === 0) yield;
     for (let i = 0; i < side; i++) {
       const v = j * side + i, o = v * 3;
+      if (v && v % FAR_CELLS_A_STEP === 0) yield;
       const cx = baseCX - radius + i, cy = baseCY - radius + j;
       const xc = cx * cell + half, yc = cy * cell + half, px = Math.floor(xc), py = Math.floor(yc);
-      const wet = low[v] > majority || oceanAt(px, py);
+      const wet = low[v] > majority || oceanAt(px, py, v);
       positions[o] = (xc - bx) * S;
       positions[o + 1] = wet ? seaY : heightOf(high[v]);
       positions[o + 2] = (by + 1 - yc) * S;
-      const t = tintAt(px, py, wet ? 0 : high[v]);
+      const t = tintAt(px, py, wet ? 0 : high[v], v);
       colors[o] = t[0]; colors[o + 1] = t[1]; colors[o + 2] = t[2];
       if (wet) sea[v] = 255;
     }
   }
   const h = (i, j) => positions[(Math.max(0, Math.min(side - 1, j)) * side + Math.max(0, Math.min(side - 1, i))) * 3 + 1];
   const span = cell * S;
-  yield;
   for (let j = 0; j < side; j++) {
+    if (j % FAR_NORMAL_ROWS === 0) yield;   // the normals a few rows a step too (all 14,641 at once ran a step to 6-35 ms)
     for (let i = 0; i < side; i++) {
       // rows run south (+j is -z): the far ring's own differences
       const nx = h(i - 1, j) - h(i + 1, j), nz = h(i, j + 1) - h(i, j - 1), ny = 2 * span;
