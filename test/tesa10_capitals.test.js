@@ -346,6 +346,7 @@ test('TESA10 the sweep: on the frame, when the fit moves, every built pixel past
     const _swept = { arena: null, capital: null, capitalLand: -1 };   // PIN MOVED (HOST-SPLIT, at the merge of main): the sweep is scenes/tamrielSweepsHost.js's, its live names the host's
     const host = { built, locationIndex, queue, state, walkMode, playerSpawned, _seasonHoldKey: null, _countryTemplates: rolled ? {} : null, _lairTemplates: null };
     const sweepCapitalLod = () => {};   // PIN MOVED (IC-GRAND): the Imperial City's near and far asked first - its own pins, test/world/icgrand_lod.test.js
+    const capitalSkyline = { sweep: () => {} };   // PIN MOVED (IC-GRAND x FAR-LANDMARK): and its landmarks on the far ring - the same pins
     ${sweep}
     return { sweep: sweepCapitalPixels, destroyed, queue };`)(cop, tf, tlv, otb, rolled);
   setTamrielFit({ ox: 38 * 15.5, oy: 57 * 15.5, ppu: 15.5 });
