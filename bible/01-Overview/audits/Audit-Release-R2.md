@@ -126,8 +126,10 @@ at Solitude, Mournhold and the Imperial City each offer work whose remote sites 
 the held map by their pixel, their targets placed on arrival, the same places after a load from the Bay; the Bay's
 draw unchanged. `06-Systems/Quest-Arc.md` "AUDIT RELEASE R2-5"; Port-Ledger A; `test/systems/quest/auditrelease_r25.test.js`,
 `test/systems/quest/auditrelease_r25f.test.js` and `test/systems/quest/auditrelease_r25_freeware.test.js`;
-`tools/mutants/questsites.json`. Still open from R2-5f, at the fold with BLD-3: the city's fabric buildings stand in the
-cells the walk skips, so no quest site lands in one (Quest-Arc R2-5f).
+`tools/mutants/questsites.json`. What R2-5f left open at the fold with BLD-3 - the city's fabric buildings stood in the
+cells the walk skipped, so no quest site landed in one - QUEST-FABRIC closed (the owner: "Let quests use them"): the cells
+read as a quest reads them, a slice's index taking its fabric baked, a temple's remote dart from the Temple District 0.45 s
+cold on the freeware where the cells made whole took 83 s (Quest-Arc QUEST-FABRIC).
 
 ### R2-6 - a vampire's crypt past the Bay (FIXED, the second pass)
 

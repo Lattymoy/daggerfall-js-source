@@ -6,9 +6,12 @@
 // townSitesIndex - CollectQuestSitesOfBuildingType's walk and its law, each one home: townBuildings, buildingAdmits) are
 // kept a slice (scenes/quest/questProvinceSites.js), read off the slice as the build lays it before it stands
 // (scenes/tamrielPlacesHost.js capitalSliceAt), and a search stands only the slices whose index admits its kind
-// (siteIndexGives, Place._dartIndexGives); the city's own generated cells are never made for a walk (townBlockGrid's
-// noBuildingBlock). The law on fixtures here; with ARENA2_PATH, end to end at the centre in
-// auditrelease_r25_freeware.test.js.
+// (siteIndexGives, Place._dartIndexGives). QUEST-FABRIC (the owner, asked whether quests may land in BLD-3's buildings:
+// "Let quests use them"): the city's own generated cells are read as every block is - BLD-3 stands buildings there, with
+// Daggerfall's interiors and their quest markers - where R2-5f had read them as holding none - and read as a quest reads
+// them (the quest world's `questBlock`, world/imperialFabricBuildings.js fabricQuestBlock: a cell's buildings, never its
+// whole fabric, which made every cell afresh again). The law on fixtures here; with ARENA2_PATH, end to end at the centre
+// in auditrelease_r25_freeware.test.js.
 import '../../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -25,6 +28,9 @@ import { REGION_NAMES } from '../../../src/formats/mapsTables.js';
 import { setTamrielTrace } from '../../../src/world/tamriel/tamrielLand.js';
 import { setTamrielFit } from '../../../src/world/tamriel/tamrielFrame.js';
 import { CAPITALS, capitalPixel, capitalOnPixel, capitalSliceName, setCapitalsStanding, dryKinds } from '../../../src/world/tamrielCapitals.js';
+import { fabricCellBuildings, FABRIC_DONORS, _resetFabricInteriors } from '../../../src/world/imperialFabricBuildings.js';
+import { FABRIC_DONOR_MARKED, FABRIC_SITE_SETS, FABRIC_SLICE_SETS } from '../../../src/world/imperialFabricSites.js';
+import { IMPERIAL_SPAN, imperialCell, imperialCodeCell } from '../../../src/world/imperialCity.js';
 import { imperialOwnName, imperialBlockOf } from '../../../src/world/imperialBlocks.js';
 
 const SKYRIM = 64, CYRODIIL = 70;
@@ -113,18 +119,26 @@ test('R2-5f a town\'s sites index: every building of its blocks a search could e
   ]);
   assert.ok(Object.isFrozen(index) && index.every((s) => Object.isFrozen(s)), 'frozen: the law no quest or owner changes');
   assert.deepEqual(townSitesIndex(world, { loaded: true, exterior: {} }), [], 'no layout, no sites');
-  // A CAPITAL'S OWN GENERATED CELL is never made for a walk (world.noBuildingBlock names one); any other town's block is read
+  // A CAPITAL'S OWN GENERATED CELL is read as any block is - PIN MOVED (QUEST-FABRIC): BLD-3 stands buildings there, and a
+  // world that still names such a block (R2-5f's `noBuildingBlock`) is not asked
   const own = imperialOwnName(10, 10);
   const asked = [];
   const read = { ...blocks, [own]: rmb([[bld(15), [flat(SPAWN)]]]) };
   const w = worldOver(read, { getBlock: (name) => { asked.push(name); return read[name] ?? null; }, noBuildingBlock: (name) => name === own });
   const slice = townOf('Slice', [own, 'MARKS1.RMB'], { capital: { k: 0, s: 1 } });
-  assert.deepEqual(townBlockGrid(w, slice).map((b) => !!b.dfBlock), [false, true], 'the capital\'s own cell: no block');
-  assert.deepEqual(asked, ['MARKS1.RMB'], 'and never made');
-  assert.deepEqual(townSitesIndex(w, slice).map((s) => s.buildingType), [14]);
+  assert.deepEqual(townBlockGrid(w, slice).map((b) => !!b.dfBlock), [true, true], 'the capital\'s own cell: its block');
+  assert.deepEqual(asked, [own, 'MARKS1.RMB'], 'made and read');
+  assert.deepEqual(townSitesIndex(w, slice).map((s) => s.buildingType), [15, 14], 'its fabric building a site');
   asked.length = 0;
   assert.deepEqual(townSitesIndex(w, townOf('Elsewhere', [own, 'MARKS1.RMB'])).map((s) => s.buildingType), [15, 14], 'a town that is no capital reads its every block');
   assert.deepEqual(asked, [own, 'MARKS1.RMB']);
+  asked.length = 0;
+  // QUEST-FABRIC: a world that reads a block as a quest does (`questBlock`) is asked first, its block the walk's; the rest
+  // are made
+  const viewed = [];
+  const wv = { ...w, questBlock: (name) => { viewed.push(name); return name === own ? read[own] : null; } };
+  assert.deepEqual(townBlockGrid(wv, slice).map((b) => b.dfBlock), [read[own], read['MARKS1.RMB']]);
+  assert.deepEqual([viewed, asked], [[own, 'MARKS1.RMB'], ['MARKS1.RMB']], 'the own cell viewed, never made');
   asked.length = 0;
   assert.deepEqual(townBlockGrid(worldOver(read, { getBlock: w.getBlock }), slice).map((b) => !!b.dfBlock), [true, true], 'a world that names no such block reads them all');
 });
@@ -258,16 +272,18 @@ test('R2-5f the quest layer\'s provinces keep a capital slice\'s index once a sl
   assert.equal(indexAsked.filter((n) => n === sliceQuestName(A.x, A.y)).length, 1, 'a slice\'s index read once a session');
 });
 
-test('R2-5f end to end on a fixture city through the quest layer: a centre\'s local tavern taken in the nearest slice whose index holds one, that slice alone stood (picked 1), the nearer slice of a markerless tavern and the city\'s own cells passed over unstood; a dart on that nearer slice misses unstood, on the tavern\'s it lands; none of the city\'s own cells made for a walk, a town\'s that is no capital read (mutants: the city\'s admit dropped; the dart\'s refusal unasked; the seams - the index, the refusal, the cells)', () => {
+test('R2-5f end to end on a fixture city through the quest layer: a centre\'s local tavern taken in the nearest slice whose index holds one, that slice alone stood (picked 1), the nearer slice of a markerless tavern and the city\'s own cells passed over unstood; a dart on that nearer slice misses unstood, on the tavern\'s it lands; the city\'s own cells read - PIN MOVED (QUEST-FABRIC) - and a town\'s that is no capital (mutants: the city\'s admit dropped; the dart\'s refusal unasked; the seams - the index, the refusal, the cells)', () => {
   const { ic, slice, pixelOf } = icFixture();
   const centre = slice(ic.px, ic.py);
   const order = [...capitalSlicesNear(centre, (x, y) => slice(x, y))].map(pixelOf);
   const [first, second] = order.map((k) => k.split(',').map(Number));
   const own = (x, y) => imperialOwnName(x & 31, y & 31);
-  // the city's own cells hold a marked tavern here: a walk that made one would take it (the centre's own first)
+  // the city's own cells (the plan's corner, every cell of it holding no building) are read as a quest reads them, and
+  // give no answer (QUEST-FABRIC: fabricQuestBlock) - a marked fabric tavern is the next test's
+  _resetFabricInteriors();
   const BLOCKS = { 'TVRNFIX0.RMB': rmb([[bld(15), []]]), 'TVRNFIX1.RMB': rmb([[bld(15), [flat(SPAWN)]]]) };
   const made = [];
-  const blocks = { getBlockByName: (name) => { made.push(name); return BLOCKS[name] ?? (imperialBlockOf(name) ? rmb([[bld(15), [flat(SPAWN)]]]) : null); } };
+  const blocks = { getBlockByName: (name) => { made.push(name); return BLOCKS[name] ?? (imperialBlockOf(name) ? rmb([[bld(15), []]]) : null); } };
   const locs = new Map();
   const standing = (x, y) => {
     const k = `${x},${y}`;
@@ -284,6 +300,8 @@ test('R2-5f end to end on a fixture city through the quest layer: a centre\'s lo
   maps.getRegion = () => null; maps.getLocation = () => null;
   const { questWorld: qw } = createQuestWorld({ maps, blocks, provinceQuestPlaces, params: new URLSearchParams(), _questRegionIndex: () => CYRODIIL, _questLoc: () => centre,
     playerTravelOrigin: () => ({ x: ic.px, y: ic.py }), placeByName: () => null, townTalk: { nameOpts: () => ({}) } });
+  const viewed = [], view = qw.questBlock;
+  qw.questBlock = (name) => { viewed.push(name); return view(name); };
   // the centre's local tavern: none at the centre, the nearer slice's tavern markerless - the next slice's, it alone stood
   const inn = placeOf(15, 0, '_inn_');
   inn._setupLocalSite(qw, 'Place _inn_ local tavern');
@@ -293,7 +311,8 @@ test('R2-5f end to end on a fixture city through the quest layer: a centre\'s lo
   assert.deepEqual(stood, [`${second[0]},${second[1]}`], 'one slice stood: the one picked');
   assert.equal(qw.provinceSites.picked(), 1);
   assert.ok(made.includes('TVRNFIX0.RMB'), 'the nearer slice\'s block read for its index');
-  assert.deepEqual(made.filter((n) => imperialBlockOf(n)), [], 'none of the city\'s own cells made for a walk');
+  assert.ok(viewed.some((n) => imperialBlockOf(n)), 'the city\'s own cells read - PIN MOVED (QUEST-FABRIC): BLD-3\'s buildings stand there');
+  assert.ok(!made.some((n) => imperialBlockOf(n)), '...as a quest reads them (fabricQuestBlock), never made - the 83 s dart');
   // a dart on a slice row: refused unstood where its index holds none of the kind; landed where it holds one
   stood.length = 0;
   const cyr = qw.maps.getRegion(CYRODIIL);
@@ -302,13 +321,85 @@ test('R2-5f end to end on a fixture city through the quest layer: a centre\'s lo
   assert.deepEqual(stood, [], 'unstood');
   assert.equal(dart._tryTownLocation(qw, CYRODIIL, cyr.mapNameLookup.get(sliceQuestName(...second)), 15), true, 'a marked tavern: landed');
   assert.deepEqual(stood, [`${second[0]},${second[1]}`]);
-  // the quest layer names the city's own cells (world/imperialBlocks.js) and no other block; a town that is no capital is read whole
-  assert.equal(qw.noBuildingBlock(own(3, 4)), true);
-  assert.equal(qw.noBuildingBlock('TVRNFIX1.RMB'), false);
-  made.length = 0;
+  // PIN MOVED (QUEST-FABRIC): the quest layer names no block as holding none; a town that is no capital is read whole
+  assert.equal(qw.noBuildingBlock, undefined);
+  made.length = 0; viewed.length = 0;
   assert.deepEqual(townBlockGrid(qw, townOf('Elsewhere', [own(3, 4)])).map((b) => !!b.dfBlock), [true]);
-  assert.deepEqual(made, [own(3, 4)]);
+  assert.deepEqual([viewed, made], [[own(3, 4)], []]);
   assert.equal(questView(centre).name, 'Imperial City', '(the centre, one of its name)');
+});
+
+test('QUEST-FABRIC (the owner: "Let quests use them") on a fixture city through the quest layer: a marked tavern in a fabric building of the centre\'s own cells is the centre\'s local tavern - its own site, no other slice stood, nothing picked; where R2-5f read those cells as holding none it was sent a slice away (mutants: the city\'s own cells skipped again)', () => {
+  const { ic, slice } = icFixture();
+  // the plan's cell (33, 92) holds one tavern, its record 15 (world/imperialFabricBuildings.js fabricCellBuildings), its
+  // donor TVRNBM04.RMB's record 5 - whose interior here holds a spawn marker; the fixture's other slices are the plan's
+  // corner, no building
+  const tavern = fabricCellBuildings(33, 92).filter((b) => b.type === 15);
+  assert.deepEqual(tavern.map((b) => [b.recordIndex, FABRIC_DONORS[b.donor].block, FABRIC_DONORS[b.donor].record]), [[15, 'TVRNBM04.RMB', 5]]);
+  _resetFabricInteriors();
+  const centre = slice(ic.px, ic.py, imperialOwnName(33, 92));
+  const made = [];
+  const blocks = { getBlockByName: (name) => {
+    if (imperialBlockOf(name)) made.push(name);
+    return name === 'TVRNBM04.RMB' ? rmb(Array.from({ length: 6 }, (_, i) => [bld(15), i === 5 ? [flat(SPAWN)] : []])) : null;
+  } };
+  const stood = [];
+  const provinceQuestPlaces = { worldPlaces: createWorldPlaces(), regionAt: () => CYRODIIL, lairsNear: () => [],
+    standAt: (x, y) => { stood.push(`${x},${y}`); return capitalOnPixel(x, y) ? slice(x, y) : null; },
+    sliceAt: (x, y) => (capitalOnPixel(x, y) ? slice(x, y) : null) };
+  const maps = Object.create(MapsFile.prototype);
+  maps.getRegion = () => null; maps.getLocation = () => null;
+  const { questWorld: qw } = createQuestWorld({ maps, blocks, provinceQuestPlaces, params: new URLSearchParams(), _questRegionIndex: () => CYRODIIL, _questLoc: () => centre,
+    playerTravelOrigin: () => ({ x: ic.px, y: ic.py }), placeByName: () => null, townTalk: { nameOpts: () => ({}) } });
+  const inn = placeOf(15, 0, '_inn_');
+  inn._setupLocalSite(qw, 'Place _inn_ local tavern');
+  assert.equal(inn.siteDetails.mapId, centre.mapTableData.mapId, 'the centre\'s own fabric tavern');
+  assert.equal(inn.siteDetails.buildingKey, makeBuildingKey(0, 0, 15), 'the plan\'s tavern, its record');
+  assert.ok(inn.siteDetails.questSpawnMarkers?.length === 1, 'its donor\'s marker');
+  assert.deepEqual(made, [], 'no cell made: read as a quest reads it');
+  assert.ok(!inn.siteDetails.nearSite, 'a local site, not a slice away');
+  assert.deepEqual(stood, [], 'no other slice stood');
+  assert.equal(qw.provinceSites.picked(), 0);
+});
+
+test('QUEST-FABRIC A SLICE\'S INDEX through the quest layer (scenes/questWorld.js sitesIndexOf): its Daggerfall blocks walked, its own cells read as holding none and its fabric\'s kinds baked (fabricSliceSites) - the kinds the whole walk finds there, with no own cell read and no donor opened for it; a town that is no slice of the city walked whole (mutants: the bake unread; the own cells walked)', () => {
+  _resetFabricInteriors();
+  // a slice whose fabric holds a Mages Guild hall, its plan's cells: its own ones the city's blocks, the rest a marked shop
+  const namesOf = (s) => {
+    const sx = s % IMPERIAL_SPAN, sy = Math.floor(s / IMPERIAL_SPAN), out = [];
+    for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++) { const rc = imperialCodeCell(imperialCell(sy * 8 + i, sx * 8 + j)); out.push(rc ? imperialOwnName(rc[0], rc[1]) : 'MARKS1.RMB'); }
+    return out;
+  };
+  const s = FABRIC_SLICE_SETS.findIndex((set, k) => FABRIC_SITE_SETS[set].split(' ').includes('11:40') && namesOf(k).includes('MARKS1.RMB'));
+  const names = namesOf(s);
+  assert.ok(names.includes('MARKS1.RMB') && names.some((n) => imperialBlockOf(n)), 'the slice holds both');
+  const loc = townOf('Slice', names, { regionIndex: CYRODIIL, mapId: 0xa9000000 + s, capital: { k: 0, s } });
+  // BLOCKS.BSA: each donor's interior marked as the table says, Daggerfall's MARKS1 a marked Bank (14)
+  const read = [];
+  const blocks = { getBlockByName: (name) => {
+    read.push(name);
+    if (name === 'MARKS1.RMB') return rmb([[bld(14), [flat(SPAWN)]]]);
+    const at = FABRIC_DONORS.map((d, i) => [d, i]).filter(([d]) => d.block === name);
+    if (!at.length) return null;
+    const subs = [];
+    for (const [d, i] of at) subs[d.record] = [bld(0), FABRIC_DONOR_MARKED[i] ? [flat(SPAWN)] : []];
+    return rmb(Array.from({ length: subs.length }, (_, k) => subs[k] ?? [bld(0), []]));
+  } };
+  const provinceQuestPlaces = { worldPlaces: createWorldPlaces(), regionAt: () => CYRODIIL, lairsNear: () => [], standAt: () => null, sliceAt: () => loc };
+  const maps = Object.create(MapsFile.prototype);
+  maps.getRegion = () => null; maps.getLocation = () => null;
+  const { questWorld: qw } = createQuestWorld({ maps, blocks, provinceQuestPlaces, params: new URLSearchParams(), _questRegionIndex: () => CYRODIIL, _questLoc: () => loc,
+    playerTravelOrigin: () => ({ x: 100, y: 100 }), placeByName: () => null, townTalk: { nameOpts: () => ({}) } });
+  const kinds = (index) => [...new Set(index.map((x) => `${x.buildingType}:${x.factionId}`))].sort();
+  const index = qw.provinceSites.sliceIndexAt(100, 100);
+  assert.deepEqual([...new Set(read)], ['MARKS1.RMB'], 'Daggerfall\'s blocks walked; no own cell read, no donor opened');
+  assert.deepEqual(kinds(index), [...FABRIC_SITE_SETS[FABRIC_SLICE_SETS[s]].split(' '), '14:0'].sort(), 'its Daggerfall block\'s and its fabric\'s');
+  assert.ok(kinds(index).includes('11:40'), 'the fabric\'s Mages Guild hall');
+  // the whole walk, every own cell read as a quest reads it (questBlock): the same kinds
+  assert.deepEqual(kinds(townSitesIndex(qw, loc)), kinds(index), 'the walk\'s own answer');
+  // a town that is no slice of the city: walked whole
+  read.length = 0;
+  assert.deepEqual(kinds(townSitesIndex(qw, townOf('Elsewhere', ['MARKS1.RMB']))), ['14:0']);
 });
 
 test('R2-5f the warmer reads each row it warms for its capital slice\'s index, nearest first, as it stands it (mutant: unread)', () => {
