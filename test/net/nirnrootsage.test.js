@@ -94,7 +94,7 @@ const find = (n, cls) => {
 
 test('NIRNROOT-SAGE vocabulary: the title and the glyph join the closed lists last, the aura joins AURAS last; "Nirnroot Sage" and "Sage\'s Smoke" in words, the glyph named on the account card; the title a gradient - the leaf into the glow into the haze, #2e9e57, #7affb0, #e2f0e8 - edged in black, its one colour the glow, apart from every title\'s; the glyph in the glow, filled; `Y` on the classic face; the smoke\'s button in the Sage\'s paint; the wire keeps all three (mutants: the gradient\'s stops, its order, the edge, the one colour, the glyph\'s colour, the mark, the fill, the button\'s paint, the words)', () => {
   assert.equal(TITLES.at(-1), 'nirnrootsage', 'the vocabulary\'s newest');
-  assert.equal(GLYPHS.at(-1), 'nirnrootsage');
+  assert.equal(GLYPHS.slice(0, GLYPHS.indexOf('crownSK')).at(-1) /* PIN MOVED (NIRNROOT-SAGE x TESA, the merge): the Nirnroot Sage's sprig joined after the wikimaid, before the crowns */, 'nirnrootsage');   // PIN MOVED (WW7-3): the provinces' seven crowns joined the list after it
   assert.equal(AURAS.at(-1), 'sagesmoke');
   assert.equal(TITLE_TEXT.nirnrootsage, 'Nirnroot Sage', 'the owner\'s word for it');
   assert.equal(AURA_TEXT.sagesmoke, 'Sage\'s Smoke');
@@ -235,7 +235,7 @@ test('NIRNROOT-SAGE the service end to end: Blob-Marley registers, holds the tit
 });
 
 test('NIRNROOT-SAGE token and relay: a token may carry the title, the glyph and the smoke and verifies; every glyph at once still fits; a word the vocabulary lacks is refused; the relay - world268 and after, the ones that know the words - reads all three out of the signature onto the peer\'s row (mutants: the vocabulary\'s words)', async () => {
-  assert.equal(RELAY_VERSION, 'world268', 'NIRNROOT-SAGE moved it on: the vocabulary rides the relay\'s bundle (world267 on its branch, renumbered past KETCH-WORDS at the merge; NOT YET DEPLOYED)');
+  assert.equal(RELAY_VERSION, 'world269', 'PIN MOVED: world269, TESA with WORLD-WIDE folded in (world268 on its branch, renumbered past world268 on main at the merge; NOT YET DEPLOYED); NIRNROOT-SAGE moved it on: the vocabulary rides the relay\'s bundle (world267 on its branch, renumbered past KETCH-WORDS at the merge; NOT YET DEPLOYED)');
   const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   const pub = await importPublicKeyB64(Buffer.from(new Uint8Array(await subtle.exportKey('raw', kp.publicKey))).toString('base64url'), { subtle });
   const nowS = 1_760_000_000;

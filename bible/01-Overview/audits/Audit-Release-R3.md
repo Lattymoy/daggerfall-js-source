@@ -78,7 +78,7 @@ git checkout --conflict=diff3 -- bible/ test/scenes/citedrift.test.js test/tooli
 node tools/mergeMain.mjs --apply                                        # N on the diff3 hunks
 # by hand: the H list above; D; R; then V3 (the LAW row), V4 (the gates), V5 (git mv the migrations)
 node tools/mergeMain.mjs --locales --apply                              # L, once the source resolves
-node tools/mergeMain.mjs --sweep                                        # pins outside the conflicts still on an old version
+node tools/mergeMain.mjs --sweep --apply                                # pins outside the conflicts still on an old version (without --apply: listed only)
 # M: measure, then write; then the relay's hash last (it moves with any bundle file)
 npm run lint && npm run types && node --test test/bible/*.test.js test/tooling/citeanchor.test.js test/tooling/mutantdrift.test.js test/scenes/citedrift.test.js test/systems/ledger.test.js
 ```
@@ -143,13 +143,17 @@ before the merge.
   province crowns after it - names travel by name, so the order is shape; the vocabulary pins composed), the instance
   door (main's QUEST-FIRST public row last, under the nine keys), the attachment widths measured (1221, 1276), and
   `server-account/wrangler.toml` - both sides had written `acct194`, so git took it silently: set it to the release's
-  number by hand (rule V4 again). Lint, types, `npm run build` and the moved gates green.
+  number by hand (rule V4 again). Lint, types, `npm run build` and the moved gates green. The chunk run then named
+  `nirnrootsage` - main's new file, outside every conflict - still pinning world268 and its glyph last: the second merge's
+  sweep (`--sweep --apply`, the redo's step after the locales) had not been run. Run late, it named that one pin; both moved (PIN MOVED, the
+  glyph as its siblings compose it).
 - **To re-hash the release's row after a later relay change on the branch** (a slice that re-hashed the branch's
   world260 in place - E2-5 and R2-7, staff events past the Bay): on the merge, edit the one row
   `test/net/relayversion.test.js` names `world269` (never a row of main's), put its old hash in its "re-hashed in place,
   undeployed - bytes <old>... before it: <slice>" note, and paste the hash `node --test test/net/relayversion.test.js`
   prints as `<new version>`.
-- **Account acct194** (acct189 on the branch), past main's acct189 DAEDRIC-SMELT + DEEP-OPEN to acct193 COPY-LIFT.
+- **Account acct195** (acct189 on the branch; acct194 at the first merge), past main's acct189 DAEDRIC-SMELT + DEEP-OPEN to
+  acct193 COPY-LIFT and acct194 NIRNROOT-SAGE.
 - **Migrations 0176-0179** (`seat_gifts`, `guild_castles`, `domain_witness`, `world_books`), past main's 0174 and 0175.
   Checked: neither of main's touches the seven tables 0179 rebuilds (0174 creates `broker_sales`; 0175 has no DDL), so
   0179's "every column a later ALTER TABLE added kept" still holds.
@@ -183,20 +187,20 @@ From `.github/workflows` on a push to main:
    their row counts before the merge (`SELECT COUNT(*)` of `market_listings`, `market_orders`, `market_auctions`,
    `market_bids`, `guild_writs`, `guild_contracts`, `commissions`); the deploy records a time-travel bookmark first.
 2. **The relay** (`relay-deploy.yml`, triggered by the version): waits out a live siege and the Spire's hold, deploys
-   world266 (dropping every connected player), verifies `/health`.
+   world269 (dropping every connected player), verifies `/health`.
 3. **The account Worker** (`account-deploy.yml` "Wait for the relay to serve this push's version" - up to 5.5 h - then
-   "Deploy"): acct194, so the service never signs what the live relay would refuse.
-4. **The site** (`deploy.yml`: waits for `/v1/health` to serve acct194, then Pages).
+   "Deploy"): acct195, so the service never signs what the live relay would refuse.
+4. **The site** (`deploy.yml`: waits for `/v1/health` to serve acct195, then Pages).
 5. **The desktop release** (`release-desktop.yml`): after `verify` only - it does NOT wait on the relay or the service.
 
 During the rollout:
 
-- **An old client in a new room** (a cached tab or an un-updated desktop on world266): every word it sends is one the
+- **An old client in a new room** (a cached tab or an un-updated desktop on main's world268): every word it sends is one the
   merged relay still reads - the Bay's gate is lane 0, gate number = its day, so its room keys and receipts keep their
   shape; its region link is the channel (an old build that asks for a shard is told the channel, COST-1); it asks for no
   province channel, no lane, no hall of Cyrodiil.
 - **A new client in an old room** (the desktop release ahead of the relay, step 5 before step 2): every world-wide arm is
-  gated on the relay's `v` (`relaySupportsWorldWide`, `relaySupportsGuildInstances`), so on world260-265 the client stands
+  gated on the relay's `v` (`relaySupportsWorldWide`, `relaySupportsGuildInstances`), so on world260-268 the client stands
   the Bay alone. **R3-1**: before this merge those gates read 260 - THE FOLD's number - and opened the lanes, the provinces'
   channels, the halls, the grants past the Bay and the castle door against relays that know none of them.
 
@@ -232,7 +236,7 @@ On `r3-release-trial` (main a981d29c84, the branch through d80b5c9d23):
 
 | Id | Severity | Anchor | Finding | Status |
 |---|---|---|---|---|
-| R3-1 | High | `src/net/wire.js:"export const WORLD_WIDE_RELAY_MIN = 269;"`, `src/net/instanceRoom.js:"export const GUILD_INSTANCE_RELAY_MIN = 269;"` | The branch's world-wide and castle gates named world260, which main deployed as THE FOLD: a new client on world260-265 would open lanes, province channels, halls, grants past the Bay and the castle door against relays that know none of them. git merges these lines silently. | Fixed in the merge (266); pins `audittesa2z_worldwide`, `domain2_castles`; `tools/mutants/release_r3.json` R3-1-*. |
+| R3-1 | High | `src/net/wire.js:"export const WORLD_WIDE_RELAY_MIN = 269;"`, `src/net/instanceRoom.js:"export const GUILD_INSTANCE_RELAY_MIN = 269;"` | The branch's world-wide and castle gates named world260, which main deployed as THE FOLD: a new client on any of main's world260-268 would open lanes, province channels, halls, grants past the Bay and the castle door against relays that know none of them. git merges these lines silently. | Fixed in the merge (266 in the trial, 269 at the second merge - a gate names the release's own row); pins `audittesa2z_worldwide`, `domain2_castles`; `tools/mutants/release_r3.json` R3-1-*. |
 | R3-2 | Medium | `test/net/sleepcost.test.js:"function flushesOf(r) {"` | GRANT-SLEEP's cell pin waited 200 `setImmediate` turns for a signed post; under load (13 on four cores) the post landed later and the pin failed 1 run in 3 - CI's eight shards run under the same kind of load. | Fixed on the branch (a commit before the merge): it waits on every post the cell started, a condition. |
 | R3-3 | High | `src/net/hubShards.js:"? new Set(Array.from({ length: REGION_SPLIT }, (_, region) => region))"` | Main's REGION_SHARDS over the branch's 71 channels: `all` (or a province's number) sent a province's link to a shard key no Room opens. | Fixed in the merge; pins moved (`cost1_regions`, `sleepcost`); `release_r3.json` R3-3-*. |
 | R3-4 | Low | `src/systems/instancePlaces.js:"const mine = questHere"` | Main's party-first door order under the branch's nine-key bound: at a castle with seven partners and a quest of mine, my own row became the tenth, which no key chooses. | Fixed in the merge; `domain2_castles` PIN MOVED; `release_r3.json` R3-4. |

@@ -8,7 +8,7 @@
 //
 //   node tools/mergeMain.mjs              # report: each conflicted file, the hunks it would resolve, the rest
 //   node tools/mergeMain.mjs --apply      # resolve the version hunks and the import-only hunks in place
-//   node tools/mergeMain.mjs --sweep      # after --apply: move every pin still naming either side's old version
+//   node tools/mergeMain.mjs --sweep --apply   # after the conflicts: move every pin still naming either side's old version (without --apply: list them)
 //   node tools/mergeMain.mjs --locales --apply   # once the source resolves: the catalog re-read, each language merged
 //
 // Run it on the conflicted working tree of `git merge origin/main`, before resolving anything else by hand.
