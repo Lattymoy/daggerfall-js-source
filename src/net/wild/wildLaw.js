@@ -248,6 +248,10 @@ export function wdunEnter(st, acct, h, now) {
   const occupied = st.inside[h] && Object.keys(st.inside[h]).length > 0;
   const reset = !occupied && since > 0 && now - since >= WDUN_RESET_MS;
   delete st.empty[h];
+  // AUDIT TESA III E2-5: A BODY STANDS IN ONE HALL - going into this one is leaving any other the record still holds it in
+  // (a hall it never said `out` of: a crash, a word lost), which then counts empty from now; so the halls one account
+  // stands in are one, never one a word
+  for (const [o, who] of Object.entries(st.inside)) if (o !== h && who[acct] != null) { delete who[acct]; if (!Object.keys(who).length) { delete st.inside[o]; st.empty[o] = now; } }
   (st.inside[h] ??= {})[acct] = now;
   // the hall's EPOCH: a reset is a new one, and every client keys the hall's chests by it (dungeonContext.js
   // searchLocationKey), so a reset fills them again for everyone, not only for whoever came in first
@@ -268,6 +272,10 @@ export function wdunLeave(st, acct, h, now) {
  *  circle the hall until the last remains in it go. */
 export function wdunDie(st, acct, h, now, until = now + WILD_REMAINS_MS) {
   wdunLeave(st, acct, h, now);
+  // AUDIT TESA III E2-5: ONE BODY AN ACCOUNT - its way back is its last remains alone (`piles` holds one), so the crows
+  // over the hall of the remains before go with them unless another's lie there: a word a death, in hall after hall,
+  // kept a crow over each for everyone online (and the game reads 128)
+  if (st.piles[acct] && st.piles[acct].h !== h) wdunGone(st, acct, now);
   st.piles[acct] = { h, until };
   st.crows[h] = Math.max(st.crows[h] ?? 0, until);
 }
@@ -292,13 +300,73 @@ export function wdunState(st, acct, now) {
   };
 }
 export const wdunCrows = (st, now) => Object.entries(st.crows).filter(([, u]) => u > now).map(([h, u]) => [h, u - now]);
-/** Bound the record: past WDUN_ACCTS_MAX accounts with locks, the soonest-ending are let go first. */
-export function wdunBound(st) {
-  const accts = Object.keys(st.locks);
-  if (accts.length <= WDUN_ACCTS_MAX) return false;
-  const soon = accts.map((a) => /** @type {[string, number]} */ ([a, Math.max(.../** @type {number[]} */ (Object.values(st.locks[a])))])).sort((x, y) => x[1] - y[1]);
-  for (const [a] of soon.slice(0, accts.length - WDUN_ACCTS_MAX)) delete st.locks[a];
+/**
+ * AUDIT TESA III E2-5 (2026-10-26; the owner: "Take care of exclusions and gaps"): WHAT ONE SOCKET CAN MAKE THE HUB KEEP,
+ * BOUNDED. A hall is any world map pixel (`wdunHall` - the relay cannot see the map), and every word a socket said about
+ * one was kept - its epoch two days, its emptiness a day, a lock an hour - and the whole record written at each word: one
+ * signed-in socket at WDUN_HZ_MAX grew it 69 bytes a word, past Durable Object storage's 2 MB value in four hours. So:
+ *  - an account stands in ONE hall (`wdunEnter`), and brings at most WDUN_NEW_HALLS_MAX halls the record did not hold into
+ *    it a day (the hub's meter, `wdunMeterOf` - past it the word is answered and nothing is kept), so a churn of made-up
+ *    halls cannot push the real ones out;
+ *  - each of the record's maps holds at most its own count (`wdunBound`) - the halls (WDUN_HALLS_MAX each of `inside`,
+ *    `empty`, `eps`, `crows`, the least recently touched let go first), the accounts standing in halls (WDUN_INSIDE_MAX),
+ *    an account's locks (WDUN_ACCT_LOCKS_MAX) and all locks (WDUN_LOCKS_MAX, the soonest-ending first), the accounts with
+ *    locks (WDUN_ACCTS_MAX) and the remains (WDUN_PILES_MAX); at every count full and the widest keys the record is under
+ *    WDUN_RECORD_BYTES_MAX (pinned);
+ *  - the hub writes it at most each WDUN_SAVE_MS (server/src/index.js `_wdunSave`), never once a word.
+ */
+export const WDUN_HALLS_MAX = 2048;
+export const WDUN_INSIDE_MAX = 4096;
+export const WDUN_ACCT_LOCKS_MAX = 32;
+export const WDUN_LOCKS_MAX = 8192;
+export const WDUN_PILES_MAX = 4096;
+export const WDUN_NEW_HALLS_MAX = 64;
+export const WDUN_SAVE_MS = 10_000;
+export const WDUN_RECORD_BYTES_MAX = 1_500_000;
+/** Is `h` a hall the record holds nothing of? */
+export const wdunNewHall = (st, h) => !(h in st.inside) && !(h in st.empty) && !(h in st.eps) && !(h in st.crows);
+/** An account's own meter on the hub (in memory, `meters` a Map by account, the least recent let go past WDUN_ACCTS_MAX):
+ *  `{ b, d, n }` - its words' bucket across all its sockets, and the day `d` it brought `n` new halls in. */
+export function wdunMeterOf(meters, acct, now) {
+  let m = meters.get(acct);
+  if (m) meters.delete(acct);
+  else { m = { b: null, d: wdunDay(now), n: 0 }; if (meters.size >= WDUN_ACCTS_MAX) meters.delete(meters.keys().next().value); }
+  meters.set(acct, m);
+  if (m.d !== wdunDay(now)) { m.d = wdunDay(now); m.n = 0; }
+  return m;
+}
+/** Let go of a map's entries past `max`, the lowest `rank` first. Answers whether any went. @param {Record<string, any>} map */
+function capBy(map, max, rank) {
+  const keys = Object.keys(map);
+  if (keys.length <= max) return false;
+  const order = keys.map((k) => /** @type {[string, number]} */ ([k, rank(map[k])])).sort((x, y) => x[1] - y[1]);
+  for (const [k] of order.slice(0, keys.length - max)) delete map[k];
   return true;
+}
+const newest = (/** @type {Record<string, number>} */ who) => Math.max(0, ...Object.values(who));
+/** Bound the record (AUDIT TESA III E2-5, above): every map to its count, the least recent or soonest-ending let go first;
+ *  an account's locks past WDUN_ACCT_LOCKS_MAX, all locks past WDUN_LOCKS_MAX, the accounts with locks past WDUN_ACCTS_MAX.
+ *  Answers whether anything went. */
+export function wdunBound(st) {
+  let moved = false;
+  for (const halls of Object.values(st.locks)) moved = capBy(halls, WDUN_ACCT_LOCKS_MAX, (u) => u) || moved;
+  const all = Object.entries(st.locks).flatMap(([a, halls]) => Object.entries(halls).map(([h, u]) => /** @type {[string, string, number]} */ ([a, h, u])));
+  if (all.length > WDUN_LOCKS_MAX) {
+    for (const [a, h] of all.sort((x, y) => x[2] - y[2]).slice(0, all.length - WDUN_LOCKS_MAX)) { delete st.locks[a][h]; if (!Object.keys(st.locks[a]).length) delete st.locks[a]; }
+    moved = true;
+  }
+  moved = capBy(st.locks, WDUN_ACCTS_MAX, (halls) => Math.max(0, ...Object.values(halls))) || moved;
+  moved = capBy(st.piles, WDUN_PILES_MAX, (p) => p?.until ?? 0) || moved;
+  moved = capBy(st.inside, WDUN_HALLS_MAX, newest) || moved;
+  const inside = Object.entries(st.inside).flatMap(([h, who]) => Object.entries(who).map(([a, seen]) => /** @type {[string, string, number]} */ ([h, a, seen])));
+  if (inside.length > WDUN_INSIDE_MAX) {
+    for (const [h, a] of inside.sort((x, y) => x[2] - y[2]).slice(0, inside.length - WDUN_INSIDE_MAX)) { delete st.inside[h][a]; if (!Object.keys(st.inside[h]).length) delete st.inside[h]; }
+    moved = true;
+  }
+  moved = capBy(st.empty, WDUN_HALLS_MAX, (since) => since) || moved;
+  moved = capBy(st.eps, WDUN_HALLS_MAX, (e) => e?.at ?? 0) || moved;
+  moved = capBy(st.crows, WDUN_HALLS_MAX, (u) => u) || moved;
+  return moved;
 }
 
 // ── ZONE-GIANTS (2026-10-08, the owner: "always spawn 2 giants per tier and make em show on the map"): the hub keeps which

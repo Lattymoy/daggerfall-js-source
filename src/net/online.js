@@ -1,6 +1,7 @@
 // @ts-check
 import { validStaffEventIn, validStaffEventOut, relaySupportsStaffEvents } from './staffEvent/staffEventLaw.js';   // STAFF-EVENT
 import { relaySupportsFoeInventory } from './wire.js';
+import { loneStep, loneWake, loneAhead, loneSupported, aloneOf, LONE_HOLD, LONE_SAY } from './loneSleep.js';   // LONE-SLEEP: a lone session's pose at LONE_POSE_MS
 // ONLINE1 (2026-09-12, Mac: "the basic bones of multiplayer. The goal is
 // being able to see others in the world while allowing you to bring
 // over one of your own save file ... All I care about is being able to
@@ -818,6 +819,7 @@ export class OnlineSession {
     this.onWdun = null;           // PVPDUNGEONS: (word) => void - the hub's word on the zone's halls (wire.js validWdunOut)
     this.wildCollectOk = false;   // MAC (2026-10-14, the two-phase handoff): the relay that welcomed this socket signs a killer's collect of a piece in escrow (relaySupportsWildCollect)
     this.wildOk = false;          // WILD1: the relay that welcomed this socket routes wild frames and, INT9, referees the zone (relaySupportsWildRef) - an older one CLOSES the socket on one, so nothing of the open zone is sent through it
+    this.loneOk = false;          // LONE-SLEEP: the relay that welcomed my own cell's socket is one a lone session may go quiet to (loneSupported)
     this.seaPvpOk = false;        // SHIP-PVP: the relay that welcomed this socket referees the open sea's guns (relaySupportsSeaPvp) - an older one closes the socket on their kinds
     this.onWild = null;           // WILD1: (id, data, sub) => void - a directed wild frame at ME (a blow, a fallen's gear, a pick, a gift), projected by the wire's validWildData; `sub` the sender's account as the RELAY verified it
     this.onWildRoom = null;       // WILD1: (word, room) => void - my own room's word on its remains (validWildOut)
@@ -1423,7 +1425,7 @@ export class OnlineSession {
     // COST-2 (net/cellTree.js): a halo names the room this page stands in, so the Worker can say when both are one object
     // and every halo it holds already, so a second halo toward one node is that node's own room too
     const of = isCellRoom(this.room) ? `?${HALO_OF_PARAM}=${encodeURIComponent([this.room, ...[...this._halo.keys()].filter((k) => k !== room)].slice(0, HALO_OF_MAX).join(';'))}` : '';
-    try { ws = this._leased(new this._WS(`${this.url}/room/${room}${of}`), room); } catch { this._halo.set(room, { ws: null, status: 'closed', retryAt: this._now() + BACKOFF_MIN_MS + this._rand() * Math.max(BACKOFF_MIN_MS, backoff - BACKOFF_MIN_MS), backoff: Math.min(BACKOFF_MAX_MS, backoff * 2), since: this._now() }); return; }   // SLAM5 (AUDIT SLAM): jittered like the other two halo paths - SLAM2 claimed all three and treated only two
+    try { ws = loneAhead(this, this._leased(new this._WS(`${this.url}/room/${room}${of}`), room), room); } catch { this._halo.set(room, { ws: null, status: 'closed', retryAt: this._now() + BACKOFF_MIN_MS + this._rand() * Math.max(BACKOFF_MIN_MS, backoff - BACKOFF_MIN_MS), backoff: Math.min(BACKOFF_MAX_MS, backoff * 2), since: this._now() }); return; }   // SLAM5 (AUDIT SLAM): jittered like the other two halo paths - SLAM2 claimed all three and treated only two
     this._halo.set(room, { ws, status: 'connecting', retryAt: null, backoff, since: this._now() });
     this._bind(ws);
   }
@@ -1590,7 +1592,7 @@ export class OnlineSession {
       // walk landed it wherever there was room, its welcome said that layer, and the player left their party's layer by
       // changing an aura. The primary asks what `_open` asks; a halo the layer its welcome said (`ly`)
       const ly = room === this.room ? (this.room === this._layerRoom && this.layer > 0 ? this.layer : this.layerHint) : (this._halo.get(room)?.ly ?? 0);
-      try { ws = this._leased(new this._WS(`${this.url}/room/${room}${isLayered(room) && ly > 0 ? `?ly=${ly}` : ''}`), room); } catch { continue; }   // the old socket stands; the next change asks again
+      try { ws = loneAhead(this, this._leased(new this._WS(`${this.url}/room/${room}${isLayered(room) && ly > 0 ? `?ly=${ly}` : ''}`), room), room); } catch { continue; }   // the old socket stands; the next change asks again
       this._swap.set(room, { ws, old, since: now });
       this._bind(ws);
     }
@@ -2317,7 +2319,7 @@ export class OnlineSession {
     if (!this.room || !this._WS) { this.status = 'error'; this.error = t('net.online.noSocket', 'no WebSocket'); return; }
     let ws;
     const ly = this.room === this._layerRoom && this.layer > 0 ? this.layer : this.layerHint;   // SCALE5d: a reconnect to my layer, else my party's
-    try { ws = this._leased(new this._WS(`${this.url}/room/${this.room}${isLayered(this.room) && ly > 0 ? `?ly=${ly}` : ''}`), this.room); } catch (e) { this.status = 'error'; this.error = String(e?.message ?? e); this._scheduleRetry(); return; }   // SCALE5d: my party's layer asked first
+    try { ws = loneAhead(this, this._leased(new this._WS(`${this.url}/room/${this.room}${isLayered(this.room) && ly > 0 ? `?ly=${ly}` : ''}`), this.room), this.room); } catch (e) { this.status = 'error'; this.error = String(e?.message ?? e); this._scheduleRetry(); return; }   // SCALE5d: my party's layer asked first
     this._ws = ws;
     this.status = 'connecting';
     this._tokenRetry = false;   // DOOR-TOKEN: this socket's own hello says whether it waits on one again
@@ -2439,7 +2441,7 @@ export class OnlineSession {
     // AUDIT ONCRASH1 C3: THE DOOR IS HERE, and the first cut left it open. `_deliver` wrapped the handler CALLS, so a
     // throw in `_receive`'s own body - the roster prune, `_member`, `_askWho`, a projection - still reached the window
     // and painted the overlay. Driven in a real browser to prove it. The frame is one contained act from the outside in.
-    ws.onmessage = (ev) => this._deliver('frame', () => { const room = this._roomOf(ws); if (room != null) this._receive(ev.data, room); });
+    ws.onmessage = (ev) => this._deliver('frame', () => { const room = this._roomOf(ws); if (room != null) { this._receive(ev.data, room); loneWake(this); } });   // LONE-SLEEP: a frame that ended my quiet - my pose at once
     ws.onclose = (ev) => {
       this._retire(ws);   // AURA-LIVE: a replacement refused - the socket it replaced goes too (the retry below says hello)
       for (const [r, s] of this._swap) if (s.ws === ws) this._swap.delete(r);   // AURA-LIVE: one that never took its place
@@ -2595,14 +2597,15 @@ export class OnlineSession {
   /** The frame's pose: sent at POSE_HZ when it moved, and every HEARTBEAT_MS regardless. A channel session refuses it (AUDIT CHAT D3). */
   sendPose(pose) {
     if (!this.presence) return false;
-    this._pose = pose; this._dead = false;   // AUDIT ONLINE 3 (the second read) A7: a pose said is a life
     const now = this._now();
+    // LONE-SLEEP (net/loneSleep.js): nobody near - my own cell hears me every LONE_POSE_MS and no halo does (read before
+    // `_pose` moves: a fight counter's change is a hold)
+    const lone = loneStep(this, pose, now);
+    this._pose = pose; this._dead = false;   // AUDIT ONLINE 3 (the second read) A7: a pose said is a life
+    if (lone === LONE_HOLD) return false;
     if (now - this._lastSentAt < 1000 / poseHzFor(this.peers.size)) return false;   // SLAM3: a crowd is spoken to less often
 
-    let refereed = this.haloWhole;
-    if (!refereed && this._ws && this._rfOn.get(this._ws)) refereed = true;
-    if (!refereed) for (const h of this._halo.values()) if (h.ws && this._rfOn.get(h.ws)) { refereed = true; break; }
-    const aloneQuiet = !refereed && this.othersHere === 0 && this.peers.size === 0 && (isCellRoom(this.room) || isWorldRoom(this.room));   // HIBERNATE: a cell, a building or an ordinary dungeon with nobody else sends no standing pose; a boss room, a battle and a refereed cell still do; a peer in a halo still hears my heartbeat (peers holds every room's)
+    const aloneQuiet = aloneOf(this);   // HIBERNATE (net/loneSleep.js aloneOf - alone, the one notion LONE-SLEEP's lone is built on): a cell, a building or an ordinary dungeon with nobody else sends no standing pose; a boss room, a battle and a refereed cell still do; a peer in a halo still hears my heartbeat (peers holds every room's)
     if (!poseChanged(this._lastSent, pose) && (now - this._lastSentAt < HEARTBEAT_MS || aloneQuiet)) return false;
     // WORLD6b-iii(b): the halo rooms hear my pose too - their fans range me by it and their rosters place me - each when it
     // is due (HALO-THIN, haloPoseDue); AUDIT WORLD6b-iii(b) A5: through every OPEN socket, my own cell's down or not (the
@@ -2618,7 +2621,7 @@ export class OnlineSession {
     // zone and serpent fights), or the halo reaches a player in range who does not hold my cell
     const whole = !went || this.haloWhole;
     let s = null;
-    for (const [room, h] of this._halo) {
+    for (const [room, h] of (lone === LONE_SAY ? [] : this._halo)) {   // LONE-SLEEP: an empty halo hears no pose of a lone session
       if (h.status !== 'open' || !h.ws || !this._welcomed.has(h.ws)) continue;
       if (!whole && !this._rfOn.get(h.ws) && !haloPoseDue(this._haloPosed.get(h.ws), out, now) && !this._haloAlone(room, out)) { this.stats.haloThinned++; continue; }
       try { h.ws.send(s ??= JSON.stringify({ t: 'pose', p: out })); this.stats.sent++; went = true; this._haloPosed.set(h.ws, { x: out.x, z: out.z, mv: out.mv | 0, at: now }); } catch { /* the close will say */ }
@@ -3511,6 +3514,7 @@ export class OnlineSession {
       else { const h = this._halo.get(room); if (h) h.wildOk = relaySupportsWildRef(relayV); }   // INT9: a halo says for itself
       if (primary) this.seaPvpOk = relaySupportsSeaPvp(relayV);   // SHIP-PVP: and one that referees the open sea's guns
       else { const h = this._halo.get(room); if (h) h.seaPvpOk = relaySupportsSeaPvp(relayV); }   // SHIP-PVP: a halo says for itself
+      if (primary) this.loneOk = loneSupported(relayV);   // LONE-SLEEP: a relay whose every pose reader was read for a lone player's quiet (net/loneSleep.js LONE_RELAY_MIN)
       if (primary) this.wildCollectOk = relaySupportsWildCollect(relayV);   // MAC (2026-10-14): a relay that signs a killer's collect
       else { const h = this._halo.get(room); if (h) h.wildCollectOk = relaySupportsWildCollect(relayV); }
       if (this._wildZone === 1 && primary && this.wildOk) { this._sayZone(this._ws, 1); this._wildZoneAt = this._now(); }   // INT9: my cell's socket welcomed while I stand in the zone hears so (AUDIT INT9: a halo never)
