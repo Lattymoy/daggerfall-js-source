@@ -60,10 +60,8 @@ import { POPULATE_RADIUS } from './deepWatersEncounters.js';   // DEEP-SHARE: th
 import { amGroupRollOwner } from '../../systems/campEncounters.js';   // DEEP-SHARE: the camps' election
 import { onFloatingFrame } from '../../player/collider.js';   // PERF-COL2 (AUDIT): the walls' bucket rides the floating origin
 
-export const DEEP_WATERS_VENDOR = 'iliac-puddle-no-more';
-
-/** The mod's switch (the port's Enabled). */
-export function deepWatersOn() { return modSetting(DEEP_WATERS_VENDOR, 'Enabled') === true; }
+import { DEEP_WATERS_VENDOR, deepWatersOn } from './deepWatersSwitch.js';   // BOOT-COMPILE: the key and the switch, a leaf the boot asks
+export { DEEP_WATERS_VENDOR, deepWatersOn };
 
 /** DeepWaterFloorBuilder.SyncBuildChebyshevRadius: built as promoted within this of the player's pixel. */
 export const SYNC_BUILD_CHEBYSHEV_RADIUS = 1;

@@ -1446,6 +1446,10 @@ uniform sampler2D uMap;
 out vec4 outColor;
 void main() { outColor = vec4(texture(uMap, vNdc * 0.5 + 0.5).rrr, 1.0); }`;
 
+/** BOOT-COMPILE: the pass's four programs - the march, the shadow march, the composite and the lab's viewer - as its
+ *  constructor builds them: what the boot starts ahead of the build (render/bootPrograms.js). */
+export const CLOUD_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[VS, MARCH_FS], [VS, SHADOW_FS], [VS, COMPOSITE_FS], [VS, SHADOW_VIEW_FS]]));
+
 /** The field's uniforms, shared by both marches. */
 export const FIELD_UNIFORMS = ['uShape', 'uDetail', 'uCover', 'uSoft', 'uBase', 'uTop', 'uDensity', 'uFlat', 'uShear', 'uDark', 'uVary', 'uCellCount', 'uCell', 'uCellA', 'uCellB', 'uCellC', 'uCellK', 'uCellS', 'uCellU', 'uCellKS', 'uCellKU', 'uDrift', 'uShift', 'uCamXZ', 'uEvolve', 'uCoverDrift'];   // WEATHER2c: uDark moved in (a cell has its own), the slab and the cells added; VC6a: uVary
 export const MARCH_UNIFORMS = [...FIELD_UNIFORMS, 'uMapSize', 'uLightDir', 'uLightColor', 'uCloudLit', 'uCloudShade', 'uHorizonColor', 'uSkyTint', 'uDusk', 'uSteps', 'uLightSteps', 'uCellF', 'uCirrus', 'uCirrusLight', 'uCirrusDir'];   // VC6b: uSkyTint, uDusk; VC7c: the falls
@@ -1474,10 +1478,11 @@ export class VolumetricClouds {
     gl.enableVertexAttribArray(0);
     gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
     gl.bindVertexArray(null);
-    this.marchProgram = buildProgram(gl, VS, MARCH_FS);
-    this.shadowProgram = buildProgram(gl, VS, SHADOW_FS);
-    this.compositeProgram = buildProgram(gl, VS, COMPOSITE_FS);
-    this.viewProgram = buildProgram(gl, VS, SHADOW_VIEW_FS);
+    const [march, shadow, composite, view] = CLOUD_PROGRAMS;
+    this.marchProgram = buildProgram(gl, ...march);
+    this.shadowProgram = buildProgram(gl, ...shadow);
+    this.compositeProgram = buildProgram(gl, ...composite);
+    this.viewProgram = buildProgram(gl, ...view);
     this.mu = {}; for (const n of MARCH_UNIFORMS) this.mu[n] = gl.getUniformLocation(this.marchProgram, n);
     this.su = {}; for (const n of SHADOW_UNIFORMS) this.su[n] = gl.getUniformLocation(this.shadowProgram, n);
     this.cu = {}; for (const n of COMPOSITE_UNIFORMS) this.cu[n] = gl.getUniformLocation(this.compositeProgram, n);
