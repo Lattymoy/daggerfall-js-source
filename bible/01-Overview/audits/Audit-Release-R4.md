@@ -114,7 +114,7 @@ is fixed in this pass: each lever is a wire or relay law change, and the owner's
    as it is told of them. Halves nothing in a crowd and nearly all of it on the open road.
 3. **A halo past the Bay only within one pixel** (RANGE_PIXELS 1 there): ~1.3 cells a lone player instead of ~1.9.
 
-### R4-4 - the boot's continent, built again each boot (RECORDED)
+### R4-4 - the boot's continent, built again each boot (FIXED - the trace, its relief, the fit and the roads' scan kept; the roads' print not)
 
 `src/scenes/world.js:"preloadTamrielTrace({ fetchBytes, palette }).then((trace) => {"`,
 `src/scenes/tamrielRoadsHost.js:"inputs, print: inputsPrint(inputs), regions,"`. Timed in node (load 9-22):
@@ -127,7 +127,7 @@ is fixed in this pass: each lever is a wire or relay law change, and the owner's
 | the Bay fitted to the picture (`fitBayToPicture`) | page, in the trace's `.then` | no | 251-583 ms (580-1,032 ms after SMOOTH-LAND's merge - R4-7) | the same |
 | the land's smooth law (`landLaw`, SMOOTH-LAND) | page and each worker, its own | no (a WeakMap by the trace) | 0.93-1.62 s first, 0.15-0.29 s warm (R4-7) | the same |
 | the waters' law (`tamrielWaters` compile) | the terrain worker; the page only with no worker (`watersInk.js`) | per worker life | 658-1,116 ms | the same |
-| the roads' build start: the 48 regions with land scanned, the print | page | no | 317 ms + 100 ms | the same |
+| the roads' build start: the 48 regions with land scanned, the print | page | the scan kept (R4-4, fixed) | 317 ms + 100 ms | the print's 100 ms |
 | the roads past the Bay, 48 regions | 1-4 roads workers (`roadsWorkerCount`) | IndexedDB, a region a key (`regionKey`) | 8.2 s and 15.1 s for the two nearest here; 6-72 s each, 853 s on two workers in the running game | from the cache, landed 8 ms a task (`LAND_BUDGET_MS`) |
 | a region's roads landing (unpacked, merged into the page's layer, its tiles stamped) | page, a region a task | - | 7,933 pixels (region (1, 4)): unpack 0.6-3.5 ms, merge 1.3-8.3 ms, stamp 0.7-8.7 ms over twelve landings into a growing layer (load 30-38; one reading of 176 ms in the build's own process was the collector after its 42 MB) | the same, from the cache |
 | the far field's and the middle ring's grounds | the terrain worker | no | ~100 ms a ring (Travel-View MID-RING) | the same |
@@ -142,6 +142,18 @@ nothing changed is the trace, the relief's mask, the fit, the waters' law (on th
 about a second of the page's thread and one of the worker's each boot. **Proposed** (lane R1 owns the cache keys): keep
 the trace, its relief and the fit in IndexedDB under a print of TMAP00I0, TAMRIEL2, WOODS.WLD and the relief module's
 version - the roads' own `inputsPrint` already hashes all four.
+**Fixed (the coast's stream, 2026-10-26; the owner: "Take care of exclusions and gaps"):**
+`src/world/tamriel/tamrielBootCache.js:"export const BOOT_CACHE_VERSION = 1;"` keeps in IndexedDB, and a returning boot
+takes: the trace and its relief (`preloadTamrielTrace`), under a print of the two pictures' bytes, the palette read and
+the relief's own data, each record checked against its key, its sizes and its arrays' checksum; the fit (`fitBayToPicture`
+takes a kept fit for the very land it samples - its masks' print); and the roads' regions with land (the roads' start,
+`src/scenes/tamrielRoadsHost.js:"const regions = regionsByNearness(lattice, keptLandRegions({ lattice, scan: (r) => regionHasLand(r, heightAt), ground }), from);"`)
+under a print of the ground they were scanned on - the fit, the Bay's own bytes, GROUND_ROLL_VERSION and BIOMES_VERSION -
+and the lattice. Timed in node (an in-memory store): the trace and relief 469 ms at a first boot, 18-32 ms returning; the
+fit 677 ms, 10-96 ms returning (its land's masks still sampled). No IndexedDB, a blocked one, a record that does not
+answer: built as before. The laws a kept continent stands for are printed under BOOT_CACHE_VERSION
+(`test/world/bootcache.test.js`), so a law moved without it fails. Not kept: the roads' print (`inputsPrint`, some
+100 ms) - it is the roads' own key over their inputs, and the waters' law on the worker (its own stream's).
 
 ### R4-5 - the low-end machine (RECORDED)
 

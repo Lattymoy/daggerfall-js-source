@@ -472,7 +472,9 @@ export function fitBayToPicture({ bayLand, trace, around = { ox: 46, oy: 52 }, s
       else if (v === 0) zeros[at] |= bit;
     }
   }
-  for (const ppu of ppus) {
+  // the Bay's land as the fit samples it, a mask a scale - and its print: AUDIT RELEASE R4-4, a fit kept for the trace
+  // (`trace.fitKeep`, ui/tamrielTrace.js preloadTamrielTrace's) on this very land is taken, not searched again
+  const masks = ppus.map((ppu) => {
     const cols = Math.floor(BAY_W / ppu), rows = Math.floor(BAY_H / ppu);
     const mask = new Uint8Array(cols * rows);
     for (let j = 0; j < rows; j++) {
@@ -483,6 +485,20 @@ export function fitBayToPicture({ bayLand, trace, around = { ox: 46, oy: 52 }, s
         mask[j * cols + i] = n >= 2 ? 1 : 0;
       }
     }
+    return mask;
+  });
+  const keep = /** @type {any} */ (trace).fitKeep ?? null;
+  let print = '';
+  if (keep) {
+    let h = 0x811c9dc5;
+    for (const v of [around.ox, around.oy, span, ...ppus.map((q) => q * 4)]) { h ^= v & 0xff; h = Math.imul(h, 0x01000193) >>> 0; h ^= (v >> 8) & 0xff; h = Math.imul(h, 0x01000193) >>> 0; }
+    for (const m of masks) for (let i = 0; i < m.length; i++) { h ^= m[i]; h = Math.imul(h, 0x01000193) >>> 0; }
+    print = `${h.toString(36)}:${masks.reduce((n, m) => n + m.length, 0)}`;
+    const kept = keep.get(print);
+    if (kept) return { ...kept };
+  }
+  for (let q = 0; q < ppus.length; q++) {
+    const ppu = ppus[q], cols = Math.floor(BAY_W / ppu), rows = Math.floor(BAY_H / ppu), mask = masks[q];
     const mw = (cols + 31) >>> 5, tail = cols & 31 ? 2 ** (cols & 31) - 1 : 0xffffffff;
     const bits = new Uint32Array(mw * rows);
     for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) if (mask[j * cols + i] === 1) bits[j * mw + (i >>> 5)] |= 1 << (i & 31);
@@ -518,5 +534,6 @@ export function fitBayToPicture({ bayLand, trace, around = { ox: 46, oy: 52 }, s
       }
     }
   }
+  if (keep && best) keep.keep(print, { ...best });
   return best;
 }
