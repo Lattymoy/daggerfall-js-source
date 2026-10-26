@@ -2637,7 +2637,7 @@ cells). Measuring it on the real ground found the one long task the layers had b
 the continent's biomes on this thread (some 150 ms the first read, a step to 196 ms) - they are the worker's now.
 
 **NOT MEASURED HERE - the frames in the real game.** Every arm of the A/B (the base and this tree, the Overworld's and
-the held map's) was started fourteen times over three hours on this container and none finished: the world page grows to
+the held map's) was started twenty times between 01:00 and 04:40 on this container and none finished: the world page grows to
 1.8-3.3 GB as it boots, the memory group it shares with six other agents' pages and test runs stood at its 14.3 GB
 limit, and the kernel's OOM killer takes the largest Chromium renderer first (Chromium's own +300). The probes and
 their figures are the A/B's tools; the A/B is the owner's to run (For the owner). What WAS seen: the three layers drawn
