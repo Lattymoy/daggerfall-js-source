@@ -4046,7 +4046,7 @@ export async function bootExterior(canvas, renderer, params, status) {
      *  declared `factiontype Temple/Daedra/Witches_Coven` threw. */
     findFactionsOfType: (type) => { const s = _questStore(); return s ? [...s.dict.values()].filter((f) => f.type === type) : []; },
     /** FindFactionByTypeAndRegion (PersistentFactionData.cs:236-265),
-     *  %rn/%rt's producer - questWorld.js:"currentLocationIndex: () => _questLoc()?.locationIndex ?? -1". */
+     *  %rn/%rt's producer - questWorld.js:"? provinces.locationIndexOf(r, _questLoc()) : _questLoc()?.locationIndex ?? -1". */
     findFactionByTypeAndRegion: (type, regionIndex) => {
       const s = _questStore();
       return s ? findFactionByTypeAndRegion(s.dict, type, regionIndex) : null;

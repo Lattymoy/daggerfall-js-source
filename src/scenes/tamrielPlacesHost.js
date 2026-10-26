@@ -10,7 +10,7 @@ import { createTamrielRoadsHost } from './tamrielRoadsHost.js';
 import { getNameBankOfRegion } from '../characters/nameHelper.js';
 import { getWorldClimateSettings, REGION_NAMES, LOCATION_TYPES } from '../formats/mapsFile.js';
 import { isWaterPixel } from '../ui/overworldModel.js';
-import { LAIR_TYPES, lairBlockCount, lairLayout, lairMayStandAt, lairName, lairNameSeed, lairPlaceId, lairStandsAt, synthesizeLairLocation } from '../world/tamrielDungeons.js';
+import { LAIR_TYPES, lairBlockCount, lairCellOf, lairLayout, lairMayStandAt, lairName, lairNameSeed, lairPlaceId, lairSite, lairStandsAt, synthesizeLairLocation } from '../world/tamrielDungeons.js';
 import { provinceKeyBeyondBay, tamrielLandVersion, PROVINCE_OF_ID } from '../world/tamriel/tamrielLand.js';
 import { regionOfTheatre } from '../formats/mapsTables.js';
 import { replaceSeats, tamrielSeatsOf } from '../systems/town/townSeats.js';
@@ -144,6 +144,9 @@ export function createTamrielPlaces(host) {
     const { c, pick, regionIndex, name } = at;
     return synthesizeLairLocation(pick.template, { c, px, py, type: pick.type, name, blocks }, { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: getWorldClimateSettings(maps.getClimateIndex(px, py)) });
   }
+  /** A pixel a lair may stand on as the build stands it: no capital, Arena place or countryside place first (world.js
+   *  _locationToBuild) - START2's start lairs and AUDIT RELEASE R2-5's quest lairs. */
+  const lairFree = (x, y) => !capitalOnPixel(x, y) && !(_arenaTemplates && arenaPlaceOnPixel(x, y)) && !countryRollAt(x, y);
   /** START2 (systems/starts/startSite.js): A PROVINCE'S START DUNGEON - the first of its candidates (the kinds its story
    *  wants, nearest its capital first; then any lair in reach) whose dungeon `usable` takes, stood in the index as its
    *  pixel's build stands it; or null - the land past the Bay with no lairs, its capital on no pixel, none in reach. */
@@ -151,8 +154,7 @@ export function createTamrielPlaces(host) {
     const cap = _lairTemplates ? CAPITALS.find((k) => k.key === start?.capital) : null;
     const centre = cap ? capitalPixel(cap) : null;
     const rollAt = (x, y) => { const at = lairRollAt(x, y); return at && lairBlocksOf(at) ? { type: at.pick.type, dungeonType: at.dungeonType } : null; };
-    const free = (x, y) => !capitalOnPixel(x, y) && !(_arenaTemplates && arenaPlaceOnPixel(x, y)) && !countryRollAt(x, y);   // the build stands those first (world.js _locationToBuild)
-    for (const site of startLairSites(start, { centre, rollAt, free, provinceAt: provinceKeyBeyondBay })) {
+    for (const site of startLairSites(start, { centre, rollAt, free: lairFree, provinceAt: provinceKeyBeyondBay })) {
       const at = lairRollAt(site.px, site.py), loc = at ? lairCloneOf(at, site.px, site.py) : null;
       if (loc && usable(loc)) return lairLocationAt(site.px, site.py);
     }
@@ -290,5 +292,60 @@ export function createTamrielPlaces(host) {
     for (const l of locationIndex.values()) if (l?.country && !l.country.dungeon) out.push({ type: l.mapTableData?.locationType, dungeonType: l.mapTableData?.dungeonType, px: l.country.px, py: l.country.py });
     return out;
   };
-  return { _tamrielRoads, arenaLocationAt, arenaWarm, capitalLocationAt, countryLocationAt, lairLocationAt, nearestTownOf, registerTamrielPlaces, startLairAt, tamrielPlaceName };
+  /** AUDIT RELEASE R2-5 (scenes/quest/questProvinceSites.js): THE LAIRS A QUEST PAST THE BAY MAY BE SENT TO - the nearest
+   *  `count` lairs the build stands (its cell's roll, a plan of blocks, its pixel free of the places stood first) within
+   *  `reach` of a pixel (the travel reckoning's longest axis; a tie by the cell), north-west first:
+   *  `{ mapId, name, px, py, type, dungeonType }`. BOUNDED: a cell never read before is a roll (its plateau, its plan -
+   *  about 4 ms), and at most `rolls` are made a call (the coordinator, 2026-10-26: the first table at a pixel must not
+   *  land as one main-thread task when a player asks for work); `lairsNear.rolled` is the last call's count. */
+  function lairsNear(px, py, reach, count = Infinity, rolls = Infinity) {
+    const out = [];
+    lairsNear.rolled = 0;
+    if (!_lairTemplates) return out;
+    const cells = [], seen = new Set();
+    for (let y = py - reach; y <= py + reach; y++) {
+      for (let x = px - reach; x <= px + reach; x++) {
+        const c = lairCellOf(x, y);
+        if (c < 0 || seen.has(c)) continue;
+        seen.add(c);
+        const s = lairSite(c), d = Math.max(Math.abs(s.px - px), Math.abs(s.py - py));
+        if (!inBay(s.px, s.py) && d <= reach) cells.push({ c, s, d });
+      }
+    }
+    cells.sort((a, b) => a.d - b.d || a.c - b.c);
+    for (const { c, s } of cells) {
+      if (out.length >= count) break;
+      const kept = lairCellKept(c);
+      if (!kept && lairsNear.rolled >= rolls) break;
+      if (!kept) lairsNear.rolled++;
+      const row = lairOfCell(c, s);
+      if (row) out.push(row);
+    }
+    return out.sort((a, b) => a.py - b.py || a.px - b.px);
+  }
+  lairsNear.rolled = 0;
+  /** A cell's lair row as lairsNear reads it, or null - kept while what stands the places is (the roll's plateau is a
+   *  millisecond a pixel; a questor a pixel over asks the same cells). */
+  const _lairCells = { key: '', rows: new Map() };
+  const lairCellKept = (c) => {
+    const key = `${tamrielLandVersion()}|${arenaPlacesVersion()}|${capitalsVersion()}`;
+    if (key !== _lairCells.key) { _lairCells.key = key; _lairCells.rows.clear(); }
+    return _lairCells.rows.has(c);
+  };
+  function lairOfCell(c, s) {
+    if (lairCellKept(c)) return _lairCells.rows.get(c);
+    const at = lairRollAt(s.px, s.py);
+    const row = at && lairBlocksOf(at) && lairFree(s.px, s.py) ? { mapId: lairPlaceId(at.c), name: at.name, px: s.px, py: s.py, type: at.pick.type, dungeonType: at.dungeonType ?? 0 } : null;
+    _lairCells.rows.set(c, row);
+    return row;
+  }
+  /** AUDIT RELEASE R2-5: what the quest layer's provinces read of the places past the Bay (scenes/quest/questProvinceSites.js
+   *  createQuestProvinceSites' deps) - the registry, the politic map's region, the place the build stands on a pixel (its
+   *  own order: a capital, an Arena place, the countryside, a lair), the lairs near one, and the registry kept up. */
+  const provinceQuestPlaces = Object.freeze({
+    worldPlaces, lairsNear, refresh: registerTamrielPlaces, startLairAt,   // START2's start lair rides with them (the quest layer's startSiteOfId)
+    regionAt: (px, py) => maps.getRegionIndexAt(px, py),
+    standAt: (px, py) => (inBay(px, py) ? null : capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py) || lairLocationAt(px, py) || null),
+  });
+  return { _tamrielRoads, arenaLocationAt, arenaWarm, capitalLocationAt, countryLocationAt, lairLocationAt, nearestTownOf, provinceQuestPlaces, registerTamrielPlaces, startLairAt, tamrielPlaceName };
 }
