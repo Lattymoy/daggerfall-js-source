@@ -3206,8 +3206,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const livingDungeonsNear = livingIndex.dungeonsNear;
   // the ways: the living world's own planner (livingWorld/ways.js) on the drawn roads and the game's own ground - never a
   // player's attached massifs (TO-ROADS: the host plans the player's journeys alone). WW7: and the land past the Bay
-  // walked as the player's planner walks it (TV-BEYOND's `beyond`: the ground's own dry pixels there), so a town past the
-  // Bay's travellers, caravans and outlaws have a way; the roads past the Bay are not yet a planner's (neither's)
+  // walked as the player's planner walks it (TV-BEYOND's `beyond`: the ground's own dry pixels there); the roads past the
+  // Bay are not yet a planner's (neither's). AUDIT TESA III E1-3: no trip sets out past the Bay yet - the living world's
+  // trips, dives and bands keep to the Bay's theatre (livingWorld/livingIndex.js livingRoams, AUDIT TESA II P7, kept at
+  // the TESA x AUDIT TESA II merge), so no way is asked there; lifting it is the owner's call (World-Wide.md WW7-2)
   let _livingGround = null;
   const livingWays = createWayBook({
     roads: () => terrainGen.roads(),

@@ -21,8 +21,9 @@
 
 import { idbStore } from '../roadsCache.js';
 
-/** Bump when the bake's rules change shape. */
-export const BAKE_GENERATOR_VERSION = 1;
+/** Bump when the bake's rules change shape. 2 (AUDIT TESA III E1-4): a coastal town's blend follows its outline (TOWN-SHAPES
+ *  TS2) - a bake kept before it blended the rect DFU's way. */
+export const BAKE_GENERATOR_VERSION = 2;
 
 /** FNV-1a 32 over bytes - the key's fingerprint, not a checksum anything trusts beyond "same archive". */
 export function fnv1a(bytes, h = 0x811c9dc5) {
@@ -30,19 +31,22 @@ export function fnv1a(bytes, h = 0x811c9dc5) {
   return h >>> 0;
 }
 
-/** The rects' fingerprint: [pixelId, xMin, xMax, yMin, yMax] rows in pixel order. */
+/** The rects' fingerprint: [pixelId, xMin, xMax, yMin, yMax] rows in pixel order - AUDIT TESA III E1-4: and a row's
+ *  outline's bytes, where it carries one. */
 export function rectsFingerprint(rows) {
   let h = 0x811c9dc5;
   for (const r of [...rows].sort((a, b) => a[0] - b[0])) {
-    for (const v of r) { h ^= v & 0xff; h = Math.imul(h, 0x01000193); h ^= (v >>> 8) & 0xff; h = Math.imul(h, 0x01000193); h ^= (v >>> 16) & 0xff; h = Math.imul(h, 0x01000193); }
+    for (let k = 0; k < 5; k++) { const v = r[k]; h ^= v & 0xff; h = Math.imul(h, 0x01000193); h ^= (v >>> 8) & 0xff; h = Math.imul(h, 0x01000193); h ^= (v >>> 16) & 0xff; h = Math.imul(h, 0x01000193); }
+    if (r[5]) h = fnv1a(r[5], h);
   }
   return h >>> 0;
 }
 
-/** The rows as the bake reads them: (px, py) -> {xMin, xMax, yMin, yMax} or null. */
+/** The rows as the bake reads them: (px, py) -> {xMin, xMax, yMin, yMax} or null - AUDIT TESA III E1-4: with its `shape`
+ *  where the row carries one, so the bake's blend (deepWatersBake.js pixelWaterSampler) is the streamed build's. */
 export function rectsLookup(rows) {
   const m = new Map();
-  for (const r of rows) m.set(r[0], { xMin: r[1], xMax: r[2], yMin: r[3], yMax: r[4] });
+  for (const r of rows) m.set(r[0], { xMin: r[1], xMax: r[2], yMin: r[3], yMax: r[4], ...(r[5] ? { shape: r[5] } : {}) });
   return (px, py) => m.get(py * 1000 + px) ?? null;
 }
 
