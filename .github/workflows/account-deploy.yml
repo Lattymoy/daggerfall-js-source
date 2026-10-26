@@ -390,6 +390,7 @@ on:
       - "src/systems/walletItem.js"
       - "src/systems/upkeep/upkeepItemRows.js"
       - "src/systems/upkeep/upkeepTiers.js"
+      - "src/world/blockHash.js"
       - "src/world/buildingNames.js"
       - "src/world/meshReader.js"
       - "src/world/perlin.js"

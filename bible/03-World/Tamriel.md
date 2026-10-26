@@ -765,7 +765,9 @@ traffic of its own.
   `test/world/road/river_fords.test.js` (the version 5); `test/world/tamriel2.test.js` (TAMRIEL2-WORKER: the terrain
   worker's graph 62 modules, every one under world/ and formats/ - the plan's mix and block side moved to a leaf of
   their own, `world/blockHash.js`, which `world/spawnedDungeons.js` re-exports, since its own imports reach the clock and
-  the road network).
+  the road network); `.github/workflows/account-deploy.yml`'s path filter carries the leaf, which the account Worker and
+  the deploy's Discord step bundle through `spawnedDungeons.js` (`test/server/accountdeploy.test.js`,
+  `test/server/discord_setup.test.js`).
 - Mutants: `tools/mutants/rumarewater.json` (42, all dead). Re-aimed by content, all dead: `auditcaptsea.json`'s
   ACS-B10-sea-at; `audittesa2c.json`'s AUDIT-TESA-II-C2-shore-on-its-land and -no-sea-flag; `audittesa2p.json`'s
   P12-open-sea-a-lake; `breathtaker.json`'s BREATHTAKER3-the-large-map-hashed-again; `fb1009_beyond.json`'s
