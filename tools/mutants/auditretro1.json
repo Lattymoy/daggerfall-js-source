@@ -234,8 +234,8 @@
   {
     "name": "AUDITRETRO1-C7-no-tip",
     "file": "src/ui/settings/settingsCopy.js",
-    "old": "  return SETTINGS_INFO[dfuTextKey(key)] ?? PAGE_TIPS[key] ?? '';",
-    "new": "  return SETTINGS_INFO[dfuTextKey(key)] ?? '';",
+    "old": "  return SETTINGS_INFO[dfuTextKey(key)] ?? PAGE_TIPS[key] ?? portTip(key);",
+    "new": "  return SETTINGS_INFO[dfuTextKey(key)] ?? portTip(key);",
     "tests": [
       "test/render/auditretro1.test.js"
     ]
