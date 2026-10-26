@@ -21,7 +21,7 @@
 import { BLOCK_M } from './spawnedDungeons.js';
 import {
   IMPERIAL, IMPERIAL_CELLS, IMPERIAL_SPAN, imperialCode, imperialCodeCell, imperialSlicePlan, imperialTile, imperialClosed, imperialTree,
-  imperialClassic, imperialDistrictAt, IMPERIAL_TREES, IMPERIAL_SLICE_PARTS, IMPERIAL_ARENA_CODE, imperialCellRect, rectRadii, imperialLand,
+  imperialClassic, imperialDistrictAt, IMPERIAL_TREES, IMPERIAL_SLICE_PARTS, imperialFarPartId, IMPERIAL_ARENA_CODE, imperialCellRect, rectRadii, imperialLand,
   imperialRoadsNear, imperialRoadAt, imperialGeo, pointSeg, imperialBearing,
 } from './imperialCity.js';
 import { fabricCell, fabricGroundIn, fabricTileOf, fabricClosedOf, fabricTreeOf, GROUND } from './imperialFabric.js';
@@ -248,8 +248,8 @@ export function imperialBlockJson(name, deps) {
   }
   const s = sliceOfCell(r, c), carrier = isCarrier(r, c), centre = (IMPERIAL_SPAN * IMPERIAL_SPAN - 1) / 2;
   const parts = carrier ? IMPERIAL_SLICE_PARTS[s] : [];
-  if (kind === 'far') {
-    const models = [...parts, ...(carrier ? [imperialSkylineId(s)] : [])].map((id) => deps.miscModelAt(id, at[0], at[1]));
+  if (kind === 'far') {   // IC-TOWER-LOD: the tower and the palace coarse, as the far ring stands them (imperialFarPartId)
+    const models = [...parts.map(imperialFarPartId), ...(carrier ? [imperialSkylineId(s)] : [])].map((id) => deps.miscModelAt(id, at[0], at[1]));
     return deps.portBlockJson(name, { ...rimmed(imperialFarLaws(r, c)), closed: () => false, models });
   }
   const fp = deps.footprintOf(s);

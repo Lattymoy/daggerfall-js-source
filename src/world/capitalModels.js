@@ -14,12 +14,12 @@ import { registerPortBlock, registerPortBlockOf, installWorldDataReplacement, re
 import { CASTLE_BLOCKS, castleBlockOf } from './capitalCastles.js';   // WW7-4
 import { addVendorTextures } from '../systems/textureReplacement.js';
 import { CAPITALS, CAPITAL_MODELS, capitalPortBlocks, BLOCK_M, portBlockJson, miscModelAt, startMarkerAt, inCapitalRim, CAPITAL_NO_GROUND } from './tamrielCapitals.js';
-import { IMPERIAL_PARTS, IMPERIAL_MODELS, IMPERIAL_SLICE_PARTS, IMPERIAL_SPAN, imperialSliceRect } from './imperialCity.js';   // TS5: the Imperial City's landmarks carried in parts
+import { IMPERIAL_PARTS, IMPERIAL_MODELS, IMPERIAL_SLICE_PARTS, IMPERIAL_SPAN, IMPERIAL_LOD_PARTS, imperialSliceRect } from './imperialCity.js';   // TS5: the Imperial City's landmarks carried in parts
 import { imperialBlockJson, imperialBlockIndex, imperialBlockName, imperialModelBuild, isFabricModelId, isSkylineId, imperialBlockOf } from './imperialBlocks.js';
 import { imperialPrebuilt } from './imperialPrebuild.js';   // IC-GRAND's perf pass: what its worker made   // IC-GRAND: its blocks and its fabric's models, families
 import { imperialArt } from './imperialArt.js';   // IC-GRAND: the fabric's walls' pictures
 import { CAPITAL_ARCHIVE, CAPITAL_ART } from './capitalShapes.js';
-import { buildImperialTower, buildPalaceWall, buildEmperorsTombs, buildCityWall, buildDistrictWalls, buildTempleOfTheOne, buildTalosStatue, buildImperialPrison, buildArcaneUniversity, buildWaterfront, buildTalosBridge, buildNineDivines, buildImperialPalace, buildPalaceGardens, nearRect } from './capitalImperial.js';   // TESA11
+import { buildImperialTower, buildImperialTowerLod, buildImperialPalaceLod, buildPalaceWall, buildEmperorsTombs, buildCityWall, buildDistrictWalls, buildTempleOfTheOne, buildTalosStatue, buildImperialPrison, buildArcaneUniversity, buildWaterfront, buildTalosBridge, buildNineDivines, buildImperialPalace, buildPalaceGardens, nearRect } from './capitalImperial.js';   // TESA11
 import { buildSolitudeArch, buildBluePalace, buildSolitudeWall, buildCastleDour, buildSolitudeDocks } from './capitalSolitude.js';
 import { buildMournholdPlaza, buildHighFane, buildMournholdPalace, buildGreatBazaar, buildMournholdWall } from './capitalMournhold.js';
 import { buildAlinorPalace, buildAlinorHarbour, buildAlinorWall, buildAlinorBridges } from './capitalAlinor.js';
@@ -430,7 +430,7 @@ export function installCapitals({ addTextures = addVendorTextures } = {}) {
   // TS5: the Imperial City's landmarks carried in parts, each its slice's share of the whole (drawn once) - IC-GRAND: a long
   // wall's part built of its runs near its slice alone (imperialPartBuild: the city wall is 43 km round)
   // IC-FOOTPRINT-OFF-THREAD: a part the city's worker made taken first (world/imperialPrebuild.js)
-  for (const part of IMPERIAL_PARTS) registerCustomModel(part.id, () => imperialPrebuilt()?.takeModel(part.id) ?? imperialPartModel(part.id), () => true, { climateFree: true });
+  for (const part of [...IMPERIAL_PARTS, ...IMPERIAL_LOD_PARTS]) registerCustomModel(part.id, () => imperialPrebuilt()?.takeModel(part.id) ?? imperialPartModel(part.id), () => true, { climateFree: true });   // IC-TOWER-LOD: and the coarse ones a far view stands
   installImperialFamilies();   // IC-GRAND: its blocks, near and far, and its fabric's models
   let made = null;
   const pictureOf = (record) => (made ??= capitalArt()).get(record) ?? null;
@@ -461,8 +461,12 @@ export function imperialPartBuild(base, rect) {
 }
 /** How many of the city's blocks, fabric models and skylines are kept built (the door's and the registry's LRUs). */
 export const IMPERIAL_KEEP = Object.freeze({ blocks: 1024, fabric: 768, skylines: 192, footprints: 48 });
-/** The landmarks' parts by their model id. */
-const PART_OF = new Map(IMPERIAL_PARTS.map((p) => [p.id, p]));
+/** The landmarks' parts by their model id - IC-TOWER-LOD: the coarse ones too (`of` the part each stands for). */
+const PART_OF = new Map([...IMPERIAL_PARTS, ...IMPERIAL_LOD_PARTS].map((p) => [p.id, p]));
+/** IC-TOWER-LOD: the coarse landmarks whole, at vanilla's texel density as the whole's - built once. */
+const LOD_WHOLE = Object.freeze({ [IMPERIAL_MODELS.whiteGoldTower]: buildImperialTowerLod, [IMPERIAL_MODELS.imperialPalace]: buildImperialPalaceLod });
+const _lodWholes = new Map();
+const lodWhole = (base) => { if (!_lodWholes.has(base)) _lodWholes.set(base, vanillaTexels(northward(LOD_WHOLE[base]()))); return _lodWholes.get(base); };
 /** Is a model id one of the landmarks' parts. @param {number} id */
 export const isImperialPartId = (id) => PART_OF.has(id);
 /** IC-FOOTPRINT-OFF-THREAD: A LANDMARK'S PART'S MODEL - its slice's square of its source (imperialPartBuild), as the model
@@ -470,7 +474,8 @@ export const isImperialPartId = (id) => PART_OF.has(id);
  *  build it alike. @param {number} id */
 export function imperialPartModel(id) {
   const part = PART_OF.get(id);
-  return part ? modelPart(imperialPartBuild(part.base, imperialSliceRect(part.s)), imperialSliceRect(part.s)) : null;
+  if (!part) return null;
+  return modelPart('of' in part ? lodWhole(part.base) : imperialPartBuild(part.base, imperialSliceRect(part.s)), imperialSliceRect(part.s));
 }
 /** The slices' footprints lately made, IMPERIAL_KEEP.footprints of them. @type {Map<number, ?((x: number, z: number) => boolean)>} */
 const _footprints = new Map();

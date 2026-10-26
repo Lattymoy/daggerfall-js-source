@@ -1821,6 +1821,19 @@ any street (a court's pocket, a stair's foot): DFU's law for a doorless house - 
 grid: every quarter its people, every walk of their day within one street component); `tools/mutants/icgrand_people.json`
 (12).
 
+IC-TOWER-LOD (2026-10-26, the owner walking the city: "Weird pop in issues in the city when moving") - THE TOWER AND THE
+PALACE COARSE, THE HORIZON'S OWN. A far view (a slice the stream builds past the player's ring) stood the tower's and the
+palace's whole parts (7,654 and 15,612 triangles), and past the stream the far ring stood their silhouette's few prisms:
+at the stream's edge, seen from everywhere in the city, the tower changed shape. Both are now made of ONE list each
+(`src/world/imperialCity.js:"export function imperialTowerLod(T = IMPERIAL.tower) {"`, `imperialPalaceLod` - the rotunda,
+its dome, the shaft in bands of two tiers each ringed by a gilt band, the gallery, the crown, the spire; the wings' runs and
+their slate, the pillar-towers): the silhouette (`imperialImpostor.js`, byte for byte as it stood) and a far view's coarse
+model (`capitalImperial.js` buildImperialTowerLod, buildImperialPalaceLod - the same prisms in the landmarks' pictures,
+416 and 816 triangles), its parts on the model door at their own ids past the parts' (IMPERIAL_LOD_PARTS, 940,000 on)
+and a far block's carrier standing them (`imperialBlocks.js` imperialFarPartId; the worker makes them for a far slice).
+A near view stands the whole. Pinned in `test/world/icgrand_lod.test.js` (IC-TOWER-LOD: every corner of the coarse
+prisms a corner of the silhouette and of the coarse model alike); `tools/mutants/icgrand.json` IC-TOWER-LOD-* (6).
+
 IN THE GAME AFTER: not measured today - the shared machine's memory cgroup took the probe's browser in its boot or its jump on five of the six runs after the before one (the sixth stopped by its own time limit, still booting) (the kernel's OOM killer, the renderer at 3.6-5.4 GB among the other streams' browsers and tests, load 25-38); the in-game before above stands, the after is node's (IC-PROBE-AFTER below). The in-game shots of the streets, the roofs, the Palace District, the city's arena and the far landmarks at a clear noon with the boot's pages put away (the probe's SHOTS: each slice built with the frame held, then shot) were not taken for the same reason; the city was seen in the scratch's rasterizer instead (its palace, gardens, tombs, gatehouses, the new tower from 3.6 km and from its foot, the courts, the squares' fountains and the Arboretum's orchards).
 
 OPEN - THE NAMED FOLLOW-UPS (IC-GRAND, at the release of 2026-10-26; none half-done in the code):
@@ -1830,8 +1843,7 @@ OPEN - THE NAMED FOLLOW-UPS (IC-GRAND, at the release of 2026-10-26; none half-d
   into fewer, larger models would cut the colliders' and the uploads' units.
 - **IC-PROBE-AFTER**: the probe's BUILDS run with the worker standing, on a machine of its own - here the shared memory
   cgroup took the browser (the probe's and the other streams') on every run but the before one this afternoon.
-- **IC-TOWER-LOD**: the tower's 7.7k triangles and the palace's 15.6k stand whole in the centre slice; past the stream they
-  are the far landmark's few prisms.
+- ~~IC-TOWER-LOD~~: DONE the same day (the paragraph above).
 - **IC-PALACE-PATHS** (a later content release, the owner's call 2026-10-26): the gardens' paths and walks are laid at
   the ground's own resolution (6.4 m tiles), stepped on a diagonal - a path model of its own would smooth them.
 - **IC-SQUARES** (a later content release): the Market's squares stand their fountain alone - stalls, trees and benches
