@@ -84,13 +84,13 @@ export const newWildRef = () => ({ fighters: new Map(), falls: new Map() });
  * and mends only once it has stood in the zone WILD_REF.mendMs unstruck (AUDIT INT9: a word off and on was a heal).
  * Answers the fighter, or null (none made: a word off, a full room).
  */
-export function wildZone(st, sub, { id, lv = 1, ci = '', carry = null }, z, pose, now) {
+export function wildZone(st, sub, { id, lv = 1, ci = '', carry = null, died = false }, z, pose, now) {
   let x = st.fighters.get(sub);
   if (!x) {
     if (!z) return null;
     if (st.fighters.size >= WILD_REF.fightersMax) for (const [k, v] of st.fighters) if (!v.zone && !v.down) { st.fighters.delete(k); break; }
     if (st.fighters.size >= WILD_REF.fightersMax) return null;
-    x = { id, ci: ci || '', f: newFighter(lv, now), pose: pose ? { x: pose.x, y: Number.isFinite(pose.y) ? pose.y : 0, z: pose.z } : null, poseAt: now, zone: false, zoneAt: now, outAt: -Infinity, struckAt: -Infinity, down: false, downAt: -Infinity, jumpAt: -Infinity, fightAt: -Infinity, graceUntil: -Infinity };
+    x = { id, ci: ci || '', f: newFighter(lv, now), pose: pose ? { x: pose.x, y: Number.isFinite(pose.y) ? pose.y : 0, z: pose.z } : null, poseAt: now, zone: false, zoneAt: now, outAt: -Infinity, struckAt: -Infinity, down: false, downAt: -Infinity, jumpAt: -Infinity, fightAt: -Infinity, graceUntil: -Infinity, diedAt: -Infinity };
     takeCarry(x, carry, now);
     st.fighters.set(sub, x);
   } else if (z && !x.zone && carry && carry.at > x.outAt) takeCarry(x, carry, now);   // it fought in another room since it left this one
@@ -98,21 +98,31 @@ export function wildZone(st, sub, { id, lv = 1, ci = '', carry = null }, z, pose
   if (z && x.down && now - x.downAt >= WILD_REF.riseMs) { x.f = newFighter(lv, now); x.down = false; x.struckAt = -Infinity; x.graceUntil = now + WILD_GRACE.ms; }   // ZONE-GRACE: a rise
   if (z && !x.zone) {
     if (now - x.outAt >= WILD_REF.riseMs && !x.down) { x.f.hp = x.f.max; x.struckAt = -Infinity; }
-    // ZONE-GRACE: an entry - away long enough, and out of every fight long enough
-    if (!x.down && now - x.outAt >= WILD_GRACE.awayMs && now - Math.max(x.fightAt, x.struckAt) >= WILD_GRACE.fightMs) x.graceUntil = Math.max(x.graceUntil, now + WILD_GRACE.ms);
+    // ZONE-GRACE: an entry - away long enough, and out of every fight long enough. AUDIT PVP-EASE L3-6 (the owner: "Yes,
+    // every rise"): or a rise from a death the referee did not keep (a foe's - `died` on its way out, `dd` carried)
+    if (!x.down && x.diedAt > -Infinity) { x.graceUntil = Math.max(x.graceUntil, now + WILD_GRACE.ms); x.diedAt = -Infinity; }
+    else if (!x.down && now - x.outAt >= WILD_GRACE.awayMs && now - Math.max(x.fightAt, x.struckAt) >= WILD_GRACE.fightMs) x.graceUntil = Math.max(x.graceUntil, now + WILD_GRACE.ms);
     x.zoneAt = now;
   }
   if (!z && x.zone) x.outAt = now;
+  if (!z && died && !x.down) x.diedAt = now;   // AUDIT PVP-EASE L3-6: a death the referee kept rises by its own law (above)
   x.zone = !!z;
   return x;
 }
 
 /** A fighter takes the vitality it carries from another room (`carry` - wildCarry's word, kept by the hub), unless that word
- *  is older than the mend (or, for a fall, the rise). */
+ *  is older than the mend (or, for a fall, the rise). AUDIT PVP-EASE L3-1, L3-2, L3-5: and ZONE-GRACE's whole word, of any
+ *  age - its last fight (`fa`), whether it stands in the zone still by the last room's word (`in` 1: a cell crossed, a room
+ *  woken from its sleep - never an entry), when it left it (`at`), its safe passage left or ended (`gr`), and a death the
+ *  referee did not keep (`dd`). Before, a fighter that had struck, or been struck more than the mend ago, carried
+ *  nothing: each cell it crossed and each room that woke granted it a fresh minute. */
 function takeCarry(x, carry, now) {
-  if (!carry || !Number.isFinite(carry.at) || !(now - carry.at < Math.max(WILD_REF.mendMs, carry.down ? WILD_REF.riseMs : 0))) return;
-  x.outAt = carry.at;   // it fought elsewhere a moment ago - never away from the zone
-  if (Number.isFinite(carry.gr) && carry.gr > now) x.graceUntil = carry.gr;   // ZONE-GRACE: the safe passage it had there
+  if (!carry || !Number.isFinite(carry.at)) return;
+  if (Number.isFinite(carry.fa)) x.fightAt = Math.max(x.fightAt, carry.fa);
+  x.outAt = carry.in === 1 ? now : Math.max(x.outAt, carry.at);
+  x.graceUntil = Number.isFinite(carry.gr) && carry.gr > now ? carry.gr : -Infinity;   // ZONE-GRACE: the safe passage it had there - or none
+  if (Number.isFinite(carry.dd)) x.diedAt = Math.max(x.diedAt, carry.dd);
+  if (!(now - carry.at < Math.max(WILD_REF.mendMs, carry.down ? WILD_REF.riseMs : 0))) return;   // the bar and the fall: a word of a moment ago alone
   if (carry.down && now - carry.downAt < WILD_REF.riseMs) { x.down = true; x.downAt = carry.downAt; x.f.down = true; x.f.hp = 0; return; }
   if (Number.isFinite(carry.hp) && carry.hp < x.f.max) { x.f.hp = Math.max(1, Math.min(x.f.max, Math.trunc(carry.hp))); x.struckAt = carry.at; }
 }
@@ -124,7 +134,8 @@ export function wildCarryOf(v) {
   if (!v || typeof v !== 'object' || !Number.isFinite(v.at) || !Number.isFinite(v.hp) || !Number.isFinite(v.max)) return null;
   const sea = v.sea && typeof v.sea === 'object' && Number.isFinite(v.sea.h) && Number.isFinite(v.sea.at) ? { h: Math.max(0, Math.min(1, v.sea.h)), at: v.sea.at } : null;
   const grace = Number.isFinite(v.gr) ? { gr: v.gr } : {};   // ZONE-GRACE
-  return { hp: Math.max(0, Math.trunc(v.hp)), max: Math.max(1, Math.trunc(v.max)), down: v.down === true, downAt: Number.isFinite(v.downAt) ? v.downAt : 0, at: v.at, ...grace, ...(sea ? { sea } : {}) };
+  const pass = { ...(Number.isFinite(v.fa) ? { fa: v.fa } : {}), ...(v.in === 1 ? { in: 1 } : {}), ...(Number.isFinite(v.dd) ? { dd: v.dd } : {}), ...(typeof v.rk === 'string' && v.rk.length <= 96 ? { rk: v.rk } : {}) };   // AUDIT PVP-EASE L3-1
+  return { hp: Math.max(0, Math.trunc(v.hp)), max: Math.max(1, Math.trunc(v.max)), down: v.down === true, downAt: Number.isFinite(v.downAt) ? v.downAt : 0, at: v.at, ...grace, ...pass, ...(sea ? { sea } : {}) };
 }
 
 /** INT9 (AUDIT): A FALL WAITING ON ITS PICK is kept in the room's storage under this prefix (a relay object that restarts
@@ -145,14 +156,24 @@ export function wildGone(st, sub, now) {
 }
 
 /** What a fighter CARRIES out of this room (the hub keeps it for the next room it stands in): its vitality and its fall -
- *  ZONE-GRACE: and its safe passage (`gr`), so a cell crossed ends none. A crossing is never an entry: a carry is a word
- *  of a moment ago (takeCarry's `outAt`), never WILD_GRACE.awayMs, so the next room grants no fresh one. */
+ *  ZONE-GRACE: and its safe passage (`gr`), so a cell crossed ends none. A crossing is never an entry (AUDIT PVP-EASE L3-1):
+ *  the carry says whether it stands in the zone (`in`), its last fight (`fa`) and a death the referee did not keep (`dd`),
+ *  and the relay puts it at every landed blow for BOTH fighters, at a passage ended, and as a fighter comes and goes. */
 export const wildCarry = (st, sub, now) => {
   const x = st.fighters.get(sub);
   if (!x) return null;
   const grace = x.graceUntil > now ? { gr: x.graceUntil } : {};
-  return { hp: Math.max(0, x.f.hp), max: x.f.max, down: x.down, downAt: Number.isFinite(x.downAt) ? x.downAt : 0, at: now, ...grace };
+  const pass = { ...(Number.isFinite(x.fightAt) ? { fa: x.fightAt } : {}), ...(x.zone ? { in: 1 } : {}), ...(x.diedAt > -Infinity ? { dd: x.diedAt } : {}) };
+  return { hp: Math.max(0, x.f.hp), max: x.f.max, down: x.down, downAt: Number.isFinite(x.downAt) ? x.downAt : 0, at: now, ...grace, ...pass };
 };
+/** AUDIT PVP-EASE L3-4 (the owner: "Any take ends passage"): a fighter that takes from a remains - its own or another's -
+ *  loses its safe passage, as its own blow ends it. Answers whether one ended. */
+export function wildGraceTaken(st, sub, now) {
+  const x = st.fighters.get(sub);
+  if (!x || !(x.graceUntil > now)) return false;
+  x.graceUntil = -Infinity;
+  return true;
+}
 /** ZONE-GRACE: how long a fighter's safe passage has left, ms - 0 for none. */
 export const wildGraceLeft = (/** @type {any} */ st, /** @type {string} */ sub, /** @type {number} */ now) => { const x = st.fighters.get(sub); return x && x.graceUntil > now ? Math.ceil(x.graceUntil - now) : 0; };
 

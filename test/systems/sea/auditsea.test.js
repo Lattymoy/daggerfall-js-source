@@ -34,7 +34,7 @@ import { etherPlaceId } from '../../../src/world/etherPlaces.js';
 import { OnlineSession } from '../../../src/net/online.js';
 import { fakeSocketClass } from '../../fakeSocket.mjs';
 import * as R from '../../../src/net/sea/seaRef.js';
-import { newWildRef, wildZone, wildPose, wildCarryOf, WILD_REF } from '../../../src/net/wild/wildRef.js';
+import { newWildRef, wildZone, wildPose, wildCarryOf, WILD_REF, WILD_GRACE } from '../../../src/net/wild/wildRef.js';
 import { SIEGE_UNITS_PER_M } from '../../../src/net/siege/siegeRef.js';
 import { createSeaBroadsides, SEA_SHOT_HZ, SEA_SHOT_MS } from '../../../src/scenes/naval/seaBroadsides.js';
 import { SEA_CAPTAIN_NEAR_M } from '../../../src/scenes/naval/navalPvp.js';
@@ -409,8 +409,10 @@ test('AUDIT SEA VENTURES B6: the day a season turns in counts for the old one - 
 /** A room's referee state: two captains in the zone, `gap` metres apart. */
 function seaRoom(gap = 50, now = 1000) {
   const st = newWildRef();
-  wildZone(st, 'a', { id: 'pa', lv: 10, ci: RK }, true, { x: 0, y: 0, z: 0 }, now);
-  wildZone(st, 'b', { id: 'pb', lv: 10, ci: RC }, true, { x: gap * SIEGE_UNITS_PER_M, y: 0, z: 0 }, now);
+  // PIN MOVED (AUDIT PVP-EASE L3-3, 2026-10-26): entered a minute before - ZONE-GRACE's safe passage keeps a captain's ship
+  // from a shot, and these are captains at war
+  wildZone(st, 'a', { id: 'pa', lv: 10, ci: RK }, true, { x: 0, y: 0, z: 0 }, now - WILD_GRACE.ms);
+  wildZone(st, 'b', { id: 'pb', lv: 10, ci: RC }, true, { x: gap * SIEGE_UNITS_PER_M, y: 0, z: 0 }, now - WILD_GRACE.ms);
   return st;
 }
 /** Her ship struck to about `share` of her bar by a's guns from `now`, the helms said as the page says them. */
@@ -524,8 +526,8 @@ test('AUDIT SEA VENTURES A3, A4, F1/A1: the relay - what landed is said rounded 
     const a = await join(A, 'peer-0001', -5, RK), b = await join(A, 'peer-0002', 5, RC);
     const helm = (r, ws, hl, u, t = 240) => r.raw(ws, JSON.stringify({ t: 'wild', data: { k: 'helm', hl, t, u, h: 1000 } }));
     await helm(ra, a, 4, 11); await helm(ra, b, 4, 22);
-    clock += 30_000;
-    await helm(ra, a, 4, 11);
+    clock += WILD_GRACE.ms;   // PIN MOVED (AUDIT PVP-EASE L3-3): past their entry's safe passage (it was 30 s, the guns' refill alone)
+    await helm(ra, a, 4, 11); await helm(ra, b, 4, 22);
     for (let i = 0; i < 10; i++) { clock += 100; await ra.raw(a, JSON.stringify({ t: 'wild', data: { k: 'shot', to: 'peer-0002', d: 1, s: 0, f: 0 } })); }
     const hulls = b.sent.filter((m) => m.t === 'wref' && m.k === 'hull');
     assert.equal(hulls.length, 10);
