@@ -42,12 +42,12 @@
   {
     "name": "OW5b-D2-build-skips-the-ask",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    const dfLocation = _locationToBuild(px, py) || null;",
-    "new": "    const dfLocation = locationIndex.get(key) || spawnedDungeonAt(px, py) || null;",
+    "old": "    const dfLocation = capitalBuildView(_locationToBuild(px, py), px, py, host.state.current) || null;",
+    "new": "    const dfLocation = capitalBuildView(locationIndex.get(key) || spawnedDungeonAt(px, py), px, py, host.state.current) || null;",
     "tests": [
       "test/world/spawneddungeons.test.js"
     ],
-    "note": "The build bypasses the one ask: an expired spawn the index holds is built again."
+    "note": "PIN MOVED (IC-GRAND): the ask's answer passes through capitalBuildView (a far slice's view)."
   },
   {
     "name": "OW5b-D2-gone-while-standing",

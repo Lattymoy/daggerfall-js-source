@@ -166,7 +166,9 @@ Tests `test/world/townwalls.test.js`. Mutants `tools/mutants/townwalls.json`. PI
 ## 7. TS5 - the Imperial City at seven pixels, round (BUILT)
 
 The owner, asked how large: *"7x7 pixels"* - seven map pixels a side, 5.73 km across (a pixel 819.2 m); asked again
-(*"7x7 km?"*): seven pixels, the plan 5.7 km a side, its city wall 3.9 km across.
+(*"7x7 km?"*): seven pixels, the plan 5.7 km a side, its city wall 3.9 km across. SUPERSEDED in its measures by IC-GRAND
+(`03-World/Arena-Provinces.md` IC-GRAND, 2026-10-26, the owner: *"Lets do 20km"*): twenty-five pixels, 20.48 km a side,
+its city wall 13.8 km across, its outskirts fifty pixels out - every law below the same at the new span.
 
 - **The wheel 2.17 times out** (`world/imperialCity.js` IMPERIAL_SPAN 7, IMPERIAL): the city wall 1950 m from the middle
   (TESA11's 900), the palace wall 650, Green Emperor Way 548-574, the tombs (twelve) at 416, the isle's shore 2200; each

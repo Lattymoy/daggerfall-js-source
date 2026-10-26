@@ -596,11 +596,12 @@
   {
     "name": "TESA10b-own-blocks-none",
     "file": "src/world/tamrielCapitals.js",
-    "old": "      else if (Object.hasOwn(own, cell)) out.push(own[cell].name);",
-    "new": "      else if (cell === '') out.push(own[cell].name);",
+    "old": "      else if (mine) out.push(mine.name);",
+    "new": "      else if (cell === '') out.push(mine.name);",
     "tests": [
       "test/tesa10_capitals.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (IC-GRAND): the own block asked of a law (ownOf) where it was looked up in cap.blocks."
   },
   {
     "name": "TESA10b-anchor-unflipped",

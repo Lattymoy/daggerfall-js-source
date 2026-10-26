@@ -48,7 +48,8 @@ import { HOLD_FLATS, HOLD_MODELS, holdFireLights, holdModelMatrix, PRIVATEERS_HO
 import { HOME_LOOK_BUILD_WAIT_MS, homeLookRemap } from '../world/homeLook.js';
 import { homeLookSig } from '../net/homeLaw.js';
 import { insideRocks, rockFootprint } from '../world/terrain/terrainNature.js';
-import { isClimateFreeModel, NO_CLIMATE_REMAP } from '../world/customModels.js';
+import { isClimateFreeModel, NO_CLIMATE_REMAP, isSolidModel } from '../world/customModels.js';   // IC-GRAND: a far skyline is drawn, never solid
+import { capitalBuildView, capitalViewOf } from '../world/tamrielCapitals.js';   // IC-GRAND: the Imperial City's slices near and far
 import { isDrySourceFlat, isWaterSourceFlat, WATER_SOURCE_MODELS } from '../systems/survival/items.js';
 import { isEnhanced } from '../systems/uiSkin.js';
 import { isHearthFlat } from '../systems/survival/hearth.js';
@@ -226,7 +227,8 @@ export function createPixelBuild(host) {
     const key = `${px},${py}`, pipeline = holdPixel(key), { getGpuMesh, uploadRecord, uploadRecordFrame } = pipeline;   // FIELD BUGS 2026-10-04d PLACE-LRU: THE PIXEL'S HOLD, the host's three doors and `pipeline` itself shadowed for the whole build - its models, its flats and their frames, its climate's and its homes' swaps (remapSubMeshes / homeLookRemap take this `pipeline`) are held for THIS pixel, released by destroyPixel (or BUILD-FAIL1's ledger), and freed once no standing or kept place holds them. The mills' parts stay the host's (getWindmillMeshes, pinned): millParts outlives every pixel
     const made = {};   // BUILD-FAIL1: this build's ledger, until publish hands it to the entry
     _building.set(key, made);
-    const dfLocation = _locationToBuild(px, py) || null;   // SPAWNED-DUNGEONS1: an empty pixel may stand one (AUDIT OW5b D2: a spawn the index holds asked its clocks)
+    const dfLocation = capitalBuildView(_locationToBuild(px, py), px, py, host.state.current) || null;   // SPAWNED-DUNGEONS1: an empty pixel may stand one (AUDIT OW5b D2: a spawn the index holds asked its clocks); IC-GRAND: a slice of the Imperial City far from the player its far view (world/tamrielCapitals.js capitalBuildView)
+    const farView = capitalViewOf(dfLocation) === 'far';   // IC-GRAND: no walker, yard nor port stands a far slice - its blocks close no ground
     // EV7: the LOCATION half stays here - setLocationTiles reads
     // BlocksFile + MapsFile, file objects that do not cross a
     // postMessage boundary - and its tilemap + rect ride into the job
@@ -454,7 +456,7 @@ export function createPixelBuild(host) {
       const lefayExitDoors = [];   // HOLD-MONUMENT (AUDIT FIVE-ASKS B1): the Hold's dungeon-entrance doors as its blocks stand them - its way out
       // MERCHANT-YARDS: the town's open ground, clear of its buildings, roads and lots; SHIPYARDS: and a port town's seaward
       // ground, on what the yards left - one pass (AUDIT SHIPYARDS L3-3: the yards' and the port's each asked it whole)
-      const yardTown = isYardTown(dfLocation), portTown = isPortTown(dfLocation, portOnSea(dfLocation));
+      const yardTown = !farView && isYardTown(dfLocation), portTown = !farView && isPortTown(dfLocation, portOnSea(dfLocation));
       const places = yardTown || portTown ? townPlacesFor(dfLocation, lefaySpot, climate?.people, loc, walkShut) : null;   // TS7: on the town's own ground
       if (yardTown) yardSites = places.yards;
       if (portTown) portSites = places.ports;
@@ -573,7 +575,7 @@ export function createPixelBuild(host) {
             }
           }
           const gateKey = isCityGate(placed.modelIdNum) ? `${key}:gate:${pixelGates.length}` : key;
-          late.add(gateKey, cpu.positions, cpu.indices, local,
+          if (isSolidModel(placed.modelIdNum)) late.add(gateKey, cpu.positions, cpu.indices, local,
             { translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])) });   // BLOOD1 AUDIT 3: the same; PERF-COL2: riding the floating origin
           // THE BULLETIN BOARDS. RMBLayout stands model 41739
           // STANDALONE rather than combining it (:857, :935) for the
@@ -774,7 +776,7 @@ export function createPixelBuild(host) {
       // translation. Persons ground on the flattened location terrain
       // (blendLocationTerrain planes the rect to avg - the same base
       // the RMB flats sit on). Location-type gate verbatim.
-      if (populatesWanderingNpcs(dfLocation.mapTableData.locationType)) {
+      if (!farView && populatesWanderingNpcs(dfLocation.mapTableData.locationType)) {
         await ensurePersonTex();
         const nav = new CityNavigation(loc.width, loc.height);
         for (const b of loc.blocks) {
@@ -1419,6 +1421,7 @@ export function createPixelBuild(host) {
       arenaRoadsEpoch: arenaRoadsAt, arenaRoadsPainted: !!arenaRoads,   // TESA4: the layer it was painted with, and whether its roads reached it
       centerHeight: samples[64 * HEIGHTMAP_DIMENSION + 64] * worldHeight,
       avgY: dfLocation ? avg * worldHeight : 0,
+      capitalLod: capitalViewOf(dfLocation),   // IC-GRAND: the view a slice of the Imperial City was built in (scenes/tamrielSweepsHost.js sweepCapitalLod)
     });
     if (deepWaters) deepWaters.published(built.get(key), dwResult);   // DW-B: the near promote stands with the pixel, or the pixel waits its turn
     if (dwDecor) dwDecor.onPromote(built.get(key));   // DW-E2: UnderwaterDecorations.HandlePromote, after the floor builder's (the subscription order)

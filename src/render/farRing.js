@@ -79,6 +79,7 @@ import { RING_SEA_GLSL } from './horizonHaze.js';   // FAR-SEA1: the horizon's h
 import { RING_CLOUD_GLSL, cloudFarOf } from './cloudShadow.js';   // OW-HORIZON: the clouds' shadows on the ring, as on the ground beside it
 import { RING_HAZE_GLSL } from './hazeGlsl.js';   // BANTHA1: the jungle's haze over the ring, both lanes' one text (render/hazeGlsl.js)
 import { WATER_F0, WATER_TINT } from './waterSurface.js';   // FAR-SEA1: the water's own Fresnel; AUDIT FAR-SEA1 L1: and its tint
+import { ringImpostors } from './ringImpostors.js';   // IC-GRAND: a place too big for the stream, its far shape on the ring's pass
 
 /** Ring radius in map pixels around the base - ~39 km of horizon. */
 export const RING_RADIUS = 48;
@@ -467,13 +468,16 @@ export class FarRingRenderer {
     this._proj = null;
     this._projKey = '';
     this._built = false;
+    this._imp = new Map();   // IC-GRAND: each registered impostor's GL objects and its order's key (render/ringImpostors.js)
+    this._ground = null;     // IC-GRAND: the grid's vertices, its heights an impostor's anchor stands on
   }
 
   /** (Re)build the vertex grid around `base` and punch the hole (`built`: punchHole's). */
   build(gridInputs, holeX, holeY, holeRadius, built = null) {
     const gl = this.gl;
-    const { positions, normals, colors, sea } = buildFarRingGrid(gridInputs);
+    const { positions, normals, colors, sea, side } = buildFarRingGrid(gridInputs);
     this.baseX = gridInputs.baseX; this.baseY = gridInputs.baseY;
+    this._ground = { positions, side };   // IC-GRAND
     this.dispose(false);
     const vao = gl.createVertexArray();
     gl.bindVertexArray(vao);
@@ -504,6 +508,7 @@ export class FarRingRenderer {
    *  keeps every pixel it has not built the ring's (inHole) - asked again whenever its keys change: a pixel built or
    *  dropped. A plain Map (no `changes`) is keyed by its size. */
   punchHole(holeX, holeY, holeRadius, built = null) {
+    this._impostorFrame(holeX, holeY, built);   // IC-GRAND
     const key = `${holeX},${holeY},${holeRadius},${built ? (built.changes ?? built.size) : -1}`;
     if (!this._built || key === this._holeKey) return;
     const gl = this.gl;
@@ -642,6 +647,7 @@ export class FarRingRenderer {
     gl.disable(gl.CULL_FACE);
     gl.bindVertexArray(this.vao);
     gl.drawElements(gl.TRIANGLES, this.ringCount + 6 * fill, gl.UNSIGNED_INT, 0);   // FAR-SEA1: the sea inside the hole is the range's tail - its farthest cells first
+    this._drawImpostors(origin);   // IC-GRAND: after the ground they stand on, at the same far plane
     gl.bindVertexArray(null);
     gl.depthRange(0, 1);
     gl.enable(gl.CULL_FACE);
@@ -652,9 +658,81 @@ export class FarRingRenderer {
     // are already due their reset (the R9 law).
   }
 
+  /** IC-GRAND (render/ringImpostors.js): THE IMPOSTORS A FRAME - each made a step a frame (its `step`), uploaded once whole,
+   *  and ordered again only when the eye's pixel, its anchor or the built pixels under it move (a key of its own pixels,
+   *  asked only when the built set changes); dropped when its anchor is gone or out of the ring's reach. */
+  _impostorFrame(holeX, holeY, built) {
+    const gl = this.gl;
+    for (const imp of ringImpostors()) {
+      const at = imp.anchor();
+      let st = this._imp.get(imp);
+      if (!at || Math.max(Math.abs(at.px - holeX), Math.abs(at.py - holeY)) > RING_RADIUS + imp.reach) { if (st) this._dropImpostor(imp); continue; }
+      if (!imp.step()) continue;
+      st ??= this._uploadImpostor(imp);
+      const changes = built ? (built.changes ?? built.size) : -1;
+      if (!st || (st.changes === changes && st.holeX === holeX && st.holeY === holeY && st.ax === at.px && st.ay === at.py)) continue;
+      st.changes = changes;
+      const has = (px, py) => !!built?.has(`${px},${py}`);
+      let mark = `${holeX},${holeY},${at.px},${at.py}:`;
+      for (let y = at.py - imp.reach; y <= at.py + imp.reach; y++) for (let x = at.px - imp.reach; x <= at.px + imp.reach; x++) mark += has(x, y) ? '1' : '0';
+      if (mark === st.key) continue;
+      Object.assign(st, { key: mark, holeX, holeY, ax: at.px, ay: at.py });
+      const ix = imp.order((holeX - at.px) * TERRAIN_SIZE, 2, -(holeY - at.py) * TERRAIN_SIZE, has);
+      gl.bindVertexArray(st.vao);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, st.index);
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, ix, gl.DYNAMIC_DRAW);
+      gl.bindVertexArray(null);
+      st.count = ix.length;
+    }
+  }
+  /** IC-GRAND: an impostor's vertices on the GL, once (the ring's attribute slots: position, normal, colour, sea). */
+  _uploadImpostor(imp) {
+    const m = imp.mesh();
+    if (!m) return null;
+    const gl = this.gl, vao = gl.createVertexArray(), buffers = [];
+    gl.bindVertexArray(vao);
+    for (const [data, loc, type, normalized, size] of [[m.positions, 0, gl.FLOAT, false, 3], [m.normals, 1, gl.FLOAT, false, 3], [m.colors, 2, gl.UNSIGNED_BYTE, true, 3], [m.sea, 3, gl.UNSIGNED_BYTE, true, 1]]) {
+      const b = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, b);
+      gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(loc);
+      gl.vertexAttribPointer(loc, size, type, normalized, 0, 0);
+      buffers.push(b);
+    }
+    const index = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, index);
+    buffers.push(index);
+    gl.bindVertexArray(null);
+    const st = { vao, buffers, index, count: 0, key: '', changes: null, holeX: null, holeY: null, ax: null, ay: null };
+    this._imp.set(imp, st);
+    return st;
+  }
+  _dropImpostor(imp) {
+    const st = this._imp.get(imp), gl = this.gl;
+    if (!st) return;
+    for (const b of st.buffers) gl.deleteBuffer(b);
+    gl.deleteVertexArray(st.vao);
+    this._imp.delete(imp);
+  }
+  /** IC-GRAND: the impostors, inside draw's state (its program, its far plane): each about its anchor pixel's middle on the
+   *  ring's own ground there (the grid's vertex, the nearest inside it). */
+  _drawImpostors(origin) {
+    const gl = this.gl;
+    for (const [imp, st] of this._imp) {
+      const at = imp.anchor();
+      if (!st.count || !at || !this._ground) continue;
+      const { positions, side } = this._ground, R = (side - 1) / 2;
+      const i = Math.max(0, Math.min(side - 1, at.px - this.baseX + R)), j = Math.max(0, Math.min(side - 1, at.py - this.baseY + R));
+      gl.uniform3f(this.u.uOrigin, origin[0] + (at.px - this.baseX + 0.5) * TERRAIN_SIZE, origin[1] + positions[(j * side + i) * 3 + 1], origin[2] - (at.py - this.baseY - 0.5) * TERRAIN_SIZE);
+      gl.bindVertexArray(st.vao);
+      gl.drawElements(gl.TRIANGLES, st.count, gl.UNSIGNED_INT, 0);
+    }
+  }
+
   /** Free the GL objects (every allocation has an owner). */
   dispose(whole = true) {
     const gl = this.gl;
+    if (whole) for (const imp of [...this._imp.keys()]) this._dropImpostor(imp);   // IC-GRAND
     for (const b of this.buffers) gl.deleteBuffer(b);
     this.buffers = [];
     if (this.vao) gl.deleteVertexArray(this.vao);

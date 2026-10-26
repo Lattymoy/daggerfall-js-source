@@ -3,7 +3,7 @@
 // settled names by value at construction, every live one (a `let` someone writes, a `const` made below) read at its
 // use as `host.<name>` - as the code read them where it was.
 import { arenaPixels } from '../world/arenaPlaces.js';
-import { capitalOnPixel } from '../world/tamrielCapitals.js';
+import { capitalOnPixel, capitalNear } from '../world/tamrielCapitals.js';
 import { isWaterPixel } from '../ui/overworldModel.js';
 import { layerTouches } from '../world/arenaRoads.js';
 import { nearestFirstFrom } from '../world/streamingWorld.js';
@@ -44,6 +44,7 @@ export function createTamrielSweeps(host) {
    *  once the land has moved, every built pixel past the Bay the countryside and the lairs roll (their ground, climate
    *  and province are the land's) - all but Arena's places, sweepArenaPixels' own. */
   function sweepCapitalPixels() {
+    sweepCapitalLod();   // IC-GRAND
     const fit = tamrielFit(), land = tamrielLandVersion();
     if (fit === _swept.capital && land === _swept.capitalLand) return;
     const moved = _swept.capital !== null;   // the first frame's ask is the fit the pixels were built by
@@ -62,6 +63,31 @@ export function createTamrielSweeps(host) {
     for (const k of again) destroyPixel(k.px, k.py, { collectLoose: false });
     host.queue.push(...again.sort(nearestFirstFrom(host.state.current)));
     console.log(`[capitals] ${again.length} pixel(s) beyond the Bay built again for the capitals`);
+  }
+  /** IC-GRAND (bible/03-World/Arena-Provinces.md IC-GRAND): THE IMPERIAL CITY NEAR AND FAR - its slices within NEAR_RING of
+   *  the player's pixel built near (their blocks, their fabric, their walkers), the rest far (world/tamrielCapitals.js
+   *  capitalBuildView: their skylines' masses, no collider, no walker); a near one kept near NEAR_SLACK further, so a walk
+   *  along a pixel's edge builds nothing twice. Asked on the frame, but walked only when the player's pixel or the built set
+   *  moves - the built pixels alone (the stream's few dozen), never the city's 625 slices: each built pixel whose view is
+   *  not the one it is built in now is built again, the ones coming near first (at the queue's head, nearest first - the
+   *  far ring and the city's skyline stand in the hole while it builds, render/cityImpostor.js), the ones going far last. */
+  const _lod = { at: null, size: -1 };
+  function sweepCapitalLod() {
+    const cur = host.state.current, at = cur ? `${cur.x},${cur.y}` : null;
+    if (at === _lod.at && host.built.size === _lod.size) return;
+    _lod.at = at;
+    _lod.size = host.built.size;
+    const near = [], far = [];
+    for (const [, p] of host.built) {
+      if (!p.capitalLod) continue;
+      const want = capitalNear(p.px, p.py, cur, p.capitalLod) ? 'near' : 'far';
+      if (want !== p.capitalLod) (want === 'near' ? near : far).push({ px: p.px, py: p.py });
+    }
+    if (!near.length && !far.length) return;
+    for (const k of [...near, ...far]) destroyPixel(k.px, k.py, { collectLoose: false });
+    host.queue.unshift(...near.sort(nearestFirstFrom(cur)));
+    host.queue.push(...far.sort(nearestFirstFrom(cur)));
+    _lod.size = host.built.size;
   }
   /** TESA5: land, for a crossing's run - the Bay's own water law on the Bay (the fit's), the ground's beach line past it. */
   const arenaJoinLand = (x, y) => (onTheBay(x, y) ? !isWaterPixel(maps.getClimateIndex(x, y), host.woods.getHeightMapValue(x, y)) : host.woods.getHeightMapValue(x, y) > WATER_BYTE);
@@ -88,5 +114,5 @@ export function createTamrielSweeps(host) {
     for (const k of again) destroyPixel(k.px, k.py, { collectLoose: false });
     host.queue.push(...again.sort(nearestFirstFrom(host.state.current)));
   }
-  return { _arenaRoadsStale, arenaJoinLand, arenaRoadsLanded, arenaRoadsStale, sweepArenaPixels, sweepArenaRoads, sweepCapitalPixels };
+  return { _arenaRoadsStale, arenaJoinLand, arenaRoadsLanded, arenaRoadsStale, sweepArenaPixels, sweepArenaRoads, sweepCapitalPixels, sweepCapitalLod };
 }
