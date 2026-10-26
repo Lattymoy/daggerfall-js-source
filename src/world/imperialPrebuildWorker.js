@@ -16,6 +16,20 @@
 // Pure modules only (no ui/, scenes/, render/) - a worker has no DOM. The state machine is exported for the pins and for
 // the page's own fallback (world/imperialPrebuildClient.js).
 import { sliceWork, prebuildDeps, makeWork, modelTransfers } from './imperialPrebuild.js';
+import { installCapitals, imperialSliceFootprint, isImperialPartId } from './capitalModels.js';   // IC-FOOTPRINT-OFF-THREAD
+import { customModelFor } from './customModels.js';
+
+/** The worker's own model door and its writers: the landmarks on it (their parts built here once, for the slices' parts
+ *  and their footprint - world/capitalModels.js), no picture (the page paints them); a part handed to the page a copy of
+ *  its door's (its buffers moved, the door's kept for the footprints still to come). */
+function workerDeps() {
+  installCapitals({ addTextures: () => 0 });
+  const partModel = (/** @type {number} */ id) => {
+    const m = isImperialPartId(id) ? customModelFor(id) : null;
+    return m ? { ...m, positions: m.positions.slice(), normals: m.normals.slice(), uvs: m.uvs.slice(), indices: m.indices.slice() } : null;
+  };
+  return prebuildDeps(imperialSliceFootprint, partModel);
+}
 
 /** How many pieces' keys the worker remembers as made (a near ring's and the next's, twice over). */
 export const DONE_KEEP = 2400;
@@ -40,7 +54,7 @@ export function createPrebuildWorkerState(post) {
       const key = keyOf(w);
       if (done.has(key)) return true;
       mark(key);
-      deps ??= prebuildDeps();
+      deps ??= workerDeps();
       try {
         const made = makeWork(w, deps);
         if (w.kind === 'block') post({ t: 'block', name: w.name, json: made }, made?.RmbBlock?.FldHeader?.AutoMapData?.buffer ? [made.RmbBlock.FldHeader.AutoMapData.buffer] : []);

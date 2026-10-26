@@ -53,7 +53,7 @@ test('IH1 world: %nt picks a tavern uniformly from the directory, "tavern" when 
 
 test('IH1 world: isHouseOwned is banking\'s law over the CURRENT region; the bag is townTalk\'s', () => {
   const world = hostText('src/scenes/world.js');
-  assert.match(world, /isHouseOwned: \(buildingKey\) => isHouseOwned\(playerEntity\.houses \?\? \[\], _questRegionIndex\(\), buildingKey\)/,
+  assert.match(world, /isHouseOwned: \(buildingKey\) => isHouseOwned\(playerEntity\.houses \?\? \[\], _questRegionIndex\(\), buildingKey, _questLoc\(\)\?\.mapTableData\?\.mapId \?\? null\)/,
     'DaggerfallBankManager.IsHouseOwned (:140-148) reads Houses[CurrentLocation.RegionIndex]');
   assert.match(world, /buildingNameOpts: \(\) => townTalk\.nameOpts\?\.\(\) \?\? \{\}/,
     'Place\'s _getBuildingName rides the one bag');

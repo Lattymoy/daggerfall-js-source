@@ -34,7 +34,7 @@ the code beside the fix, `AUDIT RELEASE R1-<n>`.
 | R1-1 | HIGH | A Bay city's wall model and one of the Imperial City's cells answered one model id: 43 of the 410 walled Bay cities, 15 of them on a cell that places its fabric | FIXED and pinned (8 mutants with R1-2, all dead) |
 | R1-2 | LOW | The Travel View's ground past the table kept the land that stood at its first plan - a plan asked before the trace and the fit landed walked the authored continent past the Bay for the session (AUDIT TESA III E2's routed item) | FIXED and pinned |
 | R1-3 | MED | The roads past the Bay cross the carved rivers with no ford and no bridge, and the river's water is painted over the road at each crossing (192 road pixels on a channel's pixel in five of Cyrodiil's regions, 37 of them running along it) | FIXED (RIVER-FORDS, `03-World/Roads.md`: the channels priced as fords, the paint keeps a road's tiles, TAMRIEL_ROADS_VERSION 5) |
-| R1-4 | LOW | The Imperial City's far landmarks stand each slice on the raw ground at its pixel, where the stream flattens every slice to the centre's: a slice stands up to 40 m higher once built | OPEN - proposed (IC-GRAND's file) |
+| R1-4 | LOW | The Imperial City's far landmarks stand each slice on the raw ground at its pixel, where the stream flattens every slice to the centre's: a slice stands up to 40 m higher once built | FIXED by IC-GRAND and pinned (7 mutants, all dead) |
 | R1-5 | NOTE | The Red Ring Road runs 30 to 67 km from the Imperial City's centre - between the city and the trace's ring of water, as VOYAGER chose - while IC-GRAND's own Lake Rumare is inside the city's 20.48 km | RECORDED for the owner |
 
 No finding of this lane is a release blocker by the cut-off's measure: none crashes, hangs, writes a save, splits a room's
@@ -118,15 +118,25 @@ Proposed (the roads' stream and the waters', one change, TAMRIEL_ROADS_VERSION m
 channel's pixel crossed along its flow's perpendicular, never walked along), and the paint keeps a crossing's road tiles
 a ford (or lays a bridge model) where `paintTamrielWaters` meets a road's tile.
 
-### R1-4 - the Imperial City on the horizon stands its slices on the land's raw ground (LOW, OPEN)
+### R1-4 - the Imperial City on the horizon stands its slices on the land's raw ground (LOW, FIXED)
 
-`capitalSkyline.js:"const px = centre.px + (s % IMPERIAL_SPAN) - R, py = centre.py + Math.floor(s / IMPERIAL_SPAN) - R, y = fr.groundAt(px, py);"`
-(IC-GRAND's file - not edited). The stream flattens every slice of the city to its centre's ground
+`capitalSkyline.js:"const px = centre.px + (s % IMPERIAL_SPAN) - R, py = centre.py + Math.floor(s / IMPERIAL_SPAN) - R, lo = lowestAround(fr, px, py);"`
+(IC-GRAND's file; as found, the line read the slice's own pixel's ground, `fr.groundAt(px, py)`). The stream flattens every slice of the city to its centre's ground
 (`terrainGen.js` flattenAt); the far ring has no flatten, and each slice's landmark stands on the ring's own height at its
 pixel. On the freeware the ground under the 625 slices reads 10 to 14 bytes, the ring's heights 100 to 140 m against the
 centre's 140 m: a slice's silhouette stands up to 40 m low and rises as its pixel is built. Not seen in a browser (the
 lane ran none). Proposed for IC-GRAND: stand every slice's landmark at the centre pixel's ground (`fr.groundAt(centre.px,
 centre.py)`), as the stream stands it.
+
+FIXED (IC-GRAND, 2026-10-26): every slice stands at the ring's ground at the centre pixel
+(`capitalSkyline.js:"function cityGround(fr, centre) {"`), its feet - every corner at its ground, the far view lays no
+flat quad there - down to the ring's lowest round its pixel and never above the city's
+(`capitalSkyline.js:"function lowestAround(fr, px, py) {"`), so a slice over lower land stands on a plinth to it, not in
+the air. With the centre off the ring's grid (the traveller up
+to SKYLINE_REACH out, 61 pixels against the ring's 48) the city's ground is the ring's at its slice on the grid nearest the
+centre, and every slice is stood again once the ring has the centre. Pinned in `test/world/icgrand_lod.test.js` THE CITY
+ON THE HORIZON (PIN MOVED: it read each slice's foot at its own pixel's ground); `tools/mutants/icgrand.json` R1-4-skyline-*
+(7) and IC-GRAND-skyline-stood-at-nought re-aimed by content, all dead. Not photographed (the shared machine's memory).
 
 ### R1-5 - the Red Ring Road and the two Lake Rumares (NOTE)
 

@@ -337,8 +337,8 @@
   {
     "name": "IC-GRAND-skyline-stood-at-nought",
     "file": "src/scenes/capitalSkyline.js",
-    "old": "mesh: lifted(mesh, y)",
-    "new": "mesh: lifted(mesh, 0)",
+    "old": "mesh: lifted(mesh, cityY, Math.min(cityY, lo))",
+    "new": "mesh: lifted(mesh, 0, Math.min(cityY, lo))",
     "tests": [
       "test/world/icgrand_lod.test.js"
     ]
@@ -418,8 +418,8 @@
   {
     "name": "IC-GRAND-prebuild-models-first",
     "file": "src/world/imperialPrebuild.js",
-    "old": "return [...blocks, ...models];",
-    "new": "return [...models, ...blocks];",
+    "old": "  return [...blocks, ...IMPERIAL_SLICE_PARTS[s]",
+    "new": "  return [...models, ...blocks, ...IMPERIAL_SLICE_PARTS[s]",
     "tests": [
       "test/world/icgrand_prebuild.test.js"
     ]
@@ -429,33 +429,6 @@
     "file": "src/world/imperialPrebuild.js",
     "old": "if (near) { if (own) { blocks.push(",
     "new": "if (true) { if (own) { blocks.push(",
-    "tests": [
-      "test/world/icgrand_prebuild.test.js"
-    ]
-  },
-  {
-    "name": "IC-GRAND-prebuild-footprint-unlaid",
-    "file": "src/world/imperialPrebuild.js",
-    "old": "if (!b || !fp || !fh || b.kind === 'far') return json;",
-    "new": "if (b || !fp || !fh || b.kind === 'far') return json;",
-    "tests": [
-      "test/world/icgrand_prebuild.test.js"
-    ]
-  },
-  {
-    "name": "IC-GRAND-prebuild-trees-left",
-    "file": "src/world/imperialPrebuild.js",
-    "old": "if (scenery[ty * 16 + tx].TextureRecord >= 0 && fp(",
-    "new": "if (scenery[ty * 16 + tx].TextureRecord >= 9999 && fp(",
-    "tests": [
-      "test/world/icgrand_prebuild.test.js"
-    ]
-  },
-  {
-    "name": "IC-GRAND-prebuild-far-footprinted",
-    "file": "src/world/imperialPrebuild.js",
-    "old": "b.kind === 'far') return json;",
-    "new": "b.kind === 'farr') return json;",
     "tests": [
       "test/world/icgrand_prebuild.test.js"
     ]
@@ -791,6 +764,160 @@
     "new": "return [...palaceCorners(I), ...[].flatMap(",
     "tests": [
       "test/world/icgrand_palace.test.js"
+    ]
+  },
+  {
+    "name": "R1-4-skyline-own-pixel",
+    "file": "src/scenes/capitalSkyline.js",
+    "old": "mesh: lifted(mesh, cityY, Math.min(cityY, lo))",
+    "new": "mesh: lifted(mesh, fr.groundAt(px, py), Math.min(cityY, lo))",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "R1-4-skyline-feet-in-the-air",
+    "file": "src/scenes/capitalSkyline.js",
+    "old": "mesh: lifted(mesh, cityY, Math.min(cityY, lo))",
+    "new": "mesh: lifted(mesh, cityY, cityY)",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "R1-4-skyline-feet-above",
+    "file": "src/scenes/capitalSkyline.js",
+    "old": "mesh: lifted(mesh, cityY, Math.min(cityY, lo))",
+    "new": "mesh: lifted(mesh, cityY, lo)",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "R1-4-skyline-feet-own-pixel",
+    "file": "src/scenes/capitalSkyline.js",
+    "old": "for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++)",
+    "new": "for (let dy = 0; dy <= 0; dy++) for (let dx = 0; dx <= 0; dx++)",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "R1-4-skyline-estimate-kept",
+    "file": "src/scenes/capitalSkyline.js",
+    "old": "if (!stood || (!stood.known && g.known)) stood = g;",
+    "new": "if (!stood) stood = g;",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "R1-4-skyline-estimate-not-restood",
+    "file": "src/scenes/capitalSkyline.js",
+    "old": "{ for (const h of handles.values()) h.remove(); handles.clear(); waiting = []; owe(centre, cur); }",
+    "new": "{ }",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "R1-4-skyline-centre-unread",
+    "file": "src/scenes/capitalSkyline.js",
+    "old": "  const y = fr.groundAt(centre.px, centre.py);\n  if (y != null) return { y, known: true };\n",
+    "new": "",
+    "tests": [
+      "test/world/icgrand_lod.test.js"
+    ]
+  },
+  {
+    "name": "R2-9-deed-town-unread",
+    "file": "src/systems/banking.js",
+    "old": " && deedStands(houses?.[regionIndex]) && deedHeldIn(houses?.[regionIndex], mapId);",
+    "new": " && deedStands(houses?.[regionIndex]);",
+    "tests": [
+      "test/world/icgrand_living.test.js"
+    ]
+  },
+  {
+    "name": "R2-9-deed-slot-unread",
+    "file": "src/systems/banking.js",
+    "old": "|| ((slot?.mapId ?? 0) >>> 0) === (Number(mapId) >>> 0);",
+    "new": "|| true;",
+    "tests": [
+      "test/world/icgrand_living.test.js"
+    ]
+  },
+  {
+    "name": "R2-9-deed-every-town",
+    "file": "src/systems/banking.js",
+    "old": "mapId == null || !isCapitalPlaceId(mapId) || ((slot",
+    "new": "mapId == null || ((slot",
+    "tests": [
+      "test/world/icgrand_living.test.js"
+    ]
+  },
+  {
+    "name": "R2-9-deed-host-dropped",
+    "file": "src/scenes/worldModes.js",
+    "old": "b?.regionIndex ?? 0, key, homeTownOf(b));",
+    "new": "b?.regionIndex ?? 0, key);",
+    "tests": [
+      "test/world/icgrand_living.test.js"
+    ]
+  },
+  {
+    "name": "R2-9-deed-sale-any-slice",
+    "file": "src/scenes/worldModes.js",
+    "old": " || !deedHeldIn(playerEntity.houses?.[bankRegion()], dir.mapId)) return null;",
+    "new": ") return null;",
+    "tests": [
+      "test/world/icgrand_living.test.js"
+    ]
+  },
+  {
+    "name": "IC-FOOTPRINT-worker-unlaid",
+    "file": "src/world/imperialPrebuildWorker.js",
+    "old": "return prebuildDeps(imperialSliceFootprint, partModel);",
+    "new": "return prebuildDeps(undefined, partModel);",
+    "tests": [
+      "test/world/icgrand_prebuild.test.js"
+    ]
+  },
+  {
+    "name": "IC-FOOTPRINT-parts-unmade",
+    "file": "src/world/imperialPrebuild.js",
+    "old": "...IMPERIAL_SLICE_PARTS[s].map((id) => /** @type {{ kind: 'model', id: number }} */ ({ kind: 'model', id })), ",
+    "new": "",
+    "tests": [
+      "test/world/icgrand_prebuild.test.js"
+    ]
+  },
+  {
+    "name": "IC-FOOTPRINT-part-not-taken",
+    "file": "src/world/capitalModels.js",
+    "old": "() => imperialPrebuilt()?.takeModel(part.id) ?? imperialPartModel(part.id)",
+    "new": "() => imperialPartModel(part.id)",
+    "tests": [
+      "test/world/icgrand_prebuild.test.js"
+    ]
+  },
+  {
+    "name": "IC-FOOTPRINT-worker-parts-unbuilt",
+    "file": "src/world/imperialPrebuildWorker.js",
+    "old": "const m = isImperialPartId(id) ? customModelFor(id) : null;",
+    "new": "const m = null;",
+    "tests": [
+      "test/world/icgrand_prebuild.test.js"
+    ]
+  },
+  {
+    "name": "IC-FOOTPRINT-part-square-unread",
+    "file": "src/world/capitalModels.js",
+    "old": "return part ? modelPart(imperialPartBuild(part.base, imperialSliceRect(part.s)), imperialSliceRect(part.s)) : null;",
+    "new": "return part ? imperialPartBuild(part.base, imperialSliceRect(part.s)) : null;",
+    "tests": [
+      "test/world/icgrand_prebuild.test.js",
+      "test/tesa11_imperial.test.js"
     ]
   }
 ]

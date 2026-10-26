@@ -1,19 +1,20 @@
 // IC-GRAND's PERF PASS (2026-10-26, the coordinator: "A DISTRICT'S NINE NEAR SLICES NEVER FINISHED within 900 s ... make
 // arrival and crossing workable ... off-main-thread work"; bible/03-World/Arena-Provinces.md IC-GRAND, "Off the page's
 // thread") - THE CITY'S OWN MADE AHEAD ON A WORKER, pinned: a slice's pieces in the order its build asks them; the worker's
-// blocks, the landmarks' footprint laid on the page, the page's own blocks to the byte, and its models the family's;
+// blocks, the landmarks' footprint laid there (PIN MOVED, IC-FOOTPRINT-OFF-THREAD: it was laid on the page), the page's
+// own blocks to the byte, the landmarks' parts the model door's, and its models the family's;
 // each piece handed over once, the worker told what the page made itself; the door and the family asking it first; the
 // sweep telling it the slices coming, the player's own first, and letting it go out of the city's reach.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { sliceWork, prebuildDeps, makeWork, imperialBlockFootprint, imperialPrebuilt, setImperialPrebuild } from '../../src/world/imperialPrebuild.js';
+import { sliceWork, prebuildDeps, makeWork, imperialPrebuilt, setImperialPrebuild } from '../../src/world/imperialPrebuild.js';
 import { createPrebuildWorkerState, DONE_KEEP } from '../../src/world/imperialPrebuildWorker.js';
 import { createImperialPrebuild } from '../../src/world/imperialPrebuildClient.js';
 import { createCapitalPrebuild, prebuildWanted, PREBUILD_REACH } from '../../src/scenes/capitalPrebuild.js';
 import { imperialBlockJson, imperialModelBuild, imperialOwnName, imperialFarName, imperialFabricModelId, imperialSkylineId, NEAR_RING } from '../../src/world/imperialBlocks.js';
 import { IMPERIAL_SPAN, IMPERIAL_SLICE_PARTS, IMPERIAL_ARENA_CODE, imperialSlicePlan, imperialCodeCell, polar } from '../../src/world/imperialCity.js';
-import { installCapitals, _resetCapitals, capitalFootprint } from '../../src/world/capitalModels.js';
+import { installCapitals, _resetCapitals, capitalFootprint, imperialPartModel } from '../../src/world/capitalModels.js';
 import { customModelFor } from '../../src/world/customModels.js';
 import { getDFBlockReplacementData, getNewDFBlockIndex, _resetWorldDataReplacement } from '../../src/formats/worldData/worldDataReplacement.js';
 
@@ -39,52 +40,72 @@ function fakeWorker() {
   return w;
 }
 
-test('IC-GRAND OFF THE PAGE\'S THREAD - a slice\'s pieces in the order its build asks them: near, its own cells\' blocks in its location\'s order (rows from the south) and then their fabric\'s models; far, its far blocks and its carrier\'s skyline (mutants: the models first; a far slice made near)', () => {
+test('IC-GRAND OFF THE PAGE\'S THREAD - a slice\'s pieces in the order its build asks them: near, its own cells\' blocks in its location\'s order (rows from the south), the landmarks\' parts its carrier stands (IC-FOOTPRINT-OFF-THREAD) and then their fabric\'s models; far, its far blocks, the parts and its carrier\'s skyline (mutants: the models first; a far slice made near; the parts not made)', () => {
   const near = sliceWork(MARKET, true), far = sliceWork(MARKET, false);
   const plan = imperialSlicePlan(MARKET), sx = MARKET % N, sy = Math.floor(MARKET / N), own = [];
   for (let i = 0; i < 64; i++) { const pr = 7 - Math.floor(i / 8), pc = i % 8; if (imperialCodeCell(plan[pr][pc])) own.push([sy * 8 + pr, sx * 8 + pc]); }
   assert.ok(own.length > 40);
-  assert.deepEqual(near, [...own.map(([r, c]) => ({ kind: 'block', name: imperialOwnName(r, c) })), ...own.map(([r, c]) => ({ kind: 'model', id: imperialFabricModelId(r, c) }))]);
+  const parts = IMPERIAL_SLICE_PARTS[MARKET].map((id) => ({ kind: 'model', id }));
+  // a slice with the landmarks' parts on its carrier: they come after its blocks, before its fabric's models, near or far
+  const pp = IMPERIAL_SLICE_PARTS[PALACE], pn = sliceWork(PALACE, true), pf = sliceWork(PALACE, false), firstModel = (l) => l.findIndex((w) => w.kind === 'model');
+  assert.ok(pp.length >= 1, 'the Palace District\'s landmarks');
+  assert.deepEqual(pn.slice(firstModel(pn), firstModel(pn) + pp.length).map((w) => w.id), pp, 'near: the parts first of its models');
+  assert.deepEqual(pf.slice(firstModel(pf), firstModel(pf) + pp.length).map((w) => w.id), pp, 'far: the parts first of its models');
+  assert.deepEqual(near, [...own.map(([r, c]) => ({ kind: 'block', name: imperialOwnName(r, c) })), ...parts, ...own.map(([r, c]) => ({ kind: 'model', id: imperialFabricModelId(r, c) }))]);
   const farCells = [];
   for (let i = 0; i < 64; i++) { const pr = 7 - Math.floor(i / 8), pc = i % 8; if (!['L', 'O', IMPERIAL_ARENA_CODE].includes(plan[pr][pc])) farCells.push([sy * 8 + pr, sx * 8 + pc]); }
   assert.ok(farCells.length > own.length, 'Daggerfall\'s cells too');
   assert.deepEqual(far.filter((w) => w.kind === 'block').map((w) => w.name), farCells.map(([r, c]) => imperialFarName(r, c)), 'every cell\'s far view but the lake\'s, the open shore\'s and the arena\'s');
-  assert.deepEqual(far.filter((w) => w.kind === 'model'), [{ kind: 'model', id: imperialSkylineId(MARKET) }], 'the skyline once, on its carrier');
+  assert.deepEqual(far.filter((w) => w.kind === 'model'), [...parts, { kind: 'model', id: imperialSkylineId(MARKET) }], 'the parts, then the skyline once, on its carrier');
 });
 
-test('IC-GRAND THE WORKER\'S PIECES ARE THE PAGE\'S - its blocks, the landmarks\' footprint laid on them on the page (closed and bare where a face stands), the page\'s own blocks to the byte; its models the family\'s; a far block closes nothing (mutants: the footprint unlaid; its trees left; a far block footprinted)', () => {
+test('IC-GRAND THE WORKER\'S PIECES ARE THE PAGE\'S - IC-FOOTPRINT-OFF-THREAD (PIN MOVED: the footprint was laid on the page): its blocks made with the landmarks\' footprint laid there (closed and bare where a face stands), the page\'s own blocks to the byte; the landmarks\' parts its slices stand made there, the model door\'s own; its models the family\'s; a far block closes nothing; the page\'s model door takes a part the worker made (mutants: the footprint unlaid in the worker; the parts not made; the part not taken; the far block footprinted)', () => {
   _resetCapitals();
   installCapitals({ addTextures: () => 0 });   // the landmarks' parts on the model door, for the footprint
   const deps = prebuildDeps(), pageDeps = { ...deps, footprintOf };
   let closedByFace = 0, bared = 0;
+  /** a slice's pieces as the worker's own state makes them */
+  const madeBy = (s, near) => {
+    const got = new Map(), st = createPrebuildWorkerState((m) => got.set(m.t === 'block' ? `b:${m.name}` : `m:${m.id}`, m.t === 'block' ? m.json : m.model));
+    st.on({ t: 'want', slices: [{ s, near }] });
+    for (let i = 0; i < 500 && st.step(); i++);
+    return got;
+  };
   for (const s of [MARKET, PALACE]) {
-    const fp = footprintOf(s);
+    const got = madeBy(s, true);
     for (const w of sliceWork(s, true).filter((x) => x.kind === 'block').slice(0, s === PALACE ? 64 : 12)) {
-      const made = makeWork(w, deps), plain = structuredClone(made);
+      const made = got.get(`b:${w.name}`), plain = makeWork(w, deps);
       assert.ok(made.RmbBlock.FldHeader.AutoMapData instanceof Uint8Array, 'its automap one buffer');
-      const laid = imperialBlockFootprint(made, w.name, fp);
       const page = imperialBlockJson(w.name, pageDeps);
-      laid.RmbBlock.FldHeader.AutoMapData = Array.from(laid.RmbBlock.FldHeader.AutoMapData);
-      assert.deepEqual(laid, page, w.name);
+      made.RmbBlock.FldHeader.AutoMapData = Array.from(made.RmbBlock.FldHeader.AutoMapData);
+      assert.deepEqual(made, page, w.name);
       closedByFace += page.RmbBlock.FldHeader.AutoMapData.filter((v, i) => v !== plain.RmbBlock.FldHeader.AutoMapData[i]).length;
       bared += page.RmbBlock.FldHeader.GroundData.GroundScenery.filter((g, i) => g.TextureRecord !== plain.RmbBlock.FldHeader.GroundData.GroundScenery[i].TextureRecord).length;
     }
+    // the landmarks' parts: made there, the model door's own
+    for (const id of IMPERIAL_SLICE_PARTS[s]) {
+      const m = got.get(`m:${id}`), door = customModelFor(id);
+      assert.ok(m && m.indices.length > 0, `part ${id} made`);
+      assert.deepEqual([Array.from(m.positions), Array.from(m.indices), m.subMeshes], [Array.from(door.positions), Array.from(door.indices), door.subMeshes], `part ${id} the door's`);
+    }
   }
   assert.ok(closedByFace > 20, `the footprint laid: ${closedByFace} cells closed, ${bared} trees bared`);
-  // a footprint over a whole block of trees: every cell closed, every tree bared - the door's own block under it
-  const treed = sliceWork(PALACE, true).filter((x) => x.kind === 'block').map((w) => [w, makeWork(w, deps)]).find(([, j]) => j.RmbBlock.FldHeader.GroundData.GroundScenery.some((g) => g.TextureRecord >= 0));
-  const all = () => true, laidAll = imperialBlockFootprint(treed[1], treed[0].name, all), pageAll = imperialBlockJson(treed[0].name, { ...deps, footprintOf: () => all });
-  laidAll.RmbBlock.FldHeader.AutoMapData = Array.from(laidAll.RmbBlock.FldHeader.AutoMapData);
-  assert.deepEqual(laidAll, pageAll, 'a footprint over it all');
-  assert.ok(pageAll.RmbBlock.FldHeader.GroundData.GroundScenery.every((g) => g.TextureRecord === -1), 'every tree bared');
-  // a far block: as made (nothing closed), whatever the footprint
-  const fw = sliceWork(PALACE, false).find((x) => x.kind === 'block'), far = makeWork(fw, deps);
-  assert.deepEqual(Array.from(imperialBlockFootprint(structuredClone(far), fw.name, () => true).RmbBlock.FldHeader.AutoMapData), Array.from(far.RmbBlock.FldHeader.AutoMapData));
+  // a far block: as the page makes it (nothing closed), whatever the footprint
+  const fw = sliceWork(PALACE, false).find((x) => x.kind === 'block'), far = madeBy(PALACE, false).get(`b:${fw.name}`);
+  far.RmbBlock.FldHeader.AutoMapData = Array.from(far.RmbBlock.FldHeader.AutoMapData);
+  assert.deepEqual(far, imperialBlockJson(fw.name, { ...deps, footprintOf: () => () => true }), 'a far block closes nothing');
   // the models: the family's, a cell with none none
-  for (const w of sliceWork(MARKET, true).filter((x) => x.kind === 'model').slice(0, 6)) {
+  for (const w of sliceWork(MARKET, true).filter((x) => x.kind === 'model' && !IMPERIAL_SLICE_PARTS[MARKET].includes(x.id)).slice(0, 6)) {
     const a = makeWork(w, deps), b = imperialModelBuild(w.id);
     assert.deepEqual([a.positions, a.indices, a.subMeshes], [b.positions, b.indices, b.subMeshes]);
   }
+  // the page's model door takes a part the worker made before it builds one
+  const part = IMPERIAL_SLICE_PARTS[PALACE][0], sentinel = { ...imperialPartModel(part), taken: true };
+  _resetCapitals();
+  setImperialPrebuild({ takeBlock: () => null, takeModel: (id) => (id === part ? sentinel : undefined), made() {} });
+  installCapitals({ addTextures: () => 0 });
+  assert.equal(customModelFor(part), sentinel, 'the worker\'s part taken');
+  setImperialPrebuild(null);
   _resetCapitals();
 });
 
@@ -138,7 +159,7 @@ test('IC-GRAND THE WORKER AND THE PAGE - the worker makes the wanted slices\' pi
   none.dispose();
 });
 
-test('IC-GRAND THE DOOR AND THE FAMILY ASK THE WORKER FIRST - a block the worker made is the door\'s (its footprint laid), a model the family\'s; what it has not made the page makes as before; the pixel\'s build reads a slice\'s blocks a breath at a time before its tiles read them all (mutants: the door unwired; the family unwired; the blocks read in one task)', () => {
+test('IC-GRAND THE DOOR AND THE FAMILY ASK THE WORKER FIRST - a block the worker made is the door\'s (its footprint laid there), a model the family\'s; what it has not made the page makes as before; the pixel\'s build reads a slice\'s blocks a breath at a time before its tiles read them all (mutants: the door unwired; the family unwired; the blocks read in one task)', () => {
   _resetWorldDataReplacement();
   _resetCapitals();
   installCapitals({ addTextures: () => 0 });

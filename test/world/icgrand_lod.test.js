@@ -229,7 +229,7 @@ test('IC-GRAND THE CITY FROM AFAR - its silhouette a landmark a slice (render/fa
   assert.ok(impostorQuads([], null).every((q) => q.s >= 0 || q.sea), 'every landmark in a slice');
 });
 
-test('IC-GRAND THE CITY ON THE HORIZON - the sweep hands the far ring one landmark a slice (its addLandmark), a budget a frame, the nearest the traveller first, each stood on the ground the ring stands at its pixel (groundAt) and made once; let go out of SKYLINE_REACH, on another ring or when the ring disposed them; a slice off the ring\'s grid waits for it to move; none on the classic skin (mutants: never let go; stood at nought; all at once; far first; the wait forgotten; a disposed ring kept; unwired; the ring\'s ground by column for row)', () => {
+test('IC-GRAND THE CITY ON THE HORIZON - the sweep hands the far ring one landmark a slice (its addLandmark), a budget a frame, the nearest the traveller first, each stood at the city\'s ground - the ring\'s at the centre pixel, as the stream flattens every slice to it (PIN MOVED, AUDIT RELEASE R1-4: it stood each on the ring\'s ground at its own pixel, up to 40 m under the city\'s) - its masses\'s feet down to the ring\'s lowest round its pixel, never above the city\'s ground; off the grid the centre\'s ground estimated from the nearest slice on it and every slice stood again once it is known; made once; let go out of SKYLINE_REACH, on another ring or when the ring disposed them; a slice off the ring\'s grid waits for it to move; none on the classic skin (mutants: never let go; stood at nought; stood at its own pixel; feet in the air; feet above the city; the estimate kept; all at once; far first; the wait forgotten; a disposed ring kept; unwired; the ring\'s ground by column for row)', () => {
   const ground = (px, py) => 40 + (px - 500) * 2 + (py - 400) * 0.5;
   const ringOf = (g = ground) => {
     const r = { baseX: 500, baseY: 400, added: [], removed: 0, groundAt: g };
@@ -247,11 +247,24 @@ test('IC-GRAND THE CITY ON THE HORIZON - the sweep hands the far ring one landma
   assert.deepEqual([first[0].landmark.key, first[0].landmark.px, first[0].landmark.py], [`imperial:${CENTRE}`, 500, 400], 'the nearest first');
   settle();
   assert.equal(first.length, stand, 'every slice that stands something, one landmark each');
-  for (const h of first) {
-    const { px, py, mesh } = h.landmark;
-    let lo = Infinity;
-    for (let i = 1; i < mesh.positions.length; i += 3) lo = Math.min(lo, mesh.positions[i]);
-    assert.ok(Math.abs(lo - ground(px, py)) < 1e-3, `${px},${py} on the ring's ground (${lo})`);
+  const span = (positions) => { let lo = Infinity, hi = -Infinity; for (let i = 1; i < positions.length; i += 3) { lo = Math.min(lo, positions[i]); hi = Math.max(hi, positions[i]); } return [lo, hi]; };
+  /** each landmark's top at the city's ground (`city`) over its made mesh's, its lowest the ring's lowest round it (`low`) */
+  const stoodAt = (added, city, low) => {
+    let west = 0, east = 0;
+    for (const h of added.filter((a) => a.landmark.vao)) {
+      const { px, py, mesh, key } = h.landmark, [lo, hi] = span(mesh.positions), made = span(imperialLandmarkMesh(Number(key.slice(9))).positions);
+      assert.ok(Math.abs(hi - (made[1] + city)) < 1e-3, `${px},${py} at the city's ground (${hi - made[1]})`);
+      if (made[0] < 0 || made[1] <= 0) continue;
+      const want = Math.min(city, low(px, py));
+      assert.ok(Math.abs(lo - want) < 1e-3, `${px},${py}'s feet at ${want} (${lo})`);
+      if (want < city) west++; else east++;
+    }
+    assert.ok(west > 50 && east > 50, `feet down to a lower ring and never above the city (${west}, ${east})`);
+  };
+  stoodAt(first, 40, (px, py) => ground(px - 1, py - 1));
+  for (const h of first) {   // the feet are the corners at its ground: the far view lays no flat quad there
+    const made = imperialLandmarkMesh(Number(h.landmark.key.slice(9))).positions;
+    for (let q = 0; q < made.length; q += 12) assert.ok(Math.max(made[q + 1], made[q + 4], made[q + 7], made[q + 10]) > 0, 'a quad stands up');
   }
   // out of reach: every one let go; back: handed in again
   host.state.current = { x: 500 + SKYLINE_REACH + 1, y: 400 };
@@ -281,6 +294,20 @@ test('IC-GRAND THE CITY ON THE HORIZON - the sweep hands the far ring one landma
   part.baseX = 501;
   settle();
   assert.deepEqual([part.added.length, sk.waiting], [stand, 0], 'handed in once the ring moved');
+  // R1-4: the centre off the grid - the city's ground estimated from the nearest slice on it (503, 400: 46), every slice
+  // stood again at the centre's (40) once the ring has it
+  const off = ringOf((px, py) => (px < 503 ? null : ground(px, py)));
+  host.farRing = off;
+  settle();
+  assert.ok(off.added.length > 0 && sk.waiting > 0, 'the slices on the grid stand on the estimate');
+  for (const h of off.added) assert.ok(Math.abs(span(h.landmark.mesh.positions)[1] - span(imperialLandmarkMesh(Number(h.landmark.key.slice(9))).positions)[1] - 46) < 1e-3, 'at the estimate');
+  const estimated = off.added.length;
+  off.groundAt = ground;
+  off.baseX = 502;
+  settle();
+  assert.equal(off.removed, estimated, 'the estimate\'s slices let go');
+  assert.equal(off.added.filter((h) => h.landmark.vao).length, stand, 'and every slice stood again');
+  stoodAt(off.added, 40, (px, py) => ground(px - 1, py - 1));
   // the classic skin: no ring, nothing asked
   host.farRing = null;
   assert.doesNotThrow(() => sk.sweep());

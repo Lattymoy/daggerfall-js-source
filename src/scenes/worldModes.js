@@ -355,7 +355,7 @@ import { freeTavernRooms } from '../systems/guild/guildServices.js';
 import { BankWindow, preloadBankArt, bankArtLoaded, BANK_RECTS, BANK_PANEL_X, BANK_PANEL_Y } from '../ui/bankWindow.js';
 import { BankPurchaseWindow, preloadPurchaseArt, purchaseArtLoaded } from '../ui/bankPurchaseWindow.js';   // H2
 import { titleDeed, shipLabel, BOAT_DEED_TEMPLATE as FLEET_DEED_TEMPLATE } from '../systems/fleet.js';   // HOLDINGS: a bought deed into the Fleet's book
-import { createBankAccounts, createHouses, BANK_REGION_COUNT, TRANSACTION_RESULT, ownsHouse, isHouseOwned, deedStands, ownedHouseKey, houseSellPrice, housesForSale, allocateHouseToPlayer, purchaseHouse, ownsShip, ownedShipType, purchaseShip, sellShip, sellHouse, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS, creditMarksSale, marksSaleCredit, crossedDeedLines, goldRegion } from '../systems/banking.js';   // H1/H2   // H3: the two leaves - the sell price and the ship
+import { createBankAccounts, createHouses, BANK_REGION_COUNT, TRANSACTION_RESULT, ownsHouse, isHouseOwned, deedStands, deedHeldIn, ownedHouseKey, houseSellPrice, housesForSale, allocateHouseToPlayer, purchaseHouse, ownsShip, ownedShipType, purchaseShip, sellShip, sellHouse, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS, creditMarksSale, marksSaleCredit, crossedDeedLines, goldRegion } from '../systems/banking.js';   // H1/H2   // H3: the two leaves - the sell price and the ship
 import { isEtherPlaceId } from '../world/etherPlaces.js';   // AUDIT CAPTAIN'S SEA P9: an isle town's buildings are no deed's
 import { isArenaPlaceId } from '../world/arenaLocations.js';   // TESA2: nor an Arena town's
 import { isCountryPlaceId } from '../world/tamrielCountry.js';   // TESA7: nor a country place's
@@ -5533,7 +5533,7 @@ export function createWorldModes(host) {
       const dir = buildingDirectory?.();
       const key = ownedHouseKey(playerEntity.houses ?? [], bankRegion());
       if (!key || !dir?.buildings?.length) return null;
-      if (!deedStands(playerEntity.houses?.[bankRegion()])) return null;   // AUDIT WD3 H1: a sleeping deed is neither priced nor sold
+      if (!deedStands(playerEntity.houses?.[bankRegion()]) || !deedHeldIn(playerEntity.houses?.[bankRegion()], dir.mapId)) return null;   // AUDIT WD3 H1: a sleeping deed is neither priced nor sold; AUDIT RELEASE R2-9: nor a capital's slice's in another slice
       return dir.buildings.find((bs) => bs.buildingKey === key) ?? null;
     };
     let win = null;
@@ -7587,7 +7587,7 @@ export function createWorldModes(host) {
   /** H1's IsHouseOwned for a building where it stands - DFU's (region, key) law; AUDIT CAPTAIN'S SEA P9: never a building
    *  of an isle's town (no house is sold past the Veil, and a Betony deed's key owned the same key in every isle town of
    *  region 19 - its residents gone, its cupboards the player's). */
-  const houseOwnedAt = (b, key) => !isEtherPlaceId(homeTownOf(b)) && !isArenaPlaceId(homeTownOf(b)) && !isCountryPlaceId(homeTownOf(b)) && isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, key);   // TESA2: nor an Arena town's; TESA7: nor a country place's
+  const houseOwnedAt = (b, key) => !isEtherPlaceId(homeTownOf(b)) && !isArenaPlaceId(homeTownOf(b)) && !isCountryPlaceId(homeTownOf(b)) && isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, key, homeTownOf(b));   // AUDIT RELEASE R2-9: a capital's slice's deed in its own slice alone; TESA2: nor an Arena town's; TESA7: nor a country place's
   /** The online home a building is, as this client last heard - null offline, for a building no player can own, or
    *  while its town is not known yet. */
   function homeOf(b) {
