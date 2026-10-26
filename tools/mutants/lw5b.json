@@ -83,7 +83,7 @@
   {
     "name": "LW5b-fit",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "    if (backT1 > cycleEnd) continue;",
+    "old": "    if (backT1 > cycleEnd + (c - 1) * len * DAY_MIN) continue;",
     "new": "    void cycleEnd;",
     "tests": [
       "test/systems/livingWorld/lw5b_sea.test.js"

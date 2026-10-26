@@ -436,7 +436,7 @@ import { readRaidReceipt } from '../net/raid/raidReceipt.js';   // RAID4b: a rai
 import { raidSpoilsList, raidSpoilsDay, RAID_SPOILS_KEYS, RAID_SPOILS_TEXT, RAID_SPOILS_RECORDS_MAX } from '../systems/raidSpoils.js';   // RAID4b: a town's thanks
 import { grantStaffSpoils } from '../systems/staffEventSpoils.js';   // STAFF-EVENT THE REWARD: an event's spoils
 import { createSerpentOmen, insideSerpentRing, SERPENT_OMEN_SETTLE_MS } from '../systems/serpent/serpentOmen.js';   // SERPENT1 (Mac: "a large scale sea serpent in the ocean"): the sea serpent's sighting - its lines, its ring, its compass mark
-import { findSerpentSite } from '../systems/serpent/serpentSite.js';   // SERPENT1: where it rises - on a packet lane, in open sea
+import { worldSerpentSite } from '../systems/serpent/serpentSite.js';   // SERPENT1: where it rises - on a packet lane, in open sea; WW7-12: the world's lanes', or the hub's word of it
 import { createSerpentLink } from '../net/serpent/serpentLink.js'; import { readSerpentReceipt } from '../net/serpent/serpentReceipt.js';   // SERPENT1: the cell's words of its fight, folded; a receipt's day, seed and earning
 import { createSerpentHost } from './serpentHost.js';   // SERPENT1: the client's half of the fight - the `in`, the volleys, the blows on my ship, the coil and the whirl
 import { SerpentRenderer } from '../render/serpentRender.js';   // SERPENT1: its body over and under the sea, its telegraphs, the maelstrom and the venom
@@ -23981,12 +23981,13 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   }) : null;
   const serpentOmen = serpentLink ? createSerpentOmen({
     now: () => Date.now() + _sharedOffsetMs,
-    // the day's site off the packet lanes - every client's the same lanes, the same ways, the same open sea; none before
-    // the map's data has come (asked again - systems/serpent/serpentOmen.js SITE_RETRY_MS)
+    // the day's site off the packet lanes - WW7-12: every lane of the world, the same lanes, ways and open sea on every
+    // game standing the land past the Bay whole; a game without it the hub's word of the site the accounts agree on; none
+    // before the map's data has come (asked again - systems/serpent/serpentOmen.js SITE_RETRY_MS)
     site: (day) => {
       if (!maps || !mapDict) return null;
       try {
-        return findSerpentSite(day, { lanes: worldLanes.bay(), wayOf: worldLanes.way, open: laneOpen });   // WW3: the Bay's lanes - the serpent's site the one it always was
+        return worldSerpentSite(day, worldLanes, serpentLink.toldAt);   // WW7-12: every lane of the world, standing them whole; else the hub's word of the agreed site
       } catch (e) { console.warn('[serpent] no site', e?.message ?? e); return null; }
     },
     say: (text) => eventNotice('serpent', text),   // EVENTS1
@@ -24046,7 +24047,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     try { serpentOmen?.frame(); } catch (e) { console.warn('[serpent] omen', e?.message ?? e); }
     // SERPENT2: where the serpent lies, to the hub (once a socket and day - net/online.js sendSerpentSite): its Discord
     // herald names the place from the bells on, and posts the kill at the site the most accounts agree on
-    try { const a = serpentOmen?.ahead?.(); if (a) socialLink()?.sendSerpentSite?.(a.day, a.site.sx, a.site.sz, a.site.near); } catch (e) { console.warn('[serpent] site word', e?.message ?? e); }
+    try { const a = serpentOmen?.ahead?.(); if (a && !a.site.told) socialLink()?.sendSerpentSite?.(a.day, a.site.sx, a.site.sz, a.site.near); } catch (e) { console.warn('[serpent] site word', e?.message ?? e); }   // WW7-12: a site the hub told is no word of this game's
     serpentClaims?.tick();
     sdClaims?.tick();   // SD9b: what the account service has not counted yet, offered again on its own clock
     iliacClaims?.tick();   // CARDS10: and the ranked Iliac games', on theirs

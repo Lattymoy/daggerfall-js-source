@@ -1522,7 +1522,9 @@ when first read; the city past the stream's reach is drawn on the far ring's pas
   middle is the city's anchor (TESA11's capitalCentre, the anchor at the plan's middle grid point) - and 24 (19.66 km)
   would put the city's middle on a pixel's corner. Six hundred and twenty-five slices, each its own location, its map
   id and index its ordinal's (capitalSliceOrdinal - the lane's 0x80000 bit holds 625 ordinals); the outskirts' round
-  towns fifty pixels from the centre (IMPERIAL_OUTSKIRTS, TS5's law at the new span).
+  towns fifty pixels from the centre (IMPERIAL_OUTSKIRTS, TS5's law at the new span). WW7-11 (`03-World/World-Wide.md`): to the living world the city is
+  ONE town, its centre slice's (`scenes/livingWorld/livingIndex.js` capitalStreet) - the other 624 its streets, in no town's
+  list near and sending no traveller - so a town by the city has one town more near it, never 625.
 - **The wheel at its new size** (IMPERIAL): the White-Gold Tower on its plaza (300 m), Green Emperor Way's ring road
   (2140-2180 m), the twenty-four emperors' tombs at 1.4 km, the palace wall at 2.3 km round the PALACE DISTRICT (the
   team's list names it; TESA11's "Green Emperor Way" is its ring road's name now), the city wall at 6.9 km (TS5's

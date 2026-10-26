@@ -65,7 +65,7 @@ was built on the Bay and stops at its edge. A survey of the tree on 2026-10-24 f
 | WW3 | The sea, whole: the packet lanes over the registry's ports on the world's water; the raiders' and the director's sea world-wide; the port test's bounds | BUILT (below) |
 | WW-R | The provinces as regions: each province past the Bay a region of its own after the Bay's 62 (the owner, 2026-10-24: "Separate regions make sense"); the politic map past the Bay; the people, the law, the banks and the regional channels a province's | BUILT (below) |
 | WW-C | Cyrodiil (the owner, 2026-10-24: "Each region becomes home to their own abundant harvesting resources with other resources sprinkled in. Cyrodil becomes the new open PvP area with the wrothgarian mountain area being retired in favor of this. Cryodil will be home to all abundent resources and everything else from the wrothgarian zone"): WW-C1 each province's ground rich in its own kinds and ore, Cyrodiil in all; WW-C2 the open zone moved from the Wrothgarian Mountains to Cyrodiil | BUILT (below) |
-| WW4 | The serpent in every sea: a serpent lane for each sea theatre | planned |
+| WW4 | The serpent in every sea: a serpent lane for each sea theatre | IN PART (WW7-12, below: the one serpent's site rolled over every lane of the world, the hub telling every game the site the accounts agree on; a serpent a sea theatre still planned) |
 | WW5 | The Hollows and the stars: an Abyss dungeon slot and a Starfall coven night in each theatre | planned |
 | WW6 | The raids past the Bay: the raids' towns off the registry by area, the wire's world pixels | planned |
 | WW7 | The roads' PEOPLE past the Bay - not the roads: the network past the Bay is TESA's (PR #1184, TESA14 and TESA15 - laid by the Bay's own law, drawn on the map). WW7 puts the living world's travellers, patrols, bands and the Watch on it (WW7-7: the ways' planner walks the roads past the Bay) and keys the town economy by the world's key; it lands on #1184 once that merges | IN PROGRESS on #1184 (2026-10-25; section WW7 below) |
@@ -354,8 +354,8 @@ of the world's, so the bound is the law's (Port-Ledger).
 ### The world's lanes (`scenes/naval/worldLanes.js`)
 
 - **The Bay's lanes are the Bay's**: its ports (Travel Options' list off the map's directory, `bayLanePorts`), its water
-  (the host's `laneOpen`, the Bay's map alone), made once - every packet in the water she sailed, and the serpent's site
-  rolled over the same list in the same order (WW4 lanes the serpent).
+  (the host's `laneOpen`, the Bay's map alone), made once - every packet in the water she sailed. The serpent's site is
+  rolled over every lane of the world, the Bay's first (WW7-12).
 - **The lanes past the Bay** run between the world's ports over THE WORLD'S LANE WATER (`worldLaneWater`): the Bay's own
   on the Bay, and past it the Ocean climate on water where the land past the Bay stands (the composed continent's
   readers - TAMRIEL2), never the Eltheric Ocean's box (its isles keep their own ports), a native point by its pixel
@@ -367,8 +367,8 @@ of the world's, so the bound is the law's (Port-Ledger).
   shape) the walk is the Bay's scale's, within LANE_PATH_PX, and may cross the Bay's water. A player is near a lane past
   the Bay within the ellipse its two roadsteads bound for a way of BEYOND_LANE_PATH_PX (`near`).
 - **One book**: `all()` the Bay's lanes and then the world's, each lane's way kept once (`way`) - the feed of packets
-  about the player, the living world's sailors and crews ashore, and the passage by sea read it. The serpent reads the
-  Bay's (`bay()`, WW4); SEA-TRADE's port lanes the world's (WW7-10: a Bay port's the Bay's alone).
+  about the player, the living world's sailors and crews ashore, and the passage by sea read it. The serpent reads it
+  whole (WW7-12: `whole()`, then `all()`); SEA-TRADE's port lanes the world's (WW7-10: a Bay port's the Bay's alone).
 - **The lane search on the world's grid** (`systems/naval/seaLanes.js lanePixels`): keyed by the world's key and bounded
   by the grid, so a lane past the map's edge is walked as the Bay's are - pinned step for step against the Bay's search
   as it was.
@@ -399,7 +399,6 @@ stander did.
 
 - **The crowns.** A ship past the Bay flies the nearest Bay crown's colours and a crime at sea is charged as on the Bay
   until the provinces are regions (WW-R).
-- **The serpent** sails the Bay's lanes (WW4).
 - **Deep Waters** (the sea floor's bake) is the Bay's - WOODS.WLD's own bathymetry; past the Bay a ship's draft is the
   streamed water's.
 
@@ -775,6 +774,8 @@ and the seats are derived off MAPS.BSA's rows alone, behind laws bounded to the 
 | WW7-8 | the ships named past the Bay: every reader names a ship as her stander did | BUILT (below) |
 | WW7-9 | the living world across the Bay's edge, the land past the Bay waking a region at a time | BUILT (below) |
 | WW7-10 | the lanes across the Bay's edge, and the sea's trade past the Bay | BUILT (below) |
+| WW7-11 | the long passages: a far lane's passage the cycles it needs; a capital one town to the living world | BUILT (below) |
+| WW7-12 | the serpent on the world's lanes, the hub telling every game where the accounts agree it lies | BUILT (below) |
 
 ### WW7-1 - TESA's places in the registry (BUILT)
 
@@ -964,8 +965,8 @@ Bay and by sea on the lanes past it.
   hideouts' book and the trips' kept choices (`trips.js` roadChoices, templesNear - kept by the world's generation now).
 - **By sea**: a port town past the Bay sails its travellers on its lanes (LW5b's passage over the lanes past the Bay - WW3's,
   P7's BEYOND_LANE_MAX_PX of 400), and its sailors crew its packets (LW5's berths read the world's lanes). SEA_PACE_X stays
-  three: a lane past the Bay is some ten of the Bay's long (a port's two nearest a median 325 pixels off), so a passage
-  past the Bay fits a pilgrim's twenty days more often than a merchant's seven (measured: WW7-10).
+  three: a lane past the Bay is some ten of the Bay's long (a port's two nearest a median 325 pixels off), so its passage
+  takes the cycles it needs (WW7-11, below - the owner: "Make them longer").
 - **Online**: nothing crosses the wire (LW0 decision 2) - every trip past the Bay is a pure function of the registry's places,
   the roads past the Bay, the ground, a seed and the clock, as the Bay's are. TESA-ONLINE's divergence holds and no wider: a
   player without Arena's places stands other roads and places past the Bay, and so other people there.
@@ -1004,8 +1005,8 @@ was called otherwise on another player's screen, her captain and her hands with 
   bundles any module this slice moved.
 - **Recorded**: the crowns stay the Bay's three - a navy ship past the Bay sails for the nearest Bay crown and a crime at sea
   there is charged as on the Bay (`navalShips.js` CROWNS, the wire's `n` by their rows): seven more crowns' navies are the
-  wire's, the law's and the save's shape, the owner's to call. The serpent's lanes are WW4's. SEA-TRADE's port lanes are
-  the world's since WW7-10 (below).
+  wire's, the law's and the save's shape, the owner's to call. The serpent's lanes are the world's since WW7-12, and
+  SEA-TRADE's port lanes since WW7-10 (below).
 
 ### Pins and mutants (WW7-7, WW7-8)
 
@@ -1127,16 +1128,15 @@ the Bay's lanes alone.
     share), flying the nearest Bay crown's colours, and a crime at sea there is charged as on the Bay: the crowns'
     allegiance and law (`systems/naval/navalShips.js` CROWNS, the wire's `n`, the save's crowns) - a different system;
     seven provinces' navies are the owner's call (WW-R).
-  - **The serpent** (WW4) is a monster of the Bay's lanes, no ship: its site is rolled over the Bay's lanes in their order
-    (`systems/serpent/serpentSite.js`, and the relay's serpent with it), so moving it onto the world's lanes would move the
-    Bay's serpent for every client that stands the land past the Bay, and the relay's law with it - WW4's own.
+  - **The serpent** (WW4) is a monster, no ship; the owner's call on its lanes is taken - *"Fucking do it"*: its site is
+    rolled over the world's lanes (WW7-12, below).
   - **SEA_PACE_X** (3) is a passenger's pace (LW5b: three times a walker's, by night as by day), no ship's - a packet sails at
-    her class's cruise on the shared clock - so it keeps no ship to the Bay. What keeps passages past the Bay rare is their
-    length against the travellers' cycles (CYCLE_DAYS: a merchant's seven days, a pilgrim's twenty). Measured on the
-    freeware's lanes at the calendar's pace, of the 19 ways past the Bay (37 to 633 km) 2 fit a merchant's cycle or an
-    adventurer's, 11 a pilgrim's, 1 a courier's or a pedlar's; of the six crossing lanes (175 to 378 km) the two to Hegathe
-    a pilgrim's. A faster passage would outsail the packets she rides, and a longer cycle for a far port is LW3's cycle
-    law - both the owner's call.
+    her class's cruise on the shared clock - so it keeps no ship to the Bay. What kept passages past the Bay rare was their
+    length against the travellers' cycles (CYCLE_DAYS: a merchant's seven days, a pilgrim's twenty) - measured on the
+    freeware's lanes at the calendar's pace, of the ways past the Bay (37 to 633 km) 2 fit a merchant's cycle or an
+    adventurer's, 11 a pilgrim's, 1 a courier's or a pedlar's, and of the six crossing lanes (175 to 378 km) the two to
+    Hegathe a pilgrim's. The owner's call is taken - *"Make them longer"*: a far lane's passage takes the cycles it needs
+    (WW7-11, below).
 - **No relay change**: nothing of the lanes, the passages or the counts crosses the wire; neither Worker bundles a module
   this slice moved.
 
@@ -1162,6 +1162,105 @@ bins; P7-lanes-from-past-the-bay - a lane to its own side or a crossing's), `ww1
 roads' host's `landedIn` holds its law - `ww7_cross.json`'s WW7-9-host records), and `townecon4.json`
 TOWNECON4-host-lanes-cached-empty (its guard is gone: the counts follow the lanes' own identity, so an answer before they
 stand counts none and they are counted again once they do - WW7-10-trade's records hold it).
+
+### WW7-11 - the long passages, and a capital one town (BUILT, 2026-10-26)
+
+The owner, on passages past the Bay being rare (*"Faster ships or longer trips would fix it"*): *"Make them longer"*. A
+trip's cycle grows with its voyage: a FAR lane's passage takes as many of its traveller's cycles as it needs, and the
+Bay's own lanes keep a cycle a passage.
+
+- **Far** (`scenes/livingWorld/livingLanes.js` from): a lane past the Bay or across its edge says it is far (`far`); a Bay
+  lane's entry is the shape it always was.
+- **The block** (`systems/livingWorld/trips.js` voyageBlock): where the land past the Bay stands (the trips' world's
+  `longPassages` - `scenes/livingWorld/livingTrips.js`, its roads' host present), a port's sea-going traveller's cycles are
+  dealt into blocks of as many cycles as the longest passage needs: SEA_VOYAGE_DAYS (74 - the longest way a lane of the
+  world is let have, a crossing lane's CROSS_LANE_PATH_PX of 996 km, out and back at SEA_PACE_X with the longest stay and
+  the turn-round) over its cycle at the clock's pace - a merchant's or an adventurer's 11 cycles, a pilgrim's 4, a
+  courier's 15, a pedlar's 13. Each place's blocks begin at a cycle its own seed picks. Anywhere else, and with the land
+  off, every cycle is its own block.
+- **The passage** (seaTrip): a far lane's takes the whole cycles its span needs (`sea.cycles`), set out inside its own cycle
+  (its offset over the cycles' room less its span, under a cycle's) and home inside its last; one that does not fit its
+  ROOM is passed over for the next shorter lane, as a lane too long for a cycle always was. A far lane that fits a cycle
+  sails the passage it always did, to the byte.
+- **The room** (voyageRoom): one cycle, but at a block's first the block's - short of any cycle the lives take the traveller,
+  or one who walks with them (its company's places, a merchant's contract sellswords), on: that death is met on that
+  cycle's own trip (LW4: a fated death is on the road), never at sea on another's. A holder the lives take at the block's
+  first sails no longer passage than ever.
+- **The cycles at sea** (voyageOver): a cycle its block's long passage spends at sea makes no trip of its own - the passage
+  read through the trips' book (memoTrip), so the passage and the cycles it spans are one reading; a cycle whose block's
+  passage is still being asked waits, as a way does; a block whose first rolled no sea (its sea dice - seaRolled) asks
+  nothing of it.
+- **Every day it is under way** (townTrips, cyclesAbout): a day's trips are its cycle's, the one before's and the first
+  cycle's of the block either lies in where its sea dice came up - so the passage is the town's on every day of it, once,
+  and its party the far port's visitors through the stay.
+- **A long passage is its own** (formCaravans' trainOf): none joins it, it joins none - a joiner walks its train's
+  timeline, and on a passage of more cycles its own would set out again from aboard.
+- **The fit** (ARENA2, the freeware's 25 far lanes - 21 past the Bay, 6 across, 37 to 633 km): every one fits a passage of
+  every sailing kind at a block's first cycle, the longest stay and the latest tide - merchant, adventurer, pilgrim,
+  courier and pedlar 25 of 25 each. A cycle alone fits a merchant 1, an adventurer 2, a pilgrim 13, a courier 1, a pedlar 1.
+- **The Bay as it was**: with the land off the trips' world has no `longPassages` - every block a cycle, every passage a
+  cycle's - and a port with no far lane sails the trips it always did with the land on, to the byte (pinned over sixty
+  days of the synthetic sea).
+- **A capital is one town** (the coordinator at IC-GRAND's merge: the Imperial City's 625 slices are places - *"keep your near
+  lists and wake bounded over them"*): `livingIndex.js` capitalStreet - a capital's slice but its centre (`capitalPlaceId`'s
+  ordinal 0: the capital's own name, map id and port) is one of its streets. No square past the Bay, no area's towns and no
+  roads' place names a street, so a town near the Imperial City has one town more near it, never 625, and a traveller bound
+  for the city walks to its centre; a street sends no traveller (`livingTrips.js` rosterOf). A street's own record stands for
+  a reader on it (`townAt`). The wake asks a place's box (LIVING_WAKE_PX), whatever it holds: unmoved.
+- **Online**: nothing crosses the wire; every client standing the land past the Bay deals the same blocks and rooms off the
+  same seeds, lanes and lives. Departure from Daggerfall Unity: DFU has no living world's traffic at all (LW0).
+
+### WW7-12 - the serpent on the world's lanes (BUILT, 2026-10-26)
+
+The owner, on the sea serpent kept to the Bay's lanes because moving it moves the relay's law: *"Fucking do it"*. Its site
+is rolled over every lane of the world - the Bay's, the ones past it and the crossing lanes - as it was over the Bay's.
+
+- **The roll** (`systems/serpent/serpentSite.js` worldSerpentSite): a game standing the world's lanes whole
+  (`scenes/naval/worldLanes.js` whole - the Bay's directory, the land past the Bay and its picture: every lane past the Bay
+  and across its edge is the picture's, the same list in the same order on every such game) rolls the day's site over
+  `all()` by findSerpentSite's own law, its open sea the world's lane water (`open`). On the freeware's world (ARENA2) 436
+  lanes, 409 the Bay's: over sixty serpent days its waters lay 48 times on the Bay's lanes, 8 past the Bay and 4 across its
+  edge, 183 ms the sixty.
+- **The relay and every game agreeing.** The relay holds no map (AUDIT SERPENT S1): the site is the games' word, as it
+  always was - each online game says the site it found (`serpent` `site`, once a socket and day) and the hub folds the
+  words (`foldGateSite`, one an account a day, agreed at GATE_SITE_AGREE). A game without the land past the Bay rolled the
+  Bay's site itself before, the one every game rolled; the site is the world's lanes' now, which it cannot roll. So THE HUB
+  TELLS every game online the site the accounts agree on - `serpent` `at` (`net/serpent/serpentHerald.js` serpentAtWord;
+  `server/src/index.js` _serpentAtTell as an account's word moves the agreement, _serpentAtTo at each hello while its day
+  holds; `net/wire.js` the kind: the day, the site's native point to the whole unit, the port's name by the `site` word's
+  law), the session hands it on from the hub alone (`net/online.js`), the link keeps it by its day
+  (`net/serpent/serpentLink.js` toldAt) - and a game without the world's lanes whole rises its serpent there (siteOfWord:
+  its pixel, its ring, the port it lies off; no province, no lane), never at one of its own; with no agreement yet, none
+  (its omen asks again, SITE_RETRY_MS). A site the hub told is never said back as this game's (`told`). The fight is the
+  cell's, one a site (the `in`'s site, bounded by the world's grid - POSE_BOUND).
+- **Recorded**: a game standing the land past the Bay whose picture is still coming waits for it or the hub's word, whichever
+  first - never the Bay's lanes alone, which would name another site. The Bay's serpent moved for every game: its lane is
+  rolled over 436 lanes where it was over 409. A serpent a sea theatre (WW4's whole) stays planned.
+- **The relay's law moved** (no RELAY_VERSION bump: world260 is undeployed) - its row re-hashed in place
+  (`test/net/relayversion.test.js`). The account service bundles none of it (`test/server/accountdeploy.test.js`).
+- **HOST-SPLIT**: the host hands the serpent's site the lanes' book whole (`bootWorld` 36,064 -> 36,061 logical lines, the
+  ceiling at it - `bible/01-Overview/Host-Split.md`); the hub's word is two Room methods of their own.
+
+### Pins and mutants (WW7-11, WW7-12)
+
+`test/world/worldWide/ww7_longer.test.js` (12, one with ARENA2): the block (its days the longest way's, its cycles a job's at
+the clock's pace, a place's own first, every cycle its own with the land off, at no port, for a job that never sails; the
+cycles a day reads, the block before's at a block's first); a far lane's passage (the cycles, inside its own and its last,
+its room, the Bay's never grown, a cycle's to the byte, the shorter); the room (the block's first, its fate, a cycle the
+lives take, a sellsword's, a rider's); the cycles at sea (no trip, home again, the wait, the empty place, no sea no ask);
+every day under way (once, the visitors, one trip at a time); a long passage its own; the Bay's passages as they were and
+the far word; a capital one town; the hub's word (`at`'s law, serpentAtWord); the hub telling (two agreeing, a forged word,
+a hello, the agreement moved, a day gone); the client keeping it; the site over the world's lanes (every kind of lane, its
+own roll, the told site, none, the lanes whole); with ARENA2 the fit and the serpent's sixty days. Mutants
+`tools/mutants/ww7_longer.json` (67, all dead).
+
+PINS MOVED (WW7-11): `ww7_places.test.js` (a capital's streets send none); (WW7-12) `serpent1_relay.test.js` (the out kinds, and `at`), `serpent2_herald.test.js` (a told site never said
+back), `serpent1_auditclient.test.js` (the hub's `at` through the session), `ww3_sea.test.js` (the world's lanes to the
+serpent), `hostceiling.test.js` (bootWorld's ceiling lowered), `relayversion.test.js` (world260 re-hashed in place). Mutant
+records re-aimed by content: `audittesa2p.json` (P7-places-unfiltered, P7-lanes-from-past-the-bay), `lw3.json`
+(LW3-train-of-the-window), `lw5b.json` (LW5b-fit), `serpent1_audit.json` (AUDIT-SERPENT-S5-online-rcpt), `serpent2.json`
+(SERPENT2-scene-says-nothing), `ww7_people.json` (WW7-7-roads-places-unfiltered), `hostsplit.json`
+(HOST-SPLIT-a-ceiling-under-its-host) - all dead.
 
 ## TESA x AUDIT TESA II (2026-10-25, the merge)
 

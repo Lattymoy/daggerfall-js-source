@@ -401,7 +401,10 @@ link with the ship AI at ports" - LW3's trips kept to the land; a port's travell
 - **When.** Out from the dock on a morning tide (`SEA_TIDE_H`, 6 to 9 o'clock); the crossing at `SEA_PACE_X` (3) a
   walker's pace, by night as by day; the stay (the job's `STAY_DAYS`); home on a later morning's tide, the same hour
   (a ship turns round overnight at the least). The whole passage inside the cycle: a lane too long for it gives way to
-  the longest shorter lane that fits; none that fits (or no lane at all), the road's trip it always was.
+  the longest shorter lane that fits; none that fits (or no lane at all), the road's trip it always was. WW7-11
+  (`03-World/World-Wide.md`; the owner: *"Make them longer"*): a FAR lane's passage (past the Bay or across its edge) takes
+  the whole cycles it needs, set out at the first cycle of its traveller's block of long passages (`voyageBlock`), and the
+  cycles it spends at sea make no trip of their own; the Bay's lanes keep a cycle a passage, to the byte.
 - **At sea, never on the road.** A passage is `sea` while it sails, out and home, and `stay` between - never `out` or
   `back`, so no road, Overworld mark or roadside fight shows it (it has no way under it). Its party is a caravan's
   like any trip's: a merchant's sellswords and the joiners of the day (LW3) take the same ship.

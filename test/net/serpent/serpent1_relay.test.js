@@ -125,7 +125,7 @@ test('SERPENT1 wire: the cell\'s every word projected for the client - a state t
   assert.equal(SERPENT_MODES, MODE_NAMES.length);
   assert.equal(SERPENT_CHART_MAX, SERPENT_DAMAGE_CHART_MAX);
   assert.equal(SERPENT_RECEIPT_WIRE_MAX, SERPENT_RECEIPT_MAX);
-  assert.deepEqual(SERPENT_OUT_KINDS, ['st', 'sw', 'dv', 'atk', 'hp', 'ph', 'coil', 'ch', 'cb', 'cr', 'cx', 'mael', 'fell', 'gone', 'no', 'rcpt', 'bd']);   // PIN MOVED (INT13): and the count's wreck
+  assert.deepEqual(SERPENT_OUT_KINDS, ['st', 'sw', 'dv', 'atk', 'hp', 'ph', 'coil', 'ch', 'cb', 'cr', 'cx', 'mael', 'fell', 'gone', 'no', 'rcpt', 'bd', 'at']);   // PIN MOVED (INT13): and the count's wreck; PIN MOVED (WW7-12): and the hub's word of the agreed site
   const leg = { k: 1, at: 1000, x: 10, z: -20, yw: 0.5, v: 11, r: 60, sd: -1, j: 1 };
   assert.deepEqual(validSerpentOut({ k: 'sw', l: leg }), { k: 'sw', l: leg });
   assert.equal(validSerpentOut({ k: 'sw', l: { ...leg, sd: 0 } }), null);

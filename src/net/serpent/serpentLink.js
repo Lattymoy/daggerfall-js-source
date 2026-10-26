@@ -9,7 +9,9 @@
 // falls by day and site (the hub says each site's kill to everyone online - AUDIT SERPENT S1: a forged site's is not
 // this machine's serpent's) and the receipts by day, and says a refusal in words once. AUDIT SERPENT 2 F1: every word
 // of a fight names its site (the relay stamps each - server/src/index.js _serpentFan) and only this machine's own
-// site's is folded.
+// site's is folded. WW7-12: and the hub's word of where the accounts agree it lies (`at`), kept for the day it names
+// (`toldAt`) - a game that cannot roll the site over the world's lanes rises its serpent there (systems/serpent/
+// serpentSite.js worldSerpentSite).
 //
 // Not a DFU member. Ledger A (SERPENT1).
 import { readSerpentReceipt } from './serpentReceipt.js';
@@ -112,11 +114,14 @@ export function createSerpentLink({ now, say = () => {}, onFell = () => {}, onRe
   const falls = new Map();
   const receipts = new Map();
   const refused = new Set();
+  /** WW7-12: the hub's latest word of where the accounts agree the serpent lies. @type {{d: number, sx: number, sz: number, pl: string}|null} */
+  let told = null;
   return {
     /** A word from the cell or the hub. */
     word(w) {
       if (!w) return;
       if (w.k === 'no') { if (!refused.has(w.m)) { refused.add(w.m); say(SERPENT_NO_TEXT[w.m] ?? w.m); } return; }
+      if (w.k === 'at') { if (!told || w.d >= told.d) told = { d: w.d, sx: w.sx, sz: w.sz, pl: w.pl }; return; }   // WW7-12: the hub's, of no fight
       if (w.k === 'rcpt') { const c = readSerpentReceipt(w.r); if (c && !receipts.has(c.d)) { receipts.set(c.d, w.r); onReceipt(w.r); } return; }
       // a kill, any site's, kept by its day and site (the hub's names its day; the cell's is the day of the fight here)
       const mine = site();
@@ -135,6 +140,8 @@ export function createSerpentLink({ now, say = () => {}, onFell = () => {}, onRe
     /** The kill of the serpent at `at` on `day` (its relay time), or null. */
     fellAt: (day, at) => (at && Number.isFinite(at.sx) && Number.isFinite(at.sz) ? falls.get(fallKey(day, at))?.at ?? null : null),
     receipt: (day) => receipts.get(day) ?? null,
+    /** WW7-12: where the hub says the accounts agree the serpent of `day` lies (`{d, sx, sz, pl}` - its `at`), or null. */
+    toldAt: (day) => (told && told.d === day ? told : null),
     /** A refusal said again only after the fight is left (a ship turned away from the storm's wall is told once). */
     leave() { state = SERPENT_STATE_EMPTY; refused.clear(); },
   };

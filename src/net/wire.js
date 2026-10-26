@@ -5931,8 +5931,12 @@ export function validOwOut(m) {
 export const SERPENT_KINDS = Object.freeze(['in', 'hit', 'held', 'esc', 'wr', 'site', 'vt']);   // INT13: `vt` - my hull, in my own word
 /** What the cell (or the hub) says back (the client drops any other kind): the whole state, a leg of its swim, a change
  *  in how it rides the sea, an attack begun, its health, a phase's turn, a coil wound / its health / broken / crushed /
- *  slipped, the maelstrom formed, the kill, the sounding, a refusal, a receipt. */
-export const SERPENT_OUT_KINDS = Object.freeze(['st', 'sw', 'dv', 'atk', 'hp', 'ph', 'coil', 'ch', 'cb', 'cr', 'cx', 'mael', 'fell', 'gone', 'no', 'rcpt', 'bd']);   // INT13: `bd` - the relay's count has wrecked my ship (enforced)
+ *  slipped, the maelstrom formed, the kill, the sounding, a refusal, a receipt. WW7-12 (bible/03-World/World-Wide.md;
+ *  the owner, 2026-10-26, on the serpent rising on the world's lanes: "Fucking do it"): and the HUB's `at` - where the
+ *  accounts that found the serpent agree it lies (net/serpent/serpentHerald.js serpentAtWord: the `site` words folded,
+ *  GATE_SITE_AGREE of them), told to every game online, so a game that cannot roll the site over the world's lanes (the
+ *  land past the Bay off, or its picture still coming) rises its serpent where the rest do. */
+export const SERPENT_OUT_KINDS = Object.freeze(['st', 'sw', 'dv', 'atk', 'hp', 'ph', 'coil', 'ch', 'cb', 'cr', 'cx', 'mael', 'fell', 'gone', 'no', 'rcpt', 'bd', 'at']);   // INT13: `bd` - the relay's count has wrecked my ship (enforced)
 /** The serpent frames' own bucket: the brain's SERPENT_HIT_HZ_MAX (6) gathered volleys, the `in`, a coil's word, slack. */
 export const SERPENT_HZ_MAX = 10;
 export const serpentGate = (bucket, nowMs) => tokenGate(bucket, nowMs, SERPENT_HZ_MAX);
@@ -6115,6 +6119,10 @@ function serpentOutOf(m) {
     }
     case 'gone': return spMs(m.at) ? { k: 'gone', at: m.at } : null;
     case 'no': return SERPENT_NO_WORDS.includes(m.m) ? { k: 'no', m: m.m } : null;
+    // WW7-12: the hub's word of the agreed site - the day, its native point (the word's site, spSite's bounds) to the whole
+    // unit, the port it lies off (the `site` word's own law, validSerpentIn)
+    case 'at': return Number.isSafeInteger(m.d) && m.d >= 0 && Number.isSafeInteger(m.sx) && Number.isSafeInteger(m.sz)
+      && typeof m.pl === 'string' && /^[A-Za-z]/.test(m.pl) && gatePlaceWire(m.pl) === m.pl ? { k: 'at', d: m.d, pl: m.pl } : null;
     case 'rcpt': return typeof m.r === 'string' && m.r.length <= SERPENT_RECEIPT_WIRE_MAX && SERPENT_RECEIPT_RE.test(m.r) ? { k: 'rcpt', r: m.r } : null;
     default: return null;
   }
