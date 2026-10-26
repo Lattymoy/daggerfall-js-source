@@ -16,6 +16,7 @@ import { DECOR_TURN_STEP } from '../../src/systems/decor/decorPlacer.js';
 import { createDecorPanel } from '../../src/ui/decorPanel.js';
 import { standService, T0 } from '../accountDb.mjs';
 import { settle, fakeDoc, fakeWin, all, one, catalogue, rows, toolRig, placeFrom } from '../decorFakes.mjs';
+import { townYards } from '../yardCellsRead.mjs';   // YARD-CELL: a town's yards, read through its cells
 
 const piece = (over = {}) => ({ id: 'yard1', model: 41000, flat: null, pos: [8, 0, 2], rot: [0, 0, 0], scale: 1, light: null, storage: false, paid: 120, ...over });
 const placeOf = (p) => ({ pos: p.pos, rot: p.rot, scale: p.scale, light: p.light, storage: p.storage, paid: p.paid });
@@ -44,7 +45,7 @@ test('YARD-HEIGHT the service: a yard\'s piece placed past DECOR_YARD_HIGH is re
   const move = (id, pl) => svc.call('/v1/homes/decor/move', { mapId: 7, buildingKey: 300, character: o.character, id, place: pl }, owner.secret);
   const high = await place({ piece: piece({ pos: [8, DECOR_YARD_HIGH + 0.5, 2] }), yard: true });
   assert.equal(high.body.error, 'yard-high', 'a tower\'s piece');
-  const yards = async () => (await svc.call('/v1/homes/yards', { mapId: 7 })).body.yards;
+  const yards = async () => (await townYards(svc.call, 7)).body.yards;
   assert.deepEqual(await yards(), [], 'none stands');
   const top = await place({ piece: piece({ pos: [8, DECOR_YARD_HIGH, 2] }), yard: true });
   assert.equal(top.status, 200, JSON.stringify(top.body));

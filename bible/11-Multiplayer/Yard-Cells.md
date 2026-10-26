@@ -1,7 +1,7 @@
-# YARD-CELL - a town's yards kept, synced and stood by block (PLAN, 2026-10-26)
+# YARD-CELL - a town's yards kept, synced and stood by block (2026-10-26)
 
-**Status: PLAN, revised with the owner's answers (2026-10-26). Nothing is built.** The owner gives final approval
-before any slice is built. The plan replaces the whole-town yard snapshot that YARD-SNAP (`Scale-Arc.md`) built and
+**Status: YC1 BUILT (section 10), the owner's final approval given 2026-10-26; YC2, YC3 and YC4 to come.** The plan was
+revised with the owner's answers before it was approved. The plan replaces the whole-town yard snapshot that YARD-SNAP (`Scale-Arc.md`) built and
 YARD-TOWN (`06-Systems/Online-Arc.md`, merged as #1276) bounded at 6,500 pieces a town.
 
 The owner's answers to the first draft, each worked into the sections named:
@@ -201,7 +201,7 @@ route is the build the site publishes with it.
 ### 3.5 The client
 
 The town-wide cache in `homeYards.js` (`towns`, `ensure`) is replaced by a module of its own,
-`yardCells.js` beside it in `src/scenes`, which `homeYards.js` wires. The module owns which cells to ask, the versions
+`yardCellSync.js` beside it in `src/scenes`, which `homeYards.js` wires. The module owns which cells to ask, the versions
 held, the request and the merge; `homeYards.js` keeps the standing, the lots and the decorator.
 
 - **Which cells.** The cells that hold a home the town's homes answer lists, within `YARD_ASK_M` (YARD-SHED's reach,
@@ -285,7 +285,7 @@ With the push, the poll is a safety net. Its interval and its skips:
 
 - The relay changes only in YC2 (section 3.6): one order kind and the hub's arm. It keeps no yard state.
 - Yards stand in `scenes/world.js` alone. `scenes/exterior.js`, `scenes/worldModes.js` (interiors) and
-  `scenes/dungeonContext.js` stand none. No host grows: the new client code is `yardCells.js`, wired by `homeYards.js`;
+  `scenes/dungeonContext.js` stand none. No host grows: the new client code is `yardCellSync.js`, wired by `homeYards.js`;
   on the relay, the yard word is a Room method of its own, not a branch of `_message` (HOST-SPLIT).
 - `keptBoard.js` is not edited. Its other tenants, the vendor board (`market.js`) and the arena board (`arena.js`),
   keep their rows and shapes.
@@ -421,7 +421,7 @@ by version, the same shape as the yards', is a slice of its own after the yards 
 - The old route: `410` with `client-update`, reading nothing; an old build's `ensure` (main's `homeYards.js`, run with
   fakes) backs off on it without a throw.
 - `HOME_TOWN_MAX` is 2,048 and a town of 2,048 homes is answered whole.
-- The client module (`yardCells.js`), run with fakes: only cells with listed homes within reach asked, nearest first;
+- The client module (`yardCellSync.js`), run with fakes: only cells with listed homes within reach asked, nearest first;
   versions sent; a cell that leaves reach dropped; standing nearest first under the budget; two neighbouring towns'
   yards (two Imperial City slices) stood in one order by distance.
 - Over #1184's capitals as built (section 4.1): no capital's own block holds more than 32 building records, and no
@@ -434,7 +434,7 @@ by version, the same shape as the yards', is a slice of its own after the yards 
 - The poll (YC1's skips, YC2's interval): no request indoors, in a dungeon, on the travel map, with the tab hidden or
   with no listed home in reach; one catch-up on leaving each; the slow interval only while the hub socket is unbroken,
   a catch-up at its welcome after a break; the interval doubling over quiet polls to 20 minutes and back on a change.
-- Mutation records for the new tests, as YARD-TOWN's `tools/mutants/yard_town.json`.
+- Mutation records for the new tests, as YARD-TOWN's were (its `tools/mutants/yard_town.json`, DELETED by YC1 with the town cap).
 
 **In the running game (each slice, when a slot is free):**
 
@@ -457,9 +457,64 @@ by version, the same shape as the yards', is a slice of its own after the yards 
 
 | Slice | What | Deploy |
 |---|---|---|
-| YC1 | Service: migration 0176 (cell tables, triggers, backfill), `settleYardCell`, the stale clock, the cell route, the per-cell kept answers, the town cap removed, the old route refused (`410`, `client-update`), `HOME_TOWN_MAX` 2,048, the capitals' test (section 4.1). Client: `yardCells.js`, nearest first across towns, standing on a time budget, the poll at 60 s with section 3.7's skips, the refusal text removed | one release, on main before #1184: account service acct193 first, the site after it (its deploy waits for the version) |
+| YC1 | Service: migration 0176 (cell tables, triggers, backfill), `settleYardCell`, the stale clock, the cell route, the per-cell kept answers, the town cap removed, the old route refused (`410`, `client-update`), `HOME_TOWN_MAX` 2,048, the capitals' test (section 4.1). Client: `yardCellSync.js`, nearest first across towns, standing on a time budget, the poll at 60 s with section 3.7's skips, the refusal text removed | one release, on main before #1184: account service acct193 first, the site after it (its deploy waits for the version) |
 | YC2 | The push: the YARD ORDER (service), the hub's yard arm and welcome field (relay, RELAY_VERSION), the client's carrier and listener; the slow poll and its doubling | the relay and the service before the site; one release |
 | YC3 | `home_yards`, `home_yards_ver` and their triggers dropped | account service alone, after YC1 has been live without a rollback |
 | YC4 | The town's homes answer by cell and by version (section 6) | its own slice, after YC2 |
 
 Each slice is its own pull request, opened as a draft and made ready only after its in-game check.
+
+## 10. YC1 - built (2026-10-26)
+
+The service and the client of section 3, in one release (acct193, migration 0176). Departures from the plan above are
+named in the second list.
+
+- **The law both ends read**: `src/net/yardCellLaw.js` - `yardCellOf`, the request's shape (`yardCellAskOf`, at most
+  YARD_CELLS_ASK_MAX = 65 cells) and the read's bound (YARD_CELL_PIECES_MAX, 256 records of 60).
+- **The service**: `server-account/src/yardCells.js` - the build (`settleYardCell`, `settleStaleYardCells` on the
+  minute's clock as `yard-cells`), the read (`readYardCells`: the asked cells' versions in one statement, the changed
+  cells' rows in a second, a stale cell read as its rows stand) and the isolate's kept cells (`yardCellsKept`: by bytes,
+  least recently used first, the evicted bookmark raising the floor, a write's mark sending the next read to the primary,
+  and YARD-SHED's shared read of one moment). `server-account/src/decor.js` lost its whole-town read, the town cap and
+  `yard-town-full`; `index.js` answers `/v1/homes/yards/cells` before the session, refuses `/v1/homes/yards` with 410
+  `client-update`, and a decor write settles its own cell. `HOME_TOWN_MAX` is 2,048.
+- **The client**: `src/scenes/yardCellSync.js`, wired by `src/scenes/homeYards.js`, which stands strangers' yards
+  nearest first on `YARD_STAND_BUDGET_MS`. The town-full sentence left `net/accountClient.js` and every language.
+- **The deploy's smoke** (`account-deploy.yml`): the cell route read off a cell D1 built, the old route's 410 asked until
+  this deploy answers it, the kept cells asked of D1 itself.
+
+Departures from the plan:
+
+1. **No poll while mounted, too.** The world host's ceiling is exact (HOST-SPLIT), so the yards host decides when to poll
+   from what it is already given: the player on foot in the street (`outside` - which is also false in a saddle), no
+   window up (the frame's `overlayUp`, the decorator's own panel included), the page shown. A mounted player's cells in
+   reach are still asked as they come into reach; only the poll for others' changes waits for the dismount.
+2. **The catch-up is the poll that came due.** Leaving a window does not poll by itself: a poll that came due while
+   polling was paused goes at once, and one that did not, at its time. A catch-up on every window closed would have asked
+   the service each time the inventory was shut.
+3. **The poll's clock starts when its answer lands**, as the town-wide answer's did - an answer slow in flight is not
+   asked again the moment it lands.
+4. **The owner's own write is laid over the cell when it is read** (`piecesOf`), never written into it. A cell answered
+   as unchanged keeps what it holds, so a write written into it would have outlived its hold for as long as the cell did
+   not move.
+5. **`YARD_STAND_BUDGET_MS` is 6 ms, provisional** until the in-game measurement (section 3.5) sets it.
+
+**The capitals, measured** (section 4.1, gaps 1 and 3) on #1184's branch at 4d8200b017 with ARENA2: 7 capitals, 57
+slices, 1,397 port blocks holding no building record; the most records in any block a slice lays 23 (the Imperial
+City's TEMPAAD0.RMB), under the 32 the cells are bounded by; the densest slice the Imperial City's 18th - 794 buildings,
+707 houses - past the old HOME_TOWN_MAX of 512 (its 16th slice, 606, the first past it) and inside 2,048.
+`test/world/yardcells_capitals.test.js` holds both bounds over every slice; it skips until #1184 is on main.
+
+**Tests**: `test/server/yard_cells.test.js` (the law, the migration's triggers and backfill, YARD-SNAP's oracle carried
+to cells with the old town version still moving - the rollback's net, the build and the clock, a cell at the law's
+widest, the read, a past-the-Bay map id, the Worker's routes, YARD-SHED's laws, the kept cells), and
+`test/scenes/yardcellsync.test.js` (the reach, the poll, the pause, the back-off, nearest-first standing). Replaced and
+removed with their mutant records, their laws carried into those two or gone with the code: `yard_snap.test.js` (the
+town row), `yard_town.test.js` (the town cap), `yardtown.test.js` (four a frame) and `yardshed.test.js` (the town's
+kept answer and its client). `primary_trips.test.js` holds YARDS-REPLICA and its audit's floor a cell at a time; the
+tests that read a town's yards read them through the cells (`test/yardCellsRead.mjs`). Mutant records:
+`tools/mutants/yard_cells.json` and `yardcellsync.json` (26, all dead), and 18 records of other files re-aimed at the
+same laws in their new homes (all dead).
+
+**Not yet run**: the in-game checks of section 8 (the field report again, the landing, two clients, an old build) wait
+for a slot.

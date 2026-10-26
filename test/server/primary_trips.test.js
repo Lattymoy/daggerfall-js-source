@@ -14,7 +14,7 @@ import { DatabaseSync } from 'node:sqlite';
 import worker from '../../server-account/src/index.js';
 import { standService, T0 } from '../accountDb.mjs';
 import { seatRealm, freshSave } from '../realmSeat.mjs';
-import { yardsKept, forgetYards, YARDS_FROM, YARDS_KEPT_MAX, _resetYardsKept } from '../../server-account/src/decor.js';
+import { yardCellsKept, forgetYardCell, YARD_CELLS_FROM, _resetYardCellsKept, _setYardCellsKeptBytes, _yardCellsKeptState } from '../../server-account/src/yardCells.js';   // YARD-CELL: the yards kept a cell at a time
 import { forgetBudgetConfig, budgetKept } from '../../server-account/src/budget.js';
 import { _resetArenaCache, arenaHonoursOf } from '../../server-account/src/arena.js';
 import { withHonours } from '../../server-account/src/honours.js';
@@ -61,24 +61,27 @@ test('PRIMARY-TRIPS SEAT-BATCH: the seats\' list asks its holders, the week\'s b
   assert.ok(!trips.some((t) => t.sql && /town_seat_holds h|town_seat_red|town_seat_forts|town_seat_rights/.test(t.sql)), 'none of them a trip of its own');
 });
 
-test('PRIMARY-TRIPS YARDS-REPLICA: a town\'s yards are read on a session of their own - any instance\'s first, then from the last kept read\'s bookmark, and the primary\'s right after a decor write in this isolate - and the route itself never opens one (mutants: the read on the binding; a write not marked; the bookmark not kept)', async () => {
+test('PRIMARY-TRIPS YARDS-REPLICA, a cell at a time (YARD-CELL): a town\'s yard cells are read on a session of their own - any instance\'s first, then from the last kept read\'s bookmark, and the primary\'s right after a decor write in this isolate (mutants: the replica\'s constraint, the bookmark unkept, the primary after a write)', async () => {
   await quiet(async () => {
+    _resetYardCellsKept();
     const { db } = await counted();
     db._sessions.length = 0;
     const ctx = { db, nowS: T0 };
-    assert.equal(YARDS_FROM, 'first-unconstrained');
-    await yardsKept(ctx, 1291, T0);
-    await yardsKept(ctx, 1291, T0 + 1);   // kept: no read
+    const ask = { mapId: 1291, cells: [[1, 0]] };
+    assert.equal(YARD_CELLS_FROM, 'first-unconstrained');
+    await yardCellsKept(ctx, ask, T0);
+    await yardCellsKept(ctx, ask, T0 + 1);   // kept: no read
     assert.deepEqual(db._sessions.map((s) => s.constraint), ['first-unconstrained'], 'the first read any instance\'s, the kept answer no read at all');
-    assert.match(db._sessions[0].statements.join('\n'), /LEFT JOIN home_yards_ver v ON v\.map_id = q\.m LEFT JOIN home_yards y/);   // PIN MOVED (YARD-SNAP; AUDIT LEAN-READS 2 B3: the version a row of its own): the town's version and built row - a town with no yard has none, and no rows are read
-    await yardsKept(ctx, 1291, T0 + 60);   // past YARDS_KEPT_S
+    assert.match(db._sessions[0].statements.join('\n'), /LEFT JOIN home_yard_cell_ver v ON v\.map_id = \?1/);   // PIN MOVED (YARD-CELL): the asked cells' versions and built rows - one statement
+    await yardCellsKept(ctx, ask, T0 + 60);   // past YARDS_KEPT_S
     const mark = db._sessions[1]?.constraint;
     assert.ok(mark && mark !== 'first-unconstrained' && mark !== 'first-primary', `the next read from the last one's bookmark (${mark})`);
-    forgetYards(1291);   // a decor write in this isolate (index.js, after every place, move, hide or remove)
-    await yardsKept(ctx, 1291, T0 + 61);
+    forgetYardCell(1291, 300);   // a decor write in this isolate (index.js, after every place, move, hide or remove) - building 300 is cell 1
+    await yardCellsKept(ctx, ask, T0 + 61);
     assert.equal(db._sessions[2]?.constraint, 'first-primary', 'the read after this isolate\'s own write the primary\'s - it sees the write');
-    await yardsKept(ctx, 1291, T0 + 120);
+    await yardCellsKept(ctx, ask, T0 + 120);
     assert.notEqual(db._sessions[3]?.constraint, 'first-primary', 'and only that one');
+    _resetYardCellsKept();
   });
 });
 
@@ -170,26 +173,36 @@ function laggingD1() {
   const write = (mapId, id) => { primary.db.prepare('INSERT INTO home_decor (map_id, building_key, id, model, place, placed_at, paid, yard) VALUES (?, 300, ?, 41000, ?, 1, 0, 1)').run(mapId, id, ROW); primary.pos++; };
   return { L, binding, write };
 }
-const pieceIds = (a) => a.yards.flatMap((y) => y.pieces.map((p) => p.id));
+const pieceIds = (a) => a.cells.flatMap((c) => c.yards.flatMap((y) => y.pieces.map((p) => p.id)));
 
-test('PRIMARY-TRIPS audit: a town\'s yards never read older than this isolate already answered or wrote once YARDS_KEPT_MAX towns let the kept ones go - the newest bookmark let go is where the next read starts - and a floor whose read fails is let go (mutants: the floor never kept; the floor never read; a failed floor kept)', async () => {
-  _resetYardsKept();
+test('PRIMARY-TRIPS audit, a cell at a time (YARD-CELL): a yard cell never reads older than this isolate already answered or wrote once the isolate\'s kept bytes let it go - the newest bookmark let go is where the next read starts - and a floor whose read fails is let go (mutants: the floor unraised, the floor unread, the refused floor kept)', async () => {
+  _resetYardCellsKept();
+  _setYardCellsKeptBytes(2_000);
   const { L, binding, write } = laggingD1();
   const ctx = { db: binding, nowS: T0 };
   const T = 7;
+  const cell = (mapId) => ({ mapId, cells: [[1, 0]] });   // building 300's cell
   write(T, 'mine');   // this isolate's own decor write; the replica not caught up
-  forgetYards(T);
-  assert.deepEqual(pieceIds(await yardsKept(ctx, T, T0)), ['mine'], 'the read after the write is the primary\'s');
-  for (let i = 1; i <= YARDS_KEPT_MAX; i++) await yardsKept(ctx, 100_000 + i, T0);   // the last of them lets every kept town go
-  const again = await yardsKept(ctx, T, T0 + 31);
-  assert.notEqual(L.sessions.at(-1)?.c, YARDS_FROM, 'from the floor, never any instance\'s');
+  forgetYardCell(T, 300);
+  assert.deepEqual(pieceIds(await yardCellsKept(ctx, cell(T), T0)), ['mine'], 'the read after the write is the primary\'s');
+  for (let i = 1; i <= 60; i++) await yardCellsKept(ctx, cell(100_000 + i), T0);   // past the kept bytes: the oldest let go
+  assert.ok(!_yardCellsKeptState().keys.includes(`${T}:1`), 'the cell let go');
+  const again = await yardCellsKept(ctx, cell(T), T0 + 31);
+  assert.notEqual(L.sessions.at(-1)?.c, YARD_CELLS_FROM, 'from the floor, never any instance\'s');
   assert.deepEqual(pieceIds(again), ['mine'], 'the write still stands - a replica behind it never answers it');
   // the floor's session refused at its read: that read fails, and the next starts from any instance's
   L.refuse = L.sessions.at(-1)?.c ?? null;
-  await assert.rejects(() => yardsKept(ctx, 9, T0 + 100));
-  await yardsKept(ctx, 10, T0 + 100);
-  assert.equal(L.sessions.at(-1)?.c, YARDS_FROM, 'the refused floor let go');
-  _resetYardsKept();
+  _resetYardCellsKept();
+  _setYardCellsKeptBytes(2_000);
+  write(T, 'again');
+  forgetYardCell(T, 300);
+  await yardCellsKept(ctx, cell(T), T0 + 40);
+  for (let i = 1; i <= 60; i++) await yardCellsKept(ctx, cell(200_000 + i), T0 + 40);
+  L.refuse = _yardCellsKeptState().floor;
+  await assert.rejects(() => yardCellsKept(ctx, cell(9), T0 + 100));
+  await yardCellsKept(ctx, cell(10), T0 + 100);
+  assert.equal(L.sessions.at(-1)?.c, YARD_CELLS_FROM, 'the refused floor let go');
+  _resetYardCellsKept();
 });
 
 test('PRIMARY-TRIPS audit: a checkpoint keeps the budget\'s config the moment its batch reads it - a staff change forgotten while the save is opened and the baseline read is never undone by the older row (mutant: the config kept after the baseline\'s read)', async () => {

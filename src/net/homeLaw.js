@@ -70,8 +70,13 @@ export function homeOnlinePrice(footprintM2, townBlocks) {
 /** Claims an account may make an hour - a cap stops a hoard, this stops a claim-and-release churn. */
 export const HOME_CLAIMS_MAX = 20;
 export const HOME_CLAIMS_WINDOW_S = 3600;
-/** The most homes one town's answer lists (a town has a few hundred buildings; the widest, Daggerfall's, 316). */
-export const HOME_TOWN_MAX = 512;
+/**
+ * The most homes one town's answer lists: every building a town of Daggerfall's blocks can hold, 64 blocks of at most
+ * 32 records each (BLOCKS.BSA's list), so no town the game can make is cut. Measured from ARENA2 on 2026-10-26: Wayrest
+ * holds 506 houses and Daggerfall 647 buildings, past the 512 this was. A yard stands only for a home this answer lists
+ * (scenes/homeYards.js), so a cut here hides yards as well as doors. YARD-CELL, bible/11-Multiplayer/Yard-Cells.md.
+ */
+export const HOME_TOWN_MAX = 2048;
 /** The politic regions, 0..61. */
 export const HOME_REGION_MAX = 61;
 /** A building key's widest value: (blockX<<16)+(blockY<<8)+record inside an 8x8 town, and 0 spelt 1<<24. */

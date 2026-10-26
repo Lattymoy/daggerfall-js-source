@@ -143,7 +143,8 @@ test('WD3 online, the client: the homes\' towns asked at the boot, before the fi
   assert.match(W, /if \(gen !== _pinsGen\) return false;   \/\/ AUDIT WD3 R3/, 'an overtaken call sets nothing');
   assert.match(W, /heard: \(\) => !homeLayoutsOnline \|\| \(_homeLayoutsApplied && !worldDataPacksMissing\(\)\.length\),/, 'nor a yard (AUDIT WD3 R6)');
   const Y = src('src/scenes/homeYards.js');
-  assert.match(Y, /if \(deps\.heard\?\.\(\) === false\) return;/);
+  assert.match(Y, /const heard = deps\.heard\?\.\(\) !== false;   \/\/ WD3 \(AUDIT WD3 R6\): a yard is laid out on its town's layout - none asked before it is heard/);   // PIN MOVED (YARD-CELL): no cell wished for before the layouts are heard
+  assert.match(Y, /if \(home && heard && distance <= YARD_ASK_M \+ YARD_KEEP_MARGIN_M\) \{/);
   assert.match(Y, /if \(!feet \|\| !deps\.outside\?\.\(\) \|\| deps\.heard\?\.\(\) === false\) return null;/);
   // until heard no home is bought and no home's room furnished; a claim refused for its town's layout hears them again
   const M = src('src/scenes/worldModes.js');
