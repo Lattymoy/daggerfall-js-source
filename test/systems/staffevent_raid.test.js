@@ -533,3 +533,12 @@ test('BOSS-RETRY (mob 2026-10-26: "mini boss sometimes doent spawn"): a boss wit
   const src = rd('src/systems/raidingParties.js');
   assert.match(src, /raid\.bossUp = 1; raid\.bossDown = 0; raid\.clearSince = undefined; raid\.clearWait = undefined; if \(raid\.bossHand != null\) raid\.handSeen = raid\.bossHand; _bossMisses = 0; \}/, 'the field\'s wait and the by-hand word spent once it stands');
 });
+
+test('PACK-KEEP (mob 2026-10-26: "if enemy despawn dont count them as well respawn them on another player"): a raid\'s monster stands past the runner\'s cull while any player is near it; one culled or let go is no kill, and its place is stood again in turn', () => {
+  const src = rd('src/scenes/exteriorFoes.js');
+  assert.ok(src.includes('const _raidKept = !!f.raidKey && playerNearFoe(f, ENCOUNTER_CULL_DISTANCE);') && src.includes('&& !_raidKept && !(_qTag(f) && partyNearFoe(f, _cullAt))'), 'the cull spares it while a player is near');
+  assert.match(src, /const playerNearFoe = \(f, r\) => peerCandidates\(\)\.some\(\(c\) => Array\.isArray\(c\.feet\) && Math\.hypot\(/);
+  const rp = rd('src/systems/raidingParties.js');
+  assert.ok(rp.includes("if (!e.foe.corpse || !raid || !raidActive(raid, now)) continue;   // removed, not killed"), 'a despawn is never a kill');
+  assert.ok(rp.includes("if (fights) { foe.raidKey = p.key;"), 'its raid tagged on the foe at its stand');
+});

@@ -905,6 +905,11 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   /** AUDIT (the pre-merge audit, Q4): a party member within `r` of my shared quest foe - the fight is theirs too, and the
    *  cull that takes a foe past my own relevance took it off their screen with no fall (their copy had counted the
    *  wave as placed, so the quest stood nothing of its own and waited on a kill that could not come). */
+  /** PACK-KEEP (mob 2026-10-26: "if enemy despawn dont count them as well respawn them on another player"): a raid's or a
+   *  staff event's monster (`raidKey`) stands while ANY player is near it. Its packs are stood about every player in the
+   *  town (PACK-SPREAD), and the runner's 120 m cull took each one stood about a player that far from the runner on the
+   *  frame it stood - never counted (no corpse), stood again about the same player, taken again. */
+  const playerNearFoe = (f, r) => peerCandidates().some((c) => Array.isArray(c.feet) && Math.hypot(c.feet[0] - f.ai.feet[0], c.feet[1] - f.ai.feet[1], c.feet[2] - f.ai.feet[2]) <= r);
   const partyNearFoe = (f, r) => peerCandidates().some((c) => _peerMayHit(c.id, f) && Math.hypot(c.feet[0] - f.ai.feet[0], c.feet[1] - f.ai.feet[1], c.feet[2] - f.ai.feet[2]) <= r);
   /** PSCALE1: a SHARED foe - one other players can see and strike (it rides this pool's stream, or it is another
    *  player's, stood here as a puppet). Never a private quest's (every member's own copy), never the watch (a crime's answer,
@@ -1742,9 +1747,10 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // fight with me live and my health under half in it: I ran from it - a revenant made of it, gone as the cull takes
       // a foe (before the cull, which spares a foe that detects me)
       if (_playerDist > ROUT.DISTANCE && revenantRoutable(f)) { routFoe(f); continue; }
+      const _raidKept = !!f.raidKey && playerNearFoe(f, ENCOUNTER_CULL_DISTANCE);   // PACK-KEEP: a raid's monster stands while any player is near it
       const _relentless = f.entity?.revenant?.edge?.relentless === true && f.ai.isHostile;   // RVN2: a Relentless revenant hunting me is never culled (a load or a sweep ends its stand)
       const _cullAt = f.campId != null ? CAMP_CULL_DISTANCE : ENCOUNTER_CULL_DISTANCE;
-      if (!f.placed && !f.managed && !f.refugee && _playerDist > _cullAt && !(f.ai.detected && f.ai.targetIsLocalPlayer !== false) && !(_qTag(f) && partyNearFoe(f, _cullAt)) && !_relentless) {   // DROPS-AUDIT CAMP-CULL; AUDIT (pre-merge) Q4: a shared quest's foe stands while a party member is near it
+      if (!f.placed && !f.managed && !f.refugee && _playerDist > _cullAt && !(f.ai.detected && f.ai.targetIsLocalPlayer !== false) && !_raidKept && !(_qTag(f) && partyNearFoe(f, _cullAt)) && !_relentless) {   // DROPS-AUDIT CAMP-CULL; AUDIT (pre-merge) Q4: a shared quest's foe stands while a party member is near it
         releaseFoeBatch(f);   // AUDIT WORLD-EVENTS L4-2: never a raid's refugee, above (its raid stands it and lets it go - culled at 120 m, every one was counted lost)
         f.dead = true;
         f.questBehaviour?.notifyDestroyed();   // B1: Destroy(gameObject) - the resource uncouples
