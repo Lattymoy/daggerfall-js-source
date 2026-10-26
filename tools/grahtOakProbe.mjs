@@ -60,7 +60,7 @@ const dismiss = async () => {
     await frames(3);
   }
 };
-const shot = async (name) => { await dismiss(); const path = `${OUT}/${TAG}${name}.png`; await page.screenshot({ path, timeout: 600000 }); console.log('shot', path); };
+const shot = async (name) => { await dismiss(); const path = `${OUT}/${TAG}${name}.png`; await page.screenshot({ path, timeout: 1500000 }); console.log('shot', path); };
 const t0 = Date.now();
 const q = `world&shot&play&fps&region=${encodeURIComponent(process.env.REGION || 'Daggerfall')}&loc=${encodeURIComponent(process.env.LOC || 'Arkbridge')}&class=1&novideo&tod=${TOD}&skin=enhanced&touch=off&season=summer&weather=${process.env.WEATHER || 'sunny'}${process.env.Q || ''}`;
 await page.goto(`http://localhost:${port}/play/?${q}`, { timeout: 900000, waitUntil: 'domcontentloaded' });   // a loaded machine transforms slowly

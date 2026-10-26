@@ -185,3 +185,24 @@ casters nearest first and capped, the teardown, a teardown mid-making); the well
 pack; the wiring. `test/world/valenwood_canopy.test.js`'s law, host and wiring pins moved with it (PIN MOVED, GRAHT1),
 and `test/render/volumetricClouds.test.js`'s sky span. `tools/mutants/graht1.json` (75); `tools/mutants/valenwoodcanopy.json`
 re-aimed by content (31).
+
+### Seen in the game (2026-10-26)
+
+Photographed headless on SwiftShader by `tools/grahtOakProbe.mjs` (the renders stay outside the tree - game data): the
+world booted at Arkbridge, a jump past the Bay to the Grahtwood pixel the probe finds on the page (1396, 1441 - by the
+zone's own seed), and the nearest place on the canopy (Nightpool Court, a manor), at noon and at 23:00 in the same boot;
+before (the branch head, the ceiling of leaves) and after.
+
+- **Before.** A flat ceiling of leaves - value noise in greens with blue holes and curling strokes - over every sky:
+  from the forest floor and over the manor's clearing alike, and from 330 m over the forest no tree over the jungle's
+  emergents.
+- **After, first.** The trees stood - trunks and buttresses in the haze, tiered crowns, the manor's clearing open to the
+  sky with the crowns over its edge, a sea of crowns from 330 m with a road cut through, stars in the gaps at night
+  under NIGHT-FOG's lit air - but too open: 45% of the frame was sky looking up at 66 degrees from the floor, where the
+  test's flat grass had measured 93% covered. The cause was the foot's ground (Where they stand, above): on the land's
+  own tiles 41% of the drawn sites were refused for an edge tile under a buttress.
+- **After, the foot on land.** The same view 98% leaves and limbs, the sky in a few gaps.
+- **Frame times** (`FRAMES`, the probe's): SwiftShader on four cores shared with five other workers' builds and probes -
+  the same view swung from 1.3 s to 10 s a frame between boots, so no number here compares a build with another. The
+  graht-oaks' own CPU frame, the host alone over a stub renderer: 1 to 3 ms for 6,452 trees out to the fog's 6 km, at
+  most 24 instanced draws; their GPU cost wants a real GPU.
