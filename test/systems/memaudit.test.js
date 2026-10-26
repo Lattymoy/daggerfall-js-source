@@ -59,7 +59,7 @@ test('MEM-AUDIT the cover index: held at its size - COVER-COMPACT (2026-10-26): 
   const COVER_KEYS = ['c', 'r', 'h', 'lift', '_mark'], BODY_KEYS = ['c', 'r', 'h', 'lift', 'body', '_mark'];
   for (const p of [coverProxy([0, 0, 0], { w: 2, h: 2 }), ...coverProxies([0, 0, 0], { w: 2, h: 9 }, { tree: true }), ...jungleCover([0, 0, 0], 0, 1)]) assert.deepEqual(Object.keys(p), COVER_KEYS, 'a cover proxy');
   for (const p of [...flatBodies(null, 504, 3, { w: 3, h: 9 }, [[0, 0, 0]], { tree: true }), jungleBody([0, 0, 0], 0, 1)]) assert.deepEqual(Object.keys(p), BODY_KEYS, 'a body');
-  // a proxy in a cell of its own: measured on the heap - 100,000 of them, the lists built by a first ray, their stores counted with the heap - in the measuring child
+  // a proxy in a cell of its own: measured on the heap - 100,000 of them, as `add` leaves them (built, never waiting for a first read), their stores counted with the heap - in the measuring child
   // (ALLOC-RACE: test/allocChild.mjs, the one home of its flags)
   const script = `
     import { createCoverIndex, coverProxy } from ${JSON.stringify(new URL('../../src/ai/cover.js', import.meta.url).href)};
@@ -69,7 +69,6 @@ test('MEM-AUDIT the cover index: held at its size - COVER-COMPACT (2026-10-26): 
     const held = () => { const m = process.memoryUsage(); return m.heapUsed + m.arrayBuffers; };   // a typed list's store is outside the heap
     const h0 = held();
     one.add('one', lone);
-    one.hit([0, 1, 0], [1, 0, 0], 1);
     globalThis.gc(); globalThis.gc();
     const perCell = (held() - h0) / 100000;   // read before refs(), which allocates
     console.log(JSON.stringify({ refs: one.refs(), perCell }));

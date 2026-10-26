@@ -125,8 +125,9 @@ export const CELL_EXACT = 16;
 // proxy index: the base array by reference (FELLED and `noCover` key on it, and a sunk tree's cover sinks with it), the
 // radius, height and lift as Float64 (Float32 would move an answer), and a ray's mark as an Int32. A grid is three typed
 // lists sorted by cell: the cells' keys, where each cell's references start, and the references (proxy indices).
-// `fill` only notes what it files; the first read after it (`hit`, `near`) builds the lists, the new references merged
-// behind the old cell by cell, so each cell holds its proxies in the order they were filed, as the arrays did. A body
+// Each `fill` ends by building the lists, its new references merged behind the old cell by cell, so each cell holds its
+// proxies in the order they were filed, as the arrays did. (Built at a set's first read instead, a set nothing read - a
+// fly camera's, a world with no foe - kept its references unbuilt in plain arrays: the head run of 2026-10-26.) A body
 // stays its own object: `near` hands it to its visitor.
 const NO_F64 = new Float64Array(0), NO_I32 = new Int32Array(0);
 /** A grid of no cells; `pk`/`pi` are the keys and indices filed since its lists were built. */
@@ -145,12 +146,30 @@ function firstAt(keys, k) {
   }
   return lo;
 }
+/** The references' positions sorted by cell, a cell's own in the order filed. Each is one number - its key past the
+ *  least, times the count, plus its position - so a typed sort orders them with no comparator; a spread too wide for
+ *  that to stay exact takes the comparator (Array's sort is stable). */
+function filingOrder(pk) {
+  const added = pk.length;
+  let least = Infinity, most = -Infinity;
+  for (const k of pk) {
+    if (k < least) least = k;
+    if (k > most) most = k;
+  }
+  if ((most - least + 1) * added >= Number.MAX_SAFE_INTEGER) return Array.from({ length: added }, (_, j) => j).sort((a, b) => pk[a] - pk[b]);
+  const packed = new Float64Array(added);
+  for (let j = 0; j < added; j++) packed[j] = (pk[j] - least) * added + j;
+  packed.sort();
+  const order = new Int32Array(added);
+  for (let j = 0; j < added; j++) order[j] = packed[j] % added;
+  return order;
+}
 /** The grid's lists rebuilt with the references filed since: those sorted by cell (a stable sort keeps a cell's own in
  *  the order filed) and merged behind the old, a cell's old references first. */
 function buildCells(cells) {
   const pk = cells.pk, pi = cells.pi, added = pk.length;
   if (!added) return;
-  const order = Array.from({ length: added }, (_, j) => j).sort((a, b) => pk[a] - pk[b]);
+  const order = filingOrder(pk);
   const keys = cells.keys, off = cells.off, idx = cells.idx, total = idx.length + added;
   const refKeys = new Float64Array(total), refs = new Int32Array(total);
   let c = 0, j = 0, m = 0;
@@ -261,6 +280,7 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
         for (let gz = Math.floor((z - it.r) / COVER_CELL); gz <= Math.floor((z + it.r) / COVER_CELL); gz++) fileIn(set.grid, cellKey(gx, gz), i);
       }
     }
+    if (set.dirty) seal(set);
     return set.n;
   }
 
@@ -275,7 +295,7 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
     }
   }
 
-  /** COVER-COMPACT: a set filled since its last read, made readable - its columns cut to their length, its grids'
+  /** COVER-COMPACT: a set just filled, made readable - its columns cut to their length, its grids'
    *  lists built, its marks one a proxy. */
   function seal(set) {
     set.dirty = false;
@@ -299,7 +319,6 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
   function near(p, reach, visit) {
     for (const set of sets.values()) {
       if (!set.bodyN) continue;
-      if (set.dirty) seal(set);
       const t = set.t(), x = p[0] - t[0], z = p[2] - t[2];
       const stamp = nextStamp(set, 'bodyStamp', 'bodyMark'), mark = set.bodyMark;
       const { keys, off, idx } = set.bodyCells;
@@ -335,7 +354,6 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
     const lo = _lo;
     const endAt = sight ? maxDist : null;
     for (const set of sets.values()) {
-      if (set.dirty) seal(set);
       const t = set.t();
       lo[0] = origin[0] - t[0]; lo[1] = origin[1] - t[1]; lo[2] = origin[2] - t[2];
       const reach = Math.min(maxDist, best);
