@@ -2828,3 +2828,114 @@ from the Bay's edge.
   `roadCurves.js` curveApex, not wired into the lane.
 - Pins `test/systems/travel/voyager21_beyond.test.js` (5); mutants `tools/mutants/voyager.json` (VOYAGER2.1's). PIN
   MOVED: none; TV-BEYOND's road-byte record re-aimed by content (`tools/mutants/fb1009_beyond.json`).
+
+## MID-RING and FAR-FIELD - the horizon in layers, out to the mountains 300 km off (2026-10-26, the owner)
+
+The owner: "we need to find a way to expand the overworld view distance without killing performance. Currently tiles
+visibly load in with distance". And BREATHTAKER 1 of KPbICA's spec, through the owner: "render landscapes and landforms
+way further than actual distance to load. To see the mountain from 300km for example by rendering it's simplified
+version".
+
+**What stood past the streamed grid.** The grid (Land View 5: 4.5 km round the traveller) and then the far ring alone
+(EV8, `render/farRing.js`): a vertex a map pixel, 819 m apart, at the byte's macro height - the large heightmap's noise
+and the ground's own left out - its land closed into the sky over 16.8-28.0 km (RING_RIM_START..RING_RIM_END). So a
+pixel the stream built stood up out of a flat-faceted lowland as it landed, every hill at once (the owner's "tiles
+visibly load in"), and nothing at all stood past 28 km.
+
+**The layers, by distance** - each drawn in the far ring's one pass at the far plane (PERF2: after the ground; depth
+tested, never written, so each shows only where everything nearer drew nothing), farthest first so a nearer layer is
+painted over a farther one (`FarRingRenderer.draw`):
+
+| layer | cells | reach | its ground |
+|---|---|---|---|
+| the streamed grid | 128 a pixel (6.4 m) | Land View (4.5 km at 5) | the pixel's whole build |
+| THE MIDDLE RING (`render/midRing.js`) | 8 a pixel (102.4 m) | MID_RADIUS 14 pixels (11.9 km to its corner's edge) | the stream's own kernel at whole samples |
+| the far ring (EV8) | 1 a pixel (819 m) | 48 pixels (39 km) | the byte's macro height (`ringHeight`) |
+| THE FAR FIELD (`render/farField.js`) | 1 a FAR_CELL of 8 pixels (6.55 km) | FAR_RADIUS 60 cells (393 km) | a cell's highest byte, the far ring's law |
+
+- **The middle ring** (`world/terrain/midRingGrid.js`, built on the terrain worker - never on the frame). Each vertex is
+  the pixel's own kernel (`terrainSampler.js` sampleKernel: the small heightmap's bicubic, the large one's, the ground
+  noise, the ocean's floor, and with the Landforms row the landforms' shaping) at a whole sample - the ground the stream
+  will build there, coarse - so a pixel built lands on the hills already standing. A pixel's seam samples are its
+  neighbour's first (the kernel's own seam law), read once. Its colour is the far ring's (overworldTint at the pixel
+  centres, read bilinearly: the two rings one field of colour), its light, haze, sea and clouds' shadows the far ring's
+  program. Where the stream has built a pixel the ring leaves it out by RUNS of its ordered index list (a built pixel
+  cuts a run; the buffer is never rewritten for it), and the far ring is holed for the middle ring's whole footprint -
+  the sea's fill inside the hole stays the streamed grid's (FAR-SEA1), since the middle ring has its own sea.
+- **Its rim eases onto the far ring** - a geomorph in the rings' one vertex program (`aCoarse`, the far ring's surface
+  under each middle-ring vertex through the far ring's own triangles; `uMorph`): over MID_MORPH_START..MID_MORPH_END
+  (7.4-9.0 km, Chebyshev from the traveller - the haze's own point, `renderer.focus`) its ground slides onto the far
+  ring's, so where the far ring takes over the two are one surface, and the band moves with the traveller, never with
+  a rebuild (MID_MORPH_END is the rim the traveller's farthest drift from its base still leaves: MID_RADIUS -
+  MID_REBUILD_DRIFT pixels).
+- **The far field** (BREATHTAKER 1). The heightmap a cell at a time - FAR_SAMPLES (nine pixels a cell, the highest
+  kept: a range's silhouette is its peaks', none lost to a 6.5 km average) off the heightmap's own reader,
+  `woods.getHeightMapValue` (the Bay's bytes, the continent's authored ground past them, the Eltheric Ocean's - the reader
+  every kernel reads), its height the far ring's own law (`ringHeight`, the landforms' lift with the row), its sea where
+  more than half its samples are at the sea's floor or its centre is the ocean's climate. It reads the terrain's law
+  and holds no copy of it: when the ground's generation changes (BREATHTAKER 2-3) the far field shows the change. A vertex
+  a cell on the cell's own centre, world-fixed - a rebuild (every FAR_REBUILD_DRIFT cells, 13 km) adds cells at the rim,
+  past the haze, and moves none. The far ring's footprint is left to it (`farFieldOrder`'s `covered`).
+- **The haze runs on.** While the far field stands the rings' rim law closes over FAR_RIM_START..FAR_RIM_END (217-361
+  km) instead of 16.8-28.0 km, and the rings' lens reaches FAR_LENS_FAR (600 km); the land holds the far ring's 85% haze
+  (RING_HAZE_HOLD) all the way out, so a range is a pale silhouette, as distance makes it - a range 2 km high 300 km off
+  stands some 0.4 degrees over the horizon (no curvature is drawn): a few pixels of the 65-degree lens, as it would be. Weather (an EXPONENTIAL row) stands every ring down, as ever.
+- **Why geometry and not sprites.** The spec asks for "multilayered 2D sprite composition". The far field is that
+  layered composition built as geometry: 14,641 vertices in one draw cost less than the impostor cards it would take to
+  show the same ranges, and they stay still where a card does not (a card re-baked as the traveller moves shimmers;
+  these vertices are world-fixed). The layers by distance are the table above.
+- **A just-built pixel eases out of the ring's tint** (`render/pixelFade.js`, a leaf). The ring showed the pixel's shape
+  in the far ring's tint a frame before its build, and the build laid the ground's own tiles over it at once: the shape
+  held but the colour popped. A pixel published PIXEL_FADE_RING (2) or more from the traveller carries its arrival and
+  its centre's tint (`scenes/pixelBuild.js`, enhanced lane, middle ring on), and both lanes' ground programs mix the tint
+  over its tiles by a smoothstep share over PIXEL_FADE_MS (1.2 s) - a colour, never a discard, so the ground keeps its
+  early depth test (GROUND-LAST). The renderer uploads the share only while it moves (`_terrainFade`).
+
+**How the frame pays for it.** The heights, the far field's bytes and its cells' climates past the Bay are the terrain
+worker's (`terrainGenWorker.js` 'midring', 'farfield'), asked a band at a time (HORIZON_BAND_ROWS: 4 pixel rows, 16 cell
+rows; the next band posted as the last lands) so the stream's own pixel jobs run between bands, and kept by pixel and cell
+across rebuilds (HORIZON_KEPT: 4,096 pixels and 32,768 cells, each book two of its grounds - one 8,192-entry book for
+both let every far cell go before the next rebuild asked it again; let go whenever what they read moves). A far cell's
+climate past the Bay is read there (`world/terrain/farClimate.js`) as the main thread's reader reads it (the continent's, `groundClimateIndex`; on the
+Bay and in the Eltheric Ocean's box FAR_CLIMATE_ASK, the main thread's own map): measured on the freeware's ground, the
+continent's first climate read works its biomes out in some 150 ms and a cold centre costs some 16 microseconds after,
+so a first far field read on this thread ran a step of its build to 196 ms. One ask at a time per layer; the ask stands
+until its ground is laid, and an answer for a base let go is dropped. On this thread a landed ground's vertices are laid
+a step at a time (the middle ring MID_ROWS_A_STEP 12 rows, its tints a row of 31 pixel centres; the far field
+FAR_CELLS_A_STEP 32 cells, its normals FAR_NORMAL_ROWS 8 rows) under HORIZON_BUDGET_MS (2 ms a frame, one step at the
+least), and the painter's order is written once a pixel (the middle ring) or a cell (the far field) the traveller
+crosses. Measured in node on this shared four-core machine, loaded to 30 runnable threads (the figures rank; they are not
+a player's): the far field's 474 steps on the freeware's ground with the worker's climates, 28-53 ms in all, p95 0.04-0.16
+ms a step (its longest steps, 6-150 ms, the machine's preemption: they moved from run to run); a middle ring's vertices
+64 ms in all; a middle ring's order 1.6-7.9 ms a pixel crossed, the far field's 2.2-2.5 ms a cell (its cells walked off
+one list of offsets sorted once - sorting the cells each crossing was 16-30 ms); the runs 0.07 ms. On the worker a cold
+far field is 0.3-1.7 s (the continent's authored ground some 6 microseconds a pixel, nine pixels a cell), 80-190 ms warm;
+a cold middle ring 0.15-0.8 s of kernel without the landforms, a rebuild after three pixels' drift some 170 new pixels of
+its 841. The GPU: the middle ring 54,289 vertices and 107,648 triangles in a handful of runs, the far field 14,641
+vertices and some 28,500 triangles in one draw, their buffers 2.4 MB and 0.6 MB; their fragments only where nothing
+nearer stands.
+
+**The doors.** `?midring=off` and `?farfield=off` (read once as the ring is made) stand either layer down - the far ring
+then holes and closes as before - and with no worker (`?terrainthread=off`, a dead one) neither is asked: the client
+answers null, never computes them on this thread. `tools/horizonProbe.mjs` photographs one view with the layers and
+with both doors shut (the A/B in one tree; the probes' read is `__horizonRings`, behind the shot gate - AUDIT ANTICHEAT
+A2 - and let go with the ring).
+
+**A city's skyline** (the Imperial City at some 20 km, stream A): not built here. The hook is a layer of the same pass -
+a landmark's low-poly silhouette handed to the far ring, drawn by its program between the far field and the far ring in
+the painter's order, hazed by the same law and left out where the streamed grid stands - so a city past Land View is
+its own shape on the horizon and not the far ring's facets.
+
+A departure from Daggerfall Unity (its terrain ends at its TerrainDistance, its far view a flat fog; no layer past it):
+Port-Ledger row MID-RING. Proof: `test/render/midring.test.js` (10: the heights against the kernel's own samples with
+the landforms and without; the vertices' frame, tints, sea and their ease's ground; the painter's order and its runs;
+the mesh; the far ring's asks, stepped laying, hole, ease and origins; the worker's bands and kept pixels, the client's
+bands, its errors and the worker's death; the wiring; the pixel's ease out of the tint; the far field's vertices and
+order; the far ring's far field, its rim, its lens and its drift; the worker's climates and the client's far bands; the
+steps' sizes), `tools/mutants/midring.json` (88, all dead). PIN
+MOVED: `test/ui/farring.test.js`, `test/render/el1_enhancedlighting.test.js`, `test/render/owhorizon.test.js` (the host's
+line: the far ring handed the terrain's client), `test/render/boot2.test.js` (the boot's reach 86: `render/pixelFade.js`,
+a leaf the renderer reads), `test/scenes/perfcol2.test.js` (the ocean holes' pits moved out of bootWorld for the room),
+`test/world/terrain/terrainworker.test.js` (the worker's imports: the horizon's grounds, the landforms and a far cell's climate). The four hosts: `scenes/world.js` wires it (the far ring handed the terrain's client, one
+logical line; HOST-SPLIT made the room - `01-Overview/Host-Split.md` MID-RING); `scenes/exterior.js`,
+`scenes/worldModes.js` and `scenes/dungeonContext.js` draw no far ring.

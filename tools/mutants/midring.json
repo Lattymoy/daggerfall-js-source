@@ -1,0 +1,795 @@
+[
+  {
+    "name": "MID-RING-step-off-the-samples",
+    "file": "src/world/terrain/midRingGrid.js",
+    "old": "const step = (HEIGHTMAP_DIMENSION - 1) / sub",
+    "new": "const step = HEIGHTMAP_DIMENSION / sub",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-row-pixel-south-first",
+    "file": "src/world/terrain/midRingGrid.js",
+    "old": "const py = baseY + radius - pj;",
+    "new": "const py = baseY - radius + pj;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-band-no-closing-row",
+    "file": "src/world/terrain/midRingGrid.js",
+    "old": "(pj1 === 2 * radius + 1 ? 1 : 0)",
+    "new": "(pj1 === 2 * radius + 1 ? 0 : 0)",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-landforms-dropped",
+    "file": "src/world/terrain/midRingGrid.js",
+    "old": "sampleKernel(woods, px, py, HEIGHTMAP_DIMENSION, true, landforms)",
+    "new": "sampleKernel(woods, px, py, HEIGHTMAP_DIMENSION, true, null)",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-cell-lowest",
+    "file": "src/world/terrain/midRingGrid.js",
+    "old": "if (b > m) m = b;",
+    "new": "if (b < m) m = b;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-sea-count-flipped",
+    "file": "src/world/terrain/midRingGrid.js",
+    "old": "if (b <= seaByte) n++;",
+    "new": "if (b >= seaByte) n++;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-rows-south-first",
+    "file": "src/world/terrain/midRingGrid.js",
+    "old": "cellAt(baseCX - radius + i, baseCY - radius + j)",
+    "new": "cellAt(baseCX - radius + i, baseCY + radius - j)",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-normal-x-flipped",
+    "file": "src/world/terrain/midRingGrid.js",
+    "old": "const nx = h(x - 1, z) - h(x + 1, z)",
+    "new": "const nx = h(x + 1, z) - h(x - 1, z)",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-normal-span-halved",
+    "file": "src/world/terrain/midRingGrid.js",
+    "old": "ny = 2 * cell;",
+    "new": "ny = cell;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-frame-off-a-cell",
+    "file": "src/render/midRing.js",
+    "old": "positions[o] = (gx - radius * sub) * cell;",
+    "new": "positions[o] = (gx - radius * sub + 1) * cell;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-tint-lattice-unpadded",
+    "file": "src/render/midRing.js",
+    "old": "const fz = (gz - sub / 2) / sub + 1",
+    "new": "const fz = (gz - sub / 2) / sub",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-tint-weights-swapped",
+    "file": "src/render/midRing.js",
+    "old": "tints[a + k] * (1 - wx) + tints[b + k] * wx",
+    "new": "tints[a + k] * wx + tints[b + k] * (1 - wx)",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-sea-inverted",
+    "file": "src/render/midRing.js",
+    "old": "Math.abs(heights[v] - seaY) < MID_SEA_EPS",
+    "new": "Math.abs(heights[v] - seaY) > MID_SEA_EPS",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-coarse-other-diagonal",
+    "file": "src/render/midRing.js",
+    "old": "coarse[v] = u >= w ?",
+    "new": "coarse[v] = u <= w ?",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-coarse-row-off",
+    "file": "src/render/midRing.js",
+    "old": "const h00 = ring[(kz + 1) * rw + kx]",
+    "new": "const h00 = ring[kz * rw + kx]",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-coarse-none-flat",
+    "file": "src/render/midRing.js",
+    "old": "} else coarse[v] = heights[v];",
+    "new": "} else coarse[v] = 0;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-order-nearest-first",
+    "file": "src/render/midRing.js",
+    "old": "pixels.sort((a, b) => b.d - a.d",
+    "new": "pixels.sort((a, b) => a.d - b.d",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-order-east-flipped",
+    "file": "src/render/midRing.js",
+    "old": "tpl[(p.px > curX ? 1 : 0)",
+    "new": "tpl[(p.px < curX ? 1 : 0)",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-order-north-flipped",
+    "file": "src/render/midRing.js",
+    "old": "(p.py < curY ? 2 : 0)",
+    "new": "(p.py > curY ? 2 : 0)",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-template-east-unreversed",
+    "file": "src/render/midRing.js",
+    "old": "const i = q & 1 ? sub - 1 - ii : ii;",
+    "new": "const i = q & 1 ? ii : ii;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-runs-first-lost",
+    "file": "src/render/midRing.js",
+    "old": "if (start >= 0) runs.push([start, total - start]);",
+    "new": "if (start > 0) runs.push([start, total - start]);",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-reorder-every-frame",
+    "file": "src/render/midRing.js",
+    "old": "if (!this.vao || key === this._orderKey) return;",
+    "new": "if (!this.vao) return;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-cut-never-again",
+    "file": "src/render/midRing.js",
+    "old": "if (key === this._runsKey) return;",
+    "new": "if (key !== this._runsKey) return;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-run-offset-in-indices",
+    "file": "src/render/midRing.js",
+    "old": "first * bytes)",
+    "new": "first)",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-vao-kept",
+    "file": "src/render/midRing.js",
+    "old": "if (this.vao) gl.deleteVertexArray(this.vao);",
+    "new": "if (this.vao) void 0;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-frame-off-a-pixel",
+    "file": "src/render/farField.js",
+    "old": "positions[o + 2] = (by + 1 - yc) * S;",
+    "new": "positions[o + 2] = (by - yc) * S;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-sea-a-third",
+    "file": "src/render/farField.js",
+    "old": "majority = (FAR_SAMPLES.length ** 2) / 2",
+    "new": "majority = (FAR_SAMPLES.length ** 2) / 3",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-ocean-climate-ignored",
+    "file": "src/render/farField.js",
+    "old": "const wet = low[v] > majority || oceanAt(px, py, v);",
+    "new": "const wet = low[v] > majority;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-sea-tint-land",
+    "file": "src/render/farField.js",
+    "old": "tintAt(px, py, wet ? 0 : high[v], v)",
+    "new": "tintAt(px, py, high[v], v)",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-order-nearest-first",
+    "file": "src/render/farField.js",
+    "old": "b[2] - a[2] ||",
+    "new": "a[2] - b[2] ||",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-hole-too-wide",
+    "file": "src/render/farField.js",
+    "old": "centre(cx + 1) <= covered.x1",
+    "new": "centre(cx) <= covered.x1",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-reach-short",
+    "file": "src/render/farField.js",
+    "old": "const reach = radius + 2 * FAR_REBUILD_DRIFT + 1",
+    "new": "const reach = radius",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-reorder-every-frame",
+    "file": "src/render/farField.js",
+    "old": "if (!this.vao || key === this._orderKey) return;",
+    "new": "if (!this.vao) return;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-rim-start",
+    "file": "src/render/farField.js",
+    "old": "export const FAR_RIM_START = FAR_RIM_END * 0.6;",
+    "new": "export const FAR_RIM_START = FAR_RIM_END * 0.5;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-morph-end-at-radius",
+    "file": "src/render/farRing.js",
+    "old": "export const MID_MORPH_END = (MID_RADIUS - MID_REBUILD_DRIFT) * TERRAIN_SIZE;",
+    "new": "export const MID_MORPH_END = MID_RADIUS * TERRAIN_SIZE;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-morph-band-wider",
+    "file": "src/render/farRing.js",
+    "old": "export const MID_MORPH_START = MID_MORPH_END - 2 * TERRAIN_SIZE;",
+    "new": "export const MID_MORPH_START = MID_MORPH_END - 3 * TERRAIN_SIZE;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-morph-reversed",
+    "file": "src/render/farRing.js",
+    "old": "smoothstep(uMorph.x, uMorph.y, max(d.x, d.y))",
+    "new": "smoothstep(uMorph.y, uMorph.x, max(d.x, d.y))",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-morph-always",
+    "file": "src/render/farRing.js",
+    "old": "if (uMorph.z > 0.5) {",
+    "new": "if (uMorph.z > -0.5) {",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-morph-on-far-ring",
+    "file": "src/render/farRing.js",
+    "old": "gl.uniform3f(this.u.uMorph, 0, 0, 0);",
+    "new": "gl.uniform3f(this.u.uMorph, 0, 0, 1);",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-morph-band-swapped",
+    "file": "src/render/farRing.js",
+    "old": "gl.uniform3f(this.u.uMorph, MID_MORPH_START, MID_MORPH_END, 1);",
+    "new": "gl.uniform3f(this.u.uMorph, MID_MORPH_END, MID_MORPH_START, 1);",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-origin-unmoved",
+    "file": "src/render/farRing.js",
+    "old": "o[0] = origin[0] + (mid.baseX - this.baseX) * TERRAIN_SIZE;",
+    "new": "o[0] = origin[0];",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-origin-z-flipped",
+    "file": "src/render/farRing.js",
+    "old": "o[2] = origin[2] - (farField.baseCY * FAR_CELL - this.baseY) * TERRAIN_SIZE;",
+    "new": "o[2] = origin[2] + (farField.baseCY * FAR_CELL - this.baseY) * TERRAIN_SIZE;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-never-drawn",
+    "file": "src/render/farRing.js",
+    "old": "if (farField) {   // FAR-FIELD: the farthest first",
+    "new": "if (false && farField) {   // FAR-FIELD: the farthest first",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-rim-the-rings",
+    "file": "src/render/farRing.js",
+    "old": "gl.uniform1f(this.u.uRimEnd, farField ? FAR_RIM_END : RING_RIM_END);",
+    "new": "gl.uniform1f(this.u.uRimEnd, RING_RIM_END);",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-lens-short",
+    "file": "src/render/farRing.js",
+    "old": "const far = farField ? FAR_LENS_FAR :",
+    "new": "const far = farField ? FAR_RIM_END :",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-ask-every-frame",
+    "file": "src/render/farRing.js",
+    "old": "if (drift > MID_REBUILD_DRIFT && this._midAsk === null) this._askMid(curX, curY);",
+    "new": "if (drift > MID_REBUILD_DRIFT) this._askMid(curX, curY);",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-drift-late",
+    "file": "src/render/farRing.js",
+    "old": "if (drift > MID_REBUILD_DRIFT && this._midAsk === null) this._askMid(curX, curY);",
+    "new": "if (drift > MID_REBUILD_DRIFT + 1 && this._midAsk === null) this._askMid(curX, curY);",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-hole-the-grids",
+    "file": "src/render/farRing.js",
+    "old": "const hole = mid ? {",
+    "new": "const hole = false ? {",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-sea-fill-the-footprints",
+    "file": "src/render/farRing.js",
+    "old": "const cells = seaFillCells({ ...grid, sea: this._sea });",
+    "new": "const cells = seaFillCells({ ...hole, sea: this._sea });",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-stale-answer-built",
+    "file": "src/render/farRing.js",
+    "old": "if (gen !== this._midGen) return;",
+    "new": "if (false) return;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-ask-every-frame",
+    "file": "src/render/farRing.js",
+    "old": "if (drift > FAR_REBUILD_DRIFT && this._farAsk === null) this._askFar(ccx, ccy);",
+    "new": "if (drift > FAR_REBUILD_DRIFT) this._askFar(ccx, ccy);",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-drift-late",
+    "file": "src/render/farRing.js",
+    "old": "if (drift > FAR_REBUILD_DRIFT && this._farAsk === null) this._askFar(ccx, ccy);",
+    "new": "if (drift > FAR_REBUILD_DRIFT + 1 && this._farAsk === null) this._askFar(ccx, ccy);",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-sea-byte-high",
+    "file": "src/render/farRing.js",
+    "old": "const seaByte = Math.floor(OCEAN_Y / BYTE_SCALE);",
+    "new": "const seaByte = Math.floor(OCEAN_Y / BYTE_SCALE) + 1;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "HORIZON-budget-never-steps",
+    "file": "src/render/farRing.js",
+    "old": "while (this._work.length && (!stepped || this._now() - t0 < HORIZON_BUDGET_MS)) {",
+    "new": "while (this._work.length && (this._now() - t0 < HORIZON_BUDGET_MS)) {",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "HORIZON-budget-unbounded",
+    "file": "src/render/farRing.js",
+    "old": "while (this._work.length && (!stepped || this._now() - t0 < HORIZON_BUDGET_MS)) {",
+    "new": "while (this._work.length && (!stepped || this._now() - t0 < HORIZON_BUDGET_MS * 100)) {",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "HORIZON-probe-door-kept",
+    "file": "src/render/farRing.js",
+    "old": "if (whole && globalThis.__horizonRings === this._statsFn)",
+    "new": "if (whole && globalThis.__horizonRings !== this._statsFn)",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "PIXEL-FADE-a-line",
+    "file": "src/render/pixelFade.js",
+    "old": "return 1 - t * t * (3 - 2 * t);",
+    "new": "return 1 - t;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "PIXEL-FADE-ring-wider",
+    "file": "src/render/pixelFade.js",
+    "old": "< PIXEL_FADE_RING) return false;",
+    "new": "<= PIXEL_FADE_RING) return false;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "PIXEL-FADE-tint-scale",
+    "file": "src/render/pixelFade.js",
+    "old": "tint[2] / 255]",
+    "new": "tint[2] / 256]",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "PIXEL-FADE-stamp-kept",
+    "file": "src/render/renderer.js",
+    "old": "if (!(share > 0)) { surface._fadeFrom = null; share = 0; }",
+    "new": "if (!(share > 0)) { share = 0; }",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "PIXEL-FADE-whole-every-draw",
+    "file": "src/render/renderer.js",
+    "old": "if (share === 0 && this._tFade === 0) return;",
+    "new": "if (share === 0 && this._tFade === 1) return;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "PIXEL-FADE-classic-mix-inverted",
+    "file": "src/render/renderer.js",
+    "old": "tex = mix(tex, uFadeTint.rgb, uFadeTint.a);",
+    "new": "tex = mix(tex, uFadeTint.rgb, 1.0 - uFadeTint.a);",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "PIXEL-FADE-frame-block-keeps",
+    "file": "src/render/renderer.js",
+    "old": "this._tFade = -1;   // MID-RING: the pixel tint's whole, with the frame's block",
+    "new": "// MID-RING: the pixel tint's whole, with the frame's block",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "PIXEL-FADE-lane-mix-inverted",
+    "file": "src/render/enhancedLighting.js",
+    "old": "tex = mix(tex, uFadeTint.rgb, uFadeTint.a);",
+    "new": "tex = mix(tex, uFadeTint.rgb, 1.0 - uFadeTint.a);",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "PIXEL-FADE-stamped-with-the-door-shut",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "if (isEnhanced() && !midRingDisabled()) stampPixelFade(",
+    "new": "if (isEnhanced() && midRingDisabled()) stampPixelFade(",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "HORIZON-client-band-offset",
+    "file": "src/world/terrain/terrainGenClient.js",
+    "old": "heights.set(m.heights, pj0 * job.sub * side);",
+    "new": "heights.set(m.heights, pj0 * side);",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "HORIZON-client-bands-wider",
+    "file": "src/world/terrain/terrainGenClient.js",
+    "old": "export const HORIZON_BAND_ROWS = { mid: 4, far: 16 };",
+    "new": "export const HORIZON_BAND_ROWS = { mid: 5, far: 16 };",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "HORIZON-client-one-band",
+    "file": "src/world/terrain/terrainGenClient.js",
+    "old": "return kept === false ? null : kept === true ? next(r1) : kept;",
+    "new": "return kept === false ? null : kept;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "HORIZON-client-failed-band-answered",
+    "file": "src/world/terrain/terrainGenClient.js",
+    "old": "return kept === false ? null : kept === true ? next(r1) : kept;",
+    "new": "return kept === false ? kept : kept === true ? next(r1) : kept;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "HORIZON-client-death-unanswered",
+    "file": "src/world/terrain/terrainGenClient.js",
+    "old": "for (const resolve of this._mids.values()) resolve(null);",
+    "new": "for (const resolve of []) resolve(null);",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "HORIZON-worker-mid-copied",
+    "file": "src/world/terrain/terrainGenWorker.js",
+    "old": "globalThis.postMessage({ t: 'mid', id: m.id, heights }, [heights.buffer]);",
+    "new": "globalThis.postMessage({ t: 'mid', id: m.id, heights }, []);",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "HORIZON-worker-mid-key-no-row",
+    "file": "src/world/terrain/terrainGenWorker.js",
+    "old": "keptMid(`${px},${py},",
+    "new": "keptMid(`${px},",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "HORIZON-worker-far-key-no-row",
+    "file": "src/world/terrain/terrainGenWorker.js",
+    "old": "keptFar(`${cx},${cy},",
+    "new": "keptFar(`${cx},",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "HORIZON-worker-mid-whole",
+    "file": "src/world/terrain/terrainGenWorker.js",
+    "old": "landforms, rows: m.rows ?? null, pixel });",
+    "new": "landforms, rows: null, pixel });",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "HORIZON-worker-far-book-one-ground",
+    "file": "src/world/terrain/terrainGenWorker.js",
+    "old": "export const HORIZON_KEPT = Object.freeze({ mid: 4096, far: 32768 });",
+    "new": "export const HORIZON_KEPT = Object.freeze({ mid: 4096, far: 8192 });",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-worker-climate-dropped",
+    "file": "src/render/farRing.js",
+    "old": "climAt = (x, y, v) => (clim && clim[v] !== FAR_CLIMATE_ASK ? clim[v] : climateOf(x, y))",
+    "new": "climAt = (x, y, v) => climateOf(x, y)",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-cell-climate-at-its-corner",
+    "file": "src/world/terrain/midRingGrid.js",
+    "old": "climateAt(Math.floor(cx * cell + cell / 2), Math.floor(cy * cell + cell / 2))",
+    "new": "climateAt(cx * cell, cy * cell)",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-clim-unassembled",
+    "file": "src/world/terrain/terrainGenClient.js",
+    "old": "high.set(m.high, j0 * side); low.set(m.low, j0 * side); clim.set(m.clim, j0 * side);",
+    "new": "high.set(m.high, j0 * side); low.set(m.low, j0 * side);",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-clim-not-answered",
+    "file": "src/world/terrain/terrainGenClient.js",
+    "old": "m.t === 'far' ? { high: m.high, low: m.low, clim: m.clim }",
+    "new": "m.t === 'far' ? { high: m.high, low: m.low, clim: new Uint8Array(m.high.length) }",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-worker-climate-untraced",
+    "file": "src/world/terrain/farClimate.js",
+    "old": "return tamrielTrace() && !inBay(x, y) && !inEtherLaw(x, y) ? tamrielClimateAt(x, y) & 255 : FAR_CLIMATE_ASK;",
+    "new": "return !inBay(x, y) && !inEtherLaw(x, y) ? tamrielClimateAt(x, y) & 255 : FAR_CLIMATE_ASK;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-worker-climate-on-the-bay",
+    "file": "src/world/terrain/farClimate.js",
+    "old": "return tamrielTrace() && !inBay(x, y) && !inEtherLaw(x, y) ? tamrielClimateAt(x, y) & 255 : FAR_CLIMATE_ASK;",
+    "new": "return tamrielTrace() && !inEtherLaw(x, y) ? tamrielClimateAt(x, y) & 255 : FAR_CLIMATE_ASK;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-worker-climate-unasked",
+    "file": "src/world/terrain/terrainGenWorker.js",
+    "old": "() => farFieldCell(woods, cx, cy, m.cell, m.seaByte, farCellClimate));",
+    "new": "() => farFieldCell(woods, cx, cy, m.cell, m.seaByte));",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-clim-copied",
+    "file": "src/world/terrain/terrainGenWorker.js",
+    "old": "[high.buffer, low.buffer, clim.buffer]",
+    "new": "[high.buffer, low.buffer]",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "HORIZON-probe-door-ungated",
+    "file": "src/render/farRing.js",
+    "old": "if (pageHas('shot')) globalThis.__horizonRings = this._statsFn;",
+    "new": "globalThis.__horizonRings = this._statsFn;",
+    "tests": [
+      "test/render/midring.test.js",
+      "test/tree/probegate.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-steps-by-the-row",
+    "file": "src/render/farField.js",
+    "old": "if (v && v % FAR_CELLS_A_STEP === 0) yield;",
+    "new": "if (v && v % (FAR_CELLS_A_STEP * 64) === 0) yield;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "FAR-FIELD-normals-whole",
+    "file": "src/render/farField.js",
+    "old": "if (j % FAR_NORMAL_ROWS === 0) yield;",
+    "new": "if (j === 0) yield;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-tints-whole",
+    "file": "src/render/midRing.js",
+    "old": "    if (tj) yield;\n",
+    "new": "",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  },
+  {
+    "name": "MID-RING-rows-a-step-doubled",
+    "file": "src/render/midRing.js",
+    "old": "export const MID_ROWS_A_STEP = 12;",
+    "new": "export const MID_ROWS_A_STEP = 24;",
+    "tests": [
+      "test/render/midring.test.js"
+    ]
+  }
+]

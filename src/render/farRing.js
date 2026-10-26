@@ -79,6 +79,20 @@ import { RING_SEA_GLSL } from './horizonHaze.js';   // FAR-SEA1: the horizon's h
 import { RING_CLOUD_GLSL, cloudFarOf } from './cloudShadow.js';   // OW-HORIZON: the clouds' shadows on the ring, as on the ground beside it
 import { RING_HAZE_GLSL } from './hazeGlsl.js';   // BANTHA1: the jungle's haze over the ring, both lanes' one text (render/hazeGlsl.js)
 import { WATER_F0, WATER_TINT } from './waterSurface.js';   // FAR-SEA1: the water's own Fresnel; AUDIT FAR-SEA1 L1: and its tint
+import { MidRingMesh, midRingVertexSteps, midRingDisabled } from './midRing.js';   // MID-RING: the kernel's own ground between the grid and this ring
+import { MID_RADIUS, MID_SUB, MID_REBUILD_DRIFT, FAR_CELL, FAR_RADIUS, FAR_REBUILD_DRIFT, FAR_CLIMATE_ASK } from '../world/terrain/midRingGrid.js';
+import { FarFieldMesh, farFieldVertexSteps, farFieldDisabled, FAR_RIM_START, FAR_RIM_END, FAR_LENS_FAR } from './farField.js';   // FAR-FIELD: the land past this ring
+import { SCALED_OCEAN_ELEVATION as OCEAN_Y, BASE_HEIGHT_SCALE as BYTE_SCALE } from '../world/terrain/terrainSampler.js';
+import { CLIMATES } from '../formats/mapsFile.js';   // FAR-FIELD: a cell's centre on the ocean's climate is the sea
+import { pageHas } from '../systems/pageQuery.js';   // MID-RING: the probes' read stands behind the shot gate (AUDIT ANTICHEAT A2)
+/** MID-RING: the band (metres, Chebyshev from the traveller) over which the middle ring's ground eases onto the far
+ *  ring's - ending where the traveller's farthest drift from its base still leaves its rim (MID_RADIUS - MID_REBUILD_DRIFT
+ *  pixels: the far ring's ground there whatever the base), two pixels wide. */
+export const MID_MORPH_END = (MID_RADIUS - MID_REBUILD_DRIFT) * TERRAIN_SIZE;
+export const MID_MORPH_START = MID_MORPH_END - 2 * TERRAIN_SIZE;
+/** MID-RING / FAR-FIELD: a frame's share of the horizon's builds (milliseconds) - a landed ground's vertices laid a step of
+ *  rows at a time (render/midRing.js midRingVertexSteps, render/farField.js farFieldVertexSteps), one step at the least. */
+export const HORIZON_BUDGET_MS = 2;
 
 /** Ring radius in map pixels around the base - ~39 km of horizon. */
 export const RING_RADIUS = 48;
@@ -133,16 +147,7 @@ export function buildFarRingGrid({ heightBytes, mapWidth, mapHeight, climateAt, 
   const sea = new Uint8Array(side * side);   // FAR-SEA1: 255 where the vertex is the sea - a water pixel at the sea's own height
   const clampX = (x) => Math.max(0, Math.min(mapWidth - 1, x));
   const clampY = (y) => Math.max(0, Math.min(mapHeight - 1, y));
-  // TAMRIEL2: past the map the host may hand the continent's own bytes (world/tamriel/tamrielGround.js groundWoods); the map's
-  // bytes stay the buffer's, read as ever - the clamp is the host's edge-of-the-world when it hands none
-  const byteAt = byteAtPast
-    ? (x, y) => (x >= 0 && y >= 0 && x < mapWidth && y < mapHeight ? heightBytes[y * mapWidth + x] : byteAtPast(x, y))
-    : (x, y) => heightBytes[clampY(y) * mapWidth + clampX(x)];
-  // ETHER-SEA: and the climate past the map, where the host hands one (the Eltheric Ocean's isles wear their own; the clamp
-  // read the Bay's edge's there, and an isle stood in the edge's climate)
-  const climateOf = climatePast
-    ? (x, y) => (x >= 0 && y >= 0 && x < mapWidth && y < mapHeight ? climateAt(x, y) : climatePast(x, y))
-    : (x, y) => climateAt(clampX(x), clampY(y));
+  const { byteAt, climateOf } = ringReaders({ heightBytes, mapWidth, mapHeight, climateAt, byteAt: byteAtPast, climatePast });
   // AUDIT LANDFORMS II I1: each node's lift faded beside the sea as the kernel fades it - from the same clamped bytes.
   // AUDIT CAPTAIN'S SEA G6: where the host hands the ground past the map, a node there faded at its OWN pixel (the clamped
   // corner's fade, 1, stood every isle on the horizon with its whole lift) - off the bytes read once into a grid padded
@@ -181,6 +186,25 @@ export function buildFarRingGrid({ heightBytes, mapWidth, mapHeight, climateAt, 
     }
   }
   return { positions, normals, colors, sea, side };
+}
+
+/**
+ * A pixel's height byte and climate as the ring reads them (buildFarRingGrid; MID-RING's tints the same, render/midRing.js):
+ * TAMRIEL2: past the map the host may hand the continent's own bytes (world/tamriel/tamrielGround.js groundWoods); the
+ * map's bytes stay the buffer's, read as ever - the clamp is the host's edge-of-the-world when it hands none. ETHER-SEA:
+ * and the climate past the map, where the host hands one (the Eltheric Ocean's isles wear their own; the clamp read the
+ * Bay's edge's there, and an isle stood in the edge's climate).
+ */
+export function ringReaders({ heightBytes, mapWidth, mapHeight, climateAt, byteAt: byteAtPast = null, climatePast = null }) {
+  const clampX = (x) => Math.max(0, Math.min(mapWidth - 1, x));
+  const clampY = (y) => Math.max(0, Math.min(mapHeight - 1, y));
+  const byteAt = byteAtPast
+    ? (x, y) => (x >= 0 && y >= 0 && x < mapWidth && y < mapHeight ? heightBytes[y * mapWidth + x] : byteAtPast(x, y))
+    : (x, y) => heightBytes[clampY(y) * mapWidth + clampX(x)];
+  const climateOf = climatePast
+    ? (x, y) => (x >= 0 && y >= 0 && x < mapWidth && y < mapHeight ? climateAt(x, y) : climatePast(x, y))
+    : (x, y) => climateAt(clampX(x), clampY(y));
+  return { byteAt, climateOf };
 }
 
 /**
@@ -348,6 +372,9 @@ layout(location=0) in vec3 aPos;
 layout(location=1) in vec3 aNormal;
 layout(location=2) in vec3 aColor;
 layout(location=3) in float aSea;   // FAR-SEA1: 1 at the sea's vertices
+layout(location=4) in float aCoarse;   // MID-RING: the far ring's own height under a middle ring's vertex
+uniform vec3 uMorph;      // MID-RING: x, y the band (metres, Chebyshev from uMorphFrom) its ground eases onto the far ring's over; z 1 to ease
+uniform vec3 uMorphFrom;  // the traveller (the haze's own point, else the eye)
 uniform mat4 uProj;
 uniform mat4 uView;
 uniform vec3 uOrigin;
@@ -362,6 +389,13 @@ out vec3 vWorld;     // the sea's point, for its facing to the eye (world space:
 out vec3 vSeaBody;   // the water's own body: its texel averaged by the mip chain, tinted - waterSurface.js's body, one fetch a vertex
 void main() {
   vec3 world = aPos + uOrigin;
+  // MID-RING: toward its rim the middle ring's ground eases onto the far ring's surface under it, by the traveller's own
+  // distance - so where the far ring takes over the two are one surface, and the band moves with the traveller, not with
+  // the ring's rebuilds
+  if (uMorph.z > 0.5) {
+    vec2 d = abs(world.xz - uMorphFrom.xz);
+    world.y = mix(aPos.y, aCoarse, smoothstep(uMorph.x, uMorph.y, max(d.x, d.y))) + uOrigin.y;
+  }
   vNormal = aNormal;
   vColor = aColor;
   vSea = aSea;
@@ -436,10 +470,26 @@ export class FarRingRenderer {
    *  one with a switch - and decodes the scene colours draw() takes.
    *  OW-HORIZON: `opts.renderer`, the renderer the world is drawn by - its lane (when no `lane` is handed), and each
    *  frame its focus (the point the world's fog is measured from) and its cloud deck, so the ring hazes and shades
-   *  as the ground beside it does. */
+   *  as the ground beside it does. MID-RING: `opts.mid`, the terrain's client (world/terrain/terrainGenClient.js midRing) -
+   *  the middle ring's heights are asked of its worker, and the ring stands between the streamed grid and this one. */
   constructor(gl, opts = {}) {
     this.gl = gl;
     this.renderer = opts.renderer ?? null;
+    this._midSource = opts.mid && !midRingDisabled() ? opts.mid : null;
+    this._mid = null;           // MID-RING: its mesh, once a ring's heights have landed
+    this._midAsk = null;        // the base a request is out for ("x,y"), or null
+    this._midGen = 0;           // a request's generation: one answered after a newer one is let go
+    this._inputs = null;        // the grid's inputs (build's), the middle ring's tints read through them
+    this._farSource = opts.mid && !farFieldDisabled() ? opts.mid : null;   // FAR-FIELD: the far field's cells, asked of the same worker
+    this._far = null; this._farAsk = null; this._farGen = 0;
+    this._work = [];            // the horizon's landed grounds still being laid: { it, done }, a frame's share at a time
+    /** @type {?Float32Array} */ this._midOrigin = null;   // the middle ring's and the far field's origins, made once
+    /** @type {?Float32Array} */ this._farOrigin = null;
+    this._now = opts.now ?? (() => performance.now());
+    // the probes' read (tools/horizonProbe.mjs): which of the horizon's layers stand, and round which bases - let go by
+    // the ring that set it (dispose)
+    this._statsFn = () => this.horizonStats();
+    if (pageHas('shot')) globalThis.__horizonRings = this._statsFn;
     this.lane = opts.lane ?? this.renderer?.lightingLane ?? null;
     this._dec = new Float32Array(3);
     const p = buildProgram(gl, VS, this.lane ? this.lane.farRingFs : FS, 'far ring');
@@ -451,7 +501,8 @@ export class FarRingRenderer {
       'uSkyZenith', 'uSkyHorizon', 'uSeaF0', 'uSeaLook',   // FAR-SEA1: the sea's sky, its Fresnel, and whether it has one
       'uEye', 'uSeaTiles', 'uSeaTint', 'uSeaAmbient', 'uSeaSunColor', 'uSeaMoonColor',   // AUDIT FAR-SEA1 L1: the water's body, its light (the lane's in the water's own space)
       'uELExposure', 'uAdapt', 'uJungleHaze', 'uHazeEye',   // BANTHA1: the jungle's haze and the eye it is measured from
-      'uHazeFrom', 'uCloudShadowMap', 'uCloudShadowRect', 'uCloudShadowFar', 'uCloudFar']) {   // OW-HORIZON: the fog's focus, the clouds' map and its far law
+      'uHazeFrom', 'uCloudShadowMap', 'uCloudShadowRect', 'uCloudShadowFar', 'uCloudFar',   // OW-HORIZON: the fog's focus, the clouds' map and its far law
+      'uMorph', 'uMorphFrom']) {   // MID-RING: the middle ring's ease onto this one
       this.u[name] = gl.getUniformLocation(p, name);
     }
     this.vao = null;
@@ -472,7 +523,9 @@ export class FarRingRenderer {
   /** (Re)build the vertex grid around `base` and punch the hole (`built`: punchHole's). */
   build(gridInputs, holeX, holeY, holeRadius, built = null) {
     const gl = this.gl;
-    const { positions, normals, colors, sea } = buildFarRingGrid(gridInputs);
+    this._inputs = gridInputs;   // MID-RING: the middle ring's tints are read the way this grid's are
+    const { positions, normals, colors, sea, side } = buildFarRingGrid(gridInputs);
+    this._ringY = { positions, side, baseX: gridInputs.baseX, baseY: gridInputs.baseY, radius: gridInputs.radius ?? RING_RADIUS };   // MID-RING: this ring's heights at the pixel centres, its ease's ground
     this.baseX = gridInputs.baseX; this.baseY = gridInputs.baseY;
     this.dispose(false);
     const vao = gl.createVertexArray();
@@ -504,14 +557,18 @@ export class FarRingRenderer {
    *  keeps every pixel it has not built the ring's (inHole) - asked again whenever its keys change: a pixel built or
    *  dropped. A plain Map (no `changes`) is keyed by its size. */
   punchHole(holeX, holeY, holeRadius, built = null) {
-    const key = `${holeX},${holeY},${holeRadius},${built ? (built.changes ?? built.size) : -1}`;
+    const mid = this._midFrame(holeX, holeY, built);   // MID-RING: the middle ring asked for, ordered and cut first
+    const key = `${holeX},${holeY},${holeRadius},${built ? (built.changes ?? built.size) : -1},${mid ? `${mid.baseX},${mid.baseY},${mid.radius}` : '-'}`;
     if (!this._built || key === this._holeKey) return;
     const gl = this.gl;
-    const hole = { baseX: this.baseX, baseY: this.baseY, holeX, holeY, holeRadius, built: built ? footprintBuilt(built, holeX, holeY, holeRadius) : null };
+    const grid = { baseX: this.baseX, baseY: this.baseY, holeX, holeY, holeRadius, built: built ? footprintBuilt(built, holeX, holeY, holeRadius) : null };
+    // MID-RING: with the middle ring standing, this ring's hole is its footprint whole (it stands there, built pixel or
+    // none); the sea's fill stays the streamed grid's, the built pixels the middle ring leaves to the stream
+    const hole = mid ? { baseX: this.baseX, baseY: this.baseY, holeX: mid.baseX, holeY: mid.baseY, holeRadius: mid.radius, built: null } : grid;
     const side = RING_RADIUS * 2 + 1;
     const out = new Uint32Array((side - 1) * (side - 1) * 6);   // AUDIT FAR-SEA1 P4: one buffer - the hole's cells are the fill's room
     const ringN = writeRingCells(out, hole);
-    const cells = seaFillCells({ ...hole, sea: this._sea });   // FAR-SEA1: the sea inside the hole, after the ring, farthest first
+    const cells = seaFillCells({ ...grid, sea: this._sea });   // FAR-SEA1: the sea inside the streamed grid's hole, after the ring, farthest first
     const fillN = writeSeaFill(out, ringN, cells, side);
     gl.bindVertexArray(this.vao);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._indexBuffer);
@@ -522,6 +579,112 @@ export class FarRingRenderer {
     this._fillReach = Float32Array.from(cells, (c) => c[0]);
     this._holeX = holeX; this._holeY = holeY;
     this._holeKey = key;
+  }
+
+  /**
+   * MID-RING: the middle ring's turn of a frame (punchHole's) - its heights asked of the terrain's worker for the
+   * traveller's pixel when it has none or the traveller has drifted MID_REBUILD_DRIFT from its base (one ask at a time; an
+   * answer for a base let go is dropped), its painter's order written for the traveller's pixel, and its runs cut where
+   * the stream has built. Answers the mesh while it stands, else null (the far ring's hole is then the grid's, as before).
+   */
+  _midFrame(curX, curY, built) {
+    this._workFrame();   // the grounds landed: a frame's share of their vertices laid
+    this._farFrame(curX, curY);   // FAR-FIELD: the land past this ring, its own turn
+    if (!this._midSource || !this._inputs) return null;
+    const mid = this._mid;
+    const drift = mid ? Math.max(Math.abs(curX - mid.baseX), Math.abs(curY - mid.baseY)) : Infinity;
+    if (drift > MID_REBUILD_DRIFT && this._midAsk === null) this._askMid(curX, curY);
+    if (!mid?.built) return null;
+    mid.reorder(curX, curY);
+    mid.cut(built ? (k) => built.has(k) : () => false, built ? (built.changes ?? built.size) : -1);
+    return mid;
+  }
+
+  /** MID-RING / FAR-FIELD: the frame's share of the grounds' builds - steps until HORIZON_BUDGET_MS is spent, one at the
+   *  least; a build whose generation was let go is dropped. */
+  _workFrame() {
+    const t0 = this._now();
+    let stepped = false;
+    while (this._work.length && (!stepped || this._now() - t0 < HORIZON_BUDGET_MS)) {
+      const w = this._work[0], r = w.it.next();
+      stepped = true;
+      if (r.done) { this._work.shift(); w.done(r.value); }
+    }
+  }
+
+  /** FAR-FIELD: the far field's turn - asked for the traveller's cell when it has none or they drifted FAR_REBUILD_DRIFT
+   *  cells from its base (one ask at a time), and ordered for their cell and this ring's footprint. */
+  _farFrame(curX, curY) {
+    if (!this._farSource || !this._inputs || !this._built) return;
+    const ccx = Math.floor(curX / FAR_CELL), ccy = Math.floor(curY / FAR_CELL), far = this._far;
+    const drift = far ? Math.max(Math.abs(ccx - far.baseCX), Math.abs(ccy - far.baseCY)) : Infinity;
+    if (drift > FAR_REBUILD_DRIFT && this._farAsk === null) this._askFar(ccx, ccy);
+    if (!far?.built) return;
+    const R = RING_RADIUS, bx = this.baseX, by = this.baseY;
+    far.reorder(ccx, ccy, `${bx},${by}`, { x0: bx - R + 0.5, x1: bx + R + 0.5, y0: by - R + 0.5, y1: by + R + 0.5 });   // this ring's vertices' span
+  }
+
+  /** FAR-FIELD: the far field's cells asked of the worker round (baseCX, baseCY); built into its mesh when they land - its
+   *  height the far ring's law on a cell's highest byte, its tint this ring's at the cell's centre. */
+  _askFar(baseCX, baseCY) {
+    const gen = ++this._farGen, inputs = this._inputs;
+    this._farAsk = `${baseCX},${baseCY}`;
+    const seaByte = Math.floor(OCEAN_Y / BYTE_SCALE);   // isWaterPixel's byte arm: byte x 8 at or under the ocean's floor
+    Promise.resolve(this._farSource.farField?.({ baseCX, baseCY, radius: FAR_RADIUS, cell: FAR_CELL, seaByte }) ?? null).then((answer) => {
+      if (gen !== this._farGen) return;
+      if (!answer?.high || !this.gl) { this._farAsk = null; return; }   // the ask stands until its ground is laid
+      const { climateOf } = ringReaders(inputs);
+      // a cell's climate the worker's where it read one (past the Bay: the continent's biomes, worked out off the frame),
+      // else this ring's own reader's
+      const clim = answer.clim ?? null, climAt = (x, y, v) => (clim && clim[v] !== FAR_CLIMATE_ASK ? clim[v] : climateOf(x, y));
+      const it = farFieldVertexSteps({
+        high: answer.high, low: answer.low, baseCX, baseCY,
+        heightOf: (byte) => ringHeight(byte, !!inputs.relief),
+        tintAt: (x, y, byte, v) => overworldTint(climAt(x, y, v), byte),
+        oceanAt: (x, y, v) => climAt(x, y, v) === CLIMATES.Ocean,
+        seaY: RING_SEA_Y,
+      });
+      // one ask at a time and it stands until laid, so no newer ask can come while this is laid; a dispose drops the work
+      this._work.push({ it, done: (v) => {
+        this._farAsk = null;
+        (this._far ??= new FarFieldMesh(this.gl)).build(v, { baseCX, baseCY });
+      } });
+    }, (e) => { if (gen === this._farGen) this._farAsk = null; console.warn('[ring] the far field failed', e?.message ?? e); });
+  }
+
+  /** MID-RING: one ring's heights asked of the worker round (baseX, baseY); built into the mesh when they land. */
+  _askMid(baseX, baseY) {
+    const gen = ++this._midGen, inputs = this._inputs;
+    this._midAsk = `${baseX},${baseY}`;
+    const job = { baseX, baseY, radius: MID_RADIUS, sub: MID_SUB, landform: !!inputs.relief };
+    Promise.resolve(this._midSource.midRing?.(job) ?? null).then((answer) => {
+      if (gen !== this._midGen) return;   // a newer ask, or the renderer disposed
+      if (!answer?.heights || !this.gl) { this._midAsk = null; return; }   // the ask stands until its ground is laid
+      const { byteAt, climateOf } = ringReaders(inputs);
+      const tintAt = (x, y) => overworldTint(climateOf(x, y), byteAt(x, y));
+      const g = this._ringY;   // a pixel centre's height on this ring - world-fixed, whichever base the grid was built round
+      const ringAt = (x, y) => {
+        const i = x - g.baseX + g.radius, j = y - g.baseY + g.radius;
+        return i >= 0 && j >= 0 && i < g.side && j < g.side ? g.positions[(j * g.side + i) * 3 + 1] : RING_SEA_Y;
+      };
+      const it = midRingVertexSteps({ heights: answer.heights, baseX, baseY, radius: MID_RADIUS, sub: MID_SUB, tintAt, seaY: RING_SEA_Y, ringAt });
+      this._work.push({ it, done: (v) => {   // as the far field's: one ask, standing until laid; a dispose drops the work
+        this._midAsk = null;
+        (this._mid ??= new MidRingMesh(this.gl)).build(v, { baseX, baseY, radius: MID_RADIUS, sub: MID_SUB, curX: baseX, curY: baseY });
+        this._holeKey = '';   // the far ring's hole is the new footprint's
+      } });
+    }, (e) => { if (gen === this._midGen) this._midAsk = null; console.warn('[ring] the middle ring failed', e?.message ?? e); });
+  }
+
+  /** MID-RING / FAR-FIELD: which of the horizon's layers stand (the probes' read): the far ring's base, the middle ring's
+   *  base and runs, the far field's base cell and cells drawn, and the grounds still being laid. */
+  horizonStats() {
+    return {
+      far: this._built ? { baseX: this.baseX, baseY: this.baseY, ring: this.ringCount / 6 } : null,
+      mid: this._mid?.built ? { baseX: this._mid.baseX, baseY: this._mid.baseY, runs: this._mid.runs.length } : null,
+      field: this._far?.built ? { baseCX: this._far.baseCX, baseCY: this._far.baseCY, cells: this._far.count / 6 } : null,
+      laying: this._work.length, asking: [this._midAsk, this._farAsk].filter(Boolean).length,
+    };
   }
 
   /** EL4: a 1x1 image holding the multiplier 1 (the log encoding's midpoint), for a lane frame with no adaptation image. */
@@ -552,8 +715,9 @@ export class FarRingRenderer {
     skyZenith = null, skyHorizon = null, eye = null, worldProj = null, seaTiles = null, seaTint = null, haze = null, hazeEye = null }) {   // BANTHA1: the jungle's haze and its eye; FAR-SEA1: the sky the sea reflects (the water's); AUDIT FAR-SEA1: the eye and the world's lens the fill is counted from (P1), the water's tiles and tint (L1)
     if (!this._built || !this.indexCount) return;
     const gl = this.gl;
-    const far = (RING_RADIUS + 1) * TERRAIN_SIZE * 1.5;
-    const projKey = `${fovY},${aspect}`;
+    const farField = this._far?.built ? this._far : null;   // FAR-FIELD: the land past this ring, while it stands
+    const far = farField ? FAR_LENS_FAR : (RING_RADIUS + 1) * TERRAIN_SIZE * 1.5;
+    const projKey = `${fovY},${aspect},${far}`;
     if (projKey !== this._projKey) {
       this._proj = mirrorProjectionX(perspective(fovY, aspect, 40, far));
       this._projKey = projKey;
@@ -588,8 +752,8 @@ export class FarRingRenderer {
     // topped out at ~0.885 and tall ring terrain terminated against
     // the sky as a faint unblended straight edge at the four cardinal
     // directions; only the corners actually dissolved.
-    gl.uniform1f(this.u.uRimStart, RING_RIM_START);
-    gl.uniform1f(this.u.uRimEnd, RING_RIM_END);
+    gl.uniform1f(this.u.uRimStart, farField ? FAR_RIM_START : RING_RIM_START);   // FAR-FIELD: the land runs on past this ring to the far field's rim
+    gl.uniform1f(this.u.uRimEnd, farField ? FAR_RIM_END : RING_RIM_END);
     gl.uniform1f(this.u.uHazeHold, RING_HAZE_HOLD);
     gl.uniform4fv(this.u.uJungleHaze, haze ?? NO_HAZE);   // BANTHA1: the jungle's haze (renderer.setJungleHaze) - off ([1].x 0) when none is handed
     gl.uniform3fv(this.u.uHazeEye, hazeEye ?? eye ?? FLAT_UP);
@@ -641,8 +805,27 @@ export class FarRingRenderer {
     gl.depthRange(1, 1);   // AUDIT FAR-SEA1 P1: every fragment at the far plane by the viewport, so the test runs BEFORE the shader
     gl.disable(gl.CULL_FACE);
     gl.bindVertexArray(this.vao);
+    gl.uniform3f(this.u.uMorph, 0, 0, 0);   // MID-RING: the far ring is its own ground
+    if (farField) {   // FAR-FIELD: the farthest first - the painter's order the three layers keep
+      const o = this._farOrigin ??= new Float32Array(3);
+      o[0] = origin[0] + (farField.baseCX * FAR_CELL - this.baseX) * TERRAIN_SIZE; o[1] = origin[1]; o[2] = origin[2] - (farField.baseCY * FAR_CELL - this.baseY) * TERRAIN_SIZE;
+      farField.draw(this.u.uOrigin, o);
+      gl.uniform3f(this.u.uOrigin, origin[0], origin[1], origin[2]);
+      gl.bindVertexArray(this.vao);
+    }
     gl.drawElements(gl.TRIANGLES, this.ringCount + 6 * fill, gl.UNSIGNED_INT, 0);   // FAR-SEA1: the sea inside the hole is the range's tail - its farthest cells first
     gl.bindVertexArray(null);
+    // MID-RING: the middle ring over it, in the same pass - its base's origin is this ring's moved by the bases' pixels, its
+    // rim eased onto this ring by the traveller's distance (the haze's own point: the travel view's traveller, else the eye)
+    const mid = this._mid;
+    if (mid?.built) {
+      const o = this._midOrigin ??= new Float32Array(3);
+      o[0] = origin[0] + (mid.baseX - this.baseX) * TERRAIN_SIZE; o[1] = origin[1]; o[2] = origin[2] - (mid.baseY - this.baseY) * TERRAIN_SIZE;
+      const focus = this.renderer?.focus, from = focus && focus[3] > 0.5 ? focus : (eye ?? o);
+      gl.uniform3f(this.u.uMorphFrom, from[0], from[1], from[2]);
+      gl.uniform3f(this.u.uMorph, MID_MORPH_START, MID_MORPH_END, 1);
+      mid.draw(this.u.uOrigin, o);
+    }
     gl.depthRange(0, 1);
     gl.enable(gl.CULL_FACE);
     gl.depthMask(true);
@@ -655,6 +838,9 @@ export class FarRingRenderer {
   /** Free the GL objects (every allocation has an owner). */
   dispose(whole = true) {
     const gl = this.gl;
+    if (whole) { this._midGen++; this._midAsk = null; this._mid?.dispose(); this._mid = null; }   // MID-RING: an answer still out is let go
+    if (whole) { this._farGen++; this._farAsk = null; this._far?.dispose(); this._far = null; this._work = []; }   // FAR-FIELD: the same, and any ground still being laid
+    if (whole && globalThis.__horizonRings === this._statsFn) delete globalThis.__horizonRings;   // the probes' read, if it is still this ring's
     for (const b of this.buffers) gl.deleteBuffer(b);
     this.buffers = [];
     if (this.vao) gl.deleteVertexArray(this.vao);

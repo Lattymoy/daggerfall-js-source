@@ -67,7 +67,8 @@ ESCORTING FACES - the quest escorts' portrait column, FE1 - and the CREDITS TABL
 - and START2's PAGE (`startChoice.js`: "Where does your story begin?", the last question of making a character - the eight starts, the race's homeland first - and `enhanced/enhancedStartChoice.js`, its Plus face - `06-Systems/Alternate-Starts-Arc.md` section 7);
 - and STAFF-FLATMAP's SHEET (`staffFlatMap.js`: Shift+N, one region from above off the politic map, a dot a traveller coloured by their most urgent flag, the Most urgent list beside it, a press opening the staff tag menu - mob 2026-10-24: "did u get the flat map done?"; filled by `scenes/staffFlatMapHost.js`)
 - and KETCH's TWO (`ketch/ketchHud.js`: the Sky-Ketch's voyage tracker - the stage, what it asks, the cell in hand, the crew and the clock - and the Tonal Warden's bar, the gate's in the Hour's brass; `ketch/ketchMapMark.js`: her ring on the held map - `11-Multiplayer/Sky-Ketch.md` section 12);
-419 modules
+- and MAP-WHOLE's RASTER (`inkRaster.js`: the held map's continent dots stamped into a coverage mask and laid as one pass - `03-World/Arena-Provinces.md` MAP-WHOLE);
+420 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.

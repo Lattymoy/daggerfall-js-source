@@ -877,7 +877,7 @@
   },
   {
     "name": "OH-F-A2-box-not-grown",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/oceanHolesPits.js",
     "old": "if (b) for (let i = 0; i < 3; i++) { b[i] = Math.min(b[i], c[i] + reach[i]); b[3 + i] = Math.max(b[3 + i], c[i] + reach[3 + i]); }",
     "new": "",
     "tests": [

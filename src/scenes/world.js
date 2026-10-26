@@ -1150,7 +1150,6 @@ import { loadGraceActive, teleported as dwTeleported, loadStarted as dwLoadStart
 import { createUnderwaterDecorations, createDecorTextureSource } from './deepWater/deepWatersDecor.js';
 import { createOceanHoles, oceanHolesOn } from './oceanHolesHost.js';   // OH-B: There's a Hole in the Bottom of the Ocean (jet082) - the pits in the carved sea
 import { OceanHolesRenderer } from '../render/oceanHolesRender.js';   // OH-C: its discs and its miasma
-import { createMiasma, miasmaReach } from '../world/oceanHolesMiasma.js';
 import { SURFACE_INNER_COLOR, FLOOR_INNER_COLOR, placementFraction, OCEAN_HOLES_VENDOR, addBonusMagicLoot, upgradeLoot } from '../world/oceanHoles.js';
 import { createOceanHolesAbyss } from './oceanHolesAbyss.js';   // OH-D: the abyss - the pit's way down, its dungeon, its way back up
 import { DUNGEON_AMBIENT } from '../world/dungeon/dungeonLights.js';   // OH-E: PlayerAmbientLight.DungeonAmbientLight, what the abyss darkens
@@ -1210,6 +1209,7 @@ import { createTamrielPorts } from './tamrielPortsHost.js';   // HOST-SPLIT
 import { createQuestWorld } from './questWorld.js';   // HOST-SPLIT
 import { createWorldQuickSave } from './worldQuickSave.js';   // HOST-SPLIT
 import { createCsaAudio } from './csaAudio.js';   // HOST-SPLIT
+import { createOceanHolesPits } from './oceanHolesPits.js';   // HOST-SPLIT
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -1781,7 +1781,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // the far ring below takes the same lane, so the horizon lights as the
   // ground does.
   const lightingOn = syncLightingLane(renderer);
-  const farRing = (isEnhanced() && !ringDisabled()) ? new FarRingRenderer(renderer.gl, { renderer }) : null;   // EL1: the renderer's lighting lane; OW-HORIZON: and its focus and cloud deck, each frame
+  const farRing = (isEnhanced() && !ringDisabled()) ? new FarRingRenderer(renderer.gl, { renderer, mid: terrainGen }) : null;   // EL1: the renderer's lighting lane; OW-HORIZON: and its focus and cloud deck, each frame
   const _ringOrigin = [0, 0, 0];
 
   // One location per map pixel game-wide (pinned corpus invariant).
@@ -4824,26 +4824,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const offEnemy = enemyLootSpawned.add((e) => ohUpgrade(e.lootTableKey, e.items, e.worn, e.where, e.rolls ?? Math.random, e.roller ?? playerEntity));
     _ohLootOff = () => { offTable(); offEnemy(); };
   }
-  /** OH-C: BuildPit's children that need a machine of their own - the miasma's particles and the entrance's BoxCollider,
-   *  pixel-local through the live translation (the walls' shape). The discs are one shared mesh, drawn from the pit. */
-  function ohCreatePit(entry, pit) {
-    const h = { entry, pit, miasma: createMiasma({ count: pit.miasma.count, height: pit.miasma.height, radius: pit.miasma.radius }), bucket: `${entry.px},${entry.py}:oceanhole` };
-    const [sx, sy, sz] = pit.entrance.size;
-    const x = pit.marker.localX, y = pit.entrance.y, z = pit.marker.localZ;
-    const bx = sx / 2, by = sy / 2, bz = sz / 2;
-    const pos = [x - bx, y - by, z - bz, x + bx, y - by, z - bz, x + bx, y + by, z - bz, x - bx, y + by, z - bz,
-      x - bx, y - by, z + bz, x + bx, y - by, z + bz, x + bx, y + by, z + bz, x - bx, y + by, z + bz];
-    const idx = [0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 3, 7, 6, 3, 6, 2, 0, 4, 7, 0, 7, 3, 1, 2, 6, 1, 6, 5];
-    const o = [0, 0, 0];
-    collider.addMesh(h.bucket, pos, idx, _ohIdentity, onFloatingFrame(state, () => state.pixelTranslation(entry.px, entry.py, o)));   // PERF-COL2: riding the floating origin
-    // AUDIT OH-F A2: Unity culls the plume by its particles' own bounds; here the pixel's box is the draw's verdict
-    // (drawOceanHolesTransparent), so the box reaches the plume - the rise, the drift, the largest puff. It only grows.
-    const b = entry._box, reach = miasmaReach(pit.miasma), c = [x, pit.miasma.y, z];
-    if (b) for (let i = 0; i < 3; i++) { b[i] = Math.min(b[i], c[i] + reach[i]); b[3 + i] = Math.max(b[3 + i], c[i] + reach[3 + i]); }
-    return h;
-  }
-  function ohDestroyPit(h) { if (h?.bucket) collider.removeBucket(h.bucket); h.bucket = null; }
-  const _ohIdentity = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+  const { ohCreatePit, ohDestroyPit } = createOceanHolesPits({   // HOST-SPLIT: src/scenes/oceanHolesPits.js
+    collider,
+    get state() { return state; },
+  });
   const OH_CONTACT_SKIN = 0.08;   // CharacterController.skinWidth (Unity's default): OnControllerColliderHit's reach
   /** OH-B: the frame's pit work - OceanHoles.Update's ProcessOneTerrain (and a settings change), the miasma's step on the
    *  game's clock, and OceanPitCollision: the swimmer's capsule touching the entrance box of the pit at their pixel. */

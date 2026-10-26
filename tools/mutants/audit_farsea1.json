@@ -72,12 +72,13 @@
   {
     "name": "AUDIT-FAR-SEA1-P1-the-range-left-at-the-far-plane",
     "file": "src/render/farRing.js",
-    "old": "    gl.bindVertexArray(null);\n    gl.depthRange(0, 1);",
-    "new": "    gl.bindVertexArray(null);",
+    "old": "      mid.draw(this.u.uOrigin, o);\n    }\n    gl.depthRange(0, 1);",
+    "new": "      mid.draw(this.u.uOrigin, o);\n    }",
     "tests": [
       "test/render/audit_farsea1.test.js",
       "test/render/farsea1.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (MID-RING): the middle ring is drawn after the far ring inside the pass, so the depth range is put back after it."
   },
   {
     "name": "AUDIT-FAR-SEA1-L1-the-sun-in-full-on-the-ring-sea",

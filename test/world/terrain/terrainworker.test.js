@@ -247,7 +247,11 @@ test('EV7: the worker shell imports only pure modules and spells the Worker URL 
   // PIN MOVED (TESA4, bible/03-World/Arena-Provinces.md): and Arena's roads past the Bay (world/arenaRoads.js - pure: the
   // road generator, the frame, the land and the cache's key law)
   // PIN MOVED (AUDIT BANTHA1 PERF-2): and the nature's wire (world/terrain/natureWire.js - pure: it imports nothing)
-  assert.deepEqual(imports, ['../../formats/woodsFile.js', '../arenaRoads.js', '../ethericSea.js', '../roadsCache.js', '../roadsProducer.js', '../tamriel/tamrielFrame.js', '../tamriel/tamrielGround.js', '../tamriel/tamrielLand.js', './natureWire.js', './terrainGen.js'],
+  // PIN MOVED (MID-RING, bible/06-Systems/Travel-View.md MID-RING and FAR-FIELD): and the horizon's grounds
+  // (world/terrain/midRingGrid.js - pure: the kernel's sampler alone) with the landforms they shape the middle ring by
+  // (world/landforms.js - the kernel's own, already in terrainGen.js's closure), and a far cell's climate
+  // (world/terrain/farClimate.js - pure: the continent's ground, its land and frame, the Eltheric Ocean's box)
+  assert.deepEqual(imports, ['../../formats/woodsFile.js', '../arenaRoads.js', '../ethericSea.js', '../landforms.js', '../roadsCache.js', '../roadsProducer.js', '../tamriel/tamrielFrame.js', '../tamriel/tamrielGround.js', '../tamriel/tamrielLand.js', './farClimate.js', './midRingGrid.js', './natureWire.js', './terrainGen.js'],
     'the import graph is exactly the reader, the road cache, the producer, the kernel, the continent\'s ground (TAMRIEL2 - pure: the authored geography and the frame), the Eltheric Ocean\'s and the nature\'s wire');
   const code = shell.replace(/\/\/[^\n]*/g, '').replace(/\/\*[^]*?\*\//g, '');
   assert.ok(!/\bdocument\b/.test(code) && !/new Worker/.test(code), 'no DOM, no nested workers');

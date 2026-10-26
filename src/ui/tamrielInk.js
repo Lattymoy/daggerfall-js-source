@@ -41,7 +41,7 @@ import { arenaPlaceId } from '../world/arenaLocations.js';   // WW7-6: a place's
 import { seatMapMark } from '../net/townSeatLaw.js';   // WW7-6: how a seat is marked, the Bay's own law
 import { arenaRoadsLayer, arenaRoadTiles, arenaRoadTilePixels, arenaRoadsVersion, beyondKey, beyondPixel, ROAD_TILE, roadTileKey } from '../world/arenaRoads.js';
 import { DIR, DIR_DELTA } from '../world/road/roadNetwork.js';   // TESA15: a pixel's steps, as the far view draws them   // TESA13: the roads past the Bay, as the kernels paint them; TESA15: a tile at a time
-import { pastBayPlacesStamp } from '../world/pastBayPlaces.js';   // TESA15: the places the roads' regions laid, a bin at a time
+import { pastBayPlacesStamp, pastBayPlacesVersion } from '../world/pastBayPlaces.js';   // TESA15: the places the roads' regions laid, a bin at a time
 import { getPixelColorIndex } from './travel/travelMapWindow.js';   // TESA13: a place's classic bucket, under the map's filters
 import { LOCATION_TYPES } from '../formats/mapsFile.js';   // AUDIT TESA II M7: a place past the Bay's type, the Bay's own
 import { locationTypeName } from '../systems/travel/travelOptions.js';   // TESA13: MacroHelper.LocationTypeName - a place's kind in words
@@ -49,6 +49,7 @@ import { makeNoise, octaveNoise } from './intro/introMap.js';   // the intro's o
 import { PEN, NAME_FACE, HALO_PEN, FAR_TRACK_PEN, penOf, pathPen, PATH_KINDS, penSolid, toPaper, paintGlyph, paintSeatRing, markReach, roundCorners, inkChain, spacedName, boundarySegments, linkSegments, pathChains, strokePaths, zoomBand, BAND_MARKS, markKind } from './ink/inkMap.js';
 import { HUB_CAPITALS } from '../systems/region/regionHubs.js';   // REGION-LINES: the Bay's three kingdoms' capitals, with every province's
 import { simplifyChain } from './overworldModel.js';   // TAMRIEL3: the coast's chain thinned as the overworld's are
+import { stampSquare, coveragePixels, clearCoverage, penRgb } from './inkRaster.js';   // MAP-WHOLE: the continent's dots rasterised by hand
 import { labelPoint } from './provinceMap.js';   // TAMRIEL3: a province's name hangs where the chargen's map hangs it
 import { zoneLineOf } from '../systems/wild/cyrodiilZone.js';   // ZONE-LINE: Cyrodiil's outline is the zone's law's to draw
 
@@ -837,7 +838,7 @@ export const MARK_REACH_PX = 10;
  * @param {CanvasRenderingContext2D} ctx @param {{ox:number,oy:number,scale:number}} view
  * @param {{ paperW: number, paperH: number, band?: string, continent?: boolean, filters?: any, inks?: any,
  *   placesIn?: ?PlacesIn, frame?: ?{ x0: number, y0: number, w: number, h: number } }} opts
- * @param {?{ scratch: () => any }} [job]
+ * @param {?{ scratch: () => any, coverage?: () => any, pixels?: () => Uint8ClampedArray }} [job] - MAP-WHOLE: `coverage` the job's mask and `pixels` its RGBA, the continent's dots rasterised by hand (ui/inkRaster.js)
  */
 export function paintPastBay(ctx, view, opts, job = null) {
   const it = pastBayJob(ctx, view, opts, job);
@@ -852,6 +853,10 @@ export function paintPastBay(ctx, view, opts, job = null) {
  *  one tile was a path of 302,205 rects (the freeware's network, the contain view at one device pixel a point). */
 export const PAST_BAY_STEP = 2048;
 export const PAST_BAY_MARKS_STEP = 512;
+/** MAP-WHOLE: a rasterised dot's share of a step against a path's rect - a few typed-array writes where the canvas walked
+ *  a sub-path (measured on a CPU canvas: 300,000 dots 28 ms against 370-1,500 ms); a step of the raster is eight times
+ *  PAST_BAY_STEP dots. */
+export const RASTER_STEP_SHARE = 1 / 8;
 /** A translucent pass laid down: the scratch it was laid on solid, at the pen's alpha, whole. */
 function layDown(ctx, target, alpha) {
   ctx.save();
@@ -869,6 +874,29 @@ function passOf(ctx, job, style) {
   target.lineJoin = 'round';
   return { target, style: solid, alpha };
 }
+/**
+ * MAP-WHOLE (ui/inkRaster.js): a dots pass RASTERISED - the job's coverage mask (its own, ui/tamrielTiles.js) and its
+ * scratch, where the canvas can take pixels (a 2D context with putImageData; anything else paints its paths as before).
+ * `stamp` lays the pass's shapes in paper pixels (dpr the scratch's own: its canvas's width over the paper's), `lay`
+ * puts the mask on the scratch in the pen's solid colour and lays the scratch down at its alpha - the one fill or stroke
+ * the pass was (layDown).
+ */
+function rasterPass(ctx, job, style, paperW) {
+  const cov = job?.coverage?.();
+  if (!cov) return null;
+  const target = job.scratch();
+  if (typeof target?.putImageData !== 'function' || typeof ImageData === 'undefined' || !(target.canvas?.width > 0)) return null;
+  clearCoverage(cov);
+  const d = target.canvas.width / paperW, { alpha } = penSolid(style), rgb = penRgb(style);
+  return {
+    dot: (x, y, w) => stampSquare(cov, x * d, y * d, w * d),
+    lay: () => {
+      if (cov.any) target.putImageData(new ImageData(/** @type {Uint8ClampedArray<ArrayBuffer>} */ (coveragePixels(cov, rgb, job.pixels?.())), cov.w, cov.h), 0, 0);
+      layDown(ctx, target, alpha);
+    },
+  };
+}
+
 /** The paint as steps (paintPastBay): the roads and the tracks a pass a kind, then the marks' halos and their glyphs. */
 function* pastBayJob(ctx, view, opts, job) {
   const { paperW, paperH } = opts;
@@ -886,7 +914,22 @@ function* pastBayJob(ctx, view, opts, job) {
     const s = view.scale;
     for (const kind of /** @type {const} */ (['tracks', 'roads'])) {
       if (filters[kind] || !layer) continue;
-      const pen = pathPen(kind, 'far'), w = pen.width, p = passOf(ctx, job, pen.style);
+      const pen = pathPen(kind, 'far'), w = pen.width;
+      const ras = rasterPass(ctx, job, pen.style, paperW);
+      if (ras) {   // MAP-WHOLE: each pixel's dot a square of the mask, the pass laid once
+        let n = 0, walked = _walked;
+        for (let ty = Math.floor(view.oy / ROAD_TILE); ty <= Math.floor(y1 / ROAD_TILE); ty++) {
+          for (let tx = Math.floor(view.ox / ROAD_TILE); tx <= Math.floor(x1 / ROAD_TILE); tx++) {
+            const at = tileDots(layer, tx, ty)[kind];
+            for (let i = 0; i < at.length; i += 2) ras.dot((at[i] - view.ox) * s, (at[i + 1] - view.oy) * s, w);
+            n += at.length / 2;
+            if (n * RASTER_STEP_SHARE + _walked - walked >= step) { n = 0; walked = _walked; yield; if (!fresh()) return; }
+          }
+        }
+        ras.lay();
+        continue;
+      }
+      const p = passOf(ctx, job, pen.style);
       p.target.fillStyle = p.style;
       p.target.beginPath();
       let n = 0, walked = _walked;
@@ -937,6 +980,14 @@ function* pastBayJob(ctx, view, opts, job) {
       }
     }
   }
+}
+
+/** MAP-WHOLE (ui/tamrielTiles.js BASE_SCALE): the base's paint - the continent's whole frame out on the continent, under
+ *  the view's own filters and hues (its key is theirs), its words read again when the roads' installs or the places'
+ *  adds move. */
+export function baseOf(past, ink) {
+  if (!ink.frame) return null;
+  return { key: `far|1|${JSON.stringify(past.filters)}|${JSON.stringify(past.inks)}`, paint: { ...past, band: 'far', continent: true }, frame: ink.frame, version: `${arenaRoadsVersion()}|${pastBayPlacesVersion()}` };
 }
 
 /** REGION-LINES: the provinces' line (PROVINCE_PEN) - halo, then the stroke, solid. */
@@ -1003,7 +1054,7 @@ export function paintTamrielInk(ctx, view, ink, opts) {
   // them (ui/tamrielTiles.js, paintPastBay's paint a tile at a time), or painted here where it keeps none
   const past = { paperW, paperH, band, continent, filters: opts.filters ?? {}, inks: opts.inks ?? null, placesIn: opts.placesIn ?? null, frame: ink.frame };
   if (!part || part === 'roads') {
-    if (opts.tiles) opts.tiles.draw(ctx, view, { paperW, paperH, dpr: opts.dpr ?? 1, key: `${band}|${continent ? 1 : 0}|${JSON.stringify(past.filters)}|${JSON.stringify(past.inks)}`, paint: past, ...(opts.settling ? { budgetMs: 0, force: false } : {}) });
+    if (opts.tiles) opts.tiles.draw(ctx, view, { paperW, paperH, dpr: opts.dpr ?? 1, key: `${band}|${continent ? 1 : 0}|${JSON.stringify(past.filters)}|${JSON.stringify(past.inks)}`, paint: past, ...(opts.settling ? { budgetMs: 0, force: false } : {}), base: baseOf(past, ink) });
     else paintPastBay(ctx, view, past);
   }
   if (part && part !== 'over') { ctx.restore(); return true; }
