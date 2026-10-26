@@ -1,0 +1,392 @@
+[
+  {
+    "name": "LONE-SLEEP-never-lone",
+    "file": "src/net/loneSleep.js",
+    "old": "  return !!s.ok && !!s.presence && isCellRoom(s.room)",
+    "new": "  return false && !!s.ok && !!s.presence && isCellRoom(s.room)",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "a session never goes quiet"
+  },
+  {
+    "name": "LONE-SLEEP-interval-the-heartbeat",
+    "file": "src/net/loneSleep.js",
+    "old": "export const LONE_POSE_MS = 60_000;",
+    "new": "export const LONE_POSE_MS = 20_000;",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "the lone interval the heartbeat's"
+  },
+  {
+    "name": "LONE-SLEEP-interval-two-minutes",
+    "file": "src/net/loneSleep.js",
+    "old": "export const LONE_POSE_MS = 60_000;",
+    "new": "export const LONE_POSE_MS = 120_000;",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "past the silence law's 80 s"
+  },
+  {
+    "name": "LONE-SLEEP-hold-short",
+    "file": "src/net/loneSleep.js",
+    "old": "export const LONE_HOLD_MS = 5_000;",
+    "new": "export const LONE_HOLD_MS = 2_000;",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "a hold under the reaction feed's first seconds"
+  },
+  {
+    "name": "LONE-SLEEP-gate-open",
+    "file": "src/net/loneSleep.js",
+    "old": "?.[1] ?? 0) >= LONE_RELAY_MIN;",
+    "new": "?.[1] ?? 0) >= 0;",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "every relay, and none named"
+  },
+  {
+    "name": "LONE-SLEEP-gate-floor",
+    "file": "src/net/loneSleep.js",
+    "old": "export const LONE_RELAY_MIN = 260;",
+    "new": "export const LONE_RELAY_MIN = 259;",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "the live relay at the release's start"
+  },
+  {
+    "name": "LONE-SLEEP-relay-unread",
+    "file": "src/net/loneSleep.js",
+    "old": "  return !!s.ok && !!s.presence &&",
+    "new": "  return !!s.presence &&",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "the gate dropped from the law"
+  },
+  {
+    "name": "LONE-SLEEP-presence-unread",
+    "file": "src/net/loneSleep.js",
+    "old": "!!s.ok && !!s.presence && isCellRoom",
+    "new": "!!s.ok && isCellRoom",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "a channel counted"
+  },
+  {
+    "name": "LONE-SLEEP-room-unread",
+    "file": "src/net/loneSleep.js",
+    "old": "isCellRoom(s.room) && s.open",
+    "new": "s.open",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "a place counted"
+  },
+  {
+    "name": "LONE-SLEEP-open-unread",
+    "file": "src/net/loneSleep.js",
+    "old": "&& s.open && s.peers",
+    "new": "&& s.peers",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "my cell's socket's state dropped from the law"
+  },
+  {
+    "name": "LONE-SLEEP-peers-unread",
+    "file": "src/net/loneSleep.js",
+    "old": "&& s.peers === 0 && !s.rf",
+    "new": "&& !s.rf",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "a peer near, still quiet"
+  },
+  {
+    "name": "LONE-SLEEP-rf-unread",
+    "file": "src/net/loneSleep.js",
+    "old": "&& !s.rf && !s.whole",
+    "new": "&& !s.whole",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "a referee's cell, still quiet"
+  },
+  {
+    "name": "LONE-SLEEP-whole-unread",
+    "file": "src/net/loneSleep.js",
+    "old": "&& !s.whole && s.now",
+    "new": "&& s.now",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "a duel, still quiet"
+  },
+  {
+    "name": "LONE-SLEEP-hold-unread",
+    "file": "src/net/loneSleep.js",
+    "old": " && s.now >= s.holdUntil;",
+    "new": ";",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "a fight, still quiet"
+  },
+  {
+    "name": "LONE-SLEEP-fight-never",
+    "file": "src/net/loneSleep.js",
+    "old": "!!last && !!pose && LONE_FIGHT_KEYS.some(",
+    "new": "false && LONE_FIGHT_KEYS.some(",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "no counter ever moves"
+  },
+  {
+    "name": "LONE-SLEEP-fight-keys",
+    "file": "src/net/loneSleep.js",
+    "old": "['wd', 'an', 'cn', 'ar', 'hk', 'hu']",
+    "new": "['an', 'cn', 'ar', 'hk', 'hu']",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "the weapon drawn unread"
+  },
+  {
+    "name": "LONE-SLEEP-session-peers",
+    "file": "src/net/loneSleep.js",
+    "old": "peers: s.peers.size,",
+    "new": "peers: 0,",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "the session's peers unread"
+  },
+  {
+    "name": "LONE-SLEEP-session-halo-rf",
+    "file": "src/net/loneSleep.js",
+    "old": "  for (const [, h] of s._halo) if (h.ws && s._rfOn.get(h.ws)) rf = true;\n",
+    "new": "",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "a halo's referee unread"
+  },
+  {
+    "name": "LONE-SLEEP-session-own-rf",
+    "file": "src/net/loneSleep.js",
+    "old": "let rf = !!(s._ws && s._rfOn.get(s._ws));",
+    "new": "let rf = false;",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "my own cell's referee unread"
+  },
+  {
+    "name": "LONE-SLEEP-session-whole",
+    "file": "src/net/loneSleep.js",
+    "old": "whole: !!s.haloWhole,",
+    "new": "whole: false,",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "the host's haloWhole unread"
+  },
+  {
+    "name": "LONE-SLEEP-session-open",
+    "file": "src/net/loneSleep.js",
+    "old": "open: s.status === 'open' && !!s._ws && s._welcomed.has(s._ws),",
+    "new": "open: true,",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "my cell's socket down, still quiet"
+  },
+  {
+    "name": "LONE-SLEEP-session-gate",
+    "file": "src/net/loneSleep.js",
+    "old": "ok: !!s.loneOk,",
+    "new": "ok: true,",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "the welcome's version unread"
+  },
+  {
+    "name": "LONE-SLEEP-step-no-fight-hold",
+    "file": "src/net/loneSleep.js",
+    "old": "  if (fightMoved(s._pose, pose)) s._loneHold = now + LONE_HOLD_MS;\n",
+    "new": "",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "a swing said at the next minute"
+  },
+  {
+    "name": "LONE-SLEEP-step-say-swapped",
+    "file": "src/net/loneSleep.js",
+    "old": "? LONE_SAY : LONE_HOLD;",
+    "new": "? LONE_HOLD : LONE_SAY;",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "quiet and loud swapped"
+  },
+  {
+    "name": "LONE-SLEEP-no-wake",
+    "file": "src/net/loneSleep.js",
+    "old": "if (s._loneWas && s._pose && !s._dead && !loneOf(s, s._now())) s.sendPose(s._pose);",
+    "new": "if (s._loneWas && s._pose && !s._dead && !loneOf(s, s._now())) return;",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "a peer arrives to a ghost until my next frame"
+  },
+  {
+    "name": "LONE-SLEEP-wake-the-dead",
+    "file": "src/net/loneSleep.js",
+    "old": "if (s._loneWas && s._pose && !s._dead && !loneOf",
+    "new": "if (s._loneWas && s._pose && !loneOf",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "a join stands a fallen body up"
+  },
+  {
+    "name": "LONE-SLEEP-no-pose-ahead",
+    "file": "src/net/loneSleep.js",
+    "old": "      if (s._loneWas && s._welcomed.has(ws)) poseAhead(s, ws, send);\n",
+    "new": "",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "a word judged where I stood a minute ago"
+  },
+  {
+    "name": "LONE-SLEEP-ahead-not-lone",
+    "file": "src/net/loneSleep.js",
+    "old": "      if (s._loneWas && s._welcomed.has(ws)) poseAhead(s, ws, send);",
+    "new": "      if (s._welcomed.has(ws)) poseAhead(s, ws, send);",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "a pose ahead of every word, near or not"
+  },
+  {
+    "name": "LONE-SLEEP-no-mint-hold",
+    "file": "src/net/loneSleep.js",
+    "old": "      if (LONE_MINT_RE.test(frame)) s._loneHold = s._now() + LONE_HOLD_MS;\n",
+    "new": "",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "an encounter's first seconds at the lone interval"
+  },
+  {
+    "name": "LONE-SLEEP-ahead-every-time",
+    "file": "src/net/loneSleep.js",
+    "old": "  if (last && last.x === pose.x && last.z === pose.z && (last.mv | 0) === (pose.mv | 0)) return;\n",
+    "new": "",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "a pose ahead of every word"
+  },
+  {
+    "name": "LONE-SLEEP-ahead-clock-kept",
+    "file": "src/net/loneSleep.js",
+    "old": "  if (mine) { s._lastSent = { ...pose }; s._lastSentAt = now; s.stats.poses++; }",
+    "new": "  if (mine) { s._lastSent = { ...pose }; s.stats.poses++; }",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "the pose ahead does not restart the minute"
+  },
+  {
+    "name": "LONE-SLEEP-ping-not-quiet",
+    "file": "src/net/loneSleep.js",
+    "old": "/^\\{\"t\":\"(?:ping|hello|pose|lease)\"/;",
+    "new": "/^\\{\"t\":\"(?:hello|pose|lease)\"/;",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "every ping carries my pose"
+  },
+  {
+    "name": "LONE-SLEEP-pose-not-quiet",
+    "file": "src/net/loneSleep.js",
+    "old": "/^\\{\"t\":\"(?:ping|hello|pose|lease)\"/;",
+    "new": "/^\\{\"t\":\"(?:ping|hello|lease)\"/;",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "every lone pose carries another ahead of it"
+  },
+  {
+    "name": "LONE-SLEEP-online-hold-ignored",
+    "file": "src/net/online.js",
+    "old": "    if (lone === LONE_HOLD) return false;\n",
+    "new": "",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "sendPose ignores the law"
+  },
+  {
+    "name": "LONE-SLEEP-online-halos-told",
+    "file": "src/net/online.js",
+    "old": "for (const [room, h] of (lone === LONE_SAY ? [] : this._halo)) {",
+    "new": "for (const [room, h] of this._halo) {",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "an empty halo hears every lone pose"
+  },
+  {
+    "name": "LONE-SLEEP-online-no-wake",
+    "file": "src/net/online.js",
+    "old": "if (room != null) { this._receive(ev.data, room); loneWake(this); } });",
+    "new": "if (room != null) { this._receive(ev.data, room); } });",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "no frame wakes a lone session"
+  },
+  {
+    "name": "LONE-SLEEP-online-gate-unset",
+    "file": "src/net/online.js",
+    "old": "      if (primary) this.loneOk = loneSupported(relayV);",
+    "new": "      if (primary) this.loneOk = false;",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "the welcome's word never read"
+  },
+  {
+    "name": "LONE-SLEEP-online-primary-unwrapped",
+    "file": "src/net/online.js",
+    "old": "    try { ws = loneAhead(this, this._leased(new this._WS(`${this.url}/room/${this.room}${isLayered(this.room) && ly > 0 ? `?ly=${ly}` : ''}`), this.room), this.room); }",
+    "new": "    try { ws = this._leased(new this._WS(`${this.url}/room/${this.room}${isLayered(this.room) && ly > 0 ? `?ly=${ly}` : ''}`), this.room); }",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "my own cell's words carry no pose"
+  },
+  {
+    "name": "LONE-SLEEP-online-halo-unwrapped",
+    "file": "src/net/online.js",
+    "old": "    try { ws = loneAhead(this, this._leased(new this._WS(`${this.url}/room/${room}`), room), room); } catch {",
+    "new": "    try { ws = this._leased(new this._WS(`${this.url}/room/${room}`), room); } catch {",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "a halo's words carry no pose"
+  }
+]

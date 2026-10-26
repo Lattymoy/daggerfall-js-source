@@ -207,8 +207,8 @@
   {
     "name": "LEASE1-a-halo-skipped",
     "file": "src/net/online.js",
-    "old": "    try { ws = this._leased(new this._WS(`${this.url}/room/${room}`), room); } catch {",
-    "new": "    try { ws = new this._WS(`${this.url}/room/${room}`); } catch {",
+    "old": "    try { ws = loneAhead(this, this._leased(new this._WS(`${this.url}/room/${room}`), room), room); } catch {",
+    "new": "    try { ws = loneAhead(this, new this._WS(`${this.url}/room/${room}`), room); } catch {",
     "why": "a halo never handed the lease",
     "tests": [
       "test/net/lease1.test.js"

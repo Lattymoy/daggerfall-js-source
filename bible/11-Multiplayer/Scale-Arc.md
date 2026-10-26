@@ -4049,3 +4049,103 @@ Pins: `test/net/sleepcost.test.js` (4); PIN MOVED `test/net/scale5c.test.js`'s r
 `test/world/worldWide/wwr_regions.test.js`'s province shards; `tools/mutants/sleepcost.json` (9, all dead) and
 `tools/mutants/scale5c.json`'s SCALE5c-region-fifth-shard re-aimed at REGION_SPLIT.
 
+
+## LONE-SLEEP: a lone player's pose once a minute (2026-10-26 - client only; the relay unchanged, gated on world260)
+
+The owner, 2026-10-26, choosing among AUDIT RELEASE R4's levers (`01-Overview/audits/Audit-Release-R4.md` R4-3, lever 2):
+"Idle lone cells" - a player with nobody near sends their position only on the heartbeat, so their cells can sleep;
+full rate the moment someone comes near. No visible change to players. And, through the coordinator the same day: the
+hidden law gets no side channel (a hidden staff socket is never counted), and the interval is the longest one the
+readers allow, a constant of its own - HEARTBEAT_MS itself is everyone's and does not move.
+
+Not a DFU member: Daggerfall Unity has no multiplayer. Ledger A row (ONLINE1's).
+
+### What was true before
+
+A STILL player already said a pose only every HEARTBEAT_MS (20 s - `sendPose` skips an unmoved pose under it), its
+socket kept alive by the ping the runtime answers in the object's sleep
+(`server/src/index.js:"if (state.setWebSocketAutoResponse"`, RELAY-H1). A MOVING one said POSE_HZ (10) down its own
+cell's socket and each halo's when due (HALO-THIN), so a lone mover held its cell and its ~0.9 halo cells awake the
+whole time it moved (R4-3: ~1.9 objects, ~$7.8 a month a lone concurrent player). The runtime sleeps an object some ten
+seconds after its last event, so even a still lone player's heartbeat kept its cells awake about half the time.
+
+### The client (`src/net/loneSleep.js`, wired by `net/online.js`; no host grew)
+
+- **LONE** (`loneOf`): a presence session in a world cell, its own cell's socket open and welcomed by a relay at
+  LONE_RELAY_MIN (world260) or later (`loneOk`, read off the welcome's `v`), **no peer** in any room it holds (`peers`:
+  every room's roster, join and pose fill it - a peer anywhere I could see or be seen), no referee in any cell it holds
+  (`rf`: a duel's bout, a Wild zone fighter, a serpent's fight), no halo referee the host names (`haloWhole`), and
+  outside a fight's hold.
+- **Lone**, `src/net/online.js:"const lone = loneStep(this, pose, now);"`: the pose goes down my own cell's socket once
+  each `src/net/loneSleep.js:"export const LONE_POSE_MS = 60_000;"`, moved or not, and **down no halo** - an empty halo
+  hears no pose at all (its liveness is its ping, answered asleep). A crossing's promotion clears `_lastSentAt`, so the
+  cell crossed into hears me at once; a new halo's and a new room's hello carries my pose.
+- **The wake** (`loneWake`, after every frame read): a join, a welcome's roster, a stranger's pose or a referee's word
+  that ends the quiet says my pose at once - the notice's own turn, before the next frame - down my cell's socket and
+  each halo it is due to (one quiet a heartbeat or more always is), and POSE_HZ from the next frame. Never from a body
+  lying dead (the pose would stand it up).
+- **A fight**: `src/net/loneSleep.js:"export const LONE_HOLD_MS = 5_000;"` of POSE_HZ after a pose whose fight counters
+  moved (`wd`, `an`, `cn`, `ar`, `hk`, `hu` - that pose goes at once) and after a grant's mint is asked.
+- **A word carries my pose** (`src/net/loneSleep.js:"export function loneAhead(s, ws, room) {"`, beside LEASE1's
+  `_leased`, the same shape): any frame but a ping, a hello, a pose or a lease said down a cell's socket while lone goes
+  behind my current pose when that socket last heard me elsewhere, and restarts the minute. Chat, a door, a zone's word,
+  a grant, a raid's, a rite's - each is judged where I stand.
+- **Logout**: the leave closes the sockets; nobody is there to be told where I stood.
+
+### Every reader of a pose on the relay, read for the lone minute (none changed)
+
+| reader | safe how |
+|---|---|
+| the fan and its range (`server/src/index.js:"async _poseFrame(ws, a, m) {"`), the chat's and the foes' range | nobody to hear; a peer's arrival wakes me first |
+| SLAM8's keepalive and stop floors, the pose gate and its strikes | a minute's changed pose is a move; a minute apart is far under any gate; nothing is struck (pinned) |
+| the grant's cell and pixel (`server/src/index.js:"_grantHere(ws, a, id) {"`, `_grantMint`) | my pose goes ahead of the ask (pinned) |
+| raid, rite, star, serpent site, the Hour's door, the Wild zone's word, a duel's open | my pose ahead of the word; a referee's cell is never quiet (`rf`) |
+| SEAT1b's Watch (`server/src/index.js:"async _watchTick(ws, sub, p, moved, now) {"`) | it ticks on a pose that finds its last tick WATCH_TICK_MS (120 s) old, at that pose's pixel - a minute's poses tick every two minutes as a pose a second does (pinned: 5 receipts in 10 minutes either way); WATCH_MOVED_MS (300 s) is five of them |
+| the reaction feed (`server/src/staffFeeds.js:"export function staffReactPose(room, ws, p, now) {"`, REACTION_FEED_URL set) | the mint holds POSE_HZ for LONE_HOLD_MS, past `server/src/staffFeedLaw.js:"export const REACT_FIRST_MS = 3_000;"`; each first it times (a draw, a swing, a cast, an arrow, a blow either way) is a fight counter, said at once; a death is `sendDeath`'s, at once |
+| duelPose, wildPose, the serpent's trail (`server/src/index.js:"_refereesPoses() {"`) | a referee in the cell says `rf`, and a session hearing it is never quiet |
+| siege and Royal `refereeStep`, a court, the Hour, a ship, the arena, an instance | not world cells - never quiet |
+| the warden's throw (first frame in the room) | at most a minute late, nobody there to see it but me |
+| a newcomer's welcome roster | stands me where the relay last heard me; my answer to their join lands one round trip later (pinned) |
+| a hidden staff spectator, a staff follow | not counted (no side channel): it hears a pose a minute, under its silence law's `src/net/online.js:"export const PEER_TIMEOUT_MS = 4 * HEARTBEAT_MS;"` (80 s), so the target never vanishes - the accepted cost; the hub's where note (5 s moving) is unchanged |
+| the hub, the party's marks, travellers, the region channels | other sockets, unchanged |
+| the relay's count of poses (`_metrics.c.poses`) | falls - expected |
+| a dead socket | the relay detects none by silence (a failed send, or the runtime's close); liveness is the ping |
+
+**What bounds LONE_POSE_MS**: under PEER_TIMEOUT_MS (80 s) - a peer that does hold me (a hidden spectator) must never
+hide me between two; a whole part of WATCH_TICK_MS (120 s) - 90 s would tick the Watch every 180 s; over HEARTBEAT_MS,
+or nothing is saved. Sixty seconds is the longest that holds all three.
+
+### Mixed builds
+
+An older client (always POSE_HZ) is read as ever - the relay is unchanged. This client goes quiet only to a relay that
+welcomed its own cell's socket as world260 or later (`loneSupported`); to the live world259, or to one that names no
+version, it says POSE_HZ as before (pinned). No frame and no relay byte moved, so world260's row in
+`test/net/relayversion.test.js` is not re-hashed.
+
+### The saving, on R4's numbers
+
+R4-3: a lone mover holds ~1.9 objects awake ($4.11 an object-month at 128 MB) - ~$7.8 a month. With LONE-SLEEP its own
+cell hears an event a minute (~10 s awake of 60, ~0.17) and its halos none (~0.02 for a halo's hello at a crossing a
+13 km cell apart): **~0.19 objects, ~$0.8 a month, between encounters**. R4-2's estimate of ~3 grant asks a minute in
+the open (a mint and a free a foe, a renew each eight minutes) wakes the own cell too: some three wakes a minute, a
+mint's 5 s hold among them, ~35 s of 60 - **~0.6 objects, ~$2.5 a month, fighting through the open**. So a lone mover
+costs 68-90% less; a still lone player (a heartbeat a minute where it was every 20 s, its halos none) ~0.95 objects to
+~0.17. On R4-3's table, 30% of 1,000 concurrent players alone past the Bay (570 objects, ~$2,340 a month) become
+~60-180 objects: **~$1,600-2,100 a month saved per 1,000 concurrent players**. Today's population is the Bay's: in the
+evening's hour R4 measured, cells that never held more than one socket were 11% of the 162 awake cells' time (~18
+objects, ~$73 a month), most of which this takes. Measure it the week after release with R4's hour-by-object query.
+
+### Pins
+
+`test/net/lonesleep.test.js` (11): the interval and its bounds, the gate, the law clause by clause, the count (a lone
+session walking N seconds says ceil(N / LONE_POSE_MS) poses down its own cell's socket and none down a halo, its pings
+carrying none), mixed builds, the wake one notice after a join in a halo or my own cell or a stranger's pose (and never
+for the dead), referees, my own socket down, a fight and a mint, a word's pose ahead, and on the fake relay: poses a
+minute and 600 m apart taken whole, the Watch's receipts the same, and a peer arriving seeing the lone player where it
+stands one answer after the join. `tools/mutants/lonesleep.json` (39, all dead). Re-aimed by content (the socket's
+`loneAhead` wrap; all four dead): `tools/mutants/lease1.json` LEASE1-a-halo-skipped,
+`tools/mutants/auditscale2_client.json` AUDIT-SCALE2-R3-10-halo-at-the-place and -layer-unasked,
+`tools/mutants/scale5d.json` SCALE5d-hint-unasked. PIN MOVED (LONE-SLEEP): `test/net/staffpanel5drop_e2e.test.js`
+FOLLOW-DROP's "draws the target where they stand" - a target with nobody near but hidden watchers (the staff game
+hidden, or out of its room) is lone, and the follow draws it where its last pose put it, never more than a lone
+minute's walk behind; with the staff game standing in the cell, shown, where it stands, as before.

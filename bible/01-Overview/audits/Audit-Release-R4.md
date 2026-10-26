@@ -38,7 +38,7 @@ below).
 |---|---|---|---|---|
 | R4-1 | LOW | Nothing held the relay's timers to a count: GRANT-SLEEP took the one a cell held, and the next timer armed on a cell's or a province's path would keep it awake unseen | 14 timer sites, 0 intervals - unpinned / pinned by callee | FIXED (a census pin) |
 | R4-2 | MED | E2-1's fix writes one SQLite row at every grant ask that moves a cell's gate - the release's one new per-message storage write | ~3 rows a player-minute in the open; at most 2 a socket-second (the socket gate); ~$130 a month per 1,000 concurrent | MEASURED, pinned as a budget (one row an ask, one read an instance life, none a pose or a tally) |
-| R4-3 | HIGH (cost) | The spread: a 16-pixel cell is one Durable Object awake while anyone in it moves, and the land past the Bay is 30 times the Bay's cells - a player alone past the Bay holds about 1.9 cells awake (their own and the halo's) | Bay: ~0.15 awake cells a player online; alone past the Bay ~1.9 (~$7.8 a month a lone concurrent player) | RECORDED - proposals for the owner |
+| R4-3 | HIGH (cost) | The spread: a 16-pixel cell is one Durable Object awake while anyone in it moves, and the land past the Bay is 30 times the Bay's cells - a player alone past the Bay holds about 1.9 cells awake (their own and the halo's) | Bay: ~0.15 awake cells a player online; alone past the Bay ~1.9 (~$7.8 a month a lone concurrent player) | RECORDED - proposals for the owner; lever 2 TAKEN (LONE-SLEEP, 2026-10-26) |
 | R4-4 | LOW | Every boot (a returning one too) traces the picture, masks the relief and fits the Bay again on the page's thread, and starts the roads' build with a region scan and a print - the same answers each time | 0.3-0.9 s (trace with its relief, then the fit), 0.4 s (scan and print), in four tasks - none over a second | RECORDED - the cache is lane R1's |
 | R4-5 | LOW | A low-end machine (2 cores) builds the roads past the Bay on one worker beside the terrain worker: the first boot's 48 regions are some 28 minutes of one core | `roadsWorkerCount(2)` = 1; 853 s on two workers in the running game | RECORDED |
 | R4-6 | INFO | No retained cache of the new systems grows without bound across Tamriel: every pixel-, tile- and cell-keyed one is capped or keyed by a finite set | the walk: zones 91,836 of 262,144, heights 228,105 of 262,144, the heap after collection 17 MB lower than before it | VERIFIED |
@@ -112,6 +112,11 @@ is fixed in this pass: each lever is a wire or relay law change, and the owner's
 2. **A lone cell's pose at the heartbeat** - a client whose cell and halo hold no peer and no stream sends its pose on
    HEARTBEAT_MS alone, so the object sleeps between; the first peer's hello wakes it, and the client returns to POSE_HZ
    as it is told of them. Halves nothing in a crowd and nearly all of it on the open road.
+   **TAKEN** (the owner, 2026-10-26: "Idle lone cells"): LONE-SLEEP, `11-Multiplayer/Scale-Arc.md` - a lone session's
+   pose down its own cell's socket once a minute (`src/net/loneSleep.js:"export const LONE_POSE_MS = 60_000;"`, the
+   longest the silence law and the Watch's tick allow - HEARTBEAT_MS itself unmoved) and none down an empty halo; at once
+   on a peer's join, a referee's word, a fight or a word judged by where it stands. Client only, gated on world260; a
+   lone mover's ~1.9 objects to ~0.2-0.6.
 3. **A halo past the Bay only within one pixel** (RANGE_PIXELS 1 there): ~1.3 cells a lone player instead of ~1.9.
 
 ### R4-4 - the boot's continent, built again each boot (RECORDED)
