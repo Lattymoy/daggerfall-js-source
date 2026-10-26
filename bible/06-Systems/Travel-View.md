@@ -2921,6 +2921,32 @@ the walk asks the Bay's table.
   Leyawiin on the freeware's own ground); mutants `tools/mutants/road_beyond.json` (13, all dead). PIN MOVED: none;
   no record displaced (`mutantdrift`).
 
+## FAST-REFUSAL - no way by land past the Bay said at once (2026-10-26, the owner: "Take care of exclusions and gaps")
+
+ROAD-BEYOND bounded a plan past the Bay by a count of cells; a refusal spent all of it (300,000 cells, 1 to 4 seconds on a
+loaded machine) before it said "no way". The Bay's own refusals are its land's pieces (`routeGround` `apart`, AUDIT OW4
+J3); past the table there were none.
+
+- **The pieces** (`systems/travel/landPieces.js` apartPastBay). The land past the Bay is the trace's smooth law
+  (`world/tamriel/tamrielLand.js` landLaw): a point is land only in a square of the picture's centres with a land
+  centre at a corner (a square of four sea centres is the sea whole). Two neighbouring pixels stand in one square or in
+  two that touch, so their squares' land centres lie within PIECE_REACH (2) centres of each other: the trace's land
+  centres joined to every one within two are pieces no way on land crosses between. The Bay's own ground, its seam and
+  its blend (`tamrielGround.js` SEAM_PX, BLEND_PX) are one piece with every centre within BAY_PAD (3) of the Bay's
+  rectangle - the Bay's land is Daggerfall's, not the trace's. Made once a land (the trace's object and the fit's
+  numbers), 64,000 centres and a dozen joins each - milliseconds; every ask after it is a lookup. An end whose square
+  holds no land centre (the sea, an isle the trace does not draw) is in no piece known here and is never refused.
+- **The plan** (`planRoute`): an end past the table, no boat in the search (THE MERGE: a crossing is none of the land's
+  pieces), the host's ground handing its pieces (`apart`) - two ends in pieces that share none is `null` before a cell
+  is expanded. Alinor to the Imperial City: refused in a millisecond, where it spent the whole count.
+- **OPEN**: a split finer than the trace's grid is not a piece here. Mournhold to Ebonheart is one: Ebonheart's ground
+  (some 200,000 pixels and more) is cut from the mainland's (4,000,000 flooded, Ebonheart never reached) by water
+  narrower than two of the picture's centres, so the trace joins them and the plan still spends its count (1.8 s, load
+  average 25) before it refuses. Exact pieces need the ground's own pixels labelled - the roads' regions read every
+  pixel of the land as they are laid (`world/tamrielRoads.js`), the place to label them.
+- The four hosts: none changes. Pins `test/systems/travel/fast_refusal.test.js` (4, the last with ARENA2); mutants
+  `tools/mutants/fast_refusal.json` (6, all dead).
+
 ## MID-RING and FAR-FIELD - the horizon in layers, out to the mountains 300 km off (2026-10-26, the owner)
 
 The owner: "we need to find a way to expand the overworld view distance without killing performance. Currently tiles
