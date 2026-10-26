@@ -392,6 +392,7 @@ on:
       - "src/world/terrain/terrainSampler.js"
       - "src/world/terrain/terrainSurface.js"
       - "src/world/terrain/terrainTiles.js"
+      - "src/world/townShape.js"
       - "src/world/water/waterCorners.js"
       - "src/world/weather.js"
       - "src/systems/party/partyScale.js"
