@@ -32,7 +32,7 @@ same at every site it changed (`AUDIT TESA III E1-<n>`).
 | E1-1 | MED | TS2's road ring is mostly never paved, and where it is paved at a shore town it can pave the sea | OPEN - ROUTED to the roads' stream (`src/world/road/roadPainter.js`), the fix proven on a copy |
 | E1-2 | LOW | The fixed-city bench (`?exterior`) draws no wall on a Bay city's town map and walks its people through the wall | FIXED, pinned (4 mutants) |
 | E1-3 | MED | WW7-1/WW7-2's record says travellers, caravans, outlaws and divers live past the Bay; the merge kept P7's guard and none do | FIXED (the record); lifting the guard is the owner's call |
-| E1-4 | MED | The Deep Waters bake blends a coastal town's rect DFU's way while the streamed ground follows TS2's outline - the seafloor before 262 Bay towns shaped against a coastline that is gone | FIXED for the Bay, pinned (4 mutants); the Eltheric isles' half OPEN, routed |
+| E1-4 | MED | The Deep Waters bake blends a coastal town's rect DFU's way while the streamed ground follows TS2's outline - the seafloor before 262 Bay towns shaped against a coastline that is gone | FIXED for the Bay, pinned (4 mutants); the Eltheric isles' half FIXED by the terrain stream (stream G, 2026-10-26), pinned (7 mutants) |
 | E1-5 | LOW | The jungle's trails keep off a town's rect, not its outline | NOT REPRODUCED - a hypothesis, recorded |
 
 ### E1-1 - the road ring round a town's outline (MED, OPEN, routed)
@@ -100,11 +100,21 @@ from a player's IndexedDB. After: on the bake's own threshold, the bake's water 
 at all 339 pixels. Pins: `test/world/audittesa3e1.test.js` (the row, the lookup, the key, the version; with ARENA2 Antelibuton
 and Aldwall Rock equal to the streamed ground where the rect alone was thousands of samples off). Mutants E1-4 (4, all dead).
 
-OPEN, routed (the Eltheric isles; the terrain stream's or the owner's to choose): the Eltheric bake reads each template's rect
-(`etherWatersBake.js` etherPlaceRects, the templates' own map ids), while each isle's clone stands its own TS2 outline,
+The Eltheric isles (routed, then FIXED by the terrain stream - stream G, 2026-10-26): the Eltheric bake read each template's
+rect (`etherWatersBake.js` etherPlaceRects, the templates' own map ids), while each isle's clone stands its own TS2 outline,
 seeded by its own map id (`etherPlaces.js` etherPlaceId). Probe, 60 port isles sampled: bounds the same at every one, 3
-disagreeing, 564 samples. Two fixes: the clones keep DFU's rect blend (`terrainTiles.js` locationShapeField answers none for
-an isle's place, as for a capital), or the isles' bake is handed each isle's outline as it asks for it.
+disagreeing, 564 samples. Two fixes were open: the clones keep DFU's rect blend, or the isles' bake is handed each isle's
+outline as it asks for it. The second was taken (the coordinator's word: an outline rather than none). `etherPlaceRects`
+keeps each template's outline basis once (`terrainTiles.js` locationOutlineBasis - the occupied tiles on the outline's box
+and the tiles the stamp would lay, packed a bit a tile; 2,737 distinct of the freeware's 7,538 templates, 2.15 MB, 255 ms of
+packing on a 7.5 s walk), and `etherRectAt` draws the isle's outline under its own id and the rect setLocationTiles cuts
+under it (`outlineOfBasis`, `rectOfBasis`; locationShapeField is the basis under the location's own id, and carries it,
+unenumerated). The bounds move with the outline too (a ruin's by two tiles in the pin's fixture), so both are the isle's.
+After, over 120 port and ruin isles about Veilhaven on the freeware data: outline and bounds the clone's at 120 of 120; the
+bake's water off the streamed ground 3,691 samples at 13 isles before, 0 after. Pins: `test/world/audittesa3e1_ether.test.js`
+(3, a template and its clones built and stamped by setLocationTiles itself); mutants `tools/mutants/audittesa3e1_ether.json`
+(7, all dead). PIN MOVED: `test/world/terrain/bootrects.test.js` (the Bay's row carries its outline - E1's own change,
+whose source pin it had left).
 
 ### E1-5 - the jungle's trails and a town's outline (LOW, NOT REPRODUCED)
 

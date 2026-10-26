@@ -75,8 +75,10 @@ DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from `TerrainHelper.SetLo
   (`deepWatersClient.js` deepWatersLocationRects, `deepWatersBakeCache.js` rectsLookup), so it blended DFU's way and called
   the sea TS2 keeps land: 453,230 samples at 262 of the Bay's 339 coastal location pixels, the seafloor before them shaped
   against the old rect's coastline (up to 27 m off at the default depth). A row now carries the outline, the key its
-  bytes, BAKE_GENERATOR_VERSION 2. OPEN: the Eltheric isles' bake still reads its templates' rects, while each clone
-  stands its own outline (seeded by its own map id) - 3 of 60 sampled port isles, 564 samples.
+  bytes, BAKE_GENERATOR_VERSION 2. The Eltheric isles' bake read its templates' rects, while each clone stands its own
+  outline (seeded by its own map id) - 3 of 60 sampled port isles, 564 samples: it now draws each isle's outline and the
+  rect cut under it off its template's basis under the isle's own id (`terrainTiles.js` locationOutlineBasis,
+  outlineOfBasis, rectOfBasis; `03-World/Deep-Waters.md`).
 - **The road's ring** (`townRoadRing`, `roadPainter.js`): the mod's "Paint roads around locations" paves the tiles off the
   town's ground within two and a half of it - its outline's ring, where it paved the rect's padding. AUDIT TESA III E1-1
   (OPEN, routed to the roads' stream): the painter's FAST-SUITE guard passes by every tile off the centre cross, the

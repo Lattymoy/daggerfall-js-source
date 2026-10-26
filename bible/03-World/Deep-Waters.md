@@ -51,9 +51,20 @@ outline (`deepWatersClient.js` deepWatersLocationRects; `rectsLookup` hands it
 to `pixelWaterSampler`'s blend), the key fingerprints its bytes, and
 BAKE_GENERATOR_VERSION is 2, so no bake kept from before is read. The mod's own
 file knows no TS2, so the DW-A oracle's agreement now departs at those pixels
-too (its bounds hold room for it; not run here - no `DW_BAKE_FILE`). OPEN: the
-Eltheric isles' bake (`world/etherWatersBake.js` etherPlaceRects) reads its
-templates' rects, while each isle's clone stands its own outline.
+too (its bounds hold room for it; not run here - no `DW_BAKE_FILE`). The
+Eltheric isles' half (fixed by the terrain stream, the same day): the isles'
+bake had read its templates' rects alone, while each isle's clone stands its
+own outline, seeded by its own map id. `etherPlaceRects` keeps each template's
+outline BASIS once (`terrainTiles.js` locationOutlineBasis: its grid's occupied
+tiles and the tiles it stamps, packed a bit a tile, 2,737 distinct of 7,538
+templates, 2.15 MB on the freeware data), and `etherRectAt` draws the isle's
+outline and the rect cut under it off that basis under the isle's own id
+(`outlineOfBasis`, `rectOfBasis` - locationShapeField is the same basis under
+the location's own id). Over 120 port and ruin isles about Veilhaven the bake's
+outline and bounds are the clone's at every one, and the bake's water against
+the streamed ground went from 3,691 samples off (13 isles) to none. The isles'
+bake is built as it is asked and kept in memory alone, so no cache's version
+moves.
 
 THE FRAME (ETHER-DEEP, 2026-10-12; `03-World/Eltheric-Ocean.md`). The mod knows
 one map, IsValidMapPixel's 1000 x 500, and clamps every query to it. The
