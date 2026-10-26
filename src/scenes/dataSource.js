@@ -1299,7 +1299,7 @@ export async function pickTesArenaFiles() {
   return pickAssetFolder({
     title: t('menu.packs.attachTesArena', 'Attach TES: Arena'),
     blurb: `<p>${t('menu.packs.tesArenaPick', 'Pick the ARENA folder of The Elder Scrolls: Arena, which Bethesda gives away free (Arena106Setup.zip from Bethesda\u2019s site, or the free copy on Steam or GOG). Two of its files are kept: GLOBAL.BSA and PAL.COL. Nothing is uploaded. They are stored in this browser.')}</p>
-      <p style="color:#999">${t('menu.packs.tesArenaShows', 'With it, the Enemy Expansion\u2019s goblins, minotaurs, medusas and golems wear Arena\u2019s own sprites; without it, Daggerfall\u2019s. It shows the next time the game starts.')}</p>`,
+      <p style="color:#999">${t('menu.packs.tesArenaShows', 'With it, the Enemy Expansion\u2019s goblins, minotaurs, medusas and golems wear Arena\u2019s own sprites; without it, the original game\u2019s. It shows the next time the game starts.')}</p>`,
     store: (files) => storeAssets(TES_ARENA_STORE, files, (base) => TES_ARENA_FILES.includes(base.toUpperCase()), (f, base) => base.toUpperCase()),
     register: async () => ((await hasTesArena()) ? TES_ARENA_FILES.length : 0),
     doneText: null,

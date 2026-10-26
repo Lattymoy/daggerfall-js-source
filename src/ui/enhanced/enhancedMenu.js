@@ -3364,11 +3364,11 @@ function packsCard() {
   // ARN2 (Mac, 2026-10-26: "let's do arena"): TES: ARENA - Bethesda's free 1994 game, attached as ARENA2 is; the Enemy
   // Expansion's creatures wear its sprites (systems/enemyExpansion/dexArena.js), Daggerfall's without it
   c.append(el('h3', null, t('menu.packs.tesArena', 'TES: Arena')));
-  c.append(el('p', 'meta', t('menu.packs.tesArenaBlurb', 'The Elder Scrolls: Arena is free from Bethesda. Attach its ARENA folder and the Enemy Expansion’s creatures wear Arena’s own sprites; without it they wear Daggerfall’s. It shows the next time the game starts.')));
+  c.append(el('p', 'meta', t('menu.packs.tesArenaBlurb', 'The Elder Scrolls: Arena is free from Bethesda. Attach its ARENA folder and the Enemy Expansion’s creatures wear Arena’s own sprites; without it they wear the original game’s. It shows the next time the game starts.')));
   const arena = tesArenaAttached();   // null while the store is read
   if (arena) {
     c.append(el('p', 'meta', t('menu.packs.attached', 'Attached.')));
-    c.append(acts([remove(t('menu.packs.removeYes', 'Remove'), t('menu.packs.removeTesArena', 'Remove TES: Arena'), t('menu.packs.removeTesArenaBody', 'This clears Arena’s files from this browser. The Enemy Expansion’s creatures wear Daggerfall’s sprites from the next start.'), async (d) => { await d.clearStoredTesArena(); _tesArena = false; })]));
+    c.append(acts([remove(t('menu.packs.removeYes', 'Remove'), t('menu.packs.removeTesArena', 'Remove TES: Arena'), t('menu.packs.removeTesArenaBody', 'This clears Arena’s files from this browser. The Enemy Expansion’s creatures wear the original game’s sprites from the next start.'), async (d) => { await d.clearStoredTesArena(); _tesArena = false; })]));
   } else if (arena === false) {
     c.append(acts([{ label: t('menu.packs.attachTesArena', 'Attach TES: Arena'), onClick: async () => { const ds = await import('../../scenes/dataSource.js'); await ds.pickTesArenaFiles(); _tesArena = null; render(); } }]));
   }

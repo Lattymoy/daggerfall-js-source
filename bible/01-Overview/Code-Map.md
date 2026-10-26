@@ -218,6 +218,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 |---|---|
 | `src/formats/morrowind/` | Morrowind's formats: NIF, ESM, BSA, DDS, the body. |
 | `src/formats/save/` | Saving and loading. |
+| `src/formats/tesArena/` | TES: Arena's formats - GLOBAL.BSA, PAL.COL, CFA - for the Enemy Expansion's Arena sprites (ARN1). |
 | `src/formats/unity/` | Unity asset bundles, for the mods that ship them. |
 | `src/formats/worldData/` | DFU's WorldData JSON and its patches. |
 
