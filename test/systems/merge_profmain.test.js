@@ -38,7 +38,7 @@ test('THE MERGE: LootTables.OnLootSpawned is one list - a named subscriber and a
     registerTabledLootHandler('zz-merge-named', null);
     registerTabledLootHandler('zz-merge-after', null);
   }
-  assert.match(hostText('src/scenes/world.js'), /const offTable = tableLootSpawned\.add\(\(e\) => ohUpgrade\(e\.key, e\.items, \[\], e\.where, e\.rolls \?\? Math\.random, e\.roller \?\? playerEntity\)\);/, 'OH-E subscribes through the door');   // PIN MOVED (PARTY-LOOT): the raiser's dice and roller ride the event
+  assert.match(hostText('src/scenes/ohLootHost.js'), /const offTable = tableLootSpawned\.add\(\(e\) => ohUpgrade\(e\.key, e\.items, \[\], e\.where, e\.rolls \?\? Math\.random, e\.roller \?\? player\(\)\)\);/, 'OH-E subscribes through the door');   // PIN MOVED (HOST-SPLIT, EVENT-RULES): out of the world host whole   // PIN MOVED (PARTY-LOOT): the raiser's dice and roller ride the event
 });
 
 test('THE MERGE: CSA-H\'s rows are a provider in GetCustomItemsForGroup\'s one home - after the providers before its first row, in registration order, a row only while its mod is on, a second registration none', () => {

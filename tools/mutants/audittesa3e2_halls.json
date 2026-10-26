@@ -1,0 +1,272 @@
+[
+  {
+    "name": "E2-5-one-hall-unkept",
+    "file": "src/net/wild/wildLaw.js",
+    "old": "  for (const [o, who] of Object.entries(st.inside)) if (o !== h && who[acct] != null) { delete who[acct]; if (!Object.keys(who).length) { delete st.inside[o]; st.empty[o] = now; } }\n",
+    "new": "",
+    "tests": [
+      "test/net/audittesa3e2_halls.test.js"
+    ],
+    "note": "an account stands in every hall it ever named"
+  },
+  {
+    "name": "E2-5-crows-kept-a-death",
+    "file": "src/net/wild/wildLaw.js",
+    "old": "  if (st.piles[acct] && st.piles[acct].h !== h) wdunGone(st, acct, now);\n",
+    "new": "",
+    "tests": [
+      "test/net/audittesa3e2_halls.test.js"
+    ],
+    "note": "a crow over every hall an account claimed a death in"
+  },
+  {
+    "name": "E2-5-acct-locks-uncapped",
+    "file": "src/net/wild/wildLaw.js",
+    "old": "  for (const halls of Object.values(st.locks)) moved = capBy(halls, WDUN_ACCT_LOCKS_MAX, (u) => u) || moved;\n",
+    "new": "",
+    "tests": [
+      "test/net/audittesa3e2_halls.test.js"
+    ],
+    "note": "an account's locks unbounded"
+  },
+  {
+    "name": "E2-5-all-locks-uncapped",
+    "file": "src/net/wild/wildLaw.js",
+    "old": "  if (all.length > WDUN_LOCKS_MAX) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/net/audittesa3e2_halls.test.js"
+    ],
+    "note": "all locks unbounded"
+  },
+  {
+    "name": "E2-5-piles-uncapped",
+    "file": "src/net/wild/wildLaw.js",
+    "old": "  moved = capBy(st.piles, WDUN_PILES_MAX, (p) => p?.until ?? 0) || moved;\n",
+    "new": "",
+    "tests": [
+      "test/net/audittesa3e2_halls.test.js"
+    ],
+    "note": "the remains unbounded"
+  },
+  {
+    "name": "E2-5-inside-halls-uncapped",
+    "file": "src/net/wild/wildLaw.js",
+    "old": "  moved = capBy(st.inside, WDUN_HALLS_MAX, newest) || moved;\n",
+    "new": "",
+    "tests": [
+      "test/net/audittesa3e2_halls.test.js"
+    ],
+    "note": "the halls stood in unbounded"
+  },
+  {
+    "name": "E2-5-inside-accounts-uncapped",
+    "file": "src/net/wild/wildLaw.js",
+    "old": "  if (inside.length > WDUN_INSIDE_MAX) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/net/audittesa3e2_halls.test.js"
+    ],
+    "note": "the accounts standing in halls unbounded"
+  },
+  {
+    "name": "E2-5-empty-uncapped",
+    "file": "src/net/wild/wildLaw.js",
+    "old": "  moved = capBy(st.empty, WDUN_HALLS_MAX, (since) => since) || moved;\n",
+    "new": "",
+    "tests": [
+      "test/net/audittesa3e2_halls.test.js"
+    ],
+    "note": "the empties unbounded"
+  },
+  {
+    "name": "E2-5-eps-uncapped",
+    "file": "src/net/wild/wildLaw.js",
+    "old": "  moved = capBy(st.eps, WDUN_HALLS_MAX, (e) => e?.at ?? 0) || moved;\n",
+    "new": "",
+    "tests": [
+      "test/net/audittesa3e2_halls.test.js"
+    ],
+    "note": "the epochs unbounded"
+  },
+  {
+    "name": "E2-5-crows-uncapped",
+    "file": "src/net/wild/wildLaw.js",
+    "old": "  moved = capBy(st.crows, WDUN_HALLS_MAX, (u) => u) || moved;\n",
+    "new": "",
+    "tests": [
+      "test/net/audittesa3e2_halls.test.js"
+    ],
+    "note": "the crows unbounded"
+  },
+  {
+    "name": "E2-5-order-reversed",
+    "file": "src/net/wild/wildLaw.js",
+    "old": "  const order = keys.map((k) => /** @type {[string, number]} */ ([k, rank(map[k])])).sort((x, y) => x[1] - y[1]);",
+    "new": "  const order = keys.map((k) => /** @type {[string, number]} */ ([k, rank(map[k])])).sort((x, y) => y[1] - x[1]);",
+    "tests": [
+      "test/net/audittesa3e2_halls.test.js"
+    ],
+    "note": "the newest let go first"
+  },
+  {
+    "name": "E2-5-halls-doubled",
+    "file": "src/net/wild/wildLaw.js",
+    "old": "export const WDUN_HALLS_MAX = 2048;",
+    "new": "export const WDUN_HALLS_MAX = 4096;",
+    "tests": [
+      "test/net/audittesa3e2_halls.test.js"
+    ],
+    "note": "a count past the bytes"
+  },
+  {
+    "name": "E2-5-locks-doubled",
+    "file": "src/net/wild/wildLaw.js",
+    "old": "export const WDUN_LOCKS_MAX = 8192;",
+    "new": "export const WDUN_LOCKS_MAX = 16384;",
+    "tests": [
+      "test/net/audittesa3e2_halls.test.js"
+    ],
+    "note": "a count past the bytes"
+  },
+  {
+    "name": "E2-5-piles-doubled",
+    "file": "src/net/wild/wildLaw.js",
+    "old": "export const WDUN_PILES_MAX = 4096;",
+    "new": "export const WDUN_PILES_MAX = 8192;",
+    "tests": [
+      "test/net/audittesa3e2_halls.test.js"
+    ],
+    "note": "a count past the bytes"
+  },
+  {
+    "name": "E2-5-inside-doubled",
+    "file": "src/net/wild/wildLaw.js",
+    "old": "export const WDUN_INSIDE_MAX = 4096;",
+    "new": "export const WDUN_INSIDE_MAX = 8192;",
+    "tests": [
+      "test/net/audittesa3e2_halls.test.js"
+    ],
+    "note": "a count past the bytes"
+  },
+  {
+    "name": "E2-5-new-halls-doubled",
+    "file": "src/net/wild/wildLaw.js",
+    "old": "export const WDUN_NEW_HALLS_MAX = 64;",
+    "new": "export const WDUN_NEW_HALLS_MAX = 128;",
+    "tests": [
+      "test/net/audittesa3e2_halls.test.js"
+    ],
+    "note": "another day's count"
+  },
+  {
+    "name": "E2-5-save-a-second",
+    "file": "src/net/wild/wildLaw.js",
+    "old": "export const WDUN_SAVE_MS = 10_000;",
+    "new": "export const WDUN_SAVE_MS = 1_000;",
+    "tests": [
+      "test/net/audittesa3e2_halls.test.js"
+    ],
+    "note": "a write a second"
+  },
+  {
+    "name": "E2-5-meters-unbounded",
+    "file": "src/net/wild/wildLaw.js",
+    "old": "  else { m = { b: null, d: wdunDay(now), n: 0 }; if (meters.size >= WDUN_ACCTS_MAX) meters.delete(meters.keys().next().value); }",
+    "new": "  else { m = { b: null, d: wdunDay(now), n: 0 }; }",
+    "tests": [
+      "test/net/audittesa3e2_halls.test.js"
+    ],
+    "note": "the hub's meters grow without bound"
+  },
+  {
+    "name": "E2-5-day-never-turns",
+    "file": "src/net/wild/wildLaw.js",
+    "old": "  if (m.d !== wdunDay(now)) { m.d = wdunDay(now); m.n = 0; }\n",
+    "new": "",
+    "tests": [
+      "test/net/audittesa3e2_halls.test.js"
+    ],
+    "note": "an account's count never begins again"
+  },
+  {
+    "name": "E2-5-hub-acct-bucket-unread",
+    "file": "server/src/index.js",
+    "old": "    if (!this._wdunAcctPass(acct, now)) return;   // AUDIT TESA III E2-5: an account's tabs share its words\n",
+    "new": "",
+    "tests": [
+      "test/net/audittesa3e2_halls.test.js"
+    ],
+    "note": "an account's tabs each their own words"
+  },
+  {
+    "name": "E2-5-hub-meter-unread",
+    "file": "server/src/index.js",
+    "old": "    if (meter && meter.n >= WDUN_NEW_HALLS_MAX) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/net/audittesa3e2_halls.test.js"
+    ],
+    "note": "every made-up hall kept"
+  },
+  {
+    "name": "E2-5-hub-count-unkept",
+    "file": "server/src/index.js",
+    "old": "    if (meter) meter.n++;\n",
+    "new": "",
+    "tests": [
+      "test/net/audittesa3e2_halls.test.js"
+    ],
+    "note": "the day's new halls never counted"
+  },
+  {
+    "name": "E2-5-hub-write-a-word",
+    "file": "server/src/index.js",
+    "old": "    if (now - this._wdunSavedAt < (force || this._wdunOwed ? WDUN_SAVE_MS : WDUN_HERE_MS)) { if (force) this._wdunOwed = true; return; }",
+    "new": "    if (!force && now - this._wdunSavedAt < WDUN_HERE_MS) return;",
+    "tests": [
+      "test/net/audittesa3e2_halls.test.js"
+    ],
+    "note": "the record written at every word, as before"
+  },
+  {
+    "name": "E2-5-hub-owed-forgotten",
+    "file": "server/src/index.js",
+    "old": "{ if (force) this._wdunOwed = true; return; }",
+    "new": "{ return; }",
+    "tests": [
+      "test/net/audittesa3e2_halls.test.js"
+    ],
+    "note": "a word inside the window never written"
+  },
+  {
+    "name": "E2-5-hub-owed-unread",
+    "file": "server/src/index.js",
+    "old": "    if (wdunPrune(this._wdun, now) || this._wdunOwed) {",
+    "new": "    if (wdunPrune(this._wdun, now)) {",
+    "tests": [
+      "test/net/audittesa3e2_halls.test.js"
+    ],
+    "note": "the next word past the window writes nothing"
+  },
+  {
+    "name": "E2-5-hub-drain-silent",
+    "file": "server/src/index.js",
+    "old": "    if (last) { try { await this._wdunFlush(); await this._sweep(",
+    "new": "    if (last) { try { await this._sweep(",
+    "tests": [
+      "test/net/audittesa3e2_halls.test.js"
+    ],
+    "note": "the drain loses what is owed"
+  },
+  {
+    "name": "E2-5-hub-unbounded",
+    "file": "server/src/index.js",
+    "old": "  async _wdunSave(now, force = false) {\n    wdunBound(this._wdun);\n",
+    "new": "  async _wdunSave(now, force = false) {\n",
+    "tests": [
+      "test/net/audittesa3e2_halls.test.js"
+    ],
+    "note": "the record never bounded"
+  }
+]

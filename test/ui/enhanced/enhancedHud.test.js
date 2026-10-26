@@ -40,7 +40,7 @@ test('PX30 target: the blow you landed, and it FADES', () => {
   assert.equal(foeTarget(), null, 'a foe hitting ANOTHER foe is not your target');
   markFoeStruck(foe, { fromPlayer: true });
   // PIN MOVED (TELL9: the poise track rides the read - null for a foe with no brain, none drawn)
-  assert.deepEqual({ ...foeTarget(), fade: 1 }, { name: 'Grizzly Bear', health: 30, maxHealth: 50, fade: 1, poise: null });
+  assert.deepEqual({ ...foeTarget(), fade: 1 }, { name: 'Grizzly Bear', health: 30, maxHealth: 50, fade: 1, poise: null, traits: [], rules: [], ward: 0 });   // PIN MOVED - AUDIT WORLD-EVENTS L5-6: the traits' rules beside their words   // BOSS-TRAITS (PIN MOVED): its traits' words and its ward - none here
   // It goes. A bar that never leaves is furniture.
   tickFoeTarget(FOE_TARGET_SECONDS - 1);
   assert.ok(foeTarget(), 'still there a second before its time');

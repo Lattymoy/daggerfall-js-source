@@ -664,7 +664,7 @@ test('IF1: the four stride hosts ask ownsStride before the classic play and driv
   assert.match(ic, /floorMaterials\.push\(unityMaterialName\(a, r\)\);/);
   assert.match(ic, /const swapped = texRemap\.get\(base\) \?\? base;/, 'through the climate remap - DFU names the material after the swapped archive');
   assert.match(ic, /^\s+floorMaterials,/m, 'on the context');
-  assert.match(rd('src/ui/native/nativeInventory.js'), /_closeSilently\(\) \{\s*this\.done = true;[\s\S]{0,400}immersiveFootsteps\.onInventoryClose\(this\.hooks\.entity \?\? null\);/);
+  assert.match(rd('src/ui/native/nativeInventory.js'), /_closeSilently\(\) \{[\s\S]{0,400}this\.done = true;[\s\S]{0,400}immersiveFootsteps\.onInventoryClose\(this\.hooks\.entity \?\? null\);/);
   // AUDIT-IF F5: BOTH skins. The enhanced pack (the default) closes through inventoryDoor's own close, not _closeSilently.
   assert.match(rd('src/ui/inventoryDoor.js'), /closeSession\(deps, \{ dropped \}\);[\s\S]{0,700}immersiveFootsteps\.onInventoryClose\(deps\.entity \?\? null\);/, 'the enhanced skin\'s close refreshes too');
   assert.equal((rd('src/systems/inventorySession.js').match(/immersiveFootsteps/g) ?? []).length, 0, 'not in closeSession: inventorySession.js is upstream of transport.js, which the component imports');

@@ -58,7 +58,8 @@ import { chromium } from 'playwright';
 // climb's lane lit behind the climb and dark ahead of it (node's law, dawnClimb); from X's side its spire standing whole once
 // taken and a third before, and the shaft of first light past the head as it is taken; no seam where the ring closes, no
 // jump at the wrap, nothing before it kindles.
-import { DAWN_R, DAWN_INNER_M, DAWN_HZ, DAWN_CLIMB, DAWN_START, DAWN_SPIRE_H, dawnMarkAngle } from '../src/render/auraRing.js';   // SPIRE-FIRST: where Firstlight's Redoubts, spires and climb are, by node's own law
+import { DAWN_R, DAWN_INNER_M, DAWN_HZ, DAWN_CLIMB, DAWN_START, DAWN_SPIRE_H, dawnMarkAngle } from '../src/render/auraRing.js';
+import { SAGE_RUNE_R, SAGE_ROOTS, SAGE_ROOT_M, SAGE_ROOT_PAD, SAGE_PUFFS, SAGE_PUFF_A, sagePuff, sageRoot, sageClock } from '../src/render/auraRing.js';   // NIRNROOT-SAGE: where the nirnroots and the smoke are, by node's own law   // SPIRE-FIRST: where Firstlight's Redoubts, spires and climb are, by node's own law
 import { glyphEdges, CLOAK_GLYPH, RESONANCE_R, RESONANCE_COLUMNS, RESONANCE_CELLS, RESONANCE_PITCH_M, AURA_LIFT_M, resonanceLit, resonanceClock, MAELSTROM_R, MAELSTROM_ARMS, maelstromArmAngle, auraClock, WARREN_R, WARREN_RING_IN, WARREN_BUNNIES, WARREN_BUNNY_M, WARREN_BUNNY, WARREN_LEAN, WARREN_PRINTS, warrenBunny, warrenClock, warrenPrintsInto } from '../src/render/auraRing.js';   // WIKIMAID: where the rabbits and their tracks are, by node's own law   // SHADOW-CLOAK; SERPENT5 (AUDIT WORLD-REWARDS D3): the Maelstrom: where the wearer's glyph is, to read it back; CRYSTAL-FIST: which squares stand lit, by node's own law
 import http from 'node:http';
 import { readFileSync, existsSync } from 'node:fs';
@@ -87,7 +88,9 @@ try { pass = new AuraRingRenderer(gl); } catch (e) { err = String(e.message ?? e
 const persp = (f, a, n, fa) => { const t = 1 / Math.tan(f / 2); return new Float32Array([t / a, 0, 0, 0, 0, t, 0, 0, 0, 0, (fa + n) / (n - fa), -1, 0, 0, 2 * fa * n / (n - fa), 0]); };
 const look = (e, c) => { const u = [0, 1, 0]; const z = [e[0] - c[0], e[1] - c[1], e[2] - c[2]]; let l = Math.hypot(...z); z.forEach((v, i) => { z[i] = v / l; }); const x = [u[1] * z[2] - u[2] * z[1], u[2] * z[0] - u[0] * z[2], u[0] * z[1] - u[1] * z[0]]; l = Math.hypot(...x); x.forEach((v, i) => { x[i] = v / l; }); const y = [z[1] * x[2] - z[2] * x[1], z[2] * x[0] - z[0] * x[2], z[0] * x[1] - z[1] * x[0]]; return new Float32Array([x[0], y[0], z[0], 0, x[1], y[1], z[1], 0, x[2], y[2], z[2], 0, -(x[0] * e[0] + x[1] * e[1] + x[2] * e[2]), -(y[0] * e[0] + y[1] * e[1] + y[2] * e[2]), -(z[0] * e[0] + z[1] * e[1] + z[2] * e[2]), 1]); };
 const mul = (a, b) => { const o = new Float32Array(16); for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) for (let k = 0; k < 4; k++) o[c * 4 + r] += a[k * 4 + r] * b[c * 4 + k]; return o; };
-window.probe = { err, linked: pass ? AURA_KINDS.every((k) => { const P = pass.programOf(k, true); return !!P && gl.getProgramParameter(P.prog, gl.LINK_STATUS); }) : false,   // AURA-SPLIT (#1143): every look a program of its own, built here whatever the driver says ringR: AURA_RING_R, period: AURA_CLOCK_PERIOD, wardR: WARD_RING_R, runeR: WARD_RUNE_R, radR: RADIANCE_R, radH: RADIANCE_H, poolR: RADIANCE_POOL_R, cloakPoolR: CLOAK_POOL_R, cloakSigilY: CLOAK_SIGIL_Y, cloakSigilR: CLOAK_SIGIL_R, cloakH: CLOAK_H, cloakClaspY: CLOAK_CLASP_Y, cloakRipS: CLOAK_RIP_S };
+// AURA-SPLIT (#1143): every look a program of its own, built here whatever the driver says. NIRNROOT-SAGE: the comment that
+// said so stood mid-line here, inside the page's script, and ended the object literal early - the page never ran.
+window.probe = { err, linked: pass ? AURA_KINDS.every((k) => { const P = pass.programOf(k, true); return !!P && gl.getProgramParameter(P.prog, gl.LINK_STATUS); }) : false, ringR: AURA_RING_R, period: AURA_CLOCK_PERIOD, wardR: WARD_RING_R, runeR: WARD_RUNE_R, radR: RADIANCE_R, radH: RADIANCE_H, poolR: RADIANCE_POOL_R, cloakPoolR: CLOAK_POOL_R, cloakSigilY: CLOAK_SIGIL_Y, cloakSigilR: CLOAK_SIGIL_R, cloakH: CLOAK_H, cloakClaspY: CLOAK_CLASP_Y, cloakRipS: CLOAK_RIP_S };
 /** Draw the floor and the aura at the origin from \`eye\` at \`t\` seconds, kindled \`kindle\`; read back \`pts\` (world). */
 window.draw = (eye, t, kindle, pts, aura, at = [0, 0.2, 0], yaw = 0, lit = 1, torn = -1, extra = null, opts = {}) => {   // SHADOW-CLOAK (AUDIT): \`opts\` - strict (a point off the canvas throws, never reads black), mirror (the game's own projection and CW front face), none (the same frame with no aura at all)   // PRIMARCH: \`at\` - where the eye looks (the first person looks level); SHADOW-CLOAK: the wearer's facing, and the floor lit brighter so a shadow shows
   const proj = persp(0.9, 640 / 480, 0.05, 100), view = look(eye, at);
@@ -120,7 +123,7 @@ const server = http.createServer((req, res) => {
 });
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
 const port = server.address().port;
-const browser = await chromium.launch();
+const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});   // NIRNROOT-SAGE: a browser of the machine's own, as brokerProbe.mjs takes one
 try {
   const page = await browser.newPage({ viewport: { width: 640, height: 480 } });
   const errs = []; page.on('pageerror', (e) => errs.push(e.message));
@@ -509,6 +512,45 @@ try {
   const flCold = await fl(flTop, flHeld, 0, flRingPts, [0, 0, 0]), flBare = await fl(flTop, flHeld, 0, flRingPts, [0, 0, 0], true);
   check('unkindled, nothing stands', flCold.px.every((c, i) => Math.abs(lum(c) - lum(flBare.px[i])) < 6), `${Math.max(...flCold.px.map((c, i) => Math.abs(lum(c) - lum(flBare.px[i]))))}`);
   if (shotsAt) { await fl([0.4, 2.3, 3.6], flHeld, 1, [], [0, 0.7, 0]); await page.locator('#c').screenshot({ path: join(shotsAt, 'firstlight.png') }); }
+  // ── NIRNROOT-SAGE: SAGE'S SMOKE ──
+  const sg = (eye, t, k, pts, at, lit = 1, none = false) => page.evaluate(([e, tt, kk, ps, a, l, n]) => window.draw(e, tt, kk, ps, 'sagesmoke', a, 0, l, -1, null, { strict: true, none: n }), [eye, t, k, pts, at, lit, none]);
+  const sgT = 13.3, sgTop = [0, 3.4, 0.001], sgEye = [0, 1.2, 3.2], sgAt = [0, 0.9, 0];
+  const runeRing = Array.from({ length: 72 }, (_, i) => { const a = (i / 72) * Math.PI * 2; return [Math.cos(a) * SAGE_RUNE_R, 0.05, Math.sin(a) * SAGE_RUNE_R]; });
+  const sgRing = await sg(sgTop, sgT, 1, runeRing, [0, 0, 0]);
+  if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'sagesmoke_top.png') });
+  check('Sage\'s Smoke draws without a GL error', sgRing.error === 0 && sgRing.drawn === 1, `error ${sgRing.error}, drawn ${sgRing.drawn}`);
+  const greenish = (c) => c[1] > c[0] + 20 && c[1] > c[2] + 10;
+  const runesLit = sgRing.px.filter((c) => greenish(c) && c[1] > 120).length;
+  check('from above, small green runes glowing round the feet', runesLit >= 12, `${runesLit} of 72 bearings bright and green`);
+  // each nirnroot where node's law has it: a point in its bulb's glow (the badge's box (8.3, 0.9)), placed as the vertex
+  // half places it - square to the eye about the vertical, swayed by its turn, tilted
+  const rootGlow = (k, t, eye) => {
+    const r = sageRoot(k, sageClock(t, 0.37)), c = [r.x, r.y, r.z];
+    const te = [eye[0] - c[0], eye[2] - c[2]], tl = Math.hypot(...te), right = [-te[1] / tl, te[0] / tl];
+    let ox = ((8.3 - 8) / (16 * SAGE_ROOT_PAD)) * r.size * r.turn, oy = ((8 - 0.9) / (16 * SAGE_ROOT_PAD)) * r.size;
+    [ox, oy] = [ox * Math.cos(r.tilt) - oy * Math.sin(r.tilt), ox * Math.sin(r.tilt) + oy * Math.cos(r.tilt)];
+    return [c[0] + right[0] * ox, c[1] + oy, c[2] + right[1] * ox];
+  };
+  const glows = Array.from({ length: SAGE_ROOTS }, (_, k) => rootGlow(k, sgT, sgEye));
+  const sgSide = await sg(sgEye, sgT, 1, glows, sgAt);
+  if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'sagesmoke.png') });
+  check('every nirnroot where the law has it, round the waist, glowing green', sgSide.px.filter(greenish).length >= SAGE_ROOTS - 1, JSON.stringify(sgSide.px));
+  // the smoke: puffs in their thick middle years, from the side over the dark floor - each a grey over the bare frame
+  const thick = Array.from({ length: SAGE_PUFFS }, (_, m) => sagePuff(m, sageClock(sgT, 0.37))).filter((q) => q.age > 0.15 && q.age < 0.55 && q.z > -0.2).map((q) => [q.x, q.y, q.z]);
+  const sgSmoke = await sg(sgEye, sgT, 1, thick, sgAt), sgBareSide = await sg(sgEye, sgT, 1, thick, sgAt, 1, true);
+  const greyed = sgSmoke.px.filter((c, i) => lum(c) > lum(sgBareSide.px[i]) + 15).length;
+  check('smoke billowing about the body, a grey over what is behind it', thick.length >= 3 && greyed >= Math.ceil(thick.length * 0.6), `${greyed} of ${thick.length} puffs seen (cover ${SAGE_PUFF_A} at most)`);
+  // the wearer's own first person: looking ahead, no smoke over the view
+  const ahead = [[0, 1.7, 2], [0.5, 1.5, 2], [-0.5, 1.9, 2], [0.3, 1.2, 1.5]];
+  const sgFirst = await sg([0, 1.7, 0.05], sgT, 1, ahead, [0, 1.6, 2]), sgFirstBare = await sg([0, 1.7, 0.05], sgT, 1, ahead, [0, 1.6, 2], 1, true);
+  const sgVeil = Math.max(...sgFirst.px.map((c, i) => Math.abs(lum(c) - lum(sgFirstBare.px[i]))));
+  check('from the wearer\'s own eye, no smoke over the view ahead', sgVeil <= 12, `${sgVeil}`);
+  // no jump at the wrap (the runes and the nirnroots both sides of it), nothing before it kindles
+  const sgB = await sg(sgTop, p.period - 1 / 240, 1, runeRing.filter((_, i) => i % 6 === 0), [0, 0, 0]), sgA = await sg(sgTop, 1 / 240, 1, runeRing.filter((_, i) => i % 6 === 0), [0, 0, 0]);
+  const sgJump = Math.max(...sgB.px.map((c, i) => Math.abs(lum(c) - lum(sgA.px[i]))));
+  check('no jump where the clock wraps', sgJump <= 45, `${sgJump}`);
+  const sgCold = await sg(sgEye, sgT, 0, [...glows, ...thick], sgAt), sgColdBare = await sg(sgEye, sgT, 0, [...glows, ...thick], sgAt, 1, true);
+  check('unkindled, nothing stands', sgCold.px.every((c, i) => Math.abs(lum(c) - lum(sgColdBare.px[i])) < 6), `${Math.max(...sgCold.px.map((c, i) => Math.abs(lum(c) - lum(sgColdBare.px[i]))))}`);
   check('no page error', errs.length === 0, errs.join('; '));
 } finally {
   await browser.close();

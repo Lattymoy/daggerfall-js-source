@@ -80,6 +80,8 @@ test('SPAWN-SHORE by source: both of the host\'s gates ask the ground - the buil
   assert.match(w, /const _spawnGround = createSpawnGround\(woods\);/);
   const i = w.indexOf('const spawnedDungeonAt = (px, py) => {');
   assert.match(w.slice(i, w.indexOf('\n  };\n', i)), /CLIMATES\.Ocean \|\| !_spawnGround\(px, py\)\) return null;/);
-  const j = w.indexOf('function tvSpawnAt(px, py) {');
-  assert.match(w.slice(j, w.indexOf('\n  }\n', j)), /CLIMATES\.Ocean \|\| !_spawnGround\(px, py\) \|\| tvSpawnGone/);
+  // PIN MOVED (GROUND-AGREE): the Overworld's far found spawn is the shared spawn law's (world/spawnGroundPlace.js), handed
+  // this plateau test - test/scenes/fb1024_groundagree.test.js runs the law's own sea and plateau gates
+  assert.match(w, /const tvSpawnAt = spawnGroundPlace\.spawnAt;/, 'the Overworld\'s far found spawn');
+  assert.match(w, /plateauDry: _spawnGround,/, 'handed the same plateau test');
 });

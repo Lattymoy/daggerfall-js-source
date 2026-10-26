@@ -159,8 +159,8 @@
   {
     "name": "WBX6-the-switch-ignored",
     "file": "src/systems/courtRules.js",
-    "old": "export const regenBarred = () => _on;",
-    "new": "export const regenBarred = () => false;",
+    "old": "  if (!_on || !(n > 0)) return n;\n  const onPlayer",
+    "new": "  if (true || !_on || !(n > 0)) return n;\n  const onPlayer",
     "tests": [
       "test/world/gate/wbx_gate_fixes.test.js"
     ]

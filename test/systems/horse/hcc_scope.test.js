@@ -26,6 +26,7 @@ const MOD = {
   'horseCartLaw.js': 'src/systems/horse/horseCartLaw.js',
   'horseFollow.js': 'src/systems/horse/horseFollow.js',
   'horseCart.js': 'src/systems/horse/horseCart.js',
+  'trailingPoseCache.js': 'src/systems/horse/trailingPoseCache.js',   // STALE-PARK: the trailing wagon's cached pose
   'wagon41214.js': 'src/systems/wagon/wagon41214.js',
   'horseCartPool.js': 'src/scenes/horseCartPool.js',
   'quat.js': 'src/world/quat.js',
@@ -311,7 +312,7 @@ const IL = {
   'TrailingWagonRuntime::IsPhysicalTransportStateValid': { port: 'isPhysicalTransportStateValid', mod: 'horseCart.js' },
   'TrailingWagonRuntime::CacheMovingWorldPose': { port: 'cacheMovingWorldPose', mod: 'horseCart.js' },
   'TrailingWagonRuntime::DeployFromBestAvailablePose': { port: 'deployFromBestAvailablePose', mod: 'horseCart.js' },
-  'TrailingWagonRuntime::CaptureBestAvailableDeploymentPose': { port: 'captureBestAvailableDeploymentPose', mod: 'horseCart.js' },
+  'TrailingWagonRuntime::CaptureBestAvailableDeploymentPose': { port: 'captureBestAvailableDeploymentPose', mod: 'trailingPoseCache.js' },
   'TrailingWagonRuntime::CommitDeployment': { port: 'commitDeployment', mod: 'horseCart.js' },
   'TrailingWagonRuntime::UpdateDeployedPresentation': { port: 'updateDeployedPresentation', mod: 'horseCart.js' },
   'TrailingWagonRuntime::UpdateStationaryHorsePresentation': { port: 'updateStationaryHorsePresentation', mod: 'horseCart.js' },

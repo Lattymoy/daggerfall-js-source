@@ -83,7 +83,7 @@ test('HALO-WAIT: a crossing into a cell whose halo is still minting WAITS from i
 test('HALO-WAIT: a pixel that moves on into a THIRD cell while waiting (a corner at speed) is joined by the same rule for that cell - waited for while its halo is connecting, then promoted, nothing torn down', () => quiet(async () => {
   const { s, sockets, clock, mints } = traveller();
   const st = { key: null, since: 0 };
-  const sock = (room) => sockets.find((w) => w.url.endsWith(`/room/${room}`) && !w.closed);
+  const sock = (room) => sockets.find((w) => w.url.split('?')[0].endsWith(`/room/${room}`) && !w.closed);
   const mintOf = (room) => mints.find((m) => m.room === room);
   hostFrame(s, { x: 40, y: 200 }, clock.t, st);
   sockets[0].open(); await flush(); mints[0].answer(); await flush();
@@ -114,7 +114,7 @@ test('HALO-WAIT: the wait is BOUNDED - a halo still connecting HALO_WAIT_MS afte
   clock.t = opened + HALO_WAIT_MS; hostFrame(s, { x: 49, y: 200 }, clock.t, st);
   assert.equal(s.room, 'world:3,12', 'joined'); assert.notEqual(s._ws, sockets[1]);
   assert.deepEqual(sockets[1].closed, { code: 1000, reason: 'leaving' }, 'the halo that never opened is closed');
-  assert.ok(sockets.slice(2).some((w) => w.url.endsWith('/room/world:3,12')), 'a socket of its own for the cell stood in');
+  assert.ok(sockets.slice(2).some((w) => w.url.split('?')[0].endsWith('/room/world:3,12')), 'a socket of its own for the cell stood in');
   for (const m of mints) m.answer();   // the mints the sockets awaited, let go, so no wait outlives the pin
   await flush();
 }));
@@ -137,8 +137,8 @@ test('HALO-WAIT: only a halo with a socket CONNECTING is waited for - one droppe
     sockets[0].drop(1006);
     // my own cell's retry: a socket again, still connecting - a socket, and no open cell to wait in
     const since = s._halo.get('world:3,12').since;
-    while (!sockets.slice(2).some((w) => w.url.endsWith('/room/world:2,12')) && clock.t - since < 7000) { clock.t += 250; hostFrame(s, { x: 47, y: 200 }, clock.t, st); }
-    assert.ok(s._ws && s._ws.url.endsWith('/room/world:2,12'), 'my cell retried'); assert.equal(s.status, 'connecting');
+    while (!sockets.slice(2).some((w) => w.url.split('?')[0].endsWith('/room/world:2,12')) && clock.t - since < 7000) { clock.t += 250; hostFrame(s, { x: 47, y: 200 }, clock.t, st); }
+    assert.ok(s._ws && s._ws.url.split('?')[0].endsWith('/room/world:2,12'), 'my cell retried'); assert.equal(s.status, 'connecting');
     assert.equal(s._halo.get('world:3,12').status, 'connecting', 'and the halo still connecting');
     clock.t += 100; hostFrame(s, { x: 48, y: 200 }, clock.t, st);
     clock.t += 500; hostFrame(s, { x: 48, y: 200 }, clock.t, st);

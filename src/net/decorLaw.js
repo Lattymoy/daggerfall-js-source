@@ -414,8 +414,19 @@ export const decorYardHighOk = (pl) => Array.isArray(pl?.pos) && Number(pl.pos[1
 /** YARD-HEIGHT (AUDIT Y3): the refusal in its one sentence - the decorator's (scenes/homeYards.js YARD_TOO_HIGH) and the
  *  service's `yard-high` (net/accountClient.js), as townSeatLaw.js's rosters' words are the board's and the service's. */
 export const DECOR_YARD_HIGH_WHY = `Too high. Yard decorations can be at most ${DECOR_YARD_HIGH} m above the ground.`;
-/** The most pieces one town's yards answer at once. */
-export const DECOR_YARDS_TOWN_MAX = 2_000;
+/**
+ * THE MOST YARD PIECES ONE TOWN HOLDS, and so the most its yards answer at once (server-account/src/decor.js yardRowsSql).
+ * YARD-TOWN (2026-10-25, players: "Decorative items placed in any house yard in that area disappear after restarting the
+ * game, even when the Saved to the Realm notification pops up"; "More than half of Daggerfall city cannot place outdoor
+ * decorations"): the answer was 2,000 pieces, read in building-key order, and placing never asked it - Daggerfall's
+ * city held 3,357 on 2026-10-19 (migration 0136), so every piece in its eastern blocks (a key's high byte is the block's
+ * column - talkTopics.js makeBuildingKey) was written, paid for and never served again. Now the bound is the town's
+ * whole yards, refused at the placement (`yard-town-full`), so nothing written is ever left out of the answer. It is as
+ * many rows as the town's built row keeps (YARD-SNAP, keptBoard.js KEPT_BOARD_MAX_BYTES, 1.5 MB), with room to spare:
+ * Daggerfall's live rows take 179 bytes there and its widest 187; the widest the yard's law takes (a 24-character id,
+ * the widest place) 216, so 6,944 of those fit.
+ */
+export const DECOR_YARDS_TOWN_MAX = 6_500;
 
 /** A yard piece's place, projected (decorPlaceOf's), or null - one that holds things, serves a craft, gives light or
  *  stands past the yard's bound is no yard's. */

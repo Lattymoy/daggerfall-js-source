@@ -326,8 +326,8 @@
   {
     "name": "WATCH-FIX-summons-waiting-uncounted",
     "file": "src/scenes/cityGuards.js",
-    "old": " + spawning.filter((p) => p.defender).length + _summonsWaiting;",
-    "new": " + spawning.filter((p) => p.defender).length;",
+    "old": " + spawning.filter((p) => p.defender && !p.bearer).length + _summonsWaiting;",
+    "new": " + spawning.filter((p) => p.defender && !p.bearer).length;",
     "tests": [
       "test/systems/livingWorld/watchfix_watch.test.js",
       "test/systems/auditdisc19.test.js"

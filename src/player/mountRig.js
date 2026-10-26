@@ -39,6 +39,7 @@ import { ownsShip } from '../systems/banking.js';
 import { horseOffsetHeight, dockedLargeHudHeight } from '../ui/hud/hudLarge.js';   // ROAD-D D10: LargeHUDOffsetHorse; AUDIT-RR F25: EnhancedRiding's own arm asks LargeHUDDocked (EnhancedRiding.cs:256-257)
 import { mwViewHides, mwViewDrawSaddle } from './mwView.js';   // AUDIT-EOTB2: the sprite body on screen hides the FPV horse (Eye Of The Beholder's ToggleBillboard); COATS3D: the 3D horse in its place
 import { SOUND } from '../systems/soundClips.js';
+import { horseVolume } from '../systems/animalVolume.js';   // HORSE-VOL: the mount's neigh, voices and hooves on the Audio tab's Horse Volume
 import { isShipAvailable } from '../systems/ship.js';   // RR1: TransportManager.ShipAvailiable, the delegate
 import { NATIVE_SCREEN_HEIGHT } from '../systems/riding.js';   // RR2: the 200-line native screen the sprite scales by
 import { RR_RIDING, rrTerrainAngle, rrTerrainFollow, rrRidingYAdj, rrRidingNeckBand } from '../systems/roleplayRealism/rrRealism.js';   // RR2: EnhancedRiding's draw laws
@@ -220,19 +221,20 @@ export function createMountRig({
         walking: !!player.rideWalking,   // HORSE-WALK: the walk's slow clop and its slower nod
         soundVolume: ridingVolumeScale(),   // AUDIT-TO1 J1: 0 for the length of an accelerated journey
       });
+      const horse = horseVolume();   // HORSE-VOL: the Audio tab's Horse Volume - the neigh, the voices and the hooves alike
       // HORSE-VOICE: with the port's own sounds on, the neigh's moment says a voice of the horse's mood and the hooves
       // follow the ground - off, DFU's neigh and clop exactly
       const voiced = !!soundsOn() && isRiding(player.transportMode);
       if (voiced) {
         installHorseSounds(audio);
         const shots = voice.update(dt, { neigh: r.neigh, clip: r.clip, moving: r.playing && !player.standing, running: player.isRunning, pitch: r.pitch, paused: ridePaused, breath: horseBreath?.()?.amount ?? null, foesNear });
-        for (const s of shots) audio.playOneShot(s.clip, s.volume * RIDING_VOLUME_SCALE * ridingVolumeScale(), s.pitch);
+        for (const s of shots) audio.playOneShot(s.clip, s.volume * RIDING_VOLUME_SCALE * ridingVolumeScale() * horse, s.pitch);
       } else {
         voice.hush();   // AUDIT SOUNDSCAPE H1: nothing owed from before is said when the voices come back
-        if (r.neigh) audio.playOneShot(SOUND.AnimalHorse, RIDING_VOLUME_SCALE);
+        if (r.neigh) audio.playOneShot(SOUND.AnimalHorse, RIDING_VOLUME_SCALE * horse);
       }
-      if (voiced) audio.setLoop('riding', r.playing ? hoofClipFor(r.clip, surfaceKind?.()) : null, { volume: r.volume, pitch: r.pitch });
-      else audio.setLoop('riding', r.playing ? SOUND[r.clip] : null, { volume: r.volume, pitch: r.pitch });
+      if (voiced) audio.setLoop('riding', r.playing ? hoofClipFor(r.clip, surfaceKind?.()) : null, { volume: r.volume * horse, pitch: r.pitch });
+      else audio.setLoop('riding', r.playing ? SOUND[r.clip] : null, { volume: r.volume * horse, pitch: r.pitch });
       // TR-AUDIT F-E1: OnGUI (:293) refuses to draw AT ALL while the
       // game is paused - `!GameManager.IsGamePaused` sits in the same
       // condition as the Repaint test. Under an open window DFU shows

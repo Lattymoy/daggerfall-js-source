@@ -93,7 +93,9 @@ test('GOLD-MARKET book: the service\'s no gives the gold back and lets the buy g
     const s2 = realmSide(1000);
     const storage = memStorage();
     let online = false;
-    const d2 = { account: () => 'acct-1', buy: async () => (online ? (landed ? sold({ repeat: true, piece: { provenance: PROV, recipe: 'dagger:iron', quality: 1, seed: 7, wear: 1000 } }) : sold({ piece: { provenance: PROV, recipe: 'dagger:iron', quality: 1, seed: 7, wear: 1000 } })) : { ok: false, error: 'offline' }) };
+    // VENDOR-LOST: the repeat of a sale made before the join names no sequence, as the service answers it - the record has
+    // not moved since the join read it (a repeat that names one is the settle's own sale, landed: fb1025_vendorlost.test.js)
+    const d2 = { account: () => 'acct-1', buy: async () => (online ? (landed ? sold({ repeat: true, realm: undefined, piece: { provenance: PROV, recipe: 'dagger:iron', quality: 1, seed: 7, wear: 1000 } }) : sold({ piece: { provenance: PROV, recipe: 'dagger:iron', quality: 1, seed: 7, wear: 1000 } })) : { ok: false, error: 'offline' }) };
     const b2 = createMarketBook({ door: d2, storage, character: () => 'realm-1', sleep: noWait, realm: s2.realm, wallet: s2.wallet });
     const minted = [];
     const k = await b2.buy({ region: DF, listing: 'G1', units: 5, max: 400, hubs: HUBS, currency: 'gold' }, (p) => minted.push(p));

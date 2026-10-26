@@ -37,8 +37,8 @@
   {
     "name": "SHIPSTORE-decor-storage-not-storage",
     "file": "src/scenes/worldModes.js",
-    "old": "interiorInventory({ loot: { items: () => interiorDecor.itemsOf(id), storage: true } });",
-    "new": "interiorInventory({ loot: { items: () => interiorDecor.itemsOf(id) } });",
+    "old": "interiorInventory({ loot: { items: () => interiorDecor.itemsOf(id), storage: true } })",
+    "new": "interiorInventory({ loot: { items: () => interiorDecor.itemsOf(id) } })",
     "tests": ["test/systems/item/shipstore.test.js"]
   }
 ]

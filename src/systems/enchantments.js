@@ -62,7 +62,7 @@ import { applyDressStanding } from './clothingStanding.js';   // DRESS1 (2026-09
 // in the graph; re-exported for this module's many consumers.
 import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';
 import { SOCIAL_GROUP_COUNT } from '../formats/factionFile.js';   // AUDIT 63 F6: PlayerEntity.cs:128-129 sizes reactionMods at socialGroupCount = 11
-import { regenBarred } from './courtRules.js';   // WBX6: the Burning Court keeps no regeneration
+import { regenShare } from './courtRules.js';   // WBX6 / EVENT-RULES: a made level holds regeneration
 import { ITEM_TEMPLATES, templateByIndex, mendOrder, mintCondition, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from './item/itemTemplates.js';   // MEND-WORN: the mend order's one home, and the smith's refusal
 import { WEAPONS } from '../characters/weapons.js';   // MEND-WORN / MEND-ARMOUR: a tick is the classic Dagger's share
 import { repoolWeapon } from './conditionRepair.js';   // MEND-WORN: a weapon on its row's pool moves before a mend on the pool, as before a wear
@@ -537,11 +537,11 @@ const REGISTRY = new Map([
   [T.RegensHealth, {
     flags: PAYLOAD.Held,   // RegensHealth.cs:34 - the round tick is its held bundle's
     magicRound({ param, round, entity, ctx }) {
-      if (round % REGEN_PER_ROUNDS !== 0 || regenBarred()) return;   // WBX6: not in the Burning Court
+      if (round % REGEN_PER_ROUNDS !== 0) return;
       const regen = param === 0
         || (param === 2 && (ctx?.inDarkness?.() ?? false))
         || (param === 1 && (ctx?.inSunlight?.() ?? false));
-      if (regen && entity.health < entity.maxHealth) entity.health = Math.min(entity.maxHealth, entity.health + 1);
+      if (regen && entity.health < entity.maxHealth) entity.health = Math.min(entity.maxHealth, entity.health + regenShare(1, 'item', entity));   // WBX6 / EVENT-RULES: held in a made level (systems/courtRules.js)
     },
   }],
   /** VampiricEffect.cs - two params. AtRange (0): every 4 rounds drain

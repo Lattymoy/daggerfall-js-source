@@ -346,7 +346,7 @@ test('NAME-F2: the filter is in the RELAY’s graph, and the entry pane is the o
   const code = pane.replace(/^\s*\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');   // its own prose is not its wiring
   assert.equal((code.match(/entryVerdict\(/g) ?? []).length, 0, 'the ladder is not walked here at all');
   assert.match(code, /const who = storedSession\(appStorage\(\)\);/, 'what the pane reads is the SESSION');
-  assert.match(code, /disabled: !who(?: \|\| save\.testRoom)?,/, 'and signed out is a dead button, not a warning beside a live one (AUDIT SET D4: a Test Room character\'s too)');
+  assert.match(code, /disabled: !who(?: \|\| button\.offlineOnly)?,/, 'and signed out is a dead button, not a warning beside a live one (AUDIT SET D4: a Test Room character\'s too, and a realm copy\'s)');
 });
 
 test('AUDIT-CHATR F6: the Online pane\u2019s copy says what sanitizeName actually does', () => {

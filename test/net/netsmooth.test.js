@@ -42,7 +42,7 @@ function edge() {
   const cellRoom = `world:${cellX},${cellZ}`, haloRoom = `world:${cellX + 1},${cellZ}`;
   s.join(cellRoom, me); sockets[0].open();
   s.setHalo([haloRoom]);
-  const halo = sockets.find((w) => w.url.endsWith(haloRoom)); halo.open();
+  const halo = sockets.find((w) => w.url.split('?')[0].endsWith(haloRoom)); halo.open();
   const at = (dx, mv = 1) => ({ ...me, x: me.x - 1600 + dx, mv });
   for (const w of [sockets[0], halo]) w.receive({ t: 'welcome', id: 'mac-0001', peers: [{ id: 'eve-0003', name: 'Eve', look: null, pose: at(0, 0) }], host: null, world: null });
   return { s, cell: sockets[0], halo, cellRoom, haloRoom, clock, at, eve: () => s.peers.get('eve-0003') };

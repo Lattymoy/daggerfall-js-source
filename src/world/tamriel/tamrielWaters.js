@@ -446,8 +446,9 @@ export function tamrielWatersShaper(px, py, span) {
  * are laid there. Only where the carve stands (the landforms' row on); never a location's own rect. Answers how many.
  * @param {Uint8Array} tileData @param {number} px @param {number} py
  * @param {?{xMin: number, xMax: number, yMin: number, yMax: number}} [rect]
+ * @param {number} [tdDim] @param {?Uint8Array} [paths] RIVER-FORDS: the tiles the road painter wrote (GRASS-PATH1), kept
  */
-export function paintTamrielWaters(tileData, px, py, rect = null, tdDim = HEIGHTMAP_DIMENSION) {
+export function paintTamrielWaters(tileData, px, py, rect = null, tdDim = HEIGHTMAP_DIMENSION, paths = null) {
   if (bayEdgeDistance(px, py) <= SEAM_PX + BLEND_PX) return 0;
   const law = tamrielWaters();
   if (!law) return 0;
@@ -458,11 +459,18 @@ export function paintTamrielWaters(tileData, px, py, rect = null, tdDim = HEIGHT
   for (let y = 0; y < tdDim; y++) {
     for (let x = 0; x < tdDim; x++) {
       if (rect && x > rect.xMin && x < rect.xMax && y > rect.yMin && y < rect.yMax) continue;
+      if (paths && onPath(paths, x, y, span)) continue;   // RIVER-FORDS: a road's or a track's own tiles keep their ground - the ford
       if (!wetAt(law, rids, lids, px + x / span, py + 1 - y / span)) continue;
       tileData[y * tdDim + x] = WATER; n++;
     }
   }
   return n;
+}
+/** RIVER-FORDS (AUDIT RELEASE R1-3): is a sample a corner of a tile the road painter wrote (`paths`, GRASS-PATH1's record,
+ *  `span` tiles a side) - a crossing's road kept a ford, never painted over by the channel. */
+function onPath(paths, x, y, span) {
+  for (let ty = y - 1; ty <= y; ty++) for (let tx = x - 1; tx <= x; tx++) if (tx >= 0 && ty >= 0 && tx < span && ty < span && paths[ty * span + tx]) return true;
+  return false;
 }
 /** Is a Bay point in a channel or a lake (the compiled law's own water, not the trace's)? */
 function wetAt(law, rids, lids, x, y) {

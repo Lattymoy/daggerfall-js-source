@@ -1,0 +1,308 @@
+[
+  {
+    "name": "AUDIT-WE-L4-1-pursuit-while-following",
+    "file": "src/characters/enemy/enemyMotor.js",
+    "old": "      if (this.canAct && !follows) this._classicTick(",
+    "new": "      if (this.canAct) this._classicTick(",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L4-2-a-loss-without-a-body",
+    "file": "src/systems/raidingParties.js",
+    "old": "    if (e.foe.dead) { e.done = true; if (e.foe.corpse) raid.lost = (raid.lost | 0) + 1; }",
+    "new": "    if (e.foe.dead) { e.done = true; raid.lost = (raid.lost | 0) + 1; }",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L4-2-the-refugee-culled",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (!f.placed && !f.managed && !f.refugee && _playerDist > _cullAt &&",
+    "new": "      if (!f.placed && !f.managed && _playerDist > _cullAt &&",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L4-5-the-swing-reaches-a-refugee",
+    "file": "src/combat/friendlyFire.js",
+    "old": "export const sparedBySwing = (t) => isShipmate(t) || isRefugee(t);",
+    "new": "export const sparedBySwing = (t) => isShipmate(t);",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L4-5-the-shaft-reaches-a-refugee",
+    "file": "src/combat/friendlyFire.js",
+    "old": "export const sparedByPlayer = (t) => !!t && (t.defender === true || sparedBySwing(t));",
+    "new": "export const sparedByPlayer = (t) => !!t && (t.defender === true || isShipmate(t));",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L4-9-all-on-one-point",
+    "file": "src/systems/raidingParties.js",
+    "old": "{ at: alongWay(o.way, Math.max(0, o.guide - 2 - i * RAID_REFUGEE_GAP_M)),",
+    "new": "{ at: alongWay(o.way, Math.max(0, o.guide - 2)),",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L4-9-the-guide-off-before-they-stand",
+    "file": "src/systems/raidingParties.js",
+    "old": "  if (alive.length && still <= 0) {",
+    "new": "  if (alive.length) {",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L4-9-mine-kept-standing-by",
+    "file": "src/systems/raidingParties.js",
+    "old": "  if (sharedClockOn() && !runsRaid(raid)) { cancelPending(); letGoAllies(raidKey(raid)); return 'standing-by'; }",
+    "new": "  if (sharedClockOn() && !runsRaid(raid)) { cancelPending(); return 'standing-by'; }",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L3-12-stood-at-dt-0",
+    "file": "src/systems/raidingParties.js",
+    "old": "    if (!(dt > 0)) return 'idle';",
+    "new": "    if (!(dt >= 0)) return 'idle';",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L3-12-the-breather-on-the-wall",
+    "file": "src/systems/raidingParties.js",
+    "old": "  objOf(raid).clock += dt;",
+    "new": "  objOf(raid).clock = localNow() / 1000;",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L4-4-the-null-kept",
+    "file": "src/systems/raidingParties.js",
+    "old": "  if (o[field] === undefined || (o[field] === null && o.clock >= o.siteAt)) {",
+    "new": "  if (o[field] === undefined) {",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L4-4-the-feet-alone",
+    "file": "src/scenes/raidSitesHost.js",
+    "old": "Number.isInteger(raid.py) ? townAtPixel(raid.px, raid.py) : null)",
+    "new": "Number.isInteger(raid.py) ? null : null)",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L4-3-the-edge-raw-cell",
+    "file": "src/scenes/raidSitesHost.js",
+    "old": "?.cell ?? streetEdgeCell(t.nav, s.label, s.id, k);",
+    "new": "?.cell ?? [[Math.floor(t.nav.width / 2), t.nav.height - 2], [t.nav.width - 2, Math.floor(t.nav.height / 2)], [Math.floor(t.nav.width / 2), 1], [1, Math.floor(t.nav.height / 2)]][k];",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L4-8-the-pocket-a-square",
+    "file": "src/scenes/raidSitesHost.js",
+    "old": "    if (id && size.get(id) >= min) return",
+    "new": "    if (id) return",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L4-8-the-places-unread",
+    "file": "src/scenes/raidSitesHost.js",
+    "old": "    if (pl?.net && pl.square?.cell) return { label: pl.net, id: pl.netId, square: pl.square.cell, exits: pl.exits ?? null };\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L4-6-dismissed-in-a-lull",
+    "file": "src/scenes/cityGuards.js",
+    "old": "      if (g.dead || !g.defender || g.leaving || g.raidBearer) continue;",
+    "new": "      if (g.dead || !g.defender || g.leaving) continue;",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L4-6-counted-a-defender",
+    "file": "src/scenes/cityGuards.js",
+    "old": "guards.filter((g) => !g.dead && g.defender && !g.leaving && !g.raidBearer).length",
+    "new": "guards.filter((g) => !g.dead && g.defender && !g.leaving).length",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L4-6-enlisted-by-a-crime",
+    "file": "src/scenes/cityGuards.js",
+    "old": "    if (g.raidBearer) return;   // AUDIT WORLD-EVENTS L4-6",
+    "new": "    // AUDIT WORLD-EVENTS L4-6",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L4-6-a-walk-off-a-whole-standard",
+    "file": "src/systems/raidingParties.js",
+    "old": "    if (kind === 'bearer' && foe.entity && objOf(raid).share < 1) foe.entity.health",
+    "new": "    if (kind === 'bearer' && foe.entity && objOf(raid).share < -1) foe.entity.health",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L4-7-the-shift-unheard",
+    "file": "src/systems/raidingParties.js",
+    "old": "    shift(o.post);\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L3-10-the-stall-never-timed",
+    "file": "src/systems/raidingParties.js",
+    "old": "  const stalled = o.stall >= RAID_WAVE_STALL_S;",
+    "new": "  const stalled = false;",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L3-7-packs-before-the-ledger",
+    "file": "src/systems/raidingParties.js",
+    "old": "  if (raidRelayOn() && !_relay.has(key)) return 'idle';\n",
+    "new": "",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L3-5-the-takeover-a-raider",
+    "file": "src/systems/raidingParties.js",
+    "old": "leader: !!f.entity?.raidLeader, routed: false",
+    "new": "routed: false",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L3-6-the-reader-wave-unread",
+    "file": "src/systems/raidingParties.js",
+    "old": " || (raid.wv ?? -1) >= (raid.plan ??= raidWavePlan(raid.attackAmount)).sizes.length;",
+    "new": ";",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L3-4-the-fold-dropped",
+    "file": "src/systems/raidingParties.js",
+    "old": "  if (kind === 'defend') { if (w.b === 1) raid.sacked = true; else raid.stAt = t; }",
+    "new": "  if (kind === 'defend') { if (w.b !== 1) raid.stAt = t; }",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L3-9-the-kind-unchecked",
+    "file": "src/systems/raidingParties.js",
+    "old": "    if (!raid || raid.staff || RAID_KIND_ORDER[w.k] !== kindOf(raid)) continue;",
+    "new": "    if (!raid || raid.staff) continue;",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L3-8-held-off-the-word-alone",
+    "file": "src/systems/raidingParties.js",
+    "old": "b.foe.entity.maxHealth); raid.stAt = localNow(); }",
+    "new": "b.foe.entity.maxHealth); }",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L3-11-asked-unsaved",
+    "file": "src/systems/raidingParties.js",
+    "old": "...(r.asked ? { asked: true } : {}), ...(r.ow ?",
+    "new": "...(r.ow ?",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L3-13-the-lines-off-the-last-word",
+    "file": "src/systems/raidingParties.js",
+    "old": "  raid.ow = [w[0], Math.max(was[1], w[1]), Math.max(was[2], w[2])];",
+    "new": "  raid.ow = [w[0], w[1], w[2]];",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L3-13-the-stale-word-kept",
+    "file": "src/systems/raidingParties.js",
+    "old": "  return p && localNow() - p.at <= RAID_WORD_STALE_MS ? [p.k, p.a, p.b] : null;",
+    "new": "  return p ? [p.k, p.a, p.b] : null;",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L3-14-the-receipt-held-unsent",
+    "file": "src/systems/raidingParties.js",
+    "old": "    host().onRaidReceipt?.(f.r, c, raidHeldFor(c.w));",
+    "new": "    host().onRaidReceipt?.(f.r, c);",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L6-5-the-goal-through-the-chain",
+    "file": "src/characters/enemy/enemyTargets.js",
+    "old": "    if (bout !== true && !civilian && !star && !goal) {",
+    "new": "    if (bout !== true && !civilian && !star) {",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L6-5-no-priority",
+    "file": "src/characters/enemy/enemyTargets.js",
+    "old": "    if (goal) priority += RAID_GOAL_PRIORITY;",
+    "new": "    if (goal) priority += 0;",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WE-L6-5-never-turned",
+    "file": "src/systems/raidingParties.js",
+    "old": "    if (!e.foe.raidTurned && !e.foe.dead && (e.foe.entity?.health ?? 1) < (e.foe.entity?.maxHealth ?? 1)) e.foe.raidTurned = true;",
+    "new": "    if (false) e.foe.raidTurned = true;",
+    "tests": [
+      "test/systems/auditwe_raid.test.js"
+    ]
+  }
+]

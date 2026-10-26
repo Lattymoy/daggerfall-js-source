@@ -121,10 +121,10 @@ function herbNode() {
   return nodeKey({ kind: 'herb', x: 300, y: 200, day: today(), slot: p.slot });
 }
 
-test('AUDIT 29 A5: a dungeon nobody has vouched for gives an account four veins a day - its id the client\'s word, so invented dungeons buy four Silver, not the day', async () => {
+test('AUDIT 29 A5: a dungeon nobody has vouched for gives an account four veins a day - its id the client\'s word, so invented dungeons buy four deep veins, not the day (DEEP-OPEN: each of the whole deep table, where it was Silver)', async () => {
   const s = await stand();
   const mac = await s.seated('Mac');
-  s.setXp(mac, xpForRank(25));
+  s.setXp(mac, xpForRank(70));   // PIN MOVED (DEEP-OPEN, Professions-Arc.md section 53): an unvouched dungeon's vein draws tiers 3-6 now - rank 70 opens them all
   assert.equal(DEEP_UNCONFIRMED_PER_DAY, 4);
   clock(secondAt(today() * DAY + 60, 2));
   for (let i = 0; i < DEEP_UNCONFIRMED_PER_DAY; i++) {

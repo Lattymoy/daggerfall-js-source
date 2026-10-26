@@ -361,7 +361,7 @@ test('SEA-BOUNTY the Wanted section in the shipwright\'s window: a freeport\'s t
 test('SEA-BOUNTY the seams by source: the relay passes the room and signs it with the killer\'s character; the fall\'s batch writes the kill; the routes; the world hands the sea\'s host the record\'s gold acts and the harbourmaster\'s tab its Wanted section; the deploy watches the law (mutants: each seam)', () => {
   const relay = src('server/src/index.js');
   assert.match(relay, /wildBlow\(st, a\.sub, tb\.sub, \{ d: d\.d, r, held, wa: a\.wa \?\? null, kin, rid, room: a\.key \}, now\)/);
-  assert.match(relay, /mintWildReceipt\(\{ f: fall\.fallen, c: fall\.ci, k: fall\.killer, r: fall\.r, w: fall\.w, wt: fall\.wt, m: fall\.m, kc: fall\.kc \}/);
+  assert.match(relay, /mintWildReceipt\(\{ f: fall\.fallen, c: fall\.ci, k: fall\.killer, r: fall\.r, w: fall\.w, wt: fall\.wt, m: fall\.m, kc: fall\.kc, g: fallenGone \}/);   // PIN MOVED (WILD-REJOIN): and whether its fallen had gone from the room
   const ref = src('src/net/wild/wildRef.js');
   assert.match(ref, /killerId: a\.id, kc: a\.ci \|\| '', m: typeof room === 'string' \? room : '',/);
   assert.match(ref, /kc: typeof v\.kc === 'string' \? v\.kc : '', m: typeof v\.m === 'string' \? v\.m : '',/);

@@ -87,7 +87,7 @@ test('YARD-SHED the kept answer: kept YARDS_KEPT_S and asked again after, forgot
   await flying;
   await yardsKept(ctx, 7, 2000);
   assert.equal(reads, 5, 'the answer asked before the write was not kept');
-  assert.match(src('server-account/src/index.js'), /: await removeDecor\(hctx, who\.player, body\);\n\s+forgetYards\(body\?\.mapId\);/, 'every decor write forgets its town');
+  assert.match(src('server-account/src/index.js'), /: await removeDecor\(hctx, who\.player, body\);\r?\n\s+if \(path !== '\/v1\/homes\/decor\/use'\) \{[^\n]*\n\s+forgetYards\(body\?\.mapId\);/, 'a decor write forgets its town; using a chest does not');
   rows = [];
 });
 

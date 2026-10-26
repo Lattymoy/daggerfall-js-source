@@ -137,8 +137,8 @@
   {
     "name": "AUDITWW-F5-the-falls-line",
     "file": "src/scenes/world.js",
-    "old": "top: f.top }), gateLineId(day)); },",
-    "new": "top: f.top })); },",
+    "old": "boss: gateBossOf(day).name }), gateLineId(day)); },",
+    "new": "boss: gateBossOf(day).name })); },",
     "tests": [
       "test/world/worldWide/auditww.test.js"
     ]

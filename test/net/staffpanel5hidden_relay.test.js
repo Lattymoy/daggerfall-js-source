@@ -13,6 +13,9 @@ import { fakeRoom, fakeRooms } from '../fakeRoom.mjs';
 import { SOCIAL_ROOM, SOCKETS_MAX, CLOSE_POLICY, CLOSE_BUSY, HELLO_WAIT_MS, chatRegionRoom, FOES_STALE_MS, PIXEL_UNITS, LAYER_HEADER, LAYER_ASK_HEADER, LAYER_EMPTY_HEADER } from '../../src/net/wire.js';
 import { egBreachOfRoom } from '../../src/net/eliteGates/egLaw.js';
 import * as H from '../../src/net/hubShards.js';
+/** COST-1: these pins hold a region's channel SPLIT - the way back, the relay's REGION_SHARDS - so their worlds name every region, and a region's shard is asked of the same split (a region's channel is whole by default: test/net/cost1_regions.test.js). */
+const SPLIT_VARS = { REGION_SHARDS: 'all' };
+const SPLIT = H.regionsSharded(SPLIT_VARS.REGION_SHARDS);
 import { mintHideOrder, mintOrder, importPublicKeyB64 } from '../../src/net/identityToken.js';
 import { privateInteriorPrefix, privateInteriorRoom } from '../../src/net/privateInterior.js';
 import { instanceOwnerOf, instanceRoomOf } from '../../src/net/instanceRoom.js';
@@ -109,7 +112,7 @@ async function world(fn) {
   Date.now = () => clock;
   try {
     return await quiet(async () => {
-      const W = fakeRooms({ now: () => clock });
+      const W = fakeRooms({ now: () => clock, vars: SPLIT_VARS });
       const settle = async () => {
         for (let i = 0; i < 6; i++) {
           for (const [k, r] of W.made) if (H.isChannelShard(k)) await r.room._hubUpFlush();
@@ -195,10 +198,10 @@ test('STAFF-PANEL5-HIDDEN THE ACCEPTANCE, a region: a hidden link on its region 
   await world(async ({ W, link, say, drop }) => {
     const RB = chatRegionRoom(5);
     const bus = W.room(RB);
-    const kg = H.shardOf(RB, GHOST_SUB);
+    const kg = H.shardOf(RB, GHOST_SUB, SPLIT);
     const MARK = { px: 207, py: 213, fx: 12, fy: 250, h: 64, m: 1, tv: 1 };
     let gameName = null;
-    for (let i = 0; i < 4096 && !gameName; i++) if (H.shardOf(RB, `acct-r${i}`) === kg) gameName = `r${i}`;
+    for (let i = 0; i < 4096 && !gameName; i++) if (H.shardOf(RB, `acct-r${i}`, SPLIT) === kg) gameName = `r${i}`;
     const game = await link(gameName, kg, { kind: 'linked' });
     const raw = await link('rawreg', RB, { hs: undefined, kind: 'linked' });
     const ghost = await link('staffer', kg, { ...HIDE, peer: GHOST_ID, kind: 'linked' });
@@ -210,7 +213,7 @@ test('STAFF-PANEL5-HIDDEN THE ACCEPTANCE, a region: a hidden link on its region 
     assert.ok(ofT(ghost, 'trav').some((f) => f.id === `peer-${gameName}`), 'the staff socket hears the region\'s marks');
     await say(raw, RB, { t: 'find', all: 1 });
     assert.deepEqual(ofT(raw, 'found').at(-1).l.map((p) => p.name).sort(), [gameName, 'rawreg'].sort(), 'the Region list leaves it out');
-    const late = await link('latereg', H.shardOf(RB, 'acct-latereg'));
+    const late = await link('latereg', H.shardOf(RB, 'acct-latereg', SPLIT));
     assert.ok(!(welcomeOf(late).tr ?? []).some((t) => t.id === GHOST_ID));
     await drop(ghost, kg);
     for (const ws of [game, raw, late]) assert.deepEqual(leaks(ws), [], `${ws.att.id} heard nothing of it`);

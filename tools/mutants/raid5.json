@@ -1,0 +1,247 @@
+[
+  {
+    "name": "RAID5-the-kind-a-draw",
+    "file": "src/systems/raidKinds.js",
+    "old": "return RAID_KIND_ORDER[tupleHash(['raid-kind', key, raid.startMinute, raid.attackAmount, raid.type]) % RAID_KIND_ORDER.length];",
+    "new": "return RAID_KIND_ORDER[Math.floor(Math.random() * RAID_KIND_ORDER.length)];",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-the-party-left-out-of-the-tuple",
+    "file": "src/systems/raidKinds.js",
+    "old": "raid.startMinute, raid.attackAmount, raid.type]",
+    "new": "raid.startMinute, raid.attackAmount]",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-a-kind-on-a-bare-host",
+    "file": "src/systems/raidingParties.js",
+    "old": "(raid.kind ??= raid.staff || host().sites ? raidKindOf(raid) : 'classic')",
+    "new": "(raid.kind ??= raidKindOf(raid))",
+    "tests": ["test/systems/raid5_kinds.test.js", "test/systems/raid1_raidingParties.test.js"]
+  },
+  {
+    "name": "RAID5-the-leaders-one-not-taken",
+    "file": "src/systems/raidKinds.js",
+    "old": "const n = Math.max(0, (tg | 0) - 1), w = RAID_WAVES_FOR(tg | 0);",
+    "new": "const n = Math.max(0, tg | 0), w = RAID_WAVES_FOR(tg | 0);",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-the-shares-uneven",
+    "file": "src/systems/raidKinds.js",
+    "old": "Math.floor(n / w) + (i < n % w ? 1 : 0)",
+    "new": "Math.floor(n / w) + (i === 0 ? n % w : 0)",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-the-wave-off-by-one",
+    "file": "src/systems/raidKinds.js",
+    "old": "const wave = plan.ends.findIndex((e) => k < e);",
+    "new": "const wave = plan.ends.findIndex((e) => k <= e);",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-the-ways-end-not-kept",
+    "file": "src/systems/raidKinds.js",
+    "old": "  return [...pts[pts.length - 1]];\n}",
+    "new": "  return null;\n}",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-the-detail-count-off-by-one",
+    "file": "src/systems/raidKinds.js",
+    "old": "{ n: o.wave + 1, of: o.of }",
+    "new": "{ n: o.wave, of: o.of }",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-the-word-lets-the-classic-through",
+    "file": "src/world/raidShared.js",
+    "old": "if (!Number.isInteger(k) || k < 1 || k >= RAID_OBJ_KINDS) continue;",
+    "new": "if (!Number.isInteger(k) || k < 0 || k >= RAID_OBJ_KINDS) continue;",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-the-words-bound-off-by-one",
+    "file": "src/world/raidShared.js",
+    "old": "a < 0 || a > RAID_OBJ_MAX ||",
+    "new": "a < 0 || a >= RAID_OBJ_MAX ||",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-a-duplicate-word-kept",
+    "file": "src/world/raidShared.js",
+    "old": "if (!raidLikeKey(key) || seen.has(key)) continue;\n    if (!Number.isInteger(k) || k < 1",
+    "new": "if (!raidLikeKey(key)) continue;\n    if (!Number.isInteger(k) || k < 1",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-the-waves-size-ignored",
+    "file": "src/systems/raidingParties.js",
+    "old": ": Math.min(at.left, MAX_RAID_ENEMIES) - standing - puppets.length;",
+    "new": ": MAX_RAID_ENEMIES - standing - puppets.length;",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-the-breather-skipped",
+    "file": "src/systems/raidingParties.js",
+    "old": "  if (t < o.breather) return 'idle';",
+    "new": "",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-the-leader-untraited",
+    "file": "src/systems/raidingParties.js",
+    "old": " giveBossTraits(foe.entity, rollBossTraits(RAID_LEADER_TRAITS, rnd())); }",
+    "new": " }",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-the-held-reputation-unpaid",
+    "file": "src/systems/raidingParties.js",
+    "old": "    if (held) grantRaidHeldReputation(host().reputation?.() ?? null, raid.regionIndex);",
+    "new": "",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-the-wave-said-never",
+    "file": "src/systems/raidingParties.js",
+    "old": "  const was = raid.ow ?? [-1, -1, -1];",
+    "new": "  const was = raid.ow ?? [-1, 0, 0];",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-the-bearer-unstood",
+    "file": "src/systems/raidingParties.js",
+    "old": "  if (!raid.sacked && !b) { spawn(raid, 'bearer', null, o.post); return 'bearer'; }\n",
+    "new": "",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-the-raiders-unaimed",
+    "file": "src/systems/raidingParties.js",
+    "old": "if (fights) { foe.raidKey = p.key; aimRaider(raid, foe); }",
+    "new": "if (fights) { foe.raidKey = p.key; }",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-a-walk-off-a-fall",
+    "file": "src/systems/raidingParties.js",
+    "old": "if (e.kind === 'bearer' && e.foe.dead && e.foe.corpse && !e.counted) {",
+    "new": "if (e.kind === 'bearer' && e.foe.dead && !e.counted) {",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-the-town-held-when-sacked",
+    "file": "src/systems/raidingParties.js",
+    "old": "if (kind === 'defend') return !raid.sacked && raid.stAt != null && localNow() - raid.stAt <= RAID_STANDARD_FRESH_MS;",
+    "new": "if (kind === 'defend') return raid.stAt != null && localNow() - raid.stAt <= RAID_STANDARD_FRESH_MS;",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-a-reader-held-with-no-word",
+    "file": "src/systems/raidingParties.js",
+    "old": "if (kind === 'defend') return !raid.sacked && raid.stAt != null && localNow() - raid.stAt <= RAID_STANDARD_FRESH_MS;",
+    "new": "if (kind === 'defend') return !raid.sacked;",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-the-guide-never-waits",
+    "file": "src/systems/raidingParties.js",
+    "old": "    if (lag <= RAID_REFUGEE_WAIT_M) o.guide = Math.min(o.len, o.guide + RAID_REFUGEE_PACE * dt);",
+    "new": "    o.guide = Math.min(o.len, o.guide + RAID_REFUGEE_PACE * dt);",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-a-fall-saved",
+    "file": "src/systems/raidingParties.js",
+    "old": "if (e.foe.dead) { e.done = true; if (e.foe.corpse) raid.lost = (raid.lost | 0) + 1; }",
+    "new": "if (e.foe.dead) { e.done = true; if (e.foe.corpse) raid.safe = (raid.safe | 0) + 1; }",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-the-held-count-off-by-one",
+    "file": "src/systems/raidingParties.js",
+    "old": "if (kind === 'escort') return (raid.safe | 0) >= RAID_REFUGEES_HOLD;",
+    "new": "if (kind === 'escort') return (raid.safe | 0) > RAID_REFUGEES_HOLD;",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-the-raid-stalled-after-the-exodus",
+    "file": "src/systems/raidingParties.js",
+    "old": "  if (!alive.length && still <= 0) return null;",
+    "new": "",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-a-readers-word-sent",
+    "file": "src/systems/raidingParties.js",
+    "old": "    if (!raidActive(r, now) || !_myClaims.has(raidKey(r))) continue;\n    const w = objWordOf(r);",
+    "new": "    if (!raidActive(r, now)) continue;\n    const w = objWordOf(r);",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-the-peers-word-unread",
+    "file": "src/systems/raidingParties.js",
+    "old": "  if (ro !== undefined) raidObjPeerWord(from, ro, t);",
+    "new": "",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-the-takeover-forgetting",
+    "file": "src/systems/raidingParties.js",
+    "old": "  if (kind === 'defend') { if (w.b === 1) raid.sacked = true; else raid.stAt = t; }",
+    "new": "  if (kind === 'defend') { if (w.b === 2) raid.sacked = true; else raid.stAt = t; }",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-a-field-unsaved",
+    "file": "src/systems/raidingParties.js",
+    "old": "...(r.lost ? { lost: r.lost } : {}),",
+    "new": "",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-the-held-list-lost",
+    "file": "src/systems/raidingParties.js",
+    "old": "  ...(_held.length ? { held: _held.slice() } : {}),",
+    "new": "",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-the-held-thanks-unpaid",
+    "file": "src/systems/raidSpoils.js",
+    "old": "(held ? RAID_HELD_GOLD_X : 1)",
+    "new": "1",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-the-board-detail-dropped",
+    "file": "src/systems/eventBoard.js",
+    "old": "const count = live && r.obj ? [r.obj, counted].filter(Boolean).join(' - ') : counted;",
+    "new": "const count = counted;",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-the-bearer-unleashed",
+    "file": "src/scenes/raidSitesHost.js",
+    "old": "if (g.ai) g.ai.follow = { feet: () => post, stop: 0.6, leash: RAID_BEARER_LEASH_M };",
+    "new": "",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-the-refugee-hostile",
+    "file": "src/scenes/raidSitesHost.js",
+    "old": "{ allied: true, loose: true, transient: true, feetGiven: true }",
+    "new": "{ loose: true, transient: true, feetGiven: true }",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  },
+  {
+    "name": "RAID5-the-way-from-the-wrong-side",
+    "file": "src/scenes/raidSitesHost.js",
+    "old": "      const k = ((side | 0) % 4 + 4) % 4;",
+    "new": "      const k = 0;",
+    "tests": ["test/systems/raid5_kinds.test.js"]
+  }
+]

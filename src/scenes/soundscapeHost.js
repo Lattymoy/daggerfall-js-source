@@ -16,7 +16,7 @@
 //                                                   a sea ship's, a peer's (AUDIT SOUNDSCAPE S2: a deck off the helm was
 //                                                   land - no sea, and the shore's surf at full over deep water)
 //     bow(boat, yaw) -> her heading [x, 0, z]       world.js boatForward: off her root's rotation (S3)
-//     csa -> Come Sail Away's runtime | null        helmPanelState (her way, her sails, in irons), IsNearPort
+//     csa -> Come Sail Away's runtime | null        helmPanelState (her way), IsNearPort
 //     fight() -> a sea fight as the watch knows it  the naval host's battle: her guns run out, the crew called to them
 //                                                   (WK-W2's alarm - by night a ship the night's law shows), a boarding
 //                                                   (AUDIT SOUNDSCAPE M2: hostileNear's 700 m gave a dark ship away)
@@ -32,6 +32,7 @@
 //     doors -> the host's building doors            each { door, pixelKey, dfBlock, recordIndex }; doorAt(entry) -> its
 //                                                   door in the scene's frame (world.js shiftedDoor: its building's
 //                                                   placement, its centre and normal in the model's own space)
+//     rand?() -> [0, 1)                             the airs' dice - Math.random unless a test seeds it
 //   }
 // Not a DFU member - Ledger A (SOUNDSCAPE). THE FOUR HOSTS: world.js wires it; worldModes.js (interiors) and
 // dungeonContext.js stop it by the modal frame's return (no air of the open world indoors or underground);
@@ -45,7 +46,6 @@ import { isNight } from '../world/worldClock.js';
 import { CLIMATES } from '../formats/mapsTables.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { doorSpotsNear } from '../characters/foeSpacing.js';   // AUDIT SOUNDSCAPE W2: a door's own centre and its outward face, the one home
-import { animatorOf } from '../systems/comeSailAway/comeSailAwayBoat.js';
 
 /** The gulls' land: a map pixel within this ring of mine that is not the sea. */
 export const GULL_RING = 2;
@@ -70,13 +70,11 @@ const SMITHIES = new Set([BUILDING_TYPES.Armorer, BUILDING_TYPES.WeaponSmith]);
 /** The score's word while I am at no helm. */
 const NOT_SAILING = Object.freeze({ sailing: false, fight: false, weather: 'sunny', night: false, nearPort: false, way: 0 });
 const TAVERNS = new Set([BUILDING_TYPES.Tavern]);
-/** A boat I ride and do not steer (another player's - AUDIT SOUNDSCAPE S4: her way and sails were my own idle helm's,
- *  lying still and furled at six knots): her way is her root's own going, eased over WAY_TAU_S; a step faster than
- *  WAY_JUMP_MPS is a recentre of the scene or her snap, never her way. */
+/** A boat I ride and do not steer (another player's - AUDIT SOUNDSCAPE S4: her way was my own idle helm's, lying still
+ *  at six knots): her way is her root's own going, eased over WAY_TAU_S; a step faster than WAY_JUMP_MPS is a recentre
+ *  of the scene or her snap, never her way. */
 export const WAY_TAU_S = 0.6;
 export const WAY_JUMP_MPS = 40;
-/** Whether any of a boat's sails is set - her masts' Animators, as Come Sail Away and the peers' word leave them. Pure. @param {any} boat */
-export const sailsSet = (boat) => (boat?.Sails ?? []).some((/** @type {any} */ sail) => animatorOf(sail)?.GetBool?.('Stowed') === false);
 
 /**
  * THE SHORE'S EDGE near `ear` (the scene's frame): `{ dist, dir, at }` - metres to where the water changes (the sea
@@ -136,12 +134,12 @@ export const winterIn = (climate, winter) => !!winter && climate !== CLIMATES.De
 /**
  * @param {{ audio: any, music: any, boat: () => any, aboard?: () => boolean, bow?: (boat: any, yaw: number) => number[], csa: any, fight: () => boolean, pixel: () => ({ x: number, y: number } | null),
  *   seaPixel: (x: number, y: number) => boolean, dw: any, inTown: () => boolean, townAt: (x: number, y: number) => ({ blocks?: number } | null),
- *   doors: any[], doorAt: (entry: any) => any }} deps
+ *   doors: any[], doorAt: (entry: any) => any, rand?: () => number }} deps
  */
 export function createSoundscapeHost(deps) {
   const columnAt = deps.dw?.rawColumnAt ? (/** @type {number} */ x, /** @type {number} */ z) => deps.dw.rawColumnAt(x, z) : null;
-  const sea = createSeaAir({ engine: deps.audio });
-  const world = createWorldAir({ engine: deps.audio });
+  const sea = createSeaAir({ engine: deps.audio, rand: deps.rand });
+  const world = createWorldAir({ engine: deps.audio, rand: deps.rand });
   const score = createSeaScore();
   let songsMade = false, held = false;
   // the way of a boat I ride (S4): her last place and her eased speed
@@ -213,12 +211,11 @@ export function createSoundscapeHost(deps) {
         world.stop();
         let helm = null;
         if (boat) { try { helm = deps.csa?.helmPanelState?.() ?? null; } catch { helm = null; } }
-        // my helm says her way and her sails; a boat I ride says them by her own going and her masts (S4); a deck
-        // off any helm - mine at anchor, a sea ship's - lies still
+        // my helm says her way; a boat I ride says it by her own going (S4); a deck off any helm - mine at anchor, a sea
+        // ship's - lies still
         const way = helm ? Number(helm.way) || 0 : boat && !f.paused ? wayOf(boat, dt) : boat ? rodeWay : 0;
-        const sailsUp = helm ? !!helm.sailsUp : sailsSet(boat);
         const bow = boat?.GameObject?.rotation && deps.bow ? deps.bow(boat, 0) : null;
-        sea.frame(dt, { ear, fwd, bow, way, sailsUp, inIrons: !!helm?.inIrons, wind, gust, weather: f.weather, night, nearLand: land, minute, paused: f.paused });
+        sea.frame(dt, { ear, fwd, bow, way, wind, gust, weather: f.weather, night, nearLand: land, minute, paused: f.paused });
         // the score's word: at a helm the sea's law; aboard off it, the fight's alone (AUDIT SOUNDSCAPE M1: a boarding
         // lets the helm go - its deck fight is the sea fight's still, and a fight ended aboard keeps its tail)
         sailing = { sailing: !!helm, aboard: true, fight: !!deps.fight?.(), weather: f.weather, night, nearPort: port, way };

@@ -102,7 +102,7 @@
   {
     "name": "PSCALE1-outdoor-door-unweighed",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "    f.entity.health -= !bypassShield && !_whole && _sharedFoe(f) ? partyFoeLoses(f, healthDamage, fightN(f)) : healthDamage;",
+    "old": "    f.entity.health -= !bypassShield && !_whole && _toughFoe(f) ? partyFoeLoses(f, healthDamage, fightN(f)) : healthDamage;",
     "new": "    f.entity.health -= healthDamage;",
     "tests": [
       "test/systems/party/pscale1.test.js",
@@ -112,8 +112,8 @@
   {
     "name": "PSCALE1-outdoor-scripted-kill-weighed",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "    f.entity.health -= !bypassShield && !_whole && _sharedFoe(f) ?",
-    "new": "    f.entity.health -= !_whole && _sharedFoe(f) ?",
+    "old": "    f.entity.health -= !bypassShield && !_whole && _toughFoe(f) ?",
+    "new": "    f.entity.health -= !_whole && _toughFoe(f) ?",
     "tests": [
       "test/systems/party/pscale1.test.js",
       "test/systems/auditpscale1.test.js"

@@ -13,7 +13,7 @@
 //
 // `public/` is NOT copied wholesale: the site's static root carries the
 // icons, the skin tables and a 1.3MB parchment the lab never asks for.
-// The two art files and the sounds it does ask for are copied by hand
+// The art strip and the sounds it does ask for are copied by hand
 // below, and the page's own index.html is written beside them so the
 // directory serves itself.
 import { defineConfig } from 'vite';
@@ -21,7 +21,7 @@ import { copyFileSync, mkdirSync, readdirSync, readFileSync, writeFileSync } fro
 import { join } from 'node:path';
 
 const OUT = 'dist-gun';
-const ART = ['gun-idle.png', 'gun-fire-sheet.webp'];
+const ART = ['thunderlock-frames.png'];   // THUNDERLOCK-LAB (2026-10-25): the page draws the owner's strip now, not the old sheet
 // every .wav in public/sfx, plus the provenance that must travel with
 // them - a CC0 file owes nobody an attribution and a build that cannot
 // say where its audio came from owes its next reader one anyway

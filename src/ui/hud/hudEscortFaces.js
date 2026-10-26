@@ -134,16 +134,61 @@ export function resolveFaceImage(face) {
  *  advances the column by spaceY, or spaceYSpecial when the panel is
  *  taller than spaceY (`if (spaceY < facePanel.Size.y)`). A face whose
  *  art has not landed yet has no height and advances by spaceY. */
-export function layoutEscortFaces(sizes) {
+export function layoutEscortFaces(sizes, startY = ESCORT_START_Y) {
   const placed = [];
   let count = 0;
-  let y = ESCORT_START_Y;
+  let y = startY;
   for (const size of sizes) {
     if (count++ >= ESCORT_MAX_FACES) { placed.push({ x: 0, y: 0, enabled: false }); continue; }
     placed.push({ x: ESCORT_START_X, y, enabled: true });
     y += ESCORT_SPACE_Y < (size?.h ?? 0) ? ESCORT_SPACE_Y_SPECIAL : ESCORT_SPACE_Y;
   }
   return placed;
+}
+
+/** ESCORT-TOUCH-ROW: air between the touch layer's top row and the first face, in CSS pixels. */
+export const ESCORT_TOUCH_AIR = 8;
+/** ESCORT-TOUCH-ROW: frames between two measures of the touch row - a layout read is not free, and the row moves only
+ *  when the window does (a new size is measured at once). */
+export const ESCORT_MEASURE_EVERY = 30;
+
+/**
+ * ESCORT-TOUCH-ROW (2026-10-25, the phone pass of QUEST-SHELF-FACES): where the column starts, in the classic's own
+ * 320x200 units. DFU's startY (36) unless the touch layer's top row reaches lower: `clearPx` is that row's bottom edge
+ * plus ESCORT_TOUCH_AIR, in canvas pixels (0 with no row), and `scale` is the HUD's. At scale 1 on a phone the dial and
+ * the menu button (16 to 64 CSS px down) stood over the face at 36; at the iPad's scale 3 the face starts at 108 and
+ * DFU's place stands.
+ */
+export function escortStartY({ clearPx = 0, scale = 1 } = {}) {
+  const s = Number.isFinite(scale) && scale > 0 ? scale : 1;
+  const clearNative = Math.ceil((Number(clearPx) || 0) / s);
+  return Math.max(ESCORT_START_Y, clearNative);
+}
+
+/**
+ * ESCORT-TOUCH-ROW: the touch layer's top row (`.dftouch-btn`, ui/touch/touch.js), measured where it stands as the
+ * status widget measures it (ui/enhanced/enhancedHud.js STAT_ABOVE): its lowest bottom edge among the presses that
+ * cross the column's width and start above the screen's middle, plus the air, in canvas pixels. 0 with no touch layer,
+ * so a mouse and a pad keep DFU's place. A notched phone's safe-area inset is in the measure.
+ */
+function touchRowClearPx(canvas, scale) {
+  const doc = globalThis.document;
+  const viewWidth = Number(globalThis.innerWidth) || canvas.width;
+  const viewHeight = Number(globalThis.innerHeight) || canvas.height;
+  if (!doc?.querySelectorAll || !viewWidth || !viewHeight) return 0;
+  // canvas pixels per CSS pixel, as hud.js escortBottomPx converts the other way
+  const perCssX = canvas.width / viewWidth;
+  const perCssY = canvas.height / viewHeight;
+  const columnLeft = (ESCORT_START_X * scale) / perCssX;
+  const columnRight = ((ESCORT_START_X + ESCORT_SPECIAL_FACE_SIZE) * scale) / perCssX;
+  let rowBottom = 0;
+  for (const press of doc.querySelectorAll('.dftouch-btn')) {
+    const r = press.getBoundingClientRect?.();
+    if (!r || !(r.width > 0) || !(r.height > 0)) continue;
+    const crossesColumn = r.left < columnRight && r.right > columnLeft;
+    if (crossesColumn && r.top < viewHeight / 2) rowBottom = Math.max(rowBottom, r.bottom);
+  }
+  return rowBottom > 0 ? (rowBottom + ESCORT_TOUCH_AIR) * perCssY : 0;
 }
 
 // ---- the one panel's state ----
@@ -179,6 +224,13 @@ const _files = new Map();     // file -> Promise<CifRciFile>
 const _textures = new Map();  // `${file}#${record}` -> {tex,w,h}
 let _warned = false;
 let _headStamp = 0;   // PORTRAIT3D: the data's stamp the panels were resolved under
+// QUEST-SHELF-FACES: whether a quest is set aside (machine.js shelveQuest), by its uid - the quest bridge hands it.
+// Not reset by initEscortFaces: the bridge and the panel mount in either order.
+let _questAway = () => false;
+// ESCORT-TOUCH-ROW: where the column starts (classic units), and when the touch row was last measured
+let _startY = ESCORT_START_Y;
+let _measureTick = -1;
+let _measuredView = '';
 
 function _loadFile(file) {
   let p = _files.get(file);
@@ -234,6 +286,9 @@ export function initEscortFaces(deps) {
   _files.clear();
   _textures.clear();
   _warned = false;
+  _startY = ESCORT_START_Y;
+  _measureTick = -1;
+  _measuredView = '';
 }
 
 /** AddFace(Person) / AddFace(Foe) (:97-113) - one door because the
@@ -261,6 +316,18 @@ export function dropEscortFace(resource) {
 export function clearEscortFaces() {
   _faces = [];
   _panels = [];
+}
+
+/**
+ * QUEST-SHELF-FACES (2026-10-25, a player: abandoned the Acolyte's escort and "stuck with the Oracle's portrait"): A
+ * QUEST SET ASIDE SHOWS NO FACES. DFU has no abandon - its faces leave by DropFace or by the quest-end sweep above, and
+ * QUEST-SHELF's Abandon is neither, so the face stood for as long as the quest was away. Its faces are KEPT, not
+ * dropped: a reclaim restores the quest from its own envelope and never runs its `add face` again, so a dropped face
+ * would never come back. Hidden at the draw, they ride the save as they are and show again the moment the quest is
+ * reclaimed. `questAway(uid)` answers whether that quest is set aside; null shows every face.
+ */
+export function setEscortQuestAway(questAway) {
+  _questAway = questAway ?? (() => false);
 }
 
 /** QuestMachine_OnQuestEnded (:295-304): "Remove any faces belonging
@@ -315,23 +382,48 @@ export function restoreEscortFacesSaveData(faces) {
  *
  * Special panels draw at the fixed 48x48; racial and child heads at
  * their art's size.
+ *
+ * RECORDED DEPARTURE (ESCORT-TOUCH-ROW): on a touch screen the column
+ * starts below the touch layer's top row where that row reaches lower
+ * than startY (escortStartY) - DFU has no touch layer.
  */
 export function drawEscortFaces(renderer, canvas) {
   if (!_panels.length) return;
   if (headDataStamp() !== _headStamp) refreshFaces();   // PORTRAIT3D: the data came or went - the faces resolved again
   const m = { s: hudScale(canvas.width, canvas.height) };
-  const sizes = _panels.map((p) => (p?.special
-    ? { w: ESCORT_SPECIAL_FACE_SIZE, h: ESCORT_SPECIAL_FACE_SIZE }
-    : (p?.img ? { w: p.img.w, h: p.img.h } : null)));
-  const placed = layoutEscortFaces(sizes);
-  for (let i = 0; i < _panels.length; i++) {
-    const p = _panels[i];
-    if (!p?.img || !placed[i].enabled || !sizes[i]) continue;
-    renderer.drawScreenQuad(p.img.tex, {
-      x: placed[i].x * m.s, y: placed[i].y * m.s,
-      w: sizes[i].w * m.s, h: sizes[i].h * m.s,
+  measureStart(canvas, m.s);
+  for (const { panel, size, place } of shownColumn()) {
+    if (!panel?.img || !place.enabled || !size) continue;
+    renderer.drawScreenQuad(panel.img.tex, {
+      x: place.x * m.s, y: place.y * m.s,
+      w: size.w * m.s, h: size.h * m.s,
     });
   }
+}
+
+/** The column drawEscortFaces draws and escortFacesBottom measures: each shown panel with its size and its place.
+ *  A face whose quest is set aside (QUEST-SHELF-FACES) is left out before the layout, so the faces under it close up
+ *  as they do when a face drops. Special panels take the fixed 48x48; a face whose art has not landed has no size. */
+function shownColumn() {
+  const panels = _panels.filter((_, i) => !_questAway(_faces[i]?.questUID));
+  const sizes = panels.map((p) => (p?.special
+    ? { w: ESCORT_SPECIAL_FACE_SIZE, h: ESCORT_SPECIAL_FACE_SIZE }
+    : (p?.img ? { w: p.img.w, h: p.img.h } : null)));
+  const placed = layoutEscortFaces(sizes, _startY);
+  return panels.map((panel, i) => ({ panel, size: sizes[i], place: placed[i] }));
+}
+
+/** ESCORT-TOUCH-ROW: the column's start, measured every ESCORT_MEASURE_EVERY frames and at once on a new window size or
+ *  HUD scale (a rotation moves the row). escortFacesBottom reads the start this kept, so the status widget follows. */
+function measureStart(canvas, scale) {
+  const view = `${globalThis.innerWidth}x${globalThis.innerHeight}x${canvas.width}x${canvas.height}`;
+  if (view !== _measuredView) {
+    _measuredView = view;
+    _measureTick = -1;
+  }
+  _measureTick = (_measureTick + 1) % ESCORT_MEASURE_EVERY;
+  if (_measureTick !== 0) return;
+  _startY = escortStartY({ clearPx: touchRowClearPx(canvas, scale), scale });
 }
 
 /** UI3: how far down the drawn column reaches, in the classic's own 320x200 units - 0 while no face is drawn. The
@@ -339,13 +431,8 @@ export function drawEscortFaces(renderer, canvas) {
  *  widget's band ends. The same sizes and places drawEscortFaces draws. */
 export function escortFacesBottom() {
   let bottom = 0;
-  if (!_panels.length) return bottom;
-  const sizes = _panels.map((p) => (p?.special
-    ? { w: ESCORT_SPECIAL_FACE_SIZE, h: ESCORT_SPECIAL_FACE_SIZE }
-    : (p?.img ? { w: p.img.w, h: p.img.h } : null)));
-  const placed = layoutEscortFaces(sizes);
-  for (let i = 0; i < _panels.length; i++) {
-    if (_panels[i]?.img && placed[i].enabled && sizes[i]) bottom = Math.max(bottom, placed[i].y + sizes[i].h);
+  for (const { panel, size, place } of shownColumn()) {
+    if (panel?.img && place.enabled && size) bottom = Math.max(bottom, place.y + size.h);
   }
   return bottom;
 }

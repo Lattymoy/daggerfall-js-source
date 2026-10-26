@@ -79,6 +79,16 @@ export const SD_BEAT_OUT_STAGE_S = SD_BEAT_BLINK / SD_BEAT_DISSOLVE.keep.length;
 export const SD_CHUNK = Object.freeze({ rewind: 0.6, rise: 2.2, drift: 0.5, spin: 2.2, shudder: 0.25, settle: 0.02 });
 /** The longest frame the breath pushes for (s) - a hitch is not a gale. */
 const BREATH_DT_MAX = 0.1;
+/** AUDIT KETCH II L4-6: how far either side of a course's steps (their breadth and their sway) its breath reaches - on a course
+ *  laid beside a ship's decks, never the Hour's (its void is all about it). */
+export const SD_BREATH_BAND_M = 3;
+/** The breath's band across a course `[x0, x1]` (the realm's x) - null for the Hour's, which breathes at every x. Pure. */
+export function sdBreathBand(course) {
+  if (course === SD_COURSE) return null;
+  let a = Infinity, b = -Infinity;
+  for (const s of course.steps) { const h = (s.w ?? 0) / 2 + (s.amp ?? 0) + SD_BREATH_BAND_M; a = Math.min(a, s.x - h); b = Math.max(b, s.x + h); }
+  return [a, b];
+}
 /** AUDIT SD: a step's place, the frame's one scratch (a frame is one call deep - nothing awaits between its uses). AUDIT SD
  *  II (L2 F9): and a Crumble step's state, the breath's push and its sight - "a frame of 23 steps makes nothing" was not
  *  so (eight Crumble states, the gust and the body's place in the realm, made a frame). */
@@ -176,6 +186,7 @@ export function createSdSteps({ renderer = null, audio = null, ending = null, li
   /** @type {any[] | null} */
   let draws = null;
   let checksMesh = null, lastTick = null, lastWarned = null;
+  const band = sdBreathBand(course);   // AUDIT KETCH II L4-6: the ship's gust blew on her aft deck and her bridge, and its wind sounded all through the Warden's fight
   /** AUDIT SD II (L2 F18): the breath's streaks - their mesh and their draw, hidden but while the breath is seen. L4 F1:
    *  the span my feet last stood in (a checkpoint's included), where the void casts me back to. */
   let breathMesh = null, breathDraw = null, lastSpan = -1;
@@ -398,10 +409,10 @@ export function createSdSteps({ renderer = null, audio = null, ending = null, li
       const span = spanAt(rz, course);
       if (body.grounded) lastSpan = on ? on.s.span : span;   // AUDIT SD II (L4 F1): the span I last stood in
       // the Warp's breath, and its wind the second before it - SD-LOOK S9: the vane's clack with it
-      const g = gustAt(t, _gust);
-      if (g.push && inBreath(rz, course) && dt > 0) body.collider?.move?.(body.pos, g.push * Math.min(dt, BREATH_DT_MAX), 0, 0, body.height, !!body.grounded && !body.jumping);
+      const g = gustAt(t, _gust), rx = body.pos[0] - SD_REALM_ORIGIN[0], onLine = !band || (rx >= band[0] && rx <= band[1]);
+      if (g.push && onLine && inBreath(rz, course) && dt > 0) body.collider?.move?.(body.pos, g.push * Math.min(dt, BREATH_DT_MAX), 0, 0, body.height, !!body.grounded && !body.jumping);
       const gust = Math.floor(t / SD_GUST_EVERY);
-      if (g.warn && span === 2 && lastWarned !== gust) { lastWarned = gust; play(SD_STEPS_SOUNDS.wind, 0.9); play(SD_STEPS_SOUNDS.clack, 0.45, 2.2); }
+      if (g.warn && onLine && span === 2 && lastWarned !== gust) { lastWarned = gust; play(SD_STEPS_SOUNDS.wind, 0.9); play(SD_STEPS_SOUNDS.clack, 0.45, 2.2); }
       // the Beat's tick: a half beat gone by, and its steps come back
       if (span === 1) {
         const b = Math.floor(t / SD_BEAT_HALF);

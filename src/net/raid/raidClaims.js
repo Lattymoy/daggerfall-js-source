@@ -77,8 +77,8 @@ export function raidRecordText(rec) {
  *   claim: (receipt: string, character: string, name: string|null, cid: string) => Promise<any>,
  *   store?: { get: (k: string) => any, set: (k: string, v: any) => void }|null,
  *   nowS?: () => (number|null), nowMs?: () => number, say?: (text: string) => void,
- *   onRecorded?: (data: any, entry: { r: string, ch: string, nm: string|null, lv: number, cid: string }) => void,
- *   onSpoils?: (entry: { r: string, ch: string, nm: string|null, lv: number, cid: string }, data: any) => void,
+ *   onRecorded?: (data: any, entry: { r: string, ch: string, nm: string|null, lv: number, cid: string, hd?: boolean }) => void,
+ *   onSpoils?: (entry: { r: string, ch: string, nm: string|null, lv: number, cid: string, hd?: boolean }, data: any) => void,
  *   onMarks?: (data: any) => (string|string[]|null),
  *   me?: () => (string|null), cid?: () => string,
  * }} deps `claim` is net/accountClient.js accountRaids' - `{ ok, data }` or `{ ok: false, error, why? }`, never a
@@ -149,13 +149,13 @@ export function createRaidClaims({ claim, store = null, nowS = () => Math.floor(
     /** A receipt the relay handed this socket, with the character that fought it and its level: kept (one a raid AND
      *  account - the relay re-sends the same one; AUDIT RAID R4: never one this device settled) and offered at once.
      *  Answers whether it is kept. */
-    add(r, character, name = null, level = 1) {
+    add(r, character, name = null, level = 1, held = false) {
       const c = live(r);
       if (!c || settled.has(r) || settledHere().includes(settledKeyOf(c)) || typeof character !== 'string' || !character) return false;
       const list = kept();
       if (!list.some((k) => { const o = readRaidReceipt(k.r); return k.r === r || (o?.w === c.w && o?.s === c.s); })) {
         const lv = Math.max(1, Math.floor(Number(level) || 1));
-        keep([...list, { r, ch: character, nm: typeof name === 'string' ? name : null, lv, cid: cid() }].slice(-RAID_CLAIMS_MAX));
+        keep([...list, { r, ch: character, nm: typeof name === 'string' ? name : null, lv, cid: cid(), hd: held === true }].slice(-RAID_CLAIMS_MAX));   // AUDIT WORLD-EVENTS L3-14: `hd` the town held, as the receipt came (RAID5 - its thanks the richer)
       }
       void flush();
       return true;

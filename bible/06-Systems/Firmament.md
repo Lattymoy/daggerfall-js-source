@@ -188,6 +188,14 @@ edge (`skillSoftcap.js combatEdge`), the loot's and the sets' caps.
   said, not dropped. AN ID NAMES ONE TREE: a kept change's id is asked again for that tree alone, a newer tree is its
   own request, and the service refuses another tree under a made change's id (`firm-rid`). No change is taken while a
   respec is on its way (`firm-busy`). (AUDIT UICALM-FIRM1 L2 M1-M3, L4.)
+- **A read the service never answered is read again by the book itself** (FIRM-RETRY, 2026-10-25, from a player's
+  report: "Firmament fully bugged and im not getting any benefits from it"): after a read or a change that got one of the
+  unheard words above, the book reads again after `FIRM_READ_RETRY_MS` (15 seconds), the wait doubling to
+  `FIRM_READ_RETRY_MAX_MS` (2 minutes), until a read is answered; that read asks a kept change again. One retry waits at
+  a time, and a refusal the service gave after it looked (`firm-closed`, a 404) is not read again. The tree in force
+  comes only from a read, and the world host reads once, at the first Renown: when that read failed, only the enhanced
+  HUD's star tile asked again (`hudAdvance.js`, its own two-minute retry, taken out), so on the classic HUD the
+  character played with no stars until a Renown rise or the Growth tab.
 - **`firmamentLive.js`** is a leaf: the tree in force, online alone, and asleep while mentoring (`setFirmamentMentoring`,
   from `world.js` partyFrame - the fold and the layer move that frame). The gathering acts read it there (the herb's
   window, `act.herbalism`; the tug's, `act.fishing`) and so does the sail under either helm (`comeSailAway.js` firmSail:
@@ -213,8 +221,18 @@ alone - offline the page says what the sky is and why it waits.
   press to allocate the way; right-press (or long-press on a phone) to take a star back with everything beyond it; drag
   to pan, wheel or pinch to zoom, F for your sign, a search that lights every star whose words match.
 - **Every change is pending** - free to try - until Confirm, which says what it allocates, what it refunds and the
-  silver; the purses on the bar move as you plan.
+  silver; the purses on the bar move as you plan. A tree that moves under the open window (a change accepted in
+  another window, tab or device, heard through the book) starts the pending sky again from it - a birthsign alone
+  included (FIRM-SIGNPANEL, 2026-10-25: a sign-only change had left the panel saying no birthsign was chosen).
 - The side panel sums the sky as it stands, in a fight and in a life, and marks a channel held at its cap.
+- **Above the sums, the side panel says whether the stars act now, and the first reason they do not** (FIRM-STATUS,
+  2026-10-25, the same report as FIRM-RETRY: the sums are the stars held whether or not they act, so a sleeping sky
+  looked like a broken one). `firmamentLive.js firmamentStatus` answers, in this order (the duel handed in from
+  `sigil.js sigilDueling`, the word `firmamentPowers.js firmamentAwake` sleeps on, so the window does not load the powers): another tab or device holds the
+  online seat (`seat`); the book has no answer from the service yet (`unread`); no birthsign accepted (`no-sign`);
+  mentoring, the whole sky asleep (`mentoring`); a duel or an Arena bout, the combat stars asleep and the crafting and
+  trade stars acting (`duel`); else every accepted star acts (`active`). The line moves with the book and with the
+  online and mentoring words (`firmamentLive.js onFirmamentChange`). A lab sky (`preview`) says none.
 - **Two dresses, one window.** Its frames are the kit's roles (`enhancedFrame.js FRAME_ROLES`: the bar and the side
   panel windows, the tip a panel, the presses buttons), so Enhanced Plus carves them in stone and brass and DFO Grimoire
   turns them into its pages, planks and red Exit with no rule of this file's. The sky is a canvas that reads the dress:
@@ -264,6 +282,9 @@ hash, the law, the purses, the budget whole), `test/net/firm1_service.test.js` (
 change judged whole, Craft for the life ring alone, a repeat, the refund's silver, the harvest's XP),
 `test/systems/firm1_powers.test.js` (10: raw on the key stars, a maxed stat (FIRM-MAX), the Wrothgarian zone, offline, the fold, the duel and the mentor,
 the blow, the spell, the damage and the layer, the acts), `test/net/firmament/firm1_book.test.js` (4: the respec, the read, a change
-coalesced, a lost answer kept), `test/net/firmament/firm2_balance.test.js` (3: FIRM2 - no channel of a sign sums past its cap, a small star
+coalesced, a lost answer kept), `test/net/firmament/firm_book_retry.test.js` (5: FIRM-RETRY - the wait doubling to its
+ceiling, one retry at a time, no retry over a refusal, a lost change asked again), `test/systems/firm_status.test.js`
+(5: FIRM-STATUS - each status against what the stars fold), `test/ui/firm_signpanel.test.js` (2: FIRM-SIGNPANEL - a
+birthsign accepted outside the open window is named on its side panel), `test/net/firmament/firm2_balance.test.js` (3: FIRM2 - no channel of a sign sums past its cap, a small star
 one for one, the lift past 100), and the audit's `test/systems/audit_uicalm_firm1.test.js` (`01-Overview/audits/Audit-UICalm-Firm1.md`). The lab: `firmament.html`
 (`?dress=grimoire` for the Grimoire, `?fresh=1`, `?renown=`, `?ranks=`).

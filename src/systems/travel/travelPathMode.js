@@ -77,6 +77,21 @@ export function pickTakesPlace({ hit, nearby = false, fine = false, mode: m = tr
   return !!hit && travelPathUsesRoads(m) && !nearby && !fine;
 }
 
+/** OW-TOWN-ROUND (2026-10-23, the owner: "Overworld pathing always wants to walk into the middle of the town let the player
+ *  always go around it if not clicking vaguely in the middle of the city"): THE TOWN'S JOURNEY IS ASKED AT ITS MIDDLE. A
+ *  click anywhere in a town's grown rect took the town (and walked to its middle); now only one in the middle of it does
+ *  - within PLACE_MIDDLE_SHARE of its half-width each way, never less than PLACE_MIDDLE_MIN (native units, about 75 m: a
+ *  hamlet of one block is all middle). Anywhere else on it is the spot, walked round the town (travelRoute.js routeLegs).
+ *  `p` native {x, z}; `rect` the view's grown place rect ({minX, maxX, minZ, maxZ, cx, cz}), `grow` what it was grown by. */
+export const PLACE_MIDDLE_SHARE = 0.4;
+export const PLACE_MIDDLE_MIN = 3072;
+export function pickNearPlaceMiddle(p, rect, grow = 0) {
+  if (!p || !rect) return false;
+  const hx = Math.max(0, (rect.maxX - rect.minX) / 2 - grow), hz = Math.max(0, (rect.maxZ - rect.minZ) / 2 - grow);
+  const rx = Math.max(PLACE_MIDDLE_MIN, hx * PLACE_MIDDLE_SHARE), rz = Math.max(PLACE_MIDDLE_MIN, hz * PLACE_MIDDLE_SHARE);
+  return Math.abs(p.x - rect.cx) <= rx && Math.abs(p.z - rect.cz) <= rz;
+}
+
 /** The fine-move modifier on a pointer event: Shift or Alt. */
 export const fineMoveHeld = (e) => !!(e && (e.shiftKey || e.altKey));
 

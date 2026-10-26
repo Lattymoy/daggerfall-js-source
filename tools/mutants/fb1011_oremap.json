@@ -2,8 +2,8 @@
   {
     "name": "ORE-MAP-a-the-signature-unsaid",
     "file": "src/ui/oreMapTip.js",
-    "old": "  else if (sig) lines.push(",
-    "new": "  else if (false) lines.push(",
+    "old": "  else if (sig) {",
+    "new": "  else if (false) {",
     "tests": [
       "test/ui/fb1011_oremap.test.js"
     ],

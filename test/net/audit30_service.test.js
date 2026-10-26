@@ -229,11 +229,11 @@ test('AUDIT 30 S9 + L7 + L8: a listing binds only its kind\'s fields; an order f
   s.piece(mac, '0123456789abcdef');
   const p = await s.call('/v1/market/list', { character: mac.character, region: DF, kind: 'piece', provenance: '0123456789abcdef', wear: 900, price: 5, material: 'ore:mithril', hubs: HUBS, rid: rid() }, mac.secret);
   assert.equal(p.status, 200, JSON.stringify(p.body));
-  for (const m of ['ingot:daedric']) {   // PROF7 moved it: the Bear Hide is Hunting's now; PIN MOVED (AUDIT-SEATS): the sieges' Spoils yield the Warforged ingot and the silk
+  for (const m of ['part:daedra-heart']) {   // PROF7 moved it: the Bear Hide is Hunting's now; PIN MOVED (AUDIT-SEATS): the sieges' Spoils yield the Warforged ingot and the silk; PIN MOVED (DAEDRIC-SMELT): the forge smelts the Daedric ingot, and its heart - loose alone, no door counts one - is what nobody can bring: the loose door's, as CLOTH-GEMS' graded gems are, no order's material
     const o = await s.call('/v1/market/order', { character: mac.character, region: DF, material: m, units: 1, price: 10, hubs: HUBS, rid: rid() }, mac.secret);
-    assert.equal(o.body.error, 'market-unyielded', `${m}: an escrow held a week for goods nobody can bring`);
+    assert.equal(o.body.error, 'bad-material', `${m}: an escrow held a week for goods nobody can bring`);
   }
-  for (const m of ['ingot:warforged', 'cloth:standard', 'gem:siege']) {   // AUDIT-SEATS: a siege's Spoils - an order for one is an order someone can fill
+  for (const m of ['ingot:warforged', 'cloth:standard', 'gem:siege', 'ingot:daedric']) {   // AUDIT-SEATS: a siege's Spoils - an order for one is an order someone can fill; DAEDRIC-SMELT: and the forge's Daedric ingot
     const o = await s.call('/v1/market/order', { character: mac.character, region: DF, material: m, units: 1, price: 10, hubs: HUBS, rid: rid() }, mac.secret);
     assert.equal(o.status, 200, `${m}: ${JSON.stringify(o.body)}`);
   }

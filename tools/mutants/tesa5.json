@@ -11,8 +11,8 @@
   {
     "name": "TESA5-the-runs-wider",
     "file": "src/world/arenaRoads.js",
-    "old": "export const JOIN_SPACING = 60;",
-    "new": "export const JOIN_SPACING = 62;",
+    "old": "export const JOIN_SPACING = 12;",
+    "new": "export const JOIN_SPACING = 13;",
     "tests": [
       "test/tesa5_join.test.js"
     ]

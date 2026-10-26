@@ -63,9 +63,26 @@ export function wardenTownIn(built, translate, size, x, z) {
     if (!nav) continue;
     const ox = t[0] + p.locOrigin[0], oz = t[2] + p.locOrigin[2], u = x - ox, v = z - oz;
     if (u < 0 || v < 0 || u >= nav.width * NAV_CELL || v >= nav.height * NAV_CELL) continue;
-    return { town: p.wardenTown, nav, local: [u, v], toScene: (/** @type {number} */ a, /** @type {number} */ b) => [a + ox, b + oz] };
+    return { town: p.wardenTown, nav, places: p.population?.places ?? null, local: [u, v], toScene: (/** @type {number} */ a, /** @type {number} */ b) => [a + ox, b + oz] };   // AUDIT WORLD-EVENTS L4-8: and its living town's places (a raid's square and way)
   }
   return ground ? null : undefined;
+}
+
+/**
+ * AUDIT WORLD-EVENTS L4-4: the built town on map pixel (px, py), as wardenTownIn answers one - a raid's own town, read
+ * off its pixel rather than the player's feet (the town's rect a raid is "here" in is a block wider than its grid), or
+ * null (not built, or no watch keeps it). Pure but for `translate`.
+ * @param {Iterable<any>} built @param {(px: number, py: number) => number[]} translate @param {number} px @param {number} py
+ */
+export function wardenTownOfPixel(built, translate, px, py) {
+  for (const p of built) {
+    if (p.px !== px || p.py !== py) continue;
+    const nav = p.wardenTown != null && p.locOrigin ? p.population?.nav : null;
+    if (!nav) return null;
+    const t = translate(p.px, p.py), ox = t[0] + p.locOrigin[0], oz = t[2] + p.locOrigin[2];
+    return { town: p.wardenTown, nav, places: p.population?.places ?? null, local: null, toScene: (/** @type {number} */ a, /** @type {number} */ b) => [a + ox, b + oz] };
+  }
+  return null;
 }
 
 /**

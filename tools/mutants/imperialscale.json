@@ -134,8 +134,8 @@
   {
     "name": "IS-the-parts-unregistered",
     "file": "src/world/capitalModels.js",
-    "old": "  for (const part of IMPERIAL_PARTS) registerCustomModel(",
-    "new": "  for (const part of []) registerCustomModel(",
+    "old": "  for (const part of [...IMPERIAL_PARTS, ...IMPERIAL_LOD_PARTS]) registerCustomModel(",
+    "new": "  for (const part of [...IMPERIAL_LOD_PARTS]) registerCustomModel(",
     "tests": [
       "test/world/imperialscale.test.js"
     ]

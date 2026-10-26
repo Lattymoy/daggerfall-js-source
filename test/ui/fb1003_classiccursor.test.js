@@ -31,7 +31,9 @@ test('CLASSIC-CURSOR the art: DFU\'s Cursor2.png byte for byte at the listing\'s
 
 test('CLASSIC-CURSOR the boot: the arrow is laid before the renderer, with no game data asked - the front menu wears it - and the old CURSOR.IMG read is gone; the pad\'s arrow is the same art (mutants: laid after the data; the pad\'s own arrow)', () => {
   const main = rd('src/main.js').toString();
-  assert.match(main, /\n {2}installCursor\(\);[^\n]*\n {2}const canvas = document\.getElementById\('c'\);\n {2}const renderer = new Renderer\(canvas\);/);
+  // PIN MOVED (GPU-TRAIL, 2026-10-24): the crash trail's door stands between the canvas and the renderer - it counts the
+  // canvas before the renderer's first object (render/gpuTrail.js) and asks no game data; its lines alone are admitted
+  assert.match(main, /\n {2}installCursor\(\);[^\n]*\n {2}const canvas = document\.getElementById\('c'\);\n(?: {2}(?:\/\/ |const gpuTrail = | {2}\? await import\('\.\/render\/gpuTrail\.js'\))[^\n]*\n)* {2}const renderer = new Renderer\(canvas\);/);
   assert.doesNotMatch(main, /installCursor\(getBytes\)/);
   assert.doesNotMatch(rd('src/ui/cursor.js').toString(), /CURSOR\.IMG'|fetchBytes/, 'DFU reads no cursor from the game\'s files');
   const pad = rd('src/ui/gamepadInput.js').toString();

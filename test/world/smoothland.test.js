@@ -11,7 +11,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   setTamrielTrace, tamrielTrace, landLaw, landLabelAt, landSideAt, provinceLeadAt, coastDepthAt, provinceKeyAt, provinceKeyBeyondBay,
-  SMOOTH_LAND, PROVINCE_OF_ID,
+  SMOOTH_LAND, PROVINCE_OF_ID, LAW_TILE,
 } from '../../src/world/tamriel/tamrielLand.js';
 import { setTamrielFit, pictureToBay, bayToPicture } from '../../src/world/tamriel/tamrielFrame.js';
 import { lawLines, linkPieces, linkSteps, squareEnds, segKey, LINE_BISECT, LINK_STEP } from '../../src/world/tamriel/tamrielLines.js';
@@ -141,8 +141,10 @@ test('SMOOTH-LAND the law\'s distance: the coast\'s waterline 0, half a pixel at
   assert.ok(provinceLeadAt(L, 20, 12, 3, 9) && !provinceLeadAt(L, 20, 12, 9, 3), 'a tie the lower id\'s');
   assert.ok(provinceLeadAt(L, 37.5, 15.5, 0, 9) && !provinceLeadAt(L, 25.5, 12.5, 0, 9), 'the sea\'s own distance leads at sea, a province\'s on its land');
   assert.ok(landSideAt(L, 12.5, 15.5) && !landSideAt(L, 38.5, 15.5), 'a square of one label, the land\'s side or the sea\'s whole');
+  // PIN MOVED (AUDIT RELEASE R4-7): the fields are made a tile at a time as reads need them - compared made whole
   const copy = landLaw({ w: t.w, h: t.h, land: Uint8Array.from(t.land), province: Uint8Array.from(t.province) });
   assert.notEqual(copy, L);
+  copy.materialize(); L.materialize();
   assert.ok(Buffer.from(copy.S.buffer).equals(Buffer.from(L.S.buffer)), 'the land\'s distance bit for bit');
   for (const id of [3, 7, 9]) assert.ok(Buffer.from(copy.fieldOf(id).buffer).equals(Buffer.from(L.fieldOf(id).buffer)), `province ${id}'s`);
   assert.equal(copy.T[1], null, 'no field for a province the picture has none of');
@@ -321,6 +323,30 @@ test('SMOOTH-LAND a lane\'s mooring: a roadstead on the law\'s sea whose picture
   assert.deepEqual(moorCell(qx, qy, sea, native, (a, b) => !(b.x === 35.5 && b.z === 24.5)), [34, 25], 'the next where the nearest\'s leg crosses land');
   assert.equal(moorCell(12.5, 15.5, sea, native, () => true), null, 'no sea within reach');
   assert.deepEqual(moorCell(32.5, 13.5, sea, native, () => true), [32, 11], 'two cells off');
+});
+
+test('SMOOTH-LAND (AUDIT RELEASE R4-7, the law\'s first build) the law made as it is read: its build makes no distance (no tile of any field); a read in a square of one label none; a read where labels meet at most four tiles of each field it asks; answers the same before and after the law is made whole, and the fields made in any order bit for bit the same (mutants: the build making every tile; a tile\'s centre skipped; the held centres computed; the cover\'s reach)', () => {
+  const t = install();
+  const L = landLaw(tamrielTrace());
+  assert.equal(LAW_TILE, 16);
+  assert.equal(L.tilesMade(), 0, 'the build makes no tile');
+  assert.equal(landLabelAt(L, 12.5, 15.5), 3);
+  assert.equal(L.tilesMade(), 0, 'a square of one label reads none');
+  assert.equal(landLabelAt(L, 20.002, 12), 9);
+  const fields = 1 + [3, 9].length;
+  assert.ok(L.tilesMade() >= 1 && L.tilesMade() <= 4 * fields, `a read where labels meet makes ${L.tilesMade()} tiles`);
+  // lazily read, then whole: the same answers at an eighth of a pixel, a fresh law each way
+  const pts = [];
+  for (let py = 0.0625; py < t.h; py += 0.375) for (let px = 0.0625; px < t.w; px += 0.375) pts.push([px, py]);
+  const lazy = landLaw({ ...tamrielTrace() }), lazyAns = pts.map(([x, y]) => `${landLabelAt(lazy, x, y)}:${provinceLeadAt(lazy, x, y, 3, 9)}`);
+  const whole = landLaw({ ...tamrielTrace() });
+  whole.materialize();
+  assert.deepEqual(pts.map(([x, y]) => `${landLabelAt(whole, x, y)}:${provinceLeadAt(whole, x, y, 3, 9)}`), lazyAns);
+  // made in reverse order of tiles: bit for bit
+  const back = landLaw({ ...tamrielTrace() });
+  for (const F of [back.FS, ...back.F]) if (F) for (let k = F.done.length - 1; k >= 0; k--) F.tile(k % back.TW, Math.floor(k / back.TW));
+  lazy.materialize();
+  for (const [a, b] of [[back.S, whole.S], [lazy.S, whole.S], ...[0, 3, 7, 9].map((id) => [back.fieldOf(id), whole.fieldOf(id)])]) assert.ok(Buffer.from(a.buffer).equals(Buffer.from(b.buffer)), 'the fields bit for bit');
 });
 
 // AUDIT RELEASE R4-7 (bible/01-Overview/audits/Audit-Release-R4.md): the held map's first open held the page a second and

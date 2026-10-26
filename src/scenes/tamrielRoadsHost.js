@@ -17,7 +17,9 @@
 // time, the land about the player first, where it waited for every region of the build.
 // ═══════════════════════════════════════════════════════════════════
 import { createTamrielRoadsClient } from '../world/tamrielRoadsClient.js';
-import { regionLattice, regionsByNearness, regionHasLand, regionAt, inputsPrint, REGION_APRON } from '../world/tamrielRoads.js';
+import { regionLattice, regionsByNearness, regionWanted, regionAt, inputsPrint, REGION_APRON, GROUND_ROLL_VERSION } from '../world/tamrielRoads.js';
+import { keptLandRegions, fnv32 } from '../world/tamriel/tamrielBootCache.js';   // AUDIT RELEASE R4-4: the boot's continent kept
+import { BIOMES_VERSION } from '../world/tamriel/tamrielBiomes.js';
 import { arenaJoins, joinLayer, joinRunPixels } from '../world/arenaRoads.js';
 import { tamrielFrameInBay, tamrielFit, inBay, pictureToBay, BAY_W, BAY_H } from '../world/tamriel/tamrielFrame.js';
 import { tamrielTrace } from '../world/tamriel/tamrielLand.js';
@@ -26,6 +28,7 @@ import { WATER_BYTE } from '../world/roadsProducer.js';
 import { LOCATION_TYPES } from '../formats/mapsFile.js';
 import { resetPastBayPlaces, addPastBayPlaces } from '../world/pastBayPlaces.js';
 import { cyrodiilTrunkSpec, CYRODIIL_ROADS } from '../world/road/cyrodiilRoads.js';   // VOYAGER-CYRODIIL
+import { resetExactPieces, addExactPieces, clearExactPieces } from '../systems/travel/landPieces.js';   // EXACT-PIECES: the land's pieces, a region at a time
 
 /** VOYAGER-CYRODIIL: THE IMPERIAL CITY'S KEY in the capitals' table - its ring and its gates the plan's own. */
 export const CYRODIIL_CAPITAL = 'imperial-city';
@@ -108,7 +111,7 @@ export function createTamrielRoadsHost({ terrainGen, woodsBytes, heightAt, joinL
     },
     /** WW7-9: `fn(grid, build)` told as each region lands - its grid, the pixels its layer and its places may move. */
     onRegion(fn) { told.push(fn); },
-    dispose() { roadsClient?.dispose(); },
+    dispose() { roadsClient?.dispose(); clearExactPieces(); },
   };
 
   function start(towns, spec, capitals, held, player) {
@@ -129,8 +132,10 @@ export function createTamrielRoadsHost({ terrainGen, woodsBytes, heightAt, joinL
     lattice = regionLattice(tamrielFrameInBay());
     const from = player ?? { x: 500, y: 250 };
     at = regionAt(lattice, from.x, from.y);
-    const regions = regionsByNearness(lattice, (r) => regionHasLand(r, heightAt), from);
     const trace = tamrielTrace(), fit = tamrielFit();
+    // AUDIT RELEASE R4-4: the regions with land a returning boot scanned before, on this very ground, kept (tamrielBootCache.js)
+    const ground = `w1|g${GROUND_ROLL_VERSION}|b${BIOMES_VERSION}|${fit ? `${fit.ox}:${fit.oy}:${fit.ppu}` : '-'}|${fnv32(woodsBytes ?? []).toString(36)}`;
+    const regions = regionsByNearness(lattice, keptLandRegions({ lattice, scan: (r) => regionWanted(r, heightAt), ground }), from);   // EXACT-PIECES: the Bay's own regions too
     // AUDIT TESA II R9: the crossings' runs past the Bay held as an Arena place's pixel is - no rolled place on the road
     const inputs = { woodsBytes, trace, fit: fit ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu } : null, spec, nodes, obstacles, gates, held: [...held, ...joinRunPixels(joins)], lattice, trunks };
     landed = 0;
@@ -138,14 +143,16 @@ export function createTamrielRoadsHost({ terrainGen, woodsBytes, heightAt, joinL
     build++; asked = false; done = new Set();   // WW7-9: a new build - nothing of it landed
     grids = regions.map((r) => ({ key: `${r.i},${r.j}`, x0: r.gx, y0: r.gy, x1: r.core.x1 + REGION_APRON, y1: r.core.y1 + REGION_APRON }));
     resetPastBayPlaces();   // TESA15: and the map's places
+    resetExactPieces(lattice, regions);   // EXACT-PIECES: the land's pieces, none landed
     terrainGen.addArenaRoads(joinLayer(joins), onLanded, { reset: true });   // TESA5: the crossings first, the layer reset
     const t0 = Date.now();
     log.log(`[roads] the roads past the Bay: ${total} regions to lay (${nodes.length} towns and gates, ${joins.length} crossings, ${trunks?.roads.length ?? 0} of Cyrodiil's named roads)`);
     const mine = build;
     Promise.resolve(roadsClient.start({
       inputs, print: inputsPrint(inputs), regions,
-      onRegion: (region, layer, stats, places) => {
+      onRegion: (region, layer, stats, places, land) => {
         addPastBayPlaces(places ?? []);   // TESA15: before the roads, so the map's repaint for them has both
+        addExactPieces(region, land ?? null);   // EXACT-PIECES: its land's pieces, joined to its landed neighbours'
         terrainGen.addArenaRoads(layer, onLanded);
         landed++;
         log.log(`[roads] region (${region.i}, ${region.j}): ${layer.roads.size} road and ${layer.tracks.size} track pixels, ${places?.length ?? 0} places ${stats.cached ? 'from the cache' : `in ${stats.ms} ms`}; ${landed} of ${total}${landed === total ? `, all in ${((Date.now() - t0) / 1000).toFixed(1)} s` : ''}`);

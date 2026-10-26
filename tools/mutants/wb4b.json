@@ -128,8 +128,8 @@
   {
     "name": "WB4b-a-swing-said-a-shaft",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      landOnBoss(boss, damage, HIT_KINDS.Melee);",
-    "new": "      landOnBoss(boss, damage, HIT_KINDS.Shaft);",
+    "old": "(n) => hurtPlayer(n)), HIT_KINDS.Melee);   // BOSS-TRAITS: resisted, its thorns at me",
+    "new": "(n) => hurtPlayer(n)), HIT_KINDS.Shaft);   // BOSS-TRAITS: resisted, its thorns at me",
     "tests": [
       "test/net/gate/wb4b_gate_blows.test.js"
     ]

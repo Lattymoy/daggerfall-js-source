@@ -32,6 +32,9 @@ change) and read `bible/01-Overview/Port-Doctrine.md` before touching code.
   being true, at the doc and the quote. After merging main into a branch that
   still wrote numbers: take main's side of each cite-only conflict, then
   `npm run cites -- --apply` and `-- --check`.
+- **The loot level gate stays unpublished** (LOOT-GATE, Dudey, 2026-10-25): patch notes, release notes and Discord
+  posts never give the levels, factors or drop chances in `src/systems/loot/lootLevelGate.js`. Say only that Rare and
+  Legendary gear is rarer early on and more common as a character grows.
 - **Patch notes go in the pull request's description**, under
   `## Patch notes: <title>` (`.github/pull_request_template.md`). The desktop
   release reads them there. Never commit a patch-notes file:

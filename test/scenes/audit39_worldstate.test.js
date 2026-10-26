@@ -96,7 +96,7 @@ test('AUDIT 39r: the THIRD above-ground host - worldModes\' interior arm - reads
   // interior rig was handed no flag at all.
   assert.match(WORLD_MODES, /import \{ entityIsParalyzed \} from '\.\.\/systems\/effects\.js';/,
     'the read-time fold, the other two hosts\' own import');
-  assert.ok(WORLD_MODES.includes("const paralyzed = staffFrozen() || ((mode === 'dungeon' && dungeonCtx) ? (dungeonCtx.playerParalyzed?.() ?? false) : entityIsParalyzed(playerEntity));"),
+  assert.ok(WORLD_MODES.includes("const paralyzed = staffFrozen() || playerHeld() || ((mode === 'dungeon' && dungeonCtx) ? (dungeonCtx.playerParalyzed?.() ?? false) : entityIsParalyzed(playerEntity));"),   // PIN MOVED (AUDIT WORLD-EVENTS L1-4): and a body lying down for a raise
     'one fold: the dungeon context underground, the entity above it (STAFF-PANEL5-FREEZE: a staff freeze before both)');
   assert.ok(!WORLD_MODES.includes("(dungeonCtx.playerParalyzed?.() ?? false) : false;"), 'the hardcoded false is gone');
   // AUDIT 64 F3 (review): see the note in the #59 pin above - the

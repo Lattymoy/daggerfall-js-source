@@ -312,12 +312,17 @@ test('WB12d relay: the kill asks the hub for the day\'s helpers - a fighter who 
     for (const id of ['peer-0001', 'peer-0003']) { const ws = await at(id); await say(ws, { s: 1 }); }
     const a1 = await at('peer-0001');
     await say(a1, { s: 1, f: 1 });
-    const { fighters, mine, kill } = await courtOf(k);
+    const { fighters, mine, kill, tick } = await courtOf(k);
     await kill();
     assert.equal(mine(fighters[0]).r, 1, 'fought and broke the rite: an ember more');
     assert.ok(['dealt', 'stood'].includes(mine(fighters[0]).x));
     assert.equal('r' in mine(fighters[1]), false, 'fought, never at the circle: none');
     const hub = world.room(SOCIAL_ROOM);
+    // PIN MOVED (GATE-COURTS, net/gate/gateCourts.js riteOnly): the rite's own receipt is the night's book's, minted once every
+    // court is done - here, at the seal (a court still fighting could yet give its helper a receipt of its own)
+    await tick(2);
+    assert.equal(hub.store.get(gateReceiptKey('acct-peer-0003')), undefined, 'not at the kill');
+    k.set(TT.sealAt); await tick(1); await settle();
     const kept = hub.store.get(gateReceiptKey('acct-peer-0003'));
     assert.ok(kept, 'the hub keeps the rite\'s own');
     const c = readReceipt(kept.r);
