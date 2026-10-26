@@ -38,6 +38,7 @@
 // the one layer is the law above, unchanged: the sea refused.
 // ═══════════════════════════════════════════════════════════════════
 import { DIR_DELTA, MAP_W, MAP_H } from '../../world/road/roadNetwork.js';
+import { arenaRoadByte, arenaRoadsLayer, JOIN_DEPTH } from '../../world/arenaRoads.js';   // VOYAGER2.1: the roads past the Bay, walked as roads
 
 /** What a step costs, by what it walks on. The open ground's 3.5 makes a road worth a detour of up to three and a half
  *  times its length - Travel Options' reckless (road) and cautious (open) multipliers are 1 and 0.8 by default, so the
@@ -99,7 +100,7 @@ export function openStepBlocked(climateAt, heightAt, ax, ay, bx, by, leaving = f
  * @param {number} [height]
  * @param {((x:number, y:number) => boolean)|null} [beyond]
  */
-export function routeGround(climateAt, heightAt, waterByte, width = MAP_W, height = MAP_H, beyond = null) {
+export function routeGround(climateAt, heightAt, waterByte, width = MAP_W, height = MAP_H, beyond = null, pathsBeyond = arenaRoadByte) {
   const climate = new Uint8Array(width * height), heights = new Uint8Array(width * height);
   // OW-WOD-PATH: the World of Daggerfall massifs (WodWorld mountainPixels), one byte a pixel - set by the host when the
   // mod's list is read or grows (setRocks), null while it stands none
@@ -169,6 +170,11 @@ export function routeGround(climateAt, heightAt, waterByte, width = MAP_W, heigh
   const onTable = (p) => p.x >= 0 && p.y >= 0 && p.x < width && p.y < height;
   return {
     isWater,
+    /** VOYAGER2.1: the roads past the Bay (world/arenaRoads.js's installed layer - `kind` 'roads', 'tracks' or 'join'),
+     *  which the planner walks as roads where it is handed the Bay's (planRoute `pathsBeyond`) - none while no layer is
+     *  installed (the reader read nothing there and cost a long route past the table a fifth more), as the host's spread
+     *  (`...tvRouteGround()`) asks it at each plan. */
+    get pathsBeyond() { return pathsBeyond === arenaRoadByte && !arenaRoadsLayer() ? null : pathsBeyond; },
     peakAt: peak,
     openBlocked,
     /** OW-WOD-PATH: the massifs' table (width x height bytes, 1 a massif's pixel) or null - the land's pieces folded again. */
@@ -241,20 +247,40 @@ export function edgeKind(a, b, bit, roads, tracks) {
  * 1 a track, 2 open) a step from (ax, ay) to its neighbour (bx, by) through edge `bit` walks on, or -1 where it is
  * refused. `goal`: 0 an ordinary step; 1 onto the goal (the sea not asked - the traveller may ask for the shore); 2 onto
  * an exempt goal (a place: nor the peaks' law). `leaving`: the step starts in the start's own peaks (AUDIT OW4 J1).
+ * VOYAGER2.1: `beyond` (planRoute's `pathsBeyond`, null for none) - the roads past the Bay's table.
  */
-function stepKind(ax, ay, bx, by, bit, width, height, roads, tracks, isWater, openBlocked, goal, leaving) {
+function stepKind(ax, ay, bx, by, bit, width, height, roads, tracks, isWater, openBlocked, goal, leaving, beyond = null) {
   if (goal === 0 && isWater(bx, by)) return -1;
   // AUDIT DEEP T2-5: nor through a corner of the sea - a diagonal between two water pixels is a swim (the roads' own
   // ROADS 6, whose stricter half would refuse a coast road's own diagonal)
   if (ax !== bx && ay !== by && isWater(bx, ay) && isWater(ax, by)) return -1;
-  // TV-BEYOND: past the table there is no road's byte - the open ground (a column off the west edge read the row above's)
+  // TV-BEYOND: past the table there is no road's byte of the Bay's - VOYAGER2.1: the roads past the Bay's are its own
+  // (a step onto them, or off the Bay along a crossing's join, a road's or a track's as on the Bay), else the open ground
   const off = ax < 0 || ay < 0 || bx < 0 || by < 0 || ax >= width || ay >= height || bx >= width || by >= height;
-  const kind = off ? 2 : edgeKindAt(ay * width + ax, by * width + bx, bit, roads, tracks);
+  const kind = beyond && (off || nearEdge(ax, ay, width, height) || nearEdge(bx, by, width, height)) ? beyondKind(ax, ay, bx, by, bit, width, height, roads, tracks, beyond)
+    : off ? 2 : edgeKindAt(ay * width + ax, by * width + bx, bit, roads, tracks);
   // OW-MOUNTAINS; AUDIT OW3 J5: no step out of the start is exempt (a ridge beside it was crossed on the exempt step), and
   // the step onto the goal only for a place (`goalExempt`) - a spot's is asked (a plateau's cliff was walked straight up);
   // AUDIT OW4 J1: `leaving` only out of the start's own peaks - never out of a range a road led into
   if (kind === 2 && goal !== 2 && openBlocked && openBlocked(ax, ay, bx, by, leaving)) return -1;
   return kind;
+}
+
+/** VOYAGER2.1: is a pixel within a crossing's join of the table's edge (world/arenaRoads.js JOIN_DEPTH) - or past it. */
+const nearEdge = (x, y, width, height) => x <= JOIN_DEPTH || y <= JOIN_DEPTH || x >= width - 1 - JOIN_DEPTH || y >= height - 1 - JOIN_DEPTH;
+/** VOYAGER2.1: a pixel's road or track byte - on the table the Bay's own (a road's with a crossing's join on it, TESA5),
+ *  past it the roads past the Bay's (`beyond`, the layer's reader). */
+function pathByte(kind, x, y, width, height, arr, beyond) {
+  if (x >= 0 && y >= 0 && x < width && y < height) return (arr ? arr[y * width + x] : 0) | (kind === 'roads' ? beyond('join', x, y) : 0);
+  return beyond(kind, x, y);
+}
+/** VOYAGER2.1: edgeKindAt's law on the roads past the Bay - a road where both ends carry the step, else a track, else the
+ *  open ground. */
+function beyondKind(ax, ay, bx, by, bit, width, height, roads, tracks, beyond) {
+  const back = BACK_BIT[bit];
+  if ((pathByte('roads', ax, ay, width, height, roads, beyond) & bit) && (pathByte('roads', bx, by, width, height, roads, beyond) & back)) return 0;
+  if ((pathByte('tracks', ax, ay, width, height, tracks, beyond) & bit) && (pathByte('tracks', bx, by, width, height, tracks, beyond) & back)) return 1;
+  return 2;
 }
 
 /** A binary heap of [priority, value] - the open set. */
@@ -308,7 +334,8 @@ class Heap {
  *   peakAt?: ((x:number, y:number) => boolean)|null,
  *   apart?: ((from:{x:number,y:number}, to:{x:number,y:number}, net:{roads:any, tracks:any}) => boolean)|null,
  *   sea?: { start: 'land'|'sea', again?: boolean, goal?: 'land'|'sea', voyage?: boolean } | null, lanes?: boolean,
- *   endPad?: number }} [opts] -
+ *   endPad?: number, pathsBeyond?: ((kind: string, x: number, y: number) => number)|null }} [opts] - VOYAGER2.1: `pathsBeyond` the
+ *   roads past the Bay's reader (routeGround's), walked where `roads` or `tracks` is handed;
  *   `openBlocked`: an OPEN step refused (OW-MOUNTAINS) - never a road's or a track's; AUDIT OW3 J5: asked of the step out
  *   of the start too, and of the step onto the goal unless `goalExempt` (a place: a town among the peaks is reached; a
  *   spot is not - false, the cliff up to a plateau refused). AUDIT OW4 J1: told `leaving` - the step starts in the
@@ -321,7 +348,10 @@ class Heap {
  * @returns {{ pixels: {x:number,y:number}[], cost: number, kinds: string[] } | null}
  */
 export function planRoute(from, to, opts = {}) {
-  const { roads = null, tracks = null, isWater = () => false, width = MAP_W, height = MAP_H, margins = ROUTE_MARGINS, maxExpansions = ROUTE_MAX_EXPANSIONS, openBlocked = null, goalExempt = true, peakAt = null, apart = null, sea = null, lanes = true, endPad = 0 } = opts;
+  const { roads = null, tracks = null, isWater = () => false, width = MAP_W, height = MAP_H, margins = ROUTE_MARGINS, maxExpansions = ROUTE_MAX_EXPANSIONS, openBlocked = null, goalExempt = true, peakAt = null, apart = null, sea = null, lanes = true, endPad = 0, pathsBeyond = null } = opts;
+  // VOYAGER2.1: the roads past the Bay are walked as roads where the planner is handed the Bay's (the ROADS mode's net) -
+  // FREE, handed none, walks across country there too
+  const beyond = roads || tracks ? pathsBeyond : null;
   if (!from || !to) return null;
   if (from.x === to.x && from.y === to.y && !(sea && (sea.start === 'sea') !== (sea.goal === 'sea'))) return { pixels: [{ x: from.x, y: from.y }], cost: 0, kinds: [] };
   // LONG-VOYAGE (START2, bible/06-Systems/Travel-View.md "LONG-VOYAGE"): A CROSSING FROM A HELM WITH AN END PAST THE BAY'S
@@ -363,7 +393,7 @@ export function planRoute(from, to, opts = {}) {
     // so the map itself bounds it. Even a small margin can clip to the full map; capping that search at 200 000
     // expansions would skip the identical final box and falsely refuse a reachable trip. Use actual bounds.
     const cap = key === `${bounds.x0},${bounds.x1},${bounds.y0},${bounds.y1}` ? Infinity : maxExpansions;
-    const r = search(from, to, { roads, tracks, isWater, width, height, bounds, margin, maxExpansions: cap, openBlocked, goalExempt, peakAt, sea });
+    const r = search(from, to, { roads, tracks, isWater, width, height, bounds, margin, maxExpansions: cap, openBlocked, goalExempt, peakAt, sea, beyond });
     if (r && (!best || r.cost <= best.cost)) best = r;
     if (best && best.cost <= 2 * (margin + 1) * ROUTE_COST.road) return best;
   }
@@ -540,7 +570,7 @@ function nearestDry(p, isWater) {
   return null;
 }
 
-function search(from, to, { roads, tracks, isWater, width, height, bounds, margin, maxExpansions, openBlocked, goalExempt, peakAt, sea }) {
+function search(from, to, { roads, tracks, isWater, width, height, bounds, margin, maxExpansions, openBlocked, goalExempt, peakAt, sea, beyond = null }) {
   const x0 = Math.max(bounds.x0, Math.min(from.x, to.x) - margin), x1 = Math.min(bounds.x1, Math.max(from.x, to.x) + margin);
   const y0 = Math.max(bounds.y0, Math.min(from.y, to.y) - margin), y1 = Math.min(bounds.y1, Math.max(from.y, to.y) + margin);
   const bw = x1 - x0 + 1, bh = y1 - y0 + 1;
@@ -616,7 +646,7 @@ function search(from, to, { roads, tracks, isWater, width, height, bounds, margi
       } else {
         // the land's step: the sea refused (never the goal - the traveller may ask for the shore), and the peaks: stepKind,
         // the one law (AUDIT OW4 J3)
-        const kind = stepKind(cx, cy, nx, ny, STEP_BIT[d], width, height, roads, tracks, isWater, openBlocked, n !== goal ? 0 : goalExempt ? 2 : 1, leaving);
+        const kind = stepKind(cx, cy, nx, ny, STEP_BIT[d], width, height, roads, tracks, isWater, openBlocked, n !== goal ? 0 : goalExempt ? 2 : 1, leaving, beyond);
         if (kind < 0) continue;
         kindIx = kind; step = diag * KIND_COST[kind];
       }

@@ -94,8 +94,8 @@
   {
     "name": "TESA15-a-place-on-theirs",
     "file": "src/world/tamrielRoads.js",
-    "old": " && !theirs.has(`${p.x},${p.y}`)).sort((a, b) => a.y - b.y || a.x - b.x);\n  return",
-    "new": ").sort((a, b) => a.y - b.y || a.x - b.x);\n  return",
+    "old": " && !theirs.has(`${p.x},${p.y}`)).sort((a, b) => a.y - b.y || a.x - b.x);\n  const trunkPath",
+    "new": ").sort((a, b) => a.y - b.y || a.x - b.x);\n  const trunkPath",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
       "test/tesa14_roads.test.js"
@@ -104,8 +104,8 @@
   {
     "name": "TESA15-the-places-unordered",
     "file": "src/world/tamrielRoads.js",
-    "old": ".sort((a, b) => a.y - b.y || a.x - b.x);\n  return { roads, tracks, places:",
-    "new": ";\n  return { roads, tracks, places:",
+    "old": ".sort((a, b) => a.y - b.y || a.x - b.x);\n  const trunkPath",
+    "new": ";\n  const trunkPath",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
       "test/tesa14_roads.test.js"

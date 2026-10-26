@@ -81,10 +81,12 @@ DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from `TerrainHelper.SetLo
   outlineOfBasis, rectOfBasis; `03-World/Deep-Waters.md`).
 - **The road's ring** (`townRoadRing`, `roadPainter.js`): the mod's "Paint roads around locations" paves the tiles off the
   town's ground within two and a half of it - its outline's ring, where it paved the rect's padding. AUDIT TESA III E1-1
-  (OPEN, routed to the roads' stream): the painter's FAST-SUITE guard passes by every tile off the centre cross, the
-  diagonals and the rect - proven against the rect's law alone - and the ring lies past the rect, so 82% of it is never
+  (FIXED 2026-10-26, the roads' stream): the painter's FAST-SUITE guard passed by every tile off the centre cross, the
+  diagonals and the rect - proven against the rect's law alone - and the ring lies past the rect, so 82% of it was never
   paved (259,606 of 1,451,249 ring tiles over the Bay's 3,444 towns; a road's stubs where its arms cross it); and the ring
-  paves the sea where TS2 keeps it (2,670 ring tiles over water).
+  paved the sea where TS2 keeps it (2,670 ring tiles over water). Now the guard passes no ring tile, the ring paves no
+  water and `smoothRoadHeights` keeps off it (`roadPainter.js:"&& !locationRect?.ring?.[y * DIM + x]) continue;"`): the
+  whole dry ring paved (the audit page's record).
 - Measured on the freeware: Daggerfall stands within its walls as before (its rect 11..116, its tiles' histogram
   unchanged, its ground 0.166139 for DFU's 0.166147 - its own land's mean); Antelibuton keeps its sea (thousands of water
   samples where DFU's blend left about 240); Gothway Garden's outline wanders on every side. The corpus' stamped tiles

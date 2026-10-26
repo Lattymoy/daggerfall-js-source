@@ -22,8 +22,8 @@
   {
     "name": "TV-BEYOND-road-byte-read-past-the-table",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "const kind = off ? 2 : edgeKindAt(ay * width + ax, by * width + bx, bit, roads, tracks);",
-    "new": "const kind = edgeKindAt(ay * width + ax, by * width + bx, bit, roads, tracks);",
+    "old": "    : off ? 2 : edgeKindAt(ay * width + ax, by * width + bx, bit, roads, tracks);",
+    "new": "    : edgeKindAt(ay * width + ax, by * width + bx, bit, roads, tracks);",
     "tests": [
       "test/systems/travel/fb1009_beyond.test.js"
     ]
