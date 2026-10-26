@@ -7145,6 +7145,7 @@ wild.insure.inZone,"Personne ne délivre d’assurance dans une zone PvP ouverte
 wild.insure.line,"Assuré. Une mort de la main d’un joueur dans une zone PvP ouverte ne le prendra pas, et la police est consommée lorsqu’elle sauve cet objet."
 wild.insure.offline,"Les assurances se délivrent en ligne, pour un personnage du royaume."
 wild.insure.soon,"Assuré. La police prend effet dans {min, plural, one {# minute} other {# minutes}}."
+wild.store.locked,"Vous ne pouvez rien ranger pendant encore {s, plural, one {# seconde} other {# secondes}} après avoir combattu un autre joueur."
 wild.zone.chipTip,"{zone} : d’autres joueurs peuvent vous attaquer. Les ennemis sont quatre fois plus forts et lâchent jusqu’à deux fois plus de butin (25 % de plus à la lisière, deux fois plus au cœur). Si un autre joueur vous tue, vous lâchez ce que vous portez."
 wild.zone.enter,"Vous entrez dans {zone}, une zone PvP ouverte. Les ennemis y sont quatre fois plus forts. Si un autre joueur vous tue, vous lâchez ce que vous portez."
 wild.zone.revenantOne,"Un seul revenant peut marcher à vos côtés dans les Wrothgarian Mountains."

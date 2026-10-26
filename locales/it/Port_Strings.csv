@@ -7145,6 +7145,7 @@ wild.insure.inZone,"Nessuno emette assicurazioni dentro una zona PvP aperta. Ass
 wild.insure.line,"Assicurato. L’uccisione da parte di un giocatore in una zona PvP aperta non lo prenderà, e la polizza si consuma quando salva questo oggetto."
 wild.insure.offline,"Le assicurazioni si emettono online, per un personaggio del reame."
 wild.insure.soon,"Assicurato. La polizza entra in vigore tra {min, plural, one {# minuto} other {# minuti}}."
+wild.store.locked,"Non puoi riporre nulla per altri {s, plural, one {# secondo} other {# secondi}} dopo aver combattuto contro un altro giocatore."
 wild.zone.chipTip,"{zone}: altri giocatori possono attaccarti. I nemici sono quattro volte più forti e lasciano fino al doppio del bottino (25% in più ai margini, il doppio nel cuore). Se un altro giocatore ti uccide, lasci cadere ciò che porti."
 wild.zone.enter,"Entri nelle {zone}, una zona PvP aperta. Qui i nemici sono quattro volte più forti. Se un altro giocatore ti uccide, lasci cadere ciò che porti."
 wild.zone.revenantOne,"Nelle Wrothgarian Mountains può camminare al tuo fianco un solo redivivo."

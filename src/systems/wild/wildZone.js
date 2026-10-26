@@ -52,6 +52,11 @@ export const WILD_DEATH_HOLD_S = 120;
 /** A blow from another player this recent at the death names them the killer (a lingering spell, a foe's last swing
  *  after a player's - the player who brought you down). */
 export const WILD_KILL_CREDIT_MS = 10_000;
+/** AUDIT PVP-EASE L2-1 (the owner chose "Combat lock"): how long after a player's blow - given or taken, a sword's or a
+ *  ship's gun's - nothing may be STORED: the cart, a companion's pack, a ship's hold, a chest, a sworn one's kit. STORE-KEEPS
+ *  made all of those storage no death takes, and a fighter at 1 HP moved its whole bag and purse into them; taking out is
+ *  never locked. */
+export const WILD_STORE_LOCK_MS = 60_000;
 /** How far from the zone's edge the maps still hide a player, in map pixels (one is ~820 m). */
 export const WILD_NEAR_PX = 6;
 
@@ -130,6 +135,18 @@ export function setWildHere(on, ring = 0, kind = WILD_KIND) {
 }
 /** Does the player stand in the zone now? (The foe pools ask at a spawn, the loot rolls at a death.) */
 export const wildHere = () => _here;
+
+// ── AUDIT PVP-EASE L2-1: THE COMBAT LOCK on storing ───────────────────────────────────────────────────────────────────
+let _blowAt = -Infinity;
+/** A player's blow landed - mine on another or another's on me (world.js wildHpIn, scenes/naval/seaBroadsides.js's hull
+ *  word): storing locked WILD_STORE_LOCK_MS from `at`. @param {number} [at] */
+export const noteWildBlow = (at = Date.now()) => { _blowAt = Math.max(_blowAt, at); };
+/** Why nothing may be stored now - the words said - or null. The inventory's storage destinations ask it (systems/
+ *  inventorySession.js storeRefusalOf), and a sworn one's kit (revenantCompanions.js giveSwornGear). @param {number} [now] */
+export function wildStoreRefusal(now = Date.now()) {
+  const left = WILD_STORE_LOCK_MS - (now - _blowAt);
+  return left > 0 ? WILD_TEXT.storeLocked(Math.ceil(left / 1000)) : null;
+}
 /** The ring the player stands in (1 the outer, 4 the heart), 0 outside. */
 export const wildRing = () => _ring;
 /** ETHER-WILD: the ground of the zone the player stands in - 'wroth' or 'ether' - or null outside every zone. */
@@ -546,6 +563,7 @@ export const WILD_TEXT = Object.freeze({
   // a blow of mine it kept off
   graceOn: (s) => t('wild.grace.on', 'Safe passage: no player can harm you for {s, plural, one {# second} other {# seconds}}, or until you attack one.', { s }),
   graceOff: () => t('wild.grace.off', 'Your safe passage has ended. Other players can attack you.'),
+  storeLocked: (s) => t('wild.store.locked', 'You cannot store anything for {s, plural, one {# more second} other {# more seconds}} after fighting another player.', { s }),   // AUDIT PVP-EASE L2-1
   graceKept: (s) => t('wild.grace.kept', 'That player is under safe passage for {s, plural, one {# more second} other {# more seconds}}.', { s }),
   // WILD2: the rings
   ring: (r) => `${wildRingName(r)}: ${wildRingBonus(r)}.`,
@@ -643,6 +661,7 @@ export const wildDeath = () => _death;
 export function wildDeathAtHand(/** @type {any} */ fell, /** @type {string | null | undefined} */ name) {
   _fell = fell ?? _fell;
   _killed = true;
+  noteWildBlow(Date.now() + WILD_STORE_LOCK_MS);   // AUDIT PVP-EASE L2-1: the take is a pick's minute behind the fall - a Resurrect inside it stores nothing first
   if (_death) _death = { ..._death, kill: true, killer: _death.killer ?? (typeof name === 'string' && name ? name : null) };
 }
 /** AUDIT FOE-KEEPS H1: whether this death was a kill (the rise pays the usual tenth only when it was not). */

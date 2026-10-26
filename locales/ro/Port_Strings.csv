@@ -7145,6 +7145,7 @@ wild.insure.inZone,"Nimeni nu emite asigurări într-o zonă PvP deschisă. Asig
 wild.insure.line,"Asigurat. Uciderea de către un jucător într-o zonă PvP deschisă nu îl va lua, iar polița se consumă când salvează acest obiect."
 wild.insure.offline,"Asigurările se emit online, pentru un personaj al tărâmului."
 wild.insure.soon,"Asigurat. Polița intră în vigoare peste {min, plural, one {# minut} few {# minute} other {# de minute}}."
+wild.store.locked,"Nu poți depozita nimic încă {s, plural, one {# secundă} few {# secunde} other {# de secunde}} după o luptă cu alt jucător."
 wild.zone.chipTip,"{zone}: alți jucători te pot ataca. Dușmanii sunt de patru ori mai puternici și lasă până la de două ori mai multă pradă (cu 25% mai mult la margine, dublu în inimă). Dacă te ucide alt jucător, scapi ce porți."
 wild.zone.enter,"Intri în {zone}, o zonă PvP deschisă. Aici dușmanii sunt de patru ori mai puternici. Dacă te ucide alt jucător, scapi ce porți."
 wild.zone.revenantOne,"În Wrothgarian Mountains doar un strigoi poate merge alături de tine."

@@ -7145,6 +7145,7 @@ wild.insure.inZone,"Ingen udsteder forsikringer i en åben PvP-zone. Forsikr dit
 wild.insure.line,"Forsikret. En spillers drab i en åben PvP-zone tager det ikke, og policen bliver brugt, når den redder denne genstand."
 wild.insure.offline,"Forsikringer udstedes online, til en rigskarakter."
 wild.insure.soon,"Forsikret. Policen træder i kraft om {min, plural, one {# minut} other {# minutter}}."
+wild.store.locked,"Du kan ikke lægge noget til opbevaring i {s, plural, one {# sekund} other {# sekunder}} mere efter at have kæmpet mod en anden spiller."
 wild.zone.chipTip,"{zone}: andre spillere kan angribe dig. Fjender er fire gange så stærke og taber op til dobbelt så meget bytte (25 % mere ved kanten, dobbelt i hjertet). Dræber en anden spiller dig, taber du det, du bærer."
 wild.zone.enter,"Du går ind i {zone}, en åben PvP-zone. Fjender her er fire gange så stærke. Dræber en anden spiller dig, taber du det, du bærer."
 wild.zone.revenantOne,"Kun én genganger må gå ved din side i Wrothgarian Mountains."

@@ -7145,6 +7145,7 @@ wild.insure.inZone,"V otevřené PvP zóně nikdo pojistky nevystavuje. Pojisti 
 wild.insure.line,"Pojištěno. Zabití hráčem v otevřené PvP zóně ho nevezme a pojistka se spotřebuje, když tento předmět zachrání."
 wild.insure.offline,"Pojistky se vystavují online, pro postavu říše."
 wild.insure.soon,"Pojištěno. Pojistka začne platit za {min, plural, one {# minutu} few {# minuty} many {# minuty} other {# minut}}."
+wild.store.locked,"Po boji s jiným hráčem nemůžeš nic uložit ještě {s, plural, one {# sekundu} few {# sekundy} many {# sekundy} other {# sekund}}."
 wild.zone.chipTip,"{zone}: ostatní hráči na tebe mohou zaútočit. Nepřátelé jsou čtyřikrát silnější a padá z nich až dvojnásobná kořist (o 25 % víc na okraji, dvojnásobek v srdci). Když tě zabije jiný hráč, upustíš, co neseš."
 wild.zone.enter,"Vstupuješ do {zone}, otevřené PvP zóny. Nepřátelé jsou tu čtyřikrát silnější. Když tě zabije jiný hráč, upustíš, co neseš."
 wild.zone.revenantOne,"V Wrothgarian Mountains smí po tvém boku kráčet jen jeden revenant."

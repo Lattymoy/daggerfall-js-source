@@ -7145,6 +7145,7 @@ wild.insure.inZone,"In einer offenen PvP-Zone stellt niemand Versicherungen aus.
 wild.insure.line,"Versichert. Ein Spielertod in einer offenen PvP-Zone nimmt es nicht, und die Police wird verbraucht, wenn sie dieses Stück rettet."
 wild.insure.offline,"Versicherungen werden online ausgestellt, für einen Charakter des Reichs."
 wild.insure.soon,"Versichert. Die Police tritt in {min, plural, one {# Minute} other {# Minuten}} in Kraft."
+wild.store.locked,"Nach einem Kampf gegen einen anderen Spieler kannst du noch {s, plural, one {# Sekunde} other {# Sekunden}} lang nichts einlagern."
 wild.zone.chipTip,"{zone}: Andere Spieler dürfen dich angreifen. Gegner sind viermal so stark und lassen bis zu doppelt so viel Beute fallen (25 % mehr am Rand, doppelt so viel im Herzen). Tötet dich ein anderer Spieler, lässt du fallen, was du trägst."
 wild.zone.enter,"Du betrittst {zone}, eine offene PvP-Zone. Gegner sind hier viermal so stark. Tötet dich ein anderer Spieler, lässt du fallen, was du trägst."
 wild.zone.revenantOne,"In den Wrothgarian Mountains darf nur ein Wiedergänger an deiner Seite gehen."

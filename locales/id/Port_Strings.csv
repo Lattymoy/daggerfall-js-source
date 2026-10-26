@@ -7145,6 +7145,7 @@ wild.insure.inZone,"Tidak ada yang menerbitkan asuransi di dalam zona PvP terbuk
 wild.insure.line,"Diasuransikan. Pembunuhan oleh pemain di zona PvP terbuka tidak akan mengambilnya, dan polisnya terpakai saat menyelamatkan barang ini."
 wild.insure.offline,"Asuransi diterbitkan secara daring, untuk karakter ranah."
 wild.insure.soon,"Diasuransikan. Polis berlaku dalam {min, plural, other {# menit}}."
+wild.store.locked,"Kamu tidak bisa menyimpan apa pun selama {s, plural, other {# detik}} lagi setelah bertarung dengan pemain lain."
 wild.zone.chipTip,"{zone}: pemain lain boleh menyerangmu. Musuh empat kali lebih kuat dan menjatuhkan jarahan hingga dua kali lipat (25% lebih banyak di tepi, dua kali lipat di jantungnya). Jika pemain lain membunuhmu, kamu menjatuhkan barang yang kamu bawa."
 wild.zone.enter,"Kamu memasuki {zone}, zona PvP terbuka. Musuh di sini empat kali lebih kuat. Jika pemain lain membunuhmu, kamu menjatuhkan barang yang kamu bawa."
 wild.zone.revenantOne,"Hanya satu revenant yang boleh berjalan di sisimu di Wrothgarian Mountains."

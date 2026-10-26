@@ -23,7 +23,7 @@
 //    here (a fight won at my side, swornFightWon; an errand home, once an errand, returnFromErrand), its sky set from the
 //    page (setSwornStars - never abroad), and read where its numbers are: its health and blows (applySwornStrength), its
 //    loyalty's losses and its rests (each site below).
-import { wildHere, zoneWord } from '../wild/wildZone.js';   // PVPDUNGEONS (the owner: "Only 1 revenant allowed to summon in the zone")
+import { wildHere, zoneWord, wildStoreRefusal } from '../wild/wildZone.js';   // PVPDUNGEONS (the owner: "Only 1 revenant allowed to summon in the zone")
 // PVPDUNGEONS: how many sworn revenants may stand at the player's side in the open zone - COMPANION-DROP: and which ones
 // (wildSwornAtSide), so the zone stands the ones whose packs drop; the drop's law reads the same leaf (wildLeaf.js - no
 // imports, so standing a revenant never pulls the drop law's graph, the item law among it, into a client's)
@@ -317,7 +317,7 @@ export function giveSwornGear(id, item, { kindName = null } = {}) {
   const r = revenantRecord(_player, id);
   if (!_player || !r) return t('rvn.sworn.gone', 'It is no longer sworn to you.');
   const key = gearKeyOf(item);
-  const why = gearRefusal(r, item, { kindName });
+  const why = gearRefusal(r, item, { kindName }) ?? wildStoreRefusal();   // AUDIT PVP-EASE L2-1: a sworn one's kit is storage no zone death takes - the combat lock
   if (why) return why;
   if (equipTableOf(_player).includes(item)) return t('rvn.gear.no.worn', 'You are wearing it.');
   const pack = _player.items ?? [];

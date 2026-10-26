@@ -7145,6 +7145,7 @@ wild.insure.inZone,"No one writes insurance inside an open PvP zone. Insure your
 wild.insure.line,"Insured. A player's kill in an open PvP zone will not take it, and the policy is spent when it saves this piece."
 wild.insure.offline,"Insurance is written online, for a realm character."
 wild.insure.soon,"Insured. The policy takes effect in {min, plural, one {# minute} other {# minutes}}."
+wild.store.locked,"You cannot store anything for {s, plural, one {# more second} other {# more seconds}} after fighting another player."
 wild.zone.chipTip,"{zone}: other players may attack you. Foes are four times as strong and drop up to twice the loot (25% more at the edge, twice in the heart). If another player kills you, you drop what you carry."
 wild.zone.enter,"You enter the {zone}, an open PvP zone. Foes here are four times as strong. If another player kills you, you drop what you carry."
 wild.zone.revenantOne,"Only one revenant may walk at your side in the Wrothgarian Mountains."
