@@ -13,6 +13,7 @@ import { gateTimes, gateRoomKey } from '../../../src/net/gate/gateLaw.js';
 import { COURT_CENTRE, GATE_FIGHTERS_MAX, HIT_KINDS, ATTACKS, HOST, COURT_WATCH_ASK_MS, COURTS, RECKON_CLOSE_MS } from '../../../src/net/gate/gateBrain.js';
 import { createGateLink, GATE_STATE_EMPTY, courtWatchText, GATE_NO_TEXT } from '../../../src/net/gate/gateLink.js';
 import { createGateCourt } from '../../../src/scenes/gate/gateCourt.js';
+import { GATE_COURTS_MAX, GATE_COURT_FIGHTERS, bookNew } from '../../../src/net/gate/gateCourts.js';   // GATE-COURTS: a night's courts
 import { relaySupportsCourtWatch } from '../../../src/net/wire.js';
 import * as TM from '../../../src/systems/textManager.js';
 import { courtToDungeon, ARRIVE_Z } from '../../../src/world/gate/gateArena.js';
@@ -21,16 +22,20 @@ const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8
 const quiet = async (fn) => { const keep = { info: console.info, warn: console.warn, log: console.log }; console.info = console.warn = console.log = () => {}; try { return await fn(); } finally { Object.assign(console, keep); } };
 const DAY = 200;
 
-test('COURT-WATCH the relay: the fight seats GATE_FIGHTERS_MAX and the next `in` is told the court is full - handed the fight as it stands first (AUDIT PLAN-1000 G8), its socket kept, the beats its room\'s and none of them saying `me` (G11); an `in` asked again sooner than COURT_WATCH_ASK_MS is answered as before, and at it is asked again (G7); the answer to an `in` that seats a fighter says so (`me`), and the wire carries it through (mutants: the seat unsaid; the wire dropping it; the state not handed; `me` on every beat; the floor unread)', async () => {
+test('COURT-WATCH the relay: every court of the night full (PIN MOVED, GATE-COURTS: its book seats GATE_COURT_FIGHTERS a court, GATE_COURTS_MAX courts) and the next `in` is told the court is full - handed the fight as it stands first (AUDIT PLAN-1000 G8), its socket kept, the beats its room\'s and none of them saying `me` (G11); an `in` asked again sooner than COURT_WATCH_ASK_MS is answered as before, and at it is asked again (G7); the answer to an `in` that seats a fighter says so (`me`), and the wire carries it through (mutants: the seat unsaid; the wire dropping it; the state not handed; `me` on every beat; the floor unread)', async () => {
   const realNow = Date.now;
   let clock = gateTimes(DAY).openAt + 1000;
   Date.now = () => clock;
   try {
     await quiet(async () => {
       const R = fakeRoom(gateRoomKey(DAY), { now: () => clock });
+      // every court past the first already full in the night's book (the first court's own storage)
+      const book = bookNew(DAY);
+      for (let c = 1; c < GATE_COURTS_MAX; c++) for (let n = 0; n < GATE_COURT_FIGHTERS; n++) book.s[`acct-c${c}-${n}`] = [c, clock, 1];
+      R.store.set('gatebook', book);
       const at = (i) => ({ x: COURT_CENTRE[0] + (i % 16), y: 0, z: COURT_CENTRE[2] + Math.floor(i / 16), yaw: 0, pitch: 0, mv: 0 });
       const socks = [];
-      for (let i = 0; i <= GATE_FIGHTERS_MAX; i++) {
+      for (let i = 0; i <= GATE_COURT_FIGHTERS; i++) {
         const ws = R.connect(); clock += 101;
         await R.hello(ws, `peer-${String(i).padStart(4, '0')}`, at(i));
         assert.equal(ws.closed, null, `hello ${i}`);
@@ -41,11 +46,12 @@ test('COURT-WATCH the relay: the fight seats GATE_FIGHTERS_MAX and the next `in`
       const first = answers[0].find((f) => f.k === 'st');
       assert.equal(first?.me, 1, 'a seated fighter\'s answer says the seat is its');
       assert.deepEqual(validGateOut(first)?.me, 1, 'and the wire carries it through');
-      const last = answers[GATE_FIGHTERS_MAX];
+      const last = answers[GATE_COURT_FIGHTERS];
       assert.deepEqual(last.map((f) => (f.k === 'no' ? [f.k, f.m] : [f.k])), [['st'], ['no', 'the court is full']], 'the one past the seats: the fight as it stands, then the court is full');
       assert.equal(last[0].me, undefined, 'the state handed a watcher says no seat');
-      assert.equal(socks[GATE_FIGHTERS_MAX].closed, null, 'its socket kept - it watches');
-      const beat = socks[GATE_FIGHTERS_MAX];
+      assert.equal(socks[GATE_COURT_FIGHTERS].closed, null, 'its socket kept - it watches');
+      assert.equal(GATE_COURT_FIGHTERS < GATE_FIGHTERS_MAX, true, 'the book fills a court before its fight\'s own seats');
+      const beat = socks[GATE_COURT_FIGHTERS];
       for (const ws of socks) ws.sent.length = 0;   // the seats' answers said; what follows is the room's beat
       clock += 1000;
       if (R.alarm.at != null && clock >= R.alarm.at) await R.fire();

@@ -175,8 +175,8 @@
   {
     "name": "AUDWB-A10-told-unanswered",
     "file": "server/src/index.js",
-    "old": "    if (!(await this._gateTellHub({ d: f.day, at: f.fell.at, top: f.fell.top, n: f.fell.n, rc: Object.entries(f.rc ?? {}), here: f.here ?? [] }))) return;",
-    "new": "    await this._gateTellHub({ d: f.day, at: f.fell.at, top: f.fell.top, n: f.fell.n, rc: Object.entries(f.rc ?? {}), here: f.here ?? [] });",
+    "old": "    if (!(await this._gateTellHub({ d: f.day, c: cn, ...(cs ? { cs } : {}), at: f.fell.at, top: f.fell.top, n: f.fell.n, rc: Object.entries(f.rc ?? {}), here: f.here ?? [] }))) return;",
+    "new": "    await this._gateTellHub({ d: f.day, c: cn, ...(cs ? { cs } : {}), at: f.fell.at, top: f.fell.top, n: f.fell.n, rc: Object.entries(f.rc ?? {}), here: f.here ?? [] });",
     "tests": [
       "test/net/gate/auditwb_relay.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "AUDWB-A10-no-beat-to-retry",
     "file": "server/src/index.js",
-    "old": "    await this.state.storage.setAlarm(f.said && !f.told ? now + GATE_TELL_RETRY_MS : here",
-    "new": "    await this.state.storage.setAlarm(here",
+    "old": "    await this.state.storage.setAlarm(Math.min((f.said && !f.told) || (f.fell && !f.booked) ? now + GATE_TELL_RETRY_MS : here",
+    "new": "    await this.state.storage.setAlarm(Math.min(here",
     "tests": [
       "test/net/gate/auditwb_relay.test.js"
     ]
