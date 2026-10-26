@@ -33,7 +33,6 @@ import { perlinNoise } from '../perlin.js';
 import { UMRandom } from '../../formats/umRandom.js';
 import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, SCALED_OCEAN_ELEVATION, SCALED_BEACH_ELEVATION } from './terrainSampler.js';
 import { worldDataDoor } from '../../formats/worldData/worldDataDoor.js';   // BOOT-RECTS: whether a layout pin stands where a walk reads
-import { keptGroundTiles } from './groundTilesKept.js';   // FIRST-VISIT: the walks' ground tiles kept across launches
 
 /** MeshReader.cs:487: an RMB ground record at or past this is a random marker, not a tile of the set (the tileset has
  *  56 records). AUDIT WATER-NEXT m8: ONE home - the stamp below, rmbLayout.js buildGroundTilemap, the fixed town's
@@ -328,6 +327,11 @@ export function setLocationTiles(dfLocation, mapsFile, blocksFile, tilemapData) 
  * @param {object} mapsFile @param {object} blocksFile @param {object|null} [as]
  * @returns {(dfLocation: object) => {xMin: number, xMax: number, yMin: number, yMax: number}}
  */
+/** FIRST-VISIT: the keeper of the walks' ground tiles across launches - `(walk, index, read) => groundTiles`, read through
+ *  until groundTilesKept.js installs its own (from the mod world-data loader, so the terrain worker, the boot's entry and
+ *  the account Worker, which reach this module, never reach the store). */
+let keptGroundTiles = (_walk, _index, read) => read();
+export function setGroundTilesKeeper(fn) { keptGroundTiles = typeof fn === 'function' ? fn : (_walk, _index, read) => read(); }
 export function locationRectReader(mapsFile, blocksFile, as = null) {
   /** @type {Map<number, object|null>} block index -> its ground tiles, as getBlock serves them */
   const ground = new Map();

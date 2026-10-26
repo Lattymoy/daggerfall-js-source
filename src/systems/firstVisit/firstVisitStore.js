@@ -10,11 +10,9 @@
 // The store is injectable (roadsCache.js's law): a Map-backed fake in node, where there is no IndexedDB. A store that
 // cannot open or answer is a miss, never an error.
 
-/** FNV-1a 32 over bytes, continuing from `h`. */
-export function fnv1a(bytes, h = 0x811c9dc5) {
-  for (let i = 0; i < bytes.length; i++) { h ^= bytes[i]; h = Math.imul(h, 0x01000193); }
-  return h >>> 0;
-}
+import { fnv1a } from '../../formats/fnv1a.js';
+
+export { fnv1a };
 
 const SAMPLE = 64 * 1024;
 

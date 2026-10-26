@@ -16,11 +16,13 @@
 // nothing is read from the record or added to it.
 //
 // The record is fetched once, before the walks (prefetchGroundTiles, from the mod world-data loader that opens the
-// door they read through), so the walks stay synchronous; what they add is written back a moment later.
+// door they read through), so the walks stay synchronous; what they add is written back a moment later. The fetch
+// installs this module as terrainTiles.js's keeper - the walks' module never imports the store.
 
 import { BUILD_TAG } from '../../buildTag.js';
 import { bytesStamp, textStamp, derivedValueStore } from '../../systems/firstVisit/firstVisitStore.js';
 import { anyBlockVariant } from '../../systems/worldDataVariants.js';
+import { setGroundTilesKeeper } from './terrainTiles.js';
 
 /** Bump when the kept tiles change shape. */
 export const GROUND_TILES_VERSION = 1;
@@ -52,6 +54,7 @@ function isRecord(v) {
  * @param {{ blocksBytes: Uint8Array|null, serving: string, store?: any }} o
  */
 export async function prefetchGroundTiles({ blocksBytes, serving, store = derivedValueStore() }) {
+  setGroundTilesKeeper(keptGroundTiles);
   const key = groundTilesKey(blocksBytes, serving);
   if (!key) { kept = null; return false; }
   if (kept?.key === key) return kept.walks.size > 0;

@@ -20,15 +20,12 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { idbStore } from '../roadsCache.js';
+import { fnv1a } from '../../formats/fnv1a.js';
 
 /** Bump when the bake's rules change shape. */
 export const BAKE_GENERATOR_VERSION = 1;
 
-/** FNV-1a 32 over bytes - the key's fingerprint, not a checksum anything trusts beyond "same archive". */
-export function fnv1a(bytes, h = 0x811c9dc5) {
-  for (let i = 0; i < bytes.length; i++) { h ^= bytes[i]; h = Math.imul(h, 0x01000193); }
-  return h >>> 0;
-}
+export { fnv1a };   // FIRST-VISIT: moved to formats/fnv1a.js, shared with the first visit's kept answers
 
 /** The rects' fingerprint: [pixelId, xMin, xMax, yMin, yMax] rows in pixel order. */
 export function rectsFingerprint(rows) {
