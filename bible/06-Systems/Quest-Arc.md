@@ -6920,6 +6920,17 @@ gaps."* At first the city was left out. Its 625 slices are 625 locations under f
 - **The rest are rows.** That leaves 257 slices, of which 96 stand no building today (the palace grounds, the prison, a
   district's edge). Each is a row whose dart misses, as DFU's dart misses a town without the building.
 
+**A CAPITAL IS ONE TOWN: THE CENTRE'S LOCAL SITES (R2-5c).** The same owner's word. A questor in a capital slice with no
+building of the asked kind - the Imperial City's centre, the White-Gold Tower's grounds, holds none at all - threw at a
+`local` site ("Could not find local site ... in Cyrodiil/Imperial City"): a Mages Guild or a commoner standing there had
+no work. The city is one town (WW7-11 capitalStreet), so a local site the questor's slice cannot give is taken in the
+city's nearest slice that can (`src/systems/quest/place.js:"_citySites(world, location, p2, p3) {"` over
+`capitalSlicesNear`: the capital's other slices nearest first, a tie by slice index - the same on every client - the
+slices no site stands in left out, each stood only as the search reaches it), by SetupLocalSite's own search there (its
+house fallback with it), and marked a near site (the travel map is shown it). The same for any capital of several
+slices whose questor's slice lacks the kind. Its name is the slice's quest name (R2-5b). Not a DFU member: Daggerfall's
+towns are one location each.
+
 **THE DEPARTURE** (Port-Ledger A, R2-5). DFU has no provinces. The draws are DFU's, but the table's contents are ours:
 the nearest lairs where a Bay region lists every dungeon, none of the countryside's hamlets or homes (a pixel's roll and
 no list, TESA7), no slice of the Imperial City, and the held site's pixel. The countryside is left out, and the province's

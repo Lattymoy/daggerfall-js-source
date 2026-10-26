@@ -93,6 +93,7 @@ export function createQuestWorld(host) {
     // PIXEL (in or out of the walls); IsPlayerInLocationRect is the
     // music director's own live rect flag.
     currentLocation: () => _questLoc(),
+    capitalSlicesNear: (loc) => provinces?.capitalSlicesNear(loc) ?? [],   // AUDIT RELEASE R2-5c: a capital one town - its other slices, nearest first
     currentRegionIndex: () => _questRegionIndex(),
     // AUDIT RELEASE R2-5: past the Bay the location's row in its province's table (a remote draw sets the questor's own aside)
     currentLocationIndex: () => { const r = _questRegionIndex(); return provinces && isProvinceRegion(r) ? provinces.locationIndexOf(r, _questLoc()) : _questLoc()?.locationIndex ?? -1; },

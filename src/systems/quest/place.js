@@ -568,6 +568,16 @@ export class Place extends QuestResource {
     // House-type fallback: there should almost always be a local house - and DFU writes it into the place (Place.cs:735)
     if (houseFallback) this.p2 = -1;
     if (!foundSites.length) {
+      // AUDIT RELEASE R2-5c (the owner: "Take care of exclusions and gaps"): A CAPITAL IS ONE TOWN (WW7-11) - a questor in a
+      // slice with no building of the kind (the Imperial City's centre holds none at all) takes the local site in the
+      // city's nearest slice that has one (_citySites); its words name that slice. Not a DFU member: Daggerfall's towns are
+      // one location each. Ledger A (R2-5).
+      const city = this._citySites(world, location, asked.p2, asked.p3);
+      if (city) {
+        this.p2 = city.houseFallback ? -1 : asked.p2;
+        this.siteDetails = { ...city.found[this._range(city.found.length)], nearSite: true };   // shown on the map as a near site
+        return;
+      }
       // QUEST-AUDIT II NEAR-SITE - AUDIT QA2: only where the mods took the kind away (_modsTookKind), and never for a
       // person's first ask of a home, whose own fallback is a house here (person.js)
       const near = this._nearTowns && this._modsTookKind(world, location, asked.p2, asked.p3) ? this._nearTownSites(world, location, asked.p2, asked.p3) : null;
@@ -659,6 +669,17 @@ export class Place extends QuestResource {
       if (validateQuestMarkers(questSpawnMarkers, questItemMarkers) && ++n >= atLeast) break;
     }
     return n;
+  }
+
+  /** AUDIT RELEASE R2-5c: SetupLocalSite's search (_searchTownSites, its house fallback with it) over the other slices of the
+   *  capital the questor stands in, nearest first (world.capitalSlicesNear - scenes/quest/questProvinceSites.js): the first
+   *  that has sites, `{ found, houseFallback }`, or null (no capital of many slices, or none has the kind). */
+  _citySites(world, location, p2, p3) {
+    for (const slice of world.capitalSlicesNear?.(location) ?? []) {
+      const r = this._searchTownSites(world, slice, p2, p3);
+      if (r.found.length) return r;
+    }
+    return null;
   }
 
   /** AUDIT QA2: is this place a home a Person of its quest was given (Person.cs's `_<person>_home_`)? */

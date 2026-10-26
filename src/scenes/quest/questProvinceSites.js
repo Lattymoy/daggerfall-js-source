@@ -47,7 +47,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { REGION_NAMES, isProvinceRegion, theatreOfRegion } from '../../formats/mapsTables.js';
 import { mapPixelToLongitudeLatitude, longitudeLatitudeToMapPixel } from '../../formats/mapsFile.js';
-import { CAPITALS, capitalOnPixel, capitalSliceName, capitalDims, capitalCentre } from '../../world/tamrielCapitals.js';
+import { CAPITALS, capitalOnPixel, capitalSliceName, capitalDims, capitalCentre, capitalSpanPixels } from '../../world/tamrielCapitals.js';
 
 /** How far, map pixels (the travel reckoning's longest axis), a province's lairs are drawn from the questor: a Bay region's
  *  span (systems/quest/questReach.js - level 15's reach, "about a region"). */
@@ -113,6 +113,33 @@ export function questView(loc) {
   let v = _views.get(loc);
   if (v?.name !== name) { v = { ...loc, name }; _views.set(loc, v); }
   return v;
+}
+
+/**
+ * R2-5c: A CAPITAL IS ONE TOWN (WW7-11 capitalStreet; the owner: "Take care of exclusions and gaps") - the other slices of
+ * the capital a location is a slice of, nearest first (the travel reckoning's longest axis from it, a tie by slice index -
+ * the same on every client), each as the quest layer sees it (questView), stood only as a search reaches it (a generator);
+ * none past the slices no site may stand in (isUnsitedSlice), none for any other location. A local site the questor's own
+ * slice cannot give is the city's (quest/place.js _citySites).
+ * @param {any} loc @param {(px: number, py: number) => any} standAt
+ */
+export function* capitalSlicesNear(loc, standAt) {
+  const t = loc?.capital ? loc.mapTableData : null;
+  if (!t) return;
+  const p = longitudeLatitudeToMapPixel(t.longitude, t.latitude);
+  const at = capitalOnPixel(p.x, p.y);
+  if (!at || !manySlices(at.cap)) return;
+  const others = [];
+  for (const q of capitalSpanPixels(at.k)) {
+    const s = capitalOnPixel(q.x, q.y)?.s;
+    if (s == null || s === at.s || isUnsitedSlice(q.x, q.y)) continue;
+    others.push({ x: q.x, y: q.y, s, d: Math.max(Math.abs(q.x - p.x), Math.abs(q.y - p.y)) });
+  }
+  others.sort((a, b) => a.d - b.d || a.s - b.s);
+  for (const q of others) {
+    const l = standAt(q.x, q.y);
+    if (l?.loaded && l.capital) yield questView(l);
+  }
 }
 
 /**
@@ -215,6 +242,8 @@ export function createQuestProvinceSites({ worldPlaces, regionAt, standAt, lairs
     getRegion,
     getLocation,
     indexOfName,
+    /** R2-5c: the capital's other slices nearest a slice location (capitalSlicesNear over the build's places). @param {any} loc */
+    capitalSlicesNear: (loc) => capitalSlicesNear(loc, standAt),
     /** MapsFile.GetLocationByName for a province's region: the place, or null (any other region: null). */
     locationByName(/** @type {string} */ regionName, /** @type {string} */ locationName) {
       const r = REGION_NAMES.indexOf(regionName);
