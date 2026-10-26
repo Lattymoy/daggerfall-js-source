@@ -89,7 +89,8 @@ test('FAR-SEA1: every ring shader - classic, the lane, the classic-shadow lane -
     for (const l of lines) { const i = text.indexOf(l); assert.ok(i > at, `${name}: '${l}' in its place`); at = i; }
   };
   // AUDIT FAR-SEA1 C1: the whole output line, and the sea's line between the light and it - inverted or dead, it fails
-  order(classicFs, ['float sun = ringSun();', 'vec3 lit = vColor * (uAmbient + uSunColor * (sun * diff) + uMoonColor * (uMoonScale * mdiff));',
+  // PIN MOVED (FAR-FLORA, 2026-10-26): the land's colour under its woods' crowns (horizonHaze.js floraShade - 1 off the woods)
+  order(classicFs, ['float sun = ringSun();', 'vec3 lit = vColor * floraShade(vWorld.xz) * (uAmbient + uSunColor * (sun * diff) + uMoonColor * (uMoonScale * mdiff));',
     'float sea = vSea * uSeaLook;', 'if (sea > 0.0) lit = mix(lit, ringSea(uAmbient, uSunColor, uMoonColor, sun), sea);',
     'outColor = vec4(mix(lit, uFogColor, ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, uHazeHold))), 1.0);'], 'classic');   // BANTHA1: the jungle's haze over the horizon's
   // the lane: its ground through the tonemap into display space, the sea in the water's own space from the light as given

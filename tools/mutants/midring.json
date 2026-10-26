@@ -407,8 +407,8 @@
   {
     "name": "MID-RING-ask-every-frame",
     "file": "src/render/farRing.js",
-    "old": "if (drift > MID_REBUILD_DRIFT && this._midAsk === null) this._askMid(curX, curY);",
-    "new": "if (drift > MID_REBUILD_DRIFT) this._askMid(curX, curY);",
+    "old": "if ((drift > MID_REBUILD_DRIFT || this._floraStale(mid)) && this._midAsk === null) this._askMid(curX, curY);",
+    "new": "if ((drift > MID_REBUILD_DRIFT || this._floraStale(mid))) this._askMid(curX, curY);",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "MID-RING-drift-late",
     "file": "src/render/farRing.js",
-    "old": "if (drift > MID_REBUILD_DRIFT && this._midAsk === null) this._askMid(curX, curY);",
-    "new": "if (drift > MID_REBUILD_DRIFT + 1 && this._midAsk === null) this._askMid(curX, curY);",
+    "old": "if ((drift > MID_REBUILD_DRIFT || this._floraStale(mid)) && this._midAsk === null) this._askMid(curX, curY);",
+    "new": "if ((drift > MID_REBUILD_DRIFT + 1 || this._floraStale(mid)) && this._midAsk === null) this._askMid(curX, curY);",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "FAR-FIELD-ask-every-frame",
     "file": "src/render/farRing.js",
-    "old": "if (drift > FAR_REBUILD_DRIFT && this._farAsk === null) this._askFar(ccx, ccy);",
-    "new": "if (drift > FAR_REBUILD_DRIFT) this._askFar(ccx, ccy);",
+    "old": "if ((drift > FAR_REBUILD_DRIFT || this._floraStale(far)) && this._farAsk === null) this._askFar(ccx, ccy);",
+    "new": "if ((drift > FAR_REBUILD_DRIFT || this._floraStale(far))) this._askFar(ccx, ccy);",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "FAR-FIELD-drift-late",
     "file": "src/render/farRing.js",
-    "old": "if (drift > FAR_REBUILD_DRIFT && this._farAsk === null) this._askFar(ccx, ccy);",
-    "new": "if (drift > FAR_REBUILD_DRIFT + 1 && this._farAsk === null) this._askFar(ccx, ccy);",
+    "old": "if ((drift > FAR_REBUILD_DRIFT || this._floraStale(far)) && this._farAsk === null) this._askFar(ccx, ccy);",
+    "new": "if ((drift > FAR_REBUILD_DRIFT + 1 || this._floraStale(far)) && this._farAsk === null) this._askFar(ccx, ccy);",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -632,8 +632,8 @@
   {
     "name": "HORIZON-worker-mid-copied",
     "file": "src/world/terrain/terrainGenWorker.js",
-    "old": "anyWet ? [heights.buffer, wet.buffer] : [heights.buffer]);",
-    "new": "anyWet ? [heights.buffer, wet.buffer] : []);",
+    "old": "const moved = [heights.buffer, ...(anyWet ? [wet.buffer] : []), ...(flora ? [flora.buffer] : [])];",
+    "new": "const moved = [...(anyWet ? [wet.buffer] : []), ...(flora ? [flora.buffer] : [])];",
     "tests": [
       "test/render/midring.test.js"
     ]
