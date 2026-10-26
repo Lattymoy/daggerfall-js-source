@@ -17109,6 +17109,31 @@
   "tr": "b1905c74699f",
   "by": "claude-in-session"
  },
+ "menu.motion.peerShake.full": {
+  "en": "10b28a8c1e44",
+  "tr": "1f4e9341c058",
+  "by": "claude-in-session"
+ },
+ "menu.motion.peerShake.half": {
+  "en": "45d31208222c",
+  "tr": "0c77aeece8c2",
+  "by": "claude-in-session"
+ },
+ "menu.motion.peerShake.name": {
+  "en": "da2636d180e2",
+  "tr": "f24db27c2ba6",
+  "by": "claude-in-session"
+ },
+ "menu.motion.peerShake.note": {
+  "en": "093ae6aeb48a",
+  "tr": "ca51a7992415",
+  "by": "claude-in-session"
+ },
+ "menu.motion.peerShake.off": {
+  "en": "e3de5ab0ca4c",
+  "tr": "0cded01bb961",
+  "by": "claude-in-session"
+ },
  "menu.mw.archives": {
   "en": "8ebb43e7d7e7",
   "tr": "b9d3b14ec304",
@@ -18187,6 +18212,11 @@
  "menu.settings.tabStatus": {
   "en": "03662c8d2f8f",
   "tr": "6f897b087310",
+  "by": "claude-in-session"
+ },
+ "menu.settings.tip.frameCap": {
+  "en": "b03b5e76ccb8",
+  "tr": "181b468a1f71",
   "by": "claude-in-session"
  },
  "menu.settings.unavailableBlurb": {
