@@ -114,6 +114,9 @@ export const SMOOTH_LAND = Object.freeze({ reach: 2, clamp: 1, passes: 3 });
 const PAD = SMOOTH_LAND.reach + 2;
 /** A square of more than one label. */
 const MIXED = 255;
+/** AUDIT RELEASE R4-7: the law's fields are made a tile of LAW_TILE x LAW_TILE centres at a time, as reads first need
+ *  them - so the law's build is its labels alone, and no one read makes more than four tiles of a field. */
+export const LAW_TILE = 16;
 /** The label of the trace's land that names no province (a picture made by hand without them): land to the coast's law,
  *  the picture's sea to none, no province's - provinceKeyAt's null, as it always was. */
 export const NO_PROVINCE = 10;
@@ -184,7 +187,10 @@ function smoothRings(m, W, H, passes) {
 
 /**
  * THE LAW OF A TRACE, made once a trace: each padded pixel's label (0 the sea, else its province's id), the land's
- * distance `S`, each province's own (`T[id]`), and each square's label (MIXED where its four centres differ).
+ * distance `S`, each province's own (`T[id]`), and each square's label (MIXED where its four centres differ). AUDIT
+ * RELEASE R4-7: the distances are made a tile at a time as reads first need them (`field`, `at`) - the build is the
+ * labels alone (some 20-80 ms on the freeware's picture, where it was 0.15-1.6 s), `materialize` makes it whole and
+ * `tilesMade` counts.
  * @param {{ w: number, h: number, land: Uint8Array, province: Uint8Array }} trace
  */
 export function landLaw(trace) {
@@ -207,61 +213,98 @@ export function landLaw(trace) {
       for (let qy = Math.max(0, y - R); qy <= Math.min(H - 1, y + 1 + R); qy++) for (let qx = Math.max(0, x - R); qx <= Math.min(W - 1, x + 1 + R); qx++) near[qy * W + qx] = 1;
     }
   }
-  /** The signed distance of a mask's smooth outline at every centre. @param {(l: number) => boolean} is */
+  /**
+   * A mask's FIELD - the signed distance of its smooth outline at every centre, made LAZILY (AUDIT RELEASE R4-7): at the
+   * law's build each centre stands at the clamp on its own side (+ on the mask's, - off it - what a centre past the reach
+   * is), and a tile of LAW_TILE x LAW_TILE centres is given its true distances the first time a read needs one of them
+   * (`cover`). The outline (its rings and their index by square) is made with the field's first tile. A centre's value is
+   * the one an eager build gives it, whichever tile or order made it.
+   * @param {(l: number) => boolean} is
+   */
   const field = (is) => {
     const m = new Uint8Array(W * H);
     for (let i = 0; i < m.length; i++) m[i] = is(label[i]) ? 1 : 0;
-    // the outline's segments, each in every square of centres its box meets (the distance asks a centre's squares about):
-    // counted, then laid square by square (start[k] .. start[k + 1], four numbers a segment)
-    const rings = smoothRings(m, W, H, SMOOTH_LAND.passes), start = new Int32Array(W * H + 1);
-    const each = (/** @type {(k: number, ax: number, ay: number, bx: number, by: number) => void} */ fn) => {
-      for (const r of rings) {
-        for (let q = 0, n = r.length / 2; q < n; q++) {
-          const ax = r[2 * q], ay = r[2 * q + 1], bx = r[(2 * q + 2) % r.length], by = r[(2 * q + 3) % r.length];
-          for (let cy = Math.floor(Math.min(ay, by)); cy <= Math.floor(Math.max(ay, by)); cy++) for (let cx = Math.floor(Math.min(ax, bx)); cx <= Math.floor(Math.max(ax, bx)); cx++) fn(cy * W + cx, ax, ay, bx, by);
-        }
-      }
-    };
-    each((k) => { start[k + 1]++; });
-    for (let k = 0; k < W * H; k++) start[k + 1] += start[k];
-    const fillAt = start.slice(0, W * H), seg = new Float64Array(start[W * H] * 4);
-    each((k, ax, ay, bx, by) => { const o = fillAt[k]++ * 4; seg[o] = ax; seg[o + 1] = ay; seg[o + 2] = bx; seg[o + 3] = by; });
     const f = new Float32Array(W * H);
-    for (let y = 0; y < H; y++) {
-      for (let x = 0; x < W; x++) {
-        let d2 = C * C;
-        if (near[y * W + x]) for (let cy = Math.max(0, y - R); cy < Math.min(H, y + R); cy++) {
-          for (let cx = Math.max(0, x - R); cx < Math.min(W, x + R); cx++) {
-            const k = cy * W + cx;
-            for (let n = start[k] * 4, e4 = start[k + 1] * 4; n < e4; n += 4) {
-              const ax = seg[n], ay = seg[n + 1], vx = seg[n + 2] - ax, vy = seg[n + 3] - ay, l2 = vx * vx + vy * vy;
-              let t = l2 > 0 ? ((x - ax) * vx + (y - ay) * vy) / l2 : 0;
-              t = t < 0 ? 0 : t > 1 ? 1 : t;
-              const qx = ax + vx * t - x, qy = ay + vy * t - y, e = qx * qx + qy * qy;
-              if (e < d2) d2 = e;
-            }
+    for (let i = 0; i < f.length; i++) f[i] = m[i] ? C : -C;
+    /** @type {{ start: Int32Array, seg: Float64Array }|null} */
+    let index = null;
+    const outline = () => {
+      // the outline's segments, each in every square of centres its box meets (the distance asks a centre's squares
+      // about): counted, then laid square by square (start[k] .. start[k + 1], four numbers a segment)
+      const rings = smoothRings(m, W, H, SMOOTH_LAND.passes), start = new Int32Array(W * H + 1);
+      const each = (/** @type {(k: number, ax: number, ay: number, bx: number, by: number) => void} */ fn) => {
+        for (const r of rings) {
+          for (let q = 0, n = r.length / 2; q < n; q++) {
+            const ax = r[2 * q], ay = r[2 * q + 1], bx = r[(2 * q + 2) % r.length], by = r[(2 * q + 3) % r.length];
+            for (let cy = Math.floor(Math.min(ay, by)); cy <= Math.floor(Math.max(ay, by)); cy++) for (let cx = Math.floor(Math.min(ax, bx)); cx <= Math.floor(Math.max(ax, bx)); cx++) fn(cy * W + cx, ax, ay, bx, by);
           }
         }
-        const d = Math.sqrt(d2);
-        f[y * W + x] = m[y * W + x] ? d : -d;
-      }
-    }
+      };
+      each((k) => { start[k + 1]++; });
+      for (let k = 0; k < W * H; k++) start[k + 1] += start[k];
+      const fillAt = start.slice(0, W * H), seg = new Float64Array(start[W * H] * 4);
+      each((k, ax, ay, bx, by) => { const o = fillAt[k]++ * 4; seg[o] = ax; seg[o + 1] = ay; seg[o + 2] = bx; seg[o + 3] = by; });
+      return { start, seg };
+    };
     // a saddle of the mask (two opposite centres its, the other two not): its two off the mask held at the clamp, so the
     // cubic's reach past the square never joins the two across its middle - the strait stays open
+    const held = new Uint8Array(W * H);
     for (let y = 0; y + 1 < H; y++) {
       for (let x = 0; x + 1 < W; x++) {
         const i = y * W + x, a = m[i], b = m[i + 1], c = m[i + W + 1], d = m[i + W];
         if (a !== c || b !== d || a === b) continue;
-        if (a) { f[i + 1] = -C; f[i + W] = -C; } else { f[i] = -C; f[i + W + 1] = -C; }
+        if (a) { held[i + 1] = 1; held[i + W] = 1; } else { held[i] = 1; held[i + W + 1] = 1; }
       }
     }
-    return f;
+    const done = new Uint8Array(TW * TH);
+    const F = { f, done, made: 0, whole: false, tile: (/** @type {number} */ tx, /** @type {number} */ ty) => {
+      done[ty * TW + tx] = 1; F.made++;
+      if (F.made === done.length) F.whole = true;
+      const { start, seg } = (index ??= outline());
+      for (let y = ty * LAW_TILE; y < Math.min(H, (ty + 1) * LAW_TILE); y++) {
+        for (let x = tx * LAW_TILE; x < Math.min(W, (tx + 1) * LAW_TILE); x++) {
+          const i = y * W + x;
+          if (!near[i] || held[i]) continue;   // past the reach the clamp's; a saddle's held centre the clamp's too
+          let d2 = C * C;
+          for (let cy = Math.max(0, y - R); cy < Math.min(H, y + R); cy++) {
+            for (let cx = Math.max(0, x - R); cx < Math.min(W, x + R); cx++) {
+              const k = cy * W + cx;
+              for (let n = start[k] * 4, e4 = start[k + 1] * 4; n < e4; n += 4) {
+                const ax = seg[n], ay = seg[n + 1], vx = seg[n + 2] - ax, vy = seg[n + 3] - ay, l2 = vx * vx + vy * vy;
+                let t = l2 > 0 ? ((x - ax) * vx + (y - ay) * vy) / l2 : 0;
+                t = t < 0 ? 0 : t > 1 ? 1 : t;
+                const qx = ax + vx * t - x, qy = ay + vy * t - y, e = qx * qx + qy * qy;
+                if (e < d2) d2 = e;
+              }
+            }
+          }
+          const d = Math.sqrt(d2);
+          f[i] = m[i] ? d : -d;
+        }
+      }
+    } };
+    return F;
   };
-  const S = field((l) => l !== 0);
+  const TW = Math.ceil(W / LAW_TILE), TH = Math.ceil(H / LAW_TILE);
+  /** @type {Array<ReturnType<typeof field>|null>} */
+  const F = Array(NO_PROVINCE + 1).fill(null);
+  const FS = field((l) => l !== 0);
+  // the sea's own: the land's, turned (a line between the sea and a province's land is the coast) - a tile of it the
+  // land's tile negated
+  const f0 = new Float32Array(W * H);
+  for (let i = 0; i < f0.length; i++) f0[i] = -FS.f[i];
+  const done0 = new Uint8Array(TW * TH);
+  const F0 = { f: f0, done: done0, made: 0, whole: false, tile: (/** @type {number} */ tx, /** @type {number} */ ty) => {
+    done0[ty * TW + tx] = 1; F0.made++;
+    if (F0.made === done0.length) F0.whole = true;
+    if (!FS.done[ty * TW + tx]) FS.tile(tx, ty);
+    for (let y = ty * LAW_TILE; y < Math.min(H, (ty + 1) * LAW_TILE); y++) for (let x = tx * LAW_TILE; x < Math.min(W, (tx + 1) * LAW_TILE); x++) f0[y * W + x] = -FS.f[y * W + x];
+  } };
+  F[0] = F0;
+  for (let id = 1; id <= NO_PROVINCE; id++) if (label.includes(id)) F[id] = field((l) => l === id);
   /** @type {Array<Float32Array|null>} */
-  const T = Array(NO_PROVINCE + 1).fill(null);
-  T[0] = S.map((v) => -v);   // the sea's own: the land's, turned (a line between the sea and a province's land is the coast)
-  for (let id = 1; id <= NO_PROVINCE; id++) if (label.includes(id)) T[id] = field((l) => l === id);
+  const T = F.map((x) => (x ? x.f : null));
+  const S = FS.f;
   // each square's label: its four centres (ix, iy) .. (ix + 1, iy + 1) - one, or MIXED
   const uni = new Uint8Array(W * H).fill(MIXED);
   for (let iy = 0; iy + 1 < H; iy++) {
@@ -270,9 +313,24 @@ export function landLaw(trace) {
       if (label[iy * W + ix + 1] === l && label[(iy + 1) * W + ix] === l && label[(iy + 1) * W + ix + 1] === l) uni[iy * W + ix] = l;
     }
   }
-  L = { W, H, w, h, label, S, uni, T, fieldOf: (/** @type {number} */ id) => /** @type {Float32Array} */ (T[id]) };
+  /** Every tile of every field made - the law whole, as an eager build stands it. */
+  const materialize = () => { for (const x of [FS, ...F]) if (x) for (let ty = 0; ty < TH; ty++) for (let tx = 0; tx < TW; tx++) if (!x.done[ty * TW + tx]) x.tile(tx, ty); };
+  /** How many tiles the law has made, over its fields (AUDIT RELEASE R4-7's count). */
+  const tilesMade = () => [FS, ...F].reduce((n, x) => n + (x ? x.made : 0), 0);
+  L = { W, H, w, h, label, S, uni, T, TW, FS, F, materialize, tilesMade, fieldOf: (/** @type {number} */ id) => /** @type {Float32Array} */ (T[id]) };
   _laws.set(trace, L);
   return L;
+}
+
+/** AUDIT RELEASE R4-7: a law's field read at square (ix, iy) - the tiles under its sixteen centres made first. */
+function at(L, F, ix, iy, fx, fy) {
+  if (!F.whole) {
+    const TW = L.TW;
+    for (let ty = Math.floor((iy - 1) / LAW_TILE); ty <= Math.floor((iy + 2) / LAW_TILE); ty++) {
+      for (let tx = Math.floor((ix - 1) / LAW_TILE); tx <= Math.floor((ix + 2) / LAW_TILE); tx++) if (!F.done[ty * TW + tx]) F.tile(tx, ty);
+    }
+  }
+  return cubic(F.f, L.W, ix, iy, fx, fy);
 }
 
 /** Catmull-Rom's four weights at t of a span (the centres before, at its start, at its end, after). */
@@ -306,7 +364,7 @@ export function landLabelAt(L, px, py) {
   const u = L.uni[iy * W + ix];
   if (u !== MIXED) return u;
   const fx = x - ix, fy = y - iy;
-  if (!(cubic(L.S, W, ix, iy, fx, fy) > 0)) return 0;
+  if (!(at(L, L.FS, ix, iy, fx, fy) > 0)) return 0;
   const i = iy * W + ix, ids = [L.label[i], L.label[i + 1], L.label[i + W], L.label[i + W + 1]];
   let one = 0;
   for (const id of ids) if (id && id !== one) { if (one) { one = -1; break; } one = id; }
@@ -314,7 +372,7 @@ export function landLabelAt(L, px, py) {
   let best = 0, bv = -Infinity;
   for (const id of ids) {
     if (!id || id === best) continue;
-    const v = cubic(L.fieldOf(id), W, ix, iy, fx, fy);
+    const v = at(L, L.F[id], ix, iy, fx, fy);
     if (v > bv || (v === bv && id < best)) { bv = v; best = id; }
   }
   return best;
@@ -327,13 +385,13 @@ export function landSideAt(L, px, py) {
   const x = px - 0.5 + PAD, y = py - 0.5 + PAD, ix = Math.floor(x), iy = Math.floor(y);
   const u = L.uni[iy * L.W + ix];
   if (u !== MIXED) return u !== 0;
-  return cubic(L.S, L.W, ix, iy, x - ix, y - iy) > 0;
+  return at(L, L.FS, ix, iy, x - ix, y - iy) > 0;
 }
 /** SMOOTH-LAND: does province `p`'s distance stand over province `q`'s at a picture point (the border between them, the
  *  law's own second ask - the lines' border crossings are found by it)? @param {ReturnType<typeof landLaw>} L */
 export function provinceLeadAt(L, px, py, p, q) {
   const x = px - 0.5 + PAD, y = py - 0.5 + PAD, ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy;
-  const vp = cubic(L.fieldOf(p), L.W, ix, iy, fx, fy), vq = cubic(L.fieldOf(q), L.W, ix, iy, fx, fy);
+  const vp = at(L, L.F[p], ix, iy, fx, fy), vq = at(L, L.F[q], ix, iy, fx, fy);
   return vp > vq || (vp === vq && p < q);
 }
 
@@ -344,7 +402,7 @@ export function coastDepthAt(px, py) {
   const L = landLaw(_trace);
   if (!(px >= 0 && py >= 0 && px < L.w && py < L.h)) return -SMOOTH_LAND.clamp;
   const x = px - 0.5 + PAD, y = py - 0.5 + PAD, ix = Math.floor(x), iy = Math.floor(y);
-  return cubic(L.S, L.W, ix, iy, x - ix, y - iy);
+  return at(L, L.FS, ix, iy, x - ix, y - iy);
 }
 /** TESA3 (bible/03-World/Arena-Provinces.md): the province a Bay pixel past the Bay stands on - its centre's
  *  provinceKeyAt - or null: the Bay's own pixels (Daggerfall's regions answer there), and the sea. */

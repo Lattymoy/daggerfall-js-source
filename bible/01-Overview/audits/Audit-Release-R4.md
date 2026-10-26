@@ -42,7 +42,7 @@ below).
 | R4-4 | LOW | Every boot (a returning one too) traces the picture, masks the relief and fits the Bay again on the page's thread, and starts the roads' build with a region scan and a print - the same answers each time | 0.3-0.9 s (trace with its relief, then the fit), 0.4 s (scan and print), in four tasks - none over a second | RECORDED - the cache is lane R1's |
 | R4-5 | LOW | A low-end machine (2 cores) builds the roads past the Bay on one worker beside the terrain worker: the first boot's 48 regions are some 28 minutes of one core | `roadsWorkerCount(2)` = 1; 853 s on two workers in the running game | RECORDED |
 | R4-6 | INFO | No retained cache of the new systems grows without bound across Tamriel: every pixel-, tile- and cell-keyed one is capped or keyed by a finite set | the walk: zones 91,836 of 262,144, heights 228,105 of 262,144, the heap after collection 17 MB lower than before it | VERIFIED |
-| R4-7 | MED | SMOOTH-LAND (merged at ad2a8d71de) moved the land past the Bay onto a smooth law the page's thread builds whole: the law at the first province asked at boot, and the continent's lines, Cyrodiil's red line and the held map's chains in one task at the map's first open | the law 0.9-1.6 s first on this thread (0.15-0.29 s warm); the first open's ink 2.1-3.3 s here (some 1 s on the stream's own unloaded figure) | FIXED for the lines (proposal 2: made in idle time from the trace's landing, `03-World/Tamriel.md` SMOOTH-LAND); the law's first build RECORDED, a follow-up (proposal 3) |
+| R4-7 | MED | SMOOTH-LAND (merged at ad2a8d71de) moved the land past the Bay onto a smooth law the page's thread builds whole: the law at the first province asked at boot, and the continent's lines, Cyrodiil's red line and the held map's chains in one task at the map's first open | the law 0.9-1.6 s first on this thread (0.15-0.29 s warm); the first open's ink 2.1-3.3 s here (some 1 s on the stream's own unloaded figure) | FIXED - the lines made in idle time from the trace's landing (proposal 2), the law made a tile at a time as it is read (proposal 3's aim: its build some 20-80 ms), `03-World/Tamriel.md` SMOOTH-LAND |
 
 ### R4-1 - the relay's timers, counted (FIXED)
 
@@ -155,7 +155,7 @@ also holds the world page (1.8-3.3 GB in OW-STREAM's record). The living world w
 pixels owed (the client's `near` already re-orders; a `hold()` beside it), or build the regions within a few of the
 player first and the rest only when the page is idle.
 
-### R4-7 - the smooth land's law and lines, built whole on the page (FIXED for the lines; the law's first build RECORDED)
+### R4-7 - the smooth land's law and lines, built whole on the page (FIXED)
 
 `src/world/tamriel/tamrielLand.js:"export function landLaw(trace) {"`, `src/world/tamriel/tamrielLines.js:"export function lawLines(trace) {"`,
 `src/ui/tamrielInk.js:"export function tracedChains(trace) {"`, `src/systems/wild/cyrodiilZone.js:"export function zoneLineOf(trace, mask = cyrodiilMask()) {"`.
@@ -186,7 +186,10 @@ the page's first `landLaw` ride the same idle step after the trace lands rather 
 **Fixed (proposal 2, the coast's stream, 2026-10-26):** the walk, Cyrodiil's line and the linking are steps, walked
 TRACED_SLICE_STEPS a slice of idle time from the trace's landing into the keep the map's open reads
 (`src/ui/tamrielInk.js:"export function startTracedJob(trace) {"`); the chains byte for byte the whole walk's, a step's
-work bounded by its structure (`test/world/smoothland.test.js`, R4-7). Proposal 3, the law's first build, is not done.
+work bounded by its structure (`test/world/smoothland.test.js`, R4-7). **Proposal 3's aim (the same day):** the law's
+build is its labels alone and its distances are made a tile of 16 x 16 centres at a time as reads first need them
+(`src/world/tamriel/tamrielLand.js:"function at(L, F, ix, iy, fx, fy) {"`) - on the page and in every worker alike; the build
+28-83 ms here, a read at most four tiles a field (pinned by count), the fields bit for bit the eager build's.
 
 ### R4-6 - nothing grows without bound (VERIFIED)
 
