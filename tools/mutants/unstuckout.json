@@ -56,10 +56,11 @@
   {
     "name": "UO-the-landing-unchecked",
     "file": "src/scenes/world.js",
-    "old": "    if (walkMode && (!local || ground) && heldInSolid(collider, pos)) {",
-    "new": "    if (false) {",
+    "old": "    if (walkMode && (!local || ground) && (heldInSolid(collider, pos) || ",
+    "new": "    if (false && (heldInSolid(collider, pos) || ",
     "tests": [
       "test/player/unstuckout.test.js"
-    ]
+    ],
+    "note": "PORTAL-ANYWHERE (PIN MOVED): re-aimed by content - the landing's question is held-in-a-rock OR (a teleport's bare landing) unsafe ground"
   }
 ]

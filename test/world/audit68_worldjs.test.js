@@ -243,7 +243,7 @@ test('AUDIT 68 S22-teleport-reentry: F11 during a fast travel\'s build is refuse
       const at = WORLD.indexOf(`  ${fn}`);
       assert.ok(at > 0, fn);
       const body = WORLD.slice(WORLD.indexOf('{\n', at) + 2);
-      assert.match(body, /^ {4}if \(worldMoveBusy\(\)\) return;/, `${fn}: the busy question is the first statement`);
+      assert.match(body, /^ {4}if \(worldMoveBusy\(\)\) return( false)?;/, `${fn}: the busy question is the first statement`);   // PIN MOVED (PORTAL-BAY): teleportTo answers whether it arrived
     }
   });
 });

@@ -198,6 +198,14 @@ into, a dungeon to go down - and the held map takes the player there.
   (`systems/travel/pastBayTravel.js` pastBayJourney, asked by `scenes/world.js` fastTravelTo's wildTravelGate): a
   journey whose end lies past the Bay is refused ("No road the Bay knows leads there. The land past the Iliac Bay is
   walked, or reached through a Portal Stone."), the open zone's own journeys inside Cyrodiil its own (PVPJOURNEY).
+  PORTAL-BAY (2026-10-26, `06-Systems/Portal-Stone.md`; the owner: "attempting to teleport anywhere outside the bay with
+  the portal stone leads to a black screen and a prompt telling you cannot travel"): a teleport is no journey - P4's law
+  sat at the gate the teleports pass too (the guild's teleportTo, a stone's step into it, Recall) and refused them all past
+  the Bay; they ask the gate under their own law now (`pastBayTravel.js` teleportJourney: the open zone's verdict alone),
+  and every journey keeps P4's. PORTAL-ANYWHERE (2026-10-26, the owner, asked whether the stone should reach any point past
+  the Bay: "Anywhere on land"): A DEPARTURE FROM TESA-NO-FAST FOR THE PORTAL STONE ALONE - on its map any land past the Bay
+  is a portal's end (`pastBayTravel.js` portalLandAt), landed on safe ground (`06-Systems/Portal-Stone.md`); the guild's
+  teleport map keeps the cities, and the travel map and every journey keep TESA-NO-FAST.
   OWNER (recorded, not built): a journey FROM past the Bay TO the Bay is still DFU's fast travel - the travel map opens
   past the Bay (and Immersive Travel's driver's and captain's maps in a town past the Bay) and journeys to any Bay place.
   The owner's words ("fast travel shouldnt be a thing ... the player can traverse using the overworld") read for both
@@ -940,7 +948,9 @@ laws.
   temples, taverns and towns, at near every kind), the glyph (markKind), every halo before every glyph (MAP-FIELD6) and
   each kind's hue (MAP-KEY). None at far and none out on the continent, where the atlas is not asked. The hover names
   one - "Skyrim : The Sacred Oracle (temple, beyond the Bay)", its kind in MacroHelper.LocationTypeName's word
-  (`systems/travel/travelOptions.js` locationTypeName). No press: TESA-NO-FAST keeps a portal's ends to the cities.
+  (`systems/travel/travelOptions.js` locationTypeName). No press: TESA-NO-FAST keeps a portal's ends to the cities -
+  but on the Portal Stone's map, since PORTAL-ANYWHERE (2026-10-26, the owner: "Anywhere on land"), a press on any land
+  past the Bay is a portal's end, named by its province (`06-Systems/Portal-Stone.md`).
 - **A recorded departure - no discovery law.** The Bay's map marks a place once it is discovered (DFU's
   checkLocationDiscovered); every place past the Bay is inked, as TESA1's cities, towns and villages are. The discovery
   store keys a place by its map id's low twenty bits (DFU's MapId & 0xfffff), and the countryside's sixty-four lanes and

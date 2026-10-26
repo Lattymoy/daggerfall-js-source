@@ -218,11 +218,12 @@
   {
     "name": "TESA2-any-city-a-journey",
     "file": "src/ui/heldMap.js",
-    "old": "      if (city?.pixel) {",
-    "new": "      if (city) {",
+    "old": "const end = city?.pixel ? city : ",
+    "new": "const end = city ? city : ",
     "tests": [
       "test/tesa2_arena.test.js"
-    ]
+    ],
+    "note": "PORTAL-ANYWHERE (PIN MOVED): re-aimed by content - the press's portal's end is a city with a pixel, else (the stone's map) the land"
   },
   {
     "name": "TESA2-pixels-unstood",
@@ -245,10 +246,11 @@
   {
     "name": "TESA-NO-FAST-the-cursor-points-anyway",
     "file": "src/ui/heldMap.js",
-    "old": "cursor: this.teleportationTravel && past.city?.pixel ? 'pointer' : ''",
-    "new": "cursor: past.city?.pixel ? 'pointer' : ''",
+    "old": "cursor: this.teleportationTravel && (past.city?.pixel || (this.deps.portalLandPastBay && portalLandAt(px, py))) ? 'pointer' : ''",
+    "new": "cursor: (past.city?.pixel || (this.deps.portalLandPastBay && portalLandAt(px, py))) ? 'pointer' : ''",
     "tests": [
       "test/tesa2_arena.test.js"
-    ]
+    ],
+    "note": "PORTAL-ANYWHERE (PIN MOVED): re-aimed by content - the hover's pointer reads the stone's land too"
   }
 ]
