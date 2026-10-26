@@ -23,7 +23,8 @@
 // Process: an orientation check samples what the GL samples).
 import { MeshBuilder } from './detStandIns.js';
 import { CAPITAL_ART, art, robedFigure } from './capitalShapes.js';
-import { fabricCell, fabricMasses, outwardOf, STOREY, BAY, LEDGE_Y, PARAPET, STACK_STEP, STACK_DEPTH, STACK_RUN, YARD_WALL, SHED, WELL, SQUARE_FOUNTAIN, PAVEMENT, STATUE, streetKind } from './imperialFabric.js';
+import { fabricCell, fabricMasses, outwardOf, inQuad, STOREY, BAY, LEDGE_Y, PARAPET, STACK_STEP, STACK_DEPTH, STACK_RUN, YARD_WALL, SHED, WELL, SQUARE_FOUNTAIN, PAVEMENT, STATUE, streetKind } from './imperialFabric.js';
+import { FACADE_PLAIN, FACADE_TEXELS } from './imperialArt.js';
 import { sewerCoversIn, sewerBranchesIn, IMPERIAL_SEWERS } from './imperialSewers.js';
 import { BLOCK_M } from './spawnedDungeons.js';
 import { IMPERIAL_CELLS, imperialSliceRect, imperialClassic, imperialSlicePlan, imperialCellRect, IMPERIAL_SPAN, imperialDistrictAt } from './imperialCity.js';
@@ -43,6 +44,47 @@ function wallFace(mb, tex, a, b, y0, y1, n, vTop = y1, bay = BAY) {
   const len = Math.hypot(b[0] - a[0], b[1] - a[1]), u = len / bay;
   const v0 = (y0 - vTop) / STOREY, v1 = (y1 - vTop) / STOREY;   // BLD: the picture's top row at vTop, v falling down the wall
   mb.quad(tex, W(a[0], y0, a[1]), W(b[0], y0, b[1]), W(b[0], y1, b[1]), W(a[0], y1, a[1]), WN(n[0], 0, n[1]), [[0, v0], [u, v0], [u, v1], [0, v1]]);
+}
+/**
+ * BLD (the owner, 2026-10-26: windows that "clip into the ground and into the roofs") - A WALL OF STOREYS: its windowed
+ * storeys counted down from its eave (a window under every eave, where a window is), each whole - a whole number of bays
+ * along the wall (wholeBay: the bay stretched to fit, never a window cut at a corner) - and whatever is left at its foot,
+ * less than a storey, a PLAIN BAND (a plinth over the street, or a mezzanine over a shopfront) laid in the picture's plain
+ * rows (world/imperialArt.js FACADE_PLAIN); under the ground a plain band too. Measured on the city before (5,230
+ * buildings in 147 cells): half the eaves stood an odd half storey up, so the lowest windows of half the city stood half
+ * under the street.
+ */
+function storeys(mb, tex, a, b, y0, h, n) {
+  const bay = wholeBay(a, b), k = Math.floor((h - y0) / STOREY + 1e-6), foot = h - k * STOREY;
+  if (k > 0) wallFace(mb, tex, a, b, foot, h, n, h, bay);
+  plainBand(mb, tex, a, b, y0, foot, n, bay);
+  if (y0 > -0.5) plainBand(mb, tex, a, b, -0.5, Math.min(0, y0), n, bay);
+}
+/** BLD: a wall's bay - BAY stretched so the wall carries a whole number of them. */
+const wholeBay = (a, b) => { const len = Math.hypot(b[0] - a[0], b[1] - a[1]); return len / Math.max(1, Math.round(len / BAY)); };
+/** BLD: the plain rows' v: the band's top row FACADE_PLAIN.top at its top, the rows on down at the picture's own density
+ *  stretched to fit a half storey (FACADE_PLAIN.rows over STOREY / 2) - the GL's law (v falling down the wall). */
+const PLAIN_TOP = -FACADE_PLAIN.top / FACADE_TEXELS.h, PLAIN_PER_M = FACADE_PLAIN.rows / FACADE_TEXELS.h / (STOREY / 2);
+/** BLD: A PLAIN BAND of a wall from y0 up to y1 - half storeys of the picture's plain rows from the top down (no window). */
+function plainBand(mb, tex, a, b, y0, y1, n, bay = wholeBay(a, b)) {
+  const u = Math.hypot(b[0] - a[0], b[1] - a[1]) / bay;
+  for (let top = y1; top - y0 > 1e-3; top -= STOREY / 2) {
+    const bot = Math.max(y0, top - STOREY / 2), v0 = PLAIN_TOP - (top - bot) * PLAIN_PER_M;
+    mb.quad(tex, W(a[0], bot, a[1]), W(b[0], bot, b[1]), W(b[0], top, b[1]), W(a[0], top, a[1]), WN(n[0], 0, n[1]), [[0, v0], [u, v0], [u, PLAIN_TOP], [0, PLAIN_TOP]]);
+  }
+}
+/** BLD: A GABLE - the wall's triangle over its eave a-b (height h) up to its ridge R, laid in plain bands a half storey each
+ *  from the eave up (a trapezoid each, the last a triangle): the roof's slopes cut no window. */
+function gable(mb, tex, a, b, h, R, ridge, n) {
+  const bay = wholeBay(a, b), len = Math.hypot(b[0] - a[0], b[1] - a[1]), t = [(b[0] - a[0]) / len, (b[1] - a[1]) / len];
+  const at = (P, y) => { const s = (y - h) / (ridge - h); return [P[0] + (R[0] - P[0]) * s, P[1] + (R[1] - P[1]) * s]; };
+  const U = (P) => ((P[0] - a[0]) * t[0] + (P[1] - a[1]) * t[1]) / bay;
+  for (let bot = h; ridge - bot > 1e-3; bot += STOREY / 2) {
+    const top = Math.min(ridge, bot + STOREY / 2), v0 = PLAIN_TOP - (top - bot) * PLAIN_PER_M;
+    const [p0, p1, p2, p3] = [at(a, bot), at(b, bot), at(b, top), at(a, top)];
+    if (top >= ridge - 1e-6) mb.tri(tex, W(p0[0], bot, p0[1]), W(p1[0], bot, p1[1]), W(R[0], ridge, R[1]), WN(n[0], 0, n[1]), [U(p0), v0], [U(p1), v0], [U(R), PLAIN_TOP]);
+    else mb.quad(tex, W(p0[0], bot, p0[1]), W(p1[0], bot, p1[1]), W(p2[0], top, p2[1]), W(p3[0], top, p3[1]), WN(n[0], 0, n[1]), [[U(p0), v0], [U(p1), v0], [U(p2), PLAIN_TOP], [U(p3), PLAIN_TOP]]);
+  }
 }
 /** A horizontal quad (map frame corners) at height y facing up (or down), its picture in the world's metres. */
 function flat(mb, tex, q, y, up = 1) {
@@ -77,24 +119,30 @@ function post(mb, tex, x, z, s, y0, y1) {
 
 /**
  * ONE BUILDING: its walls - each street front its ground floor's picture a storey high and its upper floors' over it to
- * its eave, every other face its wall's picture; its roof - flat, under its parapet on its street fronts (PARAPET, a
- * vault's), or pitched on its ridge, two slopes and two gables; a ledge along a street front at LEDGE_Y; a balcony or two
- * on a front over the ledge; and a pavement along a main street's front (PAVEMENT, a step).
+ * its eave, every other face its wall's picture (BLD: storeys, whole, from the eave down - a plain band at the foot;
+ * a PARTY WALL, `party` bit e - an edge against a neighbour's, partyEdges - blind, plain bands its whole height: no
+ * window under a neighbour's roof); its roof - flat, under its parapet on its street fronts (PARAPET, a vault's), or
+ * pitched on its ridge, two slopes and two gables (BLD: plain bands, no window cut by a slope); a ledge along a street
+ * front at LEDGE_Y; a balcony or two on a front over the ledge, on a floor (BALCONY_FLOORS); and a pavement along a main
+ * street's front (PAVEMENT, a step).
  */
-export function buildPlot(mb, p) {
+export function buildPlot(mb, p, party = 0) {
   const wallT = T(p.wall), groundT = T(p.ground), stone = T('wallStone'), paving = T('bridgeStone'), timber = T('timber');
   for (let e = 0; e < 4; e++) {
     const a = p.q[e], b = p.q[(e + 1) & 3], n = outwardOf(p.q, e), front = !!(p.out & (1 << e));
-    if (front && p.h > STOREY + 0.5) {
-      wallFace(mb, groundT, a, b, -0.5, STOREY, n, STOREY);
-      wallFace(mb, wallT, a, b, STOREY, p.h, n, p.h);
-    } else wallFace(mb, wallT, a, b, -0.5, p.h, n, p.h);
+    if (!front && (party & (1 << e))) plainBand(mb, wallT, a, b, -0.5, p.h, n);
+    else if (front && p.h > STOREY + 0.5) {
+      wallFace(mb, groundT, a, b, 0, STOREY, n, STOREY, wholeBay(a, b));
+      plainBand(mb, wallT, a, b, -0.5, 0, n);
+      storeys(mb, wallT, a, b, STOREY, p.h, n);
+    } else storeys(mb, wallT, a, b, 0, p.h, n);
     if (!front) continue;
     const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
     if (p.ledge && len > 2 && p.h > LEDGE_Y + 2) slab(mb, stone, a, b, n, 0.42, LEDGE_Y - 0.3, LEDGE_Y);
-    if (p.balcony && len > 4 && p.h > STOREY * 2 + 1) {
+    const y = balconyFloor(p.h);
+    if (p.balcony && len > 4 && y + STOREY <= p.h + 1e-6) {
       for (let k = 0; k < p.balcony; k++) {
-        const t0 = (k + 0.5) / (p.balcony + 0.5) - 0.18, t1 = t0 + 0.36, y = STOREY * 2 - 0.2;
+        const t0 = (k + 0.5) / (p.balcony + 0.5) - 0.18, t1 = t0 + 0.36;
         const A = [a[0] + (b[0] - a[0]) * t0, a[1] + (b[1] - a[1]) * t0], Bp = [a[0] + (b[0] - a[0]) * t1, a[1] + (b[1] - a[1]) * t1];
         slab(mb, timber, A, Bp, n, 1.1, y - 0.25, y);
         const C = [Bp[0] + n[0] * 1.05, Bp[1] + n[1] * 1.05], D = [A[0] + n[0] * 1.05, A[1] + n[1] * 1.05];
@@ -126,11 +174,29 @@ export function buildPlot(mb, p) {
     const slope = [n[0] * (p.ridge - p.h), Math.hypot(rb[0] - b[0], rb[1] - b[1]), n[1] * (p.ridge - p.h)], sl = Math.hypot(...slope);
     mb.quad(roofT, W(a[0], p.h, a[1]), W(b[0], p.h, b[1]), W(rb[0], p.ridge, rb[1]), W(ra[0], p.ridge, ra[1]), WN(slope[0] / sl, slope[1] / sl, slope[2] / sl), [[0, -up / PIC], [along / PIC, -up / PIC], [along / PIC, 0], [0, 0]]);   // BLD: the slates' top row at the ridge
   }
-  for (const [a, b] of [g0, g1]) {
-    const R = mid(a, b), n = outwardOf(q, q.indexOf(a));
-    const len = Math.hypot(b[0] - a[0], b[1] - a[1]), rv = (p.ridge - p.h) / STOREY;
-    mb.tri(wallT, W(a[0], p.h, a[1]), W(b[0], p.h, b[1]), W(R[0], p.ridge, R[1]), WN(n[0], 0, n[1]), [0, -rv], [len / BAY, -rv], [len / BAY / 2, 0]);
+  for (const [a, b] of [g0, g1]) gable(mb, wallT, a, b, p.h, mid(a, b), p.ridge, outwardOf(q, q.indexOf(a)));
+}
+/** BLD: THE FLOORS A BALCONY STANDS ON - a floor line of the wall's storeys (counted from the eave down; the heights are
+ *  half storeys, world/imperialFabric.js) at a second storey's floor: 4.8 m where the eave stands an odd half storey up
+ *  (over a shopfront's mezzanine), 6.4 m where it stands even - its deck never across a window. */
+export const BALCONY_FLOORS = Object.freeze([STOREY * 1.5, STOREY * 2]);
+const balconyFloor = (h) => BALCONY_FLOORS[Math.round(h / (STOREY / 2)) % 2 === 0 ? 1 : 0];
+/**
+ * BLD: A BUILDING'S PARTY WALLS - the bits of its edges that are no street front and stand against another building of the
+ * cell's layout (`near`): the ground a hand out from the edge, at a quarter, the middle and three quarters along it,
+ * under a neighbour. Its windows would stand under the neighbour's roof (9,687 of the 14,639 inner walls measured).
+ */
+export function partyEdges(L, p) {
+  let bits = 0;
+  for (let e = 0; e < 4; e++) {
+    if (p.out & (1 << e)) continue;
+    const a = p.q[e], b = p.q[(e + 1) & 3], n = outwardOf(p.q, e);
+    for (const s of [0.25, 0.5, 0.75]) {
+      const x = a[0] + (b[0] - a[0]) * s + n[0] * 0.3, z = a[1] + (b[1] - a[1]) * s + n[1] * 0.3;
+      if (L.near.some((o) => o !== p && inQuad(o.q, x, z))) { bits |= 1 << e; break; }
+    }
   }
+  return bits;
 }
 
 /** A WAY UP: a stair of crates and sheds along a street front, each STACK_STEP over the last, STACK_RUN along it and
@@ -213,7 +279,7 @@ function buildCover(mb, cv) {
  */
 export function fabricCellModel(r, c) {
   const L = fabricCell(r, c), mb = new MeshBuilder();
-  for (const p of L.plots) buildPlot(mb, p);
+  for (const p of L.plots) buildPlot(mb, p, partyEdges(L, p));
   for (const s of L.stacks) buildStack(mb, s);
   for (const br of L.bridges) buildBridge(mb, br);
   const stone = T('wallStone'), timber = T('timber');
@@ -242,7 +308,7 @@ export function fabricCellHasModel(r, c) {
  *  flat or ridged along its longer side. */
 function buildMass(mb, m) {
   const wallT = T(m.wall), roofT = T(m.roofTex);
-  for (let e = 0; e < 4; e++) wallFace(mb, wallT, m.q[e], m.q[(e + 1) & 3], -0.5, m.h, outwardOf(m.q, e), m.h);
+  for (let e = 0; e < 4; e++) storeys(mb, wallT, m.q[e], m.q[(e + 1) & 3], 0, m.h, outwardOf(m.q, e));   // BLD: the near walls' law
   if (!m.gable) { flat(mb, T('bridgeStone'), m.q, m.h, 1); return; }
   const q = m.q, l0 = Math.hypot(q[1][0] - q[0][0], q[1][1] - q[0][1]), l1 = Math.hypot(q[2][0] - q[1][0], q[2][1] - q[1][1]);
   const mid = (u, v) => [(u[0] + v[0]) / 2, (u[1] + v[1]) / 2], rise = Math.min(l0, l1) * 0.3;
@@ -252,10 +318,7 @@ function buildMass(mb, m) {
     const n = outwardOf([a, b, c, d], e), ny = Math.hypot(r0[0] - p0[0], r0[1] - p0[1]), sl = Math.hypot(ny, rise);
     mb.quad(roofT, W(p0[0], m.h, p0[1]), W(p1[0], m.h, p1[1]), W(r1[0], up, r1[1]), W(r0[0], up, r0[1]), WN((n[0] * rise) / sl, ny / sl, (n[1] * rise) / sl));
   }
-  for (const [p0, p1, R, e] of [[b, c, R1, 1], [d, a, R0, 3]]) {
-    const n = outwardOf([a, b, c, d], e);
-    mb.tri(wallT, W(p0[0], m.h, p0[1]), W(p1[0], m.h, p1[1]), W(R[0], up, R[1]), WN(n[0], 0, n[1]));
-  }
+  for (const [p0, p1, R, e] of [[b, c, R1, 1], [d, a, R0, 3]]) gable(mb, wallT, p0, p1, m.h, R, up, outwardOf([a, b, c, d], e));   // BLD: no window cut by a slope
 }
 /** A Daggerfall block's mass far off: a ring of houses round the cell's edge, a street in from it (its blocks' own houses
  *  stand on their edges' streets). */

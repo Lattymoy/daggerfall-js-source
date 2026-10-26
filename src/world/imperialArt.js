@@ -14,6 +14,13 @@ export const FACADE_TEXELS = Object.freeze({ w: 64, h: 128 });
 /** The window every facade carries, texels of its picture: [x0, y0, x1, y1] (its frame inside), its mullion's column and
  *  its transom's row - 0.8 m wide, 1.4 m tall, its sill 1.0 m over the floor. */
 export const FACADE_WINDOW = Object.freeze({ rect: Object.freeze([16, 30, 48, 86]), mullion: 31, transom: 50 });
+/** BLD: A FACADE'S PLAIN ROWS - the run of a storey's picture between its window's sill (and the shadow under it, the
+ *  window's foot + 6) and the next storey's window's lintel cap (its head - 9, the cut stone's heaviest), through the
+ *  picture's wrap: `top` its first row, `rows` how many. No window, frame, shutter, sill or lintel of any of the five
+ *  walls stands in it (the half-timbering's posts, rail, cross and plates do - its framing), so a strip of wall that is
+ *  no whole storey (a plinth, a mezzanine over a shopfront, a gable, a party wall) is laid in it
+ *  (world/imperialFabricModels.js) and never shows a window cut. */
+export const FACADE_PLAIN = Object.freeze({ top: FACADE_WINDOW.rect[3] + 6, rows: FACADE_TEXELS.h - (FACADE_WINDOW.rect[3] + 6) + FACADE_WINDOW.rect[1] - 9 });
 
 /**
  * THE FABRIC'S PICTURES on `out` (record to picture), painted by the capitals' own kit (world/capitalModels.js

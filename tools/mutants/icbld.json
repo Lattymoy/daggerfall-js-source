@@ -7,5 +7,77 @@
     "tests": [
       "test/world/icbld_fabric.test.js"
     ]
+  },
+  {
+    "name": "BLD-storeys-counted-to-the-ground",
+    "file": "src/world/imperialFabricModels.js",
+    "old": "k = Math.floor((h - y0) / STOREY + 1e-6)",
+    "new": "k = Math.ceil((h - y0) / STOREY - 1e-6)",
+    "tests": [
+      "test/world/icbld_fabric.test.js"
+    ]
+  },
+  {
+    "name": "BLD-gable-in-storeys",
+    "file": "src/world/imperialFabricModels.js",
+    "old": "const top = Math.min(ridge, bot + STOREY / 2), v0",
+    "new": "const top = Math.min(ridge, bot + STOREY), v0",
+    "tests": [
+      "test/world/icbld_fabric.test.js"
+    ]
+  },
+  {
+    "name": "BLD-party-walls-windowed",
+    "file": "src/world/imperialFabricModels.js",
+    "old": "{ bits |= 1 << e; break; }",
+    "new": "{ break; }",
+    "tests": [
+      "test/world/icbld_fabric.test.js"
+    ]
+  },
+  {
+    "name": "BLD-bay-unstretched",
+    "file": "src/world/imperialFabricModels.js",
+    "old": "return len / Math.max(1, Math.round(len / BAY)); };",
+    "new": "return BAY; };",
+    "tests": [
+      "test/world/icbld_fabric.test.js"
+    ]
+  },
+  {
+    "name": "BLD-balcony-across-a-window",
+    "file": "src/world/imperialFabricModels.js",
+    "old": "% 2 === 0 ? 1 : 0]",
+    "new": "% 2 === 0 ? 0 : 1]",
+    "tests": [
+      "test/world/icbld_fabric.test.js"
+    ]
+  },
+  {
+    "name": "BLD-party-wall-off-the-ground",
+    "file": "src/world/imperialFabricModels.js",
+    "old": "plainBand(mb, wallT, a, b, -0.5, p.h, n);",
+    "new": "plainBand(mb, wallT, a, b, 0.3, p.h, n);",
+    "tests": [
+      "test/world/icbld_fabric.test.js"
+    ]
+  },
+  {
+    "name": "BLD-plain-run-into-the-window",
+    "file": "src/world/imperialArt.js",
+    "old": "+ FACADE_WINDOW.rect[1] - 9 });",
+    "new": "+ FACADE_WINDOW.rect[1] + 9 });",
+    "tests": [
+      "test/world/icbld_fabric.test.js"
+    ]
+  },
+  {
+    "name": "BLD-a-building-over-another",
+    "file": "src/world/imperialFabric.js",
+    "old": "rects.push({ s0: 0, s1: D, t0: 0, t1: D, out: 0b1001 });",
+    "new": "rects.push({ s0: 0, s1: D + 1.5, t0: 0, t1: D, out: 0b1001 });",
+    "tests": [
+      "test/world/icbld_fabric.test.js"
+    ]
   }
 ]
