@@ -39,6 +39,8 @@ import { setWatersInk, lawWatersInk } from '../tamriel/watersInk.js';   // MAP-W
 /** MID-RING / FAR-FIELD: how many of a ground's rows a worker answers at a time - the stream's own jobs run between bands
  *  (a band is one message; the next is posted when it lands), so no pixel waits behind a whole horizon. */
 export const HORIZON_BAND_ROWS = { mid: 4, far: 16 };
+/** FAR-TREES: the band's pixels an ask (some 40 ms of the worker's a pixel: a stream job waits a band's ask at most). */
+export const BAND_PIXELS_AN_ASK = 4;
 
 /** The escape hatch, read once at scene build (the ?cull=off shape). */
 export function terrainThreadDisabled(search = globalThis.location?.search) {
@@ -106,7 +108,7 @@ export class TerrainGenClient {
           return;
         }
         if (m.t === 'grid' || m.t === 'gridError') { this._gridAnswer(m); return; }   // PERF-EXT26: by id, never through the FIFO
-        if (m.t === 'mid' || m.t === 'midError' || m.t === 'far' || m.t === 'farError') { this._midAnswer(m); return; }   // MID-RING, FAR-FIELD: by id too
+        if (m.t === 'mid' || m.t === 'midError' || m.t === 'far' || m.t === 'farError' || m.t === 'band' || m.t === 'bandError') { this._midAnswer(m); return; }   // MID-RING, FAR-FIELD: by id too; FAR-TREES: and the band's
         if (m.t === 'watersInk') { setWatersInk(m.ink ?? null); return; }   // MAP-WATERS: the held map's rivers and lakes landed
         this._answer(m);
       };
@@ -309,6 +311,30 @@ export class TerrainGenClient {
     });
   }
 
+  /**
+   * FAR-TREES (render/farTrees.js): the band's trees for `job.pixels` ([px, py, nature archive, climate type] four a pixel)
+   * - ON THE WORKER ALONE, BAND_PIXELS_AN_ASK pixels an ask (the next posted as the last lands, so the stream's own jobs run
+   * between them): an array of each pixel's `[x, y, z, record]` trees, in order; null with no worker or on an error.
+   * @param {{ pixels: Int32Array, forests: boolean, landform: boolean }} job
+   * @returns {Promise<?Float32Array[]>}
+   */
+  floraBand(job) {
+    if (!this._worker) return Promise.resolve(null);
+    const n = job.pixels.length / 4, out = [];
+    const ask = (p0) => new Promise((resolve) => {
+      if (!this._worker) { resolve(null); return; }
+      const id = ++this._gridId;
+      this._mids.set(id, resolve);
+      this._worker.postMessage({ t: 'floraband', id, forests: job.forests, landform: job.landform, pixels: job.pixels.slice(p0 * 4, Math.min(n, p0 + BAND_PIXELS_AN_ASK) * 4) });
+    });
+    const next = (p0) => (p0 >= n ? Promise.resolve(out) : ask(p0).then((m) => {
+      if (!m?.trees) return null;
+      out.push(...m.trees);
+      return next(p0 + BAND_PIXELS_AN_ASK);
+    }));
+    return next(0);
+  }
+
   /** MID-RING / FAR-FIELD: a ground asked a band of `rows` at a time, the next band posted when the last lands; `take`
    *  keeps each answer (false: a band failed, the ground is null) and answers the ground at the last. */
   _bands(t, job, total, rows, take) {
@@ -345,8 +371,8 @@ export class TerrainGenClient {
     const resolve = this._mids.get(m.id);
     if (!resolve) return;
     this._mids.delete(m.id);
-    if (m.t === 'midError' || m.t === 'farError') console.warn('[terrain] worker horizon failed -', m.message);
-    resolve(m.t === 'mid' ? { heights: m.heights, wet: m.wet ?? null, flora: m.flora ?? null } : m.t === 'far' ? { high: m.high, low: m.low, clim: m.clim } : null);
+    if (m.t === 'midError' || m.t === 'farError' || m.t === 'bandError') console.warn('[terrain] worker horizon failed -', m.message);
+    resolve(m.t === 'band' ? { trees: m.trees } : m.t === 'mid' ? { heights: m.heights, wet: m.wet ?? null, flora: m.flora ?? null } : m.t === 'far' ? { high: m.high, low: m.low, clim: m.clim } : null);
   }
 
   _gridAnswer(m) {

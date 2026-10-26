@@ -72,7 +72,7 @@ function ring({ d, h, L, sky, fog, fogRange, texel, openColor, lane = false }) {
     uFogColor: fog, uFogStart: fogRange[0], uFogEnd: fogRange[1], uRimStart: RING_RIM_START, uRimEnd: RING_RIM_END, uHazeHold: RING_HAZE_HOLD,
     uSkyZenith: sky.z, uSkyHorizon: sky.h, uSeaF0: WATER_F0, uSeaLook: 1, uELExposure: EL_EXPOSURE, gl_FragCoord: [0, 0, 0, 1],
     uCloudShadowRect: [0, 0, 0, 0], uCloudShadowFar: [1, 1], uCloudFar: 1,   // OW-HORIZON: no deck - the sun whole
-    vFlora: 0, uFlora: [0, 9, 46],   // FAR-FLORA: the sea grows no woods
+    vFlora: 0, vCanopy: [0, 0, 0], uFlora: [0, 9, 46],   // FAR-FLORA: the sea grows no woods
   });
   fns.main();
   return fns.globals.outColor.slice(0, 3);

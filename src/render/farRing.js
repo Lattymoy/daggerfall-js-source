@@ -88,6 +88,7 @@ import { CLIMATES } from '../formats/mapsFile.js';   // FAR-FIELD: a cell's cent
 import { pageHas } from '../systems/pageQuery.js';
 import { expectedTrees, standsTrees, FLORA } from '../world/terrain/floraCover.js';   // FAR-FLORA: the near law's woods, where the field is past the vertices' reach
 import { createFloraArt, floraDisabled, FLORA_MIN_LAND_VIEW } from './farFlora.js';   // FAR-FLORA: the trees' own art
+import { FarTreesBand, farTreesDisabled } from './farTrees.js';   // FAR-TREES: the near trees carried past the grid
 import { capLineOfPixel, capShare, whiten } from '../world/peaks/snowcap.js';   // PEAKS1: the summits' snow on the horizon   // MID-RING: the probes' read stands behind the shot gate (AUDIT ANTICHEAT A2)
 /** MID-RING: the band (metres, Chebyshev from the traveller) over which the middle ring's ground eases onto the far
  *  ring's - ending where the traveller's farthest drift from its base still leaves its rim (MID_RADIUS - MID_REBUILD_DRIFT
@@ -160,7 +161,7 @@ export function buildFarRingGrid({ heightBytes, mapWidth, mapHeight, climateAt, 
   const normals = new Float32Array(side * side * 3);
   const colors = new Uint8Array(side * side * 3);
   const sea = new Uint8Array(side * side);   // FAR-SEA1: 255 where the vertex is the sea - a water pixel at the sea's own height
-  const flora = floraOf ? new Uint8Array(side * side) : null, ground = floraOf ? new Float32Array(side * side) : null;   // FAR-FLORA
+  const flora = floraOf ? new Uint8Array(side * side * 4) : null, ground = floraOf ? new Float32Array(side * side) : null;   // FAR-FLORA: the canopy (render/midRing.js plantCanopy's four bytes) and the ground under it
   const clampX = (x) => Math.max(0, Math.min(mapWidth - 1, x));
   const clampY = (y) => Math.max(0, Math.min(mapHeight - 1, y));
   const { byteAt, climateOf } = ringReaders({ heightBytes, mapWidth, mapHeight, climateAt, byteAt: byteAtPast, climatePast });
@@ -204,10 +205,14 @@ export function buildFarRingGrid({ heightBytes, mapWidth, mapHeight, climateAt, 
           const f = floraOf(climate);
           if (f) {
             layGround(colors, o, f.ground, FLORA.ground[1], FLORA.ground[2], FLORA.ground[3]);   // the near ground's own tiles, by the law's mean shares
-            positions[o + 1] += plantCanopy(colors, o, expectedTrees(f.spec, byte), f.art, flora, o / 3);
+            positions[o + 1] += plantCanopy(flora, o / 3, expectedTrees(f.spec, byte), f.art);
           }
         }
-        if (snowAt) whiten(colors, o, capShare(positions[o + 1] - RING_SEA_Y, normals[o + 1], snowAt(px, py)));   // PEAKS1
+        if (snowAt) {
+          const share = capShare(positions[o + 1] - RING_SEA_Y, normals[o + 1], snowAt(px, py));
+          whiten(colors, o, share);   // PEAKS1
+          if (flora?.[(o / 3) * 4]) whiten(flora, (o / 3) * 4 + 1, share);   // FAR-FLORA: and the canopy under it
+        }
       }
       o += 3;
     }
@@ -421,7 +426,9 @@ layout(location=1) in vec3 aNormal;
 layout(location=2) in vec3 aColor;
 layout(location=3) in float aSea;   // FAR-SEA1: 1 at the sea's vertices
 layout(location=4) in float aCoarse;   // MID-RING: the far ring's own height under a middle ring's vertex
-layout(location=5) in float aFlora;    // FAR-FLORA: the canopy's cover (0 off the woods, and where no array is bound)
+layout(location=5) in vec4 aCanopy;    // FAR-FLORA: x the canopy's cover, yzw its colour - (0, 0, 0, 1) where no array is bound: none
+uniform vec4 uCanopyBand;   // FAR-TREES: x, y the band's dither (metres, Chebyshev from uCanopyFrom) - the canopy over it, its trees under it; z 1 while the band stands
+uniform vec3 uCanopyFrom;
 uniform vec3 uMorph;      // MID-RING: x, y the band (metres, Chebyshev from uMorphFrom) its ground eases onto the far ring's over; z 1 to ease
 uniform vec3 uMorphFrom;  // the traveller (the haze's own point, else the eye)
 uniform mat4 uProj;
@@ -437,8 +444,8 @@ out float vSea;
 out vec3 vWorld;     // the sea's point, for its facing to the eye (world space: the frame's light directions are too)
 out vec3 vSeaBody;   // the water's own body: its texel averaged by the mip chain, tinted - waterSurface.js's body, one fetch a vertex
 out float vFlora;
+out vec3 vCanopy;
 void main() {
-  vFlora = aFlora;
   vec3 world = aPos + uOrigin;
   // MID-RING: toward its rim the middle ring's ground eases onto the far ring's surface under it, by the traveller's own
   // distance - so where the far ring takes over the two are one surface, and the band moves with the traveller, not with
@@ -448,7 +455,12 @@ void main() {
     world.y = mix(aPos.y, aCoarse, smoothstep(uMorph.x, uMorph.y, max(d.x, d.y))) + uOrigin.y;
   }
   vNormal = aNormal;
+  // FAR-FLORA: the canopy's share of the ground, its cover - FAR-TREES: under the band, whose own trees stand there, none
+  // (the band's trees dither out over the same metres as the canopy comes in); the program mixes it (FLORA_GLSL)
+  vec2 cb = abs(world.xz - uCanopyFrom.xz);
+  vFlora = aCanopy.x * (uCanopyBand.z > 0.5 ? smoothstep(uCanopyBand.x, uCanopyBand.y, max(cb.x, cb.y)) : 1.0);
   vColor = aColor;
+  vCanopy = aCanopy.yzw;
   vSea = aSea;
   vWorld = world;
   vSeaBody = textureLod(uSeaTiles, vec3(0.5, 0.5, 0.0), 8.0).rgb * uSeaTint;
@@ -488,7 +500,8 @@ void main() {
   float diff = max(dot(n, uLightDir), 0.0);
   float mdiff = max(dot(n, uMoonDir), 0.0);
   float sun = ringSun();   // OW-HORIZON: the clouds' shadow where their map knows the ground, the far law past it
-  vec3 lit = vColor * floraShade(vWorld.xz) * (uAmbient + uSunColor * (sun * diff) + uMoonColor * (uMoonScale * mdiff));   // FAR-FLORA: the woods' crowns
+  // FAR-FLORA: the canopy over the ground by its cover, lit as the trees are near (horizonHaze.js floraLight) and grained
+  vec3 lit = mix(vColor * (uAmbient + uSunColor * (sun * diff) + uMoonColor * (uMoonScale * mdiff)), vCanopy * floraLight(uAmbient, uSunColor, sun, uMoonColor, uMoonScale) * floraGrain(vWorld.xz), vFlora);
   // FAR-SEA1: the sea is the water's own (AUDIT FAR-SEA1 L1/L2: its body, its light, its glints) - the land pays nothing for it
   float sea = vSea * uSeaLook;
   if (sea > 0.0) lit = mix(lit, ringSea(uAmbient, uSunColor, uMoonColor, sun), sea);
@@ -554,6 +567,10 @@ export class FarRingRenderer {
     this.lane = opts.lane ?? this.renderer?.lightingLane ?? null;
     this._dec = new Float32Array(3);
     const p = buildProgram(gl, VS, this.lane ? this.lane.farRingFs : FS, 'far ring');
+    // FAR-TREES: the band past the grid - with the woods (the knob's), a worker to lay it, and not `?fartrees=off`
+    this._band = this._flora && opts.mid && !farTreesDisabled() ? new FarTreesBand(gl, { source: opts.mid, lane: this.lane }) : null;
+    this._bandOrigin = new Float32Array(3);
+    this._bandLight = [new Float32Array(3), new Float32Array(3), new Float32Array(3)];
     this.program = p;
     this.u = {};
     for (const name of ['uProj', 'uView', 'uOrigin', 'uLightDir', 'uAmbient', 'uSunScale', 'uSunColor',
@@ -564,7 +581,7 @@ export class FarRingRenderer {
       'uELExposure', 'uAdapt', 'uJungleHaze', 'uHazeEye',   // BANTHA1: the jungle's haze and the eye it is measured from
       'uHazeFrom', 'uCloudShadowMap', 'uCloudShadowRect', 'uCloudShadowFar', 'uCloudFar',   // OW-HORIZON: the fog's focus, the clouds' map and its far law
       'uMorph', 'uMorphFrom',   // MID-RING: the middle ring's ease onto this one
-      'uFlora']) {   // FAR-FLORA: the woods on, and their crowns' and groves' spacing
+      'uFlora', 'uCanopyBand', 'uCanopyFrom']) {   // FAR-FLORA: the woods on, and their crowns' and groves' spacing; FAR-TREES: the band's crossfade
       this.u[name] = gl.getUniformLocation(p, name);
     }
     this.vao = null;
@@ -586,6 +603,7 @@ export class FarRingRenderer {
   build(gridInputs, holeX, holeY, holeRadius, built = null) {
     const gl = this.gl;
     this._inputs = gridInputs;   // MID-RING: the middle ring's tints are read the way this grid's are
+    this._readers = null;   // FAR-TREES: the band's climate reader, made again for these inputs
     this._floraRadius = holeRadius;
     const floraOf = this._floraOf();   // FAR-FLORA: the woods, with the knob's Land View
     this._floraVersion = floraOf ? /** @type {any} */ (this._flora).version : -1;
@@ -607,7 +625,7 @@ export class FarRingRenderer {
     buf(normals, 1, gl.FLOAT, false);
     buf(colors, 2, gl.UNSIGNED_BYTE, true);
     buf(sea, 3, gl.UNSIGNED_BYTE, true, 1);   // FAR-SEA1
-    if (flora) buf(flora, 5, gl.UNSIGNED_BYTE, true, 1);   // FAR-FLORA: the canopy's cover
+    if (flora) buf(flora, 5, gl.UNSIGNED_BYTE, true, 4);   // FAR-FLORA: the canopy's cover and colour
     this._sea = sea;
     this._indexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._indexBuffer);
@@ -659,6 +677,10 @@ export class FarRingRenderer {
   _midFrame(curX, curY, built) {
     this._workFrame();   // the grounds landed: a frame's share of their vertices laid
     this._farFrame(curX, curY);   // FAR-FIELD: the land past this ring, its own turn
+    if (this._band && this._inputs && this._floraOf()) {   // FAR-TREES: the band's turn - with the woods, the knob's Land View
+      this._readers ??= ringReaders(this._inputs);
+      this._band.frame({ curX, curY, radius: this._floraRadius, built, climateOf: this._readers.climateOf, forests: /** @type {any} */ (this._flora).forests ?? true, landform: !!this._inputs.relief, work: this._work });
+    }
     if (!this._midSource || !this._inputs) return null;
     const mid = this._mid;
     const drift = mid ? Math.max(Math.abs(curX - mid.baseX), Math.abs(curY - mid.baseY)) : Infinity;
@@ -845,6 +867,22 @@ export class FarRingRenderer {
     mid.drawRange(this.u.uOrigin, o, at, mid.total);
   }
 
+  /** FAR-TREES: the band drawn by its own program, in this pass's state - this ring's lens, its haze and its light (the
+   *  lane's decoded as this ring's are), at its base pixel's origin (this ring's moved by the pixels between). */
+  _drawBand(view, origin, f) {
+    const gl = this.gl, b = /** @type {FarTreesBand} */ (this._band), d = b.drawn, o = this._bandOrigin;
+    o[0] = origin[0] + (d.baseX - this.baseX) * TERRAIN_SIZE; o[1] = origin[1]; o[2] = origin[2] - (d.baseY - this.baseY) * TERRAIN_SIZE;
+    const [a, s, m] = this._bandLight, dec = (c, out) => (this.lane ? this.lane.decode3(c, out) : (out.set(c), out));
+    const farSun = cloudFarOf(f.deck);
+    b.draw({
+      proj: this._proj, view, origin: o, radius: this._floraRadius, viewportH: this.renderer?.worldViewportPx?.[3] ?? gl.drawingBufferHeight,
+      hazeFrom: this.renderer?.focus ?? NO_FOCUS, ambient: dec(f.ambient, a), sunScale: f.sunScale, sunColor: dec(f.sunColor, s),
+      moonScale: f.moonScale, moonColor: dec(f.moonColor ?? FLAT_WHITE, m), fogColor: f.fogColor, fogStart: f.fogStart, fogEnd: f.fogEnd,
+      rimStart: f.farField ? FAR_RIM_START : RING_RIM_START, rimEnd: f.farField ? FAR_RIM_END : RING_RIM_END, hold: RING_HAZE_HOLD,
+      haze: f.haze ?? NO_HAZE, hazeEye: f.hazeEye, cloudFar: farSun, cloudRect: f.deck?.map ? f.deck.rect : NO_RECT, cloudUnit: RING_CLOUD_UNIT, exposure: f.exposure,
+    });
+  }
+
   /** MID-RING / FAR-FIELD: which of the horizon's layers stand (the probes' read): the far ring's base, the middle ring's
    *  base and runs, the far field's base cell and cells drawn, and the grounds still being laid. */
   horizonStats() {
@@ -853,6 +891,7 @@ export class FarRingRenderer {
       mid: this._mid?.built ? { baseX: this._mid.baseX, baseY: this._mid.baseY, runs: this._mid.runs.length } : null,
       field: this._far?.built ? { baseCX: this._far.baseCX, baseCY: this._far.baseCY, cells: this._far.count / 6 } : null,
       laying: this._work.length, asking: [this._midAsk, this._farAsk].filter(Boolean).length, landmarks: this._landmarks.length,
+      trees: this._band ? this._band.count : null,   // FAR-TREES: the band's trees drawn
     };
   }
 
@@ -926,6 +965,11 @@ export class FarRingRenderer {
     gl.uniform1f(this.u.uRimEnd, farField ? FAR_RIM_END : RING_RIM_END);
     gl.uniform1f(this.u.uHazeHold, RING_HAZE_HOLD);
     gl.uniform3f(this.u.uFlora, this._floraOf() ? 1 : 0, FLORA_CROWN_M, FLORA_GROVE_M);   // FAR-FLORA: the crowns' grain while the woods stand
+    // FAR-TREES: under the band its own trees stand, the canopy over its dithered rim - measured from the band's base pixel
+    const bandOn = !!(this._band?.count && this._floraOf()), bd = this._band?.drawn;
+    const cf = this._band?.canopyFade ?? [0, 1];
+    gl.uniform4f(this.u.uCanopyBand, bandOn ? (this._floraRadius + cf[0]) * TERRAIN_SIZE : 0, bandOn ? (this._floraRadius + cf[1]) * TERRAIN_SIZE : 1, bandOn ? 1 : 0, 0);
+    gl.uniform3f(this.u.uCanopyFrom, bandOn ? origin[0] + (bd.baseX - this.baseX + 0.5) * TERRAIN_SIZE : 0, 0, bandOn ? origin[2] - (bd.baseY - this.baseY) * TERRAIN_SIZE + 0.5 * TERRAIN_SIZE : 0);
     gl.uniform4fv(this.u.uJungleHaze, haze ?? NO_HAZE);   // BANTHA1: the jungle's haze (renderer.setJungleHaze) - off ([1].x 0) when none is handed
     gl.uniform3fv(this.u.uHazeEye, hazeEye ?? eye ?? FLAT_UP);
     // OW-HORIZON: the haze from where the world's fog is measured - the travel view's traveller (renderer.setFocus), the
@@ -1002,6 +1046,7 @@ export class FarRingRenderer {
     } else {
       for (const { lm } of near) this._drawLandmark(lm, origin);   // no middle ring: the near ones after this ring
     }
+    if (this._band?.count && this._floraOf()) this._drawBand(view, origin, { ambient, sunScale, sunColor, moonScale, moonColor, fogColor, fogStart, fogEnd, exposure, haze, hazeEye: hazeEye ?? eye ?? FLAT_UP, farField: !!farField, deck: this.renderer?.cloudShadow ?? null });   // FAR-TREES: the near trees past the grid, nearest of the pass
     gl.depthRange(0, 1);
     gl.enable(gl.CULL_FACE);
     gl.depthMask(true);
@@ -1018,6 +1063,7 @@ export class FarRingRenderer {
     if (whole) { this._farGen++; this._farAsk = null; this._far?.dispose(); this._far = null; this._work = []; }   // FAR-FIELD: the same, and any ground still being laid
     if (whole && globalThis.__horizonRings === this._statsFn) delete globalThis.__horizonRings;   // the probes' read, if it is still this ring's
     if (whole) { for (const lm of this._landmarks) lm.dispose(); this._landmarks = []; }   // FAR-LANDMARK: the silhouettes it was handed
+    if (whole && this._band) { this._band.dispose(); this._band = null; }   // FAR-TREES: the band's buffers, its atlas, its program
     for (const b of this.buffers) gl.deleteBuffer(b);
     this.buffers = [];
     if (this.vao) gl.deleteVertexArray(this.vao);
