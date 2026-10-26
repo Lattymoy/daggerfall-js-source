@@ -151,8 +151,8 @@ version - the roads' own `inputsPrint` already hashes all four.
 `src/world/tamriel/tamrielBootCache.js:"export const BOOT_CACHE_VERSION = 1;"` keeps in IndexedDB, and a returning boot
 takes: the trace and its relief (`preloadTamrielTrace`), under a print of the two pictures' bytes, the palette read and
 the relief's own data, each record checked against its key, its sizes and its arrays' checksum; the fit (`fitBayToPicture`
-takes a kept fit for the very land it samples - its masks' print); and the roads' regions with land (the roads' start,
-`src/scenes/tamrielRoadsHost.js:"const regions = regionsByNearness(lattice, keptLandRegions({ lattice, scan: (r) => regionHasLand(r, heightAt), ground }), from);"`)
+takes a kept fit for the very land it samples - its masks' print); and the roads' regions to build (the roads' start - since EXACT-PIECES the regions it wants, the Bay's own with those with land, the kept set's key tagged `w1`,
+`src/scenes/tamrielRoadsHost.js:"const regions = regionsByNearness(lattice, keptLandRegions({ lattice, scan: (r) => regionWanted(r, heightAt), ground }), from);"`)
 under a print of the ground they were scanned on - the fit, the Bay's own bytes, GROUND_ROLL_VERSION and BIOMES_VERSION -
 and the lattice. Timed in node (an in-memory store): the trace and relief 469 ms at a first boot, 18-32 ms returning; the
 fit 677 ms, 10-96 ms returning (its land's masks still sampled). No IndexedDB, a blocked one, a record that does not
