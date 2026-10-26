@@ -182,8 +182,8 @@ From `.github/workflows` on a push to main:
 
 1. **The account service's migrations** (`account-deploy.yml`, "Apply migrations" - after `verify`, BEFORE it waits on the
    relay). 0176-0178 add tables; 0179 rebuilds seven market and guild tables with the same columns and wider CHECKs
-   (`region <= 70`). The old Worker (acct193) runs on the migrated database for as long as the next step waits, and it
-   writes regions 0-61 alone, which the wider CHECKs admit: compatible. 0179 rebuilds tables on the live primary - read
+   (`region <= 70`). The old Worker (main's acct194, NIRNROOT-SAGE; acct193 before it) runs on the migrated database
+   for as long as the next step waits, and it writes regions 0-61 alone, which the wider CHECKs admit: compatible. 0179 rebuilds tables on the live primary - read
    their row counts before the merge (`SELECT COUNT(*)` of `market_listings`, `market_orders`, `market_auctions`,
    `market_bids`, `guild_writs`, `guild_contracts`, `commissions`); the deploy records a time-travel bookmark first.
 2. **The relay** (`relay-deploy.yml`, triggered by the version): waits out a live siege and the Spire's hold, deploys
