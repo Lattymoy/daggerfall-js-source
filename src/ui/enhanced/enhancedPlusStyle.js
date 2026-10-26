@@ -942,6 +942,53 @@ export const TECH_BLOCK_CSS = `.techbox { --tech: #59c7ff; --tech-hi: #c4ecff; -
 .inv-tip.tip-compact .techbox .tech-note, .pack-shell .packtip.packdetail .card.card-compact .techbox .tech-note { display: none; }
 .inv-tip.tip-tight .techbox .tech-foot, .pack-shell .packtip.packdetail .card.card-tight .techbox .tech-foot { display: none; }
 .inv-tip.tip-tight .techbox.compact p.tech-effect, .pack-shell .packtip.packdetail .card.card-tight .techbox.compact p.tech-effect { margin: 0; }`;
+/** AUDIT LOCKPICK C1 (bible/06-Systems/Lockpicking.md section 4): THE LOCK'S WINDOW (ui/lockpickWindow.js) - the layout
+ *  alone; the kit dresses its frame, header, well, presses and chips by role (ui/enhanced/enhancedFrame.js FRAME_ROLES), so a
+ *  Plus colour and the DFO Grimoire dress repaint it as they repaint the Broker. The classic skin lays it with the kit cut
+ *  to its own selectors (lockpickWindow.js lockSkinCss), as AUDIT SET U1 laid the Broker's. */
+export const LOCK_CSS = `/* ── LOCKPICK: THE LOCK'S WINDOW (ui/lockpickWindow.js) - the tumblers in cross-section over a stone window; the kit
+   dresses it (FRAME_ROLES), this is the layout and the words' ink ── */
+.lk-host { position: fixed; inset: 0; z-index: 13; display: flex; align-items: center; justify-content: center; padding: 8px;
+  background: rgba(0,0,0,0.42); font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none; }
+.lk-win { width: min(560px, 96vw); max-height: calc(100dvh - 16px); overflow-y: auto; overscroll-behavior: contain; border: 2px solid;
+  padding: 0 0 10px; color: #f1ead8; font-size: 15px; line-height: 1.35; user-select: none; -webkit-user-select: none; }   /* C2: never past the screen - it scrolls */
+.lk-head { padding: 10px 14px 8px; }
+.lk-title { color: #efe0b8; font-size: 18px; letter-spacing: 0.06em; text-shadow: 2px 2px 0 #050608; }
+.lk-diff { color: #d9d0bc; font-size: 15px; }   /* C10: DFU's look-at line is read - a reading line's size */
+.lk-canvas { display: block; width: calc(100% - 20px); height: auto; margin: 10px auto 6px; aspect-ratio: 520 / 260; cursor: pointer;
+  touch-action: none; image-rendering: auto; }   /* C2: the lock alone takes the finger's drag; the window scrolls */
+.lk-word { min-height: 2.7em; padding: 0 14px; text-align: center; color: #fbf8f0; }   /* two lines held - three on a phone (C11) */
+.lk-word.bad { color: #ffc4bb; } .lk-word.good { color: #c9f0b0; } .lk-word.warn { color: #ffd98a; }
+.lk-meta { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 10px; padding: 4px 14px 0; font-size: 13px; }
+.lk-meta > span { padding: 2px 8px; color: #e2dccd; }
+.lk-meta b { color: #f3cf86; font-weight: normal; }
+.lk-acts { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; padding: 10px 14px 2px; }
+.lk-acts button { font: inherit; color: #e6dec6; padding: 6px 14px; cursor: pointer; }
+/* C7 (MENU-ORDER, the Broker's refusal): a refused press is never disabled - pressed, it says why - and it reads refused
+   under the pointer, held and focused too, its word in the dim bone */
+body .lk-host .lk-win .lk-acts button[aria-disabled="true"], body .lk-host .lk-win .lk-acts button[aria-disabled="true"]:hover,
+body .lk-host .lk-win .lk-acts button[aria-disabled="true"]:active, body .lk-host .lk-win .lk-acts button[aria-disabled="true"]:focus-visible {
+  color: #9c937d; text-shadow: none; border-color: rgba(125,116,96,0.3); background-color: rgba(12,14,18,0.6); background-image: none;
+  box-shadow: 0 0 0 1px rgba(5,6,8,0.6); translate: none; cursor: help; }
+.lk-keys { padding: 6px 14px 0; text-align: center; color: #b9ab93; font-size: 12px; }
+.lk-win.pad .lk-keys { display: none; }   /* C3/C9: a pad's prompts stand on its bar - no key letters to a thumb */
+@media (pointer: coarse) {
+  .lk-keys { display: none; }   /* C9: no keyboard keys told to a finger */
+  .lk-acts button { min-height: 44px; min-width: 44px; padding: 8px 16px; }   /* C5: a finger's press */
+}
+@media (max-width: 420px) { .lk-word { min-height: 4.05em; } }   /* C11: three lines held where the words wrap to three */
+@media (max-height: 520px) {   /* C2: a phone on its side - the lock beside its words and presses, the whole of it on the screen */
+  .lk-win { width: min(880px, 98vw); display: grid; grid-template-columns: minmax(0, 11fr) minmax(0, 9fr); grid-template-areas: "head head" "lock word" "lock meta" "lock acts"; align-content: start; }
+  .lk-head { grid-area: head; padding: 6px 12px 4px; }
+  .lk-canvas { grid-area: lock; width: auto; max-width: calc(100% - 16px); max-height: calc(100dvh - 96px); margin: 8px; }
+  .lk-word { grid-area: word; min-height: 4.05em; padding: 8px 10px 0; }
+  .lk-meta { grid-area: meta; } .lk-acts { grid-area: acts; }
+  .lk-keys { display: none; }
+}
+/* S3: the pad's prompt bar up under it (plusPad.js promptClearance) - the window stands above the bar, never under it */
+html.plus-pad-prompts-visible .lk-host { padding-bottom: calc(var(--plus-pad-clearance, 0px) + 8px); }
+html.plus-pad-prompts-visible .lk-win { max-height: calc(100dvh - var(--plus-pad-clearance, 0px) - 16px); }
+@media (prefers-reduced-motion: reduce) { .lk-win { scroll-behavior: auto; } }`;
 /** SET7: the Sigil Broker's window (ui/brokerWindow.js) - every rule the window's own class; the window lays it itself on the classic skin (AUDIT SET U1), with the kit made for its roles alone. */
 export const BROKER_CSS = `/* ── SET7: THE SIGIL BROKER'S WINDOW (ui/brokerWindow.js) - the Info box's kind: a stone window over the world, the
    day's six offers in a list, the one pressed shown whole beside it (under it on a phone). The kit dresses the window,
@@ -2142,6 +2189,7 @@ ${TECH_BLOCK_CSS}
 ${BROKER_CSS}
 ${REFORGE_CSS}
 ${BOUNTY_CSS}
+${LOCK_CSS}
 ${NOTICE_CSS}
 ${PROF_CSS}
 ${ARENA_WINDOW_CSS}

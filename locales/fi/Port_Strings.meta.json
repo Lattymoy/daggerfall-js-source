@@ -439,6 +439,11 @@
   "tr": "69e76aa99476",
   "by": "claude-in-session"
  },
+ "account.glyph.nirnrootsage": {
+  "en": "84174edc6e42",
+  "tr": "84174edc6e42",
+  "by": "claude-in-session"
+ },
  "account.glyph.penitent": {
   "en": "e96df7568799",
   "tr": "2c916ddf79f3",
@@ -3587,6 +3592,11 @@
  "coll.look.resonance": {
   "en": "4f617addf148",
   "tr": "2e8a2ec4b8e7",
+  "by": "claude-in-session"
+ },
+ "coll.look.sagesmoke": {
+  "en": "d110d0fa1d62",
+  "tr": "65ae0d19e92f",
   "by": "claude-in-session"
  },
  "coll.look.seraphwings": {
@@ -7427,6 +7437,31 @@
  "menu.intro.musicFailed": {
   "en": "90465798688d",
   "tr": "5d367cf399ff",
+  "by": "claude-in-session"
+ },
+ "menu.intro.narration1": {
+  "en": "6cdda13c60fe",
+  "tr": "13be75c4a7f6",
+  "by": "claude-in-session"
+ },
+ "menu.intro.narration2": {
+  "en": "a73d722e6148",
+  "tr": "2246e60e0c54",
+  "by": "claude-in-session"
+ },
+ "menu.intro.narration3": {
+  "en": "b0db5c7d2264",
+  "tr": "3866198d19a3",
+  "by": "claude-in-session"
+ },
+ "menu.intro.narration4": {
+  "en": "02e54d9b7bf2",
+  "tr": "24331af54e07",
+  "by": "claude-in-session"
+ },
+ "menu.intro.narration5": {
+  "en": "bb1aec630851",
+  "tr": "22cce33cae78",
   "by": "claude-in-session"
  },
  "menu.intro.opening": {

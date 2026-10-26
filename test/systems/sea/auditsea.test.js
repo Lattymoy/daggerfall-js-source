@@ -178,7 +178,7 @@ async function harbour() {
     R[n] = await seatRealm(svc.env, who[n].secret, n, { name: n, level: 5, items: [], goldPieces: 5000, modData: { 'come-sail-away': { placedBoats: [{ UID: 77, Hull: 2, Items: [sword(2, { uid: '00000000000000c1', magic: true }), sword(0)] }] } } });
   }
   let n = 0;
-  const wreck = (o = {}) => mintSeaWreck({ f: who.kim.id, c: R.kim.id, k: who.hal.id, kc: R.hal.id, r: `${(++n).toString(16).padStart(12, '0')}`, u: 77, b: 1, m: SEA_CELL, ...o }, svc.gatePriv, { subtle, nowS: Math.floor(Date.now() / 1000) });
+  const wreck = (o = {}, nowS = Math.floor(Date.now() / 1000)) => mintSeaWreck({ f: who.kim.id, c: R.kim.id, k: who.hal.id, kc: R.hal.id, r: `${(++n).toString(16).padStart(12, '0')}`, u: 77, b: 1, m: SEA_CELL, ...o }, svc.gatePriv, { subtle, nowS });
   const rows = (sql, ...a) => svc.env.DB._raw.prepare(sql).all(...a).map((x) => ({ ...x }));
   const ctx = (o = {}) => ({ db: svc.env.DB, primary: svc.env.DB, bucket: svc.env.SAVES, subtle, rand: (b) => globalThis.crypto.getRandomValues(b), nowS: Math.floor(Date.now() / 1000), ...o });
   return { svc, who, R, wreck, rows, ctx };
@@ -200,11 +200,14 @@ test('AUDIT SEA VENTURES B7, E3: a wreck that stands answers her killer within h
   assert.equal(mine.status, 200);
   const his = await h.svc.call('/v1/sea/wreck', { receipt: rc }, h.who.hal.secret);
   assert.deepEqual([his.status, his.body.again, his.body.n], [200, true, 1], 'her carry stands: his answer at once');
-  // the race: past her grace, a seize whose batch fails as her checkpoint moved the record first
-  const rc2 = await h.wreck();
+  // the race: past her grace, a seize whose batch fails as her checkpoint moved the record first. The wreck is minted
+  // at the clock the asks are reckoned from - read twice, a second turning between the mint and the read moved the
+  // probe meant for the last second of her grace to the second it ran out, and the probe seized (deploy 1703)
+  const minted = Math.floor(Date.now() / 1000);
+  const rc2 = await h.wreck({}, minted);
   let failed = 0;
   const db = new Proxy(h.svc.env.DB, { get: (t, k) => (k === 'batch' ? async (steps) => { if (!failed++) throw new Error('CHECK constraint failed: moved = expected'); return t.batch(steps); } : (typeof t[k] === 'function' ? t[k].bind(t) : t[k])) });
-  const nowS = Math.floor(Date.now() / 1000) + SEA_WRECK_GRACE_S + 1;
+  const nowS = minted + SEA_WRECK_GRACE_S + 1;
   const seize = async () => seaWreck(h.ctx({ db, nowS }), { id: h.who.hal.id }, { receipt: rc2 }, { gateKey: await gateKeyOf(h.svc) });
   assert.equal((await seaWreck(h.ctx({ db, nowS: nowS - 2 }), { id: h.who.hal.id }, { receipt: rc2 }, { gateKey: await gateKeyOf(h.svc) })).error, 'grace');
   assert.deepEqual(await seize(), { error: 'seq' }, 'the record moved under it: asked again, never a throw');

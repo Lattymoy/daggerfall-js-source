@@ -189,7 +189,7 @@ test('PCO1: the damage - hand-to-hand, the weapon roll, the silver six, the two-
   const claymore = { group: 'Weapons', templateIndex: 122, material: 1, flags: 0 };
   assert.equal(pcaaoWeaponAttackDamage(mkPlayer({ stats: stats({ strength: 70 }) }), monster(0), 0, 0, claymore, fixed(0), M), 2 + 2 * 2, 'two-handed: the strength term doubled');
   const bow = { group: 'Weapons', templateIndex: 130, material: 1, flags: 0 };
-  assert.equal(pcaaoWeaponAttackDamage(mkPlayer({ stats: stats({ strength: 70 }) }), monster(0), 0, 0, bow, fixed(0), M), 4 + 2, 'a bow is two-handed and does NOT double');
+  assert.equal(pcaaoWeaponAttackDamage(mkPlayer({ stats: stats({ strength: 70 }) }), monster(0), 0, 0, bow, fixed(0), M), 5 + 2 * 2, 'BAL-ARCHERY: a bow takes the two-handed strength term, and its base is +1');
 });
 
 test('PCO1: Roleplay Realism\'s archery, as baked in - the draw time\'s hit and damage tables', () => {

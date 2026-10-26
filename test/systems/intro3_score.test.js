@@ -15,7 +15,7 @@ import {
 } from '../../src/systems/introScore.js';
 import { midiNote } from '../../src/systems/gate/gateScore.js';
 import { songLevel, songPress, songVoices, songKit, songTone } from '../../src/systems/song/songPlayer.js';
-import { CLOUD_REVEAL_TIME, TITLE_IMPACT_TIME } from '../../src/ui/intro/introCue.js';
+import { CLOUD_REVEAL_TIME, CREST_TIME } from '../../src/ui/intro/introCue.js';   // INTRO4: the 19 s beat is the crest's now
 
 const song = introThemeSong();
 const notes = song.events.filter((e) => e.type === 'noteOn');
@@ -25,7 +25,7 @@ const CRASH = 49;
 test('INTRO3: the film’s two landmarks are the score’s bar lines, to the millisecond, and the song strikes them', () => {
   assert.equal(IMPACT_BAR - CLOUD_BAR, 4, 'the cloud break and the logo’s landing are four bars apart, as in the recording');
   assert.ok(Math.abs(introSeconds(CLOUD_BAR) - CLOUD_REVEAL_TIME) < 0.001, `cloud break at ${introSeconds(CLOUD_BAR)}`);
-  assert.ok(Math.abs(introSeconds(IMPACT_BAR) - TITLE_IMPACT_TIME) < 0.001, `impact at ${introSeconds(IMPACT_BAR)}`);
+  assert.ok(Math.abs(introSeconds(IMPACT_BAR) - CREST_TIME) < 0.001, `impact at ${introSeconds(IMPACT_BAR)}`);
   assert.equal(INTRO_LEAD_TICKS, 68);
   assert.ok(Math.abs(song.beatsPerMinute - 128.755) < 0.001, `${song.beatsPerMinute} BPM`);
   for (const [bar, root] of [[CLOUD_BAR, 'C3'], [IMPACT_BAR, 'G2']]) {

@@ -140,7 +140,10 @@ export const FORCED_TEXT_COLOR = [186 / 255, 207 / 255, 125 / 255, 1];
  *  AUDIT PROF10 J2 (DECIDED, Mac: "Item maker can add to it"): a
  *  CRAFTED piece of jewellery is taken with the enchantments it
  *  carries (enchanting.js keptEnchantments - a Masterwork's Rare
- *  roll); every other enchanted item is refused as DFU refuses it.
+ *  roll); MAKER-RARE (FIELD BUGS 2026-10-26): and an identified Rare,
+ *  loot's or a Masterwork's, its ladder's rows riding free
+ *  (enchanting.js rareKeeps); every other enchanted item is refused as
+ *  DFU refuses it.
  *  AETHERIC-MAKER (FIELD BUGS 2026-10-03b): an Aetheric piece carries
  *  no DFU enchantment and is refused all the same (itemMakerRefuses). */
 export function itemMakerFilter(item, tabPage, selected = null) {

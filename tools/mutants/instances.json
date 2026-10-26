@@ -125,8 +125,8 @@
   {
     "name": "INSTANCES-HOLD-PUBLIC",
     "file": "src/systems/instancePlaces.js",
-    "old": "  if (!isHold) rows.push({ kind: 'public' });",
-    "new": "  rows.push({ kind: 'public' });",
+    "old": "  if (!isHold && !publicLast) rows.push({ kind: 'public' });",
+    "new": "  if (!publicLast) rows.push({ kind: 'public' });",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],

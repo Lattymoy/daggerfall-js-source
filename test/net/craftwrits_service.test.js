@@ -169,17 +169,19 @@ test('CRAFT-WRITS service: a potion writ filled - two Novice brews of Healing (t
   assert.deepEqual((await s.deliver(mac, w2.id)).body, { error: 'craft-unbrewed' }, 'yesterday\'s four went to yesterday\'s writ');
 });
 
-test('CRAFT-WRITS service: a cauldron that spent a LOOSE unit (the pack\'s, never the service\'s) is no witness - its potions fill nothing; brews without the bottles in the record are refused craft-goods-gone and nothing moves; a writ of another character, of yesterday, or with no record named is refused (mutants: the loose clause; the record\'s take)', async () => {
+// PIN MOVED (ANY-GOODS, FIELD BUGS 2026-10-26, the owner: "Crafting writs should work with even store bought ingredients"):
+// a cauldron that spent a LOOSE unit was no witness and its potions filled nothing - it is the character's brew now
+test('CRAFT-WRITS service: a cauldron that spent a LOOSE unit (looted, or bought with gold - ANY-GOODS) is the character\'s brew all the same - its potions count; too few brews are refused craft-unbrewed; brews without the bottles in the record are refused craft-goods-gone and nothing moves; a writ of another character, of yesterday, or with no record named is refused (mutants: the witness asked again; the record\'s take)', async () => {
   const s = await stand();
   const mac = await s.seated('Mac');
   await s.board(mac);
   const w = s.aim(mac, 0, 'potion:healing');
   s.give(mac, 'p1:16', 'loose', 1);
   await s.brew(mac, 'healing', HEALING);
-  await s.brew(mac, 'healing', HEALING);
-  assert.deepEqual(s.raw.prepare('SELECT witnessed FROM prof_brews WHERE char_id = ? ORDER BY at, rid').all(mac.character).map((r) => r.witnessed).sort(), [0, 1], 'the first spent the loose Red Berries; the second none');
+  assert.deepEqual(s.raw.prepare('SELECT witnessed FROM prof_brews WHERE char_id = ?').all(mac.character).map((r) => r.witnessed), [0], 'it spent the loose Red Berries - its record says so');
+  assert.equal((await s.board(mac)).writs[0].brewed, 2, 'and the card counts it');
   s.pack(mac, [bottles('potion:healing', 4)]);
-  assert.deepEqual((await s.deliver(mac, w.id)).body, { error: 'craft-unbrewed' }, 'two witnessed of four');
+  assert.deepEqual((await s.deliver(mac, w.id)).body, { error: 'craft-unbrewed' }, 'two brewed of four');
   await s.brew(mac, 'healing', HEALING);
   s.pack(mac, [bottles('potion:healing', 3)]);
   const gone = await s.deliver(mac, w.id);

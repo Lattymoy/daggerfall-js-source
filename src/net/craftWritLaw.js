@@ -23,9 +23,14 @@
 //    the record the goods).
 //    A looted or bought bottle fills nothing a brew of its own does not stand behind.
 //  - DISHES AND KITS: the pieces themselves, by provenance - each the filling character's make (products.char_id), the
-//    account's still (a sold one is its buyer's), never walled to gold (products.bought_with - AUDIT CRAFT-WRITS T2: a
-//    piece of goods bought for silver is its maker's all the same), on no listing, road or home, and in the record's pack
-//    loose; their rows go with them.
+//    account's still (a sold one is its buyer's), never bought back with gold (products.bought_with 'gold' with loose 0 -
+//    AUDIT CRAFT-WRITS T2: a piece of goods bought for silver is its maker's all the same), on no listing, road or home,
+//    and in the record's pack loose; their rows go with them.
+//  - ANY-GOODS (FIELD BUGS 2026-10-26, the owner: "Crafting writs should work with even store bought ingredients. I hate
+//    this"): WHATEVER THE GOODS. A brew or a piece made of goods from the pack - looted, or bought with gold at a shop
+//    (AUDIT BAG-CRAFT A1's loose units) - fills a writ as one of gathered or silver-bought goods does: the make is the
+//    service's act, and what it was made of no longer asked. Before, migration 0145's `witnessed` and the gold wall kept
+//    them out, and the card said "0 brewed by you" over a brew that had paid its XP.
 //  - Never a potion wholly of the Apothecaries' goods (Water Breathing, Levitation - alchemyLaw brewFirstPays): silver
 //    bought at the counter and brewed would come back as more silver with no hand's work between.
 //
@@ -332,10 +337,11 @@ export function craftHeldText(/** @type {{ kind: string }} */ w, /** @type {{ pa
     ? t('prof.craftWrit.heldPotion', '{made, number} brewed by you, {pack, number} in your pack', { made: h.made, pack: h.pack })
     : t('prof.craftWrit.heldPiece', '{made, number} of your own in your pack', { made: h.made });
 }
-/** Why Deliver waits, said on its title: what is short. */
+/** Why Deliver waits, said on its title: what is short. A potion is brewed at an alchemy station (FIELD BUGS 2026-10-26):
+ *  a potion maker anywhere else is the client's mix (POTION-DOOR), which the service never sees. */
 export function craftShortText(/** @type {{ kind: string, qty: number }} */ w, /** @type {{ pack: number, made: number }} */ h) {
   if (w.kind === 'potion') {
-    if (h.made < w.qty) return t('prof.craftWrit.shortBrew', 'Brew {n, number} more yourself - found or bought bottles do not count', { n: w.qty - h.made });
+    if (h.made < w.qty) return t('prof.craftWrit.shortBrew', 'Brew {n, number} more yourself at an alchemy station - found or bought bottles do not count', { n: w.qty - h.made });
     return t('prof.craftWrit.shortCarry', 'Carry {n, number} more of these bottles in your pack', { n: w.qty - h.pack });
   }
   return t('prof.craftWrit.shortMake', 'Make {n, number} more yourself - pieces you bought or sold do not count', { n: w.qty - h.made });

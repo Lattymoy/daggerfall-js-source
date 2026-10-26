@@ -40,7 +40,7 @@ import { PARTY_GREEN_CSS } from '../../net/social.js';   // SHIPMATES: the crew'
 import { spellIconPicture } from '../enhanced/enhancedArt.js';   // COMPANION-KIT: a companion's effects' icons over his bar - AUDIT WK-U8: fitted to their tiles
 import { showFitted } from '../textureCanvas.js';   // AUDIT WK-U8: a fitted picture into its <img>, as every fitted slot puts one
 import { clampDpr, screenDpr } from '../iconFit.js';   // AUDIT WK-U8: the tiles' device pixels - the screen's, times the HUD's scale the bar rides
-import { t } from '../../systems/textManager.js';   // RAM-BOARD: the card's new words in the player's language (fouledText)
+import { t } from '../../systems/textManager.js';   // the HUD's words in the player's language
 import { partyFxKey, partyFxAbbrev } from '../../net/partyBuffs.js';   // COMPANION-KIT: the party card's own effect row's key and words
 
 export const NAVAL_HUD_STYLE_ID = 'dagger-naval-hud-style';
@@ -562,12 +562,6 @@ function fightCard(b) {
   return { name: 'Repel the boarders', sub: `From ${b.name}`, state: b.raid ? 'Hold your deck' : `${b.down} of ${b.total} down`, kind: 'sinking' };
 }
 
-/** RAM-BOARD: the card's line for a ship my stem has fouled, in reach - the grapples' key, or the heave-to's. */
-function fouledText(board, key) {
-  if (board.kind === 'board') return t('naval.foul.board', 'Fouled - {key}: board', { key });
-  return board.heaving ? t('naval.foul.heaving', 'Fouled, heaving to') : t('naval.foul.heave', 'Fouled - {key}: heave to', { key });
-}
-
 /** The card's state line: what she is doing, and - when she is in reach - the key that goes over her rail. */
 function cardState(t, board, key) {
   const mine = board != null && board.name === t.name;
@@ -575,12 +569,8 @@ function cardState(t, board, key) {
   // AUDIT NAV1 (the presentation): one wording with the plate's hint ("open ... hold") - it read "her hold" here
   if (t.state === 'prize') return mine && board.kind === 'hold' ? { text: `Taken - ${key}: open hold`, kind: 'board' } : { text: 'Taken', kind: '' };
   if (t.boarded) return { text: 'Boarded', kind: '' };
-  // RAM-BOARD (systems/naval/navalFoul.js): her bow fouled in my stem - boarded as she stands, her colours flying
-  if (t.fouled && t.state === 'afloat' && mine && (board.kind === 'board' || board.kind === 'heave')) return { text: fouledText(board, key), kind: 'board' };
   if (t.state === 'struck') {
-    if (mine && board.kind === 'board') return { text: `Colors struck - ${key}: board`, kind: 'board' };
-    // AUDIT NAV1 (the helm): in reach but too fast - the refusal said nothing
-    if (mine && board.kind === 'heave') return { text: board.heaving ? 'Colors struck, heaving to' : `Colors struck - ${key}: heave to`, kind: 'board' };
+    if (mine && board.kind === 'board') return { text: `Colors struck - ${key}: board`, kind: 'board' };   // BOARD-MAGNET: in reach, at any way
     return { text: 'Colors struck', kind: '' };
   }
   if (t.faction === 'unknown') return { text: 'Colors unknown', kind: '' };   // SPYGLASS: nothing of her stance till they are made out
@@ -603,7 +593,7 @@ export function navalPadPrompts(model, codes = {}) {
   if (codes.brace) rows.push([[codes.brace], 'Hold: brace']);
   const b = model.board;
   if (codes.board && model.aiming) rows.push([[codes.board], 'Hold fire']);   // GUN-HOLD: Activate's, while they are laid
-  else if (codes.board && b) rows.push([[codes.board], b.kind === 'hold' ? `Open ${b.name}'s hold` : b.kind === 'heave' ? 'Heave to' : b.kind === 'yard' ? 'The shipwright' : `Board ${b.name}`]);
+  else if (codes.board && b) rows.push([[codes.board], b.kind === 'hold' ? `Open ${b.name}'s hold` : b.kind === 'yard' ? 'The shipwright' : `Board ${b.name}`]);
   return rows;
 }
 
@@ -655,9 +645,7 @@ export function navalHudText(model, keys = {}, { touch = false } = {}) {
     // the press that matters most, first: the guns while they are laid (GUN-HOLD: Activate holds fire then, never
     // boards), a ship in reach to board or plunder, then the guns
     hint: model.aiming && model.armed && !ship.wrecked ? `${touch ? 'Lift' : 'Let go'} to fire - ${boardKey}: hold fire`
-      : model.board ? (model.board.kind === 'heave' && model.board.heaving ? `Heaving to beside ${model.board.name}`
-      : `${boardKey}: ${model.board.kind === 'hold' ? `open ${model.board.name}'s hold` : model.board.kind === 'yard' ? model.board.name
-        : model.board.kind === 'heave' ? `heave to beside ${model.board.name}` : `board ${model.board.name}`}`)
+      : model.board ? `${boardKey}: ${model.board.kind === 'hold' ? `open ${model.board.name}'s hold` : model.board.kind === 'yard' ? model.board.name : `board ${model.board.name}`}`
       : ship.wrecked ? (ship.repairing ? 'Crippled, crew repairing' : ship.repairOrdered ? 'Crippled, repairs ordered' : ship.stores > 0 ? 'Crippled. Order repairs, or make for port' : 'Crippled. Make for port and a shipwright')   // AUDIT NAV1: the way out of a wreck, said - SEA-REPAIR: her stores the other
       : !model.armed ? 'No guns aboard'
       : `${touch ? 'Hold and drag' : `Hold ${aimKey}`} to aim - ${bracePress}`,

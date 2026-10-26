@@ -71,7 +71,8 @@ test('HOME2 the door, by source: the verbs listed in every mode but Steal and on
   // the press
   assert.match(m, /return activateStaticDoor\(entries\[key\], entries, false, \{ verb: plaqueActionFor\(key\) \}\);/);
   const door = m.slice(m.indexOf('async function activateStaticDoor('));
-  assert.match(door, /^async function activateStaticDoor\(hit, entries, isBash = false, \{ homeAsked = false, verb = null, listed = plaqueListing\(\) && worldPlaqueOn\(\) \} = \{\}\) \{/);   // PIN MOVED (AUDIT HOME-VOTE II B4, D1): and whether the plaque listed - and drew - rows, read as the press lands
+  // PIN MOVED (LOCKPICK, bible/06-Systems/Lockpicking.md): the door's options carry `picked` - a front door the pick window opened walks in through the same door
+  assert.match(door, /^async function activateStaticDoor\(hit, entries, isBash = false, \{ homeAsked = false, verb = null, listed = plaqueListing\(\) && worldPlaqueOn\(\), picked = false \} = \{\}\) \{/);   // PIN MOVED (AUDIT HOME-VOTE II B4, D1): and whether the plaque listed - and drew - rows, read as the press lands
   assert.match(door, /if \(!isBash && !homeAsked && mode !== 'steal'\) \{/);
   assert.match(door, /if \(verb === HOME_VERB\.buy && price\) \{ pressHomeBuy\(bd, price\); return true; \}\n\s*if \(verb === HOME_VERB\.entry && door === 'own'\) \{ turnHomeEntry\(bd, home\); return true; \}\n\s*if \(verb === HOME_VERB\.sell && door === 'own'\) \{ openHomeSale\(bd\); return true; \}/);
   assert.ok(door.indexOf('if (verb === HOME_VERB.buy') < door.indexOf('const unlocked = homeOpen || resolveBuildingUnlocked(bd);'), 'before Daggerfall\'s lock ladder');

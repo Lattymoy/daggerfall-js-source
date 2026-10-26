@@ -1,9 +1,9 @@
 [
   {
-    "name": "CREW-MUSTER-my-crew-at-the-helms-range-alone",
+    "name": "CREW-MUSTER-my-crew-past-the-reach",
     "file": "src/scenes/naval/navalHost.js",
     "old": "const e = boardable(boat); if (e) { toward = e.ship.pos; way = 'board'; } }",
-    "new": "const e = boardable(boat, { anySpeed: true }); if (e) { toward = e.ship.pos; way = 'board'; } }",
+    "new": "const e = [...sea.values()].find((x) => boardableState(x.ship) && x.boat); if (e) { toward = e.ship.pos; way = 'board'; } }",
     "tests": [
       "test/systems/naval/fb1014_crewmuster.test.js"
     ]
@@ -36,10 +36,10 @@
     ]
   },
   {
-    "name": "CREW-MUSTER-her-crew-at-the-helms-range-alone",
+    "name": "CREW-MUSTER-her-crew-past-the-reach",
     "file": "src/scenes/naval/navalHost.js",
     "old": "if (helm ? boardingGap(helm, e) != null : footReach(e, from)) {",
-    "new": "if (helm ? boardingGap(helm, e, { anySpeed: true }) != null : footReach(e, from)) {",
+    "new": "if (helm ? true : footReach(e, from)) {",
     "tests": [
       "test/systems/naval/fb1014_crewmuster.test.js"
     ]
@@ -58,15 +58,6 @@
     "file": "src/scenes/naval/navalHost.js",
     "old": "toward = helm ? abeam(e, from, yawOfRot(helm.GameObject.rotation)) : from; way = 'repel'; }",
     "new": "toward = helm ? abeam(e, from, yawOfRot(helm.GameObject.rotation)) : from; way = 'board'; }",
-    "tests": [
-      "test/systems/naval/fb1014_crewmuster.test.js"
-    ]
-  },
-  {
-    "name": "CREW-MUSTER-the-boarding-reach-blind-to-the-way",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "    if (!anySpeed && Math.hypot(pose.velocity[0], pose.velocity[2]) > BOARD_SPEED) return null;",
-    "new": "",
     "tests": [
       "test/systems/naval/fb1014_crewmuster.test.js"
     ]

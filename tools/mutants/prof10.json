@@ -1364,7 +1364,7 @@
   {
     "name": "AUDIT-PROF10-J2-kept-any-enchanted",
     "file": "src/systems/enchanting.js",
-    "old": "  if (!craftedJewelRecipe(item)) return null;\n  const out = [];",
+    "old": "  if (!jewel && !rareKeeps(item)) return null;\n  const out = [];",
     "new": "  const out = [];",
     "tests": [
       "test/systems/prof10_client.test.js"

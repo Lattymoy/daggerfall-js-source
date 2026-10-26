@@ -4,20 +4,25 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { IntroTheme, audibleContextTime, INTRO_THEME_GAIN, MENU_THEME_GAIN } from '../../src/systems/introTheme.js';
-import { introTitleAt, introFrameAt, introCameraAt, INTRO_CREDITS, TITLE_IMPACT_TIME, TITLE_ENTER_TIME, TITLE_READY_TIME, LANDSCAPE_HOLD_TIME, TITLE_DEPTH, TITLE_BLUR } from '../../src/ui/intro/introCue.js';
-import { introTerrainGrid } from '../../src/ui/intro/introLandscape.js';
-import { buildIliac, SEA_LEVEL, seaDistance, BALFIERA } from '../../src/ui/intro/introMap.js';
+import { introTitleAt, introFrameAt, introCameraAt, INTRO_CREDITS, TITLE_IMPACT_TIME, TITLE_ENTER_TIME, TITLE_READY_TIME, LANDSCAPE_HOLD_TIME, TITLE_DEPTH, TITLE_BLUR, CREST_TIME } from '../../src/ui/intro/introCue.js';
+import { introTerrainGrid, introGroundGrid } from '../../src/ui/intro/introLandscape.js';
+import { seaDistance, BALFIERA } from '../../src/ui/intro/introMap.js';
 import { brandMark } from '../../src/ui/brandMark.js';
 
 const read = (p) => readFileSync(new URL('../../' + p, import.meta.url));
+/** INTRO-REVERT II (the owner, 2026-10-26: "Intro music currently isnt working. We need to revert before we started
+ *  tinkering with this"): systems/introTheme.js as INTRO2 left it, before INTRO3's #906 and THEME-BUFFER. */
+const INTRO2_THEME_SHA256 = '6954cf4c01f2a32e098a08c4ae4edb81b00823573076fd1c74c2f9c5ac24c8ec';
 
 test('INTRO2: supplied logo and Mac\u2019s remastered recording are byte-exact; timing cannot drift behind a replacement track', () => {
   // BR4 (2026-09-27) shipped Mac's earlier cut as he supplied it
   // (real alpha; INTRO2's JPEG had a black backing to screen away). BR5
   // (2026-10-11): his DFO Online logo, its 800 x 600 file cut to the 526 x 322
   // its paint covers - every pixel inside his, unchanged, and none outside
-  // with any alpha.
-  assert.equal(createHash('sha256').update(read('src/assets/branding/dfo-online.png')).digest('hex'), 'd27cf6f8fa6b6147be5fb36bdb2ebbe9deb22823d456826394f7fa9aa9dbba25');
+  // with any alpha. BR6 (2026-10-26): his dragon mark - its 2000 x 1434
+  // file cut to the 1680 x 1410 its paint covers, then scaled to 1232 x 1034
+  // at his word (the same 56:47; 785 KB where the cut was 1.28 MB).
+  assert.equal(createHash('sha256').update(read('src/assets/branding/dfo-online.png')).digest('hex'), 'bf7a6bca77b6f29f31738a85545cd7fb51c3e91dce4df985a93c7874804b57a7');
   const track = read('src/assets/intro/theme.mp3');
   assert.equal(createHash('sha256').update(track).digest('hex'), 'c8eb0eccf3265244c0f4424d26efee835d40cccf4e11a66744ec4b284d8392e3');
 
@@ -38,9 +43,10 @@ test('INTRO2: supplied logo and Mac\u2019s remastered recording are byte-exact; 
   }
 });
 
-test('INTRO2b: the logo lands on the 19 s beat at decoded sample 230016 / 12000; one frame earlier it is still out in front', () => {
-  const measured = 230016 / 12000; // reproduced by tools/introAudioCheck.mjs, independently of the cue
-  assert.ok(measured > 19 && measured < 19.25, 'Mac\u2019s beat is the one around 19 seconds');
+test('INTRO4: the 19 s beat (decoded sample 230016 / 12000) is the crest; the logo lands on bar 16 at sample 592128 / 12000, and one frame earlier it is still out in front', () => {
+  assert.ok(Math.abs(CREST_TIME - 230016 / 12000) < 1e-9, 'Mac\u2019s beat is the one around 19 seconds - INTRO2\u2019s landing, INTRO4\u2019s crest');
+  const measured = 592128 / 12000; // reproduced by tools/introAudioCheck.mjs, independently of the cue
+  assert.ok(measured > 49.3 && measured < 49.4, 'the third phrase\u2019s downbeat, sixteen bars after the 19 s beat');
   assert.ok(Math.abs(TITLE_IMPACT_TIME - measured) < 1e-6);
   const before = introTitleAt(measured - 1 / 60), at = introTitleAt(measured + 1e-8);
   assert.ok(before.scale < 0.95 && before.opacity > 0.9, 'still arriving, and already legible');
@@ -100,13 +106,16 @@ test('INTRO2: both credits end before the climb, with a readable hold and no ove
 });
 
 test('INTRO2: camera is continuous, finite, and keeps the full horizontal frame on portrait screens', () => {
+  // INTRO4: the flight climbs from a dozen metres to thousands of kilometres, so "no teleport" is held against the
+  // camera's height: no frame moves the eye more than a tenth of how high it stands (and never more than 15 m low down)
   for (const aspect of [0.47, 1, 16 / 9, 21 / 9]) {
     let previous = introCameraAt(0, aspect);
-    for (let i = 1; i <= 1450; i++) {
+    for (let i = 1; i <= Math.ceil((LANDSCAPE_HOLD_TIME + 1) * 60); i++) {
       const current = introCameraAt(i / 60, aspect);
       assert.ok([...current.eye, ...current.aim, current.fov].every(Number.isFinite));
       assert.ok(current.fov > 0 && current.fov < Math.PI);
-      assert.ok(Math.hypot(...current.eye.map((v, k) => v - previous.eye[k])) < 15, 'no teleport between camera projections');
+      const step = Math.hypot(...current.eye.map((v, k) => v - previous.eye[k]));
+      assert.ok(step < Math.max(15, 0.1 * previous.eye[1]), `no teleport between camera projections at ${(i / 60).toFixed(3)} s: ${step.toFixed(1)} m at ${previous.eye[1].toFixed(0)} m`);
       previous = current;
     }
   }
@@ -121,14 +130,27 @@ test('INTRO2: reduced motion removes the flight, the arriving logo, and impact, 
   assert.deepEqual(introTitleAt(TITLE_IMPACT_TIME - 0.4, true), { opacity: 0, y: 0, scale: 1, blur: 0, impact: 0 });
 });
 
-test('INTRO2: generated mesh indices remain within the grid and geography has sea plus land', () => {
+test('INTRO2: generated mesh indices remain within the grid; INTRO4: the city\u2019s ground grid is dense at its middle and reaches its rim', () => {
   const g = introTerrainGrid(8, 5);
   assert.equal(g.vertices.length, 9 * 6 * 2); assert.equal(g.indices.length, 8 * 5 * 6);
   assert.ok(g.indices.every(i => i < 9 * 6));
-  const map = buildIliac({ w: 64, h: 40 });
-  assert.ok(map.height.some(h => h === SEA_LEVEL)); assert.ok(map.height.some(h => h > SEA_LEVEL + 60));
+  const ground = introGroundGrid(16, 1000, 2);
+  const xs = [...new Set(Array.from(ground.vertices.filter((_, i) => i % 2 === 0)))].sort((a, b) => a - b);
+  assert.deepEqual([xs[0], xs.at(-1)], [-1000, 1000]);
+  assert.ok(xs[9] - xs[8] < xs[16] - xs[15], 'the middle\u2019s cells are the small ones');
+  // INTRO2's bay shape stays authored (it is drawn inside the continent now): Balfiera is still land
   assert.ok(seaDistance(BALFIERA.x, BALFIERA.y) > 0);
-  assert.deepEqual(buildIliac({ w: 64, h: 40 }), map, 'same boot, same geography');
+});
+
+test('INTRO-REVERT II: the theme plays on the context it had before INTRO3 - interactive, as INTRO2 built it (THEME-BUFFER undone)', () => {
+  const made = [];
+  const had = globalThis.AudioContext;
+  globalThis.AudioContext = class { constructor(o) { made.push(o); } };
+  try { new IntroTheme({ subscribe: () => () => {} }).makeContext(); }
+  finally { if (had === undefined) delete globalThis.AudioContext; else globalThis.AudioContext = had; }
+  assert.deepEqual(made, [{ latencyHint: 'interactive' }]);
+  // and the file is the one INTRO2 shipped, byte for byte (6f501bf5d, the merge before INTRO3's #906)
+  assert.equal(createHash('sha256').update(read('src/systems/introTheme.js')).digest('hex'), INTRO2_THEME_SHA256);
 });
 
 test('INTRO2: audible clock uses the device timestamp, with a latency-aware fallback', () => {
@@ -206,7 +228,7 @@ test('INTRO2: the shared logo has accessible text and its exact natural aspect r
   assert.equal(logo.tag, 'img'); assert.equal(logo.alt, 'DFO Online');   // BR5: the product's name alone - the mark names no other game
   // BR4: the element's size is the FILE's, read from its own IHDR - a new
   // logo dropped in without its dimensions reddens here, not in a layout
-  // (BR5's did: 2112 x 850 to 526 x 322).
+  // (BR5's did: 2112 x 850 to 526 x 322; BR6's: to 1232 x 1034).
   const png = read('src/assets/branding/dfo-online.png');
   assert.equal(png.toString('latin1', 12, 16), 'IHDR');
   assert.deepEqual([logo.width, logo.height], [png.readUInt32BE(16), png.readUInt32BE(20)]);

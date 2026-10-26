@@ -1,0 +1,62 @@
+[
+  {
+    "name": "QUEST-FIRST-relaid-never-passed",
+    "file": "src/scenes/instanceDoor.js",
+    "old": "questHere: questHere(site), relaid: site.relaid === true, partners:",
+    "new": "questHere: questHere(site), partners:",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ],
+    "note": "the door never tells the law the public room is laid smaller - Public first over the quest's crypt, as the report found it"
+  },
+  {
+    "name": "QUEST-FIRST-public-first",
+    "file": "src/systems/instancePlaces.js",
+    "old": "  const publicLast = questHere && relaid;",
+    "new": "  const publicLast = false;",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ],
+    "note": "the law ignores the re-laid room"
+  },
+  {
+    "name": "QUEST-FIRST-public-last-anywhere",
+    "file": "src/systems/instancePlaces.js",
+    "old": "  const publicLast = questHere && relaid;",
+    "new": "  const publicLast = questHere;",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ],
+    "note": "a quest's dungeon laid whole in public loses its Public-first door too"
+  },
+  {
+    "name": "QUEST-FIRST-public-last-without-quest",
+    "file": "src/systems/instancePlaces.js",
+    "old": "  const publicLast = questHere && relaid;",
+    "new": "  const publicLast = relaid;",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ],
+    "note": "a re-laid dungeon with no quest of mine puts the shared world last"
+  },
+  {
+    "name": "QUEST-FIRST-hold-public",
+    "file": "src/systems/instancePlaces.js",
+    "old": "  if (!isHold && publicLast) rows.push({ kind: 'public' });",
+    "new": "  if (publicLast) rows.push({ kind: 'public' });",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ],
+    "note": "the Hold's door offers its public room HOLD-ONCE refuses, where a quest names it re-laid"
+  },
+  {
+    "name": "QUEST-FIRST-public-dropped",
+    "file": "src/systems/instancePlaces.js",
+    "old": "  if (!isHold && publicLast) rows.push({ kind: 'public' });",
+    "new": "",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ],
+    "note": "the shared world no longer offered at a quest's re-laid dungeon"
+  }
+]

@@ -5,9 +5,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  GRAPPLE_S, BERTH_GAP, MUSTER_MIN, MUSTER_MAX, CREW_PER_HAND, HANDS_MAX, SURRENDER_SHARE, REPEL_PARTY, MOBILE, MUSTERS, HAND,
+  GRAPPLE_S, HAUL_MAX_S, BERTH_GAP, MUSTER_MIN, MUSTER_MAX, CREW_PER_HAND, HANDS_MAX, SURRENDER_SHARE, REPEL_PARTY, MOBILE, MUSTERS, HAND,
   WA_SMALLRAID, WA_ATTACK_PIRATE, RAID_WIN_TASKS,
-  raidQuestOf, raidQuestWon, musterOf, handsOf, repelPartyOf, berthPose, haulPose, boardingWon, createBoarding,
+  raidQuestOf, raidQuestWon, musterOf, handsOf, repelPartyOf, berthPose, drawHaul, boardingWon, createBoarding,
 } from '../../../src/systems/naval/navalBoarding.js';
 import {
   HOLD_KEYS, STRONGBOX_KEY, CHOICES, REPAIR_SHARE, PRESS_SHARE, FLOTSAM_OF, HOLD_RARITY_TIER, STRONGBOX_RARITY_TIER, CHOICE_TITLES,
@@ -53,7 +53,7 @@ test('NAV-D the muster: her class\'s boarders thinned by her crew\'s losses, nev
   assert.equal(repelPartyOf(classById('pirateFlagship')), REPEL_PARTY.max);
 });
 
-test('NAV-D the berth: she is hauled parallel on the side she lies - the same heading or the reciprocal, whichever is nearer her own - the two half beams and BERTH_GAP apart, level with the middle; the haul eased, the yaw the short way across the seam (mutants: the side\'s sign, the gap, the long way round)', () => {
+test('NAV-D the berth: she is hauled parallel on the side she lies - the same heading or the reciprocal, whichever is nearer her own - the two half beams and BERTH_GAP apart, level with the middle; the haul\'s yaw the short way across the seam (BOARD-MAGNET: drawn, navalBoarding.js drawHaul - boardmagnet.test.js holds its way in) (mutants: the side\'s sign, the gap, the long way round)', () => {
   const anchor = { pos: [0, 0, 0], yaw: 0, beam: 7.4, midZ: 0 };
   const star = berthPose(anchor, { pos: [30, 5, 10], yaw: 0.3, beam: 1.9, midZ: 0 });
   assert.equal(star.side, 1);
@@ -68,20 +68,19 @@ test('NAV-D the berth: she is hauled parallel on the side she lies - the same he
   // the middles: hers is set against the anchor's
   const mid = berthPose({ ...anchor, midZ: 4 }, { pos: [30, 0, 0], yaw: 0, beam: 1, midZ: 2 });
   near(mid.pos[2], 4 - 2, 1e-9);
-  // the haul
+  // the haul's heading, the hull it is hauled to far off (BOARD-MAGNET: drawHaul)
+  const far = { pos: [0, 0, -5000], yaw: 0, hull: 2 };
   const from = { pos: [10, 0, 0], yaw: Math.PI - 0.1 }, to = { pos: [20, 0, 10], yaw: -Math.PI + 0.1 };
-  assert.deepEqual(haulPose(from, to, 0).pos, from.pos);
-  const end = haulPose(from, to, 1);
-  assert.deepEqual(end.pos, to.pos);
-  near(end.yaw, Math.PI + 0.1, 1e-9, 'the short way: 0.2 across the seam, not 6.08 back round');
-  near(haulPose(from, to, 0.5).pos[0], 15, 1e-9, 'smoothstep is half at half');
-  assert.ok(haulPose(from, to, 0.1).pos[0] - 10 < 1, 'eased from rest');
-  assert.deepEqual(haulPose(from, to, 7).pos, to.pos, 'clamped');
+  const half = drawHaul(from, to, 0, GRAPPLE_S / 2, far, 2);
+  near(Math.abs(half.yaw), Math.PI, 1e-9, 'the short way: half of 0.2 across the seam, not half of 6.08 back round');
+  const end = drawHaul(half, to, GRAPPLE_S / 2, GRAPPLE_S / 2, far, 2);
+  near(end.pos[0], to.pos[0], 1e-9); near(end.pos[2], to.pos[2], 1e-9);
+  near(end.yaw, to.yaw, 1e-9);
   // a yaw many turns out lands in one step (ONCRASH1: no loop)
-  near(haulPose({ pos: [0, 0, 0], yaw: 0 }, { pos: [0, 0, 0], yaw: 1e6 * Math.PI * 2 + 0.5 }, 1).yaw, 0.5, 1e-6);
+  near(drawHaul({ pos: [0, 0, 0], yaw: 0 }, { pos: [0, 0, 0], yaw: 1e6 * Math.PI * 2 + 0.5 }, GRAPPLE_S, 1, far, 2).yaw, 0.5, 1e-6);
 });
 
-test('NAV-D the fight\'s reckoning and phases: won when the captain is down with SURRENDER_SHARE of the muster, or every man; grapple for GRAPPLE_S, then the fight, then the prize - or abandoned (mutants: the share\'s edge, the captain not asked, a won fight abandoned)', () => {
+test('NAV-D the fight\'s reckoning and phases: won when the captain is down with SURRENDER_SHARE of the muster, or every man; grapple for GRAPPLE_S and on till she lies in her berth (HAUL_MAX_S at most), then the fight, then the prize - or abandoned (mutants: the share\'s edge, the captain not asked, a won fight abandoned)', () => {
   assert.equal(boardingWon({ captainDown: true, down: Math.ceil(10 * SURRENDER_SHARE), total: 10 }), true);
   assert.equal(boardingWon({ captainDown: true, down: Math.ceil(10 * SURRENDER_SHARE) - 1, total: 10 }), false);
   assert.equal(boardingWon({ captainDown: false, down: 9, total: 10 }), false, 'her captain still stands');
@@ -89,11 +88,19 @@ test('NAV-D the fight\'s reckoning and phases: won when the captain is down with
   assert.equal(boardingWon({ captainDown: false, down: 0, total: 0 }), true);
   const b = createBoarding({ kind: 'board', shipId: 's1', from: { pos: [0, 0, 0], yaw: 0 }, to: { pos: [10, 0, 0], yaw: 0 } });
   assert.equal(b.phase, 'grapple');
-  assert.ok(b.pose());
+  const far = { pos: [0, 0, -5000], yaw: 0, hull: 2 };
+  b.haul(b.to, far, GRAPPLE_S - 0.01);
   assert.equal(b.step(GRAPPLE_S - 0.01), null);
+  b.haul(b.to, far, 0.02);
+  assert.equal(b.arrived, true, 'in her berth');
   assert.equal(b.step(0.02), 'fight');
-  assert.equal(b.pose(), null, 'alongside: no more haul');
   assert.equal(b.step(1), null);
+  // held from her berth, the fight waits for her - HAUL_MAX_S at the most
+  const held = createBoarding({ kind: 'board', shipId: 's2', from: { pos: [0, 0, 0], yaw: 0 }, to: { pos: [10, 0, 0], yaw: 0 } });
+  held.step(GRAPPLE_S + 0.5);
+  assert.equal(held.phase, 'grapple', 'not yet alongside');
+  held.step(HAUL_MAX_S);
+  assert.equal(held.phase, 'fight', 'HAUL_MAX_S: over her rail whatever held her');
   b.win();
   assert.equal(b.phase, 'prize');
   assert.equal(b.outcome, 'won');

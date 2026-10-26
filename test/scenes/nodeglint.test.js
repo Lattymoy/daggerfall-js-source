@@ -531,7 +531,7 @@ test('NODE-GLINT the draw over a fake GL: nothing to light touches nothing; each
   assert.deepEqual(far, [glintPx(480, side)]);
   assert.ok(far[0] < glintPxMax(480) - 0.5 && Math.abs(far[0] - GLINT_SHARE * side) < 1e-9, `its share of its picture (${far[0]} px of a ${side} px picture)`);
   r.dispose();
-  assert.ok(calls.some((x) => x[0] === 'deleteFramebuffer') && calls.some((x) => x[0] === 'deleteTexture') && calls.filter((x) => x[0] === 'deleteProgram').length === 2, 'EVERY ALLOCATION HAS AN OWNER');
+  assert.ok(calls.some((x) => x[0] === 'deleteFramebuffer') && calls.some((x) => x[0] === 'deleteTexture') && calls.filter((x) => x[0] === 'deleteProgram').length === 3, 'EVERY ALLOCATION HAS AN OWNER');   // PIN MOVED (RESOURCE-HIGHLIGHTS): the mask's, the light's and the ring's
 });
 
 test('GLINT-LIGHT the draw: each node\'s light asked where it stands, at the flats\' floor, into the pass\'s one array - its glints as bright as that light, its sheen out in the dark and part in a dim one; a renderer that answers none lights it as the day (the draw above) (mutants: the light unread; the sheen lit in the dark; the floor not asked; the node\'s place not handed; an array a node)', () => {
