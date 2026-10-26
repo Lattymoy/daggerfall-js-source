@@ -49,6 +49,7 @@ float snowCapLine(vec2 local) {
 // snowcap.js faceRock: steep (the normal's y under held, all of it at bare) and near or over the cap's line
 float snowFaceRock(vec2 local, float y, vec3 n) {
   if (uSnowSet.y < 0.5) return 0.0;
+  if (n.y >= ${f(F.held)}) return 0.0;   // a ledge holds it - the line unread (its four fetches spared on most ground)
   float line = snowCapLine(local);
   return (1.0 - smoothstep(${f(F.bare)}, ${f(F.held)}, n.y)) * smoothstep(line - ${f(F.from)}, line - ${f(F.full)}, y + uSnowSet.x);
 }

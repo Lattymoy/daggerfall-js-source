@@ -137,8 +137,8 @@
   {
     "name": "PEAKS1-the-lane-s-test",
     "file": "src/render/snowCapGlsl.js",
-    "old": "  if (uSnowSet.y < 0.5) return 0.0;\n  float line",
-    "new": "  float line",
+    "old": "  if (uSnowSet.y < 0.5) return 0.0;\n  if (n.y",
+    "new": "  if (n.y",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]
