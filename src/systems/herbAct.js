@@ -12,7 +12,8 @@
 //   steady - an uncommon or rare herb with the Sickle: hold Interact for
 //            HERB_ACT.steadyS while the meter fills. Turning the view
 //            more than the window (3 degrees x the band x Botanist's
-//            +50%) or moving a quarter of a metre BRUISES it; letting go
+//            +50%, x0.8 in the rain - AUDIT GATHER F7, 5.3's "rain wets
+//            the herbs") or moving a quarter of a metre BRUISES it; letting go
 //            before the end cancels, nothing lost. Unbruised is clean.
 //   basket - the Basket's search: three finds glint one after another,
 //            each for BASKET_ACT.glintS x the band (masterGlintS at
@@ -37,14 +38,15 @@ export const BASKET_SPOTS = Object.freeze([
 const turnDeg = (a, b) => { let d = (a - b) % 360; if (d > 180) d -= 360; if (d < -180) d += 360; return Math.abs(d); };
 
 /**
- * @param {{ kind: 'hand'|'steady'|'basket', band?: number, botanist?: boolean, master?: boolean, gentle?: boolean,
- *   rng?: () => number }} o `band` the attribute band's widening (professionLaw actBand)
+ * @param {{ kind: 'hand'|'steady'|'basket', band?: number, botanist?: boolean, master?: boolean, gentle?: boolean, wet?: boolean,
+ *   rng?: () => number }} o `band` the attribute band's widening (professionLaw actBand); `wet` rain or thunder over the
+ *   patch (AUDIT GATHER F7: the steady window HERB_ACT.wet of itself)
  */
-export function createHerbAct({ kind, band = 1, botanist = false, master = false, gentle = false, rng = Math.random }) {
+export function createHerbAct({ kind, band = 1, botanist = false, master = false, gentle = false, wet = false, rng = Math.random }) {
   // FIRM1 (bible/06-Systems/Firmament.md): the Firmament's `act.herbalism` widens (or a keystone's price narrows) both
   // windows - the steady hand's turn and the Basket's glint - 1 with no tree in force
   const sky = firmActMult('herbalism');
-  const window = HERB_ACT.steadyDeg * band * (botanist ? HERB_ACT.botanist : 1) * sky;
+  const window = HERB_ACT.steadyDeg * band * (botanist ? HERB_ACT.botanist : 1) * sky * (wet ? HERB_ACT.wet : 1);
   const glint = (master ? BASKET_ACT.masterGlintS : BASKET_ACT.glintS) * band * sky;
   const length = kind === 'hand' ? HERB_ACT.commonS : kind === 'steady' ? HERB_ACT.steadyS : BASKET_ACT.finds * (glint + BASKET_ACT.gapS) + BASKET_ACT.gapS;
   const st = {

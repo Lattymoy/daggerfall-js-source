@@ -35,9 +35,9 @@ function beatTo(f, from, until, bodiesAt, rng = seeded(5), stop = () => false) {
   return out;
 }
 
-test('KETCH THE WARDEN\'S NUMBERS: a share of 600 s of reference damage (PIN MOVED, KETCH-LONGER: 300); awake six seconds on; lost after thirty; its phases at 65% and 35% - the Steersman, the Discord, the Last Note; the Discord a quarter of everyone\'s health every thirty seconds; the forks three and one for each two living, seven at most; the Ketch turning west at twenty-two minutes (mutants: the phases moved; a fork for every living; the end a minute early)', () => {
+test('KETCH THE WARDEN\'S NUMBERS: a share of 600 s of reference damage (PIN MOVED, KETCH-LONGER: 300); awake six seconds on; lost after two minutes (PIN MOVED, AUDIT KETCH II L5-4: thirty seconds); its phases at 65% and 35% - the Steersman, the Discord, the Last Note; the Discord a quarter of everyone\'s health every thirty seconds; the forks three and one for each two living, seven at most; the Ketch turning west at twenty-two minutes (mutants: the phases moved; a fork for every living; the end a minute early)', () => {
   assert.equal(KW_TTK_S, 600, 'PIN MOVED (KETCH-LONGER): 300 before');
-  assert.deepEqual([KW_OPENING_MS, KW_LOST_MS], [6000, 30_000]);
+  assert.deepEqual([KW_OPENING_MS, KW_LOST_MS], [6000, 120_000]);   // PIN MOVED (AUDIT KETCH II L5-4): thirty seconds before - no solo who fell was back in time
   assert.deepEqual([...KW_PHASE_AT], [0.65, 0.35]);
   assert.deepEqual([KW_DISCORD_FIRST_MS, KW_DISCORD_EVERY_MS, KW_DISCORD_PCT], [8000, 30_000, 0.25]);
   assert.deepEqual([0, 1, 2, 4, 6, 8, 20].map(forkCountFor), [3, 3, 4, 5, 6, 7, 7]);
@@ -182,7 +182,7 @@ test('KETCH THE OUTER RING GIVES WAY: in the Last Note two sections at a time sh
   assert.equal(sectionGone(first.s, k, back), false, 'back together');
 });
 
-test('KETCH THE KETCH TURNS WEST: fourteen minutes on from its wake, its clock-blow over the whole bridge every two seconds, nothing else done (mutants: the turn never coming; its blows every beat)', () => {
+test('KETCH THE KETCH TURNS WEST: twenty-two minutes on from its wake, its clock-blow over the whole bridge every two seconds, nothing else done (mutants: the turn never coming; its blows every beat)', () => {
   const f = fight(1), rng = seeded(2), crew = () => crewOn(f);
   const t = f.endsAt - KW_BLOWS.west.wu;
   stepWarden(f, t - 250, crew(), rng);

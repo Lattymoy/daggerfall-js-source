@@ -135,7 +135,7 @@ test('GUN-HOLD: Activate while the guns are laid holds fire - the aim put down, 
   assert.ok(h.host._shots.inFlight > before, 'and a broadside when it is let go');
 });
 
-test('GUN-HOLD: the world gives Activate to the hold first - before the click casts a readied spell or the helm\'s ladder boards, heaves to or opens the yard; the attack\'s own order is the cast law\'s (a readied spell takes the press, NAV-H\'s)', () => {
+test('GUN-HOLD: the world gives Activate to the hold first - before the click casts a readied spell or the helm\'s ladder boards or opens the yard; the attack\'s own order is the cast law\'s (a readied spell takes the press, NAV-H\'s)', () => {
   // PIN MOVED (AUDIT NAV2 F31): Interact - the readout's "E: hold fire" - holds it too, read before the hold
   // PIN MOVED (SPELL-HAND): the cast press says it is a cast's own - `interceptAttack(true, { cast: true })` (was:
   // `interceptAttack(true)`); the order did not move. PIN MOVED (AUDIT SPELL-HAND, HOST-SPLIT): the word is CAST_PRESS, imported

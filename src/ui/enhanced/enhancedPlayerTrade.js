@@ -11,7 +11,7 @@
 //
 // CLOSING: Escape / Close cancels a trade that is still being negotiated. Once the goods are in flight (`committing`) the
 // window cannot be cancelled and says so; when the session ends it shows the outcome a moment and closes itself.
-import { itemLine, linePicture, markItemFrame, wearBar, itemBriefLines } from './enhancedInventory.js';   // TRADE-INFO: an item's magic, in words   // RARITY-UI: the pack's one frame marker; WEAR-UI: its wear bar
+import { itemLine, linePicture, markItemFrame, wearBar, itemBriefLines, questWord } from './enhancedInventory.js';   // TRADE-INFO: an item's magic, in words   // RARITY-UI: the pack's one frame marker; WEAR-UI: its wear bar
 import { lockRefuses, lockedText } from '../../systems/item/itemLock.js';   // LOCK1: a locked piece is not held out
 import { setLines } from '../../systems/sigil/sigilSets.js';   // CARD-FIT U4: a set's tiers, under the pointer
 import { letterWorthLine } from '../../systems/walletItem.js';   // TRADE-LOC: a letter of credit says what it is worth
@@ -135,7 +135,7 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
     const mid = el('span', 'itemname');
     const n = count ?? (line.stack || 0);
     mid.append(el('span', null, line.name + (n > 1 ? ` ×${n}` : '')));
-    const sub = [letterWorthLine(item), line.material, line.word].filter(Boolean).join(' · ');   // TRADE-LOC II: a letter's worth on its row - two letters told apart at a glance, on touch too (no hover there)
+    const sub = [letterWorthLine(item), line.material, line.word, line.quest != null ? questWord() : null].filter(Boolean).join(' · ');   // QUEST-MARK (AUDIT FB1025i B6): a quest's item says so, as the pack's row does; TRADE-LOC II: a letter's worth on its row - two letters told apart at a glance, on touch too (no hover there)
     if (sub) mid.append(el('small', null, sub));
     b.append(mid, el('span', 'itemwt', `${line.weight.toFixed(2)} kg`));
     // TRADE-INFO (Tabitha: "magic item stats on the trade hover"): the row's hover says what its magic is - mine and theirs

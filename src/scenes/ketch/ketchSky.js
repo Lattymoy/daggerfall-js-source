@@ -36,7 +36,7 @@ export const KT_LIFT_NEAR_M = 14;
 export const KT_SKY_BUCKET = 'kt:sky';
 /** The words - each read through the text core when it is said (L10N4). */
 export const KT_SKY_TEXT = Object.freeze({
-  get near() { return t('ketch.sky.near', 'The anchor-lift hangs from the Ketch. Stand in it to ride it up.'); },
+  get near() { return t('ketch.sky.near', 'Stand in the anchor-lift to ride it up.'); },
   rising: (s) => t('ketch.sky.rising', 'The anchor-lift rises in {s}...', { s }),
   get up() { return t('ketch.sky.up', 'The anchor-lift is drawn up.'); },
 });

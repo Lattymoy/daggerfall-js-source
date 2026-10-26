@@ -62,6 +62,7 @@
 // One owner: the host builds it online, and disposes it with the page.
 // ═══════════════════════════════════════════════════════════════════
 import { utcDayOfMs, pixelKey, parseNodeKey } from '../net/nodeLaw.js';
+import { t } from '../systems/textManager.js';   // AUDIT LOCKPICK C14: the gone spot's line, in the player's language
 import { TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
 /** A map pixel's side in the scene (metres). */
 const PIXEL_M = TERRAIN_SIZE;
@@ -188,6 +189,9 @@ export const storesWhereLine = (key, carrying = false) => (carrying ? BAG_WORDS.
   : `Gathered goods go straight to your Stores, under Holdings in the pause menu.${key ? ` ${key} opens your Professions.` : ''}`);
 /** GATHER-SAID: an act that ended before its end - let go, walked off, a window over it, the dungeon left - nothing asked. */
 export const ACT_STOPPED_LINE = 'The gathering stopped early. Nothing was taken.';
+/** AUDIT LOCKPICK C14, D3: an act whose spot went from under it - the UTC day's turn, a Motherlode sunk - said why, read
+ *  when said. */
+export const ACT_GONE_LINE = () => t('gather.stop.gone', 'This spot is gone for now, so the gathering stopped. Nothing was taken.');
 /** A harvest the service did not answer, kept and asked again (net/profBook.js PROF_QUEUE_MS: ten minutes). */
 /** AUDIT PACK-OVER C: the over-weight line, said at most once in this long (ms). */
 export const OVER_SAID_MS = 10_000;
@@ -1216,7 +1220,21 @@ export function createGatherHost(deps) {
         book.refresh().then((r) => { if (r?.ok) { refreshAt = 0; restandAll(); if (book.pendingWithdrawals || book.pendingCrafts || book.pendingDeposits) deps.onSettle?.(); } }, () => {});   // AUDIT2 BAG1 K3: and a kept deposit, at the next settle
       }
       const d = utcDayOfMs(now);
-      if (d !== day) { day = d; restandAll(); }
+      /** An act whose spot went from under it ends, nothing asked or worn - its blows let go, its meter down, said why. */
+      const goneAct = () => { letGo(act); act.act.cancel(); act = null; syncPointer(); hud.setMeter(null); hud.toast(ACT_GONE_LINE()); };
+      // AUDIT LOCKPICK D3: a Motherlode's act ends as its lode sinks - at its close (the day's last as late as 23:58 UTC),
+      // and so before the turn: its key (`mlode:`) is no node key, and F5 below never saw it - struck past the close, the
+      // Pick-Axe wore for a refusal
+      if (act?.node?.what === 'motherlode' && !(now / 1000 < (act.node.lode?.closesAt ?? Infinity))) goneAct();
+      if (d !== day) {
+        day = d;
+        // AUDIT GATHER F5 (Professions-Arc section 55): an act on yesterday's node ends at the turn, nothing asked or worn -
+        // played to its end it wore the tool, then the service refused it (`prof-day`). A body lapses and a cast re-keys of
+        // their own (huntHost, fishHost); a patch, a vein, a boulder, a tree and a dungeon's vein did not
+        const was = act ? parseNodeKey(act.node?.key) : null;
+        if (was && was.kind !== 'haul' && was.kind !== 'body' && was.day !== d) goneAct();
+        restandAll();
+      }
       // SEASONAL-EYE (AUDIT 2026-10-01 part four): a spec chosen mid-session that changes what STANDS - Herbalism 100's
       // Seasonal Eye, the herbs out of season - stands the pixels again; the patches waited for the next state read or the
       // day's turn, and named another herb than the service rolled

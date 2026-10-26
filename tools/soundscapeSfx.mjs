@@ -4,19 +4,15 @@
 //
 // OURS, the gathering's way (tools/gatherSfx.mjs): built here from noise and sine with the shared kit
 // (tools/sfxSynth.mjs) and put through the one bake - tools/sndify.mjs, down to DAGGER.SND's own 11025 Hz unsigned 8-bit
-// mono - so a wave on a hull sits IN Daggerfall's world. DAGGER.SND has splashes, a bell and a lap of water; it has no
-// hull, no rigging, no canvas, no surf, no owl and no wolf. These seventeen:
+// mono - so a wave on a shore sits IN Daggerfall's world. DAGGER.SND has splashes, a bell and a lap of water; it has no
+// surf, no owl and no wolf. These six (DECK-QUIET, 2026-10-26, the owner: "Remove all deck at sea" - the deck's eleven,
+// a wave's slap on the hull, the timbers, the ropes, the canvas luffing and the spray, are gone):
 //
-//   sea-slap-1/-3      a wave slapping a hull: the water's mass, the planking's low knock, the slop thrown up
-//   sea-creak-1/-2     the timbers working in a seaway: a slow stick-slip groan through a hull's low bands
-//   sea-rope-1/-2      a rope rendering in its block: a quicker, higher creak, a sheave's tick at its end
-//   sea-luff-1/-2      canvas shaking head to wind: flaps of a sail's band uneven in time, a whump under each
-//   sea-spray-1/-2     spray over the bow: a crest's crack and a long hiss of water falling back
 //   shore-crash-1/-2   a wave breaking on a shore: its roar rising as it curls, the crash, the foam running back
 //   wild-owl-1/-2      an owl in the dark: a tawny's hoot and its tremolo (-1), a deeper owl's slow triple call (-2)
 //   wild-howl-1/-2     a wolf far off: a long howl rising and falling with a breath in it, the hills' echo after
 //
-//     node tools/soundscapeSfx.mjs             # writes public/sfx/{sea,shore,wild}-*.wav
+//     node tools/soundscapeSfx.mjs             # writes public/sfx/{shore,wild}-*.wav
 //     node tools/soundscapeSfx.mjs --measure   # and prints each clip's attack, crest, tail and brightness
 //     node tools/soundscapeSfx.mjs --raw=dir   # also the 44.1 kHz source
 //
@@ -32,96 +28,6 @@ import { RATE, rng, seconds, buf, decay, attack, biquad, sweepLowpass, noise, mi
 import { isMain } from './lib/isMain.mjs';
 
 const OUT = 'public/sfx';
-
-// ---- the sea -------------------------------------------------------------------------------------------------------
-
-/** A wave on her hull: the water's mass (a low band of noise), the planking's knock (a hull's few low modes), the slop
- *  thrown up (a splash with its top gone), a smaller slosh behind it. */
-function slap(seed, { hull = [92, 176, 305], from = 2800, len = 0.7, slosh = 0.12 } = {}) {
-  return () => {
-    const rand = rng(seed);
-    const out = buf(len);
-    const n = seconds(len);
-    const mass = biquad(noise(n, rand), { type: 'lowpass', f0: 320, q: 0.7 });
-    envelope(mass, (i) => attack(i, 6) * decay(i, 0.085));
-    mix(out, unit(mass), 0, 0.9);
-    mix(out, unit(modes(len, [[hull[0], 0.075, 1], [hull[1], 0.05, 0.55], [hull[2], 0.03, 0.3]], { attackMs: 3 })), 0.004, 0.75);
-    mix(out, splash(rand, { len: len - 0.05, from, to: 380, tau: 0.075, body: 0.35, drops: 5, dropsTo: 0.42 }), 0.01, 0.55);
-    const second = biquad(noise(seconds(0.3), rand), { type: 'lowpass', f0: 420, q: 0.8 });
-    envelope(second, (i) => attack(i, 8) * decay(i, 0.06));
-    mix(out, unit(second), slosh, 0.35);
-    return softClip(out, 1.2);
-  };
-}
-
-/** The timbers working: a slow stick-slip groan through a hull's low bands, swelling and easing. */
-function timbers(seed, { len = 1.4, rate = [46, 28], bands = [[150, 10, 1], [330, 9, 0.7], [570, 7, 0.4], [880, 6, 0.2]] } = {}) {
-  return () => {
-    const rand = rng(seed);
-    const out = buf(len);
-    mix(out, groan(rand, len, {
-      rate: (u) => rate[0] + (rate[1] - rate[0]) * u + 5 * Math.sin(2 * Math.PI * 1.7 * u),
-      jitter: 0.14,
-      bands,
-      env: (u) => Math.min(1, u / 0.25) * Math.min(1, (1 - u) / 0.35) * (0.7 + 0.3 * Math.sin(2 * Math.PI * 2.2 * u)),
-      noiseGain: 0.04,
-    }), 0, 1);
-    return softClip(out, 1.3);
-  };
-}
-
-/** A rope rendering in its block: a quicker, higher creak, and the sheave's small tick as it stops. */
-function rope(seed, { len = 0.7, rate = [96, 64], bands = [[690, 12, 1], [1080, 10, 0.7], [1650, 8, 0.4]] } = {}) {
-  return () => {
-    const rand = rng(seed);
-    const out = buf(len + 0.08);
-    mix(out, groan(rand, len, {
-      rate: (u) => rate[0] + (rate[1] - rate[0]) * u,
-      jitter: 0.2,
-      bands,
-      env: (u) => Math.min(1, u / 0.15) * Math.min(1, (1 - u) / 0.25),
-      noiseGain: 0.06,
-    }), 0, 1);
-    mix(out, burst(rand, { f0: 2100, q: 2.2, tau: 0.004 }), len - 0.02, 0.35);
-    return softClip(out, 1.2);
-  };
-}
-
-/** Canvas shaking: `flaps` snaps of a sail's band at uneven gaps, each with a low whump and a ripple after it. */
-function luff(seed, { flaps = 7, gap = [0.09, 0.2], band = [600, 1400], len = 1.3 } = {}) {
-  return () => {
-    const rand = rng(seed);
-    const out = buf(len);
-    let at0 = 0.01;
-    for (let k = 0; k < flaps && at0 < len - 0.15; k++) {
-      const g = (1 - 0.6 * (k / flaps)) * (0.6 + 0.4 * rand());
-      mix(out, burst(rand, { f0: band[0] + (band[1] - band[0]) * rand(), q: 0.8, tau: 0.03 + 0.02 * rand(), attackMs: 2 }), at0, g);
-      mix(out, unit(knock(0.12, 150, 85, 0.03, 0.035, 2)), at0, 0.45 * g);
-      const ripple = biquad(noise(seconds(0.09), rand), { type: 'bandpass', f0: 420, q: 1.1 });
-      envelope(ripple, (i) => (0.5 + 0.5 * Math.sin((2 * Math.PI * 26 * i) / RATE)) * decay(i, 0.03));
-      mix(out, unit(ripple), at0 + 0.025, 0.25 * g);
-      at0 += gap[0] + (gap[1] - gap[0]) * rand();
-    }
-    return softClip(out, 1.3);
-  };
-}
-
-/** Spray over the bow: a crest's crack, a long hiss of water falling back losing its top, a few drops after. */
-function spray(seed, { len = 1.3, hiss = 0.34 } = {}) {
-  return () => {
-    const rand = rng(seed);
-    const out = buf(len);
-    const n = seconds(len);
-    const x = noise(n, rand);
-    envelope(x, (i) => attack(i, 22) * decay(i, hiss));
-    mix(out, unit(sweepLowpass(x, 6200, 700, hiss * 1.2)), 0, 1);
-    const body = biquad(noise(n, rand), { type: 'lowpass', f0: 260, q: 0.8 });
-    envelope(body, (i) => attack(i, 10) * decay(i, 0.12));
-    mix(out, unit(body), 0, 0.5);
-    grit(out, rand, { count: 14, from: 0.25, to: len - 0.1, lo: 1500, hi: 3800, gain: 0.12 });
-    return softClip(out, 1.2);
-  };
-}
 
 // ---- the shore -----------------------------------------------------------------------------------------------------
 
@@ -216,17 +122,6 @@ function howl(seed, { lo = 360, hi = 640, end = 420, dur = 2.6, len = 3.8 } = {}
 
 /** [name, maker, peak] - the peak each is baked to (tools/sndify.mjs bake): the loudest a clip of this kind should be. */
 export const CLIPS = [
-  ['sea-slap-1', slap(0x51a9001), 0.86],
-  ['sea-slap-2', slap(0x51a9002, { hull: [84, 161, 290], from: 2500, slosh: 0.15 }), 0.86],
-  ['sea-slap-3', slap(0x51a9003, { hull: [101, 190, 330], from: 3200, len: 0.6, slosh: 0.1 }), 0.86],
-  ['sea-creak-1', timbers(0xc2ea001), 0.84],
-  ['sea-creak-2', timbers(0xc2ea002, { len: 1.1, rate: [58, 36], bands: [[170, 11, 1], [360, 9, 0.75], [610, 7, 0.4], [940, 6, 0.2]] }), 0.84],
-  ['sea-rope-1', rope(0x40be001), 0.8],
-  ['sea-rope-2', rope(0x40be002, { len: 0.55, rate: [120, 84], bands: [[760, 12, 1], [1190, 10, 0.7], [1800, 8, 0.4]] }), 0.8],
-  ['sea-luff-1', luff(0x1aff001), 0.86],
-  ['sea-luff-2', luff(0x1aff002, { flaps: 5, gap: [0.12, 0.26], band: [500, 1200], len: 1.25 }), 0.86],
-  ['sea-spray-1', spray(0x5b4a001), 0.84],
-  ['sea-spray-2', spray(0x5b4a002, { len: 1.1, hiss: 0.28 }), 0.84],
   ['shore-crash-1', crash(0xc4a5001), 0.88],
   ['shore-crash-2', crash(0xc4a5002, { len: 3.6, curl: 1.05, run: 1.3 }), 0.88],
   ['wild-owl-1', owl(0x0b1001, 1), 0.8],

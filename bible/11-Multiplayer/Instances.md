@@ -129,6 +129,13 @@ THE LAW is pure (instancePlaces.js):
     It comes after the party's rooms (WIPE-RETURN, section 11): a member holding a copy of the quest has a room of its
     own, and the first instance row taken by habit was that one, apart from the party.
 
+  QUEST-FIRST (FIELD BUGS 2026-10-26, `01-Overview/bugs/Field-Bugs-2026-10-26.md` - runa, of The Masoleum of
+  Darkivaron: "an area (up the elevator in the large central space) is missing ... this one is in a Main Quest to slay a
+  specific Mummy"): where a quest of mine names the place and the world builds its public room smaller (`dungeonSite`'s
+  `relaid`), Public is the LAST row - the party's rooms, then mine, then Public. That room stands none of the quest's
+  things (questMountsHere) and lacks blocks the whole dungeon has, so the first row, taken by habit, is one the quest can
+  be done in. Everywhere else the order above stands.
+
   A place with nothing but its public room has no popup: the door opens as it always did.
 - **questMountsHere**: online, a quest's things stand only in a dungeon whole - an instance, a main-story keep, a dungeon
   the world gives its whole size. Offline, as DFU's frozen size builds.
@@ -260,7 +267,9 @@ stands in.
   "the Objective just did not want to spawn (I tried the dungeon in 'Public' mode) even after 'Quest Repair'") says it
   BEFORE the choice, in the popup, where the world builds the public room smaller (`dungeonSite`'s `relaid` - the size
   built, which the mount reads too; AUDIT FB1019f B1), and Quest
-  Repair in that room says where the things are instead of "Nothing was missing". The automap keeps each layout's map
+  Repair in that room says where the things are instead of "Nothing was missing". The line was not enough: runa took
+  Public at Darkivaron, built small online (its lift rises into a border block where N0000057, the upper hall, stood),
+  and found neither the hall nor the mummy - so since QUEST-FIRST (section 4) Public is the last row there. The automap keeps each layout's map
   (LAYOUT-KEEP): exploring one room no longer wipes the other's.
 - **Reachability.** The public world's re-laid dungeons can still seal an area from their entrance - the Hold of
   Coppering's medium build does - for anyone exploring them. A reachability pass over every dungeon's small and medium

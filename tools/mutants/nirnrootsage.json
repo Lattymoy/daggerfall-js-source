@@ -1,0 +1,592 @@
+[
+  {
+    "name": "NIRNROOT-SAGE-leaf-drifted",
+    "file": "src/ui/playerBadge.js",
+    "old": "export const NIRN_LEAF = Object.freeze([0.18, 0.62, 0.341, 1]);",
+    "new": "export const NIRN_LEAF = Object.freeze([0.18, 0.4, 0.157, 1]);",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The Witchwarden's moss, not the nirnroot's leaf: the gradient's first stop is another title's."
+  },
+  {
+    "name": "NIRNROOT-SAGE-gradient-turned",
+    "file": "src/ui/playerBadge.js",
+    "old": "  nirnrootsage: Object.freeze([NIRN_LEAF, NIRN_GLOW, NIRN_HAZE]),",
+    "new": "  nirnrootsage: Object.freeze([NIRN_HAZE, NIRN_GLOW, NIRN_LEAF]),",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The words drawn haze into leaf - 'Nirnroot' pale, 'Sage' dark."
+  },
+  {
+    "name": "NIRNROOT-SAGE-edge-dropped",
+    "file": "src/ui/playerBadge.js",
+    "old": "  nirnrootsage: Object.freeze([0, 0, 0, 1]),   // NIRNROOT-SAGE",
+    "new": "  zz_nirnrootsage: Object.freeze([0, 0, 0, 1]),   // NIRNROOT-SAGE",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "No black edge: the haze end lost over snow and a day sky."
+  },
+  {
+    "name": "NIRNROOT-SAGE-one-colour-leaf",
+    "file": "src/ui/playerBadge.js",
+    "old": "  nirnrootsage: NIRN_GLOW,   // NIRNROOT-SAGE",
+    "new": "  nirnrootsage: NIRN_LEAF,   // NIRNROOT-SAGE",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The button's and the glyph's colour the leaf - near the Spire Champion's jade."
+  },
+  {
+    "name": "NIRNROOT-SAGE-glyph-colour-drifted",
+    "file": "src/ui/playerBadge.js",
+    "old": "  nirnrootsage: TITLE_RGBA.nirnrootsage,   // NIRNROOT-SAGE",
+    "new": "  nirnrootsage: NIRN_HAZE,   // NIRNROOT-SAGE",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The glyph in the haze, not its title's glow: the grant's two halves drift apart."
+  },
+  {
+    "name": "NIRNROOT-SAGE-mark-the-wikimaids",
+    "file": "src/ui/playerBadge.js",
+    "old": "  nirnrootsage: 'Y',  // NIRNROOT-SAGE",
+    "new": "  nirnrootsage: 'V',  // NIRNROOT-SAGE",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The classic face's mark the WikiMaid's ears - two glyphs one mark."
+  },
+  {
+    "name": "NIRNROOT-SAGE-stroked",
+    "file": "src/ui/playerBadge.js",
+    "old": "nirnrootsage: false });",
+    "new": "nirnrootsage: true });",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The sprig drawn as an outline - its filled leaves a scribble at 13 px."
+  },
+  {
+    "name": "NIRNROOT-SAGE-button-paint",
+    "file": "src/ui/playerBadge.js",
+    "old": "sagesmoke: 'nirnrootsage' });",
+    "new": "sagesmoke: 'witchwarden' });",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The smoke's button in the Witchwarden's paint."
+  },
+  {
+    "name": "NIRNROOT-SAGE-title-word",
+    "file": "src/ui/playerBadge.js",
+    "old": "  nirnrootsage: 'Nirnroot Sage',   // NIRNROOT-SAGE",
+    "new": "  nirnrootsage: 'Nirnroot',   // NIRNROOT-SAGE",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "Half the owner's word over his head."
+  },
+  {
+    "name": "NIRNROOT-SAGE-aura-word",
+    "file": "src/ui/playerBadge.js",
+    "old": "  sagesmoke: \"Sage's Smoke\",",
+    "new": "  sagesmoke: 'Sage Smoke',",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The aura's word not as named."
+  },
+  {
+    "name": "NIRNROOT-SAGE-heart-deep",
+    "file": "src/ui/playerBadge.js",
+    "old": "'M8.3 1.35Q9.4 1.35 9.4 2.8Q9.4 4.25 8.3 4.25Q7.2 4.25 7.2 2.8Q7.2 1.35 8.3 1.35Z', rgba: NIRN_HAZE",
+    "new": "'M8.3 1.35Q9.4 1.35 9.4 2.8Q9.4 4.25 8.3 4.25Q7.2 4.25 7.2 2.8Q7.2 1.35 8.3 1.35Z', rgba: NIRN_DEEP",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The bulb's heart dark - a nirnroot that does not glow."
+  },
+  {
+    "name": "NIRNROOT-SAGE-heart-out-of-bulb",
+    "file": "src/ui/playerBadge.js",
+    "old": "'M8.3 1.35Q9.4 1.35 9.4 2.8Q9.4 4.25 8.3 4.25Q7.2 4.25 7.2 2.8Q7.2 1.35 8.3 1.35Z'",
+    "new": "'M8.3 7.35Q9.4 7.35 9.4 8.8Q9.4 10.25 8.3 10.25Q7.2 10.25 7.2 8.8Q7.2 7.35 8.3 7.35Z'",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The heart down the stem, out of the bulb."
+  },
+  {
+    "name": "NIRNROOT-SAGE-leaf-dropped",
+    "file": "src/ui/playerBadge.js",
+    "old": "L8.9 12.6Q12.2 10 15.4 10.6Q13.2 15.4 8.7 15.6Z',",
+    "new": "L8.9 15.6L8.7 15.6Z',",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The right broad leaf gone - a sprig with one leaf at its foot."
+  },
+  {
+    "name": "NIRNROOT-SAGE-outline-crossing",
+    "file": "src/ui/playerBadge.js",
+    "old": "L7.5 10.8Q4.6 10.9 2.4 7.4",
+    "new": "L7.5 10.8Q4.6 15.9 2.4 7.4",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The upper left leaf's edge swung through the broad leaf below it: the outline crosses itself, and the aura's even-odd fill cuts a hole where they overlap."
+  },
+  {
+    "name": "NIRNROOT-SAGE-list-key",
+    "file": "server-account/src/titles.js",
+    "old": "  nirnrootsage: 'NIRNROOT_SAGE_HANDLES',",
+    "new": "  nirnrootsage: 'NIRNROOT_HANDLES',",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The title read off a list the config does not have: nobody holds it."
+  },
+  {
+    "name": "NIRNROOT-SAGE-glyph-word",
+    "file": "server-account/src/titles.js",
+    "old": "nirnrootsage: 'nirnrootsage' });",
+    "new": "nirnrootsage: 'wikimaid' });",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The WikiMaid's glyph beside his name."
+  },
+  {
+    "name": "NIRNROOT-SAGE-aura-grant",
+    "file": "server-account/src/titles.js",
+    "old": "nirnrootsage: 'sagesmoke' });",
+    "new": "nirnrootsage: 'lilacwarren' });",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The Lilac Warren granted for the Sage's Smoke."
+  },
+  {
+    "name": "NIRNROOT-SAGE-handle",
+    "file": "server-account/wrangler.toml",
+    "old": "NIRNROOT_SAGE_HANDLES = \"Blob-Marley\"",
+    "new": "NIRNROOT_SAGE_HANDLES = \"BlobMarley\"",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "Another account's name - Blob-Marley holds nothing."
+  },
+  {
+    "name": "NIRNROOT-SAGE-title-not-in-vocabulary",
+    "file": "src/net/identityToken.js",
+    "old": "'skyfarer', 'nirnrootsage']);",
+    "new": "'skyfarer']);",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The title the service signs is a word the relay refuses."
+  },
+  {
+    "name": "NIRNROOT-SAGE-glyph-not-in-vocabulary",
+    "file": "src/net/identityToken.js",
+    "old": "'wikimaid', 'nirnrootsage']);",
+    "new": "'wikimaid']);",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The glyph the service signs is a word the relay refuses - every token of his refused whole."
+  },
+  {
+    "name": "NIRNROOT-SAGE-aura-not-in-vocabulary",
+    "file": "src/net/identityToken.js",
+    "old": "'witchfire', 'sagesmoke']);",
+    "new": "'witchfire']);",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The aura the service signs is a word the relay refuses."
+  },
+  {
+    "name": "NIRNROOT-SAGE-relay-unmoved",
+    "file": "src/net/wire.js",
+    "old": "export const RELAY_VERSION = 'world268';",
+    "new": "export const RELAY_VERSION = 'world267';",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The vocabulary changed under a relay version already named."
+  },
+  {
+    "name": "NIRNROOT-SAGE-the-kind",
+    "file": "src/render/auraRing.js",
+    "old": "  sagesmoke: Object.freeze({ kind: 14,",
+    "new": "  sagesmoke: Object.freeze({ kind: 13,",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "Drawn as Witchfire."
+  },
+  {
+    "name": "NIRNROOT-SAGE-added-not-covered",
+    "file": "src/render/auraRing.js",
+    "old": "glyphs: SAGE_CARDS, shade: true }),",
+    "new": "glyphs: SAGE_CARDS }),",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "Drawn added: the smoke a glow, never a cover; the nirnroots washed out over a bright floor."
+  },
+  {
+    "name": "NIRNROOT-SAGE-rune-ring-out",
+    "file": "src/render/auraRing.js",
+    "old": "export const SAGE_RUNE_R = 0.6;",
+    "new": "export const SAGE_RUNE_R = 0.9;",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The runes out past the fire's ring - not about the feet."
+  },
+  {
+    "name": "NIRNROOT-SAGE-orbit-off-whole",
+    "file": "src/render/auraRing.js",
+    "old": "orbit: 1 / 10, bob: 1 / 4,",
+    "new": "orbit: 1 / 11, bob: 1 / 4,",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The nirnroots' orbit off whole over the clock: they jump at the wrap."
+  },
+  {
+    "name": "NIRNROOT-SAGE-puff-life-off-whole",
+    "file": "src/render/auraRing.js",
+    "old": "export const SAGE_PUFF_LIFE = Object.freeze([4, 5, 6]);",
+    "new": "export const SAGE_PUFF_LIFE = Object.freeze([4, 5, 7]);",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "A puff's life off whole over the clock: the smoke pops at the wrap."
+  },
+  {
+    "name": "NIRNROOT-SAGE-glow-drifted",
+    "file": "src/render/auraRing.js",
+    "old": "glow: Object.freeze(NIRN_GLOW.slice(0, 3))",
+    "new": "glow: Object.freeze(NIRN_LEAF.slice(0, 3))",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The runes' glow the leaf's - the aura drifted off its title's paint."
+  },
+  {
+    "name": "NIRNROOT-SAGE-rise-slow-first",
+    "file": "src/render/auraRing.js",
+    "old": "const y = 0.05 + SAGE_SMOKE_H * age * (1.4 - 0.4 * age);",
+    "new": "const y = 0.05 + SAGE_SMOKE_H * age * age;",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The smoke creeps off the ground and races at the top - not billowing up."
+  },
+  {
+    "name": "NIRNROOT-SAGE-growth-dropped",
+    "file": "src/render/auraRing.js",
+    "old": "const size = SAGE_PUFF_M[0] + (SAGE_PUFF_M[1] - SAGE_PUFF_M[0]) * Math.pow(age, 0.7);",
+    "new": "const size = SAGE_PUFF_M[0];",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "Every puff its first size - no billowing out."
+  },
+  {
+    "name": "NIRNROOT-SAGE-drift-dropped",
+    "file": "src/render/auraRing.js",
+    "old": " + SAGE_PUFF_DRIFT * age;",
+    "new": ";",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The smoke climbs straight up its column, never out from the body."
+  },
+  {
+    "name": "NIRNROOT-SAGE-flight-never-moves",
+    "file": "src/render/auraRing.js",
+    "old": "const flight = ((n % flights) + flights) % flights;",
+    "new": "const flight = 0;",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "Every flight of a puff off the same place - a fountain, not a cloud."
+  },
+  {
+    "name": "NIRNROOT-SAGE-wrap-broken",
+    "file": "src/render/auraRing.js",
+    "old": "const flight = ((n % flights) + flights) % flights;",
+    "new": "const flight = n;",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The flight not wrapped with the clock: every puff jumps elsewhere at the wrap."
+  },
+  {
+    "name": "NIRNROOT-SAGE-orbit-radius",
+    "file": "src/render/auraRing.js",
+    "old": "x: Math.cos(a) * SAGE_ROOT_R, y: SAGE_ROOT_Y",
+    "new": "x: Math.cos(a) * SAGE_ROOT_Y, y: SAGE_ROOT_Y",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The nirnroots off their orbit - an ellipse, not a ring round the waist."
+  },
+  {
+    "name": "NIRNROOT-SAGE-spacing",
+    "file": "src/render/auraRing.js",
+    "old": "const a = (k / SAGE_ROOTS) * Math.PI * 2 + Math.PI * 2 * SAGE_HZ.orbit * t;",
+    "new": "const a = (k / 4) * Math.PI * 2 + Math.PI * 2 * SAGE_HZ.orbit * t;",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "Two nirnroots on top of each other."
+  },
+  {
+    "name": "NIRNROOT-SAGE-bob-dropped",
+    "file": "src/render/auraRing.js",
+    "old": "y: SAGE_ROOT_Y + SAGE_ROOT_BOB * Math.sin(bob),",
+    "new": "y: SAGE_ROOT_Y,",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The nirnroots on rails, not afloat."
+  },
+  {
+    "name": "NIRNROOT-SAGE-all-up-at-once",
+    "file": "src/render/auraRing.js",
+    "old": "(kindle - k * SAGE_EMERGE_STEP) / SAGE_EMERGE",
+    "new": "kindle / SAGE_EMERGE",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "Every nirnroot up at once as it kindles."
+  },
+  {
+    "name": "NIRNROOT-SAGE-nearest-first",
+    "file": "src/render/auraRing.js",
+    "old": "  rows.sort((a, b) => b[0] - a[0]);   // farthest first",
+    "new": "  rows.sort((a, b) => a[0] - b[0]);   // farthest first",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "Nearest first: a far puff laid over a near nirnroot."
+  },
+  {
+    "name": "NIRNROOT-SAGE-near-fade-dropped",
+    "file": "src/render/auraRing.js",
+    "old": "rows.push([d, p.x, p.y, p.z, p.size, 0, p.age, k1 * near * near * (3 - 2 * near), p.seed]);",
+    "new": "rows.push([d, p.x, p.y, p.z, p.size, 0, p.age, k1, p.seed]);",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The wearer's own first person smoked out."
+  },
+  {
+    "name": "NIRNROOT-SAGE-puff-kindle-ignored",
+    "file": "src/render/auraRing.js",
+    "old": "rows.push([d, p.x, p.y, p.z, p.size, 0, p.age, k1 * near * near * (3 - 2 * near), p.seed]);",
+    "new": "rows.push([d, p.x, p.y, p.z, p.size, 0, p.age, near * near * (3 - 2 * near), p.seed]);",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The smoke whole before the aura has kindled."
+  },
+  {
+    "name": "NIRNROOT-SAGE-puff-added",
+    "file": "src/render/auraRing.js",
+    "old": "    return vec4(col * a, a);",
+    "new": "    return vec4(col * a, 0.0);",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "A puff added - a glow, never smoke."
+  },
+  {
+    "name": "NIRNROOT-SAGE-puff-cover-ignored",
+    "file": "src/render/auraRing.js",
+    "old": "* thin * ${g3(SAGE_PUFF_A)} * s.z;",
+    "new": "* thin * ${g3(SAGE_PUFF_A)};",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The law's cover dropped: the smoke in the wearer's eyes, and before it kindles."
+  },
+  {
+    "name": "NIRNROOT-SAGE-puff-lit-from-below",
+    "file": "src/render/auraRing.js",
+    "old": "smoothstep(0.15, 0.85, uv.y + (n - 0.5) * 0.35)",
+    "new": "smoothstep(0.15, 0.85, 1.0 - uv.y + (n - 0.5) * 0.35)",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The smoke lit from below."
+  },
+  {
+    "name": "NIRNROOT-SAGE-veins-dropped",
+    "file": "src/render/auraRing.js",
+    "old": "  col = mix(col, SG_DEEP, clamp(0.5 - sageVeinD(g) / px, 0.0, 1.0));\n",
+    "new": "",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The aura's nirnroots without their veins - not the badge's own."
+  },
+  {
+    "name": "NIRNROOT-SAGE-heart-dropped",
+    "file": "src/render/auraRing.js",
+    "old": "  col = mix(col, SG_HAZE, clamp(0.5 - sageBudD(g) / px, 0.0, 1.0));\n",
+    "new": "",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The aura's nirnroots without the bulb's glowing heart."
+  },
+  {
+    "name": "NIRNROOT-SAGE-halo-covering",
+    "file": "src/render/auraRing.js",
+    "old": "if (body <= 0.0) return vec4(halo, 0.0);",
+    "new": "if (body <= 0.0) return vec4(halo, 0.3);",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "A nirnroot's glow covering - a dark card round every nirnroot."
+  },
+  {
+    "name": "NIRNROOT-SAGE-runes-dropped",
+    "file": "src/render/auraRing.js",
+    "old": "    light += sageInked(d, 0.009) * lit * breath;\n",
+    "new": "",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "No runes round the feet."
+  },
+  {
+    "name": "NIRNROOT-SAGE-band-dropped",
+    "file": "src/render/auraRing.js",
+    "old": "    light += SG_GLOW * lines * 0.55 * breath;\n",
+    "new": "",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The runes' band unlined."
+  },
+  {
+    "name": "NIRNROOT-SAGE-shade-added",
+    "file": "src/render/auraRing.js",
+    "old": "vec4 c = vec4(SG_DEEP * 0.6 * shade, shade);",
+    "new": "vec4 c = vec4(SG_DEEP * 0.6 * shade, 0.0);",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The smoke's shade at the feet added - a green smear, not a shade."
+  },
+  {
+    "name": "NIRNROOT-SAGE-shade-kindle-ignored",
+    "file": "src/render/auraRing.js",
+    "old": "* 0.5 * uKindle;\n  vec4 c = vec4(SG_DEEP",
+    "new": "* 0.5;\n  vec4 c = vec4(SG_DEEP",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The shade at the feet before the aura kindles."
+  },
+  {
+    "name": "NIRNROOT-SAGE-runes-kindle-ignored",
+    "file": "src/render/auraRing.js",
+    "old": "    light *= wardDrawn(fract(a / TAU + 0.5));\n",
+    "new": "",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The runes lit before the aura kindles."
+  },
+  {
+    "name": "NIRNROOT-SAGE-wall-added",
+    "file": "src/render/auraRing.js",
+    "old": "  vec4 c = vec4(col * smoke, smoke);",
+    "new": "  vec4 c = vec4(col * smoke, 0.0);",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The low smoke added - a glow round the boots."
+  },
+  {
+    "name": "NIRNROOT-SAGE-wall-rim-dropped",
+    "file": "src/render/auraRing.js",
+    "old": "  float rim = 0.3 + 0.7 * pow(1.0 - facing, 2.0);",
+    "new": "  float rim = 1.0;",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The low smoke as thick across the boots as along the strip - a grey band over the feet."
+  },
+  {
+    "name": "NIRNROOT-SAGE-wall-kindle-ignored",
+    "file": "src/render/auraRing.js",
+    "old": "  return c * clamp((uKindle * 1.25 - v) / 0.15, 0.0, 1.0);",
+    "new": "  return c;",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The low smoke whole before the aura kindles."
+  },
+  {
+    "name": "NIRNROOT-SAGE-puff-not-facing",
+    "file": "src/render/auraRing.js",
+    "old": "      w = at + r * o.x + cross(e, r) * o.y;",
+    "new": "      w = at + vec3(o.x, o.y, 0.0);",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "A puff a flat card along one axis - a sliver from the side."
+  },
+  {
+    "name": "NIRNROOT-SAGE-root-turn-ignored",
+    "file": "src/render/auraRing.js",
+    "old": "      o.x *= l.y;\n",
+    "new": "",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The nirnroots never sway."
+  },
+  {
+    "name": "NIRNROOT-SAGE-root-leaning",
+    "file": "src/render/auraRing.js",
+    "old": "      w = at + vec3(-toEye.y, 0.0, toEye.x) * o.x + vec3(0.0, o.y, 0.0);",
+    "new": "      w = at + vec3(-toEye.y, 0.0, toEye.x) * o.x + vec3(toEye.x, 1.0, toEye.y) * o.y;",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "A nirnroot leaning toward the eye."
+  },
+  {
+    "name": "NIRNROOT-SAGE-cards-not-handed",
+    "file": "src/render/auraRing.js",
+    "old": "          gl.uniform4fv(U.uSage, this._sage); gl.uniform4fv(U.uSageLook, this._sageLook);\n",
+    "new": "",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "The cards never handed: every puff and nirnroot at the feet, sized nothing."
+  },
+  {
+    "name": "NIRNROOT-SAGE-seed-ignored",
+    "file": "src/render/auraRing.js",
+    "old": "sageCardsInto(this._sage, this._sageLook, sageClock(seconds, w.seed),",
+    "new": "sageCardsInto(this._sage, this._sageLook, sageClock(seconds, 0),",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "Every wearer's smoke in step."
+  }
+]

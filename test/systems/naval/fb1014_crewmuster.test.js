@@ -6,8 +6,8 @@
 // BOARD_RANGE mustered my crew whatever my way - every man to the rail with his blade out, crying "Here they come!" and
 // "Nobody sets foot on our deck!" at nobody but the player, for as long as he sat at the helm, and never off it.
 //   1. A MUSTER IS FOR A BOARDING THE HELM COULD MAKE: my crew musters toward the struck ship the boarding's own
-//      `boardable` would take now (in reach, my way under BOARD_SPEED), her crew toward a helm that could board her
-//      (boardingGap) or feet that could go over her rail (footReach).
+//      `boardable` would take now (in reach - BOARD-MAGNET, 2026-10-26: at any way, the grapples taking it off), her crew
+//      toward a helm that could board her (boardingGap) or feet that could go over her rail (footReach).
 //   2. ITS WORDS ARE ITS SIDE OF THE BOARDING: the crew going over cries the boarding's (CREW_BLURBS.board), the crew
 //      being boarded the repel's (CREW_BLURBS.repel) - the host says which (`way`), the grapple by its kind.
 // The real naval host over Come Sail Away's real pool (test/navalSea.mjs), the real crew host (scenes/naval/navalCrew.js) and
@@ -22,7 +22,7 @@ import { hourOf } from '../../../src/world/worldClock.js';
 import { crewRoster, crewCount, CREW_BLURBS } from '../../../src/systems/naval/crewLife.js';
 import { createNavalCrew, CREW_RANGE, CREW_KEEP } from '../../../src/scenes/naval/navalCrew.js';
 import { intoDeck } from '../../../src/systems/naval/navalDeck.js';
-import { GRAPPLE_S, BOARD_SPEED } from '../../../src/systems/naval/navalBoarding.js';
+import { GRAPPLE_S, BOARD_RANGE } from '../../../src/systems/naval/navalBoarding.js';
 import { hullBuild } from '../../../src/systems/naval/navalShips.js';
 import { SHIP_STATES } from '../../../src/systems/naval/navalDamage.js';
 import { sea } from '../../navalSea.mjs';
@@ -91,21 +91,22 @@ function linesOver(s, seconds) {
   return said;
 }
 
-test('CREW-MUSTER (FIELD BUGS 2026-10-14, "Crew Attacking Me"; Mac\'s call): a repel thrown back leaves her struck 13 m off - at my helm with my way over BOARD_SPEED no boarding of mine is to be had and my crew musters to nobody, standing at their work (was: every man to the rail, blades out, crying the repel\'s words, for as long as I sat at the helm); her way off, they muster to board her and cry the boarding\'s words alone (mutants: the muster at the helm\'s range alone, the way untold)', async () => {
+test('CREW-MUSTER (FIELD BUGS 2026-10-14, "Crew Attacking Me"; Mac\'s call): a repel thrown back leaves her struck 13 m off - out of the grapples\' reach no boarding of mine is to be had and my crew musters to nobody, standing at their work (was: every man to the rail, blades out, crying the repel\'s words, for as long as I sat at the helm); in reach - at my way, BOARD-MAGNET: the grapples take it off - they muster to board her and cry the boarding\'s words alone (mutants: the muster past the reach, the way untold)', async () => {
   const s = await repelThrownBack();
   const { h, crew, e } = s;
   const gap = Math.hypot(e.ship.pos[0], e.ship.pos[2]) - hullBuild(e.ship.hull).beam - hullBuild(h.boat.hull).beam;
   assert.ok(Math.abs(Math.hypot(e.ship.pos[0], e.ship.pos[2]) - 13) < 1 && gap <= 32, `she lies alongside, 13 m off: ${Math.hypot(e.ship.pos[0], e.ship.pos[2]).toFixed(2)}`);
   const mine = () => crew.ships().find((x) => x.boat === h.boat);
-  // back at my helm, her way on
+  const lie = [...e.ship.pos];
+  // back at my helm, her way on - and she drifted out of the grapples' reach
   h.runtime.sailing = true;
-  h.runtime.state.velocityCurrent = [0, 0, BOARD_SPEED + 1.5];
-  s.step(15);
+  h.runtime.state.velocityCurrent = [0, 0, 4];
+  s.step(15, 0.1, () => { e.ship.pos = [lie[0] + BOARD_RANGE + 10, lie[1], lie[2]]; });
   assert.equal(h.host.myCrew(h.boat).toward, null, 'no boarding at hand');
   assert.equal(mine().toward, null);
   assert.equal(mustered(mine()), 0, 'not a man at the rail');
-  // her way off: the helm can board her now - a muster to board her, the boarding's words
-  h.runtime.state.velocityCurrent = [0, 0, 0];
+  // in reach again, her way still on: the helm can board her now - a muster to board her, the boarding's words
+  e.ship.pos = [...lie];
   s.step(0.2);
   const said = h.host.myCrew(h.boat);
   assert.deepEqual([said.toward, said.way], [e.ship.pos, 'board'], 'the struck ship the helm would board, mine to board');
@@ -117,15 +118,16 @@ test('CREW-MUSTER (FIELD BUGS 2026-10-14, "Crew Attacking Me"; Mac\'s call): a r
   assert.deepEqual(shouted.filter((x) => !CREW_BLURBS.board.includes(x)), [], 'the boarding\'s words alone - never "Here they come!" at nobody');
 });
 
-test('CREW-MUSTER: HER CREW, THE SAME LAW - struck alongside, her men muster toward a helm that could board her and never toward one too fast to (was: BOARD_RANGE alone); toward my feet within FOOT_BOARD_M of her side (the rail I could go over) - and theirs are the repel\'s words, the boarded side\'s (mutants: her helm arm at range alone, her side told the boarding\'s)', async () => {
+test('CREW-MUSTER: HER CREW, THE SAME LAW - struck alongside, her men muster toward a helm that could board her and never toward one out of the grapples\' reach (BOARD-MAGNET: at any way); toward my feet within FOOT_BOARD_M of her side (the rail I could go over) - and theirs are the repel\'s words, the boarded side\'s (mutants: her helm arm past the reach, her side told the boarding\'s)', async () => {
   const s = await repelThrownBack();
-  const { h, crew, id } = s;
+  const { h, crew, id, e } = s;
   const hers = () => crew.ships().find((x) => x.key === id);
+  const lie = [...e.ship.pos];
   h.runtime.sailing = true;
-  h.runtime.state.velocityCurrent = [0, 0, BOARD_SPEED + 1.5];
-  s.step(1);
-  assert.equal(h.host.crewShips().find((x) => x.key === id).toward, null, 'a helm too fast to board her: no muster');
-  h.runtime.state.velocityCurrent = [0, 0, 0];
+  h.runtime.state.velocityCurrent = [0, 0, 4];
+  s.step(1, 0.1, () => { e.ship.pos = [lie[0] + BOARD_RANGE + 10, lie[1], lie[2]]; });
+  assert.equal(h.host.crewShips().find((x) => x.key === id).toward, null, 'a helm out of reach of her: no muster');
+  e.ship.pos = [...lie];
   s.step(0.2);
   const her = h.host.crewShips().find((x) => x.key === id);
   assert.ok(her.toward, 'a helm that could board her: her crew to the rail');

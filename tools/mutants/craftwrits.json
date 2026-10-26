@@ -185,15 +185,6 @@
     ]
   },
   {
-    "name": "CRAFT-WRITS-svc-loose-brews-count",
-    "file": "server-account/src/craftWrits.js",
-    "old": " AND potion = ${potion} AND witnessed = 1), 0)",
-    "new": " AND potion = ${potion}), 0)",
-    "tests": [
-      "test/net/craftwrits_service.test.js"
-    ]
-  },
-  {
     "name": "CRAFT-WRITS-svc-taken-uncounted",
     "file": "server-account/src/craftWrits.js",
     "old": "  - COALESCE((SELECT SUM(qty) FROM craft_writs WHERE player = ${p} AND filled_char = ${c} AND product = ${product} AND filled_at IS NOT NULL), 0))`;",
@@ -214,8 +205,8 @@
   {
     "name": "CRAFT-WRITS-svc-listed-ok",
     "file": "server-account/src/craftWrits.js",
-    "old": "    AND pk.listed = 0 AND pk.bought_with IS NOT 'gold'",
-    "new": "    AND pk.bought_with IS NOT 'gold'",
+    "old": "    AND pk.listed = 0 AND (pk.bought_with IS NOT 'gold' OR pk.loose = 1)",
+    "new": "    AND (pk.bought_with IS NOT 'gold' OR pk.loose = 1)",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -389,8 +380,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-S2-alias-shared",
     "file": "server-account/src/craftWrits.js",
-    "old": "const pieceOkSql = (p, c, pv, recipes) => `EXISTS (SELECT 1 FROM products pk WHERE pk.provenance = ${pv} AND pk.owner = ${p} AND pk.char_id = ${c}\n    AND pk.listed = 0 AND pk.bought_with IS NOT 'gold' AND pk.recipe IN (SELECT value FROM json_each(${recipes}))\n    AND EXISTS (SELECT 1 FROM prof_crafts cr WHERE cr.player = ${p} AND (cr.provenance = pk.provenance OR cr.provenance2 = pk.provenance))\n    AND NOT EXISTS (SELECT 1 FROM market_listings WHERE provenance = pk.provenance AND state = 'open')\n    AND NOT EXISTS (SELECT 1 FROM market_auctions WHERE provenance = pk.provenance AND state = 'open')\n    AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE provenance = pk.provenance AND collected = 0)\n    AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE player = ${p} AND collected = 0 AND item IS NOT NULL AND json_extract(item, '$.provenance') = pk.provenance)\n    AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = pk.provenance))`;",
-    "new": "const pieceOkSql = (p, c, pv, recipes) => `EXISTS (SELECT 1 FROM products pr WHERE pr.provenance = ${pv} AND pr.owner = ${p} AND pr.char_id = ${c}\n    AND pr.listed = 0 AND pr.bought_with IS NOT 'gold' AND pr.recipe IN (SELECT value FROM json_each(${recipes}))\n    AND EXISTS (SELECT 1 FROM prof_crafts cr WHERE cr.player = ${p} AND (cr.provenance = pr.provenance OR cr.provenance2 = pr.provenance))\n    AND NOT EXISTS (SELECT 1 FROM market_listings WHERE provenance = pr.provenance AND state = 'open')\n    AND NOT EXISTS (SELECT 1 FROM market_auctions WHERE provenance = pr.provenance AND state = 'open')\n    AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE provenance = pr.provenance AND collected = 0)\n    AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE player = ${p} AND collected = 0 AND item IS NOT NULL AND json_extract(item, '$.provenance') = pr.provenance)\n    AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = pr.provenance))`;",
+    "old": "const pieceOkSql = (p, c, pv, recipes) => `EXISTS (SELECT 1 FROM products pk WHERE pk.provenance = ${pv} AND pk.owner = ${p} AND pk.char_id = ${c}\n    AND pk.listed = 0 AND (pk.bought_with IS NOT 'gold' OR pk.loose = 1) AND pk.recipe IN (SELECT value FROM json_each(${recipes}))\n    AND EXISTS (SELECT 1 FROM prof_crafts cr WHERE cr.player = ${p} AND (cr.provenance = pk.provenance OR cr.provenance2 = pk.provenance))\n    AND NOT EXISTS (SELECT 1 FROM market_listings WHERE provenance = pk.provenance AND state = 'open')\n    AND NOT EXISTS (SELECT 1 FROM market_auctions WHERE provenance = pk.provenance AND state = 'open')\n    AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE provenance = pk.provenance AND collected = 0)\n    AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE player = ${p} AND collected = 0 AND item IS NOT NULL AND json_extract(item, '$.provenance') = pk.provenance)\n    AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = pk.provenance))`;",
+    "new": "const pieceOkSql = (p, c, pv, recipes) => `EXISTS (SELECT 1 FROM products pr WHERE pr.provenance = ${pv} AND pr.owner = ${p} AND pr.char_id = ${c}\n    AND pr.listed = 0 AND (pr.bought_with IS NOT 'gold' OR pr.loose = 1) AND pr.recipe IN (SELECT value FROM json_each(${recipes}))\n    AND EXISTS (SELECT 1 FROM prof_crafts cr WHERE cr.player = ${p} AND (cr.provenance = pr.provenance OR cr.provenance2 = pr.provenance))\n    AND NOT EXISTS (SELECT 1 FROM market_listings WHERE provenance = pr.provenance AND state = 'open')\n    AND NOT EXISTS (SELECT 1 FROM market_auctions WHERE provenance = pr.provenance AND state = 'open')\n    AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE provenance = pr.provenance AND collected = 0)\n    AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE player = ${p} AND collected = 0 AND item IS NOT NULL AND json_extract(item, '$.provenance') = pr.provenance)\n    AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = pr.provenance))`;",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -443,8 +434,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-T2-bought-refused",
     "file": "server-account/src/craftWrits.js",
-    "old": "AND pk.bought_with IS NOT 'gold' AND",
-    "new": "AND pk.bought_with IS NULL AND",
+    "old": "AND (pk.bought_with IS NOT 'gold' OR pk.loose = 1) AND",
+    "new": "AND (pk.bought_with IS NULL OR pk.loose = 1) AND",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -452,7 +443,7 @@
   {
     "name": "AUDIT-CRAFT-WRITS-T2-gold-let-in",
     "file": "server-account/src/craftWrits.js",
-    "old": "AND pk.bought_with IS NOT 'gold' AND",
+    "old": "AND (pk.bought_with IS NOT 'gold' OR pk.loose = 1) AND",
     "new": "AND 1 AND",
     "tests": [
       "test/net/craftwrits_service.test.js"

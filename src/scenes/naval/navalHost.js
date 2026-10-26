@@ -69,7 +69,7 @@ import { createSeaShip, stepCaptain, quatOfYaw, forwardOfYaw, velocityOf, provok
 import { wrapAngle, multiply } from '../../world/mat4.js';   // ONCRASH1: the port's one angle wrap; AUDIT GN-R5: a rig box turned with its boom
 import { createShipDamage, shotDamage, shotMen, ballMen, playerMen, SHIP_STATES, SINK_SECONDS, SINK_CLEAR, sinkAngles, sinkDepth, BRACE_TAKEN, FIRE_CHANCE, WRECKED_OARS, repairCost, STRUCK_AT } from '../../systems/naval/navalDamage.js';
 import { createGunDeck, aimSolution, volleyLaunches, bearingOf, sideForBearing, toWorld, RIPPLE_S, READY_FLASH_S } from '../../systems/naval/navalGunnery.js';
-import { hullBuild, firstBuildOf, batteryOf, batteriesOf, GUNS, classById, classFor, shipNames, crownOf, classLine, SIDES, SIDE_DIR, BARREL, NAVAL_FACTIONS, HULL, PLAYER_CREW_TOUGHNESS, SHIP_TOUGHNESS, shipBatteryWeight, MOD_BUILDS, flagOf, CROWNS } from '../../systems/naval/navalShips.js';
+import { flatHull, hullOverlap, hullBuild, firstBuildOf, batteryOf, batteriesOf, GUNS, classById, classFor, shipNames, crownOf, classLine, SIDES, SIDE_DIR, BARREL, NAVAL_FACTIONS, HULL, PLAYER_CREW_TOUGHNESS, SHIP_TOUGHNESS, shipBatteryWeight, MOD_BUILDS, flagOf, CROWNS } from '../../systems/naval/navalShips.js';
 import { createWaterGrid, errandFor, errandRng, dwellOf, offsetErrand, alongside, BERTH_SNAP_M, BERTH_WAY } from '../../systems/naval/shipLife.js';   // SHIP-LIFE
 import { createHarbourBook, HARBOUR_RETRY_S } from '../../systems/naval/harbourBook.js';   // HARBOUR-BOOK: the harbours, the world's and mine
 import { hash32 } from '../../world/spawnedDungeons.js';
@@ -92,11 +92,11 @@ import { createCompanions, companionRows, heldAtSide, packStaysAshore } from '..
 import { createShipCrew, reloadScaleOf, mendScaleOf, handsBonusOf, crewCard, CREW_ORDERS, ORDER_TEXT, spiritsOf, LOOKOUT_ROLE, FIRST_MATE, crewWorth, NO_WORTH, SEASONED_HIRE } from '../../systems/naval/shipCrew.js';   // SHIP-CREW; CAPT-CREW: what her posts are worth
 import { crewRoster, playerCrewCount } from '../../systems/naval/crewLife.js';   // AUDIT NAV1: the shipwright, the mending at sea
 import { enlistPlan, releasePlan, CREW_HALL_TEXT } from '../../systems/crewHall.js';   // SHIPYARDS: the crew hall's recruits signed on to her deck by name, and paid off
-import { createBoarding, berthPose, musterOf, crewTeamOf, handsOf, repelPartyOf, raidQuestOf, raidQuestWon, raidQuestRetreated, boardingWon, BOARD_RANGE, BOARD_SPEED, ABANDON_RANGE, HAND, SURRENDER_SHARE, CREW_PER_HAND } from '../../systems/naval/navalBoarding.js';
+import { createBoarding, boardableState, musterOf, crewTeamOf, handsOf, repelPartyOf, raidQuestOf, raidQuestWon, raidQuestRetreated, boardingWon, BOARD_RANGE, ABANDON_RANGE, HAND, SURRENDER_SHARE, CREW_PER_HAND } from '../../systems/naval/navalBoarding.js';   // BOARD-MAGNET: struck, the one way aboard
 import { navalWireRecord, validNavalRecord, navalHitData, validNavalHit, NAVAL_SHARE_RADIUS, NAVAL_VOLLEY_KEEP_MS, NAVAL_GEN_MAX, NAVAL_WIRE_VOLLEYS, NAVAL_WIRE_SPENT, TRAFFIC_DEFAULT } from '../../systems/naval/navalWire.js';
 import { Boat, boatAnimators, boatParticleSystems, animatorOf, setLights, meshLocalBounds, HULL_NAMES } from '../../systems/comeSailAway/comeSailAwayBoat.js';
 import { runsDark, nightSight, lampSize, lampAlpha, lampPoints, LAMP_NEAR_M, LAMP_COLOR } from '../../systems/naval/shipWatch.js';   // SHIP-WATCH: the sea by night, and my lookout
-import { stowSail, vSignedAngle, CSA_BRAKE_MAX } from '../../systems/comeSailAway/comeSailAway.js';   // AUDIT GN2-RG6: sailWind's angle - AUDIT 2 XA5: the brake's bound
+import { stowSail, vSignedAngle } from '../../systems/comeSailAway/comeSailAway.js';   // AUDIT GN2-RG6: sailWind's angle
 import { quatEuler } from '../../world/unityAnimator.js';
 import { quatRotate, quatLookRotation, quatAngleAxis, mat4FromQuatPos } from '../../world/quat.js';
 import { constantCurve } from '../../world/unityParticles.js';
@@ -116,12 +116,11 @@ import { timeScale } from '../../systems/timeScale.js';   // AUDIT GN2-GN3: the 
 import { sharedSea, seaSeconds } from '../../systems/naval/seaClock.js';   // TIME-DILATION: a shared sea keeps real time
 import { markStolen } from '../../systems/stolenGoods.js';   // STOLEN-GOODS AUDIT S4: a lawful ship's hold, taken by Piracy, is stolen goods
 import { dockFor, madeFast, warpStep, quaySide, landwardOf, quayFrame, quayToScene, sceneToQuay, gangwayFoot, DOCK_WAY, DOCK_REACH_M, DOCK_REFUSED, GANGWAY_REACH, GANGWAY_ASHORE, GANGWAY_FACING, gangwaySide, QUAY_GAP, QUAY_WIDTH, QUAY_DECK_UP } from '../../systems/naval/quays.js';   // QUAYS: docking at a harbour's quays
-import { foul, fouledBy, foulLeft, foulSaid, boardableState } from '../../systems/naval/navalFoul.js';   // RAM-BOARD: a ram fouls her, and a fouled ship is boarded as she stands
-import { t } from '../../systems/textManager.js';   // RAM-BOARD: its words in the player's language
 import { shotGun, shotFireChance, shotRigFire, naturalShot } from '../../systems/naval/shotKinds.js';   // SHOT-KINDS: what a battery is loaded with
 import { captainWorth, struckGun, statScale } from '../../systems/naval/captainTree.js';   // CAPTAIN-TREE: what her captain's stars do at sea
 import { createNavalLoads } from './navalLoads.js';   // SHOT-KINDS: the captain's choice of load, at the helm
 import { createAimCamera } from './aimCamera.js';   // THE BROADSIDE CAMERA and AIM-ENDS: the helm's eye while a battery is laid
+import { createNavalHaul } from './navalHaul.js';   // BOARD-MAGNET: the grapples' haul - her berth, her way in, my way off
 import { createSeaHulls } from '../../systems/naval/seaClearance.js';   // FERRY-CLEAR: the hulls a journey's hand steers round
 import { createVolleyTally } from './navalTally.js';   // AUDIT NAV1 G17: my volley's tally - CARD-CREW: and her men it took
 import { seaLiveryOf, seaFlagsOf } from '../../systems/naval/seaColours.js';   // SEA-COLOURS: the sea's ships in their own paint and flags
@@ -296,7 +295,7 @@ export const PEER_HULL_FAR_M = 5500;
  * OWN-HULL-RANGE: WHETHER ONE OF MY OWN SEA'S SHIPS KEEPS HER HULL, however far: bodies on her deck, the boarding I am
  * in, a prize not yet settled (`claimPrize` moves her deck by her hull), a fight - hers (`mode` engage or board,
  * afloat) or one that targets her (`fought`, the targets of every ship in one): a shot lands only on a hull
- * (`targets`) and a galley rams only one (`checkShipRams`), so a fight between hull-less ships would never end.
+ * (`targets`), so a fight between hull-less ships would never end.
  * @param {any} e a sea entry @param {{ fought: Set<string>, boardingId?: string|null }} at
  */
 export function hullKept(e, { fought, boardingId = null }) {
@@ -438,32 +437,6 @@ export const BODY_GAP = 0.9;
 /** The share's hysteresis (DEEP-SHARE's): one who stands the sea keeps it until a lower id is within the radius;
  *  one who does not takes it only when every lower id is past this many radii. */
 export const SHARE_HYSTERESIS = 1.25;
-/** The ram: the closing speed a bow must strike at (m/s), and what it does a metre a second. */
-export const RAM_SPEED = 1.6;
-export const RAM_DAMAGE = 14;
-/** A galley's ram multiplies what it deals, and takes this share back. */
-export const GALLEY_RAM = 3;
-export const RAM_RECOIL = 0.3;
-/** The men a ram's blow takes: one for every RAM_A_MAN of the hull it deals - what the wire says (`ramMenSaid`) - and
- *  TOUGHER-SHIPS: over her crew's toughness on the `roll`, as a ball's (navalDamage.js ballMen), where she is stood -
- *  CREW-HOLD: a player's ship's PLAYER_CREW_TOUGHNESS (`tough`). */
-export const RAM_A_MAN = 40;
-export const ramMenSaid = (dealt) => Math.round(dealt / RAM_A_MAN);
-export const ramMen = (dealt, roll, tough) => ballMen(dealt / RAM_A_MAN, roll, tough);
-/** One ram a ship a stretch (s). */
-export const RAM_COOLDOWN_S = 3;
-/** AUDIT NAV1 (the helm): the ram strikes from her STEM (the hull's own bowZ) within RAM_REACH of the other's box - the
- *  collider stops a stem at the planking it meets; it read a point `beam * 2.4` out, 1.2 m short of a Small Ship's stem
- *  and 29 m inside a galley's, so no ram ever landed - at the way she came in with, the most of the last RAM_MEMORY_S
- *  (Come Sail Away takes a bow's way off it the frame it meets a hull), less the other's own way along her course. A
- *  stem not built to ram takes BOW_RECOIL times RAM_RECOIL back, a galley's ram a GALLEY_RAM-th of it. */
-export const RAM_REACH = 1.2;
-/** AUDIT NAV1 (the helm): HEAVE TO - a struck ship in reach with the helm too fast to board (the refusal said nothing:
- *  under sail W/S do nothing, and a Small Ship at 8.2 m/s took 28 s and 151 m to lose her way with her sails struck):
- *  Activate strikes the sails and brakes her, her way off at HEAVE_TO_DECEL (m/s^2, Come Sail Away's `brake` seam) for
- *  HEAVE_TO_S at most, until she is under BOARD_SPEED - then the grapples are the key's. HELM-WAY: a brake of its own
- *  number - it was ten times her own coast, which the Ship handling choice now moves (a Small Ship's 0.2 m/s^2 made 2). */
-export const HEAVE_TO_DECEL = 2;
 /** AUDIT NAV1 (the helm): the sea's ships stand on the compass within this (m) - the target card's own reach. */
 export const COMPASS_SHIP_RANGE = 900;
 /** AUDIT NAV1 (the helm): MY GUN CREWS' SKILL (navalGunnery.js volleyLaunches) - a full crew's, or my own hand at a boat
@@ -471,25 +444,9 @@ export const COMPASS_SHIP_RANGE = 900;
  *  none (it was PLAYER_SKILL whatever was left of them). */
 export const PLAYER_SKILL = 0.6;
 export const PLAYER_SKILL_THIN = 0.3;
-export const HEAVE_TO_S = 8;
-/** AUDIT SHIPS A3 (2026-10-06, Mac: "Audit everything"): HER WAY OFF BESIDE HER - the brake sized to the way she heaves to
- *  at, so it comes off within HEAVE_TO_M (m) at HEAVE_TO_DECEL at the least (heaveToDecel): at SAIL-FREE's ways the fixed
- *  2 m/s^2 ran a galleon 50-64 m and a Carrack 73-93 m (8.5 s, past HEAVE_TO_S) before she came under BOARD_SPEED, out of
- *  BOARD_RANGE of the ship she hove to beside. Under HELM-WAY's ways (8.2 m/s, 1.6 m/s^2 by this) it is 2 as it was. */
-export const HEAVE_TO_M = 20;
-/** AUDIT SHIPS A3: the brake (m/s^2) that takes a way of `v` m/s down to BOARD_SPEED within HEAVE_TO_M - AUDIT 2 XA5
- *  (2026-10-06): never past the runtime's own bound on a brake (comeSailAway.js CSA_BRAKE_MAX), so the brake asked is
- *  the brake she gets. */
-export const heaveToDecel = (v) => Math.min(CSA_BRAKE_MAX, Math.max(HEAVE_TO_DECEL, (v * v - BOARD_SPEED * BOARD_SPEED) / (2 * HEAVE_TO_M)));
-/** AUDIT 2 XA5: the metres she runs to BOARD_SPEED heaving to at a way of `v` m/s - HEAVE_TO_M, or farther where her way
- *  asks more than CSA_BRAKE_MAX (a storm's: a Carrack on her quarter at 38.9 m/s runs 37.7 m). The heave-to is offered by
- *  where it leaves her (heaveFor): offered beside a struck ship at that way, she ran past BOARD_RANGE of her. */
-export const heaveToRun = (v) => Math.max(0, (v * v - BOARD_SPEED * BOARD_SPEED) / (2 * heaveToDecel(v)));
 /** AUDIT NAV1 (the helm): THE SHIPWRIGHT stands at a port - a port town's waters (`inPortWaters` - FB1020c BERTH-RING), her way under
  *  YARD_SPEED (she lies to his quay) and no hostile ship near (systems/naval/navalYard.js). */
 export const YARD_SPEED = 2.5;
-export const RAM_MEMORY_S = 0.6;
-export const BOW_RECOIL = 2;
 /** Another player's ship eases toward its word at this rate (per second) and snaps past this far (m) - the team's law
  *  (systems/horse/horseCartWire.js easeToward), a ship's scale. */
 export const PUPPET_EASE = 6;
@@ -573,8 +530,11 @@ export { AIM_CAM_OUT, AIM_CAM_UP, AIM_CAM_AFT, AIM_CAM_TAU, AIM_CAM_CLEAR, AIM_C
  *  AUDIT GN2-GN3: real seconds, as that frame is - on my sea's clock Come Sail Away's time scale made 2 s ten at x5. */
 export const PEER_LAY_S = 3;
 
+/** A hull on the flat and the push out of another (BOARD-MAGNET: one law, navalShips.js's, for the hulls kept apart, the
+ *  serpent's bumpers and the grapples' haul). */
+export { flatHull, hullOverlap };
 /** A boat's hull as an oriented box in the world: its MeshCollider's own bounds through its MeshObject (null before
- *  its mesh is known) - the shots' target, the ram's, the target card's, and the host's deck rays'. */
+ *  its mesh is known) - the shots' target, the target card's, and the host's deck rays'. */
 export function hullBoxOf(boat, models) {
   const local = boat?.MeshCollider ? meshLocalBounds({ models }, boat.MeshCollider.m_Mesh) : null;
   if (!local) return null;
@@ -663,27 +623,6 @@ const myBoatId = (boat) => `${MY_BOAT}:${boat?.uid || 0}`;
 const isMine = (id) => typeof id === 'string' && id.startsWith(`${MY_BOAT}:`);
 /** A shot a sea ship fired - never a player's own (mine, or a peer's `peer:`). */
 const shipShot = (shooter) => !(typeof shooter === 'string' && (shooter.startsWith('peer:') || isMine(shooter)));
-/** A hull on the flat, off its build: its centre, forward and right, half length and half width. */
-export function flatHull(pos, yaw, hull) {
-  const b = hullBuild(hull);
-  const f = [Math.sin(yaw), Math.cos(yaw)];
-  const mid = (b.bowZ + b.aftZ) / 2;
-  return { c: [pos[0] + f[0] * mid, pos[2] + f[1] * mid], f, r: [f[1], -f[0]], hl: (b.bowZ - b.aftZ) / 2, hw: b.halfWidth };
-}
-/** The least push that takes hull A out of hull B (separating axes on the flat), or null when they stand apart. */
-export function hullOverlap(A, B) {
-  const d = [B.c[0] - A.c[0], B.c[1] - A.c[1]];
-  let best = null, least = Infinity;
-  for (const u of [A.f, A.r, B.f, B.r]) {
-    const ra = A.hl * Math.abs(A.f[0] * u[0] + A.f[1] * u[1]) + A.hw * Math.abs(A.r[0] * u[0] + A.r[1] * u[1]);
-    const rb = B.hl * Math.abs(B.f[0] * u[0] + B.f[1] * u[1]) + B.hw * Math.abs(B.r[0] * u[0] + B.r[1] * u[1]);
-    const dd = d[0] * u[0] + d[1] * u[1];
-    const o = ra + rb - Math.abs(dd);
-    if (o <= 0) return null;
-    if (o < least) { least = o; best = [-Math.sign(dd || 1) * u[0] * o, -Math.sign(dd || 1) * u[1] * o]; }
-  }
-  return best;
-}
 /**
  * SERPENT4 (2026-10-11, the players: "ships inevitably end up colliding and then phasing through each other with the lag.
  * I think ships need some kind of larger invisible box "aura" around them while this fight is in effect so they "bounce"
@@ -743,7 +682,7 @@ export function createNavalHost(deps) {
   let enabled = true;
 
   // ── the sea's ships ──────────────────────────────────────────────────────────────────────────────────────────────
-  /** @type {Map<string, any>} id -> { id, n, owner, ship, boat, fires, fireLoop, sinkLoop, target, seen, charged, ramAt, myBlowAt, hunter,
+  /** @type {Map<string, any>} id -> { id, n, owner, ship, boat, fires, fireLoop, sinkLoop, target, seen, charged, myBlowAt, hunter,
    *  lifeDt, lifeN, list, deck, prize, lost, sinkUnder, colours } */
   const sea = new Map();
   const shipDecks = createSeaDecks({ standsOn: (boat, feet) => standsOn(boat, feet), feet: () => deps.feet(), swimming: () => !!deps.swimming?.() });   // SEA-DECK: the deck of a ship of the sea's, stood on, carries
@@ -1918,7 +1857,7 @@ export function createNavalHost(deps) {
     if (spec.deep) ship.temper = temperOf(cls, spec.seed, { bold: DEEP_BOLD });   // CAPT-WATERS: the deep waters' pirates bolder
     else if (ether && cls.faction === 'pirate') ship.temper = temperOf(cls, spec.seed, { bold: etherBold(ether) });   // ETHER-SEA: the deeper the band, the bolder its corsairs
     if (legend) ship.temper = TEMPERS.bold;   // ETHER-LEGENDS: a legend fears nothing that sails
-    const entry = { id, n: num, owner, gen: Math.max(0, Math.min(NAVAL_GEN_MAX, spec.gen | 0)), region, deep: !!spec.deep, ether, legend: legend?.id ?? null, orphan: null, ship, boat: null, fires: null, fireLoop: null, sinkLoop: null, target: null, seen: clock, charged: null, ramAt: -Infinity, myBlowAt: -Infinity, grappleAt: -Infinity, hunter: !!spec.hunter, phase: random() * 6.28, lifeDt: 0, lifeN: num % FAR_LIFE_EVERY, list: null, wake: false, deck: null, prize: null, lost: false, sinkUnder: null, colours: null, fade: 0, retiring: false };   // SHIP-FADE: she comes into the world
+    const entry = { id, n: num, owner, gen: Math.max(0, Math.min(NAVAL_GEN_MAX, spec.gen | 0)), region, deep: !!spec.deep, ether, legend: legend?.id ?? null, orphan: null, ship, boat: null, fires: null, fireLoop: null, sinkLoop: null, target: null, seen: clock, charged: null, myBlowAt: -Infinity, grappleAt: -Infinity, hunter: !!spec.hunter, phase: random() * 6.28, lifeDt: 0, lifeN: num % FAR_LIFE_EVERY, list: null, wake: false, deck: null, prize: null, lost: false, sinkUnder: null, colours: null, fade: 0, retiring: false };   // SHIP-FADE: she comes into the world
     // ETHER-LEGENDS: she comes, said - AUDIT CAPTAIN'S SEA D12: to every captain whose sea she comes into (a party's other
     // captain stands another's copy of her, and never heard her come), once while she is in it
     const heard = legend && [...sea.values()].some((x) => x.legend === legend.id && x.ship.damage.state !== SHIP_STATES.sunk);
@@ -3262,7 +3201,7 @@ export function createNavalHost(deps) {
   function wayScale(underSail) {
     const boat = myBoat();
     if (!enabled || !boat) return 1;
-    if (heaveTo) return 0;   // heaving to: nothing driving her on
+    if (haul.hauling(boarding)) return 0;   // BOARD-MAGNET (navalHaul.js): the grapples hauling - nothing driving her on
     const d = myBoatState(boat).damage;
     if (underSail) return d.state === SHIP_STATES.wrecked ? 0 : d.wayShare();
     return d.state === SHIP_STATES.wrecked ? WRECKED_OARS : 1;
@@ -3346,15 +3285,15 @@ export function createNavalHost(deps) {
 
   // ── boarding ─────────────────────────────────────────────────────────────────────────────────────────────────────
   let boarding = null;
-  /** The ship a boarding at the helm would take: struck, not taken, within reach - the one the look is on first. `at`
-   *  where her helm is reckoned from (AUDIT 2 XA5: where a heave-to leaves her - heaveFor), else where she is. */
-  function boardable(boat, { anySpeed = false, at = null } = {}) {
+  const haul = createNavalHaul({ csa, myBoat, boatPose, yawOfRot });   // BOARD-MAGNET: the grapples' haul
+  /** The ship a boarding at the helm would take: struck, not taken, within reach - the one the look is on first. */
+  function boardable(boat) {
     if (!boat) return null;
     const pose = boatPose(boat);
     const look = deps.look?.();
     let best = null, bestScore = Infinity;
     for (const e of sea.values()) {
-      const d = boardingGap(boat, e, { anySpeed, at, pose });
+      const d = boardingGap(boat, e, pose);
       if (d == null) continue;
       let score = d;
       if (look) {
@@ -3369,49 +3308,22 @@ export function createNavalHost(deps) {
   }
   /** THE HELM'S BOARDING REACH, one law (`boardable`'s, and CREW-MUSTER's: the crews muster for a boarding this would
    *  allow, never for one it would not - FIELD BUGS 2026-10-14): her water between the two hulls (m) when the helm of
-   *  `boat` could throw the grapples on `e` - struck, not taken, her hull standing, within BOARD_RANGE past the two
-   *  beams of `at` (else where `boat` lies), `boat`'s way under BOARD_SPEED unless `anySpeed` - else null. */
-  function boardingGap(boat, e, { anySpeed = false, at = null, pose = boatPose(boat) } = {}) {
-    if (!anySpeed && Math.hypot(pose.velocity[0], pose.velocity[2]) > BOARD_SPEED) return null;
-    if (!boardableState(e.ship, myId(), clock) || !e.boat) return null;   // RAM-BOARD: struck, or fouled by my stem
-    const d = dist2d(e.ship.pos, at ?? pose.position) - (hullBuild(e.ship.hull).beam + hullBuild(boat.hull).beam);
-    return d > BOARD_RANGE ? null : d;
+   *  `boat` could throw the grapples on `e` - struck, not taken, her hull standing, within BOARD_RANGE (CAPTAIN-TREE: her
+   *  captain's `reach` on it) past the two beams - else null. BOARD-MAGNET: at any way - the haul takes it off. */
+  function boardingGap(boat, e, pose = boatPose(boat)) {
+    if (!boardableState(e.ship) || !e.boat) return null;
+    const d = dist2d(e.ship.pos, pose.position) - (hullBuild(e.ship.hull).beam + hullBuild(boat.hull).beam);
+    return d > BOARD_RANGE * statScale(deps.captain?.stats?.(), 'reach') ? null : d;
   }
   /** ON FOOT, one law (`boardableOnFoot`'s, and CREW-MUSTER's): whether `feet` stand within FOOT_BOARD_M of struck `e`'s
    *  side - not taken, her hull standing - to go over her rail. */
   function footReach(e, feet) {
-    return boardableState(e.ship, myId(), clock) && !!e.boat && dist2d(e.ship.pos, feet) - hullBuild(e.ship.hull).beam <= FOOT_BOARD_M;   // RAM-BOARD: or fouled by my stem
+    return boardableState(e.ship) && !!e.boat && dist2d(e.ship.pos, feet) - hullBuild(e.ship.hull).beam <= FOOT_BOARD_M;
   }
 
-  // ── heave to (AUDIT NAV1, the helm) ─────────────────────────────────────────────────────────────────────────────
-  let heaveTo = null;   // { id, until, decel }
-  /** A struck ship that the helm is too fast to board - the one a heave-to is for - or null: AUDIT 2 XA5, in reach of
-   *  where the heave-to leaves her (heaveToRun along her way), so it is offered as she comes up on her and never as she
-   *  passes her too fast to stop beside her. */
-  function heaveFor(boat) {
-    if (!boat || boardable(boat)) return null;
-    const pose = boatPose(boat), v = pose.velocity, way = Math.hypot(v[0], v[2]), run = heaveToRun(way);
-    const at = way > 0 ? [pose.position[0] + (v[0] / way) * run, pose.position[1], pose.position[2] + (v[2] / way) * run] : null;
-    return boardable(boat, { anySpeed: true, at });
-  }
-  /** Strike the sails and take her way off beside `e` (AUDIT SHIPS A3: at the brake her way needs - heaveToDecel). */
-  function startHeaveTo(e, boat) {
-    const v = boat ? boatPose(boat).velocity : [0, 0, 0];
-    heaveTo = { id: e.id, until: clock + HEAVE_TO_S, decel: heaveToDecel(Math.hypot(v[0], v[2])) };
-    const r = csa();
-    if (r?.state?.sailPosition > 0) r.LowerSails?.();
-    deps.say?.(`Heave to! You slow down beside ${e.ship.names?.name ?? 'it'}.`, 2.5);
-  }
-  /** The heave-to ends under BOARD_SPEED, past HEAVE_TO_S, or with her gone from reach. */
-  function stepHeaveTo(boat) {
-    if (!heaveTo) return;
-    const e = sea.get(heaveTo.id);
-    const v = boat ? boatPose(boat).velocity : null;
-    const slow = !v || Math.hypot(v[0], v[2]) <= BOARD_SPEED;
-    if (slow || clock > heaveTo.until || !e || !boardableState(e.ship, myId(), clock)) heaveTo = null;   // RAM-BOARD: struck, or fouled by me
-  }
-  /** Come Sail Away's `brake` seam: her way comes off at the heave-to's brake while she heaves to (0: her own rate). */
-  const brake = () => (enabled && heaveTo && myBoat() ? heaveTo.decel : 0);
+  /** Come Sail Away's `brake` seam - BOARD-MAGNET: the grapples' haul's, beside the boat at my helm (navalHaul.js) - 0: her
+   *  own rate. */
+  const brake = () => (enabled ? haul.brake(boarding) : 0);
 
   /**
    * Activate: at the helm, throw the grapples on a struck ship in reach; on foot (a deck alongside her, or swimming
@@ -3425,9 +3337,7 @@ export function createNavalHost(deps) {
     if (prize) { openPrize(prize); return true; }
     if (boat) {
       const e = boardable(boat);
-      if (e) { startBoarding('board', e, boat); return true; }
-      const fast = heaveFor(boat);
-      if (fast) { startHeaveTo(fast, boat); return true; }   // AUDIT NAV1: too fast to board her - heave to
+      if (e) { startBoarding('board', e, boat); return true; }   // BOARD-MAGNET: at any way - the haul brings her up and takes mine off
       return yardHere(boat) && openYard(boat, { quay: true });   // AUDIT NAV1: the shipwright, lying to his quay
     }
     const e = boardableOnFoot();
@@ -3438,14 +3348,14 @@ export function createNavalHost(deps) {
     return true;
   }
   /** NAVAL-E (AUDIT 2026-10-01 part four): WHETHER `activate` WOULD TAKE THE PRESS NOW, asked without taking it - a prize's
-   *  hold, a struck ship to board or to heave to beside, the yard at her quay, a struck ship's rail on foot. The street
+   *  hold, a struck ship to board, the yard at her quay, a struck ship's rail on foot. The street
    *  asks it before a node's press: at sea the net's cast stands in the look, and E cast it while the readout said "E:
    *  board her". */
   function takesActivate({ boatTrigger = false } = {}) {
     if (aiming || boarding || !enabled) return false;   // activate's own guard
     const boat = myBoat();
     if (prizeInReach(boat)) return true;
-    if (boat) return !!(boardable(boat) || heaveFor(boat) || yardHere(boat));
+    if (boat) return !!(boardable(boat) || yardHere(boat));
     if (!boatTrigger && passageShip()) return true;   // PASSAGE: and a berth's ship to book
     return !!(boardableOnFoot() || (!boatTrigger && gangwayInReach()));   // QUAYS: and the gangway
   }
@@ -3486,19 +3396,15 @@ export function createNavalHost(deps) {
 
   function startBoarding(kind, entry, boat) {
     const from = { pos: [...entry.ship.pos], yaw: entry.ship.yaw };
-    let to = from;
-    if (boat) {
-      const pose = boatPose(boat);
-      const anchor = { pos: pose.position, yaw: yawOfRot(pose.rotation), beam: hullBuild(boat.hull).beam, midZ: 0 };
-      to = berthPose(anchor, { pos: entry.ship.pos, yaw: entry.ship.yaw, beam: hullBuild(entry.ship.hull).beam, midZ: 0 });
-    }
+    const to = boat ? haul.berth(boat, from, entry.ship.hull) : from;
     // AUDIT NAV1 (online #3): a ship another stands is taken over at the grapple - the haul, the fight, the prize and
     // her fate in one world, mine (the boarder's copy was hauled 23 m from her stander's, and slid back from under him)
     adopt(entry);
-    boarding = createBoarding({ kind, shipId: entry.id, from, to: { pos: to.pos, yaw: to.yaw } });
+    boarding = createBoarding({ kind, shipId: entry.id, from, to: { pos: to.pos, yaw: to.yaw }, hull: entry.ship.hull });
     boarding.boat = boat;
     boarding.peerOrigin = deps.aboardPeer?.() ?? null;
     if (!boat) boarding.t = Infinity;   // on foot: no haul - over the rail at once
+    haul.start(boarding, to);   // BOARD-MAGNET (navalHaul.js): her side and heading kept; at my helm my canvas struck, my way off
     entry.ship.boarded = true;
     entry.ship.speed = 0;
     entry.ship.damage.douse();   // AUDIT NAV1 (B4): grappled, her fires are fought - never a fight on a deck burning under it
@@ -3519,15 +3425,19 @@ export function createNavalHost(deps) {
       return;
     }
     const was = b.phase;
+    if (was === 'grapple') {
+      // BOARD-MAGNET (navalHaul.js): drawn toward her berth beside the ship she is hauled to as it lies THIS frame, kept
+      // clear of its hull - the fight begins once she lies in it, side by side wherever that ship came to rest
+      const pose = haul.step(b, entry.ship.hull, dt);
+      entry.ship.pos = [pose.pos[0], entry.ship.pos[1], pose.pos[2]]; entry.ship.yaw = pose.yaw;
+    }
     b.step(dt);
-    const pose = b.pose();
-    if (pose) { entry.ship.pos = [pose.pos[0], entry.ship.pos[1], pose.pos[2]]; entry.ship.yaw = pose.yaw; }
     if (was === 'grapple' && b.phase === 'fight') beginFight(b, entry);
     if (b.phase !== 'fight') return;
     // the fight: its muster's tally, the player's distance
     if (dist2d(deps.feet(), entry.ship.pos) > ABANDON_RANGE) {
       if (b.kind === 'repel') { castOff(b, entry, 'abandon'); return; }   // AUDIT NAV1 (B6, B7): my own deck left to them
-      deps.say?.(entry.ship.damage.state === SHIP_STATES.afloat ? t('naval.foul.leave', 'You leave the boarding. The enemy crew returns to their guns.') : 'You leave the boarding. The enemy crew stands down.', 3);   // RAM-BOARD: a sound ship fights on
+      deps.say?.('You leave the boarding. The enemy crew stands down.', 3);
       for (const f of b.foes) deps.board?.removeFoe?.(f.handle);
       b.foes = [];
       entry.ship.boarded = false;
@@ -4077,47 +3987,6 @@ export function createNavalHost(deps) {
     return deal;
   }
 
-  // ── rams ─────────────────────────────────────────────────────────────────────────────────────────────────────────
-  let wayIn = [];   // AUDIT NAV1: my boat's forward way over the last RAM_MEMORY_S - [{ t, v }]
-  function checkRams(boat) {
-    if (!boat || boat.charter) { wayIn = []; return; }   // FERRY-CLEAR: a booked ship's master never rams - her stem in a neighbour's side broke one or the other, the passenger charged with piracy for it
-    const pose = boatPose(boat);
-    const v = pose.velocity;
-    const fwd = flatUnit(quatRotate(pose.rotation, [0, 0, 1])) ?? [0, 0, 1];
-    wayIn.push({ t: clock, v: v[0] * fwd[0] + v[2] * fwd[2] });
-    while (wayIn.length && clock - wayIn[0].t > RAM_MEMORY_S) wayIn.shift();
-    const way = wayIn.reduce((m, w) => Math.max(m, w.v), 0);
-    if (way < RAM_SPEED) return;
-    const build = hullBuild(boat.hull);
-    const stem = [pose.position[0] + fwd[0] * build.bowZ, pose.position[1] + 1, pose.position[2] + fwd[2] * build.bowZ];
-    for (const e of sea.values()) {
-      if (!e.boat || e.ship.damage.state === SHIP_STATES.sunk || clock - e.ramAt < RAM_COOLDOWN_S) continue;
-      const box = hullBox(e.boat);
-      if (!box || !insideGrown(box, stem, RAM_REACH)) continue;
-      const her = velocityOf(e.ship);
-      const speed = way - (her[0] * fwd[0] + her[2] * fwd[2]);   // closing: a ship sailing on ahead of the stem takes less of it
-      if (speed < RAM_SPEED) continue;
-      e.ramAt = clock;
-      wayIn = [];   // the way spent on her
-      const galley = build.ram;
-      const dealt = Math.round(speed * RAM_DAMAGE * (galley ? GALLEY_RAM : 1) * statScale(deps.captain?.stats?.(), 'ram'));   // CAPTAIN-TREE: her captain's ram
-      effects.hit(stem, fwd, true);
-      sound(NAVAL_SFX.hit, stem, 1);
-      deps.shake?.(3);
-      deps.mid?.(galley ? 'Your ram smashes into the hull!' : 'You ram the ship!', 2);
-      chargePlayer('fire', e);
-      e.myBlowAt = clock;
-      // RAM-BOARD (systems/naval/navalFoul.js): her bow fouled in my stem - boarded as she stands while it holds
-      if (!e.owner) strike(e, { hull: dealt, sail: 0, crew: ramMen(dealt, random()) }, myId());   // AUDIT 2: her blow first - a ram that sends her down (or strikes her colours) fouls nothing, nor says so
-      if (e.ship.damage.state === SHIP_STATES.afloat && !e.ship.boarded) { foul(e.ship, myId(), clock, deps.captain?.stats?.().foul); deps.say?.(t('naval.foul.rammed', 'The ships are locked together. Board before they break free!'), 3); }
-      if (e.owner) deps.sendHit?.(navalHitData(e.owner, { n: e.n, hull: Math.min(400, dealt), crew: ramMenSaid(dealt), zone: 'holed', foul: fouledBy(e.ship, myId(), clock) ? foulLeft(e.ship, clock) : 0 }));   // RAM-BOARD: her stander holds her way
-      const st = myBoatState(boat);
-      const back = dealt * RAM_RECOIL * (galley ? 1 / GALLEY_RAM : BOW_RECOIL) * (st?.guns.braced ? BRACE_TAKEN : 1);
-      st?.damage.apply({ hull: Math.round(back), sail: 0, crew: 0 }, clock);
-      break;
-    }
-  }
-
   // ── the frame ────────────────────────────────────────────────────────────────────────────────────────────────────
   /**
    * One frame of the sea, the streaming world's exterior only. `paused` holds every clock (the shots, the ships, the
@@ -4162,12 +4031,9 @@ export function createNavalHost(deps) {
     knowStep();   // SPYGLASS: what this frame teaches me of each ship
     siteStep(boat);   // CAPT-BOARD: the held contracts' waters, and a delivery's berth
     if (clock - lastHailCheck >= SAIL_HO_CHECK_S) { lastHailCheck = clock; hailSails(boat); }   // AUDIT NAV1 (#14)
-    // the ram and the aim, on the hulls as this frame stands them (AUDIT NAV1: both read the last frame's, a ship's way
-    // behind - my stem where it is, her planking where it was)
-    checkRams(boat);
-    stepHeaveTo(boat);
     poseMyFires(total);
     feel.frame(total, (en) => (sea.get(en.id) === en && en.ship.damage.state === SHIP_STATES.sinking ? [en.ship.pos[0], seaY + 1.5, en.ship.pos[2]] : null));   // COMBAT-FEEL: magazines due, my hull's smoke
+    // the aim, on the hulls as this frame stands them (AUDIT NAV1: it read the last frame's, a ship's way behind)
     aim = null; aimHit = null;
     if (aiming && boat) {
       const side = lookSide(boat);
@@ -4228,7 +4094,7 @@ export function createNavalHost(deps) {
     }
   }
 
-  /** One step of the sea's clocks (`d` at most FRAME_STEP_S): my boats, the rams, the traffic, the captains and the
+  /** One step of the sea's clocks (`d` at most FRAME_STEP_S): my boats, the traffic, the captains and the
    *  hulls kept apart, the raiders' reckoning, the others' ships eased, the boarding, the shots and the smoke. */
   // ── SHIP-LIFE: the harbours and the errands (systems/naval/shipLife.js) ────────────────────────────────────────────
   /** The known harbours, as the errands read them. */
@@ -4655,7 +4521,6 @@ export function createNavalHost(deps) {
       } else if (out.grapple && out.grapple !== myId() && sea.has(out.grapple) && !s.lashed) lashPrize(e, sea.get(out.grapple));   // SEA-PEACE: alongside the ship that struck to her
     }
     stepPrizes();
-    checkShipRams();
     separateHulls();
     // NAV-R: a raider of mine sunk, struck, taken or boarding, or one that chased me and lost me, is spent for its life
     for (const e of sea.values()) {
@@ -4709,8 +4574,8 @@ export function createNavalHost(deps) {
   /** A ship of mine coming for me: fighting me, or coming alongside to board. */
   const chasesMe = (e) => (e.ship.mode === 'engage' || e.ship.mode === 'board') && e.ship.target === myId();
 
-  // ── hulls kept apart, and a galley's ram (AUDIT NAV1) ──────────────────────────────────────────────────────────────
-  // (a hull on the flat and the push out of another - flatHull, hullOverlap - stand at the module's top: SERPENT4's bumpers read them too)
+  // ── hulls kept apart (AUDIT NAV1) ────────────────────────────────────────────────────────────────────────────────
+  // (a hull on the flat and the push out of another - flatHull, hullOverlap - are navalShips.js's: SERPENT4's bumpers and the grapples' haul read them too)
   /**
    * Every sea ship of mine that stands in another hull - a ship of mine, another player's, one of my boats - is pushed
    * out along the shallowest axis (two of mine share it), and the way she made into it is taken off her.
@@ -4760,59 +4625,6 @@ export function createNavalHost(deps) {
     const b = others.length ? bumperDrift(flatHull(pose.position, yawOfRot(pose.rotation), boat.hull), others) : null;
     return b ? (d ? [d[0] + b[0], 0, d[2] + b[2]] : b) : d;
   }
-  /** A galley of mine that strikes a hull with her ram at RAM_SPEED or more: the ram's own law, the player's boats
-   *  and the sea's ships alike - my boats take it on my client (the victim's law), a ship of mine is struck. */
-  function checkShipRams() {
-    for (const e of sea.values()) {
-      const s = e.ship;
-      if (e.owner || !hullBuild(s.hull).ram || s.damage.state !== SHIP_STATES.afloat || s.speed < RAM_SPEED) continue;
-      if (clock - (e.rammedAt ?? -Infinity) < RAM_COOLDOWN_S) continue;
-      const f = forwardOfYaw(s.yaw), bowZ = hullBuild(s.hull).bowZ;
-      const bow = [s.pos[0] + f[0] * bowZ, deps.seaY() + 1, s.pos[2] + f[2] * bowZ];
-      const inBox = (box) => {
-        const l = [bow[0] - box.c[0], bow[1] - box.c[1], bow[2] - box.c[2]];
-        return Math.abs(l[0] * box.ax[0] + l[1] * box.ax[1] + l[2] * box.ax[2]) <= box.h[0] + 1 && Math.abs(l[0] * box.az[0] + l[1] * box.az[1] + l[2] * box.az[2]) <= box.h[2] + 1;
-      };
-      for (const b of myBoats()) {
-        const box = hullBox(b);
-        if (!box || !inBox(box)) continue;
-        const v = boatPose(b).velocity;
-        const closing = s.speed - (v[0] * f[0] + v[2] * f[2]);
-        if (closing < RAM_SPEED) continue;
-        e.rammedAt = clock;
-        const st = myBoatState(b);
-        const dealt = Math.round(closing * RAM_DAMAGE * GALLEY_RAM * (st.guns.braced ? BRACE_TAKEN : 1));
-        st.damage.apply({ hull: Math.round(dealt * captainsDue().hull), sail: 0, crew: ramMen(dealt, random(), PLAYER_CREW_TOUGHNESS) }, clock);   // CREW-HOLD: my boat's crew; SEA-SET: the Captain's Due on her hull
-        effects.hit(bow, f, true);
-        sound(NAVAL_SFX.hit, bow, 1);
-        deps.shake?.(3.5);
-        deps.mid?.(`${s.names?.name ?? 'A galley'} rams you!`, 2);
-        s.damage.apply({ hull: Math.round(dealt * RAM_RECOIL / GALLEY_RAM), sail: 0, crew: 0 }, clock);
-        break;
-      }
-      if (clock - (e.rammedAt ?? -Infinity) < RAM_COOLDOWN_S) continue;
-      for (const t of sea.values()) {
-        if (t === e || !t.boat || t.owner || t.ship.damage.state === SHIP_STATES.sunk || boarding?.shipId === t.id) continue;
-        const box = hullBox(t.boat);
-        if (!box || !inBox(box)) continue;
-        const tv = velocityOf(t.ship);
-        const closing = s.speed - (tv[0] * f[0] + tv[2] * f[2]);
-        if (closing < RAM_SPEED) continue;
-        e.rammedAt = clock;
-        const dealt = Math.round(closing * RAM_DAMAGE * GALLEY_RAM);
-        effects.hit(bow, f, true);
-        sound(NAVAL_SFX.hit, bow, 1);
-        // AUDIT NAV2 F26: a sound ship is rammed to her strike, never under it - one blow sank a prize outright (the rest
-        // of a volley is floored only once she has struck: strike's STRUCK_GRACE_S)
-        const td = t.ship.damage;
-        const room = td.state === SHIP_STATES.afloat && td.hullShare() > STRUCK_AT ? Math.ceil(td.hull - td.maxHull * STRUCK_AT) : Infinity;
-        strike(t, { hull: Math.min(dealt, room), sail: 0, crew: ramMen(dealt, random()) }, e.id);
-        s.damage.apply({ hull: Math.round(dealt * RAM_RECOIL / GALLEY_RAM), sail: 0, crew: 0 }, clock);
-        break;
-      }
-    }
-  }
-
   // ── the others (NAV-G) ───────────────────────────────────────────────────────────────────────────────────────────
   /** My word: the ships I stand, my recent volleys and barrels. */
   function word(toWire) {
@@ -4993,9 +4805,8 @@ export function createNavalHost(deps) {
     }
     const entry = ownByN(hit.n);   // AUDIT NAV1 (online #8): by her number, whatever id she was minted under
     if (!entry) return false;
-    const hurt = { hull: hit.hull, sail: hit.sail, crew: ballMen(hit.crew, random()), fire: hit.fire };   // TOUGHER-SHIPS: the men said are a gun's (shotMen) or a ram's (ramMenSaid), her toughness reckoned here - an older build's word the same
+    const hurt = { hull: hit.hull, sail: hit.sail, crew: ballMen(hit.crew, random()), fire: hit.fire };   // TOUGHER-SHIPS: the men said are a gun's (shotMen), her toughness reckoned here - an older build's word the same
     strike(entry, hurt, from, true, strayOnAlly(entry, hurt, from));   // a player's blow - SEA-EASE: a stray on an aid weighed as mine
-    if (hit.foul) foulSaid(entry.ship, from, clock, hit.foul);   // RAM-BOARD (AUDIT 2026-10-17): their ram's foul - my AI holds her way
     return true;
   }
 
@@ -5147,8 +4958,7 @@ export function createNavalHost(deps) {
     const hot = !!aimHit && state === 'ready';
     const nb = boarding ? null : boardable(boat);
     const pr = nb || boarding ? null : prizeInReach(boat);
-    const hv = nb || pr || boarding ? null : heaveFor(boat);
-    const yard = !nb && !pr && !hv && !boarding && yardHere(boat);
+    const yard = !nb && !pr && !boarding && yardHere(boat);
     return {
       waters: w.waters ?? null,   // CAPT-WATERS: the plate says the deep waters
       ether: w.ether ? { bandName: w.ether.bandName, depth: w.ether.depth, veil: !!w.ether.veil } : null,   // ETHER-SEA: ...and the Eltheric Ocean's band and depth (AUDIT CAPTAIN'S SEA D19: or the Veil itself)
@@ -5161,7 +4971,7 @@ export function createNavalHost(deps) {
       aiming,
       target,
       board: nb ? { name: nb.ship.names?.name ?? 'the ship', kind: 'board' } : pr ? { name: pr.ship.names?.name ?? 'the ship', kind: 'hold' }
-        : hv ? { name: hv.ship.names?.name ?? 'the ship', kind: 'heave', heaving: !!heaveTo } : yard ? { name: 'the shipwright', kind: 'yard' } : null,
+        : yard ? { name: 'the shipwright', kind: 'yard' } : null,
       boarding: boarding ? fightOf(boarding) : null,
       notoriety: notorietyWord,
       incoming: st.damage.state === SHIP_STATES.wrecked ? null : incoming(boat),
@@ -5223,7 +5033,6 @@ export function createNavalHost(deps) {
       // out, as she wears no tag (whose bar the card's mirrors)
       hull: made ? s.damage.hullShare() : null, sail: made && s.damage.maxSail > 0 ? s.damage.sailShare() : null, state: s.damage.state, boarded: !!s.boarded,
       crew: made && s.damage.maxCrew > 0 ? s.damage.crewShare() : null,   // CARD-CREW (COMBAT-FEEL): her men, as grape thins them
-      ...(s.damage.state === SHIP_STATES.afloat && fouledBy(s, myId(), clock) ? { fouled: true } : {}),   // RAM-BOARD: her bow in my stem
       distance: Math.round(dist2d(s.pos, from)),
       ...stance, bound: known < KNOW.colours || hid ? '' : boundOf(e),   // SEA-PEACE: sized up as I stand; SHIP-STANCE: as her tag - a struck ship neither; SHIP-TAGS
     };
@@ -5335,7 +5144,7 @@ export function createNavalHost(deps) {
     seenVolleys.clear();
     hailCalls.clear();   // SHIP-WATCH
     flashes.length = 0;
-    aiming = false; aim = null; aimHit = null; heaveTo = null; wayIn = [];
+    aiming = false; aim = null; aimHit = null;
     for (const [b, f] of [...myFires]) douseMine(b, f);
     galleonGuns.clear();   // AUDIT GN2-GN5: every gun deck at rest - the sea's frame steps none while the arc is off
     if (boarding) {
@@ -5585,7 +5394,7 @@ export function createNavalHost(deps) {
      *  crew is held off her deck (`hold`: a prize, or her men the fight's - my boarding's, or another's in a room) and,
      *  AUDIT NAV2 F40, a boarding at hand (`toward`, the point her crew musters toward, and CREW-MUSTER's `way`, her side
      *  of it): the ship she closes on to board (her 'board' course: 'board'), or me able to board her now she has struck
-     *  ('repel': my helm's own reach, boardingGap - in range, my way under BOARD_SPEED - or my feet's, footReach) - a ship
+     *  ('repel': my helm's own reach, boardingGap - in range, at any way (BOARD-MAGNET) - or my feet's, footReach) - a ship
      *  to come alongside set abeam of her on the side it will
      *  lie once she is (berthPose's: she lies on the side of its keel she is on, her heading its own or its reciprocal),
      *  at its distance (her men swung rail to rail while she came up bow-on). */
@@ -5611,9 +5420,9 @@ export function createNavalHost(deps) {
           const peer = me || other ? null : (deps.peerBoats?.() ?? []).find((p) => p.id === t);
           const [pos, yaw] = me ? [me.GameObject.position, yawOfRot(me.GameObject.rotation)] : other ? [other.ship.pos, other.ship.yaw] : [peer?.pos ?? null, peer?.yaw];
           if (pos) { toward = Number.isFinite(yaw) ? abeam(e, pos, yaw) : pos; way = 'board'; }   // CREW-MUSTER: she goes over the other's rail
-        } else if (boardableState(e.ship, myId(), clock) && !boarding) {   // RAM-BOARD: struck, or fouled by my stem
+        } else if (boardableState(e.ship) && !boarding) {
           // CREW-MUSTER (FIELD BUGS 2026-10-14; Mac's call): a boarding of her I could make NOW - my helm's own reach
-          // (boardingGap: in range and my way under BOARD_SPEED), or my feet's (footReach) - and hers is the repel's side
+          // (boardingGap: in range, at any way - BOARD-MAGNET), or my feet's (footReach) - and hers is the repel's side
           const from = helm ? helm.GameObject.position : (feet ??= deps.feet());
           if (helm ? boardingGap(helm, e) != null : footReach(e, from)) { toward = helm ? abeam(e, from, yawOfRot(helm.GameObject.rotation)) : from; way = 'repel'; }
         }
@@ -5643,7 +5452,7 @@ export function createNavalHost(deps) {
       }
       if (toward) way = 'repel';   // CREW-MUSTER: she comes over our rail
       // CREW-MUSTER (FIELD BUGS 2026-10-14, "Crew Attacking Me"; Mac's call): at her helm, the struck ship a boarding from it
-      // would take NOW (the boarding's own `boardable`: in reach, her way under BOARD_SPEED) - never one it would not
+      // would take NOW (the boarding's own `boardable`: in reach - BOARD-MAGNET: at any way) - never one it would not
       // (they stood at the rail crying the repel's words for as long as I sat at her helm with a struck ship in reach, at
       // any way - and to the player, with none coming aboard, they were crying them at him)
       else if (!boarding && boat === myBoat()) { const e = boardable(boat); if (e) { toward = e.ship.pos; way = 'board'; } }

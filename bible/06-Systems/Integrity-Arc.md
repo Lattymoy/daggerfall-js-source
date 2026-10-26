@@ -522,11 +522,35 @@ shelf's fix - each finding reproduced over the real code before it counted. What
 
 Not changed, and why: a deploy runs the migration a moment before the new Worker serves, and an old Worker's
 checkpoint in that window can lift a migrated hold early - the new one's first checkpoint holds it again from
-`held_until`; a locked copy is locked for good (no route clears `item_dupes` - the owner's call is the piece, not a
-term); the dungeon's legacy piles and bodies were not re-traced past the find; a claim costs its maker nothing now (a contested
+`held_until`; a locked copy is locked for good (the owner's call is the piece, not a term) - save a record's copy of its
+own lifted by staff's purge with `keep` (COPY-LIFT, below); the dungeon's legacy piles and bodies were not re-traced past the find; a claim costs its maker nothing now (a contested
 claim is no strike - the owner's call), so a player who reads a piece's key off the wire and shows the same piece with
 it stops that piece moving for the grace (`DUPE_GRACE_S`, five minutes) each time, and takes nothing - its own copy
 locked.
+
+**COPY-LIFT (FIELD BUGS 2026-10-25i, Giljabrar: "I placed 89 rare/legendary items in a chest ... they were all 'Realm
+Locked'").** The decorator's Discard wrote a home's chests back as they stood when its draft opened
+(`scenes/decor/decorTool.js` CHEST-DRAFT): a piece taken out since stood in the chest and the pack, a key shown twice in
+one record - and in #1223's build a Discard in another room's decorator (a ship's, a caravan's, an offline house's)
+stood the home's pieces there in place of that room's own, with its chests and its own-things record: a copy of
+everything the chests held and of each own thing standing in the home, and the other room's own things lost (in no
+record: staff give one back fresh, Add an item, on the player's word). Such a pair is repaired by staff's purge with
+`keep: true`: one of each kept - of the record's own lists first (its pack before a room's chest), the first of the print
+its ledger row holds - and every other copy destroyed wherever the save holds it, the places the checkpoint never reads
+with them: a deserter revenant's take, a pile on the ground, a shop's shelf, a dungeon's chest
+(`staffRealm.js:"export function copiesOfKeys(save, keySet) {"`, said as `hidden`), and of a piece it lifts, the
+account's chests'. A `twice` copy is lifted in the same batch only where the act itself leaves the record one - its
+batch destroys a copy of it, or staff's Remove took one off the character and keeps it - its row the record's own, held
+and unclaimed and of the piece kept, no other record's copy known, and no trail check or one that found it innocent
+(`ledger.js:"export async function ownCopiesLiftable(db, char, pieces) {"`); the `dupe` finding and the answer's
+`lifted` say what the batch took, and a checkpoint landing between the act's read and its seizure refuses it `seq`. No
+checkpoint lifts a copy (AUDIT FB1025i): the record a checkpoint shows is the lists it holds, and a copy moved where it
+lists nothing - a revenant's take (RVN8: a deserter's split, `splitPack`, and a kill's, `pickTaken` - neither takes a
+realm-locked piece now, `revenant.js:"&& !isRealmLocked(item)"`), a counter or the ground under a modified client -
+and brought back after would leave the other one trading. Open: a copy sold at a counter before the keep is gone from
+the save - nothing the act can count, so nothing lifts on that word; the sale's gold stays, and the piece bought back is
+a second of one, locked again by the checkpoint that shows both. Pinned by `test/server/fb1025i_chestlock.test.js` and
+`staffpanel3realm.test.js`; `tools/mutants/fb1025i_chestlock.json`.
 
 ### 4b. The audit (2026-10-09, Mac: "Lets do a comprehensive audit on this")
 

@@ -22,7 +22,11 @@ const browser = await chromium.launch({ args: [
 const base = 'http://localhost:5201/play/';
 const results = [], errors = [];
 const check = (name, ok, detail = null) => { results.push({ name, ok: !!ok, detail }); console.log(`${ok ? 'ok' : 'FAIL'} ${name}`, detail ?? ''); };
-const ready = async (page) => page.waitForFunction(() => !document.querySelector('.intro-begin')?.disabled && window.__intro?.state.landscapeReady !== undefined, null, { timeout: 30000 });
+// MAIN-RED (2026-10-26): A PAGE OF THE DEV SERVER IS ITS WHOLE GRAPH. Unbundled, the door asks ~15,900 modules (BOOT1's
+// world.js warm-up among them) before the intro's code runs and asks for its recording - measured here, 34s on a warm
+// server and 51s on a cold one, and the recording itself then lands at once. This wait's 30s has run out on every run
+// since 2026-10-25 as the graph grew; every load is given two minutes. A built page is a few chunks.
+const ready = async (page) => page.waitForFunction(() => !document.querySelector('.intro-begin')?.disabled && window.__intro?.state.landscapeReady !== undefined, null, { timeout: 120000 });
 const shot = (page, name) => page.screenshot({ path: `${out}/${name}.png` });
 /** ACC1: the first-run account prompt stands over the doors on a fresh profile - put it away (overhaulsProbe's own). */
 const closeAccount = async (page) => {
@@ -195,7 +199,7 @@ try {
   let release;
   const blocked = new Promise(resolve => { release = resolve; });
   await sp.route('**/theme.mp3*', async route => { await blocked; await route.continue().catch(() => {}); });
-  await sp.goto(`${base}?introdebug`); await sp.waitForSelector('.intro-skip');
+  await sp.goto(`${base}?introdebug`); await sp.waitForSelector('.intro-skip', { timeout: 120000 });   // MAIN-RED: a dev page, as ready()
   await sp.locator('.intro-skip').click(); await sp.waitForSelector('#intro', { state: 'detached' });
   check('skip works while audio is still loading', await sp.locator('.px-menu button').count() > 0);
   release();

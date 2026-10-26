@@ -693,6 +693,9 @@ export class Collider {
      *  parts it holds back from the body are a bucket's not yet stood, and leave with the bucket; null for none */
     this.late = null;
     this._poseCount = 0;   // SEA-DROPS: moved by posesMoved - the posed movers' boxes are kept while it stands
+    this._walk = 0;   // FIELD BUGS 2026-10-25i RAIL-HANG: a walking step's body height while its passes resolve (_moveStep), 0 for none
+    this._walkRefused = false;   // RAIL-HANG: a sphere's resolve made again with no walking floor taken (_resolveSphere)
+    this._onGround = false;   // RAIL-HANG (AUDIT FB1025i G6): the move's body stood on the ground when it began (move's `onGround`)
   }
 
   /** SEA-DROPS: THE POSED MOVERS MAY STAND ELSEWHERE NOW - every bucket laid with addMesh's `posed` has its world box made
@@ -836,8 +839,16 @@ export class Collider {
    * any query: its world box is made once a move and kept, and a query
    * far from every posed mover asks none of them. A mover laid without it
    * is asked from where it stands at every query (moverReaches).
+   *
+   * FIELD BUGS 2026-10-25i SIGN-PASS (AUDIT FB1025i G5): `sight` - a mark a
+   * triangle of `indices` (one a triangle, in their order; null for none):
+   * a marked one is MET BY EVERY RAY AND SWEEP, as DFU's MeshCollider is
+   * met, and by NO BODY - the resolve, the overlap, the contact, the
+   * parity and a body's own ray (BODY_RAY) pass it. A shop's hung board
+   * (world/signSolid.js): an arrow, a look, the camera and a click meet
+   * it, a rider rides under it.
    */
-  addMesh(bucketKey, positions, indices, matrix, translation = null, rotation = null, posed = false) {
+  addMesh(bucketKey, positions, indices, matrix, translation = null, rotation = null, posed = false, sight = null) {
     let bucket = this._buckets.get(bucketKey);
     const fresh = !bucket;
     if (!bucket) {
@@ -845,7 +856,7 @@ export class Collider {
       // OWN space (the translation is applied to the RAY, as the DDA
       // already does), kept as the triangles go in - one compare per
       // vertex, paid once at load, against a walk paid per ray.
-      bucket = { key: bucketKey, moves: !!(translation || rotation), frame: FRAME_OF.get(translation) ?? null, ord: -1, _broadStamp: 0, lvl: FILED_NONE, bx0: 0, bx1: -1, bz0: 0, bz1: -1, tris: [], yLo: [], yHi: [], part: [], parts: 0, rayMark: null, posed: !!posed && !!(translation || rotation), wbox: null, grid: new Map(), wide: [], wideTree: null, t: translation || (() => ZERO3), r: rotation, min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] };   // AUDIT BRANCH (WoD) B1; OW-WOD-LAG: the wide triangles, and their tree (built when first asked); FB0930-FRAME: its key, whether it moves, its place in the walk
+      bucket = { key: bucketKey, moves: !!(translation || rotation), frame: FRAME_OF.get(translation) ?? null, ord: -1, _broadStamp: 0, lvl: FILED_NONE, bx0: 0, bx1: -1, bz0: 0, bz1: -1, tris: [], yLo: [], yHi: [], part: [], parts: 0, sight: null, rayMark: null, posed: !!posed && !!(translation || rotation), wbox: null, grid: new Map(), wide: [], wideTree: null, t: translation || (() => ZERO3), r: rotation, min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] };   // AUDIT BRANCH (WoD) B1; OW-WOD-LAG: the wide triangles, and their tree (built when first asked); FB0930-FRAME: its key, whether it moves, its place in the walk
       this._buckets.set(bucketKey, bucket);
     }
     const m = matrix;
@@ -860,6 +871,7 @@ export class Collider {
       ];
     };
     const part = bucket.parts++;   // FIELD BUGS 2026-10-02 ROCK-FREE: each call one collider of the bucket's
+    if (sight && !bucket.sight) bucket.sight = new Array(bucket.tris.length).fill(0);   // SIGN-PASS: a bucket's marks, one a triangle once any is marked
     // AUDIT REST III E2: A MIRRORED PLACEMENT'S WINDING, AS THE WORLD PASS WINDS IT - a negative determinant turns every
     // triangle over, and the static batch swaps each one's last two corners back (staticBatch.js WOD5), so the face the
     // game draws faces the eye. The answer's normal is turned to face the ray either way; `back` (AUDIT REST II F4) reads
@@ -873,6 +885,7 @@ export class Collider {
       const idx = bucket.tris.length;
       bucket.tris.push([a, b, c]);
       bucket.part[idx] = part;
+      if (bucket.sight) bucket.sight[idx] = sight && sight[i / 3] ? 1 : 0;   // SIGN-PASS: a ray's, never a body's
       bucket.yLo[idx] = Math.min(a[1], b[1], c[1]);   // FB0930-FOE-RAYS: the ray walk's Y reject
       bucket.yHi[idx] = Math.max(a[1], b[1], c[1]);
       for (let j = 0; j < 3; j++) {   // PERF-EXT25: the three corners without a fourth array a triangle
@@ -999,6 +1012,7 @@ export class Collider {
     let bestR = null;   // AUDIT NAV1 (#12): and the turn of the bucket it stands in
     const only = filter?.only ? new Set(filter.only) : null;
     const skip = filter?.skip ? new Set(filter.skip) : null;
+    const bodies = !!filter?.bodies;   // SIGN-PASS (AUDIT FB1025i G5): a body's own ray (BODY_RAY) - it passes a ray's triangle as the body does
     // FB0930-FRAME: the buckets the ray's own world box reaches, in the walk's order - the rest would fail the box below
     const ex = origin[0] + dirW[0] * maxDist, ez = origin[2] + dirW[2] * maxDist;
     const near = this._near(Math.min(origin[0], ex) - BOX_SKIN, Math.max(origin[0], ex) + BOX_SKIN,
@@ -1044,7 +1058,7 @@ export class Collider {
       const tDeltaX = Math.abs(CELL * invX);
       const tDeltaZ = Math.abs(CELL * invZ);
       const marks = rayMarks(bucket), stamp = RAY_STAMP;   // FB0930-FOE-RAYS
-      const yLoOf = bucket.yLo, yHiOf = bucket.yHi, dy = dir[1];
+      const yLoOf = bucket.yLo, yHiOf = bucket.yHi, dy = dir[1], passed = bodies ? bucket.sight : null;
       let walked = 0;
       while (walked <= Math.min(maxDist, best)) {
         const cell = bucket.grid.get(cellKey(cx, cz));   // PERF-EXT25
@@ -1058,6 +1072,7 @@ export class Collider {
             if (marks[ti] === stamp) continue;
             if (yHiOf[ti] < rLo || yLoOf[ti] > rHi) continue;   // not reachable in this cell - left unmarked
             marks[ti] = stamp;
+            if (passed !== null && passed[ti]) continue;   // SIGN-PASS: a body's ray passes it
             const tri = bucket.tris[ti];
             const hit = rayTriangle(ox, oy, oz, dir, tri[0], tri[1], tri[2]);
             if (hit !== null && hit < best && hit <= maxDist) { best = hit; bestKey = bkey; bestTri = tri; bestR = R; }
@@ -1069,6 +1084,7 @@ export class Collider {
       // AUDIT BRANCH (WoD) B1: the wide triangles, where this bucket holds any
       if (bucket.wide.length) {   // OW-WOD-LAG: the tree's, each wide triangle once
         for (const ti of wideOnRay(bucket, ox, oy, oz, dir, Math.min(maxDist, best))) {
+          if (passed !== null && passed[ti]) continue;   // SIGN-PASS: a body's ray passes it
           const tri = bucket.tris[ti];
           const hit = rayTriangle(ox, oy, oz, dir, tri[0], tri[1], tri[2]);
           if (hit !== null && hit < best && hit <= maxDist) { best = hit; bestKey = bkey; bestTri = tri; bestR = R; }
@@ -1216,12 +1232,13 @@ export class Collider {
       }
       if (!sphereTouchesBox(lx, ly, lz, radius, bucket.min, bucket.max)) continue;   // PERF-COL1: the same broad phase (the test below is `< r2`, no skin)
       const marks = rayMarks(bucket), stamp = RAY_STAMP;   // FB0930-FRAME: the walk's stamp, not a Set
-      const yLoOf = bucket.yLo, yHiOf = bucket.yHi, yReach = radius + SPHERE_Y_SLACK;
+      const yLoOf = bucket.yLo, yHiOf = bucket.yHi, yReach = radius + SPHERE_Y_SLACK, sightOf = bucket.sight;
       for (const cell of nearCells(bucket, lx, ly, lz, radius)) {   // AUDIT BRANCH (WoD) B1: the fine 3x3, then any wide triangles
         for (let ci = 0; ci < cell.length; ci++) {
           const ti = cell[ci];
           if (marks[ti] === stamp) continue;
           marks[ti] = stamp;
+          if (sightOf !== null && sightOf[ti]) continue;   // SIGN-PASS (AUDIT FB1025i G5): room for a body is room a ray's triangle never takes
           if (yHiOf[ti] < ly - yReach || yLoOf[ti] > ly + yReach) continue;   // FB0930-FRAME: out of reach above or below
           const tri = bucket.tris[ti];
           if (!triNear(tri, lx, ly, lz, radius)) continue;   // OW-WOD-LAG
@@ -1269,12 +1286,13 @@ export class Collider {
         if (R) { intoBucket(feet[0], feet[1] + CAPSULE_RADIUS + (axis * i) / (n - 1), feet[2], t, R, LOCAL); lx = LOCAL[0]; ly = LOCAL[1]; lz = LOCAL[2]; }
         if (!sphereTouchesBox(lx, ly, lz, lim, bucket.min, bucket.max)) continue;
         const marks = rayMarks(bucket), stamp = RAY_STAMP;   // FB0930-FRAME: the walk's stamp, not a Set
-        const yLoOf = bucket.yLo, yHiOf = bucket.yHi, yReach = lim + SPHERE_Y_SLACK;
+        const yLoOf = bucket.yLo, yHiOf = bucket.yHi, yReach = lim + SPHERE_Y_SLACK, sightOf = bucket.sight;
         for (const cell of nearCells(bucket, lx, ly, lz, lim)) {
           for (let ci = 0; ci < cell.length; ci++) {
             const ti = cell[ci];
             if (marks[ti] === stamp) continue;
             marks[ti] = stamp;
+            if (sightOf !== null && sightOf[ti]) continue;   // SIGN-PASS (AUDIT FB1025i G5): a body touches no ray's triangle
             if (yHiOf[ti] < ly - yReach || yLoOf[ti] > ly + yReach) continue;   // FB0930-FRAME: out of reach above or below
             const tri = bucket.tris[ti];
             if (!triNear(tri, lx, ly, lz, lim)) continue;   // OW-WOD-LAG
@@ -1563,6 +1581,10 @@ export class Collider {
     let pushedDown = false;
     let groundKey = null;
     let groundY = -Infinity;
+    // FIELD BUGS 2026-10-25i RAIL-HANG: the highest floor a walking step's lower sphere was set on (PH1, below) - its
+    // point and the way into it from the centre - asked once the walk is done whether the body stands there
+    let liftY = -Infinity, liftX = 0, liftZ = 0, intoX = 0, intoZ = 0;
+    const c0x = center[0], c0y = center[1], c0z = center[2];
     // PERF-COL1 (2026-09-21, SquidKam: "Guards kill the framerate"): THE
     // BROAD PHASE THE RAY HAD AND THE SPHERE DID NOT. This walked EVERY
     // bucket for EVERY sample - nine string keys, nine Map lookups and a
@@ -1607,12 +1629,13 @@ export class Collider {
       const bx = R ? LOCAL[0] : center[0] - t[0], by = R ? LOCAL[1] : center[1] - t[1], bz = R ? LOCAL[2] : center[2] - t[2];   // the centre in the bucket, as it stands at the bucket's turn
       if (!sphereTouchesBox(bx, by, bz, radius + SKIN, bucket.min, bucket.max)) continue;
       const marks = rayMarks(bucket), stamp = RAY_STAMP;   // FB0930-FRAME: the walk's stamp, not a Set
-      const yLoOf = bucket.yLo, yHiOf = bucket.yHi, yReach = reach + SPHERE_Y_SLACK;
+      const yLoOf = bucket.yLo, yHiOf = bucket.yHi, yReach = reach + SPHERE_Y_SLACK, sightOf = bucket.sight;
       for (const cell of nearCells(bucket, bx, by, bz, radius + SKIN)) {   // AUDIT BRANCH (WoD) B1: the fine 3x3, then any wide triangles
         for (let ci = 0; ci < cell.length; ci++) {
           const ti = cell[ci];
           if (marks[ti] === stamp) continue;
           marks[ti] = stamp;
+          if (sightOf !== null && sightOf[ti]) continue;   // SIGN-PASS (AUDIT FB1025i G5): a ray's triangle, never a body's (addMesh's `sight`)
           // Live local point: pushes from earlier triangles must be
           // seen by later ones (a stale snapshot compounded pushes).
           let lx = center[0] - t[0];
@@ -1709,20 +1732,35 @@ export class Collider {
           // own normal (PhysX's CctCharacterController testSlope) - so the face's own plane must be floor-sloped too,
           // |n.y| >= cos(slopeLimit), facing-blind as every test here is. A floor's edge is still its floor's; a
           // wall's edge is the wall's, and meets the plain push below.
+          // FIELD BUGS 2026-10-25i RAIL-HANG (Harlander: "Even going on foot you can get hung up on shop signs and
+          // fences"): AND A WALKING BODY IS SET ON A FLOOR ONLY WHERE IT STANDS. A body walking into a fence's rail from
+          // behind (41206-41208: a wedge whose back edge stands 0.55 m up) met the rail's upper slope just over its lower
+          // sphere's centre, and this arm set it ON the rail - 0.39 m up, 0.55 for a rider - wedged under the upper
+          // rail, whose back edge stands 0.9 m over the lower's; and met from the street, the same rail's under slope -
+          // its quad's diagonal edge over the sphere - set a runner 0.3 m up on it, under the rail's own top. A walking
+          // step's passes (`_walk`, the body's height - _moveStep) take a floor here only where the body stands once set
+          // on it - its height clear over that floor, asked at the walk's end (below; _standsOn). AUDIT FB1025i G2: the
+          // stand ceiling this read first (SH1's, entryY + STEP_OFFSET) turned every top 0.5-0.7 m over the feet that a
+          // walker had stepped onto through this arm - a bench, a bed, a throne's seat, a dungeon block's seam 0.501-
+          // 0.505 m over its ramp - into a jump or a wall; and the plane test beside it (the floor's own plane over the
+          // centre) asked nothing the headroom does not, at either side of every fence. A step with a fall or a rise in
+          // it is the arm as it was.
           const floorAbove = oneWayFloor !== false && d < radius && !wallAbove && dy / d <= -GROUND_NY
             && (oneWayFloor === true || (R ? center[1] - dy : t[1] + (ly - dy)) < center[1] + oneWayFloor)
             && (R ? faceNyTurned(tri, R) : faceNy(tri)) >= GROUND_NY;
-          if (floorAbove) {
+          const unstood = floorAbove && this._walk && this._walkRefused;   // RAIL-HANG: a walking step's floor where the body does not stand - a wall to it
+          if (floorAbove && !unstood) {
             const dh2 = dx * dx + dz * dz;
             const cy = R ? center[1] - dy : t[1] + (ly - dy);   // the closest point's world y (a mover's: the centre less the contact's turned-out y)
             center[1] = cy + Math.sqrt(Math.max(0, radius * radius - dh2));   // the sphere ON the surface
             grounded = true;
             if (cy > groundY) groundY = cy;
             if (groundKey == null || bkey !== 'dungeon') groundKey = bkey;
+            if (this._walk) { liftY = cy; liftX = center[0] - dx; liftZ = center[2] - dz; intoX = -dx; intoZ = -dz; }   // RAIL-HANG: asked at the walk's end (each floor set on stands over the sphere the last left: the last is the highest)
             continue;
           }
           if (d < radius) {
-            if (wallAbove) {
+            if (wallAbove || unstood) {   // RAIL-HANG: as SH1's wall - pushed back the way it came, never down through the floor's edge
               const dh = Math.sqrt(dx * dx + dz * dz);
               if (dh > 1e-6) {
                 const pushH = (radius - d) / dh;   // the whole penetration, sideways
@@ -1764,6 +1802,21 @@ export class Collider {
           if (touching && ny <= -GROUND_NY) pushedDown = true;
         }
       }
+    }
+    // RAIL-HANG: the floor a walking step set its lower sphere on is one the body STANDS on - its height clear over
+    // it (_standsOn) - or the sphere's resolve is made again from where it began with no such floor taken, each a wall
+    // to it as SH1's is (the walk above done: no query runs inside another's walk). A fence's lower rail, the upper
+    // 0.9 m over it, is no floor; nor a rib under a ceiling a water walker is pressed to - the plain push it had taken
+    // instead carried the body down past the rib's edge and through it (WW-LID B's own pin). PH1's own case - a body
+    // whose lower sphere sank under a floor with room over it - stands as it was. A body that began inside a closed
+    // solid under a ceiling too low to stand on its top (a sweep's station on W0000005's altar plinth, inside the altar
+    // block 41831, 1.25 m under the ceiling) meets its faces from inside, as DFU's CharacterController meets a
+    // MeshCollider's - a surface, never a volume - where PH1 had lifted it onto the block.
+    if (liftY > -Infinity && !this._standsOn(liftX, liftZ, intoX, intoZ, center[1], radius)) {
+      center[0] = c0x; center[1] = c0y; center[2] = c0z;
+      this._walkRefused = true;
+      try { this._resolveSphere(center, radius, out, standCeil, oneWayFloor, midBody, skip); } finally { this._walkRefused = false; }
+      return;
     }
     out.grounded = out.grounded || grounded;
     out.hitCeiling = out.hitCeiling || ceiling;
@@ -1954,7 +2007,7 @@ export class Collider {
     // does. The ray starts a skin under the centre: rayTriangle takes no hit nearer than 1e-4, and a head whose centre
     // stood ON a ceiling's plane was lifted through it unasked. A refused rise says so (`out.refused`) - the sideways
     // pass and the step ladder's rung read it (_moveStep).
-    if (feet[1] - entryY > SKIN && Number.isFinite(this.raycast([feet[0], entryY + CAPSULE_RADIUS + axis - SKIN, feet[2]], UP, feet[1] - entryY + SKIN))) {
+    if (feet[1] - entryY > SKIN && Number.isFinite(this.raycast([feet[0], entryY + CAPSULE_RADIUS + axis - SKIN, feet[2]], UP, feet[1] - entryY + SKIN, BODY_RAY))) {
       out.refused = true;
       feet[1] = Math.max(entryY, floorFeet);
     }
@@ -1973,12 +2026,16 @@ export class Collider {
    *  keeps the floor its lower sphere was set on (SQUEEZE1), whatever its height. The player's stances never pass it.
    *  AUDIT CLIMB2 G1: `noStep` - a climber's move (motor.js _freeClimbStep): the hug's press into the wall is always
    *  stopped, which the step ladder reads as a walk into a stair - a climb across under an eave was lifted 0.375 m in
-   *  one step, into the eave and the wall. A body on a wall climbs; it never steps. */
-  move(feet, dx, dy, dz, height = CAPSULE_HEIGHT, snap = true, keepFloor = false, noStep = false) {
-    const was = this._keepFloor, stepped = this._noStep;
+   *  one step, into the eave and the wall. A body on a wall climbs; it never steps.
+   *  FIELD BUGS 2026-10-25i RAIL-HANG (AUDIT FB1025i G6): `onGround` - the body stood on the ground when the move began
+   *  (EnemyMotor's walk, whose every step carries gravity's fall): its step is a WALKING one, as a step with no fall in
+   *  it is (_moveStep's `_walk`). */
+  move(feet, dx, dy, dz, height = CAPSULE_HEIGHT, snap = true, keepFloor = false, noStep = false, onGround = false) {
+    const was = this._keepFloor, stepped = this._noStep, stood = this._onGround, walked = this._walk;
     this._keepFloor = !!keepFloor;
     this._noStep = !!noStep;
-    try { return this._move(feet, dx, dy, dz, height, snap); } finally { this._keepFloor = was; this._noStep = stepped; }
+    this._onGround = !!onGround;
+    try { return this._move(feet, dx, dy, dz, height, snap); } finally { this._keepFloor = was; this._noStep = stepped; this._onGround = stood; this._walk = walked; }   // RAIL-HANG (AUDIT FB1025i G8): a throw leaves no walking pass behind it
   }
   _move(feet, dx, dy, dz, height = CAPSULE_HEIGHT, snap = true) {
     const maxComp = Math.max(Math.abs(dx), Math.abs(dy), Math.abs(dz));
@@ -2016,6 +2073,29 @@ export class Collider {
     return Math.hypot(probe[0] - feet[0], probe[1] - feet[1], probe[2] - feet[2]);
   }
 
+  /** FIELD BUGS 2026-10-25i RAIL-HANG: WHETHER A WALKING BODY STANDS on the floor its lower sphere was set on at (x, z),
+   *  met along (ix, iz) from its centre - the lower sphere's centre now at height `cy`, of radius `r`: its height
+   *  (`_walk`) clear over that floor. A body's ray straight up from just inside the floor's edge (STAND_INSET along the way
+   *  in, and STAND_SPREAD either side of it along the edge), from the sphere's own height (inside the body, clear of every
+   *  face the walk left it touching - a slab met by its underside answers from over its top), meets nothing short of the
+   *  body's top. A fence's lower rail answers no, at its middle and at its end (its upper rail stands over it, 0.9 m up);
+   *  a bench, a bed, a seat, a block's seam and a ledge under an open sky yes. Asked once a sphere's walk is done
+   *  (_resolveSphere). */
+  _standsOn(x, z, ix, iz, cy, r) {
+    const reach = this._walk - r;   // from the lower sphere's centre to the body's top
+    if (!(reach > 0)) return true;
+    const l = Math.hypot(ix, iz), ux = l > 1e-9 ? ix / l : 0, uz = l > 1e-9 ? iz / l : 0, o = STAND_ORIGIN;
+    // the floor's edge under the body, across its footprint: at the way in and STAND_SPREAD either side of it - at a
+    // rail's end the body stands half under the rail over it, and the way in itself runs along that rail's own end
+    for (const k of STAND_ACROSS) {
+      o[0] = x + ux * STAND_INSET - uz * k * STAND_SPREAD;
+      o[1] = cy;
+      o[2] = z + uz * STAND_INSET + ux * k * STAND_SPREAD;
+      if (Number.isFinite(this.raycast(o, UP, reach, BODY_RAY))) return false;
+    }
+    return true;
+  }
+
   /**
    * Unstick: from feet, step UP until the capsule is in clear space
    * (penetration below a threshold) AND there is floor within a short
@@ -2027,7 +2107,7 @@ export class Collider {
       const test = [feet[0], feet[1] + up, feet[2]];
       if (this.penetrationAt(test) < 0.03) {
         // clear here - now drop to the floor beneath this clear point
-        const d = this.raycast([test[0], test[1] + 0.2, test[2]], [0, -1, 0], up + 2);
+        const d = this.raycast([test[0], test[1] + 0.2, test[2]], [0, -1, 0], up + 2, BODY_RAY);   // SIGN-PASS: a floor a body stands on
         if (Number.isFinite(d)) return [test[0], test[1] + 0.2 - d, test[2]];
         return test;
       }
@@ -2061,6 +2141,14 @@ export class Collider {
     feet[0] += dx;
     feet[2] += dz;
     const hOut = { grounded: false, hitCeiling: false, pushedDown: false };
+    // FIELD BUGS 2026-10-25i RAIL-HANG: and a WALKING body - no fall in its step (velY is 0 on the player's ground), or
+    // one its motor says began on the ground (EnemyMotor's walk carries gravity's fall every step, as DFU's does: AUDIT
+    // FB1025i G6) - is set by none of its step's passes (the sideways pass, the ladder, the vertical pass and its snap) on
+    // a PH1 floor where it cannot stand, its height not clear over it (_resolveSphere's floorAbove: a fence's rail met
+    // from behind; the vertical pass set a wagon's driver sliding along one on its rail where the sideways pass had
+    // refused it). A falling body's catch of a lip is the arm's as it was (a running jump's reach,
+    // net/eliteGates/egSpanLaw.js egJumpReach, is measured on it).
+    this._walk = dy === 0 || this._onGround ? height : 0;
     this._resolveCapsule(feet, hOut, height, Infinity, true);   // WW-LID: a body moving sideways straddles a floor only below its head's centre
     // WW-LID: and a sideways pass the resolve refused is not taken - the refusal reverts to the resolve's entry, which is
     // the move itself, so a body with a rib through its waist and no room over it passed clean through the rib. A
@@ -2319,6 +2407,7 @@ function partsHolding(bucket, lx, ly, lz, out) {
   crossings.clear();
   const cross = (ti) => {
     if (bucket.yHi[ti] < ly) return;
+    if (bucket.sight !== null && bucket.sight[ti]) return;   // SIGN-PASS (AUDIT FB1025i G5): no body is held by a ray's triangle
     const tri = bucket.tris[ti];
     const h = rayTriangle(lx, ly, lz, UP3, tri[0], tri[1], tri[2]);
     if (h === null) return;
@@ -2418,6 +2507,17 @@ function sweepCorner(cx, cy, cz, r2, dx, dy, dz, L, v, best, out) {
 }
 const TMP = [0, 0, 0];
 const UP = Object.freeze([0, 1, 0]);   // WW-LID: the head's rise, asked as a ray
+/** SIGN-PASS (AUDIT FB1025i G5): the filter of a ray the body asks for itself - the head's rise, a floor to stand on, its
+ *  headroom - which passes what the body passes (addMesh's `sight`). */
+const BODY_RAY = Object.freeze({ bodies: true });
+/** RAIL-HANG: how far inside a floor's edge a walking body's headroom is asked (_standsOn) - off the edge's own line,
+ *  where a rail's back edge and the one over it meet a ray alike - and the ray's origin, one scratch. */
+const STAND_INSET = 2 * SKIN;
+const STAND_ORIGIN = [0, 0, 0];
+/** RAIL-HANG: and how far either side of the way in, along the floor's edge, it is asked again - half the body's
+ *  radius, inside its footprint - and the three places, the way in first. */
+const STAND_SPREAD = CAPSULE_RADIUS / 2;
+const STAND_ACROSS = Object.freeze([0, 1, -1]);
 /** restFloor's limiter: the smaller of two one-sided grades that agree in sign, else 0. */
 const minmod = (a, b) => (a * b <= 0 ? 0 : Math.abs(a) < Math.abs(b) ? a : b);
 // AUDIT COL1 F9: the middle spheres' centres, reused. _resolveCapsule

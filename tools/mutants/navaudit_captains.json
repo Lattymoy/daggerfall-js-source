@@ -450,24 +450,6 @@
     ]
   },
   {
-    "name": "NAV1-no-galley-rams",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "    checkShipRams();\n    separateHulls();",
-    "new": "    separateHulls();",
-    "tests": [
-      "test/systems/naval/navaudit_captains.test.js"
-    ]
-  },
-  {
-    "name": "NAV1-the-rams-brace-unread",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "        const dealt = Math.round(closing * RAM_DAMAGE * GALLEY_RAM * (st.guns.braced ? BRACE_TAKEN : 1));",
-    "new": "        const dealt = Math.round(closing * RAM_DAMAGE * GALLEY_RAM);",
-    "tests": [
-      "test/systems/naval/navaudit_captains.test.js"
-    ]
-  },
-  {
     "name": "NAV1-one-clamped-step",
     "file": "src/scenes/naval/navalHost.js",
     "old": "FRAME_STEP_S * FRAME_STEPS_MAX);   // TIME-DILATION",

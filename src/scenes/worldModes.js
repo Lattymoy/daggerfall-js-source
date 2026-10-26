@@ -93,7 +93,7 @@ import { isNight } from '../world/worldClock.js';   // AUDIT 23 (C12)
 import { worldMinutes, skyMinutes, setWorldMinutes, ownMinutes, ownTimeLeftText, ownTimeLeftShort, sharedClockOn, trustedWorldMinutes, worldSpanRealWords, tickInFlight } from '../systems/worldTick.js';   // AUDIT 23 (C12): the one clock; G4's probe moves it; LIVED1: the character's own clock, and its deadlines said in their time; AUDIT LIVED1b K1: the collapse box's guard is online's; AUDIT CARDS-6 B4: a round of damage over time stands nobody up from the cards
 import { exhaustionOutcome, exhaustedInWaterText } from '../systems/rest/rest.js';   // AUDIT 23 (C5)
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
-import { registerPresenter, hudText } from '../systems/notify.js';   // ENH-NOTICE3: the modal modes' slot, offered to the one door every message goes through
+import { registerPresenter, hudText, messageBox } from '../systems/notify.js';   // ENH-NOTICE3: the modal modes' slot, offered to the one door every message goes through; BOX-ON-TOP: the Identify spell's magicka refusal is a box
 import { toggleStatusReadout } from '../ui/statusBox.js';   // STATUS-LIVE: the Status readout, one composer for all four hosts
 import { liveVampirism } from '../systems/racialLive.js';   // SURV5: the vampire's one status line
 import { survivalOn } from '../systems/survival/switch.js';
@@ -165,6 +165,7 @@ import { mwViewFrame, mwViewDrawBody, mwViewFootstep, mwViewTransition, mwViewFi
 import { MOBILE_TYPES } from '../characters/mobile/mobileTypes.js';   // IF: the daedric punishment's name->id door
 import { areEnemiesNearby, setEnemyAlert } from '../systems/encounters.js';   // IF: GameManager.AreEnemiesNearby, one method over this host's database; AUDIT 58: the 354 refusal's other term
 import { audio } from '../systems/audio.js';
+import { createLockpickHost } from './lockpickHost.js';   // LOCKPICK: a front door's pick plays the lock's tumblers
 import { lycanthropeMoveSound } from '../systems/lycanthropy.js';   // LM1: the 4-20s transformed move-sound loop
 import { inventoryDoorReady } from '../ui/inventoryDoor.js';   // DISC10-E: the door's own readiness gate - a ready door that built nothing REFUSED
 import { SpellbookWindow, preloadSpellbookArt, spellbookArtLoaded } from '../ui/spellbookWindow.js';   // U42: the classic art window (retires M2's keyed stand-in), and the guilds' BUY mode
@@ -273,12 +274,12 @@ import { BUILDING_TYPES, isResidence, isTavern } from '../world/buildingNames.js
 import { getInteractionMode, setInteractionMode } from '../player/interactionMode.js';   // R1: PlayerActivate.currentMode, the one home
 import { buildingIsUnlocked, buildingLockValue, isBuildingOpen, lockedExteriorDoorText, buildingClosedText } from '../systems/buildingLocks.js';   // R1: opening hours + the unlocked ladder   // P1: the people gate reads the same hours   // WORLD-HOVER: the closed sentence, not the two tables it is built from
 import { peopleAreVisible, updateNpcPresence } from '../characters/interiorPeople.js';   // P1: AddPeople's visibility tail   // ROAD-B B5: OnPop's presence re-roll
-import { exteriorLockpickingChance, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT, isActionDoorObject } from '../world/actionSystem.js';   // AUDIT 63 F42: GetComponent<DaggerfallActionDoor>() with a name
+import { lookAtLockText, isActionDoorObject } from '../world/actionSystem.js';   // AUDIT 63 F42: GetComponent<DaggerfallActionDoor>() with a name
 import { tallyCrimeGuildRequirements } from '../systems/crimeGuilds.js';   // CG2: the break-in tally
 import { theftBasket, privatePropertyTheft, shopShelfTheft } from '../systems/theft.js';   // PT1: the two stealing laws
 import { buildingGreeting, shopQualityPresentation } from '../systems/buildingGreeting.js';
 import { setUnleveledLootWorld, unleveledLootPreTransition, unleveledLootExteriorTransition } from '../systems/unleveledLoot.js';   // UL1: PlayerEnterExit's world and its transition events   // BG1: the shop quality + the householder's greeting
-import { discoverBuilding, undiscoverBuilding, getDiscoveredBuilding, getLastLockpickAttempt, setLastLockpickAttempt, shownBuildingName } from '../systems/discovery.js';   // H3: selling a house takes its name back off the map
+import { discoverBuilding, undiscoverBuilding, getDiscoveredBuilding, shownBuildingName } from '../systems/discovery.js';   // H3: selling a house takes its name back off the map
 import { BUILDING_KEY_0 } from '../systems/talk/talkTopics.js';   // H3: the no-key key both ship interiors are filed under
 import { carriedPieces } from '../systems/item/itemIds.js';   // AUTO-HOLD: the room's word never lands a piece I carry (world/interior/interiorShared.js)
 import { interiorLocationKey, mintInteriorShared, composeInteriorShared, applyInteriorShared, applyInteriorLoot, interiorActionRecords, interiorLootOpen, interiorLootFrame, interiorLootUnborn, interiorLootRoll, interiorLootBirth, interiorLootAside, interiorLootLeave } from '../world/interior/interiorShared.js';   // WORLD6a: the building as a world room - the pure half; AUDIT WORLD6a A1: the bag minted there
@@ -318,7 +319,7 @@ import { preloadMessageBoxArt } from '../ui/messageBox.js';
 import { nativeMetrics, pointToNative } from '../ui/native/nativePanel.js';
 import { templateByIndex, itemBaseValue } from '../systems/item/itemTemplates.js';
 import { questLetterName, itemLongName, shownItemName } from '../systems/item/itemInfo.js';   // ResolveItemLongName's quest-letter arm; DECOR2a: an own item's name; L10N3e: an item's name as shown
-import { applyTransfer } from '../systems/item/itemTransfer.js';   // DECOR2a: one's own item leaves the pack as a drop does
+import { createDecorPack, returnUnstood } from '../systems/decor/decorPack.js';   // DECOR2a/2b: the owner's own things' doors (AUDIT FB1025i E1); E8: a save's room's strays
 import { decorItemName, decorOwnBackLine } from '../systems/decor/decorItems.js';   // DECOR2a: an own item's piece named from its numbers
 import { isFurnishing, furnishingDeliveredLine, ownBackLines } from '../systems/decor/decorFurnish.js';   // DECOR2b: furniture delivered, never carried
 import { useDecorPiece } from '../systems/decor/decorUse.js';   // DECOR-USE: a placed bed slept in, a placed fire cooked on
@@ -1533,6 +1534,9 @@ export function createWorldModes(host) {
   // `townTalk`. It reads only the function's own argument, so it is
   // safe anywhere inside the body.
   const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, doorGeneration = null, npcTargets = null, boardTargets = null, buildingTargets = null, bulletinBoardNews = null, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null, questBridge = null, questSceneCtx = null, npcSession = null, talkSave = null, onQuestRestored = null, layoutPinsLoaded = null, discoveryLocationId = null, questBuildingSource = null, gps = null, buildingDirectory = null, openBountyBoard = null, openNoticeBoard = null } = host;   // AUDIT 63 F49: questBuildingSource = PlayerGPS.DiscoverBuilding's { currentMapID, isBuildingQuestResource } pair   // H1: the location's whole building list, for the houses-for-sale roll   // V5: gps = PlayerGPS's location reads, for CanRest   // R1: the discovery store's location key (the anti-grind record's namespace)   // B4: the quicksave composer's trio + the world host's _questStarted latch   // Q4-v: the quest bridge + the host's scene-context closure ({mapId, locationIndex})   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
+  // LOCKPICK (bible/06-Systems/Lockpicking.md): a building's front door picked in Steal mode plays the lock's tumblers
+  // (scenes/lockpickHost.js) in the street's slot - a lockpick from the pack. A page's life: the modes are never torn down
+  const lockHost = createLockpickHost({ talk: townTalk, mount: mountServiceWindow });   // AUDIT LOCKPICK A1: never `lockpick` - the steal ladder's own `lockpick` (the skill, DFU's name) shadowed it; A4: the mode's own slot
   let swingKeyLatch = false;   // MAC-SWING1: a swing bound to a key or pad code, polled in frame()
   const moveAxes = new MoveAxes();   // AUDIT 28 W8: MovementAcceleration - the modal frames' own axes
   // U43-ii: the interior HUD-text layer is the OUTER host's, and
@@ -4034,7 +4038,7 @@ export function createWorldModes(host) {
         // returns before ClearSelectedItems: the lot stays staged for
         // a caster who steps out and comes back with the points.
         if (identifySpell.cost > (playerEntity.magicka ?? 0)) {
-          townTalk?.say?.(notEnoughSpellPointsText());
+          messageBox(notEnoughSpellPointsText());   // BOX-ON-TOP: DaggerfallUI.MessageBox over the window (:962) - the HUD line is not drawn under it
           surfacePlayer();
           return false;
         }
@@ -5007,6 +5011,9 @@ export function createWorldModes(host) {
     if (interiorHome || _seatHallVisit) interiorDecor.keep(placed); else interiorDecor.set(placed);   // SEAT-HALL (AUDIT SEATS-3 C2: the visit's latch)
     interiorDecor.setItems(data.decorItems);
     interiorDecor.setOwn(data.decorOwn);   // DECOR2a
+    // AUDIT FB1025i E8: a room whose pieces are the save's gives back what its record kept under pieces it no longer stands
+    // - a draft left by the door, not discarded (systems/decor/decorPack.js returnUnstood); an online home's list does its own
+    if (!(interiorHome || _seatHallVisit)) returnUnstood(interiorDecor, placed, decorPackGive, say);
     // BASE-HIDE: what the owner took out of the offline house's or ship's own furniture; an online home's comes from the
     // account service with its pieces (loadHomeDecor), and the save's own record for the building is kept to go back
     if (interiorHome || _seatHallVisit) (_keptHidden = (data.hiddenBase ?? []).filter((k) => !String(k).startsWith('intdoor:')), interiorCtx.base?.roomDoors?.apply?.(data.hiddenBase)); else (interiorCtx.base?.setHidden(data.hiddenBase ?? []), interiorCtx.base?.roomDoors?.apply?.(data.hiddenBase));
@@ -5384,34 +5391,9 @@ export function createWorldModes(host) {
     sceneCache().permanent.delete(name);
     return back;
   }
-  /** DECOR2a: ONE OF THE PLAYER'S OWN THINGS OUT OF THE PACK, to stand in a room - one of a stack, moved as a drop
-   *  moves it (itemTransfer.js applyTransfer: a lit torch stops lighting the player, a stack splits one off) - or null
-   *  when it is no longer carried. */
-  function decorPackTake(item) {
-    if (isFurnishing(item)) {   // DECOR2b: a delivered piece leaves the deliveries whole
-      const list = decorHome(item);
-      const i = list.indexOf(item);
-      if (i < 0) return null;
-      list.splice(i, 1);
-      return item;
-    }
-    const pack = playerEntity.items ?? [];
-    if (!pack.includes(item)) return null;
-    return applyTransfer(item, { ok: true, amount: 1 }, pack, [], { entity: playerEntity, fromLocal: true }) ?? null;
-  }
-  /** DECOR2a: one of the player's own things back where it lives - taken down, or its room sold: the pack, or (DECOR2b)
-   *  a piece of furniture delivered again. */
-  function decorPackGive(item) {
-    if (isFurnishing(item)) { decorHome(item).push(item); return; }
-    playerEntity.items ??= [];
-    addItem(playerEntity.items, item);
-  }
-  /** DECOR2b: where one of the player's own things lives while it stands nowhere - the pack, or the furnisher's
-   *  deliveries (the save's `furnishings`: a bed is never carried). */
-  function decorHome(item) {
-    if (isFurnishing(item)) return (playerEntity.furnishings ??= []);
-    return (playerEntity.items ??= []);
-  }
+  // DECOR2a/DECOR2b: the owner's own things' doors - where one lives, one out to stand, one back (systems/decor/decorPack.js;
+  // AUDIT FB1025i E1: out of the host, so the decorator's pins stand on them)
+  const { decorHome, decorPackTake, decorPackGive } = createDecorPack(() => playerEntity);
   /** DECOR2b: FURNITURE BOUGHT (or stolen) - delivered, not carried, and said once for the lot. */
   function decorDeliver(items) {
     if (!items.length) return;
@@ -7862,7 +7844,7 @@ export function createWorldModes(host) {
   // AUDIT HOME-VOTE II B4: `listed` - whether the plaque listed rows - read as the press lands, beside its verb: the home's
   // town is waited for below, and a view turned away meanwhile emptied the plaque and popped the Info box at a door that
   // had been drawn; II D1: and only a list DRAWN - the classic face folds rows it never draws
-  async function activateStaticDoor(hit, entries, isBash = false, { homeAsked = false, verb = null, listed = plaqueListing() && worldPlaqueOn() } = {}) {
+  async function activateStaticDoor(hit, entries, isBash = false, { homeAsked = false, verb = null, listed = plaqueListing() && worldPlaqueOn(), picked = false } = {}) {
     // Route by verbatim door type: buildings to interiors, dungeon
     // entrances into the RDB crawl.
     // :507-509 - the bash SOUND, before any of the type routing and
@@ -8020,28 +8002,12 @@ export function createWorldModes(host) {
             setMidScreenText(lookAtLockText(lockValue, playerEntity.level, lockpick));
             return true;
           }
-          if (locId && lockpick <= getLastLockpickAttempt(locId, bd.buildingKey)) {
-            setMidScreenText(lookAtLockText(lockValue, playerEntity.level, lockpick));   // AUDIT 64 F34: LookAtInteriorLock, the same surface
-            return true;
-          }
-          tallySkill(playerEntity, SKILLS.Lockpicking, 1);
-          const chance = exteriorLockpickingChance(lockValue, lockpick);
-          const roll = 1 + Math.floor(Math.random() * 100);   // Random.Range(1, 101), success strictly chance > roll
-          if (chance > roll) {
-            // CG2: PlayerActivate.cs:552 - the tally lands BEFORE the
-            // success text and the unlock sound, as it does in C#. A
-            // picked exterior lock IS a break-in and counts one toward
-            // the Thieves Guild's ten; the FAILED roll below tallies
-            // nothing, because nothing was broken into.
-            tallyCrimeGuildRequirements(playerEntity, true, 1);
-            townTalk?.say?.(LOCKPICKING_SUCCESS_TEXT);
-            audio.playOneShot(SOUND.ActivateLockUnlock, 1);
-            isBrokenIn = true;   // :557 - the pick raises THIS and never buildingUnlocked
-          } else {
-            townTalk?.say?.(LOCKPICKING_FAILURE_TEXT);
-            if (locId) setLastLockpickAttempt(locId, bd.buildingKey, lockpick);
-            return true;
-          }
+          // LOCKPICK (bible/06-Systems/Lockpicking.md): the lock's tumblers (scenes/lockpickHost.js frontDoor), DFU's
+          // exterior chance their tolerance, where :543-566 rolled it - a lockpick from the pack, its snaps the retry's cost
+          // (the LastLockpickAttempt gate retired). Opened - CG2's tally, the success text, the unlock sound, the host's -
+          // the door is activated again, `picked`
+          if (!picked) return lockHost.frontDoor({ lock: lockValue, skill: lockpick, key: `front:${locId ?? 0}:${bd.buildingKey}`, enter: () => activateStaticDoor(hit, entries, false, { homeAsked, picked: true }).catch((e) => console.error(e)) });
+          isBrokenIn = true;   // :557 - the pick raises THIS and never buildingUnlocked
         }
         // ROAD-B - THE FIRST BASH ARM (:570-583). "Classic makes a roll
         // whether it is locked or not", and DFU's comment is the law:
@@ -8765,6 +8731,7 @@ export function createWorldModes(host) {
       // X1: an armed Open/Lock spell fires on this interior's doors
       // too - the same law the dungeon context wires for its own.
       wireDoorSpells(ctx.actions, playerEntity, (t) => townTalk?.say?.(t));
+      lockHost.wire(ctx.actions, `inner:${interiorBuilding?.buildingKey ?? 0}`);   // AUDIT LOCKPICK A4: a door a Lock spell locked is picked as DFU picks it (ActivateActionDoor)
       // (the building was resolved above, before the context was
       // built - P1 needs it to gate the people.)
       ensureInteriorWindowArt();   // U23: every interior can open a window now

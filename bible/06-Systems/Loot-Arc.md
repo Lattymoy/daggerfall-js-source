@@ -757,6 +757,21 @@ doubling price, every line's press), `tech1_roster` (a technique's line not offe
 aimed at the new one; LOOT9-carried-kind-again equivalent as recorded - its guard is belt-and-braces beside the draw's
 weights); AUDIT LOOT II A4 pinned from its other side (a gem's kind free for the piece's own lines).
 
+**NAME-KEPT (FIELD BUGS 2026-10-25i item 1; SaberGGaming again: "if you've renamed your item it will revert it back
+into its original name"; reworked by AUDIT FB1025i A1-A5)**: the reforge named a Magic or Rare piece again from its
+TEMPLATE (`rarityName`), so a name the Item Maker gave (RenameItem) was lost, a Masterwork's own name ("Silver Ring"
+under its maker's mark) took the ladder's words its mint withholds, and a crafted jewel lost its metal and gem. The law
+now (`lootRarity.js` linesName): a name is the ladder's - at most one of its tier's prefix words and one of its suffix
+words around the piece's BASE, read off the piece (a crafted jewel's recipe name, a Masterwork's bare template, else the
+RRI word and the template; an older save's bare template besides) - or it is the piece's own and stands. The ladder's is
+built again from the piece's own lines (a set gem's never - AUDIT GEM), a Masterwork's base alone. The first cut parsed
+a name by the lines it had: a curse's line added after the name, an unset gem's word, an older reforge's damage and a
+partial rename ("Porter's Pride") each came out wrong (the audit's A1-A5). The Imbue keeps a name of the piece's own too
+(`reforge.js` imbuePiece - a questline's named reward), and a load gives a crafted piece the old law broke its own
+base's name back (`repairCraftedNames`, in save.js repairItemLists; never a found piece - a curse's line is added after
+its name by design). `test/systems/loot/fb1025i_namekept.test.js` (9), `tools/mutants/fb1025i_namekept.json` (14: 13
+dead, 1 equivalent as recorded).
+
 ### LOOT10 - the codex, and the imprint (2026-10-01)
 
 **`systems/loot/lootCodex.js`** (new): the character's CODEX - every Legendary record and every Aetheric piece taken, with

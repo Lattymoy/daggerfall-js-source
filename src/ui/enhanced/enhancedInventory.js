@@ -135,6 +135,7 @@ import { liveStat } from '../../systems/statMods.js';
 import { conditionWord, conditionPercentage, itemNameParts, itemLongName, itemDamageLine, itemArmourLine, itemHandsLine } from '../../systems/item/itemInfo.js';   // RF6: the long name's two parts, ResolveItemLongName's arms once
 import { survivalInfoTokens, potionMacroName, potionRecipeIngredientNames } from '../../systems/item/itemInfo.js'; import { isPortalStone } from '../../systems/gate/gateSpoils.js';   // AUDIT SURV C: the survival items' tokens on this skin's card too
 import { isStarglass } from '../../systems/starfall/starglass.js';   // AUDIT STAR I2: Starfall Glass's lines on this skin's card
+import { isLockpick } from '../../systems/lockpick/lockpickItem.js';   // AUDIT LOCKPICK B2: the Lockpick's lines on this skin's card
 import { isFestivalFace } from '../../systems/festival/soulCake.js';   // AUDIT STAR: and the festival's two items'
 import { isSurvivalItem } from '../../systems/survival/items.js';
 import { hoodCapable, hoodUp } from '../../systems/survival/temperature.js';   // HOOD-SAID: the one hood law, on the card and the panel
@@ -161,7 +162,7 @@ import { virtualRows } from '../virtualRows.js';   // VIRT: a long list draws th
 import { landingTiles } from './landingTiles.js';   // VIRT: a picture into its tile, not a repaint
 import { overlayAction, eventActions } from '../input.js';   // MAC-C: and the REGISTRY's answer for the two window keys
 import { audio } from '../../systems/audio.js';   // MAC-O6: the pack's own transfer cue - this window carried none at all
-import { dismantleStones, dismantleRefusal, dismantleWare, dismantleAsk, DISMANTLED, DISMANTLE_WORN } from '../../systems/sigil/sigilBroker.js';   // SS5: a Broker ware back into stones
+import { dismantleStones, dismantleRefusal, dismantleWare, dismantleAsk, DISMANTLED, DISMANTLE_WORN, wareName } from '../../systems/sigil/sigilBroker.js';   // SS5: a Broker ware back into stones
 import { salvageShards, salvageRefusal, salvagePiece, salvageMany, salvageable, shardsText } from '../../systems/reforge.js';   // LOOT9: a laddered piece broken into Welkynd Shards
 import { gemsHeld, setGemPiece, unsetGemPiece } from '../../systems/reforge.js';   // GEM1: a gem set in a socket from the pack, and shattered out of one
 import { ALL_GEM_IDS, SOCKET_EMPTY, emptySockets, gemKindOf } from '../../systems/loot/lootRarity.js';   // GEM1: the socket list and the gems
@@ -461,7 +462,7 @@ export function itemLine(item, identity = undefined) {
     // AUDIT SURV C: a food's worth and stage, a skin's water, the gear's uses - the classic popup's tokens (systems/item/itemInfo.js
     // survivalInfoTokens, less the name and the weight this card already carries), so a Waterskin says its water here too
     survival: isSurvivalItem(item) || isRestItem(item) ? survivalInfoTokens(item).slice(2).map((r) => r.text) : null,   // REST6: the seven's lines too
-    ...(isPortalStone(item) || isStarglass(item) || isFestivalFace(item) ? { survival: survivalInfoTokens(item).slice(2).map((r) => r.text) } : {}),   // PORTAL1: and the Portal Stone's; AUDIT STAR I2: and Starfall Glass's (this skin's card is its info); AUDIT STAR: and the Soul Cake's and the Hearth Offering's (WITCH1's lines, the classic box's alone before)
+    ...(isPortalStone(item) || isStarglass(item) || isFestivalFace(item) || isLockpick(item) ? { survival: survivalInfoTokens(item).slice(2).map((r) => r.text) } : {}),   // PORTAL1: and the Portal Stone's; AUDIT STAR I2: and Starfall Glass's (this skin's card is its info); AUDIT STAR: and the Soul Cake's and the Hearth Offering's (WITCH1's lines, the classic box's alone before)
     // MAPLOOT1 (Discord: "Potion recipe's can't be read at all"): a recipe is READ, not used - DFU's use arm
     // is cannotUseThis (DaggerfallInventoryWindow.cs:1732-1740) and the knowledge is ShowInfoPopup's
     // (:1602-1609): "Recipe for Potion of %po" and the chained PotionRecipeIngredients box. This skin has no
@@ -477,6 +478,11 @@ export function itemLine(item, identity = undefined) {
     // row gold; this skin had no way to say it at all, so a player who
     // lit a torch could not tell which of three torches was burning.
     lit: !!item && identity?.lightSource === item,
+    // FIELD BUGS 2026-10-25i QUEST-MARK: and a QUEST's own item - that handler's FIRST arm, the classic list's green cell
+    // (questItemBackgroundColor). This skin drew none, so the heart Q0C4XY04 gives its foe looked exactly like the plain
+    // one a seducer's own loot leaves on the same body. The quest's name as the journal shows it ('' when no quest of
+    // this world holds it), null for an item no quest owns.
+    quest: item?.questItem ? (deps.getQuest?.(item.questUID)?.displayName ?? '') : null,
     broken: isBrokenItem(item),
     // The address only. Fetching is the view's business, because a
     // model has no repaint to schedule. DECOR2b: archive 0 is NO picture,
@@ -489,6 +495,10 @@ export function itemLine(item, identity = undefined) {
     model: img ? null : inventoryItemModel(item),
   };
 }
+/** QUEST-MARK: a quest item's word on its row (HT2's "lit" is the gold row's), and its card's line naming the quest.
+ *  AUDIT FB1025i B6: the trade windows' rows say the word too (enhancedTrade.js, enhancedPlayerTrade.js). */
+export const questWord = () => t('inventory.quest.word', 'quest item');
+const questLine = (name) => (name ? t('inventory.quest.of', 'Quest item: {quest}', { quest: name }) : t('inventory.quest.item', 'Quest item'));
 
 /** DISC24-B: THE LINE'S CLASSIC PICTURE, as a data URL - its record through textureCanvas, or, for an item with no
  *  art of its own, its model's bake (ui/modelIcon.js). One door for every enhanced list, so the pack, the detail card,
@@ -2832,7 +2842,7 @@ function itemRow(item, from = 'local') {
   if (line.stack && from === 'local') row.append(el('span', 'count', String(line.stack)));
   const mid = el('span', 'itemname');
   mid.append(el('span', null, line.name + (line.stack ? ` ×${line.stack}` : '')));
-  const sub = [line.material, line.word, line.lit ? 'lit' : null].filter(Boolean).join(' · ');   // HT2: the classic list paints the lit row gold; this one says the word
+  const sub = [line.material, line.word, line.lit ? 'lit' : null, line.quest != null ? questWord() : null].filter(Boolean).join(' · ');   // HT2: the classic list paints the lit row gold; this one says the word; QUEST-MARK: and the quest's green one
   if (sub) mid.append(el('small', null, sub));
   row.append(mid);
   row.append(el('span', 'itemwt', walletKg(shownKg(item, line))));   // WALLET-WEIGHT: the wallet's row, what it holds
@@ -3473,6 +3483,7 @@ function infoCard(picked, side, ready = render, { body = false, own = true } = {
   const bline = boundLine(picked);   // AUDIT AUTO-HOLD: a piece the realm locked says so in its own words
   if (bline) into.append(el('p', 'boundline', bline));   // SS1: the lock's line style, without its padlock
   if (isStolen(picked)) into.append(el('p', 'boundline', stolenLine()));   // STOLEN-GOODS: what a counter and a court do with it
+  if (line.quest != null) into.append(el('p', 'boundline', questLine(line.quest)));   // QUEST-MARK: whose quest it is
   const dl = el('dl', 'stats');
   // CARD-FIT: each pair in its own group, so a narrow card flows them two a line and never breaks a pair across two
   const pair = (k, v) => { if (v != null) { const g = el('div', 'pair'); g.append(el('dt', null, k), el('dd', null, String(v))); dl.append(g); } };
@@ -3718,7 +3729,7 @@ function closeDismantle() { dismantleEl?.remove(); dismantleEl = null; dismantle
  *  button never stands where the card's did, and a second click of a pair never presses it (pairGuard). */
 function askDismantle(item) {
   hideTip(); closeMenu(); closeInfo(); closeDismantle();
-  const name = itemLongName(item, { getQuest: deps.getQuest ?? null });
+  const name = wareName(itemLongName(item, { getQuest: deps.getQuest ?? null }), item);   // AUDIT FB1025i A8: and its set's
   const refusedFor = (why) => { notice = why === 'locked' ? lockedText(name) : why === 'worn' ? DISMANTLE_WORN(name) : null; refresh(); render(); };
   const why = dismantleRefusal(item);
   if (why) { refusedFor(why); return; }

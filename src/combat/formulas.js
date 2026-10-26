@@ -140,13 +140,13 @@ export const WEAPON_MIN_DAMAGE = Object.freeze({
   Dagger: 1, Tanto: 1, Wakazashi: 1, Shortsword: 1, Broadsword: 1, Staff: 1, Mace: 1,
   Longsword: 2, Claymore: 2, 'Battle Axe': 2, 'War Axe': 2, Flail: 2,
   Saber: 3, Katana: 3, 'Dai-Katana': 3, Warhammer: 3,
-  'Short Bow': 4, 'Long Bow': 4,
+  'Short Bow': 5, 'Long Bow': 5,   // BAL-ARCHERY: +1 over FormulaHelper; the swing reads weaponMinDamage
 });
 export const WEAPON_MAX_DAMAGE = Object.freeze({
   Dagger: 6, Tanto: 8, Shortsword: 8, Staff: 8, Wakazashi: 10,
   Broadsword: 12, Saber: 12, 'Battle Axe': 12, Mace: 12, Flail: 14,
-  Longsword: 16, Katana: 16, 'War Axe': 16, 'Short Bow': 16,
-  Claymore: 18, Warhammer: 18, 'Long Bow': 18, 'Dai-Katana': 21,
+  Longsword: 16, Katana: 16, 'War Axe': 16, 'Short Bow': 17,
+  Claymore: 18, Warhammer: 18, 'Long Bow': 19, 'Dai-Katana': 21,
 });
 
 /** DaggerfallUnityItem.GetBaseDamageMin/GetBaseDamageMax

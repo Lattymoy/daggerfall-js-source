@@ -84,7 +84,7 @@ test('bats 2: every collider.move in both motors passes the foe\'s own controlle
     const s = src(f);
     const sites = [...s.matchAll(/this\.collider\.move\(this\.feet,[^;]*\);/g)].map((m) => m[0]);
     assert.ok(sites.length >= 1, `${f} moves through the collider`);
-    for (const site of sites) assert.match(site, /, this\.controllerHeight(?:, true, FOE_KEEPS_FLOOR)?\);$/, `${f}: ${site}`);   // AUDIT (pre-merge) S2: the foe's floor flag after it
+    for (const site of sites) assert.match(site, /, this\.controllerHeight(?:, true, FOE_KEEPS_FLOOR(?:, false, this\.isGrounded)?)?\);$/, `${f}: ${site}`);   // AUDIT (pre-merge) S2: the foe's floor flag after it; PIN MOVED (AUDIT FB1025i G6): and the walk's ground after that
   }
   assert.equal([...src('src/characters/enemy/enemyMotor.js').matchAll(/this\.collider\.move\(/g)].length, 6, 'the six motor sites');
 });

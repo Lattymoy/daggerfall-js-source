@@ -8,6 +8,28 @@
 
 Newest first.
 
+**2026-10-26 - AUDIT LOCKPICK.** The owner: *"Audit this"* and *"Also ensure this is enhanced ui plus"*, of the branch
+that built LOCKPICK, RESOURCE-HIGHLIGHTS and AUDIT GATHER. Four cold lanes on a frozen snapshot (81ff3671f), each finding
+proven on the real code; 38 reported. Paid: every front-door pick threw (the steal ladder's own `lockpick`, the skill,
+shadowed the host - no test made the press); a fixed rhythm set every pin at every chance; a death in the opened lock's
+hold ran its success tail; a Lock spell's door inside a building never pickable; the Lockpick's card lines on no card; a
+shoplift then one purchase put the stolen picks back; the lock's window its own Georgia box no Plus colour, Grimoire or
+pad prompt reached, its presses off a phone on its side; F1 keeping a first ask's seat refusal; F3 bounding hauls, not
+schools; a Motherlode's strike played past its close. Every one fixed or its record corrected, pinned red; 48 mutants, 47
+dead, one recorded equivalent. Account acct195 (migration 0176) before the site. Record: `audits/Audit-Lockpick.md`
+(AUDIT LOCKPICK).
+
+**2026-10-26 - AUDIT KETCH II.** The owner: *"Can you audit the airship raid. Its a buggy mess"*, of the Sky-Ketch on
+main after the four slices that followed AUDIT KETCH. Five cold lanes, each reproducing every finding with a probe on the
+real code; 36 reported, 30 defects. Paid: nobody could board (the page ran her sky aboard alone, a slice's misplaced
+`else`), and a fall from a fallen section of the bridge's ring landed in her shut belly; the tracker said the Watch was
+waiting through its last two waves; the room never heard a heal before the bridge; the lid's cast-back stood nobody
+anywhere, a cost a frame to 1 HP; the Sailwalk skipped over the engine house's roof; the Pellet cap a page's and a room's
+and spent before the bosses; constructs' health read off who posed last; Sentries out over the bow's nets, stacked two to a
+post and never firing when chased; twenty minutes after she weighs anchor shorter than a voyage, and a fight lost before a
+solo could climb back. 26 fixed and pinned red, each with a mutant (33, all dead); two left with their reasons; the solo's
+pace the owner's to set. Relay world266. Record: `audits/Audit-Ketch-II.md` (AUDIT KETCH II).
+
 **2026-10-25 - AUDIT FB-FEEDBACK-1024 (AIM-ENDS, FERRY-CLEAR, DECOR-USE, PERK-TRIAL).** The owner: *"Audit"*, of the
 branch's four slices for the Discord's feature-feedback (2026-10-24). Four cold lanes on a frozen snapshot, each given the
 ask and the files and never the record's conclusions; each lane built its own harness over the real code (the naval
