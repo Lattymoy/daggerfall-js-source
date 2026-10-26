@@ -342,11 +342,14 @@ test('audit24: a quest item is found by QUEST IDENTITY, not object identity', ()
   // SEPARATELY, so afterwards they are two objects with equal content
   // and nothing relinks them. The tombstone sweep and `give item to`
   // silently no-opped on every quest item already carried.
+  // PIN MOVED (FIELD BUGS 2026-10-25i HEART-KEPT): the law left bootWorld for systems/item/itemTransfer.js
+  // heldQuestRecordIndex - read there, and the host's two hooks read through it (playerHasItem never a foe's clone)
   const world = hostText('src/scenes/world.js');
-  assert.match(world, /const _heldItemIndex = \(dfItem\) => \{[\s\S]{0,600}it\.questUID === dfItem\.questUID[\s\S]{0,120}it\.questSymbol\?\.name === dfItem\.questSymbol\?\.name/,
+  assert.match(world, /const _heldItemIndex = \(dfItem, clones = true\) => heldQuestRecordIndex\(playerEntity\.items, dfItem, \{ clones \}\);/);
+  assert.match(read('src/systems/item/itemTransfer.js'), /export function heldQuestRecordIndex\(items, dfItem, \{ clones = false \} = \{\}\) \{[\s\S]{0,300}it\.questUID === dfItem\.questUID && it\.questSymbol\?\.name === dfItem\.questSymbol\?\.name/,
     'the fallback is the quest identity the sibling hooks already match on');
   assert.match(world, /removeItemFromPlayer: \(dfItem\) => \{[\s\S]{0,160}_heldItemIndex\(dfItem\)/);
-  assert.match(world, /playerHasItem: \(dfItem\) => _heldItemIndex\(dfItem\) >= 0/);
+  assert.match(world, /playerHasItem: \(dfItem\) => _heldItemIndex\(dfItem, false\) >= 0/);
   assert.doesNotMatch(world, /playerHasItem: \(dfItem\) => \(playerEntity\.items \?\? \[\]\)\.includes\(dfItem\)/,
     'the identity-only reads are gone');
 });

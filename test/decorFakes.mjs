@@ -11,7 +11,8 @@ import { decorCatalogue, collectDecor } from '../src/systems/decor/decorCatalogu
 import { DECOR_CAP, decorPrice } from '../src/net/decorLaw.js';
 import { PROP_MODEL_TYPE } from '../src/world/interior/interiorLayout.js';
 import { isFurnishing } from '../src/systems/decor/decorFurnish.js';
-import { decorMatrix, decorKeyOf } from '../src/scenes/decor/decorRoom.js';
+import { createDecorPack } from '../src/systems/decor/decorPack.js';   // AUDIT FB1025i E1: the producer's own doors
+import { decorMatrix, decorKeyOf, createDecorRoom } from '../src/scenes/decor/decorRoom.js';
 import { localAabb } from '../src/render/frustum.js';
 import { createHomeYards } from '../src/scenes/homeYards.js';
 import { applyClimate, SEASON } from '../src/world/climateSwaps.js';
@@ -119,7 +120,8 @@ export const ACTIONS = new Map([['KeyW', 'MoveForwards'], ['KeyS', 'MoveBackward
  * put again by its id stands in its place, `holds` the ids of the pieces holding something. The wallet pays from and
  * credits `w.gold`, `hand.stick` is the host's stickAxes reading (null: no stick in hand), and `rays` each eye ray's
  * bucket filter. `radius(model)` the scan's measure of a model (null: unread). DECOR2a: `pack` the items carried -
- * packTake moves one of a stack out (a copy of one; the whole item when it is the last), packGive puts one back.
+ * packTake moves one of a stack out as a drop does, packGive puts one back through the pack's own door - AUDIT FB1025i E1: the
+ * host's own doors (systems/decor/decorPack.js) over the rig's lists, never a fake that pushed where the host refuses.
  * DECOR2b: `furnishings` the furniture delivered - where a piece of furniture lives, as the host's decorHome has it:
  * taken out whole, given back there, never to the pack. DECOR2c: `state.normal` the surface's normal the eye's ray
  * answers (null: none, as before), and the renderer's decal pass and texture cache, faked - `decals` every batch made
@@ -160,20 +162,25 @@ export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 
     const tris = new Uint32Array([0, 1, 2, 0, 2, 3, 4, 6, 5, 4, 7, 6, 0, 4, 5, 0, 5, 1, 3, 2, 6, 3, 6, 7, 0, 3, 7, 0, 7, 4, 1, 5, 6, 1, 6, 2]);
     collider.addMesh(decorKeyOf(p.id), at, tris, decorMatrix(p, [10, 0, 10]));
   };
+  // FIELD BUGS 2026-10-25i CHEST-DRAFT: what the storage pieces hold is the REAL room's store (scenes/decor/decorRoom.js
+  // itemsOf, itemsSnapshot, setItems) - the fake's no-op `setItems` and empty `itemsSnapshot` let "Discard puts the room
+  // back" pass while the discard wrote every chest back as it stood when the draft opened. `chests` is that store.
+  const chests = createDecorRoom({ meshes: {}, renderer: null, getTexture: async () => null, uploadRecord() {}, uploadRecordFrame() {}, collider: () => null, origin: () => [10, 0, 10] });
   const pool = {
     put: (p) => { const i = standing.findIndex((x) => x.id === p.id); if (i >= 0) standing[i] = p; else standing.push(p); solid(p); },
     remove: (id) => { const i = standing.findIndex((x) => x.id === id); if (i >= 0) standing.splice(i, 1); collider?.removeBucket?.(decorKeyOf(id)); },
     list: () => standing.map((p) => ({ ...p })),
     size: () => standing.length,
-    holdsAny: (id) => holds.has(id),
+    holdsAny: (id) => holds.has(id) || chests.holdsAny(id),
     pieceOf: (id) => standing.find((p) => p.id === id) ?? null,
     targets: () => aim,
     ownOf: (id) => owned.get(id) ?? null,
     keepOwn: (id, item) => { if (item) owned.set(id, item); },
     takeOwn: (id) => { const it = owned.get(id) ?? null; owned.delete(id); return it; },
     ownIds: () => [...owned.keys()],
-    itemsSnapshot: () => ({}),
-    setItems() {},
+    itemsOf: (id) => chests.itemsOf(id),
+    itemsSnapshot: () => chests.itemsSnapshot(),
+    setItems: (record) => chests.setItems(record),
     ownSnapshot: () => Object.fromEntries([...owned].map(([id, item]) => [id, { ...item }])),
     setOwn(record) { owned.clear(); if (record) for (const [id, item] of Object.entries(record)) owned.set(id, item); },
   };
@@ -185,6 +192,7 @@ export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 
   const pack = [];   // DECOR2a: the items carried - packTake moves one of a stack out, as a drop does
   const furnishings = [];   // DECOR2b: the furniture delivered (worldModes.js decorHome)
   const homeOf = (item) => (isFurnishing(item) ? furnishings : pack);
+  const ownDoors = createDecorPack(() => ({ items: pack, furnishings }));   // AUDIT FB1025i E1: the host's own (worldModes.js wires the same)
   const rays = [];   // each eye ray's bucket filter (player/collider.js raycastHit's fourth), or null
   let visit = 1;
   let cursorOff = 0;
@@ -235,15 +243,8 @@ export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 
     homeDecor, character: () => 'char-me', visit: () => visit,
     realm: () => realm,   // REALM P2.2b: a realm character's act on its record (systems/realmSaves.js realmGoldAct), none unless a pin hands one
     pack: () => pack, identity: () => null, furnishings: () => furnishings, packHas: (item) => homeOf(item).includes(item),
-    packTake: (item) => {
-      const list = homeOf(item);
-      const i = list.indexOf(item);
-      if (i < 0) return null;
-      if (list === pack && (item.stackCount ?? 1) > 1) { item.stackCount -= 1; return { ...item, stackCount: 1 }; }
-      list.splice(i, 1);
-      return item;
-    },
-    packGive: (item) => { homeOf(item).push(item); },
+    packTake: (item) => ownDoors.decorPackTake(item),
+    packGive: (item) => ownDoors.decorPackGive(item),
     openSlot: (o) => slots.push(['open', o]), closeSlot: (o) => slots.push(['close', o]),
     say: (l) => said.push(l), refusal: (word) => `refused: ${word}`, now,
     ...(doorsHere ? { doorsHere } : {}), ...(walls ? { walls } : {}),   // HOME-DOORS
@@ -258,7 +259,7 @@ export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 
   const cam = { pos: [10, 1.6, 10], yaw: 0, pitch: 0 };
   const frame = (over = {}) => tool.frame({ dt: 0.1, cam, overlayUp: false, interior: true, ...over });
   return {
-    tool, doc, win, entries, standing, holds, aim, owned, hand, rays, pack, furnishings, names, slots, said, w, cam, frame, draws, state, decals, textures, renderer,
+    tool, doc, win, entries, standing, holds, chests, aim, owned, hand, rays, pack, furnishings, names, slots, said, w, cam, frame, draws, state, decals, textures, renderer,
     setVisit: (v) => { visit = v; }, cursorOffs: () => cursorOff,
   };
 }
