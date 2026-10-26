@@ -24,6 +24,7 @@ import { localizedText } from '../systems/textManager.js';
 import { PLACE_FOE_DEFAULTS, placeFoeFreely } from '../systems/quest/sceneMount.js';
 import { playerEntity } from '../characters/playerEntity.js';
 import { REGION_RACES } from '../formats/mapsFile.js';
+import { REGION_NAMES, isProvinceRegion } from '../formats/mapsTables.js';   // AUDIT RELEASE R2-4: a province's region's name past the Bay
 import { spellRecordOfIndex } from '../systems/loot/loot.js';
 
 /** @param {any} host */
@@ -178,7 +179,11 @@ export function createQuestWorld(host) {
       && ((e.subType ?? 0) & 0xff) === ((effect.subType ?? 0) & 0xff)),
     currentClimateIndex: () => maps.getClimateIndex(playerTravelPixel().x, playerTravelPixel().y),
     currentLocationType: () => _questLoc()?.mapTableData?.locationType ?? null,
-    currentRegionName: () => maps.getRegion(_questRegionIndex())?.name ?? '',
+    // AUDIT RELEASE R2-4 (bible/01-Overview/audits/Audit-Release-R2.md): PlayerGPS.CurrentRegionName - the loaded region's
+    // name on the Bay (an empty region's '' as DFU's empty DFRegion), and past it the province's region's (WW-R), which no
+    // MAPS.BSA record holds: '' there kept every NPC past the Bay from knowing a quest's place or person there (the place's
+    // site names its province - scenes/tamrielPlacesHost.js), and "Where am I?" in a lair said "in ."
+    currentRegionName: () => { const r = _questRegionIndex(); return maps.getRegion(r)?.name ?? (isProvinceRegion(r) ? REGION_NAMES[r] : ''); },
     isPlayerInLocationRect: () => _musicInLocationRect(),
     // F114: the bridge declares this hook as GetPlayerTravelPosition
     // "incl. its on-ship arm" (machine.js's ctx doc) and its one
