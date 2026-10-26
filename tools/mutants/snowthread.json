@@ -99,6 +99,24 @@
     ]
   },
   {
+    "name": "SNOW-THREAD-client-silent-worker-waited-on",
+    "file": "src/systems/snowfall/snowBuildClient.js",
+    "old": "      if (this._silentFor() > JOB_DEADLINE_MS) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/systems/snowthread.test.js"
+    ]
+  },
+  {
+    "name": "SNOW-THREAD-client-let-go-answer-kept",
+    "file": "src/systems/snowfall/snowBuildClient.js",
+    "old": "    this._forget(this._latest.mid);\n",
+    "new": "",
+    "tests": [
+      "test/systems/snowthread.test.js"
+    ]
+  },
+  {
     "name": "SNOW-THREAD-runtime-ring-left-on-this-thread",
     "file": "src/systems/snowfallRuntime.js",
     "old": "    M.job = this.builds?.postMid(this) ?? 0;   // SNOW-THREAD: sampled on the build worker when it can be (0: on this thread)",

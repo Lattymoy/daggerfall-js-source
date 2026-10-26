@@ -35,6 +35,9 @@ function defaultWorkerFactory() {
 const UNUSED_MS = 10_000;
 /** The metres past a build's reach whose pixels it is handed - a point on a pixel's very edge is read on either side. */
 const REACH_MARGIN = 4;
+/** A worker silent this long with a build out hangs without a fault: it is let go and the build made on the main thread. A
+ *  build takes the worker tens of milliseconds; a page hidden long enough to pass this only falls back to the old path. */
+const JOB_DEADLINE_MS = 10_000;
 
 /** A copy of a typed array alone (structured clone would copy the whole buffer a view stands on). */
 const own = (a) => (ArrayBuffer.isView(a) ? a.slice() : a);
@@ -66,6 +69,9 @@ export class SnowBuildClient {
     /** id -> last used; the roads the worker holds */
     this._roadsSent = new Map();
     this._nextPrune = 0;
+    /** job -> the clock when it was posted, while it is out */
+    this._postedAt = new Map();
+    this._heardAt = -Infinity;
     this.posted = 0;
     this.taken = 0;
     const factory = workerFactory ?? ((snowThreadDisabled() || typeof Worker === 'undefined') ? null : defaultWorkerFactory);
@@ -93,6 +99,7 @@ export class SnowBuildClient {
     const job = this._world(rt, c[0], c[1], MID.radius + REACH_MARGIN, M.context0);
     if (!job) return 0;
     const id = ++this._job;
+    this._forget(this._latest.mid);
     this._latest.mid = id;   // before the post: an answer is taken for the newest build of its kind alone
     this._midTiles = { id, tiles: job.tiles };
     return this._post({ t: 'mid', id, center: [c[0], c[1]], ...job.message }) ? id : 0;
@@ -116,6 +123,7 @@ export class SnowBuildClient {
       m.arrays = { pos: L.pos.slice(), nrm: L.nrm.slice(), statics: L.statics.slice(), context: L.context.slice() };
       for (const a of Object.values(m.arrays)) transfer.push(a.buffer);
     }
+    this._forget(this._latest.local);
     this._latest.local = id;
     this._localPosted = id;
     return this._post(m, transfer) ? id : 0;
@@ -125,7 +133,14 @@ export class SnowBuildClient {
    *  could not stand, { down: true } for one the worker will never answer; null while it is out. */
   take(id) {
     const r = this._answers.get(id);
-    if (!r) return this._worker ? null : { down: true };
+    if (!r) {
+      if (!this._worker) return { down: true };
+      if (this._silentFor() > JOB_DEADLINE_MS) {
+        this._down(`a build out ${JOB_DEADLINE_MS} ms`);
+        return { down: true };
+      }
+      return null;
+    }
     this._answers.delete(id);
     this.taken++;
     if (r.ok && r.t === 'mid') {
@@ -241,11 +256,30 @@ export class SnowBuildClient {
     if (tiles.length || roads.length) this._post({ t: 'drop', tiles, roads });
   }
 
+  /** How long the worker has said nothing while a build is out - since the oldest build out was posted, or since its
+   *  last answer, whichever is later (a ring the player outruns is posted again; the worker's silence is what counts). */
+  _silentFor() {
+    if (!this._postedAt.size) return 0;
+    return this.clock() - Math.max(this._heardAt, Math.min(...this._postedAt.values()));
+  }
+
+  /** A build a newer one of its kind replaces: an answer already in (a build a door or a teleport let go before it
+   *  landed) is never taken - its arrays go back. */
+  _forget(id) {
+    const r = this._answers.get(id);
+    if (!r) return;
+    this._answers.delete(id);
+    if (r.arrays) this.recycle(Object.values(r.arrays));
+  }
+
   // ---- the wire ----
   _post(m, transfer = []) {
     try {
       this._worker.postMessage(m, transfer);
-      if (m.t === 'mid' || m.t === 'local') this.posted++;
+      if (m.t === 'mid' || m.t === 'local') {
+        this.posted++;
+        this._postedAt.set(m.id, this.clock());
+      }
       return true;
     } catch (e) {
       console.warn('[snowfall] a build could not cross to the worker; it is built on the main thread', e?.message ?? e);
@@ -255,6 +289,8 @@ export class SnowBuildClient {
 
   _answer(m) {
     if (m.t === 'error') { this._down(m.message); return; }
+    this._postedAt.delete(m.id);   // answered: no deadline left to keep
+    this._heardAt = this.clock();
     if (m.missing) { this._sent.delete(m.missing); }   // never expected: sent again with the next build
     if (m.id !== this._latest[m.t]) {   // replaced by a newer build of its kind: never taken
       if (m.arrays) this.recycle(Object.values(m.arrays));

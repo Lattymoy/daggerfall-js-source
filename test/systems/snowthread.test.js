@@ -106,7 +106,7 @@ async function hostWorld() {
 function fakeWorker(kernel, twin = null) {
   const queue = [];
   const w = {
-    onmessage: null, onerror: null, terminated: false, throwOn: null, sent: { tiles: 0, roads: 0 },
+    onmessage: null, onerror: null, terminated: false, throwOn: null, hang: false, sent: { tiles: 0, roads: 0 },
     postMessage(m, transfer = []) {
       if (w.terminated) return;
       const check = twin?.(m);
@@ -114,6 +114,7 @@ function fakeWorker(kernel, twin = null) {
       if (m.t === 'roads') w.sent.roads++;
       const copy = structuredClone(m, { transfer });
       if (w.throwOn === copy.t) { queue.push({ t: 'error', id: copy.id, message: 'a kernel fault' }); return; }
+      if (w.hang && (copy.t === 'mid' || copy.t === 'local')) return;   // a worker that never answers and never faults
       const out = kernel.handle(copy);
       check?.(out?.reply);
       if (out?.reply) queue.push(structuredClone(out.reply, { transfer: out.transfer ?? [] }));
@@ -258,17 +259,21 @@ test('SNOW-THREAD a runtime on the worker: its rings and windows come from the w
     for (const k of ['pos', 'nrm', 'ctxA', 'ctxB', 'ctxC', 'heights', 'bnrm', 'statics', 'context']) assert.ok(bytesOf(C.mid[k]).equals(bytesOf(this.mid[k])), `ring ${rings}: ${k} a fresh build's bytes`);
     rings++;
   };
-  let jumped = 0, nextJump = 399;
+  let jumped = 0, nextJump = 399, reset = false;
   fly(2600, (st) => { w.flush(); B.frame(frameOf(st)); }, (i, st) => {
     if (i >= nextJump && B.local.job) { st.x += 30; jumped++; nextJump = i + 400; }   // outrun a recentre that is out: it is refused, and the worker built it
+    if (!reset && i > 1500 && B.mid.job && B.mid.building) { reset = true; B.worldReset(); }   // a door, a teleport: the builds out are let go
   });
+  assert.ok(reset, 'the world was reset with a ring out');
+  const held = [...client._answers.keys()].filter((id) => id !== client._latest.mid && id !== client._latest.local);
+  assert.deepEqual(held, [], 'no build let go keeps its answer');
   assert.ok(jumped >= 3, `recentres outrun: ${jumped}`);
   assert.equal(here, 0, 'nothing built on the main thread');
   assert.ok(rings >= 12 && B.local.meshReady && client.taken >= 60, `the worker's rings and windows committed: ${rings}, ${client.taken}`);
   assert.ok(mirrored >= 30, `windows recentred from the worker's own copy: ${mirrored}`);
 });
 
-test('SNOW-THREAD the fallback is the old path: ?snowthread=off, no Worker, a factory that throws and a ground the worker cannot copy each build on the main thread; a worker that faults mid-build hands its build back, and the runtime finishes it there (mutants: a faulted job never answered; the fallback switched off with the worker)', async () => {
+test('SNOW-THREAD the fallback is the old path: ?snowthread=off, no Worker, a factory that throws and a ground the worker cannot copy each build on the main thread; a worker that faults mid-build hands its build back, and one that falls silent is let go at its deadline - the runtime finishes either build there (mutants: a faulted job never answered; a silent worker waited on for ever)', async () => {
   assert.equal(snowThreadDisabled('?world&snowthread=off'), true);
   assert.equal(snowThreadDisabled('?world&snowthread=on'), false);
   const quiet = console.warn;
@@ -287,6 +292,14 @@ test('SNOW-THREAD the fallback is the old path: ?snowthread=off, no Worker, a fa
     fly(700, (st) => { w.flush(); B.frame(frameOf(st)); }, () => {});
     assert.equal(client.up, false, 'the faulted worker is let go');
     assert.ok(here > 0 && B.mid.completed >= 2 && B.local.meshReady, `the ring built here instead: ${B.mid.completed}`);
+    let ms = 0;
+    const hung = fakeWorker(new SnowBuildKernel());
+    hung.hang = true;
+    const late = new SnowBuildClient({ masks: MASKS, settings: snowfallSettings(), workerFactory: () => hung, clock: () => ms });
+    const H = new SnowfallRuntime({ world, coverage: new SnowCoverage(MASKS), frameBudgetMs: Infinity, builds: late });
+    fly(1200, (st) => { ms += 1000 / 60; hung.flush(); H.frame(frameOf(st)); }, () => {});
+    assert.equal(late.up, false, 'a worker that hangs is let go at the deadline');
+    assert.ok(H.mid.completed >= 1 && H.local.meshReady, 'and the ring and the window are built here');
     const noData = { ...world, frame: undefined };
     const D = new SnowfallRuntime({ world: noData, coverage: new SnowCoverage(MASKS), frameBudgetMs: Infinity, builds: new SnowBuildClient({ masks: MASKS, settings: snowfallSettings(), workerFactory: () => fakeWorker(new SnowBuildKernel()) }) });
     fly(400, (st) => D.frame(frameOf(st)), () => {});

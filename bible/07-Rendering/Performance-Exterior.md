@@ -1953,7 +1953,8 @@ busy time standing and 17% moving; the middle ring's rebuild was 8% alone, and o
   36,237 -> 36,233 logical lines); `carvedFloorLocalY` moved beside the floor it reads (`world/deepWater/deepWaterFloor.js`)
   and the base64 pair to `systems/save/base64Bytes.js`, so the worker loads 36 modules, not the 820 that
   `save/saveTransfer.js` pulled in.
-- **The fallback is the old path**: `?snowthread=off`, no `Worker`, a worker that faults, or a ground the worker cannot
+- **The fallback is the old path**: `?snowthread=off`, no `Worker`, a worker that faults or falls silent for 10 s with a
+  build out (`JOB_DEADLINE_MS`), or a ground the worker cannot
   copy (`scenes/exterior.js`'s hands no `data` or `frame`) build on the main thread as before. THE FOUR HOSTS:
   `world.js` wired; `exterior.js` builds its snow on its own thread (its ground hands no copy); `worldModes.js` and
   `dungeonContext.js` build no snow.
@@ -2003,7 +2004,8 @@ elsewhere; a runtime on the worker builds nothing on the main thread, each of it
 bytes, and a window recentred from the worker's own copy is the one recentred from the main thread's (a recentre the
 player outran leaves that copy untrusted); the fallbacks. Re-aimed by content: `audit_environs.json` (two P3 records, at
 the runs), `snowfall1.json` (the carved sea's, at the law's call), `hostsplit.json` (the ceiling). Mutants:
-`tools/mutants/snowthread.json` 14, all dead.
+`tools/mutants/snowthread.json` 17, all dead. A build a door or a teleport lets go before it lands keeps
+nothing: posting the next of its kind sends its arrays back (`_forget`).
 
 # THE GRASS ON A WORKER (GRASS-THREAD, 2026-10-26) - not built
 
