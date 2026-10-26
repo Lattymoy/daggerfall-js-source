@@ -435,12 +435,13 @@
   },
   {
     "name": "LW3-host-ground-misbound",
-    "file": "src/scenes/world.js",
-    "old": "routeGround((px, py) => maps.getClimateIndex(px, py), (px, py) => woods.getHeightMapValue(px, py), WATER_BYTE, 1000, 500,",
-    "new": "routeGround((px, py) => woods.getHeightMapValue(px, py), (px, py) => maps.getClimateIndex(px, py), WATER_BYTE, 1000, 500,",
+    "file": "src/scenes/livingWorld/livingTrips.js",
+    "old": "routeGround((px, py) => maps.getClimateIndex(px, py), (px, py) => woods.getHeightMapValue(px, py), WATER_BYTE, 1000, 500)",
+    "new": "routeGround((px, py) => woods.getHeightMapValue(px, py), (px, py) => maps.getClimateIndex(px, py), WATER_BYTE, 1000, 500)",
     "tests": [
       "test/systems/livingWorld/lw3_roads.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (WW7-7): the ways' ground scenes/livingWorld/livingTrips.js's, the Bay's table alone."
   },
   {
     "name": "LW3-host-network-memo-kept",

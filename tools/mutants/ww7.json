@@ -37,12 +37,13 @@
  },
  {
   "name": "WW7-2-the-beyond-unwalked",
-  "file": "src/scenes/world.js",
-  "old": "WATER_BYTE, 1000, 500, (px, py) => (!!woods.isTamrielGround || !!woods.etherLaw?.(px, py)) && woods.getHeightMapValue(px, py) > WATER_BYTE))",
-  "new": "WATER_BYTE, 1000, 500, () => false))",
+  "file": "src/scenes/livingWorld/livingTrips.js",
+  "old": "    beyond: { epoch, plan: beyondWays.plan, frame: beyondWays.frame, clear: beyondWays.clear },\n",
+  "new": "",
   "tests": [
    "test/world/worldWide/ww7_places.test.js"
-  ]
+  ],
+  "note": "Re-aimed by content (WW7-7): WW7-2's walk past the Bay's table retired - a pair past the Bay the window planner's on the roads past the Bay."
  },
  {
   "name": "WW7-3-a-crown-unseated",

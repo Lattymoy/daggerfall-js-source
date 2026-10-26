@@ -396,7 +396,7 @@ link with the ship AI at ports" - LW3's trips kept to the land; a port's travell
   with their merchant. The cycle's own dice ('sea'), apart from the road's, so a cycle that does not sail is the trip it
   always was.
 - **Where.** A port a lane of the Bay runs to from theirs (`world.lanesFrom`: the far port, the lane's length in
-  metres): the bigger and the nearer the likelier (a pilgrim's a temple town's). Lanes are the Bay's own - the ones its
+  metres): the bigger and the nearer the likelier (a pilgrim's a temple town's). Lanes are the Bay's own (WW7-7, `03-World/World-Wide.md`: a port town past the Bay's the lanes past it) - the ones its
   packets sail (LW5) - so a passage can reach a port beyond any road's `TRIP_REACH_PX`.
 - **When.** Out from the dock on a morning tide (`SEA_TIDE_H`, 6 to 9 o'clock); the crossing at `SEA_PACE_X` (3) a
   walker's pace, by night as by day; the stay (the job's `STAY_DAYS`); home on a later morning's tide, the same hour

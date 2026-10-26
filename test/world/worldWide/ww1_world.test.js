@@ -246,11 +246,12 @@ test('WW1 the living world\'s index: towns and dungeons off the registry - a tow
   const t = idx.townAt(sx, sy);
   assert.ok(t && t.region === 64 && theatreOfArea(t.area) === THEATRE_KEYS.indexOf('Skyrim'), 'its area a district of Skyrim, its region Skyrim\'s');   // PIN MOVED (WW-R)
   assert.equal(idx.townOfId(701).name, 'P701', 'its records the index\'s');
-  // PIN MOVED (AUDIT TESA II P7): the living world's people go the Bay's ways alone until WW7 (scenes/livingWorld/livingIndex.js
-  // livingRoams) - the ways' planner reads the Bay's roads, so a traveller set out from Solitude walked the Bay's
-  assert.deepEqual(idx.townsNear(sx, sy, 4), [], 'no trip from past the Bay');
+  // PIN MOVED (AUDIT TESA II P7, then WW7-7 - bible/03-World/World-Wide.md): an index handed no word of the land past the Bay
+  // (`beyond`: the roads past the Bay laid whole, and the places they rolled) knows no square past the Bay - a trip there
+  // waits on it (test/world/worldWide/ww7_people.test.js: the squares past the Bay once it is said)
+  assert.deepEqual(idx.townsNear(sx, sy, 4), [], 'no trip from past the Bay while its roads are unsaid');
   assert.deepEqual(idx.townsNear(101, 100, 2).map((x) => x.mapId), [4, 5], 'the Bay\'s as before');
-  assert.deepEqual(idx.townsIn(t.area), [], 'no band\'s town in Skyrim\'s area');
+  assert.deepEqual(idx.townsIn(t.area), [], 'no band\'s town in Skyrim\'s area while its roads are unsaid');
   assert.deepEqual(idx.townsIn(18).map((x) => x.mapId), [4]);
   assert.notEqual(idx.townOfId(5), undefined);
   const g = idx.generation();
@@ -328,8 +329,11 @@ test('WW1 the dry ground keeps a pixel\'s kernel by the world\'s key - a pixel a
 test('WW1 the host: the game\'s own rows the registry\'s first provider at the boot, the living world\'s index over the registry, its towns, dungeons, area towns, port towns and dungeons by id handed on, the pixel builder\'s town the index\'s; nothing in the living world filed by `y * 1000 + x` (mutants: the index unwired, the pixel builder)', () => {
   const w = rd('src/scenes/world.js');
   assert.match(w, /const worldPlaces = createWorldPlaces\(\);\n\s*worldPlaces\.register\(BAY_SOURCE, bayPlaceRows\(_hubRows, \{ hasPort \}\)\);\n\s*_hubRows\.length = 0;/);
-  assert.match(w, /const livingIndex = createLivingIndex\(\{ places: worldPlaces, populated: populatesWanderingNpcs, peopleAt: /);
-  assert.match(w, /const livingTownsNear = livingIndex\.townsNear;\n\s*const livingDungeonsNear = livingIndex\.dungeonsNear;/);
+  // PIN MOVED (WW7-7): the index and the trips' world scenes/livingWorld/livingTrips.js's, the host handing the registry
+  assert.match(w, /const \{ index: livingIndex, [^\n]*\} = createLivingTrips\(\{ places: worldPlaces, populated: populatesWanderingNpcs,\n\s*peopleAt: /);
+  const lt = rd('src/scenes/livingWorld/livingTrips.js');
+  assert.match(lt, /const index = createLivingIndex\(\{ places, populated, peopleAt, beyond: /);
+  assert.match(lt, /townsNear: index\.townsNear,\n[^]*dungeonsNear: index\.dungeonsNear,/);
   assert.match(w, /const livingTownOfId = livingIndex\.townOfId;/);
   // PIN MOVED (WW7-1): a dungeon by its location's own map id - a lair past the Bay has no MAPS row
   assert.match(w, /const id = loc\.mapTableData\?\.mapId \?\? maps\.getLocation\(loc\.regionIndex, loc\.locationIndex\)\?\.mapTableData\?\.mapId;[^\n]*\n\s*return id != null \? livingIndex\.dungeonOfId\(id >>> 0\) : null;/);
