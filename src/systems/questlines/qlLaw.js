@@ -98,6 +98,14 @@ export function bindingSymbols(b, out = []) {
 /** The open binding a sheet omits: an objective with no `open` is open from the start. */
 const ALWAYS = Object.freeze({ started: true });
 
+/** FIELD BUGS 2026-10-25i HEART-TAKEN (AUDIT FB1025i B4): A MENDED BINDING READS ITS OBJECTIVE AFRESH, ONCE. An objective
+ *  whose binding was mended names the mend (`reread`); a state that has not taken it - a save, or a party copy, from a
+ *  build before the mend - holds that objective's latch from the OLD binding (Q0C4XY04's heart, struck on a look at the
+ *  body's row), so its latch does not stand until the state takes the mend (observe), which forgets it: the mended
+ *  binding decides from there. */
+const unmended = (st, o) => !!o?.reread && !(st?.reread ?? []).includes(o.reread);
+const latched = (st, list, o) => !!list?.includes(o.id) && !unmended(st, o);
+
 /**
  * The objectives as the player is to see them now: `[{ id, text, state, optional, group, any, mark }]` in the sheet's
  * order, each `state` one of 'hidden' (its state has not opened it), 'open', 'done' or 'failed'. Done and failed read
@@ -108,9 +116,9 @@ const ALWAYS = Object.freeze({ started: true });
 export function readObjectives(quest, sheet, probe = {}) {
   const st = quest?.ql ?? null;
   return (sheet?.objectives ?? []).map((o) => {
-    const done = !!st?.done?.includes(o.id) || holds(quest, o.done, probe);
-    const failed = !done && (!!st?.failed?.includes(o.id) || (!!o.fail && holds(quest, o.fail, probe)));
-    const open = done || failed || !!st?.opened?.includes(o.id) || holds(quest, o.open ?? ALWAYS, probe);
+    const done = latched(st, st?.done, o) || holds(quest, o.done, probe);
+    const failed = !done && (latched(st, st?.failed, o) || (!!o.fail && holds(quest, o.fail, probe)));
+    const open = done || failed || latched(st, st?.opened, o) || holds(quest, o.open ?? ALWAYS, probe);
     return {
       id: o.id, text: o.text, state: done ? 'done' : failed ? 'failed' : open ? 'open' : 'hidden',
       optional: !!o.optional, group: o.group ?? null, any: o.any ?? null, mark: o.mark ? symName(o.mark) : null,
@@ -148,6 +156,15 @@ export function observe(quest, sheet, probe0 = {}, { settle = false, ending = fa
   const moved = { done: [], failed: [], chose: [], outcome: null };
   const st = isStamped(quest) ? quest.ql : null;
   if (!st || !sheet) return moved;
+  // HEART-TAKEN (AUDIT FB1025i B4): a mend this state has not taken - its objectives' latches forgotten, the mend taken
+  st.reread ??= [];
+  const mends = new Set();
+  for (const o of sheet.objectives ?? []) {
+    if (!unmended(st, o)) continue;
+    mends.add(o.reread);
+    for (const k of ['done', 'opened', 'failed']) st[k] = (st[k] ?? []).filter((x) => x !== o.id);
+  }
+  for (const m of mends) st.reread.push(m);
   for (const b of sheet.branches ?? []) {
     if (st.choices[b.id]) continue;
     const c = (b.choices ?? []).find((x) => holds(quest, { task: x.sets }, probe));

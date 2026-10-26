@@ -231,6 +231,52 @@ const copyRows = (/** @type {any} */ db, /** @type {string[]} */ keys, /** @type
   chunks(keys, DUPE_ROWS).map((part) => db.prepare(`INSERT OR IGNORE INTO item_dupes (uid, char_id, at, kind, first_char, first_at, claimant, claim_at, fp) VALUES ${part.map((_, i) => { const o = 4 + 6 * i; return `(?${o}, ?1, ?2, ?3, ?${o + 1}, ?${o + 2}, ?${o + 3}, ?${o + 4}, ?${o + 5})`; }).join(', ')}`)
     .bind(char, nowS, kind, ...part.flatMap((k) => { const w = whoOf(k); return [k, w?.first ?? null, w?.firstAt ?? null, w?.claimant ?? null, w?.claimAt ?? null, w?.fp ?? null]; })));
 
+/**
+ * FIELD BUGS 2026-10-25i COPY-LIFT (Giljabrar: "I placed 89 rare/legendary items in a chest ... they were all 'Realm
+ * Locked'"): A RECORD'S COPY OF ITS OWN, LIFTED BY THE SERVICE'S OWN HAND. The decorator's Discard wrote a home's chests
+ * back (scenes/decor/decorTool.js CHEST-DRAFT), and every piece stored stood twice in one record - a `twice` copy, both
+ * locked. A copy is lifted ONLY in the batch of a service act that itself leaves the record one of the piece (staff's
+ * purge with `keep` - staffRealm.js: its batch destroys a copy of it wherever the save holds one, or staff's Remove took
+ * one and keeps it): never on a checkpoint's word that the record shows it once, which no service can tell from a copy
+ * moved where the record lists nothing - a deserter revenant's take (revenant.js RVN8: splitPack, and a kill's take,
+ * pickTaken - neither takes a realm-locked piece now, AUDIT FB1025i F1, and a forged client's is the keep's to find),
+ * a counter, the ground - and brought back after (AUDIT FB1025i). Of `pieces` (`{ key, fp }`, one of each the act
+ * keeps), the keys liftable: a `twice` copy of `char`'s, no trail check found or found it innocent (AUDIT FB1025i F7: an
+ * `unclear` one is staff's to settle first), its row `char`'s own, held and unclaimed and of that piece, no other
+ * record's copy known. Every other copy stays locked for good.
+ * @param {any} db @param {string} char @param {{ key: string, fp: string }[]} pieces
+ */
+export async function ownCopiesLiftable(db, char, pieces) {
+  const fpOf = new Map(pieces.map((p) => [p.key, p.fp]));
+  /** @type {string[]} */
+  const out = [];
+  for (const part of chunks([...fpOf.keys()], UID_CHUNK)) {
+    const r = await db.prepare(`SELECT d.uid, u.fp FROM item_dupes d JOIN item_uids u ON u.uid = d.uid
+      WHERE d.char_id = ?1 AND ${OWN_COPY_SQL} AND d.uid IN (${marks(part.length, 2)})`).bind(char, ...part).all();
+    for (const row of r?.results ?? []) if (row.fp === fpOf.get(row.uid)) out.push(row.uid);
+  }
+  return out;
+}
+/** COPY-LIFT's law in SQL, over item_dupes `d` and its row item_uids `u` (?1 the record) - asked again by the lift's own
+ *  statement, so a row that moved since the ask is not lifted. */
+const OWN_COPY_SQL = `d.kind = 'twice' AND (d.trail_found IS NULL OR d.trail_found = 'innocent')
+  AND u.char_id = ?1 AND u.state = 'held' AND u.claim_char IS NULL
+  AND NOT EXISTS (SELECT 1 FROM item_dupes o WHERE o.uid = d.uid AND o.char_id != ?1)`;
+/** AUDIT FB1025i F2: the copies of the keys in JSON `?4` the law lifts on `?1` now - what the lift's statement will take. */
+const LIFTING_SQL = `SELECT d.uid AS uid FROM item_dupes d JOIN item_uids u ON u.uid = d.uid
+  WHERE d.char_id = ?1 AND ${OWN_COPY_SQL} AND d.uid IN (SELECT value FROM json_each(?4))`;
+/** COPY-LIFT: `keys` (ownCopiesLiftable's) lifted on `char`, in the act's own batch - and said among its findings, a
+ *  'dupe' with `lifted`, as the copy was when it came (chargeSteps). AUDIT FB1025i F2: the finding says what the lift's
+ *  own statement takes, asked by the same law in the same batch just before it - a row that moved since the ask (a
+ *  peer's claim landed) is neither lifted nor said; none lifted, no finding. No keys, no statement. */
+export const ownCopyLiftSteps = (/** @type {any} */ db, /** @type {string} */ char, /** @type {string[]} */ keys, /** @type {number} */ nowS) => (!keys.length ? [] : [
+  db.prepare(`INSERT INTO realm_findings (player, char_id, seq, at, law, kind, detail)
+    SELECT c.player, c.id, c.seq, ?2, ?3, 'dupe', json_object('lifted', json((SELECT json_group_array(uid) FROM (SELECT uid FROM (${LIFTING_SQL}) LIMIT 40))), 'count', (SELECT COUNT(*) FROM (${LIFTING_SQL})))
+    FROM realm_characters c WHERE c.id = ?1 AND EXISTS (${LIFTING_SQL})`).bind(char, nowS, JUDGE_VERSION, JSON.stringify(keys)),
+  ...overKeys(db, keys, [char], (m) => `DELETE FROM item_dupes WHERE char_id = ?1 AND uid IN (${m}) AND EXISTS (SELECT 1 FROM item_dupes d JOIN item_uids u ON u.uid = d.uid
+    WHERE d.uid = item_dupes.uid AND d.char_id = ?1 AND ${OWN_COPY_SQL})`),
+]);
+
 /** INT9 (AUDIT): `keys` written down as copies `char` holds - a death's dropped pieces, whose ids the remains carry afresh
  *  (server-account/src/wild.js): never charged, and moved by no route. */
 export const knownCopySteps = (/** @type {any} */ db, /** @type {string} */ char, /** @type {string[]} */ keys, /** @type {number} */ nowS) =>

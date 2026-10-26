@@ -98,7 +98,7 @@ and the Iliac table's (`server/src/index.js:"async _iliacVouch(a, m, now, refuse
 way. The game's own `canTake` still reads the remains' `oid` as the fallen's peer (a seizure's carrier is its killer),
 so the killer's party and guild see no pile of a remains the room would let them take.
 
-DEPLOY: the account service `acct193` first (its order's `wnm` - an older relay ignores the field), then the relay
+DEPLOY: the account service `acct194` (acct193 on its branch, renumbered past COPY-LIFT at the merge) first (its order's `wnm` - an older relay ignores the field), then the relay
 `world266` (world265 on its branch, renumbered past GATE-COURTS at the merge), then the site.
 
 LIMITS (`11-Multiplayer/Wild-Zone.md` section 22): a page that comes back outside the zone, or inside one of its

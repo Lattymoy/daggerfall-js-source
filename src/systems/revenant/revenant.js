@@ -78,7 +78,7 @@ import { goldStack, isSummoned, isGoldPieces, addItem, addGoldPieces } from '../
 import { unequipItem, equipTableOf, EQUIP_SLOTS } from '../equip.js';   // RVN8: what it takes, off the hand that held it
 import { isLocked } from '../item/itemLock.js';   // RVN8: LOCK1's promise - a locked piece stays yours
 import { isBagItem } from '../../net/bagLaw.js';   // RVN8: never the Materials Bag
-import { isPackOnly } from '../item/itemBound.js';   // AUDIT 625 W2: nor a pack-only piece (the Wallet)
+import { isPackOnly, isRealmLocked } from '../item/itemBound.js';   // AUDIT 625 W2: nor a pack-only piece (the Wallet); AUDIT FB1025i F1: nor a realm-locked one
 import { WILD_NEVER_GROUPS } from '../wild/wildLeaf.js';   // STEED-KEPT: nor what never changes hands - a vehicle, a deed (the zone's own leaf - never the drop law's graph)
 import { BOAT_TEMPLATES } from '../../net/realm/realmTradeLaw.js';   // STEED-KEPT: nor a ship's deed or parts
 import { DECOR_OWN_KEPT_BACK } from '../../net/decorLaw.js';   // STEED-KEPT: nor a deed as Daggerfall files one, nor the spellbook
@@ -946,9 +946,14 @@ export function forgetLastSlew() { _lastSlew = null; }
  *  realmTradeLaw.js BOAT_TEMPLATES - a deed handed on is a second boat): a stable's horse beside a worn longsword was drawn
  *  one death in six. A BOUND piece stays its own (AUDIT 625 W2, "RVN8 names its own exclusions"), decided again: the zone
  *  keeps one because a death's remains are anyone's, and what a revenant takes never rides to another player - its body
- *  hands what it carried to its owner alone (net/bodyLoot.js shareableRecord, peerWord.js neverPeerHanded). */
+ *  hands what it carried to its owner alone (net/bodyLoot.js shareableRecord, peerWord.js neverPeerHanded). AUDIT FB1025i
+ *  F1 (FIELD BUGS 2026-10-25i COPY-LIFT): but never a piece THE REALM LOCKED (itemBound.js isRealmLocked - a copy the
+ *  ledger wrote down): what it took rides on its record, a list the checkpoint's ledger never reads, and a copy hidden
+ *  there while staff's keep lifted the other came back after as a second, live one. One taken before comes home at the
+ *  load (ensureMirror), where the ledger reads it. */
 export const revenantMayTake = (item) => !!item && typeof item === 'object' && Number.isInteger(item.templateIndex) && !isLetterOfCredit(item)
   && !WILD_NEVER_GROUPS.has(item.group) && !DECOR_OWN_KEPT_BACK.has(item.templateIndex) && !BOAT_TEMPLATES.includes(item.templateIndex)   // STEED-KEPT
+  && !isRealmLocked(item)   // AUDIT FB1025i F1: nor a piece the realm locked
   && !item.questItem && !isSummoned(item) && !isGoldPieces(item) && !isBagItem(item) && !isPackOnly(item) && !isLocked(item);
 /** AUDIT FEUD: a piece it took, named after "your", "my" or "lovely" - the name the pack shows, its own article gone
  *  (a legendary's "The Glenmoril Bow": "your Glenmoril Bow", never "your The ..."). */
