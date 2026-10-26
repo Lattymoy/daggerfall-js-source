@@ -128,7 +128,8 @@ import { REALM_COPY_SAVE_NAME, realmCopyIds } from '../../systems/realmCopyMark.
 import { bringOnlineButton } from './bringOnlineButton.js';
 import { createRealmLine } from '../../systems/legacy/realmLine.js';   // HOUSE-WAITS (FIELD BUGS 2026-10-09f): the account's lines, read at the door
 import { loadFamily } from '../../systems/legacy/store.js';
-import { waitingHouses, takeUpLine, houseWaitsTitle, houseWaitsLine, heirButtonLabel } from '../../systems/legacy/waitingHouses.js';
+import { waitingHouses, takeUpLine, houseWaitsTitle, houseWaitsLine, heirButtonLabel, newbornButtonLabel } from '../../systems/legacy/waitingHouses.js';
+import { legacySettings } from '../../systems/legacy/settings.js';   // RPT1026-MISC HEIR-WAITS: the Descendants dial a newborn heir is offered by
 import { mintCharacterId } from '../../systems/characterId.js';   // REALM P1.4: a copy to offline is a new offline character
 import { exportSavesZip, collectSlots, importSlots, entriesFromFiles, slotPathOf, TRANSFER_ZIP_NAME } from '../../systems/save/saveTransfer.js';   // SP1: saves move between the website and the app
 import { appStorage, tabStorage } from '../../systems/appStorage.js';   // SP1: the store under this build - the browser's on the site, the file store in the app   // SAV4: the slot store; SLOTS1: every slot
@@ -1401,26 +1402,30 @@ function waitingHouseCards() {
   if (!realmLineIds?.length) return [];
   const living = new Set(realmRows.map((r) => String(r.id)));
   const families = realmLineIds.map((id) => loadFamily(appStorage(), id)).filter(Boolean);
-  return waitingHouses(families, { played: (cid) => living.has(cid) }).map(({ family, fallen, heirs }) => {
+  return waitingHouses(families, { played: (cid) => living.has(cid), settings: legacySettings() }).map(({ family, fallen, heirs, newborn }) => {
     const card = el('div', 'card svhousewaits');
     card.append(el('h4', null, houseWaitsTitle(family)), el('p', 'meta', houseWaitsLine(family, fallen)));
-    card.append(acts(heirs.map((p) => ({
+    card.append(acts([...heirs.map((p) => ({
       label: heirButtonLabel(p),
       disabled: realmBusy || realmRows.length >= realmMax,
       onClick: () => carryOn(family.id, p.id),
-    }))));
+    })), ...(newborn ? [{   // RPT1026-MISC HEIR-WAITS: the Succession's newborn heir, where the fall may raise one
+      label: newbornButtonLabel(fallen),
+      disabled: realmBusy || realmRows.length >= realmMax,
+      onClick: () => carryOn(family.id, null, true),
+    }] : [])]));
     return card;
   });
 }
 /** HOUSE-WAITS: the Succession's choice, made here - the record stored and the realm's copy written (its birth checks
  *  the person there), then the boot births them online. */
-function carryOn(familyId, personId) {
+function carryOn(familyId, personId, newborn = false) {
   realmBusy = true; render();
-  const took = takeUpLine({ storage: appStorage(), tab: tabStorage(), familyId, personId });
+  const took = takeUpLine({ storage: appStorage(), tab: tabStorage(), familyId, personId, newborn, settings: legacySettings() });   // RPT1026-MISC HEIR-WAITS: or the newborn, made here
   if (!took.ok) { realmWords = [took.why]; realmBusy = false; render(); return; }
   Promise.resolve(realmLine?.push(took.family)).then(() => realmLine?.flush()).then((ok) => {
     if (!ok) { realmWords = [realmRefusalText(realmLine?.refusalOf(familyId) ?? realmLine?.error ?? 'server')]; realmBusy = false; render(); return; }
-    _pickedLegacyBirth = { personId, region: took.place.region, loc: took.place.loc };
+    _pickedLegacyBirth = { personId: took.heirId, region: took.place.region, loc: took.place.loc };   // RPT1026-MISC HEIR-WAITS: the heir the take named (a newborn's id is minted there)
     realmBusy = false;
     onAction('online-new');
   }).catch(() => { realmWords = [realmRefusalText('server')]; realmBusy = false; render(); });

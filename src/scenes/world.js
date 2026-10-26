@@ -35352,7 +35352,12 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // RR2: EnhancedRiding.OnTriggerEnter / OnControllerColliderHit (:157-215)
         // - a galloping rider tramples the townsperson under the hooves and
         // charges down the foe in the way, once each
-        if (rrRidingOn() && player.riding && player.isRunning) rrRidingContacts();
+        // RPT1026-MISC JOURNEY-TRAMPLE (a private report: "I got hit with an Assault charge while traveling through town on
+        // the overworld map on horseback"): never while a journey drives the ride (rideOnTheRoad: the Overworld's view, or
+        // a Travel Options autopilot - a held Run or AutoRun gallops it). DFU's mods run EnhancedRiding's OnTriggerEnter
+        // under TravelOptions' journey too, the clip muted (RidingVolumeScale 0, AUDIT-TO1 J1); here a journey at sixty
+        // times the pace charged an Assault for townsfolk under hooves the player never steered. Ledger A.
+        if (rrRidingOn() && player.riding && player.isRunning && !rideOnTheRoad()) rrRidingContacts();
       }
       // DISC14 (Starempire42 on Discord: "is there a way to make it so I can see my weapon above my horse?"): the
       // weapons draw OVER the mount. OnGUI puts the horse at GUI.depth 2, "behind other HUD elements & weapons"

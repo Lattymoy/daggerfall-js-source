@@ -18,8 +18,18 @@
 // birth door (`?online&realmnew&legacyborn=`), so the birth, its first save and the fall's settling are the law that
 // already ran. Pure where it can be: storage, the tab and the realm line come in.
 // ═══════════════════════════════════════════════════════════════════
-import { MODELS, isAlive, personOf, fullNameOf, setCurrent, touch } from './family.js';
+import { MODELS, isAlive, personOf, fullNameOf, setCurrent, touch, newbornAllowed, addChild, rollSiblings } from './family.js';
 import { loadFamily, storeFamily, leaveBirth } from './store.js';
+import { t } from '../textManager.js';   // RPT1026-MISC HEIR-WAITS: the newborn's door, in the player's language
+//
+// RPT1026-MISC HEIR-WAITS (a private report: "Level 22 character selected to pass on with heritage system. Given option to
+// select an heir. Game crashes to menu before selecting an heir for character creation, and the parent character no
+// longer exists on the server"). THE NEWBORN'S DOOR. The Succession the fall offers is every living member of the blood
+// AND, when the heir answer allows, a newborn heir of the fallen (legacyHost.js fallOutcome's `newborn`) - and this door
+// named the living members alone. A line whose fallen left no sibling or child, its Succession left waiting by a page
+// that went back to the title before the choice, had no card on the Online page and no character anywhere: the fallen is
+// the realm's tombstone, and the heir the fall would have raised was never made. The card offers that newborn now, made
+// here as the Succession makes them (legacyHost.js succeed: addChild, then rollSiblings, at the fall's own minute).
 
 /** The town a member is born in when the line has no seat (legacyHost.js play's last answer). */
 export const DEFAULT_BIRTH_PLACE = Object.freeze({ region: 'Daggerfall', loc: 'Daggerfall' });
@@ -31,7 +41,7 @@ export const DEFAULT_BIRTH_PLACE = Object.freeze({ region: 'Daggerfall', loc: 'D
  * (`played(characterId)`: online the account's roster holds them, and they are joined from there).
  * @param {any[]} families @param {{ played?: (characterId: string) => boolean }} [opts]
  */
-export function waitingHouses(families, { played = () => false } = {}) {
+export function waitingHouses(families, { played = () => false, settings = null } = {}) {
   const out = [];
   for (const family of Array.isArray(families) ? families : []) {
     const pend = family?.pending;
@@ -40,7 +50,9 @@ export function waitingHouses(families, { played = () => false } = {}) {
       .filter((p) => isAlive(p) && (p.kind ?? 'member') === 'member' && p.retired == null && p.id !== pend.fallenId)
       .filter((p) => !(p.characterId && played(String(p.characterId))))
       .sort((a, b) => (a.gen | 0) - (b.gen | 0) || a.id - b.id);
-    if (heirs.length) out.push({ family, fallen: personOf(family, pend.fallenId), heirs });
+    const fallen = personOf(family, pend.fallenId);
+    const newborn = newbornOffered(family, fallen, settings);   // RPT1026-MISC HEIR-WAITS: and a newborn of the fallen, as the Succession offers one
+    if (heirs.length || newborn) out.push({ family, fallen, heirs, newborn });
   }
   return out;
 }
@@ -52,6 +64,11 @@ export function houseWaitsLine(family, fallen) {
   return `${who} ${family?.model === MODELS.enduring ? 'has died of their years' : 'has fallen'}, and the house's Succession was never answered. Choose who carries the line on.`;
 }
 export const heirButtonLabel = (p) => `Carry on as ${fullNameOf(p.given, p.surname)}${p.minor ? ' (comes of age)' : ''}`;
+/** RPT1026-MISC HEIR-WAITS: the newborn's button - the Succession's own "A child of {given}" (world.js's choices). */
+export const newbornButtonLabel = (fallen) => t('legacy.houseWaits.newborn', 'Raise a child of {name} as your heir', { name: fallen?.given || fallen?.surname || '' });
+/** RPT1026-MISC HEIR-WAITS: whether the waiting fall may raise a newborn heir - the Succession's own test (legacyHost.js
+ *  fallOutcome): the heir answer rolled at the fallen's birth, the Descendants dial at Always, or an elder retired. */
+const newbornOffered = (family, fallen, settings) => !!fallen && (fallen.retired != null || newbornAllowed(family, fallen, settings));
 
 /**
  * THE SUCCESSION'S CHOICE, MADE FROM THE MENU: line `familyId`'s member `personId` takes the mantle - of age, the line's
@@ -60,11 +77,19 @@ export const heirButtonLabel = (p) => `Carry on as ${fullNameOf(p.given, p.surna
  * why }`. A member who has been played and whose character stands is no birth: the roster plays them.
  * @param {{ storage: any, tab: any, familyId: string, personId: number, now?: number }} a
  */
-export function takeUpLine({ storage, tab, familyId, personId, now = Date.now() }) {
+export function takeUpLine({ storage, tab, familyId, personId, now = Date.now(), newborn = false, settings = null, rng = Math.random }) {
   const family = loadFamily(storage, familyId);
   if (!family) return { ok: false, why: 'That house is not on this device. Play any character on this account online once, then try again.' };
   const base = family.rev;   // the store's rev this copy was made from (store.js storeFamily's `base`)
-  const heir = personOf(family, personId);
+  let heir = null;
+  if (newborn) {
+    // RPT1026-MISC HEIR-WAITS: the newborn made as the Succession makes them, born at the fall's own minute
+    const fallen = personOf(family, family.pending?.fallenId);
+    if (!family.pending || !newbornOffered(family, fallen, settings)) return { ok: false, why: t('legacy.houseWaits.noNewborn', 'No heir can be raised for that house.') };
+    const at = family.pending.at ?? 0;
+    heir = addChild(family, fallen.id, { rng, at, settings }).person;
+    rollSiblings(family, heir.id, { rng, at, settings });
+  } else heir = personOf(family, personId);
   if (!heir || !isAlive(heir) || (heir.kind ?? 'member') !== 'member' || heir.retired != null || heir.id === family.pending?.fallenId) {
     return { ok: false, why: 'That member of the family cannot take up the line.' };
   }
@@ -74,8 +99,8 @@ export function takeUpLine({ storage, tab, familyId, personId, now = Date.now() 
   touch(family);
   if (!storeFamily(storage, family, base)) return { ok: false, why: 'The family record could not be saved on this device. Free some space and try again.' };
   const place = family.seat?.region && family.seat?.loc ? family.seat : DEFAULT_BIRTH_PLACE;
-  if (!leaveBirth(tab, { familyId: family.id, personId: heir.id, region: place.region, loc: place.loc, estate: 0 }, now)) {
+  if (!leaveBirth(tab, { familyId: family.id, personId: heir.id, region: place.region, loc: place.loc, estate: 0, ...(newborn ? { newborn: true } : {}) }, now)) {
     return { ok: false, why: 'The new heir could not be saved in this window. Try again.' };
   }
-  return { ok: true, family, place: { region: place.region, loc: place.loc } };
+  return { ok: true, family, heirId: heir.id, place: { region: place.region, loc: place.loc } };   // RPT1026-MISC HEIR-WAITS: a newborn's id is minted here
 }

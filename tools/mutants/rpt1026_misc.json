@@ -108,5 +108,75 @@
       "test/ui/enhanced/rpt1026_misc_confirm.test.js"
     ],
     "note": "CONFIRM-SHEET: answered, the sheet the ask raised stays up over the list"
+  },
+  {
+    "name": "rpt1026-misc-trample-on-journey",
+    "file": "src/scenes/world.js",
+    "old": "if (rrRidingOn() && player.riding && player.isRunning && !rideOnTheRoad()) rrRidingContacts();",
+    "new": "if (rrRidingOn() && player.riding && player.isRunning) rrRidingContacts();",
+    "tests": [
+      "test/scenes/rpt1026_misc_trample.test.js"
+    ],
+    "note": "JOURNEY-TRAMPLE: a journey galloping through a town tramples its people and charges Assault again"
+  },
+  {
+    "name": "rpt1026-misc-heir-newborn-unoffered",
+    "file": "src/systems/legacy/waitingHouses.js",
+    "old": "    if (heirs.length || newborn) out.push({ family, fallen, heirs, newborn });",
+    "new": "    if (heirs.length) out.push({ family, fallen, heirs, newborn });",
+    "tests": [
+      "test/systems/legacy/rpt1026_misc_heir.test.js"
+    ],
+    "note": "HEIR-WAITS: a fall with no living kin has no card again - the line waits with nothing to press"
+  },
+  {
+    "name": "rpt1026-misc-heir-newborn-refused",
+    "file": "src/systems/legacy/waitingHouses.js",
+    "old": "  if (newborn) {\n",
+    "new": "  if (false) {\n",
+    "tests": [
+      "test/systems/legacy/rpt1026_misc_heir.test.js"
+    ],
+    "note": "HEIR-WAITS: the newborn's press makes nobody and is refused"
+  },
+  {
+    "name": "rpt1026-misc-heir-newborn-born-now",
+    "file": "src/systems/legacy/waitingHouses.js",
+    "old": "    const at = family.pending.at ?? 0;",
+    "new": "    const at = 0;",
+    "tests": [
+      "test/systems/legacy/rpt1026_misc_heir.test.js"
+    ],
+    "note": "HEIR-WAITS: the newborn is born at no minute of the fall's"
+  },
+  {
+    "name": "rpt1026-misc-touch-field-unmarked",
+    "file": "src/ui/enhanced/enhancedPorts.js",
+    "old": "value: w.value, active: true, numeric: true } : null,",
+    "new": "value: w.value, active: true } : null,",
+    "tests": [
+      "test/ui/enhanced/rpt1026_misc_field.test.js"
+    ],
+    "note": "TOUCH-FIELD: the Bank's amount is no number - a phone raises the letters"
+  },
+  {
+    "name": "rpt1026-misc-touch-entry-unhooked",
+    "file": "src/ui/touch/touch.js",
+    "old": "  _openEntry = openEntry;",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/rpt1026_misc_field.test.js"
+    ],
+    "note": "TOUCH-FIELD: a window's field can raise no entry - a finger on it raises no keyboard"
+  },
+  {
+    "name": "rpt1026-misc-touch-field-press-unread",
+    "file": "src/ui/enhanced/enhancedPort.js",
+    "old": "      if (typed && openTouchEntry({ numeric: typed.dataset.entry === 'numeric' })) { e.stopPropagation(); return; }",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/rpt1026_misc_field.test.js"
+    ],
+    "note": "TOUCH-FIELD: the port's press on its field asks no entry"
   }
 ]
