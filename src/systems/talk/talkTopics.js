@@ -170,6 +170,11 @@ export function drawNamedBuildings(exteriorBuildings, blocks, { locationIndex = 
   const out = new Map();   // block -> merged buildingDataList copy
   for (const b of blocks) {
     const list = b.dfBlock.rmbBlock.fldHeader.buildingDataList.map((d) => ({ ...d }));
+    // BLD (bible/03-World/Arena-Provinces.md IC-GRAND, BLD; Port-Ledger section A, IC-GRAND): A BLOCK THAT NAMES ITS OWN
+    // BUILDINGS - the Imperial City's fabric (world/imperialFabricBuildings.js withFabricBuildings) - keeps its records and
+    // draws none of the location's list: the outcome that list would give carrying them in grid order, and a classic
+    // block's draw after it untouched
+    if (b.dfBlock.ownNamedBuildings) { out.set(b, list); continue; }
     // AUDIT 2026-08-17c: DFU scans SubRecords.Length entries, NOT the
     // full 32-slot header - garbage entries past the subrecord count
     // must never steal pool draws (they misalign every later name).

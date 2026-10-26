@@ -6,9 +6,9 @@
 // DFU's reference: a city is its MAPS.BSA row's grid of RMB blocks, each block's buildings and streets its own author's
 // (RMBLayout). DEPARTURE (named; Port-Ledger section A, IC-GRAND): the Imperial City's own blocks stand streets and
 // buildings no block of Daggerfall's carries - laid by district from the metres about the city's middle, so a street runs
-// on across the blocks it crosses and a building stands across a block's edge where its street puts it. Facades: no
-// building of the fabric has a door or an inside (Daggerfall's blocks, along each district's avenue and round its heart,
-// are the city's houses, shops, temples and guilds - world/imperialCity.js tradeCell).
+// on across the blocks it crosses and a building stands across a block's edge where its street puts it. Its street-front
+// buildings are entered as Daggerfall's are - a record, a door, a Daggerfall interior (world/imperialFabricBuildings.js,
+// BLD) - beside Daggerfall's own blocks along each district's avenue and round its heart (world/imperialCity.js tradeCell).
 //
 // EACH DISTRICT ITS OWN STREETS (`IMPERIAL_STYLES`), and each its NEIGHBOURHOODS - five rings out from the palace wall and
 // two halves either side of its avenue, the middle ring its heart's alone - each its own frame of streets off its own seed,
