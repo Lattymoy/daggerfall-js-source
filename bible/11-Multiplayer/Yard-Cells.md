@@ -549,4 +549,15 @@ accounts' realm characters stood online in Daggerfall's city. B stood by a weste
   tutorial's pages were still up, and the game holds its pause latch while one is (`overlayUp`), so B never polled. Put
   away with a key each, as a player puts them away, the polls ran.
 
-**Still to run**: check 3 (a build from before YC1 answered 410).
+**Check 3, an old build, in the running game** (2026-10-26): main's client at 829fc148da against YC1's service (acct196)
+and relay in local workerd.
+
+- **Its yards: as section 3.4 says.** It asked `/v1/homes/yards` four times, its back-off between, and was answered 410
+  `{"error":"client-update"}` each time. None of the 20 strangers' yards seeded beside the player stood, nothing was said
+  on screen, and the page threw nothing.
+- **Its writes land.** A yard piece placed through the old build's own client (its `accountDecor` place, the page's fetch
+  and storage) was answered ok, and YC1's cell route serves it.
+- **The build notice: not shown.** The old page's build poll (`BUILD_POLL_MS`, ten minutes after the load) ran once.
+  The probe's route answered it with a page carrying another build tag, standing in for YC1's site being live. The
+  notice's line was not found in the page's text: no chat panel was open, and a quest's letter was up. The notice's code
+  (SRV-N, `net/updateNotice.js`) is unchanged by YC1.
