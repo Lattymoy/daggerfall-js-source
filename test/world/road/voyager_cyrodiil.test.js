@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
-  CYRODIIL_ROADS, RING_POINTS, RING_GAP, RING_REACH, LEG_MAX, COARSE, COARSE_MARGIN, SNAP_REACH,
+  CYRODIIL_ROADS, RING_POINTS, RING_GAP, RING_REACH, RING_SHORE_GAP, LEG_MAX, COARSE, COARSE_MARGIN, SNAP_REACH,
   cyrodiilTrunkSpec, ringPoints, courseLegs, planTrunkLegs,
 } from '../../../src/world/road/cyrodiilRoads.js';
 import { buildRoadNetwork, MAP_W, MAP_H } from '../../../src/world/road/roadNetwork.js';
@@ -32,7 +32,7 @@ test('VOYAGER-CYRODIIL the table: eight roads, their names and their cities in o
   ]);
   const imperial = new Set(CITIES.filter((c) => c.province === 'Imperial').map((c) => c.name));
   for (const r of CYRODIIL_ROADS) for (const s of r.stops) if (typeof s === 'string') assert.ok(imperial.has(s), `${s} is Cyrodiil's`);
-  assert.deepEqual([RING_POINTS, RING_GAP, RING_REACH, LEG_MAX, COARSE, COARSE_MARGIN, SNAP_REACH], [12, 3, 40, 80, 4, 96, 6]);
+  assert.deepEqual([RING_POINTS, RING_GAP, RING_REACH, RING_SHORE_GAP, LEG_MAX, COARSE, COARSE_MARGIN, SNAP_REACH], [12, 3, 80, 2, 80, 4, 96, 6]);
   assert.ok(LEG_MAX < 100, 'a leg inside a region\'s apron (world/tamrielRoads.js REGION_APRON)');
 });
 
@@ -53,28 +53,30 @@ test('VOYAGER-CYRODIIL the spec: each city by the pixel its place stands on, a p
   assert.equal(cyrodiilTrunkSpec({ cityAt: () => null, pictureAt: () => [0, 0], capital: null }), null);
 });
 
-test('VOYAGER-CYRODIIL the Red Ring Road\'s points: on twelve bearings clockwise from north, the span\'s half and RING_GAP out on open land; past a lake within reach, its far shore; a lake past the reach, none (mutants: the bearings, the gap, the far shore, the reach)', () => {
+test('VOYAGER-CYRODIIL the Red Ring Road\'s points: on twelve bearings clockwise from north - with no water about the city, the span\'s half and RING_GAP out; a lake within reach, RING_SHORE_GAP short of its shore, never nearer than that; a bearing with no lake, the radius between its nearest neighbours\' by their share of the turn; snapped to land (mutants: the bearings, the gap, the shore\'s gap, the reach, the clamp, the shares, the open side)', () => {
   const ring = { centre: [100, 100], half: 4 };
   assert.deepEqual(ringPoints(ring, () => true, () => false), [
     [100, 93], [104, 94], [106, 96], [107, 100], [106, 104], [104, 106], [100, 107], [96, 106], [94, 104], [93, 100], [94, 96], [96, 94],
   ]);
-  // a ring of water 9 to 12 out: the ring at 13, past its far shore
-  const r = (x, y) => Math.hypot(x - 100, y - 100);
-  const lake = (x, y) => r(x, y) >= 8.5 && r(x, y) < 12.5;
-  const pts = ringPoints(ring, (x, y) => !lake(x, y), lake);
-  assert.deepEqual(pts[0], [100, 87]);
-  assert.deepEqual(pts[3], [113, 100]);
-  for (const p of pts) assert.ok(r(p[0], p[1]) >= 12.5 && r(p[0], p[1]) < 14.5, `past the lake: ${p}`);
-  // water past the reach: no point on that bearing
-  const sea = (x) => x > 103;
-  const east = ringPoints(ring, (x) => !sea(x), sea);
-  assert.deepEqual(east.slice(1, 6), [null, null, null, null, null], 'every bearing that runs into it');
-  assert.deepEqual(east[9], [93, 100], 'the dry side as ever');
+  // a lake round the north, its shore 15 out: the ring 13 out on every bearing - the open south at the shore's reach too
+  const north = (x, y) => y <= 85;
+  assert.deepEqual(ringPoints(ring, (x, y) => !north(x, y), north), [
+    [100, 87], [108, 87], [123, 86], [127, 100], [123, 114], [114, 123], [100, 127], [86, 123], [77, 114], [73, 100], [77, 86], [92, 87],
+  ]);
+  // the sea east of x 120 and a lake north of y 70: each bearing that meets either two short of it; south and west meet
+  // neither, and take 37 and 57 (the bearings either side) by their shares - 41 one bearing from the 37, 53 one from the 57
+  const wet = (x, y) => x >= 120 || y <= 70;
+  assert.deepEqual(ringPoints(ring, (x, y) => !wet(x, y), wet), [
+    [100, 72], [117, 71], [118, 89], [118, 100], [118, 111], [119, 132], [100, 141], [77, 139], [58, 125], [47, 100], [51, 71], [83, 71],
+  ]);
+  // water at the ray's start: the ring at the start, never nearer the city
+  const moat = (x, y) => Math.hypot(x - 100, y - 100) >= 7.5 && Math.hypot(x - 100, y - 100) < 9;
+  assert.deepEqual(ringPoints(ring, () => true, moat)[0], [100, 93]);
   // a point off the land snaps to the nearest land
   assert.deepEqual(ringPoints(ring, (x, y) => !(x === 100 && y === 93), () => false)[0], [99, 92]);
 });
 
-test('VOYAGER-CYRODIIL a course cut into legs: two points within LEG_MAX one leg; farther, the coarse plan\'s cuts, each leg within LEG_MAX and chained end to start; a lake between them gone round, every cut on land (mutants: the cut\'s reach, the chain, the snap, the coarse water)', () => {
+test('VOYAGER-CYRODIIL a course cut into legs: two points within LEG_MAX one leg; farther, the coarse plan\'s cuts, each leg within LEG_MAX and chained end to start; a lake between them gone round, every cut on land; a lake past the first box\'s reach gone round over the wider one; no way at all, the straight way cut (mutants: the cut\'s reach, the chain, the snap, the coarse water, the wider box, the straight cut)', () => {
   assert.deepEqual(courseLegs([10, 10], [80, 40], flat), [[[10, 10], [80, 40]]]);
   const legs = courseLegs([100, 100], [400, 160], flat);
   assert.ok(legs.length >= 4, `${legs.length} legs`);
@@ -89,6 +91,15 @@ test('VOYAGER-CYRODIIL a course cut into legs: two points within LEG_MAX one leg
   const round = courseLegs([100, 130], [400, 130], { heightAt: () => 20, walkable: (x, y) => !lake(x, y), wet: lake });
   for (const [a] of round.slice(1)) assert.ok(!lake(a[0], a[1]), `a cut on land: ${a}`);
   assert.ok(round.some(([a]) => Math.abs(a[1] - 130) >= 60), 'round the lake\'s end');
+  // a lake 300 pixels across the way, past the first box's reach: the wider box goes round it
+  const wide = (x, y) => Math.abs(x - 250) < 30 && Math.abs(y - 130) < 150;
+  const wider = courseLegs([100, 130], [400, 130], { heightAt: () => 20, walkable: (x, y) => !wide(x, y), wet: wide });
+  assert.ok(wider.some(([a]) => Math.abs(a[1] - 130) >= 150), `round its end: ${JSON.stringify(wider)}`);
+  for (const [a, b] of wider) assert.ok(cheb(a, b) <= LEG_MAX, 'each leg within a region\'s grid');
+  // no way at all: the straight way cut, each leg within LEG_MAX - none a region could not hold
+  const wall = (x) => x >= 240 && x <= 260;
+  assert.deepEqual(courseLegs([100, 130], [400, 130], { heightAt: () => 20, walkable: (x) => !wall(x), wet: wall }),
+    [[[100, 130], [160, 130]], [[160, 130], [220, 130]], [[220, 130], [280, 130]], [[280, 130], [340, 130]], [[340, 130], [400, 130]]]);
 });
 
 test('VOYAGER-CYRODIIL the legs of every road: the ring round, each gate to its nearest ring point, each road from the ring point nearest its first city\'s bearing, city to city (mutants: the ring\'s closure, the gate, the bearing\'s pick)', () => {
@@ -105,6 +116,12 @@ test('VOYAGER-CYRODIIL the legs of every road: the ring round, each gate to its 
   assert.deepEqual(legs[RING_POINTS + 2], [[200, 150], [240, 140]]);
   assert.equal(legs.length, RING_POINTS + 3);
   assert.deepEqual(planTrunkLegs(null, flat), []);
+  // a bearing with no land in reach has no point: the ring closes over it
+  const gap = { ...flat, walkable: (x, y) => Math.hypot(x - 200, y - 193) > 9 };
+  const holed = planTrunkLegs({ ...spec, roads: spec.roads.slice(0, 1) }, gap);
+  const pts = ringPoints(spec.ring, gap.walkable, () => false);
+  assert.equal(pts[0], null);
+  assert.deepEqual(holed.slice(0, RING_POINTS - 1), pts.slice(1).map((p, k, a) => [p, a[(k + 1) % a.length]]), 'eleven legs, the last from the eleventh point back to the first');
 });
 
 test('VOYAGER-CYRODIIL a named road\'s legs are routed as roads by the builder after the towns\' roads, taking them where they run its way (mutants: the trunks unread, the owner\'s test, the order)', () => {

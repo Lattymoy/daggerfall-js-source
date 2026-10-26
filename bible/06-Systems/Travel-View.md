@@ -2072,7 +2072,8 @@ past the Alik'r).** The planner's search box was clamped to the map, and TAMRIEL
 past one edge turned the box inside out and its typed arrays threw; one end past it began the route on the box's far
 side. The box's bounds are the map and the two ends now (`systems/travel/travelRoute.js` `planRoute`); `routeGround` asks the
 host's `beyond` for the ground past its table (kept a pixel at a time, `BEYOND_CACHE_MAX`) where it called it all the
-sea; `apart` leaves an end past the table to the search; a step past the table reads no road's byte. The host hands it
+sea; `apart` leaves an end past the table to the search; a step past the table reads no road's byte of the Bay's table (it
+reads the roads past the Bay's own layer since VOYAGER2.1, below). The host hands it
 `tvWater`'s own answer, which is the ground's where TAMRIEL2 composed the reader and the sea off the map where it did
 not (`scenes/world.js`). The record, and the wire's half: `01-Overview/bugs/Field-Bugs-2026-10-09.md` TV-BEYOND;
 `test/systems/travel/fb1009_beyond.test.js`, `tools/mutants/fb1009_beyond.json`.
@@ -2798,3 +2799,32 @@ a pond, is its harbor's sea).
 **The four hosts.** No host changed: the world host's journey asks `planRoute` as before (`travelViewRouteTo`, its
 `tvSeaAsk`), and the lanes are the planner's. `scenes/exterior.js` sails nowhere; `scenes/worldModes.js` and
 `scenes/dungeonContext.js` stand no sea. Ledger A (START2).
+
+## VOYAGER2.1 - the roads past the Bay walked as roads (2026-10-26, KPbICA's spec, forwarded by the owner)
+
+KPbICA: *"Roads at current state does not behave like roads for Pathfinding system in Overworld view"*. Measured first:
+past the Bay's table every step of `planRoute`'s search was `open` (3.5 a step, ROUTE_COST) - TV-BEYOND's step read no
+road's byte there, rightly, since the Bay's arrays end at the table - so a click to a town past the Bay walked the field
+straight across beside the road TESA14 had built, and a road's crossing onto the Bay (TESA5's join) was open ground
+from the Bay's edge.
+
+- **The law** (`systems/travel/travelRoute.js`): `routeGround` carries the reader of the installed layer of the roads past
+  the Bay (`travelRoute.js:"get pathsBeyond() { return pathsBeyond === arenaRoadByte && !arenaRoadsLayer() ? null : pathsBeyond; },"`
+  - `world/arenaRoads.js` arenaRoadByte, none while no layer is installed, so a plan with no roads past the Bay reads
+  nothing), and `planRoute` hands it to the search only when it walks roads (`travelRoute.js:"const beyond = roads || tracks ? pathsBeyond : null;"`
+  - FREE mode, which hands no road, reads none). A step past the table, or within JOIN_DEPTH of its edge where a
+  crossing's join carries a Bay road out, asks the layer (`stepKind`'s beyondKind: the road's bit out of the one pixel and
+  its back bit into the other, the Bay's own byte ORed with its join on the table): a road's step 1, a track's 1.6, as on
+  the Bay. The legs fold a road past the Bay as one run (`routeLegs`, unchanged).
+- **The host** grows no line: `scenes/world.js`'s `tvRouteGround()` is already spread into every Overworld plan, and the
+  living world's ground (`_livingGround`) takes the same default (its trips stay on the Bay, AUDIT TESA III E1-3).
+- **The four hosts**: `scenes/world.js` as above; `scenes/exterior.js`, `scenes/worldModes.js` and
+  `scenes/dungeonContext.js` plan no Overworld route.
+- **Measured** (the pins' grids): a town past the Bay reached by the road round, not the field across; a plan along a
+  road past the Bay priced a road's (where it walked the open ground beside it at three and a half times it); the
+  crossing, the Bay's road to its edge and its join past it, walked as one road.
+- **OPEN**: the walk aims pixel middle to pixel middle (OW-ROAD-TRUE's lane), and past the Bay a road is drawn as a curve
+  (`03-World/Roads.md` VOYAGER2), so on a bend the walker cuts up to 0.125 of a pixel inside it; the curve's apex is
+  `roadCurves.js` curveApex, not wired into the lane.
+- Pins `test/systems/travel/voyager21_beyond.test.js` (5); mutants `tools/mutants/voyager.json` (VOYAGER2.1's). PIN
+  MOVED: none; TV-BEYOND's road-byte record re-aimed by content (`tools/mutants/fb1009_beyond.json`).

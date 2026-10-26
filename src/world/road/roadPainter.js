@@ -111,6 +111,9 @@ export function pathCorners(mask, x, y, w = 1000) {
  * track laid over dirt, which the mod writes nothing for, tile()); absent,
  * the painter is byte-for-byte what it was.
  *
+ * VOYAGER2: `opts.curve` ({ px, py, byteAt } - a pixel past the Bay, the layer's reader) draws its roads and tracks as
+ * the port's curves (world/road/roadCurves.js paintCurvedPaths); absent - every Bay pixel - none of it runs.
+ *
  * @param {object} masks - { road, track, river, stream } bytes for this pixel
  * @param {object} corners - { road, track, river, stream } corner bytes
  */

@@ -1072,6 +1072,12 @@ the countryside's 226,068 places or the lairs.
   started with 48 regions (300 towns and gates, 7 crossings) and the nearest six landed from the roads' workers within
   95 s of the page's life, 0.3 to 7.6 s a region on a busy machine; the held map's ink held 1,796 road and 5,360 track
   chains; no page error.
+- **VOYAGER** (2026-10-26, `Roads.md` VOYAGER): the regions' routes pay the land's law (the grade squared on the smoothed
+  height, the height, the shore, a ford over two pixels of water at the most, the land's grain; a dear road asks the
+  wider box), Cyrodiil's eight named roads (the Red Ring Road round the Imperial City from its own span and gates, the
+  Gold, Black, Silver, Orange, Blue, Yellow and Green Roads) are planned coarse and routed in legs after the towns' roads,
+  the painter draws the layer as curves and the Overworld walks it as roads. TAMRIEL_ROADS_VERSION 4; the land's dials and
+  the named roads' legs in the inputs' print (`tamrielRoads.js` inputsPrint).
 
 ## TESA15 - the map past the Bay at the world's fidelity (2026-10-24)
 

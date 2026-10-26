@@ -162,7 +162,8 @@ export function* tamrielRegionSteps({ region, places, nodes, obstacles, gates, h
   // asked): the builder is order-bound - each route merges into the ones before it - and every client lays the same roads
   const ordered = places.filter((p) => inGrid(p.x, p.y) && !inBay(p.x, p.y) && !taken.has(`${p.x},${p.y}`)).sort((a, b) => a.y - b.y || a.x - b.x);
   for (const p of ordered) locations.push({ x: p.x - gx, y: p.y - gy, type: p.type });
-  // VOYAGER1: the land the routes are costed on (roadNetwork.js landForRoutes - the smoothed height, the shore, the fords);
+  // VOYAGER1: the land the routes are costed on (road/roadLand.js landForRoutes - the smoothed height, the shore, the fords,
+  // the grain);
   // a ford is water a route may cross, at its price
   const land = landForRoutes(heights, water, bay, MAP_W, MAP_H, VOYAGER_DIALS, (u, v) => landGrain(gx + u, gy + v));
   yield;   // a step

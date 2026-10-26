@@ -8,7 +8,8 @@
 // height bytes, the trace and the fit). The host's client (world/tamrielRoadsClient.js) keeps several of these busy,
 // the nearest regions first.
 //
-//   init   { woodsBytes, trace, fit, spec, nodes, obstacles, gates, held, lattice }  the build's inputs (world/tamrielRoads.js)
+//   init   { woodsBytes, trace, fit, spec, nodes, obstacles, gates, held, lattice, trunks }  the build's inputs
+//          (world/tamrielRoads.js; `trunks` VOYAGER-CYRODIIL's spec, its legs planned here - road/cyrodiilRoads.js)
 //   build  { id, i, j }  ->  region { id, i, j, layer (packArenaRoads), places (packPastBayPlaces - TESA15), stats, ms }
 //                            or { id, i, j, error }
 //

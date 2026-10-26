@@ -30,7 +30,7 @@
     "name": "VOYAGER2-an-end-drawn-none",
     "file": "src/world/road/roadCurves.js",
     "old": "  if (ks.length === 1) end(ks[0]);\n",
-    "new": "",
+    "new": "  if (false) end(ks[0]);\n",
     "tests": [
       "test/world/road/voyager2_curves.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "VOYAGER-CYRODIIL-the-near-shore",
     "file": "src/world/road/cyrodiilRoads.js",
-    "old": "if (water && walkable(x, y)) { at = [x, y]; break; }",
-    "new": "if (walkable(x, y)) { at = [x, y]; break; }",
+    "old": "if (wet(x, y)) { shore = Math.max(r0, r - RING_SHORE_GAP); break; }",
+    "new": "if (wet(x, y)) { shore = Math.max(r0, r - 1); break; }",
     "tests": [
       "test/world/road/voyager_cyrodiil.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "VOYAGER-CYRODIIL-the-cut-late",
     "file": "src/world/road/cyrodiilRoads.js",
-    "old": "if (cheb(last, p) < (LEG_MAX * 3) >> 2) continue;",
-    "new": "if (cheb(last, p) < LEG_MAX * 2) continue;",
+    "old": "if (cheb(last, plan[k]) >= (LEG_MAX * 3) >> 2) cut(plan[k]);",
+    "new": "if (cheb(last, plan[k]) >= LEG_MAX * 2) cut(plan[k]);",
     "tests": [
       "test/world/road/voyager_cyrodiil.test.js"
     ]
@@ -501,6 +501,60 @@
     "new": "  return { height, shore, ford, grain, d, step: (t, cx, cy, nx, ny, len) => len };",
     "tests": [
       "test/world/road/voyager1_land.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER-CYRODIIL-the-clamp",
+    "file": "src/world/road/cyrodiilRoads.js",
+    "old": "shore = Math.max(r0, r - RING_SHORE_GAP);",
+    "new": "shore = r - RING_SHORE_GAP;",
+    "tests": [
+      "test/world/road/voyager_cyrodiil.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER-CYRODIIL-the-shares-swapped",
+    "file": "src/world/road/cyrodiilRoads.js",
+    "old": "r = Math.round((rays[a].shore * db + rays[b].shore * da) / (da + db));",
+    "new": "r = Math.round((rays[a].shore * da + rays[b].shore * db) / (da + db));",
+    "tests": [
+      "test/world/road/voyager_cyrodiil.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER-CYRODIIL-the-open-side-at-the-city",
+    "file": "src/world/road/cyrodiilRoads.js",
+    "old": "if (r < 0 && !any) r = r0;",
+    "new": "if (r < 0) r = r0;",
+    "tests": [
+      "test/world/road/voyager_cyrodiil.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER-CYRODIIL-the-wider-box-unasked",
+    "file": "src/world/road/cyrodiilRoads.js",
+    "old": " ?? coursePlan(a, b, heightAt, walkable, COARSE_MARGIN * 3);",
+    "new": ";",
+    "tests": [
+      "test/world/road/voyager_cyrodiil.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER-CYRODIIL-the-straight-uncut",
+    "file": "src/world/road/cyrodiilRoads.js",
+    "old": "    for (let k = 1; k < n; k++) cut(",
+    "new": "    for (let k = 1; k < 1; k++) cut(",
+    "tests": [
+      "test/world/road/voyager_cyrodiil.test.js"
+    ]
+  },
+  {
+    "name": "VOYAGER-CYRODIIL-the-ring-unclosed",
+    "file": "src/world/road/cyrodiilRoads.js",
+    "old": "for (let k = 0; k < onRing.length && onRing.length > 2; k++)",
+    "new": "for (let k = 0; k < onRing.length - 1 && onRing.length > 2; k++)",
+    "tests": [
+      "test/world/road/voyager_cyrodiil.test.js"
     ]
   }
 ]
