@@ -115,8 +115,10 @@ test('EV5: the wiring - three lit shaders, the latched flat tint, the studio, th
   // AUDIT 65 MC-3: the mod's arm is the BRIDGE's own export now, not a
   // second copy of its body - dynamicMoonlight carries the null guard,
   // so the arm a future host forgets lives in one place.
-  assert.match(shared, /moonlight\(\)\s*\{\s*if \(enhancedSky\?\.state\) return moonlightTerm\(enhancedSky\.state\);[\s\S]*?return dynamicMoonlight\(dynamicMoons\);/,
+  // PIN MOVED (NIGHT-FOG): the term's body is the controller's `moonNow`, which the lit fog asks too (systems/weather/nightFog.js)
+  assert.match(shared, /const moonNow = \(\) => \(enhancedSky\?\.state \? moonlightTerm\(enhancedSky\.state\) : dynamicMoonlight\(dynamicMoons\)\);/,
     'classic answers null - the 1:1 lane keeps the hard-off night');
+  assert.match(shared, /moonlight\(\) \{ return moonNow\(\); \},/, 'and the world light asks the same term');
   // and the export itself answers, rather than merely being named: the
   // null arm, and byte-for-byte moonlightTerm for a state the mod's own
   // producer mints (dynamicMoonState, the shape shared.js hands it).

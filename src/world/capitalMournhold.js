@@ -9,6 +9,9 @@
 import { MeshBuilder } from './detStandIns.js';
 import { CAPITAL_ART, art, taper, ring, ledge, translated, wallRun, gatedRun, hall, darkDoor, entranceDoor, dome, blob, limb, outward, framed, robedFigure } from './capitalShapes.js';
 import { MOURNHOLD } from './capitalPlans.js';
+import { urbanArt } from './urban/urbanRecords.js';   // URBANIZER U2: the towns' own cut stone
+/** URBANIZER U2 (world/urban/urbanArt.js): the Royal Palace's dressed ochre stone. */
+const OCHRE_ASHLAR = urbanArt('ochreAshlar');
 
 const OCHRE = art(CAPITAL_ART.ochre), BRONZE = art(CAPITAL_ART.bronze), GOLD = art(CAPITAL_ART.gold), CLOTH = art(CAPITAL_ART.cloth);
 const MARBLE = art(CAPITAL_ART.marble), DARK = art(CAPITAL_ART.dark), TIMBER = art(CAPITAL_ART.timber), BLUE = art(CAPITAL_ART.blueSlate);
@@ -120,7 +123,7 @@ export function buildHighFane(M = MOURNHOLD) {
  */
 export function buildMournholdPalace(M = MOURNHOLD) {
   const mb = new MeshBuilder(), P = M.palace;
-  hall(mb, OCHRE, P.x, P.z, P.w, P.d, -3, P.h, 0.2);
+  hall(mb, OCHRE_ASHLAR, P.x, P.z, P.w, P.d, -3, P.h, 0.2);   // URBANIZER U2: the palace in dressed ochre stone, the city's walls its rubble
   translated(mb, P.x, P.h - 1, P.z, () => mb.box(GOLD, [0, 0.5, 0], [P.w + 0.8, 1, P.d + 0.8], 0.5));
   for (const [dx, r] of [[0, P.domeR], [-P.w / 3, P.sideR], [P.w / 3, P.sideR]]) {
     translated(mb, P.x + dx, 0, P.z, () => taper(mb, OCHRE, 16, r, P.h, r, P.h + 3, { vRepeat: 3 }));

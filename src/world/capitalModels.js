@@ -30,6 +30,9 @@ import { buildManePalace, buildTwoMoonsTemple, buildTorvalQuay, buildTorvalWall,
 import { buildXanmeer, buildHist, buildHelstromWalks, buildPalisade } from './capitalHelstrom.js';
 
 export { CAPITAL_ARCHIVE, CAPITAL_ART };
+/** URBANIZER (world/urban/urbanArt.js): the painting laws below, lent to the towns' own pictures - one home, at vanilla's
+ *  detail (TESA-LORE). */
+export const CAPITAL_PAINT = Object.freeze({ rng, noise, ramp, painted, masonry, shingles, lengths, cells, grain01 });
 
 // ---------------------------------------------------------------- the pictures
 

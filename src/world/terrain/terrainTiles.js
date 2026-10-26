@@ -350,6 +350,26 @@ const SHAPE_PAD = Math.ceil(TOWN_SHAPE.margin + TOWN_SHAPE.wander) + 1;
  * @returns {?Uint8Array} townShapeField's codes in the pixel's tiles (index x + y * 128), 0 outside
  */
 export function locationShapeField(dfLocation, rmbOf, tilePos = getLocationTerrainTileOrigin(dfLocation)) {
+  const basis = locationOutlineBasis(dfLocation, rmbOf, tilePos);
+  if (!basis) return null;
+  const out = outlineOfBasis(basis, (dfLocation.mapTableData?.mapId ?? 0) >>> 0);
+  // AUDIT TESA III E1-4: the outline's basis rides on it (never posted - a typed array's own property), so a reader that
+  // stands the same grid under another map id (the Eltheric isles' clones of a template, etherWatersBake.js) draws that
+  // one's outline off it
+  Object.defineProperty(out, 'basis', { value: basis });
+  return out;
+}
+
+/**
+ * AUDIT TESA III E1-4: AN OUTLINE'S BASIS - what locationShapeField draws its outline from before its seed: the grid's
+ * occupied tiles (townTiles) on the outline's padded box (SHAPE_PAD tiles each side - its margin wanders out past the
+ * blocks' squares), whether it stands on a walled round (TS4), and where the box lies in the pixel's tiles; and what
+ * setLocationTiles' rect is cut from under it (`stamp`: the grid's tiles of a ground record it stamps - under
+ * GROUND_RECORD_LIMIT - on the same box; `clear` its clearance, the location's type's). null where locationShapeField
+ * answers none.
+ * @returns {?{ padded: Uint8Array, stamp: Uint8Array, PW: number, PH: number, walled: boolean, x0: number, y0: number, clear: number }}
+ */
+export function locationOutlineBasis(dfLocation, rmbOf, tilePos = getLocationTerrainTileOrigin(dfLocation)) {
   if (!dfLocation?.exterior?.exteriorData || dfLocation.capital) return null;
   const { width, height } = dfLocation.exterior.exteriorData;
   const T = RMB_TILES_PER_BLOCK, W = width * T, H = height * T;
@@ -357,16 +377,43 @@ export function locationShapeField(dfLocation, rmbOf, tilePos = getLocationTerra
   for (let by = 0; by < height; by++) for (let bx = 0; bx < width; bx++) blockAt.push(rmbOf(bx, by) ?? null);
   if (!blockAt.some(Boolean)) return null;
   const occ = townTiles(width, height, (bx, by) => blockAt[by * width + bx]);
-  // the outline free of the grid's edge: its margin wanders out past the blocks' squares (SHAPE_PAD tiles each side)
-  const PW = W + 2 * SHAPE_PAD, PH = H + 2 * SHAPE_PAD, padded = new Uint8Array(PW * PH);
+  const PW = W + 2 * SHAPE_PAD, PH = H + 2 * SHAPE_PAD, padded = new Uint8Array(PW * PH), stamp = new Uint8Array(PW * PH);
   for (let y = 0; y < H; y++) padded.set(occ.subarray(y * W, y * W + W), (y + SHAPE_PAD) * PW + SHAPE_PAD);
+  for (let by = 0; by < height; by++) for (let bx = 0; bx < width; bx++) {
+    const ground = blockAt[by * width + bx]?.fldHeader?.groundData?.groundTiles;
+    if (!ground) continue;
+    for (let ty = 0; ty < T; ty++) for (let tx = 0; tx < T; tx++) {
+      if (ground[tx][(T - 1) - ty].textureRecord < GROUND_RECORD_LIMIT) stamp[(by * T + ty + SHAPE_PAD) * PW + bx * T + tx + SHAPE_PAD] = 1;
+    }
+  }
   // TS4: a walled city past the Bay (world/townWalls.js) stands on its round - its wall's line and all inside it - and its
   // apron is its own ground
-  const walled = !!dfLocation.outline?.walled;
-  const field = townShapeField(walled ? townRound(padded, PW, PH).inside : padded, PW, PH, (dfLocation.mapTableData?.mapId ?? 0) >>> 0, walled ? { core: WALL_ROUND.apron } : {});
+  return { padded, stamp, PW, PH, walled: !!dfLocation.outline?.walled, x0: tilePos.x - SHAPE_PAD, y0: tilePos.y - SHAPE_PAD,
+    clear: dfLocation.mapTableData?.locationType === LOCATION_TYPE_TOWN_CITY ? 3 : 2 };
+}
+
+/** AUDIT TESA III E1-4: the rect setLocationTiles cuts under an outline (`shape`, outlineOfBasis') - its stamped tiles'
+ *  bounds, the clearance past them, the outline with it. */
+export function rectOfBasis(basis, shape) {
+  const { stamp, PW, PH, x0, y0, clear } = basis, D = WORLD_MAP_TILE_DIM;
+  let xmin = Infinity, ymin = Infinity, xmax = 0, ymax = 0;
+  for (let y = 0; y < PH; y++) for (let x = 0; x < PW; x++) {
+    if (!stamp[y * PW + x]) continue;
+    const px = x0 + x, py = y0 + y;
+    if (px < 0 || py < 0 || px >= D || py >= D || !shape[px + py * D]) continue;
+    if (px < xmin) xmin = px; if (px > xmax) xmax = px; if (py < ymin) ymin = py; if (py > ymax) ymax = py;
+  }
+  return { xMin: xmin - clear, xMax: xmax + clear, yMin: ymin - clear, yMax: ymax + clear, shape };
+}
+
+/** AUDIT TESA III E1-4: the outline a basis stands under a map id (`seed`) - townShapeField over its box, laid in the
+ *  pixel's 128 x 128 tiles (index x + y * 128), 0 outside. locationShapeField is this under the location's own id. */
+export function outlineOfBasis(basis, seed) {
+  const { padded, PW, PH, walled, x0, y0 } = basis;
+  const field = townShapeField(walled ? townRound(padded, PW, PH).inside : padded, PW, PH, seed >>> 0, walled ? { core: WALL_ROUND.apron } : {});
   const out = new Uint8Array(WORLD_MAP_TILE_DIM * WORLD_MAP_TILE_DIM);
   for (let y = 0; y < PH; y++) for (let x = 0; x < PW; x++) {
-    const px = tilePos.x - SHAPE_PAD + x, py = tilePos.y - SHAPE_PAD + y;
+    const px = x0 + x, py = y0 + y;
     if (px >= 0 && px < WORLD_MAP_TILE_DIM && py >= 0 && py < WORLD_MAP_TILE_DIM) out[px + py * WORLD_MAP_TILE_DIM] = field[y * PW + x];
   }
   return out;

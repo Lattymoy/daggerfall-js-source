@@ -350,7 +350,7 @@ export function capitalOnPixel(px, py) {
 /** TESA14: a gate's step out of the capital, by its side. */
 export const GATE_STEPS = Object.freeze({ N: Object.freeze([0, -1]), E: Object.freeze([1, 0]), S: Object.freeze([0, 1]), W: Object.freeze([-1, 0]) });
 /** AUDIT TESA II (lane R's R2): how far, pixels, a gate walks out from its side for ground the roads can reach. */
-export const GATE_REACH = 4;
+export const CAPITAL_GATE_REACH = 4;
 /** The roads' land (world/tamrielRoads.js buildTamrielRegion: a byte over WATER_BYTE is ground it walks) past the Bay and
  *  off every capital's pixels. */
 const gateGround = (x, y) => !inBay(x, y) && tamrielHeightByte(x, y) > WATER_BYTE && !capitalOnPixel(x, y);
@@ -359,7 +359,7 @@ const _unroutable = new Set();
  * TESA14: WHERE THE ROADS COME TO A CAPITAL - for each of its gates (CAPITALS `gates`, its plan's gates and bridges), the
  * pixel just outside its span at the side's middle (AUDIT TESA II C2: its own slice's row or column), and the step from it
  * into the city: a road ends there, at the city's edge, never across its own pixels - a lake, a harbour, a canal
- * (world/tamrielRoads.js). AUDIT TESA II (lane R's R2): the first pixel out from there, within GATE_REACH, that is ground the
+ * (world/tamrielRoads.js). AUDIT TESA II (lane R's R2): the first pixel out from there, within CAPITAL_GATE_REACH, that is ground the
  * roads walk with a neighbour of such ground off the city (4-connected: Solitude's gate and the city stood an islet of
  * three among the shore's beach-line bytes, and no road reached it); a side with none in reach stands no gate, and a
  * capital with none is said once a land. None for a capital with no pixel on the live fit and land.
@@ -373,7 +373,7 @@ export function capitalGates(k, { walkable = gateGround } = {}) {
   const D = capitalDims(cap), out = [];
   for (const side of cap.gates ?? []) {
     const [dx, dy] = GATE_STEPS[side], base = [at.px + (dx > 0 ? D.w - D.mx : dx < 0 ? -D.mx - 1 : 0), at.py + (dy > 0 ? D.h - D.my : dy < 0 ? -D.my - 1 : 0)];
-    for (let t = 0; t < GATE_REACH; t++) {
+    for (let t = 0; t < CAPITAL_GATE_REACH; t++) {
       const x = base[0] + dx * t, y = base[1] + dy * t;
       if (!walkable(x, y)) continue;
       if (!Object.values(GATE_STEPS).some(([sx, sy]) => walkable(x + sx, y + sy))) continue;
@@ -382,7 +382,7 @@ export function capitalGates(k, { walkable = gateGround } = {}) {
     }
   }
   const key = `${k}|${tamrielLandVersion()}`;
-  if (!out.length && (cap.gates ?? []).length && !_unroutable.has(key)) { _unroutable.add(key); console.warn(`[capitals] ${cap.name}: no gate the roads can reach within ${GATE_REACH} pixels of its sides`); }
+  if (!out.length && (cap.gates ?? []).length && !_unroutable.has(key)) { _unroutable.add(key); console.warn(`[capitals] ${cap.name}: no gate the roads can reach within ${CAPITAL_GATE_REACH} pixels of its sides`); }
   return out;
 }
 /** TS5: a capital's centre pixel on the live fit and land, or null. @param {number} k */

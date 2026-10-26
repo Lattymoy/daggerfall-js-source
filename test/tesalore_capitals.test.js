@@ -22,11 +22,13 @@ import { buildGrahtOak, spiralAt, spiralInner, limbForks } from '../src/world/ca
 import { buildAlinorPalace, buildAlinorBridges, buildAlinorWall, alinorStairY, alinorTowers } from '../src/world/capitalAlinor.js';
 import { CAPITAL_ARCHIVE, CAPITAL_ART, CAPITAL_ART_SIZE, CAPITAL_TEXEL_METRES, capitalArt, vanillaTexels, installCapitals, _resetCapitals } from '../src/world/capitalModels.js';
 import { customModelFor } from '../src/world/customModels.js';
+import { URBAN_ARCHIVE, URBAN_ART } from '../src/world/urban/urbanRecords.js';   // URBANIZER U2
 
 const sane = (m) => {
   assert.ok(m.positions.every(Number.isFinite) && m.uvs.every(Number.isFinite));
   for (let i = 0; i < m.normals.length; i += 3) assert.ok(Math.abs(Math.hypot(m.normals[i], m.normals[i + 1], m.normals[i + 2]) - 1) < 1e-4, 'unit normals');
-  assert.ok(m.subMeshes.every((s) => s.textureArchive === CAPITAL_ARCHIVE && Object.values(CAPITAL_ART).includes(s.textureRecord)));
+  // PIN MOVED (URBANIZER U2): a landmark's pictures the capitals' own or the towns' (cut stone, brick, half-timbering)
+  assert.ok(m.subMeshes.every((s) => (s.textureArchive === CAPITAL_ARCHIVE && Object.values(CAPITAL_ART).includes(s.textureRecord)) || (s.textureArchive === URBAN_ARCHIVE && Object.values(URBAN_ART).includes(s.textureRecord))));
   assert.equal(m.subMeshes.reduce((n, s) => n + s.primitiveCount * 3, 0), m.indices.length);
 };
 /** Does the segment p-q cross any face of the model (Moller-Trumbore)? */

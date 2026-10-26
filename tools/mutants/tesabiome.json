@@ -182,8 +182,8 @@
   {
     "name": "TESA-BIOME-21-ground-province",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "return tamrielBiomeAt(x, y)?.climate ?? CLIMATES.Ocean;",
-    "new": "return tamrielBiomeAt(x, y) ? CLIMATES.Woodlands : CLIMATES.Ocean;",
+    "old": "  if (zone) return zone.climate;",
+    "new": "  if (zone) return CLIMATES.Woodlands;",
     "tests": [
       "test/world/tesabiome_biomes.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "TESA-BIOME-30-roads-print",
     "file": "src/world/tamrielRoads.js",
-    "old": "  const text = JSON.stringify([spec, nodes, obstacles, gates, held, ROAD_DIALS, BIOMES_VERSION]);",
-    "new": "  const text = JSON.stringify([spec, nodes, obstacles, gates, held, ROAD_DIALS]);",
+    "old": "  const text = JSON.stringify([spec, nodes, obstacles, gates, held, ROAD_DIALS, BIOMES_VERSION, VOYAGER_DIALS, trunks]);",
+    "new": "  const text = JSON.stringify([spec, nodes, obstacles, gates, held, ROAD_DIALS, VOYAGER_DIALS, trunks]);",
     "tests": [
       "test/world/tesabiome_biomes.test.js"
     ]

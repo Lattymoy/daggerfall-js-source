@@ -980,6 +980,20 @@ this page, each above where it lives:
   snow deck (I6) and a road's bench on DFU's own cliff (I1) - RESIDUES; the
   real data re-measured with every fix in - ON THE REAL WOODS.WLD.
 
+## PAST THE BAY (BREATHTAKER, 2026-10-26)
+
+Everything above is the Bay's, and the Bay keeps it to the bit. Past the Bay's seam (SEAM_PX) the land is the
+continent's (`03-World/Tamriel.md` BREATHTAKER):
+
+- The lift goes on past the 7-bit top (continentLift), under LANDFORM_CEILING by construction (CONTINENT_CEILING).
+- The climate hills give way to the continent's own landforms (`world/tamriel/tamrielLandforms.js`), over a ramp of 8
+  pixels past the seam. Both ease beside the roads (LANDFORM7) and carve into the painted water's valleys (AUDIT
+  LANDFORMS III C1) as the hills do.
+- Cyrodiil's rivers and lakes are carved into it (`world/tamriel/tamrielWaters.js`, the shaper's last step: the
+  channel level at its surface, never raising the land).
+
+The shaper's samples stay one function of world position, every seam one number from both pixels.
+
 ## Pins
 
 `test/systems/landform.test.js` - the knee (every sample of eleven coastal pixels, the

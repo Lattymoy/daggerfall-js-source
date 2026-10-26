@@ -345,7 +345,7 @@ import { roomOf, parseClient, GROUND_LAW, GROUND_OLD_REASON, groundRoom, GRANT_H
 import { NEW_VOICE_GAP_MS, SAFE_LAW_PATH } from './relay.js';   // SAFE6: a new voice's pace; SAFE4: the service's door in
 import { mintStamp, stampTabOf, PUBLIC_TABS } from '../../src/net/safety/chatStamp.js';   // SAFE2: the relay's stamp on every line it relays
 import { sealFeed, FEED_SIG_HEADER, FEED_BATCH, FEED_WAIT_MS, FEED_POST_MS } from '../../src/net/safety/chatFeed.js';   // SAFE5: the reviewer's feed
-import { grantGate, grantModeOf, GRANT_MODES, GRANT_CFG_TTL_MS, validGrantAsk, grantMintGate, grantMarksFor, signGrant, grantBucketIdle, GRANT_TTL_MS, GRANT_SKEW_MS, GRANT_TALLY_MS, grantRenewed, grantCarried, grantHanded, grantSignedHere, GRANT_OPEN_KINDS, grantKindRolled, grantMarksAllow } from '../../src/net/grantLaw.js';   // GRANT2: the spawn grant's law (bible/11-Multiplayer/Spawn-Grants.md)
+import { grantGate, grantModeOf, GRANT_MODES, GRANT_CFG_TTL_MS, validGrantAsk, grantMintGate, grantMarksFor, signGrant, grantBucketIdle, GRANT_TTL_MS, GRANT_SKEW_MS, GRANT_TALLY_MS, grantRenewed, grantCarried, grantHanded, grantSignedHere, GRANT_OPEN_KINDS, grantKindRolled, grantMarksAllow, GRANT_GATE_KEY, grantGateKept, grantGateOf } from '../../src/net/grantLaw.js';   // GRANT2: the spawn grant's law (bible/11-Multiplayer/Spawn-Grants.md); AUDIT TESA III E2-1: its gate kept across a sleep
 import { newGrantMeasure, foldGrantAsk, foldGrantTally, grantMeasureBatch, sealGrantMeasure, grantMeasureDue, GRANT_MEASURE_SIG_HEADER, GRANT_MEASURE_POST_MS, GRANT_RELAY_READER } from '../../src/net/grantMeasure.js';   // GRANT2: and its measure, to the service
 import { foeStatsRefusal } from '../../src/net/foeBounds.js';   // FOE-BOUNDS: the most health a streamed foe can legally have (GRANT9's strip reads it)
 import { seatOf, seatElder, seatStreams, seatTraffic, seatSilent, seatHeardAt, seatInAt, othersInOf } from '../../src/net/seatLive.js';   // FIELD BUGS 2026-10-18d SEAT-LIVE: a dungeon room's seat is a live socket's
@@ -1010,7 +1010,8 @@ export class Room {
     this._helloBy = new Map();   // AUDIT-SEATS R3: a battle room's hello buckets, by verified account (_battleHelloGate) - a wake forgets them, as the meters
     this._receiptKey = undefined;   // WB3: the relay's signing key (GATE_SIGNING_KEY), imported once; null = none (the receipts go out unsigned)
     this._leaseKey = undefined;   // LEASE1: the lease key (net/roomLease.js leaseKeyOf), derived once; null = none (no lease handed out, nobody bound)
-    this._grants = null;            // GRANT2 (Spawn-Grants.md section 12): a cell's spawn grants (_grantState) - made at its first ask, in memory alone
+    this._grants = null;            // GRANT2 (Spawn-Grants.md section 12): a cell's spawn grants (_grantState) - made at its first ask; AUDIT TESA III E2-1: its gate kept in storage (_grantGateKeep)
+    this._grantGateRead = null;     // AUDIT TESA III E2-1: the cell's kept grant gate, read once an instance life (_grantGateLoad) - its promise
     this._gateFells = new Map();    // WB3: the hub's last word of a kill, said to a hello while its gate still holds - WW2: a lane's (lane -> the word, null for none; absent: not read yet)
     this._serpentSiteRec = undefined; // SERPENT2: the hub's record of where the serpent lies, as accounts said it (net/gate/gateHerald.js foldGateSite) - undefined: not read yet
     this._serpentFells = undefined; // SERPENT1: the hub's kills of the latest serpent day, one a site (SERPENT_FELLS_KEY), said to a hello while that day holds
@@ -11450,6 +11451,7 @@ export class Room {
    */
   _grantStripped(a, data, kind = 'foes', now = Date.now()) {
     if (!data || !Array.isArray(data.f)) return data;
+    if (!this._grantGateRead) void this._grantGateLoad(a.key, now);   // AUDIT TESA III E2-1: a woken cell reads its kept gate - the frames after this one are read against it
     const G = this._grants;
     const asker = !!G?.askers?.has(a.id) || a.gv === 1;   // GRANT-DOOR: a socket whose hello says it stands on grants is held to them from its first frame
     const allies = new Set([data.al, data.cw, data.cp].flatMap((x) => (Array.isArray(x) ? x : [])));
@@ -11495,9 +11497,11 @@ export class Room {
   }
   /** GRANT2: A CELL'S GRANTS - its counter (begun anywhere in 31 bits, so a re-woken cell does not number its grants from
    *  its last life's), the live grants it minted (number -> members and expiry) and their members, each account's bucket
-   *  per kind (`<account>|<kind>`), and the measure's window. In memory alone: an evicted cell forgets them, and its
-   *  window with them (a measure is a sample). GRANT-SLEEP: so a cell that hibernates forgets them - a renewal signs a
-   *  forgotten grant again (AUDIT GRANT A8), and the window posts when the last socket leaves (_grantDrained). */
+   *  per kind (`<account>|<kind>`), and the measure's window. AUDIT TESA III E2-1: the gate - the counter, the live grants,
+   *  the buckets and the askers - is kept in the cell's storage too (_grantGateKeep) and read back once an instance life
+   *  (_grantGateLoad), so a cell that hibernates (GRANT-SLEEP: nothing pending holds it awake) keeps it; the measure's
+   *  window is memory's alone (a measure is a sample), posted when the last socket leaves (_grantDrained). A relay
+   *  deployed over a cell's grants still reads them back; one it cannot read signs again at its renewal (AUDIT GRANT A8). */
   _grantState(q, now) {
     return this._grants ??= { q, n: rand32() >>> 1, live: new Map(), liveN: 0, buckets: new Map(), tallied: new Map(), w: newGrantMeasure(now) };
   }
@@ -11521,14 +11525,40 @@ export class Room {
     if (!ask || !streamsFoes(a.key) || !a.id) { this._junk(ws); return; }   // GRANT4: a cell's, or a world room's own lane
     const mode = await this._grantMode(now);
     if (mode === 'off') { this._send(ws, JSON.stringify({ t: 'grant', k: 'off', id: ask.id })); return; }
-    const G = this._grantState(a.key, now);
+    const G = await this._grantGateLoad(a.key, now);   // AUDIT TESA III E2-1: the gate as the cell kept it, across a sleep
     this._grantPrune(G, now);
-    if (ask.k === 'mint') return this._grantMintAsk(ws, a, ask, G, mode, now);
-    if (ask.k === 'renew') return this._grantRenew(ws, a, ask, G, now);
-    if (ask.k === 'free') return this._grantFree(a, ask, G);
-    if (ask.k === 'carry') return this._grantCarry(ws, a, ask, G, now);
-    if (ask.k === 'heir') return this._grantHeir(ws, a, ask, G, now);
-    return this._grantTally(a, ask, G, now);
+    if (ask.k === 'tally') return this._grantTally(a, ask, G, now);   // the measure's alone - a sample, in memory
+    if (ask.k === 'mint') await this._grantMintAsk(ws, a, ask, G, mode, now);
+    else if (ask.k === 'renew') await this._grantRenew(ws, a, ask, G, now);
+    else if (ask.k === 'free') this._grantFree(a, ask, G);
+    else if (ask.k === 'carry') await this._grantCarry(ws, a, ask, G, now);
+    else await this._grantHeir(ws, a, ask, G, now);
+    await this._grantGateKeep(G, now);   // AUDIT TESA III E2-1: every ask that can move the gate kept
+  }
+  /** AUDIT TESA III E2-1 (bible/01-Overview/audits/Audit-Tesa-III-E2.md; net/grantLaw.js grantGateOf): A CELL'S GATE
+   *  OUTLIVES ITS SLEEP - read from storage once an instance life, the read's promise shared by every ask that lands while
+   *  it runs, and laid on the cell's grants (a strip's tally may have made them first: it touches the measure alone, and
+   *  no ask mints before the read). A kept gate nothing binds any more is let go; a read that fails leaves the gate the
+   *  object's memory, as before. Answers the cell's grants. */
+  _grantGateLoad(q, now) {
+    return (this._grantGateRead ??= (async () => {
+      let raw;
+      try { raw = await this.state.storage.get(GRANT_GATE_KEY); } catch { raw = undefined; }
+      const G = this._grantState(q, now), kept = grantGateOf(raw, now);
+      if (kept) Object.assign(G, { n: kept.n, buckets: kept.buckets, live: kept.live, liveN: kept.liveN, askers: kept.askers, kept: true });
+      if (raw !== undefined && !grantGateKept(G, now)) { try { await this.state.storage.delete(GRANT_GATE_KEY); } catch { /* the next keep */ } G.kept = false; }
+      return G;
+    })());
+  }
+  /** AUDIT TESA III E2-1: the gate written after an ask that may have moved it (net/grantLaw.js grantGateKept - its buckets
+   *  that bind, its live grants, its counter and its askers), or its key let go once nothing binds. A write is no I/O left
+   *  pending: nothing it does keeps the cell awake. A failed write leaves the gate in memory, where a sleep forgets it. */
+  async _grantGateKeep(G, now) {
+    const kept = grantGateKept(G, now);
+    try {
+      if (kept) { await this.state.storage.put(GRANT_GATE_KEY, kept); G.kept = true; }
+      else if (G.kept) { await this.state.storage.delete(GRANT_GATE_KEY); G.kept = false; }
+    } catch (e) { console.warn('[grant] gate keep', e?.message ?? e); }
   }
   /** GRANT2: does this socket's pose stand in this cell? A halo's foes are their own cell's, and a pose not yet here is
    *  told `cell` - the owner's own cell mints, and carries. GRANT4: a world room's socket stands in it (a building's or a

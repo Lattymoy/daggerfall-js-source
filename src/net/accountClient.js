@@ -420,7 +420,7 @@ const REFUSAL_WORDS = {
   'marks-full': () => t('account.refusal.marksFull', 'An account holds at most {max, number} silver.', { max: MARKS_MAX }),
   'guild-marks-short': () => t('account.refusal.guildMarksShort', 'The treasury does not hold that much silver.'),
   // DOMAIN2 (bible/11-Multiplayer/Domains.md 6): a castle - none in that region, its crown not the guild's, another guild's, none of the guild's to give up
-  'castle-none': () => t('account.refusal.castleNone', 'No castle stands in that region. Only the crowns - Daggerfall, Wayrest and Sentinel - keep one.'),
+  'castle-none': () => t('account.refusal.castleNone', "No castle stands in that region for a guild to keep. Only a crown's city keeps one - Daggerfall, Wayrest, Sentinel and each province's capital but the Imperial City."),   // AUDIT TESA III E2-2: WW7-4's castles past the Bay
   'castle-not-held': () => t('account.refusal.castleNotHeld', "Your guild does not hold that region's crown, so its castle is not yours to buy."),
   'castle-taken': () => t('account.refusal.castleTaken', 'That castle belongs to another guild.'),
   'castle-not-yours': () => t('account.refusal.castleNotYours', 'Your guild does not keep that castle.'),

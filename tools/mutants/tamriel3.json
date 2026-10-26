@@ -272,8 +272,8 @@
   {
     "name": "TAMRIEL3-a-border-where-the-province-stays",
     "file": "src/ui/tamrielInk.js",
-    "old": "if (x + 1 < w && land[i + 1] && province[i + 1] !== province[i]) segs.push([x + 1, y, x + 1, y + 1]);",
-    "new": "if (x + 1 < w && land[i + 1] && province[i + 1] !== province[i]) segs.push([x + 1, y, x + 1, y + 1]); else if (x + 1 < w && land[i + 1]) segs.push([x + 1, y, x + 1, y + 1]);",
+    "old": "if (x + 1 < w && land[i + 1] && province[i + 1] !== province[i] && zone.keeps(x, y, x + 1, y)) segs.push([x + 1, y, x + 1, y + 1]);",
+    "new": "if (x + 1 < w && land[i + 1] && province[i + 1] !== province[i] && zone.keeps(x, y, x + 1, y)) segs.push([x + 1, y, x + 1, y + 1]); else if (x + 1 < w && land[i + 1]) segs.push([x + 1, y, x + 1, y + 1]);",
     "tests": [
       "test/world/tamriel3.test.js"
     ]
@@ -281,7 +281,7 @@
   {
     "name": "TAMRIEL3-the-southern-border-edge-is-dropped",
     "file": "src/ui/tamrielInk.js",
-    "old": "if (y + 1 < h && land[i + w] && province[i + w] !== province[i]) segs.push([x, y + 1, x + 1, y + 1]);",
+    "old": "if (y + 1 < h && land[i + w] && province[i + w] !== province[i] && zone.keeps(x, y, x, y + 1)) segs.push([x, y + 1, x + 1, y + 1]);",
     "new": "if (false) segs.push([x, y + 1, x + 1, y + 1]);",
     "tests": [
       "test/world/tamriel3.test.js"

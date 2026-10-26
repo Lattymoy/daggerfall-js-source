@@ -14,7 +14,7 @@
 import { packetsAt } from '../../systems/naval/seaLanes.js';
 import { portPackets } from '../../systems/livingWorld/portCrews.js';
 import { portIdOf } from '../../world/worldWide/worldPorts.js';
-import { livingRoams } from './livingIndex.js';   // AUDIT TESA II P7: the living world's people go the Bay's ways alone until WW7
+import { livingSide } from './livingIndex.js';   // WW7-7: a trip keeps to its own side of the Bay's edge
 
 /**
  * @param {{ lanes: () => any[], way: (lane: any) => any, townOfPort: (id: number) => any,
@@ -43,16 +43,17 @@ export function createLivingLanes({ lanes, way, townOfPort, sailorsOf, generatio
   };
   return {
     count,
-    /** A port town's lanes `[{ to, len, key }]` - the far port's town and the lane's length. */
+    /** A port town's lanes `[{ to, len, key }]` - the far port's town and the lane's length. WW7-7: wherever the town
+     *  stands (a town past the Bay sails its travellers on the lanes past it, as a Bay port's on the Bay's), each lane's far
+     *  town on the town's own side of the Bay's edge. */
     from(town) {
       const n = fresh();
-      if (!livingRoams(town)) return [];   // AUDIT TESA II P7: a town past the Bay sails no traveller (its packets sail - WW3's)
       let got = from.get(town.mapId);
       if (!got) {
         const id = portIdOf(town);   // WW3: a port's one number - the Bay's masked id, the world's key past it
         got = n.filter((l) => l.a.id === id || l.b.id === id).flatMap((l) => {
           const w = way(l), to = townOfPort(l.a.id === id ? l.b.id : l.a.id);
-          return w && to ? [{ to, len: w.len, key: l.key }] : [];
+          return w && to && livingSide(to) === livingSide(town) ? [{ to, len: w.len, key: l.key }] : [];   // WW7-7: past the Bay as on it - a lane to a port of its own side
         });
         from.set(town.mapId, got);
       }

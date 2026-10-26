@@ -439,8 +439,8 @@
   {
     "name": "TESA-LORE-estate-gate-shut",
     "file": "src/world/capitalTorval.js",
-    "old": "  gatedRun(mb, SAND, sw, se, E.thick, E.h, h, E.gate, E.gateH);",
-    "new": "  hall(mb, SAND, P.x, P.z + h, 2 * h, E.thick, -1, E.h, 0.25);",
+    "old": "  gatedRun(mb, SAND_BRICK, sw, se, E.thick, E.h, h, E.gate, E.gateH);",
+    "new": "  hall(mb, SAND_BRICK, P.x, P.z + h, 2 * h, E.thick, -1, E.h, 0.25);",
     "tests": [
       "test/tesalore_capitals.test.js"
     ]

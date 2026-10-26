@@ -18,7 +18,7 @@
 // WILD_GIANT_RESPAWN_MS for everyone, then it walks again from wherever its path has got to.
 // Pure: the mask, a pixel test and a time in; the giants out.
 // ═══════════════════════════════════════════════════════════════════
-import { WILD_RINGS, maskWorld, ringOfCell } from './wildZone.js';
+import { WILD_RINGS, maskWorld, ringOfCell, wildInside } from './wildZone.js';
 
 export const WILD_GIANTS_PER_RING = 2;
 export const WILD_GIANT_COUNT = WILD_GIANTS_PER_RING * WILD_RINGS;
@@ -111,12 +111,17 @@ function waypointOf(c, g, leg) {
   if (c.legs.size > 4096) c.legs.delete(c.legs.keys().next().value);
   return w;
 }
+/** WW-C2: a giant's place on the world at a point of the cells' grid - a cell's middle its middle pixel's (a hall's own
+ *  pixel, wildDungeons.js), the walk between at the grid's scale. */
+const giantWorld = (mask, cx, cy) => maskWorld(mask, cx - 0.5, cy - 0.5).map((v) => v + Math.floor((mask.cell ?? 1) / 2) + 0.5);
+/** Does a giant at grid point (cx, cy) stand in the zone - its cell the zone's, and (ZONE-LINE) the world pixel under it the
+ *  zone's own: a cell whose middle is the province's may hold a pixel or two past the province's line. */
+const giantIn = (mask, cx, cy) => !!ringOfCell(mask, Math.floor(cx), Math.floor(cy)) && wildInside(mask, ...giantWorld(mask, cx, cy));
 /** Does the straight walk from cell `a` to cell `b` (their middles) stay inside the zone all the way? */
 function lineInside(mask, a, b) {
   const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) * 4));
   for (let k = 0; k <= n; k++) {
-    const x = Math.floor(a.x + 0.5 + ((b.x - a.x) * k) / n), y = Math.floor(a.y + 0.5 + ((b.y - a.y) * k) / n);
-    if (!ringOfCell(mask, x, y)) return false;
+    if (!giantIn(mask, a.x + 0.5 + ((b.x - a.x) * k) / n, a.y + 0.5 + ((b.y - a.y) * k) / n)) return false;
   }
   return true;
 }
@@ -133,7 +138,6 @@ function lineInside(mask, a, b) {
 export function wildGiantsAt(mask, free, now, dead = () => false, heightAt = null) {
   if (!mask?.depth || !mask.maxDepth) return [];
   const c = cellsOf(mask, free, heightAt);
-  const cell = mask.cell ?? 1;
   const out = [];
   for (let g = 0; g < WILD_GIANT_COUNT; g++) {
     if (dead(g)) continue;
@@ -146,10 +150,8 @@ export function wildGiantsAt(mask, free, now, dead = () => false, heightAt = nul
     // GIANT-LEASH (the owner: "giant should not be able to walk out of the zone"): a straight line between two waypoints
     // of its tier that cuts over the zone's edge (a bay in the border) is not walked out there - the giant waits at the
     // nearer waypoint until the line comes back in
-    if (!ringOfCell(mask, Math.floor(cx), Math.floor(cy))) { const p = f < 0.5 ? a : b; cx = p.x + 0.5; cy = p.y + 0.5; }
-    // WW-C2: on the world - a waypoint the middle of its cell's middle pixel (a hall's own pixel, wildDungeons.js), the
-    // walk between at the grid's scale
-    const [x, y] = maskWorld(mask, cx - 0.5, cy - 0.5).map((v) => v + Math.floor(cell / 2) + 0.5);
+    if (!giantIn(mask, cx, cy)) { const p = f < 0.5 ? a : b; cx = p.x + 0.5; cy = p.y + 0.5; }   // ZONE-LINE: the zone's own pixel too
+    const [x, y] = giantWorld(mask, cx, cy);
     out.push({ g, ring: wildGiantRing(g), x, y, heading: Math.atan2(b.y - a.y, b.x - a.x) });
   }
   return out;

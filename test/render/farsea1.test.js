@@ -304,7 +304,7 @@ test('FAR-SEA1: the world host - the ring takes the water\'s sky, body and eye, 
   // one home for the sea's climate: Iliac Puddle No More's sea and the ring's sea read the same archive
   assert.equal((w.match(/snowCover\.arrayOf\(seaGroundArchive\(\)\)/g) || []).length, 2, 'the open sea and the ring\'s sea, one body');   // AUDIT PRECIP GROUND-2 (PIN MOVED)
   assert.equal((w.match(/renderer\.tileArrays\.get\(seaGroundArchive\(\)\)/g) || []).length, 0, 'never the bare set, which the snow lane does not upload');
-  assert.match(w, /import \{ FarRingRenderer, ringDisabled, ringHeight, RING_HAZE_HOLD, BuiltPixels \} from '\.\.\/render\/farRing\.js';/);   // PIN MOVED (OW-HORIZON, 2026-10-20): and the built pixels the ring's hole is keyed by
+  assert.match(w, /import \{ FarRingRenderer, ringDisabled, ringHeightAt, RING_HAZE_HOLD, BuiltPixels \} from '\.\.\/render\/farRing\.js';/);   // PIN MOVED (OW-HORIZON, 2026-10-20): and the built pixels the ring's hole is keyed by; PIN MOVED (BREATHTAKER2 on the horizon): the height at its pixel, the continent's lift with it
   // THE FOUR HOSTS: the fixed city draws the water and no ring, the interiors and the dungeons neither - none sets it
   for (const f of ['src/scenes/exterior.js', 'src/scenes/dungeonContext.js', 'src/scenes/worldModes.js', 'src/tools/waterLab.js']) assert.ok(!rd(f).includes('setSeaHaze'), `${f}: the world's fog alone`);
   // the lens reads back the world's far plane

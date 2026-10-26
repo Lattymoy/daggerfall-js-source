@@ -9,9 +9,12 @@
 import { MeshBuilder } from './detStandIns.js';
 import { CAPITAL_ART, art, taper, ledge, translated, gatedRun, hall, crenels, darkDoor, entranceDoor, dome, squareTower, outward, limb, pyramid } from './capitalShapes.js';
 import { TORVAL, estateBeds } from './capitalPlans.js';
+import { urbanArt } from './urban/urbanRecords.js';   // URBANIZER U2: the towns' own brick
 
 const SAND = art(CAPITAL_ART.sandstone), TERRA = art(CAPITAL_ART.terracotta), GOLD = art(CAPITAL_ART.gold), MARBLE = art(CAPITAL_ART.marble);
 const DARK = art(CAPITAL_ART.dark), TIMBER = art(CAPITAL_ART.timber), CANE = art(CAPITAL_ART.cane), CLOTH = art(CAPITAL_ART.cloth);
+/** URBANIZER U2 (world/urban/urbanArt.js): the Mane's estate walled in sandstone brick. */
+const SAND_BRICK = urbanArt('sandBrick');
 
 /**
  * TESA-LORE: A CRESCENT MOON of gilt at (x, y, z) - the Khajiit's moons over their domes: a short shaft, then an arc of
@@ -88,8 +91,8 @@ export function buildTwoMoonsTemple(T = TORVAL) {
 export function buildManeEstate(T = TORVAL) {
   const mb = new MeshBuilder(), E = T.estate, P = T.palace, h = E.half;
   const ne = [P.x + h, P.z - h], nw = [P.x - h, P.z - h], sw = [P.x - h, P.z + h], se = [P.x + h, P.z + h];
-  for (const [p, q] of [[ne, nw], [nw, sw], [se, ne]]) { hall(mb, SAND, (p[0] + q[0]) / 2, (p[1] + q[1]) / 2, Math.abs(q[0] - p[0]) + E.thick, Math.abs(q[1] - p[1]) + E.thick, -1, E.h, 0.25); }
-  gatedRun(mb, SAND, sw, se, E.thick, E.h, h, E.gate, E.gateH);
+  for (const [p, q] of [[ne, nw], [nw, sw], [se, ne]]) { hall(mb, SAND_BRICK, (p[0] + q[0]) / 2, (p[1] + q[1]) / 2, Math.abs(q[0] - p[0]) + E.thick, Math.abs(q[1] - p[1]) + E.thick, -1, E.h, 0.25); }
+  gatedRun(mb, SAND_BRICK, sw, se, E.thick, E.h, h, E.gate, E.gateH);   // URBANIZER U2: the estate's wall of sandstone brick
   for (const [x, z, w, d] of estateBeds(T)) hall(mb, CANE, x, z, w, d, -0.3, E.bedH, 0.3);
   const Q = T.palanquin, qz = P.z + Q.dz;
   hall(mb, SAND, P.x, qz, Q.dais, Q.dais, -1, Q.daisH, 0.25);

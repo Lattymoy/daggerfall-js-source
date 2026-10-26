@@ -1225,7 +1225,7 @@ test('AUDIT LANDFORMS II I1: the lift fades beside the sea - a sea cliff\'s rim 
   assert.equal(ringY(100), Math.fround(ringHeight(75)), 'the rim\'s node: no lift');
   assert.equal(ringY(101), Math.fround(ringHeight(75, true, 0.5)));
   assert.equal(ringY(103), Math.fround(ringHeight(75, true)), 'three in: the whole lift');
-  assert.match(WORLD, /cliffFadeAt\(\(bx, by\) => woods\.getHeightMapValue\(bx, by\), px\.x, px\.y\) : 1;[^\n]*\n\s+return \[x, ringHeight\(byte, !!landform, fade\)/, 'the travel view past the grid fades it the same');
+  assert.match(WORLD, /cliffFadeAt\(\(bx, by\) => woods\.getHeightMapValue\(bx, by\), px\.x, px\.y\) : 1;[^\n]*\n\s+return \[x, ringHeightAt\(px\.x, px\.y, byte, !!landform, fade\)/, 'the travel view past the grid fades it the same');   // PIN MOVED (BREATHTAKER2 on the horizon): at its pixel, the continent's lift with it
   // and every edge across the fade, a road over it, is one number from both pixels
   const cut = (px, py) => generateSamples(cw, px, py, H, CUT);
   for (const px of [99, 100, 101, 102]) {

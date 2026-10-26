@@ -29,8 +29,8 @@
   {
     "name": "PERF-WAYS1-the-time-never-renewed",
     "file": "src/systems/livingWorld/ways.js",
-    "old": "    frame(n = WAYS_PER_FRAME, ms = WAYS_MS_PER_FRAME) { budget = n; asked = 0; spent = 0; spendMs = ms; },",
-    "new": "    frame(n = WAYS_PER_FRAME, ms = WAYS_MS_PER_FRAME) { budget = n; asked = 0; spendMs = ms; },",
+    "old": "    frame(n = WAYS_PER_FRAME, ms = WAYS_MS_PER_FRAME) { budget = n; asked = 0; spent = 0; spendMs = ms; beyond?.frame?.(); },",
+    "new": "    frame(n = WAYS_PER_FRAME, ms = WAYS_MS_PER_FRAME) { budget = n; asked = 0; spendMs = ms; beyond?.frame?.(); },",
     "tests": [
       "test/systems/livingWorld/perfways1.test.js"
     ]
@@ -117,8 +117,8 @@
   {
     "name": "PERF-WAYS1-a-shipped-clock-reading-nothing",
     "file": "src/systems/livingWorld/ways.js",
-    "old": "plan = planRoute, now = () => performance.now() })",
-    "new": "plan = planRoute, now = () => 0 })",
+    "old": "plan = planRoute, now = () => performance.now(), beyond = null })",
+    "new": "plan = planRoute, now = () => 0, beyond = null })",
     "tests": [
       "test/systems/livingWorld/perfways1.test.js",
       "test/systems/livingWorld/lw3_roads.test.js"

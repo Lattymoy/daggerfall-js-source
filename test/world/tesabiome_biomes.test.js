@@ -282,7 +282,7 @@ test('TESA-BIOME: the air\'s kept tiles follow the land - a ground whose version
   } finally { setAirGround(null); }
   assert.match(read('src/systems/weather/airGround.js'), /version: biomeStamp,/, 'the law\'s map carries the zones\' stamp');
   const base = { woodsBytes: new Uint8Array(64), fit: null, trace: null, spec: {}, nodes: [], obstacles: [], gates: [], held: [] };
-  assert.match(read('src/world/tamrielRoads.js'), /const text = JSON\.stringify\(\[spec, nodes, obstacles, gates, held, ROAD_DIALS, BIOMES_VERSION\]\);/);
+  assert.match(read('src/world/tamrielRoads.js'), /const text = JSON\.stringify\(\[spec, nodes, obstacles, gates, held, ROAD_DIALS, BIOMES_VERSION, VOYAGER_DIALS, trunks\]\);/);   // PIN MOVED (VOYAGER1, VOYAGER-CYRODIIL): the land's dials and the named roads printed too
   assert.equal(typeof inputsPrint(base), 'string');
 });
 

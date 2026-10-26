@@ -423,8 +423,8 @@
   {
     "name": "AEOW-T-rects-ruins-as-towns",
     "file": "src/world/etherWatersBake.js",
-    "old": "ruins: rows(templates?.ruins) };",
-    "new": "ruins: rows(templates?.towns) };",
+    "old": "ruins: rows(templates?.ruins), bases };",
+    "new": "ruins: rows(templates?.towns), bases };",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],

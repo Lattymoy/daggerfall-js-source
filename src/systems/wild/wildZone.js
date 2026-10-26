@@ -205,26 +205,113 @@ export function fillEnclosed(inside, width, height) {
   for (let i = 0; i < inside.length; i++) if (!inside[i] && !reached[i]) inside[i] = 1;
 }
 
+/** ZONE-LINE: the most map pixels a side a cell keeps as bits (sixteen bits a cell, buildWildMask's `bits`). */
+export const PIXEL_CELL_MAX = 4;
+
+/**
+ * ZONE-LINE (2026-10-26, the owner: "Also ensure the pvp border outlines cyrodil perfectly, currently it doesnt"): THE
+ * PIXEL'S OWN LAW ON THE CELLS' GRID. `pixelIn(x, y)` answers a whole world map pixel; each cell keeps its pixels as
+ * bits (bit `sy * cell + sx`), so the zone is its law's to the pixel and every ask is one bit. A cell of four had stood
+ * whole where its middle pixel stood - a 3.3 km staircase about the province's own line, 9,012 pixels of the two apart.
+ * THE COARSE PRE-TEST: the law is asked at every cell's middle, and a cell whose eight neighbours' middles all answer as
+ * its own is that answer whole; every pixel of any other cell is asked. Exact for a law constant over squares wider
+ * than two cells - the traced picture's, every picture pixel fifteen map pixels and more a side (world/tamriel/
+ * tamrielLand.js FIT_PPUS): a picture edge through a cell lies between its middle and a neighbour's, and a picture corner
+ * in it is some neighbour's middle. THE ENCLOSED, AT THE PIXEL (AUDIT TESA II Z4's law): the outside is walked from the
+ * grid's edge through a pixel's four sides alone, a uniform outside cell walked whole; what it never reaches is the
+ * zone's. Answers `{ bits, band }` (band: the cells asked a pixel at a time).
+ * @param {{ width: number, height: number, ox: number, oy: number, cell: number, pixelIn: (x: number, y: number) => boolean }} p
+ */
+function pixelBits({ width, height, ox, oy, cell, pixelIn }) {
+  const n = width * height, full = (1 << (cell * cell)) - 1, m = Math.floor(cell / 2), S = cell * cell;
+  const mid = new Uint8Array(n), bits = new Uint16Array(n), band = new Uint8Array(n);
+  for (let cy = 0; cy < height; cy++) for (let cx = 0; cx < width; cx++) mid[cy * width + cx] = pixelIn(ox + cx * cell + m, oy + cy * cell + m) ? 1 : 0;
+  // the band: both cells of every two neighbours (eight ways) whose middles differ, and an inside cell on the grid's edge
+  for (let cy = 0; cy < height; cy++) {
+    for (let cx = 0; cx < width; cx++) {
+      const i = cy * width + cx, v = mid[i];
+      if (v && (cx === 0 || cy === 0 || cx === width - 1 || cy === height - 1)) band[i] = 1;
+      if (cx + 1 < width && mid[i + 1] !== v) band[i] = band[i + 1] = 1;
+      if (cy + 1 < height) {
+        const j = i + width;
+        if (mid[j] !== v) band[i] = band[j] = 1;
+        if (cx + 1 < width && mid[j + 1] !== v) band[i] = band[j + 1] = 1;
+        if (cx > 0 && mid[j - 1] !== v) band[i] = band[j - 1] = 1;
+      }
+    }
+  }
+  for (let cy = 0; cy < height; cy++) {
+    for (let cx = 0; cx < width; cx++) {
+      const i = cy * width + cx;
+      if (!band[i]) { bits[i] = mid[i] ? full : 0; continue; }
+      let b = 0;
+      for (let sy = 0; sy < cell; sy++) for (let sx = 0; sx < cell; sx++) if (pixelIn(ox + cx * cell + sx, oy + cy * cell + sy)) b |= 1 << (sy * cell + sx);
+      bits[i] = b;
+    }
+  }
+  // the outside, walked from the grid's edge: `reached` its pixels as bits, a uniform outside cell all at once
+  const reached = new Uint16Array(n);
+  /** @type {number[]} */ const units = [];
+  /** @type {number[]} */ const pix = [];
+  const enter = (cx, cy, sx, sy) => {
+    if (cx < 0 || cy < 0 || cx >= width || cy >= height) return;
+    const i = cy * width + cx, b = 1 << (sy * cell + sx);
+    if ((bits[i] | reached[i]) & b) return;
+    if (!band[i]) { reached[i] = full; units.push(i); return; }
+    reached[i] |= b; pix.push(i * S + sy * cell + sx);
+  };
+  /** A neighbour's side met whole (`sx` or `sy` the side's own column or row, the other -1): a uniform cell in one step. */
+  const side = (cx, cy, sx, sy) => {
+    if (cx < 0 || cy < 0 || cx >= width || cy >= height) return;
+    const i = cy * width + cx;
+    if (!band[i]) { if (!bits[i] && !reached[i]) { reached[i] = full; units.push(i); } return; }
+    for (let s = 0; s < cell; s++) enter(cx, cy, sx < 0 ? s : sx, sy < 0 ? s : sy);
+  };
+  for (let cx = 0; cx < width; cx++) { side(cx, 0, -1, 0); side(cx, height - 1, -1, cell - 1); }
+  for (let cy = 0; cy < height; cy++) { side(0, cy, 0, -1); side(width - 1, cy, cell - 1, -1); }
+  while (units.length || pix.length) {
+    if (units.length) {
+      const i = /** @type {number} */ (units.pop()), cx = i % width, cy = (i - cx) / width;
+      side(cx - 1, cy, cell - 1, -1); side(cx + 1, cy, 0, -1); side(cx, cy - 1, -1, cell - 1); side(cx, cy + 1, -1, 0);
+      continue;
+    }
+    const k = /** @type {number} */ (pix.pop()), i = Math.floor(k / S), j = k - i * S, sx = j % cell, sy = (j - sx) / cell, cx = i % width, cy = (i - cx) / width;
+    if (sx > 0) enter(cx, cy, sx - 1, sy); else enter(cx - 1, cy, cell - 1, sy);
+    if (sx < cell - 1) enter(cx, cy, sx + 1, sy); else enter(cx + 1, cy, 0, sy);
+    if (sy > 0) enter(cx, cy, sx, sy - 1); else enter(cx, cy - 1, sx, cell - 1);
+    if (sy < cell - 1) enter(cx, cy, sx, sy + 1); else enter(cx, cy + 1, sx, 0);
+  }
+  for (let i = 0; i < n; i++) bits[i] = full & (bits[i] | ~reached[i]);
+  return { bits, band };
+}
+
 /**
  * The zone over a `width` x `height` grid of cells: `inside` and `near` (inside, or within `nearPx` map pixels of an
  * inside cell - a cell at the least) as one byte a cell, each inside cell's depth, and the inside's box (cells). `inZone`
  * answers a cell; what the zone encloses is inside too (fillEnclosed - AUDIT TESA II Z4). Built once a zone
- * (systems/wild/cyrodiilZone.js cyrodiilMask keeps it).
- * @param {{ width: number, height: number, inZone: (cx: number, cy: number) => boolean, ox?: number, oy?: number, cell?: number, nearPx?: number }} p
+ * (systems/wild/cyrodiilZone.js cyrodiilMask keeps it). ZONE-LINE: with `pixelIn` (a whole world map pixel's law, cells
+ * of PIXEL_CELL_MAX or less) the zone is that law's to the pixel - `bits`, each cell's pixels (pixelBits); a cell is
+ * `inside` where its middle pixel is, the depth and the rings run on those cells as before, `near` and the box take every
+ * cell the zone touches, and every ask of a place reads its own pixel's bit.
+ * @param {{ width: number, height: number, inZone?: (cx: number, cy: number) => boolean, ox?: number, oy?: number, cell?: number, nearPx?: number, pixelIn?: ((x: number, y: number) => boolean)|null }} p
  */
-export function buildWildMask({ width, height, inZone, ox = 0, oy = 0, cell = 1, nearPx = WILD_NEAR_PX }) {
+export function buildWildMask({ width, height, inZone, ox = 0, oy = 0, cell = 1, nearPx = WILD_NEAR_PX, pixelIn = null }) {
+  const exact = pixelIn && cell <= PIXEL_CELL_MAX ? pixelBits({ width, height, ox, oy, cell, pixelIn }) : null;
+  const m = Math.floor(cell / 2), midBit = m * cell + m;
+  const at = exact ? (x, y) => ((exact.bits[y * width + x] >> midBit) & 1) === 1 : /** @type {(x: number, y: number) => boolean} */ (inZone);
   const inside = new Uint8Array(width * height);
   let x0 = width, y0 = height, x1 = -1, y1 = -1;
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      if (!inZone(x, y)) continue;
-      inside[y * width + x] = 1;
+      if (!(exact ? exact.bits[y * width + x] : at(x, y))) continue;   // ZONE-LINE: the box every cell the zone touches
+      if (at(x, y)) inside[y * width + x] = 1;
       if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
     }
   }
-  if (x1 >= 0) fillEnclosed(inside, width, height);   // AUDIT TESA II Z4: an enclosed cell lies within the box the zone's own make
+  if (x1 >= 0 && !exact) fillEnclosed(inside, width, height);   // AUDIT TESA II Z4: an enclosed cell lies within the box the zone's own make (ZONE-LINE: the bits filled at the pixel)
   const band = Math.max(1, Math.ceil(nearPx / cell));   // WW-C2: the hiding band in cells
   const near = new Uint8Array(width * height);
+  const seed = exact ? exact.bits : inside;   // ZONE-LINE: the band from every cell the zone touches
   if (x1 >= 0) {
     // a separable square dilation (two passes over the box widened by the band) - a cell within the band on both axes
     const bx0 = Math.max(0, x0 - band), bx1 = Math.min(width - 1, x1 + band);
@@ -233,7 +320,7 @@ export function buildWildMask({ width, height, inZone, ox = 0, oy = 0, cell = 1,
     for (let y = y0; y <= y1; y++) {
       for (let x = bx0; x <= bx1; x++) {
         let hit = 0;
-        for (let k = Math.max(0, x - band); k <= Math.min(width - 1, x + band) && !hit; k++) hit = inside[y * width + k];
+        for (let k = Math.max(0, x - band); k <= Math.min(width - 1, x + band) && !hit; k++) hit = seed[y * width + k] ? 1 : 0;
         row[y * width + x] = hit;
       }
     }
@@ -269,7 +356,7 @@ export function buildWildMask({ width, height, inZone, ox = 0, oy = 0, cell = 1,
       }
     }
   }
-  return { width, height, ox, oy, cell, inside, near, depth, maxDepth, box: x1 >= 0 ? { x0, y0, x1, y1 } : null };
+  return { width, height, ox, oy, cell, inside, near, depth, maxDepth, box: x1 >= 0 ? { x0, y0, x1, y1 } : null, bits: exact?.bits ?? null };
 }
 
 /**
@@ -279,16 +366,25 @@ export function buildWildMask({ width, height, inZone, ox = 0, oy = 0, cell = 1,
 export function wildRingAt(x, y, mask = _mask) {
   if (!mask) return 0;
   if (!mask.depth || !mask.maxDepth) return wildInside(mask, x, y) ? WILD_RINGS : 0;
+  if (mask.bits && !wildInside(mask, x, y)) return 0;   // ZONE-LINE: the pixel's own law first
   const [cx, cy] = maskCellOf(mask, x, y);
-  return ringOfCell(mask, cx, cy);
+  return mask.bits ? Math.max(1, ringOfCell(mask, cx, cy)) : ringOfCell(mask, cx, cy);   // a zone pixel of a cell whose middle is out: the edge's ring
 }
 const at = (mask, field, x, y) => {
   if (!mask) return false;
   const [cx, cy] = maskCellOf(mask, x, y);
   return onGrid(mask, cx, cy) && mask[field][cy * mask.width + cx] === 1;
 };
-/** Is world map pixel (x, y) - fractions allowed - inside the zone? */
-export const wildInside = (mask, x, y) => at(mask, 'inside', x, y);
+/** ZONE-LINE: a pixel's bit on a mask that keeps them (buildWildMask's `bits`) - world map pixel (x, y), fractions floored. */
+const pixelBit = (mask, x, y) => {
+  const [cx, cy] = maskCellOf(mask, x, y);
+  if (!onGrid(mask, cx, cy)) return false;
+  const c = mask.cell ?? 1, sx = Math.floor(x - (mask.ox ?? 0)) - cx * c, sy = Math.floor(y - (mask.oy ?? 0)) - cy * c;
+  return ((mask.bits[cy * mask.width + cx] >> (sy * c + sx)) & 1) === 1;
+};
+/** Is world map pixel (x, y) - fractions allowed - inside the zone? ZONE-LINE: its own pixel's law where the mask keeps
+ *  the pixels (Cyrodiil's: the province's own line, to the pixel), else its cell's. */
+export const wildInside = (mask, x, y) => (mask?.bits ? pixelBit(mask, x, y) : at(mask, 'inside', x, y));
 /** Is it in the zone or within its band? */
 export const wildNear = (mask, x, y) => at(mask, 'near', x, y);
 
@@ -300,28 +396,45 @@ export const wildNear = (mask, x, y) => at(mask, 'near', x, y);
  */
 export function wildEdgeChains(mask, within = null) {
   if (!mask?.box) return [];
+  if (mask.bits && !within) return pixelEdgeChains(mask);   // ZONE-LINE: the zone's own edge, a pixel's sides
   const { width, inside } = mask;
   const isIn = within
     ? (x, y) => onGrid(mask, x, y) && inside[y * width + x] === 1 && within(x, y)
     : (x, y) => onGrid(mask, x, y) && inside[y * width + x] === 1;
+  const { x0, y0, x1, y1 } = mask.box;
+  return linkEdges((add) => {
+    for (let y = y0; y <= y1; y++) {
+      for (let x = x0; x <= x1; x++) {
+        if (!isIn(x, y)) continue;
+        // clockwise around the cell, so every chain runs one way
+        if (!isIn(x, y - 1)) add(x, y, x + 1, y);
+        if (!isIn(x + 1, y)) add(x + 1, y, x + 1, y + 1);
+        if (!isIn(x, y + 1)) add(x + 1, y + 1, x, y + 1);
+        if (!isIn(x - 1, y)) add(x, y + 1, x, y);
+      }
+    }
+  }, (x, y) => maskWorld(mask, x, y));
+}
+
+/**
+ * EDGES TO CHAINS: `each(add)` lays directed unit edges `add(ax, ay, bx, by)` on a lattice; they are joined end to end
+ * where they meet, a straight run one segment, each chain `[{x, y}, ...]` laid on the world by `toWorld(x, y)`. A closed
+ * set of edges (clockwise round a set of squares) gives closed chains, their first point their last; ZONE-LINE: an open
+ * run's walk begins at its head (a point no edge reaches), so a run is one chain.
+ * @param {(add: (ax: number, ay: number, bx: number, by: number) => void) => void} each
+ * @param {(x: number, y: number) => number[]} toWorld
+ */
+export function linkEdges(each, toWorld) {
   /** @type {Map<string, Array<[number, number]>>} */
   const from = new Map();
-  const add = (ax, ay, bx, by) => {
-    const k = `${ax},${ay}`;
+  /** @type {Map<string, number>} */
+  const into = new Map();
+  each((ax, ay, bx, by) => {
+    const k = `${ax},${ay}`, t = `${bx},${by}`;
     const list = from.get(k);
     if (list) list.push([bx, by]); else from.set(k, [[bx, by]]);
-  };
-  const { x0, y0, x1, y1 } = mask.box;
-  for (let y = y0; y <= y1; y++) {
-    for (let x = x0; x <= x1; x++) {
-      if (!isIn(x, y)) continue;
-      // clockwise around the cell, so every chain runs one way
-      if (!isIn(x, y - 1)) add(x, y, x + 1, y);
-      if (!isIn(x + 1, y)) add(x + 1, y, x + 1, y + 1);
-      if (!isIn(x, y + 1)) add(x + 1, y + 1, x, y + 1);
-      if (!isIn(x - 1, y)) add(x, y + 1, x, y);
-    }
-  }
+    into.set(t, (into.get(t) ?? 0) + 1);
+  });
   const chains = [];
   const take = (k) => {
     const list = from.get(k);
@@ -330,8 +443,11 @@ export function wildEdgeChains(mask, within = null) {
     if (!list.length) from.delete(k);
     return next;
   };
+  const heads = [...from.keys()].filter((k) => !into.get(k));
   while (from.size) {
-    const startKey = from.keys().next().value;
+    let startKey = heads.shift();
+    while (startKey !== undefined && !from.has(startKey)) startKey = heads.shift();
+    if (startKey === undefined) startKey = /** @type {string} */ (from.keys().next().value);
     const [sx, sy] = startKey.split(',').map(Number);
     const chain = [{ x: sx, y: sy }];
     let k = startKey;
@@ -345,10 +461,46 @@ export function wildEdgeChains(mask, within = null) {
       k = `${n[0]},${n[1]}`;
       if (k === startKey) break;
     }
-    if (chain.length > 1) chains.push(chain.map((p) => { const [wx, wy] = maskWorld(mask, p.x, p.y); return { x: wx, y: wy }; }));
+    if (chain.length > 1) chains.push(chain.map((p) => { const [wx, wy] = toWorld(p.x, p.y); return { x: wx, y: wy }; }));
   }
   return chains;
 }
+
+/** ZONE-LINE: THE ZONE'S EDGE TO THE PIXEL - every side between a zone pixel and another (buildWildMask's `bits`),
+ *  clockwise, on the world's own pixel corners. A whole cell among whole cells has none and is passed over. */
+function pixelEdgeChains(mask) {
+  const { width, height, bits } = mask, c = mask.cell ?? 1, full = (1 << (c * c)) - 1;
+  const isIn = (gx, gy) => {
+    if (gx < 0 || gy < 0) return false;
+    const cx = Math.floor(gx / c), cy = Math.floor(gy / c);
+    return cx < width && cy < height && ((bits[cy * width + cx] >> ((gy - cy * c) * c + (gx - cx * c))) & 1) === 1;
+  };
+  const whole = (cx, cy) => onGrid(mask, cx, cy) && bits[cy * width + cx] === full;
+  const { x0, y0, x1, y1 } = mask.box;
+  return linkEdges((add) => {
+    for (let cy = y0; cy <= y1; cy++) {
+      for (let cx = x0; cx <= x1; cx++) {
+        const b = bits[cy * width + cx];
+        if (!b || (b === full && whole(cx - 1, cy) && whole(cx + 1, cy) && whole(cx, cy - 1) && whole(cx, cy + 1))) continue;
+        for (let sy = 0; sy < c; sy++) {
+          for (let sx = 0; sx < c; sx++) {
+            if (!((b >> (sy * c + sx)) & 1)) continue;
+            const x = cx * c + sx, y = cy * c + sy;
+            if (!isIn(x, y - 1)) add(x, y, x + 1, y);
+            if (!isIn(x + 1, y)) add(x + 1, y, x + 1, y + 1);
+            if (!isIn(x, y + 1)) add(x + 1, y + 1, x, y + 1);
+            if (!isIn(x - 1, y)) add(x, y + 1, x, y);
+          }
+        }
+      }
+    }
+  }, (x, y) => [(mask.ox ?? 0) + x, (mask.oy ?? 0) + y]);
+}
+
+/** ZONE-LINE: THE ZONE'S DRAWN EDGE - the line its law hands the mask (`mask.line`: Cyrodiil's, the province's own
+ *  outline off the traced picture - systems/wild/cyrodiilZone.js), else its own edge (wildEdgeChains). The maps' red line,
+ *  the fog's cut and the zone map's ring and wash are this one line. */
+export const wildOutline = (mask) => mask?.line?.chains ?? wildEdgeChains(mask);
 
 /** WILD2: the line where ring `ring` (2-4) begins - the edge of every cell at that ring or deeper. */
 export const wildRingChains = (mask, ring) => wildEdgeChains(mask, (cx, cy) => ringOfCell(mask, cx, cy) >= ring);

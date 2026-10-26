@@ -70,9 +70,23 @@ DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from `TerrainHelper.SetLo
   as DFU's ramp keeps it, so a neighbour's ground meets it). A rect without an outline (a capital) takes DFU's blend as
   before and answers its average.
 - **Its copies** follow by the same rect: the Deep Waters bake's water test, the landforms' lift (`landformLiftField`,
-  its difference field flattened on the outline with DFU's own samples as its land), the classic pass.
+  its difference field flattened on the outline with DFU's own samples as its land), the classic pass. AUDIT TESA III
+  E1-4 (2026-10-26, `01-Overview/audits/Audit-Tesa-III-E1.md`): the bake's did not - its rows were the rect's four numbers
+  (`deepWatersClient.js` deepWatersLocationRects, `deepWatersBakeCache.js` rectsLookup), so it blended DFU's way and called
+  the sea TS2 keeps land: 453,230 samples at 262 of the Bay's 339 coastal location pixels, the seafloor before them shaped
+  against the old rect's coastline (up to 27 m off at the default depth). A row now carries the outline, the key its
+  bytes, BAKE_GENERATOR_VERSION 2. The Eltheric isles' bake read its templates' rects, while each clone stands its own
+  outline (seeded by its own map id) - 3 of 60 sampled port isles, 564 samples: it now draws each isle's outline and the
+  rect cut under it off its template's basis under the isle's own id (`terrainTiles.js` locationOutlineBasis,
+  outlineOfBasis, rectOfBasis; `03-World/Deep-Waters.md`).
 - **The road's ring** (`townRoadRing`, `roadPainter.js`): the mod's "Paint roads around locations" paves the tiles off the
-  town's ground within two and a half of it - its outline's ring, where it paved the rect's padding.
+  town's ground within two and a half of it - its outline's ring, where it paved the rect's padding. AUDIT TESA III E1-1
+  (FIXED 2026-10-26, the roads' stream): the painter's FAST-SUITE guard passed by every tile off the centre cross, the
+  diagonals and the rect - proven against the rect's law alone - and the ring lies past the rect, so 82% of it was never
+  paved (259,606 of 1,451,249 ring tiles over the Bay's 3,444 towns; a road's stubs where its arms cross it); and the ring
+  paved the sea where TS2 keeps it (2,670 ring tiles over water). Now the guard passes no ring tile, the ring paves no
+  water and `smoothRoadHeights` keeps off it (`roadPainter.js:"&& !locationRect?.ring?.[y * DIM + x]) continue;"`): the
+  whole dry ring paved (the audit page's record).
 - Measured on the freeware: Daggerfall stands within its walls as before (its rect 11..116, its tiles' histogram
   unchanged, its ground 0.166139 for DFU's 0.166147 - its own land's mean); Antelibuton keeps its sea (thousands of water
   samples where DFU's blend left about 240); Gothway Garden's outline wanders on every side. The corpus' stamped tiles
@@ -261,6 +275,13 @@ DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from `DefaultTerrainNatur
   never cross it (shutTownWall - its gates shut, as Daggerfall's gate blocks carve theirs); its town map draws it in
   Daggerfall's wall byte (0x18, WALLAA00-11's) over a copy of each block's bytes (wallOnTownMap,
   `scenes/exteriorAutomapToggle.js`). Measured over every third city: every wall closed on its walk grid, 0.23 ms a city.
+  THE FOUR HOSTS (AUDIT TESA III E1-2, 2026-10-26): the streaming host (`scenes/world.js`, through `pixelBuild.js` and
+  `exteriorAutomapToggle.js`) and the fixed-city bench (`scenes/exterior.js`, `?exterior` / `?region&loc`) - the bench had
+  been left out, and TS7 opens every Bay city's ring on the door's read, so its Daggerfall drew no wall at all on its town
+  map (11,064 wall-byte cells before TS7, 0 after) and its walkers crossed every one of the wall's 12,513 cells. It now
+  draws the wall (wallOnTownMap) and carves its walk grid off each block's bytes with the wall laid in
+  (`townWalls.js` wallLaidBytes); the interiors (`scenes/worldModes.js`) and the dungeons (`scenes/dungeonContext.js`)
+  stand no street.
 
 Tests `test/world/townfollow.test.js`. Mutants `tools/mutants/townfollow.json`. PINS MOVED: `test/world/terrain/terrain.test.js`
 (Daggerfall's environs: 1237 flats -> 808), `test/ui/town/arena_townmap.test.js` (the streaming host's town map rows through

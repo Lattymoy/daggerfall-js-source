@@ -47,8 +47,8 @@
   {
     "name": "AUDITTESA2R-R9-the-runs-unhanded",
     "file": "src/scenes/tamrielRoadsHost.js",
-    "old": "held: [...held, ...joinRunPixels(joins)], lattice };",
-    "new": "held, lattice };",
+    "old": "held: [...held, ...joinRunPixels(joins)], lattice, trunks };",
+    "new": "held, lattice, trunks };",
     "tests": [
       "test/world/audittesa2r_roads.test.js"
     ]

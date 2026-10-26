@@ -306,7 +306,8 @@ test('WW3 the wiring: the world host stands the world\'s ports off the registry 
   assert.match(src('src/scenes/livingWorld/livingLanes.js'), /const id = portIdOf\(town\);/);   // PIN MOVED (AUDIT WW F7): a town's lanes the living lanes' book's
   assert.equal((w.match(/maskMapId\(/g) ?? []).length, 0, 'no port keyed by a masked id in the host');
   const n = src('src/scenes/naval/navalHost.js');
-  assert.match(n, /watersShipNames\(cls, spec\.seed, region, crown, spec\.area \?\? \(spec\.region >= 0 \? -1 : w\.area \?\? -1\)\)/, 'her home port\'s waters, else the waters she is met in - a Bay ship\'s her region\'s');   // PIN MOVED (AUDIT TESA II K7): the names built beside watersFolk, out of the host's scope
+  assert.match(n, /watersShipNames\(cls, spec\.seed, region, crown, area\)/, 'her home port\'s waters, else the waters she is met in - a Bay ship\'s her region\'s');
+  assert.match(n, /const namesArea = \(spec, w\) => spec\.area \?\? \(\(spec\.region \?\? -1\) >= 0 \? -1 : w\.area \?\? -1\);/, 'PIN MOVED (WW7-8): the area the module\'s namesArea, kept on her entry for the wire');   // PIN MOVED (AUDIT TESA II K7): the names built beside watersFolk, out of the host's scope
   assert.match(n, /const watersShipNames = \(cls, seed, region, crown, area\) => shipNames\(cls, seed, \{ regionIndex: region, crown, bank: shipNameBank\(region, area\) \}\);/);
   assert.match(n, /\.\.\.watersFolk\(where\(\)\), record: saved\?\.mates \?\? null \}\);/);   // PIN MOVED (AUDIT WW F12): the waters read once
   assert.match(n, /const watersFolk = \(w\) => \(\{ regionIndex: w\.region \?\? 17, bank: shipNameBank\(w\.region \?\? 17, w\.area \?\? -1\) \}\);/);

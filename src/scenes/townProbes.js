@@ -6,11 +6,13 @@ import { addGold } from '../systems/court.js';
 import { charSheetDoorReady } from '../ui/charSheetDoor.js';
 import { isNight } from '../world/worldClock.js';
 import { playerEntity } from '../characters/playerEntity.js';
+import { partyAt } from '../systems/livingWorld/trips.js';   // WW7-7: the road's parties placed, for the probe
+import { skyMinutes } from '../systems/worldTick.js';
 
 /** @param {any} host */
 export function createTownProbes(host) {
   const {
-    _crimeResponse, built, cam, cityGuards, droppedLoot, minuteNow, state, townTalk, weaponRig
+    _crimeResponse, built, cam, cityGuards, droppedLoot, livingRoadsOf, minuteNow, state, townTalk, weaponRig
   } = host;
   // T2: the townsfolk probe surface - aggregated over built pixels,
   // positions reported in WORLD space (through the live translation).
@@ -40,6 +42,14 @@ export function createTownProbes(host) {
       return JSON.stringify(out);
     };
     window.__talk = () => JSON.stringify(townTalk._debug());   // T3b probe surface
+    // WW7-7 probe surface (bible/03-World/World-Wide.md WW7-7): the road's parties the living world's roads layer has near,
+    // each where its trip has it at the sky's minute - native, and in the scene - its kind and its two ends
+    window.__livingRoads = () => (livingRoadsOf?.()?.parties() ?? []).map((p) => {
+      const at = partyAt(p.trip, skyMinutes());
+      const placed = Number.isFinite(at.x) && Number.isFinite(at.z);
+      return { id: p.trip.id, kind: p.trip.kind, from: p.trip.from?.name ?? null, to: p.trip.to?.name ?? null, home: [p.trip.from?.px, p.trip.from?.py],
+        party: p.trip.party?.length ?? 1, phase: at.phase, camp: !!at.camp, native: placed ? [at.x, at.z] : null, scene: placed ? state.localFromWorld(at.x, at.z) : null };
+    });
     // MAP3: the held pose's tuning door - `__heldPose()` reads the pose in
     // force while the map is up, `__heldPose({ bones: { 'left forearm':
     // [rx, ry, rz], ... }, paper: { width, forward, drop, tilt } })` re-places

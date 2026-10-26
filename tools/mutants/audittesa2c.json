@@ -433,7 +433,7 @@
   {
     "name": "AUDIT-TESA-II-R2-the-side-pixel-alone",
     "file": "src/world/tamrielCapitals.js",
-    "old": "    for (let t = 0; t < GATE_REACH; t++) {",
+    "old": "    for (let t = 0; t < CAPITAL_GATE_REACH; t++) {",
     "new": "    for (let t = 0; t < 1; t++) {",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"

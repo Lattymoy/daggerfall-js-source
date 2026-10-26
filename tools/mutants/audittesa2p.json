@@ -314,39 +314,43 @@
   {
     "name": "P7-asker-unguarded",
     "file": "src/scenes/livingWorld/livingIndex.js",
-    "old": "    if (!livingRoams({ px, py })) return NONE_NEAR;",
-    "new": "",
+    "old": "const t = livingSide(p) === LIVING_SIDES.bay ? recOf(p) : null;",
+    "new": "const t = recOf(p);",
     "tests": [
-      "test/scenes/audittesa2p_hosts.test.js",
-      "test/world/worldWide/ww1_world.test.js"
-    ]
+      "test/world/worldWide/ww7_people.test.js"
+    ],
+    "note": "Re-aimed by content (WW7-7, bible/03-World/World-Wide.md): P7's guard lifted - a pixel of the Bay has the Bay's places alone near it, never one past the edge."
   },
   {
     "name": "P7-places-unfiltered",
     "file": "src/scenes/livingWorld/livingIndex.js",
-    "old": "const t = livingRoams(p) ? recOf(p) : null;",
-    "new": "const t = recOf(p);",
+    "old": "        if (livingSide(p) !== LIVING_SIDES.beyond) continue;\n",
+    "new": "",
     "tests": [
-      "test/scenes/audittesa2p_hosts.test.js"
-    ]
+      "test/world/worldWide/ww7_people.test.js"
+    ],
+    "note": "Re-aimed by content (WW7-7): a pixel past the Bay has the land past the Bay's places alone near it (its listed bins), never the Bay's."
   },
   {
     "name": "P7-bands-past-the-bay",
     "file": "src/scenes/livingWorld/livingIndex.js",
-    "old": "if (theatreOfArea(area | 0) === BAY_THEATRE) for",
-    "new": "if (true) for",
+    "old": "const t = p.area === (area | 0) ? townOf(p) : null;",
+    "new": "const t = townOf(p);",
     "tests": [
-      "test/world/worldWide/ww1_world.test.js"
-    ]
+      "test/world/worldWide/ww7_people.test.js"
+    ],
+    "note": "Re-aimed by content (WW7-7): a province's district's bands keep its own area's towns (a district a border cuts is two areas)."
   },
   {
     "name": "P7-lanes-from-past-the-bay",
     "file": "src/scenes/livingWorld/livingLanes.js",
-    "old": "      if (!livingRoams(town)) return [];",
-    "new": "",
+    "old": "return w && to && livingSide(to) === livingSide(town) ? [{ to, len: w.len, key: l.key }] : [];",
+    "new": "return w && to ? [{ to, len: w.len, key: l.key }] : [];",
     "tests": [
-      "test/scenes/audittesa2p_hosts.test.js"
-    ]
+      "test/world/worldWide/auditww.test.js",
+      "test/world/worldWide/ww7_people.test.js"
+    ],
+    "note": "Re-aimed by content (WW7-7): a town past the Bay sails its lanes, each to a port of its own side of the Bay's edge."
   },
   {
     "name": "P7-reach-the-bays",

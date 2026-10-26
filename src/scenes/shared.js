@@ -41,6 +41,7 @@ import { MAX_DELTA_SECONDS } from '../systems/dynamicSkies/dynamicSkies.js';   /
 import { dynamicSkiesAssets, loadDynamicSkiesTexture, dynamicSkiesTextureUrl, DYNAMIC_SKIES_TEXTURES } from '../systems/dynamicSkies/dynamicSkiesAssets.js';   // DS1: the vendored files
 import { modSetting, modSettingsOf } from '../systems/modSettings.js';   // DS1: the mod's own switches
 import { weatherSunlightScale } from '../world/weather.js';   // DS1: WeatherManager's ScaleFactor, for the skybox's _LightColor0
+import { airLight, airColor, litFog, nightFogOn } from '../systems/weather/nightFog.js';   // NIGHT-FOG: the fog lit by the land's own light
 import { seasonValue, SEASONS, dateFromClassicMinutes } from '../systems/gameDate.js';   // DS1: the winter arm of that scale
 import { hasActiveEffect, isEntityWaterWalking, isBlending, isInvisible, isAShade } from '../systems/effects.js';
 import { skillValue, displaySkillValue, tallySkill, tallyMovementSkill, SKILLS, SKILL_NAMES } from '../systems/skills.js';   // MOVE-REAL: the climb's check is a motion tally
@@ -104,7 +105,7 @@ import '../systems/sigil/sigilBroker.js';   // SET7: the Broker's record (what t
 import { installImmersiveTravel } from '../systems/immersiveTravel.js';   // IT1: Immersive Travel's Init - the drivers' and sailors' factions, their Fast Travel services
 import { installRoleplayRealism } from '../systems/roleplayRealism/rrInstall.js';   // RR1: Roleplay & Realism's InitMod - after Items', as DFU loads them (Items is the one it looks up)   // RRI1: the templates, the patches, the art - the same seam, the same reason   // DW3: its icons, on the replacement door - here and not at worldTick's module scope, where the mod's law sits in an import cycle (a TDZ)
 import { installEnemyExpansion } from '../systems/enemyExpansion/dexInstall.js';   // DEX1: Daggerfall Enemy Expansion's fifty enemies, their careers and the classic edits, once at boot
-import { getBool, getInt } from '../systems/settings/settings.js';   // M-FM: Audio/AlternateMusic, read once for all three hosts; MAC-O4: Controls/WeaponSwingMode, the drag route's own missing term
+import { getBool, getInt, getFloat } from '../systems/settings/settings.js';   // M-FM: Audio/AlternateMusic, read once for all three hosts; MAC-O4: Controls/WeaponSwingMode, the drag route's own missing term; NIGHT-FOG: Enhancements/NightAmbientLightScale, the night air's
 import { SongManager, musicEnvironment, holdEnvironment } from '../systems/song/songManager.js';
 import { festivalEnvironment } from './seatFestival.js';   // FESTIVAL-STAGE: a Festival town's streets hear the tavern
 import { audio } from '../systems/audio.js';
@@ -310,6 +311,20 @@ export function createSkyController(gl, params) {
   const dreaded = (ws) => brassed(sunbabyWaterSky(dreadW > 0 ? { zenith: dreadGrade(ws.zenith, dreadW), horizon: dreadGrade(ws.horizon, dreadW) } : ws, sunbabyW, sunbabyEvil));   // SUNBABY2: the wrath's sky
   /** VALENWOOD-CANOPY: and under a closed canopy, the leaves' (world/jungle/jungleCanopy.js canopyWaterSky). */
   const leaved = (ws) => canopyWaterSky(ws, canopySky?.canopy);
+  /** EV5: the moons' term (`moonlight` below) - the dome's own state; DS1: the same term from the mod's own moons - where
+   *  its orbit puts them, lit by DFU's phase - so the world's night agrees with the sky it stands under. */
+  const moonNow = () => (enhancedSky?.state ? moonlightTerm(enhancedSky.state) : dynamicMoonlight(dynamicMoons));
+  // NIGHT-FOG (systems/weather/nightFog.js): THE FOG IS LIT BY THE LIGHT THE LAND IS LIT BY - on the enhanced lane the
+  // frame's fog is never darker than air lit by the open air's light (the hour and the weather's sunlight scale the last
+  // use() was handed, the player's Night Brightness, the moons); the classic panorama keeps SetSkyFogColor verbatim, and
+  // `?nightfog=off` is the door back (nightFogOn, read at every ask). Its scratches are the controller's: the colour
+  // answered is the frame's until the next.
+  const nightFogLane = Boolean(enhancedSky || dynamic);
+  const airAt = { minute: 0, sun: 1 };
+  const _airLight = new Float32Array(3), _air = new Float32Array(3), _litFog = new Float32Array(3);
+  const litAir = (fog) => (nightFogLane && nightFogOn()
+    ? litFog(fog, airColor(airLight({ minute: airAt.minute, nightScale: getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), sun: airAt.sun, moon: moonNow() }, _airLight), _air), _litFog)
+    : fog);
   setLightCurve(dynamic ? dynamic.lightCurve : null);
   if (dynamicSky) {
     // the presets' textures land as they decode; a slot shows the
@@ -433,7 +448,7 @@ export function createSkyController(gl, params) {
      *  any other sky, SetSkyFogColor's law over the sky's own horizon,
      *  as before. */
     fogColorFor(fogNow) {
-      const own = dynamic?.fogColor ?? outdoorFogColor(fogNow, (enhancedSky ?? dynamicSky ?? sky).clearColor);
+      const own = litAir(dynamic?.fogColor ?? outdoorFogColor(fogNow, (enhancedSky ?? dynamicSky ?? sky).clearColor));   // NIGHT-FOG: never darker than the lit air (systems/weather/nightFog.js)
       const c = sunbabyW > 0 ? sunbabyHaze(own, sunbabyW, sunbabyEvil) : own;   // SUNBABY1: the land's haze is the flower sky's horizon (SUNBABY2: the wrath's, burning)
       const d = dreadW > 0 ? dreadGrade(c, dreadW) : c;   // EVENT1: the land's haze is the sky's colour under the dread too
       return brassW > 0 ? sdBrassGrade(d, brassW) : d;   // SD19: and brass near a standing Hollow
@@ -610,13 +625,7 @@ export function createSkyController(gl, params) {
      *  cloud-dimmed visibility; secunda's ambient lift). null under
      *  the classic sky - which has no moon state, so the 1:1 lane
      *  keeps DFU's hard-off night - and null by day. */
-    moonlight() {
-      if (enhancedSky?.state) return moonlightTerm(enhancedSky.state);
-      // DS1: the same term from the mod's own moons - where its orbit
-      // puts them, lit by DFU's phase - so the world's night agrees
-      // with the sky it stands under
-      return dynamicMoonlight(dynamicMoons);
-    },
+    moonlight() { return moonNow(); },
     /** Ensure the panorama for (skyIndex, minuteOfDay); async, frame-late.
      *  ES1: the enhanced sky takes the same call and needs the weather
      *  and the classic clock too (`extra`), for the clouds and the moons;
@@ -624,6 +633,7 @@ export function createSkyController(gl, params) {
     use(skyIndex, minuteOfDay, showNightSky = true, extra = null) {
       lastUse.index = skyIndex; lastUse.night = showNightSky; lastUse.extra = extra;   // KETCH-LOOK KL1: what retime takes again
       if (sunbabyOn && extra) extra = { ...extra, violence: extra.weather, cells: null, cloudBase: null, approach: 0 };   // SUNBABY1: the clear day, whole
+      airAt.minute = minuteOfDay; airAt.sun = extra?.sun ?? 1;   // NIGHT-FOG: the air's hour and the weather's sunlight scale (the host's one, AUDIT 61)
       if (enhancedSky || dynamic) {
         const now = (typeof performance !== 'undefined' ? performance.now() : 0);
         const seconds = (now - t0) / 1000;

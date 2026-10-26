@@ -56,10 +56,13 @@ are new: the halls (PVPDUNGEONS), the Greater Giants (ZONE-GIANTS and its passes
 
 WW-C2: CYRODIIL, WHOLE - every map pixel the world's grid puts in the Imperial Province (`world/worldWide/worldGrid.js`
 theatreAt, theatre 9; region 70, `WILD_REGION`, `wildZone.js:"export const WILD_REGION = CYRODIIL_REGION;"`), and every
-place on it. Its mask is `systems/wild/cyrodiilZone.js` (`cyrodiilZone.js:"export function cyrodiilMask()"`): a grid of
-`CYRODIIL_CELL_PX` (4) pixel cells on one lattice over the world, a cell the zone's where its middle pixel is the
-province's - the province's border is the player's own traced picture (a picture unit some eighteen pixels), so every
-client with the same files cuts the same zone; kept while the trace and the fit stand. `buildWildMask`
+place on it. Its mask is `systems/wild/cyrodiilZone.js` (`cyrodiilZone.js:"export function cyrodiilMask()"`): ZONE-LINE
+(section 27), a map pixel is the zone's exactly when the world's grid puts it in the province or it lies in water the
+province encloses - the province's own law to the pixel, its border the player's own traced picture (a picture unit
+some fifteen to eighteen pixels), so every client with the same files cuts the same zone; kept while the trace and the
+fit stand. The mask keeps it on a grid of `CYRODIIL_CELL_PX` (4) pixel cells on one lattice over the world, each cell its
+sixteen pixels as bits, a cell inside where its middle pixel is (the rings' depth, the halls and the giants run on
+those cells), and the maps draw one line for it and for the province (`cyrodiilZone.js:"export function zoneLineOf("`). `buildWildMask`
 (`wildZone.js:"export function buildWildMask"`) lays any zone on such a grid - its origin, its cell - and every law
 that takes or answers a place takes and answers world map pixels (section 25). NEAR it is within `WILD_NEAR_PX` (6)
 map pixels of its edge (two cells). ONLINE ALONE: offline the province is the world's own (the death penalty's law). The
@@ -752,10 +755,11 @@ half health", "everyone in the zone should see the same ... that the big giant i
 
 ## 18. The maps, later
 
-- SMOOTHZONE (the owner: "the zone how it is cut out right now smooth it better"): the edge's and the rings' contours
-  are drawn as a pen would - resampled, relaxed toward their neighbours, corner-cut (`smoothContour`,
-  `wildZoneMap.js:"export function smoothContour"`); the fog is clipped by the same curve, and a wide soft shadow lies
-  under the red line.
+- SMOOTHZONE (the owner: "the zone how it is cut out right now smooth it better"): the rings' contours, and the edge of
+  a zone of whole cells, are drawn as a pen would - resampled, relaxed toward their neighbours, corner-cut
+  (`smoothContour`, `wildZoneMap.js:"export function smoothContour"`), and a wide soft shadow lies under the red line.
+  ZONE-LINE (section 27): a zone kept to the pixel - Cyrodiil's - is drawn on its own line, never smoothed off it
+  (`wildZoneMap.js:"export const zoneLine ="`), and the fog is clipped by that line.
 - ZONEINK2 (the owner: "The tier colors when zoomed in on the zone map are overwriting the map too much make it look
   waaaay more high quality and take care of the performance"): the tiers are a WASH - `TIER_WASH`
   (`wildZoneMap.js:"export const TIER_WASH"`), a light pigment each laid with `multiply`, so the sheet's relief, roads
@@ -1014,8 +1018,9 @@ Cryodil will be home to all abundent resources and everything else from the wrot
 `03-World/World-Wide.md` WW-C2; the province's resources are WW-C1's (Cyrodiil every province's richness and ore).
 
 - THE ZONE (section 1): the Imperial Province whole, `systems/wild/cyrodiilZone.js` - on the freeware's own picture
-  86,152 cells of four, some 1.38 million map pixels (the authored rings, which stand in offline where no trace is, cut
-  about 125,000), where the mountains' cut was some twelve thousand pixels. WHAT IT ENCLOSES IS ITS OWN (AUDIT TESA II
+  86,152 cells of four inside, 1,379,288 map pixels to the pixel (ZONE-LINE: 1,337,260 the province's land and 42,028
+  the water it encloses; the authored rings, which stand in offline where no trace is, 2,003,007), where the mountains'
+  cut was some twelve thousand pixels. WHAT IT ENCLOSES IS ITS OWN (AUDIT TESA II
   Z4, `wildZone.js:"export function fillEnclosed"`): the painting's waters within the province - Lake Rumare round the
   Imperial City's isle, the Niben - are the zone's, so the rings run from its outer side alone (the Imperial City stands
   in The Heart; as holes, their shores were the zone's edge and put it in The Borderlands) and a lake is no door (a
@@ -1131,6 +1136,68 @@ Pins: `test/systems/wild/zonesafe.test.js` - the law over synthetic places on th
 over every MAPS.BSA row and TESA's clones of them; the referee; the host's doors and frame and tile run as they stand;
 the watch; the words in German - `tools/mutants/zonesafe.json` (25, all dead).
 
+## 27. The zone is the province, to the pixel (ZONE-LINE, 2026-10-26)
+
+The owner: "Also ensure the pvp border outlines cyrodil perfectly, currently it doesnt".
+
+- WHERE THEY PARTED (measured on the freeware's picture, its fit 589, 883.5 at 15.5 map pixels a picture pixel): the zone
+  was a grid of four-pixel cells, a cell whole where its middle pixel was the province's (WW-C2) - 9,012 map pixels of
+  Cyrodiil's box apart from the province's own law (`worldGrid.js:"export function theatreAt"`, with the water it
+  encloses): 4,078 of the zone's past the province, 4,934 of the province's outside the zone, its edge a 3.3 km
+  staircase up to 2.8 pixels off the province's. Its red line was that staircase smoothed (SMOOTHZONE), up to 3.7 pixels
+  off the law; and the province's own line on the held map (REGION-LINES 2, `ui/tamrielInk.js` tracedChains) was the
+  picture smoothed another way (TAMRIEL4's corner cut), up to 12 pixels off the law at a corner - the red line and the
+  province's line up to 11 pixels apart, 1.9 on the mean: two shapes, neither of them the law. The law is the trace's:
+  theatreAt reads the picture at a pixel's middle, a picture pixel 15.5 map pixels a side, and the ground past the Bay
+  stands on the same picture (`tamrielGround.js:"export function authoredHeightByte"`) - the province's own edge, the
+  coast and the borders alike, is a staircase of 12.7 km steps.
+- THE ZONE TO THE PIXEL (`wildZone.js:"function pixelBits("`; `buildWildMask`'s `pixelIn`): each cell keeps its sixteen
+  pixels as bits, and every ask of a place - `wildInside`, `wildRingAt`, a fast journey and its fee, a hall's, a
+  dungeon's (`etherWild.js` wildRingAtPlace), the frame's word to the referee - reads its own pixel's bit. THE
+  PRE-TEST: the law is asked at every cell's middle, and a cell whose eight neighbours' middles all answer as its own is
+  that answer whole; every pixel of the rest is asked - exact for a law constant over squares wider than two cells (a
+  picture pixel is fifteen map pixels and more a side, FIT_PPUS): 5,584 cells asked a pixel at a time, 1,733 of them
+  holding both. What the zone encloses is filled at the pixel (Z4's law: a pixel's sides alone a way out). After: 0
+  pixels apart - 1,379,288 the zone's - and on the authored shape (offline, untraced) 0 apart too.
+- THE CELLS STAND: a cell is inside where its middle pixel is, as before - all 214,928 cells and their depth as they
+  were on the freeware's picture - so the rings, the halls' picks and the giants' tiers stand where they stood. A zone
+  pixel of a cell whose middle is out is the edge's ring (The Borderlands); a pixel past the line is in no ring,
+  whatever its cell. The hiding band and the box take every cell the zone touches. A giant's walk and its leash ask the
+  pixel under it too (`wildGiants.js:"const giantIn ="`): a cell whose middle is the province's may hold a pixel or two
+  past the line, and a giant walked them: on the freeware's picture 68 of 691,200 places over thirty days (30 s apart)
+  stood past it, none now; 4,121 of those places moved, a giant's walk by the border (every client's alike).
+- ONE LINE (`cyrodiilZone.js:"export function zoneLineOf("`): Cyrodiil's outline on the traced picture - its land and the
+  water it encloses, against the rest - laid on the world. The red line, the fog's cut and the zone map's outer ring
+  and wash draw it unsmoothed (`wildZoneMap.js:"export const zoneLine ="`), and the province's own ink draws it in place
+  of its own there: `tracedChains` keeps no border with Cyrodiil on one side (`keeps`), leaves Cyrodiil's open coast to
+  the line (`cutCoast` - in a square of four pixel middles the line crosses, the coast is the pixels' own sides from the
+  picture's corner, so a lake's shore stays and a neighbour's coast ends on the line's corner), and lays the line's
+  coast runs among its coast and its border runs among its borders. Measured: every point of the red line on the
+  province's ink (0 apart), and a map pixel the zone's exactly when its middle lies inside the line - 0 of the box's
+  3,489,830 apart (the line is the picture's own edge; a pixel's staircase lies within half a pixel of it).
+- THE REFEREE is unchanged (`wildRef.js:"export function wildBlow"`): a blow lands where both fighters said they stand
+  in the zone, and each says so by the pixel's law now (`world.js:"const here = seaRing > 0"`). No wire, no relay
+  version.
+- THE FOUR HOSTS: `scenes/world.js` (the frame's word, the halls, the rise, the maps) reads the law through the mask,
+  nothing of its own changed; `scenes/dungeonContext.js` reads a dungeon's pixel through `wildRingAtPlace`, the same law;
+  `scenes/worldModes.js` reads the zone through the world host's seams; `scenes/exterior.js`, offline, stands no zone.
+  No host grew.
+- RECORDED: the mask's build asks the law 89,344 times more and walks the outside to the pixel - 202 ms against the
+  cells' 118, the best of five on a shared machine under load, once a picture. Cyrodiil's outline on the held map is
+  the law's staircase now, where every other province's line keeps TAMRIEL4's smoothing: the province is the picture's
+  pixel (theatreAt, the ground), and drawn smoothed it was a line no law followed. Whether the province's own law should
+  become the smoothed outline - the ground, the regions and the zone with it - is the province's arc's call
+  (`03-World/Tamriel.md`), not the zone's. The line is the picture's alone: theatreAt answers the Bay's own rectangle
+  before the picture, and Cyrodiil's box lies 38 pixels east of it.
+
+Pins: `test/systems/wild/zoneline.test.js` (5 - the pixel's law over 81 offsets of a picture-like law and at the grid's
+edge; the cells as they stood, the edge's ring, a journey by the pixel; the giants and the halls inside to the pixel; the
+province's ink the zone's line on a small picture; the whole of it on the player's own picture) - `tools/mutants/
+zoneline.json` (28, all dead). PINS MOVED: `test/world/worldWide/wwc2_zone.test.js` (every pixel the province's own;
+the edge on the pixels' corners, a ring's line on the cells'), `test/world/tamriel3.test.js` (the ink's coast: the
+continent's in two pieces ending on the Imperial Province's corners, and the zone's two shores - seven chains, four
+before). Mutant records re-aimed by content: `wwc2.json` (2), `audittesa2z.json` (1), `tamriel3.json` (2), all dead.
+
 ## Pins
 
 `test/systems/wild1_zone.test.js`, `test/net/wild1_wire.test.js`, `test/net/wild1_fight.test.js`, `test/systems/wild2_rings.test.js`,
@@ -1154,4 +1221,5 @@ zone; through the real drop law, the real naval host's party, the real feud's sw
 nothing; a kill's tenth): `test/systems/wild/foekeeps.test.js`, int9's FOE-KEEPS THE SERVICE, `tools/mutants/foekeeps.json`. ZONE-SAFE (a
 settlement's streets are peace, section 26): `test/systems/wild/zonesafe.test.js`, `tools/mutants/zonesafe.json`.
 AUDIT FOE-KEEPS (`01-Overview/audits/Audit-Foe-Keeps.md`): `test/systems/wild/auditfoekeeps.test.js`,
-`test/net/auditfoekeeps_relay.test.js`, `tools/mutants/auditfoekeeps.json`.
+`test/net/auditfoekeeps_relay.test.js`, `tools/mutants/auditfoekeeps.json`. ZONE-LINE (the zone the province to the pixel, one line drawn for both - section 27):
+`test/systems/wild/zoneline.test.js`, `tools/mutants/zoneline.json`.
