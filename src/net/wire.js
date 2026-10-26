@@ -219,6 +219,7 @@ import { validGambitIn, validGambitOut } from './gambit/gambitTable.js';   // KG
 import { GATE_COURTS_MAX } from './gate/gateCourts.js';   // GATE-COURTS: a court's number on the wire - gateCourts.js imports nothing, so the worker's graph stays flat
 import { validGateMods, GATE_FEEDS_MAX, validGatePortents } from './gate/gateMods.js';   // WB8b: the Warden's marks on a gate's state - gateMods.js imports nothing, so the worker's graph stays flat
 import { egStampOk } from './eliteGates/egShape.js';   // EG-FULL: a Spire blow's FULL shape stamp, checked as the wire carries it - egShape.js imports nothing, so the worker's graph stays flat
+import { KT_WATCH_WAVES } from './ketch/ketchLaw.js';   // AUDIT KETCH II L2-2: the Watch's waves, one number for the `wave` and the `st` words (the `st`'s stood at three) - ketchLaw.js imports instanceRoom.js alone, which the relay walks already
 export { validRollSpec, validRoll, rollDice, ROLL_DICE_MAX, ROLL_SIDES_MAX, ROLL_MOD_MAX };
 export { validHoldemIn, validHoldemOut };
 export { validIliacIn, validIliacOut };
@@ -1614,7 +1615,8 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
 // Integrated Arena spectator visibility with staff teleport, stable boat identity and private ownership; deploy relay before clients.
-export const RELAY_VERSION = 'world265';   // world265: GATE-COURTS (2026-10-26, the owner: "We need to develop instances for oblivion gate. The player counts are becoming too large for one instance"; bible/11-Multiplayer/World-Bosses.md section 29; NOT YET DEPLOYED) - a gate's night holds up to GATE_COURTS_MAX courts of GATE_COURT_FIGHTERS, each its own fight (`gate:<day>.<k>` past the first, net/gate/gateLaw.js gateRoomKey); the first court keeps the night's book of seats (net/gate/gateCourts.js placeSeat; GATE_INTERNAL_SEAT, GATE_INTERNAL_COURT, and the hub's GATE_INTERNAL_PARTY) and answers `go` with another court; a court's kill is said to everyone online as `cf`, and the night's `fell` (the gate's collapse, `w` and `cs`) once every court is done; GATE_BRAIN_V and GATE_BRAIN_MIN 7 (a game from before is told to reload).
+export const RELAY_VERSION = 'world266';   // world266: AUDIT KETCH II (2026-10-26, world265 on its branch, renumbered past GATE-COURTS' world265 at the merge; the owner: "Can you audit the airship raid. Its a buggy mess"; bible/01-Overview/audits/Audit-Ketch-II.md; NOT YET DEPLOYED) - the `st` word's wave to KT_WATCH_WAVES, a ship's own sweep said `sw` on its `dn`, KT_VOYAGE_N_MAX a receipt's bound, her crews' last minutes forty-five (ketchLaw.js KT_LAST_MS), a Warden's fight lost after two minutes empty (ketchWarden.js KW_LOST_MS), the crew counted by its kept places (ketchBrain.js aboard), six Sentry posts, a Sentry that shoots when chased, the bow's and the hold's floors, her fall's receipts told before her record goes, a raised member's dying pose forgotten.
+// world265: GATE-COURTS (2026-10-26, the owner: "We need to develop instances for oblivion gate. The player counts are becoming too large for one instance"; bible/11-Multiplayer/World-Bosses.md section 29; NOT YET DEPLOYED) - a gate's night holds up to GATE_COURTS_MAX courts of GATE_COURT_FIGHTERS, each its own fight (`gate:<day>.<k>` past the first, net/gate/gateLaw.js gateRoomKey); the first court keeps the night's book of seats (net/gate/gateCourts.js placeSeat; GATE_INTERNAL_SEAT, GATE_INTERNAL_COURT, and the hub's GATE_INTERNAL_PARTY) and answers `go` with another court; a court's kill is said to everyone online as `cf`, and the night's `fell` (the gate's collapse, `w` and `cs`) once every court is done; GATE_BRAIN_V and GATE_BRAIN_MIN 7 (a game from before is told to reload).
 // world264: REWARD-KILLS (2026-10-25, world258 then world262 on its branch, renumbered past KETCH-LONGER's world258, ASK-LONGER's world259, THE FOLD's world260, EVENT-RULES' world261 and HIBERNATE's world263 at the merges; mob: "im getting drops even tho i barlky particpate", card "Kills only (3+)"; bible/11-Multiplayer/Staff-Events.md section 9; NOT YET DEPLOYED) - net/staffEvent/staffEventLaw.js staffEventEarned: a staff event's reward is earned by STAFF_EVENT_EARN_KILLS kills alone, a stand no longer.
 // world263: HIBERNATE (2026-10-25, world260 then world261 on its branch, renumbered past THE FOLD's world260, #1281's world261 and #1238's world262 at the merges): a quiet cell keeps no timer awake (the grant window and the Staff Panel's network and reaction windows post on their next frame or at the drain), a cell, building or ordinary dungeon with nobody else in it or a halo sends no standing pose until someone arrives, a socket's secret rides its attachment and is never stored, a lease is asked every two minutes and held five while the relay's `leaseDoor` is on (the hub says the door, `ldo`), and a freeze or a mute asks one at once with the door off
 // world261: EVENT-RULES, BOSS-TRAITS and RAID5 (2026-10-25, world260 on its branch, renumbered past THE FOLD's world260 at the merge; the owner: "A lot of people are unhappy with the world event restrictions including the regen not working"; bible/11-Multiplayer/Super-Dungeons.md SD-REZ, bible/05-Combat/Boss-Traits.md): a realm keeps a death in the Hour DOWN for SD_REZ_MS (the body's minute), and a body rises only by a raise the realm recorded (`sd` `rz`, AUDIT WORLD-EVENTS L1-1), a new life on the count; the Spire's `down`, `rise`, `yield` and `rz` and the Ketch's `rz` and `rez` lay a death down for a raise before the fall (L1-4); a foe record carries its boss traits (`bt`), its wrath (`bw`), its ward's live share (`bv`, AUDIT WORLD-EVENTS L5-10) and a raid's leader (`rl`).
@@ -6966,10 +6968,10 @@ export function validKetchOut(m) {
     case 'mv': return ktMv(m);
     case 'bl': { const b = ktBlow(m.b); return b ? { k: 'bl', b } : null; }
     case 'hp': return Array.isArray(m.h) && m.h.length <= 64 && m.h.every((e) => Array.isArray(e) && intIn(e[0], 1, KT_BODY_ID_MAX) && intIn(e[1], 0, KT_HP_MAX)) ? { k: 'hp', h: m.h.map((e) => [e[0], e[1]]) } : null;
-    case 'dn': return intIn(m.o, 1, KT_BODY_ID_MAX) && ktMs(m.at) ? { k: 'dn', o: m.o, n: name(m.n), at: m.at } : null;
+    case 'dn': return intIn(m.o, 1, KT_BODY_ID_MAX) && ktMs(m.at) ? { k: 'dn', o: m.o, n: name(m.n), at: m.at, ...(m.sw === 1 ? { sw: 1 } : {}) } : null;   // AUDIT KETCH II L3-3: `sw` - the ship took it off (the engine fed, a fight lost, the Warden's fall), nobody felled it
     case 'wk': return intIn(m.o, 1, KT_BODY_ID_MAX) && ktMs(m.at) ? { k: 'wk', o: m.o, at: m.at } : null;
     case 'sg': return intIn(m.sg, 0, 5) && ktMs(m.at) ? { k: 'sg', sg: m.sg, at: m.at, ...(m.by != null ? { by: name(m.by) } : {}) } : null;
-    case 'wave': return intIn(m.w, 1, 5) && ktMs(m.at) ? { k: 'wave', w: m.w, at: m.at } : null;   // KETCH-LONGER: the Watch's five (ketchLaw.js KT_WATCH_WAVES)
+    case 'wave': return intIn(m.w, 1, KT_WATCH_WAVES) && ktMs(m.at) ? { k: 'wave', w: m.w, at: m.at } : null;   // KETCH-LONGER: the Watch's five (ketchLaw.js KT_WATCH_WAVES)
     case 'cl': return ktCells(m);
     case 'drop': case 'pick': case 'bank': return typeof m.s === 'string' && ID_RE.test(m.s) && ktMs(m.at) ? { k: m.k, s: m.s, n: name(m.n), at: m.at, ...(m.k === 'drop' && typeof m.why === 'string' && /^[a-z]{1,8}$/.test(m.why) ? { why: m.why } : {}), ...(m.k === 'bank' && intIn(m.sk, 0, KT_CELL_SPOT_MAX) ? { sk: m.sk } : {}) } : null;
     case 'wf': return intIn(m.fi, 1, 1e9) && ktMs(m.at) ? { k: 'wf', fi: m.fi, at: m.at } : null;
@@ -6994,7 +6996,7 @@ export function validKetchOut(m) {
       const cl = ktCells(m.cl), ws = m.ws == null ? null : ktWardenState(m.ws);
       if (!bd || !bd.every(Boolean) || !mv || !mv.every(Boolean) || !bl || !bl.every(Boolean) || !cl || (m.ws != null && !ws)) return null;
       return {
-        k: 'st', n: m.n, sg: m.sg, sga: m.sga, cr: m.cr.map((c) => [c[0], name(c[1])]), bd, mv, bl, wv: intIn(m.wv, 0, 3) ? m.wv : 0, cl,
+        k: 'st', n: m.n, sg: m.sg, sga: m.sga, cr: m.cr.map((c) => [c[0], name(c[1])]), bd, mv, bl, wv: intIn(m.wv, 0, KT_WATCH_WAVES) ? m.wv : 0, cl,
         br: m.br && ktMs(m.br.at) ? { at: m.br.at, by: name(m.br.by) } : null, ws,
         fell: m.fell && ktMs(m.fell.at) ? { at: m.fell.at, top: Array.isArray(m.fell.top) ? m.fell.top.filter((x) => typeof x === 'string').slice(0, 3).map(sanitizeName) : [], n: intIn(m.fell.n, 0, KT_CREW_WIRE_MAX) ? m.fell.n : 0 } : null,
       };
@@ -7013,8 +7015,9 @@ export const ketchReceiptKey = (sub) => `${KT_RC_PREFIX}${sub}`;
 /** The hub's internal door a ship's room tells its fall's receipts at, and how long it waits to tell again. */
 export const KT_INTERNAL_RC = '/internal/ketch/rc';
 export const KT_TELL_RETRY_MS = 30_000;
-/** The most a voyage's number is on the wire (two centuries of Saturdays). */
-export const KT_VOYAGE_N_MAX = 10_000;
+/** The most a voyage's number is on the wire - AUDIT KETCH II L1-8: a receipt's own bound (net/ketch/ketchReceipt.js
+ *  KT_RECEIPT_VOYAGE_MAX, pinned equal); 10,000 was two centuries of Saturdays, and every ten hours ran out in 2038. */
+export const KT_VOYAGE_N_MAX = 0xffffffff;
 /** A ship's receipts as told to the hub - its voyage and `[account, receipt]` each, the wire's own receipts alone -
  *  projected, or null. */
 export function validKtRcTell(v) {

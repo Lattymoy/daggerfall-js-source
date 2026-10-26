@@ -45,7 +45,7 @@ import { foldStrayFaces } from '../festival/soulCake.js';   // WITCH1: and the W
 import '../professions/profTemplates.js';   // PROF2: the ores, ingots and stone a pack may hold, known to every scene a save loads in
 import '../rest/restItems.js';   // REST6: the seven rest supplies (1700-1706), known to every scene a save loads in
 import { repairPartsWeights } from '../comeSailAway/comeSailAwayItems.js';   // PARTS-WEIGHT: a boat's parts weighed as her hull alone
-import { repairRarityNames, repairRarityBases } from '../loot/lootRarity.js';   // DISC29-B: a Magic or Rare Roleplay & Realism: Items piece given back its make's word; RARITY-WEAR: a rolled wand worn as an Amulet
+import { repairRarityNames, repairRarityBases, repairCraftedNames } from '../loot/lootRarity.js';   // DISC29-B: a Magic or Rare Roleplay & Realism: Items piece given back its make's word; RARITY-WEAR: a rolled wand worn as an Amulet
 import { SOCIAL_GROUPS } from '../../formats/factionFile.js';   // AUDIT 24
 import { travelMapSaveData, restoreTravelMapSaveData } from '../travel/travelMapState.js';   // U41: TravelMapSaveData
 import { getEscortFacesSaveData, restoreEscortFacesSaveData } from '../../ui/hud/hudEscortFaces.js';   // FE1: SaveData_v1.escortingFaces
@@ -747,6 +747,12 @@ export function repairItemLists(repairLists) {
   for (const list of repairLists) {
     const n = repairRarityNames(list);
     if (n) console.info(`[save] DISC29-B: ${n} item name(s) given back the word their make wrote`);
+  }
+  // NAME-KEPT (FIELD BUGS 2026-10-25i; AUDIT FB1025i A3): a crafted piece the reforge before NAME-KEPT named on its bare
+  // template - a jewel without its metal and gem, a Masterwork with the ladder's words - takes its own base's name again
+  for (const list of repairLists) {
+    const n = repairCraftedNames(list);
+    if (n) console.info(`[save] NAME-KEPT: ${n} crafted item name(s) built on their own base again`);
   }
   // WB12a: the Sigil Stones a save kept under their old name are Deadlands Embers - every list, as the names above
   for (const list of repairLists) {

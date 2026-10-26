@@ -1076,6 +1076,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // the cull the record STAYS in `foes` (the tail splice spares
       // corpses), so the batch was unreachable and undead at once.
       releaseFoeBatch(f);
+      f.killedBy = peer ? 'peer' : fromPlayer ? 'player' : 'other';   // AUDIT FB1025i D2: whose hand, as the watch's pool marks it (cityGuards.js damageGuard) - a road stand slain by the player alone is a Murder reported (roadStands.js)
       // EnemyDeath:131-136 gates the clear on `senses.Target ==
       // PlayerEntityBehaviour` too - a foe killed while fighting
       // ANOTHER foe never touches the player's alert (MT-ii).

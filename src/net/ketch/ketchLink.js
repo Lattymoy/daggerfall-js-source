@@ -21,7 +21,7 @@ import { t } from '../../systems/textManager.js';
 import { KT_WORDS, ketchPhaseName } from '../../systems/ketch/ketchWords.js';
 
 /**
- * @typedef {{ id: number, k: number, x: number, y: number, z: number, yw: number, h: number, m: number, wake: number, up: number, mv: any, down: number, hurtAt: number }} KtBody
+ * @typedef {{ id: number, k: number, x: number, y: number, z: number, yw: number, h: number, m: number, wake: number, up: number, mv: any, down: number, hurtAt: number, sw?: number }} KtBody
  * @typedef {{ n: number, sg: number, sga: number, crew: Array<[string, string]>, bodies: KtBody[], blows: any[], wv: number,
  *   cl: any, br: {at: number, by: string}|null, ws: any, fell: {at: number, top: string[], n: number}|null, heardAt: number }} KtState
  */
@@ -126,7 +126,9 @@ export function foldKetch(s, w, now) {
       return { ...s, blows: [...live(s.blows), b], bodies: s.bodies.map((B) => (B.id === b.o ? { ...B, mv: null, atkAt: b.at, atkWu: b.wu } : B)), heardAt: now };
     }
     case 'hp': { const H = new Map(w.h); return { ...s, bodies: s.bodies.map((B) => (H.has(B.id) ? { ...B, h: H.get(B.id) } : B)), heardAt: now }; }
-    case 'dn': return { ...s, bodies: s.bodies.map((B) => (B.id === w.o ? { ...B, h: 0, down: w.at, mv: null } : B)), heardAt: now };
+    // AUDIT KETCH II L3-5: its walk stepped to the fall's moment (its start was where it lay - up to 23 m back); L3-3: one the
+    // ship took off (`sw`) kept so
+    case 'dn': return { ...s, bodies: s.bodies.map((B) => { if (B.id !== w.o) return B; const p = ktBodyAt(B, w.at); return { ...B, x: p[0], z: p[1], h: 0, down: w.at, mv: null, sw: w.sw === 1 ? 1 : 0 }; }), heardAt: now };
     case 'wk': return { ...s, bodies: s.bodies.map((B) => (B.id === w.o ? { ...B, wake: 1 } : B)), heardAt: now };
     case 'sg': return { ...s, sg: w.sg, sga: w.at, br: w.sg === KT_STAGE.bridge ? { at: w.at, by: w.by ?? '' } : s.br, heardAt: now };
     case 'wave': return { ...s, wv: w.w, heardAt: now };

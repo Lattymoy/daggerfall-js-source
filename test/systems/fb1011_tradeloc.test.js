@@ -29,7 +29,8 @@ test('TRADE-LOC II: a letter\'s worth as gold - the letter the bank mints, and t
 test('TRADE-LOC II: the trade window\'s row says a letter\'s worth under its name - mine and theirs, no hover or click asked - and the pack\'s card says it as its Worth (mutants: the row without it; the card without it)', () => {
   const t = src('src/ui/enhanced/enhancedPlayerTrade.js');
   // the one row builder both lists and both offers draw through (`row(item, side, count)`)
-  assert.match(t, /const row = \(item, side, count = null\) => \{[\s\S]{0,700}const sub = \[letterWorthLine\(item\), line\.material, line\.word\]\.filter\(Boolean\)\.join\(' · '\);[^\n]*\n\s+if \(sub\) mid\.append\(el\('small', null, sub\)\);/);
+  // PIN MOVED (FIELD BUGS 2026-10-25i QUEST-MARK, AUDIT FB1025i B6): the row's words end with a quest item's own
+  assert.match(t, /const row = \(item, side, count = null\) => \{[\s\S]{0,700}const sub = \[letterWorthLine\(item\), line\.material, line\.word, line\.quest != null \? questWord\(\) : null\]\.filter\(Boolean\)\.join\(' · '\);[^\n]*\n\s+if \(sub\) mid\.append\(el\('small', null, sub\)\);/);
   // PIN MOVED (TRADE-VIRT): each list drawn through its window (`fill`, ui/virtualRows.js), the one row its build
   // PIN MOVED (AUDIT TRADE-VIRT, 2026-10-20): each named - its rows' heights kept by name across repaints
   for (const call of ["fill(list, items, (it) => row(it, 'pack'), 'pack');", "fill(list, entries(), (e) => row(e.item, 'offer', e.count), 'offer');", "fill(list, session.theirs.items, (it) => row(it, 'theirs'), 'theirs');"]) assert.ok(t.includes(call), `${call} - the pack, my offer and theirs draw through the one row`);

@@ -9444,6 +9444,16 @@
   "tr": "2b053b2834bd",
   "by": "claude-in-session"
  },
+ "decor.tool.discardGaveBack": {
+  "en": "071120788670",
+  "tr": "029164f82021",
+  "by": "claude-in-session"
+ },
+ "decor.tool.discardNotInPack": {
+  "en": "35ead6a52b4e",
+  "tr": "ba44a8416925",
+  "by": "claude-in-session"
+ },
  "decor.tool.kept": {
   "en": "6995196c9caf",
   "tr": "f285715ad116",
@@ -9497,6 +9507,11 @@
  "decor.tool.stationKept": {
   "en": "0a4c7e43a096",
   "tr": "e225f01e92d4",
+  "by": "claude-in-session"
+ },
+ "decor.tool.strayBack": {
+  "en": "c2203e9265da",
+  "tr": "2be3e372df7e",
   "by": "claude-in-session"
  },
  "decor.tool.thePiece": {
@@ -14057,6 +14072,21 @@
  "inventory.batch.yes": {
   "en": "fcf57649fcdb",
   "tr": "dd55b4087fdb",
+  "by": "claude-in-session"
+ },
+ "inventory.quest.item": {
+  "en": "18d4da5c6380",
+  "tr": "51bcec174e30",
+  "by": "claude-in-session"
+ },
+ "inventory.quest.of": {
+  "en": "fa8b45ad7fae",
+  "tr": "103717b437ac",
+  "by": "claude-in-session"
+ },
+ "inventory.quest.word": {
+  "en": "1fac2a6125f4",
+  "tr": "6c1ce7e6412e",
   "by": "claude-in-session"
  },
  "inventory.store.chestShut": {

@@ -72,6 +72,7 @@ export function sheetProblems(sheet, { quest = null, lines = null } = {}) {
     if (o?.fail != null) bindingShape(o.fail, at(`${w}.fail`), out);
     if (o?.group != null && !ID.test(o.group)) out.push(at(`${w}.group: "${o.group}"`));
     if (o?.any != null && !ID.test(o.any)) out.push(at(`${w}.any: "${o.any}"`));
+    if (o?.reread != null && !ID.test(o.reread)) out.push(at(`${w}.reread: "${o.reread}"`));   // HEART-TAKEN (AUDIT FB1025i B4): a mend's name (qlLaw.js observe)
   }
   const branchIds = new Set();
   for (const [i, b] of (sheet.branches ?? []).entries()) {

@@ -944,7 +944,9 @@ body.draglock .wornrow, body.draglock .wornmap { touch-action: none; }
 
    AUDIT INV2 A7: THE LADDER, walked rather than eyeballed. Every
    z-index literal in src/ and index.html: the doors' hosts are 11-14,
-   the boot error and three bottom sheets are 20, enhancedChunk's "the
+   the boot error and three bottom sheets are 20, the layer a message box
+   lays over an open enhanced window to take its clicks is 29 (BOX-ON-TOP,
+   ui/boxClickCatcher.js), enhancedChunk's "the
    game was updated" scrim is 30, the notice stack (ENH-NOTICE1; AUDIT
    ENH-NOTICE3 A7 lifted it off a tie with that scrim) is 31, the asset
    picker is 40 (and test/scenes/mwattach.test.js holds that it outranks

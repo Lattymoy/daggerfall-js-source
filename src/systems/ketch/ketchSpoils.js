@@ -54,6 +54,20 @@ export const KT_CONSTRUCT_PELLETS = Object.freeze({
   tonal: Object.freeze({ min: 15, max: 25, p: 1 }),
 });
 export const KT_CONSTRUCT_PELLETS_MAX = 90;
+/** AUDIT KETCH II L3-2: THE BOSSES PAY THEIR OWN - the Hammer Wardens, the Watch-Captain and the Tonal Warden, each once a
+ *  ship: the cap holds the Watch's and the vents' alone (the farmable - the Watch's five waves and the Wardens spent it
+ *  before the vents opened, and the Tonal Warden's 15 to 25 paid at a crew's fall nowhere). */
+export const KT_PELLETS_OWN = Object.freeze(['warden', 'captain', 'tonal']);
+/** AUDIT KETCH II L3-1: the device's tally of a voyage's capped Pellets - `{ n, given }`, her voyage's number - so a reload, or
+ *  a second crew's ship that voyage, is never a fresh KT_CONSTRUCT_PELLETS_MAX. */
+export const KT_PELLETS_KEY = 'ketch.pellets';
+/** What construct `kind`'s `rolled` Pellets pay with `given` of the cap already paid this voyage: `{ n, given }` after. Pure. */
+export function ketchPelletsDue(kind, rolled, given) {
+  const r = Math.max(0, rolled | 0), g = Math.max(0, given | 0);
+  if (KT_PELLETS_OWN.includes(kind)) return { n: r, given: g };
+  const n = Math.min(r, Math.max(0, KT_CONSTRUCT_PELLETS_MAX - g));
+  return { n, given: g + n };
+}
 /** KETCH-PELLETS: how many Pellets construct `kind` drops on one roll source (0 for none, or an unknown kind). Pure. */
 export function ketchConstructPellets(kind, rolls = Math.random) {
   const D = KT_CONSTRUCT_PELLETS[kind];

@@ -363,12 +363,12 @@
   {
     "name": "LOOT9-name-stays",
     "file": "src/systems/loot/lootRarity.js",
-    "old": "  if (tier !== 'legendary') item.name = rarityName(item, tier, item.affixes.filter((a) => a?.gem == null));",
+    "old": "  if (tier !== 'legendary') item.name = linesName(item, tier);",
     "new": "",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ],
-    "note": "AUDIT BAL/GEM (PIN MOVED, 2026-10-10): its line changed with the audit's fix; re-aimed by content."
+    "note": "AUDIT BAL/GEM (PIN MOVED, 2026-10-10): its line changed with the audit's fix; re-aimed by content. NAME-KEPT (FIELD BUGS 2026-10-25i, AUDIT FB1025i): re-aimed again at linesName's call."
   },
   {
     "name": "LOOT9-price-stays",

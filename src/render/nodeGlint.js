@@ -21,7 +21,8 @@
 //        crown) in the plane each stands in, so it moves with the picture as the eye moves; a flat's judged by its own
 //        picture at its own texel, a crown's by the silhouette GLINT_HOLD_PX round; none, and that life is dark: a
 //        white-hot core in a soft bloom, and four thin rays, a little turned, GLINT_PX long at most at GLINT_REF_ROWS
-//        rows, shorter on a small picture.
+//        rows, shorter on a small picture. NODE-CROWN (FIELD BUGS 2026-10-25i): a 3D crown's grow with its size on
+//        screen, up to twice as many reaching twice as far (glintCrownGrowth) - a big tree's six were lost in it.
 //      - THE SHEEN: a soft band of light crossing the silhouette, rising, once each 1 / GLINT_SHEEN_HZ seconds - the
 //        picture's own shape lit, only inside it; faded out as the node comes near (GLINT_SHEEN_NEAR_M to
 //        GLINT_SHEEN_FULL_M).
@@ -80,6 +81,11 @@ export const GLINT_PX_MIN = 4;
 export const GLINT_PX_FLOOR = 1.5;
 export const GLINT_REF_ROWS = 1080;
 export const GLINT_SHARE = 0.35;
+/** NODE-CROWN (AUDIT FB1025i C1, the report's "Needs to be size aware"): the most a 3D crown's glints grow over a herb's
+ *  - twice as many, each reaching twice as far (glintCrownGrowth) - and so the most glints a node has: the light's
+ *  slots. A flat (a herb, a vein, a far tree) keeps GLINT_COUNT at glintPx's reach. */
+export const GLINT_CROWN_GROWTH = 2;
+export const GLINT_CROWN_COUNT = GLINT_COUNT * GLINT_CROWN_GROWTH;
 /** The light each part adds at its brightest: a glint's core, its rays, the soft bloom about its core, the sheen's band. */
 export const GLINT_GAIN = Object.freeze({ core: 0.9, ray: 0.5, bloom: 0.3, sheen: 0.14 });
 /** The light's own colour (a warm daylight), the share of the profession's colour it carries, and how much whiter than
@@ -118,8 +124,23 @@ export const glintPx = (rows, sidePx) => {
   const scale = rows / GLINT_REF_ROWS;
   return Math.max(GLINT_PX_FLOOR, Math.min(GLINT_PX * scale, Math.max(GLINT_PX_MIN * scale, GLINT_SHARE * sidePx)));
 };
-/** The most a glint reaches in an image `rows` tall - the rectangle's room round its picture. Pure. */
+/** The most a flat's glint reaches in an image `rows` tall - the rectangle's room round its picture (a crown's, its own
+ *  reach's: NODE-CROWN). Pure. */
 export const glintPxMax = (rows) => Math.max(GLINT_PX_FLOOR, (GLINT_PX * rows) / GLINT_REF_ROWS);
+/** NODE-CROWN: how much a 3D crown's glints grow over a herb's, in an image `rows` tall, for a crown `crownPx` across on
+ *  screen (crownSidePx): from the side a herb's glint stops growing at (GLINT_PX / GLINT_SHARE, with the image) its
+ *  side's share to the two thirds - its glints' light (their count, times their reach squared) then keeps the share of
+ *  its picture a herb's keeps - between 1 (a crown no bigger: a herb's six at a herb's reach) and GLINT_CROWN_GROWTH. Pure. */
+export const glintCrownGrowth = (rows, crownPx) => Math.min(GLINT_CROWN_GROWTH, Math.max(1, (crownPx / ((GLINT_PX / GLINT_SHARE) * (rows / GLINT_REF_ROWS))) ** (2 / 3)));
+/** NODE-CROWN: a 3D crown's glints - GLINT_COUNT grown (glintCrownGrowth), to a whole one. Pure. */
+export const glintCrownCount = (rows, crownPx) => Math.round(GLINT_COUNT * glintCrownGrowth(rows, crownPx));
+/** NODE-CROWN: a 3D crown's glint's reach - a picture's (glintPx) of its side, grown (glintCrownGrowth). Pure. */
+export const glintCrownPx = (rows, crownPx) => glintPx(rows, crownPx) * glintCrownGrowth(rows, crownPx);
+/** NODE-CROWN: a 3D crown's side on screen in pixels - the square root of its standing area (its width `w` and height
+ *  `h`, metres) at its root's clip w `cw`, through the projection `proj` onto a `vw` x `vh` image; its root at or behind
+ *  the eye, the most there is. Pure. @param {ArrayLike<number>} proj */
+export const crownSidePx = (proj, cw, w, h, vw, vh) => (cw > GLINT_NEAR_W
+  ? Math.sqrt(((w * Math.abs(proj[0]) * vw) / (2 * cw)) * ((h * Math.abs(proj[5]) * vh) / (2 * cw))) : Infinity);
 /** The light a node's glints are lit in: the warm light with GLINT_TINT of its profession's `rgb`, written into `out`.
  *  Pure but for `out`. @param {ArrayLike<number>} rgb @param {number[]} out */
 export const glintTint = (rgb, out) => {
@@ -134,8 +155,9 @@ export const glintSheen = (d) => GLINT_GAIN.sheen * smooth(GLINT_SHEEN_NEAR_M, G
 export const glintLightLevel = (rgb) => rgb[1] + 0.299 * (rgb[0] - rgb[1]) + 0.114 * (rgb[2] - rgb[1]);
 /** GLINT-LIGHT: the sheen's share at a light `level`: none in the dark, whole in a lit hour. Pure. */
 export const glintSheenLight = (level) => smooth(GLINT_SHEEN_DARK, GLINT_SHEEN_LIT, level);
-/** Every rate is whole over the glow's 60 s clock - the last glint's and the sheen's included. Pure. */
-export const glintRatesWhole = () => [GLINT_SHEEN_HZ, ...Array.from({ length: GLINT_COUNT }, (_, i) => GLINT_RATE + i * GLINT_RATE_STEP)]
+/** Every rate is whole over the glow's 60 s clock - the last glint's (a big crown's last, NODE-CROWN) and the sheen's
+ *  included. Pure. */
+export const glintRatesWhole = () => [GLINT_SHEEN_HZ, ...Array.from({ length: GLINT_CROWN_COUNT }, (_, i) => GLINT_RATE + i * GLINT_RATE_STEP)]
   .every((r) => Math.abs(r * 60 - Math.round(r * 60)) < 1e-9);
 
 /** THE MASK'S VERTEX STAGE: the billboard program's own, and after it places the vertex, the node's rectangle on screen
@@ -169,13 +191,31 @@ void main() {
 }`;
 
 /** Each glint's index, for the stages written out a glint at a time (an output array indexed in a loop is no law every
- *  translator keeps). */
-const GLINT_SLOTS = Array.from({ length: GLINT_COUNT }, (_, i) => i);
+ *  translator keeps) - NODE-CROWN: a big crown's GLINT_CROWN_COUNT, a node's own count (`uCount`) lit. */
+const GLINT_SLOTS = Array.from({ length: GLINT_CROWN_COUNT }, (_, i) => i);
 const f = (x) => x.toFixed(4);
 /** The hash both stages read: a node's seed, a glint's phase and its life's spot and turn. */
 const GLINT_HASH_GLSL = `uint glintHash(uint x) { x ^= x >> 16; x *= 0x7feb352du; x ^= x >> 15; x *= 0x846ca68bu; x ^= x >> 16; return x; }
 float glintRand(uint x) { return float(glintHash(x) >> 8) * (1.0 / 16777216.0); }
 float maskAt(vec2 at, ivec2 lo, ivec2 hi) { return texelFetch(uMask, clamp(ivec2(floor(at)), lo, hi), 0).r; }`;
+/** A GLINT'S LIFE AT THE CLOCK'S MOMENT, the one law both stages read (NODE-CROWN: the vertex stage finds its spot, the
+ *  fragment stage turns its rays, so no turn is handed on - a big crown's twelve glints take the varyings a herb's six and
+ *  their turns took): the node's seed, a glint's light this moment and its life's own hash, numbered on the clock's own
+ *  wrap, and the life's turn. */
+const GLINT_LIFE_GLSL = `const float PI = 3.141592653589793;
+uint glintSeed() { return uint(uSeed * 1009.0 + 0.5) * 2654435761u; }   // each node its own glints
+float glintLife(int i, uint seed, float tm, out uint life) {
+  uint ui = uint(i);
+  float lives = ${f(GLINT_RATE * 60)} + float(i) * ${f(GLINT_RATE_STEP * 60)};   // a glint's lives a period - whole
+  float cyc = tm * lives / 60.0 + glintRand(seed ^ (ui * 0x9e3779b9u));
+  float c = mod(floor(cyc), lives);
+  float env = uStill > 0.5 ? ${f(GLINT_STILL)} : pow(max(sin(PI * fract(cyc)), 0.0), ${f(GLINT_FLASH)});
+  life = glintHash(seed + ui * 0x85ebca6bu + uint(c) * 0xc2b2ae35u);
+  return env;
+}
+float glintTurn(uint life) {   // a life's own turn, within 17 degrees
+  return (glintRand(life ^ 0x5bd1e995u) - 0.5) * 0.6;
+}`;
 
 /** THE LIGHT'S VERTEX STAGE: the node's rectangle on screen (uRect: NDC centre, half size), its depth the fragment's - and,
  *  once for the node (AUDIT NODE-GLINT: every fragment of the rectangle found them again), each glint this life: its life
@@ -184,7 +224,8 @@ float maskAt(vec2 at, ivec2 lo, ivec2 hi) { return texelFetch(uMask, clamp(ivec2
  *  of the node's pictures (`uAnchor` - a flat's base, width and height, or a 3D tree's crown about its root) in the
  *  plane it stands in (the frame's billboard basis), so the spot is a point of the picture and moves with it as the eye
  *  moves; on the screen, before the eye; none, a dark life. Handed to the fragment stage flat: its spot (the rectangle's
- *  shares), the picture's depth there, its light; and its turn. */
+ *  shares), the picture's depth there, its light (NODE-CROWN: its turn the fragment stage's own, of the same life).
+ *  NODE-CROWN: the node's own count of glints (`uCount`) - a flat's GLINT_COUNT, a big crown's up to GLINT_CROWN_COUNT. */
 export const NODE_GLINT_VS = `#version 300 es
 precision highp float;
 precision highp int;
@@ -202,9 +243,10 @@ uniform vec3 uUp;
 uniform vec4 uAnchor[${2 * GLINT_ANCHORS}];   // each picture a glint may stand on: its base (xyz) and width (w); its height (x), and 1 (y) a flat its own picture judges
 uniform int uAnchors;
 uniform sampler2D uFlatTex;      // the node's flats' own picture (its first batch's)
-${GLINT_SLOTS.map((i) => `flat out vec4 vGlint${i};\nflat out float vTurn${i};`).join('\n')}
-const float PI = 3.141592653589793;
+uniform int uCount;              // NODE-CROWN: its glints - a flat's GLINT_COUNT, a big crown's more
+${GLINT_SLOTS.map((i) => `flat out vec4 vGlint${i};`).join('\n')}
 ${GLINT_HASH_GLSL}
+${GLINT_LIFE_GLSL}
 // a point of a flat its own picture holds - judged at the flat's own texel, so it holds as the eye moves (the mask's
 // pixels came and went under it a frame at a time)
 bool opaque(vec2 uv) { return textureLod(uFlatTex, uv, 0.0).a >= 0.5; }
@@ -212,17 +254,12 @@ bool holds(vec2 at, ivec2 lo, ivec2 hi) {
   return maskAt(at + vec2(uHold, 0.0), lo, hi) < 1.0 && maskAt(at - vec2(uHold, 0.0), lo, hi) < 1.0
     && maskAt(at + vec2(0.0, uHold), lo, hi) < 1.0 && maskAt(at - vec2(0.0, uHold), lo, hi) < 1.0;
 }
-vec4 glintOf(int i, uint seed, float tm, out float turn) {
-  uint ui = uint(i);
-  float lives = ${f(GLINT_RATE * 60)} + float(i) * ${f(GLINT_RATE_STEP * 60)};   // a glint's lives a period - whole
-  float cyc = tm * lives / 60.0 + glintRand(seed ^ (ui * 0x9e3779b9u));
-  float c = mod(floor(cyc), lives);
-  float env = uStill > 0.5 ? ${f(GLINT_STILL)} : pow(max(sin(PI * fract(cyc)), 0.0), ${f(GLINT_FLASH)});
-  turn = 0.0;
+vec4 glintOf(int i, uint seed, float tm) {
+  if (i >= uCount) return vec4(0.0, 0.0, 1.0, 0.0);   // NODE-CROWN: past the node's own count, none
+  uint life;
+  float env = glintLife(i, seed, tm, life);
   if (env < 0.004) return vec4(0.0, 0.0, 1.0, 0.0);
   if (uAnchors < 1) return vec4(0.0, 0.0, 1.0, 0.0);   // no picture to stand on
-  uint life = glintHash(seed + ui * 0x85ebca6bu + uint(c) * 0xc2b2ae35u);
-  turn = (glintRand(life ^ 0x5bd1e995u) - 0.5) * 0.6;
   ivec2 lo = ivec2(uTile.xy), hi = ivec2(uTile.xy + uTile.zw) - 1;
   for (int j = 0; j < ${GLINT_TRIES}; j++) {
     uint h = glintHash(life + uint(j) * 0x27d4eb2fu), g = glintHash(h ^ 0x68e31da4u);
@@ -246,8 +283,8 @@ vec4 glintOf(int i, uint seed, float tm, out float turn) {
 void main() {
   gl_Position = vec4(uRect.xy + aP * uRect.zw, 0.0, 1.0);
   float tm = uTime * (1.0 - uStill);
-  uint seed = uint(uSeed * 1009.0 + 0.5) * 2654435761u;   // each node its own glints
-${GLINT_SLOTS.map((i) => `  vGlint${i} = glintOf(${i}, seed, tm, vTurn${i});`).join('\n')}
+  uint seed = glintSeed();
+${GLINT_SLOTS.map((i) => `  vGlint${i} = glintOf(${i}, seed, tm);`).join('\n')}
 }`;
 
 /** THE LIGHT'S FRAGMENT STAGE: where the fragment falls in the node's rectangle and its tile; the sheen where the
@@ -276,15 +313,19 @@ uniform int uFogMode;
 uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
-${GLINT_SLOTS.map((i) => `flat in vec4 vGlint${i};\nflat in float vTurn${i};`).join('\n')}
+${GLINT_SLOTS.map((i) => `flat in vec4 vGlint${i};`).join('\n')}
 out vec4 o;
 ${FOG_FACTOR_GLSL}
-float maskAt(vec2 at, ivec2 lo, ivec2 hi) { return texelFetch(uMask, clamp(ivec2(floor(at)), lo, hi), 0).r; }
+${GLINT_HASH_GLSL}
+${GLINT_LIFE_GLSL}
 // a glint's star about its spot: a white-hot core in a soft bloom, and four thin rays turned by its own turn
-void glintAt(vec4 g, float th, vec2 q, vec2 rectPx, inout vec3 parts, inout float best, inout float bestDepth) {
+void glintAt(vec4 g, int i, uint seed, float tm, vec2 q, vec2 rectPx, inout vec3 parts, inout float best, inout float bestDepth) {
   if (g.w <= 0.0) return;   // a dark life
   vec2 off = (q - g.xy) * rectPx;
   if (dot(off, off) > uGlint * uGlint) return;
+  uint life;
+  glintLife(i, seed, tm, life);   // NODE-CROWN: the life the vertex stage stood it at, its turn its own
+  float th = glintTurn(life);
   off = mat2(cos(th), sin(th), -sin(th), cos(th)) * off;
   float w = max(0.75, 0.08 * uGlint), cr = max(1.0, 0.22 * uGlint), br = max(1.5, 0.4 * uGlint);
   vec2 a = max(1.0 - abs(off) / uGlint, 0.0);
@@ -299,6 +340,7 @@ void main() {
   vec2 q = (ndc - uRect.xy) / uRect.zw * 0.5 + 0.5;
   ivec2 lo = ivec2(uTile.xy), hi = ivec2(uTile.xy + uTile.zw) - 1;
   vec2 rectPx = uRect.zw * uViewport.zw;
+  uint seed = glintSeed();
   float tm = uTime * (1.0 - uStill);
   float here = maskAt(uTile.xy + q * uTile.zw, lo, hi);
   // THE SHEEN: a soft band rising across the picture's own box, lit only where the silhouette is
@@ -312,7 +354,7 @@ void main() {
   // THE GLINTS: each its star about the spot its life stands at
   vec3 parts = vec3(0.0);   // core, rays, bloom
   float best = 0.0, bestDepth = 1.0;
-${GLINT_SLOTS.map((i) => `  glintAt(vGlint${i}, vTurn${i}, q, rectPx, parts, best, bestDepth);`).join('\n')}
+${GLINT_SLOTS.map((i) => `  glintAt(vGlint${i}, ${i}, seed, tm, q, rectPx, parts, best, bestDepth);`).join('\n')}
   float lit = sheen + ${f(GLINT_GAIN.ray)} * parts.y + ${f(GLINT_GAIN.bloom)} * parts.z + ${f(GLINT_GAIN.core)} * parts.x;
   if (lit * uAlpha < 0.002) discard;   // nothing lit here
   float dep = min(here, bestDepth);   // the nearer picture: the fragment's own, or its strongest glint's
@@ -328,7 +370,7 @@ ${GLINT_SLOTS.map((i) => `  glintAt(vGlint${i}, vTurn${i}, q, rectPx, parts, bes
 
 const MASK_UNIFORMS = ['uProj', 'uView', 'uRight', 'uUp', 'uOrigin', 'uSize', 'uFlatWind', 'uSway', 'uWindfallSway', 'uWindfallAxis', 'uTip',
   'uFacePoint', 'uElitePad', 'uTex', 'uMesh', 'uMeshScale', 'uMeshColor', 'uMeshAlpha', 'uLptCut', 'uLptBand', 'uLptSun', 'uMaskRect'];
-const GLINT_UNIFORMS = ['uMask', 'uRect', 'uTile', 'uInner', 'uHold', 'uRight', 'uUp', 'uAnchor', 'uAnchors', 'uFlatTex', 'uViewport', 'uGlint', 'uColor', 'uAlpha', 'uSeed', 'uSheen', 'uTime', 'uStill',
+const GLINT_UNIFORMS = ['uMask', 'uRect', 'uTile', 'uInner', 'uHold', 'uRight', 'uUp', 'uAnchor', 'uAnchors', 'uCount', 'uFlatTex', 'uViewport', 'uGlint', 'uColor', 'uAlpha', 'uSeed', 'uSheen', 'uTime', 'uStill',
   'uInvVP', 'uVP', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze', 'uDwFog'];
 const NO_FOG_RANGE = new Float32Array([0, 1]);
 const NO_FOCUS = new Float32Array(4);
@@ -513,7 +555,7 @@ export class NodeGlintRenderer {
     this._rows = new WeakMap();
     // the frame's scratch: each node's picture's box and its rectangle on screen, its tile, its glint's reach, its
     // picture's share of the rectangle, its boxes; the matrices; the light's colour
-    this._nodes = Array.from({ length: GLINT_MAX }, () => ({ g: null, inner: [0, 0, 0, 0], rect: [0, 0, 0, 0], tile: [0, 0, 0, 0], share: [0, 0, 0, 0], glint: 1, hold: 1, boxes: /** @type {number[][]} */ ([]), spans: /** @type {number[][]} */ ([]), anchors: new Float32Array(GLINT_ANCHORS * 8), anchorN: 0, flatTex: null }));
+    this._nodes = Array.from({ length: GLINT_MAX }, () => ({ g: null, inner: [0, 0, 0, 0], rect: [0, 0, 0, 0], tile: [0, 0, 0, 0], share: [0, 0, 0, 0], glint: 1, count: GLINT_COUNT, hold: 1, boxes: /** @type {number[][]} */ ([]), spans: /** @type {number[][]} */ ([]), anchors: new Float32Array(GLINT_ANCHORS * 8), anchorN: 0, flatTex: null }));
     this._vp = new Float32Array(16);
     this._inv = new Float32Array(16);
     this._pad = /** @type {[number, number]} */ ([0, 0]);
@@ -574,7 +616,6 @@ export class NodeGlintRenderer {
     const view = gl.getParameter(gl.VIEWPORT), target = gl.getParameter(gl.FRAMEBUFFER_BINDING);
     const vw = Math.max(1, view[2]), vh = Math.max(1, view[3]);
     const roomPx = glintPxMax(vh) + 2;
-    this._pad[0] = (2 * roomPx) / vw; this._pad[1] = (2 * roomPx) / vh;
     const frames = r.lptDrawnFrames?.() ?? [];
     // THE NODES' RECTANGLES: each picture's box - a flat's quad about each centre (its batch's size at the flat's own scale),
     // a 3D tree's crown about its root - through the frame's camera, and the room a glint's rays reach into round it
@@ -584,7 +625,7 @@ export class NodeGlintRenderer {
       const pics = g.mark?.pictures;
       if (!pics?.length || !(g.alpha > 0.001)) continue;
       const s = this._nodes[n];
-      let k = 0;
+      let k = 0, crown = 0;   // NODE-CROWN: its 3D crown's side on screen (crownSidePx), none a flat's
       s.flatTex = null;
       for (const pic of /** @type {NodePicture[]} */ (pics)) {
         const b = pic.batch;
@@ -605,9 +646,16 @@ export class NodeGlintRenderer {
           }
         }
         if (t) {
-          const row = this._row, reach = t.run.size[0] * GLINT_TREE_REACH * row[4], h = t.run.size[1] * row[4] * t.run.scale[1];
+          // FIELD BUGS 2026-10-25i NODE-CROWN ("Big trees hide resource node particles"): its crown as tall as the tree its
+          // run draws - the run's standing size at its row's scale; the prototype's own scale is in that size already
+          // (world/lowPolyTrees.js readLowPolyTrees), and counted again it stood most of a temperate or mountain wood's
+          // crowns at half to four fifths of their trees (504_16's 16 m tree lit to 8 m, its top never) and a swamp's, a
+          // desert's or a winter wood's 15 over up to four times their height (AUDIT FB1025i C2: 74 of the climates' 93)
+          const row = this._row, reach = t.run.size[0] * GLINT_TREE_REACH * row[4], h = t.run.size[1] * row[4];
           NodeGlintRenderer._span(s.spans, k, row[0], row[1], row[2], 2 * reach, h, 0);   // AUDIT NODE-GLINT: its crown, about its root
           NodeGlintRenderer._box(s.boxes, k++, row[0] - reach, row[1], row[2] - reach, row[0] + reach, row[1] + h, row[2] + reach);
+          // NODE-CROWN (AUDIT FB1025i C1): its standing width and height at its root's depth, the size its glints grow by
+          crown = Math.max(crown, crownSidePx(r._proj, vpm[3] * row[0] + vpm[7] * row[1] + vpm[11] * row[2] + vpm[15], t.run.size[0] * row[4], h, vw, vh));
         }
       }
       if (!k || !screenRect(s.boxes, k, vpm, s.inner)) continue;
@@ -617,9 +665,14 @@ export class NodeGlintRenderer {
         const sp = s.spans[Math.floor((i * k) / s.anchorN)], o = i * 8;
         s.anchors[o] = sp[0]; s.anchors[o + 1] = sp[1]; s.anchors[o + 2] = sp[2]; s.anchors[o + 3] = sp[3]; s.anchors[o + 4] = sp[4]; s.anchors[o + 5] = sp[5];
       }
+      // NODE-CROWN (AUDIT FB1025i C1, the report's "Needs to be size aware"): a 3D crown's glints grown by its size on
+      // screen - more of them, each reaching further (a big tree's six herb-sized glints were lost in it); a flat's
+      // GLINT_COUNT at its picture's reach, as they were. And the room its rays take round it.
+      if (crown > 0) { s.count = glintCrownCount(vh, crown); s.glint = glintCrownPx(vh, crown); } else { s.count = GLINT_COUNT; s.glint = glintPx(vh, Math.max(s.inner[2] * vw, s.inner[3] * vh)); }
+      const room = Math.max(roomPx, s.glint + 2);
+      this._pad[0] = (2 * room) / vw; this._pad[1] = (2 * room) / vh;
       snapRect(widenRect(s.inner, this._pad, s.rect), vw, vh);   // whole pixels: a tile that holds the node whole holds it a texel a pixel
       innerShare(s.inner, s.rect, s.share);
-      s.glint = glintPx(vh, Math.max(s.inner[2] * vw, s.inner[3] * vh));
       const wPx = Math.round(s.rect[2] * vw), hPx = Math.round(s.rect[3] * vh), fit = Math.min(1, GLINT_TILE / Math.max(wPx, hPx));   // AUDIT NODE-GLINT: whole pixels, never one over
       s.tile[0] = (n % GLINT_GRID) * GLINT_TILE; s.tile[1] = Math.floor(n / GLINT_GRID) * GLINT_TILE;
       s.tile[2] = Math.max(1, Math.min(GLINT_TILE, Math.ceil(wPx * fit))); s.tile[3] = Math.max(1, Math.min(GLINT_TILE, Math.ceil(hPx * fit)));
@@ -745,6 +798,7 @@ export class NodeGlintRenderer {
       gl.uniform1i(L.uAnchors, s.anchorN);
       gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, s.flatTex); gl.activeTexture(gl.TEXTURE0);
       gl.uniform1f(L.uGlint, s.glint);
+      gl.uniform1i(L.uCount, s.count);   // NODE-CROWN: its glints
       const tint = glintTint(g.rgb, this._tint);
       gl.uniform3f(L.uColor, tint[0], tint[1], tint[2]);
       // GLINT-LIGHT: the light the node's own flat takes where it stands (the sun's half, the moons', the lamps', the

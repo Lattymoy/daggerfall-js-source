@@ -1,0 +1,92 @@
+[
+  {
+    "name": "BOT-the-box-raises-no-layer",
+    "file": "src/ui/actionText.js",
+    "old": "    catchBoxClicks(this);   // BOX-ON-TOP: drawn as the top over an enhanced window, the box takes the screen's clicks",
+    "new": "",
+    "tests": [
+      "test/ui/boxontop.test.js"
+    ]
+  },
+  {
+    "name": "BOT-the-layer-outlives-the-box-it-closed",
+    "file": "src/ui/actionText.js",
+    "old": "    releaseBoxClicks(this);   // BOX-ON-TOP: ...and so does the layer that took its clicks",
+    "new": "",
+    "tests": [
+      "test/ui/boxontop.test.js"
+    ]
+  },
+  {
+    "name": "BOT-the-layer-outlives-a-replaced-box",
+    "file": "src/ui/actionText.js",
+    "old": "  dispose() { this.onClose = null; noticeRelease(this); releaseBoxClicks(this); }",
+    "new": "  dispose() { this.onClose = null; noticeRelease(this); }",
+    "tests": [
+      "test/ui/boxontop.test.js"
+    ]
+  },
+  {
+    "name": "BOT-a-layer-with-no-enhanced-window-open",
+    "file": "src/ui/boxClickCatcher.js",
+    "old": "  if (!overlayOpen()) return false;",
+    "new": "  if (overlayOpen() === null) return false;",
+    "tests": [
+      "test/ui/boxontop.test.js"
+    ]
+  },
+  {
+    "name": "BOT-a-layer-for-the-status-readout",
+    "file": "src/ui/boxClickCatcher.js",
+    "old": "  if (!pauseWhileOpen(box)) return false;",
+    "new": "  if (pauseWhileOpen(box) === null) return false;",
+    "tests": [
+      "test/ui/boxontop.test.js"
+    ]
+  },
+  {
+    "name": "BOT-a-covered-box-keeps-the-clicks",
+    "file": "src/ui/boxClickCatcher.js",
+    "old": "  return !windowCovered(box);",
+    "new": "  return true;",
+    "tests": [
+      "test/ui/boxontop.test.js"
+    ]
+  },
+  {
+    "name": "BOT-the-covered-window-keeps-the-focus",
+    "file": "src/ui/boxClickCatcher.js",
+    "old": "  if (focused && focused !== doc.body) focused.blur?.();",
+    "new": "",
+    "tests": [
+      "test/ui/boxontop.test.js"
+    ]
+  },
+  {
+    "name": "BOT-the-right-button-opens-the-menu",
+    "file": "src/ui/boxClickCatcher.js",
+    "old": "  layer.addEventListener('contextmenu', (/** @type {any} */ e) => e.preventDefault?.());",
+    "new": "",
+    "tests": [
+      "test/ui/boxontop.test.js"
+    ]
+  },
+  {
+    "name": "BOT-a-dropped-box-leaves-its-layer",
+    "file": "src/ui/boxClickCatcher.js",
+    "old": "  held.watchdog = armDrawWatchdog(DRAW_WATCH_MS, () => releaseBoxClicks(box));",
+    "new": "  held.watchdog = armDrawWatchdog(DRAW_WATCH_MS, () => {});",
+    "tests": [
+      "test/ui/boxontop.test.js"
+    ]
+  },
+  {
+    "name": "BOT-the-counter-keeps-its-keys-under-a-box",
+    "file": "src/ui/tradeDoor.js",
+    "old": "  hooks.covered = () => windowCovered(overlay);",
+    "new": "  hooks.covered = () => false;",
+    "tests": [
+      "test/ui/boxontop.test.js"
+    ]
+  }
+]
