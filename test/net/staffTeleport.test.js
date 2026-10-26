@@ -216,7 +216,7 @@ test('STAFF-TP dungeon identity selects the target dungeon; interior entry uses 
     dungeonLocation: { mapTableData: { mapId: dungeon.mapId } },
     startInDungeon: async (options) => { calls.push(options); return true; },
     restoreInterior: async (_saved, pos) => { assert.equal(pos, null, 'no unchecked target position during the build'); return true; } };
-  const prepare = hostFunction('prepareStaffDestination', { modes, _wodInside: false, playerSpawned: false,
+  const prepare = hostFunction('prepareStaffDestination', { gateLink: null, modes, _wodInside: false, playerSpawned: false,
     _teleportToPixel: async () => {}, staffLanding: (d) => d.pos, ohAbyss: null });
   await prepare(d); assert.deepEqual(calls, [{ locationKey: 'dungeon:9812', holdOpen: true, recorded: { ins: null, whole: false, staff: true } }]);   // PIN MOVED (HOLD-ONCE): staff may land by a player in Privateer's Hold; PIN MOVED (INSTANCES' audit): in the room the player stands in - here its public room
   const inst = validStaffDestination({ ...dungeon, locationKey: 'dungeon:9812', ins: '0123456789abcdef.89abcdef' });
@@ -267,7 +267,7 @@ test('STAFF-TP host: live target capture retains height and unrounded moving-dec
   const state = { current: { x: 207, y: 213 }, compensation: [0, 40, 0], worldCoords: (p) => ({ x: p[0] * 100, z: p[2] * 100 }) };
   const hull = { GameObject: { position: [12, 5, 6], rotation: [0, 0, 0, 1] } };
   const pos = [12.123456789, 7.987654321, 8.012345678];
-  const capture = hostFunction('staffDestination', { walkMode: true, playerSpawned: true, worldMoveBusy: () => false, modes: { mode: 'exterior', anchorContext: () => ({}) }, seatOut: () => false, playerEntity: { health: 100 }, siegeSession: null, royalSession: null, state, player: { pos }, cam: { yaw: 1, pitch: 0 }, playerTravelPixel: () => ({ x: 207, y: 213 }), csaOn: () => true, csaAboard: { aboard: { boat: hull, owner: 'peer-sailor', slot: 2 } }, csaLocalOf: localOf, csaDeckPose: deckPose, validStaffDestination });
+  const capture = hostFunction('staffDestination', { gateLink: null, walkMode: true, playerSpawned: true, worldMoveBusy: () => false, modes: { mode: 'exterior', anchorContext: () => ({}) }, seatOut: () => false, playerEntity: { health: 100 }, siegeSession: null, royalSession: null, state, player: { pos }, cam: { yaw: 1, pitch: 0 }, playerTravelPixel: () => ({ x: 207, y: 213 }), csaOn: () => true, csaAboard: { aboard: { boat: hull, owner: 'peer-sailor', slot: 2 } }, csaLocalOf: localOf, csaDeckPose: deckPose, validStaffDestination });
   const d = capture().dest; assert.equal(d.pos[1], pos[1] - 40);
   assert.deepEqual(worldOf(deckPose(hull), d.boat.local), pos);
   assert.notEqual(d.boat.local[0], Math.round(d.boat.local[0] * 100) / 100);
@@ -276,19 +276,19 @@ test('STAFF-TP host: live target capture retains height and unrounded moving-dec
 for (const d of destinations.filter((d) => !d.boat)) test(`STAFF-TP host: loads ${d.kind} before exact placement`, async () => {
   const log = [], loc = { mapTableData: { mapId: dungeon.mapId }, regionIndex: abyss.abyss.TemplateRegionIndex, locationIndex: abyss.abyss.TemplateLocationIndex };
   const modes = { forceExitToExterior: () => log.push('exit'), setPlayerLocalPosition: (p) => log.push(['place', p]), restoreInterior: async (saved, p, opts) => { assert.deepEqual(saved, { door: interior.door }); assert.equal(opts.strictDoor, true); log.push('interior'); return true; }, startInDungeon: async () => { log.push('dungeon'); return true; }, enterGateArena: async (g) => { assert.deepEqual(g, gate.gate); log.push('gate'); return true; }, dungeonLocation: loc };
-  const prepare = hostFunction('prepareStaffDestination', { modes, _wodInside: false, playerSpawned: false, _teleportToPixel: async (x, y) => log.push(['pixel', x, y]), staffLanding: (a) => [...a.pos], ohAbyss: { data: { RecallBinding: 'own-binding' }, restoreSaveData: (a) => { assert.equal(a.RecallBinding, 'own-binding'); log.push('abyss'); }, active: true, onRespawnerComplete: () => {} } });
+  const prepare = hostFunction('prepareStaffDestination', { gateLink: null, modes, _wodInside: false, playerSpawned: false, _teleportToPixel: async (x, y) => log.push(['pixel', x, y]), staffLanding: (a) => [...a.pos], ohAbyss: { data: { RecallBinding: 'own-binding' }, restoreSaveData: (a) => { assert.equal(a.RecallBinding, 'own-binding'); log.push('abyss'); }, active: true, onRespawnerComplete: () => {} } });
   await prepare(d); assert.equal(log[0], 'exit'); assert.deepEqual(log[1], ['pixel', 207, 213]); assert.deepEqual(log.at(-1), ['place', d.pos]);
 });
 
 test('STAFF-TP host: failed interior/dungeon entry reports failure and never applies indoor coordinates outside', async () => {
   const log = [];
-  const prepare = hostFunction('prepareStaffDestination', { modes: { forceExitToExterior: () => {}, restoreInterior: async () => false, setPlayerLocalPosition: () => assert.fail('no indoor spawn outside') }, _wodInside: false, _teleportToPixel: async () => log.push('safe exterior'), staffLanding: (a) => a.pos, ohAbyss: null });
+  const prepare = hostFunction('prepareStaffDestination', { gateLink: null, modes: { forceExitToExterior: () => {}, restoreInterior: async () => false, setPlayerLocalPosition: () => assert.fail('no indoor spawn outside') }, _wodInside: false, _teleportToPixel: async () => log.push('safe exterior'), staffLanding: (a) => a.pos, ohAbyss: null });
   await assert.rejects(prepare(interior), /not completed/); assert.equal(log.length, 2);
 });
 
 test('STAFF-TP host: death/seat loss while the pixel loads cancels before entering or placing', async () => {
   let ready = true;
-  const prepare = hostFunction('prepareStaffDestination', { modes: { forceExitToExterior: () => {}, restoreInterior: () => assert.fail('cancelled before interior build'), setPlayerLocalPosition: () => assert.fail('cancelled before placement') }, _wodInside: false, _teleportToPixel: async () => { ready = false; } });
+  const prepare = hostFunction('prepareStaffDestination', { gateLink: null, modes: { forceExitToExterior: () => {}, restoreInterior: () => assert.fail('cancelled before interior build'), setPlayerLocalPosition: () => assert.fail('cancelled before placement') }, _wodInside: false, _teleportToPixel: async () => { ready = false; } });
   await assert.rejects(prepare(interior, () => ready), /cancelled/);
 });
 
@@ -326,12 +326,12 @@ test('STAFF-TP layout: live capture and strict restore carry the visited layout;
   const layout = 'beautiful-cities@0.5.0';
   let identity = { kind: 'interior', buildingKey: interior.door.buildingKey, layout };
   const modes = { mode: 'interior', roomIdentity: () => identity, anchorContext: () => ({ interior: { door: interior.door } }) };
-  const capture = hostFunction('staffDestination', { walkMode: true, playerSpawned: true, worldMoveBusy: () => false, modes, seatOut: () => false, playerEntity: { health: 100 }, siegeSession: null, royalSession: null,
+  const capture = hostFunction('staffDestination', { gateLink: null, walkMode: true, playerSpawned: true, worldMoveBusy: () => false, modes, seatOut: () => false, playerEntity: { health: 100 }, siegeSession: null, royalSession: null,
     state: { worldCoords: () => ({ x: 1, z: 3 }), compensation: [0, 0, 0] }, player: { pos: [1, 2, 3] }, cam: { yaw: 0, pitch: 0 }, playerTravelPixel: () => interior.pixel, validStaffDestination });
   const { dest } = capture();
   assert.equal(dest.layout, layout);
   let restored = null;
-  const prepare = hostFunction('prepareStaffDestination', { modes: { forceExitToExterior() {}, restoreInterior: async (saved, position, options) => { restored = saved; assert.equal(position, null); assert.equal(options.strictDoor, true); return false; }, setPlayerLocalPosition: () => assert.fail('a mismatched layout must not place the player') }, _wodInside: false, _teleportToPixel: async () => {}, staffLanding: (d) => d.pos, ohAbyss: null });
+  const prepare = hostFunction('prepareStaffDestination', { gateLink: null, modes: { forceExitToExterior() {}, restoreInterior: async (saved, position, options) => { restored = saved; assert.equal(position, null); assert.equal(options.strictDoor, true); return false; }, setPlayerLocalPosition: () => assert.fail('a mismatched layout must not place the player') }, _wodInside: false, _teleportToPixel: async () => {}, staffLanding: (d) => d.pos, ohAbyss: null });
   await assert.rejects(prepare(dest), /unavailable|entered|enter|ready/i);
   assert.equal(restored.layout, layout);
   assert.deepEqual(restored.door, interior.door);

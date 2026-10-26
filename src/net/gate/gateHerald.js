@@ -74,13 +74,13 @@ export function omenPost({ day, place = null, role = null }) {
  * THE KILL'S POST: the boss fallen, where, and by whom - the court's top dealers and how many more fought. Pings nobody.
  * HERALD-CARDS: the card - its title the fall, its fields where and by whom (WB13b: the chat's kill line's facts), its
  * text the breach's collapse.
- * @param {{day: number, place?: string|null, top?: ReadonlyArray<string>, n?: number}} o
+ * @param {{day: number, place?: string|null, top?: ReadonlyArray<string>, n?: number, w?: number, cs?: number}} o
  */
-export function fellPost({ day, place = null, top = [], n = 0 }) {
+export function fellPost({ day, place = null, top = [], n = 0, w = 0, cs = 0 }) {
   const boss = gateBossOf(day);
   return heraldCard({
     family: 'gate', moment: 'Slain',
-    title: `${boss.name} has fallen`,
+    title: cs > 1 ? `${boss.name} has fallen in ${w} of ${cs} courts` : `${boss.name} has fallen`,   // GATE-COURTS: one card a night - the courts that won, of the courts it held (net/gate/gateCourts.js nightWord)
     text: 'The breach collapses.',
     fields: [['Where', place ? `Near ${place}` : 'In the wilds'], ['Struck down by', heraldWho((Array.isArray(top) ? top : []).slice(0, GATE_TOP_MAX), n)]],
   });

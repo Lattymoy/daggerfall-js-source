@@ -401,7 +401,7 @@ test('WB3 wire: the client says two things - `in` with a level claim, `hit` with
   assert.deepEqual(validGateIn({ k: 'in', lv: 12, bv: 1.5 }), { k: 'in', lv: 12 });
   assert.deepEqual(validGateIn({ k: 'spent', d: 514, x: 1 }), { k: 'spent', d: 514 });
   for (const bad of [{ k: 'spent' }, { k: 'spent', d: -1 }, { k: 'spent', d: 1.5 }]) assert.equal(validGateIn(bad), null);
-  assert.deepEqual(GATE_OUT_KINDS, ['st', 'mv', 'atk', 'hp', 'ph', 'wrath', 'fell', 'rcpt', 'no', 'fed', 'cx', 'cxh', 'cxb', 'stun', 'ad', 'amv', 'aatk', 'ah', 'adie', 'bd', 'vgw', 'sdh', 'kn', 'kr', 'rj', 'tithe', 'cpf', 'cpw']);   // PIN MOVED (WB14f): the Captive freed and his ward given; PIN MOVED (WB14e): a Tithe-Imp's tithe; PIN MOVED (INT11): and the count's fall; PIN MOVED (WB14c): and a stage of the Vanguard; PIN MOVED (WB14d): the Sundering's four; WB8b: a Soul-Hungry Warden's feeding; WB9c: the crystals and the stun; WB11b: his host
+  assert.deepEqual(GATE_OUT_KINDS, ['st', 'mv', 'atk', 'hp', 'ph', 'wrath', 'fell', 'rcpt', 'no', 'fed', 'cx', 'cxh', 'cxb', 'stun', 'ad', 'amv', 'aatk', 'ah', 'adie', 'bd', 'vgw', 'sdh', 'kn', 'kr', 'rj', 'tithe', 'cpf', 'cpw', 'go', 'cf']);   // PIN MOVED (GATE-COURTS): the court the book seats me in, and a court's kill said to everyone; PIN MOVED (WB14f): the Captive freed and his ward given; PIN MOVED (WB14e): a Tithe-Imp's tithe; PIN MOVED (INT11): and the count's fall; PIN MOVED (WB14c): and a stage of the Vanguard; PIN MOVED (WB14d): the Sundering's four; WB8b: a Soul-Hungry Warden's feeding; WB9c: the crystals and the stun; WB11b: his host
   assert.deepEqual(validGateIn({ k: 'in', lv: 12, x: 1 }), { k: 'in', lv: 12 });
   assert.deepEqual(validGateIn({ k: 'hit', q: 3, d: 12.5, r: 2, extra: true }), { k: 'hit', q: 3, d: 12.5, r: 2 });
   for (const bad of [{ k: 'in' }, { k: 'in', lv: 0 }, { k: 'in', lv: GATE_LV_WIRE_MAX + 1 }, { k: 'in', lv: 1.5 }, { k: 'hit', q: -1, d: 1, r: 0 }, { k: 'hit', q: 1, d: 0, r: 0 },
@@ -537,7 +537,7 @@ test('WB3 relay: A BLOW - believed as far as the brain allows from where the soc
 test('WB3 relay: THE KILL - said once to everyone in the court, a receipt to exactly the accounts that earned one (signed by GATE_SIGNING_KEY, which its public half verifies), the fight checkpointed with them, and the hub\'s world line: everyone online hears the fall, a fighter outside the court is handed their receipt there, a later hello hears it while the gate still holds (mutants: a receipt to one who did not earn it; the hub told nothing; the fall said twice)', async () => {
   const kp = await keypair();
   const pkcs8 = Buffer.from(await subtle.exportKey('pkcs8', kp.privateKey)).toString('base64');
-  await withGate(async ({ world, r, tick, say, now }) => {
+  await withGate(async ({ world, r, tick, say, now, set }) => {
     r.env.GATE_SIGNING_KEY = pkcs8;
     const hub = world.room(SOCIAL_ROOM);
     const h1 = hub.connect(), h3 = hub.connect(), h9 = hub.connect();
@@ -568,9 +568,11 @@ test('WB3 relay: THE KILL - said once to everyone in the court, a receipt to exa
     assert.equal(readReceipt(f.rc['acct-peer-0003']).x, 'dealt', 'and peer-0003 by what it dealt');
     assert.deepEqual(Object.keys(f.rc).sort(), ['acct-peer-0001', 'acct-peer-0003']);
     assert.equal(r.store.get('gatefight').said, true, 'checkpointed with the kill');
-    // the hub
-    const hubFell = gates(h9, 'fell');
-    assert.deepEqual(hubFell, [{ t: 'gate', k: 'fell', at: fell[0].at, top: fell[0].top, n: 3, d: DAY }], 'everyone online, the day with it');
+    // the hub - PIN MOVED (GATE-COURTS): a court's kill is said as `cf`, its court and the courts the night holds with it;
+    // the night's `fell` (the gate's collapse) waits for the seal, below
+    const hubFell = gates(h9, 'cf');
+    assert.deepEqual(hubFell, [{ t: 'gate', k: 'cf', at: fell[0].at, top: fell[0].top, n: 3, d: DAY, c: 0, cs: 1 }], 'everyone online, the day and the court with it');
+    assert.equal(gates(h9, 'fell').length, 0, 'the gate stands - a newcomer before the seal is the next court\'s');
     assert.equal(gates(h9, 'rcpt').length, 0);
     assert.deepEqual(gates(h3, 'rcpt').map((m) => m.r), [f.rc['acct-peer-0003']], 'the fighter outside the court is handed theirs');
     // AUDIT WBX S4: a fighter IN the court at the kill has theirs from the court - the hub hands no other tab of theirs
@@ -579,13 +581,27 @@ test('WB3 relay: THE KILL - said once to everyone in the court, a receipt to exa
     await tick(4);
     assert.equal(gates(a, 'fell').length, 1, 'said once');
     const later = hub.connect(); await hub.hello(later, 'peer-0007');
-    assert.deepEqual(gates(later, 'fell'), hubFell, 'a hello while the gate still holds hears it');
+    assert.equal(gates(later, 'cf').length + gates(later, 'fell').length, 0, 'a court\'s kill is not kept for a hello - the night\'s is');
     // a fighter back in the court after the kill is handed theirs again
     const back = r.connect(); await r.hello(back, 'peer-0003', at(0, 10));
     await say(back, { k: 'in', lv: 10, bv: GATE_BRAIN_V });
     assert.deepEqual(gates(back, 'rcpt').map((m) => m.r), [f.rc['acct-peer-0003']]);
+    // PIN MOVED (GATE-COURTS): a newcomer while the gate admits comes in at the first court and is sent on to the next,
+    // whose Warden stands
     const stranger = r.connect(); await r.hello(stranger, 'peer-0008', at(0, 10));
-    assert.deepEqual(stranger.sent, [{ t: 'error', m: 'the gate is closing' }]);
+    assert.equal(stranger.closed, null, 'the first court is every newcomer\'s door');
+    await say(stranger, { k: 'in', lv: 10, bv: GATE_BRAIN_V });
+    assert.deepEqual(gates(stranger, 'go'), [{ t: 'gate', k: 'go', d: DAY, c: 1 }], 'sent on to the second court');
+    // THE NIGHT, AT THE SEAL: every court a fighter joined has won (the second court was given, never joined) - the hub's
+    // `fell`, kept for a hello while the gate still holds
+    set(TT.sealAt);
+    await r.fire();
+    const night = gates(h9, 'fell');
+    assert.deepEqual(night, [{ t: 'gate', k: 'fell', at: TT.sealAt, top: fell[0].top, n: 3, d: DAY, w: 1, cs: 1 }], 'the night, once');
+    const late = hub.connect(); await hub.hello(late, 'peer-0006');
+    assert.deepEqual(gates(late, 'fell'), night, 'a hello while the gate still holds hears it');
+    const sealed = r.connect(); await r.hello(sealed, 'peer-0005', at(0, 10));
+    assert.deepEqual(sealed.sent, [{ t: 'error', m: 'the gate is closing' }], 'sealed: a stranger is no court\'s');
   });
 });
 
@@ -616,7 +632,7 @@ test('WB3 relay: NO KEY - the fight and its receipts run the same, unsigned (the
     await say(a, { k: 'in', lv: 10, bv: GATE_BRAIN_V });
     await r.drop(a);
     await tick(1);
-    assert.equal(r.alarm.at, TT.wrathAt + GATE_COLLAPSE_MS, 'nobody in the court: the beat sleeps until the day\'s end');
+    assert.equal(r.alarm.at, TT.sealAt, 'nobody in the court: the beat sleeps until the night\'s book next looks - the seal (PIN MOVED, GATE-COURTS: the day\'s end before the book)');
     const b = r.connect(); await r.hello(b, 'peer-0001', at(0, 3));
     await say(b, { k: 'in', lv: 10, bv: GATE_BRAIN_V });
     assert.equal(r.alarm.at, now() + BRAIN_TICK_MS, 'and an `in` wakes it');
