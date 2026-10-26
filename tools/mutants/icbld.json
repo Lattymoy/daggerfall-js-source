@@ -79,5 +79,77 @@
     "tests": [
       "test/world/icbld_fabric.test.js"
     ]
+  },
+  {
+    "name": "BLD-capital-masonry-upside-down",
+    "file": "src/world/capitalModels.js",
+    "old": "axis === 0 ? [p[i + 2] / metres - o[2], p[i + 1] / metres - o[1]] : [p[i] / metres - o[0], p[i + 1] / metres - o[1]]",
+    "new": "axis === 0 ? [p[i + 2] / metres - o[2], -p[i + 1] / metres + o[1]] : [p[i] / metres - o[0], -p[i + 1] / metres + o[1]]",
+    "tests": [
+      "test/world/icbld_fabric.test.js"
+    ]
+  },
+  {
+    "name": "BLD-lamps-cap-lifted",
+    "file": "src/world/imperialFabricLights.js",
+    "old": "if (kept.length >= FABRIC_LAMPS.perCell) break;",
+    "new": "if (kept.length >= 99) break;",
+    "tests": [
+      "test/world/icbld_lights.test.js"
+    ]
+  },
+  {
+    "name": "BLD-lamps-unspaced",
+    "file": "src/world/imperialFabricLights.js",
+    "old": "Math.hypot(k.at[0] - x, k.at[1] - z) < FABRIC_LAMPS.spacing)) continue;",
+    "new": "Math.hypot(k.at[0] - x, k.at[1] - z) < 0)) continue;",
+    "tests": [
+      "test/world/icbld_lights.test.js"
+    ]
+  },
+  {
+    "name": "BLD-lamp-on-a-building",
+    "file": "src/world/imperialFabricLights.js",
+    "old": "if (g !== GROUND.street && g !== GROUND.square) continue;",
+    "new": "if (g === GROUND.canal) continue;",
+    "tests": [
+      "test/world/icbld_lights.test.js"
+    ]
+  },
+  {
+    "name": "BLD-block-without-lamps",
+    "file": "src/world/imperialBlocks.js",
+    "old": "deps.startMarkerAt(at[0] + dx, at[1] - dz)), ...lamps] });",
+    "new": "deps.startMarkerAt(at[0] + dx, at[1] - dz))] });",
+    "tests": [
+      "test/world/icbld_lights.test.js"
+    ]
+  },
+  {
+    "name": "BLD-window-mask-top-down",
+    "file": "src/world/imperialWindows.js",
+    "old": "return m ? toColor32({ width: m.width, height: m.height, data: m.data.slice() }) : null;",
+    "new": "return m ? { width: m.width, height: m.height, colors: new Uint8ClampedArray(m.data) } : null;",
+    "tests": [
+      "test/world/icbld_lights.test.js"
+    ]
+  },
+  {
+    "name": "BLD-pipeline-glass-arm-gone",
+    "file": "src/scenes/dataPipeline.js",
+    "old": "const ownGlass = t.vendor ? standInWindowMask(archive, record) : null;",
+    "new": "const ownGlass = null;",
+    "tests": [
+      "test/world/icbld_lights.test.js"
+    ]
+  },
+  {
+    "name": "BLD-arcade-glows",
+    "file": "src/world/imperialWindows.js",
+    "old": "'facadeTimber', 'groundShop'].map",
+    "new": "'facadeTimber', 'groundShop', 'groundArcade'].map",
+    "tests": [
+      "test/world/icbld_lights.test.js"
+    ]
   }
 ]

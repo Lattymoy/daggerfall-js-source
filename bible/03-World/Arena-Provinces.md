@@ -1890,8 +1890,40 @@ mutants `tools/mutants/icbld.json`). The doors, the interiors and the lights fol
   (the skylines) take the same law.
 - **Seen**: the scratch's GL-faithful rasterizer (the pictures in color32 order, REPEAT, backfaces culled), before and
   after, of an arcade front, a timber street and the gables and party walls over a block.
-- **Found beside it, its own record below**: `world/capitalModels.js` vanillaTexels lays every capital landmark's
-  pictures (and URBANIZER's yard and dead-end walls) with the same inverted sign - masonry lit from below.
+- **The capitals' own walls, the same finding**: `world/capitalModels.js` vanillaTexels - the box projection every
+  capital landmark's pictures are laid by (the Imperial City's, Solitude's and the rest, URBANIZER's pictures on those past
+  the Bay), and URBANIZER's yard and dead-end walls and woodpiles (`world/urban/townFabricModel.js`) - laid v falling up
+  a wall too: their masonry stood on its head, each stone lit on its bottom edge. v rises now (pinned with the fabric's;
+  `test/tesalore_capitals.test.js`'s quad PIN MOVED; IS-the-pictures-from-the-middle re-aimed by content). URBANIZER's
+  towns otherwise show neither symptom: their buildings are Daggerfall's own models on its own layouts (MeshReader's law,
+  its own windows), re-dressed in their province's climate set.
+
+### BLD - the fabric's lights: Daggerfall's lamp-posts on its streets, its windows lit at night (2026-10-26)
+
+The owner's *"... and no lighting sources like the original layouts"* (BLD, above). DFU's reference: a city block's
+lights are its LIGHT FLATS - misc flats of TEXTURE.210 (RMBLayout AddLights/AddLight, `world/city/cityLights.js`
+collectCityLights: a point light a flat, the [City] prefab's range 18, white), drawn as billboards and lit at night; and
+an exterior window's glass glows after dark with the window style (MaterialReader's IsExteriorWindow arm, TextureReader
+GetWindowColors32, `render/realWindows.js` RW1). The fabric's streets had neither, and its stand-in walls no mask to
+cut one from.
+
+- **The lamp-posts** (`world/imperialFabricLights.js` fabricCellLamps, FABRIC_LAMPS; laid into the own block's misc flats
+  by `world/imperialBlocks.js` imperialBlockJson, by DFU's flat record law - so the prebuilt blocks carry them too).
+  Measured on the freeware's 920 RMB blocks: 2,146 light flats, 2.33 a block, 8 at most; the street lamp-posts 29 (992)
+  and 28 (710) the commonest by far. So each cell's street fronts carry those two posts (a district's pick) at the kerb
+  by a front's first corner - on a main street's pavement, at a lane's or a side street's wall foot, never in an alley,
+  never before a door - two by every square's fountain, 18 m apart at least, at most 8 a cell (the blocks' own most),
+  only on the cell's own open street or square. Over the pins' thirteen district cells: lamps in all but one (the Arboretum's park the barest), most at the cap.
+  A near slice carries a few hundred; the renderer lights the nearest of them as it lights a town's (the lane's cap and
+  its fade, LA-LIGHTS2), and the far city's glow is the far view's own (`world/imperialImpostor.js`, untouched).
+- **The windows** (`world/imperialWindows.js`): each wall's and the shopfront's glass read off its own painting (its
+  window's ramp - `world/imperialArt.js`), white in a mask the GL's way up, and the pipeline uploads it as a classic
+  window's mask for the stand-in that carries one (`scenes/dataPipeline.js`, beside the IsExteriorWindow arm, which a
+  stand-in never takes - it has no classic bitmap). The arcade's open arch carries none. The skylines' masses wear the
+  same pictures, so the far masses' windows light with them at no cost of their own.
+- Pinned by `test/world/icbld_lights.test.js` (the lamps' records, cap, spacing and ground; the block's flats lit by the
+  exterior's own collector where each lamp stands; the masks' glass inside its window and bottom-up; the pipeline's
+  arm), seven mutants in `tools/mutants/icbld.json`, all dead.
 
 ## MAP-WHOLE - the map past the Bay whole from its first frames (2026-10-26)
 

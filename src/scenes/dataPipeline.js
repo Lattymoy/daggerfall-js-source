@@ -10,6 +10,7 @@
 import { TextureFile, LAST_CLASSIC_TEXTURE_ARCHIVE } from '../formats/textureFile.js'; import { changeMask } from '../formats/baseImageFile.js';   // HM1: the item icons' removeMask (one line: the cites below stand)
 import { FlatsFile } from '../formats/flatsFile.js';   // NPC1: captions + portrait indices
 import { isExteriorWindow } from '../world/climateSwaps.js';
+import { standInWindowMask } from '../world/imperialWindows.js';   // BLD: a stand-in wall that carries its own glass
 import { isInteriorGlassArchive, interiorGlassMask } from '../world/interior/interiorGlass.js';   // RW1: an interior's own glass
 import { isEmissive, FIRE_WALLS_ARCHIVE, FIRE_WALL_COLOR, FIRE_WALL_SCALE } from '../world/emissiveTextures.js';   // TextureReader's auto-emissive table (lit lanterns, fireplaces, fire daedra)
 import { dfMeshToModel } from '../world/meshReader.js'; import { patchSeams } from '../world/arch3dSeams.js';   // DUNGEON-SEAMS (one line: the cites below stand)
@@ -246,8 +247,13 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     // window mask from - and IsExteriorWindow's `archive % 100` reads 1210's
     // record 3 as a window. A mod picture's billboard material carries no
     // window emission in DFU (GetStaticBillboardMaterial), so it gets none.
+    // BLD: a stand-in WALL that carries its own glass (world/imperialWindows.js - the Imperial City's facades, read off
+    // their own painting) takes the same window mask, lit by the window style after dark as a classic window is.
+    const ownGlass = t.vendor ? standInWindowMask(archive, record) : null;
     if (isExteriorWindow(archive, record) && !t.vendor) {
       renderer.uploadEmissionTexture(archive, record, t.getWindowColors32(bitmap), { replacement, window: true });   // RW1: DFU's window mask - the rooms' glass from the street, the street's from inside (render/realWindows.js)
+    } else if (ownGlass) {
+      renderer.uploadEmissionTexture(archive, record, ownGlass, { replacement, window: true });
     } else if (isEmissive(archive, record)) {
       // AUDIT 39 F49: THE AUTO-EMISSIVE ARM (MaterialReader.cs:419-423
       // -> TextureReader.cs:301-308 "Just reuse albedo map for basic

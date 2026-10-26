@@ -143,8 +143,9 @@
   {
     "name": "IS-the-pictures-from-the-middle",
     "file": "src/world/capitalModels.js",
-    "old": "axis === 1 ? [p[i] / metres - o[0], p[i + 2] / metres - o[2]] : axis === 0 ? [p[i + 2] / metres - o[2], -p[i + 1] / metres + o[1]] : [p[i] / metres - o[0], -p[i + 1] / metres + o[1]];",
-    "new": "axis === 1 ? [p[i] / metres, p[i + 2] / metres] : axis === 0 ? [p[i + 2] / metres, -p[i + 1] / metres] : [p[i] / metres, -p[i + 1] / metres];",
+    "old": "axis === 1 ? [p[i] / metres - o[0], p[i + 2] / metres - o[2]] : axis === 0 ? [p[i + 2] / metres - o[2], p[i + 1] / metres - o[1]] : [p[i] / metres - o[0], p[i + 1] / metres - o[1]];",
+    "new": "axis === 1 ? [p[i] / metres, p[i + 2] / metres] : axis === 0 ? [p[i + 2] / metres, p[i + 1] / metres] : [p[i] / metres, p[i + 1] / metres];",
+    "note": "PIN MOVED (BLD): re-aimed by content - the same law (each coordinate from a whole number of pictures nearest the middle) on v rising up a wall, MeshReader's.",
     "tests": [
       "test/world/imperialscale.test.js",
       "test/tesalore_capitals.test.js"
