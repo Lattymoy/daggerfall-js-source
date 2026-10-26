@@ -108,8 +108,9 @@ const localBoxOf = (positions) => {
  * (null for no collider). THE BODY IT GUARDS is the one its settle was last handed - the caller that holds the body
  * settles it every frame - so a late solid of any owner needs no body of its own to be held back from it. ROCK-CLEAR:
  * a getter may stand for the body, read whenever the gate asks it (the world's: none while a jump is under way).
- *   add(key, positions, indices, matrix, { body, translation }) - stand the triangles (meshReader buffers; `matrix`
- *       into the bucket's frame, `translation` the bucket's provider - addMesh's own arguments) as a PART of `key`'s
+ *   add(key, positions, indices, matrix, { body, translation, sight }) - stand the triangles (meshReader buffers;
+ *       `matrix` into the bucket's frame, `translation` the bucket's provider, `sight` its marks - addMesh's own
+ *       arguments; FIELD BUGS 2026-10-25i SIGN-PASS: a shop's hung board, a ray's and no body's) as a PART of `key`'s
  *       bucket, beside any it holds: at once where the body is clear of them, else WITHHELD (answers false) - the
  *       key's other parts stand as they stood. `body` left out is the body the gate guards; `null`, or a gate that
  *       guards none (a bench, a test, a collider no body has walked, a jump's landing), stands it at once, as every
@@ -138,15 +139,15 @@ export function lateSolidsOf(collider) {
 
 /** @param {any} collider */
 function makeGate(collider) {
-  /** @typedef {{ positions: ArrayLike<number>, indices: ArrayLike<number>, matrix: ArrayLike<number>, translation: any, probe: Collider | null, box: number[] | null }} Part */
+  /** @typedef {{ positions: ArrayLike<number>, indices: ArrayLike<number>, matrix: ArrayLike<number>, translation: any, sight: ArrayLike<number> | null, probe: Collider | null, box: number[] | null }} Part */
   /** @type {Map<string, Part[]>} */
   const held = new Map();
   /** @type {LateBody} the body the gate guards - its last settle's */
   let guarded = null;
-  const partOf = (positions, indices, matrix, translation) => ({ positions, indices, matrix, translation: translation ?? null, probe: null, box: null });
+  const partOf = (positions, indices, matrix, translation, sight = null) => ({ positions, indices, matrix, translation: translation ?? null, sight, probe: null, box: null });   // FIELD BUGS 2026-10-25i SIGN-PASS: `sight`, addMesh's - a ray's triangles, no body's
   /** The withheld part's own collider - made once, asked every settle until it stands; riding the bucket's own provider. */
   const probeOf = (h) => {
-    if (!h.probe) { h.probe = new Collider(); h.probe.addMesh(PROBE, h.positions, h.indices, h.matrix, h.translation); }
+    if (!h.probe) { h.probe = new Collider(); h.probe.addMesh(PROBE, h.positions, h.indices, h.matrix, h.translation, null, false, h.sight); }   // SIGN-PASS: a hung board closes on no body
     return h.probe;
   };
   // the law, its box first: a town's yards stand two thousand pieces and a pixel a thousand parts, and one whose box (its
@@ -159,11 +160,11 @@ function makeGate(collider) {
     for (let i = 0; i < 6; i++) BOX[i] = b[i] + (t ? t[i % 3] : 0);
     return boxMeetsBody(BOX, body.pos, body.height ?? CAPSULE_HEIGHT) && lateSolidCloses(probeOf(h), body);
   };
-  const stand = (key, h) => collider.addMesh?.(key, h.positions, h.indices, h.matrix, h.translation);
+  const stand = (key, h) => collider.addMesh?.(key, h.positions, h.indices, h.matrix, h.translation, null, false, h.sight);
   return {
-    /** @param {string} key @param {ArrayLike<number>} positions @param {ArrayLike<number>} indices @param {ArrayLike<number>} matrix @param {{ body?: LateBody, translation?: any }} [o] */
-    add(key, positions, indices, matrix, { body = guarded, translation = null } = {}) {
-      const h = partOf(positions, indices, matrix, translation);
+    /** @param {string} key @param {ArrayLike<number>} positions @param {ArrayLike<number>} indices @param {ArrayLike<number>} matrix @param {{ body?: LateBody, translation?: any, sight?: ArrayLike<number> | null }} [o] */
+    add(key, positions, indices, matrix, { body = guarded, translation = null, sight = null } = {}) {
+      const h = partOf(positions, indices, matrix, translation, sight);
       const now = bodyNow(body);
       if (!(now && closes(h, now))) { stand(key, h); return true; }
       const parts = held.get(key);

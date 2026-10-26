@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { newVoyage, joinVoyage, stepVoyage, voyageWord, voyageStateOf, ktLeastMs, KT_BRIDGE_CRADLE0, KT_RESONATOR0, KT_SAILWALK_LEAST_MS } from '../../../src/net/ketch/ketchBrain.js';
 import { ketchRoomKey, ketchVoyageOf, KT_STAGE } from '../../../src/net/ketch/ketchLaw.js';
 import { KT_CRADLES, KT_BRIDGE_CRADLES, KT_SOCKETS, KT_RESONATORS } from '../../../src/net/ketch/ketchDeck.js';
-import { KW_ID, KW_FORK_ID0 } from '../../../src/net/ketch/ketchWarden.js';
+import { KW_ID, KW_FORK_ID0, KW_ENDS_MS, KW_LOST_MS } from '../../../src/net/ketch/ketchWarden.js';
 import { HIT_KINDS } from '../../../src/net/gate/gateBrain.js';
 import { validKetchOut, KT_OUT_KINDS } from '../../../src/net/wire.js';
 
@@ -116,7 +116,7 @@ export function fightWhole(V, t0, core, rng = seeded(9)) {
     }
     return out;
   };
-  const run = sail(V, t0, core, { act, most: 14 * 60_000, until: (f) => f.k === 'fell' });
+  const run = sail(V, t0, core, { act, most: KW_ENDS_MS + KW_LOST_MS,   /* AUDIT KETCH II L5-7: the fight's own end, fourteen minutes before KETCH-LONGER */ until: (f) => f.k === 'fell' });
   return { out: [...ins, ...run.out], now: run.now };
 }
 

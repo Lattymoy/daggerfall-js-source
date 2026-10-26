@@ -16,65 +16,64 @@ DisplayName: What the Lodestone Answers
 QRC:
 
 QuestFail:  [1003]
-<ce>       Imrah Bel-Tavir has gone home to Sentinel, her
-<ce>              question still unanswered.
+<ce>         Imrah Bel-Tavir has gone back to Sentinel
+<ce>                     without an answer.
 
 QuestComplete:  [1004]
-<ce>       "For the last of it," Imrah says, and counts out
-<ce>       _gold_ gold. "And for going up a chain I never
-<ce>                  could, in my place."
+<ce>        "For the last of it," Imrah says, and counts
+<ce>       out _gold_ gold. "And for climbing the chain I
+<ce>                       never could."
 
 QuestLogEntry:  [1010]
 %qdt:
- Imrah Bel-Tavir has read the Sky-Ketch's lodestone,
- and she knows what it follows. She wants my counsel
- on who should be told before she writes it down.
- She is at _tavern_ in __tavern_.
+ Imrah Bel-Tavir has read the Sky-Ketch's
+ lodestone and knows what it follows. She wants my
+ advice on who to tell. She is at _tavern_ in
+ __tavern_.
 
 Message:  1011
 %pcn,
 
-     I have it. I know what brought her down over
- Daggerfall, and I wish I did not. Come to _tavern_
- in __tavern_. Do not come aboard her first. Come
- straight to me.
+     I know what brought the ship to Daggerfall,
+ and I wish I did not. Come to _tavern_ in
+ __tavern_. Come straight to me.
 
 <ce>                Imrah Bel-Tavir, Antiquarian
 
 Message:  1012
-<ce>       The porter will not meet your eye. "She burned
-<ce>       three letters before she sent this one," he says.
+<ce>        The porter won't meet your eye. "She burned
+<ce>          three letters before this one," he says.
 
 Message:  1013
-<ce>       "Her lodestone is tuned to Dwemer brass, a great
-<ce>        deal of it, as a compass is tuned to the north.
-<ce>        Once before there was enough of it in one place
-<ce>        to pull her, when Tiber Septim's Brass God walked,
-<ce>        and it was broken before she could follow. Now
-<ce>        its pieces are pulling her again."
+<ce>         "The lodestone is tuned to Dwemer brass, a
+<ce>        great deal of it, the way a compass is tuned
+<ce>       to north. It pulled the ship once before, when
+<ce>       Tiber Septim's Brass God walked, and the Brass
+<ce>        God was broken before the ship could follow.
+<ce>             Now its pieces are pulling again."
 <ce>
-<ce>       She turns her chart to you. Every line she has
-<ce>       drawn of the Ketch's course bends toward one
-<ce>       place under the Bay.
+<ce>       She turns her chart toward you. Every line of
+<ce>       the ship's course bends toward one place under
+<ce>                          the Bay.
 <ce>
-<ce>       "The Numidium. Its pieces are somewhere under
-<ce>        these waters, and something is waking them, and
-<ce>                    the ship follows."
+<ce>         "The Numidium. Its pieces are down there,
+<ce>           something is waking them, and the ship
+<ce>                         follows."
 
 Message:  1014
 The antiquarian? She has stopped drawing the sky. Now she draws the Bay.
 <--->
-Imrah Bel-Tavir will not say what she found. She looks like she has not slept in a week.
+Imrah Bel-Tavir won't say what she found. She looks like she hasn't slept in a week.
 <--->
 They say the brass ship is looking for something. They say it found it.
 
 Message:  1030
-<ce>       "Every king on this Bay would go to war for a
-<ce>        piece of the Brass God, and some of them already
-<ce>        are. If I write this, someone will read it. The
-<ce>        Mages Guild would want to know. Ysolde Marnhel
-<ce>        in Wayrest would want to know. Who do I tell,
-<ce>                          %pcf?"
+<ce>        "Every king on the Bay would go to war for a
+<ce>       piece of the Brass God, and some already have.
+<ce>        If I write this down, someone will read it.
+<ce>        The Mages Guild would want to know. So would
+<ce>         Ysolde Marnhel in Wayrest. Who do I tell,
+<ce>                           %pcf?"
 
 Message:  1031
 The Mages Guild. Write to Ysolde Marnhel.
@@ -83,27 +82,26 @@ Message:  1032
 No one. Burn the chart.
 
 Message:  1040
-<ce>       Imrah nods and takes up her pen. "Ysolde, then.
-<ce>        She wrote the book on the Burning Doors. She
-<ce>        will know what to do with a door that opens
-<ce>                    the other way."
+<ce>         Imrah nods and picks up her pen. "Ysolde,
+<ce>       then. She wrote the book on the Burning Doors.
+<ce>            She will know what to do with this."
 <ce>
-<ce>       Then she takes a little brass charm from her own
-<ce>       neck, a tuning-fork no longer than a finger, and
-<ce>       hangs it on yours. "Rourken work. It hummed in
-<ce>        my hand the day she first came over the walls.
-<ce>                       Keep it."
+<ce>       She takes a small brass charm from around her
+<ce>        neck, a tuning-fork no longer than a finger,
+<ce>       and gives it to you. "Rourken work. It hummed
+<ce>        in my hand the day the ship first came over
+<ce>                    the walls. Keep it."
 
 Message:  1041
-<ce>       Imrah holds the chart over the candle until it
-<ce>       catches, and watches it burn down to her fingers.
+<ce>         Imrah holds the chart over the candle and
+<ce>                      watches it burn.
 <ce>
-<ce>       "Then no one," she says. From under her table
-<ce>       she lifts a war hammer, its head cut with the
-<ce>       Tonal Guard's marks. "From the bridge. A porter
-<ce>        brought it down off her anchor-lift and would
-<ce>        take no coin for it. I think the steersman
-<ce>        carried it. You have earned it more than I."
+<ce>         "No one, then," she says. She lifts a war
+<ce>       hammer from under the table, its head cut with
+<ce>         the Tonal Guard's marks. "A porter brought
+<ce>       this down from the anchor-lift and would take
+<ce>       no coin for it. I think the steersman carried
+<ce>                  it. You should have it."
 
 -- Symbols used in the QRC file:
 --
@@ -111,7 +109,7 @@ Message:  1041
 --               %pcf occurs 1 time.
 --               %qdt occurs 1 time.
 --             _gold_ occurs 1 time.
---           _tavern_ occurs 3 times.
+--           _tavern_ occurs 2 times.
 --          __tavern_ occurs 2 times.
 
 QBN:

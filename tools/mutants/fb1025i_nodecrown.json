@@ -1,0 +1,251 @@
+[
+  {
+    "name": "NODE-CROWN-the-scale-counted-twice",
+    "file": "src/render/nodeGlint.js",
+    "old": "h = t.run.size[1] * row[4];",
+    "new": "h = t.run.size[1] * row[4] * t.run.scale[1];",
+    "tests": [
+      "test/scenes/fb1025i_nodecrown.test.js",
+      "test/scenes/nodeglint.test.js"
+    ],
+    "note": "the bug: the prototype's scale, already in its standing size, taken again"
+  },
+  {
+    "name": "NODE-CROWN-the-row-s-scale-unread",
+    "file": "src/render/nodeGlint.js",
+    "old": "h = t.run.size[1] * row[4];",
+    "new": "h = t.run.size[1];",
+    "tests": [
+      "test/scenes/fb1025i_nodecrown.test.js",
+      "test/scenes/nodeglint.test.js"
+    ],
+    "note": "the tree's own scale (DFU's 0.6..1.4) left out"
+  },
+  {
+    "name": "NODE-CROWN-the-width-for-the-height",
+    "file": "src/render/nodeGlint.js",
+    "old": "h = t.run.size[1] * row[4];",
+    "new": "h = t.run.size[0] * row[4];",
+    "tests": [
+      "test/scenes/fb1025i_nodecrown.test.js",
+      "test/scenes/nodeglint.test.js"
+    ],
+    "note": "the crown's height its standing width"
+  },
+  {
+    "name": "NODE-CROWN-the-anchors-on-the-old-height",
+    "file": "src/render/nodeGlint.js",
+    "old": "_span(s.spans, k, row[0], row[1], row[2], 2 * reach, h, 0)",
+    "new": "_span(s.spans, k, row[0], row[1], row[2], 2 * reach, h * t.run.scale[1], 0)",
+    "tests": [
+      "test/scenes/fb1025i_nodecrown.test.js"
+    ],
+    "note": "the box the tree's, the glints' spots still on the double-counted crown"
+  },
+  {
+    "name": "NODE-CROWN-the-box-on-the-old-height",
+    "file": "src/render/nodeGlint.js",
+    "old": "row[0] + reach, row[1] + h, row[2] + reach);",
+    "new": "row[0] + reach, row[1] + h * t.run.scale[1], row[2] + reach);",
+    "tests": [
+      "test/scenes/fb1025i_nodecrown.test.js"
+    ],
+    "note": "the spots the tree's, the box (the rectangle the mask and the light stand in) still the double-counted one"
+  },
+  {
+    "name": "NODE-CROWN-the-row-s-scale-held-at-1-and-over",
+    "file": "src/render/nodeGlint.js",
+    "old": "h = t.run.size[1] * row[4];",
+    "new": "h = t.run.size[1] * Math.max(1, row[4]);",
+    "tests": [
+      "test/scenes/fb1025i_nodecrown.test.js"
+    ],
+    "note": "AUDIT FB1025i C3: a tree under its prototype's size at its prototype's"
+  },
+  {
+    "name": "NODE-CROWN-C1-the-growth-unbounded",
+    "file": "src/render/nodeGlint.js",
+    "old": "Math.min(GLINT_CROWN_GROWTH, Math.max(1, (crownPx",
+    "new": "Math.min(Infinity, Math.max(1, (crownPx",
+    "tests": [
+      "test/scenes/fb1025i_nodecrown.test.js"
+    ],
+    "note": "a crown's glints past twice a herb's"
+  },
+  {
+    "name": "NODE-CROWN-C1-the-growth-under-1",
+    "file": "src/render/nodeGlint.js",
+    "old": "Math.max(1, (crownPx",
+    "new": "Math.max(0, (crownPx",
+    "tests": [
+      "test/scenes/fb1025i_nodecrown.test.js"
+    ],
+    "note": "a small crown's glints fewer than a herb's"
+  },
+  {
+    "name": "NODE-CROWN-C1-the-power-the-side-s-own",
+    "file": "src/render/nodeGlint.js",
+    "old": "** (2 / 3)));",
+    "new": "** 1));",
+    "tests": [
+      "test/scenes/fb1025i_nodecrown.test.js"
+    ],
+    "note": "the light growing as the side cubed, not its area"
+  },
+  {
+    "name": "NODE-CROWN-C1-the-image-unscaled",
+    "file": "src/render/nodeGlint.js",
+    "old": "* (rows / GLINT_REF_ROWS))) ** (2 / 3)",
+    "new": "* 1)) ** (2 / 3)",
+    "tests": [
+      "test/scenes/fb1025i_nodecrown.test.js"
+    ],
+    "note": "the reference side at 1080 rows whatever the image"
+  },
+  {
+    "name": "NODE-CROWN-C1-the-count-unrounded",
+    "file": "src/render/nodeGlint.js",
+    "old": "Math.round(GLINT_COUNT * glintCrownGrowth(rows, crownPx))",
+    "new": "GLINT_COUNT * glintCrownGrowth(rows, crownPx)",
+    "tests": [
+      "test/scenes/fb1025i_nodecrown.test.js"
+    ],
+    "note": "a count no whole one"
+  },
+  {
+    "name": "NODE-CROWN-C1-the-reach-ungrown",
+    "file": "src/render/nodeGlint.js",
+    "old": "glintPx(rows, crownPx) * glintCrownGrowth(rows, crownPx);",
+    "new": "glintPx(rows, crownPx);",
+    "tests": [
+      "test/scenes/fb1025i_nodecrown.test.js",
+      "test/scenes/nodeglint.test.js"
+    ],
+    "note": "a crown's glints more, never further"
+  },
+  {
+    "name": "NODE-CROWN-C1-the-area-its-width-alone",
+    "file": "src/render/nodeGlint.js",
+    "old": "* ((h * Math.abs(proj[5]) * vh) / (2 * cw))",
+    "new": "* ((w * Math.abs(proj[0]) * vw) / (2 * cw))",
+    "tests": [
+      "test/scenes/fb1025i_nodecrown.test.js"
+    ],
+    "note": "the side its width's"
+  },
+  {
+    "name": "NODE-CROWN-C1-a-root-behind-the-eye-none",
+    "file": "src/render/nodeGlint.js",
+    "old": ": Infinity);",
+    "new": ": 0);",
+    "tests": [
+      "test/scenes/fb1025i_nodecrown.test.js"
+    ],
+    "note": "a crown about the eye grown none"
+  },
+  {
+    "name": "NODE-CROWN-C1-three-times",
+    "file": "src/render/nodeGlint.js",
+    "old": "export const GLINT_CROWN_GROWTH = 2;",
+    "new": "export const GLINT_CROWN_GROWTH = 3;",
+    "tests": [
+      "test/scenes/fb1025i_nodecrown.test.js"
+    ],
+    "note": "the bound moved"
+  },
+  {
+    "name": "NODE-CROWN-C1-the-crown-never-grown",
+    "file": "src/render/nodeGlint.js",
+    "old": "if (crown > 0) { s.count",
+    "new": "if (false) { s.count",
+    "tests": [
+      "test/scenes/fb1025i_nodecrown.test.js",
+      "test/scenes/nodeglint.test.js"
+    ],
+    "note": "every node a herb's six"
+  },
+  {
+    "name": "NODE-CROWN-C1-every-node-grown",
+    "file": "src/render/nodeGlint.js",
+    "old": "if (crown > 0) { s.count",
+    "new": "if (crown >= 0) { s.count",
+    "tests": [
+      "test/scenes/fb1025i_nodecrown.test.js",
+      "test/scenes/nodeglint.test.js"
+    ],
+    "note": "a flat by the crown's law"
+  },
+  {
+    "name": "NODE-CROWN-C1-the-crown-s-size-its-height-alone",
+    "file": "src/render/nodeGlint.js",
+    "old": "t.run.size[0] * row[4], h, vw, vh));",
+    "new": "h, h, vw, vh));",
+    "tests": [
+      "test/scenes/fb1025i_nodecrown.test.js",
+      "test/scenes/nodeglint.test.js"
+    ],
+    "note": "its width read as its height"
+  },
+  {
+    "name": "NODE-CROWN-C1-the-crown-at-the-eye-s-depth",
+    "file": "src/render/nodeGlint.js",
+    "old": "vpm[3] * row[0] + vpm[7] * row[1] + vpm[11] * row[2] + vpm[15]",
+    "new": "1",
+    "tests": [
+      "test/scenes/fb1025i_nodecrown.test.js",
+      "test/scenes/nodeglint.test.js"
+    ],
+    "note": "its size at a metre off"
+  },
+  {
+    "name": "NODE-CROWN-C1-the-room-a-flat-s",
+    "file": "src/render/nodeGlint.js",
+    "old": "const room = Math.max(roomPx, s.glint + 2);",
+    "new": "const room = roomPx;",
+    "tests": [
+      "test/scenes/fb1025i_nodecrown.test.js",
+      "test/scenes/nodeglint.test.js"
+    ],
+    "note": "a crown's longer rays cut at a flat's room"
+  },
+  {
+    "name": "NODE-CROWN-C1-the-count-unsent",
+    "file": "src/render/nodeGlint.js",
+    "old": "      gl.uniform1i(L.uCount, s.count);   // NODE-CROWN: its glints\n",
+    "new": "",
+    "tests": [
+      "test/scenes/nodeglint.test.js"
+    ],
+    "note": "every node lit at its last count"
+  },
+  {
+    "name": "NODE-CROWN-C1-the-count-unread",
+    "file": "src/render/nodeGlint.js",
+    "old": "  if (i >= uCount) return vec4(0.0, 0.0, 1.0, 0.0);   // NODE-CROWN: past the node's own count, none\n",
+    "new": "",
+    "tests": [
+      "test/scenes/nodeglint.test.js"
+    ],
+    "note": "every slot lit whatever the node"
+  },
+  {
+    "name": "NODE-CROWN-C1-the-turn-another-life-s",
+    "file": "src/render/nodeGlint.js",
+    "old": "  glintLife(i, seed, tm, life);",
+    "new": "  glintLife(0, seed, tm, life);",
+    "tests": [
+      "test/scenes/nodeglint.test.js"
+    ],
+    "note": "every glint turned as the first"
+  },
+  {
+    "name": "NODE-CROWN-C1-the-slots-a-herb-s",
+    "file": "src/render/nodeGlint.js",
+    "old": "const GLINT_SLOTS = Array.from({ length: GLINT_CROWN_COUNT }, (_, i) => i);",
+    "new": "const GLINT_SLOTS = Array.from({ length: GLINT_COUNT }, (_, i) => i);",
+    "tests": [
+      "test/scenes/nodeglint.test.js"
+    ],
+    "note": "a crown's twelve with six slots"
+  }
+]

@@ -77,7 +77,8 @@ test('BR1: every surface the player reads carries the one name', () => {
   // over a tracked sub-line - after BR2's one day as an uploaded logo.
   // AUDIT BR5 (Mac, 2026-10-11: "Use the new logo"): it is the product's
   // logo again, the game's own file, named by its alt.
-  assert.ok(landing.includes(`<h1 class="wordmark"><img src="./src/assets/branding/dfo-online.png" alt="${NAME}" width="526" height="322" /></h1>`), 'the wordmark');
+  // BR6 (Mac, 2026-10-26): the dragon mark, at its own 1232 x 1034.
+  assert.ok(landing.includes(`<h1 class="wordmark"><img src="./src/assets/branding/dfo-online.png" alt="${NAME}" width="1232" height="1034" /></h1>`), 'the wordmark');
   assert.equal((landing.match(/<img\s/g) ?? []).length, 1, 'and it is the one image on the page');
   // THE WORDMARK SPLITS THE NAME ACROSS TWO ELEMENTS, so no adjacency
   // sweep can ever see it whole: the front door rendered DAGGERFALL over
@@ -227,7 +228,8 @@ test('BR4: the logo is Mac’s transparent cut, and nothing blends it away - BR5
   // followed up over). Every box keeps the HEIGHT it had, so nothing above or
   // below a mark moves: its new width is the old one's height at the new
   // ratio - worked here from the file's own IHDR, so the next logo's size
-  // reddens this, not a layout.
+  // reddens this, not a layout. BR6's dragon mark (Mac, 2026-10-26) is the
+  // next logo: 1232 x 1034, 1.19:1, so every box below narrowed to its height.
   const png = readFileSync(join(root, 'src/assets/branding/dfo-online.png'));
   const ratio = png.readUInt32BE(16) / png.readUInt32BE(20);
   // AUDIT BR5: the site's and the launcher's logo reserve the file's own size, so neither page moves as it loads
@@ -338,7 +340,7 @@ test('BR5: no surface still says Daggerfall Online - whole, split across a wordm
   assert.equal(split, '', `a wordmark still spells the old name across two elements:\n${split}`);
   assert.match(read('src/ui/enhanced/enhancedChargen.js'), new RegExp(`brand\\.append\\(el\\('div', 'sub', '${NAME}'\\)\\);`), 'the new character\'s masthead');
   // AUDIT BR5: the launcher wears the logo too, the game's own file, named by its alt
-  assert.ok(read('app/launcher/index.html').includes(`<h1 class="wordmark"><img src="dfo-online.png" alt="${NAME}" width="526" height="322"></h1>`), 'and the desktop launcher\'s');
+  assert.ok(read('app/launcher/index.html').includes(`<h1 class="wordmark"><img src="dfo-online.png" alt="${NAME}" width="1232" height="1034"></h1>`), 'and the desktop launcher\'s');
   assert.match(read('src/ui/screenshot.js'), /return `dfo-\$\{d\.getFullYear\(\)\}/, 'a screenshot is named for the product');
   assert.match(read('src/ui/shotsPane.js'), /a\.download = `dfo-shot-\$\{s\.id\}\.jpg`;/, 'and so is a saved loading shot');
   assert.match(read('server-account/src/patreon.js'), new RegExp(`<title>\\$\\{esc\\(heading\\)\\} - ${NAME}</title>`), 'and the Patreon link\'s page');

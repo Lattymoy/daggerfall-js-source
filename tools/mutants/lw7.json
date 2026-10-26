@@ -827,47 +827,57 @@
   {
     "name": "LW7-host-road-unstruck",
     "file": "src/scenes/world.js",
-    "old": "            else if (!r?.spared && livingStrikeRoad(cam.pos, lookFwd)) surfacePlayer();",
-    "new": "            else if (false) surfacePlayer();",
+    "old": "            r ||= livingStrikeRoad(cam.pos, lookFwd);",
+    "new": "            void livingStrikeRoad;",
     "tests": [
-      "test/systems/livingWorld/lw7_deeds.test.js"
-    ]
+      "test/systems/livingWorld/lw7_deeds.test.js",
+      "test/systems/livingWorld/fb1025i_roadspare.test.js"
+    ],
+    "note": "FIELD BUGS 2026-10-25i ROAD-SPARE (re-aimed by content): the road's strike moved to its own module"
   },
   {
     "name": "LW7-host-road-reach",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/livingWorld/roadStrike.js",
     "old": "    if (!near || near.distance > WEAPON_REACH) return false;",
     "new": "    if (!near) return false;",
     "tests": [
-      "test/systems/livingWorld/lw7_deeds.test.js"
-    ]
+      "test/systems/livingWorld/lw7_deeds.test.js",
+      "test/systems/livingWorld/fb1025i_roadspare.test.js"
+    ],
+    "note": "FIELD BUGS 2026-10-25i ROAD-SPARE (re-aimed by content): the road's strike moved to its own module"
   },
   {
     "name": "LW7-host-road-wall",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/livingWorld/roadStrike.js",
     "old": "    if (Number.isFinite(wall) && wall < near.distance - 1e-3) return false;",
     "new": "    if (false) return false;",
     "tests": [
-      "test/systems/livingWorld/lw7_deeds.test.js"
-    ]
+      "test/systems/livingWorld/lw7_deeds.test.js",
+      "test/systems/livingWorld/fb1025i_roadspare.test.js"
+    ],
+    "note": "FIELD BUGS 2026-10-25i ROAD-SPARE (re-aimed by content): the road's strike moved to its own module"
   },
   {
     "name": "LW7-host-road-tally",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/livingWorld/roadStrike.js",
     "old": "    tallyCrimeGuildRequirements(playerEntity, false, 5);\n    playerWeaponHitEntity",
     "new": "    playerWeaponHitEntity",
     "tests": [
-      "test/systems/livingWorld/lw7_deeds.test.js"
-    ]
+      "test/systems/livingWorld/lw7_deeds.test.js",
+      "test/systems/livingWorld/fb1025i_roadspare.test.js"
+    ],
+    "note": "FIELD BUGS 2026-10-25i ROAD-SPARE (re-aimed by content): the road's strike moved to its own module"
   },
   {
     "name": "LW7-host-road-racial",
-    "file": "src/scenes/world.js",
-    "old": "    playerWeaponHitEntity(playerEntity, { health: 0 }, { isCivilian: true });\n    return true;",
-    "new": "    return true;",
+    "file": "src/scenes/livingWorld/roadStrike.js",
+    "old": "    playerWeaponHitEntity(playerEntity, { health: 0 }, { isCivilian: true });\n    return ROAD_STRUCK;",
+    "new": "    return ROAD_STRUCK;",
     "tests": [
-      "test/systems/livingWorld/lw7_deeds.test.js"
-    ]
+      "test/systems/livingWorld/lw7_deeds.test.js",
+      "test/systems/livingWorld/fb1025i_roadspare.test.js"
+    ],
+    "note": "FIELD BUGS 2026-10-25i ROAD-SPARE (re-aimed by content): the road's strike moved to its own module"
   },
   {
     "name": "LW7-host-tone",

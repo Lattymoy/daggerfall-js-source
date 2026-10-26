@@ -384,9 +384,13 @@ test('LW7 the streaming host: every resident\'s place by the lives (`livingCycle
   // WATCH-FIX: PIN MOVED - every marked guard followed every frame in the lane, its end deciding (test/systems/livingWorld/watchfix_watch.test.js)
   assert.match(w, /const livingWatchStep = \(\) => watchStep\(_livingWatchTurned, cityGuards\.guards, \{ resolve: livingResidentOf, localOf: livingLocalOf \}\);/);
   assert.match(w, /if \(livingWorldOn\(\)\) \{ livingWatchStep\(\); livingPeerWatchStep\(\); \}/);
-  assert.match(w, /else if \(!r\?\.spared && livingStrikeRoad\(cam\.pos, lookFwd\)\) surfacePlayer\(\);/);
-  assert.match(w, /const near = nearestPerson\(eye, dir, livingRoads\.talkSeats\(\)\);[^\n]*\n\s*if \(!near \|\| near\.distance > WEAPON_REACH\) return false;\n\s*const wall = collider\.raycast\(eye, dir, near\.distance\);\n\s*if \(Number\.isFinite\(wall\) && wall < near\.distance - 1e-3\) return false;\n\s*if \(!livingRoads\.slain\(near\.entry\.person\)\) return false;/);
-  assert.match(w, /tallyCrimeGuildRequirements\(playerEntity, false, 5\);\n\s*playerWeaponHitEntity\(playerEntity, \{ health: 0 \}, \{ isCivilian: true \}\);/);
+  // PIN MOVED (FIELD BUGS 2026-10-25i ROAD-SPARE): the road's strike is scenes/livingWorld/roadStrike.js (run by execution in
+  // test/systems/livingWorld/fb1025i_roadspare.test.js) - the host builds it and offers it a swing that met nobody in the street
+  assert.match(w, /const livingStrikeRoad = createRoadStrike\(\{ roads: \(\) => livingRoads, open: \(\) => livingWorldOn\(\) && _mode\(\) === 'exterior', collider, cityGuards, hitEffects, playerEntity \}\);/);
+  assert.match(w, /r \|\|= livingStrikeRoad\(cam\.pos, lookFwd\);[^\n]*\n\s*if \(r\?\.crime \|\| r\?\.struck\) surfacePlayer\(\);/);
+  const rs = rd('src/scenes/livingWorld/roadStrike.js');
+  assert.match(rs, /const near = nearestPerson\(eye, dir, layer\.talkSeats\(\)\);\n\s*if \(!near \|\| near\.distance > WEAPON_REACH\) return false;\n\s*const wall = collider\.raycast\(eye, dir, near\.distance\);\n\s*if \(Number\.isFinite\(wall\) && wall < near\.distance - 1e-3\) return false;\n\s*if \(cityGuards\.playerSparesPerson\(near\.entry\.person\)\) return ROAD_SPARED;[^\n]*\n\s*if \(!layer\.slain\(near\.entry\.person\)\) return false;/);
+  assert.match(rs, /tallyCrimeGuildRequirements\(playerEntity, false, 5\);\n\s*playerWeaponHitEntity\(playerEntity, \{ health: 0 \}, \{ isCivilian: true \}\);/);
   // PIN MOVED: TONE-TASTE - the seams carry the tone as taken
   assert.match(w, /livingTone: \(person, taste\) => person\?\.living\?\.town\?\.toned\?\.\(person, taste\),/);
   assert.match(w, /_livingRoadsDoor\.toned = \(p, taste\) => livingRoads\?\.toned\(p, taste\) \?\? null;/);

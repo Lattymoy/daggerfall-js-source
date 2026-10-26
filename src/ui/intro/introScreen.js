@@ -32,8 +32,8 @@ const STYLE = `${PIXELIFY_FIVE_FACE}
 .intro-credit p{margin:0;font-size:clamp(11px,1.15vw,15px);text-transform:uppercase;letter-spacing:.26em;text-shadow:0 2px 12px #000}
 .intro-credit img{display:block;max-width:62vw;max-height:29dvh;width:auto;height:auto;object-fit:contain;filter:drop-shadow(0 3px 14px #0008)}
 .intro-credit[data-credit=nexus] img{max-width:45vw;max-height:17dvh}
-/* BR5: the box keeps BR4's height - 86vw and 1240px x 850/2112 x 526/322 for the DFO mark's 1.63:1 */
-.intro-title{position:absolute;left:50%;top:48%;width:min(56.5vw,815px);opacity:0;pointer-events:none;transform-origin:50% 50%;will-change:transform,opacity,filter}
+/* BR5: the box keeps BR4's height - 86vw and 1240px x 850/2112 x 526/322 for the DFO mark's 1.63:1; BR6: x 1232/1034 for the dragon mark's 1.19:1 */
+.intro-title{position:absolute;left:50%;top:48%;width:min(41.2vw,595px);opacity:0;pointer-events:none;transform-origin:50% 50%;will-change:transform,opacity,filter}
 .intro-title .brand-logo{display:block;width:100%;height:auto}
 .intro-title-fallback{font-size:clamp(28px,7vw,100px);text-align:center;margin:0;letter-spacing:.05em}
 .intro-light{position:absolute;inset:0;opacity:0;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,#ebd3a025,transparent 58%)}
@@ -48,8 +48,8 @@ const STYLE = `${PIXELIFY_FIVE_FACE}
 .intro-continue{position:absolute;left:50%;bottom:max(13dvh,60px);transform:translateX(-50%);white-space:nowrap;min-height:48px;padding:12px 28px;background:none;border:0;font-size:12px!important;letter-spacing:.25em;text-transform:uppercase;opacity:0}
 .intro-continue:before,.intro-continue:after{content:'◆';display:inline-block;font-size:7px;vertical-align:middle;color:#bfa878;margin:0 18px}
 .intro-footer{position:absolute;bottom:max(18px,env(safe-area-inset-bottom));left:20px;right:20px;text-align:center;font-size:11px;line-height:1.5;letter-spacing:.18em;text-transform:uppercase;color:#898a82;pointer-events:none}
-@media(max-width:600px){.intro-credit img{max-width:80vw;max-height:24dvh}.intro-credit[data-credit=nexus] img{max-width:72vw}.intro-credit p{font-size:11px;letter-spacing:.18em}.intro-continue{bottom:23dvh;font-size:11px!important;letter-spacing:.16em}.intro-title{width:94vw}.intro-letterbox{border-width:4dvh 0}.intro-footer{font-size:11px}}
-@media(max-height:450px){.intro-continue{bottom:7dvh}.intro-title{width:min(48.7vw,657px)}.intro-footer{bottom:6px}.intro-gate{gap:12px}}
+@media(max-width:600px){.intro-credit img{max-width:80vw;max-height:24dvh}.intro-credit[data-credit=nexus] img{max-width:72vw}.intro-credit p{font-size:11px;letter-spacing:.18em}.intro-continue{bottom:23dvh;font-size:11px!important;letter-spacing:.16em}.intro-title{width:68.6vw}.intro-letterbox{border-width:4dvh 0}.intro-footer{font-size:11px}}
+@media(max-height:450px){.intro-continue{bottom:7dvh}.intro-title{width:min(35.5vw,480px)}.intro-footer{bottom:6px}.intro-gate{gap:12px}}
 `;
 
 const make = (doc, tag, cls, text) => {

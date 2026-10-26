@@ -61,7 +61,7 @@ test('U60: the root document is a page about the game, and the game is at /play/
   // picture and nothing else is one. It is the GAME's own file, which the
   // build carries for the front door already - one copy, so public/brand/
   // stays untracked and the site cannot show a logo the game does not.
-  const LOGO = '<h1 class="wordmark"><img src="./src/assets/branding/dfo-online.png" alt="DFO Online" width="526" height="322" /></h1>';
+  const LOGO = '<h1 class="wordmark"><img src="./src/assets/branding/dfo-online.png" alt="DFO Online" width="1232" height="1034" /></h1>';
   assert.equal(landing.split(LOGO).length, 2, 'the wordmark is the product\'s logo, once');
   const drawn = landing.replace(LOGO, '').replace(/url\(data:font\/woff2;base64,[A-Za-z0-9+/=]+\)/g, '');
   assert.doesNotMatch(drawn, /<img\s|<canvas|<video|<picture|url\(/i, 'beyond the logo, the landing page draws nothing but CSS');
@@ -391,8 +391,9 @@ test('U63: the page is the pixel face\'s own idioms, not the shell it replaced',
   assert.match(skin, /0 -4px 0 var\(--brass\), 0 4px 0 var\(--brass\)/, '...which is the menu\'s gem');
   // AUDIT BR5: the wordmark is the product's logo again (BR3 had made it type), at the width the game's front door
   // gives it (src/ui/enhanced/enhancedStyle.js .px-wordmark:has(.brand-logo)), centred over the rule.
-  assert.match(css, /\.wordmark img \{ display: block; width: min\(321px, 64vw\); height: auto; margin: 0 auto; \}/, 'the logo, sized as the door\'s');
-  assert.ok(read('src/ui/enhanced/enhancedStyle.js').includes('.px-wordmark:has(.brand-logo) { width: min(321px, 50vw);'), '...whose 321px it shares');
+  // BR6: the dragon mark's 234px, and 46.7vw - the height BR5's 64vw gave its 1.63:1
+  assert.match(css, /\.wordmark img \{ display: block; width: min\(234px, 46\.7vw\); height: auto; margin: 0 auto; \}/, 'the logo, sized as the door\'s');
+  assert.ok(read('src/ui/enhanced/enhancedStyle.js').includes('.px-wordmark:has(.brand-logo) { width: min(234px, 36.4vw);'), '...whose 234px it shares');
   assert.doesNotMatch(css, /\.wordmark small/, 'the type wordmark\'s sub-line went with it');
   assert.match(css, /rgb\(243,239,44\)/, 'the classic shadowed-label pair, for what is live');
   assert.match(css, /text-shadow: 2px 2px 0 rgb\(93,77,12\)/);

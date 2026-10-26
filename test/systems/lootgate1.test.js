@@ -7,6 +7,7 @@ import { imbuePiece, imbueRefusal, imbuePrice } from '../../src/systems/reforge.
 import { welkyndShards } from '../../src/systems/gate/gateSpoils.js';
 import { createRandomWeapon } from '../../src/systems/loot/loot.js';
 import { setPref } from '../../src/systems/uiPrefs.js';
+import { isAmmunition } from '../../src/systems/item/itemTemplates.js';
 
 setPref('lootRarity', true);
 registerRollerLevel(null);
@@ -23,7 +24,7 @@ test('LOOT-GATE the curves: Rare x0.15 to level 7 and whole at 12, Legendary x0.
   assert.equal(droughtHeld(9), true); assert.equal(droughtHeld(10), false); assert.equal(droughtHeld(null), false);
 });
 
-const weapon = () => { for (let i = 0; i < 50; i++) { const w = createRandomWeapon(5); if (w && !w.rarity) return w; } throw new Error('no weapon'); };
+const weapon = () => { for (let i = 0; i < 50; i++) { const w = createRandomWeapon(5); if (w && !w.rarity && !isAmmunition(w)) return w; } throw new Error('no weapon'); };   // never an Arrow: the Imbue takes none, and one draw in twenty was one (the test's own flake)
 const player = (level, gold, shards) => ({ level, items: [welkyndShards(shards)], goldPieces: gold });
 
 test('LOOT-GATE the Imbue: plain to Magic and Magic to Rare at any level, one price at every level, and a counter pays for the piece it was (mutants: a level gate; a price moved; sold at the new worth)', () => {

@@ -272,8 +272,8 @@
   {
     "name": "AUDIT-QL-FLOW-REWARD-15-offer-back",
     "file": "src/systems/questlines/qlState.js",
-    "old": "acts: {}, received: false });",
-    "new": "acts: {}, received: false, offer: null });",
+    "old": "acts: {}, received: false, reread: [] });",
+    "new": "acts: {}, received: false, reread: [], offer: null });",
     "tests": [
       "test/systems/questlines/ql4_flow.test.js"
     ]
