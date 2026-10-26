@@ -33,11 +33,17 @@ const b36 = (n) => n.toString(36).padStart(2, '0');
 // ---------------------------------------------------------------- the names and the numbers
 
 /** The blocks' fixed indices (formats/worldData/worldDataReplacement.js: past every fixed one in the tree - the capitals'
- *  run from 901000, the town outline's 906000): a cell's own block, its far view's, the plan's ring of lake. */
-export const IMPERIAL_BLOCK_INDEX = Object.freeze({ own: 2_000_000, far: 2_100_000, lake: 2_200_000 });
-/** The models' ids (world/customModels.js families): a cell's fabric, a slice's skyline. */
-export const IMPERIAL_FABRIC_MODEL = 3_000_000;
-export const IMPERIAL_SKYLINE_MODEL = 3_100_000;
+ *  run from 901000, the town outline's 906000, TS4's walled towns' 1,000,000 plus twenty bits of a map id, to 2,048,575):
+ *  a cell's own block, its far view's, the plan's ring of lake. FOUND (IC-GRAND's perf pass): the own blocks stood at
+ *  2,000,000 - a walled town's index for a map id's low bits over 1,000,000 was one of theirs. */
+export const IMPERIAL_BLOCK_INDEX = Object.freeze({ own: 2_060_000, far: 2_100_000, lake: 2_200_000 });
+/** The models' ids (world/customModels.js families): a cell's fabric, a slice's skyline - past TS4's town walls'
+ *  (world/townWalls.js townWallModelId: 3,000,000 plus twenty bits of a map id, to 4,048,575) and the towns' fabric's
+ *  (world/urban/townFabricStand.js, from 5,000,000). FOUND (IC-GRAND's perf pass): they stood at 3,000,000 and
+ *  3,100,000, inside the town walls' run - a walled town whose map id's low twenty bits fell under 40,000 would have drawn
+ *  its wall in a cell of the city's (a model registered alone is asked before a family's). */
+export const IMPERIAL_FABRIC_MODEL = 7_000_000;
+export const IMPERIAL_SKYLINE_MODEL = 7_100_000;
 /** How many slices out from the player's are built near; the slack before a near slice is built far again. */
 export const NEAR_RING = 1;
 export const NEAR_SLACK = 1;

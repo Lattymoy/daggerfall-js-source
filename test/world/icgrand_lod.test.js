@@ -12,7 +12,10 @@ import { CAPITALS, capitalNear, capitalBuildView, capitalViewOf, synthesizeCapit
 import {
   NEAR_RING, NEAR_SLACK, IMPERIAL_BLOCK_INDEX, imperialBlockIndex, imperialBlockName, imperialOwnName, imperialFarName, imperialLakeName, imperialViewName,
   imperialFabricModelId, imperialSkylineId, isFabricModelId, isSkylineId, imperialBlockJson, imperialOwnLaws, imperialOpenAt, sliceOfCell,
+  IMPERIAL_FABRIC_MODEL, IMPERIAL_SKYLINE_MODEL,
 } from '../../src/world/imperialBlocks.js';
+import { townWallBlockIndex, townWallModelId } from '../../src/world/townWalls.js';
+import { TOWN_FABRIC_MODEL_BASE } from '../../src/world/urban/townFabricStand.js';
 import { IMPERIAL, IMPERIAL_SPAN, IMPERIAL_CELLS, imperialSlicePlan, imperialCodeCell, IMPERIAL_ARENA_CODE, polar } from '../../src/world/imperialCity.js';
 import { installCapitals, _resetCapitals, IMPERIAL_KEEP } from '../../src/world/capitalModels.js';
 import { customModelFor, isSolidModel, registerCustomModelFamily, _resetCustomModels } from '../../src/world/customModels.js';
@@ -112,6 +115,30 @@ test('IC-GRAND THE FAMILIES - the city\'s blocks served by their names on the wo
   assert.ok(far.rmbBlock.fldHeader.autoMapData.every((v) => v === 0 || v === CAPITAL_CLOSED_BYTE) && !far.rmbBlock.fldHeader.autoMapData.includes(CAPITAL_CLOSED_BYTE), 'a far block closes nothing');
 });
 
+test('IC-GRAND THE FAMILIES APART - the city\'s block indices and model ids each a run of its own: its own, far and lake blocks past TS4\'s walled towns\' (1,000,000 plus a map id\'s low twenty bits), its fabric\'s and skylines\' models past the town walls\' (3,000,000 plus the same) and the towns\' fabric\'s (from TOWN_FABRIC_MODEL_BASE, two million before they meet) - FOUND in IC-GRAND\'s perf pass, the own blocks at 2,000,000 and the models at 3,000,000 inside the walls\' runs (mutants: the fabric back at 3,000,000; the own blocks back at 2,000,000)', () => {
+  const LOW = 0xfffff, CELLS = IMPERIAL_CELLS ** 2, SLICES = IMPERIAL_SPAN ** 2;
+  const runs = [
+    ['town wall blocks', townWallBlockIndex(0), townWallBlockIndex(LOW) + 1],
+    ['own blocks', IMPERIAL_BLOCK_INDEX.own, IMPERIAL_BLOCK_INDEX.own + CELLS],
+    ['far blocks', IMPERIAL_BLOCK_INDEX.far, IMPERIAL_BLOCK_INDEX.far + CELLS],
+    ['lake blocks', IMPERIAL_BLOCK_INDEX.lake, IMPERIAL_BLOCK_INDEX.lake + CELLS],
+  ];
+  const models = [
+    ['town wall models', townWallModelId(0), townWallModelId(LOW) + 1],
+    ['town fabric models', TOWN_FABRIC_MODEL_BASE, TOWN_FABRIC_MODEL_BASE + 2_000_000],
+    ['fabric models', IMPERIAL_FABRIC_MODEL, IMPERIAL_FABRIC_MODEL + CELLS],
+    ['skyline models', IMPERIAL_SKYLINE_MODEL, IMPERIAL_SKYLINE_MODEL + SLICES],
+  ];
+  for (const set of [runs, models]) {
+    for (let i = 0; i < set.length; i++) for (let j = i + 1; j < set.length; j++) {
+      const [a, a0, a1] = set[i], [b, b0, b1] = set[j];
+      assert.ok(a1 <= b0 || b1 <= a0, `${a} [${a0}, ${a1}) and ${b} [${b0}, ${b1}) apart`);
+    }
+  }
+  assert.equal(imperialFabricModelId(IMPERIAL_CELLS - 1, IMPERIAL_CELLS - 1), IMPERIAL_FABRIC_MODEL + CELLS - 1);
+  assert.equal(imperialSkylineId(SLICES - 1), IMPERIAL_SKYLINE_MODEL + SLICES - 1);
+});
+
 test('IC-GRAND EVERY SLICE\'S ARRIVALS ON ITS CARRIER - its start markers editor flats on its carrier block (made on the door) at the anchor\'s metres, each on its cell\'s open ground; a block on the plan\'s outer ring leaves Daggerfall\'s rim to the land (PIN MOVED from test/audit_tesa.test.js A6-1 and test/world/audittesa2c_capitals.test.js C1 - the city\'s blocks a family\'s; mutants: a marker in the water; the rim unread)', () => {
   _resetCapitals();
   installCapitals({ addTextures: () => 0 });
@@ -159,7 +186,8 @@ test('IC-GRAND THE SWEEP - on the frame, walked only when the player\'s pixel or
   host.state.current = { x: 101, y: 100 };
   sweepCapitalLod();
   assert.deepEqual(destroyed, ['100,100'], 'the player moved: walked');
-  assert.match(read('src/scenes/tamrielSweepsHost.js'), /function sweepCapitalPixels\(\) \{\n\s+sweepCapitalLod\(\);/, 'asked where the capitals\' sweep is (scenes/world.js, the frame)');
+  // PIN MOVED (IC-GRAND's perf pass): the city's worker told first (scenes/capitalPrebuild.js), then this sweep
+  assert.match(read('src/scenes/tamrielSweepsHost.js'), /function sweepCapitalPixels\(\) \{\n\s+capitalPrebuild\.sweep\(\);[^\n]*\n\s+sweepCapitalLod\(\);/, 'asked where the capitals\' sweep is (scenes/world.js, the frame)');
 });
 
 test('IC-GRAND THE BUILD - a pixel built as its view (the location the index holds, its far view where it is far), its view on its entry; a far view stands no walker, no yard and no port; a model no collider takes the model door\'s word (mutants: the view unread; walkers on a far slice; the skyline solid in the collider)', () => {
@@ -257,8 +285,9 @@ test('IC-GRAND THE CITY ON THE HORIZON - the sweep hands the far ring one landma
   host.farRing = null;
   assert.doesNotThrow(() => sk.sweep());
   assert.equal(sk.count, 0);
-  // wired: the capitals' sweep asks it on the frame, the world host hands its ring
-  assert.match(read('src/scenes/tamrielSweepsHost.js'), /function sweepCapitalPixels\(\) \{\n\s+sweepCapitalLod\(\);[^\n]*\n\s+capitalSkyline\.sweep\(\);/);
+  // wired: the capitals' sweep asks it on the frame, the world host hands its ring - PIN MOVED (IC-GRAND's perf pass): the
+  // city's worker told first (scenes/capitalPrebuild.js)
+  assert.match(read('src/scenes/tamrielSweepsHost.js'), /function sweepCapitalPixels\(\) \{\n\s+capitalPrebuild\.sweep\(\);[^\n]*\n\s+sweepCapitalLod\(\);[^\n]*\n\s+capitalSkyline\.sweep\(\);/);
   assert.match(read('src/scenes/world.js'), /createTamrielSweeps\(\{[^\n]*\n(?:\s+[^\n]*\n){0,12}?\s+get farRing\(\) \{ return farRing; \},/);
   // the ring's ground at a pixel's centre: its own grid, row by row
   const r = Object.create(FarRingRenderer.prototype);

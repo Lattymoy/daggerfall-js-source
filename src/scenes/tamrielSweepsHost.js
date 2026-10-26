@@ -11,6 +11,7 @@ import { inBay as onTheBay, tamrielFit } from '../world/tamriel/tamrielFrame.js'
 import { tamrielLandVersion } from '../world/tamriel/tamrielLand.js';
 import { WATER_BYTE } from '../world/roadsProducer.js';
 import { createCapitalSkyline } from './capitalSkyline.js';   // IC-GRAND x FAR-LANDMARK: the Imperial City on the far ring's horizon
+import { createCapitalPrebuild } from './capitalPrebuild.js';   // IC-GRAND's perf pass: the city's own made ahead on its worker
 
 /** @param {any} host */
 export function createTamrielSweeps(host) {
@@ -45,6 +46,7 @@ export function createTamrielSweeps(host) {
    *  once the land has moved, every built pixel past the Bay the countryside and the lairs roll (their ground, climate
    *  and province are the land's) - all but Arena's places, sweepArenaPixels' own. */
   function sweepCapitalPixels() {
+    capitalPrebuild.sweep();   // IC-GRAND's perf pass: its worker told the slices coming, before they are queued
     sweepCapitalLod();   // IC-GRAND
     capitalSkyline.sweep();   // IC-GRAND x FAR-LANDMARK: its silhouette past the stream, a slice a landmark
     const fit = tamrielFit(), land = tamrielLandVersion();
@@ -77,6 +79,8 @@ export function createTamrielSweeps(host) {
   const _lod = { at: null, size: -1 };
   /** IC-GRAND x FAR-LANDMARK: the city's landmarks on the far ring (`host.farRing`, null on the classic skin). */
   const capitalSkyline = createCapitalSkyline(host);
+  /** IC-GRAND's perf pass: the city's worker told what the stream is about to build (scenes/capitalPrebuild.js). */
+  const capitalPrebuild = createCapitalPrebuild(host);
   function sweepCapitalLod() {
     const cur = host.state.current, at = cur ? `${cur.x},${cur.y}` : null;
     if (at === _lod.at && host.built.size === _lod.size) return;
@@ -119,5 +123,5 @@ export function createTamrielSweeps(host) {
     for (const k of again) destroyPixel(k.px, k.py, { collectLoose: false });
     host.queue.push(...again.sort(nearestFirstFrom(host.state.current)));
   }
-  return { _arenaRoadsStale, arenaJoinLand, arenaRoadsLanded, arenaRoadsStale, sweepArenaPixels, sweepArenaRoads, sweepCapitalPixels, sweepCapitalLod, capitalSkyline };
+  return { _arenaRoadsStale, arenaJoinLand, arenaRoadsLanded, arenaRoadsStale, sweepArenaPixels, sweepArenaRoads, sweepCapitalPixels, sweepCapitalLod, capitalSkyline, capitalPrebuild };
 }
