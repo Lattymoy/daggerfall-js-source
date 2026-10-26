@@ -983,7 +983,7 @@ function* pastBayJob(ctx, view, opts, job) {
 /** MAP-WHOLE (ui/tamrielTiles.js BASE_SCALE): the base's paint - the continent's whole frame out on the continent, under
  *  the view's own filters and hues (its key is theirs), its words read again when the roads' installs or the places'
  *  adds move. */
-function baseOf(past, ink) {
+export function baseOf(past, ink) {
   if (!ink.frame) return null;
   return { key: `far|1|${JSON.stringify(past.filters)}|${JSON.stringify(past.inks)}`, paint: { ...past, band: 'far', continent: true }, frame: ink.frame, version: `${arenaRoadsVersion()}|${pastBayPlacesVersion()}` };
 }

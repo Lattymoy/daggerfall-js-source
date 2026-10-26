@@ -2,7 +2,7 @@
 // ═══════════════════════════════════════════════════════════════════
 // FAR-FIELD (2026-10-26, BREATHTAKER 1 of KPbICA's spec, through the owner: "render landscapes and landforms way further
 // than actual distance to load. To see the mountain from 300km for example by rendering it's simplified version";
-// bible/07-Rendering/Performance-Priority.md MID-RING): THE FAR FIELD - the land past the far ring, out to 393 km.
+// bible/06-Systems/Travel-View.md MID-RING): THE FAR FIELD - the land past the far ring, out to 393 km.
 //
 // THE LAYERS BY DISTANCE, each the one inside it drawn over it, at the far plane, in one pass (render/farRing.js draw):
 //   the streamed grid (Land View: 4.5 km)  ->  the middle ring (the kernel's own ground, 102 m cells, to 11.5 km,

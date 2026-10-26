@@ -7,8 +7,9 @@ import assert from 'node:assert/strict';
 
 import { createCoverage, clearCoverage, stampSquare, coveragePixels, penRgb, RASTER_SS } from '../../src/ui/inkRaster.js';
 import { createTamrielTiles, BASE_SCALE, baseLevelIndex, tileLevelIndex, TILE_PX, LEVEL_STEPS } from '../../src/ui/tamrielTiles.js';
-import { paintPastBay, RASTER_STEP_SHARE, PAST_BAY_STEP } from '../../src/ui/tamrielInk.js';
-import { setArenaRoads, beyondKey } from '../../src/world/arenaRoads.js';
+import { paintPastBay, RASTER_STEP_SHARE, PAST_BAY_STEP, baseOf } from '../../src/ui/tamrielInk.js';
+import { setArenaRoads, beyondKey, arenaRoadsVersion } from '../../src/world/arenaRoads.js';
+import { pastBayPlacesVersion } from '../../src/world/pastBayPlaces.js';
 import { pathPen, penSolid } from '../../src/ui/ink/inkMap.js';
 import { DIR } from '../../src/world/road/roadNetwork.js';
 
@@ -151,13 +152,34 @@ test('MAP-WHOLE the base: the continent\'s whole frame at BASE_SCALE, painted be
   const small = { ...base, frame: { x0: 0, y0: 0, w: 1000, h: 1000 } };
   const tiny = { paperW: 10, paperH: 10, dpr: 1, key: 'k', base: small, budgetMs: 1 };
   r3.draw(r.sheet, { ox: 0, oy: 0, scale: 6 }, tiny);
-  const once = stamps;
+  let once = stamps;
   r3.draw(r.sheet, { ox: 0, oy: 0, scale: 6 }, tiny);
-  assert.ok(stamps - once <= 2, `the base whole and its version unmoved: its words unread (${stamps - once} stamps, the view's own)`);
+  const own = r3.stats().want;
+  assert.ok(own > 0);
+  assert.equal(stamps - once, own, `the base whole and its version unmoved: its words unread (${stamps - once} stamps, the view's own ${own})`);
+  once = stamps;
   r3.draw(r.sheet, { ox: 0, oy: 0, scale: 6 }, { ...tiny, base: { ...small, version: 'v2' } });
-  assert.ok(stamps - once > 2, 'the version moved: read again');
+  assert.ok(stamps - once > own, 'the version moved: read again');
   // apart from the view's count; let go on close
   assert.ok(r.tiles.kept() < bases + 30, 'the base is not the view\'s');
   r.tiles.clear();
   assert.deepEqual(r.tiles.baseKept(), { tiles: 0, whole: 0 });
+  // the window's base: the continent's whole frame out on the continent, under the view's own filters and hues, its words'
+  // version the roads' installs and the places' adds; none without a frame
+  const past = { paperW: 600, paperH: 300, band: 'near', continent: false, filters: { tracks: true }, inks: { a: 1 }, placesIn: null, frame: null };
+  const f = { x0: -1, y0: -2, w: 3, h: 4 };
+  assert.deepEqual(baseOf(past, { frame: f }), { key: 'far|1|{"tracks":true}|{"a":1}', paint: { ...past, band: 'far', continent: true }, frame: f, version: `${arenaRoadsVersion()}|${pastBayPlacesVersion()}` });
+  assert.equal(baseOf(past, { frame: null }), null);
+});
+
+test('MAP-WHOLE a job\'s mask is the tile\'s size and pooled: a finished job\'s mask the next job\'s, the pixels one buffer for every job (mutant: the mask\'s size, the pool)', () => {
+  const masks = [], bufs = [];
+  const make = () => { const c = { width: 0, height: 0 }; c.getContext = () => ({ setTransform() {}, clearRect() {}, drawImage() {}, canvas: c }); return c; };
+  const tiles = createTamrielTiles({ paint: (ctx, view, w, h, opts, job) => { masks.push(job.coverage()); bufs.push(job.pixels()); }, stamp: () => 'w', make, now: () => 0 });
+  const sheet = { save() {}, restore() {}, beginPath() {}, rect() {}, clip() {}, drawImage() {} };
+  tiles.draw(sheet, { ox: 0, oy: 0, scale: 1 }, { paperW: 600, paperH: 300, dpr: 1, key: 'k', budgetMs: 1 });
+  assert.ok(masks.length > 1, `${masks.length} tiles painted`);
+  assert.deepEqual([masks[0].w, masks[0].h, masks[0].mask.length], [TILE_PX, TILE_PX, TILE_PX * TILE_PX * RASTER_SS * RASTER_SS]);
+  assert.ok(masks.every((m) => m === masks[0]), 'each finished job\'s mask the next one\'s');
+  assert.ok(bufs.every((b) => b === bufs[0]) && bufs[0].length === TILE_PX * TILE_PX * 4);
 });

@@ -1,5 +1,5 @@
-// OW-STREAM (2026-10-26, the owner: "The held map still struggles to load everything at once"; bible/03-World/
-// Arena-Provinces.md OW-STREAM): THE HELD MAP'S TIME TO COMPLETE, BY ZOOM, IN THE REAL GAME.
+// MAP-WHOLE (2026-10-26, the owner: "The held map still struggles to load everything at once"; bible/03-World/
+// Arena-Provinces.md MAP-WHOLE): THE HELD MAP'S TIME TO COMPLETE, BY ZOOM, IN THE REAL GAME.
 //
 // The world host boots in Daggerfall, the roads' forty-eight regions land (from the roads' cache after a first run - keep
 // PROFILE between runs), the travel map (V) rises, and the sheet is set to a list of views - the whole continent, far over

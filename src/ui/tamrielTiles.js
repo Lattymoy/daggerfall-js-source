@@ -69,7 +69,7 @@ export function createTamrielTiles({ paint, stamp, make = () => document.createE
   let pixels = null;   // MAP-WHOLE: one tile's RGBA, filled and put at once (a pass's lay), shared by every job
   const releaseCov = (job) => { if (job?.cov && covSpare.length < COV_SPARE) covSpare.push(job.cov); if (job) job.cov = null; };
   let pending = false, usable = null, curKey = null, prevKey = null;
-  /** OW-STREAM (the probe's read, tools/heldMapLoadProbe.mjs): the last draw's tiles - wanted, painted whole in it, shown
+  /** MAP-WHOLE (the probe's read, tools/heldMapLoadProbe.mjs): the last draw's tiles - wanted, painted whole in it, shown
    *  by a stand-in, and HOLES (owed with nothing kept to show) - and whether it left one owed. */
   let last = { want: 0, painted: 0, stood: 0, holes: 0, owed: false };
   const idOf = (key, n, dpr, tx, ty) => `${key}|${n}|${dpr}|${tx}|${ty}`;
@@ -236,7 +236,7 @@ export function createTamrielTiles({ paint, stamp, make = () => document.createE
     },
     /** Did a draw since the last call leave a tile owed? Answered once: the flag goes with the answer. */
     takePending() { const p = pending; pending = false; return p; },
-    /** The last draw's tiles (OW-STREAM's read): wanted, painted, stood in for, holes, and whether one is owed. */
+    /** The last draw's tiles (MAP-WHOLE's read): wanted, painted, stood in for, holes, and whether one is owed. */
     stats: () => ({ ...last }),
     /** How many tiles are kept now. */
     kept: () => tiles.size,

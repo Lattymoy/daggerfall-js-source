@@ -1,7 +1,7 @@
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
 // MID-RING (2026-10-26, the owner: "we need to find a way to expand the overworld view distance without killing
-// performance. Currently tiles visibly load in with distance"; bible/07-Rendering/Performance-Priority.md MID-RING):
+// performance. Currently tiles visibly load in with distance"; bible/06-Systems/Travel-View.md MID-RING):
 // THE MIDDLE RING'S GROUND - the streamed kernel's own heights, coarse, past the streamed grid.
 //
 // Past the streamed grid (Land View 5: 4.5 km) the horizon was the far ring alone (render/farRing.js EV8): one vertex a

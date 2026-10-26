@@ -483,8 +483,10 @@ export class FarRingRenderer {
     this._far = null; this._farAsk = null; this._farGen = 0;
     this._work = [];            // the horizon's landed grounds still being laid: { it, done }, a frame's share at a time
     this._now = opts.now ?? (() => performance.now());
-    // the probes' read (tools/horizonProbe.mjs): which of the horizon's layers stand, and round which bases
-    globalThis.__horizonRings = () => this.horizonStats();
+    // the probes' read (tools/horizonProbe.mjs): which of the horizon's layers stand, and round which bases - let go by
+    // the ring that set it (dispose)
+    this._statsFn = () => this.horizonStats();
+    globalThis.__horizonRings = this._statsFn;
     this.lane = opts.lane ?? this.renderer?.lightingLane ?? null;
     this._dec = new Float32Array(3);
     const p = buildProgram(gl, VS, this.lane ? this.lane.farRingFs : FS, 'far ring');
@@ -636,8 +638,8 @@ export class FarRingRenderer {
         oceanAt: (x, y) => climateOf(x, y) === CLIMATES.Ocean,
         seaY: RING_SEA_Y,
       });
+      // one ask at a time and it stands until laid, so no newer ask can come while this is laid; a dispose drops the work
       this._work.push({ it, done: (v) => {
-        if (gen !== this._farGen || !this.gl) return;
         this._farAsk = null;
         (this._far ??= new FarFieldMesh(this.gl)).build(v, { baseCX, baseCY });
       } });
@@ -660,8 +662,7 @@ export class FarRingRenderer {
         return i >= 0 && j >= 0 && i < g.side && j < g.side ? g.positions[(j * g.side + i) * 3 + 1] : RING_SEA_Y;
       };
       const it = midRingVertexSteps({ heights: answer.heights, baseX, baseY, radius: MID_RADIUS, sub: MID_SUB, tintAt, seaY: RING_SEA_Y, ringAt });
-      this._work.push({ it, done: (v) => {
-        if (gen !== this._midGen || !this.gl) return;
+      this._work.push({ it, done: (v) => {   // as the far field's: one ask, standing until laid; a dispose drops the work
         this._midAsk = null;
         (this._mid ??= new MidRingMesh(this.gl)).build(v, { baseX, baseY, radius: MID_RADIUS, sub: MID_SUB, curX: baseX, curY: baseY });
         this._holeKey = '';   // the far ring's hole is the new footprint's
@@ -833,6 +834,7 @@ export class FarRingRenderer {
     const gl = this.gl;
     if (whole) { this._midGen++; this._midAsk = null; this._mid?.dispose(); this._mid = null; }   // MID-RING: an answer still out is let go
     if (whole) { this._farGen++; this._farAsk = null; this._far?.dispose(); this._far = null; this._work = []; }   // FAR-FIELD: the same, and any ground still being laid
+    if (whole && globalThis.__horizonRings === this._statsFn) delete globalThis.__horizonRings;   // the probes' read, if it is still this ring's
     for (const b of this.buffers) gl.deleteBuffer(b);
     this.buffers = [];
     if (this.vao) gl.deleteVertexArray(this.vao);

@@ -1,7 +1,7 @@
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
 // MID-RING (2026-10-26, the owner: "we need to find a way to expand the overworld view distance without killing
-// performance. Currently tiles visibly load in with distance"; bible/07-Rendering/Performance-Priority.md MID-RING):
+// performance. Currently tiles visibly load in with distance"; bible/06-Systems/Travel-View.md MID-RING):
 // THE MIDDLE RING - the streamed kernel's own ground past the streamed grid, between it and the far ring.
 //
 // WHAT IT IS. A grid of MID_SUB cells a map pixel (a vertex every 102.4 m) over MID_RADIUS pixels round its base, its

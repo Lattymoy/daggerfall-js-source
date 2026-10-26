@@ -1,5 +1,5 @@
 // MID-RING (2026-10-26, the owner: "we need to find a way to expand the overworld view distance without killing
-// performance. Currently tiles visibly load in with distance"; bible/07-Rendering/Performance-Priority.md MID-RING) -
+// performance. Currently tiles visibly load in with distance"; bible/06-Systems/Travel-View.md MID-RING) -
 // THE MIDDLE RING: the streamed kernel's own ground past the streamed grid, between it and the far ring
 // (world/terrain/midRingGrid.js, render/midRing.js, render/farRing.js, the terrain worker's 'midring' job). Pinned with no
 // game data, on the landforms' synthetic world (test/landformWorld.mjs).
@@ -12,7 +12,7 @@ import { generateSamples, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TER
 import { createLandforms } from '../../src/world/landforms.js';
 import { buildMidRingHeights, midRingNormals, midRingSide, midRingPixel, midRingBandRows, buildFarFieldBytes, farFieldCell, FAR_SAMPLES, MID_RADIUS, MID_SUB, MID_REBUILD_DRIFT } from '../../src/world/terrain/midRingGrid.js';
 import { midRingVertices, midRingOrder, midRingRuns, MidRingMesh, midRingDisabled, MID_SEA_EPS } from '../../src/render/midRing.js';
-import { FarRingRenderer, ringHeight, RING_RADIUS, HORIZON_BUDGET_MS } from '../../src/render/farRing.js';
+import { FarRingRenderer, ringHeight, RING_RADIUS, HORIZON_BUDGET_MS, MID_MORPH_START, MID_MORPH_END } from '../../src/render/farRing.js';
 import { TerrainGenClient, HORIZON_BAND_ROWS } from '../../src/world/terrain/terrainGenClient.js';
 import { syntheticWoodsBytes, network } from '../landformWorld.mjs';
 
@@ -72,6 +72,16 @@ test('MID-RING the vertices: the base pixel\'s corner frame (x east, z north), e
   assert.equal(v.sea[1], 0);
   assert.ok(MID_SEA_EPS > 0 && MID_SEA_EPS < 1);
   assert.equal(v.normals.length, side * side * 3);
+  assert.deepEqual([...v.coarse], [...heights], 'no far ring handed: its own ground');
+  // `coarse`, the far ring's surface under each vertex (the ease's ground): a plane through the pixel centres is the plane
+  // at the vertex's own place; one centre raised lifts only the triangle of the far ring's that holds it (its winding
+  // splits a cell north-west to south-east)
+  const plane = midRingVertices({ heights, baseX: bx, baseY: by, radius, sub, tintAt, seaY, ringAt: (px, py) => 3 * px + 7 * py });
+  const pxOf = (gx) => bx - radius + (gx - sub / 2) / sub, pyOf = (gz) => by + radius - (gz - sub / 2) / sub;
+  for (const [gx, gz] of [[8, 7], [5, 3], [9, 9]]) assert.ok(Math.abs(plane.coarse[at(gx, gz)] - (3 * pxOf(gx) + 7 * pyOf(gz))) < 1e-3, `the plane at ${gx},${gz}`);
+  const peak = midRingVertices({ heights, baseX: bx, baseY: by, radius, sub, tintAt, seaY, ringAt: (px, py) => (px === bx + 1 && py === by - 1 ? 80 : 0) });
+  assert.equal(peak.coarse[at(8, 7)], 0, 'south-west of the cell\'s diagonal: the flat triangle');
+  assert.ok(Math.abs(peak.coarse[at(9, 9)] - 40) < 1e-4, 'north-east of it: the raised one, a half of the way up');
 });
 
 test('MID-RING the painter\'s order: every cell once, farthest pixel first, a pixel\'s cells farthest first along each axis; the runs cut where the stream has built (mutant: the sort, the axes, the runs)', () => {
@@ -129,14 +139,15 @@ test('MID-RING the mesh: built, ordered once a pixel, its runs drawn at its orig
   assert.equal(log.buffers.length, uploads, 'the same pixel: the order stands');
   mesh.reorder(6, 5);
   assert.equal(log.buffers.length, uploads + 1, 'a new pixel: written again');
-  mesh.cut((k) => k === '6,5', 1);
+  mesh.cut((k) => k === '5,5', 1);   // a pixel inside the order: two runs
   const runs = mesh.runs;
   mesh.cut(() => true, 1);
   assert.equal(mesh.runs, runs, 'the same stamp: the runs stand');
-  mesh.cut((k) => k === '6,5', 2);
+  mesh.cut((k) => k === '5,5', 2);
   mesh.draw('uOrigin', [1, 2, 3]);
   assert.deepEqual(log.origins.at(-1), ['uOrigin', 1, 2, 3]);
   assert.equal(log.draws.length, mesh.runs.length);
+  assert.ok(mesh.runs.length === 2 && mesh.runs[1][0] > 0, 'a built pixel inside the order cuts it in two');
   for (const [k, [first, count]] of mesh.runs.entries()) assert.deepEqual(log.draws[k], [count, gl.UNSIGNED_SHORT, first * 2]);
   assert.equal(log.draws.reduce((a, d) => a + d[0], 0), (9 - 1) * sub * sub * 6, 'every cell but the built pixel\'s');
   mesh.dispose();
@@ -150,8 +161,9 @@ test('MID-RING the far ring asks the middle ring of the terrain\'s worker once, 
   let answer = null;
   const mid = { midRing: (job) => { asks.push(job); return new Promise((r) => { answer = r; }); } };
   const ring = new FarRingRenderer(gl, { mid });
-  const W = 400, Hh = 300, inputs = { heightBytes: new Uint8Array(W * Hh).fill(40), mapWidth: W, mapHeight: Hh, climateAt: () => 231, baseX: 200, baseY: 150, relief: false };
-  const built = new Map([['200,150', {}]]);
+  const W = 400, Hh = 300, inputs = { heightBytes: new Uint8Array(W * Hh), mapWidth: W, mapHeight: Hh, climateAt: () => 231, baseX: 200, baseY: 150, relief: false };   // the sea
+  const built = new Map();   // the stream's whole grid round the traveller (Land View 5)
+  for (let y = 145; y <= 155; y++) for (let x = 195; x <= 205; x++) built.set(`${x},${y}`, {});
   ring.build(inputs, 200, 150, 5, built);
   assert.equal(asks.length, 1, 'asked at the first hole');
   assert.deepEqual(asks[0], { baseX: 200, baseY: 150, radius: MID_RADIUS, sub: MID_SUB, landform: false });
@@ -170,17 +182,33 @@ test('MID-RING the far ring asks the middle ring of the terrain\'s worker once, 
   assert.ok(ring.ringCount < before, `the far ring holed for the middle ring's footprint (${ring.ringCount} < ${before})`);
   const cells = (2 * RING_RADIUS) ** 2 - (2 * MID_RADIUS) ** 2;
   assert.equal(ring.ringCount, cells * 6, 'every cell wholly inside the footprint left to the middle ring');
+  const fill = (ring.indexCount - ring.ringCount) / 6;
+  assert.ok(fill > 0 && fill <= (2 * 5 + 1) ** 2, `the sea's fill the streamed grid's hole's (${fill} cells), never the footprint's`);
   // the draw: the far ring, then the middle ring at its base's origin
   log.draws.length = 0;
   ring.draw(new Float32Array(16), { origin: [10, 0, 20], lightDir: [0, 1, 0], ambient: [0, 0, 0], sunScale: 1, sunColor: [1, 1, 1], fogColor: [0, 0, 0], fogEnd: 1, fovY: 1, aspect: 1 });
   assert.ok(log.draws.length >= 2, 'the far ring and the middle ring\'s runs');
   assert.deepEqual(log.origins.filter((o) => o[0] === 'uOrigin').at(-1), ['uOrigin', 10, 0, 20], 'the bases are one pixel: the far ring\'s origin');
+  // the ease: off for the far ring, the band for the middle ring, measured from the traveller (no focus handed: the eye,
+  // else the ring's own origin)
+  assert.deepEqual(MID_MORPH_END, (MID_RADIUS - MID_REBUILD_DRIFT) * TERRAIN_SIZE);
+  assert.deepEqual(MID_MORPH_START, MID_MORPH_END - 2 * TERRAIN_SIZE);
+  assert.deepEqual(log.origins.filter((o) => o[0] === 'uMorph').slice(-2), [['uMorph', 0, 0, 0], ['uMorph', MID_MORPH_START, MID_MORPH_END, 1]]);
+  assert.deepEqual(log.origins.filter((o) => o[0] === 'uMorphFrom').at(-1), ['uMorphFrom', 10, 0, 20]);
+  // the middle ring's base a pixel off the far ring's: its origin moved by the pixels between (x east, z north)
+  ring.baseX = 199; ring.baseY = 151;
+  ring.draw(new Float32Array(16), { origin: [10, 0, 20], lightDir: [0, 1, 0], ambient: [0, 0, 0], sunScale: 1, sunColor: [1, 1, 1], fogColor: [0, 0, 0], fogEnd: 1, fovY: 1, aspect: 1 });
+  assert.deepEqual(log.origins.filter((o) => o[0] === 'uOrigin').at(-1), ['uOrigin', Math.fround(10 + TERRAIN_SIZE), 0, Math.fround(20 + TERRAIN_SIZE)], 'a Float32Array\'s');
+  ring.baseX = 200; ring.baseY = 150;
   // past the drift: asked again; an answer for a base let go is dropped
   ring.punchHole(200 + MID_REBUILD_DRIFT + 1, 150, 5, built);
   assert.equal(asks.length, 2);
+  assert.equal(typeof globalThis.__horizonRings, 'function', 'the probes\' read');
   ring.dispose();
+  assert.equal(globalThis.__horizonRings, undefined, 'let go with the ring');
   answer({ heights: new Float32Array(side * side) });
   await new Promise((r) => setTimeout(r, 0));
+  for (let k = 0; k < 100; k++) ring.punchHole(204, 150, 5, built);
   assert.equal(ring._mid, null, 'disposed: the late answer built nothing');
   // no worker: the client answers null and the ring stands as before
   const client = new TerrainGenClient({ woods, woodsBytes: null });
@@ -212,17 +240,19 @@ test('MID-RING / FAR-FIELD the worker\'s grounds: by id and by band, transferred
     globalThis.onmessage({ data: { t: 'midring', id: 10, baseX: 398, baseY: 251, radius: 1e9, sub: 2 } });
     assert.equal(posted.at(-1).m.t, 'midError');
     // the far field: a band of its rows, each cell its highest sample and its count of the sea's floor
-    globalThis.onmessage({ data: { t: 'farfield', id: 11, baseCX: 50, baseCY: 31, radius: 2, cell: 8, seaByte: 3, rows: [0, 5] } });
+    globalThis.onmessage({ data: { t: 'farfield', id: 11, baseCX: 40, baseCY: 25, radius: 2, cell: 8, seaByte: 3, rows: [0, 5] } });   // a slope: every row its own
     const f = posted.at(-1);
     assert.equal(f.m.t, 'far');
     assert.deepEqual(f.t, [f.m.high.buffer, f.m.low.buffer]);
-    const ref = buildFarFieldBytes({ woods, baseCX: 50, baseCY: 31, radius: 2, cell: 8, seaByte: 3 });
+    const ref = buildFarFieldBytes({ woods, baseCX: 40, baseCY: 25, radius: 2, cell: 8, seaByte: 3 });
     assert.deepEqual([[...f.m.high], [...f.m.low]], [[...ref.high], [...ref.low]]);
-    const [m0, n0] = farFieldCell(woods, 48, 29, 8, 3);
+    const [m0, n0] = farFieldCell(woods, 38, 23, 8, 3);
     let m = 0, n = 0;
-    for (const v of FAR_SAMPLES) for (const u of FAR_SAMPLES) { const byte = woods.getHeightMapValue(48 * 8 + u, 29 * 8 + v); m = Math.max(m, byte); if (byte <= 3) n++; }
+    for (const v of FAR_SAMPLES) for (const u of FAR_SAMPLES) { const byte = woods.getHeightMapValue(38 * 8 + u, 23 * 8 + v); m = Math.max(m, byte); if (byte <= 3) n++; }
     assert.deepEqual([m0, n0], [m, n], 'a cell: its samples\' highest byte and how many are the sea\'s floor');
     assert.equal(ref.high[0], m0, 'the north-west cell first');
+    for (let j = 0; j < 5; j++) for (let i = 0; i < 5; i++) assert.equal(ref.high[j * 5 + i], farFieldCell(woods, 38 + i, 23 + j, 8, 3)[0], `cell ${i},${j}: rows run south`);
+    assert.notEqual(ref.high[0], ref.high[20], 'the slope the rows are told apart by');
   } finally { globalThis.onmessage = was.on; globalThis.postMessage = was.post; }
   // the pixel kept: a second ring over the same pixels asks the kernel no more
   let made = 0;
@@ -255,6 +285,7 @@ test('MID-RING / FAR-FIELD the worker\'s grounds: by id and by band, transferred
   assert.equal(got.length, sideJ * sideJ);
   assert.equal(got[0], 0);
   assert.equal(got[4 * 4 * sideJ], 4, 'the second band at its own rows');
+  assert.equal(got[(4 * 4 - 1) * sideJ], 0, 'the first band\'s last row its own');
   const p2 = client.midRing(job);
   w.onmessage({ data: { t: 'midError', id: sent.at(-1).id, message: 'x' } });
   assert.equal(await p2, null);
@@ -268,6 +299,12 @@ test('MID-RING the wiring: the world host hands the far ring the terrain\'s clie
   assert.match(world, /new FarRingRenderer\(renderer\.gl, \{ renderer, mid: terrainGen \}\)/);
   const ring = readFileSync('src/render/farRing.js', 'utf8');
   assert.match(ring, /gl\.drawElements\(gl\.TRIANGLES, this\.ringCount \+ 6 \* fill[^\n]*\n[\s\S]*?mid\.draw\(this\.u\.uOrigin, o\);[\s\S]*?gl\.depthRange\(0, 1\);/, 'after the far ring, before the depth range is put back');
+  // the ease in the rings' one vertex program: the middle ring's ground onto the far ring's under it, by the traveller's
+  // Chebyshev distance, only where the draw asks it
+  assert.match(ring, /layout\(location=4\) in float aCoarse;/);
+  assert.match(ring, /if \(uMorph\.z > 0\.5\) \{\n\s*vec2 d = abs\(world\.xz - uMorphFrom\.xz\);\n\s*world\.y = mix\(aPos\.y, aCoarse, smoothstep\(uMorph\.x, uMorph\.y, max\(d\.x, d\.y\)\)\) \+ uOrigin\.y;/);
+  const mesh = readFileSync('src/render/midRing.js', 'utf8');
+  assert.match(mesh, /buf\(v\.coarse, 4, gl\.FLOAT, false, 1\);/, 'the mesh hands it at the program\'s location');
 });
 
 test('MID-RING the stream\'s new pixel eases out of the middle ring\'s tint: stamped past the near rings, its share a smoothstep to nought over PIXEL_FADE_MS, mixed over its tiles by both lanes\' ground programs with no discard, uploaded only while it moves and its stamp dropped when done (mutant: the ring, the curve, the mix, the upload, the drop)', async () => {
@@ -372,6 +409,17 @@ test('FAR-FIELD the far ring asks the far field of the worker, lays it a frame\'
   assert.equal(u1.find((x) => x[0] === 'uRimEnd')[1], FAR_RIM_END, 'the haze closes at the far field\'s rim');
   assert.equal(log.draws[0][0], ring.horizonStats().field.cells * 6, 'the far field first');
   assert.ok(ring._projKey.endsWith(`,${FAR_LENS_FAR}`), 'the rings\' lens reaches it');
+  // its origin: the base cell's north-west pixel (25 x 8, 18 x 8) off the far ring's base (200, 150), z north
+  assert.deepEqual(log.origins.filter((o) => o[0] === 'uOrigin').slice(0, 3), [['uOrigin', 0, 0, 0], ['uOrigin', 0, 0, Math.fround((150 - 18 * 8) * TERRAIN_SIZE)], ['uOrigin', 0, 0, 0]], 'the pass\'s, the far field\'s, the far ring\'s again');
+  // the order written only when the traveller's cell or the ring's footprint moved; asked again only past the drift
+  const ups = log.buffers.length;
+  ring.punchHole(200, 150, 5, new Map());
+  assert.equal(log.buffers.length, ups, 'the same cell: nothing written');
+  ring.punchHole(200 + 8 * 2, 150, 5, new Map());
+  assert.equal(asks.length, 1, 'two cells off: the field stands');
+  ring.punchHole(200 + 8 * 3, 150, 5, new Map());
+  assert.equal(asks.length, 2, 'past the drift: asked again');
+  assert.deepEqual([asks[1].baseCX, asks[1].baseCY], [28, 18]);
   ring.dispose();
   assert.equal(ring.horizonStats().field, null);
 });
