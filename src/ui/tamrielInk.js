@@ -889,7 +889,7 @@ function rasterPass(ctx, job, style, paperW) {
   return {
     dot: (x, y, w) => stampSquare(cov, x * d, y * d, w * d),
     lay: () => {
-      if (cov.any) target.putImageData(new ImageData(coveragePixels(cov, rgb, job.pixels?.()), cov.w, cov.h), 0, 0);
+      if (cov.any) target.putImageData(new ImageData(/** @type {Uint8ClampedArray<ArrayBuffer>} */ (coveragePixels(cov, rgb, job.pixels?.())), cov.w, cov.h), 0, 0);
       layDown(ctx, target, alpha);
     },
   };

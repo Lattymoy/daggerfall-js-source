@@ -50,7 +50,7 @@ export function stampSquare(cov, cx, cy, side) {
  * @param {ReturnType<typeof createCoverage>} cov @param {ArrayLike<number>} rgb @param {Uint8ClampedArray} [out]
  */
 export function coveragePixels(cov, rgb, out = new Uint8ClampedArray(cov.w * cov.h * 4)) {
-  const { w, h, ss, sw, mask } = cov, full = ss * ss, [r, g, b] = rgb;
+  const { w, h, ss, sw, mask } = cov, full = ss * ss, r = rgb[0], g = rgb[1], b = rgb[2];
   // at the default four samples a side a pixel's row of samples is one 32-bit word, and its bytes (each 0 or 1) sum
   // into the top byte of the word times 0x01010101 - four reads a pixel
   const words = ss === 4 && mask.byteOffset % 4 === 0 ? new Uint32Array(mask.buffer, mask.byteOffset, mask.length >> 2) : null;

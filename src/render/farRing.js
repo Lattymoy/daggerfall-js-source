@@ -483,6 +483,8 @@ export class FarRingRenderer {
     this._farSource = opts.mid && !farFieldDisabled() ? opts.mid : null;   // FAR-FIELD: the far field's cells, asked of the same worker
     this._far = null; this._farAsk = null; this._farGen = 0;
     this._work = [];            // the horizon's landed grounds still being laid: { it, done }, a frame's share at a time
+    /** @type {?Float32Array} */ this._midOrigin = null;   // the middle ring's and the far field's origins, made once
+    /** @type {?Float32Array} */ this._farOrigin = null;
     this._now = opts.now ?? (() => performance.now());
     // the probes' read (tools/horizonProbe.mjs): which of the horizon's layers stand, and round which bases - let go by
     // the ring that set it (dispose)
