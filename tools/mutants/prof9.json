@@ -499,8 +499,8 @@
   {
     "name": "PROF9-svc-pan-never-clean",
     "file": "server-account/src/professions.js",
-    "old": "const xp = scaleXp(r.kind === 'dish' ? cookXp(rank, { clean: clean === true, steps: halls }) : craftXp(r.tier, rank, false),",
-    "new": "const xp = scaleXp(r.kind === 'dish' ? cookXp(rank, { clean: false, steps: halls }) : craftXp(r.tier, rank, false),",
+    "old": "const xp = scaleXp(r.kind === 'dish' ? cookXp(rank, { clean: clean === true, steps: halls }) : craftXp(r.tier, rank),",
+    "new": "const xp = scaleXp(r.kind === 'dish' ? cookXp(rank, { clean: false, steps: halls }) : craftXp(r.tier, rank),",
     "tests": [
       "test/net/prof9_service.test.js",
       "test/systems/prof9_client.test.js"
@@ -510,8 +510,8 @@
   {
     "name": "PROF9-svc-dish-tier-xp",
     "file": "server-account/src/professions.js",
-    "old": "const xp = scaleXp(r.kind === 'dish' ? cookXp(rank, { clean: clean === true, steps: halls }) : craftXp(r.tier, rank, false),",
-    "new": "const xp = scaleXp(craftXp(r.tier, rank, false),",
+    "old": "const xp = scaleXp(r.kind === 'dish' ? cookXp(rank, { clean: clean === true, steps: halls }) : craftXp(r.tier, rank),",
+    "new": "const xp = scaleXp(craftXp(r.tier, rank),",
     "tests": [
       "test/net/prof9_service.test.js",
       "test/systems/prof9_client.test.js"

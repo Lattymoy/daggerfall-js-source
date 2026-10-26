@@ -82,7 +82,7 @@
   {
     "name": "OW-ROADSIDE-alongside",
     "file": "src/scenes/world.js",
-    "old": "    if (!legs.length || (plan.kinds[0] !== 'road' && plan.kinds[0] !== 'track')) return legs;",
+    "old": "    if (!legs.length || (legs[0].ring && legs[0].x === from.x && legs[0].y === from.y) || (plan.kinds[0] !== 'road' && plan.kinds[0] !== 'track')) return legs;",
     "new": "    return legs;",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"

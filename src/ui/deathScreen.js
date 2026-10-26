@@ -204,8 +204,9 @@ export class DeathScreen {
    *  screen goes up. The owner: "When a player dies by mobs he has to wait 2mins till respawn" - and at a player's hand
    *  "the body ... disappears in 2 minutes and with it the player can only then respawn". */
   get wild() { return this.online ? wildDeath() : null; }
-  /** DEATH6 / WILD1: the online wait - the body's minute, or the zone's two. */
-  get holdSeconds() { return this.wild ? WILD_DEATH_HOLD_S : ONLINE_RESPAWN_SECONDS; }
+  /** DEATH6 / WILD1: the online wait - the body's minute, or the zone's two. WILD-REJOIN: less what a death the referee
+   *  told this page of had lain before it came back (systems/wild/wildZone.js `served`). */
+  get holdSeconds() { return this.wild ? WILD_DEATH_HOLD_S - (this.wild.served ?? 0) : ONLINE_RESPAWN_SECONDS; }
   /** DEATH4: whole seconds left before an online respawn, or null offline. */
   get respawnIn() {
     if (!this.online) return null;

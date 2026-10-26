@@ -4,9 +4,11 @@
 //   - THE SHARD: template 571 beside the Sigil Stone - stacking with its own kind, BOUND (the realm's list names it).
 //   - SALVAGE: Magic 1, Rare 3, Legendary 8, Exalted 15 - only a piece the ladder graded; never an Aetheric piece, an
 //     artifact, a quest's, a bound, worn or locked one; all of it or none of it.
-//   - THE REFORGE: a Magic's or Rare's every line, an Exalted Legendary's own extra line, never a record's; once reforged,
-//     that line alone. The line rolled again from its tier's pool - never a kind or param another line carries, a proc
-//     a proc, a Rare's slot kept - the name and the price following; paid in shards then gold, nothing taken when refused.
+//   - THE REFORGE: a Magic's or Rare's every line, an Exalted Legendary's own extra line, never a record's. REFORGE-REPLACE
+//     (2026-10-25, the owner: "Replace, price rises"): any line, however often (an old piece's one-line mark a reforge
+//     counted, never a lock); the line REPLACED from its tier's pool - never its own kind, never a kind or param another
+//     line carries, a proc a proc, any name slot (the name follows) - the price following, and each reforge on a piece
+//     twice the last; paid in shards then gold, nothing taken when refused.
 //   - THE FACES: the window (both pages), the pack card's Salvage, the Mages Guild Identify popup's fourth row on both
 //     skins, and the host's hook.
 
@@ -27,7 +29,7 @@ import { createWeapon } from '../../src/combat/enemyEquipment.js';
 import { validLootItem } from '../../src/systems/loot/loot.js';
 import { equipItem } from '../../src/systems/equip.js';
 import { withDom } from '../invdrag.mjs';
-import { mountReforgeWindow, reforgeLabel, reforgePurseText, reforgePriceText, REFORGED, SALVAGED, REFORGE_REFUSALS } from '../../src/ui/reforgeWindow.js';
+import { mountReforgeWindow, reforgeLabel, reforgePurseText, reforgePriceText, REFORGED, SALVAGED, REFORGE_REFUSALS, REFORGE_NOTE } from '../../src/ui/reforgeWindow.js';
 import { GuildServiceWindow, REFORGE_RECT, REFORGE_ROW, REFORGE_KEY, PANEL_X, PANEL_Y, _setGuildServiceArtForTests } from '../../src/ui/guildServiceWindow.js';
 import { destroyEnhancedNotice } from '../../src/ui/enhanced/enhancedNotice.js';
 import { itemLongName } from '../../src/systems/item/itemInfo.js';
@@ -113,7 +115,7 @@ test('LOOT9: the purse - unlocked shards alone; a spend takes from the stacks, a
   assert.deepEqual([RF.shardsText(1), RF.shardsText(3)], ['1 Welkynd Shard', '3 Welkynd Shards']);
 });
 
-test('LOOT9: the lines the Reforge may take - a Magic\'s or Rare\'s every line, an Exalted\'s extra line, never a record\'s; once reforged, that line', () => {
+test('LOOT9: the lines the Reforge may take - a Magic\'s or Rare\'s every line, an Exalted\'s extra line, never a record\'s; REFORGE-REPLACE: once reforged, still every line', () => {
   on();
   const m = graded('magic', 1), r = graded('rare', 2), leg = graded('legendary', 3);
   assert.deepEqual(LR.reforgeableLines(m), m.affixes.map((_, i) => i));
@@ -123,20 +125,25 @@ test('LOOT9: the lines the Reforge may take - a Magic\'s or Rare\'s every line, 
   assert.deepEqual(LR.reforgeableLines(leg), [leg.affixes.length - 1], 'its own extra line');
   assert.deepEqual(LR.reforgeableLines(createWeapon(113, 1)), []);
   r.reforged = 1;
-  assert.deepEqual(LR.reforgeableLines(r), [1], 'once reforged, that line alone');
+  assert.deepEqual(LR.reforgeableLines(r), r.affixes.map((_, i) => i), 'PIN MOVED (REFORGE-REPLACE): an old piece\'s one-line mark locks nothing - every line');
+  assert.equal(LR.reforgeCount(r), 1, 'REFORGE-REPLACE: the old mark is one reforge counted');
   assert.equal(validLootItem(r)?.reforged, 1, 'the mark rides the wire and the save');
   for (const bad of ['1', -1, 16, 1.5]) assert.equal(validLootItem({ ...r, reforged: bad }), null, `a forged mark (${bad}) refused`);
+  delete r.reforged;
+  r.reforges = 3;
+  assert.deepEqual([LR.reforgeableLines(r), LR.reforgeCount(r), validLootItem(r)?.reforges], [r.affixes.map((_, i) => i), 3, 3], 'REFORGE-REPLACE: the count rides the wire and the save, and locks nothing');
+  for (const bad of ['1', 0, -1, LR.REFORGES_MAX + 1, 1.5]) assert.equal(validLootItem({ ...r, reforges: bad }), null, `a forged count (${bad}) refused`);
 });
 
-test('LOOT9: the roll - never a kind or param another line carries; a proc stays a proc; a Rare keeps its slot and its name both parts; an Exalted line from the top half; the name and the price follow', () => {
+test('LOOT9: the roll - never a kind or param another line carries; a proc stays a proc; REFORGE-REPLACE: never its own kind, a Rare\'s line across its slots and its name following; an Exalted line from the top half; the name and the price follow', () => {
   on();
   const slot = (a) => LR.AFFIX_KINDS[a.id].slot;
-  let sameKind = 0, changed = 0;
+  let crossed = 0, kept = 0;
   for (let seed = 1; seed <= 300; seed++) {
     for (const tier of ['magic', 'rare']) {
       const it = graded(tier, seed, seed % 2 ? 113 : 120);
       LR.addProcLine?.(it, lcg(seed + 7));
-      const i = seed % it.affixes.length;
+      const i = LR.reforgeableLines(it)[seed % LR.reforgeableLines(it).length];
       const old = it.affixes[i];
       const others = it.affixes.filter((_, k) => k !== i).map((a) => ({ ...a }));
       const before = it.value;
@@ -147,18 +154,14 @@ test('LOOT9: the roll - never a kind or param another line carries; a proc stays
       assert.equal(!!LR.AFFIX_KINDS[line.id].proc, !!LR.AFFIX_KINDS[old.id].proc, 'a proc stays a proc, a number a number');
       const [lo, hi] = LR.AFFIX_RANGES[line.id][tier];
       assert.ok(line.value >= lo && line.value <= hi, 'its tier\'s range');
-      if (tier === 'rare') {
-        assert.equal(slot(line), slot(old), 'a Rare\'s slot kept');
-        const named = (sl) => it.affixes.some((a) => slot(a) === sl && !LR.AFFIX_KINDS[a.id].proc);
-        assert.ok(named('prefix') && named('suffix'), 'its name keeps both parts');
-      }
+      assert.notEqual(line.id, old.id, 'PIN MOVED (REFORGE-REPLACE): never the same kind back - the hone raises a value');
+      if (tier === 'rare' && !LR.AFFIX_KINDS[old.id].proc) { if (slot(line) === slot(old)) kept++; else crossed++; }
       assert.equal(it.name, LR.rarityName(it, tier, it.affixes), 'the name follows');
       assert.equal(it.value, before - LR.affixesWorth([old]) + LR.affixesWorth([line]), 'the price follows');
-      assert.equal(it.reforged, i);
-      if (line.id === old.id) sameKind++; else changed++;
+      assert.deepEqual([it.reforges, 'reforged' in it], [1, false], 'REFORGE-REPLACE: the reforge counted, no line marked');
     }
   }
-  assert.ok(sameKind > 50 && changed > 50, `the same kind may come back, and often another (${sameKind}, ${changed})`);
+  assert.ok(crossed > 30 && kept > 30, `PIN MOVED (REFORGE-REPLACE): a Rare's line crosses its name slot, or keeps it (${crossed}, ${kept})`);
   for (let seed = 1; seed <= 60; seed++) {
     const leg = graded('legendary', seed);
     const name = leg.name;
@@ -172,7 +175,7 @@ test('LOOT9: the roll - never a kind or param another line carries; a proc stays
   }
 });
 
-test('LOOT9: the price and the press - Magic 2 and 100, Rare 4 and 400, Exalted 10 and 2,000; refused in words with nothing taken; paid shards then gold', () => {
+test('LOOT9: the price and the press - Magic 2 and 100, Rare 4 and 400, Exalted 10 and 2,000, REFORGE-REPLACE: each reforge twice the last; refused in words with nothing taken; paid shards then gold', () => {
   on();
   assert.deepEqual(RF.REFORGE_PRICE, { magic: { shards: 2, gold: 100 }, rare: { shards: 4, gold: 400 }, exalted: { shards: 10, gold: 2000 } });
   const ex = graded('legendary', 3);
@@ -193,9 +196,21 @@ test('LOOT9: the price and the press - Magic 2 and 100, Rare 4 and 400, Exalted 
   assert.equal(RF.reforgeRefusal(unknown, 0, me), 'unknown', 'The guild identifies it first');
   const r = RF.reforgePiece(piece, 2, me, lcg(2));
   assert.equal(r.ok, true);
+  assert.deepEqual(r.price, RF.REFORGE_PRICE.rare, 'the first at its tier\'s price');
   assert.deepEqual([RF.shardsHeld(me.items), me.goldPieces], [4, 600], 'four shards and four hundred gold');
-  assert.deepEqual(RF.reforgePiece(piece, 0, me, lcg(3)), { ok: false, reason: 'line' }, 'once reforged, only that line');
-  assert.equal(RF.reforgePiece(piece, 2, me, lcg(3)).ok, true, 'that line again');
+  assert.deepEqual(RF.reforgePrice(piece), { shards: 8, gold: 800 }, 'REFORGE-REPLACE: the next twice the last');
+  assert.deepEqual(RF.reforgePiece(piece, 0, me, lcg(3)), { ok: false, reason: 'shards' }, 'PIN MOVED (REFORGE-REPLACE): another line is no refusal - its doubled price is');
+  me.items.push(shards(4));
+  me.goldPieces = 800;
+  const again = RF.reforgePiece(piece, 0, me, lcg(3));
+  assert.deepEqual([again.ok, again.price, RF.shardsHeld(me.items), me.goldPieces, piece.reforges], [true, { shards: 8, gold: 800 }, 0, 0, 2], 'PIN MOVED (REFORGE-REPLACE): another line, at twice the price');
+  assert.deepEqual(RF.reforgePrice(piece), { shards: 16, gold: 1600 }, 'and the next twice that');
+  const exalted = graded('legendary', 3);
+  LR.exaltLegendary(exalted, lcg(4));
+  me.items.push(exalted);
+  assert.deepEqual([RF.reforgeRefusal(exalted, 0, me), RF.reforgePiece(exalted, 0, me, lcg(5))], ['line', { ok: false, reason: 'line' }], 'a line the Reforge may not take - a record\'s - refused in its word, nothing taken');
+  me.items.push(shards(9));
+  me.goldPieces = 1000;
   const worn = graded('magic', 2);
   const w = { items: [worn, shards(9)], goldPieces: 999 };
   equipItem(w, worn);
@@ -252,8 +267,9 @@ test('LOOT9: the window - the purse, both pages, a piece whole with a press on e
       assert.equal(one(shell, 'broker-note').textContent, REFORGED(rare.name, LR.affixLine(rare, 0)));
       assert.equal(one(shell, 'broker-purse').textContent, reforgePurseText(1, 50), 'paid');
       const after = kids(one(shell, 'reforge-card'), 'reforge-press');
-      assert.equal(after.length, 1, 'only the line it was reforged on');
-      assert.equal(after[0].textContent, 'Need 3 more shards');
+      assert.equal(after.length, rare.affixes.length, 'PIN MOVED (REFORGE-REPLACE): every line still, no line locked');
+      assert.equal(after[0].textContent, 'Need 7 more shards', 'REFORGE-REPLACE: at twice the price');
+      assert.equal(one(shell, 'reforge-note').textContent, REFORGE_NOTE({ shards: 8, gold: 800 }), 'the card says the next price, and that it doubles');
       assert.equal(after[0].attrs['aria-disabled'], 'true');
       assert.equal(after[0].attrs.title, REFORGE_REFUSALS.shards);
       after[0].onclick({ stopPropagation() {} });   // MENU-ORDER (Plain-Words law 5): pressed, it says why and rolls nothing

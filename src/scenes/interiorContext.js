@@ -22,6 +22,8 @@ import { layoutInterior, INTERIOR_MARKER, PROP_MODEL_TYPE } from '../world/inter
 import { multiply, transformPoint, identity } from '../world/mat4.js';
 import { StaticBatchBuilder, keyResolver } from '../render/staticBatch.js';   // PERF6: the room's static models as one mesh
 import { collectInteriorLights } from '../world/interior/interiorLights.js';
+import { sealDoorsToNowhere, sealedDoorText } from '../world/interior/doorsToNowhere.js';   // FIELD BUGS 2026-10-25 DOOR-VOID
+import { setMidScreenText } from '../ui/midScreenText.js';   // DOOR-VOID: the sealed door's line, where a locked door's is said
 import { applyClimate } from '../world/climateSwaps.js';
 import { remapSubMeshes, markRemapLaw } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam; AUDIT MENU-ORDER C3: a table named by its law
 import { unityMaterialName } from '../systems/immersiveFootsteps.js';   // IF1: MaterialReader's material name, for the mod's floor walk
@@ -124,7 +126,7 @@ export function seedInteriorTreasure({ markers, building, locationType, pool, le
     // recipe tail, on the PLAYER's level and gender.
     // FORAGE3: OnLootSpawned at the LOCATION type's index, which Foraging reads as the dungeon type of that number (Q12);
     // REALM P0.4: online, the level's gold divided back
-    const items = rollLootRarity(addPileLootExtras(generateLootItems(lootKey, { level, gender }), lootKey, Math.random, { locationIndex: locationType, luck, level }), pileSource(INTERIOR_RARITY_TIER), { luck });   // LR1
+    const items = rollLootRarity(addPileLootExtras(generateLootItems(lootKey, { level, gender }), lootKey, Math.random, { locationIndex: locationType, luck, level }), pileSource(INTERIOR_RARITY_TIER), { luck, level });   // LR1
     stampWonWeapons(items, 1);   // SIGIL1: a pile found online, its weapons' sigils rolled at the mint
     minted.push(pool.seedPile(items, pos, { archive: DROP_ICON_ARCHIVES.clothing, record: 0 }, key));
   });
@@ -499,6 +501,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     addDoor: (cpu, matrix) => actions.addDoor(cpu, matrix),
     removeDoor: (key) => actions.removeDoor(key),
   });
+  const hung = [];   // DOOR-VOID: [record index, model, draw] - offered to the owner's list once the seal has run
   for (let doorIndex = 0; doorIndex < interior.actionDoors.length; doorIndex++) {
     const d = interior.actionDoors[doorIndex];
     // The same seam as the placements above: addDoor reads
@@ -512,8 +515,15 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
       continue;
     }
     dynamicDraws.push({ gpu, object: actions.addDoor(cpu, parent(d.matrix)) });
-    roomDoors.adopt(doorIndex, cpu, dynamicDraws[dynamicDraws.length - 1]);
+    hung.push([doorIndex, cpu, dynamicDraws[dynamicDraws.length - 1]]);
   }
+  // FIELD BUGS 2026-10-25 DOOR-VOID: a door with no floor behind it stays shut - asked of the room's whole shell and its
+  // models, every door registered (world/interior/doorsToNowhere.js). Wired here, as the door sounds are, so both
+  // interior hosts (worldModes' buildings and the standalone interior scene) say the line. A sealed door is not one an
+  // owner may take out (decorInteriorDoors.js isRemovableInteriorDoor): its opening would be the way into nothing.
+  sealDoorsToNowhere(actions);
+  actions.onSealedDoor = () => setMidScreenText(sealedDoorText());
+  for (const [doorIndex, cpu, draw] of hung) roomDoors.adopt(doorIndex, cpu, draw);
   if (base) base.roomDoors = roomDoors;   // the owner's list; a room that is not furnished has none to take out
 
   // TAVERN-TABLE (world/card/cardTableProp.js, world/placedCardTable.js; the owner: "Lets instead place a specific table in

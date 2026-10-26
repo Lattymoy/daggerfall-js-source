@@ -5335,7 +5335,8 @@ once), never the session. The audit24 CTX_PENDING table lost its
 addFace/dropFace rows - removing a row means mounting it.
 
 Pins: 12 in `test/systems/quest/escortfaces.test.js`. Campaign: 13 mutants, 13
-killed.
+killed. QUEST-SHELF-FACES (2026-10-25) added a 13th: a quest set aside shows no
+faces (its section, below).
 
 ## RW1 - THE QUESTCOMPLETE LOOT WINDOW (2026-08-28)
 
@@ -6664,6 +6665,27 @@ a quest up carried its letter, its package, its body part until they took it up 
   save envelope beside `shelvedSites`); `reclaimQuest` hands each one the pack no longer holds back - its own quest item,
   once - so the quest can still be finished. The journal says so ("Its item is back in your pack.").
 - Pinned by `test/systems/quest/questshelf.test.js` (QUEST-SHELF-DROP) and `tools/mutants/questshelf.json`.
+
+## QUEST-SHELF-FACES - an abandoned quest's escort face is hidden, kept (2026-10-25)
+
+A player: *"I was unable to complete the Acolyte Quest where you escort the Oracle, I ended up abandoning the quest and
+now I am stuck with the Oracle's portrait in my UI."* N0B21Y14's `_S.03_` runs `add _oracle_ face` as the Oracle joins
+you. The HUD's escort column (FE1, `ui/hud/hudEscortFaces.js`) loses a face by DropFace or by the quest-end sweep
+(`escortQuestEnded`, raised by `tombstoneQuest`). QUEST-SHELF's Abandon is neither, so the face stood for as long as the
+quest was set aside, and it rode the save.
+
+- **Hidden, not dropped.** The column leaves out every face whose quest is set aside before its layout, so the faces
+  under it close up as they do when one drops (`shownColumn`, read by `drawEscortFaces` and by the enhanced HUD's
+  `escortFacesBottom`). The faces list is unchanged: it is saved as it is, and the face is shown again the moment the
+  quest is reclaimed. A drop would lose it for good, because `reclaimQuest` restores the quest from its own envelope and
+  never runs its `add face` again. A save that already carries the stuck face loads hidden, with no migration.
+- **The question is the bridge's.** `setEscortQuestAway` is handed `isShelved` over the bridge's own machine
+  (`scenes/quest/questBridge.js`), the one panel asking the page's one bridge as `setMacroWorld` does. No host grows.
+- A DEPARTURE only as QUEST-SHELF is one (Port-Ledger A, its row): DFU has no abandon, so its faces never meet a quest
+  set aside. The face of a quest that ends is still DFU's sweep.
+- Pinned by `test/systems/quest/escortfaces.test.js` (QUEST-SHELF-FACES, a real quest set aside and reclaimed through a
+  bare bridge) and `tools/mutants/questshelffaces.json` (2, both dead). UI3's `the-escorts-top-for-their-bottom` record
+  (`tools/mutants/ui3.json`) was re-aimed by content to the new loop, and still dies.
 
 ## NO-ASKS-AGAIN - a No that leads nowhere asks again, on the next click (2026-10-13, FIELD BUGS 2026-10-13e)
 

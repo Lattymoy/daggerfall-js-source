@@ -18,11 +18,12 @@
 // furniture. It clears at once when the foe dies, because a dead thing
 // has no health to report.
 import { foeTitle } from '../../systems/foeTitle.js';   // FOE-TITLE: what a special foe is called, one home
+import { bossTraitWords, bossTraitRules, bossWardNow, bossClockS } from '../../systems/bossTraits.js';   // BOSS-TRAITS: the traits a foe carries, their rules, its ward
 
 export const FOE_TARGET_SECONDS = 6;
 /** LOOT7 (the Loot arc): a CHAMPION's trait before its name; ELITE FOES: "Elite" before it; REVENANT: its own name -
  *  systems/foeTitle.js, the one home every surface asks (a leaf, as this one is). */
-const titled = (e, base) => foeTitle(e, base);
+const titled = (e, base) => foeTitle(e, base, { traits: false });   // AUDIT WORLD-EVENTS L5-12: the traits are said on their own line below
 
 let _foe = null;
 let _left = 0;
@@ -85,6 +86,9 @@ export function foeTarget() {
     maxHealth: max,
     fade: Math.min(1, _left / 1.5),   // the last second and a half
     poise: _poiseOf ? _poiseOf(_foe) ?? null : null,   // TELL9: the poise track under the health (null: none drawn)
+    traits: bossTraitWords(e),   // BOSS-TRAITS: every trait's word (systems/bossTraits.js)
+    rules: bossTraitRules(e),   // AUDIT WORLD-EVENTS L5-6: and what each one does - the trait line's tip
+    ward: bossWardNow(e, bossClockS())?.now ?? 0,   // BOSS-TRAITS: what its ward holds now (AUDIT WORLD-EVENTS L2-5: on the traits' clock; L2-7: a puppet's as its owner says it)
   };
 }
 

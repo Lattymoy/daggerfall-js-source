@@ -1551,6 +1551,15 @@ voice, the index floor, the body, air and ensemble insert and its drop, the
 tone's routing, the bite, the arc and the sway; every field held). Mutants:
 50 more in `tools/mutants/intro3.json` (81), all dead.
 
+#### INTRO-REVERT (2026-10-25): the recording again
+
+The owner: *"Can we revert the intro music to the original before we changed it"*. The film and the menu play INTRO2's
+recording again. `src/assets/intro/theme.mp3` is back, as are its `IntroTheme` (`systems/introTheme.js`: fetched,
+decoded, looped on the session's own gain under MusicVolume) and the decoded landmark check (`tools/introAudioCheck.mjs`),
+all as they stood before INTRO3's merge (#906). `systems/introScore.js` and its test stay as a written score that
+nothing plays. The song player's INTRO3 work stays too, since the Elite Gates' scores use it (`egroar_score.test.js`).
+The sections above, INTRO3 to INTRO3d, are history.
+
 ## U65 THE INTRO (2026-08-30) - HISTORICAL REMOVAL
 
 Built through five versions in one day (U65, c, d, e: generated Iliac
@@ -20247,8 +20256,8 @@ option under audio for it called Monster Volume with 0 - 100%".
   pointsLeft); a press opens the Growth tab's Firmament page (`setHudPauseAt`, wired by `scenes/world.js`). Each is a
   buff's own tile with a 16px glyph (`hudStatus.js` STATUS_GLYPHS `skillup`, `firmstar`), on the bar's line and past the
   hotbar's ends where the hotbar is wider (CLEAR-HOTBAR, `advanceReach`). Each is its own piece of the movable HUD
-  (Alt+U: `skillsReady`, `starsUnspent`). The book is read once, again when the Renown rises, and again after
-  `BOOK_RETRY_MS` when a read found no sky. The level strip no longer draws the skills' standing line; the level's own row
+  (Alt+U: `skillsReady`, `starsUnspent`). The book is read once and again when the Renown rises; a read the service
+  never answered the book asks again itself, on every HUD (FIRM-RETRY, `06-Systems/Firmament.md` section 6). The level strip no longer draws the skills' standing line; the level's own row
   stays, and under DFO Grimoire its words are in the page's full ink (LEVEL-INK).
 - **The status tiles' hover card** (`ui/hud/statusTips.js`, `ui/hud/hudTip.js`): with the mouse freed every tile shows
   the pack's hover card - a spell's effects from its live entries, a disease's daily losses, a need's meaning and what

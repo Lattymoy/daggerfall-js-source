@@ -462,7 +462,7 @@ test('LW12 the host\'s wiring: the trouble world\'s bands over the trip\'s two r
   assert.match(w, /spawn: \(type, feet, o\) => exteriorFoes\.spawnFoe\(type, feet, \{ yaw: o\.yaw, gender: o\.gender, level: o\.level, allied: false, loose: true, transient: true, managed: true \}\),/);   // PIN MOVED (AUDIT LW-II C3): managed - the host owns their lives
   // AUDIT LW-II C3: the pool's relevance cull passes a managed foe by (DW-E4's own law), and marks a kill with its body
   const foes = readFileSync(new URL('../../../src/scenes/exteriorFoes.js', import.meta.url), 'utf8');
-  assert.match(foes, /if \(!f\.placed && !f\.managed && _playerDist > _cullAt/);
+  assert.match(foes, /if \(!f\.placed && !f\.managed && !f\.refugee && _playerDist > _cullAt/);   // PIN MOVED (AUDIT WORLD-EVENTS L4-2): a raid's refugee exempt too
   assert.match(foes, /f\.dead = true;\n[^\n]*\n[^\n]*\n\s*f\.corpse = true;/);
   assert.match(w, /dropPile: \(items, feet\) => droppedLoot\.seedPile\(items, feet, \{ archive: TREASURE_PILE_ARCHIVE, record: 0 \}, null, null, \{ unsaved: true, owner: 'lw-hideout' \}\),/);
   assert.match(w, /unheard: \(t\) => \{ const h = livingHideoutsHostOf\(\), here = playerSpawned \? state\.worldCoords\(player\.pos\) : null; return here \? h\.unheardNear\(here\.x, here\.z, t\) : null; \},/);

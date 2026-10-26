@@ -163,8 +163,9 @@ test('GRANT3 A READER\'S TALLY: folded into the cell\'s window under the reader\
   assert.deepEqual([...c0.room._grants.w.tallies.values()], [{ a: 'acct-sock-ann-01', b: 'acct-sock-mac-01', r: 'marks', n: 4 }], 'a sender here alone, never the reader itself; one tally a window');
   W.tick(GRANT_TALLY_MS);
   await ann.ask({ k: 'tally', rows: [{ o: 'sock-mac-01', r: 'unsigned', n: 1 }] });
-  assert.equal(c0.room._grants.w.tallies.size, 2, 'the next window\'s');
-  assert.equal(await c0.room._grantFlush(), true);
+  // HIBERNATE: no timer posts the window - the first fold after it has waited GRANT_MEASURE_MS does, its own row in it
+  assert.equal(c0.room._grants.w.tallies.size, 0, 'posted on the next fold, that fold\'s tally in it');
+  for (let i = 0; i < 50 && !W.posts.length; i++) await new Promise((r) => setTimeout(r, 5));
   const opened = await openGrantMeasure(W.posts.at(-1).body, W.posts.at(-1).sig, W.kp.publicKey, { subtle, nowMs: W.now });
   assert.ok(opened.ok);
   assert.deepEqual(opened.batch.tl, [{ a: 'acct-sock-ann-01', b: 'acct-sock-mac-01', r: 'marks', n: 4 }, { a: 'acct-sock-ann-01', b: 'acct-sock-mac-01', r: 'unsigned', n: 1 }]);

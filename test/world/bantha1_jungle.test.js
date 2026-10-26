@@ -889,7 +889,7 @@ test('BANTHA1 the hosts: world.js builds the jungle\'s host behind its switch an
   assert.ok(fogAt > 0 && w.indexOf('renderer.setFog(fogNow.mode,', fogAt) - fogAt < 600, 'the haze, then the fog with its colour');
   assert.match(w, /const pixelVisible = !cullOn \|\| !\(aabbOutside\(_planes, p\._box, t\[0\], t\[1\], t\[2\]\) \|\| jungle\?\.hides\(p\._box, t\)\);/);
   assert.match(w, /haze: renderer\._haze, hazeEye: jungle\?\.eye/, 'the far ring');
-  assert.match(pb, /jungle: jungle \? jungle\.job\(px, py, FOREST_HIDDEN_LOCATION_TYPES\.has\(dfLocation\?\.mapTableData\?\.locationType\)\) : null,/);
+  assert.match(pb, /jungle: jungle \? jungle\.job\(px, py, FOREST_HIDDEN_LOCATION_TYPES\.has\(groundLocation\?\.mapTableData\?\.locationType\)\) : null,/);   // PIN MOVED (GROUND-AGREE): the ground's place
   assert.match(pb, /jungle\.door\.acquire\(far\); jungleHandles\.push\(far\);/);
   assert.match(pb, /made\.jungleHandles = jungleHandles;/, 'BUILD-FAIL1\'s ledger');
   assert.match(pb, /const young = f\.js <= JUNGLE\.underScale\[1\], gk = young \? `J\$\{f\.jungle\}y` : `J\$\{f\.jungle\}`;/, 'AUDIT BANTHA1 PERF-5: the young trees a group of their own');

@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createPartyTravel } from '../../../src/systems/party/partyTravel.js';
 import { BESIDE_LEVEL } from '../../../src/systems/party/partyTravelLaw.js';
-import { partyArrivalBeside, waitForPartyArrival, PartyArrivalUnavailable } from '../../../src/systems/party/partyArrival.js';
+import { besideLeaderLanding, waitForPartyArrival, PartyArrivalUnavailable } from '../../../src/systems/party/partyArrival.js';
 import { validPartyPose, PIXEL_UNITS } from '../../../src/net/wire.js';
 import { floorLanding, openGroundNear, heldInSolid } from '../../../src/player/enterExit.js';   // UNSTUCK-OUT (PIN MOVED): the landing's rock check rides the lifted block
 import { StreamingWorldState } from '../../../src/world/streamingWorld.js';
@@ -16,7 +16,6 @@ function between(start, end) {
   assert.ok(a >= 0 && b > a, `Source extraction failed: ${start}`);
   return WORLD.slice(a, b);
 }
-const partyLandingSource = between('  function partyBesideLanding(w, seat = 0) {', '  // TL2: a floor');
 const initialLandingSource = between('    const wantsLanding = reposition ===', '    // Q4-v: StreamingWorld.OnInitWorld');
 
 const X = 300, Y = 150;
@@ -28,7 +27,7 @@ state.init(X, Y);
 // collision may be ready, delayed, or at an older network position.
 function landingHost(r, onWait = () => {}) {
   const body = `
-    const { collider, player, cam, floorLanding, openGroundNear, heldInSolid, partyArrivalBeside, state, waitForPartyArrival, onWait } = deps;
+    const { collider, player, cam, floorLanding, openGroundNear, heldInSolid, besideLeaderLanding, state, waitForPartyArrival, onWait } = deps;
     const ARRIVAL_REACH = 240, ARRIVAL_LIFT = 40;
     const OBSTRUCTED_ABOVE = 3, TERRAIN_SIZE = 819.2, walkMode = true;
     const tvSeaY = () => 0;
@@ -37,7 +36,8 @@ function landingHost(r, onWait = () => {}) {
     const px = ${X}, py = ${Y}, dest = { centerHeight: ${FLOOR} };
     const locationLandingFor = () => null;
     let playerSpawned = false;
-    ${partyLandingSource}
+    // PARTY-FOLLOW: the landing beside the leader is the module's own now (systems/party/partyArrival.js)
+    const partyBesideLanding = (w, seat = 0) => (w ? besideLeaderLanding(w, seat, state, collider, tvSeaY()) : null);
     return async (pick) => {
       const resolveArrival = () => waitForPartyArrival(() => partyBesideLanding(pick.besideAt(), pick.besideSeat),
         { wait: async () => onWait(), now: () => 0 });
@@ -45,7 +45,7 @@ function landingHost(r, onWait = () => {}) {
       return { final: [...player.pos], target: pick.besideAt(), beside: true };
     };`;
   return new Function('deps', body)({ collider: r.colliders.exterior, player: r.player, cam: r.cam,
-    floorLanding, openGroundNear, heldInSolid, partyArrivalBeside, state, waitForPartyArrival, onWait });
+    floorLanding, openGroundNear, heldInSolid, besideLeaderLanding, state, waitForPartyArrival, onWait });
 }
 
 function partyJourney(deck) {

@@ -561,8 +561,8 @@
   {
     "name": "PROF10-no-jeweller-station",
     "file": "src/net/decorLaw.js",
-    "old": "'workbench', 'loom', 'mason', 'jeweller', 'vendor']);",
-    "new": "'workbench', 'loom', 'mason', 'vendor']);",
+    "old": "'workbench', 'cooking', 'loom', 'mason', 'jeweller', 'vendor']);",
+    "new": "'workbench', 'cooking', 'loom', 'mason', 'vendor']);",
     "tests": [
       "test/net/prof10_law.test.js",
       "test/ui/homestations.test.js"
@@ -1490,11 +1490,12 @@
   {
     "name": "AUDIT-PROF-541-J4-no-fit",
     "file": "src/systems/smithItems.js",
-    "old": "applyRarity(item, eff.rarity, rolls, null, { fits })",
-    "new": "applyRarity(item, eff.rarity, rolls, null, {})",
+    "old": "applyRarity(item, eff.rarity, rolls, null, { fits, byLines",
+    "new": "applyRarity(item, eff.rarity, rolls, null, { byLines",
     "tests": [
       "test/systems/prof10_client.test.js"
-    ]
+    ],
+    "note": "REFORGE-REPLACE and AFFIX-LINES (2026-10-25): re-aimed by content - the roll's options carry its mint version's law beside the fit."
   },
   {
     "name": "AUDIT-PROF-541-J4-first-draw-stands",

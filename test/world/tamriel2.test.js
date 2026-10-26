@@ -264,7 +264,7 @@ test('TAMRIEL2 host: the reader is rebound to the composed one at the mount, aft
   assert.match(between, /woods = groundWoods\(woods\);/, 'composed between the two');
   assert.match(between, /maps\.getClimateIndex = groundClimateIndex\(maps\.getClimateIndex\.bind\(maps\)\);/);
   assert.match(between, /StreamingWorldState\.frame = tamrielLand \? tamrielFrameInBay\(\) : null;/);
-  assert.match(src, /if \(picks\.length && onTheBay\(px, py\)\) wodPicks = picks;/, 'the mod\'s sites are the Bay\'s');
+  assert.match(src, /if \(picks\.length && onTheBay\(px, py\)\) \{ wodPicks = picks; wodHeld = /, 'the mod\'s sites are the Bay\'s');   // PIN MOVED (GATE-AGREE): the picks a clearing holds beside them
   // PIN MOVED (ETHER-DEEP, bible/03-World/Eltheric-Ocean.md): the host's promote is the one gate for every arm - the Bay's
   // map and the Eltheric Ocean's box carved, the continent past the map held there (test/world/deepWater/ether_deep.test.js)
   assert.match(src, /const dwNear = deepWaters \? deepWaters\.promoteNear\(\{ px, py, samples, tilemap, tilemapBytes \}\) : null;/, 'the mod\'s bathymetry is the host\'s to gate');

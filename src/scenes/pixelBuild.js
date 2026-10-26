@@ -25,6 +25,7 @@ import { collectExteriorNpcs, exteriorNpcRecord } from '../characters/exteriorNp
 import { coverProxies, coverProxy, FELLED, isCoverFlat } from '../ai/cover.js';
 import { flatBodies, jungleBody } from '../world/propBodies.js';   // PROP-BODIES: the solid flats' bodies, beside their cover
 import { DOOR_TYPE, GLOBAL_SCALE } from '../world/meshReader.js';
+import { isHouseSign } from '../world/houseSigns.js';   // HOUSE-SIGN: a shop's sign at a house's door does not stand
 import { doorCornersOf, doorNormalOf } from './hallBanners.js';
 import { drawnFlat } from '../characters/nudeFlats.js';
 import { dungeonEntranceLanding } from '../player/enterExit.js';
@@ -103,7 +104,7 @@ import { lateSolidsOf } from '../player/lateSolid.js';   // ROCK-CLEAR: a pixel'
 export function createPixelBuild(host) {
   const {
     MILL_SAIL_PAD, TERRAIN_INDICES, TERRAIN_INDICES_LOD, _building, _dwRubble, _dwRubbleCarry, _groundBefore,
-    _livingPatrons, _locationToBuild, _lptSway, _lptWindfall, _reskin, adoptWodCarry, archAabb, blocks, boardSplitOf,
+    _livingPatrons, _locationToBuild, spawnGroundPlace, _lptSway, _lptWindfall, _reskin, adoptWodCarry, archAabb, blocks, boardSplitOf,
     breather, buildingDoors, built, chapterSheet, climates3x3, collider, cpuModels, deepWaters, destroyPixel,
     dfMeshSize, dwDecor, ecotones, ensurePersonTex, forests, gateClearSweep, getTexture, getWindmillMeshes,
     halfWidthsOf, heightAt, heightCell, holdPixel, hostBed, jungle, labGrass, landform, livingArmOf, livingAshore,
@@ -222,6 +223,9 @@ export function createPixelBuild(host) {
     const made = {};   // BUILD-FAIL1: this build's ledger, until publish hands it to the entry
     _building.set(key, made);
     const dfLocation = _locationToBuild(px, py) || null;   // SPAWNED-DUNGEONS1: an empty pixel may stand one (AUDIT OW5b D2: a spawn the index holds asked its clocks)
+    // GROUND-AGREE (bible/01-Overview/bugs/Field-Bugs-2026-10-24b.md): the terrain is shaped for the place the roll stands
+    // here, alive or dead (world/spawnGroundPlace.js) - every client's the same - and what STANDS is dfLocation's alone
+    const groundLocation = spawnGroundPlace.groundLocationAt(px, py, dfLocation);
     // EV7: the LOCATION half stays here - setLocationTiles reads
     // BlocksFile + MapsFile, file objects that do not cross a
     // postMessage boundary - and its tilemap + rect ride into the job
@@ -233,7 +237,7 @@ export function createPixelBuild(host) {
     // collider, the single atomic built.set - stays on this thread.
     const seedTilemap = new Uint8Array(128 * 128); made.placeHold = pipeline;   // FIELD BUGS 2026-10-04d PLACE-LRU: BUILD-FAIL1's ledger carries the hold, so a build that throws lets it go (releaseFailedBuild)
     let locationRect = null;
-    if (dfLocation) locationRect = setLocationTiles(dfLocation, maps, blocks, seedTilemap);
+    if (groundLocation) locationRect = setLocationTiles(groundLocation, maps, blocks, seedTilemap);
     // WOD2: LocationLoader.AddLocation's DECISION (LocationLoader.cs:101-172),
     // taken here because it reads only the map data and the kernel needs
     // its rects. The region under the player is announced first
@@ -241,6 +245,11 @@ export function createPixelBuild(host) {
     // and again here, where the list is read), every announced folder
     // lands, and the first valid instance naming this pixel takes it.
     let wodPicks = null;
+    // GATE-AGREE (bible/01-Overview/bugs/Field-Bugs-2026-10-24b.md): per pick, whether a clearing withholds its objects. The
+    // clearings - the gate's, every arch this client believes and every fallen star's - are each client's own word, so
+    // they never decide a pick: a pick levels the ground. A whole site reaching one keeps its pick and its level ground,
+    // and none of its objects stand (GATE-CLEAR: a camp never half stood); the ledger says what it cost
+    let wodHeld = null;
     // GATE-CLEAR: the gate's clearing this build keeps its rock off - read ONCE, here, and held to by its placements
     // below (the gate's day can turn while it builds; the sweep asks a pixel that published on a stale one again)
     const gateClear = host._gateClearNow();
@@ -254,11 +263,11 @@ export function createPixelBuild(host) {
         wod.noteRegion(maps.getRegionIndexAt(here.x, here.y));
         await wod.settle();
         const picks = wod.picksFor({
-          mapPixelX: px, mapPixelY: py, hasLocation: !!dfLocation,
+          mapPixelX: px, mapPixelY: py, hasLocation: !!groundLocation,   // GROUND-AGREE
           worldHeight: host.woods.getHeightMapValue(px, py),
           regionIndex: maps.getRegionIndexAt(px, py),   // WOD-SEA-TEST: the PIXEL's region (the sea's 31), never the location's
-        }, wodPathsPoint, (name, prefab, rect) => wodSiteClear(terrainGen.roads(), px, py, name, prefab, rect) && gateSite(name, prefab, rect));   // ROADS-CLEAR: a camp, fort, shrine or ruin whose pieces reach a road is not stood (world/road/roadClearance.js); GATE-CLEAR: nor one reaching the Oblivion Gate's clearing
-        if (picks.length && onTheBay(px, py)) wodPicks = picks;   // TAMRIEL2: the mod's sites are the Bay's
+        }, wodPathsPoint, (name, prefab, rect) => wodSiteClear(terrainGen.roads(), px, py, name, prefab, rect));   // ROADS-CLEAR: a camp, fort, shrine or ruin whose pieces reach a road is not stood (world/road/roadClearance.js)
+        if (picks.length && onTheBay(px, py)) { wodPicks = picks; wodHeld = picks.map((p) => !gateSite(p.prefabName, p.prefab, p.rect)); }   // TAMRIEL2: the mod's sites are the Bay's
       } catch (e) {
         console.warn(`[wod] pixel ${key}: the loader failed here, and the pixel stands without its site: ${e?.message ?? e}`);
         wodPicks = null;
@@ -275,17 +284,17 @@ export function createPixelBuild(host) {
     // ghost rows keep edge normals central differences either way.
     const stride = strideFor(px, py);
     const { samples, tilemap, positions, normals, bed: carved, tilemapBytes, avg, nature, withRoads, paths, wodAverages, beach, roadside } = await terrainGen.generate({
-      px, py, stride, tilemap: seedTilemap, locationRect, hasLocation: !!dfLocation, climateType: climateBase,
+      px, py, stride, tilemap: seedTilemap, locationRect, hasLocation: !!groundLocation, climateType: climateBase,
       bed: waterOn,   // AUDIT WATER-NEXT P1: the bed under the water, carved on the worker with the grid
       // WOD2: the smoothing arms run in the kernel; FOREST1: and whether each pick is a SITE the woods close round (a camp, a
       // fort, a ruin - not a rock field or a mountain, AUDIT FOREST1 F1) and its whole footprint (its objects, F7)
       wod: wodPicks ? { picks: wodPicks.map((p) => ({ flatten: p.flatten, rect: p.rect, hide: !wodPiecewise(p.prefabName), bounds: forests || jungle ? wodSiteFootprint(p.prefab, p.rect) : null })) } : null,   // AUDIT BANTHA1 LAY-4: the jungle keeps a site's own pieces' ground as the woods do
       // FOREST1: the woods' archive (the climate's summer one, which names its Trees) and whether this pixel's place is one they hide
-      forests: forests ? { archive: climate.natureArchive, hidden: FOREST_HIDDEN_LOCATION_TYPES.has(dfLocation?.mapTableData?.locationType) } : null,
+      forests: forests ? { archive: climate.natureArchive, hidden: FOREST_HIDDEN_LOCATION_TYPES.has(groundLocation?.mapTableData?.locationType) } : null,
       ecotone: natureBorder,   // ECOTONE1: null unless a neighbour's nature differs
       // BANTHA1: the jungle's field about this pixel (scenes/jungleHost.js job - null where it cannot reach), and whether
       // its location is a place the woods close round
-      jungle: jungle ? jungle.job(px, py, FOREST_HIDDEN_LOCATION_TYPES.has(dfLocation?.mapTableData?.locationType)) : null,
+      jungle: jungle ? jungle.job(px, py, FOREST_HIDDEN_LOCATION_TYPES.has(groundLocation?.mapTableData?.locationType)) : null,
       landform,   // LANDFORM1-3: the shaped ground, cut along the kernel's own network
     });
     // DW-B: HandlePromote's synchronous arm - a pixel beside the player's is
@@ -511,6 +520,7 @@ export function createPixelBuild(host) {
           // WM2f: the mill's companion building is part of an enhanced-skin
           // departure; the 1:1 lane must not see it.
           if (placed.enhancedOnly && !isEnhanced()) continue;
+          if (isHouseSign(placed, b, (id) => cpuModels.get(id)?.doors)) continue;   // HOUSE-SIGN: a shop's sign at a house's door does not stand
           const gpu = await getGpuMesh(placed.modelIdNum, () => breather.breathe());   // AUDIT PRE-MERGE 1003 W6: a model built here breathes with the pixel (the colosseum's seal)
           if (!gpu) continue;
           const climateFree = isClimateFreeModel(placed.modelIdNum);   // ARENA1: the colosseum - never swapped, nor a key of the pixel's table
@@ -902,10 +912,12 @@ export function createPixelBuild(host) {
     let wodSpawners = null;
     const pixelRocks = [];   // PROF2: the Rocks and Mountains layouts' standing pieces, pixel-local boxes - Mining's anchors
     if (wodPicks && wodAverages) {
-      const place = wod.placements(wodPicks, wodAverages);
-      const rockPick = (i) => WOD_ROCK_SITES.includes(wodPicks[i]?.name);   // PROF2's rock sites; ROCK-SUNK: and the sites whose 60610 is a boulder
+      // GATE-AGREE: the picks whose objects stand - a pick a clearing withholds levelled the ground above and stands nothing
+      const stood = wodPicks.filter((_, i) => !wodHeld[i]);
+      const place = wod.placements(stood, wodAverages.filter((_, i) => !wodHeld[i]));
+      const rockPick = (i) => WOD_ROCK_SITES.includes(stood[i]?.name);   // PROF2's rock sites; ROCK-SUNK: and the sites whose 60610 is a boulder
       const _roadsNow = terrainGen.roads();   // ROADS-CLEAR: null until the network lands - the roads sweep rebuilds this pixel then
-      let _wodOffRoad = 0, _wodOffGate = 0;
+      let _wodOffRoad = 0, _wodOffGate = wodPicks.length - stood.length;
       if (place.stopped) console.warn(`[wod] pixel ${key}: a negative model name stopped the loader here, as uint.Parse throws in the C#`);
       const wodBucket = onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0]));   // BLOOD1 AUDIT 3: one array a bucket; PERF-COL2: riding the floating origin
       for (const m of place.models) {
@@ -919,7 +931,7 @@ export function createPixelBuild(host) {
         // it is eased toward it (flattenForLocation), and the shrubs ring the site in that band, at heights the
         // author read off the ground of the one place they were laid out. They hung over ground falling away (DFU's
         // too). Its mesh's foot goes to the lowest ground under the middle of its footprint, collider and all.
-        if (isWodShrub(m.modelId, wodPicks[m.pick]?.name)) {   // ROCK-SUNK (2026-10-02, the field: "Insane glitched geometry over at Hadus"): the rock fields build their outcrops of the same model - boulders scaled 5.6 to 95, set into the piles on purpose - and standing those on their lowest corner raised shards hundreds of metres into the sky round Hadus; a Rocks or Mountains site keeps the mod's height (world/worldOfDaggerfall/wodLocationObjects.js isWodShrub)
+        if (isWodShrub(m.modelId, stood[m.pick]?.name)) {   // ROCK-SUNK (2026-10-02, the field: "Insane glitched geometry over at Hadus"): the rock fields build their outcrops of the same model - boulders scaled 5.6 to 95, set into the piles on purpose - and standing those on their lowest corner raised shards hundreds of metres into the sky round Hadus; a Rocks or Mountains site keeps the mod's height (world/worldOfDaggerfall/wodLocationObjects.js isWodShrub)
           const dy = lowestGroundUnder(samples, box) - box[1];
           m.matrix[13] += dy; box[1] += dy; box[4] += dy;
         }
@@ -987,7 +999,7 @@ export function createPixelBuild(host) {
         }
       }
       if (_wodOffRoad) console.log(`[wod] pixel ${key}: ${_wodOffRoad} piece(s) kept off the road`);   // ROADS-CLEAR
-      if (_wodOffGate) console.log(`[wod] pixel ${key}: ${_wodOffGate} piece(s) kept off Dagon's Breach`);   // GATE-CLEAR
+      if (_wodOffGate) console.log(`[wod] pixel ${key}: ${_wodOffGate} piece(s) or site(s) kept off a breach's clearing`);   // GATE-CLEAR; GATE-AGREE: a held site counts
       const site = [...wodPicks].reverse().find((p) => p.flatten);
       if (site) wodSite = { xMin: site.rect.x, xMax: site.rect.x + site.rect.width, yMin: site.rect.y, yMax: site.rect.y + site.rect.height };
     }

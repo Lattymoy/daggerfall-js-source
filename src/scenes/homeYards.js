@@ -201,6 +201,14 @@ export const YARD_SYNC_S = 0.5;
 /** YARD-MERGE: how many yards' models are merged in one frame (decorRoom.js DECOR_MERGE_SETTLE_MS) - a town streaming in
  *  stands every yard at once, and its merges are spread a frame each. */
 export const YARD_MERGES_A_FRAME = 1;
+/**
+ * YARD-TOWN (2026-10-25, measured in Daggerfall's city on a local build): HOW MANY STRANGERS' YARDS ARE STOOD IN ONE
+ * FRAME. A town's answer landing stood every yard in it in one sync - the city's 2,000 pieces one frame of 108 to 138 ms,
+ * a city of 4,000 one of 142 to 208, whatever the Yard decorations range (it gates the draw, never the stand). Now a sync
+ * stands this many and the next frame syncs again until the town is stood; the owner's own yard, and the one the decorator
+ * stands in, never wait.
+ */
+export const YARD_STANDS_A_FRAME = 4;
 /** What the decorator says of a piece off the lot, in the house, or on another building's ground. */
 export const YARD_OFF_LOT = 'Outside your lot. Keep it within the marked edge.';
 export const YARD_IN_HOUSE = 'That is inside your house. Place it in the yard around it.';
@@ -643,9 +651,12 @@ export function createHomeYards(deps) {
     }
     return false;
   }
+  /** Answers whether a yard still waits to be stood (YARD-TOWN: past this sync's YARD_STANDS_A_FRAME). */
   function sync() {
     const live = new Set();
     const feet = deps.feet?.() ?? null;
+    let stands = YARD_STANDS_A_FRAME;
+    let behind = false;
     for (const [pk, p] of deps.built?.() ?? []) {
       if (!p?.homeTown || !p.homeFrames) continue;
       if (withinReach(p, feet)) ensure(p.homeTown);
@@ -678,6 +689,9 @@ export function createHomeYards(deps) {
         // was holding back, a piece being moved gone from under it.
         const holding = cur?.yard === y && busyWriting();
         if (moved || rebuilt || (sig !== y.sig && !holding)) {
+          // YARD-TOWN: a stranger's yard past this frame's stands waits, as it was, for the next frame's sync
+          if (stands <= 0 && !y.kept && cur?.yard !== y) { behind = true; continue; }
+          stands--;
           y.t = [...t];
           y.entry = p;
           y.skin = p._skinGen ?? 0;
@@ -687,6 +701,7 @@ export function createHomeYards(deps) {
       }
     }
     for (const [key, y] of yards) if (!live.has(key)) { y.pool.destroyAll(); yards.delete(key); }
+    return behind;
   }
   const busyWriting = () => !!tool.flying() || !!tool.panelOpen();
   /** A yard's pixel's climate swaps (its texRemap), or none. */
@@ -836,7 +851,7 @@ export function createHomeYards(deps) {
     // AUDIT: the world recentred - every yard stood again this frame, never half a second in the old place; DECOR-OUTDOOR:
     // nor half a second out of its rebuilt pixel's climate and season (AUDIT PRECIP HOST-7: nor its re-skinned one's)
     if (syncIn > 0) for (const y of yards.values()) { const t = deps.translation(y.px, y.py), e = entryOf(y); if (t[0] !== y.t[0] || t[1] !== y.t[1] || t[2] !== y.t[2] || e !== y.entry || (e?._skinGen ?? 0) !== y.skin) { syncIn = 0; break; } }
-    if (syncIn <= 0) { syncIn = YARD_SYNC_S; sync(); }
+    if (syncIn <= 0) syncIn = sync() ? 0 : YARD_SYNC_S;   // YARD-TOWN: a town not yet stood syncs again next frame
     if (!tool.flying() && !tool.panelOpen()) cur = ownYardHere();   // the yard is held while the decorator is up
     else if (cur && yards.get(cur.yard.key) !== cur.yard) {
       // AUDIT: its pixel was built again under the open decorator (a painted home leaving the merge, a season) - the

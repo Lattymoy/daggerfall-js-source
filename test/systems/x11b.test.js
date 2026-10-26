@@ -29,6 +29,10 @@ import { createWeapon } from '../../src/combat/enemyEquipment.js';
 import { createRandomWeapon } from '../../src/systems/loot/loot.js';
 import { tickPlayerMinutes } from '../../src/systems/worldTick.js';
 import { REFUSAL } from '../../src/systems/item/itemTransfer.js';   // U56
+import { PotionMakerWindow } from '../../src/ui/potionMakerWindow.js';
+import { potionMakerHooks } from '../../src/scenes/potionMakerHost.js';
+import { POTION_RECIPES, potionRecipeKey } from '../../src/systems/potions.js';
+import { mintMaterialItem } from '../../src/systems/professions/profItems.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const src = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -610,13 +614,38 @@ test('X11b: the potion maker really consumes its ingredients now', () => {
   // passed `list[i]` - the ITEM - to removeOne, which takes a TEMPLATE
   // INDEX. Its findIndex compared a number against an object, matched
   // nothing, and returned false, so brewing never spent a reagent.
-  const s = src('src/scenes/worldModes.js');
-  const hook = s.slice(s.indexOf('takeOne: (templateIndex, where'), s.indexOf('takeOne: (templateIndex, where') + 1100);
-  assert.ok(!/removeOne\(list, list\[i\]\)/.test(hook), 'the item is still passed where an index goes');
   // AUDIT 26 F176 grew the call: the group rides along so the walk
   // spends only un-enchanted reagents (GetItem's allowEnchantedItem
   // false, :338/:345). The X11b lesson - index, not item - stands.
-  assert.ok(hook.includes('removeOne(list, templateIndex, { group, allowEnchantedItem: false })'), 'the index is not passed');
+  // POTION-DOOR moved the hook to scenes/potionMakerHost.js, so this
+  // brews through the real hooks and window rather than reading text.
+  const berries = mintMaterialItem('p1:16');
+  const southernBerries = mintMaterialItem('p2:16');   // template 16 too, the other plant group
+  const enchantedBerries = { ...mintMaterialItem('p1:16'), enchantments: [{ type: 1, param: 0 }] };
+  const trollBlood = mintMaterialItem('reagent:troll-blood');
+  const elixirVitae = mintMaterialItem('reagent:elixir-vitae');
+  const mercury = mintMaterialItem('metal:mercury');
+  // Both twins stand before the plain berries: a spend that drops the
+  // group or the enchantment rule takes a twin, and a spend that passes
+  // the item where the index goes takes nothing.
+  const player = { items: [southernBerries, enchantedBerries, berries, trollBlood, elixirVitae, mercury] };
+  const icons = { getTexture: async () => ({ recordCount: 0 }), uploadRecord: () => {}, textures: new Map() };
+  // No door is the offline maker: DFU's own mix, spent by the window's walk.
+  const hooks = potionMakerHooks({ player, icons, door: () => null });
+  const maker = new PotionMakerWindow(hooks);
+  const grid = maker.ingredients();
+  for (const reagent of [berries, trollBlood, elixirVitae, mercury]) {
+    const unit = grid.find((it) => it.group === reagent.group && it.templateIndex === reagent.templateIndex);
+    assert.ok(unit, `${reagent.name} of ${reagent.group} is on the grid`);
+    maker._addToCauldron(unit);
+  }
+  maker._mix();
+  const healing = POTION_RECIPES.find((r) => r.name === 'healing');
+  assert.deepEqual(maker.cauldron, [], 'the walk spent every unit, so the cauldron emptied');
+  assert.deepEqual(player.items.slice(0, 2), [southernBerries, enchantedBerries], 'the plain berries were spent by index and group; neither twin was');
+  assert.equal(player.items.length, 3, 'the four reagents went and one potion came');
+  assert.equal(player.items[2].potionRecipeKey, potionRecipeKey(healing.ingredients), 'the potion is Healing');
+  assert.equal(hooks.takeOne(berries.templateIndex, 'pack', berries.group), false, 'an enchanted twin is never spent');
 });
 
 // ── the catalog ──────────────────────────────────────────────────

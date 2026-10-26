@@ -47,7 +47,7 @@ const wear = (e, ...pieces) => { for (const p of pieces) { e.items.push(p); equi
 const ALL_GARMENTS = [...GROUP_TEMPLATE_INDICES.MensClothing, ...GROUP_TEMPLATE_INDICES.WomensClothing];
 const POOL = ['standing', 'warmth', 'dry', 'skill', 'stat'];
 
-test('LOOT14: every garment rolls, on the wardrobe\'s pool alone - standing, warmth, weatherproofing, the street\'s skills and Personality; never a line of fight, capacity, resistance, Luck or one that does something; a Rare names both parts', () => {
+test('LOOT14: every garment rolls, on the wardrobe\'s pool alone - standing, warmth, weatherproofing, the street\'s skills and Personality; never a line of fight, capacity, resistance, Luck or one that does something; AFFIX-LINES: a Rare named as its lines fall', () => {
   on();
   assert.equal(ALL_GARMENTS.length, 76, 'DFU\'s men\'s and women\'s clothing, every template');
   for (const t of ALL_GARMENTS) assert.ok(LR.rarityEligible(garment(t)), `template ${t} is eligible`);
@@ -79,7 +79,8 @@ test('LOOT14: every garment rolls, on the wardrobe\'s pool alone - standing, war
         const sigs = it.affixes.map((a) => `${a.id}:${a.param ?? ''}`);
         assert.equal(new Set(sigs).size, sigs.length, 'no line repeats');
         if (tier === 'rare') {
-          assert.ok(it.affixes.some((a) => LR.AFFIX_KINDS[a.id].slot === 'prefix') && it.affixes.some((a) => LR.AFFIX_KINDS[a.id].slot === 'suffix'), 'a Rare names both parts');
+          assert.ok(it.affixes.some((a) => LR.AFFIX_KINDS[a.id].slot === 'suffix'), 'PIN MOVED (AFFIX-LINES): a Rare\'s suffix always (a garment has two prefixes to give), its prefix as its lines fall');
+          assert.equal(it.name, LR.rarityName(it, tier, it.affixes), 'named by its lines');
           assert.equal(it.enchantments?.length, 1, 'a Rare carries one DFU flavour');
         }
       }
@@ -126,11 +127,14 @@ test('LOOT14: the leans - a garment\'s first line is its standing half the time;
   assert.ok(LR.garmentOnFeet(garment(147)) && LR.garmentOnFeet(garment(189)) && !LR.garmentOnFeet(garment(155)));
   assert.ok(share(shoe.skills, feet) > 0.8, `a shoe's lean to the feet (${share(shoe.skills, feet).toFixed(2)})`);
   // GOLDEN: three seeded garments mint exactly this - a draw more or less (a second roll for a standing line, a lean
-  // lost) moves every line after it
+  // lost) moves every line after it. PIN MOVED (AFFIX-LINES, 2026-10-25): each pick drawn over the lines (the skills'
+  // 35 of a garment's 43), one roll as before - the same seeds land on other lines; main's three were the gown's dry,
+  // warmth, skill 1 and Personality (932), the robes' underworld and warmth (139), the shoes' merchants, skill 16,
+  // warmth and scholars (877)
   const goldens = [
-    [195, 'rare', 42, 'Oiled Evening Gown of Skill', [{ id: 'dry', value: 31 }, { id: 'warmth', value: 6 }, { id: 'skill', param: 1, value: 11 }, { id: 'stat', param: 'personality', value: 6 }], 932],
-    [163, 'magic', 7, 'Lined Plain Robes of the Alley', [{ id: 'standing', param: 'underworld', value: 3 }, { id: 'warmth', value: 3 }], 139],
-    [147, 'rare', 11, 'Quilted Shoes of the Market', [{ id: 'standing', param: 'merchants', value: 5 }, { id: 'skill', param: 16, value: 17 }, { id: 'warmth', value: 4 }, { id: 'standing', param: 'scholars', value: 5 }], 877],
+    [195, 'rare', 42, 'Oiled Evening Gown of the Library', [{ id: 'standing', param: 'scholars', value: 5 }, { id: 'skill', param: 2, value: 15 }, { id: 'skill', param: 16, value: 12 }, { id: 'dry', value: 31 }], 922],
+    [163, 'magic', 7, 'Plain Robes of the Alley', [{ id: 'standing', param: 'underworld', value: 3 }, { id: 'skill', param: 4, value: 8 }], 194],
+    [147, 'rare', 11, 'Shoes of the Market', [{ id: 'standing', param: 'merchants', value: 5 }, { id: 'skill', param: 16, value: 17 }, { id: 'skill', param: 18, value: 10 }, { id: 'skill', param: 17, value: 13 }], 954],
   ];
   for (const [t, tier, seed, name, affixes, value] of goldens) {
     const it = LR.applyRarity(garment(t), tier, lcg(seed));

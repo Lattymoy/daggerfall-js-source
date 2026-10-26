@@ -189,12 +189,13 @@
   {
     "name": "CLOTHGEMS-words-own-unread",
     "file": "src/ui/craftXpWords.js",
-    "old": "  const more = firstCraftPays(r, own) ? FIRST_CRAFT_XP : 0;\n",
-    "new": "  const more = firstCraftPays(r) ? FIRST_CRAFT_XP : 0;\n",
+    "old": "  const more = firstCraftXp(r, own);",
+    "new": "  const more = firstCraftXp(r);",
     "tests": [
       "test/net/fb1015f_firstcraft.test.js",
       "test/systems/clothgems_client.test.js"
-    ]
+    ],
+    "note": "FIRST-BUDGET (re-aimed at the merge, Professions-Arc 52): the line's first is firstCraftXp(r, own) - the share where the units are own - where it was firstCraftPays(r, own) ? FIRST_CRAFT_XP : 0."
   },
   {
     "name": "CLOTHGEMS-words-branch-inverted",

@@ -84,33 +84,33 @@
     ]
   },
   {
-    "name": "FIELD-GUN17-10-the-gain-threshold-is-dropped-so-the-whole-sprite-is-the-flash",
-    "file": "src/combat/thunderlockArt.js",
-    "old": "      if (gain <= MUZZLE_GAIN) continue;",
-    "new": "      if (gain <= 0) continue;",
+    "name": "FIELD-GUN17-10-the-hot-threshold-is-dropped-so-the-whole-sprite-is-the-flash",
+    "file": "src/combat/gun/gunFlash.js",
+    "old": "  const hot = (i) => luma(i) >= FLASH_LUMA;",
+    "new": "  const hot = (i) => luma(i) >= 0;",
     "tests": [
       "test/systems/thunderlock.test.js"
     ]
   },
   {
-    "name": "FIELD-GUN17-11-the-centroid-stops-weighting-by-brightness",
-    "file": "src/combat/thunderlockArt.js",
-    "old": "      sx += x * gain; sy += y * gain; total += gain;",
-    "new": "      sx += x; sy += y; total += 1;",
+    "name": "FIELD-GUN17-11-the-centroid-takes-the-texel-corner-not-its-centre",
+    "file": "src/combat/gun/gunFlash.js",
+    "old": "if (body[i]) { sx += (i % img.width) + 0.5; sy += ((i / img.width) | 0) + 0.5; n++; }",
+    "new": "if (body[i]) { sx += (i % img.width); sy += ((i / img.width) | 0); n++; }",
     "tests": [
       "test/systems/thunderlock.test.js"
     ],
-    "equivalent": true,
-    "why": "The pins can only see the ONE-hot-pixel fixture, where a count and a weighted sum agree exactly. The weighting is still the right code - the real flash is a gradient, and its brightest core is where the barrel is - but no assertion here can tell the two apart without baking a second fixture whose only purpose is to distinguish them, and the art itself is not in the tree to measure. Recorded rather than papered over."
+    "note": "Re-aimed THUNDERLOCK-ART2 (2026-10-24): muzzlePoint retired with the sheet; the muzzle is flashBodyPoint, an unweighted centroid of the flash's core, so the brightness weighting this record held equivalent is gone with it."
   },
   {
-    "name": "FIELD-GUN17-12-mismatched-frames-are-read-anyway",
-    "file": "src/combat/thunderlockArt.js",
-    "old": "  if (!dark?.data || !lit?.data || dark.width !== lit.width || dark.height !== lit.height) return null;",
-    "new": "  if (!dark?.data || !lit?.data) return null;",
+    "name": "FIELD-GUN17-12-y-counted-up-from-the-foot",
+    "file": "src/combat/gun/gunFlash.js",
+    "old": "  return { x: sx / n / img.width, y: sy / n / img.height };",
+    "new": "  return { x: sx / n / img.width, y: 1 - sy / n / img.height };",
     "tests": [
       "test/systems/thunderlock.test.js"
-    ]
+    ],
+    "note": "Re-aimed THUNDERLOCK-ART2 (2026-10-24): one frame now, no pair to mismatch - the axis the draw reads is the law left to hold."
   },
   {
     "name": "FIELD-GUN17-13-the-colour-is-a-flat-mean-with-no-alpha-weight",

@@ -24,7 +24,9 @@
 //   players have stored in it (`s`, full records, and their ids `si`). Two words merge the same in any order, so two
 //   players taking different pieces in the same breath both see both gone; nothing a peer says overwrites a list. A word
 //   carries its base's signature (`h`): a client whose own computation differs (another build) reads it as AUDIT SETS
-//   M2's unreadable word, never as a list to land.
+//   M2's unreadable word, never as a list to land. The room's memory is the exception on its host: a remembered word
+//   was the room's own, an earlier visit's, so the host starts that container over one generation on
+//   (scenes/roomLootHost.js restartStaleContainer).
 // - THE CLAIMS (Mac, 2026-10-15: "Host arbitrates"). A take of a shared piece is a claim the room's host grants, first
 //   come first served; the loser is told so and the piece reaches the winner's pack alone. The takes, the stored pieces
 //   and the verdicts are the HOST's word; a claimer says only its claims and its puts (below, validRoomWord's `q`, `a`

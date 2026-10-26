@@ -740,9 +740,9 @@
   },
   {
     "name": "OH-E-bonus-wrong-column",
-    "file": "src/scenes/world.js",
-    "old": "      addBonusMagicLoot(lootMatrix(key).MI, items, () => {",
-    "new": "      addBonusMagicLoot(lootMatrix(key).WP, items, () => {",
+    "file": "src/scenes/ohLootHost.js",
+    "old": "    addBonusMagicLoot(lootMatrix(key).MI, items, () => {",
+    "new": "    addBonusMagicLoot(lootMatrix(key).WP, items, () => {",
     "tests": [
       "test/scenes/oh_abyss.test.js"
     ]
@@ -941,7 +941,7 @@
   },
   {
     "name": "OH-F-B3-every-host-upgraded",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/ohLootHost.js",
     "old": "if (where !== 'dungeon' || !ohAbyss.shouldUpgradeLoot()) return;",
     "new": "if (!ohAbyss.shouldUpgradeLoot()) return;",
     "tests": [

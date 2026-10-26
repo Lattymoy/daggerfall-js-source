@@ -56,6 +56,10 @@ async function boot() {
   installFramePacer();   // FPS-VSYNC: first, before any loop asks for a frame - a no-op but in the app with the wait lifted
   installCursor();   // CLASSIC-CURSOR: DFU's own arrow on the classic skin, from the first frame - it needs no game data
   const canvas = document.getElementById('c');
+  // GPU-TRAIL (render/gpuTrail.js): the desktop shell keeps the GPU's last samples with a crash, so the canvas is counted
+  // before the renderer makes its first object. Behind a door, as the shell's update notice is: a tab has no shell.
+  const gpuTrail = typeof globalThis.daggerShell?.gpuTrail === 'function'
+    ? await import('./render/gpuTrail.js').then((m) => m.gpuTrailOn(canvas, globalThis.daggerShell.gpuTrail)).catch(() => null) : null;
   const renderer = new Renderer(canvas);
   onPageGone(() => { pageGoing = true; loseGlContext(renderer.gl); });   // GL-LEAK: the game's own context, let go as the page goes
   import('./render/portraitRenderer.js').then(({ setPortraitRenderer }) => setPortraitRenderer(renderer)).catch(() => {});   // PORTRAIT3D: the faces' renderer, for the menu's wells that hold none (behind a door: BOOT2's ceiling)
@@ -81,7 +85,8 @@ async function boot() {
       .then(([updates, notify]) => updates.listenForShellUpdates(globalThis.daggerShell, (text) => notify.hudTextWhenShown(text, 12)))
       .catch((err) => console.warn('[update] the update notice could not load:', err?.message ?? err));
   }
-  mountFpsCounter({ enabled: () => params.has('fps') || !!getPref('showFps'), stats: () => renderer.stats, info: () => renderer.frameInfo });   // FPS1: over every host, on the pref or the probe door; PERF3: with the renderer's counts; PERF-SCALE: and its GPU and frame size
+  const fps = mountFpsCounter({ enabled: () => params.has('fps') || !!getPref('showFps'), stats: () => renderer.stats, info: () => renderer.frameInfo });   // FPS1: over every host, on the pref or the probe door; PERF3: with the renderer's counts; PERF-SCALE: and its GPU and frame size
+  gpuTrail?.start(renderer, fps.last);   // GPU-TRAIL: the counter's seconds are the trail's frames
   // FB0930-TITLE: a boot's steps name themselves in the title, and a null step is the boot done - the bare name, so
   // the window does not say "loading the saved game" for the rest of the session.
   const status = (msg) => {

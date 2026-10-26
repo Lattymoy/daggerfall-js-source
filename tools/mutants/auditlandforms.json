@@ -858,10 +858,11 @@
     ]
   },
   {
-    "name": "AUDIT-LANDFORMS-B1-spawn-past-its-time-stands",
+    "name": "GROUND-AGREE-the-lift-asks-the-clocks",
     "file": "src/scenes/world.js",
-    "old": "_liftLocationAt = (x, y) => (locationIndex.get(`${x},${y}`)?.spawned && tvSpawnGone(x, y) ? null : tvLocationAt(x, y));",
-    "new": "_liftLocationAt = (x, y) => tvLocationAt(x, y);",
+    "old": "  const _liftLocationAt = (x, y) => spawnGroundPlace.groundLocationAt(x, y, locationIndex.get(`${x},${y}`));\n",
+    "new": "  const _liftLocationAt = (x, y) => tvLocationAt(x, y);\n",
+    "note": "GROUND-AGREE (Field-Bugs-2026-10-24b): re-aimed - the lift asks the clocks again (a spent spawn read as bare ground) where its build shapes the ground for the spawn alive or dead.",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -870,7 +871,7 @@
   {
     "name": "AUDIT-LANDFORMS-B1-never-bound",
     "file": "src/scenes/world.js",
-    "old": "  const _liftLocationAt = (x, y) => (locationIndex.get(`${x},${y}`)?.spawned && tvSpawnGone(x, y) ? null : tvLocationAt(x, y));\n",
+    "old": "  const _liftLocationAt = (x, y) => spawnGroundPlace.groundLocationAt(x, y, locationIndex.get(`${x},${y}`));\n",
     "new": "  const _liftLocationAt = (x, y) => locationIndex.get(`${x},${y}`);\n",
     "tests": [
       "test/systems/landform.test.js",
@@ -1015,8 +1016,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-F1-the-probe-skips-the-roll",
     "file": "src/scenes/world.js",
-    "old": "?.spawned && tvSpawnGone(x, y) ? null : tvLocationAt(x, y));",
-    "new": "?.spawned && tvSpawnGone(x, y) ? null : locationIndex.get(`${x},${y}`));",
+    "old": "groundLocationAt(x, y, locationIndex.get(`${x},${y}`));",
+    "new": "(locationIndex.get(`${x},${y}`) ?? null);",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
@@ -1459,8 +1460,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-J3-probe-transposed",
     "file": "src/scenes/world.js",
-    "old": "?.spawned && tvSpawnGone(x, y) ? null : tvLocationAt(x, y));",
-    "new": "?.spawned && tvSpawnGone(x, y) ? null : tvLocationAt(y, x));",
+    "old": "groundLocationAt(x, y, locationIndex",
+    "new": "groundLocationAt(y, x, locationIndex",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
@@ -1468,19 +1469,21 @@
   {
     "name": "AUDIT-LANDFORMS-II-J3-index-transposed",
     "file": "src/scenes/world.js",
-    "old": "  const _liftLocationAt = (x, y) => (locationIndex.get(`${x},${y}`)?.spawned",
-    "new": "  const _liftLocationAt = (x, y) => (locationIndex.get(`${y},${x}`)?.spawned",
+    "old": "groundLocationAt(x, y, locationIndex.get(`${x},${y}`));",
+    "new": "groundLocationAt(x, y, locationIndex.get(`${y},${x}`));",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
-    "name": "AUDIT-LANDFORMS-II-J3-gone-transposed",
-    "file": "src/scenes/world.js",
-    "old": "?.spawned && tvSpawnGone(x, y) ? null :",
-    "new": "?.spawned && tvSpawnGone(y, x) ? null :",
+    "name": "GROUND-AGREE-roll-transposed",
+    "file": "src/world/spawnGroundPlace.js",
+    "old": "if (!spawnsDungeon(WORLD_SALT, px, py)) return null;",
+    "new": "if (!spawnsDungeon(WORLD_SALT, py, px)) return null;",
+    "note": "GROUND-AGREE (Field-Bugs-2026-10-24b): re-aimed - the lift asks no tvSpawnGone of its own now; the ground's roll is asked of the pixel transposed.",
     "tests": [
-      "test/world/terrain/auditlandforms.test.js"
+      "test/world/terrain/auditlandforms.test.js",
+      "test/scenes/fb1024_groundagree.test.js"
     ]
   },
   {

@@ -65,7 +65,7 @@ Mutants: `tools/mutants/fb1018d_crafthowto.json` (30, all dead).
 
 NOT PROVEN. Measured in Node over the real modules, on a 4-core container one and a half to two times slower than a
 gaming desktop (scripts, not committed):
-- the online realm checkpoint, every 120 s (`world.js:"if (checkpointDue(now, _checkpointAt)) {"`): at 4.37 MB (the
+- the online realm checkpoint, every 120 s (`world.js:"checkpointWhenDue(now, _checkpointAt, realmSession, () => onlineCheckpoint());   // SCALE2b"`): at 4.37 MB (the
   size of the largest field save we hold) about 48 ms in one frame and another 33 ms in a later task once the put
   lands; about 9 ms at a typical 600 KB. A known hitch that grows with the save (Performance-Next.md), but its cadence
   is fixed, and the report's is not;
@@ -301,7 +301,7 @@ alone. Left: the spoils are thrown when the account service answers the claim, n
 ### Item 5, the rest's short timer: the record's windows - and a key clash, the owner's call
 
 Measured on the real director, solo: the rest opens 6 s after the fall (EG_RD_WINDOW_MS) with the Vestige offer, the
-decrees, Ready and the respite together; each question is open 10 s (`egRun.js:"export const EG_ASK_MS = 10_000;"`);
+decrees, Ready and the respite together; each question was open 10 s (`egRun.js:"export const EG_ASK_MS = 30_000;"`, 30 s since FIELD BUGS 2026-10-25 ASK-LONGER);
 a decree no one votes takes the first shown, the offer's first card is taken at the next circle (96 s), and one yes to
 Ready ends a solo rest about 12 s later. All of it is the record's (16.2-16.4, 14, 15).
 
@@ -325,7 +325,7 @@ the panel those keys and its hint says "Y: the Ready vote", while KB1 gives Y to
 Spire's controls, so it is Mac's: (a) the Spire never takes a key the world has bound (Y, N and the digits alike) (Ready by click, pad or
 `/breach vote yes`), rewording 27.8 and the hint; or (b) the panel's keys become rebindable actions on free codes. Ten
 seconds for a decree, read beside the cards, is tight for a solo reader; lengthening EG_ASK_MS is the record's law to
-change, also the owner's. What would prove it was Boar's path: whether he pressed Y or a number at the rest, or a
+change, also the owner's (the owner handed over the players' ask on 2026-10-25: ASK-LONGER, 30 s). What would prove it was Boar's path: whether he pressed Y or a number at the rest, or a
 relay `vote` with q `ready` from his account.
 
 ## KEY-LOGBOOK: the journal keys' rows name the window each skin opens (5)

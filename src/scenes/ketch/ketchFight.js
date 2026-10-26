@@ -1,4 +1,5 @@
 // @ts-check
+// BOSS-TRAITS (bible/05-Combat/Boss-Traits.md section 3; AUDIT WORLD-EVENTS L5-16) - FLAGGED: the Tonal Warden carries no boss traits; its health and blows are the ship's room's, and this deck host has no striker's half yet.
 // KETCH (2026-10-24; bible/11-Multiplayer/Sky-Ketch.md sections 5-8): THE SHIP'S FIGHTS ON THIS SCREEN - the constructs and
 // the Tonal Warden as the room says them (net/ketch/ketchLink.js's fold), every blow on the floor it lands on, every blow
 // judged on MY OWN FEET (co-op's law - the gate's court and the Spire's halls alike: net/eliteGates/egShape.js
@@ -123,12 +124,14 @@ export function ktBodyAct(B, now, mobile, blow, look = null) {
  *   audio?: any, link: any, now: () => number, cam?: () => number[]|null, feet?: () => number[]|null, grounded?: () => boolean,
  *   player?: () => any, save?: (e: any, el: string) => number, strike?: (dmg: number, how: any) => void, say?: (text: string) => void,
  *   sendHit?: (hit: { o: number, d: number, r: number, q: number }) => boolean, onStruck?: () => void,
+ *   fell?: (kind: string, id: number, at: number[]) => void,
  * }} deps
  *   `link` the ship's (net/ketch/ketchLink.js); `now` the relay's clock; `feet` my feet (the dungeon's frame, null off the ship);
  *   `strike` the dungeon context's door a blow on me lands through; `save` my saving throw against an element; `sendHit` a
- *   blow of mine out to the room; `onStruck` any blow or hazard met me (the client lets my cell go).
+ *   blow of mine out to the room; `onStruck` any blow or hazard met me (the client lets my cell go); `fell` a construct
+ *   (its kind's key, 'tonal' for the Warden) fallen fresh, where (KETCH-PELLETS: the client lays its Pellets).
  */
-export function createKetchFight({ renderer = null, gl = null, getTexture = null, uploadRecordFrame = null, audio = null, link, now, cam = () => null, feet = () => null, grounded = () => true, player = () => null, save = () => 100, strike = () => {}, say = () => {}, sendHit = () => false, onStruck = () => {} }) {
+export function createKetchFight({ renderer = null, gl = null, getTexture = null, uploadRecordFrame = null, audio = null, link, now, cam = () => null, feet = () => null, grounded = () => true, player = () => null, save = () => 100, strike = () => {}, say = () => {}, sendHit = () => false, onStruck = () => {}, fell = () => {} }) {
   const O = deckToDungeon(0, 0, 0);
   const bodies = new Map(), textures = new Map();
   const judged = new Set(), heard = new Set();
@@ -253,7 +256,7 @@ export function createKetchFight({ renderer = null, gl = null, getTexture = null
         b.hp = B.h;
         if (blow && b.wound !== blow.at) { b.wound = blow.at; if (t < blow.at) play(hostCue('windup', look.mobile), at); }
         if (blow && b.landed !== blow.at && t >= blow.at) { b.landed = blow.at; if (t - blow.at <= 2000) play(hostCue('land', look.mobile), at); }
-        if (!(B.h > 0) && !b.fell) { b.fell = true; if (t - (B.down || t) <= 2000) play(hostCue('fall', look.mobile), at); }
+        if (!(B.h > 0) && !b.fell) { b.fell = true; if (t - (B.down || t) <= 2000) { play(hostCue('fall', look.mobile), at); fell(K.key, B.id, at); } }   // KETCH-PELLETS: a fresh fall drops its Pellets
         const glint = act.act === 'windup' ? [...(COLOR_OF[blow?.el] ?? COLOR_OF.null), Math.min(1, 0.4 + (act.k ?? 0) * 0.6)] : null;
         const yaw = blow && t < blow.at + 600 ? Math.atan2((blow.s?.[0]?.[1] ?? x) - x, (blow.s?.[0]?.[2] ?? z) - z) : B.yw;
         b.yaw = yaw;
@@ -279,6 +282,7 @@ export function createKetchFight({ renderer = null, gl = null, getTexture = null
         const at = deckToDungeon(x, KT_BRIDGE.y + act.lift, z);
         if (ws.h < warden.hp) { warden.roomAt = t; if (t - warden.heardHurt >= 800) { warden.heardHurt = t; play(hostCue('hurt', KT_WARDEN_LOOK.mobile), at); } }
         warden.hp = ws.h;
+        if (ws.fell && !warden.fell) { warden.fell = true; if (t - ws.fell.at <= 2000) fell('tonal', KW_ID, at); }   // KETCH-PELLETS: the Tonal Warden's own
         if (blow && warden.wound !== blow.at) { warden.wound = blow.at; if (t < blow.at) play(BOSS_CUES.growl, at); }
         const glint = act.act === 'windup' ? [...(COLOR_OF[blow?.el] ?? COLOR_OF.null), 0.5 + 0.5 * (act.k ?? 0)] : ws.ward ? [1, 0.86, 0.5, 0.45] : null;
         const yaw = blow && t < blow.at + 600 && blow.s?.[0]?.[0] !== 'a' ? Math.atan2((blow.s[0][1] ?? x) - x, (blow.s[0][2] ?? z) - z) : W.yw;

@@ -133,7 +133,7 @@
   {
     "name": "AUDIT-PSCALE1-outdoor-heal-unweighed",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "    const h = !f.puppet && _sharedFoe(f) ? partyFoeHeals(f, n, fightN(f)) : n;",
+    "old": "    const h = !f.puppet && _toughFoe(f) ? partyFoeHeals(f, n, fightN(f)) : n;",
     "new": "    const h = n;",
     "tests": [
       "test/systems/party/pscale1.test.js",
@@ -379,6 +379,96 @@
     "new": "  if (r.n !== undefined) out.n = r.n;",
     "tests": [
       "test/systems/party/pscale1.test.js",
+      "test/systems/auditpscale1.test.js"
+    ]
+  },
+  {
+    "name": "BOSS-EXACT-boss-weighed",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "  const _toughFoe = (f) => _sharedFoe(f) && !f.entity?.staffBoss;",
+    "new": "  const _toughFoe = (f) => _sharedFoe(f);",
+    "tests": [
+      "test/systems/auditpscale1.test.js"
+    ]
+  },
+  {
+    "name": "BOSS-BIG-HIT-refused",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "(dmg > PEER_HIT_DMG_MAX && !f.entity?.staffBoss)) return false;",
+    "new": "dmg > PEER_HIT_DMG_MAX) return false;",
+    "tests": [
+      "test/systems/auditpscale1.test.js"
+    ]
+  },
+  {
+    "name": "BOSS-BIG-HIT-unclamped",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    const blow = Math.min(PEER_HIT_DMG_MAX, dmg);",
+    "new": "    const blow = dmg;",
+    "tests": [
+      "test/systems/auditpscale1.test.js"
+    ]
+  },
+  {
+    "name": "BOSS-BAR-clamped",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "k < 1 ? Math.round(e.health * k) : e.health",
+    "new": "e.health",
+    "tests": [
+      "test/systems/auditpscale1.test.js"
+    ]
+  },
+  {
+    "name": "BOSS-SPELL-WARD-uncut",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (_bossSpell && damage > 0) damage = Math.max(1, Math.round(damage * STAFF_BOSS_SPELL_TAKEN));",
+    "new": "",
+    "tests": [
+      "test/systems/auditpscale1.test.js"
+    ]
+  },
+  {
+    "name": "BOSS-SPELL-WARD-puppet-cut-twice",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    const _bossSpell = kind === 'spell' && !f.puppet && !!f.entity?.staffBoss;",
+    "new": "    const _bossSpell = kind === 'spell' && !!f.entity?.staffBoss;",
+    "tests": [
+      "test/systems/auditpscale1.test.js"
+    ]
+  },
+  {
+    "name": "BOSS-HIT-SHARE-uncapped",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      damage = staffBossHit(damage, f.entity.maxHealth, foeFightersUpTo(f, _now(), STAFF_BOSS_FIGHTERS_MAX));",
+    "new": "",
+    "tests": [
+      "test/systems/auditpscale1.test.js"
+    ]
+  },
+  {
+    "name": "BOSS-HIT-SHARE-unsplit",
+    "file": "src/systems/eliteFoes.js",
+    "old": "* STAFF_BOSS_HIT_SHARE) / Math.max(1, fighters))));",
+    "new": "* STAFF_BOSS_HIT_SHARE))));",
+    "tests": [
+      "test/systems/auditpscale1.test.js"
+    ]
+  },
+  {
+    "name": "BOSS-HIT-SHARE-party-seats",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "foeFightersUpTo(f, _now(), STAFF_BOSS_FIGHTERS_MAX)",
+    "new": "foeFighters(f, _now())",
+    "tests": [
+      "test/systems/auditpscale1.test.js"
+    ]
+  },
+  {
+    "name": "BOSS-HIT-SHARE-striker-uncounted",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (hitter != null) noteFighter(f, hitter, _now());",
+    "new": "",
+    "tests": [
       "test/systems/auditpscale1.test.js"
     ]
   }

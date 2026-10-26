@@ -255,7 +255,7 @@
  {
   "name": "PW-reload-forgets-the-frames",
   "file": "src/combat/playerWeapon.js",
-  "old": "return Math.max(0, FIRE_FRAMES / g.fps - g._t) + g.cooldownMs / 1000;",
+  "old": "return Math.max(0, g.frames / g.fps - g._t) + g.cooldownMs / 1000;",
   "new": "return g.cooldownMs / 1000;",
   "tests": [
    "test/combat/gun/pistolport.test.js",

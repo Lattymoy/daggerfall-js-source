@@ -23,7 +23,7 @@
 //
 // Not a DFU member. Ledger A (KETCH).
 import { identity } from '../../world/mat4.js';
-import { buildKetchShip, buildKetchParts, buildKetchGround, KT_GROUND, KT_CAGE, KT_LODESTONE, KT_LAMP } from '../../world/ketch/ketchModel.js';
+import { buildKetchShip, buildKetchParts, buildKetchGround, KT_GROUND, KT_CAGE, KT_LODESTONE, KT_LAMP, KT_LID_Y } from '../../world/ketch/ketchModel.js';
 import { ketchArt, resolveKetchArt, KT_ARCHIVE, KT_REC } from '../../world/ketch/ketchArt.js';
 import { DFPalette } from '../../formats/dfPalette.js';
 import { hammerHeadY, hazardState, hazardStrike, sectionPose } from '../../world/ketch/ketchPose.js';
@@ -33,7 +33,7 @@ import { ketchHourLight, ketchLightRecord, KT_TRI } from '../../world/ketch/ketc
 import { KT_GROUP, pvsGroupsAt } from '../../world/ketch/ketchStates.js';
 import {
   KT_HAMMER, KT_STEAM, KT_ARCS, KT_LIFT, KT_CRADLES, KT_BRIDGE_CRADLES, KT_SOCKETS, KT_RESONATORS, KT_BRIDGE, KT_HOLD, KT_GALLERY, KT_SECTIONS,
-  KT_ENGINE, KT_HATCH, KT_HOLD_HATCH, KT_FORK_RING, KT_GANGWAY, liftYAt, deckToDungeon, dungeonToDeck, deckZoneAt, sectionAt,
+  KT_ENGINE, KT_HATCH, KT_HOLD_HATCH, KT_FORK_RING, KT_GANGWAY, KT_WAIST, KT_ANCHOR, liftYAt, deckToDungeon, dungeonToDeck, deckZoneAt, sectionAt,
 } from '../../net/ketch/ketchDeck.js';
 import { KT_STAGE } from '../../net/ketch/ketchLaw.js';
 import { KW_SECTION_WARN_MS } from '../../net/ketch/ketchWarden.js';
@@ -478,6 +478,19 @@ export function ketchApplyLook(renderer, L, fogInto = null) {
  * (ketchMoonNow - a test's own).
  * @param {{ renderer: any, host: any, wm: { readonly mode: string, readonly dungeonCtx: any, readonly dungeonLoc: any, place: (at: number[], yaw?: number|null) => boolean }, moon?: () => ({ dir: ArrayLike<number>, scale: number } | null) }} deps
  */
+/** KETCH-FIX (2026-10-25, the owner: "The invisable panels cam fuck up players"): IS A BODY STANDING ON THE WAIST'S LID -
+ *  the unseen ceiling over the Anchor Deck and the waist (world/ketch/ketchModel.js KT_LID_Y, the collider's alone, so
+ *  nobody climbs out over the nets or the quarter wall)? From above it is an invisible floor in the air: a body off the main
+ *  top's net or over the quarter wall's top stood on it, out of the fight with no way down. It is the sky's, then - the
+ *  ship casts it back as the nets do. The mast-lift's shaft (its cage rides through the lid's height) is never the lid.
+ *  Deck metres. Pure. */
+export function ketchOnLid(x, y, z) {
+  if (!(y > KT_LID_Y - 0.3 && y < KT_LID_Y + 0.6)) return false;
+  if (Math.abs(x - KT_LIFT.x) <= KT_LIFT.half + 0.5 && Math.abs(z - KT_LIFT.z) <= KT_LIFT.half + 0.5) return false;
+  const W = KT_WAIST, A = KT_ANCHOR;
+  return (x >= W.x0 && x <= W.x1 && z >= W.z0 && z <= W.z1) || (x >= A.x0 && x <= A.x1 && z >= A.z0 && z <= A.z1);
+}
+
 export function createKetchDeckHost({ renderer, host, wm, moon = ketchMoonNow }) {
   let deck = null, deckCtx = null;
   const onShip = () => wm.mode === 'dungeon' && isKetchShip(wm.dungeonLoc);
@@ -519,6 +532,7 @@ export function createKetchDeckHost({ renderer, host, wm, moon = ketchMoonNow })
       ctx.sdStepsRide = (dt, body, live = true) => {
         const k = K(), now = k?.now?.() ?? Date.now(), t = k?.clock?.() ?? now / 1000;
         deck?.pose(k?.voyage?.() ?? null, t, now, body, k?.carried?.() ?? NONE);
+        if (live && body?.grounded && body.pos) { const p = dungeonToDeck(body.pos[0], body.pos[1], body.pos[2]); if (ketchOnLid(p[0], p[1], p[2])) castBack(); }   // KETCH-FIX: the lid is the sky's
         if (live) noteGround(body);
         return ride ? ride(dt, body, live) : null;
       };

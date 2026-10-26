@@ -866,7 +866,10 @@ closed or crashed first) at the next launch. A new install starts over: the inst
 "Updated to v...", and nothing installs or restarts. With the game running, it is kept and told on the HUD, and plays
 from the page's next document load: File > Restart to Update reloads onto it now (the game's own Leave/Stay asks first
 where progress is at risk), and the next launch plays it otherwise. The installer runs only for a release that changes
-the shell itself.
+the shell itself. Only a navigation that loads the game's own pages (`dagger://game/`) switches it
+(`app/lib/readyGameSwitch.cjs`): Electron raises `did-start-navigation` before `will-navigate`, so a navigation the
+fence then cancelled used to switch the version under the page still running and count its trial with no boot to prove
+it - and the next launch rolled back the version the HUD had called ready.
 
 **Every failure is the installer's.** A manifest that does not read, a pack that is not the manifest's, a range, a hash,
 the disk, a boot that never came up: the version is remembered (`failed`) and that release goes the installer's path at
@@ -904,10 +907,11 @@ differ from the Linux leg's that the pack is cut from (each leg builds its own; 
 first update - the hashes decide, never the build); the NSIS install, the AppImage and macOS running the channel; and
 Windows Defender reading the new files.
 
-**Pinned** in `test/tooling/da13_gamechannel.test.js` (14: the per-file pack from the real producer, the manifest's laws, the
+**Pinned** in `test/tooling/da13_gamechannel.test.js` (15: the per-file pack from the real producer, the manifest's laws, the
 plan, the ranges, the range answer, a version staged from ranges of the real pack byte for byte, a flipped byte and a
-200 refused with nothing staged, the trial and its rollback, a version that no longer reads, the route, the launcher,
-the shell's wiring and the pipeline's, the release script's commands run); `tools/mutants/da13.json`: 51, all dead.
+200 refused with nothing staged, the trial and its rollback, a version that no longer reads, which navigations switch,
+the route, the launcher, the shell's wiring and the pipeline's, the release script's commands run);
+`tools/mutants/da13.json`: 54, all dead.
 Pins moved in `test/tooling/updatecheck.test.js` (the channel's one door, the fourth fetch), `test/tooling/autoupdate.test.js` (the
 menu's check), `test/tooling/da10_launcher.test.js` and `test/tooling/da12_directplay.test.js` (the game's version kept as played;
 `--play` asks the channel first), `test/tooling/da8_launcher.test.js` (the HUD's one sentence: an update that is here plays
@@ -1066,6 +1070,44 @@ launch - seconds a program on D3D11. Chrome runs a newer cache on Windows by fie
 get field trials. `main.cjs` sizes both stores to 128 MiB (GPU_CACHE_KB, the `gpu-disk-cache-size-kb` switch), before
 the app is ready, beside FPS-VSYNC's, PERF-GPU1's and PERF-GC1's switches. The record and the shell's two-launch
 measurement: `bugs/Field-Bugs-2026-10-23b.md`. Pins: `test/tooling/fb1023b_gpucache.test.js`.
+
+## The GPU's last ten minutes, kept with a crash (GPU-TRAIL, 2026-10-24)
+
+Players report the game's page stopping after a while of play, and the box says "It ran out of memory". That is only
+Electron's `render-process-gone` reason in the player's words (RENDERER-GONE, `lib/rendererGone.cjs` GONE_WHY). One
+reporter's kernel log (RDNA3 on Linux, Mesa) showed the GPU hang (`ring gfx_0.0.0 timeout`) and a full GPU reset, not
+an allocation that failed. A census on Windows/D3D11 found no GPU object leak from terrain streaming or idling;
+multiplayer, combat and dungeons were not measured. Nobody asks a reporter for more and nobody here has the hardware,
+so `crash.log` carries the evidence.
+
+The page (`src/render/gpuTrail.js`) counts the live textures, buffers, vertex arrays, framebuffers and programs of the
+renderer's own WebGL2 context. The entry shadows the canvas's `getContext` before `new Renderer(canvas)`, so the count
+starts at the constructor's first object, and wraps that context's `create*` and `delete*` (a delete counts only an
+object the count saw made). Five seconds in, every 30 s from the start, and at the moment the context is lost, it takes
+a sample: those counts, the FPS counter's last second (`ui/fpsCounter.js` `last`: fps, mean and worst ms, the minute's
+worst hitch, draws, binds, the view out's and the shadow maps' draws - `-` when the counter has not moved since the last
+sample), the JS heap (`performance.memory`), and whether the page is hidden and the context lost. It keeps the last 20,
+ten minutes, and hands all of them to the shell with each sample (`daggerShell.gpuTrail`, an async `dagger:gpu-trail`),
+so a page that stops between samples has already said its last. Nothing runs in the frame: no `getError`, no
+`getParameter`. The module is behind the entry's door, opened only when the shell's bridge offers `gpuTrail`, so a tab
+loads none of it and BOOT2's static reach is unchanged. There is no byte estimate: a texture uploaded again at a level
+and a buffer filled again make a running byte total mislead on exactly the question asked.
+
+The shell keeps the newest trail from the game's window only, read field by field (`trailFrom`: known numbers, two
+flags, a GPU name of at most 160 characters, the newest 20 samples), and `logGone` writes it under the stop's line -
+the renderer's and the GPU process's alike - through `logWith`, so the 64 KB cap holds. A stopped page's trail is let go
+after it is written, so the page after it never writes the dead one's samples as its own. An entry:
+
+```text
+2026-10-24T07:47:31.000Z renderer oom exitCode=-536870904
+  gpu ANGLE (AMD, Radeon RX 7800 XT)
+  2026-10-24T07:47:00.000Z up=1234s tex=812 buf=2300 vao=1100 fbo=24 prog=140 fps=60 ms=16.7 worst=33 hitch=121 draws=430 binds=900 view=0 shadow=120 heap=512MB
+```
+
+Verified on Windows (D3D11) by `forcefullyCrashRenderer()` on the built app: the entry, the GPU's name and both samples
+taken, and with the context lost first, a last sample marked `lost`. The GPU process's own stop cannot be forced from
+the shell and is not verified. Pins: `test/render/gputrail.test.js`, `test/tooling/gputrail_crashlog.test.js`; mutants:
+`tools/mutants/gputrail.json`.
 
 ## What deliberately did NOT move
 

@@ -668,3 +668,59 @@ test('STAFF-GIVE: ADD AN ITEM - the item list from the game\'s tables; a piece m
   assert.equal(back.status, 200, JSON.stringify(back.body));
   assert.equal(back.body.tradeHeld ?? null, null, 'a gift never holds their trading');
 });
+
+test('STAFF-PURGE-DUPES: one confirm destroys every copy marked on the character, in the pack and the wagon and that account\'s chests, and leaves another home\'s row', async () => {
+  const s = await stand();
+  const a = 'a100000000000001';
+  const c = 'c100000000000003';
+  const keep = 'd100000000000004';
+  const gear = 'e100000000000005';
+  const doubled = piece(a);
+  const t = await s.seat('Flagged', freshSave({
+    name: 'Flagged', items: [doubled, { ...doubled }, piece(keep)], wagonItems: [piece(c)],
+    modData: { Revenant: { list: [{ sworn: true, companion: { gear: { helm: piece(gear) } } }] } },
+  }));
+  s.raw.prepare('INSERT INTO item_dupes (uid, char_id, at) VALUES (?, ?, ?)').run(c, t.id, nowS());
+  s.raw.prepare('INSERT INTO item_dupes (uid, char_id, at) VALUES (?, ?, ?)').run(gear, t.id, nowS());
+  const player = s.row(t.id).player;
+  s.raw.prepare("INSERT INTO homes (map_id, building_key, player, char_id, owner_name, region, entry, price, bought_at) VALUES (11, 11, ?, ?, 'Flagged', 17, 'private', 1, 1)").run(player, t.id);
+  s.raw.prepare("INSERT INTO decor_bin (map_id, building_key, piece_id, uid, item) VALUES (11, 11, 'chest', ?, '{}')").run(a);
+  const other = await s.seat('Neighbour');
+  s.raw.prepare("INSERT INTO homes (map_id, building_key, player, char_id, owner_name, region, entry, price, bought_at) VALUES (22, 22, ?, ?, 'Neighbour', 17, 'private', 1, 1)").run(s.row(other.id).player, other.id);
+  s.raw.prepare("INSERT INTO decor_bin (map_id, building_key, piece_id, uid, item) VALUES (22, 22, 'chest', ?, '{}')").run(a);
+  const pre = await s.admin('/v1/staff/item/purge-dupes', { id: t.id });
+  assert.equal(pre.status, 200, JSON.stringify(pre.body));
+  assert.deepEqual([pre.body.dupes, pre.body.held, pre.body.bins, pre.body.playing], [3, 4, 1, true]);
+  const ask = { id: t.id, confirm: true, reason: 'duplicated', note: 'clear the chest flags', seq: pre.body.seq };
+  assert.deepEqual(await s.admin('/v1/staff/item/purge-dupes', { ...ask, reason: 'because' }), { status: 400, body: { error: 'staff-reason' } });
+  assert.deepEqual(await s.admin('/v1/staff/item/purge-dupes', { ...ask, seq: 1 }), { status: 409, body: { error: 'seq' } });
+  const r = await s.admin('/v1/staff/item/purge-dupes', ask);
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  assert.equal(r.body.playing, false);
+  const save = recordOf(s.env, t.id);
+  assert.deepEqual(save.items.map((i) => i.uid), [keep]);
+  assert.deepEqual(save.wagonItems, []);
+  assert.deepEqual(save.modData.Revenant.list[0].companion.gear, {});
+  assert.equal(s.row(t.id).lease, null);
+  assert.equal(s.row(t.id).seq, pre.body.seq + 1);
+  assert.equal(s.raw.prepare('SELECT 1 FROM item_dupes WHERE char_id = ?').get(t.id), undefined);
+  assert.equal(s.raw.prepare('SELECT 1 FROM item_uids WHERE uid = ? AND char_id = ?').get(a, t.id), undefined);
+  assert.equal(s.raw.prepare('SELECT 1 FROM decor_bin WHERE map_id = 11').get(), undefined);
+  assert.ok(s.raw.prepare('SELECT 1 FROM decor_bin WHERE map_id = 22').get());
+  assert.equal(s.staffFindings(t.id).at(-1).act, 'purge-dupes');
+  assert.deepEqual(await s.admin('/v1/staff/item/purge-dupes', { ...ask, seq: r.body.seq, note: 'again' }), { status: 409, body: { error: 'no-dupes' } });
+  // a mark that lives only in a chest still seizes the record, so a withdraw racing the purge cannot land the piece after it
+  const only = 'f100000000000006';
+  const chest = await s.seat('Chested');
+  s.raw.prepare('INSERT INTO item_dupes (uid, char_id, at) VALUES (?, ?, ?)').run(only, chest.id, nowS());
+  s.raw.prepare("INSERT INTO homes (map_id, building_key, player, char_id, owner_name, region, entry, price, bought_at) VALUES (33, 33, ?, ?, 'Chested', 17, 'private', 1, 1)").run(s.row(chest.id).player, chest.id);
+  s.raw.prepare("INSERT INTO decor_bin (map_id, building_key, piece_id, uid, item) VALUES (33, 33, 'chest', ?, '{}')").run(only);
+  const bare = await s.admin('/v1/staff/item/purge-dupes', { id: chest.id });
+  assert.deepEqual([bare.body.dupes, bare.body.held, bare.body.bins], [1, 0, 1]);
+  const gone = await s.admin('/v1/staff/item/purge-dupes', { id: chest.id, confirm: true, reason: 'duplicated', note: 'the chest copy', seq: bare.body.seq });
+  assert.equal(gone.status, 200, JSON.stringify(gone.body));
+  assert.equal(s.row(chest.id).seq, bare.body.seq + 1);
+  assert.equal(s.row(chest.id).lease, null);
+  assert.equal(s.raw.prepare('SELECT 1 FROM decor_bin WHERE map_id = 33').get(), undefined);
+  assert.equal(s.raw.prepare('SELECT 1 FROM item_dupes WHERE char_id = ?').get(chest.id), undefined);
+});

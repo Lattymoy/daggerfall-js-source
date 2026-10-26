@@ -83,8 +83,8 @@ test('ROCK-SUNK on the real producer: round Hadus a rock field\'s 60610s keep th
 
 test('ROCK-SUNK by source: the WoD loop asks isWodShrub with the pick\'s own site name, and the rock sites are one list', () => {
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /if \(isWodShrub\(m\.modelId, wodPicks\[m\.pick\]\?\.name\)\) \{[^\n]*\n\s+const dy = lowestGroundUnder\(samples, box\) - box\[1\];/);
-  assert.match(w, /const rockPick = \(i\) => WOD_ROCK_SITES\.includes\(wodPicks\[i\]\?\.name\);/);
+  assert.match(w, /if \(isWodShrub\(m\.modelId, stood\[m\.pick\]\?\.name\)\) \{[^\n]*\n\s+const dy = lowestGroundUnder\(samples, box\) - box\[1\];/);
+  assert.match(w, /const rockPick = \(i\) => WOD_ROCK_SITES\.includes\(stood\[i\]\?\.name\);/);
   assert.doesNotMatch(w, /=== 'Rocks'|=== 'Mountains'|WOD_BUSH_MODEL/, 'no second spelling of either');
 });
 

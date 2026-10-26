@@ -170,6 +170,10 @@ const ENTITY_FIELDS = [
   // every Legendary and Ruhn's Regalia whole, to look at; the mark rides every save of it, and the boot keeps such a
   // character offline (testRoomOnlineRefused). A save without it restores undefined: a character of the world.
   'testRoom',
+  // A copy of a realm character made by Copy to offline (systems/realmCopyMark.js). The mark rides every save of the copy,
+  // so the Online door can say on each of its tiles why the copy cannot be brought online. A save without it restores
+  // undefined: a character that is no such copy.
+  'realmCopy',
   // REST1: the last night's end on the character's own clock (systems/rest/restAct.js) - the night interval is a DIFFERENCE
   // against it, so a save that dropped it would let a reload pass a night at every rest. A save older than this field
   // restores undefined, which reads as "no night yet": the first rest is a night.

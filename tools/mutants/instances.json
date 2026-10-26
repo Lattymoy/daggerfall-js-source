@@ -406,8 +406,8 @@
   {
     "name": "INSTANCES-POSE-OUTSIDE",
     "file": "src/scenes/instanceDoor.js",
-    "old": "    poseWord: (mode, room) => (mode !== 'exterior' && isInstanceRoom(room) ? { ins: room } : {}),",
-    "new": "    poseWord: (mode, room) => (isInstanceRoom(room) ? { ins: room } : {}),",
+    "old": "      if (mode === 'exterior' || !isInstanceRoom(room)) return {};",
+    "new": "      if (!isInstanceRoom(room)) return {};",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],

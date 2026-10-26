@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import { standService, T0 } from '../accountDb.mjs';
 import { trees, tree, nodeKey, TREE_YIELD } from '../../src/net/nodeLaw.js';
 import { xpForRank, harvestXp, cutsMax, STOCK_MAX } from '../../src/net/professionLaw.js';
-import { recipeById, FIRST_CRAFT_XP, PROVENANCE_RE, RAM_KIT_RANK } from '../../src/net/recipeLaw.js';
+import { recipeById, firstCraftXp, PROVENANCE_RE, RAM_KIT_RANK } from '../../src/net/recipeLaw.js';
 import { readProductRecord } from '../../src/net/productRecord.js';
 import { sharedClassicMinutes } from '../../src/net/wire.js';
 import { utcDay } from '../../src/net/marksLaw.js';
@@ -201,9 +201,9 @@ test('PROF4 service: a Small Oak Table made - three Oak Planks spent, the piece 
   s.give(mac, 'plank:oak', 'own', 3);
   const r = await steered(0x00, () => s.call('/v1/prof/craft', craft(mac, 'table-small:oak'), mac.secret));
   assert.equal(r.status, 200, JSON.stringify(r.body));
-  assert.deepEqual([r.body.quality, r.body.xp, r.body.first, r.body.marked, r.body.track.profession], [0, 20 * 2 + FIRST_CRAFT_XP, true, false, 'building'], 'margin 0, the roll\'s foot: Crude');   // PIN MOVED (CRAFT3): the track answered is the craft's, Building
+  assert.deepEqual([r.body.quality, r.body.xp, r.body.first, r.body.marked, r.body.track.profession], [0, 20 * 2 + firstCraftXp(recipeById('table-small:oak')), true, false, 'building'], 'margin 0, the roll\'s foot: Crude');   // PIN MOVED (FIRST-BUDGET): the first's XP its track's first-make share (recipeLaw firstCraftXp), no longer a flat 500 - Building's, 1,823;   // PIN MOVED (CRAFT3): the track answered is the craft's, Building
   assert.deepEqual(s.stores(mac, 'plank:oak'), []);
-  assert.equal(s.xpOf(mac, 'building'), xpForRank(10) + 540);   // PIN MOVED (CRAFT3): credited to the Building row
+  assert.equal(s.xpOf(mac, 'building'), xpForRank(10) + 40 + 1823);   // PIN MOVED (FIRST-BUDGET): Building's share   // PIN MOVED (CRAFT3): credited to the Building row
   const [{ provenance, record }] = r.body.pieces;
   assert.match(provenance, PROVENANCE_RE);
   const row = s.raw.prepare('SELECT * FROM products WHERE provenance = ?').get(provenance);

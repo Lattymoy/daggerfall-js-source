@@ -1,0 +1,222 @@
+[
+  {
+    "name": "EVENT-RULES-the-share-whole",
+    "file": "src/systems/courtRules.js",
+    "old": "  const c = (carry.get(source) ?? 0) + n * REGEN_HELD_SHARE;",
+    "new": "  const c = (carry.get(source) ?? 0) + n;",
+    "tests": [
+      "test/world/gate/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-RULES-the-pause-unread",
+    "file": "src/systems/courtRules.js",
+    "old": "  if (onPlayer && regenPausedMs() > 0) return 0;\n",
+    "new": "",
+    "tests": [
+      "test/world/gate/wbx_gate_fixes.test.js",
+      "test/ui/hud/eventrules_tile.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-RULES-the-pause-on-a-foe",
+    "file": "src/systems/courtRules.js",
+    "old": "  if (onPlayer && regenPausedMs() > 0) return 0;",
+    "new": "  if (regenPausedMs() > 0) return 0;",
+    "tests": [
+      "test/world/gate/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-RULES-the-fraction-dropped",
+    "file": "src/systems/courtRules.js",
+    "old": "  carry.set(source, c - out);",
+    "new": "  carry.set(source, 0);",
+    "tests": [
+      "test/world/gate/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-RULES-the-hurt-unheard",
+    "file": "src/systems/courtRules.js",
+    "old": "  if (_on && hurt && hurt.after < hurt.before) _hurtAt = _now;\n",
+    "new": "",
+    "tests": [
+      "test/world/gate/wbx_gate_fixes.test.js",
+      "test/ui/hud/eventrules_tile.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-RULES-a-heal-read-as-a-hurt",
+    "file": "src/systems/courtRules.js",
+    "old": "hurt.after < hurt.before) _hurtAt = _now;",
+    "new": "hurt.after !== hurt.before) _hurtAt = _now;",
+    "tests": [
+      "test/world/gate/wbx_gate_fixes.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-RULES-the-court-off-again",
+    "file": "src/systems/madeLevel.js",
+    "old": "companions: 'out', regen: 'held', death: 'castOut'",
+    "new": "companions: 'out', regen: 'off', death: 'castOut'",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js",
+      "test/ui/hud/eventrules_tile.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-RULES-the-ketch-refuses-a-rise",
+    "file": "src/systems/madeLevel.js",
+    "old": "slowfall: 'banned', techFlight: 'refused', runLeap: 'refused', avoidDeath: 'refused', death: 'fall', deathPenalty: 'none', unstuck: 'refused', says: 'mid' }),",
+    "new": "slowfall: 'banned', techFlight: 'refused', runLeap: 'refused', resurrect: 'refused', avoidDeath: 'refused', death: 'fall', deathPenalty: 'none', unstuck: 'refused', says: 'mid' }),",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js",
+      "test/ui/hud/eventrules_tile.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-RULES-the-tile-outside-a-level",
+    "file": "src/ui/hud/statusTips.js",
+    "old": "  if (!level || !Object.hasOwn(MADE_LEVEL_PLACE, level)) return null;\n  return { level,",
+    "new": "  if (!level) return null;\n  return { level,",
+    "tests": [
+      "test/ui/hud/eventrules_tile.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-RULES-the-foot-always",
+    "file": "src/ui/hud/statusTips.js",
+    "old": "foot: pausedMs > 0 ? `${Math.ceil(pausedMs / 1000)}s` : null };",
+    "new": "foot: `${Math.ceil(pausedMs / 1000)}s` };",
+    "tests": [
+      "test/ui/hud/eventrules_tile.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-RULES-the-recall-said-in-the-court",
+    "file": "src/ui/hud/statusTips.js",
+    "old": "out.push(r('recall') === 'refused' ? t(",
+    "new": "out.push(true ? t(",
+    "tests": [
+      "test/ui/hud/eventrules_tile.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-RULES-the-potions-everywhere",
+    "file": "src/ui/hud/statusTips.js",
+    "old": "  if (r('potions') === 'counted') out.push(",
+    "new": "  if (true) out.push(",
+    "tests": [
+      "test/ui/hud/eventrules_tile.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-RULES-the-promise-kept",
+    "file": "src/ui/hud/statusTips.js",
+    "old": "  regenerate: () => (regenHeldNow() ? t(",
+    "new": "  regenerate: () => (false ? t(",
+    "tests": [
+      "test/ui/hud/eventrules_tile.test.js"
+    ]
+  },
+  {
+    "name": "EVENT-RULES-the-tile-unshown",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "  if (rules) all.unshift(...statusTiles({ rules }));",
+    "new": "  if (rules) all.push();",
+    "tests": [
+      "test/ui/hud/eventrules_tile.test.js"
+    ]
+  },
+  {
+    "name": "SD-REZ-the-window-ignored",
+    "file": "src/net/superDungeon/sdLaw.js",
+    "old": "  if (now - d[1] > SD_REZ_MS) return 'fallen';\n  return (realm.raised",
+    "new": "  return (realm.raised",
+    "tests": [
+      "test/net/superDungeon/sd12_onelife.test.js"
+    ]
+  },
+  {
+    "name": "SD-REZ-the-window-never-opens",
+    "file": "src/net/superDungeon/sdLaw.js",
+    "old": "  return (realm.raised ?? []).some(([x, at]) => x === sub && at >= d[1]) ? 'rise' : 'down';",
+    "new": "  return 'fallen';",
+    "tests": [
+      "test/net/superDungeon/sd12_onelife.test.js"
+    ]
+  },
+  {
+    "name": "SD-REZ-the-rise-kept-down",
+    "file": "server/src/index.js",
+    "old": "    realm.down = realm.down.filter(([x]) => x !== sub);\n    realm.raised = (realm.raised ?? []).filter(([x]) => x !== sub);\n    await this.state.storage.put(SD_REALM_KEY, realm);\n    const f = await this._sdFightOf();",
+    "new": "    realm.raised = (realm.raised ?? []).filter(([x]) => x !== sub);\n    await this.state.storage.put(SD_REALM_KEY, realm);\n    const f = await this._sdFightOf();",
+    "tests": [
+      "test/net/superDungeon/sd12_onelife.test.js"
+    ]
+  },
+  {
+    "name": "SD-REZ-dead-at-once",
+    "file": "server/src/index.js",
+    "old": "    realm.down = lying.slice(-SD_FIGHTERS_MAX);",
+    "new": "    realm.dead.push(sub);",
+    "tests": [
+      "test/net/superDungeon/sd12_onelife.test.js"
+    ]
+  },
+  {
+    "name": "SD-REZ-the-count-blind-to-a-rise",
+    "file": "server/src/index.js",
+    "old": "census = () => bodyCensus(f, bodies, now, line.body, line.enforce, { lives: raised });",
+    "new": "census = () => bodyCensus(f, bodies, now, line.body, line.enforce, { lives: false });",
+    "tests": [
+      "test/net/superDungeon/sd12_onelife.test.js"
+    ]
+  },
+  {
+    "name": "SD-REZ-every-body-rises",
+    "file": "src/net/bossBody.js",
+    "old": "      if (!(typeof lives === 'function' ? lives(x.sub) : lives)) return",
+    "new": "      if (!(typeof lives === 'function' ? true : lives)) return",
+    "tests": [
+      "test/net/int11_body.test.js"
+    ]
+  },
+  {
+    "name": "SD-REZ-the-page-keeps-the-slot",
+    "file": "src/systems/superDungeon/sdSlots.js",
+    "old": "      own.get(k)?.delete(s);\n",
+    "new": "",
+    "tests": [
+      "test/net/superDungeon/sd12_onelife.test.js"
+    ]
+  },
+  {
+    "name": "SD-REZ-a-rise-past-the-window",
+    "file": "src/systems/superDungeon/sdSlots.js",
+    "old": "      if (s == null || last?.s !== s || clock() - last.at > SD_REZ_MS - SD_REZ_PAGE_SLACK_MS) return;",
+    "new": "      if (s == null || last?.s !== s) return;",
+    "tests": [
+      "test/net/superDungeon/sd12_onelife.test.js"
+    ]
+  },
+  {
+    "name": "SD-REZ-the-page-window-ignored",
+    "file": "src/systems/superDungeon/sdSlots.js",
+    "old": "    mayRise: (s) => s == null || last?.s !== s || clock() - last.at <= SD_REZ_MS - SD_REZ_PAGE_SLACK_MS,",
+    "new": "    mayRise: (s) => true,",
+    "tests": [
+      "test/net/superDungeon/sd12_onelife.test.js"
+    ]
+  },
+  {
+    "name": "SD-REZ-the-raise-unread",
+    "file": "src/scenes/world.js",
+    "old": "    _sdFallen.rise(modes?.sdRealmSlot?.());",
+    "new": "    void 0;",
+    "tests": [
+      "test/net/superDungeon/sd12_onelife.test.js"
+    ]
+  }
+]

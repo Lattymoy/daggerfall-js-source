@@ -398,8 +398,8 @@
   {
     "name": "EGZ-card-line-swapped",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "sub: fall.final ? EG_FALL_TEXT.final : EG_FALL_TEXT.first }",
-    "new": "sub: fall.final ? EG_FALL_TEXT.first : EG_FALL_TEXT.final }",
+    "old": ": fall.final ? EG_FALL_TEXT.final : EG_FALL_TEXT.first }, now)",
+    "new": ": fall.final ? EG_FALL_TEXT.first : EG_FALL_TEXT.final }, now)",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]

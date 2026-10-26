@@ -17,7 +17,7 @@ test('AETHERIC-MAKER: an Aetheric piece is never on the item maker\'s list and n
   setPref('lootRarity', true);
   let seed = 1;
   while (!rollSpoils(seed, 12).pieces.some((p) => p.item.aetheric === 'ruhn-gatecleaver')) seed++;
-  assert.equal(seed, 17, 'the first kill whose spoils carry the Gatecleaver');
+  assert.equal(seed, 2, 'the first kill whose spoils carry the Gatecleaver');   // PIN MOVED (AFFIX-LINES): seed 17 before - the spoils' pieces draw their lines over the lines (one roll a pick, as before), so a seed's stream lands on other lines and the Gatecleaver on another kill
   const axe = rollSpoils(seed, 12).pieces.find((p) => p.item.aetheric === 'ruhn-gatecleaver').item;
   const ware = brokerStock(20000).find((o) => o.kind === 'regalia').item;
   let raid = null;

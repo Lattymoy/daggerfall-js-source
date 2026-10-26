@@ -601,3 +601,49 @@ SEA-DROPS (`07-Rendering/Performance-Priority.md`) took one more: the boats' col
 collider its posed buckets moved (`posesMoved`) once it has carried them - the sync is the one place that moves them, and
 `player/collider.js` holds the rest. 36,296 -> 36,297, the reason beside it; 36,295 at the merge with main, whose own host had come down to 36,282.
 
+
+## VENDOR-LOST's move - the home traders out of bootWorld (FIELD BUGS 2026-10-25)
+
+VENDOR-LOST (`01-Overview/bugs/Field-Bugs-2026-10-25g.md`) had a trader's stall settle the market book as it opens: two
+logical lines of wiring in the stall's host object, inside `bootWorld`. The block they belonged to - the home traders'
+thirteen members (the stall `openHomeVendorWindow`, the board's Vendors tab `vendorBoardHost`, `vendorBuy`, `vendorTake`,
+`vendorPut`, `vendorReachable` and the Vendor page's helpers) - wrote nothing of the host's and was used in three places,
+so it moved verbatim instead, by `tools/hostMove.mjs`, to `src/scenes/vendorHost.js` (`createVendorHost(host)`), and the
+wiring lives there. `bootWorld` 36,389 (main's, at the merge) -> 36,251 logical lines, its ceiling down to what stands. No
+pin read the moved code's text; the stall's settle is held by a test that builds the vendor host and opens a stall
+(`fb1025_vendorlost.test.js`). The tool wrote Windows absolute paths into the module's imports on this machine; they were
+set back to the host's relative ones by hand.
+
+## PARTY-FOLLOW's move - the party arrival out of bootWorld (2026-10-25)
+
+PARTY-FOLLOW (`06-Systems/Online-Arc.md`) changes how a follower lands beside the party leader: it waits for a spot
+beside them before taking the place's own arrival, and says when it took it. That law stood in `bootWorld` - the
+waiting callback inside `fastTravelTo`'s teleport, the `partyBesideLanding` frame conversion beside `_teleportToPixel`,
+and the arrival line's choice - and other open pull requests touch `world.js` too. It went out rather than changing
+there: `systems/party/partyArrival.js`, beside `waitForPartyArrival` whose wait it drives, written as a module the host
+wires (fishHost.js's shape, not a verbatim move - its new behaviour is in it). `createPartyArrival` is the law over its
+seams (a test runs it with fakes); `createPartyArrivalHost` binds it to the host's streaming state, collider and sea.
+The host keeps one construction (`partyLanding`), one `land(pick, fallback)` and one `arrivalLine`. `bootWorld`
+36,387 -> 36,384 logical lines, its ceiling 36,389 -> 36,384. The pins that quoted the moved code run the module now
+(`partyArrivalTransaction.test.js`, `partyBoatTeleportFix.test.js`, `l10n3e_scenes.test.js`; `partytravel.test.js`
+pins only the wiring), and three mutant records were re-aimed there.
+
+## WILD-REJOIN's move - the seizure's frame out of bootWorld (2026-10-25)
+
+WILD-REJOIN (`01-Overview/bugs/Field-Bugs-2026-10-25h.md`) wires a page that comes back while its fall is still down, and
+`bootWorld` stood one logical line under its ceiling (36,386 of 36,387). The move came first, by `tools/hostMove.mjs`:
+`wildSeizeFrame` - the killer's carry of a fall's receipt, one member that writes nothing of the host's - went verbatim to
+`src/scenes/wildSeizeHost.js` (`createWildSeizeHost(host)`): five names by value (`_wildSeize`, `campToWire`, `player`,
+`wildAccount`, `wildDeposit`), two live (`online`, `wildRemains`), the frame returned. 17 logical lines freed
+(36,386 -> 36,369); WILD-REJOIN's wiring took them back (36,386), the decisions in `systems/wild/wildRejoin.js`. The
+ceiling stays. Two pins quote the moved spelling (`host.online`): `test/net/int9_wild_ref.test.js` through `hostText`,
+`test/systems/fb1015_cartaway.test.js` by the module's own path. The change the slice made to the frame (the 'grace'
+word of an older account service asked again once) came after the move, in the module.
+
+WILD-REJOIN BODY (2026-10-25, the owner's rule for every open pull request: the hosts are wiring). The zone death's body
+record - `{ p, room, dungeon, px }`, where the remains of a death are laid - was composed twice in `bootWorld`: at the
+first dead frame (the death mark) and where a page that came back is told it is down (the referee's place). Two copies of
+one shape drift (Home.md, THE ONE CONSTRUCTION SEAM), so the record is `systems/wild/wildRejoin.js` `bodyAt(p, room)`,
+handed the player's hall and pixel through the module's `place` handle, and both sites call it. 4 logical lines out
+(36,387 -> 36,383); the ceiling comes down by them (36,389 -> 36,385). Pinned by `wildrejoin.test.js` THE BODY RECORD,
+three more records in `tools/mutants/wildrejoin.json`.

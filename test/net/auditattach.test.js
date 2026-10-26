@@ -45,7 +45,8 @@ test('AUDIT ATTACH A1: the WIDEST attachment a place socket carries - the widest
   // (the glyph list 185 of them, as words); still 1018 under the runtime's 2048. The next field is measured against
   // this; storing the glyphs as their places in GLYPHS rather than their words would buy back some 170 bytes if the
   // half is to be held again.
-  assert.ok(bytes <= 1080, `the widest place attachment is ${bytes} bytes - about half the runtime's 2048 at most, so the next field is measured with room to spare`);
+  // PIN MOVED (HIBERNATE): 1136, from 1080 - the id's secret (`sc`) rides the attachment, so a wake can ask it without a storage read
+  assert.ok(bytes <= 1136, `the widest place attachment is ${bytes} bytes - about half the runtime's 2048 at most, so the next field is measured with room to spare`);
   assert.ok(bytes > 500, `and it is the wide one: ${bytes} bytes`);
 }));
 
@@ -58,7 +59,8 @@ test('AUDIT ATTACH A1 (AUDIT FB1018D L4-4): THE WIDEST DUNGEON INSTANCE SOCKET -
   const bytes = JSON.stringify(me.att).length;
   // SEAT-LIVE's stamps (two thirteen-digit times) and the instance's longer key: 1086 at its widest, past the building's
   // 1056 - a dungeon instance's ceiling of its own, still about half. PIN MOVED (LEASE1): 1135, from 1100 - the lease's three numbers
-  assert.ok(bytes <= 1135, `the widest dungeon instance attachment is ${bytes} bytes`);
+  // PIN MOVED (HIBERNATE): 1191, from 1135 - the same secret on a dungeon instance's wider key
+  assert.ok(bytes <= 1191, `the widest dungeon instance attachment is ${bytes} bytes`);
 }));
 
 // Each arm's flood, at one instant: `passes` frames through the bucket, then a strike a frame (`key`), closed past `max`.

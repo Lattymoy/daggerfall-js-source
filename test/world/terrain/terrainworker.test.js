@@ -267,7 +267,7 @@ test('EV7: the world host rides the client and the pinned build contracts stand'
   assert.ok(world.includes('const terrainGen = new TerrainGenClient({ woods, woodsBytes })'),
     'one client, built beside the reader it falls back to');
   assert.ok(world.includes('await terrainGen.generate({'), 'buildPixel awaits the kernel');
-  assert.ok(world.includes('setLocationTiles(dfLocation, maps, blocks, seedTilemap)'),
+  assert.ok(world.includes('setLocationTiles(groundLocation, maps, blocks, seedTilemap)'),   // PIN MOVED (GROUND-AGREE): the ground's place
     'the file-object half stays on this thread and rides the job as data');
   // the publish stays atomic and main-side: built.set is still the
   // last act of the build, after the GL uploads and the collider

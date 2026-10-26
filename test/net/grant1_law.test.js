@@ -53,7 +53,7 @@ test('GRANT1 THE PINNED RATES: each copy the relay holds equals its home - the e
   assert.deepEqual(GRANT_DICE, ['species', 'level', 'weapon', 'health']);
   assert.deepEqual(GRANT_REFUSALS, ['kind', 'size', 'bucket', 'ceiling', 'unsigned', 'sender', 'cell', 'expired', 'member', 'marks']);
   const src = readFileSync(new URL('../../src/net/grantLaw.js', import.meta.url), 'utf8');
-  assert.deepEqual([...src.matchAll(/^import .* from '([^']+)';/gm)].map((m) => m[1]), ['./identityToken.js', './wire.js'], 'the relay imports it: nothing that reaches the loot tables');
+  assert.deepEqual([...src.matchAll(/^import .* from '([^']+)';/gm)].map((m) => m[1]), ['./identityToken.js', './cellTree.js', './wire.js'], 'the relay imports it: nothing that reaches the loot tables');   // PIN MOVED (COST-2): and the cell tree's law (a grant stands in any cell its reader's socket covers), which imports wire.js alone
 });
 
 test('GRANT1 A GRANT READ WHOLE OR NOT AT ALL: every field in its law, a fresh copy back; an unknown kind, a size past its kind, an elite that is also a champion, a mark past the members, a bad pixel, a level or Renown no token carries, a bad signature\'s shape - each refused (mutants: the kind\'s most ignored; an elite champion believed; the guest\'s 0 refused)', () => {

@@ -40,6 +40,26 @@ export const KT_SPOILS_LEGENDARY = 0.25;
 export const KT_SPOILS_SOURCE = Object.freeze({ boss: true, tier: 22, luck: 65 });
 /** The Pellets the Ketch's foundry pays, always: from `min` to `max`, one draw. */
 export const KT_SPOILS_PELLETS = Object.freeze({ min: 20, max: 40 });
+/** KETCH-PELLETS (2026-10-25, the owner: "We need more aquireable sources of deeamer pellets"): WHAT HER CONSTRUCTS DROP -
+ *  each construct downed lays Pellets on her deck where it fell, for every hand aboard (each screen its own pile, as the
+ *  share is), `{ min, max, p }` a kind: `p` the chance it drops any. The spiders pour from the vents while the engine
+ *  starves, so theirs is a chance of one; the Wardens' and the Captain's a fistful. And a voyage's construct Pellets are
+ *  capped (KT_CONSTRUCT_PELLETS_MAX) so no hand farms the vents. */
+export const KT_CONSTRUCT_PELLETS = Object.freeze({
+  sphere: Object.freeze({ min: 2, max: 4, p: 1 }),
+  sentry: Object.freeze({ min: 3, max: 5, p: 1 }),
+  spider: Object.freeze({ min: 1, max: 1, p: 0.35 }),
+  warden: Object.freeze({ min: 8, max: 12, p: 1 }),
+  captain: Object.freeze({ min: 10, max: 15, p: 1 }),
+  tonal: Object.freeze({ min: 15, max: 25, p: 1 }),
+});
+export const KT_CONSTRUCT_PELLETS_MAX = 90;
+/** KETCH-PELLETS: how many Pellets construct `kind` drops on one roll source (0 for none, or an unknown kind). Pure. */
+export function ketchConstructPellets(kind, rolls = Math.random) {
+  const D = KT_CONSTRUCT_PELLETS[kind];
+  if (!D || !(rolls() < D.p)) return 0;
+  return D.min + Math.floor(rolls() * (D.max - D.min + 1));
+}
 /** THE GUNS: each its own draw (rare - a share a voyage at most, every ten hours: net/ketch/ketchLaw.js's voyage). */
 export const KT_THUNDERLOCK_CHANCE = 1 / 10;
 export const KT_PISTOLET_CHANCE = 1 / 8;

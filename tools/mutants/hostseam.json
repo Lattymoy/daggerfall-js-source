@@ -2,8 +2,8 @@
   {
     "name": "HOSTSEAM-a-live-name-handed-over-as-a-copy",
     "file": "src/scenes/world.js",
-    "old": "    get social() { return social; },\n",
-    "new": "    social,\n",
+    "old": "    get quays() { return quays; },\n    get social() { return social; },\n",
+    "new": "    get quays() { return quays; },\n    social,\n",
     "tests": [
       "test/tooling/hostseam.test.js"
     ]

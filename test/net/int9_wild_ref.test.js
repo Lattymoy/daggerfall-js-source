@@ -677,6 +677,17 @@ test('INT9 THE SERVICE, THE KILLER\'S SEIZURE: the killer carries the receipt on
   assert.deepEqual(kinds(saved().items), [113, 'potion']);
 });
 
+test('WILD-REJOIN THE SERVICE, A FALLEN GONE: a receipt the relay signed with its fallen gone from the room (`g` 1) is its killer\'s to carry at once - the record taken where it stands, its lease cleared, as any seizure; one without it still waits the grace (mutants: the grace for every fall)', async () => {
+  const { svc, bo, R, saved, receipt } = await fallen();
+  const kept = await fall(svc, bo, { receipt: await receipt({ r: '0123456789ac' }) });
+  assert.deepEqual([kept.status, kept.body.error], [409, 'grace']);
+  const at = R.at();
+  const now = await fall(svc, bo, { receipt: await receipt({ g: 1 }) });
+  assert.equal(now.status, 200, JSON.stringify(now.body));
+  assert.deepEqual([R.at().seq, R.at().lease], [at.seq + 1, null], 'moved where it stood, the lease cleared');
+  assert.deepEqual(kinds(saved().items), [113, 'potion']);
+});
+
 // PIN MOVED (FOE-KEEPS, 2026-10-24, bible/11-Multiplayer/Wild-Zone.md section 4 - the owner: "I dont want people to lose
 // everything they have"; asked, "Only PvP deaths drop"): a death to a foe was the fallen's own act on its nonce, its drop taken
 test('FOE-KEEPS THE SERVICE, A DEATH TO A FOE: no receipt takes nothing - refused (`foe`), the record unmoved and no fall written; a bad nonce still refused as one; a foe\'s fall taken before the word is answered as it was taken (its remains\' id a digest of the character and the nonce) (mutants: the refusal removed; the refusal ahead of the fall taken before)', async () => {
@@ -742,7 +753,7 @@ test('INT9 THE CLIENT: a blow rolled on my own sheet and sent as a number; no de
   assert.ok(w.includes('if (d.order && n && body) wildDeposit({ r: d.r, items: d.items, o: d.order, p: body.p, room, mine: body });'), 'the service\'s records, on its order');
   assert.ok(w.includes("online?.sendWild({ k: 'fall', r: dep.r, p: dep.p, items: dep.chunks[dep.k], last: dep.k === dep.chunks.length - 1 ? 1 : 0, o: dep.o }, { room: dep.room })"));
   assert.ok(w.includes('_wildDeposits.push({ ...dep, chunks: wildChunks(dep.items, WILD_ITEMS_MAX, room), k: 0, at: Date.now() });'), 'chunked by their bytes');
-  assert.ok(w.includes('wildAccount.fall({ receipt: s.rc, room: s.room, ...(online?.wildCollectAt?.(s.room) ? { collect: 1 } : {}) }).then((a) => {'), 'the seizure names the room that refereed it');   // PIN MOVED (MAC, 2026-10-14): and asks the escrow where it collects
+  assert.ok(w.includes('wildAccount.fall({ receipt: s.rc, room: s.room, ...(host.online?.wildCollectAt?.(s.room) ? { collect: 1 } : {}) }).then((a) => {'), 'the seizure names the room that refereed it');   // PIN MOVED (WILD-REJOIN, HOST-SPLIT): wildSeizeFrame moved verbatim to scenes/wildSeizeHost.js, which hostText reads with its host   // PIN MOVED (MAC, 2026-10-14): and asks the escrow where it collects
   assert.ok(w.includes('const p = s.p ?? campToWire(player.feetAt());'), 'laid where the body fell');
   assert.ok(!/takeWildDrop\(|takeWildGold\(/.test(w), 'no drop of the client\'s own making');
   // the chunks: every frame of a heavy drop inside the wire's bound

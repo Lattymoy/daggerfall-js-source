@@ -1103,7 +1103,7 @@ fifth reaches G1 and the night's flute answer B3, under those instruments' own c
 
 ## HORSE-VOICE (2026-10-24): the horse heard - its moods, its breath, the ground under its hooves
 
-The owner: "more varied horse sounds". DFU's TransportManager gives a horse one voice, AnimalHorse (99), on a clock that re-rolls to 2-39 s and to 1-4 s on a mount, and one ground: HorseClop (97) slow, HorseClop2 (298) fast, HorseAndCart (104), whatever the hooves come down on (`systems/riding.js` RidingAnimator, every arm kept). Behind ES1 the horse is heard in that place (`systems/horse/horseVoice.js`); off, `player/mountRig.js` plays the classic two as it always has, its own lines as the else arm (`mountRig.js:"if (r.neigh) audio.playOneShot(SOUND.AnimalHorse, RIDING_VOLUME_SCALE);"`). That arm is the port's older line kept verbatim, and it is not DFU's in two places this change leaves alone (AUDIT SOUNDSCAPE H5, FLAGGED for a change of its own): it neighs at a constant 0.6 through a Travel Options journey, where DFU's neigh rides RidingVolumeScale (TransportManager.cs:282), and under a pause, where DFU's `Time.time` stops. A departure with no DFU member behind it; Ledger A (HORSE-VOICE).
+The owner: "more varied horse sounds". DFU's TransportManager gives a horse one voice, AnimalHorse (99), on a clock that re-rolls to 2-39 s and to 1-4 s on a mount, and one ground: HorseClop (97) slow, HorseClop2 (298) fast, HorseAndCart (104), whatever the hooves come down on (`systems/riding.js` RidingAnimator, every arm kept). Behind ES1 the horse is heard in that place (`systems/horse/horseVoice.js`); off, `player/mountRig.js` plays the classic two as it always has, its own lines as the else arm (`mountRig.js:"if (r.neigh) audio.playOneShot(SOUND.AnimalHorse, RIDING_VOLUME_SCALE * horse);"`). That arm is the port's older line kept verbatim, and it is not DFU's in two places this change leaves alone (AUDIT SOUNDSCAPE H5, FLAGGED for a change of its own): it neighs at a constant 0.6 through a Travel Options journey, where DFU's neigh rides RidingVolumeScale (TransportManager.cs:282), and under a pause, where DFU's `Time.time` stops. A departure with no DFU member behind it; Ledger A (HORSE-VOICE).
 
 - **The voices.** DFU's clock stays the clock: each moment it rolls says a voice of the horse's MOOD then. The first after a mount is a whinny (the neigh at 1.08). Foes in sight are the alarm, blown is tired, then the gallop, the walk (calm) and riding on, each mood's weights over the neigh (at one of 0.94, 1, 1.05 and 1.1) and the port's snorts and blows, never a clip twice running. Beside the clock, three of the port's own:
   - **The gallop's breath:** past 8 s of gallop, or galloping with horse care's breath short, an exhale once a stride, a little uneven, harder as it runs on. The stride is the clop's: 0.52 s at pitch 1 over the loop's own pitch, so 0.43 s at the gallop's 1.2 (AUDIT SOUNDSCAPE H3).
@@ -1116,6 +1116,9 @@ The owner: "more varied horse sounds". DFU's TransportManager gives a horse one 
 Pins: `test/systems/horse/horsevoice.test.js` (13); `tools/mutants/horsevoice.json` (49, all dead).
 
 ## INTRO3 (2026-10-14): the main theme, written as notes - the film's and the menu's
+
+**Reverted 2026-10-25 (INTRO-REVERT, `10-UI/UI-Arc.md`).** The film and the menu play the recording again
+(`src/assets/intro/theme.mp3`). The score below is no longer heard.
 
 The owner: "With the main menu music, is there anyway to recreate it using the sound system daggerfall's music uses",
 then "you do it and it's for both". The front door's theme was a recording decoded by a session of its own; it is now
@@ -1181,3 +1184,53 @@ AND EVERY COPY RAN ITS OWN SINES: a vibrato LFO and a sway LFO a copy a note, 36
 over the attack), the vibrato in Hz into each oscillator's frequency (an a-rate detune costs an exp2 a sample), and the
 bow's low-pass and a bowed pitch read once a render quantum (`slow`, k-rate). Offline load over the first 60 s 1.1x real
 time to 0.51x (INTRO3b's 0.48x); live, 0.05 s behind at most over 60 s. The probe, the same 11/11 at 30 s.
+
+## HORSE-VOL, ANIMAL-VOL, SOUND-LIVE (2026-10-23): two more Volume rows, and every sound on a slider
+
+travddm: "add an ability to disable horse neighing"; then "Add both animal volume & horse volume (since you use horses
+to travel, but not other animals, so you're around them a lot more). Also, there are reportedly some sounds in the game
+which are not tied to any volume sliders at all - let's try to surface these and make sure they're tied to sliders."
+
+- **Horse Volume** (`systems/animalVolume.js` horseVolume, uiPrefs `horseVolume`, 0-100%). Every horse heard: the
+  mount's neigh and its riding loop (`player/mountRig.js`), a mounted peer's loop and neigh (`net/remotePlayers.js`), a
+  town's horse flat (`systems/animalAmbience.js`), and the team the Wagon Warden lifts (`scenes/world.js` WARDEN_CLIPS
+  `heave`; the throw and the landing are the guard's sounds, not a horse's). With the port's own sounds on, HORSE-VOICE's
+  voices (the mount's whinny, the snorts, the breath, a spook) and its hooves on the ground, mine and a peer's, are on
+  the row too. At 0 no horse is heard.
+- **Animal Volume** (uiPrefs `animalVolume`): every other archive-201 animal flat - the dog, the cat, the pig and the
+  cow (`soundClips.js` ANIMAL_SOUND_BY_RECORD, GameObjectHelper.AddAnimalAudioSource's table). A horse flat answers to
+  Horse Volume alone, so one row silences every neigh. The ambience's birds, crickets and the cemetery's howl
+  (`systems/ambientEffects.js`) are on neither row.
+- Both rows sit in the Audio tab's Volume section after Monster Volume and Companion Idle Volume, and each scales its
+  sounds under Sound Volume, as Monster Volume does. At 100% every level is DFU's. The rows share one builder
+  (`enhancedMenu.js` volumeRow) and one reader (`monsterVolume.js` shelfVolume).
+- The four hosts: `world.js` and `exterior.js` reach the mount and the animal flats through `mountRig.js` and
+  `animalAmbience.js`, and `dungeonContext.js` its animal flats through `animalAmbience.js`. `worldModes.js` (interiors)
+  plays no horse and no animal. A peer's mount and the Wagon Warden stand in `world.js` alone (`exterior.js` runs no
+  town watch, `wagonWardenHost.js`).
+
+THE AUDIT. Every sound the game plays reaches the speakers through a slider. Each door of the engine (`playOneShot`,
+`play3d`, `play3dVoice`, the loops, the beds, `source()`) connects through the master that Sound Volume levels
+(`_out`). The music's two players and the intro theme follow Music Volume, and a VID reads Sound Volume for each
+clip of its sound.
+Three sounds did not follow their slider:
+
+1. **Sound Volume itself, while a sound played.** The master read the setting only when a NEW sound started. A slider
+   moved on the Options page over a quiet world left every sound already going (the rain, the wind, a torch, the ride, a
+   ship's loops) at the old level until something new played. The master now subscribes to the setting
+   (`onSettingChange`) and ramps to the new level over 50 ms (`audio.js:"  _relevel() {"`), as the music's resync does.
+   This is the port's own engine, not a DFU member.
+2. **The Trireme's oar stroke** (Come Sail Away, `comeSailAway.js` oarEvent). The mod plays it with the rudder's plain
+   `AudioSource.PlayOneShot`, which reads neither Sound Volume nor the mod's own boat volume. The host divides Sound
+   Volume out of the bus for a plain source (`plainSourceGain`), so the stroke played at one level whatever either
+   slider said. It now plays at Sound Volume x the mod's own, as the boat's loops do.
+3. **A boat's loops.** They took Sound Volume x the mod's volume when a loop started or crossfaded, and were re-levelled
+   only when the MOD's setting changed (LoadSettings' Audio arm). A change of the game's Sound Volume mid-voyage left
+   them where they were. `checkSettings` now watches the product, so either slider re-levels them.
+
+Items 2 and 3 depart from the mod: Port-Ledger section A, SOUND-LIVE.
+
+Pins: `test/systems/volume_sliders.test.js` (8: the readers; the animal flats; my own mount with DFU's sounds and with
+the port's own; a peer's; the Warden's heave; the rows; the live master), and
+`test/systems/comeSailAway/csa_time_audio.test.js` (the stroke at both volumes; the loops after a Sound Volume change).
+`tools/mutants/volume_sliders.json`: 15 dead.

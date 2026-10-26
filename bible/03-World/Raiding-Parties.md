@@ -401,3 +401,83 @@ a word - was tallied and never said (step F said the word from inside the rect a
 standing and stood no one under its cap. Step F says a raid I fought from anywhere on its pixel now, and
 `raidPoolCleared()` runs beside the sweep. The held map's card counts the town's ledger (`raidRelayState`) against the
 town's target, not this machine's share. The record: `01-Overview/bugs/Field-Bugs-2026-10-11g.md` RAID-WORD.
+
+## RAID5 - a raid's kind: the assault, the standard, the exodus (2026-10-25)
+
+> The owner, 2026-10-25: "I was want to rework town raids to bring them up to par with other world events, implementing
+> mechanics (not the puzzle), different types of structure like wave based, defend, escort, etc". Asked which: "Waves",
+> "Defend", "Escort" and "Classic skirmish".
+
+Every raid the day rolls is now one of four kinds, and the kind is the raid's own: `systems/raidKinds.js raidKindOf`
+reads it off what the day already drew - the raid's key, its start, its target and its party, hashed - and never draws,
+so RAID-ROLL's roll (the relay's check of a word) is the roll it always was and every machine names the same kind. The
+count and the cleanse are what they were (RAID1-RAID3): the raid's deaths against its target, the relay's ledger online.
+The kind decides how its raiders stand and what more the town asks; Kamer's mod has no kinds - a departure (Ledger A,
+RAID5).
+
+| Kind | Its name | What the town asks | How it runs (`systems/raidingParties.js`) |
+|---|---|---|---|
+| `classic` | Raid | - | RAID1's raid: one raider at a time, out of view, the watch beside you |
+| `waves` | Assault | "They come in waves. Hold until their leader falls." | the target less one shared over three waves (four from a target of 21, `raidWavePlan`), each in packs of 3-5; a 12 s breather between (`RAID_WAVE_BREATHER_S`), each wave said; the last the party's LEADER alone - the knights' Knight-Captain, the bandits' Bandit Chief, the orcs' Orc Warlord - an elite with two boss traits (`05-Combat/Boss-Traits.md`), its fall the target's last death |
+| `defend` | Siege of the Standard | "Keep the Standard-Bearer of {town} alive in the square." | a watchman of the town stood at its square (`scenes/cityGuards.js standBearer`, eight times as hardy, leashed 4 m to his post); the raiders come at him in packs of 2-3 from 40 m out, each sent at him; KILLED (a walk-off is no fall - another is raised) he sacks the town: said, none raised again, the raid goes on |
+| `escort` | Exodus | "Refugees flee to the square of {town}. See them there safely." | three refugees (a temple's Healer of the street's pool, the player's allies, four times as hardy) walk the town's streets from its edge to its square behind a guide that waits for them; the raiders come in packs ahead of them and hunt them; each arriving is saved and goes out of sight, each fallen lost, both said; when all three are saved or lost the rest of the raid is the classic one |
+
+**Held.** A town whose objective is kept to its cleanse is HELD: an assault whose leader fell, a standard still
+standing, two refugees of three saved (`raidHeld`). It is said ("{town} is held - its people will not forget it."), the
+region's legal reputation and its People take 3 more beside GrantReputation's own (`grantRaidHeldReputation`, the same
+door and clamp), and the town's thanks (RAID4b) are half again in gold with one more Magic-or-better piece, rolled LAST
+so every thanks before it is its seed's (`systems/raidSpoils.js rollRaidSpoils`, `held`). The held raids are saved (the
+newest 16) because the account service may answer after a load.
+
+**The town's sites** (`scenes/raidSitesHost.js`, a module `scenes/world.js` wires - HOST-SPLIT): the raid's own town, read
+off its map pixel (`wagonWardenHost.js wardenTownOfPixel` - AUDIT WORLD-EVENTS L4-4: off the player's feet alone it read
+null across the block a town's rect is widened by, and the raid kept that null for its whole life; a site not found is
+asked again RAID_SITE_AGAIN_S on). Its square and the refugees' way are on the town's STREETS: the living town's places
+where it has them (`livingWorld/places.js` - the net its doors open onto, its square, its exits by side), else the grid's
+own (`gridStreets` - the component of the cell nearest the middle that holds `RAID_STREETS_MIN` cells, so a boxed-in yard
+is no square: AUDIT WORLD-EVENTS L4-8); the way from the side the raid names (its own tuple; 0 north, +z) to the square
+along them (`livingWorld/townPaths.js findTownPath`) - AUDIT WORLD-EVENTS L4-3: a walled city's edge cells are the fields
+outside its wall, and no city ever found one. A town with no square or no way, and a host with no sites at all, runs the
+classic raid. THE FOUR HOSTS: `scenes/world.js` wired; `scenes/exterior.js` FLAGGED - the fixed-city bench runs no raid;
+`scenes/worldModes.js` and `scenes/dungeonContext.js` FLAGGED - a raid is the street's.
+
+**Online.** The runner (RAID2's) stands the kind and says its objective beside its raid word on its foes frame - `ro`,
+`[key, kind, a, b]` (the assault its wave and its leader's fall, the standard its bearer's health in per cent and
+whether he fell, the exodus its saved and its lost), validated by `world/raidShared.js validRaidObjWords` (the classic
+never, counts 0-100, each raid once, at most four). Every reader in the town says the same lines off it and shows it on
+the board; a reader stands nothing of it - the bearer rides the runner's frame as the watch's defenders do (`al`), and the
+refugees are named `rf` there so a reader stands them as its allies. AUDIT WORLD-EVENTS (L3-4..L3-14): a word is FOLDED
+into the raid as it is heard (`foldObjective` - the leader's fall, the wave reached, the standard sacked or seen standing,
+the saved and the lost: each the most heard, never back), so a runner that takes the raid over - again, or first - stands
+nothing the town has lost; a word of another kind than the raid's own is no word of it; a word older than
+RAID_WORD_STALE_MS leaves the board; the lines are said off the high-water mark of what was said (`ow`, saved with `asked`,
+so a load says none again); a leader taken over from a fallen runner is the leader. A runner that stops running a raid
+lets its bearer walk off and its refugees go (they are never handed to an heir), and the next stands its own. At a raid
+relay an assault stands nothing before the town's ledger is heard, and its leader only into an empty field. The relay
+reads no `ro` (it counts a foes frame's records) - nothing of the kind is the relay's, and a held town's thanks are the
+client's (RAID4b's roll), held as the receipt came (`hd` on the claim, for the character that fought - L3-14).
+
+**The motor, the people and the pool** (AUDIT WORLD-EVENTS L4-1, L4-2, L4-5, L4-6, L4-7, L6-5): a follower whose leader is
+not the player - a refugee's guide, the bearer's post - walks to it (the motor's pursuit tick turned it back at the player
+it senses, `characters/enemy/enemyMotor.js`); refugees are spared the street pool's relevance cull and the player's own
+harm (`combat/friendlyFire.js isRefugee`), lost only when KILLED (one let go with no body is stood again), each a pace
+behind the one before, the guide setting off once they all stand; the bearer is no part of the watch's lifecycle (never
+dismissed in a lull, never a defender in its count, never enlisted by a crime - `scenes/cityGuards.js raidBearer`) and is
+raised again at the share he was let go at; a raid's points move with the floating origin (`raidOffsetAll`); and a raid's
+GOAL - its bearer, its refugees (`raidGoal`) - is its raiders' quarry first whatever infighting reads, until a blow turns
+the raider (`characters/enemy/enemyTargets.js huntsRaidGoal`, STAR5's shape). The kinds run on their own clock, the
+frame's dt (a pause holds the breather, and stands nothing), and an assault wave whose count has not moved in
+RAID_WAVE_STALL_S stands again past the raider it cannot reach.
+
+**Seen.** The event board's live raid of a kind names the kind in its title ("Siege of the Standard: Gothway Garden") and
+its objective before the count ("Standard 40% - Raiders down: 3 of 20" - AUDIT WORLD-EVENTS L5-13: the detail line ran out
+of room); a classic raid and a staff event name no kind; a raid leader is titled and its traits shown on the target frame
+like any traited foe, its charge said with its own article ("The Orc Warlord leads the last charge on ...", L5-8).
+
+**Not seen in the running game.** The pins drive each kind through a recording host and the sites host over a grid of
+its own; no town has been raided in a browser with these kinds.
+
+Pins: `test/systems/raid5_kinds.test.js` (13: the kind, the plan, the words, the word, each kind run, online, the save,
+the thanks, the board, the sites, the hosts); `tools/mutants/raid5.json` (35, 35 dead); the audit's
+`test/systems/auditwe_raid.test.js` (14) and `tools/mutants/auditwe_raid.json` (34, 34 dead) -
+`01-Overview/audits/Audit-World-Events.md`.

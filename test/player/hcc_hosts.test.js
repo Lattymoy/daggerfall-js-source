@@ -144,7 +144,7 @@ test('HCC hosts: world.js - the frame, the draw, the origin, the ray, the plaque
     // AUDIT HCC H3: DFU's per-mod slot on every save; OnStartLoad before any await, RestoreSaveData once the place stands
     /modData: \{ \[HCC_VENDOR\]: hccRuntime\.getSaveData\(\), \.\.\.modSaveRecords\(\) \},/,   // WA1: every registered mod's record beside it
     /autoBuildArms\(playerEntity\);[^\n]*\n\s+hccRuntime\.handleStartLoad\(\);/,
-    /const hccRecord = extras\.modData\?\.\[HCC_VENDOR\] \?\? null;\n\s+if \(hccRecord\) hccRuntime\.restoreSaveData\(hccRecord\);/,
+    /const hccRecord = extras\.modData\?\.\[HCC_VENDOR\] \?\? null;\n\s+if \(hccRecord\) hccRuntime\.restoreSaveData\(hccRecord, \{ elsewhere: csaElsewhere \}\);/,   // PIN MOVED (HORSE-WAKE): and the landing's word
     /horseCartSave: \(\) => hccRuntime\.getSaveData\(\),/, /horseCartLoad: \(rec\) => \{ hccRuntime\.handleStartLoad\(\); upkeep\.reset\(\); if \(rec\) hccRuntime\.restoreSaveData\(rec\); \},/,
     /if \(!_loadedGame\) hccRuntime\.handleNewGame\(\);/, /horseCart: hccRuntimeOn,\s+\/\/ HCC: the runtime's transition handlers/,
     // AUDIT HCC H2: the travel map's journey (the mod's one subscription), and the online respawn treated as one

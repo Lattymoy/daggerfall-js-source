@@ -47,7 +47,7 @@ import { deepIn, BODY_AFTER_MS } from '../bossBody.js';
 
 // ── the numbers ────────────────────────────────────────────────────────
 /** A fighter's share: KW_TTK_S seconds of its reference damage x KW_SHARE_X. */
-export const KW_TTK_S = 300;
+export const KW_TTK_S = 600;   // KETCH-LONGER: 300 before - a solo fight of some seven minutes, where the live run's went in three and a half
 export const KW_SHARE_X = 1;
 export const KW_OPENING_MS = 6000;
 export const KW_LOST_MS = 30_000;
@@ -85,15 +85,15 @@ export const KW_SECTION_FALLS = 2;
 export const KW_SECTION_WARN_MS = 3000;
 export const KW_SECTION_GONE_MS = 7000;
 /** THE KETCH TURNS WEST. */
-export const KW_ENDS_MS = 14 * 60_000;
+export const KW_ENDS_MS = 22 * 60_000;   // KETCH-LONGER: 14 before, the fight twice as long
 export const KW_END_EVERY_MS = 2000;
 export const KW_END_PCT = 0.99;
 
 /** THE BLOWS, by the wire's `a`. `sh` its shape, the rest its numbers (THE WIND-UP FLOOR may lengthen a wind-up). */
 export const KW_BLOWS = Object.freeze({
-  keel: Object.freeze({ a: 0, key: 'keel', name: 'Keel-Strike', sh: 'lane', len: 26, w: 4.5, wu: 1900, rec: 1300, p: 0.32, b: 14, el: null, range: 24, w8: 2 }),
-  lash: Object.freeze({ a: 1, key: 'lash', name: 'Steam Lash', sh: 'cone', r: 13, arc: 150, wu: 1700, rec: 1100, p: 0.26, b: 12, el: 'fire', range: 11, w8: 2 }),
-  ring: Object.freeze({ a: 2, key: 'ring', name: 'Tonal Ring', sh: 'self', r: 7, wu: 1800, rec: 1300, p: 0.3, b: 14, el: null, range: 6, w8: 2, wave: Object.freeze({ r1: 20, after: 900, p: 0.16, b: 8, name: 'Tonal Wave' }) }),
+  keel: Object.freeze({ a: 0, key: 'keel', name: 'Keel-Strike', sh: 'lane', len: 26, w: 4.5, wu: 1900, rec: 1300, p: 0.4, b: 14, el: null, range: 24, w8: 2 }),
+  lash: Object.freeze({ a: 1, key: 'lash', name: 'Steam Lash', sh: 'cone', r: 13, arc: 150, wu: 1700, rec: 1100, p: 0.33, b: 12, el: 'fire', range: 11, w8: 2 }),
+  ring: Object.freeze({ a: 2, key: 'ring', name: 'Tonal Ring', sh: 'self', r: 7, wu: 1800, rec: 1300, p: 0.38, b: 14, el: null, range: 6, w8: 2, wave: Object.freeze({ r1: 20, after: 900, p: 0.16, b: 8, name: 'Tonal Wave' }) }),
   discord: Object.freeze({ a: 3, key: 'discord', name: 'The Discord', sh: 'all', wu: 2500, rec: 0, p: KW_DISCORD_PCT, b: 0, el: null, range: 999, w8: 0 }),
   song: Object.freeze({ a: 4, key: 'song', name: 'The Keel-Song', sh: 'all', wu: 8000, rec: 1800, p: KW_SONG_PCT, b: 0, el: null, range: 999, w8: 0 }),
   west: Object.freeze({ a: 5, key: 'west', name: 'The Ketch Turns West', sh: 'all', wu: 2000, rec: 0, p: KW_END_PCT, b: 0, el: null, range: 999, w8: 0 }),

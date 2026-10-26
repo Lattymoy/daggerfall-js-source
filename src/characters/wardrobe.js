@@ -308,22 +308,10 @@ export function npcGarmentPick(n, piece) {
   const tier = Math.max(n.lo ?? 0, Math.min(n.hi ?? 3, n.tier + (step < 2 ? -1 : step === 2 ? 1 : 0)));
   return { pick: h >>> 8, tier };
 }
-/** Daggerfall's footwear (MENS/WOMENS): what a beast's feet refuse. */
-const FOOTWEAR = new Set([M.shoes, M.tallBoots, M.boots, M.sandals, W.shoes, W.tallBoots, W.boots, W.sandals]);
-/** The races Morrowind builds on the beast skeleton (fpArm.js tpSkeletonPath `beast`). */
+/** The races Morrowind builds on the beast skeleton (fpArm.js tpSkeletonPath `beast`). What a beast of them wears of
+ *  its worn list is the item map's call for every look, an NPC's and a player's alike, by the viewer's Beast Footwear
+ *  and Beast Helmets switches (mwItemMap.js beastCut, BEAST-BOOTS). */
 export const WARDROBE_BEAST_RACES = Object.freeze(['Khajiit', 'Argonian']);
-/**
- * A BEAST'S WORN LIST (AUDIT MWNPC16-18 C, the beasts): Morrowind dresses no Khajiit or Argonian in shoes, boots or a
- * closed helm - its own equip refuses them, and they sit on no beast's digitigrade feet or muzzle - so an NPC of a
- * beast race (every producer's - the wardrobe's, the watch's plate, a foe's own equip table) stands without them:
- * footwear, armoured boots and a helm dropped from the worn list (mwItemMap.js dfWornEquipment's) before the build.
- * Which Daggerfall helm would be an open one is the item map's call, not the look's: none is worn. A player's look is
- * never asked (the caller's: an NPC's alone). @param {any[]} worn @param {any} [race]
- */
-export function beastWorn(worn, race) {
-  if (!WARDROBE_BEAST_RACES.includes(race)) return worn;
-  return worn.filter((p) => (p.kind === 'clothing' ? !FOOTWEAR.has(p.templateIndex) : p.templateIndex !== A.Helm && p.templateIndex !== A.Boots));
-}
 /** The worn list (mwItemMap.js dfWornEquipment's) with each garment's picks - the armour as it was. @param {any[]} worn @param {any} n */
 export function withNpcPicks(worn, n) {
   return worn.map((p) => (p.kind === 'clothing' ? { ...p, ...npcGarmentPick(n, p) } : p));

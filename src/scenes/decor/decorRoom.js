@@ -51,6 +51,7 @@ import { decorIsDoor } from '../../systems/decor/decorDoorways.js';   // HOME-DO
 import { drawnFlat } from '../../characters/nudeFlats.js';   // NUDE-DECOR: a nude figure stands as its clothed stand-in while Show Nudity is off
 import { StaticBatchBuilder, keyResolver } from '../../render/staticBatch.js';   // YARD-MERGE: a yard's models as one mesh, as a town's statics are
 import { lateSolidsOf } from '../../player/lateSolid.js';   // DECOR-CLEAR: a piece landing round the body is withheld until it is clear
+import { decorHearth } from '../../systems/decor/decorUse.js';   // DECOR-USE: a placed fire is one of the room's hearths
 
 /** How far the eye reaches a placed piece - the room's own furniture's reach (a bed's, a shelf's: 128 units). */
 export const DECOR_REACH = DEFAULT_ACTIVATION_DISTANCE;
@@ -776,9 +777,38 @@ export function createDecorRoom({
   // visit that stood none of them never wipes them ("The offline house keeps working offline").
   let kept = [];
   const keep = (pieces) => { kept = [...(pieces ?? [])]; };
+  // A wagon's Confirm has not been pressed: the save and the relay read the last kept picture, while the
+  // pieces the player is still moving stay standing in the room.
+  let savedList = null;
+  const live = () => [...standing.values()].map((e) => e.piece);
+  const showSaved = (fn) => { savedList = typeof fn === 'function' ? fn : null; };
 
   const pieceOf = (id) => standing.get(id)?.piece ?? null;
-  const list = () => [...standing.values()].map((e) => e.piece);
+  const list = () => (savedList ? savedList() : live());
+  /**
+   * DECOR-USE (systems/decor/decorUse.js decorHearth): THE ROOM'S PLACED FIRES - a fire flat one stands over, a fireplace
+   * and a piece made the cooking station - as survival/hearth.js collectHearths gives the room's own, by their flame
+   * (`x`, `y`, `z`: a model's box's middle, a picture's over its base). AUDIT DECOR-USE D1: and NO eye's box (`foot`,
+   * `w`, `h` - hearthAabb answers none): the piece's own target (`decor:<id>`, its model's mesh or its picture) is the
+   * press, and a square over a model's longer side stood past its narrow sides, through a wall at a hand from it, and
+   * took the press from a door beyond. A piece not yet standing (no size, no box) is none yet.
+   */
+  function hearths() {
+    const out = [];
+    const o = origin?.() ?? [0, 0, 0];
+    for (const e of standing.values()) {
+      if (!decorHearth(e.piece)) continue;
+      if (e.piece.model != null) {
+        if (!e.box || !e.matrix) continue;
+        const b = transformedAabb(e.box, e.matrix);
+        out.push({ x: (b[0] + b[3]) / 2, y: (b[1] + b[4]) / 2, z: (b[2] + b[5]) / 2 });
+      } else if (e.size) {
+        const p = [o[0] + e.piece.pos[0], o[1] + e.piece.pos[1], o[2] + e.piece.pos[2]];
+        out.push({ x: p[0], y: p[1] + e.size.h / 2, z: p[2] });
+      }
+    }
+    return out;
+  }
 
   /** MW-MOUNT: a Morrowind build landed, or went (the host watches fpArm.js mountPictureStamp) - every mount asks
    *  for its picture again and hangs as the answer, where it stood. */
@@ -808,7 +838,7 @@ export function createDecorRoom({
   }
 
   return {
-    put, remove, hold, set, restand, destroyAll, draw, batches, batchesSeen, figures, drawMounts, lights, pushLights, targets, pieceOf, list, size: () => standing.size,
+    put, remove, hold, set, restand, destroyAll, draw, batches, batchesSeen, figures, drawMounts, lights, pushLights, targets, pieceOf, list, live, showSaved, hearths, size: () => standing.size,   // DECOR-USE: the placed fires
     itemsOf, holdsAny, itemsSnapshot, setItems, takeUnserved, keep, kept: () => kept,
     ownOf, keepOwn, takeOwn, ownSnapshot, setOwn, ownIds, refreshMounts, mountPicture, standPicture, onRefresh,
   };

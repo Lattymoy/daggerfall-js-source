@@ -30,6 +30,8 @@ import {
   buildCode, treeOfCode, treeFault,
 } from '../net/firmament/firmamentLaw.js';
 import { firmamentBook } from '../net/firmament/firmamentBook.js';
+import { firmamentStatus, onFirmamentChange } from '../systems/firmamentLive.js';   // FIRM-STATUS: whether the stars act now, said on the side panel
+import { sigilDueling } from '../systems/sigil/sigil.js';
 import { accountRefusalText } from '../net/accountClient.js';   // AUDIT UICALM-FIRM1 L4 L4: a refusal the window has no words for, in the account's
 import { FRAME_TONES } from './enhanced/enhancedFrame.js';
 import { GRIM_TONES, GRIMOIRE_STACK, px } from './grimoireDress.js';
@@ -122,6 +124,8 @@ export const FIRM_CSS = `
 .fmt-side li.neg { color: #e08a7a; }
 .fmt-side .none { color: #b9b2a1; font-style: italic; }
 .fmt-side .fmt-note { color: #b9b2a1; font-size: 12px; margin: 10px 0 0; line-height: 1.4; }
+.fmt-side .fmt-live { color: #f3cf86; font-size: 14px; margin: 0 0 8px; line-height: 1.4; }
+.fmt-side .fmt-live.off { color: #e08a7a; }
 .fmt-tip { position: absolute; z-index: 2; pointer-events: none; min-width: 200px; max-width: 320px; padding: 10px 12px; font-family: var(--data); color: #e9e4d9; font-size: 13px; display: none; }
 .fmt-tip.on { display: block; }
 .fmt-tip .nm { font-family: var(--display); font-size: 18px; font-weight: 600; color: #f3cf86; line-height: 1.15; }
@@ -160,6 +164,8 @@ export const FIRM_CSS = `
 :root[data-plus-dress="grimoire"] .fmt-purse.life b { color: #c8f0a0; }
 :root[data-plus-dress="grimoire"] .fmt-btn.fmt-go, :root[data-plus-dress="grimoire"] .fmt-btn.fmt-exit { color: ${G.yellow}; }
 :root[data-plus-dress="grimoire"] .fmt-side li.capped { color: ${G.red}; }
+:root[data-plus-dress="grimoire"] .fmt-side .fmt-live { color: inherit; }
+:root[data-plus-dress="grimoire"] .fmt-side .fmt-live.off { color: ${G.redHi}; }
 :root[data-plus-dress="grimoire"] .fmt-tip li.neg, :root[data-plus-dress="grimoire"] .fmt-side li.neg, :root[data-plus-dress="grimoire"] .fmt-tip .ft.no { color: ${G.redHi}; }
 :root[data-plus-dress="grimoire"] .fmt-say { font-family: ${GRIMOIRE_STACK}; }
 /* THE SCROLLS (the lead dev, 2026-10-13: "give the tooltips when hovering a scroll look the upper message also a scroll
@@ -443,6 +449,12 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
     const parts = [];
     parts.push(el('h3', null, sign ? sign.name : t('firmament.side.noSign', 'No birthsign chosen')));
     parts.push(el('p', 'fmt-sign', sign ? sign.lore : t('firmament.side.chooseSign', 'Click one of the seven large stars to choose your birthsign. The Serpent, in the center, can reach every part of the sky.')));
+    // FIRM-STATUS: the sums below are the stars held, whether or not they act - this line says whether they act now.
+    // A lab sky (preview) has no game to act in.
+    if (!preview) {
+      const status = firmamentStatus({ read: book?.state?.open === true, dueling: sigilDueling() });
+      parts.push(el('p', `fmt-live${status === 'active' ? '' : ' off'}`, statusText(status)));
+    }
     for (const ring of /** @type {const} */ (['combat', 'life'])) {
       parts.push(el('h3', null, ring === 'combat' ? t('firmament.side.combat', 'Combat') : t('firmament.side.craft', 'Crafting and trade')));
       const ul = el('ul');
@@ -690,6 +702,15 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
     const KEPT = ['offline', 'server', 'rate', 'maintenance'];
     if (KEPT.includes(error)) return respec ? t('firmament.refusal.respecLost', 'The server didn\'t answer the respec. Open the Firmament again in a moment to see if it went through.') : REFUSALS.offline;
     return /** @type {Record<string, string>} */ (REFUSALS)[error] ?? accountRefusalText(error);
+  }
+  /** Whether the stars act now, in the player's words (firmamentLive.js firmamentStatus). */
+  function statusText(status) {
+    if (status === 'seat') return t('firmament.status.seat', 'Your stars are off: another tab or device is playing online, so this one is offline.');
+    if (status === 'unread') return t('firmament.status.unread', 'Your stars are off until they load from the server.');
+    if (status === 'no-sign') return t('firmament.status.noSign', 'Your stars are off until you choose a birthsign and press {accept}.', { accept: t('firmament.accept', 'Accept') });
+    if (status === 'mentoring') return t('firmament.status.mentoring', 'Your stars are off while you mentor a lower-level party. They return when you leave the party.');
+    if (status === 'duel') return t('firmament.status.duel', 'Your combat stars are off during this duel or Arena fight. Your crafting and trade stars still work.');
+    return t('firmament.status.active', 'Your accepted stars are active.');
   }
   /** UI-CALM (2026-10-14, a player: "why dont i get any stars ... with renown lvl 5"): a read the service refused was
    *  silent - the purses stood at their empty defaults ("0 of 0", Renown 1) as if that were the answer. Now it says so. */
@@ -1177,6 +1198,10 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
     const fail = readFailText(book.state);
     if (fail) say(fail, true, true);
   }) : null;
+  // FIRM-STATUS: the side panel's status line moves when the page goes offline or online, or mentoring starts or ends
+  const offSky = preview ? null : onFirmamentChange(() => {
+    if (!dead) refresh();
+  });
   if (!preview && book) book.read?.().catch?.(() => {});
 
   refresh();
@@ -1196,6 +1221,7 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
     watch?.disconnect?.();
     unregister();
     offBook?.();
+    offSky?.();
     root.remove();
     try { onExit(); } catch { /* the host's */ }
   }

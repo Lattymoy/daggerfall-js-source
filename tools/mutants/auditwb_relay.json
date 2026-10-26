@@ -11,12 +11,12 @@
   {
     "name": "AUDWB-A1-a-socket-unstamped",
     "file": "server/src/index.js",
-    "old": "    const att = { key, id: null, name: null, pose: null, at: Date.now(), ...(ly ? { ly } : {}) };   // AUDIT WB A1: when it opened",
-    "new": "    const att = { key, id: null, name: null, pose: null, ...(ly ? { ly } : {}) };   // AUDIT WB A1: when it opened",
+    "old": "    const att = { key, id: null, name: null, pose: null, at: Date.now(), ...(ly ? { ly } : {}), ...(nd ? { nd } : {}) };   // AUDIT WB A1: when it opened",
+    "new": "    const att = { key, id: null, name: null, pose: null, ...(ly ? { ly } : {}), ...(nd ? { nd } : {}) };   // AUDIT WB A1: when it opened",
     "tests": [
       "test/net/gate/auditwb_relay.test.js"
     ],
-    "note": "SCALE5d (re-aimed by content): and the layer the Worker says"
+    "note": "COST-2 3a (re-aimed by content: the cell-scoped law reads the socket's cover). SCALE5d (re-aimed by content): and the layer the Worker says"
   },
   {
     "name": "AUDWB-A1-the-talker-unseated",

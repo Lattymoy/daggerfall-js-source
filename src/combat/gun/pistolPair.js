@@ -6,6 +6,7 @@
 // back from here. Not a line of it changed on the way; one door was added for the game (`fireHand`, below).
 
 import { createGunMachine } from './gunMachine.js';
+import { PISTOL_STRIP } from './pistolStrip.js';   // THUNDERLOCK-ART2's audit: the cycle the Pistolet's own strip's, never the lab sheet's by coincidence
 import { HANDS_MODE, strikeHandOf, otherHand } from '../twoHands/handsLaw.js';
 
 /** How the trigger is pulled with a pistol in each hand. */
@@ -40,7 +41,7 @@ export const PAIR_TRIGGER = Object.freeze({
  * the flurry's case) and the seconds since they ended after.
  */
 export function createPair({ trigger = PAIR_TRIGGER.Alternate, lead = 'R', fps, cooldownMs, hitFrame } = {}) {
-  const opts = { fps, cooldownMs, hitFrame };
+  const opts = { fps, cooldownMs, hitFrame, frames: PISTOL_STRIP.frames };
   const pair = {
     trigger, lead,
     R: createGunMachine(opts), L: createGunMachine(opts),

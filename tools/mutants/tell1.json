@@ -344,8 +344,8 @@
   {
     "name": "TELL1-round-unsaid",
     "file": "src/systems/effects.js",
-    "old": "bundleDuel: !!a.bundleDuel, round: true });",
-    "new": "bundleDuel: !!a.bundleDuel });",
+    "old": "bundleDuel: !!a.bundleDuel, round: true, element: a.element ?? null });",
+    "new": "bundleDuel: !!a.bundleDuel, element: a.element ?? null });",
     "tests": [
       "test/systems/tell1_poise.test.js"
     ]

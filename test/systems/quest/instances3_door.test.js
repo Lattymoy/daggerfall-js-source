@@ -158,6 +158,8 @@ test('INSTANCES what the door offers: offline or at an older relay nothing; a qu
   assert.deepEqual(instanceOffer({ online: true, instanceOk: true, isHold: true }), [{ kind: 'mine' }], 'HOLD-ONCE: never its public room');
   assert.deepEqual(instanceOffer({ online: true, instanceOk: true, partners }), [{ kind: 'public' }, { kind: 'join', name: 'Ann', acct: 'a1', owner: '0123456789abcdef', epoch: '89abcdef' }]);
   assert.equal(instanceOffer({ online: true, instanceOk: true }), null, 'no popup: the door opens as it always did');
+  assert.deepEqual(instanceOffer({ online: true, instanceOk: true, questHere: true, partners }).map((r) => r.kind), ['public', 'join', 'mine'], 'the party\'s room before my own - a copy of the quest has its own room');
+  assert.deepEqual(instanceOffer({ online: true, instanceOk: true, isHold: true, partners }).map((r) => r.kind), ['join', 'mine'], 'and at the Hold');
 });
 
 /** The door over fake deps: a quest at the crypt, the windows laid over and the lines kept. */
@@ -339,6 +341,72 @@ test('INSTANCES the door\'s other words: atDoor - Leave spends the press, a row 
   assert.equal(d.questElsewhere(build), false, 'once a build');
   assert.equal(d.questElsewhere({ ...COPPERING }), true, 'the next build says it again');
   assert.deepEqual(said.filter((l) => l === INSTANCE_TEXT.questHere()).length, 2);
+});
+
+test('WIPE-RETURN (a field report, 2026-10-25: "Upon Death in an instance, party members and host will desync even if everyone dies and goes back in"): the room the relay last joined me to is offered again at its place\'s door once no pose names it - after the rooms members stand in, one row a room, its owner in my party, never another place\'s, never kept from outside, never one the relay shut on me (mutants: never kept; never offered by the law or the door; before the living; twice; kept from outside; kept past a refusal)', async () => {
+  const site = dungeonSite(COPPERING), base = siteBase(site);
+  const annRoom = instanceRoomOf(base, { owner: ANN, epoch: '89abcdef' });
+  const ann = { acct: 'acct-ann1', name: 'Ann', online: true, p: { in: 1, ins: annRoom } };
+  const labels = (win) => win.options.map((o) => o.label);
+  // Cy holds no copy of the quest and stands in Ann's room; then the party falls together: each death leaves the room at
+  // once (world.js onlineFrame) and wakes outside its door (respawnOnlinePlayer), so no pose names the room any more
+  const cy = door({ quest: false, members: [ann] });
+  assert.deepEqual(cy.d.poseWord('dungeon', annRoom), { ins: annRoom }, 'the frame\'s word while I stand in it');
+  ann.p = { in: 0 };
+  let pending = cy.d.choose(site);
+  await until(() => cy.shown.length === 1);
+  assert.deepEqual(labels(cy.shown[0].win), [`1 - ${INSTANCE_TEXT.public()}`, `2 - ${INSTANCE_TEXT.join('Ann')}`, `Esc - ${INSTANCE_TEXT.leave()}`], 'a popup - it was none, and the door opened on the public room unasked');
+  cy.shown[0].win.input('Digit2');
+  assert.deepEqual(await pending, { instance: { owner: ANN, epoch: '89abcdef' }, whole: true });
+  // Bo holds a copy, whose own instance is another room: Ann's is offered beside it, and every other way in takes it first
+  const bo = door({ members: [ann] });
+  bo.d.poseWord('dungeon', annRoom);
+  pending = bo.d.choose(site);
+  await until(() => bo.shown.length === 1);
+  assert.deepEqual(labels(bo.shown[0].win), [`1 - ${INSTANCE_TEXT.public()}`, `2 - ${INSTANCE_TEXT.join('Ann')}`, `3 - ${INSTANCE_TEXT.mine()}`, `Esc - ${INSTANCE_TEXT.leave()}`], 'it was Public and their own room alone; the party\'s comes first');
+  bo.shown[0].win.input('Digit2');
+  assert.deepEqual(await pending, { instance: { owner: ANN, epoch: '89abcdef' }, whole: true });
+  assert.deepEqual(await bo.d.entryFor(site), { instance: { owner: ANN, epoch: '89abcdef' }, whole: true }, 'a quest\'s transfer: the party\'s room before my own');
+  // after the rooms members stand in now, and one row a room
+  const DEE = hex('instance:account:acct-dee4', 8);
+  const dee = { acct: 'acct-dee4', name: 'Dee', online: true, p: { in: 1, ins: instanceRoomOf(base, { owner: DEE, epoch: '01234567' }) } };
+  const both = door({ quest: false, members: [ann, dee] });
+  both.d.poseWord('dungeon', annRoom);
+  pending = both.d.choose(site);
+  await until(() => both.shown.length === 1);
+  assert.deepEqual(labels(both.shown[0].win), [`1 - ${INSTANCE_TEXT.public()}`, `2 - ${INSTANCE_TEXT.join('Dee')}`, `3 - ${INSTANCE_TEXT.join('Ann')}`, `Esc - ${INSTANCE_TEXT.leave()}`], 'where someone stands now comes first');
+  both.shown[0].win.input('Escape'); await pending;
+  ann.p = { in: 1, ins: annRoom };
+  pending = both.d.choose(site);
+  await until(() => both.shown.length === 2);
+  assert.deepEqual(labels(both.shown[1].win), [`1 - ${INSTANCE_TEXT.public()}`, `2 - ${INSTANCE_TEXT.join('Ann')}`, `3 - ${INSTANCE_TEXT.join('Dee')}`, `Esc - ${INSTANCE_TEXT.leave()}`], 'Ann back inside: her room once');
+  both.shown[1].win.input('Escape'); await pending;
+  ann.p = { in: 0 };
+  // none of these is offered: no popup, the public room as the door opened it before. A popup that does go up is answered
+  // (Esc), so the case fails rather than waits on a window nobody closes
+  const none = async (d, shown, why) => {
+    let got;
+    const asked = d.choose(site).then((entry) => { got = entry; });
+    await until(() => got !== undefined || shown.length > 0);
+    if (shown.length) shown[0].win.input('Escape');
+    await asked;
+    assert.equal(shown.length, 0, why);
+    assert.deepEqual(got, { instance: null, whole: false }, why);
+  };
+  const left = door({ quest: false, members: [] });
+  left.d.poseWord('dungeon', annRoom);
+  await none(left.d, left.shown, 'its owner gone from my party - the relay would refuse it');
+  const away = door({ quest: false, members: [ann] });
+  away.d.poseWord('dungeon', instanceRoomOf('dungeon:m12345', { owner: ANN, epoch: '89abcdef' }));
+  await none(away.d, away.shown, 'another place\'s room');
+  const outside = door({ quest: false, members: [ann] });
+  outside.d.poseWord('dungeon', base);
+  outside.d.poseWord('exterior', annRoom);
+  await none(outside.d, outside.shown, 'a public room keeps nothing, and a room keyed while I am outside is not one I stood in');
+  const shut = door({ quest: false, members: [ann] });
+  shut.d.poseWord('dungeon', annRoom);
+  assert.equal(shut.d.refused({ terminal: true, error: INSTANCE_DOOR_WORD, room: annRoom }), true);
+  await none(shut.d, shut.shown, 'the relay shut it on me - the hub\'s party can be ahead of mine');
 });
 
 // worldModes.js's funnels, executed from their source

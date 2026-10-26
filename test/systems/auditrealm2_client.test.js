@@ -514,7 +514,7 @@ test('AUDIT REALM2 C6: a realm home\'s sale gives the owner\'s own things back t
 
 // ═══ C7 ══════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
-test('AUDIT REALM2 C7: the pause menu\'s Exit ends a duel first and passes P0.5\'s gate - the last checkpoint is the healed character, never the duel\'s 1 health or the opponent\'s spells, and none out of the seat (mutants: realmCheckpoint straight, no duelLeaveNow)', async () => {
+test('AUDIT REALM2 C7: the pause menu\'s Exit ends a duel first and passes P0.5\'s gate - the last checkpoint is the healed character, never the duel\'s 1 health or the opponent\'s spells, and still out of the seat (mutants: realmCheckpoint straight, no duelLeaveNow)', async () => {
   const run = async ({ seatOut = false } = {}) => {
     const log = [];
     // PIN MOVED (INT8, 2026-10-09 - bible/06-Systems/Integrity-Arc.md lane 2): a duel is the relay's to referee - its bar
@@ -537,6 +537,7 @@ test('AUDIT REALM2 C7: the pause menu\'s Exit ends a duel first and passes P0.5\
     mount(`
       let _checkpointAt = -Infinity;
       ${W.decl('duelLeaveNow')}
+      ${W.decl('checkpointGateOpen')}
       ${W.decl('onlineCheckpoint')}
       ${W.fn('realmCheckpoint')}
       ${W.top(WORLD, 'setBeforeTitleExit(')}
@@ -545,7 +546,8 @@ test('AUDIT REALM2 C7: the pause menu\'s Exit ends a duel first and passes P0.5\
     return log;
   };
   assert.deepEqual(await run(), ['duel ended', { health: 80, effects: ['Mine'] }, 'leave'], 'the duel ends, then the checkpoint, then the leave');
-  assert.deepEqual(await run({ seatOut: true }), ['duel ended', 'leave'], 'out of the seat: no checkpoint (P0.5), the leave still goes');
+  // PIN MOVED (FIELD BUGS 2026-10-25 SEAT-SAVES): a realm character out of the seat still saves - the service's lease decides
+  assert.deepEqual(await run({ seatOut: true }), ['duel ended', { health: 80, effects: ['Mine'] }, 'leave'], 'out of the seat: the realm checkpoint still goes, then the leave');
 });
 
 // ═══ C8 ══════════════════════════════════════════════════════════════════════════════════════════════════════════════

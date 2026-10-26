@@ -268,8 +268,8 @@
   {
     "name": "AUDIT29-A15-the-client-asks-blind",
     "file": "src/net/profBook.js",
-    "old": "door.spec(c, profession, rank, spec, from, m.id)",
-    "new": "door.spec(c, profession, rank, spec, null, m.id)",
+    "old": "door.spec(c, profession, rank, spec, from, m.id, trial)",
+    "new": "door.spec(c, profession, rank, spec, null, m.id, trial)",
     "tests": [
       "test/net/audit29_client.test.js"
     ]

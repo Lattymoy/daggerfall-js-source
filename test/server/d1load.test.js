@@ -12,15 +12,16 @@ import { execFileSync } from 'node:child_process';
 import { DATASET, HOURS_MAX, QUESTIONS, loadHours, loadSql, loadTable } from '../../tools/d1Load.mjs';
 import { standService, T0 } from '../accountDb.mjs';
 import { confirmedSeats, SEAT_ROWS_KEPT_S, SEAT_ROWS_SQL, SEAT_JUDGED_SQL } from '../../server-account/src/townSeats.js';
+import { HOT_TABLES, tablesBlob } from '../../server-account/src/metrics.js';
 import { titheAt } from '../../server-account/src/seatHolding.js';
 import { settleWeek, settleDueOnce } from '../../server-account/src/seatTurning.js';
 import { seatReportText, seatWeekOf, seatWeekStartMs } from '../../src/net/townSeatLaw.js';
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 
-test('D1-LOAD the questions: each over the service\'s own dataset and window, every count and sum weighted by the sample, the D1 wait (double5) in seconds most first, the minute row, the clock\'s jobs, the errors; the window whole hours 1 to a week, anything else refused before it reaches the SQL; an answer drawn as its columns, none said so, a refusal thrown (mutants: the weight; the wait\'s double; the order; the window\'s guard; the empty answer)', () => {
+test('D1-LOAD the questions: each over the service\'s own dataset and window, every count and sum weighted by the sample, the D1 wait (double5) in seconds most first, the minute row, the clock\'s jobs, the errors, the rows written by route and tables (COST-0: blob5 the tables a request wrote, double8-11 the hot tables\' own); the window whole hours 1 to a week, anything else refused before it reaches the SQL; an answer drawn as its columns, none said so, a refusal thrown (mutants: the weight; the wait\'s double; the order; the window\'s guard; the empty answer; the tables\' blob; a hot table\'s double; the written rows\' order; the points that wrote)', () => {
   assert.equal(DATASET, src('server-account/wrangler.toml').match(/\[\[analytics_engine_datasets\]\]\nbinding = "METRICS"\ndataset = "(\w+)"/)[1], 'the dataset the service writes');
-  assert.deepEqual(QUESTIONS.map(([n]) => n), ['routes', 'minutes', 'cron', 'errors']);
+  assert.deepEqual(QUESTIONS.map(([n]) => n), ['routes', 'minutes', 'cron', 'errors', 'written']);
   for (const [name] of QUESTIONS) {
     const sql = loadSql(name, 3);
     assert.match(sql, new RegExp(`FROM ${DATASET} WHERE timestamp > NOW\\(\\) - INTERVAL '3' HOUR`));
@@ -34,6 +35,14 @@ test('D1-LOAD the questions: each over the service\'s own dataset and window, ev
   assert.match(loadSql('minutes', 1), /toStartOfInterval\(timestamp, INTERVAL '1' MINUTE\) AS minute/);
   assert.match(loadSql('cron', 1), /AND blob2 = 'CRON'/, 'the clock\'s points (cron.js: `CRON` its method)');
   assert.match(loadSql('errors', 1), /NOT startsWith\(blob3, '2'\)/);
+  // COST-0: the rows written - blob5 the tables a request wrote (metrics.js tablesBlob), each hot table its own double in
+  // HOT_TABLES' order (metrics.js writes them after its seven), weighted, over the points that wrote, the most first
+  const written = loadSql('written', 2);
+  assert.ok(written.startsWith('SELECT blob1 AS route, blob5 AS tables, SUM(_sample_interval) AS requests, SUM(double4 * _sample_interval) AS rows_written, '), written);
+  HOT_TABLES.forEach((t, i) => assert.ok(written.includes(`SUM(double${8 + i} * _sample_interval) AS ${t}`), `${t} is double${8 + i}`));
+  assert.ok(written.endsWith("WHERE timestamp > NOW() - INTERVAL '2' HOUR AND double4 > 0 GROUP BY route, tables ORDER BY rows_written DESC LIMIT 40 FORMAT JSON"), written);
+  assert.deepEqual([...written.matchAll(/ AS (\w+)/g)].map((x) => x[1]), QUESTIONS.find(([n]) => n === 'written')[2], 'its columns are what it selects');
+  assert.equal(tablesBlob({ sessions: 1, players: 3 }), 'players:3 sessions:1', 'blob5 as metrics.js writes it');
   assert.equal(loadHours(''), 1);
   assert.equal(loadHours(' 24 '), 24);
   assert.equal(loadHours(String(HOURS_MAX)), HOURS_MAX);
@@ -59,17 +68,43 @@ function stepRun(yml, stepName) {
   return lines.join('\n');
 }
 
-test('D1-LOAD the workflow: run by hand only, its one input read once as environment, its own queue, writing nothing; its metrics step, run here as the runner runs it over the SQL API\'s answers, draws every question into the summary and warns - never fails - on a refusal (mutants: the input spliced into a run line; a refusal drawn as a table)', () => {
+test('D1-LOAD the workflow: run by hand only, its two inputs each read once as environment, its own queue, writing nothing; its insights step ranks the statements as the choice input asks (COST-0: time, reads or writes) and hands wrangler no other; its metrics step, run here as the runner runs it over the SQL API\'s answers, draws every question into the summary and warns - never fails - on a refusal (mutants: the input spliced into a run line; a refusal drawn as a table; the ranking fixed; the ranking unguarded)', () => {
   const wf = src('.github/workflows/d1-load.yml');
   const on = /\non:\n([\s\S]*?)\n\S/.exec(wf)?.[1] ?? '';
   assert.match(on, /^ {2}workflow_dispatch:/);
   assert.doesNotMatch(on, /push:|pull_request|schedule:/);
-  assert.equal(wf.match(/\$\{\{ inputs\./g)?.length, 1, 'the one input, read once');
+  assert.equal(wf.match(/\$\{\{ inputs\./g)?.length, 2, 'the two inputs, each read once');
   assert.match(wf, /\n {6}HOURS: \$\{\{ inputs\.hours \}\}\n/);
+  assert.match(wf, /\n {6}SORT_BY: \$\{\{ inputs\.sort_by \}\}\n/);
+  assert.match(wf, /\n {6}sort_by:\n(?: {8}.*\n)*? {8}type: choice\n {8}options:\n {10}- time\n {10}- reads\n {10}- writes\n/, 'COST-0: the ranking a choice of three');
   assert.match(wf, /\nconcurrency:\n {2}group: d1-load\n {2}cancel-in-progress: false\n/);
   assert.match(wf, /\npermissions:\n {2}contents: read\n/);
   assert.doesNotMatch(wf, /d1 create|migrations apply|wrangler deploy|d1 execute/, 'it creates, migrates, deploys and executes nothing');
-  assert.match(stepRun(wf, 'Read D1\'s query insights'), /\$WRANGLER d1 insights "\$DB_NAME" --sort-type sum --sort-by time/);
+  assert.match(stepRun(wf, 'Read D1\'s query insights'), /\$WRANGLER d1 insights "\$DB_NAME" --sort-type sum --sort-by "\$sort"/);
+
+  // COST-0: THE INSIGHTS STEP, run by bash over a wrangler that keeps its arguments and is refused (so no jq is asked):
+  // the ranking asked reaches it, an empty one is time's, and one the choice does not offer never reaches it
+  const wdir = mkdtempSync(join(tmpdir(), 'd1insights-'));
+  const fakeWrangler = join(wdir, 'wrangler');
+  writeFileSync(fakeWrangler, `#!/usr/bin/env bash\necho "$*" >> "$FAKE_ARGS"\necho refused >&2\nexit 1\n`);
+  chmodSync(fakeWrangler, 0o755);
+  let asked = 0;
+  const insights = (sortBy) => {
+    const args = join(wdir, `args-${++asked}.txt`);
+    writeFileSync(args, '');
+    const out = execFileSync('bash', ['-c', stepRun(wf, 'Read D1\'s query insights')], {
+      cwd: wdir, encoding: 'utf8',
+      env: { ...process.env, WRANGLER: fakeWrangler, DB_NAME: 'db', HOURS: '2', SORT_BY: sortBy, FAKE_ARGS: args, GITHUB_STEP_SUMMARY: join(wdir, 'summary.md') },
+    });
+    return { out, args: readFileSync(args, 'utf8') };
+  };
+  assert.match(insights('reads').args, /^d1 insights db --sort-type sum --sort-by reads --limit 30 --timePeriod 1d --json\n$/);
+  assert.match(insights('writes').args, /--sort-by writes /);
+  assert.match(insights('').args, /--sort-by time /, 'an empty input: time');
+  const bad = insights('reads; rm -rf /');
+  assert.equal(bad.args, '', 'a ranking the choice does not offer never reaches wrangler');
+  assert.match(bad.out, /::warning::not a ranking/);
+  assert.match(insights('time').out, /::warning::wrangler d1 insights was refused/, 'a refusal a warning, never a stop');
 
   // THE METRICS STEP, run by bash over a curl that answers as the SQL API does - each question its own answer
   const dir = mkdtempSync(join(tmpdir(), 'd1load-'));

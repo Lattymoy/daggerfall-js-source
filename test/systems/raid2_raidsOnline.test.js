@@ -317,8 +317,8 @@ test('RAID2 the lane and the lock: the raids\' switch is the room\'s online, for
 
 test('RAID2 the world host by source: my word rides my cell frame, a peer\'s reaches the raids through the pool\'s room test, and the seams answer who I am, who stands in the town (the watch\'s own rect), the raid\'s puppets and my taken raiders on the net\'s clock', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /if \(cell\) duelRingWord\(frame, full\); if \(cell\) csaWord\(frame, full\);( if \(cell\) csaAboardWord\(frame, full\);)?(?: if \(cell\) bandWord\(frame, full\);)?( if \(cell\) navalWord\(frame, full\);)?(?: if \(cell\) seaRaidWord\(frame, full\);)? if \(cell\) \{ const rk = raidWireWord\(\); if \(rk\) frame\.rk = rk; \}[^\n]*\n\s+(?:\/\/[^\n]*\n\s*)*const said = [^\n]*\n\s*if \(_foesQuiet\.skip\(frame, said\)\)[^\n]*\n\s*if \(!online\.sendFoes\(frame\)\)/, 'on the riders\' own line (PIN MOVED, SCALE2c: the quiet frame\'s gate asked between it and the send), beside the camps, the horse, the ring and (THE MERGE) the boats - and (THE MERGE with NAV-G) the sea\'s word before it, and (OW6) the raiders\' after it');
-  assert.match(w, /exteriorFoes\.setOnRaids\(\(from, rk, at\) => raidPeerWord\(from, rk, at\)\);/);
+  assert.match(w, /if \(cell\) duelRingWord\(frame, full\); if \(cell\) csaWord\(frame, full\);( if \(cell\) csaAboardWord\(frame, full\);)?(?: if \(cell\) bandWord\(frame, full\);)?( if \(cell\) navalWord\(frame, full\);)?(?: if \(cell\) seaRaidWord\(frame, full\);)? if \(cell\) \{ const rk = raidWireWord\(\), ro = raidObjWord\(\); if \(rk\) frame\.rk = rk; if \(ro\) frame\.ro = ro; \}[^\n]*\n\s+(?:\/\/[^\n]*\n\s*)*const said = [^\n]*\n\s*if \(_foesQuiet\.skip\(frame, said\)\)[^\n]*\n\s*if \(!online\.sendFoes\(frame\)\)/, 'on the riders\' own line (PIN MOVED, SCALE2c: the quiet frame\'s gate asked between it and the send), beside the camps, the horse, the ring and (THE MERGE) the boats - and (THE MERGE with NAV-G) the sea\'s word before it, and (OW6) the raiders\' after it, and (PIN MOVED, RAID5) their objective\'s word beside theirs');
+  assert.match(w, /exteriorFoes\.setOnRaids\(\(from, rk, at, ro\) => raidPeerWord\(from, rk, at, ro\)\);/);
   const at = w.indexOf('  setRaidingPartiesHost({');
   const body = w.slice(at, w.indexOf('\n  });', at));
   assert.match(body, /selfId: \(\) => online\?\.id \?\? null,/);
@@ -329,13 +329,13 @@ test('RAID2 the world host by source: my word rides my cell frame, a peer\'s rea
   assert.match(rd('src/systems/raidingParties.js'), /for \(const pup of puppets\) \{\n    if \(pup\.dead\) continue;/, 'a fallen puppet marks no raid fought');
   assert.match(body, /ownRaidFoes: \(\) => exteriorFoes\.foes\.filter\(\(f\) => !f\.puppet && f\.raidKey && !f\.dead\),/);
   const pool = rd('src/scenes/exteriorFoes.js');
-  assert.match(pool, /if \(data\.rk !== undefined\) _onRaids\?\.\(from, data\.rk, _now\(\)\);/);
+  assert.match(pool, /if \(data\.rk !== undefined \|\| data\.ro !== undefined\) _onRaids\?\.\(from, data\.rk, _now\(\), data\.ro\);/);
   // PIN MOVED (GRANT9, bible/11-Multiplayer/Spawn-Grants.md section 16): the relay reads a foes frame's records - and its
   // allies' `al` - in one method alone, `_grantStripped`, and only while its `grantStrip` switch is on (off unset); PIN MOVED
   // (FOE-BOUNDS, section 19): the strip runs with the grants' law off too - a record no builder could give is no grant's
   // question - and is handed the frame's kind and the clock
   const relay = rd('server/src/index.js');
   assert.match(relay, /if \(relayCfgValue\(this\._relayCfg, this\.env, 'grantStrip'\) === 'on' [^\n]*\) data = this\._grantStripped\(a, data, kind, now\);/);
-  assert.doesNotMatch(relay.replace(/\n {2}_grantStripped\(a, data, kind = 'foes', now = Date\.now\(\)\) \{[\s\S]*?\n {2}\}\n/, '\n'), /\brz\b|\brk\b|\bal\b/, 'the relay reads nothing inside a foes frame - no relay change');
+  assert.doesNotMatch(relay.replace(/\n {2}_grantStripped\(a, data, kind = 'foes', now = Date\.now\(\)\) \{[\s\S]*?\n {2}\}\n/, '\n'), /\.(?:rz|rk|al)\b|[{,]\s*(?:rz|rk|al)\s*[,}:=]/, 'the relay reads nothing inside a foes frame - no relay change');   // PIN MOVED (AUDIT WORLD-EVENTS L1-1, L1-4): no FIELD of those names read - the Hour's and the Spire's raise words are kinds named `rz` (`m.k === 'rz'`), never a foes frame's
   assert.doesNotMatch(rd('src/net/wire.js'), /RAID2|raidKey/, 'nor does the record\'s law change');
 });

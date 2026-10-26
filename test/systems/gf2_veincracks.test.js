@@ -23,7 +23,7 @@ import { mineFlats, mineRecord, mineWash, ORE_DYE, ORE_FLAT_ARCHIVE, standDungeo
 import { MINE_ACT } from '../../src/net/professionLaw.js';
 import { utcDayOfMs } from '../../src/net/nodeLaw.js';
 import { setForagingHost } from '../../src/systems/foraging/foragingInstall.js';
-import { PX, WOODS, GLENUMBRA, NOON, rig, arrive, lands, sfxOf, tick, dice } from '../gatherRig.mjs';
+import { PX, WOODS, GLENUMBRA, NOON, DEEP_DUNGEON, rig, arrive, lands, sfxOf, tick, dice } from '../gatherRig.mjs';
 
 const ROOT = join(fileURLToPath(new URL('..', import.meta.url)), '..');
 const src = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -405,14 +405,14 @@ test('GF2-VEINCRACKS V8: a dungeon\'s vein - already its own batch, cracked as i
     const stood = [], dropped = [];
     const wall = (m, b) => [6 + m * 9, 0, 4 + b];
     t.host.enterDungeon({
-      id: 1234, climate: WOODS, region: GLENUMBRA, wall,
+      id: DEEP_DUNGEON, climate: WOODS, region: GLENUMBRA, wall,
       stand: async (a, rec, s, c, o) => { const b = r.createBillboardBatch(a, rec, { w: 0.3 * s, h: 0.3 * s }, c, o); stood.push(b); return b; },
       drop: (b) => { dropped.push(b); b.destroyed = true; },
     });
     under = true;
     for (let i = 0; i < 8; i++) await tick();
     const day = utcDayOfMs(NOON * 1000);
-    const veins = standDungeonVeins({ dungeon: 1234, day, climate: WOODS, confirmed: false, wall });
+    const veins = standDungeonVeins({ dungeon: DEEP_DUNGEON, day, climate: WOODS, confirmed: false, wall });
     assert.ok(veins.length >= 1, 'the dungeon\'s veins');
     const v = veins[0];
     const own = stood.find((b) => !b.dynamic && sameCenters(b.centers, mineFlats(v)));

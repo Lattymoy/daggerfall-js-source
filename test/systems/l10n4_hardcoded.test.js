@@ -317,7 +317,8 @@ const HARDCODED = {
   'src/scenes/travelView.js': 39,
   'src/scenes/treeHost.js': 3,
   'src/scenes/windfallHost.js': 5,
-  'src/scenes/world.js': 338,   // QUEST-AUDIT III SHARE-WORDS: -4, the share's lines through questShare.js's t(); AUDIT QA3: -2, the sender's (shareSentLine); STAFF-PANEL5-FOLLOW-FIX: -1 already at the relay base (ec3d522d61), written down; FB1020c ONE-SAVE: the kept words moved to the Stores page (BAG_PAGE_WORDS.kept); CABIN-FOES: Transport > Ship's helm refusal read off CABIN_REFUSAL; AUDIT SEA VENTURES C6: -1, /unstuck's outdoor refusal read off the zone's words; SEASON-BOOK: -1, /mail's refusal read off chatCommands.js pauseCommandRefusal (344 at the merge of main #1161: both -1s stand)
+  'src/scenes/vendorHost.js': 7,   // VENDOR-LOST: the home traders' words, moved verbatim out of world.js
+  'src/scenes/world.js': 331,   // VENDOR-LOST: -7, the home traders' words moved verbatim to vendorHost.js; QUEST-AUDIT III SHARE-WORDS: -4, the share's lines through questShare.js's t(); AUDIT QA3: -2, the sender's (shareSentLine); STAFF-PANEL5-FOLLOW-FIX: -1 already at the relay base (ec3d522d61), written down; FB1020c ONE-SAVE: the kept words moved to the Stores page (BAG_PAGE_WORDS.kept); CABIN-FOES: Transport > Ship's helm refusal read off CABIN_REFUSAL; AUDIT SEA VENTURES C6: -1, /unstuck's outdoor refusal read off the zone's words; SEASON-BOOK: -1, /mail's refusal read off chatCommands.js pauseCommandRefusal (344 at the merge of main #1161: both -1s stand)
   'src/scenes/worldModes.js': 83,
   'src/systems/aetheric.js': 168,   // SEA-SET: +17, the Eltheric Tidemail's nine names and lore, as the Weave's - the records' own data, minted onto the item; WITCH1: the Wyrd's Raiment's nine pieces, each its name and its affixes' names (+18) - an item's canonical name, as every Aetheric set's; STAR7: +18, the Starspun Weave's nine names and lore - the records' own data, minted onto the item, never read at load
   'src/systems/alchemyItems.js': 3,
@@ -402,6 +403,7 @@ const HARDCODED = {
   'src/systems/horse/horseCart.js': 26,
   'src/systems/horse/horseCartLaw.js': 47,
   'src/systems/horse/horseCoats.js': 3,
+  'src/systems/horse/trailingPoseCache.js': 3,   // STALE-PARK: the far-park warning's three - a console line through the runtime's injected `log`, which the scan reads as prose (it exempts `console.*` alone)
   'src/systems/iliac/iliacItems.js': 8,
   'src/systems/immersiveFootsteps.js': 10,
   'src/systems/immersiveTravel.js': 13,
@@ -477,6 +479,7 @@ const HARDCODED = {
   'src/systems/quickslots.js': 32,
   'src/systems/raidSpoils.js': 4,
   'src/systems/raidingParties.js': 4,
+  'src/systems/realmCopyMark.js': 1,   // REALM-COPY: the copy's slot name, moved here from enhancedMenu.js - a slot's identity, so it stays one English string
   'src/systems/realmCustoms.js': 29,
   'src/systems/realmSaves.js': 15,
   'src/systems/region/regionHubs.js': 4,
@@ -627,7 +630,7 @@ const HARDCODED = {
   'src/ui/enhanced/enhancedHud.js': 9,   // HUD/GROWTH PATCHES (2026-10-20): counted as they arrived at their merge with main - English until a slice routes them through t() (SKILL-READY, FIRM-STARS: +3, the two tiles' names and their cell's class)
   'src/ui/enhanced/enhancedInventory.js': 89,   // HUD/GROWTH PATCHES (2026-10-20): counted as they arrived at their merge with main - English until a slice routes them through t() (BELT-LANTERN: +5, the lantern slot's acts)
   'src/ui/enhanced/enhancedLevelingChoice.js': 6,
-  'src/ui/enhanced/enhancedMenu.js': 53,   // AUDIT MEM-AUDIT G5: -2, the Graphics preset's name and note routed (with its effect, its Custom and its four labels). QUEST-AUDIT III SHELF-WORDS: -5, the shelf's buttons and lines through t(). AUDIT COLLECTIONS-II: -2, the empty Holdings rail's words, gone with the rail that is never empty now. AUDIT EG V (c, L7-10): the Spire's three accessibility rows routed; UI-CALM's doors at the merge of main
+  'src/ui/enhanced/enhancedMenu.js': 52,   // AUDIT MEM-AUDIT G5: -2, the Graphics preset's name and note routed (with its effect, its Custom and its four labels). QUEST-AUDIT III SHELF-WORDS: -5, the shelf's buttons and lines through t(). AUDIT COLLECTIONS-II: -2, the empty Holdings rail's words, gone with the rail that is never empty now. AUDIT EG V (c, L7-10): the Spire's three accessibility rows routed; UI-CALM's doors at the merge of main. REALM-COPY: -1, the copy's slot name moved to systems/realmCopyMark.js
   'src/ui/enhanced/enhancedMerchantPanel.js': 1,
   'src/ui/enhanced/enhancedNotice.js': 1,
   'src/ui/enhanced/enhancedPlayerTrade.js': 14,
@@ -695,7 +698,6 @@ const HARDCODED = {
   'src/ui/naval/navalPlunderWindow.js': 19,
   'src/ui/naval/navalYardWindow.js': 67,
   'src/ui/noticeWindow.js': 99,
-  'src/ui/oreMapTip.js': 8,
   'src/ui/padGlyphsHD.js': 15,
   'src/ui/pageWindow.js': 4,
   'src/ui/partyMapMarks.js': 3,
@@ -710,7 +712,7 @@ const HARDCODED = {
   'src/ui/plus/plusPad.js': 18,
   'src/ui/plus/plusPadBinds.js': 30,
   'src/ui/prisonScreen.js': 1,
-  'src/ui/professions/profPages.js': 31,   // FB1020c ONE-SAVE: the kept words, moved here from the world host
+  'src/ui/professions/profPages.js': 29,   // FB1020c ONE-SAVE: the kept words, moved here from the world host; REFORGE-REPLACE: the Reforge with Essence's two words through t()
   'src/ui/profileBadge.js': 4,
   'src/ui/profileIcons.js': 4,   // WITCH1: the four profile icons' names (ICON_TEXT) - the badge's words, as playerBadge.js's titles and auras
   'src/ui/profileWindow.js': 14,
@@ -721,7 +723,7 @@ const HARDCODED = {
   'src/ui/quest/questMarks.js': 1,
   'src/ui/quest/questRail.js': 1,
   'src/ui/quest/questTracker.js': 5,
-  'src/ui/reforgeWindow.js': 92,
+  'src/ui/reforgeWindow.js': 89,   // REFORGE-REPLACE: the card's note and the line's refusal through t(), the one-line lock's words gone
   'src/ui/restWindow.js': 7,
   'src/ui/revenant/revenantCard.js': 5,
   'src/ui/revenant/revenantFateView.js': 3,

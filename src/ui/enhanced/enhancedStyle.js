@@ -1060,6 +1060,18 @@ img.fit { image-rendering: pixelated; }   /* AUDIT UI A1: a fitted picture drawn
   font: inherit; font-size: 15px; font-variant-numeric: tabular-nums;
 }
 .goldfield input:focus-visible { outline: none; border-color: var(--brass); }
+/* GOLD-ALL: the verb and its "all", stacked in the 44px the box beside them already stands - one column of two equal
+   rows, so both presses are one size (the wider word's width, each half the box's height) and the floating field grows
+   neither taller nor wider (each keeps the kit's 104px, the one Stow's width before). They are the pack's own presses, at the Gold button's
+   12px; the pack's 2px word shadow is halved for the smaller face. */
+.goldfield .goldacts { display: grid; grid-template-columns: max-content; grid-template-rows: 1fr 1fr; gap: 4px;
+  flex: 0 0 auto; height: 44px; }
+.goldfield .goldacts .act { min-height: 0; height: auto; margin: 0; padding: 0 12px; box-sizing: border-box;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  font-size: 12px; line-height: 1; white-space: nowrap; }
+.pack-shell .goldfield .goldacts .act { text-shadow: 1px 1px 0 rgba(0,0,0,0.85); }
+.pack-shell .goldfield .goldacts .act.primary, .pack-shell .goldfield .goldacts .act:hover,
+.pack-shell .goldfield .goldacts .act:focus-visible { text-shadow: 1px 1px 0 rgb(93,77,12); }
 /* DISC25-F: the card's how-many field - a stack's split, beside the button that moves it */
 .qtyfield { display: inline-flex; align-items: center; gap: 6px; color: var(--dim); font-size: 12px; }
 .qtyfield input {
@@ -3508,6 +3520,12 @@ ${paceControlsCss('tview')}
 .hud-foe { display: none; flex-direction: column; align-items: center; gap: 4px; }
 .hud-foe.on { display: flex; }
 .hud-foename { font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; }
+/* BOSS-TRAITS (bible/05-Combat/Boss-Traits.md): a hard foe's traits under its name, and its ward - a pale blue sheen over
+   its health from the left, its share of the whole */
+.hud-foetraits { display: none; margin-top: -3px; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #a9c8ff; }
+.hud-foe.traited .hud-foetraits { display: block; }
+.hud-foeward { position: absolute; left: 0; top: 0; bottom: 0; width: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(214,232,255,0.85) 0 1px, rgba(120,170,255,0.6) 1px calc(100% - 1px), rgba(60,96,170,0.7) calc(100% - 1px)); }
 .hud-track { position: relative; width: min(320px, 46vw); height: 10px;
   background: rgba(10,12,17,0.75); border: 2px solid rgba(125,116,96,0.55); }
 .hud-fill { display: block; height: 100%; width: 100%; background: #d98074; }

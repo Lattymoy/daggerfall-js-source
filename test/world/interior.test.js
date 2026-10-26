@@ -104,12 +104,17 @@ test('interior: getStaticDoors size, centre, and null parity', () => {
   assert.equal(getStaticDoors({}, 0, 0, matrix), null);
 });
 
-test('interior: isBadInteriorModel filters 31000 only at flagged records', () => {
-  assert.equal(isBadInteriorModel(51, 1, 31000), true);
-  assert.equal(isBadInteriorModel(51, 0, 31000), false);
-  assert.equal(isBadInteriorModel(51, 1, 999), false);
-  assert.equal(isBadInteriorModel(1278, 4, 31000), true);
-  assert.equal(isBadInteriorModel(9999, 1, 31000), false);
+test('interior: isBadInteriorModel filters 31000 only at flagged records - BAD-CELL: and only at the misplaced spot', () => {
+  const misplaced = { modelIdNum: 31000, xPos: 192, yPos: -192, zPos: 64 };
+  assert.equal(isBadInteriorModel(51, 1, misplaced), true);
+  assert.equal(isBadInteriorModel(51, 0, misplaced), false);
+  assert.equal(isBadInteriorModel(51, 1, { ...misplaced, modelIdNum: 999 }), false);
+  assert.equal(isBadInteriorModel(1278, 4, misplaced), true);
+  assert.equal(isBadInteriorModel(9999, 1, misplaced), false);
+  // BAD-CELL: Beautiful Cities' own room cell in FIGHGL00 #1 (block 106), and one step off the spot on each axis
+  assert.equal(isBadInteriorModel(106, 1, { modelIdNum: 31000, xPos: 64, yPos: -63, zPos: 448 }), false);
+  for (const k of ['xPos', 'yPos', 'zPos']) assert.equal(isBadInteriorModel(106, 1, { ...misplaced, [k]: misplaced[k] + 1 }), false, k);
+  assert.equal(isBadInteriorModel(106, 1, misplaced), true);
 });
 
 test('interior: layoutInterior - prop anchor, marker split, action door modulo', () => {

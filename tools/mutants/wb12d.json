@@ -144,11 +144,12 @@
   {
     "name": "WB12d-the-cell-unasked",
     "file": "server/src/index.js",
-    "old": "    if (worldRoom(m.px, m.py) !== a.key) { this._junk(ws); return; }\n    if (!isGateDay(m.d)",
+    "old": "    if (junkOutsideCover(this, ws, a, worldRoom(m.px, m.py))) return;\n    if (!isGateDay(m.d)",
     "new": "    if (!isGateDay(m.d)",
     "tests": [
       "test/net/gate/wb12d_rite_relay.test.js"
-    ]
+    ],
+    "note": "COST-2 3a (re-aimed by content: the cell-scoped law reads the socket's cover)."
   },
   {
     "name": "WB12d-the-hub-never-told",
@@ -716,11 +717,12 @@
   {
     "name": "WB12d-the-session-to-an-old-relay",
     "file": "src/net/online.js",
-    "old": "if (!(cell === this.room ? this.riteOk : halo?.riteOk)) return false;",
+    "old": "if (!(this._mine(cell) ? this.riteOk : halo?.riteOk)) return false;",
     "new": "",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
-    ]
+    ],
+    "note": "COST-2 3a (re-aimed by content: the cell-scoped law reads the socket's cover)."
   },
   {
     "name": "WB12d-the-hub-s-word-from-anywhere",
@@ -2954,8 +2956,8 @@
   {
     "name": "AUDIT-WB12d-T-online-rite-to-any-room",
     "file": "src/net/online.js",
-    "old": "    if (!w || typeof cell !== 'string' || !isCellRoom(cell)) return false;\n    const halo = cell !== this.room ? this._halo.get(cell) : null;\n    if (!(cell === this.room ? this.riteOk",
-    "new": "    if (!w || typeof cell !== 'string') return false;\n    const halo = cell !== this.room ? this._halo.get(cell) : null;\n    if (!(cell === this.room ? this.riteOk",
+    "old": "    if (!w || typeof cell !== 'string' || !isCellRoom(cell)) return false;\n    const halo = !this._mine(cell) ? this._haloFor(cell) : null;\n    if (!(this._mine(cell) ? this.riteOk",
+    "new": "    if (!w || typeof cell !== 'string') return false;\n    const halo = !this._mine(cell) ? this._haloFor(cell) : null;\n    if (!(this._mine(cell) ? this.riteOk",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js",
       "test/net/raid3_raidLedger.test.js",
@@ -2963,7 +2965,8 @@
       "test/net/gate/wb12d_rite_law.test.js",
       "test/net/gate/wb12d_rite_relay.test.js",
       "test/net/gate/wb12d_rite_host.test.js"
-    ]
+    ],
+    "note": "COST-2 3a (re-aimed by content: the cell-scoped law reads the socket's cover)."
   },
   {
     "name": "AUDIT-WB12d-T-host-smoke-in-not-8s",

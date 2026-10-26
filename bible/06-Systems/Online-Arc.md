@@ -9163,6 +9163,49 @@ this one - an unescaped `'` in the RELAY_VERSION history; fixed - so every list 
 `test/net/soc3_socialpanel.test.js` 33 -> 34; `tools/mutants/partyready.json` (14, 14 dead); one `auditpartyui.json` and
 one `party-travel.json` record re-aimed.
 
+**PARTY-FOLLOW (2026-10-25; the report: "Party members can get drawn into fights while following during fast travel but
+remain too far away to assist. Other times, party fast travel fails entirely, forcing manual travel/warping.").** Four
+faults in the follower's half of the journey, each closed with a pin that fails without it:
+- *A refused departure ended the follow.* A follower waits where the party set out until the leader's pose says they
+  have arrived - the leader's PARTY_TRIP_GO_MS, their whole build and a pose's latency. An enemy that reached them in
+  that wait made the map door refuse ("You cannot travel with enemies nearby."), and `followTick` had already dropped
+  the follow: the member fought alone at the departure, the leader already gone, and `/leader` was refused for the same
+  reason. The follow now waits a refusal out as it waits out a window - the reason said once, and said again only when
+  it changes ("... You will follow <leader> once you can."), the journey taken the moment it lifts - and a member
+  refused twice TRIP_FOLLOW_MS is left behind with the window's own line (`partyTravel.js` `leaveBehind`). The door's
+  `off` (the member fell, or a journey of their own is moving them) and a fare they cannot pay are no refusals of the
+  moment: the follow still ends on them, so a member who fell and respawned elsewhere is never carried off to the
+  leader by a follow from before they fell.
+- *The landing beside the leader gave up on its first check.* The arrival probe in `fastTravelTo` took the place's own
+  arrival (a town's start marker, a location's edge) the first time no spot beside the leader held a body, so the
+  bounded wait never ran. A leader mid-jump, knocked back in a fight or on a ledge at that moment put the follower
+  hundreds of metres away, told only "You arrive at <place>.". The probe now waits for a spot beside the leader for the
+  whole PARTY_ARRIVAL_WAIT_MS and takes the ordinary landing on the last attempt (`partyArrival.js`
+  `waitForPartyArrival` hands the probe `last`); with no leader in the pixel's open air (indoors, in a dungeon, gone
+  quiet) it takes it at once, as before. An arrival not beside the leader says so: "There was no room beside <leader>.
+  You arrive at <place>." (the pick's `besideMissedText`). Cost: a leader who stays unsupported for the whole wait
+  (swimming, flying) holds the follower's black screen PARTY_ARRIVAL_WAIT_MS longer than before.
+- *A journey sent back stayed "bound".* `journey()` set `bound` to the destination and never read what the journey
+  came to, so a member sent back ("No safe landing found.") was taken to be on their way there, and `watch` never
+  offered that place again. A journey that resolves false now clears its own `bound`.
+- *The follower gave up on a leader still on the road, and misread one who had landed.* The follower's TRIP_FOLLOW_MS
+  counted from when they read `go`: a leader's build slower than that sent the follower to the place's own arrival
+  ahead of the leader, and a leader the follower never saw land in the destination's open air (an arrival in the
+  next pixel, a walk on) read "did not set out" once the round left their pose, which it does only once their journey
+  has ended (AUDIT PARTY-TRAVEL). The follow now records the pixel the leader set out from (`from`), and reads the
+  round's leaving by where the leader stands: still there, they did not set out; anywhere else, their journey is over
+  and the follower travels to where they stand, beside them in the open air. While the leader's seat is here and
+  carries the round the follower waits, however slow the build; only a seat gone quiet is given up on after
+  TRIP_FOLLOW_MS, to the place. Two older pins changed with it: AUDIT PARTY-TRAVEL's slow build (the follower went to
+  the place at TRIP_FOLLOW_MS; now waits for the leader to land) and AUDIT PARTY-UI2's held round (a follower under a
+  window went to the round's place after the leader had travelled on alone; now goes to the leader).
+THE HOSTS DO NOT GROW: the arrival's landing and its line left `bootWorld` for `systems/party/partyArrival.js`
+(`createPartyArrival`, `createPartyArrivalHost`), so the host keeps only their wiring and the change conflicts with no
+other pull request's `world.js` (`01-Overview/Host-Split.md`, PARTY-FOLLOW's move).
+Records: `test/systems/party/partytravel.test.js` 44 -> 47, `test/systems/partyArrivalTransaction.test.js` 12 -> 17;
+`tools/mutants/partyfollow.json` (14, 14 dead); seven records re-aimed by content (four in `party-travel.json`, two
+in `auditpartytravel.json`, one in `l10n3escenes.json`).
+
 ## EVENT1 (2026-09-25, Mac: "I wanna do a fun live event for the server. Wanna setup the infastructure for this without breaking anything. We have a lot of major updates today, but I want to turn the skies of Daggerfall into a detailed oblivion styled dread in prep for the world bosses. Red lightning and such") - a live event, staged for everyone online: the dread, world110
 
 Asked two things first: how it is switched (Mac: **a staff command** - `/event dread on|off`, the dev glyph, as /red) and who sees it (Mac: **online players only**).
@@ -10802,6 +10845,59 @@ was written against among them.
   standing, a room's high shelf kept, a malformed place passed over, a second run nothing more), the town read, the
   client's yard over the real pool; `tools/mutants/yardsweep.json` (5, all killed).
 
+### YARD-TOWN - a town's yards bound at the placement, and stood a few a frame (2026-10-25)
+
+Two field reports: "There's a bug in the top right part of Daggerfall City's map. Decorative items placed in any house
+yard in that area disappear after restarting the game, even when the Saved to the Realm notification pops up", and "More
+than half of Daggerfall city cannot place outdoor decorations due to bug with yards".
+
+- **Found.** A town's yards were answered at most DECOR_YARDS_TOWN_MAX pieces (2,000), read in building-key order
+  (`server-account/src/decor.js` yardRowsSql), and placing asked only the yard's own cap (DECOR_YARD_CAP, 60). A building
+  key's high byte is its block's column (`systems/talk/talkTopics.js` makeBuildingKey), so the cut fell on the east of
+  the city first: every piece there was written, paid for and shown for the session (the owner's own write is held -
+  YARD-STALE), then never served again. Daggerfall held 3,357 yard pieces on 2026-10-19 (migration 0136's own count). The
+  live answer on 2026-10-25 was 110 yards and exactly 2,000 pieces, every one in block columns 1 to 3 of its 8 by 8.
+- **The bound is the placement's.** `net/decorLaw.js` DECOR_YARDS_TOWN_MAX is 6,500, and placeDecor writes a yard piece
+  only while its town's yards hold fewer, in the same INSERT as the yard's own cap (TOWN_ROOM_SQL, a count off
+  idx_home_decor_yard_order's `(map_id, yard)` prefix). Past it the word is `yard-town-full` (capWord, on both the paid
+  and the free path), said by the client with the bound (`net/accountClient.js`, `account.refusal.yardTownFull`, drafted
+  in every language). A room's piece never counts. So a piece placed is always one its town's answer serves.
+- **Why 6,500.** It is as many rows as the town's built row keeps (YARD-SNAP, `keptBoard.js` KEPT_BOARD_MAX_BYTES, 1.5
+  MB), with room to spare: Daggerfall's live rows take 179 bytes there and its widest 187; the widest the yard's law takes
+  (a 24-character id, the widest place) 216, so 6,944 of those fit. Past the built row's bound a town is still answered,
+  read every time - the cost YARD-SNAP took away. The bound has a price: the answer a player in a town downloads each
+  minute grows with it, about 144 bytes a piece (26 compressed) - Daggerfall's 2,000 were 288 KB (52 KB), a town at 6,500
+  about 0.9 MB (170 KB).
+- **Every town built again.** The bound is part of the build's shape (YARD_SNAP_SHAPE), so every row 0136 and the clock
+  built became another shape: each read as its rows stand until the minute's clock, fifty towns a firing, reached it.
+  Migration `0175_yard_town.sql` builds them all at the deploy, in the shape the code reads (`05361a66`), as 0136 did.
+- **A few a frame.** Measured in Daggerfall's city on a local build (Edge, 1280 by 720, an RTX 5080; the account service's
+  answers given by the probe: the live 2,000 pieces, and a city of 4,000 with columns 4 to 6 filled like 1 to 3; two runs
+  a case): the steady frame follows the Yard decorations range, not the yards standing - at 75 m every yard stands and the
+  frame is within noise of Off; at 300 m the city of 4,000 costs 2.2 to 2.5 ms and 270 to 350 draws. What grows with the
+  town is the frame its answer lands in: 108 to 138 ms for the live city and 142 to 208 ms for the 4,000, at any range
+  above Off, because every yard was stood in one sync. `scenes/homeYards.js` YARD_STANDS_A_FRAME (4) strangers' yards stand
+  a sync now, and a town not yet stood syncs again the next frame (never YARD_SYNC_S apart); the owner's own yard and the
+  one the decorator stands in never wait. Measured again with it, the same way: the longest frame of the landing is 33 to
+  46 ms for the live city (it was 113) and 38 to 63 ms for the 4,000 (it was 142 to 208), the whole town stood within the
+  15 seconds watched.
+- **Not known.** In the classic offline layout the probe booted, 24 of the 110 served yards stood on buildings with no
+  yard frame (86 yards, 1,538 pieces stood). Their owners placed them online, where the town's layout gave them one; the
+  measured costs are a quarter low for it. What the frame of up to 63 ms left in the landing holds (the answer read, the
+  models' builds or the merges) was not profiled.
+- **Next, if the city outgrows 6,500.** Reading and standing yards by block (`cell = building_key >> 8`; a block holds at
+  most 32 buildings in BLOCKS.BSA, so 1,920 pieces) bounds the answer by the blocks within reach instead of the town.
+  Not built: the bound and the spread are what the measurements asked for.
+- **The four hosts.** Yards stand in `scenes/world.js` alone (unchanged); `scenes/exterior.js`, `scenes/worldModes.js`
+  (interiors) and `scenes/dungeonContext.js` stand none. No relay change. acct191 (acct177 and migration 0163 on its branch, renumbered past main's acct177-acct190
+  and 0163-0174 at its merges).
+- **Pinned**: `test/server/yard_town.test.js` (2) - over the real Worker, the town's last piece placed and the next refused
+  as `yard-town-full`, paid or free, another town never counted, a room's piece never refused, one taken away making room,
+  the client's sentence naming the bound; a town at the bound, every row as wide as the law allows, kept in its built row.
+  `test/scenes/yardtown.test.js` (1) - over the real yards and pools, four strangers' yards a frame, frame after frame, the
+  owner's own in the first. `test/server/yard_snap.test.js` - 0136's backfill in its own shape at its 2,000 bound, 0175's
+  in the code's at DECOR_YARDS_TOWN_MAX. `tools/mutants/yard_town.json` (15, all killed).
+
 ### STALL-SHAPE's re-seat - a yard's saved stalls and boulders, put back where their owners put them (2026-10-16)
 
 FIELD BUGS 2026-10-16b STALL-SHAPE (the Discord, 2026-10-15: "market stalls all shifted into the ground/walls" - a red
@@ -10939,8 +11035,8 @@ early price and offer checks, which the write's own guards repeat).
   ground a piece covers (its turned box), not its middle; yards stand again the frame the world recentres; far yards
   are not drawn (`YARD_DRAW_M`); yard pieces take their pixel's climate swaps; a full yard says so (`yard-cap`); the
   painter offers only the styles a roof's or a door's family holds.
-- Known limits kept: a town's yards are read up to DECOR_YARDS_TOWN_MAX pieces (a town of more than about 33 full
-  yards shows the first by building key); a tenancy's end is read on the client's clock; a refused rent's reserve
+- Known limits kept: a town's yards hold at most DECOR_YARDS_TOWN_MAX pieces between them (YARD-TOWN, above: a piece
+  past it is refused, `yard-town-full`); a tenancy's end is read on the client's clock; a refused rent's reserve
   comes back to the region's account, as a refused home purchase's does.
 
 Pinned: `test/scenes/decor/homedoors.test.js` (14), `test/server/homerent.test.js` (10), `test/net/homelook.test.js` (7),
@@ -10972,9 +11068,11 @@ and `test/systems/decor/decor2b.test.js` (the sale's line, the tap under a fligh
   (`decor.js` vendorStocked, `vendor-stocked`) and its house is not sold (`homes.js`, `home-vendor-stocked`). The
   region's directory says each house's door as the town answer says it (entry, mine, guildmate, tenant); the client
   keeps only the traders `homeMayEnter` lets the character in on. A guild's hall stands no trader.
-- **The client.** A trader pressed in its home (`scenes/worldModes.js` openHomeVendor -> `scenes/world.js`
-  openHomeVendorWindow) opens its stall in the Notice Board's window (`ui/noticeWindow.js` `traderOnly`,
-  `ui/vendor/vendorTab.js`): a visitor buys off the purse; the owner takes a piece back or puts one up from the pack. The
+- **The client.** A trader pressed in its home (`scenes/worldModes.js` openHomeVendor -> `scenes/vendorHost.js`
+  openHomeVendorWindow, moved out of `world.js` by VENDOR-LOST) opens its stall in the Notice Board's window (`ui/noticeWindow.js` `traderOnly`,
+  `ui/vendor/vendorTab.js`): a visitor buys off the purse; the owner takes a piece back or puts one up from the pack.
+  VENDOR-LOST (FIELD BUGS 2026-10-25): the stall opened settles the market book's kept acts, so a buy whose answer was
+  lost has its piece collected where its buyer comes back (only the Market tab settled before). The
   board's Vendors tab lists the region's reachable traders, searched, a row setting the WAYPOINT
   (`systems/vendorWaypoint.js`) - a gold coin on both world maps (`ui/vendor/vendorMapMark.js`, apart from the map's one yellow
   mark, which stays the player's), the house named on the town map, the compass on the town from the street, a mark in
@@ -10982,6 +11080,7 @@ and `test/systems/decor/decor2b.test.js` (the sale's line, the tap under a fligh
   window's Character rail under the Professions (Mac: "add a Vendor tab under professions (not in)") holds my traders,
   their stock, what they sold and the takings, collected into the account of the region I stand in.
 - **Pinned** in `test/net/homevendor_service.test.js` and `test/ui/homevendor_ui.test.js`; `tools/mutants/homevendor.json`.
+  VENDOR-LOST: `test/net/fb1025_vendorlost.test.js`, `tools/mutants/fb1025_vendorlost.json`.
 
 ### ACCOUNT-HOMES - a home is its account's; a deleted character's homes go (2026-10-06)
 
@@ -12678,7 +12777,8 @@ service lane's migration `0059_audit_seats.sql`.
   (`dungeonContext.js` castleShelves, a fifth activation family in the modes host);
 - the Siege-cracked Gem (template 678, the Diamond's picture - DECIDED: undyed, no overlay: the icon's one door is a
   dye) in the Spoils, a roll a third each; UNYIELDED keeps the Daedric Ingot alone, the sieges yielding the Warforged
-  ingot and Standard-bearer's Silk.
+  ingot and Standard-bearer's Silk (DAEDRIC-SMELT, Professions-Arc.md section 53: the forge smelts the Daedric Ingot
+  since, its Daedra's Heart the loose door's as CLOTH-GEMS' graded gems are, and UNYIELDED empty).
 
 **The shared law** (`test/net/audit_seats_law.test.js`, 12):
 - L1 Season 1's Keepers - Season 0's last Turning claims nothing, so a Charter from Season 1's first Turning held it
@@ -15288,7 +15388,10 @@ gold can now change hands the way a guild deposit or a house's price does - in t
 - **A gold buy moves the buyer's record** (`server-account/src/market.js` buyWithGold): where the record stands asked
   first (realmActFirst, AUDIT REALM L1-F2), the exact cost - the price and the courier, a Drake's worth of gold a Drake -
   paid off it (purse, letters, then the board region's account: realmGoldLaw payFromSave) in the batch that decides the
-  sale, GUARDED (mustChange): a sale that does not land rolls the record back. The seller's share is held on the service
+  sale, GUARDED (mustChange): a sale that does not land rolls the record back. VENDOR-LOST (FIELD BUGS 2026-10-25,
+  `01-Overview/bugs/Field-Bugs-2026-10-25g.md`), a departure from L1-F2 for a buy alone: a record one on from where the
+  tab asked, with a sale this id made, is that sale, landed - answered as the repeat with the record's sequence, to a
+  tab that asks for it (`landed`), never `seq`, which ended the buyer's session. The seller's share is held on the service
   for its character (`market_gold`, at most 100,000,000) until its own record collects it into the bank account of the
   board it stands at (`/v1/market/gold`, creditSave's `bank`; the purse where the record keeps no account there). A
   realm character with gold held is not deleted (REALM_MARKET_OPEN_SQL).
@@ -15303,8 +15406,10 @@ gold can now change hands the way a guild deposit or a house's price does - in t
 - **The client** (`src/net/marketBook.js`, `src/ui/marketTab.js`): for a realm character a currency switch beside the
   filters, gold rows priced in gold, a gold Buy through the host's realm act (`realmGoldAct`: the purse checkpointed,
   the exact cost out of it as the service is asked, given back on the service's refusal); KEPT as a Drakes buy is, and
-  asked again by a settle when its answer is lost (a repeat pays nothing; a sale made on the settle is paid on its
-  answer); the List form's "Priced in gold"; under My listings the gold held and its Collect. The Stores page counts
+  asked again by a settle when its answer is lost (a repeat of a sale made before it pays nothing; a sale made on the
+  settle is paid on its answer, and VENDOR-LOST, a repeat naming the record's sequence is the settle's own sale; a piece
+  from a pack bought here is collected on the answer); the List form's "Priced in gold"; under My listings the gold held
+  and its Collect. The Stores page counts
   gold's units, splits them ("bought with gold") and says where they may go. Any other character sees the Drakes'
   market alone.
 - **The service**: **acct40** (past HOUSING's acct37, WB9g's acct38 and PINE-SHARE's acct39), migration `0041_gold_market.sql` (the Stores rebuilt for the third origin; a listing's
@@ -16286,7 +16391,11 @@ one breath should end - each keeping it, or the room deciding): **"Host arbitrat
   50, RENOWN-LOOT's first stage, no finder's multiplier. A pile's chain is `rollPileItems` (the table, the pile trio and
   its subscribers, the ladder, the sigils); a body's is SetEnemyCareer's whole loot chain and its death's
   (`roomBodyBase`: `spawnEnemyLoot`, the kit's ladder, the sigils at the fight's count, OnEnemyDeath's subscribers and the
-  cap) over the fallen foe's own entity, handed back without touching what the foe wore or fought with. It is rolled
+  cap) over the fallen foe's own entity, handed back without touching what the foe wore or fought with. A class foe
+  stands at the party's level there, and CHAMP-BASE (2026-10-25, `01-Overview/bugs/Field-Bugs-2026-10-25b.md`) asks the
+  layout's champion mark at that level too (`champions.js` `championTraitFor`) and sets the build's FOE-CAP cap aside:
+  each client's build stands the mark at its builder's level, so a character under level 3 had rolled a plain foe's
+  base under the host's champion and read every word about the body as another build's. It is rolled
   AS THE ROOM (`onlineLane.js` `asTheRoom`): REALM P0.2's own read widened, for the length of the roll, to every mod -
   each reads its shipped default, so one player's switch (Foraging off, say) cannot make their base another list. Every
   term of the chain is an argument now: the table's roll, a kit's variant and its poison drew `Math.random` whatever dice
@@ -16339,7 +16448,13 @@ one breath should end - each keeping it, or the room deciding): **"Host arbitrat
   same in either order, and no word overwrites a list: the list is composed (`composeRoomContainer`, `roomLoot.js`
   `composeRoomView`) from the base, the takes, the stored pieces, this player's claims and puts in flight and their own
   layer, in place. An OPEN says nothing (`sayRoomWord`): the base is every client's already. A word whose signature is
-  not this client's own computation (another build's chain) is AUDIT SETS M2's unreadable word, never a list landed.
+  not this client's own computation (another build's chain) is AUDIT SETS M2's unreadable word, never a list landed -
+  a live peer's word, and the memory's on a client that is not the host. CHAMP-BASE's STALE-MEMORY (2026-10-25,
+  `01-Overview/bugs/Field-Bugs-2026-10-25b.md`): the memory's word on the HOST was the room's own, an earlier visit's
+  (often the same player's, alone, on the build before an update), so the host starts the container over one
+  generation on (`roomLootHost.js` `restartStaleContainer`) - the newer generation beats the old terms on every client
+  - and a client that takes the seat does the same for a stale word it held unread; a body still being rebuilt as the
+  memory's species is left to CORPSE-GOLD's second landing. What the earlier visit took from it is back once.
   AUDIT WORLD4 C1 stands: nothing lands under a window this player has open.
 - **THE CLAIMS** (Mac, 2026-10-15: "Host arbitrates"). A take of a shared piece - a base piece or a stored one, by the
   window, the quick door or Physical Items' one-item door - is a CLAIM, and the room's host (WORLD2's, the seat that
@@ -16419,7 +16534,7 @@ OUTDOOR-LOOT's, below.) A claim
 still in flight when its claimer leaves is kept by the claimer - widened and made honest in OUTDOOR-LOOT's R1: a dupe when the
 claim lost a race or was never heard, and a crash or reload loses a granted piece in flight.
 
-- **Pinned**: `test/systems/partyloot.test.js` (10; 18 since OUTDOOR-LOOT: D-2.1's three - a joiner's Take all of forty stored pieces, two bulk takes judged together by the new seat, a dropped verdict frame recovered by a re-ask - SPLIT-LIFT's "a claim GIVEN UP", and its audit's four: D4, D5, and D-2.1's claims and verdicts AT ONCE) - two and three peers mounted over the dungeon host's real loot doors and
+- **Pinned**: `test/systems/partyloot.test.js` (10; 18 since OUTDOOR-LOOT: D-2.1's three - a joiner's Take all of forty stored pieces, two bulk takes judged together by the new seat, a dropped verdict frame recovered by a re-ask - SPLIT-LIFT's "a claim GIVEN UP", and its audit's four: D4, D5, and D-2.1's claims and verdicts AT ONCE; 20 since CHAMP-BASE: a champion-marked class foe's body one base for a level-30 host and a level-2 joiner, and a stale memory word started over by its host) - two and three peers mounted over the dungeon host's real loot doors and
   the real producers, at different levels, Luck, Renown, dice and Foraging switches, joined by a queuing relay: one base
   on every body and pile; a take removing the same piece for everyone; two takes in one breath both landing; THE HOST
   ARBITRATES - the same piece taken in one breath going to one player (the host against a joiner, two joiners), the
@@ -17199,3 +17314,84 @@ re-aimed: the halo still connecting is waited for, and once the wait is out the 
 covers any mint the halo outlives. `HALO_WAIT_MS` is `BACKOFF_MAX_MS` by design, so raising the reconnect backoff's
 ceiling lengthens the wait with it. #1134's second effect (a fast peer drawn jumping, SNAP_WORLD_UNITS) is not this
 slice.
+
+## DECOR-USE - a placed bed is slept in, a placed fire cooked on, and the cooking station (2026-10-24, the Discord's feature-feedback, "Make bed decor and firepit decor actually funtional")
+
+Saint Diaz: *"Was hyped to get a caravan for a mini house until i saw the beds dont actually let you sleep in it and
+firepit doesnt actually let you cook on it"* (eleven seconded it); Ashley: *"yeah we need a way to be able to cook in our
+homes"*; and, to the answer that any piece can be made any profession's station, Mona Polca: *"Cooking station is not an
+option in decorate"*. All three were so. A placed piece pressed did one of three things - its trader, its station's
+craft, its storage - and nothing else (`worldModes.js` activateDecor): a bed the player placed was furniture, the room's
+own beds answering alone (and only under Roleplay Realism's bed sleeping); a placed bowl of fire or brazier was a light,
+because the room's hearths are collected once from its own lights when the room is built (HEARTH1), and a placed piece's
+light carries no record; and no station cooks - the fire is no station (PROF9: any lit fire, no fee).
+
+THE LAW (`systems/decor/decorUse.js`, the port's own - DFU places no furniture):
+
+- **A bed** - a placed piece that is one of Daggerfall's beds (`rrRealism.js` BED_MODELS; a town mod's coloured bed read
+  as the classic bed it stands for, `customModels.js` classicModelIdOf) - is slept in when pressed, through the room's own
+  beds' door (`restFromInteriorBed`: the rest window, ignoring the allocated bed - RR1's F6). Who may is the rest
+  window's, as it is at the room's beds and at the R key: the owner, a tenant, a member, a caravan's visitor. A placed bed
+  answers whatever Roleplay Realism says - it was placed to be slept in.
+- **A fire** - a placed fire one stands over, HEARTH1's own (`survival/hearth.js` isHearthFlat: the lights archive's bowl
+  of fire, camp flame and brazier) - is one of the room's hearths (`decorRoom.js` hearths, handed to the interior's camps
+  beside the room's own - `worldModes.js` interiorCamps): it warms and dries, a rest by it is a camp's, Climates &
+  Calories cooks on it and so does the Stores page's The Fire (PROF9's cookFireHere asks the same camps), and pressed it
+  opens what a brazier opens (Rest and Cook online, the cooking list offline). A fire is nobody's: a visitor cooks at it.
+- **The cooking station** - a tenth station (`net/decorLaw.js` DECOR_STATIONS, before the loom so the stations counted
+  from the end stand), at the crafts' own licence (50,000 gold, STATION-FEES' law for the profession stations), named
+  "Cooking station" - makes ANY piece the room's fire: a fireplace model, a stove, a cauldron. It is a hearth as a placed
+  fire is, and pressed it opens the same. Offered online and offline (Climates & Calories cooks offline), in a home, a
+  caravan and a ship's cabin; the account service keeps it by the shared law, so it waits on its deploy (`acct186` - acct182 on its branch, renumbered at the merge). Its
+  name is the text core's (`decor.station.cooking`, drafted in-session for the thirteen whole languages) - the other
+  stations' names are not yet, and the hard-coded ratchet holds decorLaw.js at its count.
+- A piece that holds things holds things - pressed, its storage opens - and a fire made another craft's station serves
+  that craft. Neither is a bed or a hearth.
+
+The host: `useDecorPiece` decides bed or fire and opens the room's own doors, pressed after a trader (anyone's) and
+before a station's craft - one statement, and the room's fires in the camps' entry that already stood (createWorldModes
++2 logical lines, its ceiling raised with the reason, `test/scenes/hostceiling.test.js`). THE FOUR HOSTS: the interior
+host (`worldModes.js`) is where a home, a ship's cabin and a caravan's room stand; `world.js` and `exterior.js` stand
+yards, whose placed fires stay lights (a yard's fire is its own slice); `dungeonContext.js` places no decor.
+
+**Pins.** `test/systems/decor/decoruse.test.js` (the bed, the fire, the station, the press, the room's hearths on a real
+decor room, the host's two lines); pins moved for the tenth station: `test/ui/homestations.test.js`,
+`test/net/prof2_client.test.js`, `test/net/audit29_client.test.js` (offline the cycle is alchemy, spells, enchanting and
+cooking), and the interior camps' line in `test/systems/survival/fb1004d_campcap.test.js`,
+`test/systems/survival/hearth1_worldfires.test.js` and `test/systems/auditrest2_camps.test.js`;
+`test/scenes/fb1018d_homebench.test.js`'s lifted gate is handed the press. Mutants: `tools/mutants/decoruse.json`, 16
+dead; the station list's and the licences' records in `prof2.json`, `prof4.json`, `prof7.json`, `prof10.json`,
+`prof11.json` and the camps' in `fb1004d_campcap.json` re-aimed by content.
+
+### AUDIT DECOR-USE (2026-10-25)
+
+The owner: *"Audit"*. A cold lane on a frozen snapshot of the branch, given the ask and the files and never this
+record, built a real decor room (TEXTURE.210, a real fireplace model) wired to `createCamps` as the host wires it and
+pressed it. Each finding below failed on the snapshot and passes now.
+
+- **D1 - a placed fire took a door's press.** `decorRoom.js` hearths gave each placed fire an eye's box (`foot`, `w`,
+  `h`), and a square laid over a model's longer side stood through the room's wall and caught the press meant for its
+  door. A hearth is a place now (`x`, `y`, `z`: a picture's flame over its base, a model's box's middle) and no box: the
+  piece's own target is its press.
+- **D8 - a fire that is a model was no hearth.** The room's hearths were its flats alone; a fireplace model, or any
+  model made the cooking station, warmed nothing, and a rest or Climates & Calories' cooking by it found no fire. A
+  model's hearth stands at its box's middle.
+- **D2 - the cooking station opened the brazier's door.** Pressed online it opened Rest and Cook, where the Stores
+  page's The Fire is the crafts' cooking: it opens the Stores page on The Fire now where the page is offered (the
+  forge's own door - `worldModes.js` activateDecor, the one statement), else what a brazier opens; The Fire is a
+  station's head the press lands on (`profPages.js` stationHead).
+- **D4 - Daggerfall's own fireplaces were "Furniture 26" and "27".** Models 41116 and 41117 (`improvedInteriorLighting.js`
+  IIL_FIREPLACE_MODELS, their one home) placed in a home were neither named nor hearths; the camp flame was "Light 1".
+  They are "Fireplace" and "Campfire" (`decorCatalogue.js`), and a fireplace placed is a hearth.
+- **D6 - a placed fire answered where the room's own did not.** A press opened Rest and Cook wherever it stood; it
+  answers now only where the room's braziers do (`camps.js` usable).
+
+Left, each with its reason: a fire flat licensed as the cooking station (50,000 gold) is a hearth already, and the
+licence buys it only the Stores door - the licence is the stations' one price, and the catalogue says what each piece
+is; a yard's placed fires stay lights (a yard's fire is its own slice, above); an older build drops a piece it does not
+know as a station (`cooking`) until it updates - the account service keeps it, so nothing is lost; and a long model's
+hearth stands at its middle, so its far end is out of a brazier's reach - the camps' reach is HEARTH1's, not this
+slice's to widen.
+
+Pinned in `test/systems/decor/decoruse.test.js` (D1, D2, D4, D6, D8); `tools/mutants/decoruse.json` (23, all dead).
+

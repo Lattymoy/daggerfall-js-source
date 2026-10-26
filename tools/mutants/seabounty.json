@@ -74,8 +74,8 @@
   {
     "name": "SEA-BOUNTY-collect-carries-room",
     "file": "src/net/wild/wildReceipt.js",
-    "old": "const COLLECT_FOREIGN = [...WILD_FOREIGN, 'f', 'w', 'wt', 'm', 'kc'];",
-    "new": "const COLLECT_FOREIGN = [...WILD_FOREIGN, 'f', 'w', 'wt', 'kc'];",
+    "old": "const COLLECT_FOREIGN = [...WILD_FOREIGN, 'f', 'w', 'wt', 'm', 'kc', 'g'];",
+    "new": "const COLLECT_FOREIGN = [...WILD_FOREIGN, 'f', 'w', 'wt', 'kc', 'g'];",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SEA-BOUNTY-collect-carries-killer-char",
     "file": "src/net/wild/wildReceipt.js",
-    "old": "const COLLECT_FOREIGN = [...WILD_FOREIGN, 'f', 'w', 'wt', 'm', 'kc'];",
-    "new": "const COLLECT_FOREIGN = [...WILD_FOREIGN, 'f', 'w', 'wt', 'm'];",
+    "old": "const COLLECT_FOREIGN = [...WILD_FOREIGN, 'f', 'w', 'wt', 'm', 'kc', 'g'];",
+    "new": "const COLLECT_FOREIGN = [...WILD_FOREIGN, 'f', 'w', 'wt', 'm', 'g'];",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SEA-BOUNTY-mint-no-room",
     "file": "src/net/wild/wildReceipt.js",
-    "old": "...(m ? { m } : {}), ...(kc ? { kc } : {}), i: nowS",
-    "new": "...(kc ? { kc } : {}), i: nowS",
+    "old": "...(m ? { m } : {}), ...(kc ? { kc } : {}), ...fallenGone, i: nowS",
+    "new": "...(kc ? { kc } : {}), ...fallenGone, i: nowS",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SEA-BOUNTY-mint-no-killer-char",
     "file": "src/net/wild/wildReceipt.js",
-    "old": "...(m ? { m } : {}), ...(kc ? { kc } : {}), i: nowS",
-    "new": "...(m ? { m } : {}), i: nowS",
+    "old": "...(m ? { m } : {}), ...(kc ? { kc } : {}), ...fallenGone, i: nowS",
+    "new": "...(m ? { m } : {}), ...fallenGone, i: nowS",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SEA-BOUNTY-mint-always",
     "file": "src/net/wild/wildReceipt.js",
-    "old": "...(m ? { m } : {}), ...(kc ? { kc } : {}), i: nowS",
-    "new": "m: m || 'world:0,0', kc: kc || 'r00000000000000000000', i: nowS",
+    "old": "...(m ? { m } : {}), ...(kc ? { kc } : {}), ...fallenGone, i: nowS",
+    "new": "m: m || 'world:0,0', kc: kc || 'r00000000000000000000', ...fallenGone, i: nowS",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "SEA-BOUNTY-relay-unsigned",
     "file": "server/src/index.js",
-    "old": "w: fall.w, wt: fall.wt, m: fall.m, kc: fall.kc }",
-    "new": "w: fall.w, wt: fall.wt }",
+    "old": "w: fall.w, wt: fall.wt, m: fall.m, kc: fall.kc, g: fallenGone }",
+    "new": "w: fall.w, wt: fall.wt, g: fallenGone }",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]

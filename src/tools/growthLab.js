@@ -9,6 +9,7 @@ import { mountEnhancedMenu } from '../ui/enhanced/enhancedMenu.js';
 import { playerEntity } from '../characters/playerEntity.js';
 import { SKILLS } from '../systems/skills.js';
 import { setFirmamentBook } from '../net/firmament/firmamentBook.js';
+import { setFirmamentOnline, setFirmamentTree } from '../systems/firmamentLive.js';
 import { starsFor, craftPointsFor } from '../net/firmament/firmamentLaw.js';
 import { setHoldingsProvider } from '../ui/holdingsPages.js';
 import { createCaptainLedger } from '../systems/naval/captainLedger.js';
@@ -41,10 +42,12 @@ e._online = true;
 e.isPlayer = true;
 Object.assign(playerEntity, e);
 
-// THE FIRMAMENT'S BOOK - the purses the lab's, a confirm kept in this page alone
+// THE FIRMAMENT'S BOOK - the purses the lab's, a confirm kept in this page alone. The page plays online and an accepted
+// tree is put in force, as the world host does, so the window's status line says what the game would.
 if (q.get('offline') !== '1') {
   let tree = { start: null, nodes: [] };
-  const listeners = new Set();
+  const listeners = new Set([() => setFirmamentTree(tree)]);
+  setFirmamentOnline(true);
   setFirmamentBook({
     state: { open: true, stars: starsFor(30), craft: craftPointsFor([30, 30, 30, 30, 30, 30, 30, 30, 30, 30]), renown: 30, refund: { freeBelow: 10, perStar: 10 } },
     current: () => tree,

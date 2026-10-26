@@ -473,7 +473,7 @@ test('TOWN-ECON LAW-3 the wiring: both doors of a counter\'s Buy hand the mark t
   const et = rd('src/ui/enhanced/enhancedTrade.js');
   assert.match(et, /return getTradePrice\(m, lot\.cost, quality, skills, lot\.pieces, lot\.resale\);/);
   assert.match(et, /const \{ cost: c, pieces, resale \} = tradeCost\('Sell', \[item\], ctx\);\n\s+const price = getTradePrice\('Sell', c, ctx\.quality \?\? 0, ctx\.skills \?\? \{\}, pieces, resale\);/);
-  assert.match(et, /const price = getTradePrice\(mode, c, ctx\.quality \?\? 0, ctx\.skills \?\? \{\}, pieces, resale\);/);
+  assert.match(et, /return getTradePrice\(mode, lot\.cost, ctx\.quality \?\? 0, ctx\.skills \?\? \{\}, lot\.pieces, lot\.resale\);/);   // PIN MOVED (SELL-SHOWN): the lot's price, the footer's and the confirm's one home
   for (const src of [nt, et, wm]) assert.equal((src.match(/getTradePrice\('Sell'|getTradePrice\(this\.mode|getTradePrice\(mode|getTradePrice\(m,/g) ?? []).length, (src.match(/getTradePrice\([^\n]*resale\)|\}, lot\.pieces, lot\.resale\)/g) ?? []).length, 'every sale\'s price');
 });
 

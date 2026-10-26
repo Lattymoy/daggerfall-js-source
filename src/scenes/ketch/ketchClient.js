@@ -39,16 +39,18 @@ import { bodySayer } from '../../net/bossBody.js';
 import { createKetchFight } from './ketchFight.js';
 import { createKetchSky, ketchSkyPose } from './ketchSky.js';
 import { bosunLineAt } from '../../world/ketch/ketchModel.js';
-import { ketchSpoilsOf, KT_SPOILS_TEXT, KT_SPOILS_KEYS, KT_SPOILS_RECORDS_MAX, KT_SPOILS_GATHERED } from '../../systems/ketch/ketchSpoils.js';
+import { ketchSpoilsOf, KT_SPOILS_TEXT, KT_SPOILS_KEYS, KT_SPOILS_RECORDS_MAX, KT_SPOILS_GATHERED, ketchConstructPellets, KT_CONSTRUCT_PELLETS_MAX } from '../../systems/ketch/ketchSpoils.js';
+import { createPellets } from '../../systems/thunderlock.js';   // KETCH-PELLETS: what her constructs drop
 import { createSpoilsPool, recoverSpoils } from '../spoilsPool.js';
-import { createKetchShares } from './ketchShares.js';
+import { createKetchShares, ketchChestMouth } from './ketchShares.js';
 import { addItem, addGoldPieces } from '../../systems/inventory.js';
 import { itemIconColor32 } from '../../ui/item/itemIconColor32.js';
 import { lootPileName } from '../../systems/worldTooltips.js';
 import { characterIdOf } from '../../systems/characterId.js';
 import { onSlotSaved, onSlotLoaded, enumerateSaves } from '../../systems/save/saveSlots.js';
 import { noteAct } from '../../systems/questlines/qlActs.js';
-import { registerPlayerDeathSave, hurtPlayer } from '../../characters/playerEntity.js';
+import { registerPlayerDeathSave, hurtPlayer, registerPlayerDamageMod, registerPlayerHold } from '../../characters/playerEntity.js';   // AUDIT WORLD-EVENTS L1-4: a body lying down takes no blow and holds still
+import { KT_DOWN_MS, KT_REZ_PCT } from '../../net/ketch/ketchBrain.js';   // AUDIT WORLD-EVENTS L1-4: the ship's window for a raise, and the health it stands the raised at
 import { flashPlayerDamage } from '../../ui/damageFlash.js';
 import { longitudeLatitudeToMapPixel } from '../../formats/mapsFile.js';
 import { spawnedLocationCentreLocal } from '../../world/spawnedDungeons.js';
@@ -201,8 +203,26 @@ export function createKetchClient(deps) {
     renderer: deps.renderer, gl: deps.gl, getTexture: deps.getTexture, uploadRecordFrame: deps.uploadRecordFrame, audio: deps.audio, link, now,
     cam: () => cam.pos, feet: () => (onShip() ? player.feetAt() : null), grounded: () => !!player.grounded, player: () => entity,
     save: deps.save, strike: (d, how) => modes()?.dungeonCtx?.strikePlayer?.(d, how), say: (t) => mid(t),
-    sendHit: (h) => !!online()?.sendKetch?.('hit', h), onStruck: () => struck(),
+    sendHit: (h) => !!online()?.sendKetch?.('hit', h), onStruck: () => struck(), fell: (kind, id, at) => constructFell(kind, id, at),
   });
+  // KETCH-PELLETS (2026-10-25, the owner: "We need more aquireable sources of deeamer pellets"): A CONSTRUCT DOWNED LAYS
+  // ITS PELLETS ON HER DECK where it fell - on this screen, for me (each hand aboard its own pile, as the share is): once a
+  // body (its id, the ship's), a voyage's capped (KT_CONSTRUCT_PELLETS_MAX), on the dungeon's own dropped loot
+  // (dungeonContext.js layRemains); with no deck to lay them on, into the pack
+  const pelletDrops = { room: null, ids: new Set(), given: 0 };
+  function constructFell(kind, id, at) {
+    const room = ship()?.key ?? null;   // the ship's room key (world/ketch/ketchShip.js): a new voyage, a new tally
+    if (pelletDrops.room !== room) { pelletDrops.room = room; pelletDrops.ids.clear(); pelletDrops.given = 0; }
+    const key = `${kind}:${id}`;
+    if (pelletDrops.ids.has(key)) return;
+    pelletDrops.ids.add(key);
+    const n = Math.min(ketchConstructPellets(kind), KT_CONSTRUCT_PELLETS_MAX - pelletDrops.given);
+    if (!(n > 0)) return;
+    pelletDrops.given += n;
+    const shot = createPellets(n);
+    try { if (modes()?.dungeonCtx?.layRemains?.([shot], [at[0], at[1], at[2]])) return; } catch (e) { console.warn('[kt] pellets', e?.message ?? e); }
+    entity.items?.push?.(shot);
+  }
   // DAGGERFALL IN THE SCENE: its own row read once (formats/mapsFile.js), its centre in its pixel (the spawns' law -
   // world/spawnedDungeons.js spawnedLocationCentreLocal), its pixel where the streaming frame stands it now
   let cityRow;
@@ -259,6 +279,27 @@ export function createKetchClient(deps) {
     sky.hold();
     return true;
   }
+  /** AUDIT WORLD-EVENTS L1-4 - RAISE BEFORE THE FALL (net/ketch/ketchBrain.js ketchRaise): a death aboard with a crewmate on
+   *  the ship lies DOWN where it fell for KT_DOWN_MS - the body held there, dying on every screen (net/online.js `poseDown`),
+   *  no blow reaching it - for a crewmate's Resurrect (the room's `rez`); past it, THE FALL as ever. Answers whether it lay. */
+  let down = null;
+  function lieDown(why) {
+    if (down) return true;
+    const lp = online()?._pose ?? null, f = player.feetAt?.() ?? null;   // my pose's frame (the world host's `_deadMark`'s), and my feet to hold
+    if (!onShip() || falling || !lp || !Number.isFinite(lp.x) || !Array.isArray(f) || !((online()?.peers?.size ?? 0) > 0)) return false;
+    down = { why, until: Date.now() + KT_DOWN_MS, spot: [lp.x, lp.y ?? 0, lp.z], hold: [...f] };
+    if (link.carrying()) online()?.sendKetch?.('drop');
+    entity.health = Math.max(1, Math.min(entity.health, 1));
+    mid(t('kt.down', 'You are down. A crewmate can raise you within {s} seconds.', { s: KT_DOWN_MS / 1000 }));
+    return true;
+  }
+  function downFrame() {
+    if (!down) return;
+    if (Date.now() >= down.until) { const why = down.why; down = null; fall(why); return; }
+    modes()?.ktPlace?.(down.hold, null);
+  }
+  registerPlayerDamageMod('kt-down', (_e, d) => (down ? 0 : d));
+  registerPlayerHold('kt-down', () => !!down);
   /** A FALL: the death save's, the relay's count's - out of the sky to the fields, woken at KT_FALL_WAKE of my health. */
   function fall(why) {
     if (!onShip() || falling) return;
@@ -300,7 +341,7 @@ export function createKetchClient(deps) {
     if (c && Number.isSafeInteger(c.c)) shares.paid(c);
   }
   function openChest() {
-    const at = deckToDungeon(KT_VAULT.x, 0.6, KT_VAULT.z), f = player.feetAt();
+    const at = ketchChestMouth(), f = player.feetAt();   // KETCH-FIX: out of the chest's mouth, never its solid middle
     if (!shares.chest(at, Math.atan2(f[0] - at[0], f[2] - at[2]))) mid(KT_CLIENT_TEXT.chestEmpty);
   }
   // ── the presses aboard ──
@@ -387,14 +428,16 @@ export function createKetchClient(deps) {
     try { spoils.gather(); deps.changed?.(); } catch (e) { console.warn('[kt] spoils', e?.message ?? e); }   // AUDIT KETCH L3-13: a save asked for
   }
 
-  registerPlayerDeathSave('kt-fall', () => { if (!onShip()) return false; fall('death'); return true; });
+  registerPlayerDeathSave('kt-fall', () => { if (!onShip()) return false; if (!lieDown('death')) fall('death'); return true; });   // AUDIT WORLD-EVENTS L1-4: down first
 
   return {
     /** A word from my ship's room (net/online.js onKetch): a receipt kept and carried, the count's fall of me, else folded. */
     word(w) {
       if (!w) return;
       if (w.k === 'rcpt') { claims.add(w.r); return; }
-      if (w.k === 'bd') { fall('count'); return; }
+      if (w.k === 'bd') { if (!lieDown('count')) fall('count'); return; }   // AUDIT WORLD-EVENTS L1-4: down first
+      if (w.k === 'rez' && w.s === me() && down) { down = null; entity.health = Math.max(1, Math.round((entity.maxHealth ?? 1) * KT_REZ_PCT)); mid(t('kt.raised', '{name} raises you.', { name: w.by || t('resurrect.companion', 'Your companion') })); return; }   // AUDIT WORLD-EVENTS L1-4
+      if (w.k === 'rez' && w.s !== me()) say(t('kt.raisedOther', '{by} raises {name}.', { by: w.by, name: w.n }));
       if (!onShip()) return;
       const kept = ketchShipKept(w, me(), ship(), social()?.party?.id ?? null);
       if (kept) keepShip(kept);
@@ -409,7 +452,10 @@ export function createKetchClient(deps) {
       if (aboard && !wasOnShip) { link.leave(); fight.leave(); }
       if (!aboard && wasOnShip) offShip();
       wasOnShip = aboard;
-      if (aboard) aboardFrame(t);
+      if (aboard) { downFrame(); aboardFrame(t); }   // AUDIT WORLD-EVENTS L1-4: a body lying down held where it fell
+      const o = online();
+      if (o) o.poseDown = aboard && down ? () => down?.spot ?? null : null;
+      if (!aboard) down = null;
       else if ((modes()?.mode ?? 'exterior') === 'exterior') {
         try { sky.frame(); } catch (e) { console.warn('[kt] sky', e?.message ?? e); }
         if (falling) {

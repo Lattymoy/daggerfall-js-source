@@ -1,0 +1,146 @@
+[
+ {
+  "name": "AUDIT-WE-L1-4-spire-falls-at-once",
+  "file": "src/net/eliteGates/egBrain.js",
+  "old": "    case 'fell': if (mm.alive && B.h > 0) egLayDown(B, sub, now, out, p); break;",
+  "new": "    case 'fell': if (mm.alive && B.h > 0) egFall(B, sub, now, out, p); break;",
+  "tests": [
+   "test/net/eliteGates/auditwe_down.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L1-4-spire-count-falls-at-once",
+  "file": "src/net/eliteGates/egBrain.js",
+  "old": "    if (b.dead) egLayDown(B, b.sub, now, out, spec0 ? local(spec0, b) : null);",
+  "new": "    if (b.dead) egFall(B, b.sub, now, out, spec0 ? local(spec0, b) : null);",
+  "tests": [
+   "test/net/eliteGates/auditwe_down.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L1-4-spire-down-alone",
+  "file": "src/net/eliteGates/egBrain.js",
+  "old": "|| !where || !living(B).some(([s]) => s !== sub)) {",
+  "new": "|| !where) {",
+  "tests": [
+   "test/net/eliteGates/auditwe_down.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L1-4-spire-raise-from-afar",
+  "file": "src/net/eliteGates/egBrain.js",
+  "old": "Math.hypot(at.x - m.downAt.x, at.z - m.downAt.z) > EG_REZ_REACH_M) return false;",
+  "new": "Math.hypot(at.x - m.downAt.x, at.z - m.downAt.z) > EG_REZ_REACH_M * 100) return false;",
+  "tests": [
+   "test/net/eliteGates/auditwe_down.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L1-4-spire-raise-past-window",
+  "file": "src/net/eliteGates/egBrain.js",
+  "old": "|| B.end || now - m.down >= EG_DOWN_MS || sub === to) return false;",
+  "new": "|| B.end || sub === to) return false;",
+  "tests": [
+   "test/net/eliteGates/auditwe_down.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L1-4-spire-dead-raiser",
+  "file": "src/net/eliteGates/egBrain.js",
+  "old": "if (!c || !c.in || !c.alive || c.home ||",
+  "new": "if (!c || !c.in || c.home ||",
+  "tests": [
+   "test/net/eliteGates/auditwe_down.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L1-4-spire-window-never-shuts",
+  "file": "src/net/eliteGates/egBrain.js",
+  "old": "if (m.down && (now - m.down >= EG_DOWN_MS || !living(B).length)) egFall(",
+  "new": "if (m.down && !living(B).length) egFall(",
+  "tests": [
+   "test/net/eliteGates/auditwe_down.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L1-4-spire-yield-ignored",
+  "file": "src/net/eliteGates/egBrain.js",
+  "old": "    case 'yield': if (mm.down) egFall(B, sub, now, out, null); break;",
+  "new": "    case 'yield': break;",
+  "tests": [
+   "test/net/eliteGates/auditwe_down.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L1-4-spire-recall-the-lying",
+  "file": "src/net/eliteGates/egBrain.js",
+  "old": "if (!m || m.alive || m.down || m.forsaken || !(m.recall > 0)) return false;",
+  "new": "if (!m || m.alive || m.forsaken || !(m.recall > 0)) return false;",
+  "tests": [
+   "test/net/eliteGates/auditwe_down.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L1-4-ketch-raise-from-afar",
+  "file": "src/net/ketch/ketchBrain.js",
+  "old": "Math.hypot(at.x - p.lay.x, at.z - p.lay.z) > KT_REZ_REACH_M ||",
+  "new": "Math.hypot(at.x - p.lay.x, at.z - p.lay.z) > KT_REZ_REACH_M * 100 ||",
+  "tests": [
+   "test/net/eliteGates/auditwe_down.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L1-4-ketch-raise-past-window",
+  "file": "src/net/ketch/ketchBrain.js",
+  "old": "|| !p.lay || now - p.lay.at > KT_DOWN_MS) return null;",
+  "new": "|| !p.lay) return null;",
+  "tests": [
+   "test/net/eliteGates/auditwe_down.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L1-4-ketch-no-new-life",
+  "file": "server/src/index.js",
+  "old": "    for (const r of out) if (r.k === 'rez' && V.players[r.s]) bodyLife(V.players[r.s], now, line.body);   // AUDIT WORLD-EVENTS L1-4: the raised, a new life on the count\n",
+  "new": "",
+  "tests": [
+   "test/net/eliteGates/auditwe_down.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L1-4-ketch-falls-at-once",
+  "file": "src/scenes/ketch/ketchClient.js",
+  "old": "if (!lieDown('death')) fall('death'); return true; });",
+  "new": "fall('death'); return true; });",
+  "tests": [
+   "test/net/eliteGates/auditwe_down.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L1-4-ketch-down-struck",
+  "file": "src/scenes/ketch/ketchClient.js",
+  "old": "registerPlayerDamageMod('kt-down', (_e, d) => (down ? 0 : d));",
+  "new": "registerPlayerDamageMod('kt-down', (_e, d) => d);",
+  "tests": [
+   "test/net/eliteGates/auditwe_down.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L1-4-ketch-down-walks",
+  "file": "src/scenes/ketch/ketchClient.js",
+  "old": "registerPlayerHold('kt-down', () => !!down);",
+  "new": "registerPlayerHold('kt-down', () => false);",
+  "tests": [
+   "test/net/eliteGates/auditwe_down.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-WE-L1-4-raise-word-unrouted",
+  "file": "src/net/raiseWord.js",
+  "old": "  if (isEgRoom(room)) return !!online.sendEg?.('rz', { to });\n",
+  "new": "",
+  "tests": [
+   "test/net/eliteGates/auditwe_down.test.js"
+  ]
+ }
+]

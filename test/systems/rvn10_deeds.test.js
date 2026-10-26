@@ -223,7 +223,7 @@ test('RVN10 THE JUMP\'S SWEEP: the engaged specials of the pool I leave routed, 
 test('RVN10 THE HOSTS: the street pool routs past 70 m before its cull, gone as the cull takes a foe and told; a jump routs (never a load\'s) before the sweep, a Recall before a mode\'s teardown (both hosts that cast one); the respawn ends every fight first (mutants: each seam unwired; the load routing)', () => {
   const x = read('src/scenes/exteriorFoes.js');
   const at = x.indexOf('if (_playerDist > ROUT.DISTANCE && revenantRoutable(f)) { routFoe(f); continue; }');
-  assert.ok(at > 0 && at < x.indexOf('if (!f.placed && !f.managed && _playerDist > _cullAt'), 'before the cull');
+  assert.ok(at > 0 && at < x.indexOf('if (!f.placed && !f.managed && !f.refugee && _playerDist > _cullAt'), 'before the cull');   // PIN MOVED (AUDIT WORLD-EVENTS L4-2): a raid's refugee exempt from the cull too
   assert.match(x, /function routFoe\(f\) \{\n\s*scatterBand\(f\);\n\s*releaseFoeBatch\(f\);\n\s*f\.dead = true;\n\s*f\.escaped = true;\n\s*if \(f\.ai\?\.detected\) setEnemyAlert\(playerEntity, false\);\n\s*const r = revenantRouted\(playerEntity, f\);\n\s*if \(r\) revenantSay\(revenantRoutedEvent\(r, \{ archive: f\.archive \}\), say\);/);
   const w = read('src/scenes/world.js');
   const tp = w.slice(w.indexOf('async function _teleportToPixel('));

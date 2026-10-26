@@ -25,7 +25,7 @@
 // route by LIVE mode; worldMinutes; the settings store). A host that
 // passed those in would be re-answering a question the port answers
 // once.
-import { playerInSunlight, playerInHolyPlace } from '../systems/passiveSpecials.js';   // V2c: the two E1 conditional flags
+import { playerInSunlight, playerInDarkness, playerInHolyPlace } from '../systems/passiveSpecials.js';   // V2c: the E1 conditional flags (FB1024: + the dark)
 import { skyMinutes } from '../systems/worldTick.js';   // TIME1: a season's or a moon's enchantment reads the sky
 import { getBool } from '../systems/settings/settings.js';
 import { seasonValue, SEASONS, dateFromClassicMinutes, lunarPhasesFromMinutes, LUNAR_PHASES } from '../systems/gameDate.js';
@@ -180,6 +180,10 @@ export function createEnchantCtx({
     // gate, the affinity/curse place gates). Both read seams the mode
     // machine registers, so they route by LIVE mode in every host.
     inSunlight: () => playerInSunlight(),
+    // FB1024 (2026-10-24, #bug-reports): RegensHealth's InDarkness arm asks
+    // inDarkness, and no ctx answered it - Regens Health: In Darkness healed
+    // nothing, anywhere, ever (bible/01-Overview/bugs/Field-Bugs-2026-10-24.md).
+    inDarkness: () => playerInDarkness(),
     inHolyPlace: () => playerInHolyPlace(),
     applySpellToSelf: (record, _entity, item) => magic.castByItemSelf(record, item),   // D9: bundle.CastByItem (CastWhenUsed.cs:136)
     castBarred: () => magic.barCast?.() === true,   // HOME-MAGIC: a place that bars casting bars an item's, and it spends nothing

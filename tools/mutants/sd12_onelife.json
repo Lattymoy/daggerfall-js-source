@@ -2,8 +2,8 @@
   {
     "name": "SD12-ONELIFE-the-death-unkept",
     "file": "server/src/index.js",
-    "old": "if (posed && m.p?.dd && typeof a.sub === 'string' && a.sub && isSdRoom(a.key)) await this._sdMarkFallen(a.key, a.sub);",
-    "new": "if (false) await this._sdMarkFallen(a.key, a.sub);",
+    "old": "if (posed && m.p?.dd && typeof a.sub === 'string' && a.sub && isSdRoom(a.key)) await this._sdMarkFallen(a.key, a.sub, m.p);",
+    "new": "if (false) await this._sdMarkFallen(a.key, a.sub, m.p);",
     "tests": [
       "test/net/superDungeon/sd12_onelife.test.js"
     ]
@@ -20,7 +20,7 @@
   {
     "name": "SD12-ONELIFE-unread-at-the-door",
     "file": "server/src/index.js",
-    "old": "    if (sub && (realm.dead.includes(sub) || (realm.dead.length >= SD_FIGHTERS_MAX && (await this.state.storage.get(sdDeadKey(sub))) != null))) return SD_NO_FALLEN;",
+    "old": "    if (sub && (lies === 'fallen' || (realm.dead.length >= SD_FIGHTERS_MAX && (await this.state.storage.get(sdDeadKey(sub))) != null))) return SD_NO_FALLEN;",
     "new": "    if (false) return SD_NO_FALLEN;",
     "tests": [
       "test/net/superDungeon/sd12_onelife.test.js"
@@ -29,8 +29,8 @@
   {
     "name": "SD12-ONELIFE-memory-alone",
     "file": "server/src/index.js",
-    "old": "gu: strs(v.gu), dead: strs(v.dead) }",
-    "new": "gu: strs(v.gu), dead: [] }",
+    "old": "gu: strs(v.gu), dead: strs(v.dead), down: downs(v.down), raised: raised(v.raised) }",
+    "new": "gu: strs(v.gu), dead: [], down: [], raised: [] }",
     "tests": [
       "test/net/superDungeon/sd12_onelife.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SD12-ONELIFE-twice-over",
     "file": "server/src/index.js",
-    "old": "    if (realm.dead.includes(sub)) return;\n    if (realm.dead.length >= SD_FIGHTERS_MAX) { await",
-    "new": "    if (realm.dead.length >= SD_FIGHTERS_MAX) { await",
+    "old": "    if (realm.dead.includes(sub) || realm.down.some(([x]) => x === sub)) return;\n    for (const [x] of realm.down",
+    "new": "    for (const [x] of realm.down",
     "tests": [
       "test/net/superDungeon/sd12_onelife.test.js"
     ]
@@ -83,11 +83,12 @@
   {
     "name": "SD12-ONELIFE-a-resurrect-in-the-hour",
     "file": "src/scenes/world.js",
-    "old": "const rez = social?.acct && madeRuleHere('resurrect') !== 'refused' ? rezFor(",
-    "new": "const rez = social?.acct ? rezFor(",
+    "old": "const rez = social?.acct && madeRuleHere('resurrect') !== 'refused' && hourRezOpen() ? rezFor(",
+    "new": "const rez = social?.acct && madeRuleHere('resurrect') !== 'refused' ? rezFor(",
     "tests": [
       "test/net/superDungeon/sd12_onelife.test.js"
-    ]
+    ],
+    "why": "SD-REZ (EVENT-RULES): re-aimed - the Hour's raise window unread"
   },
   {
     "name": "SD12-ONELIFE-a-forgiving-death",

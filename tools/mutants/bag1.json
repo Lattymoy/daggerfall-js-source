@@ -787,18 +787,18 @@
   },
   {
     "name": "AUDIT2-BAG1-D3-the-potion-maker-blind-to-the-bag",
-    "file": "src/scenes/worldModes.js",
-    "old": "        wagonItems: () => [...(playerEntity.wagonItems ??= []), ...(playerEntity.bagItems ?? [])],",
-    "new": "        wagonItems: () => (playerEntity.wagonItems ??= []),",
+    "file": "src/scenes/potionMakerHost.js",
+    "old": "    wagonItems: () => [...(player.wagonItems ??= []), ...(player.bagItems ?? [])],",
+    "new": "    wagonItems: () => (player.wagonItems ??= []),",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]
   },
   {
     "name": "AUDIT2-BAG1-D3-the-potion-maker-never-spends-the-bag",
-    "file": "src/scenes/worldModes.js",
-    "old": "          return where !== 'pack' && removeOne(playerEntity.bagItems ?? [], templateIndex, { group, allowEnchantedItem: false });",
-    "new": "          return false;",
+    "file": "src/scenes/potionMakerHost.js",
+    "old": "      return where !== 'pack' && removeOne(player.bagItems ?? [], templateIndex, { group, allowEnchantedItem: false });",
+    "new": "      return false;",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]

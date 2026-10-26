@@ -42,7 +42,13 @@ export const hubOfSubject = (sub) => (typeof sub === 'string' && sub ? chatHubRo
  *  a channel, `chat:region.<r>`, which held every player standing in the region: 2,048 sockets, and a start region's
  *  every arrival at its one gate. A region link lands on `chat:region.<r>.<k>`, k from the verified account as the hub's
  *  is, and the region's own channel is that region's bus - its lines, its travellers' marks and its census, run over a
- *  ShardSocket for each shard's socket as the hub's bus runs its own. */
+ *  ShardSocket for each shard's socket as the hub's bus runs its own.
+ *  A REGION'S CHANNEL IS WHOLE AGAIN unless the relay names it (`REGION_SHARDS`, below; Scale-Arc.md COST-1). A shard
+ *  holding a socket keeps a call open at its bus (HUB-PULL), so a populated region kept up to five objects awake all
+ *  day - for a few dozen players, under a fifth of one object's CHAT_SOCKETS_MAX. Unsharded, a region link says hello
+ *  to the region's channel itself (as it did before the split), and a quiet region sleeps between its lines. The shards
+ *  stay: a link of an older build that asks for one is told the channel (`hub`), and a region the relay names is split
+ *  as before. */
 export const REGION_SHARDS = 4;
 export const REGION_CHANNELS = 62;
 const REGION_BUS_RE = /^chat:region\.(\d{1,2})$/;
@@ -65,10 +71,40 @@ export const isChannelShard = (key) => busOf(key) != null;
 export const isChannelBus = (key) => key === HUB_BUS || isRegionBus(key);
 /** A key's channel: a shard's bus, or the key itself. */
 export const channelOf = (key) => busOf(key) ?? key;
-/** The shard of the channel `bus` an account lands on, by its verified subject - null for no subject or no such bus. */
-export const shardOf = (bus, sub) => {
+/** No region split - the default, and the client's (only the relay knows its own var). */
+export const NO_REGIONS = Object.freeze(new Set());
+/** Each var's text, read once: the relay asks on every hop, and the var never changes inside an isolate. Bounded, so a
+ *  stream of odd values cannot grow it. */
+const shardedByVar = new Map();
+/** THE WAY BACK: the regions the relay keeps split, read off its `REGION_SHARDS` var (server/wrangler.toml [vars]) -
+ *  region numbers separated by commas, or `all`; anything else names none. A start region whose reconnect wave through
+ *  its one hello gate shows again (the reason the regions were split) is split again by the var, with no change to the
+ *  code. */
+export function regionsSharded(raw) {
+  const text = typeof raw === 'string' ? raw.trim() : '';
+  if (!text) return NO_REGIONS;
+  let regions = shardedByVar.get(text);
+  if (!regions) {
+    regions =
+      text === 'all'
+        ? new Set(Array.from({ length: REGION_CHANNELS }, (_, region) => region))
+        : new Set(
+            text
+              .split(',')
+              .map((part) => part.trim())
+              .filter((part) => /^\d{1,2}$/.test(part) && canon(part, REGION_CHANNELS))
+              .map(Number),
+          );
+    if (shardedByVar.size < 64) shardedByVar.set(text, regions);
+  }
+  return regions;
+}
+/** The shard of the channel `bus` an account lands on, by its verified subject - null for no subject or no such bus. A
+ *  region's channel has shards only where `sharded` (regionsSharded) names its region - none by default. */
+export const shardOf = (bus, sub, sharded = NO_REGIONS) => {
   if (bus === HUB_BUS) return hubOfSubject(sub);
-  if (!isRegionBus(bus) || typeof sub !== 'string' || !sub) return null;
+  // a region bus's key ends in its region's number (`chat:region.<r>`)
+  if (!isRegionBus(bus) || typeof sub !== 'string' || !sub || !sharded.has(Number(String(bus).slice(String(bus).lastIndexOf('.') + 1)))) return null;
   return `${bus}.${shardHash(sub) % REGION_SHARDS}`;
 };
 

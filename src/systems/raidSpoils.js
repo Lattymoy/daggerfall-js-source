@@ -29,6 +29,9 @@ import { rollRaidSetPiece } from './aetheric.js';
 
 /** Gold a level of the player's, before the seed's variation (0.8 to 1.2 of it) - a third of a boss's. */
 export const RAID_SPOILS_GOLD_PER_LEVEL = 80;
+/** RAID5 (bible/03-World/Raiding-Parties.md RAID5): a town HELD - its leader felled, its standard standing, most of its
+ *  refugees saved (systems/raidingParties.js raidHeld) - thanks with this much more gold and one more piece. */
+export const RAID_HELD_GOLD_X = 1.5;
 /** The source the one Magic-or-better piece is laddered at: a treasure pile's, halfway up the ladder, even luck. */
 export const RAID_SPOILS_SOURCE = Object.freeze({ kind: 'pile', tier: 12, luck: 50 });
 /** The device's record of a town's thanks no save holds yet, and the receipts spent - the spoils pool's two keys, a
@@ -49,11 +52,13 @@ export const raidSpoilsDay = (w) => `raid:${w}`;
  * A TOWN'S THANKS for one player: `{ gold, pieces: [{ item, tier }] }` - the Magic-or-better piece first, the party's
  * set piece (when one comes) last. The same seed, level, party and world answer the same thanks.
  * @param {number} seed the receipt's `c` @param {number} level the player's @param {number} party the receipt's `y`
+ * @param {boolean} [held] RAID5: the town held - the gold RAID_HELD_GOLD_X, and one more Magic-or-better piece, rolled
+ *   LAST so every thanks before it stays what it was for its seed
  */
-export function rollRaidSpoils(seed, level, party) {
+export function rollRaidSpoils(seed, level, party, held = false) {
   const rolls = seededRng(seed >>> 0);
   const lv = Math.max(1, Math.floor(Number(level) || 1));
-  const gold = Math.round(RAID_SPOILS_GOLD_PER_LEVEL * lv * (0.8 + 0.4 * rolls()));
+  const gold = Math.round(RAID_SPOILS_GOLD_PER_LEVEL * lv * (0.8 + 0.4 * rolls()) * (held ? RAID_HELD_GOLD_X : 1));
   const item = spoilsBase(lv, rolls);
   const tier = magicOrBetter(rolls, RAID_SPOILS_SOURCE);
   applyRarity(item, tier, rolls);
@@ -63,11 +68,19 @@ export function rollRaidSpoils(seed, level, party) {
   if (set) pieces.push({ item: set, tier: set.rarity });
   lastPass([item], rolls);   // LOOT2: the ladder's last pass, after the set piece - its earlier draws stay its seed's
   techniquePass([item], rolls);   // TECH1: a weapon's technique - LAST of all (law 9)
+  if (held) {   // RAID5: the town held - one more piece, after all of it (its own ladder's last pass and technique)
+    const more = spoilsBase(lv, rolls), moreTier = magicOrBetter(rolls, RAID_SPOILS_SOURCE);
+    applyRarity(more, moreTier, rolls);
+    more.isIdentified = true;
+    lastPass([more], rolls);
+    techniquePass([more], rolls);
+    pieces.push({ item: more, tier: more.rarity ?? moreTier });
+  }
   return { gold, pieces };
 }
 
 /** The thanks as the spoils pool hands them over (scenes/spoilsPool.js's pieces): each item, then the gold. Pure. */
-export function raidSpoilsList(seed, level, party) {
-  const s = rollRaidSpoils(seed, level, party);
+export function raidSpoilsList(seed, level, party, held = false) {
+  const s = rollRaidSpoils(seed, level, party, held);
   return [...s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier })), { kind: 'gold', gold: s.gold, tier: 'common' }];
 }

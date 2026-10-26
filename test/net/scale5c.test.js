@@ -13,6 +13,9 @@ import { fakeSocketClass } from '../fakeSocket.mjs';
 import { OnlineSession, HUB_FIND_ASK_MS, HUB_FIND_FRESH_MS } from '../../src/net/online.js';
 import { SOCIAL_ROOM, CHAT_ROOMS, isSocialRoom, isChatRoom, isRegionRoom, parseClient, RELAY_VERSION, CLOSE_REPLACED } from '../../src/net/wire.js';
 import * as H from '../../src/net/hubShards.js';
+/** COST-1: these pins hold a region's channel SPLIT - the way back, the relay's REGION_SHARDS - so their worlds name every region, and a region's shard is asked of the same split (a region's channel is whole by default: test/net/cost1_regions.test.js). */
+const SPLIT_VARS = { REGION_SHARDS: 'all' };
+const SPLIT = H.regionsSharded(SPLIT_VARS.REGION_SHARDS);
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const quiet = async (fn) => { const keep = { info: console.info, warn: console.warn, log: console.log }; console.info = console.warn = console.log = () => {}; try { return await fn(); } finally { Object.assign(console, keep); } };
@@ -32,7 +35,7 @@ async function world(fn) {
   Date.now = () => clock;
   try {
     return await quiet(async () => {
-      const W = fakeRooms({ now: () => clock });
+      const W = fakeRooms({ now: () => clock, vars: SPLIT_VARS });
       const bus = W.room(SOCIAL_ROOM);
       /** Every shard's hand-up and the bus's deliveries, until both rest. */
       const settle = async () => {
@@ -531,18 +534,19 @@ test('SCALE5c part two: A REGION\'S CHANNEL, FOUR WAYS - its shards beside it, a
   assert.equal(H.busOf('chat:region.7.2'), 'chat:region.7'); assert.equal(H.busOf('chat:world.3'), SOCIAL_ROOM); assert.equal(H.busOf('chat:region.7'), null);
   assert.equal(H.isChannelBus('chat:region.7'), true); assert.equal(H.isChannelBus(SOCIAL_ROOM), true); assert.equal(H.isChannelBus('chat:world.3'), false); assert.equal(H.isChannelBus('chat:region.62'), false);
   assert.equal(H.channelOf('chat:region.7.2'), 'chat:region.7'); assert.equal(H.channelOf('cell:1,2'), 'cell:1,2');
-  assert.equal(H.shardOf('chat:region.7', 'acct-x'), `chat:region.7.${H.shardHash('acct-x') % H.REGION_SHARDS}`);
+  assert.equal(H.shardOf('chat:region.7', 'acct-x', SPLIT), `chat:region.7.${H.shardHash('acct-x') % H.REGION_SHARDS}`);
+  assert.equal(H.shardOf('chat:region.7', 'acct-x'), null, 'COST-1: whole unless the relay names the region');
   assert.equal(H.shardOf(SOCIAL_ROOM, 'acct-x'), H.hubOfSubject('acct-x'));
   assert.equal(H.shardOf('chat:region.7', ''), null); assert.equal(H.shardOf('chat:world.3', 'acct-x'), null);
   assert.equal(H.hubHopOf({ t: 'hub', key: 'chat:region.7.2' }), 'chat:region.7.2'); assert.equal(H.hubHopOf({ t: 'hub', key: 'chat:region.7' }), 'chat:region.7');
   const MARK = { px: 207, py: 213, fx: 12, fy: 250, h: 64, m: 1, tv: 1 };
   const RB = chatRegionRoom(5);
   /** Names whose accounts land on distinct shards of the region. */
-  const onRegionShards = (count) => { const out = [], seen = new Set(); for (let i = 0; out.length < count && i < 4096; i++) { const n = `r${i}`; const k = H.shardOf(RB, `acct-${n}`); if (!seen.has(k)) { seen.add(k); out.push(n); } } assert.equal(out.length, count); return out; };
+  const onRegionShards = (count) => { const out = [], seen = new Set(); for (let i = 0; out.length < count && i < 4096; i++) { const n = `r${i}`; const k = H.shardOf(RB, `acct-${n}`, SPLIT); if (!seen.has(k)) { seen.add(k); out.push(n); } } assert.equal(out.length, count); return out; };
   await world(async ({ W, link, say }) => {
     const bus = W.room(RB);
     const [a, b, c] = onRegionShards(3);
-    const ka = H.shardOf(RB, `acct-${a}`), kb = H.shardOf(RB, `acct-${b}`), kc = H.shardOf(RB, `acct-${c}`);
+    const ka = H.shardOf(RB, `acct-${a}`, SPLIT), kb = H.shardOf(RB, `acct-${b}`, SPLIT), kc = H.shardOf(RB, `acct-${c}`, SPLIT);
     const wa = await link(a, ka, { kind: 'linked' }), wb = await link(b, kb);
     const old = await link('regold', RB, { hs: undefined, kind: 'linked' });   // a tab from before: the region's channel itself
     assert.equal(wa.sent[0].t, 'welcome');

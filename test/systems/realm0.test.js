@@ -39,7 +39,7 @@ import { sigilStone } from '../../src/systems/gate/gateSpoils.js';
 import { shareQuestGold, GivePc } from '../../src/systems/quest/actions.js';
 import { QuestMachine } from '../../src/systems/quest/machine.js';
 import { tradeRefusal, createTradePack } from '../../src/systems/tradePack.js';
-import { ONLINE_CHECKPOINT_MS, checkpointAllowed, checkpointDue, checkpointedTradePack } from '../../src/systems/online/onlineCheckpoint.js';
+import { ONLINE_CHECKPOINT_MS, checkpointAllowed, checkpointDue, checkpointWhenDue, checkpointedTradePack } from '../../src/systems/online/onlineCheckpoint.js';
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 /** Runs `fn` as if the page were `search`, then restores the page. */
@@ -379,12 +379,28 @@ test('REALM P0.5: a checkpoint is written online, spawned, in the seat and out o
   assert.equal(checkpointAllowed({ ...ok, online: false }), false, 'offline: the player saves');
   assert.equal(checkpointAllowed({ ...ok, spawned: false }), false, 'no character yet');
   assert.equal(checkpointAllowed({ ...ok, seatOut: true }), false, 'a tab another took the seat from');
+  // PIN MOVED (FIELD BUGS 2026-10-25 SEAT-SAVES): a realm character out of the seat still saves - the service's lease decides
+  assert.equal(checkpointAllowed({ ...ok, seatOut: true, realm: true }), true, 'a realm character out of the seat');
+  assert.equal(checkpointAllowed({ ...ok, duel: true, realm: true }), false, 'the realm flag lifts the seat alone');
   assert.equal(checkpointAllowed({ ...ok, duel: true }), false, 'a duel\'s borrowed health is not the character\'s');
   assert.equal(checkpointAllowed(), false);
   assert.equal(checkpointDue(5, -Infinity), true, 'the first online frame');
   assert.equal(checkpointDue(1_000 + 299_999, 1_000), false);
   assert.equal(checkpointDue(1_000 + 300_000, 1_000), true);
   assert.equal(checkpointDue(Number.NaN, 0), false);
+});
+
+test('FIELD BUGS 2026-10-25 SEAT-SAVES: the periodic checkpoint, when due - through the realm session\'s idle door, else straight', () => {
+  const ran = [];
+  const run = () => { ran.push('checkpoint'); return true; };
+  const session = { idle: (fn) => { ran.push('idle door'); return fn(); } };
+  assert.equal(checkpointWhenDue(1_000 + 299_999, 1_000, session, run), false, 'not due');
+  assert.deepEqual(ran, []);
+  assert.equal(checkpointWhenDue(1_000 + 300_000, 1_000, session, run), true);
+  assert.deepEqual(ran, ['idle door', 'checkpoint'], 'a realm character\'s through its idle door (SCALE2b)');
+  ran.length = 0;
+  assert.equal(checkpointWhenDue(5, -Infinity, null, run), true, 'the first frame, no realm session');
+  assert.deepEqual(ran, ['checkpoint']);
 });
 
 test('REALM P0.5: a trade\'s every change to the pack is checkpointed - the goods out before the commit frame is queued, back, and in; a refused take writes nothing', () => {
@@ -412,10 +428,13 @@ test('REALM P0.5: a trade\'s every change to the pack is checkpointed - the good
 test('REALM P0.5 by source: the host checkpoints every slot the exit save writes, quietly, each online frame it is due and through the trade pack', () => {
   const w = src('src/scenes/world.js');
   const frame = w.slice(w.indexOf('const onlineFrame = (now, dt) => {'));
-  assert.match(frame, /_rezSeen = null;[^\n]*\n\s*if \(checkpointDue\(now, _checkpointAt\)\) \{ if \(realmSession\?\.idle\) realmSession\.idle\(\(\) => onlineCheckpoint\(\)\); else onlineCheckpoint\(\); \}/, 'each online frame, past the seat\'s and the dead\'s returns (SCALE2b: a realm character\'s through the session\'s idle door, which may answer an unchanged save without a put)');
+  // PIN MOVED (FIELD BUGS 2026-10-25 SEAT-SAVES): the periodic line is onlineCheckpoint.js checkpointWhenDue, run here and in the seat's branch
+  assert.match(frame, /_rezSeen = null;[^\n]*\n\s*checkpointWhenDue\(now, _checkpointAt, realmSession, \(\) => onlineCheckpoint\(\)\);/, 'each online frame, past the seat\'s and the dead\'s returns (SCALE2b: a realm character\'s through the session\'s idle door, which may answer an unchanged save without a put)');
   // PIN MOVED (OFFER-ID, FIELD BUGS 2026-10-11b): the pack is handed the realm's id stamp
   assert.match(w, /const tradePack = checkpointedTradePack\(createTradePack\(playerEntity, \{ stampIds: stampItemIds \}\), \(\) => onlineCheckpoint\(\)\);/);
-  assert.match(w, /if \(!checkpointAllowed\(\{ online: !!online, spawned: playerSpawned, seatOut: seatOut\(\), duel: !!duelMgr\?\.duel, walkWaiting: ownWalkWaiting\(playerEntity\) \}\)\) return false;/);
+  // PIN MOVED (FIELD BUGS 2026-10-25 SEAT-SAVES review): the gate's inputs are built once (checkpointGateOpen) and asked here
+  assert.match(w, /const checkpointGateOpen = \(\) => checkpointAllowed\(\{ online: !!online, spawned: playerSpawned, seatOut: seatOut\(\), duel: !!duelMgr\?\.duel, walkWaiting: ownWalkWaiting\(playerEntity\), realm: !!realmSession \}\);/);
+  assert.match(w, /if \(!checkpointGateOpen\(\)\) return false;/);
   assert.match(w, /const names = exitAutosaveNames\(playerEntity, \{ deathUp: townTalk\.overlay instanceof DeathScreen \|\| !!modes\?\.deathUp\?\.\(\) \|\| successionOpen\(\) \}\);\n\s*for \(const saveName of names\) \{\n\s*if \(modes\) modes\?\.quickSaveNow\(saveName, \{ quiet: true \}\);[^\n]*\n\s*else worldQuickSave\(saveName, \{ quiet: true \}\);/);
   // quiet: no shot and no "Game saved." - a failure still speaks
   assert.match(w, /if \(r\.ok && !quiet\) requestScreenshot\(r\.key\);\n\s*if \(!r\.ok \|\| !quiet\) townTalk\.say\(r\.ok \? localizedText\('gameSaved', 'Game saved\.'\) : 'Save failed/);

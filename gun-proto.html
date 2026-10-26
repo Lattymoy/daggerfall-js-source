@@ -80,17 +80,16 @@
   <h1>New weapon type &mdash; gun</h1>
 
   <h2>Placement &mdash; FPSWeapon</h2>
-  <label><span>idle pose</span><select id="idleSrc"><option value="sheet">sheet frame 1</option><option value="art">gun-idle.png</option></select></label>
   <label><span>align</span><select id="align"><option value="2">Right</option><option value="1">Center</option><option value="0">Left</option></select></label>
   <label><span>offset</span><input id="offset" type="range" min="0" max="0.4" step="0.005" value="0"><span class="v" id="voffset"></span></label>
-  <label><span>size %</span><input id="size" type="range" min="20" max="120" step="1" value="49"><span class="v" id="vsize"></span></label>
-  <label><span>raise</span><input id="raise" type="range" min="-60" max="60" step="1" value="-8"><span class="v" id="vraise"></span></label>
+  <label><span>size %</span><input id="size" type="range" min="20" max="120" step="1" value="50"><span class="v" id="vsize"></span></label>
+  <label><span>raise</span><input id="raise" type="range" min="-60" max="60" step="1" value="-5"><span class="v" id="vraise"></span></label>
   <label><span>left hand</span><input id="flip" type="checkbox"><span class="v">mirror</span></label>
 
   <h2>Cycle</h2>
   <label><span>fire fps</span><input id="fps" type="range" min="4" max="30" step="1" value="14"><span class="v" id="vfps"></span></label>
   <label><span>reload ms</span><input id="cool" type="range" min="0" max="2000" step="20" value="1700"><span class="v" id="vcool"></span></label>
-  <label><span>hit frame</span><input id="hit" type="range" min="0" max="5" step="1" value="1"><span class="v" id="vhit"></span></label>
+  <label><span>hit frame</span><input id="hit" type="range" min="0" max="6" step="1" value="1"><span class="v" id="vhit"></span></label>
   <label><span>auto</span><input id="auto" type="checkbox"><span class="v">hold</span></label>
 
   <h2>Recoil &mdash; the lab's own</h2>
@@ -142,8 +141,6 @@
   <label><span>SPD</span><input id="spd" type="range" min="10" max="100" step="1" value="50"><span class="v" id="vspd"></span></label>
 
   <h2>Art &amp; room</h2>
-  <label><span>key white</span><input id="key" type="range" min="180" max="255" step="1" value="244"><span class="v" id="vkey"></span></label>
-  <label><span>chroma</span><input id="chroma" type="range" min="0" max="40" step="1" value="10"><span class="v" id="vchroma"></span></label>
   <label><span>muzzle light</span><input id="light" type="range" min="0" max="1" step="0.02" value="0.6"><span class="v" id="vlight"></span></label>
   <label><span>room</span><input id="room" type="range" min="0.15" max="1.2" step="0.01" value="0.62"><span class="v" id="vroom"></span></label>
   <label><span>boxes</span><input id="grid" type="checkbox"><span class="v">G</span></label>
@@ -154,8 +151,7 @@
 
 <script type="module">
 import {
-  SHEET_GRID, FIRE_FRAMES, ALIGN, cellRect, keyBackground, contentBox,
-  unionBox, gunFrameRect, createGunMachine, muzzleLight,
+  ALIGN, gunFrameRect, createGunMachine, thunderlockFrames, THUNDERLOCK_STRIP, labThunderlockLight,
   createRecoil, createScreenShake, createWidgetRig, widgetRigStep, labWidgetSettings, labMotion,
   SFX_CANDIDATES, createSfxPlayer,
 } from '/src/tools/gunLab.js';
@@ -165,7 +161,7 @@ const ctx = canvas.getContext('2d');
 const $ = (id) => document.getElementById(id);
 
 const state = {
-  idleSrc: 'sheet', align: ALIGN.Right, offset: 0, size: 49, raise: -8, flip: false,
+  align: ALIGN.Right, offset: 0, size: 50, raise: -5, flip: false,
   fps: 14, cool: 1700, hit: 1, auto: false,
   kick: 5, back: 0, stiff: 400, damp: 36,
   shake: 30, shakeRot: 4, shakeFreq: 60, shakeDecay: 5,
@@ -175,13 +171,13 @@ const state = {
   modBob: true, bobLength: 100, bobSizeX: 1, bobSizeY: 1, bobSpeedMove: 1, bobSpeedState: 1, bobShape: 0, bobIdle: true,
   modInertia: true, inScale: 1, inSpeed: 1, inFwd: 1, inFwdSpeed: 1,
   walk: false, run: false, crouch: false, spd: 50,
-  key: 244, chroma: 10, light: 0.6, room: 0.62, grid: false,
+  light: 0.6, room: 0.62, grid: false,
 };
 const NUM = {
   offset:1, size:1, raise:1, fps:1, cool:1, hit:1, kick:1, back:1, stiff:1, damp:1,
   shake:1, shakeRot:1, shakeFreq:1, shakeDecay:1, sfxVol:1, sfxVary:1,
   drop:1, offsetSpeed:1, bobLength:1, bobSizeX:1, bobSizeY:1, bobSpeedMove:1, bobSpeedState:1,
-  inScale:1, inSpeed:1, inFwd:1, inFwdSpeed:1, spd:1, key:1, chroma:1, light:1, room:1,
+  inScale:1, inSpeed:1, inFwd:1, inFwdSpeed:1, spd:1, light:1, room:1,
 };
 const ENUMS = { align:1, bobShape:1 };
 const bind = (id, after = () => {}) => {
@@ -198,76 +194,43 @@ const bind = (id, after = () => {}) => {
 };
 
 // ── THE ART ──────────────────────────────────────────────────────────
-// Sliced, keyed and cropped here rather than shipped pre-cut, so the
-// key threshold is live. `frames` are six canvases on ONE box (the
-// union), `anchor` is the gun's own box inside it - see gunLab.js.
-let art = null, rebuilding = false, wantRebuild = false;
-const sheetImg = new Image(), idleImg = new Image();
+// THUNDERLOCK-LAB (2026-10-25, the owner: "insert the new thunderlock sprite into the prototype so I can adjust it"):
+// the owner's seven 160x98 frames (public/art/thunderlock-frames.png), cut by the game's own cut
+// (combat/thunderlockArt.js thunderlockFrames, via gunLab.js): a fixed stride, the 1-bit alpha, drawn as drawn. The
+// canvas is both `anchor` and `union`, so `size` 50 is the game's 160 of 320 and `raise` -5 its seat under the kick.
+const TL_FRAMES = THUNDERLOCK_STRIP.frames;
+let art = null;
+const stripImg = new Image();
 
-function bakeOne(src, sx, sy, sw, sh) {
+function toCanvas(rgba) {
   const cv = document.createElement('canvas');
-  cv.width = sw; cv.height = sh;
-  const c = cv.getContext('2d', { willReadFrequently: true });
-  c.imageSmoothingEnabled = false;
-  c.drawImage(src, sx, sy, sw, sh, 0, 0, sw, sh);
-  const img = c.getImageData(0, 0, sw, sh);
-  keyBackground(img, state.key, state.chroma);
-  c.putImageData(img, 0, 0);
-  return { cv, box: contentBox(img) };
-}
-
-function crop(cv, box) {
-  const out = document.createElement('canvas');
-  out.width = box.w; out.height = box.h;
-  const c = out.getContext('2d');
-  c.imageSmoothingEnabled = false;
-  c.drawImage(cv, box.x, box.y, box.w, box.h, 0, 0, box.w, box.h);
-  return out;
+  cv.width = rgba.width; cv.height = rgba.height;
+  cv.getContext('2d').putImageData(new ImageData(rgba.data, rgba.width, rgba.height), 0, 0);
+  return cv;
 }
 
 function rebuild() {
-  if (!sheetImg.complete || !sheetImg.naturalWidth) return;
-  const baked = [];
-  for (let i = 0; i < FIRE_FRAMES; i++) {
-    const r = cellRect(i, sheetImg.naturalWidth, sheetImg.naturalHeight);
-    baked.push(bakeOne(sheetImg, r.x, r.y, r.w, r.h));
-  }
-  const union = unionBox(baked.map((b) => b.box));
-  const anchor = baked[0].box;   // frame 1: the gun with no flash on it
-  const frames = baked.map((b) => crop(b.cv, union));
-  let idle = null;
-  if (idleImg.complete && idleImg.naturalWidth) {
-    const b = bakeOne(idleImg, 0, 0, idleImg.naturalWidth, idleImg.naturalHeight);
-    if (b.box) idle = { cv: crop(b.cv, b.box), box: { x: 0, y: 0, w: b.box.w, h: b.box.h } };
-  }
-  art = { frames, union, anchor, idle };
-  $('note').textContent = `sheet ${sheetImg.naturalWidth}x${sheetImg.naturalHeight}, cell ${Math.floor(sheetImg.naturalWidth / SHEET_GRID.cols)}x${Math.floor(sheetImg.naturalHeight / SHEET_GRID.rows)} — gun ${anchor.w}x${anchor.h}, with flash ${union.w}x${union.h}`;
+  const cv = document.createElement('canvas');
+  cv.width = stripImg.naturalWidth; cv.height = stripImg.naturalHeight;
+  const c = cv.getContext('2d', { willReadFrequently: true });
+  c.drawImage(stripImg, 0, 0);
+  const set = thunderlockFrames(c.getImageData(0, 0, cv.width, cv.height));
+  if (!set) { $('note').textContent = `${THUNDERLOCK_STRIP.file} is ${cv.width}x${cv.height}, not ${TL_FRAMES} frames of ${THUNDERLOCK_STRIP.cellW}x${THUNDERLOCK_STRIP.cellH}`; return; }
+  art = { frames: set.frames.map(toCanvas), union: set.union, anchor: set.anchor };
+  $('note').textContent = `${THUNDERLOCK_STRIP.file}: ${TL_FRAMES} frames of ${set.anchor.w}x${set.anchor.h}`;
 }
 
-// The key sweep is a flood fill over six cells plus a 1625x968 page;
-// coalesce so dragging the slider does not queue a dozen of them.
-function scheduleRebuild() {
-  if (rebuilding) { wantRebuild = true; return; }
-  rebuilding = true;
-  requestAnimationFrame(() => {
-    rebuild();
-    rebuilding = false;
-    if (wantRebuild) { wantRebuild = false; scheduleRebuild(); }
-  });
-}
-
-sheetImg.onload = scheduleRebuild; idleImg.onload = scheduleRebuild;
-sheetImg.onerror = () => { $('note').textContent = 'art/gun-fire-sheet.webp did not load'; };
+stripImg.onload = rebuild;
+stripImg.onerror = () => { $('note').textContent = `art/${THUNDERLOCK_STRIP.file} did not load`; };
 // RELATIVE to the page, not the site root: the lab is deployed on its
 // own as well as beside the game (deploy.yml mounts it under
 // /preview/gun-lab/), and an absolute '/art/...' only resolves at a
 // root. document.baseURI is the page's own home in both.
 const artUrl = (name) => new URL(`art/${name}`, document.baseURI).href;
-sheetImg.src = artUrl('gun-fire-sheet.webp');
-idleImg.src = artUrl('gun-idle.png');
+stripImg.src = artUrl(THUNDERLOCK_STRIP.file);
 
 // ── the machine, the mod's rig, the gun's spring ─────────────────────
-const gun = createGunMachine({ fps: state.fps, cooldownMs: state.cool, hitFrame: state.hit });
+const gun = createGunMachine({ fps: state.fps, cooldownMs: state.cool, hitFrame: state.hit, frames: TL_FRAMES });
 const rig = createWidgetRig();
 const recoil = createRecoil();
 const shake = createScreenShake();
@@ -287,14 +250,13 @@ let hitFlash = 0;        // the target's tell, so the hit frame can be judged
 let look = [0, 0];       // the frame's look, as takeFrameLook hands it over
 const LOOK_RADIANS_PER_PX = 0.0025;
 
-const CONTROLS = ['idleSrc','align','offset','size','raise','flip','fps','cool','hit','auto',
+const CONTROLS = ['align','offset','size','raise','flip','fps','cool','hit','auto',
   'kick','back','stiff','damp','shake','shakeRot','shakeFreq','shakeDecay','drop','offsetSpeed','modOffset',
   'modBob','bobLength','bobSizeX','bobSizeY','bobSpeedMove','bobSpeedState','bobShape','bobIdle',
   'modInertia','inScale','inSpeed','inFwd','inFwdSpeed',
   'walk','run','crouch','spd','light','room','grid',
   'sfxFire','sfxOpen','sfxClose','sfxVol','sfxVary','sfxOn'];
 for (const id of CONTROLS) bind(id);
-for (const id of ['key','chroma']) bind(id, scheduleRebuild);
 
 /** The mod's switches, live off the panel - read per frame exactly as
  *  the component re-reads its settings per frame. */
@@ -341,8 +303,8 @@ addEventListener('keydown', (e) => {
   if (e.shiftKey) setTick('run', true);
   if (e.code === 'Tab') { e.preventDefault(); for (const el of document.querySelectorAll('.hud,.stat')) el.style.display = el.style.display === 'none' ? '' : 'none'; }
   if (e.code === 'KeyG') { state.grid = !state.grid; $('grid').checked = state.grid; }
-  if (e.code === 'ArrowRight') scrub = (scrub + 1 + FIRE_FRAMES) % FIRE_FRAMES;
-  if (e.code === 'ArrowLeft') scrub = (scrub - 1 + FIRE_FRAMES) % FIRE_FRAMES;
+  if (e.code === 'ArrowRight') scrub = (scrub + 1 + TL_FRAMES) % TL_FRAMES;
+  if (e.code === 'ArrowLeft') scrub = (scrub - 1 + TL_FRAMES) % TL_FRAMES;
 });
 addEventListener('keyup', (e) => {
   if (e.code === 'Space') release();
@@ -432,7 +394,7 @@ function frame(now) {
   if (gun.state !== 'Cooling') { _reloadOpened = false; _reloadClosed = false; }
 
   const showFrame = gun.state === 'Firing' ? gun.frame : (scrub >= 0 ? scrub : 0);
-  const lit = state.room * (1 + muzzleLight(gun.state, showFrame) * state.light * 1.9);
+  const lit = state.room * (1 + labThunderlockLight(gun.state, showFrame) * state.light * 1.9);
   bobWorld = bobWorld * 0.86 - look[0] * canvas.width * 0.18;
 
   ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -466,10 +428,7 @@ function frame(now) {
 
   let r = null, anchorRect = null;
   if (art) {
-    const useIdleArt = state.idleSrc === 'art' && art.idle && gun.state !== 'Firing' && scrub < 0;
-    const src = useIdleArt ? art.idle.cv : art.frames[showFrame];
-    const union = useIdleArt ? art.idle.box : art.union;
-    const anchor = useIdleArt ? art.idle.box : art.anchor;
+    const src = art.frames[showFrame], union = art.union, anchor = art.anchor;
     // AUDIT 68 S08: the GAME's frame (combat/gun/gunViewmodel.js) - anchor
     // mirror, FPSWeapon's rect, the mod's three channels, the kick after
     // the floor, the union - called, not restated beside it.
@@ -498,12 +457,12 @@ function frame(now) {
     rect: art ? r : null, anchorRect: art ? anchorRect : null,
     channels: { position: [...rig.position], scale: [...rig.scale], offset: [...rig.offset] },
     kick, cam, trauma: shake.trauma,
-    art: art && { union: art.union, anchor: art.anchor, frames: art.frames.length, idle: !!art.idle },
+    art: art && { union: art.union, anchor: art.anchor, frames: art.frames.length },
   };
 
-  const cycle = FIRE_FRAMES / state.fps * 1000 + state.cool;
+  const cycle = TL_FRAMES / state.fps * 1000 + state.cool;
   $('stat').textContent =
-    `${(reloading ? 'RELOAD' : gun.state).padEnd(8)} frame ${showFrame + 1}/${FIRE_FRAMES}${scrub >= 0 && gun.state === 'Idle' ? ' (held)' : ''}\n` +
+    `${(reloading ? 'RELOAD' : gun.state).padEnd(8)} frame ${showFrame + 1}/${TL_FRAMES}${scrub >= 0 && gun.state === 'Idle' ? ' (held)' : ''}\n` +
     `shots ${gun.shots}   cycle ${cycle.toFixed(0)}ms   ${(60000 / cycle).toFixed(0)} rpm\n` +
     `bob ${rig.position[0].toFixed(0)},${rig.position[1].toFixed(0)}  ` +
     `off ${rig.offset[1].toFixed(2)}  kick ${kick.y.toFixed(1)}  shake ${shake.trauma.toFixed(2)}`;

@@ -881,6 +881,14 @@ Roads network, in scratch, with the slice's own functions:
   that moves only on the real data (a World of Daggerfall site, a location's
   blend) is outside it, and its slice names the bump itself. The room's
   memory (WORLD1) holds dungeon and building places only, no exterior height.
+- TWO BELIEFS IN ONE ROOM (GROUND-AGREE and GATE-AGREE, 2026-10-24,
+  `01-Overview/bugs/Field-Bugs-2026-10-24b.md`). One build, two grounds: a pixel
+  was levelled by what its client believed as it built it - whether a spawned
+  dungeon stood there (each client's clocks), and which breach arches' clearings
+  refused a World of Daggerfall site at its pick (each client's own word of a
+  stranger's arch). Both now shape the ground by what every client computes
+  alike - the spawn's roll alive or dead, every pick held or not - and only what
+  stands follows the belief. The print does not read spawns or clearings.
 - A RECORD BY A PATH, ACROSS A CHANGE OF THE ROW (THE SAVES, above): the mod's
   SmoothRoads smooths DFU's own road and not the landforms' level bed, so a
   record on a road from before the row lands within 1.6 m over or 2.0 m under

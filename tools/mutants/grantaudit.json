@@ -92,22 +92,24 @@
   {
     "name": "AUDIT-GRANT-A8-renew-forgets",
     "file": "server/src/index.js",
-    "old": "      if (gr.o === a.id && gr.a === (a.sub ?? '') && gr.q === a.key && now <= gr.x && await grantSignedHere(gr, key, { subtle: crypto.subtle })) grs.push(",
+    "old": "      if (gr.o === a.id && gr.a === (a.sub ?? '') && inCover(a, gr.q) && now <= gr.x && await grantSignedHere(gr, key, { subtle: crypto.subtle })) grs.push(",
     "new": "      if (false) grs.push(",
     "why": "a forgotten grant never signed again",
     "tests": [
       "test/net/grant3_asks.test.js"
-    ]
+    ],
+    "note": "COST-2 3a (re-aimed by content: the cell-scoped law reads the socket's cover)."
   },
   {
     "name": "AUDIT-GRANT-A8-renew-adopts-anothers",
     "file": "server/src/index.js",
-    "old": "      if (gr.o === a.id && gr.a === (a.sub ?? '') && gr.q === a.key && now <= gr.x && await grantSignedHere(",
-    "new": "      if (gr.q === a.key && now <= gr.x && await grantSignedHere(",
+    "old": "      if (gr.o === a.id && gr.a === (a.sub ?? '') && inCover(a, gr.q) && now <= gr.x && await grantSignedHere(",
+    "new": "      if (inCover(a, gr.q) && now <= gr.x && await grantSignedHere(",
     "why": "another's forgotten grant adopted",
     "tests": [
       "test/net/grant3_asks.test.js"
-    ]
+    ],
+    "note": "COST-2 3a (re-aimed by content: the cell-scoped law reads the socket's cover)."
   },
   {
     "name": "AUDIT-GRANT-A9-closed-socket-law",

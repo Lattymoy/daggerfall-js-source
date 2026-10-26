@@ -7,15 +7,18 @@
 // rides the save envelope as SaveData_v1.escortingFaces.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 
 import {
   createFaceDetailsPerson, createFaceDetailsFoe, resolveFaceImage, layoutEscortFaces,
   initEscortFaces, addEscortFace, dropEscortFace, clearEscortFaces, escortQuestEnded,
   getEscortFacesSaveData, restoreEscortFacesSaveData, _escortFaces,
+  drawEscortFaces, escortFacesBottom, setEscortQuestAway,
   ESCORT_MAX_FACES, CHILDREN_FACTION_ID,
 } from '../../../src/ui/hud/hudEscortFaces.js';
 import { QuestMachine } from '../../../src/systems/quest/machine.js';
+import { createQuestBridge } from '../../../src/scenes/quest/questBridge.js';
+import { loadQuestTables } from '../../../src/systems/quest/tables.js';
 import { GENDERS } from '../../../src/characters/nameHelper.js';
 import { RACES, raceArt } from '../../../src/systems/races.js';
 
@@ -155,6 +158,55 @@ test('FE1 save: GetSaveData round-trips; the null arm CLEARS (SaveLoadManager.cs
   assert.deepEqual(_escortFaces(), saved);
   restoreEscortFacesSaveData(null);
   assert.equal(_escortFaces().length, 0, 'a save without the block clears the panel');
+});
+
+// ── QUEST-SHELF-FACES: a quest set aside shows no faces ─────────
+
+test('QUEST-SHELF-FACES: a quest set aside (Abandon) draws no escort face and the faces under it close up; reclaimed, its face is back - kept all the while, in the save too (mutants: the filter, the bridge wiring)', async () => {
+  const tables = new URL('../../../vendor/dfu-quests/Tables/', import.meta.url);
+  loadQuestTables(Object.fromEntries(readdirSync(tables).filter((f) => f.endsWith('.txt'))
+    .map((f) => [f.replace('.txt', ''), read(new URL(f, tables)).replace(/^﻿/, '')])));
+  // a bare bridge wires the panel to its machine (questBridge.js setEscortQuestAway)
+  const bridge = createQuestBridge({ data: { readListTable: () => null, getQuestSourceLines: () => null } });
+  const m = bridge.machine;
+  const lines = (name) => [`Quest: ${name}`, 'QRC:', 'Message:  1011', ' x', '', 'QBN:', 'Clock _c_ 2.00:00', '', ' start timer _c_'];
+  const escort = m.scheduleQuest(lines('__QFA'));
+  const other = m.scheduleQuest(lines('__QFB'));
+  m.tick(); m.tick();
+  assert.ok(escort && other, 'both quests run');
+
+  // FACES.CIF record 0 is a fixed NPC's 48x48 special panel; a blank record is enough art to draw
+  initEscortFaces({
+    fetchBytes: async () => new Uint8Array(64 * 64), palette: null,
+    renderer: { uploadTexture: (kind, key) => key },
+    getFactionData: () => ({ face: 0 }),
+  });
+  const fixed = (quest, symbol) => person({ parentQuest: quest, symbol: { original: symbol }, isIndividualNPC: true, factionData: { id: 100 } });
+  addEscortFace(fixed(escort, '_oracle_'));
+  addEscortFace(fixed(other, '_love_'));
+  await new Promise((resolve) => setTimeout(resolve, 0));   // the art lands
+  const drawn = () => {
+    const quads = [];
+    drawEscortFaces({ drawScreenQuad: (tex, at) => quads.push(at.y) }, { width: 320, height: 200 });
+    return quads;
+  };
+  assert.deepEqual(drawn(), [36, 86], 'both faces stand, the second a special panel\'s 50 below');
+
+  assert.ok(m.shelveQuest(escort.uid).ok);
+  assert.deepEqual(drawn(), [36], 'the abandoned quest\'s face is gone, and the other closes up to the top');
+  assert.equal(escortFacesBottom(), 36 + 48, 'the enhanced HUD\'s status widget reads the closed-up column');
+  assert.equal(_escortFaces().length, 2, 'kept, not dropped');
+  assert.deepEqual(getEscortFacesSaveData().map((f) => f.targetPerson), ['_oracle_', '_love_'], 'and saved as it is');
+
+  assert.ok(m.reclaimQuest(escort.uid).ok);
+  assert.deepEqual(drawn(), [36, 86], 'reclaimed, the face is back where it stood - no `add face` ran again');
+
+  m.shelveQuest(escort.uid);
+  m.shelveQuest(other.uid);
+  assert.deepEqual(drawn(), [], 'every quest away, no column');
+  assert.equal(escortFacesBottom(), 0);
+  setEscortQuestAway(null);
+  clearEscortFaces();
 });
 
 // ── the machine's new seam ───────────────────────────────────────

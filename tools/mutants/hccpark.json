@@ -2,11 +2,12 @@
   {
     "name": "PARK-store-from-anywhere",
     "file": "server/src/index.js",
-    "old": "      if (m.data.r && cell === here) {",
+    "old": "      if (m.data.r && atCover(here, cell)) {",
     "new": "      if (m.data.r) {",
     "tests": [
       "test/net/hcc_park.test.js"
-    ]
+    ],
+    "note": "COST-2 3a (re-aimed by content: the cell-scoped law reads the socket's cover)."
   },
   {
     "name": "PARK-D1-owner-is-peer-id",
@@ -20,20 +21,22 @@
   {
     "name": "PARK-registry-skipped",
     "file": "server/src/index.js",
-    "old": "      await this._parkRegister(k, cell, now, m.data.r && cell === here ? a.ly | 0 : undefined);   // AUDIT SCALE II R3-8: the layer it is kept in, when it is kept here\n",
+    "old": "      await this._parkRegister(k, cell, now, m.data.r && atCover(here, cell) ? a.ly | 0 : undefined);   // AUDIT SCALE II R3-8: the layer it is kept in, when it is kept here\n",
     "new": "      void cell;\n",
     "tests": [
       "test/net/hcc_park.test.js"
-    ]
+    ],
+    "note": "COST-2 3a (re-aimed by content: the cell-scoped law reads the socket's cover)."
   },
   {
     "name": "PARK-superseded-kept",
     "file": "server/src/index.js",
-    "old": "      } else if (here && cell !== here) await this._parkDrop(k);",
+    "old": "      } else if (here && !atCover(here, cell)) await this._parkDrop(k);",
     "new": "      } else if (false) await this._parkDrop(k);",
     "tests": [
       "test/net/hcc_park.test.js"
-    ]
+    ],
+    "note": "COST-2 3a (re-aimed by content: the cell-scoped law reads the socket's cover)."
   },
   {
     "name": "PARK-C3-welcome-silent-when-empty",

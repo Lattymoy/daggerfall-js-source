@@ -162,12 +162,13 @@
   {
     "name": "GRANT3-reader-sender-unchecked",
     "file": "src/scenes/grantHost.js",
-    "old": "grantRefusal(v.gr, { from, cell: cell ?? session()?.room ?? '',",
-    "new": "grantRefusal(v.gr, { from: v.gr.o, cell: cell ?? session()?.room ?? '',",
+    "old": "grantRefusal(v.gr, { from, cell: at,",
+    "new": "grantRefusal(v.gr, { from: v.gr.o, cell: at,",
     "why": "a grant under another's name believed",
     "tests": [
       "test/scenes/grant3_pool.test.js"
-    ]
+    ],
+    "note": "COST-2 3a (re-aimed by content: the cell-scoped law reads the socket's cover)."
   },
   {
     "name": "GRANT3-tally-never-handed",

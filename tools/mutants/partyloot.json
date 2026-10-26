@@ -29,8 +29,8 @@
   {
     "name": "PARTY-LOOT-base-rolled-under-the-players-mods",
     "file": "src/scenes/roomLootHost.js",
-    "old": "    asTheRoom(() => {\n      if (h.pile) items = roomPileBase(h, terms, rolls, gender);",
-    "new": "    ((fn) => fn())(() => {\n      if (h.pile) items = roomPileBase(h, terms, rolls, gender);",
+    "old": "    asTheRoom(() => withRollerLevel(terms.lv, () => {\n      if (h.pile) items = roomPileBase(h, terms, rolls, gender);",
+    "new": "    ((fn) => fn())(() => withRollerLevel(terms.lv, () => {\n      if (h.pile) items = roomPileBase(h, terms, rolls, gender);",
     "tests": [
       "test/systems/partyloot.test.js"
     ]

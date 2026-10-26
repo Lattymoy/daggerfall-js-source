@@ -70,7 +70,7 @@ test('CLOTH-GEMS the loom\'s page: Spin and Weave rows for the furs and Root Ten
     // a garment wholly of Linen: the made cloth's 500 while no bought bolt stands, none said once one does
     buttons().find((b) => b.textContent === 'Clothing').onclick();
     buttons().find((b) => b.textContent.startsWith('Straps')).onclick();
-    assert.match(text(), /20 Outfitting experience, and 500 more the first time you make this piece at this grade from cloth you wove or spun yourself\./);
+    assert.match(text(), /20 Outfitting experience, and 511 more the first time you make this piece at this grade from cloth you wove or spun yourself\./);   // PIN MOVED (FIRST-BUDGET, Professions-Arc 52): Outfitting's first-make share
     use(bookOf({ 'cloth:linen': { own: 4, bought: 1 } }));
     draw();
     assert.match(text(), /20 Outfitting experience\. Cloth you did not weave or spin yourself is used first, and earns no first-time bonus\./);

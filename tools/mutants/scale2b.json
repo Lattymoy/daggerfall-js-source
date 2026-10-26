@@ -66,8 +66,8 @@
   {
     "name": "SCALE2b-secret-written-every-hello",
     "file": "server/src/index.js",
-    "old": "      if (held !== m.secret || !this._secrets.has(m.id)) {",
-    "new": "      if (true) {",
+    "old": "id: m.id, sc: m.secret, name: who.name",
+    "new": "id: m.id, name: who.name",
     "tests": [
       "test/net/scale2b.test.js",
       "test/server/online_relay.test.js",
@@ -77,7 +77,7 @@
       "test/net/soc1_hub.test.js",
       "test/net/auditsoc.test.js"
     ],
-    "note": "A reconnect writes the id's secret it already holds."
+    "note": "HIBERNATE (re-aimed by content): the secret rides the hello's attachment, not storage - dropped, a wake guards the id with nothing."
   },
   {
     "name": "SCALE2b-look-written-every-hello",
@@ -98,8 +98,8 @@
   {
     "name": "SCALE2b-secrets-forgotten-at-a-wake",
     "file": "server/src/index.js",
-    "old": "    const v = await this.state.storage.get(secretKey(id));",
-    "new": "    const v = null; void secretKey;",
+    "old": "if (b.id === id && typeof b.sc === 'string') { held = b.sc; break; }",
+    "new": "if (false) { held = b.sc; break; }",
     "tests": [
       "test/net/scale2b.test.js",
       "test/server/online_relay.test.js",
@@ -109,7 +109,7 @@
       "test/net/soc1_hub.test.js",
       "test/net/auditsoc.test.js"
     ],
-    "note": "After a wake no secret guards an id - a thief takes it."
+    "note": "HIBERNATE (re-aimed by content): after a wake no secret guards an id - a thief takes it."
   },
   {
     "name": "SCALE2b-memory-read-every-hello",
@@ -218,12 +218,12 @@
   {
     "name": "SCALE2b-metrics-drain-not-flushed",
     "file": "server/src/index.js",
-    "old": " this._metricsTick(true); }   // SCALE2b: a drained room says its last window",
-    "new": " }",
+    "old": " this._metricsTick(true); void flushAtDrain(this); }",
+    "new": " void flushAtDrain(this); }",
     "tests": [
       "test/net/scale2b.test.js"
     ],
-    "note": "A room that drains loses its last window's counts."
+    "note": "COST-1 (re-aimed by content: the drain posts its windows after it). A room that drains loses its last window's counts."
   },
   {
     "name": "SCALE2b-storage-reads-uncounted",

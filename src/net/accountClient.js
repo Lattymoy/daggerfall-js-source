@@ -46,7 +46,7 @@ import { LETTER_SUBJECT_MAX, LETTER_BODY_MAX, LETTER_LINES_MAX, LETTERS_SENT_MAX
 import { banRangeText, bannedText } from './safety/safetyLaw.js';   // SAFE4: a ban's bound in its refusal's sentence, from its home; AUDIT SAFE CLIENT-2: and the ban itself
 import { muteRangeText } from './moderation.js';   // AUDIT 68 S14-mute-range-text-duplicated: the mute's bound in the refusal's sentence, from its home (L10N4: its reader)
 import { HOME_CAP, RENT_ROOMS_MAX, RENT_HELD_MAX, RENT_DAYS_MAX } from './homeLaw.js';   // HOME1: the cap a refusal names; HOME-RENT: and the rooms'
-import { DECOR_CAP, DECOR_YARD_CAP, DECOR_YARD_HIGH_WHY } from './decorLaw.js';   // DECOR1: the cap its refusal names; HOME-YARD: a yard's
+import { DECOR_CAP, DECOR_YARD_CAP, DECOR_YARD_HIGH_WHY, DECOR_YARDS_TOWN_MAX } from './decorLaw.js';   // DECOR1: the cap its refusal names; HOME-YARD: a yard's; YARD-TOWN: a town's
 import { MARKS_MAX, MARKS_BANK, MARKS_MOVE_MAX, MARKS_FAUCETS } from './marksLaw.js';   // MARKS1: the bounds its refusals name; CRAFT-WRITS: a crafting writ's day
 import { NOTES_LIVE_MAX, NOTE_DAYS, NOTICE_DAYS_MAX } from './boardLaw.js';   // NOTICE1: the bounds its refusals name
 import { SIGN_WHY, SIEGE_WHY, ROYAL_WHY, FEALTY_WHY, SELLSWORD_FEE_MAX } from './townSeatLaw.js';   // SEAT2a: the rosters' refusals in the board's own words; the fee's bound
@@ -225,6 +225,7 @@ const REFUSAL_WORDS = {
   'no-name-as': () => t('account.refusal.noNameAs', 'The account service does not know that choice of name. The game may need updating.'),   // NAME-AS
   'no-insignia': () => t('account.refusal.noInsignia', 'The Broker does not sell that any more. The game may need updating.'),
   owned: () => t('account.refusal.owned', 'Your account already owns that.'),
+  fenced: () => t('account.refusal.fenced', 'The Broker already settled that sale. Open her window again.'),   // AUDIT FB1024 (BROKER-RID): a press whose request id a settle fenced first (server-account/src/brokerSales.js)
   bought: () => t('account.refusal.bought', 'You have bought from the Panoply this week. Come back next week.'),   // EG-E1: the Broker's Panoply sink, once a week (server-account/src/egEconomy.js egSink)
   piece: () => t('account.refusal.piece', 'The Broker does not sell that piece. The game may need updating.'),
   short: () => t('account.refusal.short', 'Your account has too few embers for that.'),   // WB12a; WB13b: the card says the rule; AUDIT WB12d (A4): a rite's ember counts, and is no breach closed
@@ -340,6 +341,7 @@ const REFUSAL_WORDS = {
   // DECOR1: an online home's decor (server-account/src/decor.js)
   'decor-cap': () => t('account.refusal.decorCap', 'A home holds at most {max} pieces. Remove one to place another.', { max: DECOR_CAP }),
   'yard-cap': () => t('account.refusal.yardCap', 'A yard holds at most {max} pieces. Remove one to place another.', { max: DECOR_YARD_CAP }),   // HOME-YARD
+  'yard-town-full': () => t('account.refusal.yardTownFull', "This town's yards hold {max} pieces between them, the most a town can. Remove one of yours to place another.", { max: DECOR_YARDS_TOWN_MAX }),   // YARD-TOWN
   'yard-high': () => DECOR_YARD_HIGH_WHY,   // YARD-HEIGHT (AUDIT Y3): the decorator's own sentence
   'decor-taken': () => t('account.refusal.decorTaken', 'Another piece already stands under that name. Place it again.'),
   'decor-rate': () => t('account.refusal.decorRate', 'You have placed and moved pieces too often this hour. Try again later.'),
@@ -498,6 +500,7 @@ const REFUSAL_WORDS = {
   'prof-account-cap': () => t('account.refusal.profAccountCap', 'Your account has gathered all a day allows in this craft, across your characters.'),
   'prof-deep-cap': () => t('account.refusal.profDeepCap', 'Dungeons not yet confirmed by other players give you {max} veins a day.', { max: DEEP_UNCONFIRMED_PER_DAY }),
   'prof-spec-stale': () => t('account.refusal.profSpecStale', 'Your specialization changed elsewhere. Look again before you choose.'),
+  'prof-trial-over': () => t('account.refusal.profTrialOver', 'The free day to change this specialization has ended. Nothing was spent - look again before you choose.'),   // AUDIT PERK-TRIAL P4
   'prof-spec-taken': () => t('account.refusal.profSpecTaken', 'A specialization was chosen there already. Look again.'),
   'stores-full': () => t('account.refusal.storesFull', 'Your Stores hold {max, number} of that already.', { max: STORES_MAX }),
   'stores-short': () => t('account.refusal.storesShort', 'Your Stores do not hold that many.'),
@@ -529,6 +532,10 @@ const REFUSAL_WORDS = {
   'prof-lapidary': () => t('account.refusal.profLapidary', 'Only a Lapidary can set a Siege-cracked Gem in a piece. Choose it at Jewelcrafting 100, under Smithing.'),   // PROF10; CRAFT3
   // PROF12: the alchemy station's and the enchanter's refusals
   'prof-transmuter': () => t('account.refusal.profTransmuter', 'Only a Transmuter can turn one metal into the next. Choose it at Alchemy 100, under Provisioning.'),   // CRAFT3
+  // DAEDRIC-SMELT (Professions-Arc.md section 53): the Daedric smelt's embers - the account's purse short (the service's
+  // half), or the pack's (the client's, net/profBook.js smelt over systems/sigil/sigilBroker.js emberHands)
+  'prof-embers': () => t('account.refusal.profEmbers', 'Each Daedric Ingot takes a Deadlands Ember, won closing Dagon\'s Breaches, slaying Sea Serpents and taking Elite Breach Redoubts. Your account has too few left to spend.'),
+  embers: () => t('account.refusal.embers', 'Each Daedric Ingot takes a Deadlands Ember from your pack, and your pack holds too few.'),
   'bad-brew': () => t('account.refusal.badBrew', 'That cauldron makes no such potion.'),
   'bad-piece': () => t('account.refusal.badPiece', 'That is no crafted piece.'),
   'prof-no-piece': () => t('account.refusal.profNoPiece', 'Only a piece a crafter made online can be disenchanted.'),
@@ -555,7 +562,7 @@ const REFUSAL_WORDS = {
   'craft-pieces': () => t('account.refusal.craftPieces', 'Only pieces you made yourself and never sold can fill this writ, and you need all of them.'),
   'craft-goods-gone': () => t('account.refusal.craftGoodsGone', 'Your pack does not hold enough of what this writ asks.'),
   'prof-spec': () => t('account.refusal.profSpec', 'That specialization is not one this craft offers.'),
-  'prof-respec-pending': () => t('account.refusal.profRespecPending', 'A change of specialization is already on its way ({days} days).', { days: RESPEC.days }),
+  'prof-respec-pending': () => t('account.refusal.profRespecPending', 'This craft\'s specialization was changed less than {days} days ago. The next change opens {days} days after the last.', { days: RESPEC.days }),   // PERK-TRIAL: the lock after a paid change
   'prof-rate': () => t('account.refusal.profRate', 'You have done too much crafting this hour. Try again later.'),
   // PROF5: the market (server-account/src/market.js)
   'market-closed': () => t('account.refusal.marketClosed', 'The market is not open yet.'),
@@ -1252,7 +1259,10 @@ export const equipGlyph = (io, glyph, on) => call(io, '/v1/account/glyph', { gly
 export const chooseNameAs = (io, as) => call(io, '/v1/account/name', { as });
 /** WB9g: buy a piece of the Broker's insignia (net/insignia.js INSIGNIA) for this account - the wardrobe after the sale and
  *  the `purse` its closed gates can still pay, or a refusal (`owned`, `short` with `purse` and `price`, `guest`). */
-export const buyInsignia = (io, item) => call(io, '/v1/account/insignia', { item });
+export const buyInsignia = (io, item, rid = null) => call(io, '/v1/account/insignia', rid ? { item, rid } : { item });   // AUDIT FB1024 (BROKER-RID): the press's request id
+/** AUDIT FB1024 (BROKER-RID): a Broker sale whose answer was lost, asked after by its request id (`{ rid, nonce }`) -
+ *  server-account/src/brokerSales.js settleBrokerSale. Signed out, nothing is asked. */
+export const settleBrokerSale = (io, body) => (io ? call(io, '/v1/broker/settle', body) : Promise.resolve({ ok: false, error: 'no-session' }));
 /** PATREON-LINK: take this account's Patreon off it - `{ ok, titles, title, glyphs, auras, aura, insignia, patreon }`,
  *  the wardrobe after it and the card's Patreon row. Linking has no call here: the account read carries the link, and
  *  the player follows it in a browser (server-account/src/patreon.js says why). */
@@ -1953,7 +1963,7 @@ export function accountEg({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     admit: (b) => post('/v1/eg/admit', { b }),
     board: () => post('/v1/eg/board', {}),   // EG-E2: the three boards (server-account/src/egHonours.js egBoardOf)
     claim: (receipt, character = null) => post('/v1/eg/claim', { receipt, ...(typeof character === 'string' && character ? { character } : {}) }),   // EG-E1: the claiming character - its guild's deed
-    sink: (piece) => post('/v1/eg/sink', { piece }),   // EG-E1: the Broker's Panoply piece, once a week
+    sink: (piece, rid = null) => post('/v1/eg/sink', rid ? { piece, rid } : { piece }),   // EG-E1: the Broker's Panoply piece, once a week (AUDIT FB1024: and the press's request id)
     find: (tier) => post('/v1/eg/find', { tier }),   // EG-E3: a dungeon elite's find (section 5) - `{ found, keys, asks }`
     first: (bits) => post('/v1/eg/first', { bits }),   // EG-ZF: the first-time lines shown, kept once an account (section 27.7) - `{ first }`
     me: () => storedSession(storage)?.id ?? null,
@@ -2091,6 +2101,7 @@ export function accountDecor({ fetch, storage, listWaitMs = DECOR_LIST_WAIT_MS }
   const waited = waitedPost({ fetch, storage }, listWaitMs);
   return {
     list: (mapId, buildingKey, seat = false, yard = false) => waited('/v1/homes/decor', { mapId, buildingKey, ...(seat ? { seat: true } : {}), ...(yard && !seat ? { yard: true } : {}) }),   // SEAT-HALL: a palace's Charter Room; HOME-YARD: the street's pieces, for its Confirm
+    rev: (mapId, buildingKey, seat = false, yard = false) => waited('/v1/homes/decor', { mapId, buildingKey, revOnly: true, ...(seat ? { seat: true } : {}), ...(yard && !seat ? { yard: true } : {}) }),   // the standing poll: one row, the pieces only once the revision moves
     place: ({ mapId, buildingKey, character, piece, realm = null, yard = false, seat = false }) => post('/v1/homes/decor/place', { mapId, buildingKey, character, piece, ...(realm ? { realm } : {}), ...(yard ? { yard: true } : {}), ...(seat ? { seat: true } : {}) }),   // REALM P2.2b: and its gold on the record; HOME-YARD: outside
     yards: (mapId) => waited('/v1/homes/yards', { mapId }),   // HOME-YARD: every yard of a town
     move: ({ mapId, buildingKey, character, id, place, realm = null, seat = false }) => post('/v1/homes/decor/move', { mapId, buildingKey, character, id, place, ...(realm ? { realm } : {}), ...(seat ? { seat: true } : {}) }),
@@ -2306,7 +2317,7 @@ export function accountProf({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     state: (character) => post('/v1/prof/state', { character }),
     pixels: (character, pixels, dungeons = []) => post('/v1/prof/pixels', { character, pixels, dungeons }),   // PROF2: the dungeon stood in
     harvest: (req) => post('/v1/prof/harvest', req),
-    spec: (character, profession, rank, spec, from, rid) => post('/v1/prof/spec', { character, profession, rank, spec, from, rid }),   // AUDIT 29 A15: `from`, the choice the client saw standing
+    spec: (character, profession, rank, spec, from, rid, trial = false) => post('/v1/prof/spec', { character, profession, rank, spec, from, rid, ...(trial ? { trial: true } : {}) }),   // AUDIT 29 A15: `from`, the choice the client saw standing; PERK-TRIAL: `trial`, asked as the choice's free day
     // BAG1: `carry` - the units counted as carried, into the bag or the pack - with what the client holds of it (`held`)
     // AUDIT BAG1 B2: and `seen`, the count as the client last heard it - the service cuts to `held` only against its own
     withdraw: (character, material, qty, rid, carry = null) => post('/v1/stores/withdraw', { character, material, qty, rid, ...(carry ? { carry: true, held: carry.held, ...(carry.seen == null ? {} : { seen: carry.seen }) } : {}) }),
@@ -2316,7 +2327,7 @@ export function accountProf({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     stock: (character, material, qty, rid) => post('/v1/prof/stock', { character, material, qty, rid }),   // PROF3: the smith's stock
     brew: (character, potion, keys, rid, seat = null) => post('/v1/prof/brew', { character, potion, keys, rid, ...(seat == null ? {} : { seat }) }),   // PROF12: the alchemy station's brew - `keys` the cauldron as the Stores hold it, `seat` the held town it stands in
     temper: (character, recipe, quality, provenance, rid) => post('/v1/prof/temper', { character, recipe, quality, rid, ...(provenance ? { provenance } : {}) }),   // CRAFT4: a piece a quality step better
-    reforge: (character, tier, rid) => post('/v1/prof/reforge', { character, tier, rid }),   // CRAFT4: an Enchanter's Reforge for Arcane Essence - the seed its line is rolled with
+    reforge: (character, tier, rid, count = 0) => post('/v1/prof/reforge', { character, tier, count, rid }),   // CRAFT4: an Enchanter's Reforge for Arcane Essence - the seed its line is rolled with; REFORGE-REPLACE: the piece's reforges, its price doubled for each
     disenchant: (character, provenance, rid, realm = null) => post('/v1/prof/disenchant', { character, provenance, rid, ...(realm ? { realm } : {}) }),   // PROF12: a crafted piece into Arcane Essence; AUDIT PROF-541 B2: a realm character's record where it stands
     writs: (character, region) => post('/v1/writs/list', { character, region }),
     deliver: (character, id, rid) => post('/v1/writs/deliver', { character, id, rid }),

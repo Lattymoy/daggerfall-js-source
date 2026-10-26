@@ -2520,7 +2520,8 @@ same cooldown and says its seconds): *here*, *danger* or *mine* (an errand claim
 a blue pillar 6 m tall whose glyph names the kind, with a chime (blue is the company's, section 25.2).
 
 A company choice (the decrees, Dagon's Bargain, a respite, the Ready vote) is a prompt at the beacon or the shrine,
-open for 10 s to every member, the witnesses included. It passes on a majority of those who answer; silence abstains,
+open for 30 s (`EG_ASK_MS`; 10 s until FIELD BUGS 2026-10-25 ASK-LONGER - players could not read a rest's
+decrees in it) to every member, the witnesses included. It passes on a majority of those who answer; silence abstains,
 and a tie refuses (for the decrees, a tie takes the first shown). One silent player never blocks the company, and
 nobody decides for eight alone. A respite that passes is asked again, and the Ready with it; a Ready and a respite in one
 word take the respite whole (section 6.2).
@@ -2948,7 +2949,9 @@ the pay law `net/eliteGates/egPay.js`, and the Broker sells the Panoply's sink. 
 - **The sink.** `POST /v1/eg/sink { piece }` (one of `EG_PANOPLY_IDS`) is one conditional UPDATE in the insignia's way:
   `insignia_spent + 20`, where the purse covers it and no `eg_sink` row stands this week. The week's row is written by
   that write alone. It answers `{ ok, piece, week, purse }`, or refuses `guest` 403, `piece` 400, `bought` 409 (which
-  piece) or `short` 409 (the purse and the price). It is in `ROUTES`, the eg act map, `EG_STATUS` and the route comment.
+  piece) or `short` 409 (the purse and the price). BROKER-RID (AUDIT FB1024): `rid`, the press's request id, is written
+  beside the sale in its batch (`broker_sales`, migration 0174) - refused `fenced` 409 where a settle fenced it first,
+  `rid` 400 where it is not one; the same id asked again answers its sale (`again`). It is in `ROUTES`, the eg act map, `EG_STATUS` and the route comment.
 - **`server-account/src/index.js`**: the claim takes `{ receipt, character }`. INT5's `grantSpoils` fires only for a
   recorded, paid Redoubt.
 - **Migration 0117** (EG-PLAY's, unshipped; 0111, 0112, 0113, 0114 then 0116 on its branch, renumbered past NAME-AS's 0111, SEAT-FACTS' 0112, LAMP-KEEPER II's 0113, FIRMAMENT-ON's 0114, KG6's 0115 and POI-1's 0116 at the merges) gains a block of its own:
@@ -2960,7 +2963,9 @@ the pay law `net/eliteGates/egPay.js`, and the Broker sells the Panoply's sink. 
     `piece`;
   - `systems/sigil/sigilBroker.js` `panoplySale`, the insignia's two halves. The host's `mint` comes first (a piece it cannot
     make is never paid for). Then the embers leave the pack before the service is asked. A refusal gives them back. A
-    lost answer is asked after (`held`). A held sale adds the piece, with no Broker price on it, and is saved;
+    lost answer is asked after by the press's own request id (`/v1/broker/settle`: the sale, or the id fenced and the
+    embers back; BROKER-RID, AUDIT FB1024 - `01-Overview/bugs/Field-Bugs-2026-10-24.md`). A held sale adds the piece,
+    with no Broker price on it, and is saved. One unheard twice is owed, and her next open settles it;
   - `ui/brokerWindow.js`: "The Battlemage's Panoply" under the insignia (`panoplyRows`, the nine pieces by section 19's
     names). It shows the price and "One a week", and its Buy says why not ("Need 15 more", "Bought", "Next week"). A
     sale in flight holds every other;
@@ -3568,16 +3573,44 @@ The Burning Court and the Hour are re-plugged with their behaviour unchanged.
 | Recall | as today | refused | refused |
 | the Portal Stone | refused | refused | refused |
 | companions (GATE-ALONE, SD-ALONE) | kept out | kept out | kept out |
-| natural regeneration (`courtRules`) | off | off | off |
+| natural regeneration (`courtRules`) | held (EVENT-RULES) | held | held |
 | restoring potions | as today | as today | two a hall (THE POTION LAW) |
 | Levitate | as today | banned | banned |
 | Slowfall | as today | as today | banned |
 | a technique's flight on traversal ground | as today | as today | refused |
 | the jump buffer and the late press | none | none | 0.12 s each |
-| Resurrect | as today | refused | refused |
+| Resurrect | as today | raise before the fall (EVENT-RULES, AUDIT WORLD-EVENTS L1-4) | raise before the fall (EVENT-RULES, AUDIT WORLD-EVENTS L1-4) |
 | Stendarr's AvoidDeath | as today | as today | refused |
 | a death | cast out | final for the Hollow | a fall (section 16.5) |
 | DEATH-PENALTY | as today | as today | none |
+
+**EVENT-RULES (2026-10-25, the owner: "A lot of people are unhappy with the world event restrictions including the regen
+not working"; asked, "Back, held in a fight" and "Resurrect allowed").** Two rows changed for every made level, the
+Sky-Ketch's among them. REGENERATION IS HELD, not off (`systems/courtRules.js`): every natural source - the class's and
+the race's, a ring's, a technique's, Grit's, the Firmament's, Hist-Sap's, the Warden's Steadfast (AUDIT WORLD-EVENTS L1-3:
+the last three had never asked) - regrows at half (`REGEN_HELD_SHARE`, each source's fraction carried round to round, each
+body its own carry - L1-9) and not at all for 5 s after the player is hurt (`REGEN_HELD_HURT_MS`, started at the player's
+hurt door, `systems/courtRulesDoor.js` - L1-10: a frame-to-frame health diff started it on a maximum's fall and missed a hit
+healed in the same frame), so a boss's blows still cost but a breather between them pays; WBX6's "off" had no word on the
+screen, and players read it as a broken regeneration. RESURRECT IS ALLOWED: no level refuses a party member's Resurrect;
+the Hour's one life is kept by the relay (`Super-Dungeons.md` SD-REZ), so a fallen member may be raised within the body's
+minute there. THE RULES ARE SAID: a made level's tile on the HUD's status row (`ui/hud/statusTips.js madeRulesTile`)
+names the place and lists what it holds and refuses, the regeneration's pause counting down on it. The tile is the
+enhanced HUD's alone (AUDIT WORLD-EVENTS L1-11, kept): the classic skin is Daggerfall's own status row, which has no
+tile for any rule; its player hears each rule where it bites - a refusal's own words, the death's card.
+
+**RAISE BEFORE THE FALL (AUDIT WORLD-EVENTS L1-4, 2026-10-25; the owner, asked what "Resurrect allowed" means where a
+death is a fall: "Raise before the fall").** Removing the refusal did nothing here: a lethal blow in the Spire is caught by
+the fall's death save (the witness's view, section 16.5), so no body ever lay for a spell. Now a death in a hall's fight,
+with another member living, lays the member DOWN where it fell for `EG_DOWN_MS` (60 s, the Hour's minute -
+`net/eliteGates/egBrain.js egLayDown`): out of the fight (`alive` 0), its Reliquaries still its own, its company told
+(`down`); its page holds the witness's eye, its body dying on every screen (`net/online.js poseDown`). A party member's
+Resurrect at it (`rz`, `net/raiseWord.js` from the world host's Resurrect door; `egRezMember`: the caster living in the
+breach, within `EG_REZ_REACH_M` of where the body lies, inside the window) stands it there at `EG_REZ_PCT` (Resurrect's
+own 30%, pinned equal), a new life on the count (`rise`, said by name to the hall). Past the window, given up (the card's
+key - `yield`), with nobody living left to raise it, or the hall cleared (the Redoubt's recall falls the downs first), it
+is THE FALL as ever. A death with no hall's fight about it (a rest, the stair) falls at once. Pins:
+`test/net/eliteGates/auditwe_down.test.js`.
 
 **The world's clock does not stop.** The shared clock turns during a three-hour breach (36 game hours, a game day and
 a half). A quest's deadline can lapse inside, which is why the start window warns of it (section 5).

@@ -130,6 +130,15 @@ export const huntsStar = (self, ward) => self?.starSite != null && self.starSite
 /** A hunter no defender has turned (`starTurned` - struck, it turns on its striker as any foe does) goes for the star
  *  before anyone beside it: this much over a target's own priority (distance, sight). */
 export const STAR_HUNT_PRIORITY = 40;
+/**
+ * AUDIT WORLD-EVENTS L6-5 (RAID5, bible/03-World/Raiding-Parties.md): A RAID'S GOAL - its Standard-Bearer, its refugees
+ * (systems/raidingParties.js stamps each `raidGoal` with its raid's key) - is quarry for that raid's raiders (`raidKey`)
+ * whatever infighting reads, and first, until a blow turns the raider (`raidTurned`, its health no longer whole) - STAR5's
+ * shape. With infighting off a raider took no ally but a companion for its foe: the standard was never sacked and no
+ * refugee lost, every such raid held for nothing.
+ */
+export const huntsRaidGoal = (self, c) => self?.raidKey != null && c?.raidGoal === self.raidKey && !!self.ai?.isHostile;
+export const RAID_GOAL_PRIORITY = 40;
 export function targetPriority(targetHasNoTarget, seen, distance) {
   let p = 0;
   if (targetHasNoTarget) p += 5;
@@ -233,10 +242,11 @@ export function getTargets(self, candidates, playerFeet, {
     // STAR5: a fallen star is quarry for its own coven's monsters alone (huntsStar), and no team's
     const star = !isPlayer && c.starWard === true;
     if (star && !huntsStar(self, c)) continue;
+    const goal = !isPlayer && !self.raidTurned && huntsRaidGoal(self, c);   // AUDIT WORLD-EVENTS L6-5: a raid's goal, past the chain below - until a blow turns the raider
     // ARENA2: THE BOUT TEAM - a bout's pair skips the chain below; anyone else meets no fighter, and no fighter meets them
     const bout = boutGate(self, c, isPlayer, playerBout);
     if (bout === false) continue;
-    if (bout !== true && !civilian && !star) {
+    if (bout !== true && !civilian && !star && !goal) {
     // NoTarget mode (:776-777): the BASICS team here
     if ((noTargetMode || !ai.isHostile || selfMobileTeam === 'PlayerAlly' || self.companion != null) && isPlayer) continue;   // AUDIT CC-B2: a companion never the player's foe, whatever his team reads
     if (dropLocal && isLocalPlayerTarget(c)) continue;   // AUDIT-F5: a wilderness foe unaware of a fast traveller (scenes/exteriorFoes.js) - them alone
@@ -295,6 +305,7 @@ export function getTargets(self, candidates, playerFeet, {
     // WATCH-PROTECTS: a townsperson has no foe of their own, and is no likelier quarry for it than the player beside them
     let priority = targetPriority(targetAi && !civilian && !star ? (targetAi.target ?? null) === null : false, see, distance);
     if (star && !self.starTurned) priority += STAR_HUNT_PRIORITY;   // STAR5: the star first, until a defender turns it
+    if (goal) priority += RAID_GOAL_PRIORITY;   // AUDIT WORLD-EVENTS L6-5: the raid's goal first
     if (self.companion != null && fightsOurSide(targetAi, self)) priority += COMPANION_ASSIST_PRIORITY;   // ASSIST (FIELD BUGS 2026-10-05c)
     if (priority > highestPriority) {
       secondHighestPriority = highestPriority;

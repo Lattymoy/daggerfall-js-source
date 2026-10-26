@@ -2124,3 +2124,111 @@ doors' draws). `test/systems/shoppellets.test.js` is RETIRED with its law. `tool
 dead (AUDIT SHIP C2's checked by hand). `shoppellets.json` is retired too: its three records that read the counter's law moved to `arrowsupply.json`,
 each re-aimed at the quiver's pins, and the rest went with the line they mutated. Re-aimed by content: `gunsunfound.json`
 (2), `pistolet.json` (2), `loot21.json` (3), `tech1.json` (1).
+
+## THUNDERLOCK-ART2 (2026-10-24): the owner's new sprite
+
+The owner, with seven first-person frames and a list picture: *"Heres the new thunderlock sprite replacement"*.
+
+**The frames** (`public/art/thunderlock-frames.png`, the owner's seven 160x98 frames side by side, pixels unchanged):
+the rest frame, the shot (its muzzle flash and the Dweamer's bolt along the barrel), two of smoke, and three settling,
+with the fifth held for a beat. `combat/thunderlockArt.js` `thunderlockFrames` reads them the Pistolet's way
+(`Dwarven-Pistolet.md`):
+
+- **The stride.** Each frame is registered to the others by its canvas, so the frames are cut at a fixed stride, with no
+  background key and no crop to content.
+- **The canvas is the anchor.** The owner placed the gun in its canvas, with both forearms leaving through the foot, so
+  the canvas is what sits on the screen's corner (AlignRight). It is drawn at `THUNDERLOCK_ART.scale` design pixels per
+  texel: 160 of the surface's 320, close to the 0.49 the old sheet's gun took.
+- **The cut.** The frames are cut to one bit at the screen quad's 0.5 and are otherwise drawn exactly as drawn.
+- **Seated, never stretched.** A first cut carried the forearms straight down below the foot, for PISTOL-EDGE's reason,
+  and the owner took it back: *"Why is it stretched at the bottom. You need to place it correctly"*. So nothing is
+  invented under the frames. Instead the canvas is seated the kick's height (`GUN_FEEL.kick`, 5) below the screen's foot
+  (`THUNDERLOCK_ART.raise`). Weapon Widget's transform never lifts the foot off where it is seated (its floor), and the
+  shot's kick, applied after it, lifts it at most that far, so the cut foot never shows.
+- **The cycle is seven frames.** The count lives on a leaf (`combat/gun/thunderlockStrip.js`
+  `THUNDERLOCK_STRIP.frames`), and `THUNDERLOCK_ANIMS` reads it. The machine's `THUNDERLOCK_NUM_FRAMES` keeps its own
+  literal, because `characters/weaponStates.js` imports nothing (SWING-LAW: the neutral viewer pastes its source), and
+  `thunderlockart2.test.js` holds the two equal. The rest
+  frame is first and the flash second, as the sheet had them, so the hit still lands on the flash
+  (`GUN_FEEL.hitFrame`). A shot is 0.5 s at the lab's 14 fps, one frame longer than the sheet's 0.43 s, and the 1.7 s
+  cooldown starts when it ends: one shot every 2.2 s where the sheet gave one every 2.13 s, about 3% slower. The
+  Pistolet keeps its own six (`PISTOLET_ANIMS`, read off `PISTOL_STRIP.frames`), and each gun's machine is handed its
+  own cycle's length (`createGunMachine` `frames`).
+- **The light is the flash's frame.** The sheet drew its flash on two frames, and `MUZZLE_CURVE` (0.82 on the second)
+  was written for it. The strip draws it on one, so the Thunderlock has its own curve
+  (`THUNDERLOCK_MUZZLE_CURVE`, `combat/gun/gunFeel.js`): full on the flash frame and falling from the smoke. The
+  Pistolet keeps `MUZZLE_CURVE`.
+- **The muzzle** is the centre of the largest white-hot body on the shot frame, which is the flash's ball at the
+  barrel's end (`flashBodyPoint`, `combat/gun/gunFlash.js`). The bolt's smaller sparks along the barrel would pull an
+  average of every hot texel down the gun. The shot kicks the gun inside the canvas, so "what got brighter"
+  (`muzzlePoint`, the sheet's reading, retired with it) would measure the moved gun as well. The flash's laws (the
+  white-hot luma, the core, the flame grown out of it) are one leaf both guns read, so a retune moves both.
+- **The Gilded look** (Volendrung's Echo, the Hourlock's gun era): the gun's own brass is gilded on every frame
+  (`thunderlockGildKeep`): hue 32 to 60, saturated, lit. The gloves are as warm but duller and darker, and the sleeve is
+  grey, so neither is gilded. The flash never is: neither its white-hot core nor the painted orange glow round it, which
+  reads as brass by hue alone, so the keep leaves out the Pistolet's flame mask (`flashMask`) as well.
+- **The enchanted look** (`thunderlockShimmer`): the shimmer goes on the brass and on everything drawn bright (the flash,
+  the bolt, the smoke), and never on the hands. A whole-frame shimmer had turned the grey sleeve blue.
+
+**The list picture** (`public/art/thunderlock-icon.png`, the owner's 88x31, pixels unchanged): `tools/gunIcons.mjs` trims
+it into `gun-icon.png` (80x23) and lays its gold twin, `gun-icon-gilded.png`, on the same ramp. The gun is drawn whole,
+so nothing is healed. `healGap` stays the answer for a doll layer that has no picture of its own.
+
+**Not changed:**
+- The doll layer (`gun-paperdoll.png` and its gold twin) is the old art, because its fist's gap and its place on the doll
+  (`PAPERDOLL_OFFSET`) are the owner's placement to make.
+- The gun lab (`gun-proto.html`, `src/tools/gunLab.js`) still cuts the old six-frame sheet (`gun-fire-sheet.webp`, kept
+  for it).
+
+**The audit** (the owner: *"Audit this"*). Eleven findings, all taken:
+- The light stayed at 0.82 on a frame of smoke: the Thunderlock's own curve (above).
+- The gold took the flash's orange glow: the keep leaves out the flame mask (above).
+- The slower rate of fire was unsaid: the cycle bullet above and the patch notes say it.
+- FIELD-GUN7's parity pin had been loosened to one tick. The cause was the lab machine's `Math.floor(t * fps)` landing
+  just under 7 at 0.5 s, a sum of sixtieths. `createGunMachine` now reads that edge with a 1e-9 epsilon on its later
+  side, as the game's machine does, and the pin is exact again.
+- The Pistolet's machines and `_pistolLeft` had the old sheet's six by coincidence (`FIRE_FRAMES`): both read
+  `PISTOL_STRIP.frames` now.
+- A strip wider or taller than seven 160x98 frames was cut short without a word: it is refused, as a narrower one was.
+- The sheet's readers (`handMask`, `gildKeep`, `boxBlur`, `GILD`, `muzzlePoint`, `MUZZLE_GAIN`, `KEY_THRESHOLD`,
+  `KEY_CHROMA`, `NATIVE_WIDTH`, `SHEET_FILE`) were dead in the game but still held by pins and mutants: retired, and
+  the pins and mutants moved onto the laws the game runs.
+- `TL_FLASH_LUMA` and the body search were a second copy of the Pistolet's: one leaf, `combat/gun/gunFlash.js`. Left
+  as it is: `thunderlockGildKeep`'s six-line `hsl` against `pixelClass`'s, which classifies with early exits and would
+  move the Pistolet's gold for no change of behaviour.
+- The cycle's length was three separate literals: the strip's leaf, read by the anim table, and the machine's one
+  literal (its file imports nothing), pinned equal.
+- The art's `thunderlockMuzzle(lit, w, h)` shared a name with the rig's `thunderlockMuzzle(fovRad, forward)`: it is
+  `flashBodyPoint` now.
+- Comments that still described the six-frame sheet: rewritten.
+
+**Pins:**
+- `test/systems/thunderlockart2.test.js` (new, read off the committed strip): the strip, the canvas anchor, the frames
+  as drawn texel for texel, and the seating under the kick; the cycle of seven, with the Pistolet's six; the muzzle on the ball; the gold and the shimmer on the gun alone.
+- PIN MOVED:
+  - `thunderlock.test.js`: the table and the machine at seven; FIELD-GUN3's orientation read off a strip; FIELD-GUN7's
+    parity with the lab's machine at seven, exact; FIELD-GUN17a's muzzle read by `flashBodyPoint`.
+  - `gilded1_gilded.test.js`: GILDED1's gold in the hand read by `thunderlockGildKeep`.
+  - `pistolet.test.js`: the Pistolet's own table.
+  - `thunderlockart.test.js`: the list picture is the owner's.
+  - `doctrine.test.js`: the two new files' provenance.
+- Mutants: `tools/mutants/thunderlockart.json`, with 13 records added and 1 re-aimed (the gap left). Re-aimed by
+  content onto the laws the game runs: `fieldgun17.json` 10-12 (`flashBodyPoint`; record 11's equivalence went with the
+  brightness weighting, so the campaign is 18 dead and 1 equivalent), `gilded1.json`'s hand and alpha,
+  `fieldgunmwaudit.json` F1 and `pistolet.json`'s resting pistol (the curve argument). Each run once and dead.
+
+## THUNDERLOCK-LAB (2026-10-25): the lab draws the new sprite
+
+The owner: *"Can you insert the new thunderlock sprite into the prototype so I can adjust it"*. `gun-proto.html` now
+draws the owner's seven-frame strip (`public/art/thunderlock-frames.png`) instead of the old six-frame sheet.
+
+- **The cut is the game's.** `thunderlockFrames`, `THUNDERLOCK_STRIP` and `labThunderlockLight` reach the page
+  through `src/tools/gunLab.js`. The page cuts at a fixed stride with the 1-bit alpha, and uses the canvas as both
+  anchor and union.
+- **The defaults are the game's pose.** The panel opens at size 50 (the game's 160 of 320) and raise -5 (seated the
+  kick's height under the screen). FIELD-GUN8 (`test/systems/thunderlock.test.js`) holds those two to
+  `THUNDERLOCK_ART` now, not to `GUN_FEEL`'s old-sheet numbers.
+- **The cycle has seven frames.** The page's machine runs seven frames, and the hit slider reaches frame 7. The room
+  is lit on `THUNDERLOCK_MUZZLE_CURVE`.
+- **Gone from the panel:** the old sheet's controls, which were the idle-pose switch, the key and the chroma.
+  `tools/gunProtoProbe.mjs` now checks the strip's seven frames.

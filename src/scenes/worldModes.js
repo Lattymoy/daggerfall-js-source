@@ -22,6 +22,7 @@
 //   baseCollider() - the collider to restore on exit.
 
 import { DecisionBoxWindow } from '../ui/decisionBox.js';   // REST-WARN2: the Plus decision box
+import { markInteriorLoad } from '../ui/interiorLoadMark.js';   // a building's load is a ring over the hotbar, not the full screen
 import { restAilmentLines } from '../systems/rest/restWarning.js';   // REST-WARN
 import { healCurseOffer, healCursePaid, healCurseText } from '../systems/healCurse.js';   // HEAL-CURSE: the temple's second row
 import { walkModeOn } from '../player/walkMode.js';   // PADWALK
@@ -56,10 +57,10 @@ import { tryMobileEnemyActivate } from '../player/mobileEnemyActivate.js';
 import { FOUND_NOTHING_VALUABLE_TEXT_ID } from '../systems/talk/talk.js';
 import { searchReachFor } from '../systems/searchables.js';   // SEARCH1: a headstone's reach, half a door's - GRAVE-PARTY: from the body to the stone   // GetRandomText(8999)
 import { LOCK_PICK_DISTANCE } from '../player/lockOn.js';   // AUDIT 62 F16/F28: the tap-to-lock reach, the same the exterior and standalone-dungeon arms use
-import { removeOne, addItem, isEnchanted, carriedWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE, spendAmmoFor, takeOneInto, isSummoned } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
+import { addItem, isEnchanted, carriedWeight, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE, spendAmmoFor, takeOneInto, isSummoned } from '../systems/inventory.js';   // U40: the sell filter, the encumbrance gate and the letter
 import { isEquipped, unequipSlot } from '../systems/equip.js';   // AUDIT 17e F4: worn gear is not merchandise
 import { targetAimPoint, missileAimDirection } from '../characters/enemy/enemyTargets.js';   // AUDIT WORLD6b-iii(a) C3: the ONE aim law for an enemy missile (the peer's transform, mine otherwise)
-import { playerEntity, surfacePlayer, staffFrozen } from '../characters/playerEntity.js';
+import { playerEntity, surfacePlayer, staffFrozen, playerHeld } from '../characters/playerEntity.js';   // AUDIT WORLD-EVENTS L1-4: and a body lying down for a raise
 import { drawnFlat } from '../characters/nudeFlats.js';   // NUDE-FLATS: Show Nudity off draws a nude figure's clothed stand-in
 import { offHandQuickslot, offHandOffersSwap, tickQuickslotHold } from '../systems/quickslots.js';   // QS4: the off-hand cell's press, on THIS mode's own rig   // QS6: the off hand's swap question, and the hold machine this mode's frame drives
 import { createPlayerTicker , wireInfectionVideos, endRunToTitleMenu, exitToTitleMenu, doorSpellFor, exteriorOpenSpellFor, consumeDoorSpell, wireDoorSpells, createDetectFeed, createRestDeps, foeNearbyRecord, nearbyLootRecords} from './shared.js';   // AUDIT 18: the interior host's world clock; S40: its rest deps
@@ -202,7 +203,7 @@ import { staticDoorName, npcHoverName, questResourceName, questStandItem, worldT
   houseContainerName, houseContainerHover, actionObjectName, lootPileName, indoorDecorHover,
   BOOKSHELF_TEXT, SHOP_SHELF_TEXT, LADDER_TEXT, BULLETIN_BOARD_TEXT, mobileEntityName, liveEntityName } from '../systems/worldTooltips.js'; import { questFoeSubs } from '../systems/quest/questFoeLine.js';   // WORLD-HOVER: the mod's ladder for the families THIS host stands; QUEST-FOE-LINE: a quest's foe says whose it is   // WORLD-HOVER: the mod's ladder for the families THIS host stands
 import { LOCATION_TYPES, REGION_NAMES, REGION_RACES } from '../formats/mapsFile.js';   // WORLD-HOVER: .cs:777-782 - a dungeon exit names its town, or the region   // WORLD-HOVER: the texture record is DERIVED at its one reader, off the stored model id
-import { isShop, stockShopShelf, stockHouseContainer, PRIVATE_PROPERTY_TEXT_ID, privatePropertyRows, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems, stockGuildMagicItems, stockGuildPotions, dayShelf, createStockedDate, needsRestock, stockSearched, restockEndless } from '../systems/shopStock.js';   // X6: the soul-gem shelf; G4: the two guild shelves; A2: the daily restock; ENDLESS-STOCK: the bag and the Campfire never sell out
+import { isShop, stockShopShelf, stockHouseContainer, PRIVATE_PROPERTY_TEXT_ID, privatePropertyRows, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems, stockGuildMagicItems, stockGuildPotions, dayShelf, createStockedDate, needsRestock, stockSearched, restockEndless, landSoldAt } from '../systems/shopStock.js';   // X6: the soul-gem shelf; G4: the two guild shelves; A2: the daily restock; ENDLESS-STOCK: the bag and the Campfire never sell out
 import { BAG_WORDS, isBagItem, holdsOtherBag } from '../net/bagLaw.js';   // ONE-BAG: one Materials Bag to a character, on the keyed shelf too
 import { identifySpellPass, identifiedTallyText, notEnoughSpellPointsText, tradeCost, getTradePrice, markCounterBought } from '../systems/tradeModes.js';   // X7: the Identify SPELL's per-item roll; F067: its magicka refusal; FB0929: the keyed rows' prices are the counter's; AUDIT LW-II-2 S1: the counter's mark
 import { liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // X10: the Dispel Magic picker
@@ -225,8 +226,7 @@ import { revenantTakes } from '../systems/revenant/revenant.js';   // AUDIT FEUD
 import { endPlayerFights } from '../systems/harmMark.js';   // AUDIT FEUD (RVN10): ...and its fights ended
 import { tokenRows } from '../ui/messageBox.js';
 import { showsJoinButton, serviceAccess, onPushEffects, rankNeedsLines, wayBackLines, NO_POTION_INGREDIENTS, isServiceBox, SERVICE_LABEL, SERVICE_DESTINATION } from '../systems/guild/guildServiceFlow.js';
-import { isIngredient } from '../systems/potions.js';   // F201: MakePotionService's scan
-import { isPotionRecipe, USE_TEXT, expandItemMacro } from '../systems/useItem.js';   // AUDIT 63 F42: IsPotionRecipe (DaggerfallUnityItem.cs:344-347); RR1: the light's own "You douse the %it."
+import { USE_TEXT, expandItemMacro } from '../systems/useItem.js';   // AUDIT 63 F42: IsPotionRecipe (DaggerfallUnityItem.cs:344-347); RR1: the light's own "You douse the %it."
 import { canAccessService , getCustomMerchantService, getCustomMerchantServiceLabel } from '../systems/guild/guildServices.js';   // G4: does THIS guild also sell soul gems?
 import {
   receiveArmorDecision, claimArmor, SPYMASTER_GREETING_TEXT_ID,
@@ -276,7 +276,6 @@ import { peopleAreVisible, updateNpcPresence } from '../characters/interiorPeopl
 import { exteriorLockpickingChance, lookAtLockText, LOCKPICKING_SUCCESS_TEXT, LOCKPICKING_FAILURE_TEXT, isActionDoorObject } from '../world/actionSystem.js';   // AUDIT 63 F42: GetComponent<DaggerfallActionDoor>() with a name
 import { tallyCrimeGuildRequirements } from '../systems/crimeGuilds.js';   // CG2: the break-in tally
 import { theftBasket, privatePropertyTheft, shopShelfTheft } from '../systems/theft.js';   // PT1: the two stealing laws
-import { landSold } from '../systems/stolenGoods.js';   // STOLEN-GOODS: a stolen piece sold is the merchant's to be rid of, never shelved
 import { buildingGreeting, shopQualityPresentation } from '../systems/buildingGreeting.js';
 import { setUnleveledLootWorld, unleveledLootPreTransition, unleveledLootExteriorTransition } from '../systems/unleveledLoot.js';   // UL1: PlayerEnterExit's world and its transition events   // BG1: the shop quality + the householder's greeting
 import { discoverBuilding, undiscoverBuilding, getDiscoveredBuilding, getLastLockpickAttempt, setLastLockpickAttempt, shownBuildingName } from '../systems/discovery.js';   // H3: selling a house takes its name back off the map
@@ -322,6 +321,7 @@ import { questLetterName, itemLongName, shownItemName } from '../systems/item/it
 import { applyTransfer } from '../systems/item/itemTransfer.js';   // DECOR2a: one's own item leaves the pack as a drop does
 import { decorItemName, decorOwnBackLine } from '../systems/decor/decorItems.js';   // DECOR2a: an own item's piece named from its numbers
 import { isFurnishing, furnishingDeliveredLine, ownBackLines } from '../systems/decor/decorFurnish.js';   // DECOR2b: furniture delivered, never carried
+import { useDecorPiece } from '../systems/decor/decorUse.js';   // DECOR-USE: a placed bed slept in, a placed fire cooked on
 import { goldAmount, totalGoldAmount, deductGold, addGold, payUndoable, setCrimeCommitted, CRIMES } from '../systems/court.js';   // PT1: the ONE crime write (V4's SuppressCrime gate rides it)
 // Q4-v: the quest layer's host wiring. The BRIDGE (scenes/quest/questBridge.js)
 // is created by the outer host (world.js) and rides in; this machine owns
@@ -391,7 +391,7 @@ import {
 } from '../systems/homeRent.js';
 // DECOR1c: the pieces a room's owner placed (their law, and the pool that stands them in the room)
 import { decorPieceOf, decorSaleBack, DECOR_STATION_SERVICES, DECOR_STATION_NAMES } from '../net/decorLaw.js';
-import { noteDecorGrants, decorMayStorage, decorMayStation, decorIsShared, decorStationShut, bindDecorHouseFrom, openSharedChest, openDecorChest } from '../systems/decor/decorGrants.js';   // DECOR-ACCESS
+import { noteDecorGrants, decorMayStorage, decorMayStation, decorIsShared, decorStationShut, bindDecorHouseFrom, openSharedChest, openDecorChest, openOwnChest } from '../systems/decor/decorGrants.js';   // DECOR-ACCESS
 import { openHomeTransfer, answerHomeTransfer } from '../ui/homeTransferWindow.js';
 import { VENDOR_STATION, VENDOR_COLD_LINE } from '../net/vendorLaw.js';   // HOME-VENDOR: a trader, and its word where none can trade
 import { forgeOffered, PROF_STATIONS, stationColdLine, enchantGoldPct, STORES_ACT_STATIONS, focusStoresStation } from '../ui/professions/profPages.js';   // AUDIT 29 B2: a Forge worked only where the Stores page is; PROF4: a Workbench
@@ -450,8 +450,9 @@ import { SpellMakerWindow, preloadSpellMakerArt, spellMakerArtLoaded } from '../
 import { hasSpellbook } from '../systems/spell/spellMaker.js';   // AUDIT 63 F12: MakeSpells' door gate (DaggerfallGuildServicePopupWindow.cs:391)
 // M2: the potion maker - the other half of the guild's magic economy.
 import { PotionMakerWindow, preloadPotionArt, potionArtLoaded } from '../ui/potionMakerWindow.js';
+import { potionMakerHooks } from './potionMakerHost.js';   // POTION-DOOR: the maker's hooks, DFU's and the brew's door (Professions-Arc 52)
 import { ItemMakerWindow, preloadItemMakerArt, itemMakerArtLoaded, ITEM_RECTS, rowLayout as itemMakerRowLayout } from '../ui/item/itemMakerWindow.js';
-import { createPotion, getMagicItemTemplates, LOOT_NEWER_TEXT, shownSpellName } from '../systems/loot/loot.js';   // M2: ItemBuilder.CreatePotion, one minter; G4: the MAGIC.DEF registry; L10N3e: a spell's name as shown
+import { getMagicItemTemplates, LOOT_NEWER_TEXT, shownSpellName } from '../systems/loot/loot.js';   // M2: ItemBuilder.CreatePotion, one minter; G4: the MAGIC.DEF registry; L10N3e: a spell's name as shown
 import { SITE_TYPES } from '../systems/quest/place.js';
 import { personOwnName } from '../systems/quest/person.js';   // QUEST-NAME-ONE: a quest stand answers to its Person's own name
 import { placeFoeFreely, questStandBox, rideSceneMarker, markerScenePosition, siteMarkerSpots, standSpot, buildingStandSpot, MARKER_FLOOR_REACH, freeQuestStand } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring, finally called; TOTEM-CAGE: a stand's box where it IS; QUEST-MARKERS: the building's backstop; FB1020c CROWD-CLEAR: a Person clear of the room's people
@@ -1760,7 +1761,7 @@ export function createWorldModes(host) {
   const interiorHearths = [];
   const interiorCamps = createCamps({
     entity: playerEntity,
-    hearths: () => interiorHearths,
+    hearths: () => [...interiorHearths, ...interiorDecor.hearths()],   // DECOR-USE (systems/decor/decorUse.js): and the fires placed in it - a bowl of fire, a brazier, a cooking station
     place: () => ({ insideBuilding: true }),
     camera: () => ({ feet: player.pos, yaw: cam.yaw }),
     say: (l) => say(l), showOverlay: (w) => mountInterior(w),
@@ -3953,7 +3954,7 @@ export function createWorldModes(host) {
         if (!isFurnishing(it)) addItem(playerEntity.items, it);
       }
       decorDeliver(staged.filter(isFurnishing));   // DECOR2b: the furnisher delivers
-      restockEndless(shelf.items, staged);   // ENDLESS-STOCK: a Materials Bag or a Campfire bought is back on the shelf - neither sells out
+      restockEndless(shelf.items, staged, shelf === interiorCtx?.shelves?.[0] ? interiorBuilding?.buildingType : null);   // ENDLESS-STOCK: a Materials Bag or a Campfire bought is back on the shelf - neither sells out; ENDLESS-ARROWS: nor a General Store's arrows, on its counter's shelf alone (AUDIT UPDATE E2)
       // HOLDINGS (bible/03-World/Holdings.md): a ship's deed bought goes to the Fleet's book, never the pack - she waits at this
       // town's port
       const town = buildingDirectory?.()?.locationName ?? '';   // the town the counter stands in
@@ -3985,7 +3986,7 @@ export function createWorldModes(host) {
       for (const it of staged) {
         const i = playerEntity.items.indexOf(it);
         if (i >= 0) playerEntity.items.splice(i, 1);
-        landSold(shelf.items, it);   // sold goods land on the open shelf - STOLEN-GOODS: an honest piece; a stolen one is gone
+        landSoldAt(shelf.items, it, shelf === interiorCtx?.shelves?.[0] ? interiorBuilding?.buildingType : null);   // sold goods land on the open shelf - STOLEN-GOODS: an honest piece; a stolen one is gone (AUDIT UPDATE II B2: an arrow at a General Store's counter, never)
         setJunk(it, false);   // AUDIT LOOT II C5: the junk mark is the seller's word for what goes - gone, it is the merchant's, unmarked if bought back
       }
     } else if (mode === 'Repair') {
@@ -4086,7 +4087,7 @@ export function createWorldModes(host) {
     // AUDIT HOLDINGS F8: a ship's deed off the keyed shelf goes to the Fleet's book as the counter's does (she waits at
     // this town's port); one the book will not take (no number) into the pack as before
     else if (!(it?.templateIndex === FLEET_DEED_TEMPLATE && titleDeed(it, { port: buildingDirectory?.()?.locationName ? { name: buildingDirectory().locationName } : null }))) addItem(playerEntity.items, it);
-    restockEndless(shelf.items, [it]);   // ENDLESS-STOCK: the keyed list's purchase, as the counter's
+    restockEndless(shelf.items, [it], shelf === interiorCtx?.shelves?.[0] ? interiorBuilding?.buildingType : null);   // ENDLESS-STOCK: the keyed list's purchase, as the counter's (ENDLESS-ARROWS: its shop's quiver, the counter's shelf alone - AUDIT UPDATE E2)
     tallySkill(playerEntity, SKILLS.Mercantile, 1);   // per completed trade (DFU OnTrade)
     surfacePlayer();
     return price;
@@ -4106,7 +4107,7 @@ export function createWorldModes(host) {
     if (isEquipped(it)) unequipSlot(playerEntity, it.equipSlot);
     addGold(playerEntity, price);
     playerEntity.items.splice(playerEntity.items.indexOf(it), 1);
-    landSold(shelf.items, it);   // sold goods land on the open shelf (DFU's remoteItems) - STOLEN-GOODS: an honest piece; a stolen one is gone
+    landSoldAt(shelf.items, it, shelf === interiorCtx?.shelves?.[0] ? interiorBuilding?.buildingType : null);   // sold goods land on the open shelf (DFU's remoteItems) - STOLEN-GOODS: an honest piece; a stolen one is gone (AUDIT UPDATE II B2)
     setJunk(it, false);   // AUDIT LOOT II C5: sold, its junk mark ends
     tallySkill(playerEntity, SKILLS.Mercantile, 1);
     surfacePlayer();
@@ -5058,6 +5059,7 @@ export function createWorldModes(host) {
   function activateDecor(id) {
     const piece = interiorDecor.pieceOf(id);
     if (piece?.station === VENDOR_STATION) { openHomeVendor(piece, id); return; }   // HOME-VENDOR: anyone may trade with it
+    if (useDecorPiece(piece, interiorCamps, getInteractionMode, restFromInteriorBed, () => forgeOffered() && (focusStoresStation('fire'), interiorKeyCtx.togglePause({ at: 'stores' }), true))) return;   // DECOR-USE (systems/decor/decorUse.js): a placed fire or the cooking station opens what a brazier opens (a fire is nobody's), a placed bed is slept in as the room's own are (the rest window says who may)
     if (piece?.station) { useDecorStation(piece); return; }   // HOME-STATIONS
     if (piece?.storage && caravanGuestHere()) { say(homeBelongsLine({ owner: privateVisitOwner })); return; }   // WAGONS2-VISIT: a caravan's storage is its owner's, as a home's cupboards are - shut to its visitor, in its owner's name
     if (isHallBoard(piece)) { openHallBoard(); return; }   // GUILD1e: the board in a guild's hall
@@ -5068,8 +5070,8 @@ export function createWorldModes(host) {
       if (interiorHome) say(homeBelongsLine(interiorHome));
       return;
     }
-    const win = interiorInventory({ loot: { items: () => interiorDecor.itemsOf(id), storage: true } });   // SHIP-STORE: the owner's own storage, two-way
-    if (win) interiorOverlay = win;
+    // SHIP-STORE: the owner's own storage, two-way; HOME-SHARE-WAIT: in an online home, once the service has said it is not shared (decorGrants.js openOwnChest)
+    openOwnChest(piece.id, !!interiorHome, () => { interiorOverlay = interiorInventory({ loot: { items: () => interiorDecor.itemsOf(id), storage: true } }) ?? interiorOverlay; });
   }
 
   /** HOME-VENDOR (net/vendorLaw.js): A HOME'S TRADER PRESSED - its window (the host's: the owner stocks it, a visitor
@@ -6694,71 +6696,15 @@ export function createWorldModes(host) {
     // destination immediately below: PotionMakerWindow in the interior
     // slot, behind MakePotionService's no-ingredient refusal.
     if (destination === 'guildServicePotionMaker' && potionArtLoaded() && _shopFont) {
-      // AUDIT 26 F201: MakePotionService (:670-686) closes the popup,
-      // scans pack AND wagon for any ingredient, and refuses with
-      // NoPotionIngredients (34) when there is none - the record id
-      // had shipped with zero callers and the mixer opened empty.
-      if (![...(playerEntity.items ?? []), ...(playerEntity.wagonItems ?? []), ...(playerEntity.bagItems ?? [])].some(isIngredient)) {   // BAG1: and the Materials Bag's herbs
-        return { rows: rows(NO_POTION_INGREDIENTS), closesWindow: true };
-      }
+      // POTION-DOOR (bible/06-Systems/Professions-Arc.md 52): the window's hooks are scenes/potionMakerHost.js's - DFU's own
+      // as M2 wired them (the pack, the cart and the bag; the carried recipes; the one minter; the walk's spend) and, online
+      // at an alchemy station, the brew's door. AUDIT 26 F201: MakePotionService (:670-686) closes the popup, scans pack
+      // AND wagon for any ingredient (and the Materials Bag's herbs; at a station the Stores' too), and refuses with
+      // NoPotionIngredients (34) when there is none
       let potionWin = null;
-      potionWin = new PotionMakerWindow({
-        packItems: () => (playerEntity.items ??= []),
-        // BAG1: THE SECOND LIST the walk reads is the cart's, and the Materials Bag's after it - the herbs a player gathered
-        // are DFU's own plants, and DFU's mixer takes them wherever they are carried (read here, spent by takeOne below)
-        wagonItems: () => [...(playerEntity.wagonItems ??= []), ...(playerEntity.bagItems ?? [])],
-        // AUDIT 58: Refresh's gold label is GetGoldAmount
-        // (DaggerfallPotionMakerWindow.cs:138) - coins PLUS letters of
-        // credit (PlayerEntity.cs:1313-1316), the same reader the item
-        // maker (itemMakerWindow.js), the spellbook and the character
-        // sheet take. The two windows whose labels really are the bare
-        // GoldPieces counter are the spell maker
-        // (DaggerfallSpellMakerWindow.cs:358) and the travel popup
-        // (DaggerfallTravelPopUp.cs:280), and both carry that note;
-        // this one had the coins-only reader without it.
-        gold: () => totalGoldAmount(playerEntity),
-        // AUDIT 63 F42: the picker's source is DFU's own - the recipe
-        // ITEMS the player carries, in the pack AND the wagon, each
-        // resolved through GetPotionRecipe(item.PotionRecipeKey)
-        // (Refresh :143-153, :150-151, :164-169). Recipes are not
-        // "learned": UseItem's recipe arm really is cannotUseThis, so
-        // the carried scroll IS the knowledge. The old read took
-        // `playerEntity.potionRecipeKeys`, which nothing in the port
-        // ever wrote, so the button answered "You have no recipes."
-        // for every character in every game.
-        // Key 0 is DFU's "no recipe" sentinel (potionRecipeKey([]) is
-        // 0, potions.js), so it never enters the set.
-        recipeKeys: () => {
-          const seen = new Set();
-          for (const it of [...(playerEntity.items ?? []), ...(playerEntity.wagonItems ?? [])]) {
-            if (isPotionRecipe(it) && it.potionRecipeKey) seen.add(it.potionRecipeKey);
-          }
-          return [...seen];
-        },
-        // ItemBuilder.CreatePotion (:324) - loot.js has minted these
-        // since E1 for random treasure; a mixed potion is the same
-        // bottle carrying the same key, so there is one minter.
-        addPotion: (recipe, key) => {
-          const bottle = createPotion(key);
-          bottle.name = recipe.name;
-          bottle.value = recipe.price;
-          addItem(playerEntity.items, bottle);
-          surfacePlayer();
-        },
-        takeOne: (templateIndex, where, group) => {
-          const list = where === 'pack' ? playerEntity.items : (playerEntity.wagonItems ?? []);
-          // F176: GetItem(group, template, allowEnchantedItem: false)
-          // (:338, :345) - the walk must not spend an enchanted twin
-          // of the plain reagent that went in the pot. (X11b's lesson
-          // stands: removeOne takes a TEMPLATE INDEX, not the item.)
-          if (removeOne(list, templateIndex, { group, allowEnchantedItem: false })) return true;
-          // BAG1: the second list's second half - the Materials Bag, after the cart
-          return where !== 'pack' && removeOne(playerEntity.bagItems ?? [], templateIndex, { group, allowEnchantedItem: false });
-        },
-        icons: { getTexture, uploadRecord, textures: renderer.textures },
-        entity: playerEntity,
-        onClose: () => closeSpellWindow(potionWin),
-      });  potionWin = enhancedWindow(potionWin, 'potionMaker');   // PORT4: the enhanced skin's face; the classic window unchanged
+      const hooks = potionMakerHooks({ player: playerEntity, surface: surfacePlayer, icons: { getTexture, uploadRecord, textures: renderer.textures }, onClose: () => closeSpellWindow(potionWin) });
+      if (!hooks.stocked()) return { rows: rows(NO_POTION_INGREDIENTS), closesWindow: true };
+      potionWin = enhancedWindow(new PotionMakerWindow(hooks), 'potionMaker');   // PORT4: the enhanced skin's face; the classic window unchanged
       return mountServiceWindow(potionWin);   // QUESTOR-SAID: handed back, as the book's - a null read "not available yet" over it
     }
     // M4: the item maker, the Mages Guild's own enchanter. M4 wired
@@ -8579,7 +8525,7 @@ export function createWorldModes(host) {
     // TR5: TransportManager.HandleTransition (:196-202) - a BUILDING
     // interior puts you back on foot. The law shipped in TR1 with no
     // caller; this is it.
-    let _hccLanded = false;   // HCC: OnTransitionInterior fired, else OnFailedTransition on the way out
+    let _hccLanded = (markInteriorLoad(true), false);   // HCC: OnTransitionInterior fired, else OnFailedTransition on the way out. The comma raises the load ring as the door starts; the flag stays false.
     host.onPreTransition?.();   // AUDIT PSCALE1 NET-3: my foes to the players outside, before the door takes me
     host.horseCart?.()?.handlePreTransition({ type: 'ToBuildingInterior', door: hccDoorOf(hit) });   // HCC: OnPreTransition [IL_98f0] - the wagon's parking pose and the door's distance, BEFORE the dismount reads the mode
     unleveledLootPreTransition();   // UL1: OnPreTransition (TransitionInterior) - a listener beside TransportManager's HandleTransition, the raise itself is one
@@ -8872,7 +8818,7 @@ export function createWorldModes(host) {
       betterAmbience.onTransition({ building: true });   // BA1: OnTransitionInterior - the fog off, the 2D rain source   // AUDIT 62 F16/F28: the lock never outlives a mode change - the foe pool and the coordinate frame both change here, and lockOn breaks only on death, a null chest or 32 m, none of which fire for a street foe you walked away from through a door (the interior is parented at the building's world matrix, so it stays metres away).
       console.log(`interior: ${ctx.drawList.length} draws, ${ctx.doors.length} doors, ${ctx.lights.length} lights, ${ctx.people.length} people`);
     } finally {
-      transitioning = false;
+      transitioning = markInteriorLoad(false);   // the ring goes with the door, landed or not
       if (!_hccLanded) host.horseCart?.()?.handleFailedTransition({ type: 'ToBuildingInterior' });   // HCC: OnFailedTransition [IL_9c0c] - the pending deployment is undone, the team is back with the player
     }
     return true;
@@ -10549,7 +10495,7 @@ export function createWorldModes(host) {
     // (FrictionMotor :75-81, AcrobatMotor :135-141, WeaponManager
     // :235-239), which is the fold world.js and exterior.js took; the
     // dungeon arm keeps its context read, the same answer one seam over.
-    const paralyzed = staffFrozen() || ((mode === 'dungeon' && dungeonCtx) ? (dungeonCtx.playerParalyzed?.() ?? false) : entityIsParalyzed(playerEntity));   // STAFF-PANEL5-FREEZE: a staff freeze holds the motor as paralysis does
+    const paralyzed = staffFrozen() || playerHeld() || ((mode === 'dungeon' && dungeonCtx) ? (dungeonCtx.playerParalyzed?.() ?? false) : entityIsParalyzed(playerEntity));   // STAFF-PANEL5-FREEZE: a staff freeze holds the motor as paralysis does
     // A6: FrictionMotor.GroundedMovement's head-dip guard reads
     // IsParalyzed itself (:90-93) - the zeroed input bag below is
     // the movement half of the same law, not this one.
@@ -14086,10 +14032,14 @@ export function createWorldModes(host) {
     },
     /** PROF12 (bible/06-Systems/Professions-Arc.md 9.3; professionLaw ALCHEMY_FEE): THE ALCHEMY STATION THE PLAYER STANDS AT -
      *  an Alchemist's, open for trade (its use fee, ALCHEMY_FEE gold a brew or a transmutation), or their own home's alchemy
-     *  station (a hall member's) - or null. The station's DFU potion maker stays the station's own press (useDecorStation) - beside the brew, online (STATION-DOOR). */
+     *  station (a hall member's) - or null. The station's DFU potion maker stays the station's own press (useDecorStation) - beside the brew, online (STATION-DOOR).
+     *  POTION-DOOR (Professions-Arc 52): and a Mages Guild hall - the house of DFU's own Make Potions, whose maker brews
+     *  there now (scenes/potionMakerHost.js), at the Alchemist's fee. */
     alchemyHere() {
       if (mode !== 'interior' || !interiorBuilding) return null;
       if (interiorBuilding.buildingType === BUILDING_TYPES.Alchemist) return interiorBuilding.insideOpenShop === false ? null : { kind: 'shop', fee: ALCHEMY_FEE };
+      if (interiorBuilding.buildingType === BUILDING_TYPES.GuildHall && interiorBuilding.factionId
+        && guildGroupOfFaction(townTalk?.factionDict ?? null, interiorBuilding.factionId) === GUILD_GROUPS.MagesGuild) return { kind: 'shop', fee: ALCHEMY_FEE };
       if (stationOwnerHere() && interiorDecor.list().some((p) => p?.station === 'alchemy')) return { kind: 'home', fee: 0 };
       if (hallMemberHere() && interiorDecor.list().some((p) => p?.station === 'alchemy')) return { kind: 'home', fee: 0 };   // AUDIT GUILD1d A2's law
       return caravanGuestStation('alchemy');   // WAGONS2-VISIT: and a caravan's, its visitor's

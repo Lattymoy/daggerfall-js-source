@@ -18,9 +18,11 @@
 //     locked one - and never a piece the ladder did not grade (DFU's own
 //     magic items, a made one), so shards come from what was FOUND.
 //   - THE REFORGE: one line of a known Magic or Rare piece - or an
-//     Exalted Legendary's own extra line - rolled again
-//     (lootRarity.js reforgeAffix), for shards and gold; once a piece is
-//     reforged, only that line again.
+//     Exalted Legendary's own extra line - REPLACED by a line of another
+//     kind (lootRarity.js reforgeAffix), for shards and gold. REFORGE-
+//     REPLACE (2026-10-25, the owner: "Replace, price rises"): any line,
+//     as often as the purse allows, the price doubling with every reforge
+//     the piece has taken (reforgePrice, as the hone's does).
 //   - LOOT17 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 9):
 //     THE HONE - a line taken up its own band, never lower (lootRarity.js
 //     honeAffix), the price doubling with every hone on the piece.
@@ -36,7 +38,11 @@
 // nothing is reforged.
 // ═══════════════════════════════════════════════════════════════════
 
-import { lootRarityOn, reforgeableLines, reforgeAffix, honeableLines, honeAffix, affixBand } from './loot/lootRarity.js';   // LOOT17: and the hone
+import { lootRarityOn, reforgeableLines, reforgeAffix, reforgeCount, honeableLines, honeAffix, affixBand } from './loot/lootRarity.js';   // LOOT17: and the hone; REFORGE-REPLACE: the reforges a piece has taken
+import { applyRarity, rarityEligible, AFFIX_KINDS, isCursed, addTechniqueLine } from './loot/lootRarity.js';   // LOOT-GATE: the Imbue; AUDIT UPDATE L2: a kept technique in its new band
+import { itemLawFindings } from './loot/loot.js';   // AUDIT UPDATE L2: the item law's word on what the Imbue made
+import { sigilFloor } from './sigil/sigil.js';   // AUDIT UPDATE L2: a won sigil at its new tier's floor
+import { itemBaseValue } from './item/itemTemplates.js';   // AUDIT UPDATE L5: the price a piece with none stood at
 import { rarityOf } from './loot/lootRarity.js';   // FB1012d SALVAGE-CLASSIC: the tier a piece's card wears
 import { ALL_GEM_IDS, SOCKET_EMPTY, gemKindOf, gemGrade, hasSocket, socketsOf, socketGem, socketGems, setGem, unsetGem, gemWorthOf } from './loot/lootRarity.js';
 import { PATRON_COUNTER_MARK, COUNTER_PAID_MARK, COUNTER_VALUE_MARK } from '../net/patronLaw.js';   // AUDIT TOWN-ECON 2 PRICE-2: a set stone's counter mark   // LOOT20: the sockets; GEM1: a list of them, every grade of gem
@@ -45,7 +51,7 @@ import { welkyndShards, isWelkyndShard, WELKYND_SHARD } from './gate/gateSpoils.
 import { isBound } from './item/itemBound.js';
 import { isLocked } from './item/itemLock.js';
 import { isEquipped, notifyEquipChange } from './equip.js';   // GEM1: a worn piece's wearer folded again
-import { addItem, isEnchanted } from './inventory.js';   // AUDIT GEM: an enchanted gem is no loose stone
+import { addItem, isEnchanted, isSummoned } from './inventory.js';   // AUDIT GEM: an enchanted gem is no loose stone
 import { totalGoldAmount, deductGold } from './court.js';
 import { itemIsIdentified } from './tradeModes.js';
 import { noteAct } from './questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
@@ -139,21 +145,25 @@ export function spendShards(items, n) {
 export const shardsText = (n) => `${n} ${WELKYND_SHARD.name}${n === 1 ? '' : 's'}`;
 
 // ── the Reforge ─────────────────────────────────────────────────────
-/** What a reforge costs, by the piece's tier: shards and gold. */
+/** What a piece's first reforge costs, by its tier: shards and gold. */
 export const REFORGE_PRICE = Object.freeze({
   magic: Object.freeze({ shards: 2, gold: 100 }),
   rare: Object.freeze({ shards: 4, gold: 400 }),
   exalted: Object.freeze({ shards: 10, gold: 2000 }),
 });
-/** A piece's price, or null for one the Reforge does not take. */
+/** A piece's next reforge's price, or null for one the Reforge does not take. REFORGE-REPLACE: its tier's first price
+ *  doubled for every reforge the piece has taken (lootRarity.js reforgeCount - an old piece's one-line mark counts as
+ *  one), as the hone's doubles with every hone (honePrice): each reforge on a piece costs more than the last. */
 export function reforgePrice(item) {
-  if (item?.rarity === 'magic' || item?.rarity === 'rare') return REFORGE_PRICE[item.rarity];
-  if (item?.rarity === 'legendary' && item.exalted === true) return REFORGE_PRICE.exalted;
-  return null;
+  const base = item?.rarity === 'magic' || item?.rarity === 'rare' ? REFORGE_PRICE[item.rarity]
+    : item?.rarity === 'legendary' && item.exalted === true ? REFORGE_PRICE.exalted : null;
+  if (!base) return null;
+  const twice = 2 ** reforgeCount(item);
+  return { shards: base.shards * twice, gold: base.gold * twice };
 }
 /** Why a line of a piece may not be reforged now, or null: 'off', 'not' (no tier the Reforge takes, or no line it may
- *  roll), 'unknown' (not yet identified), 'worn', 'line' (a line it may not take - a record's, or not the line the
- *  piece was reforged on), 'shards', 'gold'. `player` is the payer: `{ items, goldPieces }`. */
+ *  roll), 'unknown' (not yet identified), 'worn', 'line' (a line it may not take - a record's, or one nothing else can
+ *  replace - REFORGE-REPLACE), 'shards', 'gold'. `player` is the payer: `{ items, goldPieces }`. */
 export function reforgeRefusal(item, index, player) {
   if (!lootRarityOn()) return 'off';
   const price = reforgePrice(item);
@@ -211,6 +221,88 @@ export function honePiece(item, index, player, rolls = Math.random) {
   deductGold(player, gold);
   return { ok: true, line, price };
 }
+// ── LOOT-GATE: the Imbue ───────────────────────────────────────────
+// LOOT-GATE (2026-10-25, Dudey: "we need a gold sink"; "without my level", "15k gold is gate enough"): a press at the
+// Mages Guild's Reforge that raises a piece one tier at a flat price, at any level: plain to Magic, Magic to Rare. Never
+// to Legendary - a Legendary is found, never bought. Its lines are rolled fresh, as a found one's are; a technique line
+// stays, last. The piece is marked `imbued`, and a counter pays for the piece it was (lootRarity.js
+// craftedRarityWorth), so buying a tier and selling it never prints gold.
+
+/** The prices, the same at every level. */
+export const IMBUE_PRICE = Object.freeze({
+  magic: Object.freeze({ shards: 2, gold: 2500 }),
+  rare: Object.freeze({ shards: 6, gold: 15000 }),
+});
+/** What a purse lacks for a price - 'shards', 'gold' - or null. */
+const shortOf = (player, p) => (shardsHeld(player?.items) < p.shards ? 'shards' : totalGoldAmount(player) < p.gold ? 'gold' : null);
+/** Pay a price off a purse: the shards, then the gold. */
+const payFor = (player, p) => { spendShards(player.items, p.shards); deductGold(player, p.gold); };
+
+/** The tier an Imbue raises a piece to, or null: a plain piece the ladder could grade becomes Magic, a found Magic one
+ *  Rare. Never a made piece (its record is its maker's), DFU's own magic, a quest's item or an artifact. */
+export function imbueTarget(item) {
+  if (!item || typeof item.provenance === 'string' || item.questItem || item.artifact || isSummoned(item)) return null;   // AUDIT UPDATE II A5: nor a conjured piece - it vanishes at its hour, the price with it
+  if (item.rarity == null) return rarityEligible({ ...item, equipSlot: null }) ? 'magic' : null;   // worn is the refusal's word, not the target's
+  if (item.magic) return null;
+  if (makerRows(item)) return null;   // AUDIT UPDATE L3: the Item Maker's rows on a found Magic piece - the Rare's flavour would write over them
+  return item.rarity === 'magic' ? 'rare' : null;
+}
+/** AUDIT UPDATE L3: an enchantment row a Magic piece carries that is not its curse's drawback - a found Magic piece rolls
+ *  none (lootRarity.js applyRarity: the Rare's flavour alone), so it is one the Item Maker laid. */
+const makerRows = (item) => (Array.isArray(item.enchantments) ? item.enchantments : [])
+  .some((e) => !(item.cursed && e?.type === item.cursed.type && e?.param === item.cursed.param));
+/** What an Imbue costs, or null for a piece it does not take. */
+export function imbuePrice(item) {
+  const t = imbueTarget(item);
+  return t ? { ...IMBUE_PRICE[t] } : null;
+}
+/** Why a piece may not be imbued now, or null: 'off', 'not', 'unknown', 'locked', 'worn', 'cursed', 'set',
+ *  'shards', 'gold'. */
+export function imbueRefusal(item, player) {
+  if (!lootRarityOn()) return 'off';
+  const target = imbueTarget(item);
+  if (!target) return 'not';
+  if (item.rarity && !itemIsIdentified(item)) return 'unknown';
+  if (isLocked(item)) return 'locked';
+  if (isEquipped(item)) return 'worn';
+  if (isCursed(item)) return 'cursed';
+  if (socketGems(item).length) return 'set';
+  return shortOf(player, /** @type {{ shards: number, gold: number }} */ (imbuePrice(item)));
+}
+/** THE IMBUE, MADE: paid at its price, the piece rolled at its new tier. Answers `{ ok: true, tier, price }` or
+ *  `{ ok: false, reason }` with nothing taken. */
+export function imbuePiece(item, player, rolls = Math.random) {
+  if (!player || !Array.isArray(player.items) || !player.items.includes(item)) return { ok: false, reason: 'gone' };
+  const why = imbueRefusal(item, player);
+  if (why) return { ok: false, reason: why };
+  const tier = /** @type {'magic'|'rare'} */ (imbueTarget(item));
+  const price = /** @type {{ shards: number, gold: number }} */ (imbuePrice(item));
+  const kept = (item.affixes ?? []).filter((a) => AFFIX_KINDS[a?.id]?.technique);
+  const was = structuredClone(item);   // AUDIT UPDATE L2: whole, so a refused piece is put back exactly
+  const lawBefore = new Set(itemLawFindings(item));
+  const before = Number.isFinite(item.value) ? item.value : itemBaseValue(item);   // AUDIT UPDATE L5: the price it stood at
+  if (tier === 'rare') {
+    // the Magic tier's marks go with its lines
+    for (const k of ['rarity', 'reforged', 'reforges', 'honed']) delete item[k];   // REFORGE-REPLACE x MAIN: and the reforges it took
+    item.affixes = [];
+  }
+  const putBack = () => { for (const k of Object.keys(item)) delete item[k]; Object.assign(item, was); };
+  try {
+    applyRarity(item, tier, rolls);
+    // AUDIT UPDATE L2: what the piece keeps, at its new tier's law - a technique rolled again in the new band (the law
+    // reads a Rare's line by the Rare's band), a won sigil at least at the new tier's floor
+    if (item.rarity === tier) for (const a of kept) addTechniqueLine(item, rolls, { id: a.param });
+    if (item.rarity === tier && Number.isFinite(item.sigil?.power)) item.sigil = { ...item.sigil, power: Math.max(item.sigil.power, sigilFloor(tier, item.sigil.party)) };   // AUDIT UPDATE II A2: a set's sigil is no blow - it has no power to raise
+    item.imbued = true;
+    item.imbueWorth = (Number.isInteger(was.imbueWorth) ? Math.max(0, was.imbueWorth) : 0) + Math.max(0, Math.round((Number.isFinite(item.value) ? item.value : before) - before));   // AUDIT UPDATE L5: what a counter takes off (lootRarity.js craftedRarityWorth); AUDIT UPDATE II A7: a second Imbue's added to the first's
+    item.isIdentified = true;   // the guild made it - nothing to identify
+    // AUDIT UPDATE L2: a piece the item law would hold (the judge's own reading) is never made - put back, nothing paid
+    if (item.rarity !== tier || itemLawFindings(item).some((f) => !lawBefore.has(f))) { putBack(); return { ok: false, reason: 'not' }; }
+  } catch (err) { putBack(); throw err; }   // AUDIT UPDATE II A9: a throw after the roll leaves the piece as it was, nothing paid
+  payFor(player, price);
+  return { ok: true, tier, price };
+}
+
 // ── LOOT20: the sockets ──────────────────────────────────────────────
 /** GEM1 (bible/06-Systems/Gem-Sockets.md section 3): SETTING IS FREE - the gem is the price, in the pack or at the
  *  Reforge alike (LOOT20 charged the guild's 100 gold, when the guild was the only door). What the Reforge alone does is
@@ -319,18 +411,23 @@ export function extractGemPiece(item, player, at = null) {
   refold(item, player);
   return { ok: true, gem, price };
 }
-/** THE REFORGE, MADE: paid (the shards, then the gold - DFU's purse-then-letters law), the line rolled again. Answers
+/** THE REFORGE, MADE: paid at the price before it (the shards, then the gold - DFU's purse-then-letters law), the line
+ *  replaced and the reforge counted (REFORGE-REPLACE: so the next costs twice). Answers
  *  `{ ok: true, line, price }` or `{ ok: false, reason }` with nothing taken. */
 export function reforgePiece(item, index, player, rolls = Math.random) {
   if (!player || !Array.isArray(player.items) || !player.items.includes(item)) return { ok: false, reason: 'gone' };
   const why = reforgeRefusal(item, index, player);
   if (why) return { ok: false, reason: why };
   const price = /** @type {{ shards: number, gold: number }} */ (reforgePrice(item));
-  const before = { affixes: item.affixes, name: item.name, value: item.value, reforged: item.reforged };
+  const before = { affixes: item.affixes, name: item.name, value: item.value, reforged: item.reforged, reforges: item.reforges };
   const line = reforgeAffix(item, index, rolls);
-  if (!line) { Object.assign(item, before); if (before.reforged === undefined) delete item.reforged; return { ok: false, reason: 'not' }; }
+  if (!line) {
+    Object.assign(item, before);
+    for (const k of /** @type {const} */ (['reforged', 'reforges'])) if (before[k] === undefined) delete item[k];
+    return { ok: false, reason: 'not' };
+  }
   spendShards(player.items, price.shards);
   deductGold(player, price.gold);
-  noteAct('piece-reforged');   // QL11: a piece reforged - paid, its line rolled again
+  noteAct('piece-reforged');   // QL11: a piece reforged - paid, its line replaced
   return { ok: true, line, price };
 }

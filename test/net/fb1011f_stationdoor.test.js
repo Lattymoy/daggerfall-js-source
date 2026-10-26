@@ -190,5 +190,5 @@ test('STATION-DOOR: the Stores page opened from the station scrolls to its secti
 
 test('STATION-DOOR: the Professions page says where the act is done - the Stores page', () => {
   assert.match(ENCHANTING_HOW(0), /^Enchanting improves as you break crafted pieces down into Arcane Essence at an enchanting station, in a Mages Guild hall or your own home, from the Stores page\./);   // VOICE1 (PIN MOVED): the same law in plain words
-  assert.match(ALCHEMY_HOW, /^Brew at an alchemy station \(an Alchemist's or your own home\) from the Stores page/);   // VOICE1 (PIN MOVED): the same law in plain words
+  assert.match(ALCHEMY_HOW, /^Brew at an alchemy station \(an Alchemist's, a Mages Guild hall or your own home\) from the Stores page/);   // VOICE1 (PIN MOVED): the same law in plain words; POTION-DOOR (PIN MOVED): a Mages Guild hall a station
 });

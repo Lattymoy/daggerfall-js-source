@@ -116,6 +116,7 @@ export const EVENT_BOARD_TEXT = Object.freeze({
   superLive: () => t('events.super.live', 'It fades away unbeaten when this runs out'),
   /** A raid's rows. */
   raid: (town) => t('events.raid.title', 'Raid on {town}', { town }),
+  raidKind: (kind, town) => t('events.raid.titleKind', '{kind}: {town}', { kind, town }),   // AUDIT WORLD-EVENTS L5-13: a raid of a kind (RAID5)
   raidComing: (party) => t('events.raid.coming', '{party} gather to attack', { party }),
   raidLive: (party) => t('events.raid.live', '{party} attacking', { party }),
   raidCount: (n, of) => t('events.raid.count', 'Raiders down: {n} of {of}', { n, of }),
@@ -163,9 +164,11 @@ function raidRow(r, now, src, soonMs) {
   const type = String(r.type ?? '');
   const party = EVENT_PARTY_TEXT[type]?.() ?? (capital(type) || null);
   const live = r.startMs <= now;
-  const count = live && Number.isFinite(r.n) && Number.isFinite(r.tg) && r.tg > 0 ? EVENT_BOARD_TEXT.raidCount(Math.min(r.n, r.tg), r.tg) : null;
+  const counted = live && Number.isFinite(r.n) && Number.isFinite(r.tg) && r.tg > 0 ? EVENT_BOARD_TEXT.raidCount(Math.min(r.n, r.tg), r.tg) : null;
+  const count = live && r.obj ? [r.obj, counted].filter(Boolean).join(' - ') : counted;   // RAID5: its kind's objective first (systems/raidingParties.js raidTimerList)
+  const kindOn = live && r.obj && r.kind;   // AUDIT WORLD-EVENTS L5-13: the kind in the row's title, its objective alone before the count (the detail line ran out of room)
   return {
-    id: r.key ? `raid:${r.key}` : `raid:${r.name}:${r.startMs}`, kind: 'raid', title: EVENT_BOARD_TEXT.raid(r.name), where: r.region || null,
+    id: r.key ? `raid:${r.key}` : `raid:${r.name}:${r.startMs}`, kind: 'raid', title: kindOn ? EVENT_BOARD_TEXT.raidKind(r.kind, r.name) : EVENT_BOARD_TEXT.raid(r.name), where: r.region || null,
     detail: count ?? (party ? (live ? EVENT_BOARD_TEXT.raidLive(party) : EVENT_BOARD_TEXT.raidComing(party)) : null),
     live, at: live ? r.endMs : r.startMs, way, since: live ? r.startMs : r.startMs - soonMs,
     announce: (!!src?.region && r.region === src.region) || (!!way && way.m <= EVENT_RAID_REACH_M),

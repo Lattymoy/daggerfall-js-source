@@ -9,7 +9,10 @@ import assert from 'node:assert/strict';
 
 import { standService, T0 } from '../accountDb.mjs';
 import { xpForRank } from '../../src/net/professionLaw.js';
-import { FIRST_CRAFT_XP } from '../../src/net/recipeLaw.js';
+import { firstCraftXp, recipeById, FIRST_MAKE_SHARE } from '../../src/net/recipeLaw.js';
+/** FIRST-BUDGET (Professions-Arc 52): a garment's first, Outfitting's first-make share asked as own - 511, the least that
+ *  brings Outfitting to Master in Smithing's crafts (CLOTH-GEMS says whether a first pays, the share how much). */
+const FIRST_CRAFT_XP = firstCraftXp(recipeById('garment-141:linen'), true);
 import { utcDay } from '../../src/net/marksLaw.js';
 
 const NOON = utcDay(T0) * 86_400 + 12 * 3600;
@@ -60,12 +63,13 @@ test('CLOTH-GEMS service: AUDIT 32 S1 JUDGES THE UNITS - Linen Straps of the loo
   assert.equal((await work('weave:linen-north', 1)).status, 200);
   const straps = await craft('garment-141:linen');
   assert.equal(straps.status, 200, JSON.stringify(straps.body));
-  assert.deepEqual([straps.body.xp, straps.body.first, straps.body.firstPaid, xpOf('outfitting')], [20 + FIRST_CRAFT_XP, true, true, 520], 'the loom\'s own Linen: the 500');
+  assert.deepEqual([straps.body.xp, straps.body.first, straps.body.firstPaid, xpOf('outfitting')], [20 + FIRST_CRAFT_XP, true, true, 20 + FIRST_CRAFT_XP], 'the loom\'s own Linen: its first');
+  assert.equal(FIRST_CRAFT_XP, FIRST_MAKE_SHARE.outfitting, 'PIN MOVED (FIRST-BUDGET): Outfitting\'s share, 511');
   fund(100);
   const buy = await s.call('/v1/prof/stock', { character: mac.character, material: 'cloth:linen', qty: 1, rid: rid() }, mac.secret);
   assert.deepEqual([buy.status, stores('cloth:linen')], [200, [['bought', 1]]]);
   const armbands = await craft('garment-142:linen');
-  assert.deepEqual([armbands.status, armbands.body.xp, armbands.body.first, armbands.body.firstPaid, xpOf('outfitting')], [200, 20, true, false, 540], 'the Weavers\' Linen: its first recorded, no 500');
+  assert.deepEqual([armbands.status, armbands.body.xp, armbands.body.first, armbands.body.firstPaid, xpOf('outfitting')], [200, 20, true, false, 40 + FIRST_CRAFT_XP], 'the Weavers\' Linen: its first recorded, none laid on');   // PIN MOVED (FIRST-BUDGET): the Straps' first and the Armbands' 20
   // Wool: one bought beside six own - the station spends the bought first, so the rug's first pays none
   setXp('outfitting', xpForRank(10));
   give('hide:boar', 'own', 12);
@@ -82,5 +86,5 @@ test('CLOTH-GEMS service: AUDIT 32 S1 JUDGES THE UNITS - Linen Straps of the loo
   assert.deepEqual([net.status, net.body.xp, net.body.first, net.body.firstPaid], [200, 20, true, false], 'loose cloth: no 500');
   // the record: each first recorded, the 500 where it paid
   const rows = s.env.DB._raw.prepare('SELECT recipe, xp, first FROM prof_crafts WHERE player = ? ORDER BY at, rowid').all(mac.id).map((r) => [r.recipe, Number(r.xp), Number(r.first)]);
-  assert.deepEqual(rows, [['garment-141:linen', 520, 1], ['garment-142:linen', 20, 1], ['rug-237:wool', 40, 1], ['tapestry-243:wool', 540, 1], ['fishingnet:linen', 20, 1]]);
+  assert.deepEqual(rows, [['garment-141:linen', 20 + FIRST_CRAFT_XP, 1], ['garment-142:linen', 20, 1], ['rug-237:wool', 40, 1], ['tapestry-243:wool', 40 + FIRST_CRAFT_XP, 1], ['fishingnet:linen', 20, 1]]);   // PIN MOVED (FIRST-BUDGET): Outfitting's share
 });

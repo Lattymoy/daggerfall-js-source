@@ -1,0 +1,65 @@
+name: Durable Objects awake
+
+# COST-0 (2026-10-24, the owner's bill: about $90 a day, $50 of it Durable Objects compute duration) - HOW MANY ROOMS ARE
+# AWAKE, READ BY THE OPERATOR. Run it by hand from the Actions tab; the run's summary carries Cloudflare's own count of
+# each object's active time (GraphQL durableObjectsPeriodicGroups): what the account's schema exposes, then for each of
+# the last days how many objects were awake and how many past 22 hours, the object-days and their cost, the hours-a-day
+# histogram and the objects awake longest. The questions are tools/doActive.mjs's, tested in test/server/doactive.test.js
+# - not written again here. It READS ONLY. relay-load.yml reads the relay's own metrics.
+
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "How many whole days back to read (1 to 7)."
+        required: false
+        default: "7"
+        type: string
+
+permissions:
+  contents: read
+
+# Its own group, never the deploy's (d1-load.yml's law).
+concurrency:
+  group: do-active
+  cancel-in-progress: false
+
+jobs:
+  read:
+    runs-on: ubuntu-latest
+    # some twenty questions of a minute's bound each - a hung call never holds a runner for six hours
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    env:
+      # The input reaches the scripts as ENVIRONMENT, never pasted into them (account-recovery.yml's law); the tool
+      # refuses anything but whole days. The token is the two steps' that use it, never the job's (relay-load.yml's law).
+      DAYS: ${{ inputs.days }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Refuse to start without a token
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -z "${CLOUDFLARE_API_TOKEN}" ]; then
+            echo "::error::secrets.CLOUDFLARE_API_TOKEN is not set for this repository - nothing else in this job can work"
+            exit 1
+          fi
+          node tools/doActive.mjs --check "$DAYS" > /dev/null
+
+      - name: Read the objects' active time
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          acct=$(grep -oP '^account_id\s*=\s*"\K[^"]+' server/wrangler.toml)
+          echo "**Window: the last $(node tools/doActive.mjs --check "$DAYS") whole UTC day(s), to $(date -u +%Y-%m-%d) 00:00 UTC**" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          # the tool writes each part as it reads it, so a run that stops part way keeps the schema and the days it read
+          node tools/doActive.mjs --account "$acct" --days "$DAYS" >> "$GITHUB_STEP_SUMMARY"

@@ -74,8 +74,8 @@ export const REMOVE_REASONS = Object.freeze(['duplicated', 'duped-gold', 'bug-re
 const READ_ROW_S = 10 * 60;
 
 export const REALM_ROUTES = Object.freeze(['/v1/staff/trade-holds', '/v1/staff/findings', '/v1/staff/trade-hold', '/v1/staff/trade-unhold',
-  '/v1/staff/rollback', '/v1/staff/fix/repair', '/v1/staff/fix/mend', '/v1/staff/fix/bank', '/v1/staff/gains', '/v1/staff/market/pull',
-  '/v1/staff/market/remove', '/v1/staff/item/take', '/v1/staff/evidence', '/v1/staff/evidence/return', '/v1/staff/item/catalogue', '/v1/staff/item/give']);
+  '/v1/staff/rollback', '/v1/staff/fix/repair', '/v1/staff/fix/mend', '/v1/staff/fix/bank', '/v1/staff/fix/letter', '/v1/staff/gains', '/v1/staff/market/pull',
+  '/v1/staff/market/remove', '/v1/staff/item/take', '/v1/staff/item/purge-dupes', '/v1/staff/evidence', '/v1/staff/evidence/return', '/v1/staff/item/catalogue', '/v1/staff/item/give']);
 
 const LEVELS = Object.freeze(['low', 'medium', 'high']);
 const parse = (/** @type {unknown} */ t) => { try { return typeof t === 'string' ? JSON.parse(t) : null; } catch { return null; } };
@@ -520,6 +520,17 @@ export async function staffRealm(ctx, env, path, body, who, audit) {
     };
   }
 
+  if (path === '/v1/staff/fix/letter') {
+    // GUILD-LETTER-FIX (2026-10-25, mob: "do it"): review.js `letter` - a crime guild's letter sent again or called off,
+    // `{ ticket, guild, op, note }`; the playing tab's seat taken as a mend's
+    const note = noteOf(body.note);
+    const { ticket, guild, op } = body;
+    const detail = { ...ch, note, ticket: typeof ticket === 'string' ? ticket.slice(0, 64) : null, guild: typeof guild === 'string' ? guild.slice(0, 8) : null, op: typeof op === 'string' ? op.slice(0, 8) : null };
+    if (!note) return said('fix-letter', row.player, detail, { error: 'staff-note' });
+    const r = await reviewAct(c, me, env, 'letter', { id: row.id, note, ticket, guild, op });
+    return said('fix-letter', row.player, r.error ? detail : { ...detail, was: r.was, repeat: r.repeat }, r.error ? r : { ...r, playing: playing(row) });
+  }
+
   if (path === '/v1/staff/fix/repair' || path === '/v1/staff/fix/mend' || path === '/v1/staff/fix/bank') {
     // review.js `repair` and `mend`, as buttons with a note instead of scripts (design doc "Fix account"). STAFF-SET-BANK
     // (2026-10-23, mob: "we need a set bank setting"): and `bank` - the bank the profile says (`banks`, the total it was
@@ -536,6 +547,7 @@ export async function staffRealm(ctx, env, path, body, who, audit) {
     return said(`fix-${act}`, row.player, { ...detail, ...landed }, r.error ? r : { ...r, playing: playing(row) });
   }
 
+  if (path === '/v1/staff/item/purge-dupes') return purgeDupes();
   if (path === '/v1/staff/item/take') return takeAct();
   if (path === '/v1/staff/item/give') return giveAct();
   return { error: 'not-found' };
@@ -579,6 +591,72 @@ export async function staffRealm(ctx, env, path, body, who, audit) {
     }
     await dropObjects(c.bucket, [prep.prev]);
     return said('item-give', row.player, { ...detail, from: row.seq, to: prep.seq }, { ok: true, seq: prep.seq, piece: g.item, playing: playing(row) });
+  }
+
+  /**
+   * DESTROY EVERY COPY MARKED ON THIS CHARACTER (the panel's button): the ledger's `item_dupes` rows for this character,
+   * every one of those pieces in the record, and the same uids in chests of homes this account owns. Not kept for Put
+   * back, and no trail check - a hundred flagged rares is the case the one-piece Remove cannot clear. A chest in a home
+   * this account does not own keeps its row. The record is seized even when the preview found nothing in it: a withdraw
+   * can move a flagged chest row into the save after that read, and the sequence guard is what refuses the purge then.
+   */
+  async function purgeDupes() {
+    const act = 'purge-dupes';
+    const refuse = (/** @type {string} */ error) => body.confirm === true ? said(act, row.player, { ...ch }, { error }) : { error };
+    if (row.dead_at != null) return refuse('dead');
+    if (!c.bucket || !row.obj) return refuse('no-data');
+    const save = parse(await realmSaveTextOf(await c.bucket.get(row.obj)));
+    if (!save || typeof save !== 'object') return refuse('no-data');
+    const flagged = /** @type {{ uid: string }[]} */ ((await db.prepare('SELECT uid FROM item_dupes WHERE char_id = ?1').bind(row.id).all())?.results ?? []);
+    const keys = flagged.map((d) => d.uid).filter((u) => typeof u === 'string');
+    const keySet = new Set(keys);
+    let held = 0;
+    for (const list of possessedItemLists(save)) for (const it of list) if (keySet.has(ledgerKeyOf(it))) held++;
+    let bins = 0;
+    for (let i = 0; i < keys.length; i += 80) {
+      const part = keys.slice(i, i + 80);
+      const m = part.map((_, j) => `?${j + 2}`).join(', ');
+      const n = await db.prepare(`SELECT COUNT(*) AS n FROM decor_bin b WHERE b.uid IN (${m}) AND EXISTS (SELECT 1 FROM homes h WHERE h.map_id = b.map_id AND h.building_key = b.building_key AND h.player = ?1)`).bind(row.player, ...part).first();
+      bins += Number(n?.n ?? 0);
+    }
+    if (body.confirm !== true) {
+      await audit('purge-dupes-check', row.player, ch, { onceIn: READ_ROW_S }).run();
+      return { character: { id: row.id, name: row.name, account: accountOf(row) }, seq: row.seq, playing: playing(row), dupes: keys.length, held, bins };
+    }
+    const reason = REMOVE_REASONS.includes(body.reason) ? body.reason : null;
+    const note = noteOf(body.note);
+    const detail = { ...ch, reason, note, dupes: keys.length, held, bins };
+    if (!reason) return said(act, row.player, detail, { error: 'staff-reason' });
+    if (!note) return said(act, row.player, detail, { error: 'staff-note' });
+    if (!keys.length) return said(act, row.player, detail, { error: 'no-dupes' });
+    if (body.seq !== row.seq) return said(act, row.player, detail, { error: 'seq' });
+    const seized = await seizeRealmRecord(c, row.player, row.id, (s) => {
+      const doomed = [];
+      for (const list of possessedItemLists(s)) for (const it of list) if (keySet.has(ledgerKeyOf(it))) doomed.push(it);
+      for (const it of doomed) takeOut(s, it);   // gear and a room's own piece are not the list the walk handed back
+      return null;
+    }, { take: true, escrow: false });
+    if ('error' in seized) return said(act, row.player, detail, { error: seized.error });
+    const steps = [...seized.steps];
+    const seq = seized.seq;
+    for (let i = 0; i < keys.length; i += 80) {
+      const part = keys.slice(i, i + 80);
+      const m = part.map((_, j) => `?${j + 2}`).join(', ');
+      steps.push(
+        db.prepare(`DELETE FROM item_dupes WHERE char_id = ?1 AND uid IN (${m})`).bind(row.id, ...part),
+        db.prepare(`DELETE FROM item_uids WHERE char_id = ?1 AND uid IN (${m})`).bind(row.id, ...part),
+        db.prepare(`DELETE FROM decor_bin WHERE uid IN (${m}) AND EXISTS (SELECT 1 FROM homes h WHERE h.map_id = decor_bin.map_id AND h.building_key = decor_bin.building_key AND h.player = ?1)`).bind(row.player, ...part),
+      );
+    }
+    steps.push(staffFinding(db, row, nowS, { act, by, note, reason, dupes: keys.length, held, bins, from: row.seq, to: seq }));
+    try {
+      await db.batch(steps);
+    } catch {
+      await dropIfUnnamed(db, c.bucket, row.player, row.id, seized.key);
+      return said(act, row.player, detail, { error: 'seq' });
+    }
+    await dropObjects(c.bucket, [seized.prev]);
+    return said(act, row.player, { ...detail, from: row.seq, to: seq }, { ok: true, seq, dupes: keys.length, held, bins, playing: false });
   }
 
   /**

@@ -41,7 +41,10 @@
 import {
   addItem, canHoldAmount, effectiveUnitWeightInKg, totalWeight, isSummoned,
   splitStack, GOLD_PIECE_WEIGHT_KG, goldPiecesOf, addGoldPieces, isGoldPieces, tellTaken,
+  findExistingStack, goldStack,
 } from '../inventory.js';
+import { LOOT_STACK_MAX } from '../loot/loot.js';   // GOLD-WIRE: the most one stack rides the room's word in
+import { isRoomCarried } from '../loot/roomCarriedList.js';   // GOLD-WIRE: whether the room's word carries the list a drop lands in
 import { isMap, isLightSource, isSpellbook } from '../useItem.js';   // AUDIT 26 F156/F157: the map interception + the lit-torch clear; KEEP-SPELLBOOK
 import { cannotRemoveItemText } from '../createItem.js';
 // AUDIT 26: DaggerfallEntity.MaxEncumbrance, enchantment allowance and
@@ -113,6 +116,8 @@ export const REFUSAL = Object.freeze({
    *  rather than clamped (:1272-1300), and the field simply does not
    *  take it. */
   badAmount: { reason: 'badAmount', text: null },
+  /** GOLD-WIRE: the gold pile in a container the room's word carries holds LOOT_STACK_MAX already (sharedGoldRoom). */
+  sharedGoldFull: { reason: 'sharedGoldFull', get text() { return sharedGoldFullText(); } },
 });
 
 /**
@@ -226,6 +231,17 @@ export const wagonFullGoldText = (n) => formatText(localizedText('wagonFullGold'
  *  refuses in its own words, the port's: DFU has no companion to name. */
 export const packFullText = (name) => `${name || 'Your companion'} cannot carry any more.`;
 export const packFullGoldText = (name, n) => `${name || 'Your companion'} could only carry ${n} gold pieces.`;
+/** GOLD-WIRE (FIELD BUGS 2026-10-25b): a container the room's word carries (loot/roomCarriedList.js) takes coin up to the
+ *  room left on the gold stack it lands on, in its own words - the port's: DFU has no other player to share one with. */
+export const sharedGoldText = (n) => t('items.gold.sharedRoom', 'Only {n, number} more gold pieces fit here. Everyone here shares this container, and one pile of gold in it holds no more than {max, number}.', { n, max: LOOT_STACK_MAX });
+export const sharedGoldFullText = () => t('items.gold.sharedFull', 'No more gold fits here. Everyone here shares this container, and one pile of gold in it holds no more than {max, number}.', { max: LOOT_STACK_MAX });
+/** GOLD-WIRE: how much more gold the stack a drop lands on may take in a list the room's word carries. The drop's addItem
+ *  merges the coin into findExistingStack's answer, and a stack past LOOT_STACK_MAX - the most one stack rides the room's
+ *  word in - made that word unreadable to everyone else in the room (portalStone.js portalStoneRoom's law, for coin). */
+export function sharedGoldRoom(remote) {
+  const onto = findExistingStack(remote, goldStack(1));
+  return Math.max(0, LOOT_STACK_MAX - (onto ? (onto.stackCount ?? 1) : 0));
+}
 /** AUDIT ECON C5: a storage whose keeper is gone (a quickload under his window that left him aboard) takes nothing - what
  *  it took would go into a list nothing keeps. */
 export const packGoneText = (name) => `${name || 'Your companion'} is no longer with you.`;
@@ -243,10 +259,15 @@ const packRefuses = (capacity, item, units, remote) => !!capacity.gone || canHol
  * read, because a screen holding an entity and a screen holding only
  * an item list both ask this.
  *
+ * GOLD-WIRE: `shared` - the room's word carries `remote` (by default,
+ * whether it is marked so) - clamps the amount to the room left on the
+ * gold stack it lands on (sharedGoldRoom), with a box that names it, as
+ * the wagon does. The port's own: DFU has no shared container.
+ *
  * @returns {{ok:true, amount:number, notice:string|null}
  *          |{ok:false, refusal:object, notice:string|null}}
  */
-export function planDropGold(text, { carried = 0, usingWagon = false, remote = [], groundRefusal = null, capacity = null, wagonKg = WAGON_KG_LIMIT } = {}) {
+export function planDropGold(text, { carried = 0, usingWagon = false, remote = [], shared = isRoomCarried(remote), groundRefusal = null, capacity = null, wagonKg = WAGON_KG_LIMIT } = {}) {
   if (groundRefusal && !usingWagon) return { ok: false, refusal: { reason: 'ground', text: groundRefusal }, notice: null };   // HOUSE-DROP: gold on a floor that refuses it
   // A numeric field of 8 opening on "0": anything that is not a run of
   // digits is not a number, and 0 fails the range below.
@@ -260,6 +281,12 @@ export function planDropGold(text, { carried = 0, usingWagon = false, remote = [
     const amount = Math.min(asked, canCarry);
     if (amount < 1) return { ok: false, refusal: packFull(capacity), notice };
     return { ok: true, amount, notice };
+  }
+  if (!usingWagon && shared) {
+    const room = sharedGoldRoom(remote);
+    const amount = Math.min(asked, room);
+    if (amount < 1) return { ok: false, refusal: REFUSAL.sharedGoldFull, notice: sharedGoldFullText() };
+    return { ok: true, amount, notice: asked > room ? sharedGoldText(room) : null };
   }
   if (!usingWagon) return { ok: true, amount: asked, notice: null };
   // :1296-1303 - the 750kg headroom in COINS, and the box names it.
@@ -587,7 +614,8 @@ function _applyTransfer(item, plan, from, to, rolls = Math.random, beforeLanding
   // droppable quest item into the wagon or the ground pile inserts at
   // that collection's front too, and DaggerfallTradeWindow's clicks
   // inherit the same member.
-  const held = addItem(to, moved, moved?.questItem ? 'front' : 'dontCare');
+  // A shared chest records each stack on its own. Merging here would add the count onto a pile the settle also stores.
+  const held = to?.unstacked === true ? (to.push(moved), moved) : addItem(to, moved, moved?.questItem ? 'front' : 'dontCare');
   afterLanding?.(moved, held);   // STOLEN-GOODS AUDIT S1: where the owner's piece came to rest - the record that holds it is theirs
   return moved;
 }

@@ -16,8 +16,8 @@
 //
 // THE BOOK IS READ HERE ONCE. The Firmament's book (net/firmament/firmamentBook.js) is read when its window opens; a
 // player who never opened it this session has a book that does not know its purses. So the tiles ask it once, and again
-// when the Renown level they see rises (a rise brings stars) or a read found no sky yet (BOOK_RETRY_MS), never more than once
-// in ASK_EVERY_MS.
+// when the Renown level they see rises (a rise brings stars), never more than once in ASK_EVERY_MS. A read the service
+// never answered the book asks again itself (firmamentBook.js FIRM-RETRY), on every HUD.
 
 import { skillsImprovable } from '../levelUp/levelNotice.js';
 import { firmamentBook } from '../../net/firmament/firmamentBook.js';
@@ -28,8 +28,6 @@ import { hudArranging } from './hudLayout.js';
 
 /** The fewest milliseconds between two reads of the book this module asks for. */
 export const ASK_EVERY_MS = 15_000;
-/** How long a book that answered no sky (no session yet, offline for a moment) waits before it is asked again. */
-export const BOOK_RETRY_MS = 120_000;
 
 /** The pause page a press on the stars opens (ui/growth/growthPages.js). */
 export const FIRM_PAGE = 'firmament';
@@ -71,8 +69,7 @@ export function askBookWhenDue(book, level, now) {
   if (now - _askedAt < ASK_EVERY_MS) return false;
   const unread = book.state?.open == null && _askedLevel == null;
   const rose = level != null && _askedLevel != null && level > _askedLevel;
-  const stale = book.state?.open !== true && now - _askedAt >= BOOK_RETRY_MS;   // a read that found no session yet (the boot's first frames)
-  if (!unread && !rose && !stale) { if (_askedLevel == null && level != null) _askedLevel = level; return false; }
+  if (!unread && !rose) { if (_askedLevel == null && level != null) _askedLevel = level; return false; }
   _askedAt = now;
   _askedLevel = level ?? _askedLevel ?? 0;
   try { book.read()?.catch?.(() => {}); } catch { /* the book's own failure is its word */ }

@@ -17,7 +17,7 @@ import {
   PROFESSIONS, DISCIPLINES, SPECIALISATIONS, SPEC_RANKS, trackOf, disciplinesOf, disciplineName, specDiscipline, specOk, specOf,
   professionName, isProfession, isGathering, craftXpCap, xpForRank, PROF_XP_MAX, smeltRecipe,
 } from '../../src/net/professionLaw.js';
-import { RECIPES, masterworkSpec, recipeById, FIRST_CRAFT_XP, craftXp, cookXp } from '../../src/net/recipeLaw.js';
+import { RECIPES, masterworkSpec, recipeById, firstCraftXp, craftXp, cookXp } from '../../src/net/recipeLaw.js';
 import { mintPieces } from '../../src/systems/smithItems.js';
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -43,7 +43,7 @@ test('CRAFT3 DONE WHEN: a Silver Ring and an Iron Dagger raise one Smithing trac
     assert.equal(r.ok, true, `${id}: ${JSON.stringify(r)}`);
     made.push([id, r.data.track.profession, r.data.xp]);
   }
-  const each = craftXp(1, 0, false) + FIRST_CRAFT_XP;
+  const each = craftXp(1, 0) + 500;   // PIN MOVED (FIRST-BUDGET): Smithing's first-make share, the 500 a first always paid it
   assert.deepEqual(made, [['ring:silver', 'smithing', each], ['dagger:iron', 'smithing', each]]);
   assert.equal(book.track('smithing').xp, 2 * each);
   assert.equal(book.track('jewelcrafting'), book.track('smithing'), 'a discipline\'s track its craft\'s');
@@ -203,7 +203,7 @@ test('CRAFT3 service: the merge\'s free change - no Marks, in effect at once, an
   const dish = await book.craft('stew:north', { clean: false, name: 'Mac' }, (data) => mintPieces(data));
   assert.equal(dish.ok, true, JSON.stringify(dish));
   assert.deepEqual([dish.data.track.profession, dish.data.xp, dish.data.track.xp], ['provisioning', 100, xpForRank(51) - 1], 'held one short of 51');
-  assert.ok(cookXp(50) + FIRST_CRAFT_XP > dish.data.xp, 'the cap is what held it');
+  assert.ok(cookXp(50) + firstCraftXp(recipeById('stew:north')) > dish.data.xp, 'the cap is what held it');   // PIN MOVED (FIRST-BUDGET)
 });
 
 test('CRAFT3 service source: every track read and credit is the craft\'s - the craft, the smelt, the brew, the seats\' choices; a free change its own row (source pins)', () => {

@@ -389,11 +389,12 @@
   {
     "name": "SEAT1b-relay-a-channel-ticks",
     "file": "server/src/index.js",
-    "old": "    if (isCellRoom(a.key) && cellRoomOfWire(m.p.x, m.p.z) === a.key && typeof met.sub === 'string' && met.sub) await this._watchTick(",
+    "old": "    if (isCellRoom(a.key) && inCover(a, cellRoomOfWire(m.p.x, m.p.z)) && typeof met.sub === 'string' && met.sub) await this._watchTick(",
     "new": "    if (typeof met.sub === 'string' && met.sub) await this._watchTick(",
     "tests": [
       "test/net/seat1b_client.test.js"
-    ]
+    ],
+    "note": "COST-2 3a (re-aimed by content: the cell-scoped law reads the socket's cover)."
   },
   {
     "name": "SEAT1b-client-a-halo-tick",

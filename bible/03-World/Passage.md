@@ -133,6 +133,83 @@ alone: the next player to stand the port stood her at her berth again, bookable 
 hears a word that says her (the booker gone from the room before they came, and nobody since who heard it) may still
 stand her - as a spent packet (AUDIT BAY A18).
 
+## Clear of other ships (FERRY-CLEAR, 2026-10-24)
+
+Discord, "Ferrys still unstable": *"Had several issues with the ferry ramming a neighbour ship till it broke, or running
+ashore."* Read in the code, the ramming was two faults together:
+
+- **Her master's hand saw only water.** The crossing's hand (OWS2, `world.js` tvSeaSail over `systems/seaHelm.js`) looked
+  for land along her bow, her beam and the mark's lane, and nothing else. A booked ship lies along the shore's line,
+  and the next berth's ship can lie on it a quarter of a hull's length past her stem (`shipLife.js` BERTH_SPACING, 1.25
+  lengths centre to centre); a first mark along the coast sent her straight into it. Now a ship's hull is as land to the hand: each of those looks stops at the
+  first hull of the sea's ships afloat, HULL_CLEAR_M (6 m) off her side (`systems/naval/seaClearance.js` hullAlong,
+  handed the sea's ships by the naval host - `navalHost.js` `hullAlong`), and the hand turns off it to the freer hand
+  and holds clear of it as it does an islet (AUDIT SHIPS A2's law, unchanged). Her centreline's look stays land's alone:
+  the landfall's "shore ahead" is the shore, never a ship lying off it. A look that starts within a ship's clearance
+  (alongside her) stops at her side and lets a look away from her go. Every crossing's hand has it - a booked ship's and
+  the traveller's own boat's.
+- **Her stem rammed as a boat of mine does.** The naval host's ram (`checkRams`, AUDIT NAV1 H11) counts the boat at the
+  player's helm, and a booked ship's boat is that boat: a ram's damage every RAM_COOLDOWN_S of the sea's clock, 0.6 of it
+  back on her, the other ship fouled - and the passenger charged with piracy for it. A booked ship's master never rams
+  now: her stem in another's side deals nothing and takes nothing back (Come Sail Away's collider still stops her there).
+
+Running ashore, as read and left: THE ARRIVAL is the landfall by design (The voyage, above) - she runs in on her oars
+anywhere within VOYAGE_LANDFALL_PX of her port, never to a quay there; berthing her at her port's quay is its own
+slice. Between the marks the hand's look is the only thing keeping her off land (the marks float; the run between them
+is not traced), and once beached Come Sail Away holds her where she lies - PASSAGE-PACE's ground outrun at x60
+(`01-Overview/bugs/Field-Bugs-2026-10-21d.md`) is still the next slice's. The x60 is RATE-LAW's, the owner's.
+
+Pinned by `test/systems/auditships_sail.test.js` FERRY-CLEAR (world.js's own hand lifted over Come Sail Away's real
+runtime: a ship moored dead ahead on her line, one across her leg and one off her bow, a galleon and a Carrack in three
+winds - eighteen arrivals, none of her ever inside either ship) and `test/systems/naval/ferryclear.test.js` (the real
+naval host: a booked ship's stem rams nothing, a boat of mine still does; the sea's ships handed to the hand);
+`tools/mutants/ferryclear.json` (8, all dead). Not a DFU member; Ledger A (PASSAGE).
+
+### AUDIT FERRY-CLEAR (2026-10-25)
+
+The owner: *"Audit"*. A cold lane on a frozen snapshot of the branch, given the ask and the files and never this
+record, lifted world.js's own hand over Come Sail Away's real runtime where FERRY-CLEAR's test had not gone - a
+landfall, a departure from a berth, ships under way - and measured. Each finding below failed on the snapshot and
+passes now. The lane's own measures (Come Sail Away's collider answering the ships' boxes), rerun on the final tree:
+a landfall past a ship moored off its shore lands, 8 of 8; a departure from a berth with the shore beside her and the
+next berth's ship off her line arrives clear, 16 of 16, and from a row of berths along the shore, 32 of 32; a ship met
+head on or overtaken, 24 of 24 clear; a ship crossing her course overlaps her on 3 legs of 108 (38 on the snapshot),
+and one more stopped for no way.
+
+- **F1 - a landfall rowed in through a ship moored off its shore.** The landfall's line was never looked along, and its
+  "shore ahead" let her run in to whatever stood there. The hand keeps the land and the hulls apart now: a hull close
+  ahead (`hullAhead`, `systems/seaHelm.js`) turns her off on every leg, a landfall's too, and a landfall's line to its
+  mark is read for its hulls alone (`world.js` tvSeaLandAlong's `'only'`) - the land a landfall runs in to is its
+  shore, a ship lying off it never is. The hulls are looked for from her bow and either beam (her middle's look is her
+  bow's, behind it - measured the same on every leg, so it is not kept).
+- **F2 - a departure froze beside the shore.** With the shore under a node of hers, Come Sail Away will not raise her
+  sails (`CanSail`), and the hand asked for sails and no oar: she held a heading under neither, and nothing woke her.
+  Sails wanted that cannot be raised are the oars' now (`seaHelmStep`'s `row`). And the freer side was asked of the
+  land alone, so she turned for the shore-free side into the next berth's ship: a ship's side is no freer water.
+- **F3 - a boat of mine or a peer's at the next berth was water.** The hand saw the sea's ships alone. The hulls about
+  her (`seaClearance.js` createSeaHulls, the naval host's one list) are the sea's ships afloat, other players' boats at
+  their helms and my own other boats - never a sunk one, never the boat at my helm.
+- **F4 - a ship under way was looked for where she stood.** A ship crossing her course met her hull where the hand had
+  seen water. The hand's looks find a ship under way, and a peer's boat, where her way carries her too: her box and
+  its copies HULL_LEAD_STEP_S (2 s) apart out to HULL_LEAD_S (8 s), while she makes HULL_LEAD_MIN_MPS (0.5 m/s) or
+  more (`ledHulls`). The aim camera's ships alongside are the same list as they stand (Naval-Combat AIM-ENDS A5).
+- **The pins themselves.** F2's oars row her off an edge she runs onto, so "she arrived" stopped telling whether her
+  beam was looked along at all: AUDIT SHIPS A2's islet legs now hold that no node of hers is ever over the islet (her
+  beam unlooked: 24 of 72 legs touched it), and FERRY-CLEAR's ships and F1's landfalls that every node of hers keeps
+  HULL_CLEAR_M off a ship's hull (her beam hull-blind passed 2.3 m off; a landfall's line unread, 2.7-5.4 m).
+
+Left, each with its reason: the three crossings of 108 that still meet her and the one that stopped - a ship
+crossing her course: the hand looks for her where her way carries her (F4) and these legs meet her still - why each
+does is the next slice's to measure, not this audit's to guess. A quay or a pier is neither water's edge nor a hull to the hand (the terrain's water test
+reads the ground; a pier is a model) - berthing her at a quay is the passage's own next slice, above; another ship's
+ram (a galley's, `checkShipRams`) can still strike a booked ship - the sea's fights are not the passage's to switch
+off; and a passenger can still lay and fire her guns while her master sails her - whether a passage takes them is the
+owner's call, not an audit's.
+
+Pinned by `test/systems/auditships_sail.test.js` AUDIT FERRY-CLEAR (F1, F2, F4 on the lifted hand) and the tightened A2
+and FERRY-CLEAR pins, and `test/systems/naval/ferryclear.test.js` AUDIT FERRY-CLEAR F3/F4 (the hulls about her);
+`tools/mutants/ferryclear.json` (17, all dead) and the re-aimed records of `auditships_sail.json` and `hostsplit.json`.
+
 ## The words
 
 Every word the passage says is the text core's (`t('passage.*')`, L10N4 - the eight winds of a port's row too),
@@ -155,6 +232,6 @@ harbour ships - no passage there. `scenes/worldModes.js` (interiors) and `scenes
 booking, the voyage's life, the end, the wiring), `test/scenes/naval/passagesea.test.js` (the ship at her berth, her
 boat, her letting go - the real naval host and pool, two players' rooms), `test/systems/comeSailAway/passage_csa.test.js` (the save and the
 pack, the real runtime), `test/scenes/naval/passageaudit.test.js` (the cabins, the world's audit doors);
-`tools/mutants/passage.json` (93: 91 dead, 2 recorded equivalent). The audit: `01-Overview/audits/Audit-Passage-Batch-Salvage.md`.
+`tools/mutants/passage.json` (93: 91 dead, 2 recorded equivalent). FERRY-CLEAR's are in its section above. The audit: `01-Overview/audits/Audit-Passage-Batch-Salvage.md`.
 
 Not a DFU member. Ledger A (PASSAGE).

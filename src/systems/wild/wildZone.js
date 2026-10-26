@@ -606,13 +606,18 @@ let _fell = null;
 /** The world host's word at a death in the zone - `{ killer, dropped, claimed, held, burnt, letters }` (the killer's name or
  *  null, how many things were left where the body fell, the worn piece the killer took - `held`: MAC (2026-10-14), held in
  *  escrow until they collect it - BURNT-SAID: how many were taken and laid nowhere, a held record's, and `letters` the
- *  pieces the death took out of the pack, of which the letters of credit are counted) - or null when the death screen
- *  goes. The screen holds WILD_DEATH_HOLD_S and takes no Enter while it stands (ui/deathScreen.js). */
+ *  pieces the death took out of the pack, of which the letters of credit are counted, and `served` the seconds it lay
+ *  before this page heard of it) - or null when the death screen goes. The screen holds WILD_DEATH_HOLD_S less `served`
+ *  and takes no Enter while it stands (ui/deathScreen.js). */
 export function setWildDeath(d) {
+  // WILD-REJOIN: a death the referee told a page that came back after its game closed on the death screen has already
+  // lain this long - kept through the death's later words, which never say it again
+  const served = d ? Math.min(WILD_DEATH_HOLD_S, Math.max(0, Number(d.served ?? _death?.served) || 0)) : 0;
   if (!d) { _killed = false; _fell = null; }
   else if (d.kill === true || (typeof d.killer === 'string' && d.killer)) _killed = true;
   _death = d ? { killer: typeof d.killer === 'string' && d.killer ? d.killer : null, kill: _killed, dropped: Math.max(0, d.dropped | 0), claimed: typeof d.claimed === 'string' && d.claimed ? d.claimed : null, held: d.held === true,
     burnt: Math.max(0, d.burnt | 0), letters: wildLettersOf(d.letters), kind: d.kind ?? _death?.kind ?? _kind ?? WILD_KIND } : null;   // ETHER-WILD: the ground it fell on, for its words
+  if (_death) _death.served = served;
 }
 /** BURNT-SAID: the letters of credit among `items` - how many, and the gold they stand for. AUDIT FOE-KEEPS LETTERS-TENTH:
  *  and `tenth`, the gold a kill took out of the letters left in the wallet (wildTakeTook's `out.letters`), when any. */

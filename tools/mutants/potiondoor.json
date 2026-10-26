@@ -1,0 +1,229 @@
+[
+  {
+    "name": "POTION-DOOR-stores-unlisted",
+    "file": "src/scenes/potionMakerHost.js",
+    "old": "    storeItems,   // POTION-DOOR",
+    "new": "    storeItems: () => [],   // POTION-DOOR",
+    "tests": [
+      "test/systems/potiondoor.test.js"
+    ]
+  },
+  {
+    "name": "POTION-DOOR-away-unsaid",
+    "file": "src/scenes/potionMakerHost.js",
+    "old": "if (!d.station) return { classic: true, word: POTION_DOOR_WORDS.away() };",
+    "new": "if (!d.station) return null;",
+    "tests": [
+      "test/systems/potiondoor.test.js"
+    ]
+  },
+  {
+    "name": "POTION-DOOR-offline-said",
+    "file": "src/scenes/potionMakerHost.js",
+    "old": "      if (!d) return null;\n      if (!d.station)",
+    "new": "      if (!d) return { classic: true, word: POTION_DOOR_WORDS.away() };\n      if (!d.station)",
+    "tests": [
+      "test/systems/potiondoor.test.js"
+    ]
+  },
+  {
+    "name": "POTION-DOOR-failed-stores-spent",
+    "file": "src/scenes/potionMakerHost.js",
+    "old": "if (result.kind !== 'mixed') return stored ? { ok: false, failed: true } : null;",
+    "new": "if (result.kind !== 'mixed') return null;",
+    "tests": [
+      "test/systems/potiondoor.test.js"
+    ]
+  },
+  {
+    "name": "POTION-DOOR-rank-unread",
+    "file": "src/scenes/potionMakerHost.js",
+    "old": "if (rank < potion.rank) return stored",
+    "new": "if (false) return stored",
+    "tests": [
+      "test/systems/potiondoor.test.js"
+    ]
+  },
+  {
+    "name": "POTION-DOOR-fee-unread",
+    "file": "src/scenes/potionMakerHost.js",
+    "old": "if (!stored && fee > totalGoldAmount(player)) return",
+    "new": "if (false) return",
+    "tests": [
+      "test/systems/potiondoor.test.js"
+    ]
+  },
+  {
+    "name": "POTION-DOOR-herb-group-lost",
+    "file": "src/scenes/potionMakerHost.js",
+    "old": "return keys.find((k) => PLANT_GROUPS[/** @type {'p1'|'p2'} */ (k.slice(0, 2))] === it.group) ?? keys[0];",
+    "new": "return keys[0];",
+    "tests": [
+      "test/systems/potiondoor.test.js"
+    ]
+  },
+  {
+    "name": "POTION-DOOR-stocked-pack-alone",
+    "file": "src/scenes/potionMakerHost.js",
+    "old": "stocked: () => carried().some(isIngredient) || storeItems().length > 0,",
+    "new": "stocked: () => carried().some(isIngredient),",
+    "tests": [
+      "test/systems/potiondoor.test.js"
+    ]
+  },
+  {
+    "name": "POTION-DOOR-window-mints-on-client",
+    "file": "src/ui/potionMakerWindow.js",
+    "old": "if (door && !door.classic) { this._throughDoor(door); return; }",
+    "new": "if (false) { this._throughDoor(door); return; }",
+    "tests": [
+      "test/systems/potiondoor.test.js"
+    ]
+  },
+  {
+    "name": "POTION-DOOR-window-cauldron-kept",
+    "file": "src/ui/potionMakerWindow.js",
+    "old": "if (r?.ok) { this.cauldron = []; audio.playOneShot(SOUND.MakePotion, 1); }",
+    "new": "if (r?.ok) { audio.playOneShot(SOUND.MakePotion, 1); }",
+    "tests": [
+      "test/systems/potiondoor.test.js"
+    ]
+  },
+  {
+    "name": "POTION-DOOR-window-twice-asked",
+    "file": "src/ui/potionMakerWindow.js",
+    "old": "if (this.cauldron.length === 0 || this._brewing) return;",
+    "new": "if (this.cauldron.length === 0) return;",
+    "tests": [
+      "test/systems/potiondoor.test.js"
+    ]
+  },
+  {
+    "name": "POTION-DOOR-window-one-source",
+    "file": "src/ui/potionMakerWindow.js",
+    "old": "const at = (it) => `${it.stores ?? ''}|${it.templateIndex}`;",
+    "new": "const at = (it) => `${it.templateIndex}`;",
+    "tests": [
+      "test/systems/potiondoor.test.js"
+    ]
+  },
+  {
+    "name": "POTION-DOOR-window-pot-touched-while-brewing",
+    "file": "src/ui/potionMakerWindow.js",
+    "old": "if (slot >= this.cauldron.length || this._brewing) return;",
+    "new": "if (slot >= this.cauldron.length) return;",
+    "tests": [
+      "test/systems/potiondoor.test.js"
+    ]
+  },
+  {
+    "name": "POTION-DOOR-window-classic-word-unsaid",
+    "file": "src/ui/potionMakerWindow.js",
+    "old": "this.box = this._mixedBox(door?.word);",
+    "new": "this.box = this._mixedBox();",
+    "tests": [
+      "test/systems/potiondoor.test.js"
+    ]
+  },
+  {
+    "name": "POTION-DOOR-door-station-always",
+    "file": "src/ui/professions/profPages.js",
+    "old": "station: typeof p.brew === 'function' && !!p.alchemy?.(),",
+    "new": "station: true,",
+    "tests": [
+      "test/systems/potiondoor.test.js"
+    ]
+  },
+  {
+    "name": "POTION-DOOR-ingredient-keys-one-group",
+    "file": "src/net/professionLaw.js",
+    "old": "...['p1', 'p2'].flatMap((g) => PLANT_GROUP_TEMPLATES",
+    "new": "...['p1'].flatMap((g) => PLANT_GROUP_TEMPLATES",
+    "tests": [
+      "test/systems/potiondoor.test.js"
+    ]
+  },
+  {
+    "name": "POTION-DOOR-ingredient-keys-no-rows",
+    "file": "src/net/professionLaw.js",
+    "old": "(g)].map((t) => `${g}:${t}`)), ...[...DFU_ROWS.values()].map((m) => m.key),",
+    "new": "(g)].map((t) => `${g}:${t}`)),",
+    "tests": [
+      "test/systems/potiondoor.test.js"
+    ]
+  },
+  {
+    "name": "POTION-DOOR-mages-guild-unasked",
+    "file": "src/scenes/worldModes.js",
+    "old": "=== GUILD_GROUPS.MagesGuild) return { kind: 'shop', fee: ALCHEMY_FEE };",
+    "new": "=== GUILD_GROUPS.MagesGuild && false) return { kind: 'shop', fee: ALCHEMY_FEE };",
+    "tests": [
+      "test/systems/potiondoor.test.js",
+      "test/ui/professions/fb1018d_crafthowto.test.js"
+    ]
+  },
+  {
+    "name": "POTION-DOOR-mages-guild-enchant-fee",
+    "file": "src/scenes/worldModes.js",
+    "old": "=== GUILD_GROUPS.MagesGuild) return { kind: 'shop', fee: ALCHEMY_FEE };",
+    "new": "=== GUILD_GROUPS.MagesGuild) return { kind: 'shop', fee: ENCHANT_FEE };",
+    "tests": [
+      "test/systems/potiondoor.test.js"
+    ]
+  },
+  {
+    "name": "POTION-DOOR-any-guild-hall",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (interiorBuilding.buildingType === BUILDING_TYPES.GuildHall && interiorBuilding.factionId\n        && guildGroupOfFaction(townTalk?.factionDict ?? null, interiorBuilding.factionId) === GUILD_GROUPS.MagesGuild) return { kind: 'shop', fee: ALCHEMY_FEE };",
+    "new": "      if (interiorBuilding.buildingType === BUILDING_TYPES.GuildHall && interiorBuilding.factionId) return { kind: 'shop', fee: ALCHEMY_FEE };",
+    "tests": [
+      "test/systems/potiondoor.test.js"
+    ]
+  },
+  {
+    "name": "POTION-DOOR-host-gate-dropped",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (!hooks.stocked()) return { rows: rows(NO_POTION_INGREDIENTS), closesWindow: true };\n",
+    "new": "",
+    "tests": [
+      "test/systems/potiondoor.test.js",
+      "test/systems/audit26_potionmaker.test.js"
+    ]
+  },
+  {
+    "name": "POTION-DOOR-words-away-station-unnamed",
+    "file": "src/scenes/potionMakerHost.js",
+    "old": "At an alchemy station (an Alchemist\\'s, a Mages Guild hall or your own home) the potion maker brews it",
+    "new": "At an alchemy station the potion maker brews it",
+    "tests": [
+      "test/systems/potiondoor.test.js"
+    ]
+  },
+  {
+    "name": "POTION-DOOR-X11b-the-item-where-the-index-goes",
+    "file": "src/scenes/potionMakerHost.js",
+    "old": "      if (removeOne(list, templateIndex, { group, allowEnchantedItem: false })) return true;",
+    "new": "      if (removeOne(list, list.find((it) => it.templateIndex === templateIndex), { group, allowEnchantedItem: false })) return true;",
+    "tests": [
+      "test/systems/x11b.test.js"
+    ]
+  },
+  {
+    "name": "POTION-DOOR-X11b-the-spend-blind-to-the-group",
+    "file": "src/scenes/potionMakerHost.js",
+    "old": "      if (removeOne(list, templateIndex, { group, allowEnchantedItem: false })) return true;",
+    "new": "      if (removeOne(list, templateIndex, { group: list.find((it) => it.templateIndex === templateIndex)?.group, allowEnchantedItem: false })) return true;",
+    "tests": [
+      "test/systems/x11b.test.js"
+    ]
+  },
+  {
+    "name": "POTION-DOOR-X11b-an-enchanted-twin-spent",
+    "file": "src/scenes/potionMakerHost.js",
+    "old": "      if (removeOne(list, templateIndex, { group, allowEnchantedItem: false })) return true;",
+    "new": "      if (removeOne(list, templateIndex, { group })) return true;",
+    "tests": [
+      "test/systems/x11b.test.js"
+    ]
+  }
+]

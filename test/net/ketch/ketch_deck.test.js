@@ -80,7 +80,7 @@ test('KETCH THE ENGINE: seven sockets on a ring about its drum, facing aft; six 
   assert.ok(KT_SOCKETS.every(([, z]) => z >= KT_ENGINE.z - KT_SOCKET_R * 0.6), 'facing aft');
   assert.equal(KT_CRADLES.length, 6);
   for (const [x, z] of KT_CRADLES) assert.ok(x >= KT_HOLD.x0 && x <= KT_HOLD.x1 && z > KT_ENGINE.z + 40 && z <= KT_HOLD.z1);
-  assert.deepEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(engineNeeds), [4, 4, 4, 5, 5, 6, 6, 7, 7, 7]);
+  assert.deepEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(engineNeeds), [6, 6, 6, 7, 7, 7, 7, 7, 7, 7], 'PIN MOVED (KETCH-LONGER): five and one for each two aboard, every socket from three');
 });
 
 test('KETCH THE HAZARDS ON THE SHARED CLOCK: each hammer\'s row a half second on, its lanes a second apart, so every row leaves a lane clear two seconds in three; the steam lanes half a cycle apart; the arcs a third; each landing once in its window, in order, with its storey (mutants: two lanes of a row at once; a landing counted twice at a window\'s edge; the gallery\'s hazards in the hold)', () => {

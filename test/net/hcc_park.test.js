@@ -391,5 +391,5 @@ test('HCC-PARK / RIDE hosts: the owner\'s word names the character, is ticked wi
   const s = rd('server/src/index.js');
   assert.match(s, /if \(path === PARK_INTERNAL_REG \|\| path === PARK_INTERNAL_DROP\) return this\._parkInternal\(path, request\);/);
   assert.match(s, /const k = await parkKeyOf\(a\.sub, m\.data\.c\);/);
-  assert.match(s, /if \(m\.data\.r && cell === here\) \{\n\s*const thrown = await this\._parkStore\(k, a\.sub, a\.id, a\.name \?\? '', m\.data\.r, now\);/);   // PIN MOVED (WARDEN1): the store answers a thrown team its owner re-said
+  assert.match(s, /if \(m\.data\.r && atCover\(here, cell\)\) \{\n\s*const thrown = await this\._parkStore\(k, a\.sub, a\.id, a\.name \?\? '', m\.data\.r, now\);/);   // PIN MOVED (COST-2): a cell this socket covers; PIN MOVED (WARDEN1): the store answers a thrown team its owner re-said
 });

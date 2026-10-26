@@ -38,6 +38,7 @@
 // Not a DFU member: online, an encounter's dice come from the relay's seed. The slice that ships that (GRANT2) adds
 // its bracket to Port-Ledger section A, row ONLINE (Spawn-Grants section 6).
 import { _b64url, SIG_BYTES, ID_RE, characterLevelIssuable, renownIssuable } from './identityToken.js';
+import { coversCell } from './cellTree.js';   // COST-2 (b): a grant stands in any cell the reader's socket covers
 import { EG_CALL_SG_RE, roomOf, tokenGate } from './wire.js';   // a signature's shape on the wire (64 bytes, base64url) - the wire's own; a room's name; the relay's one bucket
 
 /** The version leading the signed bytes, and the line that ends it. */
@@ -270,12 +271,14 @@ export function grantMintGate(k, n, bucket, live, nowMs) {
 
 /**
  * THE READER'S CHECK, past the signature: why member `i` of grant `g` may not stand from sender `from` in cell `cell`
- * at `nowMs` - 'sender', 'cell', 'expired', 'member' - or null. Pure.
- * @param {SpawnGrant} g @param {{ from: string, cell: string, nowMs: number, i: number }} at
+ * at `nowMs` - 'sender', 'cell', 'expired', 'member' - or null. Pure. COST-2 (b): the grant's `q` (the cell it was made out
+ * to, a fine cell's key) stands in any cell the reader's socket covers (`cover`: its node, or its room - net/cellTree.js
+ * coversCell), so a reader and a sender who share a node agree whatever cell of it each joined; under L0 `cover` is `cell`.
+ * @param {SpawnGrant} g @param {{ from: string, cell: string, nowMs: number, i: number, cover?: string }} at
  */
-export function grantRefusal(g, { from, cell, nowMs, i }) {
+export function grantRefusal(g, { from, cell, nowMs, i, cover = cell }) {
   if (g.o !== from) return 'sender';
-  if (g.q !== cell) return 'cell';
+  if (!coversCell(cover, g.q)) return 'cell';
   if (!(nowMs <= g.x + GRANT_SKEW_MS)) return 'expired';
   if (!Number.isInteger(i) || i < 0 || i >= g.n || (g.h >= 0 && i !== g.h)) return 'member';   // GRANT3: a handed-on grant stands its one member
   return null;

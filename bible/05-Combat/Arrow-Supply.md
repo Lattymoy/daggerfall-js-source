@@ -126,11 +126,16 @@ law, one export now (`shopAmmoStack`), at `SHOP_ARROWS_MAX` 100:
 | Shop | Quality 1 | Quality 10 | Quality 20 |
 |---|---|---|---|
 | Weapon Smith | 50 | 74 | 100 |
-| Armorer, General Store | 14 | 21 | 29 |
+| Armorer | 14 | 21 | 29 |
+| General Store (ENDLESS-ARROWS, 2026-10-23) | 100 | 100 | 100 |
 | Pawn Shop | 7 | 11 | 14 |
 
 The quiver is minted as the shelf mints arrows, its stack roll answered by a constant, so it merges with DFU's own
-draw when there is one. Pins moved, each marked PIN MOVED (SHOP-ARROWS):
+draw when there is one. ENDLESS-ARROWS (2026-10-23, the owner: "give general stores always arrows for each player to
+buy they cant exhaust"; Port-Ledger A): a General Store's counter quiver is a whole one at any quality, and a purchase
+puts back what it took of it, up to the whole, offline and online - every other storefront's sells out until the day's
+restock. AUDIT UPDATE E1/E2 (`01-Overview/audits/Audit-Update-2026-10-25.md`): only what a purchase took, so arrows
+stolen stay gone, and on the counter's shelf alone. Pins moved, each marked PIN MOVED (SHOP-ARROWS):
 
 - `test/systems/shopstock.test.js`: the counter's list;
 - `test/systems/roada2_itemseconomy.test.js`: DFU's Range(1, 21) read off a shelf behind the counter;

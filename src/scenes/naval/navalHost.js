@@ -74,7 +74,7 @@ import { createWaterGrid, errandFor, errandRng, dwellOf, offsetErrand, alongside
 import { createHarbourBook, HARBOUR_RETRY_S } from '../../systems/naval/harbourBook.js';   // HARBOUR-BOOK: the harbours, the world's and mine
 import { hash32 } from '../../world/spawnedDungeons.js';
 import { mulberry32 } from '../../combat/blood/bloodArt.js';
-import { orientedBox, arcPoints, flatUnit, NAVAL_DEG, rangeAt, segmentBoxEntry, shotPosition, landing } from '../../systems/naval/navalBallistics.js';
+import { orientedBox, arcPoints, fallArc, flatUnit, NAVAL_DEG, rangeAt, segmentBoxEntry, shotPosition, landing } from '../../systems/naval/navalBallistics.js';
 import { lawOf, createNotoriety, crownRegion, notorietyLevel, WITNESS_RANGE, KNIGHTLY_FACTION, TEMPLE_FACTION } from '../../systems/naval/navalLaw.js';
 import { standingFor } from '../../systems/naval/captainLedger.js';   // CAPT-MARQUE: a rival's regard lost to a letter's prize
 import { SITE_REACH_PX } from '../../systems/naval/harbourBoard.js';   // CAPT-BOARD: a held contract's waters within this of me
@@ -121,6 +121,8 @@ import { t } from '../../systems/textManager.js';   // RAM-BOARD: its words in t
 import { shotGun, shotFireChance, shotRigFire, naturalShot } from '../../systems/naval/shotKinds.js';   // SHOT-KINDS: what a battery is loaded with
 import { captainWorth, struckGun, statScale } from '../../systems/naval/captainTree.js';   // CAPTAIN-TREE: what her captain's stars do at sea
 import { createNavalLoads } from './navalLoads.js';   // SHOT-KINDS: the captain's choice of load, at the helm
+import { createAimCamera } from './aimCamera.js';   // THE BROADSIDE CAMERA and AIM-ENDS: the helm's eye while a battery is laid
+import { createSeaHulls } from '../../systems/naval/seaClearance.js';   // FERRY-CLEAR: the hulls a journey's hand steers round
 import { createVolleyTally } from './navalTally.js';   // AUDIT NAV1 G17: my volley's tally - CARD-CREW: and her men it took
 import { seaLiveryOf, seaFlagsOf } from '../../systems/naval/seaColours.js';   // SEA-COLOURS: the sea's ships in their own paint and flags
 import { liveryCode } from '../../systems/naval/shipLivery.js';
@@ -564,14 +566,8 @@ export const INCOMING_SLACK = 10;
  *  walked this finely (s) against each ship as she will stand. */
 export const LOOK_REACH_PAD = 60;
 export const HOT_STEP_S = 0.1;
-/** THE BROADSIDE CAMERA: while a broadside is laid, the eye eases (over AIM_CAM_TAU s) to AIM_CAM_OUT past the battery's
- *  ports, AIM_CAM_UP over them and AIM_CAM_AFT toward the stern (m) - her guns, the zone and the enemy on one screen. */
-export const AIM_CAM_OUT = 4;
-export const AIM_CAM_UP = 5.5;
-export const AIM_CAM_AFT = 3;
-export const AIM_CAM_TAU = 0.22;
-/** ...and stops this far (m) short of another ship's side on its way out from the ports. */
-export const AIM_CAM_CLEAR = 1.2;
+/** THE BROADSIDE CAMERA's numbers, and AIM-ENDS' over the bow and the stern: scenes/naval/aimCamera.js, said here too. */
+export { AIM_CAM_OUT, AIM_CAM_UP, AIM_CAM_AFT, AIM_CAM_TAU, AIM_CAM_CLEAR, AIM_CAM_AHEAD } from './aimCamera.js';
 /** AUDIT GN-G3: how long (s) another player's word keeps her broadside laid on my screen - longer than the full frame
  *  her word is said again by (net/online.js FOES_FULL_MS, 2 s), so a lay held still is never dropped between words.
  *  AUDIT GN2-GN3: real seconds, as that frame is - on my sea's clock Come Sail Away's time scale made 2 s ten at x5. */
@@ -3290,35 +3286,14 @@ export function createNavalHost(deps) {
     return null;
   }
 
-  /** THE BROADSIDE CAMERA: the eye this frame - `ownEye` eased toward the broadside's own while one is laid, and home. */
-  let camK = 0, camSide = null;
-  function aimEye(ownEye, dt) {
-    const boat = myBoat();
-    const want = setting('AimCamera', true) !== false && aiming && boat && aim && (aim.side === 'port' || aim.side === 'starboard')
-      && myBoatState(boat).damage.state !== SHIP_STATES.wrecked ? aim.side : null;
-    if (want) camSide = want;
-    camK += ((want ? 1 : 0) - camK) * (1 - Math.exp(-Math.max(0, dt) / AIM_CAM_TAU));
-    if (!want && camK < 1e-3) { camK = 0; camSide = null; }
-    if (!boat || !camSide || camK <= 0) return ownEye;
-    const pose = boatPose(boat);
-    const bat = batteryOf(boat.hull, camSide);
-    if (!bat) return ownEye;
-    const ports = bat.muzzles.map((m) => toWorld(pose, m));
-    const c = ports.reduce((acc, m) => [acc[0] + m[0] / ports.length, acc[1] + m[1] / ports.length, acc[2] + m[2] / ports.length], [0, 0, 0]);
-    const fire = flatUnit(quatRotate(pose.rotation, SIDE_DIR[camSide])) ?? [1, 0, 0];
-    const fwd = flatUnit(quatRotate(pose.rotation, [0, 0, 1])) ?? [0, 0, 1];
-    let at = [c[0] + fire[0] * AIM_CAM_OUT - fwd[0] * AIM_CAM_AFT, c[1] + AIM_CAM_UP, c[2] + fire[2] * AIM_CAM_OUT - fwd[2] * AIM_CAM_AFT];
-    // never inside a ship alongside - a broadside at her rail's width is the one Black Flag remembers
-    let clear = 1;
-    for (const e of sea.values()) {
-      const box = e.boat && e.ship.damage.state !== SHIP_STATES.sunk ? hullBox(e.boat) : null;
-      const hit = box ? segmentBoxEntry(c, at, box, AIM_CAM_CLEAR) : null;
-      if (hit && hit.t < clear) clear = hit.t;
-    }
-    if (clear < 1) at = [c[0] + (at[0] - c[0]) * clear, c[1] + (at[1] - c[1]) * clear, c[2] + (at[2] - c[2]) * clear];
-    const k = camK * camK * (3 - 2 * camK);   // eased in and out
-    return [ownEye[0] + (at[0] - ownEye[0]) * k, ownEye[1] + (at[1] - ownEye[1]) * k, ownEye[2] + (at[2] - ownEye[2]) * k];
-  }
+  /** THE BROADSIDE CAMERA, and AIM-ENDS over the bow and the stern: the frame's eye while a battery is laid (aimCamera.js). */
+  const aimCam = createAimCamera({
+    setting, aiming: () => aiming, aim: () => aim, boat: myBoat, wrecked: (b) => myBoatState(b).damage.state === SHIP_STATES.wrecked, pose: boatPose, hull: hullBox, rig: rigBoxesOf,
+    alongside: () => seaHulls.boxes(),   // AUDIT AIM-ENDS A5: a peer's boat and my other boats too
+  });
+  /** FERRY-CLEAR and AUDIT FERRY-CLEAR F3: the hulls about my boat - the sea's ships afloat, the peers' boats and my other
+   *  boats (systems/naval/seaClearance.js createSeaHulls): the aim camera's ships alongside, and the crossing's hand's. */
+  const seaHulls = createSeaHulls({ sea, hullBox, velocity: velocityOf, peerBoats: () => deps.peerBoats?.() ?? [], myBoats, myBoat, enabled: () => enabled });
 
   /** The side the look lays on my boat, and whether it has guns. */
   function lookSide(boat) {
@@ -4105,7 +4080,7 @@ export function createNavalHost(deps) {
   // ── rams ─────────────────────────────────────────────────────────────────────────────────────────────────────────
   let wayIn = [];   // AUDIT NAV1: my boat's forward way over the last RAM_MEMORY_S - [{ t, v }]
   function checkRams(boat) {
-    if (!boat) { wayIn = []; return; }
+    if (!boat || boat.charter) { wayIn = []; return; }   // FERRY-CLEAR: a booked ship's master never rams - her stem in a neighbour's side broke one or the other, the passenger charged with piracy for it
     const pose = boatPose(boat);
     const v = pose.velocity;
     const fwd = flatUnit(quatRotate(pose.rotation, [0, 0, 1])) ?? [0, 0, 1];
@@ -5269,7 +5244,7 @@ export function createNavalHost(deps) {
       aimDraw = { arcs, zone, strikes, hot: ready && strikes.length > 0, radius: Math.max(1.6, aim.width / 2), ready, posts: true };
     } else if (aim?.barrel) {
       const boat = myBoat();
-      aimDraw = { arcs: [], zone: aim.landings.map((l) => l.point), hot: false, radius: 2, ready: !!boat && aimState(myBoatState(boat), aim.side, boat) === 'ready', posts: false };
+      aimDraw = { arcs: aim.muzzles.map((m, i) => fallArc(m, aim.landings[i].point, 8)), zone: aim.landings.map((l) => l.point), hot: false, radius: 2, ready: !!boat && aimState(myBoatState(boat), aim.side, boat) === 'ready', posts: true };   // AIM-ENDS: the barrel's fall drawn, and its post
     }
     const particles = effects.drawList();
     lampsInto(particles);   // SHIP-WATCH: the far ships' lanterns, points of light on the night sea
@@ -5440,7 +5415,7 @@ export function createNavalHost(deps) {
   }
 
   return {
-    frame, attackInput, cancelAim, holdFire, activate, hudModel, drawFrame, lights, offsetAll, clear, stowPlunder, aimEye, wayScale, sailRefused, brake, postsWay,
+    frame, attackInput, cancelAim, holdFire, activate, hudModel, drawFrame, lights, offsetAll, clear, stowPlunder, aimEye: aimCam.eye, hullAlong: seaHulls.along, wayScale, sailRefused, brake, postsWay,
     /** SHOT-KINDS: the load of the guns at hand stepped on (`dir` 1) or back - the key's, the pad's, the helm button's;
      *  the wheel's while they are laid (true: the wheel is the guns'); the helm button's label (null: no guns). */
     cycleShot: (dir = 1) => loads.cycle(dir), shotWheel: (dy) => loads.wheel(dy), shotLabel: () => (enabled ? loads.label(myBoat()) : null),

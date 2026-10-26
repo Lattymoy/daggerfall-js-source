@@ -117,13 +117,17 @@ THE LAW is pure (instancePlaces.js):
   choice and every other way in, as a quest's. A whole build of a dungeon is the location's own blocks, drawn from
   nothing, so the heir's instance stands them on the floor under where they fell. Remains laid in the public room's own
   size (smaller or whole), or in a row from before the size was kept, are the public room's, as they always were.
-- **instanceOffer**: offline or at an older relay, nothing. Otherwise the rows:
+- **instanceOffer**: offline or at an older relay, nothing. Otherwise the rows, in this order:
   - Public - never Privateer's Hold online (HOLD-ONCE).
-  - Your instance - where a quest of mine names the place (the death quest's whole dungeon among them, HEIR-WHOLE: the
-    quest's room where a quest names it too - the dungeon whole as well, so it stands the remains), and at the Hold.
   - `<owner>`'s instance - for each room a party member stands in at THIS place (partnerInstances: the pose's `ins`, its
     public room this place's - never a pixel, which Castle Daggerfall and the arena share) whose owner is in the party,
-    the relay's own law, so nothing is offered that the relay would refuse. Named by its owner; one row a room.
+    the relay's own law, so nothing is offered that the relay would refuse. Named by its owner; one row a room. After
+    them, under the same law, the room the relay last joined ME to at this place (partnerInstances' `stood`, WIPE-RETURN,
+    section 11): a room nobody stands in any more.
+  - Your instance - where a quest of mine names the place (the death quest's whole dungeon among them, HEIR-WHOLE: the
+    quest's room where a quest names it too - the dungeon whole as well, so it stands the remains), and at the Hold.
+    It comes after the party's rooms (WIPE-RETURN, section 11): a member holding a copy of the quest has a room of its
+    own, and the first instance row taken by habit was that one, apart from the party.
 
   A place with nothing but its public room has no popup: the door opens as it always did.
 - **questMountsHere**: online, a quest's things stand only in a dungeon whole - an instance, a main-story keep, a dungeon
@@ -145,13 +149,13 @@ THE PAGE (instanceDoor.js, HOST-SPLIT's shape - built once in world.js, asked by
     quest that names the place holds its epoch, the remains' while they lie there whole; a partner's while its owner is in
     my party), else the public room laid as
     it was - an instance's place whole, so the position stands in the blocks it was taken in;
-  - nothing recorded: a quest's place its instance - a partner's standing there first, the party together, else mine -
-    and where none can be had (an older relay, no account yet) its public room whole; the Hold mine; anywhere else the
-    public room.
+  - nothing recorded: a quest's place its instance - a partner's standing there first, the party together, then a
+    partner's room I last stood in there (WIPE-RETURN, section 11), else mine - and where none can be had (an older
+    relay, no account yet) its public room whole; the Hold mine; anywhere else the public room.
   - The new game's start (`holdOpen`, nothing recorded) is the Hold's public room, never asked.
 - **The popup** is `ui/talkWindow.js` ChoiceWindow laid over whatever is open (townTalk.pushOverlay) - the enhanced dialog
   on the Plus skin and the panel on the classic. It is a redesigned window, not a DFU one (Port-Doctrine, Scope). Its rows
-  are numbered (`1 - Public`, `2 - Your instance`, ... nine at most - a full party's seven others with public and mine),
+  are numbered (`1 - Public`, `2 - Ann's instance`, ..., `Your instance` last - nine at most, a full party's seven others with public and mine),
   and Leave is the Escape key's row (`Esc - Leave`: a keyed menu takes its codes alone). The window closed any other way -
   replaced, disposed - answers Leave: never a door left waiting on nothing.
 - **Its two lines**: the place's name (localized, getLocalizedLocationName), then the question. At the Hold: "Privateer's
@@ -164,9 +168,9 @@ THE PAGE (instanceDoor.js, HOST-SPLIT's shape - built once in world.js, asked by
 - **The relay's refusal** (`refused`, the realm's door's own shape - systems/realmSaves.js realmDoorShut): an instance's
   door shut on this page is said once a room ("That instance is closed to you. Only its owner and their party can
   enter.") and the player is taken out (world.js onlineFrame, forceExitToExterior) - never left inside an unconnected
-  build.
+  build. The door no longer offers that room back (WIPE-RETURN, section 11).
 - **The party pose's word** (`poseWord`): inside, the instance room the relay JOINED me to, never the one I meant to enter -
-  a private room wins the key, a refused one is none.
+  a private room wins the key, a refused one is none. The door keeps it past the leave (WIPE-RETURN, section 11).
 
 ## 5. The sizes (world/smallerDungeons.js, systems/quest/questRepair.js)
 
@@ -217,17 +221,19 @@ stands in.
   one room, the public room untouched, the alarm's clock; the party pose's `ins` a room key; the audit's: a member kicked
   refused out by the re-ask and never asked more often, the party as it stands (a lapsed owner) and no no kept, a zone
   hall refused to all, the gate by account, a member gone on its own while the hub was asked never refused after.
-- `test/systems/quest/instances3_door.test.js` (15): the door's law over the real QuestMachine and Place, a quest's epoch for its life
+- `test/systems/quest/instances3_door.test.js` (17): the door's law over the real QuestMachine and Place, a quest's epoch for its life
   (its save, a copy's, a resync's), the sizes and the load's re-lay, partners by their room, the offer; the door's popup
   awaited (its rows, Esc, the window closed any way), no popup where nothing is chosen, the Hold, a partner, a building, a
-  home; entryFor's rule and what was recorded; atDoor, refused, poseWord, questElsewhere; the funnel and the doors
-  executed from their source; the hosts by source; the Recall anchor's dungeon record.
+  home; entryFor's rule and what was recorded; atDoor, refused, poseWord, questElsewhere; the party's room after a wipe
+  (WIPE-RETURN, section 11); the funnel and the doors executed from their source; the hosts by source; the Recall
+  anchor's dungeon record.
 - `test/net/staffTeleport.test.js`: a staff landing in the player's instance.
 - `test/systems/legacy/fb1019f_heirwhole.test.js` (4, HEIR-WHOLE): a death in another player's instance of a ruin the
   world lays medium, and the heir's door - its popup, their own instance, its build standing the remains under where
   they fell; the room kept while they lie, a quest's room first, the older relay's whole public room; public-room
   remains as they were; one whole layout whoever builds it. `tools/mutants/fb1019f_heirwhole.json` (13), all dead.
 - `tools/mutants/instances.json` (51), all dead; the lists re-aimed by content where this arc moved their lines.
+  `tools/mutants/wipereturn.json` (8, WIPE-RETURN), all dead.
 - PIN MOVED: RELAY_VERSION world208 in every file that names it, and `test/net/relayversion.test.js`'s row and graph; the
   quest stamp and the re-lay; the funnels', the doors' and the identity's shapes; the relay's hello gate; the account
   Worker's deploy filter (`.github/workflows/account-deploy.yml`: net/instanceRoom.js is in its bundle).
@@ -241,8 +247,12 @@ stands in.
   size of it (`.m`/`.s`) and stands apart from the quest's holder - an older relay drops every word that could say which
   room a partner is in.
 - **Two members choosing at once.** Each member's instance is its owner's: two who both choose "Your instance" in the
-  same second stand in two rooms (a join row appears once a partner's pose says its room, within PARTY_SEND_MS). The one
-  who leaves and comes back is offered the other's.
+  same second, the first time, stand in two rooms (a join row appears once a partner's pose says its room, within
+  PARTY_SEND_MS, and the popup reads its rows once, when it opens). The one who leaves and comes back is offered the
+  other's. A party that stood in one room and fell together is offered that room back (WIPE-RETURN, section 11).
+- **A room kept past its quest.** The room the door keeps (WIPE-RETURN) is offered while its owner is in my party, the
+  law a recorded partner's room is held to (stillHeld). The page cannot see the owner's quest, so a partner's room whose
+  quest has ended since is still offered, and the relay admits it. The owner's own door never keys it again (section 2).
 - **Every dungeon.** Mac chose quests', the Hold's and buildings' (the death quest's whole dungeon is a quest's -
   HEIR-WHOLE). A door at any dungeon is one row of instanceOffer away.
 - **A re-laid public room's own quests.** A player who chooses Public at a quest's dungeon finds its things in the
@@ -277,3 +287,47 @@ this one found, and the arc fixed at their roots:
   (lapsed seats admitted), a no kept fifteen seconds, a zone hall copyable, the door's bucket before the token.
 - **The refusal** was final and unhandled - the player left inside a build with no room; now said and taken out.
 - **The popup**: Esc did nothing and a full party's Leave was `Digit10`, which no key sends; the place's name unlocalized.
+
+## 11. WIPE-RETURN - a party that falls together goes back into one room (2026-10-25)
+
+A field report: *"Upon Death in an instance, party members and host will desync even if everyone dies and goes back in at
+times. One other time we all died and respawned and the third member wasn't visible despite being in the same dungeon at
+the same respawn.. we had to leave and reset the dungeon."*
+
+- **The root.** The door offered a partner's room only off a pose (partnerInstances, section 4), and a pose names a room
+  only while its member stands joined to it. A death leaves the room the moment the death screen goes up (world.js
+  onlineFrame, AUDIT ONLINE D12), and D-ONLINE1 wakes a dungeon's dead outside its door (respawnOnlinePlayer), where the
+  mode's instance is gone (setMode). So a party that fell together came back to a door where no pose named a room:
+  - the owner was offered Public and their own instance - the right room;
+  - a member holding a copy of the quest was offered Public and their own instance - another room, the copy's own epoch
+    (machine.js receiveSharedQuest, NO_INSTANCE);
+  - a member without the quest had no popup at all and went into the public room.
+
+  Each stood at the same door, and in the same layout wherever the public room is the dungeon whole (`dungeonSite`'s
+  `relaid`), and nobody saw anybody. Leaving and coming back once the owner stood inside showed the owner's row again:
+  the players' "reset".
+- **The fix.** The door keeps the instance room the relay last joined the page to (`poseWord`, which already reads that
+  room for the party pose - composed while the page has its hub link, in a party or not) and hands it to the law as
+  partnerInstances' `stood`: one more room after the rooms members stand in, under the same law - its public room this
+  place's, its owner in my party (the relay's own law), one row a room. After a wipe the member with a copy is offered
+  the owner's instance beside their own, and the member without the quest gets the popup. entryFor takes it after a live
+  partner and before my own room (section 4).
+  - A room the relay shut on me is not kept (`refused`): the hub's party can be ahead of the page's.
+  - A public room is never kept, and a room keyed while the player is outside is not one they stood in.
+  - It lasts as long as the page. A reload inside records the room in the save (section 7); a reload outside after the
+    death forgets it, and the door reads the poses alone.
+- **The party's rows first.** A second report: *"Dying in an instance often causes party members and the host to
+  desync upon respawning ... (Note: Using Resurrect in time seems to prevent this death desync)."* A Resurrect rises in
+  place (world.js resurrectInPlace): no door, the mode's instance kept, the room rejoined from where the body lay. A
+  respawn goes out through the door, and after a single death too a member holding a copy of the quest was offered
+  `Public`, `Your instance`, then the owner's - and `Your instance` is the copy's own room. The door now lists the
+  party's rooms before mine (instanceOffer, section 4), so the first instance row is the party's.
+- **Not changed.** D-ONLINE1 still wakes a dungeon death outside the door. Waking it inside the instance, at its start,
+  would also keep the party together; it is a change to the respawn, and the owner's call.
+- **Pinned.** `test/systems/quest/instances3_door.test.js` WIPE-RETURN, over the real door, ChoiceWindow and digests: a
+  member without the quest and one with a copy after the wipe, the popup's rows and the entry taken, entryFor; the rooms
+  members stand in first and one row a room; none offered whose owner left the party, of another place, kept from
+  outside or from a public room, or shut by the relay; the party's rows before mine, in the law and the popup.
+  `tools/mutants/wipereturn.json` (8), all dead.
+  INSTANCES-POSE-OUTSIDE (`tools/mutants/instances.json`) re-aimed by content: `poseWord` is a method now.
+- **Open** (section 9): the popup's rows read once, when it opens; a room kept past its quest.

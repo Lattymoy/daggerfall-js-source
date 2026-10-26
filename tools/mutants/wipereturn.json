@@ -1,0 +1,82 @@
+[
+  {
+    "name": "WIPE-RETURN-never-kept",
+    "file": "src/scenes/instanceDoor.js",
+    "old": "      stood = room;\n      return { ins: room };",
+    "new": "      return { ins: room };",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ],
+    "why": "the door forgets the room the moment the pose stops naming it - a party that fell together walks back into rooms apart"
+  },
+  {
+    "name": "WIPE-RETURN-never-offered-by-the-law",
+    "file": "src/systems/instancePlaces.js",
+    "old": ": null)), stood];",
+    "new": ": null))];",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ],
+    "why": "the kept room is handed to the law and dropped there"
+  },
+  {
+    "name": "WIPE-RETURN-never-offered-by-the-door",
+    "file": "src/scenes/instanceDoor.js",
+    "old": "(acct) => owners.get(acct) ?? null, instanceOf(stood));",
+    "new": "(acct) => owners.get(acct) ?? null);",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ],
+    "why": "the door keeps the room and never asks the law with it"
+  },
+  {
+    "name": "WIPE-RETURN-before-the-living",
+    "file": "src/systems/instancePlaces.js",
+    "old": "const rooms = [...list.map((m) => (m?.p && m.online !== false ? instanceOf(m.p.ins) : null)), stood];",
+    "new": "const rooms = [stood, ...list.map((m) => (m?.p && m.online !== false ? instanceOf(m.p.ins) : null))];",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ],
+    "why": "a room I left is offered, and taken by every other way in, ahead of the room the party stands in now"
+  },
+  {
+    "name": "WIPE-RETURN-twice",
+    "file": "src/systems/instancePlaces.js",
+    "old": " || out.some((o) => o.owner === r.owner && o.epoch === r.epoch)) continue;",
+    "new": ") continue;",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ],
+    "why": "the room I left and a member standing in it are two rows of one room"
+  },
+  {
+    "name": "WIPE-RETURN-kept-from-outside",
+    "file": "src/scenes/instanceDoor.js",
+    "old": "      if (mode === 'exterior' || !isInstanceRoom(room)) return {};\n      stood = room;\n",
+    "new": "      stood = room;\n      if (mode === 'exterior' || !isInstanceRoom(room)) return {};\n",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ],
+    "why": "a room the page only meant to enter (still keyed outside) is offered as one I stood in"
+  },
+  {
+    "name": "WIPE-RETURN-kept-past-a-refusal",
+    "file": "src/scenes/instanceDoor.js",
+    "old": "      if (stood === room) stood = null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ],
+    "why": "the door offers back the room the relay just shut on me, while my party picture still names its owner"
+  },
+  {
+    "name": "WIPE-RETURN-mine-before-the-party",
+    "file": "src/systems/instancePlaces.js",
+    "old": "  for (const p of partners ?? []) rows.push({ kind: 'join', name: p.name, acct: p.acct, owner: p.owner, epoch: p.epoch });\n  if (questHere || isHold) rows.push({ kind: 'mine' });",
+    "new": "  if (questHere || isHold) rows.push({ kind: 'mine' });\n  for (const p of partners ?? []) rows.push({ kind: 'join', name: p.name, acct: p.acct, owner: p.owner, epoch: p.epoch });",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ],
+    "why": "a member with a copy of the quest takes the first instance row by habit - their own room, apart from the party"
+  }
+]

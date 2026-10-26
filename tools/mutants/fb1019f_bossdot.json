@@ -42,7 +42,7 @@
   {
     "name": "BOSS-DOT-never-ticked",
     "file": "src/scenes/gate/standInSpell.js",
-    "old": "k++) tickActiveEffects(e, counting(got), rolls);",
+    "old": "k++) tickActiveEffects(e, counting(got, e), rolls);",
     "new": "k++) void tickActiveEffects;",
     "tests": ["test/net/gate/fb1019f_bossdot.test.js"],
     "why": "the rounds kept and never run"

@@ -45,11 +45,10 @@ jobs:
       # this job's 25 minutes and cancelled every run before its probes; verify.yml runs the whole gate on every PR
       - name: The intro's own tests
         run: node --test test/ui/intro.test.js test/systems/intro3_score.test.js
-      # INTRO3: the theme is the score, played by the game's own player - its landmarks heard where the cue puts them,
-      # its peaks under the ceiling, over the film's 27 s (the whole song's loudness is a local run: ~8 min to render)
-      - name: The score through the game's own player
+      # INTRO-REVERT (2026-10-25): the theme is the recording again (src/assets/intro/theme.mp3), its landmarks decoded
+      - name: Independent decoded music landmarks
         if: ${{ !cancelled() }}
-        run: mkdir -p test-harness/intro && node tools/introScoreProbe.mjs --seconds 27 --wav test-harness/intro/theme-opening.wav
+        run: mkdir -p test-harness/intro && node tools/introAudioCheck.mjs test-harness/intro/audio-landmarks.json
       - name: Live clock, transitions, ownership and responsive presentation
         if: ${{ !cancelled() }}
         run: node tools/introProbe.mjs

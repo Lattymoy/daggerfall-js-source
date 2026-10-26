@@ -1,0 +1,102 @@
+[
+  {
+    "name": "KTP-the-house-drawn-only",
+    "file": "src/world/ketch/ketchModel.js",
+    "old": "{ skip: ['bottom', 'top'], recs: { nz: R.stone }, solid: true });",
+    "new": "{ skip: ['bottom', 'top'], recs: { nz: R.stone } });",
+    "note": "The house's walls walked through: a jump over the bridge's fore rail into the ship.",
+    "tests": [
+      "test/world/ketch_panels.test.js"
+    ]
+  },
+  {
+    "name": "KTP-the-aft-deck-unlaid",
+    "file": "src/world/ketch/ketchModel.js",
+    "old": "  K.fan(R.deck, ketchAftDeck(), 0, [0, 1, 0], true);",
+    "new": "",
+    "note": "The hull's dark open under the bridge's fore rail again.",
+    "tests": [
+      "test/world/ketch_panels.test.js"
+    ]
+  },
+  {
+    "name": "KTP-the-strips-drawn-only",
+    "file": "src/world/ketch/ketchModel.js",
+    "old": "[s * KT_HOUSE.x, 0, KT_HOUSE.z1], [0, 1, 0], null, true);",
+    "new": "[s * KT_HOUSE.x, 0, KT_HOUSE.z1], [0, 1, 0]);",
+    "note": "A body on the strips beside the house falls through them.",
+    "tests": [
+      "test/world/ketch_panels.test.js"
+    ]
+  },
+  {
+    "name": "KTP-the-sides-drawn-only",
+    "file": "src/world/ketch/ketchModel.js",
+    "old": "    if (hullRunSolid(a, b)) {",
+    "new": "    if (false) {",
+    "note": "The void between the gun deck's walls and the hull open to a body down her side.",
+    "tests": [
+      "test/world/ketch_panels.test.js"
+    ]
+  },
+  {
+    "name": "KTP-the-bow-solid",
+    "file": "src/world/ketch/ketchModel.js",
+    "old": "  return Math.hypot(a[0] + dx * t - L.x, a[1] + dz * t - L.z) > L.r + 1;",
+    "new": "  return Math.hypot(a[0] + dx * t - L.x, a[1] + dz * t - L.z) >= 0;",
+    "note": "The anchor-lift's cage would rise into a solid bow.",
+    "tests": [
+      "test/world/ketch_panels.test.js"
+    ]
+  },
+  {
+    "name": "KTP-the-soffit-undrawn",
+    "file": "src/world/ketch/ketchKit.js",
+    "old": "      quad(soffitRec ?? riserRec ?? rec, [x0, y0, z0], [x1, y0, z0], [x1, y1, z1], [x0, y1, z1], [0, -1, 0]);\n",
+    "new": "",
+    "note": "The invisible ceiling under both stairs.",
+    "tests": [
+      "test/world/ketch_panels.test.js"
+    ]
+  },
+  {
+    "name": "KTP-the-lid-stood-on",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "  if (!(y > KT_LID_Y - 0.3 && y < KT_LID_Y + 0.6)) return false;",
+    "new": "  if (!(y > KT_LID_Y + 99)) return false;",
+    "note": "A body on the waist's lid stands in the air, out of the fight.",
+    "tests": [
+      "test/world/ketch_panels.test.js"
+    ]
+  },
+  {
+    "name": "KTP-the-shaft-cast-back",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "  if (Math.abs(x - KT_LIFT.x) <= KT_LIFT.half + 0.5 && Math.abs(z - KT_LIFT.z) <= KT_LIFT.half + 0.5) return false;\n  const W = KT_WAIST",
+    "new": "  const W = KT_WAIST",
+    "note": "A rider of the mast-lift cast back as its cage passes the lid's height.",
+    "tests": [
+      "test/world/ketch_panels.test.js"
+    ]
+  },
+  {
+    "name": "KTP-thrown-from-the-chest-middle",
+    "file": "src/scenes/ketch/ketchShares.js",
+    "old": "export const KT_CHEST_MOUTH = Object.freeze({ out: 1.0, y: 1.2 });",
+    "new": "export const KT_CHEST_MOUTH = Object.freeze({ out: 0, y: 0.6 });",
+    "note": "The share in the chest's own solid box, out of reach.",
+    "tests": [
+      "test/world/ketch_panels.test.js"
+    ]
+  },
+  {
+    "name": "KTP-the-cabin-keep-dropped",
+    "file": "src/scenes/ketch/ketchShares.js",
+    "old": "at, bearing, acct: e.s, keep: KT_SPOILS_KEEP, roll:",
+    "new": "at, bearing, acct: e.s, roll:",
+    "note": "A throw out of the cabin's door and over the bridge's rail.",
+    "tests": [
+      "test/world/ketch_panels.test.js"
+    ]
+  }
+]

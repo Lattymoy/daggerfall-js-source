@@ -34,7 +34,7 @@ test('KETCH THE TRACKER, STAGE BY STAGE: the Watch waiting then its wave and wha
   const w1 = at((f) => f.k === 'wave' && f.w === 1);
   const m1 = ketchHudModel(w1.s, w1.now);
   assert.equal(m1.line, KT_HUD_TEXT.wave(1));
-  assert.equal(m1.sub, KT_HUD_TEXT.standing(6), 'a crew of four: six spheres');
+  assert.equal(m1.sub, KT_HUD_TEXT.standing(7), 'a crew of four: seven spheres (PIN MOVED, KETCH-LONGER: six)');
   let wardens = 0;
   const g = at((f) => f.k === 'nb' && f.b[1] === 3 && ++wardens === 2);
   const mg = ketchHudModel(g.s, g.now);

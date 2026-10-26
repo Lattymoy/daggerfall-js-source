@@ -14,7 +14,7 @@ import { accountProf, SESSION_KEY } from '../../src/net/accountClient.js';
 import { createProfBook } from '../../src/net/profBook.js';
 import { xpForRank } from '../../src/net/professionLaw.js';
 import {
-  RECIPES, recipeById, recipeInputs, recipePattern, patternsOf, firstCraftKey, firstCraftKin, firstCraftPays, FIRST_CRAFT_XP, craftXp,
+  RECIPES, recipeById, recipeInputs, recipePattern, patternsOf, firstCraftKey, firstCraftKin, firstCraftPays, firstCraftXp, craftXp,
   COOKING_RECIPES,
 } from '../../src/net/recipeLaw.js';
 import { mintPieces } from '../../src/systems/smithItems.js';
@@ -40,11 +40,15 @@ test('CRAFT2 DONE WHEN: the first-make 500 is a pattern\'s at a tier, through th
     assert.equal(r.ok, true, `${id}: ${JSON.stringify(r)}`);
     made.push([id, r.data.first, r.data.xp]);
   }
-  const t6 = craftXp(6, 70, false), t5 = craftXp(5, 70, false);
+  const t6 = craftXp(6, 70), t5 = craftXp(5, 70);
+  // PIN MOVED (FIRST-BUDGET, Professions-Arc 52): a first's XP its track's first-make share - Smithing's
+  // the 500 it always was, so these stand as they were
+  const first = 500;
   assert.deepEqual(made, [
-    ['longsword:adamantium', true, t6 + FIRST_CRAFT_XP], ['longsword:ebony', false, t6], ['longsword:mithril', true, t5 + FIRST_CRAFT_XP],
-    ['broadsword:ebony', true, t6 + FIRST_CRAFT_XP], ['wand:ironwood:ruby', true, t6 + FIRST_CRAFT_XP], ['wand:ghostwood:ruby', false, t6],
+    ['longsword:adamantium', true, t6 + first], ['longsword:ebony', false, t6], ['longsword:mithril', true, t5 + first],
+    ['broadsword:ebony', true, t6 + first], ['wand:ironwood:ruby', true, t6 + first], ['wand:ghostwood:ruby', false, t6],
   ]);
+  assert.deepEqual(made.map(([id]) => firstCraftXp(recipeById(id))), [500, 500, 500, 500, 500, 500], 'the law\'s share for each - the service lays it on the first alone');
   assert.deepEqual(raw.prepare('SELECT recipe FROM prof_crafts WHERE player = ? ORDER BY at, rowid').all(mac.id).map((x) => x.recipe),
     made.map(([id]) => id), 'the service\'s recipes as they were - a craft still asks its material');
 });

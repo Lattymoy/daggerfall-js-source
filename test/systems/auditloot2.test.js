@@ -149,6 +149,19 @@ test('AUDIT LOOT II A4: a gem\'s line takes no kind from the piece - a Rare blad
     tried++;
   }
   assert.ok(tried >= 5, `${tried} blades with a damage line`);
+  // REFORGE-REPLACE (2026-10-25): a reforge never gives a line its own kind back, so the damage line above would find
+  // its pool full whatever the gem; the law's other half - the gem's kind is FREE for the piece's own lines - is a blade
+  // with no damage line of its own and a Diamond set: its lines may still become damage, beside the gem's
+  let bare = 0, became = 0;
+  for (let seed = 1; seed < 2000 && bare < 400; seed++) {
+    const it = socketed(seed);
+    if (it.affixes.some((a) => a.id === 'damage')) continue;
+    LR.setGem(it, 'diamond');
+    bare++;
+    const line = LR.reforgeAffix(it, 0, lcg(seed + 300));
+    if (line?.id === 'damage') became++;
+  }
+  assert.ok(bare >= 300 && became > 0, `a blade's own line became damage beside the Diamond's ${became} times in ${bare}`);
 });
 
 test('AUDIT LOOT II A5: the line compare is a row a kind - a gem\'s line summed with the piece\'s own against what it replaces', () => {
@@ -174,6 +187,7 @@ test('AUDIT LOOT II A6: a curse\'s drawback never undoes a line of its piece - a
   assert.deepEqual(LR.SLAYER_FOES, ['undead', 'daedra', 'humanoid', 'animal'], 'DFU\'s kinds, in DFU\'s order');
   const gown = known(LR.applyRarity(garment(195), 'rare', lcg(3)));
   gown.affixes = [{ id: 'standing', param: 'merchants', value: 4 }, { id: 'warmth', value: 3 }];
+  gown.enchantments = [];   // PIN MOVED (AFFIX-LINES): its flavour set aside, as the blade's - lcg(3)'s gown draws a Good Rep With now, the old rule's
   assert.deepEqual(LR.curseParams(BAD, gown), [0, 2, 3, 4], 'never the Merchants');
   const blade = known(LR.applyRarity(sword(), 'rare', lcg(4)));
   blade.affixes = [{ id: 'damage', value: 12 }, { id: 'slayer', param: 'undead', value: 15 }];
@@ -212,7 +226,9 @@ test('AUDIT LOOT II A7: a line minted past the roll leans as its rolled lines do
   };
   const street = (g) => LR.skillKin(g).kin;
   const cursed = lean((s) => { const g = LR.applyRarity(garment(195), 'rare', mulberry(s)); return g.rarity === 'rare' ? g : null; }, LR.cursePiece, street);
-  assert.ok(cursed.all >= 50 && cursed.kin / cursed.all > 0.6, `a cursed gown's skill the street's ${cursed.kin} in ${cursed.all} (an even draw: 7 in 35)`);
+  // PIN MOVED (AFFIX-LINES, 2026-10-25): a Rare gown's roll draws over its lines, the skills' 35 among them, so it
+  // carries a skill far oftener and a curse finds the kind free less often - 37 in the 6,000 seeds, where 50 were
+  assert.ok(cursed.all >= 30 && cursed.kin / cursed.all > 0.6, `a cursed gown's skill the street's ${cursed.kin} in ${cursed.all} (an even draw: 7 in 35)`);
   // an Exalted garment's: a Legendary whose lines carry every kind but a skill (the six records carry one already, so
   // their Exalted line is another kind - a standing on the same lean when it is one)
   const recs = LR.WARDROBE_LEGENDARIES;
@@ -426,7 +442,7 @@ test('AUDIT LOOT II C1: a honed made piece is no longer what its record mints - 
 test('AUDIT LOOT II C5: a sold piece\'s junk mark ends at the shelf - both of the host\'s sales', () => {
   const wm = read('src/scenes/worldModes.js');
   // PIN MOVED (FIELD BUGS 2026-10-16b STOLEN-GOODS): a sold piece lands through landSold (the shelf for an honest piece)
-  const pushes = [...wm.matchAll(/landSold\(shelf\.items, it\);[^\n]*\n\s*setJunk\(it, false\);/g)];
+  const pushes = [...wm.matchAll(/landSoldAt\(shelf\.items, it, shelf === interiorCtx\?\.shelves\?\.\[0\] \? interiorBuilding\?\.buildingType : null\);[^\n]*\n\s*setJunk\(it, false\);/g)];   // PIN MOVED (AUDIT UPDATE II B2): through shopStock.js landSoldAt - an arrow sold at a General Store's counter is never shelved
   assert.equal(pushes.length, 2, 'the counter\'s sale and the keyed shelf\'s');
   assert.match(wm, /import \{ setJunk \} from '\.\.\/systems\/item\/itemJunk\.js';/);
 });

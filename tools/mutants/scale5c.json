@@ -202,22 +202,22 @@
   {
     "name": "SCALE5c-hop-unasked",
     "file": "server/src/index.js",
-    "old": "      if (isChannelShard(a.key) && shardOf(busOf(a.key), who.subject) !== a.key) {",
+    "old": "      if (isChannelShard(a.key) && this._shardOf(busOf(a.key), who.subject) !== a.key) {",
     "new": "      if (false) {",
     "tests": [
       "test/net/scale5c.test.js"
     ],
-    "note": "an account held by a shard not its own"
+    "note": "COST-1 (re-aimed by content: the relay's _shardOf). an account held by a shard not its own"
   },
   {
     "name": "SCALE5c-bus-hop-unasked",
     "file": "server/src/index.js",
-    "old": "      if (isChannelBus(a.key) && m.hs === 1 && shardOf(a.key, who.subject)) {",
+    "old": "      if (isChannelBus(a.key) && m.hs === 1 && this._shardOf(a.key, who.subject)) {",
     "new": "      if (false) {",
     "tests": [
       "test/net/scale5c.test.js"
     ],
-    "note": "a link of this build kept on the bus"
+    "note": "COST-1 (re-aimed by content: the relay's _shardOf). a link of this build kept on the bus"
   },
   {
     "name": "SCALE5c-seat-unasked-across",
@@ -729,16 +729,6 @@
       "test/net/scale5c.test.js"
     ],
     "note": "a shard its own channel"
-  },
-  {
-    "name": "SCALE5c-region-subject-unread",
-    "file": "src/net/hubShards.js",
-    "old": "return `${bus}.${shardHash(sub) % REGION_SHARDS}`;",
-    "new": "return `${bus}.0`;",
-    "tests": [
-      "test/net/scale5c.test.js"
-    ],
-    "note": "every account on a region's first shard"
   },
   {
     "name": "SCALE5c-region-no-bus",

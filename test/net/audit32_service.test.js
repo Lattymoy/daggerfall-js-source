@@ -170,7 +170,7 @@ test('AUDIT 32 S1 (Mac: "Whatever you think is best"): a Linen garment, a Wool r
   const net = await craft('fishingnet:linen');
   assert.deepEqual([net.status, net.body.xp, net.body.first], [200, 20, true]);
   const boots = await craft('garment-149:linen');
-  assert.deepEqual([boots.status, boots.body.xp, boots.body.first, xp()], [200, 20 + 500, true, 560], 'a bolt and a Cured Leather: the 500 laid on');
+  assert.deepEqual([boots.status, boots.body.xp, boots.body.first, xp()], [200, 20 + 511, true, 571], 'a bolt and a Cured Leather: its first laid on');   // PIN MOVED (FIRST-BUDGET, Professions-Arc 52): Outfitting's first-make share, 511 - the least that brings Outfitting to Master in Smithing's 172 crafts
   const again = await craft('garment-149:linen');
   assert.deepEqual([again.body.xp, again.body.first], [20, false], 'and once');
   s.setXp(mac, xpForRank(10), 'outfitting');

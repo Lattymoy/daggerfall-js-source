@@ -305,7 +305,10 @@ Either death, at the first dead frame, while the room is still the player's (`wi
   relay) is the room's old take: the piece off the record into the remains, the killer's alone (section 5).
   While the body lies the fallen's socket stays in the
   room, so the signed fall reaches them; a fallen that lets `WILD_FALL_GRACE_S` (30 s) go by is seized by its killer
-  (the record moved where it stands, its lease cleared). A death at a player's hand underground drops the bag and the
+  (the record moved where it stands, its lease cleared). WILD-REJOIN (FIELD BUGS 2026-10-25h): a fall signed while its
+  fallen had no socket in the room - its game closed on the death screen - says so (`g` 1,
+  `wildReceipt.js:"export const wildFallGraceS"`), and its killer carries it at once: no tab of the fallen's is there to
+  take the drop first. A death at a player's hand underground drops the bag and the
   gold's tenth as a kill in the open does, and offers no worn piece; a death to a foe there drops nothing (FOE-KEEPS).
 - THE DEATH CHECKPOINT. A dead character is never the realm's save; its drop's act checkpoints it AS IT WILL RISE (one
   health, where it fell) before the service is asked, and again after, without what it dropped
@@ -314,6 +317,20 @@ Either death, at the first dead frame, while the room is still the player's (`wi
   zone map"): always locks the hall for the hour and sets the crows over it, whether or not the pack had anything to
   drop (`world.js:"if (modes?.mode === 'dungeon' && _wdunInside)"`; section 13).
 - THE WAIT: the death screen holds `WILD_DEATH_HOLD_S` (120 s) and takes no Enter; the killer's body lies as long.
+- A GAME CLOSED ON THE DEATH SCREEN (WILD-REJOIN, FIELD BUGS 2026-10-25h, a player's report: "if you die in the
+  wilderness and alt f4 before you are looted you wont be able to be looted by who killed you. you can also skip the
+  death timer this way"): the fall is the referee's, and the referee keeps the fighter down its two minutes
+  (`WILD_REF.riseMs`) - in its room, and by the hub's carry in any other. The record the game comes back to is the save
+  from before the fall (a dead character is never saved), so a page that comes back alive and says it stands in the
+  zone is told it is still down (`wref` `down`, `wildRef.js:"export function wildDownWord"`): the time left and, from
+  the room that refereed the fall, where the body lies. It lies down again for the rest of the wait
+  (`systems/wild/wildRejoin.js`, the death's `served` seconds off the screen's hold), a kill, its body where the fall
+  was, so the receipt it is owed - said after the `down` word - lays its drop there; nothing is offered again. The death's
+  subscribers are not told it twice (`playerEntity.js:"export function presentHeardDeath"`: Project Legacy decided it on
+  the page that closed). A page that saw its own death in the zone inside `WILD_REJOIN_KNOWN_MS` (on the screen, risen,
+  raised by a party's Resurrect) takes no `down` word, and the referee says none inside `WILD_DOWN_SAY_MIN_MS` of the
+  rise. DECIDED (2026-10-25, asked with the fix and answered "with your recommended defaults"): the page serves the time
+  LEFT, never a fresh two minutes; the killer keeps the whole pick window when the fallen leaves before it picks.
 - THE RISE: at another player's hand, the nearest town or temple outside the zone and its band (`wildRiseSite`,
   `world.js:"const wildRiseSite"`, over `wildDeath.js:"export function wildRisePicks"`). AUDIT FOE-KEEPS E1 (the owner,
   2026-10-24, asked: "Rise inside the zone"): a death to a foe, which drops nothing since FOE-KEEPS, rises INSIDE the
@@ -434,6 +451,10 @@ renumbered past main's SUPER-DUNGEONS (world176) - its parts written on their br
   its takes (section 3-5). INT9 (world185, `WILD_REF_RELAY_MIN`): the zone word (`zone`), the blows refereed and routed
   to nobody, the killer's `pick` the room's, a deposit carrying the service's order on every chunk; `gave` and
   `result` retired. The referee's own frame `{t:'wref', k}` (`validWildRefOut`): `hp`, `fell`, `rc` (the signed fall).
+  WILD-REJOIN (world260 - world258 on its branch, renumbered past KETCH-LONGER and ASK-LONGER at the merges - account acct191, acct186 on its branch): `down` (`ms`, and `r` with `p` from the fall's own room - section 4), said
+  before the receipts a socket is owed; an older client drops the kind. A fall receipt signed with its fallen gone from
+  the room carries `g` 1. Deploy the account service first (an older one holds a `g` fall's killer to the grace - the
+  killer's tab then asks again past it, `wildSeizeHost.js:"a?.error === 'grace'"`), then the relay, then the site.
   PVP-LOOT (world205 - world201 on its branch, one bump past main's world201 and world202 at the merge, and world203 on the integration, renumbered past main's world203 and world204 at the merge of main): the room's take asks the friend law of the drop's records alone (section 5); a guildmate is kin
   at the referee (section 3); and the two-phase handoff (section 4) - the order's `we`
   (`identityToken.js:"if (c.we !== undefined && c.we !== 1) return false;"`), the room's `cr` word to the killer
@@ -914,6 +935,12 @@ Pinned by `test/systems/wild/fb1009b_partytruce.test.js` and `test/systems/trave
   fall names (its killer seizes it), or deposit anything the service did not take. A fight across a cell's seam waits
   for one of the two to cross (a fighter's bar is its own cell's), and the rest of lane 2's limits are
   `06-Systems/Integrity-Arc.md` section 5's.
+- WILD-REJOIN (section 4): the `down` word answers a socket's zone word, which a page says only standing in the zone
+  where it fights (`wildCan`). A page that closed on the death screen and comes back outside the zone, or inside one of
+  its buildings, is told nothing until it steps into the zone: it skips the rest of the wait there. The hub keeps the
+  carry in memory alone, so a hub restarted inside the two minutes forgets the fall in every other room. A fallen whose
+  socket dropped for a moment just as its fall was signed is counted gone (`g` 1): its killer seizes at once, the
+  record's lease cleared, and its tab rejoins.
 - The maps' hiding is the receiving client's; a guildless player's own mark is never sent in the zone.
 - No player fighting inside the zone's buildings; underground no arrow is aimed at a player and no worn piece is
   claimed.
@@ -1016,4 +1043,5 @@ zone; through the real drop law, the real naval host's party, the real feud's sw
 `test/systems/fb1019f_companiondrop.test.js`, `tools/mutants/fb1019f_companiondrop.json`. FOE-KEEPS (a death to a foe drops
 nothing; a kill's tenth): `test/systems/wild/foekeeps.test.js`, int9's FOE-KEEPS THE SERVICE, `tools/mutants/foekeeps.json`.
 AUDIT FOE-KEEPS (`01-Overview/audits/Audit-Foe-Keeps.md`): `test/systems/wild/auditfoekeeps.test.js`,
-`test/net/auditfoekeeps_relay.test.js`, `tools/mutants/auditfoekeeps.json`.
+`test/net/auditfoekeeps_relay.test.js`, `tools/mutants/auditfoekeeps.json`. WILD-REJOIN (`01-Overview/bugs/Field-Bugs-2026-10-25h.md`):
+`test/systems/wild/wildrejoin.test.js`, int9's WILD-REJOIN THE SERVICE, `tools/mutants/wildrejoin.json` (22, all dead).

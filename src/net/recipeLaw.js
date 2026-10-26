@@ -27,8 +27,10 @@ import {
   CURED_LEATHER, HARDENED_LEATHER, SKINNING_KNIFE, COUNTER_ONLY, CUT_STONE, MORTAR, PROF_RANK_MAX,   // PROF11: the mason's stone
   GEMS, PEARL, SIEGE_GEM,   // PROF10: the gems a jeweller sets, and a Lapidary's Siege-cracked one
   GRADED_GEMS, gemGradeOfKey,   // CLOTH-GEMS: and every grade of them
+  WORK_RECIPES, trackOf, ingredientKeys,   // FIRST-BUDGET: a mason's works and a brew among the first-makes, each its track's
 } from './professionLaw.js';
 import { GEM_GRADE_PRICE } from '../systems/loot/gemGrades.js';   // CLOTH-GEMS: a grade's ladder, one home (a leaf)
+import { POTION_RECIPES } from '../systems/potionRecipes.js';   // FIRST-BUDGET: DFU's twenty, a brew's first-makes (the leaf imports nothing)
 import { GROUP_TEMPLATE_INDICES } from '../systems/item/itemTemplatesData.js';   // PROF10: DFU's Jewellery enum, one home
 import { CLOTHING_DYES } from '../characters/dyes.js';   // DFU's ten clothing dyes (DyeColors 0-9), one home
 import { textCaught } from './nameFilter.js';   // TEXT-F1: a mark's words, read as a name's (nameFilter.js imports nothing)
@@ -725,12 +727,12 @@ export const carriesMark = (r, quality, spec100 = null) => quality === MASTERWOR
 // ─── THE XP AND THE COUNT (PROF0 3.2, 3.3) ───────────────────────────
 
 export const CRAFT_XP_PER_TIER = 20;
-export const FIRST_CRAFT_XP = 500;
-/** A craft's XP (Smithing's, Carpentry's or Outfitting's): 20 x its tier - a quarter for a recipe more than two tiers below the rank's top - and 500 the
- *  first time the character makes it (where firstCraftPays). */
-export function craftXp(tier, rank, first) {
+/** A craft's XP (Smithing's, Carpentry's or Outfitting's): 20 x its tier - a quarter for a recipe more than two tiers below
+ *  the rank's top. FIRST-BUDGET (Professions-Arc 52): the first time's XP is its track's share (firstCraftXp, below),
+ *  laid on by the service's decision beside it - it was a flat 500 here, every track alike. */
+export function craftXp(tier, rank) {
   const xp = CRAFT_XP_PER_TIER * tier;
-  return (tier < topTierOf(rank) - 2 ? Math.floor(xp / 4) : xp) + (first ? FIRST_CRAFT_XP : 0);
+  return tier < topTierOf(rank) - 2 ? Math.floor(xp / 4) : xp;
 }
 /**
  * AUDIT 32 S1 (Mac: "Whatever you think is best"): THE RECIPES S1 JUDGES - those made wholly of the goods a counter sells
@@ -743,7 +745,7 @@ export function craftXp(tier, rank, first) {
 export const counterMade = (r) => !!r && r.inputs.length > 0 && r.inputs.every((i) => COUNTER_ONLY.includes(i.key));
 /**
  * AUDIT 32 S1, JUDGED BY THE UNITS (CLOTH-GEMS, 2026-10-25; the player SaberGGaming's "Profession oversights", the owner:
- * "No band aids"): whether a craft's first lays on FIRST_CRAFT_XP - every recipe's, but one S1 judges (counterMade) only
+ * "No band aids"): whether a craft's first lays on its XP (FIRST-BUDGET: firstCraftXp, its share) - every recipe's, but one S1 judges (counterMade) only
  * where `own`: the craft's units are the character's own, no bought and no loose one among them - the piece's own origin,
  * AUDIT PROF-541 B7's (`products.bought_with` none), which the service reads in its decision
  * (server-account/src/professions.js craftAtAnvil). Linen and Wool were the counter's alone, so S1 withheld the 500 from
@@ -771,6 +773,72 @@ export const firstCraftKey = (r) => (!r ? null : `${r.product}@${r.tier}`);
 const KIN = new Map();
 for (const r of RECIPES) KIN.set(firstCraftKey(r), [...(KIN.get(firstCraftKey(r)) ?? []), r.id]);
 export const firstCraftKin = (r) => (!r ? [] : Object.freeze([...(KIN.get(firstCraftKey(r)) ?? [r.id])]));
+
+// ─── FIRST-BUDGET: A FIRST-MAKE'S SHARE, A TRACK AT SMITHING'S PACE (Professions-Arc 52) ───
+
+/**
+ * AUDIT 32 S1's law for a brew (AUDIT PROF-541 B6): whether a brew's first time pays - not for a potion made wholly of
+ * goods only a counter sells (the Apothecaries' sixteen: Water Breathing, Levitation). `potion` one of alchemyLaw.js
+ * POTIONS or the leaf's POTION_RECIPES - both carry DFU's `ingredients`. alchemyLaw.js re-exports it; FIRST-BUDGET moved it
+ * here, beside the recipe's (firstCraftPays), for a brew is among its track's first-makes.
+ * @param {{ ingredients: readonly number[] }|null|undefined} potion
+ */
+export const brewFirstPays = (potion) => !!potion && !potion.ingredients.every((t) => ingredientKeys(t).every((k) => COUNTER_ONLY.includes(k)));
+/**
+ * FIRST-BUDGET (SaberGGaming's report, 2026-10-25: Provisioning is slow; the owner: "No band aids"), RETUNED (the owner,
+ * asked: "Match Smithing's pace"): A FIRST-MAKE PAYS ITS TRACK'S SHARE, SET SO EVERY CRAFTING TRACK REACHES MASTER IN THE
+ * CRAFTS SMITHING TAKES. Every first-make paid a flat 500 (3.2's "+500 the first time a recipe is made"), every track
+ * alike, and a track's whole climb leans on them - but the tracks' pools differ tenfold: Smithing's 221 first-makes,
+ * Outfitting's 332 (since CLOTH-GEMS let the loom's cloth patterns pay), Building's 43 and Provisioning's 22 - so
+ * Provisioning took 178 crafts to Journeyman and 599 to Master and Building 116 and 525, where Smithing took 45 and 172
+ * (tools/craftPace.mjs, each track walked from no XP at its best). Now each track's first-make pays FIRST_MAKE_SHARE's
+ * figure for it: Smithing's the 500 it always paid, and each other track's THE LEAST SHARE AT WHICH THE WALK REACHES
+ * MASTER IN SMITHING'S 172 - DERIVED by craftPace's firstShares, pinned here, the two held equal by
+ * test/net/firstbudget_law.test.js (one XP less and the track takes 173). One share a track matches Master, not
+ * Journeyman as well: a small pool's firsts come early, so Building reaches Journeyman in 14 crafts and Provisioning in 8
+ * (Outfitting in 45, as Smithing). NO TRACK PAYS LESS THAN IT DID (FIRST_MAKE_FLOOR): no share is under the 500.
+ * A first-make is what the service keys its "made before" by: a recipe's pattern at its tier (firstCraftKey - a jewel's
+ * piece and base, a dish either herb's way), a mason's work by its id (smeltAtForge), a brew by its potion
+ * (brewAtStation) - each where its first can pay (firstCraftPays, brewFirstPays). THE SHARE SAYS HOW MUCH A FIRST PAYS,
+ * CLOTH-GEMS WHETHER: a recipe S1 judges (counterMade) is in the pool and pays its share only where its units are own
+ * (the service's decision, its `p`). Enchanting has no first-make (a disenchant pays none), so it has no share.
+ * Read by the service's binds (server-account/src/professions.js, alchemy.js) and the stations' words
+ * (ui/craftXpWords.js, ui/professions/profPages.js).
+ */
+/** FIRST-BUDGET: the least a first-make pays - the flat first every track paid before (3.2's +500) - so no track pays
+ *  less than it did (firstShares never answers under it). */
+export const FIRST_MAKE_FLOOR = 500;
+/** FIRST-BUDGET RETUNED: what one first-make pays on each crafting track - Smithing's 500, and each other track's the
+ *  least share that brings it to Master in Smithing's 172 crafts (tools/craftPace.mjs firstShares, on this recipe set;
+ *  a change to a track's recipes, its pool or its XP moves the derivation, and the law's test says by how much). */
+export const FIRST_MAKE_SHARE = Object.freeze({ smithing: 500, outfitting: 511, building: 1823, provisioning: 3155 });
+/** Each track's first-makes, in the tables' order: RECIPES, then the mason's works, then DFU's twenty. */
+const FIRST_MAKES = new Map();
+const firstMake = (/** @type {string} */ track, /** @type {string} */ key) => {
+  const keys = FIRST_MAKES.get(track) ?? [];
+  if (!keys.includes(key)) keys.push(key);
+  FIRST_MAKES.set(track, keys);
+};
+for (const r of RECIPES) if (firstCraftPays(r, true)) firstMake(trackOf(r.profession), /** @type {string} */ (firstCraftKey(r)));   // CLOTH-GEMS: every recipe's first can pay - one S1 judges where its units are own
+for (const w of /** @type {any[]} */ (WORK_RECIPES)) if (w.act && firstCraftPays(w)) firstMake(trackOf(w.xp), w.id);
+for (const p of POTION_RECIPES) if (brewFirstPays(p)) firstMake(trackOf('alchemy'), p.name);
+/** What each first-make pays, by its track and its key: its track's share. */
+const FIRST_XP = new Map();
+for (const [track, keys] of FIRST_MAKES) for (const k of keys) FIRST_XP.set(`${track} ${k}`, /** @type {Record<string, number>} */ (FIRST_MAKE_SHARE)[track] ?? 0);
+/** A track's first-makes (a discipline answers its craft's), in the tables' order - empty for a track that has none. */
+export const firstMakesOf = (track) => Object.freeze([...(FIRST_MAKES.get(trackOf(track)) ?? [])]);
+/** What a first-make pays on `track` (a discipline its craft's), by its key - 0 for a key that is none of the track's. */
+export const firstMakeXp = (track, key) => FIRST_XP.get(`${trackOf(track)} ${key}`) ?? 0;
+/** A recipe's first time's XP: its track's first-make share (its pattern at its tier the key), where its first pays - CLOTH-GEMS: a
+ *  recipe S1 judges (counterMade) only where `own`, its units the character's own (firstCraftPays). The service binds the
+ *  share asked as own (`own` true) and its decision says whether the units are (its `p`). */
+export const firstCraftXp = (r, own = false) => (!r || !firstCraftPays(r, own) ? 0 : firstMakeXp(r.profession, firstCraftKey(r)));
+/** A mason's work's first time's XP (a cut, a mix - smeltAtForge keys it by the work): Building's first-make share -
+ *  0 for every other work of the forge's table (a smelt, a burn, a saw, a cure, a weave, a transmutation pays no first). */
+export const workFirstXp = (w) => (!w?.xp ? 0 : firstMakeXp(w.xp, w.id));
+/** A brew's first time's XP (brewAtStation keys it by the potion): Provisioning's first-make share - 0 for one wholly
+ *  of the Apothecaries' goods (brewFirstPays). */
+export const brewFirstXp = (potion) => (!potion ? 0 : firstMakeXp('alchemy', potion.id));
 /** The pieces a craft makes: one, a Quartermaster's kit two (3.3); PROF9: a Cook's dish two (3.3: "+1 serving a dish" -
  *  a choice at 50). */
 export const craftCount = (r, spec100, spec50 = null) => ((r.kind === 'kit' && spec100 === 'quartermaster') || (r.kind === 'dish' && spec50 === COOK) ? 2 : 1);
@@ -864,13 +932,14 @@ export const masonTier = (rank) => topTierOf(rank);
  * A MASON'S WORK's XP (3.2: "a craft 20 x tier x units, +500 the first time a recipe is made"): 20 x the rank's tier
  * (masonTier) a unit of work - a cut, a mix - never a product (a Quarryman's second Cut Stone earns nothing more, as a
  * Quartermaster's second ingot does not, PROF0 24); half again for a CLEAN chisel (DECIDED: the Stores keep no quality,
- * so the clean act's step is the clean act's +50% - 3.2's harvest law, Mining's at the rock, PROF0 23); and 500 the
- * first time the character does it (where firstCraftPays - the service reads `first` in its decision).
+ * so the clean act's step is the clean act's +50% - 3.2's harvest law, Mining's at the rock, PROF0 23). FIRST-BUDGET
+ * (Professions-Arc 52): the first time the character does it, Building's first-make share (workFirstXp) -
+ * the service lays it on in its decision, beside this.
  */
-export function masonXp(units, rank, { clean = false, first = false } = {}) {
+export function masonXp(units, rank, { clean = false } = {}) {
   let xp = CRAFT_XP_PER_TIER * masonTier(rank) * (Number.isSafeInteger(units) && units > 0 ? units : 0);
   if (clean) xp = Math.floor((xp * 3) / 2);
-  return xp + (first ? FIRST_CRAFT_XP : 0);
+  return xp;
 }
 
 // ─── PROF9: THE PAN (PROF0 9.4) ──────────────────────────────────────
@@ -902,8 +971,8 @@ export function panWindow(rank, band = 1, skillet = false) {
  * (Mac, PROF8; Masonry's law, PROF11): four dishes, three of them tiers 1-2, would be quartered from rank 40 and Cooking
  * could never reach its Chef - so a dish is cooked at the rank's own tier, 20 x it a cook (never a serving: a Cook's
  * second earns nothing more, as a Quartermaster's second kit does not), half again for a CLEAN PAN (DECIDED: a dish
- * takes no quality, so the clean act's step is its +50% - the bench's law). The first time's 500 is the service's to lay
- * on, in its decision (firstCraftPays).
+ * takes no quality, so the clean act's step is its +50% - the bench's law). The first time's XP is the service's to lay
+ * on, in its decision - FIRST-BUDGET: Provisioning's first-make share (firstCraftXp).
  * PROF12 (Seats-Arc 7.5: the Apothecary - "members in Alchemy, Cooking, Jewelcrafting here: +1 step" a tier): DECIDED, a
  * dish takes no quality, so a hall's step is what the clean pan's step is - half again of the dish's XP, a step each
  * (`steps`, the Apothecary's tiers where the cook's guild holds the town): a clean pan in a tier-2 Apothecary's town

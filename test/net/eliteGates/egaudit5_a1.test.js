@@ -77,7 +77,7 @@ test('AUDIT EG V L2-1 THE COMPANY\'S CHOSEN DECREES REACH THE NEXT CIRCLE (secti
   P.toWindow();
   const decs = P.B.asks.filter((a) => a.q.startsWith('dec:'));
   assert.equal(decs.length, egDecreeCount(10), 'four families asked');
-  for (const a of decs) assert.equal(a.until, P.now() + EG_ASK_MS, 'open its ten seconds');
+  for (const a of decs) assert.equal(a.until, P.now() + EG_ASK_MS, 'open its EG_ASK_MS');
   for (const a of decs) P.voteAll(a.q, 1);
   P.voteAll('ready', 1);
   const up = P.B.next.up, want = decs.map((a) => [a.o[1], a.q.slice(4) === up ? 2 : 1]);

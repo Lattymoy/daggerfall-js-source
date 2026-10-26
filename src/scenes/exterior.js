@@ -327,6 +327,7 @@ import { WORLD_CONTEXT, makeAnchor, teleportPlan, ANCHOR_MUST_BE_SET } from '../
 import { STREAMING_TERRAIN_SCALE } from '../world/terrain/terrainSampler.js';   // TERRAIN-SCALE1: the anchor's stamp
 import { locationWorldRect } from '../world/streamingWorld.js';   // TP2: the native frame this host's origin stands at
 import { GLOBAL_SCALE, DOOR_TYPE } from '../world/meshReader.js';   // TP2: scene units <-> native world units; ARENA1: the undercroft's stair
+import { isHouseSign } from '../world/houseSigns.js';   // HOUSE-SIGN: a shop's sign at a house's door does not stand
 import { isClimateFreeModel, NO_CLIMATE_REMAP } from '../world/customModels.js';   // ARENA1: the colosseum wears its own pictures
 import { isUndercroftDoor, isArenaCity, undercroftLocation, ARENA_BLOCK, ARENA_GATE_PEOPLE, arenaTownLandmark } from '../world/arena/arenaCity.js';   // ARENA1: the undercroft below the city; ARENA-FIX 12: the colosseum's block and its Herald; ARENA-MAP: its name on the town map
 import { createArenaBouts } from './arena/arenaBouts.js';   // ARENA-FIX 12: THE FOUR HOSTS - the bout driver on this host too
@@ -727,6 +728,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // WM2f: the mill's companion building is part of an enhanced-skin
       // departure; the 1:1 lane must not see it.
       if (placed.enhancedOnly && !isEnhanced()) continue;
+      if (isHouseSign(placed, b, (id) => cpuModels.get(id)?.doors)) continue;   // HOUSE-SIGN: a shop's sign at a house's door does not stand
       const mesh = gpuMeshes.get(placed.modelIdNum);
       if (!mesh) continue;
       const matrix = multiply(originMatrix, placed.matrix);

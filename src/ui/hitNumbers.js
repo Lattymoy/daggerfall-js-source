@@ -137,6 +137,19 @@ export function tagHit(target, word, { now = Date.now() } = {}) {
   return showWord(word);
 }
 
+/** AUDIT WORLD-EVENTS L2-13: my last hit's number on `target` told again (inside TAG_JOIN_MS) - a foe's trait resisted it
+ *  after the formula reported (systems/bossTraits.js, its striker's door): the number that landed, and `word` on it.
+ *  None such, and nothing (the numbers are the enhanced HUD's). */
+export function retellHit(target, n, word, { now = Date.now() } = {}) {
+  const l = _lastHit;
+  if (!l || target == null || l.target !== target || now - l.at > TAG_JOIN_MS || !l.node?.isConnected) return null;
+  const first = l.node.firstChild, text = String(Math.max(0, Math.round(n)));
+  if (first && first.nodeType === 3) first.textContent = text;   // the number's own text, its tags kept after it
+  else if (!first) l.node.textContent = text;
+  if (word) { const tag = document.createElement('small'); tag.className = 'hitnum-tag'; tag.textContent = String(word); l.node.append(tag); }
+  return l.node;
+}
+
 /** FIELD BUGS 2026-10-15e ROSE-SEEN: a FOLLOW-UP BLOW of mine (Open Hand's second, Many Endings' echo -
  *  systems/loot/lootPowers.js again) runs no formula, so the seam below never hears it and only the first blow rose: its own
  *  number, the power's name its tag. Only while the enhanced HUD has mounted the numbers. FIELD BUGS 2026-10-20f LANDED-WORD:

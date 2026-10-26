@@ -454,8 +454,8 @@
   {
     "name": "EGINT-the-hooks-left-on",
     "file": "src/scenes/eliteGates/egClient.js",
-    "old": "      if (o) { o.poseRide = inSpire() ? ridePl : null; o.rideAt = inSpire() ? rideDraw : null; }",
-    "new": "      if (o) { o.poseRide = ridePl; o.rideAt = rideDraw; }",
+    "old": "o.poseRide = inSpire() ? ridePl : null; o.rideAt = inSpire() ? rideDraw : null; o.poseDown",
+    "new": "o.poseRide = ridePl; o.rideAt = rideDraw; o.poseDown",
     "tests": [
       "test/net/eliteGates/egint_client.test.js"
     ]

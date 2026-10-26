@@ -535,7 +535,10 @@ the traveller is (A1); the governor holds under what the MOD asked - a ring walk
 never the spinner's x30 (A2, `travelAsked`); a road journey resets the ring walk's
 path-crossing watch that stopped it at the first pixel middle (A3); every other journey
 clears the view's route, and a stopped SPOT journey is over (A4); a click in a town's margin
-that falls on the neighbour pixel still takes the town (A5, the 3x3 asked).
+that falls on the neighbour pixel still takes the town (A5, the 3x3 asked). (OW-TOWN-ROUND, 2026-10-23: the town's
+journey is asked at its MIDDLE alone - a click elsewhere on it is a spot walked round the town, unless it is the
+middle, a fine-move click or the traveller stands in the town; with Travel Options' places alone, a click anywhere on
+it still takes the town - AUDIT UPDATE T1/T2.)
 
 **TV3 - the travellers (C1-C6).** A welcome resets what the relay holds of me - a new socket's
 attachment holds nothing (C1); a CLEAR is always said, even over the room's budget, or a

@@ -30,6 +30,7 @@
 //     doors -> the host's building doors            each { door, pixelKey, dfBlock, recordIndex }; doorAt(entry) -> its
 //                                                   door in the scene's frame (world.js shiftedDoor: its building's
 //                                                   placement, its centre and normal in the model's own space)
+//     rand?() -> [0, 1)                             the airs' dice - Math.random unless a test seeds it
 //   }
 // Not a DFU member - Ledger A (SOUNDSCAPE). THE FOUR HOSTS: world.js wires it; worldModes.js (interiors) and
 // dungeonContext.js stop it by the modal frame's return (no air of the open world indoors or underground);
@@ -134,12 +135,12 @@ export const winterIn = (climate, winter) => !!winter && climate !== CLIMATES.De
 /**
  * @param {{ audio: any, music: any, boat: () => any, aboard?: () => boolean, bow?: (boat: any, yaw: number) => number[], csa: any, fight: () => boolean, pixel: () => ({ x: number, y: number } | null),
  *   seaPixel: (x: number, y: number) => boolean, dw: any, inTown: () => boolean, towns: () => Map<number, { blocks?: number }>,
- *   doors: any[], doorAt: (entry: any) => any }} deps
+ *   doors: any[], doorAt: (entry: any) => any, rand?: () => number }} deps
  */
 export function createSoundscapeHost(deps) {
   const columnAt = deps.dw?.rawColumnAt ? (/** @type {number} */ x, /** @type {number} */ z) => deps.dw.rawColumnAt(x, z) : null;
-  const sea = createSeaAir({ engine: deps.audio });
-  const world = createWorldAir({ engine: deps.audio });
+  const sea = createSeaAir({ engine: deps.audio, rand: deps.rand });
+  const world = createWorldAir({ engine: deps.audio, rand: deps.rand });
   const score = createSeaScore();
   let songsMade = false, held = false;
   // the way of a boat I ride (S4): her last place and her eased speed

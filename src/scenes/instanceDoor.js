@@ -14,6 +14,16 @@
 // popup asked from inside the entry broke every one of those: it answered "not entered" to a quest's transfer, which
 // then stood the player at dungeon coordinates outside (S0000016's Crux - the main quest's soft-lock).
 //
+// THE DOOR REMEMBERS THE PARTY'S ROOM (WIPE-RETURN, a field report, 2026-10-25: "Upon Death in an instance, party members
+// and host will desync even if everyone dies and goes back in at times"). A partner's room was offered only off a pose
+// that named it, and a pose names one only while its member stands inside. A party that fell together respawned at the
+// door with no pose naming its room: a member with a copy of the quest was offered Public and their own instance, a
+// member without it no popup at all, and each walked into a room apart. The room the relay last joined this page to is
+// kept (poseWord), forgotten if the relay shuts it on me (refused), and offered after the rooms members stand in, under
+// the same law (systems/instancePlaces.js partnerInstances' `stood`): a row of the popup, and entryFor's room for a
+// quest's place where nothing was recorded. It lives as long as the page: a reload inside records the room in the save,
+// a reload outside forgets it.
+//
 // deps: online() - the page is online; instanceOk() - its relay admits instances (net/instanceRoom.js
 // relaySupportsInstances, the welcome's word); account(), character() - the verified account and the character's id
 // (the private rooms' own: social.acct, realmSession.id); members() - the party's other members, each with its party
@@ -24,7 +34,7 @@
 import { ChoiceWindow } from '../ui/talkWindow.js';
 import { t, getLocalizedLocationName } from '../systems/textManager.js';
 import { SITE_TYPES } from '../systems/quest/place.js';
-import { instanceOwnerOf, holdEpochOf, instanceOfWord, isInstanceRoom, INSTANCE_DOOR_WORD } from '../net/instanceRoom.js';
+import { instanceOwnerOf, holdEpochOf, instanceOf, instanceOfWord, isInstanceRoom, INSTANCE_DOOR_WORD } from '../net/instanceRoom.js';
 import { roomKeyFor } from '../net/online.js';
 import { wdunHallOfRoom, seaRoomCell } from '../net/wire.js';
 import { openerQuestOf, partnerInstances, instanceOffer, questDungeonWhole, questsAtSite, questInstanceEpoch, remainsWholeAt, remainsInstanceEpoch } from '../systems/instancePlaces.js';
@@ -73,6 +83,7 @@ const keepsNone = (site) => { const base = siteBase(site); return !base || !!sit
 export function createInstanceDoor(deps) {
   let ownerFor = null, owner = null;   // the account the owner digest is of, and the digest
   let refusedRoom = null;              // the instance room whose refusal was said (refused)
+  let stood = null;                    // WIPE-RETURN: the instance room the relay last joined me to (poseWord), kept past its leave - its key
   const said = new WeakSet();          // the builds whose quest-elsewhere line was said (questElsewhere)
   const online = () => !!deps.online?.();
   const machine = () => deps.questMachine?.() ?? null;
@@ -107,10 +118,11 @@ export function createInstanceDoor(deps) {
     const members = deps.members?.() ?? [];
     return new Map(await Promise.all(members.map(async (m) => [m?.acct, await instanceOwnerOf(m?.acct)])));
   }
-  /** The party's instances standing at `site` whose owners are in the party (systems/instancePlaces.js partnerInstances). */
+  /** The party's instances standing at `site` whose owners are in the party (systems/instancePlaces.js partnerInstances) -
+   *  then the room I last stood in there (WIPE-RETURN), while its owner is in the party. */
   async function partnersAt(site) {
     const owners = await partyOwners();
-    return partnerInstances(deps.members?.() ?? [], siteBase(site), (acct) => owners.get(acct) ?? null);
+    return partnerInstances(deps.members?.() ?? [], siteBase(site), (acct) => owners.get(acct) ?? null, instanceOf(stood));
   }
   /** May a RECORDED instance (a save's, an anchor's, a staff landing's) still be stood in? A staff landing's always (the
    *  relay admits staff); mine while what opened it runs - the Hold's for good, a quest's while a running quest that names
@@ -130,8 +142,9 @@ export function createInstanceDoor(deps) {
    *   word, net/instanceRoom.js instanceWord, absent for its public room; whether it stood whole; a staff landing's): that
    *   instance where it may still be had (stillHeld), else the public room laid as it was - an instance's place whole, so
    *   the recorded position stands in the blocks it was taken in. Undefined: nothing recorded -
-   * a quest's place its instance (a partner's standing there first - the party together - else mine), and where none
-   *   can be had (an older relay, no account yet) its public room whole (questDungeonWhole: its markers are the whole's);
+   * a quest's place its instance (a partner's standing there first - the party together - then the partner's room I
+   *   last stood in there, WIPE-RETURN - else mine), and where none can be had (an older relay, no account yet) its
+   *   public room whole (questDungeonWhole: its markers are the whole's);
    * the Hold mine (HOLD-ONCE refuses its public room at the entry);
    * anywhere else the public room, as it always was.
    */
@@ -194,15 +207,24 @@ export function createInstanceDoor(deps) {
      *  spent (true: its caller says nothing more). */
     async atDoor(site, go) { const entry = await choose(site); return entry ? go(entry) : true; },
     /** The party pose's `ins` (net/wire.js validPartyPose): inside, the instance room the relay joined me to (`room`) - never
-     *  the one I meant to enter (a private room wins the key, a refused one is none) - so a partner is offered what is there. */
-    poseWord: (mode, room) => (mode !== 'exterior' && isInstanceRoom(room) ? { ins: room } : {}),
+     *  the one I meant to enter (a private room wins the key, a refused one is none) - so a partner is offered what is there.
+     *  WIPE-RETURN: and the door keeps it (`stood`) - the pose stops naming it the moment I leave it (a death leaves the room
+     *  at once, world.js onlineFrame), and its place's door offers it to me again. The pose is composed whenever the page
+     *  has its hub link, in a party or not (world.js partyFrame). */
+    poseWord(mode, room) {
+      if (mode === 'exterior' || !isInstanceRoom(room)) return {};
+      stood = room;
+      return { ins: room };
+    },
     /** THE RELAY SHUT AN INSTANCE'S DOOR on `session` (net/instanceRoom.js INSTANCE_DOOR_WORD: not its owner, staff, nor of
      *  its owner's party - at the hello, or asked again while staying, a kick or a lapse): said once a room, true then -
-     *  the host takes the player out (the realm's door's own shape, systems/realmSaves.js realmDoorShut). */
+     *  the host takes the player out (the realm's door's own shape, systems/realmSaves.js realmDoorShut). WIPE-RETURN: and
+     *  the door no longer offers it back - the relay's word on who comes in is the hub's party, which can be ahead of mine. */
     refused(session) {
       const room = session?.room;
       if (!session?.terminal || session.error !== INSTANCE_DOOR_WORD || !isInstanceRoom(room) || refusedRoom === room) return false;
       refusedRoom = room;
+      if (stood === room) stood = null;
       deps.say?.(INSTANCE_TEXT.refused());
       return true;
     },

@@ -318,7 +318,7 @@ test('SEAT1b THE SEAT TAB: beside the board\'s tabs while the seats are open, ne
 
 test('SEAT1b THE HOSTS BY SOURCE: the relay ticks in its pose arm and nowhere else; the client hands a `watch` frame of its own cell to the book; the world host keeps it, claims on the frame, passes the board its seat, the gate claim its region and the Renown report the region it stands in; the service routes, statuses and deploy filter (mutants: each seam)', () => {
   const relay = rd('server/src/index.js');
-  assert.match(relay, /if \(isCellRoom\(a\.key\) && cellRoomOfWire\(m\.p\.x, m\.p\.z\) === a\.key && typeof met\.sub === 'string' && met\.sub\) await this\._watchTick\(ws, met\.sub, m\.p, !unmoved, now\);/);   // PIN MOVED (AUDIT-SEATS): R7 - the pose's own cell alone, never a halo's
+  assert.match(relay, /if \(isCellRoom\(a\.key\) && inCover\(a, cellRoomOfWire\(m\.p\.x, m\.p\.z\)\) && typeof met\.sub === 'string' && met\.sub\) await this\._watchTick\(ws, met\.sub, m\.p, !unmoved, now\);/);   // PIN MOVED (COST-2): a cell the socket covers - its own at L0, never a halo's; PIN MOVED (AUDIT-SEATS): R7 - the pose's own cell alone, never a halo's
   assert.equal((relay.match(/_watchTick\(/g) ?? []).length, 2, 'one call, one definition');
   // PIN MOVED (AUDIT ETHER-OW C2-1, test/systems/audit_etherow.test.js): a pose off the map mints nothing - the Watch's ground
   // one home (net/watchReceipt.js watchPixelOk), its answers as they were

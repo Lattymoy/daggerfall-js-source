@@ -1190,19 +1190,25 @@ async function listGood(ctx, player, env, { character, region, item, pick, price
  * to pay in all. Here, a material goes into the Stores at once and a piece is answered to the pack; elsewhere the goods
  * go by courier. The seller is paid at the sale; a piece's owner moves to the buyer in the same batch.
  */
-export async function marketBuy(ctx, player, env, { character, region, listing: id, units = 1, max, hubs, rid, realm = null, board = null, vendor = null } = {}) {
+export async function marketBuy(ctx, player, env, { character, region, listing: id, units = 1, max, hubs, rid, realm = null, board = null, vendor = null, landed = false } = {}) {
   const { db, nowS, rand } = ctx;
   const refused = asks(player, { character, rid });
   if (refused) return refused;
   const me = player.id;
   // GOLD-MARKET: a gold buy moves its buyer's record - where the record stands answered before any other word (AUDIT
-  // REALM L1-F2: a lost answer asked again reads "one on" as its act, landed)
-  let at = null;
+  // REALM L1-F2: a lost answer asked again reads "one on" as its act, landed).
+  // VENDOR-LOST (FIELD BUGS 2026-10-25), A DEPARTURE FROM L1-F2: a buy's tab needs the sale's answer (the piece, the
+  // delivery), so "one on" ended its session (realmGoldAct's `needsAnswer`) and the piece bought waited uncollected. A
+  // record one on from where the tab asked, under its lease, with a sale this id made, is that sale, landed: answered as
+  // the repeat with the record's sequence (`oneOn`). Only to a tab that says it reads it so (`landed`) - an older tab
+  // reads every repeat as a sale paid before it asked, and would checkpoint its purse unpaid over the record.
+  let at = null, oneOn = null;
   if (realm != null) {
     const side = await realmActFirst(db, me, character, realm);
-    if (side.error) return side;
-    if (!side.at) return { error: 'market-gold-realm' };
-    at = side.at;
+    if (landed === true && side.error === 'seq' && side.seq === Number(realm.seq) + 1) oneOn = side.seq;
+    else if (side.error) return side;
+    else if (!side.at) return { error: 'market-gold-realm' };
+    else at = side.at;
   }
   const answer = async (row, extra = {}) => {
     // MARKET-SPEED: the balance and the Stores (or the delivery) asked together, never one after the other
@@ -1236,7 +1242,8 @@ export async function marketBuy(ctx, player, env, { character, region, listing: 
     return out;
   };
   const prior = await db.prepare('SELECT * FROM market_sales WHERE buyer = ?1 AND rid = ?2').bind(me, rid).first();
-  if (prior) return answer(prior, { repeat: true });
+  if (prior) return answer(prior, { repeat: true, ...(oneOn ? { realm: { seq: oneOn } } : {}) });
+  if (oneOn) return { error: 'seq', seq: oneOn };   // one on, and no sale of this id: a move this tab never made
   const closed = shut(player, env);
   if (closed) return closed;
   if (!regionOk(region)) return { error: 'bad-region' };
@@ -1287,7 +1294,7 @@ export async function marketBuy(ctx, player, env, { character, region, listing: 
   ]);
   const road = courierOf(hubsNow, from, region, units, courierSlow(env, nowS, region));
   if (!road) return { error: 'market-no-road' };
-  if (at) return buyWithGold(ctx, player, { character, region, l, units, max, rid, road, own, at, answer, vend });
+  if (at) return buyWithGold(ctx, player, { character, region, l, units, max, rid, road, own, at, answer, vend, landed: landed === true });
   const total = units * Number(l.price);
   // AUDIT 30 L6: the tax of the listing's running total - what it has sold before this, units x its price
   const left = Number(l.own) + Number(l.bought);
@@ -1386,7 +1393,7 @@ export async function marketBuy(ctx, player, env, { character, region, listing: 
  * gold's, a piece's owner moved and marked bought with gold. The tax and the fee, and the courier, are burnt: gold no
  * row holds. Answers the sale and the record's new sequence (`realm.seq`).
  */
-async function buyWithGold(ctx, player, { character, region, l, units, max, rid, road, own, at, answer, vend = null }) {
+async function buyWithGold(ctx, player, { character, region, l, units, max, rid, road, own, at, answer, vend = null, landed = false }) {
   const { db, bucket, nowS, rand } = ctx;
   const me = player.id;
   const courier = road.courier * MARK_WORTH_GOLD;
@@ -1457,6 +1464,10 @@ async function buyWithGold(ctx, player, { character, region, l, units, max, rid,
   } catch {
     await dropIfUnnamed(db, bucket, me, at.id, prep.key);   // AUDIT REALM2 S3
     const moved = await recordMovedOf(db, me, at);
+    // VENDOR-LOST: the first asking's batch landed while this one ran (its answer given up on, and asked again) - that sale
+    const first = landed && moved?.error === 'seq' && moved.seq === at.seq + 1
+      ? await db.prepare('SELECT * FROM market_sales WHERE buyer = ?1 AND rid = ?2').bind(me, rid).first() : null;
+    if (first) return answer(first, { repeat: true, realm: { seq: moved.seq } });
     if (moved) return moved;
     const now = await db.prepare('SELECT * FROM market_listings WHERE id = ?1').bind(l.id).first();
     if (!now || now.state !== 'open') return { error: 'market-gone' };

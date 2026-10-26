@@ -181,7 +181,7 @@ test('CART-AWAY THE CLIENT\'S WORD (systems/wild/wildCart.js wildCartAway / wild
   assert.ok(w.includes('...(online?.wildCollectAt?.(lay) ? { collect: 1 } : {}), ...wildFallWords(hccOn(), hccRuntime.getSaveData(), wildMaskOf(maps)) }),'), 'my drop says where my wagon is');   // PIN MOVED (AUDIT FB1019f B2): the words through wildFallWords (systems/wild/wildDeath.js) - the wagon's and COMPANION-DROP's `packs` (test/systems/fb1019f_companiondrop.test.js)
   assert.ok(w.includes("wildFallWords, wildTookAny, wildRisePicks } from '../systems/wild/wildDeath.js';"));   // PIN MOVED (AUDIT FOE-KEEPS E1): the rise's towns beside them
   assert.ok(rd('src/systems/wild/wildDeath.js').includes('export const wildFallWords = (on, rec, mask) => ({ ...wildCartWord(on, rec, mask), packs: WILD_FALL_PACKS, letters: WILD_FALL_LETTERS });'), 'the wagon\'s word among them');   // PIN MOVED (AUDIT FOE-KEEPS LETTERS-TENTH): and the letters'
-  assert.ok(w.includes('wildAccount.fall({ receipt: s.rc, room: s.room, ...(online?.wildCollectAt?.(s.room) ? { collect: 1 } : {}) }).then('), 'a seizure says nothing of another\'s wagon');
+  assert.ok(rd('src/scenes/wildSeizeHost.js').includes('wildAccount.fall({ receipt: s.rc, room: s.room, ...(host.online?.wildCollectAt?.(s.room) ? { collect: 1 } : {}) }).then('), 'a seizure says nothing of another\'s wagon');   // PIN MOVED (WILD-REJOIN, HOST-SPLIT): wildSeizeFrame moved verbatim to scenes/wildSeizeHost.js
 });
 
 // ─── THE ACCOUNT SERVICE, the whole act ─────────────────────────────────────────────────────────────────────────

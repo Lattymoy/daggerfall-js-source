@@ -299,7 +299,7 @@ test('SD5a the world host\'s steps, run from its own text: through the Rift - un
   assert.equal(worldSteps({ realm: null }).sdWayBack(), false, 'only out of the Hour');
 });
 
-test('SD5a the world host by source: the Rift\'s door; the doors out of the Hour; its room the relay\'s realm; no Mark, no Recall, no regeneration; its floors an edge; the Hollow stands while I stand in its Hour, so its end casts me out of either (mutants: a Recall out of the Hour; the room a dungeon\'s; left in a room that refused me)', () => {
+test('SD5a the world host by source: the Rift\'s door; the doors out of the Hour; its room the relay\'s realm; no Mark, no Recall, regeneration held; its floors an edge; the Hollow stands while I stand in its Hour, so its end casts me out of either (mutants: a Recall out of the Hour; the room a dungeon\'s; left in a room that refused me)', () => {
   const w = read('src/scenes/world.js');
   assert.match(w, /enter: \(\) => sdEnterRealm\(s\) \};/);
   assert.match(w, /sdWayBack: \(\) => sdWayBack\(\),/);
@@ -312,8 +312,8 @@ test('SD5a the world host by source: the Rift\'s door; the doors out of the Hour
   assert.match(w, /function madeSay\(rule\) \{ const t = madeSaysHere\(rule\); if \(madeRuleHere\('says'\) === 'hour'\) sdSay\(t\); else setMidScreenText\(t\); \}/);
   assert.deepEqual([madeLevelRule('hour', 'says'), madeLevelRule('hour', 'mark'), madeLevelSays('hour', 'mark'), madeLevelRule('hour', 'recall'), madeLevelSays('hour', 'recall')], ['hour', 'refused', SD_REALM_TEXT.noMark, 'refused', SD_REALM_TEXT.noRecall]);
   assert.ok(w.indexOf("madeRuleHere('recall')") > w.indexOf('async function recallToAnchor()') && w.indexOf("madeRuleHere('recall')") < w.indexOf('const anchor = playerEntity.anchorPosition;'), 'before the anchor is read');
-  assert.match(w, /\n\s+setCourtRules\(madeRuleHere\('regen'\) === 'off'\);/);
-  assert.equal(madeLevelRule('hour', 'regen'), 'off');
+  assert.match(w, /\n\s+setCourtRules\(madeRuleHere\('regen'\) === 'held'\);/);   // PIN MOVED (EVENT-RULES): regeneration held, not off; PIN MOVED (AUDIT WORLD-EVENTS L1-10): the pause the hurt door's, not my health's
+  assert.equal(madeLevelRule('hour', 'regen'), 'held');
   assert.match(w, /if \(!player\.arena && modes\?\.sdRealmSlot\?\.\(\) != null\) player\.arena = sdArenaHeld\(\) \? _realmArenaHeld : sdConcordHere\(\) \? _realmArenaBridged : _realmArena;/);   // SD6c (PIN MOVED): the Concord's bridge among its floors; AUDIT SD III (F2, PIN MOVED): the arena's rim first, for a fighter it holds
   assert.match(w, /inside: \(loc\) => \(modes\?\.mode \?\? 'exterior'\) === 'dungeon' && \(modes\?\.dungeonLocation\?\.sdSlot === loc\?\.sdSlot \|\| modes\?\.dungeonLocation\?\.sdRealm === loc\?\.sdSlot\),/);
   // a room that will not have me: out before the Hollow's door with the relay's own words, once

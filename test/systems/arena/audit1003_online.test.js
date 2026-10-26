@@ -590,7 +590,7 @@ test('AUDIT PRE-MERGE 1003 O10 a displaced home\'s move is said read only once t
       // the standing composer (worldModes quickSaveNow -> worldQuickSave / dungeonContext quickSave): the caller's sink, else the realm's
       modes: { deathUp: () => false, quickSaveNow: (name, opts = {}) => { const into = opts.sink ?? realmSink; into({ n: name }); return true; } },
     };
-    const landed = mount(`${W.decl('onlineCheckpoint')}\n${W.fn('realmCheckpoint')}\n${W.decl('onlineCheckpointLanded')}\nreturn onlineCheckpointLanded;`, state);
+    const landed = mount(`${W.decl('checkpointGateOpen')}\n${W.decl('onlineCheckpoint')}\n${W.fn('realmCheckpoint')}\n${W.decl('onlineCheckpointLanded')}\nreturn onlineCheckpointLanded;`, state);
     const run = moveArenaHomes({
       homes: { ensure: async () => true, homesIn: () => new Map([[OLD, { buildingKey: OLD, hall: true, keeper: true }]]) },
       api: {

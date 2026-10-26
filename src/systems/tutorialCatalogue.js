@@ -476,11 +476,11 @@ export const TUTORIALS = Object.freeze([
     id: 'crafting', group: 'livelihood',
     get title() { return t('tutorials.crafting.title', 'Crafting'); },
     get trigger() { return t('tutorials.crafting.trigger', 'When you first gather something.'); },
-    get body() { return [t('tutorials.crafting.body', 'Online, you craft at a station: stand at one, press {Professions} and open Holdings > Stores. Cook at any fire.')]; },
+    get body() { return [t('tutorials.crafting.body', 'Online, craft at a station: stand at one, press {Professions} and open Holdings > Stores. Cook at any fire.')]; },
     get points() {
       return [
         t('tutorials.crafting.shops1', 'Forge: Weaponsmiths, Armorers. Loom: Clothing Stores. Workbench: Furniture Stores, joineries.'),
-        t('tutorials.crafting.shops2', 'Jeweler\'s bench: Pawn Shops, Gem Stores. Mason\'s bench: General Stores. Alchemy: Alchemists. Enchanting: Mages Guild halls.'),
+        t('tutorials.crafting.shops2', 'Jeweler\'s bench: Pawn Shops, Gem Stores. Mason\'s bench: General Stores. Alchemy: Alchemists, Mages Guilds. Enchanting: Mages Guild halls.'),
         t('tutorials.crafting.more', 'Your home can hold stations too. Each crafting profession under {Professions} says more.'),
       ];
     },

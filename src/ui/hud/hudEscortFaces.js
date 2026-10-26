@@ -179,6 +179,9 @@ const _files = new Map();     // file -> Promise<CifRciFile>
 const _textures = new Map();  // `${file}#${record}` -> {tex,w,h}
 let _warned = false;
 let _headStamp = 0;   // PORTRAIT3D: the data's stamp the panels were resolved under
+// QUEST-SHELF-FACES: whether a quest is set aside (machine.js shelveQuest), by its uid - the quest bridge hands it.
+// Not reset by initEscortFaces: the bridge and the panel mount in either order.
+let _questAway = () => false;
 
 function _loadFile(file) {
   let p = _files.get(file);
@@ -263,6 +266,18 @@ export function clearEscortFaces() {
   _panels = [];
 }
 
+/**
+ * QUEST-SHELF-FACES (2026-10-25, a player: abandoned the Acolyte's escort and "stuck with the Oracle's portrait"): A
+ * QUEST SET ASIDE SHOWS NO FACES. DFU has no abandon - its faces leave by DropFace or by the quest-end sweep above, and
+ * QUEST-SHELF's Abandon is neither, so the face stood for as long as the quest was away. Its faces are KEPT, not
+ * dropped: a reclaim restores the quest from its own envelope and never runs its `add face` again, so a dropped face
+ * would never come back. Hidden at the draw, they ride the save as they are and show again the moment the quest is
+ * reclaimed. `questAway(uid)` answers whether that quest is set aside; null shows every face.
+ */
+export function setEscortQuestAway(questAway) {
+  _questAway = questAway ?? (() => false);
+}
+
 /** QuestMachine_OnQuestEnded (:295-304): "Remove any faces belonging
  *  to this quest" - the unlike-Daggerfall sweep. */
 export function escortQuestEnded(quest) {
@@ -320,18 +335,25 @@ export function drawEscortFaces(renderer, canvas) {
   if (!_panels.length) return;
   if (headDataStamp() !== _headStamp) refreshFaces();   // PORTRAIT3D: the data came or went - the faces resolved again
   const m = { s: hudScale(canvas.width, canvas.height) };
-  const sizes = _panels.map((p) => (p?.special
+  for (const { panel, size, place } of shownColumn()) {
+    if (!panel?.img || !place.enabled || !size) continue;
+    renderer.drawScreenQuad(panel.img.tex, {
+      x: place.x * m.s, y: place.y * m.s,
+      w: size.w * m.s, h: size.h * m.s,
+    });
+  }
+}
+
+/** The column drawEscortFaces draws and escortFacesBottom measures: each shown panel with its size and its place.
+ *  A face whose quest is set aside (QUEST-SHELF-FACES) is left out before the layout, so the faces under it close up
+ *  as they do when a face drops. Special panels take the fixed 48x48; a face whose art has not landed has no size. */
+function shownColumn() {
+  const panels = _panels.filter((_, i) => !_questAway(_faces[i]?.questUID));
+  const sizes = panels.map((p) => (p?.special
     ? { w: ESCORT_SPECIAL_FACE_SIZE, h: ESCORT_SPECIAL_FACE_SIZE }
     : (p?.img ? { w: p.img.w, h: p.img.h } : null)));
   const placed = layoutEscortFaces(sizes);
-  for (let i = 0; i < _panels.length; i++) {
-    const p = _panels[i];
-    if (!p?.img || !placed[i].enabled || !sizes[i]) continue;
-    renderer.drawScreenQuad(p.img.tex, {
-      x: placed[i].x * m.s, y: placed[i].y * m.s,
-      w: sizes[i].w * m.s, h: sizes[i].h * m.s,
-    });
-  }
+  return panels.map((panel, i) => ({ panel, size: sizes[i], place: placed[i] }));
 }
 
 /** UI3: how far down the drawn column reaches, in the classic's own 320x200 units - 0 while no face is drawn. The
@@ -339,13 +361,8 @@ export function drawEscortFaces(renderer, canvas) {
  *  widget's band ends. The same sizes and places drawEscortFaces draws. */
 export function escortFacesBottom() {
   let bottom = 0;
-  if (!_panels.length) return bottom;
-  const sizes = _panels.map((p) => (p?.special
-    ? { w: ESCORT_SPECIAL_FACE_SIZE, h: ESCORT_SPECIAL_FACE_SIZE }
-    : (p?.img ? { w: p.img.w, h: p.img.h } : null)));
-  const placed = layoutEscortFaces(sizes);
-  for (let i = 0; i < _panels.length; i++) {
-    if (_panels[i]?.img && placed[i].enabled && sizes[i]) bottom = Math.max(bottom, placed[i].y + sizes[i].h);
+  for (const { panel, size, place } of shownColumn()) {
+    if (panel?.img && place.enabled && size) bottom = Math.max(bottom, place.y + size.h);
   }
   return bottom;
 }

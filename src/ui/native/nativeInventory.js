@@ -92,7 +92,7 @@ import { shiftDrop } from '../../systems/physicalItems.js';   // PI1: Physical I
 // U57: which list is the remote one, and what opening and closing
 // this window decide.
 import {
-  openState, remoteTarget, planWagonToggle, closeSession,
+  openState, remoteTarget, planWagonToggle, closeSession, holdChestSave,
   remoteTargetType, REMOTE_TARGET_TYPES,   // AUDIT MERGE-PLUS C3: whether a Remove drops on the ground
   // G5: the drop icon's five laws - the OnPush seed, CanChangeDropIcon,
   // the cycling arithmetic and dropIconIdxs' record lookup.
@@ -634,6 +634,8 @@ export class NativeInventoryWindow {
    *  overlay slot WITHOUT closing this one, so those two effects were
    *  skipped and a session drop was silently LOST. */
   _closeSilently() {
+    this._chestGate ??= { saving: false, saved: false };
+    if (holdChestSave(this._chestGate, this.hooks?.loot, () => this._closeSilently())) return;
     this.done = true;
     // IF1: UIManager.OnWindowChange's inventory arm (ImmersiveFootstepsMain
     // .cs:372-398) - the inventory window popped, so the mod re-reads the

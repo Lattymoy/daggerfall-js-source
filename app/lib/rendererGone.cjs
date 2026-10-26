@@ -73,4 +73,51 @@ function logWith(text, line) {
   return out;
 }
 
-module.exports = { GONE_WHY, LOOP_STOPS, RESTART_SPAN_MS, goneAsk, restarts, hangAsk, restartsHung, createStopCount, goneLine, CRASH_LOG_MAX, logWith };
+// GPU-TRAIL (2026-10-24, src/render/gpuTrail.js): THE GPU'S LAST SAMPLES, UNDER THE STOP'S LINE. "It ran out of memory"
+// is only Electron's reason; one reporter's kernel log showed the GPU hang and reset instead. The game's page hands the
+// shell its trail with every sample (app/preload.cjs gpuTrail), the shell keeps the newest, and a process gone writes it
+// under its own line. What the page hands is read field by field - known numbers, two flags, a short GPU name, the
+// newest TRAIL_KEEP samples - so no line it makes is long: logWith keeps whole lines, and one line past CRASH_LOG_MAX
+// would leave the log nothing.
+
+/** The samples kept: the page's own ring (src/render/gpuTrail.js GPU_TRAIL_KEEP). */
+const TRAIL_KEEP = 20;
+/** A sample's numbers as crash.log writes them: the page's field, its label, its unit. */
+const TRAIL_FIELDS = Object.freeze([
+  ['upS', 'up', 's'], ['textures', 'tex', ''], ['buffers', 'buf', ''], ['vaos', 'vao', ''], ['framebuffers', 'fbo', ''], ['programs', 'prog', ''],
+  ['fps', 'fps', ''], ['frameMs', 'ms', ''], ['worstMs', 'worst', ''], ['hitchMs', 'hitch', ''], ['draws', 'draws', ''], ['binds', 'binds', ''],
+  ['viewDraws', 'view', ''], ['shadowDraws', 'shadow', ''], ['heapMB', 'heap', 'MB'],
+]);
+/** A sample's flags, written by name when set. */
+const TRAIL_FLAGS = Object.freeze(['hidden', 'lost']);
+/** The latest time a Date can print (toISOString throws past it). */
+const TIME_MOST = 8.64e15;
+
+/** The page's trail as the shell keeps it - `{ gpu, samples }`, the newest TRAIL_KEEP samples of known fields - or null
+ *  with no sample to keep. */
+function trailFrom(raw) {
+  const samples = [];
+  for (const s of Array.isArray(raw?.samples) ? raw.samples.slice(-TRAIL_KEEP) : []) {
+    if (!Number.isFinite(s?.at) || Math.abs(s.at) > TIME_MOST) continue;
+    const kept = { at: s.at };
+    for (const [field] of TRAIL_FIELDS) kept[field] = Number.isFinite(s[field]) ? s[field] : null;
+    for (const flag of TRAIL_FLAGS) kept[flag] = s[flag] === true;
+    samples.push(kept);
+  }
+  if (!samples.length) return null;
+  return { gpu: typeof raw.gpu === 'string' ? raw.gpu.replace(/\s+/g, ' ').slice(0, 160) : null, samples };
+}
+
+/** crash.log's lines for a kept trail, under a process gone's line: the GPU's name, then a sample a line, oldest first;
+ *  a number the page did not have is '-'. '' with no trail. */
+function trailLines(trail) {
+  if (!trail?.samples?.length) return '';
+  let out = `  gpu ${trail.gpu ?? 'unknown'}\n`;
+  for (const s of trail.samples) {
+    out += `  ${new Date(s.at).toISOString()}${TRAIL_FIELDS.map(([field, label, unit]) => ` ${label}=${s[field] == null ? '-' : `${s[field]}${unit}`}`).join('')}`
+      + `${TRAIL_FLAGS.filter((flag) => s[flag]).map((flag) => ` ${flag}`).join('')}\n`;
+  }
+  return out;
+}
+
+module.exports = { GONE_WHY, LOOP_STOPS, RESTART_SPAN_MS, goneAsk, restarts, hangAsk, restartsHung, createStopCount, goneLine, CRASH_LOG_MAX, logWith, TRAIL_KEEP, trailFrom, trailLines };

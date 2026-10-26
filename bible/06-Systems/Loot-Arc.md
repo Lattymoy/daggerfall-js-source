@@ -21,7 +21,7 @@ Every one of these is a standing call of Mac's, and no slice moves it:
 
 1. **The source sets the odds, never the player** (`Loot-Rarity.md`, LR1). A signature drop steers WHICH Legendary a
    source's kind of foe yields, never whether; the drought multiplies the source's OWN Legendary chance, so a rat's
-   stays a rat's; a champion is a source, stronger because it is.
+   stays a rat's; a champion is a source, stronger because it is. LOOT-GATE (2026-10-25, Dudey; Port-Ledger A LOOT-GATE) departs from it: the roller's level now holds Rare and Legendary back for a young character. Recorded by AUDIT UPDATE (`01-Overview/audits/Audit-Update-2026-10-25.md` U1) as OPEN for Mac's ruling - this law is his standing call. The gate's levels and factors are never published (CLAUDE.md LOOT-GATE).
 2. **Shops and quest rewards do not roll** (LR1). The Reforge is a service on a piece the player already owns; no
    shelf is stocked, nothing is rolled for sale.
 3. **A craft reaches Rare at most** (`Professions-Arc.md` law 7). Nothing here makes a Legendary: an imprinted Rare
@@ -188,8 +188,11 @@ more and a quarter again. LOOT7's Rare-or-better guarantee is gone. The numbers 
 `06-Systems/Searchables.md`.
 
 **Online.** A dungeon's foes are its layout's, built on every client from the location (the elite's way): the
-champion and its trait are a HASH of the location and the marker, so every client stands the same champion with no
-wire word. A foe in the street or a building is its owner's: the owner's hash says it, and the foe record carries its trait
+champion and its trait are a HASH of the location and the marker, so every client marks the same foe with no wire
+word. CHAMP-BASE (2026-10-25, `01-Overview/bugs/Field-Bugs-2026-10-25b.md`): each client stands the mark at its own
+build's level, and a class foe is built at its builder's, so a character under level 3 stands no champion there; the
+room's shared base of the body asks the mark at the room's level (`scenes/roomLootHost.js` `roomBodyBase`), one base
+for everyone. A foe in the street or a building is its owner's: the owner's hash says it, and the foe record carries its trait
 (`cp`, sent only when set) to every puppet, which wears the same scaling, so a puppet's blow resolved on my side is a
 champion's. Said so: when a dying owner hands a street foe over, its carried loot does not travel (the hand-over's
 own law), so a champion adopted mid-fight carries none.
@@ -197,7 +200,9 @@ own law), so a champion adopted mid-fight carries none.
 ## 10. LOOT8 - the drought
 
 Bad-luck protection. Every eligible piece (a weapon, armour, jewellery - LR1's eligibility) the player TAKES from a
-body or a pile below Legendary adds one to the character's drought; a Legendary or better taken empties it. At every
+body or a pile below Legendary adds one to the character's drought; a Legendary or better taken empties it. (LOOT-GATE,
+2026-10-25: a young character's takes below Legendary add nothing, so no pity builds while the gate holds the top tiers
+back - and a Legendary taken still empties it, AUDIT UPDATE L6.) At every
 source door, the Legendary threshold is multiplied by `1 + 0.2 x floor(drought / 25)`, at most x3 - after 25 pieces
 x1.2, after 250 x3 - and never above the Rare threshold (the ladder never inverts). Counted at the TAKE because a
 body's loot is rolled when its foe is spawned (`hostCombat.spawnEnemyLoot`): counting the rolls would fill the
@@ -215,11 +220,13 @@ Broker's dismantle is its), an artifact, a quest's item, a worn, locked or bound
 card's button, as the Broker's Dismantle) and at the Mages Guild (both skins).
 
 **The Reforge** - the Mages Guild's, a fourth row beside Identify. Pick a Magic or Rare piece (known, not worn) and
-one of its lines; that line is rolled again from its tier's pool, never a kind or a param another line carries, a
-Rare keeping its prefix and its suffix (so its name keeps both parts). The name and the price follow. Once a piece has
-been reforged, only THAT line may be reforged again (`reforged`, the line's index). An Exalted Legendary's extra line
-may be reforged too; a record's own lines never. The price: a Magic 2 shards and 100 gold, a Rare 4 and 400, an
-Exalted 10 and 2,000.
+one of its lines; that line is REPLACED by a line of another kind from its tier's pool (REFORGE-REPLACE, 2026-10-25,
+the owner: "Replace, price rises") - never the line's own kind, never a kind or a param another line carries, a line
+that does something by another that does, a number by a number, across the name's slots. The name and the price
+follow. Any line may be reforged, as often as the purse allows; a line nothing else can take the place of (armour's
+thorns, a technique) is not offered. An Exalted Legendary's extra line may be reforged too; a record's own lines
+never. The price: a Magic 2 shards and 100 gold, a Rare 4 and 400, an Exalted 10 and 2,000 - the first time; each
+reforge on a piece costs twice the last (`reforges`, the piece's count).
 
 ## 12. LOOT10 - the codex, and the imprint
 
@@ -550,8 +557,10 @@ damage door, so a shield, a ward and a death save see it as any hurt; never a pe
 
 **Who.** A dungeon's: `markDungeonChampions` marks the layout's records by an FNV hash of the location id and the
 marker's index - one in fourteen (`CHAMPION_PER_MILLE` 70; CHAMP-RATE, was 50), its trait from the hash's high bits - so every client
-stands the same champions with no wire word, and a mark rides its record through a rebuild. Every build arm of
-`applyEliteScaling` stands it, an elite dungeon's onto the elite's scaling. A quest's foe is never in the layout. The
+marks the same records with no wire word, and a mark rides its record through a rebuild. Every build arm of
+`applyEliteScaling` stands it, an elite dungeon's onto the elite's scaling, at the build's level (CHAMP-BASE: a class
+foe's is its builder's, and a room's shared base asks the mark again at the room's - `championTraitFor`, the gate's one
+home). A quest's foe is never in the layout. The
 street's: an ordinary encounter's foe (`capped` - never a quest's, a summons, a placed camp's or a replacement) is
 `rollStreetChampion`'s - the same mixer over where it stands, its type and the pool's count of them, NEVER a draw:
 the pool's stream (its loot, its kit) draws as it did, and a seeded test's street stands the same foes every run
@@ -724,6 +733,29 @@ thirteen whole languages; the single piece's refusals it borrows (`lockedText`, 
 face's sigil rune (C7). The classic pack has no card and no batch: the Reforge's Salvage page and its "Salvage every
 Magic" (LOOT18) stay its doors. `test/systems/batchsalvage.test.js` (9), `tools/mutants/batchsalvage.json` (25, all
 dead). Audited: `01-Overview/audits/Audit-Passage-Batch-Salvage.md`.
+
+**REFORGE-REPLACE (2026-10-25; a player, SaberGGaming, beside AFFIX-LINES - `Loot-Rarity.md`; the owner: "Replace,
+price rises")**: measured, 26 to 31% of Rare lines could only be rolled back into their own kind - a Rare's line held
+to its name slot, a kind another line carried barred - and the first reforge locked the piece to that one line for
+good, at a flat price, while the hone (LOOT17) raised a value with its price doubling. The law above is the owner's:
+`lootRarity.js` reforgePool - the kinds a line may become, never its own (so a reforge always replaces; the same kind
+back was a value rolled again, which the hone sells), never one another line carries, a proc for a proc, any slot,
+the piece renamed (`rarityName` - a Rare gains or loses its prefix as the line crosses); `reforgeableLines` - every
+line whose pool holds a kind, however often reforged (thorns, armour's one proc, and a technique - only a technique may
+stand there, TECH1's law - are never offered; the hone still takes them); the replacement drawn over the pool's lines
+(AFFIX-LINES' pickByLines), its value from its tier's band, a skill's and a standing's param on the roll's own leans.
+`reforgeCount` - the piece's `reforges` (a declared field, 1 to REFORGES_MAX 31; item law 14 holds it to the tiers the
+Reforge takes), or one for an old piece's `reforged` mark - honoured as a reforge taken, never a lock, folded into the
+count at the next reforge. `reforge.js` reforgePrice - the tier's price doubled for every reforge taken, as honePrice
+doubles; one `reforgeAffix` serves the Mages Guild's Reforge and the Reforge with Essence (`Professions-Arc.md` 41.7),
+so both doors are one roll: `temperLaw.js` reforgeEssence(tier, count) doubles the Essence the same way, and the
+service's /v1/prof/reforge takes the piece's `count` (acct187 - acct182 on its branch, renumbered at the merge). The card says the price and that it doubles, and a line
+no other kind can replace says so when pressed (`reforgeWindow.js` REFORGE_NOTE, `REFORGE_REFUSALS.line`, through t()).
+`test/systems/affixlines_reforge.test.js`; PIN MOVED: `loot9_reforge` (no lock, never the same kind, the count and the
+doubling price, every line's press), `tech1_roster` (a technique's line not offered), `craft4_temper`.
+`tools/mutants/affixlines.json` (36, all dead); `loot9.json` re-aimed (three records whose law was inverted renamed and
+aimed at the new one; LOOT9-carried-kind-again equivalent as recorded - its guard is belt-and-braces beside the draw's
+weights); AUDIT LOOT II A4 pinned from its other side (a gem's kind free for the piece's own lines).
 
 ### LOOT10 - the codex, and the imprint (2026-10-01)
 

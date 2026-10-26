@@ -2059,12 +2059,16 @@ export class EnemyAI {
     // refill in DFU's order, and does here too.
     this._handleNoAction(foeTarget);
     if (this.detected) this.giveUpTimer = GIVE_UP_TICKS;
+    // AUDIT WORLD-EVENTS L4-1: a follower keeping to its leader takes no pursuit tick - the pursuit turned it at the player
+    // it detects and the follow turned it back, so a leader that is not the player (a refugee's guide, the Standard's
+    // post) was never walked to; a companion's leader IS the player, and turned twice a tick
+    const follows = !!this.follow && !paralyzed && !paused && !knocked && !locked && this._followWanted();
     for (let i = 0; i < classicTicks; i++) {
       if (!this.detected && this.giveUpTimer > 0) this.giveUpTimer--;
       // C-slice: a pacified foe with NO foe target keeps its senses
       // but takes no action - its senses hold no Target, so
       // HandleNoAction drops CanAct. One with a foe target still acts.
-      if (this.canAct) this._classicTick(targetFeet ?? playerFeet, paused);   // MT-i: pursuit aims at the TARGET
+      if (this.canAct && !follows) this._classicTick(targetFeet ?? playerFeet, paused);   // MT-i: pursuit aims at the TARGET
     }
     // ROAD-U: `paused` joins the two intent clears. DFU calls
     // TakeAction (and through it AttemptMove) every FixedUpdate, so
@@ -2075,7 +2079,7 @@ export class EnemyAI {
     if (paralyzed || paused || locked || !(this.isHostile || foeTarget)) this.moving = false;
     // CREW-COMPANIONS: a companion (the host's `follow`) with no foe to fight - or one chased too far from its
     // leader - keeps to the leader instead: the pursuit's own turn-then-walk, aimed at the leader's feet.
-    this._following = !!this.follow && !paralyzed && !paused && !knocked && !locked && this._followWanted();
+    this._following = follows;
     if (this._following) this._followTicks(classicTicks, dt);
 
     // C15 KnockbackMovement, verbatim: runs INSTEAD of pursuit (and

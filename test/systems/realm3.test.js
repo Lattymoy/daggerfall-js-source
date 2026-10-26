@@ -164,7 +164,7 @@ test('REALM P1.5 end to end: customs on a copy, the realm character made once fr
   const got = await realmFetch(io, made.data.id);
   assert.equal(JSON.parse(got.text).characterId, made.data.id);
   const door = src('src/ui/enhanced/enhancedMenu.js');
-  assert.match(door, /snap\.characterId = mintCharacterId\(\);\s*\n\s*const r = saveSlot\(snap\.name \|\| row\.name, 'Copied from the realm', snap, \{ storage: appStorage\(\) \}\);/);
+  assert.match(door, /snap\.characterId = mintCharacterId\(\);\s*\n\s*const r = saveSlot\(snap\.name \|\| row\.name, REALM_COPY_SAVE_NAME, snap, \{ storage: appStorage\(\) \}\);/);
 });
 
 test('REALM P1.3: a notice crosses the reload once; the boot\'s address carries the online lane, the load door, the id, the classic start and the world host\'s door alone; every word has its sentence', () => {

@@ -1,0 +1,90 @@
+[
+  {
+    "name": "GOLD-WIRE-mark-dungeon-off",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "    markRoomCarried(list);   // GOLD-WIRE: a gold drop into it stops at the most one stack rides the room's word in\n",
+    "new": "",
+    "tests": [
+      "test/systems/loot/goldwire.test.js"
+    ],
+    "note": "a dungeon room container's composed list unmarked: the purse lands whole and the host's word is unreadable"
+  },
+  {
+    "name": "GOLD-WIRE-mark-interior-off",
+    "file": "src/world/interior/interiorRoomLoot.js",
+    "old": "    markRoomCarried(t.items);   // GOLD-WIRE: a gold drop into it stops at the most one stack rides the room's word in\n",
+    "new": "",
+    "tests": [
+      "test/systems/loot/goldwire.test.js"
+    ],
+    "note": "a building cupboard's composed list unmarked"
+  },
+  {
+    "name": "GOLD-WIRE-carried-never",
+    "file": "src/systems/loot/roomCarriedList.js",
+    "old": "Array.isArray(list) && _carried.has(list);",
+    "new": "false && _carried.has(list);",
+    "tests": [
+      "test/systems/loot/goldwire.test.js"
+    ]
+  },
+  {
+    "name": "GOLD-WIRE-clamp-off",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "  if (!usingWagon && shared) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/systems/loot/goldwire.test.js"
+    ],
+    "note": "the bug: the whole purse lands as one stack past LOOT_STACK_MAX"
+  },
+  {
+    "name": "GOLD-WIRE-clamp-everywhere",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "shared = isRoomCarried(remote),",
+    "new": "shared = true,",
+    "tests": [
+      "test/systems/loot/goldwire.test.js"
+    ],
+    "note": "the owner's condition: a home's cupboard and the ground clamped too"
+  },
+  {
+    "name": "GOLD-WIRE-room-whole",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "  return Math.max(0, LOOT_STACK_MAX - (onto ? (onto.stackCount ?? 1) : 0));",
+    "new": "  return LOOT_STACK_MAX;",
+    "tests": [
+      "test/systems/loot/goldwire.test.js"
+    ],
+    "note": "the stack the drop merges into ignored: two drops pass the bound"
+  },
+  {
+    "name": "GOLD-WIRE-room-off-by-one",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "  return Math.max(0, LOOT_STACK_MAX - (onto ? (onto.stackCount ?? 1) : 0));",
+    "new": "  return Math.max(0, LOOT_STACK_MAX + 1 - (onto ? (onto.stackCount ?? 1) : 0));",
+    "tests": [
+      "test/systems/loot/goldwire.test.js"
+    ]
+  },
+  {
+    "name": "GOLD-WIRE-full-accepts",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "    if (amount < 1) return { ok: false, refusal: REFUSAL.sharedGoldFull, notice: sharedGoldFullText() };",
+    "new": "    if (amount < 0) return { ok: false, refusal: REFUSAL.sharedGoldFull, notice: sharedGoldFullText() };",
+    "tests": [
+      "test/systems/loot/goldwire.test.js"
+    ],
+    "note": "a full stack answers a drop of nothing as a drop"
+  },
+  {
+    "name": "GOLD-WIRE-notice-off",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "    return { ok: true, amount, notice: asked > room ? sharedGoldText(room) : null };",
+    "new": "    return { ok: true, amount, notice: null };",
+    "tests": [
+      "test/systems/loot/goldwire.test.js"
+    ],
+    "note": "a clamped drop with no box naming the room left"
+  }
+]

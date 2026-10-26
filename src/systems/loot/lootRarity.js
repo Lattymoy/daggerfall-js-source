@@ -14,8 +14,9 @@
 //   magic      - an item with one or two AFFIXES (below), or one of
 //                DFU's own MAGIC.DEF items (which are the same idea:
 //                a plain item with enchantments and a name)
-//   rare       - three or four affixes, a generated two-part name, and
-//                ONE of DFU's own catalogue enchantments as its flavour
+//   rare       - three or four affixes, a name its lines give (a prefix,
+//                a suffix or both - AFFIX-LINES), and ONE of DFU's own
+//                catalogue enchantments as its flavour
 //   legendary  - a fixed record from LEGENDARIES: a name, a set affix
 //                signature and its own DFU enchantment
 //   aetheric   - SET6 (Sigil Sets): the rung under Artifact, never
@@ -87,6 +88,7 @@ import { THUNDERLOCK_TEMPLATE } from '../../characters/thunderlockIds.js';   // 
 import { dressClassOf } from '../clothingStanding.js';   // LOOT14: a garment's standing leans to its dress
 import { survivalOn } from '../survival/switch.js';   // LOOT14: the warmth and weatherproof lines' reader - a leaf
 import { hoodCapable } from '../survival/temperature.js';   // LOOT15: Unseen answers a hood (HOOD-SAID's one law)
+import { rareGate, legendaryGate, rollerLevel, gateLevel } from './lootLevelGate.js';   // LOOT-GATE: the roller's level holds the top tiers back
 import { ROLLED_TIERS } from '../rarityTier.js';   // RARE-BREAK1: the rolled tiers' one home
 import { GEM_IDS, GEM_GRADES, GEM_GRADE_WORDS, GEM_ROW_GRADES, GEM_GRADE_TEMPLATE_BASE, GEM_GRADE_TEMPLATES, gemId, ALL_GEM_IDS, isGemId, gemKind, gemGrade, GEM_NAMES, gemTemplateOf } from './gemGrades.js';   // GEM-GRADES: a gem's kind and grade, one home
 import { setPieceKind, rollSetSigil, rollSetJoin, setLines, setSigilLines } from '../sigil/sigilSets.js';   // SET4: a won piece of armour or a shield may carry a set's sigil; a weapon's may join one; SET5: the set in words
@@ -309,7 +311,7 @@ export const luckMult = (luck = 50) => Math.max(LUCK_MULT_MIN, Math.min(LUCK_MUL
 /** The three thresholds, per mille, for one source at one luck. LOOT5: `find` multiplies the Legendary threshold - the
  *  source's OWN chance, past its cap but never past the Rare threshold (the ladder never inverts): Foxglove's Fortune's
  *  Favour, and LOOT8's drought. */
-export function rarityChances({ kind = 'corpse', tier = 0, boss = false, luck = 50, qualityMult = 1, find = 1, weights = RARITY_WEIGHTS, legendaryTier = null, legendaryQuality = null, ladder = 1 } = {}) {   // FOE-CAP: `weights` a source's own table (systems/foeLootCap.js, a plain foe's); CHAMP-LOOT: `legendaryTier`/`legendaryQuality` the Legendary threshold's own source (a champion's)
+export function rarityChances({ kind = 'corpse', tier = 0, boss = false, luck = 50, qualityMult = 1, find = 1, weights = RARITY_WEIGHTS, legendaryTier = null, legendaryQuality = null, ladder = 1, rollerLevel: atLevel = null } = {}) {   // FOE-CAP: `weights` a source's own table (systems/foeLootCap.js, a plain foe's); CHAMP-LOOT: `legendaryTier`/`legendaryQuality` the Legendary threshold's own source (a champion's)
   // ELITE: `qualityMult` scales the whole ladder (1.2 = every tier 20% likelier), caps unchanged
   const mult = (boss ? SOURCE_MULT.boss : (SOURCE_MULT[kind] ?? 1)) * (Number.isFinite(qualityMult) && qualityMult > 0 ? qualityMult : 1);
   const lk = luckMult(luck);   // LOOT13: luck multiplies, before the cap
@@ -328,7 +330,11 @@ export function rarityChances({ kind = 'corpse', tier = 0, boss = false, luck = 
     return Math.max(0, Math.min(w.cap, (w.base + w.perTier * Math.max(0, lt)) * lm * lk));
   };
   const legendary = Math.min(rare, legAt(W.legendary) * (Number.isFinite(find) && find > 0 ? find : 1));
-  return { magic, rare, legendary };
+  // LOOT-GATE (lootLevelGate.js): the roller's level, when the roll names one, scales Rare and Legendary - never Magic
+  const lv = gateLevel(atLevel);   // AUDIT UPDATE L9: a level read as the gate reads one (a number's string too)
+  if (lv == null) return { magic, rare, legendary };
+  const rareG = Math.min(magic, rare * rareGate(lv));
+  return { magic, rare: rareG, legendary: Math.min(rareG, legendary * legendaryGate(lv)) };
 }
 
 /** LOOT5 (bible/06-Systems/Loot-Arc.md sections 7 and 10): THE FINDERS - named functions answering a multiplier on the
@@ -344,7 +350,7 @@ export function legendaryFindMult() {
 
 /** One roll in [0, 1000) against the thresholds, highest tier first. */
 export function rollRarity(source, rolls = Math.random) {
-  const c = rarityChances(source);
+  const c = rarityChances({ ...source, rollerLevel: source?.rollerLevel ?? rollerLevel() });   // LOOT-GATE: the source's level, else the player's
   const r = rolls() * 1000;
   if (r < c.legendary) return 'legendary';
   if (r < c.rare) return 'rare';
@@ -645,6 +651,36 @@ export function kindParams(id, item) {
 
 const rangeInt = (min, max, rolls) => min + Math.floor(rolls() * (max + 1 - min));
 const pick = (list, rolls) => list[Math.floor(rolls() * list.length)];
+/** AFFIX-LINES (2026-10-25, a player - SaberGGaming: carrying capacity on four Rare pieces in five; the owner: "No band
+ *  aids"; bible/06-Systems/Loot-Rarity.md, the affix law): A NUMBER LINE IS DRAWN OVER LINES, NOT KINDS. A pool of kinds,
+ *  each weighed by the lines it may still give the piece (`linesOf` - a kind with params its free params, a kind
+ *  without its one): carrying capacity is one line and the attributes eight, so it is drawn an eighth as often as they
+ *  are together, where an even draw over the kinds drew it as often as all eight. ONE ROLL, as `pick` took (LOOT1's
+ *  law): every seeded mint draws as many rolls as it did, so only which line it lands on moves. */
+function pickByLines(pool, linesOf, rolls) {
+  const weights = pool.map((id) => Math.max(0, linesOf(id)));
+  let r = rolls() * weights.reduce((n, w) => n + w, 0);
+  let last = pool.length - 1;
+  for (let i = 0; i < pool.length; i++) {
+    if (weights[i] > 0) last = i;
+    if (r < weights[i]) return pool[i];
+    r -= weights[i];
+  }
+  return pool[last];   // a sum's rounding past the last weight: the last kind that has a line
+}
+/** Tests only: the one draw, alone. */
+export const _pickByLinesForTests = pickByLines;
+/** AFFIX-LINES: the lines a kind may give `item` past those `held` carries (affix records) - its params no held line
+ *  names, or one for a kind without params no held line is. */
+export function kindLines(id, item, held = []) {
+  const params = kindParams(id, item);
+  if (!params) return held.some((a) => a?.id === id) ? 0 : 1;
+  return params.filter((p) => !held.some((a) => a?.id === id && a.param === p)).length;
+}
+/** AFFIX-LINES: a kind's weight in a line's draw - a number kind's lines (kindLines); a kind that DOES something (LOOT4)
+ *  one while it has a line to give, its params one power's flavours (an elemental's fire or frost, a slayer's foe), so
+ *  the proc pass's even draw over its kinds (addProcLine) is this draw too. */
+export const drawWeight = (id, item, held = []) => { const n = kindLines(id, item, held); return AFFIX_KINDS[id]?.proc ? Math.min(1, n) : n; };
 
 /** LOOT1 (the Loot arc, bible/06-Systems/Loot-Arc.md - AUDIT-LR's second note: "a warhammer can roll +20 Impish ... a
  *  weighting toward the group's own combat skills would be a tuning slice"): A SKILL AFFIX LEANS TO THE ITEM'S OWN
@@ -739,9 +775,16 @@ export const affixWord = (a, tier) => (validAffix(a) ? AFFIX_KINDS[a.id].word(BA
 /** Roll a tier's affixes for an item: the count from AFFIX_COUNTS, no
  *  kind repeated (no param repeated for a kind with params), the first
  *  pick leaning to the group's own number (a weapon's damage, a piece
- *  of armour's armour) half the time, a Rare guaranteed a prefix AND a
- *  suffix so its name has both parts. */
-export function rollAffixes(item, tier, rolls = Math.random) {
+ *  of armour's armour) half the time, every other pick over the LINES
+ *  still open (AFFIX-LINES, pickByLines) and the name following them -
+ *  a prefix, a suffix or both, as the lines fall (nameAround).
+ *
+ *  `byLines` false is the law a crafted piece's product record minted
+ *  under before MINT_V_LINES (net/productRecord.js; systems/smithItems.js
+ *  mintPiece): each pick even over the KINDS, and a Rare's last pick held
+ *  to whichever name slot its lines left empty - so a record made before
+ *  mints the piece it always did. */
+export function rollAffixes(item, tier, rolls = Math.random, { byLines = true } = {}) {
   const kinds = AFFIX_IDS.filter((id) => AFFIX_KINDS[id].groups.includes(item.group) && !AFFIX_KINDS[id].proc);   // LOOT4: the numbers alone - a door's last pass adds a kind that does something
   const [min, max] = AFFIX_COUNTS[tier] ?? [0, 0];
   const count = rangeInt(min, max, rolls);
@@ -763,13 +806,14 @@ export function rollAffixes(item, tier, rolls = Math.random) {
   for (let i = 0; i < count; i++) {
     let pool = open();
     if (!pool.length) break;
-    if (tier === 'rare' && i === count - 1) {
-      // the last pick fills whichever slot the name still lacks
+    if (!byLines && tier === 'rare' && i === count - 1) {
+      // the record's old law: the last pick fills whichever slot the name still lacks
       const has = (slot) => out.some((a) => AFFIX_KINDS[a.id].slot === slot);
       const need = !has('prefix') ? 'prefix' : !has('suffix') ? 'suffix' : null;
       if (need) { const p = pool.filter((id) => AFFIX_KINDS[id].slot === need); if (p.length) pool = p; }
     }
-    const id = i === 0 && own && pool.includes(own) && rolls() < 0.5 ? own : pick(pool, rolls);
+    const draw = () => (byLines ? pickByLines(pool, (k) => drawWeight(k, item, out), rolls) : pick(pool, rolls));   // AFFIX-LINES: over the lines
+    const id = i === 0 && own && pool.includes(own) && rolls() < 0.5 ? own : draw();
     out.push(mint(id));
   }
   return out;
@@ -1186,8 +1230,10 @@ export function legendariesFor(item) {
 
 // ── the mint ────────────────────────────────────────────────────────
 /** The item's name for a tier: "Sentinel's Cuirass of the Bear"
- *  (prefix, the template, suffix). A Magic item has one word, a Rare
- *  both, a Legendary its record's name.
+ *  (prefix, the template, suffix) - the words its lines give, the first
+ *  prefix's and the first suffix's (AFFIX-LINES: a Rare as its lines
+ *  fall - one part or both, never a slot forced), a Legendary its
+ *  record's name.
  *
  *  DISC29-B (Julian on Discord: a coloured-tier "iron" helmet his class was refused as leather): "the template" is the
  *  template's name AS THE MINT WROTE IT - Roleplay & Realism: Items puts Brigandine, Fur or Mail before it
@@ -1274,20 +1320,20 @@ export const affixesWorth = (affixes, item = null) => Math.round((affixes ?? [])
  *  enchantment. Common leaves the item as DFU minted it; so does any
  *  tier the ladder does not roll (SET6: an Aetheric piece is a fixed
  *  record, minted whole by systems/aetheric.js - never a roll). */
-export function applyRarity(item, tier, rolls = Math.random, legendaryPool = null, { family = null, fits = null } = {}) {
+export function applyRarity(item, tier, rolls = Math.random, legendaryPool = null, { family = null, fits = null, byLines = true } = {}) {   // AFFIX-LINES: `byLines` false a product record's old law (rollAffixes)
   if (!item || !ROLLED_TIERS.includes(tier)) return item;
   let affixes;
   let enchantment = null;
   if (tier === 'legendary') {
     const pool = legendaryPool ?? legendariesFor(item);
-    if (!pool.length) return applyRarity(item, 'rare', rolls);   // no record for this item: the tier below
+    if (!pool.length) return applyRarity(item, 'rare', rolls, null, { byLines });   // no record for this item: the tier below
     const rec = pickLegendary(pool, family, rolls);   // LOOT6: a source's family weighs its own records
     affixes = rec.affixes.map((a) => ({ ...a }));
     enchantment = rec.enchantment;
     item.legendary = rec.id;
     item.name = rec.name;
   } else {
-    affixes = rollAffixes(item, tier, rolls);
+    affixes = rollAffixes(item, tier, rolls, { byLines });
     item.name = rarityName(item, tier, affixes);
     if (tier === 'rare') enchantment = rareFlavour(RARE_FLAVOURS[item.group] ?? RARE_FLAVOURS.Jewellery, rolls, fits);
   }
@@ -1320,18 +1366,22 @@ export const rareEnchantWorth = (item) => Math.round(RARE_ENCHANT_WORTH * (isGar
  *  staff fetches 6, every time, at a shop whose gold never runs out (~79k gold an hour of chopping and sawing at margin
  *  45, ~320k at the service's own throttle). 0 for a piece no craft made, or one its quality rolled nothing onto. */
 export function craftedRarityWorth(item) {
-  if (typeof item?.provenance !== 'string' || !ROLLED_TIERS.includes(item.rarity)) return 0;
+  if ((typeof item?.provenance !== 'string' && item?.imbued !== true) || !ROLLED_TIERS.includes(item.rarity)) return 0;   // LOOT-GATE: an imbued piece too - its tier was bought, so a counter pays for the piece it was
   // AUDIT CRAFT-WORTH: a record's lines only as a list - a malformed one is worth nothing here, never a throw in the Sell walk
-  return affixesWorth(Array.isArray(item.affixes) ? item.affixes : [], item) + (item.rarity === 'rare' ? rareEnchantWorth(item) : 0);
+  const rolled = affixesWorth(Array.isArray(item.affixes) ? item.affixes : [], item) + (item.rarity === 'rare' ? rareEnchantWorth(item) : 0);
+  // AUDIT UPDATE L5: an imbued piece's counter takes off what the Imbue added, so a found Magic made Rare sells as the
+  // Magic it was (reforge.js imbuePiece imbueWorth) - never more than its lines are worth
+  return typeof item.provenance !== 'string' && Number.isInteger(item.imbueWorth) ? Math.min(rolled, Math.max(0, item.imbueWorth)) : rolled;
 }
 
 /** THE HOST DOOR. Roll every eligible item of a freshly generated list
  *  against the source; a no-op with no source, and with the switch off
  *  the DFU loot list untouched but for the final finds (the Pellet). `luck` is the player's
  *  live luck. Returns the list for chaining. */
-export function rollLootRarity(items, source, { rolls = Math.random, luck = 50, find: findIn = undefined } = {}) {   // PARTY-LOOT: `find` the roll's own finders' word (a room's base reads none of a player's)
-  if (!source || !Array.isArray(items)) return items;
-  if (!lootRarityOn()) return (items.push(...rollFinalFinds({ ...source, luck }, rolls)), items);   // AUDIT SHIP C2: the Pellet a find, not a tier - the switch off still drops it, the shelves selling none
+export function rollLootRarity(items, sourceIn, { rolls = Math.random, luck = 50, find: findIn = undefined, level = undefined } = {}) {   // PARTY-LOOT: `find` the roll's own finders' word (a room's base reads none of a player's); LOOT-GATE: `level` the roll's own level (a room's base names its own), else the player's
+  if (!sourceIn || !Array.isArray(items)) return items;
+  if (!lootRarityOn()) return (items.push(...rollFinalFinds({ ...sourceIn, luck }, rolls)), items);   // AUDIT SHIP C2: the Pellet a find, not a tier - the switch off still drops it, the shelves selling none
+  const source = { ...sourceIn, rollerLevel: sourceIn.rollerLevel ?? level ?? rollerLevel() };
   const find = findIn ?? legendaryFindMult();   // LOOT5: the finders' word, once for the list
   const minted = [];
   for (const it of items) {
@@ -1402,8 +1452,8 @@ export function lastPass(pieces, rolls = Math.random, { on = lootRarityOn() } = 
 // The Loot arc (bible/06-Systems/Loot-Arc.md section 6). LR1's six kinds are numbers a wearer carries; five more DO
 // something (systems/loot/lootPowers.js: a weapon's sear, leech and slayer's edge, armour's thorns, jewellery's focus).
 // A Magic piece one time in five, a Rare a bit over one time in three, takes ONE such line in its door's last pass:
-// a kind its group may carry, from its tier's band. It never names the piece (nameAround), so a Rare's two-part name
-// and a Magic's one word stand as LR1 made them.
+// a kind its group may carry, from its tier's band. It never names the piece (nameAround), so the name its number
+// lines gave stands as they made it.
 /** Per mille that a Magic or a Rare minted at a source takes a line that does something. */
 export const PROC_PER_MILLE = Object.freeze({ magic: 200, rare: 350 });
 let _procPerMille = PROC_PER_MILLE;
@@ -1560,7 +1610,8 @@ export function tierLabel(item) {
   return `${cursed}${RARITIES[tier].label}`;
 }
 /** EXALT a Legendary IN PLACE: one more line - a kind its lines do not carry and its group may, or (none left) a kind
- *  with a param its lines leave free - its value from the top half of the Legendary band; the mark, and the price.
+ *  with a param its lines leave free, drawn over the lines (AFFIX-LINES, pickByLines) - its value from the top half of
+ *  the Legendary band; the mark, and the price.
  *  Answers whether it was exalted (never twice, never a piece that is not a Legendary, never one with no line left). */
 export function exaltLegendary(item, rolls = Math.random) {
   if (item?.rarity !== 'legendary' || item.exalted === true || !Array.isArray(item.affixes)) return false;
@@ -1570,7 +1621,7 @@ export function exaltLegendary(item, rolls = Math.random) {
   let pool = kinds.filter((id) => !carried.has(id));
   if (!pool.length) pool = kinds.filter((id) => AFFIX_KINDS[id].params && freeParams(id).length);
   if (!pool.length) return false;
-  const id = pick(pool, rolls);
+  const id = pickByLines(pool, (k) => drawWeight(k, item, item.affixes), rolls);   // AFFIX-LINES: over the lines, one roll as `pick` took
   const [lo, hi] = AFFIX_RANGES[id].legendary;
   const value = rangeInt(Math.ceil((lo + hi) / 2), hi, rolls);
   const k = AFFIX_KINDS[id];
@@ -1643,11 +1694,12 @@ export const isDamned = (item) => isCursed(item) && item.cursed.type === DAMNED_
 /** A piece a curse may damn: a Legendary weapon. */
 const damnable = (item) => item?.rarity === 'legendary' && item.group === 'Weapons';
 /** CURSE A PIECE IN PLACE - a Rare or a Legendary that is no Exalted and no cursed one: one more line, a number kind its
- *  group may carry and its lines do not (or, none left, a kind with a param they leave free), its value from the top
+ *  group may carry and its lines do not (or, none left, a kind with a param they leave free) drawn over the lines
+ *  (AFFIX-LINES), its value from the top
  *  half of its tier's band; one drawback, a row of its group's drawn and then its param; the drawback beside its
  *  enchantment (`enchantments`) and named (`cursed`, what the temple lifts); the line's worth on its price (a drawback
- *  is worth nothing, DFU's own law - enchantments.js VALUE_COUNTS_BELOW). It never renames the piece: a Rare's prefix and
- *  suffix are its first lines'. TRUE-CURSE: `damned` damns it as well (the Test Room's; a door's are damnPass's,
+ *  is worth nothing, DFU's own law - enchantments.js VALUE_COUNTS_BELOW). It never renames the piece: a Rare's name is its
+ *  first lines'. TRUE-CURSE: `damned` damns it as well (the Test Room's; a door's are damnPass's,
  *  after every draw it makes). Answers whether it was cursed. */
 export function cursePiece(item, rolls = Math.random, { damned = false } = {}) {
   if ((item?.rarity !== 'rare' && item?.rarity !== 'legendary') || item.exalted === true || isCursed(item) || !Array.isArray(item.affixes)) return false;
@@ -1658,7 +1710,7 @@ export function cursePiece(item, rolls = Math.random, { damned = false } = {}) {
   if (!pool.length) pool = numbers.filter((id) => AFFIX_KINDS[id].params && unclaimed(id).length);
   const rows = CURSE_DRAWBACKS.filter((row) => curseParams(row, item).length);
   if (!pool.length || !rows.length) return false;
-  const id = pick(pool, rolls);
+  const id = pickByLines(pool, (k) => drawWeight(k, item, item.affixes), rolls);   // AFFIX-LINES: over the lines, one roll as `pick` took
   const [lo, hi] = AFFIX_RANGES[id][item.rarity];
   const top = Math.ceil((lo + hi) / 2);   // the top half of its tier's band, as an Exalted's line
   const value = rangeInt(top, hi, rolls);
@@ -1743,8 +1795,8 @@ export function curseLine(item) {
  *  whose wardrobe pool keeps the fight off the clothes (LOOT14). A gem set in it (systems/reforge.js setGemPiece) gives
  *  its LINE beside the piece's own - one more line in `affixes`, marked with its gem (`gem`), so every reader of a line
  *  reads it (the fold, a weapon's procs and damage, LOOT12's cap, the card's compare) - and no roll made it: it has no
- *  band, is never reforged or honed, and never names the piece (the gems' lines are last, after a Rare's own prefix and
- *  suffix). Unset, the gem shatters.
+ *  band, is never reforged or honed, and never names the piece (the gems' lines are last, after the lines that name a
+ *  Rare). Unset, the gem shatters.
  *  GEM1 (bible/06-Systems/Gem-Sockets.md section 3): A SOCKET LIST. `sockets` - one to three values, each 'empty' or
  *  the gem set in it, a declared item field - where LOOT20 wrote one string (`socket`): a weapon holds as many as its
  *  size (socketMax), and the weapons' own pass (weaponSocketPass) gives the rest. LOOT20's string is still READ wherever
@@ -1963,47 +2015,68 @@ export function gemCapLine(item) {
   const held = (Array.isArray(item?.affixes) ? item.affixes : []).find((a, i) => a?.gem != null && read[i] !== a);
   return held ? `Gems: ${affixLabel({ id: held.id, ...(held.param != null ? { param: held.param } : {}), value: gemPieceCap(held.id) })} at most` : null;
 }
+/** REFORGE-REPLACE (2026-10-25, a player - SaberGGaming; the owner's decision: "Replace, price rises"; bible/06-Systems/
+ *  Loot-Arc.md section 11): THE KINDS A REFORGE MAY PUT IN A LINE'S PLACE - its group's, a line that DOES something
+ *  (LOOT4) for one and a number for a number (a technique for a technique, TECH1 - the pools hold none), NEVER the
+ *  line's own kind (a reforge always replaces the line - the same kind back was a value rolled again, which the hone
+ *  sells), and never a kind (nor, for a kind with params, a param) another of the piece's own lines carries. Any name
+ *  slot: a Rare's name follows its lines (nameAround). `{ ids, freeParams }`, ids empty for a line nothing can replace. */
+function reforgePool(item, index) {
+  const old = item.affixes[index];
+  const was = AFFIX_KINDS[old.id];
+  const others = item.affixes.filter((a, i) => i !== index && a?.gem == null);   // AUDIT LOOT II A4: a gem's line is its socket's, no roll's - it never takes a kind or a param from the piece's own (a Diamond's damage left a weapon's damage line nothing to become)
+  const freeParams = (id) => kindParams(id, item).filter((p) => !others.some((a) => a?.id === id && a.param === p));   // LOOT14: a garment's own params
+  const ids = (was.technique ? ['technique'] : AFFIX_IDS).filter((id) => {
+    const k = AFFIX_KINDS[id];
+    if (id === old.id || !k.groups.includes(item.group) || !!k.proc !== !!was.proc) return false;
+    return k.params ? freeParams(id).length > 0 : !others.some((a) => a?.id === id);
+  });
+  return { ids, others, freeParams };
+}
 /** LOOT9 (bible/06-Systems/Loot-Arc.md section 11): THE LINES THE REFORGE MAY TAKE - every line of a Magic or Rare
- *  piece; an Exalted Legendary's own extra line (its last - exaltLegendary appends it) and never a record's; and once a
- *  piece has been reforged, that line alone (`reforged`, the line's index). Indices into `affixes`; none for anything
- *  else, and none that is not a valid line. */
+ *  piece; an Exalted Legendary's own extra line (its last - exaltLegendary appends it) and never a record's. REFORGE-
+ *  REPLACE: any of them, however often the piece was reforged (the one-line lock is gone - an old piece's `reforged`
+ *  mark is a reforge counted, reforgeCount), and never a line nothing else can take the place of (reforgePool: a
+ *  technique's, an armour's thorns - no other kind could be put there). Indices into `affixes`; none for anything else,
+ *  and none that is not a valid line. */
 export function reforgeableLines(item) {
   const list = Array.isArray(item?.affixes) ? item.affixes : [];
   let lines = [];
   if (item?.rarity === 'magic' || item?.rarity === 'rare') lines = list.map((_, i) => i);
   else if (item?.rarity === 'legendary' && item.exalted === true && list.length) lines = [list.filter((a) => a?.gem == null).length - 1];   // LOOT20, GEM1: the gems' lines are last - the Exalted's own is the one before them
   if (lines.length === 1 && item?.rarity === 'legendary' && isTechniqueAffix(list[lines[0]])) lines = [lines[0] - 1];   // TECH1: a technique's line (before the gems') is the find's - the Exalted's own is before it
-  lines = lines.filter((i) => validAffix(list[i]) && list[i].gem == null);   // LOOT20: and a gem's line is never reforged
-  return Number.isInteger(item?.reforged) ? lines.filter((i) => i === item.reforged) : lines;
+  return lines.filter((i) => validAffix(list[i]) && list[i].gem == null && reforgePool(item, i).ids.length > 0);   // LOOT20: a gem's line is never reforged; REFORGE-REPLACE: nor one nothing can replace
 }
-/** LOOT9: REFORGE ONE LINE, IN PLACE - rolled again from its tier's pool, never a kind (or, for a kind with params, a
- *  param) another line carries; a line that DOES something (LOOT4) stays one and a number stays a number; a Rare's line
- *  keeps its slot, so its name keeps its prefix and its suffix; an Exalted Legendary's line from the top half of the
- *  Legendary band, as its exalting rolled it. The same kind may come back - its value rolled again. The name (a Magic's
- *  or a Rare's - a Legendary keeps its record's) and the price follow, and the line is marked (`reforged`). Answers the
- *  new line, or null (a line the Reforge may not take; nothing changed). */
+/** REFORGE-REPLACE: the most reforges a piece counts (`reforges`, a declared item field - itemFields.js): past it the
+ *  price stands at its last, which no purse holds (a Rare's 4 shards doubled 31 times). */
+export const REFORGES_MAX = 31;
+/** REFORGE-REPLACE: HOW MANY TIMES A PIECE HAS BEEN REFORGED - its count (`reforges`), or one for a piece the old law
+ *  marked (`reforged`, the line it locked the piece to: that mark is a reforge taken, honoured as a count, never a lock
+ *  now), or none. What the next reforge costs (systems/reforge.js reforgePrice; net/temperLaw.js reforgeEssence). */
+export const reforgeCount = (item) => (Number.isInteger(item?.reforges) && item.reforges > 0 ? item.reforges : Number.isInteger(item?.reforged) ? 1 : 0);
+/** LOOT9: REFORGE ONE LINE, IN PLACE. REFORGE-REPLACE: the line REPLACED - a kind of its pool (reforgePool: never its own,
+ *  never one another line carries; a proc for a proc, a number for a number; any name slot), drawn over the pool's
+ *  lines as the roll draws (AFFIX-LINES, pickByLines), its value from its tier's band - an Exalted Legendary's line from
+ *  the top half of the Legendary band, as its exalting rolled it - and its param on the roll's own leans (a skill to the
+ *  item's own, LOOT1; a garment's standing to its dress, LOOT14). The name (a Magic's or a Rare's, which may gain or lose
+ *  a part as the line crosses a slot - a Legendary keeps its record's) and the price follow, and the piece counts the
+ *  reforge (`reforges` - what the next costs; an old piece's `reforged` mark folded into it). Answers the new line, or
+ *  null (a line the Reforge may not take; nothing changed). */
 export function reforgeAffix(item, index, rolls = Math.random) {
   if (!reforgeableLines(item).includes(index)) return null;
   const tier = item.rarity;
   const old = item.affixes[index];
-  const was = AFFIX_KINDS[old.id];
-  const others = item.affixes.filter((a, i) => i !== index && a?.gem == null);   // AUDIT LOOT II A4: a gem's line is its socket's, no roll's - it never takes a kind or a param from the piece's own (a Diamond's damage left a weapon's damage line nothing to become)
-  const freeParams = (id) => kindParams(id, item).filter((p) => !others.some((a) => a?.id === id && a.param === p));   // LOOT14: a garment's own params
-  const pool = (was.technique ? ['technique'] : AFFIX_IDS).filter((id) => {   // TECH1: a technique stays a technique (its family's) - the pools hold none
-    const k = AFFIX_KINDS[id];
-    if (!k.groups.includes(item.group) || !!k.proc !== !!was.proc) return false;
-    if (tier === 'rare' && k.slot !== was.slot) return false;
-    return k.params ? freeParams(id).length > 0 : !others.some((a) => a?.id === id);
-  });
-  if (!pool.length) return null;   // never: the line's own kind is always free to come back
-  const id = pick(pool, rolls);
+  const { ids: pool, others, freeParams } = reforgePool(item, index);
+  const id = pickByLines(pool, (k) => drawWeight(k, item, others), rolls);
   const k = AFFIX_KINDS[id];
   const [lo, hi] = AFFIX_RANGES[id][tier];
   const value = rangeInt(tier === 'legendary' ? Math.ceil((lo + hi) / 2) : lo, hi, rolls);
   const leaned = id === 'skill' ? pickSkill : id === 'standing' ? pickStanding : null;   // LOOT1's lean, LOOT14's
   const line = k.params ? { id, param: leaned ? leaned(item, freeParams(id), rolls) : pick(freeParams(id), rolls), value } : { id, value };
+  const count = Math.min(REFORGES_MAX, reforgeCount(item) + 1);
   item.affixes = item.affixes.map((a, i) => (i === index ? line : a));
-  item.reforged = index;
+  item.reforges = count;
+  delete item.reforged;   // the old law's lock, counted now (reforgeCount)
   if (tier !== 'legendary') item.name = rarityName(item, tier, item.affixes.filter((a) => a?.gem == null));   // AUDIT GEM: named by the piece's own lines - never a set gem's word ("Soldier's" off a Diamond), which outlived the gem's unsetting
   item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) - affixesWorth([old], item) + affixesWorth([line], item);
   return line;
@@ -2057,14 +2130,14 @@ export const championSource = (source, qualityMult = 1) => ({
  *  list it is handed - so the find landed on the copy and was thrown away with it: no body ever kept one (the
  *  Thunderlock's "tier-4 corpse, about 1 in 700"; 0 of 20,000 level-12 champions' bodies, where the list door kept 111).
  *  What the roll added past the carried pieces goes onto the body. */
-export function rollCorpseLoot(entity, basics, { rolls = Math.random, luck = 50, qualityMult = 1, weights = null, find = undefined } = {}) {   // FOE-CAP: `weights` the plain foe's ladder (systems/foeLootCap.js)
+export function rollCorpseLoot(entity, basics, { rolls = Math.random, luck = 50, qualityMult = 1, weights = null, find = undefined, level = undefined } = {}) {   // FOE-CAP: `weights` the plain foe's ladder (systems/foeLootCap.js); AUDIT UPDATE L4: `level` the roller's (LOOT-GATE)
   if (!lootRarityOn() || !entity) return entity?.items ?? [];
   const worn = new Set(entity.equip ? equipTableOf(entity).filter(Boolean) : []);
   const loot = (entity.items ?? []).filter((it) => it && !worn.has(it));
   const carried = loot.length;
   const source = corpseSource(basics, entity.level, entity.mobileType);   // LOOT6: its family
   const champ = typeof entity.champion === 'string' && entity.champion !== '';   // LOOT7: a champion is a stronger source
-  rollLootRarity(loot, champ ? championSource(source, qualityMult) : { ...source, qualityMult, ...(weights ? { weights } : {}) }, { rolls, luck, find });   // CHAMP-LOOT: a champion's own source (half an elite's); FOE-CAP: a plain foe's ladder
+  rollLootRarity(loot, champ ? championSource(source, qualityMult) : { ...source, qualityMult, ...(weights ? { weights } : {}) }, { rolls, luck, find, level });   // CHAMP-LOOT: a champion's own source (half an elite's); FOE-CAP: a plain foe's ladder
   if (loot.length > carried) (entity.items ??= []).push(...loot.slice(carried));   // LOOT7-CHECK CORPSE-FIND: the find onto the body
   return entity.items;
 }

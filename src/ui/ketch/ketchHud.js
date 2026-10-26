@@ -15,7 +15,7 @@
 //
 // Both models are pure - the link's state (net/ketch/ketchLink.js) and the relay's clock in. Not a DFU member. Ledger A
 // (KETCH).
-import { KT_STAGE, KT_CREW_MAX, ketchVoyageOf } from '../../net/ketch/ketchLaw.js';
+import { KT_STAGE, KT_CREW_MAX, KT_WATCH_WAVES, ketchVoyageOf } from '../../net/ketch/ketchLaw.js';
 import { t } from '../../systems/textManager.js';
 import { KT_WORDS, ketchWhen, ketchStageName, ketchPhaseName, ketchBlowName, ketchKindName } from '../../systems/ketch/ketchWords.js';
 import { KT_KIND_BY_K } from '../../net/ketch/ketchConstructs.js';
@@ -31,7 +31,7 @@ import { PIXEL_FONT_CSS } from '../pixelifyFive.js';
 export const KT_HUD_TEXT = Object.freeze({
   get kicker() { return KT_WORDS.name; },
   get waiting() { return t('ketch.hud.waiting', 'Step into the waist. The Watch is waiting.'); },
-  wave: (w) => t('ketch.hud.wave', 'Break the Watch - wave {w} of 3', { w }),
+  wave: (w) => t('ketch.hud.wave', 'Break the Watch - wave {w} of {n}', { w, n: KT_WATCH_WAVES }),
   standing: (n) => t('ketch.hud.standing', '{n, plural, one {# construct stands} other {# constructs stand}}', { n }),
   get gallery() { return t('ketch.hud.gallery', 'Cross the Gallery of Hammers and fell the Hammer Wardens.'); },
   wardens: (n) => t('ketch.hud.wardens', '{n, plural, one {# Hammer Warden stands} other {# Hammer Wardens stand}}', { n }),

@@ -1,0 +1,157 @@
+[
+  {
+    "name": "COST1-region-split-default",
+    "file": "src/net/hubShards.js",
+    "old": "export const shardOf = (bus, sub, sharded = NO_REGIONS) => {",
+    "new": "export const shardOf = (bus, sub, sharded = regionsSharded('all')) => {",
+    "tests": [
+      "test/net/cost1_regions.test.js"
+    ]
+  },
+  {
+    "name": "COST1-var-loose",
+    "file": "src/net/hubShards.js",
+    "old": "/^\\d{1,2}$/.test(part) && canon(part, REGION_CHANNELS))",
+    "new": "canon(part, REGION_CHANNELS))",
+    "tests": [
+      "test/net/cost1_regions.test.js"
+    ]
+  },
+  {
+    "name": "COST1-all-short",
+    "file": "src/net/hubShards.js",
+    "old": "Array.from({ length: REGION_CHANNELS }, (_, region) => region)",
+    "new": "Array.from({ length: REGION_CHANNELS - 1 }, (_, region) => region)",
+    "tests": [
+      "test/net/cost1_regions.test.js"
+    ]
+  },
+  {
+    "name": "COST1-hub-touched",
+    "file": "src/net/hubShards.js",
+    "old": "  if (bus === HUB_BUS) return hubOfSubject(sub);\n  // a region bus's key ends in its region's number (`chat:region.<r>`)\n  if (!isRegionBus(bus) || typeof sub !== 'string' || !sub || !sharded",
+    "new": "  if (bus === HUB_BUS) return sharded.size ? hubOfSubject(sub) : null;\n  // a region bus's key ends in its region's number (`chat:region.<r>`)\n  if (!isRegionBus(bus) || typeof sub !== 'string' || !sub || !sharded",
+    "tests": [
+      "test/net/cost1_regions.test.js"
+    ]
+  },
+  {
+    "name": "COST1-var-shipped",
+    "file": "server/wrangler.toml",
+    "old": "REGION_SHARDS = \"\"",
+    "new": "REGION_SHARDS = \"5\"",
+    "tests": [
+      "test/net/cost1_regions.test.js"
+    ]
+  },
+  {
+    "name": "COST1-var-unread",
+    "file": "server/src/index.js",
+    "old": "return shardOf(bus, sub, regionsSharded(this.env?.REGION_SHARDS));",
+    "new": "return shardOf(bus, sub, regionsSharded(''));",
+    "tests": [
+      "test/net/cost1_regions.test.js",
+      "test/net/scale5c.test.js"
+    ]
+  },
+  {
+    "name": "COST1-drain-unwired",
+    "file": "server/src/index.js",
+    "old": "this._metricsTick(true); void flushAtDrain(this); }",
+    "new": "this._metricsTick(true); }",
+    "tests": [
+      "test/server/cost1_drain.test.js"
+    ]
+  },
+  {
+    "name": "COST1-grant-left",
+    "file": "server/src/drainWindows.js",
+    "old": "  if (grants && (grants.timer || grants.w?.rows.size || grants.w?.tallies.size)) posts.push(room._grantFlush());\n",
+    "new": "",
+    "tests": [
+      "test/server/cost1_drain.test.js"
+    ],
+    "note": "HIBERNATE (re-aimed by content): the grant window arms no timer, so its rows say it is due."
+  },
+  {
+    "name": "COST1-net-left",
+    "file": "server/src/drainWindows.js",
+    "old": "if (staffNet && (staffNet.timer || staffNet.rows.size || staffNet.foes.size || staffNet.retry)) posts.push",
+    "new": "if (false) posts.push",
+    "tests": [
+      "test/server/cost1_drain.test.js"
+    ]
+  },
+  {
+    "name": "COST1-react-left",
+    "file": "server/src/drainWindows.js",
+    "old": "if (staffReact && (staffReact.timer || staffReact.rows.length || staffReact.retry)) posts.push",
+    "new": "if (false) posts.push",
+    "tests": [
+      "test/server/cost1_drain.test.js"
+    ]
+  },
+  {
+    "name": "COST1-lines-left",
+    "file": "server/src/drainWindows.js",
+    "old": "  if (room._feedQ?.lines.length) posts.push(room._feedFlush());\n",
+    "new": "",
+    "tests": [
+      "test/server/cost1_drain.test.js"
+    ]
+  },
+  {
+    "name": "COST1-retry-kept",
+    "file": "server/src/drainWindows.js",
+    "old": "    staffFeedsStop(room);\n",
+    "new": "",
+    "tests": [
+      "test/server/cost1_drain.test.js"
+    ]
+  },
+  {
+    "name": "COST1-retry-cleared-under-socket",
+    "file": "server/src/drainWindows.js",
+    "old": "  if (drained(room)) {",
+    "new": "  if (true) {",
+    "tests": [
+      "test/server/cost1_drain.test.js"
+    ]
+  },
+  {
+    "name": "COST1-alarm-uncounted",
+    "file": "server/src/relayScale.js",
+    "old": " || k === 'setAlarm' || k === 'deleteAlarm')\n        return",
+    "new": ")\n        return",
+    "tests": [
+      "test/server/cost1_drain.test.js"
+    ]
+  },
+  {
+    "name": "COST1-entries-one",
+    "file": "server/src/relayScale.js",
+    "old": "? Object.keys(args[0]).length\n    : method === 'delete'",
+    "new": "? 1\n    : method === 'delete'",
+    "tests": [
+      "test/server/cost1_drain.test.js"
+    ]
+  },
+  {
+    "name": "COST1-keys-one",
+    "file": "server/src/relayScale.js",
+    "old": "Array.isArray(args[0])\n      ? args[0].length\n      : 1;",
+    "new": "Array.isArray(args[0])\n      ? 1\n      : 1;",
+    "tests": [
+      "test/server/cost1_drain.test.js"
+    ]
+  },
+  {
+    "name": "COST1-read-a-write",
+    "file": "server/src/relayScale.js",
+    "old": "if (k === 'get' || k === 'list') return (...args) => { metrics.c.reads++;",
+    "new": "if (k === 'get' || k === 'list') return (...args) => { metrics.c.writes++;",
+    "tests": [
+      "test/server/cost1_drain.test.js"
+    ]
+  }
+]

@@ -12,6 +12,19 @@
 // in. Not a DFU member. Ledger A (KETCH).
 import { ketchSpoilsDay, ketchSpoilsList, KT_SPOILS_TEXT } from '../../systems/ketch/ketchSpoils.js';
 import { spoilsLevel, spoilsLock } from '../spoilsPool.js';
+import { deckToDungeon, KT_VAULT } from '../../net/ketch/ketchDeck.js';
+
+/** KETCH-FIX (2026-10-25, the owner: "that loot gets stuck inside the chest at the end"): THE CHEST'S MOUTH, where its
+ *  share leaves - a metre out from its front (it faces the door, -z) and over its lid (1.0), never its middle at 0.6: that
+ *  was inside its own solid box (world/ketch/ketchModel.js, 0 to 0.8), so every piece's first ray met the box's inside and
+ *  the whole share came to rest in the chest, out of reach. Deck metres. */
+export const KT_CHEST_MOUTH = Object.freeze({ out: 1.0, y: 1.2 });
+/** The mouth in the dungeon's frame (the pool's). */
+export const ketchChestMouth = () => deckToDungeon(KT_VAULT.x, KT_CHEST_MOUTH.y, KT_VAULT.z - KT_CHEST_MOUTH.out);
+/** KETCH-FIX: THE CABIN KEEPS ITS SPOILS (world/gate/gateSpew.js keepLaunch, the Hour's SD_SPOILS_KEEP's law) - a disc of
+ *  the cabin's floor between the chest and the door, clear of the stern lift's ring (a piece taken there rides a body off
+ *  the ship) and of the door, so no throw carries a piece out onto the bridge or over its rail. */
+export const KT_SPOILS_KEEP = Object.freeze({ centre: Object.freeze(deckToDungeon(1.5, 0, 228)), r: 2.6, floorY: deckToDungeon(0, 0, 0)[1] });
 
 /** The device's shares paid and not yet given: `[{ d, o, s, c, l }]` - a receipt's voyage, ship, account, seed, level. */
 export const KT_OWED_KEY = 'kt.owed';
@@ -57,12 +70,12 @@ export function createKetchShares({ store = null, pool, level, me, aboard, say =
       if (!aboard()) void grant(e);
       return true;
     },
-    /** The chest pressed: my oldest share thrown from it at `at`, toward `bearing` - else into the pack (no floor to throw
-     *  onto). Answers whether there was one. */
+    /** The chest pressed: my oldest share thrown from it at `at` (its mouth, ketchChestMouth), toward `bearing`, kept to the
+     *  cabin's floor (KT_SPOILS_KEEP) - else into the pack (no floor to throw onto). Answers whether there was one. */
     chest(at, bearing) {
       const e = mine()[0];
       if (!e) return false;
-      const ok = pool.spew({ day: ketchSpoilsDay(e.d, e.o), seed: e.c, level: lv(e), at, bearing, acct: e.s, roll: () => ketchSpoilsList(e.c, lv(e)) });
+      const ok = pool.spew({ day: ketchSpoilsDay(e.d, e.o), seed: e.c, level: lv(e), at, bearing, acct: e.s, keep: KT_SPOILS_KEEP, roll: () => ketchSpoilsList(e.c, lv(e)) });
       if (ok) { drop(e); say(KT_SPOILS_TEXT.spilled); } else void grant(e);
       return true;
     },

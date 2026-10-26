@@ -2,8 +2,8 @@
   {
     "name": "FIRST-PICK-every-card-waits",
     "file": "src/ui/professions/profPages.js",
-    "old": "      const waits = !!chosen && !!tr.respec && !free;",
-    "new": "      const waits = !!tr.respec;",
+    "old": "      const waits = !!chosen && (!!tr.respec || lock !== null) && !free && !trial;",
+    "new": "      const waits = !!tr.respec || lock !== null;",
     "tests": [
       "test/net/fb1016b_firstpick.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "FIRST-PICK-the-free-change-waits",
     "file": "src/ui/professions/profPages.js",
-    "old": "      const waits = !!chosen && !!tr.respec && !free;",
-    "new": "      const waits = !!chosen && !!tr.respec;",
+    "old": "      const waits = !!chosen && (!!tr.respec || lock !== null) && !free && !trial;",
+    "new": "      const waits = !!chosen && (!!tr.respec || lock !== null) && !trial;",
     "tests": [
       "test/net/fb1016b_firstpick.test.js"
     ]
@@ -20,7 +20,7 @@
   {
     "name": "FIRST-PICK-nothing-waits",
     "file": "src/ui/professions/profPages.js",
-    "old": "      const waits = !!chosen && !!tr.respec && !free;",
+    "old": "      const waits = !!chosen && (!!tr.respec || lock !== null) && !free && !trial;",
     "new": "      const waits = false;",
     "tests": [
       "test/net/fb1016b_firstpick.test.js"

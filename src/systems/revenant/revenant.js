@@ -72,6 +72,7 @@ import { characterIdOf, mintCharacterId } from '../characterId.js';
 import { ownMinutes, skyMinutes } from '../worldTick.js';
 import { isNight } from '../../world/worldClock.js';   // RVN1: a fight begun by night
 import { tieredGear } from '../eliteFoes.js';
+import { legendaryGate, rollerLevel } from '../loot/lootLevelGate.js';   // LOOT-GATE
 import { foeSeed } from '../../characters/foeBodies.js';   // FB1012d ALLY-RACE: the person a revenant is born as - the seed its body was drawn by
 import { goldStack, isSummoned, isGoldPieces, addItem, addGoldPieces } from '../inventory.js';   // RVN11b: a deserter's pack, handed back   // RVN8: never a summoned piece or gold taken
 import { unequipItem, equipTableOf, EQUIP_SLOTS } from '../equip.js';   // RVN8: what it takes, off the hand that held it
@@ -1116,7 +1117,8 @@ export function revenantLoot(level = 1, rank = 1, rolls = Math.random, goldMult 
   const L = REVENANT_LOOT;
   if (rolls() < L.magicChance) { const it = tieredGear(lv, 'magic', rolls); if (it) out.push(it); }
   if (rk >= L.rareFromRank || rolls() < L.rareChance + L.rarePerRank * rk) { const it = tieredGear(lv, 'rare', rolls); if (it) out.push(it); }
-  if (rolls() < L.legendaryChance + L.legendaryPerRank * rk) { const it = tieredGear(lv, 'legendary', rolls); if (it) out.push(it); }
+  const at = rollerLevel() ?? lv;   // LOOT-GATE: the player's level holds its Legendary back; AUDIT UPDATE II A3: none registered yet, the level the drop is minted at (the player's at every host)
+  if (rolls() < (L.legendaryChance + L.legendaryPerRank * rk) * (at == null ? 1 : legendaryGate(at))) { const it = tieredGear(lv, 'legendary', rolls); if (it) out.push(it); }
   const [lo, hi] = L.goldPerLevel;
   out.push(goldStack(Math.round(lv * rk * (lo + rolls() * (hi - lo)) * (goldMult > 0 ? goldMult : 1))));   // RVN7d: found in its lair, x LAIR_GOLD
   return out;

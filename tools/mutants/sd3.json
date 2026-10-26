@@ -192,7 +192,7 @@
   {
     "name": "SD3-a-returner-refused",
     "file": "server/src/index.js",
-    "old": "    if (sub && realm.in.includes(sub)) { this._sdTellIn(s, rec, now); return null; }   // SD-THROUGH",
+    "old": "    if (sub && realm.in.includes(sub)) { if (lies === 'rise') await this._sdRose(realm, sub, now); this._sdTellIn(s, rec, now); return null; }   // SD-THROUGH; AUDIT WORLD-EVENTS L1-8: a rise off the lying once it is let in, never before a refusal",
     "new": "",
     "tests": [
       "test/net/sd3_relay.test.js"

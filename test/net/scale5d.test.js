@@ -110,7 +110,7 @@ test('SCALE5d the session: a join asks for its party\'s layer, a reconnect for i
     // a halo's layer is kept with it, and a crossing carries it
     s.setHalo(['world:11,10']);
     const halo = sockets.at(-1);
-    assert.match(halo.url, /\/room\/world:11,10$/, 'a halo asks for the place itself - the Worker walks on past a full one');
+    assert.match(halo.url, /\/room\/world:11,10(\?of=[^&]*)?$/, 'a halo asks for the place itself (COST-2: its `of` naming the rooms its page holds, no layer) - the Worker walks on past a full one');
     halo.open();
     halo.receive({ t: 'welcome', id: 'mac-0001', peers: [], host: null, world: null, now: t, v: 'world192', ly: 2 });
     s.join('world:11,10', { x: 0, y: 0, z: 0, yaw: 0, pitch: 0, mv: 0, ts: 0 });

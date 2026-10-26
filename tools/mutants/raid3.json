@@ -273,11 +273,12 @@
   {
     "name": "RAID3-relay-cell-not-asked",
     "file": "server/src/index.js",
-    "old": "    if (worldRoom(m.px, m.py) !== a.key) { this._junk(ws); return; }\n    if (!raidWordSane(m)) { this._junk(ws); return; }",
+    "old": "    if (junkOutsideCover(this, ws, a, worldRoom(m.px, m.py))) return;\n    if (!raidWordSane(m)) { this._junk(ws); return; }",
     "new": "    if (!raidWordSane(m)) { this._junk(ws); return; }",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
-    ]
+    ],
+    "note": "COST-2 3a (re-aimed by content: the cell-scoped law reads the socket's cover)."
   },
   {
     "name": "RAID3-relay-pose-not-asked",
@@ -463,21 +464,23 @@
   {
     "name": "RAID3-session-old-relay",
     "file": "src/net/online.js",
-    "old": "    if (!(cell === this.room ? this.raidOk : halo?.raidOk)) return false;",
-    "new": "    if (!(cell === this.room ? true : halo?.raidOk)) return false;",
+    "old": "    if (!(this._mine(cell) ? this.raidOk : halo?.raidOk)) return false;",
+    "new": "    if (!(this._mine(cell) ? true : halo?.raidOk)) return false;",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
-    ]
+    ],
+    "note": "COST-2 3a (re-aimed by content: the cell-scoped law reads the socket's cover)."
   },
   {
     "name": "RAID3-session-cell-not-asked",
     "file": "src/net/online.js",
-    "old": "    if (!(cell === this.room ? this.raidOk : halo?.raidOk)) return false;\n    const ws = cell === this.room ? (this.status === 'open' ? this._ws : null) : (halo?.status === 'open' ? halo.ws : null);",
-    "new": "    if (!(cell === this.room ? this.raidOk : halo?.raidOk)) return false;\n    const ws = this.status === 'open' ? this._ws : null;",
+    "old": "    if (!(this._mine(cell) ? this.raidOk : halo?.raidOk)) return false;\n    const ws = this._mine(cell) ? (this.status === 'open' ? this._ws : null) : (halo?.status === 'open' ? halo.ws : null);",
+    "new": "    if (!(this._mine(cell) ? this.raidOk : halo?.raidOk)) return false;\n    const ws = this.status === 'open' ? this._ws : null;",
     "tests": [
       "test/net/raid3_raidLedger.test.js",
       "test/net/auditraid.test.js"
-    ]
+    ],
+    "note": "COST-2 3a (re-aimed by content: the cell-scoped law reads the socket's cover)."
   },
   {
     "name": "RAID3-session-any-room",

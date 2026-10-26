@@ -319,9 +319,9 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   }
 
   /** SpawnCityGuard: the C17 class-foe recipe at a position/facing. */
-  async function spawnGuardAt(pos, yaw, attackerFeet = null, { level = null, defender = false, threat = null } = {}) {   // AUDIT ALL A6: a restore hands the saved level in as final; DISC19-F: a DEFENDER comes for the threat, as the player's ally
+  async function spawnGuardAt(pos, yaw, attackerFeet = null, { level = null, defender = false, threat = null, bearer = false } = {}) {   // AUDIT ALL A6: a restore hands the saved level in as final; DISC19-F: a DEFENDER comes for the threat, as the player's ally
     const basics = ENEMY_BASICS[GUARD_MOBILE_TYPE];
-    const pending = { feet: [pos[0], pos[1] + 0.1, pos[2]], defender: !!defender };   // AUDIT-39r: shifted by offsetAll until the record lands; AUDIT DISC19: a defender counts from its mint (defenderCount)
+    const pending = { feet: [pos[0], pos[1] + 0.1, pos[2]], defender: !!defender, bearer: !!bearer };   // AUDIT-39r: shifted by offsetAll until the record lands; AUDIT DISC19: a defender counts from its mint (defenderCount)
     spawning.push(pending);
     const gen = epoch;   // AUDIT-39r: the world this guard is being posted to
     try {
@@ -390,7 +390,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       attack.rangedAttack = false;
       const mobile = new MobileUnit(GUARD_MOBILE_TYPE, basics, (rec) => tex.getFrameCount(rec), Math.random, 'male');
       const batch = renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]);
-      const g = { id: _nextGuardId++, mobile, ai, attack, entity, batch, tex, archive, mobileType: GUARD_MOBILE_TYPE, idleH, dead: false, _swingSeq: 0, _mout: null, defender: !!defender, leaving: false, beset: false,   // DISC19-F; WATCH-LEAVES: a defender stood down, walking off (dismissDefenders) - and one set upon on his way (update)
+      const g = { id: _nextGuardId++, mobile, ai, attack, entity, batch, tex, archive, mobileType: GUARD_MOBILE_TYPE, idleH, dead: false, _swingSeq: 0, _mout: null, defender: !!defender, raidBearer: !!bearer, leaving: false, beset: false,   // AUDIT WORLD-EVENTS L4-6: a raid's Standard-Bearer (raidSitesHost.js) - none of the watch's comings and goings; DISC19-F; WATCH-LEAVES: a defender stood down, walking off (dismissDefenders) - and one set upon on his way (update)
         // WATCH1: THE WATCH RIDES THE CELL'S STREAM. `seq` is this watchman's number on the wire, minted by the
         // encounter pool's own counter the first time he rides a frame (one number space with the foes, so a
         // peer's blow names one thing); `_atkA`/`_atkB` the attack count and its recipient in the pool's spelling
@@ -821,7 +821,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   function dismissDefenders() {
     let n = 0;
     for (const g of guards) {
-      if (g.dead || !g.defender || g.leaving) continue;
+      if (g.dead || !g.defender || g.leaving || g.raidBearer) continue;   // AUDIT WORLD-EVENTS L4-6: the Standard-Bearer holds his post through a lull
       g.leaving = true;
       g.ai.target = null; g.ai.secondaryTarget = null;   // his fight is over - a target he holds from here was a monster's doing (update)
       n++;
@@ -839,12 +839,13 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  on this number, and a summon still fetching its archive read as no
    *  defenders at all: a cold load over the countdown summoned twice,
    *  past the cap. */
-  const defenderCount = () => guards.filter((g) => !g.dead && g.defender && !g.leaving).length + spawning.filter((p) => p.defender).length + _summonsWaiting;   // WATCH-FIX: and the summons waiting their turn; WATCH-LEAVES: never one walking off - the town has stood him down, and the next summons calls him back
+  const defenderCount = () => guards.filter((g) => !g.dead && g.defender && !g.leaving && !g.raidBearer).length + spawning.filter((p) => p.defender && !p.bearer).length + _summonsWaiting;   // AUDIT WORLD-EVENTS L4-6: never the Standard-Bearer (a raid's, not the watch's answer - his standing held off its summons and filled one of the raid's eight)   // WATCH-FIX: and the summons waiting their turn; WATCH-LEAVES: never one walking off - the town has stood him down, and the next summons calls him back
   /** DISC19-F: a crime turns a defender into the ordinary watch on the
    *  spot - its species' team back on both per-instance fields (the
    *  allied copy would otherwise keep the player out of its target list,
    *  EnemySenses.cs:776) and the crime watch's own pursuit seeded. */
   function enlistDefender(g, playerFeet) {
+    if (g.raidBearer) return;   // AUDIT WORLD-EVENTS L4-6: the Standard-Bearer keeps the square whatever the player's crime - he holds it for the town
     g.defender = false;
     g.leaving = false; g.ai.fleeLeft = 0;   // WATCH-LEAVES: one walking off turns back for the criminal
     g.entity.team = g.entity.mobileTeam = staticTeamOf(GUARD_MOBILE_TYPE);
@@ -1897,6 +1898,9 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
      *  outside the watch's own call - the ONE watchman minted where a walker stood, facing their
      *  way, hostile to the player. Resolves to the guard record (or null when the world moved on). */
     spawnCityGuard: (pos, yaw, attackerFeet = null) => spawnGuardAt([...pos], yaw, attackerFeet),
+    /** RAID5: a raid's Standard-Bearer - one of the watch, a DEFENDER (the player's ally, a raid's), minted where its
+     *  standard is held (scenes/raidSitesHost.js makes him hardy and keeps him at his post). */
+    standBearer: (pos, yaw = 0) => spawnGuardAt([...pos], yaw, null, { defender: true, bearer: true }),
     // M2 (spellcasting above ground): the player's spell damage rides
     // THE SAME door the melee swing uses - corpse, Murder on the kill,
     // hostility - so a fireball is not a free crime channel.

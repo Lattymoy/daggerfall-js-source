@@ -187,7 +187,10 @@ test('STAR-CLEAR over the shipped lists: a star\'s spot DOES land in the mod\'s 
     for (const p of pickLocations(tile(x, y), session, getPrefab, paths, null)) for (const o of p.prefab.obj) if (Math.abs(o.pos.y) <= 1000 && pointNearGate(clear, x, y, p.rect.x * 6.4 + o.pos.x, p.rect.y * 6.4 + o.pos.z)) within++;
     if (within) hit++;
     const ledger = { refused: false, reach: [] };
-    for (const p of pickLocations(tile(x, y), session, getPrefab, paths, (nm, pf, r) => wodSiteClear(net, x, y, nm, pf, r) && gateSiteTest(clear, x, y, ledger)(nm, pf, r))) {
+    // PIN MOVED (GATE-AGREE, bible/01-Overview/bugs/Field-Bugs-2026-10-24b.md): the road alone picks, then the clearing asks
+    // each pick - a held site keeps its pick (and its level ground) and stands none of its objects
+    for (const p of pickLocations(tile(x, y), session, getPrefab, paths, (nm, pf, r) => wodSiteClear(net, x, y, nm, pf, r))) {
+      if (!gateSiteTest(clear, x, y, ledger)(session.prefab[p.index], p.prefab, p.rect)) continue;
       const whole = !wodPiecewise(session.prefab[p.index]);
       assert.ok(!whole || wodSiteOffGate(clear, x, y, session.prefab[p.index], p.prefab, p.rect));
       for (const o of p.prefab.obj) {
@@ -198,7 +201,7 @@ test('STAR-CLEAR over the shipped lists: a star\'s spot DOES land in the mod\'s 
     if (ledger.refused) refused++;
   }
   assert.ok(hit >= 100, `of ${spots} star spots on the pixels the lists name, ${hit} stand within ${STAR_ROCK_M} m of a piece the mod stands`);
-  assert.ok(refused > 0, `the pick refused a whole site at ${refused} of them`);
+  assert.ok(refused > 0, `the clearing held a whole site at ${refused} of them`);
   assert.equal(leftWhole, 0, 'no camp, fort, shrine, ruin, cave or nature spot stands in a star\'s clearing once its pick is asked');
   assert.ok(left > 0, `the rock fields' pieces are the placement's to refuse, box by box: ${left} such positions`);
 });
@@ -224,8 +227,9 @@ test('STAR-CLEAR on the player\'s map: of the festival\'s real stars, the mod\'s
   const reaches = (s, clear, asked) => {
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
       const x = s.px + dx, y = s.py + dy;
-      const siteClear = (nm, pf, r) => wodSiteClear(net, x, y, nm, pf, r) && (!asked || gateSiteTest(clear, x, y, { refused: false, reach: [] })(nm, pf, r));
+      const siteClear = (nm, pf, r) => wodSiteClear(net, x, y, nm, pf, r);   // GATE-AGREE: the road alone picks
       for (const p of pickLocations(tile(x, y), session, getPrefab, paths, siteClear)) {
+        if (asked && !gateSiteTest(clear, x, y, { refused: false, reach: [] })(session.prefab[p.index], p.prefab, p.rect)) continue;   // held: none of its objects
         for (const { obj, pos } of placeObjects(p, 0, validateValue)) {
           const c = classifyObject(obj);
           const lb = c.kind === 'model' && c.modelId != null ? boxOf(c.modelId) : null;

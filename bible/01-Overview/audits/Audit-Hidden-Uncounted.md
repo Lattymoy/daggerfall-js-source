@@ -122,6 +122,16 @@ Every finding is fixed, pinned and named below, or left and said.
   link it says never happens does. Red on a2c40c60c's parent too. FIXED ON MAIN the same day, as this page proposed
   (the guest dated a month past the pin's own clock), and merged in here before this audit's merge.
 
+## Found after the merge
+
+- **The World tab's pin waited for the count alone** (2026-10-25, red now and then in CI's `verify` shards on pull
+  requests that touch none of this): the `[true, false]` pin's `until` asked each screen's count, then asserted the
+  staff game's rows, `['Alpha']` for `['Alpha', 'Beta']`. The count moves on the hub's `n` each HUB_COUNT_MS; the other
+  shards' rows move only on the next who-answer, asked at most each HUB_WHO_MS. A hello the relay verifies late (the
+  token's Ed25519 is real work, outside the fake clock) is counted a who-answer before it is listed. The game is right:
+  the list lags its count by one who-answer at most (SCALE5c). Reproduced by holding Beta's mint 30 ms. FIXED: the wait
+  also asks that every list is as long as its count.
+
 ## Pins
 
 `test/net/hiddenuncounted.test.js` (8, over the real relay), `test/server/hiddenuncounted_guild.test.js` (1, over the

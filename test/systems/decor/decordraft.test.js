@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { decorDelta, decorDraftGold, decorDraftParts, decorDraftText, decorHallDraftText } from '../../../src/systems/decor/decorDraft.js';
-import { toolRig } from '../../decorFakes.mjs';
+import { placeFrom, toolRig } from '../../decorFakes.mjs';
 
 const piece = (extra = {}) => ({ id: 'p1', model: 41000, flat: null, pos: [1, 0, 1], rot: [0, 0, 0], scale: 1, light: null, storage: false, paid: 180, ...extra });
 
@@ -22,6 +22,58 @@ test('DECOR-BATCH the differences: several edits of one piece are its last state
   assert.match(decorHallDraftText(mixed), /180 gold to confirm, 90 to the guild/);
   assert.match(decorDraftText(-180), /180 gold to confirm/);
   assert.match(decorDraftText(90), /90 gold back/);
+});
+
+test('DECOR-BATCH standing reads the revision, and the room only when it moves', async () => {
+  const calls = [];
+  let rev = 3;
+  const rig = toolRig({
+    room: { kind: 'home', mapId: 11, buildingKey: 22 },
+    homeDecor: {
+      batch: async () => ({ ok: true }),
+      rev: async () => { calls.push('rev'); return { ok: true, data: { rev } }; },
+      list: async () => { calls.push('list'); return { ok: true, data: { rev, pieces: [] } }; },
+      use: async () => { calls.push('use'); return { ok: true, data: {} }; },
+    },
+  });
+  rig.frame({ dt: 2.1 });
+  await new Promise((r) => setTimeout(r, 0));
+  assert.deepEqual(calls, ['rev'], 'the first look remembers the revision and does not fetch the room');
+  rig.frame({ dt: 2.1 });
+  await new Promise((r) => setTimeout(r, 0));
+  assert.deepEqual(calls, ['rev', 'rev']);
+  rev = 4;
+  rig.frame({ dt: 2.1 });
+  await new Promise((r) => setTimeout(r, 0));
+  await new Promise((r) => setTimeout(r, 0));
+  assert.deepEqual(calls, ['rev', 'rev', 'rev', 'list', 'use']);
+});
+
+test('DECOR-BATCH a room that did not arrive is asked again on the same revision', async () => {
+  const calls = [];
+  let rev = 3;
+  let fail = true;
+  const rig = toolRig({
+    room: { kind: 'home', mapId: 11, buildingKey: 22 },
+    homeDecor: {
+      batch: async () => ({ ok: true }),
+      rev: async () => { calls.push('rev'); return { ok: true, data: { rev } }; },
+      list: async () => { calls.push('list'); return fail ? { ok: false } : { ok: true, data: { rev, pieces: [] } }; },
+      use: async () => { calls.push('use'); return { ok: true, data: {} }; },
+    },
+  });
+  const tick = async () => { rig.frame({ dt: 2.1 }); await new Promise((r) => setTimeout(r, 0)); await new Promise((r) => setTimeout(r, 0)); };
+  await tick();
+  rev = 4;
+  await tick();
+  assert.deepEqual(calls, ['rev', 'rev', 'list']);
+  await tick();
+  assert.deepEqual(calls, ['rev', 'rev', 'list', 'rev', 'list'], 'the same revision is fetched again after a miss');
+  fail = false;
+  await tick();
+  assert.deepEqual(calls, ['rev', 'rev', 'list', 'rev', 'list', 'rev', 'list', 'use']);
+  await tick();
+  assert.deepEqual(calls, ['rev', 'rev', 'list', 'rev', 'list', 'rev', 'list', 'use', 'rev']);
 });
 
 test('DECOR-BATCH the decorator: Confirm sends the difference once, a refusal keeps the draft, Discard puts the room back and Escape will not throw it away', async () => {
@@ -74,6 +126,36 @@ test('DECOR-BATCH the decorator: Confirm sends the difference once, a refusal ke
   assert.equal(rig.tool.flying(), false, 'a kept room leaves the mode');
 });
 
+test('DECOR-BATCH a hall\'s draft is not the wagon\'s: Leave them behind puts the wagon back, and a wagon keeps only on Confirm', async () => {
+  const sent = [];
+  const rig = toolRig({
+    room: { kind: 'home', mapId: 11, buildingKey: 22, hall: true }, gold: 1000,
+    homeDecor: {
+      list: async () => ({ ok: true, data: { rev: 4, pieces: [] } }),
+      batch: async (body) => { sent.push(body); return { ok: true, data: { rev: 5 } }; },
+    },
+  });
+  rig.frame();
+  rig.doc.body.children.find((c) => c.className === 'dfdecor-open').fire('click');
+  rig.standing.push(piece({ id: 'hall' }));
+  rig.state.room = { kind: 'caravan' };
+  rig.setVisit(2);
+  rig.standing.splice(0, rig.standing.length, piece({ id: 'wagon', paid: 0 }));
+  assert.equal(rig.tool.discardDraft(), false);
+  assert.deepEqual(rig.standing.map((p) => p.id), ['wagon']);
+  rig.win.fire('keydown', { code: 'Escape', repeat: false });
+  assert.equal(rig.tool.flying(), false, 'the wagon is not asked to drop the hall');
+  rig.frame();
+  rig.doc.body.children.find((c) => c.className === 'dfdecor-open').fire('click');
+  rig.standing.push(piece({ id: 'new', paid: 180 }));
+  rig.win.fire('keydown', { code: 'Escape', repeat: false });
+  assert.equal(rig.tool.flying(), true, 'a wagon\'s own change asks before it is dropped');
+  assert.equal(await rig.tool.confirmDraft(), true);
+  assert.equal(sent.length, 0, 'a wagon is not a hall\'s batch');
+  assert.equal(rig.w.gold, 820);
+  assert.deepEqual(rig.standing.map((p) => p.id).sort(), ['new', 'wagon']);
+});
+
 test('DECOR-BATCH a copy\'s access waits until Confirm has written the piece', async () => {
   const use = [];
   const rig = toolRig({
@@ -94,4 +176,37 @@ test('DECOR-BATCH a copy\'s access waits until Confirm has written the piece', a
   assert.ok(rig.said.includes('Who may use: Friends.'));
   assert.equal(await rig.tool.confirmDraft(), true);
   assert.deepEqual(use.filter((b) => b.op === 'set'), [{ mapId: 11, buildingKey: 22, character: 'char-me', op: 'set', id: copy.id, kind: 'storage', mode: 'friends', names: [], realm: null }]);
+});
+
+test('DECOR-BATCH a wagon Confirm keeps an owned item through a later Discard', async () => {
+  const rig = toolRig({ room: { kind: 'caravan' }, gold: 1000 });
+  rig.frame();
+  rig.doc.body.children.find((c) => c.className === 'dfdecor-open').fire('click');
+  rig.standing.push(piece({ id: 'chest', paid: 0 }));
+  rig.owned.set('chest', { name: 'Rug' });
+  assert.equal(await rig.tool.confirmDraft(), true);
+  rig.standing.push(piece({ id: 'later', paid: 0 }));
+  rig.owned.set('later', { name: 'Later' });
+  assert.equal(rig.tool.discardDraft(), true);
+  assert.equal(rig.owned.get('chest')?.name, 'Rug');
+  assert.equal(rig.owned.has('later'), false);
+  assert.deepEqual(rig.standing.map((p) => p.id), ['chest']);
+});
+
+test('DECOR-BATCH a placed piece stays in the mode: Escape asks, and the piece is not kept yet', async () => {
+  const rig = toolRig({
+    room: { kind: 'home', mapId: 11, buildingKey: 22 }, gold: 5000,
+    homeDecor: {
+      list: async () => ({ ok: true, data: { rev: 4, pieces: [] } }),
+      batch: async () => ({ ok: true, data: { rev: 5 } }),
+    },
+  });
+  await placeFrom(rig, 'm41000');
+  assert.equal(await rig.tool.commit(), true);
+  assert.equal(rig.standing.length, 1);
+  assert.equal(rig.w.gold, 5000, 'Confirm is what pays');
+  assert.equal(rig.tool.flying(), true, 'the place returns to the flight, as a move does');
+  rig.win.fire('keydown', { code: 'Escape', repeat: false });
+  assert.equal(rig.tool.flying(), true, 'Escape asks before the place is left behind');
+  assert.equal(rig.standing.length, 1);
 });

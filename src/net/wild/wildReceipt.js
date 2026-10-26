@@ -10,7 +10,9 @@
 //         (AUDIT INT9: the service matches it against what the fallen really wears - the place alone was an index into a
 //         list the fallen built)   m the room the fall was refereed in and kc the killer's realm character (SEA-BOUNTY,
 //         2026-10-22: the service's word on where a fall was - the open sea's, net/wire.js seaRoomOf - and whom a bounty
-//         pays; a receipt of an older relay names neither, and pays none)   i issued   e expires (i + WILD_RECEIPT_TTL_S)
+//         pays; a receipt of an older relay names neither, and pays none)   g 1 when the fallen had no socket in that room
+//         as the fall was signed (WILD-REJOIN: no tab of theirs is there to take the drop first, so the killer's carry
+//         waits no grace - wildFallGraceS; absent otherwise)   i issued   e expires (i + WILD_RECEIPT_TTL_S)
 //
 // WILD1 left a fall to the fallen's own machine (its health at none), and its drop and its worn piece to the fallen's own
 // hands - so a client that never took a blow never fell, and one that fell gave what it chose. Now the relay holds the
@@ -18,7 +20,7 @@
 // this receipt - the relay's use of its one key again: the version is inside the signed bytes, so no other shape is read
 // as one, and the other shapes' own fields are refused outright. The account service takes the drop and the worn piece
 // off the fallen's JUDGED record against it (server-account/src/wild.js), once (its remains' id) - the fallen's own tab
-// first, the killer's after WILD_FALL_GRACE_S - and signs what it took for the room (identityToken.js `remains` order).
+// first, the killer's after WILD_FALL_GRACE_S (at once when the fallen had gone from the room, `g`) - and signs what it took for the room (identityToken.js `remains` order).
 //
 // PURE, and all three ends import it.
 //
@@ -39,6 +41,13 @@ export const WILD_RECEIPT_V = 'f1';
 export const WILD_RECEIPT_TTL_S = 3600;
 /** How long the fallen's own tab has to take its drop before the killer may take it for them, s. */
 export const WILD_FALL_GRACE_S = 30;
+/**
+ * The grace a fall's killer waits before carrying its receipt, s. The grace exists so that the fallen's own tab takes
+ * its drop first. A fall signed while the fallen had no socket in the room (`g` 1 - its game closed on the death screen)
+ * has no tab there to wait for, so the killer carries it at once (WILD-REJOIN).
+ * @param {{ g?: number } | null | undefined} claims a fall receipt's claims
+ */
+export const wildFallGraceS = (claims) => (claims?.g === 1 ? 0 : WILD_FALL_GRACE_S);
 /** The bound on a receipt's length on the wire (SEA-BOUNTY: 512 - the room and the killer's character signed too). */
 export const WILD_RECEIPT_MAX = 512;
 /** A remains' id: the relay's, twelve hex. */
@@ -58,7 +67,7 @@ export const WILD_ROOM_RE = /^[a-z]{1,12}:[\x21-\x7e]{1,80}$/;
 export const WILD_COLLECT_V = 'g1';
 export const WILD_COLLECT_TTL_S = 300;
 /** A collect never carries a fall's own fields, nor any other receipt's. */
-const COLLECT_FOREIGN = [...WILD_FOREIGN, 'f', 'w', 'wt', 'm', 'kc'];
+const COLLECT_FOREIGN = [...WILD_FOREIGN, 'f', 'w', 'wt', 'm', 'kc', 'g'];
 
 /** Everything a well-formed fall receipt's claims must be, before any signature is considered. */
 export function wildReceiptValid(/** @type {any} */ c) {
@@ -71,14 +80,16 @@ export function wildReceiptValid(/** @type {any} */ c) {
   if (c.wt !== undefined && !(Array.isArray(c.wt) && c.wt.length === 2 && c.wt.every((n) => Number.isSafeInteger(n) && n >= 0 && n < 65536))) return false;
   if (c.m !== undefined && !(typeof c.m === 'string' && WILD_ROOM_RE.test(c.m))) return false;   // SEA-BOUNTY: the room
   if (c.kc !== undefined && !(typeof c.kc === 'string' && REALM_CHARACTER_RE.test(c.kc))) return false;   // SEA-BOUNTY: the killer's character
+  if (c.g !== undefined && c.g !== 1) return false;   // WILD-REJOIN: the fallen gone from the room, or unsaid
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i || c.e - c.i > WILD_RECEIPT_TTL_S) return false;
   return true;
 }
 /** MINT - the relay's half; unsigned (`f1.<body>.`) with no key, which the service declines. */
-export async function mintWildReceipt(/** @type {{ f: string, c: string, k: string, r: string, w: number, wt?: number[]|null, m?: string, kc?: string }} */ { f, c, k, r, w, wt = null, m = '', kc = '' }, /** @type {CryptoKey|null} */ privateKey, /** @type {{ subtle: SubtleCrypto, nowS: number }} */ { subtle, nowS }) {
+export async function mintWildReceipt(/** @type {{ f: string, c: string, k: string, r: string, w: number, wt?: number[]|null, m?: string, kc?: string, g?: number }} */ { f, c, k, r, w, wt = null, m = '', kc = '', g = 0 }, /** @type {CryptoKey|null} */ privateKey, /** @type {{ subtle: SubtleCrypto, nowS: number }} */ { subtle, nowS }) {
   if (!Number.isSafeInteger(nowS)) throw new TypeError('mintWildReceipt needs an integer epoch-seconds clock');
-  const claims = { f, c, k, r, w, ...(w >= 0 && wt ? { wt } : {}), ...(m ? { m } : {}), ...(kc ? { kc } : {}), i: nowS, e: nowS + WILD_RECEIPT_TTL_S };
+  const fallenGone = g === 1 ? { g: 1 } : {};
+  const claims = { f, c, k, r, w, ...(w >= 0 && wt ? { wt } : {}), ...(m ? { m } : {}), ...(kc ? { kc } : {}), ...fallenGone, i: nowS, e: nowS + WILD_RECEIPT_TTL_S };
   if (!wildReceiptValid(claims)) throw new TypeError('mintWildReceipt refused a claim set it could not verify');
   return mintAs(WILD_RECEIPT_V, claims, privateKey, subtle);
 }

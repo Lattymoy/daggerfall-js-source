@@ -255,13 +255,22 @@ stands (the Spire's way); `scenes/ketch/ketchFight.js` draws the constructs, the
 forks and sections; `scenes/ketch/ketchClient.js` holds the world's half - the sky, boarding, the link, the claims, the
 burden, the bosun's line, the presses aboard (`kt:` targets: a cradle, a cell lying loose, a socket, a resonator, the line,
 the way down, the stern lift, the chest), the cast-back, and **a death aboard is a fall**: the death save (`kt-fall`)
-wakes the body in the fields under her at a sliver of health - no death penalty. Her look: her own lighting by the hour
+wakes the body in the fields under her at a sliver of health - no death penalty. **Raise before the fall** (AUDIT
+WORLD-EVENTS L1-4, 2026-10-25; the owner, asked what "Resurrect allowed" means aboard: "Raise before the fall"): a death
+aboard - the save's or the count's (`bd`) - with a crewmate on the ship lies DOWN where it fell for `KT_DOWN_MS` (60 s,
+`net/ketch/ketchBrain.js`) first: the body held there (`characters/playerEntity.js registerPlayerHold`, the hosts'
+paralysis gate), no blow reaching it, dying on every screen (`net/online.js poseDown`), a cell carried let go. A crewmate's
+Resurrect at it (`rz`, `net/raiseWord.js`; `ketchRaise`: the caster alive aboard, within `KT_REZ_REACH_M` of the body,
+inside the window - the brain marks where each member lies off the room's own poses, `p.lay`) stands it there at
+`KT_REZ_PCT` (Resurrect's 30%, pinned equal), a new life on the relay's count (`rez`, named to the crew). Past the window,
+THE FALL as ever. Pins: `test/net/eliteGates/auditwe_down.test.js` (THE SKY-KETCH, and THE PAGES). Her look: her own lighting by the hour
 - her night never darker than the world's outside it (DFU's exterior night floor 0.25) - the air's fog above and the
 lamps' below.
 
 **The made level's rules** (`systems/madeLevel.js`, `ketch`): no save, no rest, no map, no Mark or Recall, no portal
-stone, no companions, no regeneration, no levitation or slow fall, no flight, no run-leap, no resurrection, no
-avoid-death, no unstuck; a death a fall, its penalty none. No tier label over her deck (`world/dungeon/dungeonLabel.js`
+stone, no companions, regeneration held (EVENT-RULES, `Elite-Gates.md` section 24), no levitation or slow fall, no
+flight, no run-leap, Resurrect a raise before the fall (above), no avoid-death, no unstuck; a death a fall, its penalty
+none. No tier label over her deck (`world/dungeon/dungeonLabel.js`
 madeDungeon - nor over an Elite Breach's hall, which no list named before).
 
 ## 12. The Ketch on the screen
@@ -465,3 +474,92 @@ draw count), `loot21_stones.test.js` (the switch off), and `relayversion.test.js
 DEPLOYED). Mutants: `ketch_brain.json` (+2, one re-aimed), `ketch_relay.json` (+1), `ketch_fight.json` (+1),
 `ketch_look_law.json` (+7, two re-aimed), `lostspoils.json` (+2, one re-aimed), `pelletsscarce.json` (+1), and re-aimed
 by content `ketch_client.json` (1) and `ketch_look_light.json` (2) - the 22 each run once and dead.
+
+## 18. KETCH-FIX - the invisible panels and the stuck share (2026-10-25)
+
+The owner, from players: *"The invisable panels cam fuck up players and that loot gets stuck inside the chest at the
+end"*.
+
+**How they were found.** A reachability audit on the real ship: every part posed at each stage, the real Collider, and
+a flood fill of the space a body occupies. The fill walks, jumps (with a running jump's carry), falls and climbs as
+DFU's climbing does, seeded at every deck a ride reaches. Every collider face it touches is then checked from the
+side the body stands on: does a drawn face show it there (culling is on, so a face shows from its front alone)? A
+pinned check follows each fix. The one real-motor run that started it: on the bridge, a running jump at the fore rail
+(0.95 m, no net) cleared it, passed through the engine house's aft wall and fell through the ship, past −43 m and on.
+
+**Found and fixed:**
+- **The engine house** (`world/ketch/ketchModel.js`) was drawn only, and its walls are seen from outside alone. Its
+  walls, eaves and roof are solid now. Every invisible floor and wall a body found began in it:
+  - its floor, which is the top of the gun deck's ceiling and was never drawn;
+  - the hull's void past its floor;
+  - the quarter wall's back, which a body climbed onto the waist's lid.
+- **The deck between the house and the bridge** was never laid, so the hull's dark lay open under the fore rail. It is
+  laid now (`ketchAftDeck`), solid, and its edge is the disc's own rim. The strips beside the house were drawn only;
+  they are solid now and end at the house's aft wall.
+- **Her sides below her deck** were drawn only. A body down her side passed through into the void between the gun
+  deck's walls and the hull, and stood on the hold ceiling's undrawn top. That spot was recorded as its last ground, so
+  every cast-back returned it there. Every run of the outline is now solid below the deck, in its own plane
+  (`hullRunSolid`). The one exception is the bow's run, where the anchor-lift's cage rises.
+- **The stairs' undersides.** The Watch hatch's stair and the hold's walked a slope that is solid from both faces but
+  drawn from above alone, so under each stair there was an invisible ceiling. The kit's stairs now draw the underside
+  (`soffitRec`).
+- **The waist's lid** stays. It is the unseen ceiling at 7 m that stops anyone climbing out over the nets or the
+  quarter wall, and its edge is the nets' top cord. From above, though, it was an invisible floor in the air. A body
+  standing on it is now cast back as the nets cast it, with the same cost and line (`scenes/ketch/ketchDeckHost.js`
+  `ketchOnLid`). The mast-lift's shaft is excepted, since its cage rides through that height.
+- **The share stuck in the chest.** The chest threw its share from its middle, 0.6 m up, which is inside its own solid
+  box (0 to 0.8). Every piece's first ray met the box's inside, and the run reproduced 80 of 80 pieces at rest in the
+  chest. It now throws from its mouth, a metre out from its front and above its lid (`ketchChestMouth`). The throw is
+  also kept to the cabin's floor (`KT_SPOILS_KEEP`, the Hour's keep law), between the chest and the door and clear of
+  the stern lift's ring.
+
+**Left as they are:**
+- The rails' and nets' panels. Their bars and nets are drawn on them, so they are a railing's collision, not invisible
+  walls.
+- The stairs' slope under their treads.
+- The lid's underside, which only a body climbing to the nets' top cord meets.
+
+**Pins:** `test/world/ketch_panels.test.js` (5): the house and the aft deck on the real motor (three running jumps over
+the fore rail, all stopped at the house's wall, none under her deck), the strips; her sides from outside, and the bow
+open alone; the stairs' undersides; the lid's cast-back and its shaft; the share flown over the real collider from six
+places to stand at six seeds, all on the cabin's floor and out of the chest, the door and the lift, and the keep
+handed to the pool. `tools/mutants/ketch_panels.json`: 10, each run once and dead.
+
+## 19. KETCH-PELLETS and KETCH-LONGER - more shot, a longer and harder raid (2026-10-25)
+
+The owner: *"We need more aquireable sources of deeamer pellets"*, and from players: *"the raid is too short and too
+easy"*. The owner picked from the options: the constructs drop Pellets; about fifteen minutes solo and twenty for a crew.
+
+**Her constructs drop Pellets** (`systems/ketch/ketchSpoils.js` `KT_CONSTRUCT_PELLETS`, `ketchConstructPellets`). Every
+construct downed lays a pile where it fell, on the dungeon's own dropped loot, for each hand aboard. Each screen gets
+its own pile, as the share does. The amounts:
+- a Sphere 2 to 4;
+- a Sentry 3 to 5;
+- a Hammer Warden 8 to 12;
+- the Watch-Captain 10 to 15;
+- the Tonal Warden 15 to 25;
+- a vent spider one, at a 35% chance.
+
+A body drops once, only on a fresh fall (`scenes/ketch/ketchFight.js` `fell`). A voyage's construct Pellets stop at
+`KT_CONSTRUCT_PELLETS_MAX` (90), so nobody farms the vents. With no deck to lay them on, they go into the pack. This adds
+to the chest's 20 to 40 a share.
+
+**The raid retuned** (`RELAY_VERSION` world258 - world257 on its branch, renumbered past STAFF-EVENT BOSS at the merge). The live run went in about six minutes solo: the Watch in 24 s, the
+Wardens in 7, the engine in 58, the Warden in 208.
+- **The Boarding Watch:** five waves (`KT_WATCH_WAVES`, `net/ketch/ketchLaw.js`, the brain's and the HUD's one number),
+  each fuller than before: spheres; spheres and sentries; more of both; the sentries' wall; the Watch-Captain with
+  spheres and a sentry. The wire takes a wave to five, and the HUD says "wave {w} of {n}". A new line covers waves
+  three and four, drafted in every language.
+- **The constructs:** health about two and a half times (`hpS`: a Sphere 16, a Sentry 24, a spider 5, a Hammer Warden
+  72, the Captain 100), and every blow a third again as hard (`p` ×1.35).
+- **The Starved Engine:** it eats five cells and one for each two aboard, up to its seven sockets (`engineNeeds`). Its
+  cradles charge in 28 s (20 before), and its spiders come every 6 s (9 before), five and the crew at once (three and
+  the crew before).
+- **The Tonal Warden:** a fighter's share is 600 s of reference damage (`KW_TTK_S`, 300 before). Its Keel-Strike,
+  Steam Lash and Tonal Ring hit a quarter harder. The Ketch turns west at twenty-two minutes (`KW_ENDS_MS`, fourteen
+  before), because the fight is twice as long.
+
+**PIN MOVED:** `ketch_brain.test.js` (the numbers, the Watch's five waves), `ketch_deck.test.js` (the engine's appetite),
+`ketch_warden.test.js` (the share and the end), `ketch_hud.test.js` (the first wave's spheres), `relayversion.test.js`
+(world258). Re-aimed by content: `ketch_brain.json` (2), `ketch_deck.json` (1), `ketch_warden.json` (1), each run once
+and dead.

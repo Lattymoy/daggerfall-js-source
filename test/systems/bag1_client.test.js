@@ -735,9 +735,9 @@ test('BAG1 (AUDIT B4/B5; AUDIT2 K4/H5): every gathering kind names the material 
   assert.equal(actMaterial({ harvest: 'food' }), null, 'the Basket\'s roll: none');
   assert.match(src('src/scenes/gatherHost.js'), /^\s+\.\.\.\(actMaterial\(a\) \? \{ material: actMaterial\(a\) \} : \{\}\),$/m, 'AUDIT2 D3: a line of code, never a comment');
   // AUDIT2 D3: DFU's potion maker reads the bag after the cart and spends it - lines of code, never comments
-  const modes = src('src/scenes/worldModes.js');
-  assert.match(modes, /^\s+wagonItems: \(\) => \[\.\.\.\(playerEntity\.wagonItems \?\?= \[\]\), \.\.\.\(playerEntity\.bagItems \?\? \[\]\)\],/m);
-  assert.match(modes, /^\s+return where !== 'pack' && removeOne\(playerEntity\.bagItems \?\? \[\], templateIndex, \{ group, allowEnchantedItem: false \}\);/m);
+  const modes = src('src/scenes/potionMakerHost.js');   // PIN MOVED (POTION-DOOR): the maker's hooks, the host's player handed in
+  assert.match(modes, /^\s+wagonItems: \(\) => \[\.\.\.\(player\.wagonItems \?\?= \[\]\), \.\.\.\(player\.bagItems \?\? \[\]\)\],/m);
+  assert.match(modes, /^\s+return where !== 'pack' && removeOne\(player\.bagItems \?\? \[\], templateIndex, \{ group, allowEnchantedItem: false \}\);/m);
   assert.match(src('src/scenes/herbHost.js'), /plan\.harvest === 'herbs' \? \{ material: \(info\) => herbKey\(p\.herb, info\?\.region \?\? 0\) \}/);
   assert.match(src('src/scenes/treeHost.js'), /material: n\.material,/);
   assert.match(src('src/scenes/mineHost.js'), /n\.what === 'boulder' \? \{\} : \{ material: n\.material \}/);
@@ -993,7 +993,7 @@ test('BAG1 wired: the world host hands the book its hands on the bag and the pac
   assert.match(src('src/systems/save/save.js'), /snap\.bagTakes = bagTakesSaved\(entity\.bagTakes\);/);
   assert.match(w, /const _storesReached = \(\) => \(modes\?\.mode \?\? 'exterior'\) !== 'dungeon' && _musicInLocationRect\(\)/);
   assert.match(w, /const ready = await profBook\.ensureInStores\(\[\{ key: material, n: Number\(ask\.units\) \|\| 0 \}\]\);/);
-  assert.match(src('src/scenes/worldModes.js'), /bagItems/);
+  assert.match(src('src/scenes/potionMakerHost.js'), /bagItems/);   // PIN MOVED (POTION-DOOR): the potion maker's hooks, out of worldModes.js
   assert.match(src('src/systems/save/save.js'), /bagItems/);
 });
 

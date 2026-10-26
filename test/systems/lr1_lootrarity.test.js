@@ -92,7 +92,11 @@ test('LR5: the switch - ON by default (the ladder is the port\'s own game), forc
   // turns it red for nothing. The claim is that the note names the three tiers in
   // order, not that it punctuates them a particular way.
   assert.match(row.note, /Magic\b[\s\S]*Rare\b[\s\S]*Legendary\b/, 'the note names the ladder, in order');
-  assert.match(row.note, /never your level/, 'and the source law');
+  // PIN MOVED (AUDIT UPDATE L8): LOOT-GATE holds the top tiers back by the roller's level - the note says so in its own
+  // words and never its numbers (CLAUDE.md LOOT-GATE: no level, factor or chance in anything a player reads)
+  assert.match(row.note, /what you killed, where, and your luck/, 'and the source law');
+  assert.match(row.note, /rarer early on and becomes more common as you grow/, 'and the gate, in the words it may be told in');
+  assert.doesNotMatch(row.note, /\d/, 'and no number of it');
   assert.match(row.note, /unidentified/, 'and the identify loop');
   assert.deepEqual(checkFeatures(FEATURES), []);
   off();
@@ -194,8 +198,10 @@ test('LR2: the affix kinds - six, each banded per tier, each with a word for the
   assert.equal(LR.affixWord({ id: 'stat', param: 'strength' }, 'magic'), '', 'LR4: a record with no value is malformed and names nothing');
 });
 
-test('LR2: rollAffixes - the count per tier, no kind or param repeated, only the group\'s kinds, a Rare with both name parts', () => {
+test('LR2: rollAffixes - the count per tier, no kind or param repeated, only the group\'s kinds; AFFIX-LINES: a Rare named as its lines fall (the old law\'s, both name parts)', () => {
   const rolls = lcg(11);
+  const has = (out, slot) => out.some((a) => LR.AFFIX_KINDS[a.id].slot === slot);
+  let both = 0, suffixOnly = 0;
   for (let i = 0; i < 200; i++) {
     for (const [make, group] of [[sword, 'Weapons'], [cuirass, 'Armor'], [ring, 'Jewellery']]) {
       for (const tier of ['magic', 'rare']) {
@@ -213,11 +219,18 @@ test('LR2: rollAffixes - the count per tier, no kind or param repeated, only the
           else assert.equal(a.param, undefined);
         }
         if (tier === 'rare') {
-          assert.ok(out.some((a) => LR.AFFIX_KINDS[a.id].slot === 'prefix') && out.some((a) => LR.AFFIX_KINDS[a.id].slot === 'suffix'), 'a Rare names both parts');
+          // PIN MOVED (AFFIX-LINES, 2026-10-25: carrying capacity on four Rare pieces in five - the last pick held to the
+          // empty slot, and a jewel's one prefix is it): no slot forced - a suffix always (no group has three prefixes to
+          // give), a prefix as the lines fall
+          assert.ok(has(out, 'suffix'), 'a Rare has a suffix');
+          if (has(out, 'prefix')) both++; else suffixOnly++;
+          const old = LR.rollAffixes(make(), tier, rolls, { byLines: false });   // a product record's old law (MINT_V_LINES)
+          assert.ok(has(old, 'prefix') && has(old, 'suffix'), 'the old law: a Rare names both parts');
         }
       }
     }
   }
+  assert.ok(both > 100 && suffixOnly > 100, `AFFIX-LINES: a Rare with both parts, and one with its suffix alone (${both}, ${suffixOnly})`);
 });
 
 test('LR2: applyRarity - the field, the affixes, the name, the value; a Rare\'s DFU flavour; a Legendary\'s record; Common untouched', () => {
@@ -238,7 +251,8 @@ test('LR2: applyRarity - the field, the affixes, the name, the value; a Rare\'s 
   assert.ok(r.affixes.length >= 3 && r.affixes.length <= 4);
   assert.equal(r.enchantments.length, 1, 'one flavour');
   assert.ok(LR.RARE_FLAVOURS.Armor.some((f) => f.type === r.enchantments[0].type && f.param === r.enchantments[0].param), 'from the armour pool');
-  assert.match(r.name, /^\S+ Cuirass of /, `a two-part name: ${r.name}`);
+  assert.match(r.name, / ?Cuirass of /, `PIN MOVED (AFFIX-LINES): named as its lines fall - a suffix always, a prefix where a line gives one: ${r.name}`);
+  assert.equal(r.name, LR.rarityName(r, 'rare', r.affixes));
   assert.equal(r.value, itemBaseValue(r) + LR.affixesWorth(r.affixes) + LR.RARE_ENCHANT_WORTH);
   const l = LR.applyRarity(sword(), 'legendary', rolls);
   assert.equal(l.rarity, 'legendary');
@@ -406,12 +420,12 @@ test('LR1: rollLootRarity - off or sourceless returns the DFU list untouched; on
 test('LR1: four hosts - every list a host mints rolls at its source, and the pile\'s tier is the dungeon\'s', () => {
   const dc = read('src/scenes/dungeonContext.js');
   assert.equal((dc.match(/spawnEnemyLoot\(entity, e\.mobileType, basics, D\.playerEntity, \{ \.\.\.eliteLootOpts\(e\), where: 'dungeon' \}\)/g) ?? []).length, 2, 'both dungeon spawn arms, through the one seam (RF2), whose corpse door is LR4\'s');
-  assert.match(dc, /rollLootRarity\(items, \{ \.\.\.pileSource\(dungeonRarityTier\(dfLocation\.mapTableData\.dungeonType\)\), qualityMult: _superTier \? SUPER_LOOT_QUALITY_MULT : elite \? ELITE_LOOT_QUALITY_MULT : 1, family: dungeonFamily\(dfLocation\.mapTableData\.dungeonType\) \}, \{ luck, rolls, find \}\)/, 'the treasure piles at the dungeon\'s tier (LOOT6: and its kind\'s family)');   // PIN MOVED (PARTY-LOOT): the roll's own Luck, dice and finders   // SD4a (PIN MOVED): a Super dungeon's quality before the Elite's
+  assert.match(dc, /rollLootRarity\(items, \{ \.\.\.pileSource\(dungeonRarityTier\(dfLocation\.mapTableData\.dungeonType\)\), qualityMult: _superTier \? SUPER_LOOT_QUALITY_MULT : elite \? ELITE_LOOT_QUALITY_MULT : 1, family: dungeonFamily\(dfLocation\.mapTableData\.dungeonType\) \}, \{ luck, rolls, find, level \}\)/, 'the treasure piles at the dungeon\'s tier (LOOT6: and its kind\'s family)');   // PIN MOVED (LOOT-GATE): the pile's roll names its own level (a room's base its own, else the player's)   // PIN MOVED (PARTY-LOOT): the roll's own Luck, dice and finders   // SD4a (PIN MOVED): a Super dungeon's quality before the Elite's
   assert.match(read('src/scenes/exteriorFoes.js'), /spawnEnemyLoot\(entity, mobileType, basics, playerEntity, (?:wild \? wildLootOpts\(\{ rolls \}, wildRing\(\)\) : )?\{ rolls \}\)/, 'the exterior foes, off the same stream (WILD1: the open zone\'s ring multiplies its odds)');
   assert.match(read('src/scenes/cityGuards.js'), /spawnEnemyLoot\(entity, GUARD_MOBILE_TYPE, basics, playerEntity, \{ rolls: rand \}\)/, 'the watch');
   // PIN MOVED (RENOWN-LOOT): a plain foe's ladder read at the roller's Renown (foeLootCap.js plainFoeRarityWeights - LOOT-EASE's own at four quarters)
-  assert.match(read('src/scenes/hostCombat.js'), /rollCorpseLoot\(entity, basics, \{ rolls, luck, find, qualityMult: lootQualityMult, weights: plain\?\.plainLadder \? plainFoeRarityWeights\(ease\) : null \}\);/, 'the corpse door, in the one seam (RF2; FOE-CAP: a plain foe\'s ladder beside it)');   // PIN MOVED (PARTY-LOOT): the caller's Luck and finders, the roller's own by default
-  assert.match(read('src/scenes/interiorContext.js'), /rollLootRarity\(addPileLootExtras\(generateLootItems\(lootKey, \{ level, gender \}\), lootKey, Math\.random, \{ locationIndex: locationType, luck, level \}\), pileSource\(INTERIOR_RARITY_TIER\), \{ luck \}\)/, 'a tavern\'s pile');
+  assert.match(read('src/scenes/hostCombat.js'), /rollCorpseLoot\(entity, basics, \{ rolls, luck, find, qualityMult: lootQualityMult, weights: plain\?\.plainLadder \? plainFoeRarityWeights\(ease\) : null, level: effectiveLevel\(player\) \}\);/, 'the corpse door, in the one seam (RF2; FOE-CAP: a plain foe\'s ladder beside it)');   // PIN MOVED (AUDIT UPDATE L4): and its roller's level (LOOT-GATE)   // PIN MOVED (PARTY-LOOT): the caller's Luck and finders, the roller's own by default
+  assert.match(read('src/scenes/interiorContext.js'), /rollLootRarity\(addPileLootExtras\(generateLootItems\(lootKey, \{ level, gender \}\), lootKey, Math\.random, \{ locationIndex: locationType, luck, level \}\), pileSource\(INTERIOR_RARITY_TIER\), \{ luck, level \}\)/, 'a tavern\'s pile');   // PIN MOVED (AUDIT UPDATE L4): and the player's level (LOOT-GATE)
   assert.match(read('src/scenes/worldModes.js'), /luck: liveStat\(playerEntity, 'luck'\),   \/\/ LR1/, 'the interior host hands its luck in');
   // the reads, at DFU's own read sites
   const f = read('src/combat/formulas.js');
@@ -732,7 +746,8 @@ test('AUDIT-LR: OFF is still DFU exactly on both sides of the wire - the fields 
   // A player who rolled online and plays offline with the switch off keeps the item and its name
   // (the feature's own copy says so) - and folds NOTHING from it.
   on();
-  const online = LR.applyRarity(cuirass(), 'rare', lcg(17));
+  const online = LR.applyRarity(cuirass(), 'rare', lcg(293));   // PIN MOVED (AFFIX-LINES): seed 17's piece moved and drew carrying capacity's DFU flavour, which folds off as DFU's own - 293 carries the armour, Strength and carrying-capacity lines that must rest
+  assert.ok(['armor', 'weight'].every((id) => online.affixes.some((a) => a.id === id)) && online.affixes.some((a) => a.id === 'stat' && a.param === 'strength'), 'the lines that must rest');
   const crossed = validLootList(JSON.parse(JSON.stringify([online])))[0];
   off();
   assert.equal(crossed.rarity, 'rare', 'the field is the item\'s, not the switch\'s');
