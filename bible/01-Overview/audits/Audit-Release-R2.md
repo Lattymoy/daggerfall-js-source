@@ -42,7 +42,7 @@ finding there would be routed, not fixed - none was. The code says what each fix
 | R2-3 | LOW | GRAVE-PARTY's own field bug, past the Bay: a lair's headstone there was owed to no cell, so a partymate searched it again | FIXED and pinned |
 | R2-4 | MED | The quest layer's region name was `''` past the Bay: no NPC there knew a quest's place or person there (START3's province starts among them), and "Where am I?" in a lair said "in ." | FIXED and pinned |
 | R2-5 | MED | A quest giver past the Bay has no remote site to give: every quest that wants another town or a dungeon parses to no work (a guild's "no work", a Daedra's "no task here, keep your gold") | RECORDED - the owner's design (proposal below) |
-| R2-6 | LOW | A vampire turned past the Bay is not carried to a cemetery (the region's MAPS rows are the transfer's search) | RECORDED (DFU throws where a region holds none) - proposal below |
+| R2-6 | LOW | A vampire turned past the Bay is not carried to a cemetery (the region's MAPS rows are the transfer's search) | FIXED and pinned (the second pass) |
 | R2-7 | LOW | A staff event cannot be staged past the Bay: its place's pixel is the Bay's (`staffEventLaw.js`), the place picker lists no province's places, and the event runs as a raid, which is the Bay's until WW6 | RECORDED - WW6's |
 | R2-8 | LOW | A POI (the builder's tool) stands on the Bay's map alone: its law, its id `py * 1000 + px` and its feed's key | RECORDED - proposal below |
 | R2-9 | NOTE | A deed in one of a capital's slices (the Imperial City is 25 pixels, each slice its own map id) is DFU's (region, key) law: a house of the same key in another slice of the same capital would read as owned | NOT REPRODUCED - routed to the Imperial City's stream |
@@ -114,12 +114,22 @@ Skyrim questor's courier goes to another town of Skyrim and its dungeon to a lai
 smaller-dungeon law and the START3 `worldPixel` already carry a site past the Bay. The owner decides whether quests past
 the Bay are the province's own (this) or stay local-only until the arc that writes them.
 
-### R2-6 - a vampire's crypt past the Bay (RECORDED)
+### R2-6 - a vampire's crypt past the Bay (FIXED, the second pass)
 
-`src/scenes/world.js:"function transferToCemeteryArm() {"`. The transfer reads the current region's MAPS.BSA rows for a
-cemetery (PlayerGPS.CurrentRegionIndex, GetRandomCemetery); past the Bay there are none, so it is skipped with its
-warning (DFU throws where a region holds none) and the vampire wakes where they turned. PROPOSED (a host change - its own
-module): the nearest Graveyard among the theatre's lairs (`world/tamrielDungeons.js` LAIR_TYPES).
+`src/scenes/vampireCrypt.js:"export function vampireCryptPixel(at, regionIndex, maps, places, roll = Math.random) {"`,
+`src/world/worldWide/worldCemetery.js:"export function cemeteryPastBay(places, px, py, roll = Math.random) {"`. The
+transfer (`scenes/world.js` transferToCemeteryArm - VampirismInfection's GetRandomCemetery, then the respawn into its
+dungeon) read the current region's MAPS.BSA rows for a cemetery; past the Bay a province's region holds none, so it was
+skipped with its warning and the vampire woke where they turned. The owner, of the gaps the first pass left: *"Take care
+of exclusions and gaps"*. DFU's rule on the province's own ground now: WW1's AREA is the region (a province's district,
+DISTRICT_PX, a Bay region's size - World-Wide.md decision 4), so a cemetery is drawn by DFU's draw from the player's
+district's lairs of DUNGEON_TYPES.Cemetery (TESA8's graveyards, through the registry's `inArea` - a district walked once a
+generation), in map-id order so every client's list is one; none there, the nearest of the eight districts about it in
+the same province; none at all (no lair stands - their templates unread), the nearest of the Bay's own, any region's
+(`nearestBayCemetery`) - never skipped past the Bay. On the Bay the transfer is DFU's to the byte (the region's draw,
+`systems/infection.js randomCemeteryLocationIndex`, and the host's skip where a region holds none); past the Veil the
+host's own skip stands (AUDIT CAPTAIN'S SEA P4). HOST-SPLIT: the law is the module's, and bootWorld is two logical lines
+shorter (the host asks one positional call).
 
 ### R2-7 - a staff event past the Bay (RECORDED - WW6's)
 
@@ -203,6 +213,13 @@ PINS MOVED (AUDIT RELEASE R2-1, R2-3): `test/net/staffTeleport.test.js` (a desti
 (a note "off the map" at pixel 8192, not 5000), `test/systems/fb1016b_graveparty.test.js` (a stone's row past the wire's
 grid, not at pixel 1000). One mutant record re-aimed by content (dead): `fb1016b_graveparty.json`'s
 GRAVE-PARTY-the-session-asks-no-margin (the session's cell margin, beside the older relay's gate).
+
+The second pass (the owner's "exclusions and gaps"): `test/world/worldWide/auditrelease_r2_gaps.test.js` - R2-6 the draw
+over the district's cemeteries in map-id order (a ruin never taken), the nearest of the districts about it, the Bay's
+nearest where no lair stands, DFU's own on the Bay, the host's one call. Mutants `tools/mutants/auditrelease_r2_gaps.json`
+(R2-6: 10, all dead). PIN MOVED (AUDIT RELEASE R2-6): `test/systems/guildswap.test.js` (the pure pick is the crypt
+module's, the host asks it); one record re-aimed by content (dead): `disc10.json`'s
+DISC10-D-V4-the-transfer-never-leaves-the-interior.
 
 ## Versions
 

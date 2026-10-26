@@ -1,0 +1,82 @@
+[
+  {
+    "name": "R2-6-draw-unordered",
+    "file": "src/world/worldWide/worldCemetery.js",
+    "old": "  return [...(places.inArea(area) ?? [])].filter(isCemeteryPlace).sort((a, b) => a.mapId - b.mapId);",
+    "new": "  return [...(places.inArea(area) ?? [])].filter(isCemeteryPlace);",
+    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "note": "the draw over the walk's order: two clients' lists need not agree"
+  },
+  {
+    "name": "R2-6-any-lair",
+    "file": "src/world/worldWide/worldCemetery.js",
+    "old": "export const isCemeteryPlace = (p) => !!p && !!p.hasDungeon && p.dungeonType === DUNGEON_TYPES.Cemetery;",
+    "new": "export const isCemeteryPlace = (p) => !!p && !!p.hasDungeon;",
+    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "note": "a ruin taken for a crypt"
+  },
+  {
+    "name": "R2-6-no-dungeon-taken",
+    "file": "src/world/worldWide/worldCemetery.js",
+    "old": "export const isCemeteryPlace = (p) => !!p && !!p.hasDungeon && p.dungeonType === DUNGEON_TYPES.Cemetery;",
+    "new": "export const isCemeteryPlace = (p) => !!p && p.dungeonType === DUNGEON_TYPES.Cemetery;",
+    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "note": "a graveyard with no dungeon taken"
+  },
+  {
+    "name": "R2-6-roll-floor",
+    "file": "src/world/worldWide/worldCemetery.js",
+    "old": "  if (own.length) return siteOf(own[Math.min(own.length - 1, Math.floor(roll() * own.length))]);",
+    "new": "  if (own.length) return siteOf(own[0]);",
+    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "note": "no draw: always the first"
+  },
+  {
+    "name": "R2-6-neighbours-unasked",
+    "file": "src/world/worldWide/worldCemetery.js",
+    "old": "      if (!dx && !dy) continue;",
+    "new": "      if (dx || dy) continue;",
+    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "note": "none in the district: the districts about it never asked"
+  },
+  {
+    "name": "R2-6-neighbour-farthest",
+    "file": "src/world/worldWide/worldCemetery.js",
+    "old": "        if (d < bestD || (d === bestD && p.mapId < best.mapId)) { best = p; bestD = d; }",
+    "new": "        if (!best || p.mapId > best.mapId) { best = p; bestD = d; }",
+    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "note": "not the nearest"
+  },
+  {
+    "name": "R2-6-bay-nearest-any-dungeon",
+    "file": "src/world/worldWide/worldCemetery.js",
+    "old": "      if (row?.dungeonType !== DUNGEON_TYPES.Cemetery) continue;",
+    "new": "      if (!row) continue;",
+    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "note": "the Bay's fallback takes a crypt for a cemetery"
+  },
+  {
+    "name": "R2-6-bay-fallback-unasked",
+    "file": "src/scenes/vampireCrypt.js",
+    "old": "    const c = (places ? cemeteryPastBay(places, at.x, at.y, roll) : null) ?? nearestBayCemetery(maps, at.x, at.y);",
+    "new": "    const c = places ? cemeteryPastBay(places, at.x, at.y, roll) : null;",
+    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "note": "no lair: the transfer skipped past the Bay again"
+  },
+  {
+    "name": "R2-6-bays-rule-past-the-bay",
+    "file": "src/scenes/vampireCrypt.js",
+    "old": "  if (!inBay(at.x, at.y)) {",
+    "new": "  if (false) {",
+    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "note": "the head's law: the region's MAPS rows past the Bay - none"
+  },
+  {
+    "name": "R2-6-host-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    const pos = vampireCryptPixel(playerTravelPixel(), _questRegionIndex(), maps, worldPlaces);",
+    "new": "    const pos = vampireCryptPixel(playerTravelPixel(), _questRegionIndex(), maps, null);",
+    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "note": "the host never hands the registry"
+  }
+]

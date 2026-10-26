@@ -220,7 +220,7 @@ import { giveOffer } from '../ui/pendingOffer.js';   // AUDIT 58: DaggerfallUI.G
 import { cureLycanthropy, racialSuppressTalk, lycanthropeMoveSound, isTransformedLycanthrope } from '../systems/lycanthropy.js';   // V2d: $CUREWER's cure arm; V4: the transformed gates; LM1: the 4-20s move-sound loop; DISC10-E L3: the inventory refusal moved INTO the window door
 import { setRacialQuestHost } from '../systems/racialQuests.js';   // V2d: the quest-start seam (the machine is this host's)
 import { setCrimeGuildQuestHost, setCrimeGuildClock, tallyCrimeGuildRequirements } from '../systems/crimeGuilds.js';   // CG2; LW7: a traveller struck down is the Brotherhood's five
-import { randomCemeteryLocationIndex } from '../systems/infection.js';   // V2e: GetRandomCemetery's pick half
+import { vampireCryptPixel } from './vampireCrypt.js';   // V2e: GetRandomCemetery's pick half; AUDIT RELEASE R2-6: and the province's own past the Bay
 import { MEMBERSHIP_STATUS } from '../systems/quest/questLists.js';   // V2d: the vampire clan pool asks as a Member
 import { prepareQuestShare, prepareShareData, shareSignature, receiveSharedQuest, SHARE_REFUSAL_TEXT, sayShareRefusal, syncBaselineAfter, questBusyAgain, shareSomeone, shareReceivedLine, shareRefusedLine, shareSentLine } from '../systems/quest/questShare.js';   // QUEST1: the chronicle's own Share button, and the party frame it answers
 import { careerSunAverse } from '../systems/passiveSpecials.js';   // AUDIT 64 F20: Career.DamageFromSunlight, the arrival clamp's second arm - HOOD-CAREER: under a bare head
@@ -14465,13 +14465,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   function transferToCemeteryArm() {
     // AUDIT CAPTAIN'S SEA P4: no cemetery of the Bay's past the Veil - the transfer skipped, as where a region has none
     { const p = playerTravelPixel(); if (etherSea && inEther(p.x, p.y)) { console.warn('[infection] past the Veil - no cemetery a crossing away; the transfer is skipped'); return; } }
-    const mapTable = maps.getRegion(_questRegionIndex())?.mapTable ?? [];
-    const idx = randomCemeteryLocationIndex(mapTable);
-    if (idx == null) {
-      console.warn('[infection] no cemetery in this region - the transfer is skipped (DFU throws here)');
-      return;
-    }
-    const pos = longitudeLatitudeToMapPixel(mapTable[idx].longitude, mapTable[idx].latitude);
+    // AUDIT RELEASE R2-6 (scenes/vampireCrypt.js): the Bay's region's cemetery (DFU's draw); past the Bay the province's own,
+    // never skipped - the region's MAPS.BSA rows were the whole search, and a province holds none
+    const pos = vampireCryptPixel(playerTravelPixel(), _questRegionIndex(), maps, worldPlaces);
+    if (!pos) { console.warn('[infection] no cemetery in this region - the transfer is skipped (DFU throws here)'); return; }
     modes?.forceExitToExterior();
     Promise.resolve().then(async () => {
       _wodInside = true;   // WOD6: the crypt is inside
