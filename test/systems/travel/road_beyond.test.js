@@ -92,6 +92,45 @@ test('ROAD-BEYOND the open ground about the ends: a town in the field beside the
   assert.ok(tally.n < 20000, `${tally.n} cells: the roads' search, not the ladder's`);
 });
 
+test('ROAD-BEYOND the roads\' search walks the open ground about its ends alone, within its spend, leaning on its goal: a road round three sides of a field is its way (the field\'s middle far from both ends), the plan the cheaper walk across it (TV2\'s law); a road broken far from its ends no way of its; a spend too small is no way; the lean on the goal spends fewer cells (mutants: open ground everywhere, the cheaper kept, the spend unread, the greed)', () => {
+  // the road north 150, east 100, south 150 - 400 a road's price; straight across the field 100 at 3.5 (350)
+  const u = [];
+  for (let y = 300; y >= 150; y--) u.push([1100, y]);
+  for (let x = 1101; x <= 1200; x++) u.push([x, 150]);
+  for (let y = 151; y <= 300; y++) u.push([1200, y]);
+  const r = searchByRoad({ x: 1100, y: 300 }, { x: 1200, y: 300 }, { ...bay(), beyond: roadThrough(u) });
+  assert.equal(count(r.kinds, 'road'), r.kinds.length, 'the road round, never the field\'s middle');
+  assert.equal(r.cost, 400);
+  // and the plan keeps TV2's law: a way by the roads dearer than the straight walk is asked of the ladder, the cheaper kept
+  const plan = planRoute({ x: 1100, y: 300 }, { x: 1200, y: 300 }, { ...bay(), pathsBeyond: roadThrough(u) });
+  assert.equal(plan.cost, 100 * ROUTE_COST.open, 'across the field');
+  // a road broken far from both ends (a pixel's bit with no bit back): no way by the roads alone - the ladder walks the gap
+  const gap = roadThrough(ell());
+  const broken = (k, x, y) => (x === 1400 && y === 100 ? gap(k, x, y) & ~DIR.W : gap(k, x, y));
+  assert.equal(searchByRoad({ x: 1100, y: 100 }, { x: 1700, y: 400 }, { ...bay(), beyond: broken }), null, 'the gap is no step of the roads\' search');
+  const walked = planRoute({ x: 1100, y: 100 }, { x: 1700, y: 400 }, { ...bay(), pathsBeyond: broken });
+  assert.equal(count(walked.kinds, 'open'), 1, 'the ladder steps it');
+  // the spend: a road of 900 is no way in a hundred cells
+  assert.equal(searchByRoad({ x: 1100, y: 100 }, { x: 1700, y: 400 }, { ...bay(), beyond: roadThrough(ell()), maxExpansions: 100 }), null);
+  // the lean: the road of 900 found in fewer cells than the plain A* walks (some 3,300 - the fields about its start)
+  const leaned = { n: 0 };
+  searchByRoad({ x: 1100, y: 100 }, { x: 1700, y: 400 }, { ...bay(), beyond: roadThrough(ell()), tally: leaned });
+  assert.ok(leaned.n < 2800, `${leaned.n} cells`);
+});
+
+test('ROAD-BEYOND the ladder\'s rungs past the table are no wider than BEYOND_MARGIN about the ends: a causeway running off a thousand pixels is asked no further (the whole map\'s rung there allotted millions of cells for a spend that walks a hundred thousand), and the roads\' search asks a pixel\'s water only for a step its road\'s edge leaves by away from the ends (mutants: the rung, the edge)', () => {
+  // the land a causeway one pixel wide along row 100 from 1100 to 3000; the goal on another
+  let far = 0;
+  const wet = (x, y) => { if (x > far) far = x; return !((y === 100 && x >= 1100 && x <= 3000) || (y === 300 && x >= 1100 && x <= 1150)); };
+  assert.equal(planRoute({ x: 1100, y: 100 }, { x: 1150, y: 300 }, { isWater: wet }), null);
+  assert.ok(far <= 1150 + BEYOND_MARGIN + 1, `asked out to ${far}`);
+  // the roads' search: a pixel's water asked about the ends, and along the road only for the road's own steps
+  let asks = 0;
+  const tally = { n: 0 };
+  searchByRoad({ x: 1100, y: 100 }, { x: 1700, y: 400 }, { ...bay(), beyond: roadThrough(ell()), isWater: () => { asks++; return false; }, tally });
+  assert.ok(asks < 6 * tally.n, `${asks} asks for ${tally.n} cells (every neighbour's asked, some eight a cell)`);
+});
+
 test('ROAD-BEYOND the spend is counted: a goal past the Bay no way reaches costs at most the roads\' search, the ladder\'s whole spend and the walk\'s across country - never a rung of 200 000 four times over, twice (mutant: the ladder\'s spend)', () => {
   // the goal on an island of one pixel in a pond past the Bay; a road from the traveller that never reaches it
   const pond = (x, y) => Math.max(Math.abs(x - 1500), Math.abs(y - 500)) <= 6 && !(x === 1500 && y === 500);

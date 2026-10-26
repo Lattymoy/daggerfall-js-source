@@ -390,14 +390,17 @@ export function planRoute(from, to, opts = {}) {
   // edge to bound it), and an all-open plan's heuristic the field's own price (`hCost`: a FREE walk is the straight one).
   const past = offTable(from) || offTable(to);
   const tally = opts.tally ?? { n: 0 }, spent = tally.n;   // ROAD-BEYOND: the cells a plan expands, counted (a caller's own count, the pins')
+  // a way by the roads dearer than the straight walk across the field (a road round three sides of it) is asked of the
+  // ladder too, and the cheaper kept - TV2's law, a road worth a detour of three and a half times its length and no more
+  let byRoad = null;
   if (past && beyond && (!sea || (sea.start === 'land' && sea.goal !== 'sea'))) {
-    const byRoad = searchByRoad(from, to, { roads, tracks, isWater, width, height, openBlocked, goalExempt, beyond, tally });
-    if (byRoad) return byRoad;
+    byRoad = searchByRoad(from, to, { roads, tracks, isWater, width, height, openBlocked, goalExempt, beyond, tally });
+    if (byRoad && byRoad.cost <= ROUTE_COST.open * octile(from, to)) return byRoad;
   }
   const reachOf = (margin) => (past ? { x0: Math.min(bounds.x0, offTable(from) ? from.x - margin : Infinity, offTable(to) ? to.x - margin : Infinity), x1: Math.max(bounds.x1, offTable(from) ? from.x + margin : -Infinity, offTable(to) ? to.x + margin : -Infinity),
     y0: Math.min(bounds.y0, offTable(from) ? from.y - margin : Infinity, offTable(to) ? to.y - margin : Infinity), y1: Math.max(bounds.y1, offTable(from) ? from.y + margin : -Infinity, offTable(to) ? to.y + margin : -Infinity) } : bounds);
   const hCost = past && !roads && !tracks && !sea ? ROUTE_COST.open : ROUTE_COST.road;
-  let best = null, box = '', asked = false;
+  let best = byRoad, box = '', asked = false;
   for (const rung of margins) {
     const margin = past ? Math.min(rung, BEYOND_MARGIN) : rung;   // ROAD-BEYOND: past the table no rung wider than its spend can walk
     const reach = reachOf(margin);
@@ -425,6 +428,8 @@ export function planRoute(from, to, opts = {}) {
   return best;
 }
 
+/** The straight walk's length between two pixels, a diagonal step sqrt 2. */
+const octile = (a, b) => { const dx = Math.abs(a.x - b.x), dy = Math.abs(a.y - b.y); return Math.max(dx, dy) + (Math.SQRT2 - 1) * Math.min(dx, dy); };
 /** ROAD-BEYOND: the ladder's whole spend past the Bay's table, cells expanded over every rung (an op count, never a clock). */
 export const BEYOND_MAX_EXPANSIONS = 100000;
 /** ROAD-BEYOND: the widest rung past the table, pixels about the ends - a box no wider than the ladder's spend walks (the
