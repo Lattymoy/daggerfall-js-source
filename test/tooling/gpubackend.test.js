@@ -190,8 +190,8 @@ test('GPU-BACKEND by source: the shell appends the switches before the app is re
   const early = main.slice(from, to);
   codeHasOnce(early, /\nconst BACKEND_LAUNCH = backendLaunch\(app\.getPath\('userData'\)\);/);
   codeHasOnce(early, /\nfor \(const \[name, value\] of BACKEND_LAUNCH\.switches\) app\.commandLine\.appendSwitch\(name, value\);/);
-  codeHasOnce(early, /app\.once\('browser-window-created', \(_e, w\) => w\.webContents\.once\('did-finish-load', \(\) => \{ backendGuard\.check\(\); \}\)\);/);
-  codeHasOnce(early, /if \(details\?\.type === 'GPU'\) \{ logGone\('gpu', details\); backendGuard\.onGpuGone\(details\); \}/);
+  codeHasOnce(early, /app\.once\('browser-window-created', \(_e, w\) => w\.webContents\.on\('did-finish-load', backendGuard\.check\)\);/);
+  codeHasOnce(early, /app\.on\('child-process-gone', \(_e, details\) => \{ if \(details\?\.type === 'GPU'\) backendGuard\.onGpuGone\(details\); \}\);/);
   codeHasOnce(main, new RegExp(`const CONFIG_FILE = \\(\\) => path\\.join\\(app\\.getPath\\('userData'\\), '${B.CONFIG_NAME.replace('.', '\\.')}'\\);`));
   assert.match(read('src/systems/uiPrefs.js'), new RegExp(`\\nconst STORAGE_KEY = '${B.UI_PREFS.replace(/\./g, '\\.')}';`));
 });

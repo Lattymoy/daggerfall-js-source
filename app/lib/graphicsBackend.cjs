@@ -166,8 +166,11 @@ function watchBackend({ app, launch, loadConfig, saveConfig, notify, now = Date.
     }
   }
 
+  let checked = false;
+  /** Once a launch: main.cjs calls it at each load of the first window. */
   async function check() {
-    if (!armed && !launch.held) return;
+    if (checked || (!armed && !launch.held)) return;
+    checked = true;
     const info = await gpuInfoWithin(app, 'complete', infoTimeoutMs) ?? await gpuInfoWithin(app, 'basic', infoTimeoutMs);
     key = gpuKey(info) ?? key;
     if (launch.held) { review(info); return; }

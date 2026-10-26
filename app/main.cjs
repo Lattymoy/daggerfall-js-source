@@ -68,7 +68,7 @@ for (const s of FRAME_SWITCHES) app.commandLine.appendSwitch(s);
 const BACKEND_LAUNCH = backendLaunch(app.getPath('userData'));
 for (const [name, value] of BACKEND_LAUNCH.switches) app.commandLine.appendSwitch(name, value);
 const backendGuard = watchBackend({ app, launch: BACKEND_LAUNCH, loadConfig, saveConfig, notify: (opts) => dialog.showMessageBox(opts) });
-app.once('browser-window-created', (_e, w) => w.webContents.once('did-finish-load', () => { backendGuard.check(); }));
+app.once('browser-window-created', (_e, w) => w.webContents.on('did-finish-load', backendGuard.check));
 
 // PERF-GPU1 (2026-10-10, a player via Mac: 5 fps in every room "with the graphics all low", playable only at 800x600):
 // THE DISCRETE GPU. On a laptop with two GPUs Chromium draws on whichever the system hands a browser - the integrated
@@ -498,9 +498,10 @@ function logGone(what, details) {
   if (what === 'renderer') gpuTrail = null;
 }
 // RENDERER-GONE: the GPU's process gone is logged too - Chromium starts it again, and the page says the graphics stopped
-// itself (main.js webglcontextlost: tap to reload). GPU-BACKEND: and a chosen backend's GPU process gone in its first
-// minute is that backend failing to start.
-app.on('child-process-gone', (_e, details) => { if (details?.type === 'GPU') { logGone('gpu', details); backendGuard.onGpuGone(details); } });
+// itself (main.js webglcontextlost: tap to reload)
+app.on('child-process-gone', (_e, details) => { if (details?.type === 'GPU') logGone('gpu', details); });
+// GPU-BACKEND: a chosen backend's GPU process gone in its first minute is that backend failing to start
+app.on('child-process-gone', (_e, details) => { if (details?.type === 'GPU') backendGuard.onGpuGone(details); });
 const { RELEASES_URL, latestDownloadUrl, releaseAssetUrl, manualDownloadFile } = require('./lib/downloads.cjs');
 const {
   CHECK_TIMEOUT_MS, RECHECK_MS, INSTALL_NOTICE_MS, INSTALL_GIVEUP_MS, DOWNLOAD_STALL_MS, DETECT_DEADLINE_MS, JUDGE_DEADLINE_MS, PICK_DEADLINE_MS,
