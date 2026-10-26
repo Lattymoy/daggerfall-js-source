@@ -19,6 +19,7 @@ import { accountRefusalText } from '../../../src/net/accountClient.js';
 import { validLootList } from '../../../src/systems/loot/loot.js';
 import { createWeapon } from '../../../src/combat/enemyEquipment.js';
 import { seededRng } from '../../../src/systems/wind/wind.js';
+import { NativeInventoryWindow } from '../../../src/ui/native/nativeInventory.js';
 
 const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const { subtle } = globalThis.crypto;
@@ -75,7 +76,7 @@ async function stand() {
 }
 const HOME = { mapId: 1291010263, buildingKey: 0x10203 };
 const PURSE = 1_000;
-const SAVE = (name, items = [], gold = PURSE) => ({ name, level: 9, goldPieces: gold, items, bankAccounts: new Array(62).fill(0).map(() => ({ accountGold: 0 })) });
+const SAVE = (name, items = [], gold = PURSE) => ({ name, level: 9, goldPieces: gold, items, stats: { strength: 60 }, bankAccounts: new Array(62).fill(0).map(() => ({ accountGold: 0 })) });
 const chestPiece = { id: 'p1', model: 41000, flat: null, pos: [1, 0, 1], rot: [0, 0, 0], scale: 1, light: null, storage: true, paid: 180 };
 const binRows = (env) => env.DB._raw.prepare('SELECT uid, item FROM decor_bin').all().map((r) => ({ uid: r.uid, ...JSON.parse(r.item) }));
 const binGold = (env) => binRows(env).filter((it) => it.group === 'Currency').reduce((n, it) => n + it.stackCount, 0);
@@ -105,7 +106,7 @@ async function sharedChest(t) {
 function gameOf(t, secret, id) {
   const { env, call } = t;
   const rec = recordOf(env, id);
-  const entity = { name: rec.name, goldPieces: rec.goldPieces, items: [...(rec.items ?? [])] };
+  const entity = { name: rec.name, goldPieces: rec.goldPieces, items: [...(rec.items ?? [])], stats: { ...rec.stats }, activeEffects: [] };
   let saving = Promise.resolve();
   const served = [];   // the record's purse as each checkpoint found it - what the service left there
   const putSave = async () => {
@@ -143,6 +144,9 @@ function gameOf(t, secret, id) {
     take: (row, n = row.stackCount ?? 1) => spec.loot.commit('take', row, n, () => applyTransfer(row, { amount: n }, chest(), pack(), { entity, toPlayer: true })),
     put: (it, n = it.stackCount ?? 1) => spec.loot.commit('put', it, n, () => applyTransfer(it, { amount: n }, pack(), chest(), { entity, fromLocal: true })),
     close: async () => { await spec.loot.finish(); await saving; },
+    /** the window's own spec, as the host hands it to an inventory window (worldModes.js interiorInventory) */
+    spec: () => spec,
+    saved: () => saving,
   };
 }
 
@@ -366,4 +370,26 @@ test('RPT1026-CHESTGOLD an open window keeps its hold while it is used, and a ho
   await g.close();
   assert.equal(g.entity.goldPieces, PURSE);
   assert.equal(binGold(env), 60);
+});
+
+test('RPT1026-CHESTGOLD the classic skin\'s window: its gold click pays no purse, so the chest it never settles keeps its gold once', async () => {
+  const t = await stand();
+  const { mara, M } = await sharedChest(t);
+  layBin(t.env, coinRow(400));
+  const g = gameOf(t, mara, M.id);
+  const spec = await g.open();
+  // the classic window over the host's spec (inventoryDoor.js createInventoryWindow's other arm): DFU's Remove off the chest
+  const win = new NativeInventoryWindow({ ...spec, entity: g.entity, icons: { getTexture: async () => ({ recordCount: 0 }), uploadRecord: () => {}, textures: new Map() } });
+  win.mode = 'remove';
+  win._pickRemote(spec.loot.items().findIndex((it) => it.group === 'Currency'));
+  assert.equal(spec.loot.items().some((it) => it.group === 'Currency'), false, 'the pile left the chest\'s list');
+  assert.equal(spec.items().find((it) => it.group === 'Currency')?.stackCount, 400, 'and stands in the window\'s pack as a pile');
+  assert.equal(g.entity.goldPieces, PURSE, 'the click pays no purse');
+  win._close();
+  await spec.loot.finish();
+  await g.saved();
+  await g.checkpoint();
+  assert.equal(g.entity.goldPieces, PURSE);
+  assert.equal(recordOf(t.env, M.id).goldPieces, PURSE, 'nor does any checkpoint carry it');
+  assert.equal(binGold(t.env), 400, 'the gold is in the chest, once');
 });
