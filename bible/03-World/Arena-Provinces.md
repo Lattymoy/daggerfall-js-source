@@ -1711,11 +1711,65 @@ NOT SEEN in the game: a district's streets and roofs at street level, the city's
 nine near slices were not built within the probe's 900 s here (before the merge and after it), and three runs lost their
 renderer to the shared memory. After the merge the first frame looking down over the centre held 88 s of script in the
 frame (4 s of frame, 77 ms of script before it): the far landmarks' 625 meshes take 374 ms in the page and the sweep makes
-them 3 ms a frame, so it is not their making; what it is stands OPEN (a probe with `?perf=cpu` on a machine of its own).
+them 3 ms a frame, so it is not their making - FOUND (IC-GRAND's perf pass, below): the living world's trips.
+
+IC-GRAND'S PERF PASS (2026-10-26, the coordinator: *"Your two open performance problems are not acceptable to ship for a
+20 km city ... (1) THE 88 s FRAME ... find the cause with a CPU profile in the running game ... (2) A DISTRICT'S NINE NEAR
+SLICES NEVER FINISHED within 900 s ... make arrival and crossing workable"*). Measured with Chrome's own sampler over CDP
+in the running game (`tools/imperialCityProbe.mjs` PROFILE; its summaries a scratch's), the machine shared as above:
+- **THE 88 s FRAME WAS THE LIVING WORLD** (stream I's `scenes/livingWorld/livingIndex.js`, its trips
+  `systems/livingWorld/trips.js`). Every place of a populated type is a town of the living world, and every town within
+  TRIP_REACH_PX (18) of a town is among its visitors' sources: the Imperial City's 625 slices were each a place of the
+  capital's type (each its own location - the slice law), so 625 cities of 64 blocks stood within each other's trip
+  reach, and the frame that first asked the trips over the centre walked visitorsOf -> townTrips -> ownTrip ->
+  roadChoices for each of them - 52.4 s of the profiled frame's script (88 s in the coordinator's run), 51.6 s of the
+  jump's 75 s of script. Ruled out by the same profile: the far landmarks (0.37 s for all 625, a 3 ms budget a frame),
+  stream H's town fabric, B's mid ring, far field and pixel fade, G's landforms and rivers, J's zone mask and F's curved
+  roads (none among the jump's forty heaviest stacks, none in the frame: the frame's 50.2 s under framePopulation -> the living towns' trips). The fix where it lives, minimal (`world/tamrielCapitals.js`
+  capitalSliceAside; livingIndex.js `townOf` - one line of stream I's): a family capital's slice but its centre is a part
+  of its city and no town of its own; the centre's place is the Imperial City's one town. AFTER: the same frame 118 ms of
+  script (its 2.9 s the SwiftShader frame's), the trips 0.09 s of it; the jump's trips 0.7 s; the page's heap there
+  1.46 GB.
+- **THE ID RUNS** (FOUND here): the city's own blocks stood at 2,000,000 and its fabric's and skylines' models at
+  3,000,000 and 3,100,000 - inside TS4's walled towns' block indices (1,000,000 plus twenty bits of a map id) and their
+  walls' model ids (3,000,000 plus the same). Moved past them (2,060,000; 7,000,000 and 7,100,000) and pinned apart.
+- **A NEAR SLICE, TIMED IN THE GAME WITH ITS FRAME HELD** (the probe's BUILDS: `scenes/shared.js` holdFrame, so
+  SwiftShader's frame is out of it and an animation frame comes at the display's pace; the pump's own build of the
+  slice's pixel, `window.__pixelBuild`): BEFORE - a Market slice 7.5 s (206 frames; 103k triangles of fabric), its east
+  neighbour 4.0 s (131k), the Arena District's 7.0 s (86k), the Elven Gardens' 4.7 s (68k), the Temple District's 4.1 s
+  (68k), a Palace District slice 1.9 s; the worst task 0.9-1.8 s in every one (the 99th percentile frame 73-682 ms); the
+  heap 1.47 GB rising to 1.95 GB over the six. The profile: the city's own blocks made on the world-data door 5.3 s of
+  the builds' 20 s of script (imperialBlockJson - each block's 4,096 closed cells asked of the fabric), the fabric's
+  models 1.5 s, the model boxes the merchant yards ask of them 1.5 s more, and setLocationTiles reading a slice's
+  sixty-four blocks in ONE task - the 1-1.8 s frame. So the 900 s was two things: SwiftShader's seconds a frame times a
+  build that lends each frame its 3-6 ms (a slice is a couple of hundred breaths), and on any machine a slice of seconds
+  of the page's thread with a second-long frame in it.
+- **OFF THE PAGE'S THREAD** (`world/imperialPrebuild.js`, `world/imperialPrebuildWorker.js`,
+  `world/imperialPrebuildClient.js`, `scenes/capitalPrebuild.js`): the city's blocks and its fabric's models are pure
+  work of their rows and columns, so a worker of the city's own makes them for the slices the player is coming near -
+  told by the capitals' sweep on the frame when the player's pixel moves (within NEAR_RING of it near, the player's own
+  first; the ring past them far: their far blocks and skylines), in the order the pixel's build asks them (blocks, then
+  models), each handed back as made (its buffers moved). The world-data door and the models' family ask it first
+  (`world/capitalModels.js`): a piece it made is taken once - a block's landmarks' footprint laid on it on the page
+  (`imperialBlockFootprint`: the footprint is the page's models', so the worker makes its blocks without it - the same
+  bytes as the door's own, pinned); a piece it has not made yet is made on the page as before and the worker told to skip
+  it. No worker (node, a factory that throws, a worker that dies): every piece the page's, as it always was. Let go out of
+  the city's reach. And the pixel's build reads a family capital's slice's blocks a breath at a time before
+  setLocationTiles reads them all (`scenes/pixelBuild.js`, two lines of the host's module). AFTER: the page's own share of a near slice's city work, timed in node with the worker's pieces held as the page holds them
+(`ictake`, a scratch's; the machine at load 30-38 - every number about five times this machine's quiet one): a Market
+slice's 59 blocks and 59 models 7.5 s made on the page, 0.7 s taken (a block's median 67 ms -> 0.3 ms); its east
+neighbour 7.7 s -> 1.0 s; the Arena District's 5.9 s -> 14 ms; the Elven Gardens' 7.2 s -> 33 ms; the Temple
+District's 4.1 s -> 0.39 s; a Palace District slice 4.0 s -> 1.8 s. What is left in it is each slice's first block's
+landmarks' footprint (capitalFootprint over its and its neighbours' parts, their first build with it): 0.03-0.43 s a
+slice at load 5 (the centre slice the most: the tower's 7.7k triangles and the palace's 15.6k), 0.47-1.6 s at load 38 -
+the worst unit of the city's own left on the page. The rest of a slice's build is the stream's own (its uploads, its
+colliders, its yards' and walkers' places - about 2 s of the page's thread a slice in the profile), a breath at a time.
+The worker's own heap over the jump's list (the centre and two rings, 2,192 pieces): 61 MB of modules and 47 MB of its
+fabric's caches; what it hands the page, 22 MB of blocks held until taken. IN THE GAME AFTER: see the next paragraph.
 
 TESA11, IC-RING and TS5 read on: the pixel law the same (the nearest centre all of whose 625 pixels are the Imperial
 Province's land, on the trace's isle inside Lake Rumare's ring); the flatten the same (every slice to the centre's
-ground); the parts the same law at 1,024 a slot (183 parts of the twelve landmarks).
+ground); the parts the same law at 1,024 a slot (217 parts of the fourteen landmarks - the palace and its gardens with them).
 
 ## MAP-WHOLE - the map past the Bay whole from its first frames (2026-10-26)
 
