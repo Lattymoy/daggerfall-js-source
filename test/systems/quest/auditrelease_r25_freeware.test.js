@@ -141,16 +141,12 @@ test('R2-5 with ARENA2: a Fighters Guild, a Mages Guild, a temple, a social give
       for (const place of local) {
         const sd = place.siteDetails, p = sd.worldPixel;
         assert.equal(sliceQuestName(p.x, p.y), sd.locationName, `${name} ${place.symbol.name}: a slice of the city, under its quest name`);
-        // the nearest slice that holds its kind: none nearer the centre holds a building of its type and faction
-        const kind = place.siteBuilding(L.questWorld);
-        const dOf = (q) => Math.max(Math.abs(q.x - 2069), Math.abs(q.y - 658));
-        let nearest = null;
-        for (const sl of L.questWorld.capitalSlicesNear(L.questWorld.currentLocation())) {
-          if (!sl.exterior.buildings.some((b) => b.buildingType === kind.buildingType && (b.factionId ?? 0) === (kind.factionId ?? 0))) continue;
-          nearest = longitudeLatitudeToMapPixel(sl.mapTableData.longitude, sl.mapTableData.latitude);
-          break;
-        }
-        assert.ok(nearest && dOf(p) <= dOf(nearest), `${name} ${place.symbol.name}: the nearest slice of its kind (${p.x},${p.y})`);
+        // the first slice, nearest the centre first, whose own search gives the site's kind (the order itself is pinned on
+        // its fixture: auditrelease_r25.test.js R2-5c)
+        const law = place.declaredSiteLaw();
+        let first = null;
+        for (const sl of L.questWorld.capitalSlicesNear(L.questWorld.currentLocation())) if (place._searchTownSites(L.questWorld, sl, law.p2, law.p3).found.length) { first = sl; break; }
+        assert.equal(first?.mapTableData.mapId, sd.mapId, `${name} ${place.symbol.name}: the nearest slice that gives its kind (${p.x},${p.y})`);
         assert.equal(L.questWorld.maps.getLocationByName(sd.regionName, sd.locationName)?.mapTableData.mapId, sd.mapId, `${sd.locationName}: found by its name`);
         assert.ok(place.siteBuilding(L.questWorld), `${sd.locationName}: its building stands`);
         table.push(`| ${giver} | Cyrodiil (Imperial City, the centre) | ${name} | ${place.symbol.name} (local): ${sd.locationName} (building) @ ${p.x},${p.y} | yes | yes | - | ${ms} ms |`);
@@ -165,7 +161,7 @@ test('R2-5 with ARENA2: a Fighters Guild, a Mages Guild, a temple, a social give
   for (const c of rural) assert.equal(standAt(c.px, c.py)?.mapTableData.mapId, c.mapId, `${c.name} @ ${c.px},${c.py} stands as itself`);
   assert.ok(countryNear.rolled <= 32);
   assert.ok(countryNear(1569, -430, 24, Infinity, 5).length <= 5, 'at most the pixels it may read');
-  assert.ok(table.some((row) => /\| Skyrim \(Solitude\) \|.*\(building\) @ (\d+),(-?\d+)/.test(row) && (([, x, y]) => Math.max(Math.abs(x - 1569), Math.abs(y + 430)) <= 24)(/@ (\d+),(-?\d+)/.exec(row))), 'a Skyrim courier\'s town near');
+  assert.ok(table.some((row) => /\| Skyrim \(Solitude\) \|.*\(building\) @ (\d+),(-?\d+)/.test(row) && (([, x, y]) => Math.max(Math.abs(Number(x) - 1569), Math.abs(Number(y) + 430)) <= 24)(/@ (\d+),(-?\d+)/.exec(row))), 'a Skyrim courier\'s town near');
   // R2-5b: the Imperial City a destination - a remote site drawn in one of its district slices, under its quest name
   assert.ok(table.some((row) => / \| Cyrodiil .*: [A-Za-z ]+ District, quarter \d+ \(building\)/.test(row)), 'a site in a district slice of the Imperial City');
   // the lairs' work at a new questor's pixel, bounded
