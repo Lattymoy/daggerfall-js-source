@@ -24,13 +24,13 @@ import { bytesStamp, textStamp, derivedValueStore } from '../../systems/firstVis
 import { anyBlockVariant } from '../../systems/worldDataVariants.js';
 import { setGroundTilesKeeper } from './terrainTiles.js';
 
-/** Bump when the kept tiles change shape. */
-export const GROUND_TILES_VERSION = 1;
+/** Bump when the kept tiles change shape. 1 -> 2: blocks kept by name, not by index. */
+export const GROUND_TILES_VERSION = 2;
 
 const TILES = 16;   // RMB_TILES_PER_BLOCK
 const SAVE_AFTER_MS = 2000;
 
-/** @type {{ key: string, walks: Map<string, Map<number, Int32Array>>, store: any, added: boolean, timer: any } | null} */
+/** @type {{ key: string, walks: Map<string, Map<string|number, Int32Array>>, store: any, added: boolean, timer: any } | null} */
 let kept = null;
 
 /** The record's key for these inputs. @param {Uint8Array|null} blocksBytes @param {string} serving */
@@ -39,7 +39,7 @@ export function groundTilesKey(blocksBytes, serving) {
   return stamp ? `fv-ground:v${GROUND_TILES_VERSION}:${stamp}:${textStamp(serving, BUILD_TAG)}` : null;
 }
 
-/** A stored record is a Map of walk name -> Map of block index -> 512 numbers. */
+/** A stored record is a Map of walk name -> Map of block name -> 512 numbers. */
 function isRecord(v) {
   if (!(v instanceof Map)) return false;
   for (const walk of v.values()) {
@@ -83,18 +83,20 @@ function pack(groundTiles) {
 
 /**
  * One block's ground tiles for a walk: the kept ones, or `read()`'s (the block as the door serves it), kept.
- * @param {string} walk - the walk's name @param {number} index - the block's index
+ * @param {string} walk - the walk's name @param {string|number} block - the block's name (its index where the reader
+ *   cannot name it): a pack's new blocks take their indices in the order the index meets them, not promised the same
+ *   on the next launch
  * @param {() => any[][] | null | undefined} read
  */
-export function keptGroundTiles(walk, index, read) {
+export function keptGroundTiles(walk, block, read) {
   if (!kept || anyBlockVariant()) return read();
-  const tiles = kept.walks.get(walk)?.get(index);
+  const tiles = kept.walks.get(walk)?.get(block);
   if (tiles) return unpack(tiles);
   const groundTiles = read();
   if (groundTiles?.length !== TILES) return groundTiles;
   let m = kept.walks.get(walk);
   if (!m) { m = new Map(); kept.walks.set(walk, m); }
-  m.set(index, pack(groundTiles));
+  m.set(block, pack(groundTiles));
   scheduleSave();
   return groundTiles;
 }

@@ -342,8 +342,9 @@ export function locationRectReader(mapsFile, blocksFile, as = null) {
     getBlock: (index) => {
       let b = ground.get(index);
       if (b === undefined) {
-        // FIRST-VISIT: kept across launches (groundTilesKept.js) - the block is not served at all on a hit
-        const groundTiles = keptGroundTiles(walk, index, () => blocksFile.getBlock(index)?.rmbBlock?.fldHeader?.groundData?.groundTiles);
+        // FIRST-VISIT: kept across launches (groundTilesKept.js) by the block's NAME - a block a pack adds past the BSA's
+        // count takes its index in the order the index meets it - and not served at all on a hit
+        const groundTiles = keptGroundTiles(walk, blocksFile.getBlockName?.(index) ?? index, () => blocksFile.getBlock(index)?.rmbBlock?.fldHeader?.groundData?.groundTiles);
         b = groundTiles ? { rmbBlock: { fldHeader: { groundData: { groundTiles } } } } : blocksFile.getBlock(index);   // a block with none fails SetLocationTiles as it did
         ground.set(index, b);
       }

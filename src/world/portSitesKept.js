@@ -4,18 +4,22 @@
 // turns - 230 ms inside the start town's pixel build on a warm launch, every launch, for the same answer. The answer is
 // a function of what portSitesOn reads and nothing else: the ground's closed and road cells and the sea field. So it is
 // kept in the player's derived store under a stamp over exactly those - the cells' bytes and the field's value at every
-// cell - and a town whose ground or water changed (a mod's layout, a yard moved) is a different key.
+// cell - and a town whose ground or water changed (a mod's layout, a yard moved) is a different key; the record is the
+// build's (BUILD_TAG), so a release that changes the placing starts it afresh.
 //
 // Every town's sites live in one small record, fetched before the world's first pixel builds (prefetchPortSites, from
 // the mod world-data loader), so the build stays synchronous; a town placed anew is written back a moment later.
 
+import { BUILD_TAG } from '../buildTag.js';
 import { fnv1a, derivedValueStore } from '../systems/firstVisit/firstVisitStore.js';
 import { portSitesOn } from './portSites.js';
 import { closeSite } from './merchantYards/merchantYardSites.js';
 
 /** Bump when portSitesOn's placing changes shape. */
 export const PORT_SITES_VERSION = 1;
-const RECORD_KEY = `fv-port-sites:v${PORT_SITES_VERSION}`;
+/** The record of every kept town - of this build, so a release that places anew never reads an older placing. */
+export const PORT_SITES_KEY = `fv-port-sites:v${PORT_SITES_VERSION}:${BUILD_TAG}`;
+const RECORD_KEY = PORT_SITES_KEY;
 /** The towns kept - the most recently placed. */
 export const PORT_SITES_MAX = 512;
 const SAVE_AFTER_MS = 2000;

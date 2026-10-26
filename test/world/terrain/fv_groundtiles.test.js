@@ -15,18 +15,21 @@ import { registerWorldDataPack, worldDataBlocksServing, _resetWorldDataReplaceme
 const NAMES = ['RESIAM10.RMB', 'TVRNAS08.RMB', 'MAGEAA12.RMB', 'GENRAS00.RMB'];
 const BYTES = new Uint8Array(200 * 1024).map((_, i) => (i * 31) & 255);
 
-/** A BLOCKS.BSA whose every read is counted. */
-function blocksOf(bytes = BYTES) {
-  const index = new Map(NAMES.map((n, i) => [n, i]));
+/** A BLOCKS.BSA whose every read is counted; `order` the names at their indices (a pack's new blocks take theirs in the
+ *  order the index meets them). A block's tiles are its name's. */
+function blocksOf(bytes = BYTES, order = NAMES) {
+  const index = new Map(order.map((n, i) => [n, i]));
   const reads = [];
   return {
     reads,
     bytes,
     checkName: (n) => (index.has(n) ? n : ''),
     getBlockIndex: (n) => index.get(n) ?? -1,
+    getBlockName: (i) => order[i] ?? null,
     getBlock: (i) => {
       reads.push(i);
-      const groundTiles = Array.from({ length: 16 }, (_, x) => Array.from({ length: 16 }, (_, y) => ({ tileBitfield: (x * 7 + y + i) & 63, textureRecord: x >= i % 9 && y >= (i * 3) % 7 ? 3 : 60, isRotated: false, isFlipped: false })));
+      const k = NAMES.indexOf(order[i]);
+      const groundTiles = Array.from({ length: 16 }, (_, x) => Array.from({ length: 16 }, (_, y) => ({ tileBitfield: (x * 7 + y + k) & 63, textureRecord: x >= k % 9 && y >= (k * 3) % 7 ? 3 : 60, isRotated: false, isFlipped: false })));
       return { rmbBlock: { fldHeader: { groundData: { groundTiles } } } };
     },
   };
@@ -105,4 +108,14 @@ test('FIRST-VISIT ground tiles: what the door serves blocks by reads the same wh
     assert.notEqual(serving([[villages, 10], [packOf('beautiful-cities', ['FIGHBM00.RMB.json', 'WALLAA02.RMB.json'], '1.1'), 20]]), a, 'a pack updated');
     assert.notEqual(serving([[villages, 10], [cities, 20]], (v) => v !== 'beautiful-cities'), a, 'a mod switched off');
   } finally { _resetWorldDataReplacement(); }
+});
+
+test('FIRST-VISIT ground tiles: a block is kept by its name - the next launch\'s indices in another order read each block\'s own tiles (mutant: kept by index)', async () => {
+  const store = storeOf();
+  const first = await launch(store);
+  const moved = blocksOf(BYTES, [...NAMES].reverse());
+  const second = await launch(store, { blocks: moved });
+  assert.equal(second.reads, 0, 'every block found by name');
+  assert.deepEqual(second.rects, first.rects, 'the same town, the same rects');
+  _resetGroundTiles();
 });

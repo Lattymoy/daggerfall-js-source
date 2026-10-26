@@ -2621,14 +2621,14 @@ waits on the land's pieces for each new network (`ways.js`), and the rest are as
 
 | item | module | key |
 |---|---|---|
-| walks' ground tiles | `world/terrain/groundTilesKept.js` | BLOCKS.BSA's stamp, what the door serves blocks by (`worldDataReplacement.js worldDataBlocksServing`: each block file's mod, pack version, layers - in name order), the build; a pinned town or a set block variant reads through |
-| land's pieces | `systems/travel/landPiecesKept.js` | every byte the fold reads (climate, heights, roads, tracks) |
-| port sites | `world/portSitesKept.js` | the town ground's cells and the sea field at every cell |
+| walks' ground tiles | `world/terrain/groundTilesKept.js` | BLOCKS.BSA's stamp, what the door serves blocks by (`worldDataReplacement.js worldDataBlocksServing`: each block file's mod, pack version, layers - in name order), the build; each block by its name (a pack's new blocks take their indices in the order the index meets them); a pinned town or a set block variant reads through |
+| land's pieces | `systems/travel/landPiecesKept.js` | the build, every byte the fold reads (climate, heights, roads, tracks) |
+| port sites | `world/portSitesKept.js` | the build, the town ground's cells and the sea field at every cell |
 | ship builds | `systems/comeSailAway/shipBuildsKept.js` | the build, the bake's sha256 and text, the mod prefabs read, the base |
 | ships' pictures | `world/ships/standInsKept.js` | the build, the picture, the palette; the player's store only - A RENDER OF GAME DATA IS GAME DATA (Port-Doctrine) |
-| Bay fit | `world/tamriel/bayFitKept.js` | the trace's land and the Bay's land at every pixel |
+| Bay fit | `world/tamriel/bayFitKept.js` | the build, the trace's land and the Bay's land at every pixel |
 
-The rig's sprites need no record: they are fetched and decoded in the shipped pack's decode workers
+Nothing kept reads the save, the day or the clock, so a save loaded or a day turned refuses nothing; a changed data file is another stamp, and an ARENA2 re-pick sweeps the store. On the dev server the build (BUILD_TAG) stands still, so a change to a producer takes its hand version, as ROADS 19's GENERATOR_VERSION does. The rig's sprites need no record: they are fetched and decoded in the shipped pack's decode workers
 (`vanillaEnhancedPack.js decodeServedPng`), the worn armour's strips through `layeredArmor.js decodeLayered`'s `picture`.
 A departure from the proposal: it named the block rebuild itself (pack and block); what the walks read of a block is its
 ground tiles, 2 KB against a ~220 KB rebuilt JSON (as a structured clone) whose structured clone reads back at ~0.7x the rebuild's cost
@@ -2664,7 +2664,7 @@ and routes, which read the save.
 Runs: `E:/git-repos/travddm/dfo-verify/tools/perf/first-visit-2026-10-25/` (`base-cold`, `base-second`, `head1-*`,
 `head-*`, `final-first`, `final-second`; each `boot.json` and `boot.cpuprofile`).
 
-Pins: `test/world/terrain/fv_groundtiles.test.js` (4), `test/systems/travel/fv_landpieces.test.js` (3),
+Pins: `test/world/terrain/fv_groundtiles.test.js` (5), `test/systems/travel/fv_landpieces.test.js` (3),
 `test/world/fv_portsites.test.js` (2), `test/systems/comeSailAway/fv_shipbuilds.test.js` (2),
 `test/world/ships/fv_standins.test.js` (2), `test/world/fv_bayfit.test.js` (2),
 `test/player/eyeOfTheBeholder/fv_rigdecode.test.js` (2).

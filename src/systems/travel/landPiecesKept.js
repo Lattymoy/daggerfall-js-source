@@ -4,10 +4,11 @@
 // which pixels a walk can join, over half a million of them) - 160 ms inside the first frame of a warm launch, every
 // launch, for the same answer. The pieces are a function of the ground (the climate and heightmap bytes and the water
 // line) and the drawn network (the road and track bytes), so they are kept in the player's derived store under:
-//   - LAND_PIECES_VERSION, bumped by hand when the step law or the fold changes shape;
+//   - LAND_PIECES_VERSION, bumped by hand when the step law or the fold changes shape, and the build (BUILD_TAG);
 //   - an FNV-1a stamp over every byte the fold reads (2 MB, a few milliseconds - next to the fold, nothing).
 // A different ground or network is a different key: worked out again and kept under its own.
 
+import { BUILD_TAG } from '../../buildTag.js';
 import { fnv1a, derivedValueStore } from '../firstVisit/firstVisitStore.js';
 
 /** Bump when the step law (travelRoute.js stepKind) or the fold changes shape. */
@@ -22,7 +23,7 @@ export function landPiecesKey(ground, roads, tracks) {
   h = fnv1a(heights, h);
   h = fnv1a(roads ?? EMPTY, h);
   h = fnv1a(tracks ?? EMPTY, h);
-  return `fv-pieces:v${LAND_PIECES_VERSION}:${width}x${height}:${waterByte}:${roads ? 'r' : '-'}${tracks ? 't' : '-'}:${h.toString(36)}`;
+  return `fv-pieces:v${LAND_PIECES_VERSION}:${BUILD_TAG}:${width}x${height}:${waterByte}:${roads ? 'r' : '-'}${tracks ? 't' : '-'}:${h.toString(36)}`;
 }
 
 /**
