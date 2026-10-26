@@ -509,3 +509,27 @@ test('PACK-STALL (mob 2026-10-26: "town was not spawning enemy on every player")
   const leaders = log.raiders.filter((f) => !f.o?.at);
   assert.ok(leaders.some((f) => f.o.near === ok) && leaders.some((f) => f.o.near == null), 'the others still had their packs');
 });
+
+test('BOSS-RETRY (mob 2026-10-26: "mini boss sometimes doent spawn"): a boss with no spot by its group keeps its call and stands about me after STAFF_PACK_LEADER_TRIES misses', async () => {
+  const { STAFF_PACK_LEADER_TRIES } = await import('../../src/systems/raidingParties.js');
+  const { at, log, h } = rig();
+  restoreRaidSaveData({ lastSelectedDay: DAY, raids: [] });
+  setSharedClock(() => at.now);
+  const grp = [500, 0, 500];
+  h.peerFeetInTown = () => [['mmm-0002', [0, 0, 0], 1], ['a', grp, 1], ['b', [505, 0, 500], 1], ['c', [510, 0, 500], 1]];
+  const stand = h.standRaider;
+  let misses = 0;
+  h.standRaider = (mt, o) => (o?.near === grp && !o?.at ? (misses++, Promise.resolve(null)) : stand(mt, o));
+  raidRelayWord({ k: 'sev', sev: { k: 'ev', l: [EV] } }, 'social');
+  await run(4);
+  raidRelayWord({ k: 'sev', sev: { k: 'ev', l: [{ ...EV, fb: 1 }] } }, 'social');
+  const { staffEventLedger } = await import('../../src/systems/staffEvents.js');
+  assert.ok(staffEventLedger({ id: EV.id, n: 0, bd: 1, bu: 0, bk: 0, fc: 0 }), 'the cell calls the boss');
+  for (let i = 0; i < 40 && !log.raiders.some((f) => f.entity.staffBoss); i++) { frame(0.1); await tick(); }
+  const boss = log.raiders.find((f) => f.entity.staffBoss);
+  assert.ok(boss, 'the boss stood');
+  assert.ok(misses >= STAFF_PACK_LEADER_TRIES, 'tried by the group first');
+  assert.equal(boss.o?.near, undefined, 'then about me');
+  const src = rd('src/systems/raidingParties.js');
+  assert.match(src, /raid\.bossUp = 1; raid\.bossDown = 0; raid\.clearSince = undefined; raid\.clearWait = undefined; if \(raid\.bossHand != null\) raid\.handSeen = raid\.bossHand; _bossMisses = 0; \}/, 'the field\'s wait and the by-hand word spent once it stands');
+});
