@@ -1162,3 +1162,14 @@ The Thunderlock's reload was the lab's fixed 1.7 s. It is now
 `cooldownUntil` when the shot ends, so the pump and the next trigger share that span. Speed 50 is 1.70 s,
 75 is 1.53 s, 100 is 1.36 s, 150 is 1.02 s, and it does not go under 1 s. The frame clock stays 14 fps.
 A Pistolet's reload stays 1.4 s. At this build the Thunderlock's sustained DPS went from 11.95 to 12.82.
+
+ARCHERY-REF (2026-10-26, from the CI of the merged change): the referees kept DFU's bow tops. The relay judges a
+player's blow in a siege, an arena bout, a duel and the open zone against its own copies of the weapon tables,
+pinned equal to `characters/weapons.js`, and the account service signs a character's arms reach from one of them.
+Both copies still read 16 and 18, so a top bow blow stood over the referee's bucket. They read 17 and 19 now
+(`net/siege/siegeRef.js:"126: 18, 127: 12, 128: 16, 129: 17, 130: 19,"`,
+`net/arena/arenaLaw.js:"export const ARENA_WEAPON_MAX"`): relay world270 and account acct196, in the TESA fold's release
+(#1184, which carried it while main stood red). The flight pins
+measured a shaft by MISSILE_SPEED's 1.25 m a 0.05 s step; they step it by the frame that flies those 1.25 m at
+ARROW_FLIGHT_SPEED now (`test/scenes/roadh_tail.test.js`, `test/systems/arrowfoes.test.js`, AUDIT 65 CV-2), and
+the volley's landings are timed at ARROW_FLIGHT_SPEED (TECHFX1). Mutants: `tools/mutants/archeryref.json`.
