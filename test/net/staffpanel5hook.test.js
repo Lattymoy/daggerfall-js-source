@@ -756,13 +756,13 @@ test('STAFF-PANEL5-FOLLOW TP host: a place a note names no spot in is loaded and
   const placed = [];
   const calls = [];
   const modes = { forceExitToExterior: () => calls.push('out'), setPlayerLocalPosition: (p) => placed.push(p), dungeonLocation: { mapTableData: { mapId: 1234 } }, startInDungeon: async () => { calls.push('dungeon'); return true; } };
-  const prepare = hostFunction('prepareStaffDestination', { modes, _wodInside: false, playerSpawned: false, _teleportToPixel: async () => calls.push('pixel'), staffLanding: () => assert.fail('no spot to land on'), capsuleFits: () => assert.fail('no spot to fit'), ohAbyss: null });
+  const prepare = hostFunction('prepareStaffDestination', { gateLink: null, modes, _wodInside: false, playerSpawned: false, _teleportToPixel: async () => calls.push('pixel'), staffLanding: () => assert.fail('no spot to land on'), capsuleFits: () => assert.fail('no spot to fit'), ohAbyss: null });
   await prepare(notePlace({ ...validPartyPose(note('dungeon:m1234', { in: 1 })), rk: 'dungeon:m1234' }));
   await prepare(notePlace(validPartyPose(note('world:100,100'))));
   assert.deepEqual(placed, []);
   assert.deepEqual(calls, ['out', 'pixel', 'dungeon', 'out', 'pixel']);
   // a spot: as ever
-  const withSpot = hostFunction('prepareStaffDestination', { modes, _wodInside: false, playerSpawned: false, _teleportToPixel: async () => {}, staffLanding: (d) => d.pos, capsuleFits: () => true, ohAbyss: null });
+  const withSpot = hostFunction('prepareStaffDestination', { gateLink: null, modes, _wodInside: false, playerSpawned: false, _teleportToPixel: async () => {}, staffLanding: (d) => d.pos, capsuleFits: () => true, ohAbyss: null });
   await withSpot(notePlace({ ...validPartyPose(note('world:100,100')), wx: 1, wy: 2, wz: 3 }));
   assert.deepEqual(placed, [[1, 2, 3]]);
 });

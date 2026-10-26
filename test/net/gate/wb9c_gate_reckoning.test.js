@@ -228,7 +228,7 @@ test('WB9c the health said: the crystals\' health goes out at most every HP_SEND
 test('WB9c the wire: a blow on a crystal (`xhit` - which crystal, a sequence, a damage, a kind) projected field by field; the room\'s crystals, their health, one broken (the name as the wire says every name) and the stun, each bounded; the brain\'s law is 4 (mutants: a crystal past the most; a stun that ends before it begins)', () => {
   assert.ok(GATE_KINDS.includes('xhit'));
   for (const k of ['cx', 'cxh', 'cxb', 'stun']) assert.ok(GATE_OUT_KINDS.includes(k));
-  assert.equal(GATE_BRAIN_V, 6);   // 4 was this slice's; WB11 raised it to 5, WB14 to 6 (his host and the nine-trial rotation) - a game that knows the Reckoning and not the host is still refused
+  assert.equal(GATE_BRAIN_V, 7);   // 4 was this slice's; WB11 raised it to 5, WB14 to 6, GATE-COURTS to 7 (PIN MOVED) (his host and the nine-trial rotation) - a game that knows the Reckoning and not the host is still refused
   assert.deepEqual(validGateIn({ k: 'xhit', c: 2, q: 7, d: 12.5, r: 1, extra: 1 }), { k: 'xhit', c: 2, q: 7, d: 12.5, r: 1 });
   for (const bad of [{ k: 'xhit', q: 7, d: 1, r: 0 }, { k: 'xhit', c: GATE_CRYSTALS_MAX, q: 7, d: 1, r: 0 }, { k: 'xhit', c: 1.5, q: 7, d: 1, r: 0 }, { k: 'xhit', c: 0, q: 7, d: 0, r: 0 }]) assert.equal(validGateIn(bad), null, JSON.stringify(bad));
   assert.deepEqual(validGateOut({ k: 'cx', i: 4, m: 50, c: [[1, 2], [3, 4], [5, 6]], z: 1 }), { k: 'cx', i: 4, m: 50, c: [[1, 2], [3, 4], [5, 6]] });

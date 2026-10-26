@@ -204,7 +204,8 @@ test('WB3b the link: the relay\'s words folded into one state - a whole state st
   assert.deepEqual(said, [GATE_NO_TEXT['the gate is sealed']]);
   link.word(validGateOut({ k: 'fell', at: 4000, top: ['Mac', 'Bran'], n: 2 }));
   link.word(validGateOut({ k: 'fell', at: 4000, top: ['Mac', 'Bran'], n: 2, d: 200 }));
-  assert.deepEqual(fell, [[200, ['Mac', 'Bran']]], 'the court\'s word and the hub\'s: one kill, said once');
+  link.word(validGateOut({ k: 'fell', at: 4000, top: ['Mac', 'Bran'], n: 2, d: 200 }));   // PIN MOVED (AUDIT GATE-COURTS): the hub's word again, as every hello hears it while the gate holds - a court's own `fell` says no kill since GATE-COURTS, so only this reaches the guard
+  assert.deepEqual(fell, [[200, ['Mac', 'Bran']]], 'the court\'s word and the hub\'s, twice: one kill, said once');
   assert.equal(link.fellAt(200), 4000); assert.equal(link.fellAt(201), null);
   link.word(validGateOut({ k: 'fell', at: 7000, top: [], n: 1, d: 205 }));
   assert.equal(link.fellAt(205), 7000, 'the hub\'s word of a gate I was nowhere near');
@@ -253,7 +254,7 @@ test('WB3b the seams, by source: the dungeon host enters the court through its o
   const w = read('src/scenes/world.js');
   assert.match(w, /ready: \(\) => !!online\?\.gateOk,/);
   assert.match(w, /enter: \(g\) => \{ modes\?\.enterGateArena\?\.\(g\); \},/);
-  assert.match(w, /else if \(modes\?\.roomIdentity\?\.\(\)\?\.kind === 'gate'\) key = gateRoomKey\(modes\?\.roomIdentity\?\.\(\)\?\.day\);/);
+  assert.match(w, /else if \(modes\?\.roomIdentity\?\.\(\)\?\.kind === 'gate'\) key = \(gateLink\?\.room \?\? gateRoomKey\)\(modes\?\.roomIdentity\?\.\(\)\?\.day\);/);   // PIN MOVED (GATE-COURTS): the court the night's book seats me in
   assert.match(w, /if \(gateLink && online\.gateOk && isGateRoom\(online\.room\) && \(online\.welcomes !== _gateInFor \|\| gateCourt\?\.askAgain\(\)\) && online\.sendGate\(\{ k: 'in', lv: Math\.max\(1, playerEntity\.level \| 0\), bv: GATE_BRAIN_V \}\)\) _gateInFor = online\.welcomes;/);   // PIN MOVED (COURT-WATCH): and a watcher's ask again; AUDIT WBX R7: the brain's law said with it
   assert.match(w, /online\.onGate = \(g\) => \{ if \(g\?\.k === 'bd'\) bossCountFell\(modes\?\.gateArenaDay\?\.\(\) != null\); else gateLink\?\.word\(g\); \};/);   // PIN MOVED (INT11): the count's fall heard beside the link
   assert.match(w, /if \(tab\.room === SOCIAL_ROOM\) link\.onGate = \(g\) => gateLink\?\.word\(g\);/);

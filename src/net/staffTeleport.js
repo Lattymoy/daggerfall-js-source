@@ -5,6 +5,7 @@ import { privateInteriorOf } from './privateInterior.js';
 import { boatUid, readSailingCabin } from './boatIdentity.js';
 import { instanceOfWord, instanceOf, instanceWord } from './instanceRoom.js';   // INSTANCES (the audit): a place's instance, where the player stands in one
 import { validPartyPose } from './wire.js';   // STAFF-PANEL5-FOLLOW: a where note, as the hub keeps it
+import { GATE_COURTS_MAX } from './gate/gateCourts.js';   // AUDIT GATE-COURTS C6: a court's number on a staff landing - gateCourts.js imports nothing
 import { t } from '../systems/textManager.js';   // STAFF-PANEL5-FOLLOW-FIX: a finished /tp's line in the player's language (L10N4)
 export const STAFF_TP_RELAY_MIN = 159;   // world156 now belongs to upstream's arena; unpublished local candidates through 158 are superseded by the combined law.
 export const STAFF_TP_TIMEOUT_MS = 8000;
@@ -76,7 +77,8 @@ export function validStaffDestination(d) {
   if (d.kind === 'gate') {
     const g = d.gate;
     if (!g || !integer(g.day) || !integer(g.px, 999) || !integer(g.py, 499) || !point(g.spot, 2) || (g.near != null && g.near !== '' && !label(g.near))) return null;
-    return { ...out, gate: { day: g.day, px: g.px, py: g.py, spot: [...g.spot], near: g.near ?? '' } };
+    if (g.c != null && !integer(g.c, GATE_COURTS_MAX - 1)) return null;   // AUDIT GATE-COURTS C6: the court the player stands in
+    return { ...out, gate: { day: g.day, px: g.px, py: g.py, spot: [...g.spot], near: g.near ?? '', ...(g.c ? { c: g.c } : {}) } };
   }
   if (d.kind === 'abyss') {
     const a = d.abyss;
@@ -175,7 +177,7 @@ export function staffDestinationKey(d) {
   const site = `${d.kind}:${d.pixel.x},${d.pixel.y}`;
   if (d.kind === 'interior') return `${site}:${JSON.stringify(d.sailingCabin ? [d.sailingCabin.uid, d.sailingCabin.hull, d.sailingCabin.origin, d.cabinOwner] : [d.door, staffLayout(d.layout)])}:${d.privateRoom ?? ''}:${d.ins ?? ''}`;   // INSTANCES: and its instance - the same door, another room
   if (d.kind === 'dungeon') return `${site}:${d.mapId}:${d.locationKey ?? ''}:${d.ins ?? ''}:${d.whole ? 'w' : ''}`;
-  if (d.kind === 'gate') return `gate:${d.gate.day}`;
+  if (d.kind === 'gate') return `gate:${d.gate.day}.${d.gate.c ?? 0}`;
   if (d.kind === 'abyss') return `${site}:${d.abyss.PitMapX},${d.abyss.PitMapY}:${d.abyss.TemplateRegionIndex},${d.abyss.TemplateLocationIndex}`;
   return site;
 }
