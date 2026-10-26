@@ -12,8 +12,9 @@
 //   2. Once the first window is up (watchBackend): a launch that took the switches reads the renderer that draws. A
 //      software renderer, or the GPU process gone within the first minute, records the failure keyed by the GPU and its
 //      driver version, tells the player, and relaunches without the switches.
-//   3. A launch held by the record compares the GPU and driver it runs on with the record's. A different one (a driver
-//      update) clears the record, and the NEXT start tries the chosen backend again.
+//   3. A launch held by the record compares the GPU, driver and Chromium it runs on with the record's. A different one
+//      (a driver update, or an app update that brings a new Chromium and its ANGLE) clears the record, and the NEXT
+//      start tries the chosen backend again.
 
 'use strict';
 
@@ -45,8 +46,9 @@ const BACKEND_SWITCHES = Object.freeze({
 });
 
 /** Renderer strings that mean Chromium draws without the GPU: WARP is D3D11's software rasterizer (its adapter is the
- *  "Microsoft Basic Render Driver"), SwiftShader and llvmpipe the other software paths. */
-const SOFTWARE_RENDERERS = Object.freeze(['basic render driver', 'warp', 'swiftshader', 'llvmpipe']);
+ *  "Microsoft Basic Render Driver"), SwiftShader and llvmpipe the other software paths. WARP is matched as a word, so a
+ *  GPU's name that merely holds the letters is never taken for it. */
+const SOFTWARE_RENDERERS = Object.freeze([/basic render driver/, /(^|[^a-z])warp([^a-z]|$)/, /swiftshader/, /llvmpipe/]);
 /** Vendor ids that name no physical GPU: Microsoft's (the Basic Render Driver, listed beside the card) and ANGLE's
  *  synthetic 0xffff ("SwANGLE") - on a backend that fell to WARP the only device Chromium lists. */
 const SOFTWARE_VENDORS = Object.freeze([0x1414, 0xffff]);
@@ -86,7 +88,16 @@ function backendLaunch(userDataRoot, { platform = process.platform, env = proces
 /** Whether a renderer string names a software renderer. */
 function isSoftwareRenderer(renderer) {
   const text = String(renderer ?? '').toLowerCase();
-  return SOFTWARE_RENDERERS.some((name) => text.includes(name));
+  return SOFTWARE_RENDERERS.some((name) => name.test(text));
+}
+
+/** Whether Chromium's feature status says WebGL2 is not drawn on the GPU (app.getGPUFeatureStatus().webgl2): anything
+ *  but an 'enabled...' answer - 'unavailable_software', 'disabled_off' and the rest. A backend that starts no WebGL2
+ *  at all (seen with use-angle=d3d9: the page got no context) names no renderer to classify. An unknown status is no
+ *  failure. */
+function webgl2Unavailable(status) {
+  const webgl2 = status?.webgl2;
+  return typeof webgl2 === 'string' && !webgl2.startsWith('enabled');
 }
 
 /** The record's key: the physical GPU and its driver version, as "vvvv:dddd@driver" - the active one, else the first.
@@ -111,7 +122,7 @@ const BACKEND_NAMES = Object.freeze({ vulkan: 'Vulkan', metal: 'Metal' });
 const backendFailedNotice = (backend) => ({
   type: 'warning',
   message: `${BACKEND_NAMES[backend] ?? backend} could not start on this graphics card`,
-  detail: 'DFO Online restarts on the default graphics backend, Direct3D 11. It tries again after a graphics driver update.',
+  detail: 'DFO Online restarts on the default graphics backend, Direct3D 11. It tries again after a graphics driver update, or an app update that brings a new graphics engine.',
   buttons: ['Restart'],
   defaultId: 0,
   cancelId: 0,
@@ -130,11 +141,13 @@ function gpuInfoWithin(app, level, ms) {
 
 /**
  * The guard over one launch. `launch` is backendLaunch's answer; `app` needs getGPUInfo, relaunch and exit;
- * `loadConfig`/`saveConfig` are main.cjs's; `notify(options)` shows the notice and resolves when it is answered.
+ * `loadConfig`/`saveConfig` are main.cjs's; `notify(options)` shows the notice and resolves when it is answered;
+ * `beforeExit` runs before the relaunch's app.exit, which skips will-quit (main.cjs flushes its held GPU-gone entry);
+ * `chromium` is this build's Chromium version, kept in the record.
  * Returns { check, onGpuGone }: main.cjs calls check() once the first window is up, and onGpuGone(details) from its
  * child-process-gone handler for a GPU process.
  */
-function watchBackend({ app, launch, loadConfig, saveConfig, notify, now = Date.now, log = console.warn, infoTimeoutMs = GPU_INFO_TIMEOUT_MS }) {
+function watchBackend({ app, launch, loadConfig, saveConfig, notify, beforeExit = () => {}, chromium = process.versions.chrome ?? null, now = Date.now, log = console.warn, infoTimeoutMs = GPU_INFO_TIMEOUT_MS }) {
   const startedAt = now();
   const armed = launch.switches.length > 0;
   let key = null;
@@ -143,22 +156,29 @@ function watchBackend({ app, launch, loadConfig, saveConfig, notify, now = Date.
   function fail(reason) {
     if (failing) return Promise.resolve();
     failing = true;
-    const record = { backend: launch.backend, gpu: key, reason, at: new Date(now()).toISOString() };
+    const record = { backend: launch.backend, gpu: key, chromium, reason, at: new Date(now()).toISOString() };
     saveConfig({ ...loadConfig(), [FAILURE_RECORD]: record });
     log(`[shell] GPU-BACKEND: ${launch.backend} failed (${reason}) on ${key ?? 'an unknown GPU'} - relaunching on the default`);
     return Promise.resolve()
       .then(() => notify(backendFailedNotice(launch.backend)))
       .catch(() => {})
-      .then(() => { app.relaunch(); app.exit(0); });
+      .then(() => { try { beforeExit(); } catch { /* the relaunch goes ahead */ } app.relaunch(); app.exit(0); });
   }
 
-  /** A held launch: clear a record made on another GPU or driver, and key a record made before the key was known. */
+  /** A held launch: clear a record made on another GPU, driver or Chromium, and key a record made before the key was
+   *  known. */
   function review(info) {
     const current = gpuKey(info);
-    if (!current) return;
     const config = loadConfig();
     const record = config[FAILURE_RECORD];
     if (!record) return;
+    if (record.chromium && chromium && record.chromium !== chromium) {
+      const { [FAILURE_RECORD]: _cleared, ...rest } = config;
+      saveConfig(rest);
+      log(`[shell] GPU-BACKEND: Chromium changed (${record.chromium} -> ${chromium}) - the next start tries ${record.backend} again`);
+      return;
+    }
+    if (!current) return;
     if (!record.gpu) {
       saveConfig({ ...config, [FAILURE_RECORD]: { ...record, gpu: current } });
     } else if (record.gpu !== current) {
@@ -177,7 +197,9 @@ function watchBackend({ app, launch, loadConfig, saveConfig, notify, now = Date.
     key = gpuKey(info) ?? key;
     if (launch.held) { review(info); return; }
     const renderer = rendererOf(info);
-    if (isSoftwareRenderer(renderer)) await fail(`software renderer: ${renderer}`);
+    if (isSoftwareRenderer(renderer)) { await fail(`software renderer: ${renderer}`); return; }
+    const status = app.getGPUFeatureStatus?.();
+    if (webgl2Unavailable(status)) await fail(`WebGL2 ${status.webgl2}`);
   }
 
   async function onGpuGone(details) {
@@ -191,5 +213,5 @@ function watchBackend({ app, launch, loadConfig, saveConfig, notify, now = Date.
 
 module.exports = {
   UI_PREFS, GRAPHICS_BACKEND_PREF, CONFIG_NAME, FAILURE_RECORD, BACKEND_ENV, GPU_GONE_GRACE_MS, BACKEND_SWITCHES,
-  savedBackend, failureRecord, backendLaunch, isSoftwareRenderer, gpuKey, rendererOf, backendFailedNotice, watchBackend,
+  savedBackend, failureRecord, backendLaunch, isSoftwareRenderer, webgl2Unavailable, gpuKey, rendererOf, backendFailedNotice, watchBackend,
 };

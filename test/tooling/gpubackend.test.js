@@ -84,13 +84,36 @@ test('GPU-BACKEND: a failure on record holds every launch on the default, whatev
   assert.deepEqual(B.backendLaunch(root, WIN).switches, VULKAN, 'no record: the chosen backend');
 });
 
-test('GPU-BACKEND: the guard knows a software renderer by its name - WARP, the Basic Render Driver, SwiftShader, llvmpipe - and never a GPU\'s (mutant: a name dropped; a match on "Microsoft" alone)', () => {
-  for (const s of [WARP, 'ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)', 'ANGLE_D3D11_WARP', 'llvmpipe (LLVM 15.0.7, 256 bits)']) {
-    assert.equal(B.isSoftwareRenderer(s), true, s);
-  }
-  for (const s of [D3D11, VK, 'ANGLE (Intel, Intel(R) UHD Graphics 630 Direct3D11 vs_5_0 ps_5_0, D3D11)', 'ANGLE (Microsoft, Microsoft Surface GPU, D3D11)', '', undefined]) {
-    assert.equal(B.isSoftwareRenderer(s), false, String(s));
-  }
+test('GPU-BACKEND: the guard knows a software renderer by its name - WARP, the Basic Render Driver, SwiftShader, llvmpipe - and never a GPU\'s, on either backend, whoever made it (mutants: a name dropped; a match on "Microsoft" alone; WARP matched inside a word)', () => {
+  const software = [
+    WARP,
+    'ANGLE (Microsoft, Microsoft Basic Render Driver (0x0000008C) Direct3D11 vs_5_0 ps_5_0, D3D11-10.0.26100.9711)',   // read in the app, getGPUInfo's form
+    'ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)',
+    'Google SwiftShader',
+    'ANGLE_D3D11_WARP',
+    'llvmpipe (LLVM 15.0.7, 256 bits)',
+  ];
+  for (const r of software) assert.equal(B.isSoftwareRenderer(r), true, r);
+  const gpus = [
+    D3D11, VK,
+    'ANGLE (NVIDIA, NVIDIA GeForce RTX 5080 (0x00002C02) Direct3D11 vs_5_0 ps_5_0, D3D11-32.0.16.1088)',   // read in the app
+    'ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA GeForce RTX 5080 (0x00002C02)), NVIDIA-610.88.0.0)',   // read in the app
+    'ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 5080/PCIe/SSE2, OpenGL 4.5.0)',   // read in the app (use-angle=gl)
+    'ANGLE (Intel, Intel(R) UHD Graphics 630 (0x00003E92) Direct3D11 vs_5_0 ps_5_0, D3D11)',
+    'ANGLE (Intel, Vulkan 1.3.260 (Intel(R) Iris(R) Xe Graphics (0x00009A49)), Intel Corporation)',
+    'ANGLE (AMD, AMD Radeon RX 6800 XT (0x000073BF) Direct3D11 vs_5_0 ps_5_0, D3D11)',
+    'ANGLE (AMD, Vulkan 1.3.270 (AMD Radeon RX 7800 XT (0x0000747E)), AMD proprietary driver)',
+    'ANGLE (Qualcomm, Qualcomm(R) Adreno(TM) X1-85 GPU Direct3D11 vs_5_0 ps_5_0, D3D11)',
+    'ANGLE (Microsoft, Microsoft Surface GPU, D3D11)',
+    'ANGLE (Acme, Warpdrive 9000 Direct3D11 vs_5_0 ps_5_0, D3D11)',   // the letters, not the rasterizer
+    '', undefined,
+  ];
+  for (const r of gpus) assert.equal(B.isSoftwareRenderer(r), false, String(r));
+});
+
+test('GPU-BACKEND: Chromium\'s own word on WebGL2 - anything but enabled is a failure, an unknown status is not (mutants: the status unread; "enabled_readback" taken for a failure)', () => {
+  for (const v of ['unavailable_software', 'unavailable_off', 'disabled_off', 'disabled_software']) assert.equal(B.webgl2Unavailable({ webgl2: v }), true, v);
+  for (const v of [{ webgl2: 'enabled' }, { webgl2: 'enabled_on' }, { webgl2: 'enabled_readback' }, {}, null, undefined]) assert.equal(B.webgl2Unavailable(v), false, JSON.stringify(v));
 });
 
 test('GPU-BACKEND: the record\'s key is the physical GPU and its driver, another after a driver update; a failed launch names no GPU, never the software device as one (mutants: Microsoft\'s or SwANGLE\'s device keyed)', () => {
@@ -103,11 +126,12 @@ test('GPU-BACKEND: the record\'s key is the physical GPU and its driver, another
 });
 
 /** A fake Electron app and main.cjs's config store, over one launch. */
-function rig({ launch, info, config = {}, clock = 0 }) {
+function rig({ launch, info, config = {}, clock = 0, status = { webgl2: 'enabled' }, chromium = '142.0.7444.0' }) {
   const calls = [];
   const state = { config: structuredClone(config), now: clock };
   const app = {
     getGPUInfo: async () => (typeof info === 'function' ? info() : info),
+    getGPUFeatureStatus: () => status,
     relaunch: () => calls.push('relaunch'),
     exit: (code) => calls.push(`exit ${code}`),
   };
@@ -116,6 +140,8 @@ function rig({ launch, info, config = {}, clock = 0 }) {
     loadConfig: () => structuredClone(state.config),
     saveConfig: (c) => { state.config = structuredClone(c); calls.push('save'); },
     notify: async (opts) => { calls.push(`notice: ${opts.message}`); return { response: 0 }; },
+    beforeExit: () => calls.push('flush'),
+    chromium,
     now: () => state.now,
     log: () => {},
     infoTimeoutMs: 50,
@@ -127,7 +153,7 @@ const ARMED = { backend: 'vulkan', switches: VULKAN, held: null };
 test('GPU-BACKEND: a launch on Vulkan that lands on a software renderer records the failure, tells the player, and relaunches; the relaunch on the card keys the record and keeps it (mutants: no record; no relaunch; the notice skipped; the unkeyed record cleared)', async () => {
   const { guard, calls, state } = rig({ launch: ARMED, info: infoOf(WARP, { warp: true }), config: { arena2Path: 'X' } });
   await guard.check();
-  assert.deepEqual(calls, ['save', 'notice: Vulkan could not start on this graphics card', 'relaunch', 'exit 0']);
+  assert.deepEqual(calls, ['save', 'notice: Vulkan could not start on this graphics card', 'flush', 'relaunch', 'exit 0']);
   assert.equal(state.config.arena2Path, 'X', 'the rest of config.json kept');
   const record = state.config[B.FAILURE_RECORD];
   assert.equal(record.backend, 'vulkan');
@@ -154,7 +180,7 @@ test('GPU-BACKEND: the GPU process gone in the first minute of a Vulkan launch i
   const early = rig({ launch: ARMED, info: infoOf(VK) });
   early.state.now = B.GPU_GONE_GRACE_MS - 1;
   await early.guard.onGpuGone({ type: 'GPU', reason: 'crashed' });
-  assert.deepEqual(early.calls, ['save', 'notice: Vulkan could not start on this graphics card', 'relaunch', 'exit 0']);
+  assert.deepEqual(early.calls, ['save', 'notice: Vulkan could not start on this graphics card', 'flush', 'relaunch', 'exit 0']);
   assert.equal(early.state.config[B.FAILURE_RECORD].reason, 'GPU process gone: crashed');
   assert.equal(early.state.config[B.FAILURE_RECORD].gpu, '10de:2c02@32.0.16.1088');
   const late = rig({ launch: ARMED, info: infoOf(VK) });
@@ -182,6 +208,28 @@ test('GPU-BACKEND: a held launch clears a record made on another driver, so the 
   assert.equal(keyed.state.config[B.FAILURE_RECORD].gpu, '10de:2c02@32.0.16.1088');
 });
 
+test('GPU-BACKEND: a Vulkan launch whose renderer reads as the card but whose WebGL2 Chromium calls unavailable is a failure too (mutant: the feature status unread)', async () => {
+  const { guard, calls, state } = rig({ launch: ARMED, info: infoOf(VK), status: { webgl2: 'unavailable_off' } });
+  await guard.check();
+  assert.deepEqual(calls, ['save', 'notice: Vulkan could not start on this graphics card', 'flush', 'relaunch', 'exit 0']);
+  assert.equal(state.config[B.FAILURE_RECORD].reason, 'WebGL2 unavailable_off');
+});
+
+test('GPU-BACKEND refresh on update: the record keeps the Chromium it failed on; an app update that brings another clears it so the next start retries, one that keeps it holds (mutants: the version unrecorded; a new Chromium held; the same one cleared)', async () => {
+  const failed = rig({ launch: ARMED, info: infoOf(WARP, { warp: true }), chromium: '142.0.7444.0' });
+  await failed.guard.check();
+  const record = failed.state.config[B.FAILURE_RECORD];
+  assert.equal(record.chromium, '142.0.7444.0');
+  const held = { backend: 'vulkan', switches: [], held: record };
+  const sameApp = rig({ launch: held, info: infoOf(D3D11), config: failed.state.config, chromium: '142.0.7444.0' });
+  await sameApp.guard.check();
+  assert.ok(sameApp.state.config[B.FAILURE_RECORD], 'a game-only update keeps the Chromium: still held');
+  const newApp = rig({ launch: held, info: infoOf(D3D11), config: failed.state.config, chromium: '144.0.7559.0' });
+  await newApp.guard.check();
+  assert.equal(newApp.state.config[B.FAILURE_RECORD], undefined, 'a new Chromium: the next start retries');
+  assert.ok(!newApp.calls.includes('relaunch'));
+});
+
 test('GPU-BACKEND: a getGPUInfo that never answers does not hold the guard (mutant: no deadline)', async () => {
   const { guard, calls } = rig({ launch: ARMED, info: () => new Promise(() => {}) });
   await guard.check();
@@ -197,6 +245,7 @@ test('GPU-BACKEND by source: the shell appends the switches before the app is re
   codeHasOnce(early, /\nfor \(const \[name, value\] of BACKEND_LAUNCH\.switches\) app\.commandLine\.appendSwitch\(name, value\);/);
   codeHasOnce(early, /app\.once\('browser-window-created', \(_e, w\) => w\.webContents\.on\('did-finish-load', backendGuard\.check\)\);/);
   codeHasOnce(early, /app\.on\('child-process-gone', \(_e, details\) => \{ if \(details\?\.type === 'GPU'\) backendGuard\.onGpuGone\(details\); \}\);/);
+  codeHasOnce(early, /beforeExit: \(\) => gpuGone\.flush\(\) \}\);/, 'the relaunch writes a held GPU-gone entry first (app.exit skips will-quit)');
   codeHasOnce(main, new RegExp(`const CONFIG_FILE = \\(\\) => path\\.join\\(app\\.getPath\\('userData'\\), '${B.CONFIG_NAME.replace('.', '\\.')}'\\);`));
   assert.match(read('src/systems/uiPrefs.js'), new RegExp(`\\nconst STORAGE_KEY = '${B.UI_PREFS.replace(/\./g, '\\.')}';`));
 });

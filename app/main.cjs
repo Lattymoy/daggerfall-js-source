@@ -67,7 +67,7 @@ for (const s of FRAME_SWITCHES) app.commandLine.appendSwitch(s);
 // the chosen backend did not start (app/lib/graphicsBackend.cjs).
 const BACKEND_LAUNCH = backendLaunch(app.getPath('userData'));
 for (const [name, value] of BACKEND_LAUNCH.switches) app.commandLine.appendSwitch(name, value);
-const backendGuard = watchBackend({ app, launch: BACKEND_LAUNCH, loadConfig, saveConfig, notify: (opts) => dialog.showMessageBox(opts) });
+const backendGuard = watchBackend({ app, launch: BACKEND_LAUNCH, loadConfig, saveConfig, notify: (opts) => dialog.showMessageBox(opts), beforeExit: () => gpuGone.flush() });
 app.once('browser-window-created', (_e, w) => w.webContents.on('did-finish-load', backendGuard.check));
 
 // PERF-GPU1 (2026-10-10, a player via Mac: 5 fps in every room "with the graphics all low", playable only at 800x600):
