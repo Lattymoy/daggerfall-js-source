@@ -19,7 +19,7 @@ import { createWayBook } from '../../../src/systems/livingWorld/ways.js';
 import { createBeyondWays, BEYOND_FAR_PX } from '../../../src/systems/livingWorld/beyondWays.js';
 import { visitorsOf, innGuestsOf, diversAt, divesIn, fallenIn, TRIP_REACH_PX, INN_REACH_PX, SEA_PACE_X, CALENDAR_MPM, CYCLE_DAYS } from '../../../src/systems/livingWorld/trips.js';
 import { hideoutsOf, HIDEOUT_OFF_PX } from '../../../src/systems/livingWorld/outlaws.js';
-import { bayMouths, baySeaward, crossLanes, crossLaneWay, pictureSea, worldLaneWater, createWorldLanes, CROSS_BAY_PATH_PX, MOUTH_RUN_PX, CROSS_LANE_PATH_PX, BEYOND_LANE_PATH_PX, BEYOND_LANE_MAX_PX, LANE_NEAR_PX } from '../../../src/scenes/naval/worldLanes.js';
+import { bayMouths, baySeaward, crossLanes, crossLaneWay, pictureSeaMask, worldLaneWater, createWorldLanes, CROSS_BAY_PATH_PX, MOUTH_RUN_PX, CROSS_LANE_PATH_PX, BEYOND_LANE_PATH_PX, BEYOND_LANE_MAX_PX, LANE_NEAR_PX } from '../../../src/scenes/naval/worldLanes.js';
 import { createTownEconHost } from '../../../src/scenes/townEconHost.js';
 import { townProsperity, townKeyOf, townDayOf } from '../../../src/net/townEconLaw.js';
 import { beyondKey, joinLayer, setArenaRoads } from '../../../src/world/arenaRoads.js';
@@ -376,7 +376,7 @@ const port = (id, px, py, o = {}) => ({ id, name: `Port${id}`, px, py, region: 1
 
 test('WW7-10 THE BAY\'S MOUTHS AND ITS SEAWARD WATER: an edge pixel of the Bay\'s lane water whose run straight out is the world\'s lane water to the first picture cell clear of the Bay\'s rectangle, that cell the picture\'s open sea - none where the run meets land first or the cell is the picture\'s land; the seaward water every Bay lane pixel a boat sails to from a mouth, never round a corner of the land nor on a lake (mutants: the edges; the run\'s water; the cell still the Bay\'s; the picture\'s sea; the run\'s reach; the flood\'s water; its corner)', () => {
   const s = seaWorld();
-  const mouths = bayMouths(s.bayOpen, s.open, pictureSea({ w: 140, h: 130, land: (() => { const l = new Uint8Array(140 * 130); for (let x = 44; x <= 47; x++) l[56 * 140 + x] = 1; return l; })() }));
+  const mouths = bayMouths(s.bayOpen, s.open, pictureSeaMask({ w: 140, h: 130, land: (() => { const l = new Uint8Array(140 * 130); for (let x = 44; x <= 47; x++) l[56 * 140 + x] = 1; return l; })() }));
   const on = (x, y) => mouths.filter((m) => m.at[0] === x && m.at[1] === y);
   assert.deepEqual(on(50, 0).map((m) => [m.out, m.run]), [[[50, -1], [{ x: 50, y: -1 }]]], 'north: a pixel out, its cell clear');
   assert.deepEqual(on(100, 0), [], 'the picture\'s land there');
@@ -400,7 +400,7 @@ test('WW7-10 THE BAY\'S MOUTHS AND ITS SEAWARD WATER: an edge pixel of the Bay\'
 
 test('WW7-10 THE CROSSING LANES: each port past the Bay runs packets to its LANE_NEIGHBOURS nearest of the Bay\'s ports whose roadstead is seaward, within BEYOND_LANE_MAX_PX - each pair once, the Bay\'s port its `a`; a lane\'s way the Bay\'s water from its roadstead to a mouth (no longer than CROSS_BAY_PATH_PX) and the picture\'s sea on to the far roadstead, every leg on the world\'s lane water; none from a lake (mutants: the seaward ports; the reach; the neighbours; the order; the key\'s ends; the mouth\'s goal; the Bay\'s leg\'s water; its corner; its bound; the far leg; the straightening\'s water)', () => {
   const s = seaWorld();
-  const mouths = bayMouths(s.bayOpen, s.open, pictureSea({ w: 140, h: 130, land: new Uint8Array(140 * 130) }));
+  const mouths = bayMouths(s.bayOpen, s.open, pictureSeaMask({ w: 140, h: 130, land: new Uint8Array(140 * 130) }));
   const sea = baySeaward(s.bayOpen, mouths);
   const A = port(250300, 300, 250), A2 = port(240300, 300, 240), L = port(205611, 611, 205), B = port(400100, 100, 400), E = port(306009, 9, 306);
   const P1 = port(2000001, -50, 250), P2 = port(2000002, -900, 250), P3 = port(2000003, 150, -100);
@@ -448,7 +448,7 @@ test('WW7-10 THE WORLD\'S LANES ACROSS THE EDGE: the crossing lanes are the book
   assert.equal(wl.cross(), cross, 'kept while nothing moves');
   assert.deepEqual(wl.all().map((l) => l.key), [...wl.bay().map((l) => l.key), ...cross.map((l) => l.key)], 'the Bay\'s, the ones past it (none), then the crossing');
   const way = wl.way(cross[0]);
-  assert.deepEqual(way, crossLaneWay(cross[0], { bayOpen: s.bayOpen, openNative: worldLaneWater({ bayOpen: s.bayOpen, water: (x, y) => !(y === -1 && x >= 200 && x <= 210), climateAt: () => CLIMATES.Ocean, beyond: () => true }).openNative, mouths: bayMouths(s.bayOpen, s.open, pictureSea({ w: 140, h: 130, land: (() => { const l = new Uint8Array(140 * 130); for (let x = 44; x <= 47; x++) l[56 * 140 + x] = 1; return l; })() })) }), 'the crossing law\'s');
+  assert.deepEqual(way, crossLaneWay(cross[0], { bayOpen: s.bayOpen, openNative: worldLaneWater({ bayOpen: s.bayOpen, water: (x, y) => !(y === -1 && x >= 200 && x <= 210), climateAt: () => CLIMATES.Ocean, beyond: () => true }).openNative, mouths: bayMouths(s.bayOpen, s.open, pictureSeaMask({ w: 140, h: 130, land: (() => { const l = new Uint8Array(140 * 130); for (let x = 44; x <= 47; x++) l[56 * 140 + x] = 1; return l; })() })) }), 'the crossing law\'s');
   assert.equal(wl.way(cross[0]), way, 'kept once');
   assert.equal(CROSS_LANE_PATH_PX, CROSS_BAY_PATH_PX + MOUTH_RUN_PX + BEYOND_LANE_PATH_PX);
   const l = cross[0], d = Math.hypot(l.a.road.x - l.b.road.x, l.a.road.y - l.b.road.y);
@@ -532,7 +532,7 @@ test('WW7-10 with ARENA2: the freeware\'s Bay opens on the sea past it at its no
     const bayOpen = (x, y) => inBay(x, y) && isWaterPixel(maps.getClimateIndex(x, y), woods.getHeightMapValue(x, y)) && maps.getClimateIndex(x, y) === CLIMATES.Ocean;
     const lw = worldLaneWater({ bayOpen, water, climateAt: (x, y) => tamrielClimateAt(x, y), beyond: () => true });
     let t0 = performance.now();
-    const mouths = bayMouths(bayOpen, lw.open, pictureSea(tamrielTrace()));
+    const mouths = bayMouths(bayOpen, lw.open, pictureSeaMask(tamrielTrace()));
     const seaward = baySeaward(bayOpen, mouths);
     const tSea = performance.now() - t0;
     const edges = { N: 0, S: 0, W: 0, E: 0 };

@@ -1092,7 +1092,7 @@ the Bay's lanes alone.
 
 - **The Bay's mouths** (`scenes/naval/worldLanes.js` bayMouths): each edge pixel of the Bay's lane water whose run straight
   out is the world's lane water to the first picture cell clear of the Bay's rectangle, that cell the picture's open sea
-  (`pictureSea` - beyondLaneWay's own, now its own export), within MOUTH_RUN_PX (16: at the freeware's fit the south
+  (`pictureSeaMask` - beyondLaneWay's own, now its own export; AUDIT TESA III: `pictureSea` was arenaPlaces.js's one-pixel question's name too), within MOUTH_RUN_PX (16: at the freeware's fit the south
   edge's run clears the rectangle at 12). On the freeware's data 854: the north edge's 218 (its western 217 pixels), the
   south's 138, the west's 498, the east's none.
 - **Its seaward water** (baySeaward): every Bay lane pixel a boat sails to from a mouth (SEA-LANES' step: eight neighbours,

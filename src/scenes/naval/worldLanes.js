@@ -82,7 +82,7 @@ const M_PER_NATIVE = 819.2 / NATIVE_PIXEL;
  *  pictureLakes: the lakes left out) that no part of the Bay's rectangle covers (the Bay's water is WOODS.WLD's).
  *  WW7-10: its own export - beyondLaneWay's, and the crossing lanes' mouths read it.
  *  @param {any} trace the picture's trace (world/tamriel/tamrielLand.js tamrielTrace's) @returns {(x: number, y: number) => boolean} */
-export function pictureSea(trace) {
+export function pictureSeaMask(trace) {
   const { w, h, land } = trace, lakes = pictureLakes(trace), bay = bayPictureRect();
   return (x, y) => x >= 0 && y >= 0 && x < w && y < h && !land[y * w + x] && !lakes[y * w + x]
     && !(x + 1 > bay.x0 && x < bay.x1 && y + 1 > bay.y0 && y < bay.y1);
@@ -102,7 +102,7 @@ export function pictureSea(trace) {
 export function beyondLaneWay(lane, openNative) {
   const trace = tamrielTrace(), fit = tamrielFit();
   if (!trace || !fit) return null;
-  const { w, h } = trace, sea = pictureSea(trace);
+  const { w, h } = trace, sea = pictureSeaMask(trace);
   const picOf = (/** @type {{ x: number, y: number }} */ r) => bayToPicture(r.x + 0.5, r.y + 0.5);   // a roadstead's centre on the picture
   const [ax, ay] = picOf(lane.a.road), [bx, by] = picOf(lane.b.road);
   const from = [Math.floor(ax), Math.floor(ay)], to = [Math.floor(bx), Math.floor(by)];
@@ -202,7 +202,7 @@ const MOUTH_EDGES = Object.freeze([
 /**
  * WW7-10: THE BAY'S MOUTHS - each pixel of the Bay's lane water (`bayOpen`) on its map's edge whose run straight out is the
  * world's lane water (`open`) up to the first pixel whose picture cell no part of the Bay's rectangle covers, that cell
- * the picture's open sea (`sea`, pictureSea's) - within MOUTH_RUN_PX. `{ at, out, run }`: the edge pixel, the pixel out,
+ * the picture's open sea (`sea`, pictureSeaMask's) - within MOUTH_RUN_PX. `{ at, out, run }`: the edge pixel, the pixel out,
  * the run's pixels after the edge's to it. The edges in turn (north, south, west, east), each along its length.
  * @param {(x: number, y: number) => boolean} bayOpen @param {(x: number, y: number) => boolean} open
  * @param {(x: number, y: number) => boolean} sea
@@ -363,7 +363,7 @@ export function createWorldLanes({ mapDict, maps, portIds, ports, bayOpen, bayOp
   const seaOf = () => {
     const trace = tamrielTrace();
     if (!trace || !tamrielFit()) return null;
-    if (sea?.trace !== trace) { const mouths = bayMouths(bayOpen, worldOpen, pictureSea(trace)); sea = { trace, mouths, seaward: baySeaward(bayOpen, mouths) }; }
+    if (sea?.trace !== trace) { const mouths = bayMouths(bayOpen, worldOpen, pictureSeaMask(trace)); sea = { trace, mouths, seaward: baySeaward(bayOpen, mouths) }; }
     return sea;
   };
   const bayNet = () => {
