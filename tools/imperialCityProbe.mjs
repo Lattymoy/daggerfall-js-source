@@ -74,7 +74,7 @@ const heap = () => ev(() => (performance.memory ? +(performance.memory.usedJSHea
 
 const rows = [];
 const t0 = Date.now();
-await page.goto(`http://localhost:${PORT}/play/?world&shot&region=${process.env.REGION ?? 'Daggerfall'}&loc=${encodeURIComponent(process.env.LOC ?? 'Daggerfall')}&class=1&novideo&tod=12:00&skin=enhanced&touch=off&fps`);
+await page.goto(`http://localhost:${PORT}/play/?world&shot&region=${process.env.REGION ?? 'Daggerfall'}&loc=${encodeURIComponent(process.env.LOC ?? 'Daggerfall')}&class=1&novideo&tod=12:00&weather=sunny&skin=enhanced&touch=off&fps`);   // a clear noon: a shot of the city, not of the rain
 // the boot's wait, said as it goes: the frame counter, the stream and the pixels built
 for (let i = 0; ; i++) {
   const s = await ev(() => ({ ready: window.__shotReady === true, frame: window.__frame ?? null, idle: window.__streamIdle?.() ?? null, built: window.__builtCount?.() ?? null, at: location.search.slice(0, 60) })).catch((e) => ({ ready: false, error: String(e?.message ?? e).slice(0, 160) }));
@@ -94,6 +94,16 @@ const at = await (async () => {
 if (!at) throw new Error('the Imperial City never stood (no centre pixel)');
 console.log(`booted in ${((Date.now() - t0) / 1000).toFixed(0)} s; the Imperial City's centre pixel ${at.px},${at.py}`);
 await page.addStyleTag({ content: '#fps-counter { visibility: hidden !important; }' });   // its numbers read (__fpsStats), its card off the shots
+/** The boot's pages put away (the tutorial's, the main quest's opening box): Space, a frame each, as a player clicks them. */
+const pagesAway = async () => {
+  for (let i = 0; i < 30; i++) {
+    const up = await ev(() => { try { return !!JSON.parse(window.__talk?.() ?? '{}').overlay; } catch { return false; } });
+    if (!up) return;
+    await page.keyboard.press('Space');
+    await frames(1);
+  }
+};
+await pagesAway();
 // Daggerfall's own arena, as it stands, before the jump (window.__arena: the stage's centre, the scene's frame) - the eye
 // north-west of it looking south-east (the camera's forward is (sin yaw, cos yaw) east and north)
 const dfArena = await ev(() => window.__arena?.()?.centre ?? null);
@@ -110,7 +120,10 @@ await frames(2);
 await idle();
 const jumpMs = Date.now() - tj;
 const span = await ev(async () => (await import('/src/world/imperialCity.js')).IMPERIAL_SPAN);
-rows.push({ row: 'jump', span, jumpMs, built: await ev(() => window.__builtCount()), heapMB: await heap() });
+await pagesAway();
+// IC-GRAND x FAR-LANDMARK: the far landmarks' meshes made in the page, all 625 (the sweep makes them a budget a frame)
+const landmarksMs = await ev(async () => { const m = await import('/src/world/imperialImpostor.js').catch(() => null); if (!m?.imperialLandmarkMesh) return null; const t = performance.now(); for (let s = 0; s < 625; s++) m.imperialLandmarkMesh(s); return +(performance.now() - t).toFixed(0); });
+rows.push({ row: 'jump', span, jumpMs, built: await ev(() => window.__builtCount()), heapMB: await heap(), landmarksMs });
 console.log(JSON.stringify(rows.at(-1)));
 // the scene's frame: the jump re-inits the stream on the centre pixel, its south-west corner the scene's origin; its middle
 // the city's anchor (x east, z north in the scene - the city's z runs south)
@@ -144,7 +157,8 @@ for (const [label, b, out, h, yaw, pitch] of STATIONS) {
   const stats = [];
   for (let i = 0; i < FRAMES; i++) { await frames(1); const s = await ev(() => window.__fpsStats?.() ?? null); if (s) stats.push(s); }
   const mean = (k) => { const v = stats.map((s) => s[k]).filter((q) => q != null); return v.length ? +(v.reduce((a, c) => a + c, 0) / v.length).toFixed(1) : null; };
-  const row = { row: label, settleMs, built: await ev(() => window.__builtCount()), frameMs: mean('meanMs'), scriptMs: mean('scriptMs'), draws: mean('draws'), heapMB: await heap() };
+  // the frame's script split (in the frame, before it, the stream's builds) and the minute's worst frame kept (HITCH-KEEP)
+  const row = { row: label, settleMs, built: await ev(() => window.__builtCount()), frameMs: mean('meanMs'), scriptMs: mean('scriptMs'), inFrameMs: mean('scriptInFrameMs'), beforeMs: mean('scriptBeforeMs'), streamMs: mean('scriptStreamMs'), draws: mean('draws'), heapMB: await heap(), hitch: stats.at(-1)?.hitch ?? null };
   rows.push(row);
   console.log(JSON.stringify(row));
   if (OUT) await page.screenshot({ path: `${OUT}/${label}.png` });

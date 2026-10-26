@@ -1630,6 +1630,21 @@ cells 1.3-1.7 s and 86-112k triangles; a slice's skyline 0.2-0.5 s, 3.5-7k trian
 for all 625 (the slowest slice 14-16 ms, under the sweep's 3 ms budget a frame mostly two or three a frame); the
 pictures 0.24-0.29 s once.
 
+SEEN WITHOUT A BROWSER (2026-10-26): the browser on this machine shared a 14 GB memory cgroup with the other streams'
+browsers and tests (96 kills logged; the probe's renderer was taken twice in Daggerfall's boot), so the city's own meshes
+were first looked at through a software rasterizer of the scratch's (perspective, a z-buffer, the port's own pictures
+sampled, a sun): each near cell's fabric model, the slices' skylines and the landmarks' parts past them, and past those
+the far landmarks (imperialLandmarkMesh) - Daggerfall's own blocks undrawn, their cells dark lots. Seen: the Market's
+dense ochre, brick and white blocks under terracotta, arcades and shopfronts down its streets, flat roofs with parapets
+and gables a half storey apart; the Elven Gardens' white and stone ranges under blue slate round green garden courts and
+their garden walls; the Temple District's long stone blocks on its axis; Talos Plaza's cut-stone ranges; the Arena
+District's rings and spokes; the Arboretum's lawns, paths, statues and villas; the Waterfront's warehouses in rows to the
+quay, its piers and its light out into Lake Rumare; the tower over the Palace District's lawns and tombs; from the city
+wall the tower at the avenue's end, drawn by the far landmarks; and from 13.5 km across the lake the city a low band on
+the water with the tower over it. The fabric's built share of a district's own ground (every third cell): the Market 46%,
+the Waterfront 49%, the Arena District 42%, the Elven Gardens and Talos Plaza 40%, the Temple District 37%, the Arboretum
+25% (a park); kept clear by the roads, walls and landmarks 6-11% - the rest its streets, courts, yards and squares.
+
 TESA11, IC-RING and TS5 read on: the pixel law the same (the nearest centre all of whose 625 pixels are the Imperial
 Province's land, on the trace's isle inside Lake Rumare's ring); the flatten the same (every slice to the centre's
 ground); the parts the same law at 1,024 a slot (183 parts of the twelve landmarks).
@@ -2077,7 +2092,11 @@ taking theirs inside it), `test/world/worldWide/ww7_castles.test.js` (the kinds 
 `test/world/audit68_worldjs.test.js` (the stair asks `standsArena`), `test/world/spawneddungeons.test.js` (the build's
 ask through capitalBuildView), `test/systems/shipyards1_found.test.js` (no yard nor port on a far slice),
 `test/tesa10c_capitals.test.js` (the port blocks without the family's) and `test/world/audittesa2p_world.test.js` (with
-ARENA2: the rows past the Bay 631 slices, the Imperial City's 625). The tesa11 slices' pin had lost, at the
+ARENA2: the rows past the Bay 631 slices, the Imperial City's 625); and at the merge of the streams' head,
+`test/world/breathtaker.test.js` (stream G's CYRODIIL-WATERS: the lake inside the span's own half - every river clear of
+the 25 x 25, the ring round it and the lake's 10 km on the freeware's trace), `test/world/urban/urban3_stand.test.js`
+(stream H's: the walkers' gate asks the far view first) and the capitals' sweep's sandbox in
+`test/tesa10_capitals.test.js` (the skyline's sweep beside the LOD's). The tesa11 slices' pin had lost, at the
 migration, its cross-slice seeds check (each slice's buildings named apart from another's in the same cell of their
 grids): restored. Re-aimed BY CONTENT (each record's `note` says how; each judged again): `tools/mutants/tesa11.json`
 (eighteen - the span, the plan's laws, the slices' names, plans, hash and seeds, the tower, the walls' gates and
