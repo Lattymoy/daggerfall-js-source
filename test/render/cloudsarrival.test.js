@@ -200,3 +200,41 @@ test('CLOUD-COMPILE: a compile done before the sky\'s first frame costs no frame
     setPref('enhancedEnvironments', pref);
   }
 });
+
+test('CLOUD-COMPILE option D: `?cloudsweep=whole` marches the clouds\' first sweep in their first frame and draws them in it; later sweeps keep their stripes; off by default (mutant: the door ignored)', () => {
+  const skin = uiSkin();
+  const pref = getPref('enhancedEnvironments');
+  setUiSkin('enhanced');
+  setPref('enhancedEnvironments', true);
+  try {
+    const run = (query) => {
+      const { gl, driver, state } = compilingGl();
+      driver.done = true;
+      const ctl = createSkyController(gl, new URLSearchParams(query));
+      const extra = { classicMinutes: 600, pos: [0, 0, 0], weather: 'overcast', cells: [] };
+      const frames = [];
+      for (let f = 0; f < 3; f++) {
+        const from = state.draws.length;
+        extra.classicMinutes = 600 + f;
+        ctl.use(16, extra.classicMinutes, true, extra);
+        ctl.draw(0, 0.3, 1.1, 16 / 9);
+        const draws = state.draws.slice(from);
+        frames.push({
+          marches: draws.filter((d) => d.prog?.locs?.has('uLightSteps')).map((d) => d.viewport),
+          composites: draws.filter((d) => d.prog?.locs?.has('uBoltCos')).length,
+        });
+      }
+      return frames;
+    };
+    const height = QUALITY.default.height;
+    const whole = run('sky=enhanced&weather=overcast&cloudsweep=whole');
+    assert.deepEqual(whole[0].marches, [[0, 0, QUALITY.default.width, height]], 'the whole map marched in the first frame');
+    assert.equal(whole[0].composites, 1, 'and the clouds drawn in it');
+    assert.ok(whole[1].marches.every(([, , , h]) => h < height), 'the next sweep striped again');
+    const striped = run('sky=enhanced&weather=overcast');
+    assert.ok(striped[0].marches[0][3] < height && striped[0].composites === 0, 'off by default: a stripe, and nothing drawn yet');
+  } finally {
+    setUiSkin(skin);
+    setPref('enhancedEnvironments', pref);
+  }
+});

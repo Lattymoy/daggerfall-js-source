@@ -89,5 +89,35 @@
       "test/render/cloudsarrival.test.js"
     ],
     "note": "The key light drops the dome's occlusion before the ground reads the clouds' map."
+  },
+  {
+    "name": "CC-D-the-whole-sweep-ignored",
+    "file": "src/render/volumetricClouds.js",
+    "old": "      const rows = this.wholeFirstSweep && this.sweeps === 0 ? q.height : Math.ceil(q.height / this.pace);",
+    "new": "      const rows = Math.ceil(q.height / this.pace);",
+    "tests": [
+      "test/render/cloudsarrival.test.js"
+    ],
+    "note": "Option D asked for and not given: the first sweep striped, the clouds drawn frames later."
+  },
+  {
+    "name": "CC-D-every-sweep-whole",
+    "file": "src/render/volumetricClouds.js",
+    "old": "      const rows = this.wholeFirstSweep && this.sweeps === 0 ? q.height : Math.ceil(q.height / this.pace);",
+    "new": "      const rows = this.wholeFirstSweep ? q.height : Math.ceil(q.height / this.pace);",
+    "tests": [
+      "test/render/cloudsarrival.test.js"
+    ],
+    "note": "Every sweep marched whole: the whole map's GPU time every frame, for good."
+  },
+  {
+    "name": "CC-D-the-door-not-handed",
+    "file": "src/render/cloudsArrival.js",
+    "old": "    built.wholeFirstSweep = wholeFirstSweep;",
+    "new": "",
+    "tests": [
+      "test/render/cloudsarrival.test.js"
+    ],
+    "note": "The controller reads `?cloudsweep=whole` and the clouds never hear it."
   }
 ]

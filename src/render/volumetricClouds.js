@@ -1509,6 +1509,9 @@ export class VolumetricClouds {
     this.pace = SWEEP_FRAMES;        // RAIN-FPS: this sky sweep's frames, taken at its first stripe
     this.shadowPace = SWEEP_FRAMES;  // ...and the shadow sweep's, at its own
     this.sweeps = 0;          // full sweeps of the sky map completed (the probe waits for one); the first is striped like every other - no stall
+    /** CLOUD-COMPILE option D (`?cloudsweep=whole`, off by default): march the first sweep whole, in the clouds' first
+     *  frame, so they are drawn from that frame - one frame's GPU time for the whole map instead of a stripe's. */
+    this.wholeFirstSweep = false;
     this.origin = null;       // the shadow square's corner the camera asks for
     this.mapOrigin = null;    // the corner the map HOLDS - the deck's rect (the two differ for the frame between a crossing and its blit)
     this.shadowStripe = 0;
@@ -1651,7 +1654,7 @@ export class VolumetricClouds {
       const u = this.mu;
       // RAIN-FPS: the pace is the sky's at a sweep's start and holds to its end - a sweep never changes stripe midway
       if (this.stripe === 0) this.pace = sweepFramesFor(this.row?.cover, this.cells.length);
-      const rows = Math.ceil(q.height / this.pace);
+      const rows = this.wholeFirstSweep && this.sweeps === 0 ? q.height : Math.ceil(q.height / this.pace);
       const y0 = this.stripe * rows;
       gl.useProgram(this.marchProgram);
       this._fieldUniforms(u);

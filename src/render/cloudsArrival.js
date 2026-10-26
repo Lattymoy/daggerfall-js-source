@@ -36,8 +36,9 @@ export const CLOUDS_ARRIVAL_PROGRAMS = Object.freeze([...CLOUD_NOISE_PROGRAMS, .
 /** The clouds' door for the sky controller.
  *  @param {WebGL2RenderingContext} gl @param {string} quality a volumetricClouds.js QUALITY key
  *  @param {string|null} testCellSpec the `?cloudcell=` door's text, handed to the clouds at their build
+ *  @param {boolean} [wholeFirstSweep] option D (`?cloudsweep=whole`): the clouds' first sweep marched in one frame
  *  @returns {CloudsArrival} */
-export function createCloudsArrival(gl, quality, testCellSpec) {
+export function createCloudsArrival(gl, quality, testCellSpec, wholeFirstSweep = false) {
   const pendingOffset = [0, 0, 0];
   let offsetPending = false;
   let clouds = /** @type {VolumetricClouds|null} */ (null);
@@ -49,6 +50,7 @@ export function createCloudsArrival(gl, quality, testCellSpec) {
   const build = () => {
     const built = new VolumetricClouds(gl, quality, buildViewport);
     built.testCellSpec = testCellSpec;
+    built.wholeFirstSweep = wholeFirstSweep;
     if (offsetPending) built.offsetOrigin(pendingOffset);
     // A probe reads when the clouds arrive on the page's own clock (tools: the boot's first world frame beside it).
     globalThis.performance?.mark?.('clouds-built');

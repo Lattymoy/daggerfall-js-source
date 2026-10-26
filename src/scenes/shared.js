@@ -268,7 +268,9 @@ export function createSkyController(gl, params) {
   const cloudsDoor = params.get('clouds');
   const cloudQuality = Object.hasOwn(CLOUD_QUALITY, cloudsDoor) ? cloudsDoor : (Object.hasOwn(CLOUD_QUALITY, getPref('cloudQuality')) ? getPref('cloudQuality') : 'default');
   // WEATHER2c: `?cloudcell=<weather>[,<ahead>[,<radius>]]` - one static cell, for the eye and the probe
-  const cloudArrival = enhancedLane && cloudsDoor !== 'off' ? createCloudsArrival(gl, cloudQuality, params.get('cloudcell')) : null;
+  // CLOUD-COMPILE option D, `?cloudsweep=whole`: the clouds' first sweep marched in one frame (the owner's measurement; off
+  // by default - the striped sweep ships)
+  const cloudArrival = enhancedLane && cloudsDoor !== 'off' ? createCloudsArrival(gl, cloudQuality, params.get('cloudcell'), params.get('cloudsweep') === 'whole') : null;
   // The clouds once built: fed the sky's state and marched every frame from then on.
   let clouds = /** @type {import('../render/volumetricClouds.js').VolumetricClouds|null} */ (null);
   // The clouds the sky draws and the ground reads, the sky's own decks down for them (cloudsArrival.js shown): decided
