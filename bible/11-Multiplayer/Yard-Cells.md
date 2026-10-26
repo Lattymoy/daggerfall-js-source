@@ -498,7 +498,7 @@ Departures from the plan:
 4. **The owner's own write is laid over the cell when it is read** (`piecesOf`), never written into it. A cell answered
    as unchanged keeps what it holds, so a write written into it would have outlived its hold for as long as the cell did
    not move.
-5. **`YARD_STAND_BUDGET_MS` is 6 ms, provisional** until the in-game measurement (section 3.5) sets it.
+5. **`YARD_STAND_BUDGET_MS` is 3 ms**, set by check 1 below.
 
 **The capitals, measured** (section 4.1, gaps 1 and 3) on #1184's branch at 4d8200b017 with ARENA2: 7 capitals, 57
 slices, 1,397 port blocks holding no building record; the most records in any block a slice lays 23 (the Imperial
@@ -517,5 +517,23 @@ tests that read a town's yards read them through the cells (`test/yardCellsRead.
 `tools/mutants/yard_cells.json` and `yardcellsync.json` (26, all dead), and 18 records of other files re-aimed at the
 same laws in their new homes (all dead).
 
-**Not yet run**: the in-game checks of section 8 (the field report again, the landing, two clients, an old build) wait
-for a slot.
+**Check 1, in the running game** (2026-10-26, headed Edge on the RTX 5080, #1304 at 84f27b002d, the account service and
+the relay in local workerd - `tools/loadHarness.mjs` standServices; two runs):
+
+- **The field report: PASS.** Daggerfall's city seeded with 539 strangers' yards and 7,000 pieces, past YARD-TOWN's 6,500.
+  A registered account's realm character placed a piece at its home in the eastern blocks (column 5, row 4) through the
+  service's own place route (answered 200). The game was loaded again, and the home's yard stood with that piece in it.
+  Done in both runs.
+- **The landing.** The cell route was held until the town had settled, then let go, and every frame after was timed.
+  Run 1: the longest frame was 54 ms at a 6 ms budget, 38 ms at 3 ms and 46 ms at 10 ms (2, 3 and 7 frames over 33 ms).
+  Run 2 (the request asked again from where the player stood): 62 ms at 3 ms (26 frames over 33 ms) and 54 ms at 2 ms
+  (7). Every yard (515-526) stood within about one second each time. YARD-TOWN measured 38-63 ms for a city of 4,000 at
+  four yards a frame. The spread between runs is wider than the budget's effect: most of the landing's long frames are
+  other work (the answer's parse, the models' builds). The budget is set to 3 ms, the best measured.
+- **Hooks used**: the probe's served-source edits (the yards and homes read out, the budget read from the page), `__pose`,
+  `__shotReady` and `__frame`; the homes and the strangers' pieces were seeded into the local database, and the one piece
+  placed through the route with the account's secret. The decorator's in-world placement was not driven (canvas clicks do
+  not register in a Playwright Edge); YC1 does not change it.
+- **Not shown in the game**: the nearest-first order - the whole town stood inside one half-second sample.
+
+**Still to run**: check 2 (two clients on the local relay) and check 3 (a build from before YC1 answered 410).

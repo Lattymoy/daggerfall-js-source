@@ -191,10 +191,12 @@ export const YARD_MERGES_A_FRAME = 1;
  * in map order, so the far side of a city could stand before the yard beside the player. YARD-CELL stands them NEAREST
  * FIRST while the frame's standing time is under this budget - always one a frame - and the next frame syncs again until
  * all stand. The owner's own yard, and the one the decorator stands in, never wait.
- * PROVISIONAL: the value is set by the in-game measurement (YARD-TOWN's probe method, bible/11-Multiplayer/Yard-Cells.md
- * section 3.5) before YC1 leaves draft.
+ * Measured 2026-10-26 (bible/11-Multiplayer/Yard-Cells.md section 10, check 1): Daggerfall's city with 515-526 strangers'
+ * yards (7,000 pieces) landing at once, the longest frame 38 ms at 3 ms, 54 ms at 6 and 46 ms at 10 in one run, and 62 ms
+ * at 3 and 54 ms at 2 in another - the spread between runs is wider than the budget's, so most of a landing's long frames
+ * are other work. 3 ms was the best measured.
  */
-export const YARD_STAND_BUDGET_MS = 6;
+export const YARD_STAND_BUDGET_MS = 3;
 /** What the decorator says of a piece off the lot, in the house, or on another building's ground. */
 export const YARD_OFF_LOT = 'Outside your lot. Keep it within the marked edge.';
 export const YARD_IN_HOUSE = 'That is inside your house. Place it in the yard around it.';
