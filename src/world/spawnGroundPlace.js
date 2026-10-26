@@ -16,6 +16,7 @@ import { CLIMATES } from '../formats/mapsTables.js';
 import { inEther } from './ethericSea.js';
 import { spawnsDungeon, pathFreePixel, WORLD_SALT } from './spawnedDungeons.js';
 import { wildInside } from '../systems/wild/wildZone.js';   // AUDIT RELEASE R3-7: the zone's mask is the host's (zoneMask) - main's wildMaskOf, the Bay's zone off the maps, is gone with WW-C2
+import { inBay } from './tamriel/tamrielFrame.js';   // SPAWN-HOLE: a spawn's id is a Bay pixel's (spawnedMapId)
 
 /**
  * What the host holds that the law reads.
@@ -56,6 +57,9 @@ export function createSpawnGroundPlace(handles) {
    * @param {{ clocks?: boolean }} [options] `clocks` false: the spawn alive or dead, for the ground
    */
   function spawnAt(px, py, { clocks = true } = {}) {
+    // SPAWN-HOLE (AUDIT LEFT IN THE BAY A1): past the Bay the clone's id (spawnedMapId) threw, and the build that asked
+    // it - every pixel past the Bay the roll stands a spawn on - failed and was asked again for good: a hole in the ground
+    if (!inBay(px, py)) return null;
     if (maps.getClimateIndex(px, py) === CLIMATES.Ocean) return null;
     if (!plateauDry(px, py)) return null;
     if (clocks && spawnGone(px, py)) return null;

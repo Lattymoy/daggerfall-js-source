@@ -1,0 +1,9 @@
+[
+  {
+    "name": "SPAWN-HOLE-the-guard-gone",
+    "file": "src/world/spawnGroundPlace.js",
+    "old": "    if (!inBay(px, py)) return null;\n",
+    "new": "",
+    "tests": ["test/world/spawnhole.test.js"]
+  }
+]

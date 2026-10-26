@@ -8304,6 +8304,23 @@ the Veil or in the open zone), and the pixel build shapes the blend, the tiles, 
 woods' clearings for it. What stands - the ruin, its door, its plate, its foes - is still the clocks'. A dead spawn
 leaves its level clearing and the ruin's ground tiles until it stands again. `01-Overview/bugs/Field-Bugs-2026-10-24b.md`.
 
+### SPAWN-HOLE - NO HOLE IN THE GROUND PAST THE BAY (2026-10-26)
+
+The audit NO SYSTEM LEFT BEHIND IN THE BAY (2026-10-26), item 1 (A1, HIGH). Online with the land past the Bay, every pixel build asks
+`spawnGroundPlace.groundLocationAt` (`scenes/pixelBuild.js:"const groundLocation = spawnGroundPlace.groundLocationAt(px, py, dfLocation);"`),
+and where the roll stood a spawn on dry, empty land the host cloned it (`scenes/world.js:"function _spawnCloneAt(px, py) {"`)
+- whose id, `world/spawnedDungeons.js:"export function spawnedMapId(salt, px, py) {"`, threw `RangeError: pixel X,Y` for
+any pixel past the Bay. The pump destroyed the pixel and BUILD-RETRY asked for it again, for good: no terrain and no
+collider. A 40 x 20 box of Skyrim (about Windhelm's row): 800 pixels asked, 39 threw; the same box on the Bay, none. The
+party walk's far spawn (`tvLocationAt`, through `spawnAt`) threw the same way, with no try about it.
+
+What stands now: `spawnAt` answers none past the Bay (`world/spawnGroundPlace.js:"if (!inBay(px, py)) return null;"`), so
+the clone is never asked there; the Bay to the byte. It is the first commit of the fix and the guard SPAWN-WORLD (below)
+replaces with the spawn's own law past the Bay. Pins: `test/world/spawnhole.test.js` (the host's clone over the real
+producer, and with ARENA2 the audit's own box: 0 threw, the Bay's 14 spawns as they stood). Mutants:
+`tools/mutants/spawnhole.json`. PIN MOVED: `test/scenes/fb1024_groundagree.test.js` (the Eltheric box with no Eltheric
+Ocean is past the Bay).
+
 ### DISC29-F - a mode change stops the riding loop, as UpdateMode does (2026-09-28, Skibbster)
 
 "Horse gallop audio loops if you enter an interior before stopping while mounted." The riding sound is one named

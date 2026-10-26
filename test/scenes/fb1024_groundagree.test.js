@@ -82,8 +82,10 @@ test('GROUND-AGREE the ground\'s place (world/spawnGroundPlace.js): what stands,
   const [ex, ey] = rolledPixel(ETHER_BOX.x0 + 10, ETHER_BOX.y0 + 10);
   ({ law } = makeLaw());
   assert.equal(law.groundLocationAt(ex, ey, null), null, 'past the Veil the isles stand their own places');
+  // PIN MOVED (SPAWN-HOLE, AUDIT LEFT IN THE BAY A1): the box is past the Bay, where a spawn's id was a Bay pixel's and
+  // threw - with no Eltheric Ocean no spawn is cloned there (world/spawnGroundPlace.js spawnAt's guard)
   ({ law } = makeLaw({ etherSea: false }));
-  assert.deepEqual(law.groundLocationAt(ex, ey, null), { name: `Spawn ${ex},${ey}` }, 'with no Eltheric Ocean that box is no isle\'s');
+  assert.equal(law.groundLocationAt(ex, ey, null), null, 'with no Eltheric Ocean that box is no isle\'s, and past the Bay no spawn stands');
 
   // PIN MOVED (AUDIT RELEASE R3-7, the merge of main into TESA): the open zone is Cyrodiil's (WW-C2), its mask the host's
   // (zoneMask - scenes/world.js hands systems/wild/cyrodiilZone.js cyrodiilMask); here a zone over the whole fake map
