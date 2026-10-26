@@ -101,8 +101,8 @@
  {
   "name": "AUDIT-WE-L1-4-ketch-no-new-life",
   "file": "server/src/index.js",
-  "old": "    for (const r of out) if (r.k === 'rez' && V.players[r.s]) bodyLife(V.players[r.s], now, line.body);   // AUDIT WORLD-EVENTS L1-4: the raised, a new life on the count\n",
-  "new": "",
+  "old": "{ bodyLife(V.players[r.s], now, line.body); V.players[r.s].rzAt = now; }",
+  "new": "{ V.players[r.s].rzAt = now; }",
   "tests": [
    "test/net/eliteGates/auditwe_down.test.js"
   ]

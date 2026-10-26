@@ -256,7 +256,7 @@ export function createKetchFight({ renderer = null, gl = null, getTexture = null
         b.hp = B.h;
         if (blow && b.wound !== blow.at) { b.wound = blow.at; if (t < blow.at) play(hostCue('windup', look.mobile), at); }
         if (blow && b.landed !== blow.at && t >= blow.at) { b.landed = blow.at; if (t - blow.at <= 2000) play(hostCue('land', look.mobile), at); }
-        if (!(B.h > 0) && !b.fell) { b.fell = true; if (t - (B.down || t) <= 2000) { play(hostCue('fall', look.mobile), at); fell(K.key, B.id, at); } }   // KETCH-PELLETS: a fresh fall drops its Pellets
+        if (!(B.h > 0) && !b.fell) { b.fell = true; if (t - (B.down || t) <= 2000) { play(hostCue('fall', look.mobile), at); if (!B.sw) fell(K.key, B.id, deckToDungeon(x, yF, z)); } }   // KETCH-PELLETS: a fresh fall drops its Pellets - AUDIT KETCH II L3-3: a body felled, never one the ship took off (`sw`); L3-4: on its floor, never where its sinking had drawn it
         const glint = act.act === 'windup' ? [...(COLOR_OF[blow?.el] ?? COLOR_OF.null), Math.min(1, 0.4 + (act.k ?? 0) * 0.6)] : null;
         const yaw = blow && t < blow.at + 600 ? Math.atan2((blow.s?.[0]?.[1] ?? x) - x, (blow.s?.[0]?.[2] ?? z) - z) : B.yw;
         b.yaw = yaw;
@@ -282,7 +282,7 @@ export function createKetchFight({ renderer = null, gl = null, getTexture = null
         const at = deckToDungeon(x, KT_BRIDGE.y + act.lift, z);
         if (ws.h < warden.hp) { warden.roomAt = t; if (t - warden.heardHurt >= 800) { warden.heardHurt = t; play(hostCue('hurt', KT_WARDEN_LOOK.mobile), at); } }
         warden.hp = ws.h;
-        if (ws.fell && !warden.fell) { warden.fell = true; if (t - ws.fell.at <= 2000) fell('tonal', KW_ID, at); }   // KETCH-PELLETS: the Tonal Warden's own
+        if (ws.fell && !warden.fell) { warden.fell = true; if (t - ws.fell.at <= 2000) fell('tonal', KW_ID, deckToDungeon(x, KT_BRIDGE.y, z)); }   // KETCH-PELLETS: the Tonal Warden's own (AUDIT KETCH II L3-4: on the bridge's floor)
         if (blow && warden.wound !== blow.at) { warden.wound = blow.at; if (t < blow.at) play(BOSS_CUES.growl, at); }
         const glint = act.act === 'windup' ? [...(COLOR_OF[blow?.el] ?? COLOR_OF.null), 0.5 + 0.5 * (act.k ?? 0)] : ws.ward ? [1, 0.86, 0.5, 0.45] : null;
         const yaw = blow && t < blow.at + 600 && blow.s?.[0]?.[0] !== 'a' ? Math.atan2((blow.s[0][1] ?? x) - x, (blow.s[0][2] ?? z) - z) : W.yw;

@@ -1192,8 +1192,10 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
     if (dead) return;
     const was = committed;
     committed = cloneTree(book.current());
-    // a pending sky over a tree that moved under it starts again from the new one
-    if (treeDiff(was, committed).added.length || treeDiff(was, committed).removed.length) pending = cloneTree(committed);
+    // a pending sky over a tree that moved under it starts again from the new one - FIRM-SIGNPANEL: a birthsign alone
+    // is a move (UICALM-FIRM1 L4 M5's rule), or a sign accepted elsewhere left the panel saying none was chosen
+    const moved = treeDiff(was, committed);
+    if (moved.added.length || moved.removed.length || moved.startChanged) pending = cloneTree(committed);
     refresh();
     const fail = readFailText(book.state);
     if (fail) say(fail, true, true);

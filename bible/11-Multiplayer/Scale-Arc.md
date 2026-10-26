@@ -337,6 +337,11 @@ REAL account service, both in local workerd (`wrangler dev`; the service behind 
 - It refuses every address but its own two.
 - A run serves its tree live (`wrangler dev` rebuilds on every source change), so each column below ran from a
   `git worktree` of its commit.
+- It runs on Linux, macOS and Windows, and so do the probes built on it (`tools/partyLootProbe.mjs`,
+  `tools/onlineFrameProbe.mjs`) and `tools/accountProbe.mjs`. `tools/lib/wranglerLaunch.mjs` holds what differs
+  (HARNESS-WIN, 2026-10-25). On Windows it runs wrangler's own `wrangler.js` (or npm's `npx-cli.js`) under node, keeps
+  each wrangler attached with no console window, and kills its tree with `taskkill /T /F`, because Windows has no
+  process groups.
 
 **What it is not.** Local workerd is not Cloudflare: D1 is one SQLite file with no queue and no network, and the fleet
 shares four cores with both Workers. Latency here is relative. The counts are the code's own: statements a request,

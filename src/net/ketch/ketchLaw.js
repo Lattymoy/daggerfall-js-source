@@ -29,9 +29,9 @@ export const KT_EVERY_MS = 10 * 3600 * 1000;
 /** Voyage 0's arrival: 2026-10-25, 00:00 UTC - the first after she goes live (KETCH-EVERY). Every voyage after is a round on. */
 export const KT_EPOCH_MS = Date.UTC(2026, 9, 25);
 /** Sighted this long before it arrives; keeps station this long; the crews aboard have this long after it weighs anchor. */
-export const KT_SIGHT_MS = 1 * 3600 * 1000;   // KETCH-EVERY: an hour sighted, seven at station, twenty minutes more - away an hour and forty of every ten
+export const KT_SIGHT_MS = 1 * 3600 * 1000;   // KETCH-EVERY: an hour sighted, seven at station, forty-five minutes more - away an hour and a quarter of every ten
 export const KT_STATION_MS = 7 * 3600 * 1000;
-export const KT_LAST_MS = 20 * 60 * 1000;
+export const KT_LAST_MS = 45 * 60 * 1000;   // AUDIT KETCH II L5-1: twenty before - KETCH-LONGER made a voyage some twenty to twenty-five minutes, and a crew boarding at her last minute was shut out with the Warden standing and no receipt
 /** The most accounts one ship's crew holds - the party's own bound (net/social PARTY_MAX, pinned equal). */
 export const KT_CREW_MAX = 8;
 /** The Boarding Watch's waves (KETCH-LONGER, 2026-10-25: three before) - the brain's and the HUD's one number. */

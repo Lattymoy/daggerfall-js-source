@@ -67,8 +67,9 @@ ESCORTING FACES - the quest escorts' portrait column, FE1 - and the CREDITS TABL
 - and STAFF-FLATMAP's SHEET (`staffFlatMap.js`: Shift+N, one region from above off the politic map, a dot a traveller coloured by their most urgent flag, the Most urgent list beside it, a press opening the staff tag menu - mob 2026-10-24: "did u get the flat map done?"; filled by `scenes/staffFlatMapHost.js`)
 - and KETCH's TWO (`ketch/ketchHud.js`: the Sky-Ketch's voyage tracker - the stage, what it asks, the cell in hand, the crew and the clock - and the Tonal Warden's bar, the gate's in the Hour's brass; `ketch/ketchMapMark.js`: her ring on the held map - `11-Multiplayer/Sky-Ketch.md` section 12);
 - and REALM-COPY's BUTTON (`enhanced/bringOnlineButton.js`: the Online pane's Bring online button on an offline character's tile - dead, with the reason in its words, for a Test Room character and for a copy of an online character, which customs can never let in; `06-Systems/Realm-Arc.md` REALM-COPY);
+- and BOX-ON-TOP's LAYER (`boxClickCatcher.js`: a message box drawn as the top window over an open enhanced window - a tutorial page over the Identify window, the Identify spell's magicka refusal - takes a click anywhere, as DFU's ClickAnywhereToClose does (`DaggerfallMessageBox.cs:645-660`), through a transparent layer over the whole screen above the window; the counter's own keys stand down while a box covers it (`ui/tradeDoor.js:"hooks.covered = () => windowCovered(overlay);"`). The refusal is a box over the window, as DFU's is (`DaggerfallTradeWindow.cs:962`), not a HUD line the window hides);
 - and the BUILDING DOOR'S RING (`interiorLoadMark.js`: a ring over the hotbar while a building's door loads, the full loading screen stepped aside so the street stays visible - `10-UI/Loading-Screens.md`);
-418 modules
+419 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.

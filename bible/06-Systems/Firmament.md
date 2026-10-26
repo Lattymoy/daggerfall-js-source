@@ -221,7 +221,9 @@ alone - offline the page says what the sky is and why it waits.
   press to allocate the way; right-press (or long-press on a phone) to take a star back with everything beyond it; drag
   to pan, wheel or pinch to zoom, F for your sign, a search that lights every star whose words match.
 - **Every change is pending** - free to try - until Confirm, which says what it allocates, what it refunds and the
-  silver; the purses on the bar move as you plan.
+  silver; the purses on the bar move as you plan. A tree that moves under the open window (a change accepted in
+  another window, tab or device, heard through the book) starts the pending sky again from it - a birthsign alone
+  included (FIRM-SIGNPANEL, 2026-10-25: a sign-only change had left the panel saying no birthsign was chosen).
 - The side panel sums the sky as it stands, in a fight and in a life, and marks a channel held at its cap.
 - **Above the sums, the side panel says whether the stars act now, and the first reason they do not** (FIRM-STATUS,
   2026-10-25, the same report as FIRM-RETRY: the sums are the stars held whether or not they act, so a sleeping sky
@@ -282,6 +284,7 @@ change judged whole, Craft for the life ring alone, a repeat, the refund's silve
 the blow, the spell, the damage and the layer, the acts), `test/net/firmament/firm1_book.test.js` (4: the respec, the read, a change
 coalesced, a lost answer kept), `test/net/firmament/firm_book_retry.test.js` (5: FIRM-RETRY - the wait doubling to its
 ceiling, one retry at a time, no retry over a refusal, a lost change asked again), `test/systems/firm_status.test.js`
-(5: FIRM-STATUS - each status against what the stars fold), `test/net/firmament/firm2_balance.test.js` (3: FIRM2 - no channel of a sign sums past its cap, a small star
+(5: FIRM-STATUS - each status against what the stars fold), `test/ui/firm_signpanel.test.js` (2: FIRM-SIGNPANEL - a
+birthsign accepted outside the open window is named on its side panel), `test/net/firmament/firm2_balance.test.js` (3: FIRM2 - no channel of a sign sums past its cap, a small star
 one for one, the lift past 100), and the audit's `test/systems/audit_uicalm_firm1.test.js` (`01-Overview/audits/Audit-UICalm-Firm1.md`). The lab: `firmament.html`
 (`?dress=grimoire` for the Grimoire, `?fresh=1`, `?renown=`, `?ranks=`).

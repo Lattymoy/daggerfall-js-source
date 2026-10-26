@@ -463,7 +463,7 @@ const HARDCODED = {
   'src/systems/party/partyTravelLaw.js': 28,
   'src/systems/peerWord.js': 2,
   'src/systems/physicalItems.js': 25,
-  'src/systems/portBooks.js': 57,   // KETCH: +39, two books (Rourken Thunder - the guns and the shot; The Ketch That Never Lands) - a port book's pages are written into the BOK format's bytes and read whole, and no language holds a -LOC book for one (ui/bookDoor.js), so they are English as On the Burning Doors is
+  'src/systems/portBooks.js': 56,   // KETCH-WORDS: -1, the Ketch book's 'How she is boarded' head now the one word 'Boarding'; KETCH: +39, two books (Rourken Thunder - the guns and the shot; The Ketch That Never Lands) - a port book's pages are written into the BOK format's bytes and read whole, and no language holds a -LOC book for one (ui/bookDoor.js), so they are English as On the Burning Doors is
   'src/systems/portPlaces.js': 8,
   'src/systems/portalStone.js': 21,   // PORTAL-BULK: -2, the counter's offer and its sale's line through t() (portal.buy.ask, portal.buy.bought - their plurals the count's)
   'src/systems/potionRecipes.js': 15,

@@ -15,26 +15,26 @@ import { KT_TEXT, ketchVoyageAt } from '../../net/ketch/ketchLaw.js';
 /** THE VOYAGE'S AND THE SHIP'S LINES. */
 export const KT_WORDS = Object.freeze({
   get name() { return t('ketch.name', 'The Sky-Ketch Mzunthar'); },
-  get sighted() { return t('ketch.sighted', 'A shape like a brass whale hangs in the east sky over Daggerfall. The Ketch is coming.'); },
-  get arrived() { return t('ketch.arrived', 'The Rourken sky-ketch Mzunthar keeps station over Daggerfall. Its anchor-lift waits in the fields outside the walls.'); },
-  get departing() { return t('ketch.departing', 'The Ketch is weighing anchor. Her anchor-lift will not rise again this voyage.'); },
-  get departed() { return t('ketch.departed', 'The Ketch turns west and is gone. She comes round again every ten hours.'); },
-  get boarding() { return t('ketch.boarding', 'The anchor-lift rises into the sky.'); },
+  get sighted() { return t('ketch.sighted', 'The Sky-Ketch has been sighted east of Daggerfall.'); },
+  get arrived() { return t('ketch.arrived', 'The Sky-Ketch has arrived over Daggerfall. Its anchor-lift is down in the fields east of the city.'); },
+  get departing() { return t('ketch.departing', 'The Ketch is weighing anchor. No one else can board this voyage.'); },
+  get departed() { return t('ketch.departed', 'The Ketch has gone. It comes back every ten hours.'); },
+  get boarding() { return t('ketch.boarding', 'The anchor-lift rises.'); },
   get lowered() { return t('ketch.lowered', 'The anchor-lift sets you down in the fields outside Daggerfall.'); },
   get noRest() { return t('ketch.noRest', 'You cannot rest aboard the Ketch.'); },
   get noSave() { return t('ketch.noSave', 'You cannot save aboard the Ketch.'); },
-  get noMap() { return t('ketch.noMap', 'The Ketch keeps no map you can read.'); },
-  get noMark() { return t('ketch.noMark', 'You cannot set a Mark on a ship in the sky.'); },
-  get noRecall() { return t('ketch.noRecall', 'Nothing answers a Recall aboard the Ketch.'); },
+  get noMap() { return t('ketch.noMap', 'There is no map of the Ketch.'); },
+  get noMark() { return t('ketch.noMark', 'You cannot set a Mark here.'); },
+  get noRecall() { return t('ketch.noRecall', 'Recall does not work aboard the Ketch.'); },
   get noFlight() { return t('ketch.noFlight', 'The Sailwalk is walked, not flown.'); },
-  get noUnstuck() { return t('ketch.noUnstuck', 'The Ketch\'s ways down are her anchor-lift and her stern lift.'); },
-  get died() { return t('ketch.died', 'You fall from the Ketch. You wake in the fields outside Daggerfall, the anchor-lift above you.'); },
-  get castBack() { return t('ketch.castBack', 'The rigging nets catch you and haul you back aboard.'); },
+  get noUnstuck() { return t('ketch.noUnstuck', 'Use the anchor-lift or the stern lift to leave the Ketch.'); },
+  get died() { return t('ketch.died', 'You fall from the Ketch and wake in the fields below.'); },
+  get castBack() { return t('ketch.castBack', 'The rigging nets catch you and pull you back aboard.'); },
   get hatchOpen() { return t('ketch.hatchOpen', 'The Watch is broken. The hatch to the gun deck opens.'); },
   get holdOpen() { return t('ketch.holdOpen', 'The Hammer Wardens are down. The way to the hold opens.'); },
-  get engineFed() { return t('ketch.engineFed', 'The Starved Engine wakes. The mast-lift rises to the main top.'); },
-  get bridgeBarred() { return t('ketch.bridgeBarred', 'The bridge is barred from within.'); },
-  get bridgeOpen() { return t('ketch.bridgeOpen', 'The bridge is unbarred. The bosun\'s line runs from the main top.'); },
+  get engineFed() { return t('ketch.engineFed', 'The engine wakes. The mast-lift is running.'); },
+  get bridgeBarred() { return t('ketch.bridgeBarred', 'The bridge is barred.'); },
+  get bridgeOpen() { return t('ketch.bridgeOpen', 'The bridge is open. The bosun\'s line runs from the main top.'); },
   get lineTaken() { return t('ketch.lineTaken', 'You ride the bosun\'s line down to the bridge.'); },
   get cabinOpen() { return t('ketch.cabinOpen', 'The Ketchmaster\'s cabin opens.'); },
 });
@@ -42,13 +42,13 @@ export const KT_WORDS = Object.freeze({
 /** THE DOOR'S REFUSALS in the player's language: the relay's four (net/ketch/ketchLaw.js KT_TEXT.refuse, key for key -
  *  closed, gone, crew, full) and the page's own three (busy, offline, away - said before any room is asked). */
 export const KT_REFUSE_WORDS = Object.freeze({
-  get closed() { return t('ketch.refuse.closed', 'The anchor-lift is drawn up. The Ketch takes no crew while she weighs anchor.'); },
+  get closed() { return t('ketch.refuse.closed', 'The anchor-lift is up. No one can board while the Ketch weighs anchor.'); },
   get gone() { return t('ketch.refuse.gone', 'The Ketch is gone.'); },
-  get crew() { return t('ketch.refuse.crew', 'The anchor-lift answers only to its captain\'s crew.'); },
-  get full() { return t('ketch.refuse.full', 'The anchor-lift will not rise for nine.'); },
+  get crew() { return t('ketch.refuse.crew', 'This ship belongs to another party.'); },
+  get full() { return t('ketch.refuse.full', 'This crew is full.'); },
   get busy() { return t('ketch.refuse.busy', 'The anchor-lift does not answer. Try again in a moment.'); },
   get offline() { return t('ketch.refuse.offline', 'Only an online crew can board the Ketch.'); },
-  get away() { return t('ketch.refuse.away', 'There is no Ketch over Daggerfall now. She comes round every ten hours.'); },
+  get away() { return t('ketch.refuse.away', 'The Ketch is not over Daggerfall right now. It comes every ten hours.'); },
 });
 /** A refusal the relay said (its English) in the player's language - any other word as it came. Pure. */
 export function ketchRefusal(err) {
