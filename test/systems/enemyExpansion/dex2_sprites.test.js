@@ -1,17 +1,19 @@
 // DEX2 (bible/04-Characters/Enemy-Expansion.md section 6): DAGGERFALL ENEMY EXPANSION'S SPRITES ON THE TEXTURE DOOR - every
-// picture the tables draw registered from its one place (the authors' own, the fourth exception's repaints, or rebuilt
-// from the player's files), a stand-in's frames the registry's, the xml's scale ungated on a stand-in, a frame's
-// emission map beside it, and DFU's two import rules held of the data.
+// picture the tables draw registered once and built from the player's own files (ARN3, 2026-10-26: the authors' own
+// art and their repaints are gone; derived.json's records, the classic copies of dexStandIns.js and TES: Arena's
+// sprites stand in), a stand-in's frames the registry's, the xml's scale ungated on a stand-in, a frame's emission map
+// beside it, and DFU's two import rules held of the data.
 import '../../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DEX_ART } from '../../../src/systems/enemyExpansion/dexArt.js';
-import { dexSpriteEntries, dexXmlScales, installDexSprites, _resetDexSprites, DEX_OWN_ART, DEX_REPAINTED_ART } from '../../../src/systems/enemyExpansion/dexSprites.js';
+import { dexSpriteEntries, dexXmlScales, installDexSprites, _resetDexSprites } from '../../../src/systems/enemyExpansion/dexSprites.js';
+import { DEX_STAND_INS } from '../../../src/systems/enemyExpansion/dexStandIns.js';
 import { addVendorTextures, clearVendorTextures, vendorTextureStandIn, vendorFrameCount, isVendorArchive, decodedTextureBytes, preloadTextureArchive } from '../../../src/systems/textureReplacement.js';
-import { readPng } from '../../../tools/pngIO.mjs';
+import { readPng, writePng } from '../../../tools/pngIO.mjs';
 import { mobileBillboardSize } from '../../../src/world/rmbFlats.js';
 import { billboardXmlScale, unregisterBillboardXml, registerBillboardXml } from '../../../src/world/billboardXml.js';
 import { setValue } from '../../../src/systems/settings/settings.js';
@@ -19,56 +21,46 @@ import { setValue } from '../../../src/systems/settings/settings.js';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const rd = (p) => readFileSync(join(root, p), 'utf8');
 const VENDOR = 'vendor/daggerfall-enemy-expansion';
-const listed = (file) => JSON.parse(rd(`${VENDOR}/${file}`)).Files.map((f) => f.replace(/\.png$/, ''));
 const DERIVED = JSON.parse(rd(`${VENDOR}/derived.json`));
+/** ARN3: the install with the player's TES: Arena never read - the classic copies and the derived pictures alone. */
+const noArena = { arena: async () => 0 };
 
-test('DEX2 every picture DFU imports is one entry, from its one place - the own, the repainted, or rebuilt from the player\'s files; a picture past a gap is shipped and never drawn', () => {
-  const asked = [];
-  const entries = dexSpriteEntries({ fetchBytes: async (url) => { asked.push(url); return new Uint8Array(0); } });
+test('DEX2 every picture DFU imports is one entry, built from the player\'s own files - a record derived.json names, or (ARN3) a stand-in\'s copy where the authors\' art was; a picture past a gap is never registered', () => {
+  const entries = dexSpriteEntries();
   const keys = entries.map((e) => `${e.archive}_${e.record}-${e.frame}_${e.map}`);
   assert.equal(new Set(keys).size, keys.length, 'no picture twice');
-  const own = new Set(listed('daggerfall-enemy-expansion.files.json')), repainted = new Set(listed('repainted.files.json'));
-  const there = (name) => own.has(name) || repainted.has(name) || Object.hasOwn(DERIVED, name);
   for (const e of entries) {
     assert.equal(e.standIn, true, `${e.fileName}: a stand-in - no TEXTURE file carries ${e.archive}`);
     assert.ok(e.archive > 511, `${e.fileName}: a mod's archive`);
-    assert.ok(e.frame < DEX_ART[e.archive].frames[e.record], `${e.fileName}: within DFU's import`);
+    assert.equal(typeof e.build, 'function', `${e.fileName}: built, never fetched - no file of the mod's is carried`);
+    assert.equal(e.load, undefined, `${e.fileName}: nothing to load`);
   }
-  // every albedo DFU imports, from where it is
-  const albedo = entries.filter((e) => e.map === 'Albedo');
-  assert.equal(albedo.length, Object.values(DEX_ART).reduce((n, art) => n + art.frames.reduce((x, y) => x + y, 0), 0));
-  for (const e of albedo) {
-    assert.ok(there(e.fileName), `${e.fileName} is in one of the three places`);
-    assert.equal(typeof (Object.hasOwn(DERIVED, e.fileName) ? e.build : e.load), 'function', `${e.fileName}: rebuilt where derived.json names it, else its file`);
+  // every record of every archive's layout has its frame 0 - the derived archives from derived.json, frame for frame
+  for (const [a, art] of Object.entries(DEX_ART)) {
+    const mine = entries.filter((e) => e.archive === Number(a) && e.map === 'Albedo');
+    art.frames.forEach((n, r) => assert.ok(!n || mine.some((e) => e.record === r && e.frame === 0), `${a}_${r}-0`));
+    if (DEX_STAND_INS[a]) continue;
+    assert.equal(mine.length, art.frames.reduce((x, y) => x + y, 0), `${a}: every frame DFU imports`);
+    for (const e of mine) assert.ok(Object.hasOwn(DERIVED, e.fileName), `${e.fileName} is derived.json's`);
   }
-  // past a gap: shipped, never registered (1500_14-7 after 14-0; 1500_4-3..7 after 4-2 is missing)
-  for (const name of ['1500_14-7', '1500_4-3', '1500_4-7']) {
-    assert.ok(there(name), `${name} ships`);
-    assert.ok(!entries.some((e) => e.fileName === name), `${name} is past its record's gap - DFU never imports it`);
-  }
-  // the emission: a frame's own map, or its albedo where the archive's xml asks for emission and it has none (1614_20-2)
+  // past a gap: never registered (1500_14-7 after 14-0; 1500_4-3..7 after 4-2 is missing)
+  for (const name of ['1500_14-7', '1500_4-3', '1500_4-7']) assert.ok(!entries.some((e) => e.fileName === name), `${name} is past its record's gap - DFU never imports it`);
+  // the emission: a frame's own map, the Will-o'-wisp's alone now (the Hell Hound's were the authors')
   const lit = entries.filter((e) => e.map === 'Emission');
-  for (const e of lit) assert.ok(DEX_ART[e.archive].emission, `${e.fileName}: an emissive archive's`);
-  const hound = lit.find((e) => e.archive === 1614 && e.record === 20 && e.frame === 2);   // the Hell Hound's (1614)
-  assert.ok(hound && typeof hound.load === 'function', '1614_20-2 is lit');
-  return hound.load().then(() => assert.match(asked.at(-1), new RegExp(`${DEX_OWN_ART}1614_20-2\\.png$`), 'by its albedo, having no map of its own'));
+  assert.deepEqual([...new Set(lit.map((e) => e.archive))], [1610]);
+  assert.equal(lit.length, 200, 'its twenty records\' ten frames, each its map');
 });
 
-test('DEX2 a file is fetched from its own directory - a repaint from the fourth exception\'s (the Royal Knight\'s among them, AUDIT DEX B1), the authors\' own from theirs', async () => {
+test('ARN3 no picture of the authors\' is asked for: the stand-ins replace exactly the archives their art was in, and every copy builds from the player\'s classic records', async () => {
+  const theirs = Object.entries(DEX_ART).filter(([, art]) => art.from !== 'derived').map(([a]) => Number(a));
+  assert.deepEqual(Object.keys(DEX_STAND_INS).map(Number), theirs, 'every archive whose pictures were theirs, and no other');
   const asked = [];
-  const entries = dexSpriteEntries({ fetchBytes: async (url) => { asked.push(url); return new Uint8Array(0); } });
-  const one = (name) => entries.find((e) => e.fileName === name);
-  await one('1504_0-0').load();
-  await one('1505_0-0').load();
-  await one('1507_0-0').load();
-  await one('1614_0-0_Emission').load();
-  assert.match(asked[0], new RegExp(`${DEX_REPAINTED_ART}1504_0-0\\.png$`));
-  assert.match(asked[1], new RegExp(`${DEX_REPAINTED_ART}1505_0-0\\.png$`));
-  assert.match(asked[2], new RegExp(`${DEX_OWN_ART}1507_0-0\\.png$`));
-  assert.match(asked[3], new RegExp(`${DEX_OWN_ART}1614_0-0_Emission\\.png$`));
-  for (const [dir, file] of [[DEX_REPAINTED_ART, '1504_0-0.png'], [DEX_REPAINTED_ART, '1505_0-0.png'], [DEX_OWN_ART, '1507_0-0.png'], [DEX_OWN_ART, '1614_0-0_Emission.png']]) {
-    assert.ok(existsSync(join(root, 'public', dir, file)), `public/${dir}${file} ships`);
-  }
+  const ctx = { classicRgba: async (a, r, f) => { asked.push([a, r, f]); return { width: 2, height: 3, data: new Uint8Array(24) }; }, classicScale: async () => ({ width: -80, height: -80 }) };
+  const one = (name) => dexSpriteEntries().find((e) => e.fileName === name);
+  assert.deepEqual(await one('1504_0-1').build(ctx), { width: 2, height: 3, data: new Uint8Array(24) }, 'a repaint\'s copy: the frame it was painted over, at the mod\'s xml scale');
+  assert.deepEqual(asked.at(-1), [482, 0, 1]);
+  const barbarian = await one('1507_5-0').build(ctx);
+  assert.deepEqual([asked.at(-1), barbarian.scale], [[488, 5, 0], { width: -80, height: -80 }], 'the classic Barbarian\'s own sprite, at its own record\'s scale');
 });
 
 test('DEX2 DFU\'s import rules hold of the index: every archive has its 0-0, and no record of an archive stops before its first frame', () => {
@@ -78,17 +70,20 @@ test('DEX2 DFU\'s import rules hold of the index: every archive has its 0-0, and
   }
 });
 
-test('DEX2 a stand-in\'s frames are the registry\'s - each record\'s own, as many as DFU imports - where it answered one for all, counted again when a registration moves the tiers (mutants: one frame; the counts never stale)', (t) => {
+test('DEX2 a stand-in\'s frames are the registry\'s - each record\'s own, as many as are registered - where it answered one for all, counted again when a registration moves the tiers (mutants: one frame; the counts never stale)', (t) => {
   t.after(() => { clearVendorTextures(); _resetDexSprites(); unregisterBillboardXml('daggerfall-enemy-expansion'); });
   clearVendorTextures();
-  installDexSprites({ fetchBytes: async () => new Uint8Array(0) });
+  installDexSprites(noArena);
+  const entries = dexSpriteEntries().filter((e) => e.map === 'Albedo');
   for (const [a, art] of Object.entries(DEX_ART)) {
     assert.ok(isVendorArchive(Number(a)), `${a} goes down the stand-in branch`);
     const tex = vendorTextureStandIn(Number(a));
-    assert.equal(tex.recordCount, art.frames.length, `${a}'s records`);
-    assert.deepEqual(art.frames.map((_, r) => tex.getFrameCount(r)), art.frames, `${a}'s frames by record`);
+    const counts = art.frames.map((_, r) => entries.filter((e) => e.archive === Number(a) && e.record === r).length);
+    assert.equal(tex.recordCount, counts.length, `${a}'s records`);
+    assert.deepEqual(counts.map((_, r) => tex.getFrameCount(r)), counts, `${a}'s frames by record`);
   }
-  assert.equal(vendorFrameCount(1507, 5), 19, 'the Barbarian\'s (1507) attack: nineteen frames');
+  assert.equal(vendorFrameCount(1507, 5), 6, 'the Barbarian\'s (1507) attack: his own six again (TEXTURE.488 record 5) - the authors\' nineteen are gone');
+  assert.equal(vendorFrameCount(1504, 5), DEX_ART[1504].frames[5], 'a repaint\'s copy keeps the mod\'s own frame count');
   // a gap ends a record's frames, as DFU's import stops at the first missing one
   addVendorTextures([0, 1, 3].map((frame) => ({ archive: 9601, record: 0, frame, standIn: true, load: async () => new Uint8Array(0) })));
   assert.equal(vendorFrameCount(9601, 0), 2, 'frames 0 and 1 - frame 3 past the gap is not imported');
@@ -102,9 +97,10 @@ test('DEX2 a stand-in\'s frames are the registry\'s - each record\'s own, as man
 test('DEX2 a stand-in\'s xml scale applies whatever AssetInjection says - its pictures are the port\'s own; a classic sprite\'s waits for the switch, as DFU\'s mobile unit does', (t) => {
   t.after(() => { setValue('Enhancements', 'AssetInjection', 'False'); clearVendorTextures(); _resetDexSprites(); unregisterBillboardXml('daggerfall-enemy-expansion'); });
   clearVendorTextures();
-  installDexSprites({ fetchBytes: async () => new Uint8Array(0) });
+  installDexSprites(noArena);
   assert.deepEqual(billboardXmlScale(1530, 0), { x: 1.3, y: 1.3 }, 'the archive xml\'s scale, registered');
-  assert.deepEqual(dexXmlScales()[1507][0], [0.385, 0.365]);
+  assert.deepEqual(dexXmlScales()[1504][0], [0.7265625, 0.7265625], 'a repaint\'s copy keeps the scale written for its sprite');
+  assert.equal(dexXmlScales()[1507], undefined, 'ARN3: a copy of another sprite stands at its own record\'s scale, not the authors\' art\'s');
   setValue('Enhancements', 'AssetInjection', 'False');
   const standIn = { vendor: true, archive: 1530, getSize: () => ({ width: 100, height: 100 }), getScale: () => ({ width: 0, height: 0 }) };
   const classic = { archive: 1530, getSize: () => ({ width: 100, height: 100 }), getScale: () => ({ width: 0, height: 0 }) };
@@ -118,7 +114,7 @@ test('DEX2 a stand-in\'s xml scale applies whatever AssetInjection says - its pi
 test('DEX2 A STAND-IN\'S XML-SCALED SIZE IS ONE CACHED OBJECT (AUDIT DEX B7): mobileBillboardSize answers the same object for a texture\'s record frame after frame - it minted two a call, per foe per frame - and a new registration, a table registered again or a registrant\'s switch moves it (mutants: the cache never kept; blind to a switch; blind to a registration)', (t) => {
   t.after(() => { unregisterBillboardXml('b7-later'); unregisterBillboardXml('daggerfall-enemy-expansion'); clearVendorTextures(); _resetDexSprites(); });
   clearVendorTextures();
-  installDexSprites({ fetchBytes: async () => new Uint8Array(0) });
+  installDexSprites(noArena);
   const standIn = { vendor: true, archive: 1530, getSize: () => ({ width: 100, height: 100 }), getScale: () => ({ width: 0, height: 0 }) };
   const one = mobileBillboardSize(standIn, 0);
   assert.equal(mobileBillboardSize(standIn, 0), one, 'the same object, asked again');
@@ -147,12 +143,17 @@ test('DEX2 A STAND-IN\'S XML-SCALED SIZE IS ONE CACHED OBJECT (AUDIT DEX B7): mo
 });
 
 // AUDIT DEX B5: A MOBILE'S PICTURES ARE THE GPU'S ONCE UPLOADED. Every picture of an archive was decoded to RGBA on the CPU
-// when the archive first loaded and kept for the session - the 5,500 shipped pictures are ~350 MB of it, the classic
-// Barbarian's 1507 and 1508 86 MB the first time one is met - where DFU imports a mobile's pictures `readOnly: true`
-// (TextureReplacement.cs:574, :609): on the GPU alone. Driven through the real pipeline and the real renderer's upload
-// door (a stub context), with the shipped files decoded as the browser decodes them (disc22d_flail_icon's stub).
-const pngBytes = (file) => { const b = readFileSync(join(root, 'public', file)); return b.readUInt32BE(16) * b.readUInt32BE(20) * 4; };
-const shipped = (url) => /art\/daggerfall-enemy-expansion(?:-repainted)?\/[^/]+\.png$/.exec(url)[0];
+// when the archive first loaded and kept for the session - the mod's 5,500 shipped pictures were ~350 MB of it - where DFU
+// imports a mobile's pictures `readOnly: true` (TextureReplacement.cs:574, :609): on the GPU alone. Driven through the
+// real pipeline and the real renderer's upload door (a stub context), with PNGs decoded as the browser decodes them
+// (disc22d_flail_icon's stub). ARN3: the mod's own files are gone, so two archives of the test's own stand in - one
+// plain (9801), one with an emission map beside each frame (9802) - registered as the door registers any readOnly art.
+const PLAIN = 9801, LIT = 9802;
+const picture = (w, h, v) => writePng({ width: w, height: h, data: new Uint8Array(w * h * 4).fill(v) });
+const ART = new Map();   // file name -> PNG bytes
+for (const [rec, n] of [[0, 4], [1, 4], [5, 6]]) for (let f = 0; f < n; f++) ART.set(`${PLAIN}_${rec}-${f}`, picture(30 + rec, 40 + f, 100 + f));
+for (let f = 0; f < 3; f++) { ART.set(`${LIT}_0-${f}`, picture(20, 24, 50)); ART.set(`${LIT}_0-${f}_Emission`, picture(20, 24, 200)); }
+const pngBytes = (name) => { const b = ART.get(name); return b.readUInt32BE(16) * b.readUInt32BE(20) * 4; };
 function uploadRenderer(Renderer) {
   let made = 0;
   const gl = new Proxy({}, { get: (_, k) => (k === 'createTexture' ? () => ({ id: ++made }) : typeof k === 'string' && /^[A-Z_0-9]+$/.test(k) ? 1 : () => {}) });
@@ -162,60 +163,72 @@ function uploadRenderer(Renderer) {
 }
 const landed = async () => { for (let i = 0; i < 20; i++) await new Promise((res) => setTimeout(res, 5)); };
 
-test('DEX2 A MOBILE\'S PICTURES ARE THE GPU\'S ONCE UPLOADED (AUDIT DEX B5): the Barbarian\'s archive decoded whole at its first load (as DFU imports it) and let go of, picture by picture, as the upload takes it - 43.8 MB to none - its stand-in measuring as before; a refresh decodes none back; a frame whose GPU copy was evicted draws nothing until it is decoded again, a hit asks nothing, and an emission map comes back with its albedo (mutants: the release never made; the preload decodes the released; the pending picture uploaded; a hit decoded; the size forgotten; the map after its albedo)', async (t) => {
+test('DEX2 A MOBILE\'S PICTURES ARE THE GPU\'S ONCE UPLOADED (AUDIT DEX B5): an archive decoded whole at its first load (as DFU imports it) and let go of, picture by picture, as the upload takes it, its stand-in measuring as before; a refresh decodes none back; a frame whose GPU copy was evicted draws nothing until it is decoded again, a hit asks nothing, and an emission map comes back with its albedo (mutants: the release never made; the preload decodes the released; the pending picture uploaded; a hit decoded; the size forgotten; the map after its albedo)', async (t) => {
   const was = { cib: globalThis.createImageBitmap, oc: globalThis.OffscreenCanvas };
   globalThis.createImageBitmap = async (blob) => ({ ...readPng(new Uint8Array(await blob.arrayBuffer())), close() {} });
   globalThis.OffscreenCanvas = class {
     constructor(w, h) { this.width = w; this.height = h; }
     getContext() { let bmp = null; return { drawImage: (b) => { bmp = b; }, getImageData: () => ({ width: bmp.width, height: bmp.height, data: new Uint8ClampedArray(bmp.data) }) }; }
   };
-  t.after(() => { globalThis.createImageBitmap = was.cib; globalThis.OffscreenCanvas = was.oc; clearVendorTextures(); _resetDexSprites(); unregisterBillboardXml('daggerfall-enemy-expansion'); });
+  t.after(() => { globalThis.createImageBitmap = was.cib; globalThis.OffscreenCanvas = was.oc; clearVendorTextures(); });
   clearVendorTextures();
-  let slowMaps = false;   // an emission map's fetch held back - the albedo, asked beside it, would land first
-  installDexSprites({ fetchBytes: async (url) => {
-    if (slowMaps && /_Emission\.png$/.test(url)) await new Promise((res) => setTimeout(res, 60));
-    return new Uint8Array(readFileSync(join(root, 'public', shipped(url))));
-  } });
+  let slowMaps = false;   // an emission map's load held back - the albedo, asked beside it, would land first
+  const load = (name) => async () => {
+    if (slowMaps && /_Emission$/.test(name)) await new Promise((res) => setTimeout(res, 60));
+    return new Uint8Array(ART.get(name));
+  };
+  addVendorTextures([...ART.keys()].map((name) => {
+    const [, a, rec, f, map] = /^(\d+)_(\d+)-(\d+)(?:_(\w+))?$/.exec(name);
+    return { archive: Number(a), record: Number(rec), frame: Number(f), map: map ?? 'Albedo', standIn: true, readOnly: true, fileName: name, load: load(name) };
+  }));
   const { Renderer } = await import('../../../src/render/renderer.js');
   const { createDataPipeline } = await import('../../../src/scenes/dataPipeline.js');
   const r = uploadRenderer(Renderer);
   const pipe = createDataPipeline({ renderer: r, arch: null, palette: null, fetch: async (n) => { throw new Error(`no ${n} here`); } });
-  const frames = (a) => DEX_ART[a].frames.flatMap((n, rec) => Array.from({ length: n }, (_, f) => [rec, f]));
+  const frames = (a) => [...ART.keys()].filter((n) => n.startsWith(`${a}_`) && !n.endsWith('_Emission')).map((n) => /_(\d+)-(\d+)$/.exec(n).slice(1).map(Number));
   const before = decodedTextureBytes();
-  const barbarian = await pipe.getTexture(1507);
-  const whole = frames(1507).reduce((n, [rec, f]) => n + pngBytes(`${DEX_OWN_ART}1507_${rec}-${f}.png`), 0);
-  assert.equal(frames(1507).length, 160);
-  assert.equal(decodedTextureBytes() - before, whole, `the first load decodes every picture DFU imports (${(whole / 1048576).toFixed(1)} MB)`);
-  const sizes = DEX_ART[1507].frames.map((_, rec) => barbarian.getSize(rec));
-  assert.ok(sizes.every((z) => z.width > 1 && z.height > 1), 'measured off its pictures');
-  for (const [rec, f] of frames(1507)) pipe.uploadRecordFrame(1507, rec, f);
-  assert.equal(r.textures.size, 160, 'every frame on the GPU');
+  const plain = await pipe.getTexture(PLAIN);
+  const whole = frames(PLAIN).reduce((n, [rec, f]) => n + pngBytes(`${PLAIN}_${rec}-${f}`), 0);
+  assert.equal(frames(PLAIN).length, 14);
+  assert.equal(decodedTextureBytes() - before, whole, 'the first load decodes every picture DFU imports');
+  const sizes = [0, 1, 5].map((rec) => plain.getSize(rec));
+  assert.deepEqual(sizes.map((z) => [z.width, z.height]), [[30, 40], [31, 40], [35, 40]], 'measured off its pictures');
+  for (const [rec, f] of frames(PLAIN)) pipe.uploadRecordFrame(PLAIN, rec, f);
+  assert.equal(r.textures.size, 14, 'every frame on the GPU');
   assert.equal(decodedTextureBytes() - before, 0, 'and none on the CPU');
-  assert.deepEqual(DEX_ART[1507].frames.map((_, rec) => barbarian.getSize(rec)), sizes, 'the stand-in measures as before: a picture let go keeps its size');
-  await preloadTextureArchive(1507);
+  assert.deepEqual([0, 1, 5].map((rec) => plain.getSize(rec)), sizes, 'the stand-in measures as before: a picture let go keeps its size');
+  await preloadTextureArchive(PLAIN);
   assert.equal(decodedTextureBytes() - before, 0, 'an archive\'s refresh (a tier\'s epoch moved) decodes nothing the GPU holds');
   // PLACE-LRU let a frame's GPU copy go, and a foe draws it again
-  r.evictTexture('1507_5#3');
-  pipe.uploadRecordFrame(1507, 5, 3);
-  assert.equal(r.textures.has('1507_5#3'), false, 'on its way: nothing at its key - the draw asks again');
+  r.evictTexture(`${PLAIN}_5#3`);
+  pipe.uploadRecordFrame(PLAIN, 5, 3);
+  assert.equal(r.textures.has(`${PLAIN}_5#3`), false, 'on its way: nothing at its key - the draw asks again');
   await landed();
-  assert.equal(decodedTextureBytes() - before, pngBytes(`${DEX_OWN_ART}1507_5-3.png`), 'decoded again, that frame alone');
-  pipe.uploadRecordFrame(1507, 5, 3);
-  assert.ok(r.textures.has('1507_5#3'), 'and drawn');
+  assert.equal(decodedTextureBytes() - before, pngBytes(`${PLAIN}_5-3`), 'decoded again, that frame alone');
+  pipe.uploadRecordFrame(PLAIN, 5, 3);
+  assert.ok(r.textures.has(`${PLAIN}_5#3`), 'and drawn');
   assert.equal(decodedTextureBytes() - before, 0, 'and let go');
-  pipe.uploadRecordFrame(1507, 5, 2);
+  pipe.uploadRecordFrame(PLAIN, 5, 2);
   await landed();
   assert.equal(decodedTextureBytes() - before, 0, 'a frame the GPU holds asks no decode');
+  // and at the renderer's own door: a picture on its way, asked under a key the GPU holds, is not decoded; under an
+  // empty key it is
+  let asks = 0;
+  const onItsWay = { width: 1, height: 1, colors: new Uint8ClampedArray(4), pending: () => { asks++; } };
+  r.uploadTexture(PLAIN, '5#2', onItsWay);
+  assert.equal(asks, 0, 'a hit asks no decode');
+  r.uploadTexture(PLAIN, '9#0', onItsWay);
+  assert.equal(asks, 1, 'an empty key asks it');
   // an emissive archive's frame: its map evicted with it, both back together (the map decoded before its albedo)
-  await pipe.getTexture(1614);
-  for (const [rec, f] of frames(1614)) pipe.uploadRecordFrame(1614, rec, f);
-  assert.equal(decodedTextureBytes() - before, 0, 'the Hell Hound\'s pictures and maps, all on the GPU');
-  assert.ok(r.emissionTextures.has('1614_0#0'), 'its own map');
-  r.evictTexture('1614_0#0'); r.evictEmissionTexture('1614_0#0');
+  await pipe.getTexture(LIT);
+  for (const [rec, f] of frames(LIT)) pipe.uploadRecordFrame(LIT, rec, f);
+  assert.equal(decodedTextureBytes() - before, 0, 'the lit archive\'s pictures and maps, all on the GPU');
+  assert.ok(r.emissionTextures.has(`${LIT}_0#0`), 'its own map');
+  r.evictTexture(`${LIT}_0#0`); r.evictEmissionTexture(`${LIT}_0#0`);
   slowMaps = true;
-  for (let i = 0; i < 60 && !r.textures.has('1614_0#0'); i++) { pipe.uploadRecordFrame(1614, 0, 0); await new Promise((res) => setTimeout(res, 5)); }   // a foe drawn, frame after frame
-  assert.ok(r.textures.has('1614_0#0'), 'drawn again');
-  assert.ok(r.emissionTextures.has('1614_0#0'), 'and its map with it - never the albedo first, unlit for good');
+  for (let i = 0; i < 60 && !r.textures.has(`${LIT}_0#0`); i++) { pipe.uploadRecordFrame(LIT, 0, 0); await new Promise((res) => setTimeout(res, 5)); }   // a foe drawn, frame after frame
+  assert.ok(r.textures.has(`${LIT}_0#0`), 'drawn again');
+  assert.ok(r.emissionTextures.has(`${LIT}_0#0`), 'and its map with it - never the albedo first, unlit for good');
   assert.equal(decodedTextureBytes() - before, 0);
 });
 

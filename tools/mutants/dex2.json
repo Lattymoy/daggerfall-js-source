@@ -30,16 +30,6 @@
   ]
  },
  {
-  "name": "DEX2-the-albedo-never-the-emission",
-  "file": "src/systems/enemyExpansion/dexSprites.js",
-  "old": "        else if (art.emission) out.push(",
-  "new": "        else if (false) out.push(",
-  "why": "an emissive archive's frame with no map of its own goes unlit",
-  "tests": [
-   "test/systems/enemyExpansion/dex2_sprites.test.js"
-  ]
- },
- {
   "name": "DEX2-a-frame-emission-map-dropped",
   "file": "src/scenes/dataPipeline.js",
   "old": "    const lit = swapFrame ? decodedTexture(archive, record, frame, 'Emission') : null;",

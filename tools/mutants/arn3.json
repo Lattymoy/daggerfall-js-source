@@ -1,0 +1,66 @@
+[
+ {
+  "name": "ARN3-arena-attack-from-the-side",
+  "file": "src/systems/enemyExpansion/dexArena.js",
+  "old": "  if (facing === 0 && n >= 12) return { file, frames: range(8, 12) };",
+  "new": "  if (false) return { file, frames: range(8, 12) };",
+  "why": "the front attack drawn from the walk - Arena's only attack frames never shown",
+  "tests": ["test/systems/enemyExpansion/arn3_standins.test.js"]
+ },
+ {
+  "name": "ARN3-arena-corpse-the-first-death-frame",
+  "file": "src/systems/enemyExpansion/dexArena.js",
+  "old": "{ file: 6, frames: [counts[6] - 1] }",
+  "new": "{ file: 6, frames: [0] }",
+  "why": "the corpse a creature still falling",
+  "tests": ["test/systems/enemyExpansion/arn3_standins.test.js"]
+ },
+ {
+  "name": "ARN3-arena-not-mirrored",
+  "file": "src/systems/enemyExpansion/dexArena.js",
+  "old": "data[y * width + x] = src[y * width + (width - 1 - x)];",
+  "new": "data[y * width + x] = src[y * width + x];",
+  "why": "Arena's facing kept - a creature seen from the side walks backwards",
+  "tests": ["test/systems/enemyExpansion/arn3_standins.test.js"]
+ },
+ {
+  "name": "ARN3-arena-copies-never-removed",
+  "file": "src/systems/enemyExpansion/dexArena.js",
+  "old": "  remove((e) => drawn.has(e.archive));",
+  "new": "  void drawn;",
+  "why": "a classic copy's frames past Arena's left standing in its records",
+  "tests": ["test/systems/enemyExpansion/arn3_standins.test.js"]
+ },
+ {
+  "name": "ARN3-classic-ranged-facing-lost",
+  "file": "src/systems/enemyExpansion/dexStandIns.js",
+  "old": "if (record >= 20 && record < 30 && frames[5 + (record % 5)] > 0) return 5 + (record % 5);",
+  "new": "if (record >= 20 && record < 30 && frames[5] > 0) return 5;",
+  "why": "every facing's spell drawn from the front's attack",
+  "tests": ["test/systems/enemyExpansion/arn3_standins.test.js"]
+ },
+ {
+  "name": "ARN3-classic-hurt-from-the-attack",
+  "file": "src/systems/enemyExpansion/dexStandIns.js",
+  "old": "if (record >= 10 && record < 20 && frames[record % 5] > 0) return record % 5;",
+  "new": "if (record >= 10 && record < 20 && frames[5 + (record % 5)] > 0) return 5 + (record % 5);",
+  "why": "a stand-in idle drawn from the attack",
+  "tests": ["test/systems/enemyExpansion/arn3_standins.test.js"]
+ },
+ {
+  "name": "ARN3-the-authors-xml-on-every-copy",
+  "file": "src/systems/enemyExpansion/dexSprites.js",
+  "old": "if (art.scale && (!s || s.xml)) out[a] = art.scale;",
+  "new": "if (art.scale) out[a] = art.scale;",
+  "why": "a copy of another sprite sized by the scale written for the authors' art",
+  "tests": ["test/systems/enemyExpansion/dex2_sprites.test.js"]
+ },
+ {
+  "name": "ARN3-the-unpainted-frames-unread",
+  "file": "src/systems/enemyExpansion/dexStandIns.js",
+  "old": "    if (DEX_UNPAINTED[`${archive}_${record}-0`]) {",
+  "new": "    if (false) {",
+  "why": "a repaint drawn record for record from its source, its frames out of order",
+  "tests": ["test/systems/enemyExpansion/arn3_standins.test.js"]
+ }
+]

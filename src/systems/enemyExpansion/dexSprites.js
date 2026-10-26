@@ -14,8 +14,7 @@
 // A stand-in's frames are the registry's (textureReplacement.js vendorFrameCount), its xml scale applies ungated
 // (world/rmbFlats.js mobileBillboardSize), and a frame's emission map lights it (scenes/dataPipeline.js uploadRecordFrame).
 // DFU's import is the index's (dexArt.js, tools/dexExtract.mjs): a record's frames from 0 to the first one missing,
-// every archive's 0-0 there (a custom archive imports nothing without it), and a frame of an archive whose xml asks for
-// emission lit by its own map, or by its albedo where it has none - the Will-o'-wisp's, the one left.
+// every archive's 0-0 there (a custom archive imports nothing without it), and an emissive frame lit by its own map.
 
 import { DEX_ART } from './dexArt.js';
 import DERIVED from '../../../vendor/daggerfall-enemy-expansion/derived.json' with { type: 'json' };
@@ -50,9 +49,10 @@ export function dexSpriteEntries() {
         const build = (from) => (ctx) => buildDerivedPicture(DERIVED[from], ctx.classicRgba);
         out.push({ archive, record, frame, map: 'Albedo', standIn: true, readOnly: true, fileName: name, build: build(name) });
         if (standIn) continue;   // ARN3: a stand-in's art carries no emission of the authors'
-        // the emission: the frame's own map, or - the archive's xml asking for emission - its albedo, lit
+        // the emission: the frame's own map - the Will-o'-wisp's, TEXTURE.379's frames again. DFU's other arm, an
+        // emissive archive's albedo lit where a frame has no map (1614.xml), was the Hell Hound's alone, and its art
+        // was the authors' (ARN3)
         if (maps.has(frame) && DERIVED[`${name}_Emission`]) out.push({ archive, record, frame, map: 'Emission', standIn: true, readOnly: true, fileName: `${name}_Emission`, build: build(`${name}_Emission`) });
-        else if (art.emission) out.push({ archive, record, frame, map: 'Emission', standIn: true, readOnly: true, fileName: `${name}_Emission`, build: build(name) });
       }
     });
   }

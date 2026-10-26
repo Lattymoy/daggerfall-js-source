@@ -1,0 +1,34 @@
+[
+ {
+  "name": "ARN1-cfa-bits-least-significant-first",
+  "file": "src/formats/tesArena/tesArenaCfa.js",
+  "old": "(packed[row + byte] >> (7 - (b & 7))) & 1",
+  "new": "(packed[row + byte] >> (b & 7)) & 1",
+  "why": "the demux reads each byte's bits from the low end - every packed sprite scrambled",
+  "tests": ["test/formats/tesArena.test.js"]
+ },
+ {
+  "name": "ARN1-cfa-eight-bits-translated",
+  "file": "src/formats/tesArena/tesArenaCfa.js",
+  "old": "for (let x = 0; x < Math.min(w, wc); x++) px[out + x] = packed[row + x];",
+  "new": "for (let x = 0; x < Math.min(w, wc); x++) px[out + x] = lut[packed[row + x]] ?? 0;",
+  "why": "an 8-bit CFA's indices looked up in a table it does not have",
+  "tests": ["test/formats/tesArena.test.js"]
+ },
+ {
+  "name": "ARN1-bsa-entry-start-not-the-previous-end",
+  "file": "src/formats/tesArena/tesArenaBsa.js",
+  "old": "      offset += size;",
+  "new": "      offset += 0;",
+  "why": "every file read from byte 2",
+  "tests": ["test/formats/tesArena.test.js"]
+ },
+ {
+  "name": "ARN1-col-version-unread",
+  "file": "src/formats/tesArena/tesArenaPalette.js",
+  "old": "if (v.getUint32(4, true) !== TES_ARENA_COL_VERSION)",
+  "new": "if (false)",
+  "why": "a palette of another version taken for Arena's",
+  "tests": ["test/formats/tesArena.test.js"]
+ }
+]
