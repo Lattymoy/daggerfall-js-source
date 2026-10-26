@@ -150,6 +150,17 @@ game asks the game through the staff hook's door: `places?` (a region's named pl
 staff member's region, the place on their pixel or -1, their pixel). The boot hands its maps over with
 `gameMaps(new MapsFile())`. A panel in a tab of its own can stage an area alone.
 
+PAST THE BAY (AUDIT RELEASE R2-7, 2026-10-26, `01-Overview/audits/Audit-Release-R2.md`; the owner: "Take care of
+exclusions and gaps"). An event's pixel is the world's (the law's STAFF_EVENT_PIXEL_BOUND, the wire's WORLD_PIXEL_BOUND -
+the event, and its place's `sev` word to the place's cell), so an AREA's event stands in a province as on the Bay. A
+TOWN's event runs as the town's raid (section 4: its town by region and MAPS.BSA location), and the raids are the Bay's
+until WW6 (`03-World/World-Wide.md`): a town's event past the Bay is refused by name (`event-bad-town-past-bay`). The
+picker lists a province's region (62..70) from the world's registry (`gamePlaces`, kept as the boot makes it - its listed
+places in the province's theatre: the capitals, cities, towns and villages) and offers each as an area at its pixel
+(`loc` -1), so what it offers runs; `here?` past the Bay names the area at the place on the staff member's pixel. Left
+to WW6: a town's own event past the Bay - the raids' words (`net/wire.js` validRaidIn, the Bay's pixels), a town past the
+Bay keyed by its own index, its rect's walls and its watch.
+
 ## 7. Versions and what a deploy does
 
 - Relay `world256` (`STAFF_EVENT_RELAY_MIN`): `staffEventLaw.js`, `staffEventReceipt.js` and `server/src/staffEvents.js` join the bundle. An

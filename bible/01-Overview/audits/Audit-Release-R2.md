@@ -43,7 +43,7 @@ finding there would be routed, not fixed - none was. The code says what each fix
 | R2-4 | MED | The quest layer's region name was `''` past the Bay: no NPC there knew a quest's place or person there (START3's province starts among them), and "Where am I?" in a lair said "in ." | FIXED and pinned |
 | R2-5 | MED | A quest giver past the Bay has no remote site to give: every quest that wants another town or a dungeon parses to no work (a guild's "no work", a Daedra's "no task here, keep your gold") | RECORDED - the owner's design (proposal below) |
 | R2-6 | LOW | A vampire turned past the Bay is not carried to a cemetery (the region's MAPS rows are the transfer's search) | FIXED and pinned (the second pass) |
-| R2-7 | LOW | A staff event cannot be staged past the Bay: its place's pixel is the Bay's (`staffEventLaw.js`), the place picker lists no province's places, and the event runs as a raid, which is the Bay's until WW6 | RECORDED - WW6's |
+| R2-7 | LOW | A staff event cannot be staged past the Bay: its place's pixel is the Bay's (`staffEventLaw.js`), the place picker lists no province's places, and the event runs as a raid, which is the Bay's until WW6 | FIXED and pinned for an area's event (the second pass); a town's own event past the Bay recorded as WW6's |
 | R2-8 | LOW | A POI (the builder's tool) stands on the Bay's map alone: its law, its id `py * 1000 + px` and its feed's key | RECORDED - proposal below |
 | R2-9 | NOTE | A deed in one of a capital's slices (the Imperial City is 25 pixels, each slice its own map id) is DFU's (region, key) law: a house of the same key in another slice of the same capital would read as owned | NOT REPRODUCED - routed to the Imperial City's stream |
 
@@ -131,13 +131,22 @@ the same province; none at all (no lair stands - their templates unread), the ne
 host's own skip stands (AUDIT CAPTAIN'S SEA P4). HOST-SPLIT: the law is the module's, and bootWorld is two logical lines
 shorter (the host asks one positional call).
 
-### R2-7 - a staff event past the Bay (RECORDED - WW6's)
+### R2-7 - a staff event past the Bay (FIXED for an area, the second pass; a town's is WW6's)
 
-`src/net/staffPlaces.js:"export function staffPlaces(maps, r) {"`. The event's place is a Bay pixel by its law (the
-account service, the relay and the game read one copy), the picker lists a region's MAPS.BSA places (none for 62..70),
-and an event runs as a town's raid runs (RAID2/RAID3), whose words are the Bay's until WW6 ("the raids past the Bay").
-Staff can stage an event on the Bay only; the panel's list for a province is empty rather than wrong. The three move
-together with WW6.
+`src/net/staffEvent/staffEventLaw.js:"export const STAFF_EVENT_PIXEL_BOUND = 8192;"`,
+`src/net/staffPlaces.js:"function provincePlaces(maps, region, places) {"`. The event's place was a Bay pixel by its law
+(the account service that signs it, the relay that keeps its book and its place's cell, and the game read one copy), the
+picker listed a region's MAPS.BSA places (none for 62..70), and an event runs as a town's raid runs (RAID2/RAID3). Now:
+an event's pixel and its place's word are the world's (the law's bound held equal to the wire's WORLD_PIXEL_BOUND - the
+law imports nothing), so an AREA's event stands, counts and calls its boss past the Bay as on it (the game's
+`staffRaidHere`: outdoors on its pixel; its cell `worldRoom` past the Bay). A TOWN's event stays the Bay's: its run is
+the town's raid, keyed by region and MAPS.BSA location, and the raids are the Bay's until WW6 - so the law refuses a
+town's event past the Bay by name (`town-past-bay`, the panel's `event-bad-town-past-bay`), and the picker offers a
+province's places (the world's registry's listed places of its theatre, kept for the panel as the boot makes it -
+`gamePlaces`) each as an AREA at its pixel, so what it offers runs. WW6's remainder, precisely: a town's own event past
+the Bay needs the raids' words on the world's pixels (`net/wire.js` validRaidIn), a town past the Bay keyed by its own
+index (a province's places are no MAPS.BSA row), and the raid's rect, walls and watch there. Relay `world260` re-hashed in
+place (undeployed). `11-Multiplayer/Staff-Events.md` section 6 says the same.
 
 ### R2-8 - a POI past the Bay (RECORDED)
 
@@ -216,16 +225,20 @@ GRAVE-PARTY-the-session-asks-no-margin (the session's cell margin, beside the ol
 
 The second pass (the owner's "exclusions and gaps"): `test/world/worldWide/auditrelease_r2_gaps.test.js` - R2-6 the draw
 over the district's cemeteries in map-id order (a ruin never taken), the nearest of the districts about it, the Bay's
-nearest where no lair stands, DFU's own on the Bay, the host's one call. Mutants `tools/mutants/auditrelease_r2_gaps.json`
-(R2-6: 10, all dead). PIN MOVED (AUDIT RELEASE R2-6): `test/systems/guildswap.test.js` (the pure pick is the crypt
-module's, the host asks it); one record re-aimed by content (dead): `disc10.json`'s
-DISC10-D-V4-the-transfer-never-leaves-the-interior.
+nearest where no lair stands, DFU's own on the Bay, the host's one call; R2-7 an area's event past the Bay through the law,
+the relay's parse of its word and the game's book, a town's refused by name, the picker's province from the registry as
+areas, `here?` past the Bay, the host keeping the registry. Mutants `tools/mutants/auditrelease_r2_gaps.json` (R2-6: 10,
+R2-7: 8, all dead). PIN MOVED (AUDIT RELEASE R2-6): `test/systems/guildswap.test.js` (the pure pick is the crypt module's,
+the host asks it); one record re-aimed by content (dead): `disc10.json`'s DISC10-D-V4-the-transfer-never-leaves-the-interior.
+PIN MOVED (AUDIT RELEASE R2-7): `test/net/staffevent_law.test.js` (the word's pixel 8192 past the wire's grid, not 1000),
+`test/server/staffevent_relay.test.js` (`px: 8192` the pixel's refusal, `px: 1000` a town's past the Bay).
 
 ## Versions
 
 Relay `world260` re-hashed in place, undeployed (its row in `test/net/relayversion.test.js` names the bytes before it):
 R2-1, R2-2 and R2-3 are the relay's law. No frame changes shape; the client says a word past the Bay only to the
-world-wide relay. The account service is unchanged (acct189 stands); no migration.
+world-wide relay. The account service is unchanged (acct189 stands); no migration. The second pass: R2-7's law is the relay's too - `world260` re-hashed in place again (its
+row names the bytes before it); the account service reads the same law (no version moved, no migration).
 
 ## What this lane could not check
 

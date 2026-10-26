@@ -78,5 +78,69 @@
     "new": "    const pos = vampireCryptPixel(playerTravelPixel(), _questRegionIndex(), maps, null);",
     "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
     "note": "the host never hands the registry"
+  },
+  {
+    "name": "R2-7-event-pixel-the-bays",
+    "file": "src/net/staffEvent/staffEventLaw.js",
+    "old": "  if (!worldPx(e.px) || !worldPx(e.py)) return 'pixel';",
+    "new": "  if (!intIn(e.px, 0, 999) || !intIn(e.py, 0, 499)) return 'pixel';",
+    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "note": "the head's law: an area past the Bay refused"
+  },
+  {
+    "name": "R2-7-world-bound-off",
+    "file": "src/net/staffEvent/staffEventLaw.js",
+    "old": "export const STAFF_EVENT_PIXEL_BOUND = 8192;",
+    "new": "export const STAFF_EVENT_PIXEL_BOUND = 8193;",
+    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "note": "the law's bound past the wire's"
+  },
+  {
+    "name": "R2-7-town-past-bay-taken",
+    "file": "src/net/staffEvent/staffEventLaw.js",
+    "old": "  if (e.loc >= 0 && !staffTownPixelOk(e.px, e.py)) return 'town-past-bay';",
+    "new": "",
+    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "note": "a town's event past the Bay staged, which no raid runs"
+  },
+  {
+    "name": "R2-7-word-pixel-the-bays",
+    "file": "src/net/staffEvent/staffEventLaw.js",
+    "old": "  if (!worldPx(m.px) || !worldPx(m.py) || !intIn(m.n, 0, STAFF_EVENT_WORD_KILLS_MAX)",
+    "new": "  if (!intIn(m.px, 0, 999) || !worldPx(m.py) || !intIn(m.n, 0, STAFF_EVENT_WORD_KILLS_MAX)",
+    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "note": "the place's word past the Bay refused: no kill counted, no boss"
+  },
+  {
+    "name": "R2-7-province-unlisted",
+    "file": "src/net/staffPlaces.js",
+    "old": "  if (region !== null && isProvinceRegion(region)) return provincePlaces(maps, region, places);   // AUDIT RELEASE R2-7",
+    "new": "",
+    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "note": "the picker's province empty"
+  },
+  {
+    "name": "R2-7-offered-as-town",
+    "file": "src/net/staffPlaces.js",
+    "old": "    if (p?.name) list.push({ loc: -1, name: String(p.name).slice(0, 48), kind: placeKind(p.type), px: p.px, py: p.py });",
+    "new": "    if (p?.name) list.push({ loc: 0, name: String(p.name).slice(0, 48), kind: placeKind(p.type), px: p.px, py: p.py });",
+    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "note": "a place past the Bay offered as a town's event, which the law refuses"
+  },
+  {
+    "name": "R2-7-other-theatre",
+    "file": "src/net/staffPlaces.js",
+    "old": "  const rows = places?.inTheatre?.(theatreOfRegion(region)) ?? [];",
+    "new": "  const rows = places?.all?.() ?? [];",
+    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "note": "every province's places in one's list"
+  },
+  {
+    "name": "R2-7-registry-unkept",
+    "file": "src/scenes/world.js",
+    "old": "  const worldPlaces = gamePlaces(createWorldPlaces());",
+    "new": "  const worldPlaces = createWorldPlaces();",
+    "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
+    "note": "the host never keeps the registry for the picker"
   }
 ]
