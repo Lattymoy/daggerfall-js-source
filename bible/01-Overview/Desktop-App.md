@@ -1150,8 +1150,10 @@ window over CDP.
 | Pref off (2 runs) | `ANGLE (NVIDIA, NVIDIA GeForce RTX 5080 (0x00002C02) Direct3D11 vs_5_0 ps_5_0, D3D11)` | 16.1 s / 24.1 s | 33 (21.3 s) / 48 (31.0 s) | 120 / 120 fps |
 | Pref on (2 runs) | `ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA GeForce RTX 5080 (0x00002C02)), NVIDIA)` | 2.1 s / 1.8 s | 26 (8.1 s) / 25 (6.6 s) | 89 / 118 fps |
 
-Standing frames held near 120 a second on both backends (p50 8.3 ms). The first Vulkan run's 89 fps (the page thread
-94% busy) did not come again, and its cause was not found.
+Standing frames held near 120 a second on both backends (p50 8.3 ms) on a 240 Hz screen. That is a ceiling, so standing
+frame rate did not separate the backends in the app: 118 against 120 is not Vulkan being slower, and Edge's 139 against
+120 has no in-app counterpart. The first Vulkan run's 89 fps (the page thread 94% busy) did not come again, and its
+cause was not found. Runs, logs and screenshots: `dfo-verify/tools/perf/desktop-vulkan-2026-10-26/`.
 
 The forced failure (`DAGGER_GRAPHICS_BACKEND=metal`): the page drew on `ANGLE (Microsoft, Microsoft Basic Render Driver
 (0x0000008C) Direct3D11 vs_5_0 ps_5_0, D3D11)`. The shell logged `[shell] GPU-BACKEND: metal failed (software renderer:
@@ -1161,7 +1163,9 @@ and keyed the record `10de:2c02@32.0.16.1088`. The first cut keyed SwANGLE's dev
 relaunch then cleared the record as "another GPU". That would have tried the failed backend on every other start.
 
 Not verified: the built app over `dagger://` (the shell code is the same; the page is not), the GPU process's own loss
-(it cannot be forced from the shell), a real driver update, and any GPU but this one NVIDIA card. A third
+(it cannot be forced from the shell), a real driver update, and any GPU but this one NVIDIA card. Every run used
+`--play`, so the guard checked on the game window's load, never the launcher's. A later start held by a keyed record on
+the same driver was driven only as the relaunch itself; the unit test holds the rest. A third
 failure shape was seen and not covered: `use-angle=d3d9` gave the page no WebGL2 context at all. What `getGPUInfo`
 reports then was not read, so it is not known whether the guard catches it. Pins:
 `test/tooling/gpubackend.test.js`, and the row in `test/systems/org2_options.test.js`.
