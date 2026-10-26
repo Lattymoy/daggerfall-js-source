@@ -3723,7 +3723,10 @@ relay redeployed (`RELAY_VERSION` `world63`).
   `peer` (a failed trap even refused the death). Threaded line for
   line with the dungeon's (AUDIT WORLD2 B9): no trap, no Star, no
   notice for a blow I did not strike; the corpse, the alert clear and
-  `raiseEnemyDeath` stay.
+  `raiseEnemyDeath` stay. [RPT1026-FIGHTS TRAP-TO-OWNER (2026-10-26)
+  narrowed "no trap": a trap of MY OWN is read for a peer's kill - its
+  soul is its caster's whoever struck, DFU's every source alike - with
+  no tether; no Star and no notice stand.]
 - **B3 (critical, paid) / C2: puppets were unbounded.** One frame could
   stand 400 foes (batches, entities, careers, textures) at every reader
   - by accident in a crowded cell, on purpose from a hostile client.
@@ -15113,6 +15116,16 @@ else).
   number moved because the bundle's bytes did (`hitSpellOf`, `hitSpellFields` and `validFoeRecord` live in
   `src/net/wire.js`). An older relay carries both fields untouched, and an older client reads past them.
 - Pins: `test/scenes/strikeshared.test.js` (7). Mutants: `tools/mutants/strikeshared.json` (16, all dead).
+- **RPT1026-FIGHTS TRAP-TO-OWNER (2026-10-26, a private report: soul traps on Daedra Lords in a party member's instance
+  never trapped).** A CAST's Soul Trap - a missile's, a touch's, an area's - on such a foe went through the cast engine's
+  foe door onto my copy ("Trap active."), and the runner's foe fell with none: only a strike's crossed. The cast engine
+  now sends its Soul Trap effects through the same door (`hostMagic.js` applySpellToFoe's `trapToOwner`, the session's
+  door `systems/enchantments.js` spellToFoeOwner - the mounted enchantment ctx's `spellToOwner`, routed by the pool as a
+  strike's is) and lands the rest of the spell here as before; the soul is rolled at the fall as a strike's is. And the
+  runner's OWN trap is read whoever struck: AUDIT WORLD2 B9 had a peer's killing blow read no gem of the runner's, so a
+  trap laid on its own foe was spent for nothing when a party member landed the blow - DFU's SetHealth intercept takes
+  every damage source alike. A peer's blow is still never tethered and fills no Azura's Star (B9 stands for those).
+  Pins: `test/scenes/rpt1026_fights_trap.test.js` (4); `strikeshared.test.js`'s two trap-door pins moved.
 
 ## LOAN-AMNESTY (2026-09-29, Mac: "Can we reset the loans for everyone online. The bank of the empire has decided to forgive everyone's loans") - every online loan forgiven, once
 

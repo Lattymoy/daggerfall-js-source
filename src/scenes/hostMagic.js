@@ -52,6 +52,7 @@ import { tellSpellLanded } from '../systems/spell/spellPower.js';   // SCHOOLS3:
 import '../systems/arcanePowers.js';   // AUDIT SCHOOLS L2 F8: what the paths DO, registered with THE ONE CAST ENGINE every page builds - the standalone dungeon page (scenes/dungeon.js) had their price and potency and none of their powers
 import '../systems/firmamentPowers.js';   // FIRM1: what the Firmament DOES, registered with the one cast engine every page builds, as the paths' are
 import { applySpell, spellReflectedText, hasActiveEffect, isSoulTrapEffect, spellSways } from '../systems/effects.js';   // WBX7: a soul trap meets the court's boss too
+import { spellToFoeOwner } from '../systems/enchantments.js';   // RPT1026-FIGHTS (TRAP-TO-OWNER): the session's door to a foe another player runs
 import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { potionBundle } from '../systems/potions.js';   // U44: DrinkPotion's bundle
 import { potentEffect } from '../net/alchemyLaw.js';   // PROF12: a Potent potion's magnitudes
@@ -202,6 +203,7 @@ export function createPlayerMagic({
   // which is precisely why the machine latches instead of polling.
   lairHere = null,     // RVN7 (bible/12-Enhanced-AI/Feud-Arc.md 18.1): where a revenant's deed is done here, for its lair (systems/playerDoor.js)
   isPuppet = null,     // AUDIT FEUD 2: the host's word on a foe another client runs (a dungeon room's carries no `puppet`)
+  trapToOwner = spellToFoeOwner,   // RPT1026-FIGHTS (TRAP-TO-OWNER): (foe, spell, level) => bool - a cast's Soul Trap to the player who runs the foe
   onNewReadySpell = null,
   onCastReadySpell = null,
   // ROAD-E6: THE HANDS, AND THE RELEASE FRAME THEY OWN.
@@ -779,6 +781,18 @@ export function createPlayerMagic({
     // RVN1 (Feud-Arc.md section 12): MY spell's landing goes in the fight's ledger by its element (a later round is
     // systems/effects.js's to write - the round sink's own law); a peer's (its stand-in caster) and a foe's never
     const mine = striker === playerEntity;
+    // RPT1026-FIGHTS (TRAP-TO-OWNER; a private report: Soul Trap on Daedra Lords in a party member's dungeon said
+    // "Trap active." and never trapped a soul): MY CAST'S SOUL TRAP ON A FOE ANOTHER PLAYER RUNS is laid
+    // where the foe lives. Landed here it lay on my copy - a puppet its runner's stream poses, whose death is the runner's
+    // word - and the runner's foe fell with no trap on it: "Trap active." and no soul, whoever struck. STRIKE-SHARED carried
+    // a strike's trap to the runner; a cast's never went. Now its Soul Trap rides that door (the runner lands it marked
+    // mine, names me on the body as it falls, and I roll it against my own pack - dungeonContext.js applyFoeRecord's `j`),
+    // and the rest of the spell lands here as before. The runner's save is rolled there, so I hear no "Trap active." -
+    // STRIKE-SHARED's own word; the soul's line comes as the foe falls.
+    if (mine && typeof ctx?.peerCaster !== 'string' && (spell?.effects ?? []).some((e) => e && isSoulTrapEffect(e))) {
+      const trapFx = spell.effects.filter((e) => e && isSoulTrapEffect(e));
+      if (trapToOwner?.(foe, { ...spell, effects: trapFx }, casterLevel)) spell = { ...spell, effects: spell.effects.filter((e) => !trapFx.includes(e)) };
+    }
     // BAL9 (bible/05-Combat/Balance-Arc.md section 15): A SPELL ANSWERS ITS FOE. MY spell that reaches a foe - not my own
     // ally - remembers it as the fight's (skillSoftcap.js noteSkillChallenge, formulas.js's blow's own door), so past 100
     // a school's next uses learn by that foe, as a weapon's do; only a blow ever said so, and a fireball at an Ancient

@@ -8090,6 +8090,25 @@ says so. `test/scenes/winfoe1_foes_under_windows.test.js` - 1 pin; ROAD-G G2's
 review pin, the interior-foes pin and ROAD-B's indoor-watch pin
 re-aimed. **QUEST-POPUP-PAUSE (2026-09-26, Mac: "Pause them offline"):** offline, a quest's message box on top holds the pools again, as DFU's does; every other window keeps this law, and online nothing is held (`01-Overview/bugs/Field-Bugs-2026-09-26c.md`).
 
+**RPT1026-FIGHTS WINDOW-ONLINE (2026-10-26): the dungeon, online.** Two private
+reports: the room's host opening the inventory or the pause menu froze every foe of
+the shared dungeon while its party member killed them freely, and a paralysed player
+waited the paralysis out in the inventory. Both dungeon hosts returned before
+`drawFoes` under any pausing window, so WINFOE1 had never reached the dungeon: offline
+that is DFU's pause, whole; online the character's own clock runs with the world's
+(LIVED1) and was walked whole on the first frame after the window, while the foes -
+the room's one simulation, stepped by its host (WORLD2) - stood frozen and took the
+party's blows. Online a window now holds no dungeon while the player lives under it
+(`scenes/windowWorld.js` windowHoldsDungeon, read by `worldModes.js`'s dungeon arm and
+`world.js`'s tactics clock): the frame runs and the window is drawn last over it; the
+motor, the input, the collision triggers, the breath and a pending cast stay held.
+Offline the dungeon pauses as before, and the death screen holds it in both. THE FOUR
+HOSTS: `scenes/worldModes.js` (the world-hosted dungeon) WIRED; `scenes/world.js` WIRED
+(the tactics clock); `scenes/dungeonContext.js` WIRED (the breath and the pending cast
+under its own window); `scenes/dungeon.js` and `scenes/exterior.js` FLAGGED - offline
+hosts, no shared clock: DFU's pause stands. Ledger A, WINDOW-ONLINE. Pins:
+`test/scenes/rpt1026_fights_window.test.js` (3).
+
 **JAIL-HIT (2026-09-27): the trial is the one window the watch waits
 out.** Discord: *"Guards will still chase you down and kill you, even
 if you have already been to prison for the crime committed."* The

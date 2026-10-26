@@ -1820,7 +1820,11 @@ byte. The Spire's lords are written to it. The gate's brain already exports the 
     for the company standing before it.
   - **From its wake no fall takes a share out of it.** The living finish what the fallen left, so a death makes a fight
     harder for the company, never easier. The gate and the Remnant retire a share only for absence (`ABSENT_RETIRE_MS`),
-    and the Remnant keeps a fallen body's. A recall finds its member's share where it was. A member never seen whose
+    at the fraction the boss stands at - and there a death IS an absence: the fallen's page leaves the room at once
+    (`world.js`'s death branch, `online.leave()`), so neither keeps a fallen fighter's share as a lord does. [Corrected by
+    RPT1026-FIGHTS (a private report, 2026-10-20): this said "and the Remnant keeps a fallen body's" - true of its law (a
+    body seen dead in its arena keeps its share) and never of play, since no fallen body's pose stays in the arena.] A
+    recall finds its member's share where it was. A member never seen whose
     absence becomes a fall (section 6.1's 180 s) takes nothing with it: it never brought any.
   - The members a hall can gain mid-fight are the late and those a Memento calls back into it (a member is admitted only
     in the open window, before the first wake: section 6.1), each bringing its share at the fraction. The last share in

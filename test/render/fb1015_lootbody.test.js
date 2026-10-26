@@ -99,8 +99,9 @@ test('FB1015 LOOT-BODY (by source): both dungeon hosts draw the window\'s bodies
   const ctx = rd('src/scenes/dungeonContext.js');
   assert.ok(ctx.includes("    drawWindowBodies: (canvas, { proj, view, eye }) => drawBodiesUnderWindow(_npcLane, foes, _npcStood, { idOf: foeId, corpseFlat: (f) => f.corpseBatch, renderer, canvas, proj, view, eye }),"));
   assert.ok(!ctx.includes('showBodyFlats'), 'the flats-only door is gone');
+  // PIN MOVED (RPT1026-FIGHTS WINDOW-ONLINE): the arm's window test is windowHoldsDungeon's - a window holds the dungeon offline, or over a death online (scenes/windowWorld.js)
   for (const [file, show, draw, ret] of [
-    ['src/scenes/worldModes.js', '      if (dungeonCtx.uiOverlayActive) dungeonCtx.drawWindowBodies?.(canvas, { proj, view, eye: cam.pos });', '      renderer.drawBillboards([...dungeonCtx.billboardBatches,', 'if (dungeonCtx.uiOverlayActive) { dungeonCtx.hideHudText?.();'],
+    ['src/scenes/worldModes.js', '      if (windowHoldsDungeon(dungeonCtx.uiOverlayActive, aliveUnder())) dungeonCtx.drawWindowBodies?.(canvas, { proj, view, eye: cam.pos });', '      renderer.drawBillboards([...dungeonCtx.billboardBatches,', 'if (windowHoldsDungeon(dungeonCtx.uiOverlayActive, aliveUnder())) { dungeonCtx.hideHudText?.();'],
     ['src/scenes/dungeon.js', '    if (ctx.uiOverlayActive) ctx.drawWindowBodies?.(canvas, { proj, view, eye: cam.pos });', '    renderer.drawBillboards([...ctx.billboardBatches,', 'ctx.hideHudText?.(); hideWorldPlaque(); ctx.tickOverlay(dt); ctx.drawOverlay(canvas);'],
   ]) {
     const s = rd(file), a = s.indexOf(show), b = s.indexOf(draw, a), c = s.indexOf(ret, b);

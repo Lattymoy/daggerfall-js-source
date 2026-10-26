@@ -92,9 +92,11 @@ test('ARENA4b the dungeon\'s host numbers its blows and routes a spell on my opp
   // as a spell - never a swing held to a sword's reach - under its cast's one number, every body of the blast sharing it
   assert.match(D, /const cast = kind === 'spell' \|\| !!spell;\n\s+if \(fromPlayer && damage >= 0\) opts\.onArenaHit\?\.\(\{ i: `a\$\{foe\._ownI\}`, d: damage, kind: kind === 'arrow' \? 'arrow' : cast \? 'spell' : 'melee', [^\n]*, q: cast \? arenaSpellQ\(\) : _arenaQ \}\);/, 'a relay fighter\'s claim carries its sequence, a spell as a spell');
   assert.match(D, /const arenaSpellQ = \(\) => \{\n\s+if \(_arenaSpellQ == null\) \{ _arenaSpellQ = nextArenaQ\(\); void Promise\.resolve\(\)\.then\(\(\) => \{ _arenaSpellQ = null; \}\); \}\n\s+return _arenaSpellQ;\n\s+\};/, 'one number a cast: the cast engine\'s one run, then a new one');
-  // PVPDUNGEON: with no bout the seam is the open zone's (its fair players, wildSpellOut) - the arena's branch unchanged
-  assert.match(D, /duelMark: opts\.arenaRival \? \(\) => \{ const rb = arenaRivalBody\(\); return rb \? \{ id: rb\.rival, name: rb\.entity\?\.name \?\? '', feet: rb\.ai\.feet, height: rb\.ai\.height \} : null; \} : \(opts\.wildSpellMarks \? \(\) => opts\.wildSpellMarks\(\) : null\),/);
-  assert.match(D, /castAtDuel: opts\.arenaRival \? \(_id, sp\) => spellOnRival\(sp\) : \(opts\.wildSpellOut \? \(id, sp\) => opts\.wildSpellOut\(id, sp\) : null\),/);
+  // PVPDUNGEON: with no bout the seam is the open zone's (its fair players, wildSpellOut) - the arena's branch unchanged.
+  // PIN MOVED (RPT1026-FIGHTS HALL-SPELLS): asked at the cast - the world-hosted dungeon is handed the arena's door always, so
+  // the build-time choice this pinned took the arena's branch in every dungeon (test/scenes/rpt1026_fights_halls.test.js)
+  assert.match(D, /duelMark: \(\) => \{ const rb = arenaRivalBody\(\); return rb \? \{ id: rb\.rival, name: rb\.entity\?\.name \?\? '', feet: rb\.ai\.feet, height: rb\.ai\.height \} : \(opts\.wildSpellMarks\?\.\(\) \?\? null\); \},/);
+  assert.match(D, /castAtDuel: \(id, sp\) => \(arenaRivalBody\(\)\?\.rival === id \? spellOnRival\(sp\) : !!opts\.wildSpellOut\?\.\(id, sp\)\),/);
   // PIN MOVED (FIELD BUGS 2026-10-19f STAND-IN-WHOLE, HOST-SPLIT): the spell door left the host for scenes/gate/standInSpell.js,
   // which the host wires with the rival's body, its door and the sequence
   assert.match(D, /const \{ spellOnBoss, spellOnCrystal, spellOnHost, spellOnRival, spellOnStandIn, standInRound \} = createStandInSpell\(\{[^]*?rival: arenaRivalBody,[^]*?landOnRival, nextArenaQ,/);

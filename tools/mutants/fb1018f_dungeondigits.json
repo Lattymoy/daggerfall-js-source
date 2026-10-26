@@ -52,8 +52,8 @@
   {
     "name": "DUNGEON-DIGITS-world-arm-door-dropped",
     "file": "src/scenes/worldModes.js",
-    "old": "if (dungeonCtx.uiOverlayActive) { dungeonCtx.hideHudText?.(); hideWorldPlaque();",
-    "new": "if (dungeonCtx.uiOverlayActive) { hideWorldPlaque();",
+    "old": "if (windowHoldsDungeon(dungeonCtx.uiOverlayActive, aliveUnder())) { dungeonCtx.hideHudText?.(); hideWorldPlaque();",
+    "new": "if (windowHoldsDungeon(dungeonCtx.uiOverlayActive, aliveUnder())) { hideWorldPlaque();",
     "tests": [
       "test/ui/hud/fb1018f_dungeondigits.test.js"
     ],

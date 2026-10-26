@@ -177,6 +177,11 @@ export function joinWarden(f, sub, name, lv, now, present = null) {
 }
 
 const poseIn = (pose) => !!pose && onBridge(pose.x, pose.z, 1.5) && (!Number.isFinite(pose.y) || Math.abs(pose.y - KT_BRIDGE.y) <= 4);
+/** RPT1026-FIGHTS (RETIRED-BLOW - net/superDungeon/sdRemnant.js sighted, the Hour's law rung for rung): A BLOW IS A SIGHTING.
+ *  A member the beat had not seen on the bridge ABSENT_RETIRE_MS has its share out of the Warden, and its blows from a pose
+ *  on the bridge (the relay drops one older than KT_POSE_FRESH_MS) landed whole on the share of the rest - it is seen now,
+ *  its share back at the fraction the Warden stands at, before what it lands is judged. */
+function sighted(f, p, now) { p.seenAt = now; restoreShare(f, p); }
 /**
  * A blow on the Warden: `got` - what the crew's purse already accepted (net/ketch/ketchBrain.js spends the voyage's hand
  * and purse, the one a member strikes everything with) - laid on it: refused (answers 0, and the brain gives the purse
@@ -191,6 +196,7 @@ export function applyWardenHit(f, sub, d, r, pose, now, spend) {
   const W = f.wd;
   stepWalk(W, now);
   if (r === HIT_KINDS.Melee && dist(pose.x, pose.z, W.x, W.z) - KW_BODY.r > MELEE_REACH + POSE_SLACK) return 0;
+  sighted(f, p, now);   // RPT1026-FIGHTS (RETIRED-BLOW): its share in before its blow is judged
   const got = spend(d * (now < f.stunUntil ? KW_STUN_HIT_X : 1), Math.max(0, f.hp - floorOf(f)));
   if (got > 0) { f.threat[sub] = (f.threat[sub] ?? 0) + got; p.dealt += got; p.hits = (p.hits ?? 0) + 1; p.best = Math.max(p.best ?? 0, got); }
   f.hp -= got;
@@ -235,6 +241,7 @@ export function applyForkHit(f, sub, c, d, r, pose, now, spend) {
   const p = f.players[sub], X = f.fk, q = X && Number.isInteger(c) ? X.c[c] ?? null : null;
   if (!p || over(f, now) || !q || !(q.h > 0) || !Number.isFinite(d) || !(d > 0) || !forksOpen(f, now) || !poseIn(pose)) return out;
   if (r === HIT_KINDS.Melee && dist(pose.x, pose.z, q.x, q.z) - KW_FORK.r > MELEE_REACH + POSE_SLACK) return out;
+  sighted(f, p, now);   // RPT1026-FIGHTS (RETIRED-BLOW): a fork's striker stands on the bridge too
   const got = spend(d, q.h);
   p.dealt += got;   // a part in the fight, as the gate's crystals are (AUDIT KETCH L1-8: a fork's damage counted for nothing)
   p.cxd = (p.cxd ?? 0) + got;

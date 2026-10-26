@@ -140,7 +140,8 @@ test('AUDIT CC-A5 (major): a hand home again stands on her deck - the last of th
 
 test('AUDIT CC-A6 (major): the bars come down under a dungeon window - the overlay\'s early return draws them covered too', () => {
   const m = rd('src/scenes/worldModes.js');
-  assert.match(m, /if \(dungeonCtx\.uiOverlayActive\) \{[^\n]*host\.drawCompanionBars\?\.\(\{ proj, view, eye: mwv\.eye \}\);[^\n]*dungeonCtx\.drawOverlay\(canvas\); return true; \}/);
+  // PIN MOVED (RPT1026-FIGHTS WINDOW-ONLINE): the arm's window test is windowHoldsDungeon's - a window holds the dungeon offline, or over a death online (scenes/windowWorld.js)
+  assert.match(m, /if \(windowHoldsDungeon\(dungeonCtx\.uiOverlayActive, aliveUnder\(\)\)\) \{[^\n]*host\.drawCompanionBars\?\.\(\{ proj, view, eye: mwv\.eye \}\);[^\n]*dungeonCtx\.drawOverlay\(canvas\); return true; \}/);
 });
 
 test('AUDIT CC-A7: companions take none of the street\'s (or a building\'s) encounter slots', () => {
