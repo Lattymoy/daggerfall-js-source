@@ -310,6 +310,20 @@ function appendHoleEdgeWalls(w) {
 const clampNum = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
 
 /**
+ * The seafloor's pixel-local height in a carved cell, on the triangle the
+ * floor draws there - null where the cell keeps its ground (the terrain's
+ * own floor stands) or the pixel has no floor.
+ */
+export function carvedFloorLocalY(dw, lx, lz) {
+  if (!dw || !dw.holes || !dw.floor) return null;
+  const n = HOLES_RESOLUTION;
+  const cx = Math.floor(lx / (TILE_WORLD_SIZE / n)), cz = Math.floor(lz / (TILE_WORLD_SIZE / n));
+  if (cx < 0 || cz < 0 || cx >= n || cz >= n) return null;
+  if (dw.holes[cz * n + cx]) return null;
+  return sampleMeshLocalY(dw.floor, lx, lz);
+}
+
+/**
  * TrySampleMeshLocalY: the floor's height at a pixel-local point, on the
  * triangle the mesh draws there, or null off the floor's water quads.
  */

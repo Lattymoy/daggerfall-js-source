@@ -1,0 +1,130 @@
+[
+  {
+    "name": "SNOW-THREAD-ground-carved-sea-snows",
+    "file": "src/systems/snowfall/snowGroundLaw.js",
+    "old": "  return !!p.deepWaters && carvedFloorLocalY(p.deepWaters, lx, lz) != null;",
+    "new": "  return false;",
+    "tests": [
+      "test/systems/snowthread.test.js"
+    ]
+  },
+  {
+    "name": "SNOW-THREAD-ground-floor-read-with-the-switch-off",
+    "file": "src/systems/snowfall/snowGroundLaw.js",
+    "old": "  if (floors && p.deepWaters) {   // DW-B: the floor is drawn there",
+    "new": "  if (p.deepWaters) {   // DW-B: the floor is drawn there",
+    "tests": [
+      "test/systems/snowthread.test.js"
+    ]
+  },
+  {
+    "name": "SNOW-THREAD-ground-bed-added",
+    "file": "src/systems/snowfall/snowGroundLaw.js",
+    "old": "  return d ? h - gridValueAt(d, g, g, TILE_SIDE * stride, lx, lz) : h;",
+    "new": "  return d ? h + gridValueAt(d, g, g, TILE_SIDE * stride, lx, lz) : h;",
+    "tests": [
+      "test/systems/snowthread.test.js"
+    ]
+  },
+  {
+    "name": "SNOW-THREAD-ground-stride-dropped",
+    "file": "src/systems/snowfall/snowGroundLaw.js",
+    "old": "  const stride = p._stride ?? 1;\n  const h = surfaceHeightAt(p.samples, lx, lz, stride);",
+    "new": "  const stride = 1;\n  const h = surfaceHeightAt(p.samples, lx, lz, stride);",
+    "tests": [
+      "test/systems/snowthread.test.js"
+    ]
+  },
+  {
+    "name": "SNOW-THREAD-snapshot-loses-the-floor",
+    "file": "src/systems/snowfall/snowGroundLaw.js",
+    "old": "floor: floor ? { vertexLocalY: floor.vertexLocalY ?? null, floorQuadWater: floor.floorQuadWater ?? null } : null } : null,",
+    "new": "floor: null } : null,",
+    "tests": [
+      "test/systems/snowthread.test.js"
+    ]
+  },
+  {
+    "name": "SNOW-THREAD-worker-compensation-dropped",
+    "file": "src/systems/snowfall/snowBuildKernel.js",
+    "old": "        return snowGlobalOf(f[0], f[1], f[2], f[3], f[4], x, z, g);",
+    "new": "        return snowGlobalOf(f[0], f[1], 0, 0, f[4], x, z, g);",
+    "tests": [
+      "test/systems/snowthread.test.js"
+    ]
+  },
+  {
+    "name": "SNOW-THREAD-worker-origin-height-not-the-posts",
+    "file": "src/systems/snowfall/snowBuildKernel.js",
+    "old": "      t._o[1] = oy;",
+    "new": "      t._o[1] = 0;",
+    "tests": [
+      "test/systems/snowthread.test.js"
+    ]
+  },
+  {
+    "name": "SNOW-THREAD-worker-roads-not-the-prepared-ones",
+    "file": "src/systems/snowfall/snowBuildKernel.js",
+    "old": "      roads.push({ data, x: r.x, z: r.z, tileMetres: r.tileMetres, archive: r.archive, mapX: r.mapX, mapY: r.mapY });",
+    "new": "      roads.push({ data, x: r.x + 1, z: r.z, tileMetres: r.tileMetres, archive: r.archive, mapX: r.mapX, mapY: r.mapY });",
+    "tests": [
+      "test/systems/snowthread.test.js"
+    ]
+  },
+  {
+    "name": "SNOW-THREAD-worker-window-handed-over-ignored",
+    "file": "src/systems/snowfall/snowBuildKernel.js",
+    "old": "    if (m.arrays) {\n      L.pos.set(m.arrays.pos);",
+    "new": "    if (m.arrays) {\n      void 0;",
+    "tests": [
+      "test/systems/snowthread.test.js"
+    ]
+  },
+  {
+    "name": "SNOW-THREAD-client-mirror-trusted-after-a-refused-job",
+    "file": "src/systems/snowfall/snowBuildClient.js",
+    "old": "    const mirror = L.fromJob && L.fromJob === this._localPosted ? L.fromJob : 0;",
+    "new": "    const mirror = L.fromJob;",
+    "tests": [
+      "test/systems/snowthread.test.js"
+    ]
+  },
+  {
+    "name": "SNOW-THREAD-client-fault-never-answered",
+    "file": "src/systems/snowfall/snowBuildClient.js",
+    "old": "    if (m.t === 'error') { this._down(m.message); return; }",
+    "new": "    if (m.t === 'error') return;",
+    "tests": [
+      "test/systems/snowthread.test.js"
+    ]
+  },
+  {
+    "name": "SNOW-THREAD-runtime-ring-left-on-this-thread",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "    M.job = this.builds?.postMid(this) ?? 0;   // SNOW-THREAD: sampled on the build worker when it can be (0: on this thread)",
+    "new": "    M.job = 0;",
+    "tests": [
+      "test/systems/snowthread.test.js"
+    ]
+  },
+  {
+    "name": "SNOW-THREAD-step1-run-past-the-row",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "        const run = Math.min(sres - j, sres - sj), from = (si * sres + sj) * 4;",
+    "new": "        const run = Math.min(sres - j + 1, sres - sj), from = (si * sres + sj) * 4;",
+    "tests": [
+      "test/systems/snowthread.test.js",
+      "test/systems/audit_environs.test.js"
+    ]
+  },
+  {
+    "name": "SNOW-THREAD-step1-mesh-run-never-written",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "    M.nextNrm.set(M.nrm.subarray(a * 3, b * 3), k * 3);",
+    "new": "",
+    "tests": [
+      "test/systems/snowthread.test.js",
+      "test/systems/audit_environs.test.js"
+    ]
+  }
+]

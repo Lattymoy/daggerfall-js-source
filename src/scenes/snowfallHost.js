@@ -16,6 +16,7 @@ import { registerCommand, gateConsoleCommand } from '../systems/consoleCommands.
 import { pageParam } from '../systems/pageQuery.js';
 import { SnowCoverage, BasicRoadsTerrain, roadCorners, snowfallSettings, winterArchiveOf, markAuthoredBlock, locationRect, isVanillaLocation, SNOWFALL_VENDOR, SNOW_MASK_ARCHIVES } from '../systems/snowfall.js';
 import { SnowfallRuntime } from '../systems/snowfallRuntime.js';
+import { SnowBuildClient } from '../systems/snowfall/snowBuildClient.js';   // SNOW-THREAD: the ring's and the window's builds on a worker
 import { SnowfallSurface } from '../render/snowfallSurface.js';
 import { getWorldClimateSettings, worldCoordToMapPixel } from '../formats/mapsFile.js';
 import { getLocationTerrainTileOrigin } from '../world/terrain/terrainTiles.js';
@@ -66,6 +67,8 @@ async function defaultAlbedo() {
  * @property {(minX: number, minZ: number, maxX: number, maxZ: number) => any[]} settlements - vanilla locations' rectangles (global metres)
  * @property {number} [size] - a tile's side, metres (819.2)
  * @property {number} [terrainDistance]
+ * @property {(p: any) => any} [data] - SNOW-THREAD: what systems/snowfall/snowGroundLaw.js reads of the tile (snowGroundSnapshot) - present only where `height`, `normal` and `bare` are those laws over it
+ * @property {() => number[]} [frame] - SNOW-THREAD: [map origin x, y, compensation x, z, pixel size] - pixelAt's and toGlobal's inputs (snowGroundLaw.js snowPixelX, snowGlobalOf)
  */
 
 /** The host standing now. A boot claims the frame and kills the loop before it (scenes/shared.js claimFrame), and that
@@ -82,6 +85,7 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
   standing?.dispose();
   let gen = -1, settings = snowfallSettings();
   let runtime = null, surface = null, pending = null, failed = false, asked = false, disposed = false;
+  let builds = null;             // SNOW-THREAD: the build worker's client, where the ground can be copied to it
   let wasInside = null, lastFrame = null, gameSecondsNow = 0, frameNo = 0, nextPrune = 0;
   let roadStatus = 'not sampled';   // AUDIT ENVIRONS S6: BasicRoadsContextCache.Status - the last tile's classification's word
   let climateNow = -1, desertNow = false, doorNow = -1;   // the climate's base type, read when the climate index changes
@@ -125,6 +129,8 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
       height: (lx, lz) => ground.height(p, lx, lz),
       normal: (lx, lz, out) => ground.normal(p, lx, lz, out),
       bare: snowless ? () => true : ground.bare ? (lx, lz) => ground.bare(p, lx, lz) : undefined,
+      // SNOW-THREAD: the tile as the build worker reads it - `bare` as above, the ground snowGroundLaw.js's over its data
+      snapshot: ground.data ? () => ({ mapX: t.mapX, mapY: t.mapY, size, tileMap: t.tileMap, winterArchive, bare: snowless ? 'all' : ground.bare ? 'ground' : null, ground: ground.data(p) }) : null,
       get roads() {   // BasicRoadsContextCache.Get: classified once a tile (TryCreate: a reason, and no roads, where it fails)
         if (!roadsMade) {
           roadsMade = true;
@@ -165,6 +171,8 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
       return out;
     },
     toGlobal: (x, z) => ground.toGlobal(x, z),
+    terrainOn: (px, py) => terrainOf(ground.pixelOn?.(px, py) ?? null),   // SNOW-THREAD: the tile terrainAt answers on a map pixel
+    frame: ground.frame ? () => ground.frame() : undefined,
     settlements: (a, b, c, d) => ground.settlements(a, b, c, d),
     footprints: () => [],   // LocationLoaderBridge: Location Loader is not the port's - none stand
     get terrainDistance() { return ground.terrainDistance ?? 3; },   // StreamingWorld.TerrainDistance, read when asked (a host's view distance can move)
@@ -208,7 +216,9 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
     Promise.all([Promise.resolve().then(() => loadMasks()), gl ? Promise.resolve().then(() => loadAlbedo()) : null])
       .then(([masks, albedo]) => {
         if (disposed) return;   // a later boot's host stands now
-        runtime = new SnowfallRuntime({ world, coverage: new SnowCoverage(masks), settings: readSettings() });
+        const settings0 = readSettings();
+        if (ground.data && ground.frame) builds = new SnowBuildClient({ masks, settings: settings0 });
+        runtime = new SnowfallRuntime({ world, coverage: new SnowCoverage(masks), settings: settings0, builds });
         if (gl && renderer) {
           albedoIn = albedo;
           snowReady = renderer.startTerrainSnow?.() ?? (() => true);   // SHADER-STALL: its program started now, the surface made once it is compiled
@@ -332,7 +342,7 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
     /** The world under the snow was rebuilt (a fast travel, a load's arrival) - every tier stands again. */
     worldReset() { runtime?.worldReset(); },
     /** Its GPU surfaces let go - the next host built calls it (above); nothing it holds is drawn again. */
-    dispose() { disposed = true; surface?.dispose(); surface = null; if (standing === host) standing = null; },
+    dispose() { disposed = true; surface?.dispose(); surface = null; builds?.dispose(); builds = null; if (standing === host) standing = null; },
   };
   standing = host;
   return host;

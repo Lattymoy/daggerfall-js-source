@@ -338,7 +338,7 @@
   {
     "name": "SNOWFALL1-world-carved-sea-snows",
     "file": "src/scenes/world.js",
-    "old": "    bare: (p, lx, lz) => !!p.deepWaters && carvedFloorLocalY(p.deepWaters, lx, lz) != null,",
+    "old": "    bare: (p, lx, lz) => snowGroundBare(p, lx, lz),",
     "new": "    bare: () => false,",
     "tests": [
       "test/render/snowfall1_runtime.test.js"

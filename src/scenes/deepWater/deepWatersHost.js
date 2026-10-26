@@ -50,7 +50,8 @@ import { inFrame } from '../../world/deepWater/deepWatersBake.js';
 import { waterFrameOf } from '../../world/etherWatersBake.js';   // ETHER-DEEP: a pixel's frame - the Bay's map, or the Eltheric Ocean's box
 import { modSetting, modSettingsGeneration, MOD_SETTINGS } from '../../systems/modSettings.js';
 import { DeepWaterTileData } from '../../world/deepWater/deepWaterTileData.js';
-import { sampleMeshLocalY, HOLES_RESOLUTION, TILE_WORLD_SIZE } from '../../world/deepWater/deepWaterFloor.js';
+import { sampleMeshLocalY, TILE_WORLD_SIZE, carvedFloorLocalY } from '../../world/deepWater/deepWaterFloor.js';   // SNOW-THREAD: its home beside the floor it reads, so the snow's build worker reads it without this host
+export { carvedFloorLocalY };
 import { heightGridFromPositions } from '../../world/oceanHoles.js';   // OH-B: CommitExternalMeshChanges' grid read-back
 import { DW_OCEAN_LOCAL_Y } from '../../world/deepWater/deepWatersPixel.js';
 import { mapDataHasWater, isLocalPointWater } from '../../world/deepWater/deepWaterClassification.js';
@@ -157,20 +158,6 @@ export function deepWatersGeometrySettings() {
     waterDepth: Number(modSetting(DEEP_WATERS_VENDOR, 'General.WaterDepth')),
     spawnSurfaces: modSetting(DEEP_WATERS_VENDOR, 'General.SpawnWaterSurfaces') === true,
   };
-}
-
-/**
- * The seafloor's pixel-local height in a carved cell, on the triangle the
- * floor draws there - null where the cell keeps its ground (the terrain's
- * own floor stands) or the pixel has no floor.
- */
-export function carvedFloorLocalY(dw, lx, lz) {
-  if (!dw || !dw.holes || !dw.floor) return null;
-  const n = HOLES_RESOLUTION;
-  const cx = Math.floor(lx / (TILE_WORLD_SIZE / n)), cz = Math.floor(lz / (TILE_WORLD_SIZE / n));
-  if (cx < 0 || cz < 0 || cx >= n || cz >= n) return null;
-  if (dw.holes[cz * n + cx]) return null;
-  return sampleMeshLocalY(dw.floor, lx, lz);
 }
 
 /**

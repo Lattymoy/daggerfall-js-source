@@ -213,7 +213,13 @@ tier `drawSnow` draws) and the foes' ground pass lies its marks over it.
   window the player outran goes again at the mod's own pace, its sample
   counts alone (AUDIT ENVIRONS P8): a machine that makes fewer samples in the
   two milliseconds than a ride asks would otherwise never stand it, nor the
-  ring and the blanket, which wait on it.
+  ring and the blanket, which wait on it. SNOW-THREAD (2026-10-26,
+  `07-Rendering/Performance-Exterior.md`): where the build worker is up, the
+  window's recentre and the ring's rebuild are made whole on it and land the
+  first frame they are in (the ring's while the window is not building, as
+  before) - the same bytes, sooner than the mod's own counts would stand
+  them; `?snowthread=off` and a ground the worker cannot copy keep the pace
+  above.
 - **A BODY ON FIRST SIGHT.** HandleEnemyDeath and the scan are one law here:
   a body is registered the frame its marker first lies, whatever the player's
   side of a door.

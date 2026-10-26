@@ -1,0 +1,270 @@
+// SNOW-THREAD (2026-10-26): THE SNOW'S BUILDS, OFF THE MAIN THREAD - the main thread's half. The runtime
+// (systems/snowfallRuntime.js) posts a build where it would begin one (`postMid` at _midBegin, `postLocal` at
+// _beginRecenter) and takes the finished arrays the first frame they are in (`take`, its _midAwait and _localAwait);
+// snowBuildKernel.js runs the build on snowBuildWorker.js's thread.
+//
+// The shape is terrainGenClient.js's (EV7):
+//  - `new Worker(new URL(...))` stays in exactly that spelling (Vite bundles the worker entry from it);
+//  - the factory is injectable, so node never evaluates `new Worker` and a test drives the kernel in-process;
+//  - THE FALLBACK IS THE OLD PATH: no Worker, a factory that throws, a worker that dies, a ground with no data to copy
+//    (`t.snapshot`: scenes/exterior.js's), or `?snowthread=off` - the runtime builds on this thread, as it always did.
+//
+// WHAT CROSSES, AND HOW OFTEN:
+//  - the three surface masks and the settings once (the settings again when they change);
+//  - a pixel's ground once a version of it - its snapshot (snowGroundLaw.js snowGroundSnapshot) is keyed by the arrays it
+//    was taken from, so a ground rebuilt is a new key - COPIED: the entry keeps reading its own; a Basic Roads tile once;
+//  - a job: the frame, the pixels it may read (their keys and origins now), the context prepared on this thread, and
+//    for a window the worker does not hold, that window (the recentre copies from it);
+//  - an answer: the build's arrays, TRANSFERRED; the arrays they replace go back the same way to be written into again.
+// A job a newer one of its kind replaced is never taken: its answer's arrays go straight back.
+
+import { MID } from '../snowfallRuntime.js';
+import { snowGroundSources, snowPixelX, snowPixelY } from './snowGroundLaw.js';
+
+/** `?snowthread=off`: every snow build on the main thread (the ?terrainthread=off shape), read once a host. */
+export function snowThreadDisabled(search = globalThis.location?.search) {
+  try { return /[?&]snowthread=off\b/.test(search ?? ''); } catch { return false; }
+}
+
+/** The one place the worker's URL is spelled. */
+function defaultWorkerFactory() {
+  return new Worker(new URL('./snowBuildWorker.js', import.meta.url), { type: 'module' });
+}
+
+/** A pixel's ground or roads unused this long is let go on the worker (sent again if it is asked for again). */
+const UNUSED_MS = 10_000;
+/** The metres past a build's reach whose pixels it is handed - a point on a pixel's very edge is read on either side. */
+const REACH_MARGIN = 4;
+
+/** A copy of a typed array alone (structured clone would copy the whole buffer a view stands on). */
+const own = (a) => (ArrayBuffer.isView(a) ? a.slice() : a);
+
+export class SnowBuildClient {
+  /**
+   * @param {object} o
+   * @param {Uint8Array[]} o.masks - the three surface masks (SnowCoverage's)
+   * @param {any} o.settings - snowfallSettings()
+   * @param {?Function} [o.workerFactory] - a test seam
+   * @param {() => number} [o.clock] - milliseconds
+   */
+  constructor({ masks, settings, workerFactory = null, clock = () => globalThis.performance?.now?.() ?? Date.now() }) {
+    this.clock = clock;
+    this._worker = null;
+    this._job = 0;
+    this._key = 0;
+    /** @type {Map<number, any>} answers in, by job */
+    this._answers = new Map();
+    this._latest = { mid: 0, local: 0 };
+    this._midTiles = { id: 0, tiles: new Map() };
+    this._localPosted = 0;
+    /** SnowTerrain -> { key, sources } */
+    this._keys = new WeakMap();
+    /** key -> last used; the grounds the worker holds */
+    this._sent = new Map();
+    /** BasicRoadsTerrain -> id */
+    this._roadIds = new WeakMap();
+    /** id -> last used; the roads the worker holds */
+    this._roadsSent = new Map();
+    this._nextPrune = 0;
+    this.posted = 0;
+    this.taken = 0;
+    const factory = workerFactory ?? ((snowThreadDisabled() || typeof Worker === 'undefined') ? null : defaultWorkerFactory);
+    if (!factory) return;
+    let w = null;
+    try {
+      w = factory();
+      w.onerror = (e) => this._down(e?.message ?? e);
+      w.onmessage = (ev) => this._answer(ev.data);
+      const copies = masks.map((m) => m.slice());
+      w.postMessage({ t: 'init', masks: copies, settings }, copies.map((m) => m.buffer));
+      this._worker = w;
+    } catch (e) {
+      console.warn('[snowfall] build worker unavailable; the snow builds on the main thread', e);
+      try { w?.terminate?.(); } catch { /* never spawned or already gone */ }
+      this._worker = null;
+    }
+  }
+
+  get up() { return !!this._worker; }
+
+  /** The ring the runtime has just begun (its buildCenter, its prepared context0) - the job's id, or 0 to build here. */
+  postMid(rt) {
+    const M = rt.mid, c = M.buildCenter;
+    const job = this._world(rt, c[0], c[1], MID.radius + REACH_MARGIN, M.context0);
+    if (!job) return 0;
+    const id = ++this._job;
+    this._latest.mid = id;   // before the post: an answer is taken for the newest build of its kind alone
+    this._midTiles = { id, tiles: job.tiles };
+    return this._post({ t: 'mid', id, center: [c[0], c[1]], ...job.message }) ? id : 0;
+  }
+
+  /** The recentre the runtime has just begun (_beginRecenter's state, its prepared context) - the job's id, or 0. */
+  postLocal(rt) {
+    const L = rt.local, c = L.nextCenter;
+    const job = this._world(rt, c[0], c[1], rt.gridRadius + REACH_MARGIN, rt.context);
+    if (!job) return 0;
+    const id = ++this._job;
+    const mirror = L.fromJob && L.fromJob === this._localPosted ? L.fromJob : 0;
+    const p = rt.outerCenter ?? c;
+    const m = {
+      t: 'local', id, ...job.message, player: [p[0], p[1]], res: L.res, sres: L.sres, mirror,
+      center: [...L.center], nextCenter: [...L.nextCenter], nextDyn: [...L.nextDyn], nextStat: [...L.nextStat],
+      meshDelta: [...L.meshDelta], statDelta: [...L.statDelta], full: L.fullRebuild, baseY: L.baseY,
+    };
+    const transfer = [];
+    if (!mirror && !L.fullRebuild) {   // the worker does not hold the window this recentre copies from
+      m.arrays = { pos: L.pos.slice(), nrm: L.nrm.slice(), statics: L.statics.slice(), context: L.context.slice() };
+      for (const a of Object.values(m.arrays)) transfer.push(a.buffer);
+    }
+    this._latest.local = id;
+    this._localPosted = id;
+    return this._post(m, transfer) ? id : 0;
+  }
+
+  /** A job's answer once it is in: { ok, arrays, tiles } (tiles the runtime's own), { ok: false } for a build that
+   *  could not stand, { down: true } for one the worker will never answer; null while it is out. */
+  take(id) {
+    const r = this._answers.get(id);
+    if (!r) return this._worker ? null : { down: true };
+    this._answers.delete(id);
+    this.taken++;
+    if (r.ok && r.t === 'mid') {
+      const tiles = this._midTiles.id === id ? this._midTiles.tiles : null;
+      r.tiles = r.tiles.map((k) => tiles?.get(k));
+      this._midTiles = { id: 0, tiles: new Map() };
+      if (r.tiles.some((t) => !t)) return { ok: false };
+    }
+    if (r.mirror) return { down: true };   // never expected: the worker's window was not the one named - built here
+    return r;
+  }
+
+  /** Arrays the runtime is done with, back to the worker to write the next answers into. */
+  recycle(arrays) {
+    if (!this._worker) return;
+    const seen = new Set();
+    for (const a of arrays) if (a?.buffer?.byteLength && !seen.has(a.buffer)) seen.add(a.buffer);
+    if (seen.size) this._post({ t: 'recycle', buffers: [...seen] }, [...seen]);
+  }
+
+  settings(s) { if (this._worker) this._post({ t: 'settings', settings: s }); }
+
+  offset(o) { if (this._worker) this._post({ t: 'offset', offset: [o[0], o[1], o[2]] }); }
+
+  dispose() {
+    try { this._worker?.terminate?.(); } catch { /* already gone */ }
+    this._worker = null;
+  }
+
+  // ---- the job's world ----
+  /** The pixels a build round (cx, cz) may read within `reach`, their grounds sent where the worker lacks them, and
+   *  the prepared context - null where the ground cannot be copied (the build is the main thread's). */
+  _world(rt, cx, cz, reach, context) {
+    const world = rt.world;
+    if (!this._worker || !world.frame || !world.terrainOn) return null;
+    const frame = world.frame();
+    if (!frame) return null;
+    const [mx, my, fx, fz, size] = frame;
+    const now = this.clock();
+    const x0 = snowPixelX(mx, fx, size, cx - reach), x1 = snowPixelX(mx, fx, size, cx + reach);
+    const y0 = snowPixelY(my, fz, size, cz + reach), y1 = snowPixelY(my, fz, size, cz - reach);
+    const pixels = [], tiles = new Map(), out = [0, 0, 0];
+    for (let py = y0; py <= y1; py++) {
+      for (let px = x0; px <= x1; px++) {
+        const t = world.terrainOn(px, py);
+        if (!t) continue;
+        const key = this._tile(t, now);
+        if (!key) return null;
+        const o = t.origin(out);
+        pixels.push([px, py, key, o[0], o[1], o[2]]);
+        tiles.set(key, t);
+      }
+    }
+    const roads = [];
+    for (const r of context.roads) {
+      const id = this._road(r.data, now);
+      if (!id) return null;
+      roads.push({ id, x: r.x, z: r.z, tileMetres: r.tileMetres, archive: r.archive, mapX: r.mapX, mapY: r.mapY });
+    }
+    this._prune(now);
+    const ctx = { roads, settlements: context.settlements, locations: context.locations, settlementFeather: context.settlementFeather, locationFeather: context.locationFeather };
+    return { tiles, message: { frame: [mx, my, fx, fz, size], pixels, context: ctx } };
+  }
+
+  /** A pixel's key on the worker - its ground sent first if the worker does not hold this version of it. 0: no data. */
+  _tile(t, now) {
+    const snap = t.snapshot?.();
+    if (!snap) return 0;
+    const g = snap.ground;
+    const sources = [...snowGroundSources(g), snap.tileMap, g._stride, g.floors, snap.winterArchive, snap.bare];
+    let rec = this._keys.get(t);
+    if (!rec || rec.sources.some((s, i) => s !== sources[i])) {
+      rec = { key: ++this._key, sources };
+      this._keys.set(t, rec);
+    }
+    if (!this._sent.has(rec.key)) {
+      const dw = g.deepWaters;
+      const ground = {
+        samples: own(g.samples), _stride: g._stride, groundNormals: own(g.groundNormals), _bed: g._bed ? { depths: own(g._bed.depths) } : null,
+        deepWaters: dw ? { holes: own(dw.holes), floor: dw.floor ? { vertexLocalY: own(dw.floor.vertexLocalY), floorQuadWater: own(dw.floor.floorQuadWater) } : null } : null,
+        floors: g.floors,
+      };
+      const tile = { key: rec.key, mapX: snap.mapX, mapY: snap.mapY, size: snap.size, tileMap: own(snap.tileMap), winterArchive: snap.winterArchive, bare: snap.bare, ground };
+      if (!this._post({ t: 'tiles', tiles: [tile] })) return 0;
+    }
+    this._sent.set(rec.key, now);
+    return rec.key;
+  }
+
+  /** A Basic Roads tile's id on the worker, sent first if it does not hold it. 0: not a tile the worker can rebuild. */
+  _road(data, now) {
+    let id = this._roadIds.get(data);
+    if (!id) {
+      id = ++this._key;
+      this._roadIds.set(data, id);
+    }
+    if (!this._roadsSent.has(id)) {
+      const roads = { mapX: data.mapX, mapY: data.mapY, tiles: own(data.tiles), kinds: own(data.kinds), roadTiles: data.roadTiles, pathTiles: data.pathTiles };
+      if (!(roads.tiles instanceof Uint8Array) || !(roads.kinds instanceof Uint8Array)) return 0;
+      if (!this._post({ t: 'roads', id, roads })) return 0;
+    }
+    this._roadsSent.set(id, now);
+    return id;
+  }
+
+  /** What the worker holds and no build asked for a while, let go there. */
+  _prune(now) {
+    if (now < this._nextPrune) return;
+    this._nextPrune = now + UNUSED_MS / 2;
+    const tiles = [], roads = [];
+    for (const [k, at] of this._sent) if (now - at > UNUSED_MS) { tiles.push(k); this._sent.delete(k); }
+    for (const [k, at] of this._roadsSent) if (now - at > UNUSED_MS) { roads.push(k); this._roadsSent.delete(k); }
+    if (tiles.length || roads.length) this._post({ t: 'drop', tiles, roads });
+  }
+
+  // ---- the wire ----
+  _post(m, transfer = []) {
+    try {
+      this._worker.postMessage(m, transfer);
+      if (m.t === 'mid' || m.t === 'local') this.posted++;
+      return true;
+    } catch (e) {
+      console.warn('[snowfall] a build could not cross to the worker; it is built on the main thread', e?.message ?? e);
+      return false;
+    }
+  }
+
+  _answer(m) {
+    if (m.t === 'error') { this._down(m.message); return; }
+    if (m.missing) { this._sent.delete(m.missing); }   // never expected: sent again with the next build
+    if (m.id !== this._latest[m.t]) {   // replaced by a newer build of its kind: never taken
+      if (m.arrays) this.recycle(Object.values(m.arrays));
+      return;
+    }
+    this._answers.set(m.id, m);
+  }
+
+  _down(message) {
+    console.warn('[snowfall] the build worker stopped - the snow builds on the main thread from here:', message);
+    this.dispose();
+  }
+}

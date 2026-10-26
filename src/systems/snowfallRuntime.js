@@ -232,9 +232,6 @@ const _o = v3(), _n = v3();
 /** A tier's uniforms (render/renderer.js drawSnow's `u`), filled in place by the runtime's own (AUDIT ENVIRONS P1). */
 export const snowUniforms = () => ({ origin: [0, 0, 0], depths: [0, 0, 0, 0], limits: [0, 0, 0, 0], dynMap: [0, 0, 0, 0], dynTexel: [0, 0, 0, 0], statMap: [0, 0, 0, 0], farMap: null, flags: [0, 0, 0, 0], radius: [0, 0, 0, 0], inner: [0, 0, 0, 0], outer: [0, 0, 0, 0], boundaryFade: 0, darkening: 0 });
 const put4 = (a, x, y, z, w) => { a[0] = x; a[1] = y; a[2] = z; a[3] = w; return a; };
-/** Three or four bytes or floats from one array's row to another's (AUDIT ENVIRONS P5: no view a texel). */
-const copy3 = (a, i, b, j) => { b[j] = a[i]; b[j + 1] = a[i + 1]; b[j + 2] = a[i + 2]; };
-const copy4 = (a, i, b, j) => { b[j] = a[i]; b[j + 1] = a[i + 1]; b[j + 2] = a[i + 2]; b[j + 3] = a[i + 3]; };
 /** The middle ring's blend under a vertex, BlanketSamples.at's answer for one sample at a time (AUDIT ENVIRONS P5). */
 const _quad = { height: 0, normal: [0, 0, 0], contextA: null, contextB: null, contextC: null, blend: [0, 0, 0], offset: 0 };
 
@@ -263,9 +260,11 @@ export class SnowfallRuntime {
    * @param {any} [o.settings] - systems/snowfall.js snowfallSettings()
    * @param {number} [o.frameBudgetMs] - SNOW_FRAME_BUDGET_MS (Infinity: the mod's sample budgets alone)
    * @param {() => number} [o.clock] - milliseconds, for the budget
+   * @param {any} [o.builds] - SNOW-THREAD: systems/snowfall/snowBuildClient.js SnowBuildClient (none: every build on this thread)
    */
-  constructor({ world, coverage, settings = snowfallSettings(), frameBudgetMs = SNOW_FRAME_BUDGET_MS, clock = clockMs }) {
+  constructor({ world, coverage, settings = snowfallSettings(), frameBudgetMs = SNOW_FRAME_BUDGET_MS, clock = clockMs, builds = null }) {
     this.world = world;
+    this.builds = builds;
     this.frameBudgetMs = frameBudgetMs;
     this.clock = clock;
     this.frameStart = 0;
@@ -292,6 +291,7 @@ export class SnowfallRuntime {
     this.npcSegmentsWritten = 0; this.npcSamplePasses = 0;
     this.stampAttempts = 0; this.stampsWritten = 0; this.lastStampChanged = 0; this.lastStampStatus = 'not evaluated';
     this.staleCancellations = 0;
+    this._midRun = { k: -1, from: -1, len: 0 };   // SNOW-THREAD (step 1): the ring's copy run in progress
     this.local = this._newLocal();
     this.mid = this._newMid();
     this.blanket = this._newBlanket();
@@ -330,6 +330,7 @@ export class SnowfallRuntime {
     const L = this.local;
     if (rebuildGrid || rebuildStatic || reevaluate) { L.recentering = false; L.fullRebuild = false; }
     this.settings = next;
+    this.builds?.settings(next);   // SNOW-THREAD: the worker's builds read the same settings from its next build on
     if (this.corpses.enabled !== next.corpseImpressionsEnabled && next.corpseImpressionsEnabled) this.corpseScanPending = true;
     this.corpses.enabled = next.corpseImpressionsEnabled;
     this.corpses.width = next.corpseImpressionWidth;
@@ -366,6 +367,7 @@ export class SnowfallRuntime {
       lastStamp: [0, 0], hasLastStamp: false,
       pending: [],
       visible: false,
+      job: 0, fromJob: 0,   // SNOW-THREAD: the recentre out on the build worker, and the worker's job whose window this is (0: none)
     };
     const normal = encodeStaticSnow(1, 1);
     for (let k = 0; k < sres * sres; k++) L.statics.set(normal, k * 4);
@@ -418,7 +420,10 @@ export class SnowfallRuntime {
     if (L.recentering && Math.hypot(px - L.nextCenter[0], pz - L.nextCenter[1]) > Math.max(s.recenterDistance * 1.5, 9)) this._cancelForRetarget(f);
     if (!L.recentering && (L.heightRebuild || L.staticRebuild) && f.now >= L.nextRetry) this._beginRecenter(px, pz, true);
     else if (!L.recentering && L.meshReady && L.staticReady && f.now >= L.nextRetry && Math.hypot(px - L.center[0], pz - L.center[1]) > s.recenterDistance) this._beginRecenter(px, pz, false);
-    if (L.recentering) this._processRecenter(px, pz, f);
+    if (L.recentering) {
+      if (L.job) this._localAwait(f);
+      else this._processRecenter(px, pz, f);
+    }
     L.visible = L.meshReady && L.staticReady;
     if (L.meshReady && L.staticReady) { this._stampPlayer(f); this._stampNpcs(f); } else this._resetNpcAnchors();
     if (this.corpseProjectionPending) {
@@ -545,6 +550,7 @@ export class SnowfallRuntime {
     }
     L.meshCursor = 0; L.statCursor = 0;
     L.recentering = true;
+    L.job = this.builds?.postLocal(this) ?? 0;   // SNOW-THREAD: sampled on the build worker when it can be (0: on this thread)
   }
 
   // ProcessRecenter
@@ -581,8 +587,11 @@ export class SnowfallRuntime {
       const i = Math.floor(k / sres), j = k - i * sres;
       const sj = j + L.statDelta[0], si = i + L.statDelta[1];
       if (sj >= 0 && sj < sres && si >= 0 && si < sres) {
-        copy4(L.statics, (si * sres + sj) * 4, L.nextStatics, k * 4);
-        copy4(L.context, (si * sres + sj) * 4, L.nextContext, k * 4);
+        // SNOW-THREAD (step 1): the row's whole in-range stretch from here in one copy a mask - a copy spends no budget
+        const run = Math.min(sres - j, sres - sj), from = (si * sres + sj) * 4;
+        L.nextStatics.set(L.statics.subarray(from, from + run * 4), k * 4);
+        L.nextContext.set(L.context.subarray(from, from + run * 4), k * 4);
+        L.statCursor = k + run;
         continue;
       }
       const wx = f32(L.nextStat[0] + f32(f32(f32(j / (sres - 1)) - 0.5) * dia));
@@ -600,13 +609,9 @@ export class SnowfallRuntime {
     const L = this.local;
     const dx = roundToInt(f32(f32(L.nextDyn[0] - L.dynCenter[0]) / this.maskTexel)), dz = roundToInt(f32(f32(L.nextDyn[1] - L.dynCenter[1]) / this.maskTexel));
     if (dx !== 0 || dz !== 0) this._scrollDynamic(dx, dz);
-    [L.pos, L.nextPos] = [L.nextPos, L.pos];
-    [L.nrm, L.nextNrm] = [L.nextNrm, L.nrm];
-    [L.statics, L.nextStatics] = [L.nextStatics, L.statics];
-    [L.context, L.nextContext] = [L.nextContext, L.context];
-    L.center = [...L.nextCenter]; L.dynCenter = [...L.nextDyn]; L.statCenter = [...L.nextStat];   // copies: the mod's Vector2s are values, and offsetOrigin shifts each array once
+    this._localFinish();
+    L.fromJob = 0;   // SNOW-THREAD: built here - the build worker's copy of the window is not this one (_localAwait sets it)
     this._restorePersistentTracks(dx, dz);
-    snowContactRamp(L.statics, L.sres, L.sres, Math.max(1, Math.ceil(HARD_BOUNDARY_CONTACT_WIDTH / this.staticTexel)));
     L.meshReady = true; L.staticReady = true;
     L.heightRebuild = false; L.staticRebuild = false;
     L.fullRebuild = false; L.recentering = false; L.outrun = false;
@@ -614,13 +619,42 @@ export class SnowfallRuntime {
     this.dirty.localMesh = true; this.dirty.localStatic = true;
     this._replayPendingTracks();
   }
+  /** The recentre's own half of the commit - the window's arrays and centres committed, its static mask ramped.
+   *  SNOW-THREAD: the build worker runs it too (snowBuildKernel.js); the tracks' half is _commitRecenter's. */
+  _localFinish() {
+    const L = this.local;
+    [L.pos, L.nextPos] = [L.nextPos, L.pos];
+    [L.nrm, L.nextNrm] = [L.nextNrm, L.nrm];
+    [L.statics, L.nextStatics] = [L.nextStatics, L.statics];
+    [L.context, L.nextContext] = [L.nextContext, L.context];
+    L.center = [...L.nextCenter]; L.dynCenter = [...L.nextDyn]; L.statCenter = [...L.nextStat];   // copies: the mod's Vector2s are values, and offsetOrigin shifts each array once
+    snowContactRamp(L.statics, L.sres, L.sres, Math.max(1, Math.ceil(HARD_BOUNDARY_CONTACT_WIDTH / this.staticTexel)));
+  }
+  /** SNOW-THREAD: the build worker's recentre, taken the first frame it is in - committed as this thread's would be. A
+   *  window that could not stand (a pixel not loaded) is _cancelForRetry's; with the worker gone the recentre goes on
+   *  here, from its first sample, the next frame. */
+  _localAwait(f) {
+    const L = this.local, id = L.job, r = this.builds.take(id);
+    if (!r) return;
+    L.job = 0;
+    if (r.down) return;
+    if (!r.ok) { this._cancelForRetry(f); return; }
+    this.builds.recycle([L.nextPos, L.nextNrm, L.nextStatics, L.nextContext]);
+    const a = r.arrays;
+    L.nextPos = a.pos; L.nextNrm = a.nrm; L.nextStatics = a.statics; L.nextContext = a.context;
+    L.meshCursor = L.res * L.res; L.statCursor = L.sres * L.sres;
+    this._commitRecenter();
+    L.fromJob = id;   // the worker keeps this window as its own: the next recentre copies from its copy
+  }
 
   _rebuildCommittedContext() {
     const L = this.local;
     if (!L.hasCenter) return;
     this._fillContext(L.context, L.statCenter, L.sres * L.sres);
+    L.fromJob = 0;   // SNOW-THREAD: the committed context is written here - the worker's copy is not it
     this.dirty.localStatic = true;
     if (L.recentering) this._fillContext(L.nextContext, L.nextStat, L.statCursor);
+    if (L.recentering && L.job) L.job = this.builds.postLocal(this) ?? 0;   // SNOW-THREAD: the worker's recentre asked again over the new context (this.context is prepared at its centre now)
   }
   _fillContext(px, center, count) {
     const s = this.settings, L = this.local, dia = this.gridDiameter;
@@ -790,6 +824,7 @@ export class SnowfallRuntime {
       active: false, ready: false, building: false, rebuildPending: false, hasDeformation: false, visible: false, lastHistoryChanged: 0,
       meshCursor: 0, staticCursor: 0, nextRetry: 0, nextHistoryUpload: 0, historyDirty: false,
       pending: [], completed: 0, cancelled: 0, blankets: new Map(),
+      job: 0,   // SNOW-THREAD: the build out on the build worker (0: none)
     };
   }
   _midTick(shouldBeActive, player, f, allowBuild) {
@@ -800,14 +835,23 @@ export class SnowfallRuntime {
     if (M.building && Math.hypot(player[0] - M.buildCenter[0], player[1] - M.buildCenter[1]) > 112) { M.building = false; M.cancelled++; M.nextRetry = f.now; }
     const far = !M.ready || Math.hypot(player[0] - M.center[0], player[1] - M.center[1]) > MID.recenter;
     if (!M.building && (M.rebuildPending || far) && f.now >= M.nextRetry) this._midBegin(player);
-    if (M.building && allowBuild) this._midProcess(player, f);
+    if (M.building && allowBuild) {
+      if (M.job) this._midAwait(f);
+      else this._midProcess(player, f);
+    }
     M.visible = M.ready && Math.hypot(player[0] - M.center[0], player[1] - M.center[1]) <= 32;
     return M.visible;
   }
   _midBegin(player) {
-    const M = this.mid, s = this.settings, last = M.source;
+    const M = this.mid, s = this.settings;
     M.buildCenter = snapToGrid(player[0], player[1], MID.snap, M.lattice[0], M.lattice[1]);
     M.context0.prepare(M.buildCenter[0], M.buildCenter[1], 176, s.settlementBoundaryFeather, s.locationLoaderBoundaryFeather, s);
+    this._midStart();
+    M.job = this.builds?.postMid(this) ?? 0;   // SNOW-THREAD: sampled on the build worker when it can be (0: on this thread)
+  }
+  /** The build begun round `buildCenter` over the prepared context - the half of _midBegin the build worker runs too. */
+  _midStart() {
+    const M = this.mid, last = M.source;
     M.meshCursor = 0; M.staticCursor = 0;
     M.blankets = new Map();
     M.buildTiles = [];
@@ -832,6 +876,11 @@ export class SnowfallRuntime {
     const M = this.mid, s = this.settings, n = MID.mesh * MID.mesh, sn = MID.staticRes * MID.staticRes;
     let budget = Math.hypot(player[0] - M.center[0], player[1] - M.center[1]) > 80 ? MID.catchUp : MID.samples;
     const dia = 320, R = M.reuse;
+    // SNOW-THREAD (step 1): the copies are gathered into runs - consecutive vertices (texels) copied from consecutive
+    // ones of the last build - and each run goes over in one copy an array when it breaks. The test a vertex passes,
+    // and the budget it spends, are its own as before.
+    const run = this._midRun;
+    run.k = -1; run.from = -1; run.len = 0;
     while (M.meshCursor < n && budget > 0) {
       const k = M.meshCursor++;
       const i = Math.floor(k / 257), j = k - i * 257;
@@ -846,10 +895,8 @@ export class SnowfallRuntime {
       const oj = R ? j + R.mesh[0] : -1, oi = R ? i + R.mesh[1] : -1, from = oi * 257 + oj;
       if (R && oj >= 0 && oj < 257 && oi >= 0 && oi < 257 && R.tiles[M.meshTile[from] - 1] === t) {
         M.nextPos[k * 3 + 1] = M.pos[from * 3 + 1];   // AUDIT ENVIRONS P3: the last build's vertex, here
-        copy3(M.nrm, from * 3, M.nextNrm, k * 3);
-        copy4(M.ctxA, from * 4, M.nextCtxA, k * 4); copy4(M.ctxB, from * 4, M.nextCtxB, k * 4); copy4(M.ctxC, from * 4, M.nextCtxC, k * 4);
-        copy4(M.heights, from * 4, M.nextHeights, k * 4);
-        copy3(M.bnrm, from * 3, M.nextBnrm, k * 3);
+        if (run.len > 0 && k === run.k + run.len && from === run.from + run.len) run.len++;
+        else { this._midCopyMesh(run); run.k = k; run.from = from; run.len = 1; }
       } else {
         const og = t.origin(_o);
         const ground = og[1] + t.height(wx - og[0], wz - og[2]);
@@ -862,8 +909,9 @@ export class SnowfallRuntime {
         M.nextBnrm[k * 3] = b.normal[0]; M.nextBnrm[k * 3 + 1] = b.normal[1]; M.nextBnrm[k * 3 + 2] = b.normal[2];
       }
       budget--;
-      if ((budget & BUDGET_CHECK) === 0 && this._spent()) return;
+      if ((budget & BUDGET_CHECK) === 0 && this._spent()) { this._midCopyMesh(run); return; }
     }
+    this._midCopyMesh(run);
     while (M.meshCursor >= n && M.staticCursor < sn && budget > 0) {
       const k = M.staticCursor++;
       const i = Math.floor(k / 321), j = k - i * 321;
@@ -874,16 +922,36 @@ export class SnowfallRuntime {
       const oj = R ? j + R.stat[0] : -1, oi = R ? i + R.stat[1] : -1, from = oi * 321 + oj;
       if (R && t && oj >= 0 && oj < 321 && oi >= 0 && oi < 321 && R.tiles[M.statTile[from] - 1] === t
         && f32(R.center[0] + f32(f32(f32(oj / 320) - 0.5) * dia)) === wx && f32(R.center[1] + f32(f32(f32(oi / 320) - 0.5) * dia)) === wz) {
-        copy4(M.statics, from * 4, M.nextStatics, k * 4);   // ramped in r and a, which the commit's ramp makes again from b and g
-        copy4(M.context, from * 4, M.nextContext, k * 4);
+        // ramped in r and a, which the commit's ramp makes again from b and g
+        if (run.len > 0 && k === run.k + run.len && from === run.from + run.len) run.len++;
+        else { this._midCopyStatic(run); run.k = k; run.from = from; run.len = 1; }
       } else {
         if (!sampleStaticSnow(this.world, this.coverage, M.context0, s, wx, wz, M.nextStatics, k * 4, t)) { this._midFail(f); return; }
         M.context0.sample(wx, wz, M.nextContext, k * 4);
       }
       budget--;
-      if ((budget & BUDGET_CHECK) === 0 && this._spent()) return;
+      if ((budget & BUDGET_CHECK) === 0 && this._spent()) { this._midCopyStatic(run); return; }
     }
+    this._midCopyStatic(run);
     if (M.staticCursor >= sn) this._midCommit();
+  }
+  /** SNOW-THREAD (step 1): a run of the ring's vertices copied from the last build's, its channels one copy each. */
+  _midCopyMesh(run) {
+    if (run.len === 0) return;
+    const M = this.mid, a = run.from, k = run.k, b = a + run.len;
+    M.nextNrm.set(M.nrm.subarray(a * 3, b * 3), k * 3);
+    M.nextCtxA.set(M.ctxA.subarray(a * 4, b * 4), k * 4); M.nextCtxB.set(M.ctxB.subarray(a * 4, b * 4), k * 4); M.nextCtxC.set(M.ctxC.subarray(a * 4, b * 4), k * 4);
+    M.nextHeights.set(M.heights.subarray(a * 4, b * 4), k * 4);
+    M.nextBnrm.set(M.bnrm.subarray(a * 3, b * 3), k * 3);
+    run.len = 0;
+  }
+  /** SNOW-THREAD (step 1): a run of the ring's static texels copied from the last build's. */
+  _midCopyStatic(run) {
+    if (run.len === 0) return;
+    const M = this.mid, a = run.from * 4, b = a + run.len * 4;
+    M.nextStatics.set(M.statics.subarray(a, b), run.k * 4);
+    M.nextContext.set(M.context.subarray(a, b), run.k * 4);
+    run.len = 0;
   }
   _midFail(f) { this.mid.building = false; this.mid.nextRetry = f.now + TERRAIN_RETRY_SECONDS; }
   /** The frame's snow has spent its time (SNOW_FRAME_BUDGET_MS): a progressive build stops where it stands. */
@@ -891,6 +959,26 @@ export class SnowfallRuntime {
   _midCommit() {
     const M = this.mid;
     const wasReady = M.ready, old = M.center;
+    this._midFinish();
+    let p = [0, -1, 0, -1];
+    if (wasReady) {
+      const dx = roundToInt(f32((M.center[0] - old[0]) / 0.5)), dz = roundToInt(f32((M.center[1] - old[1]) / 0.5));
+      this._midScroll(dx, dz);
+      if (Math.abs(dx) < 641 && Math.abs(dz) < 641) p = [Math.max(0, -dx), Math.min(640, 640 - dx), Math.max(0, -dz), Math.min(640, 640 - dz)];
+    }
+    if (this.tracks.applyToMask(M.history, 641, M.center[0], M.center[1], 320, p[0], p[1], p[2], p[3]) > 0) { M.hasDeformation = true; M.historyDirty = true; }
+    M.ready = true;
+    this._midProjectCorpses();
+    M.building = false; M.rebuildPending = false;
+    M.completed++;
+    this.dirty.mid = true; this.rects.mid.all();
+    const list = M.pending.splice(0);
+    for (const seg of list) if (this._midInside(seg) && this._midRasterize(seg) > 0) M.historyDirty = true;
+  }
+  /** The build's own half of the commit - its arrays committed, its tiles and centre, the next build's source, its
+   *  static mask ramped. SNOW-THREAD: the build worker runs it too (snowBuildKernel.js); the tracks' half is _midCommit's. */
+  _midFinish() {
+    const M = this.mid;
     [M.pos, M.nextPos] = [M.nextPos, M.pos];
     [M.nrm, M.nextNrm] = [M.nextNrm, M.nrm];
     [M.statics, M.nextStatics] = [M.nextStatics, M.statics];
@@ -903,21 +991,24 @@ export class SnowfallRuntime {
     M.source = { center: [...M.center], tiles: M.tiles, context: { roads: M.context0.roads, settlements: M.context0.settlements, locations: M.context0.locations, settings: M.context0.settings, settlementFeather: M.context0.settlementFeather } };   // AUDIT ENVIRONS P3: the next build's to copy from
     M.reuse = null;
     M.baseY = 0;
-    let p = [0, -1, 0, -1];
-    if (wasReady) {
-      const dx = roundToInt(f32((M.center[0] - old[0]) / 0.5)), dz = roundToInt(f32((M.center[1] - old[1]) / 0.5));
-      this._midScroll(dx, dz);
-      if (Math.abs(dx) < 641 && Math.abs(dz) < 641) p = [Math.max(0, -dx), Math.min(640, 640 - dx), Math.max(0, -dz), Math.min(640, 640 - dz)];
-    }
-    if (this.tracks.applyToMask(M.history, 641, M.center[0], M.center[1], 320, p[0], p[1], p[2], p[3]) > 0) { M.hasDeformation = true; M.historyDirty = true; }
     snowContactRamp(M.statics, 321, 321, Math.max(1, Math.ceil(HARD_BOUNDARY_CONTACT_WIDTH / 1)));
-    M.ready = true;
-    this._midProjectCorpses();
-    M.building = false; M.rebuildPending = false;
-    M.completed++;
-    this.dirty.mid = true; this.rects.mid.all();
-    const list = M.pending.splice(0);
-    for (const seg of list) if (this._midInside(seg) && this._midRasterize(seg) > 0) M.historyDirty = true;
+  }
+  /** SNOW-THREAD: the build worker's ring, taken the first frame it is in and the ring may land (`allowBuild`): its
+   *  arrays become the next ones and commit as this thread's would. A ring that could not stand (a pixel not loaded) is
+   *  _midFail's; with the worker gone the build goes on here, from its first sample, the next frame. */
+  _midAwait(f) {
+    const M = this.mid, r = this.builds.take(M.job);
+    if (!r) return;
+    M.job = 0;
+    if (r.down) return;
+    if (!r.ok) { this._midFail(f); return; }
+    this.builds.recycle([M.nextPos, M.nextNrm, M.nextCtxA, M.nextCtxB, M.nextCtxC, M.nextHeights, M.nextBnrm, M.nextStatics, M.nextContext, M.nextMeshTile, M.nextStatTile]);
+    const a = r.arrays;
+    M.nextPos = a.pos; M.nextNrm = a.nrm; M.nextCtxA = a.ctxA; M.nextCtxB = a.ctxB; M.nextCtxC = a.ctxC; M.nextHeights = a.heights; M.nextBnrm = a.bnrm;
+    M.nextStatics = a.statics; M.nextContext = a.context; M.nextMeshTile = a.meshTile; M.nextStatTile = a.statTile;
+    M.buildTiles = r.tiles;
+    M.meshCursor = MID.mesh * MID.mesh; M.staticCursor = MID.staticRes * MID.staticRes;
+    this._midCommit();
   }
   _midInside([sx, sz, ex, ez, w]) {
     const c = this.mid.center, lim = f32(160 - f32(w * 0.5));
@@ -1139,7 +1230,7 @@ export class SnowfallRuntime {
       if (covered) {
         const c = B.context0.sample(f32(og[0] + f32(u * t.size)), f32(og[2] + f32(v * t.size)), tmp);
         contextInto(c[0], c[1], c[2], c[3], ctx, k * 4);
-      } else copy4(SNOW_EXCLUDED, 0, ctx, k * 4);
+      } else ctx.set(SNOW_EXCLUDED, k * 4);
     }
     o.contextRevision = B.contextRevision;
     this.dirty.blanket.add(o);
@@ -1213,6 +1304,7 @@ export class SnowfallRuntime {
     for (const t of this.npcTargets.values()) if (t.hasAnchor) { t.last[0] += ox; t.last[1] += oz; }
     if (oy !== 0) { M.building = false; M.rebuildPending = true; }
     M.source = null; M.reuse = null;   // AUDIT ENVIRONS P3: every place the ring sampled is another number now
+    this.builds?.offset(offset);   // SNOW-THREAD: and the worker's ring's too
   }
   /** HandleTransitionInterior / HandleTransitionExterior / InvalidateSessionPresentation: the world the snow stood on
    *  is gone (a door, a load, a fast travel) - every tier is built again where the player next stands outside. */

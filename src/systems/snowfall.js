@@ -20,7 +20,7 @@
 
 import { modSetting } from './modSettings.js';
 import { roundToInt, lerpF } from './mathf.js';   // Mathf.RoundToInt (banker's), Mathf.Lerp in float
-import { bytesToBase64, base64ToBytes } from './save/saveTransfer.js';   // Convert.ToBase64String / FromBase64String
+import { bytesToBase64, base64ToBytes } from './save/base64Bytes.js';   // Convert.ToBase64String / FromBase64String
 import { deflateRaw, inflateRaw } from '../formats/rawDeflate.js';   // DeflateStream
 
 const f32 = Math.fround;

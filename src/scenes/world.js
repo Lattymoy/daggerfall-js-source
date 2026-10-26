@@ -238,7 +238,8 @@ import { WindWispsRenderer, wispsOn, SAND_LOOK } from '../render/windWisps.js'; 
 import { HeatHazeRenderer } from '../render/heatHaze.js';   // HAZE1: Heat Haze's ring, drawn
 import { createHeatHaze, hazeFrameSettings } from '../systems/heatHaze.js';   // HAZE1: Heat Haze's law (demifiend000, vendor/heat-haze/)
 import { createWindfallHost } from './windfallHost.js';   // WINDFALL1: Windfall (demifiend000, vendor/windfall/) - its wind, its sounds, its leaves
-import { createSnowfallHost, snowfallNetwork, authoredTiles, settlementsIn } from './snowfallHost.js';   // SNOWFALL1: Snowfall (demifiend000, vendor/snowfall/) - the snow on the ground, its tracks
+import { createSnowfallHost, snowfallNetwork, authoredTiles, settlementsIn } from './snowfallHost.js';
+import { snowGroundHeight, snowGroundNormal, snowGroundBare, snowGroundSnapshot, snowPixelX, snowPixelY, snowGlobalOf } from '../systems/snowfall/snowGroundLaw.js';   // SNOW-THREAD: the snow's ground, one law for the frame and the build worker   // SNOWFALL1: Snowfall (demifiend000, vendor/snowfall/) - the snow on the ground, its tracks
 import { createWindAudio, windSoundOn } from '../systems/wind/windAudio.js';   // WIND3: the wind, heard
 import { placeFoeFreely, PLACE_FOE_DEFAULTS } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
 import { PLAYED_STEP_MAX_SECONDS } from '../systems/quest/clock.js';   // WORLD7: the quest clocks' played step online
@@ -2850,7 +2851,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     get terrainDistance() { return state.terrainDistance; },
     pixelAt(x, z) {
       const c = state.compensation;
-      return snowGround.pixelOn(state.mapOrigin.x + Math.floor((x - c[0]) / TERRAIN_SIZE), state.mapOrigin.y - Math.floor((z - c[2]) / TERRAIN_SIZE));
+      return snowGround.pixelOn(snowPixelX(state.mapOrigin.x, c[0], TERRAIN_SIZE, x), snowPixelY(state.mapOrigin.y, c[2], TERRAIN_SIZE, z));
     },
     pixelOn(px, py) {   // StreamingWorld.GetTerrainFromPixel: the built entry standing there, its ground published
       if (px < 0 || px >= 1000 || py < 0 || py >= 500) return null;
@@ -2865,17 +2866,16 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       return out.sort(nearestFirstFrom(cur));
     },
     translation: (p, out) => state.pixelTranslation(p.px, p.py, out),
-    height(p, lx, lz) {
-      if (p.deepWaters && deepWaters) { const f = deepWaters.floorLocalY(p, lx, lz); if (f != null) return f; }   // DW-B: the floor is drawn there
-      const stride = p._stride ?? 1, h = surfaceHeightAt(p.samples, lx, lz, stride), d = p._bed?.depths, g = 128 / stride + 1;
-      return d ? h - gridValueAt(d, g, g, tileSide * stride, lx, lz) : h;   // WATER-NEXT 2: and the bed carved under a shore
-    },
-    normal: (p, lx, lz, out) => (p.groundNormals && (p._stride ?? 1) === 1 ? surfaceNormalAt(p.groundNormals, lx, lz, out) : surfaceNormalFromSamples(p.samples, lx, lz, p._stride ?? 1, out)),
+    // SNOW-THREAD: the drawn ground's laws live in systems/snowfall/snowGroundLaw.js, which the snow's build worker reads
+    // off `data`'s snapshot of the same entry - DW-B's floor, WATER-NEXT 2's bed, the stride's surface and normals
+    height: (p, lx, lz) => snowGroundHeight(p, !!deepWaters, lx, lz),
+    normal: (p, lx, lz, out) => snowGroundNormal(p, lx, lz, out),
+    data: (p) => snowGroundSnapshot(p, !!deepWaters),
     tileMap: (p) => p._dwBytes ?? p.tilemapBytes,
     climate: (p) => maps.getClimateIndex(p.px, p.py),
     mapPixel: (p) => ({ x: p.px, y: p.py }),
     stamp: (p) => `${p._stride ?? 1}/${snowIdOf(p._dwBytes ?? p.tilemapBytes)}/${snowIdOf(p.deepWaters)}/${snowIdOf(p._bed?.depths)}`,
-    bare: (p, lx, lz) => !!p.deepWaters && carvedFloorLocalY(p.deepWaters, lx, lz) != null,   // DW-B: the carved sea has no ground to lie on
+    bare: (p, lx, lz) => snowGroundBare(p, lx, lz),
     roads(p) {
       const raw = terrainGen.roads();
       const net = raw?.source === 'basic-roads' ? snowfallNetwork(raw, p.px, p.py) : null;
@@ -2884,12 +2884,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       const authored = loc?.exterior?.exteriorData && (net.roads | net.roadCorners | net.paths | net.pathCorners) !== 0 ? authoredTiles(loc, maps, blocks) : new Uint8Array(16384);
       return { ...net, authored, rect: p.locationRect ?? { xMin: 0, xMax: 0, yMin: 0, yMax: 0 } };
     },
-    toGlobal(x, z) {
-      const c = state.compensation;
-      _snowG[0] = state.mapOrigin.x * TERRAIN_SIZE + (x - c[0]);
-      _snowG[1] = (499 - state.mapOrigin.y) * TERRAIN_SIZE + (z - c[2]);
-      return _snowG;
-    },
+    toGlobal: (x, z) => snowGlobalOf(state.mapOrigin.x, state.mapOrigin.y, state.compensation[0], state.compensation[2], TERRAIN_SIZE, x, z, _snowG),
+    frame: () => [state.mapOrigin.x, state.mapOrigin.y, state.compensation[0], state.compensation[2], TERRAIN_SIZE],   // SNOW-THREAD: toGlobal's and pixelAt's inputs, for the worker's copy of the world
     settlements: (minX, minZ, maxX, maxZ) => settlementsIn((x, y) => locationIndex.get(`${x},${y}`) ?? null, minX, minZ, maxX, maxZ),
   };
   const snowfall = createSnowfallHost({ gl: renderer.gl, renderer, enhanced: !!sky.enhanced, ground: snowGround });
