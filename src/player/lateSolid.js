@@ -185,6 +185,16 @@ function makeGate(collider) {
     },
     /** @param {string} key */
     forget(key) { held.delete(key); },
+    /** IC-SWAP-BEHIND (scenes/swapBehind.js): a held bucket woken under its pixel's own key - its withheld parts (and its
+     *  keys' - `from:...`, a gate's) stand there when they stand. @param {string} from @param {string} to */
+    rename(from, to) {
+      for (const [k, parts] of [...held]) {
+        const as = k === from ? to : k.startsWith(`${from}:`) ? `${to}${k.slice(from.length)}` : null;   // its own key and its keys' (a gate's)
+        if (as === null) continue;
+        held.delete(k);
+        held.set(as, [...(held.get(as) ?? []), ...parts]);
+      }
+    },
     /** @param {LateBody} body */
     settle(body) {
       if (typeof body === 'function' || body?.pos) guarded = body;

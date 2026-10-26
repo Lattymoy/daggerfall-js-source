@@ -515,7 +515,7 @@
   {
     "name": "TESA10-sweep-not-queued",
     "file": "src/scenes/tamrielSweepsHost.js",
-    "old": "    host.queue.push(...again.sort(nearestFirstFrom(host.state.current)));\n    console.log(`[capitals]",
+    "old": "    swap.rebuild(again);   // IC-SWAP-BEHIND: behind its view\n    console.log(`[capitals]",
     "new": "    console.log(`[capitals]",
     "tests": [
       "test/tesa10_capitals.test.js"

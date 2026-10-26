@@ -331,7 +331,7 @@
   {
     "name": "WOD7-fresh-promote-remembers",
     "file": "src/scenes/pixelBuild.js",
-    "old": "    if (!wodKept.life) wodForgetPeerSites(key);   // AUDIT WOD7: a fresh promote's markers are its own again\n",
+    "old": "    if (!wodKept.life) wodForgetPeerSites(pkey);   // AUDIT WOD7: a fresh promote's markers are its own again\n",
     "new": "",
     "tests": [
       "test/scenes/wod7_sharedcamps.test.js"

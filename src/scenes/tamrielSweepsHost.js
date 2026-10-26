@@ -12,12 +12,22 @@ import { tamrielLandVersion } from '../world/tamriel/tamrielLand.js';
 import { WATER_BYTE } from '../world/roadsProducer.js';
 import { createCapitalSkyline } from './capitalSkyline.js';   // IC-GRAND x FAR-LANDMARK: the Imperial City on the far ring's horizon
 import { createCapitalPrebuild } from './capitalPrebuild.js';   // IC-GRAND's perf pass: the city's own made ahead on its worker
+import { createSwapBehind, swapBehindOff } from './swapBehind.js';   // IC-SWAP-BEHIND: a pixel built again behind its standing view
 
 /** @param {any} host */
 export function createTamrielSweeps(host) {
   const {
     destroyPixel, maps
   } = host;
+  /** IC-SWAP-BEHIND (scenes/swapBehind.js): every rebuild of a standing pixel built behind its view - the host's sweeps
+   *  and these; `?swapbehind=off` (read once) every one torn down and then built, as it was. */
+  const swapOff = swapBehindOff();
+  const swap = createSwapBehind({
+    get built() { return host.built; }, destroyPixel, get collider() { return host.collider; }, get buildingDoors() { return host.buildingDoors; },
+    doorsMoved: () => { host.doorGeneration += 1; }, get queue() { return host.queue; }, nearestFirst: nearestFirstFrom, get state() { return host.state; },
+    walkMode: () => host.walkMode, playerSpawned: () => host.playerSpawned, seasonHold: (k) => { host._seasonHoldKey = k; },
+    off: () => swapOff,
+  });
   /** TESA2: THE ARENA SWEEP - a pixel beyond the Bay built before Arena's places stood as they stand now (the trace or
    *  the data landing after it, the Arena card's Attach or Remove) is built again, the way the late Hollow's is
    *  (sweepSdLate): each built pixel's Arena slot (its entry's `arenaSlot`) against the place standing on it now. Asked on the frame
@@ -34,10 +44,7 @@ export function createTamrielSweeps(host) {
       if ((place ? `${place.provinceIndex}|${place.id}|${!!place.port}` : null) !== (p.arenaSlot ? `${p.arenaSlot.provinceIndex}|${p.arenaSlot.id}|${!!p.arenaSlot.port}` : null)) again.push({ px: p.px, py: p.py });   // TESA6: and its port
     }
     if (!again.length) return;
-    const under = `${host.state.current.x},${host.state.current.y}`;
-    if (host.walkMode && host.playerSpawned && again.some((k) => `${k.px},${k.py}` === under)) host._seasonHoldKey = under;
-    for (const k of again) destroyPixel(k.px, k.py, { collectLoose: false });
-    host.queue.push(...again.sort(nearestFirstFrom(host.state.current)));
+    swap.rebuild(again);   // IC-SWAP-BEHIND: behind its view
     console.log(`[arena] ${again.length} pixel(s) beyond the Bay built again for Arena's places`);
   }
   /** TESA10: THE CAPITALS' SWEEP (sweepArenaPixels' shape) - on the frame, when the fit or the land moves (the trace
@@ -62,10 +69,7 @@ export function createTamrielSweeps(host) {
       if (rolled || cap !== !!had?.capital) again.push({ px: p.px, py: p.py });
     }
     if (!again.length) return;
-    const under = `${host.state.current.x},${host.state.current.y}`;
-    if (host.walkMode && host.playerSpawned && again.some((k) => `${k.px},${k.py}` === under)) host._seasonHoldKey = under;
-    for (const k of again) destroyPixel(k.px, k.py, { collectLoose: false });
-    host.queue.push(...again.sort(nearestFirstFrom(host.state.current)));
+    swap.rebuild(again);   // IC-SWAP-BEHIND: behind its view
     console.log(`[capitals] ${again.length} pixel(s) beyond the Bay built again for the capitals`);
   }
   /** IC-GRAND (bible/03-World/Arena-Provinces.md IC-GRAND): THE IMPERIAL CITY NEAR AND FAR - its slices within NEAR_RING of
@@ -76,26 +80,31 @@ export function createTamrielSweeps(host) {
    *  not the one it is built in now is built again, the ones coming near first (at the queue's head, nearest first - the
    *  far ring and the city's landmarks stand in the hole while it builds, scenes/capitalSkyline.js), the ones going far
    *  last. */
-  const _lod = { at: null, size: -1 };
-  /** IC-GRAND x FAR-LANDMARK: the city's landmarks on the far ring (`host.farRing`, null on the classic skin). */
-  const capitalSkyline = createCapitalSkyline(host);
+  const _lod = { at: null, size: -1, swaps: -1 };
+  /** IC-GRAND x FAR-LANDMARK: the city's landmarks on the far ring (`host.farRing`, null on the classic skin) - handed
+   *  the two names it reads, live (the seam law: tools/hostScope.mjs sees a name this module reads, never one handed on
+   *  whole). */
+  const capitalSkyline = createCapitalSkyline({ get farRing() { return host.farRing; }, get state() { return host.state; } });
   /** IC-GRAND's perf pass: the city's worker told what the stream is about to build (scenes/capitalPrebuild.js). */
   const capitalPrebuild = createCapitalPrebuild(host);
   function sweepCapitalLod() {
     const cur = host.state.current, at = cur ? `${cur.x},${cur.y}` : null;
-    if (at === _lod.at && host.built.size === _lod.size) return;
+    if (at === _lod.at && host.built.size === _lod.size && swap.swaps === _lod.swaps) return;   // IC-SWAP-BEHIND: or a view swapped in, the set's size unmoved
     _lod.at = at;
     _lod.size = host.built.size;
+    _lod.swaps = swap.swaps;
     const near = [], far = [];
-    for (const [, p] of host.built) {
-      if (!p.capitalLod) continue;
+    for (const [k, p] of host.built) {
+      if (!p.capitalLod || swap.owes(k)) continue;   // IC-SWAP-BEHIND: one owed a build behind its view is built from the view as it is at its build, and asked again once swapped in
       const want = capitalNear(p.px, p.py, cur, p.capitalLod) ? 'near' : 'far';
       if (want !== p.capitalLod) (want === 'near' ? near : far).push({ px: p.px, py: p.py });
     }
     if (!near.length && !far.length) return;
-    for (const k of [...near, ...far]) destroyPixel(k.px, k.py, { collectLoose: false });
-    host.queue.unshift(...near.sort(nearestFirstFrom(cur)));
-    host.queue.push(...far.sort(nearestFirstFrom(cur)));
+    // IC-SWAP-BEHIND (the owner: "Weird pop in issues in the city when moving"): each slice built again behind the view
+    // that stands until its new one is published - the ones coming near first at the queue's head, the ones going far at
+    // its tail
+    swap.rebuild(far);
+    swap.rebuild(near, { front: true });
     _lod.size = host.built.size;
   }
   /** TESA5: land, for a crossing's run - the Bay's own water law on the Bay (the fit's), the ground's beach line past it. */
@@ -118,10 +127,7 @@ export function createTamrielSweeps(host) {
       else if (!host.inFlight.has(k)) _arenaRoadsStale.delete(k);   // not standing: it builds with the layer as it is now
     }
     if (!again.length) return;
-    const under = `${host.state.current.x},${host.state.current.y}`;
-    if (host.walkMode && host.playerSpawned && again.some((k) => `${k.px},${k.py}` === under)) host._seasonHoldKey = under;
-    for (const k of again) destroyPixel(k.px, k.py, { collectLoose: false });
-    host.queue.push(...again.sort(nearestFirstFrom(host.state.current)));
+    swap.rebuild(again);   // IC-SWAP-BEHIND: behind its view
   }
-  return { _arenaRoadsStale, arenaJoinLand, arenaRoadsLanded, arenaRoadsStale, sweepArenaPixels, sweepArenaRoads, sweepCapitalPixels, sweepCapitalLod, capitalSkyline, capitalPrebuild };
+  return { swap, _arenaRoadsStale, arenaJoinLand, arenaRoadsLanded, arenaRoadsStale, sweepArenaPixels, sweepArenaRoads, sweepCapitalPixels, sweepCapitalLod, capitalSkyline, capitalPrebuild };
 }

@@ -331,7 +331,7 @@ test('SNOWFALL1 the hosts: world.js and exterior.js build the one runtime on the
   }
   const w = hostText('src/scenes/world.js');
   assert.match(w, /snowfall\.offsetOrigin\(r\.offset\);/);
-  assert.match(w, /^ {4}snowfall\.promoted\(built\.get\(key\)\);/m, 'OnPromoteTerrainData');
+  assert.match(w, /^ {4}snowfall\.promoted\(built\.get\(pkey\)\);/m, 'OnPromoteTerrainData');   // PIN MOVED (IC-SWAP-BEHIND): the entry under the pixel's own key (`key` the build's, behind a standing view)
   assert.match(w, /if \(!tvf\) snowfall\.draw\(cullOn \? snowOutside : null\);/, 'never under the travel view, its blanket culled to the frustum');
   assert.match(w, /const snowOutside = \(box, x, y, z\) => aabbOutside\(_planes, box, x, y, z\);/, 'by the frame\'s own planes');
   assert.match(w, /return surfaceHeightAt\(p\.samples, lx, lz, p\._stride \?\? 1\) \+ t\[1\];/, 'the drawn ground the snow reads is the one surfaceAt answers');

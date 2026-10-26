@@ -165,27 +165,44 @@ test('IC-GRAND EVERY SLICE\'S ARRIVALS ON ITS CARRIER - its start markers editor
 });
 
 test('IC-GRAND THE SWEEP - on the frame, walked only when the player\'s pixel or the built set moves (the built pixels alone - never the city\'s slices): a slice whose view is not the one it was built in built again, the ones coming near first at the queue\'s head, the ones going far at its tail (mutants: walked every frame; near at the tail; the slack unread)', () => {
+  // PIN MOVED (IC-SWAP-BEHIND, scenes/swapBehind.js): each slice built again through the swap - marked (its carry alone taken,
+  // its view standing until the one built behind it is swapped in) and owed a build behind; the sweep walks on a swap too
+  // (a view swapped in moves no set's size), and leaves one owed a build behind to the view it is built in
   const built = new Map(), queue = [{ px: 900, py: 900 }], destroyed = [];
-  const host = { destroyPixel: (x, y) => { destroyed.push(`${x},${y}`); built.delete(`${x},${y}`); }, maps: {}, built, queue, state: { current: { x: 100, y: 100 } }, locationIndex: new Map() };
+  const host = { destroyPixel: (x, y, o = {}) => { destroyed.push(`${x},${y}`); if (!o.carryOnly) built.delete(`${x},${y}`); }, maps: {}, built, queue, state: { current: { x: 100, y: 100 } }, locationIndex: new Map(),
+    collider: { hold() {}, wake() {}, unhold() {} }, buildingDoors: [], doorsMoved() {}, walkMode: false, playerSpawned: false };
   const put = (px, py, capitalLod) => built.set(`${px},${py}`, { px, py, capitalLod });
   put(100, 100, 'near'); put(101, 100, 'far'); put(102, 100, 'near'); put(103, 100, 'near'); put(104, 100, null); put(99, 99, 'near');
-  const { sweepCapitalLod } = createTamrielSweeps(host);
+  const { sweepCapitalLod, swap } = createTamrielSweeps(host);
   sweepCapitalLod();
   assert.deepEqual(destroyed.sort(), ['101,100', '103,100'], 'the far one beside the player and the near one past the slack');
+  assert.equal(swap.owed, 2, 'both owed a build behind their views');
+  assert.ok(built.has('101,100') && built.has('103,100'), 'their views stand');
   assert.deepEqual(queue[0], { px: 101, py: 100 }, 'coming near: the head');
   assert.deepEqual(queue[queue.length - 1], { px: 103, py: 100 }, 'going far: the tail');
-  // unmoved: nothing walked (a built entry changed in place is not read)
+  const keys = { '101,100': swap.keyFor(101, 100), '103,100': swap.keyFor(103, 100) };   // both under way behind their views
+  // a pixel built: walked - the two owed a build behind are not asked again
   destroyed.length = 0;
-  put(101, 100, 'far');   // the set's size back to what the sweep left plus one: a pixel built
+  const queued = queue.length;
+  put(99, 100, 'far');
   sweepCapitalLod();
-  assert.deepEqual(destroyed, ['101,100'], 'a pixel built: walked');
+  assert.deepEqual(destroyed, ['99,100'], 'a pixel built: walked');
+  assert.equal(queue.length, queued + 1, 'and only it queued');
+  // unmoved: nothing walked (a built entry changed in place is not read)
   destroyed.length = 0;
   built.get('100,100').capitalLod = 'far';
   sweepCapitalLod();
   assert.deepEqual(destroyed, [], 'nothing moved: not walked');
+  // a view swapped in: walked, the set's size unmoved
+  swap.publish(101, 100, keys['101,100'], {}, { px: 101, py: 100, capitalLod: 'near' });
+  destroyed.length = 0;
+  sweepCapitalLod();
+  assert.deepEqual(destroyed, ['100,100'], 'a view swapped in: walked');
+  destroyed.length = 0;
+  built.get('102,100').capitalLod = 'far';
   host.state.current = { x: 101, y: 100 };
   sweepCapitalLod();
-  assert.deepEqual(destroyed, ['100,100'], 'the player moved: walked');
+  assert.deepEqual(destroyed, ['102,100'], 'the player moved: walked');
   // PIN MOVED (IC-GRAND's perf pass): the city's worker told first (scenes/capitalPrebuild.js), then this sweep
   assert.match(read('src/scenes/tamrielSweepsHost.js'), /function sweepCapitalPixels\(\) \{\n\s+capitalPrebuild\.sweep\(\);[^\n]*\n\s+sweepCapitalLod\(\);/, 'asked where the capitals\' sweep is (scenes/world.js, the frame)');
 });

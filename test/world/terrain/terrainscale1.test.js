@@ -27,6 +27,7 @@ import { snapshotPlayer, restorePlayer } from '../../../src/systems/save/save.js
 import { createSceneCache, cacheScene, restoreCachedScene, snapshotSceneCache, restoreSceneCache } from '../../../src/systems/sceneCache.js';
 import { makeAnchor } from '../../../src/systems/teleportAnchor.js';
 import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
+import { createSwapBehind } from '../../../src/scenes/swapBehind.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const rd = (p) => hostText(p);
@@ -205,7 +206,7 @@ test('TERRAIN-SCALE1: an interior caches its floor in the BUILDING\'s frame - DF
 
 // ── BUILD-FAIL1 ─────────────────────────────────────────────────────────
 
-function pump({ publish = false } = {}) {
+function pump({ publish = false, behind = false } = {}) {
   const i = WORLD.indexOf('  const inFlight = new Map();');
   const j = WORLD.indexOf('  const breather = createBreather(', i);   // PERF-EXT24: the breather takes options now
   assert.ok(i > 0 && j > i);
@@ -214,18 +215,22 @@ function pump({ publish = false } = {}) {
     destroyMesh: (m) => freed.push(['mesh', m]), destroyWaterSurface: (w) => freed.push(['water', w]),
     destroyBatch: (b) => freed.push(['batch', b]), gl: { deleteTexture: (t) => freed.push(['texture', t]) },
   };
-  const buckets = new Set(['1,1', '1,1:gate:0', '1,1:gate:1', '2,2']);
-  const collider = { removeBucket: (k) => buckets.delete(k) };
+  const buckets = new Set(['1,1', '1,1:gate:0', '1,1:gate:1', '2,2', ...(behind ? ['1,1#b', '1,1#b:gate:0', '1,1#b:gate:1'] : [])]);
+  const collider = { removeBucket: (k) => buckets.delete(k), hold: () => {}, unhold: (k) => { for (const b of [...buckets]) if (b === k || b.startsWith(`${k}:`)) buckets.delete(b); } };
   const built = new Map();
   const buildingDoors = [{ pixelKey: '1,1' }, { pixelKey: '2,2' }, { pixelKey: '1,1' }];
+  // IC-SWAP-BEHIND (scenes/swapBehind.js): the swap the host's sweeps make; `behind` - pixel 1,1 stands, owed a build behind it
+  const swap = createSwapBehind({ built, destroyPixel: () => {}, collider, buildingDoors, doorsMoved: () => {}, queue: [], nearestFirst: () => () => 0,
+    state: { current: { x: 0, y: 0 } }, walkMode: () => false, playerSpawned: () => false, seasonHold: () => {} });
+  if (behind) { built.set('1,1', { px: 1, py: 1, view: 'old' }); swap.mark(1, 1); }
   const hums = [], handed = [];
-  const env = { built, renderer, collider, buildingDoors, doorGeneration: 0, hums,
+  const env = { built, renderer, collider, buildingDoors, doorGeneration: 0, hums, swap,
     trees: { releasedBuild: (m) => handed.push(m) },   // LPT1 / BANTHA1: the far pictures' handles the build took, the trees' host's to give back (scenes/treesHost.js)
     // DW-D: DeepWaterRuntime's location-load count rides a location's build - none here
     locationIndex: new Map(), spawnedDungeonAt: () => null, _locationToBuild: () => null, dwLocationLoadBegan: () => {}, dwLocationLoadEnded: () => {} };   // AUDIT OW5b D2: the build's one ask
   const body = `${WORLD.slice(i, j)}
     async function buildPixelNow(px, py) {
-      const key = px + ',' + py;
+      const key = swap.keyFor(px, py);
       const made = {};
       _building.set(key, made);
       made.terrain = 'T'; made.water = 'W'; made.tilemapTex = 'X'; made.staticBatch = 'S';
@@ -239,7 +244,7 @@ function pump({ publish = false } = {}) {
     }
     return { buildPixel, inFlight, _building };`;
   const api = new Function(...Object.keys(env), body)(...Object.values(env));
-  return { ...api, freed, buckets, buildingDoors, built, hums, handed };
+  return { ...api, freed, buckets, buildingDoors, built, hums, handed, swap };
 }
 
 test('BUILD-FAIL1: a build that throws frees what it made - the GPU surfaces and batches, its collider bucket and its gates\', its doors - and a published one is left to destroyPixel', async () => {
@@ -259,11 +264,21 @@ test('BUILD-FAIL1: a build that throws frees what it made - the GPU surfaces and
   assert.equal(p.buckets.size, 4);
   // the ledger is kept where the build makes each thing, and handed over at publish
   assert.match(WORLD, /    const made = \{\};[^\n]*\n    _building\.set\(key, made\);/, 'opened as the build begins');
-  assert.match(WORLD, /    if \(_building\.get\(key\) === made\) _building\.delete\(key\);[^\n]*\n    built\.set\(key, \{/, 'closed as the entry is published - the entry\'s from there');
+  assert.match(WORLD, /    if \(_building\.get\(key\) === made\) _building\.delete\(key\);[^\n]*\n    swap\.publish\(px, py, key, made, \{/, 'closed as the entry is published - the entry\'s from there');   // PIN MOVED (IC-SWAP-BEHIND): published through the swap
   for (const line of ['made.terrain = terrain; made.water = water;', 'made.tilemapTex = tilemapTex;', 'made.cityGates = pixelGates;', 'made.windmills = windmills;', 'made.personBatches = personBatches;', 'made.batches = batches;', 'made.staticBatch = staticBatch;']) {
     assert.ok(WORLD.includes(line), line);
   }
-  assert.match(WORLD, /flying = buildPixelNow\(px, py\)\n      \.catch\(\(e\) => \{ releaseFailedBuild\(key\); throw e; \}\)/);
+  assert.match(WORLD, /flying = buildPixelNow\(px, py\)\n      \.catch\(\(e\) => \{ releaseFailedBuild\(swap\.failed\(px, py\) \?\? key\); throw e; \}\)/);   // PIN MOVED (IC-SWAP-BEHIND): a build behind its view frees under its own key
+  // IC-SWAP-BEHIND: a build behind its pixel's standing view that throws frees what it made under its own key - its held
+  // buckets and its gates' - and the view stands, its buckets and its doors with it
+  const b = pump({ behind: true });
+  await assert.rejects(b.buildPixel(1, 1), /never came/);
+  assert.deepEqual(b.freed.map((f) => f.join(':')).sort(), ['batch:b1', 'batch:b2', 'batch:pb', 'mesh:S', 'mesh:T', 'texture:X', 'water:W'].sort(), 'its own made freed');
+  assert.deepEqual([...b.buckets].sort(), ['1,1', '1,1:gate:0', '1,1:gate:1', '2,2'], 'its held buckets gone; the view\'s stand');
+  assert.deepEqual(b.buildingDoors.map((d) => d.pixelKey), ['1,1', '2,2', '1,1'], 'the view\'s doors stand');
+  assert.equal(b.built.get('1,1').view, 'old', 'the view stands');
+  assert.equal(b.swap.owes('1,1'), false, 'owed nothing more: a later rebuild marks it anew');
+  assert.equal(b._building.size, 0); assert.equal(b.inFlight.size, 0);
   // audit: one that threw AFTER publishing is torn down by the pump that releases its key, and a pixel torn down
   // while its NPCs' art loads takes no batch made after
   assert.match(WORLD, /console\.error\(`pixel \$\{next\.px\},\$\{next\.py\} failed:`, e\);\n(?:\s*\/\/[^\n]*\n)*      destroyPixel\(next\.px, next\.py, \{ collectLoose: false \}\);/);

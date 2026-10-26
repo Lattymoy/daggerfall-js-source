@@ -378,7 +378,7 @@ test('PROF1 keys and hosts: the act choice is KB1\'s, on ;, in a Professions gro
   assert.deepEqual(ACTION_GROUPS.find((g) => g.title === 'Professions')?.rows.map((r) => r.action), ['ActChoice', 'Professions'], 'CLASSIC-PAGES: the Professions key beside it');
   const w = hostText('src/scenes/world.js');
   // PROF2: the herb host became the one gathering host (src/scenes/gatherHost.js) - Herbalism a kind in it
-  assert.match(w, /gatherHost\?\.onBuilt\(built\.get\(key\)\);/);
+  assert.match(w, /gatherHost\?\.onBuilt\(built\.get\(pkey\)\);/);   // PIN MOVED (IC-SWAP-BEHIND): the entry under the pixel's own key - its nodes stood once it is swapped in
   assert.match(w, /gatherHost\?\.onDestroyed\(p\);[^\n]*\n\s*for \(const b of p\.batches\) renderer\.destroyBatch\(b\);/, 'forgotten before the pixel frees its batches');
   // PIN MOVED (AUDIT 2026-10-01 part four, CLICK-LIFT): the act's click asked before the ladder, and held to its release;
   // NAVAL-E: the sea's E asked before a node's

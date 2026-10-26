@@ -155,10 +155,10 @@ test('TESA4 the host: each pixel keeps the epoch its job was posted under and wh
   assert.match(w, /arenaSlot: dfLocation\?\.arena \?\? null,\n\s+arenaRoadsEpoch: arenaRoadsAt, arenaRoadsPainted: !!arenaRoads,/);
   assert.match(w, /const arenaRoadsStale = \(p, epoch, layer, reset = true\) => p\.arenaRoadsEpoch < epoch && \(\(reset && p\.arenaRoadsPainted\) \|\| layerTouches\(layer, p\.px, p\.py\)\);/, 'PIN MOVED (TESA14): a region\'s landing repaints what it reaches; a reset what any roads painted too');
   assert.match(w, /function arenaRoadsLanded\(epoch, layer, reset = false\) \{\n\s+for \(const \[k, p\] of host\.built\) if \(arenaRoadsStale\(p, epoch, layer, reset\)\) _arenaRoadsStale\.add\(k\);/);
-  assert.match(w, /if \(built\.has\(key\) && arenaRoadsStale\(built\.get\(key\), terrainGen\.arenaRoadsLanded, arenaRoadsLayer\(\)\)\) _arenaRoadsStale\.add\(key\);/, 'a pixel in flight, as it publishes');
+  assert.match(w, /if \(built\.has\(pkey\) && arenaRoadsStale\(built\.get\(pkey\), terrainGen\.arenaRoadsLanded, arenaRoadsLayer\(\)\)\) _arenaRoadsStale\.add\(pkey\);/, 'a pixel in flight, as it publishes');   // PIN MOVED (IC-SWAP-BEHIND): the pixel's own key
   const fn = w.slice(w.indexOf('  function sweepArenaRoads() {'), w.indexOf('\n  }\n', w.indexOf('  function sweepArenaRoads() {')) + 4);   // PIN MOVED (HOST-SPLIT, at the merge of main): the sweeps are scenes/tamrielSweepsHost.js's - the function's own end, read whole
   assert.match(fn, /if \(p\) \{ again\.push\(\{ px: p\.px, py: p\.py \}\); _arenaRoadsStale\.delete\(k\); \}\n\s+else if \(!host\.inFlight\.has\(k\)\) _arenaRoadsStale\.delete\(k\);/);
-  assert.match(fn, /for \(const k of again\) destroyPixel\(k\.px, k\.py, \{ collectLoose: false \}\);\n\s+host\.queue\.push\(\.\.\.again\.sort\(nearestFirstFrom\(host\.state\.current\)\)\);/);
+  assert.match(fn, /if \(!again\.length\) return;\n\s+swap\.rebuild\(again\);/);   // PIN MOVED (IC-SWAP-BEHIND): built again behind its view (scenes/swapBehind.js rebuild)
   assert.match(w, /if \(_arenaRoadsStale\.size && !building\) sweepArenaRoads\(\);/);
   assert.match(w, /setArenaStanding\(arenaStands\);\n\s+setArenaRoads\(null\);/, 'a mount starts with none on this thread');
   // the kernel and the verge read it off the Bay

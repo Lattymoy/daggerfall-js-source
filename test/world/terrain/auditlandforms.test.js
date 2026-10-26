@@ -22,6 +22,7 @@ import { Collider } from '../../../src/player/collider.js';
 import { _setTimeScaleForTest, TRAVEL_ROAD_RATE } from '../../../src/systems/timeScale.js';
 import { TRANSPORT_MODES } from '../../../src/systems/transport.js';
 import { createDroppedLoot } from '../../../src/scenes/droppedLoot.js';
+import { createSwapBehind } from '../../../src/scenes/swapBehind.js';
 import { natureStandsAt, layoutNature, groundAt } from '../../../src/world/terrain/terrainNature.js';
 import { sampleHeight, blendLocationTerrain, calcAvgMaxHeight, generateTileData } from '../../../src/world/terrain/terrainTiles.js';
 import { hostText, movedOutOf } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
@@ -931,11 +932,12 @@ test('AUDIT LANDFORMS II I2: a bank is never a launch ramp - a track benched alo
 });
 
 /** world.js's roads sweep, destroyPixel and the publish's re-stand block, sliced and run as written over the real loot
- *  pool, every name they do not ask for answered by a do-nothing stand-in (lane G's harness). */
+ *  pool, every name they do not ask for answered by a do-nothing stand-in (lane G's harness). IC-SWAP-BEHIND: the sweep's
+ *  rebuild through the real swap (scenes/swapBehind.js) - `swapOff` its kill switch. */
 function rebuildHost(vars) {
   const sliceTo = (head, end) => { const i = WORLD.indexOf(head), j = WORLD.indexOf(end, i); assert.ok(i > 0 && j > i, head); return WORLD.slice(i, j + end.length); };
   const SWEEP = sliceTo('  function sweepRoadless() {', '\n  }\n');
-  const DESTROY = sliceTo('  function destroyPixel(px, py, { collectLoose = true } = {}) {', '\n  }\n');
+  const DESTROY = sliceTo('  function destroyPixel(px, py, { collectLoose = true, carried = false, carryOnly = false } = {}) {', '\n  }\n');   // PIN MOVED (IC-SWAP-BEHIND): its carry's two doors
   // HOST-SPLIT 2: the publish moved with the pixel build - its live names read `host.<name>`, and `host` is the scope
   const i = WORLD.indexOf('    if (host.labGrassField) {   // WOD2'), j = WORLD.indexOf('    if (homeTown) host._homeLookV = -1;', i);
   assert.ok(i > 0 && j > i, 'the publish\'s re-stand block');
@@ -944,11 +946,15 @@ function rebuildHost(vars) {
   const scope = new Proxy(vars, { has: (t, k) => !KEEP.has(k), get: (t, k) => (k === Symbol.unscopables ? undefined : k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
   const fns = new Function('scope', `with (scope) { ${DESTROY}\n${SWEEP}\n return { destroyPixel, sweepRoadless }; }`)(scope);
   vars.host = scope;   // and `host` is the stand-ins themselves (under `with` every name, `scope` too, is the scope's)
+  vars.swap = createSwapBehind({ built: vars.built, destroyPixel: fns.destroyPixel, collider: { hold() {}, wake() {}, unhold() {} }, buildingDoors: [], doorsMoved() {},
+    queue: vars.queue, nearestFirst: vars.nearestFirstFrom, state: vars.state, walkMode: () => vars.walkMode, playerSpawned: () => vars.playerSpawned,
+    seasonHold: (k) => { vars._seasonHoldKey = k; }, off: () => !!vars.swapOff });
   const publish = new Function('scope', `with (scope) { ${WORLD.slice(i, j)} }`);
   // the rides, bound as the boot binds them once the pools and the player stand (BOOT-TDZ2, K1)
-  new Function('scope', `with (scope) { ${sliceTo('  rideGround = (t, key, moved) => {', '\n  };\n')} }`)(scope);
-  // the publish's own names ride the scope: under `with` the stand-in answers before a parameter would
-  return { ...fns, publish: (px, py) => { Object.assign(vars, { px, py, key: `${px},${py}` }); publish(scope); } };
+  new Function('scope', `with (scope) { ${sliceTo('  rideGround = (t, key, moved, behind = false) => {', '\n  };\n')} }`)(scope);   // PIN MOVED (IC-SWAP-BEHIND): and the view swapped in from behind
+  // the publish's own names ride the scope: under `with` the stand-in answers before a parameter would - `key` the build's
+  // own (the behind key, built behind a standing view), `pkey` the pixel's
+  return { ...fns, swap: vars.swap, publish: (px, py, key = `${px},${py}`) => { Object.assign(vars, { px, py, key, pkey: `${px},${py}` }); publish(scope); } };
 }
 
 test('AUDIT LANDFORMS II G1/G2: a pixel rebuilt under the live pools carries what lies on its ground - a pile on the river\'s floor stood before the network landed rides the cut down with it, and the player the hold kept standing there rides it too; a fall under way keeps its own', () => {
@@ -959,7 +965,7 @@ test('AUDIT LANDFORMS II G1/G2: a pixel rebuilt under the live pools carries wha
   const cell = TERRAIN_SIZE / (H - 1), M = UNIT * STREAMING_TERRAIN_SCALE, x = sx * cell, z = sy * cell;
   const gB = before[sx * H + sy] * M, gA = after[sx * H + sy] * M;
   assert.ok(gA < gB - 1, `the landing cut the channel here (${(gA - gB).toFixed(2)} m)`);   // PIN MOVED BACK (AUDIT LANDFORMS III C1): LANDFORM5's stilling had the landing raise the floor 2.62 m over a dale; the valley carves it down
-  const run = ({ grounded }) => {
+  const run = ({ grounded, behind = false }) => {
     const loot = createDroppedLoot({ renderer: { createBillboardBatch: () => ({}), destroyBillboardBatch: () => {} }, getTexture: async () => ({ getSize: () => ({ width: 32, height: 32 }), getScale: () => ({ width: 0, height: 0 }), recordCount: 64, getFrameCount: () => 1 }), uploadRecordFrame: () => {} });
     const pile = loot.dropPile([{ group: 'Gems', templateIndex: 0 }], [x, gB, z], key);
     const player = { pos: [x + 3, gB + 0.25, z], grounded };
@@ -967,12 +973,22 @@ test('AUDIT LANDFORMS II G1/G2: a pixel rebuilt under the live pools carries wha
     const host = rebuildHost({
       built, queue: [], droppedLoot: loot, walkMode: true, playerSpawned: true, player, _seasonHoldKey: null, _groundBefore: new Map(),
       state: { current: { x: px, y: py }, pixelTranslation: () => [0, 0, 0] }, nearestFirstFrom: () => () => 0,
-      TERRAIN_SIZE, HEIGHTMAP_DIMENSION: H, heightCell: cell, worldHeight: M,
+      TERRAIN_SIZE, HEIGHTMAP_DIMENSION: H, heightCell: cell, worldHeight: M, swapOff: !behind,
     });
-    host.sweepRoadless();   // the network landed: the roadless pixel torn down (collectLoose: false), queued again
-    assert.equal(built.has(key), false);
-    built.set(key, { px, py, withRoads: true, samples: after, batches: [], models: [] });   // the rebuild, cut along the network
-    host.publish(px, py);
+    host.sweepRoadless();   // the network landed: the roadless pixel built again
+    const rebuilt = { px, py, withRoads: true, samples: after, batches: [], models: [] };   // the rebuild, cut along the network
+    let held = null;
+    if (behind) {
+      // IC-SWAP-BEHIND (scenes/swapBehind.js): the view stands while its rebuild builds behind it - the player on it, unheld -
+      // and the swap takes it down and stands the new one in one step
+      assert.equal(built.has(key), true, 'the view stands');
+      held = host.swap.keyFor(px, py);
+      host.swap.publish(px, py, held, {}, rebuilt);
+    } else {
+      assert.equal(built.has(key), false, 'the switch off: torn down (collectLoose: false), queued again');
+      built.set(key, rebuilt);
+    }
+    host.publish(px, py, held ?? key);
     return { pile, player, gP: (() => { const fx = (x + 3) / cell, ix = Math.floor(fx), a = fx - ix; return ((after[ix * H + sy] * (1 - a) + after[(ix + 1) * H + sy] * a) - (before[ix * H + sy] * (1 - a) + before[(ix + 1) * H + sy] * a)) * M; })() };
   };
   const stood = run({ grounded: true });
@@ -981,6 +997,12 @@ test('AUDIT LANDFORMS II G1/G2: a pixel rebuilt under the live pools carries wha
   const falling = run({ grounded: false });
   assert.equal(falling.player.pos[1], gB + 0.25, 'a fall under way is its own (FALL-KEPT)');
   assert.ok(Math.abs(falling.pile.pos[1] - gA) < 1e-6);
+  // IC-SWAP-BEHIND: built behind the view the player stands on, no hold - the swap's teardown takes the ground it carries the
+  // pools off, and the player on their feet on the view swapped out rides the cut as the held one did
+  const behind = run({ grounded: true, behind: true });
+  assert.ok(Math.abs(behind.pile.pos[1] - gA) < 1e-6, 'the pile rides the swap');
+  assert.ok(Math.abs(behind.player.pos[1] - (gB + 0.25 + behind.gP)) < 1e-6, `the player on the view swapped out rides the cut (${(behind.player.pos[1] - gB - 0.25).toFixed(2)} m), unheld`);
+  assert.equal(run({ grounded: false, behind: true }).player.pos[1], gB + 0.25, 'and a fall under way is its own');
 });
 
 test('AUDIT LANDFORMS II G3: a Basic Roads file that never arrives is a failed ask - its fetch and its body each time out - so the port\'s own network or the next retry stands in, never a roadless session', async () => {
