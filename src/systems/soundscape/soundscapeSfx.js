@@ -11,13 +11,10 @@ import { createClipInstaller } from './clipInstall.js';
 /** @param {string} stem @param {number} n */
 const takes = (stem, n) => Object.freeze(Array.from({ length: n }, (_, i) => `${stem}-${i + 1}`));
 
-/** The keys, by group: each a take's key, which is its file's stem (`sea-slap-1` is public/sfx/sea-slap-1.wav). */
+/** The keys, by group: each a take's key, which is its file's stem (`sea-gull-1` is public/sfx/sea-gull-1.wav). DECK-QUIET
+ *  (2026-10-26, the owner: "Remove all deck at sea"): the deck's five groups - the slaps, creaks, ropes, luffs and
+ *  spray - are gone. */
 export const SCAPE_SFX = Object.freeze({
-  seaSlap: takes('sea-slap', 3),
-  seaCreak: takes('sea-creak', 2),
-  seaRope: takes('sea-rope', 2),
-  seaLuff: takes('sea-luff', 2),
-  seaSpray: takes('sea-spray', 2),
   gull: takes('sea-gull', 6),
   shoreCrash: takes('shore-crash', 2),
   owl: takes('wild-owl', 2),

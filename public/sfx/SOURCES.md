@@ -34,10 +34,10 @@ bake. DAGGER.SND has one neigh, two clops on hard ground and the cart; it has no
 ground.
 
 The `sea-*`, `shore-*`, `wild-*` and `town-*` files are the soundscape's (SOUNDSCAPE, bible/08-Audio/Audio.md): the
-deck's air at sea, the surf on a shore, the wild's voices and a town's smithies. Two kinds. OURS: the hull's slaps, the
-timbers' and the ropes' creaks, the canvas luffing, the spray, a wave breaking, the owls and the wolves, built by
-`tools/soundscapeSfx.mjs` from the same kit and the same bake - DAGGER.SND has splashes, a bell and a lap of water, and
-no hull, no rigging, no surf, no owl and no wolf. RECORDED, each **CC0** (public domain) from
+gulls at sea, the surf on a shore, the wild's voices and a town's smithies. Two kinds. OURS: a wave breaking, the owls
+and the wolves, built by `tools/soundscapeSfx.mjs` from the same kit and the same bake - DAGGER.SND has splashes, a bell
+and a lap of water, and no surf, no owl and no wolf (the deck's own eleven - the hull's slaps, the timbers' and the
+ropes' creaks, the canvas luffing, the spray - were removed with DECK-QUIET, 2026-10-26). RECORDED, each **CC0** (public domain) from
 [OpenGameArt](https://opengameart.org) - the gulls, a crow, the frogs and two anvils, whose character a synthesiser
 does badly - fetched from each page's own file and baked by `tools/soundscapeSfxInstall.mjs` (re-run it to rebuild them
 from the same sources). The soundscape's beds (the swell, the wash, the rigging, the surf, the marsh) are made at run
@@ -140,17 +140,6 @@ over 5 kHz, which DAGGER.SND's format cannot hold. **Source and license: to be f
 | `horse-snow-fast.wav` | horse: hooves in snow, fast | `tools/horseSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the same on HorseClop2's cadence |
 | `horse-water-slow.wav` | horse: hooves in shallow water, slow | `tools/horseSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a splash and its drops, a low plop; HorseClop's cadence |
 | `horse-water-fast.wav` | horse: hooves in shallow water, fast | `tools/horseSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the same on HorseClop2's cadence |
-| `sea-slap-1.wav` | sea: a wave on the hull | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the water's mass under 320 Hz, the planking's three low modes, the slop thrown up and a smaller slosh behind it |
-| `sea-slap-2.wav` | sea: a wave on the hull | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the water's mass under 320 Hz, the planking's three low modes, the slop thrown up and a smaller slosh behind it |
-| `sea-slap-3.wav` | sea: a wave on the hull | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the water's mass under 320 Hz, the planking's three low modes, the slop thrown up and a smaller slosh behind it |
-| `sea-creak-1.wav` | sea: the timbers working | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a slow stick-slip groan through a hull's low bands (150 to 940 Hz), swelling and easing |
-| `sea-creak-2.wav` | sea: the timbers working | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a slow stick-slip groan through a hull's low bands (150 to 940 Hz), swelling and easing |
-| `sea-rope-1.wav` | sea: a rope in its block | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a quicker, higher stick-slip creak (690 to 1800 Hz) and the sheave's tick as it stops |
-| `sea-rope-2.wav` | sea: a rope in its block | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a quicker, higher stick-slip creak (690 to 1800 Hz) and the sheave's tick as it stops |
-| `sea-luff-1.wav` | sea: canvas luffing | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - flaps of a sail's band at uneven gaps, a low whump under each and a ripple after it |
-| `sea-luff-2.wav` | sea: canvas luffing | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - flaps of a sail's band at uneven gaps, a low whump under each and a ripple after it |
-| `sea-spray-1.wav` | sea: spray over the bow | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a crest's crack, a long hiss of water falling back losing its top, drops after |
-| `sea-spray-2.wav` | sea: spray over the bow | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a crest's crack, a long hiss of water falling back losing its top, drops after |
 | `shore-crash-1.wav` | shore: a wave breaking | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the roar rising as the wave curls (its top opening out), the crash, the foam running back with fizz in it |
 | `shore-crash-2.wav` | shore: a wave breaking | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the roar rising as the wave curls (its top opening out), the crash, the foam running back with fizz in it |
 | `wild-owl-1.wav` | wild: an owl at night | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a tawny's hoot and its tremolo (470 Hz) - sines sliding down with a breath of their band |

@@ -439,6 +439,11 @@
   "tr": "ad3b15c3a7bc",
   "by": "claude-in-session"
  },
+ "account.glyph.nirnrootsage": {
+  "en": "84174edc6e42",
+  "tr": "84174edc6e42",
+  "by": "claude-in-session"
+ },
  "account.glyph.penitent": {
   "en": "e96df7568799",
   "tr": "f1d74b74babb",
@@ -3582,6 +3587,11 @@
  "coll.look.resonance": {
   "en": "4f617addf148",
   "tr": "43f4cf30582f",
+  "by": "claude-in-session"
+ },
+ "coll.look.sagesmoke": {
+  "en": "d110d0fa1d62",
+  "tr": "a8dc5aa90788",
   "by": "claude-in-session"
  },
  "coll.look.seraphwings": {

@@ -33,8 +33,8 @@ test('CRAFT-WRITS client: the host holds a potion writ ready only when the pack\
   const book = { craftDeliver: async (id, pieces, at) => { asked.push([id, pieces, at.seq, player.items.map((it) => it.stackCount ?? 1)]); return answer; } };
   let checkpoints = 0, saves = 0;
   const host = createCraftWritHost({ player: () => player, session: () => session(), checkpoint: () => { checkpoints++; }, saved: () => { saves++; }, book: () => book });
-  assert.deepEqual(host.held(HEALING), { pack: 5, made: 4, ready: true });
-  assert.deepEqual(host.held({ ...HEALING, brewed: 3 }), { pack: 5, made: 3, ready: false }, 'the brews short');
+  assert.deepEqual(host.held(HEALING), { pack: 5, made: 4, loose: 0, ready: true });
+  assert.deepEqual(host.held({ ...HEALING, brewed: 3 }), { pack: 5, made: 3, loose: 0, ready: false }, 'the brews short');
   assert.deepEqual(host.held({ ...HEALING, qty: 6, brewed: 9 }).ready, false, 'the pack short');
   const no = await host.deliver(HEALING);
   assert.deepEqual([no.ok, no.error], [false, 'craft-unbrewed']);
@@ -57,7 +57,7 @@ test('CRAFT-WRITS client: a dish writ\'s pieces are the service\'s own list in p
   const book = { craftDeliver: async (id, pieces) => { asked.push(pieces); return { ok: true, data: { pay: 20 } }; } };
   const host = createCraftWritHost({ player: () => player, session: () => session(), checkpoint() {}, saved() {}, book: () => book });
   const w = { id: 'k:1:r0123456789abcdef0123:1', product: 'dish:stew', kind: 'dish', qty: 3, pieces: [P[0], P[1], P[2]] };
-  assert.deepEqual(host.held(w), { pack: 4, made: 3, ready: true }, 'P[3] is in the pack but not the service\'s - bought, or another\'s');
+  assert.deepEqual(host.held(w), { pack: 4, made: 3, loose: 0, ready: true }, 'P[3] is in the pack but not the service\'s - bought, or another\'s');
   assert.deepEqual(await host.deliver({ ...w, pieces: [P[0], P[1]] }), { ok: false, error: 'craft-pieces' });
   assert.deepEqual(asked, [], 'nothing asked');
   assert.equal((await host.deliver(w)).ok, true);
@@ -97,7 +97,7 @@ test('AUDIT CRAFT-WRITS C1/C4/C9: the host puts the goods back WHERE THEY STOOD 
   const p3 = { items: [dish(P[0], { locked: true }), dish(P[1])] };
   const h3 = createCraftWritHost({ player: () => p3, session: () => session(), checkpoint() {}, saved() {}, book: () => ({ craftDeliver: async () => ({ ok: true, data: {} }) }) });
   const w = { id: 'k:1:r0123456789abcdef0123:1', product: 'dish:stew', kind: 'dish', qty: 2, pieces: P };
-  assert.deepEqual(h3.held(w), { pack: 1, made: 1, ready: false });
+  assert.deepEqual(h3.held(w), { pack: 1, made: 1, loose: 0, ready: false });
   assert.deepEqual(await h3.deliver(w), { ok: false, error: 'craft-pieces' });
 });
 

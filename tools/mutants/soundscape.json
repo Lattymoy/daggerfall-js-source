@@ -99,46 +99,10 @@
     ]
   },
   {
-    "name": "SEA-AIR-the-irons-arm",
-    "file": "src/systems/soundscape/seaAir.js",
-    "old": "!!sailsUp && (!!inIrons || (",
-    "new": "!!sailsUp && (false || (",
-    "tests": [
-      "test/systems/soundscape/seaair.test.js"
-    ]
-  },
-  {
     "name": "SEA-AIR-the-gulls-rain",
     "file": "src/systems/soundscape/seaAir.js",
     "old": "!night && weather !== 'rain' && ",
     "new": "!night && ",
-    "tests": [
-      "test/systems/soundscape/seaair.test.js"
-    ]
-  },
-  {
-    "name": "SEA-AIR-the-sprays-way",
-    "file": "src/systems/soundscape/seaAir.js",
-    "old": "export const SPRAY_WAY = 2.5;",
-    "new": "export const SPRAY_WAY = 2;",
-    "tests": [
-      "test/systems/soundscape/seaair.test.js"
-    ]
-  },
-  {
-    "name": "SEA-AIR-the-creaks-storm-gap",
-    "file": "src/systems/soundscape/seaAir.js",
-    "old": "Object.freeze({ calm: 16, storm: 3.2 })",
-    "new": "Object.freeze({ calm: 16, storm: 4 })",
-    "tests": [
-      "test/systems/soundscape/seaair.test.js"
-    ]
-  },
-  {
-    "name": "SEA-AIR-the-ropes-furled",
-    "file": "src/systems/soundscape/seaAir.js",
-    "old": "      if (s.sailsUp && (ropeIn -= step) <= 0) {",
-    "new": "      if ((ropeIn -= step) <= 0) {",
     "tests": [
       "test/systems/soundscape/seaair.test.js"
     ]
@@ -209,17 +173,8 @@
   {
     "name": "SEA-AIR-the-clocks-unseeded",
     "file": "src/systems/soundscape/seaAir.js",
-    "old": "      if (!on) seed(s);\n",
+    "old": "      if (!on) seed();\n",
     "new": "",
-    "tests": [
-      "test/systems/soundscape/seaair.test.js"
-    ]
-  },
-  {
-    "name": "SEA-AIR-the-slaps-side",
-    "file": "src/systems/soundscape/seaAir.js",
-    "old": "play(pick(rand, SCAPE_SFX.seaSlap), at(s.ear, [starboard, side * between(rand, 2.5, 4)], [UP, -1.6])",
-    "new": "play(pick(rand, SCAPE_SFX.seaSlap), at(s.ear, [bow, side * between(rand, 2.5, 4)], [UP, -1.6])",
     "tests": [
       "test/systems/soundscape/seaair.test.js"
     ]
@@ -774,37 +729,10 @@
     ]
   },
   {
-    "name": "AUDIT-SOUNDSCAPE-S3-the-spray-off-the-camera",
-    "file": "src/systems/soundscape/seaAir.js",
-    "old": "at(s.ear, [bow, 5], [UP, -1])",
-    "new": "at(s.ear, [flatOf(s.fwd), 5], [UP, -1])",
-    "tests": [
-      "test/systems/soundscape/seaair.test.js"
-    ]
-  },
-  {
     "name": "AUDIT-SOUNDSCAPE-S3-the-bell-turning-with-the-head",
     "file": "src/systems/soundscape/seaAir.js",
     "old": "at(c.ear, [headingOf(c), 3], [UP, 2.5])",
     "new": "at(c.ear, [flatOf(c.fwd), 3], [UP, 2.5])",
-    "tests": [
-      "test/systems/soundscape/seaair.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-SOUNDSCAPE-S8-the-luff-at-each-return",
-    "file": "src/systems/soundscape/seaAir.js",
-    "old": "} else luffIn = Math.max(0, LUFF_GAP_S[0] - (t - lastLuffT));",
-    "new": "} else luffIn = 0;",
-    "tests": [
-      "test/systems/soundscape/seaair.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-SOUNDSCAPE-the-second-slap-gone",
-    "file": "src/systems/soundscape/seaAir.js",
-    "old": "        if (rand() < state) due.push(",
-    "new": "        if (rand() < 0) due.push(",
     "tests": [
       "test/systems/soundscape/seaair.test.js"
     ]
@@ -976,15 +904,6 @@
     "file": "src/scenes/soundscapeHost.js",
     "old": "const way = helm ? Number(helm.way) || 0 : boat && !f.paused ? wayOf(boat, dt) : boat ? rodeWay : 0;",
     "new": "const way = helm ? Number(helm.way) || 0 : 0;",
-    "tests": [
-      "test/scenes/soundscapehost.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-SOUNDSCAPE-S4-her-sails-furled-whatever",
-    "file": "src/scenes/soundscapeHost.js",
-    "old": "const sailsUp = helm ? !!helm.sailsUp : sailsSet(boat);",
-    "new": "const sailsUp = !!helm?.sailsUp;",
     "tests": [
       "test/scenes/soundscapehost.test.js"
     ]

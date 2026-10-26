@@ -519,6 +519,11 @@
   "tr": "82dc2f90b138",
   "by": "claude-in-session"
  },
+ "account.glyph.nirnrootsage": {
+  "en": "84174edc6e42",
+  "tr": "84174edc6e42",
+  "by": "claude-in-session"
+ },
  "account.glyph.penitent": {
   "en": "e96df7568799",
   "tr": "99d7b45526a2",
@@ -8322,6 +8327,11 @@
  "coll.look.resonance": {
   "en": "4f617addf148",
   "tr": "67b8d52f6f65",
+  "by": "claude-in-session"
+ },
+ "coll.look.sagesmoke": {
+  "en": "d110d0fa1d62",
+  "tr": "a9704b84c79b",
   "by": "claude-in-session"
  },
  "coll.look.seraphwings": {
@@ -26225,8 +26235,13 @@
   "by": "claude-in-session"
  },
  "prof.craftWrit.shortBrew": {
-  "en": "5c96920bf78f",
-  "tr": "130040d50388",
+  "en": "d83ab225fc93",
+  "tr": "57704db86a55",
+  "by": "claude-in-session"
+ },
+ "prof.craftWrit.shortBrewLoose": {
+  "en": "826729c32ad4",
+  "tr": "c2b48f3acc52",
   "by": "claude-in-session"
  },
  "prof.craftWrit.shortCarry": {
@@ -26237,6 +26252,11 @@
  "prof.craftWrit.shortMake": {
   "en": "a102d722f048",
   "tr": "2084258b1b96",
+  "by": "claude-in-session"
+ },
+ "prof.craftWrit.shortMakeLoose": {
+  "en": "757e6c348542",
+  "tr": "43d9a2701091",
   "by": "claude-in-session"
  },
  "prof.lode.legend": {
