@@ -140,6 +140,7 @@ import { bayPlaceRows, BAY_SOURCE } from '../world/worldWide/bayPlaces.js';   //
 import { createTownTable } from '../world/worldWide/townTable.js';   // WW7: a town by its map id, the Bay's and the registry's
 import { createLivingTrips } from './livingWorld/livingTrips.js';   // WW1: the living world's towns and dungeons, off the registry; WW7-7: its trips' world, everywhere
 import { createWorldPorts, portIdOf, portIdOfLocation, COMPASS_WAYS } from '../world/worldWide/worldPorts.js';   // WW3: the world's ports past the Bay, off the registry
+import { rumareSeaPixel } from '../world/rumareWaters.js';   // RUMARE-WATER: the Imperial City's lake the sea's - its ports' shore, its voyages' water
 import { createWorldLanes, onWorldSea } from './naval/worldLanes.js';   // WW3: the Bay's packet lanes and the sea's past it, one book
 import { stockShopShelf } from '../systems/shopStock.js';   // LW11: a caravan's counter, the shops' own roll
 import { townTrips as tripsOfTown, partyAt as livingPartyAt } from '../systems/livingWorld/trips.js';   // LW11: a merchant's trip, and where a party is
@@ -4181,7 +4182,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   let _openSea = null;
   const openSea = (x, y) => {
     if (etherSea && inEther(x, y)) return seaPixel(x, y);
-    if (!(x >= 0 && y >= 0 && x < MAP_WIDTH && y < MAP_HEIGHT)) return tamrielLand && seaPixel(x, y) && !pastBayLakeAt(x, y);   // AUDIT TESA II P12: never one of the picture's lakes (Lake Rumare and four more on the freeware's - world/arenaPlaces.js pastBayLakeAt): the continent's sea is the water its border joins, as the Bay's open sea is
+    if (!(x >= 0 && y >= 0 && x < MAP_WIDTH && y < MAP_HEIGHT)) return tamrielLand && ((seaPixel(x, y) && !pastBayLakeAt(x, y)) || rumareSeaPixel(x, y));   // AUDIT TESA II P12: never one of the picture's lakes (Lake Rumare and four more on the freeware's - world/arenaPlaces.js pastBayLakeAt): the continent's sea is the water its border joins, as the Bay's open sea is
     _openSea ??= openSeaOf(seaPixel, MAP_WIDTH, MAP_HEIGHT);
     return _openSea[y * MAP_WIDTH + x] === 1;
   };
@@ -30160,7 +30161,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     (_tvRouteGround ??= routeGround(
       (x, y) => (tvWildFree(x, y) && woods.getHeightMapValue(x, y) > WATER_BYTE ? 0 : maps.getClimateIndex(x, y)),
       (x, y) => { const h = woods.getHeightMapValue(x, y); return tvWildFree(x, y) && h > WATER_BYTE ? WATER_BYTE + 8 : h; },   // inside the zone: flat dry ground, water still water
-      WATER_BYTE, 1000, 500, (x, y) => !tvWater(x, y))).setRocks(tvWodRocks());   // TV-BEYOND: the land past the Bay walked, as the view shows it
+      WATER_BYTE, 1000, 500, (x, y) => !tvWater(x, y), undefined, rumareSeaPixel)).setRocks(tvWodRocks());   // TV-BEYOND: the land past the Bay walked, as the view shows it; RUMARE-WATER: the Imperial City's lake sailed
     return _tvRouteGround;
   };
   /** OW-ROADSIDE (2026-09-28, Mac: routes "appear traveling alongside" the road): a route whose first step is a road's (or

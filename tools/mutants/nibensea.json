@@ -93,7 +93,7 @@
   {
     "name": "HARBOUR-canal-unasked",
     "file": "src/world/tamrielCapitals.js",
-    "old": "  return canalAt(at.px + cap.harbour[0] - D.mx, at.py + cap.harbour[1] - D.my + 1);",
+    "old": "  return canalAt(at.px + cap.harbour[0] - D.mx, at.py + D.h - D.my);",
     "new": "  return D.w > 0;",
     "tests": [
       "test/world/nibensea.test.js"
@@ -121,7 +121,7 @@
   {
     "name": "PORT-reach-unset",
     "file": "src/world/worldWide/worldPorts.js",
-    "old": "      ...(cap?.harbour ? { reach: CANAL_PORT_REACH_PX } : {}) });",
+    "old": "      ...(cap?.harbour ? { reach: CANAL_PORT_REACH_PX, neighbours: CANAL_PORT_NEIGHBOURS } : {}) });",
     "new": "      ...({}) });",
     "tests": [
       "test/world/nibensea.test.js"

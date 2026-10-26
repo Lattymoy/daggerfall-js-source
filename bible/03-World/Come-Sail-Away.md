@@ -644,6 +644,12 @@ on, PlaceBoatAtRayHit refuses a water tile whose ground stands over the
 line - a town's harbour basin at its ground's height - with a word
 (PLACE_RAISED_TEXT), where it placed her beached; the mod off, the tile
 alone decides, as the C#'s.
+RUMARE-WATER (`03-World/Tamriel.md`): AUDIT TESA II C2 had stood a shore
+capital's every slice at the sea's floor, its streets 33.994 m and so
+water to the nodes. Its land stands a metre over the sea now (35 m,
+`world/terrain/capitalSea.js` CAPITAL_FREEBOARD) and only its water at
+the sea's height; the Imperial City's lake is that water too, so a boat
+sails up the canal and across the lake to the Waterfront.
 `01-Overview/bugs/Field-Bugs-2026-10-02.md`. The Terrain form reads the player's
 terrain unless one is given; the pixel form reads its own pixel's, and
 nothing where none is built. UpdateAllBoatsNodes is kept as the C# has

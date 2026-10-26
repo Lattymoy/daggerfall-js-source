@@ -22,9 +22,14 @@
 // Pure and worker-safe (formats/ and world/ alone): the Deep Waters worker and this thread build the same planes from the
 // same trace and fit, and a pixel the worker built hands its 3 x 3's sea bits and classes back (adoptPlanes).
 // ═══════════════════════════════════════════════════════════════════
-import { DeepWatersBake, floodSteps, classifyPixel, coarseCandidateBits, pixelWaterSampler, PIXEL_MIXED, PIXEL_SEA, PIXEL_LAND, inFrame } from './deepWater/deepWatersBake.js';
+import { DeepWatersBake, floodSteps, classifyPixel, coarseCandidateBits, fineMaskBits, pixelWaterSampler, PIXEL_MIXED, PIXEL_SEA, PIXEL_LAND, inFrame, WATER_THRESHOLD } from './deepWater/deepWatersBake.js';
 import { tamrielTrace, pictureLakes } from './tamriel/tamrielLand.js';
 import { tamrielFrameInBay, bayToPicture, inBay } from './tamriel/tamrielFrame.js';
+import { generateSamples, HEIGHTMAP_DIMENSION } from './terrain/terrainSampler.js';
+import { blendLocationTerrain } from './terrain/terrainTiles.js';
+import { CAPITAL_LAND, capitalSeaGround } from './terrain/capitalSea.js';   // RUMARE-WATER: the city's ground, as the streamed build lays it
+import { CAPITAL_RIM_TILES } from './capitalPlans.js';
+import { rumareSlice, rumareSeaPixel, rumareSliceRect } from './rumareWaters.js';
 
 /** An exported row's frame: the composed bakes route it here by it. */
 export const TAMRIEL_ROW = 'tamriel';
@@ -52,6 +57,22 @@ export function pictureOpenSeaAt(px, py) {
   return !trace.land[i] && !pictureLakes(trace)[i];
 }
 
+/**
+ * RUMARE-WATER (bible/03-World/Tamriel.md RUMARE-WATER): THE IMPERIAL CITY'S WATER TO THE BAKE - a pixel of its span read as
+ * the streamed build lays it (world/terrain/terrainGen.js: flattened to a capital at the sea's land, its water let down to
+ * the sea by world/terrain/capitalSea.js capitalSeaGround - the plan's law alone, no tile laid here), so its lake and its
+ * mouth are the bake's water as they are the ground's; every other pixel the plain sampler's.
+ */
+export function rumareWaterSampler(woods, px, py) {
+  const rect = rumareSliceRect(px, py, CAPITAL_RIM_TILES);
+  if (!rect) return pixelWaterSampler(woods, px, py, null);
+  const S = generateSamples(woods, px, py), natural = Float32Array.from(S);
+  blendLocationTerrain(S, CAPITAL_LAND, rect);
+  capitalSeaGround(S, natural, null, rect, px, py);
+  const water = (x, y) => S[x * HEIGHTMAP_DIMENSION + y] <= WATER_THRESHOLD;
+  return { water, quick: (x, y) => (water(x, y) ? 1 : 0), exact: water };
+}
+
 /** The Deep Waters bake of the continent's frame - DeepWatersBake's queries, its planes built as they are asked. */
 export class TamrielWatersBake extends DeepWatersBake {
   /**
@@ -62,7 +83,7 @@ export class TamrielWatersBake extends DeepWatersBake {
    *   the Bay's bake, whose open sea seeds the flood on the Bay's own pixels and answers its planes there
    */
   constructor({ woods, frame = tamrielWaterFrame(), bay = null }) {
-    super({ woods, global: null, frame });
+    super({ woods, global: null, frame, fineAt: (px, py) => fineMaskBits(rumareWaterSampler(woods, px, py)) });   // RUMARE-WATER: the city's fine water its ground's
     this.bay = bay;
     /** @type {Map<number, number>} */
     this._cls = new Map();
@@ -75,7 +96,7 @@ export class TamrielWatersBake extends DeepWatersBake {
 
   _class(i, px, py) {
     let c = this._cls.get(i);
-    if (c === undefined) { c = classifyPixel(this.woods, px, py); this._cls.set(i, c); }
+    if (c === undefined) { c = rumareSlice(px, py) ? PIXEL_MIXED : classifyPixel(this.woods, px, py); this._cls.set(i, c); }   // RUMARE-WATER: the city's span asked whole
     return c;
   }
 
@@ -110,10 +131,10 @@ export class TamrielWatersBake extends DeepWatersBake {
     const seed = (x, y) => {
       const X = x0 + x, Y = y0 + y;
       if (inBay(X, Y)) { const b = this.bay?.seaBits(X, Y); return !!b && b.every((v) => v === 0xff); }
-      return pictureOpenSeaAt(X, Y) && cls(X, Y) === PIXEL_SEA;
+      return (pictureOpenSeaAt(X, Y) && cls(X, Y) === PIXEL_SEA) || rumareSeaPixel(X, Y);   // RUMARE-WATER: the city's lake the sea's, through its mouth and the canal
     };
     const steps = floodSteps(n, n, (x, y) => cls(x0 + x, y0 + y),
-      (x, y) => coarseCandidateBits(pixelWaterSampler(this.woods, x0 + x, y0 + y, null)), seed);
+      (x, y) => coarseCandidateBits(rumareWaterSampler(this.woods, x0 + x, y0 + y)), seed);
     let r = steps.next();
     while (!r.done) r = steps.next();
     const { state, partialIndex, partialBits } = /** @type {any} */ (r.value);

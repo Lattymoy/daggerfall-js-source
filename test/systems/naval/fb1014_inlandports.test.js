@@ -108,14 +108,15 @@ test('INLAND-PORTS THE TOWNS (the report): a city the byte\'s 0x10 marks, on Tra
 });
 
 /** The host's open sea, lifted off world.js and run over a map of the test's (`isWater`) and the ether's switch. */
-function hostOpenSea({ isWater, width, height, ether = false, inEther = () => false, tamriel = false, lakeAt = () => false }) {
+function hostOpenSea({ isWater, width, height, ether = false, inEther = () => false, tamriel = false, lakeAt = () => false, rumareAt = () => false }) {
   const m = /\n {2}(let _openSea = null;\n {2}const openSea = \(x, y\) => \{\n[\s\S]*?\n {2}\};)\n/.exec(W);
   assert.ok(m, 'the host\'s open sea moved');
   let asked = 0;
   const seaPixel = (x, y) => { asked++; return isWater(x, y); };
   // eslint-disable-next-line no-new-func
-  // PIN MOVED (AUDIT TESA II P12): the picture's lakes (world/arenaPlaces.js pastBayLakeAt) handed, the test's own
-  const openSea = new Function('etherSea', 'inEther', 'seaPixel', 'MAP_WIDTH', 'MAP_HEIGHT', 'openSeaOf', 'tamrielLand', 'pastBayLakeAt', `${m[1]}\nreturn openSea;`)(ether, inEther, seaPixel, width, height, openSeaOf, tamriel, lakeAt);
+  // PIN MOVED (AUDIT TESA II P12): the picture's lakes (world/arenaPlaces.js pastBayLakeAt) handed, the test's own;
+  // PIN MOVED (RUMARE-WATER): and the Imperial City's lake (world/rumareWaters.js rumareSeaPixel)
+  const openSea = new Function('etherSea', 'inEther', 'seaPixel', 'MAP_WIDTH', 'MAP_HEIGHT', 'openSeaOf', 'tamrielLand', 'pastBayLakeAt', 'rumareSeaPixel', `${m[1]}\nreturn openSea;`)(ether, inEther, seaPixel, width, height, openSeaOf, tamriel, lakeAt, rumareAt);
   return { openSea, asked: () => asked };
 }
 
@@ -144,6 +145,10 @@ test('INLAND-PORTS THE HOST\'S OPEN SEA, run: a pixel of the Bay\'s map is the f
   // AUDIT TESA II P12: a lake of the picture past the edge (Lake Rumare's kind) is no sea, the water its border joins is
   const lake = hostOpenSea({ isWater: beyond, width: 6, height: 3, tamriel: true, lakeAt: (x, y) => x === -3 && y === 2 });
   assert.deepEqual([lake.openSea(-3, 2), lake.openSea(-3, 0)], [false, true], 'the lake none, the sea beside it the sea');
+  // RUMARE-WATER: the Imperial City's lake past the edge the sea's, its land's water or not - with the land beyond the Bay
+  const city = (x, y) => x === -3 && y === 1;
+  assert.equal(hostOpenSea({ isWater: beyond, width: 6, height: 3, tamriel: true, rumareAt: city }).openSea(-3, 1), true, 'the city\'s lake the sea\'s');
+  assert.equal(hostOpenSea({ isWater: beyond, width: 6, height: 3, rumareAt: city }).openSea(-3, 1), false, 'the land beyond the Bay off: none');
 });
 
 /** The host's port list (the harbour board's), lifted off world.js and run over a map directory and an open sea of the

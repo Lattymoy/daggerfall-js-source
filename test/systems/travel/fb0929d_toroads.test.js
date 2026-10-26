@@ -198,6 +198,7 @@ function host({ firstPerson = false, roads = false, enhanced = true } = {}) {
     TEST_GODMODE: false, staffPowers: () => ({ god: false }), teleportTo: refuse('teleportTo'),   // TESTBUILD: the shipped build's god mode is off
     wildMapMask: () => null, wildInside: () => false,   // WILD1: no open zone on this map
     wagonRiders: null,   // WAGONS2: seated in no one's wagon - the Overworld's own refusal of a rider stands unasked
+    rumareSeaPixel: () => false,   // PIN MOVED (RUMARE-WATER): the voyages' sea takes the Imperial City's lake (world/rumareWaters.js) - none on this map
   };
   Object.assign(h, new Function(...Object.keys(env), HOST)(...Object.values(env)));
   Object.assign(h, { to, ui, view });

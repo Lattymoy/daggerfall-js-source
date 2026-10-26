@@ -95,6 +95,10 @@ export const IMPERIAL = Object.freeze({
   /** City Isle's shore round the city wall, and Lake Rumare's far shore round the isle (the land past it its own). */
   isle: 7900,
   lake: 10000,   // AUDIT TESA II C1 at IC-GRAND's scale: its far shore and the bridge's landing short of the rim's inner edge (10,169.6 m: the plan's half less CAPITAL_RIM_M) and inside the city's own blocks (10,137.6 m: AUDIT-TESA A6-3, none in the land's)
+  /** RUMARE-WATER (bible/03-World/Tamriel.md RUMARE-WATER): the Waterfront's mouth - the lake south through its far shore
+   *  to the span's edge, `mouth` metres either side of the city's middle line: the Waterfront canal's three pixels
+   *  (world/tamriel/tamrielGeography.js WATERFRONT_CANAL's `half` and a half, pinned equal), so the lake meets it. */
+  mouth: 1228.8,
   /** The districts' grand avenues: from each palace gate out along its sector's middle to the city wall, `w` wide. */
   avenue: Object.freeze({ w: 30 }),
   /** Each district's heart, on its avenue `r` out (the Temple District's the Temple of the One's). */
@@ -289,9 +293,10 @@ export const causewayLines = (I = IMPERIAL) => [
 export const bridgeLine = (I = IMPERIAL) => [polar(I.bridge.b, I.cityWall.r), polar(I.bridge.b, I.lake + I.bridge.landing)];
 
 /** IS A POINT LAND - City Isle: within its shore, the Prison's and the University's grounds, or the Waterfront's quay; TS5:
- *  and the far shore past Lake Rumare's ring. */
+ *  and the far shore past Lake Rumare's ring, RUMARE-WATER but the Waterfront's mouth through it. */
 export function imperialLand(x, z, I = IMPERIAL) {
   const r = Math.hypot(x, z);
+  if (r >= I.lake && z > 0 && Math.abs(x) < I.mouth) return false;   // RUMARE-WATER: the Waterfront's mouth, through the far shore
   if (r <= I.isle || r >= I.lake) return true;
   if (inBox(x, z, polar(I.prison.b, I.prison.r), I.prison.half + 24)) return true;
   if (inBox(x, z, polar(I.university.b, I.university.r), I.university.half + 24)) return true;

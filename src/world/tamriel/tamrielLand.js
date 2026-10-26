@@ -90,13 +90,14 @@ export function provinceKeyAt(px, py) {
   return provinceAt(px, py)?.key ?? null;
 }
 
-/** @type {{ trace: object|null, fit: object|null, canal: ?{ x0: number, x1: number, y0: number, y1: number, p0: number, p1: number, q0: number, q1: number } }} */
+/** @type {{ trace: object|null, fit: object|null, canal: ?{ x0: number, x1: number, y0: number, y1: number, p0: number, p1: number, q0: number, q1: number, cx: number, cy: number } }} */
 const _canal = { trace: null, fit: null, canal: null };
 /**
  * NIBEN-SEA: THE WATERFRONT CANAL (world/tamriel/tamrielGeography.js WATERFRONT_CANAL) on the installed trace and fit - the
  * Bay pixels x0..x1, y0..y1 (inclusive) from the row past the city's span's south edge to the last before the trace's
  * water, its middle column and `half` either side, and the same box on the picture (p0..p1, q0..q1: a point inside it is
- * the canal's) - or null: no trace, the city's span at its point not all its province's land (the capitals' own law would
+ * the canal's), and the city's centre pixel it is cut from (`cx`, `cy` - RUMARE-WATER: world/rumareWaters.js stands the
+ * city's own water on it) - or null: no trace, the city's span at its point not all its province's land (the capitals' own law would
  * stand it elsewhere, world/tamrielCapitals.js capitalPixel), or no row of the water within `reach`. Read off the trace's
  * own law (SMOOTH-LAND landLabelAt - never provinceKeyAt, which reads the canal), so it ends where every reader's water
  * begins; kept a trace and a fit.
@@ -119,7 +120,7 @@ export function waterfrontCanal() {
     if (y === cy + r + 1) return null;   // the water at the city's edge: no canal to cut
     const x0 = cx - half, x1 = cx + half, y0 = cy + r + 1, y1 = y - 1;
     const [p0, q0] = bayToPicture(x0, y0), [p1, q1] = bayToPicture(x1 + 1, y1 + 1);
-    return (_canal.canal = Object.freeze({ x0, x1, y0, y1, p0, p1, q0, q1 }));
+    return (_canal.canal = Object.freeze({ x0, x1, y0, y1, p0, p1, q0, q1, cx, cy }));
   }
   return null;
 }

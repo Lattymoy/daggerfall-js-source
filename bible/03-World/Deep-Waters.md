@@ -795,7 +795,11 @@ Nothing in `scenes/world.js` waits on it.
 **Not done, and why.** A place past the Bay blends its pixel's ground as a classic location's, and the bake samples the
 continent's pixels without a location's rect. A coastal town's cells may therefore read as water in the planes where the
 town raised them. The carve itself takes a cell only where its four corners stand at the ocean's height, so no town is
-cut. The Ocean Holes' pits stay the Bay's, as they were.
+cut. The Ocean Holes' pits stay the Bay's, as they were. RUMARE-WATER (`03-World/Tamriel.md`): a shore capital stood its
+every slice at the ocean's height (AUDIT TESA II C2), so its streets were such cells. Its land now stands a metre over
+the sea (`world/terrain/capitalSea.js` CAPITAL_FREEBOARD, past the carve's 0.25 headroom) and only its water at the sea's
+height. The Imperial City's span is read by this bake as the streamed build lays it (`tamrielWatersBake.js`
+rumareWaterSampler), so its lake is flooded from the canal and carved as the sea's.
 
 ### Pins
 

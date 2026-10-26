@@ -34,6 +34,7 @@ import { reliefStands, reliefAt, RELIEF_COAST_REACH, RELIEF_FLOOR } from './tamr
 import { theatreAt } from '../worldWide/worldGrid.js';   // WW-R: a province's land is its region's
 import { WATER_BYTE } from '../roadsProducer.js';   // AUDIT TESA II R1: the beach line the land stands over - one constant
 import { perlinNoise } from '../perlin.js';   // BREATHTAKER3: the large map's swell
+import { rumareBasin, rumareMouthPixel } from '../rumareWaters.js';   // RUMARE-WATER: the land let down about the Imperial City at the sea
 
 /** The height law's bytes (WOODS' own units: byte * 8 metres; the sea at 3 and under). AUDIT TESA II R1/G12: the shore - the
  *  least any land past the Bay stands, the relief's and the authored law's alike - is one over the beach line every
@@ -114,13 +115,19 @@ export const groundCacheSize = () => _bytes.size;
 export const dropGroundCache = () => { _bytes.clear(); _large.clear(); };   // TAMRIEL-DEEP: the large map reads the land too
 
 /** THE AUTHORED HEIGHT at a Bay-coordinate pixel beyond the Bay (integers), with the lattice noise, cached. Asked of
- *  a pixel on the Bay it still answers the authored law - the composition below is what chooses. */
+ *  a pixel on the Bay it still answers the authored law - the composition below is what chooses. RUMARE-WATER
+ *  (world/rumareWaters.js rumareBasin): about the Imperial City, where its canal stands, the land let down toward the shore
+ *  (SHORE_BYTE) - whole on its span, eased back to its own over RUMARE_BASIN.ramp pixels - so the city at the sea meets
+ *  the land round it as a shore; the sea and the land already that low never moved; and the span's pixels the
+ *  Waterfront's mouth crosses the sea's (rumareMouthPixel), the canal's water laid on into it. */
 export function tamrielHeightByte(x, y) {
   const k = cacheKey(x, y);
   const hit = _bytes.get(k);
   if (hit !== undefined) return hit;
   const [px, py] = bayToPicture(x + 0.5, y + 0.5);
-  const byte = authoredHeightByte(px, py, (groundHash(x, y) - 0.5) * 4);
+  let byte = rumareMouthPixel(x, y) ? 0 : authoredHeightByte(px, py, (groundHash(x, y) - 0.5) * 4);   // RUMARE-WATER: the mouth's pixels the sea's
+  const basin = byte > SHORE_BYTE ? rumareBasin(x, y) : 0;
+  if (basin > 0) byte = Math.round(byte - (byte - SHORE_BYTE) * basin);
   if (_bytes.size >= GROUND_CACHE_MAX) _bytes.clear();
   _bytes.set(k, byte);
   return byte;
@@ -158,10 +165,10 @@ const _large = new Map();
 export function tamrielLargeMap(x, y) {
   const k = cacheKey(x, y), hit = _large.get(k);
   if (hit) return hit;
-  const data = [], { wave, swing, mean } = LARGE_SWELL, sea = tamrielHeightByte(x, y) === 0;
+  const data = [], { wave, swing, mean } = LARGE_SWELL, sea = tamrielHeightByte(x, y) === 0, keep = 1 - rumareBasin(x, y);   // RUMARE-WATER: the basin's floor the shore's
   for (let ix = 0; ix < 5; ix++) {
     const col = new Uint8Array(5);
-    if (!sea) for (let iy = 0; iy < 5; iy++) col[iy] = Math.round(mean + swing * (2 * perlinNoise((x * 5 + ix) / wave + 0.37, (y * 5 + iy) / wave + 0.61) - 1));
+    if (!sea) for (let iy = 0; iy < 5; iy++) col[iy] = Math.round(keep * (mean + swing * (2 * perlinNoise((x * 5 + ix) / wave + 0.37, (y * 5 + iy) / wave + 0.61) - 1)));
     data.push(col);
   }
   if (_large.size >= LARGE_CACHE_MAX) _large.clear();

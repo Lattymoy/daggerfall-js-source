@@ -155,8 +155,8 @@
   {
     "name": "TDEEP-detail-at-sea",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "    if (!sea) for (let iy = 0; iy < 5; iy++) col[iy] = Math.round(mean + swing",
-    "new": "    for (let iy = 0; iy < 5; iy++) col[iy] = Math.round(mean + swing",
+    "old": "    if (!sea) for (let iy = 0; iy < 5; iy++) col[iy] = Math.round(keep * (mean + swing",
+    "new": "    for (let iy = 0; iy < 5; iy++) col[iy] = Math.round(keep * (mean + swing",
     "tests": [
       "test/world/tamriel2.test.js",
       "test/world/deepWater/tamriel_deep.test.js"

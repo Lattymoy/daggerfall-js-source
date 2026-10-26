@@ -176,7 +176,7 @@ export function laneNetwork(ports, open, maxPx = LANE_MAX_PX) {
   for (const p of sea) {
     const reach = Math.max(maxPx, p.reach ?? 0);   // NIBEN-SEA: a harbour up a canal reaches farther (world/worldWide/worldPorts.js)
     const near = sea.filter((q) => q !== p).map((q) => ({ q, d: Math.hypot(q.road.x - p.road.x, q.road.y - p.road.y) }))
-      .filter((x) => x.d > 0 && x.d <= reach).sort((x, y) => x.d - y.d || x.q.id - y.q.id).slice(0, LANE_NEIGHBOURS);
+      .filter((x) => x.d > 0 && x.d <= reach).sort((x, y) => x.d - y.d || x.q.id - y.q.id).slice(0, p.neighbours ?? LANE_NEIGHBOURS);   // RUMARE-WATER: a canal harbour's own count
     for (const { q } of near) {
       const [a, b] = p.id < q.id ? [p, q] : [q, p];
       const key = `${a.id}-${b.id}`;

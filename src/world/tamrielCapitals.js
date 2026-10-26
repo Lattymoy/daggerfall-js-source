@@ -57,7 +57,7 @@ import { provinceKeyBeyondBay, tamrielLandVersion, canalAt } from './tamriel/tam
 import { CITIES } from './tamriel/tamrielGeography.js';   // AUDIT TESA II C15: a capital's point TAMRIEL1's city's, one home
 import { tamrielHeightByte } from './tamriel/tamrielGround.js';   // AUDIT TESA II (lane R's R2): a gate the roads can reach
 import { WATER_BYTE } from './roadsProducer.js';
-import { IMPERIAL_MODELS, IMPERIAL_CARRY, IMPERIAL_SPAN, IMPERIAL_CELLS, IMPERIAL_PARTS, IMPERIAL_OUTSKIRTS, IMPERIAL_ARENA_CODE, imperialSlicePlan, imperialSliceName, imperialDistrictOfCell, imperialCodeCell, imperialCell } from './imperialCity.js';   // TESA11: the Imperial City over nine pixels; TS5 over forty-nine; IC-GRAND over 625, its plan a slice at a time
+import { IMPERIAL, IMPERIAL_MODELS, IMPERIAL_CARRY, IMPERIAL_SPAN, IMPERIAL_CELLS, IMPERIAL_PARTS, IMPERIAL_OUTSKIRTS, IMPERIAL_ARENA_CODE, imperialSlicePlan, imperialSliceName, imperialDistrictOfCell, imperialCodeCell, imperialCell } from './imperialCity.js';   // TESA11: the Imperial City over nine pixels; TS5 over forty-nine; IC-GRAND over 625, its plan a slice at a time
 import { imperialSliceMarkers, imperialOwnName, imperialAnchorCarrier, imperialSliceCarrier, imperialViewName, imperialBlockOf, NEAR_RING, NEAR_SLACK } from './imperialBlocks.js';   // IC-GRAND: its blocks a family, near and far
 import { ARENA_BLOCK } from './arena/arenaCity.js';   // IC-GRAND: Daggerfall's arena in the Arena District
 import { TOWN_OUTLINE_BLOCK } from './townOutline.js';   // TS5: the open ground past the Imperial City's lake
@@ -219,7 +219,7 @@ export const CAPITALS = Object.freeze([
     span: IMPERIAL_SPAN, sliceName: imperialSliceName, carry: IMPERIAL_CARRY,   // TESA11: nine pixels, each slice its district's; TS5: forty-nine, each landmark carried in parts; IC-GRAND: 625
     sliceMarkers: imperialSliceMarkers,   // AUDIT TESA II C7: every slice its own start markers (each worked when first read)
     gates: Object.freeze(['W']),   // TESA14: Talos Bridge, west to the mainland
-    harbour: Object.freeze([(IMPERIAL_SPAN - 1) / 2, IMPERIAL_SPAN - 1]),   // NIBEN-SEA: the south edge's middle slice, below the Waterfront, where its canal meets the city (capitalCanalOpen)
+    harbour: Object.freeze([(IMPERIAL_SPAN - 1) / 2, Math.floor(IMPERIAL.waterfront.pierTo / 819.2 + IMPERIAL_SPAN / 2)]),   // NIBEN-SEA: its harbour; RUMARE-WATER: the Waterfront's own slice, its quay and its piers' ends, the lake's way to the canal open (capitalCanalOpen)
     anchor: Object.freeze([IMPERIAL_SPAN * 4, IMPERIAL_SPAN * 4]), markers: Object.freeze([[220, 0], [-220, 0], [0, 220], [0, -220]]), blocks: null, models: Object.freeze(IMPERIAL_PARTS.map((p) => p.id)), drawn: Object.freeze(Object.values(IMPERIAL_MODELS)) }),   // TS5: its markers on the plaza round the tower; its landmarks' parts the slices' models, the whole ones drawn once
   capital({ key: 'solitude', tag: 'SO', name: 'Solitude', province: 'Skyrim', shore: true, plan: SOLITUDE_PLAN, districts: SOLITUDE_DISTRICTS,
     sea: Object.freeze(['N', 'W']),   // AUDIT TESA II C9: the plan's water - the Sea of Ghosts north, the Karth west
@@ -386,16 +386,18 @@ export function capitalGates(k, { walkable = gateGround } = {}) {
   if (!out.length && (cap.gates ?? []).length && !_unroutable.has(key)) { _unroutable.add(key); console.warn(`[capitals] ${cap.name}: no gate the roads can reach within ${CAPITAL_GATE_REACH} pixels of its sides`); }
   return out;
 }
-/** NIBEN-SEA: A CAPITAL'S HARBOUR - the slice its port stands on: its `harbour` (the Imperial City's, the middle of its south
- *  edge below the Waterfront, where its canal meets it), else its centre (a shore capital's own slice, TESA10b). */
+/** NIBEN-SEA: A CAPITAL'S HARBOUR - the slice its port stands on: its `harbour` (the Imperial City's: RUMARE-WATER the
+ *  Waterfront's own slice on the middle line, its quay and the ends of its piers over the lake), else its centre (a shore
+ *  capital's own slice, TESA10b). */
 export const capitalHarbourSlice = (cap) => (cap.harbour ? cap.harbour[1] * capitalDims(cap).w + cap.harbour[0] : capitalCentre(cap));
-/** NIBEN-SEA: whether a capital's harbour slice meets its canal (world/tamriel/tamrielLand.js waterfrontCanal) - the pixel
- *  south of it the canal's - on the live fit and land. @param {number} k */
+/** NIBEN-SEA: whether a capital's harbour meets its canal (world/tamriel/tamrielLand.js waterfrontCanal) - RUMARE-WATER: the
+ *  pixel past its span's south edge in its harbour's column the canal's, the city's lake joined to it through the
+ *  Waterfront's mouth (world/imperialCity.js IMPERIAL.mouth) - on the live fit and land. @param {number} k */
 export function capitalCanalOpen(k) {
   const cap = CAPITALS[k], at = capitalPixels().pixels[k];
   if (!cap?.harbour || !at) return false;
   const D = capitalDims(cap);
-  return canalAt(at.px + cap.harbour[0] - D.mx, at.py + cap.harbour[1] - D.my + 1);
+  return canalAt(at.px + cap.harbour[0] - D.mx, at.py + D.h - D.my);
 }
 /** TS5: a capital's centre pixel on the live fit and land, or null. @param {number} k */
 export const capitalCentrePixel = (k) => capitalPixels().pixels[k] ?? null;
@@ -762,7 +764,10 @@ export function synthesizeCapitalLocation({ cap, k, s = capitalCentre(cap) }, ct
   const castle = so === 0 ? capitalCastleDungeon(k, mapId) : null;   // WW7-4: the centre's - the capital's own - its castle's halls
   const where = ctx.where ?? {};
   const base = ctx.base;
-  const flattenAt = many || cap.shore ? Object.freeze({ px: ctx.px - (sx - D.mx), py: ctx.py - (sy - D.my), ...(cap.shore ? { sea: true } : {}) }) : null;
+  // RUMARE-WATER (world/terrain/capitalSea.js): at the sea a shore capital, and the Imperial City where its canal stands;
+  // a seam with the capital's sea slice water on both its sides
+  const sea = cap.shore || capitalCanalOpen(k), seaEdges = sea && D.sea ? seaEdgesOf(D, sx, sy) : null;
+  const flattenAt = many || cap.shore ? Object.freeze({ px: ctx.px - (sx - D.mx), py: ctx.py - (sy - D.my), ...(sea ? { sea: true } : {}), ...(seaEdges ? { seaEdges } : {}) }) : null;
   return {
     ...base,
     name: capitalSliceName(cap, s),
@@ -785,6 +790,15 @@ export function synthesizeCapitalLocation({ cap, k, s = capitalCentre(cap) }, ct
     capital: Object.freeze({ key: cap.key, k, s, ...(flattenAt ? { flattenAt } : {}), rim: Object.freeze({ W: sx === 0 ? CAPITAL_RIM_TILES : 0, E: sx === D.w - 1 ? CAPITAL_RIM_TILES : 0, N: sy === 0 ? CAPITAL_RIM_TILES : 0, S: sy === D.h - 1 ? CAPITAL_RIM_TILES : 0 }) }),
     ...(ctx.arena ? { arena: ctx.arena } : {}),
   };
+}
+
+/** RUMARE-WATER: a slice's sides shared with its capital's sea slice - or every inner side of a sea slice's own - each side
+ *  water on both its slices (world/terrain/capitalSea.js capitalSeaGround's `seaEdges`); null where none is. */
+function seaEdgesOf(D, sx, sy) {
+  const sea = (x, y) => x >= 0 && y >= 0 && x < D.w && y < D.h && D.sea.includes(y * D.w + x);
+  const own = sea(sx, sy), side = (x, y) => x >= 0 && y >= 0 && x < D.w && y < D.h && (own || sea(x, y));
+  const e = { N: side(sx, sy - 1), E: side(sx + 1, sy), S: side(sx, sy + 1), W: side(sx - 1, sy) };
+  return e.N || e.E || e.S || e.W ? Object.freeze(e) : null;
 }
 
 /** The district a cell of a capital's grid belongs to, or null - IC-GRAND: the Imperial City's by its law. */

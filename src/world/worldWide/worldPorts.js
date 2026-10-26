@@ -31,13 +31,19 @@ import { longitudeLatitudeToMapPixel } from '../../formats/mapsFile.js';
 import { capitalOnPixel } from '../tamrielCapitals.js';   // NIBEN-SEA: a capital's harbour bears its capital's name
 
 /** @typedef {{ id: number, mapId: number, key: string, name: string, px: number, py: number, region: number, area: number,
- *   theatre: number, crown: null, reach?: number }} WorldPort - a port past the Bay, in the shape the host's port lists hand the
- *   sea; NIBEN-SEA: `reach` a harbour up a canal's packets' own (CANAL_PORT_REACH_PX) */
+ *   theatre: number, crown: null, reach?: number, neighbours?: number }} WorldPort - a port past the Bay, in the shape the host's port lists hand the
+ *   sea; NIBEN-SEA: `reach` a harbour up a canal's packets' own (CANAL_PORT_REACH_PX); RUMARE-WATER: `neighbours` the ports its
+ *   lanes are asked of (CANAL_PORT_NEIGHBOURS) */
 
 /** NIBEN-SEA: how far (map pixels, roadstead to roadstead) a harbour up a canal - the Imperial City's, some 850 pixels of
  *  the Niben from the Topal Bay, a thousand from the nearest port of the sea - runs its packets: the lanes' own reach past
  *  the Bay (scenes/naval/worldLanes.js BEYOND_LANE_MAX_PX, 400) would leave it none. */
 export const CANAL_PORT_REACH_PX = 1200;
+/** RUMARE-WATER: how many of its nearest ports a harbour up a canal asks a lane of - past the lanes' own two
+ *  (systems/naval/seaLanes.js LANE_NEIGHBOURS): its nearest as the crow flies lie across the land (the Imperial City's,
+ *  on the Waterfront: Senchal, then Winterhold and Windhelm over Skyrim - no way to either - then Torval), and a lane the
+ *  water does not join has no way and sails nothing. */
+export const CANAL_PORT_NEIGHBOURS = 4;
 /** The compass's eight ways, east first, turning north (map y runs south). */
 export const COMPASS_WAYS = Object.freeze(['east', 'north-east', 'north', 'north-west', 'west', 'south-west', 'south', 'south-east']);
 
@@ -70,7 +76,7 @@ export function beyondPorts(places, openSea) {
     if (!p.port || inBay(p.px, p.py) || !p.name || !isPortTownType(p.type) || !seaBears(p.px, p.py, openSea)) continue;
     const cap = capitalOnPixel(p.px, p.py)?.cap;
     out.push({ id: portIdOf(p), mapId: p.mapId, key: `${p.px},${p.py}`, name: cap?.name ?? p.name, px: p.px, py: p.py, region: p.region, area: p.area, theatre: p.theatre, crown: null,   // AUDIT TESA II P7: its province's region (WW-R)
-      ...(cap?.harbour ? { reach: CANAL_PORT_REACH_PX } : {}) });   // NIBEN-SEA: a harbour up its canal, its packets' own reach
+      ...(cap?.harbour ? { reach: CANAL_PORT_REACH_PX, neighbours: CANAL_PORT_NEIGHBOURS } : {}) });   // NIBEN-SEA: a harbour up its canal, its packets' own reach; RUMARE-WATER: and its lanes asked of more of its nearest
   }
   return out;
 }

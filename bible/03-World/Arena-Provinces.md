@@ -745,6 +745,10 @@ mossy stone). No game data.
   hummocks before its two gates, the north and south rows' middle cells (C6: they opened onto the marsh's water, 82 m of
   it to the pixel's edge); Falinesti's walkway clear to its platforms (C4, TESA-LORE below); the plans' measures in BLOCK_M
   (C15). The crystal picture deleted (lane K's K15: no model wore it since TESA-LORE).
+- **Moved by RUMARE-WATER** (2026-10-26, `03-World/Tamriel.md`): a shore capital's land a metre over the sea
+  (`world/terrain/capitalSea.js` CAPITAL_LAND, CAPITAL_FREEBOARD) and only its water at the sea's own height - its
+  streets had stood at the sea's floor, where the continent's Deep Waters carve and Come Sail Away's hull read them as
+  water; a slice's seam with its capital's sea slice water on both sides (`seaEdges`).
 
 ## TESA10d - a capital on the map, Arena or none (2026-10-13)
 
@@ -800,7 +804,9 @@ at 317 m); Solitude and the other five stand as they were. SUPERSEDED in its mea
   by its inputs), so the nine meet level; the outer edge steps to the land as any city's does. AUDIT TESA II C1: it did
   not - its ground ran to its pixels' edges and left the blend no land, 45 m over its neighbours; its outer sides leave
   Daggerfall's rim to the land now (TESA10's rim), so it meets the land level (0.000 m measured). A shore capital's every
-  slice is flattened to the sea's floor (AUDIT TESA II C2: `flattenAt`'s `sea`).
+  slice is flattened to the sea's floor (AUDIT TESA II C2: `flattenAt`'s `sea`); RUMARE-WATER (`03-World/Tamriel.md`): its
+  land a metre over the sea, its water at the sea's own height, and the Imperial City flattened so too where its canal
+  stands, its lake the sea's.
 - **The layout is the city's canon** - the wheel the later games mapped, in Daggerfall's day (3E 405, Uriel Septim VII)
   and of Daggerfall's own blocks (`world/imperialCity.js`, every cell decided from the metres about the city's middle):
   City Isle in Lake Rumare (1010 m from the middle - since IC-RING the city's own ring of water, a moat in the trace's
@@ -1540,7 +1546,8 @@ when first read; the city past the stream's reach is drawn on the far ring's pas
   the Palace District below), the palace wall at 2.3 km round the PALACE DISTRICT (the team's list names it; TESA11's
   "Green Emperor Way" is its ring road's name now), the city wall at 6.9 km (TS5's
   1.95), City Isle's shore at 7.9 km, Lake Rumare's far shore at 10 km, the land past it Rumare Shore (TS5's open
-  ground). Each district on its sector as TESA11 laid them (the Market north-east, the Arena District east, the
+  ground; RUMARE-WATER, `03-World/Tamriel.md`: a mouth through it south of the isle, `IMPERIAL.mouth` 1,228.8 m either
+  side of the middle line, the Waterfront canal's width, so the lake meets the canal). Each district on its sector as TESA11 laid them (the Market north-east, the Arena District east, the
   Arboretum south-east, the Temple District south-west, Talos Plaza - the team's Nobles District - west, the Elven
   Gardens north-west), its heart on its avenue at 4.6 km: the Market's great square, the arena, the Nine Divines,
   the Temple of the One, Talos's dragon, the Elven Gardens' pool. Outside the wall on the isle the Prison (45 degrees,

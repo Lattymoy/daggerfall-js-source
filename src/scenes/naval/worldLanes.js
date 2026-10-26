@@ -31,6 +31,7 @@ import { pictureLakes } from '../../world/arenaPlaces.js';   // AUDIT TESA II P7
 import { inWorldGrid } from '../../world/worldWide/worldGrid.js';
 import { inEther, onBayOrEther } from '../../world/ethericSea.js';
 import { NATIVE_PIXEL } from '../../systems/seaRaiders.js';
+import { rumareSeaPixel } from '../../world/rumareWaters.js';   // RUMARE-WATER: the Imperial City's lake the sea's
 
 /**
  * The Bay's ports as its lanes read them - Travel Options' list (`portIds`, the host's: systems/travel/travelPorts.js
@@ -52,13 +53,15 @@ export function bayLanePorts(mapDict, maps, portIds) {
 /**
  * The world's lane water: the Bay's own (`bayOpen`) on the Bay, and past it the continent's sea - the Ocean climate on
  * water (`water`, `climateAt`: the host's composed readers) where the land past the Bay stands (`beyond()`), never the
- * Eltheric Ocean's box (its isles keep their own ports). Its native twin reads a point's pixel FLOORED (a pixel west of
- * the map's edge is its own - the map pixel law truncates, seaRaiders.js tvRaidSea's own reading).
+ * Eltheric Ocean's box (its isles keep their own ports); RUMARE-WATER: and the Imperial City's lake and its mouth, where its
+ * canal stands (world/rumareWaters.js rumareSeaPixel - its harbour's packets sail up to its Waterfront). Its native twin
+ * reads a point's pixel FLOORED (a pixel west of the map's edge is its own - the map pixel law truncates, seaRaiders.js
+ * tvRaidSea's own reading).
  * @param {{ bayOpen: (x: number, y: number) => boolean, water: (x: number, y: number) => boolean, climateAt: (x: number, y: number) => number, beyond: () => boolean }} o
  */
 export function worldLaneWater({ bayOpen, water, climateAt, beyond }) {
   const open = (/** @type {number} */ px, /** @type {number} */ py) => (inBay(px, py) ? bayOpen(px, py)
-    : beyond() && inWorldGrid(px, py) && !inEther(px, py) && water(px, py) && climateAt(px, py) === CLIMATES.Ocean);
+    : beyond() && inWorldGrid(px, py) && !inEther(px, py) && ((water(px, py) && climateAt(px, py) === CLIMATES.Ocean) || rumareSeaPixel(px, py)));
   return { open, openNative: (/** @type {number} */ x, /** @type {number} */ z) => open(Math.floor(x / NATIVE_PIXEL), 499 - Math.floor(z / NATIVE_PIXEL)) };
 }
 

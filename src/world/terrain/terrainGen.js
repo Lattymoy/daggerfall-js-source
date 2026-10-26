@@ -21,7 +21,8 @@
 // first and its tilemap + rect ride INTO the job as plain data.
 // ═══════════════════════════════════════════════════════════════════
 
-import { generateSamples, ghostSampler, HEIGHTMAP_DIMENSION, SCALED_OCEAN_ELEVATION, MAX_TERRAIN_HEIGHT } from './terrainSampler.js';
+import { generateSamples, ghostSampler, HEIGHTMAP_DIMENSION } from './terrainSampler.js';
+import { CAPITAL_SEA_FLAT, capitalSeaGround } from './capitalSea.js';   // RUMARE-WATER: a capital at the sea, its water the sea's
 import { buildTerrainGrid, convertTilemap } from './terrainSurface.js';
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, townGroundMask, unstampOffShape, townRoadRing } from './terrainTiles.js';
 import { layoutNature } from './terrainNature.js';
@@ -76,9 +77,11 @@ import { paintTamrielWaters } from '../tamriel/tamrielWaters.js';   // CYRODIIL-
  *   3x3 of pixels' climates about this one (world/terrain/terrainNature.js
  *   layoutNature's `ecotone`), null with the Blended climates row off or
  *   every neighbour this pixel's own climate.
- * @param {?{px: number, py: number, sea?: boolean}} [job.flattenAt] - TESA11: a capital that spans several pixels (world/tamrielCapitals.js
+ * @param {?{px: number, py: number, sea?: boolean, seaEdges?: { N?: boolean, E?: boolean, S?: boolean, W?: boolean }}} [job.flattenAt] - TESA11: a capital that spans several pixels (world/tamrielCapitals.js
  *   `span`): the pixel whose average every one of its pixels is flattened to - its centre's - so they meet level. AUDIT TESA II
- *   C2: `sea` a shore capital's, flattened to the sea's floor (SEA_FLAT) - its harbour's water the sea's.
+ *   C2: `sea` a shore capital's, flattened to the sea's floor - its harbour's water the sea's; RUMARE-WATER: its land a freeboard
+ *   over it (world/terrain/capitalSea.js CAPITAL_SEA_FLAT), its water let down to it (capitalSeaGround) - the Imperial City's
+ *   too, where its canal stands; `seaEdges` its sides shared with its sea slice.
  * @returns {{samples: Float32Array, tilemap: Uint8Array,
  *   positions: Float32Array, normals: Float32Array,
  *   tilemapBytes: Uint8Array, avg: number, paths: ?Uint8Array,
@@ -86,10 +89,6 @@ import { paintTamrielWaters } from '../tamriel/tamrielWaters.js';   // CYRODIIL-
  *   roadside: Array<any>, graht: ?Float32Array}} `roadside` JUNGLE-ROADSIDE's pairs (world/jungle/jungleRoadside.js standPairs);
  *   `graht` GRAHT1's graht-oaks (world/jungle/grahtOaks.js grahtSites, GRAHT_TREE_FLOATS a tree - empty where none stands)
  */
-/** AUDIT TESA II C2: THE SEA'S FLOOR - the kernel's own clamp (sampleKernel: no ground under SCALED_OCEAN_ELEVATION), where
- *  every sea's water tile stands: a shore capital's ground, so its harbour is that water (it stood the city's average, 16
- *  to 59 m over the sea beside it). */
-const SEA_FLAT = Object.freeze({ avg: SCALED_OCEAN_ELEVATION / MAX_TERRAIN_HEIGHT, classic: SCALED_OCEAN_ELEVATION / MAX_TERRAIN_HEIGHT });
 /** TESA11: the averages a city over several pixels is flattened to, by its centre pixel and whether the ground is shaped -
  *  kept while the kernel's inputs are the same (its woods, its network, its sites, its climates). */
 const _flatAverages = new Map();
@@ -125,13 +124,15 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   let avg = 0;
   if (hasLocation) {
     // TESA11: a city over several pixels stands on one ground - each of its pixels flattened to its centre's average
-    const flat = flattenAt ? (flattenAt.sea ? SEA_FLAT : flattenAverage({ woods, roads, sites, climates }, landforms, flattenAt, px === flattenAt.px && py === flattenAt.py ? { samples, classic } : null)) : null;   // AUDIT TESA II C2: a shore capital at the sea's floor
+    const flat = flattenAt ? (flattenAt.sea ? CAPITAL_SEA_FLAT : flattenAverage({ woods, roads, sites, climates }, landforms, flattenAt, px === flattenAt.px && py === flattenAt.py ? { samples, classic } : null)) : null;   // AUDIT TESA II C2: a shore capital at the sea's floor
+    const natural = flattenAt?.sea ? [Float32Array.from(samples), classic ? Float32Array.from(classic) : null] : null;   // RUMARE-WATER: the land's own ground, the far shore's and the rim's
     avg = flat ? flat.avg : calcAvgMaxHeight(samples)[0];
     // TOWN-SHAPES (bible/03-World/Town-Shapes.md): a town with an outline flattens to it, at its own land's height - the sea
     // past its margin read on DFU's own samples (the classic pass's, where the ground is shaped), as its tiles are
     const ground = locationRect?.shape ? Float32Array.from(classic ?? samples) : null;
     avg = blendLocationTerrain(samples, avg, locationRect, HEIGHTMAP_DIMENSION, ground ?? samples);
     if (classic) blendLocationTerrain(classic, flat?.classic ?? calcAvgMaxHeight(classic)[0], locationRect, HEIGHTMAP_DIMENSION, ground ?? classic);
+    if (natural) for (const [S, n] of [[samples, natural[0]], [classic, natural[1]]]) if (S && n) capitalSeaGround(S, n, tilemap, locationRect, px, py, flattenAt.seaEdges);   // RUMARE-WATER: its water the sea's, its land over it
     if (ground) {
       const mask = townGroundMask(locationRect.shape, ground);
       unstampOffShape(tilemap, locationRect.shape, mask);   // its tiles over the sea the sea's

@@ -214,8 +214,8 @@
   {
     "name": "ACS-B10-sea-at",
     "file": "src/scenes/world.js",
-    "old": "return tamrielLand && seaPixel(x, y) && !pastBayLakeAt(x, y);",
-    "new": "return seaPixel(x, y) && !pastBayLakeAt(x, y);",
+    "old": "return tamrielLand && ((seaPixel(x, y) && !pastBayLakeAt(x, y)) || rumareSeaPixel(x, y));",
+    "new": "return ((seaPixel(x, y) && !pastBayLakeAt(x, y)) || rumareSeaPixel(x, y));",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js",
       "test/systems/naval/fb1014_inlandports.test.js"
