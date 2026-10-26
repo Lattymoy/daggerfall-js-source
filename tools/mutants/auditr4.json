@@ -1,0 +1,62 @@
+[
+  {
+    "name": "AUDITR4-1-timer-in-a-cell",
+    "file": "server/src/index.js",
+    "old": "  _grantDrained() {\n",
+    "new": "  _grantDrained() {\n    setTimeout(() => { void this._grantFlush(); }, 600_000);\n",
+    "tests": [
+      "test/net/auditr4_relaybill.test.js"
+    ],
+    "note": "a timer armed on a cell's path - a pending one keeps the object awake"
+  },
+  {
+    "name": "AUDITR4-1-an-interval",
+    "file": "server/src/index.js",
+    "old": "this._downT = setTimeout(() => { this._downT = null; this._downFlush(); }, HUB_BATCH_MS); }",
+    "new": "this._downT = setInterval(() => { this._downT = null; this._downFlush(); }, HUB_BATCH_MS); }",
+    "tests": [
+      "test/net/auditr4_relaybill.test.js"
+    ],
+    "note": "an interval, which never lets its object sleep"
+  },
+  {
+    "name": "AUDITR4-1-staff-timer-added",
+    "file": "server/src/staffFeeds.js",
+    "old": "  if (!R.timer) R.timer = setTimeout(",
+    "new": "  setTimeout(() => {}, 1);\n  if (!R.timer) R.timer = setTimeout(",
+    "tests": [
+      "test/net/auditr4_relaybill.test.js"
+    ],
+    "note": "a timer added in a file of the relay beside index.js"
+  },
+  {
+    "name": "AUDITR4-2-read-every-ask",
+    "file": "server/src/index.js",
+    "old": "    return (this._grantGateRead ??= (async () => {",
+    "new": "    return (this._grantGateRead = (async () => {",
+    "tests": [
+      "test/net/auditr4_relaybill.test.js"
+    ],
+    "note": "the kept gate read again at every ask, not once an instance life"
+  },
+  {
+    "name": "AUDITR4-2-tally-writes",
+    "file": "server/src/index.js",
+    "old": "    if (ask.k === 'tally') return this._grantTally(a, ask, G, now);",
+    "new": "    if (ask.k === 'tally') { this._grantTally(a, ask, G, now); return this._grantGateKeep(G, now); }",
+    "tests": [
+      "test/net/auditr4_relaybill.test.js"
+    ],
+    "note": "a tally - the measure's sample alone - writes the gate's row"
+  },
+  {
+    "name": "AUDITR4-2-two-rows-an-ask",
+    "file": "server/src/index.js",
+    "old": "      if (kept) { await this.state.storage.put(GRANT_GATE_KEY, kept); G.kept = true; }",
+    "new": "      if (kept) { await this.state.storage.put(GRANT_GATE_KEY, kept); await this.state.storage.put(GRANT_GATE_KEY, kept); G.kept = true; }",
+    "tests": [
+      "test/net/auditr4_relaybill.test.js"
+    ],
+    "note": "the gate written twice an ask - the row budget doubled"
+  }
+]

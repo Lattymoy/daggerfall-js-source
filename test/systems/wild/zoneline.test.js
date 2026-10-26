@@ -191,26 +191,31 @@ function smallTrace() {
   return { w, h, land, province };
 }
 
-test('ZONE-LINE THE PROVINCE\'S INK IS THE ZONE\'S LINE: on a picture, Cyrodiil\'s coast and borders are the zone\'s outline - no smoothed copy of them beside it, the lake inside drawn as before, and a neighbour\'s coast and border ending on the outline\'s own corner (mutants: the ink keeps Cyrodiil\'s border; the coast left whole; a half-side on the outline drawn again; a neighbour\'s coast stopped short)', () => {
+// PIN MOVED (SMOOTH-LAND, test/world/smoothland.test.js): the outline is the land's smooth law's line where the zone's
+// pixels meet the rest (no longer the picture's pixel sides), the province's ink the same law's pieces with the outline's
+// left to it - so a neighbour's coast and border end where the law's three labels meet, by the picture's corner (6, 6)
+test('ZONE-LINE THE PROVINCE\'S INK IS THE ZONE\'S LINE: on a picture, Cyrodiil\'s coast and borders are the zone\'s outline - no smoothed copy of them beside it, the lake inside drawn as before, and a neighbour\'s coast and border ending on the outline where the law\'s three labels meet (mutants: the ink keeps Cyrodiil\'s border; the ink keeps its coast; a neighbour\'s coast stopped short)', () => {
   const trace = smallTrace();
-  setTamrielFit({ ox: 0, oy: 0, ppu: 16 });
+  setTamrielFit({ ox: -2000, oy: 0, ppu: 16 });   // the picture east of the Bay (the zone is the world's pixels, the Bay none of it)
+  setTamrielTrace(trace);
   const line = zoneLineOf(trace);
   const ink = tracedChains(trace);
   const P = (x, y) => { const [bx, by] = pictureToBay(x, y); return { x: bx, y: by }; };
   // the outline: Cyrodiil and its lake, against the sea and Elsweyr - one closed chain, its runs the ink's own
   assert.equal(line.chains.length, 1, 'one outline round the province and its lake');
+  const outline = line.chains[0];
+  assert.deepEqual(outline[0], outline.at(-1), 'closed');
   for (const run of line.coast) assert.ok(ink.coast.includes(run), 'the outline\'s coast in the ink\'s coast');
   for (const run of line.borders) assert.ok(ink.borders.includes(run), 'the outline\'s border in the ink\'s borders');
   assert.ok(line.coast.length >= 1 && line.borders.length >= 1);
-  const outline = line.chains[0];
   const fromOutline = (p) => Math.min(...outline.slice(1).map((b, i) => {
     const a = outline[i], dx = b.x - a.x, dy = b.y - a.y, l2 = dx * dx + dy * dy;
-    const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / l2));
+    const t = l2 > 0 ? Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / l2)) : 0;
     return Math.hypot(a.x + dx * t - p.x, a.y + dy * t - p.y);
   }));
   const onOutline = (p) => fromOutline(p) < 1e-6;
   // no other ink runs along the outline: a picture pixel (16) from its own ends, a line of the rest keeps off it - an
-  // eighth of a picture pixel at the least (a copy of Cyrodiil's own line, smoothed, runs within a quarter of a map pixel)
+  // eighth of a picture pixel at the least (a copy of Cyrodiil's own line runs on it)
   const others = [...ink.coast, ...ink.borders].filter((c) => !line.coast.includes(c) && !line.borders.includes(c));
   for (const c of others) {
     const ends = [c[0], c[c.length - 1]];
@@ -221,15 +226,16 @@ test('ZONE-LINE THE PROVINCE\'S INK IS THE ZONE\'S LINE: on a picture, Cyrodiil\
       }
     }
   }
-  // the lake inside Cyrodiil: its shore drawn, all of it inside the outline's box and off the outline
+  // the lake inside Cyrodiil: its shore drawn, closed, all of it inside the outline's box and off the outline
   const lake = others.filter((c) => c.every((p) => p.x > P(2, 2).x - 8 && p.x < P(4, 4).x + 8 && p.y > P(2, 2).y - 8 && p.y < P(4, 4).y + 8));
-  assert.ok(lake.length >= 1, 'the lake\'s shore drawn');
-  // Elsweyr's coast and border end on the outline's own corners: the coast at the corner where Cyrodiil's south coast
-  // meets Elsweyr (picture (6, 6)), every end of the rest that touches the outline exactly on it
+  assert.equal(lake.length, 1, 'the lake\'s shore drawn');
+  assert.deepEqual(lake[0][0], lake[0].at(-1));
+  // Elsweyr's coast and border end on the outline: the coast where Cyrodiil's south coast meets Elsweyr (by the picture's
+  // corner (6, 6), within a picture pixel), every end of the rest that comes within a picture pixel of the outline on it
   const ends = others.flatMap((c) => [c[0], c[c.length - 1]]);
   const corner = P(6, 6);
-  assert.ok(ends.some((p) => Math.hypot(p.x - corner.x, p.y - corner.y) < 1e-6), 'Elsweyr\'s coast ends on the outline\'s corner');
-  for (const p of ends) if (outline.some((q) => Math.hypot(q.x - p.x, q.y - p.y) < 16)) assert.ok(onOutline(p), `an end beside the outline at ${p.x},${p.y} not on it`);
+  assert.ok(ends.some((p) => Math.hypot(p.x - corner.x, p.y - corner.y) < 16 && onOutline(p)), 'Elsweyr\'s coast ends on the outline by the corner');
+  for (const p of ends) if (fromOutline(p) < 16) assert.ok(onOutline(p), `an end beside the outline at ${p.x},${p.y} not on it`);
 });
 
 test('ZONE-LINE ON THE PLAYER\'S OWN PICTURE: every pixel of Cyrodiil\'s box the province\'s own law with what it encloses (0 apart); the cells as they stood; the red line, the fog\'s cut, the zone map\'s edge and the province\'s own ink one line, and a pixel the zone\'s exactly when its middle lies inside it; the giants inside it to the pixel, a day\'s leg walked whole (mutants: the giant\'s pixel unasked on its walk; unasked at its leash; the zone\'s cells again; the line untraced; the line\'s fill unasked; the red line smoothed again; the zone map\'s edge its own; the fog\'s line its own; the drawn edge the mask\'s alone)', { skip: realSkip }, async () => {

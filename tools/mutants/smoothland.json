@@ -1,0 +1,408 @@
+[
+  {
+    "name": "SMOOTH-LAND-the-reach-shorter",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "export const SMOOTH_LAND = Object.freeze({ reach: 2, clamp: 1, passes: 3 });",
+    "new": "export const SMOOTH_LAND = Object.freeze({ reach: 1, clamp: 1, passes: 3 });",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-the-clamp-nearer",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "export const SMOOTH_LAND = Object.freeze({ reach: 2, clamp: 1, passes: 3 });",
+    "new": "export const SMOOTH_LAND = Object.freeze({ reach: 2, clamp: 0.75, passes: 3 });",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-a-pass-fewer",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "export const SMOOTH_LAND = Object.freeze({ reach: 2, clamp: 1, passes: 3 });",
+    "new": "export const SMOOTH_LAND = Object.freeze({ reach: 2, clamp: 1, passes: 2 });",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-a-run-across-its-square",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "case 3: case 12: seg(Lf, R); break;",
+    "new": "case 3: case 12: seg(T, B); break;",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-a-saddle-joined",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "case 10: seg(T, Lf); seg(B, R); break;",
+    "new": "case 10: seg(T, R); seg(Lf, B); break;",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ],
+    "equivalent": true,
+    "why": "the saddle hold (its two off-mask centres at the clamp) decides the strait, and each of the saddle's two land centres stands as far from its pixel's other cut corners as from the pair the contour joins - so which way the contour pairs its two segments there moves no centre's distance on the fixtures; the marching case is kept as the contour's own rule"
+  },
+  {
+    "name": "SMOOTH-LAND-the-other-saddle-joined",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "case 5: seg(T, R); seg(Lf, B); break;",
+    "new": "case 5: seg(T, Lf); seg(B, R); break;",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ],
+    "equivalent": true,
+    "why": "as SMOOTH-LAND-a-saddle-joined, on the other diagonal"
+  },
+  {
+    "name": "SMOOTH-LAND-chaikins-cut-a-third",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "out.push(ax + (bx - ax) * 0.25, ay + (by - ay) * 0.25, ax + (bx - ax) * 0.75, ay + (by - ay) * 0.75);",
+    "new": "out.push(ax + (bx - ax) * 0.3, ay + (by - ay) * 0.3, ax + (bx - ax) * 0.7, ay + (by - ay) * 0.7);",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-the-near-centres-short",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "qy <= Math.min(H - 1, y + 1 + R); qy++)",
+    "new": "qy <= Math.min(H - 1, y + R); qy++)",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ],
+    "equivalent": true,
+    "why": "a centre more than a row past a mixed square stands a pixel and a half and more from any outline in it, past the clamp - the near mask's last row is the bound's margin, never a distance"
+  },
+  {
+    "name": "SMOOTH-LAND-the-saddle-unheld",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "        if (a !== c || b !== d || a === b) continue;",
+    "new": "        continue;",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-the-cubic-lobe-lost",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "w[3] = (t3 - t2) / 2;",
+    "new": "w[3] = 0;",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-the-waterline-the-lands",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "if (!(cubic(L.S, W, ix, iy, fx, fy) > 0)) return 0;",
+    "new": "if (!(cubic(L.S, W, ix, iy, fx, fy) >= 0)) return 0;",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-the-tie-the-higher-ids",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "if (v > bv || (v === bv && id < best)) { bv = v; best = id; }",
+    "new": "if (v > bv || (v === bv && id > best)) { bv = v; best = id; }",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-the-leads-tie-the-higher-ids",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "return vp > vq || (vp === vq && p < q);",
+    "new": "return vp > vq || (vp === vq && p > q);",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-one-province-the-wrong-one",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "if (one > 0) return one;",
+    "new": "if (one > 0) return 9;",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-a-square-of-one-land-the-sea",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "if (u !== MIXED) return u !== 0;",
+    "new": "if (u !== MIXED) return u === 0;",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-off-the-picture-the-land",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "if (!(px >= 0 && py >= 0 && px < L.w && py < L.h)) return -SMOOTH_LAND.clamp;",
+    "new": "if (!(px >= 0 && py >= 0 && px < L.w && py < L.h)) return SMOOTH_LAND.clamp;",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-the-unnamed-land-the-sea",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "? province[i] : NO_PROVINCE;",
+    "new": "? province[i] : 0;",
+    "tests": [
+      "test/world/worldWide/ww7_cross.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-the-sea-a-province",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "return PROVINCE_OF_ID[/** @type {1} */ (l)] ?? null;",
+    "new": "return PROVINCE_OF_ID[/** @type {1} */ (l)] ?? 'HighRock';",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-the-seas-own-distance-the-lands",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "T[0] = S.map((v) => -v);",
+    "new": "T[0] = S;",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-LINES-fewer-halvings",
+    "file": "src/world/tamriel/tamrielLines.js",
+    "old": "export const LINE_BISECT = 10;",
+    "new": "export const LINE_BISECT = 6;",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-LINES-the-coasts-ask-turned",
+    "file": "src/world/tamriel/tamrielLines.js",
+    "old": "const same = coast ? landSideAt(L, x, y) === landFirst : provinceLeadAt(L, x, y, p, q);",
+    "new": "const same = coast ? landSideAt(L, x, y) !== landFirst : provinceLeadAt(L, x, y, p, q);",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-LINES-the-borders-ask-turned",
+    "file": "src/world/tamriel/tamrielLines.js",
+    "old": "const same = coast ? landSideAt(L, x, y) === landFirst : provinceLeadAt(L, x, y, p, q);",
+    "new": "const same = coast ? landSideAt(L, x, y) === landFirst : provinceLeadAt(L, x, y, q, p);",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-LINES-the-meeting-off-the-coast",
+    "file": "src/world/tamriel/tamrielLines.js",
+    "old": "      if (l1 !== l2) return onChord(coast[0].id, coast[1].id, l1, l2);",
+    "new": "",
+    "tests": [
+      "test/ui/tamriel4.test.js",
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-LINES-the-diagonals-pass-never",
+    "file": "src/world/tamriel/tamrielLines.js",
+    "old": "    if (twice >= 0 && m === twice) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-LINES-the-diagonals-meeting-never",
+    "file": "src/world/tamriel/tamrielLines.js",
+    "old": "    } else if (twice >= 0) {",
+    "new": "    } else if (false) {",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-LINES-the-line-between-the-meetings-lost",
+    "file": "src/world/tamriel/tamrielLines.js",
+    "old": "      piece(mid, second, { p: y, q: z, side: a === c ? [bx + 1, by, bx, by + 1] : [bx, by, bx + 1, by + 1] });",
+    "new": "",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-LINES-a-saddle-joined-the-other-way",
+    "file": "src/world/tamriel/tamrielLines.js",
+    "old": "    } else if (m === a) {",
+    "new": "    } else if (m !== a) {",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-LINES-the-walk-a-row-short",
+    "file": "src/world/tamriel/tamrielLines.js",
+    "old": "by0 = Math.floor(y0) - 1, by1 = Math.ceil(y1), n = bx1 - bx0 + 2;",
+    "new": "by0 = Math.floor(y0), by1 = Math.ceil(y1) - 1, n = bx1 - bx0 + 2;",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ],
+    "equivalent": true,
+    "why": "a map square across a mixed picture square's top edge whose upper centre lies in a square of one label holds a line only where one runs within half a map pixel of that edge; none does on the fixtures or the freeware's picture (51,582 squares either way) - the row is the walk's margin for it"
+  },
+  {
+    "name": "SMOOTH-LAND-LINES-a-run-through-a-meeting",
+    "file": "src/world/tamriel/tamrielLines.js",
+    "old": "cur = list.length === 2 ? (list[0] === cur ? list[1] : list[0]) : -1;",
+    "new": "cur = list.length >= 2 ? (list[0] === cur ? list[1] : list[0]) : -1;",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-LINES-a-border-a-coast",
+    "file": "src/world/tamriel/tamrielLines.js",
+    "old": "(p === 0 || q === 0 ? 'coast' : 'border')",
+    "new": "(p === 0 || q === 0 ? 'coast' : 'coast')",
+    "tests": [
+      "test/world/tamriel3.test.js",
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-LINES-the-label-the-pictures-pixel",
+    "file": "src/world/tamriel/tamrielLines.js",
+    "old": "if (v === 255) t.lab[i] = v = landLabelAt(L, picX(bx + 0.5), picY(by + 0.5));",
+    "new": "if (v === 255) t.lab[i] = v = landLabelAt(L, Math.floor(picX(bx + 0.5)) + 0.5, Math.floor(picY(by + 0.5)) + 0.5);",
+    "tests": [
+      "test/ui/mapwaters.test.js",
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-ZONE-a-piece-the-zone-does-not-change-across",
+    "file": "src/systems/wild/cyrodiilZone.js",
+    "old": "      if (i0 === inside(qx, qy)) continue;",
+    "new": "      if (i0 === inside(qx, qy) && false) continue;",
+    "tests": [
+      "test/systems/wild/zoneline.test.js",
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-ZONE-the-kind-past-the-zone-misread",
+    "file": "src/systems/wild/cyrodiilZone.js",
+    "old": "      const past = i0 ? lines.label(qx, qy) : lines.label(x, y);",
+    "new": "      const past = i0 ? lines.label(x, y) : lines.label(qx, qy);",
+    "tests": [
+      "test/systems/wild/zoneline.test.js",
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-INK-thinned-past-the-law",
+    "file": "src/ui/tamrielInk.js",
+    "old": "export const INK_THIN = 0.25;",
+    "new": "export const INK_THIN = 2;",
+    "tests": [
+      "test/world/smoothland.test.js",
+      "test/world/tamriel3.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-INK-the-zones-pieces-drawn-again",
+    "file": "src/ui/tamrielInk.js",
+    "old": "linkPieces(segs.filter((s) => s.kind === kind && !zone?.keys.has(segKey(s))), lines.points)",
+    "new": "linkPieces(segs.filter((s) => s.kind === kind), lines.points)",
+    "tests": [
+      "test/systems/wild/zoneline.test.js",
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-PLACES-the-pictures-sea",
+    "file": "src/world/arenaPlaces.js",
+    "old": "  return landLabelAt(landLaw(trace), px, py) === 0;",
+    "new": "  const ix = Math.floor(px), iy = Math.floor(py);\n  return !(ix >= 0 && iy >= 0 && ix < trace.w && iy < trace.h && trace.land[iy * trace.w + ix]);",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-PLACES-a-place-on-another-provinces-land",
+    "file": "src/world/arenaPlaces.js",
+    "old": "=== key; };",
+    "new": "!== null; };",
+    "tests": [
+      "test/tesa2_arena.test.js",
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-LANES-the-cells-sea-off-its-centre",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "landLabelAt(L, x + 0.5, y + 0.5) === 0 && !lakes[y * w + x]",
+    "new": "landLabelAt(L, x + 0.1, y + 0.5) === 0 && !lakes[y * w + x]",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-LANES-the-mooring-refused",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "  for (const [, x, y] of near) if (holds(at, native([x + 0.5, y + 0.5]))) return [x, y];",
+    "new": "",
+    "tests": [
+      "test/world/smoothland.test.js",
+      "test/scenes/audittesa2p_hosts.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-LANES-the-moorings-leg-unasked",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "  for (const [, x, y] of near) if (holds(at, native([x + 0.5, y + 0.5]))) return [x, y];",
+    "new": "  for (const [, x, y] of near) return [x, y];",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-LANES-the-nearest-not-first",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "  near.sort((a, b) => a[0] - b[0]);",
+    "new": "  near.sort((a, b) => b[0] - a[0]);",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-LANES-the-reach-none",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "export const MOOR_REACH = 2;",
+    "new": "export const MOOR_REACH = 1;",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "SMOOTH-LAND-LANES-a-moored-cells-centre-dropped",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "[...(ownA ? [] : [cells[0]]), ...cells.slice(1, -1)",
+    "new": "[...cells.slice(1, -1)",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ],
+    "equivalent": true,
+    "why": "the straightening runs from the roadstead past the cell it moors off wherever the picture's sea and the lane water hold the line, as on every lane of the fixtures and the freeware's; the cell's centre stands in the chain for the leg the lane water refuses"
+  }
+]

@@ -205,9 +205,9 @@ test('TAMRIEL4 ink on the trace: the coast stays within half a picture pixel of 
   assert.ok(!ch.coast.flat().some((p) => { const [px, py] = toPic(p); return Math.abs(px - 40) < 1e-6 && Math.abs(py - 30) < 1e-6; }), 'the corner is drawn round, not square');
   const round = ch.coast.flat().filter((p) => { const [px, py] = toPic(p); return Math.hypot(px - 40.5, py - 30.5) < 1.2; }).length;
   assert.ok(round >= 4, `${round} points round the corner: a curve, not the contour's one 45-degree cut`);
-  const toLine = (ex, ey) => {
+  const toLine = (ex, ey, chains = ch.coast) => {
     let d = Infinity;
-    for (const c of ch.coast) for (let i = 0; i + 1 < c.length; i++) {
+    for (const c of chains) for (let i = 0; i + 1 < c.length; i++) {
       const [ax, ay] = toPic(c[i]), [bx, by] = toPic(c[i + 1]), dx = bx - ax, dy = by - ay, l2 = dx * dx + dy * dy;
       const t = l2 > 0 ? Math.max(0, Math.min(1, ((ex - ax) * dx + (ey - ay) * dy) / l2)) : 0;
       d = Math.min(d, Math.hypot(ax + dx * t - ex, ay + dy * t - ey));
@@ -218,7 +218,9 @@ test('TAMRIEL4 ink on the trace: the coast stays within half a picture pixel of 
     for (const end of [b[0], b[b.length - 1]]) {
       const [ex, ey] = toPic(end);
       const atCoast = toLine(ex, ey);
-      const atJunction = ch.borders.some((o) => o !== b && [o[0], o[o.length - 1]].some((q) => Math.hypot(q.x - end.x, q.y - end.y) < 1e-6));
+      // PIN MOVED (SMOOTH-LAND, test/world/smoothland.test.js): where three provinces meet off the coast (Cyrodiil's two
+      // neighbours at its corner) a border ends on the line of the border that goes on through the meeting - the zone's
+      const atJunction = ch.borders.some((o) => o !== b && ([o[0], o[o.length - 1]].some((q) => Math.hypot(q.x - end.x, q.y - end.y) < 1e-6) || toLine(ex, ey, [o]) < 1e-6));
       assert.ok(atCoast < 0.06 || atJunction, `a border's end ON the coast's line or at a meeting of borders: ${ex}, ${ey} (${atCoast})`);
     }
   }

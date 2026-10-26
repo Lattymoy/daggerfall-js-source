@@ -13,9 +13,9 @@
 // (`?tamrieltrace=off`, or the few hundred milliseconds before the trace lands) none do, and the ink draws TAMRIEL1's
 // cities as it always did.
 // ═══════════════════════════════════════════════════════════════════
-import { tamrielTrace, tamrielLandVersion } from './tamriel/tamrielLand.js';
+import { tamrielTrace, tamrielLandVersion, landLaw, landLabelAt, PROVINCE_OF_ID } from './tamriel/tamrielLand.js';   // SMOOTH-LAND: the land's one law
 import { pictureToBay, bayToPicture, inBay, tamrielFit } from './tamriel/tamrielFrame.js';
-import { makeTamrielPlaces, provinceLand } from './tamrielPlaces.js';   // TESA12: the port's own places
+import { makeTamrielPlaces } from './tamrielPlaces.js';   // TESA12: the port's own places
 import { capitalPin, capitalOnPixel } from './tamrielCapitals.js';   // TESA10: a capital's place stands on the capital; TESA11: and no other on any of its pixels
 import { plateauDry } from './spawnedDungeons.js';   // AUDIT TESA II P8: a port's plateau above the beach
 import { groundWoods, bayEdgeDistance, SEAM_PX, BLEND_PX } from './tamriel/tamrielGround.js';
@@ -36,12 +36,16 @@ export const SHORE_DRY_REACH = 12;
 export const SHORE_REACH = 100;
 const RING8 = Object.freeze([[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]);
 /** TESA6: is a Bay pixel the picture's sea - its centre off the trace's land, or off the picture (the ground's own law
- *  past the Bay, world/tamriel/tamrielGround.js: the trace's sea is water). */
+ *  past the Bay, world/tamriel/tamrielGround.js: the trace's sea is water). SMOOTH-LAND: the land's smooth law's
+ *  (world/tamriel/tamrielLand.js landLabelAt) - the ground's, the maps' and the zone's one. */
 export function pictureSea(trace, x, y) {
   const [px, py] = bayToPicture(x + 0.5, y + 0.5);
-  const ix = Math.floor(px), iy = Math.floor(py);
-  return !(ix >= 0 && iy >= 0 && ix < trace.w && iy < trace.h && trace.land[iy * trace.w + ix]);
+  return landLabelAt(landLaw(trace), px, py) === 0;
 }
+/** SMOOTH-LAND: a province's land under the smooth law, a predicate over picture points - where a place STANDS (a Bay
+ *  pixel's centre on it); its point on the picture is the model's (world/tamrielPlaces.js provinceLand, the picture's
+ *  pixels - so a city's snap and every made place's draw stand as they stood). */
+const lawLand = (trace, key) => { const L = landLaw(trace); return (/** @type {number} */ x, /** @type {number} */ y) => PROVINCE_OF_ID[/** @type {1} */ (landLabelAt(L, x, y))] === key; };
 /** AUDIT TESA II P12: THE PICTURE'S LAKES - its water no way of water joins to its border (the open sea: the picture's
  *  edge is the sea's, pictureSea's own reading), eight ways round as the Bay's open sea is flooded (world/portSites.js
  *  openSeaOf): Lake Rumare's ring and the lakes beside it, kept a trace. A mask over the picture's pixels, 1 a lake's.
@@ -176,7 +180,7 @@ export function standArenaPixels(model, trace, pinned = null, reserved = null, d
     const [x, y] = pictureToBay(p.px, p.py);
     if (inBay(x, y)) continue;
     let own = lands.get(p.province);
-    if (!own) lands.set(p.province, own = provinceLand(trace, p.province));
+    if (!own) lands.set(p.province, own = lawLand(trace, p.province));   // SMOOTH-LAND: a pixel's centre on its province's land by the one law
     const free = (bx, by) => !inBay(bx, by) && !byPixel.has(`${bx},${by}`) && !reserved?.(bx, by) && own(...bayToPicture(bx + 0.5, by + 0.5));   // TESA11: never on a capital's pixel
     const port = !!p.port;
     let shores = port ? lands.get(`${p.province}:shore`) : null;

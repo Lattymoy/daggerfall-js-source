@@ -120,62 +120,47 @@
   {
     "name": "ZONELINE-the-line-untraced",
     "file": "src/systems/wild/cyrodiilZone.js",
-    "old": "  _mask.line = trace ? zoneLineOf(trace) : null;",
-    "new": "  _mask.line = null;",
+    "old": "get: () => (trace ? zoneLineOf(trace, own) : null)",
+    "new": "get: () => null",
     "tests": [
       "test/systems/wild/zoneline.test.js"
     ]
   },
-  {
-    "name": "ZONELINE-the-lines-fill-unasked",
-    "file": "src/systems/wild/cyrodiilZone.js",
-    "old": "  fillEnclosed(owned, w, h);",
-    "new": "",
-    "tests": [
-      "test/systems/wild/zoneline.test.js"
-    ]
-  },
+  
   {
     "name": "ZONELINE-the-ink-keeps-cyrodiils-border",
-    "file": "src/systems/wild/cyrodiilZone.js",
-    "old": "    keeps: (ax, ay, bx, by) => own(ax, ay) === own(bx, by),",
-    "new": "    keeps: () => true,",
+    "file": "src/ui/tamrielInk.js",
+    "old": "s.kind === kind && !zone?.keys.has(segKey(s))",
+    "new": "s.kind === kind && !(kind === 'coast' && zone?.keys.has(segKey(s)))",
     "tests": [
       "test/systems/wild/zoneline.test.js"
     ]
   },
   {
     "name": "ZONELINE-the-coast-left-whole",
-    "file": "src/systems/wild/cyrodiilZone.js",
-    "old": "        if (o === own(bx + 1, by) && o === own(bx + 1, by + 1) && o === own(bx, by + 1)) { out.push(s); continue; }",
-    "new": "        if (o === own(bx + 1, by) && o === own(bx + 1, by + 1) && o === own(bx, by + 1) || s) { out.push(s); continue; }",
+    "file": "src/ui/tamrielInk.js",
+    "old": "s.kind === kind && !zone?.keys.has(segKey(s))",
+    "new": "s.kind === kind && !(kind === 'border' && zone?.keys.has(segKey(s)))",
     "tests": [
       "test/systems/wild/zoneline.test.js"
     ]
   },
-  {
-    "name": "ZONELINE-a-half-side-on-the-outline-drawn-again",
-    "file": "src/systems/wild/cyrodiilZone.js",
-    "old": "if (isLand(ax, ay) !== isLand(qx, qy) && own(ax, ay) === own(qx, qy)) out.push([ex, ey, cx, cy]);",
-    "new": "if (isLand(ax, ay) !== isLand(qx, qy)) out.push([ex, ey, cx, cy]);",
-    "tests": [
-      "test/systems/wild/zoneline.test.js"
-    ]
-  },
+  
   {
     "name": "ZONELINE-a-neighbours-coast-stopped-short",
-    "file": "src/systems/wild/cyrodiilZone.js",
-    "old": "if (isLand(ax, ay) !== isLand(qx, qy) && own(ax, ay) === own(qx, qy)) out.push([ex, ey, cx, cy]);",
-    "new": "if (isLand(ax, ay) !== isLand(qx, qy) && own(ax, ay) === own(qx, qy) && !out) out.push([ex, ey, cx, cy]);",
+    "file": "src/world/tamriel/tamrielLines.js",
+    "old": "      for (const e of E) piece(e.id, mid, e);",
+    "new": "      for (const e of E) if (e.p && e.q) piece(e.id, mid, e);",
     "tests": [
-      "test/systems/wild/zoneline.test.js"
+      "test/systems/wild/zoneline.test.js",
+      "test/world/smoothland.test.js"
     ]
   },
   {
     "name": "ZONELINE-the-outlines-coast-none",
     "file": "src/systems/wild/cyrodiilZone.js",
-    "old": "    coast: edges((x, y) => !isLand(x, y)),",
-    "new": "    coast: edges(() => false),",
+    "old": "    coast: linkPieces(segs.filter((s) => s.kind === 'coast'), lines.points),",
+    "new": "    coast: [],",
     "tests": [
       "test/systems/wild/zoneline.test.js"
     ]
@@ -228,8 +213,8 @@
   {
     "name": "ZONELINE-the-inks-coast-uncut",
     "file": "src/ui/tamrielInk.js",
-    "old": "  const coastPic = linkSegments(zone.cutCoast(contourSegments((x, y) => land[y * w + x] === 1, w, h))).map(",
-    "new": "  const coastPic = linkSegments((contourSegments((x, y) => land[y * w + x] === 1, w, h))).map(",
+    "old": "const lines = lawLines(trace), zone = zoneLineOf(trace);",
+    "new": "const lines = lawLines(trace), zone = null;",
     "tests": [
       "test/systems/wild/zoneline.test.js"
     ]
@@ -237,8 +222,8 @@
   {
     "name": "ZONELINE-the-inks-coast-without-the-outlines",
     "file": "src/ui/tamrielInk.js",
-    "old": "  return { coast: coast.concat(zone.coast), borders: borders.concat(zone.borders), labels };",
-    "new": "  return { coast, borders: borders.concat(zone.borders), labels };",
+    "old": "coast: zone ? coast.concat(zone.coast) : coast,",
+    "new": "coast,",
     "tests": [
       "test/systems/wild/zoneline.test.js"
     ]
@@ -246,8 +231,8 @@
   {
     "name": "ZONELINE-the-inks-borders-without-the-outlines",
     "file": "src/ui/tamrielInk.js",
-    "old": "  return { coast: coast.concat(zone.coast), borders: borders.concat(zone.borders), labels };",
-    "new": "  return { coast: coast.concat(zone.coast), borders, labels };",
+    "old": "borders: zone ? borders.concat(zone.borders) : borders,",
+    "new": "borders,",
     "tests": [
       "test/systems/wild/zoneline.test.js"
     ]

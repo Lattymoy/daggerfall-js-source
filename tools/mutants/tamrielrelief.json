@@ -23,7 +23,7 @@
   {
     "name": "TAMRIEL-RELIEF-the-coast-not-eased",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "    const ease = Math.min(1, Math.max(0, coastDistanceAt(px, py) - 0.5) / RELIEF_COAST_REACH);",
+    "old": "    const ease = Math.min(1, Math.max(0, /** @type {number} */ (coastDepthAt(px, py))) / RELIEF_COAST_REACH);",
     "new": "    const ease = 1;",
     "tests": ["test/world/tamrielrelief.test.js"]
   },
