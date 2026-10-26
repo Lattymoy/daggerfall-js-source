@@ -541,7 +541,7 @@ function spawn(raid, kind, mobileType, o = undefined, pack = null) {
   const boss = kind === 'boss';   // STAFF-EVENT: a staff event's mini boss - one raider, promoted
   Promise.resolve(promise).then((foe) => {
     if (_pending === p) _pending = null;
-    if (!foe) { if (boss) raid.bossFc = -1; if (pack && !pack.at) { pack.left++; pack.far = false; } return; }   // STAFF-EVENT: no spot - the call is answered again; a pack's leader tried again, nearer
+    if (!foe) { if (boss) raid.bossFc = -1; if (pack && !pack.at) { pack.left++; pack.far = false; pack.fails = (pack.fails ?? 0) + 1; } return; }   // STAFF-EVENT: no spot - the call is answered again; a pack's leader tried again, nearer
     if (pack && !pack.at && Array.isArray(foe.ai?.feet)) pack.at = [...foe.ai.feet];   // STAFF-EVENT PACKS: its pack stands around it
     if (p.cancelled && kind !== 'defender') { h.removeFoe?.(foe); if (boss) raid.bossFc = -1; return; }
     if (boss) { promoteStaffBoss(foe.entity, { sizePct: raid.staff.bs, healthX: raid.staff.bh, hp: raid.staff.hp }); raid.bossUp = 1; raid.bossDown = 0; }
@@ -1167,6 +1167,10 @@ export const staffPackGapS = (paceS, size) => paceS * size / (MAX_RAID_ENEMIES -
 const packWaitS = (paceS, size) => Math.max(STAFF_PACK_STEP_S, staffPackGapS(paceS, size) - STAFF_PACK_STEP_S * (size - 1));
 /** The event's pace, rolled once: a last pack of STAFF_PACK_MAX stands the cap at its least, of one at its most. @param {() => number} roll */
 export const staffPackPaceS = (roll) => rangeFloat(STAFF_PACK_FILL_MIN_S * (MAX_RAID_ENEMIES - 1) / (MAX_RAID_ENEMIES - STAFF_PACK_MAX), STAFF_PACK_FILL_MAX_S, roll);
+/** PACK-STALL (mob 2026-10-26: "town was not spawning enemy on every player"): a pack whose leader found no spot this
+ *  many times about its player goes to the next player in turn. It was tried about the same player for ever, and while
+ *  it tried, no pack stood anywhere - for anyone. */
+export const STAFF_PACK_LEADER_TRIES = 3;
 /** The pack standing now: `{ key, left, size, at, far }` - its raid, how many more, how many in all, its leader's feet, whether its leader is sought far. */
 let _pack = null;
 /** One step of a staff event's packs (section I's, the clock run out). @param {any} raid @param {number} standing */
@@ -1178,6 +1182,7 @@ function staffPackStep(raid, standing) {
   raid.fillS ??= staffPackPaceS(rnd());   // the event's pace, once
   if (!_pack) { const size = rangeInt(STAFF_PACK_MIN, STAFF_PACK_MAX + 1, rnd()); _pack = { key, left: size, size, at: null, far: true, near: staffPackPlayer() }; }
   const pack = _pack;
+  if (!pack.at && (pack.fails ?? 0) >= STAFF_PACK_LEADER_TRIES) { pack.near = staffPackPlayer(); pack.far = true; pack.fails = 0; }   // PACK-STALL: the next player's turn
   pack.left--;
   const o = pack.at ? { at: pack.at, min: 1.5, max: STAFF_PACK_NEAR, los: false }
     : pack.far ? { min: STAFF_PACK_FAR_MIN, max: STAFF_PACK_FAR_MAX, los: false, near: pack.near } : { min: RAID_SPAWN_MIN_DISTANCE, max: RAID_SPAWN_MAX_DISTANCE, los: false, near: pack.near };

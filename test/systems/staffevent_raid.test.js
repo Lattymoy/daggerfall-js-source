@@ -489,3 +489,23 @@ test('PACK-EVERY (mob 2026-10-26: "make sure we spawn a pack on every player in 
   assert.ok(w.includes('...(peersNear() ?? []).filter((p) => _peerInEventPlace(p.feet)).map('), 'the event\'s players by its place');
   assert.match(w, /const _peerInEventPlace = \(feet\) => \{\n\s*if \(_musicLoc\) return _foeInTownRect\(\{ ai: \{ feet \} \}\);\n\s*if \(!feet\) return false;\n\s*const wc = state\.worldCoords\(feet\), at = worldCoordToMapPixel\(wc\.x, wc\.z\), me = playerTravelPixel\(\);\n\s*return at\.x === me\.x && at\.y === me\.y;/);
 });
+
+test('PACK-STALL (mob 2026-10-26: "town was not spawning enemy on every player"): a leader with no spot about one player goes to the next after STAFF_PACK_LEADER_TRIES - the packs never stall on one', async () => {
+  const { STAFF_PACK_LEADER_TRIES } = await import('../../src/systems/raidingParties.js');
+  assert.equal(STAFF_PACK_LEADER_TRIES, 3);
+  const { at, log, h } = rig();
+  restoreRaidSaveData({ lastSelectedDay: DAY, raids: [] });
+  setSharedClock(() => at.now);
+  const stuck = [500, 0, 500], ok = [-80, 0, 40];
+  h.peerFeetInTown = () => [['aaa-0001', stuck], ['zzz-0009', ok]];
+  const stand = h.standRaider;
+  let refused = 0;
+  h.standRaider = (mt, o) => (o?.near === stuck && !o?.at ? (refused++, Promise.resolve(null)) : stand(mt, o));
+  raidRelayWord({ k: 'sev', sev: { k: 'ev', l: [{ ...EV, n: 100 }] } }, 'social');
+  let secs = 0;
+  while (log.raiders.length < MAX_RAID_ENEMIES && secs < 200) { frame(0.05); await tick(); secs += 0.05; }
+  assert.equal(log.raiders.length, MAX_RAID_ENEMIES, 'the cap stood although one player has no spot about them');
+  assert.ok(refused >= STAFF_PACK_LEADER_TRIES, 'the stuck player was tried');
+  const leaders = log.raiders.filter((f) => !f.o?.at);
+  assert.ok(leaders.some((f) => f.o.near === ok) && leaders.some((f) => f.o.near == null), 'the others still had their packs');
+});
