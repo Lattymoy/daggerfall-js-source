@@ -7439,6 +7439,31 @@
   "tr": "064a190ab125",
   "by": "claude-in-session"
  },
+ "menu.intro.narration1": {
+  "en": "6cdda13c60fe",
+  "tr": "9a89e430d961",
+  "by": "claude-in-session"
+ },
+ "menu.intro.narration2": {
+  "en": "a73d722e6148",
+  "tr": "66236e45d0ed",
+  "by": "claude-in-session"
+ },
+ "menu.intro.narration3": {
+  "en": "b0db5c7d2264",
+  "tr": "4cb15244dc0c",
+  "by": "claude-in-session"
+ },
+ "menu.intro.narration4": {
+  "en": "02e54d9b7bf2",
+  "tr": "8857d414c415",
+  "by": "claude-in-session"
+ },
+ "menu.intro.narration5": {
+  "en": "bb1aec630851",
+  "tr": "5e3611f22807",
+  "by": "claude-in-session"
+ },
  "menu.intro.opening": {
   "en": "b1b8530bbd68",
   "tr": "f9b043440f93",

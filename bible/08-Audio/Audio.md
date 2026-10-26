@@ -1116,7 +1116,9 @@ Pins: `test/systems/horse/horsevoice.test.js` (13); `tools/mutants/horsevoice.js
 ## INTRO3 (2026-10-14): the main theme, written as notes - the film's and the menu's
 
 **Reverted 2026-10-25 (INTRO-REVERT, `10-UI/UI-Arc.md`).** The film and the menu play the recording again
-(`src/assets/intro/theme.mp3`). The score below is no longer heard.
+(`src/assets/intro/theme.mp3`). The score below is no longer heard. INTRO-REVERT II (2026-10-26) puts the theme's session
+back as INTRO2 left it; INTRO4 (the same day) cuts the new film to five more of the recording's downbeats, the recording
+unchanged - its 19 s beat, which the score's impact bar is tied to, is the film's crest now (`CREST_TIME`).
 
 The owner: "With the main menu music, is there anyway to recreate it using the sound system daggerfall's music uses",
 then "you do it and it's for both". The front door's theme was a recording decoded by a session of its own; it is now

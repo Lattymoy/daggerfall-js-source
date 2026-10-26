@@ -17,7 +17,7 @@ import http from 'node:http';
 import { readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { join, extname, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { CLOUD_REVEAL_TIME, TITLE_IMPACT_TIME } from '../src/ui/intro/introCue.js';
+import { CLOUD_REVEAL_TIME, CREST_TIME as TITLE_IMPACT_TIME } from '../src/ui/intro/introCue.js';   // INTRO4: the score's impact is the 19 s beat, the film's crest
 import { introThemeSong, INTRO_CHANNELS, INTRO_SECONDS_PER_TICK } from '../src/systems/introScore.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
