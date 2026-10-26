@@ -108,7 +108,7 @@ test('WB13b the chat names the marks - the card and the bar say what each does; 
   const fell = cardOf(fellPost({ day: 112, top: [], n: 0 }));
   assert.deepEqual([fell.author, fell.title, fell.fields.Where, fell.text], ['Dagon\'s Breach', 'Valkynaz Ruhn has fallen', 'In the wilds', 'The breach collapses.']);
   assert.equal(fellLine({ near: null, boss: P.boss, top: [] }), 'Valkynaz Ruhn has fallen at Dagon\'s Breach in the wilds. The breach collapses.', 'the chat says what Discord\'s card says - its title, its family, where and the collapse');
-  assert.match(read('src/scenes/world.js'), /eventNotice\('gate', fellLine\(\{ near: site\?\.day === day \? site\.near : null,/, 'a screen that never found the site: no place ("near the wilds")');
+  assert.match(read('src/scenes/world.js'), /eventNotice\('gate', \(f\.c != null \? courtFellLine : fellLine\)\(\{ \.\.\.f, near: site\?\.day === day \? site\.near : null,/, 'a screen that never found the site: no place ("near the wilds") - PIN MOVED (GATE-COURTS): a court\'s kill its own line');
 });
 
 test('WB13b nothing said on stepping into the court - the marks\' card stands at that moment, with the same subtitle as by the gate (mutants: the arrival line said again; two subtitles)', () => {

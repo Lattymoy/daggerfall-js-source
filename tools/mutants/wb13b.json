@@ -50,8 +50,8 @@
   {
     "name": "WB13b-near-the-wilds",
     "file": "src/scenes/world.js",
-    "old": "eventNotice('gate', fellLine({ near: site?.day === day ? site.near : null,",
-    "new": "eventNotice('gate', fellLine({ near: site?.day === day ? site.near : 'the wilds',",
+    "old": "eventNotice('gate', (f.c != null ? courtFellLine : fellLine)({ ...f, near: site?.day === day ? site.near : null,",
+    "new": "eventNotice('gate', (f.c != null ? courtFellLine : fellLine)({ ...f, near: site?.day === day ? site.near : 'the wilds',",
     "tests": [
       "test/net/gate/wb13b_words.test.js"
     ]
