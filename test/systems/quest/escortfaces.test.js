@@ -13,7 +13,7 @@ import {
   createFaceDetailsPerson, createFaceDetailsFoe, resolveFaceImage, layoutEscortFaces,
   initEscortFaces, addEscortFace, dropEscortFace, clearEscortFaces, escortQuestEnded,
   getEscortFacesSaveData, restoreEscortFacesSaveData, _escortFaces,
-  drawEscortFaces, escortFacesBottom, setEscortQuestAway,
+  drawEscortFaces, escortFacesBottom, setEscortQuestAway, escortStartY,
   ESCORT_MAX_FACES, CHILDREN_FACTION_ID,
 } from '../../../src/ui/hud/hudEscortFaces.js';
 import { QuestMachine } from '../../../src/systems/quest/machine.js';
@@ -207,6 +207,56 @@ test('QUEST-SHELF-FACES: a quest set aside (Abandon) draws no escort face and th
   assert.equal(escortFacesBottom(), 0);
   setEscortQuestAway(null);
   clearEscortFaces();
+});
+
+// ── ESCORT-TOUCH-ROW: the column starts below the touch layer's top row ─
+
+test('ESCORT-TOUCH-ROW: on a touch screen the first face starts below the touch layer\'s top row (the dial and the menu, 16 to 64 CSS px) - on a phone upright and on its side; the iPad\'s scale-3 column and a screen with no touch row keep DFU\'s startY 36; a press at the screen\'s foot or beside the column moves nothing; the status widget reads the moved bottom (mutants: the row unmeasured, the air dropped)', async () => {
+  const saved = { document: globalThis.document, innerWidth: globalThis.innerWidth, innerHeight: globalThis.innerHeight };
+  // the touch layer's presses as ui/touch/touch.js stands them: the dial and the menu at the top left, the actions at the foot
+  const press = (left, top, size = 48) => ({ getBoundingClientRect: () => ({ left, top, right: left + size, bottom: top + size, width: size, height: size }) });
+  const topRow = [press(16, 16), press(72, 16)];
+  let presses = [];
+  globalThis.document = { querySelectorAll: (selector) => (selector === '.dftouch-btn' ? presses : []) };
+  try {
+    initEscortFaces({
+      fetchBytes: async () => new Uint8Array(64 * 64), palette: null,
+      renderer: { uploadTexture: (kind, key) => key },
+      getFactionData: () => ({ face: 0 }),
+    });
+    addEscortFace(person({ isIndividualNPC: true, factionData: { id: 100 } }));
+    await new Promise((resolve) => setTimeout(resolve, 0));   // the art lands
+    // the first face's top, in CSS px, drawn on a canvas the window's own size
+    const firstFaceTop = (width, height) => {
+      globalThis.innerWidth = width;
+      globalThis.innerHeight = height;
+      const quads = [];
+      drawEscortFaces({ drawScreenQuad: (tex, at) => quads.push(at.y) }, { width, height });
+      return quads[0];
+    };
+
+    presses = topRow;
+    assert.equal(firstFaceTop(390, 664), 72, 'an iPhone upright: below the row, not under the dial');
+    assert.equal(escortFacesBottom(), 72 + 48, 'the status widget keeps below the moved face');
+    assert.equal(firstFaceTop(844, 390), 72, 'a phone on its side: the same');
+    assert.equal(firstFaceTop(1180, 820), 36 * 3, 'the iPad at scale 3: DFU\'s place, already below the row');
+
+    presses = [press(16, 600), press(300, 16)];
+    assert.equal(firstFaceTop(391, 664), 36, 'a press at the foot or beside the column moves nothing');
+    presses = [];
+    assert.equal(firstFaceTop(392, 664), 36, 'no touch layer (a mouse, a pad): DFU\'s startY');
+  } finally {
+    Object.assign(globalThis, saved);
+    clearEscortFaces();
+  }
+});
+
+test('ESCORT-TOUCH-ROW escortStartY: DFU\'s 36 unless the cleared row reaches lower, in the HUD\'s own units (rounded up, so the face never touches the row)', () => {
+  assert.equal(escortStartY({ clearPx: 0, scale: 1 }), 36);
+  assert.equal(escortStartY({ clearPx: 72, scale: 1 }), 72);
+  assert.equal(escortStartY({ clearPx: 145, scale: 2 }), 73);
+  assert.equal(escortStartY({ clearPx: 72, scale: 3 }), 36);
+  assert.equal(escortStartY(), 36);
 });
 
 // ── the machine's new seam ───────────────────────────────────────

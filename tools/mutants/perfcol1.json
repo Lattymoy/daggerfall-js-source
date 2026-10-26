@@ -37,8 +37,8 @@
   {
     "name": "PERFCOL1-the-scratch-set-is-never-cleared",
     "file": "src/player/collider.js",
-    "old": "      const marks = rayMarks(bucket), stamp = RAY_STAMP;   // FB0930-FRAME: the walk's stamp, not a Set\n      const yLoOf = bucket.yLo, yHiOf = bucket.yHi, yReach = reach + SPHERE_Y_SLACK;\n      for (const cell of nearCells(bucket, bx, by, bz, radius + SKIN)) {",
-    "new": "      const marks = bucket.rayMark ?? rayMarks(bucket), stamp = RAY_STAMP;   // FB0930-FRAME: the walk's stamp, not a Set\n      const yLoOf = bucket.yLo, yHiOf = bucket.yHi, yReach = reach + SPHERE_Y_SLACK;\n      for (const cell of nearCells(bucket, bx, by, bz, radius + SKIN)) {",
+    "old": "      const marks = rayMarks(bucket), stamp = RAY_STAMP;   // FB0930-FRAME: the walk's stamp, not a Set\n      const yLoOf = bucket.yLo, yHiOf = bucket.yHi, yReach = reach + SPHERE_Y_SLACK, sightOf = bucket.sight;\n      for (const cell of nearCells(bucket, bx, by, bz, radius + SKIN)) {",
+    "new": "      const marks = bucket.rayMark ?? rayMarks(bucket), stamp = RAY_STAMP;   // FB0930-FRAME: the walk's stamp, not a Set\n      const yLoOf = bucket.yLo, yHiOf = bucket.yHi, yReach = reach + SPHERE_Y_SLACK, sightOf = bucket.sight;\n      for (const cell of nearCells(bucket, bx, by, bz, radius + SKIN)) {",
     "tests": ["test/player/perfcol1.test.js"]
   },
   {

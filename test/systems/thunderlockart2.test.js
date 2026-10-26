@@ -52,7 +52,8 @@ test('THUNDERLOCK-ART2 THE STRIP: seven 160x98 frames at a fixed stride, the own
   assert.equal(art.records[1].frames.length, 7);
   assert.deepEqual([art.records[0].width, art.records[0].height], [160 * THUNDERLOCK_ART.scale, 98 * THUNDERLOCK_ART.scale]);
   assert.deepEqual(art.native, { w: 160, h: 98 });
-  assert.deepEqual(art.pose, { widthPct: 0.5, raise: THUNDERLOCK_ART.raise }, '160 of the surface\'s 320 - the old sheet\'s gun took 0.49');
+  assert.deepEqual(art.pose, { widthPct: 0.44, raise: -11, offset: 0.085 }, 'THUNDERLOCK-PLACE: the owner\'s placement off the lab - 44 of the surface\'s width, -11, 0.085 in from the corner');
+  assert.ok(Math.abs(art.records[0].width / 320 - art.pose.widthPct) < 1e-12, 'the records at the size the pose draws them');
   assert.equal(thunderlockFrames({ width: 160, height: 98, data: new Uint8ClampedArray(160 * 98 * 4) }), null, 'not seven frames wide: nothing');
   // THUNDERLOCK-ART2's audit: exactly the owner's seven - an eighth frame, or a padded strip, is refused, never cut short
   for (const [w, h] of [[160 * 8, 98], [160 * 7, 113]]) {

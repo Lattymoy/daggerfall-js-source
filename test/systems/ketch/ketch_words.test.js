@@ -26,9 +26,9 @@ test('KETCH THE MAP CARD\'S LINE: sighted in, arrives in, over Daggerfall with w
   const v = ketchVoyageOf(1);
   assert.equal(ketchWhenLine(ketchVoyageOf(0).sightAt - 2 * 24 * H - 3 * H), 'sighted in 2d 3h');   // PIN MOVED (KETCH-EVERY): days only before her first voyage - after it, ten hours a round, a sighting is never a day off
   assert.equal(ketchWhenLine(v.sightAt + 20 * 60 * 1000), 'arrives in 40m');   // PIN MOVED (KETCH-EVERY): sighted an hour before, no longer two
-  assert.equal(ketchWhenLine(v.sightAt - 90 * 60 * 1000), 'sighted in 1h 30m', 'between two voyages');
+  assert.equal(ketchWhenLine(v.sightAt - 70 * 60 * 1000), 'sighted in 1h 10m', 'between two voyages');   // PIN MOVED (AUDIT KETCH II L5-1): away an hour and a quarter now, her crews' last minutes forty-five
   assert.equal(ketchWhenLine(v.departAt - 5 * 60 * 1000 + 1), 'over Daggerfall, 5m left');
-  assert.equal(ketchWhenLine(v.departAt + 60 * 1000), 'weighing anchor, 19m');
+  assert.equal(ketchWhenLine(v.departAt + 60 * 1000), 'weighing anchor, 44m');   // PIN MOVED (AUDIT KETCH II L5-1): 19m of twenty before
   assert.equal(ketchWhen({ ...v, phase: 'docked' }, v.departAt - 61 * 1000), '2m', 'a minute begun counts');
   assert.deepEqual(['sighted', 'docked', 'departing'].map(ketchSkyPhase), ['Sighted in the east', 'Keeping station over the fields', 'Weighing anchor']);
 });

@@ -111,6 +111,7 @@ import { LivingTown, LINE_HEAD_M as LIVING_HEAD_M } from '../systems/livingWorld
 import { REGULAR_HEAD_M as CARD_REGULAR_HEAD_M } from '../world/card/cardRegulars.js';   // CARDS4b: a seated regular's line over his head
 import { livingWorldOn } from '../systems/livingWorld/livingSwitch.js';
 import { makeQuarry } from '../systems/livingWorld/quarry.js';   // WATCH-PROTECTS: a townsperson as a monster's quarry
+import { createRoadStrike } from './livingWorld/roadStrike.js';   // LW7: a swing at the road's travellers - FIELD BUGS 2026-10-25i ROAD-SPARE: under the street's law of who a blow passes by
 import { patrolHalts } from '../systems/standing.js';   // WATCH-KNOWS: the living watch's word by the law - one whose face it knows (FIELD BUGS 2026-10-21d PATROL-GRACE: outside the grace an answered law gives)
 import { LIVING_WORLD_VENDOR } from '../systems/livingWorld/relations.js';   // LW2: how the living world regards this character (modData `LivingWorld`)
 import { characterRelations } from '../systems/livingWorld/regardClock.js';   // FIELD BUGS 2026-10-21d REGARD-OWN: counted in the character's own days
@@ -159,7 +160,7 @@ import { preloadSpellbookArt } from '../ui/spellbookWindow.js';   // U42: the cl
 import { createSpellbookWindow } from '../ui/spellbookDoor.js';   // PX23: the book's one door
 import { calculateCastCost } from '../systems/spellcost.js';   // M2   // T3b
 import { rangedDamageSpells } from '../systems/spellcast.js';   // U42: the flight probe's picker
-import { worldMinutes, skyMinutes, setWorldMinutes, setSharedClock, sharedClockOn, sharedWallMs, alignEntityClocks, CLASSIC_MINUTES_PER_SECOND, setWorldPriceTilt, empireJoin, ownMinutes, advanceOwnMinutes, worldNightfallText, hearSharedClock, ownWalkWaiting, trustedWorldMinutes, raisedMinutes, playerWeaponHitEntity } from '../systems/worldTick.js';   // ECON1 / AUDIT ALL E1: the world's tilt off the file's base powers   // AUDIT 23 (C2): the ONE clock
+import { worldMinutes, skyMinutes, setWorldMinutes, setSharedClock, sharedClockOn, sharedWallMs, alignEntityClocks, CLASSIC_MINUTES_PER_SECOND, setWorldPriceTilt, empireJoin, ownMinutes, advanceOwnMinutes, worldNightfallText, hearSharedClock, ownWalkWaiting, trustedWorldMinutes, raisedMinutes } from '../systems/worldTick.js';   // ECON1 / AUDIT ALL E1: the world's tilt off the file's base powers   // AUDIT 23 (C2): the ONE clock
 import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: DaggerfallTravelPopUp_OnPostFastTravel (EntityEffectBroker.cs:846-847)
 import { tallySwingSkills, SWING_FATIGUE_COST, playerPainVoice, playPlayerVoice, makeEnemiesHostile, isBowWeapon, enemyHeavyPainVoice, playerClimbStrain, aimedBlowInfo, playerBlowFrame, setWindupAtMeListener } from './hostCombat.js';   // ROAD-B: GameManager.MakeEnemiesHostile
 import { flashPlayerDamage } from '../ui/damageFlash.js';
@@ -245,7 +246,7 @@ import { PLAYED_STEP_MAX_SECONDS } from '../systems/quest/clock.js';   // WORLD7
 import { mintQuestFoeWave, placeFoeEnv, entityOccupancy, questFoeGender, reviveQuestBehaviour, heldSpots, holdSpotWhile, questBoxHoldsFoes, questShareTag, partnerStandsQuestFoes, questBehaviourFor, adoptsOrphanQuestFoe, isPrivateQuestFoe, KeptKillLedger, creditKeptKills, questPrivateTag, partyQuestFoe, partyOnlyQuestShare } from './quest/questFoeHost.js';   // B1   // AUDIT 63r F24: SerializableEnemy.cs:206-217's quest-link arm, the one home both hosts use
 import { ENEMY_BASICS, enemyLevelOf } from '../characters/enemy/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag
 import { markFoeReach } from '../systems/foeReach.js';   // WATER-FOES: a foe in the water reaches no one aboard
-import { intermittentEnemySpawn, setEnemyAlert, areEnemiesNearby, foeHostile, foeAlerted } from '../systems/encounters.js';   // OW6: foeHostile, the one hostility gate   // CAMP-ROLL: REST5's quietNights moved with the carried night's sequence (scenes/shared.js restCampNight)
+import { intermittentEnemySpawn, setEnemyAlert, areEnemiesNearby, foeHostile, foeAlerted, fightNear } from '../systems/encounters.js';   // OW6: foeHostile, the one hostility gate   // CAMP-ROLL: REST5's quietNights moved with the carried night's sequence (scenes/shared.js restCampNight)
 import { nightDue, setNightListener, nightStamp, nightKindOf, isNightStamp, carriedNightEnd, REST_ACT_TEXT, campStamp, campMarkOf } from '../systems/rest/restAct.js';   // REST5: the party's night   // AUDIT REST-PARTY: and where it was slept   // AUDIT REST II: the mark asked lazily (P5), and what a carried night says (P3)
 import { createNightWatch, carriedNightAction, createCampWatch, campPasses } from '../systems/party/partyRestLaw.js';   // AUDIT REST-PARTY: the party's night, pinned by execution   // AUDIT REST II P1/P2: its watch   // CAMP-ROLL: the camp's one roll
 import { ambushNight } from '../systems/rest/restAct.js';   // AUDIT REST-PARTY A1: a resting encounter stood breaks the night that rolled it
@@ -345,7 +346,7 @@ import { createTownWatch, runTownWatchFrame } from '../systems/town/townWatch.js
 import { rollCampEncountersOnChunkLoad, amGroupRollOwner, campAnchorSpot, CAMP_SIGHT_RADIUS } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs; CAMP-NOTIMER: the chunk-load twin is this host's ONLY trigger now, so the timer's entry point is gone from here
 import { WORLD_SALT, spawnsDungeon, spawnedMapId, pathFreePixel, createSpawnGround, isEliteSpawn, pickTemplate, synthesizeDungeonLocation, spawnTemplates, createSpawnLedger, spawnedLocationCentreLocal, dungeonSightLine } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon; TTL1: ...and it does not hold it for ever
 import { createSpawnGroundPlace } from '../world/spawnGroundPlace.js';   // GROUND-AGREE: the place a pixel's ground is shaped for
-import { createGateOmen, insideGateRing, gateSceneXZ, fellLine, OMEN_SETTLE_MS, GATE_STORM_RING } from '../systems/gate/gateOmen.js';   // WB1 (Mac: "on the timer, a large area would be shown on the map, also in chat"): the Oblivion Gate's omen - its lines, its ring, its compass mark
+import { createGateOmen, insideGateRing, gateSceneXZ, fellLine, courtFellLine, OMEN_SETTLE_MS, GATE_STORM_RING } from '../systems/gate/gateOmen.js';   // WB1 (Mac: "on the timer, a large area would be shown on the map, also in chat"): the Oblivion Gate's omen - its lines, its ring, its compass mark
 import { gateScanner, findGateSite, gateSeaPixel, politicClaimed } from '../systems/gate/gateSite.js';   // WB1: where the day's gate stands, over the map files every client holds alike
 import { createGatePool, GATE_TEXT } from './gate/gatePool.js';   // WB2: the gate the world stands - its stone, its fire and beacon, its collider and its door
 import { createStarfallHost } from './starfall/starfallHost.js';   // STAR4-STAR6: the Witches' Festival's fallen stars - in the sky, in the world, defended
@@ -732,7 +733,7 @@ import { createLairDoor } from './lairHost.js';   // RVN7, LAIR-DOOR: a revenant
 import { createBountyOverlay, closeBountyDoor, bountyDoorOpen } from '../ui/bounty/bountyDoor.js';   // BOUNTY1: the board's window and the payday notice
 import { isQualifyingThreatState } from '../systems/horse/horseFollow.js';   // HCC: CollectThreats' qualification, the mod's own five-term test
 import { totalWeight } from '../systems/inventory.js';   // HCC: PlayerEntity.WagonWeight
-import { planTake, cannotCarryText, keepsQuestItem, makeHeldQuestItemsPermanent } from '../systems/item/itemTransfer.js';   // SET7: the Broker's sale asks the pack's own carry gate
+import { planTake, cannotCarryText, keepsQuestItem, makeHeldQuestItemsPermanent, heldQuestRecordIndex } from '../systems/item/itemTransfer.js';   // SET7: the Broker's sale asks the pack's own carry gate; HEART-KEPT: a quest's own record in the pack
 import { createUpkeep, horseWhereOf, upkeepReach, registerUpkeepUses } from '../systems/upkeep/upkeepRuntime.js';   // STEED1/WAGONS4: horse care and wagon upkeep, a frame at a time
 import { mendWagon, wagonWord, WAGON_UPKEEP_TEXT } from '../systems/wagon/wagonUpkeep.js';   // WAGONS4: the Wagon Yard's wright
 import { horseCareRules, wagonUpkeepRules } from '../systems/upkeep/upkeepSwitch.js';   // STEED1/WAGONS4: their Features switches; HORSE-TIERS: horse care's tier through its one accessor; WAGON-TIERS: and wagon upkeep's through its own
@@ -784,7 +785,7 @@ import { playerEntity, surfacePlayer, hurtPlayer, forcePlayerDeath, presentHeard
 import { bodySayer } from '../net/bossBody.js';   // INT15: my body, said to a boss fight's room
 import { SOUND } from '../systems/soundClips.js';
 import { createWeaponRig, autoBuildArms, armIdentityOf, armBuiltFor, armsReady, sheetHolderOf, buildArmsFor, prebuildArmsForSave } from '../combat/weapon/weaponRig.js';   // MWA1: the arms at boot; MWA3: the identity the arm should stand for, beside the one it does; MW-EARLY: and before the world is read
-import { weaponPoseOf, applyWeaponPose, mergeWeaponPose, playerMeleeCanHit, registerPlayerSwingListener, WEAPON_REACH } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law, and SL-2's per-field merge with the mode host's live rig
+import { weaponPoseOf, applyWeaponPose, mergeWeaponPose, playerMeleeCanHit, registerPlayerSwingListener } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law, and SL-2's per-field merge with the mode host's live rig
 import { ArrowFlight, playerArrowHitFoe, shaftOnRelayBody } from '../combat/arrowFlight.js';   // C13: visible exterior arrows; AUDIT 39 (#64): and the shaft that LANDS
 import { addItem, addGoldPieces, isGoldPieces, spendAmmoFor, carriedWeight } from '../systems/inventory.js';
 import { guildCardRoll, guildNameOfFaction } from '../systems/card/cardSources.js';   // CARDS9: a guild quest's card
@@ -4103,7 +4104,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       ready: () => !!walkMode && !!playerSpawned && !_loading && !modes?.transitioning && _mode() === 'exterior' && !playerAfloat(),
       sceneOf: (nx, nz) => tvSceneOf(nx, nz, 0),
       relations: () => livingRelations,
-      slay: livingRoadSlay, died: livingDied,
+      slay: livingRoadSlay, killed: livingKilled, died: livingDied,   // AUDIT FB1025i D2: a stood foe another hand cut down is killed, never the player's slain (no report)
       deadAt: livingDeadAt,   // AUDIT-B4: one a hand took is never stood again (the roads' parties are read once a second)
       fighting: () => hccThreats().some((q) => Math.hypot(q[0] - player.pos[0], q[2] - player.pos[2]) <= FIGHT_NEAR_M),
       say: (text) => townTalk.say(text),
@@ -10897,7 +10898,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     raidHere: () => raidDefendingHere(),   // RAID-GUARDS: a raid on in this town spares its defenders every blow of the player's
     guardScale: () => (wildHere() ? ZONE_WATCH_SCALE : 1),   // ZONE-WATCH (systems/wild/wildZone.js ZONE_WATCH_SCALE): the open zone's towns post their watch ten times as strong
     levelBonus: () => seatEdicts.guardLevelBonus(Math.floor(skyMinutes())),   // SEAT1d: a Curfew's night watch - AUDIT SEATS-3 E1: the sky's night (TIME1), the one the town sees
-    fightHere: () => areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]),   // PROTECT-FIGHT: under the protection, a fight spares the street's walkers
+    fightHere: () => fightNear([...cityGuards.guards, ...exteriorFoes.foes], player.pos),   // PROTECT-FIGHT: under the protection, a fight spares the street's walkers - AUDIT FB1025i D3: a fight near me, a peer's foes too (encounters.js fightNear)
     oneVoice: () => livingWorldOn(), windowUp: () => townTalk.overlayActive,   // HALT-ONE: the living watch calls as one, and nobody under a window (cityGuards.js)
     viewYaw: () => cam.yaw,   // WATCH-LEAVES: a defender walking off goes behind the view the street's walkers come and go behind (population.update's yaw)
     say: (l) => townTalk.say(l),   // C-slice: equipment breaks speak
@@ -11429,21 +11430,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     for (const f of exteriorFoes.foes) if (f.puppet && typeof f.livingId === 'string') _livingPeerWatch.add(f.livingId);
     for (const p of built.values()) p.population?.peerLend?.(_livingPeerWatch);
   };
-  /** LW7: a swing that met no one in the street, at the road's travellers - the body on the ray within reach (no wall
-   *  before it), DFU's one-hit civilian (WeaponManager.cs:504-521, less the watch: there is none on the road): struck
-   *  down for good (the roads' deed), the blood, the Brotherhood's five and the racial override's hit. */
-  const livingStrikeRoad = (eye, dir) => {
-    if (!livingRoads || !livingWorldOn() || _mode() !== 'exterior') return false;
-    const near = nearestPerson(eye, dir, livingRoads.talkSeats());   // the talk ray's own pick (SOC5: the one cylinder)
-    if (!near || near.distance > WEAPON_REACH) return false;
-    const wall = collider.raycast(eye, dir, near.distance);
-    if (Number.isFinite(wall) && wall < near.distance - 1e-3) return false;
-    if (!livingRoads.slain(near.entry.person)) return false;
-    hitEffects.showBloodSplash(0, [eye[0] + dir[0] * near.distance, eye[1] + dir[1] * near.distance, eye[2] + dir[2] * near.distance], null, LETHAL_HIT);
-    tallyCrimeGuildRequirements(playerEntity, false, 5);
-    playerWeaponHitEntity(playerEntity, { health: 0 }, { isCivilian: true });
-    return true;
-  };
+  /** LW7: a swing that met no one in the street, at the road's travellers - DFU's one-hit civilian, struck down for good
+   *  (the roads' deed); FIELD BUGS 2026-10-25i ROAD-SPARE: one the street's law spares (Protect Bystanders in a fight, a
+   *  raid) stops it. The law is scenes/livingWorld/roadStrike.js; the road is the open world's alone, so is its blood. */
+  const livingStrikeRoad = createRoadStrike({ roads: () => livingRoads, open: () => livingWorldOn() && _mode() === 'exterior', collider, cityGuards, hitEffects, playerEntity });
   /** SpawnCityGuards(FALSE) - the WITNESS arm, the other half of the
    *  same member: no crime was just seen to be committed, so the pool
    *  is searched for someone who CAN see the player. A guard NPC that
@@ -19588,15 +19578,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     addItem(playerEntity.items, card);
     try { townTalk.say(`The guild adds a card to your reward: ${iliacCardName(card).replace(/^Card: /, '')}.`); } catch { /* no talk host yet: the card is in the pack */ }
   };
-  const _heldItemIndex = (dfItem) => {
-    const items = playerEntity.items ?? [];
-    const direct = items.indexOf(dfItem);
-    if (direct >= 0) return direct;
-    if (!dfItem?.questItem) return -1;
-    return items.findIndex((it) => it.questItem
-      && it.questUID === dfItem.questUID
-      && it.questSymbol?.name === dfItem.questSymbol?.name);
-  };
+  const _heldItemIndex = (dfItem, clones = true) => heldQuestRecordIndex(playerEntity.items, dfItem, { clones });   // HEART-KEPT (FIELD BUGS 2026-10-25i): the law's own home (itemTransfer.js) - never a foe's clone for playerHasItem
   // E6: `QuestMachine.Instance.GetComponent<DaggerfallAudioSource>()`
   // (PlaySound.cs:112) - ONE source for every PlaySound action in every
   // running quest, which is what makes the busy-skip a shared gate
@@ -19865,7 +19847,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       items.splice(i, 1);
       surfacePlayer();
     },
-    playerHasItem: (dfItem) => _heldItemIndex(dfItem) >= 0,
+    playerHasItem: (dfItem) => _heldItemIndex(dfItem, false) >= 0,   // HEART-KEPT: Contains(DaggerfallUnityItem) - a heart taken off a body stays the player's
     carriesQuestItem: (res) => (playerEntity.items ?? []).some((it) =>
       it.questItem && it.questUID === res.parentQuest?.uid && it.questSymbol?.name === res.symbol?.name),
     keepsQuestItem: (res) => keepsQuestItem(playerEntity, res),   // QUEST-AUDIT III SHELF-TWIN, AUDIT QA3 B8: every keeping, for the reclaim and the repair - the pack alone for `toting` and `have`
@@ -20656,7 +20638,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     }
     if (inDungeon) {
       const gate = modes?.gateArenaGate?.();
-      if (gate) dest = { ...dest, kind: 'gate', gate };
+      if (gate) dest = { ...dest, kind: 'gate', gate: gateLink?.withCourt?.(gate) ?? gate };   // AUDIT GATE-COURTS C6: and the court I stand in
       else if (ohAbyss?.active) dest = { ...dest, kind: 'abyss', abyss: ohAbyss.data };
       else {
         const loc = modes?.dungeonLocation, id = loc?.mapTableData?.mapId;
@@ -20695,7 +20677,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     else if (d.kind === 'dungeon') {
       entered = await modes?.startInDungeon?.({ locationKey: d.locationKey ?? null, holdOpen: true, recorded: { ins: d.ins ?? null, whole: d.whole === true, staff: true } });   // HOLD-ONCE: staff may land by a player in Privateer's Hold
       entered = entered && (modes?.dungeonLocation?.mapTableData?.mapId >>> 0) === d.mapId;
-    } else if (d.kind === 'gate') entered = await modes?.enterGateArena?.(d.gate);
+    } else if (d.kind === 'gate') entered = await modes?.enterGateArena?.(gateLink?.seatFor?.(d.gate) ?? d.gate);   // AUDIT GATE-COURTS C6: in the court the player stands in
     else if (d.kind === 'abyss') {
       entered = await modes?.startInDungeon?.();
       const loc = modes?.dungeonLocation;
@@ -23863,7 +23845,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const gateLink = params.has('online') ? createGateLink({
     now: () => Date.now() + _sharedOffsetMs,
     say: (text) => setMidScreenText(text),
-    onFell: (day, f) => { const site = gateOmen?.current?.()?.site; eventNotice('gate', fellLine({ near: site?.day === day ? site.near : null, boss: gateBossOf(day).name, top: f.top })); },   // WB13b: no place found - "in the wilds"
+    onFell: (day, f) => { const site = gateOmen?.current?.()?.site; eventNotice('gate', (f.c != null ? courtFellLine : fellLine)({ ...f, near: site?.day === day ? site.near : null, boss: gateBossOf(day).name })); },   // WB13b: no place found - "in the wilds"
     onReceipt: (r) => { gateClaims?.add(r); grantSpoilsOutside(r); },   // WB5b: to the account service, kept until it is counted; AUDIT WB A2: and its spoils, when no court's floor will give them
     onRefused: (why) => { if (modes?.gateArenaDay?.() != null) ejectFromCourt(gateRefusalText(why)); },   // AUDIT WB B5: the relay will not have me in this fight - out before the gate, not left in an empty court; GATE-RELOAD: in what its word means (an outdated game is told to reload, never that an open gate is closed)
     place: bossPlace, watches: () => !!online?.courtWatchOk,   // AUDIT WBX F3: his fall frozen where he fell, as the court draws him; AUDIT PLAN-1000 G3: a watcher only on a relay that says `me`
@@ -24376,7 +24358,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (t - _spentResendAt < SPOILS_SPENT_RESEND_MS) return;
     _spentResendAt = t;
     if (socialLink()?.status !== 'open') return;
-    try { spoilsPool.resendSpent(); sdSpoilsPool.resendSpent(); } catch (e) { console.warn('[spoils] owed words', e?.message ?? e); }
+    try { for (const pool of [spoilsPool, sdSpoilsPool, ketch?.spoils]) pool?.resendSpent?.(); } catch (e) { console.warn('[spoils] owed words', e?.message ?? e); }   // AUDIT KETCH II L3-6: and the Ketchmaster's hold's (its owed word stood for ever)
   };
   /** GATE-ALONE (2026-10-07, Mac: "We need to not allow followers inside the oblivion gates"): no companion stands in a
    *  gate's court (companionPlace answers none there), and a fighter who steps in with any at their side is told so -
@@ -28780,7 +28762,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     let key;
     const mp = overworld ? worldCoordToMapPixel(wc.x, wc.z) : null;
     if (overworld) key = siegeSession?.room() ?? royalSession?.room() ?? roomKeyFor({ host: 'world', mode: 'exterior', mapPixel: mp });   // SEAT2a part four: a battle entered stands in its own room (CROWN1 part two: a Royal Tourney too)
-    else if (modes?.roomIdentity?.()?.kind === 'gate') key = gateRoomKey(modes?.roomIdentity?.()?.day);   // WB3b: the court's room is its gate's own
+    else if (modes?.roomIdentity?.()?.kind === 'gate') key = (gateLink?.room ?? gateRoomKey)(modes?.roomIdentity?.()?.day);   // WB3b: the court's room is its gate's own - GATE-COURTS: the court the night's book seats me in
     else if (modes?.roomIdentity?.()?.kind === 'sd') key = sdRoomKey(modes?.roomIdentity?.()?.s);   // SD5a: the Hour's room is the relay's realm (SD3's _sdAdmit asks the Rift's law of its hello)
     else if (modes?.roomIdentity?.()?.kind === 'eg') key = egRoomKey(modes?.roomIdentity?.()?.b);   // EG-PLAY: an Elite Breach's room is the relay's breach (its hello asks the company's law)
     else if (modes?.roomIdentity?.()?.kind === 'kt') key = modes?.roomIdentity?.()?.key;   // KETCH: a crew's ship's room is the relay's `kt:<voyage>.<captain>` (its hello asks the crew's law)
@@ -28901,7 +28883,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // place - the hold bought nothing but a 500 ms strip with no socket in the cell I stood in); HALO-WAIT: and so is one
     // whose halo is still connecting (net/online.js `crossesNow` - the join waits for it, my pose sent meanwhile, where
     // the hold sent none); otherwise the hold
-    else if (key !== online.room) { if (!online.room || isWorldRoom(key) || isWorldRoom(online.room) || (isCellRoom(key) && online.crossesNow(key)) || now - _onlineKeySince >= ROOM_HOLD_MS) { online.setLook(composeLook(playerEntity)); online.layerHint = partyLayerAt(key); online.join(key, { ...pose, ...arm }); } }   // the look re-composed: the next room's hello carries the gear worn now (PROFILE2: through setLook, so a halo the join PROMOTES - no hello of its own - is told too)
+    else if (key !== online.room) { if (!online.room || isWorldRoom(key) || isWorldRoom(online.room) || (isGateRoom(key) && isGateRoom(online.room)) || (isCellRoom(key) && online.crossesNow(key)) || now - _onlineKeySince >= ROOM_HOLD_MS) { online.setLook(composeLook(playerEntity)); online.layerHint = partyLayerAt(key); online.join(key, { ...pose, ...arm }); } }   // the look re-composed: the next room's hello carries the gear worn now (PROFILE2: through setLook, so a halo the join PROMOTES - no hello of its own - is told too)
     else online.sendPose({ ...pose, ...arm, ...poseFx() });   // PEERFX1: and my landed blows and the blows I took
     siegeSession?.tick();   // SEAT2a part four: the battle's pass, its `in`, its HUD, its window
     if (siegeNpcs) { if (inSiegeRoom()) siegeNpcs.frame(siegeSession.npcs(), battleNowMs()); else siegeNpcs.leave(); }   // SEAT2b part two (c): the relay's own fighters, in its room alone
@@ -35301,8 +35283,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           cityGuards.resolveCivilianHit(weaponRig.playerWeapon, cam.pos, lookFwd, player.pos, livingStruckPool(_guardPool()),
             { onMurder: () => _crimeResponse(), onHitSound: guardHitSound, swing }).then((r) => {
             if (r?.carriedHit) tallySwingSkills(playerEntity, weaponRig.playerWeapon.weapon, weaponRig.playerWeapon.blowWeight);
-            if (r?.crime) surfacePlayer();
-            else if (!r?.spared && livingStrikeRoad(cam.pos, lookFwd)) surfacePlayer();   // LW7: a traveller on the road, struck down
+            r ||= livingStrikeRoad(cam.pos, lookFwd);   // LW7: a swing that met nobody in the street, at the road's travellers - ROAD-SPARE: struck, spared, or nobody
+            if (r?.crime || r?.struck) surfacePlayer();   // LW7: a traveller on the road, struck down
             // ROAD-B: WeaponManager.WeaponEnvDamage (:474-477) - a
             // swing that met no living thing is offered to the STATIC
             // DOORS, and a door under it is BASHED (PlayerActivate

@@ -337,6 +337,11 @@ REAL account service, both in local workerd (`wrangler dev`; the service behind 
 - It refuses every address but its own two.
 - A run serves its tree live (`wrangler dev` rebuilds on every source change), so each column below ran from a
   `git worktree` of its commit.
+- It runs on Linux, macOS and Windows, and so do the probes built on it (`tools/partyLootProbe.mjs`,
+  `tools/onlineFrameProbe.mjs`) and `tools/accountProbe.mjs`. `tools/lib/wranglerLaunch.mjs` holds what differs
+  (HARNESS-WIN, 2026-10-25). On Windows it runs wrangler's own `wrangler.js` (or npm's `npx-cli.js`) under node, keeps
+  each wrangler attached with no console window, and kills its tree with `taskkill /T /F`, because Windows has no
+  process groups.
 
 **What it is not.** Local workerd is not Cloudflare: D1 is one SQLite file with no queue and no network, and the fleet
 shares four cores with both Workers. Latency here is relative. The counts are the code's own: statements a request,
@@ -1772,6 +1777,14 @@ content, all dead:
 - INT11-RELAY-NO-BD;
 - SCALE5c-told-unkept, -unknown-unsaid, -census-the-bus-own and -bus-any-channel;
 - SCALE5d-layer-unread and -channel-given-layer.
+
+**GATE-COURTS (2026-10-26, `World-Bosses.md` section 29).** A night is now up to sixteen courts of fifty, each a fight of
+its own in an object of its own (`gate:<day>`, `gate:<day>.<k>`), seated by the first court's book: past a court's
+fifty a newcomer fights another Warden instead of crowding round the one. Each court keeps the copies above past its own
+sockets (COURT_COPY_RE names every court's). A court past the first, fifty and its parties' slack, reaches them only with
+a full night's watchers; the first court is every newcomer's door until its book sends it on (`go`), so a burst past
+SOCKETS_MAX at the gate's opening reaches the first court's copies (AUDIT GATE-COURTS P9b, `World-Bosses.md` section
+30: this said only a full night's watchers did).
 
 ## SCALE4h: built (2026-10-11, this branch - acct112, no migration, no drop)
 

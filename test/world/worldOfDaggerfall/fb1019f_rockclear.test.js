@@ -152,7 +152,7 @@ test('ROCK-CLEAR by source: the pixel build files every solid through the world 
   assert.ok(gateAt > 0 && gateAt < p.indexOf('\n  async function buildPixelNow(') && p.indexOf('lateSolidsOf(') === p.lastIndexOf('lateSolidsOf('), 'one gate, the world collider\'s');
   const sites = [
     'late.add(key, BODY.positions, BODY.indices, local,\n              { translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])) });',
-    'late.add(gateKey, cpu.positions, cpu.indices, local,\n            { translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])) });',
+    'late.add(gateKey, cpu.positions, cpu.indices, local,\n            { translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])), sight: sightMarksOf(placed.modelIdNum, cpu) });',   // PIN MOVED (FIELD BUGS 2026-10-25i SIGN-PASS): a sign's hung triangles a ray's alone (world/signSolid.js sightMarksOf)
     'late.add(key, cpuB.positions, cpuB.indices, local, { translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])) });',
     'late.add(key, cpu.positions, cpu.indices, m.matrix, { translation: wodBucket });',
     'late.add(key, cpu.positions, cpu.indices, local, { translation: holdBucket });',

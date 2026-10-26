@@ -77,6 +77,7 @@ import { armorBodyParts, equipTableOf, wearableItem } from '../equip.js';   // L
 import { registerEntityFold, registerWeaponDamageMod, newMods, EMPTY_MODS } from '../entityMods.js';   // RF1: the fold is one of the entity's, read once per channel
 import { templateByIndex, itemBaseValue, isAmmunition } from '../item/itemTemplates.js';   // AUDIT 68 S27-ammo-arrow-only: the ammunition registry's home
 import { rriVariantWord } from '../roleplayRealismItems/rriItems.js';   // DISC29-B: the word Roleplay & Realism: Items' mint put before the template's name
+import { recipeById, MASTERWORK } from '../../net/recipeLaw.js';   // NAME-KEPT: a crafted piece's base - a jewel's recipe name, a Masterwork's mark (the Worker's law too; it imports no loot)
 import { STAT_KEYS_ORDER } from '../statMods.js';
 import { SKILL_NAMES, SKILL_COUNT, SKILLS, MAGIC_SKILLS } from '../skills.js';
 import { weaponSkillUsed } from '../../characters/weapons.js';   // LOOT1: a weapon's skill affix leans to the skill that swings it
@@ -1254,6 +1255,76 @@ const nameAround = (base, tier, affixes) => {
   if (suf) parts.push(affixWord(suf, tier));
   return parts.join(' ');
 };
+/** FIELD BUGS 2026-10-25i NAME-KEPT (SaberGGaming: "if you've renamed your item it will revert it back into its original
+ *  name"): A NAME IS THE LADDER'S, OR THE PIECE'S OWN. The ladder's is its words around its BASE, read off the piece -
+ *  never off its name (AUDIT FB1025i A1-A5: a name parsed by the lines it had kept a curse's or an unset gem's word
+ *  stale, and a name an older reforge had broken broken). The base a piece's name is built around now: a crafted jewel's
+ *  recipe name (smithItems.js setJewel - "Silver Ruby Ring"), a Masterwork's bare template (mintPiece - its maker's mark
+ *  names it), else the Roleplay & Realism: Items word and the template (rarityName's). */
+const markNamed = (item) => item?.quality === MASTERWORK && typeof item.maker === 'string' && item.maker !== '' && !!recipeById(item.recipe);
+function ladderBase(item) {
+  const template = templateByIndex(item?.templateIndex)?.name;
+  const r = recipeById(item?.recipe);
+  if (r?.kind === 'jewel') return r.name;
+  if (template == null) return null;
+  return markNamed(item) ? template : rriVariantWord(item) + template;
+}
+/** NAME-KEPT: every word a line of `tier` may put on the `slot` side of a name (a line that does something never names a
+ *  piece - LOOT4), kept by tier and side. */
+const _slotWords = new Map();
+function slotWords(tier, slot) {
+  const key = `${tier}:${slot}`;
+  let words = _slotWords.get(key);
+  if (!words) {
+    words = new Set();
+    for (const id of AFFIX_IDS) {
+      const k = AFFIX_KINDS[id];
+      if (k.slot === slot && !k.proc) for (const p of k.params ?? [null]) words.add(k.word(BAND[tier] ?? 0, p));
+    }
+    _slotWords.set(key, words);
+  }
+  return words;
+}
+/** NAME-KEPT: whether `name` is one the ladder built for `item` at `tier` - its base now, or the bare template an older
+ *  save's or an older reforge's name stood on (DISC29-B; the reforge before NAME-KEPT built even a jewel's on it), with
+ *  at most one of the tier's prefix words before it and one of its suffix words after - whichever lines gave them. */
+function ladderBuilt(item, tier, name) {
+  if (typeof name !== 'string') return false;
+  for (const base of new Set([ladderBase(item), templateByIndex(item?.templateIndex)?.name])) {
+    const at = typeof base === 'string' && base ? name.indexOf(base) : -1;
+    if (at < 0) continue;
+    const pre = name.slice(0, at), suf = name.slice(at + base.length);
+    if ((pre === '' || (pre.endsWith(' ') && slotWords(tier, 'prefix').has(pre.slice(0, -1))))
+      && (suf === '' || (suf.startsWith(' ') && slotWords(tier, 'suffix').has(suf.slice(1))))) return true;
+  }
+  return false;
+}
+/** NAME-KEPT: the name the ladder gives `item` at `tier` now - a Masterwork's its base alone, every other piece its own
+ *  lines' words around its base (never a set gem's - AUDIT GEM). */
+const ladderName = (item, tier) => (markNamed(item) ? ladderBase(item) : nameAround(ladderBase(item) ?? '', tier, item.affixes.filter((a) => a?.gem == null)));
+/** NAME-KEPT: THE NAME A PIECE TAKES WHEN ITS LINES CHANGE (a reforge, an Imbue): the ladder's, where the name it had
+ *  (`was`'s - the piece itself, or as it stood before the change) was one the ladder built; else the name it had, its
+ *  own - one the Item Maker wrote (RenameItem), a questline's named reward. */
+export function linesName(item, tier, was = item) {
+  return ladderBuilt(was, was?.rarity, was?.name) ? ladderName(item, tier) : was?.name;
+}
+/** NAME-KEPT (AUDIT FB1025i A3): THE CRAFTED NAMES A SAVE KEPT. The reforge before NAME-KEPT built a crafted piece's name
+ *  on its bare template - a jewel lost its metal and gem ("Silver Ring" to "Ring"), a Masterwork took the ladder's words
+ *  its mark withholds ("Saber's Mule's Ring of Skill"). On load a Magic or Rare crafted piece whose name is a ladder build
+ *  other than the one its base gives now takes the ladder's; a name of its own is left as it came, and a second load
+ *  finds nothing to do. Never a found piece: a curse's line was added after its name (cursePiece), by design. In place;
+ *  answers how many were renamed. */
+export function repairCraftedNames(items) {
+  let n = 0;
+  for (const it of Array.isArray(items) ? items : []) {
+    if (!it || typeof it !== 'object' || (it.rarity !== 'magic' && it.rarity !== 'rare') || !Array.isArray(it.affixes) || !recipeById(it.recipe) || !Object.isExtensible(it)) continue;
+    const name = linesName(it, it.rarity);
+    if (name === it.name) continue;
+    it.name = name;
+    n++;
+  }
+  return n;
+}
 
 /** DISC29-B: THE NAMES A SAVE KEPT. A Magic or Rare piece of Roleplay & Realism: Items armour rolled before the fix
  *  carries the name built from the bare template; on load it is given the word its mint wrote ("Sentinel's Helmet of
@@ -2059,7 +2130,8 @@ export const reforgeCount = (item) => (Number.isInteger(item?.reforges) && item.
  *  lines as the roll draws (AFFIX-LINES, pickByLines), its value from its tier's band - an Exalted Legendary's line from
  *  the top half of the Legendary band, as its exalting rolled it - and its param on the roll's own leans (a skill to the
  *  item's own, LOOT1; a garment's standing to its dress, LOOT14). The name (a Magic's or a Rare's, which may gain or lose
- *  a part as the line crosses a slot - a Legendary keeps its record's) and the price follow, and the piece counts the
+ *  a part as the line crosses a slot - a Legendary keeps its record's; NAME-KEPT: a name of the piece's own stands -
+ *  linesName) and the price follow, and the piece counts the
  *  reforge (`reforges` - what the next costs; an old piece's `reforged` mark folded into it). Answers the new line, or
  *  null (a line the Reforge may not take; nothing changed). */
 export function reforgeAffix(item, index, rolls = Math.random) {
@@ -2077,7 +2149,7 @@ export function reforgeAffix(item, index, rolls = Math.random) {
   item.affixes = item.affixes.map((a, i) => (i === index ? line : a));
   item.reforges = count;
   delete item.reforged;   // the old law's lock, counted now (reforgeCount)
-  if (tier !== 'legendary') item.name = rarityName(item, tier, item.affixes.filter((a) => a?.gem == null));   // AUDIT GEM: named by the piece's own lines - never a set gem's word ("Soldier's" off a Diamond), which outlived the gem's unsetting
+  if (tier !== 'legendary') item.name = linesName(item, tier);   // NAME-KEPT: the ladder's name again, or the piece's own
   item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) - affixesWorth([old], item) + affixesWorth([line], item);
   return line;
 }

@@ -5072,8 +5072,8 @@ DECIDED and BUILT (`render/nodeGlint.js` - section 46's module, moved; its pictu
   dark. A white-hot core (`GLINT_CORE_WHITE`, 0.6 of the way to white) in a
   soft bloom, and four thin rays turned a little (each life its own turn, within 17 degrees), reaching `GLINT_SHARE`
   (0.35) of the picture's longer side on screen, between `GLINT_PX_MIN` (4) and `GLINT_PX` (14) pixels at 1080 rows, both
-  with the image, never under 1.5 (`glintPx`) - so a far herb, a speck, still glints, and a tree filling the screen
-  glints no larger than a near herb.
+  with the image, never under 1.5 (`glintPx`) - so a far herb, a speck, still glints. (This said "and a tree filling the
+  screen glints no larger than a near herb": a big 3D crown's glints grow since NODE-CROWN, below.)
 - **The sheen.** A soft band of light rising a little aslant across the picture's own box and lit only where the
   silhouette is - the picture's own shape catching the light - once every 6.7 s (`GLINT_SHEEN_HZ` 0.15), crossing in the
   first half of the period (`GLINT_SHEEN_SHARE`) and dark the rest, at `GLINT_GAIN.sheen` (0.14) at most; none within
@@ -5260,6 +5260,52 @@ hours; `flatLightAt`'s `out`; the draw asking each node's light at its place and
 30 checks (a clear noon's light whole; at night a quarter, its brightest still clear on the picture; a black mine's held
 at the night's by the floor; far, at night, no sheen at any moment it crossed by day - `renderer.flatLightAt` itself
 over the probe's scene); `tools/mutants/nodeglint.json` 107, all dead.
+
+### NODE-CROWN - a 3D tree lit to its top, its glints by its size (FIELD BUGS 2026-10-25i)
+
+Discord #bug-reports, kvassdrit, "Big trees hide resource node particles": **"Needs to be size aware or have a completely
+different visual like others have recommended."** FACT: a Logging node near the eye is its 3D tree (Low Poly Trees, on by
+default, draws every wild tree within 140 m in 3D; a node glints within 120 m), and two things hid its glints.
+
+- **Its crown stood at the wrong height.** The pass boxed it at the run's standing size times its row's scale times the
+  prototype's own scale - but the standing size carries that scale already (`world/lowPolyTrees.js` readLowPolyTrees,
+  `m.max[1] * sy`; the mesh is drawn at it, `bbVertexShader`'s mesh mode). The climates stand 95 Tree records
+  (`TREE_RECORDS` with the woodland sets' winter archives, `world/climateSwaps.js` getNatureArchive), 93 with a prototype
+  and 74 of those scaled (AUDIT FB1025i C2: this said 88 of 116, the pin loop's own count): the temperate and mountain
+  woods' (504-511) mostly 0.5 to 0.8 glinted only up to half to four fifths of their height - 504_16's 16 m tree to 8 m,
+  the upper crown that shows over a wood never - and the swamp's, the desert's and a winter wood's 15 (1.1 to 4.2) over a
+  box up to four times their height, most of their glints' tries in the air above them. Not the depth: the light is drawn
+  after the trees against the world's depth at the picture's own. FIXED: the crown as tall as the tree its run draws
+  (`h = t.run.size[1] * row[4]`); its reach, the far flat's box and the jungle's trees (their prototypes unscaled) were
+  right and are unchanged.
+- **Its glints were a herb's** (AUDIT FB1025i C1, the report's "size aware"): six at most, no larger than a near herb's,
+  this section's own law - so a crown filling the screen carried the herb's six. Measured on the real door's tree with the
+  player's own atlases (the audit lane's probe, 1280 x 720): the light of a glint's cores a 10,000 pixels of its picture
+  was a near herb's 158 (an 0.8 m patch at 5 m) against 504_16's 14 at 30 m and 3 at 12 m - 12 and 53 times sparser.
+  BUILT: a 3D crown's glints grow with its size on screen (`glintCrownGrowth`): its side (`crownSidePx`, the square root
+  of its standing width times its height at its root's depth) against the side a herb's glint stops growing at
+  (`GLINT_PX` / `GLINT_SHARE`, 40 px at 1080 rows, with the image), to the two thirds - so their light, count times reach
+  squared, keeps the share of its picture a herb's keeps - between 1 and `GLINT_CROWN_GROWTH` (2): up to twelve glints
+  (`glintCrownCount`, a whole one), reaching up to twice as far (`glintCrownPx`, 28 px at 1080 rows), and the room round
+  its rectangle its own reach's. A temperate tree (504_16, 17.7 m across, 13.3 m up) is at the bound out to about the
+  glint's 120 m under a 65-degree view (1.95 there); a sapling far off grows part way.
+  After: 504_16's 114 at 30 m and 23 at 12 m (1.4 and 7 times sparser than the herb), 504_13's 8.5 to 72 at 30 m, its
+  hearts a frame 2.8 to 6.1 at 30 m and 2.4 to 4.7 at 12 m. A herb, a vein, a boulder, a school and a far tree's flat
+  keep `GLINT_COUNT` at `glintPx`'s reach - the probe's herb pixel for pixel as it was. The slots are twelve in the light's
+  stages, a node's own count (`uCount`) lit; a glint's life is one law both stages read (`glintLife`: the vertex stage its
+  spot, the fragment stage its turn - no turn handed on, so twelve glints take the varyings six and their turns took).
+- **NOT CHANGED, named:** a near tall crown that runs past the screen's top spends a share of its tries on its picture
+  off the screen (the audit's C4, about a tenth); a small crown whose count steps as the eye nears it gains or loses a
+  glint mid-life; the crown's box is `reach` deep (C5, as it was). Not a DFU member (the glint is ours); the scale is the
+  mod's prefab scale under DFU's terrain tree scale, as the world draws it.
+- **Pinned** by `test/scenes/fb1025i_nodecrown.test.js` (the report's 504_16 through the Low Poly Trees door, the billboard
+  program's own vertex stage and the pass; every climate's Tree records at a row scale under 1 and over it; the growth's
+  law by value; 504_16 at 30 and 12 m twelve at twice the reach, its far flat and a herb six, a small far crown part way),
+  `tools/nodeGlintProbe.mjs` (33 checks: a half-scale prefab's top two fifths lit - none before; the big crown twelve at
+  twice the reach, the herb six; its hearts a frame more than the herb's), `tools/mutants/fb1025i_nodecrown.json` (24, all
+  dead); PIN MOVED: `test/scenes/nodeglint.test.js`'s boxes (a run's scale counted once), its programs (the life one law,
+  twelve slots, no turn handed on) and its draw (the crown's count, reach and room); `tools/mutants/nodeglint.json`'s seed
+  and room records re-aimed.
 
 ## 48. CRAFT-PAYS and POT-THIN - a crafter's bottle worth brewing, the flood of drops turned down, a cooked meal that weighs what it should (BUILT 2026-10-21)
 
