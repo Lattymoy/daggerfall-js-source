@@ -91,7 +91,7 @@ Bestowed by Name.
 | dormant | Not yet available | given out by nothing yet: Apostle (no tier maps it - "Apostle still has no tier", Accounts-And-Cloud-Saves-Arc), the five chapter titles (the service's `CHAPTER_TITLES` is off) |
 | auto | Automatic | the sprout - given to every new account for two weeks, never earned |
 | staff | Staff only | Developer, Dungeon Master, the Seraph Wings, the developer's, moderator's and Dungeon Master's glyphs |
-| bestowed | Bestowed | the titles made for one player and their auras and glyphs (Shadow Fang, Penitent, Aegis of Oblivion, Primarch, Crystal Fist, WikiMaid) |
+| bestowed | Bestowed | the titles made for one player and their auras and glyphs (Shadow Fang, Penitent, Aegis of Oblivion, Primarch, Crystal Fist, WikiMaid, Nirnroot Sage - NIRNROOT-SAGE, 2026-10-26) |
 | closed | Closed | Founder - every registered account that first played by noon UTC on 25 September 2026 (`FOUNDER_UNTIL`), or granted it by name; a guest from before then earns it by registering, and a character from before then brought onto the account counts too (`founderLink.js`) |
 | retired | No longer obtainable | Hour's First and The First Hour, First of the Spire and Firstlight |
 

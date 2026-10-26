@@ -173,7 +173,7 @@ export function createInstanceDoor(deps) {
    */
   async function choose(site) {
     const ok = can(site);
-    const rows = instanceOffer({ online: online(), instanceOk: ok, isHold: !!site.isHold, questHere: questHere(site), partners: ok ? await partnersAt(site) : [] });
+    const rows = instanceOffer({ online: online(), instanceOk: ok, isHold: !!site.isHold, questHere: questHere(site), relaid: site.relaid === true, partners: ok ? await partnersAt(site) : [] });   // QUEST-FIRST: Public last where the quest's dungeon is laid smaller
     if (!rows) return entryFor(site);
     const row = await new Promise((resolve) => {
       let settled = false;

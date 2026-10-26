@@ -3692,7 +3692,9 @@ Mac: **"2 and 4"** (2026-10-02: the Apothecary waits on Alchemy, Cooking and Jew
   against the piece's points (`enchantDecision`, the "used/available" label) and in the ten-row guard and the picker's
   filters, shown at the head of its list in the forced colour, **never removed**, costing no gold; enchanted, the new rows
   land after them (`applyEnchantments` - the kept rows' created payloads not run again). Every other enchanted item is
-  refused as DFU refuses it. The bench says so ("The item maker spends them, beside a Masterwork's own enchantment.").
+  refused as DFU refuses it - but an identified Rare, found or a Masterwork of any other craft, which MAKER-RARE
+  (`01-Overview/bugs/Field-Bugs-2026-10-26.md`, the owner: "You cant enchant masterwork/rare armor") takes the same
+  way, its ladder's rows riding free (`enchanting.js` rareKeeps). The bench says so ("The item maker spends them, beside a Masterwork's own enchantment.").
 - **Audited again** (2026-10-03, AUDIT PROF-541): **J3** - the Enhanced+ skin's item maker built its lists from the
   player's own rows, so a crafted piece's kept enchantments were invisible while their cost counted: it draws the lists
   as the classic window does (`enhancedPorts.js` itemMaker over `_lists()`), a kept row muted with no act, as a forced
@@ -3705,7 +3707,7 @@ Mac: **"2 and 4"** (2026-10-02: the Apothecary waits on Alchemy, Cooking and Jew
   jeweller's hand is **written on the piece** (`hand`, 1 or 2, `itemFields.js`; a hand its recipe takes alone) and the
   cap is that hand's (`craftedJewelPoints`) - no hand, no hand's share.
 - **Pinned**: `test/net/prof10_law.test.js` (10), `test/net/prof10_service.test.js` (7, through the real Worker),
-  `test/systems/prof10_client.test.js` (13). Mutants: `tools/mutants/prof10.json` (166, all dead).
+  `test/systems/prof10_client.test.js` (16). Mutants: `tools/mutants/prof10.json` (173, all dead).
 
 ## 37. PROF12 - Alchemy and the Enchanting layer, as built (BUILT 2026-10-02)
 
@@ -5430,7 +5432,7 @@ the mages guild. The reward can be crafting xp, silver, and rep."** Every number
 A writ's silver is minted only for an act the service witnessed (law 8), and the goods leave the character's realm record
 in the same batch (INT19's law for every crafted act):
 
-- **A potion writ**: the character's own **witnessed brews** of the potion - every potion a station bottled for it
+- **A potion writ**: the character's own **brews** of the potion - every potion a station bottled for it
   (`prof_brews.count`), less what the crafting writs IT filled of that potion already took (`brewedLeftSql` - AUDIT
   CRAFT-WRITS S1: the decision named the writ's product as a column inside its own subquery, so SQLite read the
   subquery's row and every writ the character had filled, of any product, was taken from its brews; a stew writ filled
@@ -5439,15 +5441,19 @@ in the same batch (INT19's law for every crafted act):
   summoned, bound or LOCKED one - AUDIT CRAFT-WRITS C3, itemLock.js; never the recipe's sheet, which names the potion's key
   too - E3). A potion is a potion: the brews are the witness and the record the goods,
   so a looted bottle can be handed over only where a brew of the character's own stands behind it.
-- **WITNESSED WHOLE** (migration 0145, `prof_brews.witnessed`): a station spends a cauldron's LOOSE units first (AUDIT
-  BAG-CRAFT A1 - what the pack put in that the service never handed out: a looted herb, a reagent bought for gold), and a
-  potion of them is gold's goods, which never fetch silver (GOLD-MARKET). A brew is witnessed where it spent none
-  (`alchemy.js` brewAtStation writes it in the brew's own decision). Brews before the column read 0 - their units'
-  origins are unknown - so **a crafting writ counts the brews from this release on**.
+- **WHATEVER THE GOODS** (ANY-GOODS, FIELD BUGS 2026-10-26, `01-Overview/bugs/Field-Bugs-2026-10-26.md`; the owner:
+  **"Crafting writs should work with even store bought ingredients. I hate this"**): a brew or a piece made of the pack's
+  goods - a looted herb, a reagent bought with gold at a shop (AUDIT BAG-CRAFT A1's LOOSE units, which a station spends
+  first) - fills a writ as one of gathered or silver-bought goods does. The make is the service's act; what it was made
+  of is not asked. As built first a brew counted only where it spent no loose unit (migration 0145's
+  `prof_brews.witnessed`, still written as the brew's record and read by no writ) and a piece walled to gold by its goods
+  filled none, so a brew that paid its XP showed "0 brewed by you". Every brew since the column counts, and those before
+  it too. THE FAUCET'S BOUND is unchanged: three writs an account a day, 200 silver each at most - and a client's word on
+  what its pack holds past the service's count (BAG-CRAFT's put-in) now reaches that faucet, within it.
 - **A dish or kit writ**: the pieces themselves, by provenance (`pieces`, exactly the count) - each the account's (a sold
   one is its buyer's, `products.owner`) and this character's own make (`products.char_id` - a piece bought on the market
-  keeps its maker's), never walled to gold (`products.bought_with IS NOT 'gold'` - a loose-made piece's mark, AUDIT
-  BAG-CRAFT A1), on no listing, auction, road or home nor on its way back (`pieceOkSql`, PROF5's and INT19's guards), loose
+  keeps its maker's), never bought back with gold (`products.bought_with` 'gold' with `loose` 0, migration 0142 - a
+  piece walled by its goods, `loose` 1, fills one: ANY-GOODS), on no listing, auction, road or home nor on its way back (`pieceOkSql`, PROF5's and INT19's guards), loose
   in the record's pack and not locked; their `products` rows go with them, as a disenchant's. AUDIT CRAFT-WRITS T2: as
   built first the guard was `bought_with IS NULL`, and `'marks'` is ALSO a piece made of goods bought for silver (AUDIT
   PROF-541 B7) - every Repair Kit takes the Cured Leather the smith's counter sells, so a kit writ refused the kits a
@@ -5495,7 +5501,8 @@ model is not re-run here. RECORDED for the owner: if the Marks minted outrun the
   standing with the Mages Guild"), its time left, what the reading character holds ("3 brewed by you, 5 in your pack"),
   and **Deliver** - waiting, with its reason on its title, in its name for a reader and on the card (a phone has no
   hover), where something is short or the day's three are filled (AUDIT CRAFT-WRITS C8: the day's three were said on the
-  title alone). A press says the guild's thanks and marks its card filled at once, before the list read again comes back
+  title alone). A brew short is asked "at an alchemy station" (FIELD BUGS 2026-10-26: a potion maker anywhere else is
+  the client's mix, POTION-DOOR, section 52.3). A press says the guild's thanks and marks its card filled at once, before the list read again comes back
   (C1: a second press meanwhile asked the service again); the balance and the Renown are taken as a Court writ's
   (`onTaken`). The realm's silence and a character changed before the answer are said in their own words (C6), every
   other refusal the service's.
@@ -5851,8 +5858,8 @@ band aids"; and, asked how fast the tracks should climb: "Match Smithing's pace"
   does not, because BAG-CRAFT (the owner, 2026-10-09: "I just want players to also be able to craft from their
   inventory") already brews what is carried at every station and pays its XP - the Stores page's Brew does it with the
   same herbs - and two outcomes for one act at one station would be the band aid. So a pack-only mix stays unwitnessed
-  where the brew cannot be had (away from a station, past the rank, the fee unmet, offline), and says so; the service
-  keeps a brew of loose units out of a crafting writ as it always has (`witnessed`, section 49).
+  where the brew cannot be had (away from a station, past the rank, the fee unmet, offline), and says so. A brew of
+  loose units fills a crafting writ as any brew does (ANY-GOODS, section 49.2).
 - **PROF12 law 1 NARROWED** (section 37): DFU's potion maker earns nothing online only away from an alchemy station. The
   DFU member it departs from - DaggerfallPotionMakerWindow's MixCauldron, the client's mint - is `Port-Ledger.md` section
   A's row (POTION-DOOR).

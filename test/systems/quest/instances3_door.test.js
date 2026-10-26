@@ -314,6 +314,44 @@ test('QUEST-ELSEWHERE (FIELD BUGS 2026-10-16c, MD-Geist: "the Objective just did
   assert.deepEqual([home.elsewhere, home.text], [false, 'Nothing was missing from your active quest.'], 'anywhere else: as before');
 });
 
+test('QUEST-FIRST (FIELD BUGS 2026-10-26, runa: "The Masoleum of Darkivaron ... an area (up the elevator in the large central space) is missing ... this one is in a Main Quest to slay a specific Mummy"): where a quest of mine names a dungeon the world lays smaller in public, Public is the LAST row - the first, taken by habit, is a room the quest can be done in (the party\'s, then mine); anywhere else the order stands (mutants: relaid never passed; Public first; the Hold\'s public room)', async () => {
+  // the law
+  const partners = [{ name: 'Ann', acct: 'a1', owner: '0123456789abcdef', epoch: '89abcdef' }];
+  const kinds = (o) => instanceOffer({ online: true, instanceOk: true, ...o })?.map((r) => r.kind) ?? null;
+  assert.deepEqual(kinds({ questHere: true, relaid: true }), ['mine', 'public']);
+  assert.deepEqual(kinds({ questHere: true, relaid: true, partners }), ['join', 'mine', 'public'], 'the party\'s room still before my own');
+  assert.deepEqual(kinds({ questHere: true }), ['public', 'mine'], 'laid whole in public: its things stand there too');
+  assert.deepEqual(kinds({ relaid: true, partners }), ['public', 'join'], 'no quest of mine here: the shared world first');
+  assert.deepEqual(kinds({ isHold: true, questHere: true, relaid: true }), ['mine'], 'HOLD-ONCE: never its public room');
+  // the report's crypt: Isle of Balfiera's Masoleum of Darkivaron, its eight blocks as MAPS.BSA lays them - its public room
+  // built small (SD-ONLINE), N0000057 (the hall the lift rises to) replaced by a border block
+  const DARKIVARON = {
+    name: 'The Masoleum of Darkivaron', hasDungeon: true, mapTableData: { mapId: 9601832 },
+    dungeon: { blocks: [['N0000091', 0, 0], ['N0000057', 0, 1], ['B0000014', -1, 0], ['B0000000', -1, 1], ['B0000012', 0, -1], ['B0000005', 0, 2], ['B0000013', 1, 0], ['B0000010', 1, 1]]
+      .map(([n, x, z], i) => ({ blockName: `${n}.RDB`, x, z, isStartingBlock: i === 0 })) },
+  };
+  assert.equal(onlineDungeonSize(DARKIVARON), 'small');
+  const t = door();
+  t.q.resources.get('crypt').siteDetails.mapId = DARKIVARON.mapTableData.mapId;
+  const site = t.d.dungeonSite(DARKIVARON);
+  assert.equal(site.relaid, true);
+  let pending = t.d.choose(site);
+  await until(() => t.shown.length === 1);
+  assert.deepEqual(t.shown[0].win.options.map((o) => o.label), [`1 - ${INSTANCE_TEXT.mine()}`, `2 - ${INSTANCE_TEXT.public()}`, `Esc - ${INSTANCE_TEXT.leave()}`]);
+  assert.deepEqual(t.shown[0].win.lines, ['The Masoleum of Darkivaron', INSTANCE_TEXT.line(), INSTANCE_TEXT.questPublic()]);
+  t.shown[0].win.input('Digit1');
+  assert.deepEqual(await pending, { instance: { owner: ME, epoch: t.q.instanceEpoch }, whole: true }, 'the first row: the crypt whole, its mummy and its upper hall');
+  pending = t.d.choose(site); await until(() => t.shown.length === 2); t.shown[1].win.input('Digit2');
+  assert.deepEqual(await pending, { instance: null, whole: false }, 'Public still there, last');
+  // a quest's dungeon laid whole in public: as it was
+  const whole = door();
+  const pend = whole.d.choose(whole.d.dungeonSite(COPPERING));
+  await until(() => whole.shown.length === 1);
+  assert.deepEqual(whole.shown[0].win.options.map((o) => o.code === 'Escape' ? 'esc' : o.label), [`1 - ${INSTANCE_TEXT.public()}`, `2 - ${INSTANCE_TEXT.mine()}`, 'esc']);
+  whole.shown[0].win.input('Escape');
+  await pend;
+});
+
 test('INSTANCES the door\'s other words: atDoor - Leave spends the press, a row enters; refused - an instance\'s door shut on this page, said once a room; poseWord - inside, the room the relay joined; questElsewhere - once a build', async () => {
   const { d, shown, said } = door();
   const site = d.dungeonSite(COPPERING);

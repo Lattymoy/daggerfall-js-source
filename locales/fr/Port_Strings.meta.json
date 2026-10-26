@@ -519,6 +519,11 @@
   "tr": "e4ef91cb0190",
   "by": "claude-in-session"
  },
+ "account.glyph.nirnrootsage": {
+  "en": "84174edc6e42",
+  "tr": "84174edc6e42",
+  "by": "claude-in-session"
+ },
  "account.glyph.penitent": {
   "en": "e96df7568799",
   "tr": "a88aea3ab38a",
@@ -8339,6 +8344,11 @@
   "tr": "e1fb54f8ff51",
   "by": "claude-in-session"
  },
+ "coll.look.sagesmoke": {
+  "en": "d110d0fa1d62",
+  "tr": "e3af090fed0d",
+  "by": "claude-in-session"
+ },
  "coll.look.seraphwings": {
   "en": "6ddde4c0aa32",
   "tr": "bdac884862a1",
@@ -15712,6 +15722,11 @@
  "market.sift.sortLabel": {
   "en": "1d75774c0f96",
   "tr": "5c32e6311ccf",
+  "by": "claude-in-session"
+ },
+ "market.why.changedPiece": {
+  "en": "4bc7c6211af1",
+  "tr": "98da2902bbc9",
   "by": "claude-in-session"
  },
  "marks.capped.star": {
@@ -26240,8 +26255,8 @@
   "by": "claude-in-session"
  },
  "prof.craftWrit.shortBrew": {
-  "en": "5c96920bf78f",
-  "tr": "0565433582fe",
+  "en": "d83ab225fc93",
+  "tr": "f77d86185d47",
   "by": "claude-in-session"
  },
  "prof.craftWrit.shortCarry": {

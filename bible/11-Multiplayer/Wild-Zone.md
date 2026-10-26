@@ -169,7 +169,7 @@ The relay says it (`server/src/index.js:"_wildGraceSay(a, ms) {"`): a passage be
 striker alone (`n` 1, `_wildGraceBlow`) - new Room methods, `_message` untouched. The wire takes the word
 (`wire.js:"export const WILD_GRACE_MS_MAX"`, pinned equal), and the game says it to its player
 (`systems/wild/wildGrace.js`): mine begun, once (a crossing's carried word is not said again), mine ended - by my blow or
-run out on the zone's frame - and a blow of mine kept off a stranger, once in `WILD_GRACE_SAY_MS`. world268. Not a DFU
+run out on the zone's frame - and a blow of mine kept off a stranger, once in `WILD_GRACE_SAY_MS`. world269. Not a DFU
 member: Daggerfall Unity has no other players.
 
 ## 4. A death in the zone
@@ -529,10 +529,10 @@ PVP-EASE (2026-10-26, sections 3b, 4, 4b and 4c) is one relay frame and an accou
 moves no wire: the service stops taking the cart and the packs and reads neither word (`cart`, `packs`), which every tab
 from before it still sends; this game stops saying `cart`. WILD-INSURE is migration 0176 (`wild_insurance`, and
 REPEAT-SHIELD's `idx_wild_falls_pair`), two routes (`/v1/wild/insure`, `/v1/wild/policies`), a new leaf on
-`account-deploy.yml`'s list (`src/systems/wild/wildInsureLaw.js`) and the fall answer's `insured` and `shield` - acct194,
+`account-deploy.yml`'s list (`src/systems/wild/wildInsureLaw.js`) and the fall answer's `insured` and `shield` - acct195,
 the migration applied before the Worker that reads it, as the deploy runs them. A tab from before it reads neither field
 and takes out exactly what the service took (nothing of an insured piece, nothing at all under the shield). ZONE-GRACE is
-the relay's (world268): the referee's law and a `wref` kind, `grace`; a client from before it drops the word it does not
+the relay's (world269): the referee's law and a `wref` kind, `grace`; a client from before it drops the word it does not
 know. The account service and the relay deploy in either order.
 
 ## 9. The journeys (WILD3, PVPTIERS)
@@ -1004,7 +1004,7 @@ Pinned by `test/systems/wild/fb1009b_partytruce.test.js` and `test/systems/trave
 - ZONE-GRACE (section 3b): safe passage keeps off players' blows and casts alone - a foe's are its own, and a ship's guns
   at sea (SHIP-PVP, `03-World/Eltheric-Ocean.md`) are the sea referee's, which reads no passage. The hub keeps the carry in
   memory alone, so a hub restarted forgets a passage carried across a cell (the fighter enters the next cell with none).
-  A relay from before world268 grants none, and a client from before it hears the words as a kind it does not know -
+  A relay from before world269 grants none, and a client from before it hears the words as a kind it does not know -
   its blows are refused without a line.
 
 ## 23. What the suite caught (WILD-SUITE, 2026-10-08)

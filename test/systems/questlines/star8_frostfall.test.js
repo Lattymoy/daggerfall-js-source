@@ -70,7 +70,7 @@ test('STAR8 THE LINE: the Festival\'s, tier 3 - from level 6, online, a register
   assert.ok(QL_WITNESS_KINDS.includes('star') && QL_WITNESS_KINDS.includes('stars3'));
   assert.deepEqual([0, 1, 2, 3].map((s) => qlStepClaimed('thirteenthFrostfall', s)), [true, false, true, false], 'the spindle and its fate are the client\'s');
   assert.equal(ACT_KINDS['star-held'], 'endgame', 'a receipt the service holds');
-  assert.deepEqual([QL_TITLES.at(-2) /* PIN MOVED (KETCH): the Sky-Ketch's Skyfarer after it */, TITLES.at(-4) /* PIN MOVED (WITCH1): the festival's two after it; (KETCH) and the Skyfarer */, qlTitleBit('starwarden'), TITLE_TEXT.starwarden], ['starwarden', 'starwarden', 32, 'Starwarden']);
+  assert.deepEqual([QL_TITLES.at(-2) /* PIN MOVED (KETCH): the Sky-Ketch's Skyfarer after it */, TITLES.at(-5) /* PIN MOVED (NIRNROOT-SAGE): the Nirnroot Sage joined the list last */ /* PIN MOVED (WITCH1): the festival's two after it; (KETCH) and the Skyfarer */, qlTitleBit('starwarden'), TITLE_TEXT.starwarden], ['starwarden', 'starwarden', 32, 'Starwarden']);
 });
 
 test('STAR8 THE WITNESSES on the service: a star held - a row of stars_held inside the line\'s window - and the third such row for the three (mutants: the table, the offset)', () => {
