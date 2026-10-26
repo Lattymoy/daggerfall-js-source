@@ -16,8 +16,9 @@
 // back, because nothing was kept. So a take is never a copy, whatever the window did and however the race went.
 // Nothing can be PUT on remains: the pile says it can carry nothing (its `noStore`, droppedLootHooks' capacity).
 //
-// MINE: a remains whose owner the room named as me (my account, or my peer id for a guest) is marked - its pile's
-// line of light (scenes/lootLines.js) and the world map's mark - so I can find my things again.
+// MINE: a remains whose owner the room named as me (my account - its order's fallen, whoever carried the deposit; my peer
+// id only where a room names no account) is marked - its pile's line of light (scenes/lootLines.js) and the world map's
+// mark - so I can find my things again (remainsMine).
 //
 // INT9: THE KILLER'S PIECE. A remains the account service signed for a fall at another player's hand holds the worn piece
 // the killer picked off the body (the room's `wk` and `wi`: whose, and which record) - the room grants it to that account
@@ -51,6 +52,16 @@ import { GOLD_INT_MAX } from '../../systems/item/itemLaw.js';
 export const WILD_PILE_ICON = Object.freeze({ archive: 216, record: 0 });
 /** What a remains pile says when something is put on it. */
 export const WILD_NO_STORE = Object.freeze({ kg: 0, name: 'These remains' });
+
+/**
+ * Is a remains mine: the fallen's account where the room names one (`os`, its order's word), else the peer that laid it,
+ * or the remains my own deposit laid. WILD-REMAINS-LOSS: `oid` is the deposit's CARRIER - its killer on a seizure, whose
+ * game read the remains as its own while the fallen's never marked them.
+ * @param {{ r: string, os: string|null, oid: string|null }} rec
+ * @param {string|null} acct my account @param {string|null} peer my peer id @param {string|null} laid my own deposit's id
+ */
+export const remainsMine = (rec, acct, peer, laid) =>
+  (rec.os ? rec.os === acct : !!rec.oid && rec.oid === peer) || (!!laid && rec.r === laid);
 
 /**
  * @param {object} o

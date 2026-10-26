@@ -58,7 +58,7 @@
 // once the grace is gone; a death to a foe takes nothing (FOE-KEEPS).
 import { verifyWildReceipt, verifyWildCollect, wildFallGraceS, WILD_COLLECT_TTL_S } from '../../src/net/wild/wildReceipt.js';
 import { mintRemainsOrder, remainsDigest, ORDER_TTL_S } from '../../src/net/identityToken.js';
-import { streamsFoes, WILD_REMAINS_MS } from '../../src/net/wire.js';
+import { streamsFoes, WILD_REMAINS_MS, sanitizeName, FALLBACK_NAME } from '../../src/net/wire.js';
 import { GUILD_ID_RE } from '../../src/net/guild/guildLaw.js';
 import { takeWildDeath, wildDropCandidates, wildTookOf, wildCartRecordOf, wildCartMayBeAway, WILD_FALL_PACKS, WILD_FALL_LETTERS, wildTakesPacks } from '../../src/systems/wild/wildDropLaw.js';
 import { mintItemId } from '../../src/systems/item/itemIds.js';
@@ -91,16 +91,25 @@ async function foeFallId(/** @type {SubtleCrypto} */ subtle, /** @type {string} 
   return [...h.slice(0, 6)].map((x) => x.toString(16).padStart(2, '0')).join('');
 }
 
+/** WILD-REMAINS-LOSS: the fallen character's name for its remains' order, as the wire keeps a name - or null when it has
+ *  none the wire would show (the room then names the remains as it did before). */
+async function fallenNameOf(/** @type {any} */ ctx, /** @type {string} */ charId) {
+  const row = await ctx.db.prepare('SELECT name FROM realm_characters WHERE id = ?1').bind(charId).first();
+  const name = typeof row?.name === 'string' ? sanitizeName(row.name) : FALLBACK_NAME;
+  return name === FALLBACK_NAME ? null : name;
+}
+
 /** A fall's answer: the remains' id, the records taken (`wi` 0: the first is the killer's), the pieces the ledger kept back, what the record lost as the
  *  fallen's game finds it again (`took`, `gold` - wildDropLaw.js wildTakeTook), and - where the room is given any - the
  *  service's order over the records. THE FALL'S OWN ORDER: issued at `oi` for room `wm`, the same every asking, good its
  *  minute alone (AUDIT INT9: a fresh order each asking, naming no room, laid one fall's drop twice - in a second room, or
  *  in the first once it had let its emptied remains go). */
-async function answerOf(/** @type {any} */ ctx, /** @type {CryptoKey} */ signing, /** @type {any} */ { r, fallen, killer, records, kept, burnt, killerFirst, wm, oi, wg, tk, seq = null, escrow = null }) {
+async function answerOf(/** @type {any} */ ctx, /** @type {CryptoKey} */ signing, /** @type {any} */ { r, fallen, charId, killer, records, kept, burnt, killerFirst, wm, oi, wg, tk, seq = null, escrow = null }) {
   let order = null;
   if (!burnt && records.length && wm && ctx.nowS < oi + ORDER_TTL_S) {
     const wh = await remainsDigest(records, { subtle: ctx.subtle });
-    order = await mintRemainsOrder({ s: fallen, wr: r, wh, wn: records.length, wm, ...(killerFirst && killer ? { wk: killer, wi: 0, ...(escrow ? { we: 1 } : {}) } : {}), ...(wg ? { wg } : {}) }, signing, { subtle: ctx.subtle, nowS: oi });
+    const wnm = await fallenNameOf(ctx, charId);
+    order = await mintRemainsOrder({ s: fallen, wr: r, wh, wn: records.length, wm, ...(killerFirst && killer ? { wk: killer, wi: 0, ...(escrow ? { we: 1 } : {}) } : {}), ...(wg ? { wg } : {}), ...(wnm ? { wnm } : {}) }, signing, { subtle: ctx.subtle, nowS: oi });
   }
   const packs = tk?.gold?.packs && typeof tk.gold.packs === 'object' ? { packs: tk.gold.packs } : {};   // COMPANION-DROP: each pack's coin share, by its word
   const letters = tk?.gold?.letters && typeof tk.gold.letters === 'object' ? { letters: tk.gold.letters } : {};   // AUDIT FOE-KEEPS LETTERS-TENTH: each letter's share, by its id
@@ -166,7 +175,7 @@ export async function wildFall(ctx, player, body, { gateKey, signing }, again = 
       const now = await ctx.db.prepare('SELECT seq, lease FROM realm_characters WHERE id = ?1 AND player = ?2 AND dead_at IS NULL').bind(charId, fallen).first();
       if (now && now.lease === at.lease) seq = now.seq;
     }
-    return answerOf(ctx, signing, { r, fallen, killer: had.killer, records: list(had.items), kept: list(had.kept), burnt: had.burnt === 1, killerFirst: had.wi === 0, wm: had.wm, oi: had.oi, wg: had.wg, tk: read(had.tk, {}), seq, escrow });
+    return answerOf(ctx, signing, { r, fallen, charId, killer: had.killer, records: list(had.items), kept: list(had.kept), burnt: had.burnt === 1, killerFirst: had.wi === 0, wm: had.wm, oi: had.oi, wg: had.wg, tk: read(had.tk, {}), seq, escrow });
   }
   // FOE-KEEPS (2026-10-24, the owner: "I dont want people to lose everything they have"; asked, "Only PvP deaths drop",
   // in the mountains and at sea): a death to a foe takes nothing - no receipt, no take. Asked by a tab from before the
@@ -245,7 +254,7 @@ export async function wildFall(ctx, player, body, { gateKey, signing }, again = 
     throw e;
   }
   await dropObjects(ctx.bucket, [moved.prev]);   // AUDIT INT9: the save two back, as every act drops it
-  return answerOf(ctx, signing, { r, fallen, killer, records, kept, burnt, killerFirst, wm: room, oi: ctx.nowS, wg, tk, seq: seize ? null : moved.seq, escrow });
+  return answerOf(ctx, signing, { r, fallen, charId, killer, records, kept, burnt, killerFirst, wm: room, oi: ctx.nowS, wg, tk, seq: seize ? null : moved.seq, escrow });
 }
 
 /**

@@ -957,7 +957,7 @@ import { wildTakeTook, wildPacks, wornOffer, wildRecord, wildChunks, wildSpawnSp
 import { readWildReceipt, wildFallGraceS } from '../net/wild/wildReceipt.js';   // INT9: the relay's fall, carried to the service
 import { WILD_REF, wildKin, sameGuild } from '../net/wild/wildRef.js';   // INT9: the zone referee's numbers (its mend, for the HUD); MAC (2026-10-14): and its kin, one law with the referee's
 import { createWildFight } from '../net/wild/wildFight.js';
-import { createWildRemains, WILD_PILE_ICON, WILD_NO_STORE } from '../net/wild/wildRemains.js';   // WILD-WAYPOINT: my remains' flag on both maps (below)
+import { createWildRemains, remainsMine, WILD_PILE_ICON, WILD_NO_STORE } from '../net/wild/wildRemains.js';   // WILD-WAYPOINT: my remains' flag on both maps (below)
 import { markRemains, remainsMarkTick, remainsGone, keepMine, keptMine, forgetMine } from '../systems/wild/wildRemainsWaypoint.js';   // WILD-KEEP: and my remains' record, kept on the device
 import { setLootMarksLive } from './lootLines.js';   // WILD1: my remains' line with the rarity row off
 import { WILD_REMAINS_MS, WDUN_SALT, WDUN_DAY_MS, WDUN_LOCK_MS, WDUN_HERE_MS, spawnedHallMapId } from '../net/wire.js';
@@ -23549,7 +23549,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     pool: () => (wildOutdoors() ? droppedLoot : (modes?.droppedPool?.() ?? null)),
     toScene: (p) => onlineToScene({ x: p[0], y: p[1], z: p[2] }),
     canTake: (rec) => rec.mine || !(rec.oid && (social?.isPartyPeer(rec.oid) || sameGuild((online?.drawable?.() ?? []).find((d) => d.id === rec.oid)?.gt, myGuildTag()))),   // PVPDUNGEONS: party and guild members cannot take a fallen friend's pile
-    mine: (rec) => (!!rec.os && rec.os === (social?.acct ?? null)) || (!!rec.oid && rec.oid === online?.id) || rec.r === _wildMine?.r,
+    mine: (rec) => remainsMine(rec, social?.acct ?? null, online?.id ?? null, _wildMine?.r ?? null),   // WILD-REMAINS-LOSS: by the fallen's account, never by who carried the deposit
     pack: () => (playerEntity.items ??= []),
     mint: (list) => validLootList(list),
     addItem: (list, item) => (isGoldPieces(item) ? addGoldPieces(playerEntity, item.stackCount ?? 1) : addItem(list, item)),   // WILD GOLD: coin goes to the purse

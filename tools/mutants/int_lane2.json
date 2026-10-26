@@ -168,8 +168,8 @@
   {
     "name": "INT9-RELAY-THE-ORDER-UNREAD",
     "file": "server/src/index.js",
-    "old": "      if (!o.ok || o.claims.wr !== d.r) { this._junk(ws); return; }",
-    "new": "      if (false) { this._junk(ws); return; }",
+    "old": "      if (!o.ok || o.claims.wr !== d.r) { this._wildFallRefused(ws, a, d, o.ok ? 'order-names-another' : `order-${o.why ?? (this._verifyKey ? 'bad' : 'no-key')}`); return; }",
+    "new": "      if (false) { this._wildFallRefused(ws, a, d, o.ok ? 'order-names-another' : `order-${o.why ?? (this._verifyKey ? 'bad' : 'no-key')}`); return; }",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "INT9-RELAY-ANOTHER-FALLS-ORDER",
     "file": "server/src/index.js",
-    "old": "      if (!o.ok || o.claims.wr !== d.r) { this._junk(ws); return; }",
-    "new": "      if (!o.ok) { this._junk(ws); return; }",
+    "old": "      if (!o.ok || o.claims.wr !== d.r) { this._wildFallRefused(ws, a, d, o.ok ? 'order-names-another' : `order-${o.why ?? (this._verifyKey ? 'bad' : 'no-key')}`); return; }",
+    "new": "      if (!o.ok) { this._wildFallRefused(ws, a, d, o.ok ? 'order-names-another' : `order-${o.why ?? (this._verifyKey ? 'bad' : 'no-key')}`); return; }",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -606,8 +606,8 @@
   {
     "name": "INT9-AUDIT-SVC-A-FRESH-ORDER-EACH-ASKING",
     "file": "server-account/src/wild.js",
-    "old": "    order = await mintRemainsOrder({ s: fallen, wr: r, wh, wn: records.length, wm, ...(killerFirst && killer ? { wk: killer, wi: 0, ...(escrow ? { we: 1 } : {}) } : {}), ...(wg ? { wg } : {}) }, signing, { subtle: ctx.subtle, nowS: oi });",
-    "new": "    order = await mintRemainsOrder({ s: fallen, wr: r, wh, wn: records.length, wm, ...(killerFirst && killer ? { wk: killer, wi: 0, ...(escrow ? { we: 1 } : {}) } : {}), ...(wg ? { wg } : {}) }, signing, { subtle: ctx.subtle, nowS: ctx.nowS });",
+    "old": "    order = await mintRemainsOrder({ s: fallen, wr: r, wh, wn: records.length, wm, ...(killerFirst && killer ? { wk: killer, wi: 0, ...(escrow ? { we: 1 } : {}) } : {}), ...(wg ? { wg } : {}), ...(wnm ? { wnm } : {}) }, signing, { subtle: ctx.subtle, nowS: oi });",
+    "new": "    order = await mintRemainsOrder({ s: fallen, wr: r, wh, wn: records.length, wm, ...(killerFirst && killer ? { wk: killer, wi: 0, ...(escrow ? { we: 1 } : {}) } : {}), ...(wg ? { wg } : {}), ...(wnm ? { wnm } : {}) }, signing, { subtle: ctx.subtle, nowS: ctx.nowS });",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ],
@@ -688,7 +688,7 @@
   {
     "name": "INT9-AUDIT-RELAY-ANOTHER-ROOMS-ORDER",
     "file": "server/src/index.js",
-    "old": "      if (junkOutsideCover(this, ws, a, c.wm)) return;",
+    "old": "      if (!inCover(a, c.wm)) { this._wildFallRefused(ws, a, d, `outside-cover ${c.wm}`); return; }",
     "new": "",
     "tests": [
       "test/net/int9_wild_ref.test.js"
@@ -716,8 +716,8 @@
   {
     "name": "INT9-AUDIT-RELAY-A-STALLED-DEPOSIT-NEVER-LAID",
     "file": "server/src/index.js",
-    "old": "      if (rec && rec.oid !== a.id && !remainsTakeover(rec, a.id, now)) return;",
-    "new": "      if (rec && rec.oid !== a.id) return;",
+    "old": "      if (rec && rec.oid !== a.id && !remainsTakeover(rec, a.id, now)) { this._wildFallRefused(ws, a, d, 'another-carrier', rec, false); return; }",
+    "new": "      if (rec && rec.oid !== a.id) { this._wildFallRefused(ws, a, d, 'another-carrier', rec, false); return; }",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
