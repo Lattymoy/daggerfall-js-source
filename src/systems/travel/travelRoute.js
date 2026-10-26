@@ -171,6 +171,12 @@ export function routeGround(climateAt, heightAt, waterByte, width = MAP_W, heigh
     isWater,
     peakAt: peak,
     openBlocked,
+    /** FIRST-VISIT: what the pieces are folded from, for their stamp (systems/travel/landPiecesKept.js). */
+    pieceInputs: () => ({ climate, heights, waterByte, width, height }),
+    /** FIRST-VISIT: the pieces over this network - folded now when they are not held. */
+    landPieces: (roads, tracks) => pieces(roads, tracks),
+    /** FIRST-VISIT: pieces folded on another launch over the same inputs (landPiecesKept.js checked them), held as folded here. */
+    adoptPieces(roads, tracks, root) { if (root?.length === width * height) land = { roads, tracks, root }; },
     /** OW-WOD-PATH: the massifs' table (width x height bytes, 1 a massif's pixel) or null - the land's pieces folded again. */
     setRocks(table) { if (table === rocks) return; rocks = table; land = null; },
     /** No way by land: no piece beside (or under) the start is one beside (or under) the goal. Never said from among the

@@ -86,8 +86,8 @@ test('CARP-YARD THE PLACE: the joinery placed on what the two yards (and a port 
   const w = read('src/scenes/world.js');
   const at = (t) => w.indexOf(t);
   assert.ok(at('const sites = g && yardTown ? yardSitesOn(g) : [];') > 0);
-  assert.ok(at('ports = portSitesOn(g, seaField(') > at('const sites = g && yardTown ? yardSitesOn(g) : [];'));
-  assert.ok(at('if (g && yardTown) sites.push(...craftYardSitesOn(g));') > at('ports = portSitesOn(g, seaField('), 'placed after the port\'s places');
+  assert.ok(at('ports = keptPortSitesOn(g, seaField(') > at('const sites = g && yardTown ? yardSitesOn(g) : [];'));
+  assert.ok(at('if (g && yardTown) sites.push(...craftYardSitesOn(g));') > at('ports = keptPortSitesOn(g, seaField('), 'placed after the port\'s places');
   assert.ok(at('memo = { sig, sites, ports };') > at('if (g && yardTown) sites.push(...craftYardSitesOn(g));'));
 });
 

@@ -109,6 +109,9 @@ export function getBlockVariantHere(blockName) {
   if (lastLocationKey < 0) return NO_VARIANT;   // AUDIT-RR F35: `if (lastLocationKey >= 0)` (:192) - a negative key asks nothing, not even AnyLocationKey
   return blockVariants.get(blockKey(lastLocationKey, blockName)) ?? blockVariants.get(blockKey(ANY_LOCATION_KEY, blockName)) ?? NO_VARIANT;
 }
+/** FIRST-VISIT: whether any block variant is set - a kept answer about served blocks (world/terrain/groundTilesKept.js)
+ *  is read only while none is, since a variant serves another file under the block's name. */
+export const anyBlockVariant = () => blockVariants.size > 0;
 /** GetBuildingVariant(ref key, blockName) (:213-236): only asked for a key
  *  with NO variant yet; the last location's, else any's. */
 export function getBuildingVariantHere(blockName, recordIndex, currentVariant = NO_VARIANT) {

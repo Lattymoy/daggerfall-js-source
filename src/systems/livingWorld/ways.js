@@ -26,6 +26,7 @@
 // could. The same pairs, planned by the same planner on the same network in the same direction - every way the one it
 // was - known in a tenth of the frames.
 import { planRoute } from '../travel/travelRoute.js';
+import { keepLandPieces } from '../travel/landPiecesKept.js';   // FIRST-VISIT: the land's pieces kept across launches
 
 /** New pairs asked a frame - at the least (LW3). */
 export const WAYS_PER_FRAME = 2;
@@ -37,16 +38,18 @@ export const WAYS_MAX_PER_FRAME = 32;
 
 /**
  * @typedef {{ pixels: { x: number, y: number }[], kinds?: string[] }} WayPlan
- * @param {{ roads: () => ({ roads: any, tracks: any } | null), ground: () => object, plan?: typeof planRoute, now?: () => number }} deps -
+ * @param {{ roads: () => ({ roads: any, tracks: any } | null), ground: () => object, plan?: typeof planRoute, now?: () => number, keep?: typeof keepLandPieces }} deps -
  *   `roads` the drawn network (null until it is built); `ground` the planner's ground (travelRoute.js routeGround's);
- *   `now` the clock the frame's asking is timed by (PERF-WAYS1; milliseconds)
+ *   `now` the clock the frame's asking is timed by (PERF-WAYS1; milliseconds); `keep` FIRST-VISIT's fetch of the land's
+ *   pieces for a new network (landPiecesKept.js) - a promise the book waits on, or null for nothing to wait for
  */
-export function createWayBook({ roads, ground, plan = planRoute, now = () => performance.now() }) {
+export function createWayBook({ roads, ground, plan = planRoute, now = () => performance.now(), keep = keepLandPieces }) {
   /** @type {Map<string, WayPlan|null>} */
   const book = new Map();
   let budget = WAYS_PER_FRAME;
   let asked = 0, spent = 0, spendMs = WAYS_MS_PER_FRAME;   // PERF-WAYS1: the frame's asking so far (pairs, ms), and how long it may run past the floor
   let net = null, generation = 0;
+  let keeping = null;   // FIRST-VISIT: the network's pieces being fetched (or folded and kept) - the ways wait on it
   return {
     /**
      * The way from town `a` to town `b` (`{ mapId, px, py }`): the plan, null for none, undefined while it waits (the
@@ -57,7 +60,14 @@ export function createWayBook({ roads, ground, plan = planRoute, now = () => per
     wayOf(a, b) {
       const raw = roads();
       if (!raw) return undefined;
-      if (raw.roads !== net) { if (net !== null) { book.clear(); generation++; } net = raw.roads; }
+      if (raw.roads !== net) {
+        if (net !== null) { book.clear(); generation++; }
+        net = raw.roads;
+        const k = keep?.(ground(), raw) ?? null;
+        keeping = k;
+        k?.catch(() => false).finally(() => { if (keeping === k) keeping = null; });
+      }
+      if (keeping) return undefined;
       const flip = a.mapId > b.mapId;
       const p = flip ? b : a, q = flip ? a : b;
       const key = `${p.mapId}>${q.mapId}`;
@@ -78,5 +88,7 @@ export function createWayBook({ roads, ground, plan = planRoute, now = () => per
     /** Bumped each time the network changed under the book (the host's trips are cleared with it). */
     get generation() { return generation; },
     get size() { return book.size; },
+    /** FIRST-VISIT: the land's pieces being fetched for the network - a promise the ways wait on, or null. */
+    get keeping() { return keeping; },
   };
 }

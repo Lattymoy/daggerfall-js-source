@@ -409,13 +409,13 @@ test('TAMRIEL3 door: `?tamrieltrace=off` keeps the authored shape, and nothing e
 test('TAMRIEL3 host: the world host traces the two files after the travel art, fits the Bay by the one water law over the composed reads, installs both through the client, resets the stream\'s frame, and logs the fit; a missing file leaves the authored shape and says so; the held map\'s static key carries the version', () => {
   const src = read('src/scenes/world.js');
   assert.match(src, /import \{ preloadTamrielTrace \} from '\.\.\/ui\/tamrielTrace\.js';/);
-  assert.match(src, /import \{ fitBayToPicture \} from '\.\.\/world\/tamriel\/tamrielLand\.js';/);
+  assert.match(src, /import \{ keptBayFit \} from '\.\.\/world\/tamriel\/bayFitKept\.js';/, 'FIRST-VISIT: the fit kept across launches (bayFitKept.js)');
   const i = src.indexOf('if (tamrielTraceOn()) {');
   assert.ok(i > 0);
   const block = src.slice(i, src.indexOf('preloadTravelControlArt({', i));
-  assert.match(block, /preloadTamrielTrace\(\{ fetchBytes, palette \}\)\.then\(\(trace\) => \{/);
+  assert.match(block, /preloadTamrielTrace\(\{ fetchBytes, palette \}\)\.then\(async \(trace\) => \{/);
   assert.match(block, /if \(!trace\) \{ console\.warn\(/, 'a trace of nothing stands down');
-  assert.match(block, /const fit = fitBayToPicture\(\{ bayLand: \(x, y\) => !isWaterPixel\(maps\.getClimateIndex\(x, y\), woods\.getHeightMapValue\(x, y\)\), trace \}\);/, 'the Bay\'s land by the one water law');
+  assert.match(block, /const fit = await keptBayFit\(\{ bayLand: \(x, y\) => !isWaterPixel\(maps\.getClimateIndex\(x, y\), woods\.getHeightMapValue\(x, y\)\), trace \}\);/, 'the Bay\'s land by the one water law');
   assert.match(block, /const fitPx = fit \? \{ ox: fit\.ox \* fit\.ppu, oy: fit\.oy \* fit\.ppu, ppu: fit\.ppu \} : null;/, 'picture units to Tamriel pixels');
   assert.match(block, /terrainGen\.setTamriel\(\{ trace, fit: fitPx \}\);/);
   assert.match(block, /StreamingWorldState\.frame = tamrielLand \? tamrielFrameInBay\(\) : null;/, 'the stream\'s frame at the new fit');

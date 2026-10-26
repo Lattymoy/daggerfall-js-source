@@ -541,6 +541,20 @@ export async function loadDerivedJson(key) {
     return null;
   }
 }
+/** FIRST-VISIT: a derived artifact kept as itself - a structured clone, so its typed arrays come back typed and no
+ *  JSON text is parsed. The envelope is the key, as storeDerivedJson's. */
+export async function storeDerivedValue(key, value) {
+  return storeDerived(key, { key, value });
+}
+export async function loadDerivedValue(key) {
+  try {
+    const env = await assetValue(DERIVED_STORE, key);
+    return env && env.key === key && Object.hasOwn(env, 'value') ? env.value : null;
+  } catch (e) {
+    console.warn(`[derived] ${key}: unreadable, rebuilding -`, e?.message ?? e);
+    return null;
+  }
+}
 
 /** MW-D40: the canonical relative path of a LOOSE Morrowind file. The
  *  directory picker hands paths like "Pegas Horse Ranch/morrowind/Data

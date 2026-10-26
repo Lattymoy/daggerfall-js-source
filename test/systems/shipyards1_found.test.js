@@ -175,7 +175,7 @@ test('SHIPYARDS THE HOSTS: world.js places the port\'s places in each port town\
   // PIN MOVED (FIELD BUGS 2026-10-14 INLAND-PORTS): a port town is a port by its data that the open sea bears on (portOnSea),
   // and the bearing is read off the open sea
   assert.match(w, /const yardTown = isYardTown\(dfLocation\), portTown = isPortTown\(dfLocation, portOnSea\(dfLocation\)\);\n\s*const places = yardTown \|\| portTown \? townPlacesFor\(dfLocation, lefaySpot, climate\?\.people, loc\) : null;\n\s*if \(yardTown\) yardSites = places\.yards;\n\s*if \(portTown\) portSites = places\.ports;/);
-  assert.match(w, /const bearing = seaBearing\(lp\.x, lp\.y, openSea\);[^\n]*\n\s*ports = portSitesOn\(g, seaField\(g\.width, g\.height, townSeaOf\(yl, bearing\), bearing\)\);/, 'on what the yards left, off the sea');
+  assert.match(w, /const bearing = seaBearing\(lp\.x, lp\.y, openSea\);[^\n]*\n\s*ports = keptPortSitesOn\(g, seaField\(g\.width, g\.height, townSeaOf\(yl, bearing\), bearing\)\);/, 'on what the yards left, off the sea');
   assert.match(w, /const portOnSea = \(dfLocation\) => portTownOnSea\(dfLocation, hasPort, openSea\);/, 'a port by its own data on the open sea (executed: test/systems/shipyards1_audit_port.test.js, test/systems/naval/fb1014_inlandports.test.js)');
   assert.match(w, /if \(portSites\?\.length\) carveYards\(nav, portSites\);/, 'the people walk round them');
   assert.match(w, /\n\s+portSites,   \/\/ SHIPYARDS/, 'on the pixel\'s record');

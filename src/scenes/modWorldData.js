@@ -8,7 +8,7 @@
 //
 // BROWSER-ONLY: import.meta.glob is a Vite compile-time macro - node
 // tests register their JSON on the door from fs.
-import { registerWorldDataAsset, registerWorldDataPack, installWorldDataReplacement, boundWorldDataBlocks, quietLocationOverrides, latchWorldDataDoor, worldDataDoorOpen } from '../formats/worldData/worldDataReplacement.js';
+import { registerWorldDataAsset, registerWorldDataPack, installWorldDataReplacement, boundWorldDataBlocks, quietLocationOverrides, latchWorldDataDoor, worldDataDoorOpen, worldDataBlocksServing } from '../formats/worldData/worldDataReplacement.js';
 import { rebuildWorldDataPatch, canonicalSha256 } from '../formats/worldData/worldDataPatch.js';
 import { openWorldDataPack, packFileSha256, readPackText } from '../formats/worldData/worldDataPack.js';
 import { modSetting, latchModLoaded, modLatchedOn } from '../systems/modSettings.js';
@@ -17,6 +17,8 @@ import { installTownStandIns } from '../world/townStandIns.js';   // WD3: the pe
 import { installArena } from '../world/arena/arenaCity.js';   // ARENA1: the Arena of Daggerfall - the port's own block, the city's edit and the colosseum
 import { installImmersiveTravelGates } from '../world/immersiveTravelGates.js';   // IT1: the carriages, on whichever gate is served
 import { IMMERSIVE_TRAVEL_VENDOR, immersiveTravelLoaded } from '../systems/immersiveTravel.js';   // AUDIT IT1 G3: the mod loaded for the game
+import { prefetchGroundTiles } from '../world/terrain/groundTilesKept.js';   // FIRST-VISIT
+import { prefetchPortSites } from '../world/portSitesKept.js';   // FIRST-VISIT
 
 // The glob sits INSIDE the loader (Vite rewrites it wherever it stands),
 // so a node test that imports a host reaching this module does not trip
@@ -87,6 +89,13 @@ export async function loadModWorldData() {
       if (on && door && !got) _missing.add(vendor);
       return got;
     }));
+    // FIRST-VISIT: answers kept across launches, fetched before the world reads the towns the door serves - the boot
+    // walks' ground tiles, for the door as it now serves (world/terrain/groundTilesKept.js), and the port towns' sites
+    // (world/portSitesKept.js)
+    await Promise.all([
+      prefetchGroundTiles({ blocksBytes: boundWorldDataBlocks()?.bytes ?? null, serving: worldDataBlocksServing() }),
+      prefetchPortSites(),
+    ]);
     return n + counts.reduce((a, b) => a + b, 0);
   })();
   return _loaded;
