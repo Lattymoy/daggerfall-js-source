@@ -192,7 +192,7 @@ const GIVERS = [
  *  in a later task (M0B00Y07 its bear, C0B00Y00 its ghosts at the house). */
 const PLACED_AT_START = /^(N0B00Y06|T0C00Y00|X0C00Y00|A0C00Y00)$/;
 
-test('R2-5 with ARENA2: a Fighters Guild, a Mages Guild, a temple, a social giver and a Daedra in Skyrim, Morrowind and Cyrodiil each offer work that leaves town - every remote site a place the build stands in the giver\'s province, found by its name, on the held map by its pixel, its target placed when the player arrives; the quest saved, the world forgotten and loaded again on the Bay, every site the same place; and a Bay giver\'s sites the Bay\'s as before (the table printed)', { skip: HAVE ? false : 'ARENA2_PATH not set (or a file missing) - the freeware end to end skipped', timeout: 900_000 }, async () => {
+test('R2-5 with ARENA2: a Fighters Guild, a Mages Guild, a temple, a social giver and a Daedra in Skyrim, Morrowind and Cyrodiil each offer work that leaves town, the same draw in a second client\'s game at the pixel - every remote site a place the build stands in the giver\'s province, found by its name, on the held map by its pixel, its target placed when the player arrives; the quest saved, the world forgotten and loaded again on the Bay, every site the same place; and a Bay giver\'s sites the Bay\'s as before (the table printed)', { skip: HAVE ? false : 'ARENA2_PATH not set (or a file missing) - the freeware end to end skipped', timeout: 900_000 }, async () => {
   const { standWorldPastBay, questLayerAt } = await import('./r25World.mjs');
   const { loadTables, questSource } = await import('../../qlSources.mjs');
   const { addQuestResourceObjects } = await import('../../../src/systems/quest/sceneMount.js');
@@ -226,6 +226,12 @@ test('R2-5 with ARENA2: a Fighters Guild, a Mages Guild, a temple, a social give
     const quest = quiet(() => L.machine.parseQuestForLists(questSource(name, true), factionID, { rolls: seeded(name.length * 31 + pixel[0]) }));
     const ms = Date.now() - t0;
     assert.ok(quest, `${where}: the ${giver}'s ${name} is offered (it parsed: work, not "no work")`);
+    // ONE DRAW FOR EVERY CLIENT: another quest layer at the same pixel (a party member's game), the same roll - the same sites
+    const twin = await questLayerAt(world, { pixel: { x: pixel[0], y: pixel[1] }, location });
+    twin.machine.setLastNPCClicked({ hash: 1, mapID: location.mapTableData.mapId, nameSeed: 7, buildingKey: 0, factionID, gender: 0 });
+    const again = quiet(() => twin.machine.parseQuestForLists(questSource(name, true), factionID, { rolls: seeded(name.length * 31 + pixel[0]) }));
+    const sitesOf = (q) => [...q.resources.values()].filter((x) => x.isPlace).map((x) => `${x.symbol.name}=${x.siteDetails?.mapId}:${x.siteDetails?.buildingKey}`);
+    assert.deepEqual(sitesOf(again), sitesOf(quest), `${where} ${name}: the same draw`);
     quiet(() => { L.machine.startQuestImmediate(quest); quest.update(); });   // its start-up task runs at its first update
     const r = REGION_NAMES.indexOf(province);
     const remote = [...quest.resources.values()].filter((x) => x.isPlace && x.scope === 'remote');

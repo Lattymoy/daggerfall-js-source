@@ -6917,7 +6917,8 @@ that near and falls to DFU's darts over the province, by its own law. Every Bay 
 **END TO END, on the freeware** (`test/systems/quest/auditrelease_r25.test.js`, `test/systems/quest/r25World.mjs`). The
 places host stands the world past the Bay in Node from ARENA2 (the trace on the freeware's fit, the game's own rows,
 templates and blocks, the registry), and the quest layer and a real QuestMachine run over it, with NEARBY-QUESTS on as the
-game's default has it. The givers: the Fighters Guild (M0B00Y07), the Mages Guild (N0B00Y06), a temple (C0B00Y00), a
+game's default has it. A second quest layer at the same pixel (a party member's game) draws every site the same under
+the same roll. The givers: the Fighters Guild (M0B00Y07), the Mages Guild (N0B00Y06), a temple (C0B00Y00), a
 commoner (A0C00Y00) and a Daedra (Azura T0C00Y00, Hircine X0C00Y00) at Solitude, Mournhold, and the Imperial City's
 Arena District, Arcane University and Temple District slices. Every one offers its quest. For every remote site:
 
