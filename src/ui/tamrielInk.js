@@ -50,6 +50,7 @@ import { PEN, NAME_FACE, HALO_PEN, FAR_TRACK_PEN, penOf, pathPen, PATH_KINDS, pe
 import { HUB_CAPITALS } from '../systems/region/regionHubs.js';   // REGION-LINES: the Bay's three kingdoms' capitals, with every province's
 import { simplifyChain } from './overworldModel.js';   // TAMRIEL3: the coast's chain thinned as the overworld's are
 import { labelPoint } from './provinceMap.js';   // TAMRIEL3: a province's name hangs where the chargen's map hangs it
+import { zoneLineOf } from '../systems/wild/cyrodiilZone.js';   // ZONE-LINE: Cyrodiil's outline is the zone's law's to draw
 
 /** @typedef {{ x: number, y: number }} Pt */
 /** TESA13: the host's atlas's answer (world/tamrielAtlas.js placesIn) - the places on a rectangle's pixels. */
@@ -403,16 +404,17 @@ function snapEnds(chain, coast, reach = BORDER_SNAP_PX, segmentsNear = null) {
 export function tracedChains(trace) {
   const { w, h, land, province } = trace;
   const ppu = tamrielFit().ppu;
+  const zone = zoneLineOf(trace);   // ZONE-LINE (Wild-Zone.md section 27): Cyrodiil's outline is one line, the zone's and the province's
   const toBay = (seg) => seg.map((p) => { const [x, y] = pictureToBay(p.x, p.y); return { x, y }; });
-  const coastPic = linkSegments(contourSegments((x, y) => land[y * w + x] === 1, w, h)).map((c) => chaikinCapped(simplifyChain(c, COAST_SIMPLIFY_PX), SMOOTH_PASSES, COAST_CUT_PX));
+  const coastPic = linkSegments(zone.cutCoast(contourSegments((x, y) => land[y * w + x] === 1, w, h))).map((c) => chaikinCapped(simplifyChain(c, COAST_SIMPLIFY_PX), SMOOTH_PASSES, COAST_CUT_PX));
   const coast = coastPic.map((c) => simplifyChain(toBay(c), ppu * 0.05));
   const segs = [];
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const i = y * w + x;
       if (!land[i]) continue;
-      if (x + 1 < w && land[i + 1] && province[i + 1] !== province[i]) segs.push([x + 1, y, x + 1, y + 1]);
-      if (y + 1 < h && land[i + w] && province[i + w] !== province[i]) segs.push([x, y + 1, x + 1, y + 1]);
+      if (x + 1 < w && land[i + 1] && province[i + 1] !== province[i] && zone.keeps(x, y, x + 1, y)) segs.push([x + 1, y, x + 1, y + 1]);
+      if (y + 1 < h && land[i + w] && province[i + w] !== province[i] && zone.keeps(x, y, x, y + 1)) segs.push([x, y + 1, x + 1, y + 1]);
     }
   }
   const borders = linkSegments(segs).map((c) => simplifyChain(toBay(chaikinCapped(snapEnds(simplifyChain(c, COAST_SIMPLIFY_PX), coastPic), SMOOTH_PASSES, COAST_CUT_PX)), ppu * 0.05));
@@ -425,7 +427,7 @@ export function tracedChains(trace) {
     const [lx, ly] = labelPoint(mask, w, h);
     labels.push({ key, px: lx, py: ly });
   }
-  return { coast, borders, labels };
+  return { coast: coast.concat(zone.coast), borders: borders.concat(zone.borders), labels };
 }
 
 /** TAMRIEL3: an authored city on the traced land of its own province - where it stands, or the nearest such pixel

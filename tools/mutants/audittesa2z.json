@@ -167,8 +167,8 @@
   {
     "name": "AUDITTESA2Z-Z4-the-fill-unasked",
     "file": "src/systems/wild/wildZone.js",
-    "old": "  if (x1 >= 0) fillEnclosed(inside, width, height);",
-    "new": "  if (x1 < 0) fillEnclosed(inside, width, height);",
+    "old": "  if (x1 >= 0 && !exact) fillEnclosed(inside, width, height);",
+    "new": "  if (x1 < 0 && !exact) fillEnclosed(inside, width, height);",
     "tests": [
       "test/systems/wild/audittesa2z_zone.test.js"
     ]

@@ -605,9 +605,12 @@ continent, the pixel floored past the Bay, no gate in the zone, the Wroth coven 
 
 ### The zone (`systems/wild/cyrodiilZone.js`, `systems/wild/wildZone.js`)
 
-- Cyrodiil whole: every cell of four pixels whose middle the world's grid puts in the Imperial Province (theatre 9),
-  on one lattice over the world, off the player's own traced picture - every client with the same files cuts the same
-  zone. Kept while the trace and the fit stand. `WILD_REGION` is Cyrodiil's region (70, WW-R).
+- Cyrodiil whole: every map pixel the world's grid puts in the Imperial Province (theatre 9), and the water it encloses,
+  off the player's own traced picture - every client with the same files cuts the same zone. ZONE-LINE
+  (`11-Multiplayer/Wild-Zone.md` section 27): the province's own law to the pixel, kept on cells of four on one lattice
+  over the world (a cell had stood whole where its middle pixel stood - a 3.3 km staircase about the province, 9,012
+  pixels of the two apart), and the maps draw one line for the zone and the province. Kept while the trace and the fit
+  stand. `WILD_REGION` is Cyrodiil's region (70, WW-R).
 - The Wrothgarian Mountains' zone RETIRED: the region test, the owner's cut (ZONE-CUT, ZONE-CUT2), Wrothgaria kept out
   (WILD-KEEPOUT), the classic map's zone page (CLASSIC-CUT) - their code and their pins gone, their record kept in
   `Wild-Zone.md` sections 1 and 6.
