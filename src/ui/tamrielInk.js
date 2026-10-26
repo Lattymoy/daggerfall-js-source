@@ -53,7 +53,7 @@ import { stampSquare, coveragePixels, clearCoverage, penRgb } from './inkRaster.
 import { labelPoint } from './provinceMap.js';   // TAMRIEL3: a province's name hangs where the chargen's map hangs it
 import { zoneLineOf } from '../systems/wild/cyrodiilZone.js';   // ZONE-LINE: Cyrodiil's outline is the zone's law's to draw
 import { watersInk, watersInkVersion } from '../world/tamriel/watersInk.js';   // MAP-WATERS: stream G's rivers and lakes past the Bay (the worker's copy), inked
-import { lakeShores, lakeShoreAt, SHORE_WATER } from '../world/tamriel/tamrielGround.js';   // MAP-WATERS: Cyrodiil's lakes' smooth shores
+import { lawLines, linkPieces, segKey } from '../world/tamriel/tamrielLines.js';   // SMOOTH-LAND: the land's own lines
 
 /** @typedef {{ x: number, y: number }} Pt */
 /** TESA13: the host's atlas's answer (world/tamrielAtlas.js placesIn) - the places on a rectangle's pixels. */
@@ -311,7 +311,9 @@ export const SMOOTH_PASSES = 3;
  *  and the border stay within about half a picture pixel of the traced land (one pixel is 15 km). */
 export const COAST_SIMPLIFY_PX = 0.4;
 export const COAST_CUT_PX = 0.75;
-/** TAMRIEL4: how far a border's end is moved onto the coast, picture pixels. */
+/** TAMRIEL4: how far a border's end is moved onto the coast, picture pixels. (SMOOTH-LAND: the ink draws the land's own
+ *  smooth law's lines now - tracedChains - so the picture contour below, its cut and this snap draw nothing; kept, with
+ *  their pins, as TAMRIEL4's reading of the picture.) */
 export const BORDER_SNAP_PX = 1.5;
 
 /**
@@ -376,51 +378,20 @@ export function chaikinCapped(chain, passes = SMOOTH_PASSES, maxCut = Infinity) 
   return pts;
 }
 
-/** A border's open ends moved onto the nearest point of the coast's line within BORDER_SNAP_PX (picture units in and
- *  out) - its nearest point on any of the coast's segments, so a straight shore with no vertex near still takes it. */
-function snapEnds(chain, coast, reach = BORDER_SNAP_PX, segmentsNear = null) {
-  if (chain.length < 2 || (chain[0].x === chain[chain.length - 1].x && chain[0].y === chain[chain.length - 1].y)) return chain;
-  const near = (p) => {
-    let best = null, bd = reach;
-    const each = (a, b) => {
-      const dx = b.x - a.x, dy = b.y - a.y, l2 = dx * dx + dy * dy;
-      const t = l2 > 0 ? Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / l2)) : 0;
-      const q = { x: a.x + dx * t, y: a.y + dy * t }, d = Math.hypot(q.x - p.x, q.y - p.y);
-      if (d < bd) { bd = d; best = q; }
-    };
-    if (segmentsNear) for (const [a, b] of segmentsNear(p)) each(a, b);
-    else for (const c of coast) for (let i = 0; i + 1 < c.length; i++) each(c[i], c[i + 1]);
-    return best ?? p;
-  };
-  const out = chain.slice();
-  out[0] = near(out[0]);
-  out[out.length - 1] = near(out[out.length - 1]);
-  return out;
-}
-
 /** TAMRIEL3: the picture's coast and borders as chains in Bay coordinates, and each province's name at its clearest
- *  point (provinceMap labelPoint). TAMRIEL4: the coast is the land's contour (contourSegments) linked and smoothed
- *  (chaikinCapped) - a shore at the picture's own resolution, no staircase; a border runs where two land pixels change
- *  province, its staircase simplified at a third of a pixel and smoothed with its ends kept, and each end that reaches
- *  the sea moved onto the coast's own line (snapEnds) - so the dashed border meets the shore it divides.
+ *  point (provinceMap labelPoint). SMOOTH-LAND (2026-10-26, bible/03-World/Tamriel.md SMOOTH-LAND; the owner: "Whatever is
+ *  most detailed"): the coast and the borders are the land's own smooth law's lines (world/tamriel/tamrielLines.js
+ *  lawLines - where its label changes between two map pixels' centres, at the map's own pixel), thinned by INK_THIN map
+ *  pixels with their ends kept; Cyrodiil's outline is the zone's line (systems/wild/cyrodiilZone.js zoneLineOf - the same
+ *  crossings, its runs in place of the province's own pieces there, `keys`), so a neighbour's coast and border end on it.
+ *  TAMRIEL4's picture contour (contourSegments, chaikinCapped) and its staircase borders are no longer drawn.
  *  @param {{ w: number, h: number, land: Uint8Array, province: Uint8Array }} trace */
 export function tracedChains(trace) {
   const { w, h, land, province } = trace;
-  const ppu = tamrielFit().ppu;
-  const zone = zoneLineOf(trace);   // ZONE-LINE (Wild-Zone.md section 27): Cyrodiil's outline is one line, the zone's and the province's
-  const toBay = (seg) => seg.map((p) => { const [x, y] = pictureToBay(p.x, p.y); return { x, y }; });
-  const coastPic = linkSegments(zone.cutCoast(contourSegments((x, y) => land[y * w + x] === 1, w, h))).map((c) => chaikinCapped(simplifyChain(c, COAST_SIMPLIFY_PX), SMOOTH_PASSES, COAST_CUT_PX));
-  const coast = coastPic.map((c) => simplifyChain(toBay(c), ppu * 0.05));
-  const segs = [];
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const i = y * w + x;
-      if (!land[i]) continue;
-      if (x + 1 < w && land[i + 1] && province[i + 1] !== province[i] && zone.keeps(x, y, x + 1, y)) segs.push([x + 1, y, x + 1, y + 1]);
-      if (y + 1 < h && land[i + w] && province[i + w] !== province[i] && zone.keeps(x, y, x, y + 1)) segs.push([x, y + 1, x + 1, y + 1]);
-    }
-  }
-  const borders = linkSegments(segs).map((c) => simplifyChain(toBay(chaikinCapped(snapEnds(simplifyChain(c, COAST_SIMPLIFY_PX), coastPic), SMOOTH_PASSES, COAST_CUT_PX)), ppu * 0.05));
+  const lines = lawLines(trace), zone = zoneLineOf(trace);
+  const { segs } = lines.all();
+  const own = (/** @type {'coast'|'border'} */ kind) => linkPieces(segs.filter((s) => s.kind === kind && !zone?.keys.has(segKey(s))), lines.points).map((c) => simplifyChain(c, INK_THIN));
+  const coast = own('coast'), borders = own('border');
   const labels = [];
   for (const [id, key] of Object.entries(PROVINCE_OF_ID)) {
     const mask = new Uint8Array(w * h);
@@ -430,8 +401,10 @@ export function tracedChains(trace) {
     const [lx, ly] = labelPoint(mask, w, h);
     labels.push({ key, px: lx, py: ly });
   }
-  return { coast: coast.concat(zone.coast), borders: borders.concat(zone.borders), labels };
+  return { coast: zone ? coast.concat(zone.coast) : coast, borders: zone ? borders.concat(zone.borders) : borders, labels };
 }
+/** SMOOTH-LAND: how far (map pixels) the ink's own lines are thinned - a quarter of a pixel, so a line stands on the law. */
+export const INK_THIN = 0.25;
 
 /** TAMRIEL3: an authored city on the traced land of its own province - where it stands, or the nearest such pixel
  *  within CITY_SNAP_PX, or null (left off). On the authored shape every city already stands in its province. */
@@ -762,9 +735,6 @@ export function buildTamrielInk({ bayCoast = [] } = {}) {
     const rings = [closedRing(COAST), ...Object.values(ISLANDS).map((r) => closedRing(r))];
     for (const r of rings) for (const c of clipOutsideRect(chainToBay(fretRing(r, calm, noise)), rect)) coast.push(roundCorners(c, 6));
   }
-  // MAP-WATERS: Cyrodiil's lakes on the trace at the ground's own smooth shore (tamrielGround.js lakeShoreAt - the shore
-  // the stream stands), where the picture's 15 km staircase stood, in the shore's hand
-  if (trace) coast = coast.filter((c) => !lakeChain(c, trace)).concat(lakeShoreChains(trace));
   const ends = bayCoastEnds(bayCoast);
   const stitched = stitchToBay(coast, ends);
   coast = stitched.chains;
@@ -1056,58 +1026,6 @@ export function ringChain(ring) {
   for (let i = 0; i < ring.length; i += 2) out.push({ x: ring[i], y: ring[i + 1] });
   if (out.length) out.push({ ...out[0] });
   return out;
-}
-
-/** MAP-WATERS: samples a picture pixel's side the smooth shores are traced at. */
-export const LAKE_INK_SS = 4;
-/** Is a coast chain (Bay coordinates) one of the trace's Cyrodiil lakes' own staircase shores - most of its points beside
- *  a lake's picture pixel (tamrielGround.js lakeShores)? */
-function lakeChain(chain, trace) {
-  const { w, h } = trace, { lake } = lakeShores(trace);
-  let n = 0;
-  for (const p of chain) {
-    const [px, py] = bayToPicture(p.x, p.y), x = Math.floor(px - 0.5), y = Math.floor(py - 0.5);
-    let near = false;
-    for (let dy = 0; dy <= 1 && !near; dy++) for (let dx = 0; dx <= 1; dx++) { const qx = x + dx, qy = y + dy; if (qx >= 0 && qy >= 0 && qx < w && qy < h && lake[qy * w + qx]) { near = true; break; } }
-    if (near) n++;
-  }
-  return chain.length > 0 && n >= 0.6 * chain.length;
-}
-/**
- * MAP-WATERS: CYRODIIL'S LAKES AT THE GROUND'S OWN SHORE - each lake of the trace (tamrielGround.js lakeShores) traced at
- * LAKE_INK_SS samples a picture pixel through lakeShoreAt (the shore the stream stands: its contour wandered, never the
- * picture's staircase), contoured, smoothed as the coast is, in Bay coordinates.
- * @param {{ w: number, h: number }} trace
- */
-export function lakeShoreChains(trace) {
-  const { w, h } = trace, { lake } = lakeShores(trace), F = LAKE_INK_SS, seen = new Uint8Array(w * h), chains = [];
-  for (let s = 0; s < w * h; s++) {
-    if (!lake[s] || seen[s]) continue;
-    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-    const stack = [s];
-    seen[s] = 1;
-    while (stack.length) {
-      const i = /** @type {number} */ (stack.pop()), x = i % w, y = (i - x) / w;
-      if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
-      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-        const nx = x + dx, ny = y + dy, j = ny * w + nx;
-        if (nx >= 0 && ny >= 0 && nx < w && ny < h && lake[j] && !seen[j]) { seen[j] = 1; stack.push(j); }
-      }
-    }
-    const bx = x0 - 2, by = y0 - 2, W = (x1 - x0 + 5) * F, H = (y1 - y0 + 5) * F, mask = new Uint8Array(W * H);
-    for (let j = 0; j < H; j++) {
-      for (let i = 0; i < W; i++) {
-        const px = bx + (i + 0.5) / F, py = by + (j + 0.5) / F, at = lakeShoreAt(px, py), ox = Math.floor(px), oy = Math.floor(py);
-        const own = ox >= 0 && oy >= 0 && ox < w && oy < h ? lake[oy * w + ox] : 0;
-        mask[j * W + i] = at === SHORE_WATER || (at === 0 && own) ? 1 : 0;
-      }
-    }
-    for (const c of linkSegments(contourSegments((i, j) => mask[j * W + i] === 1, W, H))) {
-      const pic = c.map((p) => ({ x: bx + p.x / F, y: by + p.y / F }));
-      chains.push(chaikinCapped(simplifyChain(pic, COAST_SIMPLIFY_PX / F), SMOOTH_PASSES, COAST_CUT_PX).map((p) => { const [x, y] = pictureToBay(p.x, p.y); return { x, y }; }));
-    }
-  }
-  return chains;
 }
 
 /** MAP-WHOLE (ui/tamrielTiles.js BASE_SCALE): the base's paint - the continent's whole frame out on the continent, under

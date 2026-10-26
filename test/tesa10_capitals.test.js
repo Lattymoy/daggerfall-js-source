@@ -414,21 +414,24 @@ test('TESA10b the pixel law: the nearest pixel of its own province\'s land, ring
     assert.equal(capitalPixel({ at: [100, 100], province: 'Morrowind', shore: false }), null);
     // the Bay is no sea: a shore capital beside Daggerfall's own pixels walks on to the picture's coast
     assert.deepEqual(capitalPixel({ at: [138, 45], province: 'Skyrim', shore: true }), { px: 984, py: -210 });
-    // AUDIT TESA II C9: a bay west of column 130 - Solitude on its corner, the sea along its north and its west
+    // AUDIT TESA II C9: a bay west of column 130 - Solitude on its corner, the sea along its north and its west. PIN MOVED
+    // (SMOOTH-LAND, test/world/smoothland.test.js): the land's smooth law rounds the picture's corner, so the corner's
+    // first pixel on the land and the sea at its north and west is five map pixels (half a picture's here) east of it
     const t0 = shoreTrace();
     for (let y2 = 29; y2 < 60; y2++) for (let x2 = 0; x2 < 130; x2++) t0.land[y2 * 320 + x2] = 0;
     setTamrielTrace(t0);
-    assert.deepEqual(capitalPixel(sol), { px: 900, py: -210 });
-    assert.equal(capitalOnPixel(900, -210).cap, sol);
-    assert.equal(capitalOnPixel(900, -210).k, 1);
-    assert.deepEqual(capitalPin({ name: 'Solitude', province: 'Skyrim' }), { px: 900, py: -210 });
+    assert.deepEqual(capitalPixel(sol), { px: 905, py: -210 });
+    assert.equal(provinceKeyBeyondBay(900, -210), null, 'the corner rounded');
+    assert.equal(capitalOnPixel(905, -210).cap, sol);
+    assert.equal(capitalOnPixel(905, -210).k, 1);
+    assert.deepEqual(capitalPin({ name: 'Solitude', province: 'Skyrim' }), { px: 905, py: -210 });
     // the land moves (a new trace): the pixels with it
     const t = shoreTrace();
     for (let y2 = 29; y2 < 60; y2++) for (let x2 = 0; x2 < 130; x2++) t.land[y2 * 320 + x2] = 0;
     for (let x2 = 0; x2 < 320; x2++) { t.land[29 * 320 + x2] = 0; }
     setTamrielTrace(t);
-    assert.equal(capitalOnPixel(900, -210), null, 'the shore moved a row south');
-    assert.equal(capitalOnPixel(900, -200).cap, sol);
+    assert.equal(capitalOnPixel(905, -210), null, 'the shore moved a row south');
+    assert.equal(capitalOnPixel(905, -200).cap, sol);
   } finally { setTamrielTrace(null); }
 });
 

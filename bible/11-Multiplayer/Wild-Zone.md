@@ -1189,11 +1189,20 @@ The owner: "Also ensure the pvp border outlines cyrodil perfectly, currently it 
   become the smoothed outline - the ground, the regions and the zone with it - is the province's arc's call
   (`03-World/Tamriel.md`), not the zone's. The line is the picture's alone: theatreAt answers the Bay's own rectangle
   before the picture, and Cyrodiil's box lies 38 pixels east of it.
+- SMOOTH-LAND (2026-10-26, `03-World/Tamriel.md` SMOOTH-LAND; the owner: "Whatever is most detailed") made that call:
+  the province's own law is the smoothed outline now - theatreAt, the ground, the regions and the zone with it - and the
+  zone's line is the law's own (`cyrodiilZone.js:"export function zoneLineOf("`): the law's line pieces (`world/tamriel/
+  tamrielLines.js` lawLines) whose two pixels the zone parts, each a coast or a border by what lies past the zone. No
+  `keeps`, no `cutCoast`: the held map's ink leaves the zone's pieces to it by their keys, so a neighbour's coast and
+  border end where the law's three labels meet, on the line. The mask is built as before, a pixel at a time from
+  theatreAt (280 ms on this machine); its line is made the first time a map asks it (200 ms, the law's lines shared with
+  the held map). Measured on the freeware's picture: a map pixel the zone's exactly when its middle lies inside the red
+  line, 0 of the box's 3,486,060 apart; no zone pixel on another province's land.
 
 Pins: `test/systems/wild/zoneline.test.js` (5 - the pixel's law over 81 offsets of a picture-like law and at the grid's
 edge; the cells as they stood, the edge's ring, a journey by the pixel; the giants and the halls inside to the pixel; the
 province's ink the zone's line on a small picture; the whole of it on the player's own picture) - `tools/mutants/
-zoneline.json` (28, all dead). PINS MOVED: `test/world/worldWide/wwc2_zone.test.js` (every pixel the province's own;
+zoneline.json` (28, all dead; SMOOTH-LAND re-aimed eight and retired two - 26). PINS MOVED: `test/world/worldWide/wwc2_zone.test.js` (every pixel the province's own;
 the edge on the pixels' corners, a ring's line on the cells'), `test/world/tamriel3.test.js` (the ink's coast: the
 continent's in two pieces ending on the Imperial Province's corners, and the zone's two shores - seven chains, four
 before). Mutant records re-aimed by content: `wwc2.json` (2), `audittesa2z.json` (1), `tamriel3.json` (2), all dead.

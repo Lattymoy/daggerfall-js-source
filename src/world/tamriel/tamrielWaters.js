@@ -210,7 +210,7 @@ function compile(version) {
     const main = R.into !== 'water' ? riverOf.get(R.into) : null;
     if (main) ctl[ctl.length - 1] = nearestOn(main, ...ctl[ctl.length - 1]).at;
     // a river into the trace's water reaches it: where its last point stands on the land (the lakes' smooth shores,
-    // tamrielGround.js lakeShoreAt, move a shore a few pixels), its line runs on along its last leg into the water
+    // world/tamriel/tamrielLand.js SMOOTH-LAND, move a shore a few pixels), its line runs on along its last leg into the water
     else {
       const [lx, ly] = ctl[ctl.length - 1], [qx, qy] = ctl[ctl.length - 2], dl = Math.sqrt((lx - qx) * (lx - qx) + (ly - qy) * (ly - qy)) || 1;
       const ux = (lx - qx) / dl, uy = (ly - qy) / dl;

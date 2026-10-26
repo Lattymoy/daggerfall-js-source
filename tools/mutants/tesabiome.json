@@ -182,8 +182,8 @@
   {
     "name": "TESA-BIOME-21-ground-province",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "  if (zone) return zone.climate;",
-    "new": "  if (zone) return CLIMATES.Woodlands;",
+    "old": "return tamrielBiomeAt(x, y)?.climate ?? CLIMATES.Ocean;",
+    "new": "return tamrielBiomeAt(x, y) ? CLIMATES.Woodlands : CLIMATES.Ocean;",
     "tests": [
       "test/world/tesabiome_biomes.test.js"
     ]

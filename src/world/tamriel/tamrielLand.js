@@ -72,15 +72,274 @@ export const tamrielTrace = () => _trace;
 /** Moves on every install - the ink and the ground's cache key on it. */
 export const tamrielLandVersion = () => _version;
 
-/** The province key under a picture-grid point - the trace's where one is set, the authored rings' else; null at sea. */
+/** The province key under a picture-grid point - the trace's where one is set (SMOOTH-LAND: its smooth law, landLabelAt),
+ *  the authored rings' else; null at sea. */
 export function provinceKeyAt(px, py) {
   if (_trace) {
-    const x = Math.floor(px), y = Math.floor(py);
-    if (x < 0 || y < 0 || x >= _trace.w || y >= _trace.h) return null;
-    const i = y * _trace.w + x;
-    return _trace.land[i] ? (PROVINCE_OF_ID[_trace.province[i]] ?? null) : null;
+    const l = landLabelAt(landLaw(_trace), px, py);
+    return PROVINCE_OF_ID[/** @type {1} */ (l)] ?? null;
   }
   return provinceAt(px, py)?.key ?? null;
+}
+
+// ── SMOOTH-LAND (2026-10-26, bible/03-World/Tamriel.md SMOOTH-LAND; the owner, asked whether to smooth the coasts and the
+// borders: "Whatever is most detailed") ─────────────────────────────────────────────────────────────────────────────
+/**
+ * THE LAND'S LAW, SMOOTH. The trace is the picture's 320 x 200 grid, a pixel of it fifteen and more of the map's: read a
+ * pixel at a time, every coast and every border past the Bay was a staircase of 12.7 km steps - on the ground, on the
+ * maps, in the zone's line. Now the land and each province is a mask of the picture's pixel centres, and its OUTLINE is
+ * the mask's own contour made smooth:
+ *   - the marching squares' contour over the centres (an edge between a centre of the mask and one off it crossed at its
+ *     middle, a saddle's two of the mask kept apart - the trace's land is 4-connected, and a strait on the diagonal so
+ *     stays open): a staircase's diagonal one straight line, a corner cut;
+ *   - linked into its rings and cut at its corners by Chaikin's rule `passes` times (each pass a quarter of every
+ *     segment) - a curve through the middle of every edge it crossed;
+ *   - and stood as a SIGNED DISTANCE on the centres within `reach` of it (+ on the mask's side), held to `clamp`, read
+ *     between the centres by Catmull-Rom's cubic (a saddle's two centres off the mask held at the clamp, so the cubic
+ *     never joins the two across it) - so every picture centre keeps its own side, a square of four centres all one
+ *     label is that label whole, and the line between two labels is the smooth outline, its slope continuous from one
+ *     square to the next.
+ * A point is LAND where the land's distance stands over 0; its PROVINCE the one whose own distance stands highest there,
+ * of those its four centres hold - the border between two the line where theirs are equal. Every reader of the land asks
+ * this (provinceKeyAt, provinceKeyBeyondBay, theatreAt, the ground's bytes, the places, the ports, the lanes, the zone),
+ * and every line the maps draw is its edges (world/tamriel/tamrielLines.js).
+ */
+export const SMOOTH_LAND = Object.freeze({ reach: 2, clamp: 1, passes: 3 });
+/** The padding round the picture (sea), pixels - the reach and a square at the edge. */
+const PAD = SMOOTH_LAND.reach + 2;
+/** A square of more than one label. */
+const MIXED = 255;
+/** The label of the trace's land that names no province (a picture made by hand without them): land to the coast's law,
+ *  the picture's sea to none, no province's - provinceKeyAt's null, as it always was. */
+export const NO_PROVINCE = 10;
+/** @type {WeakMap<object, any>} */
+const _laws = new WeakMap();
+
+/** A contour's rings, smoothed: the marching squares' segments over a padded mask (`m`, W wide), linked at their shared
+ *  ends into closed rings (the padding's sea closes every one), each cut `passes` times. Rings as flat [x, y, ...] arrays
+ *  in padded centre units, the first point not repeated. @param {Uint8Array} m */
+function smoothRings(m, W, H, passes) {
+  /** @type {Map<number, number[]>} each end (a doubled coordinate's key): the segments that touch it */
+  const at = new Map();
+  /** @type {number[]} */
+  const segs = [];
+  const key = (/** @type {number} */ x2, /** @type {number} */ y2) => x2 * 8192 + y2;
+  const add = (/** @type {number} */ ax2, /** @type {number} */ ay2, /** @type {number} */ bx2, /** @type {number} */ by2) => {
+    const n = segs.length / 4;
+    segs.push(ax2, ay2, bx2, by2);
+    for (const k of [key(ax2, ay2), key(bx2, by2)]) { const l = at.get(k); if (l) l.push(n); else at.set(k, [n]); }
+  };
+  for (let y = 0; y + 1 < H; y++) {
+    for (let x = 0; x + 1 < W; x++) {
+      const a = m[y * W + x], b = m[y * W + x + 1], c = m[(y + 1) * W + x + 1], d = m[(y + 1) * W + x];
+      const k = a * 8 + b * 4 + c * 2 + d;
+      if (k === 0 || k === 15) continue;
+      // the edges' middles, doubled: top, right, bottom, left
+      const T = [2 * x + 1, 2 * y], R = [2 * x + 2, 2 * y + 1], B = [2 * x + 1, 2 * y + 2], Lf = [2 * x, 2 * y + 1];
+      const seg = (/** @type {number[]} */ p, /** @type {number[]} */ q) => add(p[0], p[1], q[0], q[1]);
+      switch (k) {
+        case 1: case 14: seg(Lf, B); break;
+        case 2: case 13: seg(B, R); break;
+        case 3: case 12: seg(Lf, R); break;
+        case 4: case 11: seg(T, R); break;
+        case 6: case 9: seg(T, B); break;
+        case 7: case 8: seg(T, Lf); break;
+        case 5: seg(T, R); seg(Lf, B); break;   // b and d of the mask, apart
+        case 10: seg(T, Lf); seg(B, R); break;   // a and c of the mask, apart
+        default: break;
+      }
+    }
+  }
+  const used = new Uint8Array(segs.length / 4), rings = [];
+  for (let s0 = 0; s0 < used.length; s0++) {
+    if (used[s0]) continue;
+    const ring = [];
+    let cur = s0, endX = segs[4 * s0], endY = segs[4 * s0 + 1];
+    while (cur >= 0 && !used[cur]) {
+      used[cur] = 1;
+      ring.push(endX / 2, endY / 2);
+      const ax = segs[4 * cur], ay = segs[4 * cur + 1], bx = segs[4 * cur + 2], by = segs[4 * cur + 3];
+      if (ax === endX && ay === endY) { endX = bx; endY = by; } else { endX = ax; endY = ay; }
+      const list = /** @type {number[]} */ (at.get(key(endX, endY)));
+      cur = list[0] === cur ? (list[1] ?? -1) : list[0];
+    }
+    let pts = ring;
+    for (let n = 0; n < passes && pts.length >= 6; n++) {
+      const out = [], len = pts.length / 2;
+      for (let q = 0; q < len; q++) {
+        const ax = pts[2 * q], ay = pts[2 * q + 1], bx = pts[(2 * q + 2) % pts.length], by = pts[(2 * q + 3) % pts.length];
+        out.push(ax + (bx - ax) * 0.25, ay + (by - ay) * 0.25, ax + (bx - ax) * 0.75, ay + (by - ay) * 0.75);
+      }
+      pts = out;
+    }
+    rings.push(pts);
+  }
+  return rings;
+}
+
+/**
+ * THE LAW OF A TRACE, made once a trace: each padded pixel's label (0 the sea, else its province's id), the land's
+ * distance `S`, each province's own (`T[id]`), and each square's label (MIXED where its four centres differ).
+ * @param {{ w: number, h: number, land: Uint8Array, province: Uint8Array }} trace
+ */
+export function landLaw(trace) {
+  let L = _laws.get(trace);
+  if (L) return L;
+  const { w, h, land, province } = trace, W = w + 2 * PAD, H = h + 2 * PAD, R = SMOOTH_LAND.reach, C = SMOOTH_LAND.clamp;
+  const label = new Uint8Array(W * H);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      if (land[i]) label[(y + PAD) * W + x + PAD] = PROVINCE_OF_ID[/** @type {1} */ (province?.[i])] ? province[i] : NO_PROVINCE;
+    }
+  }
+  // the centres within the reach of a square of mixed labels - the only ones an outline can come within the clamp of
+  const near = new Uint8Array(W * H);
+  for (let y = 0; y + 1 < H; y++) {
+    for (let x = 0; x + 1 < W; x++) {
+      const l = label[y * W + x];
+      if (label[y * W + x + 1] === l && label[(y + 1) * W + x] === l && label[(y + 1) * W + x + 1] === l) continue;
+      for (let qy = Math.max(0, y - R); qy <= Math.min(H - 1, y + 1 + R); qy++) for (let qx = Math.max(0, x - R); qx <= Math.min(W - 1, x + 1 + R); qx++) near[qy * W + qx] = 1;
+    }
+  }
+  /** The signed distance of a mask's smooth outline at every centre. @param {(l: number) => boolean} is */
+  const field = (is) => {
+    const m = new Uint8Array(W * H);
+    for (let i = 0; i < m.length; i++) m[i] = is(label[i]) ? 1 : 0;
+    // the outline's segments, each in every square of centres its box meets (the distance asks a centre's squares about):
+    // counted, then laid square by square (start[k] .. start[k + 1], four numbers a segment)
+    const rings = smoothRings(m, W, H, SMOOTH_LAND.passes), start = new Int32Array(W * H + 1);
+    const each = (/** @type {(k: number, ax: number, ay: number, bx: number, by: number) => void} */ fn) => {
+      for (const r of rings) {
+        for (let q = 0, n = r.length / 2; q < n; q++) {
+          const ax = r[2 * q], ay = r[2 * q + 1], bx = r[(2 * q + 2) % r.length], by = r[(2 * q + 3) % r.length];
+          for (let cy = Math.floor(Math.min(ay, by)); cy <= Math.floor(Math.max(ay, by)); cy++) for (let cx = Math.floor(Math.min(ax, bx)); cx <= Math.floor(Math.max(ax, bx)); cx++) fn(cy * W + cx, ax, ay, bx, by);
+        }
+      }
+    };
+    each((k) => { start[k + 1]++; });
+    for (let k = 0; k < W * H; k++) start[k + 1] += start[k];
+    const fillAt = start.slice(0, W * H), seg = new Float64Array(start[W * H] * 4);
+    each((k, ax, ay, bx, by) => { const o = fillAt[k]++ * 4; seg[o] = ax; seg[o + 1] = ay; seg[o + 2] = bx; seg[o + 3] = by; });
+    const f = new Float32Array(W * H);
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        let d2 = C * C;
+        if (near[y * W + x]) for (let cy = Math.max(0, y - R); cy < Math.min(H, y + R); cy++) {
+          for (let cx = Math.max(0, x - R); cx < Math.min(W, x + R); cx++) {
+            const k = cy * W + cx;
+            for (let n = start[k] * 4, e4 = start[k + 1] * 4; n < e4; n += 4) {
+              const ax = seg[n], ay = seg[n + 1], vx = seg[n + 2] - ax, vy = seg[n + 3] - ay, l2 = vx * vx + vy * vy;
+              let t = l2 > 0 ? ((x - ax) * vx + (y - ay) * vy) / l2 : 0;
+              t = t < 0 ? 0 : t > 1 ? 1 : t;
+              const qx = ax + vx * t - x, qy = ay + vy * t - y, e = qx * qx + qy * qy;
+              if (e < d2) d2 = e;
+            }
+          }
+        }
+        const d = Math.sqrt(d2);
+        f[y * W + x] = m[y * W + x] ? d : -d;
+      }
+    }
+    // a saddle of the mask (two opposite centres its, the other two not): its two off the mask held at the clamp, so the
+    // cubic's reach past the square never joins the two across its middle - the strait stays open
+    for (let y = 0; y + 1 < H; y++) {
+      for (let x = 0; x + 1 < W; x++) {
+        const i = y * W + x, a = m[i], b = m[i + 1], c = m[i + W + 1], d = m[i + W];
+        if (a !== c || b !== d || a === b) continue;
+        if (a) { f[i + 1] = -C; f[i + W] = -C; } else { f[i] = -C; f[i + W + 1] = -C; }
+      }
+    }
+    return f;
+  };
+  const S = field((l) => l !== 0);
+  /** @type {Array<Float32Array|null>} */
+  const T = Array(NO_PROVINCE + 1).fill(null);
+  T[0] = S.map((v) => -v);   // the sea's own: the land's, turned (a line between the sea and a province's land is the coast)
+  for (let id = 1; id <= NO_PROVINCE; id++) if (label.includes(id)) T[id] = field((l) => l === id);
+  // each square's label: its four centres (ix, iy) .. (ix + 1, iy + 1) - one, or MIXED
+  const uni = new Uint8Array(W * H).fill(MIXED);
+  for (let iy = 0; iy + 1 < H; iy++) {
+    for (let ix = 0; ix + 1 < W; ix++) {
+      const l = label[iy * W + ix];
+      if (label[iy * W + ix + 1] === l && label[(iy + 1) * W + ix] === l && label[(iy + 1) * W + ix + 1] === l) uni[iy * W + ix] = l;
+    }
+  }
+  L = { W, H, w, h, label, S, uni, T, fieldOf: (/** @type {number} */ id) => /** @type {Float32Array} */ (T[id]) };
+  _laws.set(trace, L);
+  return L;
+}
+
+/** Catmull-Rom's four weights at t of a span (the centres before, at its start, at its end, after). */
+const crw = (/** @type {number} */ t, /** @type {number[]} */ w) => {
+  const t2 = t * t, t3 = t2 * t;
+  w[0] = (-t3 + 2 * t2 - t) / 2; w[1] = (3 * t3 - 5 * t2 + 2) / 2; w[2] = (-3 * t3 + 4 * t2 + t) / 2; w[3] = (t3 - t2) / 2;
+};
+const WX = [0, 0, 0, 0], WY = [0, 0, 0, 0];
+/** A field read at padded centre coordinates in square (ix, iy), (fx, fy) into it: Catmull-Rom's cubic over the sixteen
+ *  centres about it - through every centre's own value, a straight run's linear distance kept exactly, and smooth (its
+ *  slope continuous) across the squares' edges, so a line is a curve with no corner where it passes from one square
+ *  to the next. */
+function cubic(f, W, ix, iy, fx, fy) {
+  crw(fx, WX); crw(fy, WY);
+  let v = 0;
+  for (let j = 0; j < 4; j++) {
+    const r = (iy - 1 + j) * W + ix - 1;
+    v += WY[j] * (WX[0] * f[r] + WX[1] * f[r + 1] + WX[2] * f[r + 2] + WX[3] * f[r + 3]);
+  }
+  return v;
+}
+
+/**
+ * THE LABEL AT A PICTURE POINT under the smooth law: 0 the sea (and off the picture), else the province's id (PROVINCE_OF_ID;
+ * NO_PROVINCE for land that names none).
+ * @param {ReturnType<typeof landLaw>} L @param {number} px @param {number} py
+ */
+export function landLabelAt(L, px, py) {
+  if (!(px >= 0 && py >= 0 && px < L.w && py < L.h)) return 0;
+  const x = px - 0.5 + PAD, y = py - 0.5 + PAD, ix = Math.floor(x), iy = Math.floor(y), W = L.W;
+  const u = L.uni[iy * W + ix];
+  if (u !== MIXED) return u;
+  const fx = x - ix, fy = y - iy;
+  if (!(cubic(L.S, W, ix, iy, fx, fy) > 0)) return 0;
+  const i = iy * W + ix, ids = [L.label[i], L.label[i + 1], L.label[i + W], L.label[i + W + 1]];
+  let one = 0;
+  for (const id of ids) if (id && id !== one) { if (one) { one = -1; break; } one = id; }
+  if (one > 0) return one;   // the land of one province alone about it: that one's
+  let best = 0, bv = -Infinity;
+  for (const id of ids) {
+    if (!id || id === best) continue;
+    const v = cubic(L.fieldOf(id), W, ix, iy, fx, fy);
+    if (v > bv || (v === bv && id < best)) { bv = v; best = id; }
+  }
+  return best;
+}
+
+/** SMOOTH-LAND: is a picture point on the land's side of the smooth coast (whatever province)? The law's own first ask -
+ *  the lines' coast crossings are found by it (world/tamriel/tamrielLines.js). @param {ReturnType<typeof landLaw>} L */
+export function landSideAt(L, px, py) {
+  if (!(px >= 0 && py >= 0 && px < L.w && py < L.h)) return false;
+  const x = px - 0.5 + PAD, y = py - 0.5 + PAD, ix = Math.floor(x), iy = Math.floor(y);
+  const u = L.uni[iy * L.W + ix];
+  if (u !== MIXED) return u !== 0;
+  return cubic(L.S, L.W, ix, iy, x - ix, y - iy) > 0;
+}
+/** SMOOTH-LAND: does province `p`'s distance stand over province `q`'s at a picture point (the border between them, the
+ *  law's own second ask - the lines' border crossings are found by it)? @param {ReturnType<typeof landLaw>} L */
+export function provinceLeadAt(L, px, py, p, q) {
+  const x = px - 0.5 + PAD, y = py - 0.5 + PAD, ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy;
+  const vp = cubic(L.fieldOf(p), L.W, ix, iy, fx, fy), vq = cubic(L.fieldOf(q), L.W, ix, iy, fx, fy);
+  return vp > vq || (vp === vq && p < q);
+}
+
+/** SMOOTH-LAND: how far a picture point stands inside the land's smooth coast, picture units - the law's own distance, so
+ *  its 0 is the waterline; negative at sea, held to `clamp` either way. The trace's own, or null with none. */
+export function coastDepthAt(px, py) {
+  if (!_trace) return null;
+  const L = landLaw(_trace);
+  if (!(px >= 0 && py >= 0 && px < L.w && py < L.h)) return -SMOOTH_LAND.clamp;
+  const x = px - 0.5 + PAD, y = py - 0.5 + PAD, ix = Math.floor(x), iy = Math.floor(y);
+  return cubic(L.S, L.W, ix, iy, x - ix, y - iy);
 }
 /** TESA3 (bible/03-World/Arena-Provinces.md): the province a Bay pixel past the Bay stands on - its centre's
  *  provinceKeyAt - or null: the Bay's own pixels (Daggerfall's regions answer there), and the sea. */
