@@ -65,6 +65,16 @@ IDENTITY_MAX_TTL_S = "300"
 # repository holds only its hash. EMPTY IS A LEGAL STATE: the draws
 # alone are read, as the relay did before it held a table.
 RAID_TOWNS_SHA256 = ""
+# ═══ COST-1: THE REGIONS WHOSE CHANNEL STAYS SPLIT ═════════════════
+#
+# Region numbers separated by commas ("0,23"), or "all" - each named
+# region's channel is split in four shards as SCALE5c part two split it
+# (src/net/hubShards.js regionsSharded). EMPTY IS THE DEFAULT: every
+# region's channel is whole, so a quiet region sleeps (bible/
+# 11-Multiplayer/Scale-Arc.md COST-1). Name a region here only if its
+# reconnect wave through its one hello gate shows (the relay's metrics,
+# `chat` busy refusals) - a split region keeps up to five objects awake.
+REGION_SHARDS = ""
 # ═══ DISCORD-GATES: THE ROLE THE OMEN PINGS ════════════════════════
 #
 # The Discord id of the opt-in role the hub pings on each gate's omen
@@ -176,6 +186,21 @@ MOD_FEED_URL = "https://daggerfall-accounts.mackcothran.workers.dev/v1/mod/feed"
 # woken (or one whose hub did not answer) never reads it off. Leases are
 # signed with a key derived from GATE_SIGNING_KEY; no new secret.
 GRANT_FEED_URL = "https://daggerfall-accounts.mackcothran.workers.dev/v1/mod/grant-feed"
+# COST-2 part two (bible/11-Multiplayer/Scale-Arc.md): THE CELL TREE MOVES.
+# The setting `cellSeed` (CELL_SEED, off unset) is the level the cell
+# directory seeds its tree at - 2 is 64-pixel cells. It stays off until the
+# site serves the build that says `cv` (a coarse node refuses a cell's
+# hello without it), since the relay deploys first: set it at the hub
+# (`/relay cellSeed 2`), never here, and `/relay cellSeed off` is the way
+# back. Once seeded, a node past CELL_SPLIT_AT named sockets for
+# CELL_SPLIT_DWELL_MS splits into its four children, and four sibling
+# nodes under CELL_MERGE_AT together for CELL_MERGE_DWELL_MS merge
+# (server/src/cellMoves.js; a merge not under the split is read as the
+# defaults below).
+CELL_SPLIT_AT = "150"
+CELL_SPLIT_DWELL_MS = "60000"
+CELL_MERGE_AT = "40"
+CELL_MERGE_DWELL_MS = "600000"
 # ═══ STAFF-PANEL5-HIDDEN: A HIDDEN STAFF MEMBER IN A PRIVATE HOME ═══════
 #
 # Where the relay reports a hidden staff socket entering a private home

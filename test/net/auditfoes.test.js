@@ -73,7 +73,10 @@ test('AUDIT FOES FOE5: both pools bound the damage a peer may claim, and to the 
   assert.match(d, /!Number\.isFinite\(dmg\) \|\| dmg < 0 \|\| dmg > HIT_DMG_MAX\) return false;/,
     'the dungeon host refuses a blow past the bound');
   const dungeon = Number(/const HIT_DMG_MAX = (\d+);/.exec(d)?.[1]);
-  const exterior = Number(/dmg > (\d+)\) return false;/.exec(x)?.[1]);
+  // BOSS-BIG-HIT: the exterior's bound is PEER_HIT_DMG_MAX - refused past it, but a staff event's mini boss takes it at the bound
+  assert.match(x, /!Number\.isFinite\(dmg\) \|\| dmg < 0 \|\| \(dmg > PEER_HIT_DMG_MAX && !f\.entity\?\.staffBoss\)\) return false;/, 'the exterior refuses a blow past the bound');
+  assert.match(x, /const blow = Math\.min\(PEER_HIT_DMG_MAX, dmg\);/, 'and a mini boss takes one at the bound, never past it');
+  const exterior = Number(/export const PEER_HIT_DMG_MAX = (\d+);/.exec(x)?.[1]);
   assert.ok(Number.isFinite(dungeon) && dungeon > 0, `the dungeon names a bound (read ${dungeon})`);
   assert.equal(dungeon, exterior,
     `the two pools bound a peer's word alike - dungeon ${dungeon}, exterior ${exterior}`);

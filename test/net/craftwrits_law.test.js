@@ -158,7 +158,7 @@ test('CRAFT-WRITS law: the card\'s words - the ask, what fills it, the pay, what
   assert.equal(craftPayText({ ...w, track: 'smithing', faction: GUILD_FACTION_IDS.FightersGuild }), 'Pays 156 silver, 312 Smithing experience, 234 Renown and standing with the Fighters Guild');
   assert.equal(craftHeldText(w, { pack: 5, made: 3 }), '3 brewed by you, 5 in your pack');
   assert.equal(craftHeldText({ kind: 'dish' }, { pack: 3, made: 2 }), '2 of your own in your pack');
-  assert.equal(craftShortText(w, { pack: 5, made: 3 }), 'Brew 1 more yourself - found or bought bottles do not count');
+  assert.equal(craftShortText(w, { pack: 5, made: 3 }), 'Brew 1 more yourself at an alchemy station - found or bought bottles do not count');
   assert.equal(craftShortText(w, { pack: 1, made: 4 }), 'Carry 3 more of these bottles in your pack');
   assert.equal(craftShortText({ kind: 'kit', qty: 3 }, { pack: 3, made: 1 }), 'Make 2 more yourself - pieces you bought or sold do not count');
   assert.equal(craftFilledText(w, { pay: 156, xp: 300, renown: { credited: 234 } }), 'The Mages Guild thanks you: 156 silver, 300 Provisioning experience and 234 Renown.');

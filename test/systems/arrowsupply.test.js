@@ -17,7 +17,7 @@ import { spendAmmoFor, ARROW_TEMPLATE, ammoCountFor } from '../../src/systems/in
 import { createWeapon } from '../../src/combat/enemyEquipment.js';
 import { createThunderlock } from '../../src/systems/thunderlock.js';
 import { capLootList } from '../../src/systems/foeLootCap.js';
-import { stockShopShelf, shopArrowStack, shopAmmoStack, SHOP_ARROWS_MAX, SHOP_ITEM_GROUPS } from '../../src/systems/shopStock.js';
+import { stockShopShelf, shopArrowStack, shopAmmoStack, SHOP_ARROWS_MAX, SHOP_ITEM_GROUPS, endlessArrowsAt, GENERAL_STORE_ARROWS } from '../../src/systems/shopStock.js';
 import { BUILDING_TYPES as B } from '../../src/world/buildingNames.js';
 import { useItem, usableItem } from '../../src/systems/useItem.js';
 import { fletchYield, FLETCH_TEMPLATES } from '../../src/systems/fletching.js';
@@ -255,7 +255,8 @@ test('SHOP-ARROWS ON THE COUNTER, FROM NO ROLL: the counter holds DFU\'s own dra
     const counter = run(0), next = run(1);
     const rows = counter.items.filter((it) => it.templateIndex === ARROW_TEMPLATE);
     assert.equal(rows.length, 1, `building ${b}: one arrow stack`);
-    assert.equal(arrowCount(counter.items), arrowCount(next.items) + shopArrowStack(b, q), `building ${b}: DFU's draw and the quiver`);
+    // PIN MOVED (ENDLESS-ARROWS): a General Store's quiver is a whole one at any quality (test/systems/endless_arrows.test.js)
+    assert.equal(arrowCount(counter.items), arrowCount(next.items) + (endlessArrowsAt(b) ? GENERAL_STORE_ARROWS : shopArrowStack(b, q)), `building ${b}: DFU's draw and the quiver`);
     assert.deepEqual([rows[0].group, rows[0].material, rows[0].currentCondition, rows[0].value], ['Weapons', 0, 0, 2], 'CreateWeapon\'s arrow');
     if (b === B.WeaponSmith || b === B.Armorer) assert.equal(counter.n, next.n, `building ${b}: the same draws`);
   }

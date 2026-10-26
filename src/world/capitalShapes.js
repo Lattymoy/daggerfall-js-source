@@ -14,6 +14,7 @@ export const CAPITAL_ART = Object.freeze({
   hide: 19, cane: 20,   // TESA-LORE: Falinesti's hide houses, Torval's sugarcane
   // IC-GRAND: the Imperial City's street walls, a storey each (world/imperialArt.js - vanilla's 64 x 128 wall)
   facadeOchre: 21, facadeBrick: 22, facadeWhite: 23, facadeStone: 24, facadeTimber: 25, groundShop: 26, groundArcade: 27,
+  water: 28,   // IC-GRAND: the palace gardens' fountains' water
 });
 /** A picture's [archive, record]. */
 export const art = (record) => [CAPITAL_ARCHIVE, record];

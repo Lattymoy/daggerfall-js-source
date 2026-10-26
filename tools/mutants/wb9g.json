@@ -111,12 +111,12 @@
   {
     "name": "WB9g-the-gates-never-counted",
     "file": "server-account/src/accounts.js",
-    "old": "       AND ${EMBERS_EARNED_SQL} - insignia_spent >= ?3\n",
-    "new": "",
+    "old": "         AND ${EMBERS_EARNED_SQL} - insignia_spent >= ?3${rid ? `",
+    "new": "         ${rid ? `",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ],
-    "note": "SERPENT-SET / SILVER-FINDS (PIN MOVED): the sale reads the embers' one sum (EMBERS_EARNED_SQL) - re-aimed by content."
+    "note": "Re-aimed by content (AUDIT FB1024, BROKER-RID): the request id's guard rides the same statement. SERPENT-SET / SILVER-FINDS (PIN MOVED): the sale reads the embers' one sum (EMBERS_EARNED_SQL) - re-aimed by content."
   },
   {
     "name": "WB9g-the-spend-never-added",

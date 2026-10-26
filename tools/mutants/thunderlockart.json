@@ -111,8 +111,8 @@
   {
     "name": "THUNDERLOCK-ART2-the-foot-where-the-kick-shows-it",
     "file": "src/combat/thunderlockArt.js",
-    "old": "export const THUNDERLOCK_ART = Object.freeze({ scale: 1, raise: -GUN_FEEL.kick, alphaCut: 128 });",
-    "new": "export const THUNDERLOCK_ART = Object.freeze({ scale: 1, raise: 0, alphaCut: 128 });",
+    "old": "offset: 0.085, raise: -11, alphaCut: 128 });",
+    "new": "offset: 0.085, raise: 0, alphaCut: 128 });",
     "tests": [
       "test/systems/thunderlockart2.test.js"
     ],

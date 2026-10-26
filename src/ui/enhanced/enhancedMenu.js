@@ -124,6 +124,8 @@ import {
   sweepUnsent,
 } from '../../systems/realmSaves.js';   // REALM P1.3: the Online door lists the realm's characters, the service's
 import { applyCustoms, customsLines, crossLeveling, LEVELING_CROSS_LINE } from '../../systems/realmCustoms.js';   // REALM P1.5: an offline character comes in once, through customs
+import { REALM_COPY_SAVE_NAME, realmCopyIds } from '../../systems/realmCopyMark.js';   // a copy of a realm character never comes in
+import { bringOnlineButton } from './bringOnlineButton.js';
 import { createRealmLine } from '../../systems/legacy/realmLine.js';   // HOUSE-WAITS (FIELD BUGS 2026-10-09f): the account's lines, read at the door
 import { loadFamily } from '../../systems/legacy/store.js';
 import { waitingHouses, takeUpLine, houseWaitsTitle, houseWaitsLine, heirButtonLabel } from '../../systems/legacy/waitingHouses.js';
@@ -548,6 +550,7 @@ function saveOf(entry) {
     hour: date ? `${String(date.hour).padStart(2, '0')}:${String(date.minute).padStart(2, '0')}` : null,
     chargenDone: snap.chargenDone !== false,
     testRoom: snap.testRoom === true,   // AUDIT SET D4: a Test Room character, which plays offline
+    realmCopy: snap.realmCopy === true,   // a copy of a realm character, which plays offline (systems/realmCopyMark.js)
   };
 }
 
@@ -1290,17 +1293,20 @@ function paneOnline(body) {
   // carries (systems/realmCustoms.js) on a copy, the service makes the realm character, and it appears above to play.
   // The offline character stays exactly what it was.
   body.append(el('h4', null, t('menu.online.bringHeading', 'Bring an offline character in (once)')));
-  body.append(tileGrid(saves, (save) => ({
-    current: false,
-    actions: [{
-      // AUDIT SET D4: a Test Room character's button says why it is dead (the boot refuses it whatever door it comes by)
-      label: save.testRoom ? t('menu.online.testRoomOffline', 'Test Room: offline only') : t('menu.online.bring', 'Bring online'),
-      // ACC1g: signed out is a DEAD button with the reason one card up,
-      // not a live one that fails at the service.
-      disabled: !who || save.testRoom,
-      onClick: () => { if (!realmBusy) bringOnline(save); },
-    }],
-  })));
+  const realmCopies = realmCopyIds(saves);
+  body.append(tileGrid(saves, (save) => {
+    const button = bringOnlineButton(save, { realmCopy: realmCopies.has(save.characterId) });
+    return {
+      current: false,
+      actions: [{
+        label: button.label,
+        // ACC1g: signed out is a DEAD button with the reason one card up,
+        // not a live one that fails at the service.
+        disabled: !who || button.offlineOnly,
+        onClick: () => { if (!realmBusy) bringOnline(save); },
+      }],
+    };
+  }));
   const field = (label, key, placeholder, maxLength) => {
     const wrap = el('label', 'field');
     wrap.append(el('span', 'fieldlabel', label));
@@ -1457,7 +1463,7 @@ function copyToOffline(row) {
     if (!snap || typeof snap !== 'object') return { ok: false, error: 'no-data' };
     snap = offlineCopyOf(snap);   // AUDIT LIVED1 E: the world's stamps rebased onto the character's clock, the one clock offline
     snap.characterId = mintCharacterId();
-    const r = saveSlot(snap.name || row.name, 'Copied from the realm', snap, { storage: appStorage() });
+    const r = saveSlot(snap.name || row.name, REALM_COPY_SAVE_NAME, snap, { storage: appStorage() });
     return r.ok ? { ok: true } : { ok: false, error: 'no-room' };
   }, () => [t('menu.realm.copied', '{name} is copied as a new offline character. Nothing you play on the copy comes back online.', { name: row.name })]);
 }
@@ -2883,22 +2889,46 @@ function portRowsAudio() {
   if (!can) b.disabled = true;
   ctl.append(b, el('span', `tier ${can ? 'live' : 'unavailable'}`));
   row.append(ctl);
-  return [row, monsterVolumeRow()];
+  return [row, monsterVolumeRow(), companionVolumeRow(), horseVolumeRow(), animalVolumeRow()];
 }
 
 /** MONSTER-VOL (2026-10-20, the owner: "add an option under audio for it called Monster Volume with 0 - 100%"): the
  *  Audio tab's Volume row for what monsters say - calls, attack sounds, pain cries (systems/monsterVolume.js). */
 export const MONSTER_VOLUME_NAME = 'Monster Volume';
 function monsterVolumeRow() {
+  return volumeRow('monsterVolume', t('menu.audio.monsterVolume', MONSTER_VOLUME_NAME),
+    t('menu.audio.monsterVolumeNote', 'How loud monsters call, strike and cry out.'));
+}
+/** COMPANION-VOL (2026-10-23, the owner: "add companion moaning random screaming in idle volume option"): the Audio tab's
+ *  Volume row for a companion's idle calls - the moans and cries a crew hand or a sworn one gives out while it walks with
+ *  you (systems/monsterVolume.js companionVolume), under Monster Volume and drawn as it is, so Enhanced Plus and the DFO
+ *  Grimoire dress paint it as every Volume row. */
+export const COMPANION_VOLUME_NAME = 'Companion Idle Volume';
+function companionVolumeRow() {
+  return volumeRow('companionVolume', t('menu.audio.companionVolume', COMPANION_VOLUME_NAME),
+    t('menu.audio.companionVolumeNote', 'How loud companions moan and cry out while they idle, yours and other players\' alike. 0% silences them.'));   // AUDIT UPDATE E-N6: every companion's idle call - a peer's puppet carries `companion` too
+}
+/** HORSE-VOL, ANIMAL-VOL (2026-10-23, travddm: "Add both animal volume & horse volume"): the Audio tab's Volume rows for every
+ *  horse heard and for the other animal flats (systems/animalVolume.js), drawn as Monster Volume's. */
+export const HORSE_VOLUME_NAME = 'Horse Volume';
+export const ANIMAL_VOLUME_NAME = 'Animal Volume';
+function horseVolumeRow() {
+  return volumeRow('horseVolume', t('menu.audio.horseVolume', HORSE_VOLUME_NAME),
+    t('menu.audio.horseVolumeNote', 'How loud horses neigh and clop, your own mount included.'));
+}
+function animalVolumeRow() {
+  return volumeRow('animalVolume', t('menu.audio.animalVolume', ANIMAL_VOLUME_NAME),
+    t('menu.audio.animalVolumeNote', 'How loud dogs, cats, pigs and cows call.'));
+}
+/** MONSTER-VOL's row, for any 0..1 volume on the shelf (`key`): its name, `note` its title. */
+function volumeRow(key, name, note) {
   // drawn as Sound Volume and Music Volume are (settingRow's number arm): the name alone, then the value and its two
   // arrows - 5% a press, 20% with Shift - and the row's tier
-  const key = 'monsterVolume';
-  const name = t('menu.audio.monsterVolume', MONSTER_VOLUME_NAME);
   const row = el('div', 'row');
   row.dataset.opt = key; row.dataset.pref = key;   // ORG2
   const main = el('button', 'row-main');
   main.append(el('div', 'row-name', name));
-  main.title = t('menu.audio.monsterVolumeNote', 'How loud monsters call, strike and cry out.');
+  main.title = note;
   row.append(main);
   const ctl = el('div', 'ctl');
   const cur = () => { const v = Number(getPref(key)); return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 1; };
@@ -3591,6 +3621,8 @@ const rebuildMorrowindBody = async () => {
 const TILE_AFTER = Object.freeze({
   mwSheathing: rebuildMorrowindBody,
   mwSteelHelm: rebuildMorrowindBody,   // MW-STEEL1: the steel helm's style, closed or open, on the standing body at once
+  mwBeastFeet: rebuildMorrowindBody,   // BEAST-BOOTS: a beast's footwear and helmet, on the standing body at once
+  mwBeastHelm: rebuildMorrowindBody,
 });
 
 /**

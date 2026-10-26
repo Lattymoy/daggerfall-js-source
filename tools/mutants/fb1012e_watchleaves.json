@@ -119,8 +119,8 @@
  {
   "name": "WATCH-LEAVES-counted-while-leaving",
   "file": "src/scenes/cityGuards.js",
-  "old": "guards.filter((g) => !g.dead && g.defender && !g.leaving).length",
-  "new": "guards.filter((g) => !g.dead && g.defender).length",
+  "old": "guards.filter((g) => !g.dead && g.defender && !g.leaving && !g.raidBearer).length",
+  "new": "guards.filter((g) => !g.dead && g.defender && !g.raidBearer).length",
   "tests": [
    "test/systems/fb1012e_watchleaves.test.js"
   ]

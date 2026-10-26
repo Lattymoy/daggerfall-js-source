@@ -74,7 +74,8 @@ import { FLAT_CRACK_GLSL } from '../systems/veinCrack.js';   // VEIN-CRACKS: the
 import { HIT_FLASH_GLSL, ELITE_GLOW_GLSL, GLINT_GLSL } from '../systems/hitFlash.js';   // HITFLASH1: the struck-red term, the classic BB_FS's own
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
 import { ecotoneGlsl } from './ecotoneGlsl.js';   // ECOTONE1: the ground's share of its neighbours, both terrain programs' one chunk
-import { snowCoverGlsl } from './snowCoverGlsl.js';   // PRECIP4: the snow the ground keeps, after it
+import { snowCoverGlsl, SNOW_TILE_M } from './snowCoverGlsl.js';   // PRECIP4: the snow the ground keeps, after it
+import { snowCapGlsl } from './snowCapGlsl.js';   // PEAKS1: a steep face over the cap's line is bare rock
 import { WATER_BED_GLSL, waterBedMix } from './waterBedGlsl.js';   // WATER-NEXT 2: under the enhanced water the ground is a bed
 import { RING_SEA_GLSL } from './horizonHaze.js';   // FAR-SEA1: the ring's sea and the horizon's haze, the classic ring's own text
 import { RING_HAZE_GLSL } from './hazeGlsl.js';   // BANTHA1: and the jungle's haze over it, the classic ring's own text
@@ -1000,6 +1001,7 @@ ${EL_FOG_GLSL}
 ${EL_POINT_LIT_GLSL}
 ${ecotoneGlsl('elDecode')}
 ${snowCoverGlsl('elDecode')}
+${snowCapGlsl('elDecode', SNOW_TILE_M)}
 ${WATER_BED_GLSL}
 out vec4 outColor;
 const mat2 ROT[4] = mat2[4](
@@ -1041,6 +1043,7 @@ void main() {
   vec4 ew = ecoWeights(vLocalXZ);   // ECOTONE1: the border's shares, once (AUDIT PRECIP GROUND-6: the snow crosses it by the same)
   tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share
   float snowC = snowCover(vLocalXZ, vWorldPos.y, gx, gy);   // PRECIP4: the snow the ground keeps (the bed below reads it too)
+  snowC = snowFace(tex, snowC, vLocalXZ, vWorldPos.y, normalize(vNormal), tuv, gx, gy);   // PEAKS1: a steep face over the cap's line is bare rock (render/snowCapGlsl.js)
   tex = snowGround(tex, ew, snowC, vec3(tuv, float(layer)), gx, gy);
   ${waterBedMix((t) => `elDecode(${t})`)}
   tex = mix(tex, uFadeTint.rgb, uFadeTint.a);   // MID-RING: out of the middle ring's tint, a just-built pixel's

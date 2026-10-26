@@ -509,5 +509,35 @@
       "test/tooling/da13_gamechannel.test.js"
     ],
     "note": "electron-builder leaves the index out of the shell."
+  },
+  {
+    "name": "DA13-52-a-cancelled-navigation-switches",
+    "file": "app/lib/readyGameSwitch.cjs",
+    "old": "  return typeof navigation.url === 'string' && navigation.url.startsWith(GAME_PAGES);",
+    "new": "  return true;",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "A navigation the fence cancels switches the ready version under the page still running, and the next launch rolls it back."
+  },
+  {
+    "name": "DA13-53-a-same-document-step-switches",
+    "file": "app/lib/readyGameSwitch.cjs",
+    "old": "  if (navigation.isSameDocument) return false;\n",
+    "new": "",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "A hash or history step keeps the page, and the version switches under it."
+  },
+  {
+    "name": "DA13-54-a-subframe-switches",
+    "file": "app/lib/readyGameSwitch.cjs",
+    "old": "  if (!navigation?.isMainFrame) return false;\n",
+    "new": "  if (!navigation) return false;\n",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "A frame inside the page navigates, and the version switches under the page."
   }
 ]

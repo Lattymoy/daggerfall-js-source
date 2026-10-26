@@ -12,8 +12,8 @@
   {
     "name": "STAFF-FREEZE-ASK-asked-inside-the-meter",
     "file": "src/net/online.js",
-    "old": "this._leaseAskAt = Math.max(now, this._leaseAskAt + LEASE_FRAME_MIN_MS + LEASE_ASK_SLACK_MS) - LEASE_MS;",
-    "new": "this._leaseAskAt = -Infinity;",
+    "old": "this.staffOk = true; this._leaseOnce = true; this._leaseAskAt = Math.max(now, this._leaseAskAt + LEASE_FRAME_MIN_MS + LEASE_ASK_SLACK_MS) - LEASE_MS;",
+    "new": "this.staffOk = true; this._leaseOnce = true; this._leaseAskAt = -Infinity;",
     "why": "a freeze heard a moment after the last lease ask is asked at once, dropped by the hub's meter, and reaches no other room until LEASE_MS on (mob: \"froze a player he still moves\")",
     "tests": [
       "test/net/staffpanel5live_e2e.test.js",
@@ -28,6 +28,16 @@
     "why": "a follow's links say hello with the tab's id, the game's own, and the relay replaces the staff member's World tab and room (mob: \"need the follow dropping me to stop\")",
     "tests": [
       "test/net/staffpanel5drop_e2e.test.js"
+    ]
+  },
+  {
+    "name": "HIBERNATE-freeze-lease-door-only",
+    "file": "src/net/online.js",
+    "old": "(this.leaseDoor || this._leaseOnce) && this.status === 'open'",
+    "new": "this.leaseDoor && this.status === 'open'",
+    "why": "with leaseDoor off a frozen game asks no lease, and every other room sees the frozen player walk on",
+    "tests": [
+      "test/net/staffpanel5live_e2e.test.js"
     ]
   }
 ]

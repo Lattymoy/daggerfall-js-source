@@ -433,6 +433,7 @@ test('CSA-K: the host - my place aboard rides my foes frame as `ab` (a changed w
     csaWord: () => false, csaOn: () => true, csaAboard: { word: () => aboardWord }, player: { pos: [0, 0, 0] }, _csaAboardKey: '',
     csaHelmWord: () => helmAt,   // FIELD BUGS 2026-09-29 (the sea) #1: my place at my own helm, when aboard nothing else
     raidWireWord: () => null,   // THE MERGE: RAID2's word rides the same line
+    raidObjWord: () => null,   // AUDIT WORLD-EVENTS T1: and RAID5's objective word beside it - no raid here
     bandWord: () => false,   // THE MERGE (TV7b): no band chases on this deck
     navalWord: () => false,   // THE MERGE with NAV-G: the sea's word rides beside it - no sea here, this pin is the aboard word's
     seaRaidWord: () => false,   // OW6: nor raider chases

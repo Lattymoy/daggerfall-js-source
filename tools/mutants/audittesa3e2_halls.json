@@ -252,8 +252,8 @@
   {
     "name": "E2-5-hub-drain-silent",
     "file": "server/src/index.js",
-    "old": "    if (last) { try { await this._wdunFlush(); await this._sweep();",
-    "new": "    if (last) { try { await this._sweep();",
+    "old": "    if (last) { try { await this._wdunFlush(); await this._sweep(",
+    "new": "    if (last) { try { await this._sweep(",
     "tests": [
       "test/net/audittesa3e2_halls.test.js"
     ],

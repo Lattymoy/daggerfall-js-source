@@ -198,5 +198,32 @@
     "tests": [
       "test/systems/potiondoor.test.js"
     ]
+  },
+  {
+    "name": "POTION-DOOR-X11b-the-item-where-the-index-goes",
+    "file": "src/scenes/potionMakerHost.js",
+    "old": "      if (removeOne(list, templateIndex, { group, allowEnchantedItem: false })) return true;",
+    "new": "      if (removeOne(list, list.find((it) => it.templateIndex === templateIndex), { group, allowEnchantedItem: false })) return true;",
+    "tests": [
+      "test/systems/x11b.test.js"
+    ]
+  },
+  {
+    "name": "POTION-DOOR-X11b-the-spend-blind-to-the-group",
+    "file": "src/scenes/potionMakerHost.js",
+    "old": "      if (removeOne(list, templateIndex, { group, allowEnchantedItem: false })) return true;",
+    "new": "      if (removeOne(list, templateIndex, { group: list.find((it) => it.templateIndex === templateIndex)?.group, allowEnchantedItem: false })) return true;",
+    "tests": [
+      "test/systems/x11b.test.js"
+    ]
+  },
+  {
+    "name": "POTION-DOOR-X11b-an-enchanted-twin-spent",
+    "file": "src/scenes/potionMakerHost.js",
+    "old": "      if (removeOne(list, templateIndex, { group, allowEnchantedItem: false })) return true;",
+    "new": "      if (removeOne(list, templateIndex, { group })) return true;",
+    "tests": [
+      "test/systems/x11b.test.js"
+    ]
   }
 ]

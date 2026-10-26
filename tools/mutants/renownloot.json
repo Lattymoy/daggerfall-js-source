@@ -124,8 +124,8 @@
   {
     "name": "RENOWN-LOOT-spawn-ladder-whole",
     "file": "src/scenes/hostCombat.js",
-    "old": "weights: plain?.plainLadder ? plainFoeRarityWeights(ease) : null });",
-    "new": "weights: plain?.plainLadder ? plainFoeRarityWeights(4) : null });",
+    "old": "weights: plain?.plainLadder ? plainFoeRarityWeights(ease) : null, level: effectiveLevel(player) });",
+    "new": "weights: plain?.plainLadder ? plainFoeRarityWeights(4) : null, level: effectiveLevel(player) });",
     "why": "the spawn's ladder never read at the Renown",
     "tests": [
       "test/systems/renownloot.test.js",

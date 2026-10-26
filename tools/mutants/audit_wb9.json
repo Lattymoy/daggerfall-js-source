@@ -38,11 +38,12 @@
   {
     "name": "AUDIT-WB9-a-lost-answer-taken-for-a-refusal",
     "file": "src/systems/sigil/sigilBroker.js",
-    "old": "  if (insigniaUnheard(r)) {",
-    "new": "  if (false) {",
+    "old": "  if (insigniaUnheard(r)) {\n    const s = await askAfter(settle, rid);\n    if (!s) return oweSale({ kind: 'insignia'",
+    "new": "  if (false) {\n    const s = await askAfter(settle, rid);\n    if (!s) return oweSale({ kind: 'insignia'",
     "tests": [
       "test/net/wb9g_insignia.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT FB1024, BROKER-RID): the Panoply's sale now asks after a lost answer the same way, so the insignia's is named by its own owed kind."
   },
   {
     "name": "AUDIT-WB9-a-5xx-taken-for-a-refusal",

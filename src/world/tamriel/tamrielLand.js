@@ -64,10 +64,15 @@ export function seaDistanceField(land, w, h) {
 
 /** Install a trace (or null: the authored shape again). Keeps its own distance field. */
 export function setTamrielTrace(trace) {
-  if (!trace || !trace.land || !trace.province || trace.w * trace.h !== trace.land.length) { _trace = null; _version++; return; }
+  if (!trace || !trace.land || !trace.province || trace.w * trace.h !== trace.land.length) { _trace = null; _version++; for (const fn of _heard) fn(null); return; }
   _trace = { w: trace.w, h: trace.h, land: trace.land, province: trace.province, dist: trace.dist ?? seaDistanceField(trace.land, trace.w, trace.h), relief: trace.relief ?? null };   // TAMRIEL-RELIEF: the heightmap's cells ride on the trace (world/tamriel/tamrielRelief.js)
   _version++;
+  for (const fn of _heard) fn(_trace);
 }
+/** AUDIT RELEASE R4-7: who hears a trace land (or go) - the held map's idle job (ui/tamrielInk.js startTracedJob). */
+const _heard = new Set();
+/** @param {(trace: any) => void} fn @returns {() => boolean} its removal */
+export function onTamrielTrace(fn) { _heard.add(fn); return () => _heard.delete(fn); }
 export const tamrielTrace = () => _trace;
 /** Moves on every install - the ink and the ground's cache key on it. */
 export const tamrielLandVersion = () => _version;

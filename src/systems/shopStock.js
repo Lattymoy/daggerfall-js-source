@@ -52,6 +52,7 @@ import { MINUTES_PER_DAY, dayOfYear } from './gameDate.js';   // X6: the soul-ge
 import { SOUL_TRAP_TEMPLATE } from './mysticism.js';   // X6: one home for the template id (X5 put it there with fillEmptyTrap)
 import { ILIAC_CARD_TEMPLATE, CARD_PACK_TEMPLATE } from './iliac/iliacItems.js';   // AUDIT CARDS-5 C2: the collectible card, which no shop buys; CARDS9: nor its pack
 import { goodOfTemplate } from './naval/tradeGoods.js';   // AUDIT CAPTAIN'S SEA B2: the exchange's goods, which no shop buys
+import { landSold } from './stolenGoods.js';   // AUDIT UPDATE II B2: the sale's own door, for the counter's arrows
 import { OIL_TEMPLATE, ARROW_TEMPLATE, addItem } from './inventory.js';   // SHOP-ARROWS: the counter's quiver   // AUDIT-RR2 G10: the shelf's AddItem   // AUDIT 58: UselessItems2.Oil (ItemEnums.cs:357) - one home for the id
 import { getBool } from './settings/settings.js';   // AUDIT 58: DaggerfallUnity.Settings.PlayerTorchFromItems, read where DFU reads it
 import { FACTION_TYPES } from '../formats/factionFile.js';        // S41: UpdateRegionalPrices' type-7 region walk
@@ -136,6 +137,47 @@ export function shopAmmoStack(buildingType, quality, max) {
  */
 export const SHOP_ARROWS_MAX = 100;
 export const shopArrowStack = (buildingType, quality) => shopAmmoStack(buildingType, quality, SHOP_ARROWS_MAX);
+/**
+ * ENDLESS-ARROWS (2026-10-23, the owner: "give general stores always arrows for each player to buy they cant exhaust"): A
+ * GENERAL STORE'S QUIVER NEVER EMPTIES. Its counter shelf carries a full quiver (GENERAL_STORE_ARROWS, whatever the
+ * shop's quality - SHOP-ARROWS' 14 to 29 was a General Store's) from no roll, and every purchase that takes arrows off it
+ * puts back what it took, up to the whole (restockEndless), offline and online alike - unlike ENDLESS-STOCK's bag,
+ * campfire and rations, which online alone. AUDIT UPDATE E1: only what a PURCHASE took - an arrow stolen stays gone,
+ * so a theft and one arrow bought never fill the quiver again; E2: the counter's shelf alone (the hosts hand its shop
+ * for that shelf and no other). Online a shelf is the room's (WORLD6a), and the refill rides its published list, so no
+ * patron buys another's arrows out (AUDIT UPDATE E-N8). The other storefronts' quivers sell out as SHOP-ARROWS says. A
+ * declared departure (Port-Ledger A).
+ */
+export const GENERAL_STORE_ARROWS = SHOP_ARROWS_MAX;
+export const endlessArrowsAt = (buildingType) => buildingType === BUILDING_TYPES.GeneralStore;
+const isShelfArrow = (it) => it?.group === 'Weapons' && it.templateIndex === ARROW_TEMPLATE;
+/** ENDLESS-ARROWS: the counter's quiver, minted as the shelf mints its own (CreateWeapon's arrow arm, its roll a constant). */
+const mintQuiver = (n) => mintCondition(setItemFields({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n }));
+/** AUDIT UPDATE II B2: A SOLD PIECE ONTO A SHELF - STOLEN-GOODS' law (stolenGoods.js landSold), but an arrow sold at a
+ *  General Store's COUNTER is paid for and never shelved there (a departure from DFU's remoteItems, for these arrows
+ *  alone): its quiver is endless, and a sold row bought back would read as arrows the purchase took from it - a theft,
+ *  a sale and the buy-back stood the quiver again. `buildingType` the counter's shop, null for any other shelf.
+ *  Answers landSold's word: whether the piece is on the shelf. */
+export function landSoldAt(shelfItems, item, buildingType = null) {
+  if (endlessArrowsAt(buildingType) && isShelfArrow(item)) return false;
+  return landSold(shelfItems, item);
+}
+/** ENDLESS-ARROWS: a General Store's quiver given back what a purchase took of it, up to its whole; answers 1 when it
+ *  filled or stood one, else 0. AUDIT UPDATE E1: the arrows the purchase took, never the whole - what a theft took
+ *  stays gone. */
+function restockArrows(shelfItems, bought, buildingType) {
+  const took = (bought ?? []).filter(isShelfArrow).reduce((n, it) => n + Math.max(1, Math.trunc(it.stackCount ?? 1)), 0);
+  if (!endlessArrowsAt(buildingType) || !(took > 0)) return 0;
+  const stack = shelfItems.find(isShelfArrow);
+  if (stack) {
+    const was = stack.stackCount ?? 1;
+    if (was >= GENERAL_STORE_ARROWS) return 0;
+    stack.stackCount = Math.min(GENERAL_STORE_ARROWS, was + took);
+    return 1;
+  }
+  addItem(shelfItems, mintQuiver(Math.min(GENERAL_STORE_ARROWS, took)));
+  return 1;
+}
 
 // E3: DaggerfallTradeWindow.storeBuysItemType, verbatim - the item
 // groups each storefront BUYS from the player.
@@ -281,10 +323,12 @@ export const isEndlessStock = (item) => isBagItem(item) || (isSurvivalItem(item)
  *  stacks), minted as the shelf mints it (worldModes.js commitTrade's Buy). Only a purchase restocks: a row taken from a
  *  closed shop's shelf is stolen, and stays gone. Online alone; and online no shop buys one back (shopBuysItem), so the only
  *  endless rows on a shelf are the ones it stocked itself. Answers how many went back. */
-export function restockEndless(shelfItems, bought) {
+export function restockEndless(shelfItems, bought, buildingType = null) {
+  if (!Array.isArray(shelfItems)) return 0;
+  // ENDLESS-ARROWS: a General Store's quiver, offline and online (`buildingType` the counter's shop)
+  let n = restockArrows(shelfItems, bought, buildingType);
   // AUDIT ENDLESS-STOCK F4: online alone, as the bag is - offline a shelf sells out as Daggerfall's does
-  if (!Array.isArray(shelfItems) || !isOnlinePage()) return 0;
-  let n = 0;
+  if (!isOnlinePage()) return n;
   for (const it of bought ?? []) {
     if (!isEndlessStock(it)) continue;
     if (isRations(it)) {
@@ -506,7 +550,8 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
   if (shelfIndex === 0 && (buildingType === BUILDING_TYPES.GeneralStore || buildingType === BUILDING_TYPES.PawnShop)) ensureEndlessProvisions(items);
   // SHOP-ARROWS (above): a quiver on the counter of every shop that sells weapons - after DFU's draws, from no roll; minted
   // as the shelf mints its own (CreateWeapon's arrow arm, its stack roll answered by a constant), so the two are one stack
-  if (shelfIndex === 0) { const n = shopArrowStack(buildingType, quality); if (n > 0) add({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n }); }
+  // ENDLESS-ARROWS: a General Store's a full quiver at any quality (merged into DFU's drawn arrows as SHOP-ARROWS' is)
+  if (shelfIndex === 0) { const n = endlessArrowsAt(buildingType) ? GENERAL_STORE_ARROWS : shopArrowStack(buildingType, quality); if (n > 0) add({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n }); }
   // POTION-COMMON (2026-10-01, the field: "make health potions more common"): an alchemist's and a general store's day of
   // Potions of Healing (healingSupply.js) - at the shelf's end and from no roll, so DFU's own draws above are the same.
   // AUDIT ECON P1: on the shop's FIRST shelf alone, the one its counter sells from (worldModes.js openMerchantSell) -

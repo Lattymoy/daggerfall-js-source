@@ -137,8 +137,8 @@
   {
     "name": "TAMRIEL3-a-malformed-trace-is-installed",
     "file": "src/world/tamriel/tamrielLand.js",
-    "old": "if (!trace || !trace.land || !trace.province || trace.w * trace.h !== trace.land.length) { _trace = null; _version++; return; }",
-    "new": "if (!trace || !trace.land || !trace.province) { _trace = null; _version++; return; }",
+    "old": "if (!trace || !trace.land || !trace.province || trace.w * trace.h !== trace.land.length) { _trace = null; _version++; for (const fn of _heard) fn(null); return; }",
+    "new": "if (!trace || !trace.land || !trace.province) { _trace = null; _version++; for (const fn of _heard) fn(null); return; }",
     "tests": [
       "test/world/tamriel3.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "TAMRIEL3-the-version-stands-still",
     "file": "src/world/tamriel/tamrielLand.js",
-    "old": "  _version++;\n}",
-    "new": "}",
+    "old": "  _version++;\n  for (const fn of _heard) fn(_trace);\n}",
+    "new": "  for (const fn of _heard) fn(_trace);\n}",
     "tests": [
       "test/world/tamriel3.test.js"
     ]

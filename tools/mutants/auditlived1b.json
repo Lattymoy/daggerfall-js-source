@@ -78,8 +78,8 @@
   {
     "name": "AUDITLIVED1B-S1-checkpoint-ignores-the-walk",
     "file": "src/systems/online/onlineCheckpoint.js",
-    "old": "return !!online && !!spawned && !seatOut && !duel && !walkWaiting;",
-    "new": "return !!online && !!spawned && !seatOut && !duel;",
+    "old": "return !!online && !!spawned && seatAllows && !duel && !walkWaiting;",
+    "new": "return !!online && !!spawned && seatAllows && !duel;",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]
@@ -105,8 +105,8 @@
   {
     "name": "AUDITLIVED1B-S1-the-host-never-asks",
     "file": "src/scenes/world.js",
-    "old": ", walkWaiting: ownWalkWaiting(playerEntity) })) return false;",
-    "new": " })) return false;",
+    "old": "    if (!checkpointGateOpen()) return false;",
+    "new": "    if (false) return false;",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]
@@ -114,8 +114,8 @@
   {
     "name": "AUDITLIVED1B-S1-the-death-checkpoint-never-asks",
     "file": "src/scenes/world.js",
-    "old": ", walkWaiting: ownWalkWaiting(playerEntity) });   // the periodic checkpoint's own gate",
-    "new": " });   // the periodic checkpoint's own gate",
+    "old": "    const allowed = checkpointGateOpen();",
+    "new": "    const allowed = true;",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]

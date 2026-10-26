@@ -40,6 +40,7 @@ import { liveStat } from '../../src/systems/statMods.js';
 import { playerEntity, hurtPlayer } from '../../src/characters/playerEntity.js';
 import { computeEntityMods, weaponBlowMods } from '../../src/systems/entityMods.js';
 import { setStruck } from '../../src/systems/sigil/sigilSetPowers.js';
+import { _resetPlayerHealForTests } from '../../src/systems/playerHeal.js';   // FIELD BUGS 2026-10-26: no magicka fraction carried into the pins
 import { setRenownLayer } from '../../src/systems/renownLayer.js';
 import { HULL } from '../../src/systems/naval/navalShips.js';
 import { haulKey, nodeKey, herbPatches } from '../../src/net/nodeLaw.js';
@@ -612,6 +613,47 @@ test('AUDIT UICALM-FIRM1 L5 H5: the combat channels as they act - an evasion on 
   setFirmamentTree(walk('st.start', named('Old Salt')));
   const carry = firmamentFold(me).weightMult;
   if (carry) assert.equal(withoutFirmament(me, () => firmamentFold(me).weightMult ?? 0), 0);
+});
+
+test('FIELD BUGS 2026-10-26 (Dracanis, "Spell point regeneration effects not functioning": "The 0.2% of spell points restored per round from font of magnus ... Neither is the 3% on foe slain from soul siphon"): the magicka channels as they act, on the reported stars by name - a kill\'s Spell Points back and a round\'s, Clarity\'s round as Font of Magnus\'s; asleep in a duel and while mentoring, as every combat channel; nothing past the maximum (mutants: killMana unread; mpRegen unread)', () => {
+  setFirmamentOnline(true);
+  _resetPlayerHealForTests();
+  const t = walk('mg.start', named('Font of Magnus'), named('Soul Siphon'));
+  setFirmamentTree(t);
+  const c = treeStats(t);
+  assert.deepEqual([c.mpRegen, c.killMana], [2, 3], 'the stars\' own: two tenths of a percent a round, three percent a kill');
+  const me = playerEntity;
+  me.isPlayer = true; me.peer = false; me._mentor = false; me.activeEffects = []; me.maxHealth = 1000; me.health = 1000; me.maxMagicka = 1000; me.magicka = 500;
+  firmamentKill({ isPlayer: false, health: 0 });
+  assert.equal(me.magicka, 530, 'Soul Siphon: 3% of the maximum a foe slain');
+  firmamentKill({ isPlayer: true, health: 0 });
+  assert.equal(me.magicka, 530, 'a felled player feeds nothing');
+  me.magicka = 500;
+  firmamentRound(me);
+  const max = me.maxMagicka;   // the round lays the sky's layer first (Font of Magnus's +8 Spell Points)
+  assert.ok(max >= 1000, `${max}`);
+  assert.equal(me.magicka, 500 + Math.floor((max * c.mpRegen) / 1000), 'Font of Magnus: 0.2% of the maximum a magic round');
+  _resetPlayerHealForTests();
+  me.magicka = max; firmamentRound(me);
+  assert.equal(me.magicka, max, 'full: nothing past the maximum');
+  // asleep where every combat channel sleeps
+  setSigilDueling(true);
+  me.magicka = 500; firmamentKill({ isPlayer: false, health: 0 }); firmamentRound(me);
+  assert.equal(me.magicka, 500, 'a refereed fight: asleep');
+  setSigilDueling(false);
+  me._mentor = true;
+  firmamentKill({ isPlayer: false, health: 0 }); firmamentRound(me);
+  assert.equal(me.magicka, 500, 'mentoring: asleep');
+  me._mentor = false;
+  // Clarity is Font of Magnus's twin
+  _resetPlayerHealForTests();
+  const clarity = [...FIRM_NODES.values()].find((n) => n.name === 'Clarity');
+  let ct = null;
+  for (const st of ['wr.start', 'mg.start', 'th.start', 'st.start', 'sh.start', 'rt.start', 'sp.start']) { const w = walk(st, clarity.key); if (!ct || w.keys.length < ct.keys.length) ct = w; }
+  setFirmamentTree(ct);
+  me.magicka = 500; firmamentRound(me);
+  assert.equal(me.magicka, 500 + Math.floor((me.maxMagicka * treeStats(ct).mpRegen) / 1000));
+  assert.equal(treeStats(ct).mpRegen, 2);
 });
 
 test('AUDIT UICALM-FIRM1 L5 H5: a small star\'s Spell Points share is of the maximum without Renown\'s layer', () => {

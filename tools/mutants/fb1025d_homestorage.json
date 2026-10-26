@@ -1,0 +1,74 @@
+[
+  {
+    "name": "FB1025D-HOME-POUR-REVERTED",
+    "file": "server-account/src/decorAccess.js",
+    "old": "      const name = homeSceneName(mapId, buildingKey);",
+    "new": "      const name = `DaggerfallInterior [MapID=${mapId}, BuildingKey=${buildingKey}]`;",
+    "tests": ["test/server/fb1025d_homepour.test.js"],
+    "why": "the field bug itself: a chest set back to private poured its goods into the building's scene, which the owner's client never reads for its home"
+  },
+  {
+    "name": "FB1025D-HOME-POUR-NOT-PERMANENT",
+    "file": "server-account/src/decorAccess.js",
+    "old": "      if (!live.sceneCache.permanentScenes.includes(name)) live.sceneCache.permanentScenes.push(name);\n",
+    "new": "",
+    "tests": ["test/server/fb1025d_homepour.test.js"]
+  },
+  {
+    "name": "FB1025D-SHARE-WAIT-REVERTED",
+    "file": "src/systems/decor/decorGrants.js",
+    "old": "  if (online && !known) {",
+    "new": "  if (false) {",
+    "tests": ["test/systems/decor/fb1025d_sharewait.test.js"],
+    "why": "the field bug itself: the owner's chest opened the save's window before the service said it was shared"
+  },
+  {
+    "name": "FB1025D-SHARE-WAIT-OFFLINE-SHUT",
+    "file": "src/systems/decor/decorGrants.js",
+    "old": "  if (online && !known) {",
+    "new": "  if (!known) {",
+    "tests": ["test/systems/decor/fb1025d_sharewait.test.js"]
+  },
+  {
+    "name": "FB1025D-SHARED-OPENS-SAVE",
+    "file": "src/systems/decor/decorGrants.js",
+    "old": "  if (online && shared.has(id)) {",
+    "new": "  if (false) {",
+    "tests": ["test/systems/decor/fb1025d_sharewait.test.js"]
+  },
+  {
+    "name": "FB1025D-NEVER-ASKED-AGAIN",
+    "file": "src/systems/decor/decorGrants.js",
+    "old": "    if (!asking) again?.();\n",
+    "new": "",
+    "tests": ["test/systems/decor/fb1025d_sharewait.test.js"]
+  },
+  {
+    "name": "FB1025D-ASKED-WHILE-OUT",
+    "file": "src/systems/decor/decorGrants.js",
+    "old": "    if (!asking) again?.();",
+    "new": "    again?.();",
+    "tests": ["test/systems/decor/fb1025d_sharewait.test.js"]
+  },
+  {
+    "name": "FB1025D-STALE-ANSWER-STANDS",
+    "file": "src/systems/decor/decorGrants.js",
+    "old": "    if (ask !== asked) return;\n",
+    "new": "",
+    "tests": ["test/systems/decor/fb1025d_sharewait.test.js"]
+  },
+  {
+    "name": "FB1025D-THROWN-ASK-STAYS-OUT",
+    "file": "src/systems/decor/decorGrants.js",
+    "old": "  }, () => { if (ask === asked) asking = false; });",
+    "new": "  }, () => {});",
+    "tests": ["test/systems/decor/fb1025d_sharewait.test.js"]
+  },
+  {
+    "name": "FB1025D-NO-DOOR-NEVER-KNOWN",
+    "file": "src/systems/decor/decorGrants.js",
+    "old": "  if (!homeDecor?.use) { asking = false; known = true; return; }",
+    "new": "  if (!homeDecor?.use) { asking = false; return; }",
+    "tests": ["test/systems/decor/fb1025d_sharewait.test.js"]
+  }
+]

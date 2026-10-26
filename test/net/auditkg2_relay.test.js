@@ -134,7 +134,7 @@ test('AUDIT KG II A3 (a) + (c) THE ORDER\'S ROOM, AND A ROOM THAT CANNOT SIGN: a
 test('AUDIT KG II A3 (b) THE DRAINED ROOM: a gold game under way when the room drains is no contest - each stake home, nothing rated, nobody\'s win (mutants: the void before the stands)', () => withRoom(async ({ r, tick, nowS }) => {
   await goldSeated(r, tick, nowS);
   r.wake();   // the room's instance gone and back: no socket holds a seat
-  await r.room._sweep();
+  await r.room._sweep(ROOM);
   assert.deepEqual(cashOf(r, 'acct-peer-a'), [[50, 'void']]);
   assert.deepEqual(cashOf(r, 'acct-peer-b'), [[50, 'void']]);
   assert.equal(r.store.get('gowed:acct-peer-b'), undefined, 'no rated win for the seat stood second');
@@ -329,7 +329,7 @@ test('AUDIT KG II E12 + E20 THE LONGEST LAWFUL READY FITS ITS FRAME; AN ACCOUNT\
   assert.equal(validGambitIn({ op: 'ready', table: 15, army: [1], stake: 'x'.repeat(HOLDEM_STAKE_MAX + 1) }), null, 'a stake past the order\'s length');
   r.store.set('gowed:acct-old', [{ j: '0123456789abcdef', receipt: 'r', e: Math.floor(Date.now() / 1000) - 1 }]);
   r.store.set('gowed:acct-live', [{ j: '0123456789abcdee', receipt: 'r', e: Math.floor(Date.now() / 1000) + 3600 }]);
-  await r.room._sweep();
+  await r.room._sweep(ROOM);
   assert.equal(r.store.get('gowed:acct-old'), undefined, 'past its life: gone');
   assert.ok(r.store.get('gowed:acct-live'), 'still owed: kept');
 }));

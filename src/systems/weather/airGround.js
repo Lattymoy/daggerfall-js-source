@@ -76,6 +76,7 @@ export function lawAirGround({ woods, maps, landforms, climates = () => null }) 
   };
   return {
     climateAt,
+    landforms: !!landforms,   // PEAKS1: whether the ground is the landforms' (scenes/snowCoverHost.js: the summits' caps ride on them)
     version: biomeStamp,   // AUDIT TESA-BIOME Z5: the land past the Bay moving (the trace, a fit) moves the climates read here
     groundAt(x, z) {
       const px = Math.floor(x / TERRAIN_SIZE), row = Math.floor(z / TERRAIN_SIZE), py = MAX_MAP_PIXEL_Y - 1 - row;

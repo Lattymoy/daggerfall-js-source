@@ -250,3 +250,49 @@ export const SD_NO_FULL = 'The Hour is full.';
 /** SD-ONELIFE (2026-10-07, Mac: "A death within the rift casts you out and youre unable to re enter. You get one life to
  *  prove your worth"): the Hour refuses an account that died in it - one life a Hollow. */
 export const SD_NO_FALLEN = 'The Hour will not take you back.';
+/**
+ * SD-REZ (EVENT-RULES, 2026-10-25, the owner: "Resurrect allowed" in the Hour, the Spire and the Ketch): ONE LIFE, UNLESS A
+ * FRIEND CALLS IT BACK. A death in the Hour no longer marks its account dead at once: the realm keeps it DOWN (`down`,
+ * `[sub, at, x?, z?]` - where it fell, the realm's metres, when its dying pose said) for SD_REZ_MS. AUDIT WORLD-EVENTS L1-1:
+ * THE RAISE IS THE REALM'S TO RECORD - a living fighter of the realm casting Resurrect at the body says so to the realm
+ * (`rz`, sdMayRaise: within SD_REZ_REACH_M of where it fell), kept in `raised` (`[sub, at]`), and only a down account the
+ * realm recorded raised rises at its hello; one it did not is not let in yet (its page asks again) - any hello inside the
+ * window was a rise, so a second device or a cleared store walked back into the Hour with nobody's Resurrect. Past the
+ * window, or once the fallen gives the death up (the death screen's way out casts them out of the Hour, and the page never
+ * asks again), the death is the Hollow's for good: SD_NO_FALLEN as before.
+ * AUDIT WORLD-EVENTS L1-5: the window is the body's own minute - the page's (a friend's screen keeps a body CORPSE_MS, net/
+ * remotePlayers.js; the death screen stands ONLINE_RESPAWN_SECONDS, ui/deathScreen.js: both 60 s) and the page's slack for
+ * its hello after it (systems/superDungeon/sdSlots.js SD_REZ_PAGE_SLACK_MS) - where it said two minutes the body was gone
+ * at one, and the relay's second minute served only the walk-back above. Pinned equal in test/net/superDungeon.
+ */
+export const SD_REZ_MS = 70_000;
+/** AUDIT WORLD-EVENTS L1-1: how near where a body fell its raiser stands when the realm records the raise (m) - RESURRECT's
+ *  touch (systems/resurrect.js RESURRECT_REACH, 6 m), with a pose's lag. */
+export const SD_REZ_REACH_M = 10;
+/**
+ * A realm's word on an account (the realm's record `{ dead, down, raised }`): 'fallen' (dead for good, or down past the
+ * window), 'rise' (down inside it, and raised since it fell), 'down' (down inside it, raised by nobody yet - AUDIT
+ * WORLD-EVENTS L1-1), or null (neither). Pure.
+ * @param {{ dead: string[], down?: Array<[string, number, number?, number?]>, raised?: [string, number][] }} realm @param {string} sub @param {number} now
+ * @returns {'fallen'|'rise'|'down'|null}
+ */
+export function sdDownWord(realm, sub, now) {
+  if (realm.dead.includes(sub)) return 'fallen';
+  const d = (realm.down ?? []).find(([x]) => x === sub);
+  if (!d) return null;
+  if (now - d[1] > SD_REZ_MS) return 'fallen';
+  return (realm.raised ?? []).some(([x, at]) => x === sub && at >= d[1]) ? 'rise' : 'down';
+}
+/**
+ * AUDIT WORLD-EVENTS L1-1: MAY `caster` RAISE `to` in this realm now - the caster a fighter of it (admitted, neither down nor
+ * dead), the body down inside its window, and (where its fall said where) the caster within SD_REZ_REACH_M of it (`at`,
+ * the caster's own pose in the realm's metres - [x, y, z]). Pure.
+ * @param {{ in: string[], dead: string[], down?: Array<[string, number, number?, number?]> }} realm
+ * @param {string} caster @param {string} to @param {number} now @param {number[]|null} [at]
+ */
+export function sdMayRaise(realm, caster, to, now, at = null) {
+  if (!caster || !to || caster === to || !realm.in.includes(caster) || realm.dead.includes(caster) || (realm.down ?? []).some(([x]) => x === caster)) return false;
+  const d = (realm.down ?? []).find(([x]) => x === to);
+  if (!d || now - d[1] > SD_REZ_MS) return false;
+  return !(Array.isArray(at) && Number.isFinite(d[2]) && Number.isFinite(d[3]) && Math.hypot(at[0] - d[2], at[2] - d[3]) > SD_REZ_REACH_M);
+}

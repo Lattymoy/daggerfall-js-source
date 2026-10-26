@@ -58,9 +58,9 @@ test('OPEN-HAND the Rose\'s second blow on the gate\'s Warden - no foe record of
 
 test('OPEN-HAND the dungeon host\'s claims carry what is owed - the Warden\'s, a crystal\'s, one of his host\'s - before the ward is read; a player\'s claim drops it (mutants: a claim without it; the rival\'s carrying it)', () => {
   const dc = readFileSync(new URL('../../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
-  assert.match(dc, /function landOnBoss\(boss, damage, r\) \{\n\s*damage \+= takeOwed\(boss\.entity\);/);
+  assert.match(dc, /function landOnBoss\(boss, damage, r\) \{\n\s*damage \+= bossStrikeAt\(boss\.entity, takeOwed\(boss\.entity\), 'melee', playerWeapon\.strikingWeapon, null, false, null\);/);   // PIN MOVED (AUDIT WORLD-EVENTS L2-2): the owed blow resisted as the swing it follows was
   assert.match(dc, /const landOnCrystal = \(cr, damage, r\) => \{ damage \+= takeOwed\(cr\.entity\); return /);
-  assert.match(dc, /const landOnHost = \(hb, damage, r, tick = false\) => \{ damage \+= takeOwed\(hb\.entity\); return /);   // PIN MOVED (FIELD BUGS 2026-10-19f BOSS-DOT): and a round's mark
+  assert.match(dc, /const landOnHost = \(hb, damage, r, tick = false\) => \{ damage = \([^\n]*\) \+ bossStrikeAt\(hb\.entity, takeOwed\(hb\.entity\), 'melee', playerWeapon\.strikingWeapon, null, false, null\); return /);   // PIN MOVED (FIELD BUGS 2026-10-19f BOSS-DOT): and a round's mark; PIN MOVED (AUDIT WORLD-EVENTS L5-4, L2-2): a lord's traits on the swing, and on the owed blow
   assert.match(dc, /const landOnRival = \(rb, damage, kind\) => \(takeOwed\(rb\.entity\), !!opts\.onArenaHit\?\.\(\{ i: rb\.rival, d: damage, kind,/);
   const lp = readFileSync(new URL('../../src/systems/loot/lootPowers.js', import.meta.url), 'utf8');
   assert.match(lp, /if \(f\) \{ if \(!f\.dead\) door\.hurtFoe\(f, n\); return; \}\n\s*oweFoe\(target, n\);/);

@@ -9,6 +9,9 @@ import assert from 'node:assert/strict';
 import { fakeRoom, fakeRooms } from '../fakeRoom.mjs';
 import { fakeSocketClass } from '../fakeSocket.mjs';
 import * as H from '../../src/net/hubShards.js';
+/** COST-1: these pins hold a region's channel SPLIT - the way back, the relay's REGION_SHARDS - so their worlds name every region, and a region's shard is asked of the same split (a region's channel is whole by default: test/net/cost1_regions.test.js). */
+const SPLIT_VARS = { REGION_SHARDS: 'all' };
+const SPLIT = H.regionsSharded(SPLIT_VARS.REGION_SHARDS);
 import { leaseKeyOf, mintLease, readLease, leaseRoom, relaySupportsLease, LEASE_MS, LEASE_LIFE_S, LEASE_FRAME_MIN_MS, LEASE_HELD_MS, LEASE_HAND_MIN_MS, LEASE_OLD_REASON } from '../../src/net/roomLease.js';
 import { parseClient, cellRoomOfWire, chatRegionRoom, chatLangRoom, CHAT_WORLD_ROOM, CHAT_TRADE_ROOM, CHAT_LFG_ROOM, CLOSE_BUSY, CLOSE_POLICY, PIXEL_UNITS, LEASE_WIRE_MAX, GROUND_LAW, GRANT_HELLO_LAW } from '../../src/net/wire.js';
 import { RELAY_CFG_KEYS, RELAY_INTERNAL_CFG, RELAY_CFG_TTL_MS } from '../../src/net/relayCfg.js';
@@ -234,6 +237,8 @@ test('LEASE1 A FROZEN SOCKET IS HEARD IN NOTHING BUT ITS PING AND ITS LEASE (STA
 
 test('LEASE1 THE DOOR: off, a build that hands on no lease is let in, and a bound socket with no lease yet or a lapsed one stands and is heard; on, a lease room refuses such a hello (GROUND-GATE\'s words, CLOSE_POLICY, LEASE_OLD_REASON) and the hub never does, a bound socket is heard in nothing but its ping until its first lease lands - NO GRACE (a review of the PR: a changed game that reconnected inside one was never leased, and a token carries no freeze) - a frame right behind a lease still being read waits on it and is heard, a bound socket whose lease lapsed has its ping answered and is heard in nothing - never closed (the third review: a close bought an honest game back from a hidden tab nothing but a reconnect) - until its next lease lands, a renewed one stands, an idle socket\'s renewal right ahead of its next frame is waited on too, and the hub, the one room no lease binds, hears a build that hands on none - a town is a lease room (STAFF-PANEL5-FREEZE-FIX) (mutants: the door always on; the hub bound; the renewed unheard; the lease not renewed; the unleased heard; the unleased closed; a grace back; the frame not waiting on its lease; a lapsed socket unheard with the door off; a lapsed socket closed; a lapsed socket\'s ping dropped; a renewal after a lapse not waited on; a town bound; a hub\'s frame bound)', async (t) => {
   const off = await rooms(t);
+  const hubOff = await off.join(off.hub, 'hub-off1');
+  assert.equal(hubOff.sent.find((m) => m.t === 'welcome')?.ldo, 0, 'a direct hub hello says the door is off');
   const ear0 = await off.join(off.trade, 'ear-0000', { ls: 1 });
   const old = await off.join(off.trade, 'old-0001');
   const bound = await off.join(off.trade, 'bnd-0001', { ls: 1 });
@@ -256,7 +261,9 @@ test('LEASE1 THE DOOR: off, a build that hands on no lease is let in, and a boun
   assert.deepEqual(refused.closed, { code: CLOSE_POLICY, reason: LEASE_OLD_REASON });
   assert.match(refused.sent.at(-1).m, /^This copy of the game is older than the world online/);
   assert.deepEqual((await on.join(on.cell, 'old-0003', {})).closed, { code: CLOSE_POLICY, reason: LEASE_OLD_REASON }, 'a cell too');
-  assert.equal((await on.join(on.hub, 'old-0004')).closed, null, 'the hub binds nobody: it hands the leases out');
+  const hubOn = await on.join(on.hub, 'old-0004');
+  assert.equal(hubOn.closed, null, 'the hub binds nobody: it hands the leases out');
+  assert.equal(hubOn.sent.find((m) => m.t === 'welcome')?.ldo, 1, 'a direct hub hello says the door is on');
   const ear = await on.join(on.trade, 'ear-0001', { ls: 1 });
   const kept = await on.join(on.trade, 'kpt-0001', { ls: 1 });
   const fresh = await on.join(on.trade, 'frs-0001', { ls: 1 });
@@ -315,7 +322,7 @@ test('LEASE1 THE LOAD (mob, 07:57Z: "we need to test if this affected load times
   const secret = await GATE;
   try {
     await quiet(async () => {
-      const W = fakeRooms({ now: () => clock });
+      const W = fakeRooms({ now: () => clock, vars: SPLIT_VARS });
       const room = (k) => { const r = W.room(k); r.env.GATE_SIGNING_KEY = secret; return r; };
       const hub = room(CHAT_WORLD_ROOM);
       let asked = 0;
@@ -397,7 +404,7 @@ test('LEASE1 THE FOURTH REVIEW OF THE PR: a frame that waited at the door is hea
   const LEASE_OLD_ASK_MS = 10 * RELAY_CFG_TTL_MS;   // server/src/index.js
   try {
     await quiet(async () => {
-      const W = fakeRooms({ now: () => clock });
+      const W = fakeRooms({ now: () => clock, vars: SPLIT_VARS });
       const room = (k) => { const r = W.room(k); r.env.GATE_SIGNING_KEY = secret; return r; };
       const hub = room(CHAT_WORLD_ROOM);
       let asked = 0, hold = null;
@@ -548,7 +555,7 @@ async function world(fn, env = {}) {
   const secret = await GATE;
   try {
     return await quiet(async () => {
-      const W = fakeRooms({ now: () => clock });
+      const W = fakeRooms({ now: () => clock, vars: SPLIT_VARS });
       const room = (k) => { const r = W.room(k); Object.assign(r.env, { GATE_SIGNING_KEY: secret }, env); return r; };
       const bus = room(CHAT_WORLD_ROOM);
       const settle = async () => {
@@ -578,12 +585,14 @@ test('LEASE1 THROUGH THE SHARDS: a mute the hub\'s bus took after the hello reac
   await world(async ({ bus, room, link, say, tick }) => {
     const v = 'p0', c = 'p1';
     const hv = H.hubOfSubject(`acct-${v}`), hc = H.hubOfSubject(`acct-${c}`);
-    const region = chatRegionRoom(3), rv = H.shardOf(region, `acct-${v}`), rc = H.shardOf(region, `acct-${c}`);
+    const region = chatRegionRoom(3), rv = H.shardOf(region, `acct-${v}`, SPLIT), rc = H.shardOf(region, `acct-${c}`, SPLIT);
     room(region); room(rv); room(rc);
     const wv = await link(v, hv, { peer: undefined });
+    assert.equal(of(wv, 'welcome')[0]?.ldo, undefined, 'a shard welcome does not carry the door');
+    assert.equal(of(wv, 'ldo').at(-1)?.on, 0, 'the bus says the door, and it is off');
     const wc = await link(c, hc);
-    const sv = await link(v, rv, { ls: 1 });
-    const sc = await link(c, rc, { ls: 1 });
+    const sv = await link(v, region, { ls: 1 });
+    const sc = await link(c, region, { ls: 1 });
     tick(2000);
     const kp = await bus.signer();
     const mu = Math.floor(Date.now() / 1000) + 3600;
@@ -599,9 +608,9 @@ test('LEASE1 THROUGH THE SHARDS: a mute the hub\'s bus took after the hello reac
     const l = of(wv, 'lease').at(-1)?.l;
     assert.ok(l, 'the hub shard minted a lease');
     assert.equal((await readLease(l, await leaseKeyOf(await GATE, { subtle }), { subtle, nowS: Math.floor(Date.now() / 1000) })).mu, mu);
-    await say(sv, rv, { t: 'lease', l });
+    await say(sv, region, { t: 'lease', l });
     tick(1000);
-    await say(sv, rv, { t: 'chat', text: 'region line' });
+    await say(sv, region, { t: 'chat', text: 'region line' });
     assert.ok(!lines(sc).includes('region line'), 'the region\'s bus judged it muted');
     assert.ok(of(sv, 'muted').length > 0, 'and told it so');
     void sv; void sc;
@@ -611,39 +620,39 @@ test('LEASE1 THROUGH THE SHARDS: a mute the hub\'s bus took after the hello reac
 test('LEASE1 A REGION\'S SHARD ASKS THE DOOR BEFORE ITS BUS HEARS (a review of the PR: a region\'s lines went up to the bus unleased): with the door on, a bound socket\'s line on its shard goes up only behind a live lease - unleased, nobody on any shard hears it, and it stands; leased, everyone does; and a lease older than its token hands its freeze up to the bus all the same (mutants: the shard\'s line past the door; the shard\'s parsed line past the door; an older freeze not handed up)', async () => {
   await world(async ({ room, link, say, tick, settle }) => {
     const v = 'p0', c = 'p1', f = 'p2';
-    const region = chatRegionRoom(3), rv = H.shardOf(region, `acct-${v}`), rc = H.shardOf(region, `acct-${c}`), rf = H.shardOf(region, `acct-${f}`);
+    const region = chatRegionRoom(3), rv = H.shardOf(region, `acct-${v}`, SPLIT), rc = H.shardOf(region, `acct-${c}`, SPLIT), rf = H.shardOf(region, `acct-${f}`, SPLIT);
     room(region); room(rv); room(rc); room(rf);
     const hv = H.hubOfSubject(`acct-${v}`);
     const wv = await link(v, hv);
-    const sv = await link(v, rv, { ls: 1 });
-    const sc = await link(c, rc, { ls: 1 });
+    const sv = await link(v, region, { ls: 1 });
+    const sc = await link(c, region, { ls: 1 });
     assert.equal(sv.att.ld, 0, 'bound, with no lease yet');
     tick(2000);
-    await say(sv, rv, { t: 'chat', text: 'never leased' });
+    await say(sv, region, { t: 'chat', text: 'never leased' });
     assert.ok(!lines(sc).includes('never leased'), 'unleased: the bus never heard it');
     assert.equal(sv.closed, null, 'and it stands');
     tick(LEASE_FRAME_MIN_MS);
     await say(wv, hv, { t: 'lease' });
     const l = of(wv, 'lease').at(-1)?.l;
     assert.ok(l, 'its hub shard minted a lease');
-    await say(sv, rv, { t: 'lease', l });
-    await say(sv, rv, { t: 'chat', text: 'leased' });
+    await say(sv, region, { t: 'lease', l });
+    await say(sv, region, { t: 'chat', text: 'leased' });
     assert.ok(lines(sc).includes('leased'), 'leased: everyone hears it');
     // AUDIT SCALE II R1-7's frame, kept by its first key and parsed as a line, passes the same door
-    const sw = await link('p3', H.shardOf(region, 'acct-p3'), { ls: 1 });
+    const sw = await link('p3', H.shardOf(region, 'acct-p3', SPLIT), { ls: 1 });
     tick(1000);
-    await room(H.shardOf(region, 'acct-p3')).raw(sw, '{"t":"pose","t":"chat","text":"a line dressed as a pose"}');
+    await room(H.shardOf(region, 'acct-p3', SPLIT)).raw(sw, '{"t":"pose","t":"chat","text":"a line dressed as a pose"}');
     await settle();
     assert.ok(!lines(sc).includes('a line dressed as a pose'), 'unleased, it went up to nobody either');
     // a lease minted before its token, carrying a freeze: the shard takes it, and hands it up for the bus to judge
     const key = await leaseKeyOf(await GATE, { subtle });
     const frozen = await mintLease({ s: `acct-${f}`, fz: Math.floor(Date.now() / 1000) + 600, at: Math.floor(Date.now() / 1000) }, key, { subtle });
     tick(2000);
-    const sf = await link(f, rf, { ls: 1 });
-    await say(sf, rf, { t: 'lease', l: frozen });
-    assert.ok(sf.att.fz > 0, 'the shard holds the freeze');
+    const sf = await link(f, region, { ls: 1 });
+    await say(sf, region, { t: 'lease', l: frozen });
+    assert.ok(sf.att.fz > 0, 'the room holds the freeze');
     tick(1000);
-    await say(sf, rf, { t: 'chat', text: 'frozen on a fresh token' });
+    await say(sf, region, { t: 'chat', text: 'frozen on a fresh token' });
     assert.ok(!lines(sc).includes('frozen on a fresh token'), 'and the bus judged it frozen');
   }, { LEASE_DOOR: 'on' });
 });
@@ -667,6 +676,9 @@ test('LEASE1 THE GAME: a hello to a lease room says `ls` 1 and to the hub none; 
   assert.equal(sent(trade.ws).find((f) => f.t === 'hello')?.ls, 1, 'a lease room: `ls` 1');
   hub.welcome(); trade.welcome();
   assert.equal(hub.s.leaseOk, true);
+  hub.s.tick(); now += LEASE_MS; hub.s.tick();
+  assert.equal(sent(hub.ws).filter((f) => f.t === 'lease').length, 0, 'the door off: the hub is not asked');
+  hub.ws.receive({ t: 'ldo', on: 1 });
   hub.s.tick();
   const asks = () => sent(hub.ws).filter((f) => f.t === 'lease').length;
   assert.equal(asks(), 1, 'asked at once');

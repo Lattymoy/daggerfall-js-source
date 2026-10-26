@@ -2,8 +2,10 @@
 // Discord: "gate under the rock didnt go away stayed there") - World of Daggerfall's rock keeps off the Oblivion Gate.
 // The gate's spot is the clock's and the map files' alone (every client rolls it alike), and the mod stands a site on
 // 114,087 of the pixels the gate may take; nothing kept the two apart. world/gate/gateClearance.js is the law, ROADS-CLEAR's
-// shape: a whole site reaching the clearing is refused at its pick, any other piece reaching it is not stood, and the
-// streamer's sweep builds a pixel again when the gate the clock is about turns.
+// shape: a whole site reaching the clearing stands none of its objects, any other piece reaching it is not stood, and the
+// streamer's sweep builds a pixel again when the gate the clock is about turns. GATE-AGREE (bible/01-Overview/bugs/
+// Field-Bugs-2026-10-24b.md): the clearing never decides a pick - a pick levels the ground, and the clearings are each
+// client's own word (the arches it believes), so a held site keeps its pick and its level ground.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -91,7 +93,7 @@ test('AUDIT WB12d (G12): the faithful\'s circle keeps its own clearing - its bra
   assert.equal(pointNearGate(gateClearFor({ day: 'x', px: 1, py: 2, spot: [100, 100] }), 1, 2, 400, 400), false);
 });
 
-test('GATE-CLEAR: a whole site reaching the clearing is refused at its pick - a continue, so a later instance takes the pixel; a rock field answers piece by piece; the ledger says what it cost and what stood', () => {
+test('GATE-CLEAR + GATE-AGREE: a whole site reaching the clearing keeps its pick - the clearing never moves the ground - and stands none of its objects; a rock field answers piece by piece; the ledger says what it cost and what stood', () => {
   const camp = { width: 2, height: 2, obj: [{ pos: { x: 0, y: 0, z: 0 } }, { pos: { x: 30, y: 0, z: 0 } }] };
   // tile 40, 64 is (256, 409.6) m; the second object 30 m east of it, at (286, 409.6)
   const near = gateClearFor(site(9, 500, 200, 286 + GATE_CLEAR_M + WOD_SITE_OBJECT_RADIUS_M - 1, 409.6));
@@ -101,7 +103,8 @@ test('GATE-CLEAR: a whole site reaching the clearing is refused at its pick - a 
   assert.equal(wodSiteOffGate(far, 500, 200, 'WOD_BanditCamp_01', camp, rect), true);
   assert.equal(wodSiteOffGate(near, 500, 200, 'WOD_Rocks_Large_04r1', camp, rect), true, 'a rock field is asked piece by piece, with its meshes, at placement');
   assert.equal(wodSiteOffGate(null, 500, 200, 'WOD_BanditCamp_01', camp, rect), true);
-  // the pick, through the host's own composition: the road first, then the gate
+  // the pick, through the host's own composition (scenes/pixelBuild.js): the road alone picks, then the clearing asks each
+  // pick whether its objects stand (`wodHeld`)
   const session = new LocationSession();
   session.appendRegion(1, {
     count: 2, worldX: [500, 500], worldY: [200, 200], terrainX: [40, 90], terrainY: [64, 64], type: [2, 2], locationID: [1, 2],
@@ -109,14 +112,16 @@ test('GATE-CLEAR: a whole site reaching the clearing is refused at its pick - a 
   });
   const tile = { mapPixelX: 500, mapPixelY: 200, hasLocation: false, mapRegionIndex: -1, worldHeight: 10 };
   const get = () => camp;
-  const pick = (clear, ledger) => pickLocations(tile, session, get, null, (n, pf, r) => wodSiteClear(null, 500, 200, n, pf, r) && gateSiteTest(clear, 500, 200, ledger)(n, pf, r)).map((p) => p.index);
+  const pick = (clear, ledger) => pickLocations(tile, session, get, null, (n, pf, r) => wodSiteClear(null, 500, 200, n, pf, r))
+    .map((p) => ({ index: p.index, flatten: p.flatten, held: !gateSiteTest(clear, 500, 200, ledger)(session.prefab[p.index], p.prefab, p.rect) }));
   const none = { refused: false, reach: [] };
-  assert.deepEqual(pick(null, none), [0], 'no gate: the mod exactly - the first instance takes the pixel');
+  assert.deepEqual(pick(null, none), [{ index: 0, flatten: true, held: false }], 'no gate: the mod exactly - the first instance takes the pixel, and stands');
   assert.deepEqual(none, { refused: false, reach: [256, 409.6, 256, 409.6, WOD_SITE_OBJECT_RADIUS_M, 286, 409.6, 286, 409.6, WOD_SITE_OBJECT_RADIUS_M] }, 'what stood is in the reach, at the site\'s margin');
   const ledger = { refused: false, reach: [] };
-  assert.deepEqual(pick(near, ledger), [1], 'the first reaches the gate, so the second stands');
+  assert.deepEqual(pick(near, ledger), [{ index: 0, flatten: true, held: true }],
+    'GATE-AGREE: the first reaches the gate and keeps the pixel - the same pick, the same level ground, as a client with no clearing - and stands nothing; the second never takes it');
   assert.equal(ledger.refused, true, 'and the pixel remembers the gate cost it a site');
-  assert.deepEqual(ledger.reach, [576, 409.6, 576, 409.6, WOD_SITE_OBJECT_RADIUS_M, 606, 409.6, 606, 409.6, WOD_SITE_OBJECT_RADIUS_M]);
+  assert.deepEqual(ledger.reach, [], 'a held site stands nothing for the next gate\'s sweep to ask');
   const rocks = { refused: false, reach: [] };
   assert.equal(gateSiteTest(near, 500, 200, rocks)('WOD_Rocks_Large_00', camp, rect), true);
   assert.deepEqual(rocks, { refused: false, reach: [] }, 'a rock field\'s pieces go in the reach at placement, by their own boxes');
@@ -226,10 +231,12 @@ test('GATE-CLEAR over the shipped lists: a gate\'s spot DOES land in the mod\'s 
     spots++;
     const before = within(x, y, clear, null);
     if (before) hit++;
-    // the port: the pick's gate test beside the road's, then each piece's own - a whole site's objects stand or go together
+    // the port: the road's pick, then the clearing's word on each pick, then each piece's own - a whole site's objects
+    // stand or go together (GATE-AGREE: a held site keeps its pick, and stands nothing)
     const ledger = { refused: false, reach: [] };
-    const siteClear = (n, pf, r) => wodSiteClear(net, x, y, n, pf, r) && gateSiteTest(clear, x, y, ledger)(n, pf, r);
+    const siteClear = (n, pf, r) => wodSiteClear(net, x, y, n, pf, r);
     for (const p of pickLocations(tile(x, y), session, getPrefab, paths, siteClear)) {
+      if (!gateSiteTest(clear, x, y, ledger)(session.prefab[p.index], p.prefab, p.rect)) continue;   // held: none of its objects
       const whole = !wodPiecewise(session.prefab[p.index]);
       for (const o of p.prefab.obj) {
         if (Math.abs(o.pos.y) > 1000) continue;
@@ -241,7 +248,7 @@ test('GATE-CLEAR over the shipped lists: a gate\'s spot DOES land in the mod\'s 
     if (ledger.refused) refused++;
   }
   assert.ok(hit >= 150, `of ${spots} gate spots on the pixels the lists name, ${hit} stand within ${GATE_CLEAR_M} m of an object the mod stands`);
-  assert.ok(refused > 0, `the pick refused a whole site on ${refused} of them`);
+  assert.ok(refused > 0, `the clearing held a whole site on ${refused} of them`);
   assert.equal(leftWhole, 0, 'no camp, fort, shrine, ruin, cave or nature spot stands in the clearing once its pick is asked');
   assert.ok(left > 0, `the rock fields' and mountains' pieces are the placement's to refuse, box by box: ${left} such positions`);
 });
@@ -251,7 +258,12 @@ test('GATE-CLEAR by source: the build reads the clearing once and asks it at the
   assert.equal(w.match(/(?<!get )_gateClearNow\(\)/g)?.length, 3,   // (HOST-SPLIT 2: the pixel build reads it live through its getter, `get _gateClearNow()`, which is no read)
     'read by the build, by the sweep and by the hub\'s word of the site (DISCORD-GATES) - nowhere else');
   assert.match(w, /const gateClear = host\._gateClearNow\(\);\n\s*const gateLedger = \{ refused: false, reach: \[\] \};[^\n]*\n\s*const gateSite = gateSiteTest\(gateClear, px, py, gateLedger\);\n\s*if \(wod && onTheBay\(px, py\) && await wodOpened\) \{/, 'read once, before the pick');   // PIN MOVED (AUDIT CAPTAIN'S SEA G8): the pick the Bay's alone
-  assert.match(w, /\}, wodPathsPoint, \(name, prefab, rect\) => wodSiteClear\(terrainGen\.roads\(\), px, py, name, prefab, rect\) && gateSite\(name, prefab, rect\)\);/, 'the road asked first, then the gate');
+  // PIN MOVED (GATE-AGREE, bible/01-Overview/bugs/Field-Bugs-2026-10-24b.md): the road alone picks; the clearing asks each
+  // pick after it is made, the kernel levels every pick's ground, and a held pick stands nothing
+  assert.match(w, /\}, wodPathsPoint, \(name, prefab, rect\) => wodSiteClear\(terrainGen\.roads\(\), px, py, name, prefab, rect\)\);/, 'the road alone decides a pick');
+  assert.match(w, /if \(picks\.length && onTheBay\(px, py\)\) \{ wodPicks = picks; wodHeld = picks\.map\(\(p\) => !gateSite\(p\.prefabName, p\.prefab, p\.rect\)\); \}/, 'then the gate, of each pick');
+  assert.match(w, /wod: wodPicks \? \{ picks: wodPicks\.map\(/, 'the kernel levels every pick, held or not');
+  assert.match(w, /const stood = wodPicks\.filter\(\(_, i\) => !wodHeld\[i\]\);\n\s*const place = wod\.placements\(stood, wodAverages\.filter\(\(_, i\) => !wodHeld\[i\]\)\);/, 'a held pick stands none of its objects');
   assert.match(w, /\{ _wodOffRoad\+\+; continue; \}\n(?:\s*\/\/[^\n]*\n)*\s*if \(boxNearGate\(gateClear, px, py, box\[0\], box\[2\], box\[3\], box\[5\]\)\) \{ gateLedger\.refused = true; _wodOffGate\+\+; continue; \}\n\s*gateLedger\.reach\.push\(box\[0\], box\[2\], box\[3\], box\[5\], 0\);\n\s*unionBox\(box\);/,
     'a piece whose mesh box reaches the clearing is refused before it joins the bounds, the batch or the collider - and what stands is kept');
   // PIN MOVED (VERGE1, 2026-10-07): the clear roadsides' ask may stand between the road's and the gate's - a road refusal too

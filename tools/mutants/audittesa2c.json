@@ -250,11 +250,12 @@
   {
     "name": "AUDIT-TESA-II-C5-tombs-band-narrow",
     "file": "src/world/imperialCity.js",
-    "old": "if (Math.abs(r - I.tombs.r) < I.tombs.w) for",
-    "new": "if (Math.abs(r - I.tombs.r) < I.tombs.w / 4) for",
+    "old": "if (Math.abs(r - I.tombs.r) < I.tombs.w) { const [f, s] = tombFrame(",
+    "new": "if (Math.abs(r - I.tombs.r) < I.tombs.w / 4) { const [f, s] = tombFrame(",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (IC-GRAND's palace district, 2026-10-26): re-aimed by content - the nearest tomb's podium asked in its own frame (the tombs turned to face Green Emperor Way)."
   },
   {
     "name": "AUDIT-TESA-II-C5-plinths-ring-short",

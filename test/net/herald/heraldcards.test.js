@@ -201,7 +201,7 @@ test('HERALD-CARDS relay: a thread is a setting a developer changes at run time 
 });
 
 test('HERALD-CARDS the client says a thread setting only to a relay that knows it - an older one finds no such name and closes the hub link on the frame; the roles and every older setting as before (mutants: a thread said to world242; the floor read for every setting)', async () => {
-  assert.deepEqual(RELAY_CFG_KEY_MIN, { gateThread: 250, serpentThread: 250, sdThread: 250, egThread: 250, ktRole: 255, ktThread: 255 });   // PIN MOVED (KETCH): the Sky-Ketch's role and thread, world253's
+  assert.deepEqual(RELAY_CFG_KEY_MIN, { gateThread: 250, serpentThread: 250, sdThread: 250, egThread: 250, ktRole: 255, ktThread: 255, cellSeed: 260 });   // PIN MOVED (THE FOLD: world260, one release; COST-2 part two, world262): cellSeed; PIN MOVED (KETCH): the Sky-Ketch's role and thread, world253's
   assert.ok(relayCfgSupported(RELAY_VERSION, 'gateThread'), 'this relay knows them');
   assert.deepEqual([relayCfgSupported('world242'), relayCfgSupported('world242', 'gateThread'), relayCfgSupported('world250', 'egThread'), relayCfgSupported('world242', 'gateRole'), relayCfgSupported('world191', 'gateRole')], [true, false, true, true, false]);
   await quiet(() => {
@@ -297,7 +297,7 @@ test('AUDIT HERALD-CARDS S1: the threads\' floor is the relay that made them - t
   const law = readFileSync(new URL('../relayversion.test.js', import.meta.url), 'utf8');
   for (const [k, min] of Object.entries(RELAY_CFG_KEY_MIN)) {
     const row = law.split('\n').find((l) => l.startsWith(`  world${min}: '`)) ?? '';
-    const own = k.startsWith('kt') ? /KETCH/ : /HERALD-CARDS/;   // PIN MOVED (KETCH): the Sky-Ketch's two settings are world255's, the relay that made them
+    const own = k === 'cellSeed' ? /COST-2 part two/ : k.startsWith('kt') ? /KETCH/ : /HERALD-CARDS/;   // PIN MOVED (COST-2 part two): cellSeed is world260's (the fold's one release; world262 on its branch); PIN MOVED (KETCH): the Sky-Ketch's two settings are world255's, the relay that made them
     assert.match(row, own, `${k}: world${min}'s row is the row of the relay that made it`);
   }
 });

@@ -40,6 +40,7 @@
 //     two time formats. The port keeps both strings and takes the SDF
 //     arm (systems/travel/travelOptionsText.js says why).
 
+import { pickNearPlaceMiddle } from './travelPathMode.js';   // AUDIT UPDATE II B4: a location's middle, the click's own law
 import { modSetting, colorKeyRgba } from '../modSettings.js';
 import { registerCustomGuild } from '../guild/guildServices.js';   // AUDIT-TO1 F1: GuildManager.RegisterCustomGuild (:331-336)
 import {
@@ -313,8 +314,70 @@ export function ringSideOf(dx, dy) {
   const sx = Math.sign(dx), sy = Math.sign(dy);
   return (sy < 0 ? 'n' : sy > 0 ? 's' : '') + (sx > 0 ? 'e' : sx < 0 ? 'w' : '');
 }
+/** OW-TOWN-ROUND (2026-10-23, the owner: "Overworld pathing always wants to walk into the middle of the town let the player
+ *  always go around it if not clicking vaguely in the middle of the city"): the side of a town's ring a POINT stands on -
+ *  read off the town's own rect, as the ring's bands lie (west of it 'w', north and east of it 'ne'), '' inside it. */
+export function ringSideAt(locationRect, p) {
+  const L = locationRect;
+  return (p.z > L.zMax ? 'n' : p.z < L.zMin ? 's' : '') + (p.x > L.xMax ? 'e' : p.x < L.xMin ? 'w' : '');
+}
+/** OW-TOWN-ROUND: whether the straight walk a..b crosses the town's rect (Liang-Barsky, the rect grown by `pad`). Pure. */
+export function segmentCrossesRect(a, b, rect, pad = 0) {
+  const dx = b.x - a.x, dz = b.z - a.z;
+  let t0 = 0, t1 = 1;
+  for (const [p, q] of [[-dx, a.x - (rect.xMin - pad)], [dx, (rect.xMax + pad) - a.x], [-dz, a.z - (rect.zMin - pad)], [dz, (rect.zMax + pad) - a.z]]) {
+    if (p === 0) { if (q < 0) return false; continue; }
+    const t = q / p;
+    if (p < 0) { if (t > t1) return false; if (t > t0) t0 = t; } else { if (t < t0) return false; if (t < t1) t1 = t; }
+  }
+  return t0 <= t1;
+}
+/** OW-TOWN-ROUND: a spot inside a town's rect, put out on the ring's band nearest it - the middle of the band on the side
+ *  of the rect it stands nearest, a tie to the first of west, east, south and north (AUDIT UPDATE N1: never a corner). A
+ *  spot outside the rect is kept. Pure. */
+export function spotOffTown(locationRect, locationBorderRect, p) {
+  const L = locationRect, B = locationBorderRect;
+  if (!(p.x > L.xMin && p.x < L.xMax && p.z > L.zMin && p.z < L.zMax)) return { x: p.x, z: p.z };
+  const wx = (B.xMin + L.xMin) / 2, ex = (L.xMax + B.xMax) / 2, nz = (L.zMax + B.zMax) / 2, sz = (B.zMin + L.zMin) / 2;
+  const d = { w: p.x - L.xMin, e: L.xMax - p.x, s: p.z - L.zMin, n: L.zMax - p.z };
+  const side = Object.keys(d).reduce((m, k) => (d[k] < d[m] ? k : m), 'w');
+  if (side === 'w') return { x: wx, z: p.z };
+  if (side === 'e') return { x: ex, z: p.z };
+  return { x: p.x, z: side === 'n' ? nz : sz };
+}
+/** OW-TOWN-ROUND: a clicked spot `p` in the pixel whose town's rects are `rects` (the host's, null for none), put out on
+ *  the town's ring unless the traveller (`me`) already stands in the town - its streets are the town walk's then - or
+ *  the spot stands in the location's own middle (AUDIT UPDATE II B4: a place the map holds no plate for - an
+ *  undiscovered dungeon, graveyard or coven - is asked its middle here, travelPathMode.js pickNearPlaceMiddle's law). */
+export function spotOffTownFor(p, rects, me) {
+  if (!rects?.locationRect || !rects.locationBorderRect) return p;
+  const L = rects.locationRect;
+  if (me && me.x >= L.xMin && me.x <= L.xMax && me.z >= L.zMin && me.z <= L.zMax) return p;
+  if (pickNearPlaceMiddle(p, { minX: L.xMin, maxX: L.xMax, minZ: L.zMin, maxZ: L.zMax, cx: (L.xMin + L.xMax) / 2, cz: (L.zMin + L.zMax) / 2 })) return p;
+  return { ...p, ...spotOffTown(L, rects.locationBorderRect, p) };
+}
 export function ringPassPoints(locationRect, locationBorderRect, from, to, mid) {
   const L = locationRect, B = locationBorderRect;
+  // OW-TOWN-ROUND: an END of the route walked round the town its pixel holds - `from` the traveller's own point (the
+  // route's first pixel) or `to` the spot (its last), native {x, z}, in place of a step. Its side is where it stands
+  // about the town's rect; no ring where it stands in the town (its streets are the town walk's, OW-TOWN-WALK), or where
+  // the straight walk between it and the pixel the route goes on to (or comes from) never meets the town
+  const pointy = (v) => !Array.isArray(v) && v && Number.isFinite(v.x) && Number.isFinite(v.z);
+  if (pointy(from) || pointy(to)) {
+    // AUDIT UPDATE T4: the step's own length - a FREE plan pulled taut (freePull) steps several pixels, and its sign alone
+    // aimed the crossing test at the diagonal neighbour
+    const stepPt = (v) => (pointy(v) ? v : { x: mid.x + v[0] * MP_WORLD_UNITS, z: mid.z - v[1] * MP_WORLD_UNITS });
+    const a = stepPt(from), b = stepPt(to);
+    const sa = pointy(from) ? ringSideAt(L, from) : ringSideOf(from[0], from[1]), sb = pointy(to) ? ringSideAt(L, to) : ringSideOf(to[0], to[1]);
+    if (!sa || !sb || !segmentCrossesRect(a, b, L)) return [];
+    return ringWalk(L, B, sa, sb, mid, { a: pointy(from) ? from : null, b: pointy(to) ? to : null });
+  }
+  return ringWalk(L, B, ringSideOf(from[0], from[1]), ringSideOf(to[0], to[1]), mid, null);
+}
+/** The walk round the ring from side `sA` to side `sB` (RING_ORDER words); `ends` - OW-TOWN-ROUND: the route's own end
+ *  points ({a, b}, either null) - the walk's way in or out on a side is the band's point level with that end (on a
+ *  corner the corner's own), never a road's crossing, and two ends on one side walk no ring. */
+function ringWalk(L, B, sA, sB, mid, ends) {
   // the middle of the ring's band on each side (north is +z), and a side's point on the road's own line, kept on the side
   const wx = (B.xMin + L.xMin) / 2, ex = (L.xMax + B.xMax) / 2, nz = (L.zMax + B.zMax) / 2, sz = (B.zMin + L.zMin) / 2;
   const cx = Math.min(L.xMax, Math.max(L.xMin, mid.x)), cz = Math.min(L.zMax, Math.max(L.zMin, mid.z));
@@ -332,19 +395,32 @@ export function ringPassPoints(locationRect, locationBorderRect, from, to, mid) 
     const band = q.x > L.xMin && q.x < L.xMax ? (sz2 > 0 ? 'n' : 's') : q.z > L.zMin && q.z < L.zMax ? (sx > 0 ? 'e' : 'w') : side;
     return { q, band };
   };
-  const a = RING_ORDER.indexOf(ringSideOf(from[0], from[1])), b = RING_ORDER.indexOf(ringSideOf(to[0], to[1]));
+  const a = RING_ORDER.indexOf(sA), b = RING_ORDER.indexOf(sB);
   if (a < 0 || b < 0) return [];
   const sideA = RING_ORDER[a], sideB = RING_ORDER[b];
-  const inA = sideA.length === 2 ? road(sideA) : { q: at[sideA], band: sideA }, outB = sideB.length === 2 ? road(sideB) : { q: at[sideB], band: sideB };
-  if (a === b) return [inA.q];
+  // OW-TOWN-ROUND: an end's own point of its side's band - level with it along the side, the corner's square on a corner
+  const level = (side, p) => (side.length === 2 ? at[side] : side === 'n' || side === 's'
+    ? { x: Math.min(L.xMax, Math.max(L.xMin, p.x)), z: at[side].z } : { x: at[side].x, z: Math.min(L.zMax, Math.max(L.zMin, p.z)) });
+  const endOf = (side, p) => ({ q: level(side, p), band: side });
+  const inA = ends?.a ? endOf(sideA, ends.a) : sideA.length === 2 ? road(sideA) : { q: at[sideA], band: sideA };
+  const outB = ends?.b ? endOf(sideB, ends.b) : sideB.length === 2 ? road(sideB) : { q: at[sideB], band: sideB };
+  if (a === b) return ends ? [] : [inA.q];
+  const walk = (step) => {
+    const out = [inA.q];
+    if (inA.band !== sideA && (RING_ORDER.indexOf(inA.band) + step + 8) % 8 === a) out.push(at[sideA]);   // round the corner it came in beside
+    for (let i = (a + step + 8) % 8; i !== b; i = (i + step + 8) % 8) if (RING_ORDER[i].length === 2) out.push(at[RING_ORDER[i]]);
+    if (outB.band !== sideB && (RING_ORDER.indexOf(outB.band) - step + 8) % 8 === b) out.push(at[sideB]);   // round the corner it leaves beside
+    out.push(outB.q);
+    return out;
+  };
   // the shorter way round (clockwise on a tie: the ring is paved all the way, either way is the road)
   const cw = (b - a + 8) % 8, step = cw <= 4 ? 1 : -1;
-  const out = [inA.q];
-  if (inA.band !== sideA && (RING_ORDER.indexOf(inA.band) + step + 8) % 8 === a) out.push(at[sideA]);   // round the corner it came in beside
-  for (let i = (a + step + 8) % 8; i !== b; i = (i + step + 8) % 8) if (RING_ORDER[i].length === 2) out.push(at[RING_ORDER[i]]);
-  if (outB.band !== sideB && (RING_ORDER.indexOf(outB.band) - step + 8) % 8 === b) out.push(at[sideB]);   // round the corner it leaves beside
-  out.push(outB.q);
-  return out;
+  if (!ends) return walk(step);
+  // OW-TOWN-ROUND: with an end's own point the shorter way is measured, not counted in sides - a traveller south of a
+  // town's west side bound for its east goes round the south, never the long way over the north on a tie
+  const len = (pts) => pts.reduce((m, q, k) => m + (k ? Math.hypot(q.x - pts[k - 1].x, q.z - pts[k - 1].z) : 0), 0);
+  const one = walk(1), other = walk(-1);
+  return len(one) <= len(other) ? one : other;
 }
 
 /** :753-797, CircumnavigateLocation's target pick: which corner of the

@@ -164,8 +164,8 @@
   {
     "name": "SD5A-a-Recall-out-of-the-Hour",
     "file": "src/systems/madeLevel.js",
-    "old": "  hour: row({ save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: 'off', levitate: 'banned',",
-    "new": "  hour: row({ save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: null, portalStone: 'refused', companions: 'out', regen: 'off', levitate: 'banned',",
+    "old": "  hour: row({ save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: 'held', levitate: 'banned',",
+    "new": "  hour: row({ save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: null, portalStone: 'refused', companions: 'out', regen: 'held', levitate: 'banned',",
     "tests": [
       "test/world/superDungeon/sd5a_realm.test.js"
     ]
@@ -191,7 +191,7 @@
   {
     "name": "SD5A-regeneration-in-the-Hour",
     "file": "src/systems/madeLevel.js",
-    "old": "  hour: row({ save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: 'off', levitate: 'banned',",
+    "old": "  hour: row({ save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: 'held', levitate: 'banned',",
     "new": "  hour: row({ save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: null, levitate: 'banned',",
     "tests": [
       "test/world/superDungeon/sd5a_realm.test.js"

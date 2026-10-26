@@ -29,8 +29,8 @@
   {
     "name": "REALM-GZIP-the-boot-drops-the-word",
     "file": "src/systems/realmSaves.js",
-    "old": "origin: typeof origin === 'string' ? origin : null, gzip: joined.data?.gzip === true };",
-    "new": "origin: typeof origin === 'string' ? origin : null, gzip: false };",
+    "old": "origin: typeof origin === 'string' ? origin : null, gzip: joined.data?.gzip === true, ...(stranded",
+    "new": "origin: typeof origin === 'string' ? origin : null, gzip: false, ...(stranded",
     "tests": [
       "test/net/realm_gzip.test.js"
     ]

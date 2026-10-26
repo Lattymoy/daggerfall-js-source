@@ -28,7 +28,7 @@ import { VENDOR_STATION } from '../../src/net/vendorLaw.js';
 import { GUILD_GROUPS } from '../../src/formats/factionFile.js';
 import { isCaravanRoom } from '../../src/systems/caravanRoom.js';
 import { useDecorPiece } from '../../src/systems/decor/decorUse.js';
-import { decorMayStorage, decorMayStation, decorIsShared, decorStationShut } from '../../src/systems/decor/decorGrants.js';
+import { decorMayStorage, decorMayStation, decorIsShared, decorStationShut, noteDecorGrants, openOwnChest } from '../../src/systems/decor/decorGrants.js';
 
 const MAP = 7;
 const HOME = 300;   // Cruor's character A's home
@@ -80,7 +80,11 @@ function room(home, { privateVisitRoom = null } = {}) {
     useDecorPiece, interiorCamps: { activate: () => log.opened.push(['fire']) }, getInteractionMode: () => 'steal', restFromInteriorBed: () => log.opened.push(['bed']),   // DECOR-USE: a placed bed's and fire's own press, ahead of the stations
     // DECOR-ACCESS: the service's grants, none heard - the gate's own law decides, as before the room's list arrives
     decorMayStorage, decorMayStation, decorIsShared, decorStationShut, openSharedChest: () => log.opened.push(['shared chest']),
+    openOwnChest,
   };
+  // HOME-SHARE-WAIT (FIELD BUGS 2026-10-25d): the owner's chest opens once the room's grants are heard - a room with no
+  // grants door, which shares none of its chests
+  noteDecorGrants({}, MAP, home?.buildingKey ?? HOME, null);
   const gate = Function(...Object.keys(scope), BODY)(...Object.values(scope));
   return { gate, log };
 }

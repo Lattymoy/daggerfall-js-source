@@ -389,8 +389,8 @@
   {
     "name": "AUDIT-SOUNDSCAPE-P5-the-journey-not-silencing",
     "file": "src/player/mountRig.js",
-    "old": "for (const s of shots) audio.playOneShot(s.clip, s.volume * RIDING_VOLUME_SCALE * ridingVolumeScale(), s.pitch);",
-    "new": "for (const s of shots) audio.playOneShot(s.clip, s.volume * RIDING_VOLUME_SCALE, s.pitch);",
+    "old": "for (const s of shots) audio.playOneShot(s.clip, s.volume * RIDING_VOLUME_SCALE * ridingVolumeScale() * horse, s.pitch);",
+    "new": "for (const s of shots) audio.playOneShot(s.clip, s.volume * RIDING_VOLUME_SCALE * horse, s.pitch);",
     "tests": [
       "test/systems/horse/horsevoice.test.js"
     ]

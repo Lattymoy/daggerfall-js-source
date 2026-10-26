@@ -43,7 +43,7 @@
 // row under the drinks header, the fountain's own law at the price of
 // the list's cheapest soft drink (`innWaterPrice`, `tavernWater`),
 // refused in `tavernOrder` with the rest.
-import { NEED } from './needs.js';
+import { NEED, heartyMeal } from './needs.js';   // HEARTY-MEAL: a tavern meal's Well Fed hold
 import { HARD_RULES } from './difficulty.js';
 import { isWaterskin, waterIn, WATERSKIN_CAPACITY_KG } from './food.js';
 import { drinkAtSource } from './items.js';   // INN-WATER: the fountain's own law, filled at the bar
@@ -166,7 +166,7 @@ export const TAVERN_MENU_TEXT = Object.freeze({
   closed: 'Sorry, breakfast starts at dawn.',
   closedNight: 'Sorry, the kitchen is closed for the night.',
   tooFull: 'You are too full to finish your meal. The rest goes to waste.',
-  invigorated: 'You feel invigorated by the meal.',
+  invigorated: 'You feel invigorated by the meal. You are well fed.',   // HEARTY-MEAL: and its hold, said
   fortified: 'The drink fortifies you.',
   refreshed: 'The drink refreshes you.',   // AUDIT C&C I6: TavernDrink's soft drink - "fortifies" was said over the milk
   gettingDrunk: 'You are getting drunk...',
@@ -253,6 +253,7 @@ export function tavernEat(s, now, worth) {
   if (hunger < worth) { s.lastAte = end; return { ok: false, text: TAVERN_MENU_TEXT.tooFull, minutes: MEAL_MINUTES }; }
   if (hunger > worth + NEED.PECKISH_AT) s.lastAte = end - NEED.PECKISH_AT;
   s.lastAte += worth;
+  heartyMeal(s, end);   // HEARTY-MEAL (needs.js): fed, quenched, and held so for a while - the meal served whole, never one wasted
   return { ok: true, text: TAVERN_MENU_TEXT.invigorated, minutes: MEAL_MINUTES };
 }
 /** SURV-TIERS: whether the barkeep pours at all - asked before the coin changes hands. A tier with the blackout

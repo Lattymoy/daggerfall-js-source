@@ -25,14 +25,21 @@
 // THE RELAY IS UNCHANGED. Every reader of a pose there was read (Scale-Arc LONE-SLEEP's table): none needs a lone
 // player's pose oftener than LONE_POSE_MS, and the ones that judge a WORD by where its sender stands (a grant's cell and
 // pixel, a raid's, a rite's, a star's, a serpent's site, the Hour's door, the Wild zone's word) are handed my pose first
-// (`loneAhead`). An older client (always POSE_HZ) is read as ever. The readers read are world260's, so a session goes
+// (`loneAhead`). An older client (always POSE_HZ) is read as ever. The readers read are this release's, so a session goes
 // quiet only to a relay that welcomed it as LONE_RELAY_MIN or later (`loneOk`, the version the welcome already says): an
 // older one hears POSE_HZ as it always has. No frame and no relay row moved.
-import { isCellRoom } from './wire.js';
+//
+// ALONE IS ONE NOTION (`aloneOf`, the merge with main's HIBERNATE, world263 there): a presence session in a world cell, a
+// building or an ordinary dungeon, nobody else in its own room or any it holds (`othersHere`, `peers`), no referee (the
+// host's `haloWhole`, a cell's `rf` on any socket). Alone, HIBERNATE says no STANDING pose at all - not even the
+// heartbeat - and LONE-SLEEP, in a world cell and on more conditions (`loneNow`: the open zone, a fight's hold, the
+// relay's version, its own socket welcomed), says a MOVING one each LONE_POSE_MS and none down a halo.
+import { isCellRoom, isWorldRoom, WORLD_WIDE_RELAY_MIN } from './wire.js';
 
-/** The first relay whose pose readers were read for a lone session's quiet - this release's (net/wire.js RELAY_VERSION
- *  world260, its every reader unchanged by LONE-SLEEP). */
-export const LONE_RELAY_MIN = 260;
+/** The first relay whose pose readers were read for a lone session's quiet - this release's own number (net/wire.js
+ *  WORLD_WIDE_RELAY_MIN: world260 on the branch, world269 at its second merge with main), every reader unchanged by
+ *  LONE-SLEEP; a merge's renumber moves it with the release's. */
+export const LONE_RELAY_MIN = WORLD_WIDE_RELAY_MIN;
 /** May a session go quiet to the relay at version `v`? @param {unknown} v */
 export const loneSupported = (v) => Number(/^world(\d+)$/.exec(typeof v === 'string' ? v : '')?.[1] ?? 0) >= LONE_RELAY_MIN;
 
@@ -61,11 +68,29 @@ export const LONE_FIGHT_KEYS = Object.freeze(['wd', 'an', 'cn', 'ar', 'hk', 'hu'
 export const LONE_HOLD = 'hold', LONE_SAY = 'lone', LONE_GO = 'go';
 
 /**
- * Is a session lone? Pure, over what the session knows.
- * @param {{ ok: boolean, presence: boolean, room: unknown, open: boolean, peers: number, rf: boolean, zone: boolean, whole: boolean, now: number, holdUntil: number }} s
+ * HIBERNATE and LONE-SLEEP: is a session ALONE? Pure - nobody else in its own room (`others`) or any it holds (`peers`:
+ * every room's roster, join and pose fill it - a peer in a halo still hears my heartbeat), no referee (`refereed`), in a
+ * world cell, a building or an ordinary dungeon (a boss room, a battle, a channel never).
+ * @param {{ refereed: boolean, others: number, peers: number, room: unknown }} s
+ */
+export function aloneNow(s) {
+  return !s.refereed && s.others === 0 && s.peers === 0 && (isCellRoom(s.room) || isWorldRoom(s.room));
+}
+/** The session's own `aloneNow` (net/online.js OnlineSession - read, never written): refereed while the host says a
+ *  referee may stand in a halo (`haloWhole`) or a cell said `rf` on my own socket or any halo's. @param {any} s */
+export function aloneOf(s) {
+  let refereed = !!s.haloWhole || !!(s._ws && s._rfOn.get(s._ws));
+  if (!refereed) for (const h of s._halo.values()) if (h.ws && s._rfOn.get(h.ws)) { refereed = true; break; }
+  return aloneNow({ refereed, others: s.othersHere, peers: s.peers.size, room: s.room });
+}
+
+/**
+ * Is a session lone? Pure: alone (`aloneNow`), welcomed by a relay at LONE_RELAY_MIN, a presence session in a world cell
+ * whose own socket is open and welcomed, not standing in the open zone, outside a fight's hold.
+ * @param {{ alone: boolean, ok: boolean, presence: boolean, room: unknown, open: boolean, zone: boolean, now: number, holdUntil: number }} s
  */
 export function loneNow(s) {
-  return !!s.ok && !!s.presence && isCellRoom(s.room) && s.open && s.peers === 0 && !s.rf && !s.zone && !s.whole && s.now >= s.holdUntil;
+  return !!s.alone && !!s.ok && !!s.presence && isCellRoom(s.room) && s.open && !s.zone && s.now >= s.holdUntil;
 }
 
 /** Did a fight counter move between two poses (the last said to sendPose and this one)? @param {any} last @param {any} pose */
@@ -73,9 +98,7 @@ export const fightMoved = (last, pose) => !!last && !!pose && LONE_FIGHT_KEYS.so
 
 /** The session's own `loneNow` (net/online.js OnlineSession - read, never written). @param {any} s @param {number} now */
 export function loneOf(s, now) {
-  let rf = !!(s._ws && s._rfOn.get(s._ws));
-  for (const [, h] of s._halo) if (h.ws && s._rfOn.get(h.ws)) rf = true;
-  return loneNow({ ok: !!s.loneOk, presence: s.presence, room: s.room, open: s.status === 'open' && !!s._ws && s._welcomed.has(s._ws), peers: s.peers.size, rf, zone: s._wildZone === 1, whole: !!s.haloWhole, now, holdUntil: s._loneHold ?? -Infinity });
+  return loneNow({ alone: aloneOf(s), ok: !!s.loneOk, presence: s.presence, room: s.room, open: s.status === 'open' && !!s._ws && s._welcomed.has(s._ws), zone: s._wildZone === 1, now, holdUntil: s._loneHold ?? -Infinity });
 }
 
 /**

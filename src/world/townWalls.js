@@ -51,7 +51,13 @@ export const TOWN_WALL = Object.freeze({ piece: 25.6, run: 2, marker: Object.fre
  *  low 20 bits of its map id (Arena's places: 500000 and up). */
 export const townWallBlockName = (mapId) => `TESW${((mapId >>> 0) & 0xfffff).toString(36).toUpperCase()}.RMB`;
 export const townWallBlockIndex = (mapId) => 1000000 + ((mapId >>> 0) & 0xfffff);
-export const townWallModelId = (mapId) => 3000000 + ((mapId >>> 0) & 0xfffff);
+/** AUDIT RELEASE R1-1: where the walls' model ids run - 1,000,000 to 2,048,575, under every other run of the port's own
+ *  models (the capitals' 910xxx below it; IC-GRAND's families at 3,000,000 and 3,100,000, world/imperialBlocks.js; URBANIZER's
+ *  fabrics from 5,000,000, world/urban/townFabricStand.js). At 3,000,000 a Bay city's wall (43 of the 410, Knightston's
+ *  3,013,420 among them) answered for one of the Imperial City's cells: a model registered by its id wins over a family's,
+ *  and the pipeline keeps one mesh an id (scenes/dataPipeline.js gpuMeshes). */
+export const TOWN_WALL_MODEL_BASE = 1000000;
+export const townWallModelId = (mapId) => TOWN_WALL_MODEL_BASE + ((mapId >>> 0) & 0xfffff);
 
 // ---------------------------------------------------------------- the line
 

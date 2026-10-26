@@ -13,7 +13,8 @@
 // and the killer's piece theirs alone. The room keeps a deposit only on that order.
 //
 // WHO CARRIES THE RECEIPT: the fallen's own tab first, as an act on its record (its `at` - prepareRealmRecord, the
-// client's realmGoldAct taking the same out of its own pack); its killer once WILD_FALL_GRACE_S has gone by, as a
+// client's realmGoldAct taking the same out of its own pack); its killer once WILD_FALL_GRACE_S has gone by - at once
+// when the relay signed the fall with the fallen gone from its room (WILD-REJOIN: `g` 1, wildFallGraceS) - as a
 // SEIZURE (seizeRealmRecord: the record moved where it stands, its lease cleared - a fallen that never says it fell plays
 // a record that moved under it). Once a fall (`wild_falls`, its remains' id): a second asking is answered the first's
 // records with a fresh order. A death to a foe, no receipt, takes nothing (FOE-KEEPS, 2026-10-24 - the owner: "I dont want
@@ -55,7 +56,7 @@
 // out. A seizure takes them whatever is said: no game applies it (its fallen plays a record that moved under it, and
 // its next join reads it) - so a fall at another's hand that the old tab is refused is still taken whole, by its killer
 // once the grace is gone; a death to a foe takes nothing (FOE-KEEPS).
-import { verifyWildReceipt, verifyWildCollect, WILD_FALL_GRACE_S, WILD_COLLECT_TTL_S } from '../../src/net/wild/wildReceipt.js';
+import { verifyWildReceipt, verifyWildCollect, wildFallGraceS, WILD_COLLECT_TTL_S } from '../../src/net/wild/wildReceipt.js';
 import { mintRemainsOrder, remainsDigest, ORDER_TTL_S } from '../../src/net/identityToken.js';
 import { streamsFoes, WILD_REMAINS_MS } from '../../src/net/wire.js';
 import { GUILD_ID_RE } from '../../src/net/guild/guildLaw.js';
@@ -116,7 +117,7 @@ async function answerOf(/** @type {any} */ ctx, /** @type {CryptoKey} */ signing
  * - the remains' id, the order the room keeps a deposit on (null: nothing for the room), the records taken, the ledger
  * keys the record kept, what the record lost as the fallen's game finds it again - or `{ error }`: 'no-signing-key',
  * 'no-gate-key', 'receipt' (with `why`), 'not-yours', 'no-realm-character', 'grace' (the fallen's own tab has the first
- * WILD_FALL_GRACE_S), 'nonce', 'room', 'foe' (FOE-KEEPS: a death to a foe, never taken), 'not-found' (a take of the packs, asked by a fallen's tab without `packs` 1: a
+ * WILD_FALL_GRACE_S, none when the receipt says it was gone from the room - wildFallGraceS), 'nonce', 'room', 'foe' (FOE-KEEPS: a death to a foe, never taken), 'not-found' (a take of the packs, asked by a fallen's tab without `packs` 1: a
  * game too old to apply it), the record's own words.
  * @param {any} ctx `{ db, bucket, rand, nowS, subtle }` @param {any} player the session's account
  * @param {any} body @param {{ gateKey: CryptoKey|null, signing: CryptoKey|null }} keys @param {boolean} [again] the
@@ -137,7 +138,7 @@ export async function wildFall(ctx, player, body, { gateKey, signing }, again = 
     wt = Array.isArray(c.wt) ? c.wt : null;
     sea = c;   // SEA-BOUNTY: the room it fell in and its killer's character - a kill at sea, written with the fall
     if (player.id === c.k) {
-      if (ctx.nowS < c.i + WILD_FALL_GRACE_S) return { error: 'grace' };
+      if (ctx.nowS < c.i + wildFallGraceS(c)) return { error: 'grace' };
       seize = true;
     }
   } else if (typeof body?.n !== 'string' || !WILD_NONCE_RE.test(body.n)) return { error: 'nonce' };

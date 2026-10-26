@@ -352,11 +352,11 @@ test('HORSE-VOICE THE HOSTS: the two that ride (world.js, exterior.js) hand the 
   assert.ok(X.includes('surfaceKind: () => _townFootstepKind, foesNear: () => areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]), horseBreath: () => upkeep.bar(player.transportMode),'));
   assert.ok(X.includes('}, pickFootstepSet(_fsCtx));\n        _townFootstepKind = pickFootstepKind(_fsCtx);'));
   const R = src('src/player/mountRig.js');
-  assert.ok(R.includes("        if (r.neigh) audio.playOneShot(SOUND.AnimalHorse, RIDING_VOLUME_SCALE);"));
+  assert.ok(R.includes("        if (r.neigh) audio.playOneShot(SOUND.AnimalHorse, RIDING_VOLUME_SCALE * horse);"));   // HORSE-VOL: under Horse Volume
   assert.ok(R.includes("        voice.hush();   // AUDIT SOUNDSCAPE H1"), 'the switch-off arm lets the voices\' debts go');
   assert.ok(R.includes("running: player.isRunning, pitch: r.pitch, paused: ridePaused,"), 'the gallop\'s breath on the loop\'s own pitch (H3)');
-  assert.ok(R.includes("else audio.setLoop('riding', r.playing ? SOUND[r.clip] : null, { volume: r.volume, pitch: r.pitch });"));
-  assert.ok(R.includes("if (voiced) audio.setLoop('riding', r.playing ? hoofClipFor(r.clip, surfaceKind?.()) : null, { volume: r.volume, pitch: r.pitch });"));
+  assert.ok(R.includes("else audio.setLoop('riding', r.playing ? SOUND[r.clip] : null, { volume: r.volume * horse, pitch: r.pitch });"));
+  assert.ok(R.includes("if (voiced) audio.setLoop('riding', r.playing ? hoofClipFor(r.clip, surfaceKind?.()) : null, { volume: r.volume * horse, pitch: r.pitch });"));
   const P = src('src/net/remotePlayers.js');
   assert.ok(P.includes('const clop = out.playing && heard ? SOUND[out.clip] : null;'));
   assert.ok(P.includes('clop != null && voiced ? hoofClipFor(out.clip, peer.shown.fk) : clop'));

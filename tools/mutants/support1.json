@@ -186,12 +186,12 @@
   {
     "name": "SUPPORT1-band-threshold",
     "file": "src/ui/enhanced/enhancedStyle.js",
-    "old": "@media (min-width: 481px) and (max-width: 788px) {",
-    "new": "@media (min-width: 481px) and (max-width: 789px) {",
+    "old": "@media (min-width: 481px) and (max-width: 701px) {",
+    "new": "@media (min-width: 481px) and (max-width: 702px) {",
     "tests": [
       "test/ui/enhanced/support1_asks.test.js"
     ],
-    "note": "The band's width no longer the larger mark's reach. BR5 (re-aimed by content): 788 under the DFO mark, 1007 under BR4's."
+    "note": "The band's width no longer the larger mark's reach. BR6 (re-aimed by content): 701 under the dragon mark; BR5: 788 under the DFO mark, 1007 under BR4's."
   },
   {
     "name": "SUPPORT1-band-top-on-the-marks",

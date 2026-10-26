@@ -782,9 +782,9 @@ export const FEATURES = Object.freeze([
     group: 'loot',
     get title() { return t('features.lootRarity.title', 'Loot rarity'); },
     get note() { return t('features.lootRarity.note', 'Weapons, armor and jewelry can drop as Magic, Rare or Legendary, with extra bonuses you can read '
-      + 'and compare. The odds depend on what you killed, where, and your luck, never your level. Rare and '
-      + 'Legendary items drop unidentified. Off is the classic loot. Online, some weapons carry a '
-      + 'sigil that grows with your Renown.'); },   // SIGIL1
+      + 'and compare. The odds depend on what you killed, where, and your luck. Rare and Legendary gear is rarer '
+      + 'early on and becomes more common as you grow. Rare and Legendary items drop unidentified. Off is the classic loot. Online, some weapons carry a '
+      + 'sigil that grows with your Renown.'); },   // SIGIL1; AUDIT UPDATE L8: LOOT-GATE's own words, its numbers never (CLAUDE.md LOOT-GATE)
     get effect() { return t('features.lootRarity.effect', 'Takes effect on the next drop; items you wear update within a few seconds.'); },
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'lootRarity', initial: true, online: true }),   // LR5: ON by default (Mac) - the ladder is the port's own game, not an opt-in; the lane forces it on online as it always did
@@ -1245,6 +1245,35 @@ export const FEATURES = Object.freeze([
     effect: 'Takes effect at once with the Morrowind body.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'mwSteelHelm', initial: 'closed', online: 'player', tiers: Object.freeze([['closed', 'Closed'], ['open', 'Open']]) }),
+  }),
+  // BEAST-BOOTS (2026-10-24, asked: the Beast Boots look and hiding helmets on Khajiit and Argonians as options, not the
+  // default): what a beast race wears on its feet and its head, two switches of three ways each, As worn by default.
+  // The VIEWER'S, as the Steel Helm is: how this machine draws every Khajiit and Argonian - the player, a peer, an NPC -
+  // and never on the wire. Read where the worn set is composed (combat/fpArm.js, formats/morrowind/mwItemMap.js
+  // beastCut); the tile rebuilds the player's body at once (ui/enhanced/enhancedMenu.js TILE_AFTER), the others at their next build.
+  Object.freeze({
+    id: 'beast-footwear',
+    group: 'combat',
+    get title() { return t('features.beastFeet.title', 'Beast Footwear'); },
+    get note() { return t('features.beastFeet.note', 'With the Morrowind body, how a Khajiit\'s or an Argonian\'s boots and shoes are drawn. Shafts only '
+      + 'keeps a boot\'s shaft over the bare foot and hides shoes; Hidden hides all footwear, as in Morrowind.'); },
+    get effect() { return t('features.mod.weaponSheathing.effect', 'Takes effect at once with the Morrowind body.'); },
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'mwBeastFeet', initial: 'worn', online: 'player',
+      tiers: Object.freeze([tier('worn', () => t('features.beast.asWorn', 'As worn')), tier('shafts', () => t('features.beastFeet.shafts', 'Shafts only')),
+        tier('hidden', () => t('features.beast.hidden', 'Hidden'))]) }),
+  }),
+  Object.freeze({
+    id: 'beast-helmets',
+    group: 'combat',
+    get title() { return t('features.beastHelm.title', 'Beast Helmets'); },
+    get note() { return t('features.beastHelm.note', 'With the Morrowind body, how a Khajiit\'s or an Argonian\'s helmets are drawn. Open only hides '
+      + 'closed helmets but keeps open ones such as the chain coif, as in Morrowind; Hidden hides them all.'); },
+    get effect() { return t('features.mod.weaponSheathing.effect', 'Takes effect at once with the Morrowind body.'); },
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'mwBeastHelm', initial: 'worn', online: 'player',
+      tiers: Object.freeze([tier('worn', () => t('features.beast.asWorn', 'As worn')), tier('open', () => t('features.beastHelm.open', 'Open only')),
+        tier('hidden', () => t('features.beast.hidden', 'Hidden'))]) }),
   }),
   // MW-SPELLFX1 (2026-10-07, Mac: "We need to implement morrowind spell casting effects and animations"): Morrowind's
   // spell effects - the casting effects and the glowing hands as a cast starts, the bolt it flies as, the hit and the

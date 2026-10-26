@@ -302,7 +302,9 @@
     "new": "'bad-material'",
     "tests": [
       "test/net/prof6_service.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "DAEDRIC-SMELT (Professions-Arc.md section 53) left it alive on purpose: nothing waits on a yield since the forge smelts the Daedric ingot, and its heart is the loose door's (professionLaw.js LOOSE_ONLY_KEYS, CLOTH-GEMS' home for the materials no door of the service counts - refused there first), so UNYIELDED stands empty and this guard reads a list with nothing in it today - kept for the next unyielded material, the law reading UNYIELDED whole"
   },
   {
     "name": "AUDIT31-svc-commission-elsewhere",

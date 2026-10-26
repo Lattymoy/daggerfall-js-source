@@ -137,7 +137,7 @@ and `out` over made-up halls - 1,000 writes of the record, 500 halls in each of 
 - **An account's words one bucket** (`_wdunAcctPass`, before each socket's own): the hub seats one socket an account
   (ONE-SEAT), so the gap was a reconnect's fresh bucket - ten sockets one after another, ten words each at once, were
   each heard at a socket's full burst; now at the account's one burst and rate (pinned).
-Relay `world260` re-hashed in place (below).
+Relay `world269` re-hashed in place (below).
 
 ## Findings in other streams' files (not edited; for routing)
 
@@ -147,7 +147,8 @@ Relay `world260` re-hashed in place (below).
   one ground a session (`scenes/world.js` tvRouteGround, made again only when the zone comes or goes), while the land past
   the Bay moves with the trace's landing and the relief's (`tamrielLand.js` tamrielLandVersion). NOT REPRODUCED: it needs
   the running game to plan a route past the Bay before the relief lands. Proposed: key both memos by the land's version
-  (and the relief's), or have the host make its ground again when the version moves.
+  (and the relief's), or have the host make its ground again when the version moves. FIXED by AUDIT RELEASE R1-2
+  (`01-Overview/audits/Audit-Release-R1.md`): reproduced on the module, both memos keyed by the land's version and the fit.
 
 ## Pins and mutants
 
@@ -162,7 +163,9 @@ sockets one bucket); `tools/mutants/audittesa3e2_halls.json` (27, all dead).
 ## Versions
 
 Relay `world260` re-hashed in place, undeployed (its row in `test/net/relayversion.test.js` says the bytes before it):
-E2-1 is a relay law, and so is E2-5 (re-hashed in place again, its bytes before it in the row's note). No frame and no client change; the account service is unchanged (acct189 stands); no migration.
+E2-1 is a relay law. No frame and no client change; the account service is unchanged (acct189 stands); no migration.
+E2-5 is a relay law too: re-hashed in place on the branch's world260 row, then - after the second merge with main made
+the release `world269` (`Audit-Release-R3.md` "The versions") - on `world269`'s row, its bytes before it in the row's note.
 
 ## What this lane could not check
 

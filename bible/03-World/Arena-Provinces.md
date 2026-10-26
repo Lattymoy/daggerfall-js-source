@@ -1526,8 +1526,9 @@ when first read; the city past the stream's reach is drawn on the far ring's pas
   ONE town, its centre slice's (`scenes/livingWorld/livingIndex.js` capitalStreet) - the other 624 its streets, in no town's
   list near and sending no traveller - so a town by the city has one town more near it, never 625.
 - **The wheel at its new size** (IMPERIAL): the White-Gold Tower on its plaza (300 m), Green Emperor Way's ring road
-  (2140-2180 m), the twenty-four emperors' tombs at 1.4 km, the palace wall at 2.3 km round the PALACE DISTRICT (the
-  team's list names it; TESA11's "Green Emperor Way" is its ring road's name now), the city wall at 6.9 km (TS5's
+  (2140-2180 m), the twenty-four emperors' tombs on its inner verge at 2.08 km (TESA11's 1.4 km on the lawns - moved by
+  the Palace District below), the palace wall at 2.3 km round the PALACE DISTRICT (the team's list names it; TESA11's
+  "Green Emperor Way" is its ring road's name now), the city wall at 6.9 km (TS5's
   1.95), City Isle's shore at 7.9 km, Lake Rumare's far shore at 10 km, the land past it Rumare Shore (TS5's open
   ground). Each district on its sector as TESA11 laid them (the Market north-east, the Arena District east, the
   Arboretum south-east, the Temple District south-west, Talos Plaza - the team's Nobles District - west, the Elven
@@ -1541,10 +1542,20 @@ when first read; the city past the stream's reach is drawn on the far ring's pas
   Daggerfall's arena. The slices' names: Lake Rumare 174, Rumare Shore 152, City Isle 41, the Market 40, the
   Arboretum 39, Talos Plaza 36, the Arena District 36, the Elven Gardens 34, the Temple District 33, the Palace District
   20, the Waterfront 14, the University 3, the Prison 2, and the centre the Imperial City.
-- **The White-Gold Tower** (IMPERIAL.tower; the team's spec, the reason): 760 m to its gilt spire's tip - over 500 and
-  under TS5's 1360, which a shaft 70 m across would not carry - its foundation 180 m across (150-200), its shaft 70 m
-  across at its foot and 60 m at its gallery (60-70), a gold band every 70 m, its gallery at 560-590 m, its crown to 650
-  m; its fins inside the foundation. Still wholly in the centre slice.
+- **The White-Gold Tower** (IMPERIAL.tower; `world/capitalImperial.js` buildImperialTower). The team's spec gave 760 m
+  (*"500m+ height, like 150-200m diameter in the foundation and like 60-70m diameter in the shaft"*); DEPARTED FROM BY
+  THE OWNER (2026-10-26, a reference picture of another game's tower with it - shapes of the port's own, nothing traced):
+  *"the imperial city tower model needs to be much larger and taller like this with the surrounding gate have large
+  pillars like the image shows"*. So: ROUND (48 faces, not TESA11's octagon), TS5's 1360 m to its gilt spire's tip; out
+  of the palace's ROTUNDA - a wide, low drum 320 m across and 56 m high under a low dome 44 m higher, an arcade of
+  twenty-four dark arches round its wall, twelve little gilt domes on its rim, the palace's door on its east face; the
+  shaft 144 m across at its foot (the 60-70 m of the spec gone, the owner's call) tapering to 108 m, FLUTED - every
+  other corner of its 48 standing 4.5% in, ribs like clustered columns - in TIERS of 126 m each ringed by a cornice
+  (every other one a gilt, crenellated balcony); its gallery at 1090-1120 m, crenellated; its crown, fluted, to 1210 m,
+  crenellated; the gilt spire to 1360 m. 7.7k triangles; still wholly in the centre slice (its plaza 300 m round the
+  rotunda, the start markers at 220 m on it). The far views carry it (`world/imperialImpostor.js`: the rotunda, its
+  dome, the shaft in bands, the gallery, the crown, the spire - the far landmark and capitalSkyline's), and its foot's
+  closed ground is the rotunda's (imperialClosed).
 - **The walls 38 m** (the spec's 35-40; TS5's 28): the city wall 14 m thick, a tower every two degrees (52 m), the six
   watch towers 100 m where the district walls meet it, nine gates (the six avenues', the Prison's, the University's,
   the Waterfront's); the palace wall 20 m, six gates; the district walls 16 m, three gates each where the ring roads
@@ -1571,6 +1582,49 @@ when first read; the city past the stream's reach is drawn on the far ring's pas
   (ALLEY 3.2 m), a lane, a side street and a main street (10 m and up) whose fronts carry a pavement a step up
   (PAVEMENT); the Elven Gardens' every third street a canal; the Arboretum's statues on their plinths. The fabric's
   buildings are facades - no door, no inside (Daggerfall's blocks are the city's houses, shops, temples and guilds).
+- **The Palace District** (the coordinator's review of the renders, 2026-10-26: *"THE PALACE DISTRICT reads empty ...
+  the palace at the tower's foot, Green Emperor Way's gardens and paths, the emperors' tombs as real monuments along the
+  way, walls/gates of the palace wall dressed, and trees and statuary - so from the air and from the street it reads as
+  the heart of the Empire, not a lawn"*; `world/imperialCity.js` IMPERIAL.palace, .gardens, .tombs; `world/capitalImperial.js`
+  buildImperialPalace, buildPalaceGardens, buildEmperorsTombs, buildPalaceWall). THE IMPERIAL PALACE round the tower's
+  plaza: twelve marble wings from 312 to 352 m (24 m to their gilt cornice, hipped roofs of slate, two storeys of windows
+  on both faces), a gate 26 m wide and 16 m high through each wing a palace gate faces - the tower's door's, east, among
+  them - under a gilt pediment; and THE OWNER'S "LARGE PILLARS" (2026-10-26, above): a great round pillar-tower 32 m
+  across and 64 m high - well over the wings - its gilt band at the eaves, a corbelled band and a crenellated top, on
+  each outer corner and either side of each gate (twenty-four: palacePillars); a paved terrace round it; 15.6k triangles,
+  carried by the centre slice (910213). GREEN EMPEROR
+  WAY'S GARDENS (910214): a paved path out from the terrace to the Way every thirty degrees (14 m - the six on a
+  district's bearing run on through its palace gate), ring walks at 900 and 1,500 m (8 m), a fountain where a path
+  crosses a walk (24: a marble basin 9 m round with its water, a pedestal, two bowls and a gilt finial, a paved round
+  about it), the emperors' statues along every path facing it (240: a marble plinth, a robed emperor in bronze crowned in
+  gold, 160 m apart either side), a row of trees beyond them on both sides of every path and either side of the walks
+  (a tree every other tile), groves on the lawns between and a lone tree now and then (24.7k trees in all - the lawns'
+  random one in seven, 52k, gone); 24k triangles over 21 slices, each part built of its own monuments alone (PART_BUILDS).
+  THE TOMBS along the Way's inner verge (2.08 km), two either side of every garden path's end: each a marble mausoleum
+  26 m square on its podium and its step, its cella, a portico of six columns under a gilt-banded entablature before its
+  door, a stepped pyramid over all to 34 m and a gilt cap - turned to face the Way, a paved walk out to it. THE PALACE
+  WALL'S GATES DRESSED: each a gatehouse - a marble arch over it from its lintel to 3 m over the walk, a gilt frieze, the
+  gilt crest over its middle on both faces - its passage open under it. Each ground's law the law's own (imperialTile:
+  the paths, walks, rounds, podiums and walks stone; imperialClosed: the palace's wings but their gates' passages, its
+  pavilions, the basins, the plinths, each tomb's podium in its own frame); and seen from afar - the centre slice's
+  silhouette carries the palace's wings and domes, the tombs' slices their tombs (imperialImpostor.js). Drawn without a
+  browser: from Green Emperor Way the tower over the palace's ring and domes, the paths' statues and rows of trees, the
+  fountains on the walks, the tombs facing the Way.
+- **Courts courtyard-sized, no lot left bare** (the same review: *"BLOCK INTERIORS and VOIDS ... Courtyards should be
+  courtyard-sized (yards, gardens, sheds, wells, trees), streets and plazas paved, and large empty lots either built,
+  planted (gardens, orchards in the Elven Gardens/Arboretum) or made squares with something in them"*;
+  `world/imperialFabric.js` makeBlock, BACK, WELL, SQUARE_FOUNTAIN, ORCHARD, fabricTreeOf). A court 30 m or more across
+  both ways stands a BACK RANGE in its middle - the house behind the house, a workshop, a coach house, a storey or two
+  under the ring's lowest and its own roof - 9 m in from the ring all round (the yards round it), split across its longer
+  way into pieces near 24 m long, 5 m apart; the garden walls then run from the ring to its faces (never through it); a
+  well in one court in two (its round stone kerb, two posts and a little roof - closed ground); a square's middle stands a
+  fountain (its basin, its water, a column and its bowl); the stone yards a tree one tile in eleven; the Arboretum's park
+  and the Elven Gardens' garden courts ORCHARDS where their patches stand (one 96 m patch in three: a tree every other
+  tile each way, in rows). Six to eight per cent more triangles a slice. FOUND AT THE PIN: a block's garden walls, dead
+  ends, sheds, wells and statues closed only the cell its middle stood in - a dead end's wall across an alley into the
+  next cell was walked through there; the cell's ground now asks every near block's (its `ground` list), the block whose
+  middle is the cell's drawing them once. The streets, squares and paths were already the city's stone; the dark lots in
+  the scratch's renders were Daggerfall's own blocks, which the rasterizer does not draw (in the game they stand).
 - **The rooftops are a way** (FABRIC_LAWS - every number the movement's own, `player/parkour.js` and `player/motor.js`):
   a roof beside a roof at most ROOF_STEP (1.6 m, a jump and a catch at Climbing 0: 1.5 m reach, 0.15 m in the air, the
   jump's 0.51 m rise) higher - the height a walk round its block, half a storey at a time (a tower two storeys over its
@@ -1608,7 +1662,7 @@ when first read; the city past the stream's reach is drawn on the far ring's pas
   queue's head, one going far at its tail.
 - **The families** (`formats/worldData/worldDataReplacement.js` registerPortBlockFamily, `world/customModels.js`
   registerCustomModelFamily): forty thousand cells register no block up front - a block is made on the world-data door
-  when first read under its fixed index (own, far, lake: 2,000,000 / 2,100,000 / 2,200,000 plus the cell) and kept an
+  when first read under its fixed index (own, far, lake: 2,060,000 / 2,100,000 / 2,200,000 plus the cell - past the walled towns' blocks; its models from 7,000,000, past the town walls' and the towns' fabric's) and kept an
   LRU (IMPERIAL_KEEP: 1024 blocks, 768 fabric models, 192 skylines, 48 slices' footprints); a long wall's part is built
   of its runs near its slice alone (`imperialPartBuild`: the city wall is 43 km round, 179k triangles whole).
 - **The city from afar** (`world/imperialImpostor.js` imperialLandmarkMesh, `scenes/capitalSkyline.js`; stream B's
@@ -1659,11 +1713,84 @@ NOT SEEN in the game: a district's streets and roofs at street level, the city's
 nine near slices were not built within the probe's 900 s here (before the merge and after it), and three runs lost their
 renderer to the shared memory. After the merge the first frame looking down over the centre held 88 s of script in the
 frame (4 s of frame, 77 ms of script before it): the far landmarks' 625 meshes take 374 ms in the page and the sweep makes
-them 3 ms a frame, so it is not their making; what it is stands OPEN (a probe with `?perf=cpu` on a machine of its own).
+them 3 ms a frame, so it is not their making - FOUND (IC-GRAND's perf pass, below): the living world's trips.
+
+IC-GRAND'S PERF PASS (2026-10-26, the coordinator: *"Your two open performance problems are not acceptable to ship for a
+20 km city ... (1) THE 88 s FRAME ... find the cause with a CPU profile in the running game ... (2) A DISTRICT'S NINE NEAR
+SLICES NEVER FINISHED within 900 s ... make arrival and crossing workable"*). Measured with Chrome's own sampler over CDP
+in the running game (`tools/imperialCityProbe.mjs` PROFILE; its summaries a scratch's), the machine shared as above:
+- **THE 88 s FRAME WAS THE LIVING WORLD** (stream I's `scenes/livingWorld/livingIndex.js`, its trips
+  `systems/livingWorld/trips.js`). Every place of a populated type is a town of the living world, and every town within
+  TRIP_REACH_PX (18) of a town is among its visitors' sources: the Imperial City's 625 slices were each a place of the
+  capital's type (each its own location - the slice law), so 625 cities of 64 blocks stood within each other's trip
+  reach, and the frame that first asked the trips over the centre walked visitorsOf -> townTrips -> ownTrip ->
+  roadChoices for each of them - 52.4 s of the profiled frame's script (88 s in the coordinator's run), 51.6 s of the
+  jump's 75 s of script. Ruled out by the same profile: the far landmarks (0.37 s for all 625, a 3 ms budget a frame),
+  stream H's town fabric, B's mid ring, far field and pixel fade, G's landforms and rivers, J's zone mask and F's curved
+  roads (none among the jump's forty heaviest stacks, none in the frame: the frame's 50.2 s under framePopulation -> the living towns' trips). The fix where it lives, minimal (`world/tamrielCapitals.js`
+  capitalSliceAside; livingIndex.js `townOf` - one line of stream I's): a family capital's slice but its centre is a part
+  of its city and no town of its own; the centre's place is the Imperial City's one town. AT THE MERGE into the TESA branch
+  (2026-10-26) stream I's WW7-11 had already made every capital one town (`scenes/livingWorld/livingIndex.js` capitalStreet:
+  no square, area or town's list names a street, a street sends no traveller, a street's own record stands for a reader
+  on it - the soundscape's and the wagon warden's townAt), so this line and capitalSliceAside retired for WW7-11's law
+  (`test/world/icgrand_living.test.js` PIN MOVED). AFTER: the same frame 118 ms of
+  script (its 2.9 s the SwiftShader frame's), the trips 0.09 s of it; the jump's trips 0.7 s; the page's heap there
+  1.46 GB.
+- **THE ID RUNS** (FOUND here): the city's own blocks stood at 2,000,000 and its fabric's and skylines' models at
+  3,000,000 and 3,100,000 - inside TS4's walled towns' block indices (1,000,000 plus twenty bits of a map id) and their
+  walls' model ids (3,000,000 plus the same). Moved past them (2,060,000; 7,000,000 and 7,100,000) and pinned apart.
+- **A NEAR SLICE, TIMED IN THE GAME WITH ITS FRAME HELD** (the probe's BUILDS: `scenes/shared.js` holdFrame, so
+  SwiftShader's frame is out of it and an animation frame comes at the display's pace; the pump's own build of the
+  slice's pixel, `window.__pixelBuild`): BEFORE - a Market slice 7.5 s (206 frames; 103k triangles of fabric), its east
+  neighbour 4.0 s (131k), the Arena District's 7.0 s (86k), the Elven Gardens' 4.7 s (68k), the Temple District's 4.1 s
+  (68k), a Palace District slice 1.9 s; the worst task 0.9-1.8 s in every one (the 99th percentile frame 73-682 ms); the
+  heap 1.47 GB rising to 1.95 GB over the six. The profile: the city's own blocks made on the world-data door 5.3 s of
+  the builds' 20 s of script (imperialBlockJson - each block's 4,096 closed cells asked of the fabric), the fabric's
+  models 1.5 s, the model boxes the merchant yards ask of them 1.5 s more, and setLocationTiles reading a slice's
+  sixty-four blocks in ONE task - the 1-1.8 s frame. So the 900 s was two things: SwiftShader's seconds a frame times a
+  build that lends each frame its 3-6 ms (a slice is a couple of hundred breaths), and on any machine a slice of seconds
+  of the page's thread with a second-long frame in it.
+- **OFF THE PAGE'S THREAD** (`world/imperialPrebuild.js`, `world/imperialPrebuildWorker.js`,
+  `world/imperialPrebuildClient.js`, `scenes/capitalPrebuild.js`): the city's blocks and its fabric's models are pure
+  work of their rows and columns, so a worker of the city's own makes them for the slices the player is coming near -
+  told by the capitals' sweep on the frame when the player's pixel moves (within NEAR_RING of it near, the player's own
+  first; the ring past them far: their far blocks and skylines), in the order the pixel's build asks them (blocks, then
+  models), each handed back as made (its buffers moved). The world-data door and the models' family ask it first
+  (`world/capitalModels.js`): a piece it made is taken once - a block's landmarks' footprint laid on it on the page
+  (`imperialBlockFootprint`: the footprint is the page's models', so the worker makes its blocks without it - the same
+  bytes as the door's own, pinned); a piece it has not made yet is made on the page as before and the worker told to skip
+  it. No worker (node, a factory that throws, a worker that dies): every piece the page's, as it always was. Let go out of
+  the city's reach. And the pixel's build reads a family capital's slice's blocks a breath at a time before
+  setLocationTiles reads them all (`scenes/pixelBuild.js`, two lines of the host's module). AFTER: the page's own share of a near slice's city work, timed in node with the worker's pieces held as the page holds them
+(`ictake`, a scratch's; the machine at load 30-38 - every number about five times this machine's quiet one): a Market
+slice's 59 blocks and 59 models 7.5 s made on the page, 0.7 s taken (a block's median 67 ms -> 0.3 ms); its east
+neighbour 7.7 s -> 1.0 s; the Arena District's 5.9 s -> 14 ms; the Elven Gardens' 7.2 s -> 33 ms; the Temple
+District's 4.1 s -> 0.39 s; a Palace District slice 4.0 s -> 1.8 s. What is left in it is each slice's first block's
+landmarks' footprint (capitalFootprint over its and its neighbours' parts, their first build with it): 0.03-0.43 s a
+slice at load 5 (the centre slice the most: the tower's 7.7k triangles and the palace's 15.6k), 0.47-1.6 s at load 38 -
+the worst unit of the city's own left on the page. The rest of a slice's build is the stream's own (its uploads, its
+colliders, its yards' and walkers' places - about 2 s of the page's thread a slice in the profile), a breath at a time.
+The worker's own heap over the jump's list (the centre and two rings, 2,192 pieces): 61 MB of modules and 47 MB of its
+fabric's caches; what it hands the page, 22 MB of blocks held until taken. IN THE GAME AFTER: not measured today - the shared machine's memory cgroup took the probe's browser in its boot or its jump on five of the six runs after the before one (the sixth stopped by its own time limit, still booting) (the kernel's OOM killer, the renderer at 3.6-5.4 GB among the other streams' browsers and tests, load 25-38); the in-game before above stands, the after is node's (IC-PROBE-AFTER below). The in-game shots of the streets, the roofs, the Palace District, the city's arena and the far landmarks at a clear noon with the boot's pages put away (the probe's SHOTS: each slice built with the frame held, then shot) were not taken for the same reason; the city was seen in the scratch's rasterizer instead (its palace, gardens, tombs, gatehouses, the new tower from 3.6 km and from its foot, the courts, the squares' fountains and the Arboretum's orchards).
+
+OPEN - THE NAMED FOLLOW-UPS (IC-GRAND, at the release of 2026-10-26; none half-done in the code):
+- **IC-FOOTPRINT-OFF-THREAD**: a slice's landmarks' footprint (its first block on the page: 0.03-0.43 s here, the centre
+  slice the most) made on the city's worker too - it needs the landmarks' parts there (world/capitalModels.js's builders
+  in the worker's graph), or the footprint shipped with the parts.
+- **IC-STREAM-SHARE**: the stream's own share of a near slice - its uploads, its colliders over ~100k triangles of
+  fabric, the yards' model boxes - about 2 s of the page's thread a slice, a breath at a time; a slice's fabric merged
+  into fewer, larger models would cut the colliders' and the uploads' units.
+- **IC-PROBE-AFTER**: the probe's BUILDS run with the worker standing, on a machine of its own - here the shared memory
+  cgroup took the browser (the probe's and the other streams') on every run but the before one this afternoon.
+- **IC-TOWER-LOD**: the tower's 7.7k triangles and the palace's 15.6k stand whole in the centre slice; past the stream they
+  are the far landmark's few prisms.
+- **IC-PALACE-PATHS**: the gardens' paths and walks are laid at the ground's own resolution (6.4 m tiles), stepped on a
+  diagonal - a path model of its own would smooth them.
+- **IC-SQUARES**: the Market's squares stand their fountain alone - stalls, trees and benches round it are owed.
 
 TESA11, IC-RING and TS5 read on: the pixel law the same (the nearest centre all of whose 625 pixels are the Imperial
 Province's land, on the trace's isle inside Lake Rumare's ring); the flatten the same (every slice to the centre's
-ground); the parts the same law at 1,024 a slot (183 parts of the twelve landmarks).
+ground); the parts the same law at 1,024 a slot (217 parts of the fourteen landmarks - the palace and its gardens with them).
 
 ## MAP-WHOLE - the map past the Bay whole from its first frames (2026-10-26)
 
@@ -2090,7 +2217,33 @@ another ring and when the ring disposed them, a slice off the grid waiting for i
 sweep wired and the world host's ring handed; the ring's `groundAt` row by row). `test/world/icgrand_arena.test.js` (4): the Colosseum
 gone; Daggerfall's arena in the Arena District's heart cell, the same port block, the fabric off it, the district's
 avenue and ring road at it; its stair the undercroft's door (`standsArena`); Daggerfall keeps its own (cell (4, 3), the
-edit Daggerfall's alone, the gate people's factions recorded). Mutants `tools/mutants/icgrand.json` (44: the impostor's six retired with it at the merge, ten for the far landmarks).
+edit Daggerfall's alone, the gate people's factions recorded). `test/world/icgrand_lod.test.js` also THE FAMILIES APART
+(IC-GRAND's perf pass: the own, far and lake blocks' indices past TS4's walled towns', the fabric's and skylines' model ids
+past the town walls' and the towns' fabric's). `test/world/icgrand_living.test.js` (1): the Imperial City one town - a
+family capital's slice but its centre no town of its own, the centre the town, another capital's slices as they were.
+`test/world/icgrand_prebuild.test.js` (5): a slice's pieces in the order its build asks them; the worker's pieces the
+page's to the byte once the landmarks' footprint is laid (a far block closing nothing), its models the family's; each
+handed over once, the worker told what the page made itself, a new list replacing the last, no worker or a failed one
+the page's own work; the door and the family asking it first and the pixel's build reading a slice's blocks a breath at
+a time; the sweep telling it the slices coming (the player's own first, near then far), letting it go out of reach, wired
+before the city's near and far sweep. `test/world/icgrand_palace.test.js` (6): the palace (its ring round the plaza, a
+walk through each gate meeting no face and through a wing a wall, its pavilions standing out past its wings, the plaza
+and the start markers clear, its pictures), the gardens' ground (the paths, the walks, the fountains' basins and rounds,
+the statues facing their paths, the rows of trees and the lawns' groves), its monuments (each part built of its own),
+the tombs on the Way's verge facing it (their doors, their podiums, their walks), the palace wall's gatehouses (a marble
+arch, gilt, the passage open) and the district from afar. `test/world/icgrand_fabric.test.js` also COURTS
+COURTYARD-SIZED (a wide court's back range inside it with its yards round it, lower than its ring, the garden walls never
+through a building, the wells and the squares' fountains closed, the stone yards' trees, the orchards in rows). Mutants
+`tools/mutants/icgrand.json` (91: the impostor's six retired with it at the merge, ten for the far landmarks, three for
+the living world, two for the ids, fifteen for the worker, seventeen for the Palace District, two for the owner's tower,
+eight for the courts).
+PINS MOVED (IC-GRAND's Palace District and perf pass): `test/tesa11_imperial.test.js` (the owner's tower: round, 1360 m,
+its rotunda, fluted, in tiers ringed by cornices - TESA11-tower-short and IS-a-part-missed re-aimed by content),
+`test/tesa10_capitals.test.js` (the centre slice's parts the
+tower's, the palace's and the gardens'), `test/world/audittesa2c_capitals.test.js` C5 (each tomb's podium in its own
+frame, turned to face the Way - its mutant AUDIT-TESA-II-C5-tombs-band-narrow re-aimed by content),
+`test/world/icgrand_lod.test.js` (the capitals' sweep tells the city's worker first, then its near and far sweep and its
+skyline); re-aimed by content: IC-GRAND-no-yard and IC-GRAND-no-statue (the block's answer, the park's statue's).
 PINS MOVED
 (IC-GRAND): `test/tesa11_imperial.test.js` (the plan by its law at 200 x 200, the Palace District, 625 slices, the
 pixel law twelve a side, every slice's location and the arena's one, the ground's laws at the new wheel and the

@@ -379,14 +379,20 @@ test('AUDIT 31 L1: a crafter\'s twenty count the commissions that stand - twenty
   assert.deepEqual(states, { open: 1, expired: COMMISSIONS_FOR_MAX }, 'the crafter\'s read closes what ran out');
 });
 
-test('AUDIT 31 L2: a piece of a material nothing yields yet (Daedric) is never commissioned; a Warforged one is, the sieges yield it now', async () => {
+test('AUDIT 31 L2: a piece of a material nothing yields yet is never commissioned - DAEDRIC-SMELT: a Daedric one is now, the forge smelting its ingot, as a Warforged one is, the sieges yielding it; CLOTH-GEMS: a graded gem\'s jewel is refused in the refusal\'s own word', async () => {
   clock(T0);
   const s = await stand();
   await s.registered('Silverthorn');
   const pia = await s.registered('Pia');
   s.seedMarks(pia, 10_000);
+  // PIN MOVED (DAEDRIC-SMELT, Professions-Arc.md section 53): the Daedric Longsword was refused `commission-unyielded` - the
+  // forge smelts its ingot now, and nothing waits on a yield (UNYIELDED stands empty; the heart is the loose door's)
   const r = await s.commission(pia, 'Silverthorn', { recipe: 'longsword:daedric' });
-  assert.deepEqual([r.status, r.body.error], [409, 'commission-unyielded']);
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  // CLOTH-GEMS: the refusal's own word stands for a piece of the loose door's - a graded gem's jewel (writLaw.js
+  // commissionUnyielded), a piece no crafter could be sure of making
+  const gem = await s.commission(pia, 'Silverthorn', { recipe: 'ring:silver:chipped-sapphire' });
+  assert.deepEqual([gem.status, gem.body.error], [409, 'commission-unyielded']);
   assert.notEqual((await s.commission(pia, 'Silverthorn', { recipe: 'cuirass:warforged' })).body.error, 'commission-unyielded');   // PIN MOVED (AUDIT-SEATS): a siege's Spoils yield the ingot
 });
 

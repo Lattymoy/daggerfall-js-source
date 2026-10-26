@@ -59,12 +59,12 @@
   {
     "name": "BR4-logo-dimensions-stale",
     "file": "src/ui/brandMark.js",
-    "old": "  image.height = 322;",
-    "new": "  image.height = 512;",
+    "old": "  image.height = 1034;",
+    "new": "  image.height = 322;",
     "tests": [
       "test/ui/intro.test.js"
     ],
-    "note": "BR5 (re-aimed by content): the name, its file form and the legal date moved."
+    "note": "BR5 (re-aimed by content): the name, its file form and the legal date moved. BR6 (re-aimed by content, 2026-10-26): the dragon mark, 1232 x 1034."
   },
   {
     "name": "BR4-zip-old-name",

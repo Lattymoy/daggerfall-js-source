@@ -125,7 +125,7 @@ test('YARD-SNAP a built town is one row and one statement, its answer in the rea
 test('YARD-SNAP a decor route builds its town as it answers; the minute\'s clock builds the towns a cascade left stale, YARDS_SETTLE_A_MINUTE a firing (mutants: the route\'s build, the clock\'s job, the clock\'s page)', async () => {
   const svc = await standService();
   const raw = svc.env.DB._raw;
-  assert.match(src('server-account/src/index.js'), /forgetYards\(body\?\.mapId\);[^\n]*\n\s+await settleYards\(ctx\.db, body\?\.mapId\)/, 'every decor route builds its town');
+  assert.match(src('server-account/src/index.js'), /if \(path !== '\/v1\/homes\/decor\/use'\) \{[^\n]*\n\s+forgetYards\(body\?\.mapId\);[^\n]*\n\s+await settleYards\(ctx\.db, body\?\.mapId\)/, 'a route that moves a yard builds its town; using a chest does not');
   assert.ok(MINUTE_JOBS.some(([name]) => name === 'yard-snap'), 'a minute\'s job');
   assert.equal(YARDS_SETTLE_A_MINUTE, 50);
   const { db } = world(svc.env.DB);
@@ -139,7 +139,10 @@ test('YARD-SNAP a decor route builds its town as it answers; the minute\'s clock
   _resetYardsKept();
 });
 
-test('YARD-SNAP the migration\'s backfill: the towns standing yards when 0136 is applied are built, their answers their rows\' (mutant: the backfill\'s bound)', async () => {
+/** The shape 0136 built every town in: the 2,000 bound's build (YARD-TOWN moved the bound - 0175 builds them again). */
+const SHAPE_0136 = '92826ba1';
+
+test('YARD-SNAP the migrations\' backfills: the towns standing yards when 0136 is applied are built in its own shape at its 2,000 bound; YARD-TOWN\'s 0175 builds every one again in the shape the code reads, at DECOR_YARDS_TOWN_MAX, their answers their rows\' (mutants: 0136\'s bound and shape; 0175\'s bound and shape, its rebuild kept as it was)', async () => {
   const raw = new DatabaseSync(':memory:');
   raw.exec('PRAGMA foreign_keys = ON');
   const files = readdirSync(new URL('../../server-account/migrations', import.meta.url)).filter((f) => f.endsWith('.sql')).sort();
@@ -148,7 +151,13 @@ test('YARD-SNAP the migration\'s backfill: the towns standing yards when 0136 is
   world({ _raw: raw });
   for (let i = 0; i < DECOR_YARDS_TOWN_MAX + 5; i++) put(raw, 8, KEYS[i % 3], `b${i}`, 1, 1, i % 8);
   put(raw, 7, 300, 'one', 1, 1);
-  for (const f of files.filter((f) => f >= '0136')) raw.exec(src(`server-account/migrations/${f}`));
+  raw.exec(src(`server-account/migrations/${files.find((f) => f.startsWith('0136'))}`));
+  const at0136 = snapOf(raw, 8);
+  assert.equal(at0136.shape, SHAPE_0136, '0136 built in its own day\'s shape');
+  assert.equal(yardRowsOf(at0136.rows).length, 2000, '0136 at its own day\'s bound');
+  assert.ok(DECOR_YARDS_TOWN_MAX > 2000);
+  for (const f of files.filter((f) => f >= '0137')) raw.exec(src(`server-account/migrations/${f}`));
+  assert.equal(yardRowsOf(snapOf(raw, 8).rows).length, DECOR_YARDS_TOWN_MAX, '0175 at the town\'s bound now');
   for (const t of [7, 8]) {
     const r = snapOf(raw, t);
     assert.equal(r.built, r.ver, `town ${t} built`);

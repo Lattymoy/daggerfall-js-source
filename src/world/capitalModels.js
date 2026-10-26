@@ -15,10 +15,11 @@ import { CASTLE_BLOCKS, castleBlockOf } from './capitalCastles.js';   // WW7-4
 import { addVendorTextures } from '../systems/textureReplacement.js';
 import { CAPITALS, CAPITAL_MODELS, capitalPortBlocks, BLOCK_M, portBlockJson, miscModelAt, startMarkerAt, inCapitalRim, CAPITAL_NO_GROUND } from './tamrielCapitals.js';
 import { IMPERIAL_PARTS, IMPERIAL_MODELS, IMPERIAL_SLICE_PARTS, IMPERIAL_SPAN, imperialSliceRect } from './imperialCity.js';   // TS5: the Imperial City's landmarks carried in parts
-import { imperialBlockJson, imperialBlockIndex, imperialBlockName, imperialModelBuild, isFabricModelId, isSkylineId } from './imperialBlocks.js';   // IC-GRAND: its blocks and its fabric's models, families
+import { imperialBlockJson, imperialBlockIndex, imperialBlockName, imperialModelBuild, isFabricModelId, isSkylineId, imperialBlockOf, sliceOfCell } from './imperialBlocks.js';
+import { imperialPrebuilt, imperialBlockFootprint } from './imperialPrebuild.js';   // IC-GRAND's perf pass: what its worker made   // IC-GRAND: its blocks and its fabric's models, families
 import { imperialArt } from './imperialArt.js';   // IC-GRAND: the fabric's walls' pictures
 import { CAPITAL_ARCHIVE, CAPITAL_ART } from './capitalShapes.js';
-import { buildImperialTower, buildPalaceWall, buildEmperorsTombs, buildCityWall, buildDistrictWalls, buildTempleOfTheOne, buildTalosStatue, buildImperialPrison, buildArcaneUniversity, buildWaterfront, buildTalosBridge, buildNineDivines, nearRect } from './capitalImperial.js';   // TESA11
+import { buildImperialTower, buildPalaceWall, buildEmperorsTombs, buildCityWall, buildDistrictWalls, buildTempleOfTheOne, buildTalosStatue, buildImperialPrison, buildArcaneUniversity, buildWaterfront, buildTalosBridge, buildNineDivines, buildImperialPalace, buildPalaceGardens, nearRect } from './capitalImperial.js';   // TESA11
 import { buildSolitudeArch, buildBluePalace, buildSolitudeWall, buildCastleDour, buildSolitudeDocks } from './capitalSolitude.js';
 import { buildMournholdPlaza, buildHighFane, buildMournholdPalace, buildGreatBazaar, buildMournholdWall } from './capitalMournhold.js';
 import { buildAlinorPalace, buildAlinorHarbour, buildAlinorWall, buildAlinorBridges } from './capitalAlinor.js';
@@ -220,6 +221,9 @@ export function capitalArt() {
     if (s === 0) return 0.22;
     return 0.62 - Math.abs(s - 3) * 0.05 + (node === 0 ? 0.18 : node === 1 ? -0.16 : 0) + (stalk(x, y) - 0.5) * 0.16;
   }, { seed: 0x8302, grain: 0.05 }));
+  // IC-GRAND: a fountain's water - deep blue-green under a broken shimmer of the sky
+  const swell = noise(0x8401, 4), glint = noise(0x8402, 16);
+  out.set(CAPITAL_ART.water, painted(ramp([[14, 40, 52], [30, 72, 88], [56, 108, 122], [104, 156, 166], [168, 204, 208]]), (x, y) => 0.36 + (swell(x, y) - 0.5) * 0.5 + (glint(x, y) > 0.7 ? 0.28 : 0), { seed: 0x8403, grain: 0.07 }));
   imperialArt(out, { painted, ramp, masonry, noise });   // IC-GRAND: the Imperial City's street walls, by the same kit
   return out;
 }
@@ -395,6 +399,8 @@ export function installCapitals({ addTextures = addVendorTextures } = {}) {
     [CAPITAL_MODELS.waterfront]: () => buildWaterfront(),
     [CAPITAL_MODELS.talosBridge]: () => buildTalosBridge(),
     [CAPITAL_MODELS.nineDivines]: () => buildNineDivines(),   // TESA-LORE
+    [CAPITAL_MODELS.imperialPalace]: () => buildImperialPalace(),   // IC-GRAND: the palace at the tower's foot, the gardens
+    [CAPITAL_MODELS.palaceGardens]: () => buildPalaceGardens(),
     [CAPITAL_MODELS.solitudeArch]: () => buildSolitudeArch(),
     [CAPITAL_MODELS.bluePalace]: () => buildBluePalace(),
     [CAPITAL_MODELS.solitudeWall]: () => buildSolitudeWall(),
@@ -443,6 +449,7 @@ const PART_BUILDS = Object.freeze({
   [IMPERIAL_MODELS.cityWall]: (only) => buildCityWall(undefined, only),
   [IMPERIAL_MODELS.districtWalls]: (only) => buildDistrictWalls(undefined, only),
   [IMPERIAL_MODELS.waterfront]: (only) => buildWaterfront(undefined, only),
+  [IMPERIAL_MODELS.palaceGardens]: (only) => buildPalaceGardens(undefined, only),   // IC-GRAND: 264 monuments over 4 km
 });
 /** IC-GRAND: A LANDMARK'S PART'S SOURCE - a long wall's runs near the part's square (its pictures laid as the whole's are,
  *  world/capitalModels.js vanillaTexels), else the whole landmark (customModelFor's, built once). modelPart then keeps the
@@ -474,7 +481,14 @@ function installImperialFamilies() {
   };
   const deps = { portBlockJson, miscModelAt, startMarkerAt, footprintOf, anchorMarkers: IC.markers, noGround: CAPITAL_NO_GROUND,
     rim: (r, c, x, z) => inCapitalRim(IC, c * BLOCK_M + x, (r + 1) * BLOCK_M - z) };
-  registerPortBlockFamily({ indexOf: imperialBlockIndex, nameOf: imperialBlockName, make: (name) => imperialBlockJson(name, deps), keep: IMPERIAL_KEEP.blocks });
-  registerCustomModelFamily({ owns: isFabricModelId, build: (id) => imperialModelBuild(id), keep: IMPERIAL_KEEP.fabric, climateFree: true });
-  registerCustomModelFamily({ owns: isSkylineId, build: (id) => imperialModelBuild(id), keep: IMPERIAL_KEEP.skylines, climateFree: true, solid: false });
+  // IC-GRAND's perf pass: a block or a model the city's worker made is taken (a block's landmarks' footprint laid on it
+  // here), else made on this thread as before (world/imperialPrebuild.js)
+  const make = (name) => {
+    const b = imperialBlockOf(name), pre = b && b.kind !== 'lake' ? imperialPrebuilt()?.takeBlock(name) : null;
+    return pre ? imperialBlockFootprint(pre, name, b && b.kind !== 'far' ? footprintOf(sliceOfCell(b.r, b.c)) : null) : imperialBlockJson(name, deps);
+  };
+  const model = (id) => { const pre = imperialPrebuilt()?.takeModel(id); return pre !== undefined ? pre : imperialModelBuild(id); };
+  registerPortBlockFamily({ indexOf: imperialBlockIndex, nameOf: imperialBlockName, make, keep: IMPERIAL_KEEP.blocks });
+  registerCustomModelFamily({ owns: isFabricModelId, build: model, keep: IMPERIAL_KEEP.fabric, climateFree: true });
+  registerCustomModelFamily({ owns: isSkylineId, build: model, keep: IMPERIAL_KEEP.skylines, climateFree: true, solid: false });
 }

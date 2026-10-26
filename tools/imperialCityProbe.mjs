@@ -14,10 +14,17 @@
 //   CHROMIUM=<path>    a browser other than the pinned Playwright's
 //   RADIUS=n           the land view's distance (default: the game's own)
 //   W=, H=             the viewport (default 1280 x 720)
-//   REGION=, LOC=      where the boot stands before the jump (default Daggerfall)
+//   REGION=, LOC=      where the boot stands before the jump (default Daggerfall; a hamlet boots in a fraction of it)
+//   PROFILE=<dir>      a CPU profile of the jump and of each station (Chrome's own sampler over CDP, 2 ms) written
+//                      there as <row>.cpuprofile, and the heap's sampled allocations still live after the jump and the
+//                      first station (heap-<row>.json) - read them with a summariser of self and total time
+//   IDLE_MS=900000     how long a station waits for the stream to go idle
+//   BUILDS=1           after the jump, a few near slices each built with the frame held and timed (below)
+//   SHOTS=1            after the jump, the city's shots - each slice built with the frame held, then shot (below);
+//                      SHOT_LIST=a,b the ones taken
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
-import { mkdirSync, appendFileSync } from 'node:fs';
+import { mkdirSync, appendFileSync, writeFileSync } from 'node:fs';
 
 const PORT = Number(process.env.PORT ?? 5181);
 const OUT = process.env.OUT ?? null;
@@ -69,7 +76,18 @@ const ev = (fn, ...args) => page.evaluate(fn, ...args);
 page.on('framenavigated', (f) => { if (f === page.mainFrame()) console.log(`  page: ${f.url().slice(0, 140)}`); });
 /** Frames drawn: wait until the shot-mode counter has moved `n` past where it stands. */
 const frames = async (n) => { const f0 = await ev(() => window.__frame); await page.waitForFunction((t) => window.__frame >= t, f0 + n, { timeout: 600000 }); };
-const idle = async () => { await page.waitForFunction(() => window.__streamIdle?.() === true, null, { timeout: 900000 }); await frames(2); };
+const idle = async () => { await page.waitForFunction(() => window.__streamIdle?.() === true, null, { timeout: Number(process.env.IDLE_MS ?? 900000) }); await frames(2); };
+// PROFILE: Chrome's sampler and the heap's sampled live allocations over CDP, around the jump and each station
+const PROFILE = process.env.PROFILE ?? null;
+const cdp = PROFILE ? await page.context().newCDPSession(page) : null;
+if (cdp) { mkdirSync(PROFILE, { recursive: true }); await cdp.send('Profiler.enable'); await cdp.send('Profiler.setSamplingInterval', { interval: 2000 }); await cdp.send('HeapProfiler.enable'); }
+const profileStart = async (heapToo = false) => { if (!cdp) return; await cdp.send('Profiler.start'); if (heapToo) await cdp.send('HeapProfiler.startSampling', { samplingInterval: 262144 }); };
+const profileStop = async (label, heapToo = false) => {
+  if (!cdp) return;
+  const { profile } = await cdp.send('Profiler.stop');
+  writeFileSync(`${PROFILE}/${label}.cpuprofile`, JSON.stringify(profile));
+  if (heapToo) { const { profile: h } = await cdp.send('HeapProfiler.stopSampling'); writeFileSync(`${PROFILE}/heap-${label}.json`, JSON.stringify(h)); }
+};
 const heap = () => ev(() => (performance.memory ? +(performance.memory.usedJSHeapSize / 1048576).toFixed(1) : null));
 
 const rows = [];
@@ -117,16 +135,118 @@ if (dfArena && OUT && (!want || want.has('daggerfall-arena'))) {
   console.log(`daggerfall-arena at ${dfArena.map((v) => v.toFixed(0))}`);
 }
 const tj = Date.now();
+await profileStart(true);
 await ev(([x, y]) => { window.__tesaJump(x, y); }, [at.px, at.py]);
 await frames(2);
 await idle();
 const jumpMs = Date.now() - tj;
+await profileStop('jump', true);
 const span = await ev(async () => (await import('/src/world/imperialCity.js')).IMPERIAL_SPAN);
 await pagesAway();
 // IC-GRAND x FAR-LANDMARK: the far landmarks' meshes made in the page, all 625 (the sweep makes them a budget a frame)
 const landmarksMs = await ev(async () => { const m = await import('/src/world/imperialImpostor.js').catch(() => null); if (!m?.imperialLandmarkMesh) return null; const t = performance.now(); for (let s = 0; s < 625; s++) m.imperialLandmarkMesh(s); return +(performance.now() - t).toFixed(0); });
 rows.push({ row: 'jump', span, jumpMs, built: await ev(() => window.__builtCount()), heapMB: await heap(), landmarksMs });
 console.log(JSON.stringify(rows.at(-1)));
+// BUILDS=1: A NEAR SLICE'S BUILD IN THE GAME, ITS FRAME HELD (scenes/shared.js holdFrame - nothing drawn, so SwiftShader's
+// frame is out of it and an animation frame comes at the display's pace): each slice's pixel built by the pump's own build
+// (window.__pixelBuild - the stream re-centred on it, so it is built near), its milliseconds (what it takes at the
+// display's rate on this machine - the build lends each frame its budget), the longest gap between two animation frames
+// while it ran (the worst task: a unit of the build no breath parts), its fabric's and landmarks' triangles and the heap
+if (process.env.BUILDS) {
+  const SL = [['palace', 30, 1200], ['market', 30, 3460], ['market-east', 42, 3460], ['arena', 90, 4600], ['elven', 330, 4600], ['temple', 210, 4200]];
+  await ev(async () => { const { holdFrame } = await import('/src/scenes/shared.js'); window.__probeRelease = holdFrame(); });
+  await profileStart(true);
+  for (const [label, b, r] of SL) {
+    const res = await ev(async ([b, r, at]) => {
+      const ic = await import('/src/world/imperialCity.js'), ib = await import('/src/world/imperialBlocks.js'), cm = await import('/src/world/customModels.js');
+      const B = 102.4, HALF = ic.IMPERIAL_CELLS / 2, N = ic.IMPERIAL_SPAN, [x, z] = ic.polar(b, r);
+      const sx = Math.floor((x + HALF * B) / (8 * B)), sy = Math.floor((z + HALF * B) / (8 * B)), s = sy * N + sx;
+      const px = at.px - (N - 1) / 2 + sx, py = at.py - (N - 1) / 2 + sy;
+      // the city's worker told the slices about it, as the sweep tells it when the player comes (scenes/capitalPrebuild.js) -
+      // none before IC-GRAND's perf pass
+      const pre = (await import('/src/world/imperialPrebuild.js').catch(() => null))?.imperialPrebuilt?.() ?? null;
+      const pb = pre ? await import('/src/scenes/capitalPrebuild.js') : null;
+      pre?.want(pb.prebuildWanted(px, py, at.px, at.py));
+      const t0 = pre ? [pre.taken, pre.missed] : null;
+      const gaps = []; let last = performance.now(), on = true;
+      const tick = () => { const t = performance.now(); gaps.push(t - last); last = t; if (on) requestAnimationFrame(tick); };
+      requestAnimationFrame(tick);
+      const out = await window.__pixelBuild(px, py);
+      on = false;
+      gaps.sort((p, q) => p - q);
+      let fabric = 0, parts = 0;
+      for (let i = 0; i < 64; i++) { const m = cm.customModelFor(ib.imperialFabricModelId(sy * 8 + Math.floor(i / 8), sx * 8 + (i % 8))); fabric += m ? m.indices.length / 3 : 0; }
+      for (const id of ic.IMPERIAL_SLICE_PARTS[s]) { const m = cm.customModelFor(id); parts += m ? m.indices.length / 3 : 0; }
+      return { s, name: ic.imperialSliceName(s), ms: out.ms, worker: pre ? { taken: pre.taken - t0[0], missed: pre.missed - t0[1] } : null, built: out.built, error: out.error?.message ?? null, frames: gaps.length, worstGapMs: +(gaps.at(-1) ?? 0).toFixed(1), p99GapMs: +(gaps[Math.floor(gaps.length * 0.99)] ?? 0).toFixed(1), medianGapMs: +(gaps[Math.floor(gaps.length / 2)] ?? 0).toFixed(1), fabricTris: fabric, landmarkTris: parts, heapMB: performance.memory ? +(performance.memory.usedJSHeapSize / 1048576).toFixed(1) : null };
+    }, [b, r, at]);
+    rows.push({ row: `build-${label}`, ...res });
+    console.log(JSON.stringify(rows.at(-1)));
+  }
+  await profileStop('builds', true);
+  await ev(() => { window.__probeRelease?.(); });
+}
+// SHOTS=1 (IC-GRAND, the coordinator's review: the streets, the roofs, the Palace District, the city's arena and the far
+// landmarks in the game): each shot's slice built near with the frame held (window.__pixelBuild - the pump's own build,
+// the stream re-centred on it; SwiftShader's seconds a frame kept out of it), the frame let go, the eye stood in the
+// slice and the shot taken once the frame counter has moved - [label, the slice's point (bearing, metres out), the eye's
+// point, its height (or 'roof': the nearest flat roof's), its yaw (0 north, the camera's) and pitch]
+if (process.env.SHOTS && OUT) {
+  const SHOTS = [
+    ['ic-market-avenue', [30, 3460], [30, 3300], 1.7, (30 * Math.PI) / 180, 0.03],
+    ['ic-market-street', [37, 3600], [37, 3600], 1.7, (120 * Math.PI) / 180, 0.02],
+    ['ic-market-roofs', [37.5, 3000], [37.5, 3000], 'roof', Math.PI / 4, -0.12],
+    ['ic-palace-path', [60, 1750], [60, 1750], 1.7, (240 * Math.PI) / 180, 0.05],
+    ['ic-palace-gate', [30, 2380], [30, 2400], 6, (210 * Math.PI) / 180, 0.04],
+    ['ic-palace-air', [10, 600], [200, 1500], 420, (20 * Math.PI) / 180, -0.38],
+    ['ic-elven-courts', [318, 3500], [318, 3500], 70, (120 * Math.PI) / 180, -0.66],
+    ['ic-arboretum', [132, 4000], [132, 4000], 70, (132 * Math.PI) / 180, -0.56],
+    ['ic-wall-tower', [30, 6870], [30, 6870], 48, (210 * Math.PI) / 180, 0.06],
+  ];
+  const wantShot = process.env.SHOT_LIST ? new Set(process.env.SHOT_LIST.split(',')) : null;
+  const toPixel = (b, r) => ev(async ([b, r, at]) => {
+    const ic = await import('/src/world/imperialCity.js'), B = 102.4, HALF = ic.IMPERIAL_CELLS / 2, N = ic.IMPERIAL_SPAN, [x, z] = ic.polar(b, r);
+    return [at.px - (N - 1) / 2 + Math.floor((x + HALF * B) / (8 * B)), at.py - (N - 1) / 2 + Math.floor((z + HALF * B) / (8 * B))];
+  }, [b, r, at]);
+  const shoot = async (label, [px, py], eyeAt) => {
+    await ev(async () => { const { holdFrame } = await import('/src/scenes/shared.js'); window.__probeRelease = holdFrame(); });
+    const t = Date.now(), out = await ev(([px, py]) => window.__pixelBuild(px, py), [px, py]);
+    await ev(() => { window.__probeRelease?.(); });
+    const [cx2, cy2] = (await ev(() => window.__currentPixel())).split(',').map(Number);
+    const eye = await eyeAt();
+    const [ex, ey, ez, yaw, pitch] = eye.scene ?? eye;   // the city's metres (x east, z south), or the scene's own
+    const sx = eye.scene ? ex : (at.px - cx2) * 819.2 + 409.6 + ex, sz = eye.scene ? ez : -(at.py - cy2) * 819.2 + 409.6 - ez;
+    await ev(([x, y, z, yaw, pitch]) => window.__pose(x, y, z, yaw, pitch), [sx, ey, sz, yaw, pitch]);
+    await frames(3);
+    await pagesAway();
+    await frames(1);
+    await page.screenshot({ path: `${OUT}/${label}.png` });
+    console.log(JSON.stringify({ shot: label, pixel: [px, py], buildMs: out.ms, built: out.built, error: out.error?.message ?? null, inSec: Math.round((Date.now() - t) / 1000) }));
+  };
+  const baseY = (await ev(() => window.__cam()))[1];
+  const pol = (b, r) => [r * Math.sin((b * Math.PI) / 180), -r * Math.cos((b * Math.PI) / 180)];
+  for (const [label, [sb, sr], [eb, er], h, yaw, pitch] of SHOTS) {
+    if (wantShot && !wantShot.has(label)) continue;
+    const pixel = await toPixel(sb, sr);
+    await shoot(label, pixel, async () => {
+      let [ex, ez] = pol(eb, er), y = h;
+      if (h === 'roof') {
+        const roof = await ev(async ([x0, z0]) => { const f = await import('/src/world/imperialFabric.js'); for (let d = 0; d < 200; d += 4) for (let a = 0; a < 8; a++) { const x = x0 + Math.cos(a) * d, z = z0 + Math.sin(a) * d, p = f.fabricPlotAt(x, z); if (p && p.roof === 'flat') return [x, z, p.h]; } return null; }, [ex, ez]);
+        if (roof) { [ex, ez] = roof; y = roof[2] + 1.7; } else y = 20;
+      }
+      return [ex, baseY + y, ez, yaw, pitch];
+    });
+  }
+  // the city's arena: Daggerfall's block in the Arena District, its slice built near, the eye north-west of its stage
+  if (!wantShot || wantShot.has('ic-arena')) {
+    const [ax, az] = await ev(async () => (await import('/src/world/imperialCity.js')).imperialArenaAt());
+    const b = (Math.atan2(ax, -az) * 180) / Math.PI, pixel = await toPixel((b + 360) % 360, Math.hypot(ax, az));
+    await shoot('ic-arena', pixel, async () => {
+      const stage = await ev(() => window.__arena?.()?.centre ?? null);   // the stage, in the scene's own frame
+      if (stage) return { scene: [stage[0] - 70, stage[1] + 55, stage[2] + 70, (3 * Math.PI) / 4, -0.55] };
+      return [ax - 70, baseY + 55, az + 70, (3 * Math.PI) / 4, -0.55];
+    });
+  }
+}
 // the scene's frame: the jump re-inits the stream on the centre pixel, its south-west corner the scene's origin; its middle
 // the city's anchor (x east, z north in the scene - the city's z runs south)
 const cur = await ev(() => window.__currentPixel());
@@ -152,12 +272,14 @@ for (const [label, b, out, h, yaw, pitch] of STATIONS) {
   }
   const [x, z] = sceneOf(ex, sz);
   const ts = Date.now();
+  await profileStart(label === 'centre-air');
   await ev(([x, y, z, yaw, pitch]) => window.__pose(x, y, z, yaw, pitch), [x, base[1] + eye, z, yaw, pitch]);
   await frames(2);
   await idle();
   const settleMs = Date.now() - ts;
   const stats = [];
   for (let i = 0; i < FRAMES; i++) { await frames(1); const s = await ev(() => window.__fpsStats?.() ?? null); if (s) stats.push(s); }
+  await profileStop(label, label === 'centre-air');
   const mean = (k) => { const v = stats.map((s) => s[k]).filter((q) => q != null); return v.length ? +(v.reduce((a, c) => a + c, 0) / v.length).toFixed(1) : null; };
   // the frame's script split (in the frame, before it, the stream's builds) and the minute's worst frame kept (HITCH-KEEP)
   const row = { row: label, settleMs, built: await ev(() => window.__builtCount()), frameMs: mean('meanMs'), scriptMs: mean('scriptMs'), inFrameMs: mean('scriptInFrameMs'), beforeMs: mean('scriptBeforeMs'), streamMs: mean('scriptStreamMs'), draws: mean('draws'), heapMB: await heap(), hitch: stats.at(-1)?.hitch ?? null };

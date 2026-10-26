@@ -318,8 +318,8 @@
   {
     "name": "WB8b-the-old-law-let-in",
     "file": "src/net/wire.js",
-    "old": "export const GATE_BRAIN_MIN = 6;",
-    "new": "export const GATE_BRAIN_MIN = 5;",
+    "old": "export const GATE_BRAIN_MIN = 7;",
+    "new": "export const GATE_BRAIN_MIN = 6;",
     "tests": [
       "test/net/gate/wb8b_gate_marks.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "WB8b-the-relay-fights-unmarked",
     "file": "server/src/index.js",
-    "old": "boss: gateBossOf(day).id, md: gateModsOf(day), pt: gatePortentsOf(day), ti: gateTitheOf(day) });   // WB8b",
-    "new": "boss: gateBossOf(day).id, pt: gatePortentsOf(day), ti: gateTitheOf(day) });   // WB8b",
+    "old": "boss: gateBossOf(day).id, md: gateModsOf(day), pt: gatePortentsOf(day), ti: gateTitheOf(day) }); f.cn = gateCourtOfRoom(a.key); }   // WB8b",
+    "new": "boss: gateBossOf(day).id, pt: gatePortentsOf(day), ti: gateTitheOf(day) }); f.cn = gateCourtOfRoom(a.key); }   // WB8b",
     "tests": [
       "test/net/gate/wb8b_gate_marks.test.js",
       "test/net/gate/wb8c_gate_detail.test.js"

@@ -42,6 +42,9 @@ import { RANDOM_TREASURE_ICONS } from '../../src/systems/loot/loot.js';
 import { gemKindOf } from '../../src/systems/loot/lootRarity.js';   // GEM2: a boss's gem
 import { ROOM_LOOT_OFF } from '../roomLootOff.mjs';   // PARTY-LOOT: the room's seams with no room
 import { appliedOwnerTm } from '../../src/net/ownerClock.js';   // PIN MOVED (OWNER-CLOCK): the stream door copies its frame's owner clock beside the feet - a free name of the mount
+import { strikeTraits, traitWire, traitWireKey, readTraitWire, traitsAuthority, traitsFrame } from '../../src/scenes/foeTraitsHost.js';   // AUDIT WORLD-EVENTS: the dungeon host's trait doors, in the mounted scope
+import { bossClockS } from '../../src/systems/bossTraits.js';
+const TRAIT_DOORS = { strikeTraits, traitWire, traitWireKey, readTraitWire, traitsAuthority, traitsFrame, bossClockS };
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const packsIn = (list) => (list ?? []).filter(isPackRecord).reduce((s, it) => s + (it.stackCount ?? 1), 0);
@@ -153,7 +156,7 @@ test('AUDIT CARDS-6 A3: a joiner\'s copy of a body - the stream\'s death of it a
   const foes = [{ mobileType: MOBILE_TYPES.Rat, dead: false, gender: 'male', entity: ratBody(), ai: { feet: [0, 0, 0], yaw: 0, isHostile: true, target: null } }];
   const state = {
     ...ROOM_LOOT_OFF,   // PIN MOVED (PARTY-LOOT): the dungeon's room-loot seams, answering as an offline dungeon's (test/roomLootOff.mjs)
-    ...doorDeps(), foes, _layoutFoes: 1, _retyping: new Set(), _authority: false, validFoeRecord, opts: { selfId: () => 'peer-7' },
+    ...doorDeps(), ...TRAIT_DOORS, foes, _layoutFoes: 1, _retyping: new Set(), _authority: false, validFoeRecord, opts: { selfId: () => 'peer-7' },
     appliedOwnerTm,   // PIN MOVED (OWNER-CLOCK): the stream door's frame clock (net/ownerClock.js) - null outside a frame
     renownFoeDied: () => {}, reportPlayerKill: () => {}, sayEnemyDied: () => null, hudText: { add: () => {} },
     setFoeDead: (f, d) => { f.dead = d; }, retypeFoe: async () => false,

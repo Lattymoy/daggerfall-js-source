@@ -58,9 +58,15 @@ test('AUDIT 30 L5 + L6: a worn piece never reads "worn to 100%"; the tax is take
 });
 
 test('AUDIT 30 L7 + L2 + L8: the catalogue holds what something yields; a piece is listable by its crafted family; a listing\'s worth is a balance\'s', () => {
-  assert.deepEqual([...UNYIELDED], ['ingot:daedric']);   // PROF7 moved it: Hunting yields the Bear Hide; PIN MOVED (AUDIT-SEATS): the sieges' Spoils yield the Warforged ingot and the silk
+  // PROF7 moved it: Hunting yields the Bear Hide; PIN MOVED (AUDIT-SEATS): the sieges' Spoils yield the Warforged ingot and
+  // the silk; PIN MOVED (DAEDRIC-SMELT, Professions-Arc.md section 53): the forge smelts the Daedric Ingot, and the heart it
+  // takes - loose alone, never counted by the service - is the loose door's, as CLOTH-GEMS' graded gems are
+  // (professionLaw.js LOOSE_ONLY_KEYS): nothing waits on a yield
+  assert.deepEqual([...UNYIELDED], []);
   const keys = new Set(marketCatalogue().map((c) => c.key));
   for (const k of UNYIELDED) assert.equal(keys.has(k), false, k);
+  assert.equal(keys.has('part:daedra-heart'), false, 'DAEDRIC-SMELT: the heart is no catalogue\'s');
+  assert.equal(keys.has('ingot:daedric'), true, 'DAEDRIC-SMELT: the ingot is the catalogue\'s now');
   assert.equal(keys.has('ingot:iron') && keys.has('ore:mithril'), true);
   assert.equal(pieceListable('longsword:mithril'), true);
   assert.equal(pieceListable('table-small:oak'), true);

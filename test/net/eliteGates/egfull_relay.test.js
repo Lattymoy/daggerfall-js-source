@@ -159,7 +159,9 @@ test('EG-FULL THE FALL, THE MEMENTO AND THE RECALL (section 16.5): a member\'s o
   assert.equal(B.mem['acct-1'].alive, 1);
   assert.equal(B.mem['acct-1'].recall, 0, 'the recall spent');
   // a second fall: final
-  const out = egWord(B, 'acct-1', { k: 'fell' }, null, T0 + 9e6, () => 0.5);
+  // PIN MOVED (AUDIT WORLD-EVENTS L1-4, raise before the fall): a death with a companion standing lies down first; given in
+  // to (`yield`), it is the fall
+  const out = [...egWord(B, 'acct-1', { k: 'fell' }, null, T0 + 9e6, () => 0.5), ...egWord(B, 'acct-1', { k: 'yield' }, null, T0 + 9e6, () => 0.5)];
   const f2 = out.find((f) => f.k === 'fall');
   assert.ok(f2 && f2.fin === 1, 'the second fall is final');
   assert.ok(B.owe.some((o) => o.sub === 'acct-1' && o.claims.q === 'x' && o.claims.why === 'fall'), 'its end receipt owed');

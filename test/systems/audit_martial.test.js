@@ -44,7 +44,7 @@ import { getMeleeWeaponAnimTime, registerMeleeWeaponAnimTime, registerSwingReade
 import { installSwingLaw } from '../../src/combat/swingLaw.js';
 import { rrMeleeWeaponAnimTime } from '../../src/systems/roleplayRealism/rrRealism.js';
 import { runMagicRoundsFor } from '../../src/systems/worldTick.js';
-import { setCourtRules } from '../../src/systems/courtRules.js';
+import { setCourtRules, courtRulesHurt, REGEN_HELD_HURT_MS } from '../../src/systems/courtRules.js';
 import { bossStandIn } from '../../src/world/gate/gateBoss.js';
 import { makeEnemyEntity } from '../../src/characters/enemy/enemyEntity.js';
 import { ENEMY_BASICS } from '../../src/characters/enemy/enemyBasics.js';
@@ -308,13 +308,19 @@ test('AUDIT MARTIAL L3 F2 / L2 F1: a body the relay runs reads no half line - it
   assert.deepEqual([at(hammer, weapon(WEAPONS.Warhammer), wounded), at(hammer, weapon(WEAPONS.Warhammer), fresh)], [0, 80]);
 }));
 
-test('AUDIT MARTIAL L3 F3: Grit regrows no health in the court whose law bars regeneration (WBX6), its fatigue still; outside it, both (mutants: the court unread)', () => clean(() => {
+test('AUDIT MARTIAL L3 F3 / EVENT-RULES: Grit regrows health HELD in the court whose law holds regeneration (WBX6) - half a round, none just after a hurt - its fatigue whole; outside it, both whole (mutants: the court unread; the pause unread)', () => clean(() => {
   const me = pathFighter('brawler'); me.maxHealth = 200; me.health = 100; me.fatigue = 0;
   const sinks = { heal() {}, damage() {}, fatigue() {}, magicka() {} };
-  setCourtRules(true);
+  setCourtRules(true, 1_000);
+  setCourtRules(true, 2_000); courtRulesHurt({ before: 100, after: 90 });   // hurt: the pause runs (AUDIT WORLD-EVENTS L1-10: at the hurt door)
+  me.health = 90;
   runMagicRoundsFor(me, 0, 3, { sinks, rolls: () => 0.5 });
-  assert.equal(me.health, 100, 'no regeneration in the court');
+  assert.equal(me.health, 90, 'just hurt in the court: no regeneration');
   assert.ok(me.fatigue > 0, 'its fatigue comes back');
+  setCourtRules(true, 2_000 + REGEN_HELD_HURT_MS);
+  runMagicRoundsFor(me, 0, 2, { sinks, rolls: () => 0.5 });
+  assert.equal(me.health, 92, 'past the pause: half of 1% of 200 a round');
+  me.health = 100;
   setCourtRules(false);
   runMagicRoundsFor(me, 3, 4, { sinks, rolls: () => 0.5 });
   assert.equal(me.health, 102, 'outside it: 1% of 200 a round');

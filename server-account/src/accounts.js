@@ -40,6 +40,7 @@ import { handleLooksLikeEmail } from '../../src/net/handleShape.js';   // HANDLE
 import { NAME_MAX } from '../../src/net/wire.js';   // NAME-AS: the wire's bound on a name, a worn character's among them
 import { checkName } from '../../src/net/nameFilter.js';   // NAME-AS: which word a character's name was refused for (NAME-F: a refusal names it)
 import { wardrobeOf, equipRefusal, canModerate, isDeveloper, auraRefusal, glyphRefusal, glyphsHidden, iconRefusal } from './titles.js';   // ACC3: what a player holds, wears and is true of - all four derived; WB9g: and the aura worn
+import { brokerRidOk, brokerSaleOf, brokerSaleWrite, brokerRidFreeSql } from './brokerSales.js';   // AUDIT FB1024 (BROKER-RID): a press by its request id
 import { insigniaById, insigniaHeld } from '../../src/net/insignia.js';   // WB9g: the Broker's insignia - one law both ends
 import { ID_RE, nameIsIssuable } from '../../src/net/identityToken.js';
 import { PLAY_GRACE_S } from '../../src/net/playClock.js';   // ACC4: the widest gap one beat may credit - one home both ends
@@ -580,23 +581,36 @@ export async function insigniaPurse({ db }, player) {
  * the pack; this is the half no client can skip. Answers the wardrobe after the write and the purse left.
  * @param {{ db: any, nowS: number }} ctx
  */
-export async function buyInsignia({ db, nowS }, player, env, id) {
+export async function buyInsignia({ db, nowS }, player, env, id, rid = null) {
   const offer = insigniaById(id);
   if (!offer) return { error: 'no-insignia' };
   if (!player?.handle) return { error: 'guest' };
+  // AUDIT FB1024 (BROKER-RID, brokerSales.js): a press with a request id - a fenced id writes nothing, the same press asked
+  // again answers its sale (before `owned`, which its own sale made true)
+  if (rid !== null && !brokerRidOk(rid)) return { error: 'rid' };
+  const had = rid ? await brokerSaleOf(db, player.id, rid) : null;
+  if (had?.kind === 'fence') return { error: 'fenced' };
+  if (had?.kind === 'insignia' && had.item === offer.id) return { ok: true, bought: offer.id, again: true, ...wardrobeOf(player, env, nowS), purse: await insigniaPurse({ db }, player) };
   if (insigniaHeld(player.insignia).includes(offer.id)) return { error: 'owned' };
   // AUDIT WB9 (insignia F3): the id APPENDED to the column the UPDATE matches, not written over it from the row read
   // before - two sales of two pieces at once each read the column empty, and the second wrote its id alone over the
   // first's: both paid for, one held (the id's shape is the law's own, insigniaWith's: space-separated, in sale order)
-  const row = await db.prepare(
-    `UPDATE players SET insignia = CASE WHEN COALESCE(insignia, '') = '' THEN ?2 ELSE insignia || ' ' || ?2 END,
-       insignia_spent = insignia_spent + ?3, last_seen = ?4
-     WHERE id = ?1
-       AND (' ' || COALESCE(insignia, '') || ' ') NOT LIKE ('% ' || ?2 || ' %')
-       AND ${EMBERS_EARNED_SQL} - insignia_spent >= ?3
-     RETURNING insignia, insignia_spent`,
-  ).bind(player.id, offer.id, offer.price, nowS).first();
+  // AUDIT FB1024 (BROKER-RID): the request id's guard rides the one UPDATE, and its row is written by that write alone
+  const [sold] = await db.batch([
+    db.prepare(
+      `UPDATE players SET insignia = CASE WHEN COALESCE(insignia, '') = '' THEN ?2 ELSE insignia || ' ' || ?2 END,
+         insignia_spent = insignia_spent + ?3, last_seen = ?4
+       WHERE id = ?1
+         AND (' ' || COALESCE(insignia, '') || ' ') NOT LIKE ('% ' || ?2 || ' %')
+         AND ${EMBERS_EARNED_SQL} - insignia_spent >= ?3${rid ? `
+         AND ${brokerRidFreeSql('?1', '?5')}` : ''}
+       RETURNING insignia, insignia_spent`,
+    ).bind(player.id, offer.id, offer.price, nowS, ...(rid ? [rid] : [])),
+    ...(rid ? [brokerSaleWrite(db, { account: player.id, rid, kind: 'insignia', item: offer.id, nowS })] : []),
+  ]);
+  const row = sold?.results?.[0] ?? null;
   if (!row) {
+    if (rid && (await brokerSaleOf(db, player.id, rid))?.kind === 'fence') return { error: 'fenced' };   // fenced while it was asked
     const now = await db.prepare('SELECT * FROM players WHERE id = ?').bind(player.id).first();
     if (insigniaHeld(now?.insignia).includes(offer.id)) return { error: 'owned' };
     return { error: 'short', purse: await insigniaPurse({ db }, now ?? player), price: offer.price };

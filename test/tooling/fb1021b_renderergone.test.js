@@ -51,6 +51,8 @@ test('RENDERER-GONE by source: the shell asks with exactly these and acts on exa
   assert.match(main, /if \(giveUp\('stopped before it came up'\) \|\| win\.isDestroyed\(\) \|\| details\?\.reason === 'clean-exit'\) return;\n\s*if \(restarting\) \{ restarting = false; win\.webContents\.reload\(\); return; \}\n\s*const \{ response \} = await dialog\.showMessageBox\(win, goneAsk\(details\?\.reason, stops\.stop\(Date\.now\(\)\)\)\);\n\s*if \(win\.isDestroyed\(\)\) return;\n\s*if \(restarts\(response\)\) win\.webContents\.reload\(\); else app\.quit\(\);/);
   assert.match(main, /win\.webContents\.on\('unresponsive', async \(\) => \{[\s\S]*?const \{ response \} = await dialog\.showMessageBox\(win, hangAsk\(\)\);[\s\S]*?if \(!restartsHung\(response\) \|\| win\.isDestroyed\(\)\) return;\n\s*restarting = true;\n\s*win\.webContents\.forcefullyCrashRenderer\(\);/);
   assert.match(main, /if \(details\?\.reason !== 'clean-exit'\) logGone\('renderer', details\);/, 'every stop kept in crash.log');
-  assert.match(main, /app\.on\('child-process-gone', \(_e, details\) => \{ if \(details\?\.type === 'GPU'\) logGone\('gpu', details\); \}\);/);
+  // PIN MOVED (GPU-TRAIL-LOST, 2026-10-25): the GPU's stop is held for the page's lost sample, then logged by logGone
+  assert.match(main, /app\.on\('child-process-gone', \(_e, details\) => \{ if \(details\?\.type === 'GPU'\) gpuGone\.gone\(details, Date\.now\(\)\); \}\);/);
+  assert.match(main, /createGpuGoneWait\(\{ write: \(details, at\) => logGone\('gpu', details, at\) \}\)/);
   assert.equal((main.match(/'render-process-gone'/g) ?? []).length, 1, 'one door for a stopped page');
 });

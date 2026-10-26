@@ -2,12 +2,12 @@
   {
     "name": "LONE-SLEEP-never-lone",
     "file": "src/net/loneSleep.js",
-    "old": "  return !!s.ok && !!s.presence && isCellRoom(s.room)",
-    "new": "  return false && !!s.ok && !!s.presence && isCellRoom(s.room)",
+    "old": "  return !!s.alone && !!s.ok && !!s.presence && isCellRoom(s.room)",
+    "new": "  return false && !!s.alone && !!s.ok && !!s.presence && isCellRoom(s.room)",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
-    "note": "a session never goes quiet"
+    "note": "a session never goes quiet (re-aimed by content at the merge with HIBERNATE)"
   },
   {
     "name": "LONE-SLEEP-interval-the-heartbeat",
@@ -52,22 +52,22 @@
   {
     "name": "LONE-SLEEP-gate-floor",
     "file": "src/net/loneSleep.js",
-    "old": "export const LONE_RELAY_MIN = 260;",
-    "new": "export const LONE_RELAY_MIN = 259;",
+    "old": "export const LONE_RELAY_MIN = WORLD_WIDE_RELAY_MIN;",
+    "new": "export const LONE_RELAY_MIN = WORLD_WIDE_RELAY_MIN - 1;",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
-    "note": "the live relay at the release's start"
+    "note": "the live relay at the release's start (re-aimed by content at the merge with HIBERNATE)"
   },
   {
     "name": "LONE-SLEEP-relay-unread",
     "file": "src/net/loneSleep.js",
-    "old": "  return !!s.ok && !!s.presence &&",
-    "new": "  return !!s.presence &&",
+    "old": "  return !!s.alone && !!s.ok && !!s.presence &&",
+    "new": "  return !!s.alone && !!s.presence &&",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
-    "note": "the gate dropped from the law"
+    "note": "the gate dropped from the law (re-aimed by content at the merge with HIBERNATE)"
   },
   {
     "name": "LONE-SLEEP-presence-unread",
@@ -92,52 +92,52 @@
   {
     "name": "LONE-SLEEP-open-unread",
     "file": "src/net/loneSleep.js",
-    "old": "&& s.open && s.peers",
-    "new": "&& s.peers",
-    "tests": [
-      "test/net/lonesleep.test.js"
-    ],
-    "note": "my cell's socket's state dropped from the law"
-  },
-  {
-    "name": "LONE-SLEEP-peers-unread",
-    "file": "src/net/loneSleep.js",
-    "old": "&& s.peers === 0 && !s.rf",
-    "new": "&& !s.rf",
-    "tests": [
-      "test/net/lonesleep.test.js"
-    ],
-    "note": "a peer near, still quiet"
-  },
-  {
-    "name": "LONE-SLEEP-rf-unread",
-    "file": "src/net/loneSleep.js",
-    "old": "&& !s.rf && !s.zone",
+    "old": "&& s.open && !s.zone",
     "new": "&& !s.zone",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
-    "note": "a referee's cell, still quiet"
+    "note": "my cell's socket's state dropped from the law (re-aimed by content at the merge with HIBERNATE)"
+  },
+  {
+    "name": "LONE-SLEEP-peers-unread",
+    "file": "src/net/loneSleep.js",
+    "old": "!s.refereed && s.others === 0 && s.peers",
+    "new": "!s.refereed && s.peers",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "someone in my own room, still alone (re-aimed by content at the merge with HIBERNATE: alone is aloneNow)"
+  },
+  {
+    "name": "LONE-SLEEP-rf-unread",
+    "file": "src/net/loneSleep.js",
+    "old": "  return !s.refereed && s.others === 0",
+    "new": "  return s.others === 0",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "a referee, still alone (re-aimed by content at the merge with HIBERNATE)"
   },
   {
     "name": "LONE-SLEEP-zone-unread",
     "file": "src/net/loneSleep.js",
-    "old": "&& !s.zone && !s.whole",
-    "new": "&& !s.whole",
-    "tests": [
-      "test/net/lonesleep.test.js"
-    ],
-    "note": "the open zone, still quiet"
-  },
-  {
-    "name": "LONE-SLEEP-whole-unread",
-    "file": "src/net/loneSleep.js",
-    "old": "&& !s.whole && s.now",
+    "old": "&& !s.zone && s.now",
     "new": "&& s.now",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
-    "note": "a duel, still quiet"
+    "note": "the open zone, still quiet (re-aimed by content at the merge with HIBERNATE)"
+  },
+  {
+    "name": "LONE-SLEEP-whole-unread",
+    "file": "src/net/loneSleep.js",
+    "old": "  return !!s.alone && !!s.ok",
+    "new": "  return !!s.ok",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "lone without being alone (re-aimed by content at the merge with HIBERNATE: the halo referee is aloneOf's)"
   },
   {
     "name": "LONE-SLEEP-hold-unread",
@@ -180,34 +180,54 @@
     "note": "the session's peers unread"
   },
   {
+    "name": "LONE-SLEEP-session-others",
+    "file": "src/net/loneSleep.js",
+    "old": "others: s.othersHere,",
+    "new": "others: 0,",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "someone in my own room unread by the session"
+  },
+  {
+    "name": "LONE-SLEEP-alone-any-room",
+    "file": "src/net/loneSleep.js",
+    "old": "(isCellRoom(s.room) || isWorldRoom(s.room));",
+    "new": "true;",
+    "tests": [
+      "test/net/lonesleep.test.js"
+    ],
+    "note": "a battle, a boss room or a channel alone"
+  },
+  {
     "name": "LONE-SLEEP-session-halo-rf",
     "file": "src/net/loneSleep.js",
-    "old": "  for (const [, h] of s._halo) if (h.ws && s._rfOn.get(h.ws)) rf = true;\n",
+    "old": "  if (!refereed) for (const h of s._halo.values()) if (h.ws && s._rfOn.get(h.ws)) { refereed = true; break; }\n",
     "new": "",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
-    "note": "a halo's referee unread"
+    "note": "a halo's referee unread (re-aimed by content at the merge with HIBERNATE)"
   },
   {
     "name": "LONE-SLEEP-session-own-rf",
     "file": "src/net/loneSleep.js",
-    "old": "let rf = !!(s._ws && s._rfOn.get(s._ws));",
-    "new": "let rf = false;",
+    "old": "!!s.haloWhole || !!(s._ws && s._rfOn.get(s._ws));",
+    "new": "!!s.haloWhole;",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
-    "note": "my own cell's referee unread"
+    "note": "my own cell's referee unread (re-aimed by content at the merge with HIBERNATE)"
   },
   {
     "name": "LONE-SLEEP-session-whole",
     "file": "src/net/loneSleep.js",
-    "old": "whole: !!s.haloWhole,",
-    "new": "whole: false,",
+    "old": "let refereed = !!s.haloWhole || !!(s._ws",
+    "new": "let refereed = !!(s._ws",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
-    "note": "the host's haloWhole unread"
+    "note": "the host's haloWhole unread (re-aimed by content at the merge with HIBERNATE)"
   },
   {
     "name": "LONE-SLEEP-session-zone",
@@ -402,11 +422,11 @@
   {
     "name": "LONE-SLEEP-online-halo-unwrapped",
     "file": "src/net/online.js",
-    "old": "    try { ws = loneAhead(this, this._leased(new this._WS(`${this.url}/room/${room}`), room), room); } catch {",
-    "new": "    try { ws = this._leased(new this._WS(`${this.url}/room/${room}`), room); } catch {",
+    "old": "    try { ws = loneAhead(this, this._leased(new this._WS(`${this.url}/room/${room}${of}`), room), room); }",
+    "new": "    try { ws = this._leased(new this._WS(`${this.url}/room/${room}${of}`), room); }",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
-    "note": "a halo's words carry no pose"
+    "note": "a halo's words carry no pose (re-aimed by content at the merge: COST-2's `?of=` on the halo's open)"
   }
 ]

@@ -31,6 +31,9 @@ import { freeLodgedFeet } from '../../src/characters/foeSpacing.js';   // FIELD 
 import { auraWingLights } from '../../src/render/auraRing.js';   // SERAPH-WINGS: peerTorchLights' tail
 import { createGateCrowd } from '../../src/net/gate/gateCrowd.js';   // AUDIT CROWD-WIDE B3: peerTorchLights asks the crowd's count
 import { foeSeed, applyWireLook } from '../../src/characters/foeBodies.js';   // AUDIT MW-NPC II K3: the dungeon context's look seed, in the mounted scope
+import { strikeTraits, traitWire, traitWireKey, readTraitWire, traitsAuthority, traitsFrame } from '../../src/scenes/foeTraitsHost.js';   // AUDIT WORLD-EVENTS: the dungeon host's trait doors, in the mounted scope
+import { bossClockS } from '../../src/systems/bossTraits.js';
+const TRAIT_DOORS = { strikeTraits, traitWire, traitWireKey, readTraitWire, traitsAuthority, traitsFrame, bossClockS };
 import { partyOnlyQuestShare } from '../../src/scenes/quest/questFoeHost.js';   // QUEST-OWNER: the dungeon's quest seam, narrowed to the party (ownShare)
 import { adoptLight } from '../../src/render/lightId.js';   // LIGHT-ID: the dungeon's light copies adopt their lights
 import { ROOM_LOOT_OFF } from '../roomLootOff.mjs';   // PARTY-LOOT: the room's seams with no room
@@ -109,6 +112,7 @@ function context({ authority, self }) {
   const state = {
     ...ROOM_LOOT_OFF,   // PIN MOVED (PARTY-LOOT): the dungeon's room-loot seams, answering as an offline dungeon's (test/roomLootOff.mjs)
     foeSeed, applyWireLook,   // AUDIT MW-NPC II K3: the records' look seed (roomRecord, applyFoeRecord, the puppets' stands)
+    ...TRAIT_DOORS,   // AUDIT WORLD-EVENTS: the trait doors roomRecord, applyFoeRecord and setAuthority call
     appliedOwnerTm,   // PIN MOVED (OWNER-CLOCK): the stream door's frame clock (net/ownerClock.js) - null outside a frame
     console: { error: () => {}, warn: () => {}, info: () => {} },
     ENEMY_BASICS, enemyEntityType, isClassEnemyId, setupFoeLook, MobileUnit, enemyHierarchyOrder, validFoeRecord, FOE_HEALTH_MAX, FOE_LEVEL_MAX, FOES_FRAME_MAX, CELL_FRAME_RECORDS_MAX,

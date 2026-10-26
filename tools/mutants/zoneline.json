@@ -159,8 +159,8 @@
   {
     "name": "ZONELINE-the-outlines-coast-none",
     "file": "src/systems/wild/cyrodiilZone.js",
-    "old": "    coast: linkPieces(segs.filter((s) => s.kind === 'coast'), lines.points),",
-    "new": "    coast: [],",
+    "old": "  const coast = yield* linkSteps(segs.filter((s) => s.kind === 'coast'), lines.points);",
+    "new": "  const coast = [];",
     "tests": [
       "test/systems/wild/zoneline.test.js"
     ]
@@ -213,8 +213,8 @@
   {
     "name": "ZONELINE-the-inks-coast-uncut",
     "file": "src/ui/tamrielInk.js",
-    "old": "const lines = lawLines(trace), zone = zoneLineOf(trace);",
-    "new": "const lines = lawLines(trace), zone = null;",
+    "old": "const zone = zoneMask ? yield* zoneLineSteps(trace, zoneMask) : null;",
+    "new": "const zone = null;",
     "tests": [
       "test/systems/wild/zoneline.test.js"
     ]

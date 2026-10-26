@@ -12,7 +12,7 @@
 // (byte - 128) / 128) and cache by index.
 
 import { SndFile, SAMPLE_RATE } from '../formats/sndFile.js';
-import { getFloat } from './settings/settings.js';   // SETT: SoundVolume
+import { getFloat, onSettingChange } from './settings/settings.js';   // SETT: SoundVolume; SOUND-LIVE: re-levelled as it is written
 import { REVERB_PRESET, reverbImpulse } from './reverbPresets.js';   // BA1: AudioReverbZone's presets and the impulse built from them
 import { setEquipSoundSink } from './equip.js';   // ES2: the equip moment's one audio door
 import { SOUND_REPLACEMENTS, soundBufferKey, fetchReplacement, soundSilenced, soundReplacementGen } from './soundReplacer.js';   // SNDREP1: a player's loose WAVs over classic clips, and the two night-sound switches
@@ -136,7 +136,7 @@ export class AudioEngine {
    *  AudioSource.volume from it); a WebAudio graph does it once with
    *  a gain node every source connects through, so the setting is one
    *  multiply rather than one per call site. Re-read on each
-   *  connection so a launcher change lands on the next sound. */
+   *  connection, and re-levelled as the setting is written (SOUND-LIVE). */
   _out() {
     if (!this.ctx) return null;
     // minted once per context (a re-created context invalidates it)
@@ -156,9 +156,23 @@ export class AudioEngine {
       this._reverbIn = this.ctx.createGain();
       this._master.connect(this._reverbIn);
       this._reverb = null;   // a new context is a new bus; the zone is re-armed by its next setReverb
+      // SOUND-LIVE (2026-10-23, travddm: "some sounds in the game which are not tied to any volume sliders"): the
+      // setting is read here, so a slider moved with nothing new playing - the Options page over a quiet world - left
+      // every sound already going (the rain, the wind, a torch, the ride, a ship's loops) at the old level. The
+      // master re-levels the moment the setting is written, as the music's does (music.js resyncGain).
+      this._unwatchVolume ??= onSettingChange((section, key) => {
+        if (section === 'Controls' && key === 'SoundVolume') this._relevel();
+      });
     }
     this._master.gain.value = getFloat('Controls', 'SoundVolume', 0, 1);
     return this._master;
+  }
+
+  /** SOUND-LIVE: the master to the setting over 50 ms, so a slider step is not a zipper (the music's own ramp). */
+  _relevel() {
+    if (!this.ctx || !this._master || this._master.context !== this.ctx) return;
+    const g = this._master.gain, v = getFloat('Controls', 'SoundVolume', 0, 1), t = this.ctx.currentTime;
+    try { g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(v, t + 0.05); } catch { g.value = v; }
   }
 
   /** GATE-MIX: the limiter (LIMITER, limiterCurve) built on this context and wired to the speakers - its compressor

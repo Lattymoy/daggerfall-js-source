@@ -137,8 +137,8 @@
   {
     "name": "SD9A-spent-unknown",
     "file": "src/net/wire.js",
-    "old": "'ehit', 'xhit', 'spent', 'vt']);",
-    "new": "'ehit', 'xhit', 'vt']);",
+    "old": "'ehit', 'xhit', 'spent', 'vt', 'rz']);",
+    "new": "'ehit', 'xhit', 'vt', 'rz']);",
     "tests": [
       "test/net/superDungeon/sd9a_receipt.test.js"
     ],
@@ -492,8 +492,8 @@
   {
     "name": "SD9A-spent-unmetered",
     "file": "src/net/online.js",
-    "old": "    const toll = sdGate(this._sdBucket, this._now());   // the sd words' own bucket, a find's\n    if (!toll.pass) return false;\n",
-    "new": "    const toll = sdGate(this._sdBucket, this._now());   // the sd words' own bucket, a find's\n",
+    "old": "!isSocialRoom(this.room) || this.status !== 'open' || !this._ws) return false;\n    const toll = sdGate(this._sdBucket, this._now());   // the sd words' own bucket, a find's\n    if (!toll.pass) return false;\n",
+    "new": "!isSocialRoom(this.room) || this.status !== 'open' || !this._ws) return false;\n    const toll = sdGate(this._sdBucket, this._now());   // the sd words' own bucket, a find's\n",
     "tests": [
       "test/net/superDungeon/sd9a_receipt.test.js"
     ]

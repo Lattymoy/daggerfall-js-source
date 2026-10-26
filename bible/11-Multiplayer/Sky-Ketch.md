@@ -58,8 +58,9 @@ on the guns - `05-Combat/Dwarven-Thunderlock.md` GUN-LORE).
 
 **The law** (`net/ketch/ketchLaw.js`): voyage 0 arrives **2026-10-25 at 00:00 UTC** (`KT_EPOCH_MS`) and every voyage
 **ten hours** on (`KT_EVERY_MS`). She is **sighted** an hour before (`KT_SIGHT_MS`), **keeps station** seven hours
-(`KT_STATION_MS`), then **weighs anchor**: the crews aboard have twenty minutes more (`KT_LAST_MS`), and then she is
-gone for an hour and forty minutes before she is sighted again. Ten hours does not divide the day, so her arrivals walk
+(`KT_STATION_MS`), then **weighs anchor**: the crews aboard have forty-five minutes more (`KT_LAST_MS` - twenty before
+AUDIT KETCH II L5-1, shorter than a KETCH-LONGER voyage), and then she is gone for an hour and a quarter before she is
+sighted again. Ten hours does not divide the day, so her arrivals walk
 round the clock: 00:00, 10:00 and 20:00 UTC on the first day, then 06:00, 16:00 and 02:00, and so on through every
 time zone's evening.
 
@@ -130,8 +131,9 @@ One crew's ship is one room (`kt:<voyage in 8 hex>.<captain's digest in 16>`), i
 (`net/ketch/ketchBrain.js`): the moment and a [0,1) source in, frames out, so a test runs a voyage whole. ONE HAND AND
 ONE PURSE a member for everything it strikes (the gate's `spendBlow`, `spendPurse`).
 
-1. **The Boarding Watch.** Three waves - spheres; spheres and sentries; the Watch-Captain and spheres (`watchWave`, by
-   the crew aboard) - each rising three seconds after the last is down, the first when a member steps into the waist
+1. **The Boarding Watch.** Five waves (`KT_WATCH_WAVES`, KETCH-LONGER) - spheres; spheres and sentries; more of both;
+   the sentries' wall; the Watch-Captain with spheres and a sentry (`watchWave`, by the crew aboard - counted by its
+   kept places, AUDIT KETCH II L1-3; each Sentry its own post of six, L1-7) - each rising three seconds after the last is down, the first when a member steps into the waist
    (or twelve seconds after the first boarded). The waist's floor runs over the Anchor Deck too: the Watch goes at a crew
    wherever it stands on the open deck. The last down: the hatch opens.
 2. **The Gallery of Hammers.** Its hammers and steam lanes run on the shared clock (`hazardsBetween` - each hammer
@@ -155,8 +157,8 @@ is believed only risen, by the hand, from its storey, and a swing within reach; 
 
 ## 6. The Starved Engine - the cells (the new mechanic)
 
-The engine eats **aether cells**: three, and one more for every two aboard or part of two (`engineNeeds` - four for one
-or two, seven for seven or eight; AUDIT KETCH L5-9). A member takes a
+The engine eats **aether cells**: five, and one more for every two aboard or part of two, up to its seven sockets
+(`engineNeeds` - six for one or two, seven from three; KETCH-LONGER). A member takes a
 charged cell from one of six cradles (`pick`), carries it through the arc-coils to the engine and sets it in one of
 its seven sockets (`bank`).
 
@@ -165,16 +167,18 @@ its seven sockets (`bank`).
 - **Knocked loose:** a carrier struck by any blow (its own machine's verdict, `hurt`; the relay's census; an arc-coil on
   its trail), fallen, or who lets go (`drop`) drops the cell where it stands; it lies fifteen seconds for any member to
   take up, then bleeds out. A cell carried off the hold's floor (up the stair) is gone with it.
-- A cradle charges again twenty seconds after its cell is taken; spiders pour from the vents two at a time, at most
-  three and the crew alive at once, at carriers first.
+- A cradle charges again twenty-eight seconds after its cell is taken; spiders pour from the vents two at a time every
+  six seconds, at most five and the crew alive at once, at carriers first (KETCH-LONGER), walking round the engine and its
+  sockets, the lift's tower, the cradles and the arc-coils' posts (AUDIT KETCH II L4-8).
 - The Warden's Discord is put right the same way, with the bridge's own two cradles (section 7).
 
 ## 7. The Tonal Warden
 
 What the Rourken left at the helm (`net/ketch/ketchWarden.js`): a construct twice a man's height in tonal brass, a
 tuning-fork's tines for a crown - the Brass Remnant's fight rung for rung, on the boss seam (`KETCH_SEAM`). Each fighter
-brings 300 s of its reference damage to its health; the crew's eight seats; a fight no living fighter has stood on the
-bridge for thirty seconds is lost (the Warden whole at its helm again, the next `in` a fresh fight).
+brings 600 s of its reference damage to its health (`KW_TTK_S`, KETCH-LONGER); the crew's eight seats; a fight no living
+fighter has stood on the bridge for two minutes is lost (`KW_LOST_MS` - thirty seconds before AUDIT KETCH II L5-4, which
+no solo who fell was back inside; the Warden whole at its helm again, the next `in` a fresh fight).
 
 1. **The Steersman** (100% to 65%): the Keel-Strike (a lane 26 m down its facing), the Steam Lash (a cone of fire), the
    Tonal Ring (a disc, then the wave to 20 m - jumped).
@@ -185,7 +189,7 @@ bridge for thirty seconds is lost (the Warden whole at its helm again, the next 
    for each two living, seven at most): every one broken stuns it; one standing and it lands (70% of everyone's health)
    and heals it. The outer ring gives way - two sections at a time shudder three seconds and fall away for seven.
 
-Fourteen minutes after its wake **the Ketch turns west** - ninety-nine hundredths of everyone's health every two
+Twenty-two minutes after its wake (`KW_ENDS_MS`, KETCH-LONGER) **the Ketch turns west** - ninety-nine hundredths of everyone's health every two
 seconds (`KW_END_PCT` 0.99; AUDIT KETCH L5-9: the page said nine tenths).
 
 ## 8. The ship's blows judged where the client cannot skip them
@@ -255,13 +259,22 @@ stands (the Spire's way); `scenes/ketch/ketchFight.js` draws the constructs, the
 forks and sections; `scenes/ketch/ketchClient.js` holds the world's half - the sky, boarding, the link, the claims, the
 burden, the bosun's line, the presses aboard (`kt:` targets: a cradle, a cell lying loose, a socket, a resonator, the line,
 the way down, the stern lift, the chest), the cast-back, and **a death aboard is a fall**: the death save (`kt-fall`)
-wakes the body in the fields under her at a sliver of health - no death penalty. Her look: her own lighting by the hour
+wakes the body in the fields under her at a sliver of health - no death penalty. **Raise before the fall** (AUDIT
+WORLD-EVENTS L1-4, 2026-10-25; the owner, asked what "Resurrect allowed" means aboard: "Raise before the fall"): a death
+aboard - the save's or the count's (`bd`) - with a crewmate on the ship lies DOWN where it fell for `KT_DOWN_MS` (60 s,
+`net/ketch/ketchBrain.js`) first: the body held there (`characters/playerEntity.js registerPlayerHold`, the hosts'
+paralysis gate), no blow reaching it, dying on every screen (`net/online.js poseDown`), a cell carried let go. A crewmate's
+Resurrect at it (`rz`, `net/raiseWord.js`; `ketchRaise`: the caster alive aboard, within `KT_REZ_REACH_M` of the body,
+inside the window - the brain marks where each member lies off the room's own poses, `p.lay`) stands it there at
+`KT_REZ_PCT` (Resurrect's 30%, pinned equal), a new life on the relay's count (`rez`, named to the crew). Past the window,
+THE FALL as ever. Pins: `test/net/eliteGates/auditwe_down.test.js` (THE SKY-KETCH, and THE PAGES). Her look: her own lighting by the hour
 - her night never darker than the world's outside it (DFU's exterior night floor 0.25) - the air's fog above and the
 lamps' below.
 
 **The made level's rules** (`systems/madeLevel.js`, `ketch`): no save, no rest, no map, no Mark or Recall, no portal
-stone, no companions, no regeneration, no levitation or slow fall, no flight, no run-leap, no resurrection, no
-avoid-death, no unstuck; a death a fall, its penalty none. No tier label over her deck (`world/dungeon/dungeonLabel.js`
+stone, no companions, regeneration held (EVENT-RULES, `Elite-Gates.md` section 24), no levitation or slow fall, no
+flight, no run-leap, Resurrect a raise before the fall (above), no avoid-death, no unstuck; a death a fall, its penalty
+none. No tier label over her deck (`world/dungeon/dungeonLabel.js`
 madeDungeon - nor over an Elite Breach's hall, which no list named before).
 
 ## 12. The Ketch on the screen
@@ -554,3 +567,69 @@ Wardens in 7, the engine in 58, the Warden in 208.
 `ketch_warden.test.js` (the share and the end), `ketch_hud.test.js` (the first wave's spheres), `relayversion.test.js`
 (world258). Re-aimed by content: `ketch_brain.json` (2), `ketch_deck.json` (1), `ketch_warden.json` (1), each run once
 and dead.
+
+## 20. AUDIT KETCH II - the raid read cold again (2026-10-26)
+
+The owner: *"Can you audit the airship raid. Its a buggy mess"*. Five cold lanes read main as it stood
+(`01-Overview/audits/Audit-Ketch-II.md`): the relay, the page, the rewards, the ship in the world, and the voyage run whole
+at every crew size. They reported 36 findings, 30 defects once duplicates were merged. 26 are fixed, each pinned red on the
+code as it stood, with a mutant (`tools/mutants/ketch_audit2.json`, 33, all dead). Two are left with their reasons. The
+solo's time against the design's fifteen minutes is the owner's to set.
+
+**The two that broke the raid came from the slices after AUDIT KETCH.** "Raise before the fall" hung the sky's branch on
+`!aboard`, so she was never drawn over Daggerfall, nobody boarded, a fall woke at 1 HP and the next death aboard never fell.
+KETCH-FIX shut her hull's bottom, so a fall from a section of the ring landed in her belly, short of the void.
+
+**What changed:**
+- **Boarding and the fall.** The page drives her sky off the ship again (L2-1).
+- **The hull.** Her bilge and bottom are drawn only again, so a fall from a section reaches the void and is cast back to
+  the core (L4-1).
+- **The tracker.** The whole-state word carries the Watch's fourth and fifth waves (L2-2).
+- **The body's word.** The page tells the room its health the whole voyage, not only in the Warden's fight (L2-3).
+- **The lid and the roof.** Both always stand a body somewhere: where it stood on the main top, or its span's checkpoint
+  off the Sailwalk. The engine house's roof is the sky's, so the Sailwalk can no longer be skipped over it (L2-4, L4-2).
+- **The Pellets.** The construct cap is her voyage's, kept on the device. The bosses pay their own. Nothing is laid for a
+  body the ship took off (`sw`), and a pile lies where its body fell, on the floor (L3-1 to L3-5).
+- **The Watch.** It keeps inside the bow (`KT_BOW`, L4-4). A Sentry shoots when chased (L1-6), and each Sentry has its own
+  post (L1-7).
+- **The crew's count.** A construct's health and the engine's need come from the crew's kept places, not from who posed
+  last (L1-3).
+- **The clock.** Her crews have forty-five minutes after she weighs anchor (L5-1). A fight is lost after two minutes
+  empty (L5-4).
+- **The receipts.** A fall's receipts are told to the hub before her record goes (L1-4).
+- **Smaller fixes:** the gust blows on the course's line alone (L4-6); the bulwark meets the disc (L4-7); the flywheel
+  stands clear of the sockets, solid (L4-9); the hold's owed word is said again (L3-6); a raised member is alive at once
+  (L1-5); the lab says five waves (L5-6).
+- **The health bar.** After the audit, the owner asked about health bars on her constructs: the target bar now marks a
+  host body struck and reads the relay's word of its health. This holds for every event's host bodies: the gate's, the
+  Spire's, the Hour's and hers (STAND-IN-BAR).
+
+Relay world266 (world265 on its branch, renumbered past GATE-COURTS' at the merge), NOT YET DEPLOYED.
+
+## 21. KETCH-WORDS - the raid's words, plain (2026-10-26)
+
+The owner: *"Please rework the texts of the raid and the books/quest. Remove the "her" mentions and make it not ai-like
+and non overexplanstory"*.
+
+The ship is "it" now, never "she", everywhere a player reads about it. The text was cut down: shorter lines, no
+explaining a mechanic twice, no lore padding.
+
+- **The raid's lines** (`systems/ketch/ketchWords.js`, `net/ketch/ketchLink.js`, `net/ketch/ketchClaims.js`,
+  `scenes/ketch/ketchClient.js`, `scenes/ketch/ketchSky.js`, `systems/ketch/ketchSpoils.js`, `ui/ketch/ketchHud.js`,
+  `systems/eventTimers.js`, `systems/tutorialCatalogue.js`, `systems/questlines/qlLines.js`): 51 lines rewritten.
+  Their keys and arguments are unchanged, and every language is drafted again from the new English.
+- **The questline** (`systems/questlines/quests/QLSK01.txt` to `QLSK04.txt`): every message rewritten, the same
+  messages under the same numbers. Imrah keeps her own "she"; the ship has none. The lore stands: the Rourken and
+  Volendrung, the lodestone and what it follows, the Numidium's pieces, the two rewards.
+- **The books** (`systems/portBooks.js`): *Rourken Thunder* and *The Ketch That Never Lands* rewritten in plainer prose.
+  The Ketch book no longer says the ship keeps station "a day and a half" (KETCH-EVERY made it seven hours, every ten).
+- **The herald's Discord cards** (`net/ketch/ketchHerald.js`): the three posts reworded. Relay world267, NOT YET
+  DEPLOYED.
+
+**Not changed:** the relay's own English refusals (`net/ketch/ketchLaw.js` `KT_TEXT.refuse`). The page reads them back
+word for word (`ketchRefusal`), and one of them forgets a kept ship (`ketchClient.js`), so they are wire words.
+Changing them before the relay is deployed would break both. Players see the page's own `KT_REFUSE_WORDS`, rewritten
+above.
+
+PIN MOVED: `ketch_hud` (the clock's words), `l10n4_hardcoded` (the books' count, 57 -> 56), and every `RELAY_VERSION`
+pin (world267).

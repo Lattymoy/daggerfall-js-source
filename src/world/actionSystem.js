@@ -487,6 +487,7 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
     this.onTeleport = null;
     this.onTeleportPortal = null;
     this.onLockedDoor = null;
+    this.onSealedDoor = null;   // DOOR-VOID: (o) - the player tried a door that opens onto nothing
     this.onActionSound = null;
     this.onPlayed = null;   // ECHO1: (o, triggerType) - every Receive that passed the gate, before its Play (systems/dungeon/dungeonEcho.js)
     this.onShowText = null;
@@ -849,6 +850,9 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
       // lock and restoreSaveData reads it back (both below), so a
       // failed pick no longer forgets itself across a save.
       failedSkillLevel: 0,
+      // FIELD BUGS 2026-10-25 DOOR-VOID (world/interior/doorsToNowhere.js): a door that opens onto nothing, set when
+      // its room is built - nothing opens it (_openDoor), and no save or peer stands it open (restoreSaveData)
+      sealed: false,
       matrix: baseMatrix,
     };
     this.objects.set(key, o);
@@ -1170,6 +1174,11 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
    *      PlayingForward, CurrentLockValue = 0.
    *  Returns true when the swing started. */
   _openDoor(o, ignoreLocks = false, byPlayer = false) {
+    // DOOR-VOID: ahead of DFU's own order - no lock, spell, bash or record opens a door onto nothing
+    if (o.sealed) {
+      if (byPlayer) this.onSealedDoor?.(o);
+      return false;
+    }
     if (o.actionFlag === ACTION_FLAGS.DoorText && o.index > 0
         && (o.triggerFlag === TRIGGER_FLAGS.Door || o.triggerFlag === TRIGGER_FLAGS.Direct
           || o.triggerFlag === TRIGGER_FLAGS.MultiTrigger)
@@ -1290,6 +1299,7 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
       this.toggleDoor(o, true);   // bash-close; ToggleDoor(true) fires the record
       return true;
     }
+    if (o.sealed) return false;   // DOOR-VOID: struck, heard, and never burst
     if (o.currentLockValue >= MAGIC_LOCK_THRESHOLD) return false;   // magically held: cannot bash
     const chance = 20 - o.currentLockValue;
     if (Math.floor(roll01 * 100) < chance) {      // Dice100.SuccessRoll
@@ -1311,6 +1321,11 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
   activate(key, { steal = false, doorSpell = null } = {}) {
     const o = this.objects.get(key);
     if (!o) return false;
+    // DOOR-VOID: a sealed door answers its line and nothing more - an armed Open or Lock waits for another door
+    if (o.kind === 'door' && o.sealed) {
+      this.onSealedDoor?.(o);
+      return true;
+    }
     // X1: an ARMED Open/Lock spell fires on the next door activated
     // and consumes itself, whatever the interaction mode - DFU's Open
     // and Lock wait in forcedRoundsRemaining for exactly this and
@@ -1438,6 +1453,7 @@ constructor(collider, { damagePlayer = null, drainMagicka = null, castSpell = nu
     list?.forEach((sa) => {
       const o = this.objects.get(sa.key);
       if (!o) { this._keepEarly(remote ? withoutLock(sa) : sa); return; }   // HOME-DOORS (AUDIT): a placed door, hung a moment later, takes it then
+      if (o.sealed) return;   // DOOR-VOID: shut whatever a save from before the seal, or a peer, says
       o.state = sa.state;
       o.t = sa.t;
       // F185: activationCount deliberately NOT restored - an old
