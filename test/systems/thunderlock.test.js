@@ -812,8 +812,8 @@ const PANEL_NOT_CARRIED = Object.freeze({
 /** knob -> the game's answer for it, so the pin compares VALUES. */
 const PANEL_CARRIED = Object.freeze({
   align: () => THUNDERLOCK_ANIMS[1].Alignment,
-  offset: () => THUNDERLOCK_ANIMS[1].Offset,
-  size: () => THUNDERLOCK_STRIP.cellW * THUNDERLOCK_ART.scale / 320 * 100,   // THUNDERLOCK-LAB: the lab draws the strip, at the art's own pose
+  offset: () => THUNDERLOCK_ART.offset,   // THUNDERLOCK-PLACE: the art's pose carries it (weaponRig.js drawThunderlock reads pose.offset)
+  size: () => THUNDERLOCK_ART.widthPct * 100,   // THUNDERLOCK-LAB: the lab draws the strip, at the art's own pose
   raise: () => THUNDERLOCK_ART.raise,
   fps: () => GUN_FEEL.fps,
   cool: () => GUN_FEEL.reloadMs,

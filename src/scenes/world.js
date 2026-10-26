@@ -24358,7 +24358,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (t - _spentResendAt < SPOILS_SPENT_RESEND_MS) return;
     _spentResendAt = t;
     if (socialLink()?.status !== 'open') return;
-    try { spoilsPool.resendSpent(); sdSpoilsPool.resendSpent(); } catch (e) { console.warn('[spoils] owed words', e?.message ?? e); }
+    try { for (const pool of [spoilsPool, sdSpoilsPool, ketch?.spoils]) pool?.resendSpent?.(); } catch (e) { console.warn('[spoils] owed words', e?.message ?? e); }   // AUDIT KETCH II L3-6: and the Ketchmaster's hold's (its owed word stood for ever)
   };
   /** GATE-ALONE (2026-10-07, Mac: "We need to not allow followers inside the oblivion gates"): no companion stands in a
    *  gate's court (companionPlace answers none there), and a fighter who steps in with any at their side is told so -

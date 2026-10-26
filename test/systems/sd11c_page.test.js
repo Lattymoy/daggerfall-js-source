@@ -482,7 +482,7 @@ test('SD11c THE SPENT WORD IS OWED UNTIL IT GOES (L5 F4): a spend whose word cou
   const calls = [];
   const env = {
     performance: { now: () => t }, SPOILS_SPENT_RESEND_MS, socialLink: () => ({ status }),
-    spoilsPool: { resendSpent: () => calls.push('gate') }, sdSpoilsPool: { resendSpent: () => calls.push('sd') },
+    spoilsPool: { resendSpent: () => calls.push('gate') }, sdSpoilsPool: { resendSpent: () => calls.push('sd') }, ketch: { spoils: { resendSpent: () => calls.push('kt') } },
   };
   const resend = new Function(...Object.keys(env), `let _spentResendAt = -Infinity;\n${constOf('resendSpentWords')}\nreturn resendSpentWords;`)(...Object.values(env));
   resend();
@@ -491,11 +491,11 @@ test('SD11c THE SPENT WORD IS OWED UNTIL IT GOES (L5 F4): a spend whose word cou
   t = 4999; resend();
   assert.deepEqual(calls, [], 'inside the throttle');
   t = 5000; resend(); resend();
-  assert.deepEqual(calls, ['gate', 'sd'], 'both pools, once');
+  assert.deepEqual(calls, ['gate', 'sd', 'kt'], 'every pool, once');   // PIN MOVED (AUDIT KETCH II L3-6): and the Ketchmaster's hold's
   t = 9999; resend();
-  assert.deepEqual(calls.length, 2);
+  assert.deepEqual(calls.length, 3);
   t = 10_000; resend();
-  assert.equal(calls.length, 4);
+  assert.equal(calls.length, 6);
   const w = strip(W);
   assert.match(w, /onSpent: \(day\) => socialLink\(\)\?\.sendGateSpent\?\.\(day\) === true,\s*\n\s*me: _accountGates\.me,/);
   assert.match(w, /onSpent: \(day\) => \{ const s = sdSpoilsSlot\(day\); return s == null \|\| socialLink\(\)\?\.sendSdSpent\?\.\(s\) === true; \},\s*\n\s*me: _accountGates\.me,/);

@@ -11,7 +11,7 @@
 // (scenes/superDungeon/sdSteps.js, with this file's course) and the Hour's telegraph floor reads it.
 //
 //   THE ANCHOR DECK   the bow, y 0 - where the anchor-lift sets a crew down, and its way down
-//   THE WAIST         y 0, the open deck - THE BOARDING WATCH's three waves
+//   THE WAIST         y 0, the open deck - THE BOARDING WATCH's waves
 //   THE GALLERY       y -6, the gun deck - THE GALLERY OF HAMMERS: six rows of hammers, two steam lanes, the Hammer Wardens
 //   THE HOLD          y -12 - THE STARVED ENGINE: six cradles of aether cells aft, the engine fore, three arc-coils between
 //   THE MAST-LIFT     a cage in a brass tower at the waist's port quarter, the hold to the main top (y 16)
@@ -34,6 +34,13 @@ export const dungeonToDeck = dungeonToRealm;
 /** A deck's rectangle: across `x0`..`x1`, along `z0`..`z1`, its top at `y`. */
 const box = (x0, x1, z0, z1, y) => Object.freeze({ x0, x1, z0, z1, y });
 export const KT_ANCHOR = box(-9, 9, 0, 14, 0);
+/** THE BOW: the Anchor Deck's drawn outline narrows forward of its box - `tip` either side of the keel at z 0, `beam` at z
+ *  `at`, the box's own beam at its aft end (world/ketch/ketchModel.js lays her deck and bulwark on it). */
+export const KT_BOW = Object.freeze({ tip: 4, beam: 8, at: 6 });
+/** The bow's half-beam at `z` (the Anchor Deck's from its aft end). Pure. AUDIT KETCH II L4-4: the Watch walked the box,
+ *  and a Sentry backing off went 2.6 m past the bow's edge, out over its nets. */
+export const ketchBowHalf = (z) => (z <= 0 ? KT_BOW.tip : z <= KT_BOW.at ? KT_BOW.tip + ((KT_BOW.beam - KT_BOW.tip) * z) / KT_BOW.at
+  : z >= KT_ANCHOR.z1 ? KT_ANCHOR.x1 : KT_BOW.beam + ((KT_ANCHOR.x1 - KT_BOW.beam) * (z - KT_BOW.at)) / (KT_ANCHOR.z1 - KT_BOW.at));
 export const KT_WAIST = box(-13, 13, 14, 62, 0);
 /** The gun deck: the Gallery's corridor and, aft, the Wardens' landing (wider). */
 export const KT_GALLERY = box(-6, 6, 52, 110, -6);
@@ -196,7 +203,7 @@ export const KT_STERN_LIFT = Object.freeze({ x: -3.5, z: 230.5, r: 1.6 });
 /** The Watch's: where spheres drop from the rigging, sentries take their posts, the Watch-Captain comes up. */
 export const KT_WATCH_SPOTS = Object.freeze({
   sphere: Object.freeze([[-11, 20], [11, 20], [-11, 30], [11, 30], [-11, 40], [11, 40], [-11, 50], [11, 50], [-6, 56], [2.5, 56], [0, 30], [0, 42]].map((p) => Object.freeze(p))),   // AUDIT KETCH L4-10: (6, 56) stood inside the lift's tower, (0, 44) in the aft hatch cover
-  sentry: Object.freeze([[-10, 58], [10, 50], [-4, 58], [3, 58]].map((p) => Object.freeze(p))),   // AUDIT KETCH L4-10: (4, 58) against the lift's tower
+  sentry: Object.freeze([[-10, 58], [10, 50], [-4, 58], [3, 58], [-7, 52], [4, 52]].map((p) => Object.freeze(p))),   // AUDIT KETCH L4-10: (4, 58) against the lift's tower; AUDIT KETCH II L1-7: six - the fourth wave's most (watchWave), two stood on one post
   captain: Object.freeze([0, 54]),
 });
 /** The waist's cover: two capstans (discs) and three hatch covers (boxes `w` x `d`, `h` tall). */
@@ -216,7 +223,7 @@ export const KT_CRADLES = Object.freeze([[-7, 112], [7, 112], [-7, 119], [7, 119
 export const KT_VENTS = Object.freeze([[-11.5, 76], [11.5, 76], [-11.5, 100], [11.5, 100]].map((p) => Object.freeze(p)));
 /** The reach a hand takes a cell from a cradle at, sets one in a socket or a resonator at, or picks a dropped one up at. */
 export const KT_REACH = 2.6;
-/** How many cells the engine eats for a crew of `n`: three, and one for each two aboard (four to seven). */
+/** How many cells the engine eats for a crew of `n`: five, and one for each two aboard, up to its seven sockets (six or seven). */
 export const engineNeeds = (n) => Math.min(7, 5 + Math.ceil(Math.max(1, Math.min(8, n | 0)) / 2));   // KETCH-LONGER: 3 + half the crew before - six for one or two, seven (every socket) from three
 
 // ── THE HAZARDS' CLOCKS (the shared clock's seconds - every screen and the relay alike) ─────────────────────────

@@ -9756,7 +9756,9 @@ export class Room {
       const had = newest.get(b.sub);
       if (!had || (b.since ?? 0) >= (had[1].since ?? 0)) newest.set(b.sub, [ws, b]);
     }
-    return [...newest.values()].map(([ws, b]) => { const p = this._ktPoseOf(b.pose); return { sub: b.sub, x: p.x, y: p.y, z: p.z, dead: p.dead, tr: this._trailOf(ws, (q) => this._ktPoseOf(q)) }; });
+    // AUDIT KETCH II L1-5: a dying pose stamped no later than the member's raise (`rzAt`) speaks for nobody's death - one beat
+    // between the `rez` and the raised page's next pose read it dead again, and the count held it out for BODY_RISE_MS
+    return [...newest.values()].map(([ws, b]) => { const p = this._ktPoseOf(b.pose), rz = V.players[b.sub]?.rzAt; return { sub: b.sub, x: p.x, y: p.y, z: p.z, dead: p.dead && !(Number.isFinite(rz) && (b.pAt ?? b.since ?? 0) <= rz), tr: this._trailOf(ws, (q) => this._ktPoseOf(q)) }; });
   }
   /** The voyage's frames to everyone aboard, in order - a frame for one member (`to`) to its sockets alone. */
   _ktFan(frames) {
@@ -9837,7 +9839,7 @@ export class Room {
     const pose = a.pose ? this._ktPoseOf(a.pose) : null;
     if (pose && bodyOut(p, line.enforce)) pose.dead = true;
     const out = voyageWord(V, a.sub, w, pose, now, rand01);
-    for (const r of out) if (r.k === 'rez' && V.players[r.s]) bodyLife(V.players[r.s], now, line.body);   // AUDIT WORLD-EVENTS L1-4: the raised, a new life on the count
+    for (const r of out) if (r.k === 'rez' && V.players[r.s]) { bodyLife(V.players[r.s], now, line.body); V.players[r.s].rzAt = now; }   // AUDIT WORLD-EVENTS L1-4: the raised, a new life on the count (AUDIT KETCH II L1-5: and its dying pose before it forgotten)
     if (w.k === 'in') this._trailSeed(ws, a, now);
     this._ktFan(out);
     if (V.fell && !V.said) await this._ktFall(V, now);
@@ -9857,6 +9859,10 @@ export class Room {
     const V = await this._ktOf(key), now = Date.now();
     if (now >= ketchVoyageOf(V.n).endAt) {
       for (const [ws, b] of [...this._all()]) if (b.id) this._refuse(ws, KT_TEXT.refuse.gone);
+      // AUDIT KETCH II L1-4: her fall's receipts told to the hub before her record goes - a tell that failed in her last
+      // half-minute died with it, and an earner off the ship was never paid; told again every KT_TELL_RETRY_MS while a receipt lives
+      if (V.said && !V.told) await this._ktTellHub(V, now);
+      if (V.said && !V.told && now < ketchVoyageOf(V.n).endAt + KT_RECEIPT_TTL_S * 1000) { await this.state.storage.setAlarm(now + KT_TELL_RETRY_MS); return true; }
       await this.state.storage.delete(KT_VOYAGE_KEY);   // AUDIT KETCH L1-11: her record goes with her (its receipts the hub's)
       this._kt = undefined;
       return false;
