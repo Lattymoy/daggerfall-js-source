@@ -2659,6 +2659,15 @@ first launch fills the store for ~80 ms of main thread beyond the base's (the st
 missed the land's pieces once (162 ms) - the network the first way is asked on was not the one the last launch kept,
 which a miss pays at the old cost, never with a wrong answer. The final pair hit every record.
 
+Pictures: the settled frame (`SHOT=1`, the same scene), base `9aa6bc4662` against the review's head `84505b622e` on a
+second launch whose kept answers all hit: 0.04% of pixels past a tolerance of 8, in the sky's moving clouds, against 0.01%
+between two launches of the same tree; the town itself (the frame left of the HUD's column) 0.016% against 0.013%, and a
+launch that worked every answer out against one that read it back, 0.01%. The one picture that differed by launch is the
+main quest's opening box ("You wake and look around the room", `_BRISIEN`'s `say 1025`): the quest machine does not
+tick while any window stands, so whichever opens first - that box or the welcome tour's first page - comes up first, and
+the other waits. The base showed the box on one launch and not on the next; the head, which boots sooner, showed it on
+every launch. It is never lost, only ordered.
+
 Left: quest start (54-97 ms) and the wagons' art (34-60 ms) are under 100 ms; the town's trips keep ~250-280 ms of lives
 and routes, which read the save.
 Runs: `E:/git-repos/travddm/dfo-verify/tools/perf/first-visit-2026-10-25/` (`base-cold`, `base-second`, `head1-*`,
