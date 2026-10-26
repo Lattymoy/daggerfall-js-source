@@ -1778,7 +1778,7 @@ const OPT_FILTERS = Object.freeze([['all', 'All'], ['changed', 'Changed'], ['enh
  *  total over it.) */
 export function portPool({ pause = false } = {}) {
   const pool = new Map();
-  for (const r of [...portRowsGame({ pause }), ...portRowsAudio(), ...portRowsControls({ pause }), ...portRowsInterface({ pause })]) {
+  for (const r of [...portRowsGame({ pause }), peerSpellShakeRow(), ...portRowsAudio(), ...portRowsControls({ pause }), ...portRowsInterface({ pause })]) {   // RPT1026-CLIENT: the Motion section's other players' shake
     if (r?.dataset?.opt) pool.set(r.dataset.opt, r);
   }
   return pool;
@@ -3108,6 +3108,16 @@ function portRowsGame({ pause = false } = {}) {
   ctl.append(b, el('span', `tier ${can ? 'live' : 'unavailable'}`));
   row.append(ctl);
   return [row, techniqueMotionRow()];
+}
+/** RPT1026-CLIENT (a private report: allies' spell impacts shake the camera, "and no setting turns them down"): how much
+ *  another player's spell shakes the view where it lands (scenes/hostMagic.js peerKickShare); Settings > Accessibility >
+ *  Motion lists it beside the recoil, which is the player's own injuries alone. */
+function peerSpellShakeRow() {
+  const row = choiceRow('peerSpellShake', t('menu.motion.peerShake.name', "Shake from other players' spells"),
+    t('menu.motion.peerShake.note', "How much another player's spell shakes your view when it lands near you. Your own spells and your enemies' always shake it fully."),
+    [[1, t('menu.motion.peerShake.full', 'Full')], [0.5, t('menu.motion.peerShake.half', 'Half')], [0, t('menu.motion.peerShake.off', 'Off')]]);
+  if (row?.dataset) { row.dataset.opt = 'peerSpellShake'; row.dataset.pref = 'peerSpellShake'; }   // ORG2: the map finds it by its key
+  return row;
 }
 /** TECH-FX (bible/05-Combat/Weapon-Techniques.md THE FEEL): how much a weapon technique moves the screen - every device,
  *  both skins; Settings > Accessibility > Motion lists it (ui/settings/settingsMap.js). GATHER-FEEL II: and a gathering tool's

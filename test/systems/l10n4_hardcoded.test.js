@@ -382,7 +382,7 @@ const HARDCODED = {
   'src/systems/equip.js': 3,
   'src/systems/eventTimers.js': 50,
   'src/systems/faction/factionStanding.js': 3,
-  'src/systems/features.js': 127,
+  'src/systems/features.js': 128,   // RPT1026-CLIENT: Better Ambience's 'Camera Shake.maxShake' on its tile - a mod's settings key the scan reads as words, as its three neighbours on the list are
   'src/systems/fleet.js': 10,
   'src/systems/fletching.js': 1,
   'src/systems/festival/soulCake.js': 2,   // WITCH1: the Soul Cake's and the Hearth Offering's names - an item's canonical name is its row's, as the Weir Key's
