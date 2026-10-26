@@ -483,3 +483,9 @@ test('PACK-OPEN (mob 2026-10-26: "make sure they dont spawn in houses", "or buil
   assert.match(rd('src/scenes/hostEnchant.js'), /if \(spot && spotOk && !spotOk\(spot\)\) spot = null;/);
   assert.equal(typeof standLooseFoe, 'function');
 });
+
+test('PACK-EVERY (mob 2026-10-26: "make sure we spawn a pack on every player in town"): out of a town (an area event) the players on my map pixel share the packs, the scale and the boss - in a town, its rect as ever', () => {
+  const w = rd('src/scenes/world.js');
+  assert.ok(w.includes('...(peersNear() ?? []).filter((p) => _peerInEventPlace(p.feet)).map('), 'the event\'s players by its place');
+  assert.match(w, /const _peerInEventPlace = \(feet\) => \{\n\s*if \(_musicLoc\) return _foeInTownRect\(\{ ai: \{ feet \} \}\);\n\s*if \(!feet\) return false;\n\s*const wc = state\.worldCoords\(feet\), at = worldCoordToMapPixel\(wc\.x, wc\.z\), me = playerTravelPixel\(\);\n\s*return at\.x === me\.x && at\.y === me\.y;/);
+});

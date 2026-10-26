@@ -13236,6 +13236,15 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // counts inside the town when it stands in the rect IsPlayerInTown
   // reads - the current location's, widened a block - at its own feet.
   const townWatch = createTownWatch();
+  /** PACK-EVERY (mob 2026-10-26: "make sure we spawn a pack on every player in town"): whether a peer stands in my
+   *  event's place - in the town's rect, or, out of any town (a staff AREA event: systems/staffEvents.js staffRaidHere),
+   *  on my own map pixel. Out of a town the rect answered no one, and every pack, the scale and the boss went to me. */
+  const _peerInEventPlace = (feet) => {
+    if (_musicLoc) return _foeInTownRect({ ai: { feet } });
+    if (!feet) return false;
+    const wc = state.worldCoords(feet), at = worldCoordToMapPixel(wc.x, wc.z), me = playerTravelPixel();
+    return at.x === me.x && at.y === me.y;
+  };
   const _foeInTownRect = (f) => {
     if (!_musicLoc || !f?.ai?.feet) return false;
     const px = playerTravelPixel();
@@ -20048,7 +20057,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     wallNow: () => performance.now(),
     peersInTown: () => (peersNear() ?? []).filter((p) => _foeInTownRect({ ai: { feet: p.feet } })).map((p) => p.id),   // FIELD-RAID-FT: no room open (a fast travel between the old cell's room and the new) is nobody in town, never a null walked - the crash Discord reported arriving in a raided town
     sites: () => raidSites,   // RAID5: the town's places and people a raid's kind stands (scenes/raidSitesHost.js)
-    peerFeetInTown: () => [[online?.id ?? '', player.feetAt(), playerEntity.level ?? 1], ...(peersNear() ?? []).filter((p) => _foeInTownRect({ ai: { feet: p.feet } })).map((p) => [p.id, p.feet, online?.peers.get(p.id)?.lv ?? 0])],   // PACK-SPREAD: where each player in the town stands, for its share of the packs; BOSS-SPOT: me first, and each one's level
+    peerFeetInTown: () => [[online?.id ?? '', player.feetAt(), playerEntity.level ?? 1], ...(peersNear() ?? []).filter((p) => _peerInEventPlace(p.feet)).map((p) => [p.id, p.feet, online?.peers.get(p.id)?.lv ?? 0])],   // PACK-SPREAD: where each player in the town stands, for its share of the packs; BOSS-SPOT: me first, and each one's level
     raidPuppets: () => exteriorFoes.foes.filter((f) => f.puppet && f._pupRaid),   // STAFF-EVENT THE REWARD: the fallen too - a puppet I fought that fell is my kill on the board
     ownRaidFoes: () => exteriorFoes.foes.filter((f) => !f.puppet && f.raidKey && !f.dead),
     // RAID3: the relay's arm - does it keep this world's raids, and my word to the town's cell
