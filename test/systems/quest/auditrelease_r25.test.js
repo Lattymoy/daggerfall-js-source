@@ -16,6 +16,8 @@ import { REGION_NAMES } from '../../../src/formats/mapsTables.js';
 import { LOCATION_TYPES, MapsFile, longitudeLatitudeToMapPixel } from '../../../src/formats/mapsFile.js';
 import { SITE_TYPES } from '../../../src/systems/quest/place.js';
 import { setTamrielTrace } from '../../../src/world/tamriel/tamrielLand.js';
+import { createProvinceWarm, WARM_PER_TICK } from '../../../src/scenes/quest/questProvinceWarm.js';
+import { codeOnly } from '../../codeOnly.mjs';
 import { setTamrielFit } from '../../../src/world/tamriel/tamrielFrame.js';
 import { CAPITALS, capitalPixel, capitalOnPixel, capitalSpanPixels, capitalSliceName, setCapitalsStanding } from '../../../src/world/tamrielCapitals.js';
 
@@ -183,6 +185,46 @@ test('R2-5c a capital is one town: a slice\'s other slices, nearest first (a tie
   const sol = capitalPixel(CAPITALS[1]);
   assert.deepEqual([...capitalSlicesNear({ ...townAt({ name: 'Solitude', mapId: 1, px: sol.px, py: sol.py }), capital: { k: 1, s: 0 } }, standAt)], [], 'a capital of one slice');
   assert.deepEqual([...capitalSlicesNear(townAt({ name: 'Whiterun', mapId: 2, px: 1700, py: -420 }), standAt)], [], 'another place');
+});
+test('R2-5d a province\'s places made ready in idle time: each tick stands at most WARM_PER_TICK rows not stood before, nearest the questor first (a tie by row), until the table is stood; nothing on the Bay; its loop goes on while it stands something, waits after a tick that stood nothing, and ends when stopped or when another warmer starts (mutants: the count; the order; the Bay warmed; two loops)', () => {
+  const rows = [5, 1, 9, 3, 7].map((x, i) => provinceRow({ mapId: 100 + i, name: `T${i}`, px: 1700 + x, py: -400, type: LOCATION_TYPES.TownCity }));
+  const region = { mapTable: rows };
+  let r = SKYRIM;
+  const got = [];
+  const provinces = { getRegion: () => region, getLocation: (q, i) => { got.push(rows[i].name); return {}; } };
+  const w = createProvinceWarm({ provinces, regionNow: () => r, origin: () => ({ x: 1700, y: -400 }) });
+  assert.equal(WARM_PER_TICK, 2);
+  assert.equal(w.tick(), 2);
+  assert.deepEqual(got, ['T1', 'T3'], 'nearest first');
+  assert.equal(w.done(), false);
+  assert.equal(w.tick(), 2);
+  assert.equal(w.tick(), 1);
+  assert.deepEqual(got, ['T1', 'T3', 'T0', 'T4', 'T2']);
+  assert.equal(w.done(), true);
+  assert.equal(w.tick(), 0, 'all stood: nothing more');
+  r = 17;
+  const bay = createProvinceWarm({ provinces, regionNow: () => r, origin: () => null });
+  assert.equal(bay.tick(), 0, 'on the Bay nothing');
+  // the loop: a tick in each idle period while it stands something; stopped, or another warmer started, it ends
+  r = SKYRIM;
+  const ticks = [];
+  const fresh = () => createProvinceWarm({ provinces: { ...provinces, getLocation: () => ({}) }, regionNow: () => r, origin: () => null, schedule: (fn) => { ticks.push(fn); } });
+  const loop = fresh();
+  loop.start();
+  assert.equal(ticks.length, 1);
+  ticks.shift()();
+  assert.equal(ticks.length, 1, 'it stood two: the next idle period');
+  loop.stop();
+  ticks.shift()();
+  assert.equal(ticks.length, 0, 'stopped');
+  const a = fresh(), b = fresh();
+  a.start(); b.start();
+  assert.equal(ticks.length, 2);
+  ticks.shift()();
+  assert.equal(ticks.length, 1, 'the first warmer\'s loop ended when the second started');
+  // the quest layer starts one over its provinces, on the browser's idle door
+  const QW = codeOnly(readFileSync(new URL('../../../src/scenes/questWorld.js', import.meta.url), 'utf8'));
+  assert.match(QW, /createProvinceWarm\(\{ provinces, regionNow: \(\) => _questRegionIndex\(\), origin: \(\) => playerTravelOrigin\?\.\(\) \?\? null, schedule: provinces \? idleSchedule\(\) : null \}\)\.start\(\);/);
 });
 const whiterunAt = (() => { const w = townAt({ name: 'Whiterun', mapId: 0xa7000001, px: 1700, py: -420 }); return () => w; })();
 

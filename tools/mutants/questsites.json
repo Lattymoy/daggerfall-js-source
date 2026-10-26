@@ -171,19 +171,10 @@
     ]
   },
   {
-    "name": "R25-host-rolls-unbounded",
-    "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "      if (!kept && lairsNear.rolled >= rolls) break;",
-    "new": "",
-    "tests": [
-      "test/systems/quest/auditrelease_r25_freeware.test.js"
-    ]
-  },
-  {
     "name": "R25-host-count-unbounded",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "      if (out.length >= count) break;",
-    "new": "",
+    "old": "      if (out.length >= count || read >= rolls) break;",
+    "new": "      if (read >= rolls) break;",
     "tests": [
       "test/systems/quest/auditrelease_r25_freeware.test.js"
     ]
@@ -328,6 +319,60 @@
     "file": "src/scenes/questWorld.js",
     "old": "    capitalSlicesNear: (loc) => provinces?.capitalSlicesNear(loc) ?? [],",
     "new": "    capitalSlicesNear: () => [],",
+    "tests": [
+      "test/systems/quest/auditrelease_r25_freeware.test.js"
+    ]
+  },
+  {
+    "name": "R25d-warm-count",
+    "file": "src/scenes/quest/questProvinceWarm.js",
+    "old": "      if (++stood >= WARM_PER_TICK) break;",
+    "new": "      ++stood;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25d-warm-order",
+    "file": "src/scenes/quest/questProvinceWarm.js",
+    "old": ".sort((a, b) => a[1] - b[1] || a[0] - b[0])",
+    "new": ".sort((a, b) => a[0] - b[0])",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25d-warm-bay",
+    "file": "src/scenes/quest/questProvinceWarm.js",
+    "old": "    if (!isProvinceRegion(r)) return 0;\n    const region = provinces.getRegion(r);",
+    "new": "    const region = provinces.getRegion(r);",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25d-two-loops",
+    "file": "src/scenes/quest/questProvinceWarm.js",
+    "old": "    if (stopped || !schedule || id !== liveWarm) return;",
+    "new": "    if (stopped || !schedule) return;",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25d-warm-unwired",
+    "file": "src/scenes/questWorld.js",
+    "old": "  createProvinceWarm({ provinces, regionNow: () => _questRegionIndex(), origin: () => playerTravelOrigin?.() ?? null, schedule: provinces ? idleSchedule() : null }).start();",
+    "new": "",
+    "tests": [
+      "test/systems/quest/auditrelease_r25.test.js"
+    ]
+  },
+  {
+    "name": "R25d-lair-bound-pixel",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "      if (out.length >= count || read >= rolls) break;",
+    "new": "      if (out.length >= count) break;",
     "tests": [
       "test/systems/quest/auditrelease_r25_freeware.test.js"
     ]

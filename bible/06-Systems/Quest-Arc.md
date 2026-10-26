@@ -6931,6 +6931,23 @@ house fallback with it), and marked a near site (the travel map is shown it). Th
 slices whose questor's slice lacks the kind. Its name is the slice's quest name (R2-5b). Not a DFU member: Daggerfall's
 towns are one location each.
 
+**THE PARSE'S COST, MADE IN IDLE TIME (R2-5d).** A draw reads a town by standing it. On the Bay that is a MAPS.BSA record
+(cheap, read once). Past the Bay it is a place the build makes, some 20 ms each the first time (an Imperial City slice
+14-21 ms, a Skyrim town 19 ms, measured on the freeware). A temple's `remote house2` asked in the Imperial City tried
+its pools' slices one by one and took 20 s. The build keeps a place once stood, so
+`src/scenes/quest/questProvinceWarm.js:"export function createProvinceWarm("` stands the questor's province's table in
+idle time while the player is in that province:
+
+- **Nearest first, bounded by count.** At most WARM_PER_TICK (2) places a tick are stood for the first time, nearest the
+  player first (`requestIdleCallback`; a wait while on the Bay or once all is stood).
+- **The draw is untouched.** The same table, the same darts and the same site on every client; a warm cache only makes it
+  fast.
+- **The tables' own bounds count every cell or pixel they read, cached or not.** So a table is the pixel's alone: a warm
+  client had read further than a cold one, and that is fixed.
+
+On the freeware, with each province made ready first, no giver's parse stood a place for the first time (pinned: the
+world's index does not grow while asking for work).
+
 **THE DEPARTURE** (Port-Ledger A, R2-5). DFU has no provinces. The draws are DFU's, but the table's contents are ours:
 the nearest lairs where a Bay region lists every dungeon, none of the countryside's hamlets or homes (a pixel's roll and
 no list, TESA7), no slice of the Imperial City, and the held site's pixel. The countryside is left out, and the province's

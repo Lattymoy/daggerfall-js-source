@@ -295,9 +295,10 @@ export function createTamrielPlaces(host) {
   /** AUDIT RELEASE R2-5 (scenes/quest/questProvinceSites.js): THE LAIRS A QUEST PAST THE BAY MAY BE SENT TO - the nearest
    *  `count` lairs the build stands (its cell's roll, a plan of blocks, its pixel free of the places stood first) within
    *  `reach` of a pixel (the travel reckoning's longest axis; a tie by the cell), north-west first:
-   *  `{ mapId, name, px, py, type, dungeonType }`. BOUNDED: a cell never read before is a roll (its plateau, its plan -
-   *  about 4 ms), and at most `rolls` are made a call (the coordinator, 2026-10-26: the first table at a pixel must not
-   *  land as one main-thread task when a player asks for work); `lairsNear.rolled` is the last call's count. */
+   *  `{ mapId, name, px, py, type, dungeonType }`. BOUNDED BY COUNT: at most `rolls` cells are read a call, nearest first,
+   *  whether kept or not - so the answer is the pixel's alone, the same on every client whatever it has read before
+   *  (AUDIT RELEASE R2-5d: the bound had counted first-time rolls only, and a warm client read further); a cell never read
+   *  is a roll (its plateau, its plan - about 4 ms), kept. `lairsNear.rolled` is the last call's first-time rolls. */
   function lairsNear(px, py, reach, count = Infinity, rolls = Infinity) {
     const out = [];
     lairsNear.rolled = 0;
@@ -313,11 +314,11 @@ export function createTamrielPlaces(host) {
       }
     }
     cells.sort((a, b) => a.d - b.d || a.c - b.c);
+    let read = 0;
     for (const { c, s } of cells) {
-      if (out.length >= count) break;
-      const kept = lairCellKept(c);
-      if (!kept && lairsNear.rolled >= rolls) break;
-      if (!kept) lairsNear.rolled++;
+      if (out.length >= count || read >= rolls) break;
+      read++;
+      if (!lairCellKept(c)) lairsNear.rolled++;
       const row = lairOfCell(c, s);
       if (row) out.push(row);
     }

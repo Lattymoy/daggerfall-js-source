@@ -13,6 +13,7 @@ import { REGION_NAMES } from '../../../src/formats/mapsTables.js';
 import { longitudeLatitudeToMapPixel } from '../../../src/formats/mapsFile.js';
 import { SITE_TYPES } from '../../../src/systems/quest/place.js';
 import { QUEST_REACH_TUNING } from '../../../src/systems/quest/questReach.js';
+import { createProvinceWarm, WARM_PER_TICK } from '../../../src/scenes/quest/questProvinceWarm.js';
 
 // ─── WITH ARENA2: A QUESTOR IN EACH OF THREE PROVINCES, END TO END ─────────────────────────────
 
@@ -49,6 +50,11 @@ test('R2-5 with ARENA2: a Fighters Guild, a Mages Guild, a temple, a social give
   const near = lairsNear(2600, 300, PROVINCE_LAIR_REACH, PROVINCE_LAIR_COUNT, PROVINCE_LAIR_ROLLS);
   assert.equal(lairsNear.rolled, 0, 'the cells kept');
   assert.equal(near.length, PROVINCE_LAIR_COUNT, 'the nearest, counted');
+  // R2-5d: THE BOUND IS THE PIXEL'S - at a pixel no call read before, the lairs of its PROVINCE_LAIR_ROLLS nearest cells;
+  // after the whole reach is read (a warm client), the same: a warm client reads no further than a cold one
+  const cold = lairsNear(2650, 250, PROVINCE_LAIR_REACH, Infinity, PROVINCE_LAIR_ROLLS);
+  lairsNear(2650, 250, PROVINCE_LAIR_REACH, Infinity, 100000);
+  assert.deepEqual(lairsNear(2650, 250, PROVINCE_LAIR_REACH, Infinity, PROVINCE_LAIR_ROLLS), cold, 'warm or cold, the same lairs');
   // every lair a table lists stands as itself - its pixel free of the places the build stands first (IC's outskirts' towns)
   for (const l of lairsNear(2069, 658, 24)) assert.equal(standAt(l.px, l.py)?.mapTableData.mapId, l.mapId, `${l.name} @ ${l.px},${l.py} stands as the lair`);
   QUEST_REACH_TUNING.override = true;   // NEARBY-QUESTS, as the game's default has it (systems/features.js 'nearby-quests')
@@ -61,11 +67,16 @@ test('R2-5 with ARENA2: a Fighters Guild, a Mages Guild, a temple, a social give
     const location = standAt(pixel[0], pixel[1]);
     assert.ok(location?.loaded, `${where} stands`);
     const L = await questLayerAt(world, { pixel: { x: pixel[0], y: pixel[1] }, location });
+    // R2-5d: the province made ready in idle time first (the player walked in), each tick bounded by count
+    const warm = createProvinceWarm({ provinces: L.questWorld.provinceSites, regionNow: () => REGION_NAMES.indexOf(province), origin: () => ({ x: pixel[0], y: pixel[1] }) });
+    for (let n = 0; !warm.done(); n++) { assert.ok(warm.tick() <= WARM_PER_TICK, 'a tick bounded'); assert.ok(n < 2000); }
+    const stoodBefore = world.locationIndex.size;
     L.machine.setLastNPCClicked({ hash: 1, mapID: location.mapTableData.mapId, nameSeed: 7, buildingKey: 0, factionID, gender: 0 });
     const t0 = Date.now();
     const quest = quiet(() => L.machine.parseQuestForLists(questSource(name, true), factionID, { rolls: seeded(name.length * 31 + pixel[0]) }));
     const ms = Date.now() - t0;
     assert.ok(quest, `${where}: the ${giver}'s ${name} is offered (it parsed: work, not "no work")`);
+    assert.equal(world.locationIndex.size, stoodBefore, `${where} ${name}: no place stood for the first time while asking for work (${ms} ms)`);
     // ONE DRAW FOR EVERY CLIENT: another quest layer at the same pixel (a party member's game), the same roll - the same sites
     const twin = await questLayerAt(world, { pixel: { x: pixel[0], y: pixel[1] }, location });
     twin.machine.setLastNPCClicked({ hash: 1, mapID: location.mapTableData.mapId, nameSeed: 7, buildingKey: 0, factionID, gender: 0 });
@@ -130,7 +141,16 @@ test('R2-5 with ARENA2: a Fighters Guild, a Mages Guild, a temple, a social give
       for (const place of local) {
         const sd = place.siteDetails, p = sd.worldPixel;
         assert.equal(sliceQuestName(p.x, p.y), sd.locationName, `${name} ${place.symbol.name}: a slice of the city, under its quest name`);
-        assert.ok(Math.max(Math.abs(p.x - 2069), Math.abs(p.y - 658)) <= 4, `${name} ${place.symbol.name}: a slice near the centre (${p.x},${p.y})`);
+        // the nearest slice that holds its kind: none nearer the centre holds a building of its type and faction
+        const kind = place.siteBuilding(L.questWorld);
+        const dOf = (q) => Math.max(Math.abs(q.x - 2069), Math.abs(q.y - 658));
+        let nearest = null;
+        for (const sl of L.questWorld.capitalSlicesNear(L.questWorld.currentLocation())) {
+          if (!sl.exterior.buildings.some((b) => b.buildingType === kind.buildingType && (b.factionId ?? 0) === (kind.factionId ?? 0))) continue;
+          nearest = longitudeLatitudeToMapPixel(sl.mapTableData.longitude, sl.mapTableData.latitude);
+          break;
+        }
+        assert.ok(nearest && dOf(p) <= dOf(nearest), `${name} ${place.symbol.name}: the nearest slice of its kind (${p.x},${p.y})`);
         assert.equal(L.questWorld.maps.getLocationByName(sd.regionName, sd.locationName)?.mapTableData.mapId, sd.mapId, `${sd.locationName}: found by its name`);
         assert.ok(place.siteBuilding(L.questWorld), `${sd.locationName}: its building stands`);
         table.push(`| ${giver} | Cyrodiil (Imperial City, the centre) | ${name} | ${place.symbol.name} (local): ${sd.locationName} (building) @ ${p.x},${p.y} | yes | yes | - | ${ms} ms |`);
