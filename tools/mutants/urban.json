@@ -344,8 +344,8 @@
  {
   "name": "U3M-the-gate-fenced",
   "file": "src/world/urban/townFabricModel.js",
-  "old": "  for (const run of edgeRuns({ W }, plan.fences)) {\n    const s = runSegment(run, W), dir",
-  "new": "  for (const run of edgeRuns({ W }, [...plan.fences, ...plan.gates])) {\n    const s = runSegment(run, W), dir",
+  "old": "  for (const run of edgeRuns({ W }, plan.fences)) {\n    if (++laid",
+  "new": "  for (const run of edgeRuns({ W }, [...plan.fences, ...plan.gates])) {\n    if (++laid",
   "tests": [
    "test/world/urban/urban3_model.test.js"
   ]
@@ -418,6 +418,33 @@
   "file": "src/world/urban/townFabricStand.js",
   "old": "  while (!r.done) { await breathe(); r = steps.next(); }",
   "new": "  while (!r.done) { r = steps.next(); }",
+  "tests": [
+   "test/world/urban/urban3_stand.test.js"
+  ]
+ },
+ {
+  "name": "U3S-the-model-made-in-one-piece",
+  "file": "src/world/urban/townFabricStand.js",
+  "old": "    buildSliced: (ctx, breathe) => townFabricModelSliced(plan, style, opts(ctx), breathe),",
+  "new": "    buildSliced: null,",
+  "tests": [
+   "test/world/urban/urban3_stand.test.js"
+  ]
+ },
+ {
+  "name": "U3M-the-models-breath-unasked",
+  "file": "src/world/urban/townFabricModel.js",
+  "old": "  while (!r.done) { await breathe(); r = steps.next(); }",
+  "new": "  while (!r.done) { r = steps.next(); }",
+  "tests": [
+   "test/world/urban/urban3_stand.test.js"
+  ]
+ },
+ {
+  "name": "U3M-the-mapping-unbreathed",
+  "file": "src/world/urban/townFabricModel.js",
+  "old": "  yield 'mapped';\n",
+  "new": "",
   "tests": [
    "test/world/urban/urban3_stand.test.js"
   ]

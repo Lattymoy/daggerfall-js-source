@@ -25,7 +25,7 @@ import { provinceKeyBeyondBay } from '../tamriel/tamrielLand.js';
 import { CAPITALS, BLOCK_M } from '../tamrielCapitals.js';
 import { townWallGatesOf } from '../townWalls.js';
 import { FABRIC_CELLS, fabricGrid, planSteps } from './townFabric.js';
-import { townFabricModel, FABRIC_PIECES } from './townFabricModel.js';
+import { townFabricModel, townFabricModelSliced, FABRIC_PIECES } from './townFabricModel.js';
 import { styleOf } from './urbanRecords.js';
 
 /** The fabric's model ids: past every other custom model's (the capitals' 910xxx, TS4's walls' 3,000,000 + 20 bits). */
@@ -109,7 +109,11 @@ export async function townFabricFor(dfLocation, blocks, { px, py, breathe = () =
   const style = styleOf(province), cobbles = dfLocation.mapTableData?.locationType === LOCATION_TYPES.TownCity;
   if (_fabrics.has(mapId)) return _fabrics.get(mapId);   // planned meanwhile by another build of it
   const modelId = TOWN_FABRIC_MODEL_BASE + _next++;
-  registerCustomModel(modelId, (ctx) => townFabricModel(plan, style, { cobbles, classicModel: (id) => ctx?.classicModel?.(id) ?? null }), () => true, { needs: Object.values(FABRIC_PIECES) });
+  const opts = (ctx) => ({ cobbles, classicModel: (id) => ctx?.classicModel?.(id) ?? null });
+  registerCustomModel(modelId, (ctx) => townFabricModel(plan, style, opts(ctx)), () => true, {
+    needs: Object.values(FABRIC_PIECES),
+    buildSliced: (ctx, breathe) => townFabricModelSliced(plan, style, opts(ctx), breathe),   // made a breath at a time as it was planned
+  });
   const made = Object.freeze({ plan, modelId, style });
   _fabrics.set(mapId, made);
   for (const [id, f] of _fabrics) {

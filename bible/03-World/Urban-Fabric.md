@@ -144,10 +144,11 @@ every eighth village (230), on this session's loaded machine (`fabricStats`, the
 One model of the town's own in the location's metres (x east, z north, its ground y 0 - the blocks' own origin, 5 cm over
 the flattened ground TS2 lays):
 
-- **The main streets** in the style's setts at FABRIC_ROAD_Y between kerbs, the **pavements** in its flags
-  FABRIC_PAVE_Y (0.08 m - under the 0.1 m a town's walker looks ahead at for a step, `characters/mobile/mobilePerson.js` `_clear`, so its people cross every kerb) over them, a kerb's face along every pavement edge but a house's (`cellRects` - a mask laid in
-  greedy rectangles; `runSegment`, a run of edges as a line). The planks' styles lay no carriageway: their boardwalks
-  either side of the forest floor.
+- **The main streets** in the style's setts at FABRIC_ROAD_Y between kerbs, the **pavements** in its flags FABRIC_PAVE_Y
+  (0.08 m - under the 0.1 m a town's walker looks ahead at for a step, `characters/mobile/mobilePerson.js` `_clear`, so
+  its people cross every kerb) over them, a kerb's face along every pavement edge but a house's (`cellRects` - a mask
+  laid in greedy rectangles; `runSegment`, a run of edges as a line). The planks' styles lay no carriageway: their
+  boardwalks either side of the forest floor.
 - **A city's side streets** (Daggerfall's road) in the style's cobbles; a hamlet's and a village's keep Daggerfall's own
   lane.
 - **The yards**: the fenced styles' (Skyrim's, High Rock's, Valenwood's, Black Marsh's) in Daggerfall's own fence (ARCH3D
@@ -161,6 +162,10 @@ the flattened ground TS2 lays):
   Daggerfall's pieces keep their own pictures; one submesh a picture (`world/arena/arenaModel.js` composeArenaModel).
   Measured: a city's fabric 21,188 triangles on the mean (37,151 at the most), a hamlet's 10,439, a village's 3,352, in
   nine submeshes at the most.
+- **Made a step at a time** (`townFabricSteps`; the model door's `buildSliced`, `townFabricModelSliced`): a breath after
+  its streets, after every FABRIC_RUNS_A_BREATH (64) runs of fence, after its yards, its dead ends and woodpiles, and
+  after its own faces are mapped - a city's fabric is a few hundred milliseconds of work on a slow machine, never one
+  frame's, as its plan is never one frame's.
 
 ## 6. U3 - a town's fabric, stood (`world/urban/townFabricStand.js`)
 
@@ -185,15 +190,27 @@ the flattened ground TS2 lays):
 
 ## 7. Seen and measured
 
-- **Pictures**: before and after, street level, a yard and from above (`tools/urbanProbe.mjs` - the player's own data
-  rendered, never committed). Looked at, and changed for: a kerb at the walkers' step height (lowered under it, above);
-  the setts' and the flags' courses read at a street's width; the low walls' coping and gate pillars; Daggerfall's fence
-  along a yard's run, its gate open onto the street. Seen per province: Skyrim's Nord stone over grey granite setts, its
-  yards fenced; High Rock's half-timbering over brown setts and brick; Hammerfell's and Morrowind's sandstone and ochre
-  setts, their yards walled in adobe and stucco under a coping; Summerset's white limestone and ashlar walls; Valenwood's
-  boardwalks along the house fronts.
-- **The draw** (`tools/urbanProbe.mjs`'s shot-mode counter, SwiftShader - relative only): see the slice's record of its run
-  below.
+- **Pictures**: before and after, from above, down a main street, at a yard's gate, over a woodpile and down an alley -
+  the game's own code (`world/rmbLayout.js` layoutRmbBlock, `world/meshReader.js` dfMeshToModel, `world/climateSwaps.js`
+  applyClimate, the plan and its model) over the player's own ARCH3D, BLOCKS and TEXTURE files, drawn by the slice's
+  scratch rasterizer (never committed - a render of game data is game data); Solitude's, Mournhold's, Alinor's and
+  Torval's landmarks the same way. `tools/urbanProbe.mjs` takes them in the running game, the same poses before and
+  after; this session's shared machine killed its browser at every boot (below). Looked at, and changed for: a kerb at
+  the walkers' step height (lowered under it, section 5); the setts' and the flags' courses read at a street's width;
+  the low walls' coping and gate pillars; Daggerfall's fence along a yard's run, its gate open onto the street. Seen per
+  province: Skyrim's Nord stone over grey granite setts, its yards fenced; High Rock's half-timbering over brown setts
+  and brick; Hammerfell's and Morrowind's sandstone and ochre setts, their yards walled in adobe and stucco under a
+  coping; Summerset's white limestone and ashlar walls; Valenwood's boardwalks along the house fronts.
+- **The draw**, measured on the pixel's own static batch (`render/staticBatch.js` StaticBatchBuilder - one draw a texture
+  group - fed every block model of the town as `scenes/pixelBuild.js` feeds it, Daggerfall's own models and pictures,
+  before and with the fabric; 15 of Arena's city-states and 17 of its towns, every 29th and 71st): a city's pixel 88.7
+  draws to 95.0 (+6.3 on the mean, +7 at the most), a town's 61.2 to 67.8 (+6.5, +8 at the most) - the fabric is ONE
+  model merged into the batch, no draw of its own; its triangles 22.6k over the city's blocks' 27.7k and 12.1k over the
+  town's 11.4k, most of them Daggerfall's fence (21 triangles a piece, a piece every 3.2 m of a yard's run) - a few
+  thousand triangles a block beside the terrain's and the trees'. Its plan 767 ms and its model 339 ms on the mean on
+  this session's loaded machine (four cores shared by nine sessions), each a breath at a time. The shot-mode counter in a
+  browser (`tools/urbanProbe.mjs`) was not read: every boot of a probe's browser past the Bay was killed by the shared
+  machine's memory before it reached the street.
 - **Known edges**: the town's own pictures do not swap with the season (archives past 500 the climate law leaves as they
   are): in winter its paved ways read as swept; a re-skin of a standing pixel (PRECIP HOST-7) keeps its fabric. A home's
   yard (HOME-YARD) past the Bay may meet a fence where its lot meets the street. The Bay's towns stand no fabric.
@@ -201,7 +218,7 @@ the flattened ground TS2 lays):
 ## 8. Pins
 
 `test/world/urban/urban1_look.test.js` (U1), `urban2_art.test.js` (U2), `urban3_fabric.test.js`, `urban3_model.test.js`,
-`urban3_stand.test.js` (U3). Mutants `tools/mutants/urban.json` (50). PINS MOVED (URBANIZER U2): the capitals' models'
+`urban3_stand.test.js` (U3). Mutants `tools/mutants/urban.json` (53). PINS MOVED (URBANIZER U2): the capitals' models'
 pictures (`test/tesa10_capitals.test.js`, `test/tesa10c_capitals.test.js`, `test/tesalore_capitals.test.js` - `sane`: a
 landmark's pictures the capitals' own or the towns'). PINS MOVED (URBANIZER U1): the places' host's climate
 (`test/tesa2_arena.test.js`, its arena location's line; `test/tesa7_country.test.js`, `townClimateAt` stubbed as the zone's

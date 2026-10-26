@@ -5,7 +5,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fabricTown, fabricEnds, fabricBlockOf, townFabricFor, townFabricOf, shutTownFabric, fabricWalkShut, isPortCell, _resetTownFabrics, TOWN_FABRIC_KEEP, TOWN_FABRIC_MODEL_BASE, GATE_IN_M } from '../../../src/world/urban/townFabricStand.js';
-import { hasCustomModel, customModelNeeds } from '../../../src/world/customModels.js';
+import { hasCustomModel, customModelNeeds, customModelBuilt } from '../../../src/world/customModels.js';
+import { townFabricModel } from '../../../src/world/urban/townFabricModel.js';
 import { registerTownWall, WALL_MODELS } from '../../../src/world/townWalls.js';
 import { CAPITALS, BLOCK_M } from '../../../src/world/tamrielCapitals.js';
 import { LOCATION_TYPES } from '../../../src/formats/mapsFile.js';
@@ -61,7 +62,7 @@ test('URBANIZER U3 a block as the plan reads it: its town map, its ground (Groun
   assert.equal(fabricBlockOf(null), null);
 });
 
-test('URBANIZER U3 a town\'s fabric: planned once and kept by its map id (its steps a breath apart), its model on the model door under an id never reused, needing Daggerfall\'s fence and crate; the TOWN_FABRIC_KEEP most recent kept and the rest let go, their models off the door (mutants: a model left on the door; an id reused; the breath unasked)', async () => {
+test('URBANIZER U3 a town\'s fabric: planned once and kept by its map id (its steps a breath apart), its model on the model door under an id never reused, needing Daggerfall\'s fence and crate; the TOWN_FABRIC_KEEP most recent kept and the rest let go, their models off the door (mutants: a model left on the door; an id reused; the breath unasked; the model made in one piece)', async () => {
   _resetTownFabrics();
   const at = { px: 100, py: 100 }, blocks = [laid(0), laid(1, 'RESIAA01.RMB')];
   let breaths = 0;
@@ -73,6 +74,13 @@ test('URBANIZER U3 a town\'s fabric: planned once and kept by its map id (its st
   assert.equal(townFabricOf(loc()), a);
   assert.ok(hasCustomModel(a.modelId));
   assert.deepEqual([...customModelNeeds(a.modelId)].sort(), [41206, 41818]);
+  // the model made a breath at a time when the door is handed a breather (its streets, yards, props, its faces mapped) -
+  // the same model as made whole
+  let modelBreaths = 0;
+  const sliced = await customModelBuilt(a.modelId, { classicModel: () => null }, () => { modelBreaths++; });
+  assert.ok(modelBreaths >= 4, `${modelBreaths} breaths in the model's making`);
+  const whole = townFabricModel(a.plan, a.style, { cobbles: true });   // a city's (the test's town is one)
+  assert.deepEqual([[...sliced.positions], [...sliced.indices], sliced.subMeshes], [[...whole.positions], [...whole.indices], whole.subMeshes]);
   assert.equal(await townFabricFor(loc(), blocks, at), null, 'a Bay town none');
   const ids = [a.modelId];
   for (let k = 1; k <= TOWN_FABRIC_KEEP; k++) ids.push((await townFabricFor(loc({ mapId: 0xa7000001 + k, extra: { arena: { province: 'Elsweyr' } } }), blocks, at)).modelId);

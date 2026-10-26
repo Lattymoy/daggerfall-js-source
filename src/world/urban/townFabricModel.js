@@ -115,6 +115,9 @@ export function pieceAlong(m, at, dir, len) {
   return { positions, normals, uvs: m.uvs, indices, subMeshes: m.subMeshes };
 }
 
+/** Runs of fence laid between two of the model's breaths (a city's fabric is a thousand pieces of fence and more). */
+export const FABRIC_RUNS_A_BREATH = 64;
+
 /**
  * THE TOWN'S FABRIC MODEL (the header).
  * @param {ReturnType<typeof import('./townFabric.js').fabricPlan>} plan
@@ -122,7 +125,34 @@ export function pieceAlong(m, at, dir, len) {
  * @param {{ cobbles?: boolean, classicModel?: (id: number) => any }} [o] `cobbles` whether its side streets are laid
  *   (a city's), `classicModel` Daggerfall's pieces (the model door's - null where it has none: the port's own alone)
  */
-export function townFabricModel(plan, style, { cobbles = false, classicModel = () => null } = {}) {
+export function townFabricModel(plan, style, o = {}) {
+  const steps = townFabricSteps(plan, style, o);
+  let r = steps.next();
+  while (!r.done) r = steps.next();
+  return r.value;
+}
+
+/**
+ * The same model made a step at a time, `breathe()` awaited between its steps (the model door's `buildSliced` - world/
+ * customModels.js customModelBuilt: a city's fabric is a few hundred milliseconds of work on a slow machine, never one
+ * frame's).
+ * @param {ReturnType<typeof import('./townFabric.js').fabricPlan>} plan @param {string} style
+ * @param {{ cobbles?: boolean, classicModel?: (id: number) => any }} o @param {() => any} breathe
+ */
+export async function townFabricModelSliced(plan, style, o, breathe) {
+  const steps = townFabricSteps(plan, style, o);
+  let r = steps.next();
+  while (!r.done) { await breathe(); r = steps.next(); }
+  return r.value;
+}
+
+/**
+ * The model's steps: a yield after its streets, after every FABRIC_RUNS_A_BREATH runs of its yards' fences, after its
+ * dead ends and woodpiles and after its own faces are mapped; its return the model.
+ * @param {ReturnType<typeof import('./townFabric.js').fabricPlan>} plan @param {string} style
+ * @param {{ cobbles?: boolean, classicModel?: (id: number) => any }} [o]
+ */
+export function* townFabricSteps(plan, style, { cobbles = false, classicModel = () => null } = {}) {
   const st = URBAN_STYLES[style] ?? URBAN_STYLES.imperial, K = FABRIC_KIND, W = plan.W, H = plan.H, n = W * H;
   const mb = new MeshBuilder(), parts = [];
   const setts = styleArt(style, 'setts'), flags = styleArt(style, 'flags'), cobble = styleArt(style, 'cobbles'), wallTex = styleArt(style, 'wall');
@@ -150,9 +180,12 @@ export function townFabricModel(plan, style, { cobbles = false, classicModel = (
     const s = runSegment(run, W), [ox, oz] = s.out;
     mb.quad(flags, [s.a[0], FABRIC_ROAD_Y, s.a[1]], [s.b[0], FABRIC_ROAD_Y, s.b[1]], [s.b[0], FABRIC_PAVE_Y, s.b[1]], [s.a[0], FABRIC_PAVE_Y, s.a[1]], [ox, 0, oz]);
   }
+  yield 'streets';
   // the yards' fences or walls, and the pillars at their gates
   const fenceModel = st.yard === 'fence' ? classicModel(FABRIC_PIECES.fence) : null;
+  let laid = 0;
   for (const run of edgeRuns({ W }, plan.fences)) {
+    if (++laid % FABRIC_RUNS_A_BREATH === 0) yield 'fences';
     const s = runSegment(run, W), dir = [(s.b[0] - s.a[0]) / s.length, (s.b[1] - s.a[1]) / s.length];
     if (fenceModel) {
       const pieces = Math.max(1, Math.round(s.length / 3.2)), len = s.length / pieces;
@@ -168,6 +201,7 @@ export function townFabricModel(plan, style, { cobbles = false, classicModel = (
       for (const [x, z] of [s.a, s.b]) mb.box(wallTex, [x, FABRIC_WALL.pillarH / 2, z], [FABRIC_WALL.pillar, FABRIC_WALL.pillarH, FABRIC_WALL.pillar]);
     }
   }
+  yield 'yards';
   // the dead ends' walls
   for (const run of edgeRuns({ W }, plan.walls)) wallAlong(mb, wallTex, runSegment(run, W), FABRIC_DEAD_WALL.h, FABRIC_DEAD_WALL.t, -FABRIC_DEAD_WALL.t / 2);
   // the woodpiles: against their fence, log ends to the yard and along it, bark over the top; Daggerfall's crate beside
@@ -185,6 +219,8 @@ export function townFabricModel(plan, style, { cobbles = false, classicModel = (
     mb.quad(BARK, corner(-L / 2, D / 2, 0), corner(-L / 2, -D / 2, 0), corner(-L / 2, -D / 2, Y), corner(-L / 2, D / 2, Y), [-along[0], 0, -along[1]]);
     if (crate) parts.push(pieceAlong(crate, [back[0] + along[0] * (L / 2 + 0.5), back[1] + along[1] * (L / 2 + 0.5)], along, 0.58));
   }
+  yield 'props';
   const own = mb.groups.size ? vanillaTexels(mb.build()) : null;
+  yield 'mapped';
   return composeArenaModel([...(own ? [own] : []), ...parts]);
 }
