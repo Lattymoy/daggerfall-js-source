@@ -314,7 +314,8 @@ test('AUDIT LANDFORMS III A7: a land\'s climate is read off its pixel at the sha
 });
 
 /** the ground's own sources - the kernel, the landforms, the jobs that run them, a town's tiles and blend */
-const GROUND = ['src/world/terrain/terrainSampler.js', 'src/world/landforms.js', 'src/world/terrain/terrainGen.js', 'src/world/terrain/terrainTiles.js'];
+const GROUND = ['src/world/terrain/terrainSampler.js', 'src/world/landforms.js', 'src/world/terrain/terrainGen.js', 'src/world/terrain/terrainTiles.js',
+  'src/world/tamriel/tamrielLandforms.js', 'src/world/tamriel/tamrielWaters.js', 'src/world/tamriel/tamrielGround.js'];   // BREATHTAKER3, CYRODIIL-WATERS: the land past the Bay's own
 const ENGINE_OWN = new Set(['sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'atan2', 'sinh', 'cosh', 'tanh', 'asinh', 'acosh', 'atanh', 'exp', 'expm1', 'log', 'log1p', 'log2', 'log10', 'pow', 'cbrt', 'hypot']);
 const walk = (n, f) => { if (!n || typeof n.type !== 'string') return; f(n); for (const k of Object.keys(n)) { const v = n[k]; if (Array.isArray(v)) v.forEach((c) => walk(c, f)); else if (v && typeof v.type === 'string') walk(v, f); } };
 

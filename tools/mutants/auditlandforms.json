@@ -404,8 +404,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-lift-of-whole-height",
     "file": "src/world/landforms.js",
-    "old": "    const l = h + reliefLift(low) * fade + hh;",
-    "new": "    const l = h + reliefLift(h) * fade + hh;",
+    "old": "    let hh = 0, lift = reliefLift(low), t = 0;",
+    "new": "    let hh = 0, lift = reliefLift(h), t = 0;",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"

@@ -129,6 +129,9 @@ import { perlinNoise } from './perlin.js';
 import { CLIMATES } from '../formats/mapsTables.js';
 import { inEtherLaw, etherClimateAt } from './ethericSea.js';   // AUDIT CAPTAIN'S SEA G3: the Eltheric Ocean's climates past the table (worker-safe)
 import { tamrielClimateAt, bayEdgeDistance, SEAM_PX } from './tamriel/tamrielGround.js';   // AUDIT TESA II Z8: the continent's zones past the Bay's seam (worker-safe)
+import { tamrielBiomeAt } from './tamriel/tamrielBiomes.js';   // BREATHTAKER3: a zone's own landforms
+import { landformLattice, tamrielLandformAt, continentShare, TAMRIEL_TOP, TAMRIEL_LANDFORM_DIALS } from './tamriel/tamrielLandforms.js';   // BREATHTAKER3: the land past the Bay below the heightmap's grain
+import { tamrielWatersShaper } from './tamriel/tamrielWaters.js';   // CYRODIIL-WATERS: the rivers and lakes past the Bay, carved
 
 
 /** At or under this, a height is DFU's: the beach line with its jitter, the highest height the tile classifier can
@@ -324,6 +327,28 @@ export function reliefLift(low) {
   return gain * e * smooth01((e - from) / (full - from));
 }
 
+/** BREATHTAKER2: THE LIFT GOES ON PAST THE BAY'S 7-BIT TOP, past the Bay. The lift is level past WOODS.WLD's byte 127 (the
+ *  Bay's real ground stops at 109; its one byte over is the glitch at sea), but the heightmap stands the continent's
+ *  ranges to byte 180 (TAMRIEL-RELIEF's CEILING_BYTE): measured on the freeware's trace, 8.3% of Skyrim's land and 6.1% of
+ *  Cyrodiil's stood over 127, where a byte rose 10 m against 29 m under it, and the High Peaks' and the Jerall's tops
+ *  stood as plateaus a third of their heightmap's relief. Past the Bay the lift goes on at `gain` from 127 to `top`
+ *  (kernel units) and is level after - so much and no more that the continent's tallest ground stays under
+ *  LANDFORM_CEILING (CONTINENT_CEILING, below; the snowpack's levels reach it - systems/weather/snowpack.js). */
+export const CONTINENT_LIFT = Object.freeze({ gain: 0.56, top: 180 * BASE_HEIGHT_SCALE });
+/** BREATHTAKER2: the lift past the 7-bit top a sample past the Bay takes over reliefLift's, kernel units (times its
+ *  continentShare, world/tamriel/tamrielLandforms.js - 0 on the Bay and its seam). */
+export function continentLift(low) {
+  const e = (low < CONTINENT_LIFT.top ? low : CONTINENT_LIFT.top) - LOW_TOP;
+  return e > 0 ? CONTINENT_LIFT.gain * e : 0;
+}
+/** BREATHTAKER2: the continent's share at Bay pixel (x, y)'s byte node - the kernel stands it at world sample
+ *  ((x + 1) * 128, (MAP_H - y) * 128) - so a byte read off the map takes the lift the streamed ground puts on it:
+ *  reliefByteHeight(byte, fade, byteBeyond(x, y)) (the far ring's, the held map's). 0 on the Bay and its seam. */
+export const byteBeyond = (x, y) => (inEtherLaw(x, y) ? 0 : continentShare((x + 1) * 128, (MAP_H - y) * 128, 128, MAP_H, MAP_W, SEAM_PX));
+/** BREATHTAKER2/3: is Bay pixel (x, y) the continent's - past the Bay's seam band, and not the Eltheric Ocean's box (its isles
+ *  wear their own climates' hills, AUDIT CAPTAIN'S SEA G3: etherLandAt)? */
+export const continentPixel = (x, y) => bayEdgeDistance(x, y) > SEAM_PX && !inEtherLaw(x, y);
+
 /** LANDFORM6: the lands in one order (their index is a climate's land everywhere below) and the climate each one is -
  *  CLIMATE.PAK's values, mapsTables.js CLIMATES; any other value stands as woodlands. */
 const LAND_NAMES = Object.freeze(['woodlands', 'mountainWoods', 'mountain', 'desert', 'desert2', 'rainforest', 'subtropical', 'swamp', 'haunted', 'ocean']);
@@ -349,6 +374,10 @@ export const HILLS_TOP = Math.max(...LANDS.map(landTop));
 /** LANDFORM1: the highest the landforms stand anything, in kernel units - DFU's ceiling, the most the lift adds and the
  *  tallest hill (MOUNTAINS-SHARP: about 3,644 m). Only WOODS.WLD's one glitch byte reaches it (the header, THE CEILING). */
 export const LANDFORM_CEILING = MAX_TERRAIN_HEIGHT + reliefLift(LOW_TOP) + HILLS_TOP;
+/** BREATHTAKER2/3: the highest the land past the Bay stands - DFU's ceiling, the lift with its continuation past the 7-bit
+ *  top, and the continent's tallest landform (TAMRIEL_TOP, which takes the hills' place there). Under LANDFORM_CEILING by
+ *  construction (test/world/breathtaker.test.js), so the ceiling is the whole world's. */
+export const CONTINENT_CEILING = MAX_TERRAIN_HEIGHT + reliefLift(LOW_TOP) + continentLift(CONTINENT_LIFT.top) + TAMRIEL_TOP;
 
 /** LANDFORM5: the octaves' offsets into the noise, so no two octaves (and neither field) share a lattice. */
 const HILL_OFFSETS = Object.freeze([[11.3, 47.9], [83.1, 5.7], [29.5, 71.3]]);
@@ -918,10 +947,11 @@ function pullTo(list, gx, gy, land, out) {
 
 /** LANDFORM1: a map-pixel byte's macro height with the lift, in kernel units - the far ring's law (farRing.js
  *  ringHeight), max(byte * 8, ocean) plus the lift its own `low` earns, faded beside the sea by the node's own
- *  cliffFadeAt (AUDIT LANDFORMS II I1). */
-export function reliefByteHeight(byte, fade = 1) {
+ *  cliffFadeAt (AUDIT LANDFORMS II I1). BREATHTAKER2: `beyond` the byte's continentShare (0 on the Bay and its seam, 1 a
+ *  ramp past it - world/tamriel/tamrielLandforms.js), the lift's continuation past the 7-bit top it takes (continentLift). */
+export function reliefByteHeight(byte, fade = 1, beyond = 0) {
   const low = byte * BASE_HEIGHT_SCALE;
-  return Math.max(low, SCALED_OCEAN_ELEVATION) + reliefLift(low) * fade;
+  return Math.max(low, SCALED_OCEAN_ELEVATION) + (beyond > 0 ? reliefLift(low) + beyond * continentLift(low) : reliefLift(low)) * fade;
 }
 
 /**
@@ -937,11 +967,14 @@ export function reliefByteHeight(byte, fade = 1) {
 export function meanGroundField(woods, px, py, landforms, hDim = HEIGHTMAP_DIMENSION) {
   const { base, noise } = kernelTerms(woods, px, py, hDim);
   const fade = landforms ? cliffFade(woods, px, py, hDim) : null;
+  const span = hDim - 1, ox = px * span, oy = (MAP_H - py) * span, beyond = landforms && continentPixel(px, py);   // BREATHTAKER2
   return (x, y) => {
     const low = base(x, y) * BASE_HEIGHT_SCALE;
     let h = low + noise(x, y) * NOISE_MAP_SCALE;
     h = h < SCALED_OCEAN_ELEVATION ? SCALED_OCEAN_ELEVATION : h > MAX_TERRAIN_HEIGHT ? MAX_TERRAIN_HEIGHT : h;
-    return landforms ? h + reliefLift(low) * (fade ? fade(x, y) : 1) : h;
+    if (!landforms) return h;
+    const lift = beyond ? reliefLift(low) + continentShare(ox + x, oy + y, span, MAP_H, MAP_W, SEAM_PX) * continentLift(low) : reliefLift(low);
+    return h + lift * (fade ? fade(x, y) : 1);
   };
 }
 
@@ -993,6 +1026,8 @@ export function groundTopOf(woods, px, py, landforms, climates = null, hDim = HE
   if (!landforms) return h;
   let hill = climates ? 0 : HILLS_TOP;
   if (climates) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) hill = Math.max(hill, LAND_TOP[etherLandAt(px + dx, py + dy, climates)]);
+  // BREATHTAKER2/3: past the Bay's seam the lift goes on past the 7-bit top and the continent's landforms stand with the hills
+  if (continentPixel(px, py)) return h + reliefLift(lowTop) + continentLift(lowTop) + Math.max(hill, TAMRIEL_TOP);
   return h + reliefLift(lowTop) + hill;
 }
 
@@ -1092,7 +1127,24 @@ export function createLandforms({ woods, roads = null, sites = null, hills = tru
   // III C1)
   const hill = !hills ? NO_HILLS : (gx, gy, macro, low, lattice, out) => hillsAt(gx, gy, macro, low, lattice, climates, out, span);
   const ground = { hills: !!hills, climates };   // what a site's level stands on
-  return { pixel: (px, py) => pixelShaper(woods, nets, hill, ground, sites, px, py, span, half, hDim), rivers: cutRivers };
+  const cont = hills ? continentGround(woods, climates) : null;   // BREATHTAKER3: what the continent's landforms read
+  return { pixel: (px, py) => pixelShaper(woods, nets, hill, ground, sites, px, py, span, half, hDim, cont), rivers: cutRivers };
+}
+
+/**
+ * BREATHTAKER3: THE GROUND THE CONTINENT'S LANDFORMS READ (world/tamriel/tamrielLandforms.js LandformGround) - a byte
+ * node's macro height with the lift (reliefByteHeight, its continuation past the Bay's seam), its zone past the seam
+ * (tamrielBiomes.js tamrielBiomeAt) and its climate (the table's on the Bay, held to the map as nodeLand holds it; the
+ * zone's past the seam; the woodlands' with no table).
+ */
+function continentGround(woods, climates) {
+  return {
+    mapH: MAP_H, knee: LANDFORM_KNEE,
+    height: (x, y) => reliefByteHeight(woods.getHeightMapValue(x, y), 1, byteBeyond(x, y)),
+    zoneAt: (x, y) => (bayEdgeDistance(x, y) > SEAM_PX ? tamrielBiomeAt(x, y) : null),
+    climateAt: (x, y) => (bayEdgeDistance(x, y) > SEAM_PX ? tamrielClimateAt(x, y)
+      : climates ? climates[(y < 0 ? 0 : y >= MAP_H ? MAP_H - 1 : y) * MAP_W + (x < 0 ? 0 : x >= MAP_W ? MAP_W - 1 : x)] : CLIMATES.Woodlands),
+  };
 }
 
 /** AUDIT LANDFORMS III C1, LANDFORM7: one network layer's arms from the pixels within `around` of (px, py), each a
@@ -1133,7 +1185,7 @@ function nearestD2(segs, gx, gy, r2) {
 
 /** One pixel's shaper: its paths' segments gathered from the 3x3 pixels round it, the sites about it, and the closure
  *  the kernel calls. */
-function pixelShaper(woods, nets, hill, ground, sites, px, py, span, half, hDim) {
+function pixelShaper(woods, nets, hill, ground, sites, px, py, span, half, hDim, cont = null) {
   // the pixel's own sample origin in world samples: x east from the map's west edge, y NORTH from its south edge (the
   // ground noise's own frame, terrainSampler.js `noisey`), so pixel (px, py)'s (128, y) is (px + 1, py)'s (0, y) and
   // its (x, 128) is (px, py - 1)'s (x, 0) - one number each, from either pixel
@@ -1144,7 +1196,14 @@ function pixelShaper(woods, nets, hill, ground, sites, px, py, span, half, hDim)
   const around = sitesAbout(woods, sites, px, py, span, hDim, ground);
   const near = around.filter((s) => s.x1 + s.reach > ox && s.x0 - s.reach < ox + span && s.y1 + s.reach > oy && s.y0 - s.reach < oy + span);
   const kept = new Float64Array(1);
-  const lattice = hill === NO_HILLS ? null : hillLattice(ox, oy, span);   // LANDFORM5: the slow fields' nodes over this pixel
+  // BREATHTAKER3: past the Bay's seam the continent's own landforms (world/tamriel/tamrielLandforms.js) - their lattice over
+  // this pixel; `whole` where every sample of it is the continent's (the Bay's hills never asked); CYRODIIL-WATERS: the
+  // rivers and lakes that reach it (world/tamriel/tamrielWaters.js), carved into the land
+  const past = bayEdgeDistance(px, py), continent = !!cont && continentPixel(px, py);
+  const tl = continent ? landformLattice(cont, ox, oy, span, span) : null;
+  const whole = !!tl && past >= SEAM_PX + 1 + TAMRIEL_LANDFORM_DIALS.ramp;
+  const waters = continent ? tamrielWatersShaper(px, py, span) : null;
+  const lattice = hill === NO_HILLS || whole ? null : hillLattice(ox, oy, span);   // LANDFORM5: the slow fields' nodes over this pixel
   // AUDIT LANDFORMS III C1: A RIVER CUTS ITS VALLEY. The first law stilled the hills to nothing along the painted water,
   // and where its land was a dale the water stood over it on an embankment - on the real map 215 of 2,882 inland water
   // pixels stood over every dry neighbour by more than 10 m, the worst 77 m. Now within `valley` of a river's or a
@@ -1199,18 +1258,27 @@ function pixelShaper(woods, nets, hill, ground, sites, px, py, span, half, hDim)
     }
     return out;
   };
-  const deepOut = new Float64Array(1);
+  const deepOut = new Float64Array(1), deepCont = new Float64Array(1);
   /** LANDFORMS 1, 4, 5, 7: the land at a world sample - DFU's height, the lift, the hills (eased beside the roads,
    *  carved into the painted water's valleys) - pulled to the sites about it; `kept[0]` the share of the land's own left
    *  (so of its ground noise). */
   const landAt = (gx, gy, h, macro, low, fade, list) => {
-    let hh = 0;
+    let hh = 0, lift = reliefLift(low), t = 0;
+    if (tl) {   // BREATHTAKER2: the lift's continuation past the 7-bit top, by the continent's share of the sample
+      t = whole ? 1 : continentShare(gx, gy, span, MAP_H, MAP_W, SEAM_PX);
+      if (t > 0) lift += t * continentLift(low);
+    }
     if (hill !== NO_HILLS) {
-      hh = hill(gx, gy, macro, low, lattice, deepOut);
+      if (t < 1) hh = hill(gx, gy, macro, low, lattice, deepOut);
+      if (t > 0) {   // BREATHTAKER3: the continent's landforms, come in from the Bay's hills over the ramp (and their dale)
+        const c = tamrielLandformAt(tl, gx, gy, macro + lift * fade, deepCont);
+        if (t >= 1) { hh = c; deepOut[0] = deepCont[0]; } else { hh += (c - hh) * t; deepOut[0] += (deepCont[0] - deepOut[0]) * t; }
+      }
       if (easeways.length) hh *= easeAt(gx, gy);
       if (valleys.length) hh = carve(gx, gy, hh, deepOut[0]);
     }
-    const l = h + reliefLift(low) * fade + hh;
+    const base = h + lift * fade;
+    const l = waters ? waters.carve(gx, gy, base, hh) : base + hh;   // CYRODIIL-WATERS: the rivers' and lakes' beds and valleys
     if (!list.length) { kept[0] = 1; return l; }
     return pullTo(list, gx, gy, l, kept);
   };

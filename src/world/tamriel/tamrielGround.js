@@ -26,13 +26,14 @@
 // over RELIEF_COAST_REACH, the lattice hash on it - and the authored ranges are the law only without a trace.
 // ═══════════════════════════════════════════════════════════════════
 import { rangeLift } from './tamrielGeography.js';
-import { provinceKeyAt, coastDistanceAt, tamrielTrace } from './tamrielLand.js';   // TAMRIEL3: the picture's own land where it is traced, the authored shape else
+import { provinceKeyAt, coastDistanceAt, tamrielTrace, seaDistanceField, IMPERIAL_ID } from './tamrielLand.js';   // TAMRIEL3: the picture's own land where it is traced, the authored shape else
 import { bayToPicture, inBay, BAY_W, BAY_H, tamrielFrameInBay, tamrielFit } from './tamrielFrame.js';
 import { CLIMATES, regionOfTheatre } from '../../formats/mapsTables.js';
 import { tamrielBiomeAt } from './tamrielBiomes.js';   // TESA-BIOME: each province's zones, each its own climate and air
 import { reliefStands, reliefAt, RELIEF_COAST_REACH, RELIEF_FLOOR } from './tamrielRelief.js';   // TAMRIEL-RELIEF: the owner's heightmap on the trace
 import { theatreAt } from '../worldWide/worldGrid.js';   // WW-R: a province's land is its region's
 import { WATER_BYTE } from '../roadsProducer.js';   // AUDIT TESA II R1: the beach line the land stands over - one constant
+import { perlinNoise } from '../perlin.js';   // BREATHTAKER3: the large map's swell
 
 /** The height law's bytes (WOODS' own units: byte * 8 metres; the sea at 3 and under). AUDIT TESA II R1/G12: the shore - the
  *  least any land past the Bay stands, the relief's and the authored law's alike - is one over the beach line every
@@ -69,6 +70,9 @@ export function groundHash(x, y, salt = 0x51ed) {
  *     height is) - the heightmap's dark land, where the trace has land and the picture sea (the Inner Sea), stood at the
  *     shore's own bytes and the kernel's samples dipped under the ocean's floor in sea-level ponds. */
 export function authoredHeightByte(px, py, noise = 0) {
+  const shore = lakeShoreAt(px, py);   // CYRODIIL-SHORES: Cyrodiil's lakes' own shore, smooth
+  if (shore === SHORE_WATER) return 0;
+  if (shore === SHORE_LAND) return SHORE_BYTE;
   if (!provinceKeyAt(px, py) || straitAt(px, py)) return 0;
   if (reliefStands()) {
     const ease = Math.min(1, Math.max(0, coastDistanceAt(px, py) - 0.5) / RELIEF_COAST_REACH);
@@ -80,6 +84,81 @@ export function authoredHeightByte(px, py, noise = 0) {
   const lift = rangeLift(px, py);
   if (lift > 0) h = Math.max(h, SHORE_BYTE + (SNOW_BYTE - SHORE_BYTE) * lift);
   return Math.max(SHORE_BYTE, Math.min(255, Math.round(h)));
+}
+
+// ── CYRODIIL-SHORES (2026-10-26, bible/03-World/Tamriel.md CYRODIIL-WATERS) ──────────────────────
+/** THE LAKES' SHORES, SMOOTH. The trace's water is the picture's, a pixel of it 15.5 of the map's: Lake Rumare's ring and
+ *  the Niben stood as staircases of 12.7 km blocks on the map and on the ground. For the lakes of the trace (its water no
+ *  way of water joins to the picture's edge - arenaPlaces.js pictureLakes' reading) that touch Cyrodiil's land, the shore
+ *  is the 0 contour of the lake's signed distance (the chamfer field each way, read bilinear between the picture's pixel
+ *  centres - so every pixel centre keeps its own side), wandered by LAKE_SHORE's two octaves - a Bay pixel is water where
+ *  that says so. A lake's pixel the contour gives the land stands at SHORE_BYTE (the beach); a land pixel it gives the lake
+ *  is the lake's. The sea's coasts and every other province's lakes are the trace's to the pixel still. */
+export const LAKE_SHORE = Object.freeze({ wander: 0.3, wave: 1.4, fine: 0.09, fineWave: 0.45, band: 1.25 });
+export const SHORE_WATER = 1, SHORE_LAND = 2;
+/** @type {WeakMap<object, { lake: Uint8Array, sdf: Float32Array }>} */
+const _shores = new WeakMap();
+const RING8G = Object.freeze([[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]);
+/** The trace's Cyrodiil lakes (a mask of their picture pixels) and their signed distance field (picture units: + on the
+ *  land side, - in the lake), made once a trace. */
+export function lakeShores(trace) {
+  let f = _shores.get(trace);
+  if (f) return f;
+  const { w, h, land, province } = trace, open = new Uint8Array(w * h), stack = [];
+  const reach = (x, y) => { const i = y * w + x; if (!land[i] && !open[i]) { open[i] = 1; stack.push(i); } };
+  for (let x = 0; x < w; x++) { reach(x, 0); reach(x, h - 1); }
+  for (let y = 0; y < h; y++) { reach(0, y); reach(w - 1, y); }
+  while (stack.length) {
+    const i = /** @type {number} */ (stack.pop()), x = i % w, y = (i - x) / w;
+    for (const [dx, dy] of RING8G) { const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < w && ny < h) reach(nx, ny); }
+  }
+  // each lake (eight ways round, as the open sea is flooded) kept when any of its pixels has Cyrodiil's land beside it
+  const lake = new Uint8Array(w * h), seen = new Uint8Array(w * h);
+  for (let s = 0; s < w * h; s++) {
+    if (land[s] || open[s] || seen[s]) continue;
+    const comp = [s];
+    let imperial = false;
+    seen[s] = 1;
+    for (let q = 0; q < comp.length; q++) {
+      const i = comp[q], x = i % w, y = (i - x) / w;
+      for (const [dx, dy] of RING8G) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+        const j = ny * w + nx;
+        if (land[j]) { if (province[j] === IMPERIAL_ID) imperial = true; continue; }
+        if (!seen[j] && !open[j]) { seen[j] = 1; comp.push(j); }
+      }
+    }
+    if (imperial) for (const i of comp) lake[i] = 1;
+  }
+  const notLake = Uint8Array.from(lake, (v) => (v ? 0 : 1));
+  const toLake = seaDistanceField(notLake, w, h), toShore = seaDistanceField(lake, w, h);
+  const sdf = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i++) sdf[i] = lake[i] ? -toShore[i] : toLake[i];
+  f = { lake, sdf };
+  _shores.set(trace, f);
+  return f;
+}
+/** A picture point by Cyrodiil's lakes: SHORE_WATER where the smooth shore puts it in a lake and the trace has its land
+ *  (or the lake), SHORE_LAND where it puts a lake's own pixel on the land, 0 where the trace's own answer stands (away
+ *  from the lakes, the sea, every other water). */
+export function lakeShoreAt(px, py) {
+  const trace = tamrielTrace();
+  if (!trace) return 0;
+  const { w, h } = trace, { lake, sdf } = lakeShores(trace);
+  const cx = Math.min(w - 1, Math.max(0, px - 0.5)), cy = Math.min(h - 1, Math.max(0, py - 0.5));
+  const x0 = Math.floor(cx), y0 = Math.floor(cy), x1 = Math.min(w - 1, x0 + 1), y1 = Math.min(h - 1, y0 + 1);
+  const i00 = y0 * w + x0, i10 = y0 * w + x1, i01 = y1 * w + x0, i11 = y1 * w + x1;
+  if (!(lake[i00] || lake[i10] || lake[i01] || lake[i11])) return 0;   // no lake among the four centres: the trace's own
+  const fx = cx - x0, fy = cy - y0;
+  let d = (sdf[i00] * (1 - fx) + sdf[i10] * fx) * (1 - fy) + (sdf[i01] * (1 - fx) + sdf[i11] * fx) * fy;
+  if (d > LAKE_SHORE.band || d < -LAKE_SHORE.band) return 0;
+  const S = LAKE_SHORE;
+  d += S.wander * (2 * perlinNoise(px / S.wave + 41.3, py / S.wave + 7.9) - 1) + S.fine * (2 * perlinNoise(px / S.fineWave + 3.1, py / S.fineWave + 77.7) - 1);
+  const x = Math.floor(px), y = Math.floor(py), own = x >= 0 && y >= 0 && x < w && y < h ? y * w + x : -1;
+  if (own < 0) return 0;
+  if (d < 0) return trace.land[own] || lake[own] ? SHORE_WATER : 0;   // the lake's (never the sea's, never another water's)
+  return lake[own] ? SHORE_LAND : 0;
 }
 
 /** TESA x AUDIT TESA II: A STRAIT AT A CORNER (Bay pixels, Chebyshev, about a corner of the trace's pixels). The trace draws a
@@ -130,7 +209,14 @@ export function tamrielHeightByte(x, y) {
  *  biomeAtPicture answers one for any point of a province's land), so the province's own climate it fell back to answered
  *  nothing and is gone; every reader asks of a pixel past the Bay (the Bay's own read the Bay's map). */
 export function tamrielClimateAt(x, y) {
-  return tamrielBiomeAt(x, y)?.climate ?? CLIMATES.Ocean;
+  const zone = tamrielBiomeAt(x, y);
+  if (zone) return zone.climate;
+  // CYRODIIL-SHORES: a lake's pixel its smooth shore gives the land wears the land's beside it (a half and a whole picture
+  // unit off, the first found in RING8G's order)
+  if (tamrielHeightByte(x, y) > 0) {
+    for (const r of [8, 16]) for (const [dx, dy] of RING8G) { const z = tamrielBiomeAt(x + dx * r, y + dy * r); if (z) return z.climate; }
+  }
+  return CLIMATES.Ocean;
 }
 
 /** AUDIT TESA-BIOME Z4: whether a pixel (px, py)'s 3x3 of climates (ECOTONE1, the host's climates3x3) reads its neighbour
@@ -143,17 +229,29 @@ export function climateNeighbourIn(px, py, x, y) {
   return x >= f.x0 && y >= f.y0 && x < f.x0 + f.w && y < f.y0 + f.h;
 }
 
-/** The large map's 5 x 5 of detail for a pixel beyond the Bay - data[x][y] as WoodsFile.getLargeMapData shapes it: a
- *  lattice hash of small bytes (0..9; the kernel scales them by NOISE_MAP_SCALE), deterministic in the pixel. */
+/** The large map's 5 x 5 of detail for a pixel beyond the Bay - data[x][y] as WoodsFile.getLargeMapData shapes it: small
+ *  bytes (0..9; the kernel scales them by NOISE_MAP_SCALE), deterministic in the pixel. BREATHTAKER3: a smooth swell about
+ *  the old mean (LARGE_SWELL: its wavelength in the large map's own cells, its swing), where it was a lattice hash - a
+ *  bump of up to 45 m every 273 m (the kernel reads three of its five cells a pixel), the same everywhere: the "very monotonous noise" a walker saw past the Bay. The land's
+ *  own shapes are the landforms' (world/tamriel/tamrielLandforms.js). */
+export const LARGE_SWELL = Object.freeze({ wave: 11, swing: 2.5, mean: 4.5 });
+/** @type {Map<number, Uint8Array[]>} the swell's pixels, kept (a kernel reads nine a pixel, a neighbour's again) */
+const _large = new Map();
 export function tamrielLargeMap(x, y) {
-  const data = [];
+  const k = cacheKey(x, y), hit = _large.get(k);
+  if (hit) return hit;
+  const data = [], { wave, swing, mean } = LARGE_SWELL;
   for (let ix = 0; ix < 5; ix++) {
     const col = new Uint8Array(5);
-    for (let iy = 0; iy < 5; iy++) col[iy] = Math.floor(groundHash(x * 5 + ix, y * 5 + iy, 0x2545) * 10);
+    for (let iy = 0; iy < 5; iy++) col[iy] = Math.round(mean + swing * (2 * perlinNoise((x * 5 + ix) / wave + 0.37, (y * 5 + iy) / wave + 0.61) - 1));
     data.push(col);
   }
+  if (_large.size >= LARGE_CACHE_MAX) _large.clear();
+  _large.set(k, data);
   return data;
 }
+/** The swell's kept pixels before they are dropped whole. */
+const LARGE_CACHE_MAX = 16384;
 
 /**
  * THE COMPOSITION: a WoodsFile with the continent round it. A prototype child of the Bay's own reader, so every
