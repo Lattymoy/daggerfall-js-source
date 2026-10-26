@@ -17,17 +17,21 @@
 // the page's own fallback (world/imperialPrebuildClient.js).
 import { sliceWork, prebuildDeps, makeWork, modelTransfers } from './imperialPrebuild.js';
 
+/** How many pieces' keys the worker remembers as made (a near ring's and the next's, twice over). */
+export const DONE_KEEP = 2400;
 /** @param {(msg: any, transfer?: ArrayBuffer[]) => void} post */
 export function createPrebuildWorkerState(post) {
   let deps = null, queue = /** @type {Array<{ kind: 'block', name: string } | { kind: 'model', id: number }>} */ ([]);
+  /** The pieces made here or by the page lately, oldest first - DONE_KEEP of them, so a slice come back to after a walk
+   *  across the city is made again (the page's own keep has long let it go). */
   const done = new Set();
+  const mark = (k) => { done.delete(k); done.add(k); if (done.size > DONE_KEEP) done.delete(/** @type {string} */ (done.values().next().value)); };
   const keyOf = (w) => (w.kind === 'block' ? `b:${w.name}` : `m:${w.id}`);
   return {
     /** A message from the page. */
     on(msg) {
       if (msg?.t === 'want') { queue = (msg.slices ?? []).flatMap(({ s, near }) => sliceWork(s, !!near)).filter((w) => !done.has(keyOf(w))); }
-      else if (msg?.t === 'made' && msg.key) { done.add(msg.key); queue = queue.filter((w) => keyOf(w) !== msg.key); }
-      if (done.size > 8192) done.clear();   // a long session's keys; a piece made twice is only wasted work
+      else if (msg?.t === 'made' && msg.key) { mark(msg.key); queue = queue.filter((w) => keyOf(w) !== msg.key); }
     },
     /** One piece made and handed back; false when nothing is wanted. */
     step() {
@@ -35,7 +39,7 @@ export function createPrebuildWorkerState(post) {
       if (!w) return false;
       const key = keyOf(w);
       if (done.has(key)) return true;
-      done.add(key);
+      mark(key);
       deps ??= prebuildDeps();
       try {
         const made = makeWork(w, deps);

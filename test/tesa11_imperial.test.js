@@ -320,15 +320,23 @@ const crosses = (m, p, q) => {
 };
 const P3 = (b, r, y) => { const [x, z] = polar(b, r); return [x, y, z]; };
 
-test('TESA11 the White-Gold Tower (PIN MOVED, IC-GRAND - the team\'s spec the owner forwarded: "500m+ height, like 150-200m diameter in the foundation and like 60-70m diameter in the shaft"; TS5\'s 1360 m over a 344 m plinth before): 760 m to its gilt spire\'s tip over a foundation 180 m across, its shaft 70 m across at its foot and 60 m at its gallery, its fins within its foundation, marble and gold, the palace\'s door on the east, its plaza round it', () => {
+test('TESA11 the White-Gold Tower (PIN MOVED, IC-GRAND - the team\'s spec the owner forwarded: "500m+ height, like 150-200m diameter in the foundation and like 60-70m diameter in the shaft"; TS5\'s 1360 m over a 344 m plinth before; PIN MOVED again, the owner, 2026-10-26: "the imperial city tower model needs to be much larger and taller like this with the surrounding gate have large pillars like the image shows"): ROUND, 1360 m to its gilt spire\'s tip, out of the palace\'s rotunda 320 m across under its low dome; its shaft fluted in tiers, 144 m across at its foot tapering to 108 m, every tier\'s cornice round it; marble and gold, the palace\'s door on the east, its plaza round it (mutants: the tower short; the shaft unfluted; the tiers unringed)', () => {
   const t = buildImperialTower(), T = IMPERIAL.tower;
   sane(t);
   const { lo, hi } = bounds(t);
-  assert.ok(Math.abs(hi[1] - T.spireTop) < 1e-6 && T.spireTop === 760 && T.spireTop >= 500 && T.spireTop <= 1360);
-  assert.ok(Math.abs(lo[1] + 3) < 1e-6, 'its plinth sunk');
-  assert.ok(2 * T.plinthR >= 150 && 2 * T.plinthR <= 200, 'its foundation 150 to 200 m across');
-  assert.ok(2 * T.shaftR0 >= 60 && 2 * T.shaftR0 <= 70 && 2 * T.shaftR1 >= 60 && 2 * T.shaftR1 <= 70 && T.shaftR1 < T.shaftR0, 'its shaft 60 to 70 m across, tapering');
-  assert.ok(Math.max(hi[0], -lo[0], hi[2], -lo[2]) <= T.plinthR + 1 && T.finR < T.plinthR, 'the foundation its widest, the fins within it');
+  assert.ok(Math.abs(hi[1] - T.spireTop) < 1e-6 && T.spireTop === 1360, 'TS5\'s 1360 m, the owner\'s "much larger and taller"');
+  assert.ok(Math.abs(lo[1] + 3) < 1e-6, 'its rotunda sunk');
+  assert.ok(2 * T.plinthR >= 300 && T.plinthH < T.plinthR / 2 && T.domeH > 0, 'a wide, low, domed rotunda');
+  assert.ok(2 * T.shaftR0 > 120 && T.shaftR1 < T.shaftR0 && T.sides >= 32, 'its shaft round, wide, tapering');
+  assert.ok(Math.max(hi[0], -lo[0], hi[2], -lo[2]) <= T.plinthR + 1.5, 'the rotunda its widest');
+  // round and fluted: at a tier's middle the shaft's faces turn every way, and its corners stand at two radii (the ribs)
+  const yMid = T.plinthH + T.domeH * 0.6 + T.tier / 2, rs = new Set();
+  for (let i = 0; i < t.positions.length; i += 3) if (Math.abs(t.positions[i + 1] - (T.plinthH + T.domeH * 0.6)) < 0.01) rs.add(Math.round(Math.hypot(t.positions[i], t.positions[i + 2]) * 10));
+  assert.ok([...rs].some((r) => Math.abs(r / 10 - T.shaftR0) < 0.2) && [...rs].some((r) => Math.abs(r / 10 - T.shaftR0 * (1 - T.flute)) < 0.2), 'fluted: corners at the shaft\'s radius and inside it');
+  // in tiers: a cornice proud of the shaft at every tier's top
+  const foot = T.plinthH + T.domeH * 0.6, rAt = (y) => T.shaftR0 + (T.shaftR1 - T.shaftR0) * ((y - foot) / (T.shaftTop - foot));
+  for (let y = foot + T.tier; y < T.shaftTop - 1; y += T.tier) assert.equal(crosses(t, [rAt(y) + 12, y - 1, 0], [rAt(y) + 0.8, y - 1, 0]), true, `a cornice at ${y.toFixed(0)} m`);
+  assert.equal(crosses(t, [T.shaftR0 + 12, yMid, 0], [T.shaftR0 + 4, yMid, 0]), false, 'the shaft\'s face between them');
   assert.ok(IMPERIAL.plaza > T.plinthR + 20 && IMPERIAL.plaza < IMPERIAL.tombs.r - IMPERIAL.tombs.w, 'its plaza round its foundation, inside the tombs');
   for (const [mx, mz] of IC.markers) assert.ok(Math.hypot(mx, mz) > T.plinthR && !imperialClosed(mx, mz) && imperialTile(mx, mz) === 3, 'its start markers on the plaza, clear of it');
   const recs = new Set(t.subMeshes.map((s) => s.textureRecord));

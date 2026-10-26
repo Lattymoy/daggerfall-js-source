@@ -9,7 +9,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   IMPERIAL, IMPERIAL_SPAN, IMPERIAL_MODELS, IMPERIAL_PARTS, polar, imperialTile, imperialClosed, imperialTree, imperialBearing, tombAt, tombFrame,
-  palaceCorners, palaceGates, inPalace, gardenPaths, palaceFountains, palaceStatues, imperialGeo, STATUE_PLINTH, imperialSliceRect,
+  palaceCorners, palaceGates, palacePillars, inPalace, gardenPaths, palaceFountains, palaceStatues, imperialGeo, STATUE_PLINTH, imperialSliceRect,
 } from '../../src/world/imperialCity.js';
 import { buildImperialPalace, buildPalaceGardens, buildEmperorsTombs, buildPalaceWall, nearRect } from '../../src/world/capitalImperial.js';
 import { CAPITAL_ART, CAPITAL_ARCHIVE } from '../../src/world/capitalShapes.js';
@@ -37,8 +37,8 @@ function crosses(all, [ax, az, ay], [bx, bz, by]) {
 }
 const recOf = (m, t) => m.subMeshes.find((s) => t >= s.startIndex / 3 && t < s.startIndex / 3 + s.primitiveCount)?.textureRecord;
 
-test('IC-GRAND THE PALACE AT THE TOWER\'S FOOT - a ring of marble wings round the tower\'s plaza (r0 to r1), a gate through each wing a palace gate faces - the tower\'s door\'s among them - a domed pavilion at each corner; its ground stone and its insides closed; the start markers on the plaza clear of it (mutants: no gate; the pavilions open; the plaza swallowed)', () => {
-  assert.ok(P.r0 > I.plaza && P.r1 < 2 * I.plaza && P.r0 > I.tower.finR, 'round the plaza, clear of the tower');
+test('IC-GRAND THE PALACE AT THE TOWER\'S FOOT - a ring of marble wings round the tower\'s plaza (r0 to r1), a gate through each wing a palace gate faces - the tower\'s door\'s among them - a great round pillar-tower at each corner and either side of each gate, crenellated, well over the wings (the owner\'s "large pillars"); its ground stone and its insides closed; the start markers on the plaza clear of it (mutants: no gate; the pillars open; the plaza swallowed; the gates\' pillars unbuilt)', () => {
+  assert.ok(P.r0 > I.plaza && P.r1 < 2 * I.plaza && P.r0 > I.tower.plinthR + 100, 'round the plaza, clear of the tower\'s rotunda');
   assert.deepEqual(palaceGates(), [30, 90, 150, 210, 270, 330]);
   for (const g of palaceGates()) {
     const mid = (P.r0 + P.r1) / 2;
@@ -64,14 +64,22 @@ test('IC-GRAND THE PALACE AT THE TOWER\'S FOOT - a ring of marble wings round th
   const rr = all.flatMap((v) => v.map((q) => Math.hypot(q[0], q[2])));
   assert.ok(Math.min(...rr) > P.r0 - 1 && Math.max(...rr) < P.r1 / Math.cos(Math.PI / P.sides) + P.pavilionR + 2, `${Math.min(...rr).toFixed(1)}-${Math.max(...rr).toFixed(1)} m out`);
   const top = Math.max(...all.flatMap((v) => v.map((q) => q[1])));
-  assert.ok(top > P.pavilionH + P.domeR * 0.8 && top < P.pavilionH + P.domeR + 6, `its domes' tops ${top.toFixed(1)}`);
+  assert.ok(top > P.pavilionH + 2 && top < P.pavilionH + 6 && P.pavilionH > 2 * P.h, `its pillars' crenellated tops ${top.toFixed(1)}, well over its wings`);
+  // the owner's "large pillars": one either side of every gate, standing over the wings - a walk past it at the wings'
+  // eaves meets its drum
+  assert.equal(palacePillars().length, P.sides + 2 * palaceGates().length);
+  for (const [x, z] of palacePillars().slice(P.sides)) {
+    const [ox, oz] = [x / Math.hypot(x, z), z / Math.hypot(x, z)];
+    assert.equal(crosses(all, [x + oz * (P.pavilionR + 3), z - ox * (P.pavilionR + 3), P.h + 10], [x, z, P.h + 10]), true, 'a gate\'s pillar over the wing');
+    assert.ok(imperialClosed(x, z), 'its foot closed');
+  }
   const recs = new Set(m.subMeshes.map((s) => s.textureRecord));
   for (const r of [CAPITAL_ART.marble, CAPITAL_ART.gold, CAPITAL_ART.blueSlate, CAPITAL_ART.dark]) assert.ok(recs.has(r), `${r}`);
   // a gate's passage: a walk through it at a body's height meets no face; through a wing without one it meets a wall
   for (const g of palaceGates()) assert.equal(crosses(all, [...polar(g, P.r0 - 4), 1.6], [...polar(g, P.r1 + 4), 1.6]), false, `the ${g} gate's passage clear`);
   for (const b of [0, 60, 180]) assert.equal(crosses(all, [...polar(b, P.r0 - 4), 1.6], [...polar(b, P.r1 + 4), 1.6]), true, `the ${b} wing walled`);
   for (const [x, z] of palaceCorners()) { const [ox, oz] = [x / Math.hypot(x, z), z / Math.hypot(x, z)]; assert.equal(crosses(all, [x + ox * (P.pavilionR + 3), z + oz * (P.pavilionR + 3), 4], [x + ox * (P.pavilionR - 4), z + oz * (P.pavilionR - 4), 4]), true, 'a pavilion\'s drum'); }
-  assert.ok(m.indices.length / 3 < 8000, `${m.indices.length / 3} triangles`);
+  assert.ok(m.indices.length / 3 < 20000, `${m.indices.length / 3} triangles`);
   // carried by the centre slice
   assert.deepEqual(IMPERIAL_PARTS.filter((q) => q.base === IMPERIAL_MODELS.imperialPalace).map((q) => q.s), [CENTRE]);
 });

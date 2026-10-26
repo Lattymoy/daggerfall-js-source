@@ -47,10 +47,15 @@ const SALT = 0x1c11;
  *  meters") 38 m tall; the White Tower slim (the same spec: "500m+ height, like 150-200m diameter in the foundation and
  *  like 60-70m diameter in the shaft"); the Temple of the One and the compounds larger, the arena Daggerfall's own. */
 export const IMPERIAL = Object.freeze({
-  /** The White-Gold Tower: an octagon throughout - IC-GRAND, the team's spec: 760 m to its gilt spire's tip (over 500, and
-   *  under TS5's 1360 - a shaft 70 m across would not carry that), its foundation 180 m across, its shaft 70 m across at
-   *  its foot and 60 m at its gallery, its fins out to the foundation's edge; its door a man's. */
-  tower: Object.freeze({ plinthR: 90, plinthH: 30, shaftR0: 35, shaftR1: 30, shaftTop: 560, band: 70, galleryR: 40, galleryTop: 590, crownR0: 33, crownR1: 25, crownTop: 650, spireTop: 760, finR: 88, finTop: 300, finThick: 8, door: 8 }),
+  /** The White-Gold Tower. IC-GRAND, the owner (2026-10-26): "the imperial city tower model needs to be much larger and
+   *  taller like this with the surrounding gate have large pillars like the image shows" - over the team's spec (a shaft
+   *  60-70 m across, 500 m and more: 760 m) and TESA11's octagon: ROUND (`sides` faces), TS5's 1360 m to its gilt spire's
+   *  tip; out of the palace's rotunda (`plinthR` round - 320 m across - and `plinthH` high, under its low dome `domeH`, an
+   *  arcade of `arches` round its wall and `domes` little domes on its rim); its shaft 144 m across at its foot and 108 m
+   *  at its gallery, FLUTED (`flutes` ribs, `flute` deep) in TIERS of `tier` metres ringed by cornices (`cornice` out,
+   *  every other a gilt balcony); its gallery, its crown (fluted, crenellated, `crownR0` to `crownR1`) and its spire;
+   *  its door a man's. */
+  tower: Object.freeze({ sides: 48, plinthR: 160, plinthH: 56, domeH: 44, arches: 24, domes: 12, domeR: 12, shaftR0: 72, shaftR1: 54, shaftTop: 1090, tier: 126, cornice: 3.5, flutes: 48, flute: 0.045, galleryR: 70, galleryTop: 1120, crownR0: 54, crownR1: 46, crownTop: 1210, spireTop: 1360, door: 8 }),
   /** The tower's plaza of stone, Green Emperor Way's ring road, and the emperors' tombs. IC-GRAND (the coordinator's review
    *  of the renders: "the emperors' tombs as real monuments along the way"): each a marble mausoleum on its podium, `w`
    *  square and `h` to its cornice, its portico of `columns` toward the Way and a paved walk (`walk` wide) out to it - on
@@ -60,9 +65,10 @@ export const IMPERIAL = Object.freeze({
   tombs: Object.freeze({ r: 2080, n: 24, w: 26, h: 18, podium: 3, columns: 6, walk: 10 }),
   /** IC-GRAND (the same review: "the palace at the tower's foot"): THE IMPERIAL PALACE round the tower's plaza - a ring of
    *  `sides` marble wings between `r0` and `r1` (their inner and outer faces' distances from the middle), `h` to their
-   *  eaves under roofs of slate, a gate `gate` wide and `gateH` high through each wing that faces a palace gate, a domed
-   *  pavilion (`pavilionR`, to `pavilionH`, its dome `domeR`) at each corner, a paved terrace `terrace` round it. */
-  palace: Object.freeze({ r0: 312, r1: 352, h: 24, sides: 12, gate: 26, gateH: 16, pavilionR: 14, pavilionH: 34, domeR: 12, terrace: 14 }),
+   *  eaves under roofs of slate, a gate `gate` wide and `gateH` high through each wing that faces a palace gate; the
+   *  owner's "large pillars": a great round pillar-tower (`pavilionR` round, to `pavilionH` - well over the wings,
+   *  crenellated) at each corner and either side of each gate; a paved terrace `terrace` round it. */
+  palace: Object.freeze({ r0: 312, r1: 352, h: 24, sides: 12, gate: 26, gateH: 16, pavilionR: 16, pavilionH: 64, terrace: 16 }),
   /** IC-GRAND (the same review: "Green Emperor Way's gardens and paths ... trees and statuary"): THE PALACE GARDENS - a
    *  paved path out from the palace's terrace to the Way every `every` degrees (`path` wide; those on a district's bearing
    *  run on through its palace gate), ring walks round the tower (`walks`, `walk` wide), a fountain where a path crosses a
@@ -372,6 +378,12 @@ export const palaceCorners = (I = IMPERIAL) => {
   const P = I.palace, n = P.sides, rc = P.r1 / Math.cos(Math.PI / n);
   return Array.from({ length: n }, (_, k) => polar(180 / n + (k * 360) / n, rc));
 };
+/** IC-GRAND: THE PALACE'S PILLAR-TOWERS (the owner's "large pillars") - one on each outer corner, and one either side of
+ *  each gate on its wing's middle line, its drum's edge at the gate's. */
+export const palacePillars = (I = IMPERIAL) => {
+  const P = I.palace, rm = (P.r0 + P.r1) / 2, off = P.gate / 2 + P.pavilionR;
+  return [...palaceCorners(I), ...palaceGates().flatMap((g) => { const [ux, uz] = polar(g, 1), [cx, cz] = polar(g, rm); return [1, -1].map((sd) => [cx - uz * off * sd, cz + ux * off * sd]); })];
+};
 /** IC-GRAND: the palace's gates - the bearings of the wings a palace gate faces (each district's avenue's). */
 export const palaceGates = () => IMPERIAL_SECTORS.map(([, b]) => b + 30);
 /** IC-GRAND: is a point inside the palace's walls - a wing (but its gate's passage) or a pavilion. */
@@ -380,7 +392,7 @@ export function inPalace(x, z, I = IMPERIAL) {
   if (r < P.r0 - 1 || r > P.r1 / Math.cos(Math.PI / P.sides) + P.pavilionR + 1) return false;
   const step = 360 / P.sides, b = imperialBearing(x, z), mid = Math.round(b / step) * step, d = rad(b - mid);
   const across = r * Math.cos(d), along = r * Math.sin(d);
-  for (const [cx, cz] of palaceCorners(I)) if (Math.hypot(x - cx, z - cz) < P.pavilionR + 0.5) return true;
+  for (const [cx, cz] of palacePillars(I)) if (Math.hypot(x - cx, z - cz) < P.pavilionR + 0.5) return true;
   if (across < P.r0 - 0.5 || across > P.r1 + 0.5) return false;
   return !(palaceGates().some((g) => Math.abs((((mid - g) % 360) + 360) % 360) < 1e-6) && Math.abs(along) < P.gate / 2 - 0.5);
 }
@@ -704,7 +716,7 @@ const ringTouches = (x0, z0, x1, z1, r, m) => { const [lo, hi] = rectRadii(x0, z
  * @type {Readonly<Record<number, (x0: number, z0: number, x1: number, z1: number) => boolean>>}
  */
 const EXTENTS = Object.freeze({
-  [IMPERIAL_MODELS.whiteGoldTower]: (x0, z0, x1, z1) => rectPoint(x0, z0, x1, z1, [0, 0]) < IMPERIAL.tower.finR + 6,
+  [IMPERIAL_MODELS.whiteGoldTower]: (x0, z0, x1, z1) => rectPoint(x0, z0, x1, z1, [0, 0]) < IMPERIAL.tower.plinthR + 6,
   [IMPERIAL_MODELS.palaceWall]: (x0, z0, x1, z1) => ringTouches(x0, z0, x1, z1, IMPERIAL.palaceWall.r, IMPERIAL.palaceWall.thick + IMPERIAL.palaceWall.towerR * 3 + 6),
   [IMPERIAL_MODELS.tombs]: (x0, z0, x1, z1) => ringTouches(x0, z0, x1, z1, IMPERIAL.tombs.r, IMPERIAL.tombs.w * 1.5 + 6),
   [IMPERIAL_MODELS.cityWall]: (x0, z0, x1, z1) => ringTouches(x0, z0, x1, z1, IMPERIAL.cityWall.r, IMPERIAL.cityWall.thick + Math.max(IMPERIAL.cityWall.towerR, IMPERIAL.cityWall.watchR) * 1.5 + 8),

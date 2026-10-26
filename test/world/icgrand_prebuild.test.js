@@ -8,11 +8,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { sliceWork, prebuildDeps, makeWork, imperialBlockFootprint, imperialPrebuilt, setImperialPrebuild } from '../../src/world/imperialPrebuild.js';
-import { createPrebuildWorkerState } from '../../src/world/imperialPrebuildWorker.js';
+import { createPrebuildWorkerState, DONE_KEEP } from '../../src/world/imperialPrebuildWorker.js';
 import { createImperialPrebuild } from '../../src/world/imperialPrebuildClient.js';
 import { createCapitalPrebuild, prebuildWanted, PREBUILD_REACH } from '../../src/scenes/capitalPrebuild.js';
 import { imperialBlockJson, imperialModelBuild, imperialOwnName, imperialFarName, imperialFabricModelId, imperialSkylineId, NEAR_RING } from '../../src/world/imperialBlocks.js';
-import { IMPERIAL_SPAN, IMPERIAL_SLICE_PARTS, imperialSlicePlan, imperialCodeCell, polar } from '../../src/world/imperialCity.js';
+import { IMPERIAL_SPAN, IMPERIAL_SLICE_PARTS, IMPERIAL_ARENA_CODE, imperialSlicePlan, imperialCodeCell, polar } from '../../src/world/imperialCity.js';
 import { installCapitals, _resetCapitals, capitalFootprint } from '../../src/world/capitalModels.js';
 import { customModelFor } from '../../src/world/customModels.js';
 import { getDFBlockReplacementData, getNewDFBlockIndex, _resetWorldDataReplacement } from '../../src/formats/worldData/worldDataReplacement.js';
@@ -45,7 +45,10 @@ test('IC-GRAND OFF THE PAGE\'S THREAD - a slice\'s pieces in the order its build
   for (let i = 0; i < 64; i++) { const pr = 7 - Math.floor(i / 8), pc = i % 8; if (imperialCodeCell(plan[pr][pc])) own.push([sy * 8 + pr, sx * 8 + pc]); }
   assert.ok(own.length > 40);
   assert.deepEqual(near, [...own.map(([r, c]) => ({ kind: 'block', name: imperialOwnName(r, c) })), ...own.map(([r, c]) => ({ kind: 'model', id: imperialFabricModelId(r, c) }))]);
-  assert.deepEqual(far.filter((w) => w.kind === 'block').map((w) => w.name), own.map(([r, c]) => imperialFarName(r, c)));
+  const farCells = [];
+  for (let i = 0; i < 64; i++) { const pr = 7 - Math.floor(i / 8), pc = i % 8; if (!['L', 'O', IMPERIAL_ARENA_CODE].includes(plan[pr][pc])) farCells.push([sy * 8 + pr, sx * 8 + pc]); }
+  assert.ok(farCells.length > own.length, 'Daggerfall\'s cells too');
+  assert.deepEqual(far.filter((w) => w.kind === 'block').map((w) => w.name), farCells.map(([r, c]) => imperialFarName(r, c)), 'every cell\'s far view but the lake\'s, the open shore\'s and the arena\'s');
   assert.deepEqual(far.filter((w) => w.kind === 'model'), [{ kind: 'model', id: imperialSkylineId(MARKET) }], 'the skyline once, on its carrier');
 });
 
@@ -67,7 +70,13 @@ test('IC-GRAND THE WORKER\'S PIECES ARE THE PAGE\'S - its blocks, the landmarks\
       bared += page.RmbBlock.FldHeader.GroundData.GroundScenery.filter((g, i) => g.TextureRecord !== plain.RmbBlock.FldHeader.GroundData.GroundScenery[i].TextureRecord).length;
     }
   }
-  assert.ok(closedByFace > 20 && bared > 0, `the footprint laid: ${closedByFace} cells closed, ${bared} trees bared`);
+  assert.ok(closedByFace > 20, `the footprint laid: ${closedByFace} cells closed, ${bared} trees bared`);
+  // a footprint over a whole block of trees: every cell closed, every tree bared - the door's own block under it
+  const treed = sliceWork(PALACE, true).filter((x) => x.kind === 'block').map((w) => [w, makeWork(w, deps)]).find(([, j]) => j.RmbBlock.FldHeader.GroundData.GroundScenery.some((g) => g.TextureRecord >= 0));
+  const all = () => true, laidAll = imperialBlockFootprint(treed[1], treed[0].name, all), pageAll = imperialBlockJson(treed[0].name, { ...deps, footprintOf: () => all });
+  laidAll.RmbBlock.FldHeader.AutoMapData = Array.from(laidAll.RmbBlock.FldHeader.AutoMapData);
+  assert.deepEqual(laidAll, pageAll, 'a footprint over it all');
+  assert.ok(pageAll.RmbBlock.FldHeader.GroundData.GroundScenery.every((g) => g.TextureRecord === -1), 'every tree bared');
   // a far block: as made (nothing closed), whatever the footprint
   const fw = sliceWork(PALACE, false).find((x) => x.kind === 'block'), far = makeWork(fw, deps);
   assert.deepEqual(Array.from(imperialBlockFootprint(structuredClone(far), fw.name, () => true).RmbBlock.FldHeader.AutoMapData), Array.from(far.RmbBlock.FldHeader.AutoMapData));
@@ -79,7 +88,7 @@ test('IC-GRAND THE WORKER\'S PIECES ARE THE PAGE\'S - its blocks, the landmarks\
   _resetCapitals();
 });
 
-test('IC-GRAND THE WORKER AND THE PAGE - the worker makes the wanted slices\' pieces in order, a new list replacing the last; the client holds what comes back and hands each over once (null, and the worker told to skip it, for one it has not made); a model\'s none a null; no worker, nothing held - the page makes every piece; a failed worker let go (mutants: handed over twice; the worker never told; a new list appended)', () => {
+test('IC-GRAND THE WORKER AND THE PAGE - the worker makes the wanted slices\' pieces in order, a new list replacing the last; the client holds what comes back and hands each over once (null, and the worker told to skip it, for one it has not made); a model\'s none a null; no worker, nothing held - the page makes every piece; a failed worker let go; the worker\'s memory of what was made bounded (mutants: handed over twice; the worker never told; a new list appended; never forgotten)', () => {
   const w = fakeWorker();
   const client = createImperialPrebuild({ makeWorker: () => w, log: { warn() {} } });
   assert.equal(imperialPrebuilt(), client, 'the page\'s client registered');
@@ -112,6 +121,15 @@ test('IC-GRAND THE WORKER AND THE PAGE - the worker makes the wanted slices\' pi
   assert.ok(w.terminated && !client.alive && client.held === 0);
   client.dispose();
   assert.equal(imperialPrebuilt(), null);
+  // the worker's memory of what was made: a made piece skipped, forgotten after DONE_KEEP others (a slice come back to
+  // after a walk across the city is made again)
+  const st = createPrebuildWorkerState(() => {});
+  st.on({ t: 'made', key: `b:${work[0].name}` });
+  st.on({ t: 'want', slices: [{ s: MARKET, near: true }] });
+  assert.equal(st.owed, work.length - 1, 'a made piece skipped');
+  for (let i = 0; i < DONE_KEEP; i++) st.on({ t: 'made', key: `x:${i}` });
+  st.on({ t: 'want', slices: [{ s: MARKET, near: true }] });
+  assert.equal(st.owed, work.length, 'forgotten after DONE_KEEP others');
   // no worker at all
   const none = createImperialPrebuild({ makeWorker: () => { throw new Error('no Worker'); }, log: { warn() {} } });
   none.want([{ s: MARKET, near: true }]);

@@ -13,7 +13,7 @@
 // worker makes its blocks without it.
 //
 // Pure but for the client's own registry (setImperialPrebuild / imperialPrebuilt) - the worker imports the work's half.
-import { IMPERIAL_SPAN, imperialSlicePlan, imperialCodeCell } from './imperialCity.js';
+import { IMPERIAL_SPAN, IMPERIAL_ARENA_CODE, imperialSlicePlan, imperialCodeCell } from './imperialCity.js';
 import { imperialOwnName, imperialFarName, imperialFabricModelId, imperialSkylineId, imperialBlockOf, imperialBlockJson, imperialModelBuild, isCarrier } from './imperialBlocks.js';
 import { CAPITALS, portBlockJson, miscModelAt, startMarkerAt, inCapitalRim, CAPITAL_NO_GROUND, CAPITAL_CLOSED_BYTE, tileCentre, autoCentre, BLOCK_M } from './tamrielCapitals.js';
 
@@ -21,8 +21,9 @@ const B = BLOCK_M;
 
 /**
  * A SLICE'S WORK, in the order its pixel's build asks it (its blocks in its location's order - rows from the south - then
- * its models): near, each own cell's block and its fabric's model; far, each of its cells' far blocks and, on its carrier,
- * its skyline. `{ kind: 'block', name }` or `{ kind: 'model', id }`.
+ * its models): near, each own cell's block and its fabric's model; far, every cell's far block but the lake's, the open
+ * shore's and the arena's (world/imperialBlocks.js imperialViewName's) and, on its carrier, its skyline.
+ * `{ kind: 'block', name }` or `{ kind: 'model', id }`.
  * @param {number} s @param {boolean} near
  * @returns {Array<{ kind: 'block', name: string } | { kind: 'model', id: number }>}
  */
@@ -32,11 +33,11 @@ export function sliceWork(s, near) {
   const blocks = [], models = [];
   for (let i = 0; i < 64; i++) {
     const pr = 7 - Math.floor(i / 8), pc = i % 8, r = sy * 8 + pr, c = sx * 8 + pc, cell = plan[pr][pc];
-    if (!imperialCodeCell(cell)) continue;
-    if (near) { blocks.push({ kind: 'block', name: imperialOwnName(r, c) }); models.push({ kind: 'model', id: imperialFabricModelId(r, c) }); }
-    else {
+    const own = !!imperialCodeCell(cell);
+    if (near) { if (own) { blocks.push({ kind: 'block', name: imperialOwnName(r, c) }); models.push({ kind: 'model', id: imperialFabricModelId(r, c) }); } }
+    else if (cell !== 'L' && cell !== 'O' && cell !== IMPERIAL_ARENA_CODE) {
       blocks.push({ kind: 'block', name: imperialFarName(r, c) });
-      if (isCarrier(r, c)) models.push({ kind: 'model', id: imperialSkylineId(s) });
+      if (own && isCarrier(r, c)) models.push({ kind: 'model', id: imperialSkylineId(s) });
     }
   }
   return [...blocks, ...models];

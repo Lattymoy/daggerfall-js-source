@@ -9,7 +9,7 @@
 //
 // The city's metres (x east, z south, y up from its ground) - the anchor's frame; a landmark's frame is its pixel's (x
 // east and z north from its south-west corner).
-import { IMPERIAL, IMPERIAL_CELLS, IMPERIAL_SPAN, IMPERIAL_SECTORS, polar, imperialLand, imperialDistrictAt, imperialGeo, imperialRoadAt, bridgeLine, PALACE, palaceCorners } from './imperialCity.js';
+import { IMPERIAL, IMPERIAL_CELLS, IMPERIAL_SPAN, IMPERIAL_SECTORS, polar, imperialLand, imperialDistrictAt, imperialGeo, imperialRoadAt, bridgeLine, PALACE, palaceCorners, palacePillars } from './imperialCity.js';
 import { hoodAt, STOREY } from './imperialFabric.js';
 import { BLOCK_M } from './spawnedDungeons.js';
 
@@ -90,17 +90,19 @@ export function impostorQuads(out = [], slice = null) {
     quad([p(b0, inner(b0 + 1.5)), p(b1, inner(b0 + 1.5)), p(b1, I.lake), p(b0, I.lake)], [0, 1, 0], C.lake, { sea: 1, ground: 1, at: polar(b0 + 1.5, (I.isle + I.lake) / 2) });
   }
   // the tower: its foundation, its fins' mass, its shaft, its gallery, its crown and its gilt spire
-  const T = I.tower;
-  prism(0, 0, 8, T.plinthR, 0, T.plinthR, T.plinthH, C.marble);
-  prism(0, 0, 8, T.finR * 0.7, T.plinthH, T.shaftR0, T.finTop, C.marble, false);
-  prism(0, 0, 8, T.shaftR0, T.finTop, T.shaftR1, T.shaftTop, C.marble, false);
-  prism(0, 0, 8, T.galleryR, T.shaftTop, T.galleryR, T.galleryTop, C.gold);
-  prism(0, 0, 8, T.crownR0, T.galleryTop, T.crownR1, T.crownTop, C.marble, false);
-  prism(0, 0, 8, T.crownR1, T.crownTop, 0, T.spireTop, C.gold, false);
+  // IC-GRAND (the owner's tower): its rotunda and its low dome, its round shaft (a band at every other tier's balcony),
+  // its gallery, its crown and its gilt spire
+  const T = I.tower, foot = T.plinthH + T.domeH * 0.6, rAt = (y) => T.shaftR0 + (T.shaftR1 - T.shaftR0) * ((y - foot) / (T.shaftTop - foot));
+  prism(0, 0, 16, T.plinthR, 0, T.plinthR, T.plinthH, C.marble);
+  prism(0, 0, 16, T.plinthR, T.plinthH, T.shaftR0, T.plinthH + T.domeH, C.marble, false);
+  for (let y = foot; y < T.shaftTop - 1; y += 2 * T.tier) { const y1 = Math.min(T.shaftTop, y + 2 * T.tier); prism(0, 0, 12, rAt(y), y, rAt(y1), y1, C.marble, false); if (y1 < T.shaftTop) prism(0, 0, 12, rAt(y1) + T.cornice * 2, y1 - 3, rAt(y1) + T.cornice * 2, y1, C.gold, false); }
+  prism(0, 0, 12, T.galleryR, T.shaftTop, T.galleryR, T.galleryTop, C.marble);
+  prism(0, 0, 12, T.crownR0, T.galleryTop, T.crownR1, T.crownTop, C.marble);
+  prism(0, 0, 12, T.crownR1 * 0.55, T.crownTop, 0, T.spireTop, C.gold, false);
   // IC-GRAND: the palace round its foot - its wings under their slate, its pavilions' drums and gilt domes; the tombs
-  const PL = I.palace, pc = palaceCorners(I), wc = pc.map((_, k) => polar(180 / PL.sides + (k * 360) / PL.sides, (PL.r0 + PL.r1) / 2 / Math.cos(Math.PI / PL.sides)));
+  const PL = I.palace, pc = palacePillars(I), wc = palaceCorners(I).map((_, k) => polar(180 / PL.sides + (k * 360) / PL.sides, (PL.r0 + PL.r1) / 2 / Math.cos(Math.PI / PL.sides)));
   wc.forEach((a, k) => { run(a, wc[(k + 1) % wc.length], PL.r1 - PL.r0, PL.h, C.marble); run(a, wc[(k + 1) % wc.length], (PL.r1 - PL.r0) * 0.5, PL.h + 6, C.blueSlate); });
-  for (const [x, z] of pc) { prism(x, z, 8, PL.pavilionR, 0, PL.pavilionR, PL.pavilionH, C.marble, false); prism(x, z, 8, PL.domeR, PL.pavilionH, 0, PL.pavilionH + PL.domeR, C.gold, false); }
+  for (const [x, z] of pc) prism(x, z, 8, PL.pavilionR, 0, PL.pavilionR, PL.pavilionH + 2, C.marble);
   for (const [x, z] of g.tombs) box(x - I.tombs.w / 2, z - I.tombs.w / 2, x + I.tombs.w / 2, z + I.tombs.w / 2, 0, I.tombs.h + 10, C.marble);
   // the walls: the palace's and the city's rings (their gates open), the district walls' runs, the watch towers
   const gateAt = (gates, w, r) => (b) => gates.some((q) => Math.abs(((b - q + 540) % 360) - 180) < ((w / r) * 180) / Math.PI);

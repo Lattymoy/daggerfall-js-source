@@ -11,7 +11,7 @@
 // on the canon - no game data, no other game's mesh.
 import { MeshBuilder } from './detStandIns.js';
 import { CAPITAL_ART, art, taper, ring, ledge, cap, wallRun, merlons, gatedRun, roundTower, squareTower, hall, pyramid, gableRoof, dome, blob, limb, darkDoor, entranceDoor, translated, corner, framed, robedFigure, outward } from './capitalShapes.js';
-import { IMPERIAL, IMPERIAL_SECTORS, polar, prisonAt, universityTowerAt, universityHallAt, watchTowersAt, divinesAt, divinePlinths, bridgeLine, prisonGates, universityGates, tombAt, palaceCorners, palaceGates, imperialGeo, STATUE_PLINTH } from './imperialCity.js';
+import { IMPERIAL, IMPERIAL_SECTORS, polar, prisonAt, universityTowerAt, universityHallAt, watchTowersAt, divinesAt, divinePlinths, bridgeLine, prisonGates, universityGates, tombAt, palaceCorners, palaceGates, palacePillars, imperialGeo, STATUE_PLINTH } from './imperialCity.js';
 
 const MARBLE = art(CAPITAL_ART.marble), GOLD = art(CAPITAL_ART.gold), STONE = art(CAPITAL_ART.wallStone), BRIDGE = art(CAPITAL_ART.bridgeStone);
 const DARK = art(CAPITAL_ART.dark), SLATE = art(CAPITAL_ART.blueSlate), ROOF = art(CAPITAL_ART.roof), TIMBER = art(CAPITAL_ART.timber);
@@ -20,38 +20,77 @@ const unit = (v) => { const l = Math.hypot(...v) || 1; return v.map((x) => x / l
 
 // ---------------------------------------------------------------- the White-Gold Tower and Green Emperor Way
 
+/** IC-GRAND: a FLUTED band - an n-gon from (r0, y0) to (r1, y1) whose every other corner stands `depth` of its radius in, so
+ *  the faces between catch the light as ribs (clustered columns) - its sides only. */
+function fluted(mb, tex, n, r0, y0, r1, y1, depth, phase = 0) {
+  const at = (i, r, y) => { const a = phase + (i / n) * Math.PI * 2, k = i % 2 ? 1 - depth : 1; return [Math.cos(a) * r * k, y, Math.sin(a) * r * k]; };
+  for (let i = 0; i < n; i++) {
+    const a = at(i, r0, y0), b = at(i + 1, r0, y0), c = at(i + 1, r1, y1), d = at(i, r1, y1);
+    mb.quad(tex, a, b, c, d, outward(a, b, c, [0, (y0 + y1) / 2, 0]));
+  }
+}
+/** IC-GRAND: a ring of merlons round a circle of radius r at height y - `n` blocks, `w` wide and `h` high. */
+function merlonRing(mb, tex, x, z, r, y, n, w = 2.4, h = 2.4) {
+  for (let i = 0; i < n; i++) { const a = ((i + 0.5) / n) * Math.PI * 2; mb.box(tex, [x + Math.cos(a) * r, y + h / 2, z + Math.sin(a) * r], [w, h, w], 0.4); }
+}
 /**
- * THE WHITE-GOLD TOWER: an octagonal plinth (its foundation, `plinthR` out), a tapering shaft banded in gold every `band`
- * metres, eight buttress fins at its corners from the plinth's edge to `finTop`, a gallery, the crown above it and a gilt
- * spire to `spireTop`; the palace's door at its foot on the east, toward the Market and the Arena. IC-GRAND (the team's
- * spec): slim - a foundation 180 m across, a shaft 70 m across at its foot, 760 m to the spire's tip.
+ * THE WHITE-GOLD TOWER. IC-GRAND, the owner (2026-10-26, a reference picture of another game's tower beside it - shapes
+ * of the port's own, nothing traced): *"the imperial city tower model needs to be much larger and taller like this with
+ * the surrounding gate have large pillars like the image shows"* - it overrides the team's spec (a 70 m shaft, 760 m):
+ * ROUND (`sides` faces), TS5's 1360 m to its spire's tip. It rises out of the palace's ROTUNDA - a wide, low drum
+ * (`plinthR` round, `plinthH` high) under a low dome (`domeH`), an arcade of `arches` round its wall and a ring of
+ * `domes` little gilt domes on its rim; the shaft from the dome (`shaftR0` round, tapering to `shaftR1` at `shaftTop`)
+ * FLUTED with ribs like clustered columns (`flutes`, `flute` deep), in TIERS every `tier` metres each ringed by a
+ * cornice (`cornice` out) - every other one a gilt balcony; its gallery (`galleryR`) crenellated, its crown above it
+ * (`crownR0` to `crownR1`, fluted) crenellated in its turn, and a gilt spire to `spireTop`. The palace's door at the
+ * rotunda's foot on the east, toward the Market and the Arena.
  */
 export function buildImperialTower(T = IMPERIAL.tower) {
-  const mb = new MeshBuilder(), n = 8, phase = Math.PI / 8;
-  const rAt = (y) => T.shaftR0 + (T.shaftR1 - T.shaftR0) * ((y - T.plinthH) / (T.shaftTop - T.plinthH));
+  const mb = new MeshBuilder(), n = T.sides, phase = Math.PI / n;
+  const foot = T.plinthH + T.domeH * 0.6;
+  const rAt = (y) => T.shaftR0 + (T.shaftR1 - T.shaftR0) * ((y - foot) / (T.shaftTop - foot));
+  // the rotunda: its wall, its gilt cornice, its low dome up to the shaft
   taper(mb, MARBLE, n, T.plinthR, -3, T.plinthR, T.plinthH, { phase, vRepeat: 8, uRepeat: 6 });
-  ring(mb, MARBLE, n, T.shaftR0, T.plinthR, T.plinthH, phase);
-  taper(mb, MARBLE, n, T.shaftR0, T.plinthH, T.shaftR1, T.shaftTop, { phase, vRepeat: 16, uRepeat: 4 });
-  for (let y = T.band; y <= T.shaftTop - 10; y += T.band) ledge(mb, GOLD, n, rAt(y) + 0.8, rAt(y), y - 2, y, phase);
-  for (let i = 0; i < n; i++) {
-    const a = (i / n) * Math.PI * 2 + phase, ux = Math.cos(a), uz = Math.sin(a), nx = -uz, nz = ux, t = T.finThick / 2;
-    const inB = [ux * (rAt(T.plinthH) - 1), T.plinthH, uz * (rAt(T.plinthH) - 1)], outB = [ux * T.finR, T.plinthH, uz * T.finR];
-    const inT = [ux * (rAt(T.finTop) - 1), T.finTop, uz * (rAt(T.finTop) - 1)], outT = [ux * (rAt(T.finTop) + 2.5), T.finTop, uz * (rAt(T.finTop) + 2.5)];
-    const off = (p, s) => [p[0] + nx * t * s, p[1], p[2] + nz * t * s];
-    for (const s of [1, -1]) mb.quad(MARBLE, off(inB, s), off(outB, s), off(outT, s), off(inT, s), [nx * s, 0, nz * s], [[0, 0], [4, 0], [4, -24], [0, -24]]);
-    const e = [outT[0] - outB[0], outT[1] - outB[1], outT[2] - outB[2]];
-    let outN = unit([nz * e[1], -(nz * e[0] - nx * e[2]), -nx * e[1]]);
-    if (outN[0] * ux + outN[2] * uz < 0) outN = outN.map((v) => -v);
-    mb.quad(MARBLE, off(outB, 1), off(outB, -1), off(outT, -1), off(outT, 1), outN, [[0, 0], [0.6, 0], [0.6, -24], [0, -24]]);
-    mb.quad(GOLD, off(outT, 1), off(outT, -1), off(inT, -1), off(inT, 1), [0, 1, 0]);
+  ledge(mb, GOLD, n, T.plinthR + 1.2, T.plinthR, T.plinthH - 2.2, T.plinthH, phase);
+  for (let k = 0; k < 4; k++) {
+    const t0 = k / 4, t1 = (k + 1) / 4, rr = (t) => T.shaftR0 * 0.98 + (T.plinthR - T.shaftR0 * 0.98) * Math.cos((t * Math.PI) / 2), yy = (t) => T.plinthH + T.domeH * Math.sin((t * Math.PI) / 2);
+    taper(mb, MARBLE, n, rr(t0), yy(t0), rr(t1), yy(t1), { phase, vRepeat: 6 });
   }
-  ledge(mb, MARBLE, n, T.galleryR, T.shaftR1, T.shaftTop, T.galleryTop, phase);
+  // its arcade: a dark arch between every two piers round its wall (but the door's)
+  const ap = T.plinthR * Math.cos(Math.PI / n) + 0.05, aw = (2 * Math.PI * T.plinthR) / T.arches * 0.32;
+  for (let i = 0; i < T.arches; i++) {
+    const a = ((i + 0.5) / T.arches) * Math.PI * 2;
+    if (Math.abs(Math.atan2(Math.sin(a), Math.cos(a))) < (Math.PI * 2) / T.arches) continue;   // the door's face
+    const c = Math.cos(a), sn = Math.sin(a), P = (s, y) => [c * ap - sn * s, y, sn * ap + c * s], h0 = T.plinthH * 0.18, h1 = T.plinthH * 0.62;
+    mb.quad(DARK, P(-aw / 2, h0), P(aw / 2, h0), P(aw / 2, h1), P(-aw / 2, h1), [c, 0, sn]);
+    mb.tri(DARK, P(-aw / 2, h1), P(aw / 2, h1), P(0, h1 + aw * 0.5), [c, 0, sn]);
+  }
+  // the little gilt domes round its rim
+  for (let i = 0; i < T.domes; i++) {
+    const a = ((i + 0.5) / T.domes) * Math.PI * 2, rr = T.plinthR - T.domeR - 2, x = Math.cos(a) * rr, z = Math.sin(a) * rr;
+    translated(mb, x, 0, z, () => taper(mb, MARBLE, 10, T.domeR, T.plinthH - 1, T.domeR, T.plinthH + T.domeR * 0.6, { vRepeat: 4 }));
+    dome(mb, GOLD, x, T.plinthH + T.domeR * 0.6, z, T.domeR, T.domeR * 0.9, { n: 10, rings: 3 });
+  }
+  // the shaft: fluted, in tiers, each ringed by its cornice - every other a gilt balcony
+  for (let y0 = foot; y0 < T.shaftTop - 1; y0 += T.tier) {
+    const y1 = Math.min(T.shaftTop, y0 + T.tier), k = Math.round((y0 - foot) / T.tier);
+    fluted(mb, MARBLE, T.flutes, rAt(y0), y0, rAt(y1), y1, T.flute, phase);
+    if (y1 < T.shaftTop) {
+      const balcony = k % 2 === 1, out = balcony ? T.cornice * 2 : T.cornice;
+      ledge(mb, balcony ? GOLD : MARBLE, n, rAt(y1) + out, rAt(y1) * (1 - T.flute), y1 - 2.5, y1, phase);
+      if (balcony) merlonRing(mb, GOLD, 0, 0, rAt(y1) + out - 0.8, y1, Math.round(n / 2), 1.6, 1.4);
+    }
+  }
+  // the gallery, crenellated; the crown, fluted and crenellated; the spire
+  ledge(mb, MARBLE, n, T.galleryR, T.shaftR1 * (1 - T.flute), T.shaftTop, T.galleryTop, phase);
   ledge(mb, GOLD, n, T.galleryR + 0.8, T.galleryR, T.galleryTop - 2, T.galleryTop + 0.4, phase);
-  taper(mb, MARBLE, n, T.crownR0, T.galleryTop, T.crownR1, T.crownTop, { phase, vRepeat: 12 });
-  ledge(mb, GOLD, n, T.crownR1 + 1.2, T.crownR1, T.crownTop - 3, T.crownTop, phase);
-  taper(mb, GOLD, n, T.crownR1, T.crownTop, 0.05, T.spireTop, { phase, vRepeat: 16 });
-  // the palace's door, facing east: a dark recess's face proud of the plinth by a hair, a gilt lintel over it
-  const dx = T.plinthR * Math.cos(Math.PI / 8) + 0.05, w = T.door;
+  merlonRing(mb, MARBLE, 0, 0, T.galleryR - 1, T.galleryTop + 0.4, n, 3.2, 3.2);
+  fluted(mb, MARBLE, T.flutes, T.crownR0, T.galleryTop, T.crownR1, T.crownTop, T.flute, phase);
+  ledge(mb, GOLD, n, T.crownR1 + 2, T.crownR1 * (1 - T.flute), T.crownTop - 3, T.crownTop, phase);
+  merlonRing(mb, MARBLE, 0, 0, T.crownR1 + 1, T.crownTop, n, 3, 3);
+  taper(mb, GOLD, n, T.crownR1 * 0.55, T.crownTop, 0.05, T.spireTop, { phase, vRepeat: 16 });
+  // the palace's door, facing east: a dark recess's face proud of the rotunda by a hair, a gilt lintel over it
+  const dx = T.plinthR * Math.cos(Math.PI / n) + 0.05, w = T.door;
   mb.quad(DARK, [dx, 0, -w], [dx, 0, w], [dx, w * 2.4, w], [dx, w * 2.4, -w], [1, 0, 0]);
   mb.quad(GOLD, [dx + 0.02, w * 2.4, -w - 1], [dx + 0.02, w * 2.4, w + 1], [dx + 0.02, w * 2.4 + 1.6, w + 1], [dx + 0.02, w * 2.4 + 1.6, -w - 1], [1, 0, 0]);
   return { ...mb.build(), doors: [entranceDoor(dx - 0.05, 0, w * 2, w * 2.4, [1, 0])] };   // WW7-4: the palace's halls (world/capitalCastles.js)
@@ -164,7 +203,7 @@ export function buildEmperorsTombs(T = IMPERIAL.tombs) {
  * IC-GRAND (the coordinator's review of the renders: "the palace at the tower's foot"): THE IMPERIAL PALACE - a ring of
  * marble wings round the tower's plaza (`sides` of them, `r0` to `r1`), two storeys of windows on each face, hipped roofs
  * of slate; a gate through each wing a palace gate faces (`gate` wide, `gateH` high), a gilt pediment over it on both
- * faces; a domed pavilion at each corner - its octagonal drum to `pavilionH`, a gilt band and a gilt dome.
+ * faces; a great round pillar-tower at each corner and either side of each gate (the owner's "large pillars").
  */
 export function buildImperialPalace(I = IMPERIAL) {
   const P0 = I.palace, mb = new MeshBuilder(), n = P0.sides, step = 360 / n, gates = new Set(palaceGates().map((g) => ((g % 360) + 360) % 360));
@@ -190,13 +229,16 @@ export function buildImperialPalace(I = IMPERIAL) {
       }
     }
   }
-  for (const [x, z] of palaceCorners(I)) {
+  // IC-GRAND, the owner: "the surrounding gate have large pillars like the image shows" - a great round PILLAR-TOWER at
+  // each corner and either side of each gate (palacePillars): its drum standing well over the wings, a corbelled band,
+  // a crenellated top
+  for (const [x, z] of palacePillars(I)) {
     translated(mb, x, 0, z, () => {
-      taper(mb, MARBLE, 8, P0.pavilionR, -2, P0.pavilionR, P0.pavilionH, { vRepeat: 6 });
-      ledge(mb, GOLD, 8, P0.pavilionR + 0.6, P0.pavilionR - 1.5, P0.pavilionH, P0.pavilionH + 1.2);
+      taper(mb, MARBLE, 24, P0.pavilionR, -2, P0.pavilionR, P0.pavilionH, { vRepeat: 6 });
+      ledge(mb, GOLD, 24, P0.pavilionR + 0.5, P0.pavilionR, P0.h - 0.8, P0.h + 0.4);
+      ledge(mb, MARBLE, 24, P0.pavilionR + 1.4, P0.pavilionR - 2, P0.pavilionH, P0.pavilionH + 2);
     });
-    dome(mb, GOLD, x, P0.pavilionH + 1.2, z, P0.domeR, P0.domeR * 0.9, { n: 12, rings: 4 });
-    mb.box(GOLD, [x, P0.pavilionH + 1.2 + P0.domeR * 0.9 + 1.5, z], [0.9, 3, 0.9], 0.5);
+    merlonRing(mb, MARBLE, x, z, P0.pavilionR + 0.6, P0.pavilionH + 2, 16, 2.2, 2.2);
   }
   return mb.build();
 }

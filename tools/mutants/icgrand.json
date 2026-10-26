@@ -454,8 +454,8 @@
   {
     "name": "IC-GRAND-prebuild-far-made-near",
     "file": "src/world/imperialPrebuild.js",
-    "old": "if (near) { blocks.push(",
-    "new": "if (true) { blocks.push(",
+    "old": "if (near) { if (own) { blocks.push(",
+    "new": "if (true) { if (own) { blocks.push(",
     "tests": [
       "test/world/icgrand_prebuild.test.js"
     ]
@@ -580,8 +580,8 @@
   {
     "name": "IC-GRAND-palace-pavilions-open",
     "file": "src/world/imperialCity.js",
-    "old": "if (Math.hypot(x - cx, z - cz) < P.pavilionR + 0.5) return true;",
-    "new": "if (Math.hypot(x - cx, z - cz) < 0) return true;",
+    "old": "for (const [cx, cz] of palacePillars(I)) if (Math.hypot(x - cx, z - cz) < P.pavilionR + 0.5) return true;",
+    "new": "for (const [cx, cz] of palacePillars(I)) if (Math.hypot(x - cx, z - cz) < 0) return true;",
     "tests": [
       "test/world/icgrand_palace.test.js"
     ]
@@ -697,8 +697,8 @@
   {
     "name": "IC-GRAND-palace-unseen",
     "file": "src/world/imperialImpostor.js",
-    "old": "const PL = I.palace, pc = palaceCorners(I), wc = pc.map(",
-    "new": "const PL = I.palace, pc = [], wc = pc.map(",
+    "old": "const PL = I.palace, pc = palacePillars(I), wc = palaceCorners(I).map(",
+    "new": "const PL = I.palace, pc = [], wc = [].map(",
     "tests": [
       "test/world/icgrand_palace.test.js"
     ]
@@ -782,6 +782,42 @@
     "new": "",
     "tests": [
       "test/world/icgrand_prebuild.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-prebuild-never-forgotten",
+    "file": "src/world/imperialPrebuildWorker.js",
+    "old": "if (done.size > DONE_KEEP) done.delete(",
+    "new": "if (done.size > DONE_KEEP * 99) done.delete(",
+    "tests": [
+      "test/world/icgrand_prebuild.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-tower-unfluted",
+    "file": "src/world/capitalImperial.js",
+    "old": "k = i % 2 ? 1 - depth : 1;",
+    "new": "k = 1;",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-tower-tiers-unringed",
+    "file": "src/world/capitalImperial.js",
+    "old": "    if (y1 < T.shaftTop) {\n      const balcony",
+    "new": "    if (false) {\n      const balcony",
+    "tests": [
+      "test/tesa11_imperial.test.js"
+    ]
+  },
+  {
+    "name": "IC-GRAND-palace-gate-pillars-unbuilt",
+    "file": "src/world/imperialCity.js",
+    "old": "return [...palaceCorners(I), ...palaceGates().flatMap(",
+    "new": "return [...palaceCorners(I), ...[].flatMap(",
+    "tests": [
+      "test/world/icgrand_palace.test.js"
     ]
   }
 ]

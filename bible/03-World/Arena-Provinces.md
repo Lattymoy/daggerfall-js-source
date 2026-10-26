@@ -1540,10 +1540,20 @@ when first read; the city past the stream's reach is drawn on the far ring's pas
   Daggerfall's arena. The slices' names: Lake Rumare 174, Rumare Shore 152, City Isle 41, the Market 40, the
   Arboretum 39, Talos Plaza 36, the Arena District 36, the Elven Gardens 34, the Temple District 33, the Palace District
   20, the Waterfront 14, the University 3, the Prison 2, and the centre the Imperial City.
-- **The White-Gold Tower** (IMPERIAL.tower; the team's spec, the reason): 760 m to its gilt spire's tip - over 500 and
-  under TS5's 1360, which a shaft 70 m across would not carry - its foundation 180 m across (150-200), its shaft 70 m
-  across at its foot and 60 m at its gallery (60-70), a gold band every 70 m, its gallery at 560-590 m, its crown to 650
-  m; its fins inside the foundation. Still wholly in the centre slice.
+- **The White-Gold Tower** (IMPERIAL.tower; `world/capitalImperial.js` buildImperialTower). The team's spec gave 760 m
+  (*"500m+ height, like 150-200m diameter in the foundation and like 60-70m diameter in the shaft"*); DEPARTED FROM BY
+  THE OWNER (2026-10-26, a reference picture of another game's tower with it - shapes of the port's own, nothing traced):
+  *"the imperial city tower model needs to be much larger and taller like this with the surrounding gate have large
+  pillars like the image shows"*. So: ROUND (48 faces, not TESA11's octagon), TS5's 1360 m to its gilt spire's tip; out
+  of the palace's ROTUNDA - a wide, low drum 320 m across and 56 m high under a low dome 44 m higher, an arcade of
+  twenty-four dark arches round its wall, twelve little gilt domes on its rim, the palace's door on its east face; the
+  shaft 144 m across at its foot (the 60-70 m of the spec gone, the owner's call) tapering to 108 m, FLUTED - every
+  other corner of its 48 standing 4.5% in, ribs like clustered columns - in TIERS of 126 m each ringed by a cornice
+  (every other one a gilt, crenellated balcony); its gallery at 1090-1120 m, crenellated; its crown, fluted, to 1210 m,
+  crenellated; the gilt spire to 1360 m. 7.7k triangles; still wholly in the centre slice (its plaza 300 m round the
+  rotunda, the start markers at 220 m on it). The far views carry it (`world/imperialImpostor.js`: the rotunda, its
+  dome, the shaft in bands, the gallery, the crown, the spire - the far landmark and capitalSkyline's), and its foot's
+  closed ground is the rotunda's (imperialClosed).
 - **The walls 38 m** (the spec's 35-40; TS5's 28): the city wall 14 m thick, a tower every two degrees (52 m), the six
   watch towers 100 m where the district walls meet it, nine gates (the six avenues', the Prison's, the University's,
   the Waterfront's); the palace wall 20 m, six gates; the district walls 16 m, three gates each where the ring roads
@@ -1577,8 +1587,10 @@ when first read; the city past the stream's reach is drawn on the far ring's pas
   buildImperialPalace, buildPalaceGardens, buildEmperorsTombs, buildPalaceWall). THE IMPERIAL PALACE round the tower's
   plaza: twelve marble wings from 312 to 352 m (24 m to their gilt cornice, hipped roofs of slate, two storeys of windows
   on both faces), a gate 26 m wide and 16 m high through each wing a palace gate faces - the tower's door's, east, among
-  them - under a gilt pediment, and a domed pavilion standing out on each outer corner (an octagonal drum to 34 m, a gilt
-  band and a gilt dome); a paved terrace round it; 5k triangles, carried by the centre slice (910213). GREEN EMPEROR
+  them - under a gilt pediment; and THE OWNER'S "LARGE PILLARS" (2026-10-26, above): a great round pillar-tower 32 m
+  across and 64 m high - well over the wings - its gilt band at the eaves, a corbelled band and a crenellated top, on
+  each outer corner and either side of each gate (twenty-four: palacePillars); a paved terrace round it; 15.6k triangles,
+  carried by the centre slice (910213). GREEN EMPEROR
   WAY'S GARDENS (910214): a paved path out from the terrace to the Way every thirty degrees (14 m - the six on a
   district's bearing run on through its palace gate), ring walks at 900 and 1,500 m (8 m), a fountain where a path
   crosses a walk (24: a marble basin 9 m round with its water, a pedestal, two bowls and a gilt finial, a paved round
@@ -2145,9 +2157,12 @@ the tombs on the Way's verge facing it (their doors, their podiums, their walks)
 arch, gilt, the passage open) and the district from afar. `test/world/icgrand_fabric.test.js` also COURTS
 COURTYARD-SIZED (a wide court's back range inside it with its yards round it, lower than its ring, the garden walls never
 through a building, the wells and the squares' fountains closed, the stone yards' trees, the orchards in rows). Mutants
-`tools/mutants/icgrand.json` (87: the impostor's six retired with it at the merge, ten for the far landmarks, three for
-the living world, two for the ids, fourteen for the worker, sixteen for the Palace District, eight for the courts).
-PINS MOVED (IC-GRAND's Palace District and perf pass): `test/tesa10_capitals.test.js` (the centre slice's parts the
+`tools/mutants/icgrand.json` (91: the impostor's six retired with it at the merge, ten for the far landmarks, three for
+the living world, two for the ids, fifteen for the worker, seventeen for the Palace District, two for the owner's tower,
+eight for the courts).
+PINS MOVED (IC-GRAND's Palace District and perf pass): `test/tesa11_imperial.test.js` (the owner's tower: round, 1360 m,
+its rotunda, fluted, in tiers ringed by cornices - TESA11-tower-short and IS-a-part-missed re-aimed by content),
+`test/tesa10_capitals.test.js` (the centre slice's parts the
 tower's, the palace's and the gardens'), `test/world/audittesa2c_capitals.test.js` C5 (each tomb's podium in its own
 frame, turned to face the Way - its mutant AUDIT-TESA-II-C5-tombs-band-narrow re-aimed by content),
 `test/world/icgrand_lod.test.js` (the capitals' sweep tells the city's worker first, then its near and far sweep and its
