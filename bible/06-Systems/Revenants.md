@@ -489,7 +489,9 @@ dungeon four to ten map pixels from where it happened - the one nearest a direct
 town boards' bounties use - only one the player can go down into (LAIR-DOOR, FIELD BUGS 2026-10-22d: 28 graveyards
 place no door). With none in reach it roams. A deed underground makes that dungeon its lair, and a lair a deed moves is
 one the player must hear of again. A lair already held in a place nobody can enter moves to the enterable dungeon
-nearest it within twenty map pixels, and stays known as it was. The page says what the player knows of it.
+nearest it within twenty map pixels, and stays known as it was. The page says what the player knows of it. Past the Bay
+the lairs are the land's own (TESA8), and a revenant goes to ground in them as on the Bay - LAIR-WORLD (2026-10-26):
+until it, a deed past the Bay found no dungeon in its ring and the revenant roamed (`12-Enhanced-AI/Feud-Arc.md` 18.1).
 
 **The rumour (RVN7b).** Ask a townsperson for news within twenty map pixels of a living revenant's lair, or in its
 lair's region, and one time in three or so the answer is of it - its kind, its name, its lair, how far and which way -

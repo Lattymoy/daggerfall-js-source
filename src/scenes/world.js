@@ -750,7 +750,7 @@ import { createFaceLoader } from '../ui/partyPanel.js';   // LEGACY3: a member's
 import { goldPiecesOf as legacyGold, addItem as legacyAddItem, letterOfCredit } from '../systems/inventory.js';   // LEGACY1: the estate
 import { tabStorage } from '../systems/appStorage.js';   // LEGACY1: a birth crosses the reload in the tab's own store
 import { monthNames } from '../systems/gameDate.js';   // L10N3e: the month's name in the player's language, read when asked
-import { createBountyHost } from './bountyHost.js';   // BOUNTY1: the town's bounty boards - the hunts, their packs, their purse
+import { createBountyHost, bountyDungeonPixel } from './bountyHost.js';   // BOUNTY1: the town's bounty boards - the hunts, their packs, their purse
 import { createWorldPartyPing } from './partyPingHost.js';   // PARTY-PING: a look's point for the party, and the floor route while one follows
 import { pingSubject, pingCrowd } from '../systems/party/partyPingCaption.js';   // PARTY-PING: the name under a look, a person and another player among them
 import { PING_TRAVEL_M } from '../systems/party/partyPing.js';   // PARTY-PING: how far the travel view's look reaches
@@ -11920,7 +11920,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     renderer, audio, getTexture, uploadRecord, uploadRecordFrame,
     // RVN7 (bible/12-Enhanced-AI/Feud-Arc.md 18.1): a deed in the open world - my map pixel (or the one asked: LAIR-DOOR's mend), and the named
     // dungeons in the boards' ring about it; LAIR-DOOR (FIELD BUGS 2026-10-22d): those the player can go down into (scenes/lairHost.js)
-    lairHere: createLairDoor({ maps, blocks, arch, locations: locationIndex, dungeons: _bountyDungeonPixels, regions: _dungeonRegionPixels, here: playerTravelPixel }),
+    lairHere: createLairDoor({ maps, blocks, arch, locations: locationIndex, dungeons: _bountyDungeonPixels, regions: _dungeonRegionPixels, here: playerTravelPixel, pastBay: provinceQuestPlaces }),   // LAIR-WORLD: and the lairs past the Bay
     allyMarks: (sp) => allyMarksNear(sp),   // AID1 onto ALLY-CAST: the party mates' bodies, for a beneficial touch, missile or blast (declared beside allyTargetPick, below) - SPELL-GIFT: the spell rides, for the strangers its list may reach
     peerBodies: () => peersNear(),   // SPELLFX1: every player's body, where a peer's drawn missile stops (declared below this engine's build)
     companionBodies: () => [...crewAshore.bodies(), ...revenantAshore.bodies()],   // COMPANION-KIT: my companions here - my healing and buffs reach them (REVENANT-COMPANION: the sworn too)
@@ -26527,21 +26527,18 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     regionAt: (px, py) => maps.getRegionIndexAt(px, py),   // REP4: the board's region, for the law's thanks
     // the ground a pack may stand on: land (the height bytes say where the sea is, as the gate's scan reads them), no
     // location of the game's own on the pixel, no spawned dungeon - every client's map files answer alike
-    siteOk: (x, y) => x > 0 && y > 0 && x < 999 && y < 499 && !_bountyLocPixels.has(`${x},${y}`) && !spawnsDungeon(_spawnSalt, x, y)
+    // LAIR-WORLD: past the Bay, no place the build stands there (scenes/tamrielPlacesHost.js placeOnPixel)
+    siteOk: (x, y) => (onTheBay(x, y) ? x > 0 && y > 0 && x < 999 && y < 499 && !_bountyLocPixels.has(`${x},${y}`) && !spawnsDungeon(_spawnSalt, x, y) : !provinceQuestPlaces.placeOnPixel(x, y))
       && !gateSeaPixel(maps.getClimateIndex(x, y), woods.getHeightMapValue(x, y))
       && maps.getClimateIndex(x, y) !== TV_MOUNTAIN_CLIMATE,   // BOUNTY-GROUND: never a mountain pixel - the Overworld cannot walk there
-    dungeonAt: (x, y) => _bountyDungeonPixels.get(`${x},${y}`) || null,
-    graveyardAt: (x, y) => _bountyGraveyardPixels.has(`${x},${y}`),
+    dungeonAt: (x, y) => _bountyDungeonPixels.get(`${x},${y}`) || provinceQuestPlaces.lairAt(x, y)?.name || null,   // LAIR-WORLD: and the lairs past the Bay (TESA8)
+    graveyardAt: (x, y) => _bountyGraveyardPixels.has(`${x},${y}`) || provinceQuestPlaces.lairAt(x, y)?.type === LOCATION_TYPES.Graveyard,
+    placesVersion: provinceQuestPlaces.version,   // LAIR-WORLD: what the places past the Bay stand on - a town's ground and dungeons kept under it
     playerPixel: () => ((modes?.mode ?? 'exterior') === 'exterior' ? playerTravelPixel() : null),
     // underground the streamer's pixel is frozen at the entrance - the dungeon's own pixel (playerTravelPixel's A10 note)
     // the dungeon's OWN pixel - its location's map-table position - rather than the streamer's last pixel (which is
     // where the player crossed in from, not necessarily the dungeon's)
-    dungeonPixel: () => {
-      if ((modes?.mode ?? 'exterior') !== 'dungeon') return null;
-      const mt = modes?.dungeonLocation?.mapTableData;
-      if (mt && Number.isFinite(mt.longitude) && Number.isFinite(mt.latitude)) return longitudeLatitudeToMapPixel(mt.longitude, mt.latitude);
-      return playerTravelPixel();
-    },
+    dungeonPixel: () => bountyDungeonPixel(modes, playerTravelPixel),   // HOST-SPLIT (LAIR-WORLD): the board's own question, scenes/bountyHost.js
     canStandDungeon: () => (modes?.mode ?? 'exterior') === 'dungeon' && !!modes?.dungeonCtx && !gamePaused() && !playerEntity.isResting,
     standDungeonPack: (o) => _standBountyDungeonPack(o),
     canStand: () => (modes?.mode ?? 'exterior') === 'exterior' && playerSpawned && !gamePaused() && !playerEntity.isResting

@@ -763,6 +763,17 @@ deed underground makes that dungeon its lair.
   was known; with none, it roams, and a Dread waits where it is (B4). The mend waits for the character's mirror (B1: one
   run before it was undone by the mirror's merge and never asked again that session). The Stuvam Graveyard is the one of the 28 with no other dungeon in its own
   ring: its revenant goes to Morarker's Nest, 14 px south.
+- **LAIR-WORLD (2026-10-26, the owner: "with revenants and their lairs, this will work everywhere correct?"; asked, "Fix
+  both in this PR")**: the ring was the Bay's alone. The world host's named-dungeon index is MAPS.BSA's rows, so a deed
+  past the Bay found no dungeon in its ring and the revenant roamed - no lair, no hunt, no rumour, no circle, no trail -
+  and the mend (`nearest`) sought only the Bay's 1000 x 500. Past the Bay the dungeons are TESA8's lairs
+  (`world/tamrielDungeons.js`, one to an 8 x 8 cell on its site), and the places host now answers a pixel
+  (`scenes/tamrielPlacesHost.js` `lairAt`, the build's own row; `lairCloneAt`, the lair laid unstood; its region the
+  politic map's). The door reads them after the Bay's index (`scenes/lairHost.js` `pastBay`), judges each by the same
+  door test - a graveyard past the Bay is laid on a Bay template: 13 of the 364 within 200 px of the Imperial City place
+  no door, and are never offered - and the mend seeks the world's pixels (`net/wire.js` `worldPixelOk`). A lair's rumour,
+  circle (the held map reads it over the continent's sheet: `ui/bounty/bountyMapMark.js` `readBountyMarksIn`), hunt and
+  trail follow it. Pinned by `test/systems/revenant/lairworld.test.js`, `tools/mutants/lairworld.json` (20, all dead).
 
 ### 18.2 Rumour
 

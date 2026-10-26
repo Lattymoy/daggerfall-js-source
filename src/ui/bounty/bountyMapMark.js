@@ -54,6 +54,14 @@ export function readBountyMarks(fn, size, fallbackLabel = BOUNTY_LEGEND_TEXT, ma
   return out;
 }
 
+/** LAIR-WORLD (2026-10-26): the host's marks over a BOX of map pixels (`{ x0, y0, w, h }` - the held map's continent
+ *  frame while it is shown, tamrielFrameInBay; else the Bay's own sheet), as WW2's rings past the Bay are read
+ *  (ui/gate/gateMapMark.js readGateMarks): a hunt or a lair past the Bay is drawn where the Bay's sheet would drop it. */
+export function readBountyMarksIn(fn, box, fallbackLabel = BOUNTY_LEGEND_TEXT, max = BOUNTY_MARKS_MAX) {
+  const shifted = () => { const l = typeof fn === 'function' ? fn() : null; return Array.isArray(l) ? l.map((m) => (m && typeof m === 'object' ? { ...m, cx: m.cx - box.x0, cy: m.cy - box.y0 } : m)) : l; };
+  return readBountyMarks(shifted, { width: box.w, height: box.h }, fallbackLabel, max).map((m) => ({ ...m, cx: m.cx + box.x0, cy: m.cy + box.y0 }));
+}
+
 /** What a map repaints on: the circles and their words. */
 export const bountyMarksKey = (marks) => (marks ?? []).map((m) => `${m.cx.toFixed(2)}|${m.cy.toFixed(2)}|${m.r}|${m.label}`).join(';');
 

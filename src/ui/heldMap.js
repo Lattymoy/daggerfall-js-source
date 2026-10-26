@@ -110,7 +110,7 @@ import { EG_ARCH_RING_CSS, EG_ARCH_LEGEND_TEXT } from './eliteGates/egArchMapMar
 import { KT_RING_CSS, ketchLegendText } from './ketch/ketchMapMark.js';   // KETCH: the Sky-Ketch over Daggerfall
 import { LODE_RING_CSS, LODE_LEGEND_TEXT, lodeLegendText } from './lodeMapMark.js';   // MINE-PERKS: a Motherlode Sense's day's Motherlodes, read by the bounty's reader
 import { POI_RING_CSS, POI_MARKS_MAX, poiLegendText } from './poi/poiMapMark.js';   // POI-2: the approved POIs' marks, read by the bounty's reader
-import { readBountyMarks, bountyMarksKey, BOUNTY_RING_CSS, BOUNTY_LEGEND_TEXT, BOUNTY_LEGEND_RIM_CSS, REVENANT_RING_CSS, REVENANT_LEGEND_TEXT } from './bounty/bountyMapMark.js';   // BOUNTY1: held bounties' black circles, read as the gate's ring is
+import { readBountyMarks, readBountyMarksIn, bountyMarksKey, BOUNTY_RING_CSS, BOUNTY_LEGEND_TEXT, BOUNTY_LEGEND_RIM_CSS, REVENANT_RING_CSS, REVENANT_LEGEND_TEXT } from './bounty/bountyMapMark.js';   // BOUNTY1: held bounties' black circles, read as the gate's ring is
 import { readRaidMarks, raidMarksKey, placeTip, tipKey, readTip, RAID_MARK_CSS, RAID_LEGEND_TEXT, RAID_HIT_PX, SEAT_TIP_TEXT_MAX, TOWN_TIP_LINES_MAX } from './eventMapMarks.js';   // EVENT-TIP: the raided towns, and the card a world event answers a hover with
 import { readVendorMark, vendorMarkKey, VENDOR_MARK_CSS, VENDOR_RIM_CSS, VENDOR_LEGEND_TEXT } from './vendor/vendorMapMark.js';   // HOME-VENDOR: the trader's waypoint
 import { readQuestMarks, questMarksKey, QUEST_MARK_CSS, QUEST_LEGEND_TEXT, QUEST_HIT_PX, QUEST_MARK_LIFT, QUEST_RAID_LIFT, QUEST_FOLLOWED_TEXT } from './quest/questMarks.js';   // GUIDE5: where the quests point
@@ -2243,11 +2243,13 @@ export class HeldMapWindow {
     const ketchKey = gateMarkKey(ketch);
     if (ketchKey !== this._ketchKey) { this._ketchKey = ketchKey; this._ketch = ketch; gateMoved = true; this._dirty = true; }
     // BOUNTY1: the circles ride the gate's poll and its repaint - a bounty taken or paid with the map open
-    const bounties = readBountyMarks(this.deps.bounties, this._size);
+    // LAIR-WORLD: and past the Bay, over the continent's frame while it is shown (as WW2's rings above)
+    const sheet = f ?? { x0: 0, y0: 0, w: this._size.width, h: this._size.height };
+    const bounties = readBountyMarksIn(this.deps.bounties, sheet);
     const bKey = bountyMarksKey(bounties);
     if (bKey !== this._bountiesKey) { this._bountiesKey = bKey; this._bounties = bounties; gateMoved = true; this._dirty = true; }
     // RVN7c: and the lairs heard of - a rumour heard, or a hunt given up, with the map open
-    const lairs = readBountyMarks(this.deps.revenants, this._size, REVENANT_LEGEND_TEXT);
+    const lairs = readBountyMarksIn(this.deps.revenants, sheet, REVENANT_LEGEND_TEXT);
     const lKey = bountyMarksKey(lairs);
     if (lKey !== this._revenantsKey) { this._revenantsKey = lKey; this._revenants = lairs; gateMoved = true; this._dirty = true; }
     // MINE-PERKS: and a Motherlode Sense's Motherlodes - one rising, spent or gone, or the day's find made, with the map open

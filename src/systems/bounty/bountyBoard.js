@@ -19,7 +19,7 @@
 // is scenes/bountyHost.js; the window is ui/bounty/bountyWindow.js.
 
 import { MINUTES_PER_DAY } from '../gameDate.js';
-import { BOUNTY_POSE_MAX } from '../../net/wire.js';
+import { BOUNTY_POSE_MAX, worldPixelOk } from '../../net/wire.js';   // LAIR-WORLD: a town's pixel is the world's, the Bay's and past it
 export { MINUTES_PER_DAY, BOUNTY_POSE_MAX };
 
 /** The per-mod save slot's vendor name (systems/modSaveData.js). */
@@ -145,7 +145,9 @@ export const bountyDay = (classicMinutes) => Math.floor(Math.max(0, Number(class
 export const bountySlotKey = (day, px, py, slot) => `${day}.${px}.${py}.${slot}`;
 /** A bounty as TAKEN: its slot and the level it was taken at. The wire's shape (net/wire.js validPartyPose `bq`). */
 export const bountyId = (day, px, py, slot, level) => `${bountySlotKey(day, px, py, slot)}.${clampLevel(level)}`;
-export const BOUNTY_ID_RE = /^(\d{1,7})\.(\d{1,3})\.(\d{1,3})\.([0-3])\.(\d{1,2})$/;
+/** LAIR-WORLD (2026-10-26): a town's pixel the world's (net/wire.js worldPixelOk - past the Bay up to four digits, and
+ *  west or north of the Bay's corner below zero), where it was the Bay's three. A Bay id reads as it always did. */
+export const BOUNTY_ID_RE = /^(\d{1,7})\.(-?\d{1,4})\.(-?\d{1,4})\.([0-3])\.(\d{1,2})$/;
 /** BOUNTY-TIER (Mac, 2026-09-28: "Higher level players cant share their quest with lower level players ONLY when in
  *  the same tier. They should be still able to help"): the monster tier a level hunts in, as its index (0..4). */
 export const bountyTierIndex = (level) => BOUNTY_TIERS.indexOf(bountyTierFor(level));
@@ -171,7 +173,7 @@ export function parseBountyId(id) {
   const m = BOUNTY_ID_RE.exec(String(id ?? ''));
   if (!m) return null;
   const [day, px, py, slot, level] = m.slice(1).map(Number);
-  if (px >= 1000 || py >= 500 || level < 1) return null;
+  if (!worldPixelOk(px) || !worldPixelOk(py) || level < 1) return null;   // LAIR-WORLD: the world's pixel
   return { day, px, py, slot, level, slotKey: bountySlotKey(day, px, py, slot) };
 }
 
@@ -189,7 +191,7 @@ export function bountySites(px, py, siteOk) {
       const d = Math.max(Math.abs(dx), Math.abs(dy));
       if (d < BOUNTY_MIN_PX) continue;
       const x = px + dx, y = py + dy;
-      if (x < 0 || y < 0 || x >= 1000 || y >= 500) continue;
+      if (!worldPixelOk(x) || !worldPixelOk(y)) continue;   // LAIR-WORLD: the world's pixels, past the Bay too
       let ok = false;
       try { ok = !!siteOk(x, y); } catch { ok = false; }
       if (ok) out.push([x, y]);
@@ -217,7 +219,7 @@ export function bountyDungeons(px, py, dungeonAt, graveyardAt) {
     for (let dx = -BOUNTY_MAX_PX; dx <= BOUNTY_MAX_PX; dx++) {
       if (Math.max(Math.abs(dx), Math.abs(dy)) < BOUNTY_MIN_PX) continue;
       const x = px + dx, y = py + dy;
-      if (x < 0 || y < 0 || x >= 1000 || y >= 500) continue;
+      if (!worldPixelOk(x) || !worldPixelOk(y)) continue;   // LAIR-WORLD: the world's pixels, past the Bay too
       let name = null;
       try { name = dungeonAt(x, y); } catch { name = null; }
       // GRAVEYARD: a graveyard's hunt is fought in the open air outside it, never down in its crypt
