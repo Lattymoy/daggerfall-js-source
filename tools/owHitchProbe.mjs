@@ -18,7 +18,7 @@
 //   WALK=1           no Overworld: W held on foot (the exterior's own streaming at a walk) - the same route
 //   TREE=<dir>       serve another worktree of this repository (its node_modules linked) - an A/B's base
 //   OUT=<file>       append the run's row (and its frame lists) as one JSON line
-//   PORT=5182  W=320 H=180  DRAWS=on (rasterise too)  QUERY=<more of the page's query>  CHROMIUM=<a browser other than the
+//   LAND=<the streamed radius>  HEAP_MB=<the page's old space>  PORT=5182  W=320 H=180  DRAWS=on (rasterise too)  QUERY=<more of the page's query>  CHROMIUM=<a browser other than the
 //   pinned Playwright's>
 // The figures are this machine's CPU, shared, and only relative: run an A/B's arms one after the other, nothing else
 // beside them, and compare like with like.
@@ -53,6 +53,8 @@ const errors = [];
 page.on('pageerror', (e) => errors.push(String(e.message ?? e)));
 page.on('crash', () => { console.error('the page crashed (a renderer killed - out of memory on a shared box?): no measurement'); process.exit(3); });
 page.on('console', (m) => { const t = m.text(); if (/^pixel -?\d+,-?\d+ failed:/.test(t)) errors.push(t.slice(0, 300)); });
+// LAND=<n>: the streamed radius (the Land View pref), for a shared machine's memory - both arms of an A/B the same
+if (process.env.LAND) await page.addInitScript((land) => { try { const k = 'dagger.ui.v1', p = JSON.parse(localStorage.getItem(k) ?? '{}'); localStorage.setItem(k, JSON.stringify({ ...p, landViewDistance: land })); } catch { /* the default */ } }, Number(process.env.LAND));
 await page.addInitScript((stub) => {
   // the draws stubbed from the first frame (the boot's own frames are SwiftShader's raster otherwise: a quarter of an hour)
   if (stub && typeof WebGL2RenderingContext !== 'undefined') {
