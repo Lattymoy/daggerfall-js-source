@@ -1201,7 +1201,6 @@ import { createTownWalk } from './townWalkHost.js';   // OW-TOWN-WALK
 import { createOverworldForecast } from './overworldForecastHost.js';   // OW-FORECAST
 import { regionChaseWords } from '../systems/travel/regionChase.js';   // OW-CHASE-RANGE: a chase seen as far as its band is drawn
 import { createRegionChaseHearing } from './regionChaseHost.js';   // OW-CHASE-RANGE: the region's chase words heard (AUDIT OW-REVISITED L4-2, L4-3)
-import { TOWN_PACE_MAX } from '../systems/travel/townWalk.js';   // OW-TOWN-WALK: the keys' travel in a town, held to a town's pace
 import { createExteriorAutomapToggle } from './exteriorAutomapToggle.js';   // HOST-SPLIT
 import { monsterVolume } from '../systems/monsterVolume.js';   // MONSTER-VOL: a monster's pain cry rides the Audio tab's Monster Volume
 import { createTamrielPlaces } from './tamrielPlacesHost.js';   // HOST-SPLIT
@@ -16308,7 +16307,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  classic travel map and classic fast travel, whole. */
   _travelUIHolder.ui = travelControlUI;   // AUDIT-TO1 F2: the holder the enchant ctx reads
   const townWalk = createTownWalk({ built, state });   // OW-TOWN-WALK: the town a journey stands in, and its streets (scenes/townWalkHost.js)
-  const tvInTown = () => !!townWalk.townPace(state.worldCoords(player.pos));   // OW-TOWN-WALK: the traveller stands in a town's streets (AUDIT OW-REVISITED L1-4: never a walled city's fields)
+  const tvTownPace = () => townWalk.townPace(state.worldCoords(player.pos));   // OW-TOWN-WALK: the pace of the town's streets the traveller stands in, or null (AUDIT OW-REVISITED L1-4: never a walled city's fields; IC-PACE: the Imperial City's its own)
   travelOptions = travelOptionsOn ? createTravelOptions({   // BOOT-TDZ: ASSIGNED here; the binding stands above the stream that reads it
     townKey: townWalk.townKey, townWay: townWalk.townWay,   // OW-TOWN-WALK: in a town, its streets first, at its pace
     settings: travelOptionsSettings,
@@ -31885,7 +31884,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const want = journey ? travelAsked : walk;   // AUDIT TV A2: what the mod asked - its ground's rate under its own cap (RATE-LAW); TV-WASD: or the keys' travel
     const load = travelGovernor.step(dt, { unbuilt, requested: want, owed: uc.owed, feet: unbuilt ? state.worldCoords(player.feetAt()) : null, speedMps: player?.speed ?? 0 });   // OW-LEAD: held by how near the nearest owed pixel is, at the traveller's own pace
     const foeCap = foes.strangerRate ? Math.min(foeRate(foes, want), foes.strangerRate) : foeRate(foes, want);   // ENEMY-PACE: the enemies' cap, never under the near-enemy pace (RATE-LAW: fixed)
-    const town = tvInTown() ? TOWN_PACE_MAX : Infinity;   // OW-TOWN-WALK: in a town, a town's pace - a journey's own streets ask it already, the keys' travel is held to it
+    const town = tvTownPace() ?? Infinity;   // OW-TOWN-WALK: in a town, its pace - a journey's own streets ask it already, the keys' travel is held to it
     const rate = Math.min(load, foeCap, town);   // OW6: the ground's cap and the enemies', the lower
     if (worldTimeScale() !== rate) setWorldTimeScale(rate);
     tvHeld = rate < want ? rate : null;

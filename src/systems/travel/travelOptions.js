@@ -613,7 +613,7 @@ export function createTravelOptions(deps = {}) {
     const aim = routeAim(r);
     const way = aim ? deps.townWay(pos(), aim) : null;
     if (way?.shut) st.shutStop = true;   // a walled city's gates shut for the night between the traveller and the point: said, never walked into
-    return way?.pts?.length ? { pts: way.pts.map((q) => ({ x: q.x, z: q.z })) } : null;
+    return way?.pts?.length ? { pts: way.pts.map((q) => ({ x: q.x, z: q.z })), pace: way.pace ?? TOWN_PACE_MAX } : null;   // IC-PACE: its town's pace
   }
   /** OW-TOWN-WALK: the traveller stands within the place's arrival - its rect grown by ARRIVAL_BUFFER, as the mod's
    *  location journey arrives (:62-73). */
@@ -834,7 +834,7 @@ export function createTravelOptions(deps = {}) {
   function wayPace(of) {
     const r = st.route;
     if (!r) return null;
-    if (of === 'street') return { fwd: routeLegSpeed('road'), rate: Math.min(TOWN_PACE_MAX, travelRateOf(true)), sea: false };
+    if (of === 'street') return { fwd: routeLegSpeed('road'), rate: Math.min(r.street?.pace ?? TOWN_PACE_MAX, travelRateOf(true)), sea: false };
     if (of === 'join') return { fwd: routeLegSpeed('open'), rate: travelRateOf(false), sea: false };
     const leg = r.legs[of];
     return leg ? { fwd: routeLegSpeed(leg.kind), rate: travelRateOf(ROAD_LEG_KINDS.includes(leg.kind) || bridgedRoadLeg(r.legs, of)), sea: SEA_LEG_KINDS.includes(leg.kind) } : null;
@@ -846,7 +846,7 @@ export function createTravelOptions(deps = {}) {
   function applyRate(force = false) {
     const street = !!st.route?.street;   // OW-TOWN-WALK: a town's streets, at a town's pace - paved ground (a street's grid weighs its roads best)
     const onRoad = street || journeyOnRoad();
-    const rate = street ? Math.min(TOWN_PACE_MAX, travelRateOf(true)) : st.walk === 'ring' ? Math.min(MAX_CIRCUMNAVIGATION_ACCEL, travelRateOf(onRoad)) : travelRateOf(onRoad);
+    const rate = street ? Math.min(st.route.street.pace ?? TOWN_PACE_MAX, travelRateOf(true)) : st.walk === 'ring' ? Math.min(MAX_CIRCUMNAVIGATION_ACCEL, travelRateOf(onRoad)) : travelRateOf(onRoad);   // IC-PACE: the street's own town's pace
     if (!force && rate === st.rate && onRoad === st.rateOnRoad) return;
     st.rate = rate;
     st.rateOnRoad = onRoad;

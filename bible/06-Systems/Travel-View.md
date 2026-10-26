@@ -2624,7 +2624,8 @@ takes the same way:
   sea, never across the place the journey is bound for (arrived at its edge, as ever). A gates-shut word is forgotten
   when a journey begins, resumes or is interrupted (L1-5: it stopped the next journey, anywhere and by day). The
   Overworld's route line is drawn down the streets still ahead.
-- **The pace**: TOWN_PACE_MAX (x5) - a street run asks the clock no more (`applyRate`), and under the view the governor
+- **The pace**: TOWN_PACE_MAX (x5; IC-PACE, below: the Imperial City's IMPERIAL_PACE_MAX) - a street run asks the clock
+  no more (`applyRate`), and under the view the governor
   holds the keys' travel (TV-WASD) and any journey to it while the traveller stands in a town's STREETS (`townPace`: a
   walled city's fields, where its ring runs, are not the town - L1-4: every walk round a city's ring was held at x5; a
   wall that does not close counts as all town), the panel saying why ("in town", TRAVEL_HELD_WHY - the whole held line
@@ -2649,6 +2650,26 @@ run's arrival); the governor's mounts given the town (`ow6_slowdown` - run IN a 
 band's x20 no reason, the ground's lower cap the reason - `ow_lead`, `ow_loadowed`, `ow_queueowed`, `ow_toggle`, `tv_wasd`,
 `fb0929d_toroads`) and `tv2_click_to_move`'s route-line and cap pins moved; `tools/mutants/ow_townwalk.json` (46) and
 `tools/mutants/audit_owrevisited_walk.json` (35: 34 dead, one recorded equivalent).
+
+### IC-PACE - the Imperial City's streets at sixty (2026-10-26, the owner)
+
+The owner, on the tamriel branch: *"For the Imperial City specifically, the travel speed should be 60x instead of 5"*.
+TS5 made the Imperial City forty-nine pixels (5.7 km across, `03-World/Town-Shapes.md` TS5), all of it a town's
+streets, and OW-TOWN-WALK held every journey and the keys' travel there to x5 - a quarter of an hour of real time to
+cross it. Its streets are still walked as a town's (the way, the gates, the steering); only the clock's ceiling is the
+city's own:
+- **The ceiling** (`systems/travel/townWalk.js` IMPERIAL_PACE_MAX, 60 - the dials' own top on a road).
+- **The town's pace** (`scenes/townWalkHost.js` paceAt): the Imperial City's on every one of its slices
+  (`world/tamrielCapitals.js` capitalOnPixel), TOWN_PACE_MAX everywhere else - every other capital and town. `townPace`
+  answers it (where it answered the town's key: null still out of a town's streets), and `townWay` carries it.
+- **The journey** (`systems/travel/travelOptions.js` streetRun, `applyRate`, `wayPace`): a street run is walked at its
+  own town's pace (a way that says none, TOWN_PACE_MAX); the forecast asks it the same.
+- **The keys' travel** (`scenes/world.js` tvTownPace, where `tvInTown` was): the governor holds the clock to the pace the
+  town answers, none out of a town.
+Pinned: `test/systems/travel/icpace.test.js` (5); `tools/mutants/icpace.json` (9, all dead). PINS MOVED: `ow_townwalk`
+(the host's wiring), `audit_owrevisited_walk` (`townPace` answers the pace), and the governor's mounts (`ow6_slowdown`,
+`ow_lead`, `ow_loadowed`, `ow_queueowed`, `ow_toggle`, `tv_wasd`, `fb0929d_toroads`: `tvTownPace` for `tvInTown` and
+TOWN_PACE_MAX); `ow_townwalk.json` and `audit_owrevisited_walk.json` re-aimed by content, all dead.
 
 ## OW-HORIZON - as far as the eye can see, from the air (2026-10-20, the owner)
 

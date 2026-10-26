@@ -119,7 +119,7 @@
   {
     "name": "OTW-pace-unheld",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    const rate = street ? Math.min(TOWN_PACE_MAX, travelRateOf(true)) : st.walk",
+    "old": "    const rate = street ? Math.min(st.route.street.pace ?? TOWN_PACE_MAX, travelRateOf(true)) : st.walk",
     "new": "    const rate = street ? travelRateOf(true) : st.walk",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
@@ -191,8 +191,8 @@
   {
     "name": "OTW-host-own-cell-dropped",
     "file": "src/scenes/townWalkHost.js",
-    "old": "      return { pts: way.cells.map((c) => nativeOf(town, c)), inside: way.inside, shut: false };",
-    "new": "      return { pts: way.cells.slice(1).map((c) => nativeOf(town, c)), inside: way.inside, shut: false };",
+    "old": "      return { pts: way.cells.map((c) => nativeOf(town, c)), inside: way.inside, shut: false, pace };",
+    "new": "      return { pts: way.cells.slice(1).map((c) => nativeOf(town, c)), inside: way.inside, shut: false, pace };",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ]
