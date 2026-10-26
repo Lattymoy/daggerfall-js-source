@@ -198,6 +198,7 @@ import { retroScreenRect } from '../systems/retroMode.js';   // DISC25-B: DFU's 
 import { TRAVEL_VIEW_BUTTON } from '../scenes/travelView.js';   // TV1: the Overworld door's words (ETHER-OW: one home with the Eltheric chart's)
 import { STAR_VIOLET_CSS } from './starfall/starMapMark.js';   // STAR6: a fallen star's violet
 import { STAR_CARD_TEXT } from '../systems/starfall/starWords.js';   // STAR6: its legend's word
+import { capturePointer } from './pointerCapture.js';   // RPT1026-CLIENT: a pad's synthetic pointer is refused a capture, never thrown
 
 export const HELD_MAP_URL = new URL('art/held-map.png', APP_ROOT ?? globalThis.document?.baseURI ?? 'https://invalid.invalid/').href;
 /** Its own pixels, and the stage's aspect. */
@@ -3513,7 +3514,7 @@ export class HeldMapWindow {
         orbitDrag = { id: e.pointerId, x: e.clientX, y: e.clientY, btn: e.button === 2 ? 2 : 1 };   // ORBIT-EXCLUSIVE: which button owns the orbit (buttons-bitmask bit)
         { const pp = this._paperPoint(e.clientX, e.clientY); if (pp !== OFF_SHEET) this._sheet?.orbitFrom?.(pp[0], pp[1]); }   // TURN-AT-MOUSE
         this._sheet?.orbitHold?.(true);   // EM3-3D fix: the turn keeps the middle of the paper still until let go
-        stage.setPointerCapture?.(e.pointerId);
+        capturePointer(stage, e.pointerId);
         return;
       }
       if (downAt && !second && e.pointerId !== downAt.id) {
@@ -3521,7 +3522,7 @@ export class HeldMapWindow {
         const p = pinchState({ x: downAt.cx, y: downAt.cy }, second);
         pinch = { ...p, ox: this._view.ox, oy: this._view.oy, scale: this._view.scale };
         panned = true;   // a pinch is never a pick
-        stage.setPointerCapture?.(e.pointerId);
+        capturePointer(stage, e.pointerId);
         return;
       }
       if (downAt || uiPress) return;
@@ -3535,13 +3536,13 @@ export class HeldMapWindow {
         if (pp !== OFF_SHEET && (stripHit(this._strip, pp[0], pp[1]) || this._sheet?.control?.(pp[0], pp[1]))) {
           e.preventDefault?.();
           uiPress = { id: e.pointerId, px: pp[0], py: pp[1] };
-          stage.setPointerCapture?.(e.pointerId);
+          capturePointer(stage, e.pointerId);
           return;
         }
       }
       downAt = { id: e.pointerId, x: e.clientX, y: e.clientY, cx: e.clientX, cy: e.clientY, ox: this._view.ox, oy: this._view.oy };
       panned = false;
-      stage.setPointerCapture?.(e.pointerId);
+      capturePointer(stage, e.pointerId);
     });
     stage.addEventListener('pointermove', (e) => {
       if (this._phase !== 'map') return;

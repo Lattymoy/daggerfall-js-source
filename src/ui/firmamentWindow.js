@@ -41,6 +41,7 @@ import { injectEnhancedStyle, injectEnhancedFonts } from './enhanced/enhancedSty
 import { registerOverlay } from './enhanced/enhancedOverlays.js';
 import { audio } from '../systems/audio.js';   // the UI's own click, for a press on the sky (its buttons click through ui/uiClickSound.js)
 import { SOUND } from '../systems/soundClips.js';
+import { capturePointer } from './pointerCapture.js';   // RPT1026-CLIENT: a pad's synthetic pointer is refused a capture, never thrown
 
 export const FIRM_STYLE_ID = 'firmament-window-css';
 
@@ -805,7 +806,7 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
   let longPress = 0;
   const local = (e) => { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
   canvas.addEventListener('pointerdown', (e) => {
-    canvas.setPointerCapture?.(e.pointerId);
+    capturePointer(canvas, e.pointerId);
     const p = local(e);
     pointers.set(e.pointerId, p);
     if (pointers.size === 2) {

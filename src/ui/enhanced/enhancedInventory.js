@@ -175,6 +175,7 @@ import { expandRowValues } from '../../systems/quest/questMacros.js';   // MACRO
 import { localizedText, t } from '../../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N4: LOOT-BULK's words
 import { noteFirstUse } from '../../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 import { isLanternItem, waistLanternOf, hangBeltLantern, unhangBeltLantern } from '../../systems/beltLantern.js';   // BELT-LANTERN: the lantern's own slot on the shelf (BELT-WAIST: whatever hangs at the waist)
+import { capturePointer } from '../pointerCapture.js';   // RPT1026-CLIENT: a pad's synthetic pointer is refused a capture, never thrown
 /** Slot id -> where it sits on the body, and what to call it.
  *
  *  THE FIGURE FACES THE READER, so the character's RIGHT arm is drawn
@@ -2064,7 +2065,7 @@ function modelPicture(item, box) {
 function attachFigureTurn(cv) {
   let down = null;
   cv.style.touchAction = 'pan-y';
-  cv.addEventListener('pointerdown', (e) => { down = { x: e.clientX, yaw: _figureYaw }; cv.setPointerCapture?.(e.pointerId); });
+  cv.addEventListener('pointerdown', (e) => { down = { x: e.clientX, yaw: _figureYaw }; capturePointer(cv, e.pointerId); });
   cv.addEventListener('pointermove', (e) => {
     if (!down) return;
     _figureYaw = down.yaw + (e.clientX - down.x) * 0.02;
