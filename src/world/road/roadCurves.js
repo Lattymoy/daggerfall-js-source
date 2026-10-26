@@ -272,6 +272,7 @@ export function paintCurvedPaths(tileData, tilemap, { px, py, road, track, byteA
       for (let x = 0; x < D; x++) {
         const t = y * D + x;
         if (tilemap[t] !== 0 || !(rect.ring ? rect.ring[t] === 1 : x > rect.xMin && x < rect.xMax && y > rect.yMin && y < rect.yMax)) continue;
+        if (tileData[x + y * tdDim] === WATER) continue;   // AUDIT TESA III E1-1: never the sea a shore town keeps
         tilemap[t] = ROAD_TILE;
         paved++;
         if (paths) paths[t] = 1;

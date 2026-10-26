@@ -143,7 +143,8 @@ export function paintRoads(tileData, tilemap, roadMask, trackMask, locationRect 
       // map, water on and off: `node tools/roadGuardProof.mjs` (103,487 real-map cases, none differing).
       if (!(x >= MID_LO - 1 && x <= MID_HI + 1) && !(y >= MID_LO - 1 && y <= MID_HI + 1)
         && Math.abs(x - y) > 2 && Math.abs(DIM - 1 - x - y) > 2
-        && !(locationRect && x > locationRect.xMin && x < locationRect.xMax && y > locationRect.yMin && y < locationRect.yMax)) continue;
+        && !(locationRect && x > locationRect.xMin && x < locationRect.xMax && y > locationRect.yMin && y < locationRect.yMax)
+        && !locationRect?.ring?.[y * DIM + x]) continue;   // AUDIT TESA III E1-1: nor a tile of TS2's ring, which runs past the rect
       const i = y * DIM + x;
       if (tilemap[i] !== 0) continue;   // a location's own tile, or already painted
       // AUDIT 51: NO RECT SKIP. The mod does not skip the location rect;
@@ -251,8 +252,9 @@ function paintPath(ctx, T, m, corners) {
   // THIS is how the mod rings a town: the location's own tiles are
   // non-zero and untouched; the band between them and the rect's edge
   // becomes road.
-  // TOWN-SHAPES: round a town with an outline, its ring (terrainTiles.js townRoadRing) - where the rect's padding was
-  if (m && ctx.rect && T === ROAD_TILES && (ctx.rect.ring ? ctx.rect.ring[ctx.i] === 1 : x > ctx.rect.xMin && x < ctx.rect.xMax && y > ctx.rect.yMin && y < ctx.rect.yMax)) {
+  // TOWN-SHAPES: round a town with an outline, its ring (terrainTiles.js townRoadRing) - where the rect's padding was;
+  // AUDIT TESA III E1-1: never over the sea a shore town keeps (TS2: 2,670 ring tiles over water, 516 of them paved)
+  if (m && ctx.rect && T === ROAD_TILES && (ctx.rect.ring ? ctx.rect.ring[ctx.i] === 1 && ctx.ground !== TILE.water : x > ctx.rect.xMin && x < ctx.rect.xMax && y > ctx.rect.yMin && y < ctx.rect.yMax)) {
     ctx.tilemap[ctx.i] = 46;
     if (ctx.paths) ctx.paths[ctx.i] = 1;   // GRASS-PATH1
     return true;
@@ -495,6 +497,7 @@ export function smoothRoadHeights(samples, tilemap, hDim = 129, rect = null) {
   for (let y = 1; y < hDim - 2; y++) {
     for (let x = 1; x < hDim - 2; x++) {
       if (rect && x >= rect.xMin && x < rect.xMax && y >= rect.yMin && y < rect.yMax) continue;   // Rect.Contains: min in, max OUT
+      if (rect?.ring?.[y * tDim + x]) continue;   // AUDIT TESA III E1-1: nor TS2's ring - the padding it stands for was never smoothed
       const tile = tilemap[y * tDim + x];
       if (tile !== 46 && tile !== 0xff) continue;
       const idx = x * hDim + y;   // TerrainSampler.cs:123 JobA.Idx(y, x, hDim) - the HEIGHTMAP's layout, not the tilemap's

@@ -70,5 +70,41 @@
   "tests": [
    "test/world/audittesa3e1.test.js"
   ]
+ },
+ {
+  "name": "E1-1-the-guard-passes-the-ring",
+  "file": "src/world/road/roadPainter.js",
+  "old": "\n        && !locationRect?.ring?.[y * DIM + x]) continue;",
+  "new": ") continue;",
+  "tests": [
+   "test/world/road/audittesa3e1_ring.test.js"
+  ]
+ },
+ {
+  "name": "E1-1-the-ring-paves-the-sea",
+  "file": "src/world/road/roadPainter.js",
+  "old": "ctx.rect.ring[ctx.i] === 1 && ctx.ground !== TILE.water :",
+  "new": "ctx.rect.ring[ctx.i] === 1 :",
+  "tests": [
+   "test/world/road/audittesa3e1_ring.test.js"
+  ]
+ },
+ {
+  "name": "E1-1-the-curved-ring-paves-the-sea",
+  "file": "src/world/road/roadCurves.js",
+  "old": "        if (tileData[x + y * tdDim] === WATER) continue;   // AUDIT TESA III E1-1: never the sea a shore town keeps\n",
+  "new": "",
+  "tests": [
+   "test/world/road/audittesa3e1_ring.test.js"
+  ]
+ },
+ {
+  "name": "E1-1-the-ring-smoothed",
+  "file": "src/world/road/roadPainter.js",
+  "old": "      if (rect?.ring?.[y * tDim + x]) continue;",
+  "new": "",
+  "tests": [
+   "test/world/road/audittesa3e1_ring.test.js"
+  ]
  }
 ]

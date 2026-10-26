@@ -29,15 +29,15 @@ same at every site it changed (`AUDIT TESA III E1-<n>`).
 
 | Id | Sev | Finding | Verdict |
 |---|---|---|---|
-| E1-1 | MED | TS2's road ring is mostly never paved, and where it is paved at a shore town it can pave the sea | OPEN - ROUTED to the roads' stream (`src/world/road/roadPainter.js`), the fix proven on a copy |
+| E1-1 | MED | TS2's road ring is mostly never paved, and where it is paved at a shore town it can pave the sea | FIXED by the roads' stream (VOYAGER, KPbICA stream F), pinned (4 mutants) |
 | E1-2 | LOW | The fixed-city bench (`?exterior`) draws no wall on a Bay city's town map and walks its people through the wall | FIXED, pinned (4 mutants) |
 | E1-3 | MED | WW7-1/WW7-2's record says travellers, caravans, outlaws and divers live past the Bay; the merge kept P7's guard and none do | FIXED (the record); lifting the guard is the owner's call |
 | E1-4 | MED | The Deep Waters bake blends a coastal town's rect DFU's way while the streamed ground follows TS2's outline - the seafloor before 262 Bay towns shaped against a coastline that is gone | FIXED for the Bay, pinned (4 mutants); the Eltheric isles' half OPEN, routed |
 | E1-5 | LOW | The jungle's trails keep off a town's rect, not its outline | NOT REPRODUCED - a hypothesis, recorded |
 
-### E1-1 - the road ring round a town's outline (MED, OPEN, routed)
+### E1-1 - the road ring round a town's outline (MED, FIXED)
 
-`roadPainter.js:"&& !(locationRect && x > locationRect.xMin && x < locationRect.xMax && y > locationRect.yMin && y < locationRect.yMax)) continue;"`
+`roadPainter.js:"&& !(locationRect && x > locationRect.xMin && x < locationRect.xMax && y > locationRect.yMin && y < locationRect.yMax)"`
 - the FAST-SUITE guard (2026-10-20) passes by every tile off the centre cross, the two diagonals and the rect, proven by
 `tools/roadGuardProof.mjs` against the rect's law. TS2 (2026-10-25) moved "Paint roads around locations" from the rect's
 padding to its outline's ring (`terrainTiles.js` townRoadRing: the tiles off the town's ground within 2.5 of it), and the
@@ -54,6 +54,21 @@ smoothed). Result: every dry ring tile paved (1,448,579 of 1,448,579), none of t
 left are the road's own arms - the mod's table, AUDIT-TESA A3-5), every tile off the ring byte for byte as before, no ring
 tile smoothed. `tools/roadGuardProof.mjs` holds as it is (the guard only skips less). Pin to add with it: a ring outside
 the rect and off the cross paved; a ring tile over water not; a ring tile's samples unsmoothed - mutants on each clause.
+
+FIXED (2026-10-26, the roads' stream - KPbICA's VOYAGER, which did not supersede it: its curved painter runs past the Bay
+alone and paved its whole ring already) as proposed, the three clauses:
+`roadPainter.js:"&& !locationRect?.ring?.[y * DIM + x]) continue;"`, the ring's condition
+`roadPainter.js:"if (m && ctx.rect && T === ROAD_TILES && (ctx.rect.ring ? ctx.rect.ring[ctx.i] === 1 && ctx.ground !== TILE.water"`
+and `roadPainter.js:"if (rect?.ring?.[y * tDim + x]) continue;"`; and the curved painter past the Bay keeps the same sea
+(`roadCurves.js:"if (tileData[x + y * tdDim] === WATER) continue;"`). Measured through the real kernel
+(`generatePixelTerrain` with Basic Roads' arrays, every 8th of the Bay's 2,043 towns on a road): the ring paved 15.6%
+before, 124,699 of 124,699 after, none of it over water in the sample. `tools/roadGuardProof.mjs` (its stale imports
+pointed back at `src/world/road/` now - the painter moved there) against the base painter (8df5233181): 103,487 real-map
+cases, 113,727 with the sweep, none differ - its rects carry no ring. Pins:
+`test/world/road/audittesa3e1_ring.test.js` (a ring tile off the rect, the cross and the diagonals paved, every tile off
+the ring and the rect the arms' own; a ring tile over water left, by both painters; a ring tile's samples unsmoothed).
+Mutants: `tools/mutants/audittesa3e1.json` E1-1 (4, all dead). PIN MOVED (AUDIT TESA III E1-1): TOWN-SHAPES' ring
+condition (`test/world/terrain/townshapes.test.js`).
 
 ### E1-2 - the bench's town map and walkers (LOW, FIXED)
 
