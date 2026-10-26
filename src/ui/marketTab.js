@@ -73,6 +73,7 @@ import { pictureNode } from './menu/menuGlyphs.js';   // MENU-ORDER: a row's pic
 import { t, currentLocale } from '../systems/textManager.js';   // BOARD-SIFT: the pages' and the orders' words in the player's language
 import { mintPiece, asMinted } from '../systems/smithItems.js';   // AUDIT BOARD-SIFT: a recipe's piece minted as its row mints it; AUDIT MAKER-RARE B2: and whether a piece still is
 import { itemLongName } from '../systems/item/itemInfo.js';
+import { isStolen, stolenTag, stolenLine } from '../systems/stolenGoods.js';   // RPT1026-LEDGERLAW: a stolen piece said so where another player buys it
 import { typedField } from './workSift.js';   // AUDIT BOARD-SIFT: a search read once its word is whole
 
 /** @param {string} tag @param {string|null} [cls] @param {string|null} [text] */
@@ -591,6 +592,7 @@ export function createMarketTab(m, ui) {
       el('span', 'market-quality', wearText(wearOf(it)) ?? 'whole'),
       el('span', 'market-price', priceText(row.price, row.currency)),
       el('span', 'market-where', `${where(row)}${roadText(row)}`));
+    if (isStolen(it)) b.append(el('span', 'market-stolen', stolenTag()));   // RPT1026-LEDGERLAW: the theft's mark rides the listing
     if (row.mine) b.append(el('span', 'market-mine', 'yours'));
     if (row.reports != null) b.append(el('span', 'market-mod', plural(row.reports, 'report')));
     return b;
@@ -623,6 +625,7 @@ export function createMarketTab(m, ui) {
       bar.append(n);
     }
     refresh();
+    if (row.kind === 'item' && isStolen(row.item)) bar.append(el('p', 'market-stolenline', stolenLine()));   // RPT1026-LEDGERLAW: what buying it means
     bar.append(ask, buy);
     if (!row.mine) bar.append(button('market-report', 'Report', () => act(() => m.book.report(row.id), 'Reported. A moderator will look at it.')));
     if (row.reports != null) bar.append(button('market-remove', 'Remove', () => act(() => m.book.remove(row.id), 'Removed. Its goods go back to its seller.')));
