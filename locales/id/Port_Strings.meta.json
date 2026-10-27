@@ -1334,6 +1334,11 @@
   "tr": "288f2e9b524a",
   "by": "claude-in-session"
  },
+ "account.refusal.decorLapsed": {
+  "en": "18bf013073c6",
+  "tr": "65fe969b4017",
+  "by": "claude-in-session"
+ },
  "account.refusal.decorOps": {
   "en": "045c0e54b660",
   "tr": "ebcb88f39411",
@@ -4442,6 +4447,11 @@
  "captain.tip.take": {
   "en": "d5a19996f0e8",
   "tr": "7d8efc003208",
+  "by": "claude-in-session"
+ },
+ "cards.cashout.banked": {
+  "en": "dbeb3e2bdded",
+  "tr": "9ba6b9e334d9",
   "by": "claude-in-session"
  },
  "cards.iliac.foe.committed": {
@@ -14092,6 +14102,11 @@
  "inventory.quest.word": {
   "en": "1fac2a6125f4",
   "tr": "37484e4a3c20",
+  "by": "claude-in-session"
+ },
+ "inventory.store.chestAlone": {
+  "en": "ff8f623bd887",
+  "tr": "d269c23c4532",
   "by": "claude-in-session"
  },
  "inventory.store.chestShut": {

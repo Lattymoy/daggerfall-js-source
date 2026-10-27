@@ -1139,6 +1139,11 @@
   "tr": "9a34fb5a7320",
   "by": "claude-in-session"
  },
+ "account.refusal.decorLapsed": {
+  "en": "18bf013073c6",
+  "tr": "b3236e0d20f3",
+  "by": "claude-in-session"
+ },
  "account.refusal.decorRate": {
   "en": "c2a0d6f99c79",
   "tr": "afd30297a6d9",
@@ -3042,6 +3047,11 @@
  "broker.owed": {
   "en": "d66d34978dca",
   "tr": "b0b6332e68d3",
+  "by": "claude-in-session"
+ },
+ "cards.cashout.banked": {
+  "en": "dbeb3e2bdded",
+  "tr": "e63010d65c6c",
   "by": "claude-in-session"
  },
  "chair.bench": {
@@ -5777,6 +5787,11 @@
  "holdings.wagon.boons.sound": {
   "en": "71476c661351",
   "tr": "bcc5e42442ac",
+  "by": "claude-in-session"
+ },
+ "inventory.store.chestAlone": {
+  "en": "ff8f623bd887",
+  "tr": "be4b88b3901e",
   "by": "claude-in-session"
  },
  "items.gold.sharedFull": {
