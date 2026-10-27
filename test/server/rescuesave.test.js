@@ -956,18 +956,19 @@ test('STRANDED: the player\'s own delete takes the set-aside copy with the chara
   assert.equal(readStranded(dev.storage, c.id), null);
 });
 
-test('STRANDED with SEAT-SAVES: a tab still playing when another device joined its character is refused `lease` at its next save - its copy kept for a join the record still waits at, but not marked: its own device\'s next join, past the other device\'s save, drops it and says nothing', async () => {
+test('STRANDED with SEAT-SAVES: a tab with nothing unsent when another device joined its character is refused `lease` at its next save - its copy, the save that last landed, kept for a join the record still waits at, but not marked: its own device\'s next join, past the other device\'s save, drops it and says nothing', async () => {
   const acct = await account();
   const dev = acct.device();
   const c = await joined(acct, dev);
+  assert.equal((await c.session.checkpoint(JSON.stringify(save(16, 3)))).ok, true);
   const other = acct.device();
   const theirs = await openRealmBoot({ io: other.io, id: c.id });   // the browser joins while the desktop app still plays
   const refused = await c.session.checkpoint(JSON.stringify(save(16, 3)));
   assert.equal(refused.ok, false);
   assert.deepEqual(c.lost, ['lease'], 'to the door');
-  // PIN MOVED (the STRANDED false positive): the copy holds only the moments since the other device's join - the seat's
-  // loss saves at once - so it is not marked as a save the realm missed
-  assert.deepEqual({ ...readUnsent(dev.storage, c.id), at: null }, { seq: 1, text: JSON.stringify(save(16, 3)), at: null, missed: false }, 'kept, unmarked');
+  // PIN MOVED (the STRANDED false positive): the copy is the save the realm took, so it is not marked as one it missed.
+  // A copy that differs holds unsent play and stays marked (the next test)
+  assert.deepEqual({ ...readUnsent(dev.storage, c.id), at: null }, { seq: 2, text: JSON.stringify(save(16, 3)), at: null, missed: false }, 'kept, unmarked');
   await sessionOf(other, c.id, theirs).checkpoint(JSON.stringify(save(13, 9)));
   const boot = await openRealmBoot({ io: dev.io, id: c.id });
   assert.equal(boot.snap.level, 13, 'the realm\'s save is played');
@@ -1053,4 +1054,30 @@ test('STRANDED: a device out of room drops its set-aside saves before it fails t
   assert.equal(readUnsent(dev.storage, j.id)?.text, JSON.stringify(save(30, 5)), 'the unsaved play is kept');
   assert.equal(readStranded(dev.storage, c.id), null, 'the set-aside save made room for it');
   dev.storage.setItem = setItem;
+});
+
+test('STRANDED: a copy refused `lease` that differs from the last save to land stays marked missed - the next join sets it aside, never drops it', async () => {
+  const acct = await account();
+  const dev = acct.device();
+  const c = await joined(acct, dev);
+  assert.equal((await c.session.checkpoint(JSON.stringify(save(13, 1)))).ok, true);
+  assert.equal((await realmLeave(dev.io, c.id, c.row().lease, { keepalive: true })).ok, true);   // the seat is taken
+  assert.deepEqual(await c.session.checkpoint(JSON.stringify(save(14, 2))), { ok: false, error: 'lease' });
+  assert.equal(readUnsent(dev.storage, c.id)?.missed, true, 'it holds play since the last put that landed');
+});
+
+test('STRANDED: a full device keeps every set-aside save when it still cannot keep the unsent copy', async () => {
+  const acct = await account();
+  const dev = acct.device();
+  const c = await strandedOn(acct, dev);
+  const j = await joined(acct, dev);
+  const before = readStranded(dev.storage, c.id);
+  const setItem = dev.storage.setItem;
+  dev.storage.setItem = (k, v) => { if (String(k).startsWith(REALM_UNSENT_PREFIX) && !String(k).endsWith('.at')) throw new DOMException('full', 'QuotaExceededError'); setItem(k, v); };
+  dev.door.plan = ['offline'];
+  await j.session.checkpoint(JSON.stringify(save(30, 5)));
+  j.session.time.fire();
+  dev.storage.setItem = setItem;
+  assert.equal(readUnsent(dev.storage, j.id), null, 'the unsent copy did not fit');
+  assert.deepEqual(readStranded(dev.storage, c.id), before, 'the set-aside save is still there');
 });

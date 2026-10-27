@@ -466,13 +466,27 @@ function setYieldingStranded(/** @type {any} */ storage, /** @type {string} */ k
   } catch (full) {
     if (!strandedIds(storage).length) throw full;
   }
-  forgetStranded(storage, id);
+  // the copies dropped are put back when even that is not room enough: the write fails, and they hold play the realm may lack
+  const dropped = [];
+  const drop = (/** @type {string} */ stranded) => {
+    const at = storage.getItem(strandedAtKey(stranded)), held = storage.getItem(strandedKey(stranded));
+    if (at != null && held != null) dropped.push([stranded, at, held]);
+    forgetStranded(storage, stranded);
+  };
+  drop(id);
   try {
     storage.setItem(key, text);
     return;
   } catch { /* still no room: the others go too */ }
-  for (const other of strandedIds(storage)) forgetStranded(storage, other);
-  storage.setItem(key, text);
+  for (const other of strandedIds(storage)) drop(other);
+  try {
+    storage.setItem(key, text);
+  } catch (full) {
+    for (const [stranded, at, held] of dropped) {
+      try { storage.setItem(strandedKey(stranded), held); storage.setItem(strandedAtKey(stranded), at); } catch { /* storage away */ }
+    }
+    throw full;
+  }
 }
 /** A join found the device's copy behind the record it joined: set aside when a put of it failed and it is not the
  *  save the realm holds now (`serviceText`), else dropped. Answers whether it was set aside. */
@@ -714,12 +728,12 @@ export function createRealmSession({
         if (REALM_LOST.includes(r.error) || r.error === 'seq' || !putMayClear(r)) {
           // RESCUE-SAVE: kept for the next join to decide (another tab took the lease, the account signed out), or a copy
           // no join may play, dropped
-          // STRANDED: a `lease` refusal alone does not mark the copy missed. Another device joined the character, and this
-          // tab saved at the seat's loss, so the copy holds only the moments since that join - set aside, it said "may
-          // hold progress" after every ordinary switch of device with the app left open. A copy a put missed before stays
-          // marked: it holds play the realm never took.
+          // STRANDED: a `lease` refusal marks the copy missed only when it differs from the last save that landed. A copy
+          // identical to it holds nothing the realm lacks (an idle tab at the seat's loss), so it is not set aside as one
+          // that "may hold progress". Any other copy holds play since the last landed put, up to a checkpoint's worth, and
+          // stays marked: the next join sets it aside unless the realm already holds it.
           if (UNSENT_KEPT_ON.includes(r.error)) {
-            if (r.error !== 'lease') { markMissed(); revise({ missed: true }); }
+            if (r.error !== 'lease' || job.text !== landedText) { markMissed(); revise({ missed: true }); }
             keepNow();
           } else dropCopy();
           lose(r.error); last = { ok: false, error: r.error }; answer(job, last); break;

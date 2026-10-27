@@ -155,8 +155,17 @@
   {
     "name": "STRANDED-lease-alone-marks-missed",
     "file": "src/systems/realmSaves.js",
-    "old": "            if (r.error !== 'lease') { markMissed(); revise({ missed: true }); }",
+    "old": "            if (r.error !== 'lease' || job.text !== landedText) { markMissed(); revise({ missed: true }); }",
     "new": "            { markMissed(); revise({ missed: true }); }",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "STRANDED-lease-copy-never-marked",
+    "file": "src/systems/realmSaves.js",
+    "old": "            if (r.error !== 'lease' || job.text !== landedText) { markMissed(); revise({ missed: true }); }",
+    "new": "            if (r.error !== 'lease') { markMissed(); revise({ missed: true }); }",
     "tests": [
       "test/server/rescuesave.test.js"
     ]
