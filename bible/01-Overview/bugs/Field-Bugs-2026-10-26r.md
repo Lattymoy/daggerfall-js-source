@@ -770,6 +770,24 @@ AUTOHOLD-AUDIT-the-review-promised; `fb1001_market.json` MARKET-ANY-book-the-rep
 -the-repeat-without-the-record-s-sequence and -the-batch-s-catch-answering-seq, each aimed at the buy's own line since
 collectGood grew its twin; `fieldbugs1012.json` RING-WARN-the-strikes-unsaid; `int4_int5.json` INT3-the-lift-unsaid.
 
+AUDIT RPT1026 (lane D, MARKET; read cold over the real Worker, the realm session, realmGoldAct and the vendor host).
+Three doors the sweep still missed, each fixed:
+- D1. A press's `soon` asked while a sweep was under way was cancelled by that sweep's own clock (`after` decides the
+  clock), and the sweep's road had been read before the press - so the piece the press said "will reach it on its own"
+  waited for the next join. The poke is kept and swept for once the sweep under way ends (`marketArrivals.js` `poked`,
+  Home.md ASYNC NEVER DROPS).
+- D2. A courier the service still has on the road, past its arrival by a clock running ahead of the service's, was
+  asked every ARRIVALS_LATE_MS for the courier's whole road (an hour ahead and a fifteen-minute courier: 181 reads). It
+  is asked ARRIVALS_AGAIN_MS on; a clock on time keeps the slack.
+- D3. A take-back kept unanswered (its first asking never reached the service) landed on a later settle - the stall's
+  opening sweep - and that settle never collected the piece it sent back: off the stall and in nobody's pack until
+  another settle. The settle collects a kept cancel's delivery on the answer that names it, as VENDOR-LOST's kept buy's
+  (`marketBook.js` settle); `market-gone` there is a collect another door made, said as nothing.
+- D4 (record). STORES-SAID's module, its pin and the arc page quoted #242's words (in translation); paraphrased.
+Pinned by `test/net/audit_rpt1026_market.test.js` (5: D1's two, D2's and D3's first fail at the batch head; D3's second
+holds its `market-gone` branch), mutants
+`tools/mutants/audit_rpt1026_market.json` (8, all dead). The client alone: no service, relay or migration changed.
+
 ### RPT1026-MARKET COLLECT-LANDED (249, 246) - `server-account/src/market.js`, `src/net/marketBook.js`, `src/net/accountClient.js`
 
 WHAT THE PORT DID. VENDOR-LOST (FIELD BUGS 2026-10-25g) answered a landed buy's repeat with the record's sequence, and

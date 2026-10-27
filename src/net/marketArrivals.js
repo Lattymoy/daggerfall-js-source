@@ -75,6 +75,10 @@ export function createMarketArrivals({ book, settle, ready = () => true, later =
   /** @type {Promise<any> | null} */
   let sweeping = null;
   let tries = 0, shut = false;
+  /** AUDIT RPT1026 D1: a `soon` asked while a sweep is under way - that sweep's road may have been read before the press
+   *  that asked it, and its own clock (`after`) cancelled the poke's sweep: the press said the piece "will reach it on its
+   *  own" and none came this session. Kept, and swept for once the sweep under way ends (Home.md ASYNC NEVER DROPS). */
+  let poked = false;
   const schedule = (/** @type {number} */ ms) => { cancel?.(); cancel = later(tick, Math.max(0, Math.round(ms))); };
   const me = () => { try { return book?.me?.() ?? null; } catch { return null; } };
   /** This character's pieces on the road - a crafted piece or a piece from a pack, bought or come back. */
@@ -92,7 +96,11 @@ export function createMarketArrivals({ book, settle, ready = () => true, later =
       if (++tries <= ARRIVALS_TRIES) { schedule(ARRIVALS_AGAIN_MS); return; }
     } else tries = 0;
     const nowS = now() / 1000;
-    const due = mine().filter((x) => !x.ready && Number.isFinite(Number(x.arrivesAt))).map((x) => (Number(x.arrivesAt) - nowS) * 1000 + ARRIVALS_LATE_MS);
+    // AUDIT RPT1026 D2: a piece this clock has past its arrival and the slack while the service's read, just made, still
+    // has it on the road is this clock running ahead of the service's - asked again ARRIVALS_AGAIN_MS on. It was asked
+    // every ARRIVALS_LATE_MS for the courier's whole road (an hour ahead, a fifteen-minute courier: 181 reads)
+    const due = mine().filter((x) => !x.ready && Number.isFinite(Number(x.arrivesAt))).map((x) => (Number(x.arrivesAt) - nowS) * 1000 + ARRIVALS_LATE_MS)
+      .map((ms) => (ms > 0 ? ms : ARRIVALS_AGAIN_MS));
     if (due.length && tries <= ARRIVALS_TRIES) schedule(Math.min(ARRIVALS_WAIT_MAX_MS, Math.max(ARRIVALS_LATE_MS, Math.min(...due))));
   }
 
@@ -110,6 +118,8 @@ export function createMarketArrivals({ book, settle, ready = () => true, later =
         s = { ok: false, error: 'server', settled: 0, refused: [] };
       }
       try { after(road, s); } catch { /* a sweep's clock is no reason to fail its answer */ }
+      if (poked && !shut) schedule(ARRIVALS_SOON_MS);   // AUDIT RPT1026 D1: the press's sweep, still owed
+      poked = false;
       return s ?? { ok: false, error: 'server', settled: 0, refused: [] };
     })().finally(() => { sweeping = null; });
     return sweeping;
@@ -127,6 +137,6 @@ export function createMarketArrivals({ book, settle, ready = () => true, later =
   return {
     start() { if (!cancel && !shut) schedule(ARRIVALS_FIRST_MS); },
     sweep,
-    soon() { tries = 0; if (!shut) schedule(ARRIVALS_SOON_MS); },
+    soon() { tries = 0; if (sweeping) poked = true; if (!shut) schedule(ARRIVALS_SOON_MS); },   // AUDIT RPT1026 D1: `poked`
   };
 }

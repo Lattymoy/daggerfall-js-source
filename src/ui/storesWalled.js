@@ -9,8 +9,9 @@ import { LOOSE_ORIGIN } from '../net/bagLaw.js';
 /** How many materials one line names; the rest are counted. */
 export const WALLED_SAID = 8;
 
-/** RPT1026-MARKET STORES-SAID (private reports 2026-10-26: "new resources such as arcane essence and cured leather are not
- *  counted for selling on the market ... and not shown when moving them to the guild storage"): THE STORES' UNITS A
+/** RPT1026-MARKET STORES-SAID (private reports 2026-10-26: the Stores' newer materials, Arcane Essence and Cured Leather
+ *  among them, missing from the market's List form and from the guild Stores' Put in - AUDIT RPT1026 D4: paraphrased):
+ *  THE STORES' UNITS A
  *  LISTING IN `currency` MAY NOT TAKE - a silver listing's gold-bought ones (GOLD-MARKET's wall, Professions-Arc 10.8) and a
  *  gold listing's silver-bought ones, and either's loose ones (BAG-CRAFT A1: what a station's put-in brought from the
  *  pack, and what a station made of it - net/bagLaw.js LOOSE_ORIGIN, FB1020h ESSENCE-LOOSE). The List form offered only

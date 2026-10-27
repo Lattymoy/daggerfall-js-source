@@ -83,8 +83,8 @@
   {
     "name": "RPT1026-MARKET-ARRIVE-soon-left-uncounted",
     "file": "src/net/marketArrivals.js",
-    "old": "    soon() { tries = 0; if (!shut) schedule(ARRIVALS_SOON_MS); },",
-    "new": "    soon() { if (!shut) schedule(ARRIVALS_SOON_MS); },",
+    "old": "    soon() { tries = 0; if (sweeping) poked = true;",
+    "new": "    soon() { if (sweeping) poked = true;",
     "tests": [
       "test/net/rpt1026_market_arrive.test.js"
     ]
