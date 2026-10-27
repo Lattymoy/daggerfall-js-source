@@ -94,6 +94,7 @@ export const BOUNTY_REFUSALS = Object.freeze({
  *   dungeonAt?: (x:number, y:number) => (string|null),   // the game's own dungeon on this pixel, by name
  *   graveyardAt?: (x:number, y:number) => (string|null),   // GRAVEYARD-BOUNTY: the graveyard on this pixel, by name - its hunt stands outside it
  *   placesVersion?: () => string,   // LAIR-WORLD: the stamp of what the places past the Bay stand on - a town's ground and dungeons kept under it
+ *   wildAt?: (px:number, py:number) => (Array<[number, number]>|null),   // QUARRY-WORLD: the land's own wild about a town (bountyQuarry.js bountyLandWild)
  *   playerPixel: () => ({x:number, y:number} | null),     // outdoors: my pixel; elsewhere null
  *   dungeonPixel?: () => ({x:number, y:number} | null),   // in a dungeon: its entrance's pixel; elsewhere null
  *   canStand: () => boolean,                 // outdoors, awake, not on a journey, not in the water
@@ -150,10 +151,13 @@ export function createBountyHost(deps) {
     if (!d) dungeonsCache.set(k, d = bountyDungeons(px, py, deps.dungeonAt, deps.graveyardAt));
     return d;
   };
+  /** QUARRY-WORLD: the land's own wild about a town (systems/bounty/bountyQuarry.js, the host's `wildAt` - kept there), the
+   *  beasts its board hunts; none handed, the ladder's. */
+  const wildFor = (px, py) => { try { return deps.wildAt?.(px, py) ?? null; } catch { return null; } };
   const postingOf = (id) => {
     const b = parseBountyId(id);
     if (!b) return null;
-    return postingFromId(id, { name: deps.townName(b.px, b.py), sites: sitesFor(b.px, b.py), dungeons: dungeonsFor(b.px, b.py) });
+    return postingFromId(id, { name: deps.townName(b.px, b.py), sites: sitesFor(b.px, b.py), dungeons: dungeonsFor(b.px, b.py), wild: wildFor(b.px, b.py) });
   };
   const social = () => { try { return deps.social?.() ?? null; } catch { return null; } };
   const repaint = () => { try { boardView?.repaint?.(); } catch { /* the window's own problem */ } };
@@ -240,7 +244,7 @@ export function createBountyHost(deps) {
   function boardRows(town) {
     const now = deps.now();
     const day = bountyDay(now);
-    const posts = boardPostings({ day, px: town.px, py: town.py, name: town.name, level: deps.level(), sites: sitesFor(town.px, town.py), dungeons: dungeonsFor(town.px, town.py) });
+    const posts = boardPostings({ day, px: town.px, py: town.py, name: town.name, level: deps.level(), sites: sitesFor(town.px, town.py), dungeons: dungeonsFor(town.px, town.py), wild: wildFor(town.px, town.py) });
     const mates = matesOnBoard();
     return posts.map((p) => {
       const held = ledger.held.find((h) => parseBountyId(h.id)?.slotKey === p.slotKey) ?? null;

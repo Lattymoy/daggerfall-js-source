@@ -3984,6 +3984,286 @@
   "tr": "deb28d6c448e",
   "by": "claude-in-session"
  },
+ "bounty.foes.ancientLiches": {
+  "en": "99c8c15cc6b8",
+  "tr": "5b38fe49dd06",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.bats": {
+  "en": "4ffae2ebb579",
+  "tr": "dbe4b89c2672",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.bloodSpiders": {
+  "en": "04ddd18ece9f",
+  "tr": "8d49850a3d1e",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.boars": {
+  "en": "f9247ce272c9",
+  "tr": "2931036f0745",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.centaurs": {
+  "en": "e32c91a9fd2b",
+  "tr": "7e89cf6f4cf7",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.centurionSpheres": {
+  "en": "0f840ba82d52",
+  "tr": "6078be90d995",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.daedraSeducers": {
+  "en": "6f04eadfadab",
+  "tr": "888ac8c9443d",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.daedroths": {
+  "en": "ca2e45845e79",
+  "tr": "ca2e45845e79",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.dogs": {
+  "en": "83f3dbc5b352",
+  "tr": "b75cbd3fd762",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.dragonlings": {
+  "en": "08b9d04b3b46",
+  "tr": "b78c3a44c85f",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.fadedGhosts": {
+  "en": "146a53b724c0",
+  "tr": "5d0352391c01",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.fireAtronachs": {
+  "en": "f4b09d991fc1",
+  "tr": "55d11ea78a69",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.fireDaedra": {
+  "en": "1e5eb266cc2c",
+  "tr": "b92bfcfebc58",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.fleshAtronachs": {
+  "en": "188d1c6fb1ea",
+  "tr": "ff6f81cbe5ad",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.frostDaedra": {
+  "en": "6ae16e516108",
+  "tr": "f003c1db8d8c",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.gargoyles": {
+  "en": "dc1e16c930d7",
+  "tr": "e5944b5d36a8",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.ghosts": {
+  "en": "3f28c57b933b",
+  "tr": "a393fda7377f",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.ghouls": {
+  "en": "a2cfa59511e5",
+  "tr": "9fdbe2f8d307",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.giantBats": {
+  "en": "3544e954f4b6",
+  "tr": "72e09396a70e",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.giantScorpions": {
+  "en": "112e76d955b4",
+  "tr": "c9b885ca5b86",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.giants": {
+  "en": "97c1dd4dbe26",
+  "tr": "79b078413793",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.gloomWraiths": {
+  "en": "cb97e760e7a7",
+  "tr": "4414e67d1579",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.goblins": {
+  "en": "0b0db9fefc93",
+  "tr": "0b0db9fefc93",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.grizzlyBears": {
+  "en": "765636b8fdf0",
+  "tr": "a68ae3d923df",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.harpies": {
+  "en": "edcecc9c9a48",
+  "tr": "a665b72c5ebb",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.iceAtronachs": {
+  "en": "4782d781a349",
+  "tr": "74ec14bec440",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.imps": {
+  "en": "b3b69c562c8f",
+  "tr": "bf638a51ad2b",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.ironAtronachs": {
+  "en": "c990e72fdeb3",
+  "tr": "dc030bb06d1b",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.landDreughs": {
+  "en": "166fbb71fcd1",
+  "tr": "e9e2b02da040",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.liches": {
+  "en": "1c22eefd73aa",
+  "tr": "1c22eefd73aa",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.lizardMen": {
+  "en": "565f2d6ec893",
+  "tr": "603f4ae6c36f",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.lizardWarriors": {
+  "en": "9f831b65e066",
+  "tr": "6885d0a36891",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.medusas": {
+  "en": "ad48bb9543d0",
+  "tr": "ad48bb9543d0",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.minotaurs": {
+  "en": "7f95351dc266",
+  "tr": "57b5d259d3ca",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.mountainLions": {
+  "en": "cb0d9e150016",
+  "tr": "fca4611efe8d",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.mudcrabs": {
+  "en": "14d9f8e034e9",
+  "tr": "30f5c1843140",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.mummies": {
+  "en": "befb68f474e3",
+  "tr": "c4dd7bb995d9",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.nymphs": {
+  "en": "33135e788b81",
+  "tr": "37ec080a8443",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.ogres": {
+  "en": "2ea63bd42c83",
+  "tr": "868b9416007a",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.orcSergeants": {
+  "en": "30e771afabc9",
+  "tr": "c58def425451",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.orcShamans": {
+  "en": "b221c2b8f409",
+  "tr": "e7d5387cc6de",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.orcWarlords": {
+  "en": "d46090736f51",
+  "tr": "191474e1274e",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.orcs": {
+  "en": "b153089b44b5",
+  "tr": "b153089b44b5",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.rats": {
+  "en": "a4e95dc4f015",
+  "tr": "e24a6b42dc33",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.sabretoothTigers": {
+  "en": "84ec624ddc55",
+  "tr": "d9c6e8a1c3b4",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.scamps": {
+  "en": "dda64bd9f7ba",
+  "tr": "dda64bd9f7ba",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.skeletalSoldiers": {
+  "en": "d90dbb544af1",
+  "tr": "8e3fb9b9f1b3",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.skeletalWarriors": {
+  "en": "ea5241ad6842",
+  "tr": "0cee35e6cbcd",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.snowWolves": {
+  "en": "c0a70a4ac47c",
+  "tr": "ac506c49ed39",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.spiders": {
+  "en": "225ef3093980",
+  "tr": "870f39273bb8",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.spriggans": {
+  "en": "d217ee7d2a04",
+  "tr": "d217ee7d2a04",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.trolls": {
+  "en": "910db9d3ccc4",
+  "tr": "910db9d3ccc4",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.willOWisps": {
+  "en": "e34e5430f9be",
+  "tr": "a6d168315261",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.wolves": {
+  "en": "f9ddd07645ea",
+  "tr": "defc56be020a",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.wraiths": {
+  "en": "923d0d61c0ca",
+  "tr": "7248aeda24af",
+  "by": "claude-in-session"
+ },
+ "bounty.foes.zombies": {
+  "en": "4711f7565028",
+  "tr": "44d59b7a3257",
+  "by": "claude-in-session"
+ },
  "broker.owed": {
   "en": "d66d34978dca",
   "tr": "2bf387fb3146",

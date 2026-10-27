@@ -756,6 +756,7 @@ import { pingSubject, pingCrowd } from '../systems/party/partyPingCaption.js';  
 import { PING_TRAVEL_M } from '../systems/party/partyPing.js';   // PARTY-PING: how far the travel view's look reaches
 import { createBountyFarms, farmSpotLocal, pickFarm } from './bountyFarms.js';   // BOUNTY-FARM: a farm on a farm bounty's pixel, while it is held
 import { questBoardIndices } from '../systems/bounty/bountyBoard.js';   // BOUNTY1: which of a town's boards post bounties (half)
+import { bountyLandWild } from '../systems/bounty/bountyQuarry.js';   // QUARRY-WORLD: the land's own wild about a board's town
 import { createLairDoor } from './lairHost.js';   // RVN7, LAIR-DOOR: a revenant's lair, an enterable dungeon in the boards' ring
 import { createBountyOverlay, closeBountyDoor, bountyDoorOpen } from '../ui/bounty/bountyDoor.js';   // BOUNTY1: the board's window and the payday notice
 import { isQualifyingThreatState } from '../systems/horse/horseFollow.js';   // HCC: CollectThreats' qualification, the mod's own five-term test
@@ -26440,6 +26441,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     entity: () => playerEntity,
     townName: (px, py) => String(locationIndex.get(`${px},${py}`)?.name ?? ''),
     regionAt: (px, py) => maps.getRegionIndexAt(px, py),   // REP4: the board's region, for the law's thanks
+    wildAt: bountyLandWild(maps),   // QUARRY-WORLD: the board's beasts the land's own wild (systems/bounty/bountyQuarry.js)
     // the ground a pack may stand on: land (the height bytes say where the sea is, as the gate's scan reads them), no
     // location of the game's own on the pixel, no spawned dungeon - every client's map files answer alike
     // LAIR-WORLD: past the Bay, no place the build stands there (scenes/tamrielPlacesHost.js placeOnPixel); SPAWN-WORLD: nor,

@@ -20,6 +20,7 @@
 
 import { MINUTES_PER_DAY } from '../gameDate.js';
 import { BOUNTY_POSE_MAX, worldPixelOk } from '../../net/wire.js';   // LAIR-WORLD: a town's pixel is the world's, the Bay's and past it
+import { t } from '../textManager.js';   // QUARRY-WORLD: the beasts' words in the player's language
 export { MINUTES_PER_DAY, BOUNTY_POSE_MAX };
 
 /** The per-mod save slot's vendor name (systems/modSaveData.js). */
@@ -45,26 +46,111 @@ export const BOUNTY_LEVEL_MAX = 99;
 
 /** The ladder: which beasts a level hunts. Ids are ENEMY_BASICS rows; each list runs weakest to strongest (the
  *  15+ purse reads the rank). The werebeasts are left off - a bounty is not a way to catch a curse. (Beasts that
- *  want a silver-or-better blade stay on: the server runs without that rule - Mac, 2026-09-28.) */
+ *  want a silver-or-better blade stay on: the server runs without that rule - Mac, 2026-09-28.) QUARRY-WORLD
+ *  (2026-10-27): a tier's `levels` are its own beasts' (their levels as Daggerfall has them, the strongest tier's open
+ *  above) - the band a board hunts the land's own wild in (bountyQuarry); the ladder's beasts are what a board posts
+ *  where the land's wild is not known. */
 export const BOUNTY_TIERS = Object.freeze([
-  Object.freeze({ min: 1, max: 3, foes: Object.freeze([0, 3, 6]) }),            // Rat, Giant Bat, Spider
-  Object.freeze({ min: 4, max: 5, foes: Object.freeze([4, 5, 7]) }),            // Grizzly Bear, Sabretooth Tiger, Orc
-  Object.freeze({ min: 6, max: 10, foes: Object.freeze([8, 12, 13, 15, 17]) }),   // Centaur, Orc Sergeant, Harpy, Skeletal Warrior, Zombie
-  Object.freeze({ min: 11, max: 14, foes: Object.freeze([16, 19, 20, 21]) }),   // Giant, Mummy, Giant Scorpion, Orc Shaman
-  Object.freeze({ min: 15, max: Infinity, foes: Object.freeze([22, 23, 24, 27]) }),   // Gargoyle, Wraith, Orc Warlord, Daedroth
+  Object.freeze({ min: 1, max: 3, foes: Object.freeze([0, 3, 6]), levels: Object.freeze([1, 4]) }),            // Rat, Giant Bat, Spider
+  Object.freeze({ min: 4, max: 5, foes: Object.freeze([4, 5, 7]), levels: Object.freeze([4, 5]) }),            // Grizzly Bear, Sabretooth Tiger, Orc
+  Object.freeze({ min: 6, max: 10, foes: Object.freeze([8, 12, 13, 15, 17]), levels: Object.freeze([5, 10]) }),   // Centaur, Orc Sergeant, Harpy, Skeletal Warrior, Zombie
+  Object.freeze({ min: 11, max: 14, foes: Object.freeze([16, 19, 20, 21]), levels: Object.freeze([10, 13]) }),   // Giant, Mummy, Giant Scorpion, Orc Shaman
+  Object.freeze({ min: 15, max: Infinity, foes: Object.freeze([22, 23, 24, 27]), levels: Object.freeze([14, Infinity]) }),   // Gargoyle, Wraith, Orc Warlord, Daedroth
 ]);
 
-/** A board's words for a pack of each beast. */
-export const BOUNTY_PLURALS = Object.freeze({
-  0: 'Rats', 3: 'Giant Bats', 6: 'Spiders', 4: 'Grizzly Bears', 5: 'Sabretooth Tigers', 7: 'Orcs',
-  8: 'Centaurs', 12: 'Orc Sergeants', 13: 'Harpies', 19: 'Mummies', 15: 'Skeletal Warriors', 17: 'Zombies', 16: 'Giants', 20: 'Giant Scorpions',
-  21: 'Orc Shamans', 22: 'Gargoyles', 23: 'Wraiths', 24: 'Orc Warlords', 27: 'Daedroths',
+/** A board's words for a pack of each beast, in the player's language, and the kind of trouble it is - which of the
+ *  stories below it is told in. QUARRY-WORLD (2026-10-27): every beast the land's own wild holds (the encounter law's
+ *  day and night tables - DFU's climates on the Bay, TESA-BIOME's zones past it - with Daggerfall Enemy Expansion's or
+ *  without: bountyQuarry), where it was the ladder's nineteen alone; routed through the text core (L10N4), its words
+ *  before English-only. No werebeast and no vampire has words: a bounty is not a way to catch a curse. */
+const FOES = Object.freeze({
+  0: ['vermin', () => t('bounty.foes.rats', 'Rats')],
+  1: ['dread', () => t('bounty.foes.imps', 'Imps')],
+  2: ['beast', () => t('bounty.foes.spriggans', 'Spriggans')],
+  3: ['vermin', () => t('bounty.foes.giantBats', 'Giant Bats')],
+  4: ['beast', () => t('bounty.foes.grizzlyBears', 'Grizzly Bears')],
+  5: ['beast', () => t('bounty.foes.sabretoothTigers', 'Sabretooth Tigers')],
+  6: ['vermin', () => t('bounty.foes.spiders', 'Spiders')],
+  7: ['orc', () => t('bounty.foes.orcs', 'Orcs')],
+  8: ['beast', () => t('bounty.foes.centaurs', 'Centaurs')],
+  10: ['beast', () => t('bounty.foes.nymphs', 'Nymphs')],
+  12: ['orc', () => t('bounty.foes.orcSergeants', 'Orc Sergeants')],
+  13: ['beast', () => t('bounty.foes.harpies', 'Harpies')],
+  15: ['undead', () => t('bounty.foes.skeletalWarriors', 'Skeletal Warriors')],
+  16: ['giant', () => t('bounty.foes.giants', 'Giants')],
+  17: ['undead', () => t('bounty.foes.zombies', 'Zombies')],
+  18: ['undead', () => t('bounty.foes.ghosts', 'Ghosts')],
+  19: ['undead', () => t('bounty.foes.mummies', 'Mummies')],
+  20: ['vermin', () => t('bounty.foes.giantScorpions', 'Giant Scorpions')],
+  21: ['orc', () => t('bounty.foes.orcShamans', 'Orc Shamans')],
+  22: ['dread', () => t('bounty.foes.gargoyles', 'Gargoyles')],
+  23: ['undead', () => t('bounty.foes.wraiths', 'Wraiths')],
+  24: ['orc', () => t('bounty.foes.orcWarlords', 'Orc Warlords')],
+  25: ['dread', () => t('bounty.foes.frostDaedra', 'Frost Daedra')],
+  26: ['dread', () => t('bounty.foes.fireDaedra', 'Fire Daedra')],
+  27: ['dread', () => t('bounty.foes.daedroths', 'Daedroths')],
+  29: ['dread', () => t('bounty.foes.daedraSeducers', 'Daedra Seducers')],
+  32: ['undead', () => t('bounty.foes.liches', 'Liches')],
+  33: ['undead', () => t('bounty.foes.ancientLiches', 'Ancient Liches')],
+  34: ['beast', () => t('bounty.foes.dragonlings', 'Dragonlings')],
+  35: ['dread', () => t('bounty.foes.fireAtronachs', 'Fire Atronachs')],
+  36: ['dread', () => t('bounty.foes.ironAtronachs', 'Iron Atronachs')],
+  37: ['dread', () => t('bounty.foes.fleshAtronachs', 'Flesh Atronachs')],
+  38: ['dread', () => t('bounty.foes.iceAtronachs', 'Ice Atronachs')],
+  40: ['beast', () => t('bounty.foes.dragonlings', 'Dragonlings')],   // the dragonling's second look, the same beast
+  // Daggerfall Enemy Expansion's (systems/enemyExpansion/dexNames.js names each one)
+  256: ['orc', () => t('bounty.foes.goblins', 'Goblins')],
+  258: ['orc', () => t('bounty.foes.lizardMen', 'Lizard Men')],
+  259: ['orc', () => t('bounty.foes.lizardWarriors', 'Lizard Warriors')],
+  260: ['vermin', () => t('bounty.foes.bats', 'Bats')],
+  261: ['dread', () => t('bounty.foes.medusas', 'Medusas')],
+  262: ['beast', () => t('bounty.foes.wolves', 'Wolves')],
+  263: ['beast', () => t('bounty.foes.snowWolves', 'Snow Wolves')],
+  266: ['undead', () => t('bounty.foes.skeletalSoldiers', 'Skeletal Soldiers')],
+  267: ['beast', () => t('bounty.foes.dogs', 'Dogs')],
+  269: ['giant', () => t('bounty.foes.minotaurs', 'Minotaurs')],
+  271: ['vermin', () => t('bounty.foes.bloodSpiders', 'Blood Spiders')],
+  272: ['giant', () => t('bounty.foes.trolls', 'Trolls')],
+  273: ['undead', () => t('bounty.foes.gloomWraiths', 'Gloom Wraiths')],
+  274: ['undead', () => t('bounty.foes.fadedGhosts', 'Faded Ghosts')],
+  277: ['undead', () => t('bounty.foes.ghouls', 'Ghouls')],
+  278: ['beast', () => t('bounty.foes.boars', 'Boars')],
+  279: ['beast', () => t('bounty.foes.landDreughs', 'Land Dreughs')],
+  280: ['beast', () => t('bounty.foes.mountainLions', 'Mountain Lions')],
+  281: ['vermin', () => t('bounty.foes.mudcrabs', 'Mudcrabs')],
+  282: ['giant', () => t('bounty.foes.ogres', 'Ogres')],
+  283: ['dread', () => t('bounty.foes.willOWisps', 'Will-o\'-wisps')],
+  288: ['vermin', () => t('bounty.foes.scamps', 'Scamps')],
+  289: ['dread', () => t('bounty.foes.centurionSpheres', 'Centurion Spheres')],
 });
-/** The kind of trouble each beast is - which of the stories below it is told in. */
-const KIND_OF = Object.freeze({
-  0: 'vermin', 3: 'vermin', 6: 'vermin', 4: 'beast', 5: 'beast', 7: 'orc', 8: 'beast', 12: 'orc', 13: 'beast', 19: 'undead', 15: 'undead',
-  17: 'undead', 16: 'giant', 20: 'vermin', 21: 'orc', 22: 'dread', 23: 'undead', 24: 'orc', 27: 'dread',
-});
+/** QUARRY-WORLD: does the board have words for a beast - one it may post? @param {number} id */
+export const bountyNames = (id) => Object.hasOwn(FOES, id);
+/** A board's word for a pack of a beast, in the player's language; 'beasts' for one it has none for. @param {number} id */
+export const bountyFoesWord = (id) => (Object.hasOwn(FOES, id) ? FOES[id][1]() : 'beasts');
+/** The kind of trouble a beast is (the stories' key). @param {number} id */
+const kindOf = (id) => (Object.hasOwn(FOES, id) ? FOES[id][0] : 'beast');
+
+/**
+ * QUARRY-WORLD (2026-10-27, the audit NO SYSTEM LEFT BEHIND IN THE BAY item 37; the owner: "Every single thing here needs to
+ * be addressed. No exceptions."): THE BEASTS A TIER HUNTS ABOUT A TOWN - of the land's own wild (`wild`, `[id, level]` pairs:
+ * the encounter law's day and night tables at the town, each beast at its level as the game loaded it -
+ * systems/bounty/bountyQuarry.js landWildAt), those the board has words for whose level lies in the tier's band (`levels`,
+ * its own beasts' - BOUNTY_TIERS); where none does, the land's beasts nearest the band; weakest first (the 15+ purse reads
+ * the rank), a tie by id. One global ladder had posted Orc Warlords and Centaurs on a Black Marsh board and Grizzly Bears
+ * in the Alik'r. With no wild known, or none the board can name, the ladder's own beasts. Pure: the same `wild`, the same
+ * list, on every machine.
+ * @param {number} level @param {?Array<[number, number]>} [wild]
+ */
+export function bountyQuarry(level, wild = null) {
+  const tier = bountyTierFor(level);
+  const land = (wild ?? []).filter(([id, lv]) => bountyNames(id) && Number.isFinite(lv));
+  if (!land.length) return tier.foes;
+  const [lo, hi] = tier.levels;
+  const off = (lv) => (lv < lo ? lo - lv : lv > hi ? lv - hi : 0);
+  let best = Infinity;
+  for (const [, lv] of land) best = Math.min(best, off(lv));
+  return Object.freeze(land.filter(([, lv]) => off(lv) === best).sort((a, b) => a[1] - b[1] || a[0] - b[0]).map(([id]) => id));
+}
 
 const clampLevel = (level) => Math.max(1, Math.min(BOUNTY_LEVEL_MAX, Math.trunc(Number(level) || 1)));
 
@@ -91,15 +177,16 @@ export const purseShare = (n) => 0.6 + 0.1 * (Math.max(BOUNTY_PACK_MIN, Math.min
  * @param {number} count the pack's size
  * @param {number} mobileType the beast
  * @param {boolean} [underground] a dungeon's pack
+ * @param {?readonly number[]} [foesList] QUARRY-WORLD: the tier's beasts the posting drew from (bountyQuarry); the ladder's by default
  */
-export function bountyGold(level, count, mobileType, underground = false) {
+export function bountyGold(level, count, mobileType, underground = false, foesList = null) {
   const l = clampLevel(level);
   const n = underground
     ? BOUNTY_PACK_MIN + 2 * (Math.max(BOUNTY_DUNGEON_PACK_MIN, Math.min(BOUNTY_DUNGEON_PACK_MAX, count | 0)) - BOUNTY_DUNGEON_PACK_MIN)
     : Math.max(BOUNTY_PACK_MIN, Math.min(BOUNTY_PACK_MAX, count | 0));
   const tier = BOUNTY_TIERS.indexOf(bountyTierFor(l));
   if (tier < BOUNTY_FULL_PURSE.length) return Math.round(BOUNTY_FULL_PURSE[tier] * purseShare(n));
-  const foes = bountyTierFor(l).foes;
+  const foes = foesList ?? bountyTierFor(l).foes;   // QUARRY-WORLD: the rank among the beasts the posting drew from (bountyQuarry)
   const rank = Math.max(0, foes.indexOf(mobileType));
   const strength = foes.length > 1 ? rank / (foes.length - 1) : 1;
   return 150 + 10 * (n - BOUNTY_PACK_MIN) + Math.round(10 * strength);
@@ -322,11 +409,12 @@ const capital = (s) => String(s).split('-').map((w) => w.charAt(0).toUpperCase()
 
 /**
  * One slot of a town's board, as a reader of `level` reads it - or null when the town has no ground to send anyone
- * to. `sites` is bountySites' list (the caller keeps it; it is the same all day).
+ * to. `sites` is bountySites' list (the caller keeps it; it is the same all day). QUARRY-WORLD: `wild` the land's own
+ * wild about the town (bountyQuarry) - its beasts are the ones the board hunts.
  * @param {{ day:number, px:number, py:number, name?:string, slot:number, level:number, sites:Array<[number,number]>,
- *   dungeons?:Array<{px:number, py:number, name:string}> }} o
+ *   dungeons?:Array<{px:number, py:number, name:string}>, wild?:?Array<[number, number]> }} o
  */
-export function bountyPosting({ day, px, py, name = '', slot, level, sites, dungeons = [] }) {
+export function bountyPosting({ day, px, py, name = '', slot, level, sites, dungeons = [], wild = null }) {
   const underground = dungeonSlotsFor(dungeons?.length ?? 0).includes(slot);
   if (!underground && !sites?.length) return null;
   // SITE: four slots, four different spots where the ground allows it - a slot takes the next free spot after its own
@@ -354,13 +442,13 @@ export function bountyPosting({ day, px, py, name = '', slot, level, sites, dung
     if (s === slot) site = sites[i];
   }
   const [tx, ty] = site;
-  const tier = bountyTierFor(level);
-  const mobileType = tier.foes[bountyHash(day, px, py, slot, SALT.beast) % tier.foes.length];
+  const quarry = bountyQuarry(level, wild);   // QUARRY-WORLD: the land's own beasts in the tier's band
+  const mobileType = quarry[bountyHash(day, px, py, slot, SALT.beast) % quarry.length];
   const count = underground
     ? BOUNTY_DUNGEON_PACK_MIN + (bountyHash(day, px, py, slot, SALT.count) % (BOUNTY_DUNGEON_PACK_MAX - BOUNTY_DUNGEON_PACK_MIN + 1))
     : BOUNTY_PACK_MIN + (bountyHash(day, px, py, slot, SALT.count) % (BOUNTY_PACK_MAX - BOUNTY_PACK_MIN + 1));
-  const foes = BOUNTY_PLURALS[mobileType] ?? 'beasts';
-  const kind = KIND_OF[mobileType] ?? 'beast';
+  const foes = bountyFoesWord(mobileType);
+  const kind = kindOf(mobileType);
   const dir = compassWord(tx - px, ty - py);
   const far = distanceWord(Math.max(Math.abs(tx - px), Math.abs(ty - py)));
   const town = name || 'town';
@@ -379,16 +467,16 @@ export function bountyPosting({ day, px, py, name = '', slot, level, sites, dung
     story, mapLine: place ? bountyDungeonMapLine(place.name) : BOUNTY_MAP_LINE,
     poster: pick(BOUNTY_POSTERS, bountyHash(day, px, py, slot, SALT.poster)),
     dir, far,
-    gold: bountyGold(lvl, count, mobileType, underground),
+    gold: bountyGold(lvl, count, mobileType, underground, quarry),
     item: bountyItemRule(lvl),
   };
 }
 
 /** A whole board: the day's four postings as `level` reads them (fewer only when the town has no ground). */
-export function boardPostings({ day, px, py, name = '', level, sites, dungeons = [] }) {
+export function boardPostings({ day, px, py, name = '', level, sites, dungeons = [], wild = null }) {
   const out = [];
   for (let slot = 0; slot < BOUNTIES_PER_DAY; slot++) {
-    const p = bountyPosting({ day, px, py, name, slot, level, sites, dungeons });
+    const p = bountyPosting({ day, px, py, name, slot, level, sites, dungeons, wild });
     if (p) out.push(p);
   }
   return out;
@@ -397,12 +485,12 @@ export function boardPostings({ day, px, py, name = '', level, sites, dungeons =
 /**
  * A taken bounty's posting rebuilt from its id alone - the party's shared copy, a save's, the wire's.
  * @param {string} id
- * @param {{ name?:string, sites?:Array<[number,number]>, dungeons?:Array<{px:number, py:number, name:string}> }} [o]
+ * @param {{ name?:string, sites?:Array<[number,number]>, dungeons?:Array<{px:number, py:number, name:string}>, wild?:?Array<[number, number]> }} [o]
  */
-export function postingFromId(id, { name = '', sites = [], dungeons = [] } = {}) {
+export function postingFromId(id, { name = '', sites = [], dungeons = [], wild = null } = {}) {
   const b = parseBountyId(id);
   if (!b) return null;
-  return bountyPosting({ day: b.day, px: b.px, py: b.py, name, slot: b.slot, level: b.level, sites, dungeons });
+  return bountyPosting({ day: b.day, px: b.px, py: b.py, name, slot: b.slot, level: b.level, sites, dungeons, wild });
 }
 
 /** The words the reward notice speaks. `h` picks the story (a roll the host makes). */
