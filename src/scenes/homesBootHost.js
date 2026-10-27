@@ -33,9 +33,13 @@
 //     come sweeps nothing and is asked at the next landing. The save that
 //     holds the change is the next checkpoint's - until it lands the
 //     record still holds the scene, and the next boot sweeps it again.
+//     HOME-STRANDED rides the same list: a held home's building scene that
+//     still holds goods the old pour left there is made permanent, so they
+//     wait for the owner's visit (systems/decor/homeStranded.js).
 // ═══════════════════════════════════════════════════════════════════
 import { holdRealmDeeds, homesGoneFrom, homesGoneLine } from '../systems/online/onlineHomes.js';
 import { createSceneCache } from '../systems/sceneCache.js';
+import { keepStrandedHomes } from '../systems/decor/homeStranded.js';   // HOME-STRANDED
 
 /** How long a step waits for the world to stand: a look every quarter second, five minutes of them. */
 const STAND_LOOKS = 1200;
@@ -80,6 +84,8 @@ export function createHomesBoot({ homesApi, onlineHomes, realm, player, loaded, 
       const swept = homesGoneFrom(p.sceneCache ??= createSceneCache(), r.data.homes, { ownNow: (m, k) => !!onlineHomes?.homeAt(m, k)?.own });   // never one bought while the list was read
       if (swept.own.length) { giveOwn(swept.own); say(homesGoneLine(swept.own)); }   // the furniture among Your things, the rest to the pack
       for (const name of swept.gone) console.log(`[homes] ${name}: no longer the account's - let go`);
+      // HOME-STRANDED: what the old pour left under a held home's building survives a world move until its owner walks in
+      for (const name of keepStrandedHomes(p.sceneCache, r.data.homes)) console.log(`[homes] ${name}: stranded chest goods kept for the owner's next visit`);
       return swept;
     } catch (e) {
       console.warn('[homes] the homes the account holds no more could not be swept:', e?.message ?? e);
