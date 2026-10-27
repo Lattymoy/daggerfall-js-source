@@ -523,8 +523,9 @@ answers DFU's to the byte).
 The audit "no system left behind in the Bay" (item 33) found FACTION.TXT's per-region factions the Bay's alone: a
 Province faction (type 7) for each of the Bay's regions, its Court (14) and its People (15) its children, and a crown's
 ruler its first child (Gothryd, Akorithi, Eadwyre) - and none for the provinces past the Bay (regions 62..70, WW-R). The
-owner's call taken (*"Every single thing here needs to be addressed. No exceptions."*, 2026-10-26): the provinces get
-courts and people of their own.
+owner's calls taken (*"Every single thing here needs to be addressed. No exceptions."*, 2026-10-26): the provinces get
+courts and people of their own - content, built though FACTION.TXT has none past the Bay - and a vampire bloodline is
+mapped per province (the nine below, one a province).
 
 ### What stood (measured on the freeware, at e77eadc58f)
 
@@ -574,7 +575,7 @@ courts and people of their own.
 | 69 | Black Marsh | King Caligius Calissius | Helstrom | 65 | Selenu | the hardy (Resist Cold, Fire and Shock) - the Argonians' famed resilience |
 | 70 | Cyrodiil | Emperor Uriel Septim VII | the Imperial City | 90 | Vraseth | FACTION.TXT's own: The Septim Empire (350) carries vam 150, the Vraseth |
 
-- **Each clan once**: the nine bloodlines, one a province - no province takes another's, and the default Lyrezi is
+- **Each clan once** (the owner's call taken, a bloodline mapped per province): the nine bloodlines, one a province - no province takes another's, and the default Lyrezi is
   Elsweyr's by choice, not by a miss. FACTION.TXT's own clans carry regions 62..70 (below) and are no mapping: their
   numbers are sequential ids, not provinces.
 - **The titles** are the lore's: DFU's own King, Queen, Duke and Duchess (MacroHelper.GetRulerTitle's 1-4), and the
