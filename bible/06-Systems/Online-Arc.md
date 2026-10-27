@@ -10888,7 +10888,7 @@ than half of Daggerfall city cannot place outdoor decorations due to bug with ya
 - **Replaced: YARD-CELL (2026-10-26).** The owner and a maintainer judged the town-wide bound a band-aid: it is the
   size of a D1 row, not a game rule. `11-Multiplayer/Yard-Cells.md` replaces it - the yards kept, synced by version and
   stood by block (`cell = building_key >> 8`), with no town-wide cap - and fits it to the rest of Tamriel (#1184). YC1
-  built it (acct196, migration 0177): DECOR_YARDS_TOWN_MAX, `yard-town-full` and YARD_STANDS_A_FRAME are gone.
+  built it (acct197, migration 0178): DECOR_YARDS_TOWN_MAX, `yard-town-full` and YARD_STANDS_A_FRAME are gone.
 - **The four hosts.** Yards stand in `scenes/world.js` alone (unchanged); `scenes/exterior.js`, `scenes/worldModes.js`
   (interiors) and `scenes/dungeonContext.js` stand none. No relay change. acct191 (acct177 and migration 0163 on its branch, renumbered past main's acct177-acct190
   and 0163-0174 at its merges).

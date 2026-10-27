@@ -190,7 +190,10 @@ test('PROF7 service: the tanning rack cures two hides to a leather (a Tanner\'s 
 test('PROF7 service: a garment sewn in the dye the crafter chose - signed into its record (`u`), kept on the craft and the piece, answered; a dye asked of anything else or past the ten refused (AUDIT 32 L3: DFU\'s unchangeable shirts take one); Outfitting\'s rank and XP; boots a bolt and a Cured Leather', async () => {
   const s = await stand();
   const mac = await s.seated('Mac');
-  s.give(mac, 'cloth:linen', 'bought', 10);   // PIN MOVED (CLOTH-GEMS): the Weavers' Linen, bought - S1 judges the units
+  // PIN MOVED (CLOTH-GEMS): the Weavers' Linen, bought - S1 judges the units; (WOVEN-PAYS, AUDIT WOVEN-PAYS): bought at the
+  // counter, through the real route, so its ten count against the cloth's firsts (a bought row written by hand is no silver)
+  s.fund(mac, 100);
+  assert.equal((await s.call('/v1/prof/stock', { character: mac.character, material: 'cloth:linen', qty: 10, rid: rid() }, mac.secret)).status, 200);
   s.give(mac, 'leather:cured', 'own', 10);
   const ask = craft(mac, 'garment-141:linen', { dye: 3 });
   const g = await s.call('/v1/prof/craft', ask, mac.secret);
