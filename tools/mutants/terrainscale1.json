@@ -73,7 +73,7 @@
   },
   {
     "name": "TS1-restand-inverted",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "const r = was > 0 ? was / STREAMING_TERRAIN_SCALE : 1;",
     "new": "const r = was > 0 ? STREAMING_TERRAIN_SCALE / was : 1;",
     "tests": [
@@ -82,8 +82,8 @@
   },
   {
     "name": "TS1-restand-keeps-compensation",
-    "file": "src/scenes/world.js",
-    "old": "return y - (h - state.compensation[1] - now) * (r - 1)",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "return y - (h - host.state.compensation[1] - now) * (r - 1)",
     "new": "return y - (h - now) * (r - 1)",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
@@ -91,7 +91,7 @@
   },
   {
     "name": "TS1-restand-unbuilt-untouched",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "    return y * (was > 0 ? STREAMING_TERRAIN_SCALE / was : 1) + now;",
     "new": "    return y + now;",
     "tests": [
@@ -100,7 +100,7 @@
   },
   {
     "name": "TS1-no-stamp-is-today",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "const scaleOf = (stamp) => (stamp > 0 ? stamp : DEFAULT_TERRAIN_SCALE);",
     "new": "const scaleOf = (stamp) => (stamp > 0 ? stamp : STREAMING_TERRAIN_SCALE);",
     "tests": [

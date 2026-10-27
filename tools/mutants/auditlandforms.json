@@ -496,8 +496,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-gate-kernel-key-blind-to-network",
     "file": "src/scenes/world.js",
-    "old": "const key = `${px},${py},${landform && terrainGen.roads() ? 1 : 0}`;",
-    "new": "const key = `${px},${py}`;",
+    "old": "const key = `${px},${py},${landform && terrainGen.roads() ? 1 : 0},${landformSites.generation()}`;",
+    "new": "const key = `${px},${py},${landformSites.generation()}`;",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js",
@@ -506,9 +506,9 @@
   },
   {
     "name": "AUDIT-LANDFORMS-D-liftAt-py-sign",
-    "file": "src/scenes/world.js",
-    "old": "    const py = state.mapOrigin.y - Math.floor((z - c[2]) / TERRAIN_SIZE);\n    if (!woods || px < 0",
-    "new": "    const py = state.mapOrigin.y + Math.floor((z - c[2]) / TERRAIN_SIZE);\n    if (!woods || px < 0",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "    const py = host.state.mapOrigin.y - Math.floor((z - c[2]) / TERRAIN_SIZE);\n    if (!host.woods || px < 0",
+    "new": "    const py = host.state.mapOrigin.y + Math.floor((z - c[2]) / TERRAIN_SIZE);\n    if (!host.woods || px < 0",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js",
@@ -517,7 +517,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-D-liftAt-frame-uncompensated",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "return field((x - t[0]) / heightCell, (z - t[2]) / heightCell) * STREAMING_TERRAIN_SCALE;",
     "new": "return field(x / heightCell, z / heightCell) * STREAMING_TERRAIN_SCALE;",
     "tests": [
@@ -528,7 +528,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-D-liftAt-axes-swapped",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "return field((x - t[0]) / heightCell, (z - t[2]) / heightCell) * STREAMING_TERRAIN_SCALE;",
     "new": "return field((z - t[2]) / heightCell, (x - t[0]) / heightCell) * STREAMING_TERRAIN_SCALE;",
     "tests": [
@@ -539,7 +539,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-D-liftAt-kernel-units",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "return field((x - t[0]) / heightCell, (z - t[2]) / heightCell) * STREAMING_TERRAIN_SCALE;",
     "new": "return field((x - t[0]) / heightCell, (z - t[2]) / heightCell);",
     "tests": [
@@ -550,7 +550,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-D-liftAt-memo-blind-to-rect",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "const key = `${px},${py},${rect ? `${rect.xMin},${rect.xMax},${rect.yMin},${rect.yMax}` : '-'},${terrainGen.roads() ? 1 : 0}`;",
     "new": "const key = `${px},${py},${terrainGen.roads() ? 1 : 0}`;",
     "tests": [
@@ -561,7 +561,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-D-restand-ratio-unguarded",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "const r = was > 0 ? was / STREAMING_TERRAIN_SCALE : 1;",
     "new": "const r = was / STREAMING_TERRAIN_SCALE;",
     "tests": [
@@ -642,7 +642,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-D-liftAt-built-rect-ignored",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "let rect = at ? at.locationRect ?? null : null;",
     "new": "let rect = null;",
     "tests": [
@@ -674,9 +674,9 @@
   },
   {
     "name": "AUDIT-LANDFORMS-D-restand-built-ground-with-lift",
-    "file": "src/scenes/world.js",
-    "old": "if (Number.isFinite(h)) return y - (h - state.compensation[1] - now) * (r - 1) + now;",
-    "new": "if (Number.isFinite(h)) return y - (h - state.compensation[1]) * (r - 1) + now;",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "if (Number.isFinite(h)) return y - (h - host.state.compensation[1] - now) * (r - 1) + now;",
+    "new": "if (Number.isFinite(h)) return y - (h - host.state.compensation[1]) * (r - 1) + now;",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js",
@@ -685,7 +685,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-D-restand-lift-read-always",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "const now = landform ? landformLiftAt(x, z) : 0;",
     "new": "const now = landformLiftAt(x, z);",
     "tests": [
@@ -696,7 +696,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-C1-frame-identity",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "const groundFrameHeight = (y, x, z) => (landform && Number.isFinite(y) ? y - landformLiftAt(x, z) : y);",
     "new": "const groundFrameHeight = (y, x, z) => y;",
     "tests": [
@@ -706,8 +706,8 @@
   },
   {
     "name": "AUDIT-LANDFORMS-C1-native-off-its-own-spot",
-    "file": "src/scenes/world.js",
-    "old": "    const [x, z] = state.localFromWorld(nx, nz);\n    return groundFrameHeight(y, x, z);",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "    const [x, z] = host.state.localFromWorld(nx, nz);\n    return groundFrameHeight(y, x, z);",
     "new": "    return groundFrameHeight(y, nx, nz);",
     "tests": [
       "test/systems/landform.test.js",
@@ -839,7 +839,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-B1-unbuilt-wild",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "    if (!at) {\n      const loc = _liftLocationAt(px, py)",
     "new": "    if (false) {\n      const loc = _liftLocationAt(px, py)",
     "tests": [
@@ -849,7 +849,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-B1-kept-rect-blind-to-the-place",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "if (had && had.loc === loc) rect = had.rect;",
     "new": "if (had) rect = had.rect;",
     "tests": [
@@ -995,9 +995,9 @@
   },
   {
     "name": "AUDIT-LANDFORMS-B2-host-hands-no-landforms",
-    "file": "src/scenes/world.js",
-    "old": "landformLiftField(woods, px, py, rect, HEIGHTMAP_DIMENSION, landformsHere())",
-    "new": "landformLiftField(woods, px, py, rect)",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "landformLiftField(host.woods, px, py, rect, HEIGHTMAP_DIMENSION, landformsHere())",
+    "new": "landformLiftField(host.woods, px, py, rect)",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -1005,7 +1005,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-B2-field-blind-to-the-network",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": ": '-'},${terrainGen.roads() ? 1 : 0}`;",
     "new": ": '-'}`;",
     "tests": [
@@ -1024,7 +1024,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-II-F3-cleared-whole",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "      if (_liftFields.size >= LIFT_FIELDS_KEPT) _liftFields.delete(_liftFields.keys().next().value);   // the longest unasked\n",
     "new": "      if (_liftFields.size >= LIFT_FIELDS_KEPT) _liftFields.clear();\n",
     "tests": [
@@ -1033,7 +1033,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-II-F3-never-touched",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "    if (field) _liftFields.delete(key);   // asked again: the last to be let go\n    else {",
     "new": "    if (field) { /* kept where it stood */ } else {",
     "tests": [
@@ -1042,7 +1042,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-II-F3-the-old-eight",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "  const LIFT_FIELDS_KEPT = 32;",
     "new": "  const LIFT_FIELDS_KEPT = 8;",
     "tests": [
@@ -1051,7 +1051,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-II-F3-rects-cleared-whole",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "        if (_liftRects.size >= LIFT_FIELDS_KEPT) _liftRects.delete(_liftRects.keys().next().value);   // the longest unasked\n",
     "new": "        if (_liftRects.size >= 8) _liftRects.clear();\n",
     "tests": [
@@ -1509,18 +1509,18 @@
   },
   {
     "name": "AUDIT-LANDFORMS-II-J6-z-compensation-sign",
-    "file": "src/scenes/world.js",
-    "old": "    const py = state.mapOrigin.y - Math.floor((z - c[2]) / TERRAIN_SIZE);\n    if (!woods || px < 0",
-    "new": "    const py = state.mapOrigin.y - Math.floor((z + c[2]) / TERRAIN_SIZE);\n    if (!woods || px < 0",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "    const py = host.state.mapOrigin.y - Math.floor((z - c[2]) / TERRAIN_SIZE);\n    if (!host.woods || px < 0",
+    "new": "    const py = host.state.mapOrigin.y - Math.floor((z + c[2]) / TERRAIN_SIZE);\n    if (!host.woods || px < 0",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
     "name": "AUDIT-LANDFORMS-II-J6-north-row-off",
-    "file": "src/scenes/world.js",
-    "old": "if (!woods || px < 0 || py < 0 || px >= MAP_WIDTH || py >= MAP_HEIGHT) return 0;",
-    "new": "if (!woods || px < 0 || py <= 0 || px >= MAP_WIDTH || py >= MAP_HEIGHT) return 0;",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "if (!host.woods || px < 0 || py < 0 || px >= MAP_WIDTH || py >= MAP_HEIGHT) return 0;",
+    "new": "if (!host.woods || px < 0 || py <= 0 || px >= MAP_WIDTH || py >= MAP_HEIGHT) return 0;",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]

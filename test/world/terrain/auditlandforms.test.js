@@ -145,10 +145,10 @@ test('AUDIT LANDFORMS E1: a road on a hillside is cut into the high side and fil
 /** world.js's groundFrameHeight, groundFrameNative, restandHeight and scaleOf, sliced and run over a stub ground and lift
  *  (test/systems/landform.test.js's restander; the frame stub's natives are scene coordinates offset by (100, 200)). */
 function frame({ landform = true, lift = () => 0, ground = () => null, comp = 0 } = {}) {
-  const body = between('  const groundFrameHeight = (y, x, z) =>', '  // Building doors (P3)');
+  const body = between('  const groundFrameHeight = (y, x, z) =>', '  return { groundFrameHeight, groundFrameNative, restandHeight, scaleOf };');   // PIN MOVED (BAY-LEFT-GROUND, HOST-SPLIT): scenes/groundFrameHost.js, its live names through `host`
   const state = { compensation: [0, comp, 0], localFromWorld: (nx, nz) => [nx - 100, nz - 200], worldCoords: (p) => ({ x: p[0] + 100, z: p[2] + 200 }) };
   const heightAt = (x, z) => (ground(x, z) == null ? -Infinity : ground(x, z) + comp);
-  const f = new Function('heightAt', 'state', 'STREAMING_TERRAIN_SCALE', 'DEFAULT_TERRAIN_SCALE', 'landform', 'landformLiftAt', `${body}\nreturn { groundFrameHeight, groundFrameNative, restandHeight, scaleOf };`)(heightAt, state, STREAMING_TERRAIN_SCALE, 1.5, landform, lift);
+  const f = new Function('heightAt', 'host', 'STREAMING_TERRAIN_SCALE', 'DEFAULT_TERRAIN_SCALE', 'landform', 'landformLiftAt', `${body}\nreturn { groundFrameHeight, groundFrameNative, restandHeight, scaleOf };`)(heightAt, { state }, STREAMING_TERRAIN_SCALE, 1.5, landform, lift);
   return { ...f, state };
 }
 
@@ -252,8 +252,9 @@ function liftAtHost({ built = new Map(), index = new Map(), rects = new Map(), n
   const asked = [];
   const setLocationTiles = (loc, maps, blocks, tilemap) => { asked.push(loc.name); assert.equal(tilemap.length, 128 * 128); return rects.get(loc.name) ?? null; };
   const counted = (...a) => { fields.made += 1; return landformLiftField(...a); };
-  const host = new Function('state', 'woods', 'built', 'locationIndex', 'setLocationTiles', 'maps', 'blocks', 'TERRAIN_SIZE', 'heightCell', 'MAP_WIDTH', 'MAP_HEIGHT', 'landformLiftField', 'STREAMING_TERRAIN_SCALE', 'HEIGHTMAP_DIMENSION', 'terrainGen', 'landformsHere', '_liftLocationAt',
-    `${body}\nreturn { landformLiftAt, bind: (f) => { _liftLocationAt = f; } };`)(state, woods, built, index, setLocationTiles, {}, {}, TERRAIN_SIZE, heightCell, MAP_WIDTH, MAP_HEIGHT, counted, STREAMING_TERRAIN_SCALE, H, { roads: () => net.at }, () => createLandforms({ woods, roads: net.at }), (x, y) => index.get(`${x},${y}`));
+  // PIN MOVED (BAY-LEFT-GROUND, HOST-SPLIT): scenes/groundFrameHost.js's text - the stream's frame and its reader live, through `host`
+  const host = new Function('host', 'built', 'locationIndex', 'setLocationTiles', 'maps', 'blocks', 'TERRAIN_SIZE', 'heightCell', 'MAP_WIDTH', 'MAP_HEIGHT', 'landformLiftField', 'STREAMING_TERRAIN_SCALE', 'HEIGHTMAP_DIMENSION', 'terrainGen', 'landformsHere', '_liftLocationAt',
+    `${body}\nreturn { landformLiftAt, bind: (f) => { _liftLocationAt = f; } };`)({ state, woods }, built, index, setLocationTiles, {}, {}, TERRAIN_SIZE, heightCell, MAP_WIDTH, MAP_HEIGHT, counted, STREAMING_TERRAIN_SCALE, H, { roads: () => net.at }, () => createLandforms({ woods, roads: net.at }), (x, y) => index.get(`${x},${y}`));
   const scene = (px, py, sx, sy) => { const t = state.pixelTranslation(px, py); return [t[0] + sx * heightCell, t[2] + sy * heightCell]; };
   return { ...host, scene, asked, state };
 }
@@ -1110,7 +1111,7 @@ test('AUDIT LANDFORMS II H1: THE ONE CONSTRUCTION SEAM for C1 - every height wor
   // C1's own pin names the twelve writers of today and cannot fail on a thirteenth; this sweeps the host. (It cannot see a
   // writer outside world.js - the hosts' others hand world.js their heights, THE FOUR HOSTS in Landforms.md.)
   const TRANSIENT = new Map([
-    ['if (Number.isFinite(h)) return y - (h - state.compensation[1] - now) * (r - 1) + now;', 'restandHeight itself: the read side'],
+    ['if (Number.isFinite(h)) return y - (h - host.state.compensation[1] - now) * (r - 1) + now;', 'restandHeight itself: the read side'],   // PIN MOVED (BAY-LEFT-GROUND, HOST-SPLIT): as scenes/groundFrameHost.js spells it
     ['const campToNatives = (pos) => { const wc = state.worldCoords(pos); return [wc.x, pos[1] - state.compensation[1], wc.z]; };', 'a recenter, this ground both ways (campToRecord is the record\'s)'],
     ['toNative: (p) => { const w = state.worldCoords(p); return [w.x, p[1] - state.compensation[1], w.z]; },', 'the sailing cabins\' live access'],
     ['const cabin = { v: 1, uid: boat.uid, hull: boat.hull, origin: [origin.x, boat.GameObject.position[1] - state.compensation[1], origin.z],', 'a boat at sea - its pixel is what is read, under the knee'],

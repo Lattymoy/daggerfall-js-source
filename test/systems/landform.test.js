@@ -290,12 +290,14 @@ test('LANDFORM1: a point\'s lift is the lift field taken through the location\'s
 /** world.js's own groundFrameHeight, groundFrameNative and restandHeight, sliced and run against a stub ground and a stub
  *  lift (terrainscale1.test.js's harness, with the landforms' two reads; test/world/terrain/auditlandforms.test.js runs the real lift). */
 function restander({ ground, comp = 0, landform = false, lift = () => 0 }) {
+  // PIN MOVED (BAY-LEFT-GROUND, HOST-SPLIT): the group left bootWorld for scenes/groundFrameHost.js, verbatim - read there,
+  // its live names through `host`
   const i = WORLD.indexOf('  const groundFrameHeight = (y, x, z) =>');
-  const j = WORLD.indexOf('  // Building doors (P3)', i);
+  const j = WORLD.indexOf('  return { groundFrameHeight, groundFrameNative, restandHeight, scaleOf };', i);
   assert.ok(i > 0 && j > i && WORLD.slice(i, j).includes('  const restandHeight = (y, x, z, was) => {'));
   const state = { compensation: [0, comp, 0], localFromWorld: (nx, nz) => [nx - 100, nz - 200] };
   const heightAt = (x, z) => (ground(x, z) == null ? -Infinity : ground(x, z) + comp);
-  return new Function('heightAt', 'state', 'STREAMING_TERRAIN_SCALE', 'DEFAULT_TERRAIN_SCALE', 'landform', 'landformLiftAt', `${WORLD.slice(i, j)}\nreturn { groundFrameHeight, groundFrameNative, restandHeight };`)(heightAt, state, STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE, landform, lift);
+  return new Function('heightAt', 'host', 'STREAMING_TERRAIN_SCALE', 'DEFAULT_TERRAIN_SCALE', 'landform', 'landformLiftAt', `${WORLD.slice(i, j)}\nreturn { groundFrameHeight, groundFrameNative, restandHeight };`)(heightAt, { state }, STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE, landform, lift);
 }
 
 test('LANDFORM1: a record\'s height is DFU\'s frame - written with the landforms\' lift at its own spot taken off, stood again with it put back on; with the row off it lands as it came', () => {

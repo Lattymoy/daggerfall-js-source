@@ -307,7 +307,7 @@ import { faunaBandAt, installTamrielFauna, bandGroundPastBay } from '../systems/
 import { etherWoods, etherClimateIndex, etherPoliticIndex, etherFrame, inEther, inEtherLaw, onBayOrEther, isleAt, islesNear, veilhaven, ETHER_HARBOUR_REACH, ETHER_SEA_NAME, ETHER_SEA_TITLE, CROSS_X, etherLight, ETHER_KEY_TINT } from '../world/ethericSea.js';   // ETHER-SEA: the Eltheric Ocean's ground and its box
 import { etherTemplates, etherTemplateOf, synthesizeEtherLocation, etherPlaceIsle, etherPlaceRows, ETHER_REGION, ETHER_REGION_NAME, isEtherPlaceId } from '../world/etherPlaces.js';   // ETHER-PLACES: the isles' towns and ruins; ETHER-OW: their pixels and far rows, the Overworld's
 import { tamrielFrameInBay, inBay, inBay as onTheBay } from '../world/tamriel/tamrielFrame.js';   // TAMRIEL2: the frame the world streams over, and the Bay's own ground (WW3 reads it as inBay, TESA as onTheBay)
-import { createLandforms, landformLiftField, landformSites, landformClimates, cliffFadeAt } from '../world/landforms.js';   // LANDFORM1-3: the shaped ground, and what it lifts a point by; AUDIT LANDFORMS II I1: the lift's fade beside the sea
+import { createLandforms, landformSites, landformClimates, cliffFadeAt } from '../world/landforms.js';   // LANDFORM1-3: the shaped ground, and what it lifts a point by; AUDIT LANDFORMS II I1: the lift's fade beside the sea
 import { ecotoneOwner } from '../world/ecotone.js'; import { MAP_W, MAP_H } from '../world/road/roadNetwork.js';   // ECOTONE1: a border point's owner, the pixel's lattice origin, the map's edges
 import { forestAt } from '../world/terrain/terrainNature.js';   // FOREST1 (AUDIT F1): a wood's flats keep out of the rock pieces; GRASS-LIT2: the shot hook's woods
 import { huntKind, createBodyStamps, bodiesHere, trackerMarks } from './huntHost.js';   // PROF7: Hunting's bodies - a kind in it, the kills that stamp them, a Tracker's marks; INDOOR-SKIN: the pool by the mode
@@ -774,7 +774,7 @@ import { riddenHorseLook, birthHorses } from '../systems/horse/horseCoats.js';  
 import { giveNavalItems } from '../systems/naval/navalTransfer.js';
 import { InputMessageBoxWindow } from '../ui/inputMessageBox.js';   // HCC: the horse's name (DaggerfallInputMessageBox)
 import { getBool, getInt, getFloat } from '../systems/settings/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
-import { STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION, sampleKernel } from '../world/terrain/terrainSampler.js';   // GR1: the sea plane, so no blade stands in water
+import { STREAMING_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION, sampleKernel } from '../world/terrain/terrainSampler.js';   // GR1: the sea plane, so no blade stands in water
 import { restrideGrid, gridBed } from '../world/terrain/terrainGen.js';   // PERF-EXT26: the restride's grid - the kernel's own law (EV4's ghost rows), on the worker or here
 import { getLocationTerrainTileOrigin, setLocationTiles, locationRectReader } from '../world/terrain/terrainTiles.js';
 // The start-marker arm (StreamingWorld's PositionPlayerToLocation), the
@@ -1225,6 +1225,7 @@ import { createWildInsureBook, setWildInsureBook } from '../net/wild/wildInsureB
 import { createWildGrace } from '../systems/wild/wildGrace.js';   // ZONE-GRACE: safe passage, as the referee says it
 import { createSnowGround } from './snowGround.js';   // HOST-SPLIT
 import { createLandformSites } from './landformSitesHost.js';   // BAY-LEFT-GROUND (D1): the landforms' sites past the Bay
+import { createGroundFrame } from './groundFrameHost.js';   // HOST-SPLIT
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -5440,97 +5441,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     dwRender.drawSurfaces(_dwSurfaceList, { ...f.look, underwater: f.underwater, liftY: deepWaters.oceanLocalY + SURFACE_RENDER_Y_OFFSET, surfaceScroll: surfaceScrollAt(nowMs / 1000), surfaceTexture: _dwSurfaceTex });
     renderer.markForeignPass();   // EV6: the surfaces' programs ran behind the shadows' back
   }
-  /** LANDFORM1: how far the landforms move DFU's ground at a scene point, in world units (world/landforms.js
-   *  landformLift - the kernel's own shaped ground less DFU's over the network this thread holds, the cuts with the
-   *  lift (AUDIT LANDFORMS B2), over the location rect of the pixel's build, so a town's levelled ground is exact).
-   *  What the row puts there, read while it is on. A pixel's field is kept for the next record a save or a load stands
-   *  on it - the last LIFT_FIELDS_KEPT pixels asked, the longest unasked let go first (AUDIT LANDFORMS II F3: dropped
-   *  whole past eight, a save whose records stood on nine pixels made every field again - a town's is a kernel pass,
-   *  146 ms for nine on the main thread and 0.4-0.6 s for sixteen - at every save, online every periodic checkpoint).
-   *  AUDIT LANDFORMS B1: the rect is the build's for a pixel not built yet too - the one setLocationTiles will stamp
-   *  (tvTownRects' own fallback). A load stands records before their pixels stream in (its camps anywhere in the world, a
-   *  neighbour's piles), and the wild lift it took there was up to 203 m off a location's levelled ground (Tamarilyn
-   *  Coven; 1,036 of 15,251 locations over a metre at the rect's centre), into a camp that is never stood again. */
-  const LIFT_FIELDS_KEPT = 32;   // a town's field is 129 x 129 floats (66 KB): 2 MB at the most
-  const _liftFields = new Map();
-  /** ...and the rect that build will stamp, kept per pixel while the same place stands there (a spawn's clone is made
-   *  afresh at each ask, so a spawn's is asked again - 50 us, against its field's kernel pass) */
-  const _liftRects = new Map();
-  const landformLiftAt = (x, z) => {
-    const c = state.compensation;
-    const px = state.mapOrigin.x + Math.floor((x - c[0]) / TERRAIN_SIZE);
-    const py = state.mapOrigin.y - Math.floor((z - c[2]) / TERRAIN_SIZE);
-    if (!woods || px < 0 || py < 0 || px >= MAP_WIDTH || py >= MAP_HEIGHT) return 0;
-    const t = state.pixelTranslation(px, py);
-    const at = built.get(`${px},${py}`);
-    let rect = at ? at.locationRect ?? null : null;
-    if (!at) {
-      const loc = _liftLocationAt(px, py), had = _liftRects.get(`${px},${py}`);
-      if (had && had.loc === loc) rect = had.rect;
-      else {
-        if (loc?.exterior?.exteriorData && loc.mapTableData) rect = setLocationTiles(loc, maps, blocks, new Uint8Array(128 * 128)) ?? null;
-        _liftRects.delete(`${px},${py}`);
-        if (_liftRects.size >= LIFT_FIELDS_KEPT) _liftRects.delete(_liftRects.keys().next().value);   // the longest unasked
-        _liftRects.set(`${px},${py}`, { loc, rect });
-      }
-    }
-    // AUDIT LANDFORMS B2: the field follows the cuts, so it is the network's too - made again once the network lands
-    const key = `${px},${py},${rect ? `${rect.xMin},${rect.xMax},${rect.yMin},${rect.yMax}` : '-'},${terrainGen.roads() ? 1 : 0}`;
-    let field = _liftFields.get(key);
-    if (field) _liftFields.delete(key);   // asked again: the last to be let go
-    else {
-      if (_liftFields.size >= LIFT_FIELDS_KEPT) _liftFields.delete(_liftFields.keys().next().value);   // the longest unasked
-      field = landformLiftField(woods, px, py, rect, HEIGHTMAP_DIMENSION, landformsHere());
-    }
-    _liftFields.set(key, field);
-    return field((x - t[0]) / heightCell, (z - t[2]) / heightCell) * STREAMING_TERRAIN_SCALE;
-  };
-  /** AUDIT LANDFORMS C1/B4: A HEIGHT GOES INTO A RECORD IN DFU'S FRAME. With the row on the ground at (x, z) stands
-   *  `landformLiftAt(x, z)` over DFU's, and every exterior height a record carries (the save, the scene cache, the ship's
-   *  deck, an anchor, a dungeon's outer camps) is written without it - so a build without the row reads it as it always
-   *  read one, and this one puts the lift back on (restandHeight). Written on the landforms' own ground (LANDFORM1's
-   *  stamp), a record stood the lift over its ground on any build before: a save loaded on a desktop copy that has not
-   *  updated, or after a revert, dropped its character - a fall of over 100 HP from 30% of the land. `y` is
-   *  compensation-free, (x, z) scene coordinates. */
-  const groundFrameHeight = (y, x, z) => (landform && Number.isFinite(y) ? y - landformLiftAt(x, z) : y);
-  /** ...for a record in NATIVE coordinates (a pile, a foe, a guard). */
-  const groundFrameNative = (nx, nz, y) => {
-    if (!landform) return y;
-    const [x, z] = state.localFromWorld(nx, nz);
-    return groundFrameHeight(y, x, z);
-  };
-  // TERRAIN-SCALE1: A HEIGHT WRITTEN UNDER ANOTHER TERRAIN SCALE, STOOD
-  // AGAIN ON TODAY'S GROUND. Every exterior height a save (or a scene
-  // cache, or an anchor) carries is compensation-free and stood on
-  // ground drawn at the scale it was written under - the prefab's 1.5
-  // for anything written before the game scene's 1.25 was found. The
-  // terrain is linear in the scale (sample * 1539 * scale, a location's
-  // levelled ground included), so a point `off` above the ground it was
-  // measured on keeps its `off`:
-  //     y' = y - ground'(x, z) * (was / now - 1)
-  // exact for a body on a hillside, a pile on a floor, a player on a
-  // roof or up a tower's stair, wherever the ground under (x, z) is
-  // built. Where it is not yet, the ratio stands in (y * now / was),
-  // exact for anything that stood ON its ground and a sixth of any
-  // height above it off. (x, z) are scene coordinates; `was` absent or
-  // equal to today's scale is today's ground, untouched.
-  //
-  // LANDFORM1: and every record's height is DFU's frame (AUDIT LANDFORMS
-  // C1: groundFrameHeight writes it so), so while the Landforms row is on
-  // it takes the lift at its own spot (landformLiftAt) back on, beside the
-  // scale's arm: on today's ground it is the ground's height there plus
-  // its own `off`.
-  const restandHeight = (y, x, z, was) => {
-    if ((!(was > 0) || was === STREAMING_TERRAIN_SCALE) && !landform) return y;
-    if (!Number.isFinite(y)) return y;
-    const now = landform ? landformLiftAt(x, z) : 0;
-    const r = was > 0 ? was / STREAMING_TERRAIN_SCALE : 1;
-    const h = heightAt(x, z);
-    if (Number.isFinite(h)) return y - (h - state.compensation[1] - now) * (r - 1) + now;
-    return y * (was > 0 ? STREAMING_TERRAIN_SCALE / was : 1) + now;
-  };
-  /** TERRAIN-SCALE1: the scale a record without its own stamp was written on - the prefab's, before the stamp. */
-  const scaleOf = (stamp) => (stamp > 0 ? stamp : DEFAULT_TERRAIN_SCALE);
+  const { groundFrameHeight, groundFrameNative, restandHeight, scaleOf } = createGroundFrame({   // HOST-SPLIT: src/scenes/groundFrameHost.js
+    _liftLocationAt, blocks, built, heightAt, heightCell, landform, landformsHere, maps, terrainGen,
+    get state() { return state; },
+    get woods() { return woods; },
+  });
   // Building doors (P3): registered pixel-local at build, activated
   // against the live translation; each carries what the transition
   // needs (its block + building record + sibling exterior doors).

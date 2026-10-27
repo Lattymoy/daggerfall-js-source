@@ -77,12 +77,12 @@ test('TERRAIN-SCALE1: a save carries the scale its heights stood on; one without
 /** world.js's own restandHeight and scaleOf, run against a stub ground. */
 function restander(ground, comp = 0, { landform = null, lift = () => 0 } = {}) {
   const i = WORLD.indexOf('  const restandHeight = (y, x, z, was) => {');
-  const j = WORLD.indexOf('  // Building doors (P3)', i);
+  const j = WORLD.indexOf('  return { groundFrameHeight, groundFrameNative, restandHeight, scaleOf };', i);   // PIN MOVED (BAY-LEFT-GROUND, HOST-SPLIT): scenes/groundFrameHost.js
   assert.ok(i > 0 && j > i, 'the helper stands where the rig reads it');
   const state = { compensation: [0, comp, 0] };
   const heightAt = (x, z) => (ground(x, z) == null ? -Infinity : ground(x, z) + comp);
   // LANDFORM1: the law's two new reads - the row's state and the lift at a spot (test/systems/landform.test.js runs them)
-  return new Function('heightAt', 'state', 'STREAMING_TERRAIN_SCALE', 'DEFAULT_TERRAIN_SCALE', 'landform', 'landformLiftAt', `${WORLD.slice(i, j)}\nreturn { restandHeight, scaleOf };`)(heightAt, state, STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE, landform, lift);
+  return new Function('heightAt', 'host', 'STREAMING_TERRAIN_SCALE', 'DEFAULT_TERRAIN_SCALE', 'landform', 'landformLiftAt', `${WORLD.slice(i, j)}\nreturn { restandHeight, scaleOf };`)(heightAt, { state }, STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE, landform, lift);
 }
 
 test('TERRAIN-SCALE1: a height written on the old scale stands again on today\'s ground - the same height above it where the ground is built, the ratio where it is not', () => {
