@@ -315,7 +315,8 @@ import { freePull } from '../systems/travel/freePull.js';   // OW-FREE-STRAIGHT,
 import { createGrantHost } from './grantHost.js';   // GRANT2-GRANT4: the spawn grants - my stands' and my reading of others' (bible/11-Multiplayer/Spawn-Grants.md)
 import { wireOwnerClock } from './ownerCatchUp.js';   // OWNER-CLOCK: my foes' steps on the clock their frames carry, and the street's kept to my frame's pace while anyone else is in my room
 import { fishKind } from './fishHost.js';
-import { createBootStart } from './bootStartHost.js';   // HOST-SPLIT: the boot's start, moved out of bootWorld   // PROF8: Fishing's casts and schools - a kind in it
+import { createBootStart } from './bootStartHost.js';   // HOST-SPLIT: the boot's start, moved out of bootWorld
+import { isProvinceRegion } from '../formats/mapsTables.js';   // BAY-LEFT-B: a province's region the quest layer's table (the talk's Regional rows)   // PROF8: Fishing's casts and schools - a kind in it
 import { createCraftWritHost } from './craftWritHost.js';   // CRAFT-WRITS: the Work tab's crafting writs, handed over from the pack
 import { createSeasonBook } from './seasonBookHost.js';   // SEASON-BOOK: the laurel's boards, asked while its window is open
 import { rollNoticeDoors } from './rollNoticeHost.js';   // SEAT-WORDS / STANDING-WORDS: what the Roll's tracker says
@@ -12896,10 +12897,15 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  does, or null - `name` the canonical one (the discovery's key, and
    *  the callers' gate: DaggerfallInventoryWindow.cs:1828,
    *  ThievesGuild.cs:112), its `mapId`, and `shown`, the name as the
-   *  map item shows it (GetLocalizedLocationName, :1831). */
+   *  map item shows it (GetLocalizedLocationName, :1831).
+   *
+   *  BAY-LEFT-B (B5): the CURRENT region is PlayerGPS.CurrentRegion - the politic map's under the player
+   *  (_questRegionIndex), never the location's under them: a map read in the wilderness, on the road or at sea revealed
+   *  nothing (none stands on the pixel), the map spent. And it is the quest layer's table (scenes/questWorld.js maps): a
+   *  province's region its places past the Bay (scenes/quest/questProvinceSites.js), where MAPS.BSA has none - the map
+   *  item, the Thieves Guild's and the Dark Brotherhood's reveals each did nothing there. */
   const revealLocation = (noteKey) => {
-    const dfLoc = locationIndex.get(`${playerTravelPixel().x},${playerTravelPixel().y}`);
-    const region = dfLoc ? maps.getRegion(dfLoc.regionIndex) : null;
+    const region = questWorld.maps.getRegion(_questRegionIndex());
     if (!region) return null;
     const rows = region.mapTable.map((row, i) => ({
       mapId: row.mapId, discovered: row.discovered,
@@ -12924,10 +12930,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  region's map table as systems/loot/lootScry.js reads it, and the player's map pixel; null only where the region's table
    *  cannot load (AUDIT LOOT II B7: getRegionIndexAt always answers a region - the coast's 31, out of range the first -
    *  and a guild hall stands in one). The Mages Guild's window asks it through the interior host (scenes/worldModes.js
-   *  openReforge). */
+   *  openReforge). BAY-LEFT-B (B6): the quest layer's table (scenes/questWorld.js maps) - a province's region its places
+   *  past the Bay and its lairs nearest the player (scenes/quest/questProvinceSites.js), where MAPS.BSA has none and the
+   *  scryers refused "nowhere" past the Bay. */
   const scryWhere = () => {
     const at = playerTravelPixel();
-    const region = maps.getRegion(maps.getRegionIndexAt(at.x, at.y));
+    const region = questWorld.maps.getRegion(maps.getRegionIndexAt(at.x, at.y));
     return region ? { rows: scryRows(region), at: { x: at.x, y: at.y } } : null;
   };
 
@@ -18920,9 +18928,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // tavern", the ten knightly orders - answered record 11, the
     // not-found line, and %fcn stayed empty forever. This is the plain
     // reader, not the quest layer's dungeon-sized adapter: TalkManager
-    // reads MapFileReader directly.
-    currentRegion: () => maps.getRegion(_questRegionIndex()) ?? null,
-    getLocation: (r, i) => maps.getLocation(r, i),
+    // reads MapFileReader directly. BAY-LEFT-B (B4): a province's region
+    // is the quest layer's table of the places past the Bay
+    // (scenes/quest/questProvinceSites.js, each row its location's key) -
+    // MAPS.BSA holds none, and every Regional row answered "not found".
+    currentRegion: () => questWorld.maps.getRegion(_questRegionIndex()) ?? null,
+    getLocation: (r, i) => (isProvinceRegion(r) ? questWorld.provinceSites?.getLocation(r, i) ?? null : maps.getLocation(r, i)),
     currentRegionIndex: () => _questRegionIndex(),
     currentExteriorDoorBuildingKey: () => modes?.interiorBuilding?.buildingKey ?? null,
     getAnyBuilding: (buildingKey) => discoveredBuildings(`${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`)

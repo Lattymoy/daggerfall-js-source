@@ -24,6 +24,8 @@ import { pastBayPlaceRows, PAST_BAY_SOURCE } from '../world/pastBayRows.js';   /
 import { pastBayPlacesIn } from '../world/pastBayPlaces.js';   // WW7-7: a pixel the roads past the Bay rolled a place on is dry
 import { nearestSafePlace } from '../systems/deathRespawn.js';   // AUDIT TESA II P2/P3: the nearest town of the world
 import { townClimateAt } from '../world/urban/townLook.js';   // URBANIZER U1: a town past the Bay in its province's own stone (the Imperial City aside)
+import { locationKeyOf } from '../world/locationKey.js';   // BAY-LEFT-B: a capital's MapTable key its own buildings'
+import { fabricSliceSites } from '../world/imperialFabricBuildings.js';   // BAY-LEFT-B: and the Imperial City's fabric's
 
 /** @param {any} host */
 export function createTamrielPlaces(host) {
@@ -207,8 +209,25 @@ export function createTamrielPlaces(host) {
    *  buildings by kind before it stands one; capitalLocationAt stands the same clone). */
   function capitalCloneOf(at, px, py, slot) {
     const regionIndex = maps.getRegionIndexAt(px, py);
-    return synthesizeCapitalLocation(at, { base: _capitalBase, names: _capitalNames, blockOf: (name) => blocks.getBlockByName(name), px, py, arena: slot,
+    const loc = synthesizeCapitalLocation(at, { base: _capitalBase, names: _capitalNames, blockOf: (name) => blocks.getBlockByName(name), px, py, arena: slot,
       where: { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: at.k === 0 ? getWorldClimateSettings(maps.getClimateIndex(px, py)) : townClimateAt(px, py, getWorldClimateSettings(maps.getClimateIndex(px, py))) } });
+    // BAY-LEFT-B (world/locationKey.js): its MapTable key its own buildings' - its blocks', and the Imperial City's fabric's
+    // (world/imperialFabricBuildings.js fabricSliceSites) - never the city it borrowed its shape from (the talk's regional
+    // "Where is" reads it: answerPipeline.js checkLocationKeyForRegionalBuilding)
+    if (loc) loc.mapTableData = { ...loc.mapTableData, key: locationKeyOf(CAPITALS[at.k]?.family ? [...(loc.exterior?.buildings ?? []), ...fabricSliceSites(at.s)] : loc.exterior?.buildings ?? []) };
+    return loc;
+  }
+  /** BAY-LEFT-B: A PLACE'S MapTable KEY (its buildings' directory - world/locationKey.js) as its location carries it, read
+   *  without standing it: the stood location's own; else an Arena place's, a country place's and a lair's template's (the
+   *  clone keeps it - pinned equal to every stood one's on the freeware); a capital's slice none until it stands (its
+   *  buildings' are read as it stands - the quest layer's province warm stands them in idle time); null for none. */
+  function tableKeyAt(px, py) {
+    const had = locationIndex.get(`${px},${py}`);
+    if (had) return had.mapTableData?.key ?? null;
+    if (onBayPixel(px, py) || (_capitalBase && capitalOnPixel(px, py))) return null;
+    const place = _arenaTemplates ? arenaPlaceOnPixel(px, py) : null;
+    const template = place ? arenaTemplateOf(_arenaTemplates, place) : countryRollAt(px, py)?.pick?.template ?? lairRollAt(px, py)?.pick?.template ?? null;
+    return template?.mapTableData?.key ?? null;
   }
   /** AUDIT RELEASE R2-5f (scenes/quest/questProvinceSites.js sliceIndexAt): the capital slice on (px, py) as the build
    *  stands it - the stood one, else its clone, not stood; or null. */
@@ -422,6 +441,7 @@ export function createTamrielPlaces(host) {
   const provinceQuestPlaces = Object.freeze({
     worldPlaces, lairsNear, countryNear, refresh: registerTamrielPlaces, startLairAt, sliceAt: capitalSliceAt,   // R2-5f: a capital slice read before it stands   // START2's start lair rides with them (the quest layer's startSiteOfId)
     lairAt, lairCloneAt, placeOnPixel, version: placesVersion,   // LAIR-WORLD: a lair, a place and their stamp on a pixel past the Bay - the revenants' lairs and the boards' hunts
+    tableKeyAt,   // BAY-LEFT-B: a place's MapTable key, for its province's table (the talk's regional "Where is")
     regionAt: (px, py) => maps.getRegionIndexAt(px, py),
     standAt: (px, py) => (inBay(px, py) ? null : capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py) || lairLocationAt(px, py) || null),
   });
