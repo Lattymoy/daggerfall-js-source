@@ -1421,3 +1421,18 @@ points that are past the Bay now), `test/ui/mineperks.test.js`, `test/ui/wb1_gat
 x2, homevendor, lairworld, mineperks, start3, wb1, audittesa2m M7 x2, map1 search-no-focus, map2 ports-filter-skips-search,
 tesa13 marks-at-far, tesa15 tiles-keyless, ww7 WW7-6-the-capital-keyed-as-a-city. A departure from DFU's travel map,
 whose places and find are MAPS.BSA's: Port-Ledger A, BAY-LEFT-MAPS.
+
+## PAD-CAPTURE - a pad's press on the map never throws (RPT1026-CLIENT, 2026-10-26)
+
+A private report: a pad's A pressed anywhere on the open world map threw a NotFoundError out of
+Element.setPointerCapture (an invalid pointer id), and the crash report stood until a reload. The pad's press is a
+synthetic pointer (`plusPad.js` domPointer, `enhancedDialog.js` replayClick: `pointerId: 1`, the mouse's id in
+Chromium). Firefox numbers its mouse 0 and holds no pointer 1, so the stage's capture on the press threw out of its
+listener to the page - each of the four arms of the stage's `pointerdown` (the turn, a pinch's second finger, a
+control's press, the pan). A capture is a drag's comfort, never its law: refused, the press still lands where it was
+pressed. Every capture and release in the game's own windows now goes through one door that answers a refusal
+(`ui/pointerCapture.js` capturePointer, releasePointer - the map's four, and the Firmament's sky, the charts, the sky
+window, the work board, the pack's figure, the deck plan, the family tree, the chat's grip and the POI editor's), and
+the four that already caught their own on their line stand. Pins: `test/ui/rpt1026_client_capture.test.js` (3: the
+press through the pad's own dispatch on a stage that refuses as Firefox does; the door; a sweep of `src/` for a capture
+outside it).

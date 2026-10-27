@@ -23,6 +23,8 @@ import { wareById, festivalAt, HEARTHKEEPER_GIVEN, SOULCAKE_TAKEN } from '../../
 import { QL_LINES } from '../../systems/questlines/qlLines.js';
 import { QL_SERVICE_LINES } from '../../net/questlineClaims.js';
 import { ARENA_CHAMPION_MIN_BOUTS, ARENA_CHAMPION_MIN_FOES } from '../../net/arena/arenaLaw.js';   // AUDIT COLLECTIONS-II (lane 1): the laurel's floor
+import { HUNT_TITLES, MASTERY_TITLES, SEA_TITLES } from '../../net/huntLaw.js';   // HUNTERS-MARK, MARKS-OF-MASTERY: each title's count, the service's own law
+import { professionName } from '../../net/professionLaw.js';
 
 /** The four kinds, in the Collections page's order, and the wardrobe's list that holds each (accountFlow.js wardrobe). */
 export const WARDROBE_KINDS = Object.freeze(['title', 'aura', 'icon', 'glyph']);
@@ -38,6 +40,8 @@ export const WARDROBE_SOURCES = Object.freeze([
   wordPair('serpent', () => t('coll.src.serpent', 'The Sea Serpent')),
   wordPair('broker', () => t('coll.src.broker', 'The Sigil Broker')),
   wordPair('questlines', () => t('coll.src.questlines', 'Questlines')),
+  wordPair('hunt', () => t('coll.src.hunt', 'The Hunt')),   // HUNTERS-MARK: the bounty boards' clears
+  wordPair('mastery', () => t('coll.src.mastery', 'Marks of Mastery')),   // MARKS-OF-MASTERY: a profession's Master
   wordPair('festival', () => t('coll.src.festival', 'The Witches’ Festival')),
   wordPair('seats', () => t('coll.src.seats', 'The Seats')),
   wordPair('chapters', () => t('coll.src.chapters', 'The Guild Chapters')),
@@ -134,6 +138,13 @@ const crown = () => t('coll.how.crown', 'Belong to a guild that holds this kingd
  *  seat (server-account/src/index.js, the token's seat glyphs) - never kept by the account the page reads. */
 const PER_CHARACTER = Object.freeze({ scope: 'character' });
 
+/** HUNTERS-MARK, MARKS-OF-MASTERY: a title's count off the law both ends read (net/huntLaw.js) - the account's board
+ *  clears, the serpents it helped slay - and a profession's Master. */
+const countOf = (/** @type {ReadonlyArray<ReadonlyArray<string | number>>} */ list, /** @type {string} */ id) => Number(list.find(([k]) => k === id)?.[1] ?? 0);
+const hunt = (/** @type {string} */ id) => () => t('coll.how.hunt', 'Clear {n} bounties from the towns’ bounty boards. Every character of your account counts.', { n: countOf(HUNT_TITLES, id) });
+const sea = (/** @type {string} */ id) => () => t('coll.how.sea', 'Help slay {n} Sea Serpents. One serpent a day counts.', { n: countOf(SEA_TITLES, id) });
+const master = (/** @type {string} */ prof) => () => t('coll.how.mastery', 'Reach Master in {profession} on a living character of your account.', { profession: professionName(prof) });
+
 /** THE QUESTLINE THAT PAYS A TITLE (net/questlineClaims.js QL_SERVICE_LINES), its line's own words (qlLines.js): its
  *  name, and who begins it from what level - or the line it follows. */
 export const questlineOf = (/** @type {string} */ title) => {
@@ -156,6 +167,8 @@ const questline = (/** @type {string} */ title) => () => {
  *  character shows and the account never keeps (a seat's glyph) - its holding unknown to the page, never counted. */
 const E = (/** @type {string} */ src, /** @type {string} */ avail, /** @type {() => string} */ how, extra = {}) => Object.freeze({ src, avail, how, ...extra, ...(extra.with ? { with: Object.freeze([...extra.with]) } : {}) });
 
+/** MARKS-OF-MASTERY: a profession's Master's title each, in the professions' order. */
+const MASTERS = Object.freeze(Object.fromEntries(Object.entries(MASTERY_TITLES).map(([prof, title]) => [title, E('mastery', 'open', master(prof))])));
 /** @type {Readonly<Record<string, Readonly<Record<string, WardrobeEntry>>>>} */
 export const WARDROBE = Object.freeze({
   title: Object.freeze({
@@ -222,6 +235,13 @@ export const WARDROBE = Object.freeze({
     witchwarden: E('festival', 'seasonal', wyrd('title:witchwarden')),
     hearthkeeper: E('festival', 'seasonal', () => t('coll.how.hearthkeeper', 'Set a Hearth Offering at your home’s door during the Witches’ Festival, and have other players take {n} Soul Cakes from it.', { n: HEARTHKEEPER_GIVEN })),   // AUDIT COLLECTIONS-II (lane 1): `fest_given` counts the cakes others take (festival.js takeFromOffering)
     nirnrootsage: E('bestowed', 'bestowed', bestowed, { with: ['aura:sagesmoke', 'glyph:nirnrootsage'] }),   // NIRNROOT-SAGE: Blob-Marley's own
+    bloodhound: E('hunt', 'open', hunt('bloodhound')),   // HUNTERS-MARK
+    beastbane: E('hunt', 'open', hunt('beastbane')),
+    grandhuntsman: E('hunt', 'open', hunt('grandhuntsman')),
+    huntlegend: E('hunt', 'open', hunt('huntlegend')),
+    ...MASTERS,   // MARKS-OF-MASTERY: a profession's Master each
+    serpenthunter: E('serpent', 'open', sea('serpenthunter')),   // MARKS-OF-MASTERY: sailing's, off the relay's serpent receipts
+    deepbane: E('serpent', 'open', sea('deepbane')),
   }),
   aura: Object.freeze({
     dagonfire: E('broker', 'open', broker('aura:dagonfire'), { look: () => t('coll.look.dagonfire', 'A ring of Oblivion’s fire burning on the ground at your feet.') }),

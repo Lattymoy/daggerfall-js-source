@@ -981,6 +981,25 @@ AD28Q-S4-grace-resynced (`systems/quest/machine.js` updateSharedQuest's grace gu
 (`systems/travel/travelRoute.js` the landfall's `endPad`) and TESA11-wall-band-unreserved (`world/imperialCity.js` the
 wall's band). Each is its own arc's to pin or to mark.
 
+## HEIR-WAITS - a waiting line with no living kin offers its newborn (RPT1026-MISC, 2026-10-26)
+
+A private report: a high-level Bloodline character's death offered an heir, the game went back to the menu before one
+was chosen, and the parent was gone from the realm. A Bloodline's fall is the realm's tombstone at the death door, before the Succession - so the fallen is gone
+from the roster by design, and a page that went back to the title left the Succession waiting on the line's record.
+HOUSE-WAITS (FIELD BUGS 2026-10-09f) is the Online page's door to such a line, and it named the line's LIVING members
+alone, where the fall's own Succession offers a newborn heir of the fallen too (`legacyHost.js` fallOutcome). A fallen
+with no sibling or child left the house with no card and nothing to press.
+
+- `systems/legacy/waitingHouses.js` waitingHouses lists a line whose fall may raise a newborn (the heir answer rolled at
+  the fallen's birth, the Descendants dial at Always, or an elder retired - fallOutcome's own test), and takeUpLine's
+  `newborn` makes that child as the Succession makes one (addChild, then rollSiblings, at the fall's own minute) and
+  leaves their birth for the boot. The card's button: "Raise a child of {name} as your heir"
+  (`legacy.houseWaits.newborn`); a press with no child to raise is refused in words (`legacy.houseWaits.noNewborn`).
+- `ui/enhanced/enhancedMenu.js` waitingHouseCards draws the button and carryOn passes it, with the player's legacy
+  settings. No host grows.
+- The level the fallen reached is not the heir's: a Bloodline heir starts at level 1 (the arc's own law).
+- Pinned by `test/systems/legacy/rpt1026_misc_heir.test.js` (2); `tools/mutants/rpt1026_misc.json` (3).
+
 ## COURT-DEEDS - a compliment, a gift, a hug, a kiss (FIELD BUGS 2026-10-26d)
 
 Discord #feature-feedback "Better Courtship" - lumin: "There should be specific interactions with NPC for courtship.

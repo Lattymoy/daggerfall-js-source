@@ -1,0 +1,295 @@
+[
+  {
+    "name": "RPT1026-QUESTS-ABANDON-ALWAYS-walk-drops-it",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "if (!ql?.objectives?.length && !holdsQuestorDoor(q)) continue;",
+    "new": "if (!ql?.objectives?.length) continue;",
+    "tests": [
+      "test/systems/quest/rpt1026_quests.test.js"
+    ],
+    "note": "A quest that holds its questor's door with nothing written is no row: nothing to abandon, the guild shut."
+  },
+  {
+    "name": "RPT1026-QUESTS-ABANDON-ALWAYS-every-entryless-listed",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "if (!ql?.objectives?.length && !holdsQuestorDoor(q)) continue;",
+    "new": "if (false) continue;",
+    "tests": [
+      "test/systems/quest/rpt1026_quests.test.js"
+    ],
+    "note": "Every running quest with nothing written is a row - the main story's backbone among them."
+  },
+  {
+    "name": "RPT1026-QUESTS-ABANDON-ALWAYS-any-questor",
+    "file": "src/systems/quest/machine.js",
+    "old": "some((r) => r?.isPerson && r.isQuestor && boundByClick(r));",
+    "new": "some((r) => r?.isPerson && r.isQuestor);",
+    "tests": [
+      "test/systems/quest/rpt1026_quests.test.js"
+    ],
+    "note": "A questor the script names but the player never met counts as the door."
+  },
+  {
+    "name": "RPT1026-QUESTS-ABANDON-ALWAYS-abandon-off-entryless",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "} else if (sel.entries && sel.id != null && clean.abandon && clean.canAbandon?.(sel.id)) {",
+    "new": "} else if (sel.entries?.length && sel.id != null && clean.abandon && clean.canAbandon?.(sel.id)) {",
+    "tests": [
+      "test/systems/quest/rpt1026_quests.test.js",
+      "test/ui/questlines/ql2_pause.test.js"
+    ],
+    "note": "No Abandon on a row with nothing written (UI-8 as it was)."
+  },
+  {
+    "name": "RPT1026-QUESTS-ABANDON-ALWAYS-no-row-set-aside",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "if (isShelved(q)) shelved.push({ ...row, clockSeconds: null, clocks: [], messages: [], steps: [] });\n          else unlogged.push(row);",
+    "new": "if (!isShelved(q)) unlogged.push(row);",
+    "tests": [
+      "test/systems/quest/rpt1026_quests.test.js"
+    ],
+    "note": "A quest set aside with nothing written is no Abandoned row: no Reclaim reaches it."
+  },
+  {
+    "name": "RPT1026-QUESTS-ABANDON-ALWAYS-close-row-dropped",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": ", center: true },\n  // RPT1026-QUESTS ABANDON-ALWAYS: and the way out - every quest that shuts this door is a row of the pause menu's Quests\n  // tab now, with its Abandon (the questor offers work again the moment it is set aside: machine.js shelveQuest).\n  // AUDIT RPT1026 H2: the way on the skin worn - the classic pause (DFU's OPTN00I0) has no tabs, and its Controls opens the\n  // port's whole menu, whose face (Escape) holds the Quests tab (AUDIT QUESTLINES UI-6's own way, ui/questlines/qlJournal.js\n  // offerWaitingWords)\n  { text: isEnhanced() ? t('quest.offer.questorBusyAbandon', 'If you cannot finish it, you can abandon it from the Quests tab of the pause menu.')\n    : t('quest.offer.questorBusyAbandonClassic', 'If you cannot finish it, you can abandon it: in the pause menu, press Controls, then Escape, and choose it under Quests.'), center: true }];",
+    "new": ", center: true }];",
+    "tests": [
+      "test/systems/quest/rpt1026_quests.test.js",
+      "test/systems/quest/fb1019f_questorsaid.test.js"
+    ],
+    "note": "The questor's close says nothing of the way out. (AUDIT RPT1026 H5: re-aimed by content - the row is chosen by skin now.)"
+  },
+  {
+    "name": "RPT1026-QUESTS-ABANDON-ALWAYS-unwritten-blank",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "      else if (!sel.ql?.objectives?.length) detail.append(el('p', 'px-note', t('pause.journal.unwritten', 'Nothing is written in your journal for this quest yet.')));\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/rpt1026_quests.test.js"
+    ],
+    "note": "The detail of a row with nothing written is blank."
+  },
+  {
+    "name": "RPT1026-QUESTS-QUEST-CROWD-stands-unread",
+    "file": "src/scenes/worldModes.js",
+    "old": "isItem ? null : size.w, ctx.people, list, stand);",
+    "new": "isItem ? null : size.w, ctx.people);",
+    "tests": [
+      "test/systems/quest/rpt1026_quests.test.js"
+    ],
+    "note": "The quest people already stood are no crowd: two quests' Persons share one pick box."
+  },
+  {
+    "name": "RPT1026-QUESTS-QUEST-CROWD-self-crowds",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "if (!s || s === self || !s.batch ||",
+    "new": "if (!s || !s.batch ||",
+    "tests": [
+      "test/systems/quest/rpt1026_quests.test.js"
+    ],
+    "note": "A stand counted as its own crowd."
+  },
+  {
+    "name": "RPT1026-QUESTS-QUEST-CROWD-undrawn-crowds",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "s === self || !s.batch || s.dead",
+    "new": "s === self || s.dead",
+    "tests": [
+      "test/systems/quest/rpt1026_quests.test.js"
+    ],
+    "note": "A stand not drawn yet (at the marker it has not taken) crowds the first."
+  },
+  {
+    "name": "RPT1026-QUESTS-QUEST-CROWD-dead-crowds",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "|| s.dead || s.active",
+    "new": "|| s.active",
+    "tests": [
+      "test/systems/quest/rpt1026_quests.test.js"
+    ],
+    "note": "A gone stand crowds."
+  },
+  {
+    "name": "RPT1026-QUESTS-QUEST-CROWD-hidden-crowds",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "|| s.active === false || !s.behaviour",
+    "new": "|| !s.behaviour",
+    "tests": [
+      "test/systems/quest/rpt1026_quests.test.js"
+    ],
+    "note": "A hidden stand crowds."
+  },
+  {
+    "name": "RPT1026-QUESTS-QUEST-CROWD-items-crowd",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "|| !s.behaviour?.targetResource?.isPerson) continue;",
+    "new": ") continue;",
+    "tests": [
+      "test/systems/quest/rpt1026_quests.test.js"
+    ],
+    "note": "A quest item's stand crowds a Person."
+  },
+  {
+    "name": "RPT1026-QUESTS-QUEST-CROWD-beside-never-asked",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "return besideSpot(at, collider, lift, w, crowd) ?? at;",
+    "new": "return at;",
+    "tests": [
+      "test/systems/quest/rpt1026_quests.test.js"
+    ],
+    "note": "With no clear marker the second Person stands in the first's box."
+  },
+  {
+    "name": "RPT1026-QUESTS-QUEST-CROWD-floor-unread",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": " || Math.abs((p[1] + lift - hit) - floor) > BESIDE_FLOOR_M) continue;",
+    "new": ") continue;",
+    "tests": [
+      "test/systems/quest/rpt1026_quests.test.js"
+    ],
+    "note": "Beside onto a table or off a ledge."
+  },
+  {
+    "name": "RPT1026-QUESTS-QUEST-CROWD-wall-unread",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "      if (Number.isFinite(wall) && wall < d) continue;\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/rpt1026_quests.test.js"
+    ],
+    "note": "Beside through a wall."
+  },
+  {
+    "name": "RPT1026-QUESTS-QUEST-CROWD-crowd-unread-beside",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "      if (!crowdingPerson(p, w, crowd)) return p;\n",
+    "new": "      return p;\n",
+    "tests": [
+      "test/systems/quest/rpt1026_quests.test.js"
+    ],
+    "note": "Beside into another standing person."
+  },
+  {
+    "name": "RPT1026-QUESTS-NO-GIVES-BACK-verdict-unread",
+    "file": "src/systems/quest/noAsksAgain.js",
+    "old": "gives ? { no: gives, clears: false, gives: true } : null",
+    "new": "null",
+    "tests": [
+      "test/systems/quest/rpt1026_quests.test.js",
+      "test/systems/quest/fb1013e_noasks.test.js"
+    ],
+    "note": "The Queen's No hands the letter back and she never asks again."
+  },
+  {
+    "name": "RPT1026-QUESTS-NO-GIVES-BACK-cleared-before-back",
+    "file": "src/systems/quest/noAsksAgain.js",
+    "old": "      if (law.gives && !no.actions.every((/** @type {any} */ a) => a.isComplete)) continue;",
+    "new": "",
+    "tests": [
+      "test/systems/quest/rpt1026_quests.test.js"
+    ],
+    "note": "The No cleared before its letter is back in the pack: asked again with nothing to tote."
+  },
+  {
+    "name": "RPT1026-QUESTS-QUEST-ZONE-seal-unread",
+    "file": "src/systems/quest/place.js",
+    "old": "      if (sealed?.(regionData.mapTable[i])) continue;",
+    "new": "",
+    "tests": [
+      "test/systems/quest/rpt1026_quests.test.js"
+    ],
+    "note": "Online a quest draws a dungeon the open zone seals."
+  },
+  {
+    "name": "RPT1026-QUESTS-QUEST-ZONE-seal-not-passed",
+    "file": "src/systems/quest/place.js",
+    "old": "this._collectDungeonIndicesOfType(regionData, dungeonTypeIndex, false, this._zoneSeal(world));",
+    "new": "this._collectDungeonIndicesOfType(regionData, dungeonTypeIndex);",
+    "tests": [
+      "test/systems/quest/rpt1026_quests.test.js"
+    ],
+    "note": "The draw is handed no seal."
+  },
+  {
+    "name": "RPT1026-QUESTS-QUEST-ZONE-offline-too",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (!this.parentQuest?.hooks?.sharedClock?.()) return null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/rpt1026_quests.test.js"
+    ],
+    "note": "Offline, where the zone is no law, the seal takes DFU's dungeons away."
+  },
+  {
+    "name": "RPT1026-QUESTS-QUEST-ZONE-reseat-unwidened",
+    "file": "src/systems/quest/place.js",
+    "old": "if (!isMainStoryDungeon(sd.mapId) && !(row && this._zoneSeal(world)?.(row))) return false;",
+    "new": "if (!isMainStoryDungeon(sd.mapId)) return false;",
+    "tests": [
+      "test/systems/quest/rpt1026_quests.test.js"
+    ],
+    "note": "A save whose dungeon the zone seals keeps it."
+  },
+  {
+    "name": "RPT1026-QUESTS-ARENA-ORDER-guard-dropped",
+    "file": "src/scenes/arena/arenaOnline.js",
+    "old": "    if (claims.ladderKept?.()) { void claims.flush(); return { ok: false, text: O.stillRecording }; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/rpt1026_quests.test.js"
+    ],
+    "note": "Past CLIMB_WAIT_MS the floor is entered for the step just fought: no opponent, or the service's order."
+  },
+  {
+    "name": "RPT1026-QUESTS-ARENA-ORDER-no-flush",
+    "file": "src/scenes/arena/arenaOnline.js",
+    "old": "{ void claims.flush(); return { ok: false, text: O.stillRecording }; }",
+    "new": "{ return { ok: false, text: O.stillRecording }; }",
+    "tests": [
+      "test/systems/quest/rpt1026_quests.test.js"
+    ],
+    "note": "The refusal carries nothing: the win waits for the claims' own retry."
+  },
+  {
+    "name": "RPT1026-QUESTS-CATALOG-READ-objective-gone",
+    "file": "src/systems/questlines/sheets/magesGuild.json",
+    "old": "{\"id\":\"read\",\"text\":\"Read the old catalog from ___hintdung_, which is in your pack\",\"open\":{\"any\":[{\"item\":\"_map2_\"},{\"item\":\"_I.03_\"}]},\"done\":{\"any\":[{\"task\":\"_S.15_\"},{\"task\":\"_S.16_\"}]}},",
+    "new": "",
+    "tests": [
+      "test/systems/quest/rpt1026_quests.test.js"
+    ],
+    "note": "The catalogue carried unread is a step done: nothing names the reading the script waits on."
+  },
+  {
+    "name": "RPT1026-QUESTS-CATALOG-READ-done-on-carrying",
+    "file": "src/systems/questlines/sheets/magesGuild.json",
+    "old": "\"done\":{\"any\":[{\"task\":\"_S.15_\"},{\"task\":\"_S.16_\"}]}",
+    "new": "\"done\":{\"any\":[{\"item\":\"_map2_\"},{\"item\":\"_I.03_\"}]}",
+    "tests": [
+      "test/systems/quest/rpt1026_quests.test.js"
+    ],
+    "note": "The reading struck when the catalogue is picked up, the script still unmoved."
+  },
+  {
+    "name": "RPT1026-QUESTS-BOUNTY-WAY-kept-for-a-split-hunt-alone",
+    "file": "src/scenes/bountyHost.js",
+    "old": "      const clue = clues.get(`${h.id}:${stage}`);\n      if (clue) lines.push(clue);\n",
+    "new": "      const clue = clues.get(`${h.id}:${stage}`);\n      if (clue && groups.length > 1) lines.push(clue);\n",
+    "tests": [
+      "test/systems/quest/rpt1026_quests.test.js"
+    ],
+    "note": "The farm's way, named once on the screen, kept in the journal for a two-group hunt alone: a hunter of one group who missed the line has nothing to go on."
+  },
+  {
+    "name": "RPT1026-QUESTS-BOUNTY-WAY-the-old-page",
+    "file": "src/systems/tutorialCatalogue.js",
+    "old": "'Bounty boards list four hunts. Take one and make for the middle of its black circle on your map, or the dungeon it names. There the quarry shows itself, or you are told which way it waits; the Quests tab keeps the way. The last kill pays gold and an item and raises your standing in the region.',",
+    "new": "'Bounty boards list four hunts. Take one, slay the quarry and return for gold and an item. It also raises your standing in the region.',",
+    "tests": [
+      "test/systems/quest/rpt1026_quests.test.js"
+    ],
+    "note": "The tutorial says nothing of where a hunt is found and sends the hunter back for a purse the last kill already paid."
+  }
+]

@@ -497,6 +497,30 @@ password. Recovery signs out *every* device including the one standing
 there, because the reason somebody is recovering may be that another
 person has their password.
 
+**AND NOTHING ALREADY UNDER WAY UNDOES IT** (RPT1026-SECNET, 2026-10-26, from a
+private security report). Each of these proved itself against the account as it
+found it at its start, then wrote by the account's id alone - so a thief who
+held the password, racing the owner's recovery, kept the account: a change
+already deriving wrote the thief's password on top of the owner's and ended the
+session the recovery had just opened; a sign-in already deriving opened a
+session the recovery's sign-out had already run past (and on an older-cost hash,
+wrote the old password back as its rehash). Every write now stands on what its
+request proved (`accounts.js` changePassword, login, openSession's `guard`): the
+change lands only while the password is still the one it checked and its session
+still stands, and signs the others out only while the password is still its own;
+a sign-in's rehash lands only where the hash it verified still stands, and its
+session only on the hash it holds (the row is asked once more where it moved, so
+two honest sign-ins at once on an older-cost hash both get in); a recovery's
+session only on the password it wrote, and its sign-out of every device only
+while that password is still the row's (AUDIT RPT1026 A3: a second recovery that
+wrote after it had signed every device out itself and been answered with a
+session, which the first one's sign-out by id alone then deleted), and a second
+device only through a device still in (`/v1/auth/session`, else `auth`). A loser
+is told what a wrong answer is told - `bad-login`, `codes-moved`, `auth`. Pinned
+by `test/server/rpt1026_secnet.test.js` over the real service, on a database
+that holds one request between two of its statements while another runs whole,
+and `test/server/audit_rpt1026_secnet_acct.test.js` (A3).
+
 **AND EMAIL IS COMPLETELY OPTIONAL AND MEANS IT.** The account
 registers, logs in, recovers and changes its password with no address
 ever set; an address a player never gave is not in the account view at
@@ -5658,7 +5682,10 @@ S01-changepw-unthrottled-oracle) - and a guess at the code spends RECOVER's, eac
 WRITE IS THE AUTHORITY** (AUDIT 68 S01-register-recover-lost-update): it lands only on the row as it was read
 (`recovery_hash IS ?`), so two presses racing cannot both answer a set while only the second's works, and two of a
 set's codes recovering at once cannot both spend - the loser hears `codes-moved` (409), a sentence of its own that
-does not call a right code wrong.
+does not call a right code wrong. AUDIT 68 S01 guarded the writes a recovery makes itself and left the others a recovery races
+by id alone - a password change, a sign-in's rehash and its session, a second device: RPT1026-SECNET (2026-10-26) puts
+them on what they proved too (A PASSWORD IS CHANGED WITH THE OLD ONE, above), and a recovery whose session a second
+recovery outran hears `codes-moved` as well.
 
 **Not done, and offered:** passkeys (Face ID, a fingerprint, Windows Hello) as a second way in, and an emailed reset for
 the players who chose to give an address - each its own slice if it is wanted.

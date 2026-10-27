@@ -658,7 +658,7 @@ player, the service's word one way and the relay's the other, each signed:
   if the service takes it then (C1).
 - **ON THE DEVICE** (`net/card/cardStakes.js`, world.js `cardStakes`): the stake is the record's own act (realmSaves.js
   `realmGoldAct` - the purse checkpointed, the gold held out while asked); the request kept first, the order till the
-  relay sits it; each receipt kept, its stake let go, acked to the room and claimed as the record's act. A cash-out frame
+  relay sits it; each receipt kept, its stake let go, acked to the room and claimed as the record's act. RPT1026-CARDBANK (2026-10-26, a private report: a buy-in nobody sat against that seemed lost after a reload): the claim says where the gold went - "The card table paid N gold into your account at the Bank of the Empire." (`cardStakes.js` cardBankedText), at both of the host's claims, a cash-out heard and the kept receipts claimed on a visit; the purse it was staked from stayed empty, and nothing had said so. A cash-out frame
   is heard on any socket - the room just left included (online.js). The panel: a realm character online sits at the
   relay's table through a gold buy-in ("The realm is holding your stake..."), the table's note says the realm holds it.
 - **WHAT HOLDS IT TOGETHER**: every chip at a gold table came in as a stake, the law conserves every chip, and each

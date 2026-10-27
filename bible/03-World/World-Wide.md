@@ -1540,7 +1540,7 @@ code gates alone.
   `npcChapterLaw.js`) - so a seat past the Bay's Hall of Records and a province gate's receipt are read, where WW7-3
   had left them refused. A home any region's (`homeLaw.js` HOME_REGION_MAX 70 - its table keeps no CHECK); the staff's
   economy filter with them. `bayRegionOk` stays, read by no town book.
-- **The CHECKs** (migration 0181, `server-account/migrations/0181_world_books.sql` - 0180 until main's WOVEN-PAYS took 0177, - 0170 before main's own took it): the market's listings, orders,
+- **The CHECKs** (migration 0181, `server-account/migrations/0186_world_books.sql` - 0180 until main's WOVEN-PAYS took 0177, - 0170 before main's own took it): the market's listings, orders,
   auctions and bids (`region < 62`), the guild writs, the commissions and the contracts (`region <= 61`) rebuilt as 0044
   rebuilt the market's - every row and column carried, every index and trigger made again as the migrations before left
   them (0137's vendor-board triggers on the listings with them: the board's guard asks a rebuild to make them again in

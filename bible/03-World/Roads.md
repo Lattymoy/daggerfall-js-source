@@ -97,7 +97,10 @@ are tile 46 over any ground, with 47 (dirt) or 55 (grass) as the edge;
 tracks are worn dirt showing through grass only (11/26 centre, 12/27
 edge) and leave dirt and stone alone because a dirt track on dirt is
 invisible. WATER IS NEVER PAVED: a road bit over water is a routing bug
-and the painter refuses to hide it. The centre of any arm wins over the
+and the painter refuses to hide it (history: ROADS 23's port of his painter
+paves it - AUDIT 51 - and his data routes 42 road pixels over the sea, which
+the Overworld's route walks since RPT1026-WORLD CAUSEWAY,
+`systems/travel/travelRoute.js` `pavedStep`). The centre of any arm wins over the
 edge of another, so a junction reads as one surface. A location's rect
 is left alone.
 

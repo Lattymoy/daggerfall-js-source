@@ -35,6 +35,7 @@
 
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { swallowBrowserKey } from '../input.js';   // AUDIT 27h H2: the typed field still swallows the keys the browser would steal
+import { openTouchEntry } from '../touch/touch.js';   // RPT1026-MISC TOUCH-FIELD: a finger's press on a typed field raises the phone's keyboard
 import { armDrawWatchdog, disarmDraw } from '../drawWatchdog.js';   // DISC29-D: the watchdog counts frames, not milliseconds
 import { noticeShown } from './enhancedNotice.js';   // SPELLSHOP-SAID: the notice a ported window raised takes the first click
 
@@ -184,6 +185,9 @@ function blockNode(doc, b, acts, canvases) {
       const n = el(doc, 'div', `port-fieldrow${b.active ? ' active' : ''}`);
       if (b.label) n.append(el(doc, 'span', 'port-fieldlabel', b.label));
       const f = el(doc, 'span', 'port-field');
+      // RPT1026-MISC TOUCH-FIELD: a field the window is typing into is a press that raises a phone's keyboard - the host's
+      // click below asks the touch layer (a number pad for an amount); a mouse's keys go on reaching the window as ever
+      if (b.active) f.dataset.entry = b.numeric ? 'numeric' : 'text';
       f.append(el(doc, 'span', 'port-fieldvalue', b.value || (b.active ? '' : (b.placeholder ?? ''))));
       if (b.active) f.append(el(doc, 'span', 'port-caret', '_'));
       n.append(f);
@@ -381,6 +385,8 @@ export function portWindow(win, spec, doc = globalThis.document) {
     });
     host.addEventListener('click', (e) => {
       if (swallowClick) { swallowClick = false; e.stopPropagation(); return; }   // HOLD-STEP: the release of a hold that stepped
+      const typed = e.target.closest?.('.port-field[data-entry]');
+      if (typed && openTouchEntry({ numeric: typed.dataset.entry === 'numeric' })) { e.stopPropagation(); return; }   // RPT1026-MISC TOUCH-FIELD
       const b = e.target.closest?.('[data-a]');
       e.stopPropagation();
       if (b && !b.disabled) commitTyped();   // AUDIT 27h H7: at the click, not the press - a commit at the press rebuilt the buttons before the release, and the click never came

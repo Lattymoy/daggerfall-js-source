@@ -40,6 +40,7 @@ import { WEAPONS } from '../../characters/weapons.js';
 import { isEnchanted } from '../../systems/inventory.js';
 import { hasArtifactEffect, hasArtifactSubtype, ARTIFACTS } from '../../systems/artifactEffects.js';
 import { ENCHANTMENT_TYPES } from '../../systems/enchantments.js';
+import { isLookCopy } from '../../net/appearanceLaw.js';   // APPEARANCES-II: a piece drawn in a look is no artifact
 
 /** FPSWeapon.moddedWeaponHUDAnimsEnabled (FPSWeapon.cs:97) - a static
  *  false until a mod sets it; Diverse Weapons' Start sets it true. The
@@ -140,8 +141,9 @@ export function moddedWeaponFilename(weapon, enchanted = isEnchanted(weapon)) { 
 
 /** DaggerfallUnityItem.IsArtifact - the port's reading, off the same
  *  enchantment list DFU reads (systems/artifactEffects.js, AUDIT WORLD4
- *  B1), with the loot mint's own flag beside it. */
-const isArtifact = (item) => item?.artifact === true || hasArtifactEffect(item);
+ *  B1), with the loot mint's own flag beside it. APPEARANCES-II (bible/04-Characters/Wardrobe.md section 5): a piece
+ *  drawn in a look is none - it swings the look's own sheet, `<NAME>MAGIC` while enchanted, as it does with the mod off. */
+const isArtifact = (item) => !isLookCopy(item) && (item?.artifact === true || hasArtifactEffect(item));
 
 /**
  * FPSWeapon.GetWeaponTextureAtlas's name choice (FPSWeapon.cs:637-644):

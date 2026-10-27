@@ -61,6 +61,7 @@ export const GROUND_SLACK = 1.5;
  * foot `foot` ([x, y, z] in the scene), read at HORIZON_STEPS - 1 points between the eye and the foot, a point where
  * `built(x, z)` (a pixel the stream has built: its ground in the depth) or past the ring not read; -1e9 where none lifts
  * it. The heights read bilinearly between the ring's vertices, as the filtered texture reads them. Pure.
+ * @param {ArrayLike<number>} eye @param {ArrayLike<number>} foot @param {any} ground @param {(x: number, z: number) => boolean} [built]
  */
 export function skylineAt(eye, foot, ground, built = () => false) {
   let cut = -1e9;

@@ -42,6 +42,7 @@ import { quatRotate } from '../world/quat.js';
 import { lookDir } from './decor/decorTool.js';
 import { rayDirFromScreen } from '../player/tapRay.js';
 import { canvasPoint } from '../player/travelPick.js';
+import { capturePointer } from '../ui/pointerCapture.js';   // RPT1026-CLIENT: a pad's synthetic pointer is refused a capture, never thrown
 
 /** The eye's speed (m/s): where it starts, its bounds, the wheel's step (a factor), Shift's and Ctrl's. */
 export const POI_EYE = Object.freeze({ speed: 12, min: 0.5, max: 600, wheel: 1.25, fast: 4, look: 0.0035, pitch: 1.55 });
@@ -599,7 +600,7 @@ export function createPoiEditorRouter({ editor, canvas, cam, acts, owns, overlay
     if (overlayUp() || owns(e.target)) { if (e.type === 'pointerup') editor.letGo(); return; }
     let took = false;
     switch (e.type) {
-      case 'pointerdown': if (e.target !== canvas) return; took = editor.pointerDown(e); if (took) canvas.setPointerCapture?.(e.pointerId); break;
+      case 'pointerdown': if (e.target !== canvas) return; took = editor.pointerDown(e); if (took) capturePointer(canvas, e.pointerId); break;
       case 'pointermove': took = editor.pointerMove(e, cam); break;
       case 'pointerup': took = editor.pointerUp(e); break;
       case 'wheel': if (e.target !== canvas) return; took = editor.wheel(e, cam); break;

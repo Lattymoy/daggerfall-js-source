@@ -1753,7 +1753,8 @@ test('AUDIT-WH H4/L2/L3/L4/L6: every host branch that returns above the hover sa
   // lives, and `hideHudText` already rode that exact line for this
   // exact reason. The record claimed the scheduling accident had been
   // replaced "by law"; it had not.
-  assert.match(wm, /if \(dungeonCtx\.uiOverlayActive\) \{ dungeonCtx\.hideHudText\?\.\(\); hideWorldPlaque\(\);/,
+  // PIN MOVED (RPT1026-FIGHTS WINDOW-ONLINE): the arm's window test is windowHoldsDungeon's - a window holds the dungeon offline, or over a death online (scenes/windowWorld.js)
+  assert.match(wm, /if \(windowHoldsDungeon\(dungeonCtx\.uiOverlayActive, aliveUnder\(\)\)\) \{ dungeonCtx\.hideHudText\?\.\(\); hideWorldPlaque\(\);/,
     'the world-hosted dungeon hides it on the overlay branch');
   assert.match(dj, /ctx\.hideHudText\?\.\(\); hideWorldPlaque\(\);/,
     'and so does the standalone ?dungeon door');

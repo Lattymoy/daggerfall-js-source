@@ -520,7 +520,7 @@ test('PROF7 pages: the Loom at a Clothing Store - the cures for the hides held a
   const hunting = page('Hunting');
   assert.doesNotMatch(hunting, /not practiced/);
   assert.match(hunting, /Today: 7 hides, 1 of 3 of grades 5 and 6 \(shared by all your characters\)/);   // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills"): '7 of 30 hides'
-  assert.match(hunting, /Comes when trophies are added/);
+  assert.match(hunting, /Trophy HunterA clean pelt of a grade 5 or 6 body gives a mounted trophy of the beast\./);   // PIN MOVED (HUNTERS-MARK): the trophy built - "Comes when trophies are added" no more
   assert.match(hunting, /Harpy Feathers, Dreugh Shell/);
   const outfitting = page('Outfitting');
   assert.doesNotMatch(outfitting, /not practiced/);

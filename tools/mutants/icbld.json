@@ -155,12 +155,12 @@
   {
     "name": "BLD-door-before-a-way-up",
     "file": "src/world/imperialFabricBuildings.js",
-    "old": "if ([GROUND.street, GROUND.square, GROUND.under].includes(g) && [GROUND.street, GROUND.square, GROUND.under].includes(g2)) return",
+    "old": "if (DOOR_GROUND.includes(g) && DOOR_GROUND.includes(g2)) return",
     "new": "if (g !== GROUND.canal) return",
     "tests": [
       "test/world/icbld_buildings.test.js"
     ],
-    "note": "PIN MOVED (IC-STAIRS): re-aimed by content - the door law reads the street under a stair's upper flights (GROUND.under) open as well as the street and the square; a way up's own ground (GROUND.stair) still shuts a bay."
+    "note": "PIN MOVED (IC-STAIRS): re-aimed by content - the door law reads the street under a stair's upper flights (GROUND.under) open as well as the street and the square; a way up's own ground (GROUND.stair) still shuts a bay. Re-aimed by content at the fourth merge of main into #1184 (2026-10-27): the three grounds one list, DOOR_GROUND."
   },
   {
     "name": "BLD-quality-off-district",

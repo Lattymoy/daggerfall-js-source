@@ -228,8 +228,8 @@
   {
     "name": "TECHCARD-the-chip-in-the-sigil-rune",
     "file": "src/ui/enhanced/enhancedHud.js",
-    "old": "t.set === 'technique' ? techniqueGlyphTileSrc(shade) : sigilRuneTileSrc(shade)",
-    "new": "sigilRuneTileSrc(shade)",
+    "old": "pic.src = weapon ? techniqueGlyphTileSrc(shade) : sigilRuneTileSrc(shade)",
+    "new": "pic.src = sigilRuneTileSrc(shade)",
     "tests": [
       "test/ui/techcard1.test.js"
     ]

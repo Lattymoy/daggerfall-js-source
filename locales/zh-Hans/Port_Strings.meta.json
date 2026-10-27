@@ -14,6 +14,11 @@
   "tr": "6714a7ad3ac3",
   "by": "claude-in-session"
  },
+ "account.refusal.decorLapsed": {
+  "en": "18bf013073c6",
+  "tr": "a208c100b7e9",
+  "by": "claude-in-session"
+ },
  "account.refusal.embers": {
   "en": "e9678673977b",
   "tr": "ff6215d77c90",
@@ -132,6 +137,11 @@
  "body.beast.noHelm": {
   "en": "48cfe45d7058",
   "tr": "10feca3dca49",
+  "by": "claude-in-session"
+ },
+ "cards.cashout.banked": {
+  "en": "dbeb3e2bdded",
+  "tr": "ff759a9a75b7",
   "by": "claude-in-session"
  },
  "chair.bench": {
@@ -1589,6 +1599,16 @@
   "tr": "6c92bd1dac0d",
   "by": "claude-in-session"
  },
+ "inventory.store.chestAct": {
+  "en": "88d2f1cb9aea",
+  "tr": "b53817bae61d",
+  "by": "claude-in-session"
+ },
+ "inventory.store.chestAlone": {
+  "en": "ff8f623bd887",
+  "tr": "77c9c99fcdbd",
+  "by": "claude-in-session"
+ },
  "items.gold.sharedFull": {
   "en": "7eb608a65f56",
   "tr": "4af233d2f6ee",
@@ -2649,6 +2669,16 @@
   "tr": "15d3a6500e1b",
   "by": "claude-in-session"
  },
+ "legacy.houseWaits.newborn": {
+  "en": "28e7f5a06d17",
+  "tr": "85975aaf1b7e",
+  "by": "claude-in-session"
+ },
+ "legacy.houseWaits.noNewborn": {
+  "en": "862d8a89f3cf",
+  "tr": "259d5fcc61d8",
+  "by": "claude-in-session"
+ },
  "levelup.progress.cap": {
   "en": "653a5c7ec4c8",
   "tr": "eb09602fe5fa",
@@ -3274,6 +3304,11 @@
   "tr": "792180337c05",
   "by": "claude-in-session"
  },
+ "portal.refused.event": {
+  "en": "728feb1a67e6",
+  "tr": "10384e3a4783",
+  "by": "claude-in-session"
+ },
  "prof.craft.xpFirstBought": {
   "en": "75f0476f9180",
   "tr": "6272f235e07b",
@@ -3305,8 +3340,8 @@
   "by": "claude-in-session"
  },
  "prof.page.how.outfitting": {
-  "en": "85dc68e23b5f",
-  "tr": "7166917fdc3a",
+  "en": "b4271774202f",
+  "tr": "473d7bcc4937",
   "by": "claude-in-session"
  },
  "prof.page.jewel.grade.chipped": {
@@ -3567,6 +3602,26 @@
  "saddle.hello.none": {
   "en": "c4f18acb1d78",
   "tr": "587a4c5471d9",
+  "by": "claude-in-session"
+ },
+ "sd.hall.lastBy": {
+  "en": "ba380c5a8929",
+  "tr": "742e9324690f",
+  "by": "claude-in-session"
+ },
+ "sd.hall.snapLashes": {
+  "en": "0029d66990c6",
+  "tr": "ec34f3e6ec76",
+  "by": "claude-in-session"
+ },
+ "sd.hall.snapLashesMore": {
+  "en": "59276bb84184",
+  "tr": "71e316fb45b4",
+  "by": "claude-in-session"
+ },
+ "sd.hall.you": {
+  "en": "8af56de68279",
+  "tr": "5630b886f9cd",
   "by": "claude-in-session"
  },
  "sd.through.opens": {

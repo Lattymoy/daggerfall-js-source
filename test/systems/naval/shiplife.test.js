@@ -247,7 +247,7 @@ test('SHIP-LIFE THE HARBOUR ROLL, by the real host: ashore in a port town, its h
   w.boat.GameObject.position = [0, 0, -150]; w.view.feet = [0, 0, -150];
   w.deps.harbourNear = () => PORT;
   w.run(200);
-  const open = [...w.host._sea.values()].filter((e) => e.ship.errand?.kind !== 'moored' && e.ship.damage.state === SHIP_STATES.afloat);
+  const open = [...w.host._sea.values()].filter((e) => e.ship.errand?.kind !== 'moored' && !e.ship.cls.fisher && e.ship.damage.state === SHIP_STATES.afloat);   // PIN MOVED (FISH-BOATS): a port's fishing boats are its own, as its moored ships are
   assert.ok(open.length >= 1 && open.length <= DENSITY.few + 1, `the sea's traffic beside the harbour's: ${open.length}`);
   // far off and back
   const seeds = key(h);
@@ -278,7 +278,7 @@ test('SHIP-LIFE THE SEA NEAR A PORT GOES SOMEWHERE: on the water off a port the 
   const kinds = new Map();
   for (let t = 0; t < 900; t += 30) {
     w.run(30);
-    for (const e of w.host._sea.values()) if (!e.fromHarbour && e.ship.errand && !kinds.has(e.id)) kinds.set(e.id, `${e.ship.cls.faction}:${e.ship.errand.kind}`);
+    for (const e of w.host._sea.values()) if (!e.fromHarbour && !e.fisher && e.ship.errand && !kinds.has(e.id)) kinds.set(e.id, `${e.ship.cls.faction}:${e.ship.errand.kind}`);   // PIN MOVED (FISH-BOATS): the port's fishing boats keep their own day
   }
   const seen = new Set(kinds.values());
   assert.ok([...seen].some((k) => k === 'merchant:arrive' || k === 'merchant:moored'), `a merchantman comes in: ${[...seen]}`);
@@ -332,7 +332,7 @@ test('SHIP-LIFE A SHIP TAKEN OVER: her errand never rides the word - the heir wh
   assert.equal(onB().filter((e) => !e.owner).length, 0, 'b stands none of her own while a stands');
   A.present = false;
   r.run(OWNER_SWEEP_S + 1);
-  const adopted = onB().filter((e) => !e.owner);
+  const adopted = onB().filter((e) => !e.owner && !e.ship.cls.fisher);   // PIN MOVED (FISH-BOATS): the moored ships here; the fishing boats are FISH-BOATS' own pin
   assert.equal(adopted.length, mine.length, 'b took every one over');
   for (const e of adopted) {
     const was = mine.find((x) => x.ship.seed === e.ship.seed);
@@ -347,7 +347,10 @@ test('SHIP-LIFE A SHIP TAKEN OVER: her errand never rides the word - the heir wh
 test('SHIP-LIFE the world\'s wiring by source: the host is handed the port near the player, its footprint in the scene from its native rect through the floating origin, asked once a pixel. PIN MOVED (PORT-SHIPS): the port near the player and its book moved whole to scenes/harbourHost.js (HOST-SPLIT) - the host read whole, its memo a holder written in place', () => {
   const WHOLE = hostText('src/scenes/world.js');
   assert.match(WHOLE, /harbourNear: navalHarbourNear,/);
-  assert.match(WHOLE, /const r = locationWorldRect\(t\.loc, t\.x, t\.y\);\n\s*const \[ax, az\] = state\.localFromWorld\(r\.minX, r\.minZ\), \[bx, bz\] = state\.localFromWorld\(r\.maxX, r\.maxZ\);/);
+  // PIN MOVED (RPT1026-WORLD FAR-QUAY): the footprint is made in systems/naval/harbourBook.js harbourOf, which the host
+  // maps over every port town near the player
+  assert.match(readFileSync(new URL('../../../src/systems/naval/harbourBook.js', import.meta.url), 'utf8'), /const r = locationWorldRect\(t\.loc, t\.x, t\.y\);\n\s*const \[ax, az\] = state\.localFromWorld\(r\.minX, r\.minZ\), \[bx, bz\] = state\.localFromWorld\(r\.maxX, r\.maxZ\);/);
+  assert.match(WHOLE, /harbourOf\(t, \{ state, built: csaPixelAt, woods: host\.woods \}\)/);
   assert.match(WHOLE, /if \(_navalHarbourAt\.key !== key\) \{/);
-  assert.match(WHOLE, /Object\.assign\(_navalHarbourAt, \{ key, town \}\);/);
+  assert.match(WHOLE, /Object\.assign\(_navalHarbourAt, \{ key, towns \}\);/);
 });

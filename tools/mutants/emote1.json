@@ -149,8 +149,8 @@
   {
     "name": "EM-escape-closes-the-chat-first",
     "file": "src/ui/chatPanel.js",
-    "old": "        if (emojiOpen) { setEmojiOpen(false); return; }\n",
-    "new": "",
+    "old": "        if (emojiOpen) { setEmojiOpen(false); return; }\n        if (chanOpen) { setChanOpen(false); return; }",
+    "new": "        if (chanOpen) { setChanOpen(false); return; }",
     "tests": ["test/net/emote1.test.js"]
   },
   {

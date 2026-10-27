@@ -75,10 +75,12 @@ test('F070: the trade window\'s Repair arm applies the SAME queue law as the liv
   // once per item - one UpdateRepairTimes(true) over the whole lot.
   assert.match(wm, /updateRepairTimes\(\[\.\.\.staged\], \{ commit: true, nowMinutes: now, buildingKey: bk, mapId: homeTownOf\(interiorBuilding\) \}\);/,
     'the trade arm must stretch the whole queue in ONE pass');
-  // the instant-repair branch mends in place and does NOT book a job
-  assert.ok(wm.includes("it.currentCondition = it.maxCondition;   // the InstantRepairs branch (:1062-1065)"),
+  // the instant-repair branch mends in place and does NOT book a job. PIN MOVED (RPT1026-LEDGERLAW): it mends through
+  // the paid repair's one door (systems/repairService.js repairWhole - DFU's `currentCondition = maxCondition`, a found
+  // piece's spent own mends kept spent)
+  assert.ok(wm.includes("repairWhole(it);   // the InstantRepairs branch (:1062-1065)"),
     'the keyed path: an instant repair skips the queue entirely');
-  assert.match(wm, /if \(getBool\('Controls', 'InstantRepairs'\)\) \{\n\s*for \(const it of staged\) it\.currentCondition = it\.maxCondition;\n\s*\} else \{/,
+  assert.match(wm, /if \(getBool\('Controls', 'InstantRepairs'\)\) \{\n\s*for \(const it of staged\) repairWhole\(it\);[^\n]*\n\s*\} else \{/,
     'the native path: InstantRepairs is ONE branch over the filtered list, not a per-item continue');
 });
 

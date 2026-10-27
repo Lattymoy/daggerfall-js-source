@@ -92,8 +92,8 @@
   {
     "name": "PORTSHIPS-book-keep-unhanded",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "reach, keep: near.keep ?? null, ground: deps.ground ?? null });",
-    "new": "reach, keep: null, ground: deps.ground ?? null });",
+    "old": "reach, square, keep: near.keep ?? null, ground: deps.ground ?? null });",
+    "new": "reach, square, keep: null, ground: deps.ground ?? null });",
     "tests": [
       "test/systems/naval/portships.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "PORTSHIPS-book-ground-unhanded",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "reach, keep: near.keep ?? null, ground: deps.ground ?? null });",
-    "new": "reach, keep: near.keep ?? null, ground: null });",
+    "old": "reach, square, keep: near.keep ?? null, ground: deps.ground ?? null });",
+    "new": "reach, square, keep: near.keep ?? null, ground: null });",
     "tests": [
       "test/systems/naval/portships.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "PORTSHIPS-host-keep-unhanded",
     "file": "src/scenes/harbourHost.js",
-    "old": "    return { key: `port:${t.id}`, name: t.name, rect, ready, reach, keep: harbourKeep(t.loc, rect) };",
-    "new": "    return { key: `port:${t.id}`, name: t.name, rect, ready, reach };",
+    "old": "return { ...h, keep: harbourKeep(t.loc, h.rect) };",
+    "new": "return { ...h };",
     "tests": [
       "test/systems/naval/portships.test.js"
     ]

@@ -113,7 +113,7 @@
   {
     "name": "AUDITFERRY-F3-peers-unseen",
     "file": "src/systems/naval/seaClearance.js",
-    "old": "    for (const p of host.peerBoats()) if (p?.boat) out.push(...at(host.hullBox(p.boat), p.vel));\n",
+    "old": "    for (const p of host.peerBoats()) if (p?.boat) out.push([host.hullBox(p.boat), p.vel]);\n",
     "new": "",
     "tests": [
       "test/systems/naval/ferryclear.test.js"
@@ -122,7 +122,7 @@
   {
     "name": "AUDITFERRY-F3-my-boats-unseen",
     "file": "src/systems/naval/seaClearance.js",
-    "old": "    for (const b of host.myBoats()) if (b !== mine) out.push(host.hullBox(b));",
+    "old": "    for (const b of host.myBoats()) if (b !== mine) out.push([host.hullBox(b), null]);",
     "new": "",
     "tests": [
       "test/systems/naval/ferryclear.test.js"
@@ -131,8 +131,8 @@
   {
     "name": "AUDITFERRY-F3-the-helms-own-seen",
     "file": "src/systems/naval/seaClearance.js",
-    "old": "if (b !== mine) out.push(host.hullBox(b));",
-    "new": "out.push(host.hullBox(b));",
+    "old": "if (b !== mine) out.push([host.hullBox(b), null]);",
+    "new": "out.push([host.hullBox(b), null]);",
     "tests": [
       "test/systems/naval/ferryclear.test.js"
     ]
@@ -140,8 +140,8 @@
   {
     "name": "AUDITFERRY-F4-the-camera-led",
     "file": "src/systems/naval/seaClearance.js",
-    "old": "  return { boxes: () => boxes(false), along:",
-    "new": "  return { boxes: () => boxes(true), along:",
+    "old": "    boxes: () => hulls().map(([box]) => box),",
+    "new": "    boxes: () => hulls().flatMap(([box, v]) => (v ? ledHulls(box, v) : [box])),",
     "tests": [
       "test/systems/naval/ferryclear.test.js"
     ]

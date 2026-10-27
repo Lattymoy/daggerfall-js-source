@@ -132,8 +132,8 @@ test('WW5 THE WIRE AND THE RELAY: the star word on its lane\'s pixel - the Bay\'
   assert.deepEqual(validStarOut({ k: 'hd', n: N, s: 10, px: 1600, py: -120, at: 9, top: ['Ann'], c: 1 }), { k: 'hd', n: N, s: 10, px: 1600, py: -120, at: 9, top: ['Ann'], c: 1 });
   assert.deepEqual(validStarOut({ k: 'hds', l: [[N, 10, 1600, -120, 9], [N, 10, 300, 200, 9], [N, 1, 300, 200, 9]] }).l, [[N, 10, 1600, -120, 9], [N, 1, 300, 200, 9]]);
   assert.equal(STAR_HELD_MAX, 9 * 3 * 2 + 6, 'a night\'s and the night before\'s three in every lane, and room');
-  assert.equal(WW5_RELAY_MIN, 272);
-  assert.ok(relaySupportsWw5(RELAY_VERSION) && relaySupportsWw5('world272') && !relaySupportsWw5('world271') && !relaySupportsWw5('acct272') && !relaySupportsWw5(undefined));   // PIN MOVED (the third merge of main into #1184): the gate is world272, past MASTER-THREE's world271 (main's), which refuses; world271 at the second merge, past CHAT-POST's world270
+  assert.equal(WW5_RELAY_MIN, 274);
+  assert.ok(relaySupportsWw5(RELAY_VERSION) && relaySupportsWw5('world274') && !relaySupportsWw5('world273') && !relaySupportsWw5('acct272') && !relaySupportsWw5(undefined));   // PIN MOVED (the fourth merge of main into #1184): the gate is world274, past main's world273, which refuses; PIN MOVED (the third merge of main into #1184): the gate is world272, past MASTER-THREE's world271 (main's), which refuses; world271 at the second merge, past CHAT-POST's world270   // PIN MOVED: world274, the merge of main (world272 on its branch, renumbered past world272-world273 on main at the merge)
   const on = src('src/net/online.js');
   assert.match(on, /if \(primary\) \{ this\.starOk = relaySupportsStar\(relayV\); this\.ww5Ok = relaySupportsWw5\(relayV\); \}/);
   assert.match(on, /if \(w\.k >= STAR_PER_NIGHT_WIRE && !\(this\._mine\(cell\) \? this\.ww5Ok : this\._haloFor\(cell\)\?\.ww5Ok\)\) return false;/, 'a province\'s star word never to a relay that refuses it as junk - the socket\'s own relay\'s word');

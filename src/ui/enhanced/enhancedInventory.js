@@ -83,6 +83,7 @@ import { dfWornEquipment } from '../../formats/morrowind/mwItemMap.js';   // PX2
 import { hasDaggerfallArrows } from '../../combat/fpArm.js';   // PX26
 import { ARMOR_ENUM } from '../../combat/enemyEquipment.js';   // PX25
 import { inventoryItemImage, inventoryItemModel, templateByIndex, isAmmunition, templateLore } from '../../systems/item/itemTemplates.js';   // WEAR-UI: isAmmunition, spent not worn; GUN-LORE: a template's own words
+import { lookLine } from '../../systems/appearances.js';   // APPEARANCES: the Info box says a worn look
 import { requestIcon, paperDollDataUrl, requestFittedPicture, requestFittedIcon, iconName, fittedImg } from '../textureCanvas.js';
 import { fateColumn, fateKey, ensureFateStyle, FATE_FACE_BOX } from '../revenant/revenantFateView.js';   // REVENANT-FATE: a beaten revenant's choice, this window's FATE side
 import { SLOT_BOX, gridBox, wornBox, screenDpr } from '../iconFit.js';   // UI1: the fit law's boxes and the screen's ratio
@@ -127,6 +128,7 @@ import {
   storeCapacityOf,   // COMPANION-WEIGHT: a storage's own weight limit
   planBagToggle, hasMaterialsBag,   // BAG1: the Materials Bag, a list beside the wagon's
   theftTarget,   // STOLEN-GOODS: a take from someone else's keeping is a theft
+  settlesOwnPieces, chestActRefusal,   // AUDIT RPT1026 B1/B4/B5: a chest window's pack changes by the chest's door alone
 } from '../../systems/inventorySession.js';
 import { bagStoreRefusal, bagMayLeave } from '../../systems/materialsBag.js';   // BAG1: only materials go in the bag; AUDIT2 H11: and a loaded one stays
 import { shiftDrop } from '../../systems/physicalItems.js';   // PI1: Physical Items' shift-drop, one law for both packs
@@ -179,6 +181,7 @@ import { expandRowValues } from '../../systems/quest/questMacros.js';   // MACRO
 import { localizedText, t } from '../../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N4: LOOT-BULK's words
 import { noteFirstUse } from '../../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 import { isLanternItem, waistLanternOf, hangBeltLantern, unhangBeltLantern } from '../../systems/beltLantern.js';   // BELT-LANTERN: the lantern's own slot on the shelf (BELT-WAIST: whatever hangs at the waist)
+import { capturePointer } from '../pointerCapture.js';   // RPT1026-CLIENT: a pad's synthetic pointer is refused a capture, never thrown
 /** Slot id -> where it sits on the body, and what to call it.
  *
  *  THE FIGURE FACES THE READER, so the character's RIGHT arm is drawn
@@ -1469,6 +1472,7 @@ function reorderPack(item, before) {
 
 function wear(item) {
   notice = null;
+  { const no = chestActRefusal(deps, { wear: true, item }); if (no) return refuse(no); }   // AUDIT RPT1026 B4: a piece the pack does not hold yet
   const named = itemLongName(item, { getQuest: deps.getQuest ?? null });   // RF6: the resolver's name, never the record's raw one (an unidentified magic item's)
   if (isBrokenItem(item)) { notice = `${named} is broken and cannot be worn.`; return render(); }
   if (isForbiddenEquip(deps.entity?.career, item)) {
@@ -1487,6 +1491,7 @@ function wear(item) {
  *  silent in exactly the way it leaves the classic window's silent. */
 function use(item, collection = deps.items?.() ?? [], target = null) {
   notice = null;
+  { const no = chestActRefusal(deps); if (no) return refuse(no); }   // AUDIT RPT1026 B1: never over a chest's copy of the pack
   const r = useItem(item, collection, {
     target, chooseTarget: target == null,   // MEND-AIM: the pack asks which piece a kit mends
     entity: deps.entity,
@@ -1726,7 +1731,7 @@ function stow(item) {
   // (nativeInventory.js:"if (mode === 'equip' && this.hooks.entity)") and this one did not, so dragging a
   // treasure map out of the pack dropped the paper on the floor and
   // revealed nothing.
-  if (plan.map) { use(item, deps.items?.() ?? []); return; }
+  if (plan.map && !settlesOwnPieces(deps)) { use(item, deps.items?.() ?? []); return; }   // AUDIT RPT1026 B5: into a chest it is put, not read
   // DISC25-F: SplitStackPopup_OnGotUserInput's count (:1546-1559) - the card's field where it is up for this item,
   // else what the plan would move; a count DFU's parse refuses moves nothing, and says the popup's own question
   const amount = chosenAmount(item, plan.amount);
@@ -1792,7 +1797,7 @@ function take(item) {
   // (itemTransfer.js:"and is written anyway", "F156: either direction") - taking one off a
   // pile reveals and consumes it, exactly as stowing one does. The
   // classic window routes both; this one routed neither.
-  if (plan.map) { use(item, remoteTarget(deps, sessionState())); return; }
+  if (plan.map && !settlesOwnPieces(deps)) { use(item, remoteTarget(deps, sessionState())); return; }   // AUDIT RPT1026 B5: off a chest it is taken, not read
   const amount = chosenAmount(item, plan.amount);   // DISC25-F: the card's count, as stow's
   if (amount == null) { notice = HOW_MANY_ITEMS(plan.amount); render(); return; }
   // MAC-O6 (report: "looting gold/items makes no sound"): DoTransferItem's
@@ -2071,7 +2076,7 @@ function modelPicture(item, box) {
 function attachFigureTurn(cv) {
   let down = null;
   cv.style.touchAction = 'pan-y';
-  cv.addEventListener('pointerdown', (e) => { down = { x: e.clientX, yaw: _figureYaw }; cv.setPointerCapture?.(e.pointerId); });
+  cv.addEventListener('pointerdown', (e) => { down = { x: e.clientX, yaw: _figureYaw }; capturePointer(cv, e.pointerId); });
   cv.addEventListener('pointermove', (e) => {
     if (!down) return;
     _figureYaw = down.yaw + (e.clientX - down.x) * 0.02;
@@ -3737,6 +3742,7 @@ export function itemInfoBoxes(item, d = deps) {
   if (!rows) return [[{ text: 'No item description available.', center: true }]];
   const boxes = [itemInfoRows(item, rows, { name: questLetterName(item, d.getQuest ?? null) })];
   { const lore = templateLore(item); if (lore) boxes.push([{ text: lore, center: true }]); }   // GUN-LORE: what a thing of the port's own is, under its name
+  { const look = lookLine(item); if (look) boxes.push([{ text: look, center: true }]); }   // APPEARANCES: a look worn over it said - the pack's picture is the piece's own (bible/04-Characters/Wardrobe.md)
   if (isPotionRecipe(item)) {
     const names = potionRecipeIngredientNames(item) ?? [];
     if (names.length) boxes.push(names.map((text) => ({ text, center: true })));
@@ -3755,6 +3761,7 @@ function closeDismantle() { dismantleEl?.remove(); dismantleEl = null; dismantle
  *  piece. A piece the law refuses (worn, locked) is refused in words before any question is asked. The Dismantle
  *  button never stands where the card's did, and a second click of a pair never presses it (pairGuard). */
 function askDismantle(item) {
+  { const no = chestActRefusal(deps); if (no) return refuse(no); }   // AUDIT RPT1026 B1: the ware left the chest's copy of the pack alone
   hideTip(); closeMenu(); closeInfo(); closeDismantle();
   const name = wareName(itemLongName(item, { getQuest: deps.getQuest ?? null }), item);   // AUDIT FB1025i A8: and its set's
   const refusedFor = (why) => { notice = why === 'locked' ? lockedText(name) : why === 'worn' ? DISMANTLE_WORN(name) : null; refresh(); render(); };
@@ -3816,6 +3823,7 @@ export const SALVAGE_GEMS = (name) => `${name} holds a gem. Extract it at the Re
 /** FB1012d SALVAGE-CLASSIC: a piece that wears Magic the ladder never graded (systems/reforge.js salvageRefusal 'classic'). */
 export const SALVAGE_CLASSIC = (name) => `${name} will not break: its magic is the classic kind the guilds sell and make. Welkynd Shards come only from loot with a rarity grade.`;
 function askSalvage(item) {
+  { const no = chestActRefusal(deps); if (no) return refuse(no); }   // AUDIT RPT1026 B1: the piece left the chest's copy of the pack alone, its shards on the pack's own stack
   hideTip(); closeMenu(); closeInfo(); closeDismantle();
   const name = itemLongName(item, { getQuest: deps.getQuest ?? null });
   const refusedFor = (why) => { notice = why === 'locked' ? lockedText(name) : why === 'gems' ? SALVAGE_GEMS(name) : why === 'classic' ? SALVAGE_CLASSIC(name) : null; refresh(); render(); };   // AUDIT GEM: the gems, said; FB1012d: classic magic
@@ -3950,6 +3958,7 @@ function salvageFoot() {
  *  the single piece's is (askSalvage) - Salvage or Y breaks them all; Keep, N, Enter, Escape or a press outside keep
  *  every one, and the ticks stand. */
 function askSalvageMany() {
+  { const no = chestActRefusal(deps); if (no) return refuse(no); }   // AUDIT RPT1026 B1: the batch's, as the one piece's
   hideTip(); closeMenu(); closeInfo(); closeDismantle();
   pruneSalvage(deps.items?.() ?? []);
   const chosen = [...salvageSel];

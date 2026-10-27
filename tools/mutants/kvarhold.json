@@ -20,8 +20,8 @@
   {
     "name": "KVAR-a-named-site-drawn-again",
     "file": "src/systems/quest/place.js",
-    "old": "    if ((this.scope !== Scopes.Remote && this.scope !== Scopes.Local) || this.p1 !== 1 || !isMainStoryDungeon(sd.mapId)) return false;",
-    "new": "    if (this.p1 !== 1 || !isMainStoryDungeon(sd.mapId)) return false;",
+    "old": "    if ((this.scope !== Scopes.Remote && this.scope !== Scopes.Local) || this.p1 !== 1) return false;",
+    "new": "    if (this.p1 !== 1) return false;",
     "tests": [
       "test/systems/quest/kvarhold.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "KVAR-any-dungeon-drawn-again",
     "file": "src/systems/quest/place.js",
-    "old": "    if ((this.scope !== Scopes.Remote && this.scope !== Scopes.Local) || this.p1 !== 1 || !isMainStoryDungeon(sd.mapId)) return false;",
-    "new": "    if ((this.scope !== Scopes.Remote && this.scope !== Scopes.Local) || this.p1 !== 1) return false;",
+    "old": "    if (!isMainStoryDungeon(sd.mapId) && !(row && this._zoneSeal(world)?.(row))) return false;\n",
+    "new": "",
     "tests": [
       "test/systems/quest/kvarhold.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "KVAR-the-local-scope-left",
     "file": "src/systems/quest/place.js",
-    "old": "    if ((this.scope !== Scopes.Remote && this.scope !== Scopes.Local) || this.p1 !== 1 || !isMainStoryDungeon(sd.mapId)) return false;",
-    "new": "    if (this.scope !== Scopes.Remote || this.p1 !== 1 || !isMainStoryDungeon(sd.mapId)) return false;",
+    "old": "    if ((this.scope !== Scopes.Remote && this.scope !== Scopes.Local) || this.p1 !== 1) return false;",
+    "new": "    if (this.scope !== Scopes.Remote || this.p1 !== 1) return false;",
     "tests": [
       "test/systems/quest/kvarhold.test.js"
     ]

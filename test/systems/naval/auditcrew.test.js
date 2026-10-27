@@ -140,7 +140,8 @@ test('AUDIT CC-A5 (major): a hand home again stands on her deck - the last of th
 
 test('AUDIT CC-A6 (major): the bars come down under a dungeon window - the overlay\'s early return draws them covered too', () => {
   const m = rd('src/scenes/worldModes.js');
-  assert.match(m, /if \(dungeonCtx\.uiOverlayActive\) \{[^\n]*host\.drawCompanionBars\?\.\(\{ proj, view, eye: mwv\.eye \}\);[^\n]*dungeonCtx\.drawOverlay\(canvas\); return true; \}/);
+  // PIN MOVED (RPT1026-FIGHTS WINDOW-ONLINE): the arm's window test is windowHoldsDungeon's - a window holds the dungeon offline, or over a death online (scenes/windowWorld.js)
+  assert.match(m, /if \(windowHoldsDungeon\(dungeonCtx\.uiOverlayActive, aliveUnder\(\)\)\) \{[^\n]*host\.drawCompanionBars\?\.\(\{ proj, view, eye: mwv\.eye \}\);[^\n]*dungeonCtx\.drawOverlay\(canvas\); return true; \}/);
 });
 
 test('AUDIT CC-A7: companions take none of the street\'s (or a building\'s) encounter slots', () => {
@@ -480,7 +481,7 @@ test('AUDIT CC-E2 (major): underground my companion rides the room\'s own lane (
   assert.doesNotMatch(hostText('src/scenes/world.js'), /if \(f\) f\._loose = false; return f;/, 'no longer kept off the lane');
   // PIN MOVED (AUDIT WK-U3, 2026-10-01): his name rides beside his place (`cn`), the law unchanged
   assert.match(d, /if \(!qt && f\.companion != null && !f\.dead\) \{ cp\.push\(i\); cn\.push\(/);
-  assert.match(d, /comp = validLooseSeqs\(data\.cp\);/);
+  assert.match(d, /comp = validLooseSeqs\(data\.cp\)[,;]/);   // PIN MOVED (RPT1026-PROGRESS SUMMON-BARE): the summons ride the same statement
   assert.match(d, /companionPuppet\(f, lo && comp\.has\(r\.i\), compNames\.get\(r\.i\)\); f\._heirElse/);   // PIN MOVED (AUDIT WK-U3): and named
   assert.match(d, /if \(coop\) opts\.onFoeHit\?\.\(\{ own: 1, to: foe\._ownFrom, k: _locationKey, i: foe\._ownI, \.\.\.coop \}\);/, 'own-lane bodies');
   assert.match(d, /if \(coop\?\.al === 1\) opts\.onFoeHit\?\.\(\{ \.\.\.\(foe\._encId != null \? \{ i: foe\._encId, xs: 1 \} : \{ i: foe\._surI \?\? pi \}\), \.\.\.coop \}\);/, 'the room\'s foes, as a joiner');

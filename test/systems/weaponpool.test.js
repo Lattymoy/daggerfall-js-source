@@ -78,15 +78,18 @@ test('WEAPON-POOL: every weapon type mints one pool, the Warhammer\'s 1,600, thr
 });
 
 test('WEAPON-POOL: the flat costs stop picking a type - a Worm\'s Tooth (the Legendary that rolls on a Dagger or a Tanto) strikes 160 times at iron before it breaks, as a Warp-Edge Claymore does; a Cast-When-Held dagger the item maker made pays its spell\'s first-equip bill (159 - an iron dagger\'s 50 broke on it) and runs four magic rounds a point of what is left, 5,764; 25 blows of 20 damage, which broke an iron short bow, leave it at 1,550 (mutants: the pool\'s number; the weapon test)', () => {
-  // Cast-When-Strikes bills 10 a strike (CastWhenStrikes.cs:30) through the real dispatcher; the break consumes the piece
+  // Cast-When-Strikes bills 10 a strike (CastWhenStrikes.cs:30) through the real dispatcher, to the break - PIN MOVED
+  // (RPT1026-ITEMS RARE-KEPT): the break no longer consumes a laddered piece, so the count runs to its condition's end, and
+  // the piece is still in the pack after it (test/systems/rpt1026_items.test.js holds that law)
   const strikesToBreak = (piece) => {
     const owner = P();
     owner.items.push(piece);
     let n = 0;
-    while (owner.items.includes(piece) && n < 10000) {
+    while (piece.currentCondition > 0 && n < 10000) {
       doItemEnchantmentPayloads(PAYLOAD.Strikes, piece, { entity: owner, target: { mobileType: 3 }, damage: 10 });
       n++;
     }
+    assert.ok(owner.items.includes(piece), 'broken, and kept');
     return n;
   };
   const legendary = (id, template) => applyRarity(createWeapon(template, WEAPON_MATERIALS.Iron, () => 0.5), 'legendary', () => 0, [legendaryById(id)]);

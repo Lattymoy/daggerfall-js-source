@@ -349,7 +349,10 @@ test('NO-ASKS-AGAIN: the corpus, read off every vendored quest by the law itself
     'S0000008 _meetladyb_', 'S0000010 _S.05_', 'S0000012 _S.00_', 'S0000017 _S.06_', '__DEMO08 _S.10_',
   ]);
   // Both: the one prompt in the shipped corpus whose No leads nowhere and whose asking is a click - and (PIN MOVED,
-  // QUEST-AUDIT III: the owner's call taken) C0C00Y10's healer, whose No is a `clear` of the asking alone (clearingNo).
-  assert.deepEqual(law, ['C0C00Y10 _S.10_ no _no_', 'K0C00Y05 _S.07_ no _no_']);
+  // QUEST-AUDIT III: the owner's call taken) C0C00Y10's healer, whose No is a `clear` of the asking alone (clearingNo);
+  // and (PIN MOVED, RPT1026-QUESTS NO-GIVES-BACK) the four whose No only hands back what the `toting` took
+  // (givesBackNo): the werewolf cure's blood to the child, the ruler's note, the Dark Brotherhood's research and K'avar's
+  // letter to the Queen of Sentinel.
+  assert.deepEqual(law, ['$CUREWER _S.08_ no _S.15_', '80C0XY00 _rulerclicked_ no _school_', 'C0C00Y10 _S.10_ no _no_', 'K0C00Y05 _S.07_ no _no_', 'M0B11Y18 _S.16_ no _S.20_', 'N0B00Y09 _S.07_ no _nononono_']);
   assert.deepEqual(promptsThatAskAgain(m.parseQuestShape('C0C00Y10')).map((e) => e.clears), [true], 'the healer\'s is the No that clears its asking');
 });

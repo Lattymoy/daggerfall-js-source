@@ -188,7 +188,7 @@ export function segRect(a, b, x0, z0, x1, z1, cap = Infinity) {
   return Math.min(...[[x0, z0], [x1, z0], [x1, z1], [x0, z1]].map(([x, z]) => pointSeg(x, z, a, b)), ...edges.flatMap(([r, s]) => [pointSeg(a[0], a[1], r, s), pointSeg(b[0], b[1], r, s)]));
 }
 /** A rectangle's distance to a point.
- * @param {number} x0 @param {number} z0 @param {number} x1 @param {number} z1 @param {number[]} p */
+ * @param {number} x0 @param {number} z0 @param {number} x1 @param {number} z1 @param {ReadonlyArray<number>} p */
 export const rectPoint = (x0, z0, x1, z1, p) => Math.hypot(Math.max(x0 - p[0], 0, p[0] - x1), Math.max(z0 - p[1], 0, p[1] - z1));
 /** Two squares' overlap (the second centred at c, half h).
  * @param {number} x0 @param {number} z0 @param {number} x1 @param {number} z1 @param {number[]} c @param {number} h */

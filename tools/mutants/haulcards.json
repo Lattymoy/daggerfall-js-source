@@ -250,8 +250,8 @@
   {
     "name": "HAUL-CARDS-kind-told-nothing",
     "file": "src/scenes/gatherHost.js",
-    "old": "try { k?.answered?.(d, (t) => hud.toast(t), { hauled }); }",
-    "new": "try { k?.answered?.(d, (t) => hud.toast(t)); }",
+    "old": "try { k?.answered?.(d, (t) => hud.toast(t), { hauled, entity: deps.entity?.() ?? null }); }",
+    "new": "try { k?.answered?.(d, (t) => hud.toast(t), { entity: deps.entity?.() ?? null }); }",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]

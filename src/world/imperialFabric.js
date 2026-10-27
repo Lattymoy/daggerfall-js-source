@@ -929,7 +929,7 @@ function stairAt(h, kept, p, e, dir) {
   }
   // a roof to step onto at its head: the building STAIR.roof deep behind it there, a pitched roof's slope over the head no
   // steeper than STAIR.pitch (FOUND AT THE SWEEP: a wedge of a polar frame's narrow end pitches its roof past 60 degrees)
-  const head = (x, o) => [at[0] + t[0] * x + n[0] * o, at[1] + t[1] * x + n[1] * o];
+  const head = (x, o) => /** @type {[number, number]} */ ([at[0] + t[0] * x + n[0] * o, at[1] + t[1] * x + n[1] * o]);
   const q = p.q, ridge = p.roof === 'gableS' ? [q[3], q[0], q[1], q[2]] : [q[0], q[1], q[2], q[3]];
   const R0 = [(ridge[0][0] + ridge[1][0]) / 2, (ridge[0][1] + ridge[1][1]) / 2], R1 = [(ridge[2][0] + ridge[3][0]) / 2, (ridge[2][1] + ridge[3][1]) / 2];
   for (const x of [plan.len - STAIR.head, plan.len - STAIR.wall]) {

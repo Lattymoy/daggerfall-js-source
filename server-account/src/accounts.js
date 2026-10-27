@@ -238,8 +238,16 @@ export async function createGuest({ db, subtle, rand, nowS }, { deviceLabel = nu
 /**
  * A NEW DEVICE for an existing player. The raw secret is returned here
  * and nowhere else, ever again.
+ *
+ * RPT1026-SECNET (from a private security report) - `guard` is what the
+ * session STANDS ON, and the INSERT itself checks it: `{ password }` the
+ * hash its caller verified or wrote (a sign-in, a recovery), `{ session }`
+ * the device admitting this one. A recovery that signed every device out while the caller worked
+ * moved the one or deleted the other, so the session is never written and
+ * the answer is null - it would have outlived the sign-out. None for a
+ * guest's first session, which nothing can race.
  */
-export async function openSession({ db, subtle, rand, nowS }, playerId, deviceLabel = null) {
+export async function openSession({ db, subtle, rand, nowS }, playerId, deviceLabel = null, guard = null) {
   const secret = mintSecret(rand);
   const sessionId = mintId(rand);
   const hash = await hashSecret(secret, { subtle });
@@ -247,9 +255,16 @@ export async function openSession({ db, subtle, rand, nowS }, playerId, deviceLa
   // never trusted - a device is what holds the secret, not what it
   // calls itself.
   const label = typeof deviceLabel === 'string' ? deviceLabel.slice(0, 64) : null;
-  await db.prepare('INSERT INTO sessions (id, player_id, secret_hash, device_label, created_at, last_seen) VALUES (?, ?, ?, ?, ?, ?)')
-    .bind(sessionId, playerId, hash, label, nowS, nowS).run();
-  return { sessionId, secret };
+  const into = 'INSERT INTO sessions (id, player_id, secret_hash, device_label, created_at, last_seen)';
+  if (!guard) {
+    await db.prepare(`${into} VALUES (?, ?, ?, ?, ?, ?)`).bind(sessionId, playerId, hash, label, nowS, nowS).run();
+    return { sessionId, secret };
+  }
+  const stands = guard.session != null
+    ? db.prepare(`${into} SELECT ?, ?, ?, ?, ?, ? WHERE EXISTS (SELECT 1 FROM sessions WHERE id = ? AND player_id = ?)`).bind(sessionId, playerId, hash, label, nowS, nowS, guard.session, playerId)
+    : db.prepare(`${into} SELECT ?, ?, ?, ?, ?, ? WHERE EXISTS (SELECT 1 FROM players WHERE id = ? AND password = ?)`).bind(sessionId, playerId, hash, label, nowS, nowS, playerId, guard.password ?? null);
+  const wrote = await stands.run();
+  return wrote?.meta?.changes ? { sessionId, secret } : null;
 }
 
 /** SCALE4a (2026-10-08, Mac: "Do 1 2 and 3" - the session and its player were two reads in a row, 4.86 and 4.73 million
@@ -870,11 +885,25 @@ export async function login({ db, subtle, rand, nowS }, { handle, password, devi
   // The cost of a hash goes up over the years. The only moment the
   // plaintext is in hand is a correct login, so that is when a row is
   // rewritten at the current count.
-  if (needsRehash(player.password)) {
+  // RPT1026-SECNET: AND BOTH WRITES STAND ON THE HASH THIS SIGN-IN VERIFIED.
+  // A recovery that landed while the derivation ran moved it: the rehash
+  // put the OLD password back in place of the recovered hash, and the session
+  // outlived the recovery's sign-out of every device. Now the rehash lands
+  // only where the row still holds the hash it verified, and the session only on the hash it holds.
+  let held = player.password;
+  if (needsRehash(held)) {
     const fresh = await hashPassword(password, { subtle, rand });
-    await db.prepare('UPDATE players SET password = ? WHERE id = ?').bind(fresh, player.id).run();
+    const re = await db.prepare('UPDATE players SET password = ? WHERE id = ? AND password = ?').bind(fresh, player.id, held).run();
+    if (re.meta.changes) held = fresh;
   }
-  const session = await openSession({ db, subtle, rand, nowS }, player.id, deviceLabel);
+  let session = await openSession({ db, subtle, rand, nowS }, player.id, deviceLabel, { password: held });
+  if (!session) {
+    // the row moved under it - a recovery, a change, or only another sign-in's rehash: the password typed is asked of
+    // the row as it stands now, once, so two sign-ins of one account at once both get in
+    const now = (await db.prepare('SELECT password FROM players WHERE id = ?').bind(player.id).first())?.password ?? null;
+    if (now && await verifyPassword(password, now, { subtle })) session = await openSession({ db, subtle, rand, nowS }, player.id, deviceLabel, { password: now });
+  }
+  if (!session) return { error: 'bad-login' };
   return { id: player.id, name: displayName(player), kind: accountKind(player), ...session };
 }
 
@@ -919,10 +948,17 @@ export async function recover({ db, subtle, rand, nowS }, { handle, code, passwo
   // AUDIT RECOVERY-SET A4: a code that WAS right and lost the race (two of one set's codes typed at once) is told to try
   // again, not that it was wrong - the caller has already shown a code, so the word leaks nothing
   if (!spent.meta.changes) return { error: 'codes-moved' };
-  await closeAllSessions({ db }, player.id);
+  // AUDIT RPT1026 A3: AND THE SIGN-OUT ONLY WHILE THE PASSWORD IS STILL THIS RECOVERY'S, as a change's is. A second
+  // recovery (another of the set's codes) that wrote after this one signed out every device itself and opened its own
+  // session - answered 200 - which this sign-out, by the account's id alone, then deleted. Every device from before the
+  // second is gone by its own sign-out, and nothing since stands on a password but the second's
+  await db.prepare('DELETE FROM sessions WHERE player_id = ? AND EXISTS (SELECT 1 FROM players WHERE id = ? AND password = ?)').bind(player.id, player.id, pw).run();
   await closeStaffSessions({ db }, player.id);   // STAFF-PANEL2-FIX: a new password ends the staff panel's sessions too
   await clearRate({ db }, `recover:${lc}`);
-  const session = await openSession({ db, subtle, rand, nowS }, player.id, null);
+  // RPT1026-SECNET: on the password this recovery wrote - a second recovery (another of the set's codes) that signed
+  // every device out after this one's write is not outlived by this one's session
+  const session = await openSession({ db, subtle, rand, nowS }, player.id, null, { password: pw });
+  if (!session) return { error: 'codes-moved' };
   // AUDIT RECOVERY-SET B6: and the handle as the row holds it - the saved file names the account, not its typing
   const left = one ? { recoveryCode: one } : fresh ? { recoveryCodes: fresh, codesLeft: fresh.length, handle: player.handle } : { codesLeft: rest.length, handle: player.handle };
   return { id: player.id, name: displayName(player), ...left, ...session };
@@ -943,8 +979,16 @@ export async function changePassword({ db, subtle, rand, nowS }, player, session
   if (!await verifyPassword(oldPassword, player.password, { subtle })) return { error: 'bad-login' };
   await clearRate({ db }, `login:${player.handle_lc}`);
   const pw = await hashPassword(password, { subtle, rand });
-  await db.prepare('UPDATE players SET password = ? WHERE id = ?').bind(pw, player.id).run();
-  await db.prepare('DELETE FROM sessions WHERE player_id = ? AND id != ?').bind(player.id, session.id).run();
+  // RPT1026-SECNET (from a private security report): THE CHANGE LANDS ON WHAT IT PROVED - the password it checked the
+  // old one against, still the row's, and the session asking, still standing. A recovery that landed while the
+  // derivations ran moved the one and deleted the other, and this write by id alone put the thief's password over the
+  // owner's recovered one. Refused then, as a wrong old password is.
+  const wrote = await db.prepare('UPDATE players SET password = ? WHERE id = ? AND password = ? AND EXISTS (SELECT 1 FROM sessions WHERE id = ? AND player_id = ?)')
+    .bind(pw, player.id, player.password, session.id, player.id).run();
+  if (!wrote.meta.changes) return { error: 'bad-login' };
+  // and the sign-out only while the password is still this change's: a recovery between the two statements signed every
+  // device out itself and opened its owner's, which this one would have deleted
+  await db.prepare('DELETE FROM sessions WHERE player_id = ? AND id != ? AND EXISTS (SELECT 1 FROM players WHERE id = ? AND password = ?)').bind(player.id, session.id, player.id, pw).run();
   await closeStaffSessions({ db }, player.id);   // STAFF-PANEL2-FIX: and every staff panel session
   return { ok: true };
 }

@@ -133,6 +133,7 @@ export const RESERVES = Object.freeze({
   skirt: [4, 21, 22],
 });
 import { DF_TO_MW_WEAPON, DF_TO_MW_MATERIAL, ARM_PARTS, MOD_WEAPON_TO_MW } from './mwFirstPerson.js';   // WEREWOLF1: ARM_PARTS, addPartGroup's first-person fallback parts; MW-ASSIGN: a mod's weapons
+import { drawnPiece } from '../../net/appearanceLaw.js';   // APPEARANCES: a worn piece's look
 
 /** DF armor material -> the token MW armor record ids carry. */
 // MW-D37: colour truth (see DF_MATERIAL_RGB): Elven is silver-white in
@@ -583,7 +584,8 @@ export function dfWornEquipment(slots, EQUIP_SLOTS, ARMOR_ENUM_) {
  *  hand is the weapon door's business. */
 export function dfWornArmor(slots, EQUIP_SLOTS, ARMOR_ENUM) {
   const worn = [];
-  const take = (item) => {
+  const take = (piece) => {
+    const item = drawnPiece(piece);   // APPEARANCES (bible/04-Characters/Wardrobe.md): a piece wearing a look dresses the body as the look - the player's and every peer's
     if (item && typeof item.templateIndex === 'number' && armorRowOf(item.templateIndex)) {   // MW-ASSIGN: a mod's pieces are worn too
       worn.push({ templateIndex: item.templateIndex, material: item.material ?? 0 });
     }

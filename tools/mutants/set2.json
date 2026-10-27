@@ -137,7 +137,7 @@
   {
     "name": "SET2-the-headroom-gate-skipped",
     "file": "src/systems/absorption.js",
-    "old": "  if (cost > available) return 0;\n",
+    "old": "  if (drink > available) return 0;\n",
     "new": "",
     "tests": [
       "test/systems/set2_seams.test.js"
@@ -146,8 +146,8 @@
   {
     "name": "SET2-a-zero-source-rolled",
     "file": "src/systems/absorption.js",
-    "old": "    if (c > 0 && Math.floor(rolls() * 100) < c) return cost;",
-    "new": "    if (Math.floor(rolls() * 100) < c) return cost;",
+    "old": "    if (c > 0 && Math.floor(rolls() * 100) < c) return drink;",
+    "new": "    if (Math.floor(rolls() * 100) < c) return drink;",
     "tests": [
       "test/systems/set2_seams.test.js"
     ]

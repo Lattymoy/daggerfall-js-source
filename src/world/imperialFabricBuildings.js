@@ -55,6 +55,9 @@ import { ROTATION_DIVISOR, RMB_DIMENSION } from '../formats/blocksFile.js';
 import { makeBuildingKey } from '../systems/talk/talkTopics.js';
 
 const HALF = IMPERIAL_CELLS / 2, B = BLOCK_M;
+/** The ground a door opens onto: the street, the square, and (IC-STAIRS) the street under a stair's upper flights.
+ *  @type {ReadonlyArray<number>} */
+const DOOR_GROUND = Object.freeze([GROUND.street, GROUND.square, GROUND.under]);
 const SALT = 0xb1d5;
 /** The most buildings a cell's block carries: a classic block's list has 32 slots (BlocksFile), the world-data door's
  *  JSON as many as it lists (formats/worldData/worldDataReplacement.js blockFromJson, DFU's WorldDataReplacement), and a
@@ -195,7 +198,7 @@ function doorOf(L, p) {
       const side = FABRIC_DOOR.w / 2 + FABRIC_DOOR.jamb;
       if ([-1, 0, 1].some((k2) => L.ground.stairs.some((st) => stairGround(st, at[0] + t[0] * k2 * side + n[0] * 0.3, at[1] + t[1] * k2 * side + n[1] * 0.3) === GROUND.stair))) continue;
       const g = fabricGroundIn(L, at[0] + n[0] * 0.8, at[1] + n[1] * 0.8), g2 = fabricGroundIn(L, at[0] + n[0] * 2, at[1] + n[1] * 2);
-      if ([GROUND.street, GROUND.square, GROUND.under].includes(g) && [GROUND.street, GROUND.square, GROUND.under].includes(g2)) return { edge: e, at, n, street: streetKind(p.sw?.[e] ?? 0) };   // IC-STAIRS: under a stair's upper flights too
+      if (DOOR_GROUND.includes(g) && DOOR_GROUND.includes(g2)) return { edge: e, at, n, street: streetKind(p.sw?.[e] ?? 0) };   // IC-STAIRS: under a stair's upper flights too
     }
   }
   return null;

@@ -283,7 +283,10 @@ export function createIntroLandscape(canvas, { build = startIntroBuild } = {}) {
     job = build();
     const cityReady = job.city.then((city) => { uploadCity(city); return !disposed; }).catch((error) => { console.warn('[intro] the city did not build:', error.message); return false; });
     const ready = Promise.all([programsReady, cityReady]).then(([a, b]) => a && b && !disposed);
-    job.field.then(uploadField).catch((error) => console.warn('[intro] the continent did not build:', error.message));
+    // TITLE-DOOR: the continent's own readiness - a title landed before the film reached it (introScreen.js land) waits
+    // for the map, not the city
+    const fieldReady = job.field.then((field) => { uploadField(field); return !disposed; }).catch((error) => { console.warn('[intro] the continent did not build:', error.message); return false; });
+    const mapReady = Promise.all([programsReady, fieldReady]).then(([a, b]) => a && b && !disposed);
 
     // ── per frame
     const vp = new Float32Array(16), shadowVP = new Float32Array(16), basis = new Float32Array(9);
@@ -307,6 +310,7 @@ export function createIntroLandscape(canvas, { build = startIntroBuild } = {}) {
 
     return {
       ready,
+      mapReady,
       /** The last frame's projection of a point of the film's world into the canvas's CSS pixels: [x, y, in front]. */
       project(point) {
         const p = [point[0] - frame.eye[0], point[1] - frame.eye[1], point[2] - frame.eye[2]], m = frame.vp;

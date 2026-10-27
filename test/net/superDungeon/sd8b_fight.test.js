@@ -164,7 +164,9 @@ test('SD8b THE REALM RUNS THE FIGHT: an `in` from the arena joins and is answere
     await beat(20_000);
     assert.ok(fights(ann).some((m) => m.k === 'atk' && m.b === SD_BODY.remnant), 'its blows said');
     assert.deepEqual(fights(ann).filter((m) => m.k === 'atk').map((m) => m.i), fights(bo).filter((m) => m.k === 'atk').map((m) => m.i), 'to everyone');
-    // a blow believed: the health falls on the next beat's word
+    // a blow believed: the health falls on the next beat's word. PIN MOVED (RPT1026-FIGHTS RETIRED-BLOW): from a pose no older
+    // than SD_POSE_FRESH_MS - Ann's heartbeat, which the port's client sends every 20 s standing still (her hello was 27 s ago)
+    await realm.pose(ann, inArenaAt(0, -12.1));
     const f = realm.room._sdFight;
     const h0 = f.hp;
     await realm.raw(ann, say({ k: 'hit', q: 1, d: 40, r: HIT_KINDS.Spell }));

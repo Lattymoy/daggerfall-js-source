@@ -139,7 +139,7 @@ const HARDCODED = {
   'src/net/professionLaw.js': 112,   // FIELD BUGS 2026-10-20h DEX-HIDES: the Wolf Pelt's, the Boar Hide's and the Mudcrab Chitin's names - an item's canonical name is its row's, as the ten hides' are
   'src/net/raid/raidClaims.js': 5,
   'src/net/realm/realmGoldLaw.js': 1,
-  'src/net/realm/realmTradeLaw.js': 21,
+  'src/net/realm/realmTradeLaw.js': 20,   // RPT1026-MARKET HOLD-SAID: -1, the law's named hold's words through t() (realm.held.lawNamed)
   'src/net/recipeLaw.js': 109,
   'src/net/relayCfg.js': 3,
   'src/net/renown.js': 2,
@@ -321,8 +321,8 @@ const HARDCODED = {
   'src/scenes/treeHost.js': 3,
   'src/scenes/windfallHost.js': 5,
   'src/scenes/vendorHost.js': 7,   // VENDOR-LOST: the home traders' words, moved verbatim out of world.js
-  'src/scenes/world.js': 321,   // BAY-LEFT-SEA: -4, the market's pieces' words moved verbatim to scenes/marketPiecesHost.js (HOST-SPLIT). TESA x MAIN (the merge of main into TESA, AUDIT RELEASE R3): 325 measured - TESA's -6 (the quick save's words moved whole to scenes/worldQuickSave.js) on main's 331. VENDOR-LOST: -7, the home traders' words moved verbatim to vendorHost.js; QUEST-AUDIT III SHARE-WORDS: -4, the share's lines through questShare.js's t(); AUDIT QA3: -2, the sender's (shareSentLine); STAFF-PANEL5-FOLLOW-FIX: -1 already at the relay base (ec3d522d61), written down; FB1020c ONE-SAVE: the kept words moved to the Stores page (BAG_PAGE_WORDS.kept); CABIN-FOES: Transport > Ship's helm refusal read off CABIN_REFUSAL; AUDIT SEA VENTURES C6: -1, /unstuck's outdoor refusal read off the zone's words; SEASON-BOOK: -1, /mail's refusal read off chatCommands.js pauseCommandRefusal (344 at the merge of main #1161: both -1s stand)
-  'src/scenes/worldModes.js': 83,
+  'src/scenes/world.js': 319,   // THE FOURTH MERGE OF MAIN INTO #1184: 319 measured on the merged host (RPT1026-MARKET's Collect through t() on main). BAY-LEFT-SEA: -4, the market's pieces' words moved verbatim to scenes/marketPiecesHost.js (HOST-SPLIT). TESA x MAIN (the merge of main into TESA, AUDIT RELEASE R3): 325 measured - TESA's -6 (the quick save's words moved whole to scenes/worldQuickSave.js) on main's 331. VENDOR-LOST: -7, the home traders' words moved verbatim to vendorHost.js; QUEST-AUDIT III SHARE-WORDS: -4, the share's lines through questShare.js's t(); AUDIT QA3: -2, the sender's (shareSentLine); STAFF-PANEL5-FOLLOW-FIX: -1 already at the relay base (ec3d522d61), written down; FB1020c ONE-SAVE: the kept words moved to the Stores page (BAG_PAGE_WORDS.kept); CABIN-FOES: Transport > Ship's helm refusal read off CABIN_REFUSAL; AUDIT SEA VENTURES C6: -1, /unstuck's outdoor refusal read off the zone's words; SEASON-BOOK: -1, /mail's refusal read off chatCommands.js pauseCommandRefusal (344 at the merge of main #1161: both -1s stand)
+  'src/scenes/worldModes.js': 82,   // the fourth merge of main: 82 measured (main's own)
   'src/systems/aetheric.js': 168,   // SEA-SET: +17, the Eltheric Tidemail's nine names and lore, as the Weave's - the records' own data, minted onto the item; WITCH1: the Wyrd's Raiment's nine pieces, each its name and its affixes' names (+18) - an item's canonical name, as every Aetheric set's; STAR7: +18, the Starspun Weave's nine names and lore - the records' own data, minted onto the item, never read at load
   'src/systems/alchemyItems.js': 3,
   'src/systems/allyCast.js': 5,
@@ -386,7 +386,7 @@ const HARDCODED = {
   'src/systems/eventTimers.js': 50,
   'src/systems/faction/factionStanding.js': 3,
   'src/systems/faction/provinceFactions.js': 1,   // PROVINCE-COURTS (bible/03-World/World-Wide.md): Cyrodiil's ruler, Uriel Septim VII - a proper name, Daggerfall's own Emperor (TEXT.RSC), a faction's name and its key
-  'src/systems/features.js': 127,
+  'src/systems/features.js': 128,   // RPT1026-CLIENT: the mod's 'Camera Shake.maxShake' on its tile - a mod's settings key the scan reads as words, as its three neighbours on the list are
   'src/systems/fleet.js': 10,
   'src/systems/fletching.js': 1,
   'src/systems/festival/soulCake.js': 2,   // WITCH1: the Soul Cake's and the Hearth Offering's names - an item's canonical name is its row's, as the Weir Key's
@@ -412,10 +412,9 @@ const HARDCODED = {
   'src/systems/immersiveFootsteps.js': 10,
   'src/systems/immersiveTravel.js': 13,
   'src/systems/improvedInteriorLighting.js': 1,
-  'src/systems/inputActions.js': 86,
+  'src/systems/inputActions.js': 85,
   'src/systems/inventory.js': 2,
   'src/systems/item/itemBound.js': 4,
-  'src/systems/item/itemIds.js': 2,
   'src/systems/item/itemInfo.js': 8,
   'src/systems/item/itemJunk.js': 1,
   'src/systems/item/itemLock.js': 2,
@@ -449,7 +448,7 @@ const HARDCODED = {
   'src/systems/naval/captainLedger.js': 15,
   'src/systems/naval/crewCompanions.js': 3,
   'src/systems/naval/crewLife.js': 124,
-  'src/systems/naval/etherCrossing.js': 13,
+  'src/systems/naval/etherCrossing.js': 12,   // VEIL-PARTY: the crossing's refusal through t()
   'src/systems/naval/etherShips.js': 22,
   'src/systems/naval/harbourBoard.js': 24,
   'src/systems/naval/navalPlunder.js': 17,
@@ -522,7 +521,7 @@ const HARDCODED = {
   'src/systems/sigil/sigil.js': 8,
   'src/systems/sigil/sigilBroker.js': 8,
   'src/systems/sigil/sigilSetPowers.js': 24,
-  'src/systems/sigil/sigilSets.js': 125,   // SEA-SET: +9, the Eltheric Tidemail's name, prince, role, tiers and their words, as every set's; WITCH1: the Wyrd's Raiment - its name, its prince, its three tiers' names and lines (+9), as every set's; STAR7: +8, the Starspun Weave's name, role, tiers and their words, as every set's
+  'src/systems/sigil/sigilSets.js': 126,   // PIN MOVED (AUDIT HORIZONTAL D6): +1, SET-CATCHUP's pace English inside the set's English stage line until the sets' batch routes the line whole; SEA-SET: +9, the Eltheric Tidemail's name, prince, role, tiers and their words, as every set's; WITCH1: the Wyrd's Raiment - its name, its prince, its three tiers' names and lines (+9), as every set's; STAR7: +8, the Starspun Weave's name, role, tiers and their words, as every set's
   'src/systems/smithItems.js': 26,
   'src/systems/snowfall.js': 12,
   'src/systems/snowfallRuntime.js': 10,
@@ -555,7 +554,7 @@ const HARDCODED = {
   'src/systems/travel/travelPace.js': 5,
   'src/systems/travel/travelPathMode.js': 3,
   'src/systems/travel/travelViewFilters.js': 7,   // HUD/GROWTH PATCHES (2026-10-20): counted as they arrived at their merge with main - English until a slice routes them through t() (MAP-PLAYERS: +1, the Players switch's tip)
-  'src/systems/tutorialCatalogue.js': 212,
+  'src/systems/tutorialCatalogue.js': 213,   // RPT1026-QUESTS BOUNTY-WAY: +1, the bounties page rewritten - its old words held "return", which the scan reads as code, so they were never counted; the catalogue is English, as every page's
   'src/systems/uiSkin.js': 1,
   'src/systems/upkeep/upkeepItemRows.js': 2,
   'src/systems/upkeep/upkeepRuntime.js': 8,
@@ -713,7 +712,7 @@ const HARDCODED = {
   'src/ui/pickupFeed.js': 1,
   'src/ui/pixelDial.js': 3,
   'src/ui/pixelifyFive.js': 2,
-  'src/ui/playerBadge.js': 37,   // NIRNROOT-SAGE: the Nirnroot Sage's title in words, beside the other titles'; QL12: the questlines' five titles in words ("Witness of the Hour" the one two-word phrase); SERPENT5: The Maelstrom's word, beside the other auras'; EG-E2: the Spire's thirteen titles and three auras in words; WIKIMAID: the Lilac Warren's word, beside the other auras'
+  'src/ui/playerBadge.js': 51,   // HUNTERS-MARK: the hunt's and the Marks of Mastery's fourteen two-word titles in words, beside the other titles'; NIRNROOT-SAGE: the Nirnroot Sage's title in words, beside the other titles'; QL12: the questlines' five titles in words ("Witness of the Hour" the one two-word phrase); SERPENT5: The Maelstrom's word, beside the other auras'; EG-E2: the Spire's thirteen titles and three auras in words; WIKIMAID: the Lilac Warren's word, beside the other auras'
   'src/ui/playerHistory.js': 1,
   'src/ui/plus/plusPad.js': 18,
   'src/ui/plus/plusPadBinds.js': 30,
@@ -839,6 +838,7 @@ const HARDCODED = {
   // data tables, as the districts' and Lake Rumare's above - none yet shown a player; routing them through t() is their
   // arcs' own to do when a label shows them.
   'src/world/road/cyrodiilRoads.js': 8,   // VOYAGER-CYRODIIL: the named roads (the Red Ring Road, the Gold Road...)
+  'src/world/tamriel/tamrielRanges.js': 1,   // RELIEF-PEAKS: Red Mountain's name keying its cone (namedSummit) - a proper name, read by no screen
   'src/world/tamriel/tamrielWaters.js': 20,   // CYRODIIL-WATERS: the rivers', lakes' and named waters' names, and the reference's credit (WATERS_SOURCE)
   'src/world/urban/townLook.js': 15,   // URBANIZER U1: why each province's towns wear their building set - the table's own notes, read by no screen
 };

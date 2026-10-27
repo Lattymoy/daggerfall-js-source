@@ -213,8 +213,8 @@ test('PORT-SHIPS A WALLED TOWN\'S KEEP: inside its wall\'s line and within TOWN_
 
 test('PORT-SHIPS THE HOST: the world hands the harbour book the port\'s town\'s keep (harbourKeep off its location and its footprint) and the ground over the sea\'s top (surfaceAt less tvSeaY, as navalIsWater reads it); the book hands both to findHarbour (mutants: either unhanded). PIN MOVED (PORT-SHIPS) from fb1020c_harbourreach.test.js and auditcaptsea.test.js: their lines carry the keep and the ground', () => {
   const W = hostText('src/scenes/world.js');
-  assert.match(W, /return \{ key: `port:\$\{t\.id\}`, name: t\.name, rect, ready, reach, keep: harbourKeep\(t\.loc, rect\) \};/);
+  assert.match(W, /return \{ \.\.\.h, keep: harbourKeep\(t\.loc, h\.rect\) \};/);   // PIN MOVED (the fourth merge of main - RPT1026-WORLD FAR-QUAY): each port town near, its harbour harbourBook.js harbourOf's
   assert.match(W, /const harbourBook = createHarbourBook\(\{\n\s+harbourNear: navalHarbourNear,\n\s+isWater: navalIsWater,\n\s+ground: \(x, z\) => surfaceAt\(x, z\) - tvSeaY\(\),/);
   const book = readFileSync(new URL('../../../src/systems/naval/harbourBook.js', import.meta.url), 'utf8');
-  assert.match(book, /findHarbour\(\{ rect: near\.rect, isWater: \(x, z, h\) => deps\.isWater\(x, z, h\), reach, keep: near\.keep \?\? null, ground: deps\.ground \?\? null \}\)/);
+  assert.match(book, /findHarbour\(\{ rect: near\.rect, isWater: \(x, z, h\) => deps\.isWater\(x, z, h\), reach, square, keep: near\.keep \?\? null, ground: deps\.ground \?\? null \}\)/);   // PIN MOVED (ALDBRUGH-QUAY): and the square reach
 });

@@ -966,7 +966,7 @@
   {
     "name": "AUDIT-EG-V-c-L8-6-line-unshown",
     "file": "src/systems/item/itemInfo.js",
-    "old": "  else if (isWeirKey(item)) out.push({ text: EG_TEXT.keyLine, center: true });",
+    "old": "  else if (isWeirKey(item)) out.push({ text: EG_TEXT.keyLine, center: true }, { text: weirKeySharedLine(), center: true });",
     "new": "",
     "tests": [
       "test/ui/eliteGates/egaudit5_c_hud.test.js"

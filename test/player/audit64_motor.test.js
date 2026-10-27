@@ -437,16 +437,18 @@ test('AUDIT 64 F5: CanStand sweeps camCrouchToStandDist upward, clearing only fe
   assert.equal(CAPSULE_HEIGHT, 1.8);
 });
 
-test('AUDIT 64 F5: a 1.4 ceiling PERMITS the stand where the old full-capsule probe refused it', () => {
-  // 1.4 sits inside the 1.25..1.8 band the port used to refuse. DoStand
+test('AUDIT 64 F5: a 1.6 ceiling PERMITS the stand where the old full-capsule probe refused it', () => {
+  // 1.6 sits inside the 1.25..1.8 band the port used to refuse. DoStand
   // (:265-283) raises the capsule regardless and lets the head clip.
-  const m = stood(ceiled(1.4));
+  // PIN MOVED (RPT1026-WORLD STAND-THROUGH, test/player/rpt1026_world_standthrough.test.js): it stood under 1.4 - in the
+  // band under feet + 1.45 where the standing head's centre stands past the ceiling's face, and is refused now
+  const m = stood(ceiled(1.6));
   m.update(DT, still({ crouch: true }), 0);
   for (let f = 0; f < 20; f++) m.update(DT, still(), 0);
   assert.equal(m.crouching, true, 'crouched under the low ceiling');
   m.update(DT, still({ crouch: true }), 0);
   for (let f = 0; f < 20; f++) m.update(DT, still(), 0);
-  assert.equal(m.crouching, false, 'DFU stands the player up under a 1.4 ceiling');
+  assert.equal(m.crouching, false, 'DFU stands the player up under a 1.6 ceiling');
 });
 
 test('AUDIT 64 F5: a 1.2 ceiling still REFUSES - the sweep reaches 1.25', () => {

@@ -82,8 +82,8 @@
   {
     "name": "STRIKE-SHARED-owner-reads-own-gem",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      const trap = peer || _peerTrap ? { allowDeath: true } : attemptSoulTrap(f.entity, f.mobileType, playerEntity.items, Math.random());",
-    "new": "      const trap = peer ? { allowDeath: true } : attemptSoulTrap(f.entity, f.mobileType, playerEntity.items, Math.random());",
+    "old": "      const trap = _peerTrap ? { allowDeath: true } : attemptSoulTrap(f.entity, f.mobileType, playerEntity.items, Math.random());",
+    "new": "      const trap = attemptSoulTrap(f.entity, f.mobileType, playerEntity.items, Math.random());",
     "tests": [
       "test/scenes/strikeshared.test.js"
     ],

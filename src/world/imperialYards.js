@@ -51,7 +51,7 @@ const HALF = IMPERIAL_CELLS / 2, B = BLOCK_M, SLICE_CELLS = Math.round((8 * B) /
  *  (x east, z south). */
 const cellAt = (X, Z) => [(X + 0.5) * NAV_CELL - HALF * B, HALF * B - (Z + 0.5) * NAV_CELL];
 
-/** The yards each gate stands, worked the first time a slice near it is built (or all asked). @type {Map<number, any[]>} */
+/** The yards each gate stands, worked the first time a slice near it is built (or all asked). @type {Map<number, ReadonlyArray<any>>} */
 const _gates = new Map();
 /**
  * THE CITY'S YARDS: each `{ kind, gate, s, turn, yaw, gx, gy, nx, nz, x, z, at }` - its gate's bearing, its slice, its turn

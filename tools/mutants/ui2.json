@@ -2,7 +2,7 @@
   {
     "name": "UI2-a-worn-piece-read-as-used",
     "file": "src/systems/quickslots.js",
-    "old": "  if (getEquipSlot({}, item) !== EQUIP_SLOTS.None) return 'wear';   // UI2: a throwaway table - the rule is the item's\n",
+    "old": "  if (getEquipSlot({}, item) !== EQUIP_SLOTS.None) return castsWhenUsed(item) && !wornForMore(item) ? 'use' : 'wear';   // UI2: a throwaway table - the rule is the item's; RPT1026-PROGRESS: a power to use is used; AUDIT RPT1026 F2: unless wearing it is worth something too\n",
     "new": "",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
@@ -11,8 +11,8 @@
   {
     "name": "UI2-an-item-refused",
     "file": "src/systems/quickslots.js",
-    "old": "  if (getEquipSlot({}, item) !== EQUIP_SLOTS.None) return 'wear';   // UI2: a throwaway table - the rule is the item's\n  return 'use';",
-    "new": "  if (getEquipSlot({}, item) !== EQUIP_SLOTS.None) return 'wear';   // UI2: a throwaway table - the rule is the item's\n  return null;",
+    "old": "  if (getEquipSlot({}, item) !== EQUIP_SLOTS.None) return castsWhenUsed(item) && !wornForMore(item) ? 'use' : 'wear';   // UI2: a throwaway table - the rule is the item's; RPT1026-PROGRESS: a power to use is used; AUDIT RPT1026 F2: unless wearing it is worth something too\n  return 'use';",
+    "new": "  if (getEquipSlot({}, item) !== EQUIP_SLOTS.None) return castsWhenUsed(item) && !wornForMore(item) ? 'use' : 'wear';   // UI2: a throwaway table - the rule is the item's; RPT1026-PROGRESS: a power to use is used; AUDIT RPT1026 F2: unless wearing it is worth something too\n  return null;",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]

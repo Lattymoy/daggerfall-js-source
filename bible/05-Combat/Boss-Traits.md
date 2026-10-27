@@ -63,6 +63,8 @@ floating number of a resisted blow is retold as what landed, tagged Resisted (`u
   client stands the same elite with the same trait.
 - **Raid leaders** (RAID5's assault, `03-World/Raiding-Parties.md`): an elite with two traits - those two alone, never an
   elite's own draw beside them - the last foe of the raid, and an elite's loot at its fall (AUDIT WORLD-EVENTS L2-6).
+- **Named marks** (HUNTERS-MARK, `06-Systems/Bounty-Boards.md` 12.4): an elite leader with its week's two, the same on
+  every client and never its stand's own draw beside them (HUNTERS-MARK-II), so a reader names the mark off its mask.
 - **The relay bosses** - the Oblivion Gate's lord, the Shattered Hour's Remnant, the Spire's lords and the Valkynaz
   (every body the dungeon host's `gateBossBody` stands, and the Spire's lords through its host-body seam): their health is
   the relay's, so they carry the striker's traits only - one element's proof and one answer to a blow (Blade-turning,

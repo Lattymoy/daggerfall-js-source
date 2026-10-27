@@ -81,6 +81,8 @@ import { pictureNode, frameWake } from './menu/menuGlyphs.js';   // MENU-ORDER: 
 import { t, currentLocale } from '../systems/textManager.js';   // BOARD-SIFT: the pages' and the orders' words in the player's language
 import { mintPiece, asMinted } from '../systems/smithItems.js';   // AUDIT BOARD-SIFT: a recipe's piece minted as its row mints it; AUDIT MAKER-RARE B2: and whether a piece still is
 import { itemLongName } from '../systems/item/itemInfo.js';
+import { walledText } from './storesWalled.js';   // RPT1026-MARKET STORES-SAID: what a listing may not take, said
+import { isStolen, stolenTag, stolenLine } from '../systems/stolenGoods.js';   // RPT1026-LEDGERLAW: a stolen piece said so where another player buys it
 import { typedField } from './workSift.js';   // AUDIT BOARD-SIFT: a search read once its word is whole
 import { packPickerNode, packCardNode, freshPackSift, packTierWord } from './packPicker.js';   // PACK-PICK: a piece chosen from its picture
 import { itemLookRows } from '../systems/item/itemLook.js';   // PACK-PICK: and looked at before it is listed
@@ -625,6 +627,7 @@ export function createMarketTab(m, ui) {
       el('span', 'market-quality', wearText(wearOf(it)) ?? 'whole'),
       el('span', 'market-price', priceText(row.price, row.currency)),
       el('span', 'market-where', `${where(row)}${roadText(row)}`));
+    if (isStolen(it)) b.append(el('span', 'market-stolen', stolenTag()));   // RPT1026-LEDGERLAW: the theft's mark rides the listing
     if (row.mine) b.append(el('span', 'market-mine', 'yours'));
     if (row.reports != null) b.append(el('span', 'market-mod', plural(row.reports, 'report')));
     return b;
@@ -657,6 +660,7 @@ export function createMarketTab(m, ui) {
       bar.append(n);
     }
     refresh();
+    if (row.kind === 'item' && isStolen(row.item)) bar.append(el('p', 'market-stolenline', stolenLine()));   // RPT1026-LEDGERLAW: what buying it means
     bar.append(ask, buy);
     if (!row.mine) bar.append(button('market-report', 'Report', () => act(() => m.book.report(row.id), 'Reported. A moderator will look at it.')));
     if (row.reports != null) bar.append(button('market-remove', 'Remove', () => act(() => m.book.remove(row.id), 'Removed. Its goods go back to its seller.')));
@@ -860,6 +864,8 @@ export function createMarketTab(m, ui) {
         : el('span', 'notice-tip', gold ? 'Your Stores hold nothing that sells for gold.' : MARKET_WORDS.noStores),
       field('Units', units), field(`${unitWord} each`, price));
       notes.append(carriedSaid);
+      const walled = walledText(m.stores(), gold ? 'gold' : 'marks', m.name);   // RPT1026-MARKET STORES-SAID: what the Stores hold that this listing may not take, and why
+      if (walled) notes.append(el('p', 'notice-tip market-refused', walled));
       worth = () => st.list.units * st.list.price;
       can = () => !!st.list.material && most >= st.list.units && worth() <= MARKET_WORTH_MAX;   // MARKET-AUDIT: the worth the service takes
       const req = () => ({ region: m.region, kind: 'material', material: st.list.material, units: st.list.units, price: st.list.price, hubs: m.hubs, ...at(), ...(gold ? { currency: 'gold' } : {}) });
