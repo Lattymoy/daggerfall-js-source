@@ -1060,7 +1060,7 @@ export class FarRingRenderer {
     const fire = eye && worldProj ? this._fireNow() : null;   // RED-MOUNTAIN: the volcano's lava and plume, last of the pass
     if (fire) {
       fire.draw({ ringOrigin: origin, baseX: this.baseX, baseY: this.baseY, view, worldProj, fovY, aspect, far, eye, fog: { color: fogColor, start: fogStart, end: fogEnd },
-        rim: farField ? [FAR_RIM_START, FAR_RIM_END] : [RING_RIM_START, RING_RIM_END], hold: RING_HAZE_HOLD, light: Math.max(ambient[0], ambient[1], ambient[2]) + 0.6 * sunScale, seconds: this._now() / 1000 });
+        rim: farField ? [FAR_RIM_START, FAR_RIM_END] : [RING_RIM_START, RING_RIM_END], hold: RING_HAZE_HOLD, light: Math.max(ambient[0], ambient[1], ambient[2]) + 0.6 * sunScale, lightDir, seconds: this._now() / 1000 });
     }
     gl.depthRange(0, 1);
     gl.enable(gl.CULL_FACE);

@@ -20,14 +20,18 @@ export const FIRE = Object.freeze({
    *  trough's, how far over its floor, and the least half-width a metre from the eye */
   lake: 0.92, lakeOver: 3, river: 0.42, riverOver: 1.5, widen: 0.0012,
   /** the lava: its crust and its melt, the glow it is drawn at, and the share of the haze's colour it takes at most */
-  crust: Object.freeze([0.06, 0.03, 0.025]), molten: Object.freeze([1.0, 0.34, 0.05]), glow: 1.6, hazeHold: 0.55,
+  crust: Object.freeze([0.06, 0.03, 0.025]), molten: Object.freeze([1.0, 0.34, 0.05]), glow: 1.6, hazeHold: 0.35,
   /** the plume: its height over the floor, its radius at its foot and its top, how it swells, its lean by its top (east,
-   *  north - the way the trade winds carry the ash, every day), and the metres its foot fades in over */
-  plume: Object.freeze({ height: 7500, footR: 900, topR: 6500, swell: 0.75, lean: Object.freeze([5200, 2100]), foot: 120 }),
-  /** its ash's colour and thickness, the least of the frame's light it takes, the least of it the haze leaves */
-  ash: Object.freeze([0.2, 0.18, 0.17]), alpha: 0.9, lightMin: 0.08, hazeFloor: 0.5,
-  /** the fire in its foot: its colour, how fast it falls with height (by e, metres), how bright */
-  ember: Object.freeze([1.0, 0.3, 0.07]), emberM: 1600, emberGlow: 1.4,
+   *  north - the way the trade winds carry the ash, every day), the metres its foot fades in over, its billows' size at
+   *  its foot and its top (metres, world-space), how far they bulge its outline, and how many they climb a period */
+  plume: Object.freeze({ height: 8500, footR: 1500, topR: 9000, swell: 0.6, lean: Object.freeze([6500, 2600]), foot: 150,
+    billow: Object.freeze([900, 2600]), lump: 0.45, rise: 2 }),
+  /** its ash's colour and thickness, the least of the frame's light it takes, the share its side away from the sun keeps,
+   *  the least of it the haze leaves */
+  ash: Object.freeze([0.22, 0.2, 0.19]), alpha: 0.92, lightMin: 0.06, shade: 0.45, hazeFloor: 0.5,
+  /** the fire in its foot: its colour, how fast it falls with height (by e, metres), how bright at night, and the share
+   *  of that a full day leaves (the sun outshines it) */
+  ember: Object.freeze([1.0, 0.32, 0.08]), emberM: 1100, emberGlow: 2.2, dayGlow: 0.2,
   /** the cone's profile the far draw is hidden behind: its samples out to the volcano's reach, the steps a ray takes,
    *  the depth under the profile a point may lie before it is hidden (a river's trough and the kernel's own noise), and
    *  how far from the centre a ray is asked (past it the land, not the cone, is what stands) */
@@ -206,6 +210,23 @@ ${NOISE}void main() {
   o = vec4(col, 1.0);
 }`;
 
+/** The plume's billows: world-space value noise about its foot (no seam round the column, none when the world recentres),
+ *  its cells growing as they climb, carried up by two phases crossfaded at their wraps. */
+const BILLOWS = `float hash3(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
+float vnoise3(vec3 q) {
+  vec3 i = floor(q), f = fract(q), u = f * f * (3.0 - 2.0 * f);
+  float a = mix(hash3(i), hash3(i + vec3(1.0, 0.0, 0.0)), u.x), b = mix(hash3(i + vec3(0.0, 1.0, 0.0)), hash3(i + vec3(1.0, 1.0, 0.0)), u.x);
+  float c = mix(hash3(i + vec3(0.0, 0.0, 1.0)), hash3(i + vec3(1.0, 0.0, 1.0)), u.x), d = mix(hash3(i + vec3(0.0, 1.0, 1.0)), hash3(i + vec3(1.0, 1.0, 1.0)), u.x);
+  return mix(mix(a, b, u.y), mix(c, d, u.y), u.z);
+}
+float fbm3(vec3 q) { return 0.55 * vnoise3(q) + 0.3 * vnoise3(q * 2.03 + 7.1) + 0.15 * vnoise3(q * 4.11 + 3.3); }
+float billows(vec3 rel, float h, float t) {
+  vec3 q = rel / mix(${f1(FIRE.plume.billow[0])}, ${f1(FIRE.plume.billow[1])}, h);
+  float p0 = fract(t), p1 = fract(t + 0.5), w = abs(p0 - 0.5) * 2.0;
+  return mix(fbm3(q - vec3(0.0, p0 * ${f1(FIRE.plume.rise)}, 0.0)), fbm3(q - vec3(0.0, p1 * ${f1(FIRE.plume.rise)}, 0.0) + 17.3), w);
+}
+`;
+
 export const PLUME_VS = HEAD + `layout(location = 0) in vec2 aUV;   // x around 0..1, y up 0..1
 uniform mat4 uVP;
 uniform vec3 uFoot;   // the plume's foot, on the lake
@@ -214,44 +235,49 @@ uniform float uTime;
 out vec2 vUV;
 out vec3 vWorld;
 out vec3 vNormal;
-out float vRad;
-${NOISE}vec3 axisAt(float h) { return uFoot + vec3(${f1(FIRE.plume.lean[0])} * h * h, h * ${f1(FIRE.plume.height)}, ${f1(FIRE.plume.lean[1])} * h * h); }   // scene z is north
-float radiusAt(vec2 uv) {
-  float lump = flow(vec2(uv.x * 5.0, uv.y * 7.0), vec2(0.0, 2.0), uTime);
-  float r = mix(${f1(FIRE.plume.footR)}, ${f1(FIRE.plume.topR)}, pow(uv.y, ${f1(FIRE.plume.swell)})) * (0.8 + 0.4 * lump);
-  return max(r, distance(uEye.xz, uFoot.xz) * 0.006);
+${BILLOWS}vec3 axisAt(float h) { return uFoot + vec3(${f1(FIRE.plume.lean[0])} * h * h, h * ${f1(FIRE.plume.height)}, ${f1(FIRE.plume.lean[1])} * h * h); }   // scene z is north
+vec3 placeAt(vec2 uv) {
+  float a = uv.x * 6.283185307179586, h = clamp(uv.y, 0.0, 1.0);
+  vec3 dir = vec3(cos(a), 0.0, sin(a)), c = axisAt(h);
+  float r0 = mix(${f1(FIRE.plume.footR)}, ${f1(FIRE.plume.topR)}, pow(h, ${f1(FIRE.plume.swell)}));
+  float r = r0 * (1.0 + ${f1(FIRE.plume.lump)} * (billows(c - uFoot + dir * r0, h, uTime) - 0.5) * 2.0);
+  return c + dir * max(r, distance(uEye.xz, uFoot.xz) * 0.006);
 }
-vec3 placeAt(vec2 uv) { float a = uv.x * 6.283185307179586; return axisAt(uv.y) + vec3(cos(a), 0.0, sin(a)) * radiusAt(uv); }
 void main() {
   vec3 p = placeAt(aUV);
   vec2 e = vec2(${f1(0.25 / FIRE.segments)}, ${f1(0.25 / FIRE.rows)});
-  vNormal = cross(placeAt(aUV + vec2(0.0, e.y)) - placeAt(aUV - vec2(0.0, e.y)), placeAt(aUV + vec2(e.x, 0.0)) - placeAt(aUV - vec2(e.x, 0.0)));
+  vec3 n = normalize(cross(placeAt(aUV + vec2(0.0, e.y)) - placeAt(aUV - vec2(0.0, e.y)), placeAt(aUV + vec2(e.x, 0.0)) - placeAt(aUV - vec2(e.x, 0.0))));
+  vNormal = dot(n, p - axisAt(clamp(aUV.y, 0.0, 1.0))) < 0.0 ? -n : n;   // outward
   vUV = aUV;
   vWorld = p;
-  vRad = radiusAt(aUV);
   gl_Position = uVP * vec4(p, 1.0);
 }`;
 
 export const PLUME_FS = HEAD + `in vec2 vUV;
 in vec3 vWorld;
 in vec3 vNormal;
-in float vRad;
 uniform float uTime;
 uniform float uLight;
+uniform vec3 uLightDir;
+uniform vec3 uFoot;
 ${HIDE}${HAZE}out vec4 o;
-${NOISE}void main() {
+${BILLOWS}void main() {
   if (hidden(vWorld, ${f1(FIRE.margin.plume)})) discard;
   float h = vUV.y;
-  float n = 0.6 * flow(vec2(vUV.x * 6.0, h * 9.0), vec2(0.0, 2.0), uTime) + 0.4 * flow(vec2(vUV.x * 13.0, h * 21.0), vec2(0.0, 3.0), uTime * 1.3);
-  float core = smoothstep(0.0, 0.55, abs(dot(normalize(vNormal), normalize(uEye - vWorld))));
-  float puff = smoothstep(0.3, 0.68, n) * core;
-  float body = smoothstep(0.0, ${f1(FIRE.plume.foot / FIRE.plume.height)}, h) * (1.0 - smoothstep(0.55, 1.0, h));
+  vec3 N = normalize(vNormal);
+  float n = billows(vWorld - uFoot, h, uTime);
+  float core = smoothstep(0.0, 0.5, abs(dot(N, normalize(uEye - vWorld))));
+  float puff = smoothstep(0.32, 0.62, n) * core;
+  float body = smoothstep(0.0, ${f1(FIRE.plume.foot / FIRE.plume.height)}, h) * (1.0 - smoothstep(0.6, 1.0, h));
   float a = clamp(puff * body * ${f1(FIRE.alpha)}, 0.0, 1.0);
   float hz = hazeAt(distance(vWorld, uEye));
   a *= max(1.0 - hz, ${f1(FIRE.hazeFloor)});
-  vec3 ash = mix(${v3(FIRE.ash)} * max(uLight, ${f1(FIRE.lightMin)}), uFogColor, hz * 0.7);
-  // the crater's fire lighting the ash from under it: light added
-  vec3 glow = ${v3(FIRE.ember)} * (${f1(FIRE.emberGlow)} * exp(-h * ${f1(FIRE.plume.height / FIRE.emberM)}) * puff * body * (1.0 - hz * 0.5));
+  // lit as the frame is, its side to the sun brighter, the haze's colour over it far off
+  float lit = max(uLight, ${f1(FIRE.lightMin)}) * mix(${f1(FIRE.shade)}, 1.0, max(dot(N, uLightDir), 0.0));
+  vec3 ash = mix(${v3(FIRE.ash)} * lit, uFogColor, hz * 0.7);
+  // the crater's fire lighting the ash from under it: light added, the sun outshining most of it by day
+  float night = 1.0 - ${f1(1 - FIRE.dayGlow)} * clamp(uLight, 0.0, 1.0);
+  vec3 glow = ${v3(FIRE.ember)} * (${f1(FIRE.emberGlow)} * exp(-h * ${f1(FIRE.plume.height / FIRE.emberM)}) * (0.35 + 0.65 * puff) * body * night * (1.0 - hz * 0.5));
   o = vec4(ash * a + glow, a);
 }`;
 
@@ -270,7 +296,7 @@ export class RedMountainFire {
     this.gl = gl;
     this.lavaProgram = buildProgram(gl, LAVA_VS, LAVA_FS, 'red mountain lava');
     this.plumeProgram = buildProgram(gl, PLUME_VS, PLUME_FS, 'red mountain plume');
-    const names = ['uVP', 'uOrigin', 'uEye', 'uTime', 'uCone', 'uProf', 'uFogColor', 'uHaze', 'uFoot', 'uLight'];
+    const names = ['uVP', 'uOrigin', 'uEye', 'uTime', 'uCone', 'uProf', 'uFogColor', 'uHaze', 'uFoot', 'uLight', 'uLightDir'];
     const locs = (p) => Object.fromEntries(names.map((n) => [n, gl.getUniformLocation(p, n)]));
     this.lu = locs(this.lavaProgram);
     this.pu = locs(this.plumeProgram);
@@ -314,9 +340,9 @@ export class RedMountainFire {
    * pixel stands at the origin moved by the pixels between), `view` the world's, `worldProj` the world's lens (the near
    * draw, and the far draw's near plane), `fovY`/`aspect`/`far` the far lens, `eye` the eye, `fog` { color, start, end
    * } the world's linear fog, `rim` [start, end] the far ring's haze ramp, `hold` its haze's most, `light` the frame's
-   * light 0..1, `seconds` any clock.
+   * light 0..1 and `lightDir` the sun's, `seconds` any clock.
    */
-  draw({ ringOrigin, baseX, baseY, view, worldProj, fovY, aspect, far, eye, fog, rim, hold, light, seconds }) {
+  draw({ ringOrigin, baseX, baseY, view, worldProj, fovY, aspect, far, eye, fog, rim, hold, light, lightDir, seconds }) {
     this.drawn = 0;
     const m = this.mesh;
     if (!m || !eye || !worldProj) return;
@@ -358,6 +384,7 @@ export class RedMountainFire {
       setCommon(this.pu);
       gl.uniform3fv(this.pu.uFoot, foot);
       gl.uniform1f(this.pu.uLight, Math.max(0, Math.min(1, light)));
+      gl.uniform3fv(this.pu.uLightDir, lightDir);
       gl.bindVertexArray(this.plumeVao);
       gl.drawArrays(gl.TRIANGLES, 0, this.plumeCount);
       this.drawn++;

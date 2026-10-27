@@ -333,6 +333,25 @@ test('RED-MOUNTAIN its fire: the profile the far draw hides behind the cone\'s o
   assert.ok(SUMMIT_HAZE.from > 3644 + 42.5, 'over every other ground in the world (LANDFORM_CEILING)');
   assert.deepEqual({ ...SUMMIT_HAZE }, { from: 3700, to: 6500, keep: 0.7 }, 'the summit three-tenths of the hold (Red-Mountain.md)');
   for (const text of [read('src/render/farRing.js'), read('src/render/enhancedLighting.js')]) assert.match(text, /uRimStart, uRimEnd, summitHold\(uHazeHold\)\)/);
+  // the plume: its billows world-space noise in 0..1, the same about its foot wherever the world stands it; its column's
+  // radius within its lump of its swell, at its foot and its top, leaning downwind
+  const { PLUME_VS } = await import('../../src/render/redMountainFire.js');
+  const pv = glslFunctions(PLUME_VS, { uFoot: [100, 2000, -300], uEye: [100, 2000, 60000], uTime: 0.3, uVP: Array(16).fill(0), aUV: [0, 0] });
+  for (const rel of [[0, 0, 0], [500, 1200, -700], [-3000, 6000, 2500]]) {
+    const v = Number(pv.billows(rel, 0.4, 0.3));
+    assert.ok(v >= 0 && v <= 1, `billows ${v}`);
+    pv.globals.uFoot = [5000, 0, 5000];
+    assert.equal(Number(pv.billows(rel, 0.4, 0.3)), v, 'about its foot, not the world\'s origin');
+    pv.globals.uFoot = [100, 2000, -300];
+  }
+  for (const [h, r0] of [[0, FIRE.plume.footR], [1, FIRE.plume.topR]]) {
+    const at = pv.placeAt([0.37, h]).map(Number), axis = pv.axisAt(h).map(Number);
+    const r = Math.hypot(at[0] - axis[0], at[2] - axis[2]);
+    assert.ok(r >= r0 * (1 - FIRE.plume.lump) - 1 && r <= r0 * (1 + FIRE.plume.lump) + 1, `the radius at ${h}: ${r.toFixed(0)} about ${r0}`);
+  }
+  const top = pv.axisAt(1).map(Number);
+  assert.deepEqual([top[0] - 100, top[1] - 2000, top[2] + 300].map((v) => Math.round(v)), [FIRE.plume.lean[0], FIRE.plume.height, FIRE.plume.lean[1]], 'its top over the foot, downwind (east, north)');
+  glslFunctions(PLUME_FS, {});   // its fragment stage reads as GLSL
   // both programs carry the one hiding law
   for (const fs of [LAVA_FS, PLUME_FS]) assert.match(fs, /bool hidden\(vec3 p, float margin\)/);
   assert.equal(FIRE_PROGRAMS.length, 2);
