@@ -662,8 +662,10 @@ Section A, WW-C2 (OURS: the open zone is the port's own; DFU has none).
 
 ## WW5 - the Hollows and the stars in every theatre (BUILT, 2026-10-27)
 
-The owner's call, taken (AUDIT NO SYSTEM LEFT BEHIND, item 26 - "Every single thing here needs to be addressed. No
-exceptions."): Starfall's coven night and the Abyss Dungeon stood on the Bay alone - a coven's stars over the Bay
+The owner's calls, taken (AUDIT NO SYSTEM LEFT BEHIND, item 26 - "Every single thing here needs to be addressed. No
+exceptions.", 2026-10-26): **a site-bound world event stands nowhere in the open PvP zone** (Cyrodiil's lane stands no
+night and no Hollow), and **a province's covens are authored as content** (the thirteen covens are all the Bay's
+FACTION.TXT witches, so a province's night needs its own - the eight below). Starfall's coven night and the Abyss Dungeon stood on the Bay alone - a coven's stars over the Bay
 scan's pixels (`px = id % 1000`), a star word the Bay's 0..999, one Hollow in the world with its census the Bay's 62.
 Now each theatre that holds ground for a site-bound world event keeps its own: a coven night and a Hollow on every LANE
 (a lane a theatre, WW2's word), the Bay's the night and the Hollow they always were. DFU has neither (Section A).
@@ -750,7 +752,11 @@ Hollow is found again when its ground is made anew (`sdHost.js` `rescan`) - stan
   cell's tell on the lane's pixel; the live door answers the asker's slot's lane (`_sdLiveInternal`, `sdLiveAsk`'s `s`);
   the herald posts each lane's.
 - **`WW5_RELAY_MIN` 270** (`relaySupportsWw5`): world270 re-hashed in place while it is undeployed (world269 never
-  ran). A client stands no province's star and says no province's find to an older relay (`online.js` `ww5Ok`).
+  ran). A client stands no province's star and says no province's find to an older relay (`online.js` `ww5Ok`) - and,
+  since WW5's finish, each socket's own relay says for itself (AUDIT RAID R8b's law, AUDIT WB12d C6): a halo's welcome
+  sets its own `ww5Ok`, a province's star word or find goes down a halo only when that halo's relay keeps them, and the
+  word goes with its socket across a crossing. A halo on an older object while a deploy is under way refused the word as
+  a bad frame.
 - **The account service** moves no module and no migration: it bundles the star law (`server-account/src/stars.js`
   `starDayOf` - a province's star's day its own fall's, the Bay's instants) and reads a province's slot and star as
   numbers - folded into acct196, undeployed. `test/net/relayversion.test.js`'s world270 row is re-hashed at the
@@ -779,11 +785,12 @@ Hollow's own build) hold no star or Hollow site of their own, by design.
 
 ### Pins and mutants
 
-`test/world/worldWide/ww5_stars.test.js` (7): the law (lanes, one sky, the Heart-Star, the master, the held order, the
+`test/world/worldWide/ww5_stars.test.js` (8): the law (lanes, one sky, the Heart-Star, the master, the held order, the
 ledger's pixel); the wire and the relay (the word's pixel, the held bound, `WW5_RELAY_MIN`, the send's gate, the
 receipt); the provinces' covens (their words in English and German, the Bay's bag against the old law, the leader);
 a province's night over the producer's scan; the theatres warmed one an idle moment; the host (every theatre's stars,
-an older relay's, the Timers, the hold's line, the masters); ON THE FREEWARE the Bay's nights star for star against the
+an older relay's, the Timers, the hold's line, the masters); a halo says for itself (its own relay's `ww5Ok`, a star
+word and a find); ON THE FREEWARE the Bay's nights star for star against the
 law before WW5 and every province's every festival night three stars in its own theatre by its own town, off its gate.
 `test/world/worldWide/ww5_hollows.test.js` (9): the law (the span, the lane's zero, the regions, the pick); the wire
 (the kinds, the pixels, the keys); the words and the herald; the relay (every lane's beat, census, fan, hello, find,
@@ -791,8 +798,8 @@ live door, receipts, herald); a province's site (the claim, the nearest town, dr
 routing, the ground asked, the focus, the end judged where I stand, the Timers and the map); a province's ground made
 again (it stands and moves; a townless ground's line waits and says its province); the Timers, the board and the map;
 ON THE FREEWARE every province's Hollow standing - 48 slots, each in its own theatre by its own city on dry ground - and
-the Bay's by its own rows. Mutants `tools/mutants/ww5_stars.json` (37) and `tools/mutants/ww5_hollows.json` (65), all
-dead.
+the Bay's by its own rows. Mutants `tools/mutants/ww5_stars.json` (42: WW5's finish added the halo's five) and `tools/mutants/ww5_hollows.json`
+(65), all dead.
 
 PINS MOVED: `star1_law.test.js` (the 3 that was "no fourth star" is High Rock's first), `star3_relay.test.js` (the held
 bound), `sd1_sdlaw.test.js`, `sd3_relay.test.js`, `sd8b_fight.test.js`, `sd11b_relay.test.js`, `sd20b_relay.test.js`,
@@ -801,7 +808,23 @@ bound), `sd1_sdlaw.test.js`, `sd3_relay.test.js`, `sd8b_fight.test.js`, `sd11b_r
 province lanes' Hollows resting beside the Bay's), `sd2b_world.test.js`, `sd11c_page.test.js`, `sd20f_hosts.test.js`,
 `sd26_dungeon.test.js`, `sd4b_rift.test.js`, `sd19_presence.test.js`, `sd20e_text.test.js`, `sd2c_omen.test.js`,
 `events1_board_ui.test.js` (the lanes' host and its seams), `tesa2_arena.test.js`, `tesa13_mapink.test.js` (a Hollow
-built past the Bay), `hostceiling.test.js` (`bootWorld`'s ceiling at its measure).
+built past the Bay), `hostceiling.test.js` (`bootWorld`'s ceiling at its measure), `wwr_regions.test.js` (WW-R's census the Bay's 62: every
+region's now), `tesa7_country.test.js`, `tesa8_lairs.test.js`, `tesa10_capitals.test.js` and `spawneddungeons.test.js`
+(the build's arm past the Bay, a province's Hollow first), `l10n3e_names.test.js` (the Timers' province name counted),
+`egseam_law.test.js` (EG3's golden Abyss realm: the hub's lanes draw the seeded die before the fight - with the die
+seeded afresh at the fight's first hello the realm says the same 148 frames on the trees before WW5 and after it) - the
+seven found at WW5's finish.
+
+THE OLDER RECORDS (WW5's finish, 2026-10-27): WW5 moved the lines 43 older mutant records name - 38 no longer applied
+(`test/tooling/mutantdrift.test.js` QS6 F7) and 5 named two sites once the province lanes copied their lines (MUT-AIM).
+Each is re-aimed BY CONTENT at the line its law lives on now, with a note: `sd2.json` (3, at the Bay's own `findSdSite`
+by a line only it has), `sd3.json` (6), `sd8b.json` (2), `sd9a.json` (4), `sd11b.json` (5), `sd11c.json`, `sd20b.json`,
+`sd20e.json` (3), `sd26_dungeon.json`, `sd26_text.json`, `sd2d.json`, `sdherald.json` (3), `star2.json`, `star3.json`
+(3), `star5.json`, `events1.json` (the Timers' site, now `scenes/superDungeon/sdLanes.js` `timers` - `ww5_hollows`
+pins the Bay's site there too), `audittesa2p.json` (2), `tesa2.json`, `tesa8.json` (the build's arm past the Bay, a
+province's Hollow first), `hostsplit.json` (the ceiling at 35,798) and `wwr.json` (`WWR-the-census-the-bays`: the moved
+law held from the other side) - every one run, all dead; and with the halo's word, `sd3.json`'s and `wb12d.json`'s
+step-down records (the stepped-down socket keeps `ww5Ok` beside `sdOk`).
 
 Section A, WW5 (OURS: DFU has no Starfall and no Abyss Dungeon - their lanes past the Bay are the port's own).
 
