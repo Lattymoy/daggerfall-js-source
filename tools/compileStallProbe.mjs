@@ -18,7 +18,7 @@
 // compiling for SwiftShader, read as relative: the driver a player runs has its own compiler (D3D11's is the slow one).
 //
 // Run:  ARENA2_PATH=/path/to/arena2 node tools/compileStallProbe.mjs knight     (scenes: tools/frameProbe.mjs SCENES)
-//       node tools/compileStallProbe.mjs passes
+//       node tools/compileStallProbe.mjs passes     (or queue: COMPILE-QUEUE's A/B, runQueue below)
 //   TREE=<dir> serve another worktree (an A/B's base);  SECONDS=60 after the first frame;  PARALLEL=0;  PORT=5245
 //   PROFILE=<file>: the run under a CPU profile, and its long tasks after the first frame by their own time
 import { createServer } from 'vite';
@@ -135,6 +135,43 @@ const PASSES = `async (started) => {
   return out;
 }`;
 
+/** COMPILE-QUEUE (FIELD BUGS 2026-10-27): one build that reads its link - the foes' telegraph, the idle warm's step after
+ *  the start - timed alone, and beside the passes play meets started all at once (the start before the fix) and in turn
+ *  (startPlayPrograms), at once and `delayMs` into their compile; with how long they all took to be done. */
+const QUEUE = `async ([arm, delayMs]) => {
+  const gp = await import('/src/render/glProgram.js'), pp = await import('/src/render/playPrograms.js');
+  const { FoeTelegraphPass } = await import('/src/render/foeTelegraph.js');
+  const gl = document.createElement('canvas').getContext('webgl2'), all = pp.playPrograms(), t0 = performance.now();
+  if (arm === 'at once') gp.startPrograms(gl, all);
+  if (arm === 'in turn') pp.startPlayPrograms(gl, () => new Promise((r) => setTimeout(r, 4)));
+  if (delayMs) await new Promise((r) => setTimeout(r, delayMs));
+  const b = performance.now();
+  new FoeTelegraphPass(gl);
+  const buildMs = performance.now() - b;
+  if (arm !== 'alone') while (!gp.startPrograms(gl, all)()) await new Promise((r) => setTimeout(r, 10));
+  const doneMs = arm === 'alone' ? null : performance.now() - t0;
+  gl.getExtension('WEBGL_lose_context')?.loseContext();
+  return { buildMs: Math.round(buildMs), doneMs: doneMs == null ? null : Math.round(doneMs) };
+}`;
+/** Every shader source made unique, so neither Chromium's program cache nor an earlier arm answers a compile. */
+const SALTED = `(() => { const P = WebGL2RenderingContext.prototype, f = P.shaderSource; let n = 0;
+  P.shaderSource = function (sh, src) { return f.call(this, sh, src + '\\n// salt ' + Math.random() + ' ' + (n++)); }; })();`;
+
+async function runQueue(browser) {
+  const rows = [];
+  for (const [arm, delayMs] of [['alone', 0], ['at once', 0], ['in turn', 0], ['at once', 150], ['in turn', 150]]) {
+    for (let run = 0; run < 2; run++) {
+      const ctx = await browser.newContext();
+      await ctx.addInitScript(SALTED);
+      const page = await ctx.newPage();
+      await page.goto(`http://localhost:${PORT}/src/render/glProgram.js`);
+      rows.push({ arm, delayMs, ...(await page.evaluate(`(${QUEUE})(${JSON.stringify([arm, delayMs])})`)) });
+      await ctx.close();
+    }
+  }
+  return rows;
+}
+
 async function runPasses(browser) {
   const ctx = await browser.newContext({ viewport: { width: W, height: H } });
   await ctx.addInitScript(GL_WAITS);
@@ -149,13 +186,18 @@ async function runPasses(browser) {
 
 if (isMain(import.meta.url)) {
   const names = process.argv.slice(2);
-  if (!names.length || names.some((n) => n !== 'passes' && !SCENES[n])) throw new Error(`compileStallProbe: name passes, or scenes of ${Object.keys(SCENES).join(', ')}`);
+  if (!names.length || names.some((n) => n !== 'passes' && n !== 'queue' && !SCENES[n])) throw new Error(`compileStallProbe: name passes, queue, or scenes of ${Object.keys(SCENES).join(', ')}`);
   const server = await createServer({ root: ROOT, configFile: `${ROOT}/vite.config.js`, server: { port: PORT, strictPort: true, hmr: false, watch: null }, logLevel: 'error' });
   await server.listen();
   const browser = await chromium.launch({ args: [...SWIFTSHADER_ARGS, ...(process.env.PARALLEL === '0' ? [] : PARALLEL_ARGS)] });
   const failed = [];
   try {
     for (const name of names) {
+      if (name === 'queue') {
+        console.log('== queue: the foes\' telegraph built beside the passes play meets (COMPILE-QUEUE)');
+        for (const x of await runQueue(browser)) console.log(`  ${x.arm.padEnd(8)} built at +${String(x.delayMs).padStart(3)} ms: ${String(x.buildMs).padStart(5)} ms${x.doneMs == null ? '' : `; all done after ${x.doneMs} ms`}`);
+        continue;
+      }
       if (name === 'passes') {
         const r = await runPasses(browser);
         console.log(`== passes (KHR_parallel_shader_compile ${r.ext ? 'on' : 'off'})`);

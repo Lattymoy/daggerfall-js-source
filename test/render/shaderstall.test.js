@@ -17,7 +17,7 @@ import { NodeGlintRenderer, NODE_GLINT_PROGRAMS, createNodeGlintPass } from '../
 import { ComeSailAwayRenderer, CSA_PART_PROGRAMS, CSA_WAVE_PROGRAMS } from '../../src/render/comeSailAwayRender.js';
 import { SpellImpactPass, SPELL_IMPACT_PROGRAMS } from '../../src/render/spellImpactFx.js';
 import { AuraRingRenderer, AURA_PROGRAMS, AURA_KINDS, auraPrograms } from '../../src/render/auraRing.js';   // AURA-STALL (#1137), AURA-SPLIT (#1143): the auras' looks, each through a door of its own
-import { startPlayPrograms } from '../../src/render/playPrograms.js';
+import { playPrograms, startPlayPrograms } from '../../src/render/playPrograms.js';
 import { buildGateModel, gateArchProfile } from '../../src/world/gate/gateModel.js';
 import { createGatePool } from '../../src/scenes/gate/gatePool.js';
 import { createGateCourt } from '../../src/scenes/gate/gateCourt.js';
@@ -261,7 +261,7 @@ test('SHADER-STALL the wiring: the world\'s sea warm and the spells\' impact pas
 // of fragment shader, and its build at the first wearer in range held the main thread 8.5-11 s on D3D11 - met on the frame
 // the travel view came down near a crowd, since the view draws no aura. Each look is now a program of its own (67 ms to
 // 1.65 s alone on the same machine), started at the boot's idle and built at its own door the first time its look is drawn.
-test('AURA-SPLIT the auras\' looks: one program a look - the whole source with `uAura` a constant - every one started at the boot\'s idle with the passes play meets; the pass compiles nothing at its build; a look\'s program built the first draw after its compile is done, on the started program, a wearer of a look still compiling standing without it, and bound again only where the look changes; without the extension a look is built at its first draw; the world builds the pass through a door that waits on no program (mutants: left out of the boot\'s start; a look off its list; a look asked as needed in the draw; bound for every wearer; the world\'s door waiting on the looks; built outside the door)', () => {
+test('AURA-SPLIT the auras\' looks: one program a look - the whole source with `uAura` a constant - every one started at the boot\'s idle with the passes play meets; the pass compiles nothing at its build; a look\'s program built the first draw after its compile is done, on the started program, a wearer of a look still compiling standing without it, and bound again only where the look changes; without the extension a look is built at its first draw; the world builds the pass through a door that waits on no program (mutants: left out of the boot\'s start; a look off its list; a look asked as needed in the draw; bound for every wearer; the world\'s door waiting on the looks; built outside the door)', async () => {
   assert.equal(AURA_PROGRAMS.length, AURA_KINDS.length, 'a program a look');
   for (const k of AURA_KINDS) {
     const [[vs, fs]] = auraPrograms(k);
@@ -271,14 +271,18 @@ test('AURA-SPLIT the auras\' looks: one program a look - the whole source with `
   const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
   const two = [{ at: [1, 0, 1] }, { at: [5, 0, 5], aura: 'oblivionward' }];
   const f = fakeGl();
-  assert.equal(startPlayPrograms(f.gl), true);
-  const started = f.count('createProgram');
+  const turns = [];
+  assert.equal(startPlayPrograms(f.gl, () => new Promise((res) => turns.push(res))), true);
   const r = new AuraRingRenderer(f.gl);
-  assert.equal(f.count('createProgram'), started, 'the pass compiles nothing at its build');
+  assert.equal(f.count('createProgram'), 1, 'the pass compiles nothing at its build');
   r.draw(two, I, I, [0, 0, 0], 1);
   assert.equal(r.drawn, 0, 'compiling: no wearer drawn this frame');
   assert.equal(f.count('link?'), 0, 'and no read that waits');
-  f.finish();
+  // PIN MOVED (COMPILE-QUEUE, FIELD BUGS 2026-10-27): the boot's start is a queue - a look asked for waits its turn
+  assert.equal(f.count('createProgram'), 1, 'never started beside the queue');
+  while (turns.length) { f.finish(); turns.shift()(); await new Promise((res) => setImmediate(res)); }
+  const started = f.count('createProgram');
+  assert.equal(started, playPrograms().length, 'every one started once');
   r.draw(two, I, I, [0, 0, 0], 1);
   assert.equal(r.drawn, 2, 'both drawn the first frame after their programs are done');
   assert.equal(f.count('link?'), 2, 'one read a look, of a link already made');
