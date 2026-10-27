@@ -33,7 +33,7 @@ import { ONLINE_PROBE_EDITS } from './onlineFrameProbe.mjs';
 import { isMain } from './lib/isMain.mjs';
 import { standServices, stopAll, localFetch, botStorage, LOAD_SERVICE } from './loadHarness.mjs';
 import { SESSION_KEY, SERVICE_KEY } from '../src/net/accountClient.js';
-import { realmIo, realmCreate, realmJoin, realmFetch, createRealmSession } from '../src/systems/realmSaves.js';
+import { realmIo, realmCreate, realmJoin, realmFetch, createRealmSession, idleKeyOf } from '../src/systems/realmSaves.js';
 import { stampItemIds } from '../src/systems/item/itemIds.js';
 import { ACCEPTED } from '../src/net/legalLaw.js';
 
@@ -60,8 +60,26 @@ export const REALM_SAVES_PROBE_EDITS = Object.freeze([
     window.__standing = (f) => playerEntity?.factionRep?.dict?.get(f)?.rep ?? null;
     { const said = townTalk.say; window.__heard = []; townTalk.say = (line, delay) => { window.__heard.push({ at: Date.now(), line: String(line) }); return said(line, delay); }; }`],
     ['  function realmLost(why) {', '  function realmLost(why) {\n    console.info(`[realm] lost: ${why}`);'],
+    ['  if (realmBoot?.stranded) townTalk.say(realmStrandedText());', '  if (realmBoot?.stranded) { townTalk.say(realmStrandedText()); window.__strandedSaid = realmStrandedText(); }'],
   ] },
 ]);
+
+/** Where two save texts differ once idleKeyOf's clock and look are set aside: up to 40 paths, each with both values cut short. */
+export function saveDiff(aText, bText) {
+  if (!aText || !bText) return { missing: !aText ? 'landed' : 'copy' };
+  const norm = (t) => JSON.parse(idleKeyOf(t))[0];
+  const out = [];
+  const walk = (a, b, path) => {
+    if (out.length >= 40) return;
+    if (a && b && typeof a === 'object' && typeof b === 'object') {
+      for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) walk(a[k], b[k], `${path}.${k}`);
+      return;
+    }
+    if (JSON.stringify(a) !== JSON.stringify(b)) out.push([path, JSON.stringify(a)?.slice(0, 60), JSON.stringify(b)?.slice(0, 60)]);
+  };
+  walk(norm(aText), norm(bText), '');
+  return out;
+}
 
 let stateDir = null;
 const dropState = () => { if (stateDir) { try { rmSync(stateDir, { recursive: true, force: true }); } catch { /* gone */ } stateDir = null; } };
@@ -188,6 +206,8 @@ async function main() {
       const id = await character(x);
       const ctxA = await device(x), ctxB = await device(x);
       const a = await boot(ctxA, id, 'A');
+      for (let i = 0; i < 60 && (await recordSeq(x, id)) < 2; i++) await sleep(1000);   // A's first periodic save landed
+      const landedText = (await realmFetch(x.io, id)).text;
       const b = await boot(ctxB, id, 'B');
       const bReady = Date.now();
       // A is out of the seat once B's hub claims it; A's lease went at B's join
@@ -197,13 +217,19 @@ async function main() {
       const lost = a.lostAt();
       record('a', !!lost && lost.at - bReady <= 5 * MINUTE + 30_000, lost ? `A went to the door (${lost.t}) ${((lost.at - bReady) / 1000).toFixed(0)} s after B was ready` : 'A never went to the door within 6 minutes');
       const unsent = await unsentRecord({ page: a.page }, id);
+      const copyText = await a.page.evaluate(async (cid) => {
+        const { readUnsent, unpackUnsent } = await import('/src/systems/realmSaves.js');
+        const kept = readUnsent(localStorage, cid);
+        return kept ? (kept.packed ? await unpackUnsent(kept.packed) : kept.text) : null;
+      }, id).catch(() => null);
+      console.log(`   (a) landed vs the seat-loss copy, clock aside: ${JSON.stringify(saveDiff(landedText, copyText))}`);
       const seqB = await checkpointLanded(b);
       record('a', seqB != null, `B's save landed at seq ${seqB}`);
       await b.page.close();
       const again = await boot(ctxA, id, 'A again');
       await waitFrames(again.page, 5);
       const stranded = await strandedRecord(again.page, id);
-      const said = (await again.heard()).filter((l) => /set aside/i.test(l));
+      const said = [await again.page.evaluate(() => window.__strandedSaid ?? null)].filter(Boolean).map((l) => l.slice(0, 80));
       record('a', !stranded, `A's copy (${JSON.stringify(unsent)}) at A's next join: ${stranded ? `SET ASIDE, said: ${JSON.stringify(said)}` : 'dropped, nothing said'}`);
       await ctxA.close(); await ctxB.close();
     }
@@ -369,7 +395,7 @@ async function main() {
         const text = copy ? (copy.packed ? await unpackUnsent(copy.packed) : copy.text) : null;
         return text ? JSON.parse(text).goldPieces : null;
       }, id);
-      const said = (await again.heard()).filter((l) => /set aside|recover it/i.test(l));
+      const said = [await again.page.evaluate(() => window.__strandedSaid ?? null)].filter(Boolean).map((l) => l.slice(0, 80));
       const played = await again.page.evaluate(() => window.__playerEntity?.goldPieces ?? null);
       record('g', setAside === 7777 && said.length > 0, `B's save landed at seq ${seqB}; A's next join plays gold ${played} (the realm's) and set aside gold ${setAside} (7777 played on A), said: ${JSON.stringify(said)}`);
       await again.page.close();
