@@ -14,6 +14,9 @@ import { LAND_ART, LAND_KIND_ART, landPicture, pictureMean } from '../../src/ren
 import { createLandPropsHost, LAND_PROPS_SLOT, LAND_DRAW, landMeshIndex, lookTint } from '../../src/scenes/landPropsHost.js';
 import { createLookupTable } from '../../src/world/terrain/terrainTiles.js';
 import { LANDS } from '../../src/world/tamriel/tamrielLands.js';
+import { seatFlora, warmFlora } from '../../src/scenes/floraSeat.js';
+import { walkGroundAt, ringGroundAt } from '../../src/world/terrain/terrainSurface.js';
+import { HEIGHTMAP_DIMENSION as HD, MAX_TERRAIN_HEIGHT, SCALED_BEACH_ELEVATION } from '../../src/world/terrain/terrainSampler.js';
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const li = (n) => LAND_LOOK_NAMES.indexOf(n), ki = (k) => LAND_KINDS.indexOf(k);
@@ -263,6 +266,35 @@ test('TESA-LANDS THE ROCK IS THE BODY (the second audit, lane D): a landmark\'s 
   }
 });
 
+test('TESA-LANDS THE LANDMARKS ON THE GROUND THEIR PIXEL DRAWS (the merge with FLORA-GROUND): stood on the walk floor by the kernel, as every plant is, and drawn on the ground their pixel draws - the seat gives the set each root\'s lift at its ring and over its bed, made ahead for the far ring, none on the near ring\'s walk floor; their place, their bodies and their feet the walk floor\'s (mutants: the set unseated; the kernel on the bilinear)', () => {
+  const hm = new Float32Array(HD * HD), beach = SCALED_BEACH_ELEVATION / MAX_TERRAIN_HEIGHT;
+  for (let a = 0; a < HD; a++) for (let b = 0; b < HD; b++) hm[a * HD + b] = beach * 1.6 + 0.003 * Math.sin(a / 2.3) * Math.sin(b / 2.9);
+  const roots = [[120.4, 300.2], [500.9, 77.7], [700.1, 650.3], [333.3, 444.4]];
+  const props = Float32Array.from(roots.flatMap(([x, z]) => [x, walkGroundAt(hm, x, z) - 0.6, z, 0, 1, ki('spire'), 0, li('basalt')]));
+  const p = { samples: hm, _stride: 4, _bed: null, forest: { groups: new Map() }, landProps: { px: 1, py: 2, props } };
+  seatFlora(p, { moveBillboardBatch: () => true });
+  assert.ok(p.landProps.lift, 'the far ring lifts the set');
+  roots.forEach(([x, z], k) => assert.ok(Math.abs(p.landProps.lift[k] - (ringGroundAt(hm, x, z, 4, null) - walkGroundAt(hm, x, z))) < 1e-4, `landmark ${k} on the far ring's ground`));
+  assert.ok(roots.some(([x, z]) => Math.abs(ringGroundAt(hm, x, z, 4, null) - walkGroundAt(hm, x, z)) > 0.25), 'the field parts the two grounds');
+  p._stride = 1;
+  seatFlora(p, { moveBillboardBatch: () => true });
+  assert.equal(p.landProps.lift, null, 'near: the walk floor');
+  // a set built near makes its far ring's ahead, and the crossing takes them
+  const q = { samples: hm, _stride: 1, _bed: null, forest: { groups: new Map() }, landProps: { px: 1, py: 2, props: props.slice() } };
+  seatFlora(q, { moveBillboardBatch: () => true });
+  warmFlora(q, 4);
+  const ahead = q.landProps._ringLift?.lift;
+  assert.ok(ahead instanceof Float32Array && q.landProps.lift === null, 'the far ring\'s made ahead, nothing moved by it');
+  q._stride = 4;
+  seatFlora(q, { moveBillboardBatch: () => true });
+  assert.equal(q.landProps.lift, ahead, 'the crossing takes them');
+  // the kernel stands them, and the zones' flats, on the walk floor - FLORA-GROUND's one law
+  const tn = read('src/world/terrain/terrainNature.js');
+  assert.match(tn, /ground: \(mx, mz\) => walkGroundAt\(heightmapData, Math\.min\(TERRAIN_SIZE/);
+  assert.match(tn, /return \{ record: pool\.records\[i\], x: mx, y: walkGroundAt\(heightmapData, mx, mz\) - slope \/ SLOPE_SINK_RATIO, z: mz, wood, archive: pool\.archives\[i\] \};/);
+  assert.match(read('src/scenes/landPropsHost.js'), /y = pr\[i \+ 1\] \+ t\[1\] \+ \(lift \? lift\[i \/ LAND_PROP_FLOATS\] : 0\)/);
+});
+
 /** A renderer that records what it is asked - the GPU's calls through a GL that answers anything (graht1's). */
 function fakeRenderer(over = {}) {
   const calls = [];
@@ -321,6 +353,13 @@ test('TESA-LANDS THE HOST: nothing made until a landmark is framed, then made on
   // the casters: the bodied alone (no reed, no vine), nearest first
   assert.equal(r.cast.length, 2, 'the parasol and the spire cast');
   assert.ok(r.cast[0][1][12] === 100, 'the nearest first');
+  // FLORA-GROUND (the merge): drawn on the ground its pixel draws - the seat's lift, its caster with it (scenes/floraSeat.js)
+  p.landProps.lift = new Float32Array(p.landProps.props.length / LAND_PROP_FLOATS).fill(2.5);
+  r.cast.length = 0;
+  host.frame([p], [100, 2, 60], null);
+  assert.equal(r.calls.filter((c) => c[0] === 'bufferSubData').at(-1)[3][parasolRun.drawStart * 5 + 1], 2.5, 'its y its ring\'s ground');
+  assert.equal(r.cast[0][1][13], 2.5, 'its caster with it');
+  p.landProps.lift = null;
   // culled: the view, the fog; a set past its farthest passed whole
   r.cast.length = 0;
   host.frame([p], [100, 2, 60], new Float32Array([0, 0, 1, -5000, 0, 0, 1, 1e6, 0, 0, 1, 1e6, 0, 0, 1, 1e6, 0, 0, 1, 1e6, 0, 0, 1, 1e6]));

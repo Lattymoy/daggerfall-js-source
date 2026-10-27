@@ -803,7 +803,7 @@ function landsTiles(heightmapData, tilemapData, opts) {
     const pool = u < tree ? c.trees : c.cover, i = pickOf(pool, tileDraw(tx, tz, 1));
     const mx = (x + in0 + (in1 - in0) * tileDraw(tx, tz, 2)) * scale, mz = (y + in0 + (in1 - in0) * tileDraw(tx, tz, 3)) * scale;
     const slope = Math.atan(Math.sqrt(slopeSq)) * (180 / Math.PI);
-    return { record: pool.records[i], x: mx, y: groundAt(heightmapData, mx, mz) - slope / SLOPE_SINK_RATIO, z: mz, wood, archive: pool.archives[i] };
+    return { record: pool.records[i], x: mx, y: walkGroundAt(heightmapData, mx, mz) - slope / SLOPE_SINK_RATIO, z: mz, wood, archive: pool.archives[i] };   // FLORA-GROUND: on the ground the player walks on, as FOREST1's
   };
 }
 
@@ -841,7 +841,7 @@ export function layoutLandProps(heightmapData, tilemapData, opts) {
     steep: (ti) => Math.atan(Math.sqrt(tileSlopeSq(heightmapData, ti % tDim, Math.floor(ti / tDim)))) * (180 / Math.PI),
     beach: (ti) => underBeach(heightmapData, opts.beach, ti % tDim, Math.floor(ti / tDim)),
     named: new Set(nine.flatMap((l) => l?.props?.map((p) => p.kind) ?? [])),
-    ground: (mx, mz) => groundAt(heightmapData, Math.min(TERRAIN_SIZE, Math.max(0, mx)), Math.min(TERRAIN_SIZE, Math.max(0, mz))),
+    ground: (mx, mz) => walkGroundAt(heightmapData, Math.min(TERRAIN_SIZE, Math.max(0, mx)), Math.min(TERRAIN_SIZE, Math.max(0, mz))),   // FLORA-GROUND: the walk floor's one law
     draw: tileDraw,
   });
 }

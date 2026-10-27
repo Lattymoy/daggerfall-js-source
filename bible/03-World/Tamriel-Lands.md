@@ -181,7 +181,10 @@ set whole past its kinds' farthest (its scratch sized by what is in reach - the 
 landmark had sized it, 30 MB for a grid of the Fens' reeds), then each landmark to the view, the fog's reach and its kind's own `far` (reeds 260 m,
 vines 420, a grove 1.2 km, a parasol 1.5, a spire 2.2, a Hist 2.6), at its LOD, on the renderer's fourth tree slot - so
 it is lit, fogged, hazed and lantern-lit as every 3D tree under either lane - and the nearest 16 bodied ones cast into
-the sun's maps. **The four hosts:** `scenes/world.js` WIRED through the trees' host and the pixel's build;
+the sun's maps. FLORA-GROUND (#1184's, met at the merge): the kernel stands the landmarks, and the zones' flats, on the
+walk floor (`terrainSurface.js` walkGroundAt - every plant's one law), and the seat draws them on the ground their pixel
+draws at every ring and over its bed (`scenes/floraSeat.js` seatFlora and warmFlora give the set each root's `lift`, as
+the graht-oaks'; the host draws and casts each at it) - their place, their bodies and their feet the walk floor's. **The four hosts:** `scenes/world.js` WIRED through the trees' host and the pixel's build;
 `scenes/exterior.js`, `scenes/worldModes.js`, `scenes/dungeonContext.js` FLAGGED - none stands the wilderness past the Bay.
 
 ## The far views (`render/farFlora.js`, `world/terrain/floraCover.js`, `render/farTrees.js`)
@@ -301,11 +304,12 @@ the feet's grid against every foot), a zone's woods afar (monotone, its mean the
 field's own quantiles (120,000 tiles of the continent: every tabled share and every zone's woods its own), a Tree among
 the cover counted and coloured afar, the middle ring's own field, the band's codes and art, the far views' book (the
 zone's woods, its Trees' art by weight, its dressed ground a record a task; the Bay and the row off the climate's), the
-doors. `test/world/tesalands_props.test.js` (8): the meshes, the pictures, the looks and the laws, where a landmark
+doors. `test/world/tesalands_props.test.js` (9): the meshes, the pictures, the looks and the laws, where a landmark
 stands (its inset, its rate, its woods and plains, never a road, water, a steep face or the beach, the lowest ground,
 the reeds' edge, the vines' rows whole and off the feet, vineyards, a patch's stands, the larger first), the flats off the
 feet and the bodies, the rock the body (every face to a man's chest inside a body, turned by the yaw), the host (its
-scratch by what is in reach), the wiring and the four hosts. `test/systems/buildslice.test.js`: one slice a frame
+scratch by what is in reach), the landmarks on the ground their pixel draws (the seat's lift at each ring, made ahead,
+drawn and cast at it; the kernel on the walk floor), the wiring and the four hosts. `test/systems/buildslice.test.js`: one slice a frame
 however many chains wait. `test/render/fartrees.test.js`: the atlas's lent layers, a set past the atlas laid once, a
 picture landed mid-lay held. Pins moved with it (PIN MOVED, TESA-LANDS): `test/world/graht1_oaks.test.js` (the trees'
 host frames the landmarks beside the graht-oaks), `test/world/terrain/terrain.test.js` (the lands' beach test the fifth
@@ -320,7 +324,10 @@ a zone's air), and `test/systems/l10n4_hardcoded.test.js` (the table's lore line
 words; the dress client's five warnings and reasons, console lines); and with the audit `test/render/fartrees.test.js`
 (a picture read where a wanted pixel's tree is of it, not an archive's every Tree - and a test of its own for the atlas's
 lent layers), `test/render/precip4_snowground.test.js` and `test/systems/ecotone1.test.js` (a pixel's own set and its
-neighbours' loaded together, each with its twin). `tools/mutants/tesalands.json` (118, all dead); re-aimed by content:
+neighbours' loaded together, each with its twin); with the second audit `test/render/owhitch.test.js` (a build asks again
+for its set once it stands), and at the merge with #1184's FLORA-GROUND `test/world/terrain/floraground_rings.test.js`
+(the build seats and warms the landmarks with the plants) and `test/world/graht1_oaks.test.js` (ROAD-LOOK's `bridges`
+beside the graht-oaks in the build's terrain answer - red on #1184's head too). `tools/mutants/tesalands.json` (123, all dead); re-aimed by content:
 `farflora.json`, `fartrees.json`, `ecotone1.json`, `precip1.json`, `forest1.json` (one law for both forest fields),
 `midring.json`, and with the second audit `perfextc.json` (the breather's one wake).
 

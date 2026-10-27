@@ -20,6 +20,7 @@ import { ringGroundAt, walkGroundAt } from '../world/terrain/terrainSurface.js';
 import { flatBatchAabb } from '../render/frustum.js';
 import { FELLED } from '../ai/cover.js';
 import { GRAHT_TREE_FLOATS } from '../world/jungle/grahtOaks.js';
+import { LAND_PROP_FLOATS } from '../world/lands/landProps.js';   // TESA-LANDS: the lands' landmarks, seated as the graht-oaks are
 
 /** The centres stood on the ground by its law (the kernel's woods and scatter, the jungle's trees and roadside pairs, a
  *  town's nature flats on its ground) - the flat's own base array, as FELLED knows a felled tree's (ai/cover.js). */
@@ -82,6 +83,8 @@ export function warmFlora(p, stride) {
   for (const g of p.forest?.groups?.values() ?? []) if (g.batch) liftsFor(g, stride, null, () => ringLifts(p.samples, g.centers, stride, null));
   const set = p.grahtOaks;
   if (set) liftsFor(set, stride, null, () => packedLifts(p.samples, set.trees, GRAHT_TREE_FLOATS, stride, null));
+  const lands = p.landProps;
+  if (lands) liftsFor(lands, stride, null, () => packedLifts(p.samples, lands.props, LAND_PROP_FLOATS, stride, null));
 }
 
 /**
@@ -97,7 +100,8 @@ export function drawnCentre(g, c, i, felled) {
 
 /**
  * A BUILT PIXEL'S PLANTS SEATED ON ITS RING: every forest group's batch (`p.forest.groups` - the woods', a town's nature
- * flats', the jungle's) and its graht-oaks (`p.grahtOaks`, which their host frames at `lift`) drawn on the ground the pixel
+ * flats', the jungle's), its graht-oaks (`p.grahtOaks`, which their host frames at `lift`) and TESA-LANDS' landmarks
+ * (`p.landProps`, the same) drawn on the ground the pixel
  * draws now (`p._stride`, `p._bed`), the felled trees under it; each moved batch's cull box with it and the pixel's grown
  * to hold it. The build calls it as it publishes, and the world host where the ground it draws changes (restrideTerrain,
  * dwRecarve) - a re-skin with the groups it makes. A group drawn on that ground already is left as it stands.
@@ -119,4 +123,8 @@ export function seatFlora(p, renderer) {
   }
   const set = p.grahtOaks;
   if (set) set.lift = liftsFor(set, stride, carve, () => packedLifts(p.samples, set.trees, GRAHT_TREE_FLOATS, stride, carve));
+  // TESA-LANDS: the lands' landmarks (`p.landProps`, their host frames each at its root on the ground - landPropsHost.js)
+  // by the same law: each stood on the walk floor about its root, drawn on its ring's ground and over its bed
+  const lands = p.landProps;
+  if (lands) lands.lift = liftsFor(lands, stride, carve, () => packedLifts(p.samples, lands.props, LAND_PROP_FLOATS, stride, carve));
 }

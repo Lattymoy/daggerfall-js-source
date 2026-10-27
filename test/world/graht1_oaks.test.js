@@ -542,10 +542,10 @@ test('GRAHT1: the wiring - the jungle host builds it on the canopy\'s zones (?gr
   // PIN MOVED (TESA-LANDS): the lands' landmarks framed beside them, before the same return (scenes/landPropsHost.js)
   assert.match(trees, /frame\(pixels, eye, planes\) \{\n\s+jungle\?\.graht\?\.frame\(pixels, eye, planes\);[^\n]*\n\s+landProps\?\.frame\(pixels, eye, planes\);[^\n]*\n\s+if \(!lowPolyTrees && !jungleDoor\) return;/);
   const pb = read('src/scenes/pixelBuild.js');
-  assert.match(pb, /wodAverages, graht, beach, roadside, townGround, arenaRoads \} = await terrainGen\.generate\(/);
+  assert.match(pb, /wodAverages, graht, beach, roadside, townGround, arenaRoads, bridges \} = await terrainGen\.generate\(/);   // PIN MOVED (ROAD-LOOK's bridges, met at TESA-LANDS' merge: red on #1184's head too)
   assert.match(pb, /const grahtStood = jungle\?\.graht\?\.stand\(px, py, graht, \(x, z\) => !pointNearGate\(gateClear, px, py, x, z, WOD_FLAT_GATE_CLEAR_M\) && !insideRocks\(pixelRocks, x, z\)\) \?\? null;\n\s+if \(grahtStood\) coverItems\.push\(\.\.\.grahtStood\.bodies\);/);
   assert.ok(pb.indexOf('if (grahtStood) coverItems.push(...grahtStood.bodies);') < pb.indexOf('collider.cover.add(key, coverItems.slice(i, i + COVER_SLICE), coverT);'), 'filed with the pixel\'s cover');
-  assert.match(pb, /grahtOaks: grahtStood\?\.set \?\? null,/);
+  assert.match(pb, /\n\s+grahtOaks: grahtStood\?\.set \?\? null,   \/\/ GRAHT1: its graht-oaks/, 'the built entry carries them');   // PIN MOVED (TESA-LANDS' merge): the seat's call carries the same words now, so the entry's own line
   const tg = read('src/world/terrain/terrainGen.js');
   assert.match(tg, /const \{ flats: nature, pairs: roadside, graht \} = jungleLayout\(/);
   assert.match(tg, /net: roads, canopy: jungle\.canopy \?\? null \} : null \}\);/);

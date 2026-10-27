@@ -453,8 +453,8 @@
   {
     "name": "TL-reeds-bodied",
     "file": "src/world/lands/landProps.js",
-    "old": "if (!(/** @type {any} */ (LAND_KIND_LAW)[kind])?.body) return [];",
-    "new": "if (!(/** @type {any} */ (LAND_KIND_LAW)[kind])) return [];",
+    "old": "far: 260, steep: 20, sink: 0.1, body: false, sway: 0.35",
+    "new": "far: 260, steep: 20, sink: 0.1, body: true, sway: 0.35",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]
@@ -1062,6 +1062,51 @@
     "new": "    ground: { base: 302, grass: mat(M.coastMeadow, { fleck: fleck(['#b3a770', '#d8c070'], 0.02) }), dirt: mat(M.whiteSand), stone: mat(M.greyLimestone) },\n    blades: false,",
     "tests": [
       "test/world/tesalands_ground.test.js"
+    ]
+  },
+  {
+    "name": "TL-landmarks-unseated",
+    "file": "src/scenes/floraSeat.js",
+    "old": "if (lands) lands.lift = liftsFor(lands, stride, carve, () => packedLifts(p.samples, lands.props, LAND_PROP_FLOATS, stride, carve));",
+    "new": "if (lands) lands.lift = null;",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-landmarks-warmed-none",
+    "file": "src/scenes/floraSeat.js",
+    "old": "  if (lands) liftsFor(lands, stride, null, () => packedLifts(p.samples, lands.props, LAND_PROP_FLOATS, stride, null));\n",
+    "new": "",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-landmarks-host-blind-to-the-lift",
+    "file": "src/scenes/landPropsHost.js",
+    "old": "y = pr[i + 1] + t[1] + (lift ? lift[i / LAND_PROP_FLOATS] : 0)",
+    "new": "y = pr[i + 1] + t[1]",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-landmarks-on-the-bilinear",
+    "file": "src/world/terrain/terrainNature.js",
+    "old": "    ground: (mx, mz) => walkGroundAt(heightmapData,",
+    "new": "    ground: (mx, mz) => groundAt(heightmapData,",
+    "tests": [
+      "test/world/tesalands_props.test.js"
+    ]
+  },
+  {
+    "name": "TL-lands-flats-on-the-bilinear",
+    "file": "src/world/terrain/terrainNature.js",
+    "old": "x: mx, y: walkGroundAt(heightmapData, mx, mz) - slope / SLOPE_SINK_RATIO, z: mz, wood, archive: pool.archives[i] };",
+    "new": "x: mx, y: groundAt(heightmapData, mx, mz) - slope / SLOPE_SINK_RATIO, z: mz, wood, archive: pool.archives[i] };",
+    "tests": [
+      "test/world/tesalands_props.test.js"
     ]
   }
 ]

@@ -272,6 +272,16 @@ test('FAR-TREES A SET PAST THE ATLAS IS LAID ONCE, AND HOLDS WHAT LANDS UNDER IT
   w2[0].done(r.value);
   assert.ok(b2._drawnArts.has('504,13') && b2.count === 2, 'and by the drawn set');
   b2.dispose();
+  // a full atlas lends no layer of a set being laid, though the wanted set has moved on before its pixels are laid
+  const b3 = new FarTreesBand(fakeGl().gl, { source, read });
+  const arts = Array.from({ length: TREE_LAYERS }, (_, k) => `${500 + (k % 11)},${k}`);
+  arts.forEach((a, k) => b3.layers.set(a, k));
+  b3._want = [[0, 0]];
+  b3.kept.set('0,0', { px: 0, py: 0, archive: 504, trees: new Float32Array(0), arts });
+  b3._lay([], 0, 0);
+  b3._wanted.clear(); b3._drawnArts = new Set();   // the traveller moved on: nothing wanted holds them now
+  assert.equal(b3._layerFor(), -1, 'every layer the laid set\'s');
+  b3.dispose();
 });
 
 test('FAR-TREES the worker\'s band: each pixel its own trees, kept by the pixel and answered as copies, transferred; the client asks BAND_PIXELS_AN_ASK pixels an ask and answers them in order; none with no worker (mutant: the kept key, the copy, the transfer, the chunk, the order)', async () => {

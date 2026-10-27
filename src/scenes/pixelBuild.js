@@ -1321,10 +1321,10 @@ export function createPixelBuild(host) {
     // first read of its ground), before it publishes and its felled trees are sunk; the world host seats them again
     // wherever that ground changes (world.js restrideTerrain, dwRecarve)
     await breather.breathe();
-    seatFlora({ samples, _stride: stride, _bed: bed, _box: bounds, forest: { groups: forestGroups }, grahtOaks: grahtStood?.set ?? null }, renderer);
+    seatFlora({ samples, _stride: stride, _bed: bed, _box: bounds, forest: { groups: forestGroups }, grahtOaks: grahtStood?.set ?? null, landProps: landStood?.set ?? null }, renderer);   // TESA-LANDS: and the landmarks
     // and built near, the far ring's lifts made ahead in a breath of their own - the walk away from a pixel built about the
     // player (a load, a landing) demotes five at a crossing, each then reading its ground in the crossing's frame
-    if (stride === 1 && lodStride > 1) { await breather.breathe(); warmFlora({ samples, forest: { groups: forestGroups }, grahtOaks: grahtStood?.set ?? null }, lodStride); }
+    if (stride === 1 && lodStride > 1) { await breather.breathe(); warmFlora({ samples, forest: { groups: forestGroups }, grahtOaks: grahtStood?.set ?? null, landProps: landStood?.set ?? null }, lodStride); }
     // WOD2: the scaled flats - billboardSize times the object's own scale.
     for (const { archive, record, scale, centers } of scaledGroups.values()) {
       const t = await getTexture(archive);

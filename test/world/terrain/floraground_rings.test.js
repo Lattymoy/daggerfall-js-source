@@ -238,7 +238,7 @@ test('FLORA-GROUND THE RINGS the hosts seat the plants wherever the ground they 
   const rc = W.slice(W.indexOf('function dwRecarve(p) {'), W.indexOf('function hostBed('));
   assert.match(rc, /p\._bed = \{ sheet: grid\.positions[^\n]*\n\s+seatFlora\(p, renderer\);/, 'a re-carve seats them on the bed as it lies');
   const B = src('src/scenes/pixelBuild.js');
-  const seat = B.indexOf('seatFlora({ samples, _stride: stride, _bed: bed, _box: bounds, forest: { groups: forestGroups }, grahtOaks: grahtStood?.set ?? null }, renderer);');
+  const seat = B.indexOf('seatFlora({ samples, _stride: stride, _bed: bed, _box: bounds, forest: { groups: forestGroups }, grahtOaks: grahtStood?.set ?? null, landProps: landStood?.set ?? null }, renderer);');   // PIN MOVED (TESA-LANDS, the merge with FLORA-GROUND): and the lands' landmarks (test/world/tesalands_props.test.js)
   assert.ok(seat > B.indexOf('for (const [gk, g] of jungleGroups) {') && seat > B.indexOf('const grahtStood = '), 'the build seats them once every group and the graht-oaks stand');
   assert.ok(seat < B.indexOf('swap.publish(px, py, key, made, {') && seat < B.indexOf('host.gatherHost?.onBuilt(built.get(pkey));'), 'before it publishes - before its felled trees are sunk in it');
   assert.match(B, /_box: bounds,[^\n]*\n\s+_stride: stride,[^\n]*\n\s+_bed: bed,/, 'the very box, ring and bed the entry publishes with');
@@ -270,7 +270,7 @@ test('FLORA-GROUND THE RINGS a pixel built about the player makes its far ring\'
   const far = drawnOracle(hm, 4), at = r.at.get(batch);
   centers.forEach((c, i) => { if (ground[i]) assert.ok(Math.abs(at[i][1] - (c[1] - walkGroundAt(hm, c[0], c[2])) - far(c[0], c[2])) < 1e-3); });
   const B = src('src/scenes/pixelBuild.js');
-  const seat = B.indexOf('seatFlora({ samples, _stride: stride, _bed: bed, _box: bounds,'), warm = B.indexOf('if (stride === 1 && lodStride > 1) { await breather.breathe(); warmFlora({ samples, forest: { groups: forestGroups }, grahtOaks: grahtStood?.set ?? null }, lodStride); }');
+  const seat = B.indexOf('seatFlora({ samples, _stride: stride, _bed: bed, _box: bounds,'), warm = B.indexOf('if (stride === 1 && lodStride > 1) { await breather.breathe(); warmFlora({ samples, forest: { groups: forestGroups }, grahtOaks: grahtStood?.set ?? null, landProps: landStood?.set ?? null }, lodStride); }');   // PIN MOVED (TESA-LANDS): and the landmarks
   assert.ok(seat > 0 && warm > seat && warm < B.indexOf('swap.publish(px, py, key, made, {'), 'a near build makes them after its seat, before it publishes');
   assert.match(B, /worldHeight, lodStride,/, 'the build takes the far class');
   assert.match(hostText('src/scenes/world.js'), /lodStride: lodOn \? LOD_STRIDE : 1,/, 'the world host hands it: EV4\'s stride, none on the 1:1 lane');

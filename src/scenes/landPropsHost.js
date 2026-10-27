@@ -270,12 +270,12 @@ export function createLandPropsHost({ renderer, breathe = async () => {} }) {
         const set = p.landProps, t = p._t;
         if (!set || !t) continue;
         sets++;
-        const pr = set.props;
+        const pr = set.props, lift = set.lift ?? null;
         for (const run of runsOf(set)) {
           if (!runNear(run, t, ex, ez, reach)) { skipped++; continue; }   // a kind's run past its farthest whole, passed over
           for (let i = run.from; i < run.to; i += LAND_PROP_FLOATS) {
             const k = pr[i + 5], v = pr[i + 6], li = pr[i + 7], s = pr[i + 4], o = (k * MAXV + v) * 3;
-            const x = pr[i] + t[0], y = pr[i + 1] + t[1], z = pr[i + 2] + t[2];
+            const x = pr[i] + t[0], y = pr[i + 1] + t[1] + (lift ? lift[i / LAND_PROP_FLOATS] : 0), z = pr[i + 2] + t[2];   // FLORA-GROUND: on the ground its pixel draws (scenes/floraSeat.js seatFlora)
             const R = measures[o + 1] * s, H = measures[o] * s;
             const dx = x - ex, dz = z - ez, dh = Math.hypot(dx, dz);
             if (bodyOf[k] && casters?.[k * MAXV + v] && dh < LAND_DRAW.castReach + R) castIn(dh, k * MAXV + v, x, y, z, pr[i + 3], s);

@@ -319,15 +319,23 @@ test('TESA-LANDS THE DRESS OFF THE PAGE\'S THREAD (AUDIT): the worker answers dr
     });
     return { sets, maps };
   };
+  let reads = 0;
+  const counted = tex.getColor32;
+  tex.getColor32 = (r) => { reads++; return counted(r); };
   const one = scene();
   await one.sets.loadGroundSet(key, { tileArray() {} });
+  assert.equal(reads, 2 * 56, 'the set made: its records read for its marks and its grass\'s, the key\'s puddles its file\'s - never marked again');
   assert.deepEqual(dressed, [LANDS.morrowindAshlands.ground], 'dressed once, in its zone\'s dress');
   assert.equal(one.maps.grassRecords.get(key).size, 0, 'the ash grows no blades (its grass records none)');
   const means = tileArrays.get(key).map(tileMeanColour);
   assert.deepEqual(one.maps.groundMeanColour.get(key), means, 'the grass\'s colours the dress\'s');
   assert.equal(one.maps.groundPuddles.get(key), one.maps.groundPuddles.get(102), 'its puddles its file\'s, marked once');
+  // a scene after reads the file's records twice - its puddles' marks and its grass's - and never marks them again under
+  // the key (the second audit: the module's means and the file's marks taken once)
   const two = scene();
+  reads = 0;
   await two.sets.loadGroundSet(key, { tileArray() {} });
+  assert.equal(reads, 2 * 56, 'a scene after: its marks and its grass\'s, once each');
   assert.equal(dressed.length, 1, 'an uploaded set not dressed again');
   assert.deepEqual(two.maps.groundMeanColour.get(key), means, 'a scene after: the dress\'s colours still - never the classic records\'');
   assert.notDeepEqual(means, set.map(tileMeanColour));

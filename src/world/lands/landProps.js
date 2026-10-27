@@ -307,8 +307,8 @@ export function flatsOffProps(flats, props, tileM) {
  */
 export function landPropBodies(props, i) {
   const kind = LAND_KINDS[props[i + 5]];
-  if (!(/** @type {any} */ (LAND_KIND_LAW)[kind])?.body) return [];
-  const m = landMeasures(kind, props[i + 6]), s = props[i + 4], c = Math.cos(props[i + 3]), sn = Math.sin(props[i + 3]);
+  if (!(/** @type {any} */ (LAND_KIND_LAW)[kind])) return [];
+  const m = landMeasures(kind, props[i + 6]), s = props[i + 4], c = Math.cos(props[i + 3]), sn = Math.sin(props[i + 3]);   // an unbodied kind's parts none (landMeasures)
   return m.parts.map((q) => ({ c: [props[i] + (c * q.x + sn * q.z) * s, props[i + 1], props[i + 2] + (-sn * q.x + c * q.z) * s], r: Math.max(0.3, q.r) * s, h: q.h * s, lift: 0, body: true, _mark: 0 }));
 }
 
