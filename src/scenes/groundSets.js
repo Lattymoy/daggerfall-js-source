@@ -19,21 +19,37 @@
 //   - the classic puddles are marked once a set: the grass's own mask (`groundPuddles`) is the one the layers were
 //     marked with, where it had been marked a second time from the same records.
 // What it makes is what it made.
+// TESA-LANDS (bible/03-World/Tamriel-Lands.md): AND A ZONE'S DRESS. A set's key may be a zone's dress of an archive
+// (world/tamriel/tamrielLands.js groundSetKey, `lands:<zone>:<archive>` - the pixel's build names it past the Bay): its
+// file is its archive's (the texture door reads a key's archive, `fileOf`), its drawn layers - the pack's, puddles
+// marked - are dressed a band of a record a breath before the upload (world/tamriel/groundDress.js dressLayersSteps, at
+// the pack's exposure against the classic set), the dress is the set drawn (its grass's colours its own), and every map
+// the grass and the water read is kept under the key - its grass records none where the zone grows no blades. An
+// archive's own key makes what it made.
 // ═══════════════════════════════════════════════════════════════════
 import { dfmodGroundLayers } from '../systems/dfmodTextures.js';   // GROUND1: an attached mod's terrain tile set
 import { grassRecordsOf, floorRecordsOf, tileMeanColour } from '../render/labGrass.js';
 import { markPuddleWaterSteps, carryPuddleMaskSteps, stepsBreathing } from '../world/puddleMask.js';   // WATER-PUDDLE: the puddle is the art's
 import { twinKey, twinLayers } from './snowCoverHost.js';   // PRECIP4
+import { dressLayersSteps, setExposure } from '../world/tamriel/groundDress.js';   // TESA-LANDS: a zone's dress of the set
+import { LANDS, parseGroundSetKey } from '../world/tamriel/tamrielLands.js';
 
 /**
  * @param {{ renderer: any, getTexture: (archive: number) => Promise<any>, labGrass: any, breathe: () => Promise<void>,
- *   grassRecords: Map<number, any>, floorRecords: Map<number, any>, groundPuddles: Map<number, any>,
- *   groundMeanColour: Map<number, any>, groundDrawnMeans: Map<number, any> }} deps
+ *   grassRecords: Map<number|string, any>, floorRecords: Map<number|string, any>, groundPuddles: Map<number|string, any>,
+ *   groundMeanColour: Map<number|string, any>, groundDrawnMeans: Map<number|string, any> }} deps
  *   `breathe` the stream's breather (world.js `breather.breathe()`); the five maps the world host's grass and water read
- *   (archive -> its grass records, its floor's, its puddles' layers, its records' mean colours, and the drawn mod set's
- *   means), written here as the build learns them
+ *   (a set's key - its archive, or TESA-LANDS a zone's dress of one - to its grass records, its floor's, its puddles'
+ *   layers, its records' mean colours, and the drawn set's means), written here as the build learns them
  */
-export function createGroundSets({ renderer, getTexture, labGrass, breathe, grassRecords, floorRecords, groundPuddles, groundMeanColour, groundDrawnMeans }) {
+export function createGroundSets({ renderer, getTexture: archiveTexture, labGrass, breathe, grassRecords, floorRecords, groundPuddles, groundMeanColour, groundDrawnMeans }) {
+  /** TESA-LANDS: a set key's archive (a zone's dress's own, or the key itself), its zone's land and dress (null for an
+   *  archive's own), its texture file (the archive's) and its classic records */
+  const fileOf = (key) => parseGroundSetKey(key)?.archive ?? key;
+  const landOf = (key) => { const k = parseGroundSetKey(key); return k ? /** @type {any} */ (LANDS)[k.zone] ?? null : null; };
+  const dressOf = (key) => landOf(key)?.ground ?? null;
+  const getTexture = (key) => archiveTexture(fileOf(key));
+  const classicOf = (tex) => { const l = []; for (let r = 0; r < tex.recordCount; r++) l.push(tex.getColor32(tex.getDFBitmap(r, 0), 0)); return l; };
   /** A ground archive's layers as they are drawn (a texture mod's set first, GROUND1/VE2: TextureReader.GetTerrainTextureArray),
    *  puddles marked (WATER-PUDDLE: a puddle record's water in its layer's alpha; GROUND1-W: a mod's set takes their shapes
    *  from the classic records) - `modLayers` the mod's own, null for none. OW-HITCH: marked a record a breath, and the
@@ -49,12 +65,20 @@ export function createGroundSets({ renderer, getTexture, labGrass, breathe, gras
   const _loading = new Map();
   /** A set's layers made and uploaded (its twin's, `winter`, with it), its grass means kept - once a key. */
   const makeSet = async (key, groundArchive, groundTex, winter) => {
-    const own = await groundLayersOf(groundArchive, groundTex);
+    const own = await groundLayersOf(fileOf(groundArchive), groundTex);
+    // TESA-LANDS: a zone's dress over the layers as they are drawn, a band of a record a breath, at the pack's exposure
+    // against the classic records - and the set drawn is the dress (its grass's colours are its own, below)
+    const dress = dressOf(groundArchive);
+    if (dress) {
+      own.layers = await stepsBreathing(dressLayersSteps(own.layers, dress, own.modLayers ? setExposure(own.modLayers, classicOf(groundTex)) : 1), breathe);
+      own.modLayers = own.layers;
+    }
     const layers = winter == null ? own.layers : twinLayers(own.layers, (await groundLayersOf(winter, await getTexture(winter))).layers);
     await stepsBreathing(renderer.uploadTileArraySteps(key, layers), breathe);   // OW-HITCH: a few layers a breath
     // AUDIT GRASS-LIT2 B2: the grass's colours off THESE layers - the ones drawn - and not a second ask of the mod
     // door, whose cache a mod indexed mid-session empties (another decode, maybe another mod's tiles than these)
     if (labGrass) groundDrawnMeans.set(groundArchive, own.modLayers ? own.modLayers.map(tileMeanColour) : null);
+    else if (dress) groundDrawnMeans.set(groundArchive, own.layers.map(tileMeanColour));   // TESA-LANDS: a dress's colours are its own whatever the grass - and no mod door is asked of a key that names none
   };
   const loadGroundSet = async (groundArchive, hold, winter = null) => {
     // AUDIT PRECIP GROUND-2: on the snow lane a set that wears a winter IS its twin - one array, its summer records then its
@@ -96,6 +120,7 @@ export function createGroundSets({ renderer, getTexture, labGrass, breathe, gras
       const layers = [];
       for (let r = 0; r < groundTex.recordCount; r++) layers.push(groundTex.getColor32(groundTex.getDFBitmap(r, 0), 0));
       grassRecords.set(groundArchive, grassRecordsOf(layers)); floorRecords.set(groundArchive, floorRecordsOf(layers));   // BANTHA2: the floor's beside the meadow's
+      if (landOf(groundArchive)?.blades === false) grassRecords.set(groundArchive, new Set());   // TESA-LANDS: a zone that grows no blades has none
       // GR4: each record's MEAN colour, for the grass root that stands on
       // it - averaged once, rather than sampled per blade. AUDIT 68 S17:
       // learned here, beside grassRecords (the tile cache outlives the

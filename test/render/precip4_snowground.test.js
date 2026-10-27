@@ -559,7 +559,8 @@ test('PRECIP4 THE WIRING: a build settles the snow, then keeps every season it t
   const skin = b.slice(b.indexOf('  async function reskinPixelNow('), b.indexOf('  _reskin.skinWith(reskinPixelNow);'));
   assert.match(skin, /const pixelSeason = rec\.pixel\(sk\.groundMid - SEA_LEVEL_M, host\.season\);/);
   assert.equal((skin.match(/host\.season\b(?!sReady|sActive)/g) ?? []).length, 1, 'no re-skin line reads the host\'s season past it');
-  assert.match(b, /const groundArchive = snowCover \? snowCover\.groundArchive\(climate, pixelSeason\) : getTerrainGroundArchive\(climate, pixelSeason\);/);
+  // PIN MOVED (TESA-LANDS): the pixel's set its zone's dress of it past the Bay (scenes/pixelBuild.js landSetOf)
+  assert.match(b, /const groundArchive = landSetOf\(px, py, snowCover \? snowCover\.groundArchive\(climate, pixelSeason\) : getTerrainGroundArchive\(climate, pixelSeason\)\);/);
   assert.match(b, /await loadGroundSet\(groundArchive, pipeline, snowCover\?\.winterOf\(climate\) \?\? null\);/);
   assert.match(b, /for \(const a of archives\) await loadGroundSet\(a, pipeline, snowCover\?\.winterOf\(near\[groundNear\.indexOf\(a\)\]\) \?\? null\);/);
   assert.match(b, /const fSeason = snowRec \? snowRec\.flat\(f\.x, f\.z, f\.y - SEA_LEVEL_M, pixelSeason\) : pixelSeason;/);

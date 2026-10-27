@@ -38,6 +38,7 @@ import { EL_GLSL } from './enhancedLighting.js';
 import { BAYER_MEAN } from './orderedDither.js';
 import { classicLook } from './classicShadowLane.js';
 import { pipelinePictures } from './farFlora.js';
+import { bandTreeArt } from '../world/terrain/floraCover.js';   // TESA-LANDS: a band tree of a zone's own archive
 
 /** The band's reach past the streamed grid's radius (map pixels, Chebyshev from the traveller's pixel). */
 export const BAND_RING = 1;
@@ -124,7 +125,8 @@ export function* bandInstanceSteps(pixels, baseX, baseY, layerOf) {
     yield;
     const ox = (p.px - baseX) * TERRAIN_SIZE, oz = (baseY - p.py) * TERRAIN_SIZE, t = p.trees;
     for (let i = 0; i < t.length; i += 4) {
-      const layer = layerOf(p.archive, t[i + 3]);
+      const [a, r] = bandTreeArt(p.archive, t[i + 3]);   // TESA-LANDS: its own archive's art where it carries one
+      const layer = layerOf(a, r);
       if (layer === undefined) continue;
       const o = k * (TREE_STRIDE / 4);
       f[o] = ox + t[i]; f[o + 1] = t[i + 1]; f[o + 2] = oz + t[i + 2];
@@ -236,7 +238,7 @@ export class FarTreesBand {
     for (const name of ['uProj', 'uView', 'uOrigin', 'uSides', 'uBand', 'uBandFrom', 'uHazeFrom', 'uTrees', 'uAmbient', 'uSunScale', 'uSunColor',
       'uMoonScale', 'uMoonColor', 'uFogColor', 'uFogStart', 'uFogEnd', 'uRimStart', 'uRimEnd', 'uHazeHold', 'uCloudShadowMap', 'uCloudShadowRect',
       'uCloudShadowFar', 'uCloudFar', 'uJungleHaze', 'uHazeEye', 'uELExposure', 'uAdapt']) this.u[name] = gl.getUniformLocation(this.program, name);
-    /** @type {Map<string, { px: number, py: number, archive: number, trees: Float32Array }>} */ this.kept = new Map();
+    /** @type {Map<string, { px: number, py: number, archive: number, trees: Float32Array, archives: number[] }>} */ this.kept = new Map();   // TESA-LANDS: `archives` every archive its trees' art is of
     this.layers = new Map();   // "archive,record" -> layer
     this.sides = new Float32Array(TREE_LAYERS);
     this.arts = new Map();     // archive -> 'asking' | 'ready' | 'none'
@@ -259,25 +261,26 @@ export class FarTreesBand {
    * The band's turn of a frame (render/farRing.js punchHole's): its pixels asked again when the traveller's pixel or the
    * grid's radius moved; the pixels it lacks asked of the worker (one ask at a time); and, once every pixel it wants is
    * kept (and their art read), an assembly queued on `work` (the far ring's stepped queue). `climateOf(x, y)` a pixel's
-   * climate; `forests` the Real forests switch; `landform` the Landforms row.
+   * climate; `forests` the Real forests switch; `landform` the Landforms row; `lands` TESA-LANDS' row (a zone's own trees
+   * past the Bay).
    */
-  frame({ curX, curY, radius, built, climateOf, forests, landform, work }) {
+  frame({ curX, curY, radius, built, climateOf, forests, landform, lands = false, work }) {
     const key = `${curX},${curY},${radius}`;
     if (key !== this._setKey) { this._setKey = key; this._want = this.pixelsFor(curX, curY, radius, built); this._wantAt = [curX, curY]; this._failed = false; }
     const missing = this._want.filter(([x, y]) => !this.kept.has(`${x},${y}`));
-    if (missing.length && !this._asking && !this._failed) this._ask(missing, climateOf, forests, landform);
+    if (missing.length && !this._asking && !this._failed) this._ask(missing, climateOf, forests, landform, lands);
     for (const [x, y] of this._want) {
       const k = this.kept.get(`${x},${y}`);
-      if (k) this._art(k.archive);
+      if (k) for (const a of k.archives) this._art(a);
     }
     const laidKey = `${key}|${this.version}`;
     if (missing.length || this._laying || laidKey === this._laidKey) return;
-    if (this._want.some(([x, y]) => this.arts.get(this.kept.get(`${x},${y}`).archive) === 'asking')) return;   // its art still being read
+    if (this._want.some(([x, y]) => this.kept.get(`${x},${y}`).archives.some((a) => this.arts.get(a) === 'asking'))) return;   // its art still being read
     this._laidKey = laidKey;
     this._lay(work, curX, curY);
   }
 
-  _ask(missing, climateOf, forests, landform) {
+  _ask(missing, climateOf, forests, landform, lands = false) {
     const pixels = new Int32Array(missing.length * 4), archives = [];
     missing.forEach(([x, y], k) => {
       const c = getWorldClimateSettings(climateOf(x, y));
@@ -286,11 +289,15 @@ export class FarTreesBand {
     });
     this._asking = true;
     const gen = (this._gen = (this._gen ?? 0) + 1);
-    Promise.resolve(this.source?.floraBand?.({ pixels, forests: !!forests, landform: !!landform }) ?? null).then((trees) => {
+    Promise.resolve(this.source?.floraBand?.({ pixels, forests: !!forests, landform: !!landform, lands: !!lands }) ?? null).then((trees) => {
       if (gen !== this._gen) return;
       this._asking = false;
       if (!trees) { this._failed = true; return; }   // no worker, or it failed: the band stands down until the set moves
-      missing.forEach(([x, y], k) => this.kept.set(`${x},${y}`, { px: x, py: y, archive: archives[k], trees: trees[k] ?? new Float32Array(0) }));
+      missing.forEach(([x, y], k) => {
+        const t = trees[k] ?? new Float32Array(0), own = new Set([archives[k]]);
+        for (let i = 3; i < t.length; i += 4) own.add(bandTreeArt(archives[k], t[i])[0]);   // TESA-LANDS: a zone's trees' own archives
+        this.kept.set(`${x},${y}`, { px: x, py: y, archive: archives[k], trees: t, archives: [...own] });
+      });
       this._forget();
     }, () => { if (gen === this._gen) this._asking = false; });
   }

@@ -5504,6 +5504,16 @@
   "tr": "2761ce71527d",
   "by": "claude-in-session"
  },
+ "features.tamrielLands.note": {
+  "en": "8db1462b487a",
+  "tr": "99bd3942937a",
+  "by": "claude-in-session"
+ },
+ "features.tamrielLands.title": {
+  "en": "1e8a962cf274",
+  "tr": "c8cadaba4200",
+  "by": "claude-in-session"
+ },
  "features.torchesFromItems.effect": {
   "en": "a0b8a416cb32",
   "tr": "4e6e45443703",

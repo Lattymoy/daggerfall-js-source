@@ -146,6 +146,7 @@ function handle(m) {
     const transfer = [out.samples.buffer, out.tilemap.buffer, out.positions.buffer, out.normals.buffer, out.tilemapBytes.buffer];
     if (out.paths) transfer.push(out.paths.buffer);   // GRASS-PATH1: null on a roadless pixel, and a null is not a buffer
     if (out.beach) transfer.push(out.beach.buffer);   // AUDIT LANDFORMS II H2: a location's DFU blend, with the row on
+    if (out.landProps?.length) transfer.push(out.landProps.buffer);   // TESA-LANDS: the landmarks (a Fens pixel's 5,000 reeds)
     if (out.bed) transfer.push(out.bed.depths.buffer, out.bed.sheetDepths.buffer, out.bed.positions.buffer, out.bed.normals.buffer, ...(out.bed.halo ? [out.bed.halo.bits.buffer] : []));   // AUDIT WATER-NEXT P1: the bed, carved here
     out.nature = packNature(out.nature);   // AUDIT BANTHA1 PERF-2: by column, its buffers transferred - never a clone of 12,000 objects
     transfer.push(...natureBuffers(out.nature));
@@ -210,7 +211,7 @@ function answerFloraBand(m) {
     const trees = [];
     for (let k = 0; k + 3 < m.pixels.length; k += 4) {
       const [px, py, archive, climateType] = [m.pixels[k], m.pixels[k + 1], m.pixels[k + 2], m.pixels[k + 3]];
-      trees.push(keptMid(`t${px},${py},${archive},${climateType},${m.forests ? 1 : 0},${m.landform ? 1 : 0}`, () => bandTreesPixel({ woods, px, py, archive, climateType, forests: !!m.forests, landforms })).slice());
+      trees.push(keptMid(`t${px},${py},${archive},${climateType},${m.forests ? 1 : 0},${m.landform ? 1 : 0},${m.lands ? 1 : 0}`, () => bandTreesPixel({ woods, px, py, archive, climateType, forests: !!m.forests, landforms, lands: !!m.lands })).slice());   // TESA-LANDS: a zone's own, with the row
     }
     globalThis.postMessage({ t: 'band', id: m.id, trees }, trees.map((t) => t.buffer));
   } catch (e) {

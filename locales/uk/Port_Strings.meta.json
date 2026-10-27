@@ -1344,6 +1344,16 @@
   "tr": "28afb99f614e",
   "by": "claude-in-session"
  },
+ "features.tamrielLands.note": {
+  "en": "8db1462b487a",
+  "tr": "17c23b161d0f",
+  "by": "claude-in-session"
+ },
+ "features.tamrielLands.title": {
+  "en": "1e8a962cf274",
+  "tr": "a1c9e014dbec",
+  "by": "claude-in-session"
+ },
  "features.wagonUpkeep.boons": {
   "en": "b0e0ff22a34e",
   "tr": "124c7ee1f3d8",

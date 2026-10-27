@@ -1,0 +1,350 @@
+// @ts-check
+// ═══════════════════════════════════════════════════════════════════
+// TESA-LANDS (2026-10-27, bible/03-World/Tamriel-Lands.md; the owner: "Ensuring each region recieves proper landscape details
+// and textures (minus cyrodil and valenwood) and refined detail. Research these regions online to understand and make it
+// the best that it can be") - THE GROUND'S DRESS: a zone's own ground, made from the ground set the game draws.
+//
+// Daggerfall grows its ground from four sets of 56 tiles (TEXTURE.002 the desert's, .102 the mountains', .302 the
+// temperate's, .402 the swamp's - MapsFile.GetWorldClimateSettings' groundArchive), and every zone past the Bay wore one
+// of them: the Ashlands the Wrothgarians' green turf, the Frozen Coast the same, Craglorn and the Abecean Coast one sand.
+// A DRESS is the zone's own materials laid over the set as it is drawn - the classic records, or the texture pack worn
+// over them (Vanilla Enhanced by default, Sands of the Alik'r on the desert's) - so the zone keeps the set's grain, its
+// tiles' shapes and its transitions, and takes its own colours:
+//   - THE CLASSES. A tile is painted of DFU's four grounds - 0 water, 1 dirt, 2 grass, 3 stone (TerrainHelper's tile
+//     bases; world/terrain/terrainTiles.js) - and of the town's paving (record 46, and the roads' edges 47 and 55). Each
+//     class's PROTOTYPE is its solid record in THIS set (its mean colour, and its luminance's mean and spread), so a pack
+//     that repaints the set is read on its own colours. A texel's share of each class present in its record is soft -
+//     its colour's distance to each prototype, a Gaussian over a width the record's own prototypes set - so a transition's
+//     edge stays the edge the set painted.
+//   - THE MATERIALS. A dressed class is a gradient map: the material's RAMP (its colours dark to light, the zone's -
+//     bible/03-World/Tamriel-Lands.md names each one's sources) read where its luminance is the texel's own luminance
+//     carried over - its class's mean at the ramp's middle, every texel as far over or under it, in proportion, as it
+//     stands over or under its class's mean (`contrast` 1: the set's own grain, its own light and dark, never the ramp's
+//     whole span laid over a quiet tile) - with a share of the texel's own colour noise kept (`keep`), so the grain of
+//     the set reads through the new colour. FLECKS - pumice in ash, cotton in the tundra, petals in a meadow -
+//     are cells of a few texels on a hash of the cell, so nothing larger than a fleck repeats with the tile.
+//   - WHAT IS NEVER DRESSED: water (record 0 and every texel of the water class - the puddles and the shores keep the
+//     set's water and its alpha, which carries their mask: world/puddleMask.js) and the paving (the roads stay the town's).
+//     The alpha channel is copied whole.
+// Pure: layers in, layers out (a record a step, `dressLayersSteps`, for the build's breather - scenes/groundSets.js). The
+// layers are the player's own pictures and their dress is made on the player's machine; nothing of either ships
+// (Port-Doctrine: a render of game data is game data).
+// ═══════════════════════════════════════════════════════════════════
+
+/** The classes, in prototype order: DFU's four tile bases and the town's paving. */
+export const DRESS_CLASSES = Object.freeze(['water', 'dirt', 'grass', 'stone', 'paving']);
+/** Each class's solid record in a ground set (TerrainHelper's bases 0-3; 46 the town's paving - DFU's road tile). */
+export const CLASS_RECORDS = Object.freeze([0, 1, 2, 3, 46]);
+/** Records the town's paving is painted in, and the only classes their texels are of (46 the paving whole, 47 a dirt
+ *  edge on it, 55 a grass edge - world/terrain/terrainTiles.js's road records, render/labGrass.js grassRecordsOf's). */
+export const PAVED_RECORDS = Object.freeze({ 46: Object.freeze([4]), 47: Object.freeze([1, 4]), 55: Object.freeze([2, 4]) });
+/**
+ * THE DIALS (one place).
+ *  - `contrast`: a texel's luminance over its class's mean, raised to this, is its luminance over the ramp's middle's -
+ *    1 the set's own relative light and dark (past the ramp's ends its end colour, scaled on, within `reach`);
+ *  - `keep`: the share of a texel's own colour noise (its colour less its class's mean, less its luminance's move) kept
+ *    over the ramp's colour - the set's mottle through the new material.
+ *  - `soft`, `softMin`: a texel's class shares are a Gaussian of its colour's distance to each prototype, its width this
+ *    share of the nearest two prototypes' distance (0..1 colour units), never under `softMin`;
+ *  - `blur`: then blurred over this share of the record's width (a transition's shape is half a tile; a class's grain a
+ *    texel or two) - transitionShares.
+ *  - `present`: a class nearest to fewer than this share of a record's texels is not asked there - a stray texel of
+ *    another class's colour inside a grass tile is grass.
+ *  - `fleckTexels`: a fleck's cell in texels at a 128-texel record (scaled with the record: one texel on the classic 64).
+ *  - `fleckBlend`: how much of a fleck's own colour a fleck takes over the ramp's.
+ *  - `albedo`: the ramps are written as the lore's pictures show the land - LIT (the research's colours, sampled off the
+ *    games' screenshots, bible/03-World/Tamriel-Lands.md) - and a ground set is an albedo the renderer lights: measured,
+ *    the classic grass's luminance is 65 (TEXTURE.302) and 62 (.102) against the sampled grasses' 99, the desert's sand 145
+ *    against 196 - two thirds, so a ramp's colour is taken at this share. A texture pack's set is lit as its own: its
+ *    land's exposure against the classic set's scales it again (`exposure`, dressLayersSteps' - Vanilla Enhanced's 0.94).
+ *  - `vivid`: and the screenshots' colours are hazed by their distance and their light, where Daggerfall's sets are painted
+ *    in its palette's full colours - a ramp's colours are moved this much further from their own grey (their luminance),
+ *    so a dressed ground stands as saturated as the set's own.
+ */
+export const DRESS_DIALS = Object.freeze({ contrast: 1, reach: Object.freeze([0.55, 1.6]), keep: 0.22, soft: 0.5, softMin: 0.02, blur: 0.045, present: 0.02, fleckTexels: 1, fleckBlend: 0.8, albedo: 0.7, vivid: 1.25 });
+
+/** How many rows of a 256-texel record a step dresses (dressRecordSteps): the build's breather gives the frame back
+ *  between steps (scenes/groundSets.js), so a step must be a slice of a frame, never a record whole. */
+export const DRESS_BAND = 32;
+
+/** How finely a ramp's luminance is read (compileDress) - the inverse's resolution. */
+export const RAMP_STEPS = 64;
+
+/** '#rrggbb' (or [r, g, b]) as [r, g, b], 0..255. */
+export function hexRgb(h) {
+  if (Array.isArray(h)) return [h[0], h[1], h[2]];
+  const v = parseInt(String(h).replace('#', ''), 16);
+  return [(v >> 16) & 255, (v >> 8) & 255, v & 255];
+}
+
+/** A material's ramp at `t` (0 its darkest stop, 1 its lightest - its stops evenly spaced), written into `out`. */
+export function rampAt(stops, t, out = [0, 0, 0]) {
+  const n = stops.length - 1;
+  if (n <= 0) { out[0] = stops[0][0]; out[1] = stops[0][1]; out[2] = stops[0][2]; return out; }
+  const f = Math.min(n, Math.max(0, t * n)), i = Math.min(n - 1, Math.floor(f)), u = f - i, a = stops[i], b = stops[i + 1];
+  out[0] = a[0] + (b[0] - a[0]) * u; out[1] = a[1] + (b[1] - a[1]) * u; out[2] = a[2] + (b[2] - a[2]) * u;
+  return out;
+}
+
+const lumOf = (r, g, b) => 0.299 * r + 0.587 * g + 0.114 * b;
+
+/**
+ * A SET'S PROTOTYPES: for each class (DRESS_CLASSES' order) its solid record's mean colour `rgb` (0..255), its
+ * luminance's mean `lum` and spread `sd` - null for a class whose record the set does not carry. Pure.
+ * @param {ReadonlyArray<{ width: number, height: number, colors: ArrayLike<number> }>} layers
+ */
+export function setPrototypes(layers) {
+  return CLASS_RECORDS.map((rec) => {
+    const l = layers[rec];
+    const n = l ? l.width * l.height : 0;
+    if (!n) return null;
+    let r = 0, g = 0, b = 0, s = 0, s2 = 0;
+    for (let k = 0; k < n; k++) {
+      const R = l.colors[k * 4], G = l.colors[k * 4 + 1], B = l.colors[k * 4 + 2], L = lumOf(R, G, B);
+      r += R; g += G; b += B; s += L; s2 += L * L;
+    }
+    const lum = s / n;
+    return Object.freeze({ rgb: Object.freeze([r / n, g / n, b / n]), lum, sd: Math.sqrt(Math.max(0, s2 / n - lum * lum)) });
+  });
+}
+
+/** A fleck cell's hash, 0..1 (murmur3's finaliser over the cell, the record and the salt) - the same in every engine. */
+export function fleckDraw(cx, cy, record, salt) {
+  let h = Math.imul(cx | 0, 0x9e3779b1) ^ Math.imul(cy | 0, 0x85ebca77) ^ Math.imul((record | 0) + 0x27d4eb2f, 0xc2b2ae3d) ^ Math.imul(salt | 0, 0x165667b1);
+  h = Math.imul(h ^ (h >>> 16), 0x85ebca6b);
+  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+}
+
+/**
+ * A DRESS MADE READY: its materials' ramps and flecks as numbers, by class (DRESS_CLASSES' index; null a class it leaves
+ * as the set paints it - water and paving always). `dress` a zone's (world/tamriel/tamrielLands.js LANDS' `ground`):
+ * `{ dirt?, grass?, stone? }`, each `{ ramp: hex[], keep?, contrast?, fleck?: { colors: hex[], share } }` - its ramp's
+ * luminance read at RAMP_STEPS points (made monotone), its middle's beside it.
+ * @param {any} dress
+ */
+export function compileDress(dress) {
+  return DRESS_CLASSES.map((name, c) => {
+    const m = c === 0 || c === 4 ? null : dress?.[name];
+    if (!m?.ramp?.length) return null;
+    const stops = m.ramp.map((h) => { const c = hexRgb(h), L = lumOf(c[0], c[1], c[2]); return c.map((v) => L + (v - L) * DRESS_DIALS.vivid); });
+    const lum = new Float64Array(RAMP_STEPS + 1), at = [0, 0, 0];
+    for (let i = 0; i <= RAMP_STEPS; i++) { rampAt(stops, i / RAMP_STEPS, at); lum[i] = Math.max(i ? lum[i - 1] : 0, lumOf(at[0], at[1], at[2])); }
+    return Object.freeze({
+      stops, lum, mid: lum[RAMP_STEPS >> 1], keep: m.keep ?? DRESS_DIALS.keep, contrast: m.contrast ?? DRESS_DIALS.contrast,
+      fleck: m.fleck?.share > 0 ? Object.freeze({ colors: m.fleck.colors.map(hexRgb), share: m.fleck.share, salt: c * 131 + 7 }) : null,
+    });
+  });
+}
+
+/** The classes a record's texels may be of, among those whose prototypes stand: the paving's own (PAVED_RECORDS), a
+ *  ground's solid record its own class alone (its texels' spread is its grain, never another class - CLASS_RECORDS),
+ *  else the four grounds - each kept where it is nearest to `present` of the record's texels. */
+function recordClasses(layer, record, protos) {
+  const solid = record < 4 ? [record] : null;
+  const pool = (PAVED_RECORDS[/** @type {keyof typeof PAVED_RECORDS} */ (record)] ?? solid ?? [0, 1, 2, 3]).filter((c) => protos[c]);
+  if (pool.length <= 1) return pool;
+  const near = new Array(pool.length).fill(0), n = layer.width * layer.height;
+  for (let k = 0; k < n; k++) {
+    const R = layer.colors[k * 4], G = layer.colors[k * 4 + 1], B = layer.colors[k * 4 + 2];
+    let best = 0, bd = Infinity;
+    pool.forEach((c, i) => { const p = protos[c].rgb, d = (R - p[0]) ** 2 + (G - p[1]) ** 2 + (B - p[2]) ** 2; if (d < bd) { bd = d; best = i; } });
+    near[best]++;
+  }
+  const kept = pool.filter((_, i) => near[i] >= n * DRESS_DIALS.present);
+  return kept.length ? kept : [pool[near.indexOf(Math.max(...near))]];
+}
+
+/** Where on a ramp (its monotone luminance `lum`, RAMP_STEPS + 1 of it) a luminance `target` falls: `t`, and `k` the end
+ *  colour's scale past either end (within DRESS_DIALS.reach) - so a texel brighter than the ramp's lightest is its lightest
+ *  colour lit on, never clipped flat. */
+export function rampFor(lum, target) {
+  const N = lum.length - 1;
+  if (target <= lum[0]) return { t: 0, k: Math.max(DRESS_DIALS.reach[0], target / Math.max(lum[0], 1e-3)) };
+  if (target >= lum[N]) return { t: 1, k: Math.min(DRESS_DIALS.reach[1], target / Math.max(lum[N], 1e-3)) };
+  let lo = 0, hi = N;
+  while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (lum[mid] <= target) lo = mid; else hi = mid; }
+  const span = lum[hi] - lum[lo];
+  return { t: (lo + (span > 0 ? (target - lum[lo]) / span : 0)) / N, k: 1 };
+}
+
+/** A class's transform of one colour, kept by colour (a set painted in a palette asks a few hundred): [r, g, b, t] -
+ *  its ramp's colour at the texel's luminance (laid at `light`) with the texel's own colour noise kept, and `t` where on
+ *  the ramp it fell; null for a class left as the set paints it. */
+function classTransform(m, p, light) {
+  if (!m) return null;
+  const memo = new Map(), ramp = [0, 0, 0];
+  return (R, G, B) => {
+    const key = (R << 16) | (G << 8) | B;
+    let hit = memo.get(key);
+    if (!hit) {
+      const L = lumOf(R, G, B), target = m.mid * Math.pow(Math.max(L, 1) / Math.max(p.lum, 1), m.contrast);
+      const { t, k } = rampFor(m.lum, target);
+      rampAt(m.stops, t, ramp);
+      ramp[0] *= k; ramp[1] *= k; ramp[2] *= k;
+      const dl = L - p.lum;
+      hit = [ramp[0] * light + (R - p.rgb[0] - dl) * m.keep, ramp[1] * light + (G - p.rgb[1] - dl) * m.keep, ramp[2] * light + (B - p.rgb[2] - dl) * m.keep, t];
+      memo.set(key, hit);
+    }
+    return hit;
+  };
+}
+
+/** A share map blurred in place by a box `r` texels each way, rows then columns, clamped at the edges (`tmp` scratch) -
+ *  a running sum along each line, so its cost is the map's, whatever the box. */
+export function boxBlur(a, w, h, r, tmp) {
+  const k = 1 / (2 * r + 1);
+  for (let y = 0; y < h; y++) {
+    const row = y * w;
+    let sum = 0;
+    for (let d = -r; d <= r; d++) sum += a[row + Math.min(w - 1, Math.max(0, d))];
+    for (let x = 0; x < w; x++) {
+      tmp[row + x] = sum * k;
+      sum += a[row + Math.min(w - 1, x + r + 1)] - a[row + Math.max(0, x - r)];
+    }
+  }
+  for (let x = 0; x < w; x++) {
+    let sum = 0;
+    for (let d = -r; d <= r; d++) sum += tmp[Math.min(h - 1, Math.max(0, d)) * w + x];
+    for (let y = 0; y < h; y++) {
+      a[y * w + x] = sum * k;
+      sum += tmp[Math.min(h - 1, y + r + 1) * w + x] - tmp[Math.max(0, y - r) * w + x];
+    }
+  }
+}
+
+/**
+ * A TRANSITION'S SHARES: for each class a record may hold, how much of each texel is that class - a Gaussian of the
+ * texel's distance to each prototype, its width `soft` of the nearest two prototypes' (never under `softMin`), then
+ * BLURRED over `blur` of the record's width: a tile's transition is a shape half a tile across, and a set's grain within a
+ * class (the mountains' dirt carries flecks of green, its grass of brown) is as far from its prototype as the next class
+ * is, so a texel alone cannot say which side of the shape it stands on - its neighbourhood can. Normalised. A step a
+ * band of DRESS_BAND rows, then a step a class's blur (dressRecordSteps walks it).
+ */
+function* transitionShares(layer, classes, protos) {
+  let near = Infinity;
+  for (let i = 0; i < classes.length; i++) for (let j = i + 1; j < classes.length; j++) {
+    const a = protos[classes[i]].rgb, b = protos[classes[j]].rgb;
+    near = Math.min(near, Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]) / 255);
+  }
+  const width = Math.max(DRESS_DIALS.softMin, near * DRESS_DIALS.soft), inv2 = 1 / (2 * width * width * 255 * 255);
+  const { width: w, height: h, colors: src } = layer, n = w * h;
+  const maps = classes.map(() => new Float32Array(n)), tmp = new Float32Array(n), band = Math.max(1, Math.round((DRESS_BAND * 256) / w)) * w;
+  for (let k = 0; k < n; k++) {
+    if (k && k % band === 0) yield;
+    const R = src[k * 4], G = src[k * 4 + 1], B = src[k * 4 + 2];
+    let best = 0, bd = Infinity, sum = 0;
+    for (let i = 0; i < classes.length; i++) {
+      const p = protos[classes[i]].rgb, d = (R - p[0]) ** 2 + (G - p[1]) ** 2 + (B - p[2]) ** 2;
+      if (d < bd) { bd = d; best = i; }
+      sum += (maps[i][k] = Math.exp(-d * inv2));
+    }
+    if (!(sum > 1e-12)) { for (const m of maps) m[k] = 0; maps[best][k] = 1; sum = 1; }   // past every prototype's reach: its nearest class whole
+    for (const m of maps) m[k] /= sum;
+  }
+  const r = Math.max(1, Math.round(w * DRESS_DIALS.blur));
+  for (const m of maps) { yield; boxBlur(m, w, h, r, tmp); }
+  yield;
+  for (let k = 0; k < n; k++) {
+    let sum = 0;
+    for (const m of maps) sum += m[k];
+    if (sum > 0) for (const m of maps) m[k] /= sum;
+  }
+  return maps;
+}
+
+/**
+ * ONE RECORD DRESSED: a new layer (alpha whole), or the layer itself where no class it holds is dressed. `mats` a
+ * compiled dress (compileDress), `protos` the set's (setPrototypes), `light` the ramps' share as they are laid (the
+ * albedo's, times the set's exposure). A solid record is its own class whole; a transition's texels take each class's
+ * transform by their shares (transitionShares).
+ * @param {{ width: number, height: number, colors: ArrayLike<number> }} layer @param {number} record
+ * @param {ReturnType<typeof compileDress>} mats @param {ReturnType<typeof setPrototypes>} protos @param {number} [light]
+ */
+export function dressRecord(layer, record, mats, protos, light = DRESS_DIALS.albedo) {
+  const steps = dressRecordSteps(layer, record, mats, protos, light);
+  for (;;) { const r = steps.next(); if (r.done) return r.value; }
+}
+
+/**
+ * dressRecord a band of rows at a time (DRESS_BAND rows of a 256-texel record's: a step a few milliseconds), its shares
+ * first - its value the dressed layer.
+ * @param {{ width: number, height: number, colors: ArrayLike<number> }} layer @param {number} record
+ * @param {ReturnType<typeof compileDress>} mats @param {ReturnType<typeof setPrototypes>} protos @param {number} [light]
+ */
+export function* dressRecordSteps(layer, record, mats, protos, light = DRESS_DIALS.albedo) {
+  if (!layer?.width || !layer.height) return layer;
+  const classes = recordClasses(layer, record, protos);
+  if (!classes.some((c) => mats[c])) return layer;
+  const { width: w, height: h } = layer, src = layer.colors, out = new Uint8Array(w * h * 4);
+  const shares = classes.length > 1 ? yield* transitionShares(layer, classes, protos) : null;
+  if (shares) yield;
+  const band = Math.max(1, Math.round((DRESS_BAND * 256) / w));   // DRESS_BAND rows of a 256-wide record's texels a step
+  const tf = classes.map((c) => classTransform(mats[c], protos[c], light));
+  const cell = Math.max(1, Math.round((DRESS_DIALS.fleckTexels * w) / 128));
+  for (let y = 0; y < h; y++) {
+    if (y && y % band === 0) yield;
+    for (let x = 0; x < w; x++) {
+      const k = y * w + x, o = k * 4, R = src[o], G = src[o + 1], B = src[o + 2];
+      let r = 0, g = 0, b = 0, fShare = 0, fClass = -1, fT = 0.5;
+      for (let i = 0; i < classes.length; i++) {
+        const wi = shares ? shares[i][k] : 1;
+        if (!(wi > 0)) continue;
+        const f = tf[i], v = f ? f(R, G, B) : null;
+        if (v) { r += v[0] * wi; g += v[1] * wi; b += v[2] * wi; } else { r += R * wi; g += G * wi; b += B * wi; }
+        const c = classes[i];
+        if (v && mats[c]?.fleck && wi > fShare) { fShare = wi; fClass = c; fT = v[3]; }
+      }
+      if (fClass >= 0 && fShare > 0.5) {
+        const f = /** @type {any} */ (mats[fClass]).fleck, cx = Math.floor(x / cell), cy = Math.floor(y / cell);
+        if (fleckDraw(cx, cy, record, f.salt) < f.share) {
+          const col = f.colors[Math.floor(fleckDraw(cx, cy, record, f.salt + 1) * f.colors.length)], lift = light * (0.85 + 0.3 * (fT - 0.5));
+          const kk = DRESS_DIALS.fleckBlend * fShare;
+          r += (col[0] * lift - r) * kk; g += (col[1] * lift - g) * kk; b += (col[2] * lift - b) * kk;
+        }
+      }
+      out[o] = r < 0 ? 0 : r > 255 ? 255 : Math.round(r);
+      out[o + 1] = g < 0 ? 0 : g > 255 ? 255 : Math.round(g);
+      out[o + 2] = b < 0 ? 0 : b > 255 ? 255 : Math.round(b);
+      out[o + 3] = src[o + 3];
+    }
+  }
+  return { ...layer, colors: out };
+}
+
+/** A set's land luminance: the mean of its dirt's, grass's and stone's prototypes' (0 where none stands). */
+export function landLuminance(protos) {
+  const land = [1, 2, 3].map((c) => protos[c]).filter(Boolean);
+  return land.length ? land.reduce((a, p) => a + /** @type {any} */ (p).lum, 0) / land.length : 0;
+}
+/** A drawn set's EXPOSURE: its land's luminance over the classic set's (`classic` the player's own records of the same
+ *  archive) - 1 for the classic set itself, or where either has no land. */
+export function setExposure(layers, classic) {
+  const a = landLuminance(setPrototypes(layers)), b = classic ? landLuminance(setPrototypes(classic)) : 0;
+  return a > 0 && b > 0 ? a / b : 1;
+}
+
+/**
+ * A SET DRESSED, a record a step (yields between records; its value the dressed layers) - the build's breather walks it
+ * (world/puddleMask.js stepsBreathing). `layers` the set as it is drawn (its puddles marked in alpha), `dress` a zone's,
+ * `exposure` the drawn set's against the classic (setExposure).
+ * @param {ReadonlyArray<{ width: number, height: number, colors: ArrayLike<number> }>} layers @param {any} dress
+ * @param {number} [exposure]
+ */
+export function* dressLayersSteps(layers, dress, exposure = 1) {
+  const mats = compileDress(dress), protos = setPrototypes(layers);
+  const out = layers.slice();
+  if (!mats.some(Boolean)) return out;
+  const light = DRESS_DIALS.albedo * exposure;
+  for (let r = 0; r < layers.length; r++) {
+    out[r] = yield* dressRecordSteps(layers[r], r, mats, protos, light);
+    yield;
+  }
+  return out;
+}
+
+/** dressLayersSteps run through (the pins' and the probes' door). */
+export function dressLayers(layers, dress, exposure = 1) {
+  const steps = dressLayersSteps(layers, dress, exposure);
+  for (;;) { const r = steps.next(); if (r.done) return r.value; }
+}

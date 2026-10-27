@@ -304,6 +304,7 @@ alone, flagged at its new site inside calculateAttackDamage.
 - `src/scenes/jungleHost.js` - scenes/exterior.js (the fixed city), scenes/worldModes.js (interiors), scenes/dungeonContext.js (dungeons) - FLAGGED: none stands the wilderness the jungle grows in
 - `src/scenes/ketch/ketchFight.js` - BOSS-TRAITS (bible/05-Combat/Boss-Traits.md section 3; AUDIT WORLD-EVENTS L5-16) - FLAGGED: the Tonal Warden carries no boss traits; its health and blows are the ship's room's, and this deck host has no striker's half yet.
 - `src/scenes/ketch/ketchFight.js` - /** THE INTERIM WARDEN'S DARKS (KETCH-LOOK KL2, Sky-Ketch-Look.md section 10, until its baked sheets land - KL15): the Ketch's
+- `src/scenes/landPropsHost.js` - FLAGGED: none stands the wilderness past the Bay the landmarks stand in.
 - `src/scenes/merchantYardsHost.js` - scenes/exterior.js - FLAGGED: the single-town bench stands no yard; the streaming host is where its towns are played.
 - `src/scenes/poiHost.js` - scenes/exterior.js - FLAGGED: the fixed-city bench (`?exterior`, `?region&loc`) has no feed; a POI stands in the streamed world.
 - `src/scenes/portHost.js` - scenes/exterior.js - FLAGGED: the single-town bench stands no port; the streaming host is where its towns are played.

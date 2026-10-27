@@ -375,6 +375,8 @@ features.mwBodyMotion.note,"Üçüncü şahıs görünümünde bir Morrowind bed
 features.mwBodyMotion.title,"Morrowind Beden Hareketi"
 features.npcMarks.note,"""Morrowind People"" açıkken, bulmaya değer kişilerin üzerinde küçük bir simge sallanır: bir görevin ihtiyaç duyduğu kişinin üzerinde sarı bir işaret, bir tüccarın üzerinde bir sikke ve lonca eğitmenleri, lonca görev verenleri ile arena görevlilerinin üzerinde mavi bir mücevher."
 features.npcMarks.title,"Morrowind İnsanlarının Üzerindeki İşaretler"
+features.tamrielLands.note,"Iliac Körfezi'nin ötesindeki her bölge kendi toprağını, bitkilerini ve simge yerlerini alır: Morrowind'in külü ve dev mantarları, Hist, sazlıklar, kaya sivrileri, Summerset'in korulukları ve bağları. Kapalı, her iklimin özgün görünümünü korur."
+features.tamrielLands.title,"Tamriel Toprakları"
 features.wagonUpkeep.boons,"Avantajlar"
 features.wagonUpkeep.effect,"Hemen etkili olur. Çevrimiçi her oyuncu kendisi seçer."
 features.wagonUpkeep.hard,"Zor"

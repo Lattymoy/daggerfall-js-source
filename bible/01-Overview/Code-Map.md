@@ -417,13 +417,14 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/world/interior/` | Interiors: layout, lights, glass - its models and assembly. |
 | `src/world/jungle/` | Bantha's jungle (`03-World/Bantha-Jungle.md`): where it is (the owner's area, `banthaArea.js`, and its field), the owner's trees and their measures, and its haze's law; Valenwood's closed canopy and its graht-oaks - where they stand and the trees themselves, made (`grahtOaks.js`, `grahtOakMesh.js`; `03-World/Graht-Oaks.md`). |
 | `src/world/ketch/` | The Sky-Ketch in the world (`11-Multiplayer/Sky-Ketch.md`, `Sky-Ketch-Look.md`): the ship made in code - her location, kit, art, model and pose; her look's shared numbers (the light meanings, the value ladder, her palette in ART_PAL's index space) and her light by the hour and the zone. |
+| `src/world/lands/` | The lands' landmarks past the Bay (`03-World/Tamriel-Lands.md`): the meshes made (`landPropMesh.js` - parasols, spires, the Hist, reeds, vines, groves) and where they stand, what they look like and their bodies (`landProps.js`). |
 | `src/world/merchantYards/` | A town's Stable and Wagon Yard (`03-World/Merchant-Yards.md`) - its models and assembly. |
 | `src/world/peaks/` | The mountains' high ground (`03-World/Peaks.md`): PEAKS1's snow caps and bare faces (`snowcap.js`), and PEAKS2's massif - its spurs, crests, summits and saddles (`massif.js`, built and pinned, not yet wired). |
 | `src/world/road/` | Roads: the network, its painter, verges and clearance - its models and assembly. |
 | `src/world/ships/` | The port's own ships: the galleon, the carrack, the large boat - its models and assembly. |
 | `src/world/starfall/` | The Starfall in the world: the star's art, its crater and stone, and Starfall Glass's picture. |
 | `src/world/superDungeon/` | The Abyss Dungeon in the world: the halls, the steps, the rift, the realm and its sky, the Remnant, and their art. |
-| `src/world/tamriel/` | The continent's ground: geography, frame, raster - its models and assembly. |
+| `src/world/tamriel/` | The continent's ground: geography, frame, raster - its models and assembly; TESA-LANDS' zones' own land (`tamrielLands.js`) and the ground's dress (`groundDress.js`; `03-World/Tamriel-Lands.md`). |
 | `src/world/terrain/` | Terrain generation, its worker and sampler - its models and assembly. |
 | `src/world/underwater/` | Under the water: its look, decorations, enemies and loot - its models and assembly. |
 | `src/world/urban/` | A town's fabric past the Bay (`03-World/Urban-Fabric.md`, URBANIZER): its streets, yards and dead ends read off its own blocks, its look by province, its art and its records - its models and assembly. |

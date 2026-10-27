@@ -539,7 +539,8 @@ test('GRAHT1: the wiring - the jungle host builds it on the canopy\'s zones (?gr
   assert.equal(h.job(85, 40).canopy, null, 'past the canopy field\'s reach none');
   assert.equal(mk((x, y) => (zone(x, y) ? { jungle: true } : null)).job(40, 40).canopy, null, 'a jungle with no canopy: no graht-oak stands');
   const trees = read('src/scenes/treesHost.js');
-  assert.match(trees, /frame\(pixels, eye, planes\) \{\n\s+jungle\?\.graht\?\.frame\(pixels, eye, planes\);[^\n]*\n\s+if \(!lowPolyTrees && !jungleDoor\) return;/);
+  // PIN MOVED (TESA-LANDS): the lands' landmarks framed beside them, before the same return (scenes/landPropsHost.js)
+  assert.match(trees, /frame\(pixels, eye, planes\) \{\n\s+jungle\?\.graht\?\.frame\(pixels, eye, planes\);[^\n]*\n\s+landProps\?\.frame\(pixels, eye, planes\);[^\n]*\n\s+if \(!lowPolyTrees && !jungleDoor\) return;/);
   const pb = read('src/scenes/pixelBuild.js');
   assert.match(pb, /wodAverages, graht, beach, roadside, townGround, arenaRoads \} = await terrainGen\.generate\(/);
   assert.match(pb, /const grahtStood = jungle\?\.graht\?\.stand\(px, py, graht, \(x, z\) => !pointNearGate\(gateClear, px, py, x, z, WOD_FLAT_GATE_CLEAR_M\) && !insideRocks\(pixelRocks, x, z\)\) \?\? null;\n\s+if \(grahtStood\) coverItems\.push\(\.\.\.grahtStood\.bodies\);/);

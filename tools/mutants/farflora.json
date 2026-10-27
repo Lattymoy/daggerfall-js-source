@@ -128,8 +128,8 @@
   {
     "name": "FAR-FLORA-the-expectation",
     "file": "src/world/terrain/floraCover.js",
-    "old": "export const expectedTrees = (spec, byte) => treesPerTile(FLORA.woodShare, 0, 1, 0, spec, byte);",
-    "new": "export const expectedTrees = (spec, byte) => treesPerTile(1, 0, 1, 0, spec, byte);",
+    "old": ": treesPerTile(FLORA.woodShare, 0, 1, 0, spec, byte));",
+    "new": ": treesPerTile(1, 0, 1, 0, spec, byte));",
     "tests": [
       "test/render/farflora.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "FAR-FLORA-the-ask-once",
     "file": "src/render/farFlora.js",
-    "old": "if (!arts.has(s.archive) && s.spec.treeShare > 0) ask(arts, s.archive, treeArt);",
-    "new": "if (s.spec.treeShare > 0) ask(arts, s.archive, treeArt);",
+    "old": "if (!arts.has(artKey) && spec.treeShare > 0) ask(arts, artKey,",
+    "new": "if (spec.treeShare > 0) ask(arts, artKey,",
     "tests": [
       "test/render/farflora.test.js"
     ]

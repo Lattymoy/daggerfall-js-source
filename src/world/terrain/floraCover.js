@@ -19,7 +19,9 @@
 // WORKER-SAFE: pure, node-tested modules only (the terrain worker runs `midRingFloraPixel` beside the heights).
 // ═══════════════════════════════════════════════════════════════════
 
-import { forestAt, FOREST, TREE_RECORDS, MAX_STEEPNESS, BASE_CHANCE_ON_DIRT, BASE_CHANCE_ON_GRASS, BASE_CHANCE_ON_STONE, DESERT_NATURE_SCALE, layoutNature, isTreeRecord } from './terrainNature.js';
+import { forestAt, FOREST, TREE_RECORDS, MAX_STEEPNESS, BASE_CHANCE_ON_DIRT, BASE_CHANCE_ON_GRASS, BASE_CHANCE_ON_STONE, DESERT_NATURE_SCALE, layoutNature, isTreeRecord, compileRecipe, recipeWood } from './terrainNature.js';
+import { forestQuantile, landsNine } from '../tamriel/tamrielLands.js';   // TESA-LANDS: a zone's own woods past the Bay
+import { inBay } from '../tamriel/tamrielFrame.js';
 import { tileDataAt, WORLD_MAP_TILE_DIM, WATER, generateTileData, assignTiles } from './terrainTiles.js';
 import { STREAMING_TERRAIN_SCALE, SCALED_BEACH_ELEVATION, TERRAIN_SIZE, HEIGHTMAP_DIMENSION, generateSamples } from './terrainSampler.js';
 
@@ -99,10 +101,11 @@ export function unpackFlora(v) {
  * ground's chance, the WOODS byte's elevation scale (`byte`), the desert's quarter, and the share of its 31 records that
  * are Trees. Pure.
  * @param {number} wood @param {number} dirt @param {number} grass @param {number} stone
- * @param {{ forests: boolean, desert: boolean, treeShare: number }} spec @param {number} [byte]
+ * @param {{ forests: boolean, desert: boolean, treeShare: number, lands?: any }} spec @param {number} [byte]
  */
 export function treesPerTile(wood, dirt, grass, stone, spec, byte = 128) {
   if (!spec || !(spec.treeShare > 0)) return 0;
+  if (spec.lands) return landsTrees(spec.lands, spec.lands.woodOf(wood), dirt, grass, stone);   // TESA-LANDS: a zone's own woods
   if (spec.forests) {
     const g = FOREST.ground;
     return (FOREST.plainTree + (FOREST.forestTree - FOREST.plainTree) * wood) * (g[1] * dirt + g[2] * grass + g[3] * stone);
@@ -133,8 +136,61 @@ export const standsTrees = (ny, h) => ny >= COS_STEEP && h >= SCALED_BEACH_ELEVA
 const COS_STEEP = Math.cos(FLORA.steep * Math.PI / 180);
 
 /** A far vertex's canopy where the field is past its resolution (the far ring, the far field): the woods' share of the
- *  land (FLORA.woodShare) on grass, read through the same law. Pure. */
-export const expectedTrees = (spec, byte) => treesPerTile(FLORA.woodShare, 0, 1, 0, spec, byte);
+ *  land (FLORA.woodShare; TESA-LANDS a zone's own, its `woods`) on grass, read through the same law. Pure. */
+export const expectedTrees = (spec, byte) => (spec?.lands && spec.treeShare > 0 ? landsTrees(spec.lands, spec.lands.woods, 0, 1, 0) : treesPerTile(FLORA.woodShare, 0, 1, 0, spec, byte));
+
+// ═══════════════════════════════════════════════════════════════════
+// TESA-LANDS (bible/03-World/Tamriel-Lands.md): A ZONE'S WOODS AFAR. Past the Bay a zone lays its own flats (its recipe -
+// world/tamriel/tamrielLands.js LANDS' `flora`, terrainNature.js landsTiles): its woods' edge on the forest field at its
+// own quantile, its Trees' chance by its rate and its ground's shares. The far views read the same law: a sample's packed
+// wood is FOREST1's (forestAt - the climates' 45%), so a zone's is its EXPECTATION GIVEN it (landsFloraSpec's woodOf):
+// the field's own distribution (FOREST_QUANTILES) read at 4,096 quantiles, each one's FOREST1 wood and the zone's, the
+// zone's averaged in the bins of FOREST1's - exact where FOREST1's edge is crossed, and where it is not (the field under
+// or over FOREST1's edge) the zone's mean over that side. The Pinewoods' 80% stands where FOREST1's plain does; the
+// Ashlands' 2% is a tenth of FOREST1's woods.
+// ═══════════════════════════════════════════════════════════════════
+
+/** The bins of FOREST1's wood the expectation is kept in (and its two ends: under FOREST1's edge, over it). */
+export const LANDS_WOOD_BINS = 32;
+const _landsSpecs = new WeakMap();
+/**
+ * A ZONE'S FLORA as the far views read it (floraSpec's shape, its `lands` the zone's law): `woods` its share of the land in
+ * woods, `woodOf(w)` its woods' share expected at FOREST1's wood `w`, `treeRate` and `ground` (DFU's tile record to its
+ * share of a Tree's chance) its recipe's; `treeShare` 0 where it grows no Tree. Pure, made once a recipe.
+ * @param {any} recipe world/tamriel/tamrielLands.js LANDS' `flora`
+ */
+export function landsFloraSpec(recipe) {
+  let s = _landsSpecs.get(recipe);
+  if (s) return s;
+  const c = compileRecipe(recipe), B = LANDS_WOOD_BINS, sum = new Float64Array(B + 2), n = new Float64Array(B + 2), N = 4096;
+  const smooth = (a, b, v) => { const t = Math.min(1, Math.max(0, (v - a) / (b - a))); return t * t * (3 - 2 * t); };
+  for (let k = 0; k < N; k++) {
+    const field = forestQuantile((k + 0.5) / N), w = smooth(FOREST.edge[0], FOREST.edge[1], field);
+    const bin = w <= 0 ? 0 : w >= 1 ? B + 1 : 1 + Math.min(B - 1, Math.floor(w * B));
+    sum[bin] += recipeWood(c, field); n[bin]++;
+  }
+  // a bin no quantile fell in (a sliver of FOREST1's edge) reads its nearest neighbour's
+  const table = new Float64Array(B + 2);
+  for (let b = 0; b < B + 2; b++) {
+    let at = b;
+    for (let d = 1; !n[at] && d < B + 2; d++) at = n[b - d] ? b - d : n[b + d] ? b + d : at;
+    table[b] = n[at] ? sum[at] / n[at] : recipe.woods;
+  }
+  const lands = Object.freeze({
+    woods: recipe.woods, treeRate: c.treeRate, ground: c.ground,
+    woodOf: (w) => table[w <= 0 ? 0 : w >= 1 ? B + 1 : 1 + Math.min(B - 1, Math.floor(w * B))],
+  });
+  s = Object.freeze({ forests: true, desert: false, treeShare: c.trees.cum.length ? 1 : 0, lands });
+  _landsSpecs.set(recipe, s);
+  return s;
+}
+
+/** A zone's Trees a tile at its woods' share `wz` and its ground's shares - landsTiles' own chance (FOREST1's, at the
+ *  zone's rate). Pure. */
+function landsTrees(L, wz, dirt, grass, stone) {
+  const g = L.ground;
+  return (FOREST.plainTree + (FOREST.forestTree - FOREST.plainTree) * wz) * ((g[1] ?? 0) * dirt + (g[2] ?? 0) * grass + (g[3] ?? 0) * stone) * L.treeRate;
+}
 
 
 /**
@@ -145,19 +201,28 @@ export const expectedTrees = (spec, byte) => treesPerTile(FLORA.woodShare, 0, 1,
  * built pixel stands (its own dice, a tile at a time), so where the stream builds the pixel its trees land where the
  * band's stood. What it leaves out is a built pixel's own: a location's clearing and flattening, the roads' paint, a World
  * of Daggerfall site, a neighbour's climate at a border, the jungle's own layout. Answers `[x, y, z, record]` a tree, in
- * the pixel's own frame (x east, z north from its south-west corner; y the ground's height, world units).
- * @param {{ woods: any, px: number, py: number, archive: number, climateType: number, forests: boolean, landforms?: any }} o
+ * the pixel's own frame (x east, z north from its south-west corner; y the ground's height, world units). TESA-LANDS:
+ * with `lands` (the row) a pixel past the Bay whose zone lays its own flats lays them (its recipe - landsNine), and a tree
+ * of an archive of its own answers its archive with its record, `archive * 256 + record` (bandTreeCode).
+ * @param {{ woods: any, px: number, py: number, archive: number, climateType: number, forests: boolean, landforms?: any, lands?: boolean }} o
  */
-export function bandTreesPixel({ woods, px, py, archive, climateType, forests, landforms = null }) {
+export function bandTreesPixel({ woods, px, py, archive, climateType, forests, landforms = null, lands = false }) {
   const samples = generateSamples(woods, px, py, HEIGHTMAP_DIMENSION, landforms);
   const tilemap = new Uint8Array(WORLD_MAP_TILE_DIM * WORLD_MAP_TILE_DIM);
   assignTiles(generateTileData(samples, px, py), tilemap, true);
+  const nine = lands && !inBay(px, py) ? landsNine(px, py) : null;
   const flats = layoutNature(samples, tilemap, {
     mapPixelX: px, mapPixelY: py, rawWorldHeight: woods.getHeightMapValue(px, py), climateType, locationRect: null,
     forests: forests ? { archive, pois: [] } : null,
+    lands: nine?.[4]?.flora ? { nine, blend: false, archive, pois: [], paths: null } : null,   // TESA-LANDS: its zone's own
   });
-  const trees = flats.filter((f) => isTreeRecord(archive, f.record));
+  const trees = flats.filter((f) => isTreeRecord(f.archive ?? archive, f.record));
   const out = new Float32Array(trees.length * 4);
-  trees.forEach((f, k) => out.set([f.x, f.y, f.z, f.record], k * 4));   // a tree's foot and its art's record - no light (render/lightId.js's seam is the lights')
+  trees.forEach((f, k) => out.set([f.x, f.y, f.z, bandTreeCode(archive, f)], k * 4));   // a tree's foot and its art's record - no light (render/lightId.js's seam is the lights')
   return out;
 }
+
+/** TESA-LANDS: a band tree's art - its record, or `archive * 256 + record` for a flat of an archive not the pixel's
+ *  (`archive`) - and its reading back (bandTreeArt: `[archive, record]`). Pure. */
+export const bandTreeCode = (archive, f) => (f.archive != null && f.archive !== archive ? f.archive * 256 + f.record : f.record);
+export const bandTreeArt = (archive, code) => (code >= 256 ? [Math.floor(code / 256), code % 256] : [archive, code]);

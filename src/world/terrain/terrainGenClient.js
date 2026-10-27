@@ -325,7 +325,8 @@ export class TerrainGenClient {
    * FAR-TREES (render/farTrees.js): the band's trees for `job.pixels` ([px, py, nature archive, climate type] four a pixel)
    * - ON THE WORKER ALONE, BAND_PIXELS_AN_ASK pixels an ask (the next posted as the last lands, so the stream's own jobs run
    * between them): an array of each pixel's `[x, y, z, record]` trees, in order; null with no worker or on an error.
-   * @param {{ pixels: Int32Array, forests: boolean, landform: boolean }} job
+   * TESA-LANDS: `lands` the row - a zone's own trees past the Bay (world/terrain/floraCover.js bandTreesPixel).
+   * @param {{ pixels: Int32Array, forests: boolean, landform: boolean, lands?: boolean }} job
    * @returns {Promise<?Float32Array[]>}
    */
   floraBand(job) {
@@ -335,7 +336,7 @@ export class TerrainGenClient {
       if (!this._worker) { resolve(null); return; }
       const id = ++this._gridId;
       this._mids.set(id, resolve);
-      this._worker.postMessage({ t: 'floraband', id, forests: job.forests, landform: job.landform, pixels: job.pixels.slice(p0 * 4, Math.min(n, p0 + BAND_PIXELS_AN_ASK) * 4) });
+      this._worker.postMessage({ t: 'floraband', id, forests: job.forests, landform: job.landform, lands: !!job.lands, pixels: job.pixels.slice(p0 * 4, Math.min(n, p0 + BAND_PIXELS_AN_ASK) * 4) });
     });
     const next = (p0) => (p0 >= n ? Promise.resolve(out) : ask(p0).then((m) => {
       if (!m?.trees) return null;

@@ -113,6 +113,10 @@ swamps and rain forests wear it (Bantha-Jungle, "Winter, as DFU's rainforest").
 
 ## The zones
 
+What each zone LOOKS like past its climate - its ground's dress, its own flats in its own woods, its landmarks and the
+far views' read of them - is TESA-LANDS' (`03-World/Tamriel-Lands.md`, `world/tamriel/tamrielLands.js`), for every zone
+but Cyrodiil's, Valenwood's and Blackwood's.
+
 | Province | Zone (`key`) | Climate | Air | Jungle | Seeds | The lore |
 |---|---|---|---|---|---|---|
 | Skyrim | the Frozen Coast (`skyrimFrozenCoast`) | Mountain | - | - | Dawnstar, Winterhold, 168,20, 196,22 | the Pale's and Winterhold's shore on the Sea of Ghosts - snowfields, tundra and drift ice |
