@@ -1017,13 +1017,17 @@ export function createComeSailAwayRuntime(deps) {
     state.TurnTarget = 0;
     state.lastWeight = 0;
     helmHanded = null;   // AUDIT NAV2 F14: the next helm takes the Ship handling as it stands then
-    boat.MapPixel = deps.currentMapPixel();
+    // HELM-SIGHT: let go from a jump's landing (OnWorldReanchored), she keeps her own pixel and is hidden there
+    const afar = !!boat.helmAfar;
+    boat.helmAfar = false;
+    if (!afar) boat.MapPixel = deps.currentMapPixel();
     ResetTimeScale();
     boat.ActiveObject?.setActive(false);
     boat.IdleObject?.setActive(true);
     deps.helm.footsteps?.(true);
     rudderOf(boat)?.CrossFade('Disembarked', 1);
     if (boat.RudderEmitters.length > 0) for (const rudderEmitter of boat.RudderEmitters) rudderEmitter.stop();
+    if (afar) UpdateBoatVisibilityOf(boat);
     return boat;
   }
   /** The head's lent-ship arm (IL_b0e7-IL_b121): the borrowed ship's two permanent scenes removed (the LARGE ship's -
@@ -2777,15 +2781,19 @@ export function createComeSailAwayRuntime(deps) {
    * forever after respawning"): THE WORLD RE-ANCHORED. A teleport - the respawn at a temple, a fast travel, a load's
    * landing - starts a new scene frame with no recentre offset to ride (world.js _teleportToPixel, StreamingWorld's
    * InitWorld), and every boat kept the old frame's numbers: the one just placed at sea stood by the temple, under its
-   * ground, and was never where it was left again. The frame's own move carries every boat, then each is shown or hidden
-   * for the new pixel. The helm is not asked: a teleported player goes where the teleport sends them. A dungeon's boat
-   * out of sight stays in its dungeon's frame (`ridesTheWorld`).
+   * ground, and was never where it was left again. The frame's own move carries every boat, then each but a held helm's
+   * is shown or hidden for the new pixel. The helm is not asked: a teleported player goes where the teleport sends them.
+   * A dungeon's boat out of sight stays in its dungeon's frame (`ridesTheWorld`).
    */
   function OnWorldReanchored(offset) {
     if (state.AllBoats.length < 1) return;
     for (const boat of state.AllBoats) {
       if (ridesTheWorld(boat)) shiftBoat(boat, offset);
-      UpdateBoatVisibilityOf(boat);
+      // HELM-SIGHT (FIELD BUGS 2026-10-27): a party's journey holds the helm until its landing is sure. Hidden and shown
+      // again, her sails' Animators started over stowed under a helm that read them set, and she made no way under sail.
+      // She stays in sight; a helm let go from afar hides her then (stopSailingHead).
+      if (boat !== state.CurrentBoat) UpdateBoatVisibilityOf(boat);
+      else boat.helmAfar = boat.MapPixel != null && pixelsApart(deps.currentMapPixel(), boat.MapPixel) > 1;
     }
   }
   /** OnPositionUpdateBoat (2012-2064): the boat's root moved by the offset, the wake stopped and its living particles
