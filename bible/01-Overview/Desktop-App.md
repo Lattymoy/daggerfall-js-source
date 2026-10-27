@@ -1118,8 +1118,13 @@ the GPU process killed by `chrome://gpucrash` in a hidden window wrote its own e
 ## The graphics backend: Vulkan, the player's opt-in on Windows (GPU-BACKEND, 2026-10-26)
 
 The performance proposal's P8. The game never picks a graphics API: Chromium's ANGLE translates WebGL2, and on Windows
-to Direct3D 11. In Edge on the RTX 5080 (Daggerfall city, 15:00, winter; `dfo-verify/tools/perf/baseline-2026-10-25/be-*`)
-ANGLE's Vulkan backend cut the first launch's shader wait from 37.4 s to 1.3 s. Chromium keeps D3D11 the default
+to Direct3D 11. In Edge on the RTX 5080 (2026-10-27, Daggerfall city, 15:00, interleaved D3D11 / Vulkan twice on a
+quiet machine; `dfo-verify/tools/perf/backend-ab-2026-10-27/notes.md`) ANGLE's Vulkan backend cut a cold launch's shader
+link wait from 19.1 / 19.5 s to 0.4 / 0.4 s, and its worst frozen frame from 16.9 / 17.2 s to 2.3 / 2.5 s. Warm, the
+two are the same (worst stall 2.15 to 2.35 s). Steady frame rate is 4 to 7% LOWER on Vulkan: standing 161.3 / 152.3
+against 167.3 / 170.3 fps, flying 149.8 / 141.4 against 158.5 / 153.1 fps. So Vulkan's case is the cold compile alone.
+Superseded: the 2026-10-25 survey (`baseline-2026-10-25/be-*`: 37.4 s against 1.3 s, standing 139 against 120, flying
+118 against 107), whose D3D11 arm ran under another session's load. Chromium keeps D3D11 the default
 because Vulkan drivers vary on older Intel and AMD GPUs, and a backend that fails to start does NOT fall back to D3D11:
 Chromium draws on its software renderer (WARP, 2 fps). So Vulkan is the player's choice, and the shell guards it.
 
