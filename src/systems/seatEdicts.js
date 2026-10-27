@@ -30,6 +30,10 @@ export const bountyDenPaidText = (n) => t('seat.bounty.denPaid', 'The Bounty pay
 /** BAY-LEFT-SEA (net/townSeatLaw.js bountyDenId): the den a dungeon IS - a lair's (TESA8, past the Bay: its location's
  *  `country` names its pixel) - or null; the world host asks it of the dungeon the player stands in as a foe falls. */
 export const lairDenOf = (loc) => (loc?.country?.dungeon ? bountyDenId('lair', loc.country.px, loc.country.py) : null);
+/** BAY-LEFT-SEA: a den's claim is asked again no sooner than this (ms, the real clock) - a lair asks at a foe's fall, and
+ *  a lair holds dozens; the service pays a den once a UTC day, so one ask a visit is the claim, and an ask that met no
+ *  answer (offline) is asked again at a later foe. A camp's (the Bay's) is asked at each, as ever. */
+export const BOUNTY_DEN_ASK_GAP_MS = 10 * 60 * 1000;
 const MINUTES_A_DAY = 1440;
 
 /** The Festive buff's mods: +5 to every attribute (`keys` statMods.js STAT_KEYS_ORDER). */
@@ -41,7 +45,8 @@ export const ORC_CAMP_TEXT = 'The Orc Raids: your guild gains 50 influence at it
  * @param {{ seatAt: (mapId: any) => any, here: () => any, seats: () => any[], guildId: () => (string|null),
  *   minutes: () => number, regionAt: (px: number, py: number) => number, say?: (line: string, s?: number) => void,
  *   claim?: (site: string, region: number) => Promise<{ paid: number }>, onFestive?: () => void,
- *   tideAt?: (region: number) => string, orcCamp?: (site: string, region: number) => Promise<{ counted: boolean }> }} host   SEASON1 part two: the land's Tide, an Orc Raid's camp
+ *   tideAt?: (region: number) => string, orcCamp?: (site: string, region: number) => Promise<{ counted: boolean }>,
+ *   nowMs?: () => number }} host   SEASON1 part two: the land's Tide, an Orc Raid's camp; BAY-LEFT-SEA: `nowMs` the real clock (Date.now)
  *   `seatAt` a town's seat, dressed (null where none); `here` the map id the player stands in; `seats` every seat this
  *   client knows, dressed; `guildId` the playing character's own guild; `minutes` the game clock; `regionAt` a map
  *   pixel's region.
@@ -56,6 +61,28 @@ export function createSeatEdicts(host) {
   /** The seat whose bailiwick a map pixel in `region` lies in, dressed - null where the region holds none. */
   const bailiwick = (region, pixel) => bailiwickOf(host.seats() ?? [], region, pixel);
   const bountyAt = (region, pixel) => bailiwick(region, pixel)?.holder?.edict === 'bounty';
+  /** BAY-LEFT-SEA: each den's last ask (its id -> the real clock's ms), BOUNTY_DEN_ASK_GAP_MS apart. */
+  const denAsked = new Map();
+  /** A camp cleared, or a den past the Bay (campCleared's doc). */
+  async function campCleared(site) {
+    const pixel = typeof site === 'string' ? bountyClaimPixel(site) : null;
+    if (!pixel || !host.claim) return 0;
+    const region = host.regionAt(pixel[0], pixel[1]), camp = !!bountySitePixel(site);
+    if (camp && (host.tideAt?.(region) ?? 'calm') === 'orcs' && host.orcCamp) {
+      host.orcCamp(site, region).then((r) => { if (r?.counted) host.say?.(ORC_CAMP_TEXT, 4); }).catch(() => {});
+    }
+    if (!bountyAt(region, pixel)) return 0;
+    if (!camp) {
+      const now = host.nowMs?.() ?? Date.now(), was = denAsked.get(site);
+      if (was != null && now - was < BOUNTY_DEN_ASK_GAP_MS) return 0;
+      denAsked.set(site, now);
+    }
+    const r = await host.claim(site, region).catch(() => ({ paid: 0 }));
+    if (r.paid > 0) host.say?.(camp ? bountyPaidText(r.paid) : bountyDenPaidText(r.paid), 4);
+    return r.paid;
+  }
+  /** BAY-LEFT-SEA: a den past the Bay cleared (bountyDenId; on the Bay none) - claimed as a camp is. */
+  const denCleared = (kind, px, py) => campCleared(bountyDenId(kind, px, py));
   return {
     /** THE SHOP'S FACTOR (7.2, 7.6): what a seat town's shop asks this player, as a share of its price - its building's
      *  town (`b.townMapId`), 1 anywhere else. */
@@ -84,21 +111,14 @@ export function createSeatEdicts(host) {
     orcsAt: (px, py) => (host.tideAt?.(host.regionAt(px, py)) ?? 'calm') === 'orcs',
     /** A camp cleared by this player - `site` its id (src/world/worldOfDaggerfall/wodShared.js wodSiteId, naming its pixel), claimed where a
      *  Bounty rules (and, SEASON1 part two, where an Orc Raid is the Tide - its influence). Answers the Drakes paid.
-     *  BAY-LEFT-SEA: or a den past the Bay (net/townSeatLaw.js bountyDenPixel), claimed the same way - never an Orc Raid's. */
-    async campCleared(site) {
-      const pixel = typeof site === 'string' ? bountyClaimPixel(site) : null;
-      if (!pixel || !host.claim) return 0;
-      const region = host.regionAt(pixel[0], pixel[1]), camp = !!bountySitePixel(site);
-      if (camp && (host.tideAt?.(region) ?? 'calm') === 'orcs' && host.orcCamp) {
-        host.orcCamp(site, region).then((r) => { if (r?.counted) host.say?.(ORC_CAMP_TEXT, 4); }).catch(() => {});
-      }
-      if (!bountyAt(region, pixel)) return 0;
-      const r = await host.claim(site, region).catch(() => ({ paid: 0 }));
-      if (r.paid > 0) host.say?.(camp ? bountyPaidText(r.paid) : bountyDenPaidText(r.paid), 4);
-      return r.paid;
-    },
+     *  BAY-LEFT-SEA: or a den past the Bay (net/townSeatLaw.js bountyDenPixel), claimed the same way - never an Orc Raid's,
+     *  and asked once in BOUNTY_DEN_ASK_GAP_MS (a lair's foe struck down: the world host hands its dungeon's den, lairDenOf). */
+    campCleared,
     /** BAY-LEFT-SEA: a den past the Bay cleared - an outlaws' hideout routed (scenes/hideouts.js), a lair's foe struck
      *  down - claimed as a camp is (bountyDenId; on the Bay none). Answers the Drakes paid. */
-    denCleared(kind, px, py) { return this.campCleared(bountyDenId(kind, px, py)); },
+    denCleared,
+    /** BAY-LEFT-SEA: an outlaws' hideout routed (scenes/hideouts.js `routed`, its hideout `h` - its map pixel) - its den
+     *  claimed, quietly. */
+    hideoutRouted: (h) => { denCleared('hideout', h?.px, h?.py).catch(() => {}); },
   };
 }

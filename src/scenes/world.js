@@ -3896,7 +3896,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     inPool: (f) => exteriorFoes.foes.includes(f),
     relations: () => livingRelations,
     say: (text) => townTalk.say(text),
-    routed: (h) => { seatEdicts.denCleared('hideout', h.px, h.py).catch(() => {}); },   // BAY-LEFT-SEA: a hideout routed past the Bay - a Bounty's den
+    routed: seatEdicts.hideoutRouted,   // BAY-LEFT-SEA: a hideout routed past the Bay - a Bounty's den (systems/seatEdicts.js)
     chest: livingBandChest,
     dropPile: (items, feet) => droppedLoot.seedPile(items, feet, { archive: TREASURE_PILE_ARCHIVE, record: 0 }, null, null, { unsaved: true, owner: 'lw-hideout' }),
     removePile: (pile) => droppedLoot.removePile(pile),

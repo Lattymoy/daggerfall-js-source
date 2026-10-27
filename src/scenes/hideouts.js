@@ -311,7 +311,7 @@ export function createHideouts(deps) {
     const r = rel();
     const day = Math.floor((t - 240) / DAY_MIN);
     r?.turn?.('routed', `${s.h.key}@${s.band.gen}.${s.band.heir}`, { t, who: s.band.name });
-    deps.routed?.(s.h);   // BAY-LEFT-SEA: a den cleared - a Bounty past the Bay pays for it (systems/seatEdicts.js denCleared)
+    deps.routed?.(s.h);   // BAY-LEFT-SEA: a den cleared - a Bounty past the Bay pays for it (systems/seatEdicts.js hideoutRouted)
     const thanked = new Set();
     for (const tr of s.robbed) for (const m of tr.party ?? []) if (!thanked.has(m.id)) { thanked.add(m.id); r?.note?.(m.id, 'helped', day); }
     deps.say(`You have routed ${s.band.name}.`);
