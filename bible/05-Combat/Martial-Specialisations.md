@@ -142,6 +142,12 @@ Warden's ward, never in a refereed fight, never while mentoring, never the beast
 
 ## 5. MARTIAL3/4 - the fifteen paths
 
+RPT1026-PROGRESS (2026-10-26, a private report: the passive showed no sign of working, and nothing on
+the screen said it was building): Flowing Steel worked and said nothing. Its stacks stand on the HUD
+now as a chip beside the sets' and the Legendaries' - "Flowing Steel 3" and its seconds, the technique's blue
+(`systems/martialPowers.js` martialHudChips, handed on by `scenes/world.js`'s setHudSetChips, the one HUD every host's
+frame draws), as the Legendary Flow's own has since LOOT5. Pinned by `test/systems/rpt1026_progress.test.js`.
+
 Each path: a PASSIVE while awake, and a SIGNATURE TECHNIQUE with a RIDER - what the technique does past its blow, only
 when its own path's holder strikes with it awake. A form for each of the pair's families: a pair with Archery shoots
 with a bow and strikes with its other weapon; the forms share one cooldown.

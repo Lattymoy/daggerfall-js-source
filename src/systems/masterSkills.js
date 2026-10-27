@@ -158,11 +158,23 @@ export function masteryRefusal(entity, id) {
   return null;
 }
 
+/** RPT1026-PROGRESS (a private report: weak-foe practice banked at 100 paid out after a mastery): THE PRACTICE A SKILL KEPT
+ *  UNDER THE PLAIN RULE IS DROPPED THE MOMENT IT MAY PASS 100. Below the cap - and at 100 for a skill that cannot pass it
+ *  - every use counts whole (skills.js tallySkill, DFU's TallySkill and its 20000 clamp); past it a use counts only
+ *  against a tough foe, and raiseSkills spends the counter as progress (advancement.js MOVE-BANK) without knowing which
+ *  rule counted it. A skill held at 100, practised on weak foes to the clamp and only then mastered (or Master Skills
+ *  switched on) turned 20,000 plain uses into a point every rest. The counter of a skill that may now pass 100 held
+ *  only plain uses, so it goes (the weighted fraction, skillUseFrac, is the tough-foe rule's own and stays). */
+function dropPlainPractice(entity, id) {
+  if ((entity?.skills?.[id] ?? 0) >= 100 && Array.isArray(entity.skillUses) && id < entity.skillUses.length) entity.skillUses[id] = 0;
+}
+
 /** Master it - PERMANENT. Returns { ok, text }. */
 export function masterSkill(entity, id, names = null) {
   const why = masteryRefusal(entity, id);
   if (why) return { ok: false, text: why };
   entity.masteredSkills = [...masteredSkills(entity), id];
+  dropPlainPractice(entity, id);   // RPT1026-PROGRESS: what it practised unmastered was counted whole
   const n = names?.[id] ?? 'The skill';
   return { ok: true, text: `${n} mastered: it can now pass 100.` };
 }
@@ -223,7 +235,10 @@ export function masterSkillsBlockReason(entity) {
 export function setMasterSkills(entity, on) {
   const reason = masterSkillsBlockReason(entity);
   if (reason) return { ok: false, text: reason };
+  const was = masterSkillsActive(entity);
   entity.masterSkills = !!on;
+  // RPT1026-PROGRESS: switched on - while it was off, every skill mastered and at the cap or beyond counted each use whole
+  if (!was && masterSkillsActive(entity)) for (const id of masteredSkills(entity)) dropPlainPractice(entity, id);
   entity.masterSkillsAsked = true;
   return { ok: true, text: on ? MASTER_SKILLS_ON_TEXT : MASTER_SKILLS_OFF_TEXT };
 }

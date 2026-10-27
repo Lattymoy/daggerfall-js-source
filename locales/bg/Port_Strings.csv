@@ -2028,6 +2028,7 @@ eg.vote.respiteHow,"Отговори на отдих с R или /breach respite
 eg.vote.respiteNone,"Никой не е поискал отдих."
 eg.witness.watching,"Наблюдаваш {who} - здраве {pct}%."
 eg.witness.watchingName,"Наблюдаваш {who}."
+enchant.soulGone,"Тази душа вече не е в раницата ти."
 events.board.left,"Остава {time}"
 events.board.more,"{n, plural, one {още # в Timers} other {още # в Timers}}"
 events.board.starts,"след {time}"

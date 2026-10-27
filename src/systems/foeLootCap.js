@@ -165,8 +165,29 @@ export function capLootList(items, cap) {
   return dropped;
 }
 
-/** The body's own cap, as its spawn stamped it (`entity.lootCap`); nothing for a foe without one. */
+/**
+ * RPT1026-PROGRESS (a private report: the Skull's copies were looted like any foe): AN ARTIFACT'S SUMMON CARRIES NOTHING. The Skull
+ * of Corruption stands an allied copy of the nearest foe and the Sanguine Rose an allied Daedroth (artifactEffects.js,
+ * through the enchant ctx's spawnAlliedFoe); DFU's CreateFoe gives the copy its kind's whole loot (SetEnemyCareer's
+ * table, its kit) and its corpse is looted like any foe's - so a Skull that never breaks (Repairs Objects) set a copy of
+ * a Daedra Lord on its original over and over and each copy's body was a Daedra Lord's loot. A summon's body is a
+ * puppet's here (exteriorFoes.js "a PUPPET carries no loot"): stood, its carried list goes (its hand and its worn kit
+ * still fight - the hand is `entity.weapon`, the worn set the equip table), and at its death whatever the death's
+ * handlers and the kit's ladder lay on it goes too (capFoeLoot, the last word every body door asks). Port-Ledger A.
+ * Answers `f`.
+ */
+export function summonedBody(f) {
+  const e = f?.entity;
+  if (!e) return f;
+  e.summoned = true;
+  e.items = [];
+  return f;
+}
+
+/** The body's own cap, as its spawn stamped it (`entity.lootCap`); nothing for a foe without one. RPT1026-PROGRESS: a
+ *  summon's (`summoned`) nothing at all. */
 export function capFoeLoot(entity) {
+  if (entity?.summoned === true && Array.isArray(entity.items)) return entity.items.splice(0);   // RPT1026-PROGRESS: a summon's body (summonedBody)
   const cap = entity?.lootCap;
   if (!Number.isInteger(cap) || !Array.isArray(entity.items) || titledFoe(entity)) return [];   // a foe promoted after its spawn (the street's elite) is titled by its death
   return capLootList(entity.items, cap);

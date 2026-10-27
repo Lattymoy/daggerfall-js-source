@@ -8464,7 +8464,9 @@ Six lenses, each finding checked against the code before anything moved; `01-Ove
 - **THE ARM COUNTS MATES (B2).** The marks say `mate`; `hostMagic.js` allyNear skips a stranger's. A stranger near
   had armed every online player's self-buff in a town.
 - **MATES FIRST (B5)**, so an area gift's CAST burst reaches the party before the room's strangers; **THE BEST
-  ABSORPTION (B4)** - `spellAbsorptionChance` takes the best live entry, since a gift never merges with my own;
+  ABSORPTION (B4)** - `spellAbsorptionChance` takes the best live entry, since a gift never merges with my own (and,
+  RPT1026-PROGRESS 2026-10-26, so do Spell Resistance's, Reflection's and Comprehend Languages' - `effects.js`
+  bestLiveChance: a level-one mate's 6% Resistance gift had masked the player's 100% for its whole duration);
   **A STRANGER'S CURE LEAVES AN INFECTION (B6)** - `strangerCast` rides the receiver's ctx to `cureAllOfKind`;
   **A STRANGER STANDS WHERE I SEE THEM (B7)** - a stranger's gift needs their body in `peersNear`, and its lines are
   said once in three seconds a sender.

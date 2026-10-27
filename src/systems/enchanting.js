@@ -45,7 +45,7 @@ import { templateByIndex } from './item/itemTemplates.js';
 import { ARMOR_MATERIAL } from './armorMaterials.js';
 import { WEAPON_MATERIALS } from '../characters/weapons.js';
 import { customItemClass } from './roleplayRealismItems/rriItems.js';   // RRI1: GetEnchantmentPower is a virtual the armor classes answer
-import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { localizedText, t } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { enchantGold } from '../net/alchemyLaw.js';   // PROF12: Enchanting's layer - the gold with the rank's share off
 import { recipeById, jewelPoints } from '../net/recipeLaw.js';   // AUDIT PROF10 J1: the most a crafted piece's recipe mints
 import { enchantmentSettings } from './enchantmentCatalogue.js';   // AUDIT PROF10 J2: a crafted piece's own enchantments, costed as the maker costs a row
@@ -285,15 +285,26 @@ export function openPickerDecision(selectingPowers, { item = null, powers = [], 
  *   { kind: 'noItem', text }
  *   { kind: 'refused', text }   (AETHERIC-MAKER: an item the maker refuses, the port's own arm)
  *   { kind: 'noEnchantments', text }
+ *   { kind: 'soulGone', text }   (RPT1026-PROGRESS: a bound soul the pack no longer holds, the port's own arm)
  *   { kind: 'noGold', text, goldCost }
  *   { kind: 'overLimit', text, cost, power }
  *   { kind: 'enchant', text, goldCost, cost, power }
+ * `souls` (mysticism.js enumerateFilledTraps over the pack, now) - when given, every Soul Bound row must name a soul the
+ * pack still holds.
  */
-export function enchantDecision(item, powers = [], sideEffects = [], { gold = 0, discountPct = 0 } = {}) {
+export function enchantDecision(item, powers = [], sideEffects = [], { gold = 0, discountPct = 0, souls = null } = {}) {
   if (!item) return { kind: 'noItem', text: ITEM_MUST_BE_SELECTED };
   if (itemMakerRefuses(item)) return { kind: 'refused', text: AETHERIC_TAKES_NO_ENCHANTMENT };   // AETHERIC-MAKER
   if (powers.length === 0 && sideEffects.length === 0) {
     return { kind: 'noEnchantments', text: localizedText('noEnchantments', NO_ENCHANTMENTS_PREPARED) };   // L10N3d: DaggerfallItemMakerWindow.cs:724
+  }
+  // RPT1026-PROGRESS (a private report: one filled gem bound several items): A SOUL IS BOUND ONLY FROM A GEM IN HAND. DFU's
+  // RemoveFilledTrap has no gem left to take for a soul already spent, and the bind goes ahead (SoulBound.cs:129-155) - with its
+  // negative cost, a whole budget from a gem that was gone. The window's lists read the pack live (itemMakerWindow.js
+  // `_souls`); this is the law's own refusal, whatever list the rows came from. Port-Ledger A.
+  if (souls !== null) {
+    const held = new Set(souls);
+    if ([...powers, ...sideEffects].some((e) => e?.type === 'SoulBound' && !held.has(e.param))) return { kind: 'soulGone', text: t('enchant.soulGone', 'That soul is no longer in your pack.') };
   }
   // AUDIT PROF10 J2: a kept piece's enchantments count against its points (GetTotalEnchantmentCost's own walk - a Rare's own
   // at nothing, MAKER-RARE), and cost no gold - they are on it already

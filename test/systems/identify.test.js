@@ -173,7 +173,9 @@ test('the refund, and so the window\'s charge, is what the cast spent on Identif
     registerSpellCostMod('identify-refund-test', null);
   }
 
-  // A modifier may take a cast under 5 points; the refund still keeps Identify.cs:54-55's floor of 5.
+  // A modifier may take a cast under 5 points; the effect's price - the window's charge - still keeps Identify.cs:54-55's
+  // floor of 5. PIN NARROWED (RPT1026-PROGRESS): the magicka the cast engine gives back is capped at what the cast spent
+  // (scenes/hostMagic.js) - 1 here, never 5 (test/scenes/rpt1026_progress_magic.test.js).
   registerSpellCostMod('identify-refund-test', () => 1);
   try {
     assert.equal(calculateCastCost(identifySpell, player()).sp, 1);

@@ -2028,6 +2028,7 @@ eg.vote.respiteHow,"Ответить на передышку: R или /breach r
 eg.vote.respiteNone,"Передышку никто не просил."
 eg.witness.watching,"Вы наблюдаете за {who} - здоровье {pct}%."
 eg.witness.watchingName,"Вы наблюдаете за {who}."
+enchant.soulGone,"Этой души больше нет в вашем рюкзаке."
 events.board.left,"Осталось {time}"
 events.board.more,"{n, plural, one {ещё # в Timers} few {ещё # в Timers} many {ещё # в Timers} other {ещё # в Timers}}"
 events.board.starts,"через {time}"

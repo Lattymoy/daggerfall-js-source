@@ -3653,7 +3653,9 @@ Mac: **"2 and 4"** (2026-10-02: the Apothecary waits on Alchemy, Cooking and Jew
   "worth one quality step in any recipe"); no family step (no jeweller's choice is a quality step).
 - **The specialisations** (3.3), all four chosen now. **Gemcutter** (50) - a set gem +20%, not +10%. **Goldsmith** (50) -
   DECIDED: "Silver counts as Gold" is the **piece's** - a Goldsmith's Silver piece holds Gold's +10% and so its worth; its
-  rank stays Silver's, the metal it was made of. **THE JEWELLER'S HAND** (`jewelHand`): what of the choice at 50 a piece
+  rank stays Silver's, the metal it was made of. (RPT1026-PROGRESS, 2026-10-26: the card's own words were the design's
+  shorthand, and a private report read them as Silver standing in for Gold in a recipe; they say what
+  it does now - "Silver jewelry you make has the enchantment points and worth of Gold." - `net/professionLaw.js`.) **THE JEWELLER'S HAND** (`jewelHand`): what of the choice at 50 a piece
   carries wherever it goes - 1 a Goldsmith's Silver piece, 2 a Gemcutter's gemmed piece - signed into its record (`f`,
   `net/productRecord.js`, `jewelHandOk`) and kept on it in **0069's `products.hand`** (the cook's column - its `CHECK (1,
   2)` holds both: **no migration**); so a Gemcutter's ring bought at the market holds its points in the buyer's hands.
