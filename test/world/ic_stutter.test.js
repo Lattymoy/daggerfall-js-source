@@ -42,7 +42,7 @@ import { registerCustomModelFamily, registerCustomModel, customModelFor, customM
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const N = IMPERIAL_SPAN, R = (N - 1) / 2, B = 102.4, HALF = N * 4;
 const sliceAt = (x, z) => Math.floor((z + HALF * B) / (8 * B)) * N + Math.floor((x + HALF * B) / (8 * B));
-const MARKET = sliceAt(...polar(30, 3460)), ARENA_D = sliceAt(...polar(90, 5200));
+const MARKET = sliceAt(...polar(30, 3460)), ARENA_D = sliceAt(...polar(90, 5200)), QUARTERED = 136;
 /** A step generator's answer and how many times it gave the frame back. */
 function walk(steps) {
   let yields = 0;
@@ -311,9 +311,10 @@ test('IC-STUTTER THE PLACES\' STEPS COUNTED - on a town of two quarters 512 cell
 });
 
 test('IC-STUTTER THE LIVING TOWN\'S PLACES AND THE STREETS\' PIECES A STEP AT A TIME - on a near slice of the Imperial City (its own blocks, its fabric\'s homes): the town\'s places and its quarters\' made in steps are the ones made whole, the street net and the town walk\'s pieces the same labels; each gives the frame back many times over the 512 by 512 grid; a LivingTown handed its places stands as one that made them (mutants: the places\' rows unbroken; the quarters made whole; the flood in one; the places handed in unread)', async () => {
-  const nav = sliceNav(ARENA_D), homes = fabricHomesIn(ARENA_D);
+  // PIN MOVED (IC-STAIRS, IC-PROPS): the Arena District's slice is one quarter on the city laid again - a slice of five
+  const nav = sliceNav(QUARTERED), homes = fabricHomesIn(QUARTERED);
   const IC = CAPITALS.findIndex((c) => c.family);
-  const o = { town: { mapId: capitalPlaceId(IC, ARENA_D), blocks: 64, region: 70, people: 3, port: false }, buildings: homes.buildings, doors: homes.doors };
+  const o = { town: { mapId: capitalPlaceId(IC, QUARTERED), blocks: 64, region: 70, people: 3, port: false }, buildings: homes.buildings, doors: homes.doors };
   const whole = townPlaces(nav, o.doors, o.buildings, livingPlacesWay(o));
   const stepped = walk(townPlacesSteps(nav, o.doors, o.buildings, livingPlacesWay(o)));
   assert.ok(whole.quarters?.length >= 2, 'a town of quarters');
@@ -323,11 +324,11 @@ test('IC-STUTTER THE LIVING TOWN\'S PLACES AND THE STREETS\' PIECES A STEP AT A 
   const net = walk(streetNetSteps(nav));
   assert.deepEqual(net.value.label, streetNet(nav).label);
   assert.ok(net.yields >= nav.height / PLACES_ROWS_A_STEP - 1);
-  const fresh = sliceNav(ARENA_D);
+  const fresh = sliceNav(QUARTERED);
   const pieces = walk(componentsSteps(fresh));
   assert.ok(pieces.yields >= (fresh.width * fresh.height) / PIECES_CELLS_A_STEP, `the flood broken: ${pieces.yields}`);
   assert.equal(componentsOf(fresh), pieces.value, 'kept on the grid: the walk\'s next ask a read');
-  assert.deepEqual(componentsOf(sliceNav(ARENA_D)), pieces.value, 'the same labels');
+  assert.deepEqual(componentsOf(sliceNav(QUARTERED)), pieces.value, 'the same labels');
   // the living town handed its places made a step at a time stands as one that made them
   let breaths = 0;
   const places = await livingTownPlaces(nav, o, async () => { breaths++; });

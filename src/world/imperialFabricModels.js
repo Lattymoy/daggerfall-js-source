@@ -23,7 +23,7 @@
 // Process: an orientation check samples what the GL samples).
 import { MeshBuilder } from './detStandIns.js';
 import { CAPITAL_ART, art, robedFigure } from './capitalShapes.js';
-import { fabricCell, fabricMasses, outwardOf, inQuad, STOREY, BAY, LEDGE_Y, PARAPET, STACK_STEP, STACK_DEPTH, STACK_RUN, YARD_WALL, SHED, WELL, SQUARE_FOUNTAIN, PAVEMENT, STATUE, streetKind } from './imperialFabric.js';
+import { fabricCell, fabricMasses, outwardOf, inQuad, STOREY, BAY, LEDGE_Y, PARAPET, STAIR, STAIR_DEPTH, YARD_WALL, SHED, WELL, SQUARE_FOUNTAIN, PAVEMENT, STATUE, streetKind } from './imperialFabric.js';
 import { FACADE_PLAIN, FACADE_TEXELS } from './imperialArt.js';
 import { sewerCoversIn, sewerBranchesIn, IMPERIAL_SEWERS } from './imperialSewers.js';
 import { BLOCK_M } from './spawnedDungeons.js';
@@ -124,9 +124,11 @@ function post(mb, tex, x, z, s, y0, y1) {
  * window under a neighbour's roof); its roof - flat, under its parapet on its street fronts (PARAPET, a vault's), or
  * pitched on its ridge, two slopes and two gables (BLD: plain bands, no window cut by a slope); a ledge along a street
  * front at LEDGE_Y; a balcony or two on a front over the ledge, on a floor (BALCONY_FLOORS); and a pavement along a main
- * street's front (PAVEMENT, a step).
+ * street's front (PAVEMENT, a step). IC-STAIRS: `stairs` the ways up near it (world/imperialFabric.js nearStairs) - a
+ * front a stair climbs keeps its ledge and its balconies off the stair's run, and a flat roof's parapet stands open over
+ * the head landing of its own stair (stairSpans, headSpan).
  */
-export function buildPlot(mb, p, party = 0) {
+export function buildPlot(mb, p, party = 0, stairs = []) {
   const wallT = T(p.wall), groundT = T(p.ground), stone = T('wallStone'), paving = T('bridgeStone'), timber = T('timber');
   for (let e = 0; e < 4; e++) {
     const a = p.q[e], b = p.q[(e + 1) & 3], n = outwardOf(p.q, e), front = !!(p.out & (1 << e));
@@ -137,12 +139,13 @@ export function buildPlot(mb, p, party = 0) {
       storeys(mb, wallT, a, b, STOREY, p.h, n);
     } else storeys(mb, wallT, a, b, 0, p.h, n);
     if (!front) continue;
-    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
-    if (p.ledge && len > 2 && p.h > LEDGE_Y + 2) slab(mb, stone, a, b, n, 0.42, LEDGE_Y - 0.3, LEDGE_Y);
+    const len = Math.hypot(b[0] - a[0], b[1] - a[1]), under = stairSpans(stairs, a, b, n, 0.1), on = alongOf(a, b);
+    if (p.ledge && len > 2 && p.h > LEDGE_Y + 2) for (const [u0, u1] of openRuns(len, under, 0.5)) slab(mb, stone, on(u0), on(u1), n, 0.42, LEDGE_Y - 0.3, LEDGE_Y);
     const y = balconyFloor(p.h);
     if (p.balcony && len > 4 && y + STOREY <= p.h + 1e-6) {
       for (let k = 0; k < p.balcony; k++) {
         const t0 = (k + 0.5) / (p.balcony + 0.5) - 0.18, t1 = t0 + 0.36;
+        if (under.some(([u0, u1]) => t1 * len > u0 - 0.5 && t0 * len < u1 + 0.5)) continue;   // IC-STAIRS: none over a stair
         const A = [a[0] + (b[0] - a[0]) * t0, a[1] + (b[1] - a[1]) * t0], Bp = [a[0] + (b[0] - a[0]) * t1, a[1] + (b[1] - a[1]) * t1];
         slab(mb, timber, A, Bp, n, 1.1, y - 0.25, y);
         const C = [Bp[0] + n[0] * 1.05, Bp[1] + n[1] * 1.05], D = [A[0] + n[0] * 1.05, A[1] + n[1] * 1.05];
@@ -157,8 +160,12 @@ export function buildPlot(mb, p, party = 0) {
     flat(mb, paving, p.q, p.h, 1);
     for (let e = 0; e < 4; e++) {
       if (!(p.out & (1 << e))) continue;
-      const a = p.q[e], b = p.q[(e + 1) & 3], n = outwardOf(p.q, e);
-      slab(mb, stone, [a[0] - n[0] * 0.4, a[1] - n[1] * 0.4], [b[0] - n[0] * 0.4, b[1] - n[1] * 0.4], n, 0.4, p.h, p.h + PARAPET, { bottom: false, back: true });
+      const a = p.q[e], b = p.q[(e + 1) & 3], n = outwardOf(p.q, e), on = alongOf(a, b);
+      const heads = stairs.filter((s) => s.key === p.key && s.edge === e).map((s) => headSpan(s, a, b, n));   // IC-STAIRS: its stair's head
+      for (const [u0, u1] of openRuns(Math.hypot(b[0] - a[0], b[1] - a[1]), heads)) {
+        const A = on(u0), Bp = on(u1);
+        slab(mb, stone, [A[0] - n[0] * 0.4, A[1] - n[1] * 0.4], [Bp[0] - n[0] * 0.4, Bp[1] - n[1] * 0.4], n, 0.4, p.h, p.h + PARAPET, { bottom: false, back: true });
+      }
     }
     return;
   }
@@ -199,14 +206,127 @@ export function partyEdges(L, p) {
   return bits;
 }
 
-/** A WAY UP: a stair of crates and sheds along a street front, each STACK_STEP over the last, STACK_RUN along it and
- *  STACK_DEPTH out - its last top within a vault of the roof's edge (world/imperialFabric.js waysOf: `top`). */
-function buildStack(mb, s) {
-  const tex = T('timber');
-  for (let k = 0; k < s.steps; k++) {
-    const a = [s.at[0] + s.t[0] * k * STACK_RUN, s.at[1] + s.t[1] * k * STACK_RUN], b = [a[0] + s.t[0] * STACK_RUN, a[1] + s.t[1] * STACK_RUN];
-    slab(mb, tex, a, b, s.n, STACK_DEPTH, 0, (k + 1) * STACK_STEP, { bottom: false });
+/** A point `u` metres along a front from a toward b. */
+const alongOf = (a, b) => { const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1; return (u) => [a[0] + ((b[0] - a[0]) * u) / l, a[1] + ((b[1] - a[1]) * u) / l]; };
+/** IC-STAIRS: where along a front a-b (metres from a, clipped to it) a stair's own run [x0, x1] stands - the stair's wall
+ *  on the front's line (within STAIR.tol), facing its way - or null. */
+function spanOn(s, a, b, n, x0, x1) {
+  const len = Math.hypot(b[0] - a[0], b[1] - a[1]), e = [(b[0] - a[0]) / len, (b[1] - a[1]) / len];
+  if (s.n[0] * n[0] + s.n[1] * n[1] < 0.98 || Math.abs((a[0] - s.at[0]) * s.n[0] + (a[1] - s.at[1]) * s.n[1]) > STAIR.tol + 0.05) return null;
+  const u = (x) => (s.at[0] + s.t[0] * x - a[0]) * e[0] + (s.at[1] + s.t[1] * x - a[1]) * e[1];
+  const u0 = Math.max(0, Math.min(u(x0), u(x1))), u1 = Math.min(len, Math.max(u(x0), u(x1)));
+  return u1 > u0 ? [u0, u1] : null;
+}
+/** IC-STAIRS: the runs of a front a stair climbs before, `pad` past its ends. */
+const stairSpans = (stairs, a, b, n, pad) => stairs.map((s) => spanOn(s, a, b, n, -pad, s.len + pad)).filter(Boolean);
+/** IC-STAIRS: the run of its head building's front a stair's head landing opens onto the roof - from the landing's start
+ *  to its end wall. */
+const headSpan = (s, a, b, n) => spanOn(s, a, b, n, s.len - STAIR.head, s.len - STAIR.wall) ?? [0, 0];
+/** The pieces of [0, len] none of `spans` covers, each longer than `min`. */
+function openRuns(len, spans, min = 0.05) {
+  const out = [];
+  let at = 0;
+  for (const [u0, u1] of [...spans].sort((p, q) => p[0] - q[0])) { if (u0 - at > min) out.push([at, u0]); at = Math.max(at, u1); }
+  if (len - at > min) out.push([at, len]);
+  return out;
+}
+/**
+ * IC-STAIRS: THE PAVING'S COURSE a step is laid in - CAPITAL_ART.bridgeStone's middle course, its rows `top` to `top +
+ * rows` as painted (world/capitalModels.js masonry: its joint the row at `top`, the next course's at `top + rows`). A
+ * tread's whole going is that course, its joint along the nosing; its riser the same stone's face, the joint along its
+ * top - so each step reads as one laid stone, its edge drawn; the stone's joints across the stair stagger step to step.
+ */
+export const STAIR_COURSE = Object.freeze({ top: 21, rows: 16 });
+/** IC-STAIRS: the parapet's coping - its thickness and its overhang either side. */
+export const STAIR_CAP = Object.freeze({ h: 0.1, over: 0.04 });
+/** IC-STAIRS: the newel at a stair's foot - its side, its height over the parapet's foot, its cap's side and height. */
+export const STAIR_NEWEL = Object.freeze({ side: 0.42, over: 0.3, cap: 0.54, capH: 0.12 });
+/** IC-STAIRS: a flight's and a landing's waist (its soffit under the nosings' line, the landing's floor), and a landing's
+ *  pier (its side along the wall and its depth in from the parapet's face). */
+export const STAIR_WAIST = STAIR.waist;
+export const STAIR_PIER = Object.freeze({ along: STAIR.pier, out: STAIR.pier });
+/**
+ * IC-STAIRS - A WAY UP: a built stair of the city's own stone along a street front (world/imperialFabric.js blockStair,
+ * stairRuns). Each step a riser and a tread of the paving's stone, one course of it (STAIR_COURSE), running from inside
+ * the wall behind (STAIR.into) to the parapet; the landings and the head in the paving's picture by the world's metres,
+ * as the roofs and the pavements are laid (the head meets a flat roof flush, in its own stone); a solid parapet of the
+ * walls' stone on the street side, STAIR.rail over the nosings, its top raking with the flights and level on the
+ * landings, its coping of the paving's stone. The first flight and its landing stand on a solid base down into the
+ * street, a newel at the foot, capped; every flight above spans to the next landing on its waist (STAIR_WAIST, its soffit
+ * raking under it), each landing carried on a pier at the parapet (STAIR_PIER), the head on its end wall down to the
+ * street - the shopfronts behind seen under them. The pictures the fabric's own two stones (CAPITAL_ART wallStone,
+ * bridgeStone - the city wall's and the paving's), so a cell's model gains no draw.
+ */
+export function buildStair(mb, s) {
+  const pave = T('bridgeStone'), stone = T('wallStone'), D = STAIR_DEPTH, IW = STAIR.width, IN = -STAIR.into, R = STAIR.rail, C = STAIR_CAP, TH = STAIR_WAIST;
+  const P = (x, o) => [s.at[0] + s.t[0] * x + s.n[0] * o, s.at[1] + s.t[1] * x + s.n[1] * o];
+  const V = (x, y, o) => { const p = P(x, o); return W(p[0], y, p[1]); };
+  const along = WN(s.t[0], 0, s.t[1]), back = WN(-s.t[0], 0, -s.t[1]), out = WN(s.n[0], 0, s.n[1]), wallward = WN(-s.n[0], 0, -s.n[1]);
+  const vN = -STAIR_COURSE.top / 64, vB = -(STAIR_COURSE.top + STAIR_COURSE.rows) / 64;
+  /** A face of the stair's frame along it, between along x0 and x1 at out o, its foot y0a-y0b and its top y1a-y1b. */
+  const side = (tex, o, x0, x1, y0a, y0b, y1a, y1b, n) => mb.quad(tex, V(x0, y0a, o), V(x1, y0b, o), V(x1, y1b, o), V(x0, y1a, o), n, [[x0 / PIC, y0a / PIC], [x1 / PIC, y0b / PIC], [x1 / PIC, y1b / PIC], [x0 / PIC, y1a / PIC]]);
+  /** An end face (across the stair, at along x) between out o0 and o1, from y0 to y1. */
+  const end = (tex, x, o0, o1, y0, y1, n) => mb.quad(tex, V(x, y0, o0), V(x, y0, o1), V(x, y1, o1), V(x, y1, o0), n, [[o0 / PIC, y0 / PIC], [o1 / PIC, y0 / PIC], [o1 / PIC, y1 / PIC], [o0 / PIC, y1 / PIC]]);
+  /** A box in the stair's frame: its four sides, and its top (`top`). */
+  const box = (tex, x0, x1, o0, o1, y0, y1, top = true) => {
+    if (top) flat(mb, tex, [P(x0, o0), P(x1, o0), P(x1, o1), P(x0, o1)], y1, 1);
+    side(tex, o1, x0, x1, y0, y0, y1, y1, out); side(tex, o0, x0, x1, y0, y0, y1, y1, wallward);
+    end(tex, x1, o0, o1, y0, y1, along); end(tex, x0, o0, o1, y0, y1, back);
+  };
+  // the steps and the landings; the parapet's runs over them - the nosings' line from the foot to the head, each
+  // { xa, ha, xb, hb }, `solid` on the first flight's base, `landing` a level run on a pier
+  const runs = [];
+  let k = 0, flights = 0, last = null;
+  for (const g of s.runs) {
+    if (g.kind === 'flight') {
+      for (let i = 1; i <= g.m; i++, k++) {
+        const x = g.s0 + (i - 1) * STAIR.tread, y0 = g.y + (i - 1) * s.rise, y1 = y0 + s.rise, sh = (k * 0.618) % 1, u0 = IN / PIC + sh, u1 = IW / PIC + sh;
+        mb.quad(pave, V(x, y0, IN), V(x, y0, IW), V(x, y1, IW), V(x, y1, IN), back, [[u0, vB], [u1, vB], [u1, vN], [u0, vN]]);
+        if (i < g.m) mb.quad(pave, V(x, y1, IN), V(x, y1, IW), V(x + STAIR.tread, y1, IW), V(x + STAIR.tread, y1, IN), [0, 1, 0], [[u0, vN], [u1, vN], [u1, vB], [u0, vB]]);
+      }
+      // the pitch line through the nosings - from the landing below, a tread before the flight's first riser
+      const a = flights ? [g.s0 - STAIR.tread, g.y] : [g.s0, g.y + s.rise];
+      if (last) runs.push({ xa: last[0], ha: last[1], xb: a[0], hb: a[1], solid: flights === 1, landing: flights > 1 });
+      runs.push({ xa: a[0], ha: a[1], xb: g.s1, hb: g.y + g.m * s.rise, solid: flights === 0, landing: false });
+      last = [g.s1, g.y + g.m * s.rise];
+      flights++;
+    } else {
+      // a landing's paving laid along the stair; the head's from the wall's line, where a flat roof's own begins
+      const o0 = g.kind === 'head' ? 0 : IN;
+      mb.quad(pave, V(g.s0, g.y, o0), V(g.s1, g.y, o0), V(g.s1, g.y, IW), V(g.s0, g.y, IW), [0, 1, 0], [[g.s0 / PIC, o0 / PIC], [g.s1 / PIC, o0 / PIC], [g.s1 / PIC, IW / PIC], [g.s0 / PIC, IW / PIC]]);
+      if (g.kind === 'head' && last) runs.push({ xa: last[0], ha: last[1], xb: g.s1 - STAIR.wall, hb: g.y, solid: flights === 1, landing: false });
+    }
   }
+  const L = s.len, H = s.top;
+  for (const [n, r] of runs.entries()) {
+    const { xa, ha, xb, hb, solid } = r, rake = Math.abs(hb - ha) > 1e-6 ? s.rise : 0, slope = (hb - ha) / (xb - xa), nl = Math.hypot(slope, 1);
+    // the parapet's outer face - down into the street on the base, else down to the waist - and its face over the steps
+    side(stone, D, xa, xb, solid ? -0.3 : ha - TH, solid ? -0.3 : hb - TH, ha + R, hb + R, out);
+    side(stone, IW, xa, xb, ha - rake, hb - rake, ha + R + C.h, hb + R + C.h, wallward);
+    // its coping: flush over the steps, proud of the street face
+    const ya = ha + R + C.h, yb = hb + R + C.h, po = D + C.over;
+    mb.quad(pave, V(xa, ya, IW), V(xb, yb, IW), V(xb, yb, po), V(xa, ya, po), WN((-slope * s.t[0]) / nl, 1 / nl, (-slope * s.t[1]) / nl), [[xa / PIC, IW / PIC], [xb / PIC, IW / PIC], [xb / PIC, po / PIC], [xa / PIC, po / PIC]]);
+    side(pave, po, xa, xb, ha + R, hb + R, ya, yb, out);
+    if (solid) {
+      // the base's end, where the flights above leave it
+      if (runs[n + 1] && !runs[n + 1].solid) end(stone, xb, IN, D, -0.3, hb - TH, along);
+      continue;
+    }
+    // the waist's soffit under it, raking with the flight; a landing's pier
+    mb.quad(stone, V(xa, ha - TH, IN), V(xb, hb - TH, IN), V(xb, hb - TH, D), V(xa, ha - TH, D), WN((slope * s.t[0]) / nl, -1 / nl, (slope * s.t[1]) / nl), [[xa / PIC, IN / PIC], [xb / PIC, IN / PIC], [xb / PIC, D / PIC], [xa / PIC, D / PIC]]);
+    if (r.landing) { const m = (xa + xb) / 2; box(stone, m - STAIR_PIER.along / 2, m + STAIR_PIER.along / 2, D - STAIR_PIER.out, D, -0.3, ha - TH, false); }
+  }
+  // the head's end wall: across the stair from the wall to the street and down into it, the head landing's rail high, its
+  // coping; the parapet's outer face beside it on down to the street
+  end(stone, L, IN, D, -0.3, H + R, along);
+  end(stone, L - STAIR.wall, IN, IW, H, H + R, back);
+  end(stone, L - STAIR.wall, IN, D, -0.3, H - TH, back);
+  side(stone, D, L - STAIR.wall, L, -0.3, -0.3, H + R, H + R, out);
+  box(pave, L - STAIR.wall - C.over, L + C.over, IN, D + C.over, H + R, H + R + C.h);
+  // the newel at the foot, over the parapet's first rise, capped
+  const N = STAIR_NEWEL, top = s.y0 + s.rise + R + N.over;
+  box(stone, 0, N.side, D - N.side, D, -0.3, top);
+  box(pave, N.side / 2 - N.cap / 2, N.side / 2 + N.cap / 2, D - N.side / 2 - N.cap / 2, D - N.side / 2 + N.cap / 2, top, top + N.capH);
 }
 /** A BRIDGE between two roofs across a street: a plank deck from the near front `len` out along n, its two rails. */
 function buildBridge(mb, br) {
@@ -279,8 +399,8 @@ function buildCover(mb, cv) {
  */
 export function fabricCellModel(r, c) {
   const L = fabricCell(r, c), mb = new MeshBuilder();
-  for (const p of L.plots) buildPlot(mb, p, partyEdges(L, p));
-  for (const s of L.stacks) buildStack(mb, s);
+  for (const p of L.plots) buildPlot(mb, p, partyEdges(L, p), L.nearStairs);
+  for (const s of L.stairs) buildStair(mb, s);
   for (const br of L.bridges) buildBridge(mb, br);
   const stone = T('wallStone'), timber = T('timber');
   for (const y of L.yards) freeWall(mb, stone, y.a, y.b, YARD_WALL.t, -0.3, YARD_WALL.h);
@@ -300,7 +420,7 @@ export function fabricCellModel(r, c) {
  *  asked without building it. */
 export function fabricCellHasModel(r, c) {
   const L = fabricCell(r, c);
-  if (L.plots.length || L.stacks.length || L.bridges.length || L.yards.length || L.deadEnds.length || L.sheds.length || L.statues.length || L.wells.length || L.fountains.length) return true;
+  if (L.plots.length || L.stairs.length || L.bridges.length || L.yards.length || L.deadEnds.length || L.sheds.length || L.statues.length || L.wells.length || L.fountains.length) return true;
   const [x0, z0, x1, z1] = imperialCellRect(r, c);
   return sewerCoversIn(x0, z0, x1, z1).length > 0;
 }

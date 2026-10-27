@@ -1654,7 +1654,8 @@ when first read; the city past the stream's reach is drawn on the far ring's pas
   a roof beside a roof at most ROOF_STEP (1.6 m, a jump and a catch at Climbing 0: 1.5 m reach, 0.15 m in the air, the
   jump's 0.51 m rise) higher - the height a walk round its block, half a storey at a time (a tower two storeys over its
   neighbours, a climb of its own); an alley under the running leap's shortest flight (3.2 m under 4.0); a parapet (0.9 m)
-  and a way up's crates (1.2 m steps) under a vault; a ledge along a street front at 2.6 m (a wall run's reach at
+  under a vault; a way up a built stone stair walked from the street to a roof (IC-STAIRS, below - it had been a stack of
+  crates in 1.2 m steps under a vault); a ledge along a street front at 2.6 m (a wall run's reach at
   Climbing 0) and balconies over it; a bridge from a flat roof to a flat roof within a step across a street too wide to
   leap; every pitch a top the hands keep (under 50 degrees); a kerb under a step. The collider is the model's own mesh:
   every face drawn is solid (scenes/pixelBuild.js files every placed model the model door calls solid). FOUND AT THE PIN:
@@ -2694,6 +2695,58 @@ and `test/world/urban/urban3_stand.test.js`. Mutant records re-aimed by content:
 (TB-the-walk-unshared, TB-the-places-unshut), `carpyard1.json` (CARP-YARD-placed-before-the-port), `ow_queueowed.json`
 (QUEUE-OWED-pump-builds-the-head), `ow_townwalk.json` (OTW-heuristic-unweighted).
 
+## IC-STAIRS - the Imperial City's ways up, built stone stairs (2026-10-27)
+
+The owner's field report, item 4: *"Minecraft looking staircases in Imperial city need to be completely redesigned"*; and
+on all of it *"No band aids or half assed work"*.
+
+**What the player saw, and why.** IC-GRAND gave each block a way up from the street to its roofs, so the rooftops are a
+route: a stack of crates, a shed and a lean-to along a street front, each top STACK_STEP (1.2 m) over the last and at
+most a vault (PARKOUR_VAULT_MAX) - a staircase of boxes a metre high a step, climbed by vaulting, that read as blocks
+stacked on the street. It was a parkour route drawn as cargo, not a stair.
+
+**As built** (`world/imperialFabric.js` blockStair, stairPlan, stairRuns; `world/imperialFabricModels.js` the stair's
+mesh): a WAY UP IS A BUILT STONE STAIR along its block's street front, from the street to a roof of its block.
+- **Its proportions a built stair's** (`imperialFabric.js:"export const STAIR = Object.freeze({"`): a riser of 0.18 m at
+  the most, all of a stair's alike - under half the motor's STEP_OFFSET (`player/motor.js`), so it is walked, not
+  climbed - and a tread of 0.30 m, 2 R + G within Blondel's 0.60-0.66 m; flights of 16 risers at the most, the odd ones
+  first, with a 1.2 m landing between them and a 1.8 m head landing at the top; 1.4 m clear between the wall and its
+  parapet, so a body passes another. Daggerfall's own stairs (ARCH3D) rise 0.2 to 0.425 m a step; these are a built
+  stair's.
+- **Joined to the street and the building**: the first flight and its landing on a solid base down into the street, every
+  landing above on a pier down into it, the head on its end wall; every step runs 0.25 m into the wall behind it; a
+  parapet at a flat roof's PARAPET height over the nosings along every half metre of it before a front of its block (but
+  the head's own); its foot on the street's level with open ground before it.
+- **Its head on its roof**: at its building's roof - the block's lowest a stair reaches, never a tower - on that
+  building's front, in from its corners: a flat roof's parapet opened over the head, or a pitched roof's eave no steeper
+  there than 40 degrees, never a gable's end. The roof stands 3 m deep behind it.
+- **The city's own stone**: every face is the city's two stones (CAPITAL_ART wallStone and bridgeStone - its walls' and
+  its paving's), so a cell's model gains no draw; a riser a step, its base, piers and end wall down into the street, in
+  the cell's triangle budget.
+- **Its ground**: its footprint is shut to the city's walkers (GROUND.stair), 0.9 m past its ends so a door's surround
+  stays clear; the street under its upper flights stays open where they pass high enough for a door and a body under
+  them (GROUND.under). No building's door, lamp or bridge stands on it, no ledge or balcony over it, no canal, court or
+  park under it, and no building, wall, shed, well, statue, fountain or other stair in it; every building along it keeps
+  a door of its own.
+- **The landmarks' flights**: every emperor's tomb climbs from its walk to its portico, and the Temple of the One from
+  its street to its podium before its doors, by a built flight of the same law (`world/capitalImperial.js`).
+- **The sweep** (`tools/icStairsSweep.mjs`, every stair of the whole plan held to every law above): 23,293 stairs in
+  19,323 cells, none failing a law; their flights two to seven (4,814 of two, 10,639 of three, 6,264 of four, 1,416 of
+  five, 138 of six, 22 of seven), their heads 3.2 to 17.6 m up, 1,030,246 risers and 6,677,408 triangles in all (186 s
+  on this machine). The sweep holds a head's roof STAIR.roof (3 m) deep behind it, the law the stair's plan keeps: with
+  that guard dropped the city stood six more stairs and 35 on a roof's sliver; as built, none.
+- **Found at the sweep**: a building
+  across a cell's corner is that cell's ground (its box meeting the cell's, 2 m out - it had been near only by its
+  corners), and a court, a square or the park is its own neighbourhood's (its middle in it) - a polar frame's far ring's
+  blocks, hundreds of metres long, had laid their courts over another's streets.
+
+Pinned by `test/world/icstairs.test.js` (11: the proportions measured off the mesh, every stair reaching its roof, the
+real PlayerMotor walking a way up from the street to its head with no jump, onto the roof and down again on a Collider of
+the cells' own models, the stones and the triangles, the ground shut, the base, piers and end wall, the landmarks'
+flights, the sweep's findings held, every building's door kept); the moved pins in `test/world/icbld_buildings.test.js`
+and `test/world/icgrand_fabric.test.js` (PIN MOVED (IC-STAIRS)). Mutants: `tools/mutants/icstairs.json` (32);
+`icbld.json` re-aimed by content.
+
 ## Pins
 
 `test/world/audittesa2c_capitals.test.js` (16, AUDIT TESA II lane C): the rim (eleven tiles, 70.4 m, the span's outer
@@ -3015,13 +3068,13 @@ TAMRIEL1-one-model-a-call and `tools/mutants/tamriel3.json`'s TAMRIEL3-the-ink-n
 one `stale` predicate, the land's version and Arena's).
 
 `test/world/icgrand_fabric.test.js` (7, IC-GRAND): the rooftops laid to the movement's own numbers (the step under the
-reach, the alley under the leap, the parapet and the crates under a vault, the ledge in a wall run's reach, the garden
+reach, the alley under the leap, the parapet under a vault, a way up's riser under a step (IC-STAIRS), the ledge in a wall run's reach, the garden
 wall caught, the kerb stepped, every pitch a top); the height walk (a building beside a building a step at most, a
 tower aside - 577 neighbours in 20 sampled cells); each district its own (seven looks, six frames, fifteen neighbourhoods
 and ten frames a district at the least, one heart); the street hierarchy (an alley and a main street in every district
 but the park, a lesser street, fronts on main streets); the urban fabric (yards, sheds, dead ends, ways up, bridges and
 courts in the sampled cells, the Arboretum's statues, the Elven Gardens' canals, cut stone, brick and half-timbering;
-every way up's last step within a vault of its roof's edge, every bridge over a street too wide to leap with a body's
+every way up's head at its roof's edge (IC-STAIRS), every bridge over a street too wide to leap with a body's
 headroom under it); a building clear of what keeps the fabric off, on its own ground, the avenues kept clear; the walls'
 pictures at vanilla's 64 x 128 and 40 texels a metre. `test/world/icgrand_sewers.test.js` (3): the mains, their falls,
 their culverts to the water and the rings' drops; the covers on their roads at their spacing, none past the wall; the
