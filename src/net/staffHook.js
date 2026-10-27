@@ -48,13 +48,6 @@
 //                                                  { dfoStaff: 'map', region, name, state, list: [{ id, sub, name, px, py,
 //                                                  way, road, ageS }] } on each change, at most once a STAFF_MAP_SEND_MS -
 //                                                  state 'open' when its hidden link is in, 'hide' when Hide me is off
-// STAFF-PILOT (2026-10-26, mob: "like play as a boss as attack players"; systems/staffBossPilot.js): Play as boss and Leave
-// boss on the Events page - no version bump, as STAFF-VIEW1's (a game before it leaves the word unanswered):
-//   { dfoStaff: 'pilot', on: true, ev }            steer event `ev`'s mini boss; the game answers { dfoStaff: 'pilot', on,
-//                                                  ev, boss } - `boss` true when a boss of mine already stood to take, else
-//                                                  the panel calls one (Spawn mini boss now) and it stands under me
-//   { dfoStaff: 'pilot', on: false }               let it go; and the game says { dfoStaff: 'pilot', on: false, ev, why }
-//                                                  whenever the steering ends - 'left' (asked), 'fell', 'none' (no boss stood)
 import { OnlineSession, peerId, peerSecret } from './online.js';
 import { SOCIAL_ROOM, cellRoomOfWire, isCellRoom, isChatRoom, isSocialRoom } from './wire.js';
 import { ID_RE, TOKEN_MAX_CHARS } from './identityToken.js';
@@ -271,7 +264,7 @@ export function staffHookDoor(win, hookOf, { setTimer = setTimeout, clearTimer =
     else if (m.dfoStaff === 'regions?') post({ dfoStaff: 'regions', names: mapOf()?.regions() ?? [] });
     else if (m.dfoStaff === 'places?') post(staffPlaces(placesOf()?.maps, m.region));   // STAFF-EVENT: a region's places
     else if (m.dfoStaff === 'here?') post(staffHere(placesOf()?.maps, placesOf()?.pixel ?? null));   // STAFF-EVENT: where I stand
-    else if (m.dfoStaff === 'pilot' && typeof m.on === 'boolean' && pilot) { seen = true; pilot(m); }   // STAFF-PILOT: Play as boss / Leave boss
+    else if (m.dfoStaff === 'pilot' && typeof m.on === 'boolean' && pilot) { seen = true; pilot(m); }   // STAFF-PILOT: Play as boss / Leave boss - { on, ev } in; { on, ev, boss } or { on: false, ev, why } back (Staff-Events.md section 10)
   });
   /** @param {string} sub @param {string} room @returns {Promise<string|null>} */
   const askToken = (sub, room) => new Promise((resolve) => {

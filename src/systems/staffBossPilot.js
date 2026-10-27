@@ -1,25 +1,9 @@
 // @ts-check
-// STAFF-PILOT (2026-10-26, mob: "could we do something were a staff can become a boss", "like play as a boss as attack
-// players", the card's pick "Take over the boss", then "can we do this wouthout a relay update?" and "add it to the pr";
-// bible/11-Multiplayer/Staff-Events.md section 10) - A STAFF MEMBER STEERS THEIR EVENT'S MINI BOSS. A departure from DFU,
-// which has no such thing.
-//
-// The Staff Panel's Play as boss (net/staffHook.js `pilot`) names a live event. From then:
-//   - THE RUN IS MINE. My claim on the event's raid says the oldest age the wire carries (RAID_CLAIM_AGE_MAX), so every
-//     game in the place - an old page too, which reads the same oldest-claim law (world/raidShared.js raidRunnerOf) -
-//     hands the run to me, and the next mini boss stands on my machine (systems/raidingParties.js runsRaid).
-//   - MY BOSS IS ME. Each frame the boss's feet are my feet and its facing my camera's (`pilotSteer`, scenes/
-//     exteriorFoes.js after the motor's step); its own decisions to swing or cast are held (`pilotHolds`, laid on its brain as `ai._pilot`, which
-//     characters/enemy/enemyAttack.js and enemyCasting.js read). A left click
-//     is its swing NOW (the brain's forced swing, ai._blowSwing - the wind-up path every foe's blow already rides to the
-//     players, each judging the blow on their own feet), at the player nearest my facing within PILOT_TARGET_M; a right
-//     click opens its spell decision for PILOT_CAST_MS. My own copy of it is not drawn - the camera stands inside it.
-//   - MY BODY IS NO ONE. While I steer, my pose says concealment 7 (all three bits - systems/effects.js concealBits);
-//     a game that knows this draws no body and no name for it (systems/combatVisuals.js peerDraw), an older one the
-//     shimmer of an invisible player inside the boss. The foes do not sense me (playerEntity.staffHidden).
-//   - IT ENDS when the boss falls (its reward and lines as ever), when the event ends, or at the panel's Leave boss -
-//     the boss, if it still stands, goes back to its own brain where it stands.
-// No relay, no account service: everything here rides words the wire already carries.
+// STAFF-PILOT (2026-10-26, mob: "like play as a boss as attack players"; Staff-Events.md section 10): a staff member
+// steers their event's mini boss from the Staff Panel's Play as boss. My claim says the oldest age the wire carries, so
+// every game hands me the raid's run. The boss takes my feet and facing; its own swings and casts are held, a left
+// click swings at the player nearest my facing and a right click opens its cast. My body draws as concealment 7 and
+// no foe senses it. It ends when the boss falls, the event ends, or at Leave boss. No relay, no account change.
 
 /** The oldest claim my word on the event says - the wire's bound (world/raidShared.js RAID_CLAIM_AGE_MAX). */
 export const PILOT_CLAIM_AGE = 7_200_000;

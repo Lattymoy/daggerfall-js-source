@@ -1,33 +1,10 @@
 // @ts-check
-// LEVEL-45 (2026-10-27, mob: "need to always be 45", "not let over leveling waste a player time", "everyone is
-// converting"; the design in the project thread "Find my level fix"): ONLINE, EVERY CHARACTER'S TOP LEVEL IS 45, AND
-// IT LANDS ON THE LAST POINT ITS SKILLS CAN CLIMB.
-//
-// Daggerfall levels on the sum of six skills (skills.js levelUpSkillSum: the three primaries, the two best majors, the
-// best minor), one level for every 15 points it climbed since creation (advancement.js calculatePlayerLevel). Online
-// the masteries (masterSkills.js MASTERY_SLOTS, 3 / 2 / 1 since MASTER-THREE; 2 / 2 / 1 before it) all sit in those six,
-// so the sum's top is every counted skill mastered at EFFECTIVE_SKILL_MAX, 6 x 140 = 840 (800 at 2 / 2 / 1) - but how
-// far a character climbs to it depends on where its rolls started it, so the flat 15 gave a low roll its last level
-// early and a high one late. Here the climb is shared out instead:
-//
-//     level = floor((28 + 647 * climbed / (840 - start)) / 15),  never above 45
-//
-// The 28 is Daggerfall's own head start (a new character is 28/15 of the way to level 2), and 647 = 45 x 15 - 28, so
-// a start of 193 levels exactly as Daggerfall does and every start lands on 45.0 at 840 - never 44, never 46, and no
-// point past the cap climbed for nothing. A DEPARTURE from FormulaHelper.CalculatePlayerLevel, online; offline (and
-// Oblivion's leveling) is untouched.
-//
-// THE CONVERSION (onlineLevelConvert): every realm character's level is read again from its skills at its next join,
-// beside LEVEL-ONLINE-3's switch (realmCustoms.js crossLeveling). A start no roll can give - the anchor an Oblivion
-// character was given when it crossed (advancement.js levelUpSkillSumAnchor) - becomes the average roll's; a level
-// above what its skills earn comes down to it, its health to the even floor of its class at that level (levelEven.js);
-// a level its skills earned but it has not taken yet stays owed, for the level-up screen to give.
-//
-// BESIDE levelCap.js (FIELD BUGS 2026-10-26d's LEVEL-45, the owner: "Also bring the level cap to 45"): that leaf is the
-// cap itself, 45 on either lane, and offline it stands as made - Daggerfall's 15 a level, stopped at 45, nothing
-// lowering a level. Online this law reads the level instead, so the cap is reached on the last point rather than met
-// early or late, and the conversion lowers a level the skills no longer earn (mob: "everyone is converting") - the one
-// place a level comes down. This file imports the leaf, never the other way, so the leaf stays one.
+// LEVEL-45 online (2026-10-27, mob: "need to always be 45", "everyone is converting"; Port-Ledger A LEVEL-45).
+// Daggerfall's 15 a level gave a low roll its last level early and a high one late. Online the climb from the start to
+// the six-skill top (840) is shared out, so every start reaches 45 on its last point:
+//     level = floor((28 + 647 * climbed / (840 - start)) / 15)        647 = 45 x 15 - 28
+// A DEPARTURE from FormulaHelper.CalculatePlayerLevel. levelCap.js is the cap's leaf and offline's law; this reads it.
+// onlineLevelConvert reads every realm character's level again at its join - the one place a level comes down.
 
 import { EFFECTIVE_SKILL_MAX, SKILL_SOFT_CAP } from './skillSoftcap.js';
 import { MASTERY_SLOTS } from './masterSkills.js';

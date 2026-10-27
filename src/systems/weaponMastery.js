@@ -29,18 +29,6 @@
 // player's own, no peer's stand-in) at a foe - never a player (a refereed fight's stand-in is a player: combat/
 // duelCombat.js duelStub), never the Warden's ward, never in a refereed fight (sigil.js sigilDueling), never while
 // mentoring (the edge reads no climb then either), never the beast's claws (BAL6 balanced the curse on its own claws).
-//
-// WEAPON-GEAR (2026-10-27, mob: "Bow and weapon fix", "Those are needed for pve"; the design in the project thread "Find
-// my level fix"): THE WHOLE SKILL, GEAR AND ALL, PAST 200. The climb above reads the trained skill alone, so a weapon
-// skill's gear (an Enhances Skill enchantment, a Rare's or a Legendary's skill line, a set's) bought the to-hit and
-// nothing past it, while Hand-to-Hand's fists read the live skill whole in their roll (formulas.js handToHandMinDamage
-// / MaxDamage, H2H / 10 + 1 to H2H / 5 + 1): at the same kit a Longsword struck under a third of a fist. So every
-// weapon's blow - the four melee families' and the bow's, the Thunderlock's on Archery - is also worth its LIVE skill
-// (skills.js skillValue: the climb's effective value and every point on it) over WEAPON_GEAR_DIVISOR, and the blow takes
-// the greater of the two: below 200 nothing changes, past it a Longsword at skill 872 strikes x4.36, near a fist there
-// (x0.9), a Dai-Katana a little past one. Counted to WEAPON_GEAR_SKILL_MOST, the composite ceiling's measured top
-// (powerCeiling.js BLOW_TOPS.mastery). The same doors as the climb: mine, online, at a foe, never refereed (the duel's
-// wire clamps every skill to 100 in any case: combat/duelCombat.js DUEL_SKILL_MAX), never mentoring, never the beast.
 
 import { SKILLS, skillValue } from './skills.js';
 import { SKILL_SOFT_CAP, climbedSkill } from './skillSoftcap.js';
@@ -88,8 +76,9 @@ export function weaponClimb(entity, skill, { online = isOnlinePage() } = {}) {
  *  RELAY-SHARE: the one law (combat/healthShare.js) - such a body now reads the relay's own word of its health (its
  *  stand-in's owner's reader), so each half pays its own there too, and the mean only where no word is heard. */
 const shareOf = healthShare;
-/** WEAPON-GEAR: the percent `entity`'s LIVE `skill` past WEAPON_GEAR_DIVISOR makes a weapon's blow (0 to 400): mine,
- *  online, not mentoring, not the beast, never the fists (their roll reads the skill already). */
+/** WEAPON-GEAR (2026-10-27, mob: "Bow and weapon fix"; Martial-Specialisations.md section 4): the climb above reads the
+ *  trained skill, so gear bought a weapon no damage while the fists' roll read it whole. So a weapon's blow is also
+ *  worth its LIVE skill (gear and all) over 200: the percent here, 0 to 400. Online, mine, never the fists. */
 export function weaponGearPct(entity, skill, { online = isOnlinePage() } = {}) {
   if (!online || !entity?.isPlayer || entity.peer || entity._mentor || entity.isInBeastForm || !Number.isInteger(skill) || skill === SKILLS.HandToHand) return 0;
   const live = Math.min(WEAPON_GEAR_SKILL_MOST, skillValue(entity, skill));
