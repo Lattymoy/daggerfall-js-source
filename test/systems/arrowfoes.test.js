@@ -11,11 +11,15 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { ArrowFlight } from '../../src/combat/arrowFlight.js';
-import { MISSILE_COLLIDER_RADIUS } from '../../src/systems/spellcast.js';
+import { MISSILE_COLLIDER_RADIUS, ARROW_FLIGHT_SPEED } from '../../src/systems/spellcast.js';
 
 const read = (p) => readFileSync(p, 'utf8');
 
 const flight = () => new ArrowFlight({ getGpuMesh: () => null, collider: null });
+/** One step of a shaft's flight that is 1.25 units long. PIN MOVED (BAL-ARCHERY, bible/05-Combat/Balance-Arc.md
+ *  section 18): a shaft flies at ARROW_FLIGHT_SPEED, so the fixtures' 0.05 s step (MISSILE_SPEED's 1.25) is read
+ *  off the shaft's own speed - the geometry below stays as it was written. */
+const STEP = 1.25 / ARROW_FLIGHT_SPEED;
 
 test('AR1: an enemy arrow contacts a foe capsule and the hit hands over arrow AND target', () => {
   const f = flight();
@@ -23,10 +27,10 @@ test('AR1: an enemy arrow contacts a foe capsule and the hit hands over arrow AN
   const bear = { id: 'bear', dead: false };
   f.fire([0, 0.9, 0], [0, 0, 1], { enemy: true, shooterFoe: shooter, weapon: { name: 'Short Bow' }, aimFoe: bear });   // ROAD-H tail (review): the shaft was loosed AT the bear (DaggerfallMissile.cs:669)
   const hits = [];
-  // one 0.05s step is 1.25 units; the bear at z=1.5 sits inside the
+  // one STEP is 1.25 units; the bear at z=1.5 sits inside the
   // capsule sum from the post-step position (the contact is tested
   // AFTER the move, the player arm's own shape - no capsule sweep)
-  f.update(0.05, {
+  f.update(STEP, {
     foeTargets: [{ feet: [0, 0, 1.5], ref: bear }],
     onFoeHit: (m, t) => hits.push([m.weapon.name, t.id]),
   });
@@ -39,7 +43,7 @@ test('AR1: the SHOOTER is excluded and a dead foe is no target', () => {
   const shooter = { id: 'archer' };
   f.fire([0, 0.9, 0], [0, 0, 1], { enemy: true, shooterFoe: shooter, weapon: {} });
   const hits = [];
-  f.update(0.05, {
+  f.update(STEP, {
     // both stand INSIDE contact range on the release frame
     foeTargets: [
       { feet: [0, 0, 0.5], ref: shooter },
@@ -55,7 +59,7 @@ test('AR1: the player capsule is tested FIRST when both overlap', () => {
   const f = flight();
   f.fire([0, 0.9, 0], [0, 0, 1], { enemy: true, shooterFoe: { id: 'a' }, weapon: {} });
   const log = [];
-  f.update(0.05, {
+  f.update(STEP, {
     playerFeet: [0, 0, 0.5],
     onPlayerHit: () => log.push('player'),
     foeTargets: [{ feet: [0, 0, 0.5], ref: { id: 'bear' } }],
@@ -74,7 +78,7 @@ test('AR1/#64: a player arrow takes the PLAYER arm of the impact, never the enem
   const f = flight();
   f.fire([0, 0.9, 0], [0, 0, 1], { fromPlayer: true, weapon: {} });
   const hits = [];
-  f.update(0.05, {
+  f.update(STEP, {
     foeTargets: [{ feet: [0, 0, 0.5], ref: { id: 'bear' } }],
     onFoeHit: (m, t) => hits.push(['enemyArm', t.id]),
     onPlayerArrowHitFoe: (m, t) => hits.push(['playerArm', t.id]),
@@ -86,7 +90,7 @@ test('AR1: an arrow marked neither way still lands nothing - the arms are the SH
   const f = flight();
   f.fire([0, 0.9, 0], [0, 0, 1], {});
   const hits = [];
-  f.update(0.05, {
+  f.update(STEP, {
     foeTargets: [{ feet: [0, 0, 0.5], ref: { id: 'bear' } }],
     onFoeHit: (m, t) => hits.push(t.id),
     onPlayerArrowHitFoe: (m, t) => hits.push(t.id),

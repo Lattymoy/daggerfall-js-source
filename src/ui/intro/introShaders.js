@@ -41,7 +41,7 @@ vec3 skyColour(vec3 ray){
   vec3 c = mix(zenith, horizon, hz);
   c += (vec3(1.0, 0.34, 0.09) * pow(toward, 8.0) * 1.3 + vec3(0.5, 0.26, 0.2) * pow(toward, 2.5) * 0.18) * dawn * hz * hz;
   c += vec3(0.16, 0.07, 0.12) * dawn * exp(-up * 3.0) * 0.18;
-  if (ray.y < 0.0) c = mix(c, horizon * 0.55, smoothstep(0.0, -0.25, ray.y));
+  if (ray.y < 0.0) c = mix(c, horizon * 0.55, (1.0 - smoothstep(-0.25, 0.0, ray.y)));
   float cosS = dot(ray, uSun);
   c += uSunCol * (smoothstep(0.99972, 0.99992, cosS) * 7.0 + pow(max(cosS, 0.0), 380.0) * 1.1 + pow(max(cosS, 0.0), 22.0) * 0.16);
   return c;
@@ -323,7 +323,7 @@ void main(){
   // the land: stone paved in slabs, grass, sand, and past the lake the shore's meadows, woods and fields
   float g = fbm3(p * 0.05);
   vec2 slab = fract(p / vec2(2.4, 1.6) + vec2(floor(p.y / 1.6) * 0.37, 0.0));
-  float joint = (1.0 - smoothstep(0.0, 0.05, min(min(slab.x, 1.0 - slab.x), min(slab.y, 1.0 - slab.y)))) * smoothstep(400.0, 60.0, length(vW - uEye));
+  float joint = (1.0 - smoothstep(0.0, 0.05, min(min(slab.x, 1.0 - slab.x), min(slab.y, 1.0 - slab.y)))) * (1.0 - smoothstep(60.0, 400.0, length(vW - uEye)));
   vec3 stone = vec3(0.6, 0.57, 0.5) * (0.88 + 0.2 * g) * (1.0 - joint * 0.3);
   vec3 grass = mix(vec3(0.27, 0.36, 0.16), vec3(0.36, 0.42, 0.2), g);
   vec3 sand = vec3(0.68, 0.62, 0.47) * (0.9 + 0.15 * g);
@@ -379,7 +379,7 @@ float courses(vec3 w, vec3 n, float h, float l){
 void main(){
   vec3 n = normalize(gl_FrontFacing ? vN : -vN);
   vec3 alb; float spec = 0.0, rough = 60.0;
-  float near = smoothstep(900.0, 120.0, length(vW - uEye));
+  float near = (1.0 - smoothstep(120.0, 900.0, length(vW - uEye)));
   if (vMat == 0) { // marble: pale, veined
     float v = abs(fbm3(vW.xz * 0.025 + vW.y * 0.012) - 0.5);
     alb = vec3(0.74, 0.72, 0.67) * (0.95 + 0.08 * vnoise(vW.xy * 0.05 + vW.zy * 0.05)) * (1.0 - (v < 0.02 ? 0.12 : 0.0) * near);
@@ -456,7 +456,7 @@ void main(){
   if (uPart == 1) {
     alb = uRoofs[int(vRoof + 0.5)] * (0.8 + 0.3 * vSeed);
     float rows = step(0.5, fract(vW.y / 0.42));
-    alb *= 1.0 - 0.12 * rows * smoothstep(300.0, 60.0, dist);
+    alb *= 1.0 - 0.12 * rows * (1.0 - smoothstep(60.0, 300.0, dist));
   } else {
     alb = vWall * (0.86 + 0.22 * vSeed);
     float along = abs(n.x) > abs(n.z) ? vW.z : vW.x;
@@ -470,7 +470,7 @@ void main(){
     // the windows, a floor every 3.2 m; before dawn a share of them lit
     vec2 cell = vec2(along / 2.8, (y - 2.0) / 3.2);
     vec2 f = fract(cell);
-    float win = step(0.36, f.x) * step(f.x, 0.64) * step(0.3, f.y) * step(f.y, 0.74) * step(1.0, cell.y) * step(y, vH - 1.0) * smoothstep(700.0, 200.0, dist);
+    float win = step(0.36, f.x) * step(f.x, 0.64) * step(0.3, f.y) * step(f.y, 0.74) * step(1.0, cell.y) * step(y, vH - 1.0) * (1.0 - smoothstep(200.0, 700.0, dist));
     float on = step(0.6, hash13(vec3(floor(cell), vSeed * 97.0)));
     alb = mix(alb, vec3(0.1, 0.11, 0.13), win);
     glow = vec3(1.0, 0.62, 0.28) * win * on * uNight * 2.4;
@@ -581,7 +581,7 @@ void main(){
       acc += s.a * max(dot(s.rgb, vec3(0.3, 0.5, 0.2)) - 0.35, 0.0) * wgt;
       wgt *= 0.96;
     }
-    float fall = smoothstep(1.3, 0.0, length((uv - uSunUv) * asp));
+    float fall = (1.0 - smoothstep(0.0, 1.3, length((uv - uSunUv) * asp)));
     c += uRayCol * acc / 40.0 * uSunVis * 2.2 * fall;
     c += uRayCol * uFlare * exp(-length((uv - uSunUv) * asp) * 3.5) * 0.6;
   }

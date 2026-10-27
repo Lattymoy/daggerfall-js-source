@@ -76,7 +76,8 @@ import { getPref } from '../uiPrefs.js';
 import { armorBodyParts, equipTableOf, wearableItem } from '../equip.js';   // LR4: the parts a piece covers, the foe's worn table; RARITY-WEAR: whether any slot takes it
 import { registerEntityFold, registerWeaponDamageMod, newMods, EMPTY_MODS } from '../entityMods.js';   // RF1: the fold is one of the entity's, read once per channel
 import { templateByIndex, itemBaseValue, isAmmunition } from '../item/itemTemplates.js';   // AUDIT 68 S27-ammo-arrow-only: the ammunition registry's home
-import { rriVariantWord } from '../roleplayRealismItems/rriItems.js';   // DISC29-B: the word Roleplay & Realism: Items' mint put before the template's name
+import { rriVariantWord, rriNativeMaterialValue } from '../roleplayRealismItems/rriItems.js';   // DISC29-B: the word Roleplay & Realism: Items' mint put before the template's name; ARMOR-LEAN: and the class's NativeMaterialValue, the family a piece of armour belongs to
+import { familyOfNative, MATERIAL_FAMILY } from '../armorMaterials.js';   // ARMOR-LEAN: leather, chain or plate
 import { recipeById, MASTERWORK } from '../../net/recipeLaw.js';   // NAME-KEPT: a crafted piece's base - a jewel's recipe name, a Masterwork's mark (the Worker's law too; it imports no loot)
 import { STAT_KEYS_ORDER } from '../statMods.js';
 import { SKILL_NAMES, SKILL_COUNT, SKILLS, MAGIC_SKILLS } from '../skills.js';
@@ -681,7 +682,10 @@ export function kindLines(id, item, held = []) {
 /** AFFIX-LINES: a kind's weight in a line's draw - a number kind's lines (kindLines); a kind that DOES something (LOOT4)
  *  one while it has a line to give, its params one power's flavours (an elemental's fire or frost, a slayer's foe), so
  *  the proc pass's even draw over its kinds (addProcLine) is this draw too. */
-export const drawWeight = (id, item, held = []) => { const n = kindLines(id, item, held); return AFFIX_KINDS[id]?.proc ? Math.min(1, n) : n; };
+export const drawWeight = (id, item, held = [], lean = armorLean(item)) => {
+  const n = kindLines(id, item, held);
+  return AFFIX_KINDS[id]?.proc ? Math.min(1, n) : n * (lean?.kinds[id] ?? 1);   // ARMOR-LEAN: a family's weight on a number kind
+};
 
 /** LOOT1 (the Loot arc, bible/06-Systems/Loot-Arc.md - AUDIT-LR's second note: "a warhammer can roll +20 Impish ... a
  *  weighting toward the group's own combat skills would be a tuning slice"): A SKILL AFFIX LEANS TO THE ITEM'S OWN
@@ -701,6 +705,68 @@ const MIND_KIN = Object.freeze([...MAGIC_SKILLS, S.Etiquette, S.Streetwise, S.Me
 /** LOOT14: a garment's - the street's seven, and the feet's five for what is worn on them. */
 const STREET_KIN = Object.freeze([S.Etiquette, S.Streetwise, S.Mercantile, S.Stealth, S.Pickpocket, S.Lockpicking, S.Medical]);
 const FEET_KIN = Object.freeze([S.Running, S.Jumping, S.Climbing, S.Swimming, S.Stealth]);
+// ── ARMOR-LEAN: each armour family rolls its own kind of lines ────────
+/** ARMOR-LEAN (2026-10-26, a player: "can we make differences regarding stat distribution for all types when stats are
+ *  rolled on them"): LEATHER, CHAIN AND PLATE DRAW DIFFERENT LINES. The bands (AFFIX_RANGES) are every piece's - a Rare
+ *  is a Rare - but WHICH lines a piece of armour rolls leans to its family:
+ *   - LEATHER, the light hide: the first line is its armour a third of the time (not half), carrying capacity and the
+ *     attributes come up more, and those lean to Agility and Speed (Luck a little); its resistances to Poison and Frost.
+ *   - CHAIN, the ward: armour first half the time, as before; resistances twice as often, leaning to Magic, Fire and
+ *     Frost and away from Shock (the rings carry it); attributes to Endurance, Agility and Willpower.
+ *   - PLATE, the wall: armour first two times in three and three times the weight after; carrying capacity twice (the
+ *     plate is heavy), attributes to Strength and Endurance and away from Agility and Speed; resistances rarer, to Fire
+ *     and Frost.
+ *  SKILLS ARE EVERY FAMILY'S ALIKE (the player, 2026-10-26: "plate shouldnt have weapon skills more often keep that for
+ *  every type"): how often a skill line comes up, and which skill it is (LOOT1's body kin), lean to no family.
+ *  A WEIGHTING, NEVER A FENCE: every line any piece of armour could roll, every family still can.
+ *
+ *  ONE ROLL, AS EVERY DRAW IT LEANS TOOK (LOOT1's law, pickByLines, pickSkill): a family's weights move WHERE a roll
+ *  lands, never how many a draw takes, and a piece rolls as many lines as its seed gave it. A line that lands on another
+ *  kind draws what that kind draws after it (a param, or none), so a seeded hoard holding a piece of armour may roll on
+ *  from a moved stream - as AFFIX-LINES' and CAST-SPEED's moves did. A crafted piece leans from MINT_V_ARMOR_LEAN on
+ *  (net/productRecord.js) - a record made before mints the piece it always minted (rollAffixes `lean`).
+ *
+ *  Weights multiply: `kinds` a kind's lines in a line's draw (drawWeight), `stat`/`resist` one param against the rest
+ *  (absent 1), `own` the first line's chance to be the armour (rollAffixes). */
+export const ARMOR_LEAN = Object.freeze({
+  [MATERIAL_FAMILY.Leather]: Object.freeze({
+    own: 0.35,
+    kinds: Object.freeze({ armor: 0.5, weight: 2, stat: 1.5, resist: 0.75 }),
+    stat: Object.freeze({ agility: 3, speed: 3, luck: 1.5, strength: 0.5, endurance: 0.5 }),
+    resist: Object.freeze({ poison: 2, frost: 1.5 }) }),
+  [MATERIAL_FAMILY.Chain]: Object.freeze({
+    own: 0.5,
+    kinds: Object.freeze({ resist: 2 }),
+    stat: Object.freeze({ endurance: 2, agility: 1.5, willpower: 1.5 }),
+    resist: Object.freeze({ magic: 2, fire: 1.5, frost: 1.5, shock: 0.5 }) }),
+  [MATERIAL_FAMILY.Plate]: Object.freeze({
+    own: 0.65,
+    kinds: Object.freeze({ armor: 3, weight: 2, stat: 1.25, resist: 0.75 }),
+    stat: Object.freeze({ strength: 3, endurance: 3, agility: 0.4, speed: 0.4 }),
+    resist: Object.freeze({ fire: 2, frost: 1.5, shock: 0.5, magic: 0.75 }) }),
+});
+/** ARMOR-LEAN: a piece of armour's lean (ARMOR_LEAN), by the class's NativeMaterialValue - the family the equip gate and
+ *  the card's Type row read (itemInfo.js itemArmorTypeLine); null for anything not armour. */
+export function armorLean(item) {
+  if (item?.group !== 'Armor') return null;
+  return ARMOR_LEAN[familyOfNative(rriNativeMaterialValue(item))] ?? null;
+}
+/** ARMOR-LEAN: one of `list` by weight - ONE roll, as `pick` takes, its place in [0, 1) spread over the weights. */
+function pickWeighted(list, weightOf, rolls) {
+  const r = rolls();
+  const w = list.map((x) => Math.max(0, weightOf(x)));
+  const sum = w.reduce((n, x) => n + x, 0);
+  if (!(sum > 0)) return list[Math.floor(r * list.length)];
+  let at = r * sum;
+  for (let i = 0; i < list.length; i++) { if (at < w[i]) return list[i]; at -= w[i]; }
+  return list[list.length - 1];
+}
+/** ARMOR-LEAN: a stat's or a resistance's param on a family's lean; any other kind, or no lean, the even `pick`. */
+const leanedParam = (lean, id, free, rolls) => (lean?.[id] && (id === 'stat' || id === 'resist')
+  ? pickWeighted(free, (p) => lean[id][p] ?? 1, rolls) : pick(free, rolls));
+/** Tests only. */
+export const _pickWeightedForTests = pickWeighted;
+
 /** The skills an item leans to: `{ own, kin }` - a weapon's own skill (null for one with none) and its kin. */
 export function skillKin(item) {
   if (item?.group === 'Weapons') return { own: weaponSkillUsed(item.templateIndex), kin: STRIKE_KIN };
@@ -749,7 +815,7 @@ export const _pickSkillForTests = pickSkill;
  *  rolled lines take (a skill to the item's own and its kin, a garment's to the street's; a standing to its dress), one
  *  roll as `pick` takes, so the draws after it stand where they were. An even draw over every skill put "+17 Mysticism"
  *  on a Formal Cloak. */
-const lineParam = (item, id, free, rolls) => (id === 'skill' ? pickSkill(item, free, rolls) : id === 'standing' ? pickStanding(item, free, rolls) : pick(free, rolls));
+const lineParam = (item, id, free, rolls) => (id === 'skill' ? pickSkill(item, free, rolls) : id === 'standing' ? pickStanding(item, free, rolls) : leanedParam(armorLean(item), id, free, rolls));   // ARMOR-LEAN: a stat or resistance on armour's family
 
 /** LR4 (the audit): ONE AFFIX RECORD, VALID - a known kind, a param the
  *  kind names (and none for a kind without), an integer value from 1 to
@@ -785,7 +851,8 @@ export const affixWord = (a, tier) => (validAffix(a) ? AFFIX_KINDS[a.id].word(BA
  *  mintPiece): each pick even over the KINDS, and a Rare's last pick held
  *  to whichever name slot its lines left empty - so a record made before
  *  mints the piece it always did. */
-export function rollAffixes(item, tier, rolls = Math.random, { byLines = true } = {}) {
+export function rollAffixes(item, tier, rolls = Math.random, { byLines = true, lean: leans = true } = {}) {   // ARMOR-LEAN: `lean` false a product record's law before MINT_V_ARMOR_LEAN
+  const lean = leans && byLines ? armorLean(item) : null;
   const kinds = AFFIX_IDS.filter((id) => AFFIX_KINDS[id].groups.includes(item.group) && !AFFIX_KINDS[id].proc);   // LOOT4: the numbers alone - a door's last pass adds a kind that does something
   const [min, max] = AFFIX_COUNTS[tier] ?? [0, 0];
   const count = rangeInt(min, max, rolls);
@@ -798,7 +865,7 @@ export function rollAffixes(item, tier, rolls = Math.random, { byLines = true } 
     if (!k.params) { taken.add(id); return { id, value }; }
     const free = kindParams(id, item).filter((p) => !taken.has(`${id}:${p}`));   // LOOT14: a garment's attribute is Personality alone
     if (id === 'standing') { const g = pickStanding(item, free, rolls); taken.add(`${id}:${g}`); return { id, param: g, value }; }   // LOOT14: a garment's standing leans to its dress
-    const param = id === 'skill' ? pickSkill(item, free, rolls) : pick(free, rolls);   // LOOT1: a skill leans to the item's own
+    const param = id === 'skill' ? pickSkill(item, free, rolls) : leanedParam(lean, id, free, rolls);   // LOOT1: a skill leans to the item's own; ARMOR-LEAN: a stat or resistance to armour's family
     taken.add(`${id}:${param}`);
     return { id, param, value };
   };
@@ -813,8 +880,8 @@ export function rollAffixes(item, tier, rolls = Math.random, { byLines = true } 
       const need = !has('prefix') ? 'prefix' : !has('suffix') ? 'suffix' : null;
       if (need) { const p = pool.filter((id) => AFFIX_KINDS[id].slot === need); if (p.length) pool = p; }
     }
-    const draw = () => (byLines ? pickByLines(pool, (k) => drawWeight(k, item, out), rolls) : pick(pool, rolls));   // AFFIX-LINES: over the lines
-    const id = i === 0 && own && pool.includes(own) && rolls() < 0.5 ? own : draw();
+    const draw = () => (byLines ? pickByLines(pool, (k) => drawWeight(k, item, out, lean), rolls) : pick(pool, rolls));   // AFFIX-LINES: over the lines
+    const id = i === 0 && own && pool.includes(own) && rolls() < (lean?.own ?? 0.5) ? own : draw();   // ARMOR-LEAN: the family's share
     out.push(mint(id));
   }
   return out;
@@ -1391,20 +1458,20 @@ export const affixesWorth = (affixes, item = null) => Math.round((affixes ?? [])
  *  enchantment. Common leaves the item as DFU minted it; so does any
  *  tier the ladder does not roll (SET6: an Aetheric piece is a fixed
  *  record, minted whole by systems/aetheric.js - never a roll). */
-export function applyRarity(item, tier, rolls = Math.random, legendaryPool = null, { family = null, fits = null, byLines = true } = {}) {   // AFFIX-LINES: `byLines` false a product record's old law (rollAffixes)
+export function applyRarity(item, tier, rolls = Math.random, legendaryPool = null, { family = null, fits = null, byLines = true, lean = true } = {}) {   // ARMOR-LEAN: `lean` false a product record's law before MINT_V_ARMOR_LEAN   // AFFIX-LINES: `byLines` false a product record's old law (rollAffixes)
   if (!item || !ROLLED_TIERS.includes(tier)) return item;
   let affixes;
   let enchantment = null;
   if (tier === 'legendary') {
     const pool = legendaryPool ?? legendariesFor(item);
-    if (!pool.length) return applyRarity(item, 'rare', rolls, null, { byLines });   // no record for this item: the tier below
+    if (!pool.length) return applyRarity(item, 'rare', rolls, null, { byLines, lean });   // no record for this item: the tier below
     const rec = pickLegendary(pool, family, rolls);   // LOOT6: a source's family weighs its own records
     affixes = rec.affixes.map((a) => ({ ...a }));
     enchantment = rec.enchantment;
     item.legendary = rec.id;
     item.name = rec.name;
   } else {
-    affixes = rollAffixes(item, tier, rolls, { byLines });
+    affixes = rollAffixes(item, tier, rolls, { byLines, lean });
     item.name = rarityName(item, tier, affixes);
     if (tier === 'rare') enchantment = rareFlavour(RARE_FLAVOURS[item.group] ?? RARE_FLAVOURS.Jewellery, rolls, fits);
   }
@@ -1699,7 +1766,7 @@ export function exaltLegendary(item, rolls = Math.random) {
   const free = carried.has(id) ? freeParams(id) : kindParams(id, item);
   // AUDIT LOOT II A7: a garment's on the wardrobe's leans (LOOT14); a weapon's, armour's or jewel's the even draw it always
   // was - the seeded spoils exalt those through lastPass, and their seeds stand
-  const line = k.params ? { id, param: isGarment(item) ? lineParam(item, id, free, rolls) : pick(free, rolls), value } : { id, value };
+  const line = k.params ? { id, param: isGarment(item) ? lineParam(item, id, free, rolls) : pick(free, rolls), value } : { id, value };   // ARMOR-LEAN: armour's Exalted line keeps A7's even draw (its line's kind still weighs by its family - drawWeight)
   item.affixes = withLine(item.affixes, line);   // TECH1: before a technique's line
   item.exalted = true;
   item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + exaltedWorth(item) + affixesWorth([line], item);   // LOOT14: a garment's at half
@@ -2144,7 +2211,7 @@ export function reforgeAffix(item, index, rolls = Math.random) {
   const [lo, hi] = AFFIX_RANGES[id][tier];
   const value = rangeInt(tier === 'legendary' ? Math.ceil((lo + hi) / 2) : lo, hi, rolls);
   const leaned = id === 'skill' ? pickSkill : id === 'standing' ? pickStanding : null;   // LOOT1's lean, LOOT14's
-  const line = k.params ? { id, param: leaned ? leaned(item, freeParams(id), rolls) : pick(freeParams(id), rolls), value } : { id, value };
+  const line = k.params ? { id, param: leaned ? leaned(item, freeParams(id), rolls) : leanedParam(armorLean(item), id, freeParams(id), rolls), value } : { id, value };   // ARMOR-LEAN: armour's stat or resistance on its family
   const count = Math.min(REFORGES_MAX, reforgeCount(item) + 1);
   item.affixes = item.affixes.map((a, i) => (i === index ? line : a));
   item.reforges = count;

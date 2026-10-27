@@ -40,7 +40,7 @@ test('INT7 THE LAW: a weapon\'s reach is its DFU top and its material\'s modifie
   const dagger = { group: 'Weapons', templateIndex: 113, material: 0 };
   const bow = { group: 'Weapons', templateIndex: 130, material: 1 };
   assert.deepEqual(armsOf([dagger, dai, { group: 'Armor', templateIndex: 102, material: 0x0209 }], lawful), [27, 0], 'the most, and armour arms nothing');
-  assert.deepEqual(armsOf([dagger, bow], lawful), [18, 1], 'a bow\'s own reach, and its shaft');
+  assert.deepEqual(armsOf([dagger, bow], lawful), [19, 1], 'a bow\'s own reach, and its shaft');   // PIN MOVED (BAL-ARCHERY, Balance-Arc.md section 18): a Long Bow's top is 19
   assert.deepEqual(armsOf([dagger, dai, bow], (it) => it !== dai && it !== bow), [5, 0], 'a piece the law refuses arms nobody - nor its bow');
   assert.deepEqual(armsOf([], lawful), [0, 0], 'a bare pack: a fist alone');
   assert.deepEqual(armsOf(null, lawful), [0, 0]);
