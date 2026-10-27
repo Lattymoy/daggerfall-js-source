@@ -10,6 +10,7 @@
 import '../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { mentorProfile } from '../../src/systems/mentorMode.js';   // MENTOR2: the profile the producer mints
 import { readFileSync } from 'node:fs';
 import * as acorn from 'acorn';
 import { setPref, _resetForTests } from '../../src/systems/uiPrefs.js';
@@ -116,9 +117,11 @@ test('BAL11 the reader: the level the world is built around and the page\'s Reno
     online(30);
     close(heroThreatOf({ level: 20 }).damage, 2.2838, 'online: the level and the Renown');
     close(heroThreatOf({ level: 10 }).damage, 1.01 ** 15, 'online at level 10: the Renown alone');
-    // mentoring: the group's level (mentorMode.js effectiveLevel), and the Firmament asleep - no Renown
-    close(heroThreatOf({ level: 30, _mentor: { level: 15 } }).damage, 1.07 ** 5, 'a mentor: the group\'s level, no Renown');
-    assert.equal(heroThreatOf({ level: 30, _mentor: { level: 8 } }), null, 'a mentor of a level-8 group: nothing');
+    // mentoring: the level the world is built at (mentorMode.js effectiveLevel - the group's, MENTOR2's worldLevel), no Renown
+    const mentor = (group) => ({ level: 30, _mentor: mentorProfile({ level: 30 }, [group]) });
+    assert.deepEqual([mentor(14)._mentor.worldLevel, mentor(7)._mentor.worldLevel], [15, 8], 'the group\'s level, plus one');
+    close(heroThreatOf(mentor(14)).damage, 1.07 ** 5, 'a mentor: the group\'s level, no Renown');
+    assert.equal(heroThreatOf(mentor(7)), null, 'a mentor of a level-8 group: nothing');
     // a puppet: my threat's blows, its health its owner's word
     const p = heroThreatOf({ level: 20 }, { puppet: true });
     close(p.damage, 2.2838, 'a puppet\'s blows at me: mine'); assert.equal(p.health, 1, 'a puppet\'s health: its owner\'s');

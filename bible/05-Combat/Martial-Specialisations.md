@@ -88,8 +88,7 @@ nothing a player could see. That is where the identity goes.
 - **Held and awake.** A path is HELD (`martialHeld`) by my own player entity (never a peer's stand-in) with Master Skills
   in force and both its skills mastered - what answers the technique key with its signature (a technique rides the
   formula, whose skills mentoring already lowers, as a loot line's does). It is AWAKE (`martialAwake`), and its passive
-  and rider act, while it is held and I am not mentoring - and the powers add no refereed fight (`sigil.js`
-  sigilDueling) and not the beast (`isInBeastForm` - BAL6 balanced the curse on its own claws; the runner's own word,
+  and rider act, while it is held, mentoring too (MENTOR2) - and the powers add no refereed fight (`sigil.js` sigilDueling) and not the beast (`isInBeastForm` - BAL6 balanced the curse on its own claws; the runner's own word,
   "the beast knows no technique").
 - **Never at a player.** A technique never meets a player's body (TECH law 3: neither resolution weighs one), every blow
   modifier, strike and rider here refuses a player target and the Warden's ward, and a duel's blow at me passes my
@@ -138,7 +137,28 @@ swing frame of every wielder on a mod's arm). At Speed 100 a dagger already swin
 pace there is less than x1.4 (recorded, section 9).
 
 Online alone, as BAL9b and SCHOOLS2: offline the game is Daggerfall's. MY blow at a foe - never a player, never the
-Warden's ward, never in a refereed fight, never while mentoring, never the beast's claws.
+Warden's ward, never in a refereed fight, never the beast's claws.
+
+**WEAPON-GEAR** (2026-10-27, mob: "Bow and weapon fix", "Those are needed for pve"; the design in the project thread
+"Find my level fix"). The climb above reads the TRAINED skill alone, so a weapon skill's gear - an Enhances Skill
+enchantment, a Rare's or a Legendary's skill line - bought the to-hit and nothing past it, while the fists read the live
+skill whole in their roll (H2H / 10 + 1 to H2H / 5 + 1). At one kit (skill 872, Critical Strike 860) a Daedric Longsword
+struck ~390 to a fist's ~1,360. Now every weapon's blow - the four melee families' and the bow's, the Thunderlock's on
+Archery - is also worth its LIVE skill (`skills.js` skillValue: the climb's effective value and every point on it) over
+`WEAPON_GEAR_DIVISOR` 200, and takes the greater of that and the climb's (`weaponMastery.js:"export function weaponGearPct("`):
+
+| live skill | x | Daedric Longsword (1-hand) | Daedric Dai-Katana (2-hand) | fist |
+| --- | --- | --- | --- | --- |
+| 140, no gear | the climb's x1.4 | 97 | 124 | 77 |
+| 500 | x2.5 | 435 | 555 | 516 |
+| 872 | x4.36 | ~1,215 | ~1,550 | ~1,360 |
+
+(average blows that crit, Critical Strike at the same value, STR and AGI 100, an expert class - a paper measure, not a
+run). Below 200 nothing changes; the fists keep their own roll. Counted to `WEAPON_GEAR_SKILL_MOST` 1,000 (x5), the
+ceiling's mastery top (`Power-Ceiling.md`). The same doors as the climb: offline Daggerfall's, never a player, never
+refereed (the duel's wire clamps the skill to 100 in any case: `combat/duelCombat.js` DUEL_SKILL_MAX), never mentoring,
+never the beast. A DEPARTURE from DFU, whose weapon damage reads no skill at all. Pinned by
+`test/combat/weapon_gear.test.js` (4), `tools/mutants/weapon_gear.json` (7 dead).
 
 ## 5. MARTIAL3/4 - the fifteen paths
 
@@ -293,7 +313,7 @@ Recorded by AUDIT MARTIAL, not changed:
 none a loot technique, every number literal), the choice and its refusals, held and awake, an arcane and a martial path
 together, the save's round trip; the signature in hand through the real runner (a line wins, the bare hand, gloves with
 and without a line, the claws, the Thunderlock, a path not held, the ladder off, the shared cooldown of a real press);
-every weapon past 100 through the real blow registry on both sides of its line, and asleep offline, mentoring, in a duel,
+every weapon past 100 through the real blow registry on both sides of its line, and asleep offline, in a duel,
 as the beast, at a player or the Warden; the short blades' handling in all three swing arms and the pace with its cap
 and floor; the fists' modifiers in both cores and never the claws; every passive through its seam (the damage door and
 the evasion through the real `hurtPlayer`); every rider through the landing door and the door told by the real

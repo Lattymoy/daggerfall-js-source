@@ -94,10 +94,10 @@ under a name with no top, fails the source sweep.
 | the sets | +200% | Nocturnal's Shroud 4 (Nightfall, +60% on an unaware foe) and the Starspun Weave 4 (Bound in Silk, +140% on the fourth blow) |
 | the loot | +240% | Nightwhisper's Silent Death +100%, the Night Mother's Embrace +50%, the Duelist's Vambrace +60%, an Exalted slayer's line +30% |
 | the sky | +50% | the Firmament's whole blow, its own cap (`BLOW_TOTAL_CAP`) |
-| mastery | +80% | an axe or a hammer at a skill of 200, which reads as 140 effective: 2% an effective point past 100 |
+| mastery | +400% | WEAPON-GEAR: a weapon skill's live value, gear and all, at the most counted, 1,000, over 200 (x5) - more than the climb's own +80% (an axe or a hammer at a skill of 200, which reads as 140 effective: 2% an effective point past 100), and the blow takes the greater |
 | the paths | +40% | a martial path's own cap (`MARTIAL_BLOW_MOST`) |
 
-Together, x43.18 (`systems/powerCeiling.js:"export const BLOW_MOST = Object.values(BLOW_TOPS).reduce((k, p) => k * (1 + p / 100), 1);"`).
+Together, x119.95 - x43.18 before WEAPON-GEAR (2026-10-27, mob: "Bow and weapon fix"; `Martial-Specialisations.md` section 4) raised mastery's top (`systems/powerCeiling.js:"export const BLOW_MOST = Object.values(BLOW_TOPS).reduce((k, p) => k * (1 + p / 100), 1);"`).
 
 AUDIT HORIZONTAL D7: mastery's row read as 200%. The skill pays through the soft cap, so a raw 200 is 140 effective
 and pays 40 points (`tools/powerCeiling.mjs:"export const masteryBlowTop = () =>"`; a measure that read the raw skill
@@ -124,7 +124,7 @@ paths' riders).
 **The measurement.** `node tools/powerCeiling.mjs` prints both tables and each kit. BAL7's kit harness was never
 committed (the tree holds BAL11's `tools/heroMeasure.mjs`), so this is a new measure, on BAL7's model: the strongest
 legal kit, minted by its own producers. No one blow meets every registry's best moment at once (First Blood is a
-foe's first blow, Bound in Silk its fourth), so no blow today reaches x43.18. By execution, the sigil, the sets and
+foe's first blow, Bound in Silk its fourth), so no blow today reaches x119.95. By execution, the sigil, the sets and
 the loot together reach x11.42 through the real runner, whole (`test/combat/powerceiling.test.js`). The ceiling is a
 ratio, so BOW-TOPS' new bow tops (17 and 19, `Balance-Arc.md` section 18) move the blow it multiplies, not the ceiling.
 

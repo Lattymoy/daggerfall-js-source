@@ -90,10 +90,10 @@
     ]
   },
   {
-    "name": "AUF-L1L2-mentor-awake",
+    "name": "AUF-L1L2-MENTOR2-a-life-star-scaled",
     "file": "src/systems/firmamentLive.js",
-    "old": "export const firmStat = (key) => (firmamentInForce() && !_mentoring ? _stats[key] ?? 0 : 0);",
-    "new": "export const firmStat = (key) => (firmamentInForce() ? _stats[key] ?? 0 : 0);",
+    "old": "(k === 1 || statDef(key)?.kind === 'life' ? v : Math.round(v * k))",
+    "new": "(k === 1 ? v : Math.round(v * k))",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "AUF-L1L2-mentor-untold",
     "file": "src/systems/firmamentLive.js",
-    "old": "  _mentoring = !!on;\n  tell();",
-    "new": "  _mentoring = !!on;",
+    "old": "  _mentorScale = v;\n  tell();",
+    "new": "  _mentorScale = v;",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -525,8 +525,8 @@
   {
     "name": "AUF-L5H5-quiet-ignored-by-life",
     "file": "src/systems/firmamentPowers.js",
-    "old": "const life = (e) => (!_quiet && mine(e) && !e?._mentor ? firmamentStats() : NONE);",
-    "new": "const life = (e) => (mine(e) && !e?._mentor ? firmamentStats() : NONE);",
+    "old": "const life = (e) => (!_quiet && mine(e) ? firmamentStats() : NONE);",
+    "new": "const life = (e) => (mine(e) ? firmamentStats() : NONE);",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -596,9 +596,9 @@
   },
   {
     "name": "AUF-L1L2-partyframe-unsaid",
-    "file": "src/scenes/world.js",
-    "old": "    setFirmamentMentoring(!!playerEntity._mentor);",
-    "new": "    void setFirmamentMentoring;",
+    "file": "src/scenes/mentorHost.js",
+    "old": "    setFirmamentMentorScale(mentorPowerScale(me));",
+    "new": "    void setFirmamentMentorScale;",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
