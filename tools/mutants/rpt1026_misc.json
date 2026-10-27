@@ -258,5 +258,35 @@
       "test/combat/rpt1026_misc_cast.test.js"
     ],
     "note": "CAST-PACE: a paced arm's spell is held for the key again - a frame late, and on a key that does not come, the whole section"
+  },
+  {
+    "name": "rpt1026-misc-spell-short-unscaled",
+    "file": "src/player/eyeOfTheBeholder/eotbSprite.js",
+    "old": "export const EOTB_RECORD_SCALE = Object.freeze({ 112374: Object.freeze({ from: 45, to: 59, scale: 80 / 110 }) });",
+    "new": "export const EOTB_RECORD_SCALE = Object.freeze({});",
+    "tests": [
+      "test/player/eyeOfTheBeholder/rpt1026_misc_eotb.test.js"
+    ],
+    "note": "SPELL-SHORT: set 10's spell sheets sized as the XML has them - the Fighter Mage (female) shrinks as a spell comes up"
+  },
+  {
+    "name": "rpt1026-misc-spell-short-unread",
+    "file": "src/player/eyeOfTheBeholder/eotbSprite.js",
+    "old": "  const s = k * eotbRecordScale(archive, record);",
+    "new": "  const s = k;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/rpt1026_misc_eotb.test.js"
+    ],
+    "note": "SPELL-SHORT: the door every caller sizes a sprite through never reads the mod's record scale"
+  },
+  {
+    "name": "rpt1026-misc-spell-short-xml-lost",
+    "file": "src/player/eyeOfTheBeholder/eotbSprite.js",
+    "old": "  return s === 1 ? xml : { ...xml, scale: xml.scale * s };",
+    "new": "  return s === 1 ? xml : { scale: xml.scale * s, x: 0, y: 0 };",
+    "tests": [
+      "test/player/eyeOfTheBeholder/rpt1026_misc_eotb.test.js"
+    ],
+    "note": "SPELL-SHORT: the scaled record loses the mod's XML offset - the figure stands off its feet"
   }
 ]
