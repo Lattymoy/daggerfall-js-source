@@ -140,7 +140,7 @@ import { dungeonMap3dOn, tamrielMapOn } from './map/mapSkin.js';   // EM3-3D: th
 // TAMRIEL1 (2026-10-08, Mac: "the entirety of tamriel ... connected as a gigantic map ... seen by players ingame"): the
 // continent inked round the Bay on the world sheet - the sheet's pan box grows to the whole frame, the home view stays
 // the Bay's own fit, and past that fit the sheet is on the continent (ui/tamrielInk.js; bible/03-World/Tamriel.md)
-import { tamrielInkFor, paintTamrielInk, paintPastBay, pastBayStamp, tamrielHoverAt, tamrielCityAt, tamrielCityBucket, onContinent, ARENA_KIND_GLYPHS, releasePastBayInk, viewLeavesBay } from './tamrielInk.js';   // TESA2: the press's city beside the hover's
+import { tamrielInkFor, paintTamrielInk, paintPastBay, pastBayStamp, tamrielHoverAt, tamrielCityAt, tamrielCityBucket, onContinent, ARENA_KIND_GLYPHS, releasePastBayInk, viewLeavesBay, tamrielFindRows } from './tamrielInk.js';   // TESA2: the press's city beside the hover's; BAY-LEFT-MAPS C9: the find box's places past the Bay
 import { tamrielFrameInBay, inBay } from '../world/tamriel/tamrielFrame.js';
 import { tamrielLandVersion } from '../world/tamriel/tamrielLand.js';   // TAMRIEL3: the trace's version, in the static key
 import { arenaPlacesVersion } from '../world/arenaPlaces.js';   // TESA1: the places' version past the Bay, beside it
@@ -1330,6 +1330,7 @@ export class HeldMapWindow {
         // host's atlas (deps.tamrielPlacesIn) - in each kind's hue as the Bay's
         const tamOpts = { paperW: env.paperW, paperH: env.paperH, continent: onContinent(env.view.scale, bayFit), bayFit,
           band: env.band, filters: this.filters, inks: this._markInks(), placesIn: this.deps.tamrielPlacesIn ?? null,
+          portsOnly: this.portsFilter,   // BAY-LEFT-MAPS (C11): the Ports filter past the Bay too - a port alone, its anchor beside it
           seatAt: (c) => this.deps.seatAt?.({ mapId: c.mapId }) ?? null,   // WW7-6: a seat past the Bay ringed as the Bay's (its ring moves with the marks' version)
           tiles: (this._pastBayTiles ??= createTamrielTiles({ paint: (c, v, w, h, o, job) => paintPastBay(c, v, { ...o, paperW: w, paperH: h }, job), stamp: pastBayStamp })), dpr: env.dpr, settling };
         // MAP-PAN: the place marks are one layer. A pan shifts it; a zoom, or a pan that
@@ -1870,8 +1871,8 @@ export class HeldMapWindow {
    *  with the city the press would take (`city`). */
   _pastBayHover(mx, my) {
     const ink = tamrielInkFor(this._model), continent = onContinent(this._view.scale, this._bayFit());
-    const at = tamrielHoverAt(mx, my, this._view, ink, { placesIn: continent ? null : this.deps.tamrielPlacesIn ?? null, nameOf: this.deps.tamrielPlaceName ?? null, filters: this.filters, band: zoomBand(this._view.scale), continent });   // TESA13: and the countryside's marks, where the sheet inks them
-    return at ? { ...at, city: at.on === 'city' ? tamrielCityAt(mx, my, this._view, ink, { filters: this.filters, continent }) : null } : null;
+    const at = tamrielHoverAt(mx, my, this._view, ink, { placesIn: continent ? null : this.deps.tamrielPlacesIn ?? null, nameOf: this.deps.tamrielPlaceName ?? null, filters: this.filters, band: zoomBand(this._view.scale), continent, portsOnly: this.portsFilter });   // TESA13: and the countryside's marks, where the sheet inks them (BAY-LEFT-MAPS C11: under the Ports filter too)
+    return at ? { ...at, city: at.on === 'city' ? tamrielCityAt(mx, my, this._view, ink, { filters: this.filters, continent, portsOnly: this.portsFilter }) : null } : null;
   }
   /** PVPDUNGEONS: is the pointer over the zone (the flames at its border burn while it is) */
   /** PVPDUNGEONS (the owner: "the border only burns when you hover over it on the world map not when youre already zoomed
@@ -3058,10 +3059,14 @@ export class HeldMapWindow {
     return playerPopUpRefusal(this.deps.immersiveSettings?.() ?? null, summary.locationType);
   }
 
+  /** The teleport card's place line for a bare pixel: its region by the politic map (DFU's +128 band). BAY-LEFT-MAPS (AUDIT
+   *  LEFT IN THE BAY C11): bounded by the world's regions (REGION_NAMES - the Bay's 62 and the provinces', WW-R), where it
+   *  read MAPS.BSA's region count: a pixel past the Bay (the host's politic map answers a province there,
+   *  world/tamriel/tamrielGround.js groundPoliticIndex) named no province on the card. */
   _regionNameAt(px, py) {
     const politic = this.deps.maps?.getPoliticIndex?.(px, py) ?? -1;
     const region = politic - 128;
-    return (region >= 0 && region < (this.deps.maps?.regionCount ?? 0)) ? (REGION_NAMES[region] ?? '') : '';
+    return (region >= 0 && region < REGION_NAMES.length) ? (REGION_NAMES[region] ?? '') : '';
   }
 
   // ── SELECTION, TRAVEL, TELEPORT ────────────────────────────────
@@ -3455,7 +3460,12 @@ export class HeldMapWindow {
   // ── SEARCH (the find box's laws, bay-wide) ─────────────────────
 
   _ensureSearchIndex() {
-    if (this._searchIndex) return this._searchIndex;
+    // BAY-LEFT-MAPS (AUDIT LEFT IN THE BAY C9): and the places past the Bay while the sheet shows the continent - the
+    // registry's listed rows as its ink stands them (ui/tamrielInk.js tamrielFindRows); kept by that ink, which moves as the
+    // places stand. The box read MAPS.BSA's regions alone, so Solitude, Whiterun, the Imperial City - every one of the 296
+    // names past the Bay - was never found.
+    const ink = this._tamriel ? tamrielInkFor(this._model) : null;
+    if (this._searchIndex && this._searchIndex.ink === ink) return this._searchIndex;
     const byName = new Map();   // display name -> [entry]
     const maps = this.deps.maps;
     const count = maps?.regionCount ?? 0;
@@ -3473,9 +3483,14 @@ export class HeldMapWindow {
         byName.set(name, list);
       });
     }
+    for (const row of tamrielFindRows(ink)) {
+      const list = byName.get(row.name) ?? [];
+      list.push({ name: row.name, regionName: row.regionName, pastBay: true, port: row.port, pos: { x: row.x, y: row.y } });
+      byName.set(row.name, list);
+    }
     const distance = getDaggerfallDistance();
     distance.setDictionary([...byName.keys()]);
-    this._searchIndex = { byName, distance };
+    this._searchIndex = { byName, distance, ink };
     return this._searchIndex;
   }
 
@@ -3492,7 +3507,9 @@ export class HeldMapWindow {
     for (const match of matches) {
       const entries = byName.get(match.text) ?? [];
       for (const entry of entries) {
-        if (!this._discovered(entry.summary)) continue;
+        // BAY-LEFT-MAPS (C9): a place past the Bay is on the sheet found or not (TESA1's law, tamrielMarksIn) - under the
+        // Ports filter a port alone, as the sheet inks it (C11)
+        if (entry.pastBay ? this.portsFilter && !entry.port : !this._discovered(entry.summary)) continue;
         if (cutoff === null) cutoff = new MatchesCutOff(match.relevance);
         else if (!cutoff.keep(match.relevance)) return out;
         out.push(entry);
@@ -3503,8 +3520,11 @@ export class HeldMapWindow {
   }
 
   _searchPick(entry) {
-    this._focusOn(entry.pos.x + 0.5, entry.pos.y + 0.5);
-    this._select({ x: entry.pos.x + 0.5, y: entry.pos.y + 0.5, colorIndex: 11, kind: 'city', name: entry.name, summary: entry.summary });
+    // BAY-LEFT-MAPS (C9): a place past the Bay picked as a quest's site past it is (START3's _pastBayPick: no journey -
+    // TESA-NO-FAST - and on the teleport map a portal's end where it is one)
+    const pick = entry.pastBay ? this._pastBayPick(entry.pos.x, entry.pos.y, entry.name)
+      : { x: entry.pos.x + 0.5, y: entry.pos.y + 0.5, colorIndex: 11, kind: 'city', name: entry.name, summary: entry.summary };
+    if (pick) { this._focusOn(pick.x, pick.y); this._select(pick); }
     this._chrome.searchInput.value = '';
     this._renderSearch([]);
   }
@@ -4091,7 +4111,7 @@ export class HeldMapWindow {
     // walked, or a stone's portal reaches it; a place the world does not stand picks nothing, as TAMRIEL1's did
     if (this._tamriel && !this._zoneMap && this.teleportationTravel) {
       const [mx, my] = toMap(this._view, sx, sy);
-      const city = tamrielCityAt(mx, my, this._view, tamrielInkFor(this._model), { filters: this.filters, continent: onContinent(this._view.scale, this._bayFit()) });   // AUDIT TESA II M7: a city the sheet inks
+      const city = tamrielCityAt(mx, my, this._view, tamrielInkFor(this._model), { filters: this.filters, continent: onContinent(this._view.scale, this._bayFit()), portsOnly: this.portsFilter });   // AUDIT TESA II M7: a city the sheet inks (BAY-LEFT-MAPS C11: under the Ports filter too)
       // PORTAL-ANYWHERE (bible/06-Systems/Portal-Stone.md; the owner: "Anywhere on land"): on the Portal Stone's map
       // (`portalLandPastBay`) bare land past the Bay is a portal's end too, named by its province - the guild's keeps TESA13's
       const end = city?.pixel ? city : this.deps.portalLandPastBay ? portalLandAt(Math.floor(mx), Math.floor(my)) : null;

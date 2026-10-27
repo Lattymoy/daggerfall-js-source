@@ -167,8 +167,8 @@
   {
     "name": "AUDITTESA2M-M7-the-hover-past-the-filter",
     "file": "src/ui/tamrielInk.js",
-    "old": "if ((continent && !c.capital) || tamrielCityBucket(c, filters) < 0) continue;",
-    "new": "if (continent && !c.capital) continue;",
+    "old": "if ((continent && !c.capital) || tamrielCityBucket(c, filters) < 0 || (portsOnly && !c.port)) continue;",
+    "new": "if ((continent && !c.capital) || (portsOnly && !c.port)) continue;",
     "tests": [
       "test/ui/audittesa2m_tiles.test.js"
     ]
@@ -176,8 +176,8 @@
   {
     "name": "AUDITTESA2M-M7-the-continent-every-city",
     "file": "src/ui/tamrielInk.js",
-    "old": "if ((continent && !c.capital) || tamrielCityBucket(c, filters) < 0) continue;",
-    "new": "if (tamrielCityBucket(c, filters) < 0) continue;",
+    "old": "if ((continent && !c.capital) || tamrielCityBucket(c, filters) < 0 || (portsOnly && !c.port)) continue;",
+    "new": "if (tamrielCityBucket(c, filters) < 0 || (portsOnly && !c.port)) continue;",
     "tests": [
       "test/ui/audittesa2m_tiles.test.js"
     ]
