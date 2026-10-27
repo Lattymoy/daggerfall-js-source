@@ -453,8 +453,8 @@
   {
     "name": "VOYAGER2.1-the-reader-unread",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "const kind = beyond && (off ||",
-    "new": "const kind = false && (off ||",
+    "old": "return beyond && (off ||",
+    "new": "return false && (off ||",
     "tests": [
       "test/systems/travel/voyager21_beyond.test.js"
     ]

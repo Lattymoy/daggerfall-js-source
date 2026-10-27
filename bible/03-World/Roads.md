@@ -1180,7 +1180,8 @@ the clock: it runs on the roads' workers and the cache, off the page's thread as
   (`test/world/tesabiome_biomes.test.js`); their mutant records re-aimed by content.
 - OPEN: (1) the Overworld's walk aims pixel centre to centre, so on a bend past the Bay the walker cuts up to 0.125 of a
   pixel inside the painted curve (`roadCurves.js` curveApex is the point a curve-following leg would aim through - not
-  wired). (2) Switchbacks: the land's law lays a climb across the slope at the pixel's scale; a hairpin inside one pixel's
+  wired). CLOSED by ROAD-FOLLOW (2026-10-27, `06-Systems/Travel-View.md` ROAD-FOLLOW): a leg that turns on a curve walks it
+  and the drawn line runs it (`systems/travel/roadLine.js`). (2) Switchbacks: the land's law lays a climb across the slope at the pixel's scale; a hairpin inside one pixel's
   819 m is not drawn. (3) Rivers: the ground carries no river line past the Bay - a ford is any water run of two pixels or
   less - so a river wider on the trace (the Niben, some 15 pixels) is gone round, never bridged; a river's own line from
   the terrain's law (a byte a pixel, as Basic Roads' river array is the Bay's) would let a road bridge it where it is

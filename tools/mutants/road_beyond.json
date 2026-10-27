@@ -11,7 +11,7 @@
   {
     "name": "ROAD-BEYOND-no-roads-first",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  if (past && beyond && (!sea || (sea.start === 'land' && sea.goal !== 'sea'))) {",
+    "old": "  if (past && beyond && ends?.strict && (!sea || (sea.start === 'land' && sea.goal !== 'sea'))) {",
     "new": "  if (false) {",
     "tests": [
       "test/systems/travel/road_beyond.test.js"
@@ -47,7 +47,7 @@
   {
     "name": "ROAD-BEYOND-the-ends-open-ground-everywhere",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "      if (kind < 0 || (kind === 2 && !near(nx, ny))) continue;",
+    "old": "      if (kind < 0 || (kind === 2 && !endLeg(cx, cy, nx, ny))) continue;   // ROAD-FOLLOW: the open ground on an end's own leg alone",
     "new": "      if (kind < 0) continue;",
     "tests": [
       "test/systems/travel/road_beyond.test.js"
@@ -56,8 +56,8 @@
   {
     "name": "ROAD-BEYOND-the-seek-unasked",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  const rf = Math.max(BY_ROAD_REACH, nearest(from) + 2), rt = Math.max(BY_ROAD_REACH, nearest(to) + 2);",
-    "new": "  const rf = BY_ROAD_REACH, rt = BY_ROAD_REACH;",
+    "old": "  const rf = ringOf(from), rt = ringOf(to), f = leg(rf), t = leg(rt), bridges = new Set();",
+    "new": "  const rf = 0, rt = 0, f = leg(rf), t = leg(rt), bridges = new Set();",
     "tests": [
       "test/systems/travel/road_beyond.test.js"
     ]
@@ -99,13 +99,14 @@
     ]
   },
   {
-    "name": "ROAD-BEYOND-the-dearer-road-kept",
+    "name": "ROAD-FOLLOW-the-cut-across-the-field-kept",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "    if (byRoad && byRoad.cost <= ROUTE_COST.open * octile(from, to)) return byRoad;",
-    "new": "    if (byRoad) return byRoad;",
+    "old": "    if (byRoad) return byRoad;",
+    "new": "    if (byRoad && byRoad.cost <= ROUTE_COST.open * Math.hypot(to.x - from.x, to.y - from.y)) return byRoad;",
     "tests": [
       "test/systems/travel/road_beyond.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (ROAD-FOLLOW): ROAD-BEYOND-the-dearer-road-kept's law (TV2's: a way by the roads dearer than the straight walk asked of the ladder, the cheaper kept) is retired - the record re-aimed at its return: the road round the field must be the plan."
   },
   {
     "name": "ROAD-BEYOND-no-greed",

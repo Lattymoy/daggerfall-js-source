@@ -174,8 +174,8 @@
  {
   "name": "WW7-4-made-unbound",
   "file": "src/formats/worldData/worldDataReplacement.js",
-  "old": "b.block ??= b.make ? b.make(_blocksFile) :",
-  "new": "b.block ??= b.make ? b.make(null) :",
+  "old": "  if (b.make) return (b.block = b.make(_blocksFile));",
+  "new": "  if (b.make) return (b.block = b.make(null));",
   "tests": [
    "test/world/worldWide/ww7_castles.test.js"
   ]
@@ -183,8 +183,8 @@
  {
   "name": "WW7-4-made-each-read",
   "file": "src/formats/worldData/worldDataReplacement.js",
-  "old": "  b.block ??= b.make ? b.make(_blocksFile) :",
-  "new": "  b.block = b.make ? b.make(_blocksFile) :",
+  "old": "  if (b.block) return b.block;",
+  "new": "  if (b.block && !b.make) return b.block;",
   "tests": [
    "test/world/worldWide/ww7_castles.test.js"
   ]

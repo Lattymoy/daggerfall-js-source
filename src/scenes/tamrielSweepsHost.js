@@ -6,6 +6,7 @@ import { arenaPixels } from '../world/arenaPlaces.js';
 import { capitalOnPixel, capitalNear } from '../world/tamrielCapitals.js';
 import { isWaterPixel } from '../ui/overworldModel.js';
 import { layerTouches } from '../world/arenaRoads.js';
+import { townWallReadyAt } from '../world/townWalls.js';   // ROAD-FOLLOW: a city's wall that waited for its roads
 import { nearestFirstFrom } from '../world/streamingWorld.js';
 import { inBay as onTheBay, tamrielFit } from '../world/tamriel/tamrielFrame.js';
 import { tamrielLandVersion } from '../world/tamriel/tamrielLand.js';
@@ -114,7 +115,8 @@ export function createTamrielSweeps(host) {
    *  crossing's join runs - TESA5) that the new layer reaches, or - the layer reset - whose paint the roads reached, is
    *  built again (sweepSdLate's shape); a pixel still in flight is asked as it publishes (arenaRoadsStale). */
   const _arenaRoadsStale = new Set();
-  const arenaRoadsStale = (p, epoch, layer, reset = true) => p.arenaRoadsEpoch < epoch && ((reset && p.arenaRoadsPainted) || layerTouches(layer, p.px, p.py));   // TESA5: a Bay pixel too, where a join runs
+  // ROAD-FOLLOW (world/townWalls.js townWallReadyAt): and a pixel whose city's wall waited for its roads, now known
+  const arenaRoadsStale = (p, epoch, layer, reset = true) => (p.arenaRoadsEpoch < epoch && ((reset && p.arenaRoadsPainted) || layerTouches(layer, p.px, p.py))) || townWallReadyAt(p.px, p.py);   // TESA5: a Bay pixel too, where a join runs
   function arenaRoadsLanded(epoch, layer, reset = false) {
     for (const [k, p] of host.built) if (arenaRoadsStale(p, epoch, layer, reset)) _arenaRoadsStale.add(k);
     if (_arenaRoadsStale.size) console.log(`[arena] the roads past the Bay landed: ${layer ? layer.roads.size + layer.tracks.size : 0} path pixels, ${_arenaRoadsStale.size} built pixel(s) to paint again`);

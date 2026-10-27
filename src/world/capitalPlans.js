@@ -335,3 +335,18 @@ export const HELSTROM_DISTRICTS = cells({
   'Northmarsh': [[1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [6, 1], [1, 2], [2, 2], [5, 2], [6, 2], [1, 3], [2, 3], [5, 3], [6, 3]],
   'Southmarsh': [[1, 5], [2, 5], [3, 5], [4, 5], [5, 5], [6, 5], [1, 6], [2, 6], [3, 6], [4, 6], [5, 6], [6, 6]],
 });
+
+// ---------------------------------------------------------------- the gates
+
+/** ROAD-FOLLOW (2026-10-27, the owner: "Also, city gates do not line up with the roads"; Town-Shapes.md ROAD-FOLLOW): each
+ *  plan's gates by the side of its span a road comes in by - the middle of its opening in the wall, the anchor's metres
+ *  (x east, z south), off the same measures the walls are cut at (world/capitalMournhold.js, capitalAlinor.js,
+ *  capitalTorval.js, capitalHelstrom.js): the roads' gate pixel stands off its slice and the capital lays the road on to it
+ *  (world/capitalApproaches.js). Mournhold's in each side's middle; Alinor's and Torval's north gate on its lane, east and
+ *  west in their sides' middles; Helstrom's on the anchor's line. */
+const at = (x, z) => Object.freeze([x, z]);
+export const MOURNHOLD_GATES = Object.freeze({ N: at(0, -MOURNHOLD.wall.half), E: at(MOURNHOLD.wall.half, 0), S: at(0, MOURNHOLD.wall.half), W: at(-MOURNHOLD.wall.half, 0) });
+const landwardGates = (W) => Object.freeze({ N: at(W.northGate, W.north), E: at(W.east, (W.south + W.north) / 2), W: at(W.west, (W.south + W.north) / 2) });
+export const ALINOR_GATES = landwardGates(ALINOR.wall);
+export const TORVAL_GATES = landwardGates(TORVAL.wall);
+export const HELSTROM_GATES = Object.freeze({ N: at(0, HELSTROM.palisade.north), S: at(0, HELSTROM.palisade.south) });

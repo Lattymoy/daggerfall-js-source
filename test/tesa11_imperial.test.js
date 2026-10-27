@@ -18,8 +18,9 @@ import {
 import {
   CAPITALS, CAPITAL_MODELS, BLOCK_M, capitalSpan, capitalCentre, capitalSliceOrdinal, capitalSliceName, capitalPlaceId, capitalLocationIndex, isCapitalPlaceId,
   capitalPixel, capitalOnPixel, capitalPin, capitalCarrier, capitalSliceCarriers, synthesizeCapitalLocation, capitalBlockNames, anchorMetres,
-  CAPITAL_RIM_M, CAPITAL_RIM_TILES,
+  CAPITAL_RIM_M, CAPITAL_RIM_TILES, capitalApproachName, capitalDims,
 } from '../src/world/tamrielCapitals.js';
+import { capitalApproachCells } from '../src/world/capitalApproaches.js';   // ROAD-FOLLOW: Talos Bridge's approach
 import {
   buildImperialTower, buildPalaceWall, buildEmperorsTombs, buildCityWall, buildDistrictWalls, buildTempleOfTheOne, buildTalosStatue,
   buildImperialPrison, buildArcaneUniversity, buildWaterfront, buildTalosBridge, nearRect,
@@ -171,6 +172,8 @@ test('TESA11 a slice\'s location: its eight by eight of the plan (its hash the p
   const fh = { rmbBlock: { fldHeader: { numBlockDataRecords: 1, buildingDataList: [{ buildingType: 9, factionId: 0, quality: 5 }] } } };
   const base = { name: 'Broadvale', regionIndex: 1, regionName: 'R', politic: 129, climate: {}, hasDungeon: false, mapTableData: { mapId: 9, locationType: LOCATION_TYPES.TownCity }, exterior: { exteriorData: { blockNames: ['X'], width: 1, height: 1 }, buildings: [] } };
   const seeds = new Set(), bySector = [];
+  const wayCells = new Set(capitalApproachCells(IC, capitalDims(IC)).map(([r, c]) => `${r},${c}`));
+  assert.equal(wayCells.size, 4, 'ROAD-FOLLOW: the approach over four open cells');
   let arenaSlices = 0;
   for (let s = 0; s < N * N; s++) {
     const sx = s % N, sy = Math.floor(s / N), px = 2069 + sx - (N - 1) / 2, py = 658 + sy - (N - 1) / 2;
@@ -183,7 +186,8 @@ test('TESA11 a slice\'s location: its eight by eight of the plan (its hash the p
     const R = CAPITAL_RIM_TILES, edge = N - 1;   // TESA x AUDIT TESA II: the rim's tiles on its outer sides
     assert.deepEqual(loc.capital, { key: 'imperial-city', k: 0, s, flattenAt: { px: 2069, py: 658 }, rim: { W: sx === 0 ? R : 0, E: sx === edge ? R : 0, N: sy === 0 ? R : 0, S: sy === edge ? R : 0 } }, `${s}: flattened to the centre's`);
     assert.equal('arena' in loc, s === CENTRE);
-    assert.ok(sub.flat().every((c, i) => c !== 'O' || ed.blockNames[(7 - Math.floor(i / 8)) * 8 + (i % 8)] === TOWN_OUTLINE_BLOCK), 'TS5: open ground the open block');
+    // PIN MOVED (ROAD-FOLLOW, 03-World/Town-Shapes.md ROAD-FOLLOW): but a cell Talos Bridge's approach crosses, a block of its own
+    assert.ok(sub.flat().every((c, i) => c !== 'O' || ed.blockNames[(7 - Math.floor(i / 8)) * 8 + (i % 8)] === (wayCells.has(`${sy * 8 + Math.floor(i / 8)},${sx * 8 + (i % 8)}`) ? capitalApproachName(IC, sx * 8 + (i % 8), sy * 8 + Math.floor(i / 8)) : TOWN_OUTLINE_BLOCK)), 'TS5: open ground the open block');
     sub.forEach((row, i) => row.forEach((c, j) => { if (isOwn(c)) assert.equal(ed.blockNames[(7 - i) * 8 + j], imperialOwnName(sy * 8 + i, sx * 8 + j)); }));
     if (ed.blockNames.includes(ARENA_BLOCK)) arenaSlices++;
     const classic = sub.flat().filter((c) => c !== 'L' && c !== 'O' && c !== IMPERIAL_ARENA_CODE && !isOwn(c)).length;
