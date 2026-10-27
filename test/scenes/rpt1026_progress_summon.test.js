@@ -19,7 +19,7 @@ import { MOBILE_TYPES } from '../../src/characters/mobile/mobileTypes.js';
 import { capFoeLoot } from '../../src/systems/foeLootCap.js';
 import { fakeMagicTemplates } from '../honestItems.mjs';   // DFU's own MAGIC.DEF table (dfuMagicItems.mjs)
 
-const ARENA2 = process.env.ARENA2_PATH ?? '/home/claude/dfdata/arena2';
+const ARENA2 = process.env.ARENA2_PATH ?? '';   // 17n: the corpus comes from the environment alone
 const SKIP = existsSync(join(ARENA2, 'MONSTER.BSA')) ? false : 'no ARENA2 - run tools/fetch-data.sh and set ARENA2_PATH';
 const stubTex = { getSize: () => ({ width: 64, height: 100 }), getScale: () => ({ width: 0, height: 0 }), recordCount: 8, getFrameCount: () => 1 };
 const settle = () => new Promise((r) => setTimeout(r, 0));

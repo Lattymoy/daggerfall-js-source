@@ -4,7 +4,7 @@
 //   - A CRAFTED PIECE TRADED AWAY STAYS WITH ITS BUYER: the ledger settled a contested claim on a crafted piece for
 //     the account `products.owner` names, and a realm trade, a market delivery, a vault and a chest move no owner - so a
 //     maker who traded a piece away and wrote it back into its save won it back past the grace, and its buyer's was
-//     locked as the copy (server-account/src/ledger.js CRAFT_RECORD_SQL, `products.handed_to`, migration 0176).
+//     locked as the copy (server-account/src/ledger.js CRAFT_RECORD_SQL, `products.handed_to`, migration 0178).
 //   - STAFF'S CLEAR EXCUSES THE STATE IT READ: the law's signature names a character finding by its code alone, so a
 //     cleared negative purse excused every purse after it (verdict.js lawExcused, judge.js lawValuesOf).
 import '../chargenDom.mjs';

@@ -233,7 +233,7 @@ export async function ledgerStep(db, at, pieces, known = null) {
 }
 
 /** RPT1026-LEDGERLAW: THE ACCOUNT A CRAFTED PIECE'S RECORD NAMES, over `products` `p`: the one the service last handed it to
- *  (ledgerMoves - `handed_to`, migration 0176), or its owner where none came since the owner's (a market sale, an auction,
+ *  (ledgerMoves - `handed_to`, migration 0178), or its owner where none came since the owner's (a market sale, an auction,
  *  a commission clears it). */
 const CRAFT_RECORD_SQL = 'COALESCE(p.handed_to, p.owner)';
 

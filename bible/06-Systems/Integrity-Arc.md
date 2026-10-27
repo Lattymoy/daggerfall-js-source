@@ -623,7 +623,7 @@ save's copy on.
 the writs' files moved (PIN MOVED: sellers seated, the piece in the record first - `test/realmSeat.mjs` holdPieces - and
 the pins' own call naming the record for a crafted act, `test/accountDb.mjs`, as the client's realm act does).
 
-### RPT1026-LEDGERLAW - the craft's record follows the service's hand-overs; staff's excuse is of the state it read (2026-10-26, `server-account/src/ledger.js`, `verdict.js`, `review.js`, migration 0176)
+### RPT1026-LEDGERLAW - the craft's record follows the service's hand-overs; staff's excuse is of the state it read (2026-10-26, `server-account/src/ledger.js`, `verdict.js`, `review.js`, migration 0178)
 
 Two private reports, each with its steps run against the live code, both on lane 1's own law. Daggerfall has no realm,
 no ledger and no review: nothing of DFU's is departed from.
@@ -1378,7 +1378,7 @@ six records on the lines this slice touched run again, all dead.
   RPT1026-LEDGERLAW. A crafted piece's contested claim is settled for the account the service last handed it to
   (`products.handed_to`, written by `ledgerMoves`, cleared by a sale), so a traded piece written back into its maker's
   save is the maker's copy; and staff's clear excuses the law's finding with the character law's values beside its
-  signature (`realm_characters.law_v`), ended by a clean checkpoint, so a cleared purse excuses no other. Migration 0176.
+  signature (`realm_characters.law_v`), ended by a clean checkpoint, so a cleared purse excuses no other. Migration 0178 (0176 on its branch, renumbered past main's 0176 and 0177 at the merge).
   `test/server/rpt1026_ledgerlaw.test.js`; `tools/mutants/rpt1026_ledgerlaw.json`.
 - **INT19 (2026-10-17, the owner: "Take care of the integrity arc"; on #987 with lane 4): lane 1's open item closed - a
   crafted piece handed on leaves its seller's realm record.** Section 4, INT19. A listing, an auction and a commission's
