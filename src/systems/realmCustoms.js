@@ -38,6 +38,7 @@ import { firstRestorable } from './save/saveSlots.js';   // RESTORE: the offline
 import { deductGold } from './court.js';
 import { LEVELING_CLASSIC, newCharacterLevelingSystem } from './oblivionLeveling.js';   // LEVEL-ONLINE-2: a character crossing levels the classic way
 import { levelUpSkillSumAnchor } from './advancement.js';   // LEVEL-ONLINE-2: ...from the start of the level it has
+import { onlineLevelConvert } from './levelCap.js';   // LEVEL-45: the conversion rides the switch's two doors
 import { isGoldPieces } from './inventory.js';
 import { crossFleetData } from './fleet.js';   // AUDIT SHIPYARDS L1-2: Come Sail Away's ships cross as a DFU deed does - kept, never sold
 import { COME_SAIL_AWAY_VENDOR } from './comeSailAway/comeSailAway.js';   // ...her placed boats' record, by its vendor
@@ -255,6 +256,13 @@ const REST_ITEM_IDS = new Set(Object.values(REST_ITEM));
  * @param {any} snap
  */
 export function crossLeveling(snap) {
+  const switched = switchLeveling(snap);
+  onlineLevelConvert(snap);   // LEVEL-45: and every realm character's level read again from its skills, capped at 45 (systems/levelCap.js)
+  return switched;
+}
+
+/** LEVEL-ONLINE-2's switch itself, crossLeveling's first half. @param {any} snap */
+function switchLeveling(snap) {
   const system = newCharacterLevelingSystem(snap.levelingSystem, { online: true });
   if ((snap.levelingSystem ?? LEVELING_CLASSIC) === system) return false;
   snap.levelingSystem = system;

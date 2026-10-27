@@ -53,8 +53,10 @@ import { pathFindings } from '../../src/systems/arcanePaths.js';   // SCHOOLS5: 
 
 /** The judge's version: the item law's, and its own character law beside it. */
 export const JUDGE_VERSION = ITEM_LAW_VERSION;
-/** The highest level the realm reads (realm.js REALM_LEVEL_CLAIM_MAX, the summary's own bound - pinned equal). */
-export const JUDGE_LEVEL_MAX = 1000;
+/** The highest level the realm reads (realm.js REALM_LEVEL_CLAIM_MAX, the summary's own bound - pinned equal). LEVEL-45
+ *  (2026-10-27, mob: "juidge will need changed to lvl 45"): the online cap (src/systems/levelCap.js ONLINE_LEVEL_CAP,
+ *  pinned equal), which every realm character is converted to at its join before its next checkpoint. */
+export const JUDGE_LEVEL_MAX = 45;
 /** The holds the law has come to before a held character is held for a time (verdict.js LAW_HOLD_S), whatever its next
  *  checkpoint says. */
 export const STRIKES_FOR_TIMED = 3;

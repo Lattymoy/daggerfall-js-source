@@ -28,6 +28,7 @@ import { SKILL_SOFT_CAP, SKILL_HARD_CAP, softcapCostMultiplier, milestoneAt } fr
 import { masterSkillsActive, skillCanPassCap, masteryRefusal } from './masterSkills.js';   // SOFTCAP3: the climb past 100 and the lifted 95 lock are Master Skills'
 import { hitPointsPerLevelUp, spendPoolLowest } from './chargen.js';
 import { ONLINE_BONUS_POOL } from './levelEven.js';   // LEVEL-EVEN: online, every level's pool is 5
+import { onlineLevelFor } from './levelCap.js';   // LEVEL-45: the online level, capped at 45
 import { refreshOnlineLayer } from './renownLayer.js';   // LEVEL-EVEN: the online health floor read again over the level's new maximum
 import { isOnlinePage } from './online/onlineLane.js';
 // ORL1: the ONE question this file asks the vendored mod - whose law
@@ -310,7 +311,9 @@ export const skillsReadyToImprove = (entity) => {
  *  Level++ against). pendingLevel is the port's display convenience
  *  for the U3 banner (DFU's sheet prints Level after the ++). */
 export function checkForLevelUp(entity) {
-  const calculated = calculatePlayerLevel(entity.startingLevelUpSkillSum, entity.currentLevelUpSkillSum);
+  const calculated = entity._online === true   // LEVEL-45: online, the climb shared out to exactly 45 (systems/levelCap.js)
+    ? onlineLevelFor(entity.startingLevelUpSkillSum, entity.currentLevelUpSkillSum)
+    : calculatePlayerLevel(entity.startingLevelUpSkillSum, entity.currentLevelUpSkillSum);
   const levelUp = entity.level < calculated;
   if (levelUp) {
     entity.readyToLevelUp = true;
