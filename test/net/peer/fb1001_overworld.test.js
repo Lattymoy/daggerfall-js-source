@@ -37,7 +37,7 @@ test('OW-WEATHER: under the Overworld the falling weather and the wind wrap roun
   assert.match(w, /\n {4}const wxEye = tvf \? mwv\.eye : cam\.pos;\n/, 'the weather\'s eye: the view\'s under it, the head\'s on the ground');
   assert.match(w, /\n {4}const drawFalling = \(\) => \{\n {6}wxEye32\[0\] = wxEye\[0\]; wxEye32\[1\] = wxEye\[1\]; wxEye32\[2\] = wxEye\[2\];/, 'copied into the one array as the falling weather is drawn (RAIN-LEAK)');
   for (const [what, re] of [
-    ['the sand', /dryFall\.draw\(\{ on: true, kind: precipShown, strength01: fx\.intensity, windV: wd\.windV, step: wd\.step \}, proj, view, wxEye32, now \/ 1000\);/],   // PIN MOVED (ASHFALL1, 2026-10-27): the dry falls' one renderer, the sand and the ash
+    ['the sand', /dryFall\.draw\(\{ on: true, kind: precipShown, strength01: fx\.intensity, windV: wd\.windV, step: wd\.step \}, proj, view, wxEye32, now \/ 1000, renderer\.worldViewportPx\?\.\[3\]\);/],   // PIN MOVED (ASHFALL1, 2026-10-27): the dry falls' one renderer, the sand and the ash
     ['the rain and the snow', /precip\.drawFall\(precipShown, proj, view, wxEye32, camRight, now \/ 1000\);/],   // PRECIP1: the fall at the air's snow share
     ['the wisps', /wisps\.draw\(wd, proj, view, wxEye32, now \/ 1000\);/],
   ]) assert.match(w, re, what);

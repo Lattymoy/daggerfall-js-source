@@ -63,10 +63,15 @@ export const CURTAIN_RAIN_COLOR = Object.freeze([0.5, 0.54, 0.6]);
 export const CURTAIN_SNOW_COLOR = Object.freeze([0.84, 0.86, 0.9]);
 const _mix = new Float32Array(3);
 /** PRECIP1: the curtain's colour at its snow share `k` (0 rain, 1 snow) - one scratch, read before the next. ASHFALL1:
- *  times `tint` where its cell has one (volumetricClouds.js CELL_TINT - the ash's brown-grey veil). */
+ *  where its cell has a `tint` (volumetricClouds.js CELL_TINT - the ash's), its grey times the tint, as the sky's veil
+ *  is: the rain's blue-grey times the ash's tint read neutral. */
 export function mixColor(a, b, k, tint = null) {
   const t = Math.min(1, Math.max(0, Number(k) || 0));
-  for (let i = 0; i < 3; i++) _mix[i] = (a[i] + (b[i] - a[i]) * t) * (tint ? tint[i] : 1);
+  for (let i = 0; i < 3; i++) _mix[i] = a[i] + (b[i] - a[i]) * t;
+  if (tint) {
+    const grey = 0.299 * _mix[0] + 0.587 * _mix[1] + 0.114 * _mix[2];
+    for (let i = 0; i < 3; i++) _mix[i] = grey * tint[i];
+  }
   return _mix;
 }
 /** The streaks' fall, cycles a second up the curtain's height (a whole number over the clock's period, so it never

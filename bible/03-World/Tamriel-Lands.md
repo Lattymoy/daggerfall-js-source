@@ -19,7 +19,8 @@ same. Each zone's lore line and its sources are below; the table is `world/tamri
 **The switch.** The Features row `tamriel-lands` (Lands of Tamriel, World) on the enhanced skin, on by default, FORCED ON
 ONLINE (a zone's flats are where Logging's trees stand and its landmarks turn the player: a room agrees on its ground -
 realForestsOn's shape); `?lands=off` the kill door, offline (`systems/landsSwitch.js` tamrielLandsOn, re-exported by
-`scenes/shared.js`). The world reads it once, as it mounts. Off - and on the classic skin - every zone wears its
+`scenes/shared.js`). The world reads it once, as it mounts. Off - and on the classic skin offline (online the row stands
+on whatever the skin) - every zone wears its
 climate's ground and flats as TESA-BIOME laid them, byte for byte (an archive's own ground set, the climate's layout, no
 landmark, the far views' climate book).
 
@@ -36,7 +37,8 @@ the set's grain, its tiles' shapes and its transitions, and takes its own colour
   transition's texels share their classes softly - a Gaussian of their colour's distance to each prototype, its width
   half the nearest two prototypes' distance, then blurred over 4.5% of the record (`transitionShares`): a transition's
   shape is half a tile, a class's grain a texel or two, so a texel alone cannot say which side it stands on and its
-  neighbourhood can.
+  neighbourhood can. Past the blur a share is made CRISP (`crisp` 0.15: under it none, over 0.85 whole, stretched
+  between - the second audit: every texel of a transition's inside had stood a mix, never its class whole).
 - **The materials.** A dressed class is a gradient map: its RAMP (four colours dark to light, the zone's) read where the
   texel's luminance falls once carried over - its class's mean at the ramp's middle, every texel as far over or under it,
   in proportion, as it stands over or under its class's mean (`contrast` 1: the set's own light and dark, never the
@@ -50,29 +52,42 @@ the set's grain, its tiles' shapes and its transitions, and takes its own colour
   screenshots' colours, hazed by distance and light, are moved 1.25 further from their own grey (`vivid`), so a dressed
   ground stands as saturated as the set's own.
 - **Never dressed:** water (the puddles and the shores keep the set's water and its alpha, which carries their mask -
-  `world/puddleMask.js`), the paving (the roads stay the town's) and every winter set (the snow is the snow's).
+  `world/puddleMask.js`), the paving (the roads stay the town's) and every winter set (the snow is the snow's). A winter
+  drawn SNOWLESS (Vanilla Enhanced's Snowless Swamps and Jungles' 403, `climateSwaps.js` winterSetSnowless) is its
+  summer's ground, dressed as it (`landGroundSet`) - the snow lane draws its summer set there, and off it the Hist
+  Swamps had worn the add-on's undressed set every winter (the second audit).
 - **Its base.** A zone whose climate's set is the wrong cloth for its land names another summer set to dress: the Vine
   Coast, the High Savannah and the Pellitine are grass on TEXTURE.302, not the desert's sand. The Alik'r names no dress at
   all - its set is the Sands of the Alik'r pack's own, the lore's dune sea.
 - **Its blades.** A zone says whether the enhanced grass grows on it (`blades`): none on the Frozen Coast's shingle, the
-  High Peaks' snowfields, the Ashlands' ash, Red Mountain's cinder, the Velothi's rock or the desert's dunes.
+  High Peaks' snowfields, the Ashlands' and Stonefalls' ash, Red Mountain's cinder, the Velothi's rock or the desert's
+  dunes and badlands; every grass land grows them - the Vine Coast's, the High Savannah's and the Pellitine's meadows on
+  their `base` too (the second audit: they had stood bare, left over from the desert's sand they were dressed off).
 
 **Its door** (`scenes/groundSets.js`). A pixel's ground set is named by the build (`scenes/pixelBuild.js` - its own and
 its eight neighbours', each its own zone's: `tamrielLands.js` landGroundSet, `lands:<zone>:<archive>`) and the ground
 sets' module reads such a key as its archive read as ever, its drawn layers dressed and every map the grass and the
 water read kept under the key - its grass records (none where the zone grows no blades), its floor's, its puddles' (its
-file's own, marked once - the dress keeps the alpha whole), its colours (the dress's, kept by the module beside the
-renderer's tile arrays, so a scene after reads them and never a mod door that knows no zone's key). An archive's own key
-makes what it made.
+file's own, marked once - the dress keeps the alpha whole; in a scene after, marked under the file, so every zone's key on
+it finds them), its colours (the dress's, kept by the module beside the renderer's tile arrays, so a scene after reads
+them and never a mod door that knows no zone's key - taken once a set, the second audit: twice off the same layers). A
+set whose pixel went while it was made is asked for again once it stands (`hold.tileArray`): a dropped place's ask leaves
+it loose for the next sweep (`scenes/placeHolds.js`) - it had been swept before it was there to free and landed held by
+no one, 20 MB of the GPU's a set (the second audit). An archive's own key makes what it made.
 **Its cost, off the page's thread.** A 256-texel set (Vanilla Enhanced) is 0.87 s of a core to dress: a solid record 2 ms,
 a transition 16 (its classes' shares, their blurs, its blend - the texel's transform a table over its luminance, built at
 2,048 steps of a class's ramp and read between them, and every hot loop a plain function's, which the engine optimises as
 it does not a generator's). It runs on its own worker (`world/tamriel/groundDressWorker.js`, the page's side
 `groundDressClient.js` - handed copies, the set as drawn the page's), so the page draws while it dresses; with no worker,
 or one that fails, the same work on the page's thread a band of 32 rows of a 256-texel record a breath
-(`world/puddleMask.js` stepsBreathing - its longest step 11 ms). A pixel's own set and its neighbours' are loaded
-together (`pixelBuild.js`), so a junction of zones met first has one set dressed while the page reads and uploads the
-next. Once a zone and season; the renderer's tile cache keeps it. (AUDIT: the first cut dressed on the page's thread in
+(`world/puddleMask.js` stepsBreathing - its longest step 11 ms). The second audit's client laws: a worker that dies is let
+go and the next dress makes another, three at the most (`DRESS_WORKER_DEATHS`; one failure had sent the session's every
+dress to the page); a dress unanswered in a minute (`DRESS_ANSWER_MS`) or answered unreadably counts its worker dead and
+the page dresses what it held (a lost answer had held its set, and every pixel wearing it, for the scene); a post that
+throws is the page's to dress. A pixel's own set and its neighbours' are loaded together (`pixelBuild.js`), so a junction
+of zones met first has one set dressed while the page reads and uploads the next - on ONE slice a frame however many
+chains wait (`systems/buildBreather.js` - every waiter waits on the one next frame; the second audit: each chain's
+resume had begun the slice again, four sets four slices in a frame). Once a zone and season; the renderer's tile cache keeps it. (AUDIT: the first cut dressed on the page's thread in
 the stream's slices - 1.2-1.5 s of work a set, two seconds and more of a pixel's wait, three sets one after another at a
 junction.)
 
@@ -82,8 +97,11 @@ A zone's `flora` lays its flats by FOREST1's law (DFU's tests on the tile, the w
 own dice), with the zone's numbers in FOREST1's stead:
 
 - **Its woods' share of the land** (`woods`): the field's edge at its (1 - woods) quantile, FOREST1's own width - the
-  field's quantiles measured over 400,000 world tiles of the continent's frame (`tamrielLands.js` FOREST_QUANTILES):
-  the Pinewoods 80% woods, the Tenmar 78%, the Ashlands two in a hundred.
+  field's quantiles measured every 1% over 400,000 world tiles of the continent's frame (`tamrielLands.js`
+  FOREST_QUANTILES, `tools/landsMeasure.mjs`): the Pinewoods 80% woods, the Tenmar 78%, the Ashlands two in a hundred,
+  every zone within a tenth of a point of its number. The second audit: measured every 5% and read straight from the
+  95th to the field's highest, the tail had stood the Ashlands' and the Alik'r's 2% at 0.05%, the High Peaks' 3% at 0.4%
+  and Craglorn's 4% at 1.7%, and the far views (the zone's number) stood half again the trees the ground did.
 - **Its flats, any climate's**: a wood's tile stands one of its `trees`, a plain's one of its `cover`, each an [archive,
   record, weight] of Daggerfall's own nature flats - the Mountains' pines in the Pinewoods, the swamp's black basalt
   stacks and the desert's dry trama in the Ashlands, the rainforest's twisted and vine-hung trees and its palms in the
@@ -115,7 +133,7 @@ submeshes (body, crown, detail) at three LODs:
 | parasol | an emperor parasol (a stalk 11.5-15 m, a cap 11-15 m across, its gills under it); a grove of three from one foot; a grown pod on its stalk; the xylaria's cluster of dark-tipped spikes | the Ascadian Isles' "large mushroom-like plants not unlike trees" (UESP, Morrowind:Ascadian_Isles), the Telvanni's grown pods, Deshaan's fungal forests and its glowstalks, the Ashlands' xylaria (Lore:Flora_G) |
 | spire | a pillar or obelisk; a hoodoo under its caprock; a crag and its two lumps; a standing stone; a termite mound | the Ashlands' "clusters of stone obelisks", the Alik'r's and Anequina's sandstone hoodoos and pillars, the Reach's crags, the Bitter Coast's menhirs, the High Savannah's termite mounds |
 | hist | a gnarled bulging trunk on its root flares (6-9 m out), its limbs and spreading crown, moss hung from them | "giant spore trees growing in the innermost swamps" (Lore:Hist) |
-| reeds | a clump of reeds, their heads (cattails); sugarcane; a low rush | the Shadowfen's "endless field of reeds that reached up to his chin" (The Argonian Account), Elsweyr's moon-sugar cane |
+| reeds | a clump of reeds, their heads (cattails); sugarcane; a low rush | Black Marsh's "endless field of reeds that reached up to his chin" by the Commerce Road out of Cyrodiil (The Argonian Account, Book 2), the Shadowfen's reed beds, Elsweyr's moon-sugar cane |
 | vines | a vineyard row's length (6.4 m - a tile), its posts, its trellised foliage hung with grapes | Summerset's "rows of vineyards" (Lore:Alinor_(city)) |
 | grove | a round tree (cherry), a tall (ginkgo, the Rift's aspen), a spreading (maple) | the Vine Coast's pink cherry, gold ginkgo and crimson maple, Auridon's cherries, the Rift's white-barked golden aspens, Stonefalls' orange and purple thorny cherry |
 
@@ -133,26 +151,34 @@ an olive-brown cap), `deshaan` (dragon-scale violet caps, gills aglow), `glowsta
 layoutLandProps): a site a cell of the kind's own size on the WORLD's lattice (the Hist 16 tiles, a spire 8, a parasol
 4, a grove's tree 2, a reed clump 1 - each a power of two dividing a pixel), somewhere in the cell's middle, its chance
 the zone's `rate` times its woods' share there (`woods`), its plains' (`plains`), one (`any`) or the water's edge
-(`wet` - a tile touching water); a `patch` gathers its sites in blocks of 16 tiles (the Rift's aspen stands). The vines
+(`wet` - a tile touching water); a `patch` gathers its sites in blocks of 16 tiles (the aspen stands across the Pinewoods). The vines
 are fields, not sites: a vineyard a block of 8 x 8 tiles drawn whole, two rows a tile along the world's x, at scale 1 so
 each row meets the next. Every draw a hash of the site's world tile - the same landmark on every client, the worker and
 the main thread. A site's zone is its tile's owner's (the ecotone's, as the flats'), so a border between two zones is
-one seam. Its foot (a stalk, a column, a trunk; the Hist's roots) stands wholly on land - no water, no paving, no road or
-track, no place's rect or clearing, nothing past its kind's steepest (a spire 40 degrees, the vines 14), over the beach
-(the reeds alone go to the water's edge, never into open water) - at the lowest ground under it, sunk a little; the
-larger kinds stand first and the smaller keep off them. The PIXEL'S BUILD keeps its flats off the feet of the landmarks it
+one seam. Its FOOT - its mesh's widest to a man's chest (`landPropMesh.js` LAND_CHEST: a crag's lumps, a grove of three's
+outer stalks, the Hist's roots; the second audit: one stalk's or one lump's had stood for it, a crag's 5.2 m of its 9.2,
+and its other lumps stood on roads and water) - stands wholly on land: no water, no paving, no road or track, no place's
+rect or clearing, nothing past its kind's steepest (a spire 40 degrees, the vines 6), over the beach (the reeds alone go
+to the water's edge, never into open water); at the lowest ground about its middle (as it stood), sunk a little; the
+larger kinds stand first and the smaller keep off them. A vineyard's row is its whole length: off every foot along it,
+at the lowest of its middle and its two ends (the second audit: a rigid 6.4 m stood at its middle's ground on a 14°
+slope had floated its downhill end). The PIXEL'S BUILD keeps its flats off the feet of the landmarks it
 STANDS and off their vineyards' tiles (`landProps.js` landFeetOff, a grid of the feet - a flat asks the nine cells about
 it): a landmark the gate's clearing or a rock drops leaves its ground's own flats (AUDIT: the kernel had cleared them
 under every landmark, and a dropped one left a bare ring). A pixel lays its landmarks in a few milliseconds of the kernel
 (its kinds' measures made once a worker, only the kinds its owners name walked).
 
-**Their bodies** (`landPropBodies`, PROP-BODIES' shape): a parasol's stalk, a spire's column, a Hist's trunk, a grove
-tree's trunk - the player walks round them, on foot or mounted, and through the reeds and between the vines' rows.
+**Their bodies** (`landPropBodies`, PROP-BODIES' shape): each solid part one, read off its mesh to a man's chest and turned
+by the landmark's yaw as its mesh is - a parasol's stalk (a grove of three's three), a spire's column (a crag's three
+lumps), the xylaria's cluster, a Hist's trunk (3.7 to 4.3 m), a grove tree's trunk - the player walks round them, on foot
+or mounted, and through the reeds and between the vines' rows (the second audit: the player had walked metres into a
+crag's rock, through two of a grove's three stalks and a metre into a Hist).
 **Their host** (`scenes/landPropsHost.js` - HOST-SPLIT: the trees' host makes it with the row and frames it, the pixel's
 build stands a pixel's set off the gate's clearing and the rocks and files its bodies; no line of bootWorld's): the GPU
 made when the first landmark is framed, on the stream's slice clock (a mesh a breath, a picture a breath - every kind's
 every variant at every LOD in Low Poly Trees' own buffers), a run a look's variant and LOD; the frame culls a pixel's
-set whole past its kinds' farthest, then each landmark to the view, the fog's reach and its kind's own `far` (reeds 260 m,
+set whole past its kinds' farthest (its scratch sized by what is in reach - the second audit: every built pixel's every
+landmark had sized it, 30 MB for a grid of the Fens' reeds), then each landmark to the view, the fog's reach and its kind's own `far` (reeds 260 m,
 vines 420, a grove 1.2 km, a parasol 1.5, a spire 2.2, a Hist 2.6), at its LOD, on the renderer's fourth tree slot - so
 it is lit, fogged, hazed and lantern-lit as every 3D tree under either lane - and the nearest 16 bodied ones cast into
 the sun's maps. **The four hosts:** `scenes/world.js` WIRED through the trees' host and the pixel's build;
@@ -168,7 +194,9 @@ the far field ask it at each vertex's pixel.
 - **Its canopy is its Trees'.** The far views' canopy, the band and the 3D trees are Trees (TREE_RECORDS); a stump, a log or
   a mossy rock among a recipe's `trees` stands as a flat. So a zone's tree rate afar is its recipe's by the share of its
   picks that are Trees, and its art those Trees' pictures by their weights (AUDIT: the non-Trees had read as canopy - the
-  woods thinning where the band took over).
+  woods thinning where the band took over). A Tree among its `cover` stands at the cover's chance and is counted so, its
+  picture weighed by its share of the Trees its ground stands (`floraCover.js` landsTreePicks - the second audit: the
+  Velothi Foothills' 506:14, a third of its near Trees, had stood none afar).
 - **The middle ring reads the zone's own edge.** The worker's packed wood is FOREST1's, and a zone's woods read through it
   are only their expectation given it (the field's distribution at 4,096 quantiles, averaged in 32 bins of FOREST1's wood) -
   where FOREST1's field is all plain or all woods, most of the land, one mean. With the row the worker also answers the
@@ -180,7 +208,9 @@ the far field ask it at each vertex's pixel.
   archive's art. Its atlas's 48 layers are LENT: a Tree's picture is read where a wanted pixel's tree is of it, and a full
   atlas lends the layer of a picture no wanted pixel, no drawn set and no set being laid is of (`farTrees.js` _layerFor),
   the picture it turned away asked again when the drawn set moves (AUDIT: the Bay's eight archives hold 60 Trees, and a
-  journey outgrew the atlas - a province's band trees left out for the session).
+  journey outgrew the atlas - a province's band trees left out for the session). The second audit: a picture that lands
+  while a set is laid is held by that set (its layer could have been lent from under its drawing), and the turned-away
+  are asked again only where a layer may be lent (a set wanting more than 48 had been laid again at every swap).
 
 So the Ashlands' horizon is grey ash under a few dead trees, the Pinewoods' dark under its pines.
 
@@ -188,7 +218,7 @@ So the Ashlands' horizon is grey ash under a few dead trees, the Pinewoods' dark
 
 Each zone's lore line is LANDS' own (`lore`); its sources the page's Sources, below.
 
-| Zone | Climate (its sets) | Ground: dirt / grass / stone (the ramps' middles) | Blades | Woods: share, its Trees' climates | Landmarks |
+| Zone | Climate (its sets) | Ground: dirt / grass / stone (the ramps' middles) | Blades | Woods: share, its `trees` picks' climates | Landmarks |
 |---|---|---|---|---|---|
 | the Frozen Coast (Skyrim) | Mountain (510, 102) | `#7d8280` / `#b3bbb8` / `#94979b` | no | 6%, mountain, desert | spire (frost; plains) |
 | the Tundra Plains (Skyrim) | MountainWoods (506, 102) | `#8a7a5e` / `#a39a62` / `#a2a39d` | yes | 6%, mountain, desert | spire (lichen; plains); reeds (reed; wet) |
@@ -203,12 +233,12 @@ Each zone's lore line is LANDS' own (`lore`); its sources the page's Sources, be
 | Craglorn (Hammerfell) | Desert2 (503, 002) | `#978274` / `#b3aca7` / `#c6c0bd` | no | 4%, desert, mountain | spire (limestone; any) |
 | the Abecean Coast (Hammerfell) | Subtropical (501, 002) | `#c8b8a5` / `#7d6d58` / `#bda593` | no | 35%, subtropical, woodland, desert | spire (honey; plains) |
 | the Dragontail Mountains (Hammerfell) | Mountain (510, 102) | `#8a7c6c` / `#7a7a58` / `#98887e` | yes | 45%, mountain | spire (granite; plains) |
-| the Vine Coast (Sumurset) | Subtropical (501, 002) | `#957f62` / `#6f7c4c` / `#cdc7b9` on TEXTURE.302 | no | 30%, mountain, woodland, mountain woods | grove (cherry, ginkgo, maple; woods); vines (vine; plains) |
+| the Vine Coast (Sumurset) | Subtropical (501, 002) | `#957f62` / `#6f7c4c` / `#cdc7b9` on TEXTURE.302 | | yes | 30%, mountain, woodland, mountain woods | grove (cherry, ginkgo, maple; woods); vines (vine; plains) |
 | Auridon (Sumurset) | Woodlands (504, 302) | `#d0c8b2` / `#6f7c55` / `#d9d6cf` | yes | 65%, woodland | grove (cherry; woods) |
 | Eton Nir (Sumurset) | Mountain (510, 102) | `#7a8088` / `#7e8868` / `#8a8e94` | yes | 30%, mountain | spire (granite; plains) |
 | the Anequina Badlands (Elsweyr) | Desert2 (503, 002) | `#a48f7e` / `#b08159` / `#a0754f` | no | 5%, desert, subtropical | spire (sandstone; any) |
-| the Anequina Plains (Elsweyr) | Subtropical (501, 002) | `#9e866c` / `#a8935e` / `#a8967e` on TEXTURE.302 | no | 8%, desert, subtropical | spire (mound; plains); reeds (cane; wet) |
-| the Pellitine Coast (Elsweyr) | Subtropical (501, 002) | `#e3d3b0` / `#808058` / `#8f8f89` on TEXTURE.302 | no | 45%, subtropical, woodland | reeds (cane; plains); spire (karst; any) |
+| the Anequina Plains (Elsweyr) | Subtropical (501, 002) | `#9e866c` / `#a8935e` / `#a8967e` on TEXTURE.302 | | yes | 8%, desert, subtropical | spire (mound; plains); reeds (cane; wet) |
+| the Pellitine Coast (Elsweyr) | Subtropical (501, 002) | `#e3d3b0` / `#808058` / `#8f8f89` on TEXTURE.302 | | yes | 45%, subtropical, woodland | reeds (cane; plains); spire (karst; any) |
 | the Tenmar Forest (Elsweyr) | Rainforest (500, 402) | `#454f39` / `#5a4632` / `#4f5a45` | yes | 78%, rainforest | reeds (cane; plains) |
 | the Hist Swamps (BlackMarsh) | Swamp (502, 402) | `#352b21` / `#4a3b2c` / `#44522f` | yes | 60%, swamp | hist (hist; woods); reeds (reed; wet) |
 | the Shadowfen (BlackMarsh) | Swamp (502, 402) | `#4f4130` / `#8a8a55` / `#4e5a38` | yes | 15%, swamp | reeds (reed; plains); hist (hist; woods) |
@@ -245,6 +275,8 @@ Each zone's lore line is LANDS' own (`lore`); its sources the page's Sources, be
    Trees among a recipe's picks as canopy.
 7. **The dress runs off the page's thread** (the audit): a worker of its own, the page's thread the fallback - the same
    work either way.
+8. **A zone's trees are the trees its lore names** (the second audit): Northpoint's oak and beech and Auridon's laurel,
+   maple and cherry stand no pine (the Woodlands' 504:13 had been a tenth of their trees).
 
 ## Departures from DFU (Port-Ledger A, THE LANDS PAST THE BAY)
 
@@ -254,33 +286,51 @@ landmarks (procedural meshes of the port's own) - none of it DFU's. On the Bay n
 
 ## Verification
 
-`test/world/tesalands_ground.test.js` (8): the dress compiled (water and paving never, monotone ramps, vivid), a record
+`test/world/tesalands_ground.test.js` (11): the dress compiled (water and paving never, monotone ramps, vivid), a record
 dressed (its grain kept in order, its mean at its ramp's middle at the albedo, its alpha, water and paving the set's own,
-a transition each side its own class), stepped in bands (dressLayers' layers, the running-sum blur against the box), the
-exposure and the ramp's reading, the table (every owed zone once, ramps dark to light, picks Daggerfall's, one entry a
-kind, frozen; the dead trees against the mod's meshes), a pixel's ground set, the dress off the page's thread (the
-worker's answer, the client's copies and its fallback, the ground sets across two scenes), and the doors.
-`test/world/tesalands_flora.test.js` (8): the recipes in the kernel (their picks and archives, the woods' share, the
-same every run, off the climate's), the border between two zones (flats and landmarks), the flats off the feet of the
-landmarks STOOD (a dropped one's ground its own; the feet's grid against every foot), a zone's woods afar (monotone, its
-mean the zone's woods, its Trees' share), the middle ring's own field, the band's codes and art, the far views' book
-(the zone's woods, its Trees' art by weight, its dressed ground a record a task; the Bay and the row off the climate's),
-the doors. `test/world/tesalands_props.test.js` (7): the meshes, the pictures, the looks and the laws, where a landmark
+a transition each side its own class, its inside crisp), stepped in bands (dressLayers' layers, the running-sum blur
+against the box), the exposure and the ramp's reading, the table (every owed zone once, ramps dark to light, picks a
+summer nature archive's, one entry a kind, frozen, the grass lands bladed; the dead trees and the broadleaf lands against
+the mod's meshes), a pixel's ground set (a snowless winter its summer's), the dress off the page's thread (the worker's
+answer, the client's copies and its fallback, the ground sets across two scenes, the ash's grass records none), the
+client's worker kept (made again to three deaths, a post that throws, the watch, an unreadable answer), a set whose
+pixel went freed and the file's puddles marked once, and the doors. `test/world/tesalands_flora.test.js` (10): the
+recipes in the kernel (their picks and archives, the woods' share, the same every run, off the climate's), the border
+between two zones (flats and landmarks), the flats off the feet of the landmarks STOOD (a dropped one's ground its own;
+the feet's grid against every foot), a zone's woods afar (monotone, its mean the zone's woods, its Trees' share), the
+field's own quantiles (120,000 tiles of the continent: every tabled share and every zone's woods its own), a Tree among
+the cover counted and coloured afar, the middle ring's own field, the band's codes and art, the far views' book (the
+zone's woods, its Trees' art by weight, its dressed ground a record a task; the Bay and the row off the climate's), the
+doors. `test/world/tesalands_props.test.js` (8): the meshes, the pictures, the looks and the laws, where a landmark
 stands (its inset, its rate, its woods and plains, never a road, water, a steep face or the beach, the lowest ground,
-the reeds' edge, the vines' rows and vineyards, a patch's stands, the larger first), the flats off the feet and the
-bodies, the host, the wiring and the four hosts. Pins moved with it (PIN MOVED, TESA-LANDS):
-`test/world/graht1_oaks.test.js` (the trees' host frames the landmarks beside the graht-oaks),
-`test/world/terrain/terrain.test.js` (the lands' beach test the fifth through the one home),
-`test/render/precip4_snowground.test.js` and `test/formats/incident_texture.test.js` (the pixel's set is its zone's
-dress), `test/scenes/fb1024_groundagree.test.js` (the lands' clearing the third), `test/world/gate/gateclear.test.js`
-and `test/systems/disc20.test.js` (the publish entry's window, grown by the landmarks' set), `test/systems/features.test.js`,
-`ft18_features.test.js` and `ft8_combatvisuals.test.js` (the row and the counts), and
-`test/systems/l10n4_hardcoded.test.js` (the table's lore lines are data, not the player's words); and with the audit
-`test/render/fartrees.test.js` (a picture read where a wanted pixel's tree is of it, not an archive's every Tree - and a
-test of its own for the atlas's lent layers), `test/render/precip4_snowground.test.js` and `test/systems/ecotone1.test.js`
-(a pixel's own set and its neighbours' loaded together, each with its twin). `tools/mutants/tesalands.json` (93, all
-dead); re-aimed by content: `farflora.json`, `fartrees.json`, `ecotone1.json`, `precip1.json`, `forest1.json` (one law
-for both forest fields).
+the reeds' edge, the vines' rows whole and off the feet, vineyards, a patch's stands, the larger first), the flats off the
+feet and the bodies, the rock the body (every face to a man's chest inside a body, turned by the yaw), the host (its
+scratch by what is in reach), the wiring and the four hosts. `test/systems/buildslice.test.js`: one slice a frame
+however many chains wait. `test/render/fartrees.test.js`: the atlas's lent layers, a set past the atlas laid once, a
+picture landed mid-lay held. Pins moved with it (PIN MOVED, TESA-LANDS): `test/world/graht1_oaks.test.js` (the trees'
+host frames the landmarks beside the graht-oaks), `test/world/terrain/terrain.test.js` (the lands' beach test the fifth
+through the one home), `test/render/precip4_snowground.test.js` and `test/formats/incident_texture.test.js` (the pixel's
+set is its zone's dress), `test/scenes/fb1024_groundagree.test.js` (the lands' clearing the third),
+`test/world/gate/gateclear.test.js` and `test/systems/disc20.test.js` (the publish entry's window, grown by the landmarks'
+set), `test/systems/features.test.js`, `ft18_features.test.js` and `ft8_combatvisuals.test.js` (the row and the counts),
+`test/render/midring.test.js` (the middle ring asks the forest field's own value with the row),
+`test/scenes/fb1004d_placelru.test.js` (the pixel's own set held by the pixel, loaded with its neighbours'),
+`test/systems/surv7_feed.test.js` and `test/systems/tesabiome_feltair.test.js` (the climate the body feels past the Bay,
+a zone's air), and `test/systems/l10n4_hardcoded.test.js` (the table's lore lines are data, not the player's
+words; the dress client's five warnings and reasons, console lines); and with the audit `test/render/fartrees.test.js`
+(a picture read where a wanted pixel's tree is of it, not an archive's every Tree - and a test of its own for the atlas's
+lent layers), `test/render/precip4_snowground.test.js` and `test/systems/ecotone1.test.js` (a pixel's own set and its
+neighbours' loaded together, each with its twin). `tools/mutants/tesalands.json` (118, all dead); re-aimed by content:
+`farflora.json`, `fartrees.json`, `ecotone1.json`, `precip1.json`, `forest1.json` (one law for both forest fields),
+`midring.json`, and with the second audit `perfextc.json` (the breather's one wake).
+
+**The second audit (2026-10-27, five lanes)** fixed, each pinned and its mutants dead: the transitions crisp; one slice a
+frame however many sets load; the dress's worker made again, watched, its unreadable answer and a failed post the page's;
+a set whose pixel went freed; its means taken once; the file's puddles marked once in a scene after; a snowless winter
+dressed; the grass lands bladed; the landmarks' feet and bodies their meshes'; the forest field's quantiles every 1%; the
+host's scratch by what is in reach; a Tree among the cover counted afar; the atlas's two lending gaps; the vineyard rows
+whole; the broadleaf lands' pine; the exposure the record gives (Vanilla Enhanced's .102 0.92). Found sound and left: the
+landmark host's GPU outlives no world (the world boots once a page and leaving it reloads the page).
 
 ## Sources
 
@@ -305,8 +355,9 @@ lore's words - the ramps' sources by zone:
   Lore:Pellitine, Lore:Senchal, Lore:Topal_Bay, Lore:Moon_Sugar (the Pellitine's coast and limestone); Lore:Tenmar_Forest,
   Lore:Torval, Lore:Corinthe (the Tenmar's jungle and wild sugarcane).
 - **Black Marsh.** Lore:Black_Marsh, Lore:Middle_Argonia, Lore:Helstrom, Lore:Hist ("giant spore trees growing in the
-  innermost swamps"), the Pocket Guide (the Hist swamps); Lore:Shadowfen, Online:Shadowfen, Lore:Thornmarsh, The Argonian
-  Account (the Fens' reeds "that reached up to his chin"); Online:Murkmire, Lore:Lilmoth, Lore:Soulrest, Lore:Archon.
+  innermost swamps"), the Pocket Guide (the Hist swamps); Lore:Shadowfen, Online:Shadowfen, Lore:Thornmarsh (the Fens'
+  reed beds); The Argonian Account, Book 2 (Skyrim:Argonian_Account,_Book_2 - the reeds "that reached up to his chin" by
+  the Commerce Road out of Cyrodiil); Online:Murkmire, Lore:Lilmoth, Lore:Soulrest, Lore:Archon.
 - **Morrowind.** Morrowind:Ashlands, Lore:Molag_Amur, Lore:Foyada, Lore:Guide_to_Vvardenfell, Lore:Flora_G (the Ashlands'
   ash, obelisks, trama and xylaria); Morrowind:Grazelands, Lore:Wickwheat; Morrowind:Red_Mountain; Morrowind:Ascadian_Isles
   (the emperor parasols, "large mushroom-like plants not unlike trees", heather and gold kanet); Morrowind:Bitter_Coast

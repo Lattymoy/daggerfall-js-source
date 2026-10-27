@@ -101,10 +101,10 @@ export function unpackFlora(v) {
  * ground's chance, the WOODS byte's elevation scale (`byte`), the desert's quarter, and the share of its 31 records that
  * are Trees. Pure.
  * @param {number} wood @param {number} dirt @param {number} grass @param {number} stone
- * @param {{ forests: boolean, desert: boolean, treeShare: number, lands?: any }} spec @param {number} [byte]
+ * @param {{ forests: boolean, desert: boolean, treeShare: number, coverShare?: number, lands?: any }} spec @param {number} [byte]
  */
 export function treesPerTile(wood, dirt, grass, stone, spec, byte = 128) {
-  if (!spec || !(spec.treeShare > 0)) return 0;
+  if (!spec || !(spec.treeShare > 0 || spec.coverShare > 0)) return 0;
   if (spec.lands) return landsTrees(spec.lands, spec.lands.woodOf(wood), dirt, grass, stone);   // TESA-LANDS: a zone's own woods
   if (spec.forests) {
     const g = FOREST.ground;
@@ -137,7 +137,7 @@ const COS_STEEP = Math.cos(FLORA.steep * Math.PI / 180);
 
 /** A far vertex's canopy where the field is past its resolution (the far ring, the far field): the woods' share of the
  *  land (FLORA.woodShare; TESA-LANDS a zone's own, its `woods`) on grass, read through the same law. Pure. */
-export const expectedTrees = (spec, byte) => (spec?.lands && spec.treeShare > 0 ? landsTrees(spec.lands, spec.lands.woods, 0, 1, 0) : treesPerTile(FLORA.woodShare, 0, 1, 0, spec, byte));
+export const expectedTrees = (spec, byte) => (spec?.lands && (spec.treeShare > 0 || spec.coverShare > 0) ? landsTrees(spec.lands, spec.lands.woods, 0, 1, 0) : treesPerTile(FLORA.woodShare, 0, 1, 0, spec, byte));
 
 // ═══════════════════════════════════════════════════════════════════
 // TESA-LANDS (bible/03-World/Tamriel-Lands.md): A ZONE'S WOODS AFAR. Past the Bay a zone lays its own flats (its recipe -
@@ -159,8 +159,10 @@ const _landsSpecs = new WeakMap();
  * chance) its recipe's; `treeShare` the share of its `trees` (by weight) that are Trees (TREE_RECORDS - the far views'
  * canopy, the band's and the 3D trees' kind: a stump, a log or a snag the recipe stands among them is a flat), 0 where it
  * grows none, and `treeRate` its recipe's rate by that share - so a zone's far canopy is the Trees its pixels stand and
- * no more (AUDIT: a recipe's stumps and mossy rocks had read as canopy, thinning where the band took over). Pure, made
- * once a recipe.
+ * no more (AUDIT: a recipe's stumps and mossy rocks had read as canopy, thinning where the band took over); `coverShare`
+ * and `coverRate` the same of its `cover` (the second audit, lane D: a Tree among a zone's cover stands at the cover's
+ * chance - the Velothi Foothills' 506:14, a third of its near Trees - and the far views had counted none of it). Pure,
+ * made once a recipe.
  * @param {any} recipe world/tamriel/tamrielLands.js LANDS' `flora`
  */
 export function landsFloraSpec(recipe) {
@@ -180,20 +182,42 @@ export function landsFloraSpec(recipe) {
     for (let d = 1; !n[at] && d < B + 2; d++) at = n[b - d] ? b - d : n[b + d] ? b + d : at;
     table[b] = n[at] ? sum[at] / n[at] : recipe.woods;
   }
-  const picks = recipe.trees ?? [], all = picks.reduce((a, p) => a + p[2], 0);
-  const share = all > 0 ? picks.reduce((a, p) => a + (isTreeRecord(p[0], p[1]) ? p[2] : 0), 0) / all : 0;
+  const share = treesShare(recipe.trees), coverShare = treesShare(recipe.cover);
   const lands = Object.freeze({
-    woods: recipe.woods, treeRate: c.treeRate * share, ground: c.ground,
+    woods: recipe.woods, treeRate: c.treeRate * share, coverRate: c.coverRate * coverShare, ground: c.ground,
     woodOf: (w) => table[w <= 0 ? 0 : w >= 1 ? B + 1 : 1 + Math.min(B - 1, Math.floor(w * B))],
     woodAt: (cover) => recipeWood(c, unpackCover(cover)),   // the zone's own edge on the field's own value (midRingCoverPixel)
   });
-  s = Object.freeze({ forests: true, desert: false, treeShare: share, lands });
+  s = Object.freeze({ forests: true, desert: false, treeShare: share, coverShare, lands });
   _landsSpecs.set(recipe, s);
   return s;
 }
+/** The share of a pool's picks ([archive, record, weight]) that are Trees, by weight (0 for none). */
+const treesShare = (picks = []) => {
+  const all = picks.reduce((a, p) => a + p[2], 0);
+  return all > 0 ? picks.reduce((a, p) => a + (isTreeRecord(p[0], p[1]) ? p[2] : 0), 0) / all : 0;
+};
+/**
+ * TESA-LANDS' second audit (lane D): A ZONE'S TREES AS ITS GROUND STANDS THEM - each Tree of its `trees` and its `cover`,
+ * [archive, record, weight], its weight its share of the zone's Trees at its woods (a `trees` pick's at the tree's
+ * chance, a `cover` pick's at the cover's - terrainNature.js's tile law at the zone's own woods): what the far views
+ * colour their canopy by (render/farFlora.js landTreeArt). Pure.
+ * @param {any} recipe LANDS' `flora` @returns {Array<[number, number, number]>}
+ */
+export function landsTreePicks(recipe) {
+  const w = Number.isFinite(recipe.woods) ? recipe.woods : 0;
+  const tree = (FOREST.plainTree + (FOREST.forestTree - FOREST.plainTree) * w) * (recipe.treeRate ?? 1);
+  const under = (FOREST.plainCover + (FOREST.undergrowth - FOREST.plainCover) * w) * (recipe.coverRate ?? 1);
+  const out = [];
+  for (const [pool, chance] of [[recipe.trees ?? [], tree], [recipe.cover ?? [], under]]) {
+    const all = pool.reduce((a, p) => a + p[2], 0);
+    if (all > 0) for (const [a, r, wt] of pool) if (isTreeRecord(a, r)) out.push([a, r, (wt / all) * chance]);
+  }
+  return out;
+}
 
 /** A zone's Trees a tile at its woods' share `wz` (its own - `spec.lands.woodAt`'s) and its ground's shares. Pure. */
-export const landsTreesAt = (spec, wz, dirt, grass, stone) => (spec?.lands && spec.treeShare > 0 ? landsTrees(spec.lands, wz, dirt, grass, stone) : 0);
+export const landsTreesAt = (spec, wz, dirt, grass, stone) => (spec?.lands && (spec.treeShare > 0 || spec.coverShare > 0) ? landsTrees(spec.lands, wz, dirt, grass, stone) : 0);
 
 /**
  * TESA-LANDS (AUDIT): THE FOREST FIELD'S OWN VALUE AT THE MIDDLE RING'S SAMPLES. The packed `wood` is FOREST1's, and a
@@ -218,8 +242,8 @@ export function midRingCoverPixel(px, py, sub = 8) {
 /** A zone's Trees a tile at its woods' share `wz` and its ground's shares - landsTiles' own chance (FOREST1's, at the
  *  zone's rate). Pure. */
 function landsTrees(L, wz, dirt, grass, stone) {
-  const g = L.ground;
-  return (FOREST.plainTree + (FOREST.forestTree - FOREST.plainTree) * wz) * ((g[1] ?? 0) * dirt + (g[2] ?? 0) * grass + (g[3] ?? 0) * stone) * L.treeRate;
+  const g = L.ground, rates = (FOREST.plainTree + (FOREST.forestTree - FOREST.plainTree) * wz) * L.treeRate + (FOREST.plainCover + (FOREST.undergrowth - FOREST.plainCover) * wz) * L.coverRate;
+  return rates * ((g[1] ?? 0) * dirt + (g[2] ?? 0) * grass + (g[3] ?? 0) * stone);
 }
 
 

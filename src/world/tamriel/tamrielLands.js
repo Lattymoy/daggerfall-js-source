@@ -9,7 +9,7 @@
 // on one of Daggerfall's ten climates; TAMRIEL-RELIEF and BREATHTAKER3 gave each its heights and its landforms. What a zone
 // LOOKED like was still its climate's: the Ashlands wore the Wrothgarians' green turf and pines, the Frozen Coast the same,
 // Craglorn and the Abecean Coast one sand, Summerset's Vine Coast the desert's cacti. Cyrodiil has the Bantha jungle and
-// Valenwood its graht-oaks (the owner's two calls, unchanged here). This table gives the other seven provinces' thirty-four
+// Valenwood its graht-oaks (the owner's two calls, unchanged here). This table gives the other seven provinces' thirty-three
 // zones their own land, read off the lore (the page's Sources - UESP's Lore, Morrowind, Skyrim and Online pages, the Pocket
 // Guide), each zone:
 //   - GROUND: its dress (world/tamriel/groundDress.js) - its dirt, grass and stone as the lore's materials, laid over the
@@ -29,13 +29,26 @@ import { tamrielBiomeAt, BIOME_BY_KEY } from './tamrielBiomes.js';
 import { climateNeighbourIn } from './tamrielGround.js';
 
 /**
- * THE FOREST FIELD'S QUANTILES (world/terrain/terrainNature.js forestCover - its value at a world tile), every 5% from 0
- * to 1, measured over 400,000 world tiles of the continent's frame (2026-10-27, tools/landsMeasure.mjs): the field's
- * value under which that share of the land falls. A zone's `woods` (its share of the land in woods) sets its woods' edge
- * at the field's (1 - woods) quantile - FOREST1's own 45% is the field's 0.51, its edge's centre.
+ * THE FOREST FIELD'S QUANTILES (world/terrain/terrainNature.js forestCover - its value at a world tile), every 1% from 0
+ * to 1, measured over 400,000 world tiles of the continent's frame (tools/landsMeasure.mjs): the field's value under
+ * which that share of the land falls. A zone's `woods` (its share of the land in woods) sets its woods' edge at the
+ * field's (1 - woods) quantile - FOREST1's own 45% is the field's 0.51, its edge's centre. TESA-LANDS' second audit
+ * (lane D): measured every 5% it had been read in a straight line from the 95th (0.638) to the field's highest (0.824),
+ * where the field's tail is far tighter - the Ashlands' and the Alik'r's two hundredths of woods stood five
+ * ten-thousandths, the High Peaks' three four, and the far views (the zone's number) stood half again the trees the
+ * ground did; test/world/tesalands_flora.test.js holds the table to the field.
  */
-export const FOREST_QUANTILES = Object.freeze([0.1684, 0.3606, 0.3903, 0.4109, 0.4275, 0.4418, 0.4548, 0.4668, 0.4782, 0.4892,
-  0.5002, 0.5112, 0.5223, 0.5338, 0.5458, 0.5585, 0.5728, 0.5892, 0.6093, 0.6384, 0.8238]);
+export const FOREST_QUANTILES = Object.freeze([0.1599, 0.3096, 0.3296, 0.3422, 0.3525, 0.3609, 0.3682, 0.3748, 0.3805, 0.3859,
+  0.3907, 0.3954, 0.3996, 0.4039, 0.4077, 0.4114, 0.4149, 0.4184, 0.4217, 0.4249,
+  0.4280, 0.4310, 0.4339, 0.4368, 0.4396, 0.4423, 0.4450, 0.4476, 0.4502, 0.4526,
+  0.4551, 0.4576, 0.4599, 0.4623, 0.4647, 0.4670, 0.4693, 0.4716, 0.4738, 0.4761,
+  0.4783, 0.4806, 0.4828, 0.4850, 0.4872, 0.4894, 0.4916, 0.4938, 0.4959, 0.4981,
+  0.5002, 0.5024, 0.5046, 0.5068, 0.5089, 0.5111, 0.5133, 0.5155, 0.5177, 0.5199,
+  0.5221, 0.5243, 0.5265, 0.5288, 0.5310, 0.5334, 0.5356, 0.5380, 0.5403, 0.5428,
+  0.5452, 0.5477, 0.5502, 0.5528, 0.5554, 0.5580, 0.5607, 0.5635, 0.5662, 0.5691,
+  0.5722, 0.5753, 0.5785, 0.5818, 0.5851, 0.5887, 0.5924, 0.5962, 0.6003, 0.6045,
+  0.6089, 0.6136, 0.6189, 0.6246, 0.6309, 0.6381, 0.6465, 0.6563, 0.6696, 0.6890,
+  0.8384]);
 /** The field's value under which share `p` of the land falls (FOREST_QUANTILES, linear between). Pure. */
 export function forestQuantile(p) {
   const f = Math.min(1, Math.max(0, p)) * (FOREST_QUANTILES.length - 1), i = Math.min(FOREST_QUANTILES.length - 2, Math.floor(f)), u = f - i;
@@ -231,7 +244,7 @@ export const LANDS = deepFreeze({
     ground: { grass: mat(M.greenTurf), dirt: mat(M.loam), stone: mat(M.seaRock) },
     blades: true,
     flora: { woods: 0.4, treeRate: 1, coverRate: 1,
-      trees: [...BROADLEAF, [504, 13, 1], [504, 14, 1]],
+      trees: [...BROADLEAF, [504, 14, 1]],   // the second audit (lane D): no pine (504:13) - its oak and beech
       cover: [[504, 1, 2], [504, 2, 2], [504, 21, 2], [504, 22, 2], [504, 27, 2], [504, 28, 2], [504, 3, 1], [504, 4, 1], [504, 29, 2]] },
     props: [],
     lore: 'Northpoint\'s bright green headland of farms, oak and beech above clear beaches',
@@ -276,7 +289,7 @@ export const LANDS = deepFreeze({
   // ══ SUMURSET ISLE ════════════════════════════════════════════════════════════════════════════════════════════════
   summersetVineCoast: {
     ground: { base: 302, grass: mat(M.vineMeadow, { fleck: fleck(['#e8a9c8', '#d8b84a', '#f2efe6'], 0.02) }), dirt: mat(M.warmSoil), stone: mat(M.paleLimestone) },
-    blades: false,
+    blades: true,   // the second audit (lane E): its meadows the temperate set's grass (`base`), its blades with them
     flora: { woods: 0.3, treeRate: 0.6, coverRate: 1,
       trees: [[510, 21, 3], [504, 16, 1], [504, 17, 1], [506, 14, 1]],
       cover: [[504, 1, 2], [504, 2, 2], [504, 21, 2], [504, 22, 1], [504, 27, 2], [504, 28, 1], [501, 8, 1], [504, 29, 2]] },
@@ -287,7 +300,7 @@ export const LANDS = deepFreeze({
     ground: { grass: mat(M.emerald), dirt: mat(M.paleDune), stone: mat(M.whiteGranite) },
     blades: true,
     flora: { woods: 0.65, treeRate: 1, coverRate: 1,
-      trees: [...BROADLEAF, [504, 13, 1]],
+      trees: [...BROADLEAF],   // the second audit (lane D): no pine (504:13) - its laurel, maple and cherry
       cover: [[504, 1, 2], [504, 21, 2], [504, 27, 2], [504, 28, 2], [504, 8, 2], [504, 26, 2], [504, 29, 2]] },
     props: [{ kind: 'grove', looks: ['cherry'], rate: 0.07, where: 'woods' }],
     lore: 'Auridon\'s untamed emerald woods of laurel, maple and cherry, ringed by white granite and pale dunes',
@@ -313,7 +326,7 @@ export const LANDS = deepFreeze({
   },
   elsweyrPlains: {
     ground: { base: 302, grass: mat(M.savannaGrass), dirt: mat(M.savannaDirt), stone: mat(M.savannaStone) },
-    blades: false,
+    blades: true,   // the second audit (lane E): its meadows the temperate set's grass (`base`), its blades with them
     flora: { woods: 0.08, treeRate: 0.7, coverRate: 0.8,
       trees: [[503, 5, 5], [501, 30, 1]],
       cover: [[503, 17, 3], [503, 10, 2], [504, 2, 1], [503, 7, 1], [503, 3, 1]] },
@@ -322,7 +335,7 @@ export const LANDS = deepFreeze({
   },
   elsweyrPellitine: {
     ground: { base: 302, grass: mat(M.coastMeadow, { fleck: fleck(['#b3a770', '#d8c070'], 0.02) }), dirt: mat(M.whiteSand), stone: mat(M.greyLimestone) },
-    blades: false,
+    blades: true,   // the second audit (lane E): its meadows the temperate set's grass (`base`), its blades with them
     flora: { woods: 0.45, treeRate: 1, coverRate: 1,
       trees: [...PALMS, [504, 12, 1]],
       cover: [[501, 7, 2], [501, 8, 2], [501, 25, 1], [500, 2, 2], [501, 29, 2], [501, 26, 1]] },
@@ -500,14 +513,20 @@ export const groundSetKey = (zone, archive) => `lands:${zone}:${archive}`;
 /**
  * A PIXEL'S GROUND SET: its zone's dress of `archive` - of the zone's `base` set in its stead where it names one (a zone
  * whose climate's set is the wrong cloth for its land: Summerset's Vine Coast is grass, not the Subtropical's desert
- * sand) - where `archive` is a SUMMER set (TEXTURE.002, .102, .302, .402: the winter's snow is the snow's, never dressed)
+ * sand) - where `archive` is a SUMMER set (TEXTURE.002, .102, .302, .402: the winter's snow is the snow's, never dressed;
+ * a winter `snowless` names - the page's door, world/climateSwaps.js winterSetSnowless: this module stays the terrain
+ * worker's, world/ alone - is its summer's)
  * and its zone dresses the ground; else `archive` itself. Bay-coordinate pixel (x, y).
- * @param {number} x @param {number} y @param {number|string} archive
+ * @param {number} x @param {number} y @param {number|string} archive @param {(archive: number) => boolean} [snowless]
  */
-export function landGroundSet(x, y, archive) {
-  if (typeof archive !== 'number' || archive % 100 !== 2) return archive;
+export function landGroundSet(x, y, archive, snowless = () => false) {
+  // TESA-LANDS' second audit (lane C): a winter set drawn without snow (Vanilla Enhanced's Snowless Swamps and Jungles,
+  // SNOWLESS1 - the swamps' and the jungles' 403) is its summer's ground, dressed as it: the snow lane draws its summer set
+  // there (no snow lies on it), and off that lane the Hist Swamps had worn the add-on's undressed set every winter
+  const summer = typeof archive === 'number' && archive % 100 === 3 && snowless(archive) ? archive - 1 : archive;
+  if (typeof summer !== 'number' || summer % 100 !== 2) return archive;
   const k = landKeyAt(x, y), g = k ? /** @type {any} */ (LANDS)[k].ground : null;
-  return g ? groundSetKey(k, g.base ?? archive) : archive;
+  return g ? groundSetKey(k, g.base ?? summer) : archive;
 }
 /** A ground set key's zone and archive, or null for an archive's own (a number, or a twin's key). */
 export function parseGroundSetKey(key) {

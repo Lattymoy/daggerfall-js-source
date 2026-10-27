@@ -48,6 +48,12 @@ export const PAVED_RECORDS = Object.freeze({ 46: Object.freeze([4]), 47: Object.
  *    share of the nearest two prototypes' distance (0..1 colour units), never under `softMin`;
  *  - `blur`: then blurred over this share of the record's width (a transition's shape is half a tile; a class's grain a
  *    texel or two) - transitionShares.
+ *  - `crisp`: and past the blur a share under this is none and over 1 less it whole (the rest stretched between): a
+ *    Gaussian half the prototypes' gap wide gives a texel AT its own class's prototype e^-2 of the next class's weight
+ *    (12% once normalised), so a transition's grass was dressed 88/12 with its dirt to its middle where the solid grass
+ *    record beside it is grass whole - tile-shaped patches the classic set never had (TESA-LANDS' second audit, lane C:
+ *    the Vine Coast's interiors 12 units of colour off their solid record's). The shape's edge stays soft; its inside is
+ *    its class's, as the solid record is.
  *  - `present`: a class nearest to fewer than this share of a record's texels is not asked there - a stray texel of
  *    another class's colour inside a grass tile is grass.
  *  - `fleckTexels`: a fleck's cell in texels at a 128-texel record (scaled with the record: one texel on the classic 64).
@@ -56,12 +62,12 @@ export const PAVED_RECORDS = Object.freeze({ 46: Object.freeze([4]), 47: Object.
  *    games' screenshots, bible/03-World/Tamriel-Lands.md) - and a ground set is an albedo the renderer lights: measured,
  *    the classic grass's luminance is 65 (TEXTURE.302) and 62 (.102) against the sampled grasses' 99, the desert's sand 145
  *    against 196 - two thirds, so a ramp's colour is taken at this share. A texture pack's set is lit as its own: its
- *    land's exposure against the classic set's scales it again (`exposure`, dressLayersSteps' - Vanilla Enhanced's 0.94).
+ *    land's exposure against the classic set's scales it again (`exposure`, dressLayersSteps' - Vanilla Enhanced's .102 0.92).
  *  - `vivid`: and the screenshots' colours are hazed by their distance and their light, where Daggerfall's sets are painted
  *    in its palette's full colours - a ramp's colours are moved this much further from their own grey (their luminance),
  *    so a dressed ground stands as saturated as the set's own.
  */
-export const DRESS_DIALS = Object.freeze({ contrast: 1, reach: Object.freeze([0.55, 1.6]), keep: 0.22, soft: 0.5, softMin: 0.02, blur: 0.045, present: 0.02, fleckTexels: 1, fleckBlend: 0.8, albedo: 0.7, vivid: 1.25 });
+export const DRESS_DIALS = Object.freeze({ contrast: 1, reach: Object.freeze([0.55, 1.6]), keep: 0.22, soft: 0.5, softMin: 0.02, blur: 0.045, crisp: 0.15, present: 0.02, fleckTexels: 1, fleckBlend: 0.8, albedo: 0.7, vivid: 1.25 });
 
 /** How many rows of a 256-texel record a step dresses (dressRecordSteps): the build's breather gives the frame back
  *  between steps (scenes/groundSets.js), so a step must be a slice of a frame, never a record whole. */
@@ -216,8 +222,9 @@ export function boxBlur(a, w, h, r, tmp) {
  * texel's distance to each prototype, its width `soft` of the nearest two prototypes' (never under `softMin`), then
  * BLURRED over `blur` of the record's width: a tile's transition is a shape half a tile across, and a set's grain within a
  * class (the mountains' dirt carries flecks of green, its grass of brown) is as far from its prototype as the next class
- * is, so a texel alone cannot say which side of the shape it stands on - its neighbourhood can. Normalised. A step a
- * band of DRESS_BAND rows, then a step a class's blur (dressRecordSteps walks it).
+ * is, so a texel alone cannot say which side of the shape it stands on - its neighbourhood can. Normalised, then made
+ * CRISP (DRESS_DIALS.crisp: a shape's inside its class's whole). A step a band of DRESS_BAND rows, then a step a class's
+ * blur (dressRecordSteps walks it).
  */
 function* transitionShares(layer, classes, protos) {
   let near = Infinity;
@@ -238,10 +245,15 @@ function* transitionShares(layer, classes, protos) {
   for (let k = 0; k < n; k++) {
     let sum = 0;
     for (let i = 0; i < nc; i++) sum += maps[i][k];
-    if (sum > 0) for (let i = 0; i < nc; i++) maps[i][k] /= sum;
+    if (!(sum > 0)) continue;
+    let crisp = 0;
+    for (let i = 0; i < nc; i++) crisp += crispShare(maps[i][k] / sum);
+    for (let i = 0; i < nc; i++) maps[i][k] = crisp > 0 ? crispShare(maps[i][k] / sum) / crisp : maps[i][k] / sum;   // every share under the floor (many classes evenly): as they were
   }
   return maps;
 }
+/** A blurred share made crisp (DRESS_DIALS.crisp): none under the dial, whole over 1 less it, stretched between. */
+const crispShare = (s) => Math.min(1, Math.max(0, (s - DRESS_DIALS.crisp) / (1 - 2 * DRESS_DIALS.crisp)));
 
 /** transitionShares' texels `from` to `to` (a band of rows - a plain function, so the engine optimises its loop as it
  *  does not a generator's): each class's Gaussian, normalised. */

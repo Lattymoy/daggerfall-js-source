@@ -2,7 +2,7 @@
 // flakes" - "I also definitely want to develop the new weather I mentioned"): THE ASHFALL. The port's own NINTH weather
 // word, appended as the sandstorm was, never rolled: the world weather map births it over the volcano's country past the
 // Bay - a zone's `ash`, the share of its sky's hours under the ash (Red Mountain half, the Ashlands TES III's 30%,
-// Stonefalls ESO's ashfall at 15%) - taken from the dry sky and never from what falls. Every seam a word reaches: its
+// Stonefalls 15%, the least - ESO's loading screen names its ashfall) - taken from the dry sky and never from what falls. Every seam a word reaches: its
 // fog, sun, flags and fall; the front, the ear, the sky row, the pall's cloud, tint and veil; the wind, the grass, the
 // body's air; the forecast; and the fall itself - grey ash and the tiny embers among it, glowing and cooling - drawn by
 // the dry falls' one renderer beside the sandstorm's sand. bible/07-Rendering/Weather-Arc.md, E.
@@ -16,8 +16,13 @@ import { WEATHER_ENUM } from '../../../src/systems/weather/weatherTable.js';
 import { WEATHER_TABLE } from '../../../src/systems/weather/weatherTable.js';
 import {
   PRIORITY, SYSTEM_TYPES, STRENGTH, CLOUD_COVER, SKY_WEIGHT, targetShares, birthLaw, birthsIn, weatherAt, resetWeatherMap,
+  typeCeilings, seasonCeilings, ASH_CEILING_SLACK,
 } from '../../../src/systems/weather/weatherMap.js';
-import { CELL_WORDS, ASH_FROM, ASH_FIELD_GAIN, ashAtPixel, cellSeats, fieldAt, pixelOfField } from '../../../src/systems/weather/weatherField.js';
+import { resetWeatherSim, setWeatherMapLaw, setWeatherFieldLaw, sampleWeatherField, currentMapSystems, setPrecipLaw } from '../../../src/systems/weather/weatherSim.js';
+import { biomeCacheSize, dropBiomeCache } from '../../../src/world/tamriel/tamrielBiomes.js';
+import { outdoorPlaylist, OVERCAST_SONGS, OVERCAST_SONGS_FM } from '../../../src/systems/song/songManager.js';
+import { WEATHER_PRESET, FOG_PRESET_FOR_WEATHER, fogPresetKey } from '../../../src/systems/dynamicSkies/dynamicSkies.js';
+import { CELL_WORDS, ASH_FROM, ASH_FIELD_GAIN, ashAtPixel, cellSeats, fieldAt, pixelOfField, wornCellOf } from '../../../src/systems/weather/weatherField.js';
 import { PRECIP_PEAK, PRECIP_SKEW, precipKind, soundWeather, fallTerms, createWeatherFront } from '../../../src/systems/weather/weatherFront.js';
 import { BIOMES, BIOME_BY_KEY, ASH_COUNTRY, tamrielBiomeAt } from '../../../src/world/tamriel/tamrielBiomes.js';
 import { tamrielFrameInBay, inBay, setTamrielFit } from '../../../src/world/tamriel/tamrielFrame.js';
@@ -93,7 +98,7 @@ test('ASHFALL1 the word: the ninth, appended - DFU\'s seven and the sandstorm ke
   assert.equal(skyOffsetForWeather('ashfall', weatherRng(1)), 0, 'the classic panorama has no ash sky: the season\'s');
 });
 
-test('ASHFALL1 the volcano\'s country: Red Mountain, the Ashlands and Stonefalls name their ash - half, TES III\'s 30% and ESO\'s ashfall at 15% - and no other zone; each [climate, ash] once (mutants: a zone\'s share; the country\'s pairs)', () => {
+test('ASHFALL1 the volcano\'s country: Red Mountain, the Ashlands and Stonefalls name their ash - half, TES III\'s 30% and the least, 15% (ESO\'s loading screen names Stonefalls\' ashfall) - and no other zone; each [climate, ash] once (mutants: a zone\'s share; the country\'s pairs)', () => {
   assert.equal(BIOME_BY_KEY.get('morrowindRedMountain').ash, 0.5);
   assert.equal(BIOME_BY_KEY.get('morrowindAshlands').ash, 0.3);
   assert.equal(BIOME_BY_KEY.get('morrowindStonefalls').ash, 0.15);
@@ -123,7 +128,7 @@ test('ASHFALL1 the law: a zone\'s ash is that share of its sky\'s hours, out of 
       assert.notEqual(law, birthLaw(CLIMATES.Mountain, season), 'its own law');
       assert.equal(law, birthLaw(CLIMATES.Mountain, season, ash), 'solved once');
       assert.ok(law.weight.ashfall > (ash > 0.15 ? birthLaw(CLIMATES.Mountain, season, ash / 2).weight.ashfall : 0), `${season} ${ash}: more ash, more births`);
-      for (const w of ['thunder', 'rain', 'snow']) assert.ok(Math.abs(law.weight[w] - birthLaw(CLIMATES.Mountain, season).weight[w]) < 1e-9, `${season} ${ash}: the ${w} systems born as ever`);
+      for (const w of ['thunder', 'rain', 'snow']) assert.equal(law.weight[w], birthLaw(CLIMATES.Mountain, season).weight[w], `${season} ${ash}: the ${w} systems born as ever, to the bit`);   // the second audit: an absolute 1e-9 on weights of 4e-12 could never fail
     }
     assert.equal(birthLaw(CLIMATES.Mountain, season).weight.ashfall, 0, 'none born off it');
     for (const c of [CLIMATES.Woodlands, CLIMATES.Desert, CLIMATES.Swamp]) assert.equal(birthLaw(c, season).weight.ashfall, 0);
@@ -162,6 +167,47 @@ test('ASHFALL1 the map: under the volcano the ash stands its law\'s share of the
   resetWeatherMap();
 });
 
+test('ASHFALL1 the ceilings (the second audit, lane A): every type but the ash is drawn at the rate the climates\' laws ask, to the bit - an ash law raises a ceiling only past ASH_CEILING_SLACK, so the volcano never redraws the world\'s births; the ash\'s own the volcano\'s laws\' most; a season\'s ceiling bounds every law a birth can read (mutants: the ash laws in every ceiling; the slack dropped)', () => {
+  assert.equal(ASH_CEILING_SLACK, 1e-9);
+  const seasons = Object.values(SEASONS), climates = Object.values(CLIMATES);
+  const most = (t, season) => Math.max(0, ...climates.map((c) => birthLaw(c, season)?.weight[t] ?? 0));
+  const ashMost = (t, season) => Math.max(0, ...ASH_COUNTRY.map(([c, a]) => birthLaw(c, season, a).weight[t]));
+  const amp = (t, season) => { const d = SYSTEM_TYPES[t].diurnal; return 1 + Math.abs((d[season] ?? d.other)[0]); };
+  const maxAmp = (t) => Math.max(...Object.values(SYSTEM_TYPES[t].diurnal).map(([a]) => 1 + a));
+  const c = typeCeilings();
+  for (const t of PRIORITY) {
+    if (t === 'ashfall') { assert.equal(c[t], Math.max(...seasons.map((s) => ashMost(t, s))) * maxAmp(t)); continue; }
+    assert.equal(c[t], Math.max(...seasons.map((s) => most(t, s))) * maxAmp(t), `${t}: the climates' laws' ceiling, to the bit`);
+  }
+  const sc = seasonCeilings();
+  for (const t of PRIORITY) for (const season of seasons) {
+    const need = Math.max(most(t, season), ashMost(t, season)) * amp(t, season);
+    assert.ok(sc[t][season] >= need / (1 + ASH_CEILING_SLACK) - 1e-15, `${t} ${season}: bounds every law a birth can read`);
+  }
+});
+
+test('ASHFALL1 the map\'s reads (the second audit, lane A): the zones are asked of a birthplace only where its climate can carry ash and never on the Bay - every candidate of every type had asked them, filling their cache tenfold; the sim\'s found systems follow the land past the Bay (mutants: the Bay asked; every climate asked; the found systems kept over a moved land)', () => {
+  resetWeatherMap();
+  dropBiomeCache();
+  for (const t of PRIORITY) for (let g = 0; g < 3; g++) birthsIn(t, 1 + g, 0, 700, () => CLIMATES.Mountain);   // nodes wholly on the Bay (160 km nodes 1-3 east, the south row)
+  assert.equal(biomeCacheSize(), 0, 'the Bay\'s births ask no zone');
+  const [rx, rz] = fieldOfPixel(hearts().morrowindRedMountain);
+  for (const t of PRIORITY) birthsIn(t, Math.floor(rx / SYSTEM_TYPES[t === 'thunder' ? 'rain' : t].node[0]), Math.floor(rz / SYSTEM_TYPES[t === 'thunder' ? 'rain' : t].node[0]), 701, () => CLIMATES.Woodlands);
+  assert.equal(biomeCacheSize(), 0, 'a climate that carries no ash asks no zone, past the Bay too');
+  // the sim: a minute's found systems are found again once the land past the Bay moves
+  resetWeatherSim(); setWeatherFieldLaw(true); setWeatherMapLaw(true);
+  try {
+    const at = [rx, rz], now = 600000;
+    sampleWeatherField(now, CLIMATES.Mountain, at, continent, 'jump');
+    const first = currentMapSystems();
+    sampleWeatherField(now, CLIMATES.Mountain, at, continent, 'live');
+    assert.equal(currentMapSystems(), first, 'the same minute, the same place: kept');
+    setTamrielFit({ ox: 862, oy: 976, ppu: 18.75 });
+    sampleWeatherField(now, CLIMATES.Mountain, at, continent, 'live');
+    assert.notEqual(currentMapSystems(), first, 'the land moved: found again');
+  } finally { setTamrielFit(null); resetWeatherSim(); setWeatherMapLaw(null); setWeatherFieldLaw(null); resetWeatherMap(); }
+});
+
 test('ASHFALL1 the field (?wxmap=off): an ash cell stands on the volcano\'s country under a dry word, its coin the seat\'s ash - never under what falls, never off the volcano (mutants: the coin; the dry words; the seat\'s ash unread)', () => {
   assert.deepEqual(CELL_WORDS.ashfall, { spacing: 30000, radius: [8000, 15000], p: 0.9, base: 'overcast' });
   assert.deepEqual(ASH_FROM, ['sunny', 'cloudy', 'overcast', 'fog']);
@@ -178,6 +224,11 @@ test('ASHFALL1 the field (?wxmap=off): an ash cell stands on the volcano\'s coun
     for (const c of f.cells.filter((c) => c.word === 'ashfall')) { const p = pixelOfField(c.x, c.z); assert.ok(p.y < 0 || p.x >= 1000, 'past the Bay'); }
   }
   assert.ok(ashDays > 20, `ash cells about the volcano on ${ashDays} of 40 cloudy days`);
+  // the cell worn where cells overlap: the strongest word, the nearest of it (the second audit: the nearest of any word was)
+  const ash = { word: 'ashfall', d: 1000, r: 9000 }, rain = { word: 'rain', d: 6000, r: 9000 }, far = { word: 'thunder', d: 9500, r: 9000 };
+  assert.equal(wornCellOf([ash, rain, far]), rain, 'rain over the ash it overlaps');
+  assert.equal(wornCellOf([ash, { ...ash, d: 2000 }]), ash, 'of one word, the nearest');
+  assert.equal(wornCellOf([far]), null, 'outside every cell');
   const rainy = fieldAt({ day: 3, minuteOfDay: 600, at: [x, z], climateAt: continent, wordOfClimate: () => 'rain' });
   assert.equal(rainy.cells.filter((c) => c.word === 'ashfall').length, 0, 'a rain day: none');
 });
@@ -193,6 +244,14 @@ test('ASHFALL1 the front and the ear: the ash is its own look, a dusting at its 
   const dust = fallTerms(row, 0.05, 'ashfall', light);
   assert.equal(dust.sun, 0.65); assert.ok(Math.abs(dust.fog.density - 0.006 * 0.25) < 1e-12, 'a dusting\'s haze thin');
   assert.equal(fallTerms(row, 1, 'ashfall', light), row, 'the heavy fall: the row whole');
+  // on the air's law the rain and the snow are one wet fall, the ear's and the soak's - the ash never (the second audit, lane
+  // E: off the law `rain` and `flakes` are null, and the wet fall's law went unread)
+  setPrecipLaw(true);
+  try {
+    const wet = createWeatherFront({ seed: 5 }).tick({ dt: 0.016, weather: 'ashfall', arrival: 1, nowMinutes: 300, tsec: 1, jump: true, peak: 1 });
+    assert.equal(wet.shown, 'ash'); assert.ok(wet.intensity > 0.6);
+    assert.equal(wet.rain, 0, 'no drops: nothing soaks, no ring on the water'); assert.equal(wet.flakes, 0, 'and no flakes');
+  } finally { setPrecipLaw(null); }
 });
 
 test('ASHFALL1 the sky: a brown-grey pall low, deep and dark, tinted, its veil hung under it in its tint; the body\'s air a fog\'s, dry; a breeze; a dim field (mutants: the tint; the veil untinted; the row)', () => {
@@ -201,16 +260,24 @@ test('ASHFALL1 the sky: a brown-grey pall low, deep and dark, tinted, its veil h
   assert.deepEqual(CELL_TINT.ashfall, [0.66, 0.60, 0.56]); assert.deepEqual(CURTAIN_FALL.ashfall, [0.9, 0]); assert.equal(CIRRUS_COVER.ashfall, 0.15);
   const c = cellOf('ashfall', 1, 2, 20000);
   assert.deepEqual(c.tint, CELL_TINT.ashfall); assert.equal(c.fall, 0.9); assert.equal(c.fallKind, 0);
-  assert.match(rd('src/render/volumetricClouds.js'), /mix\(uCloudLit, uHorizonColor, 0\.4\), F\.y\) \* uCellC\[i\]\.rgb;/, 'the sky\'s veil in its cell\'s tint (white for a word with none)');
+  const vc = rd('src/render/volumetricClouds.js');
+  assert.match(vc, /float tinted = 1\.0 - step\(2\.999, dot\(uCellC\[i\]\.rgb, vec3\(1\.0\)\)\);\n\s+tint = mix\(tint, vec3\(dot\(tint, vec3\(0\.299, 0\.587, 0\.114\)\)\), tinted\) \* uCellC\[i\]\.rgb;/, 'the sky\'s veil its tint\'s grey (white for a word with none: untouched)');
   const [veil] = curtainsOf([{ ...c, x: 0, z: 15000 }], { focus: [0, 0, 0], eye: [0, 400, 0] });
   assert.deepEqual(veil.tint, CELL_TINT.ashfall, 'the travel view\'s veil carries it');
-  assert.deepEqual([...mixColor(CURTAIN_RAIN_COLOR, CURTAIN_SNOW_COLOR, 0, CELL_TINT.ashfall)], CURTAIN_RAIN_COLOR.map((v, i) => Math.fround(v * CELL_TINT.ashfall[i])));
+  const grey = 0.299 * Math.fround(0.5) + 0.587 * Math.fround(0.54) + 0.114 * Math.fround(0.6);
+  assert.deepEqual([...mixColor(CURTAIN_RAIN_COLOR, CURTAIN_SNOW_COLOR, 0, CELL_TINT.ashfall)], CELL_TINT.ashfall.map((v) => Math.fround(grey * v)), 'the travel view\'s veil its grey times the tint - brown-grey, never the rain\'s blue under it');
+  const [r, , b] = mixColor(CURTAIN_RAIN_COLOR, CURTAIN_SNOW_COLOR, 0, CELL_TINT.ashfall);
+  assert.ok(r > b, 'warmer than blue');
   assert.deepEqual([...mixColor(CURTAIN_RAIN_COLOR, CURTAIN_SNOW_COLOR, 0)], [...CURTAIN_RAIN_COLOR].map(Math.fround), 'no tint: as it was');
   assert.equal(WEATHER_TEMP.ashfall, -5); assert.equal(WEATHER_TEMP.ashfall, WEATHER_TEMP.fog); assert.equal(WEATHER_WET.ashfall, undefined, 'dry');
   assert.equal(WEATHER_NAMES.ashfall, 'Ashfall');
   assert.equal(VIOLENCE.ashfall, 0.3); assert.equal(windfallWeather('ashfall'), WEATHER_ENUM.overcast);
   assert.equal(LAB_DIM.ashfall, 0.58); assert.equal(JUNGLE_HAZE.weather.ashfall, 1.12);
   assert.equal(FORECAST_WORDS.ashfall, 'Ashfall'); assert.ok(FORECAST_NOTABLE.has('ashfall'));
+  // the second audit (lane A): an overcast to the music and the sky mod, as to every flag's reader - never the sunny default
+  assert.equal(outdoorPlaylist({ weather: 'ashfall' }), OVERCAST_SONGS); assert.equal(outdoorPlaylist({ weather: 'ashfall', fm: true }), OVERCAST_SONGS_FM);
+  assert.equal(WEATHER_PRESET.ashfall, 'SkyboxOvercast'); assert.equal(FOG_PRESET_FOR_WEATHER.ashfall, 'FogSnowy'); assert.equal(fogPresetKey('ashfall'), 'snowy', 'the sky mod\'s fog the one fogForWeather stands in');
+  assert.equal(WEATHER_PRESET.sandstorm, 'SkyboxFog'); assert.equal(fogPresetKey('sandstorm'), 'heavy', 'and the sandstorm\'s, which had fallen to the sunny sky too');
 });
 
 test('ASHFALL1 the fall: grey ash and the embers among it - two instance sets on one program, the ash blended, the embers ADDED; counts the front\'s share; the clock whole cycles and whole boxes over its period; the travel wrapped at the gust\'s span (mutants: the embers blended; the counts; the clock)', () => {
@@ -224,6 +291,7 @@ test('ASHFALL1 the fall: grey ash and the embers among it - two instance sets on
   assert.match(ASH_VS, /float life = fract\(uTime \* \(uLife\.x \+ floor\(fract\(seed\*5\.3\) \* \(uLife\.y \+ 1\.0\)\)\) \/ 400\.0 \+ seed\*7\.0\);/);
   assert.match(ASH_VS, /float gust = \(32\.0 \+ floor\(fract\(seed\*3\.7\) \* 17\.0\)\) \/ 40\.0;/);
   assert.match(ASH_VS, /p = mod\(p - uEye \+ uBox\*0\.5, uBox\) \+ uEye - uBox\*0\.5;/, 'the lab\'s wrap about the eye');
+  assert.match(ASH_VS, /vFade \*= smoothstep\(0\.3, 1\.0, c\.w\);/, 'a flake at the eye goes before it fills the screen');
   assert.match(ASH_FS, /o = vec4\(hot \* vGlow \* a \* uGain, 1\.0\);/); assert.match(ASH_FS, /o = vec4\(uColor\.rgb, uColor\.a \* a\);/);
   // the renderer, on a stub context
   const { gl, calls } = stubGl();
@@ -238,9 +306,12 @@ test('ASHFALL1 the fall: grey ash and the embers among it - two instance sets on
   assert.deepEqual(blends, [[17, 18], [20, 20]], 'the ash blended, the embers added');
   assert.deepEqual(calls.filter((c) => c[0] === 'uniform1f' && c[1] === 'uEmber').map((c) => c[2]), [0, 1]);
   assert.deepEqual(calls.find((c) => c[0] === 'uniform1f' && c[1] === 'uTime').slice(2), [1], 'the clock wrapped');
-  assert.deepEqual(calls.find((c) => c[0] === 'uniform1f' && c[1] === 'uMinSize').slice(2), [1.5 / 1000]);
+  assert.deepEqual(calls.find((c) => c[0] === 'uniform1f' && c[1] === 'uMinSize').slice(2), [1.5 / 1000], 'no image handed: the canvas\'s');
   assert.deepEqual(calls.find((c) => c[0] === 'uniform1f' && c[1] === 'uAspect').slice(2), [proj[5] / proj[0]]);
   assert.equal(dry.drawn, 6160);
+  calls.length = 0;
+  dry.draw({ on: true, kind: 'ash', strength01: 0.5, windV: [2, 1], step: [0, 0] }, proj, proj, new Float32Array([0, 0, 0]), 402, 200);
+  assert.deepEqual(calls.find((c) => c[0] === 'uniform1f' && c[1] === 'uMinSize').slice(2), [1.5 / 200], 'the world image\'s own pixel (RETRO1\'s 200 rows, the render scale\'s)');
   calls.length = 0;
   dry.draw({ on: true, kind: 'sand', strength01: 1, windV: [20, 5], step: [1, 0.25], gust: 1 }, proj, proj, new Float32Array([0, 0, 0]), 3);
   assert.equal(calls.find((c) => c[0] === 'drawArraysInstanced')?.[4], SAND_LOOK.count, 'the sand its own');
@@ -257,9 +328,11 @@ test('ASHFALL1 the hosts: the dry falls\' one renderer built on the enhanced lan
   for (const [name, s, eye] of [['world', rd('src/scenes/world.js'), 'wxEye32'], ['exterior', rd('src/scenes/exterior.js'), 'eye32']]) {
     assert.match(s, /const dryFall = sky\.enhanced \? new DryFallRenderer\(renderer\.gl\) : null;/, `${name}: built at boot`);
     assert.match(s, /if \(precipMode && !isDryFall\(precipMode\) && !precip\) precip = new PrecipitationRenderer/, `${name}: the rain program for the wet falls alone`);
+    assert.match(s, /let precip = precipMode && !isDryFall\(precipMode\) \? new PrecipitationRenderer\(renderer\.gl, precipOpts\) : null;/, `${name}: at boot too`);
     const i = s.indexOf('if (isDryFall(precipShown)) {');
     assert.ok(i > 0, `${name}: the dry falls' branch`);
-    assert.ok(s.slice(i, i + 700).includes(`dryFall.draw({ on: true, kind: precipShown, strength01: fx.intensity, windV: wd.windV, step: wd.step }, proj, view, ${eye}, now / 1000);`), `${name}: the kind handed (the frame's gust, which neither fall reads, gone)`);
+    assert.ok(s.slice(i, i + 900).includes(`dryFall.draw({ on: true, kind: precipShown, strength01: fx.intensity, windV: wd.windV, step: wd.step }, proj, view, ${eye}, now / 1000, renderer.worldViewportPx?.[3]);`), `${name}: the kind handed (the frame's gust, which neither fall reads, gone), and the world image's height`);
+    if (name === 'world') assert.ok(s.slice(i, i + 900).includes('if (dryFall && !_dwPrecipOff && (!_travelWeatherOff || tvf)) {'), 'world: Travel Options\' weather off stands the dry falls down, as the rain');
   }
 });
 

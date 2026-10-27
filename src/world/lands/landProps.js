@@ -24,8 +24,9 @@
 //     beach (the reeds alone go down to the water's edge, never into open water). It stands at the lowest ground under its
 //     foot, sunk a little (never floating: the uphill side goes into the slope). The larger kinds stand first and the
 //     smaller keep off them; the pixel's flats keep off every foot.
-//   - ITS BODIES (landPropBodies): the stalk, the column or the trunk a body - the player walks round a parasol, a
-//     spire, a Hist or a grove's tree; through the reeds and between the vines' rows.
+//   - ITS BODIES (landPropBodies): each solid part a body (the second audit: a crag's every lump, a grove of three's every
+//     stalk) - the player walks round a parasol, a spire, a Hist or a grove's tree; through the reeds and between the
+//     vines' rows.
 //   - ITS LOD (landLodOf): by the distance over its scale, the kind's own reaches; past its kind's `far` none is drawn.
 // ═══════════════════════════════════════════════════════════════════
 import { LAND_KINDS, LAND_VARIANTS, VINE_SPAN, landPropMesh } from './landPropMesh.js';
@@ -45,7 +46,7 @@ export const LAND_KIND_LAW = Object.freeze({
   spire: Object.freeze({ cell: 8, inset: Object.freeze([0.25, 0.75]), lod: Object.freeze([150, 480]), far: 2200, steep: 40, sink: 0.6, body: true, sway: 0, rank: 1 }),
   parasol: Object.freeze({ cell: 4, inset: Object.freeze([0.2, 0.8]), lod: Object.freeze([100, 300]), far: 1500, steep: 30, sink: 0.3, body: true, sway: 0.03, rank: 2 }),
   grove: Object.freeze({ cell: 2, inset: Object.freeze([0.25, 0.75]), lod: Object.freeze([70, 220]), far: 1200, steep: 32, sink: 0.3, body: true, sway: 0.14, rank: 3 }),
-  vines: Object.freeze({ cell: 1, inset: Object.freeze([0.5, 0.5]), lod: Object.freeze([40, 130]), far: 420, steep: 14, sink: 0.1, body: false, sway: 0.06, rank: 4 }),
+  vines: Object.freeze({ cell: 1, inset: Object.freeze([0.5, 0.5]), lod: Object.freeze([40, 130]), far: 420, steep: 6, sink: 0.1, body: false, sway: 0.06, rank: 4 }),   // steep: the second audit's - a row's fall over its half (3.2 m) within its posts' 0.4 m
   reeds: Object.freeze({ cell: 1, inset: Object.freeze([0.15, 0.85]), lod: Object.freeze([30, 90]), far: 260, steep: 20, sink: 0.1, body: false, sway: 0.35, rank: 5 }),
 });
 /** The vines' block (tiles): a vineyard drawn whole, its rows two a tile. */
@@ -105,20 +106,29 @@ export const LAND_LOOKS = Object.freeze({
 export const LAND_LOOK_NAMES = Object.freeze(Object.keys(LAND_LOOKS));
 const LOOK_INDEX = new Map(LAND_LOOK_NAMES.map((n, i) => [n, i]));
 
-/** A kind's variant's MEASURES at scale 1 - `top`, `reach`, `stalk` (its LOD 0's: landPropMesh), and `foot`, the reach
- *  of what stands on the ground (its stalk; the Hist's its roots). Made once a variant, on the thread that asks. */
+/** A kind's variant's MEASURES at scale 1 - `top`, `reach`, `stalk` (its LOD 0's: landPropMesh); `foot`, the reach of
+ *  what stands on the ground - a bodied kind's read off its mesh to LAND_CHEST (landPropMesh's `foot`: a crag's satellite
+ *  lumps, a grove of three's outer stalks, the Hist's roots), the reeds' and the vines' their stalk's and their tile's;
+ *  `sink`, how far round its middle the lowest ground is sought (its stalk's; the Hist's its roots - as it stood, so no
+ *  landmark stands deeper than it did); and `parts`, its solid ones (landPropBodies). Made once a variant, on the thread
+ *  that asks. TESA-LANDS' second audit (lane D): the foot and the body had been one stalk's or one lump's - a crag's 5.2 m
+ *  of its 9.2, a grove of three's 1.07 of its 3.8: its satellites stood on roads and water, flats grew out of them, and
+ *  the player walked metres into the rock. */
 const _measures = new Map();
 export function landMeasures(kind, variant) {
   const key = `${kind}:${variant}`;
   let m = _measures.get(key);
   if (!m) {
     const made = landPropMesh(kind, variant, 0);
-    m = Object.freeze({ top: made.top, reach: made.reach, stalk: made.stalk, foot: kind === 'hist' ? HIST_ROOTS : kind === 'vines' ? 0.6 : Math.max(0.5, made.stalk) });
+    const sink = kind === 'hist' ? HIST_ROOTS : kind === 'vines' ? 0.6 : Math.max(0.5, made.stalk);
+    const bodied = /** @type {any} */ (LAND_KIND_LAW)[kind].body;
+    m = Object.freeze({ top: made.top, reach: made.reach, stalk: made.stalk, foot: bodied ? Math.max(0.5, made.foot) : sink, sink, parts: bodied ? made.parts : Object.freeze([]) });
     _measures.set(key, m);
   }
   return m;
 }
-/** The Hist's roots' reach (m, at scale 1 - landPropMesh's root flares, 6 to 9 m out). */
+/** The Hist's roots' reach (m, at scale 1 - landPropMesh's root flares, 6 to 9 m out): its sink's (its foot is read off
+ *  its mesh). */
 export const HIST_ROOTS = 9;
 
 /** A landmark's LOD at `d` metres from the eye over its scale. */
@@ -206,20 +216,24 @@ export function landSites({ ox, oz, tiles, tileM, owners, wood, tile, clear, ste
         const variant = lk.variants[Math.min(lk.variants.length - 1, Math.floor(draw(wx, wz, S + 4) * lk.variants.length))];
         if (!(variant < /** @type {any} */ (LAND_VARIANTS)[kind])) continue;
         const scale = lk.scale[0] + (lk.scale[1] - lk.scale[0]) * draw(wx, wz, S + 5);
-        const m = landMeasures(kind, variant), foot = m.foot * scale;
+        const m = landMeasures(kind, variant), foot = m.foot * scale, sinkR = m.sink * scale;
         if (kind === 'vines') {
-          // two rows across the tile, along x; their foot the tile's own
+          // two rows across the tile, along x; their foot the tile's own. TESA-LANDS' second audit (lane D): a row its whole
+          // length - off every foot along it (its middle's 1.6 m had been asked: a row ran through a grove's trunk at its
+          // ends), and at the lowest of its middle and its two ends (a rigid 6.4 m stood at its middle's ground on a 14°
+          // slope had floated its downhill end); its slope's limit the law's
           if (!footOk((ix + 0.5) * tileM, (iz + 0.5) * tileM, 0, false)) continue;
+          const half = VINE_SPAN / 2;
           for (const f of [0.25, 0.75]) {
             const mx = (ix + 0.5) * tileM, mz = (iz + f) * tileM;
-            if (!kept(mx, mz, VINE_SPAN * 0.25)) continue;
-            out.push(mx, lowest(mx, mz, 0) - law.sink, mz, 0, 1, K, variant, LOOK_INDEX.get(name) ?? 0);
+            if (!kept(mx - half / 2, mz, half / 2) || !kept(mx, mz, half / 2) || !kept(mx + half / 2, mz, half / 2)) continue;
+            out.push(mx, Math.min(lowest(mx, mz, 0), ground(mx - half, mz), ground(mx + half, mz)) - law.sink, mz, 0, 1, K, variant, LOOK_INDEX.get(name) ?? 0);
           }
           continue;
         }
         const mx = tx * tileM, mz = tz * tileM;
         if (!footOk(mx, mz, foot, kind === 'reeds') || !kept(mx, mz, foot)) continue;
-        out.push(mx, lowest(mx, mz, foot) - law.sink * scale, mz, draw(wx, wz, S + 7) * Math.PI * 2, scale, K, variant, LOOK_INDEX.get(name) ?? 0);
+        out.push(mx, lowest(mx, mz, sinkR) - law.sink * scale, mz, draw(wx, wz, S + 7) * Math.PI * 2, scale, K, variant, LOOK_INDEX.get(name) ?? 0);
         if (law.body) feet.push(mx, mz, foot);
       }
     }
@@ -285,15 +299,17 @@ export function flatsOffProps(flats, props, tileM) {
 }
 
 /**
- * A LANDMARK'S BODIES (world/propBodies.js's shape: `{ c, r, h, lift, body, _mark }`, its foot `c` pixel-local): its
- * stalk, column or trunk one - none for the reeds and the vines (LAND_KIND_LAW.body).
+ * A LANDMARK'S BODIES (world/propBodies.js's shape: `{ c, r, h, lift, body, _mark }`, its foot `c` pixel-local): each solid
+ * part one (landMeasures' `parts` - a stalk, a column, a lump of rock, a trunk: a crag's three lumps, a grove of three's
+ * stalks, the xylaria's cluster), turned by its yaw as the draw turns its mesh (x' = c x + s z, z' = -s x + c z) - none
+ * for the reeds and the vines (LAND_KIND_LAW.body).
  * @param {ArrayLike<number>} props a set's floats @param {number} i the landmark's first
  */
 export function landPropBodies(props, i) {
   const kind = LAND_KINDS[props[i + 5]];
   if (!(/** @type {any} */ (LAND_KIND_LAW)[kind])?.body) return [];
-  const m = landMeasures(kind, props[i + 6]), s = props[i + 4];
-  return [{ c: [props[i], props[i + 1], props[i + 2]], r: Math.max(0.3, m.stalk) * s, h: m.top * s, lift: 0, body: true, _mark: 0 }];
+  const m = landMeasures(kind, props[i + 6]), s = props[i + 4], c = Math.cos(props[i + 3]), sn = Math.sin(props[i + 3]);
+  return m.parts.map((q) => ({ c: [props[i] + (c * q.x + sn * q.z) * s, props[i + 1], props[i + 2] + (-sn * q.x + c * q.z) * s], r: Math.max(0.3, q.r) * s, h: q.h * s, lift: 0, body: true, _mark: 0 }));
 }
 
 /**

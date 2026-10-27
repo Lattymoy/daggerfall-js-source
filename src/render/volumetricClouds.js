@@ -1083,7 +1083,11 @@ void curtains(vec3 cam, vec3 dir, float tSplit, out vec4 front, out vec4 back, o
     float c0 = ta, c3 = tb, c1 = clamp(min(tB, tSplit), c0, c3), c2 = clamp(max(tB, tSplit), c1, c3);
     vec2 lo = veilPiece(i, cam, dir, c0, c1, rad, yb, yt), mid = veilPiece(i, cam, dir, c1, c2, rad, yb, yt), hi = veilPiece(i, cam, dir, c2, c3, rad, yb, yt);
     vec2 inF = w * (lo + (c2 <= tSplit ? mid : vec2(0.0))), inB = w * (hi + (c2 <= tSplit ? vec2(0.0) : mid));
-    vec3 tint = mix(mix(uCloudShade * (1.0 - 0.6 * uCellB[i].x), uHorizonColor, 0.3), mix(uCloudLit, uHorizonColor, 0.4), F.y) * uCellC[i].rgb;   // rain the cell's own dark grey, snow pale; ASHFALL1: in the cell's tint (white for a word with none)
+    vec3 tint = mix(mix(uCloudShade * (1.0 - 0.6 * uCellB[i].x), uHorizonColor, 0.3), mix(uCloudLit, uHorizonColor, 0.4), F.y);   // rain the cell's own dark grey, snow pale
+    // ASHFALL1: a tinted cell's veil is its tint's - its grey first (the sky's blue-grey times the ash's tint read neutral,
+    // the audit's), then tinted; a word with none (white) is untouched
+    float tinted = 1.0 - step(2.999, dot(uCellC[i].rgb, vec3(1.0)));
+    tint = mix(tint, vec3(dot(tint, vec3(0.299, 0.587, 0.114))), tinted) * uCellC[i].rgb;
     tauF += inF.x; tintF += tint * (inF.x - inF.y) + uHorizonColor * inF.y;   // SKY-2: each sample in its own aerial perspective
     tauB += inB.x; tintB += tint * (inB.x - inB.y) + uHorizonColor * inB.y; tSum += inB.x * 0.5 * (max(ta, tSplit) + tb);
   }

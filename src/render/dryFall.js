@@ -44,7 +44,7 @@ export const ASH_BOX = 40;
 export const ASH_LOOK = Object.freeze({ count: 12000, fall: Object.freeze([6, 7]), size: Object.freeze([0.018, 0.03]), color: Object.freeze([0.36, 0.34, 0.32]), alpha: 0.72 });
 /** THE EMBERS: fewer and smaller, falling slower (3 to 7 boxes: 0.3 to 0.7 m/s); `life` its glow's length as whole
  *  cycles over the period [least, steps more] - 40 to 99, a life of four to ten seconds; `flicker` the same for its
- *  flicker (about four to six a second); `gain` how bright it burns. */
+ *  flicker (4.25 to 6.5 a second); `gain` how bright it burns. */
 export const EMBER_LOOK = Object.freeze({ count: 320, fall: Object.freeze([3, 4]), size: Object.freeze([0.008, 0.012]), life: Object.freeze([40, 59]), flicker: Object.freeze([1700, 900]), gain: 1.6 });
 /** The tumble's two sways, whole cycles over the period (0.79 and 0.58 radians a second). */
 export const ASH_SWAY_CYCLES = Object.freeze([50, 37]);
@@ -89,6 +89,7 @@ void main(){
   float h = 0.5 * sz * uProjY / max(c.w, 1e-4);
   float k = max(h, uMinSize);
   vFade *= (h / k) * (h / k);
+  vFade *= smoothstep(0.3, 1.0, c.w);   // ASHFALL1's audit: a flake at the eye goes before it fills the screen (0.2 m off, a disc 200 px across)
   c.xy += vec2((aCorner.x - 0.5) * 2.0 * k / uAspect, (aCorner.y - 0.5) * 2.0 * k) * c.w;
   vUv = aCorner;
   gl_Position = c;
@@ -172,8 +173,10 @@ export class AshFallRenderer {
   }
 
   /** Draw the frame's ash for `frame` ({ on, strength01, windV, step } - the hosts' fall: the front's intensity, the one
-   *  wind's rate and the frame's travel). Advances the travel first. */
-  draw(frame, proj, view, eye, timeSeconds) {
+   *  wind's rate and the frame's travel). Advances the travel first. `viewH` the world image's height in pixels (the
+   *  renderer's worldViewportPx - RETRO1's 200 or 400, the render scale's, a docked HUD's strip; ASHFALL1's audit: the
+   *  canvas's held a flake at a third of a retro pixel), the canvas's where none is handed. */
+  draw(frame, proj, view, eye, timeSeconds, viewH = 0) {
     this.drawn = 0; this.embers = 0;
     if (!frame?.on) return;
     this.advance(frame.step);
@@ -188,7 +191,7 @@ export class AshFallRenderer {
     gl.uniform1f(U.uBox, ASH_BOX);
     gl.uniform1f(U.uProjY, proj[5]);
     gl.uniform1f(U.uAspect, proj[5] / proj[0]);
-    gl.uniform1f(U.uMinSize, DRY_MIN_PX / Math.max(1, gl.drawingBufferHeight || 720));   // half the least size, in the screen's -1..1
+    gl.uniform1f(U.uMinSize, DRY_MIN_PX / Math.max(1, viewH || gl.drawingBufferHeight || 720));   // half the least size, in the world image's -1..1
     gl.uniform2f(U.uWindV, frame.windV?.[0] ?? 0, frame.windV?.[1] ?? 0);
     gl.uniform2fv(U.uWindOff, this.windOff);
     gl.uniform2f(U.uLife, EMBER_LOOK.life[0], EMBER_LOOK.life[1]);
@@ -233,13 +236,13 @@ export class DryFallRenderer {
     this.drawn = 0;
   }
 
-  /** Draw the frame's fall - the ash for `kind` 'ash', the sand else. */
-  draw(frame, proj, view, eye, timeSeconds) {
+  /** Draw the frame's fall - the ash for `kind` 'ash', the sand else. `viewH` the world image's height (AshFallRenderer). */
+  draw(frame, proj, view, eye, timeSeconds, viewH = 0) {
     this.drawn = 0;
     if (frame?.kind === 'ash') {
       const ash = this.ash(true);   // needed now: built whatever the driver says (the start above has had the boot)
       if (!ash) return;
-      ash.draw(frame, proj, view, eye, timeSeconds);
+      ash.draw(frame, proj, view, eye, timeSeconds, viewH);
       this.drawn = ash.drawn + ash.embers;
       return;
     }

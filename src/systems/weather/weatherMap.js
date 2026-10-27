@@ -440,38 +440,56 @@ export function diurnal(type, hour, season) {
 }
 const maxDiurnal = (type) => Math.max(...Object.values(SYSTEM_TYPES[type].diurnal).map(([amp]) => 1 + amp));
 
-/** ASHFALL1: every law a birth can read - each known climate's, and each of the volcano's country's ([climate, ash]). */
-const LAW_KEYS = Object.freeze([...[...KNOWN].map((climate) => Object.freeze([climate, 0])), ...ASH_COUNTRY]);
+/** ASHFALL1: the climates the volcano's country is laid on - a birth reads its ash only where its climate is one. */
+const ASH_CLIMATES = new Set(ASH_COUNTRY.map(([climate]) => climate));
+/** ASHFALL1 (the second audit, lane A): AN ASH LAW RAISES A CEILING ONLY WHERE IT ASKS MORE than the climates' laws do,
+ *  past this share - so the volcano's country never redraws the world's births. A ceiling is the rate every candidate of
+ *  a type is drawn at, the world over, and moving it by a bit redraws them all; the ash takes the dry words' share of the
+ *  free air, so the winter mountains' cloud asks the same weight with ash as without to the last bits of a double
+ *  (3.972145394231093 against ...087), and a laws-wide max let that noise through. Within the slack the keep is a
+ *  billionth short of its law, there alone. */
+export const ASH_CEILING_SLACK = 1e-9;
+/** `into[t]` raised to every climate's law's weight for the type in `season`. */
+function raiseTo(into, season) {
+  for (const climate of KNOWN) {
+    const law = birthLaw(climate, season);
+    if (law) for (const t of PRIORITY) into[t] = Math.max(into[t], law.weight[t]);
+  }
+  return into;
+}
+/** ...and to the volcano's country's laws' (ASH_COUNTRY), only past ASH_CEILING_SLACK. */
+function raiseToAsh(into, season) {
+  for (const [climate, ash] of ASH_COUNTRY) {
+    const law = birthLaw(climate, season, ash);
+    if (law) for (const t of PRIORITY) if (law.weight[t] > into[t] * (1 + ASH_CEILING_SLACK)) into[t] = law.weight[t];
+  }
+  return into;
+}
 /** Every type's ceiling: the largest weight any climate and season asks
  *  of it, times its largest diurnal factor - the rate the candidates are
- *  drawn at before thinning. */
+ *  drawn at before thinning. ASHFALL1: the volcano's country's laws past
+ *  the climates' alone where they ask more (ASH_CEILING_SLACK). */
 let _ceilings = null;
-function ceilings() {
+export function typeCeilings() {
   if (_ceilings) return _ceilings;
   const c = Object.fromEntries(PRIORITY.map((t) => [t, 0]));
-  for (const [climate, ash] of LAW_KEYS) {
-    for (const season of Object.values(SEASONS)) {
-      const law = birthLaw(climate, season, ash);
-      if (law) for (const t of PRIORITY) c[t] = Math.max(c[t], law.weight[t]);
-    }
-  }
+  for (const season of Object.values(SEASONS)) raiseTo(c, season);
+  for (const season of Object.values(SEASONS)) raiseToAsh(c, season);
   for (const t of PRIORITY) c[t] *= maxDiurnal(t);
   return (_ceilings = Object.freeze(c));
 }
+const ceilings = typeCeilings;
 /** AUDIT PRECIP DOC-7: each type's ceiling IN A SEASON - the largest weight any climate asks of it then, times its largest
  *  diurnal factor then: a candidate whose draw no climate's law could keep in its season is thinned before its place is
- *  read (drawCells). Every law is a climate's in KNOWN (tableOf), so it bounds every keep. */
+ *  read (drawCells). Every law a birth can read is a climate's in KNOWN (tableOf) or the volcano's country's
+ *  (ASH_COUNTRY), so it bounds every keep. */
 let _seasonCeilings = null;
 export function seasonCeilings() {
   if (_seasonCeilings) return _seasonCeilings;
   const c = Object.fromEntries(PRIORITY.map((t) => [t, {}]));
   for (const season of Object.values(SEASONS)) {
-    for (const t of PRIORITY) c[t][season] = 0;
-    for (const [climate, ash] of LAW_KEYS) {
-      const law = birthLaw(climate, season, ash);
-      if (law) for (const t of PRIORITY) c[t][season] = Math.max(c[t][season], law.weight[t]);
-    }
-    for (const t of PRIORITY) { const d = SYSTEM_TYPES[t].diurnal; c[t][season] *= 1 + Math.abs((d[season] ?? d.other)[0]); }
+    const s = raiseToAsh(raiseTo(Object.fromEntries(PRIORITY.map((t) => [t, 0])), season), season);
+    for (const t of PRIORITY) { const d = SYSTEM_TYPES[t].diurnal; c[t][season] = s[t] * (1 + Math.abs((d[season] ?? d.other)[0])); }
   }
   return (_seasonCeilings = c);
 }
@@ -561,6 +579,13 @@ function ashOfField(climateAt, x, z) {
   const p = pixelOfField(x, z);
   return ashAtPixel(climateAt, p.x, p.y);
 }
+/** THE BIRTH LAW AT A FIELD POSITION in a season: its climate's (climateOfField), the volcano's over it where the zone
+ *  names its ash - read only where the climate can carry ash (ASH_CLIMATES: the second audit's, every candidate of every
+ *  type had asked the zones). */
+function lawAt(climateAt, x, z, season) {
+  const climate = climateOfField(climateAt, x, z);
+  return birthLaw(climate, season, ASH_CLIMATES.has(climate) ? ashOfField(climateAt, x, z) : 0);
+}
 
 /** A Poisson draw by Knuth's product, a mean over POISSON_CHUNK taken as
  *  a sum of chunks (a sum of Poissons is Poisson; the product's limit
@@ -640,7 +665,7 @@ function drawBirths(type, gx, gz, gt, climateAt) {
     const keep = r(), rc = r(), rl = r(), u1 = r(), u2 = r(), u3 = r(), u4 = r(), u5 = r(), u6 = r();
     const skyBorn = skyMinuteOfEvent(bornAt);   // TIME1: the sky's season and hour at the birth
     const season = seasonValue(dateFromClassicMinutes(skyBorn));
-    const law = birthLaw(climateOfField(climateAt, bornX, bornZ), season, ashOfField(climateAt, bornX, bornZ));   // ASHFALL1: the volcano's law over its climate's
+    const law = lawAt(climateAt, bornX, bornZ, season);   // ASHFALL1: the volcano's law over its climate's
     const hour = (((skyBorn % 1440) + 1440) % 1440) / 60;
     if (!law || keep * ceiling >= law.weight[type] * diurnal(type, hour, season)) continue;
     const shape = shapeOf(type, u1, u2, u3, u4, u5, u6);
@@ -687,7 +712,7 @@ function drawCells(front, climateAt) {
     const ox = rad * Math.cos(ang), oz = rad * Math.sin(ang);
     const [px, pz] = pathWith(fh, front.bornAt, bornAt);   // FLOW2: the front's own headings, read once for all its cells
     const bornX = front.bornX + px * fspec.speed + ox, bornZ = front.bornZ + pz * fspec.speed + oz;
-    const law = birthLaw(climateOfField(climateAt, bornX, bornZ), season, ashOfField(climateAt, bornX, bornZ));
+    const law = lawAt(climateAt, bornX, bornZ, season);
     const hour = (((skyBorn % 1440) + 1440) % 1440) / 60;
     if (!law || keep * ceiling >= law.weight[type] * diurnal(type, hour, season)) continue;
     const shape = shapeOf(type, u1, u2, u3, u4, u5, u6);

@@ -232,6 +232,13 @@ export function createLandPropsHost({ renderer, breathe = async () => {} }) {
     set.runs = out;
     return out;
   };
+  /** whether a run's box comes within its kind's farthest (or the fog - and, for a kind that casts, the casters' reach)
+   *  of the eye at (ex, ez), its pixel at `t` */
+  const runNear = (run, t, ex, ez, reach) => {
+    const bx = Math.max(run.box[0] + t[0] - ex, 0, ex - run.box[2] - t[0]), bz = Math.max(run.box[1] + t[2] - ez, 0, ez - run.box[3] - t[2]);
+    const cut = Math.min(farOf[run.k], reach);
+    return Math.hypot(bx, bz) <= (bodyOf[run.k] ? Math.max(cut, LAND_DRAW.castReach) : cut);
+  };
   return {
     /**
      * THE FRAME: every built pixel's landmarks (`pixels` the frame's, each with its translation `_t` and its set
@@ -243,29 +250,29 @@ export function createLandPropsHost({ renderer, breathe = async () => {} }) {
     frame(pixels, eye, planes) {
       lastPixels = pixels;
       let total = 0, any = false;
-      for (const p of pixels) if (p.landProps && p._t) { total += p.landProps.props.length / LAND_PROP_FLOATS; any = true; }
+      for (const p of pixels) if (p.landProps && p._t) { any = true; break; }
       if (any && !gpu) prepare();
       if (!any || !gpu) {
         if (shown || frameOut.runs.length) { renderer.setLowPolyTrees(null, LAND_PROPS_SLOT); shown = 0; frameOut.runs.length = 0; }
         stat.props = 0; stat.drawn = 0; stat.lod.fill(0); stat.casters = 0; stat.sets = 0; stat.skipped = 0;
         return;
       }
-      if (data.length < total * LPT_INSTANCE_FLOATS) { data = new Float32Array(total * LPT_INSTANCE_FLOATS * 2); keys = new Int32Array(total * 2); }
       const reach = fogReach(renderer);
+      const ex = eye[0], ey = eye[1], ez = eye[2];
+      // TESA-LANDS' second audit (lane D): the scratch sized by the runs in reach - every landmark of every built pixel had
+      // sized it (a radius-5 grid of the Fens' reed beds: 6.4 million floats, for clumps drawn 260 m out)
+      for (const p of pixels) if (p.landProps && p._t) for (const run of runsOf(p.landProps)) if (runNear(run, p._t, ex, ez, reach)) total += (run.to - run.from) / LAND_PROP_FLOATS;
+      if (data.length < total * LPT_INSTANCE_FLOATS) { data = new Float32Array(total * LPT_INSTANCE_FLOATS * 2); keys = new Int32Array(total * 2); }
       counts.fill(0);
       castN = 0;
       let n = 0, sets = 0, skipped = 0;
-      const ex = eye[0], ey = eye[1], ez = eye[2];
       for (const p of pixels) {
         const set = p.landProps, t = p._t;
         if (!set || !t) continue;
         sets++;
         const pr = set.props;
         for (const run of runsOf(set)) {
-          // a kind's run past its farthest (or the fog - and, for a kind that casts, past the casters' reach) whole, passed over
-          const bx = Math.max(run.box[0] + t[0] - ex, 0, ex - run.box[2] - t[0]), bz = Math.max(run.box[1] + t[2] - ez, 0, ez - run.box[3] - t[2]);
-          const cut = Math.min(farOf[run.k], reach);
-          if (Math.hypot(bx, bz) > (bodyOf[run.k] ? Math.max(cut, LAND_DRAW.castReach) : cut)) { skipped++; continue; }
+          if (!runNear(run, t, ex, ez, reach)) { skipped++; continue; }   // a kind's run past its farthest whole, passed over
           for (let i = run.from; i < run.to; i += LAND_PROP_FLOATS) {
             const k = pr[i + 5], v = pr[i + 6], li = pr[i + 7], s = pr[i + 4], o = (k * MAXV + v) * 3;
             const x = pr[i] + t[0], y = pr[i + 1] + t[1], z = pr[i + 2] + t[2];

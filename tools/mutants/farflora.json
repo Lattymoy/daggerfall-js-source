@@ -398,8 +398,8 @@
   {
     "name": "FAR-FLORA-the-ask-once",
     "file": "src/render/farFlora.js",
-    "old": "if (!arts.has(artKey) && spec.treeShare > 0) ask(arts, artKey,",
-    "new": "if (spec.treeShare > 0) ask(arts, artKey,",
+    "old": "if (!arts.has(artKey) && (spec.treeShare > 0 || spec.coverShare > 0)) ask(arts, artKey,",
+    "new": "if ((spec.treeShare > 0 || spec.coverShare > 0)) ask(arts, artKey,",
     "tests": [
       "test/render/farflora.test.js"
     ]

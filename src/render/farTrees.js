@@ -353,9 +353,18 @@ export class FarTreesBand {
     return -1;
   }
 
-  /** The pictures a full atlas turned away, asked again (a set moved: a layer may be lent). */
+  /** The pictures a full atlas turned away, asked again (a set moved: a layer may be lent) - TESA-LANDS' second audit
+   *  (lane D): only where one may be. A wanted set past the atlas's 48 pictures had asked its turned-away ones again at
+   *  every swap, each turned away again (`version` moved), the set laid again, swapped, asked again - for ever. */
   _unfull() {
+    if (!this._lendable()) return;
     for (const [k, st] of this.arts) if (st === 'full') this.arts.delete(k);
+  }
+  /** Whether _layerFor would answer a layer now. */
+  _lendable() {
+    if (this.layers.size < TREE_LAYERS) return true;
+    for (const k of this.layers.keys()) if (!this._wanted.has(k) && !this._drawnArts.has(k) && !this._layingArts.has(k)) return true;
+    return false;
   }
 
   _upload(layer, rgba) {
@@ -381,7 +390,9 @@ export class FarTreesBand {
     const laying = new Set();
     for (const p of pixels) for (const a of p.arts) if (this.layers.has(a)) laying.add(a);
     this._layingArts = laying;   // its pictures' layers held until it is swapped in, and then while it is drawn
-    const it = bandInstanceSteps(pixels, baseX, baseY, (a, r) => this.layers.get(`${a},${r}`));
+    // TESA-LANDS' second audit (lane D): and a picture that lands while the set is laid, held by it too - the set's trees ask
+    // their layers as they are laid, and a layer it took that the set had not named could be lent away under its drawing
+    const it = bandInstanceSteps(pixels, baseX, baseY, (a, r) => { const k = `${a},${r}`, l = this.layers.get(k); if (l !== undefined) laying.add(k); return l; });
     const self = this;
     function* steps() {
       const v = yield* it;

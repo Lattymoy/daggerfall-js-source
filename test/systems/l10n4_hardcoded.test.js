@@ -190,7 +190,7 @@ const HARDCODED = {
   'src/render/courtCrystals.js': 3,
   'src/render/deadlands.js': 4,
   'src/render/deepWatersRender.js': 13,
-  'src/render/dryFall.js': 2,   // ASHFALL1: the ash's two shader stages (GLSL, never a player's text - as windWisps.js's two)
+  'src/render/dryFall.js': 1,   // ASHFALL1: the ash's fragment stage (GLSL, never a player's text - as windWisps.js's)
   'src/render/duelWall.js': 1,
   'src/render/dynamicSkiesRenderer.js': 1,
   'src/render/eliteGates/egLightPass.js': 1,
@@ -826,7 +826,7 @@ const HARDCODED = {
   'src/world/imperialBlocks.js': 2,   // IC-GRAND: 'City Isle' (a district's proper name, as imperialCity.js's)
   'src/world/imperialCity.js': 28,   // TOWN-SHAPES TS5: 'Lake Rumare' names the lake's slices ('Rumare Shore' the land past it) - proper names, as the districts'; IC-GRAND: 'Palace District' and the districts' names its laws read - proper names
   'src/world/imperialFabric.js': 6,   // IC-GRAND: the districts' names its styles and its neighbourhoods read - proper names; IC-GRAND's courts: the Elven Gardens' orchards keyed by the district's name
-  'src/world/tamriel/groundDressClient.js': 2,   // TESA-LANDS (AUDIT): the dress's worker's two warnings (no worker, a worker that failed) - console lines through the client's injected logger, as imperialPrebuildClient.js's
+  'src/world/tamriel/groundDressClient.js': 5,   // TESA-LANDS (AUDIT): the dress's worker's warnings (no worker, a worker that failed, a dress it could not be handed - the second audit) and the two reasons a failed one is given (an answer unreadable, none in time) - console lines through the client's injected logger, as imperialPrebuildClient.js's
   'src/world/imperialPrebuildClient.js': 2,   // IC-GRAND's city worker: its two warnings (no worker, a worker that failed) - console lines through the client's injected logger, as tamrielRoadsClient.js's
   'src/world/tamrielCapitals.js': 6,
   'src/world/tamrielCountry.js': 6,

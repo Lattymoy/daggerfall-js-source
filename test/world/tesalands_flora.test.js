@@ -10,12 +10,12 @@ import { WoodsFile } from '../../src/formats/woodsFile.js';
 import { syntheticWoodsBytes } from '../landformWorld.mjs';
 import { groundWoods } from '../../src/world/tamriel/tamrielGround.js';
 import { generatePixelTerrain } from '../../src/world/terrain/terrainGen.js';
-import { FOREST, TREE_RECORDS, isTreeRecord, compileRecipe, forestCover } from '../../src/world/terrain/terrainNature.js';
-import { landsFloraSpec, expectedTrees, treesPerTile, bandTreesPixel, bandTreeArt, bandTreeCode, floraSpec, LANDS_WOOD_BINS, midRingCoverPixel, packCover, unpackCover, LANDS_COVER, landsTreesAt, canopyCover, FLORA_WOOD, FLORA_GRASS } from '../../src/world/terrain/floraCover.js';
+import { FOREST, TREE_RECORDS, isTreeRecord, compileRecipe, recipeWood, forestCover } from '../../src/world/terrain/terrainNature.js';
+import { landsFloraSpec, landsTreePicks, expectedTrees, treesPerTile, bandTreesPixel, bandTreeArt, bandTreeCode, floraSpec, LANDS_WOOD_BINS, midRingCoverPixel, packCover, unpackCover, LANDS_COVER, landsTreesAt, canopyCover, FLORA_WOOD, FLORA_GRASS } from '../../src/world/terrain/floraCover.js';
 import { midRingVertices } from '../../src/render/midRing.js';
 import { midRingSide } from '../../src/world/terrain/midRingGrid.js';
 import { ringHeight } from '../../src/render/farRing.js';
-import { LANDS, forestQuantile } from '../../src/world/tamriel/tamrielLands.js';
+import { LANDS, forestQuantile, FOREST_QUANTILES } from '../../src/world/tamriel/tamrielLands.js';
 import { tamrielBiomeAt } from '../../src/world/tamriel/tamrielBiomes.js';
 import { tamrielFrameInBay } from '../../src/world/tamriel/tamrielFrame.js';
 import { getWorldClimateSettings } from '../../src/formats/mapsFile.js';
@@ -166,6 +166,49 @@ test('TESA-LANDS A ZONE\'S WOODS AFAR: its share expected at FOREST1\'s wood is 
   assert.equal(expectedTrees(none, 128), 0);
   assert.ok(expectedTrees(landsFloraSpec(LANDS.skyrimPinewood.flora), 128) > 1.5 * expectedTrees(floraSpec(510, false, true), 128), 'the Pinewoods denser than the climates\' woods');
   assert.ok(expectedTrees(landsFloraSpec(LANDS.morrowindAshlands.flora), 128) < 0.1 * expectedTrees(floraSpec(510, false, true), 128), 'the Ashlands a tenth of them');
+});
+
+test('TESA-LANDS THE FIELD\'S OWN QUANTILES (the second audit, lane D): FOREST_QUANTILES every 1%, the forest field\'s own - at 120,000 world tiles of the continent\'s frame the share under each tabled value is its own, its tails too; and every zone stands the woods it asks, to half a point (the 5% table read its tail straight, 0.638 to 0.824: the Ashlands\' and the Alik\'r\'s 2% stood 0.05%, the High Peaks\' 3% 0.4%, and the far views stood half again the trees the ground did) (mutants: the tail the old straight line\'s)', () => {
+  assert.equal(FOREST_QUANTILES.length, 101);
+  const f = tamrielFrameInBay(), N = 120000, vals = new Float64Array(N);
+  let seed = 0x7a11e5;
+  const rnd = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
+  for (let i = 0; i < N; i++) vals[i] = forestCover(Math.floor((f.x0 + rnd() * f.w) * 128), -Math.floor((f.y0 + rnd() * f.h) * 128));
+  for (const p of [0.01, 0.02, 0.03, 0.05, 0.1, 0.3, 0.5, 0.7, 0.9, 0.95, 0.97, 0.98, 0.99]) {
+    const at = forestQuantile(p);
+    let under = 0;
+    for (let i = 0; i < N; i++) if (vals[i] < at) under++;
+    assert.ok(Math.abs(under / N - p) < 4 * Math.sqrt((p * (1 - p)) / N) + 0.001, `${p}: ${(under / N).toFixed(4)} of the land under ${at.toFixed(4)}`);
+  }
+  for (const [key, land] of Object.entries(LANDS)) {
+    if (!land.flora) continue;
+    const c = compileRecipe(land.flora);
+    let m = 0;
+    for (let i = 0; i < N; i++) m += recipeWood(c, vals[i]);
+    assert.ok(Math.abs(m / N - land.flora.woods) < 0.005, `${key}: asks ${land.flora.woods}, stands ${(m / N).toFixed(4)}`);
+  }
+});
+
+test('TESA-LANDS A TREE AMONG THE COVER (the second audit, lane D): a zone\'s cover stands its Trees at the cover\'s chance, and the far views count them and colour their canopy by them - the Velothi Foothills\' 506:14, a third of its near Trees, had stood none afar (mutants: the cover\'s Trees uncounted; the canopy\'s colour the trees\' alone)', async () => {
+  const recipe = LANDS.morrowindVelothiFoot.flora, s = landsFloraSpec(recipe), c = compileRecipe(recipe), g = c.ground;
+  const all = recipe.cover.reduce((a, p) => a + p[2], 0), trees = recipe.cover.filter(([a, r]) => isTreeRecord(a, r)).reduce((a, p) => a + p[2], 0);
+  assert.ok(trees > 0 && Math.abs(s.coverShare - trees / all) < 1e-12, 'a Tree among its cover, its share');
+  for (const wz of [0, 0.3, 1]) {
+    const want = ((FOREST.plainTree + (FOREST.forestTree - FOREST.plainTree) * wz) * c.treeRate * s.treeShare + (FOREST.plainCover + (FOREST.undergrowth - FOREST.plainCover) * wz) * c.coverRate * s.coverShare) * g[2];
+    assert.ok(Math.abs(landsTreesAt(s, wz, 0, 1, 0) - want) < 1e-12, `its trees' Trees and its cover's at ${wz}`);
+  }
+  assert.ok(landsTreePicks(recipe).some(([a, r, w]) => a === 506 && r === 14 && w > 0), 'its canopy\'s picks hold it');
+  // a zone whose Trees stand among its cover alone still stands a canopy afar
+  const only = landsFloraSpec({ woods: 0.3, trees: [[510, 20, 1]], cover: [[504, 12, 1], [510, 20, 1]] });
+  assert.equal(only.treeShare, 0); assert.equal(only.coverShare, 0.5);
+  assert.ok(expectedTrees(only, 128) > 0 && landsTreesAt(only, 0.3, 0, 1, 0) > 0);
+  // the canopy's colour by each Tree's share of the Trees its ground stands: a tree of the woods' chance and one of the cover's
+  const fake = { rgba: async (a) => ({ width: 2, height: 2, data: Uint8Array.from({ length: 16 }, (_, i) => (i % 4 === 3 ? 255 : a === 503 ? 200 : 50)) }), size: async () => ({ w: 4, h: 10 }) };
+  const mix = { woods: 0.4, trees: [[503, 11, 1]], cover: [[504, 12, 1]] };
+  const tw = FOREST.plainTree + (FOREST.forestTree - FOREST.plainTree) * 0.4, cw = FOREST.plainCover + (FOREST.undergrowth - FOREST.plainCover) * 0.4;
+  assert.ok(Math.abs((await landTreeArt(mix, fake)).rgb[0] - (200 * tw + 50 * cw) / (tw + cw)) < 1e-9, 'by their chances');
+  // every other zone: no Tree among its cover, its far views as they stood
+  for (const [key, land] of Object.entries(LANDS)) if (land.flora && key !== 'morrowindVelothiFoot') assert.equal(landsFloraSpec(land.flora).coverShare, 0, key);
 });
 
 test('TESA-LANDS A ZONE\'S WOODS IN THE MIDDLE RING (AUDIT): the forest field\'s own value packed a byte a sample (a pixel of the Bay none) and read back within half a level; a zone\'s vertex its recipe\'s edge on it - the Pinewoods\' glades and woods where FOREST1\'s plain read one mean; the worker answers it with the row, the client keeps it, the ring asks it (mutants: the field unread; the job without it; the Bay packed)', () => {

@@ -496,8 +496,8 @@
   {
     "name": "PERF-EXT24-the-budget-is-asked-once-and-never-again",
     "file": "src/systems/buildBreather.js",
-    "old": "      sliceStart = now();\n      sliceFrame = framesNow();\n      sliceBudget = budget ? budget() : sliceMs;",
-    "new": "      sliceStart = now();\n      sliceFrame = framesNow();",
+    "old": "          sliceStart = now();\n          sliceFrame = framesNow();\n          sliceBudget = budget ? budget() : sliceMs;",
+    "new": "          sliceStart = now();\n          sliceFrame = framesNow();",
     "tests": [
       "test/systems/buildslice.test.js"
     ]

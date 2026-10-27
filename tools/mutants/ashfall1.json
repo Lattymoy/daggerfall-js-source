@@ -101,8 +101,8 @@
   {
     "name": "ASH-unread-at-birth",
     "file": "src/systems/weather/weatherMap.js",
-    "old": "season, ashOfField(climateAt, bornX, bornZ));   // ASHFALL1: the volcano's law over its climate's",
-    "new": "season, 0);   // ASHFALL1: the volcano's law over its climate's",
+    "old": "return birthLaw(climate, season, ASH_CLIMATES.has(climate) ? ashOfField(climateAt, x, z) : 0);",
+    "new": "return birthLaw(climate, season, 0);",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "ASH-no-ceiling",
     "file": "src/systems/weather/weatherMap.js",
-    "old": "const LAW_KEYS = Object.freeze([...[...KNOWN].map((climate) => Object.freeze([climate, 0])), ...ASH_COUNTRY]);",
-    "new": "const LAW_KEYS = Object.freeze([...[...KNOWN].map((climate) => Object.freeze([climate, 0]))]);",
+    "old": "for (const season of Object.values(SEASONS)) raiseToAsh(c, season);",
+    "new": "for (const season of Object.values(SEASONS)) void season;",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "ASH-the-sky-veil-untinted",
     "file": "src/render/volumetricClouds.js",
-    "old": "F.y) * uCellC[i].rgb;   // rain the cell's own dark grey",
-    "new": "F.y);   // rain the cell's own dark grey",
+    "old": "    tint = mix(tint, vec3(dot(tint, vec3(0.299, 0.587, 0.114))), tinted) * uCellC[i].rgb;",
+    "new": "    tint = mix(tint, vec3(dot(tint, vec3(0.299, 0.587, 0.114))), tinted);",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "ASH-the-tint-ignored",
     "file": "src/render/rainCurtains.js",
-    "old": "  for (let i = 0; i < 3; i++) _mix[i] = (a[i] + (b[i] - a[i]) * t) * (tint ? tint[i] : 1);",
-    "new": "  for (let i = 0; i < 3; i++) _mix[i] = a[i] + (b[i] - a[i]) * t;",
+    "old": "  if (tint) {\n    const grey = 0.299 * _mix[0]",
+    "new": "  if (false) {\n    const grey = 0.299 * _mix[0]",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -317,7 +317,7 @@
   {
     "name": "ASH-the-least-size",
     "file": "src/render/dryFall.js",
-    "old": "gl.uniform1f(U.uMinSize, DRY_MIN_PX / Math.max(1, gl.drawingBufferHeight || 720));",
+    "old": "gl.uniform1f(U.uMinSize, DRY_MIN_PX / Math.max(1, viewH || gl.drawingBufferHeight || 720));",
     "new": "gl.uniform1f(U.uMinSize, 0);",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
@@ -335,8 +335,8 @@
   {
     "name": "ASH-the-world-kind-unhanded",
     "file": "src/scenes/world.js",
-    "old": "dryFall.draw({ on: true, kind: precipShown, strength01: fx.intensity, windV: wd.windV, step: wd.step }, proj, view, wxEye32, now / 1000);",
-    "new": "dryFall.draw({ on: true, strength01: fx.intensity, windV: wd.windV, step: wd.step }, proj, view, wxEye32, now / 1000);",
+    "old": "dryFall.draw({ on: true, kind: precipShown, strength01: fx.intensity, windV: wd.windV, step: wd.step }, proj, view, wxEye32, now / 1000, renderer.worldViewportPx?.[3]);",
+    "new": "dryFall.draw({ on: true, strength01: fx.intensity, windV: wd.windV, step: wd.step }, proj, view, wxEye32, now / 1000, renderer.worldViewportPx?.[3]);",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -346,6 +346,150 @@
     "file": "src/scenes/exterior.js",
     "old": "    if (precipMode && !isDryFall(precipMode) && !precip) precip",
     "new": "    if (precipMode && precipMode !== 'sand' && !precip) precip",
+    "tests": [
+      "test/systems/weather/ashfall1.test.js"
+    ]
+  },
+  {
+    "name": "ASH-the-sky-veil-not-greyed",
+    "file": "src/render/volumetricClouds.js",
+    "old": "    float tinted = 1.0 - step(2.999, dot(uCellC[i].rgb, vec3(1.0)));",
+    "new": "    float tinted = 0.0;",
+    "tests": [
+      "test/systems/weather/ashfall1.test.js"
+    ]
+  },
+  {
+    "name": "ASH-the-travel-veil-not-greyed",
+    "file": "src/render/rainCurtains.js",
+    "old": "    for (let i = 0; i < 3; i++) _mix[i] = grey * tint[i];",
+    "new": "    for (let i = 0; i < 3; i++) _mix[i] *= tint[i];",
+    "tests": [
+      "test/systems/weather/ashfall1.test.js"
+    ]
+  },
+  {
+    "name": "ASH-the-least-size-the-canvas",
+    "file": "src/render/dryFall.js",
+    "old": "DRY_MIN_PX / Math.max(1, viewH || gl.drawingBufferHeight || 720)",
+    "new": "DRY_MIN_PX / Math.max(1, gl.drawingBufferHeight || 720)",
+    "tests": [
+      "test/systems/weather/ashfall1.test.js"
+    ]
+  },
+  {
+    "name": "ASH-the-image-unhanded",
+    "file": "src/render/dryFall.js",
+    "old": "      ash.draw(frame, proj, view, eye, timeSeconds, viewH);",
+    "new": "      ash.draw(frame, proj, view, eye, timeSeconds);",
+    "tests": [
+      "test/systems/weather/ashfall1.test.js"
+    ]
+  },
+  {
+    "name": "ASH-falls-on-a-weatherless-journey",
+    "file": "src/scenes/world.js",
+    "old": "if (dryFall && !_dwPrecipOff && (!_travelWeatherOff || tvf)) {",
+    "new": "if (dryFall && !_dwPrecipOff) {",
+    "tests": [
+      "test/systems/weather/ashfall1.test.js"
+    ]
+  },
+  {
+    "name": "ASH-a-flake-fills-the-screen",
+    "file": "src/render/dryFall.js",
+    "old": "  vFade *= smoothstep(0.3, 1.0, c.w);",
+    "new": "  vFade *= 1.0;",
+    "tests": [
+      "test/systems/weather/ashfall1.test.js"
+    ]
+  },
+  {
+    "name": "ASH-the-boot-builds-the-rain-program",
+    "file": "src/scenes/exterior.js",
+    "old": "  let precip = precipMode && !isDryFall(precipMode) ? new",
+    "new": "  let precip = precipMode ? new",
+    "tests": [
+      "test/systems/weather/ashfall1.test.js"
+    ]
+  },
+  {
+    "name": "ASH-the-bay-asked",
+    "file": "src/systems/weather/weatherField.js",
+    "old": "  if (inBay(px, py)) return 0;   // the second audit: no zone asked of the Bay (it answers none - and every ask filled its cache)\n",
+    "new": "",
+    "tests": [
+      "test/systems/weather/ashfall1.test.js"
+    ]
+  },
+  {
+    "name": "ASH-every-climate-asked",
+    "file": "src/systems/weather/weatherMap.js",
+    "old": "ASH_CLIMATES.has(climate) ? ashOfField(climateAt, x, z) : 0",
+    "new": "ashOfField(climateAt, x, z)",
+    "tests": [
+      "test/systems/weather/ashfall1.test.js"
+    ]
+  },
+  {
+    "name": "ASH-the-slack-dropped",
+    "file": "src/systems/weather/weatherMap.js",
+    "old": "if (law) for (const t of PRIORITY) if (law.weight[t] > into[t] * (1 + ASH_CEILING_SLACK)) into[t] = law.weight[t];",
+    "new": "if (law) for (const t of PRIORITY) into[t] = Math.max(into[t], law.weight[t]);",
+    "tests": [
+      "test/systems/weather/ashfall1.test.js"
+    ]
+  },
+  {
+    "name": "ASH-the-found-systems-kept-over-a-moved-land",
+    "file": "src/systems/weather/weatherSim.js",
+    "old": " || stamp !== _mapNearStamp || !_mapNearAt",
+    "new": " || !_mapNearAt",
+    "tests": [
+      "test/systems/weather/ashfall1.test.js"
+    ]
+  },
+  {
+    "name": "ASH-the-songs-a-sunny-day",
+    "file": "src/systems/song/songManager.js",
+    "old": "    case 'ashfall':  return fm ? OVERCAST_SONGS_FM : OVERCAST_SONGS;\n",
+    "new": "",
+    "tests": [
+      "test/systems/weather/ashfall1.test.js"
+    ]
+  },
+  {
+    "name": "ASH-the-skies-sky-unnamed",
+    "file": "src/systems/dynamicSkies/dynamicSkies.js",
+    "old": "sandstorm: 'SkyboxFog', ashfall: 'SkyboxOvercast',",
+    "new": "sandstorm: 'SkyboxFog',",
+    "tests": [
+      "test/systems/weather/ashfall1.test.js"
+    ]
+  },
+  {
+    "name": "ASH-the-skies-fog-unnamed",
+    "file": "src/systems/dynamicSkies/dynamicSkies.js",
+    "old": "sandstorm: 'FogHeavyFog', ashfall: 'FogSnowy',",
+    "new": "sandstorm: 'FogHeavyFog',",
+    "tests": [
+      "test/systems/weather/ashfall1.test.js"
+    ]
+  },
+  {
+    "name": "ASH-the-nearest-cell-worn",
+    "file": "src/systems/weather/weatherField.js",
+    "old": "CELL_RANK[c.word] < CELL_RANK[inside.word]",
+    "new": "c.d < inside.d",
+    "tests": [
+      "test/systems/weather/ashfall1.test.js"
+    ]
+  },
+  {
+    "name": "ASH-the-world-boot-builds-the-rain-program",
+    "file": "src/scenes/world.js",
+    "old": "  let precip = precipMode && !isDryFall(precipMode) ? new",
+    "new": "  let precip = precipMode ? new",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]

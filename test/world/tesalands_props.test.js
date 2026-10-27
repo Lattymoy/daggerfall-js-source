@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { LAND_KINDS, LAND_VARIANTS, LAND_LODS, LAND_SUBS, VINE_SPAN, landPropMesh, landSeed } from '../../src/world/lands/landPropMesh.js';
+import { LAND_KINDS, LAND_VARIANTS, LAND_LODS, LAND_SUBS, VINE_SPAN, LAND_CHEST, landPropMesh, landSeed } from '../../src/world/lands/landPropMesh.js';
 import {
   LAND_PROP_FLOATS, LAND_KIND_LAW, LAND_LOOKS, LAND_LOOK_NAMES, LAND_FOOT_RECORDS, WATER_RECORDS, VINE_BLOCK, PATCH_BLOCK, FLAT_CLEAR, HIST_ROOTS,
   landSites, landMeasures, landLodOf, flatsOffProps, landPropBodies, standLandProps,
@@ -106,7 +106,7 @@ test('TESA-LANDS THE LOOKS AND THE LAWS: every look a kind\'s, its variants the 
   // every record the lookup lays: a land ring a foot, a record with water the reeds' edge alone
   const all = [...new Set(Array.from(createLookupTable(), (v) => v & 0x3f))].sort((a, b) => a - b);
   assert.deepEqual([...LAND_FOOT_RECORDS, ...WATER_RECORDS].sort((a, b) => a - b), all);
-  assert.equal(landMeasures('hist', 0).foot, HIST_ROOTS);
+  assert.equal(landMeasures('hist', 0).sink, HIST_ROOTS, 'the Hist sought its lowest ground round its roots');
   assert.equal(landMeasures('spire', 2), landMeasures('spire', 2), 'made once');
 });
 
@@ -147,8 +147,8 @@ test('TESA-LANDS WHERE A LANDMARK STANDS: a site a cell of its kind, in its inse
   // the lowest ground under its foot: a slope rising east, the foot's west side under its middle
   const slope = props([{ kind: 'spire', looks: ['basalt'], rate: 1, where: 'any' }], { ground: (x) => x * 0.1 });
   each(slope, (i) => {
-    const foot = landMeasures('spire', slope[i + 6]).foot * slope[i + 4];
-    assert.ok(slope[i + 1] <= (slope[i] - foot) * 0.1 - LAND_KIND_LAW.spire.sink * slope[i + 4] + 1e-3, 'never floating over the downhill side');
+    const sinkR = landMeasures('spire', slope[i + 6]).sink * slope[i + 4];
+    assert.ok(slope[i + 1] <= (slope[i] - sinkR) * 0.1 - LAND_KIND_LAW.spire.sink * slope[i + 4] + 1e-3, 'never floating over the downhill side');
   });
   // the reeds: the water's edge (a tile touching water), never open water
   const lake = (ti) => { const x = ti % 128; return x < 64 ? 0 : x === 64 ? 5 : 2; };
@@ -164,6 +164,29 @@ test('TESA-LANDS WHERE A LANDMARK STANDS: a site a cell of its kind, in its inse
     const f = (vines[i + 2] / 6.4) % 1;
     assert.ok(Math.abs(f - 0.25) < 1e-4 || Math.abs(f - 0.75) < 1e-4, 'its rows a quarter in');
   });
+  // the second audit (lane D): a row its whole length - at the lowest of its middle and its ends, never past the vines'
+  // slope, and off a grove's foot anywhere along it
+  assert.equal(LAND_KIND_LAW.vines.steep, 6);
+  assert.equal(props([{ kind: 'vines', looks: ['vine'], rate: 1, where: 'plains' }], { wood: () => 0, steep: () => 8 }).length, 0, 'past the vines\' slope');
+  const tilted = props([{ kind: 'vines', looks: ['vine'], rate: 1, where: 'plains' }], { wood: () => 0, steep: () => 5, ground: (x) => -x * 0.08 });
+  assert.ok(tilted.length > 0);
+  each(tilted, (i) => assert.ok(Math.abs(tilted[i + 1] - (-(tilted[i] + VINE_SPAN / 2) * 0.08 - LAND_KIND_LAW.vines.sink)) < 1e-3, 'its downhill end\'s ground, never floating'));
+  const orchard = (ti) => { const x = ti % 128, z = Math.floor(ti / 128); return x >= 60 && x < 68 && z >= 60 && z < 68 && (x + z) % 3 === 0; };
+  const rowsAndTrees = landSites(field({ owners: (ti) => (orchard(ti) ? [{ kind: 'grove', looks: ['maple'], rate: 1, where: 'any' }] : [{ kind: 'vines', looks: ['vine'], rate: 1, where: 'plains' }]), wood: () => 0 }));
+  const orchardGroves = [], rows = [];
+  each(rowsAndTrees, (i) => (rowsAndTrees[i + 5] === ki('grove') ? orchardGroves : rows).push(i));
+  assert.ok(orchardGroves.length > 2 && rows.length > 1000, `the groves among the vines (${orchardGroves.length})`);
+  let near = 0;
+  for (const g of orchardGroves) {
+    const gr = landMeasures('grove', rowsAndTrees[g + 6]).foot * rowsAndTrees[g + 4];
+    for (const i of rows) {
+      // the nearest point of the row's length to the grove's foot
+      const dx = Math.max(0, Math.abs(rowsAndTrees[i] - rowsAndTrees[g]) - VINE_SPAN / 2), dz = rowsAndTrees[i + 2] - rowsAndTrees[g + 2];
+      if (Math.hypot(dx, dz) < 6) near++;
+      assert.ok(Math.hypot(dx, dz) >= gr - 1e-3, 'no row through a grove\'s foot');
+    }
+  }
+  assert.ok(near > 0, 'rows stand by the groves');
   const someVines = props([{ kind: 'vines', looks: ['vine'], rate: 0.3, where: 'plains' }], { wood: () => 0 });
   const blocks = new Map();
   each(someVines, (i) => { const k = `${Math.floor(someVines[i] / 6.4 / VINE_BLOCK)},${Math.floor(someVines[i + 2] / 6.4 / VINE_BLOCK)}`; blocks.set(k, (blocks.get(k) ?? 0) + 1); });
@@ -181,7 +204,7 @@ test('TESA-LANDS WHERE A LANDMARK STANDS: a site a cell of its kind, in its inse
   assert.ok(hists.length && groves.length);
   for (const g of groves) for (const h of hists) {
     const d = Math.hypot(mixed[g] - mixed[h], mixed[g + 2] - mixed[h + 2]);
-    assert.ok(d >= HIST_ROOTS * mixed[h + 4] + landMeasures('grove', mixed[g + 6]).foot * mixed[g + 4] - 1e-3, 'off the Hist\'s roots');
+    assert.ok(d >= landMeasures('hist', mixed[h + 6]).foot * mixed[h + 4] + landMeasures('grove', mixed[g + 6]).foot * mixed[g + 4] - 1e-3, 'off the Hist\'s roots');
   }
   // the larger stand as they would alone: a parasol (first in LAND_KINDS) never takes a Hist's site
   const histsAlone = props([{ kind: 'hist', looks: ['hist'], rate: 1, where: 'any' }]);
@@ -208,6 +231,36 @@ test('TESA-LANDS THE FLATS OFF THE FEET AND THE BODIES: the flats within a bodie
   assert.equal(st.set.props.length, 2 * LAND_PROP_FLOATS, 'the keep refused one whole');
   assert.deepEqual([st.set.px, st.set.py], [1, 2]);
   assert.equal(st.bodies.length, 1);
+});
+
+test('TESA-LANDS THE ROCK IS THE BODY (the second audit, lane D): a landmark\'s foot is its mesh\'s widest to LAND_CHEST and a body each solid part - a crag\'s three lumps, a grove of three\'s three stalks, the xylaria\'s cluster - turned by the yaw the draw turns its mesh by, so every rock and stalk face a man\'s height up stands inside a body; the Hist\'s trunk its trunk\'s, its roots the foot\'s; the lowest ground sought as it was (mutants: one body a landmark; the parts unturned; the foot the stalk\'s; the Hist\'s trunk the stalk\'s)', () => {
+  assert.equal(LAND_CHEST, 2);
+  const crag = landMeasures('spire', 2), grove3 = landMeasures('parasol', 1);
+  assert.equal(crag.parts.length, 3); assert.ok(crag.foot > 8.5 && crag.foot > crag.stalk * 1.5, `the crag's foot its lumps' (${crag.foot})`);
+  assert.equal(grove3.parts.length, 3); assert.ok(grove3.foot > 3, `a grove of three's its outer stalks' (${grove3.foot})`);
+  assert.equal(crag.sink, Math.max(0.5, crag.stalk), 'its lowest ground sought round its middle, as it was');
+  for (let v = 0; v < 3; v++) { const h = landMeasures('hist', v); assert.equal(h.parts.length, 1); assert.ok(h.parts[0].r > 3.5 && h.parts[0].r < 4.6, `the Hist's trunk (${h.parts[0].r})`); assert.ok(h.foot > 8.5, 'its roots its foot'); }
+  assert.deepEqual(landMeasures('reeds', 0).parts, []); assert.deepEqual(landMeasures('vines', 0).parts, []);
+  // turned and stood as the draw stands them: every body or crown vertex to LAND_CHEST inside a body
+  for (const [kind, variants] of [['spire', [0, 1, 2, 3, 4]], ['parasol', [0, 1, 2, 3]]]) {
+    for (const v of variants) {
+      for (const [yaw, scale] of [[0, 1], [1.1, 1.3], [4, 0.8]]) {
+        const props = Float32Array.from([40, 7, 60, yaw, scale, ki(kind), v, 0]), bodies = landPropBodies(props, 0);
+        assert.equal(bodies.length, landMeasures(kind, v).parts.length);
+        const mesh = landPropMesh(kind, v, 0), c = Math.cos(yaw), sn = Math.sin(yaw), P = mesh.positions;
+        const [b0, bn] = [mesh.subs[0][0], mesh.subs[1][0] + mesh.subs[1][1]];
+        let outside = 0;
+        for (let k = b0; k < bn; k++) {
+          const x = P[k * 3], y = P[k * 3 + 1], z = P[k * 3 + 2];
+          if (y > LAND_CHEST) continue;
+          const wx = 40 + (c * x + sn * z) * scale, wz = 60 + (-sn * x + c * z) * scale;
+          if (!bodies.some((b) => Math.hypot(wx - b.c[0], wz - b.c[2]) <= b.r + 1e-4)) outside++;
+        }
+        assert.equal(outside, 0, `${kind} ${v} at yaw ${yaw}: its rock within its bodies`);
+        for (const b of bodies) assert.ok(b.c[1] === 7 && b.h > 0 && b.body);
+      }
+    }
+  }
 });
 
 /** A renderer that records what it is asked - the GPU's calls through a GL that answers anything (graht1's). */
@@ -286,6 +339,7 @@ test('TESA-LANDS THE HOST: nothing made until a landmark is framed, then made on
   assert.equal(host.stats.drawn, 1, 'the grove past its kind\'s farthest culled, its neighbour drawn');
   host.frame([{ landProps: standLandProps(0, 0, raw.slice(16, 24)).set, _t: [5000, 0, 0] }], [100, 2, 60], null);
   assert.equal(host.stats.skipped, 1, 'a set of reeds 5 km off passed whole');
+  assert.equal(host.stats.props, 0, 'and no scratch sized for it (the second audit, lane D: every built pixel\'s every landmark had sized it)');
   host.frame([], [0, 0, 0], null);
   assert.equal(r.slots[LAND_PROPS_SLOT], null);
   host.destroy();

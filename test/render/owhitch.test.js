@@ -288,7 +288,7 @@ test('OW-HITCH ground sets: a set is made ONCE a key while builds ask for it tog
   const holds = [];
   log.length = 0;
   await Promise.all([sets.loadGroundSet(302, { tileArray: (k) => holds.push(k) }), sets.loadGroundSet(302, { tileArray: (k) => holds.push(k) })]);
-  assert.deepEqual(holds, [302, 302], 'each build holds the set');
+  assert.deepEqual(holds, [302, 302, 302, 302], 'each build holds the set, and asks again once it stands');   // PIN MOVED (TESA-LANDS' second audit, lane C): a build whose place went while the set was made leaves it loose for the next sweep (scenes/placeHolds.js hold)
   assert.equal(log.filter((c) => c[0] === 'texImage3D').length, 1, 'one array made for the two builds');
   assert.equal(log.filter((c) => c[0] === 'texSubImage3D').length, set.length, 'its layers uploaded once');
   assert.equal(log.filter((c) => c[0] === 'generateMipmap').length, 1);

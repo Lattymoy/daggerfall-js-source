@@ -546,7 +546,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // EV2 swept for exactly this class of per-frame garbage.
   const precipOpts = { enhanced: sky.enhanced, countCap: Number(params.get('rain')) || null };
   if (sky.pixelSnow) precipOpts.pixelSnow = sky.pixelSnow;   // DS1: Dynamic Skies' InitSnow - the pixel snow replacement, when its switch is on
-  let precip = precipMode ? new PrecipitationRenderer(renderer.gl, precipOpts) : null;
+  let precip = precipMode && !isDryFall(precipMode) ? new PrecipitationRenderer(renderer.gl, precipOpts) : null;   // ASHFALL1's audit: a dry fall at boot builds no rain program either
   const eye32 = new Float32Array(3);   // RAIN-LEAK: the falling weather's eye, filled each frame (world.js's twin)
   // PERF-WARM: the renderer's on-demand programs, and the rain's whole
   // renderer, paid for at idle rather than on the frame that first needs
@@ -6243,7 +6243,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // strength, on the one wind's rate and travel; the rain program never draws it. ASHFALL1: the ashfall's ash
       // and embers the same way, by the fall's kind (render/dryFall.js)
       if (dryFall) {
-        dryFall.draw({ on: true, kind: precipShown, strength01: fx.intensity, windV: wd.windV, step: wd.step }, proj, view, eye32, now / 1000);
+        dryFall.draw({ on: true, kind: precipShown, strength01: fx.intensity, windV: wd.windV, step: wd.step }, proj, view, eye32, now / 1000, renderer.worldViewportPx?.[3]);
         renderer.markForeignPass();
       }
     } else if (precipShown && precip) {   // W1 review: the gate is the MODE, never the object - the renderer outlives a clear-up

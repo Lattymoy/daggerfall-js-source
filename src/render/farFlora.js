@@ -27,7 +27,7 @@ import { floraSpec } from '../world/terrain/floraCover.js';
 import { getWorldClimateSettings, CLIMATE_BASE_TYPES } from '../formats/mapsFile.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { textureDeriveContext, decodedTexture, decodedTextureTopDown } from '../systems/textureReplacement.js';
-import { landsFloraSpec } from '../world/terrain/floraCover.js';   // TESA-LANDS: a zone's own woods
+import { landsFloraSpec, landsTreePicks } from '../world/terrain/floraCover.js';   // TESA-LANDS: a zone's own woods, and its Trees
 import { LANDS, landKeyAt } from '../world/tamriel/tamrielLands.js';
 import { compileDress, setPrototypes, dressRecord, landLuminance, DRESS_DIALS } from '../world/tamriel/groundDress.js';
 
@@ -95,16 +95,16 @@ export async function groundArt(archive, read) {
 }
 
 /**
- * TESA-LANDS: A ZONE'S TREES AS THE FAR VIEWS DRAW THEM - treeArt's answer over its recipe's Trees (`trees`' [archive,
- * record, weight] picks that are TREE_RECORDS', any climate's - treeArt's own kind: a stump or a snag among them is a flat,
- * no canopy), each picture's texels counted by its weight (so a tree drawn twice as often weighs twice), its billboards'
- * size by the same weights; null where none reads.
+ * TESA-LANDS: A ZONE'S TREES AS THE FAR VIEWS DRAW THEM - treeArt's answer over its recipe's Trees (world/terrain/
+ * floraCover.js landsTreePicks: its `trees`' and its `cover`'s picks that are TREE_RECORDS', any climate's - treeArt's own
+ * kind: a stump or a snag among them is a flat, no canopy - each weighed by its share of the Trees its ground stands),
+ * each picture's texels counted by its weight (so a tree drawn twice as often weighs twice), its billboards' size by the
+ * same weights; null where none reads.
  * @param {any} recipe @param {Parameters<typeof treeArt>[1]} read
  */
 export async function landTreeArt(recipe, read) {
   let r = 0, g = 0, b = 0, n = 0, h = 0, w = 0, sized = 0;
-  for (const [archive, record, weight] of recipe.trees ?? []) {
-    if (!TREE_RECORDS[archive]?.includes(record)) continue;
+  for (const [archive, record, weight] of landsTreePicks(recipe)) {
     const pic = await read.rgba(archive, record).catch(() => null);
     if (pic?.data) { const m = opaqueMean(pic.data); r += m[0] * m[3] * weight; g += m[1] * m[3] * weight; b += m[2] * m[3] * weight; n += m[3] * weight; }
     const s = await read.size(archive, record).catch(() => null);
@@ -222,7 +222,7 @@ export function createFloraArt({ read = pipelineRead, forests = () => true, land
       const spec = recipe ? landsFloraSpec(recipe) : s.spec;
       const artKey = recipe ? `lands:${zone}` : s.archive, groundArchive = dress ? dress.base ?? s.groundArchive : s.groundArchive;
       const groundKey = dress ? `lands:${zone}:${groundArchive}` : s.groundArchive;
-      if (!arts.has(artKey) && spec.treeShare > 0) ask(arts, artKey, recipe ? (_, r) => landTreeArt(recipe, r) : treeArt);
+      if (!arts.has(artKey) && (spec.treeShare > 0 || spec.coverShare > 0)) ask(arts, artKey, recipe ? (_, r) => landTreeArt(recipe, r) : treeArt);
       if (!grounds.has(groundKey)) ask(grounds, groundKey, dress ? (_, r) => landGroundArt(dress, groundArchive, r) : groundArt);
       return { spec, art: arts.get(artKey) ?? null, ground: grounds.get(groundKey) ?? null };
     },

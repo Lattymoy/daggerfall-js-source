@@ -87,8 +87,8 @@ export function createGroundSets({ renderer, getTexture: archiveTexture, labGras
     await stepsBreathing(renderer.uploadTileArraySteps(key, layers), breathe);   // OW-HITCH: a few layers a breath
     // AUDIT GRASS-LIT2 B2: the grass's colours off THESE layers - the ones drawn - and not a second ask of the mod
     // door, whose cache a mod indexed mid-session empties (another decode, maybe another mod's tiles than these)
-    if (labGrass) groundDrawnMeans.set(groundArchive, own.modLayers ? own.modLayers.map(tileMeanColour) : null);
-    else if (dress) groundDrawnMeans.set(groundArchive, DRESSED_MEANS.get(groundArchive));   // TESA-LANDS: a dress's colours are its own whatever the grass - and no mod door is asked of a key that names none
+    if (dress) groundDrawnMeans.set(groundArchive, DRESSED_MEANS.get(groundArchive));   // TESA-LANDS: a dress's colours are its own whatever the grass - and no mod door is asked of a key that names none (the second audit: the means taken once, above, never again off the same layers)
+    else if (labGrass) groundDrawnMeans.set(groundArchive, own.modLayers ? own.modLayers.map(tileMeanColour) : null);
   };
   const loadGroundSet = async (groundArchive, hold, winter = null) => {
     // AUDIT PRECIP GROUND-2: on the snow lane a set that wears a winter IS its twin - one array, its summer records then its
@@ -102,6 +102,10 @@ export function createGroundSets({ renderer, getTexture: archiveTexture, labGras
         _loading.set(key, loading);
       }
       await loading;
+      // TESA-LANDS' second audit (lane C): asked again once it stands - a place dropped while its set was on its way (a
+      // dress queued on the worker is seconds of it) had it swept before it was there to free, and it landed held by no
+      // one for good; a dropped place's ask leaves it loose for the next sweep (scenes/placeHolds.js `hold`)
+      hold.tileArray(key);
     }
     renderer.applyGroundSharpness();   // GRAIN AUDIT 1: the ground-sharpness tier lands on THIS load, on every cached archive - the cache outlives the scene
     // GR1: which of this archive's records are GRASS, from its own texels -
@@ -116,7 +120,8 @@ export function createGroundSets({ renderer, getTexture: archiveTexture, labGras
     // AUDIT GRASS-LIT2 B2: the means taken at the upload above when it ran in this scene; asked of the door only for a
     // tile array an earlier scene uploaded (the renderer's cache outlives the scene)
     // TESA-LANDS (AUDIT): a dressed key an earlier scene uploaded - its colours the dress's, and its puddles its file's (the
-    // classic records' marks groundLayersOf kept under the file: never marked again under the key)
+    // classic records' marks groundLayersOf kept under the file: never marked again under the key; the second audit: and
+    // marked below under the file where this scene has none yet, so the file's other zones' keys find them)
     if (!groundDrawnMeans.has(groundArchive) && DRESSED_MEANS.has(groundArchive)) groundDrawnMeans.set(groundArchive, DRESSED_MEANS.get(groundArchive));
     if (!groundPuddles.has(groundArchive) && groundPuddles.has(fileOf(groundArchive))) groundPuddles.set(groundArchive, groundPuddles.get(fileOf(groundArchive)));
     const drawnMeans = grassRecords.has(groundArchive) ? null
@@ -128,7 +133,8 @@ export function createGroundSets({ renderer, getTexture: archiveTexture, labGras
       const classic = [];
       for (let r = 0; r < groundTex.recordCount; r++) classic.push(groundTex.getColor32(groundTex.getDFBitmap(r, 0), 0));
       const marked = await stepsBreathing(markPuddleWaterSteps(classic), breathe);
-      if (!groundPuddles.has(groundArchive)) groundPuddles.set(groundArchive, marked);
+      if (!groundPuddles.has(fileOf(groundArchive))) groundPuddles.set(fileOf(groundArchive), marked);   // the classic records' marks are the file's
+      if (!groundPuddles.has(groundArchive)) groundPuddles.set(groundArchive, groundPuddles.get(fileOf(groundArchive)));
     }
     if (!grassRecords.has(groundArchive)) {
       const layers = [];

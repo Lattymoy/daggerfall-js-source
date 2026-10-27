@@ -65,10 +65,23 @@ function builder() {
     else tri(s, a, c, b, ua, uc, ub);
   };
   const quadOut = (s, a, b, c, d, ua, ub, uc, ud, out) => { triOut(s, a, b, c, ua, ub, uc, out); triOut(s, a, c, d, ua, uc, ud, out); };
-  return { tri, triOut, quadOut, subs };
+  /** each submesh's vertices so far */
+  const mark = () => subs.map((q) => q.p.length / 3);
+  /** TESA-LANDS' second audit (lane D): A SOLID PART - what `make()` lays about the upright axis at (x, z) is one body
+   *  (a stalk, a lump of rock, a trunk), its radius and its height read off its own vertices at finish */
+  const parts = [];
+  const part = (x, z, make) => { const from = mark(); const o = make(); parts.push({ x, z, from, to: mark() }); return o; };
+  return { tri, triOut, quadOut, subs, mark, part, parts };
 }
 
-/** The made mesh: the three submeshes end to end. */
+/** TESA-LANDS' second audit (lane D): how high over its foot (m, at scale 1) a landmark's solid is read for its feet and
+ *  its bodies - the ground to a man's chest, its LOD 0 sunk a metre or so. */
+export const LAND_CHEST = 2;
+
+/** The made mesh: the three submeshes end to end - and, read off its body's and its crown's vertices (never the detail's
+ *  cards: gills, moss, leaves) up to LAND_CHEST, its FOOT (the widest of them from its axis: a crag's satellite lumps, a
+ *  grove of three's outer stalks, the Hist's roots) and each solid PART's radius about its own axis and its height (the
+ *  second audit: one stalk's or one lump's had stood for the whole - the player walked metres into a crag's rock). */
 function finish(m, extra) {
   const counts = m.subs.map((s) => s.p.length / 3);
   const total = counts.reduce((a, b) => a + b, 0);
@@ -80,7 +93,23 @@ function finish(m, extra) {
     subs.push([at, counts[i]]);
     at += counts[i];
   });
-  return { positions, normals, uvs, subs, ...extra };
+  let foot = 0;
+  for (const si of [BODY, CROWN]) {
+    const p = m.subs[si].p;
+    for (let k = 0; k < p.length; k += 3) if (p[k + 1] <= LAND_CHEST) foot = Math.max(foot, Math.hypot(p[k], p[k + 2]));
+  }
+  const parts = m.parts.map((q) => {
+    let r = 0, h = 0;
+    for (const si of [BODY, CROWN, DETAIL]) {
+      const p = m.subs[si].p;
+      for (let k = q.from[si] * 3; k < q.to[si] * 3; k += 3) {
+        h = Math.max(h, p[k + 1]);
+        if (si !== DETAIL && p[k + 1] <= LAND_CHEST) r = Math.max(r, Math.hypot(p[k] - q.x, p[k + 2] - q.z));
+      }
+    }
+    return Object.freeze({ x: q.x, z: q.z, r, h });
+  });
+  return { positions, normals, uvs, subs, foot, parts: Object.freeze(parts), ...extra };
 }
 
 /**
@@ -174,6 +203,8 @@ function card(m, s, at, tg, up, w, h, rect) {
 }
 
 const BODY = 0, CROWN = 1, DETAIL = 2;
+/** A part about the axis begun here, closed - pushed - by calling what this answers (for a part laid in several steps). */
+const mark0 = (m) => { const from = m.mark(); return () => m.parts.push({ x: 0, z: 0, from, to: m.mark() }); };
 
 // ─── THE PARASOL ──────────────────────────────────────────────────
 
@@ -237,23 +268,24 @@ function parasolMesh(variant, lod) {
   const take = (o) => { top = Math.max(top, o.top); reach = Math.max(reach, o.reach); };
   if (variant === 0) {
     const h = within(r, [11.5, 15]), r0 = within(r, [1.0, 1.3]);
-    take(parasolOne(m, r, lod, 0, 0, h, r0, within(r, [5.5, 7.5]))); stalk = r0;
+    take(m.part(0, 0, () => parasolOne(m, r, lod, 0, 0, h, r0, within(r, [5.5, 7.5])))); stalk = r0;
   } else if (variant === 1) {
     const h = within(r, [9, 12]), r0 = within(r, [1.0, 1.25]);
-    take(parasolOne(m, r, lod, 0, 0, h, r0, within(r, [5.5, 7])));
+    take(m.part(0, 0, () => parasolOne(m, r, lod, 0, 0, h, r0, within(r, [5.5, 7]))));
     const n = lod === 2 ? 1 : 2;
     for (let k = 0; k < n; k++) {
       const a = r() * 6.283 + k * 2.6, d = within(r, [2.6, 3.6]), s = within(r, [0.5, 0.72]);
-      take(parasolOne(m, r, lod, Math.cos(a) * d, Math.sin(a) * d, h * s, r0 * s * 1.1, within(r, [4, 5.5]) * s * 1.2));
+      const x = Math.cos(a) * d, z = Math.sin(a) * d;   // the grove's own stalks: each its own body
+      take(m.part(x, z, () => parasolOne(m, r, lod, x, z, h * s, r0 * s * 1.1, within(r, [4, 5.5]) * s * 1.2)));
     }
     stalk = r0;
   } else if (variant === 2) {
     const h = within(r, [6, 8.5]), r0 = within(r, [0.45, 0.6]);
-    take(podOne(m, r, lod, 0, 0, h, r0, within(r, [2.2, 3.0]))); stalk = r0;
+    take(m.part(0, 0, () => podOne(m, r, lod, 0, 0, h, r0, within(r, [2.2, 3.0])))); stalk = r0;
   } else {
-    // xylaria: spikes from one foot, leaning out, their top quarter the crown's (its dark tips)
+    // xylaria: spikes from one foot, leaning out, their top quarter the crown's (its dark tips) - the cluster one body
     const n = [8, 6, 4][lod], sides = [5, 4, 3][lod];
-    for (let k = 0; k < n; k++) {
+    m.part(0, 0, () => { for (let k = 0; k < n; k++) {
       const a = (k / n) * 6.283 + r() * 0.6, d = k ? within(r, [0.4, 1.4]) : 0, h = within(r, [2.2, 5.5]) * (k ? 0.8 : 1.15);
       const base = [Math.cos(a) * d, Math.sin(a) * d], tip = [base[0] + Math.cos(a) * h * 0.22, base[1] + Math.sin(a) * h * 0.22];
       const r0 = within(r, [0.22, 0.38]) * (k ? 1 : 1.3);
@@ -261,7 +293,7 @@ function parasolMesh(variant, lod) {
       sweep(m, BODY, [ring(0), ring(0.4), ring(0.72)], sides, { open: true, uScale: 1, vScale: 2 });
       sweep(m, CROWN, [ring(0.72), ring(0.9)], sides, { capS: CROWN, uScale: 1, vScale: 2 });
       top = Math.max(top, h); reach = Math.max(reach, d + h * 0.25);
-    }
+    } });
     stalk = 0.6;
   }
   return finish(m, { top, reach, stalk });
@@ -285,6 +317,7 @@ function spireMesh(variant, lod) {
       const waist = variant === 1 ? 1 - 0.28 * Math.sin(t * 3.14159) : 1;
       rings.push({ y, r: lerp(rb, rt, t) * waist, c: [lean[0] * t, lean[1] * t] });
     }
+    const column = mark0(m);
     sweep(m, BODY, rings, sides, { jit: jit(lod === 2 ? 0.08 : 0.16), crown: CROWN, up: 0.82, capS: CROWN, vScale: 3, uScale: 2 });
     top = h; reach = rb * 1.2; foot = rb;
     if (variant === 1) {
@@ -293,6 +326,7 @@ function spireMesh(variant, lod) {
       sweep(m, CROWN, [{ y: h - 0.2, r: cr * 0.92, c: ct }, { y: h + ch * 0.55, r: cr, c: ct }, { y: h + ch, r: cr * 0.86, c: ct }], sides, { jit: jit(0.12), capS: CROWN, vScale: 2 });
       top = h + ch; reach = Math.max(reach, cr * 1.15);
     }
+    column();
   } else if (variant === 2) {
     // a crag: a broad lump of rock and its two smaller ones, sunk a third into the ground; its tops the crown's
     const R = within(r, [4.5, 6.5]), sub = lod === 0 ? 2 : lod === 1 ? 1 : 0;
@@ -309,17 +343,18 @@ function spireMesh(variant, lod) {
       }
     };
     const sq = within(r, [0.85, 1.25]);
-    lump([0, R * sq * 0.35, 0], R, sq, (r() * 4294967296) >>> 0);
+    m.part(0, 0, () => lump([0, R * sq * 0.35, 0], R, sq, (r() * 4294967296) >>> 0));
     if (lod < 2) for (let k = 0; k < 2; k++) {
       const a = r() * 6.283, d = R * within(r, [0.8, 1.1]), rr = R * within(r, [0.35, 0.55]);
-      lump([Math.cos(a) * d, rr * 0.3, Math.sin(a) * d], rr, within(r, [0.7, 1.1]), (r() * 4294967296) >>> 0);
+      const x = Math.cos(a) * d, z = Math.sin(a) * d;   // each lump its own body
+      m.part(x, z, () => lump([x, rr * 0.3, z], rr, within(r, [0.7, 1.1]), (r() * 4294967296) >>> 0));
       reach = Math.max(reach, d + rr);
     }
     top = R * sq * 1.35 * 1.28; reach = Math.max(reach, R * 1.28); foot = R * 0.9;
   } else if (variant === 3) {
     // a standing stone: a slab, tapering to a rounded top, leaning a little
     const h = within(r, [2.8, 4.4]), w = within(r, [1.0, 1.4]), d = within(r, [0.45, 0.6]), lean = lerp(-0.12, 0.12, r());
-    const n = [4, 3, 1][lod], prof = [];
+    const n = [4, 3, 1][lod], prof = [], stone = mark0(m);
     for (let k = 0; k <= n; k++) {
       const t = k / n, y = -0.6 + (h + 0.6) * t, s = 1 - 0.35 * t * t;
       prof.push({ y, w: w * s, d: d * (1 - 0.2 * t), x: lean * y });
@@ -336,14 +371,17 @@ function spireMesh(variant, lod) {
     const T = prof[n], tc = [[T.x - T.w / 2, T.y, -T.d / 2], [T.x + T.w / 2, T.y, -T.d / 2], [T.x + T.w / 2, T.y, T.d / 2], [T.x - T.w / 2, T.y, T.d / 2]];
     const apex = [T.x, T.y + T.w * 0.25, 0];
     for (let i = 0; i < 4; i++) m.triOut(CROWN, tc[i], tc[(i + 1) % 4], apex, [0, 0], [1, 0], [0.5, 0.5], [0, 1, 0]);
+    stone();
     top = h + w * 0.25; reach = w; foot = w * 0.6;
   } else {
     // a termite mound: a ridged cone with a few lumps
     const h = within(r, [2.4, 4.0]), rb = within(r, [1.3, 1.9]), sides = [9, 7, 5][lod], n = [5, 3, 1][lod];
     const rings = [];
     for (let k = 0; k <= n; k++) { const t = k / n; rings.push({ y: -0.5 + (h + 0.5) * t, r: rb * (1 - t * 0.82), c: [0, 0] }); }
-    sweep(m, BODY, rings, sides, { jit: jit(0.2), crown: CROWN, up: 0.75, capS: CROWN, vScale: 2, uScale: 1 });
-    if (lod < 2) for (let k = 0; k < 3; k++) { const a = r() * 6.283, d = rb * 0.55; blob(m, BODY, [Math.cos(a) * d, h * within(r, [0.25, 0.55]), Math.sin(a) * d], rb * within(r, [0.35, 0.5]), 1.1, 0.8, (r() * 4294967296) >>> 0, 0, 3); }
+    m.part(0, 0, () => {
+      sweep(m, BODY, rings, sides, { jit: jit(0.2), crown: CROWN, up: 0.75, capS: CROWN, vScale: 2, uScale: 1 });
+      if (lod < 2) for (let k = 0; k < 3; k++) { const a = r() * 6.283, d = rb * 0.55; blob(m, BODY, [Math.cos(a) * d, h * within(r, [0.25, 0.55]), Math.sin(a) * d], rb * within(r, [0.35, 0.5]), 1.1, 0.8, (r() * 4294967296) >>> 0, 0, 3); }
+    });
     top = h + 0.3; reach = rb * 1.2; foot = rb;
   }
   return finish(m, { top, reach, stalk: foot });
@@ -360,7 +398,7 @@ function histMesh(variant, lod) {
   const ys = lod === 2 ? [-2, crownFrom * 0.5, crownFrom + 2] : [-2, 0, 1.5, 4, 7, 10, crownFrom, crownFrom + 2.5];
   const rings = ys.map((y) => { const t = Math.max(0, y) / crownFrom; return { y, r: r0 * (0.72 + 0.6 * Math.exp(-t * 4) + 0.12 * Math.sin(t * 9 + turn)), c: axis(Math.max(0, y)) }; });
   const seed = (r() * 4294967296) >>> 0;
-  sweep(m, BODY, rings, sides, { jit: (k, i) => (lod === 2 ? 0.05 : 0.12) * blobJitter(seed + k * 97, i), twist: 0.05, vScale: 6, uScale: 2, capS: BODY });
+  m.part(0, 0, () => sweep(m, BODY, rings, sides, { jit: (k, i) => (lod === 2 ? 0.05 : 0.12) * blobJitter(seed + k * 97, i), twist: 0.05, vScale: 6, uScale: 2, capS: BODY }));   // the trunk the body; its roots the foot's
   // the root flares: tubes from the trunk's foot out and down into the mud
   const nRoots = [7, 5, 0][lod];
   for (let k = 0; k < nRoots; k++) {
@@ -464,7 +502,7 @@ function groveMesh(variant, lod) {
   ][variant];
   const tH = within(r, shape.trunk), r0 = within(r, shape.r0), sides = [8, 6, 4][lod];
   const lean = [lerp(-0.25, 0.25, r()), lerp(-0.25, 0.25, r())];
-  sweep(m, BODY, [{ y: -0.5, r: r0 * 1.25, c: [0, 0] }, { y: 0.4, r: r0 * 1.1, c: [0, 0] }, { y: tH, r: r0 * 0.82, c: lean }], sides, { open: false, uScale: 1, vScale: 2, capS: BODY });
+  m.part(0, 0, () => sweep(m, BODY, [{ y: -0.5, r: r0 * 1.25, c: [0, 0] }, { y: 0.4, r: r0 * 1.1, c: [0, 0] }, { y: tH, r: r0 * 0.82, c: lean }], sides, { open: false, uScale: 1, vScale: 2, capS: BODY }));
   const nL = lod === 2 ? Math.max(3, shape.limbs - 2) : shape.limbs;
   let top = tH, reach = r0;
   for (let k = 0; k < nL; k++) {
@@ -492,7 +530,8 @@ const MAKERS = Object.freeze({ parasol: parasolMesh, spire: spireMesh, hist: his
 /**
  * A KIND'S VARIANT AT A LOD - `{ positions, normals, uvs }` (f32, three vertices a face), `subs` ([first vertex, vertex
  * count] a submesh, LAND_SUBS' order), and its measures at scale 1: `top` (m over its foot), `reach` (its widest from its
- * foot's axis) and `stalk` (the radius of what a body walks into - a stalk, a column, a trunk; 0 none).
+ * foot's axis), `stalk` (the radius of its main stalk, column or trunk; 0 none), `foot` (its widest up to LAND_CHEST) and
+ * `parts` (each solid one's axis { x, z }, its radius up to LAND_CHEST and its height: what a body walks into).
  * @param {string} kind @param {number} variant @param {number} lod
  */
 export function landPropMesh(kind, variant, lod) {

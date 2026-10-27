@@ -2679,7 +2679,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // EV2 swept for exactly this class of per-frame garbage.
   const precipOpts = { enhanced: sky.enhanced, countCap: Number(params.get('rain')) || null };
   if (sky.pixelSnow) precipOpts.pixelSnow = sky.pixelSnow;   // DS1: Dynamic Skies' InitSnow - the pixel snow replacement, when its switch is on
-  let precip = precipMode ? new PrecipitationRenderer(renderer.gl, precipOpts) : null;
+  let precip = precipMode && !isDryFall(precipMode) ? new PrecipitationRenderer(renderer.gl, precipOpts) : null;   // ASHFALL1's audit: a dry fall at boot builds no rain program either
   const wxEye32 = new Float32Array(3);   // RAIN-LEAK: the falling weather's eye, filled each frame - never a fresh array a frame
   // PERF-WARM: the renderer's on-demand programs, and the rain's whole
   // renderer, paid for at idle rather than on the frame that first needs
@@ -33784,11 +33784,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       wxEye32[0] = wxEye[0]; wxEye32[1] = wxEye[1]; wxEye32[2] = wxEye[2];   // RAIN-LEAK: filled here, not in the frame - PERF-V8's bytecode ceiling
       const precipShown = enhancedFront ? fx.shown : precipMode;
       if (isDryFall(precipShown)) {
-        // WEATHER2d: THE SANDSTORM'S SAND - the wisps' program in the sand's look, the front's intensity its
-        // strength, on the one wind's rate and travel; the rain program never draws it. ASHFALL1: the ashfall's ash
-        // and embers the same way, by the fall's kind (render/dryFall.js)
-        if (dryFall && !_dwPrecipOff) {
-          dryFall.draw({ on: true, kind: precipShown, strength01: fx.intensity, windV: wd.windV, step: wd.step }, proj, view, wxEye32, now / 1000);
+        // WEATHER2d, ASHFALL1: THE DRY FALLS - the sand and the ash (render/dryFall.js) by the fall's kind, the front's
+        // intensity their strength, the one wind; Travel Options' weather off stands them down as it does the rain
+        if (dryFall && !_dwPrecipOff && (!_travelWeatherOff || tvf)) {
+          dryFall.draw({ on: true, kind: precipShown, strength01: fx.intensity, windV: wd.windV, step: wd.step }, proj, view, wxEye32, now / 1000, renderer.worldViewportPx?.[3]);
           renderer.markForeignPass();
         }
       } else if (precipShown && precip) {   // W1 review: the gate is the MODE, never the object - the renderer outlives a clear-up

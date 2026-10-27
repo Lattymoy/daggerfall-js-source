@@ -16,8 +16,11 @@ import { tamrielFrameInBay } from '../../src/world/tamriel/tamrielFrame.js';
 import { LAND_KINDS } from '../../src/world/lands/landPropMesh.js';
 import { LAND_LOOKS } from '../../src/world/lands/landProps.js';
 import { dressMessage } from '../../src/world/tamriel/groundDressWorker.js';
-import { createDressClient, defaultDressWorker } from '../../src/world/tamriel/groundDressClient.js';
+import { createDressClient, defaultDressWorker, DRESS_WORKER_DEATHS, DRESS_ANSWER_MS } from '../../src/world/tamriel/groundDressClient.js';
 import { createGroundSets } from '../../src/scenes/groundSets.js';
+import { createPlaceHolds } from '../../src/scenes/placeHolds.js';
+import { setSnowlessGround, winterSetSnowless } from '../../src/world/climateSwaps.js';
+import { winterGroundSnowless } from '../../src/systems/dfmodTextures.js';
 import { tileMeanColour } from '../../src/render/labGrass.js';
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -102,6 +105,22 @@ test('TESA-LANDS A RECORD DRESSED: a solid record its own class whole - its grai
   assert.ok(right[0] > right[1] * 1.3, `the grass side orange (${right})`);
 });
 
+test('TESA-LANDS A TRANSITION\'S INSIDE IS ITS CLASS\'S (the second audit, lane C): past the shape\'s soft edge a transition\'s texels wear their solid record\'s dress exactly - a Gaussian half the prototypes\' gap wide gave a texel AT its prototype 12% of the next class, so a transition\'s grass was dressed 88/12 with its dirt where the solid grass beside it was grass whole (mutant: the shares left soft)', () => {
+  const w = 64, set = synthSet(w), protos = setPrototypes(set), mats = compileDress(DRESS);
+  const t = dressRecord(set[10], 10, mats, protos), dirt = dressRecord(set[10], 1, mats, protos), grass = dressRecord(set[10], 2, mats, protos);
+  const r = Math.max(1, Math.round(w * DRESS_DIALS.blur)), margin = r + 3;
+  let worst = 0, n = 0, edge = 0;
+  for (let y = 0; y < w; y++) for (let x = 0; x < w; x++) {
+    const o = (y * w + x) * 4, solid = x < w / 2 ? dirt : grass;
+    const d = Math.max(Math.abs(t.colors[o] - solid.colors[o]), Math.abs(t.colors[o + 1] - solid.colors[o + 1]), Math.abs(t.colors[o + 2] - solid.colors[o + 2]));
+    if (Math.abs(x + 0.5 - w / 2) > margin) { worst = Math.max(worst, d); n++; } else if (d > 0) edge++;
+  }
+  assert.ok(n > w * w * 0.7, `the inside's texels (${n})`);
+  assert.ok(worst <= 1, `the inside wears its solid record's dress (worst ${worst} of a channel)`);
+  assert.ok(edge > 0, 'the shape\'s edge still blends');
+  assert.equal(DRESS_DIALS.crisp, 0.15);
+});
+
 test('TESA-LANDS THE DRESS A STEP AT A TIME: dressLayersSteps answers dressLayers\' layers, its steps a band of DRESS_BAND rows (a 256-texel record\'s), never a record whole; the blur a running sum the box\'s own (mutants: the band a record; the shares a record; the blur\'s window off by one)', () => {
   const set = synthSet(64), whole = dressLayers(set, DRESS);
   const it = dressLayersSteps(set, DRESS);
@@ -181,7 +200,7 @@ test('TESA-LANDS THE TABLE: every zone of the seven provinces named once (none o
     if (land.flora) {
       const f = land.flora;
       assert.ok(f.woods >= 0 && f.woods < 1, `${key}'s woods`);
-      for (const [a, r, w] of [...f.trees, ...f.cover]) assert.ok(a >= 500 && a <= 510 && r >= 1 && r <= 31 && w > 0, `${key}'s pick ${a}:${r}`);
+      for (const [a, r, w] of [...f.trees, ...f.cover]) assert.ok([500, 501, 502, 503, 504, 506, 508, 510].includes(a) && r >= 1 && r <= 31 && w > 0, `${key}'s pick ${a}:${r} (a summer nature archive's: the second audit - the winter ones, 505, 507 and 509, had passed)`);
       assert.ok(f.trees.length + f.cover.length > 0);
     }
     const kinds = land.props.map((p) => p.kind);
@@ -199,17 +218,22 @@ test('TESA-LANDS THE TABLE: every zone of the seven provinces named once (none o
   assert.deepEqual([meshName(504, 24), meshName(510, 24), meshName(510, 25)], ['504_25', '504_25', '504_25'], 'the grey dead tree the pine in the mod');
   const pines = new Set([[510, 5], [510, 11], [510, 12], [510, 13], [510, 25], [510, 30], [504, 13], [504, 24], [510, 24]].map(([a, r]) => mesh(a, r)));
   for (const [a, r] of DEAD_TREES) assert.ok(mesh(a, r) != null && !pines.has(mesh(a, r)) && meshName(a, r) !== '504_25', `${a}:${r} bare in the mod too`);
+  // the broadleaf lands (the second audit, lane D): Northpoint's oak and beech and Auridon's laurel, maple and cherry stand no pine
+  for (const key of ['highRockNorthpoint', 'summersetAuridon']) for (const [a, r] of LANDS[key].flora.trees) assert.ok(!pines.has(mesh(a, r)), `${key}: ${a}:${r} no pine`);
   for (const [key, land] of Object.entries(LANDS)) {
     for (const [a, r] of land.flora?.trees ?? []) assert.ok(meshName(a, r) !== '504_25' || r === 25, `${key}: ${a}:${r} stands as the pine`);
   }
   assert.ok(Object.isFrozen(LANDS) && Object.isFrozen(LANDS.morrowindAshlands.ground.grass.ramp) && Object.isFrozen(LANDS.morrowindAshlands.props[0]));
   // the lands the owner named stand as the lore paints them: ash with no blades, the Alik'r's own sands, Summerset's grass
   assert.equal(LANDS.morrowindAshlands.blades, false);
+  // the second audit (lane E): a zone whose meadows are the temperate set's grass (its `base` TEXTURE.302 - the Vine Coast, the
+  // High Savannah, the Pellitine) grows the grass's blades with them, as every grass land does
+  for (const [key, land] of Object.entries(LANDS)) if (land.ground?.base === 302) assert.equal(land.blades, true, `${key}: its grass bladed`);
   assert.equal(LANDS.hammerfellAlikr.ground, null, 'the Alik\'r keeps the Sands of the Alik\'r');
   assert.equal(LANDS.summersetVineCoast.ground.base, 302, 'the Vine Coast is grass, not the desert\'s sand');
 });
 
-test('TESA-LANDS A PIXEL\'S GROUND SET: past the Bay a summer set its zone\'s dress (its base where it names one), a winter set and a Bay pixel and a zone with no dress their own; the key read back; the 3x3 of lands the zone\'s own at its middle (mutants: a winter dressed; the base ignored; the key unread)', () => {
+test('TESA-LANDS A PIXEL\'S GROUND SET: past the Bay a summer set its zone\'s dress (its base where it names one), a winter set and a Bay pixel and a zone with no dress their own; the key read back; the 3x3 of lands the zone\'s own at its middle (mutants: a winter dressed; the base ignored; the key unread; the second audit\'s snowless winter undressed)', () => {
   const f = tamrielFrameInBay(), at = (key) => {
     for (let y = Math.ceil(f.y0); y < f.y0 + f.h; y += 5) for (let x = Math.ceil(f.x0); x < f.x0 + f.w; x += 5) if (tamrielBiomeAt(x, y)?.key === key) return [x, y];
     return null;
@@ -220,6 +244,17 @@ test('TESA-LANDS A PIXEL\'S GROUND SET: past the Bay a summer set its zone\'s dr
   assert.equal(landGroundSet(...ash, 102), groundSetKey('morrowindAshlands', 102));
   assert.equal(landGroundSet(...ash, 103), 103, 'a winter set is the snow\'s');
   assert.equal(landGroundSet(...ash, 'twin:102'), 'twin:102');
+  // the second audit (lane C): a winter drawn snowless (Snowless Swamps and Jungles' 403) is its summer's ground, dressed as
+  // it - the snow lane's summer set there; a snowy winter, and a snowless one no zone dresses, its own
+  const hist = at('blackMarshHist'), snowless = (a) => a === 403;
+  assert.equal(landGroundSet(...hist, 403), 403, 'the add-on off: the snow\'s');
+  assert.equal(landGroundSet(...hist, 403, snowless), groundSetKey('blackMarshHist', 402), 'snowless: the summer\'s dress');
+  assert.equal(landGroundSet(...ash, 103, snowless), 103, 'a snowy winter still the snow\'s');
+  assert.equal(landGroundSet(100, 100, 403, snowless), 403, 'the Bay its own');
+  // the page hands the door's word (world/climateSwaps.js - the terrain worker's modules are world/'s alone)
+  setSnowlessGround(snowless);
+  try { assert.equal(winterSetSnowless(403), true); assert.equal(winterSetSnowless(303), false); } finally { setSnowlessGround(winterGroundSnowless); }
+  assert.match(read('src/scenes/pixelBuild.js'), /const landSetOf = \(x, y, archive\) => \(lands \? landGroundSet\(x, y, archive, winterSetSnowless\) : archive\);/);
   assert.equal(landGroundSet(...vine, 2), groundSetKey('summersetVineCoast', 302), 'its base in the climate\'s stead');
   assert.equal(landGroundSet(...alikr, 2), 2, 'no dress, its own');
   assert.equal(landGroundSet(100, 100, 302), 302, 'the Bay its own');
@@ -232,7 +267,7 @@ test('TESA-LANDS A PIXEL\'S GROUND SET: past the Bay a summer set its zone\'s dr
   // the forest field's quantiles: monotone, and read between
   for (let i = 1; i < FOREST_QUANTILES.length; i++) assert.ok(FOREST_QUANTILES[i] > FOREST_QUANTILES[i - 1]);
   assert.equal(forestQuantile(0), FOREST_QUANTILES[0]); assert.equal(forestQuantile(1), FOREST_QUANTILES.at(-1));
-  assert.ok(Math.abs(forestQuantile(0.025) - (FOREST_QUANTILES[0] + FOREST_QUANTILES[1]) / 2) < 1e-9);
+  assert.ok(Math.abs(forestQuantile(0.025) - (FOREST_QUANTILES[2] + FOREST_QUANTILES[3]) / 2) < 1e-9, 'every 1% (the second audit: every 5% had been)');
 });
 
 test('TESA-LANDS THE DRESS OFF THE PAGE\'S THREAD (AUDIT): the worker answers dressLayers\' set, its buffers moved; the client hands it copies (the set as drawn untouched) and takes the dressed set back - and with no worker, a factory that throws or a worker that fails mid-dress, the page dresses it a band a breath; the ground sets dress a zone\'s key through it, and a key an earlier scene uploaded reads its colours off the dress, never the mod door; a dressed key\'s puddles its file\'s, marked once (mutants: the copies unmade; the fallback dropped; the means the door\'s; the puddles marked again)', async () => {
@@ -287,6 +322,7 @@ test('TESA-LANDS THE DRESS OFF THE PAGE\'S THREAD (AUDIT): the worker answers dr
   const one = scene();
   await one.sets.loadGroundSet(key, { tileArray() {} });
   assert.deepEqual(dressed, [LANDS.morrowindAshlands.ground], 'dressed once, in its zone\'s dress');
+  assert.equal(one.maps.grassRecords.get(key).size, 0, 'the ash grows no blades (its grass records none)');
   const means = tileArrays.get(key).map(tileMeanColour);
   assert.deepEqual(one.maps.groundMeanColour.get(key), means, 'the grass\'s colours the dress\'s');
   assert.equal(one.maps.groundPuddles.get(key), one.maps.groundPuddles.get(102), 'its puddles its file\'s, marked once');
@@ -297,13 +333,82 @@ test('TESA-LANDS THE DRESS OFF THE PAGE\'S THREAD (AUDIT): the worker answers dr
   assert.notDeepEqual(means, set.map(tileMeanColour));
 });
 
+test('TESA-LANDS THE DRESS\'S WORKER LIVES ON (the second audit, lane C): a dead worker is let go and the next dress makes another, DRESS_WORKER_DEATHS at the most (one failure had sent the session\'s every dress to the page); a post that throws is the page\'s to dress (it was rejected, its set held); an answer that never comes, or comes unreadable, counts the worker dead and the page dresses what it held (a set had waited the scene) (mutants: no worker after one death; the post\'s throw unheld; no watch; the unreadable answer unheard)', async () => {
+  const set = synthSet(16), want = dressLayers(set, DRESS, 0.9);
+  const bytes = (ls) => ls.map((l) => (l?.colors ? Array.from(l.colors) : l));
+  assert.equal(DRESS_WORKER_DEATHS, 3); assert.equal(DRESS_ANSWER_MS, 60000);
+  // a worker a death: each fails at its first dress, the next dress makes another - three, then the page's for good
+  const made = [];
+  const failing = () => { const w = { onmessage: null, onerror: null, onmessageerror: null, postMessage() { setTimeout(() => w.onerror?.({ message: 'gone' }), 0); }, terminate() { w.dead = true; } }; made.push(w); return w; };
+  const c = createDressClient({ makeWorker: failing, log: { warn() {} }, timer: null });
+  for (let i = 0; i < 4; i++) assert.deepEqual(bytes(await c.dress(set, DRESS, 0.9, async () => {})), bytes(want), `dress ${i}: dressed whatever its worker did`);
+  assert.equal(made.length, 3, 'three workers made, each let go'); assert.equal(c.deaths, 3); assert.equal(c.alive, false);
+  assert.ok(made.every((w) => w.dead));
+  // a post that throws: the page's, and the worker kept
+  const throwing = { onmessage: null, onerror: null, postMessage() { throw new Error('DataCloneError'); }, terminate() {} };
+  const t = createDressClient({ makeWorker: () => throwing, log: { warn() {} }, timer: null });
+  assert.deepEqual(bytes(await t.dress(set, DRESS, 0.9, async () => {})), bytes(want), 'the page dressed it');
+  assert.equal(t.alive, true); assert.equal(t.deaths, 0);
+  // an answer that never comes: the watch counts the worker dead, the page dresses what it held
+  const silent = { onmessage: null, onerror: null, postMessage() {}, terminate() { silent.dead = true; } };
+  let watch = null;
+  const s = createDressClient({ makeWorker: () => silent, log: { warn() {} }, timer: (fn, ms) => { watch = { fn, ms }; return 1; }, untimer() {} });
+  const asked = s.dress(set, DRESS, 0.9, async () => {});
+  assert.equal(watch.ms, DRESS_ANSWER_MS);
+  watch.fn();
+  assert.deepEqual(bytes(await asked), bytes(want)); assert.ok(silent.dead); assert.equal(s.deaths, 1);
+  // an answer the page cannot read: the same
+  const garbled = { onmessage: null, onerror: null, onmessageerror: null, postMessage() { setTimeout(() => garbled.onmessageerror?.({}), 0); }, terminate() { garbled.dead = true; } };
+  const g = createDressClient({ makeWorker: () => garbled, log: { warn() {} }, timer: null });
+  assert.deepEqual(bytes(await g.dress(set, DRESS, 0.9, async () => {})), bytes(want)); assert.ok(garbled.dead); assert.equal(g.deaths, 1);
+  // disposed: no worker again, and no death counted
+  const d = createDressClient({ makeWorker: () => ({ postMessage() {}, terminate() {} }), log: { warn() {} }, timer: null });
+  d.dispose(); assert.equal(d.alive, false); assert.equal(d.deaths, 0);
+  assert.deepEqual(bytes(await d.dress(set, DRESS, 0.9, async () => {})), bytes(want), 'the page\'s after');
+});
+
+test('TESA-LANDS A SET ON ITS WAY, ITS PLACE GONE (the second audit, lane C): a pixel dropped while its set was being made (a dress queued on the worker is seconds of it) had its set swept before it was there to free, and it landed held by no one for good - 20 MB of the GPU\'s a set, more for every zone crossed at speed; now the next sweep frees it, and a place that stands keeps its own. And a dressed key an earlier scene uploaded marks its file\'s puddles under its file, once for every zone that wears it (mutants: the set not asked again once it stands; the marks the key\'s alone)', async () => {
+  const set = synthSet(16);
+  const tex = { recordCount: 56, getDFBitmap: (r) => r, getColor32: (r) => ({ ...set[r], colors: set[r].colors.slice() }) };
+  const tileArrays = new Map(), freed = [];
+  const holds = createPlaceHolds({ free: { mesh: () => false, tex() {}, tile: (k) => { if (!tileArrays.has(k)) return false; tileArrays.delete(k); freed.push(k); return true; } }, kept: { pixel: 0, interior: 0, dungeon: 0 } });
+  const maps = () => ({ grassRecords: new Map(), floorRecords: new Map(), groundPuddles: new Map(), groundMeanColour: new Map(), groundDrawnMeans: new Map() });
+  const setsOf = (m) => createGroundSets({
+    renderer: { tileArrays, *uploadTileArraySteps(k, layers) { tileArrays.set(k, layers); }, applyGroundSharpness() {} },
+    getTexture: async () => tex, labGrass: null, breathe: async () => {}, ...m,
+    dresser: () => ({ dress: async (l, d, e) => dressLayers(l, d, e) }),
+  });
+  const sets = setsOf(maps()), ash = groundSetKey('morrowindAshlands', 102), pine = groundSetKey('skyrimPinewood', 102);
+  const gone = holds.place('pixel', 'gone');
+  const made = sets.loadGroundSet(ash, { tileArray: (k) => gone.hold('tile', k) });
+  gone.release();   // kept none: dropped at once, and its sweep finds no set there yet
+  assert.deepEqual(freed, []);
+  await made;
+  assert.ok(tileArrays.has(ash), 'it landed');
+  holds.place('pixel', 'next').release();
+  assert.deepEqual(freed, [ash], 'the next sweep frees it');
+  // a place that stands keeps its own through every sweep
+  const stands = holds.place('pixel', 'stands');
+  await sets.loadGroundSet(pine, { tileArray: (k) => stands.hold('tile', k) });
+  holds.place('pixel', 'other').release();
+  assert.ok(tileArrays.has(pine) && !freed.includes(pine));
+  await sets.loadGroundSet(ash, { tileArray: (k) => stands.hold('tile', k) });
+  // a scene after: both keys uploaded, the file's puddles not yet marked - marked once, under the file, and both keys its
+  const m = maps(), after = setsOf(m);
+  await after.loadGroundSet(ash, { tileArray() {} });
+  await after.loadGroundSet(pine, { tileArray() {} });
+  assert.ok(m.groundPuddles.has(102), 'under the file');
+  assert.equal(m.groundPuddles.get(ash), m.groundPuddles.get(102));
+  assert.equal(m.groundPuddles.get(pine), m.groundPuddles.get(102), 'the file\'s other zone\'s key finds them');
+});
+
 test('TESA-LANDS THE DOORS: the ground sets\' module dresses a zone\'s key a record a breath at the pack\'s exposure and keeps its maps under the key, no blades where the zone grows none; the pixel\'s build names its set and its neighbours\' each its own zone\'s, and stands its landmarks; the Features row and its switch (mutants: the dress unstepped; the blades kept on ash; the neighbours the pixel\'s)', () => {
   const gs = read('src/scenes/groundSets.js');
   assert.match(gs, /const fileOf = \(key\) => parseGroundSetKey\(key\)\?\.archive \?\? key;/);
   assert.match(gs, /const getTexture = \(key\) => archiveTexture\(fileOf\(key\)\);/);
   assert.match(gs, /const own = await groundLayersOf\(fileOf\(groundArchive\), groundTex\);/);
   assert.match(gs, /own\.layers = await dresser\(\)\.dress\(own\.layers, dress, own\.modLayers \? setExposure\(own\.modLayers, classicOf\(groundTex\)\) : 1, breathe\);\n\s+own\.modLayers = own\.layers;\n\s+DRESSED_MEANS\.set\(groundArchive, own\.layers\.map\(tileMeanColour\)\);/);
-  assert.match(gs, /else if \(dress\) groundDrawnMeans\.set\(groundArchive, DRESSED_MEANS\.get\(groundArchive\)\);/);
+  assert.match(gs, /if \(dress\) groundDrawnMeans\.set\(groundArchive, DRESSED_MEANS\.get\(groundArchive\)\);[^\n]*\n\s+else if \(labGrass\) groundDrawnMeans\.set\(/);   // PIN MOVED (the second audit, lane C): the dress's means first - never taken twice off the same layers
   assert.match(gs, /if \(landOf\(groundArchive\)\?\.blades === false\) grassRecords\.set\(groundArchive, new Set\(\)\);/);
   const pb = read('src/scenes/pixelBuild.js');
   assert.match(pb, /const lands = tamrielLandsOn\(\);/);

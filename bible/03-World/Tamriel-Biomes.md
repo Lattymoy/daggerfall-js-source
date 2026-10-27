@@ -110,7 +110,8 @@ read the ground's: the Ashlands the Mountains' -40, -45 and Freezing at noon in 
 it froze to death; with its air the Dak'fron's, +45. `test/systems/tesabiome_feltair.test.js`.) **The ash** (ASHFALL1,
 2026-10-27, the owner: "with the volcanic isles we could do an ashfall sort of weather with tiny lava flakes") is a
 zone's `ash`: the share of its sky's hours under the ashfall, the volcano's own weather - Red Mountain 0.5, the Ashlands
-0.3 (TES III's Ashlands region: Ash 30% of its days), Stonefalls 0.15 (ESO's loading screen: "the ashfall from the
+0.3 (TES III's Ashlands region: Ash 30% of its weather), Stonefalls 0.15, the least - the port's share (ESO's loading
+screen names its ashfall and gives none: "the ashfall from the
 volcanoes of the Velothi Mountains and from great Ash Mountain itself is Stonefalls' bane and benefit"). The weather map
 births it there (`systems/weather/weatherMap.js`, `07-Rendering/Weather-Arc.md` E).
 

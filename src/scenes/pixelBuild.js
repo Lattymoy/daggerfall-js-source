@@ -3,7 +3,7 @@
 // settled names by value at construction, every live one (a `let` someone writes, a `const` made below) read at its
 // use as `host.<name>` - as the code read them where it was.
 import { ANIMAL_SOUND_BY_RECORD, ANIMALS_ARCHIVE } from '../systems/soundClips.js';
-import { applyClimate, getNatureArchive, getTerrainGroundArchive, INTERIOR_SEASON, SEASON } from '../world/climateSwaps.js';
+import { applyClimate, getNatureArchive, getTerrainGroundArchive, INTERIOR_SEASON, SEASON, winterSetSnowless } from '../world/climateSwaps.js';
 import { SEA_LEVEL_M } from '../systems/weather/airTemperature.js';   // PRECIP4: heights above the sea, the snow's
 import { ARENA_BLOCK } from '../world/arena/arenaCity.js';
 import { armFlatAnim, FlatAnimator } from '../render/flatAnimation.js';
@@ -138,7 +138,7 @@ export function createPixelBuild(host) {
   // TESA-LANDS (bible/03-World/Tamriel-Lands.md): the lands past the Bay - read once, as the world mounts (its row's
   // law: a flip reaches the next world); a pixel's ground set its zone's dress where the lands stand
   const lands = tamrielLandsOn();
-  const landSetOf = (x, y, archive) => (lands ? landGroundSet(x, y, archive) : archive);
+  const landSetOf = (x, y, archive) => (lands ? landGroundSet(x, y, archive, winterSetSnowless) : archive);   // the second audit: a snowless winter its summer's dress
   /** a 3x3 neighbour's set (k: (dz + 1) * 3 + (dx + 1), dx east, dz north - the map row py - dz): its own zone's dress
    *  where the 3x3 reads it (climateNeighbourIn - a Bay pixel's neighbour off the Bay wears the pixel's own, undressed) */
   const neighbourSet = (px, py, k, archive) => {

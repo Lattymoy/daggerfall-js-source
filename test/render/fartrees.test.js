@@ -228,6 +228,50 @@ test('FAR-TREES THE ATLAS LENDS ITS LAYERS (TESA-LANDS, AUDIT): full, it lends t
   band.dispose();
 });
 
+test('FAR-TREES A SET PAST THE ATLAS IS LAID ONCE, AND HOLDS WHAT LANDS UNDER IT (TESA-LANDS\' second audit, lane D): a wanted set of more pictures than the atlas holds draws the 48 it can and is not laid again - its turned-away pictures had been asked again at every swap, turned away again and the set laid again, for ever; and a picture that lands while a set is laid is held by that set, so no ask after lends its layer from under its drawing (mutants: the turned-away asked whatever; the late picture unheld)', async () => {
+  const { gl } = fakeGl();
+  let answer = null;
+  const source = { floraBand: () => new Promise((r) => { answer = r; }) };
+  const read = () => ({ picture: async () => ({ width: 2, height: 4, data: new Uint8Array(32).fill(255) }), size: async () => ({ w: 1, h: 2 }) });
+  const band = new FarTreesBand(gl, { source, read });
+  const trees = Object.entries(TREE_RECORDS).flatMap(([a, rs]) => rs.map((r) => Number(a) * 256 + r));
+  assert.ok(trees.length > TREE_LAYERS);
+  let swaps = 0;
+  const swap = band._swap.bind(band);
+  band._swap = (...a) => { swaps++; return swap(...a); };
+  const round = async (work) => {
+    band.frame({ curX: 100, curY: 100, radius: 0, built: new Map([['100,100', {}]]), climateOf: () => 231, forests: true, landform: false, work });
+    if (answer) { const a = answer; answer = null; const per = Math.ceil(trees.length / 8); a(Array.from({ length: 8 }, (_, k) => Float32Array.from(trees.slice(k * per, k * per + per).flatMap((c, i) => [i, 1, k, c])))); }
+    await new Promise((r) => setTimeout(r, 5));
+    while (work.length) { const w = work[0], r = w.it.next(); if (r.done) { work.shift(); w.done(r.value); } }
+  };
+  const work = [];
+  for (let i = 0; i < 10; i++) await round(work);
+  assert.equal(band.layers.size, TREE_LAYERS); assert.equal(band.count, TREE_LAYERS, 'the 48 it can');
+  const settled = swaps;
+  for (let i = 0; i < 10; i++) await round(work);
+  assert.equal(swaps, settled, `laid once, not again (${swaps - settled} more swaps)`);
+  band.dispose();
+  // a picture that lands mid-lay: held by the set being laid, and by the drawn set once it is swapped in
+  const b2 = new FarTreesBand(fakeGl().gl, { source, read });
+  b2._want = [[0, 0], [1, 0]];
+  b2.kept.set('0,0', { px: 0, py: 0, archive: 504, trees: Float32Array.from([0, 1, 0, 504 * 256 + 12]), arts: ['504,12'] });
+  b2.kept.set('1,0', { px: 1, py: 0, archive: 504, trees: Float32Array.from([0, 1, 0, 504 * 256 + 13]), arts: ['504,13'] });
+  b2.layers.set('504,12', 0);
+  const w2 = [];
+  b2._lay(w2, 0, 0);
+  const it = w2[0].it;
+  it.next(); it.next();   // the first pixel laid
+  b2.layers.set('504,13', 1);   // its picture lands while the set is laid
+  assert.ok(b2._layingArts.has('504,12') && !b2._layingArts.has('504,13'));
+  let r = it.next();
+  while (!r.done) r = it.next();
+  assert.ok(b2._layingArts.has('504,13'), 'held by the set it landed under');
+  w2[0].done(r.value);
+  assert.ok(b2._drawnArts.has('504,13') && b2.count === 2, 'and by the drawn set');
+  b2.dispose();
+});
+
 test('FAR-TREES the worker\'s band: each pixel its own trees, kept by the pixel and answered as copies, transferred; the client asks BAND_PIXELS_AN_ASK pixels an ask and answers them in order; none with no worker (mutant: the kept key, the copy, the transfer, the chunk, the order)', async () => {
   const posted = [];
   const was = { on: globalThis.onmessage, post: globalThis.postMessage };
