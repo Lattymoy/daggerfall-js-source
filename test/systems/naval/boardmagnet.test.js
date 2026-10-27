@@ -1,7 +1,8 @@
 // BOARD-MAGNET (2026-10-26, the owner: "I want to remove the ship ramming feature as its broken and instead with a ship
 // is damaged enough, a prompt to board should show within range and properly magnitize to the other ship";
 // bible/03-World/Naval-Refit.md BOARD-MAGNET) - THE RAM IS GONE, AND THE GRAPPLES DRAW HER IN, on the real naval host over
-// Come Sail Away's real pool (test/navalSea.mjs): no stem rams - mine, a galley's - and none fouls a ship; a ship struck
+// Come Sail Away's real pool (test/navalSea.mjs): no stem fouls a ship (RAM-RETURN brought the ram back as a blow alone,
+// test/systems/naval/ramreturn.test.js); a ship struck
 // within the grapples' reach is "E: board" at any way, never a heave-to first; the grapples' haul draws her to the ship
 // as it lies each frame while my way comes off under haulBrake, so she ends side by side where I came to rest - her hull
 // clear of mine, her middle level with mine; a captain's Long Lines and Grappling Irons reach farther; a sound ship being
@@ -140,30 +141,21 @@ test('BOARD-MAGNET AUDIT THE HAUL KEPT CLEAR: from every start in reach of every
   assert.ok(fastest < HAUL_SPEED * 3, `no leap (${fastest.toFixed(1)} m/s at the most, the push with it)`);
 });
 
-test('BOARD-MAGNET NO STEM RAMS: my stem driven into a sound ship\'s side at a ram\'s way deals her nothing and takes nothing back, fouls nothing, charges nobody and offers no boarding; a galley\'s stem into my hull at speed does nothing either - the ram is gone from every bow (RAM-BOARD\'s foul with it)', async () => {
+test('BOARD-MAGNET NO FOUL: my stem driven into a sound ship\'s side at a ram\'s way fouls nothing and offers no boarding - RAM-RETURN (2026-10-26) brought the ram back as a blow alone, bounded (ramreturn.test.js); a ship is boarded once her colours are down, never as she stands (RAM-BOARD\'s foul gone)', async () => {
   const h = await helm();
+  h.e.ship.provoked.set('local', Infinity);   // RAM-RETURN (AUDIT A1): fair game for my stem - she has had my fire
   frames(h, [[h.e, { pos: [0, 0, 90], yaw: Math.PI / 2 }]]);
-  const full = h.e.ship.damage.hull, mine = h.host.hudModel().ship.hull;
+  const full = h.e.ship.damage.hull;
   const touching = { pos: [0, 0, hullBuild(HULL.SmallShip).bowZ + hullBuild(h.e.ship.hull).halfWidth + 0.2], yaw: Math.PI / 2 };
   h.runtime.state.velocityCurrent = [0, 0, 6];
   frames(h, [[h.e, { pos: [0, 0, 40], yaw: Math.PI / 2 }]]);
   h.runtime.state.velocityCurrent = [0, 0, 0.1];
   frames(h, [[h.e, touching]], 5);
-  assert.equal(h.e.ship.damage.hull, full, 'her hull whole');
-  assert.equal(h.host.hudModel().ship.hull, mine, 'mine whole');
+  assert.ok(h.e.ship.damage.hull < full, 'RAM-RETURN: the ram strikes her');
+  assert.equal(h.e.ship.damage.state, SHIP_STATES.afloat, 'and she fights on');
   assert.equal(h.e.ship.fouled, undefined, 'nothing fouled');
-  assert.ok(!h.e.charged?.has('fire'), 'no charge of piracy');
   assert.equal(h.host.hudModel().board, null, 'a sound ship is no boarding');
   assert.equal(h.host.activate(), false);
-  // a galley at speed, her stem at my stern
-  const g = await sea({ hull: HULL.SmallShip, settings: { ShipsAtSea: 'off' } });
-  const gal = g.host._sea.get(g.host.spawnShip('pirateGalley', { range: 200, bearing: 0 }));
-  const b = hullBuild(HULL.LargeGalley);
-  gal.ship.pos = [0, 0, -(b.bowZ + 2)]; gal.ship.yaw = 0; gal.ship.speed = 6; gal.ship.course = [0, 5000];
-  const h0 = g.host.hudModel().ship.hull;
-  g.run(0.5);
-  assert.equal(g.host.hudModel().ship.hull, h0, 'my hull whole');
-  assert.equal(gal.ship.damage.hullShare(), 1, 'hers whole');
 });
 
 test('BOARD-MAGNET THE PROMPT IN REACH, AT ANY WAY: a struck ship within the grapples\' reach of my helm is "E: board" on the plate, her card and the pad - at my way of 6 m/s and of 16, where the helm offered "heave to" and boarded only under BOARD_SPEED; past the reach no prompt; and Activate throws the grapples at that way (mutants: the way gate back)', async () => {
@@ -313,7 +305,7 @@ test('BOARD-MAGNET a sound ship being boarded - a pirate\'s repel, the one way a
 test('BOARD-MAGNET online: a blow never says a foul (`u`) - and an older build\'s ram blow that still says one is taken as the blow alone: her hull holed, nothing fouled, and she is no boarding of anyone\'s while her colours fly', async () => {
   assert.equal('u' in navalHitData('b', { n: 3, hull: 40, crew: 1, zone: 'holed' }).nv, false);
   const old = { to: 'local', nv: { n: 0, h: 40, s: 0, c: 1, f: 0, z: 2, u: 20 } };
-  assert.deepEqual(validNavalHit(old), { n: 0, hull: 40, sail: 0, crew: 1, fire: false, zone: 'holed', grapple: false, cask: null, answer: false });
+  assert.deepEqual(validNavalHit(old), { n: 0, hull: 40, sail: 0, crew: 1, fire: false, zone: 'holed', grapple: false, cask: null, answer: false, ram: false });   // RAM-RETURN (AUDIT): no `r` - a blow alone
   const h = await helm();
   const at = abeam(h, 4);
   frames(h, [[h.e, at]]);
