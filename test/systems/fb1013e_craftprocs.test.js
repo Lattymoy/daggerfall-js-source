@@ -133,7 +133,7 @@ test('CRAFT-PROCS: a crafted weapon takes a weapon\'s kinds and armour thorns - 
 });
 
 test('CRAFT-PROCS: the record says the law - the service stamps the mint version at the craft and the answer\'s pieces mint at it (a Superior\'s and a Masterwork\'s cast lines through the real Worker); a version the record does not know is refused; a record made before is version 0', async () => {
-  assert.deepEqual([MINT_VERSION, MINT_V_LAST_PASS, MINT_V_LINES], [2, 1, 2], 'PIN MOVED (AFFIX-LINES): the craft stamps 2 now - its lines drawn over the lines');
+  assert.deepEqual([MINT_VERSION, MINT_V_LAST_PASS, MINT_V_LINES], [3, 1, 2], 'PIN MOVED (ARMOR-LEAN): the craft stamps 3 now - armour\'s lines on its family\'s leans');
   const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on', BOARD_OPEN: 'on' });
   const raw = s.env.DB._raw;
   const mac = await s.seated('Mac');

@@ -586,7 +586,7 @@ test('SS5 the enhanced pack: a ware\'s card offers Dismantle, which asks first -
   const worn = ware(5);
   withWarePack([worn], ({ panelOf, actOf, press }) => {
     assert.equal(isEquipped(worn), true, 'worn');
-    press(panelOf('Right arm'));
+    press(panelOf('Hands'));   // PIN MOVED (ARMOR-LEAN): the day's stock rolls on - slot 5 is Ruhn's Brand-Gauntlets now, its Right Pauldron before
     assert.ok(actOf('Take off'), 'its card is up, and takes it off');
     assert.equal(actOf('Dismantle'), null, 'a worn ware: taken off first');
   }, (e) => { equipItem(e, worn); });

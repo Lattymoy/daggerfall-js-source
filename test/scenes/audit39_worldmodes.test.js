@@ -247,17 +247,17 @@ const shoot = (opts, rolls) => {
 test('AUDIT39 #64: a LANDED arrow runs the melee ladder - the swing mods and the backstab ride it', () => {
   // the plain shot, facing the foe, no screen weapon out
   const [plain, log] = shoot({ playerFeet: [0, 0, 5] }, seq(0, 0.99, 0.05, 0.999, 0.99));
-  assert.equal(plain, 17, 'Long Bow max, str bonus, iron: the weapon ladder ran');
+  assert.equal(plain, 18, 'Long Bow max, str bonus, iron: the weapon ladder ran');   // PIN MOVED (BAL-ARCHERY, Balance-Arc.md section 18): the Long Bow's top is 19, so 17 is 18 throughout
   // and the payload rings in DFU's order - sound and splash BEFORE the
   // pool's damage door, which is the only thing that writes health
-  assert.deepEqual(log, ['sound', ['blood', 2], ['deal', 17]],
+  assert.deepEqual(log, ['sound', ['blood', 2], ['deal', 18]],
     'hit sound, then the splash, then dealDamage - and nothing else touches health');
 
   // SWING_MODS[playerWeapon.machine.state], read live at impact:
   // StrikeUp is damage -4 / toHit +10, StrikeDown is +4 / -10. The
   // damage half moves the number; the to-hit half moves the HIT.
   assert.equal(shoot({ playerFeet: [0, 0, 5], playerWeapon: { machine: { state: 'StrikeUp' } } },
-    seq(0, 0.99, 0.05, 0.999, 0.99))[0], 13, 'StrikeUp\'s -4 damageMod');
+    seq(0, 0.99, 0.05, 0.999, 0.99))[0], 14, 'StrikeUp\'s -4 damageMod');
   assert.deepEqual(shoot({ playerFeet: [0, 0, 5], playerWeapon: { machine: { state: 'StrikeDown' } } },
     seq(0, 0.99, 0.05, 0.999, 0.99)), [0, []],
     'StrikeDown\'s -10 toHitMod turns the same roll into a MISS - no sound, no splash, no damage');
@@ -265,11 +265,11 @@ test('AUDIT39 #64: a LANDED arrow runs the melee ladder - the swing mods and the
   // backstabChanceOf(playerEntity, isBackFacing(...)): the foe faces
   // +Z, so a shooter at -Z is behind it. The x3 rides the post-calc
   // roll (.10 against a Backstabbing skill of 30).
-  assert.equal(shoot({ playerFeet: [0, 0, -5] }, seq(0, 0.99, 0.05, 0.999, 0.10))[0], 51,
-    'shot in the back: 17 x3');
-  assert.equal(shoot({ playerFeet: [0, 0, 5] }, seq(0, 0.99, 0.05, 0.999, 0.10))[0], 17,
+  assert.equal(shoot({ playerFeet: [0, 0, -5] }, seq(0, 0.99, 0.05, 0.999, 0.10))[0], 54,
+    'shot in the back: 18 x3');
+  assert.equal(shoot({ playerFeet: [0, 0, 5] }, seq(0, 0.99, 0.05, 0.999, 0.10))[0], 18,
     'the same roll from the FRONT never triples - backstabChance is 0 there');
-  assert.equal(shoot({}, seq(0, 0.99, 0.05, 0.999, 0.10))[0], 17,
+  assert.equal(shoot({}, seq(0, 0.99, 0.05, 0.999, 0.10))[0], 18,
     'and a host that hands in no playerFeet cannot backstab at all');
 });
 

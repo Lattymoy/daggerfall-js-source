@@ -951,6 +951,7 @@ function detailStrip() {
   const bits = [line.material, line.word, `${line.weight.toFixed(2)} kg`];
   if (line.damage != null) bits.push(`Damage ${line.damage}`);
   if (line.armour != null) bits.push(`Armour ${line.armour}`);
+  if (line.armorType != null) bits.push(`${line.armorType} armor`);   // ARMOR-TYPE (Voice.md rule 8: American spelling)
   if (line.hands != null) bits.push(line.hands);
   for (const t of line.survival ?? []) bits.push(t);
   info.append(el('p', 'meta', bits.filter(Boolean).join(' · ')));
