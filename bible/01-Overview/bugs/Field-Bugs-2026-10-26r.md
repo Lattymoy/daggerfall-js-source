@@ -526,7 +526,13 @@ this clause.
 FIXED. The craft's record is the account the service last HANDED the piece to. Every move of a crafted piece into a
 record - `ledgerMoves`' entered set, so the trade, the collect, the vault, the chest, the zone's escrow and staff's
 return alike - writes `products.handed_to` (`ledger.js:"// RPT1026-LEDGERLAW: and a crafted one is that record's account's by the craft's record (CRAFT_RECORD_SQL) - handed on"`;
-NULL where it is the owner's own account, and only where it changes); a sale that moves the owner clears it
+NULL where it is the owner's own account, and only where it changes) - where the account handing it on is the one the
+record names (AUDIT RPT1026 C1, `ledger.js:"AND COALESCE(handed_to, owner) = COALESCE(?2,"`: the trade's other side,
+`realmTrade.js` `from`, or the account an escrow row names). The batch wrote it whoever gave the piece: a seller that kept
+a piece it SOLD holds the ledger's row first (the sale lets the row go, and the buyer's piece is minted at its pack), and
+one realm trade of it to an accomplice, or one listing of it from the pack an accomplice collected, named the
+accomplice the craft's record - the buyer's claim was settled the copy and the buyer's piece locked, where INT19 had
+given it to the buyer. A sale that moves the owner clears it
 (`market.js` pieceSoldSteps - the Drakes buy, the gold buy, the auction won - and `writs.js`'s fill); the uphold reads
 `COALESCE(handed_to, owner)` (`ledger.js:"const CRAFT_RECORD_SQL = 'COALESCE(p.handed_to, p.owner)';"`) - and never
 against the owner holding it (`ledger.js:"// RPT1026-LEDGERLAW: and never against its owner holding it"`: a piece come back
@@ -541,12 +547,16 @@ every piece today. Integrity-Arc's INT4 and its open item narrowed, and a sectio
 
 LEFT OPEN. A crafted piece passed hand to hand (the ground, a shelf, a room's container) moves no craft's record: the
 ledger cannot tell a giver's written-back copy from an owner's piece taken back, so the craft's record stands for the
-account the service last handed it to, as before.
+account the service last handed it to, as before - and a service move by its new holder hands none on either (AUDIT
+RPT1026 C1: a griefer's forged copy taken up while its owner set the piece down was one vault's round trip from being the
+record). The owner holding it keeps it whatever the record says, so a buyer whose checkpoint shows the piece gone while its
+maker's written-back copy still claims it (the ground, a counter) hands it to the maker for good.
 
 PINS: `test/server/rpt1026_ledgerlaw.test.js` (4 of its 8: the report's steps through the real anvil craft, the real
 realm trade and real checkpoints; the market's pack route bought and collected; a hand-back, an owner holding it again by
 a peer's hands against the account the trade handed it to, a sale giving the owner's word back with the seller that kept
-a sold piece still the copier; a commission's fill).
+a sold piece still the copier; a commission's fill). `test/server/audit_rpt1026_ledgerlaw.test.js` (C1: the seller that
+kept a sold piece, its trade to an accomplice and its listing collected by one; either side of a trade hands on).
 
 ### RPT1026-LEDGERLAW: EXCUSE-VALUES (99) - `server-account/src/judge.js`, `verdict.js`, `review.js`, `staffPlayers.js`, `tools/realmReview.mjs`, migration 0178
 
@@ -562,17 +572,26 @@ FIXED. Every judgement keeps the character law's VALUES beside the signature (`j
 - each finding's key and the value it read, `gold@=-8000000`, `stat@agility=101`; `realm_characters.law_v`), the clear
 excuses the two together (`review.js:"law_excused = CASE WHEN law_v IS NULL THEN law_sig ELSE law_sig || '|' || law_v END,"`,
 `verdict.js:"export const lawExcuseOf"` - a finding of pieces alone keeps its signature as every excuse was), and a
-checkpoint the law finds nothing in ends the excuse (`verdict.js:"    + ' law_excused = CASE WHEN ?15 IS NULL THEN NULL ELSE law_excused END'"`).
-An excuse written before this covers its pieces' findings still and no character finding (`verdict.js:"export const lawExcused"`),
-so a character cleared on a bare `gold:` before the deploy is held again at its next out-of-law purse. The strikes count
-as before: a finding's change of value is no new strike (`rising` reads the excuse the same way), and the finding row is
-written once a signature as before. The Staff Panel's profile reads the excuse the same way (`staffPlayers.js` lawStands).
+checkpoint the law finds nothing in ends an excuse of the values (`verdict.js:"    // RPT1026-LEDGERLAW: a checkpoint the law finds nothing in ends staff's excuse - the next finding is the law's again."`;
+AUDIT RPT1026 C2: the batch ended every excuse there, so a piece staff had cleared, put away for one checkpoint - a vault,
+a listing, a trade and back - held its holder again, with a strike, when it came back; a piece's excuse stands, as every
+excuse did). A state whose values pass the 1,000 characters kept, or a value its 40, is cut and marked so
+(`judge.js:"export const LAW_VALUES_CUT"`), and no excuse names it (AUDIT RPT1026 C5: the cut was silent, so eighty bank
+accounts below nothing ahead of the purse in the sort read alike whatever the purse, and a clear of a negative one
+excused nine quadrillion after it). A change of the state does not end the excuse - a checkpoint back at the state staff
+read is excused again. An excuse written before this covers its pieces' findings still and no character finding (`verdict.js:"export const lawExcused"`),
+so a character cleared on a bare `gold:` before the deploy is held again at its next out-of-law purse, the same purse
+included, and that hold is a strike. The strikes count as before: a held finding's change of value is no new strike,
+and the state leaving an excuse is one, as a new signature's is (`rising` reads the excuse the same way); the finding row
+is written once a signature, and once more where an excuse ends. The Staff Panel's profile reads the excuse the same way (`staffPlayers.js` lawStands).
 The clear's help says it (`tools/realmReview.mjs` USAGE and its header: it EXCUSES the finding standing, exactly as it
-stands; a purse below nothing is `mend`'s). PURSE-MEND reads the stable signature as before (`PURSE_SIG`).
+stands; any other state holds again; a clean checkpoint ends a character finding's excuse and a piece's stands - AUDIT
+RPT1026 C3, the batch's words said a change ended it; a purse below nothing is `mend`'s). PURSE-MEND reads the stable signature as before (`PURSE_SIG`).
 
 PINS: `test/server/rpt1026_ledgerlaw.test.js` (4 of its 8: lawValuesOf and the excuse, pure; the report's steps on the
 real Worker - a negative purse cleared, purses of 9e15 and 5e9 held again, a clean checkpoint ending the
-excuse, a pre-fix excuse covering no purse; an attribute's value and key; the tool's words).
+excuse, a pre-fix excuse covering no purse; an attribute's value and key; the tool's words). `test/server/audit_rpt1026_ledgerlaw.test.js`
+(C2: a piece put away and taken back; C3: the tool's words; C5: the cut state).
 
 ### RPT1026-LEDGERLAW: MEND-SPENT (98) - `src/systems/item/foundMark.js`, `src/systems/repairService.js`, `src/scenes/worldModes.js`
 
@@ -615,16 +634,21 @@ Goods rows, the traders' rows and their look said nothing.
 
 FIXED. A stolen piece's row says "Stolen" (`stolenGoods.js:"export const stolenTag"`) in the market's Goods view
 (`marketTab.js` goodRow, and its Buy bar the card's line, stolenLine), on a hired trader's rows on the board and at the
-stall (`vendorTab.js` rowNodes) and in its look (`vendorHost.js` vendorItemStats' `stolen`, drawn by vendorStatsNode),
-and on the Vendor page's search (`vendorPage.js`). Nothing about what may be listed changed.
+stall (`vendorTab.js` rowNodes) and in its look (`systems/item/itemLook.js` itemLookRows' `stolen`, the host's
+vendorItemStats, drawn by vendorStatsNode), on the Vendor page's search (`vendorPage.js`), and - AUDIT RPT1026 C4, left
+by the batch - in the window two players trade in: a stolen piece the other player holds out says "Stolen" on its row and
+its strip the card's line (`ui/enhanced/enhancedPlayerTrade.js`, both skins: the window keeps its own face). Nothing
+about what may be listed or traded changed.
 
 THE FOUR HOSTS. None: the market tab, the traders' tab and page are wired by `scenes/vendorHost.js` and the Notice
-Board as before; no host line moved.
+Board as before, and the trade window by `ui/playerTradeDoor.js`; no host line moved.
 
 THE WORDS. One key, `stolen.tag` ("Stolen"), drafted in the thirteen whole languages (`SCRATCH/drafts/ledgerlaw.json`).
 
 PINS: `test/ui/rpt1026_ledgerlaw_stolen.test.js` (2: a stolen and an honest sword listed through the real Worker and drawn
 by the Goods view, its bar; the trader's board rows, its look and the Vendor page's line).
+`test/ui/audit_rpt1026_ledgerlaw_trade.test.js` (C4: a stolen piece stolen by the theft's law, wired by its holder's
+pack, received by a real session and drawn by the real window).
 
 ### ALREADY FIXED: SIDE-ONCE (8, 13) - and the service's law, the owner's
 
@@ -676,7 +700,9 @@ the owner holding it upheld against, a sale and a fill leaving it standing; EXCU
 dropped, the clean checkpoint keeping the excuse, the clear writing none, the excuse's end said as no finding, the tool's
 words; MEND-SPENT 6: the paid repair spending nothing, the kit's credit unspent,
 the spend cut to the condition, the job and both InstantRepairs arms past the one door; STOLEN-SAID 6: each row, the bar,
-the look's two halves, the page).
+the look's two halves, the page). AUDIT RPT1026 (lane C, 2026-10-27) re-aimed three of them by content (the clean
+checkpoint's end, the value's cut, the excuse's compare) and added `tools/mutants/audit_rpt1026_ledgerlaw.json` - 10, all dead (C1 4: the
+hand-over from any giver, the escrow row's giver unread, either side of a trade naming none; C2 1; C3 1; C4 2; C5 2).
 
 ## The market and its deliveries (RPT1026-MARKET)
 

@@ -191,8 +191,14 @@ function lawValueOf(/** @type {any} */ save, /** @type {any} */ summary, /** @ty
 export function lawValuesOf(save, summary) {
   const found = characterFindings(save, summary);
   if (!found.length) return null;
-  return found.map((f) => `${f.code}@${f.at ?? ''}=${(JSON.stringify(lawValueOf(save, summary, f)) ?? 'none').slice(0, 40)}`).sort().join(',').slice(0, LAW_VALUES_MAX);
+  return cutOf(found.map((f) => `${f.code}@${f.at ?? ''}=${cutOf(JSON.stringify(lawValueOf(save, summary, f)) ?? 'none', 40)}`).sort().join(','), LAW_VALUES_MAX);
 }
+/** AUDIT RPT1026 C5: THE MARK A JUDGEMENT'S VALUES CARRY WHERE THEY WERE CUT (a value past 40 characters, the whole past
+ *  LAW_VALUES_MAX). They were cut silently, so a state past the cut - eighty bank accounts below nothing ahead of the
+ *  purse in the sort - read the same whatever stood past it, and a clear of it excused every purse after it. A state
+ *  cut is no state an excuse can name (verdict.js lawExcused): staff mend it (PURSE-MEND, STAFF-SET-BANK). */
+export const LAW_VALUES_CUT = '\u2026';
+const cutOf = (/** @type {string} */ s, /** @type {number} */ n) => (s.length > n ? `${s.slice(0, n)}${LAW_VALUES_CUT}` : s);
 
 /** A law finding's item codes, safe: a piece the law cannot read without throwing (AUDIT INT: `enchantments: [null]`
  *  threw, and the checkpoint answered 500) is a piece of no shape the game writes. */

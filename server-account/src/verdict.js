@@ -18,8 +18,9 @@
 //              and the first checkpoint past its time lifts it as any law hold lifts. The strikes and the timed holds
 //              served are forgotten LAW_FADE_S after the last finding that held (or the last timed hold's end). Staff
 //              who find the law's word wrong clear it, and the same finding holds nothing again (`law_excused`) - the
-//              same pieces and the same values of the character law (RPT1026-LEDGERLAW, lawExcused), and only until a
-//              checkpoint finds nothing.
+//              same pieces and the same values of the character law (RPT1026-LEDGERLAW, lawExcused) - an excuse of the
+//              values only until a checkpoint finds nothing (a piece's stands, AUDIT RPT1026 C2), and none of a state
+//              whose values were cut (C5).
 //   - 'budget' (only once staff turn `enforce` on) a gain past the bucket. Cleared when play refills it.
 //
 // A COPY HOLDS NO CHARACTER (AUTO-HOLD, 2026-10-16 - Mac: "I dont want to have to manually review"). The ledger locks
@@ -42,7 +43,7 @@
 // character's baseline is a newborn's purse (REALM_BIRTH_WEALTH_MAX); one through customs, its level's allowance.
 // ═══════════════════════════════════════════════════════════════════
 
-import { judgeSave, judgeProducts, STRIKES_FOR_TIMED, JUDGE_VERSION, FINDINGS_KEPT, WEALTH_VERSION, goodsOf, lawValuesOf } from './judge.js';
+import { judgeSave, judgeProducts, STRIKES_FOR_TIMED, JUDGE_VERSION, FINDINGS_KEPT, WEALTH_VERSION, goodsOf, lawValuesOf, LAW_VALUES_CUT } from './judge.js';
 import { ledgerStep, chargeSteps } from './ledger.js';
 import { budgetConfig, bandOf, stepBudget } from './budget.js';
 import { customsAllowance } from '../../src/net/realm/realmGoldLaw.js';
@@ -117,7 +118,8 @@ export const lawExcuseOf = (/** @type {string} */ sig, /** @type {string | null 
  * and all (lawExcuseOf); one written before it still covers its pieces' findings, never a character finding.
  * @param {string | null | undefined} excused @param {string | null | undefined} sig @param {string | null | undefined} values
  */
-export const lawExcused = (excused, sig, values) => excused != null && sig != null && excused === lawExcuseOf(sig, values);
+export const lawExcused = (excused, sig, values) => excused != null && sig != null && excused === lawExcuseOf(sig, values)
+  && !(values ?? '').includes(LAW_VALUES_CUT);   // AUDIT RPT1026 C5: a state cut is no state an excuse names (judge.js LAW_VALUES_CUT)
 
 /**
  * THE LEVEL THE REALM TRUSTS, pure: the save's `level`, never past `seen` (the last trusted) and one more for every
@@ -268,8 +270,11 @@ export function verdictWrite(db, char, row, s) {
     + ' allowance = CASE WHEN ?8 IS NULL OR allowance IS NULL THEN ?9 ELSE ?9 + (allowance - ?8) END,'
     + ' played_at = ?10, clean_obj = ?11, clean_seq = ?12, level_seen = ?13, level_at = ?14, law_sig = ?15, wealth_v = ?17,'
     + ' arms_top = ?18, arms_bow = ?19, held_until = ?20, law_holds = ?21, law_at = ?22, law_v = ?23,'
-    // RPT1026-LEDGERLAW: a checkpoint the law finds nothing in ends staff's excuse - the next finding is the law's again
-    + ' law_excused = CASE WHEN ?15 IS NULL THEN NULL ELSE law_excused END'
+    // RPT1026-LEDGERLAW: a checkpoint the law finds nothing in ends staff's excuse - the next finding is the law's again.
+    // AUDIT RPT1026 C2: an excuse of the character law's values (lawExcuseOf's `|`) alone - a piece staff excused stands
+    // excused as every excuse did, or one put away for a checkpoint (a vault, a listing, a trade and back) held and struck
+    // its holder again when it came back
+    + " law_excused = CASE WHEN ?15 IS NULL AND instr(law_excused, '|') > 0 THEN NULL ELSE law_excused END"
     + ' WHERE id = ?1 AND judge_rev = ?16',
   ).bind(char, s.judged_seq, s.held, s.held_at, s.strikes, s.review, s.wealth, row.allowance ?? null, s.allowance, s.played_at,
     s.clean_obj, s.clean_seq, s.level_seen, s.level_at, s.law_sig, row.judge_rev ?? 0, WEALTH_VERSION, s.arms_top ?? null, s.arms_bow ?? null,

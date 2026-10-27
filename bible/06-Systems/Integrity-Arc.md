@@ -192,8 +192,9 @@ audit: one piece carried six minutes was staff's), the same piece taken up again
 week, a month each after it, a clean checkpoint inside it no way out and the first past it lifting it (AUTO-HOLD); every
 law hold's notice says the holds are counting (RING-WARN, `01-Overview/bugs/Field-Bugs-2026-10-12.md`); its finding is
 written once a signature. Staff who judge the law's word wrong clear it (`law_excused`): the same finding holds
-nothing again, a new one does - the same pieces and the same values of the character law, and only until a checkpoint
-the law finds nothing in (RPT1026-LEDGERLAW, below: the signature alone excused every purse after a cleared one). A verdict writes over the row only as it read it (`judge_rev`): a staff act landing in
+nothing again, a new one does - the same pieces and the same values of the character law, an excuse of the values only
+until a checkpoint the law finds nothing in, and none of a state whose values were cut (RPT1026-LEDGERLAW and its audit,
+below: the signature alone excused every purse after a cleared one). A verdict writes over the row only as it read it (`judge_rev`): a staff act landing in
 between stands, and the next checkpoint judges again.
 
 What the player is told (RPT1026-MARKET HOLD-SAID, private reports 2026-10-26: gathering stopped overnight under a
@@ -240,8 +241,8 @@ and locked (`item_dupes` - that piece moves by no route from it, and is never fo
 the holder's to sell. It is no strike (AUTO-HOLD): the holder's checkpoint cannot tell a copier from a receiver whose
 giver's game died before its record saw the give. A crafted piece's copy is told by its craft's record: the account
 `products` names owns it, so a seller that kept a sold piece is the copier, never the buyer - the account the service
-last handed the piece to, where a hand-over came after its owner's (RPT1026-LEDGERLAW, below: a realm trade moves no
-owner, and a maker that wrote a traded piece back into its save took it back). A piece shown twice in one
+last handed the piece to, where a hand-over came after its owner's and from the account the record named (RPT1026-LEDGERLAW
+and its audit, below: a realm trade moves no owner, and a maker that wrote a traded piece back into its save took it back). A piece shown twice in one
 record is that record's copy at once - one strike on `dupes` a checkpoint, however many pieces, and `dupes` holds
 nothing. A piece let go is no row (a row kept `gone` only
 while a copy of it is known, so the copy cannot take it up); a character that dies, retires or is deleted lets go of all
@@ -637,6 +638,9 @@ no ledger and no review: nothing of DFU's is departed from.
   grace: the buyer's piece moved to the maker and was locked as the copy (`craft`), the maker kept the price and an untouched
   piece. Now the craft's record is the account the service last HANDED the piece to: every move of a crafted piece into
   a record (`ledgerMoves`' entered set - the trade, the collect, the vault, the chest, a staff return, the zone's escrow)
+  BY THE ACCOUNT THE RECORD NAMES (AUDIT RPT1026 C1: the trade's other side, or the account its escrow row names - the
+  batch took any giver's, so a seller that kept a piece it sold, holding the ledger's row first, handed the record to an
+  accomplice by one trade or one listing, and the buyer's claim was the copy)
   writes `products.handed_to` (NULL where it is the owner's own account), a sale that moves the owner clears it (market.js
   `pieceSoldSteps`, writs.js's fill), and the uphold reads `COALESCE(handed_to, owner)` (`CRAFT_RECORD_SQL`) - and never
   against the owner holding it: a piece come back to its owner by a peer's hands is the owner's, whoever the service
@@ -649,14 +653,21 @@ no ledger and no review: nothing of DFU's is departed from.
   negative purse excused that character's every purse after it, however far past the game's bound. Now each judgement keeps
   the character law's VALUES beside the signature (`judge.js` lawValuesOf: `gold@=-8000000`, `stat@agility=101` -
   `realm_characters.law_v`), the clear excuses the two (`verdict.js` lawExcuseOf: the signature alone for a finding of
-  pieces, as every excuse was), and a checkpoint the law finds nothing in drops the excuse. An excuse written before this
-  covers its pieces' findings still and no character finding: an excused purse holds again at its next checkpoint. The
+  pieces, as every excuse was), and a checkpoint the law finds nothing in drops an excuse of the values (AUDIT RPT1026 C2:
+  a piece's stands - the batch dropped every one, so a cleared piece put away for a checkpoint held and struck its holder
+  when it came back). A state whose values were cut (1,000 characters, 40 a value) is marked so and no excuse names it
+  (C5: eighty bank accounts below nothing put the purse past the cut). A state that moves holds again - and back at the
+  state staff read, is excused again. An excuse written before this covers its pieces' findings still and no character
+  finding: an excused purse holds again at its next checkpoint, and that hold is a strike. The
   clear's help says so (`tools/realmReview.mjs`); a purse below nothing is PURSE-MEND's (`mend`), which reads the
   signature as it always did (`PURSE_SIG`).
 
 Left open: a crafted piece passed hand to hand (the ground, a shelf, a room's container) moves no craft's record - the
 ledger cannot tell a giver's copy from an owner's piece taken back, and the craft's record stands for the account the
-service last handed it to (its owner, where none) as it did for its owner. `test/server/rpt1026_ledgerlaw.test.js`; `tools/mutants/rpt1026_ledgerlaw.json`.
+service last handed it to (its owner, where none) as it did for its owner - and a service move by its new holder hands it
+none either (AUDIT RPT1026 C1). An owner holding the piece keeps it whatever the record names, so a buyer whose checkpoint
+shows the piece gone while its maker's written-back copy still claims it hands it to the maker. `test/server/rpt1026_ledgerlaw.test.js`,
+`test/server/audit_rpt1026_ledgerlaw.test.js`; `tools/mutants/rpt1026_ledgerlaw.json`, `tools/mutants/audit_rpt1026_ledgerlaw.json`.
 
 ### What lane 1 leaves open
 
@@ -1376,9 +1387,11 @@ six records on the lines this slice touched run again, all dead.
 
 - **RPT1026-LEDGERLAW (2026-10-26, the private report inbox): lane 1's law, two of its holes closed.** Section 4,
   RPT1026-LEDGERLAW. A crafted piece's contested claim is settled for the account the service last handed it to
-  (`products.handed_to`, written by `ledgerMoves`, cleared by a sale), so a traded piece written back into its maker's
+  (`products.handed_to`, written by `ledgerMoves` where the account the record names hands it on, cleared by a sale), so a traded piece written back into its maker's
   save is the maker's copy; and staff's clear excuses the law's finding with the character law's values beside its
-  signature (`realm_characters.law_v`), ended by a clean checkpoint, so a cleared purse excuses no other. Migration 0178 (0176 on its branch, renumbered past main's 0176 and 0177 at the merge).
+  signature (`realm_characters.law_v`), ended by a clean checkpoint, so a cleared purse excuses no other. AUDIT RPT1026
+  (lane C, 2026-10-27): the hand-over from the record's own account alone (C1), a piece's excuse kept through a clean
+  checkpoint (C2), a cut state excused never (C5). Migration 0178 (0176 on its branch, renumbered past main's 0176 and 0177 at the merge).
   `test/server/rpt1026_ledgerlaw.test.js`; `tools/mutants/rpt1026_ledgerlaw.json`.
 - **INT19 (2026-10-17, the owner: "Take care of the integrity arc"; on #987 with lane 4): lane 1's open item closed - a
   crafted piece handed on leaves its seller's realm record.** Section 4, INT19. A listing, an auction and a commission's

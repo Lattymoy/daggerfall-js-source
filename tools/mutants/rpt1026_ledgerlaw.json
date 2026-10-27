@@ -52,12 +52,12 @@
   {
     "name": "RPT1026-LEDGERLAW-99-excuse-ignores-values",
     "file": "server-account/src/verdict.js",
-    "old": "&& excused === lawExcuseOf(sig, values);",
-    "new": "&& excused.split('|')[0] === sig;",
+    "old": "&& excused === lawExcuseOf(sig, values)\n",
+    "new": "&& excused.split('|')[0] === sig\n",
     "tests": [
       "test/server/rpt1026_ledgerlaw.test.js"
     ],
-    "note": "the law before the fix: an excuse of a signature stands for any purse under it - 9e15 passes"
+    "note": "the law before the fix: an excuse of a signature stands for any purse under it - 9e15 passes (AUDIT RPT1026 C5: re-aimed by content - the cut's mark read after it)"
   },
   {
     "name": "RPT1026-LEDGERLAW-99-values-unread",
@@ -72,12 +72,12 @@
   {
     "name": "RPT1026-LEDGERLAW-99-clean-keeps-excuse",
     "file": "server-account/src/verdict.js",
-    "old": "    + ' law_excused = CASE WHEN ?15 IS NULL THEN NULL ELSE law_excused END'\n",
+    "old": "    + \" law_excused = CASE WHEN ?15 IS NULL AND instr(law_excused, '|') > 0 THEN NULL ELSE law_excused END\"\n",
     "new": "    + ' law_excused = law_excused'\n",
     "tests": [
       "test/server/rpt1026_ledgerlaw.test.js"
     ],
-    "note": "a clean checkpoint keeps staff's excuse - the same state later passes for good"
+    "note": "a clean checkpoint keeps staff's excuse - the same state later passes for good (AUDIT RPT1026 C2: re-aimed by content - the end narrowed to an excuse of the character law's values)"
   },
   {
     "name": "RPT1026-LEDGERLAW-99-clear-writes-no-values",
@@ -92,12 +92,12 @@
   {
     "name": "RPT1026-LEDGERLAW-99-value-dropped",
     "file": "server-account/src/judge.js",
-    "old": "=${(JSON.stringify(lawValueOf(save, summary, f)) ?? 'none').slice(0, 40)}`",
+    "old": "=${cutOf(JSON.stringify(lawValueOf(save, summary, f)) ?? 'none', 40)}`",
     "new": "=`",
     "tests": [
       "test/server/rpt1026_ledgerlaw.test.js"
     ],
-    "note": "the values name each finding's key and no value - one excuse stands for any purse"
+    "note": "the values name each finding's key and no value - one excuse stands for any purse (AUDIT RPT1026 C5: re-aimed by content - the cut is marked)"
   },
   {
     "name": "RPT1026-LEDGERLAW-99-rise-unsaid",

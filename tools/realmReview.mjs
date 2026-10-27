@@ -8,8 +8,10 @@
 //                                                            an override: AUTO-HOLD (2026-10-16), no hold waits on it to lift -
 //                                                            and EXCUSE the law's finding standing, as it stands now: the
 //                                                            same pieces, purse, bank, level, attributes and skills hold
-//                                                            nothing again, until a checkpoint the law finds nothing in
-//                                                            (RPT1026-LEDGERLAW; a purse below nothing is `mend`'s)
+//                                                            nothing again, and any other state holds again (RPT1026-
+//                                                            LEDGERLAW; a purse below nothing is `mend`'s). A checkpoint
+//                                                            the law finds nothing in ends the excuse of a purse, bank,
+//                                                            level, attribute or skill; a piece's stands (AUDIT RPT1026 C2, C3)
 //   node tools/realmReview.mjs hold <id> [note]              hold its trade by hand
 //   node tools/realmReview.mjs rollback <id> [note]          back to its last checkpoint judged clean (its tab loses the seat)
 //   node tools/realmReview.mjs budget [days]                 the measure: gold an hour of play, by level band, the service's
@@ -64,7 +66,8 @@ export const USAGE = [
   'usage: node tools/realmReview.mjs holds',
   '       node tools/realmReview.mjs findings|clear|hold|rollback <realm character id> [note]',
   '         (clear lifts the hold and EXCUSES the finding standing, exactly as it stands now - its pieces, purse, bank,',
-  '          level, attributes and skills; a change, or a clean checkpoint, ends it. A purse below nothing: use mend)',
+  '          level, attributes and skills; any other state holds again. A clean checkpoint ends the excuse of a purse, bank,',
+  '          level, attribute or skill; a piece\'s excuse stands. A purse below nothing: use mend)',
   '       node tools/realmReview.mjs budget [days]',
   '       node tools/realmReview.mjs budget-set <json>',
   '       node tools/realmReview.mjs bodies [days]',
