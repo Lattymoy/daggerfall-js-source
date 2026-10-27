@@ -165,7 +165,7 @@
   {
     "name": "RPT1026-CAUSEWAY-the-sea-under-the-road",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  if (goal === 0 && isWater(bx, by) && !paved) return -1;",
+    "old": "  if (goal === 0 && isWater(bx, by) && !pavedStep(ax, ay, bx, by, bit, width, height, roads)) return -1;",
     "new": "  if (goal === 0 && isWater(bx, by)) return -1;",
     "tests": [
       "test/systems/travel/rpt1026_world_causeway.test.js",
@@ -176,7 +176,7 @@
   {
     "name": "RPT1026-CAUSEWAY-the-corner-refused",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "isWater(bx, ay) && isWater(ax, by) && !paved) return -1;",
+    "old": "isWater(bx, ay) && isWater(ax, by) && !pavedStep(ax, ay, bx, by, bit, width, height, roads)) return -1;",
     "new": "isWater(bx, ay) && isWater(ax, by)) return -1;",
     "tests": [
       "test/systems/travel/rpt1026_world_causeway.test.js"
@@ -196,12 +196,12 @@
   {
     "name": "RPT1026-CAUSEWAY-a-track-paved",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "const paved = pavedStep(ax, ay, bx, by, bit, width, height, roads);",
-    "new": "const paved = pavedStep(ax, ay, bx, by, bit, width, height, tracks);",
+    "old": "!pavedStep(ax, ay, bx, by, bit, width, height, roads)) return -1;\n  // AUDIT DEEP T2-5",
+    "new": "!pavedStep(ax, ay, bx, by, bit, width, height, tracks)) return -1;\n  // AUDIT DEEP T2-5",
     "tests": [
       "test/systems/travel/rpt1026_world_causeway.test.js"
     ],
-    "note": "a track's ford walked as a causeway, and his road's causeway refused"
+    "note": "a track's ford walked as a causeway into the sea, and his road's causeway refused"
   },
   {
     "name": "RPT1026-CAUSEWAY-one-end-asked",
@@ -212,5 +212,36 @@
       "test/systems/travel/rpt1026_world_causeway.test.js"
     ],
     "note": "a step paved where only the near end carries his road's edge"
+  },
+  {
+    "name": "RPT1026-STAND-THROUGH-the-heads-line-unasked",
+    "file": "src/player/motor.js",
+    "old": " && standHeadClear(this.collider, this.pos, this.height)) {   // RPT1026-WORLD STAND-THROUGH",
+    "new": ") {   // RPT1026-WORLD STAND-THROUGH",
+    "tests": [
+      "test/player/rpt1026_world_standthrough.test.js",
+      "test/player/audit64_motor.test.js"
+    ],
+    "note": "DFU's CanStand alone: under a ceiling 1.25-1.45 m up the stand puts the head's centre past the face, and the body goes up through it"
+  },
+  {
+    "name": "RPT1026-STAND-THROUGH-the-cameras-rise",
+    "file": "src/player/motor.js",
+    "old": "  const rise = CAPSULE_HEIGHT - height;",
+    "new": "  const rise = (CAPSULE_HEIGHT - height) / 2;",
+    "tests": [
+      "test/player/rpt1026_world_standthrough.test.js"
+    ],
+    "note": "the line asked only as far as the camera's rise: a ceiling between it and the standing head's centre is let through"
+  },
+  {
+    "name": "RPT1026-STAND-THROUGH-from-the-heads-top",
+    "file": "src/player/motor.js",
+    "old": "feet[1] + height - CAPSULE_RADIUS, feet[2]], [0, 1, 0], rise)",
+    "new": "feet[1] + height, feet[2]], [0, 1, 0], rise)",
+    "tests": [
+      "test/player/rpt1026_world_standthrough.test.js"
+    ],
+    "note": "the line from the head's top: a ceiling the standing head clips under (DFU's stand) refused too"
   }
 ]

@@ -261,11 +261,11 @@ function pavedStep(ax, ay, bx, by, bit, width, height, roads) {
  * an exempt goal (a place: nor the peaks' law). `leaving`: the step starts in the start's own peaks (AUDIT OW4 J1).
  */
 function stepKind(ax, ay, bx, by, bit, width, height, roads, tracks, isWater, openBlocked, goal, leaving) {
-  const paved = pavedStep(ax, ay, bx, by, bit, width, height, roads);   // RPT1026-WORLD CAUSEWAY: his road's own step is ground
-  if (goal === 0 && isWater(bx, by) && !paved) return -1;
+  // RPT1026-WORLD CAUSEWAY: his road's own step is ground - asked only where the sea would refuse it (pavedStep)
+  if (goal === 0 && isWater(bx, by) && !pavedStep(ax, ay, bx, by, bit, width, height, roads)) return -1;
   // AUDIT DEEP T2-5: nor through a corner of the sea - a diagonal between two water pixels is a swim (the roads' own
   // ROADS 6, whose stricter half would refuse a coast road's own diagonal)
-  if (ax !== bx && ay !== by && isWater(bx, ay) && isWater(ax, by) && !paved) return -1;
+  if (ax !== bx && ay !== by && isWater(bx, ay) && isWater(ax, by) && !pavedStep(ax, ay, bx, by, bit, width, height, roads)) return -1;
   // TV-BEYOND: past the table there is no road's byte - the open ground (a column off the west edge read the row above's)
   const off = ax < 0 || ay < 0 || bx < 0 || by < 0 || ax >= width || ay >= height || bx >= width || by >= height;
   const kind = off ? 2 : edgeKindAt(ay * width + ax, by * width + bx, bit, roads, tracks);

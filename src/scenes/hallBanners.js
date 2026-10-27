@@ -65,8 +65,8 @@ export const BANNER_WALL_PAD_M = 0.05;
  * RPT1026-WORLD BANNER-WALL (a private report, 2026-10-25: a Wildertown guild hall, "a small box building ... One of
  * these banners is floating in the air"): A CLOTH HANGS ON ITS WALL OR NOT AT ALL. Each cloth stood its jamb's gap beyond
  * the door whatever the wall did there, so a door near its wall's end hung the far cloth past the building's corner, in
- * the air - ARCH3D 118's door is the last 1.25 m of its west wall, and its second cloth hung wholly past the house (30 of
- * Wildertown's 252 houses, 33 of Chesterwark's 232, under the town packs). A cloth whose either end, at the wall, falls
+ * the air - ARCH3D 118's door is the last 1.25 m of its west wall, and its second cloth hung wholly past the house (105 of
+ * Wildertown's 364 doors hung a cloth past their building's box, under the town packs). A cloth whose either end, at the wall, falls
  * past the building's box (BANNER_WALL_PAD_M) is not hung - so this answers one anchor, or none, where its door leaves
  * room for one, or none. The box is the frame's model's own: a turned building's box only grows, and drops no cloth on
  * a wall.
