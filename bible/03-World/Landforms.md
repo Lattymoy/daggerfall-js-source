@@ -1006,7 +1006,8 @@ The shaper's samples stay one function of world position, every seam one number 
 
 ## BAY-LEFT-GROUND - A TOWN PAST THE BAY STANDS IN ITS LAND, AND A RECORD'S HEIGHT IS DFU'S FRAME THERE TOO (2026-10-26)
 
-The audit "no system left behind in the Bay" (2026-10-26), its items 28 (D1, the landforms' sites) and 36 (D5,
+The audit "no system left behind in the Bay" (2026-10-26, `01-Overview/audits/Audit-Left-In-The-Bay.md`), its items 28
+(D1, the landforms' sites) and 36 (D5,
 `landformLiftAt`). The owner, after the audit: *"Every single thing here needs to be addressed. No exceptions."* -
 every item built, and the owner's call on this one taken: the landforms' sites past the Bay come from places every
 client stands (GROUND-AGREE).

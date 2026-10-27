@@ -330,7 +330,8 @@ the trample (`retire`), the probes.
 
 ## BAY-LEFT-GROUND - the road's trouble on the land's own wild past the Bay (2026-10-26)
 
-The audit "no system left behind in the Bay" (2026-10-26), its item 9 (D2); the owner: *"Every single thing here needs
+The audit "no system left behind in the Bay" (2026-10-26, `01-Overview/audits/Audit-Left-In-The-Bay.md`), its item 9
+(D2); the owner: *"Every single thing here needs
 to be addressed. No exceptions."* LW4's trouble handed the encounter law no `fauna`, so a caravan past the Bay was beset
 out of Daggerfall's climate tables - Black Marsh's Centaurs, Orcs and Orc Warlords - against TESA-BIOME's recorded
 choice 4 (a province's own beasts, `03-World/Tamriel-Biomes.md`), which every other encounter path follows.

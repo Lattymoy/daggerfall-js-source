@@ -221,7 +221,8 @@ tier `drawSnow` draws) and the foes' ground pass lies its marks over it.
 
 ## BAY-LEFT-GROUND - the snow past the Bay (2026-10-26)
 
-The audit "no system left behind in the Bay" (2026-10-26), its item 10 (D3); the owner: *"Every single thing here
+The audit "no system left behind in the Bay" (2026-10-26, `01-Overview/audits/Audit-Left-In-The-Bay.md`), its item 10
+(D3); the owner: *"Every single thing here
 needs to be addressed. No exceptions."* Skyrim's winter laid the snow cover and the peaks' caps (the ground's own) but
 none of the mod's: no deep snow to wade, no footprint or track, no corpse's hollow and no berm anywhere past the Bay.
 Four Bay-shaped laws held it there, each moved, the Bay's own answer unchanged:
