@@ -199,7 +199,9 @@ test('TESA10c Falinesti: the Great Graht-Oak - its trunk narrowing up its levels
   let roots = 0;
   for (let i = 0; i < m.positions.length; i += 3) if (m.positions[i + 1] < 0 && Math.hypot(m.positions[i], m.positions[i + 2]) > F.rootOut - 3) roots++;
   assert.ok(roots >= F.roots, 'the roots to their reach');
-  for (const y of F.platforms) assert.equal(crosses(m, [trunkRadius(y) + 4, y + 3, 0], [trunkRadius(y) + 4, y - 3, 0]), true, `a platform at ${y}`);
+  // PIN MOVED (CAPITAL-TREES): probed at 4.25 rad - off the landing (the walkway's own deck there), off the boughs that
+  // carry the deck and the one over it, off the houses
+  for (const y of F.platforms) { const a = 4.25, d = trunkRadius(y) + 4; assert.equal(crosses(m, [Math.cos(a) * d, y + 3, Math.sin(a) * d], [Math.cos(a) * d, y - 3, Math.sin(a) * d]), true, `a platform at ${y}`); }
 });
 
 test('TESA10c Torval: the palace\'s dome over its roof and its four minarets; the temple\'s terraces, Masser\'s dome greater than Secunda\'s, its stair north; the walls\' gates open, the quay\'s piers out over the bay', () => {

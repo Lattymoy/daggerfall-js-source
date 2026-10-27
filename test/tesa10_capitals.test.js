@@ -46,6 +46,7 @@ import { createSwapBehind } from '../src/scenes/swapBehind.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 import { URBAN_ARCHIVE, URBAN_ART } from '../src/world/urban/urbanRecords.js';   // URBANIZER U2
+import { CAPITAL_CUT_RECORDS } from '../src/world/capitalShapes.js';   // CAPITAL-TREES: a tree's flats
 afterEach(() => setTamrielFit(null));
 
 // ── THE ID, THE PIXEL, THE PIN ──────────────────────────────────
@@ -272,10 +273,11 @@ test('TESA10 the pictures: the port\'s own, 64 x 64 (PIN MOVED, IC-GRAND: the Im
   assert.deepEqual([...a.keys()].sort(), Object.values(CAPITAL_ART).sort());
   const tall = new Set(['facadeOchre', 'facadeBrick', 'facadeWhite', 'facadeStone', 'facadeTimber', 'groundShop', 'groundArcade'].map((k) => CAPITAL_ART[k]));
   for (const [r, img] of a) {
+    assert.deepEqual(img.data, b.get(r).data);
+    if (CAPITAL_CUT_RECORDS.includes(r)) continue;   // PIN MOVED (CAPITAL-TREES): a tree's flats, a flat's size and cut by their alpha (test/world/capitaltrees.test.js)
     const h = tall.has(r) ? 2 * CAPITAL_ART_SIZE : CAPITAL_ART_SIZE;
     assert.deepEqual([img.width, img.height, img.data.length], [CAPITAL_ART_SIZE, h, CAPITAL_ART_SIZE * h * 4]);
     for (let i = 3; i < img.data.length; i += 4) assert.equal(img.data[i], 255);
-    assert.deepEqual(img.data, b.get(r).data);
   }
   const marble = a.get(CAPITAL_ART.marble).data, gold = a.get(CAPITAL_ART.gold).data;
   assert.ok(marble[0] > 150 && marble[1] > 150 && marble[2] > 150, 'the marble pale');

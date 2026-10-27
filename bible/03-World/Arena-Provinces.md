@@ -1265,6 +1265,8 @@ Unity has no capital past the Bay to read: the departure is TESA10's (`01-Overvi
     the ring wall open on its four axes; the statue on a stepped plinth - Mehrunes Dagon on its west half (`dagonFigure`:
     legs astride, horned, four arms, his axe raised the statue's top) facing Almalexia on its east (robedFigure, her arm
     raised with Hopesfire gilt). Bronze both, 13 m and 10 m over a 5 m plinth.
+    **Moved by CAPITAL-TREES** (below): the garden's trees are the city's own in their planters (`buildMournholdGardens`,
+    model 910125), and the Temple Courtyard's by its pools; the own blocks' tree law is retired.
   - **The High Fane** in the courtyard's middle (its plinth 72 m, drum 25 m, dome to 61 m with its lantern), its porch
     turned south to the courtyard and the palace; two long pools in marble kerbs either side of the way and four
     braziers along it (closed where they stand, the way between open).
@@ -1306,6 +1308,10 @@ Unity has no capital past the Bay to read: the departure is TESA10's (`01-Overvi
   - **Hide houses** (`hideHut`: a cone of hide on its poles - the new picture `hide`, tanned panels stitched) six on
     every platform, clear of the walkway's landing, and two on a timber deck at every limb's fork (`limbForks`, 130 to
     175 m up, under the crown). Daggerfall's blocks stay at its foot - the engine's city - the oak's own above them.
+  - **Moved by CAPITAL-TREES** (below): the oak finished on the capitals' trees' kit - its buttresses all round its foot,
+    each held under the walkway climbing over it (`rootUnder`; the arc the first rise had cleared is no longer the law),
+    boughs carrying its platforms, its limbs carrying their decks, its crown in storeys; the walkway's deck run into the
+    bark, its rail and the platforms' faced both ways, the houses' doors to the trunk.
 - **Torval** (`world/capitalPlans.js` TORVAL, `estateBeds`; `world/capitalTorval.js`). UESP: "its ruler's palaces stand
   among gardens of sugarcane laid out in symmetry, where the Mane meditates on a palanquin", the estates kept from
   outsiders, moon sugar being sacred. TESA10c's palace stood bare on its blocks:
@@ -1353,6 +1359,8 @@ Unity has no capital past the Bay to read: the departure is TESA10's (`01-Overvi
     diagonal: a quad's second half takes its first's plane wherever that turns
     it within the bound, and a near tie between a triangle's two greatest axes is broken by its face's normal. None is
     split now.
+    **Moved by CAPITAL-TREES** (below): a tree's flats - its leaf sprays and lianas, cut by their alpha - keep their own
+    coordinates (`world/capitalShapes.js` flatTriangles), at the density Daggerfall draws its trees' flats.
 
 ## TESA-BIOME - the land past the Bay, each province its own country (2026-10-24)
 
@@ -2452,6 +2460,140 @@ door's town's name where the record carries it), `test/server/home1.test.js`, `t
 "Residence" by its type). Mutants: `tools/mutants/icprops.json` (25, all dead); re-aimed by content:
 `icbld.json` BLD-guild-of-no-faction (a building's faction its guild's, else its donor's); retired with the code they held (the trade cells and their signatures): `tesa11.json` TESA11-shore-a-house,
 TESA11-no-signature.
+
+## CAPITAL-TREES - the capitals' main trees, finished (2026-10-27)
+
+KPbICA on the game's Discord, forwarded by the owner: *"3) The main trees in Falinesti and Mournhold should get some love.
+They are too draftish for now"*. The owner on the work: *"No band aids or half assed work"*.
+
+**What the player saw.**
+- **Falinesti's Great Graht-Oak** (model 910140) was TESA10c's draft on the capitals' first shapes: a rough column of
+  sixteen sides, ten straight tubes for roots (the seventh through the porch), nine limbs of two straight tubes each, and
+  26 balls of leaves ten sides by six over it - 7,490 faces, 2,636 of them its crown, its faces up to tens of metres
+  across. Seen whole, a lumpy mushroom of flat faces on a plain cone; its limbs stubs; its platforms rings on the bark
+  carried by nothing. The walkway's deck stopped 2.5 m off the trunk's mean surface over bark rough by 2.5 m either way
+  (a gap of up to 5 m at its inner edge, down to the turn below); its rail and the platforms' rails were drawn from
+  outside alone (a culled face from the deck); the hide houses had no doors.
+- **Mournhold** has no landmark tree of its own. The trees in its main square, Plaza Brindisi Dorom (TESA-LORE's
+  garden), were the Bay's scenery: one grass tile in five of the plaza's own blocks stood a scenery record of the
+  climate's nature archive - Deshaan is MountainWoods, so TEXTURE.506's 12, 15, 16 and 18: a fir, an oak and a shrub of
+  the Iliac Bay's woods. Read so: Mournhold's main trees are its garden's. (The other two of the port's own trees in a
+  capital are the great statue's bronze figures over them, in the same draft shapes - no tree - and Helstrom's Hist, the
+  Argonian city's tree, still on TESA10c's shapes: if the tester's Mournhold was Helstrom, the Hist is the slice after
+  this one, on this kit.)
+
+**The cause.** Both trees were built of the capitals' first shapes (`world/capitalShapes.js` rockColumn, limb, blob):
+straight tubes and balls, the pictures laid at 40 texels a metre over them. Nothing of the game's own way with a tree
+was there - no flat - and the plaza borrowed the Bay's.
+
+**The fix.**
+- **The capitals' trees' kit** (`world/capitalTrees.js`): the forests' own graht-oaks' shapes (GRAHT1,
+  `03-World/Graht-Oaks.md` - their Bezier, icosphere and seeded push borrowed, one member, one export) at a capital's
+  measure on the MeshBuilder: a fluted COLUMN of rings, twisting as it rises; a BUTTRESS of living wood from inside its
+  trunk to its foot under the ground, its top falling away, its edge snaking; a LIMB along a cubic Bezier, its rings
+  carried along it without a twist, tapering to a point; a MASS of leaves, an icosphere pushed about by its seed, its
+  underside flattened; its CARDS - leaf sprays standing out of its rim and underside, both faces drawn, crossed by a
+  second card when asked (`crossed`: a spray seen from its side shows that one's face, never a lone card's edge as a
+  bright line across a crown) - and a LIANA, two crossed strips. Every face flat-shaded, both halves of a quad on the quad's own normal (vanillaTexels lays a quad on one
+  plane, AUDIT TESA II C14).
+- **The Great Graht-Oak** (`world/capitalFalinesti.js`, its measures `world/capitalPlans.js` FALINESTI):
+  - its trunk fluted through trunkRadius's own levels (the walkway's law reads the column it climbs) - 33 corners a ring,
+    every third a furrow 7% in and the rest ridges to 2.8% out, turning as it rises (`bark`); its leader on into the cap;
+  - twelve buttresses all round its foot (`roots`, `rootArc`), none on the porch (`rootPorch` either side of north - the
+    two flanking it 20 and 23 m tall), each up the trunk no higher than `rootTop` (26 m) and always `rootUnder` (0.8 m) under the
+    walkway climbing over it (`walkwayOver`), so they rise round the trunk with the walkway, 2.7 m to 26 m, reaching
+    farther the taller (48 to 64 m); a surface root on past each foot;
+  - boughs carrying every platform (`platformBoughs`): three under each deck on `boughArc` (0.45 to 3.7 rad of its turn -
+    the walkway climbing to the platform more than 2 m under their wood there), their wood under the deck's underside out
+    past its rail, then up and out to their leaves 36 to 46 m past the trunk; one over each deck at `boughOver` (4.85
+    rad), leaving the trunk `boughLift` (7.5 m) over it, a body's 2 m and more over the deck all across it; each forking
+    twice - the crown's lower storeys, all round the trunk, outside the rails;
+  - nine great limbs (`crownLimbs`), each climbing to its fork, where it runs level under its deck - the deck on it now
+    (`limbForks`: its top on the limb) - and on to its tip, forking twice on its outer run;
+  - the crown in storeys (`grahtCrown`, 182 masses): each bough's (along its outer run, at its end, at its forks' ends),
+    each limb's (three at its tip, one over its outer run, two at each fork's end), nine between the limbs and the cap
+    over the leader (five, 42 to 50 m across - its highest, 230 m); any mass that would stand among a fork deck's houses
+    lifted clear of them by its own underside's curve; 1,148 sprays, none over a deck, a platform or the walkway
+    (`oakClear`); two lianas hung from each limb's outer half and one from each bough, over the city;
+  - the walkway's deck run into the bark (from 0.97 of trunkRadius - no gap at its inner edge), its underside, its rail
+    both faces on a post every `post` steps, and a knee of living wood under its outer edge every `knee` steps where its
+    turn stands `kneeOver` (9 m) over its landing; the platforms' fascia, their rails both faces on 24 posts; the hide
+    houses lashed at their feet, four poles crossing out of their tops, their doors to the trunk (to the deck's middle at
+    a fork).
+- **Mournhold's gardens** (`world/capitalMournhold.js` buildMournholdGardens, model 910125 on Mournhold's list; the sites
+  `world/capitalPlans.js` mournholdTreeSites over MOURNHOLD.gardens): the city's own trees in their planters, where the
+  Bay's scenery trees stood - Tribunal's Mournhold grows its plants in planters (UESP's Tribunal ingredients: Noble Sedge,
+  Golden Sedge, Timsa-Come-By, Meadow Rye and Nirthfly "found growing in various planters in Mournhold", Plaza Brindisi
+  Dorom's among them), and its Temple Courtyard is "an enclosed area with paths, water, and trees" (UESP). UESP names no
+  species for them; the tree is the port's own, a broadleaf of Deshaan's warm, wet lowlands (TESA-BIOME's "fungal valleys
+  and plantations, warm and wet"): a smooth pale trunk to a fork at about a third of its height, three limbs spreading
+  with a twig off each, a rounded crown of seven masses (each near round - `squash` 0.86) under its crossed sprays
+  (42 asked, about 40 hung), 11 to 15 m to its sprays' tops - under the great statue,
+  which still dominates the garden - in an octagonal planter of the city's ochre stone under a marble coping, its bed the
+  sedges' and the rye's. 44 of them: the plaza's two rings about its statue (8 at 32 m, 12 at 54 m, off its ways), its
+  allees by its four ways out past the ring wall and its four corners; the courtyard's rows either side of its pools.
+  Each turned and sized by its site's hash, of four variants. No spray hangs under 2.8 m (`SPRAY_FLOOR` - over a rider),
+  so the ways under the crowns stay open; the trunks and planters close the automap's cells about them (the capitals'
+  footprint, AUDIT-TESA A6-2). The own blocks' tree law (`mournholdTree`) is retired.
+- **The pictures** (`world/capitalTreeArt.js`, records 40 to 46 of CAPITAL_ARCHIVE): the graht-oak's bark (deep fissures
+  between ridged plates broken by cracks, moss in their mouths), its leaves and its spray, in the jungle's graht-oaks'
+  hues (render/grahtOakArt.js GRAHT_PALETTE) so the Great Graht-Oak is its forest's tree; Mournhold's pale bark with its
+  lenticels and lichen, its brighter leaves and its spray; the planters' bed. The solid five vanilla's 64 x 64 within the
+  freeware's band and tiling (TESA-LORE's pin), at 40 texels a metre on their faces. The sprays are a tree's FLAT: every
+  texel opaque or clear, their outline inside their picture, at the density Daggerfall draws its own trees' flats -
+  measured on the freeware's nature archives at the size a flat is drawn (world/rmbFlats.js scaledBillboardSize, DFU's
+  GetScaledBillboardSize): of TEXTURE.500-511's flats 6 m tall and more, 75 of 76 stand at 8 to 20 texels a metre and 45
+  at 10. The oak's spray is 128 x 128 (its last quarter a liana that tiles down) on cards 9 to 13.5 m (9.5 to 14 texels
+  a metre); Mournhold's 64 x 64 on cards 3.4 to 4.4 m (14.5 to 18.8).
+- **The flats in the game.** A capital's picture registered `{ cutout: true }` (`installCapitals`, CAPITAL_CUT_RECORDS)
+  is cut wherever it is uploaded: the texture door answers it (`systems/textureReplacement.js` vendorCutout) and the
+  upload door asks every picture it puts up (`scenes/dataPipeline.js` uploadRecord), so a model's build, a place's hold
+  and the remake after an eviction all upload it as RW1's cutout (`render/renderer.js` uploadTexture) - its holes holes in
+  every solid pass and the sun's casters. vanillaTexels leaves a flat's faces on their own coordinates (`world/capitalShapes.js`
+  flatTriangles) - the spray whole on its card. And a body passes through the leaves as through Daggerfall's trees'
+  flats: the collider is handed the flats as a sign's hung board is (`world/signSolid.js` sightMarksOf - met by every
+  ray, by no body).
+- **Cost.** The oak 42,568 faces in six sub-meshes - six draws as one model (bark 10,976, leaves 15,760, sprays 4,832,
+  timber 10,070, hide 844, doors 86); it was 7,490 in five. The gardens 43,268 in six (983 a tree). The city wall's
+  178,596 and the district walls' 92,916 stand beside them.
+
+**Kept.** AUDIT TESA II C4's walkway (a body's 2 m over its deck at three lanes across it, from the ground to the fourth
+platform - `test/world/audittesa2c_capitals.test.js`, green), its floor between the turns' ends, the decks walkable, every
+platform's and fork's houses, the porch and its door (WW7-4), the oak's soil and foot closed (TESA10c), the spiral's law.
+NPCs walk the ground as they did: the foot's 40 m stays closed to them; Mournhold's start markers stand clear of every
+tree (4 m and more).
+
+**Seen** (no ARENA2 - the port's own models and pictures): `tools/capitalTreePreview.mjs` draws them as installCapitals
+installs them, without a GPU (the running game past the Bay on SwiftShader is #1184's J6, and this machine had 6 GB free
+under a load of forty). From 470 m the old oak is a mushroom - one lumpy crown of flat faces on a plain brown cone, its
+platforms thin rings; the new one a giant tree: a fluted, fissured trunk spiralled by its walkway and its rising
+buttresses, leafy boughs in storeys about its platforms all round it, nine great limbs into a full crown of masses
+fringed with sprays, lianas hung over the city. On a platform: planked deck, rail and posts, a hide house lashed with its
+poles and its door toward the trunk, a bough's leaves past the rail. Mournhold's plaza: the ring wall round 32 trees in
+their ochre planters about the statue, which stands over them; its courtyard: rows of trees by the pools before the
+High Fane.
+
+**Not DFU.** Daggerfall Unity has no capital past the Bay (TESA10's departure); DFU's models are opaque
+(DaggerfallDefault.shader, INCIDENT 2026-09-04) - a capital tree's spray is a flat laid on a model, cut by its picture's
+own registration (Port-Ledger section A, CAPITAL-TREES).
+
+**The four hosts.** The models and pictures go up through the one data pipeline and the flats' marks through sightMarksOf:
+`scenes/world.js` WIRED (its streamed pixels, `scenes/pixelBuild.js`); `scenes/exterior.js` FLAGGED: the fixed-city
+bench stands the Bay's places alone, never a capital (its collider asks the same sightMarksOf and its pipeline is the same
+door, so a tree's flats would be cut and passed there too); `scenes/worldModes.js` and `scenes/dungeonContext.js`
+FLAGGED: no capital tree stands indoors.
+
+**Pins.** `test/world/capitaltrees.test.js` (13: the pictures, the flats' density and coordinates, the freeware's flats
+with ARENA2, the cutout's registration and door, the oak whole, its buttresses, its boughs, the city kept clear and
+walkable, its limbs and storeys, the flats passed by a body, Mournhold's sites, its sprays crossed, each Mournhold
+tree). PIN MOVED:
+`test/tesalore_capitals.test.js` (the plaza's trees its gardens', no tree law; the pictures' band and the texel density
+past the flats; a fork deck probed for its timber), `test/tesa10c_capitals.test.js` (a platform probed at 4.25 rad, off
+the landing, the boughs and the houses), `test/tesa10_capitals.test.js` (the pictures 64 x 64 past the flats). Mutants:
+`tools/mutants/capitaltrees.json` (26), all dead; re-aimed by content, all dead: `tesa10c.json` TESA10c-roots-short,
+TESA10c-no-platforms, TESA10c-crown-low, `tesalore.json` TESA-LORE-platforms-empty, TESA-LORE-no-fork-decks,
+TESA-LORE-forks-empty, TESA-LORE-no-walkway, TESA-LORE-plaza-treeless (onto the gardens on Mournhold's list),
+`audittesa2c.json` AUDIT-TESA-II-C4-roots-round (onto `rootUnder`).
 
 ## Pins
 
