@@ -91,6 +91,7 @@ export const CAPITAL_MODELS = Object.freeze({
   ...IMPERIAL_MODELS,   // TESA11: the Imperial City's, from 910200
   solitudeArch: 910110, bluePalace: 910111, solitudeWall: 910112, castleDour: 910113, solitudeDocks: 910114,
   mournholdPlaza: 910120, highFane: 910121, mournholdPalace: 910122, greatBazaar: 910123, mournholdWall: 910124,
+  mournholdGardens: 910125,   // CAPITAL-TREES: the city's own trees in their planters (world/capitalMournhold.js)
   alinorPalace: 910130, alinorHarbour: 910132, alinorWall: 910133, alinorBridges: 910134,   // TESA-LORE: the Crystal Tower's 910131 retired with it
   grahtOak: 910140,
   manePalace: 910150, twoMoonsTemple: 910151, torvalQuay: 910152, torvalWall: 910153, maneEstate: 910154,   // TESA-LORE: the estate
@@ -236,7 +237,7 @@ export const CAPITALS = Object.freeze([
     anchor: Object.freeze([2, 3]), markers: Object.freeze([[90, -60], [90, 60], [200, -130]]), blocks: SOLITUDE_BLOCKS, models: Object.freeze([CAPITAL_MODELS.solitudeArch, CAPITAL_MODELS.bluePalace, CAPITAL_MODELS.solitudeWall, CAPITAL_MODELS.castleDour, CAPITAL_MODELS.solitudeDocks]) }),
   capital({ key: 'mournhold', tag: 'MH', name: 'Mournhold', province: 'Morrowind', shore: false, plan: MOURNHOLD_PLAN, districts: MOURNHOLD_DISTRICTS,
     gates: Object.freeze(['N', 'E', 'S', 'W']),   // TESA14: a gate in each side of its wall
-    anchor: Object.freeze([4, 4]), markers: Object.freeze([[0, 120], [-50, 205], [50, 205], [0, -110]]), blocks: MOURNHOLD_BLOCKS, models: Object.freeze([CAPITAL_MODELS.mournholdPlaza, CAPITAL_MODELS.highFane, CAPITAL_MODELS.mournholdPalace, CAPITAL_MODELS.greatBazaar, CAPITAL_MODELS.mournholdWall]) }),   // TESA-LORE: the markers off the palace at the middle - the plaza's ways and the courtyard
+    anchor: Object.freeze([4, 4]), markers: Object.freeze([[0, 120], [-50, 205], [50, 205], [0, -110]]), blocks: MOURNHOLD_BLOCKS, models: Object.freeze([CAPITAL_MODELS.mournholdPlaza, CAPITAL_MODELS.highFane, CAPITAL_MODELS.mournholdPalace, CAPITAL_MODELS.greatBazaar, CAPITAL_MODELS.mournholdWall, CAPITAL_MODELS.mournholdGardens]) }),   // TESA-LORE: the markers off the palace at the middle - the plaza's ways and the courtyard; CAPITAL-TREES: its gardens' trees
   capital({ key: 'alinor', tag: 'AL', name: 'Alinor', province: 'Sumurset', shore: true, plan: ALINOR_PLAN, districts: ALINOR_DISTRICTS,
     sea: Object.freeze(['S']), dims: SEA_SOUTH, sliceNames: Object.freeze([null, ALINOR_HARBOUR]), sliceMarkers: Object.freeze({ 1: Object.freeze([[100, 440], [-100, 440]]) }),   // AUDIT TESA II C2: over its harbour's sea
     gates: Object.freeze(['N', 'E', 'W']),   // TESA14: its three landward sides (the harbour south)

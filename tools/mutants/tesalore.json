@@ -221,12 +221,14 @@
   },
   {
     "name": "TESA-LORE-plaza-treeless",
-    "file": "src/world/capitalPlans.js",
-    "old": "mournholdTile, mournholdClosed, mournholdTree);",
-    "new": "mournholdTile, mournholdClosed);",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "CAPITAL_MODELS.mournholdWall, CAPITAL_MODELS.mournholdGardens]) }),",
+    "new": "CAPITAL_MODELS.mournholdWall]) }),",
     "tests": [
-      "test/tesalore_capitals.test.js"
-    ]
+      "test/tesalore_capitals.test.js",
+      "test/world/capitaltrees.test.js"
+    ],
+    "note": "RE-AIMED BY CONTENT (CAPITAL-TREES): the plaza's trees are the city's own, its gardens' model on Mournhold's list (the Bay's scenery trees' tree law retired)"
   },
   {
     "name": "TESA-LORE-own-blocks-drop-trees",
@@ -376,38 +378,42 @@
   {
     "name": "TESA-LORE-platforms-empty",
     "file": "src/world/capitalFalinesti.js",
-    "old": "    for (let i = 0; i < F.huts; i++) { const a = hutAngle(i, F), d = r + F.hutAt; hideHut(mb, Math.cos(a) * d, y, Math.sin(a) * d, F.hutR, F.hutH); }\n",
+    "old": "    for (let i = 0; i < F.huts; i++) { const a = hutAngle(i, F), d = rr + F.hutAt; hideHut(mb, Math.cos(a) * d, y, Math.sin(a) * d, F.hutR, F.hutH, a + Math.PI); }\n",
     "new": "",
     "tests": [
       "test/tesalore_capitals.test.js"
-    ]
+    ],
+    "note": "RE-AIMED BY CONTENT (CAPITAL-TREES): the platform's radius `rr` and each house's door to the trunk"
   },
   {
     "name": "TESA-LORE-no-fork-decks",
     "file": "src/world/capitalFalinesti.js",
-    "old": "    translated(mb, x, y, z, () => { cap(mb, TIMBER, 12, F.forkDeck, 0); cap(mb, TIMBER, 12, F.forkDeck, -0.6, -1); ledge(mb, TIMBER, 12, F.forkDeck, F.forkDeck - 0.3, -0.6, 0); });\n",
+    "old": "    translated(mb, x, y, z, () => { cap(mb, TIMBER, 12, F.forkDeck, 0); cap(mb, TIMBER, 12, F.forkDeck, -0.6, -1); taper(mb, TIMBER, 12, F.forkDeck, -0.6, F.forkDeck, 0, { vRepeat: 0.6 }); band(mb, TIMBER, 12, F.forkDeck, F.forkDeck - 0.25, 0, 0.9); });\n",
     "new": "",
     "tests": [
       "test/tesalore_capitals.test.js"
-    ]
+    ],
+    "note": "RE-AIMED BY CONTENT (CAPITAL-TREES): the deck's fascia and its rail both faces; the deck probed for its timber (the limb runs under it now)"
   },
   {
     "name": "TESA-LORE-forks-empty",
     "file": "src/world/capitalFalinesti.js",
-    "old": "    for (const s of [1, -1]) hideHut(mb, x + Math.cos(a) * s * F.forkDeck * 0.55, y, z + Math.sin(a) * s * F.forkDeck * 0.55, F.hutR * 0.85, F.hutH * 0.85);\n",
+    "old": "    for (const s of [1, -1]) hideHut(mb, x + Math.cos(a) * s * F.forkDeck * 0.55, y, z + Math.sin(a) * s * F.forkDeck * 0.55, F.hutR * 0.85, F.hutH * 0.85, a + (s > 0 ? Math.PI : 0));\n",
     "new": "",
     "tests": [
       "test/tesalore_capitals.test.js"
-    ]
+    ],
+    "note": "RE-AIMED BY CONTENT (CAPITAL-TREES): each house's door to the deck's middle"
   },
   {
     "name": "TESA-LORE-no-walkway",
     "file": "src/world/capitalFalinesti.js",
-    "old": "    mb.quad(TIMBER, d[0], d[1], d[2], d[3], outward(d[0], d[1], d[2], [0, -1e4, 0]), [[0, 0], [1, 0], [1, -0.5], [0, -0.5]]);\n",
+    "old": "    mb.quad(TIMBER, P(a0, b0, y0), P(a1, b1, y1), P(a1, o1, y1), P(a0, o0, y0), outward(P(a0, b0, y0), P(a1, b1, y1), P(a1, o1, y1), [0, -1e4, 0]), [[0, 0], [1, 0], [1, -0.5], [0, -0.5]]);\n",
     "new": "",
     "tests": [
       "test/tesalore_capitals.test.js"
-    ]
+    ],
+    "note": "RE-AIMED BY CONTENT (CAPITAL-TREES): the walkway's deck from the bark to its rail"
   },
   {
     "name": "TESA-LORE-walkway-in-steps",

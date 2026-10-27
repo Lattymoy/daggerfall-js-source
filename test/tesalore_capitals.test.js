@@ -23,6 +23,7 @@ import { buildAlinorPalace, buildAlinorBridges, buildAlinorWall, alinorStairY, a
 import { CAPITAL_ARCHIVE, CAPITAL_ART, CAPITAL_ART_SIZE, CAPITAL_TEXEL_METRES, capitalArt, vanillaTexels, installCapitals, _resetCapitals } from '../src/world/capitalModels.js';
 import { customModelFor } from '../src/world/customModels.js';
 import { URBAN_ARCHIVE, URBAN_ART } from '../src/world/urban/urbanRecords.js';   // URBANIZER U2
+import { CAPITAL_CUT_RECORDS, flatTriangles } from '../src/world/capitalShapes.js';   // CAPITAL-TREES
 
 const sane = (m) => {
   assert.ok(m.positions.every(Number.isFinite) && m.uvs.every(Number.isFinite));
@@ -205,14 +206,10 @@ test('TESA-LORE Mournhold\'s Plaza Brindisi Dorom "a public garden dominated by 
   const M = MOURNHOLD, P = M.plaza, S = M.statue, own = MOURNHOLD_BLOCKS.P0;
   assert.equal(own.tile(P.x + 40, P.z + 40), 2, 'the garden\'s grass');
   assert.deepEqual([own.tile(P.x, P.z + 50), own.tile(P.x + 50, P.z), own.tile(P.x + 10, P.z + 10), own.tile(0, 0), own.tile(M.fane.x, M.fane.z + 60)], [3, 3, 3, 3, 3], 'its paths, its court, the stone beyond');
-  let trees = 0, grass = 0;
-  for (let x = -100; x < 100; x += 6.4) for (let z = P.z - 100; z < P.z + 100; z += 6.4) {
-    const t = own.tree(x, z);
-    if (own.tile(x, z) === 2) grass++;
-    if (t >= 0) { trees++; assert.equal(own.tile(x, z), 2); assert.ok(Math.hypot(x - P.x, z - P.z) >= P.paved); }
-  }
-  assert.ok(trees > grass / 12 && trees < grass / 3, `${trees} trees on ${grass} grass`);
-  assert.equal(own.tree(0, 0), -1, 'none off the garden');
+  // PIN MOVED (CAPITAL-TREES): the garden's trees are the city's own in their planters - its gardens' model
+  // (world/capitalMournhold.js buildMournholdGardens, test/world/capitaltrees.test.js) - and its own blocks plant none of
+  // the Bay's scenery trees (a fir and an oak of the Iliac Bay's woods, one tile in five of its grass, they were)
+  for (const code of Object.keys(MOURNHOLD_BLOCKS)) assert.equal(MOURNHOLD_BLOCKS[code].tree, undefined, `${code} plants no scenery tree`);
   assert.equal(own.closed(P.x, P.z), true, 'the plinth');
   const m = buildMournholdPlaza();
   sane(m);
@@ -316,10 +313,10 @@ test('TESA-LORE Falinesti, the city in the boughs (UESP: "Bosmer live ... coaxin
   sane(m);
   const housesAt = (pred) => hide.filter((t) => t.every(pred)).length;
   for (const y of F.platforms) assert.ok(housesAt((p) => p[1] >= y - 0.01 && p[1] <= y + F.hutH + 0.01) >= F.huts * 8, `the houses on the platform at ${y}`);
-  const forks = limbForks();
+  const forks = limbForks(), wood = m.subMeshes.find((sm) => sm.textureRecord === CAPITAL_ART.timber), timber = { ...m, indices: m.indices.slice(wood.startIndex, wood.startIndex + wood.primitiveCount * 3) };
   assert.equal(forks.length, F.limbs);
   for (const [x, y, z] of forks) {
-    assert.equal(crosses(m, [x, y + 0.3, z], [x, y - 0.9, z]), true, `a deck at the fork ${x.toFixed(0)},${z.toFixed(0)}`);
+    assert.equal(crosses(timber, [x, y + 0.3, z], [x, y - 0.9, z]), true, `a deck at the fork ${x.toFixed(0)},${z.toFixed(0)}`);   // PIN MOVED (CAPITAL-TREES): its timber - the limb runs under it now
     assert.ok(housesAt((p) => Math.hypot(p[0] - x, p[2] - z) < F.forkDeck && p[1] >= y - 0.01) >= 16, 'its two houses on it');
   }
   assert.deepEqual(spiralAt(0), [0, 0], 'from the ground');
@@ -427,6 +424,7 @@ test('TESA-LORE the capitals\' pictures at vanilla\'s detail (the owner: "fall i
   const art = capitalArt();
   assert.equal(CAPITAL_ART_SIZE, 64);
   for (const [name, record] of Object.entries(CAPITAL_ART)) {
+    if (CAPITAL_CUT_RECORDS.includes(record)) continue;   // PIN MOVED (CAPITAL-TREES): a tree's flats, cut by their alpha, are a flat's size and detail (test/world/capitaltrees.test.js)
     const img = art.get(record), h = TALL.has(name) ? 128 : 64;   // PIN MOVED (IC-GRAND): the street walls 64 x 128, vanilla's own wall's
     assert.deepEqual([img.width, img.height], [64, h], name);
     const d = detail(img.data, 64, h);
@@ -450,8 +448,9 @@ test('TESA-LORE vanilla\'s texel density on every capital model (the freeware\'s
   installCapitals({ addTextures: () => 0 });
   let faces = 0;
   for (const id of Object.values(CAPITAL_MODELS)) {
-    const m = customModelFor(id);
+    const m = customModelFor(id), flats = flatTriangles(m);   // PIN MOVED (CAPITAL-TREES): a tree's flats on their own coordinates, at the density of Daggerfall's trees' flats (test/world/capitaltrees.test.js)
     for (let t = 0; t < m.indices.length; t += 3) {
+      if (flats?.[t / 3]) continue;
       const ix = [0, 1, 2].map((k) => m.indices[t + k]);
       const P = ix.map((v) => [0, 1, 2].map((a) => m.positions[v * 3 + a])), U = ix.map((v) => [m.uvs[v * 2] * 64, m.uvs[v * 2 + 1] * 64]);
       const e1 = P[1].map((x, k) => x - P[0][k]), e2 = P[2].map((x, k) => x - P[0][k]);
