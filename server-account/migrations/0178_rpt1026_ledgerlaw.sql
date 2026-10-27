@@ -7,8 +7,9 @@
 -- it. No relay change.
 --
 -- `products.handed_to`: the account the service last handed a crafted piece to, where that is not its owner - written
--- by every move the service makes of the piece into a realm record (server-account/src/ledger.js ledgerMoves: a realm
--- trade, a market delivery collected, a vault's or a chest's), cleared by a sale that moves its owner (market.js
+-- by every move the service makes of the piece into a realm record from the account the craft's record names (server-account/
+-- src/ledger.js ledgerMoves: a realm trade, a market delivery collected, a vault's or a chest's - AUDIT RPT1026 C1: from
+-- no other giver, so a seller that kept a sold piece hands no record on), cleared by a sale that moves its owner (market.js
 -- pieceSoldSteps, writs.js's commission fill). The ledger settles a contested claim on a crafted piece for the account
 -- the craft's record names (ledger.js CRAFT_RECORD_SQL): its owner alone, until now - a realm trade moves no owner, so a
 -- maker who traded a piece away and wrote it back into its save took it back from its buyer, and the buyer's was locked

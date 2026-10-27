@@ -13,7 +13,8 @@
 //                            one does), the budget's bucket full again. RPT1026-LEDGERLAW: the excuse is of the state
 //                            the law found - the same pieces, and the same purse, bank, level, attributes and skills
 //                            (verdict.js lawExcused): a purse that moves holds again, and the first checkpoint the law
-//                            finds nothing in ends it. A purse a wrapped sale left below nothing is PURSE-MEND's (`mend`)
+//                            finds nothing in ends the excuse of a purse, bank, level, attribute or skill (a piece's
+//                            stands - AUDIT RPT1026 C2). A purse a wrapped sale left below nothing is PURSE-MEND's (`mend`)
 //   /v1/mod/realm-hold       hold a character's trade by hand ('staff')
 //   /v1/mod/realm-rollback   the character back to its last checkpoint judged clean (kept by checkpointRealm), its seat
 //                            taken from any tab (the lease cleared - the next join loads the clean save). Never past a
