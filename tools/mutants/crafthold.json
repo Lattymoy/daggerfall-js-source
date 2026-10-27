@@ -138,7 +138,7 @@
   {
     "name": "CRAFT-HOLD-wrangler-version-unmoved",
     "file": "server-account/wrangler.toml",
-    "old": "ACCOUNT_VERSION = \"acct196\"\n",
+    "old": "ACCOUNT_VERSION = \"acct197\"\n",
     "new": "ACCOUNT_VERSION = \"acct123\"\n",
     "tests": [
       "test/server/realm1.test.js",
