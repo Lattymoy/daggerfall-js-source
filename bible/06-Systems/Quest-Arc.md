@@ -6899,10 +6899,10 @@ FONT0003 for every guild quest's title, the service records unchanged (ARENA2, t
 
 ## RPT1026-QUESTS - the private report inbox's quest reports (2026-10-26)
 
-The 2026-10-26 batch of the private report inbox, its quest reports read to their roots. Four changes to the quest law
-here (the arena's ARENA-ORDER is `11-Multiplayer/Arena.md`'s); each pinned by `test/systems/quest/rpt1026_quests.test.js`
-(10 - nine here, one the arena's) and mutation-checked by `tools/mutants/rpt1026_quests.json` (25 - 23 here, two the
-arena's), all dead.
+The 2026-10-26 batch of the private report inbox, its quest reports read to their roots. Five changes to the quest law
+here (the arena's ARENA-ORDER is `11-Multiplayer/Arena.md`'s, the bounty boards' BOUNTY-WAY `Bounty-Boards.md`'s section
+5); each pinned by `test/systems/quest/rpt1026_quests.test.js` (13 - ten here, one the arena's, two the boards') and
+mutation-checked by `tools/mutants/rpt1026_quests.json` (29 - 25 here, two the arena's, two the boards'), all dead.
 
 - **ABANDON-ALWAYS** - a quest that shuts its questor's door is always a row with its Abandon. Six reports: The Lost
   Artifact shared in a party (the knight paid, every objective crossed out, nothing to abandon, the order's door shut to
@@ -6944,6 +6944,20 @@ arena's), all dead.
   inside the cut (`place.js:"_zoneSeal(world) {"`, passed to KVAR-HOLD's own collector), and the load's re-seat draws a
   saved site there again by KVAR-HOLD's law; offline the zone is no law and DFU's draw stands. Port-Ledger A, KVAR-HOLD's
   row, widened.
+
+- **CATALOG-READ** - Azimuthal Vectors' catalogue is a step until it is READ. Two reports: after the scholar's
+  teleport the catalogue's dungeon held nothing to find and no marker showed; on the dead end no payment came from the
+  Guildmagister. N0B00Y17 moves on reading its catalogue, never on carrying it (`_map2_ used do _S.15_`
+  reveals the item's dungeon; `_I.03_ used do _S.16_` is the dead end's last condition), and the questlines' sheet struck
+  "Look for the old catalog" when it was picked up - so a player who found it first, then took the scholar's errand, was
+  teleported to a dungeon already emptied, with no step left that named the letter in the pack. Driven on the
+  freeware's data through the real machine and Place (24 draws, online: every marker - the catalogue's, the vambrace's,
+  the scholar's, the teleport's landing at spawn marker 0 - stands in a block of the dungeon whole, which the quest's
+  instance builds), the placement holds; the step did not. Now the sheet has the reading as its own step, open while the
+  catalogue is carried unread: "Read the old catalog from ___hintdung_, which is in your pack"
+  (`src/systems/questlines/sheets/magesGuild.json`, N0B00Y17's `read`). Over every sheet the questlines carry, it is the
+  one objective struck on carrying an item whose script moves only on its use (N0C00Y13 and S0000017 turn theirs in by
+  carrying it). The port's own layer, not a DFU member.
 
 THE FOUR HOSTS: none grows. ABANDON-ALWAYS is the bridge's walk and the pause window's (both hosts read them); QUEST-CROWD
 rides the one logical line of `worldModes.js` standQuestFlatIn that CROWD-CLEAR already wrote (its interior adapter serves
