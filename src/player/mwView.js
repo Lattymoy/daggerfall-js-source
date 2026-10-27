@@ -38,6 +38,7 @@ import { eotbCamera } from './eyeOfTheBeholder/eotbCamera.js';
 import { eotbBody } from './eyeOfTheBeholder/eotbBody.js';
 import { eotbWagon } from './eyeOfTheBeholder/eotbWagon.js';
 import { modSetting } from '../systems/modSettings.js';
+import { getPref } from '../systems/uiPrefs.js';   // MW-SHOULDER: the player's shoulder
 import { horseRigFor, HORSE_SEAT } from '../world/horseRig.js';   // COATS3D: the 3D horse under the Morrowind body
 import { gaitShare } from '../world/horseModel.js';
 import { SEAT_PELVIS_HEIGHT } from './seatPose.js';
@@ -351,6 +352,11 @@ export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, rayca
   } else {
     fpArm.setViewMode('first');
   }
+  // MW-SHOULDER (player/mwCamera.js): the view over the shoulder, the player's choice (systems/features.js
+  // 'mw-shoulder-camera'), stepped on the arm's stance - a weapon or a spell out raises it over the head - here, once,
+  // for all four hosts (MW-D25's law: the seam, not the hosts)
+  mwCamera.setShoulder(getPref('mwShoulderCam'));
+  mwCamera.stepShoulder(state.dt ?? 0, fpArm.shoulderStance());
   pitch = spireShaftPitch(pitch, yaw, state.dt ?? 0, mwCamera.thirdPerson());   // EG-ZN: over a shaft's ledge facing its drop, the camera's pitch biased down...
   pivotFloor = spireShaftPivot(pivotFloor, feet[1] + (FOCAL_HEIGHT * heightScale) / MW_UNITS_PER_METER);   // ...and its focal risen (the standing feet's: no saddle in the Spire)
   // COATS3D: astride, the third-person camera turns about the rider's head - its feet lifted as far as the saddle lifts

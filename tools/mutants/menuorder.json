@@ -407,7 +407,7 @@
   {
     "name": "MENUORDER-host-market-unpictured",
     "file": "src/scenes/world.js",
-    "old": "      picture: (k, wake) => materialPicture(k, { onReady: wake }), itemPicture: (it, wake) => itemPicture(it, { onReady: wake }), piecePicture: marketPiecePicture,   // MENU-ORDER: a row's picture\n",
+    "old": "      picture: (k, wake) => materialPicture(k, { onReady: wake }), itemPicture: (it, wake, box) => itemPicture(it, { onReady: wake, box }), piecePicture: marketPiecePicture,   // MENU-ORDER: a row's picture\n",
     "new": "",
     "tests": [
       "test/ui/menuorder.test.js"

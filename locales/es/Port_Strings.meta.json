@@ -11029,6 +11029,26 @@
   "tr": "d2af926e8cc5",
   "by": "claude-in-session"
  },
+ "features.mwShoulder.left": {
+  "en": "8ae1c34bd37f",
+  "tr": "666ac60aa381",
+  "by": "claude-in-session"
+ },
+ "features.mwShoulder.note": {
+  "en": "1ddfce5b69bc",
+  "tr": "ace720920a35",
+  "by": "claude-in-session"
+ },
+ "features.mwShoulder.right": {
+  "en": "954daa8b0033",
+  "tr": "13b8c9dde51c",
+  "by": "claude-in-session"
+ },
+ "features.mwShoulder.title": {
+  "en": "2a1bc9d46a00",
+  "tr": "d9d00385463c",
+  "by": "claude-in-session"
+ },
  "features.navalCombat.aimCamera": {
   "en": "cfc12726e349",
   "tr": "71cb2026531c",
@@ -15822,6 +15842,81 @@
  "madeRules.unstuckHome": {
   "en": "2fe2d2f75081",
   "tr": "96946ef99065",
+  "by": "claude-in-session"
+ },
+ "market.goods.sell": {
+  "en": "c136aded14cc",
+  "tr": "5904db1032dd",
+  "by": "claude-in-session"
+ },
+ "market.list.craftedEmpty": {
+  "en": "8c65b17166cc",
+  "tr": "a1db9a4c96d2",
+  "by": "claude-in-session"
+ },
+ "market.list.craftedLabel": {
+  "en": "28f64ab188cf",
+  "tr": "19886dc90865",
+  "by": "claude-in-session"
+ },
+ "market.list.kindAuction": {
+  "en": "0774b0c33e43",
+  "tr": "b66c9612fa89",
+  "by": "claude-in-session"
+ },
+ "market.list.kindCrafted": {
+  "en": "42e1236ebb3b",
+  "tr": "b0b3e6e23d79",
+  "by": "claude-in-session"
+ },
+ "market.list.kindPack": {
+  "en": "33a51b3312f4",
+  "tr": "99ace1222961",
+  "by": "claude-in-session"
+ },
+ "market.list.kindStores": {
+  "en": "561569fc83c4",
+  "tr": "d4f168c1bbf7",
+  "by": "claude-in-session"
+ },
+ "market.list.kinds": {
+  "en": "fa2e5cff35aa",
+  "tr": "6e346fd183f7",
+  "by": "claude-in-session"
+ },
+ "market.list.mwEmpty": {
+  "en": "8eac23d4e384",
+  "tr": "6bff860b0611",
+  "by": "claude-in-session"
+ },
+ "market.list.mwLabel": {
+  "en": "44e952a4a519",
+  "tr": "78b0d820e783",
+  "by": "claude-in-session"
+ },
+ "market.list.packEmpty": {
+  "en": "bf78a767392b",
+  "tr": "b26df3e71a1d",
+  "by": "claude-in-session"
+ },
+ "market.list.packLabel": {
+  "en": "a4172827dadb",
+  "tr": "718f43e82cd3",
+  "by": "claude-in-session"
+ },
+ "market.list.pickMw": {
+  "en": "8b7b5de5ff87",
+  "tr": "62979dc3fb12",
+  "by": "claude-in-session"
+ },
+ "market.list.pickPack": {
+  "en": "7a7312e38b17",
+  "tr": "3cb76ca5af1a",
+  "by": "claude-in-session"
+ },
+ "market.list.refused": {
+  "en": "2aa24c8a3346",
+  "tr": "a0ce48a961b2",
   "by": "claude-in-session"
  },
  "market.page.label": {
@@ -21994,6 +22089,21 @@
   "tr": "f886c8415cef",
   "by": "claude-in-session"
  },
+ "naval.ram.galley": {
+  "en": "c694cf410e22",
+  "tr": "68c56ad3fef2",
+  "by": "claude-in-session"
+ },
+ "naval.ram.mine": {
+  "en": "78dda9b26926",
+  "tr": "ffd2df420e90",
+  "by": "claude-in-session"
+ },
+ "naval.ram.taken": {
+  "en": "54db41abdb97",
+  "tr": "9a94723ed802",
+  "by": "claude-in-session"
+ },
  "naval.refit.asks": {
   "en": "e5b6b89f62b2",
   "tr": "91951b86f589",
@@ -23417,6 +23527,61 @@
  "ore.tip.witnessed": {
   "en": "d7385ac3848d",
   "tr": "400eb05c7d4f",
+  "by": "claude-in-session"
+ },
+ "pack.pick.all": {
+  "en": "ab2d96c48c9c",
+  "tr": "eb91a73b739b",
+  "by": "claude-in-session"
+ },
+ "pack.pick.find": {
+  "en": "8c0399c9a415",
+  "tr": "594d16f18549",
+  "by": "claude-in-session"
+ },
+ "pack.pick.findLabel": {
+  "en": "592bcd67e1d6",
+  "tr": "cdfe591d2996",
+  "by": "claude-in-session"
+ },
+ "pack.pick.many": {
+  "en": "97e536f7d07d",
+  "tr": "7a7cc065832d",
+  "by": "claude-in-session"
+ },
+ "pack.pick.metal": {
+  "en": "d8169782b57c",
+  "tr": "d8169782b57c",
+  "by": "claude-in-session"
+ },
+ "pack.pick.none": {
+  "en": "a82b0aa9046c",
+  "tr": "794838f09ecb",
+  "by": "claude-in-session"
+ },
+ "pack.pick.noneAny": {
+  "en": "9f85767365ab",
+  "tr": "803d5cf44d99",
+  "by": "claude-in-session"
+ },
+ "pack.pick.page": {
+  "en": "276deef5715f",
+  "tr": "b50b9b92d5b7",
+  "by": "claude-in-session"
+ },
+ "pack.pick.refused": {
+  "en": "b5f2b59e9410",
+  "tr": "b5f2b59e9410",
+  "by": "claude-in-session"
+ },
+ "pack.pick.some": {
+  "en": "fb91f1f483fa",
+  "tr": "27d61f1dd03c",
+  "by": "claude-in-session"
+ },
+ "pack.pick.tier": {
+  "en": "a3e1e99f2620",
+  "tr": "26599e2a0dae",
   "by": "claude-in-session"
  },
  "party.travel.followOnceAble": {
@@ -29144,14 +29309,29 @@
   "tr": "132e5137f54b",
   "by": "claude-in-session"
  },
+ "ql.journal.pieceChain": {
+  "en": "9fc9f25448a2",
+  "tr": "bed4ae79af3c",
+  "by": "claude-in-session"
+ },
  "ql.journal.pieceDamage": {
   "en": "8d28c6a569cd",
   "tr": "bd9352c2d951",
   "by": "claude-in-session"
  },
+ "ql.journal.pieceLeather": {
+  "en": "14786dce4b74",
+  "tr": "79f6b0212b71",
+  "by": "claude-in-session"
+ },
  "ql.journal.pieceOneHanded": {
   "en": "7ec4211fda0d",
   "tr": "ff17108ec91c",
+  "by": "claude-in-session"
+ },
+ "ql.journal.piecePlate": {
+  "en": "71f27cb3d1c6",
+  "tr": "1564590b0144",
   "by": "claude-in-session"
  },
  "ql.journal.pieceTwoHanded": {
@@ -35749,6 +35929,11 @@
   "tr": "d042aba261eb",
   "by": "claude-in-session"
  },
+ "vendor.put.refused": {
+  "en": "964e7da80274",
+  "tr": "b3b0c76e6865",
+  "by": "claude-in-session"
+ },
  "wagon.upkeep.boons.failing": {
   "en": "5e6a68b53a69",
   "tr": "e99e152bd592",
@@ -35877,6 +36062,16 @@
  "wild.zone.unstuckOut": {
   "en": "23aa54c8359e",
   "tr": "d96574d13eda",
+  "by": "claude-in-session"
+ },
+ "net.chat.linkItem": {
+  "en": "10bc470a62de",
+  "tr": "10bc470a62de",
+  "by": "claude-in-session"
+ },
+ "net.chat.worn": {
+  "en": "cafe5884febc",
+  "tr": "cafe5884febc",
   "by": "claude-in-session"
  }
 }

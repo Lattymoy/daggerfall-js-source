@@ -99,7 +99,7 @@ way. The game's own `canTake` still reads the remains' `oid` as the fallen's pee
 so the killer's party and guild see no pile of a remains the room would let them take.
 
 DEPLOY: the account service `acct197` (acct193 to acct196 on its branch, renumbered past COPY-LIFT, NIRNROOT-SAGE, LOCKPICK and WOVEN-PAYS at the merges) first (its order's `wnm` - an older relay ignores the field), then the relay
-`world270` (world265 to world269 on its branch, renumbered past GATE-COURTS, AUDIT KETCH II, KETCH-WORDS, NIRNROOT-SAGE and BOW-TOPS at the merges), then the site.
+`world271` (world265 to world270 on its branch, renumbered past GATE-COURTS, AUDIT KETCH II, KETCH-WORDS, NIRNROOT-SAGE, BOW-TOPS and CHAT-POST at the merges), then the site.
 
 LIMITS (`11-Multiplayer/Wild-Zone.md` section 22): a page that comes back outside the zone, or inside one of its
 buildings, says no zone word and hears no `down` until it steps into the zone; the hub's carry is in memory alone; a

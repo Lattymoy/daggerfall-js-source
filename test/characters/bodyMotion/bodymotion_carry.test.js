@@ -5,7 +5,8 @@
 // made as the build makes it (combat/twoHands/mirrorRig.js offWeaponBoneAddon).
 //
 // What is pinned: every weapon type and hands mode to its carry class; the stances Mac named, measured on the solved
-// body - a one-hander held down and away from the side, its run in the same format with the blade trailing; a two-hander
+// body - a one-hander held down and away from the side, its run in the same format (ONE-RUN: the blade forward, as the
+// stand holds it - it trailed, and twisted the forearm; fb1026c_mwbody.test.js); a two-hander
 // in both hands at rest and at the hip at a run, its blade behind; a pair held away from both sides as mirror images and
 // swept behind at a run; a bow and a spell left to the clip's arms; the blow's clock read off the machine's sections; a
 // slash from the right, through the front on the hit with its edge leading, out to the left; a left-hand blow the
@@ -98,7 +99,7 @@ test('BODY-MOTION THE ARM BY ITS ANGLES: hanging, flexed forward, held out and b
   assert.ok(inward.wrist[0] < -5, 'the inward twist turns the forearm toward the middle');
 });
 
-test('BODY-MOTION A ONE-HANDER, HELD DOWN AND AWAY FROM THE SIDE (Mac\'s stance): the hand low by the thigh and out from it, the blade forward and down and out; running "in the same format" - the arm still low and out, the blade trailing behind and down - the free arm swinging (mutants: BODY-MOTION-one-idle-blade, BODY-MOTION-one-run-blade, BODY-MOTION-carry-weapon-unturned)', () => {
+test('BODY-MOTION A ONE-HANDER, HELD DOWN AND AWAY FROM THE SIDE (Mac\'s stance): the hand low by the thigh and out from it, the blade forward and down and out; running "in the same format" - the arm still low and out, the blade forward and a little down as the stand holds it (ONE-RUN, FIELD BUGS 2026-10-26c: it trailed behind and down, the forearm twisted to hold it) - the free arm swinging (mutants: BODY-MOTION-one-idle-blade, BODY-MOTION-one-run-blade, BODY-MOTION-carry-weapon-unturned)', () => {
   const idle = play({ weapon: MW_WEAPON_TYPE.LongBladeOneHand }, 1.5).mats;
   const F = frameOf(idle);
   const wrist = pt(idle, 'bip01 r hand'), shoulder = pt(idle, 'bip01 r upperarm'), thigh = pt(idle, 'bip01 r thigh');
@@ -117,7 +118,7 @@ test('BODY-MOTION A ONE-HANDER, HELD DOWN AND AWAY FROM THE SIDE (Mac\'s stance)
     runOut.push(pt(m, 'bip01 r hand')[0] - pt(m, 'bip01 r thigh')[0]);
     freeSwing.push(pt(m, 'bip01 l hand')[1]);
   });
-  assert.ok(runB.every((v) => v[1] < -0.2 && v[2] < -0.5), 'running: the blade trails behind and down');
+  assert.ok(runB.every((v) => v[1] > 0.6 && v[2] < 0), 'running: the blade forward and down, as the stand holds it (ONE-RUN)');
   assert.ok(Math.min(...runOut) > 0.2 * A, 'the arm still out from the side');
   assert.ok(Math.max(...freeSwing) - Math.min(...freeSwing) > 0.5 * A, 'the free arm swings');
 });
@@ -358,7 +359,8 @@ test('BODY-MOTION THE RIG\'S WORD: on only in third person, on a base_anim skele
 
 test('BODY-MOTION THE WIRING, by source: poseAssembly lays the `motion` slot after the mirror and the neck and under the run, the climb and the hold; the rig steps its motion after the clips with its own word and hands the slot to the THIRD-person body\'s pose only; the hip lantern follows the gait\'s stride while it walks the legs; and the switch is the viewer\'s, on by default (mutants: BODY-MOTION-slot-unwired, BODY-MOTION-never-stepped, BODY-MOTION-lantern-off-the-gait)', () => {
   const fp = readFileSync(new URL('../../../src/formats/morrowind/mwFirstPerson.js', import.meta.url), 'utf8');
-  assert.match(fp, /applyFirstPersonNeck\([^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*assembly\.motionFit = motion \? motion\(skeleton, pose, GRAPH_ROOT, fns\.skelMats\) : null;\n(?:\s*\/\/[^\n]*\n)*\s*assembly\.runFit = run/);
+  // BOW-AIM (FIELD BUGS 2026-10-26c): the third person's ranged aim between the neck and the motion - the spine's pitch is the clip's, which the motion keeps while the clip has the arms
+  assert.match(fp, /applyFirstPersonNeck\([^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*assembly\.aimFit = aim \? aim\(skeleton, pose, GRAPH_ROOT, fns\.skelMats\) : null;\n(?:\s*\/\/[^\n]*\n)*\s*assembly\.motionFit = motion \? motion\(skeleton, pose, GRAPH_ROOT, fns\.skelMats\) : null;\n(?:\s*\/\/[^\n]*\n)*\s*assembly\.runFit = run/);
   const arm = readFileSync(new URL('../../../src/combat/fpArm.js', import.meta.url), 'utf8');
   assert.equal((arm.match(/motion: motion\.slot,/g) ?? []).length, 1, 'one pose takes the slot');
   assert.match(arm, /hold: rifleHold\('third', t\),[^\n]*\n\s*motion: motion\.slot,/, 'the third-person body\'s');

@@ -19,7 +19,7 @@ import { setPref, _resetForTests } from '../../src/systems/uiPrefs.js';
 import * as LR from '../../src/systems/loot/lootRarity.js';
 import * as RF from '../../src/systems/reforge.js';
 import { reforgeEssence } from '../../src/net/temperLaw.js';
-import { MINT_VERSION, MINT_V_LAST_PASS, MINT_V_LINES } from '../../src/net/productRecord.js';
+import { MINT_VERSION, MINT_V_LAST_PASS, MINT_V_LINES, MINT_V_ARMOR_LEAN } from '../../src/net/productRecord.js';
 import { mintPiece, asMinted, reforgeItem, essenceReforgeRefusal } from '../../src/systems/smithItems.js';
 import { RECIPES } from '../../src/net/recipeLaw.js';
 import { mintCondition } from '../../src/systems/item/itemTemplates.js';
@@ -56,7 +56,7 @@ test('AFFIX-LINES: 10,000 seeded mints a piece - a line is drawn over the lines:
     const lines = {}, pieces = {};
     let total = 0;
     for (let s = 0; s < N; s++) {
-      const out = LR.rollAffixes(make(), tier, seededRng(seedOf(s)), { byLines });
+      const out = LR.rollAffixes(make(), tier, seededRng(seedOf(s)), { byLines, lean: false });   // ARMOR-LEAN: the lines' law alone - the family's lean is its own suite's (loot/armorlean.test.js)
       for (const a of out) { lines[a.id] = (lines[a.id] ?? 0) + 1; total++; }
       for (const id of new Set(out.map((a) => a.id))) pieces[id] = (pieces[id] ?? 0) + 1;
     }
@@ -119,7 +119,7 @@ test('AFFIX-LINES: one roll a pick, as `pick` took (LOOT1) - the roll\'s place l
           const rolls = () => { const r = base(); seen.push(r); return r; };
           const out = LR.rollAffixes(make(), tier, rolls, { byLines });
           const n = seen.length;
-          const leaned = own != null && seen[1] < 0.5;   // the count's roll, then the lean's
+          const leaned = own != null && seen[1] < (byLines ? LR.armorLean(make())?.own ?? 0.5 : 0.5);   // the count's roll, then the lean's - ARMOR-LEAN: armour's at its family's share
           const want = 1 + (own ? 1 : 0) - (leaned ? 1 : 0) + out.reduce((k, a) => k + 2 + (LR.AFFIX_KINDS[a.id].params ? 1 : 0), 0);
           assert.equal(n, want, `${make().group} ${tier} ${byLines ? 'new' : 'old'} law, seed ${s}: ${n} rolls`);
         }
@@ -129,22 +129,23 @@ test('AFFIX-LINES: one roll a pick, as `pick` took (LOOT1) - the roll\'s place l
 });
 
 test('AFFIX-LINES: the mint version - a record of 0 or 1 mints the old law\'s piece, one of 2 the new; a loot door the new; the old law\'s Rare names both parts', () => {
-  assert.deepEqual([MINT_V_LAST_PASS, MINT_V_LINES, MINT_VERSION], [1, 2, 2], 'the craft stamps the lines\' law');
+  assert.deepEqual([MINT_V_LAST_PASS, MINT_V_LINES, MINT_V_ARMOR_LEAN, MINT_VERSION], [1, 2, 3, 3], 'the craft stamps the lines\' law and, ARMOR-LEAN, armour\'s family lean');
   const weapons = RECIPES.filter((r) => ['weapon', 'plate', 'shield'].includes(r.kind));
   let moved = 0;
   for (let i = 0; i < 300; i++) {
     const r = weapons[i % weapons.length], q = 3 + (i % 2), tier = q === 3 ? 'magic' : 'rare', seed = seedOf(i + 500);
-    const door = (byLines, pass) => {
+    const door = (byLines, pass, lean = true) => {
       const rolls = seededRng(seed >>> 0);
       const it = r.kind === 'weapon' ? weaponOfMaterial(r.templateIndex, r.material) : armorOfMaterial(r.templateIndex, r.material);
-      LR.applyRarity(it, tier, rolls, null, { byLines });
+      LR.applyRarity(it, tier, rolls, null, { byLines, lean });
       if (pass) LR.lastPass([it], rolls, { on: true });
       return it.affixes;
     };
     const mint = (version) => mintPiece({ recipe: r.id, quality: q, seed, maker: null, version }, '0123456789abcdef');
     assert.deepEqual(mint(0).affixes, door(false, false), `${r.id} v0: the old law, no last pass`);
     assert.deepEqual(mint(1).affixes, door(false, true), `${r.id} v1: the old law, the last pass`);
-    assert.deepEqual(mint(2).affixes, door(true, true), `${r.id} v2: the lines\' law, the last pass - a loot door\'s`);
+    assert.deepEqual(mint(2).affixes, door(true, true, false), `${r.id} v2: the lines\' law, the last pass - no family lean`);
+    assert.deepEqual(mint(3).affixes, door(true, true), `${r.id} v3: and ARMOR-LEAN's family lean - a loot door\'s`);
     assert.deepEqual(LR.applyRarity(r.kind === 'weapon' ? weaponOfMaterial(r.templateIndex, r.material) : armorOfMaterial(r.templateIndex, r.material), tier, seededRng(seed >>> 0)).affixes, door(true, false), 'a loot door draws over the lines');
     if (JSON.stringify(mint(1).affixes) !== JSON.stringify(mint(2).affixes)) moved++;
   }

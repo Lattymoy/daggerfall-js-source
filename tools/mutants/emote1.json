@@ -135,8 +135,8 @@
   {
     "name": "EM-pick-at-the-end",
     "file": "src/ui/chatPanel.js",
-    "old": "    const a = Number.isInteger(input.selectionStart) ? input.selectionStart : v.length;",
-    "new": "    const a = v.length;",
+    "old": "  const insertAtCaret = (ch) => {\n    const v = String(input.value ?? '');\n    const a = Number.isInteger(input.selectionStart) ? input.selectionStart : v.length;",
+    "new": "  const insertAtCaret = (ch) => {\n    const v = String(input.value ?? '');\n    const a = v.length;",
     "tests": ["test/net/emote1.test.js"]
   },
   {

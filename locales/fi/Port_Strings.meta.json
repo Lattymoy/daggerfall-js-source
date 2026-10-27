@@ -5299,6 +5299,26 @@
   "tr": "c647fe734dfd",
   "by": "claude-in-session"
  },
+ "features.mwShoulder.left": {
+  "en": "8ae1c34bd37f",
+  "tr": "425be6b8afec",
+  "by": "claude-in-session"
+ },
+ "features.mwShoulder.note": {
+  "en": "1ddfce5b69bc",
+  "tr": "1e3a3bfeaa9d",
+  "by": "claude-in-session"
+ },
+ "features.mwShoulder.right": {
+  "en": "954daa8b0033",
+  "tr": "4d2baf3a8f8c",
+  "by": "claude-in-session"
+ },
+ "features.mwShoulder.title": {
+  "en": "2a1bc9d46a00",
+  "tr": "58330bbb14de",
+  "by": "claude-in-session"
+ },
  "features.navalCombat.aimCamera": {
   "en": "cfc12726e349",
   "tr": "a580ba594c13",
@@ -13777,6 +13797,21 @@
  "ql.journal.lineOffered": {
   "en": "07bf16996609",
   "tr": "82ff46b63e75",
+  "by": "claude-in-session"
+ },
+ "ql.journal.pieceChain": {
+  "en": "9fc9f25448a2",
+  "tr": "e8465c188aa4",
+  "by": "claude-in-session"
+ },
+ "ql.journal.pieceLeather": {
+  "en": "14786dce4b74",
+  "tr": "93aa50a9411f",
+  "by": "claude-in-session"
+ },
+ "ql.journal.piecePlate": {
+  "en": "71f27cb3d1c6",
+  "tr": "490719594853",
   "by": "claude-in-session"
  },
  "ql.journal.postBoard": {
