@@ -1107,3 +1107,9 @@ Recorded:
   half-sides and the old line's own fill (the mask's fill is `audittesa2z.json`'s).
 
 Section A, SMOOTH-LAND (OURS: DFU stops at the Bay's edge; the land past it is the port's own).
+
+## RED-MOUNTAIN - the volcano on Vvardenfell (2026-10-27)
+
+The owner: *"An absolute massive volcano true to lore that towers in the distance."* The cone, its crater, its foyada,
+its fire and its horizon are `Red-Mountain.md`: a law of world position the kernel stands on the land past the Bay at
+Red Mountain's summit on the relief, 6.9 km over the sea.

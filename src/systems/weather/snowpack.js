@@ -40,7 +40,7 @@ import { MAX_MAP_PIXEL_Y } from '../../formats/mapsFile.js';
  * under the one law;
  * `levels` the altitudes a place's pack is kept at (metres above the sea - the lowest are below it, the air there read on
  * down the lapse, so a pack white to the shore still has a snowline to blend across; the highest over the tallest ground
- * the landforms stand, LANDFORM_CEILING's 3,610 m over the sea); `rate` the fall at a band's full intensity (mm of water
+ * the world stands - RED-MOUNTAIN's rim (world/tamriel/redMountain.js), over which a place would read white); `rate` the fall at a band's full intensity (mm of water
  * an hour - AUDIT PRECIP PACK-2: measured against the map's own wet hours, a sixth of all hours in High Rock, so a year
  * falls 800 to 1,300 mm on its lowlands and ranges, as a temperate maritime land does; the guessed 4 / 10 / 2.5 fell
  * three times that, a boreal pack on lowland woods); `melt` the degree-hour factor (4 mm a degree-day: the textbook's open
@@ -50,7 +50,7 @@ import { MAX_MAP_PIXEL_Y } from '../../formats/mapsFile.js';
  */
 export const SNOWPACK = Object.freeze({
   stepMinutes: 180,
-  levels: Object.freeze({ from: -600, step: 200, count: 23 }),
+  levels: Object.freeze({ from: -600, step: 200, count: 44 }),   // RED-MOUNTAIN: to 8,000 m, over its rim on the relief's top byte (23 to 3,800 before)
   rate: Object.freeze({ rain: 1.3, thunder: 3.3, snow: 0.8 }),
   melt: 4 / 24,
   rainMelt: 4.19 / 334,

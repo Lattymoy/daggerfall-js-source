@@ -1,0 +1,302 @@
+[
+  {
+    "name": "RED-MOUNTAIN-the-summit-cone-rounder",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "Object.freeze({ share: 0.54, reach: 10000, power: 2 }),",
+    "new": "Object.freeze({ share: 0.54, reach: 10000, power: 3 }),",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-body-shares-more",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "Object.freeze({ share: 0.2, reach: 35000, power: 2 }),",
+    "new": "Object.freeze({ share: 0.25, reach: 35000, power: 2 }),",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-centre-a-row-off",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "cy = (MAP_ROWS + 1 - by) * 128, k = 1 / SAMPLE_M;",
+    "new": "cy = (MAP_ROWS - by) * 128, k = 1 / SAMPLE_M;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-foyada-leave-the-centre",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "const along = i * D.trough.step, r = D.rim + along;",
+    "new": "const along = i * D.trough.step, r = along;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-no-crown",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "const crownOf = (ux, uy) => 1 + D.lobes.amp * (2 * perlinNoise(ux * D.lobes.radius + 17.31, uy * D.lobes.radius + 5.77) - 1);",
+    "new": "const crownOf = (ux, uy) => 1 + 0 * (ux + uy);",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-a-foyada-floor-rising",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "lv[i] = own < above ? own : above;",
+    "new": "lv[i] = own;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-landforms-whole-on-the-rim",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "let land = base + hills * smooth01(d / D.keep) * still + lift / UNIT_M;",
+    "new": "let land = base + hills * still + lift / UNIT_M;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-foyada-floor-not-flat",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "land += (_near[1] - land) * (1 - smooth01((_near[0] - 0.5) / 0.5));",
+    "new": "land += (_near[1] - land) * (1 - smooth01(_near[0]));",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-no-crater-floor",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "  return land + (ground.floor - land) * s;",
+    "new": "  return land + 0 * s;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-bound-at-the-far-side",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "  const dx = f.cx < x0 ? x0 - f.cx : f.cx > x0 + 128 ? f.cx - x0 - 128 : 0;",
+    "new": "  const dx = f.cx < x0 ? x0 + 128 - f.cx : f.cx > x0 + 128 ? f.cx - x0 : 128;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-horizon-has-no-crater",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "  return (lift - (lift - (D.lift - D.depth)) * smooth01(-d / (D.rim - D.floor))) / UNIT_M;",
+    "new": "  return lift / UNIT_M;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-a-cell-its-centre-alone",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "const dx = ax > h ? ax - h : ax < -h ? ax + h : 0, dy = ay > h ? ay - h : ay < -h ? ay + h : 0;",
+    "new": "const dx = ax, dy = ay;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-shaper-stands-none",
+    "file": "src/world/landforms.js",
+    "old": ": crater !== null ? redMountainLand(gx, gy, base, hh, crater) : base + hh;",
+    "new": ": base + hh;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-a-site-on-the-old-land",
+    "file": "src/world/landforms.js",
+    "old": "sum += crater !== null ? redMountainLand(ox + x, oy + y, h + lift * fade, hh, crater) : h + lift * fade + hh;",
+    "new": "sum += h + lift * fade + hh;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-top-unbounded",
+    "file": "src/world/landforms.js",
+    "old": "Math.max(hill, TAMRIEL_TOP) + redMountainTopNear(px, py);",
+    "new": "Math.max(hill, TAMRIEL_TOP);",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-air-ground-without-it",
+    "file": "src/world/landforms.js",
+    "old": "return h + lift * (fade ? fade(x, y) : 1) + (beyond ? redMountainSmooth(ox + x, oy + y) : 0);",
+    "new": "return h + lift * (fade ? fade(x, y) : 1);",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-a-byte-node-misplaced",
+    "file": "src/world/landforms.js",
+    "old": "const fx = gx / 128 - 1, fy = MAP_H - gy / 128,",
+    "new": "const fx = gx / 128, fy = MAP_H - gy / 128,",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-not-on-the-horizon",
+    "file": "src/render/farRing.js",
+    "old": "ringHeight(byte, relief, fade, relief ? byteBeyond(x, y) : 0) + (relief ? redMountainLiftAt(x, y, half) * STREAMING_TERRAIN_SCALE : 0);",
+    "new": "ringHeight(byte, relief, fade, relief ? byteBeyond(x, y) : 0);",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-far-field-its-centre",
+    "file": "src/render/farRing.js",
+    "old": "heightOf: (byte, x, y) => ringHeightAt(x, y, byte, !!inputs.relief, 1, FAR_CELL / 2),",
+    "new": "heightOf: (byte, x, y) => ringHeightAt(x, y, byte, !!inputs.relief),",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-fire-undrawn",
+    "file": "src/render/farRing.js",
+    "old": "const fire = eye && worldProj ? this._fireNow() : null;",
+    "new": "const fire = null;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-fire-without-the-lift",
+    "file": "src/render/farRing.js",
+    "old": "if (!inputs?.relief || this._fireOff) return null;",
+    "new": "if (this._fireOff) return null;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-snow-on-its-ash",
+    "file": "src/world/peaks/snowcap.js",
+    "old": "return line >= CAP_NONE ? line : line + redMountainLiftAt(px, py) * STREAMING_TERRAIN_SCALE;",
+    "new": "return line;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-no-fire-in-the-air",
+    "file": "src/systems/weather/airTemperature.js",
+    "old": "  if (_ground?.heatAt) out.mean += _ground.heatAt(x, z);",
+    "new": "  if (_ground?.heatAt) out.mean += 0;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-levels-short",
+    "file": "src/systems/weather/snowpack.js",
+    "old": "levels: Object.freeze({ from: -600, step: 200, count: 44 }),",
+    "new": "levels: Object.freeze({ from: -600, step: 200, count: 43 }),",
+    "tests": [
+      "test/world/redmountain.test.js",
+      "test/render/precip4_snowground.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-profile-no-crater",
+    "file": "src/render/redMountainFire.js",
+    "old": "    out[i] = D.lift - D.depth * s;",
+    "new": "    out[i] = D.lift;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-lake-on-the-floor",
+    "file": "src/render/redMountainFire.js",
+    "old": "ly = floorY + FIRE.lakeOver;",
+    "new": "ly = floorY;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-a-river-on-its-floor",
+    "file": "src/render/redMountainFire.js",
+    "old": "y: lv[i] * STREAMING_TERRAIN_SCALE + FIRE.riverOver,",
+    "new": "y: lv[i] * STREAMING_TERRAIN_SCALE,",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-hiding-over-the-cone",
+    "file": "src/render/redMountainFire.js",
+    "old": "bool under(vec3 q, float m) { return q.y < coneAt(q.xz) - m; }",
+    "new": "bool under(vec3 q, float m) { return q.y < coneAt(q.xz) + m; }",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-eye's-ground-not-given-back",
+    "file": "src/render/redMountainFire.js",
+    "old": "  float m = margin + max(0.0, coneAt(uEye.xz) - uEye.y);",
+    "new": "  float m = margin;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-rim's-crest-unasked",
+    "file": "src/render/redMountainFire.js",
+    "old": "  float crest = uCone.z + ${f1(D.lift)} - m;",
+    "new": "  float crest = -1e9;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ],
+    "equivalent": true,
+    "why": "Belt and braces: with the profile crowded at the crater (profileR) the ray's steps within the cone's disc land within a few hundred metres of the rim in every case the pins draw, and catch the crest themselves; the crest's own test is kept for a ray whose steps straddle it."
+  },
+  {
+    "name": "RED-MOUNTAIN-the-profile-even",
+    "file": "src/render/redMountainFire.js",
+    "old": "export const profileR = (i) => ((i / (FIRE.profile - 1)) ** 2) * RED_MOUNTAIN_REACH;",
+    "new": "export const profileR = (i) => (i / (FIRE.profile - 1)) * RED_MOUNTAIN_REACH;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-summits-in-the-haze",
+    "file": "src/render/horizonHaze.js",
+    "old": "export const SUMMIT_HAZE = Object.freeze({ from: 3700, to: 6500, keep: 0.7 });",
+    "new": "export const SUMMIT_HAZE = Object.freeze({ from: 3700, to: 6500, keep: 0 });",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-lane's-ring-in-the-haze",
+    "file": "src/render/enhancedLighting.js",
+    "old": "uRimStart, uRimEnd, summitHold(uHazeHold))));",
+    "new": "uRimStart, uRimEnd, uHazeHold)));",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  }
+]

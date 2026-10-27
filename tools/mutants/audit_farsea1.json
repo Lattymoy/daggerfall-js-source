@@ -73,13 +73,13 @@
   {
     "name": "AUDIT-FAR-SEA1-P1-the-range-left-at-the-far-plane",
     "file": "src/render/farRing.js",
-    "old": "FAR-TREES: the near trees past the grid, nearest of the pass\n    gl.depthRange(0, 1);",
-    "new": "FAR-TREES: the near trees past the grid, nearest of the pass",
+    "old": "seconds: this._now() / 1000 });\n    }\n    gl.depthRange(0, 1);",
+    "new": "seconds: this._now() / 1000 });\n    }",
     "tests": [
       "test/render/audit_farsea1.test.js",
       "test/render/farsea1.test.js"
     ],
-    "note": "Re-aimed by content (FAR-TREES, at its fold into #1184): the band of near trees past the grid draws between the landmarks and the range's reset. Re-aimed by content (FAR-LANDMARK): the depth range is put back after the near landmarks too. Re-aimed by content (MID-RING): the middle ring is drawn after the far ring inside the pass, so the depth range is put back after it."
+    "note": "Re-aimed by content (FAR-TREES, at its fold into #1184): the band of near trees past the grid draws between the landmarks and the range's reset. Re-aimed by content (FAR-LANDMARK): the depth range is put back after the near landmarks too. Re-aimed by content (MID-RING): the middle ring is drawn after the far ring inside the pass, so the depth range is put back after it. Re-aimed by content (RED-MOUNTAIN): the volcano's fire draws after the band, before the range is put back."
   },
   {
     "name": "AUDIT-FAR-SEA1-L1-the-sun-in-full-on-the-ring-sea",

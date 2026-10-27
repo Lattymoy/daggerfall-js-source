@@ -38,11 +38,12 @@
   {
     "name": "BREATHTAKER2-far-field-law-unwired",
     "file": "src/render/farRing.js",
-    "old": "heightOf: (byte, x, y) => ringHeightAt(x, y, byte, !!inputs.relief),",
+    "old": "heightOf: (byte, x, y) => ringHeightAt(x, y, byte, !!inputs.relief, 1, FAR_CELL / 2),",
     "new": "heightOf: (byte) => ringHeight(byte, !!inputs.relief),",
     "tests": [
       "test/render/farlandmark.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (RED-MOUNTAIN): the far field's law asks the cone's highest in the cell too."
   },
   {
     "name": "BREATHTAKER2-travel-view-plain-law",

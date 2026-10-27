@@ -72,7 +72,9 @@
 
 import { SCALED_OCEAN_ELEVATION, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
 import { overworldTint, isWaterPixel, BASE_HEIGHT_SCALE } from '../ui/overworldModel.js';   // FAR-SEA1: and the overworld's own water rule, for the ring's sea
-import { reliefByteHeight, cliffFadeAt, CLIFF_REACH, byteBeyond } from '../world/landforms.js';   // LANDFORM1: the landforms' lift on a pixel's byte; AUDIT LANDFORMS II I1: faded beside the sea; BREATHTAKER2: and its continuation past the 7-bit top, past the Bay
+import { reliefByteHeight, cliffFadeAt, CLIFF_REACH, byteBeyond, byteBase } from '../world/landforms.js';   // LANDFORM1: the landforms' lift on a pixel's byte; AUDIT LANDFORMS II I1: faded beside the sea; BREATHTAKER2: and its continuation past the 7-bit top, past the Bay
+import { redMountainLiftAt, redMountainFrame, redMountainGround } from '../world/tamriel/redMountain.js';   // RED-MOUNTAIN: the volcano on the horizon, its lava's levels
+import { RedMountainFire } from './redMountainFire.js';   // RED-MOUNTAIN: its fire, drawn in this pass
 import { perspective, mirrorProjectionX } from '../world/mat4.js';
 import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
 import { RING_SEA_GLSL, FLORA_GLSL, FLORA_CROWN_M, FLORA_GROVE_M } from './horizonHaze.js';   // FAR-SEA1: the horizon's haze and the sea's own look, one text for the ring (both lanes) and the sea
@@ -122,7 +124,8 @@ export const ringHeight = (byte, relief = false, fade = 1, beyond = 0) =>
  *  continent's share at its byte node (world/landforms.js byteBeyond: 0 on the Bay and its seam, past it the lift that
  *  goes on over the 7-bit top, CONTINENT_LIFT) - so the far ring, the middle ring's eased rim and the far field stand
  *  Skyrim's and the Jerall's peaks at the streamed ground's height, never a copy of the law. */
-export const ringHeightAt = (x, y, byte, relief = false, fade = 1) => ringHeight(byte, relief, fade, relief ? byteBeyond(x, y) : 0);
+export const ringHeightAt = (x, y, byte, relief = false, fade = 1, half = 0) =>
+  ringHeight(byte, relief, fade, relief ? byteBeyond(x, y) : 0) + (relief ? redMountainLiftAt(x, y, half) * STREAMING_TERRAIN_SCALE : 0);   // RED-MOUNTAIN: its cone (a far field cell's highest, `half` its half-width)
 /** FAR-SEA1: the ring's sea level - a vertex standing here over a water pixel is the sea (after ringHeight: a const). */
 const RING_SEA_Y = ringHeight(0);
 
@@ -507,7 +510,7 @@ void main() {
   if (sea > 0.0) lit = mix(lit, ringSea(uAmbient, uSunColor, uMoonColor, sun), sea);
   // the world fog's own ramp, capped at the hold - silhouettes read
   // through the haze - then closed to 1 at the rim (FAR-SEA1: the horizon's one law)
-  outColor = vec4(mix(lit, uFogColor, ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, uHazeHold))), 1.0);   // BANTHA1: and the jungle's haze
+  outColor = vec4(mix(lit, uFogColor, ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, summitHold(uHazeHold)))), 1.0);   // BANTHA1: and the jungle's haze
 }`;
 
 const FLAT_UP = new Float32Array([0, 1, 0]);
@@ -526,6 +529,11 @@ export const RING_CLOUD_UNIT = 15;
 /** ?ring=off - the escape hatch, read once at scene build. */
 export function ringDisabled(search = globalThis.location?.search) {
   try { return /[?&]ring=off\b/.test(search ?? ''); }
+  catch { return false; }
+}
+/** RED-MOUNTAIN: `?redfire=off` - the volcano's lava and plume not drawn (its cone is the ground's, and stands). */
+export function fireDisabled(search = globalThis.location?.search) {
+  try { return /[?&]redfire=off\b/.test(search ?? ''); }
   catch { return false; }
 }
 
@@ -555,6 +563,7 @@ export class FarRingRenderer {
     /** @type {any} */ this._builtNow = null;
     /** @type {?Float32Array} */ this._farOrigin = null;
     this._now = opts.now ?? (() => performance.now());
+    this._fire = null; this._fireOff = fireDisabled();   // RED-MOUNTAIN: the volcano's fire, made the first frame it stands
     // FAR-FLORA: the trees' art (render/farFlora.js) - `opts.flora` a book of one's own (a test's), null for none; by
     // default the pipeline's, unless `?farflora=off`. The woods stand at Land View FLORA_MIN_LAND_VIEW and up (the knob).
     this._flora = opts.flora !== undefined ? opts.flora : (floraDisabled() ? null : createFloraArt());
@@ -746,7 +755,7 @@ export class FarRingRenderer {
       const clim = answer.clim ?? null, climAt = (x, y, v) => (clim && clim[v] !== FAR_CLIMATE_ASK ? clim[v] : climateOf(x, y));
       const it = farFieldVertexSteps({
         high: answer.high, low: answer.low, baseCX, baseCY,
-        heightOf: (byte, x, y) => ringHeightAt(x, y, byte, !!inputs.relief),   // BREATHTAKER2: the continent's lift at the cell's centre
+        heightOf: (byte, x, y) => ringHeightAt(x, y, byte, !!inputs.relief, 1, FAR_CELL / 2),   // BREATHTAKER2: the continent's lift at the cell's centre; RED-MOUNTAIN: the cone's highest in the cell
         tintAt: (x, y, byte, v) => overworldTint(climAt(x, y, v), byte),
         oceanAt: (x, y, v) => climAt(x, y, v) === CLIMATES.Ocean,
         seaY: RING_SEA_Y,
@@ -892,6 +901,7 @@ export class FarRingRenderer {
       field: this._far?.built ? { baseCX: this._far.baseCX, baseCY: this._far.baseCY, cells: this._far.count / 6 } : null,
       laying: this._work.length, asking: [this._midAsk, this._farAsk].filter(Boolean).length, landmarks: this._landmarks.length,
       trees: this._band ? this._band.count : null,   // FAR-TREES: the band's trees drawn
+      fire: this._fire ? { mesh: !!this._fire.mesh, drawn: this._fire.drawn } : null,   // RED-MOUNTAIN: the volcano's fire, made and drawn
     };
   }
 
@@ -1047,6 +1057,11 @@ export class FarRingRenderer {
       for (const { lm } of near) this._drawLandmark(lm, origin);   // no middle ring: the near ones after this ring
     }
     if (this._band?.count && this._floraOf()) this._drawBand(view, origin, { ambient, sunScale, sunColor, moonScale, moonColor, fogColor, fogStart, fogEnd, exposure, haze, hazeEye: hazeEye ?? eye ?? FLAT_UP, farField: !!farField, deck: this.renderer?.cloudShadow ?? null });   // FAR-TREES: the near trees past the grid, nearest of the pass
+    const fire = eye && worldProj ? this._fireNow() : null;   // RED-MOUNTAIN: the volcano's lava and plume, last of the pass
+    if (fire) {
+      fire.draw({ ringOrigin: origin, baseX: this.baseX, baseY: this.baseY, view, worldProj, fovY, aspect, far, eye, fog: { color: fogColor, start: fogStart, end: fogEnd },
+        rim: farField ? [FAR_RIM_START, FAR_RIM_END] : [RING_RIM_START, RING_RIM_END], hold: RING_HAZE_HOLD, light: Math.max(ambient[0], ambient[1], ambient[2]) + 0.6 * sunScale, seconds: this._now() / 1000 });
+    }
     gl.depthRange(0, 1);
     gl.enable(gl.CULL_FACE);
     gl.depthMask(true);
@@ -1056,9 +1071,23 @@ export class FarRingRenderer {
     // are already due their reset (the R9 law).
   }
 
+  /** RED-MOUNTAIN: the volcano's fire (render/redMountainFire.js), made the first frame the land stands it, its mesh on
+   *  the levels its lava lies at read off this ring's own bytes (world/landforms.js byteBase - the kernel's own law of
+   *  them) - none without the landforms' lift, which stands the cone, nor by `?redfire=off`. */
+  _fireNow() {
+    const inputs = this._inputs;
+    if (!inputs?.relief || this._fireOff) return null;
+    const frame = redMountainFrame();
+    if (!frame) return null;
+    const ground = redMountainGround(byteBase(ringReaders(inputs).byteAt), inputs);
+    (this._fire ??= new RedMountainFire(this.gl)).update(frame, ground);
+    return this._fire;
+  }
+
   /** Free the GL objects (every allocation has an owner). */
   dispose(whole = true) {
     const gl = this.gl;
+    if (whole && this._fire) { this._fire.dispose(); this._fire = null; }   // RED-MOUNTAIN: the volcano's fire
     if (whole) { this._midGen++; this._midAsk = null; this._mid?.dispose(); this._mid = null; }   // MID-RING: an answer still out is let go
     if (whole) { this._farGen++; this._farAsk = null; this._far?.dispose(); this._far = null; this._work = []; }   // FAR-FIELD: the same, and any ground still being laid
     if (whole && globalThis.__horizonRings === this._statsFn) delete globalThis.__horizonRings;   // the probes' read, if it is still this ring's

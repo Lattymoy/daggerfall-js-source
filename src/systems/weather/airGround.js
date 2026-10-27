@@ -25,7 +25,8 @@ import { etherWoods, etherClimateIndex } from '../../world/ethericSea.js';
 import { TERRAIN_SIZE, STREAMING_TERRAIN_SCALE, HEIGHTMAP_DIMENSION } from '../../world/terrain/terrainSampler.js';
 import { MAX_MAP_PIXEL_X, MAX_MAP_PIXEL_Y } from '../../formats/mapsFile.js';
 import { PAK_WIDTH } from '../../formats/pakFile.js';
-import { SEA_LEVEL_M } from './airTemperature.js';
+import { SEA_LEVEL_M, LAPSE_C_PER_M } from './airTemperature.js';
+import { redMountainSmooth } from '../../world/tamriel/redMountain.js';   // RED-MOUNTAIN: the volcano's fire
 
 /** The Bay's own reader under any composition the host made of it (groundWoods' `bay`, etherWoods' `under`). */
 export function bayReader(woods) {
@@ -76,6 +77,10 @@ export function lawAirGround({ woods, maps, landforms, climates = () => null }) 
   };
   return {
     climateAt,
+    /** RED-MOUNTAIN: THE GROUND'S OWN HEAT at field (x, z), degrees C - the volcano's fire, as much as its cone's height
+     *  cools the air (its smooth lift down the lapse), so its ash is the plateau's air at any height and never holds
+     *  snow (the lore's "ash and blighted rock, never snow"). None without the landforms, where no cone stands. */
+    heatAt: (x, z) => (landforms ? LAPSE_C_PER_M * redMountainSmooth((x / TERRAIN_SIZE) * span, (z / TERRAIN_SIZE + 1) * span) * STREAMING_TERRAIN_SCALE : 0),
     landforms: !!landforms,   // PEAKS1: whether the ground is the landforms' (scenes/snowCoverHost.js: the summits' caps ride on them)
     version: biomeStamp,   // AUDIT TESA-BIOME Z5: the land past the Bay moving (the trace, a fit) moves the climates read here
     groundAt(x, z) {

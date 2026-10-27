@@ -68,6 +68,11 @@ float horizonHaze(float d, float fogStart, float fogEnd, float rimStart, float r
  *  running down to the sea crosses into the sea's haze without a line. */
 export const SEA_HAZE_BAND = 1.0;
 
+/** RED-MOUNTAIN (03-World/Red-Mountain.md): THE HAZE LIES UNDER THE SUMMITS. Ground over `from` metres (the land's old
+ *  ceiling - Red Mountain's cone alone stands over it) is seen through thinner air: the far ring's haze hold eased down
+ *  by `keep` of itself by `to`, so the summit stands clear on the horizon. The rim still closes it into the sky. */
+export const SUMMIT_HAZE = Object.freeze({ from: 3700, to: 6500, keep: 0.7 });
+
 /** FAR-SEA1: what both lanes' far-ring fragment shaders read for the ring's sea and the horizon's haze - the vertex
  *  shader's sea weight, its world point and the sea's body (render/farRing.js VS: the camera climate's water texel
  *  under the water's tint), the eye in the same frame, the sky the water reflects, the water's Fresnel at normal
@@ -78,6 +83,7 @@ export const SEA_HAZE_BAND = 1.0;
 export const RING_SEA_GLSL = `in float vSea;
 in vec3 vWorld;
 in vec3 vSeaBody;
+uniform vec3 uOrigin;
 uniform vec3 uEye;
 uniform vec3 uSkyZenith;
 uniform vec3 uSkyHorizon;
@@ -85,6 +91,8 @@ uniform float uSeaF0;
 uniform float uSeaLook;   // 1 with a sky to reflect (and the Enhanced water on), 0 without (the sea lit as ground, as before)
 ${SEA_LOOK_GLSL}
 ${HORIZON_HAZE_GLSL}
+// RED-MOUNTAIN: the haze lies under the summits - the ring's hold eased down over ground standing over SUMMIT_HAZE.from
+float summitHold(float hold) { return hold * (1.0 - ${SUMMIT_HAZE.keep.toFixed(4)} * smoothstep(${SUMMIT_HAZE.from.toFixed(1)}, ${SUMMIT_HAZE.to.toFixed(1)}, vWorld.y - uOrigin.y)); }
 vec3 ringSea(vec3 ambient, vec3 sunColor, vec3 moonColor, float sunScale) {
   vec3 V = normalize(uEye - vWorld);   // the normal is up: the facing and the reflected ray's height are V.y
   vec3 lit = vSeaBody * seaLight(ambient, sunColor, sunScale * max(uLightDir.y, 0.0), moonColor, uMoonScale * max(uMoonDir.y, 0.0));

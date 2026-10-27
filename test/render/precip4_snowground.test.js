@@ -577,5 +577,5 @@ test('PRECIP4 THE WIRING: a build settles the snow, then keeps every season it t
   assert.match(w, /p\._stride === 1 && p\.tilemapBytes && \(snowCover\.on \|\| p\.season !== SEASON\.Winter\)/);
   assert.match(w, /seasons, siegeFieldsByTown, snowCover, snowfall, standPixelNpcs,/);
   assert.match(b, /seasons, siegeFieldsByTown, snowCover, snowfall, standPixelNpcs,/);
-  assert.equal(SNOWPACK.levels.count, 23);
+  assert.equal(SNOWPACK.levels.count, 44);   // PIN MOVED (RED-MOUNTAIN, bible/03-World/Red-Mountain.md): the levels reach over the volcano's rim, 8,000 m
 });

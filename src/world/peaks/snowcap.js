@@ -21,6 +21,8 @@
 import { CLIMATES } from '../../formats/mapsTables.js';
 import { tamrielBiomeAt } from '../tamriel/tamrielBiomes.js';
 import { bayEdgeDistance, SEAM_PX } from '../tamriel/tamrielGround.js';
+import { redMountainLiftAt } from '../tamriel/redMountain.js';   // RED-MOUNTAIN: its fire raises the line with the cone
+import { STREAMING_TERRAIN_SCALE } from '../terrain/terrainSampler.js';
 import { CAP_FACE } from '../../render/snowCapGlsl.js';   // the face's dials: their home is the shader's leaf (boot2)
 
 const C = CLIMATES;
@@ -87,8 +89,10 @@ export function capLineOfPixel(px, py, climateAt) {
   if (bayEdgeDistance(px, py) > SEAM_PX) {
     const z = tamrielBiomeAt(px, py);
     const v = z ? SNOWCAP.zones[/** @type {keyof typeof SNOWCAP.zones} */ (z.key)] : undefined;
-    if (v !== undefined) return v;
-    return SNOWCAP.climates[z ? z.climate : climateAt(px, py)] ?? SNOWCAP.climates[C.Woodlands];
+    const line = v !== undefined ? v : SNOWCAP.climates[z ? z.climate : climateAt(px, py)] ?? SNOWCAP.climates[C.Woodlands];
+    // RED-MOUNTAIN: the volcano's fire - its ash never holds snow, so the line rides up its cone (the land's own line
+    // over the land under it), and the Ashlands on its foot stay as bare as the plateau they were
+    return line >= CAP_NONE ? line : line + redMountainLiftAt(px, py) * STREAMING_TERRAIN_SCALE;
   }
   const base = SNOWCAP.climates[climateAt(px, py)] ?? SNOWCAP.climates[C.Woodlands];
   if (base >= CAP_NONE) return CAP_NONE;

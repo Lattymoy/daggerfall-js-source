@@ -78,7 +78,7 @@ coldest day.
 | The Wrothgarians past the Bay | 1130,-92 | highRockWrothgar | 1,472 m | 1,300 m | 1% / 39% |
 | The Wrothgarian Mountains (the Bay's north) | 951,3 | the Bay's Mountain | 1,739 m | 1,350 m | (the Bay's Mountain) 2% / 13% |
 | The Dragontail Mountains (the Bay's south) | 964,442 | the Bay's Mountain | 2,542 m | 1,850 m | |
-| Red Mountain | 3051,-51 | morrowindRedMountain | 2,343 m | none - its ash is warm | 0% |
+| Red Mountain | 3049,-51 | morrowindRedMountain | 6,885 m (RED-MOUNTAIN, `Red-Mountain.md`: its cone; 2,343 m the relief's swell before it) | none - its ash is warm, and its line rides its cone | 0% |
 | Eton Nir | 377,1375 | summersetVineCoast | 1,968 m | none (summersetEtonNir 1,850 m) | 0% / 3% |
 | The Alik'r, Elsweyr, Valenwood, Black Marsh | | | | none | 0% |
 

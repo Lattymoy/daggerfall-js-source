@@ -1447,6 +1447,11 @@ directory by `test/bible/audit18_bible_docs.test.js`:
   at its distance in the painter's order, its triangles farthest first;
   stood down where the stream has built its pixel (`06-Systems/Travel-View.md`
   FAR-LANDMARK).
+- `redMountainFire.js` - RED-MOUNTAIN the volcano's fire (`03-World/Red-Mountain.md`):
+  the lava lake on its crater's floor, lava down the upper foyada and the ash
+  plume, its foot lit by the fire. Drawn last of the far ring's pass, by its own
+  lens past the world's far plane and by the world's nearer; far off, hidden by
+  the cone's profile, never by depth. `?redfire=off`.
 - `farFlora.js` - FAR-FLORA THE CANOPY'S ART: a climate's Trees' colour (the
   opaque texels' mean of its summer nature archive's Tree records, the
   picture drawn near - a decoded replacement, else the classic record
