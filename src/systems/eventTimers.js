@@ -28,7 +28,8 @@ import { sdPhase, SD_COLLAPSE_MS } from '../net/superDungeon/sdLaw.js';   // SD2
 import { egTimes } from '../net/eliteGates/egLaw.js';   // EG-F: an Elite Breach's clock - the company's own row
 import { arenaSeasonOf, arenaSeasonEndsS } from '../net/arena/arenaLaw.js';   // EG-ZM: the Spire's boards keep the arena's season
 import { ketchVoyageAt } from '../net/ketch/ketchLaw.js';   // KETCH: the Sky-Ketch's voyage - the clock's alone
-import { t } from './textManager.js';
+import { t, getLocalizedRegionName } from './textManager.js';
+import { regionOfTheatre } from '../formats/mapsTables.js';   // WW5: a province lane's region, its name in the player's language
 
 const DAY_MS = 86_400_000;
 
@@ -80,7 +81,8 @@ function ketchRows(now, coming, live) {
  *           gate?: { place?: string|null, fellAt?: (day: number) => (number|null) } | null,
  *           gates?: Array<{ lane: number, place?: string|null }> | null,
  *           serpent?: { place?: string|null, fellAt?: (day: number) => (number|null) } | null,
- *           sd?: { rec: any, name?: string|null, place?: string|null, site?: { cityName?: string, px?: number, py?: number } | null } | null,
+ *           sd?: { rec: any, name?: string|null, place?: string|null, site?: { cityName?: string, px?: number, py?: number } | null,
+ *                  lanes?: Array<{ rec: any, lane: number, province: string, mine?: boolean, name?: string|null, site?: { cityName?: string, px?: number, py?: number } | null }> } | null,
  *           stars?: Array<{ id: string, kind: string, title: string, where: string|null, detail: string|null, live: boolean, at: number, until: number|null }> | null,
  *           elite?: { op: number, rh?: number, h?: number, until?: number|null, end?: string|null } | null,
  *           doors?: { board?: () => any } | null,
@@ -151,6 +153,19 @@ export function eventTimerRows(src) {
   else if (sdNow === 'fell') { live(`sd:${sdRec.s}`, 'super', `${sdName} collapses`, sdRec.fellAt + SD_COLLAPSE_MS, sdWhere, 'Its Hour is broken. It collapses when this runs out'); rows[rows.length - 1].shut = true; }   // AUDIT EVENTS1 A6
   // SD19: the next one's rise, once this one is gone - never where (a Hollow risen is a find), only not before when
   else if (sdNow === 'gone' && Number.isFinite(sdRec?.next) && sdRec.next > now) coming(`sd:${(sdRec.s ?? 0) + 1}`, 'super', 'An Abyss Dungeon rises', sdRec.next, null, 'Not before this. Watch the Bay for its brass omen');
+  // WW5 (bible/03-World/World-Wide.md WW5): AND EVERY PROVINCE'S HOLLOW (`sd.lanes` - scenes/superDungeon/sdLanes.js), each
+  // its own lane's record, in the same rows: found or collapsing, news to every screen, by its city; its next rise the
+  // province's own players' alone (`mine` - the theatre I stand in): eight coming with no place would bury the Bay's
+  for (const L of src?.sd?.lanes ?? []) {
+    const lr = L?.rec ?? null, lp = sdPhase(lr, now);
+    if (!lr || !Number.isSafeInteger(lr.s)) continue;
+    const lname = L.name || t('sd.timers.anAbyss', 'An Abyss Dungeon');
+    const lplace = L.site?.cityName ?? null, province = L.province ? getLocalizedRegionName(regionOfTheatre(L.lane), L.province) : '';
+    const lwhere = lplace ? t('events.where.near', 'Near {place}', { place: lplace }) : province ? t('sd.timers.in', 'In {province}', { province }) : null;
+    if (lp === 'found') live(`sd:${lr.s}`, 'super', t('events.super.stands', '{name} stands', { name: lname }), lr.until, lwhere, t('sd.timers.fades', 'Found. It fades away unbeaten when this runs out'));
+    else if (lp === 'fell') { live(`sd:${lr.s}`, 'super', t('sd.timers.collapses', '{name} collapses', { name: lname }), lr.fellAt + SD_COLLAPSE_MS, lwhere, t('sd.timers.broken', 'Its Hour is broken. It collapses when this runs out')); rows[rows.length - 1].shut = true; }
+    else if (lp === 'gone' && L.mine && Number.isFinite(lr.next) && lr.next > now) coming(`sd:${lr.s + 1}`, 'super', t('sd.timers.rises', 'An Abyss Dungeon rises'), lr.next, null, t('sd.timers.watch', 'Not before this. Watch {province} for its brass omen', { province }));
+  }
 
   // ── THE STARFALL (net/starfall/starfallLaw.js: three stars a night while the Witches' Festival runs) ── STAR6 (bible/11-Multiplayer/
   // Starfall.md section 8): the rows the star's own law lays (systems/starfall/starfallClient.js starTimerRows) - each

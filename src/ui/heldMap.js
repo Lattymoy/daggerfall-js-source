@@ -711,8 +711,10 @@ export class HeldMapWindow {
     // SERPENT1: the sea serpent's ring - the host's `serpent`, read as the gate's is
     this._serpent = null;
     this._serpentKey = '';
-    // SD2c: the Super dungeon's ring - the host's `sd`, read as the gate's is, once it is found (a find before that)
-    this._sd = null;
+    // SD2c: the Super dungeon's ring - the host's `sd`, read as the gate's is, once it is found (a find before that).
+    // WW5 (bible/03-World/World-Wide.md WW5): every theatre's Hollow - the host's `sd` a ring a lane (the Bay's one ring,
+    // as it was, read the same), over the continent's frame while it is shown, as WW2's gates are
+    this._sds = [];
     this._sdKey = '';
     // EG-F: my company's Elite arch's ring - the host's `arch`, read as the gate's is, while the arch stands
     this._arch = null;
@@ -1450,7 +1452,7 @@ export class HeldMapWindow {
           gate: this._gate,   // WB1
           gates: this._gates,   // WW2
           serpent: this._serpent,   // SERPENT1
-          sd: this._sd,   // SD2c
+          sds: this._sds,   // SD2c; WW5: every lane's
           arch: this._arch,   // EG-F
           ketch: this._ketch,   // KETCH
           bounties: this._bounties,   // BOUNTY1
@@ -2230,10 +2232,10 @@ export class HeldMapWindow {
     const serpent = readGateMark(this.deps.serpent, this._size);
     const serpentKey = gateMarkKey(serpent);
     if (serpentKey !== this._serpentKey) { this._serpentKey = serpentKey; this._serpent = serpent; gateMoved = true; this._dirty = true; }
-    // SD2c: and the Super dungeon's, on its own key
-    const sd = readGateMark(this.deps.sd, this._size);
-    const sdKey = gateMarkKey(sd);
-    if (sdKey !== this._sdKey) { this._sdKey = sdKey; this._sd = sd; gateMoved = true; this._dirty = true; }
+    // SD2c: and the Super dungeon's, on its own key - WW5: every lane's (one ring a Hollow)
+    const sds = readGateMarks(() => { const v = typeof this.deps.sd === 'function' ? this.deps.sd() : null; return Array.isArray(v) ? v : v ? [v] : []; }, f ?? { x0: 0, y0: 0, w: this._size.width, h: this._size.height });
+    const sdKey = gateMarksKey(sds);
+    if (sdKey !== this._sdKey) { this._sdKey = sdKey; this._sds = sds; gateMoved = true; this._dirty = true; }
     // EG-F: and my company's Elite arch, on its own key
     const arch = readGateMark(this.deps.arch, this._size);
     const archKey = gateMarkKey(arch);
@@ -2317,7 +2319,7 @@ export class HeldMapWindow {
     if (!leg) return;
     leg.innerHTML = '';
     const trav = this._trav.filter((t) => playersOnMaps() && playerShown(t));   // OW-WHO; MAP-PLAYERS: the legend speaks for the players the sheet draws
-    if (!this._party.length && !this._gate && !this._gates.length && !this._serpent && !this._sd && !this._arch && !this._ketch && !this._bounties.length && !this._revenants.length && !this._raids.length && !this._stars.length && !trav.length && !this._quests.length && !this._pois.length && !this._vendor && !this._lodes.length) { leg.classList.toggle('open', false); leg.style.display = 'none'; return; }
+    if (!this._party.length && !this._gate && !this._gates.length && !this._serpent && !this._sds?.length && !this._arch && !this._ketch && !this._bounties.length && !this._revenants.length && !this._raids.length && !this._stars.length && !trav.length && !this._quests.length && !this._pois.length && !this._vendor && !this._lodes.length) { leg.classList.toggle('open', false); leg.style.display = 'none'; return; }
     if (this._party.length) {
       const dot = el('span', 'hmlegdot');
       dot.style.background = this._party.some((m) => m.online) ? PARTY_MARK_CSS : PARTY_OFFLINE_CSS;
@@ -2344,7 +2346,7 @@ export class HeldMapWindow {
       dot.style.background = SERPENT_RING_MAP_CSS;
       leg.append(dot, el('span', 'hmlegtext', SERPENT_LEGEND_TEXT));
     }
-    if (this._sd) {   // SD2c: and the Super dungeon's
+    if (this._sds?.length) {   // SD2c: and the Super dungeon's (WW5: any lane's)
       const dot = el('span', 'hmlegdot');
       dot.style.background = SD_RING_MAP_CSS;
       leg.append(dot, el('span', 'hmlegtext', SD_LEGEND_TEXT));
@@ -2725,7 +2727,7 @@ export class HeldMapWindow {
     const [mx, my] = toMap(this._view, sx, sy);
     // AUDIT SD III (T7): a ring answers all it is drawn over - at a far zoom the paper draws it larger than its reach
     const least = GATE_RING_MIN_PX / this._view.scale;
-    for (const g of [this._gate, ...this._gates, this._serpent, this._sd, this._arch, this._ketch]) if (g && Math.hypot(mx - g.cx, my - g.cy) <= Math.max(g.r, least)) return g;   // EG-F: and my company's arch   // SERPENT1: the sea serpent's ring answers as the gate's does (SD2c: and the Super dungeon's)
+    for (const g of [this._gate, ...this._gates, this._serpent, ...(this._sds ?? []), this._arch, this._ketch]) if (g && Math.hypot(mx - g.cx, my - g.cy) <= Math.max(g.r, least)) return g;   // WW5: every lane's Hollow   // EG-F: and my company's arch   // SERPENT1: the sea serpent's ring answers as the gate's does (SD2c: and the Super dungeon's)
     return null;
   }
 
@@ -2736,7 +2738,7 @@ export class HeldMapWindow {
     let best = null, bestD = Infinity;
     if (m) { const [x, y] = toPaper(this._view, m.x, m.y); bestD = (x - sx) * (x - sx) + (y - sy) * (y - sy); }
     const scale = this._view.scale;
-    for (const g of [this._gate, ...this._gates, this._serpent, this._sd, this._arch, this._ketch]) {   // EG-F: and my company's arch; WW2: and the gates past the Bay; KETCH: and the Sky-Ketch
+    for (const g of [this._gate, ...this._gates, this._serpent, ...(this._sds ?? []), this._arch, this._ketch]) {   // WW5: every lane's Hollow   // EG-F: and my company's arch; WW2: and the gates past the Bay; KETCH: and the Sky-Ketch
       if (!g) continue;
       const [x, y] = toPaper(this._view, g.cx, g.cy), d = (x - sx) * (x - sx) + (y - sy) * (y - sy);
       const r = Math.max(GATE_RING_MIN_PX, g.r * scale);

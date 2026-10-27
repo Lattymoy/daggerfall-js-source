@@ -378,7 +378,7 @@ import { createGatePool, GATE_TEXT } from './gate/gatePool.js';   // WB2: the ga
 import { createStarfallHost } from './starfall/starfallHost.js';   // STAR4-STAR6: the Witches' Festival's fallen stars - in the sky, in the world, defended
 import { createRocketHost } from './rocketHost.js';   // ROCKET1: /event rocket - the mounds, their poop, the farting horses and the frenzy
 import { createRiteHost, RITE_TEXT } from './riteHost.js';   // WB12d: the faithful's rite - its circle, its smoke, its faithful, its word and its chest
-import { createSdHost } from './superDungeon/sdHost.js';   // SD2b: the Hollow in the world - the hub's record in, the Hollow stood at its pixel, the find, the lines
+import { createSdLanes } from './superDungeon/sdLanes.js';   // SD2b: the Hollow in the world - the hub's record in, the Hollow stood at its pixel, the find, the lines; WW5: a Hollow in every theatre, a lane at a time (the Bay's host as it was)
 import { sdOmenSeen, sdNoticeCard, SD_COMPASS_M, sdAirWeight, sdBrassLight, sdBannerText, SD_BANNER_M } from '../systems/superDungeon/sdOmen.js';   // SD2c: the Hollow seen and heard of - its column, its note, its compass's reach
 import { SdOmenPassRenderer } from '../render/superDungeon/sdOmenPass.js';   // SD2c: the Hollow's omen, the gate's beacon in brass
 import { SD_CAST_OUT_LINE, sdRoomKey, isSdRoom, sdPhase } from '../net/superDungeon/sdLaw.js';   // SD2d: a Hollow's end said to whoever it casts out; SD5a: the Hour's room; SD9e: a receipt from my realm's
@@ -2675,7 +2675,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  the Overworld (tvSpawnGone) had it gone. */
   function _locationToBuild(px, py) {
     if (etherSea && inEther(px, py)) return etherPlaceAt(px, py);   // ETHER-PLACES: an isle's place, or the open sea's none
-    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py) || lairLocationAt(px, py);   // AUDIT TESA II P1: the open zone's hall today (Cyrodiil's, past the Bay - it stood in the Bay's arm alone, never reached here); TESA10: a capital; TESA2: Arena's; TESA7-8: the land's
+    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return (locationIndex.get(`${px},${py}`)?.superTier ? locationIndex.get(`${px},${py}`) : null) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py) || lairLocationAt(px, py);   // WW5: a province's Hollow first, as its lane stands it in the index (scenes/superDungeon/sdLanes.js - the scan keeps every place off its pixel); AUDIT TESA II P1: the open zone's hall today (Cyrodiil's, past the Bay - it stood in the Bay's arm alone, never reached here); TESA10: a capital; TESA2: Arena's; TESA7-8: the land's
     const key = `${px},${py}`;
     const loc = locationIndex.get(key);
     if (loc?.spawned && !loc.wildHall && _spawnLedger.expired(key, _spawnClock()) && !_insideSpawn(key)) {   // AUDIT SPAWN-REBIRTH F6: a hall's day is its own
@@ -16610,7 +16610,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // function for the gate's reason; none while the mod is off. The enhanced map alone draws them.
       raids: () => (raidingPartiesOn() ? raidMapMarks(raidState().raids, worldMinutes(), { regionName: (r) => REGION_NAMES[r] ?? '', localTime: sharedClockOn() ? eventLocalTime : null, relay: raidRelayState }) : []),   // TIME1: online the withdrawal in local time
       serpent: () => serpentOmen?.mapMark() ?? null,   // SERPENT1: the sea serpent's ring, in the sea's colours - the held map alone draws it
-      sd: () => sdHost?.mapMark() ?? null,   // SD2c: a found Super dungeon's ring, in its omen's brass - the held map alone draws it
+      sd: () => sdHost?.mapMarks() ?? null,   // SD2c: a found Super dungeon's ring, in its omen's brass - the held map alone draws it; WW5: every lane's
       stars: () => starfall?.mapMarks() ?? [],   // STAR6: the night's fallen stars, each its card
       arch: () => egClient?.archMapMark() ?? null,   // EG-F: my company's Elite arch while it stands, in its gold - the held map alone draws it
       ketch: () => ketch?.mapMark() ?? null,   // KETCH: the Sky-Ketch over Daggerfall while she is in its sky - the held map alone draws it
@@ -16885,7 +16885,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         // SERPENT-TIMERS: the sea serpent - the port it lies off as the omen found it, and its kill at this machine's site
         serpent: { place: serpentOmen?.current?.()?.site?.near ?? null, site: serpentOmen?.current?.()?.site ?? null, fellAt: (day) => { const site = serpentOmen?.current?.()?.site; return site && site.day === day ? serpentLink?.fellAt?.(day, site) ?? null : null; } },
         // SD2c: the Super dungeon - the hub's record, its name and its city (the row's own law asks the phase: a row once found)
-        sd: sdHost ? { rec: sdHost.record(), name: sdHost.hollow()?.loc?.name ?? null, site: sdHost.hollow()?.site ?? null } : null,   // AUDIT EVENTS1 A2: the site itself - its city the window's place, its pixel the board's way
+        sd: sdHost?.timers() ?? null,   // AUDIT EVENTS1 A2: the site itself - its city the window's place, its pixel the board's way; WW5: and each province lane's (scenes/superDungeon/sdLanes.js timers)
         stars: starfall?.timerRows() ?? null,   // STAR6: each fallen star's deadline, the next fall and the night's coven
         elite: egClient?.timers() ?? null,   // EG-F: my company's Elite Breach - its opening, its window, its hall and count
         doors: egClient ? { board: () => egBoardDoor() } : null,   // EG-ZM (Elite-Gates.md section 20): the boards' door on the Elite rows
@@ -24014,7 +24014,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (!_hourScoreMade) { _hourScoreMade = true; for (const song of Object.values(sdScoreSongs())) music.registerSong(song.name, song); }
     _hourScoreHeld = true;
     const slot = modes?.dungeonLocation?.sdSlot ?? modes?.sdRealmSlot?.() ?? null;
-    const now = sdFightLink?.now?.() ?? Date.now() + _sharedOffsetMs, rec = sdHost?.record?.() ?? null;
+    const now = sdFightLink?.now?.() ?? Date.now() + _sharedOffsetMs, rec = sdHost?.record?.(slot) ?? null;   // WW5: the slot's own lane's
     const collapsing = rec != null && rec.s === slot && sdPhase(rec, now) === 'fell';
     const want = !(playerEntity.health > 0) ? SD_SCORE_SILENCE : _hourScore.want(place, place === 'hollow' ? null : sdFightLink?.state?.() ?? null, now, collapsing);   // A5: no war over the dead
     if (want === SD_SCORE_SILENCE) { if (music.current !== null) music.fadeOut(); } else music.playSong(want);
@@ -24151,8 +24151,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  slices): unbudgeted, the first frame after the hub's word paid the whole scan's remainder, and the warm never ran. A
    *  row an ask still gets there on a page with no idle callback (warmGateScan asks for one). */
   const _sdScanRow = () => false;
-  const sdHost = params.has('online') ? createSdHost({
-    now: () => Date.now() + _sharedOffsetMs,
+  const sdHost = params.has('online') ? createSdLanes({
+    now: () => Date.now() + _sharedOffsetMs, here: () => playerTravelPixel(),   // WW5: my map pixel - the nearest lane's Hollow is the one in focus
     scan: () => gateScanOf(_sdScanRow),
     warmScan: () => warmGateScan(),
     ground: (px, py) => _spawnGround(px, py),   // AUDIT SD IV (F37): a Hollow on dry ground, as every spawn (SPAWN-SHORE)
@@ -24285,7 +24285,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const hourRezOpen = () => _sdFallen.mayRise(modes?.sdRealmSlot?.());
   const sdRiftOf = (s) => {
     if (!sdHost) return null;
-    const rec = sdHost.record(), now = Date.now() + _sharedOffsetMs;
+    const rec = sdHost.record(s), now = Date.now() + _sharedOffsetMs;   // WW5: the slot's own lane's
     const seen = { entered: _sdEntered.has(s), fallen: _sdFallen.has(s) };
     return { word: sdRiftWord(rec, s, now, seen), returns: sdReturnStands(rec, s, now), through: sdThroughStands(rec, s, now), count: sdRiftCount(rec, s, now), look: riftLook(rec, s, now, seen), enter: () => sdEnterRealm(s) };   // AUDIT SD II (L6 F5): and its count; SD-LOOK: and its look - its state, read off the same record; SD-THROUGH: and whether one has gone through (the Way Through stands)
   };
@@ -24295,7 +24295,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const sdRiftLookOf = (s) => {
     if (!sdHost) return null;
     _sdSeen.entered = _sdEntered.has(s); _sdSeen.fallen = _sdFallen.has(s);
-    return riftLook(sdHost.record(), s, Date.now() + _sharedOffsetMs, _sdSeen);
+    return riftLook(sdHost.record(s), s, Date.now() + _sharedOffsetMs, _sdSeen);   // WW5: the slot's own lane's
   };
   /** SD-LOOK (Super-Dungeons-Look.md section 3): WHERE THE HOUR'S VEIL CLOSES - the Rift's window (or the Return's)
    *  on the screen each frame it is drawn, in screen radii (the corners at 1 - render/superDungeon/sdVeil.js uCentre), handed to the
@@ -24320,7 +24320,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  is under way (the way back's landing, still under its veil): not refused, not yet. The step refused it in silence,
    *  and its walk-in was spent. */
   function sdEnterRealm(s) {
-    const h = sdHost?.hollow();
+    const h = sdHost?.hollow(s);   // WW5: the slot's own lane's
     if (!h || h.s !== s || !h.site || !modes?.stepThroughFire) return false;   // AUDIT SD II (L1): a Hollow known by another slot's memo carries no site
     if (modes?.stepping) return null;   // audit24 wave37's law: guarded on the object (this runs above `var modes`)
     const hollow = { key: h.key, px: h.site.px, py: h.site.py, name: h.loc.name };
@@ -24406,7 +24406,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       modes?.forceExitToExterior();
       if (!back) return true;
       await _teleportToPixel(back.px, back.py);
-      if (sdHost?.hollow()?.key !== back.key) return true;   // its end overtook the step: outside, where it stood
+      if (sdHost?.hollow(loc.sdRealm)?.key !== back.key) return true;   // its end overtook the step: outside, where it stood (WW5: the realm's own lane's Hollow)
       if (!(await modes?.startInDungeon?.())) { standBeforeHollowDoor(back.key); return true; }   // AUDIT SD IV (F40): before its door
       const at = modes?.dungeonCtx?.sdRiftLanding?.();
       if (at) modes?.setPlayerLocalPosition?.(at);

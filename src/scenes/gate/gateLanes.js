@@ -34,6 +34,8 @@ import { theatreAt, areaAt, BAY_THEATRE } from '../../world/worldWide/worldGrid.
  * @param {{ places: import('../../world/worldWide/worldPlaces.js').WorldPlaces, wet: (x: number, y: number) => boolean, spawnSalt?: number, land?: () => number, open?: (lane: number) => boolean }} o
  */
 export function createTheatreGateScans({ places, wet, spawnSalt, land = () => 0, open = gateLaneOpen }) {
+  // WW5: kept as the world host makes them (keptTheatreScans) - Starfall's and the Hollows' lanes read the same scans, never
+  // a second walk of a theatre's rings
   let gen = -1, ver = -1;
   /** @type {Map<number, import('../../systems/gate/theatreGateSite.js').TheatreGateScan>} */ const scans = new Map();
   /** @type {number[]|null} */ let theatres = null;
@@ -48,7 +50,7 @@ export function createTheatreGateScans({ places, wet, spawnSalt, land = () => 0,
     }
     return s;
   };
-  return {
+  return (_kept = {
     scanOf,
     /** The theatres past the Bay that hold ground for a gate, ascending - a lane each. */
     theatres() {
@@ -57,8 +59,16 @@ export function createTheatreGateScans({ places, wet, spawnSalt, land = () => 0,
     },
     /** A lane's gate's site by its number, or null. @param {number} n */
     siteOf: (n) => { const t = gateLaneOf(n); return t === BAY_THEATRE ? null : findTheatreGateSite(n, scanOf(t)); },
-  };
+  });
 }
+/** @typedef {{ scanOf: (t: number) => import('../../systems/gate/theatreGateSite.js').TheatreGateScan, theatres: () => number[], siteOf: (n: number) => any }} TheatreGateScans */
+/** @type {TheatreGateScans|null} */
+let _kept = null;
+/** WW5 (bible/03-World/World-Wide.md WW5): the world host's theatre scans as it made them (scenes/world.js - online alone),
+ *  or null - read by Starfall's and the Hollows' lanes (scenes/eventTheatres.js) as net/staffPlaces.js keptPlaces is: a
+ *  theatre's suitable ground is the gate's, scanned once a registry generation and a picture for every event that stands
+ *  on it, with no wiring of its own in the host. */
+export const keptTheatreScans = () => _kept;
 
 /**
  * The world host's gates, a lane each.

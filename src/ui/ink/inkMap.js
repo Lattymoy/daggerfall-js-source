@@ -1278,8 +1278,9 @@ export function paintInkOverlay(ctx, view, opts) {
   for (const g of opts.gates ?? []) if (visible(g.cx, g.cy, g.r + 2)) paintGateRing(ctx, view, g, pulse);
   // SERPENT1: the sea serpent's ring beside it, in the sea's colours
   if (opts.serpent && visible(opts.serpent.cx, opts.serpent.cy, opts.serpent.r + 2)) paintGateRing(ctx, view, opts.serpent, pulse, SERPENT_MAP_INK);
-  // SD2c: the Super dungeon's ring once it is found, in its omen's brass
-  if (opts.sd && visible(opts.sd.cx, opts.sd.cy, opts.sd.r + 2)) paintGateRing(ctx, view, opts.sd, pulse, SD_MAP_INK);
+  // SD2c: the Super dungeon's ring once it is found, in its omen's brass - WW5: every theatre's (`sds`; `sd` the one ring a
+  // caller from before WW5 hands)
+  for (const m of opts.sds ?? (opts.sd ? [opts.sd] : [])) if (m && visible(m.cx, m.cy, m.r + 2)) paintGateRing(ctx, view, m, pulse, SD_MAP_INK);
   // EG-F: my company's Elite arch while it stands, in its gold
   if (opts.arch && visible(opts.arch.cx, opts.arch.cy, opts.arch.r + 2)) paintGateRing(ctx, view, opts.arch, pulse, EG_ARCH_MAP_INK);
   // KETCH: the Sky-Ketch while she is in Daggerfall's sky, in the aether's blue

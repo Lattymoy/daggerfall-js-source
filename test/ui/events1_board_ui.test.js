@@ -324,7 +324,7 @@ test('EVENTS1 THE SEAMS: the gate\'s (its rite too - C6), the serpent\'s, the Ab
   assert.match(world, /\}, \(text\) => chatNotice\(text\), townTalk\);/, 'the chat for a line said with the board off; the journal');
   assert.match(world, /pixel: playerTravelPixel\(\),\n\s+gate: \{ place: gateOmen\?\.current\?\.\(\)\?\.site\?\.place \?\? null, site: gateOmen\?\.current\?\.\(\)\?\.site \?\? null,/);
   assert.match(world, /serpent: \{ place: serpentOmen\?\.current\?\.\(\)\?\.site\?\.near \?\? null, site: serpentOmen\?\.current\?\.\(\)\?\.site \?\? null,/);
-  assert.match(world, /sd: sdHost \? \{ rec: sdHost\.record\(\), name: sdHost\.hollow\(\)\?\.loc\?\.name \?\? null, site: sdHost\.hollow\(\)\?\.site \?\? null \} : null,/);
+  assert.match(world, /sd: sdHost\?\.timers\(\) \?\? null,/);   // PIN MOVED (WW5): the Bay's record, name and site and every province lane's (scenes/superDungeon/sdLanes.js timers)
   assert.match(world, /region: REGION_NAMES\[raidRegionNow\(\)\] \?\? null,/);
   assert.match(world, /raids: raidingPartiesOn\(\) \? raidTimerList\(relayOf, \(r\) => REGION_NAMES\[r\], EVENT_SOON_MS\) : null,/);
   // PIN MOVED (WW2, bible/03-World/World-Wide.md): a lane past the Bay's lines on its own gate's card (its id), the Bay's as they always were
