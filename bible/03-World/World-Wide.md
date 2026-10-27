@@ -677,7 +677,9 @@ Bay is raided as the Bay's are, from the day's roll to the town's thanks, and st
   own, its theatre (`RAID_LANES` 10, pinned equal to `THEATRE_COUNT`; not imported - the law is the relay's too and
   imports nothing). A raid's lane is its region's (`raidLaneOfRegion`: a Bay region 0..61 lane 0, a province's region
   62..70 its theatre, WW-R's `regionOfTheatre`), and `raidLaneOfKey` reads it off the key. **Cyrodiil's lane (9) stands
-  no raid** (`RAID_ZONE_LANE`, `raidLaneOpen`): the open zone stands no site-bound world event (PVPDUNGEONS, WW2's gates).
+  no raid** (`RAID_ZONE_LANE`, `raidLaneOpen`): the owner's call, taken 2026-10-26 ("Every single thing here needs
+  to be addressed. No exceptions."): site-bound world events - gates, covens, Hollows, the ketch, raids - stand nowhere
+  in the open PvP zone (PVPDUNGEONS' law, WW2's gates).
 - **THE KEY** (`RAID_KEY_RE`) names every region of the world: a Bay region with its town's MAPS.BSA location (0..9999,
   as it always was), a province's region (62..70) with its town's OWN location index - negative, up to eight digits
   (`world/arenaLocations.js arenaLocationIndex`, `world/tamrielCapitals.js capitalLocationIndex`: no MAPS.BSA row holds a
@@ -811,7 +813,9 @@ picker offers Solitude as a town (`capitalLocationIndex(1, 0)`) and the law take
   a pixel provider - found by place, never listed, WW1) are no raid's town, so every client rolls the same list.
 - **A capital one town**, its centre (WW7-11).
 - **A staff town event may stand in any province, Cyrodiil's included** - staff's call, as an area's event already may;
-  the open zone's rule is the day's roll's.
+  the open zone's rule is the day's roll's. The owner's call of 2026-10-26 names the site-bound world events the world
+  stands on its own (the gates, the covens, the Hollows, the ketch, the raids' day); a staff event is staged by hand, by
+  staff, wherever staff bring it - recorded here so the owner can say otherwise.
 - **Staff events are told by their region** (a province's), as on the Bay: an event is staff's, said to its region.
 
 ### THE FOUR HOSTS (Home.md)
@@ -831,7 +835,15 @@ the receipt, the junk, the hub's table the Bay's); the session's gate; a staff t
 and with ARENA2 every lane over the freeware's registry, the Bay's roll on the real table, Torbarke's raid through the
 relay's parse, law and cell, and Solitude's event. `test/server/townecon_service.test.js` (a raid past the Bay's receipt
 at the account service: its cleanse row and its town's act; a Bay region with a town past the Bay's index and a province's
-with a MAPS.BSA row refused at the receipt). Mutants `tools/mutants/ww6.json` (58, all dead).
+with a MAPS.BSA row refused at the receipt). Mutants `tools/mutants/ww6.json` (59, all dead).
+
+THE TWO SURVIVORS AND WW6'S FINISH (2026-10-27). `WW6-staff-index-unbounded` lived (its pin read the bound through
+the constant it mutates): the eight digits are pinned by value. `WW6-client-runout-rolled-in` lived because the check
+it mutated was redundant: the lanes' roll (`syncLanes`) has one caller, the frame, and the expiry pass follows it there
+unconditionally, before any reader - a run-out raid the roll names again goes there, never announced, so unsaid. The
+check went and the record with it. The finish pins the half the record had claimed and nothing held: standing in the
+raid's own district while the registry's places move, the run-out raids rolled again are neither kept nor said
+(`ww6_raids.test.js` the client's day; `WW6-client-runout-said`, RAID1-fix2's mutation through WW6's own test).
 
 PINS MOVED: `test/scenes/hostceiling.test.js` (bootWorld 35,751); `field_raid_ft.test.js`, `raid1_raidingParties.test.js`,
 `raid2_raidsOnline.test.js`, `raid4_rewards.test.js`, `raid4b_sets.test.js`, `raid5_kinds.test.js`,

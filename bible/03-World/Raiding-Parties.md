@@ -501,7 +501,7 @@ The owner's call taken (2026-10-26: *"Every single thing here needs to be addres
   AREA - the province's districts, what a region is to the Bay's draw (`systems/raidingParties.js raidLaneGroups`; a capital
   one town, its centre) - each keyed by its own location index (`64:-1000124:600` - Torbarke in Skyrim), at the mod's pace
   (half a raid an area a game day: 125 a day past the Bay on the freeware beside the Bay's 22). Cyrodiil, the open zone,
-  stands none.
+  stands none (the owner's call, taken 2026-10-26: no site-bound world event in the open PvP zone).
 - **The province's own parties.** A lane draws the mod's parties its province's fauna stands (TESA-BIOME's rosters,
   `RAID_LANE_PARTIES`): High Rock all three (Orsinium's orcs), Valenwood bandits and orcs (Malabal Tor's), Morrowind and
   Summerset knights and bandits, Hammerfell, Skyrim, Elsweyr and Black Marsh bandits - no orc war band raids Black Marsh.
@@ -519,4 +519,4 @@ The owner's call taken (2026-10-26: *"Every single thing here needs to be addres
   the registry and the capital's street law.
 
 Pins: `test/world/worldWide/ww6_raids.test.js` (12, its last half with ARENA2) and `test/server/townecon_service.test.js`
-(a raid past the Bay's receipt at the account service); `tools/mutants/ww6.json` (58, all dead).
+(a raid past the Bay's receipt at the account service); `tools/mutants/ww6.json` (59, all dead).
