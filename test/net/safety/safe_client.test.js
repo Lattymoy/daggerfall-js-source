@@ -18,6 +18,7 @@ import { CONDUCT_VERSION, conductRules } from '../../../src/net/safety/conduct.j
 import { orderKindOf, REPORT_REASONS } from '../../../src/net/safety/safetyLaw.js';
 import { _b64url } from '../../../src/net/identityToken.js';
 import { fakeSocketClass } from '../../fakeSocket.mjs';
+import { fakeRoom } from '../../fakeRoom.mjs';   // RPT1026-SECNET: CLIENT-7's requests are the frames the real relay routes
 // AUDIT SAFE (the client lane, 2026-10-17): the audit's pins read the modules whole, so a pin of a member the old code
 // lacked fails on its own assertion rather than on the file's import
 import * as onlineNs from '../../../src/net/online.js';
@@ -707,19 +708,34 @@ test('AUDIT SAFE CLIENT-6 / RELAY-1 A LINE IS REPORTED IN THE WORDS THE RELAY SI
   assert.deepEqual(verdicts, [true, true]);
 });
 
-test('AUDIT SAFE CLIENT-7 A BLOCK HOLDS BACK WHAT A BLOCKED ACCOUNT ASKS OF ME: its trade, card and duel requests never land (by its account as the relay verified it); another account\'s do; the host gives every room the block list\'s ear (mutants: the directed frames never asked; the host never handing the ear)', async () => {
+test('AUDIT SAFE CLIENT-7 A BLOCK HOLDS BACK WHAT A BLOCKED ACCOUNT ASKS OF ME: its trade, card, duel and page requests never land (by its account as the relay verified it), each the frame the REAL relay routes to me; another account\'s do; the host gives every room the block list\'s ear (mutants: the directed frames never asked; the host never handing the ear; RPT1026-SECNET: the relay\'s trade and page sent with no account)', async () => {
+  // RPT1026-SECNET (PIN MOVED): this pin fed a trade frame carrying an account the relay never sent, in the world channel,
+  // where the relay routes no trade, and no page at all - so the block it pinned held only here. The frames are now the
+  // relay's own: three players in one place room (test/fakeRoom.mjs's Room, real tokens), two of them asking the third
+  const R = fakeRoom('world:3,12');
+  const realNow = Date.now; let clock = 1e12; Date.now = () => clock;
+  let routed;
+  try {
+    const me = R.connect(); await R.hello(me, 'me-00001');
+    const tro = R.connect(); await R.hello(tro, 'tro-0002');
+    const pal = R.connect(); await R.hello(pal, 'pal-0003');
+    me.sent.length = 0;
+    for (const [t, data] of [['trade', { k: 'ask', to: 'me-00001', s: 'abc123' }], ['card', { to: 'me-00001', ask: true }], ['duel', { k: 'ask', to: 'me-00001', s: 'abc123' }], ['page', { to: 'me-00001', page: { head: 'Morndas', lines: ['Meet me'] } }]]) {
+      for (const ws of [tro, pal]) await R.raw(ws, JSON.stringify({ t, data }));
+      clock += 1000;
+    }
+    routed = me.sent.filter((m) => onlineNs.BLOCKED_KINDS.includes(m.t));
+  } finally { Date.now = realNow; }
+  assert.deepEqual(routed.map((m) => `${m.t}:${m.id}:${m.sub}`), ['trade', 'card', 'duel', 'page'].flatMap((t) => [`${t}:tro-0002:acct-tro-0002`, `${t}:pal-0003:acct-pal-0003`]), 'every request goes out with its sender\'s account');
   const { FakeWS, sockets } = fakeSocketClass();
-  const { s, ws } = welcomedSession(FakeWS, sockets, CHAT_WORLD_ROOM);
+  const { s, ws } = welcomedSession(FakeWS, sockets, 'world:3,12');
   const got = [];
-  s.onTrade = (id) => got.push(`trade:${id}`); s.onCard = (id) => got.push(`card:${id}`); s.onDuel = (id) => got.push(`duel:${id}`);
-  const r = hostRig({ blocks: [{ sub: 'acct-tro', name: 'Troll', at: 1 }], opts: { links: () => [s] } });
+  s.onTrade = (id) => got.push(`trade:${id}`); s.onCard = (id) => got.push(`card:${id}`); s.onDuel = (id) => got.push(`duel:${id}`); s.onPage = (id) => got.push(`page:${id}`);
+  const r = hostRig({ blocks: [{ sub: 'acct-tro-0002', name: 'Troll', at: 1 }], opts: { links: () => [s] } });
   await r.host.start();
   assert.equal(s.hears, r.host.hears);
-  for (const [t, data] of [['trade', { k: 'ask', to: 'me-00001', s: 'abc123' }], ['card', { to: 'me-00001', ask: true }], ['duel', { k: 'ask', to: 'me-00001', s: 'abc123' }]]) {
-    ws.receive({ t, id: 'tro-0002', sub: 'acct-tro', data });
-    ws.receive({ t, id: 'pal-0003', sub: 'acct-pal', data });
-  }
-  assert.deepEqual(got, ['trade:pal-0003', 'card:pal-0003', 'duel:pal-0003']);
+  for (const m of routed) ws.receive(m);
+  assert.deepEqual(got, ['trade:pal-0003', 'card:pal-0003', 'duel:pal-0003', 'page:pal-0003']);
   assert.deepEqual([...onlineNs.BLOCKED_KINDS].sort(), ['card', 'duel', 'page', 'trade', 'wed']);
 });
 

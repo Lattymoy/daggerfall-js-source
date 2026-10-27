@@ -3576,7 +3576,9 @@ export const TRADE_FRAME_MAX = 12 * 1024;
 /** AUDIT DROPS B4: the widest trade DATA - the frame's cap less the wrapper the frame and the relay's fan-out put
  *  around it (`{"t":"trade","id":"<16>","data":` and `}`, under 64 bytes). validTradeData bounded the DATA at the
  *  FRAME's cap, so an honest offer of sixteen heavy items could pass at home and be refused at the relay's door as
- *  'frame too large' - which CLOSES the socket. What passes here now fits parseClient at the relay by construction. */
+ *  'frame too large' - which CLOSES the socket. What passes here now fits parseClient at the relay by construction.
+ *  RPT1026-SECNET: the fan-out carries the sender's account too (`"sub"`, the relay's `_directedFrame`) and may stand a few
+ *  dozen bytes past this cap - no door reads it at TRADE_FRAME_MAX (the receiver's is INBOUND_FRAME_MAX). */
 export const TRADE_DATA_MAX = TRADE_FRAME_MAX - 64;
 /** The most trade frames a socket may send a second, and the most one socket is sent (the destination's funnel). */
 export const TRADE_HZ_MAX = 8;
