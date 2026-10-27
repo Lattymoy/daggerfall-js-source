@@ -54,6 +54,7 @@ import { isleGood, goodById } from '../systems/naval/tradeGoods.js';   // ISLE-T
 import { ETHER_PEACE_PX, etherWayWord } from '../systems/wild/etherWild.js';   // ETHER-WILD: Veilhaven's peace, drawn where the open sea's fights begin
 import { paintWildCrows, paintWildLocks } from './wild/wildMapInk.js';   // SEA-VAULTS: the mountains' crows and padlock, on the chart's paper
 import { HALL_INK } from './ink/inkMap.js';   // SEA-VAULTS: a vault's oxblood, the halls' own
+import { capturePointer } from './pointerCapture.js';   // RPT1026-CLIENT: a pad's synthetic pointer is refused a capture, never thrown
 
 /** The zooms: screen pixels a map pixel (819.2 m). */
 export const CHART_ZOOMS = Object.freeze([1, 2, 4, 8, 16]);
@@ -882,7 +883,7 @@ export function mountEtherChartWindow(host, deps) {
   canvas.addEventListener('pointerdown', (e) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     downs.set(e.pointerId, local(e));
-    canvas.setPointerCapture?.(e.pointerId);
+    capturePointer(canvas, e.pointerId);
     canvas.style.cursor = 'grabbing';
     if (downs.size === 1) drag = { at: local(e), view, moved: false };
     else if (downs.size === 2) { const [a, b] = [...downs.values()]; pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]) || 1 }; drag = null; }

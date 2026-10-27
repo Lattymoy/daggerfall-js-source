@@ -1,0 +1,102 @@
+[
+  {
+    "name": "AUDIT-RPT1026-H1-sheet-unread",
+    "file": "src/systems/quest/noAsksAgain.js",
+    "old": "  if (sheetReadTasks(quest).has(no.symbol.name)) return null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/audit_rpt1026_quests.test.js"
+    ],
+    "note": "A No the questlines' sheet reads is forgotten a tick after it is said: N0B00Y09 ends loyal for refused, $CUREWER failed for spared."
+  },
+  {
+    "name": "AUDIT-RPT1026-H1-stamp-unread",
+    "file": "src/systems/quest/noAsksAgain.js",
+    "old": "if (quest?.ql?.stamp !== QL_STAMP) return out;",
+    "new": "if (!quest) return out;",
+    "tests": [
+      "test/systems/quest/audit_rpt1026_quests.test.js"
+    ],
+    "note": "DFU's own quest (the questlines off) reads a sheet it never had: its four Nos stop asking again."
+  },
+  {
+    "name": "AUDIT-RPT1026-H1-outcomes-unread",
+    "file": "src/systems/quest/noAsksAgain.js",
+    "old": "  for (const o of sheet.outcomes ?? []) walk(o.on);\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/audit_rpt1026_quests.test.js"
+    ],
+    "note": "An ending the sheet binds to a No is not a read: $CUREWER's spared."
+  },
+  {
+    "name": "AUDIT-RPT1026-H1-objectives-unread",
+    "file": "src/systems/quest/noAsksAgain.js",
+    "old": "  for (const o of sheet.objectives ?? []) { walk(o.open); walk(o.done); walk(o.fail); }\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/audit_rpt1026_quests.test.js"
+    ],
+    "note": "An objective the sheet strikes on a No is not a read: 80C0XY00's kept secret."
+  },
+  {
+    "name": "AUDIT-RPT1026-H1-nested-unread",
+    "file": "src/systems/quest/noAsksAgain.js",
+    "old": "    for (const k of ['all', 'any']) if (Array.isArray(b[k])) for (const x of b[k]) walk(x);\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/audit_rpt1026_quests.test.js"
+    ],
+    "note": "A No named inside a binding's any or all is not a read."
+  },
+  {
+    "name": "AUDIT-RPT1026-H2-classic-words-dropped",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "{ text: isEnhanced() ? t('quest.offer.questorBusyAbandon'",
+    "new": "{ text: true ? t('quest.offer.questorBusyAbandon'",
+    "tests": [
+      "test/systems/quest/audit_rpt1026_quests.test.js"
+    ],
+    "note": "The classic skin's close names a Quests tab its pause window does not have."
+  },
+  {
+    "name": "AUDIT-RPT1026-H4-unwritten-on-every-row",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "else if (!sel.ql?.objectives?.length) detail.append(el('p', 'px-note', t('pause.journal.unwritten'",
+    "new": "else if (true) detail.append(el('p', 'px-note', t('pause.journal.unwritten'",
+    "tests": [
+      "test/systems/quest/audit_rpt1026_quests.test.js"
+    ],
+    "note": "A stamped quest whose objectives fill its page is said to have nothing written."
+  },
+  {
+    "name": "AUDIT-RPT1026-H4-gives-any-get-item",
+    "file": "src/systems/quest/noAsksAgain.js",
+    "old": "a.typeName === 'GetItem' && toted.has(a.itemSymbol?.name))) return null;",
+    "new": "a.typeName === 'GetItem')) return null;",
+    "tests": [
+      "test/systems/quest/audit_rpt1026_quests.test.js"
+    ],
+    "note": "A No that hands back an item its click never toted asks again."
+  },
+  {
+    "name": "AUDIT-RPT1026-H4-gives-named-elsewhere",
+    "file": "src/systems/quest/noAsksAgain.js",
+    "old": "  if (sheetReadTasks(quest).has(no.symbol.name)) return null;\n  return timesNamed(quest, no.symbol.name) === 1 ? no : null;",
+    "new": "  if (sheetReadTasks(quest).has(no.symbol.name)) return null;\n  return no;",
+    "tests": [
+      "test/systems/quest/audit_rpt1026_quests.test.js"
+    ],
+    "note": "A No something else in the script reads is forgotten as if nothing did."
+  },
+  {
+    "name": "AUDIT-RPT1026-H4-beside-second-ring-dropped",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "export const QUEST_BESIDE_REACH = Object.freeze([1.1, 1.6]);",
+    "new": "export const QUEST_BESIDE_REACH = Object.freeze([1.1]);",
+    "tests": [
+      "test/systems/quest/audit_rpt1026_quests.test.js"
+    ],
+    "note": "A Person whose first ring is full stands inside someone instead of a step further out."
+  }
+]

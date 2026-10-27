@@ -246,19 +246,17 @@ export class ItemMakerWindow {
     this.picker = null;
     this._pickerType = null;
     this._icon = makeIconDrawer(hooks.icons, () => hooks.entity);
-    // AUDIT 63 F14/REVIEW: DFU enumerates the filled traps ONCE per
-    // window lifetime - at the tail of Setup (DaggerfallItemMakerWindow
-    // .cs:171) and again in OnPush (:182). Refresh (:190-215) rebuilds
-    // the labels and the filtered item list and does NOT re-enumerate,
-    // and those two are EnumerateEnchantments' only callers besides its
-    // own definition at :239. The port mounts a fresh window per open
-    // (scenes/worldModes.js's guildServiceItemMaker), so construction IS
-    // Setup+OnPush: the enumeration is frozen here for the window's life.
-    // It matters after _enchant() spends a trap - DFU still offers that
-    // soul for a second item in the same session (its RemoveFilledTrap
-    // simply finds nothing), where a live re-read would drop the row.
-    this._souls = this._filledSouls();
   }
+
+  /** AUDIT 63 F14/REVIEW: DFU enumerates the filled traps ONCE per window lifetime - at the tail of Setup
+   *  (DaggerfallItemMakerWindow.cs:171) and again in OnPush (:182); Refresh (:190-215) does NOT re-enumerate. So after
+   *  an enchant spends a trap DFU still offers that soul for a second item in the same session, and its
+   *  RemoveFilledTrap simply finds nothing. RPT1026-PROGRESS (a private report: one filled gem bound several items) - THE
+   *  DEPARTURE: a bound soul's costs are negative, so that second item got the whole SoulBound budget from a gem that
+   *  was gone, and one gem bound item after item until that window shut. The souls are read off the pack every
+   *  time the window asks (the pickers' lists), and the enchant itself refuses a bound soul the pack no longer holds
+   *  (enchanting.js enchantDecision, `souls`). Port-Ledger A. */
+  get _souls() { return this._filledSouls(); }
 
   _close() { this.done = true; noticeRelease(this); this.hooks.onClose?.(); }
   _say(text) { this.box = { rows: [{ text, center: true }] }; }
@@ -270,9 +268,8 @@ export class ItemMakerWindow {
   /** AUDIT 63 F14 - the souls SoulBound may offer. DFU reads
    *  `GameManager.Instance.PlayerEntity.Items` directly inside
    *  EnumerateFilledTraps (SoulBound.cs:107, :121), i.e. the WHOLE
-   *  pack, not the tab-filtered list `items()` above answers. Called
-   *  ONCE, from the constructor, which is DFU's Setup/OnPush lifetime
-   *  (:171, :182); both picker seams read the frozen `_souls`. */
+   *  pack, not the tab-filtered list `items()` above answers.
+   *  RPT1026-PROGRESS: read live, every time (`_souls`). */
   _filledSouls() {
     return enumerateFilledTraps(this.hooks.packItems?.() ?? (this.hooks.player ?? this.hooks.entity)?.items ?? []);
   }
@@ -353,8 +350,8 @@ export class ItemMakerWindow {
     const types = primaryPickerList(selectingPowers, {
       item: this.selected, powers: all.powers, sideEffects: all.sideEffects,
       // AUDIT 63 F14: EnumerateEnchantments builds groupedSideEffectTemplates
-      // from the enumeration frozen at Setup/OnPush (:171, :182), so this
-      // reads the window's own snapshot, not the live pack.
+      // from the filled traps (:171, :182) - RPT1026-PROGRESS: as the pack
+      // holds them now, never a snapshot taken when the window opened.
       souls: this._souls,
     });
     this._pickerType = null;
@@ -375,7 +372,7 @@ export class ItemMakerWindow {
     const all = this._lists();   // AUDIT PROF10 J2: and in the secondary list's filters
     const pick = primaryPick(type, {
       powers: all.powers, sideEffects: all.sideEffects, selectingPowers: this.selectingPowers,
-      souls: this._souls,   // AUDIT 63 F14: GetFilteredEnchantments re-reads the SAME enumerated array (:543-556)
+      souls: this._souls,   // AUDIT 63 F14: GetFilteredEnchantments reads the enumerated souls (:543-556) - RPT1026-PROGRESS: the live pack's
     });
     if (!pick) return;
     if (pick.kind === 'add') { this._add(pick.settings); return; }
@@ -422,7 +419,7 @@ export class ItemMakerWindow {
   /** EnchantButton_OnMouseClick (:705-770). */
   _enchant() {
     audio.playOneShot(SOUND.ButtonClick, 1);
-    const d = enchantDecision(this.selected, this.powers, this.sideEffects, { gold: this.gold(), discountPct: this.goldDiscountPct() });   // PROF12: Enchanting's layer
+    const d = enchantDecision(this.selected, this.powers, this.sideEffects, { gold: this.gold(), discountPct: this.goldDiscountPct(), souls: this._souls });   // PROF12: Enchanting's layer; RPT1026-PROGRESS: the souls the pack holds now
     if (d.kind !== 'enchant') { this._say(d.text); return; }
     // DeductGoldAmount, which spends letters of credit as well as the
     // purse - the one deduction seam (court.js).

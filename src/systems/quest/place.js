@@ -37,6 +37,7 @@ import { stringHash } from '../../formats/netRuntime.js';   // QUEST-AUDIT II SH
 import { getSeed, setSeed } from '../../formats/dfRandom.js';   // AUDIT QA2: a shared re-seat's residence name, seeded and the state put back
 import { seededFirst } from '../wind/wind.js';   // QUEST-AUDIT II SHARED-SEAT: the port's one seeded die (imports nothing)
 import { isMainStoryDungeon } from '../../world/dungeon/dungeonTextures.js';   // KVAR-HOLD: the main story's own dungeons are no random quest's
+import { wildMaskOf, wildInside } from '../wild/wildZone.js';   // RPT1026-QUESTS QUEST-ZONE: the open zone's sealed dungeons are no quest's
 import { boundWorldDataBlocks } from '../../formats/worldData/worldDataReplacement.js';   // AUDIT QA2: Daggerfall's own blocks (BLOCKS.BSA, past the door) - what the mods took away
 
 /** QUEST-AUDIT III MARKERLESS-DRAW: how many dungeons of a remote draw's pool are walked before it gives up. */
@@ -398,11 +399,13 @@ export class Place extends QuestResource {
   _reseatStoryDungeon(world) {
     const sd = this.siteDetails;
     // KVAR-HOLD's audit: a `local dungeon` is drawn as a remote one (_setupLocalSite), so it is rescued as one too
-    if ((this.scope !== Scopes.Remote && this.scope !== Scopes.Local) || this.p1 !== 1 || !isMainStoryDungeon(sd.mapId)) return false;
-    const { p2 } = this.declaredSiteLaw();
+    if ((this.scope !== Scopes.Remote && this.scope !== Scopes.Local) || this.p1 !== 1) return false;
     // KVAR-HOLD's audit: among the few nearest the dungeon it leaves - never this client's own player - so every copy of a
     // shared quest, under its one die (reseatMovedSite's SHARED-SEAT), draws the same site
     const row = world.maps.getRegion(sd.regionIndex)?.mapTable?.find?.((t) => t?.mapId === sd.mapId) ?? null;
+    // RPT1026-QUESTS QUEST-ZONE: and a site the open zone seals (_zoneSeal) is drawn again by the same law
+    if (!isMainStoryDungeon(sd.mapId) && !(row && this._zoneSeal(world)?.(row))) return false;
+    const { p2 } = this.declaredSiteLaw();
     const origin = row ? mapTablePixel(row) : null;
     const site = this._remoteDungeonSite(world, sd.regionIndex, p2, { origin }) ?? this._remoteDungeonSite(world, sd.regionIndex, -1, { origin });
     const next = site ? this._carryAssignments(sd, site) : null;
@@ -873,7 +876,7 @@ export class Place extends QuestResource {
     const regionData = world.maps.getRegion(regionIndex);
     if (!regionData || regionData.locationCount === 0) return null;
 
-    let foundIndices = this._collectDungeonIndicesOfType(regionData, dungeonTypeIndex);
+    let foundIndices = this._collectDungeonIndicesOfType(regionData, dungeonTypeIndex, false, this._zoneSeal(world));   // QUEST-ZONE
     if (!foundIndices.length) return null;
     // NEARBY-QUESTS: the dungeons within reach, or the nearest few; KVAR-HOLD's re-seat: the nearest few to `origin`
     const reach = origin ? { origin, pixels: 0 } : this._questReach(world);
@@ -1193,7 +1196,7 @@ export class Place extends QuestResource {
     return location.exterior.buildings.some((b) => b.buildingType === buildingType);
   }
 
-  _collectDungeonIndicesOfType(regionData, dungeonTypeIndex, allowFullRange = false) {
+  _collectDungeonIndicesOfType(regionData, dungeonTypeIndex, allowFullRange = false, sealed = null) {
     const upperLimit = allowFullRange ? 18 : 16;
     const activeQuestSites = this.parentQuest?.hooks?.getAllActiveQuestSites?.() ?? [];
     const parentQuestPlaces = [...(this.parentQuest?.resources.values() ?? [])].filter((r) => r.isPlace && r !== this);
@@ -1206,6 +1209,7 @@ export class Place extends QuestResource {
       // player reaches, his questor hidden, the guild's door shut - and NEARBY-QUESTS' nearest few made it likely beside
       // the classic start. The main story's own Places name them `permanent` and never pass here.
       if (isMainStoryDungeon(regionData.mapTable[i].mapId)) continue;
+      if (sealed?.(regionData.mapTable[i])) continue;   // RPT1026-QUESTS QUEST-ZONE (_zoneSeal): nor one the open zone seals
       if (this._isDungeonAssigned(activeQuestSites, parentQuestPlaces, regionData.mapTable[i].mapId)) continue;
       const type = regionData.mapTable[i].dungeonType;
       if (dungeonTypeIndex === -1) {
@@ -1215,6 +1219,25 @@ export class Place extends QuestResource {
       }
     }
     return found;
+  }
+
+  /**
+   * RPT1026-QUESTS QUEST-ZONE (a private report, a vampire quest's dungeon: it lay near the middle of the Open World,
+   * unmarked on the map as any dungeon, and could not be entered): ONLINE, A DUNGEON THE OPEN
+   * ZONE SEALS IS NO QUEST'S. Every real dungeon inside the Wrothgarian zone is sealed ("The way in is sealed. Only the
+   * halls marked on the map are open today." - scenes/world.js wildDungeonGate; bible/11-Multiplayer/Wild-Zone.md, SPAWNED,
+   * NOT CHOSEN), and its map draws only the day's halls - so a quest whose remote dungeon DFU's draw took there
+   * (SelectRemoteDungeonSite, Place.cs:880-935: any of the region's) could never be done. A departure (Port-Ledger A,
+   * beside KVAR-HOLD): online the draw passes over a map-table row whose pixel is inside the zone's mask (wildZone.js
+   * wildMaskOf - the map files' own, every client's alike), and a saved quest's site there is drawn again at the load's
+   * re-seat (_reseatStoryDungeon). Offline the mountains are Daggerfall's own (the zone is the online lane's) and DFU's
+   * draw stands. Answers the test over a row, or null where nothing is sealed.
+   */
+  _zoneSeal(world) {
+    if (!this.parentQuest?.hooks?.sharedClock?.()) return null;
+    const mask = wildMaskOf(world?.maps);
+    if (!mask) return null;
+    return (row) => { const p = mapTablePixel(row); return !!p && wildInside(mask, p.x, p.y); };
   }
 
   _isDungeonAssigned(activeQuestSites, parentQuestPlaces, mapId) {

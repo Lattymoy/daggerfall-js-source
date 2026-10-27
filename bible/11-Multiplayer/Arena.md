@@ -1088,3 +1088,20 @@ elsewhere; a session no welcome can answer (terminal) shuts them with "The serve
 loading" for ever (`scenes/arena/arenaOnline.js` `shut`, `shutText`). And the window before the board shows nothing of the
 save's on its Ladder page or its ladder card either (A1): the ten tiers as the law has them, nobody's climb on them
 ("Not loaded"), the card no bout and no purse.
+
+## RPT1026-QUESTS ARENA-ORDER (2026-10-26) - the next ladder bout waits for the last one's count at the Herald
+
+Two private reports from the inbox's 2026-10-26 batch: a ladder bout fought, the next Fight pressed, and the floor
+entered with no opponent on it - once with "That is not your next ladder bout" said there. AUDIT ARENA-LADDER 2 held
+the ticket while a ticketed ladder receipt of mine was still kept, but only on the floor (`askTicket`): the climb Fight
+reads waits on a held purse `CLIMB_WAIT_MS` at most and a loss holds none, so past that wait the board's climb was
+still the one before the bout, the floor was entered for that step, and only there did askTicket's guard (the receipt
+still with the service) or the service's `order` (the flush had moved the climb under it) let the bout go - the
+player left standing on an empty floor. Now the receipt holds the Fight at the Herald
+(`arenaOnline.js:"if (claims.ladderKept?.()) { void claims.flush(); return { ok: false, text: O.stillRecording }; }"`):
+"Your last ladder bout is still being recorded. Try again in a moment.", the receipt carried again by the refusal, and
+the next press asks the climb the service's answer moved. Within the wait the line is the climb's own, as before;
+askTicket's guard stays for a receipt that arrives between the press and the floor. A Grand Champion's ladder done, a
+loss breaking the tier's run and an attempt walked away from counting as lost are the climb's law (AUDIT ARENA-LADDER),
+unchanged. Not a DFU member (the online ladder is the port's). Pinned by `test/systems/quest/rpt1026_quests.test.js`
+(the real account service over node:sqlite, the receipt signed with the relay's key); `tools/mutants/rpt1026_quests.json`.

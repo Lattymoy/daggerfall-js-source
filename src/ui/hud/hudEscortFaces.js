@@ -227,6 +227,8 @@ let _headStamp = 0;   // PORTRAIT3D: the data's stamp the panels were resolved u
 // QUEST-SHELF-FACES: whether a quest is set aside (machine.js shelveQuest), by its uid - the quest bridge hands it.
 // Not reset by initEscortFaces: the bridge and the panel mount in either order.
 let _questAway = () => false;
+// RPT1026-MISC FACE-ORPHAN: whether the machine holds a face's quest no more (setEscortQuestGone) - the bridge hands it.
+let _questGone = () => false;
 // ESCORT-TOUCH-ROW: where the column starts (classic units), and when the touch row was last measured
 let _startY = ESCORT_START_Y;
 let _measureTick = -1;
@@ -330,6 +332,18 @@ export function setEscortQuestAway(questAway) {
   _questAway = questAway ?? (() => false);
 }
 
+/**
+ * RPT1026-MISC FACE-ORPHAN (a private report: three escort portraits stood on the HUD, and neither finishing nor
+ * abandoning quests cleared them): A FACE WHOSE QUEST IS GONE IS NEVER DRAWN, AND IS NOT SAVED. DFU's faces leave by DropFace or by
+ * the quest-end sweep (escortQuestEnded) and nothing else, so a face whose quest left the machine without ending - a
+ * quest a load could not restore (machine.js restoreSaveData: "This is expected after removing a mod with custom quest
+ * actions", the quest skipped and its faces restored all the same) - stood for good: no quest of it was left to turn in,
+ * abandon or end. `questGone(uid)` answers whether the machine holds that quest no more; null knows of no machine.
+ */
+export function setEscortQuestGone(questGone) {
+  _questGone = questGone ?? (() => false);
+}
+
 /** QuestMachine_OnQuestEnded (:295-304): "Remove any faces belonging
  *  to this quest" - the unlike-Daggerfall sweep. */
 export function escortQuestEnded(quest) {
@@ -340,7 +354,7 @@ export function escortQuestEnded(quest) {
 
 /** GetSaveData (:279-282) - the envelope's FaceDetails[]. */
 export function getEscortFacesSaveData() {
-  return _faces.map((f) => ({ ...f }));
+  return _faces.filter((f) => !_questGone(f.questUID)).map((f) => ({ ...f }));   // RPT1026-MISC FACE-ORPHAN
 }
 
 /** RestoreSaveData (:284-289) with SaveLoadManager's own null arm
@@ -405,7 +419,7 @@ export function drawEscortFaces(renderer, canvas) {
  *  A face whose quest is set aside (QUEST-SHELF-FACES) is left out before the layout, so the faces under it close up
  *  as they do when a face drops. Special panels take the fixed 48x48; a face whose art has not landed has no size. */
 function shownColumn() {
-  const panels = _panels.filter((_, i) => !_questAway(_faces[i]?.questUID));
+  const panels = _panels.filter((_, i) => !_questAway(_faces[i]?.questUID) && !_questGone(_faces[i]?.questUID));   // RPT1026-MISC FACE-ORPHAN: nor one whose quest is gone
   const sizes = panels.map((p) => (p?.special
     ? { w: ESCORT_SPECIAL_FACE_SIZE, h: ESCORT_SPECIAL_FACE_SIZE }
     : (p?.img ? { w: p.img.w, h: p.img.h } : null)));

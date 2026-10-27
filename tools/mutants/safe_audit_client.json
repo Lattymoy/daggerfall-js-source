@@ -242,12 +242,12 @@
   {
     "name": "SAFE-AUDIT-CLIENT-7-a-blocked-request-lands",
     "file": "src/net/online.js",
-    "old": "    if (this.hears && BLOCKED_KINDS.includes(kind)) { const sub = subOf(m); if (sub && !this.hears(sub)) return; }\n",
+    "old": "    if (this.hears && BLOCKED_KINDS.includes(kind) && !this.hears(subOf(m) ?? this.peers.get(m.id)?.sub ?? null)) return;\n",
     "new": "",
     "tests": [
       "test/net/safety/safe_client.test.js"
     ],
-    "note": "A blocked account's trade, duel, wedding, card or page request lands."
+    "note": "A blocked account's trade, duel, wedding, card or page request lands. RPT1026-SECNET (re-aimed by content): the check asks the roster's account and an unknown one too."
   },
   {
     "name": "SAFE-AUDIT-CLIENT-7-the-ear-never-handed",

@@ -587,8 +587,8 @@
   {
     "name": "QA3L-NO-ASKS-clearer-named-twice",
     "file": "src/systems/quest/noAsksAgain.js",
-    "old": "  return timesNamed(quest, no.symbol.name) === 1 ? no : null;\n}\n\n/**\n * Does this task ask",
-    "new": "  return no;\n}\n\n/**\n * Does this task ask",
+    "old": "s?.name === task.symbol.name))) return null;\n  return timesNamed(quest, no.symbol.name) === 1 ? no : null;",
+    "new": "s?.name === task.symbol.name))) return null;\n  return no;",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]

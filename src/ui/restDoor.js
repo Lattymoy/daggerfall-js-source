@@ -40,8 +40,19 @@ export { preloadRestArt };
  *  solo or offline rest on the classic skin keeps RestWindow, byte for byte. */
 export function createRestWindow(deps, ignoreAllocatedBed = false) {
   noteFirstUse('rest');   // TUT1
-  if (typeof document !== 'undefined' && (isEnhanced() || deps?.partyRest?.() === true)) return enhancedRestOverlay(deps, ignoreAllocatedBed);
-  return new RestWindow(deps, ignoreAllocatedBed);
+  // AUDIT RPT1026 L3: A WINDOW A BED OPENED RESTS IN THAT BED. `ignoreAllocatedBed` is DaggerfallRestWindow's second
+  // argument, and only a bed's press passes it (Roleplay Realism's BedActivation, `new DaggerfallRestWindow(uiManager,
+  // true)`). The hosts priced a pressed bed off a flag of their own (`_restFromBed`) held for the press alone - and a
+  // rest that asks first (REST-WARN: poisoned or diseased) opens its window on the box's Yes, after the press is over:
+  // a guild hall's bed pressed while poisoned slept the hall's boards rough. The window's open is where the rest reads
+  // its place (scenes/shared.js setResting, restAct), so the press is said there, for the open alone.
+  const mark = !!deps && Object.isExtensible(deps);   // a bag the caller froze is read as it stands
+  const held = mark ? deps.bedPressed : undefined;
+  if (mark) deps.bedPressed = !!ignoreAllocatedBed;
+  try {
+    if (typeof document !== 'undefined' && (isEnhanced() || deps?.partyRest?.() === true)) return enhancedRestOverlay(deps, ignoreAllocatedBed);
+    return new RestWindow(deps, ignoreAllocatedBed);
+  } finally { if (mark) deps.bedPressed = held; }
 }
 
 /** The enhanced card, on the PX28 stack for its whole life - see the header. */

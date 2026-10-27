@@ -20,6 +20,7 @@ import { vendorSearch, VENDOR_LISTING_S } from '../../net/vendorLaw.js';
 import { pictureNode, frameWake } from '../menu/menuGlyphs.js';   // MENU-ORDER: a piece's picture, the host's
 import { packPickerNode, packCardNode, freshPackSift, packTierWord } from '../packPicker.js';   // PACK-PICK: the piece put up chosen from its picture
 import { t } from '../../systems/textManager.js';
+import { isStolen, stolenTag } from '../../systems/stolenGoods.js';   // RPT1026-LEDGERLAW: a stolen piece said so where another player buys it
 
 const el = (tag, cls = null, text = null) => {
   const n = document.createElement(tag);
@@ -49,11 +50,12 @@ export function standsText(expiresAt, nowS) {
   const hours = Math.max(1, Math.ceil(left / 3600));
   return `${hours} hour${hours === 1 ? '' : 's'} left`;
 }
-/** A piece's stats as the Notice Board and the Vendor page show them - `stats` the host's `{ rows, magic }` (the look
- *  panel's rows - damage, armour, hands, material, condition, weight - and the magic the trade window names), a row a
- *  line and the magic in the tier's gold under them; null for a piece the host cannot read. */
+/** A piece's stats as the Notice Board and the Vendor page show them - `stats` the host's `{ rows, magic, stolen }` (the
+ *  look panel's rows - damage, armour, hands, material, condition, weight - the magic the trade window names, and
+ *  RPT1026-LEDGERLAW the theft's card line on a stolen piece), a row a line, the magic in the tier's gold under them and
+ *  the theft's line last; null for a piece the host cannot read. */
 export function vendorStatsNode(stats, el = (t, c = null, x = null) => { const n = document.createElement(t); if (c) n.className = c; if (x != null) n.textContent = x; return n; }) {
-  if (!stats || (!stats.rows?.length && !stats.magic?.length)) return null;
+  if (!stats || (!stats.rows?.length && !stats.magic?.length && !stats.stolen)) return null;
   const box = el('div', 'vendor-stats');
   if (stats.rows?.length) {
     const dl = el('div', 'vendor-statrows');
@@ -65,6 +67,7 @@ export function vendorStatsNode(stats, el = (t, c = null, x = null) => { const n
     for (const m of stats.magic) ul.append(el('li', null, m));
     box.append(ul);
   }
+  if (stats.stolen) box.append(el('p', 'vendor-stolen', stats.stolen));   // RPT1026-LEDGERLAW
   return box;
 }
 /** The stats' dress - the Plus palette, the board's and the pause window's alike. */
@@ -72,7 +75,8 @@ export const VENDOR_STATS_CSS = `.vendor-stats { flex: 1 1 100%; display: flex; 
 .vendor-statrows { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: #d9cfbd; }
 .vendor-stat { white-space: nowrap; }
 .vendor-magic { margin: 0; padding: 0 0 0 14px; font-size: 12px; color: #f3cf86; }
-.vendor-magic li { margin: 1px 0; }`;
+.vendor-magic li { margin: 1px 0; }
+.vendor-stolen { margin: 0; font-size: 12px; color: #e3a08f; }`;
 export function injectVendorStatsCss() {
   if (typeof document === 'undefined' || document.getElementById?.('vendor-stats-css')) return;
   const st = document.createElement('style');
@@ -165,6 +169,7 @@ export function createVendorTab(v, ui) {
       el('span', 'market-quality', wearText(wearOf(row.item)) ?? 'whole'),
       el('span', 'market-price', goldText(row.price)),
       el('span', 'market-where', where ? `${row.owner ?? 'someone'}'s house, ${townOf(row.map)}` : standsText(row.expiresAt, ui.nowS())));
+    if (isStolen(row.item)) b.append(el('span', 'market-stolen', stolenTag()));   // RPT1026-LEDGERLAW: the theft's mark rides the listing
     if (row.mine && !stall) b.append(el('span', 'market-mine', 'yours'));   // at my own stall every piece is mine: said once, in its title
     if (st.picked !== row.id) return [b];
     const bar = el('div', 'market-bar');

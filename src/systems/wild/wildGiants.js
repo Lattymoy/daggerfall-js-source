@@ -28,6 +28,27 @@ export const WILD_GIANT_ROAM_PX = 5;
 export const WILD_GIANT_RESPAWN_MS = 30 * 60_000;
 /** A giant is stood in the world (out of its path, onto the ground) once the player is this near its place (metres). */
 export const WILD_GIANT_STAND_M = 320;
+/**
+ * RPT1026-MISC GIANT-ROCK (a private report, the second sighting: giants of the open zone standing inside rocks): THE GROUND A GIANT
+ * IS STOOD ON IS CLEAR OF SOLIDS. GIANT-FIELDS chose its spot by the height map alone - flat, no crest, no water, inside
+ * the zone - and the Wrothgarian Mountains' rocks (World of Daggerfall's landform pieces, a mesh each in the collider) stand
+ * on flat ground too: a Greater Giant, four times its size (wildZone.js WILD_GIANT_SIZE), and the ten its call brings were
+ * stood inside them. A spot is refused where any solid of the world collider lies within GIANT_CLEAR_R of the giant's
+ * lower body (GIANT_CLEAR_LIFT over its feet) - the collider's own open-space test, CreateFoe's (PlaceFoeFreely,
+ * `sphereOverlaps`) - or holds it inside (`insideSolid`, UNSTUCK-OUT's). The ground is the height map's and never a solid,
+ * so open ground answers clear. Pure: the collider in.
+ */
+export const GIANT_CLEAR_R = 2.5;
+export const GIANT_CLEAR_LIFT = 3;
+/** A solid's face within reach of the body (`sphereOverlaps`), or the body inside a solid whose faces are all farther off
+ *  (`insideSolid` - a rock scaled up hundreds of times holds a giant with no face near it).
+ *  @param {{ sphereOverlaps?: (c: number[], r: number) => boolean, insideSolid?: (p: number[]) => boolean } | null} collider
+ *  @param {number} x @param {number} h @param {number} z */
+export function giantGroundBlocked(collider, x, h, z) {
+  if (!collider) return false;
+  const c = [x, h + GIANT_CLEAR_LIFT, z];
+  return !!(collider.sphereOverlaps?.(c, GIANT_CLEAR_R) || collider.insideSolid?.(c));
+}
 const DAY_MS = 24 * 3_600_000;
 
 const mix = (a, b) => { let h = (a ^ Math.imul(b + 0x7f4a7c15, 0x9e3779b1)) >>> 0; h = Math.imul(h ^ (h >>> 16), 0x85ebca6b) >>> 0; h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35) >>> 0; return (h ^ (h >>> 16)) >>> 0; };

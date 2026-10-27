@@ -38,7 +38,7 @@
   {
     "name": "RELAY-H1-no-presence-ping-at-all",
     "file": "src/net/online.js",
-    "old": "    if (this.presence && this.status === 'open' && now - Math.max(this._lastSentAt, this._lastPingAt) >= PING_MS) {",
+    "old": "    if (this.presence && this.status === 'open' && (now - Math.max(this._lastSentAt, this._lastPingAt) >= PING_MS || deaf)) {",
     "new": "    if (false) {",
     "tests": [
       "test/net/relayh1.test.js"

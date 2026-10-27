@@ -34,6 +34,7 @@ import { shardsHeld, spendShards, shardsText } from './reforge.js';
 import { addItem, findExistingStack } from './inventory.js';
 import { LOOT_STACK_MAX } from './loot/loot.js';   // PORTAL-BULK: the most one stack holds (itemLaw.js flags a stack past it)
 import { t } from './textManager.js';
+import { eventGroundAt } from './eventGround.js';   // RPT1026-EVENTS GATE-WAY: no portal on an event's gate's ground
 import { registerItemUseHandler } from './item/itemTemplates.js';
 import { POSE_BOUND, POSE_Y_BOUND } from '../net/wire.js';
 import { MAX_MAP_PIXEL_X, MAX_MAP_PIXEL_Y } from '../formats/mapsTables.js';
@@ -83,6 +84,8 @@ export const PORTAL_TEXT = Object.freeze({
   noMap: 'You cannot see the map to choose a destination.',
   room: 'There is no room here for a portal.',
   ground: 'There is no ground here for a portal to stand on.',
+  /** RPT1026-EVENTS GATE-WAY (systems/eventGround.js): the place stands on an event's gate's ground. */
+  get event() { return t('portal.refused.event', 'A portal cannot open this close to an event\'s gate.'); },
   gone: `The ${PORTAL_STONE.name} is no longer where you kept it.`,
   opened: (name) => `A portal to ${name} tears open. Step through before it closes.`,
   /** PORTAL-GIFT (gateSpoils.js givePortalGift): said once the world stands. */
@@ -195,6 +198,14 @@ export function portalPlace(feet, yaw, { ground = null, wall = null } = {}) {
   const d = ground ? ground([x, top, z], [0, -1, 0], PORTAL_GROUND_PROBE) : null;
   if (!Number.isFinite(d) || /** @type {number} */ (d) > PORTAL_GROUND_PROBE) return { refused: 'ground' };
   return { at: [x, top - /** @type {number} */ (d), z] };
+}
+/** RPT1026-EVENTS GATE-WAY: WHERE A PORTAL STONE'S PORTAL OPENS - portalPlace's place, refused 'event' where it stands within
+ *  EVENT_GROUND_M of an event's gate standing on this screen (systems/eventGround.js), where a crowd runs to its fire; nothing
+ *  is spent on a refusal. An Elite Breach's call opens its own portal by portalPlace alone: it is the way INTO the event.
+ *  @param {number[]} feet @param {number} yaw @param {Parameters<typeof portalPlace>[2]} [probes] */
+export function portalStonePlace(feet, yaw, probes = {}) {
+  const p = portalPlace(feet, yaw, probes);
+  return p.at && eventGroundAt(p.at) ? { refused: 'event' } : p;
 }
 /** Whether feet stand inside a portal at `at` (both in one frame). */
 export function insidePortal(feet, at) {

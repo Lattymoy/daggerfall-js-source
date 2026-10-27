@@ -542,8 +542,8 @@ export function createPixelBuild(host) {
             const bd = b.dfBlock?.rmbBlock?.fldHeader?.buildingDataList?.[placed.recordIndex] ?? null;   // YARD-LINE: whether it could hold a lot of its own
             const rects = footRectsAt(modelFeetOf(placed.modelIdNum, cpu), local);   // FB1009 HOME-FOOT: the ground its faces cover, never its box
             const f = pixelHomeFrames.get(homeKey);
-            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], rects, type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0 });
-            else if (f) { for (let i = 0; i < 3; i++) { f.box[i] = Math.min(f.box[i], box[i]); f.box[i + 3] = Math.max(f.box[i + 3], box[i + 3]); } f.rects.push(...rects); }
+            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], rects, type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0, parts: [[cpu, local]] });   // AUDIT RPT1026 J2: its models (hallBanners.js wallBehind)
+            else if (f) { for (let i = 0; i < 3; i++) { f.box[i] = Math.min(f.box[i], box[i]); f.box[i + 3] = Math.max(f.box[i + 3], box[i + 3]); } f.rects.push(...rects); f.parts?.push([cpu, local]); }
           }
           const homeRow = homeKey != null ? townHomes?.get(homeKey) ?? null : null;
           const homeLook = homeRow ? lookOfHome(homeTown, homeKey, homeRow) : null;

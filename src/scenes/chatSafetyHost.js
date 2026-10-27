@@ -184,7 +184,10 @@ export function createChatSafetyHost({ log, links, social = () => null, minter =
   const io = () => { const s = storedSession(store()); return s ? { fetch, base: serviceBase(store()), secret: s.secret } : null; };
   const say = (tabId, text) => log()?.push(tabId ?? log()?.active, { text, system: true });
   const sayActive = (text) => say(log()?.active, text);
-  const hears = (sub) => !blocked.has(sub);
+  // RPT1026-SECNET: an account nobody named (null - a request the relay stamped none on, a sender no room's roster said)
+  // is heard only while the list blocks nobody: it might be the one blocked. The log and the social picture never ask
+  // for one (a line with no account is a system's), the session's requests do (net/online.js _directedIn)
+  const hears = (sub) => (sub ? !blocked.has(sub) : blocked.size === 0);
   /** Every room this page holds: the host's, and the ones made since that were handed in (`adoptLink`) and still stand. */
   const allLinks = () => {
     for (const l of extra) if (!l?.barred && !l?.room && l?.status !== 'connecting') extra.delete(l);   // let go: nothing to carry to

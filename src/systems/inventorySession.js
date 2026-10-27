@@ -34,7 +34,7 @@
 
 import { DROP_ICON_IDXS, DROP_ICON_ARCHIVES, RANDOM_TREASURE_ARCHIVE } from './loot/lootDataTables.js';
 import { STORAGE_CONTEXT } from './horse/horseCartLaw.js';   // HCC: the storage contexts the runtime's CanAccessWagonStorage takes
-import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { localizedText, t } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { BAG_CAPACITY, BAG_WORDS, hasBag } from '../net/bagLaw.js';   // BAG1: the Materials Bag, a second list as the wagon is
 import { activeWagonItem } from './wagon/wagonKinds.js';   // CART-SLOT: the Cart cell shows the wagon driven
 
@@ -56,6 +56,27 @@ export const WAGON_REFUSAL = Object.freeze({
   noWagon: { reason: 'noWagon', get text() { return localizedText('noWagon', NO_WAGON_TEXT); } },
   exitTooFar: { reason: 'exitTooFar', get text() { return localizedText('exitTooFar', EXIT_TOO_FAR_TEXT); } },
 });
+
+/** RPT1026-CHESTGOLD (a private report): A WINDOW OVER A STORE THAT SETTLES ITS OWN PIECES SHOWS THAT STORE ALONE - the
+ *  shared chest's (`loot.commit`, systems/decor/decorGrants.js openSharedChest), whose pack is the window's own copy until
+ *  the close. The wagon and the Materials Bag are the character's lists: a piece moved between them and that copy was in
+ *  the pack and in the bag (or the wagon) at once, and a move through the chest's door parked one of the chest's own rows
+ *  on the pack. Refused in both skins' ladders until the chest is shut. */
+export const settlesOwnPieces = (deps = {}) => typeof deps.loot?.commit === 'function';
+export const CHEST_ALONE_REFUSAL = Object.freeze({ reason: 'chestAlone', get text() { return t('inventory.store.chestAlone', 'Shut the chest before you open your wagon or your bag.'); } });
+/** AUDIT RPT1026 B1: AND ITS PACK CHANGES BY THE CHEST'S DOOR ALONE. The window's pack is its copy until the close, and the
+ *  chest's list the window's until the settle, so an act that took a piece out of either - a Use (a potion drunk, a meal
+ *  eaten), a Salvage, the batch's, a Dismantle - took it out of that list alone: the character's pack (or the chest's bin)
+ *  kept it, and what the act gave landed in the copy, onto a stack the character's pack shares (a salvage's shards). Any
+ *  consumable used for free, and shards and stones out of nothing, at every opening of a chest the player shares even
+ *  with nobody. AUDIT RPT1026 B4: and a piece taken this window is not worn from the pack either - the Equip-mode take's
+ *  law, which a Remove and then a Wear walked round: the doll wore a piece the chest still held. Refused in both skins
+ *  until the chest is shut; `wear` asks of one piece, and the character's own may be worn. */
+export const CHEST_ACT_REFUSAL = Object.freeze({ reason: 'chestAct', get text() { return t('inventory.store.chestAct', 'Shut the chest before you do that.'); } });
+export function chestActRefusal(deps = {}, { wear = false, item = null } = {}) {
+  if (!settlesOwnPieces(deps)) return null;
+  return wear && (deps.entity?.items ?? []).includes(item) ? null : CHEST_ACT_REFUSAL;
+}
 
 /** Items.Contains(Transportation, Small_cart) (:1236). The CART IS IN
  *  THE BAG, which is why AUDIT 24 ui matters: dropping it into its own
@@ -302,6 +323,7 @@ export function cycleDropIcon({ archive, texture }, by) {
  * @returns {{ok:true, usingWagon:boolean}|{ok:false, refusal:object}}
  */
 export function planWagonToggle(deps = {}, state = {}) {
+  if (!state.usingWagon && settlesOwnPieces(deps)) return { ok: false, refusal: CHEST_ALONE_REFUSAL };   // RPT1026-CHESTGOLD
   // HCC: TrailingWagonInventoryWindow.WagonButton_OnMouseClick [IL_ad28] - showing, the click hides; hidden, the
   // runtime's CanAccessWagonFromDungeonExit (a granted dungeon-exit request) or CanAccessWagonInventory decides,
   // and a refusal is its own message. DFU's noWagon / exitTooFar ladder is the runtime's now.
@@ -328,6 +350,7 @@ export const hasMaterialsBag = (items = []) => hasBag(items);
  *  @returns {{ok:true, usingBag:boolean, usingWagon:boolean}|{ok:false, refusal:object}} */
 export function planBagToggle(deps = {}, state = {}) {
   if (!hasMaterialsBag(deps.items?.() ?? [])) return { ok: false, refusal: { reason: 'noBag', text: BAG_WORDS.none } };
+  if (!state.usingBag && settlesOwnPieces(deps)) return { ok: false, refusal: CHEST_ALONE_REFUSAL };   // RPT1026-CHESTGOLD
   // AUDIT BAG1 H1: never over a reward tray - a choice up makes every piece taken from the side window the claim, and a
   // log taken out of the bag was the smith's gift chosen
   if (state.chooseOne && !state.usingBag) return { ok: false, refusal: { reason: 'reward', text: BAG_WORDS.reward } };

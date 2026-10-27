@@ -191,8 +191,8 @@
   {
     "name": "EGZ-audio-scope-unread",
     "file": "src/systems/audio.js",
-    "old": "gain.gain.value = volume * this._scale;   // EG-ZH: a scope's gain (scaled) - 1 outside one\n    src.connect(gain).connect(this._out());",
-    "new": "gain.gain.value = volume;\n    src.connect(gain).connect(this._out());",
+    "old": "    const level = volume * this._scale;\n    if (!this._voiceTake(level, true)) return undefined;",
+    "new": "    const level = volume;\n    if (!this._voiceTake(level, true)) return undefined;",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]

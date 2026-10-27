@@ -403,7 +403,7 @@ export const TUTORIALS = Object.freeze([
   page({
     id: 'bounties', group: 'quests', title: 'Bounties', trigger: 'When you first read a bounty board.',
     body: [
-      'Bounty boards list four hunts. Take one, slay the quarry and return for gold and an item. It also raises your standing in the region.',
+      'Bounty boards list four hunts. Take one and make for the middle of its black circle on your map, or the dungeon it names. There the quarry shows itself, or you are told which way it waits; the Quests tab keeps the way. The last kill pays gold and an item and raises your standing in the region.',
     ],
   }),
   page({

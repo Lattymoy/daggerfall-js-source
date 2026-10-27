@@ -430,7 +430,8 @@ function feedOn({ at = { x: 200, y: 200 }, clock = 1.7e12 } = {}) {
 test('SEA-LANES THE WORLD\'S FEED: before the frame poses the sea\'s ships, every LANE_LIST_MS the world hands the host every packet of the lanes about the player at the shared clock (AUDIT BAY A19 PIN MOVED: those within LANE_LIST_M of the player) - the lanes of the map\'s own ports (Travel Options\' list, by its water and the ocean\'s climate), a lane\'s way sounded once and only near the player, each packet in the scene with her seeds, her leg, her ports by key and name and her home port\'s region', () => {
   assert.match(WORLD, /if \(_mode\(\) === 'exterior' && !gamePaused\(\) && !_loading\) \{ laneShips\(\);[^\n]*\n\s*naval\.frame\(dt \* worldTimeScale\(\)/, 'stood and steered before the frame poses them, outdoors and running');   // PIN MOVED (SEA-EVENTS, 2026-10-22): the sea's events stepped beside the lanes (scenes/seaVenturesHost.js step)
   // PIN MOVED (AUDIT CAPTAIN'S SEA H1): and its sounding's reach - an isle port's its shore's
-  assert.match(WORLD, /return \{ key: `port:\$\{t\.id\}`, name: t\.name, rect, ready, reach \};/, 'the harbour named, its key a lane port\'s');   // PIN MOVED (AUDIT HOLDINGS O1): and whether its scan's pixels are built
+  // PIN MOVED (RPT1026-WORLD FAR-QUAY): the harbour a town is handed as moved to systems/naval/harbourBook.js harbourOf
+  assert.match(readFileSync(new URL('../../../src/systems/naval/harbourBook.js', import.meta.url), 'utf8'), /return \{ key: `port:\$\{t\.id\}`, name: t\.name \?\? null, rect, ready, reach \};/, 'the harbour named, its key a lane port\'s');   // PIN MOVED (AUDIT HOLDINGS O1): and whether its scan's pixels are built
   // the clock where the lane's first packet lies at her home port, by the player
   const [lane] = laneNetwork(FEED_PORTS.map((p) => ({ id: p.y * 1000 + p.x, name: p.name, px: p.x, py: p.y, region: 1 })), open);
   const way = laneWay(lane, water, waterNative);
@@ -439,7 +440,7 @@ test('SEA-LANES THE WORLD\'S FEED: before the frame poses the sea\'s ships, ever
   const clock = ((v - p0.phase) * period + 2 * leg + LANE_DWELL_S + 10) * 1000;
   const f = feedOn({ clock });
   assert.deepEqual(f.laneNet().map((l) => [l.key, l.a.name, l.b.name, l.a.region]), [['199200-199225', 'Glenpoint', 'Wayrest', 1]], 'the map\'s ports: the far harbour too far for a lane, the lake\'s towns none (its water no ocean\'s)');
-  assert.match(WORLD, /town = \{ id: summary\.id, loc, x: p\.x \+ dx, y: p\.y \+ dy, name: maps\.getRegion\(summary\.regionIndex\)\?\.mapNames\?\.\[summary\.mapIndex\] \?\? null \};/, 'the harbour\'s town by its name');
+  assert.match(WORLD, /towns\.push\(\{ id: summary\.id, loc, x: p\.x \+ dx, y: p\.y \+ dy, name: maps\.getRegion\(summary\.regionIndex\)\?\.mapNames\?\.\[summary\.mapIndex\] \?\? null \}\);/, 'the harbour\'s town by its name');   // PIN MOVED (RPT1026-WORLD FAR-QUAY): every port town near
   f.laneShips();
   assert.equal(f.calls.liners.length, 1);
   const { list } = f.calls.liners[0];   // AUDIT BAY A6 PIN MOVED: her phase on the clock sails her - the clock's second was the host's to time a dwell by

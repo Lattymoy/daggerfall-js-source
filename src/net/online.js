@@ -272,6 +272,17 @@ export const LAW_IN_BURST = 2 * LAW_IN_HZ_MAX;
 /** AUDIT SAFE CLIENT-7: the frames one peer addresses to me that ASK something of me (`_directedIn`) - what a block holds
  *  back, as it holds back the account's lines, friend requests and party invites. */
 export const BLOCKED_KINDS = Object.freeze(['trade', 'card', 'page', 'duel', 'wed']);
+/** RPT1026-SECNET (from a private report, a player on a poor line): A STALLED LINE IS SAID NOTHING IT WOULD
+ *  DELIVER IN A BURST. A socket whose ping (the runtime answers every one, asleep or awake) has had no frame back for this
+ *  long is stalled: its poses wait, one a HEARTBEAT_MS at most and always the latest, and its foes streams wait
+ *  (`_stalled`, `_poseHeld`), and its blows (AUDIT RPT1026 A1: a blow spends the relay's pose meter). A stalled TCP
+ *  line keeps what it was given and delivers it all at once when it clears, and the relay's meter reads ~22 s of a
+ *  moving player's poses (or ~18 s of a host's foes, or ~11 s of a fight's poses and blows) arriving together as a
+ *  flood - DROP_STRIKES_MAX over-rate frames in a row, a policy close, terminal in that room. A socket that has heard
+ *  nothing for PING_MS is pinged however busy it is sending, so a stall is known within PING_MS + LINE_STALL_MS -
+ *  whatever it buffered by then is under the strike-out (test/net/rpt1026_secnet_net.test.js and
+ *  audit_rpt1026_secnet.test.js hold the arithmetic to the laws). */
+export const LINE_STALL_MS = PING_MS;
 /** Reconnect backoff bounds, ms. */
 export const BACKOFF_MIN_MS = 1000;
 export const BACKOFF_MAX_MS = 8000;
@@ -722,7 +733,7 @@ export class OnlineSession {
      *  (scenes/chatSafetyHost.js) when the relay says `banned`; a socket the relay closes 1008 'banned' latches its own. */
     this.barred = false;
     /** AUDIT SAFE CLIENT-7 (2026-10-17): whether the player hears an account - (sub) => boolean, the host's from the block
-     *  list (scenes/chatSafetyHost.js); null hears everyone. A trade, a duel, a wedding, a card or a page asked of me by an
+     *  list (scenes/chatSafetyHost.js; RPT1026-SECNET: asked `null` for a sender whose account nobody named); null hears everyone. A trade, a duel, a wedding, a card or a page asked of me by an
      *  account I blocked never lands, as its chat line never does (net/chat.js ChatLog.hears). */
     this.hears = null;
     /** AUDIT SAFE CLIENT-13 (2026-10-17): whether a chat line may go - (line) => boolean, the host's code of conduct's gate
@@ -928,6 +939,7 @@ export class OnlineSession {
     this._welcomed = new WeakSet();   // SD-HELLO: the sockets their room has welcomed - each says its hello, then nothing more until it is here (_send)
     this._haloPosed = new WeakMap();   // HALO-THIN: a halo's socket -> the last pose it heard from me ({ x, z, mv, at }) - a new socket has heard none
     this._haloPinged = new WeakMap();   // HALO-THIN (AUDIT B F2): a halo's socket -> when it was last pinged on its own clock
+    this._ear = new WeakMap();   // RPT1026-SECNET: a socket -> { heard, asked, posed } - its last frame in, its first ping since unanswered, its last pose out (LINE_STALL_MS)
     /** HALO-THIN: the host's word that a referee may stand in a halo room this frame (a duel, the open zone, a serpent's
      *  fight) - every pose goes to every halo whole while it is true. */
     this.haloWhole = false;
@@ -1430,6 +1442,7 @@ export class OnlineSession {
     if (!this.isHost() || !isWorldRoom(this.room) || !this._ws || this.status !== 'open') return false;   // AUDIT WORLD34 D3: the one out-frame without the room's guard said true where the relay kept nothing
     const s = JSON.stringify(final ? { t: 'world', data, final: true } : { t: 'world', data });   // final: the socket's one farewell inside the relay's floor (AUDIT WORLD B5)
     if (s.length > worldFrameMaxFor(this.room)) return false;   // AUDIT WORLD6a B3: a building's memory has its own, smaller cap
+    if (!this._welcomed.has(this._ws)) return false;   // AUDIT RPT1026 A5: a rehello's replacement keeps `host` before its welcome (sendHit's note) - the memory goes after it (world.js worldPublish: a new welcome says it again)
     try { this._ws.send(s); this.stats.sent++; this.stats.worlds++; return true; } catch { return false; }
   }
 
@@ -1441,6 +1454,7 @@ export class OnlineSession {
     if (data.f?.some((r) => r?.it !== undefined) && !this.foeInventoryOk) return false;
     // WORLD6b: in a cell anyone streams (a foe is its spawner's); in a world room the host alone
     if (!(isCellRoom(this.room) || (this.isHost() && isWorldRoom(this.room))) || !this._ws || this.status !== 'open' || !this._welcomed.has(this._ws)) return false;   // SD-HELLO
+    if (this._stalled(this._ws, this._now())) return false;   // RPT1026-SECNET: a stalled line is handed no burst (LINE_STALL_MS) - the host's next frame carries every foe
     const gate = foesGate(this._fbucket, this._now());
     if (!gate.pass) return false;
     const s = stampedFrameText('foes', data, this._ownerTm(), FOES_FRAME_MAX);   // OWNER-CLOCK: the frame says when its foes were where it says
@@ -1456,6 +1470,7 @@ export class OnlineSession {
   sendOwnFoes(data) {
     if (!data || typeof data !== 'object' || Array.isArray(data)) return false;
     if (!this.ownOk || !isWorldRoom(this.room) || !this._ws || this.status !== 'open') return false;
+    if (this._stalled(this._ws, this._now())) return false;   // RPT1026-SECNET: as the host's stream - its next frame is whole (world.js ownStream)
     const gate = foesGate(this._fbucket, this._now());
     if (!gate.pass) return false;
     const s = stampedFrameText('own', data, this._ownerTm(), FOES_FRAME_MAX);   // OWNER-CLOCK: the own lane's too
@@ -1632,6 +1647,10 @@ export class OnlineSession {
     // socket's own status and refuses when none is open. A world room still goes out
     // of the one socket it has.
     if (!cell && (!this._ws || this.status !== 'open')) return false;
+    // AUDIT RPT1026 A5: AND WELCOMED (SD-HELLO). `host` is no flag a hello resets: an AURA-LIVE rehello (an aura, a name)
+    // keeps it while its replacement socket's hello is still being read, and a party member's hello at an instance waits
+    // on the hub - a blow at the host went down the replacement first, "hit before hello", closed for good
+    if (!cell && !this._welcomed.has(this._ws)) return false;
     // WORLD6b-iii(b): in a cell the blow goes through the OWNER's cell - the room its frame was keyed to (`k`), where its
     // socket is; a halo's when that is not my own. The owner must be reported there (the relay routes `to` inside the
     // one room); an owner in no room I hold is not mine to strike
@@ -1642,12 +1661,19 @@ export class OnlineSession {
       // for a foes interval at every crossing until now, and silently
       const owner = hitOwnerOf(data), k = typeof data.k === 'string' ? data.k : this.room;
       const has = (r) => !!this._rooms.get(r)?.has(owner);
-      const sock = (r) => (r === this.room ? (this.status === 'open' ? this._ws : null) : (this._halo.get(r)?.status === 'open' ? this._halo.get(r).ws : null));
+      // RPT1026-SECNET: and WELCOMED (SD-HELLO, ACT WAITS) - a blink kept the roster, and a blow went down the retry's socket
+      // ahead of its welcome: "hit before hello", closed for good. Refused, the blow waits in its queue (net/hitPend.js)
+      const sock = (r) => { const w = r === this.room ? (this.status === 'open' ? this._ws : null) : (this._halo.get(r)?.status === 'open' ? this._halo.get(r).ws : null); return w && this._welcomed.has(w) ? w : null; };
       let via = null;
       for (const r of [k, this.room, ...this._halo.keys()]) if (has(r) && sock(r)) { via = sock(r); break; }
       if (!via) return false;
       ws = via;
     }
+    // AUDIT RPT1026 A1: AND A STALLED LINE IS HANDED NO BLOWS (LINE_STALL_MS). The relay meters a blow on the POSE bucket
+    // (server/src/index.js, the hit arm's `_meter`), so a fighter's blows rode in the stalled line's burst beside its
+    // poses - HIT_HZ_MAX more a second, and a held fight struck out as a held walk did. Refused, the blow waits in its
+    // queue, which ages it out (net/hitPend.js)
+    if (this._stalled(ws, this._now())) return false;
     const gate = hitGate(this._hbucket, this._now());   // AUDIT WORLD2 A6: HIT_HZ_MAX a second at home - refused to the caller, never dropped by the relay unseen
     if (!gate.pass) return false;
     const s = JSON.stringify({ t: 'hit', data });
@@ -1758,7 +1784,10 @@ export class OnlineSession {
     // moves with a crossing, and a blow sent to another room met no bout
     const h = room && room !== this.room ? this._halo.get(room) : null;
     const ws = room ? (room === this.room ? (this.status === 'open' ? this._ws : null) : (h?.status === 'open' ? h.ws : null)) : this._socketFor(d.to);
-    if (!ws) return false;
+    // RPT1026-SECNET: the bout's room too never ahead of its socket's welcome (SD-HELLO, ACT WAITS) - a blink mid-bout said
+    // its blows down a socket whose hello the room had not finished: "duel before hello", closed for good. Refused, a
+    // blow is no blow (a late blow is a wrong one) and an end waits in the bout's outbox (net/duel/duelSession.js post)
+    if (!ws || !this._welcomed.has(ws)) return false;
     const gate = duelGate(this._duelBucket, this._now());
     if (!gate.pass) return false;
     const s = JSON.stringify({ t: 'duel', data: d });
@@ -1831,7 +1860,10 @@ export class OnlineSession {
     const halo = !wildDirected(d) && room && room !== this.room ? this._halo.get(room) : null;
     if (!wildDirected(d) && room && room !== this.room && !halo) return false;   // INT9 (AUDIT): a room I no longer hold - never my own instead
     const ws = wildDirected(d) ? this._wildSocketFor(d.to) : halo ? (halo.status === 'open' && halo.wildOk ? halo.ws : null) : (this.status === 'open' ? this._ws : null);
-    if (!ws) return false;
+    // RPT1026-SECNET: never ahead of the socket's welcome (SD-HELLO, ACT WAITS) - the room's words (a deposit, a take, a
+    // pick) and a fallen's room went down an open socket whose hello was still being read. Refused, each is asked again
+    // by its owner: a deposit's chunk a frame later, a take put back on its pile, a pick to press again
+    if (!ws || !this._welcomed.has(ws)) return false;
     if (SEA_PVP_KINDS.includes(d.k) && !this._seaPvpOn(ws)) return false;   // SHIP-PVP: the sea's guns to a relay that referees them alone - the socket's own (a halo's, a shot's or a boarding's room)
     const gate = wildGate(this._wildBucket, this._now());
     if (!gate.pass) return false;
@@ -2261,10 +2293,16 @@ export class OnlineSession {
   }
 
   /** WORLD3: a change to my room's doors, levers or movers out - anyone's, in a world room, ACT_HZ_MAX a second at
-   *  home (refused to the caller past it), under the small cap. */
+   *  home (refused to the caller past it), under the small cap.
+   *  RPT1026-SECNET (from a private report): AND NEVER AHEAD OF MY
+   *  SOCKET'S WELCOME (SD-HELLO). `open` is the socket's word, said before the room has read my hello: a party member's
+   *  hello at an instance is held while the hub is asked (server/src/index.js _instanceHello), a door's act queued while
+   *  I was away left with the frame after the hello, the room read it first - parseClient's refusal - and closed the
+   *  socket for good. Refused, the
+   *  act stays queued (world.js actSend's pending set) and is sent once the welcome has come. */
   sendAct(data) {
     if (!data || typeof data !== 'object' || Array.isArray(data)) return false;
-    if (!isWorldRoom(this.room) || !this._ws || this.status !== 'open') return false;
+    if (!isWorldRoom(this.room) || !this.welcomed) return false;
     const gate = actGate(this._abucket, this._now());
     if (!gate.pass) return false;
     if (!actFrameFits(data)) return false;   // AUDIT WORLD4 A1: the one home the host reads too
@@ -2349,6 +2387,7 @@ export class OnlineSession {
       // AUDIT SCALE II C-2: THIS SOCKET OPENED - remembered before anything else, the role's question included. A shard's
       // socket that closes without it is a relay that refused the key (onclose's fallback reads it, not `status`)
       this._opened.add(ws);
+      this._earOf(ws).heard = this._now();   // RPT1026-SECNET: the line answered its opening
       const room = this._roomOf(ws) ?? this._swapRoom(ws);   // AURA-LIVE: or a socket opening to replace one (rehello)
       if (room == null) return;
       const live = () => this._roomOf(ws) != null || this._swapRoom(ws) != null;
@@ -2409,7 +2448,7 @@ export class OnlineSession {
     // AUDIT ONCRASH1 C3: THE DOOR IS HERE, and the first cut left it open. `_deliver` wrapped the handler CALLS, so a
     // throw in `_receive`'s own body - the roster prune, `_member`, `_askWho`, a projection - still reached the window
     // and painted the overlay. Driven in a real browser to prove it. The frame is one contained act from the outside in.
-    ws.onmessage = (ev) => this._deliver('frame', () => { const room = this._roomOf(ws); if (room != null) this._receive(ev.data, room); });
+    ws.onmessage = (ev) => { this._heardOn(ws); this._deliver('frame', () => { const room = this._roomOf(ws); if (room != null) this._receive(ev.data, room); }); };   // RPT1026-SECNET: any frame in - a pong too - says the line is live
     ws.onclose = (ev) => {
       this._retire(ws);   // AURA-LIVE: a replacement refused - the socket it replaced goes too (the retry below says hello)
       for (const [r, s] of this._swap) if (s.ws === ws) this._swap.delete(r);   // AURA-LIVE: one that never took its place
@@ -2555,6 +2594,24 @@ export class OnlineSession {
     try { this._ws.send(JSON.stringify(o)); this.stats.sent++; return true; } catch { return false; }
   }
 
+  /** RPT1026-SECNET (LINE_STALL_MS): a socket's ear - when the line last said anything, the first ping since that is still
+   *  unanswered, and the last pose that went down it. */
+  _earOf(ws) {
+    const ear = (this._ear ??= new WeakMap());
+    let e = ear.get(ws);
+    if (!e) ear.set(ws, e = { heard: -Infinity, asked: null, posed: -Infinity });
+    return e;
+  }
+  /** RPT1026-SECNET: a frame came in on `ws` - its line is live, and any ping on it is answered. */
+  _heardOn(ws) { const e = this._earOf(ws); e.heard = this._now(); e.asked = null; }
+  /** RPT1026-SECNET: a ping went down `ws` - the first since it was last heard starts the stall's clock. */
+  _askedOn(ws, now) { const e = this._earOf(ws); if (e.asked == null) e.asked = now; }
+  /** RPT1026-SECNET: is `ws`'s line stalled - a ping on it unanswered for LINE_STALL_MS? */
+  _stalled(ws, now) { const e = ws ? this._ear?.get(ws) : null; return !!e && e.asked != null && now - e.asked >= LINE_STALL_MS; }
+  /** RPT1026-SECNET: does `ws` hold its pose - stalled, and a pose went down it within HEARTBEAT_MS? The latest goes the
+   *  moment the line answers (sendPose is asked every frame), and a heartbeat's worth meanwhile. */
+  _poseHeld(ws, now) { return this._stalled(ws, now) && now - this._earOf(ws).posed < HEARTBEAT_MS; }
+
   /** SCALE2b: this session's send time for a pose going out now (wire.js POSE_TS_MOD) - its wall clock in ms, never
    *  less than one past the last it stamped, so two poses said in one millisecond still order. */
   _stampTs() {
@@ -2582,16 +2639,18 @@ export class OnlineSession {
     const ab = this.poseAboard?.() ?? null;   // DECK-POSE: and my place on a boat's deck, when I stand aboard one
     const dn = this.poseDown?.() ?? null;   // AUDIT WORLD-EVENTS L1-4: my body lying down where it fell (a made level keeps me for a raise) - its place, still, dying
     const out = { ...pose, ...(dn ? { x: dn[0], y: dn[1], z: dn[2], mv: 0, dd: 1 } : {}), ...(pl && !dn ? { pl } : {}), ...(ab ? { ab } : {}), ts: this._stampTs() };   // SCALE2b: one send time for every room's copy - that is what lets a listener order them
-    let went = this._send({ t: 'pose', p: out });
+    // RPT1026-SECNET: a stalled line is handed no burst to deliver (LINE_STALL_MS) - the pose waits, the latest goes
+    let went = this._poseHeld(this._ws, now) ? false : this._send({ t: 'pose', p: out });
+    if (went) this._earOf(this._ws).posed = now;
     // HALO-THIN: a halo hears the pose when it is due - every one while my own cell's socket took none, the host says a
     // referee may stand in a halo, the halo's own cell says one does (SCALE5b's `rf`, the relay's word of its duels, Wild
     // zone and serpent fights), or the halo reaches a player in range who does not hold my cell
     const whole = !went || this.haloWhole;
     let s = null;
     for (const [room, h] of this._halo) {
-      if (h.status !== 'open' || !h.ws || !this._welcomed.has(h.ws)) continue;
+      if (h.status !== 'open' || !h.ws || !this._welcomed.has(h.ws) || this._poseHeld(h.ws, now)) continue;   // RPT1026-SECNET: a halo's stalled line too
       if (!whole && !this._rfOn.get(h.ws) && !haloPoseDue(this._haloPosed.get(h.ws), out, now) && !this._haloAlone(room, out)) { this.stats.haloThinned++; continue; }
-      try { h.ws.send(s ??= JSON.stringify({ t: 'pose', p: out })); this.stats.sent++; went = true; this._haloPosed.set(h.ws, { x: out.x, z: out.z, mv: out.mv | 0, at: now }); } catch { /* the close will say */ }
+      try { h.ws.send(s ??= JSON.stringify({ t: 'pose', p: out })); this.stats.sent++; went = true; this._haloPosed.set(h.ws, { x: out.x, z: out.z, mv: out.mv | 0, at: now }); this._earOf(h.ws).posed = now; } catch { /* the close will say */ }
     }
     if (!went) return false;
     this._lastSent = { ...pose }; this._lastSentAt = now; this.stats.poses++;
@@ -3380,7 +3439,12 @@ export class OnlineSession {
     // AUDIT SAFE CLIENT-7: a request from an account I blocked never lands - a trade, a card, a page, a duel, a wedding (the
     // sender's account as the relay verified it). A cast and the open zone's blows are a fight's, never a request: a
     // block that dropped them would let the blocked strike unanswered
-    if (this.hears && BLOCKED_KINDS.includes(kind)) { const sub = subOf(m); if (sub && !this.hears(sub)) return; }
+    // RPT1026-SECNET (from a private report): A FRAME THAT NAMES NO ACCOUNT IS NOT HEARD AS NOBODY'S. The relay's trade and page arms stamped none, and a missing account read
+    // as not blocked: the account the room's roster said for the sender stands in for it (a relay before the stamp), and
+    // one unknown to both is heard only while nobody is blocked (`hears(null)`, scenes/chatSafetyHost.js). AUDIT RPT1026
+    // A2: a place room's roster and joins name no account (MOD1), so against a relay before the stamp every sender's
+    // request is held back while the list blocks anyone - the roster's account is a belt for a roster that names one
+    if (this.hears && BLOCKED_KINDS.includes(kind) && !this.hears(subOf(m) ?? this.peers.get(m.id)?.sub ?? null)) return;
     const d = valid(m.data);
     if (d && d.to === this.id) this._deliver(kind, () => deliver(m.id, d));
   }
@@ -4370,17 +4434,23 @@ export class OnlineSession {
     // two spellings to be one). Sent when nothing else has gone for PING_MS, through the halo sockets too (each is
     // its own room, and each intermediary idles a quiet socket by its own rule). On its own clock: a ping that
     // touched `_lastSentAt` would push the heartbeat pose back by a ping's width every time.
-    if (this.presence && this.status === 'open' && now - Math.max(this._lastSentAt, this._lastPingAt) >= PING_MS) {
+    // RPT1026-SECNET (LINE_STALL_MS): AND A SOCKET THAT HAS HEARD NOTHING FOR PING_MS IS ASKED, however busy it is saying -
+    // a lone player walking hears nothing back from a pose, and the ping's answer is how a stalled line is known
+    const deaf = !!this._ws && now - this._earOf(this._ws).heard >= PING_MS && now - this._lastPingAt >= PING_MS;
+    if (this.presence && this.status === 'open' && (now - Math.max(this._lastSentAt, this._lastPingAt) >= PING_MS || deaf)) {
+      if (this._ws) this._askedOn(this._ws, now);   // RPT1026-SECNET: asked before it goes - an answer is heard after it
       const went = this._send({ t: 'ping' });
-      for (const [, h] of this._halo) if (h.status === 'open' && h.ws) { try { h.ws.send('{"t":"ping"}'); } catch { /* the halo's own retry */ } }
+      for (const [, h] of this._halo) if (h.status === 'open' && h.ws) { try { this._askedOn(h.ws, now); h.ws.send('{"t":"ping"}'); } catch { /* the halo's own retry */ } }
       if (went) this._lastPingAt = now;
     }   // CHAT1: a channel's keepalive, answered without waking the room
     // HALO-THIN (AUDIT B F2): a halo hears a pose only when it is due, so it keeps RELAY-H1's cadence on its own clock - its
     // last pose, its last ping here, or the shared ping above, whichever was latest
     if (this.presence) for (const [, h] of this._halo) {
       if (h.status !== 'open' || !h.ws) continue;
-      if (now - Math.max(this._haloPosed.get(h.ws)?.at ?? -Infinity, this._haloPinged.get(h.ws) ?? -Infinity, this._lastPingAt, h.since ?? -Infinity) < PING_MS) continue;
-      try { h.ws.send('{"t":"ping"}'); this._haloPinged.set(h.ws, now); } catch { /* the halo's own retry */ }
+      const pinged = Math.max(this._haloPinged.get(h.ws) ?? -Infinity, this._lastPingAt);
+      const haloDeaf = now - this._earOf(h.ws).heard >= PING_MS && now - pinged >= PING_MS;   // RPT1026-SECNET: as the primary's
+      if (!haloDeaf && now - Math.max(this._haloPosed.get(h.ws)?.at ?? -Infinity, pinged, h.since ?? -Infinity) < PING_MS) continue;
+      try { this._askedOn(h.ws, now); h.ws.send('{"t":"ping"}'); this._haloPinged.set(h.ws, now); } catch { /* the halo's own retry */ }
     }
     if (this.presence && this.status === 'open') this._askRound(now);   // SLAM9: the fair ask over every peer not yet introduced
     this._askSeat(now);   // SEAT-LIVE: a dungeon's silent host - my pose, so the relay hears who is here to take the seat
