@@ -2208,6 +2208,11 @@ map's own pens (rivers as lines scaled by width, lakes by outline), cached like 
   whose points (60%) lay beside a lake's picture pixel (G's `lakeShores`) was dropped, and each lake traced again at
   LAKE_INK_SS (4) samples a picture pixel through G's `lakeShoreAt` - the shore the stream itself stood - contoured and
   smoothed as the coast was. Once a trace, with the rest of the static ink.
+- **The bridges** (ROAD-LOOK, `03-World/Roads.md`): in to the Bay's scale (`near`) the roads' paint marks each bridge the
+  terrain kernel stands - the road's two parapets either side of it, BRIDGE_MARK.gap paper pixels out, over the river's
+  width - off the installed roads' layer and this copy of the rivers (`world/road/roadBridges.js` inkBridgeLaw: the law's
+  own crossings on the copy's lines, no level, never the law's compile on this thread); a filtered kind draws none.
+  Pinned by `test/world/road/roadlook.test.js` (the map's bridges the kernel's, the parapets, the filter, the bands).
 
 Proof: `test/ui/mapwaters.test.js` (6: the store and the packing; a river's runs - the scale, the step, the floor, the
 shared point, the thinning; the paint - the wash under the line at its width, the lake in the coast's hand, the cull, the

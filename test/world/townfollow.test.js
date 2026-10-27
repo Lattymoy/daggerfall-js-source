@@ -120,7 +120,7 @@ test('TS6 the walkers on the town\'s ground: a walk grid cell is its tile\'s - f
   assert.match(pb, /const walkShut = dfLocation \? fabricWalkShut\(townWalkShut\(dfLocation, townGround, paths\), dfLocation\) : null;/);   // PIN MOVED (TS10): and the paths its terrain painted
   assert.match(pb, /walkShut\?\.\(nav\);/);
   assert.match(rd('src/world/townWalls.js'), /const origin = getLocationTerrainTileOrigin\(dfLocation\);\n\s+if \(ground\) shutOffGround\(nav, ground, origin\);\n\s+if \(paths\) paveOnGrid\(nav, paths, origin\);\n\s+shutTownWall\(nav, townWallCellsOf\(dfLocation\)\);/);   // PIN MOVED (TS10): the painted paths paved between
-  assert.match(pb, /beach, roadside, townGround, arenaRoads \} = await terrainGen\.generate\(/);
+  assert.match(pb, /beach, roadside, townGround, arenaRoads, bridges \} = await terrainGen\.generate\(/);   // PIN MOVED (ROAD-LOOK): and the pixel's bridges
   assert.match(rd('src/world/terrain/terrainGen.js'), /townGround: locationRect\?\.mask \?\? null,/);
 });
 
