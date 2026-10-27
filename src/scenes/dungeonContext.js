@@ -239,7 +239,7 @@ import { CLASSIC_UPDATE_INTERVAL } from '../characters/weaponStates.js';
 import { BUILD_TAG } from '../buildTag.js';
 import {
   generateItems as generateLootItems, addPileLootExtras,   // AUDIT 24 (wave 43)
-  validLootList, LOOT_LIST_MAX, LOOT_NEWER_TEXT,   // WORLD4: a container's list off the wire, projected and clamped (AUDIT WORLD3 A2's law); AUDIT WORLD4 A2: and the cap the SENDER obeys too
+  validLootList, LOOT_LIST_MAX,   // WORLD4: a container's list off the wire, projected and clamped (AUDIT WORLD3 A2's law); AUDIT WORLD4 A2: and the cap the SENDER obeys too
   RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS,
   RANDOM_TREASURE_MARKER_RECORD, DUNGEON_LOOT_KEYS, shownSpellName,   // L10N3e: a spell's name as shown
 } from '../systems/loot/loot.js';
@@ -1463,7 +1463,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   let _roomMintHold = 0;            // a restore lands the room's words before anything mints over them
   let _roomClaimN = 0;              // this context's claims, counted (roomClaimId)
   let _roomNowMs = 0;               // the frame's clock as the claims' tick last read it
-  const { _roomBase, _roomMine, _roomNextGen, _roomState, composeRoomContainer, forgetRoomContainer, holderList, isRoomBaseContainer, landRoomWord, letFindGo, lootBuiltOf, mintUnbornRoom, roomBaseHolder, roomBodyBorn, roomCanonOfFoe, roomClaimTick, roomGive, roomLootOn, roomRecordOf, roomSayNow, roomSettle, roomTakeSeat, roomUnborn, searchFound, settleRoomBonus } = createRoomLoot({   // HOST-SPLIT: src/scenes/roomLootHost.js
+  const { _roomBase, _roomMine, _roomNextGen, _roomState, composeRoomContainer, forgetRoomContainer, holderList, isRoomBaseContainer, landRoomWord, letFindGo, lootBuiltOf, mintUnbornRoom, roomBaseHolder, roomBodyBorn, roomCanonOfFoe, roomClaimTick, roomGive, roomLootOn, roomRecordOf, roomSayNow, roomSettle, roomTakeSeat, roomUnborn, roomUnreadableText, searchFound, settleRoomBonus } = createRoomLoot({   // HOST-SPLIT: src/scenes/roomLootHost.js
     _deepCleared, _deepFoeCleared, _sharedFoe, _wildDungeon, _wildRing, eliteLootOpts, fightN, foes, lootKeyOf,
     lootableBody, opts, respawnDue, rollPileItems, roomLootKey, searchHeard, searchables, settleLootFlat,
     dfLocation,   // SEA-SET: the place, whose piles of an isle's ruin roll the deep's Tidemail
@@ -10642,7 +10642,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if (p) lootHooks = droppedLootHooks(p);   // G5: playerOwned - the icon cycles
       }
       if (!source) return 0;
-      { const _u = roomLootKey(key); if (_u && _lootUnreadable.has(lootKeyOf(_u))) { setMidScreenText(LOOT_NEWER_TEXT); return 0; } }   // AUDIT SETS M2: not opened here - AUDIT GRAVE-PARTY G2: a room container too (PARTY-LOOT's), a target again so its press says so (roomLootHost.js roomUnborn)
+      { const _u = roomLootKey(key); if (_u && _lootUnreadable.has(lootKeyOf(_u))) { setMidScreenText(roomUnreadableText(lootKeyOf(_u))); return 0; } }   // RPT1026-ITEMS LOOT-SKEW: another build's base said as one (roomLootHost.js); AUDIT SETS M2: not opened here - AUDIT GRAVE-PARTY G2: a room container too (PARTY-LOOT's), a target again so its press says so (roomLootHost.js roomUnborn)
       if ((kind === 'loot' || kind === 'corpse') && roomUnborn(key)) return 0;   // PARTY-LOOT: the room's word for it has not come - nothing of this copy's own is taken
       // LOOT-STACK: a window that has CLOSED is no window - a tab closes
       // its body's window and opens the next through here in one click,

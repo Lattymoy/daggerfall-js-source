@@ -15469,6 +15469,16 @@
   "tr": "7d16a604f0f6",
   "by": "claude-in-session"
  },
+ "loot.room.lapsed": {
+  "en": "ff616a702a7f",
+  "tr": "50bcc452f35e",
+  "by": "claude-in-session"
+ },
+ "loot.room.skew": {
+  "en": "a30750ea539b",
+  "tr": "93be3b7be281",
+  "by": "claude-in-session"
+ },
  "lootBanner.honour.aura": {
   "en": "87c2003333d4",
   "tr": "82d65ae979da",
