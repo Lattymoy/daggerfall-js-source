@@ -449,7 +449,7 @@ in the pack. It spends like gold, and "Deposit letters" at any bank puts it in t
 | 269 | A stolen piece offered by another player, at a trader or on the market, looks like any other | The theft's mark rides a listing to its buyer (STOLEN-GOODS: a player may buy one, the mark riding), and no row another player buys from named it | RPT1026-LEDGERLAW (STOLEN-SAID) |
 | 290 | A player's first King's Mark was gone after they bought another from a player | No code path found that removes a carried piece when another arrives; the cause is in the player's records | NEEDS DATA / STAFF |
 
-### RPT1026-LEDGERLAW: CRAFT-HANDED (105) - `server-account/src/ledger.js`, `market.js`, `writs.js`, migration 0176
+### RPT1026-LEDGERLAW: CRAFT-HANDED (105) - `server-account/src/ledger.js`, `market.js`, `writs.js`, migration 0178
 
 WHAT DFU DOES. Nothing to follow: Daggerfall has no realm, no ledger and no market.
 
@@ -479,7 +479,7 @@ maker's written-back piece is now the claimant's copy - locked, no strike, as ev
 and passes it on, and the maker is refused `piece-dupe`. The seller that kept a piece it SOLD is still the copier (the
 sale clears the hand-over before it). `products.owner` is unmoved, so who may list a piece as a crafted piece, and for
 which currency, is the market's own question as before (FIELD BUGS 2026-10-01's question (3), whether a handed-on piece
-counts as bought with gold, stays the owner's). Migration `0176_rpt1026_ledgerlaw.sql`: `products.handed_to`, NULL for
+counts as bought with gold, stays the owner's). Migration `0178_rpt1026_ledgerlaw.sql`: `products.handed_to`, NULL for
 every piece today. Integrity-Arc's INT4 and its open item narrowed, and a section of its own;
 `Field-Bugs-2026-10-01.md`'s "can list a forged copy" sentence narrowed.
 
@@ -492,7 +492,7 @@ realm trade and real checkpoints; the market's pack route bought and collected; 
 a peer's hands against the account the trade handed it to, a sale giving the owner's word back with the seller that kept
 a sold piece still the copier; a commission's fill).
 
-### RPT1026-LEDGERLAW: EXCUSE-VALUES (99) - `server-account/src/judge.js`, `verdict.js`, `review.js`, `staffPlayers.js`, `tools/realmReview.mjs`, migration 0176
+### RPT1026-LEDGERLAW: EXCUSE-VALUES (99) - `server-account/src/judge.js`, `verdict.js`, `review.js`, `staffPlayers.js`, `tools/realmReview.mjs`, migration 0178
 
 WHAT THE PORT DID. Staff's clear (`/v1/mod/realm-clear`, the Staff Panel's Unfreeze) writes the law's standing signature
 into `law_excused`, and a finding of that signature holds nothing again. `verdict.js` lawSigOf signs a finding
@@ -2300,7 +2300,7 @@ Recorded on `03-World/Naval-Refit.md` beside BOARD-MAGNET.
 
 | | Report | What it was | Done |
 |---|---|---|---|
-| 206 | Every Accept in the Firmament throws "IndexSizeError: ... The radius provided (-21.2667) is negative", and the red report covers the health bars and hotkeys until a restart | A star's burst was stamped with `performance.now()` and drawn by the `requestAnimationFrame` clock, which hands every callback of a frame that frame's START: a burst stamped later in the frame (Accept's answer, after the world's own frame callback) was younger than nought, and its ring's radius went below it. The crash report had no way off it over a session that ran on | RPT1026-CLIENT SPARKS, DISMISS |
+| 206 | Every Accept in the Firmament throws an IndexSizeError (an arc of negative radius), and the red report covers the health bars and hotkeys until a restart | A star's burst was stamped with `performance.now()` and drawn by the `requestAnimationFrame` clock, which hands every callback of a frame that frame's START: a burst stamped later in the frame (Accept's answer, after the world's own frame callback) was younger than nought, and its ring's radius went below it. The crash report had no way off it over a session that ran on | RPT1026-CLIENT SPARKS, DISMISS |
 | 9 | A Weir Key moved to the wagon or a container is back in the pack at the next login | The pack's key is the face of the account's balance, restacked off the pack alone; a face stowed elsewhere counted nothing and the pack was minted another | ALREADY FIXED: KEY-FACE (`Field-Bugs-2026-10-19f.md`) |
 | 41 | All eight Weir Keys lost on using one | The eight were faces the account never held (stowed and carried back, KEY-FACE's record); the open staked the one real key and the answer restacked the pack to the balance. The open never restacks on a refusal or a lost answer (`egClient.js` open) | ALREADY FIXED: KEY-FACE |
 | 83 | Weir Keys change number in the pack from more than one back to one | KEY-FACE's one open door (sent before it merged): the dungeon find's throw restacked the pack to the balance less that one face, so a second find before the first body was looted, or a balance answer before the take-up, showed a key the account never held, and the next answer took it back | RPT1026-CLIENT WEIR-FACE |
@@ -2319,9 +2319,9 @@ Recorded on `03-World/Naval-Refit.md` beside BOARD-MAGNET.
 | 96 | Every spell landing within 14 m shakes the camera whoever cast it, and no setting turns it down (Dagon's Breach's constant tremor) | `hostMagic.js` landFx kicked Better Ambience's camera for every landing, a peer's drawn missile among them; Screen Shake On Damage is DFU's recoil, the player's own injuries; the shake's ceiling was off the mod's tile | RPT1026-CLIENT PEER-SHAKE |
 | 114 | The game crashes talking to the fast-travel woman in Wayrest | OFFERING-RAY: a Hearth Offering's target handed the street's one ray a 6-array where it reads `{ min, max }`, so every press in a street with one threw | ALREADY FIXED: OFFERING-RAY (`Field-Bugs-2026-10-20e.md`) |
 | 115 | Any interact (E, left click) crashes | The same | ALREADY FIXED: OFFERING-RAY |
-| 116 | Every interact crashes since a Morrowind folder was used: "TypeError: cannot read properties of undefined (reading '0') at bye (worldTick...)" | The same stack, frame for frame: OFFERING-RAY's record reads `Qv <- bye <- i <- oy <- fy <- exteriorActivationHit`, `rayAabb` on an offering's 6-array. The Morrowind folder was the day's coincidence: the festival's offerings stood that day | ALREADY FIXED: OFFERING-RAY |
-| 178 | A pad's A on the world map: "NotFoundError: Element.setPointerCapture: Invalid pointer id", stuck until a reload | The pad's press is a synthetic pointer (id 1, the mouse's in Chromium); Firefox holds no pointer 1 and refused the map's capture with a throw out of its listener | RPT1026-CLIENT PAD-CAPTURE, DISMISS |
-| 85 | "Graphics failed, often low memory on phone" on a PC, loading into an Oblivion Gate | The browser lost the game's WebGL context (`webglcontextlost`). Nothing in the game lets the main context go but the page's own going (GL-LEAK); the line blamed a phone | NEEDS DATA (the words: RPT1026-CLIENT GL-SAID) |
+| 116 | Every interact crashes since a Morrowind folder was used, a TypeError in the world tick | The same stack, frame for frame: OFFERING-RAY's record reads `Qv <- bye <- i <- oy <- fy <- exteriorActivationHit`, `rayAabb` on an offering's 6-array. The Morrowind folder was the day's coincidence: the festival's offerings stood that day | ALREADY FIXED: OFFERING-RAY |
+| 178 | A pad's A on the world map throws a NotFoundError from setPointerCapture, stuck until a reload | The pad's press is a synthetic pointer (id 1, the mouse's in Chromium); Firefox holds no pointer 1 and refused the map's capture with a throw out of its listener | RPT1026-CLIENT PAD-CAPTURE, DISMISS |
+| 85 | The game's lost-graphics message, which blamed a phone's memory, on a PC, loading into an Oblivion Gate | The browser lost the game's WebGL context (`webglcontextlost`). Nothing in the game lets the main context go but the page's own going (GL-LEAK); the line blamed a phone | NEEDS DATA (the words: RPT1026-CLIENT GL-SAID) |
 | 81 | FPS drops massively while travelling since the day before | Sent the day before OW-HITCH, which measured an Overworld journey frame by frame in the real game and took its hitches out (the grass's cell frees, the collector, the snow's catch-up, the ground sets) | ALREADY FIXED: OW-HITCH (`e394529e8`) |
 | 82 | FPS lower in general since an update | No build, setting or scene named; nothing to measure against | NEEDS DATA |
 | 129 | Stutter from three "Cast When Held: Tongues" items (Pacify checks?) | Traced: a held item's work is once a game minute (the magic round's payload, its reroll every six hours), not once a frame; the pacification roll is an edge, one roll a foe at first sight (`hostCombat.js` tryLanguagePacification) | NOT REPRODUCED |
