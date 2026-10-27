@@ -1167,21 +1167,39 @@ Chromium draws on its software renderer (WARP, 2 fps). So Vulkan is the player's
   ("Initialization of all (0) EGL display types failed"), STARTS in the app: `ANGLE (NVIDIA Corporation, NVIDIA
   GeForce RTX 5080/PCIe/SSE2, OpenGL 4.5.0)`.
 
-Verified 2026-10-26 on Windows 11, i9-12900KF + RTX 5080 (driver 32.0.16.1088), 240 Hz, on the `app/` dev shell
-(Electron 42) over the dev server, one scene (Daggerfall city, 15:00, `&fly`). Electron was started with
-`--remote-debugging-port` and `--play`. Each launch had a fresh userData, so each boot compiled cold. The renderer was
-read from the page's `WEBGL_debug_renderer_info`. The `boot,settled` phases were the perf probe's, run in the app's
-window over CDP.
+Measured 2026-10-27 on head `48fe4e5395`, on Windows 11, i9-12900KF + RTX 5080 (driver 32.0.16.1088), 240 Hz, on the
+`app/` dev shell (Electron 42) over the dev server, one scene (Daggerfall city, 15:00, `&fly`). Electron was started
+with `--remote-debugging-port` and `--play`. The renderer was read from the page's `WEBGL_debug_renderer_info`. The
+`boot,settled` phases were the perf probe's, run in the app's window over CDP. The runs interleaved off and on: a
+discarded warm-up launch, then off, on, off, on. Each run was a launch on a fresh userData (cold: every program compiled)
+and a second launch on the same userData (warm: Chromium's shader cache kept). Every launch waited for CPU under 10%
+(typeperf, three samples) with no test suite and no other game window; none had to be redone.
 
-| Launch | Page renderer | Worst frozen frame (boot) | Frames over 50 ms (sum) | Standing, 20 s |
+Means of two runs each, the spread (lowest to highest) in brackets:
+
+| Launch | Worst frozen frame (boot) | Frames over 50 ms in the boot | Their sum | Standing, 20 s |
 |---|---|---|---|---|
-| Pref off (2 runs) | `ANGLE (NVIDIA, NVIDIA GeForce RTX 5080 (0x00002C02) Direct3D11 vs_5_0 ps_5_0, D3D11)` | 16.1 s / 24.1 s | 33 (21.3 s) / 48 (31.0 s) | 120 / 120 fps |
-| Pref on (2 runs) | `ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA GeForce RTX 5080 (0x00002C02)), NVIDIA)` | 2.1 s / 1.8 s | 26 (8.1 s) / 25 (6.6 s) | 89 / 118 fps |
+| Pref off, cold | 15.8 s (15.8-15.9) | 39.5 (37-42) | 21.5 s (21.0-21.9) | 137.5 fps (137.3-137.7) |
+| Pref off, warm | 1.9 s (1.8-1.9) | 29.5 (29-30) | 5.9 s (5.8-6.0) | 143.5 fps (136.9-150.0) |
+| Pref on, cold | 1.9 s (1.9-1.9) | 29.0 (27-31) | 5.9 s (5.8-6.1) | 144.8 fps (138.3-151.3) |
+| Pref on, warm | 1.6 s (1.4-1.8) | 33.0 (30-36) | 6.2 s (6.0-6.4) | 142.8 fps (134.8-150.7) |
 
-Standing frames held near 120 a second on both backends (p50 8.3 ms) on a 240 Hz screen. That is a ceiling, so standing
-frame rate did not separate the backends in the app: 118 against 120 is not Vulkan being slower, and Edge's 139 against
-120 has no in-app counterpart. The first Vulkan run's 89 fps (the page thread 94% busy) did not come again, and its
-cause was not found. Runs, logs and screenshots: `dfo-verify/tools/perf/desktop-vulkan-2026-10-26/`.
+Off drew on `ANGLE (NVIDIA, NVIDIA GeForce RTX 5080 (0x00002C02) Direct3D11 vs_5_0 ps_5_0, D3D11)`, on on
+`ANGLE (NVIDIA, Vulkan 1.4.341 (NVIDIA NVIDIA GeForce RTX 5080 (0x00002C02)), NVIDIA)`.
+
+- **Vulkan's gain is the cold launch.** A D3D11 launch with no shader cache froze for about 16 s; Vulkan's cold launch
+  matched a warm D3D11 one. A cold launch is the first one on a new profile, and the first after an update that
+  changes the programs.
+- **Warm, the backends are level.** About 1.6 to 1.9 s worst frame and 6 s over 50 ms on both; the rest of the boot's
+  long frames are not shader compiles.
+- **Standing frame rate did not separate them.** Every arm's spread overlaps the others' (p50 8.3 ms on all).
+
+Every frame gap is in each run's `boot-gaps.json` and `settled-gaps.json`. Runs, load logs and screenshots:
+`dfo-verify/tools/perf/desktop-vulkan-2026-10-26/interleaved-2026-10-27/`.
+
+Superseded: the first in-app numbers (2026-10-26, head `1af08cb134`, two cold launches per arm, not interleaved and not
+load-gated): off 16.1 s / 24.1 s worst frame, on 2.1 s / 1.8 s, standing 120 / 120 against 89 / 118 fps. The 24.1 s and
+the 89 fps did not come again on a quiet machine.
 
 The guard in the app (2026-10-27, head `0765a2564a`, the same machine and shell, one launch each, fresh userData; the
 notice answered with Enter; `dfo-verify/tools/perf/desktop-vulkan-2026-10-26/webgl2-check/`):
