@@ -600,10 +600,9 @@ These are the working notes. The pull request holds the checks as they are run.
 - **The relay keeps no yard state on disk.** Words owed are held in memory, as the highest `v` for each `m:c`, and
   one timer sends them as one frame a second at most.
 
-**Open at this writing:**
-
-- How a word carried to a hub shard reaches the sockets of the other shards. The yard arm takes the home arm's
-  route. Whether that route reaches every shard is not yet checked.
+**The hub's shards.** A hub shard hands every frame on to the bus (`net/wire.js` isSocialRoom's note, SCALE5c), and
+the bus's fan reaches every shard's sockets. The yard arm takes that route, as the home arm does. Read in the code,
+not driven: no test stands a sharded hub for the yard word.
 
 **What was built** (account acct198, relay world271 - over YC1's acct197 and world270):
 
