@@ -548,6 +548,10 @@ accounts' realm characters stood online in Daggerfall's city. B stood by a weste
 - Two runs before this one showed nothing, and they confirmed a skip that works as designed. The intro's and the
   tutorial's pages were still up, and the game holds its pause latch while one is (`overlayUp`), so B never polled. Put
   away with a key each, as a player puts them away, the polls ran.
+- **Run again on the head to be merged: PASS** (2026-10-27, #1304 at e062e17fcb, after two merges of main renumbered it
+  to acct197, migration 0178 and world270; headless Edge with the pointer lock answered in the page). B's two polls of
+  the unchanged town carried no cells. A placed a piece in cell 1287, 449 m away. B's next poll carried that one cell,
+  and B's page showed the piece 60.9 s after the write.
 
 **Check 3, an old build, in the running game** (2026-10-26): main's client at 829fc148da against YC1's service (acct196)
 and relay in local workerd.
