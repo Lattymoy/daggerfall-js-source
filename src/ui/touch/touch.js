@@ -136,6 +136,12 @@ const touchSpire = () => { try { return _touchSpire() ?? null; } catch { return 
  */
 let _openEntry = null;
 export const openTouchEntry = (o = {}) => { try { return _openEntry?.(o) === true; } catch { return false; } };
+/** AUDIT RPT1026 L1: WHERE THE ENTRY STANDS - over the window whose field raised it. The layer is one stacking context at
+ *  z-index 5, under every DOM window, and the entry was its child: a ported window's host (enhancedPortStyle.js
+ *  `.port-host`, z-index 13, the whole screen) covered it, so the amount a finger typed stood hidden behind the Bank and
+ *  only reached it on the keyboard's Enter. The entry is the page's own now (document.body), above the windows a typed
+ *  field stands in - the modal shells' tier, 39 - and under the asset picker (scenes/dataSource.js ASSET_PICKER_Z). */
+export const TOUCH_ENTRY_Z = 39;
 
 // TI2: the safe area. A phone's notch, rounded corners and home bar
 // sit INSIDE the viewport (play/index.html asks for viewport-fit=cover
@@ -497,12 +503,12 @@ export function attachTouch(canvas, hooks = {}) {
     entry.autocomplete = 'off';
     if (numeric) entry.inputMode = 'numeric';   // RPT1026-MISC TOUCH-FIELD: an amount gets the number pad
     entry.placeholder = numeric ? '0' : 'name';
-    entry.style.cssText = `position:absolute;left:50%;${edge('top', 76)};transform:translateX(-50%);width:min(70vw,360px);height:48px;padding:0 16px;box-sizing:border-box;${entryFace};color:#eee;background:rgba(14,16,19,.85);border:1px solid rgba(255,255,255,.3);border-radius:14px;outline:none;pointer-events:auto`;
+    entry.style.cssText = `position:fixed;z-index:${TOUCH_ENTRY_Z};left:50%;${edge('top', 76)};transform:translateX(-50%);width:min(70vw,360px);height:48px;padding:0 16px;box-sizing:border-box;${entryFace};color:#eee;background:rgba(14,16,19,.85);border:1px solid rgba(255,255,255,.3);border-radius:14px;outline:none;pointer-events:auto`;
     entry.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') { const t = entry.value; closeEntry(); if (t) sendText(t); }
       else if (e.key === 'Escape') closeEntry();
     });
-    ui.appendChild(entry);
+    document.body.appendChild(entry);   // AUDIT RPT1026 L1: the page's, over the window that raised it - never under the layer's z-index 5
     entry.focus?.();
     return true;
   }
@@ -736,6 +742,6 @@ export function attachTouch(canvas, hooks = {}) {
     el: ui,
     setLockDot,
     axes: () => (stickId !== null && getPref('touchAnalogStick') ? { x: stickX, y: stickY } : null),   // TI2
-    dispose() { clearInterval(navTimer); setGyro(false); ui.remove(); if (_openEntry === openEntry) _openEntry = null; },   // RPT1026-MISC TOUCH-FIELD: a layer gone raises no entry
+    dispose() { clearInterval(navTimer); setGyro(false); closeEntry(); ui.remove(); if (_openEntry === openEntry) _openEntry = null; },   // RPT1026-MISC TOUCH-FIELD: a layer gone raises no entry - AUDIT RPT1026 L1: and takes its entry, the page's own now
   };
 }

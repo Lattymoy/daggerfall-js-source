@@ -3232,6 +3232,17 @@ html.plus-pad-prompts-visible .px-over > .px-stage.px-timersstage > .px-win { ma
   .talk-shell .talk-panel { height: calc(100dvh - 12px); bottom: 6px; }
   .talk-main { grid-template-columns: 1fr minmax(200px, 40%); grid-template-rows: minmax(0, 1fr); }
   .talk-topics { border-top: 0; border-left: 2px solid rgba(125,116,96,0.45); }
+  /* AUDIT RPT1026 L2: AND A NARROW ONE KEEPS ITS HEAD AND FOOT TO A ROW EACH. Under 720 pixels wide (a 360-wide phone on its
+     side, 640 x 360; an iPhone SE's 667 x 375 and 568 x 320) the phone rule above still stacked the name over the tones and
+     the question over Note and Ask - 108 and 90 pixels of a 308-pixel panel - and the topic list stood 66 pixels tall at
+     640 x 360, 26 at 568 x 320, under one row; the categories, in the topics' 40%, ran past the panel's edge, Work cut off
+     at 640 and wholly off the screen at 568. One row each, and the strip's buttons shrink to fit it. */
+  .talk-head { grid-template-columns: 1fr auto auto; }
+  .talk-head .door-goodbye { grid-row: auto; grid-column: auto; }
+  .talk-tone { grid-row: auto; grid-column: auto; }
+  .talk-say { grid-template-columns: 1fr auto auto; }
+  .talk-say .talk-q { grid-column: auto; }
+  .talk-cat { flex: 1 1 auto; min-width: 0; padding: 0 2px; letter-spacing: 0.04em; text-indent: 0.04em; }
 }
 /* ── PX30: THE GAMEPLAY HUD ─────────────────────────────────────
    Mac's reference is ESO's Clean UI - a compass across the top, the

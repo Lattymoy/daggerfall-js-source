@@ -2574,6 +2574,15 @@ fixes; the pins are named under each, the mutants in `tools/mutants/rpt1026_misc
 records re-aimed by content (`freemouse1.json`, `menurelock1.json`, `questshelffaces.json`, `survtiers.json`, each
 dead). Branch `worktree-agent-aa6f4b58488dcd75f`.
 
+AUDIT RPT1026 (lane L, read cold with the real modules driven - the two phone screens in Playwright's Chromium, the
+bed through the real interior host): three fixes did not reach the case they were for - TOUCH-FIELD's entry stood under
+the Bank it typed for (L1), TALK-SIDEWAYS left a phone narrower than 720 pixels on its side with a topic list under two
+rows (L2), and BED-PRESS-INDOOR's press was over before a rest that asks first opened (L3); each fixed and pinned
+(`test/ui/audit_rpt1026_l.test.js`, `test/scenes/audit_rpt1026_l_bed.test.js`, every pin failing on the batch's head),
+mutants `tools/mutants/audit_rpt1026_l.json` (14, all dead). HEIR-WAITS' pin had named its fallen after the report's own
+character (L4, renamed), and two lines below said what the code does not (L5, L6, corrected). Each fix in code carries
+an `AUDIT RPT1026 L<n>` comment.
+
 | | Report | What it was | Done |
 |---|---|---|---|
 | 204 | Holding Tab a little over half a second makes the quick menu vanish | The overlay stack's Tab listener closed the top overlay - the dial - on the key's auto-repeat, though its comment said a repeat closes nothing | TAB-REPEAT |
@@ -2581,16 +2590,16 @@ dead). Branch `worktree-agent-aa6f4b58488dcd75f`.
 | 191 | On a phone, HUD lines linger far too long | The same | TOAST-STALL |
 | 73 | An NPC asked for news answered with a quest's words and its macros raw | The quest's progress rumor outlived the quest's removal; its telling asked for a quest the machine no longer held | RUMOR-ORPHAN |
 | 172 | Three escort faces stuck on screen; turning in and abandoning quests does not clear them | A face whose quest left the machine without ending (a quest a load could not restore) had no door out, and rode every save | FACE-ORPHAN |
-| 90 | A rest in a Fighters Guild hall is the rough night, a bed clicked or not | The interior host's rest kind never read the bed's press | BED-PRESS-INDOOR |
+| 90 | A rest in a Fighters Guild hall is the rough night, a bed clicked or not | The interior host's rest kind never read the bed's press | BED-PRESS-INDOOR; through a rest that asks first too, AUDIT RPT1026 L3 |
 | 192 | On a phone, Chrome's pointer-lock banner at every menu | Every relock door asked for the pointer lock on a touch screen, and Chrome granted it | TOUCH-NO-LOCK |
 | 179 | The Morrowind card's Remove data seems dead, with no word | The Settings confirm was drawn into a sheet that was shut | CONFIRM-SHEET |
 | 94 | Charged with Assault for a mounted Overworld journey through a town | Enhanced Riding's trample ran under a journey's gallop, unsteered | JOURNEY-TRAMPLE |
 | 110 | The heritage system's heir choice went back to the menu before an heir was picked; the parent is gone from the server | The parent's tombstone is Bloodline's law at the death; the Online page's door to a waiting Succession named living kin only, never the newborn the fall offers | HEIR-WAITS; the parent: staff (notes) |
-| 190 | On a phone the Bank's amount cannot be typed (the map's name field can) | The port draws a window's typed field as words, which no phone keyboard reaches | TOUCH-FIELD |
+| 190 | On a phone the Bank's amount cannot be typed (the map's name field can) | The port draws a window's typed field as words, which no phone keyboard reaches | TOUCH-FIELD; its entry raised over the window, AUDIT RPT1026 L1 |
 | 214 | Giants spawn inside rocks in the open zone (seen twice) | GIANT-FIELDS chose the giant's ground by the height map alone | GIANT-ROCK |
 | 71 | Spells leave later with the Morrowind look than with the Daggerfall one | The classic hands release on frame 5 (0.2 s); the Morrowind arm waited for its own release key, played at the cast's rate | CAST-PACE |
 | 57 | One third-person skin (set 10, a woman) shrinks while casting | The mod's own spell sheets for that set draw her a quarter smaller, at the XML's scale 1 | SPELL-SHORT |
-| 159 | The talk window on a phone is off screen and cannot be used | Held sideways, the panel stood 52dvh and its topic list had no height | TALK-SIDEWAYS |
+| 159 | The talk window on a phone is off screen and cannot be used | Held sideways, the panel stood 52dvh and its topic list had no height | TALK-SIDEWAYS; narrower than 720 pixels too, AUDIT RPT1026 L2 |
 | 4 | A companion's bag shelters gear from a death in the open zone | COMPANION-DROP (`Field-Bugs-2026-10-19f.md`, the owner's call) | already fixed |
 | 36 | The town map's Find me goes to the town's lower right | FINDME-TOWN (`Field-Bugs-2026-10-19f.md`) | already fixed |
 | 5 | A horse gone after a death in a dungeon | STEED-KEPT (`Field-Bugs-2026-10-19f.md`, the owner's call) | already fixed |
@@ -2705,6 +2714,21 @@ PINS. `test/systems/rest/rpt1026_misc_rest.test.js` (2); `rest1_act.test.js`, `s
 Mutants (2): `rpt1026-misc-bed-press-ignored`, `-bed-press-unwired`; `survtiers.json`'s
 `SURVTIERS-the-interiors-hearth-is-bare-ground` re-aimed to the module.
 
+AUDIT RPT1026 L3 - THE PRESS ENDED BEFORE A REST THAT ASKS FIRST. `_restFromBed` stands for the press alone
+(`restFromInteriorBed`'s `finally`), and poisoned or diseased the rest asks first (REST-WARN): the window opens on the
+box's Yes, after the press. Driven through the real interior host (the mode machine over a stub host, a house stood by
+`restoreInterior`): a bed pressed opened a bed's rest; a bed pressed while poisoned, answered Yes, opened a rough one.
+The press is the window's own now - `createRestWindow`'s second argument is DaggerfallRestWindow's
+`ignoreAllocatedBed`, passed by a bed's press alone, and the door marks the bag for the open
+(`restDoor.js:"if (mark) deps.bedPressed = !!ignoreAllocatedBed;"`), where `setResting` and `restAct` read the place
+and the point (`shared.js:"const pressedBedKind = () => REST_KIND.Bed;"`). THE FOUR HOSTS: worldModes.js unchanged (its
+press already rides the door); world.js's ship bed hands its press through it, read as the toggle runs (no logical line
+added); dungeonContext.js's bed is in reach whatever the box (`bedInReach`); exterior.js stands no bed. Pinned by
+`test/scenes/audit_rpt1026_l_bed.test.js` (2: the host driven, the door and the bag); `partyrest1.test.js`,
+`surv4_rest.test.js`, `restlodging.test.js`, `pvpdungeons_game.test.js` (pins moved) and `11-Multiplayer/Wild-Zone.md`'s
+REST-WARN anchor (moved), `auditdrops.json`'s `AD-D1-vote-not-spent-on-a-granted-rest` and `surv4.json`'s
+`SURV4-the-kind-is-read-every-hour` re-aimed by content.
+
 ### TOUCH-NO-LOCK (192) - `src/player/pointerLock.js`
 
 WHAT THE PORT DID. A phone's look is the touch layer's drag, and the canvas's click net already let a finger go by -
@@ -2743,7 +2767,9 @@ town's people at a gallop, unsteered, and charged Assault.
 FIXED. The world host's frame asks the trample only off the road (`!rideOnTheRoad()` in the condition that stood). A
 departure from the mod (Port-Ledger A, JOURNEY-TRAMPLE; `06-Systems/Roleplay-Realism.md`).
 
-THE FOUR HOSTS. world.js alone runs the riding contacts; no logical line added.
+THE FOUR HOSTS. world.js runs the riding contacts and every journey; exterior.js runs them too (AUDIT-RR F15, its own
+`rrRiding.contacts()`) but stands no journey - no Overworld view, no Travel Options - so its gate is unchanged
+(AUDIT RPT1026 L5: this line had said world.js alone); no logical line added.
 
 PINS. `test/scenes/rpt1026_misc_trample.test.js` (1); `rr2_realism.test.js` (pin moved). Mutants (1):
 `rpt1026-misc-trample-on-journey`.
@@ -2757,8 +2783,9 @@ alone, where the fall's own Succession also offers a newborn heir of the fallen 
 with no sibling or child - the report's case - left the house with no card and nothing to press.
 
 FIXED. The card offers the newborn where the fall may raise one (the heir answer rolled at the fallen's birth, the
-Descendants dial at Always, or an elder retired), made as the Succession makes one (addChild, then rollSiblings, at the
-fall's own minute) and born at the boot. The parent stays fallen (Bloodline's law); the heir starts at level 1.
+Descendants dial at Always, or an elder retired), made as the Succession makes one (addChild, then rollSiblings) and born at the boot - born at the fall's own minute,
+where the in-world Succession bears its newborn at its choice's minute, a breath after the fall (AUDIT RPT1026 L6: this
+line had said the two were one). The parent stays fallen (Bloodline's law); the heir starts at level 1.
 
 THE WORDS. `legacy.houseWaits.newborn` "Raise a child of {name} as your heir"; `legacy.houseWaits.noNewborn` "No heir
 can be raised for that house." Drafted in every language (`SCRATCH/drafts/misc.json`).
@@ -2779,6 +2806,16 @@ port's live field (`openTouchEntry`), with the number pad for an amount (the ban
 PINS. `test/ui/enhanced/rpt1026_misc_field.test.js` (1: a deposit typed by finger through the real Bank window, its port
 view and the touch layer). Mutants (3): `rpt1026-misc-touch-field-unmarked`, `-touch-entry-unhooked`,
 `-touch-field-press-unread`.
+
+AUDIT RPT1026 L1 - THE ENTRY STOOD UNDER THE BANK. Mounted in Chromium at 390 x 844 and 844 x 390 (the real Bank window,
+its port view and the touch layer over Vite's dev server), the field's press raised and focused the entry - but as the
+layer's child, one stacking context at z-index 5, under the port's host (`.port-host`, z-index 13, the whole screen): the
+topmost thing at the entry's centre was the Bank's own stat row and columns. The amount a finger typed showed nowhere
+until the keyboard's Enter sent it. The entry is the page's own now (`touch.js:"export const TOUCH_ENTRY_Z = 39;"`, on
+`document.body`), over the window that raised it and under the asset picker; re-probed, it is the topmost thing at its
+centre and 250 typed there is the Bank's 250 on Enter. Pinned by `test/ui/audit_rpt1026_l.test.js` L1 (mutants
+`auditl-entry-in-layer`, `-entry-under-port`, `-entry-left-behind`); `audit62_touch.test.js` AUDIT FONT F6 reads the
+field where it stands now (pin moved).
 
 ### GIANT-ROCK (214) - `src/systems/wild/wildGiants.js`, `src/scenes/world.js`
 
@@ -2840,6 +2877,15 @@ unchanged. `10-UI/UI-Arc.md`.
 
 PINS. `test/ui/enhanced/rpt1026_misc_talk.test.js` (1: the sheet's cascade read at each size). Mutants (2):
 `rpt1026-misc-talk-sideways-short`, `-talk-sideways-stacked`.
+
+AUDIT RPT1026 L2 - AND NARROWER THAN 720. The fix's sizes were all wider than the phone rule's 720 pixels. Under it (a
+360-wide phone on its side, 640 x 360; an iPhone SE's 667 x 375 and 568 x 320) the phone rule still stacked the name over
+the tones and the question over Note and Ask, and the two columns put the categories in 40% of the width: measured in
+Chromium, the topic list stood 66 pixels at 640 x 360 and 26 at 568 x 320 - under one row - and Work was cut at the
+panel's edge at 640, wholly off the screen at 568. Under 500 pixels high the head and the foot are one row each now and
+the categories shrink to their strip: the list 152, 167 and 112 pixels, every press the topmost thing at its centre and
+none overflowing; 844 x 390, 740 x 360, 915 x 412, upright and desktop sizes measured unchanged. Pinned by
+`test/ui/audit_rpt1026_l.test.js` L2 (six mutants, `auditl-talk-*`).
 
 ### Already fixed
 

@@ -2452,6 +2452,8 @@ export const restFullyHealed = (entity) =>
  *   endLines(id)       its TEXT.RSC reader
  *   say / onLevelUp    its presenters
  */
+/** AUDIT RPT1026 L3: the place of a rest a bed's press opened (ui/restDoor.js marks the bag `bedPressed` for the open). */
+const pressedBedKind = () => REST_KIND.Bed;
 export function createRestDeps(entity, opts = {}) {
   const {
     say = () => {}, onLevelUp = null, day = () => false, inside = () => true,
@@ -2517,7 +2519,7 @@ export function createRestDeps(entity, opts = {}) {
       // price is the tier's: with the arc off every rest is DFU's whole hour (a bed's), in any place.
       if (b) {
         _rules = survivalRules();   // SURV-TIERS: the tier read beside the place prices it (restHour, stiffen, the asks)
-        _place = (_restKindOverride ?? restKind)();
+        _place = (_restKindOverride ?? (out.bedPressed ? pressedBedKind : restKind))();   // AUDIT RPT1026 L3: a window a bed's press opened rests in it (ui/restDoor.js createRestWindow) - however long a REST-WARN box held the open
         _kind = _rules ? _place : REST_KIND.Bed; _roughHours = 0;
         _spot = _place;   // AUDIT REST-PARTY: where the rest was opened - a pressed bed's flag lasts only the press, and a fire spends its fuel through the night
         // REST6: a Sleeping Draught makes a rough night a bed's - its yield, its sleep rate, no stiff morning - and is spent
@@ -2605,7 +2607,7 @@ export function createRestDeps(entity, opts = {}) {
   out.restAct = () => {
     if (litCandle(entity)) return { point: { kind: 'candle', where: 'candle' }, night: false, meditate: true, channelSeconds: REST_CHANNEL_SECONDS };
     if (!sharedClockOn()) return null;
-    const point = restPoint?.() ?? null;
+    const point = out.bedPressed ? { kind: REST_KIND.Bed, where: null } : (restPoint?.() ?? null);   // AUDIT RPT1026 L3: and its point is that bed
     return { point, night: nightDue(entity, ownMinutes()), channelSeconds: point?.channelSeconds ?? REST_CHANNEL_SECONDS };
   };
   out.restMeditate = () => {

@@ -861,7 +861,7 @@ each is a line here, findable by its tag.
 - REST-WARN (the owner: "Poison/Disease warning on rest, there should be one for when you attempt to rest"): a rest
   begun while a poison or a plain disease works asks first - "You are poisoned." / "Resting will not cure it." / "Rest
   anyway?" (`restAilmentLines`, `restWarning.js:"export function restAilmentLines"`; `src/systems/rest/restWarning.js`),
-  the rest window opening on its Yes once the box has left the slot (`world.js:"const restNow = ()"`). Wired in all
+  the rest window opening on its Yes once the box has left the slot (`world.js:"const bed = _restFromBed, restNow = ()"` - AUDIT RPT1026 L3: with the bed's press read as the toggle runs). Wired in all
   four hosts' rests - the street's, the interior's, the dungeon's and the fixed city's (world.js, worldModes.js,
   dungeonContext.js, exterior.js; the last left out by the patch and wired after it, 2026-10-08, THE FOUR HOSTS RULE -
   `test/systems/pvpdungeons_game.test.js` sweeps all four). REST-WARN2 (the owner: "those are not enhanced
