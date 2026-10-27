@@ -59,13 +59,22 @@ the set's grain, its tiles' shapes and its transitions, and takes its own colour
 
 **Its door** (`scenes/groundSets.js`). A pixel's ground set is named by the build (`scenes/pixelBuild.js` - its own and
 its eight neighbours', each its own zone's: `tamrielLands.js` landGroundSet, `lands:<zone>:<archive>`) and the ground
-sets' module reads such a key as its archive read as ever, its drawn layers dressed (`dressLayersSteps`) and every map the
-grass and the water read kept under the key - its grass records (none where the zone grows no blades), its floor's, its
-puddles' (the archive's own: the dress keeps the alpha whole), its colours. An archive's own key makes what it made.
-**Its cost:** a 256-texel set (Vanilla Enhanced) dressed in 1.2-1.5 s of a laptop core on its first pixel, never in one
-piece - a band of 32 rows of a 256-texel record a step, a transition's shares a band and a blur a step (the box blur a
-running sum), the build's breather between (`world/puddleMask.js` stepsBreathing); the longest step measured 22 ms (its
-first, the prototypes), the rest under 13. Once a zone and season; the renderer's tile cache keeps it.
+sets' module reads such a key as its archive read as ever, its drawn layers dressed and every map the grass and the
+water read kept under the key - its grass records (none where the zone grows no blades), its floor's, its puddles' (its
+file's own, marked once - the dress keeps the alpha whole), its colours (the dress's, kept by the module beside the
+renderer's tile arrays, so a scene after reads them and never a mod door that knows no zone's key). An archive's own key
+makes what it made.
+**Its cost, off the page's thread.** A 256-texel set (Vanilla Enhanced) is 0.87 s of a core to dress: a solid record 2 ms,
+a transition 16 (its classes' shares, their blurs, its blend - the texel's transform a table over its luminance, built at
+2,048 steps of a class's ramp and read between them, and every hot loop a plain function's, which the engine optimises as
+it does not a generator's). It runs on its own worker (`world/tamriel/groundDressWorker.js`, the page's side
+`groundDressClient.js` - handed copies, the set as drawn the page's), so the page draws while it dresses; with no worker,
+or one that fails, the same work on the page's thread a band of 32 rows of a 256-texel record a breath
+(`world/puddleMask.js` stepsBreathing - its longest step 11 ms). A pixel's own set and its neighbours' are loaded
+together (`pixelBuild.js`), so a junction of zones met first has one set dressed while the page reads and uploads the
+next. Once a zone and season; the renderer's tile cache keeps it. (AUDIT: the first cut dressed on the page's thread in
+the stream's slices - 1.2-1.5 s of work a set, two seconds and more of a pixel's wait, three sets one after another at a
+junction.)
 
 ## The growth: a zone's recipe (`world/terrain/terrainNature.js` layoutLands)
 
@@ -79,11 +88,14 @@ own dice), with the zone's numbers in FOREST1's stead:
   record, weight] of Daggerfall's own nature flats - the Mountains' pines in the Pinewoods, the swamp's black basalt
   stacks and the desert's dry trama in the Ashlands, the rainforest's twisted and vine-hung trees and its palms in the
   Tenmar - and every flat carries its archive (ECOTONE1's own seam: the build reads each flat's own, its season and its
-  Low Poly tree its own).
+  Low Poly tree its own). A dead tree is one of `DEAD_TREES` - the desert's snags (503:11, 503:12), its gnarled thorn
+  (503:28), the woodlands' great dead oak (504:30) - bare in the classic picture and in Low Poly Trees' mesh alike; never
+  the classic sets' grey dead tree (504:24, 510:24), which the mod stands as 504:25's PINE (AUDIT: seen in the game - the
+  Ashlands stood forty pines a pixel; `vendor/low-poly-trees/Trees/trees.json`, their prefabs on the pine's mesh).
 - **Its rates** (`treeRate`, `coverRate`) on FOREST1's chances, and its ground's shares by DFU's tile record.
 - **Its border.** With the Blended climates row a pixel's tiles within the ecotone's reach of a neighbour of another zone
   are owned as ECOTONE1 owns them (`world/ecotone.js` ecotoneOwner - the same border the ground draws), each laid by its
-  owner's recipe; a zone the table does not name keeps its climate's law on its tiles, and a Bay pixel's neighbour off
+  owner's recipe, and the landmarks by the same owners, walked once a pixel (`terrainNature.js` borderOwners); a zone the table does not name keeps its climate's law on its tiles, and a Bay pixel's neighbour off
   the Bay wears the pixel's own (`tamrielGround.js` climateNeighbourIn).
 
 **The Tenmar and Murkmire** are jungle in the lore, and stay off the Bantha's storeys - the owner's "the unique jungle
@@ -128,9 +140,11 @@ the main thread. A site's zone is its tile's owner's (the ecotone's, as the flat
 one seam. Its foot (a stalk, a column, a trunk; the Hist's roots) stands wholly on land - no water, no paving, no road or
 track, no place's rect or clearing, nothing past its kind's steepest (a spire 40 degrees, the vines 14), over the beach
 (the reeds alone go to the water's edge, never into open water) - at the lowest ground under it, sunk a little; the
-larger kinds stand first and the smaller keep off them; the pixel's flats keep off every foot and every vineyard's tile
-(`flatsOffProps`). A pixel lays its landmarks in a few milliseconds of the kernel (its kinds' measures made once a
-worker).
+larger kinds stand first and the smaller keep off them. The PIXEL'S BUILD keeps its flats off the feet of the landmarks it
+STANDS and off their vineyards' tiles (`landProps.js` landFeetOff, a grid of the feet - a flat asks the nine cells about
+it): a landmark the gate's clearing or a rock drops leaves its ground's own flats (AUDIT: the kernel had cleared them
+under every landmark, and a dropped one left a bare ring). A pixel lays its landmarks in a few milliseconds of the kernel
+(its kinds' measures made once a worker, only the kinds its owners name walked).
 
 **Their bodies** (`landPropBodies`, PROP-BODIES' shape): a parasol's stalk, a spire's column, a Hist's trunk, a grove
 tree's trunk - the player walks round them, on foot or mounted, and through the reeds and between the vines' rows.
@@ -146,15 +160,29 @@ the sun's maps. **The four hosts:** `scenes/world.js` WIRED through the trees' h
 
 ## The far views (`render/farFlora.js`, `world/terrain/floraCover.js`, `render/farTrees.js`)
 
-FAR-FLORA's book answered a climate; with the row it answers a map pixel's zone: its woods (`landsFloraSpec` - the zone's
-share expected at FOREST1's wood, the field's own distribution read at 4,096 quantiles and averaged in 32 bins of
-FOREST1's, so the middle ring's packed wood reads the zone's woods exactly where FOREST1's edge is crossed and its mean
-over each side elsewhere; afar its own share, never the climates' 45%), its Trees' art (`landTreeArt` - its recipe's
-trees by their weights) and its ground (`landGroundArt` - the drawn tiles in the zone's dress at the pack's exposure, as
-the near ground is dressed). The far ring, the middle ring and the far field ask it at each vertex's pixel. The band past
-the streamed grid (FAR-TREES) asks the worker with the row: a pixel past the Bay lays its zone's recipe, and a tree of an
-archive not the pixel's answers `archive x 256 + record` (`bandTreeCode`), each read in its own archive's art. So the
-Ashlands' horizon is grey ash under a few dead trees, the Pinewoods' dark under its pines.
+FAR-FLORA's book answered a climate; with the row it answers a map pixel's zone: its woods (`landsFloraSpec` - afar its
+own share, never the climates' 45%), its Trees' art (`landTreeArt`) and its ground (`landGroundArt` - the drawn tiles in
+the zone's dress at the pack's exposure, as the near ground is dressed, a record a task). The far ring, the middle ring and
+the far field ask it at each vertex's pixel.
+
+- **Its canopy is its Trees'.** The far views' canopy, the band and the 3D trees are Trees (TREE_RECORDS); a stump, a log or
+  a mossy rock among a recipe's `trees` stands as a flat. So a zone's tree rate afar is its recipe's by the share of its
+  picks that are Trees, and its art those Trees' pictures by their weights (AUDIT: the non-Trees had read as canopy - the
+  woods thinning where the band took over).
+- **The middle ring reads the zone's own edge.** The worker's packed wood is FOREST1's, and a zone's woods read through it
+  are only their expectation given it (the field's distribution at 4,096 quantiles, averaged in 32 bins of FOREST1's wood) -
+  where FOREST1's field is all plain or all woods, most of the land, one mean. With the row the worker also answers the
+  forest field's own value at each sample (`floraCover.js` midRingCoverPixel, a byte over 0.15-0.85; none for a Bay pixel),
+  and a zone's vertex reads its recipe's edge on it - the Pinewoods' glades and woods where the near ground has them (a
+  world field, the same at a sample two pixels share).
+- **The band past the streamed grid** (FAR-TREES) asks the worker with the row: a pixel past the Bay lays its zone's
+  recipe, and a tree of an archive not the pixel's answers `archive x 256 + record` (`bandTreeCode`), each read in its own
+  archive's art. Its atlas's 48 layers are LENT: a Tree's picture is read where a wanted pixel's tree is of it, and a full
+  atlas lends the layer of a picture no wanted pixel, no drawn set and no set being laid is of (`farTrees.js` _layerFor),
+  the picture it turned away asked again when the drawn set moves (AUDIT: the Bay's eight archives hold 60 Trees, and a
+  journey outgrew the atlas - a province's band trees left out for the session).
+
+So the Ashlands' horizon is grey ash under a few dead trees, the Pinewoods' dark under its pines.
 
 ## The zones
 
@@ -162,17 +190,17 @@ Each zone's lore line is LANDS' own (`lore`); its sources the page's Sources, be
 
 | Zone | Climate (its sets) | Ground: dirt / grass / stone (the ramps' middles) | Blades | Woods: share, its Trees' climates | Landmarks |
 |---|---|---|---|---|---|
-| the Frozen Coast (Skyrim) | Mountain (510, 102) | `#7d8280` / `#b3bbb8` / `#94979b` | no | 6%, mountain | spire (frost; plains) |
-| the Tundra Plains (Skyrim) | MountainWoods (506, 102) | `#8a7a5e` / `#a39a62` / `#a2a39d` | yes | 6%, mountain | spire (lichen; plains); reeds (reed; wet) |
+| the Frozen Coast (Skyrim) | Mountain (510, 102) | `#7d8280` / `#b3bbb8` / `#94979b` | no | 6%, mountain, desert | spire (frost; plains) |
+| the Tundra Plains (Skyrim) | MountainWoods (506, 102) | `#8a7a5e` / `#a39a62` / `#a2a39d` | yes | 6%, mountain, desert | spire (lichen; plains); reeds (reed; wet) |
 | the Pinewoods (Skyrim) | MountainWoods (506, 102) | `#756247` / `#676b46` / `#8e908a` | yes | 80%, mountain | grove (aspen; woods, in stands) |
-| the Reach (Skyrim) | Mountain (510, 102) | `#8c7c68` / `#9a8a60` / `#9a8e80` | yes | 12%, mountain | spire (reachstone; any) |
-| the High Peaks (Skyrim) | Mountain (510, 102) | `#9c9ea0` / `#dbe3ea` / `#7b7e81` | no | 3%, mountain | spire (granite; any) |
+| the Reach (Skyrim) | Mountain (510, 102) | `#8c7c68` / `#9a8a60` / `#9a8e80` | yes | 12%, desert, mountain | spire (reachstone; any) |
+| the High Peaks (Skyrim) | Mountain (510, 102) | `#9c9ea0` / `#dbe3ea` / `#7b7e81` | no | 3%, mountain, desert | spire (granite; any) |
 | the Wrothgarian Mountains (HighRock) | Mountain (510, 102) | `#776a52` / `#999670` / `#919397` | yes | 30%, mountain | spire (granite; plains) |
-| Bangkorai (HighRock) | MountainWoods (506, 102) | `#b07a4a` / `#757048` / `#ad8060` | yes | 50%, mountain | spire (striated; plains) |
+| Bangkorai (HighRock) | MountainWoods (506, 102) | `#b07a4a` / `#757048` / `#ad8060` | yes | 50%, mountain, desert | spire (striated; plains) |
 | the Rivenspire Moors (HighRock) | HauntedWoodlands (508, 302) | `#55473a` / `#7a7656` / `#7f8287` | yes | 15%, swamp, haunted | spire (flint; plains) |
 | the Northpoint Coast (HighRock) | Woodlands (504, 302) | `#8a7858` / `#5e7a3e` / `#999b9c` | yes | 40%, woodland | - |
 | the Alik'r Desert (Hammerfell) | Desert (503, 002) | the set as drawn (Sands of the Alik'r) | no | 2%, subtropical, desert | spire (redstone; any) |
-| Craglorn (Hammerfell) | Desert2 (503, 002) | `#978274` / `#b3aca7` / `#c6c0bd` | no | 4%, mountain, desert | spire (limestone; any) |
+| Craglorn (Hammerfell) | Desert2 (503, 002) | `#978274` / `#b3aca7` / `#c6c0bd` | no | 4%, desert, mountain | spire (limestone; any) |
 | the Abecean Coast (Hammerfell) | Subtropical (501, 002) | `#c8b8a5` / `#7d6d58` / `#bda593` | no | 35%, subtropical, woodland, desert | spire (honey; plains) |
 | the Dragontail Mountains (Hammerfell) | Mountain (510, 102) | `#8a7c6c` / `#7a7a58` / `#98887e` | yes | 45%, mountain | spire (granite; plains) |
 | the Vine Coast (Sumurset) | Subtropical (501, 002) | `#957f62` / `#6f7c4c` / `#cdc7b9` on TEXTURE.302 | no | 30%, mountain, woodland, mountain woods | grove (cherry, ginkgo, maple; woods); vines (vine; plains) |
@@ -185,16 +213,16 @@ Each zone's lore line is LANDS' own (`lore`); its sources the page's Sources, be
 | the Hist Swamps (BlackMarsh) | Swamp (502, 402) | `#352b21` / `#4a3b2c` / `#44522f` | yes | 60%, swamp | hist (hist; woods); reeds (reed; wet) |
 | the Shadowfen (BlackMarsh) | Swamp (502, 402) | `#4f4130` / `#8a8a55` / `#4e5a38` | yes | 15%, swamp | reeds (reed; plains); hist (hist; woods) |
 | Murkmire (BlackMarsh) | Rainforest (500, 402) | `#544833` / `#4e5a38` / `#44522f` | yes | 65%, swamp, rainforest | reeds (reed; wet); hist (hist; woods) |
-| the Ashlands (Morrowind) | Mountain (510, 102) | `#5f5a55` / `#8c8780` / `#524d48` | no | 2%, mountain, desert | spire (basalt; any); parasol (xylaria; any) |
+| the Ashlands (Morrowind) | Mountain (510, 102) | `#5f5a55` / `#8c8780` / `#524d48` | no | 2%, desert, mountain | spire (basalt; any); parasol (xylaria; any) |
 | the Grazelands (Morrowind) | Woodlands (504, 302) | `#64523e` / `#a89a55` / `#8e8a83` | yes | 3%, woodland | - |
-| Red Mountain (Morrowind) | Mountain (510, 102) | `#5e3a2e` / `#5e4b44` / `#4a2a22` | no | 0%, mountain | spire (scoria; any) |
+| Red Mountain (Morrowind) | Mountain (510, 102) | `#5e3a2e` / `#5e4b44` / `#4a2a22` | no | 0%, desert | spire (scoria; any) |
 | the Ascadian Isles (Morrowind) | Woodlands (504, 302) | `#776048` / `#5c7a3a` / `#a8a69c` | yes | 25%, woodland | parasol (ascadian; woods) |
 | the Bitter Coast (Morrowind) | Swamp (502, 402) | `#544833` / `#5a5a34` / `#5a5a34` | yes | 55%, swamp, mountain | reeds (reed; wet); spire (menhir; plains) |
-| Stonefalls (Morrowind) | Mountain (510, 102) | `#4a4642` / `#716e60` / `#3f3a36` | no | 12%, mountain, haunted | spire (basalt; plains); grove (ember, jester; woods); parasol (ascadian; woods) |
+| Stonefalls (Morrowind) | Mountain (510, 102) | `#4a4642` / `#716e60` / `#3f3a36` | no | 12%, mountain, haunted, desert | spire (basalt; plains); grove (ember, jester; woods); parasol (ascadian; woods) |
 | Deshaan (Morrowind) | MountainWoods (506, 102) | `#45403a` / `#6a8448` / `#67625e` | yes | 45%, woodland | parasol (deshaan, glowstalk; woods) |
 | the Telvanni Peninsula (Morrowind) | MountainWoods (506, 102) | `#7a684e` / `#7a7650` / `#77726c` | yes | 50%, woodland | parasol (telvanni, xylaria; woods); spire (basalt; plains) |
 | the Velothi Foothills (Morrowind) | Mountain (510, 102) | `#946454` / `#8a8858` / `#8e8a84` | yes | 10%, mountain | spire (scoria; plains) |
-| the Velothi Mountains (Morrowind) | Mountain (510, 102) | `#7a7876` / `#7a746c` / `#8a8885` | no | 5%, mountain | spire (granite; any) |
+| the Velothi Mountains (Morrowind) | Mountain (510, 102) | `#7a7876` / `#7a746c` / `#8a8885` | no | 5%, mountain, desert | spire (granite; any) |
 
 
 ## Decisions
@@ -211,6 +239,12 @@ Each zone's lore line is LANDS' own (`lore`); its sources the page's Sources, be
    offline a row and a kill door.
 5. **Winter is the snow's.** A winter set is never dressed; the landmarks wear no snow of their own (the Frozen Coast's
    spires their snow-white tops all year).
+6. **A flat is chosen as it STANDS, not as it is named** (the audit, after the game was photographed): Low Poly Trees
+   stands its own mesh for most nature records, and the classic sets' grey dead tree is its pine - so a recipe names its
+   dead trees from DEAD_TREES, held off every pine's mesh against the mod's own data, and the far views count only the
+   Trees among a recipe's picks as canopy.
+7. **The dress runs off the page's thread** (the audit): a worker of its own, the page's thread the fallback - the same
+   work either way.
 
 ## Departures from DFU (Port-Ledger A, THE LANDS PAST THE BAY)
 
@@ -220,14 +254,17 @@ landmarks (procedural meshes of the port's own) - none of it DFU's. On the Bay n
 
 ## Verification
 
-`test/world/tesalands_ground.test.js` (7): the dress compiled (water and paving never, monotone ramps, vivid), a record
+`test/world/tesalands_ground.test.js` (8): the dress compiled (water and paving never, monotone ramps, vivid), a record
 dressed (its grain kept in order, its mean at its ramp's middle at the albedo, its alpha, water and paving the set's own,
 a transition each side its own class), stepped in bands (dressLayers' layers, the running-sum blur against the box), the
 exposure and the ramp's reading, the table (every owed zone once, ramps dark to light, picks Daggerfall's, one entry a
-kind, frozen), a pixel's ground set, and the doors. `test/world/tesalands_flora.test.js` (7): the recipes in the kernel
-(their picks and archives, the woods' share, the same every run, off the climate's), the border between two zones, the
-flats off the landmarks' feet, a zone's woods afar (monotone, its mean the zone's woods), the band's codes and art, the
-far views' book (the zone's woods, its Trees' art by weight, its dressed ground; the Bay and the row off the climate's),
+kind, frozen; the dead trees against the mod's meshes), a pixel's ground set, the dress off the page's thread (the
+worker's answer, the client's copies and its fallback, the ground sets across two scenes), and the doors.
+`test/world/tesalands_flora.test.js` (8): the recipes in the kernel (their picks and archives, the woods' share, the
+same every run, off the climate's), the border between two zones (flats and landmarks), the flats off the feet of the
+landmarks STOOD (a dropped one's ground its own; the feet's grid against every foot), a zone's woods afar (monotone, its
+mean the zone's woods, its Trees' share), the middle ring's own field, the band's codes and art, the far views' book
+(the zone's woods, its Trees' art by weight, its dressed ground a record a task; the Bay and the row off the climate's),
 the doors. `test/world/tesalands_props.test.js` (7): the meshes, the pictures, the looks and the laws, where a landmark
 stands (its inset, its rate, its woods and plains, never a road, water, a steep face or the beach, the lowest ground,
 the reeds' edge, the vines' rows and vineyards, a patch's stands, the larger first), the flats off the feet and the
@@ -238,8 +275,12 @@ bodies, the host, the wiring and the four hosts. Pins moved with it (PIN MOVED, 
 dress), `test/scenes/fb1024_groundagree.test.js` (the lands' clearing the third), `test/world/gate/gateclear.test.js`
 and `test/systems/disc20.test.js` (the publish entry's window, grown by the landmarks' set), `test/systems/features.test.js`,
 `ft18_features.test.js` and `ft8_combatvisuals.test.js` (the row and the counts), and
-`test/systems/l10n4_hardcoded.test.js` (the table's lore lines are data, not the player's words).
-`tools/mutants/tesalands.json` (65); `farflora.json` and `fartrees.json` re-aimed by content.
+`test/systems/l10n4_hardcoded.test.js` (the table's lore lines are data, not the player's words); and with the audit
+`test/render/fartrees.test.js` (a picture read where a wanted pixel's tree is of it, not an archive's every Tree - and a
+test of its own for the atlas's lent layers), `test/render/precip4_snowground.test.js` and `test/systems/ecotone1.test.js`
+(a pixel's own set and its neighbours' loaded together, each with its twin). `tools/mutants/tesalands.json` (90, all
+dead); re-aimed by content: `farflora.json`, `fartrees.json`, `ecotone1.json`, `precip1.json`, `forest1.json` (one law
+for both forest fields).
 
 ## Sources
 

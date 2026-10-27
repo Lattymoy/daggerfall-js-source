@@ -38,7 +38,9 @@ page.on('pageerror', (e) => { errors.push(e.message); console.log('[pageerror]',
 page.on('crash', () => { console.log('[crash] the page crashed (out of memory?) - nothing more to photograph'); process.exit(3); });
 page.on('console', (m) => { const t = m.text(); if ((process.env.DEBUG || m.type() === 'error' || /lands|dress/i.test(t)) && !/404|cursor|CERT|GL Driver/i.test(t)) console.log(`[page:${m.type()}]`, t.slice(0, 300)); });
 await page.addInitScript(() => {
-  localStorage.setItem('dagger.ui.v1', JSON.stringify({ landViewDistance: 1 }));
+  // and survival off (the Climates & Calories law reads a zone's ground climate: the Ashlands' Mountain reads -45 at noon)
+  // and no foes (the query's `nofoes`) - the HUD and the road quiet
+  localStorage.setItem('dagger.ui.v1', JSON.stringify({ landViewDistance: 1, survival: false }));   // survival/difficulty.js SURVIVAL_STORED's Off
   localStorage.setItem('dagger.settings.v1', JSON.stringify({ Experimental: { TerrainDistance: '1' } }));
 });
 const ev = (fn, ...a) => page.evaluate(fn, ...a);
@@ -55,11 +57,15 @@ const dismiss = async () => {
 };
 const shot = async (name) => { await dismiss(); const path = `${OUT}/${TAG}${name}.png`; await page.screenshot({ path, timeout: 1500000 }); console.log('shot', path); };
 const t0 = Date.now();
-const q = `world&shot&play&fps&region=${encodeURIComponent(process.env.REGION || 'Daggerfall')}&loc=${encodeURIComponent(process.env.LOC || 'Arkbridge')}&class=1&novideo&tod=${TOD}&skin=enhanced&touch=off&season=summer&weather=${process.env.WEATHER || 'sunny'}${process.env.Q || ''}`;
+const q = `world&shot&play&fps&region=${encodeURIComponent(process.env.REGION || 'Daggerfall')}&loc=${encodeURIComponent(process.env.LOC || 'Arkbridge')}&class=1&novideo&nofoes&tod=${TOD}&skin=enhanced&touch=off&season=summer&weather=${process.env.WEATHER || 'sunny'}${process.env.Q || ''}`;
 await page.goto(`http://localhost:${port}/play/?${q}`, { timeout: 900000, waitUntil: 'domcontentloaded' });
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 1800000, polling: 2000 });
 await page.addStyleTag({ content: '#fps-counter { display: none !important; }' });
 console.log('ready in', ((Date.now() - t0) / 1000).toFixed(0), 's');
+// the land photographed, not the body: the staff's god and fly (characters/playerEntity.js setStaffPowers - the page's own
+// module) - a pose over the land neither falls nor hurts (a landmark's side and 40 m over it: walk mode spawns the body at
+// a pose, and the fall killed the character between zones)
+await ev(async () => (await import('/src/characters/playerEntity.js')).setStaffPowers({ god: true, fly: true }));
 // the trace and the fit land a little after the world mounts: the zones read the trace's land
 await page.waitForFunction(async () => { const L = await import('/src/world/tamriel/tamrielLand.js'); return !!L.tamrielTrace(); }, null, { timeout: 900000, polling: 2000 });
 const zones = process.env.ZONES ? process.env.ZONES.split(',').map((s) => s.trim()).filter(Boolean)
@@ -90,6 +96,8 @@ for (const zone of zones) {
   await ev(() => window.__look(0, -1.45));
   await idle();
   console.log(zone, 'at', at.join(','), 'in', ((Date.now() - t0) / 1000).toFixed(0), 's');
+  // a dead character photographs a death screen for every zone after - the run ends there, judged
+  if (await ev(() => /YOU DIED/i.test(document.body.innerText))) { errors.push(`the character died on the way to ${zone}`); break; }
   if (VIEWS.has('level')) { await stand(0.4, 0.06); await shot(`${zone}_level`); }
   if (VIEWS.has('ground')) { await stand(2.2, -0.55); await shot(`${zone}_ground`); }
   if (VIEWS.has('far')) { await stand(0.9, -0.22, 330); await shot(`${zone}_far`); }

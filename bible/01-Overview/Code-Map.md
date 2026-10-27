@@ -424,7 +424,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/world/ships/` | The port's own ships: the galleon, the carrack, the large boat - its models and assembly. |
 | `src/world/starfall/` | The Starfall in the world: the star's art, its crater and stone, and Starfall Glass's picture. |
 | `src/world/superDungeon/` | The Abyss Dungeon in the world: the halls, the steps, the rift, the realm and its sky, the Remnant, and their art. |
-| `src/world/tamriel/` | The continent's ground: geography, frame, raster - its models and assembly; TESA-LANDS' zones' own land (`tamrielLands.js`) and the ground's dress (`groundDress.js`; `03-World/Tamriel-Lands.md`). |
+| `src/world/tamriel/` | The continent's ground: geography, frame, raster - its models and assembly; TESA-LANDS' zones' own land (`tamrielLands.js`) and the ground's dress (`groundDress.js`, dressed on its own worker - `groundDressWorker.js`, the page's side `groundDressClient.js`; `03-World/Tamriel-Lands.md`). |
 | `src/world/terrain/` | Terrain generation, its worker and sampler - its models and assembly. |
 | `src/world/underwater/` | Under the water: its look, decorations, enemies and loot - its models and assembly. |
 | `src/world/urban/` | A town's fabric past the Bay (`03-World/Urban-Fabric.md`, URBANIZER): its streets, yards and dead ends read off its own blocks, its look by province, its art and its records - its models and assembly. |

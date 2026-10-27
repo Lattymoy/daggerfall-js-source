@@ -825,6 +825,7 @@ const HARDCODED = {
   'src/world/imperialBlocks.js': 2,   // IC-GRAND: 'City Isle' (a district's proper name, as imperialCity.js's)
   'src/world/imperialCity.js': 28,   // TOWN-SHAPES TS5: 'Lake Rumare' names the lake's slices ('Rumare Shore' the land past it) - proper names, as the districts'; IC-GRAND: 'Palace District' and the districts' names its laws read - proper names
   'src/world/imperialFabric.js': 6,   // IC-GRAND: the districts' names its styles and its neighbourhoods read - proper names; IC-GRAND's courts: the Elven Gardens' orchards keyed by the district's name
+  'src/world/tamriel/groundDressClient.js': 2,   // TESA-LANDS (AUDIT): the dress's worker's two warnings (no worker, a worker that failed) - console lines through the client's injected logger, as imperialPrebuildClient.js's
   'src/world/imperialPrebuildClient.js': 2,   // IC-GRAND's city worker: its two warnings (no worker, a worker that failed) - console lines through the client's injected logger, as tamrielRoadsClient.js's
   'src/world/tamrielCapitals.js': 6,
   'src/world/tamrielCountry.js': 6,

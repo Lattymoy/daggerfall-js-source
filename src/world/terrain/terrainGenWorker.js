@@ -22,7 +22,7 @@ import { setTamrielFit } from '../tamriel/tamrielFrame.js';
 import { generatePixelTerrain, restrideGrid } from './terrainGen.js';   // PERF-EXT26: and a built pixel's grid at another stride
 import { buildMidRingHeights, buildFarFieldBytes, midRingPixel, farFieldCell } from './midRingGrid.js';   // MID-RING: the middle ring's ground, off the frame; FAR-FIELD: and the far field's
 import { farCellClimate, midRingWet, DRY } from './farClimate.js';   // FAR-FIELD: a far cell's climate past the Bay, worked out here; MAP-WATERS: a middle-ring pixel's rivers
-import { midRingFloraPixel, bandTreesPixel } from './floraCover.js';   // FAR-FLORA: the near law's woods at the middle ring's samples; FAR-TREES: a band pixel's own trees
+import { midRingFloraPixel, midRingCoverPixel, bandTreesPixel } from './floraCover.js';   // FAR-FLORA: the near law's woods at the middle ring's samples; FAR-TREES: a band pixel's own trees
 import { lawWatersInk } from '../tamriel/watersInk.js';   // MAP-WATERS: the map's copy of the waters the kernel carves, compiled here
 import { createLandforms } from '../landforms.js';
 import { buildRoadsFromSettlements } from '../roadsProducer.js';   // AUDIT ROADS F2
@@ -180,8 +180,11 @@ function answerMidRing(m) {
     const wet = buildMidRingHeights({ woods, baseX: m.baseX, baseY: m.baseY, radius: m.radius, sub: m.sub, rows: m.rows ?? null, pixel: wetPixel, Kind: Uint8Array });
     // FAR-FLORA: and the woods the near law grows at each sample (world/terrain/floraCover.js), kept by the pixel as its heights are
     const flora = m.flora ? buildMidRingHeights({ woods, baseX: m.baseX, baseY: m.baseY, radius: m.radius, sub: m.sub, rows: m.rows ?? null, pixel: (px, py) => keptMid(`f${px},${py},${m.sub},${m.landform ? 1 : 0}`, () => midRingFloraPixel(pixel(px, py), px, py, m.sub)), Kind: /** @type {any} */ (Uint32Array) }) : null;
-    const moved = [heights.buffer, ...(anyWet ? [wet.buffer] : []), ...(flora ? [flora.buffer] : [])];
-    globalThis.postMessage({ t: 'mid', id: m.id, heights, wet: anyWet ? wet : null, flora }, moved);
+    // TESA-LANDS (AUDIT): and with the lands' row the forest field's own value there (floraCover.js midRingCoverPixel) - a
+    // zone's woods are its recipe's edge on it
+    const cover = m.flora && m.lands ? buildMidRingHeights({ woods, baseX: m.baseX, baseY: m.baseY, radius: m.radius, sub: m.sub, rows: m.rows ?? null, pixel: (px, py) => keptMid(`c${px},${py},${m.sub}`, () => midRingCoverPixel(px, py, m.sub)), Kind: Uint8Array }) : null;
+    const moved = [heights.buffer, ...(anyWet ? [wet.buffer] : []), ...(flora ? [flora.buffer] : []), ...(cover ? [cover.buffer] : [])];
+    globalThis.postMessage({ t: 'mid', id: m.id, heights, wet: anyWet ? wet : null, flora, cover }, moved);
   } catch (e) {
     globalThis.postMessage({ t: 'midError', id: m.id, message: e?.message ?? String(e) });
   }

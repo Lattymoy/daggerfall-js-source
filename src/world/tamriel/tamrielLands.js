@@ -28,10 +28,6 @@
 import { tamrielBiomeAt, BIOME_BY_KEY } from './tamrielBiomes.js';
 import { climateNeighbourIn } from './tamrielGround.js';
 
-/** THE LANDS' LAW'S VERSION - moved whenever the table or its laws change what a pixel stands, so a store of answers made
- *  with them (the roads' regions, world/tamrielRoads.js inputsPrint) is made again. */
-export const LANDS_VERSION = 1;
-
 /**
  * THE FOREST FIELD'S QUANTILES (world/terrain/terrainNature.js forestCover - its value at a world tile), every 5% from 0
  * to 1, measured over 400,000 world tiles of the continent's frame (2026-10-27, tools/landsMeasure.mjs): the field's
@@ -134,8 +130,12 @@ const SANDSTONE_ROCKS = /** @type {Pick[]} */ ([[503, 3, 3], [503, 4, 2], [503, 
 const PALMS = /** @type {Pick[]} */ ([[501, 11, 2], [501, 12, 3], [501, 13, 3], [501, 16, 2], [501, 30, 2]]);
 const MANGROVES = /** @type {Pick[]} */ ([[502, 12, 2], [502, 13, 2], [502, 16, 2], [502, 17, 2], [502, 18, 2]]);
 const BROADLEAF = /** @type {Pick[]} */ ([[504, 12, 2], [504, 16, 3], [504, 18, 3]]);
-// THE GREY DEAD TREE is the woodlands' record (504:24), never the mountains' twin of it (510:24): Low Poly Trees stands
-// 510:24 as the pine of 510:25 (its prefab shares the pine's mesh), and the Ashlands' dead wood would grow green.
+// THE DEAD TREES: bare in the classic picture and in Low Poly Trees' mesh alike - the desert's two snags (503:11, 503:12),
+// its gnarled thorn (503:28) and the woodlands' great dead oak (504:30). Never the grey dead tree of the classic sets
+// (504:24, 510:24): the mod stands both as 504:25's pine (vendor/low-poly-trees/Trees/trees.json - their prefabs' mesh
+// is the pine's), and a dead wood would grow green.
+/** The dead trees the recipes stand, [archive, record] (test/world/tesalands_ground.test.js holds each off the pines' meshes). */
+export const DEAD_TREES = Object.freeze([[503, 11], [503, 12], [503, 28], [504, 30]].map((p) => Object.freeze(p)));
 
 /** Freezes a value whole (the table is read on two threads and pinned: nothing writes it). */
 function deepFreeze(v) {
@@ -158,7 +158,7 @@ export const LANDS = deepFreeze({
     ground: { grass: mat(M.frostTundra, { fleck: fleck(['#eef3f6', '#e2e9ee'], 0.05) }), dirt: mat(M.shingle), stone: mat(M.frostGranite) },
     blades: false,
     flora: { woods: 0.06, treeRate: 0.6, coverRate: 0.7,
-      trees: [...SMALL_PINE, [510, 11, 2], [510, 12, 2], [510, 25, 1], [504, 24, 1]],
+      trees: [...SMALL_PINE, [510, 11, 2], [510, 12, 2], [510, 25, 1], [503, 12, 1]],
       cover: [...MOUNTAIN_ROCKS, [510, 2, 3], [510, 29, 2], [510, 9, 1]] },
     props: [{ kind: 'spire', looks: ['frost'], rate: 0.05, where: 'plains' }],
     lore: 'the Pale\'s pale white tundra and Winterhold\'s ice fields - frost-grey shingle, spiky grass and snowberry, a few snow-laden pines',
@@ -167,7 +167,7 @@ export const LANDS = deepFreeze({
     ground: { grass: mat(M.tundraGrass, { fleck: fleck(['#ecead0', '#8466aa', '#4a6fb5'], 0.025) }), dirt: mat(M.tundraDirt), stone: mat(M.lichenRock) },
     blades: true,
     flora: { woods: 0.06, treeRate: 0.7, coverRate: 1.1,
-      trees: [[510, 11, 2], [510, 12, 1], [510, 13, 1], [504, 24, 1]],
+      trees: [[510, 11, 2], [510, 12, 1], [510, 13, 1], [503, 11, 1]],
       cover: [...MOUNTAIN_ROCKS, [510, 2, 3], [510, 29, 3], [510, 22, 2], [506, 21, 2], [506, 9, 1], [510, 28, 1]] },
     props: [{ kind: 'spire', looks: ['lichen'], rate: 0.04, where: 'plains' }, { kind: 'reeds', looks: ['reed'], rate: 0.05, where: 'wet' }],
     lore: 'Whiterun\'s open plain of tawny grass, tundra cotton and lavender among lichened outcrops; Hjaalmarch\'s reedy salt marsh',
@@ -185,7 +185,7 @@ export const LANDS = deepFreeze({
     ground: { grass: mat(M.reachGrass), dirt: mat(M.reachDirt), stone: mat(M.reachStone) },
     blades: true,
     flora: { woods: 0.12, treeRate: 0.8, coverRate: 1.2,
-      trees: [[504, 24, 3], [510, 16, 2], [510, 20, 2], [510, 11, 1]],
+      trees: [[503, 11, 2], [503, 12, 1], [510, 16, 2], [510, 20, 2], [510, 11, 1]],
       cover: [...MOUNTAIN_ROCKS, [510, 9, 3], [506, 27, 2], [510, 2, 2], [510, 28, 1], [510, 3, 1]] },
     props: [{ kind: 'spire', looks: ['reachstone'], rate: 0.12, where: 'any' }],
     lore: 'Markarth\'s maze of warm grey-brown crags and gorges, juniper and hanging moss, skeletal grey trees',
@@ -194,7 +194,7 @@ export const LANDS = deepFreeze({
     ground: { grass: mat(M.snowfield), dirt: mat(M.scree), stone: mat(M.darkGranite) },
     blades: false,
     flora: { woods: 0.03, treeRate: 0.4, coverRate: 0.6,
-      trees: [...SMALL_PINE, [504, 24, 1]],
+      trees: [...SMALL_PINE, [503, 12, 1]],
       cover: MOUNTAIN_ROCKS },
     props: [{ kind: 'spire', looks: ['granite'], rate: 0.06, where: 'any' }],
     lore: 'the Throat of the World\'s blue-white snowfields broken by black granite ribs and scree',
@@ -213,7 +213,7 @@ export const LANDS = deepFreeze({
     ground: { grass: mat(M.dampOlive), dirt: mat(M.ochre), stone: mat(M.striated) },
     blades: true,
     flora: { woods: 0.5, treeRate: 1, coverRate: 1,
-      trees: [...PINES, [504, 24, 1]],
+      trees: [...PINES, [503, 11, 1]],
       cover: [[510, 8, 2], [510, 9, 2], [510, 17, 2], [503, 3, 1], [503, 10, 1], [510, 2, 2], [510, 19, 1]] },
     props: [{ kind: 'spire', looks: ['striated'], rate: 0.07, where: 'plains' }],
     lore: 'Bangkorai\'s damp conifer uplands falling through the pass to striated ochre and rust stone',
@@ -250,7 +250,7 @@ export const LANDS = deepFreeze({
     ground: { grass: mat(M.cragDust), dirt: mat(M.cragPath), stone: mat(M.limestone) },
     blades: false,
     flora: { woods: 0.04, treeRate: 0.5, coverRate: 0.5,
-      trees: [[504, 24, 2], [510, 16, 2], [510, 11, 1], [503, 12, 1]],
+      trees: [[503, 28, 2], [510, 16, 2], [510, 11, 1], [503, 12, 1]],
       cover: [...SANDSTONE_ROCKS, [503, 10, 2], [503, 17, 2], [510, 9, 2]] },
     props: [{ kind: 'spire', looks: ['limestone'], rate: 0.11, where: 'any' }],
     lore: 'Craglorn\'s bleached grey-cream limestone crags under hazy light, lone twisted ash and juniper',
@@ -375,7 +375,7 @@ export const LANDS = deepFreeze({
     ground: { grass: mat(M.ash, { fleck: fleck(['#a39a8e', '#8c857c'], 0.02) }), dirt: mat(M.cinder), stone: mat(M.basalt, { fleck: fleck(['#7a3a2c'], 0.012) }) },
     blades: false,
     flora: { woods: 0.02, treeRate: 0.4, coverRate: 0.55,
-      trees: [[504, 24, 3], [510, 20, 2], [503, 11, 1], [503, 12, 1]],
+      trees: [[503, 11, 2], [503, 12, 2], [503, 28, 1], [510, 20, 2]],
       cover: [...BASALT, [510, 1, 2], [510, 17, 1], [503, 10, 3], [503, 23, 2], [510, 2, 1]] },
     props: [{ kind: 'spire', looks: ['basalt'], rate: 0.1, where: 'any' }, { kind: 'parasol', looks: ['xylaria'], rate: 0.04, where: 'any' }],
     lore: 'the Ashlands\' grey wind-scoured ash and cinder, black stone obelisks, dry trama thornbrush and xylaria spikes',
@@ -393,7 +393,7 @@ export const LANDS = deepFreeze({
     ground: { grass: mat(M.blight), dirt: mat(M.blightDirt), stone: mat(M.redRock) },
     blades: false,
     flora: { woods: 0, treeRate: 0, coverRate: 0.45,
-      trees: [[504, 24, 1]],
+      trees: [[503, 12, 1]],
       cover: [...BASALT, [510, 1, 2], [510, 6, 2], [510, 17, 1], [503, 10, 1]] },
     props: [{ kind: 'spire', looks: ['scoria'], rate: 0.12, where: 'any' }],
     lore: 'Red Mountain\'s dead cone of blighted ash and red-black rock',
@@ -420,7 +420,7 @@ export const LANDS = deepFreeze({
     ground: { grass: mat(M.lavaAsh), dirt: mat(M.lavaField), stone: mat(M.lavaBasalt) },
     blades: false,
     flora: { woods: 0.12, treeRate: 0.7, coverRate: 0.8,
-      trees: [[510, 10, 2], [508, 18, 2], [504, 24, 1]],
+      trees: [[510, 10, 2], [508, 18, 2], [503, 28, 1]],
       cover: [...BASALT, [510, 1, 1], [510, 17, 1], [503, 10, 1], [502, 1, 1]] },
     props: [{ kind: 'spire', looks: ['basalt'], rate: 0.08, where: 'plains' }, { kind: 'grove', looks: ['ember', 'jester'], rate: 0.05, where: 'woods' }, { kind: 'parasol', looks: ['ascadian'], rate: 0.05, where: 'woods' }],
     lore: 'Stonefalls\' black lava fields and basalt crags with fungal pockets and orange and purple thorny cherry',
@@ -456,7 +456,7 @@ export const LANDS = deepFreeze({
     ground: { grass: mat(M.ashGrey), dirt: mat(M.velothiDirt), stone: mat(M.velothiRock) },
     blades: false,
     flora: { woods: 0.05, treeRate: 0.5, coverRate: 0.7,
-      trees: [...SMALL_PINE, [504, 24, 1]],
+      trees: [...SMALL_PINE, [503, 12, 1]],
       cover: MOUNTAIN_ROCKS },
     props: [{ kind: 'spire', looks: ['granite'], rate: 0.06, where: 'any' }],
     lore: 'the Velothi\'s tall grey volcanic wall, ash-streaked on Morrowind\'s side',

@@ -281,8 +281,8 @@
   {
     "name": "FAR-FLORA-the-job-flag",
     "file": "src/render/farRing.js",
-    "old": "landform: !!inputs.relief, flora: !!floraOf };",
-    "new": "landform: !!inputs.relief, flora: true };",
+    "old": "landform: !!inputs.relief, flora: !!floraOf, lands:",
+    "new": "landform: !!inputs.relief, flora: true, lands:",
     "tests": [
       "test/render/farflora.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "FAR-FLORA-the-worker-transfer",
     "file": "src/world/terrain/terrainGenWorker.js",
-    "old": "...(flora ? [flora.buffer] : [])];",
-    "new": "];",
+    "old": "...(flora ? [flora.buffer] : []), ...(cover",
+    "new": "...(cover",
     "tests": [
       "test/render/farflora.test.js"
     ]

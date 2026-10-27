@@ -3454,7 +3454,11 @@ over the lane's - `treesFsFor`):
   and the world viewport's height, standing on its foot.
 - **The picture.** The record's own, laid bottom-centred into a TREE_LAYER (64) layer of one mipmapped array texture
   (`layerPicture`, up to TREE_LAYERS 48). It is the picture drawn near: a decoded replacement, else the classic record
-  (`farFlora.js` `pipelinePictures`).
+  (`farFlora.js` `pipelinePictures`). TESA-LANDS (AUDIT, `03-World/Tamriel-Lands.md` "The far views"): a picture is read
+  where a wanted pixel's tree is of it - not every Tree of its archive - and the layers are LENT: a full atlas gives a
+  picture the layer of one no wanted pixel, no drawn set and no set being laid is of, and asks a picture it turned away
+  again when the drawn set moves (the Bay's eight archives hold 60 Trees: a journey had outgrown the 48 and left a
+  province's band trees out for the session).
 - **Cutout, light and haze.** Cut out at the flats' own 0.5, lit by `floraLight`, hazed as the far ring is.
 - **Sub-pixel trees.** A tree under a pixel is drawn by its share of one (its byte against its area), so a far wood keeps
   its coverage and never becomes a blot of one-pixel points.

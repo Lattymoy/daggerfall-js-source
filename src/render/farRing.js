@@ -768,7 +768,7 @@ export class FarRingRenderer {
     const gen = ++this._midGen, inputs = this._inputs, floraOf = this._floraOf();
     const floraVersion = floraOf ? /** @type {any} */ (this._flora).version : -1;
     this._midAsk = `${baseX},${baseY}`;
-    const job = { baseX, baseY, radius: MID_RADIUS, sub: MID_SUB, landform: !!inputs.relief, flora: !!floraOf };   // FAR-FLORA: the near law's woods beside the heights
+    const job = { baseX, baseY, radius: MID_RADIUS, sub: MID_SUB, landform: !!inputs.relief, flora: !!floraOf, lands: !!floraOf && !!(/** @type {any} */ (this._flora).lands) };   // TESA-LANDS: and the field's own value   // FAR-FLORA: the near law's woods beside the heights
     Promise.resolve(this._midSource.midRing?.(job) ?? null).then((answer) => {
       if (gen !== this._midGen) return;   // a newer ask, or the renderer disposed
       if (!answer?.heights || !this.gl) { this._midAsk = null; return; }   // the ask stands until its ground is laid
@@ -780,7 +780,7 @@ export class FarRingRenderer {
         return i >= 0 && j >= 0 && i < g.side && j < g.side ? g.positions[(j * g.side + i) * 3 + 1] : RING_SEA_Y;
       };
       const floraAt = floraOf ? (x, y) => ({ ...floraOf(climateOf(x, y), x, y), byte: byteAt(x, y) }) : null;   // FAR-FLORA: the climate's woods and the WOODS byte; TESA-LANDS: a zone's
-      const it = midRingVertexSteps({ heights: answer.heights, baseX, baseY, radius: MID_RADIUS, sub: MID_SUB, tintAt, seaY: RING_SEA_Y, ringAt, wet: answer.wet ?? null, snowAt: ringSnowAt(inputs), flora: answer.flora ?? null, floraAt });   // PEAKS1: and its summits' snow   // MAP-WATERS: G's rivers as water
+      const it = midRingVertexSteps({ heights: answer.heights, baseX, baseY, radius: MID_RADIUS, sub: MID_SUB, tintAt, seaY: RING_SEA_Y, ringAt, wet: answer.wet ?? null, snowAt: ringSnowAt(inputs), flora: answer.flora ?? null, cover: answer.cover ?? null, floraAt });   // PEAKS1: and its summits' snow   // MAP-WATERS: G's rivers as water
       this._work.push({ it, done: (v) => {   // as the far field's: one ask, standing until laid; a dispose drops the work
         this._midAsk = null;
         (this._mid ??= new MidRingMesh(this.gl)).build(v, { baseX, baseY, radius: MID_RADIUS, sub: MID_SUB, curX: baseX, curY: baseY });

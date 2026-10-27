@@ -5,16 +5,20 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  DRESS_CLASSES, CLASS_RECORDS, DRESS_DIALS, DRESS_BAND, compileDress, setPrototypes, dressRecord, dressLayers, dressLayersSteps,
+  DRESS_CLASSES, CLASS_RECORDS, DRESS_DIALS, DRESS_BAND, compileDress, setPrototypes, dressRecord, dressRecordSteps, dressLayers, dressLayersSteps,
   boxBlur, setExposure, rampFor, fleckDraw, hexRgb,
 } from '../../src/world/tamriel/groundDress.js';
 import {
-  LANDS, LANDS_VERSION, FOREST_QUANTILES, forestQuantile, landKeyAt, landGroundSet, groundSetKey, parseGroundSetKey, landsNine,
+  LANDS, FOREST_QUANTILES, forestQuantile, landKeyAt, landGroundSet, groundSetKey, parseGroundSetKey, landsNine, DEAD_TREES,
 } from '../../src/world/tamriel/tamrielLands.js';
 import { BIOMES, tamrielBiomeAt } from '../../src/world/tamriel/tamrielBiomes.js';
 import { tamrielFrameInBay } from '../../src/world/tamriel/tamrielFrame.js';
 import { LAND_KINDS } from '../../src/world/lands/landPropMesh.js';
 import { LAND_LOOKS } from '../../src/world/lands/landProps.js';
+import { dressMessage } from '../../src/world/tamriel/groundDressWorker.js';
+import { createDressClient, defaultDressWorker } from '../../src/world/tamriel/groundDressClient.js';
+import { createGroundSets } from '../../src/scenes/groundSets.js';
+import { tileMeanColour } from '../../src/render/labGrass.js';
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const lum = (r, g, b) => 0.299 * r + 0.587 * g + 0.114 * b;
@@ -98,7 +102,7 @@ test('TESA-LANDS A RECORD DRESSED: a solid record its own class whole - its grai
   assert.ok(right[0] > right[1] * 1.3, `the grass side orange (${right})`);
 });
 
-test('TESA-LANDS THE DRESS A STEP AT A TIME: dressLayersSteps answers dressLayers\' layers, its steps a band of DRESS_BAND rows (a 256-texel record\'s), never a record whole; the blur a running sum the box\'s own (mutants: the band a record; the blur\'s window off by one)', () => {
+test('TESA-LANDS THE DRESS A STEP AT A TIME: dressLayersSteps answers dressLayers\' layers, its steps a band of DRESS_BAND rows (a 256-texel record\'s), never a record whole; the blur a running sum the box\'s own (mutants: the band a record; the shares a record; the blur\'s window off by one)', () => {
   const set = synthSet(64), whole = dressLayers(set, DRESS);
   const it = dressLayersSteps(set, DRESS);
   let steps = 0, r;
@@ -113,6 +117,13 @@ test('TESA-LANDS THE DRESS A STEP AT A TIME: dressLayersSteps answers dressLayer
   let n = 0;
   while (!bit.next().done) n++;
   assert.ok(n >= 256 / DRESS_BAND + 1, `a 256-texel record in bands (${n} steps)`);
+  // a 256-texel transition: its shares in bands too, then its blurs, then its dress in bands
+  const dirt = (x, y) => [120 + (((x * 7 + y * 3) % 5) - 2), 90, 60], grass = (x, y) => [60, 130 + (((x * 5 + y) % 5) - 2), 50];
+  const tset = [tile(256, () => [40, 70, 150]), tile(256, dirt), tile(256, grass), tile(256, () => [128, 128, 128])];
+  const tr = tile(256, (x, y) => (x < 128 ? dirt(x, y) : grass(x, y))), ts = dressRecordSteps(tr, 10, compileDress(DRESS), setPrototypes(tset));
+  let tn = 0;
+  while (!ts.next().done) tn++;
+  assert.ok(tn >= 2 * (256 / DRESS_BAND), `a transition's shares and its dress each in bands (${tn} steps)`);
   // the running sum against the box itself
   const w = 9, h = 7, a = Float32Array.from({ length: w * h }, (_, i) => (i * 37) % 11), want = new Float32Array(w * h), R = 2;
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
@@ -154,7 +165,6 @@ const HEX = /^#[0-9a-f]{6}$/i;
 test('TESA-LANDS THE TABLE: every zone of the seven provinces named once (none of Cyrodiil, Valenwood or Blackwood), each its ground (three materials dark to light, four stops of hex), its blades, its recipe\'s picks Daggerfall\'s own (a nature archive\'s record 1-31), its landmarks (one entry a kind, each look the kind\'s) and its lore; frozen whole (mutants: a zone dropped; a ramp light to dark; a look of another kind; a table that writes)', () => {
   assert.deepEqual(Object.keys(LANDS).sort(), OWED);
   assert.equal(OWED.length, 33);
-  assert.ok(Number.isInteger(LANDS_VERSION) && LANDS_VERSION >= 1);
   for (const [key, land] of Object.entries(LANDS)) {
     assert.ok(typeof land.lore === 'string' && land.lore.length > 20, `${key}'s lore`);
     assert.equal(typeof land.blades, 'boolean', `${key}'s blades`);
@@ -173,7 +183,6 @@ test('TESA-LANDS THE TABLE: every zone of the seven provinces named once (none o
       assert.ok(f.woods >= 0 && f.woods < 1, `${key}'s woods`);
       for (const [a, r, w] of [...f.trees, ...f.cover]) assert.ok(a >= 500 && a <= 510 && r >= 1 && r <= 31 && w > 0, `${key}'s pick ${a}:${r}`);
       assert.ok(f.trees.length + f.cover.length > 0);
-      assert.ok(![...f.trees, ...f.cover].some(([a, r]) => a === 510 && r === 24), `${key}: the grey dead tree is 504:24 (Low Poly Trees stands 510:24 as a pine)`);
     }
     const kinds = land.props.map((p) => p.kind);
     assert.equal(new Set(kinds).size, kinds.length, `${key}: one entry a kind`);
@@ -182,6 +191,16 @@ test('TESA-LANDS THE TABLE: every zone of the seven provinces named once (none o
       assert.ok(p.rate > 0 && p.rate <= 1 && ['woods', 'plains', 'any', 'wet'].includes(p.where), `${key}: ${p.kind}'s rate and where`);
       for (const l of p.looks) assert.equal(/** @type {any} */ (LAND_LOOKS)[l]?.kind, p.kind, `${key}: the look ${l} is a ${p.kind}`);
     }
+  }
+  // THE DEAD TREES (AUDIT): Low Poly Trees (vendor/low-poly-trees/Trees/trees.json) stands the classic sets' grey dead tree
+  // (504:24, 510:24) as 504:25's pine - no recipe names one; each of DEAD_TREES on a mesh no pine is on
+  const lpt = JSON.parse(read('vendor/low-poly-trees/Trees/trees.json'));
+  const mesh = (a, r) => lpt.prefabs[`${a}_${r}`]?.mesh, meshName = (a, r) => lpt.meshes[mesh(a, r)]?.name;
+  assert.deepEqual([meshName(504, 24), meshName(510, 24), meshName(510, 25)], ['504_25', '504_25', '504_25'], 'the grey dead tree the pine in the mod');
+  const pines = new Set([[510, 5], [510, 11], [510, 12], [510, 13], [510, 25], [510, 30], [504, 13], [504, 24], [510, 24]].map(([a, r]) => mesh(a, r)));
+  for (const [a, r] of DEAD_TREES) assert.ok(mesh(a, r) != null && !pines.has(mesh(a, r)) && meshName(a, r) !== '504_25', `${a}:${r} bare in the mod too`);
+  for (const [key, land] of Object.entries(LANDS)) {
+    for (const [a, r] of land.flora?.trees ?? []) assert.ok(meshName(a, r) !== '504_25' || r === 25, `${key}: ${a}:${r} stands as the pine`);
   }
   assert.ok(Object.isFrozen(LANDS) && Object.isFrozen(LANDS.morrowindAshlands.ground.grass.ramp) && Object.isFrozen(LANDS.morrowindAshlands.props[0]));
   // the lands the owner named stand as the lore paints them: ash with no blades, the Alik'r's own sands, Summerset's grass
@@ -216,13 +235,75 @@ test('TESA-LANDS A PIXEL\'S GROUND SET: past the Bay a summer set its zone\'s dr
   assert.ok(Math.abs(forestQuantile(0.025) - (FOREST_QUANTILES[0] + FOREST_QUANTILES[1]) / 2) < 1e-9);
 });
 
+test('TESA-LANDS THE DRESS OFF THE PAGE\'S THREAD (AUDIT): the worker answers dressLayers\' set, its buffers moved; the client hands it copies (the set as drawn untouched) and takes the dressed set back - and with no worker, a factory that throws or a worker that fails mid-dress, the page dresses it a band a breath; the ground sets dress a zone\'s key through it, and a key an earlier scene uploaded reads its colours off the dress, never the mod door; a dressed key\'s puddles its file\'s, marked once (mutants: the copies unmade; the fallback dropped; the means the door\'s; the puddles marked again)', async () => {
+  const set = synthSet(16), want = dressLayers(set, DRESS, 0.9), bytes = (ls) => ls.map((l) => Array.from(l.colors));
+  // the worker's answer
+  let posted = null;
+  dressMessage({ t: 'dress', id: 4, layers: set.map((l) => ({ ...l, colors: l.colors.slice() })), dress: DRESS, exposure: 0.9 }, (m, t) => { posted = { m, t }; });
+  assert.deepEqual([posted.m.t, posted.m.id], ['dressed', 4]);
+  assert.deepEqual(bytes(posted.m.layers), bytes(want), 'dressLayers\' set');
+  assert.ok(posted.t.length >= 50 && new Set(posted.t).size === posted.t.length, 'its buffers moved, each once');
+  dressMessage({ t: 'dress', id: 5, layers: null, dress: DRESS, exposure: 1 }, (m) => { posted = { m }; });
+  assert.deepEqual([posted.m.t, posted.m.id], ['error', 5]);
+  // the client: copies to the worker, the dressed set back
+  const fake = () => {
+    const w = { sent: [], onmessage: null, onerror: null };
+    w.postMessage = (m, t) => { w.sent.push({ m, t }); setTimeout(() => dressMessage(m, (a) => w.onmessage?.({ data: a })), 0); };
+    w.terminate = () => { w.dead = true; };
+    return w;
+  };
+  const w1 = fake(), c1 = createDressClient({ makeWorker: () => w1, log: { warn() {} } }), before = bytes(set);
+  assert.deepEqual(bytes(await c1.dress(set, DRESS, 0.9, async () => {})), bytes(want));
+  assert.deepEqual(bytes(set), before, 'the set as drawn untouched');
+  assert.ok(w1.sent[0].m.layers.every((l, r) => l.colors !== set[r].colors) && w1.sent[0].t.length === 56, 'the worker handed copies, moved');
+  assert.equal(c1.dressed, 1);
+  // no worker: the page's own, a band a breath
+  let breaths = 0;
+  const c2 = createDressClient({ makeWorker: () => { throw new Error('no Worker'); }, log: { warn() {} } });
+  assert.equal(c2.alive, false);
+  assert.deepEqual(bytes(await c2.dress(set, DRESS, 0.9, async () => { breaths++; })), bytes(want));
+  assert.ok(breaths > 56, `a band a breath (${breaths})`);
+  assert.equal(defaultDressWorker(), null, 'node: no Worker');
+  // a worker that fails mid-dress: what it was asked is the page's
+  const w3 = { sent: [], onmessage: null, onerror: null, postMessage(m) { this.sent.push(m); }, terminate() { this.dead = true; } };
+  const c3 = createDressClient({ makeWorker: () => w3, log: { warn() {} } });
+  const asked = c3.dress(set, DRESS, 0.9, async () => {});
+  w3.onerror({ message: 'gone' });
+  assert.deepEqual(bytes(await asked), bytes(want));
+  assert.ok(!c3.alive && w3.dead);
+  assert.match(read('src/world/tamriel/groundDressClient.js'), /return new Worker\(new URL\('\.\/groundDressWorker\.js', import\.meta\.url\), \{ type: 'module' \}\);/);
+  // the ground sets: a zone's key dressed through the client, and learned again in a scene after
+  const tex = { recordCount: 56, getDFBitmap: (r) => r, getColor32: (r) => ({ ...set[r], colors: set[r].colors.slice() }) };
+  const tileArrays = new Map(), key = groundSetKey('morrowindAshlands', 102), dressed = [];
+  const scene = () => {
+    const maps = { grassRecords: new Map(), floorRecords: new Map(), groundPuddles: new Map(), groundMeanColour: new Map(), groundDrawnMeans: new Map() };
+    const sets = createGroundSets({
+      renderer: { tileArrays, *uploadTileArraySteps(k, layers) { tileArrays.set(k, layers); }, applyGroundSharpness() {} },
+      getTexture: async () => tex, labGrass: null, breathe: async () => {}, ...maps,
+      dresser: () => ({ dress: async (l, d, e) => { dressed.push(d); return dressLayers(l, d, e); } }),
+    });
+    return { sets, maps };
+  };
+  const one = scene();
+  await one.sets.loadGroundSet(key, { tileArray() {} });
+  assert.deepEqual(dressed, [LANDS.morrowindAshlands.ground], 'dressed once, in its zone\'s dress');
+  const means = tileArrays.get(key).map(tileMeanColour);
+  assert.deepEqual(one.maps.groundMeanColour.get(key), means, 'the grass\'s colours the dress\'s');
+  assert.equal(one.maps.groundPuddles.get(key), one.maps.groundPuddles.get(102), 'its puddles its file\'s, marked once');
+  const two = scene();
+  await two.sets.loadGroundSet(key, { tileArray() {} });
+  assert.equal(dressed.length, 1, 'an uploaded set not dressed again');
+  assert.deepEqual(two.maps.groundMeanColour.get(key), means, 'a scene after: the dress\'s colours still - never the classic records\'');
+  assert.notDeepEqual(means, set.map(tileMeanColour));
+});
+
 test('TESA-LANDS THE DOORS: the ground sets\' module dresses a zone\'s key a record a breath at the pack\'s exposure and keeps its maps under the key, no blades where the zone grows none; the pixel\'s build names its set and its neighbours\' each its own zone\'s, and stands its landmarks; the Features row and its switch (mutants: the dress unstepped; the blades kept on ash; the neighbours the pixel\'s)', () => {
   const gs = read('src/scenes/groundSets.js');
   assert.match(gs, /const fileOf = \(key\) => parseGroundSetKey\(key\)\?\.archive \?\? key;/);
   assert.match(gs, /const getTexture = \(key\) => archiveTexture\(fileOf\(key\)\);/);
   assert.match(gs, /const own = await groundLayersOf\(fileOf\(groundArchive\), groundTex\);/);
-  assert.match(gs, /own\.layers = await stepsBreathing\(dressLayersSteps\(own\.layers, dress, own\.modLayers \? setExposure\(own\.modLayers, classicOf\(groundTex\)\) : 1\), breathe\);\n\s+own\.modLayers = own\.layers;/);
-  assert.match(gs, /else if \(dress\) groundDrawnMeans\.set\(groundArchive, own\.layers\.map\(tileMeanColour\)\);/);
+  assert.match(gs, /own\.layers = await dresser\(\)\.dress\(own\.layers, dress, own\.modLayers \? setExposure\(own\.modLayers, classicOf\(groundTex\)\) : 1, breathe\);\n\s+own\.modLayers = own\.layers;\n\s+DRESSED_MEANS\.set\(groundArchive, own\.layers\.map\(tileMeanColour\)\);/);
+  assert.match(gs, /else if \(dress\) groundDrawnMeans\.set\(groundArchive, DRESSED_MEANS\.get\(groundArchive\)\);/);
   assert.match(gs, /if \(landOf\(groundArchive\)\?\.blades === false\) grassRecords\.set\(groundArchive, new Set\(\)\);/);
   const pb = read('src/scenes/pixelBuild.js');
   assert.match(pb, /const lands = tamrielLandsOn\(\);/);

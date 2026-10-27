@@ -120,7 +120,7 @@ test('FAR-TREES a record\'s picture in its layer: scaled to the layer by its lar
   assert.deepEqual([wide[(3 * 8) * 4 + 3], wide[(4 * 8) * 4 + 3], wide[(7 * 8 + 7) * 4 + 3]], [0, 200, 200]);
 });
 
-test('FAR-TREES the band\'s book: the pixels it lacks asked of the worker with each one\'s nature archive and climate type, one ask at a time; each archive\'s Trees read into the atlas once; laid a pixel a step and uploaded a slice a step, swapped in whole; drawn as points by its own program at the pass\'s lens, its rim dithered over the band ring; let go whole (mutant: the ask, the archive, one at a time, the layers, the slices, the swap, the draw, the rim, dispose)', async () => {
+test('FAR-TREES the band\'s book: the pixels it lacks asked of the worker with each one\'s nature archive and climate type, one ask at a time; each Tree a wanted pixel\'s tree is read into the atlas once; laid a pixel a step and uploaded a slice a step, swapped in whole; drawn as points by its own program at the pass\'s lens, its rim dithered over the band ring; let go whole (mutant: the ask, the archive, one at a time, the layers, the slices, the swap, the draw, the rim, dispose)', async () => {
   const { gl, log } = fakeGl();
   const asks = [];
   let answer = null;
@@ -146,10 +146,11 @@ test('FAR-TREES the band\'s book: the pixels it lacks asked of the worker with e
   band.frame({ curX: 100, curY: 100, radius: 0, built, climateOf, forests: true, landform: false, work });
   assert.equal(work.length, 0, 'not laid while its art is being read');
   await new Promise((r) => setTimeout(r, 10));
-  assert.deepEqual([...new Set(pics.map((p) => p[0]))].sort(), [503, 504], 'each archive\'s pictures read');
-  assert.equal(pics.length, TREE_RECORDS[503].length + TREE_RECORDS[504].length, 'once');
+  // PIN MOVED (TESA-LANDS, AUDIT - the atlas's layers lent): a Tree's picture read where a wanted pixel's tree is of it,
+  // not every Tree of its archive (60 of the Bay's eight overran the atlas's 48 on a journey)
+  assert.deepEqual(pics.map(String).sort(), ['503,12', '503,5', '504,12'], 'the Trees the pixels\' trees are - 504:5 no Tree of the woodlands\'');
   assert.equal(log.layers.length, pics.length, 'a layer each');
-  assert.equal(band.version, 2);
+  assert.equal(band.version, 3);
   band.frame({ curX: 100, curY: 100, radius: 0, built, climateOf, forests: true, landform: false, work });
   assert.equal(work.length, 1, 'laid once its art is in');
   let steps = 0;
@@ -186,6 +187,45 @@ test('FAR-TREES the band\'s book: the pixels it lacks asked of the worker with e
   assert.equal(lone._asking, false);
   assert.equal(farTreesDisabled('?world&fartrees=off'), true);
   assert.equal(farTreesDisabled('?world'), false);
+});
+
+test('FAR-TREES THE ATLAS LENDS ITS LAYERS (TESA-LANDS, AUDIT): full, it lends the layer of a picture no wanted pixel, drawn set or set being laid is of - never one they are; a picture it turned away is asked again once the drawn set moves, and the band then draws it (mutants: a drawn set\'s layer lent; the turned-away never asked again)', async () => {
+  const { gl } = fakeGl();
+  let answer = null;
+  const source = { floraBand: () => new Promise((r) => { answer = r; }) };
+  const read = () => ({ picture: async () => ({ width: 2, height: 4, data: new Uint8Array(32).fill(255) }), size: async () => ({ w: 1, h: 2 }) });
+  const band = new FarTreesBand(gl, { source, read });
+  const trees = Object.entries(TREE_RECORDS).flatMap(([a, rs]) => rs.map((r) => Number(a) * 256 + r));   // every Tree of the Bay's: more than the atlas holds
+  assert.ok(trees.length > TREE_LAYERS);
+  const settle = async (x, built, codes) => {
+    const work = [];
+    for (let round = 0; round < 8; round++) {
+      band.frame({ curX: x, curY: 100, radius: 0, built, climateOf: () => 231, forests: true, landform: false, work });
+      if (answer) { const a = answer; answer = null; a(Array.from({ length: 8 }, (_, k) => Float32Array.from(codes.slice(k * 6, k * 6 + 6).flatMap((c, i) => [i, 1, k, c])))); }
+      await new Promise((r) => setTimeout(r, 5));
+      while (work.length) { const w = work[0], r = w.it.next(); if (r.done) { work.shift(); w.done(r.value); } }
+    }
+  };
+  const first = trees.slice(0, TREE_LAYERS), then = trees.slice(TREE_LAYERS);
+  await settle(100, new Map([['100,100', {}]]), first);
+  assert.equal(band.layers.size, TREE_LAYERS, 'full');
+  assert.equal(band.count, TREE_LAYERS, 'every tree drawn');
+  // the traveller three pixels on: a new ring, its Trees the rest - the drawn set's layers kept until it is swapped out
+  const w0 = [];
+  band.frame({ curX: 103, curY: 100, radius: 0, built: new Map([['103,100', {}]]), climateOf: () => 231, forests: true, landform: false, work: w0 });
+  answer(Array.from({ length: 8 }, (_, k) => Float32Array.from(then.slice(k * 2, k * 2 + 2).flatMap((c, i) => [i, 1, k, c]))));
+  answer = null;
+  await new Promise((r) => setTimeout(r, 5));
+  band.frame({ curX: 103, curY: 100, radius: 0, built: new Map([['103,100', {}]]), climateOf: () => 231, forests: true, landform: false, work: w0 });
+  await new Promise((r) => setTimeout(r, 5));
+  const key = (c) => `${Math.floor(c / 256)},${c % 256}`;
+  assert.ok(first.every((c) => band.layers.has(key(c))), 'no layer of the drawn set lent');
+  assert.ok(then.every((c) => band.arts.get(key(c)) === 'full'), 'the new ones turned away while it is drawn');
+  await settle(103, new Map([['103,100', {}]]), then);
+  assert.ok(then.every((c) => band.layers.has(key(c))), 'asked again once the drawn set moved: lent the old ones\' layers');
+  assert.ok(band.layers.size <= TREE_LAYERS && new Set(band.layers.values()).size === band.layers.size, 'a layer a picture');
+  assert.equal(band.count, then.length, 'and drawn');
+  band.dispose();
 });
 
 test('FAR-TREES the worker\'s band: each pixel its own trees, kept by the pixel and answered as copies, transferred; the client asks BAND_PIXELS_AN_ASK pixels an ask and answers them in order; none with no worker (mutant: the kept key, the copy, the transfer, the chunk, the order)', async () => {

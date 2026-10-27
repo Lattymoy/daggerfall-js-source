@@ -19,7 +19,7 @@
 // WORKER-SAFE: pure, node-tested modules only (the terrain worker runs `midRingFloraPixel` beside the heights).
 // ═══════════════════════════════════════════════════════════════════
 
-import { forestAt, FOREST, TREE_RECORDS, MAX_STEEPNESS, BASE_CHANCE_ON_DIRT, BASE_CHANCE_ON_GRASS, BASE_CHANCE_ON_STONE, DESERT_NATURE_SCALE, layoutNature, isTreeRecord, compileRecipe, recipeWood } from './terrainNature.js';
+import { forestAt, forestCover, FOREST, TREE_RECORDS, MAX_STEEPNESS, BASE_CHANCE_ON_DIRT, BASE_CHANCE_ON_GRASS, BASE_CHANCE_ON_STONE, DESERT_NATURE_SCALE, layoutNature, isTreeRecord, compileRecipe, recipeWood } from './terrainNature.js';
 import { forestQuantile, landsNine } from '../tamriel/tamrielLands.js';   // TESA-LANDS: a zone's own woods past the Bay
 import { inBay } from '../tamriel/tamrielFrame.js';
 import { tileDataAt, WORLD_MAP_TILE_DIM, WATER, generateTileData, assignTiles } from './terrainTiles.js';
@@ -155,8 +155,12 @@ export const LANDS_WOOD_BINS = 32;
 const _landsSpecs = new WeakMap();
 /**
  * A ZONE'S FLORA as the far views read it (floraSpec's shape, its `lands` the zone's law): `woods` its share of the land in
- * woods, `woodOf(w)` its woods' share expected at FOREST1's wood `w`, `treeRate` and `ground` (DFU's tile record to its
- * share of a Tree's chance) its recipe's; `treeShare` 0 where it grows no Tree. Pure, made once a recipe.
+ * woods, `woodOf(w)` its woods' share expected at FOREST1's wood `w`, `ground` (DFU's tile record to its share of a Tree's
+ * chance) its recipe's; `treeShare` the share of its `trees` (by weight) that are Trees (TREE_RECORDS - the far views'
+ * canopy, the band's and the 3D trees' kind: a stump, a log or a snag the recipe stands among them is a flat), 0 where it
+ * grows none, and `treeRate` its recipe's rate by that share - so a zone's far canopy is the Trees its pixels stand and
+ * no more (AUDIT: a recipe's stumps and mossy rocks had read as canopy, thinning where the band took over). Pure, made
+ * once a recipe.
  * @param {any} recipe world/tamriel/tamrielLands.js LANDS' `flora`
  */
 export function landsFloraSpec(recipe) {
@@ -176,13 +180,39 @@ export function landsFloraSpec(recipe) {
     for (let d = 1; !n[at] && d < B + 2; d++) at = n[b - d] ? b - d : n[b + d] ? b + d : at;
     table[b] = n[at] ? sum[at] / n[at] : recipe.woods;
   }
+  const picks = recipe.trees ?? [], all = picks.reduce((a, p) => a + p[2], 0);
+  const share = all > 0 ? picks.reduce((a, p) => a + (isTreeRecord(p[0], p[1]) ? p[2] : 0), 0) / all : 0;
   const lands = Object.freeze({
-    woods: recipe.woods, treeRate: c.treeRate, ground: c.ground,
+    woods: recipe.woods, treeRate: c.treeRate * share, ground: c.ground,
     woodOf: (w) => table[w <= 0 ? 0 : w >= 1 ? B + 1 : 1 + Math.min(B - 1, Math.floor(w * B))],
+    woodAt: (cover) => recipeWood(c, unpackCover(cover)),   // the zone's own edge on the field's own value (midRingCoverPixel)
   });
-  s = Object.freeze({ forests: true, desert: false, treeShare: c.trees.cum.length ? 1 : 0, lands });
+  s = Object.freeze({ forests: true, desert: false, treeShare: share, lands });
   _landsSpecs.set(recipe, s);
   return s;
+}
+
+/** A zone's Trees a tile at its woods' share `wz` (its own - `spec.lands.woodAt`'s) and its ground's shares. Pure. */
+export const landsTreesAt = (spec, wz, dirt, grass, stone) => (spec?.lands && spec.treeShare > 0 ? landsTrees(spec.lands, wz, dirt, grass, stone) : 0);
+
+/**
+ * TESA-LANDS (AUDIT): THE FOREST FIELD'S OWN VALUE AT THE MIDDLE RING'S SAMPLES. The packed `wood` is FOREST1's, and a
+ * zone's woods read through it are only their expectation given it (landsFloraSpec's woodOf): where FOREST1's field is all
+ * plain or all woods - most of the land - every sample read one mean, and the Pinewoods' glades or the Ashlands' few
+ * clumps stood the middle ring as an even canopy against the near ground's woods. The field's own value, a byte a sample
+ * over LANDS_COVER, lets the zone's own edge be drawn on it (landsFloraSpec's woodAt) - a world field, so the same at a
+ * sample two pixels share. midRingFloraPixel's lattice; a pixel of the Bay's (never a zone's) answers nothing.
+ */
+export const LANDS_COVER = Object.freeze([0.15, 0.85]);
+export const packCover = (c) => Math.round(Math.min(1, Math.max(0, (c - LANDS_COVER[0]) / (LANDS_COVER[1] - LANDS_COVER[0]))) * 255);
+export const unpackCover = (b) => LANDS_COVER[0] + (b / 255) * (LANDS_COVER[1] - LANDS_COVER[0]);
+/** @param {number} px @param {number} py @param {number} [sub] */
+export function midRingCoverPixel(px, py, sub = 8) {
+  const w = sub + 1, step = WORLD_MAP_TILE_DIM / sub, out = new Uint8Array(w * w);
+  if (inBay(px, py)) return out;
+  const ox = px * WORLD_MAP_TILE_DIM, oz = -py * WORLD_MAP_TILE_DIM;   // the pixel's first world tile (north up)
+  for (let j = 0; j <= sub; j++) for (let i = 0; i <= sub; i++) out[j * w + i] = packCover(forestCover(ox + Math.min(127, i * step), oz + Math.min(127, j * step)));
+  return out;
 }
 
 /** A zone's Trees a tile at its woods' share `wz` and its ground's shares - landsTiles' own chance (FOREST1's, at the

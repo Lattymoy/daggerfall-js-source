@@ -303,12 +303,15 @@ test('TESA-LANDS THE HOST: nothing made until a landmark is framed, then made on
 
 test('TESA-LANDS THE WIRING: the kernel lays the landmarks past the Bay and keeps the flats off them and hands them out (the worker transfers them); the pixel\'s build stands them off the gate and the rocks and files their bodies, the pixel carries them; the trees\' host makes their host with the row and frames it before its return (THE FOUR HOSTS: world.js wires the trees\' host and the pixel\'s build as before - no line of its own; exterior.js, worldModes.js and dungeonContext.js stand no wilderness past the Bay - FLAGGED in scenes/landPropsHost.js) (mutants: the landmarks unlaid; the flats on their feet; the bodies unfiled; the host unframed)', () => {
   const tg = read('src/world/terrain/terrainGen.js');
-  assert.match(tg, /const landProps = natureOpts\.lands \? layoutLandProps\(samples, tilemap, natureOpts\) : new Float32Array\(0\);\n\s+if \(landProps\.length\) flatsOffProps\(nature, landProps, TERRAIN_SIZE \/ WORLD_MAP_TILE_DIM\);/);
+  assert.match(tg, /const landProps = natureOpts\.lands \? layoutLandProps\(samples, tilemap, natureOpts\) : new Float32Array\(0\);/);
+  assert.doesNotMatch(tg, /flatsOffProps|landFeetOff/, 'the kernel clears no flat: the build keeps them off the landmarks it stands');
   assert.match(tg, /\n\s+landProps,   \/\/ TESA-LANDS/);
   assert.match(read('src/world/terrain/terrainGenWorker.js'), /if \(out\.landProps\?\.length\) transfer\.push\(out\.landProps\.buffer\);/);
   const pb = read('src/scenes/pixelBuild.js');
   assert.match(pb, /nature, withRoads, paths, landProps, wodAverages,/);
-  assert.match(pb, /const landStood = lands \? standLandProps\(px, py, landProps, \(x, z\) => !pointNearGate\(gateClear, px, py, x, z, WOD_FLAT_GATE_CLEAR_M\) && !insideRocks\(pixelRocks, x, z\)\) : null;\n\s+if \(landStood\) coverItems\.push\(\.\.\.landStood\.bodies\);/);
+  assert.match(pb, /const landStood = lands \? standLandProps\(px, py, landProps, \(x, z\) => !pointNearGate\(gateClear, px, py, x, z, WOD_FLAT_GATE_CLEAR_M\) && !insideRocks\(pixelRocks, x, z\)\) : null;\n\s+const offLand = landFeetOff\(landStood\?\.set\.props, TERRAIN_SIZE \/ WORLD_MAP_TILE_DIM\);\n\s+for \(const f of nature\) \{/, 'stood before the flats, which keep off the kept ones\' feet');
+  assert.match(pb, /\n\s+if \(offLand\?\.\(f\.x, f\.z\)\) continue;/);
+  assert.match(pb, /\n\s+if \(landStood\) coverItems\.push\(\.\.\.landStood\.bodies\);/);
   assert.match(pb, /landProps: landStood\?\.set \?\? null,/);
   const th = read('src/scenes/treesHost.js');
   assert.match(th, /const landProps = landsOn \? createLandPropsHost\(\{ renderer, breathe \}\) : null;/);

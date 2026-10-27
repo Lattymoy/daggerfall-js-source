@@ -95,14 +95,16 @@ export async function groundArt(archive, read) {
 }
 
 /**
- * TESA-LANDS: A ZONE'S TREES AS THE FAR VIEWS DRAW THEM - treeArt's answer over its recipe's `trees` ([archive, record,
- * weight] each, any climate's), each picture's texels counted by its weight (so a tree drawn twice as often weighs twice),
- * its billboards' size by the same weights; null where none reads.
+ * TESA-LANDS: A ZONE'S TREES AS THE FAR VIEWS DRAW THEM - treeArt's answer over its recipe's Trees (`trees`' [archive,
+ * record, weight] picks that are TREE_RECORDS', any climate's - treeArt's own kind: a stump or a snag among them is a flat,
+ * no canopy), each picture's texels counted by its weight (so a tree drawn twice as often weighs twice), its billboards'
+ * size by the same weights; null where none reads.
  * @param {any} recipe @param {Parameters<typeof treeArt>[1]} read
  */
 export async function landTreeArt(recipe, read) {
   let r = 0, g = 0, b = 0, n = 0, h = 0, w = 0, sized = 0;
   for (const [archive, record, weight] of recipe.trees ?? []) {
+    if (!TREE_RECORDS[archive]?.includes(record)) continue;
     const pic = await read.rgba(archive, record).catch(() => null);
     if (pic?.data) { const m = opaqueMean(pic.data); r += m[0] * m[3] * weight; g += m[1] * m[3] * weight; b += m[2] * m[3] * weight; n += m[3] * weight; }
     const s = await read.size(archive, record).catch(() => null);
@@ -114,11 +116,15 @@ export async function landTreeArt(recipe, read) {
 
 /** A picture read as a ground layer (square: a ground tile's). */
 const asLayer = (pic) => { const side = Math.round(Math.sqrt(pic.data.length / 4)); return { width: pic.width ?? side, height: pic.height ?? side, colors: pic.data }; };
+/** A macrotask's wait: the page draws a frame between a far zone's records (AUDIT: eight zones asked at once dressed
+ *  theirs back to back, a 120 ms task). */
+const frameBack = () => new Promise((go) => setTimeout(go, 0));
 /**
  * TESA-LANDS: A ZONE'S GROUND AS THE FAR VIEWS MIX IT - groundArt's answer for `archive`'s tiles in the zone's `dress`
  * (world/tamriel/groundDress.js dressRecord, each solid record its own class): the drawn picture dressed at the albedo
  * and the pack's exposure (the drawn tiles' land against the classic's, groundDress.js setExposure's - `read.classic` the
- * classic record; 1 where it has none), as scenes/groundSets.js dresses the near ground; null where one does not read.
+ * classic record; 1 where it has none), as scenes/groundSets.js dresses the near ground, a record a task; null where one
+ * does not read.
  * @param {any} dress LANDS' `ground` @param {number} archive @param {{ rgba: (a: number, r: number) => Promise<any>, classic?: (a: number, r: number) => Promise<any> }} read
  */
 export async function landGroundArt(dress, archive, read) {
@@ -134,6 +140,7 @@ export async function landGroundArt(dress, archive, read) {
   const light = DRESS_DIALS.albedo * (a > 0 && b > 0 ? a / b : 1);
   const out = {};
   for (const [k, record] of Object.entries(GROUND_RECORDS)) {
+    await frameBack();
     const m = opaqueMean(dressRecord(drawn[record], record, mats, protos, light).colors, true);
     if (!m[3]) return null;
     out[k] = Object.freeze([m[0], m[1], m[2]]);

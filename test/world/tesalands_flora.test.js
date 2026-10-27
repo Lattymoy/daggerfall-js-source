@@ -10,13 +10,16 @@ import { WoodsFile } from '../../src/formats/woodsFile.js';
 import { syntheticWoodsBytes } from '../landformWorld.mjs';
 import { groundWoods } from '../../src/world/tamriel/tamrielGround.js';
 import { generatePixelTerrain } from '../../src/world/terrain/terrainGen.js';
-import { FOREST, TREE_RECORDS, isTreeRecord, compileRecipe } from '../../src/world/terrain/terrainNature.js';
-import { landsFloraSpec, expectedTrees, treesPerTile, bandTreesPixel, bandTreeArt, bandTreeCode, floraSpec, LANDS_WOOD_BINS } from '../../src/world/terrain/floraCover.js';
+import { FOREST, TREE_RECORDS, isTreeRecord, compileRecipe, forestCover } from '../../src/world/terrain/terrainNature.js';
+import { landsFloraSpec, expectedTrees, treesPerTile, bandTreesPixel, bandTreeArt, bandTreeCode, floraSpec, LANDS_WOOD_BINS, midRingCoverPixel, packCover, unpackCover, LANDS_COVER, landsTreesAt, canopyCover, FLORA_WOOD, FLORA_GRASS } from '../../src/world/terrain/floraCover.js';
+import { midRingVertices } from '../../src/render/midRing.js';
+import { midRingSide } from '../../src/world/terrain/midRingGrid.js';
+import { ringHeight } from '../../src/render/farRing.js';
 import { LANDS, forestQuantile } from '../../src/world/tamriel/tamrielLands.js';
 import { tamrielBiomeAt } from '../../src/world/tamriel/tamrielBiomes.js';
 import { tamrielFrameInBay } from '../../src/world/tamriel/tamrielFrame.js';
 import { getWorldClimateSettings } from '../../src/formats/mapsFile.js';
-import { LAND_PROP_FLOATS, landMeasures, FLAT_CLEAR, LAND_KIND_LAW } from '../../src/world/lands/landProps.js';
+import { LAND_PROP_FLOATS, landMeasures, FLAT_CLEAR, LAND_KIND_LAW, LAND_LOOK_NAMES, standLandProps, flatsOffProps, landFeetOff } from '../../src/world/lands/landProps.js';
 import { LAND_KINDS } from '../../src/world/lands/landPropMesh.js';
 import { createFloraArt, landTreeArt, landGroundArt } from '../../src/render/farFlora.js';
 import { ECOTONE_REACH } from '../../src/world/ecotone.js';
@@ -79,14 +82,51 @@ test('TESA-LANDS THE BORDER BETWEEN TWO ZONES: with the Blended climates row a p
   const S = 819.2, R = ECOTONE_REACH + S / 128;
   const byEdge = (f) => [[f.x > S - R, 1, 0], [f.x < R, -1, 0], [f.z > S - R, 0, -1], [f.z < R, 0, 1]].some(([near, dx, dy]) => near && tamrielBiomeAt(at[0] + dx, at[1] + dy)?.key === east);
   assert.ok(across.every(byEdge), 'each by an edge the neighbour holds');
+  // the landmarks the same: a tile the neighbour owns stands its landmarks (or none of the pixel's own) - the flats' border
+  const looksOf = (key) => new Set(LANDS[key].props.flatMap((p) => p.looks)), mineL = looksOf(own), theirsL = looksOf(east);
+  const marks = (k) => { const out = []; for (let i = 0; i < k.landProps.length; i += LAND_PROP_FLOATS) out.push({ x: k.landProps[i], z: k.landProps[i + 2], look: LAND_LOOK_NAMES[k.landProps[i + 7]] }); return out; };
+  const ownBy = (k) => marks(k).filter((l) => byEdge(l) && mineL.has(l.look) && !theirsL.has(l.look)).length;
+  const theirs2 = (k) => marks(k).filter((l) => theirsL.has(l.look) && !mineL.has(l.look));
+  assert.equal(theirs2(whole).length, 0, 'unblended: the pixel\'s own landmarks whole');
+  assert.ok(theirs2(blended).length > 0 || ownBy(blended) < ownBy(whole), `${own} -> ${east}: the border's landmarks its owner's (${theirs2(blended).length} theirs; ${ownBy(blended)} own by the edge against ${ownBy(whole)})`);
+  assert.ok(theirs2(blended).every(byEdge), 'each by an edge the neighbour holds');
 });
 
-test('TESA-LANDS THE FLATS KEEP OFF THE LANDMARKS\' FEET: no flat stands within a bodied landmark\'s foot and FLAT_CLEAR, nor in a vineyard\'s tile (mutants: the flats unfiltered; the clearance dropped)', () => {
+test('TESA-LANDS THE FLATS KEEP OFF THE LANDMARKS\' FEET - THE ONES STOOD: no flat stands within a kept bodied landmark\'s foot and FLAT_CLEAR, nor in a kept vineyard\'s tile; a landmark the gate\'s clearing or a rock drops leaves its ground\'s own flats (AUDIT: the worker had cleared them under every landmark); the feet\'s grid answers as every foot asked (mutants: the flats unfiltered; the clearance dropped; the kernel clearing again; the grid\'s neighbours unasked)', () => {
   for (const key of ['morrowindAshlands', 'summersetVineCoast', 'blackMarshHist']) {
     const at = pixelOf(key);
     if (!at) continue;
-    const k = kernel(...at, true), p = k.landProps, tileM = 819.2 / 128;
-    assert.ok(p.length > 0, `${key}: its landmarks`);
+    const k0 = kernel(...at, true), tileM = 819.2 / 128;
+    assert.ok(k0.landProps.length > 0, `${key}: its landmarks`);
+    // the build's: those west of the middle dropped (as the gate's clearing or a rock drops one), the rest kept
+    const stood = standLandProps(...at, k0.landProps, (x) => x >= 409.6), p = stood?.set.props ?? new Float32Array(0);
+    const k = { nature: flatsOffProps(k0.nature.slice(), p, tileM) };
+    const under = (q, i) => (landMeasures(LAND_KINDS[q[i + 5]], q[i + 6]).foot + FLAT_CLEAR) * q[i + 4];
+    // a flat at every landmark's foot: a kept one's goes, a dropped one's stays (where no kept foot reaches it)
+    const q = k0.landProps, feet = [];
+    for (let i = 0; i < q.length; i += LAND_PROP_FLOATS) feet.push({ x: q[i], z: q[i + 2], i });
+    const left = new Set(flatsOffProps(feet.slice(), p, tileM).map((f) => f.i)), offKept = landFeetOff(p, tileM);
+    let dropped = 0;
+    for (const f of feet) {
+      const bodied = LAND_KIND_LAW[LAND_KINDS[q[f.i + 5]]].body || LAND_KINDS[q[f.i + 5]] === 'vines';
+      if (f.x >= 409.6 && bodied) assert.ok(!left.has(f.i), `${key}: a kept landmark's foot clear`);
+      if (f.x < 409.6 && !offKept(f.x, f.z)) { assert.ok(left.has(f.i), `${key}: a dropped landmark's ground its own`); dropped++; }
+    }
+    assert.ok(dropped > 0, `${key}: landmarks dropped`);
+    // the kernel clears none: under its landmarks' feet its flats stand until the build knows which it keeps
+    if (key === 'blackMarshHist') assert.ok(k0.nature.some((f) => { for (let i = 0; i < q.length; i += LAND_PROP_FLOATS) if (LAND_KIND_LAW[LAND_KINDS[q[i + 5]]].body && Math.hypot(f.x - q[i], f.z - q[i + 2]) < under(q, i)) return true; return false; }), 'the kernel\'s flats under the feet, the build\'s to keep off');
+    // the grid against every foot asked, at points over the pixel
+    const off = landFeetOff(k0.landProps, tileM);
+    for (let n = 0; n < 4000; n++) {
+      const x = (n * 7919) % 8192 / 10, z = (n * 104729) % 8192 / 10;
+      let want = false;
+      for (let i = 0; i < k0.landProps.length && !want; i += LAND_PROP_FLOATS) {
+        const q = k0.landProps, kind = LAND_KINDS[q[i + 5]];
+        if (kind === 'vines') want = Math.floor(x / tileM) === Math.floor(q[i] / tileM) && Math.floor(z / tileM) === Math.floor(q[i + 2] / tileM);
+        else if (LAND_KIND_LAW[kind].body) want = Math.hypot(x - q[i], z - q[i + 2]) < under(q, i);
+      }
+      assert.equal(off(x, z), want, `${key}: (${x}, ${z})`);
+    }
     for (let i = 0; i < p.length; i += LAND_PROP_FLOATS) {
       const kind = LAND_KINDS[p[i + 5]];
       if (kind === 'vines') {
@@ -101,11 +141,12 @@ test('TESA-LANDS THE FLATS KEEP OFF THE LANDMARKS\' FEET: no flat stands within 
   }
 });
 
-test('TESA-LANDS A ZONE\'S WOODS AFAR: its share expected at FOREST1\'s wood is monotone, its mean over the field\'s own distribution the zone\'s woods; a tile\'s Trees its recipe\'s chance at its rate and ground; the expectation afar the zone\'s woods, not the climates\' 45% (mutants: the bins reversed; the expectation FOREST1\'s; the rate dropped)', () => {
+test('TESA-LANDS A ZONE\'S WOODS AFAR: its share expected at FOREST1\'s wood is monotone, its mean over the field\'s own distribution the zone\'s woods; a tile\'s Trees its recipe\'s chance at its rate and ground, by the share of its picks that are Trees (a stump, a mossy rock no canopy); the expectation afar the zone\'s woods, not the climates\' 45% (mutants: the bins reversed; the expectation FOREST1\'s; the rate dropped; the non-Trees counted)', () => {
   for (const key of ['morrowindAshlands', 'skyrimPinewood', 'blackMarshHist', 'elsweyrPlains']) {
     const recipe = LANDS[key].flora, s = landsFloraSpec(recipe);
     assert.equal(landsFloraSpec(recipe), s, 'made once a recipe');
-    assert.ok(s.forests && s.lands && s.treeShare === 1);
+    const all = recipe.trees.reduce((a, p) => a + p[2], 0), trees = recipe.trees.filter(([a, r]) => isTreeRecord(a, r)).reduce((a, p) => a + p[2], 0);
+    assert.ok(s.forests && s.lands && Math.abs(s.treeShare - trees / all) < 1e-12, `${key}: its Trees' share of its picks`);
     let last = -1;
     for (let w = 0; w <= 1.0001; w += 1 / (LANDS_WOOD_BINS * 2)) { const v = s.lands.woodOf(Math.min(1, w)); assert.ok(v >= last - 1e-9, `${key}: monotone at ${w}`); last = v; }
     // its mean over the field: FOREST1's wood at each quantile, the zone's expected there
@@ -114,12 +155,55 @@ test('TESA-LANDS A ZONE\'S WOODS AFAR: its share expected at FOREST1\'s wood is 
     for (let k = 0; k < N; k++) sum += s.lands.woodOf(sm(FOREST.edge[0], FOREST.edge[1], forestQuantile((k + 0.5) / N)));
     assert.ok(Math.abs(sum / N - recipe.woods) < 0.04, `${key}: its woods on the whole (${(sum / N).toFixed(3)} against ${recipe.woods})`);
     const c = compileRecipe(recipe), g = c.ground;
-    const want = (FOREST.plainTree + (FOREST.forestTree - FOREST.plainTree) * s.lands.woodOf(0.7)) * (g[1] * 0.2 + g[2] * 0.7 + g[3] * 0.1) * c.treeRate;
+    const want = (FOREST.plainTree + (FOREST.forestTree - FOREST.plainTree) * s.lands.woodOf(0.7)) * (g[1] * 0.2 + g[2] * 0.7 + g[3] * 0.1) * c.treeRate * s.treeShare;
     assert.ok(Math.abs(treesPerTile(0.7, 0.2, 0.7, 0.1, s) - want) < 1e-12, `${key}: a tile's Trees`);
-    assert.ok(Math.abs(expectedTrees(s, 128) - (FOREST.plainTree + (FOREST.forestTree - FOREST.plainTree) * recipe.woods) * g[2] * c.treeRate) < 1e-12, `${key}: afar`);
+    assert.ok(Math.abs(expectedTrees(s, 128) - (FOREST.plainTree + (FOREST.forestTree - FOREST.plainTree) * recipe.woods) * g[2] * c.treeRate * s.treeShare) < 1e-12, `${key}: afar`);
   }
+  assert.ok(landsFloraSpec(LANDS.morrowindAshlands.flora).treeShare < 1, 'the Ashlands\' stumps no canopy');
+  // a recipe of no Tree (a stump and a mossy rock) grows no canopy afar, whatever its woods
+  const none = landsFloraSpec({ woods: 0.5, trees: [[510, 20, 3], [510, 10, 1]], cover: [] });
+  assert.equal(none.treeShare, 0);
+  assert.equal(expectedTrees(none, 128), 0);
   assert.ok(expectedTrees(landsFloraSpec(LANDS.skyrimPinewood.flora), 128) > 1.5 * expectedTrees(floraSpec(510, false, true), 128), 'the Pinewoods denser than the climates\' woods');
   assert.ok(expectedTrees(landsFloraSpec(LANDS.morrowindAshlands.flora), 128) < 0.1 * expectedTrees(floraSpec(510, false, true), 128), 'the Ashlands a tenth of them');
+});
+
+test('TESA-LANDS A ZONE\'S WOODS IN THE MIDDLE RING (AUDIT): the forest field\'s own value packed a byte a sample (a pixel of the Bay none) and read back within half a level; a zone\'s vertex its recipe\'s edge on it - the Pinewoods\' glades and woods where FOREST1\'s plain read one mean; the worker answers it with the row, the client keeps it, the ring asks it (mutants: the field unread; the job without it; the Bay packed)', () => {
+  const pine = pixelOf('skyrimPinewood');
+  assert.ok(pine);
+  const c = midRingCoverPixel(...pine, 8), half = (LANDS_COVER[1] - LANDS_COVER[0]) / 510 + 1e-9;
+  for (let j = 0; j <= 8; j++) {
+    for (let i = 0; i <= 8; i++) {
+      const want = forestCover(pine[0] * 128 + Math.min(127, i * 16), -pine[1] * 128 + Math.min(127, j * 16));
+      assert.ok(Math.abs(unpackCover(c[j * 9 + i]) - Math.min(LANDS_COVER[1], Math.max(LANDS_COVER[0], want))) <= half, `sample ${i},${j}`);
+    }
+  }
+  assert.ok(midRingCoverPixel(100, 100, 8).every((b) => b === 0), 'a pixel of the Bay: none');
+  // the Pinewoods' edge (its 80%) on the field: its lowest fifth a glade, above it woods - both under FOREST1's edge (a plain)
+  const spec = landsFloraSpec(LANDS.skyrimPinewood.flora), lo = forestQuantile(0.05), hi = forestQuantile(0.4);
+  assert.ok(FOREST.edge[0] > hi, 'both on FOREST1\'s plain');
+  assert.equal(spec.lands.woodAt(packCover(lo)), 0);
+  assert.equal(spec.lands.woodAt(packCover(hi)), 1);
+  const edge = compileRecipe(LANDS.skyrimPinewood.flora).edge, mid = (edge[0] + edge[1]) / 2;
+  assert.ok(Math.abs(spec.lands.woodAt(packCover(mid)) - 0.5) < 0.2, `its edge where the near ground's is (${spec.lands.woodAt(packCover(mid))})`);
+  // a ring of the zone: FOREST1's wood a plain everywhere; the field under its edge to the west, over it to the east
+  const radius = 1, sub = 2, side = midRingSide(radius, sub), ART = { rgb: [40, 60, 40], h: 10, w: 6 };
+  const flora = new Uint32Array(side * side).fill(((0 << FLORA_WOOD) | (255 << FLORA_GRASS)) >>> 0);
+  const cover = Uint8Array.from({ length: side * side }, (_, v) => packCover(v % side < side / 2 ? lo : hi));
+  const floraAt = () => ({ spec, art: ART, ground: null, byte: 128 });
+  const o = { heights: new Float32Array(side * side).fill(100), baseX: 50, baseY: 60, radius, sub, tintAt: () => [7, 7, 7], seaY: ringHeight(0), flora, floraAt };
+  const withField = midRingVertices({ ...o, cover }), without = midRingVertices(o);
+  const west = 2 * side + 0, east = 2 * side + side - 1;
+  assert.equal(withField.flora[east * 4], Math.round(canopyCover(landsTreesAt(spec, 1, 0, 1, 0), ART.w) * 255), 'the woods over its edge');
+  assert.equal(withField.flora[west * 4], Math.round(canopyCover(landsTreesAt(spec, 0, 0, 1, 0), ART.w) * 255), 'a glade under it');
+  assert.ok(withField.flora[west * 4] < withField.flora[east * 4]);
+  assert.equal(without.flora[west * 4], without.flora[east * 4], 'without the field: the expectation\'s one mean');
+  // the doors: the worker answers it with the row, the client keeps it, the ring asks it and builds with it
+  assert.match(read('src/world/terrain/terrainGenWorker.js'), /const cover = m\.flora && m\.lands \? buildMidRingHeights\(/);
+  assert.match(read('src/world/terrain/terrainGenClient.js'), /if \(m\.cover\) \(cover \?\?= new Uint8Array\(side \* side\)\)\.set\(m\.cover, pj0 \* job\.sub \* side\);/);
+  const fr = read('src/render/farRing.js');
+  assert.match(fr, /flora: !!floraOf, lands: !!floraOf && !!\(\/\*\* @type \{any\} \*\/ \(this\._flora\)\.lands\) \};/);
+  assert.match(fr, /cover: answer\.cover \?\? null, floraAt \}\);/);
 });
 
 test('TESA-LANDS THE BAND PAST THE GRID: with the row a band pixel stands its zone\'s Trees, each answering its own archive with its record (archive x 256 + record), the pixel\'s own climate without it; the band\'s instances read each tree\'s own art (mutants: the code unread; the archive the pixel\'s)', () => {
@@ -158,12 +242,16 @@ test('TESA-LANDS THE FAR VIEWS\' BOOK: with the row a vertex past the Bay in a z
   const first = book.floraOf(climate, ...ash);
   assert.equal(first.spec, landsFloraSpec(LANDS.morrowindAshlands.flora), 'its own woods at once');
   assert.equal(first.art, null, 'its art asked, not yet read');
-  await new Promise((go) => setTimeout(go, 0));
+  // its ground a record a task (the page draws between them): landed within a few
+  for (let i = 0; i < 8 && !book.floraOf(climate, ...ash).ground; i++) await new Promise((go) => setTimeout(go, 0));
   const f = book.floraOf(climate, ...ash);
-  // its Trees' art: the recipe's, by weight - 510:24 x3, 510:20 x2 (dark), 503:11, 503:12 (light)
-  const w = LANDS.morrowindAshlands.flora.trees, wsum = w.reduce((a, p) => a + p[2], 0), w503 = w.filter((p) => p[0] === 503).reduce((a, p) => a + p[2], 0);
-  assert.ok(Math.abs(f.art.rgb[0] - (200 * w503 + 50 * (wsum - w503)) / wsum) < 1e-9, 'the colour by the picks\' weights');
+  // its Trees' art: the recipe's Trees, by weight - its snags and its thorn (503, light); its stumps (510:20) no Tree
+  const w = LANDS.morrowindAshlands.flora.trees.filter(([a, r]) => isTreeRecord(a, r)), wsum = w.reduce((a, p) => a + p[2], 0), w503 = w.filter((p) => p[0] === 503).reduce((a, p) => a + p[2], 0);
+  assert.ok(Math.abs(f.art.rgb[0] - (200 * w503 + 50 * (wsum - w503)) / wsum) < 1e-9, 'the colour by the Trees\' weights');
   assert.ok(Math.abs(f.art.h - (20 * w503 + 10 * (wsum - w503)) / wsum) < 1e-9, 'the size by them too');
+  // the weights, and a heavy non-Tree left out: three snags of the desert's (light), a broadleaf (dark), five stumps (none)
+  const mixed = await landTreeArt({ trees: [[503, 11, 3], [504, 12, 1], [510, 20, 5]] }, fake);
+  assert.ok(Math.abs(mixed.rgb[0] - (200 * 3 + 50) / 4) < 1e-9 && Math.abs(mixed.h - (20 * 3 + 10) / 4) < 1e-9, 'Trees alone, by their weights');
   // its ground: the drawn tiles dressed - the Ashlands' grey, not the green it was read off
   for (const k of ['dirt', 'grass', 'stone']) assert.ok(Math.abs(f.ground[k][0] - f.ground[k][1]) < 25, `${k}: the ash's grey (${f.ground[k].map(Math.round)})`);
   const again = asks.length;
@@ -174,6 +262,11 @@ test('TESA-LANDS THE FAR VIEWS\' BOOK: with the row a vertex past the Bay in a z
   assert.equal(bay.spec.lands, undefined, 'the Bay its climate\'s');
   const plain = createFloraArt({ read: () => fake }).floraOf(climate, ...ash);
   assert.equal(plain.spec.lands, undefined, 'without the row its climate\'s');
+  // the ground a record a task: a zone's three solid records never dressed in one (the far field asks many zones at once)
+  let landed = false;
+  landGroundArt(LANDS.morrowindAshlands.ground, 102, fake).then(() => { landed = true; });
+  await new Promise((go) => setTimeout(go, 0));
+  assert.equal(landed, false, 'a record a task, not all in one');
   assert.ok(await landTreeArt({ trees: [] }, fake) === null);
   assert.equal(await landGroundArt(LANDS.morrowindAshlands.ground, 102, { rgba: async () => null }), null);
 });
@@ -188,7 +281,8 @@ test('TESA-LANDS THE FAR VIEWS\' DOORS: the far ring asks the book at each verte
   assert.match(fr, /lands: !!\(\/\*\* @type \{any\} \*\/ \(this\._flora\)\.lands\), work: this\._work \}\);/);
   const ft = read('src/render/farTrees.js');
   assert.match(ft, /this\.source\?\.floraBand\?\.\(\{ pixels, forests: !!forests, landform: !!landform, lands: !!lands \}\)/);
-  assert.match(ft, /for \(const a of k\.archives\) this\._art\(a\);/);
+  assert.match(ft, /own\.add\(bandTreeArt\(archives\[k\], t\[i\]\)\.join\(','\)\);/);
+  assert.match(ft, /if \(k\) for \(const a of k\.arts\) this\._wanted\.add\(a\);\n\s+\}\n\s+for \(const a of this\._wanted\) this\._art\(a\);/);
   assert.match(read('src/world/terrain/terrainGenClient.js'), /landform: job\.landform, lands: !!job\.lands, pixels:/);
   assert.match(read('src/world/terrain/terrainGenWorker.js'), /\$\{m\.landform \? 1 : 0\},\$\{m\.lands \? 1 : 0\}`, \(\) => bandTreesPixel\(\{ woods, px, py, archive, climateType, forests: !!m\.forests, landforms, lands: !!m\.lands \}\)\)/);
 });

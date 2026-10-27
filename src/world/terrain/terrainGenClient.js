@@ -304,20 +304,23 @@ export class TerrainGenClient {
    * buildMidRingHeights), ON THE WORKER ALONE - a ring is some 100 ms of kernel, and with no worker (node, a test,
    * `?terrainthread=off`, a dead one) there is no middle ring: null, and the far ring stands as it always did. Never on
    * this thread, never a reject.
-   * @param {{ baseX: number, baseY: number, radius: number, sub: number, landform?: boolean, flora?: boolean }} job
-   * @returns {Promise<?{ heights: Float32Array, wet?: ?Uint8Array, flora?: ?Uint32Array }>}
+   * TESA-LANDS: `lands` the row - and the forest field's own value at each sample (`cover`, floraCover.js midRingCoverPixel).
+   * @param {{ baseX: number, baseY: number, radius: number, sub: number, landform?: boolean, flora?: boolean, lands?: boolean }} job
+   * @returns {Promise<?{ heights: Float32Array, wet?: ?Uint8Array, flora?: ?Uint32Array, cover?: ?Uint8Array }>}
    */
   midRing(job) {
     if (!this._worker) return Promise.resolve(null);
     const n = 2 * job.radius + 1, side = midRingSide(job.radius, job.sub), heights = new Float32Array(side * side);
     let wet = null;   // MAP-WATERS: stream G's rivers and lakes in the ring, where a band had any
     let flora = null;   // FAR-FLORA: the near law's woods at each sample (world/terrain/floraCover.js), where the job asks them
+    let cover = null;   // TESA-LANDS: the forest field's own value at each sample, with the lands' row
     return this._bands('midring', job, n, HORIZON_BAND_ROWS.mid, (m, pj0, pj1) => {
       if (!m?.heights) return false;
       heights.set(m.heights, pj0 * job.sub * side);
       if (m.wet) (wet ??= new Uint8Array(side * side)).set(m.wet, pj0 * job.sub * side);
       if (m.flora) (flora ??= new Uint32Array(side * side)).set(m.flora, pj0 * job.sub * side);
-      return pj1 === n ? { heights, wet, flora } : true;
+      if (m.cover) (cover ??= new Uint8Array(side * side)).set(m.cover, pj0 * job.sub * side);
+      return pj1 === n ? { heights, wet, flora, cover } : true;
     });
   }
 
@@ -383,7 +386,7 @@ export class TerrainGenClient {
     if (!resolve) return;
     this._mids.delete(m.id);
     if (m.t === 'midError' || m.t === 'farError' || m.t === 'bandError') console.warn('[terrain] worker horizon failed -', m.message);
-    resolve(m.t === 'band' ? { trees: m.trees } : m.t === 'mid' ? { heights: m.heights, wet: m.wet ?? null, flora: m.flora ?? null } : m.t === 'far' ? { high: m.high, low: m.low, clim: m.clim } : null);
+    resolve(m.t === 'band' ? { trees: m.trees } : m.t === 'mid' ? { heights: m.heights, wet: m.wet ?? null, flora: m.flora ?? null, cover: m.cover ?? null } : m.t === 'far' ? { high: m.high, low: m.low, clim: m.clim } : null);
   }
 
   _gridAnswer(m) {

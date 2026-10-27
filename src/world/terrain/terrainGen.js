@@ -21,12 +21,11 @@
 // first and its tilemap + rect ride INTO the job as plain data.
 // ═══════════════════════════════════════════════════════════════════
 
-import { generateSamples, ghostSampler, HEIGHTMAP_DIMENSION, TERRAIN_SIZE } from './terrainSampler.js';
+import { generateSamples, ghostSampler, HEIGHTMAP_DIMENSION } from './terrainSampler.js';
 import { CAPITAL_SEA_FLAT, capitalSeaGround } from './capitalSea.js';   // RUMARE-WATER: a capital at the sea, its water the sea's
 import { buildTerrainGrid, convertTilemap } from './terrainSurface.js';
-import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, townGroundMask, unstampOffShape, townRoadRing, WORLD_MAP_TILE_DIM } from './terrainTiles.js';
+import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, townGroundMask, unstampOffShape, townRoadRing } from './terrainTiles.js';
 import { layoutNature, layoutLandProps } from './terrainNature.js';
-import { flatsOffProps } from '../lands/landProps.js';   // TESA-LANDS: the flats kept off the landmarks' feet
 import { jungleLayout, jungleWhole } from './jungleNature.js';   // BANTHA1: the jungle over the pixel's own layout
 import { paintJungleTrails } from '../jungle/jungleTrails.js';   // JUNGLE-TRAILS: the jungle's own trails
 import { paintRoads, smoothRoadHeights, pathCorners } from '../road/roadPainter.js';
@@ -249,9 +248,9 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   // layout of its own - every flat of it would be dropped
   const { flats: nature, pairs: roadside, graht } = jungleLayout(jungle && jungleWhole(jungle.nine) ? [] : layoutNature(samples, tilemap, natureOpts), samples, tilemap,
     { ...natureOpts, jungle: jungle ? { nine: jungle.nine, pois: placesFor(jungle.hidden), paths, net: roads, canopy: jungle.canopy ?? null } : null });   // JUNGLE-ROADSIDE: and the network, its pairs astride the roads; GRAHT1: and the canopy's field, its graht-oaks
-  // TESA-LANDS: past the Bay the zones' landmarks (world/lands/landProps.js), and the flats kept off their feet
+  // TESA-LANDS: past the Bay the zones' landmarks (world/lands/landProps.js) - the pixel's build keeps its flats off the
+  // feet of those it stands (scenes/pixelBuild.js: a landmark the gate's clearing or a rock drops leaves its ground's own)
   const landProps = natureOpts.lands ? layoutLandProps(samples, tilemap, natureOpts) : new Float32Array(0);
-  if (landProps.length) flatsOffProps(nature, landProps, TERRAIN_SIZE / WORLD_MAP_TILE_DIM);
   return { samples, tilemap, positions: grid.positions, normals: grid.normals, bed: grid.bed, tilemapBytes, avg, nature,
     paths,   // GRASS-PATH1: null when no network was present, as `withRoads` says, and no jungle trail ran (JUNGLE-TRAILS)
     roadside,   // JUNGLE-ROADSIDE: the jungle's roadside pairs (jungleLayout's), beside the flats - [] where none stands

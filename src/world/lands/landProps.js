@@ -138,16 +138,18 @@ for (const r of WATER_RECORDS) WET[r] = 1;
  * the zone's props for a tile (its ecotone owner's - LANDS' `props`, or null); `wood(x, y)` the owner's woods' share at a
  * tile (0..1); `tile(ti)` its record; `clear(ti)` a tile no landmark stands on (a road, a track, a place); `steep(ti)` its
  * slope (degrees); `beach(ti)` a tile under the beach line; `ground(mx, mz)` the ground's height (m); `draw(wx, wz, salt)`
- * the world tile's dice. `tiles` a pixel's side in tiles, `tileM` a tile in metres.
+ * the world tile's dice. `tiles` a pixel's side in tiles, `tileM` a tile in metres; `named` the kinds any owner names (a
+ * kind none does stands nowhere, and its cells are not walked - AUDIT: a pixel of spires alone rolled the reeds' and the
+ * vines' 32,768 cells; every kind walked where it is not handed).
  * @param {{ ox: number, oz: number, tiles: number, tileM: number, owners: (ti: number) => any[]|null,
  *   wood: (x: number, y: number, ti: number) => number, tile: (ti: number) => number, clear: (ti: number) => boolean,
  *   steep: (ti: number) => number, beach: (ti: number) => boolean, ground: (x: number, z: number) => number,
- *   draw: (wx: number, wz: number, salt: number) => number }} a
+ *   draw: (wx: number, wz: number, salt: number) => number, named?: ReadonlySet<string> | null }} a
  * @returns {Float32Array}
  */
-export function landSites({ ox, oz, tiles, tileM, owners, wood, tile, clear, steep, beach, ground, draw }) {
+export function landSites({ ox, oz, tiles, tileM, owners, wood, tile, clear, steep, beach, ground, draw, named = null }) {
   const out = [], feet = [];   // feet: [x, z, r] of every landmark stood (m), the smaller keep off them
-  const kinds = [...LAND_KINDS].sort((a, b) => /** @type {any} */ (LAND_KIND_LAW)[a].rank - /** @type {any} */ (LAND_KIND_LAW)[b].rank);
+  const kinds = LAND_KINDS.filter((k) => !named || named.has(k)).sort((a, b) => /** @type {any} */ (LAND_KIND_LAW)[a].rank - /** @type {any} */ (LAND_KIND_LAW)[b].rank);
   const wetAt = (tx, tz) => {
     for (let y = Math.max(0, tz - 1); y <= Math.min(tiles - 1, tz + 1); y++) for (let x = Math.max(0, tx - 1); x <= Math.min(tiles - 1, tx + 1); x++) if (WET[tile(y * tiles + x) & 0x3f]) return true;
     return false;
@@ -226,29 +228,58 @@ export function landSites({ ox, oz, tiles, tileM, owners, wood, tile, clear, ste
 }
 
 /**
- * THE FLATS KEPT OFF THE FEET: the pixel's flats (`flats`, pixel-local - taken out IN PLACE, the rest in their order) less
- * any whose foot stands within a landmark's body and FLAT_CLEAR (a parasol's stalk, a spire's column, a Hist's roots, a
- * grove's trunk) or in a vineyard's tile. Its value the same array.
- * @template {{x: number, z: number}} F
- * @param {F[]} flats @param {Float32Array} props @param {number} tileM
+ * THE LANDMARKS' FEET, A TEST: whether pixel-local (x, z) stands within a bodied landmark's foot and FLAT_CLEAR (a
+ * parasol's stalk, a spire's column, a Hist's roots, a grove's trunk) or in a vineyard's tile - null for a set that has
+ * neither. Its feet are kept in a grid of cells as wide as its widest, so a flat asks the nine about it (AUDIT: every
+ * flat against every foot, the pixel build's own now - a Deshaan pixel's thousands of flats and hundreds of parasols).
+ * @param {ArrayLike<number>|null|undefined} props a set's floats @param {number} tileM a tile's metres
+ * @returns {((x: number, z: number) => boolean) | null}
  */
-export function flatsOffProps(flats, props, tileM) {
-  if (!props?.length || !flats.length) return flats;
-  const feet = [], vines = new Set();
+export function landFeetOff(props, tileM) {
+  if (!props?.length) return null;
+  const vines = new Set(), feet = [];
+  let reach = 0;
+  const at = (v, w) => (Math.floor(v / w) + 1024) * 2048;
   for (let i = 0; i < props.length; i += LAND_PROP_FLOATS) {
     const kind = LAND_KINDS[props[i + 5]];
-    if (kind === 'vines') { vines.add(`${Math.floor(props[i] / tileM)},${Math.floor(props[i + 2] / tileM)}`); continue; }
+    if (kind === 'vines') { vines.add(at(props[i], tileM) + Math.floor(props[i + 2] / tileM) + 1024); continue; }
     if (!(/** @type {any} */ (LAND_KIND_LAW)[kind]).body) continue;
-    const m = landMeasures(kind, props[i + 6]);
-    feet.push(props[i], props[i + 2], (m.foot + FLAT_CLEAR) * props[i + 4]);
+    const r = (landMeasures(kind, props[i + 6]).foot + FLAT_CLEAR) * props[i + 4];
+    feet.push(props[i], props[i + 2], r);
+    reach = Math.max(reach, r);
   }
-  const off = (f) => {
-    if (vines.size && vines.has(`${Math.floor(f.x / tileM)},${Math.floor(f.z / tileM)}`)) return true;
-    for (let i = 0; i < feet.length; i += 3) { const dx = f.x - feet[i], dz = f.z - feet[i + 1]; if (dx * dx + dz * dz < feet[i + 2] * feet[i + 2]) return true; }
+  if (!feet.length && !vines.size) return null;
+  const C = Math.max(tileM, reach), cells = new Map();
+  for (let i = 0; i < feet.length; i += 3) {
+    const k = at(feet[i], C) + Math.floor(feet[i + 1] / C) + 1024;
+    let a = cells.get(k);
+    if (!a) cells.set(k, (a = []));
+    a.push(feet[i], feet[i + 1], feet[i + 2]);
+  }
+  return (x, z) => {
+    if (vines.size && vines.has(at(x, tileM) + Math.floor(z / tileM) + 1024)) return true;
+    const cx = Math.floor(x / C), cz = Math.floor(z / C);
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dz = -1; dz <= 1; dz++) {
+        const a = cells.get((cx + dx + 1024) * 2048 + cz + dz + 1024);
+        if (a) for (let i = 0; i < a.length; i += 3) { const ex = x - a[i], ez = z - a[i + 1]; if (ex * ex + ez * ez < a[i + 2] * a[i + 2]) return true; }
+      }
+    }
     return false;
   };
+}
+
+/**
+ * THE FLATS KEPT OFF THE FEET: the pixel's flats (`flats`, pixel-local - taken out IN PLACE, the rest in their order) less
+ * any landFeetOff stands on a landmark. Its value the same array.
+ * @template {{x: number, z: number}} F
+ * @param {F[]} flats @param {ArrayLike<number>|null|undefined} props @param {number} tileM
+ */
+export function flatsOffProps(flats, props, tileM) {
+  const off = flats.length ? landFeetOff(props, tileM) : null;
+  if (!off) return flats;
   let n = 0;
-  for (let i = 0; i < flats.length; i++) if (!off(flats[i])) flats[n++] = flats[i];
+  for (let i = 0; i < flats.length; i++) if (!off(flats[i].x, flats[i].z)) flats[n++] = flats[i];
   flats.length = n;
   return flats;
 }

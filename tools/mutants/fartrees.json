@@ -128,7 +128,7 @@
   {
     "name": "FAR-TREES-the-art-once",
     "file": "src/render/farTrees.js",
-    "old": "    if (this.arts.has(archive)) return;\n",
+    "old": "    if (this.arts.has(key)) return;\n",
     "new": "\n",
     "tests": [
       "test/render/fartrees.test.js"
@@ -146,8 +146,8 @@
   {
     "name": "FAR-TREES-the-art-wait",
     "file": "src/render/farTrees.js",
-    "old": "if (this._want.some(([x, y]) => this.kept.get(`${x},${y}`).archives.some((a) => this.arts.get(a) === 'asking'))) return;",
-    "new": "if (false) return;",
+    "old": "for (const a of this._wanted) if (this.arts.get(a) === 'asking') return;",
+    "new": "for (const a of this._wanted) if (false) return;",
     "tests": [
       "test/render/fartrees.test.js"
     ]
