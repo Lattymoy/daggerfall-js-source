@@ -6024,6 +6024,7 @@ quest.mark.many,"{n, plural, one {# misiune} few {# misiuni} other {# de misiuni
 quest.mark.more,"+{n} în plus"
 quest.offer.questorBusy,"Încă n-ai terminat munca primită aici: {quest}."
 quest.offer.questorBusyAbandon,"Dacă nu o poți duce la capăt, o poți abandona din fila Misiuni a meniului de pauză."
+quest.offer.questorBusyAbandonClassic,"Dacă nu o poți duce la capăt, o poți abandona: în meniul de pauză apasă „Controls”, apoi Esc, și alege-o la Misiuni."
 quest.offer.questorBusyUnnamed,"Încă n-ai terminat munca primită aici."
 quest.outcome.filed,"Deznodământ: {text}"
 quest.possessedChild.shamTrail,"Niciun daedra n-a ieșit din _child_ când am adus obiectul (_item_). _child_ doar mi-a mulțumit și a fugit cu el. Ceva nu e în regulă aici. _guardian_ stătea la hanul _tavern_, iar cineva de acolo ar putea ști mai multe."

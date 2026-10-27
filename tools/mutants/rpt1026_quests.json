@@ -53,13 +53,13 @@
   {
     "name": "RPT1026-QUESTS-ABANDON-ALWAYS-close-row-dropped",
     "file": "src/scenes/quest/questBridge.js",
-    "old": ", center: true },\n  // RPT1026-QUESTS ABANDON-ALWAYS: and the way out - every quest that shuts this door is a row of the pause menu's Quests\n  // tab now, with its Abandon (the questor offers work again the moment it is set aside: machine.js shelveQuest)\n  { text: t('quest.offer.questorBusyAbandon', 'If you cannot finish it, you can abandon it from the Quests tab of the pause menu.'), center: true }];",
+    "old": ", center: true },\n  // RPT1026-QUESTS ABANDON-ALWAYS: and the way out - every quest that shuts this door is a row of the pause menu's Quests\n  // tab now, with its Abandon (the questor offers work again the moment it is set aside: machine.js shelveQuest).\n  // AUDIT RPT1026 H2: the way on the skin worn - the classic pause (DFU's OPTN00I0) has no tabs, and its Controls opens the\n  // port's whole menu, whose face (Escape) holds the Quests tab (AUDIT QUESTLINES UI-6's own way, ui/questlines/qlJournal.js\n  // offerWaitingWords)\n  { text: isEnhanced() ? t('quest.offer.questorBusyAbandon', 'If you cannot finish it, you can abandon it from the Quests tab of the pause menu.')\n    : t('quest.offer.questorBusyAbandonClassic', 'If you cannot finish it, you can abandon it: in the pause menu, press Controls, then Escape, and choose it under Quests.'), center: true }];",
     "new": ", center: true }];",
     "tests": [
       "test/systems/quest/rpt1026_quests.test.js",
       "test/systems/quest/fb1019f_questorsaid.test.js"
     ],
-    "note": "The questor's close says nothing of the way out."
+    "note": "The questor's close says nothing of the way out. (AUDIT RPT1026 H5: re-aimed by content - the row is chosen by skin now.)"
   },
   {
     "name": "RPT1026-QUESTS-ABANDON-ALWAYS-unwritten-blank",
