@@ -1,16 +1,16 @@
 [
   {
     "name": "P1-hall-unasked",
-    "file": "src/scenes/world.js",
-    "old": "return (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || capitalLocationAt(px, py)",
-    "new": "return capitalLocationAt(px, py)",
+    "file": "src/scenes/spawnStandHost.js",
+    "old": "return (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || host.capitalLocationAt(px, py)",
+    "new": "return host.capitalLocationAt(px, py)",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]
   },
   {
     "name": "P1-hall-offline-too",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/spawnStandHost.js",
     "old": "(params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py))",
     "new": "(zoneHalls.standIn(cyrodiilMask(), px, py))",
     "tests": [
@@ -19,9 +19,9 @@
   },
   {
     "name": "P1-hall-after-the-places",
-    "file": "src/scenes/world.js",
-    "old": "return (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py) || lairLocationAt(px, py);",
-    "new": "return capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py) || lairLocationAt(px, py) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py));",
+    "file": "src/scenes/spawnStandHost.js",
+    "old": "return (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py);",
+    "new": "return host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py));",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]

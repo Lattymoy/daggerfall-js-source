@@ -23,7 +23,11 @@ const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8'
 const liftDungeonRows = (w) => {
   const m = /\n {2}(const tvDungeonRowsAt = \(at, range = TV_FAR_RANGE\) => \{\n[\s\S]*?\n {2}\};\n {2}const tvDungeonAt = [^\n]*;)\n/.exec(w);
   assert.ok(m, 'the rows and their stand, lifted');
-  return `const etherSea = false, inEther = () => false, etherPlaceRows = () => [], tvEtherPlace = () => null, TV_FAR_RANGE = 24, tvKnownGen = () => discoveryGeneration();\n${m[1]}`;   // AUDIT ETHER-OW C2-2: the finds' generation (no charts here)
+  // PIN MOVED (HOST-SPLIT, SPAWN-WORLD 2026-10-26): the rows, their stand and the plates' list left world.js for
+  // scenes/travelViewDungeonsHost.js - the host's live names (the kept list, the rows' cache, the index's generation) read
+  // through `host`, the lifting body's own lets
+  const host = 'const host = { get tvDng() { return tvDng; }, set tvDng(v) { tvDng = v; }, get _tvDungeonRows() { return _tvDungeonRows; }, set _tvDungeonRows(v) { _tvDungeonRows = v; }, get _locIndexGen() { return _locIndexGen; } };';
+  return `const etherSea = false, inEther = () => false, etherPlaceRows = () => [], tvEtherPlace = () => null, TV_FAR_RANGE = 24, tvKnownGen = () => discoveryGeneration();\n${host}\n${m[1]}`;   // AUDIT ETHER-OW C2-2: the finds' generation (no charts here)
 };
 const loc = (name, locationType) => ({ name, mapTableData: { locationType } });
 /** A map row as systems/map/mapDirectory.js buildMapDict makes it (the key is the pixel id; the MapId carries more bits). */
@@ -170,10 +174,13 @@ test('TV6 host: the dungeons gathered once, listed on a pixel or a find, marked 
   // PIN MOVED (HOST-SPLIT 1, 2026-10-15): TV_DUNGEON_TYPES's one reader in the host, the Overworld's marks, left for
   // scenes/travelViewMarks.js, and the import went with it
   assert.match(rd('src/scenes/travelViewMarks.js'), /import \{ TV_DUNGEON_TYPES \} from '\.\.\/systems\/travel\/travelDungeons\.js';/);
-  assert.match(w, /import \{ dungeonRows, spawnedPixels, filedSpawns, nearDungeons, dungeonApproach, pixelBox, lastLegStart, dungeonToFind, dungeonFoundText, NATIVE_PER_M \} from '\.\.\/systems\/travel\/travelDungeons\.js';/);
+  // PIN MOVED (HOST-SPLIT, SPAWN-WORLD 2026-10-26): the lists' rows, stand and list left world.js for
+  // scenes/travelViewDungeonsHost.js, the readers of the rows and the spawns with them
+  assert.match(w, /import \{ nearDungeons, dungeonApproach, pixelBox, lastLegStart, dungeonToFind, dungeonFoundText, NATIVE_PER_M \} from '\.\.\/systems\/travel\/travelDungeons\.js';/);
+  assert.match(w, /import \{ dungeonRows, filedSpawns, nearDungeons, spawnedPixels \} from '\.\.\/systems\/travel\/travelDungeons\.js';/);
   assert.match(w, /_tvDungeonRows \?\?= dungeonRows\(mapDict\)/, 'AUDIT OW3 D3: gathered once off the map rows');
   assert.doesNotMatch(w, /\?\?= dungeon\w*\(locationIndex\)/, 'AUDIT OW3 D3: never a one-time snapshot of the live index');
-  assert.match(w, /if \(tvDng\.at && tvDng\.at\.x === at\.x && tvDng\.at\.y === at\.y && tvDng\.dg === dg && tvDng\.grid === grid && tvDng\.n === n\) return tvDng\.list;/, 'kept between pixels and finds (and while the grid and the index hold)');
+  assert.match(w, /if \(host\.tvDng\.at && host\.tvDng\.at\.x === at\.x && host\.tvDng\.at\.y === at\.y && host\.tvDng\.dg === dg && host\.tvDng\.grid === grid && host\.tvDng\.n === n\) return host\.tvDng\.list;/, 'kept between pixels and finds (and while the grid and the index hold)');   // PIN MOVED (HOST-SPLIT, SPAWN-WORLD): its kept list the host's, through `host`
   // PIN MOVED (HOST-SPLIT 1, 2026-10-15): the Overworld's marks left world.js for scenes/travelViewMarks.js
   const tvm = rd('src/scenes/travelViewMarks.js');
   assert.match(tvm, /if \(g\.found\) \{\n\s*if \(!g\.spawn && `far:\$\{g\.row\.mapID\}` === farEnd\) continue;/, 'a found one past the grid (the list keeps no other): a plate, but the journey\'s own end is its flag');
@@ -190,7 +197,7 @@ test('TV6 host: the dungeons gathered once, listed on a pixel or a find, marked 
 test('AUDIT OW3 D1 host: the spawns off the live index, told as the spawned feature tells them (its line this session, or the pixel entry\'s filing - the name), the list kept only while the index holds (lifted and run)', async () => {
   const { discoverLocation, hasDiscoveredLocationId } = await import('../../../src/systems/discovery.js');
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /const grid = Math\.max\(1, state\.terrainDistance \?\? 3\), n = _locIndexGen;/, 'the grid\'s reach, and the index\'s churn (AUDIT OW4 D5: its generation, not its size)');
+  assert.match(w, /const grid = Math\.max\(1, state\.terrainDistance \?\? 3\), n = host\._locIndexGen;/, 'the grid\'s reach, and the index\'s churn (AUDIT OW4 D5: its generation, not its size)');   // PIN MOVED (HOST-SPLIT, SPAWN-WORLD): the index's generation the host's, through `host`
   // PIN MOVED (ETHER-OW, test/systems/travel/ether_ow.test.js): the rows and what stands on them are the lists' one pair (tvDungeonRowsAt,
   // tvDungeonAt) - the map's rows gathered once and the live index, as before, and past the Veil the ruin isles beside them
   assert.match(w, /const dungeons = tvDungeonRowsAt\(at\), locAt = tvDungeonAt, isFound = \(x, y\) => !!tvPlaceSummary\(x, y\);/);
@@ -198,7 +205,7 @@ test('AUDIT OW3 D1 host: the spawns off the live index, told as the spawned feat
     'the rows, the live index, the spawns read afresh (AUDIT OW4 D4: and the found ones past it; D2: none gone) - and the grid handed in, so TV2\'s own spend no slot');
   // the find's own list, uncapped, is travelViewFindList (AUDIT OW5 D1 - test/player/eyeOfTheBeholder/ow5_audit.test.js mounts it); AUDIT OW5b D1's
   // own, built beside the plates, gave way to it at the merge
-  assert.match(w, /tvDng = \{ at, dg, grid, n, list \};/);
+  assert.match(w, /host\.tvDng = \{ at, dg, grid, n, list \};/);   // PIN MOVED (HOST-SPLIT, SPAWN-WORLD)
   const m = /\n {2}(const tvSpawnFound = [^\n]*;)\n {2}(const tvSpawnKnown = [^\n]*;)\n/.exec(w);
   assert.ok(m, 'the two tests the host hands the list');
   const said = new Set();
@@ -463,7 +470,9 @@ test('AUDIT OW4 D2/D4 host: a spawn is GONE by the feature\'s own test (the ledg
   const ledger = createSpawnLedger();
   let clock = 0, inside = false;
   const built = new Map();
-  const gone = new Function('_spawnLedger', '_spawnClock', '_insideSpawn', 'built', `${g[1]} return tvSpawnGone;`)(ledger, () => clock, (key) => inside && key === '5,6', built);
+  // PIN MOVED (HOST-SPLIT, SPAWN-WORLD 2026-10-26): the test left world.js for scenes/spawnGroundHost.js - the built set
+  // and the clock read through `host`
+  const gone = new Function('_spawnLedger', '_insideSpawn', 'host', `${g[1]} return tvSpawnGone;`)(ledger, (key) => inside && key === '5,6', { built, _spawnClock: () => clock });
   ledger.note('5,6', 0);
   assert.equal(gone(5, 6), false, 'fresh');
   clock = GENERAL_TTL_MINUTES;
@@ -515,7 +524,7 @@ test('AUDIT OW4 D2/D4 host: a spawn is GONE by the feature\'s own test (the ledg
   assert.deepEqual(at(2, 0, false), { name: 'S2,0' }, 'the clocks off: a spent clock stands its clone for the ground');
   assert.deepEqual([at(1, 0, false), at(5, 0, false)], [null, null], 'and the sea and a wet plateau still stand none');
   assert.deepEqual(cloned, [4, 3, 2]);
-  assert.match(w, /const loc = _spawnCloneAt\(px, py\);\n\s*if \(!loc\) return null;\n\s*_locIndexGen \+= 1;   \/\/ AUDIT OW4 D5\n\s*locationIndex\.set\(key, loc\);/, 'the feature stands the SAME clone');
+  assert.match(w, /const loc = host\._spawnCloneAt\(px, py\);\n\s*if \(!loc\) return null;\n\s*host\._locIndexGen \+= 1;   \/\/ AUDIT OW4 D5\n\s*locationIndex\.set\(key, loc\);/, 'the feature stands the SAME clone');   // PIN MOVED (HOST-SPLIT, SPAWN-WORLD): scenes/spawnStandHost.js, its live names through `host`
   // the filed ids
   const f = /\n {2}(const tvFiledSpawns = \(at\) => [\s\S]*?: \[\]\);)\n/.exec(w);
   assert.ok(f, 'the found spawns past the stream');
@@ -549,7 +558,9 @@ test('AUDIT OW4 D5/D3 host: every write to the index after the boot\'s fill bump
   const ledger = createSpawnLedger(), index = new Map(), unroaded = new Set();
   let clock = 0;
   const env = new Function('d', `let _locIndexGen = 0; const { params, spawnsDungeon, _spawnSalt, maps, CLIMATES, _spawnGround, terrainGen, pathFreePixel, _spawnLedger, _spawnClock, _insideSpawn,
-    locationIndex, _spawnCloneAt, _spawnUnroaded, owSayRow, cyrodiilMask, wildInside, zoneHalls } = d; ${seen[1]} ${s[1]} return { at: spawnedDungeonAt, enter: _spawnSeen, gen: () => _locIndexGen };`)({
+    locationIndex, _spawnCloneAt, _spawnUnroaded, owSayRow, cyrodiilMask, wildInside, zoneHalls } = d;
+    const host = { get _locIndexGen() { return _locIndexGen; }, set _locIndexGen(v) { _locIndexGen = v; }, _spawnClock, _spawnCloneAt };   // PIN MOVED (HOST-SPLIT, SPAWN-WORLD): the stand is scenes/spawnStandHost.js's, its live names through \`host\`
+    ${seen[1]} ${s[1]} return { at: spawnedDungeonAt, enter: _spawnSeen, gen: () => _locIndexGen };`)({
     params: { has: () => true }, spawnsDungeon: () => true, _spawnSalt: 1, maps: { getClimateIndex: () => 231 }, CLIMATES, _spawnGround: () => true, terrainGen: { roads: () => ({}) },
     pathFreePixel: () => true, _spawnLedger: ledger, _spawnClock: () => clock, _insideSpawn: () => false, locationIndex: index,
     _spawnCloneAt: (x, y) => spawnLoc(x, y), _spawnUnroaded: unroaded, owSayRow: () => {},

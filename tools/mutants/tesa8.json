@@ -514,9 +514,9 @@
   },
   {
     "name": "TESA8-host-no-lairs",
-    "file": "src/scenes/world.js",
-    "old": "|| countryLocationAt(px, py) || lairLocationAt(px, py);   // AUDIT TESA II P1",
-    "new": "|| countryLocationAt(px, py);   // AUDIT TESA II P1",
+    "file": "src/scenes/spawnStandHost.js",
+    "old": "|| host.countryLocationAt(px, py) || host.lairLocationAt(px, py);   // AUDIT TESA II P1",
+    "new": "|| host.countryLocationAt(px, py);   // AUDIT TESA II P1",
     "tests": [
       "test/tesa8_lairs.test.js"
     ]

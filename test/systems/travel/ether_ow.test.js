@@ -192,8 +192,11 @@ test('ETHER-OW, the far places and the dungeons: a charted port past the grid is
     nearDungeons, dungeonRows, spawnedPixels, tvFiledSpawns: () => [], tvSpawnKnown: () => false, tvSpawnFound: () => false, tvSpawnGone: () => false,
     locationWorldRect: (l, x, y) => ({ minX: x, maxX: x + 1, minZ: y, maxZ: y + 1 }),
   };
+  // PIN MOVED (HOST-SPLIT, SPAWN-WORLD 2026-10-26): the dungeons' rows, stand and list left world.js for
+  // scenes/travelViewDungeonsHost.js - its live names read through `host`
   const body = `let tvFar = { at: null, near: -1, list: [] }, _tvSettlements = null, tvDng = { at: null, dg: -1, list: [] }, _tvDungeonRows = null, _locIndexGen = 0;
     const _tvListsReady = true;
+    const host = { get tvDng() { return tvDng; }, set tvDng(v) { tvDng = v; }, get _tvDungeonRows() { return _tvDungeonRows; }, set _tvDungeonRows(v) { _tvDungeonRows = v; }, get _locIndexGen() { return _locIndexGen; }, _tvListsReady };
     ${liftLine('  const tvKnownGen = ')}
     ${lift('  function travelViewFarPlaces() {')}
     ${lift('  const tvDungeonRowsAt = (at, range = TV_FAR_RANGE) => {', '\n  };\n')}
@@ -223,7 +226,7 @@ test('ETHER-OW, the find and the models: past the Veil an uncharted ruin within 
     tvFiledSpawns: () => [], tvSpawnKnown: () => false, tvSpawnFound: () => false, tvSpawnGone: () => false,
   };
   const v = run(env, `let tvFind = { at: null, dg: -1, n: -1, list: [] }, tvDngModels = { at: null, dg: -1, n: -1, list: [] }, _tvDungeonRows = null, _locIndexGen = 0;
-    const host = { get tvDngModels() { return tvDngModels; }, set tvDngModels(v) { tvDngModels = v; }, get _locIndexGen() { return _locIndexGen; } };
+    const host = { get tvDngModels() { return tvDngModels; }, set tvDngModels(v) { tvDngModels = v; }, get _locIndexGen() { return _locIndexGen; }, get _tvDungeonRows() { return _tvDungeonRows; }, set _tvDungeonRows(v) { _tvDungeonRows = v; } };   // PIN MOVED (HOST-SPLIT, SPAWN-WORLD): the rows' cache through \`host\`
     ${liftLine('  const tvKnownGen = ')}
     ${lift('  const tvDungeonRowsAt = (at, range = TV_FAR_RANGE) => {', '\n  };\n')}
     ${liftLine('  const tvDungeonAt = ')}

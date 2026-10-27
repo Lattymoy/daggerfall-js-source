@@ -330,8 +330,10 @@ test('TTL1 by source: expiry is checked on the pixel build, and never while the 
   const w = hostText('src/scenes/world.js');
   const i = w.indexOf('const spawnedDungeonAt = (px, py) => {');
   const fn = w.slice(i, w.indexOf('\n  };\n', i));
-  assert.match(fn, /_spawnLedger\.expired\(key, _spawnClock\(\)\) && !_insideSpawn\(key\)/, 'both clocks AND the creator\'s "no player in it"');
-  assert.match(fn, /_locIndexGen \+= 1;[^\n]*\n\s*locationIndex\.delete\(key\);\s*\n\s*return null;/, 'expired: the location goes, the pixel is empty land');
+  // PIN MOVED (HOST-SPLIT, SPAWN-WORLD 2026-10-26): the stand is scenes/spawnStandHost.js's, the clock and the index's
+  // generation the host's, read through `host`
+  assert.match(fn, /_spawnLedger\.expired\(key, host\._spawnClock\(\)\) && !_insideSpawn\(key\)/, 'both clocks AND the creator\'s "no player in it"');
+  assert.match(fn, /host\._locIndexGen \+= 1;[^\n]*\n\s*locationIndex\.delete\(key\);\s*\n\s*return null;/, 'expired: the location goes, the pixel is empty land');
   assert.ok(!/_spawnLedger\.forget\(key\)/.test(fn), 'AUDIT OW5b D2: and the row STAYS - its clocks keep it gone; forgotten, the pure roll stood the same dungeon again on a fresh seven days');
   assert.doesNotMatch(fn, /_spawnSeen\(/, 'SPAWN-REBIRTH: standing a spawn starts no clock - a pixel streaming in is nobody entering it');
   const seenAt = w.indexOf('  function _spawnSeen(key) {');
@@ -339,7 +341,7 @@ test('TTL1 by source: expiry is checked on the pixel build, and never while the 
   // the boot builds the player's OWN pixel through this function before
   // `playerTicker` is declared - a temporal dead zone `?.` cannot save
   assert.match(w, /let _spawnClock = \(\) => NaN;/, 'the clock is ASKED, not read: until the ticker stands every ledger call is a no-op');
-  assert.ok(w.indexOf('let _spawnClock = () => NaN;') < w.indexOf('const spawnedDungeonAt = (px, py) => {'), 'declared above its first use');
+  assert.ok(w.indexOf('let _spawnClock = () => NaN;') < w.indexOf('const { _locationToBuild } = createSpawnStand({'), 'declared above its first use');   // PIN MOVED (HOST-SPLIT, SPAWN-WORLD): the stand constructed where it stood
   assert.match(w, /_spawnClock = \(\) => Math\.floor\(playerTicker\.classicMinutes\);/, 'armed the moment the ticker stands');
   assert.ok(w.indexOf('_spawnClock = () => Math.floor(playerTicker.classicMinutes);') > w.indexOf('const playerTicker = createPlayerTicker('), 'and never before it');
   // the ONE thing that holds a spawn past its time
@@ -439,6 +441,7 @@ test('AUDIT OW5b D2 host run (SPAWN-REBIRTH): A SPAWN PAST ITS TIME IS GONE UNTI
       const _countryTemplates = null;   // PIN MOVED (TESA7): and the countryside's
       const _capitalBase = null;   // PIN MOVED (TESA10): and the capitals
       let _locIndexGen = 0;
+      const host = { get _locIndexGen() { return _locIndexGen; }, set _locIndexGen(v) { _locIndexGen = v; }, _spawnClock, _spawnCloneAt };   // PIN MOVED (HOST-SPLIT, SPAWN-WORLD): scenes/spawnStandHost.js's live names
       ${seen}
       ${spawned}
       ${build}

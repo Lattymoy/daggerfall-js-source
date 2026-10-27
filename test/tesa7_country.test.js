@@ -240,7 +240,7 @@ test('TESA7 the host: the templates and the count off the game\'s rows before th
   assert.match(W, /const bayLandNow = \(\) => \(_pastBay\.bayLand \?\?= bayLand\(\(x, y\) => maps\.getClimateIndex\(x, y\), \(x, y, c\) => isWaterPixel\(c, host\.woods\.getHeightMapValue\(x, y\)\)\)\);\n\s+const countryRatesNow = \(\) => \(_pastBay\.countryRates \?\?= countryRates\(_countryCounts, bayLandNow\(\)\)\);/);   // PIN MOVED (TESA8): the Bay's land read once for the lairs' rates too
   assert.match(W, /const _countryGround = _countryTemplates \? createCountryGround\(host\.woods\) : null;/);
   // PIN MOVED (AUDIT TESA II P1): online the open zone's hall of the day first - Cyrodiil's lie past the Bay
-  assert.match(W, /if \(\(_arenaTemplates \|\| _countryTemplates \|\| _capitalBase\) && !onTheBay\(px, py\)\) return \(params\.has\('online'\) && zoneHalls\.standIn\(cyrodiilMask\(\), px, py\)\) \|\| capitalLocationAt\(px, py\) \|\| \(_arenaTemplates && arenaLocationAt\(px, py\)\) \|\| countryLocationAt\(px, py\) \|\| lairLocationAt\(px, py\);/);   // PIN MOVED (TESA8): then the lair's (tesa8_lairs); PIN MOVED (TESA10): a capital first (tesa10_capitals)
+  assert.match(W, /if \(\(_arenaTemplates \|\| _countryTemplates \|\| _capitalBase\) && !onTheBay\(px, py\)\) return \(params\.has\('online'\) && zoneHalls\.standIn\(cyrodiilMask\(\), px, py\)\) \|\| host\.capitalLocationAt\(px, py\) \|\| \(_arenaTemplates && host\.arenaLocationAt\(px, py\)\) \|\| host\.countryLocationAt\(px, py\) \|\| host\.lairLocationAt\(px, py\);/);   // PIN MOVED (TESA8): then the lair's (tesa8_lairs); PIN MOVED (TESA10): a capital first (tesa10_capitals)   // PIN MOVED (HOST-SPLIT, SPAWN-WORLD 2026-10-26): _locationToBuild is scenes/spawnStandHost.js's, the places' rolls through `host`
   const tp = W.slice(W.indexOf('    window.__tesaPlace = (x, y) => {'), W.indexOf('    window.__arena = () => {'));
   assert.match(tp, /country: loc\?\.country \?\? null, type: loc\?\.mapTableData\?\.locationType \?\? null \};/, 'the probe reads it');
   const M = read('src/scenes/worldModes.js');
@@ -324,6 +324,7 @@ test('TESA7 the build\'s order past the Bay: Arena\'s place where one stands, el
     const _spawnLedger = { expired: () => false }, _spawnClock = () => 0, _insideSpawn = () => false, spawnedDungeonAt = () => null;
     const params = new URLSearchParams(''), zoneHalls = { standIn: () => null }, cyrodiilMask = () => null;   // PIN MOVED (AUDIT TESA II P1): offline, no zone's hall
     let _locIndexGen = 0;
+    const host = { get _locIndexGen() { return _locIndexGen; }, set _locIndexGen(v) { _locIndexGen = v; }, _spawnClock, capitalLocationAt, arenaLocationAt, countryLocationAt, lairLocationAt: () => null };   // PIN MOVED (HOST-SPLIT, SPAWN-WORLD): scenes/spawnStandHost.js's live names
     ${src}
     return _locationToBuild;`);
   const farm = { name: 'The Ulfgar Farmstead' };

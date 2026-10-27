@@ -2,8 +2,8 @@
   {
     "name": "HOST-SPLIT-a-ceiling-under-its-host",
     "file": "test/scenes/hostceiling.test.js",
-    "old": "['src/scenes/world.js', 'bootWorld', 35_799, MODULE]",
-    "new": "['src/scenes/world.js', 'bootWorld', 35_793, MODULE]",
+    "old": "['src/scenes/world.js', 'bootWorld', 35_740, MODULE]",
+    "new": "['src/scenes/world.js', 'bootWorld', 35_730, MODULE]",
     "tests": [
       "test/scenes/hostceiling.test.js"
     ],

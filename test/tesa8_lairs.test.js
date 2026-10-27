@@ -252,7 +252,7 @@ test('TESA8 the host by source: the lairs\' templates, count and pools off the g
   assert.match(W, /const bayLandNow = \(\) => \(_pastBay\.bayLand \?\?= bayLand\(/);
   assert.match(W, /const countryRatesNow = \(\) => \(_pastBay\.countryRates \?\?= countryRates\(_countryCounts, bayLandNow\(\)\)\);/);
   assert.match(W, /const lairRatesNow = \(\) => \(_pastBay\.lairRates \?\?= countryRates\(_lairCounts, bayLandNow\(\), LAIR_TYPES\)\);/);
-  assert.match(W, /return \(params\.has\('online'\) && zoneHalls\.standIn\(cyrodiilMask\(\), px, py\)\) \|\| capitalLocationAt\(px, py\) \|\| \(_arenaTemplates && arenaLocationAt\(px, py\)\) \|\| countryLocationAt\(px, py\) \|\| lairLocationAt\(px, py\);/);   // PIN MOVED (TESA10): a capital first; PIN MOVED (AUDIT TESA II P1): the open zone's hall before them
+  assert.match(W, /return \(params\.has\('online'\) && zoneHalls\.standIn\(cyrodiilMask\(\), px, py\)\) \|\| host\.capitalLocationAt\(px, py\) \|\| \(_arenaTemplates && host\.arenaLocationAt\(px, py\)\) \|\| host\.countryLocationAt\(px, py\) \|\| host\.lairLocationAt\(px, py\);/);   // PIN MOVED (TESA10): a capital first; PIN MOVED (AUDIT TESA II P1): the open zone's hall before them   // PIN MOVED (HOST-SPLIT, SPAWN-WORLD 2026-10-26): _locationToBuild is scenes/spawnStandHost.js's, the places' rolls through `host`
   assert.match(W, /if \(had\?\.country && !had\.country\.dungeon\) \{/, 'the countryside leaves a lair to its own');
 });
 

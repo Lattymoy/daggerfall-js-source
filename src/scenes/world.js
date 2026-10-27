@@ -369,8 +369,7 @@ import { liveLycanthropy } from '../systems/lycanthropy.js';   // SURV7: the env
 import { elementalResistanceChance, ELEMENTS, BODY_CAPSULE_RADIUS, EFFECT_FLAGS, savingThrow } from '../systems/spellcast.js';   // SURV7: the env's fire and frost resistances; WB4: the saving throw a boss's fire meets   // DW-E3: a foe's controller, as a fish's probe meets it
 import { createTownWatch, runTownWatchFrame } from '../systems/town/townWatch.js';   // DISC19-F: the watch defends the town
 import { rollCampEncountersOnChunkLoad, amGroupRollOwner, campAnchorSpot, CAMP_SIGHT_RADIUS } from '../systems/campEncounters.js';   // CAMP1: the group-encounter roll - camps and packs; CAMP-NOTIMER: the chunk-load twin is this host's ONLY trigger now, so the timer's entry point is gone from here
-import { WORLD_SALT, spawnsDungeon, spawnedMapId, pathFreePixel, createSpawnGround, isEliteSpawn, pickTemplate, synthesizeDungeonLocation, spawnTemplates, createSpawnLedger, spawnedLocationCentreLocal, dungeonSightLine } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon; TTL1: ...and it does not hold it for ever
-import { createSpawnGroundPlace } from '../world/spawnGroundPlace.js';   // GROUND-AGREE: the place a pixel's ground is shaped for
+import { WORLD_SALT, spawnsDungeon, pathFreePixel, createSpawnGround, createSpawnLedger, spawnedLocationCentreLocal, dungeonSightLine } from '../world/spawnedDungeons.js';   // SPAWNED-DUNGEONS1: online, a pixel may hold a dungeon; TTL1: ...and it does not hold it for ever
 import { insideGateRing, gateSceneXZ, fellLine, courtFellLine, OMEN_SETTLE_MS, GATE_STORM_RING } from '../systems/gate/gateOmen.js';   // WB1 (Mac: "on the timer, a large area would be shown on the map, also in chat"): the Oblivion Gate's omen - its lines, its ring, its compass mark
 import { createGateLanes, createTheatreGateScans } from './gate/gateLanes.js';   // WW2: a gate a game day in every theatre - the omen a lane at a time
 import { gateScanner, findGateSite, gateSeaPixel, politicClaimed } from '../systems/gate/gateSite.js';   // WB1: where the day's gate stands, over the map files every client holds alike
@@ -549,7 +548,7 @@ import { drawWildMarks, WILD_MARK_RANGE } from '../ui/wild/wildMarks.js';   // W
 import { playerOnPathAt, pathsDataPoint } from '../systems/travel/travelPaths.js';   // RATE-LAW: the traveller on a road's lane or off it
 import { threatCap, foeRate } from '../systems/travel/travelThreat.js';   // OW6: the journey slows as enemies close; ENEMY-PACE's floor, fixed (RATE-LAW) - TIME-DILATION: x1 inside a hostile ship's hold
 import { farPlaces, settlementPixels, farDistanceText, PIXEL_KM, TV_FAR_RANGE } from '../systems/travel/travelFarPlaces.js';   // TV5: the far places, held at the view's edge
-import { dungeonRows, spawnedPixels, filedSpawns, nearDungeons, dungeonApproach, pixelBox, lastLegStart, dungeonToFind, dungeonFoundText, NATIVE_PER_M } from '../systems/travel/travelDungeons.js';   // TV6: the dungeons, discovered on approach; AUDIT OW3 D1/D3: off the map rows, and the spawns with them; AUDIT OW4 D4/D6: the far found spawns, the last leg's start
+import { nearDungeons, dungeonApproach, pixelBox, lastLegStart, dungeonToFind, dungeonFoundText, NATIVE_PER_M } from '../systems/travel/travelDungeons.js';   // TV6: the dungeons, discovered on approach; AUDIT OW3 D1/D3: off the map rows, and the spawns with them; AUDIT OW4 D4/D6: the far found spawns, the last leg's start
 import { routeGround, joinPoint, routeDrawPoints, TV_MOUNTAIN_CLIMATE } from '../systems/travel/travelRoute.js';   // OW-MOUNTAINS, OW-ROADSIDE; AUDIT OW3 J4: the drawn route's points; AUDIT OW4 J3: the ground read once
 import { bandsNear, wanderAt, bandSight, bandChaseStep, bandMakeSeed, bandSizeOf, bandLevelOf, BAND_LIFE_MS, BAND_CONTACT_M, BAND_CHASE_MPS, BAND_STAND_M, BAND_STAND_MIN_M, BAND_STAND_RETRY_MS, BAND_STAND_TRIES } from '../systems/travel/travelBands.js';   // TV7: the roaming bands; OW6: their number and their level
 import { bandWordOf, validBandWord, chaseYields, bandLifeOf, bandNearMe, bandPixelOf, BAND_WORD_MS, BANDS_WIRE_MAX } from '../systems/travel/travelBands.js';   // TV7b: the chase, shared
@@ -1223,6 +1222,9 @@ import { createPortalStoneHost } from './portalStoneHost.js';   // HOST-SPLIT
 import { createWildDropHost } from './wildDropHost.js';   // HOST-SPLIT
 import { createWildInsureBook, setWildInsureBook } from '../net/wild/wildInsureBook.js';   // WILD-INSURE: my policies on my gear
 import { createWildGrace } from '../systems/wild/wildGrace.js';   // ZONE-GRACE: safe passage, as the referee says it
+import { createSpawnGroundHost } from './spawnGroundHost.js';   // HOST-SPLIT
+import { createSpawnStand } from './spawnStandHost.js';   // HOST-SPLIT
+import { createTravelViewDungeons } from './travelViewDungeonsHost.js';   // HOST-SPLIT
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -2630,61 +2632,17 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   /** WW-C2: THE ZONE'S HALLS (scenes/zoneHallsHost.js) - Cyrodiil's, their ground the continent's own whatever the land
    *  switch, a place's pixels the registry's; the giants walk the same ground. */
   const zoneHalls = createZoneHalls({ maps, woods, places: worldPlaces, locationIndex, isMainStory: isMainStoryDungeon, dayNow: wdunDayNow, indexMoved: () => { _locIndexGen += 1; } });
-  const spawnedDungeonAt = (px, py) => {
-    if (!params.has('online')) return null;
-    try {
-      { const _wm = cyrodiilMask(); if (_wm && wildInside(_wm, px, py)) return zoneHalls.standOf(_wm, px, py); }   // BOOT-TDZ2: the stand over the mask just read, never the session's (declared far below this build)   // PVPDUNGEONS: the spawner is excluded in the zone - only the tier rules stand halls there (the day's hall on this pixel, or nothing)
-      if (!spawnsDungeon(_spawnSalt, px, py) || maps.getClimateIndex(px, py) === CLIMATES.Ocean || !_spawnGround(px, py)) return null;
-      // SPAWN-ROADS (2026-09-25, Mac: "Anyway to have things avoid being on a road?"): no ruin on a pixel a road,
-      // track, river or stream crosses (spawnedDungeons.js pathFreePixel). Online the network is the room's (the
-      // lane forces Basic Roads, onlineLane.js ONLINE_ROOM_MOD_KEYS), so every client asks the same bytes. Asked
-      // BEFORE the network lands, the answer is PROVISIONAL: the ruin stands for now and its key is kept, and the
-      // roads sweep (sweepRoadless) takes back every provisional one a path crosses before it rebuilds the pixels.
-      const net = terrainGen.roads();
-      if (net && !pathFreePixel(net, px, py)) return null;
-      // TTL1: ...AND NOT WHILE THE PLAYER IS IN IT. The creator's rule
-      // says so twice ("when there is no player in it"), and this is
-      // where it is kept: a pixel is only rebuilt from the overworld, so
-      // the one dungeon that could be underfoot is the one the mode
-      // machine is standing in. Its time runs out the moment they leave.
-      const key = `${px},${py}`;
-      // AUDIT OW5b D2: GONE IS GONE - the ledger's row is KEPT (its clocks keep it expired as the calendar goes on, and it
-      // rides the save), so the pixel stays empty. It was forgotten here, and the roll is a pure hash of the pixel: the
-      // very next ask - the build's own, a moment after buildPixel's probe had asked - stood the same dungeon again on a
-      // fresh seven days. "Spawned Dungeons should expire/removed" (TTL1, the creator's rule relayed by Mac)
-      // SPAWN-REBIRTH: gone until it stands again - REBIRTH_TTL_DAYS after it died the row is of a life that is over,
-      // `expired` answers false, and the same dungeon stands here with no clock running until a player enters it
-      if (_spawnLedger.expired(key, _spawnClock()) && !_insideSpawn(key)) {
-        _locIndexGen += 1;   // AUDIT OW4 D5
-        locationIndex.delete(key);
-        return null;
-      }
-      const loc = _spawnCloneAt(px, py);
-      if (!loc) return null;
-      _locIndexGen += 1;   // AUDIT OW4 D5
-      locationIndex.set(key, loc);
-      if (!net) _spawnUnroaded.add(key);   // SPAWN-ROADS: decided without the network - the sweep asks again
-      // SPAWN-REBIRTH: standing it starts NO clock - the seven days start when a player enters it (onDungeonSpawned).
-      // A first sight here started them for every spawn within the terrain distance of a road walked, entered or not
-      return loc;
-    } catch (e) { console.warn('[spawned dungeons]', px, py, e?.message ?? e); return null; }
-  };
-  /** AUDIT OW5b D2: WHAT STANDS ON A PIXEL BEING BUILT - its place in the index, unless that is a spawn whose time has run
-   *  out with nobody in it: then it leaves the index and the pixel is built empty; else what spawnedDungeonAt stands. The
-   *  build took the index's word for a spawn it held, so one stood again at every rebuild whatever its clocks said, while
-   *  the Overworld (tvSpawnGone) had it gone. */
-  function _locationToBuild(px, py) {
-    if (etherSea && inEther(px, py)) return etherPlaceAt(px, py);   // ETHER-PLACES: an isle's place, or the open sea's none
-    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py) || lairLocationAt(px, py);   // AUDIT TESA II P1: the open zone's hall today (Cyrodiil's, past the Bay - it stood in the Bay's arm alone, never reached here); TESA10: a capital; TESA2: Arena's; TESA7-8: the land's
-    const key = `${px},${py}`;
-    const loc = locationIndex.get(key);
-    if (loc?.spawned && !loc.wildHall && _spawnLedger.expired(key, _spawnClock()) && !_insideSpawn(key)) {   // AUDIT SPAWN-REBIRTH F6: a hall's day is its own
-      _locIndexGen += 1;   // AUDIT OW4 D5
-      locationIndex.delete(key);
-      return null;
-    }
-    return loc || spawnedDungeonAt(px, py);
-  }
+  const { _locationToBuild } = createSpawnStand({   // HOST-SPLIT: src/scenes/spawnStandHost.js
+    _arenaTemplates, _capitalBase, _countryTemplates, _insideSpawn, _spawnGround, _spawnLedger, _spawnSalt,
+    _spawnUnroaded, etherPlaceAt, etherSea, locationIndex, maps, params, terrainGen, zoneHalls,
+    get _locIndexGen() { return _locIndexGen; }, set _locIndexGen(v) { _locIndexGen = v; },
+    get _spawnClock() { return _spawnClock; },
+    get _spawnCloneAt() { return _spawnCloneAt; },
+    get arenaLocationAt() { return arenaLocationAt; },
+    get capitalLocationAt() { return capitalLocationAt; },
+    get countryLocationAt() { return countryLocationAt; },
+    get lairLocationAt() { return lairLocationAt; },
+  });
   /** ETHER-PLACES (world/etherPlaces.js): THE PLACE AN ISLE'S CENTRE PIXEL STANDS - a port's town or a ruin's dungeon,
    *  cloned off the game's own rows under the isle's own id, name and index, the region it answers for the Eltheric Isles'
    *  (etherPlaces.js ETHER_REGION) and its climate the isle's - stood in the index once (a building's door, a quest's
@@ -2715,57 +2673,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (!template) return null;
     return synthesizeEtherLocation(template, isle, { regionIndex: ETHER_REGION, regionName: REGION_NAMES[ETHER_REGION] ?? ETHER_REGION_NAME, politic: 128 + ETHER_REGION, climate: getWorldClimateSettings(isle.climate) });   // AUDIT CAPTAIN'S SEA P8: its region's own name - the quests resolve and gate a site by it
   }
-  /** AUDIT OW4 D4: THE CLONE a pixel's spawn IS - the template its hash picks, dressed as where it stands (region, politic,
-   *  climate, elite). Pure in the salt, the pixel and the map files, so the one answer serves spawnedDungeonAt (which stands
-   *  it) and the Overworld's far found spawns (tvSpawnAt, which marks it without building its pixel). */
-  function _spawnCloneAt(px, py) {
-    _spawnTemplates ??= spawnTemplates(locationIndex.values(), isMainStoryDungeon);
-    const template = pickTemplate(_spawnTemplates, _spawnSalt, px, py);
-    if (!template) return null;
-    const regionIndex = maps.getRegionIndexAt(px, py);
-    return synthesizeDungeonLocation(template, { salt: _spawnSalt, px, py, where: {
-      regionIndex, regionName: REGION_NAMES[regionIndex], politic: maps.getPoliticIndex(px, py), climate: getWorldClimateSettings(maps.getClimateIndex(px, py)),
-    }, elite: isEliteSpawn(_spawnSalt, px, py) });   // ELITE: the same hash on every client
-  }
-  /** AUDIT OW4 D2: HAS A SPAWN'S TIME RUN OUT - the spawned feature's own test (spawnedDungeonAt's: the ledger's two
-   *  clocks, never while the player is in it), asked NOW: the index lets an expired spawn go only when its pixel next
-   *  builds, and until then its plate stood and its walk went. AUDIT OW5b D2: gone FROM THE GROUND - one standing on built
-   *  ground stands until that ground is next built (_locationToBuild takes it out then), and its plate stands with it.
-   *  FIELD BUGS 29h (SPAWN-PLATE; the Discord: "Elite Dungeons that despawn stay on map ... no entrance anymore but are
-   *  still marked"): standing on the ground is the BUILD's word - whether the pixel stood a location, never that it is
-   *  built. A pixel built after the clock ran out is built EMPTY, and read as built it kept its found plate (the store
-   *  files a spawn for good) and its walk to bare grass whenever the traveller came within the grid.
-   *  AUDIT SPAWN-REBIRTH F2: and the build's word BOTH WAYS - a pixel built empty while its spawn was dead stands none
-   *  until it is built again, though the spawn has stood again since (its time over, `expired` answers false: the plate
-   *  and the walk came back over the same bare grass, 29h's report the other way round); off the built ground, the clocks. */
-  const tvSpawnGone = (x, y) => { const key = `${x},${y}`; if (_insideSpawn(key)) return false; const b = built.get(key); return b ? b.location == null : _spawnLedger.expired(key, _spawnClock()); };
-  /** GROUND-AGREE: the spawn law the Overworld and the ground share (world/spawnGroundPlace.js) - the gates it reads, handed in. */
-  const spawnGroundPlace = createSpawnGroundPlace({
-    maps,
-    online: params.has('online'),
-    etherSea,
-    plateauDry: _spawnGround,
-    terrainGen,
-    cloneAt: _spawnCloneAt,
-    spawnGone: tvSpawnGone,
-    zoneMask: cyrodiilMask,   // AUDIT RELEASE R3-7: the open zone Cyrodiil's (WW-C2), as spawnedDungeonAt reads it
+  const { _liftLocationAt, _spawnCloneAt, spawnGroundPlace, tvLocationAt, tvSpawnAt, tvSpawnGone } = createSpawnGroundHost({   // HOST-SPLIT: src/scenes/spawnGroundHost.js
+    _insideSpawn, _spawnGround, _spawnLedger, _spawnSalt, etherSea, locationIndex, maps, params, terrainGen,
+    get _spawnClock() { return _spawnClock; },
+    get _spawnTemplates() { return _spawnTemplates; }, set _spawnTemplates(v) { _spawnTemplates = v; },
+    get built() { return built; },
   });
-  /** AUDIT OW4 D4: WHAT spawnedDungeonAt WOULD STAND on a pixel it has not built - its own gates (the sea, a path across
-   *  the pixel, the clocks; the roll and the page are asked by the caller) and its clone, with none of its writes (the
-   *  index, the roads' provisional keys): a far found spawn is marked, never built. */
-  const tvSpawnAt = spawnGroundPlace.spawnAt;
-  /** AUDIT OW5b D3: WHAT STANDS ON A PIXEL, built or not - the index's place, else the spawn its roll would stand (online,
-   *  side-effect free: tvSpawnAt). A member walking to the leader's spawn read the index alone, and a far spawn their own
-   *  pixels had never built was a bare spot to them. */
-  const tvLocationAt = (x, y) => locationIndex.get(`${x},${y}`) ?? (params.has('online') && !inEtherLaw(x, y) && spawnsDungeon(_spawnSalt, x, y) ? tvSpawnAt(x, y) : null);   // ETHER-PLACES: no spawn past the Veil - the isles stand their own
-  /** AUDIT LANDFORMS B1: landformLiftAt's pixels not built yet - what the build will stand there: the index's place, else
-   *  online the spawn its roll stands (GROUND-AGREE: alive or dead - its ground is the roll's), read here without taking
-   *  anything out of the index. AUDIT LANDFORMS II F1: declared here, beside the build's own answer, so it is the
-   *  whole answer before anything can ask it. It was bound beside the Overworld's probes, far below the boot's load
-   *  (`await worldQuickLoad({ ...bootLoadPick, snap })`) - online the only load - so that load stood a spawn's records on
-   *  the wild lift and every later save wrote them on the spawn's: a camp at a spawned dungeon drifted by up to 24 m a
-   *  session (the Citadel of Copperton), and a camp is never stood again. */
-  const _liftLocationAt = (x, y) => spawnGroundPlace.groundLocationAt(x, y, locationIndex.get(`${x},${y}`));
 
   // U31 / THE CLASSIC START. StartGameBehaviour (:371-401) does not
   // resolve the start by NAME - it reads a map pixel out of settings
@@ -30735,45 +30648,14 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   // live index (streaming and the spawns change it: a spawn in it at the first ask stood for good, a later one never
   // did); the index is read afresh for each list, and the list is filtered before its twelve are taken (nearDungeons)
   let _tvDungeonRows = null;
-  /** ETHER-OW: THE DUNGEONS TV6's law reads about the traveller - the map's rows, and past the Veil the ruin isles within
-   *  `range` (their places' own rows, world/etherPlaces.js etherPlaceRows) - and what stands on a row's pixel: the
-   *  index's, else past the Veil the isle's place (tvEtherPlace: marked, never built). */
-  const tvDungeonRowsAt = (at, range = TV_FAR_RANGE) => {
-    const bay = (_tvDungeonRows ??= dungeonRows(mapDict));
-    return etherSea && inEther(at.x, at.y) ? [...bay, ...etherPlaceRows(at, range, 'ruin')] : bay;
-  };
-  const tvDungeonAt = (x, y) => locationIndex.get(`${x},${y}`) ?? (etherSea && inEther(x, y) ? tvEtherPlace(x, y) : null);
-  /** AUDIT OW3 D1: what the spawned feature has told the player of a spawn - its pixel's line (announceNearbySpawns, this
-   *  session), or the pixel entry's filing in the store (syncTopics' discoverLocation, the same crossing, saved): the
-   *  store's is its name too. Nothing else - a spawn not yet said is not marked (that feature never says one next door). */
-  const tvSpawnFound = (s) => hasDiscoveredLocationId(s.loc.mapTableData.mapId);
-  const tvSpawnKnown = (s) => tvSpawnFound(s) || _announcedSpawnPixels.has(`${s.x},${s.y}`);
-  /** AUDIT OW4 D4: the found spawns within the far range that the index does not hold (filedSpawns) - online alone, as
-   *  the spawns are (spawnedDungeonAt's own gate). The store files a spawn under its pixel's id (spawnedMapId). */
-  const tvFiledSpawns = (at) => (params.has('online') ? filedSpawns({ at, rolls: (x, y) => spawnsDungeon(_spawnSalt, x, y),
-    filed: (x, y) => hasDiscoveredLocationId(spawnedMapId(_spawnSalt, x, y)), indexed: (x, y) => locationIndex.has(`${x},${y}`), stand: tvSpawnAt }) : []);
-  function travelViewDungeons() {
-    if (typeof _tvListsReady !== 'undefined' && !_tvListsReady) return [];   // BOOT-TDZ II (typeof: a slice lifted without the flag reads as standing)
-    const at = playerTravelPixel();
-    const dg = tvKnownGen();   // AUDIT ETHER-OW C2-2: the finds and the charts
-    // AUDIT OW3 D1/D3: and the grid's reach (what TV2 plates), and the index's churn - a spawn comes as its pixel streams
-    // and goes when its time runs out or a road takes it back, on a pixel the traveller has not left (AUDIT OW4 D5: its
-    // generation - the size missed one spawn gone and another come in the same window)
-    const grid = Math.max(1, state.terrainDistance ?? 3), n = _locIndexGen;
-    // AUDIT OW4 D2: and time - a kept spawn whose clock has run out since is dropped now, asked of the kept list each time
-    if (tvDng.list.some((g) => g.spawn && tvSpawnGone(g.px, g.py))) tvDng.at = null;
-    if (tvDng.at && tvDng.at.x === at.x && tvDng.at.y === at.y && tvDng.dg === dg && tvDng.grid === grid && tvDng.n === n) return tvDng.list;
-    const dungeons = tvDungeonRowsAt(at), locAt = tvDungeonAt, isFound = (x, y) => !!tvPlaceSummary(x, y);
-    const placed = (g) => {
-      const r = locationWorldRect(g.loc, g.x, g.y);
-      return { key: g.key, row: g.row, loc: g.loc, found: g.found, spawn: g.spawn, summary: g.found && !g.spawn ? tvPlaceSummary(g.x, g.y) : null,
-        px: g.x, py: g.y, x: (r.minX + r.maxX) / 2, z: (r.minZ + r.maxZ) / 2, rect: r };
-    };
-    const list = nearDungeons({ at, grid, dungeons, locAt, isFound, spawns: [...spawnedPixels(locationIndex), ...tvFiledSpawns(at)], spawnKnown: tvSpawnKnown,
-      spawnFound: tvSpawnFound, spawnGone: (s) => tvSpawnGone(s.x, s.y) }).map(placed);
-    tvDng = { at, dg, grid, n, list };
-    return list;
-  }
+  const { travelViewDungeons, tvDungeonAt, tvDungeonRowsAt, tvFiledSpawns, tvSpawnFound, tvSpawnKnown } = createTravelViewDungeons({   // HOST-SPLIT: src/scenes/travelViewDungeonsHost.js
+    _announcedSpawnPixels, _spawnSalt, etherSea, locationIndex, mapDict, params, playerTravelPixel, state,
+    tvEtherPlace, tvKnownGen, tvPlaceSummary, tvSpawnAt, tvSpawnGone,
+    get _locIndexGen() { return _locIndexGen; },
+    get _tvDungeonRows() { return _tvDungeonRows; }, set _tvDungeonRows(v) { _tvDungeonRows = v; },
+    get _tvListsReady() { return _tvListsReady; },
+    get tvDng() { return tvDng; }, set tvDng(v) { tvDng = v; },
+  });
   const { drawTvDungeonModels, dropTvDungeonModels } = createTravelViewDungeonModels({   // HOST-SPLIT: src/scenes/travelViewDungeonModels.js
     _tvDngModel, arch, archAabb, blocks, built, cpuModels, locationIndex, maps, pipeline, playerTravelPixel,
     renderer, state, tileSide, tvDungeonAt, tvDungeonRowsAt, tvFiledSpawns, tvGroundAt, tvGroundGenNow, tvKnownGen,

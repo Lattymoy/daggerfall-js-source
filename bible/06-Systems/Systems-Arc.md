@@ -8308,7 +8308,7 @@ leaves its level clearing and the ruin's ground tiles until it stands again. `01
 
 The audit NO SYSTEM LEFT BEHIND IN THE BAY (2026-10-26), item 1 (A1, HIGH). Online with the land past the Bay, every pixel build asks
 `spawnGroundPlace.groundLocationAt` (`scenes/pixelBuild.js:"const groundLocation = spawnGroundPlace.groundLocationAt(px, py, dfLocation);"`),
-and where the roll stood a spawn on dry, empty land the host cloned it (`scenes/world.js:"function _spawnCloneAt(px, py) {"`)
+and where the roll stood a spawn on dry, empty land the host cloned it (`scenes/spawnGroundHost.js:"function _spawnCloneAt(px, py) {"`)
 - whose id, `world/spawnedDungeons.js:"export function spawnedMapId(salt, px, py) {"`, threw `RangeError: pixel X,Y` for
 any pixel past the Bay. The pump destroyed the pixel and BUILD-RETRY asked for it again, for good: no terrain and no
 collider. A 40 x 20 box of Skyrim (about Windhelm's row): 800 pixels asked, 39 threw; the same box on the Bay, none. The

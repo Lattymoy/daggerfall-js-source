@@ -1,7 +1,7 @@
 [
   {
     "name": "WILDSUITE-BOOT-TDZ2-hall-stood-from-below",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/spawnStandHost.js",
     "old": "return zoneHalls.standOf(_wm, px, py); }",
     "new": "return wildHallStand(px, py); }",
     "tests": [

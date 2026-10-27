@@ -737,3 +737,27 @@ its branch; merged with the branch head (the merge of main, relay world269), 35,
 (`test/scenes/hostceiling.test.js`, its mutant re-aimed under it). The tool re-aimed eighteen mutant records over the moved lines
 (`portal1.json`, `audittesa2z.json`, `auditcaptsea.json`, `egmade.json`); the pins that cut the members from world.js's
 text cut them from the module's (`portal1_stone.test.js`, `egmade_law.test.js`, PIN MOVED).
+
+## SPAWN-WORLD's moves - the spawn's stand, its ground and the Overworld's dungeon lists out of bootWorld (2026-10-26)
+
+The fix for the audit NO SYSTEM LEFT BEHIND IN THE BAY (work package 4: the spawned dungeons and the Overworld's
+dungeons past the Bay, `06-Systems/Systems-Arc.md` SPAWN-WORLD, `06-Systems/Travel-View.md` TVD-WORLD) changes three
+blocks of `bootWorld`, so each left it first, verbatim, by `tools/hostMove.mjs`, in a commit of its own:
+
+- **The spawn's ground law** (`scenes/spawnGroundHost.js` `createSpawnGroundHost`, 6 members: `_spawnCloneAt`,
+  `tvSpawnGone`, `spawnGroundPlace`, `tvSpawnAt`, `tvLocationAt`, `_liftLocationAt`) - moved first, so the stand below
+  reads its clone live (a `const` made below it).
+- **The spawn's stand** (`scenes/spawnStandHost.js` `createSpawnStand`, 2 members: `spawnedDungeonAt`,
+  `_locationToBuild`) - the build's answer for a pixel.
+- **The Overworld's dungeon lists** (`scenes/travelViewDungeonsHost.js` `createTravelViewDungeons`, 6 members:
+  `tvDungeonRowsAt`, `tvDungeonAt`, `tvSpawnFound`, `tvSpawnKnown`, `tvFiledSpawns`, `travelViewDungeons`). The
+  dungeons' models (`scenes/travelViewDungeonModels.js`) stay the host's to construct (`test/tooling/hostseam.test.js`:
+  a moved module is its host's own construction), so the group stops above them; `_tvDungeonRows` stays the host's
+  `let`, handed live.
+
+`bootWorld` 35,799 -> 35,736 logical lines. The ceiling came down with them, to 35,740 in the moves' commit - four kept for
+the wiring the fix's next commits hand these modules - and to its measure in the fix's last commit
+(`test/scenes/hostceiling.test.js`). The tool re-aimed the mutant records over the moved lines (52 of them, every one run
+dead after the move; `auditlandforms.json`'s F1 probe record did not parse before the move either, and is re-aimed by
+content); the pins that lift the members from world.js's text lift them from the modules, the harnesses handing them their
+`host` (PIN MOVED, HOST-SPLIT, SPAWN-WORLD).

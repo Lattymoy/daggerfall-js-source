@@ -132,7 +132,7 @@
   },
   {
     "name": "EOW-far-ruins-unread",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewDungeonsHost.js",
     "old": "    return etherSea && inEther(at.x, at.y) ? [...bay, ...etherPlaceRows(at, range, 'ruin')] : bay;",
     "new": "    return bay;",
     "tests": [
@@ -142,7 +142,7 @@
   },
   {
     "name": "EOW-far-ruins-as-ports",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewDungeonsHost.js",
     "old": "[...bay, ...etherPlaceRows(at, range, 'ruin')]",
     "new": "[...bay, ...etherPlaceRows(at, range, 'port')]",
     "tests": [
