@@ -226,3 +226,30 @@ Dagon's way, without Dagon's gear. At the FIRST fall of an event's mini boss the
   moving it a fifth either way) and one Magic-or-better piece; the board: one more Rare-or-better; first place: one
   more, Legendary a tenth of the time, else Rare or better. None of Dagon's: no Sigil Stone, no Regalia, no Dragonfire
   Oath, nothing gilded.
+
+## 10. Play as boss (STAFF-PILOT - 2026-10-26, mob: "could we do something were a staff can become a boss", "like play as a boss as attack players", the card's pick "Take over the boss", "can we do this wouthout a relay update?", "add it to the pr")
+
+A staff member steers their event's mini boss. A departure from DFU, which has no such thing. Game page and Staff Panel
+only - no relay, no account service: it rides words the wire already carries (`src/systems/staffBossPilot.js`, the page's
+half `src/scenes/staffPilotHost.js`).
+
+- **Start**: the Events page's Play as boss posts `pilot` (`net/staffHook.js`) with the event's id. A hidden game is shown
+  first (a hidden game's frames reach no one). The game answers whether a boss of mine already stood; if not, the panel
+  calls one (Spawn mini boss now) and it stands on my machine.
+- **The run is mine**: while I steer, my claim on the event's raid says `PILOT_CLAIM_AGE` (= `RAID_CLAIM_AGE_MAX`, the
+  oldest the wire carries), so every game in the place - an old page too, which reads the same oldest-claim law
+  (`world/raidShared.js` `raidRunnerOf`) - hands me the run (`raidingParties.js` `runsRaid`). A claim's age on the wire
+  is now held to that bound: past it `validRaidWords` dropped the word, and a runner two hours in fell silent.
+- **The boss is me** (`scenes/exteriorFoes.js`): after its motor steps, its feet are my feet and its facing my camera's
+  (`pilotSteer`); its own swings and casts are held (`pilotHolds`). A left click is its swing now (the brain's forced
+  swing, the path every foe's blow already rides to the players, each judging it on their own feet), at the player
+  nearest my facing within `PILOT_TARGET_M` (8 m, 60 degrees). A right click lets its spell decision run for
+  `PILOT_CAST_MS`. My own copy of the boss is not drawn: the camera stands inside it.
+- **My body is no one**: my pose's concealment says 7 (all three bits - `effects.js` `concealBits`); this build draws no
+  body and no name for a 7 (`combatVisuals.js` `peerDraw`), an older one the shimmer of an invisible player inside the
+  boss. Foes do not sense me (`playerEntity.staffHidden`).
+- **The end**: the boss falls (its reward and lines as ever), none stands in `PILOT_WAIT_MS` (60 s), or Leave boss - the
+  boss, if it still stands, goes back to its own brain where it stands. The game tells the panel why (`left`, `fell`,
+  `none`).
+- **Known limits**: the boss walks at my pace, not its kind's; a game that ran the event before keeps the monsters it had
+  stood (they fight on as theirs); my own weapon still swings at a click if drawn.

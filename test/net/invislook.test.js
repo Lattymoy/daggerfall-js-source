@@ -36,7 +36,9 @@ test('INVIS-LOOK: the look - open is plain; the classic lane hides every conceal
   assert.equal(peerDraw(2, true, 1, 'p').visual.mode, CONCEAL_MODE.blend, 'blending: the shimmer');
   const shade = peerDraw(4, true, 1, 'p').visual;
   assert.deepEqual([shade.mode, shade.alpha], [CONCEAL_MODE.shade, SHADE_ALPHA], 'a shade: the dark silhouette');
-  for (const bits of [3, 5, 6, 7]) assert.equal(peerDraw(bits, true, 1, 'p').visual.mode, CONCEAL_MODE.blend, `${bits}: the stronger concealment wins`);
+  for (const bits of [3, 5, 6]) assert.equal(peerDraw(bits, true, 1, 'p').visual.mode, CONCEAL_MODE.blend, `${bits}: the stronger concealment wins`);
+  // PIN MOVED (STAFF-PILOT, 2026-10-26, systems/staffBossPilot.js PILOT_CONCEAL): all three at once is a staff member inside its event's boss - drawn nowhere
+  assert.equal(peerDraw(7, true, 1, 'p').kind, 'hidden', '7: a staff boss pilot, not drawn');
   // the departure is the peer's alone: a foe's invisibility on the same lane is still not drawn
   const foe = { entity: { activeEffects: [{ kind: 'invisNormal', roundsRemaining: 5 }] } };
   assert.equal(foeDraw(foe, true, 1).kind, 'hidden', 'a foe\'s invisibility: not drawn (ECV1)');
