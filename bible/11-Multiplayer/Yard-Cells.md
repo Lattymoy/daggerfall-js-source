@@ -571,3 +571,33 @@ and relay in local workerd.
   said, also while an overlay hides the chat. A notice that lands under a menu the player keeps open for longer is not
   peeked; it waits in the chat log for the next time the chat is opened. The notice's code (SRV-N,
   `net/updateNotice.js`) is unchanged by YC1.
+
+## 11. YC2 - building (2026-10-27)
+
+The push and the slow poll of sections 3.6 and 3.7. Branched from YC1's head (#1304), since YC1 is not merged yet.
+These are the working notes. The pull request holds the checks as they are run.
+
+**Decisions taken at the build:**
+
+- **The version comes from the settle.** `settleYardCell` builds the cell with `RETURNING built`. A row back means
+  the write moved the cell to that version, and the route mints an order. No row back means that nothing moved, or
+  the minute's clock built the cell first. In that case no order goes, and the slow poll finds the change. The route
+  does not read `body.yard`, because move and remove do not carry it.
+- **The order** is `{ o: 'yard', s, m, c, v, i, e }`, with an exact key list (the shape of the hide, freeze and
+  staff event orders). No other order kind may carry `m`, `c` or `v`. Its time to live is the HOME ORDER's.
+- **The owner's own word.** The route's answer also carries `yardVer` in plain text, beside the sealed `yardOrder`.
+  `hold()` raises the held cell's version to it, so the owner's page drops its own word by the version rule.
+- **The welcome field, not a version minimum.** The hub's welcome says `yd: 1`. A client carries a yard order only
+  to a hub that said it. A `YARD_RELAY_MIN` would move at every renumber (`HOME_RELAY_MIN`'s note records the cost).
+- **No host grows.** `bootWorld` has one logical line of room. The carrier and the listener go through a net-level
+  registry (the `onHomeOrders` shape): `online.js` hands the yard words and the hub link's state to it, and
+  `accountClient.js` hands it the orders. `homeYards.js` and `yardCellSync.js` subscribe to it. On the relay, the
+  arm is a module of its own (the `staffFreeze.js` shape), with one dispatch line in `_message`.
+- **The relay keeps no yard state on disk.** Words owed are held in memory, as the highest `v` for each `m:c`, and
+  one timer sends them as one frame a second at most.
+
+**Open at this writing:**
+
+- How a word carried to a hub shard reaches the sockets of the other shards. The yard arm takes the home arm's
+  route. Whether that route reaches every shard is not yet checked.
+- Whether the site's deploy waits for an account version. If it does, YC2 moves ACCOUNT_VERSION too.
