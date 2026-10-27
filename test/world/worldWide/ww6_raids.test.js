@@ -275,7 +275,7 @@ function rig(places) {
 }
 beforeEach(() => { _resetRaidingParties(); _resetModSettings(); setSharedClock(null); });
 
-test('WW6 the client\'s day: the lanes past the Bay rolled for the day the Bay\'s list was (the Bay\'s raids untouched), each kept by its key and tuple through a roll again, gone when the registry\'s places go, never one run out rolled back in; saved with its area and restored (mutants: the lanes never synced; a held raid replaced by its roll; a lane\'s raids kept with no places; one run out rolled in; the area unsaved)', () => {
+test('WW6 the client\'s day: the lanes past the Bay rolled for the day the Bay\'s list was (the Bay\'s raids untouched), each kept by its key and tuple through a roll again, gone when the registry\'s places go, never one run out rolled back in; saved with its area and restored (mutants: the lanes never synced; a held raid replaced by its roll; a lane\'s raids kept with no places; the area unsaved)', () => {
   const places = skyrim();
   const { at } = rig(places);
   restoreRaidSaveData({ lastSelectedDay: D, raids: [bayRaid()] });
@@ -294,7 +294,7 @@ test('WW6 the client\'s day: the lanes past the Bay rolled for the day the Bay\'
   raidFrame(0);
   assert.equal(raidState().raids.find((r) => raidKey(r) === raidKey(held)), held, 'the very record');
   assert.equal(held.killed, 4);
-  // one run out is never rolled back in
+  // one run out is never rolled back in (the expiry pass after the lanes' roll takes it, unsaid)
   at.now = Math.max(...lane.map((r) => r.endMinute)) + 1;
   raidFrame(0);
   assert.equal(raidState().raids.filter((r) => r.regionIndex === 64).length, 0, 'every one ran out');
@@ -479,6 +479,8 @@ test('WW6 a staff TOWN event past the Bay: the law takes a town past the Bay by 
   assert.equal(staffEventFault({ ...EV, rg: 17 }), 'town', 'a town past the Bay in no province\'s region');
   assert.equal(staffEventFault({ ...EV, rg: 70, nm: 'X' }), null, 'any province\'s - staff\'s own call');
   assert.equal(staffEventFault({ ...EV, loc: STAFF_TOWN_INDEX_MIN - 1 }), 'place');
+  assert.deepEqual([staffEventFault({ ...EV, loc: -99_999_999 }), staffEventFault({ ...EV, loc: -100_000_000 })], [null, 'place'], 'eight digits, as a raid\'s key holds a town\'s index');
+  assert.deepEqual([RAID_KEY_RE.test('64:-99999999:1'), RAID_KEY_RE.test('64:-100000000:1')], [true, false], 'the raid\'s key the same eight');
   assert.equal(staffEventFault({ ...EV, rg: 17, loc: 0, px: 207, py: 213 }), null, 'a Bay town\'s as it was');
   assert.equal(staffEventFault({ ...EV, loc: STAFF_EVENT_AREA }), null, 'an area anywhere');
   assert.deepEqual([staffTownPixelOk(999, 499), staffTownPixelOk(1000, 0), staffTownPixelOk(sol.x, sol.y, -5, 64), staffTownPixelOk(sol.x, sol.y, -5, 61), staffTownPixelOk(5, 5, -5, 64)], [true, false, true, false, false]);

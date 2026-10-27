@@ -517,9 +517,10 @@ function forgetRaid(r) {
  * generator, so every client standing the same places past the Bay names the same raids), off its towns as the registry
  * holds them now, and rolled again whenever the day turns or the registry's places move. A raid already held (its key and
  * its tuple) keeps what it has - its count, its words, its cleanse, its announcement; one the roll no longer names stands
- * down and goes; one that has run out is never rolled back in. The Bay's raids are never touched.
+ * down and goes; one that has run out goes at the expiry pass that follows it in the frame (C), unsaid - it was never
+ * announced - so none is ever rolled back in. The Bay's raids are never touched.
  */
-function syncLanes(now) {
+function syncLanes() {
   const day = state.lastSelectedDay;
   if (day < 0) return;
   const sig = `${day}|${placesGen()}`;
@@ -529,7 +530,7 @@ function syncLanes(now) {
   const lanes = [];
   for (const r of lanesForDay(day)) {
     const id = raidIdOf(r), had = held.get(id);
-    if (had) { held.delete(id); lanes.push(had); } else if (now < r.endMinute) lanes.push(r);
+    if (had) { held.delete(id); lanes.push(had); } else lanes.push(r);
   }
   for (const r of held.values()) { routRaid(r); forgetRaid(r); }   // a town the registry no longer holds
   state.raids = [...state.raids.filter((r) => raidLaneOfRegion(r.regionIndex) <= 0), ...lanes];
@@ -713,7 +714,7 @@ export function raidFrame(dt = 0) {
     _lastRegion = region;
   }
   if (sharedClockOn()) _dayFromSave = false;   // AUDIT LIVED1b A3: the save's record has met the world's day (an offline frame is not the world's)
-  syncLanes(now);   // WW6: the lanes past the Bay, rolled for the same day off the registry's towns there (the Bay's list untouched)
+  syncLanes();   // WW6: the lanes past the Bay, rolled for the same day off the registry's towns there (the Bay's list untouched)
   // C. the raids that ran out [IL_0540-IL_05b9]
   expire(now, home);
   // D. a new region cancels the spawn in flight [IL_05b9]

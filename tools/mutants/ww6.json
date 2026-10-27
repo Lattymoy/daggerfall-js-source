@@ -276,7 +276,7 @@
  {
   "name": "WW6-client-lanes-unsynced",
   "file": "src/systems/raidingParties.js",
-  "old": "  syncLanes(now);   // WW6: the lanes past the Bay, rolled for the same day off the registry's towns there (the Bay's list untouched)\n",
+  "old": "  syncLanes();   // WW6: the lanes past the Bay, rolled for the same day off the registry's towns there (the Bay's list untouched)\n",
   "new": "",
   "tests": [
    "test/world/worldWide/ww6_raids.test.js"
@@ -287,15 +287,6 @@
   "file": "src/systems/raidingParties.js",
   "old": "    if (had) { held.delete(id); lanes.push(had); }",
   "new": "    if (had) { held.delete(id); lanes.push(r); }",
-  "tests": [
-   "test/world/worldWide/ww6_raids.test.js"
-  ]
- },
- {
-  "name": "WW6-client-runout-rolled-in",
-  "file": "src/systems/raidingParties.js",
-  "old": "} else if (now < r.endMinute) lanes.push(r);",
-  "new": "} else lanes.push(r);",
   "tests": [
    "test/world/worldWide/ww6_raids.test.js"
   ]
