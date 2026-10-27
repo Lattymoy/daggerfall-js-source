@@ -175,6 +175,12 @@ test('LEVEL-45 THE CLASSIC SHEET HANDS OUT NO POOL AT THE CAP, AND A LEVEL OWED 
   assert.equal(snap.startingLevelUpSkillSum, ROLLED_START_AVERAGE);
   assert.equal(snap.level, Math.min(50, onlineLevelFor(ROLLED_START_AVERAGE, snap.currentLevelUpSkillSum)));
   assert.ok(snap.level <= 45);
+  // and one at the cap whose skills earn it - the conversion leaves its level where it is, so the switch's release is
+  // what lets its latch go
+  const atCap = JSON.parse(JSON.stringify(snapshotPlayer(latchedVirtue(45))));
+  atCap.currentLevelUpSkillSum = 2000;
+  assert.equal(crossLeveling(atCap), true);
+  assert.deepEqual([atCap.level, atCap.readyToLevelUp], [45, false], 'at the cap, kept, and owing nothing');
 });
 
 test('LEVEL-45 PAST THE CAP (AUDIT FB1026d C5): a character kept above 45 owes no level on either lane, and its Level box says the cap as the cap (mutants: the cap read as one level; the box\'s cap text dropped)', () => {
