@@ -60,7 +60,7 @@ alone and paved its whole ring already) as proposed, the three clauses:
 `roadPainter.js:"&& !locationRect?.ring?.[i]) continue;"`, the ring's condition
 `roadPainter.js:"if (m && ctx.rect && T === ROAD_TILES && (ctx.rect.ring ? ctx.rect.ring[ctx.i] === RING.road && ctx.ground !== TILE.water"`
 and `roadPainter.js:"if (rect?.ring?.[y * tDim + x]) continue;"`; and the curved painter past the Bay keeps the same sea
-(`roadCurves.js:"if (tileData[x + y * tdDim] === WATER) continue;"`). Measured through the real kernel
+(`roadCurves.js:"if (ground === WATER) continue;   // AUDIT TESA III E1-1"`). Measured through the real kernel
 (`generatePixelTerrain` with Basic Roads' arrays, every 8th of the Bay's 2,043 towns on a road): the ring paved 15.6%
 before, 124,699 of 124,699 after, none of it over water in the sample. `tools/roadGuardProof.mjs` (its stale imports
 pointed back at `src/world/road/` now - the painter moved there) against the base painter (8df5233181): 103,487 real-map

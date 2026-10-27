@@ -22,14 +22,12 @@
 // Pure and worker-safe (formats/ and world/ alone): the Deep Waters worker and this thread build the same planes from the
 // same trace and fit, and a pixel the worker built hands its 3 x 3's sea bits and classes back (adoptPlanes).
 // ═══════════════════════════════════════════════════════════════════
-import { DeepWatersBake, floodSteps, classifyPixel, coarseCandidateBits, fineMaskBits, pixelWaterSampler, PIXEL_MIXED, PIXEL_SEA, PIXEL_LAND, inFrame, WATER_THRESHOLD } from './deepWater/deepWatersBake.js';
+import { DeepWatersBake, floodSteps, classifyPixel, coarseCandidateBits, fineMaskBits, pixelWaterSampler, PIXEL_MIXED, PIXEL_SEA, PIXEL_LAND, inFrame } from './deepWater/deepWatersBake.js';
 import { tamrielTrace, pictureLakes } from './tamriel/tamrielLand.js';
 import { tamrielFrameInBay, bayToPicture, inBay } from './tamriel/tamrielFrame.js';
-import { generateSamples, HEIGHTMAP_DIMENSION } from './terrain/terrainSampler.js';
-import { blendLocationTerrain } from './terrain/terrainTiles.js';
-import { CAPITAL_LAND, capitalSeaGround } from './terrain/capitalSea.js';   // RUMARE-WATER: the city's ground, as the streamed build lays it
+import { HEIGHTMAP_DIMENSION } from './terrain/terrainSampler.js';
 import { CAPITAL_RIM_TILES } from './capitalPlans.js';
-import { rumareSlice, rumareSeaPixel, rumareSliceRect } from './rumareWaters.js';
+import { rumareSlice, rumareSeaPixel, rumareSliceRect, rumareSeaGrid, rumareSliceAllLand } from './rumareWaters.js';
 
 /** An exported row's frame: the composed bakes route it here by it. */
 export const TAMRIEL_ROW = 'tamriel';
@@ -57,21 +55,53 @@ export function pictureOpenSeaAt(px, py) {
   return !trace.land[i] && !pictureLakes(trace)[i];
 }
 
+const H = HEIGHTMAP_DIMENSION, T = H - 1;
+
+/** Does a slice's rect hold a rim side - the span's outer one (world/terrain/capitalSea.js capitalSeaGround's `outer`). */
+const rimOf = (rect) => rect.xMin > 0 || rect.xMax < T || rect.yMin > 0 || rect.yMax < T;
+
 /**
  * RUMARE-WATER (bible/03-World/Tamriel.md RUMARE-WATER): THE IMPERIAL CITY'S WATER TO THE BAKE - a pixel of its span read as
  * the streamed build lays it (world/terrain/terrainGen.js: flattened to a capital at the sea's land, its water let down to
  * the sea by world/terrain/capitalSea.js capitalSeaGround - the plan's law alone, no tile laid here), so its lake and its
- * mouth are the bake's water as they are the ground's; every other pixel the plain sampler's.
+ * mouth are the bake's water as they are the ground's; every other pixel the plain sampler's. AUDIT BAY-LEFT F1: read off
+ * that law with no kernel run - capitalSeaGround stands every vertex but the span's outer edge at the sea's own height
+ * (under WATER_THRESHOLD) where rumareSeaAt says the sea and at CAPITAL_LAND or over it (over the threshold) where it does
+ * not, and the outer edge the land's own (the plain sampler's, the kernel's sample to the bit) - so a vertex's water is the
+ * law's grid there and the plain sampler's on the edge, the same answer the samples gave. The whole slice run through the
+ * kernel was 11-13 ms a pixel, every cell's flood asking all 625 again: 7 to 21 s before a promote at the city.
  */
-export function rumareWaterSampler(woods, px, py) {
+export function rumareWaterSampler(woods, px, py, grid = null) {
   const rect = rumareSliceRect(px, py, CAPITAL_RIM_TILES);
-  if (!rect) return pixelWaterSampler(woods, px, py, null);
-  const S = generateSamples(woods, px, py), natural = Float32Array.from(S);
-  blendLocationTerrain(S, CAPITAL_LAND, rect);
-  capitalSeaGround(S, natural, null, rect, px, py);
-  const water = (x, y) => S[x * HEIGHTMAP_DIMENSION + y] <= WATER_THRESHOLD;
+  const sea = rect ? grid ?? rumareSeaGrid(px, py) : null;
+  if (!rect || !sea) return pixelWaterSampler(woods, px, py, null);
+  const plain = rimOf(rect) ? pixelWaterSampler(woods, px, py, null) : null;
+  const outer = (x, y) => (x === 0 && rect.xMin > 0) || (x === T && rect.xMax < T) || (y === 0 && rect.yMin > 0) || (y === T && rect.yMax < T);
+  const water = (x, y) => (plain && outer(x, y) ? plain.water(x, y) : sea[x * H + y] === 1);
   return { water, quick: (x, y) => (water(x, y) ? 1 : 0), exact: water };
 }
+
+/** AUDIT BAY-LEFT F1: a span pixel's class off the law - LAND where no vertex is the city's sea, SEA where every one is (the
+ *  flood's, the fine mask's and the planes' own reading of the classes), MIXED else and on the span's outer edge (its rim's
+ *  land's own heights); null off the span. */
+export function rumareClass(px, py) { return rumareClassOf(px, py).cls; }
+
+/** rumareClass with the law's grid it read (a MIXED slice's - its bits are read off it next); `cls` null off the span. */
+function rumareClassOf(px, py) {
+  const rect = rumareSliceRect(px, py, CAPITAL_RIM_TILES);
+  if (!rect || !rumareSlice(px, py)) return { cls: null, grid: null };
+  if (!rimOf(rect) && rumareSliceAllLand(px, py)) return { cls: PIXEL_LAND, grid: null };   // the isle's streets and the far shore: no vertex to ask
+  const sea = rumareSeaGrid(px, py);
+  if (!sea) return { cls: null, grid: null };
+  if (rimOf(rect)) return { cls: PIXEL_MIXED, grid: sea };
+  let wet = 0;
+  for (let k = 0; k < sea.length; k++) wet += sea[k];
+  return wet === 0 ? { cls: PIXEL_LAND, grid: null } : wet === sea.length ? { cls: PIXEL_SEA, grid: null } : { cls: PIXEL_MIXED, grid: sea };
+}
+
+/** A law grid packed to a bit a vertex (2,081 bytes), and read back. */
+const packGrid = (g) => { const b = new Uint8Array((g.length + 7) >> 3); for (let k = 0; k < g.length; k++) if (g[k]) b[k >> 3] |= 1 << (k & 7); return b; };
+const unpackGrid = (b) => { const g = new Uint8Array(H * H); for (let k = 0; k < g.length; k++) g[k] = (b[k >> 3] >> (k & 7)) & 1; return g; };
 
 /** The Deep Waters bake of the continent's frame - DeepWatersBake's queries, its planes built as they are asked. */
 export class TamrielWatersBake extends DeepWatersBake {
@@ -83,7 +113,29 @@ export class TamrielWatersBake extends DeepWatersBake {
    *   the Bay's bake, whose open sea seeds the flood on the Bay's own pixels and answers its planes there
    */
   constructor({ woods, frame = tamrielWaterFrame(), bay = null }) {
-    super({ woods, global: null, frame, fineAt: (px, py) => fineMaskBits(rumareWaterSampler(woods, px, py)) });   // RUMARE-WATER: the city's fine water its ground's
+    // AUDIT BAY-LEFT F1: the city's pixels' bits kept for the bake's life (625 at the most, 520 bytes each) - its planes
+    // are evicted past PLANE_KEEP_RADIUS, the span's own half, so a walk across the city asked them all again
+    // and a MIXED one's law grid, packed, until both its bit sets are made from it (the class read it already)
+    /** @type {Map<number, { cls?: ?number, grid?: ?Uint8Array, coarse?: Uint8Array, fine?: Uint8Array }>} */
+    const city = new Map();
+    /** @type {(px: number, py: number, kind: 'cls' | 'coarse' | 'fine') => any} */
+    const cityBits = (px, py, kind) => {
+      const k = (py + 8192) * 16384 + (px + 8192);
+      let m = city.get(k);
+      if (!m) {
+        const { cls, grid } = rumareClassOf(px, py);
+        city.set(k, m = { cls, grid: grid ? packGrid(grid) : null });
+      }
+      if (kind === 'cls') return m.cls;
+      if (!m[kind]) {
+        const sampler = rumareWaterSampler(woods, px, py, m.grid ? unpackGrid(m.grid) : null);
+        m[kind] = kind === 'fine' ? fineMaskBits(sampler) : coarseCandidateBits(sampler);
+        if (m.coarse && m.fine) m.grid = null;
+      }
+      return m[kind];
+    };
+    super({ woods, global: null, frame, fineAt: (px, py) => (rumareSlice(px, py) ? cityBits(px, py, 'fine') : fineMaskBits(pixelWaterSampler(woods, px, py, null))) });   // RUMARE-WATER: the city's fine water its ground's
+    this._cityBits = cityBits;
     this.bay = bay;
     /** @type {Map<number, number>} */
     this._cls = new Map();
@@ -96,7 +148,7 @@ export class TamrielWatersBake extends DeepWatersBake {
 
   _class(i, px, py) {
     let c = this._cls.get(i);
-    if (c === undefined) { c = rumareSlice(px, py) ? PIXEL_MIXED : classifyPixel(this.woods, px, py); this._cls.set(i, c); }   // RUMARE-WATER: the city's span asked whole
+    if (c === undefined) { c = (rumareSlice(px, py) ? this._cityBits(px, py, 'cls') : null) ?? classifyPixel(this.woods, px, py); this._cls.set(i, c); }   // RUMARE-WATER: the city's span asked whole - AUDIT BAY-LEFT F1: by its law, kept
     return c;
   }
 
@@ -134,7 +186,7 @@ export class TamrielWatersBake extends DeepWatersBake {
       return (pictureOpenSeaAt(X, Y) && cls(X, Y) === PIXEL_SEA) || rumareSeaPixel(X, Y);   // RUMARE-WATER: the city's lake the sea's, through its mouth and the canal
     };
     const steps = floodSteps(n, n, (x, y) => cls(x0 + x, y0 + y),
-      (x, y) => coarseCandidateBits(rumareWaterSampler(this.woods, x0 + x, y0 + y)), seed);
+      (x, y) => (rumareSlice(x0 + x, y0 + y) ? this._cityBits(x0 + x, y0 + y, 'coarse') : coarseCandidateBits(pixelWaterSampler(this.woods, x0 + x, y0 + y, null))), seed);
     let r = steps.next();
     while (!r.done) r = steps.next();
     const { state, partialIndex, partialBits } = /** @type {any} */ (r.value);

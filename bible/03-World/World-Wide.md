@@ -152,9 +152,9 @@ Each is its region on the Bay, so each Bay answer is unchanged and a save's keys
 
 ### What stays the region's (recorded)
 
-The law: a crime on the road is charged to `maps.getRegionIndexAt`'s region, 0 past the Bay (`caravanHost.js` report,
-`relations.js reportOk`'s 0..61), so a robbery's tale past the Bay is told where the law charges it - the owner's call
-on the provinces as regions (decision 5). A temple's holy day is DFU's per-region table (`holidays.js`), and a place
+The law: a crime on the road is charged to `maps.getRegionIndexAt`'s region (`caravanHost.js` report, `relations.js
+reportOk`'s 0..70) - past the Bay its province's since WW-R (`tamrielGround.js` groundPoliticIndex), so a robbery's tale
+past the Bay is told where the law charges it, the owner's call on the provinces as regions (decision 5). A temple's holy day is DFU's per-region table (`holidays.js`), and a place
 past the Bay keeps none. The townsfolk of a place TESA builds name themselves off its synthesized location's region
 (TESA3's own work, on its branch).
 
@@ -404,8 +404,6 @@ stander did.
 
 - **The crowns.** A ship past the Bay flies the nearest Bay crown's colours and a crime at sea is charged as on the Bay
   until the provinces are regions (WW-R).
-- **Deep Waters** (the sea floor's bake) is the Bay's - WOODS.WLD's own bathymetry; past the Bay a ship's draft is the
-  streamed water's.
 
 ### THE FOUR HOSTS (Home.md)
 
@@ -496,8 +494,6 @@ DEPLOY ORDER: the relay first (world255), then the account service (acct181), th
 
 ### What stays the Bay's (recorded)
 
-- The town-bound books (above) and the seats (`townSeatLaw.js seatRegionOk`), the homes (`homeLaw.js`), the town economy
-  (`townEconLaw.js`) - their towns are the Bay's until WW7 stands the world's towns past it.
 - The Bay's three crowns (`kingdomLaw.js`): no province is a crown's, a march or a free land.
 - The classic save formats (SAVEVARS, MAPSAVE) are the Bay's 62, as Daggerfall wrote them.
 
@@ -740,12 +736,6 @@ The held map's ore card says a province's richness and Cyrodiil's every ore (`ui
 
 The node law's wider ground and the provinces' richness ship in acct181 (WW-R's, not yet deployed): one deploy.
 `src/net/provinceNodes.js` joins the account Worker's bundle and its deploy's path filter.
-
-### What stays the Bay's (recorded)
-
-- A Motherlode's site is a pixel the Watch can vouch for (`net/watchReceipt.js watchPixelOk` - the Bay's map), so the
-  Motherlodes stay the Bay's until the Watch walks past it (WW7).
-- A region's Court writs and its chapters' hall writs are a town's books (`bayRegionOk`), the Bay's until WW7.
 
 ### Pins and mutants
 
@@ -1045,7 +1035,6 @@ no capital had either: its palace's door was a dark face, and its location `hasD
   (`world.js` wildDungeonGate: a capital's castle is no ruin). AUDIT TESA III E2-2 (`01-Overview/audits/Audit-Tesa-III-E2.md`):
   the Guild window names a castle by its capital (`castleLaw.js` castleCityOf - "Castle Solitude", where it had said
   "Castle Skyrim"), and its line and the service's `castle-none` name a province's capital beside the Bay's three crowns.
-- **Not yet**: the capitals' quests (none of the Bay's quest places resolve there).
 - Relay world256 changed in place again (not deployed: the guild arm's rooms). WW7's mutant records `tools/mutants/ww7.json`
   (WW7-1 to WW7-4, 28, all dead; WW7-5's ten and WW7-6's five with them).
 
