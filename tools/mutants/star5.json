@@ -182,8 +182,9 @@
  {
   "name": "STAR5-no-window-filter",
   "file": "src/scenes/starfall/starfallHost.js",
-  "old": ".filter((s) => starInWindow(s.n, s.k))",
-  "new": "",
+  "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
+  "old": "return findGateSite(day, sc); } catch { return null; } } }).filter((s) => starInWindow(s.n, s.k))",
+  "new": "return findGateSite(day, sc); } catch { return null; } } })",
   "tests": [
    "test/scenes/starfall/star5_host.test.js"
   ]

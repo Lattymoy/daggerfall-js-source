@@ -295,6 +295,7 @@ test('WW5 THE PAGE: the hub\'s `ev` to the Bay\'s host, a province\'s `ln` to it
   Q.lanes.frame();
   const tm = Q.lanes.timers();
   assert.equal(tm.rec.s, 1, 'the Bay\'s as it always was');
+  assert.deepEqual([tm.site?.px, tm.site?.py], [303, 200], 'and its site - the board\'s way to it (AUDIT EVENTS1 A2: the Timers\' source carries the site itself)');
   assert.deepEqual(tm.lanes.map((l) => [l.lane, l.province, l.rec.s, l.mine, !!l.site]), [[SKY, 'Skyrim', SKY_S + 1, true, true]]);
   assert.equal(Q.lanes.mapMarks().length, 1, 'the found Hollow\'s ring (the Bay\'s, only risen, is a find)');
   assert.deepEqual(Q.lanes.mapMark(), Q.lanes.mapMarks()[0], 'the one in focus: the nearest');

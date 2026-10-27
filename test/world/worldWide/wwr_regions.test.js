@@ -152,11 +152,11 @@ test('WW-R the account service: a node\'s region any of the world\'s (a province
   assert.match(prof, /if \(!regionOk\(region\)\) return \{ error: 'bad-region' \};[^\n]*\s*const day = utcDay\(nowS\);\s*const halls = chaptersOpenFor\(player, env\);/, 'a writ board: the world\'s (WW7-5)');
 });
 
-test('WW-R the relay: a province\'s channel opens (PROVINCE-SLEEP: unsplit) where the relay keeps them (the world-wide relay, net/wire.js WORLD_WIDE_RELAY_MIN - world255 on its branch), a client on an older one keeps its region tab off past the Bay; the Abyss census the Bay\'s 62; the naval wire the Bay\'s regions alone (mutants: the channels\' count, the gate, the census, the wire)', () => {
+test('WW-R the relay: a province\'s channel opens (PROVINCE-SLEEP: unsplit) where the relay keeps them (the world-wide relay, net/wire.js WORLD_WIDE_RELAY_MIN - world255 on its branch), a client on an older one keeps its region tab off past the Bay; the Abyss census every region\'s (WW5); the naval wire the Bay\'s regions alone (mutants: the channels\' count, the gate, the census, the wire)', () => {
   assert.equal(CHAT_REGION_COUNT, REGION_NAMES.length, 'pinned equal (not imported: the relay\'s graph)');
   assert.equal(REGION_CHANNELS, CHAT_REGION_COUNT);
   assert.equal(CHAT_BAY_REGIONS, BAY_REGION_COUNT);
-  assert.equal(SD_REGION_COUNT, BAY_REGION_COUNT);
+  assert.equal(SD_REGION_COUNT, CHAT_REGION_COUNT);   // PIN MOVED (WW5, bible/03-World/World-Wide.md WW5): the census counts every region's channel - each lane its own regions (net/superDungeon/sdLaw.js sdLaneRegions), a crowd in Skyrim drawing Skyrim's Hollow
   for (let r = 0; r < 71; r++) {
     assert.equal(isChatRoom(chatRegionRoom(r)), true, `region ${r}`);
     for (let k = 0; k < 4; k++) assert.equal(isRegionShard(regionShardRoom(r, k)), r < 62);   // PIN MOVED (PROVINCE-SLEEP): a province's channel is one, unsplit (test/net/sleepcost.test.js)

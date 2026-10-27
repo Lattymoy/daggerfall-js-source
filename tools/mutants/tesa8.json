@@ -515,8 +515,9 @@
   {
     "name": "TESA8-host-no-lairs",
     "file": "src/scenes/world.js",
-    "old": "|| countryLocationAt(px, py) || lairLocationAt(px, py);   // AUDIT TESA II P1",
-    "new": "|| countryLocationAt(px, py);   // AUDIT TESA II P1",
+    "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
+    "old": "|| countryLocationAt(px, py) || lairLocationAt(px, py);   // WW5: a province's Hollow first",
+    "new": "|| countryLocationAt(px, py);   // WW5: a province's Hollow first",
     "tests": [
       "test/tesa8_lairs.test.js"
     ]
