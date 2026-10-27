@@ -267,7 +267,20 @@ offset table (0 -0.1, 2/3 +0.1, 5 +0.15, 6/20 +0.6, 9 +0.4, 11 -0.4,
 prefab (git show): point, range 15, intensity 1, white, Animate OFF -
 interior lights do not flicker. Scene ambient is the verbatim
 InteriorAmbientLight 0.18 (night variant exported for the clock), no
-sun. MAGEAA00:0 pins: 17 lights; the first (record-6 skull torch) at
+sun - in a room with a lamp of its own. RPT1026-WORLD DARK-ROOM
+(2026-10-26, two private reports of inns with no light, one of them
+Westhead Moor's The Howling Mug, MARKAA01.RMB #0): 177 of BLOCKS.BSA's
+6,832 rooms lay no archive-210 flat, so AddLight hangs nothing and the
+room stood at 0.18 - black on the Enhanced Lighting lane (0.027 in
+linear under INTERIOR-DIM's eye). Such a room takes DFU's own
+ambient-only level, InteriorAmbientLight_AmbientOnly 0.8 by day and
+InteriorNightAmbientLight_AmbientOnly 0.5 by night (PlayerAmbientLight.cs:29-30,
+the level DFU's Lit Interiors setting lights a room by):
+`interiorLights.js` roomAmbient, through both interior hosts
+(`worldModes.js`, `interior.js`); `scenes/exterior.js` and
+`dungeonContext.js` light no building's room. A departure for those
+rooms alone (Port-Ledger A, DARK-ROOM); pinned by
+`test/world/interior/rpt1026_world_darkroom.test.js`. MAGEAA00:0 pins: 17 lights; the first (record-6 skull torch) at
 flat y 12.9 + h 2.35 / 2 + 0.6 = 14.675, cross-checked end to end.
 Console pin gains ", 17 lights"; brightness redistributes (0.18 base +
 range-15 pools) at a near-identical mean to the old flat lighting -

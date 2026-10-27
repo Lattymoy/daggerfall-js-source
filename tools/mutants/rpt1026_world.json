@@ -1,0 +1,216 @@
+[
+  {
+    "name": "RPT1026-LOOP-AWAKE-unity-wakes-both",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "(src.awake ?? src === boat.AudioSourceSlow)",
+    "new": "true",
+    "tests": [
+      "test/systems/comeSailAway/rpt1026_world_loops.test.js",
+      "test/systems/comeSailAway/csa_time_audio.test.js"
+    ],
+    "note": "Unity's playOnAwake as it was: both loops wake, the fast one at its first volume - heard at full past a 10% slider"
+  },
+  {
+    "name": "RPT1026-LOOP-AWAKE-never-noted",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "else { src.awake = src.isPlaying; if (src.isPlaying) audioStop(src); }",
+    "new": "else if (src.isPlaying) audioStop(src);",
+    "tests": [
+      "test/systems/comeSailAway/rpt1026_world_loops.test.js",
+      "test/systems/comeSailAway/csa_time_audio.test.js"
+    ],
+    "note": "nothing notes what played as the boat went: her wake's loop under way never comes back"
+  },
+  {
+    "name": "RPT1026-TRAFFIC-REAL-no-clock-handed",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": " real: realClock,   // RPT1026-WORLD TRAFFIC-REAL",
+    "new": "   // RPT1026-WORLD TRAFFIC-REAL",
+    "tests": [
+      "test/systems/naval/rpt1026_world_traffic.test.js"
+    ],
+    "note": "the host hands the director no real clock: the rolls' wait counts the sea's seconds - a ship every second or two at x60"
+  },
+  {
+    "name": "RPT1026-TRAFFIC-REAL-the-seas-seconds",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "const spent = trafficSeconds(dt, ctx.real, lastReal);",
+    "new": "const spent = Math.max(0, dt);",
+    "tests": [
+      "test/systems/naval/rpt1026_world_traffic.test.js"
+    ],
+    "note": "the director spends the step's sea seconds whatever clock it is handed"
+  },
+  {
+    "name": "RPT1026-TRAFFIC-REAL-reset-remembers",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "reset() { wait = FIRST_ROLL_S; lastReal = null; },",
+    "new": "reset() { wait = FIRST_ROLL_S; },",
+    "tests": [
+      "test/systems/naval/rpt1026_world_traffic.test.js"
+    ],
+    "note": "a reset keeps the last reading: the time ashore is spent from the first wait at the next step"
+  },
+  {
+    "name": "RPT1026-TRAFFIC-REAL-first-read-spends",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "return Number.isFinite(lastReal) ? Math.max(0, /** @type {number} */ (real) - /** @type {number} */ (lastReal)) : 0;",
+    "new": "return Number.isFinite(lastReal) ? Math.max(0, /** @type {number} */ (real) - /** @type {number} */ (lastReal)) : Math.max(0, Number(dt) || 0);",
+    "tests": [
+      "test/systems/naval/rpt1026_world_traffic.test.js"
+    ],
+    "note": "the first reading spends the step's sea seconds"
+  },
+  {
+    "name": "RPT1026-DARK-ROOM-every-room-classic",
+    "file": "src/world/interior/interiorLights.js",
+    "old": "  if ((lamps?.length ?? 0) > 0) return ambient;\n  return ambient === INTERIOR_NIGHT_AMBIENT ? INTERIOR_NIGHT_AMBIENT_ONLY : INTERIOR_AMBIENT_ONLY;",
+    "new": "  return ambient;",
+    "tests": [
+      "test/world/interior/rpt1026_world_darkroom.test.js"
+    ],
+    "note": "every room at InteriorAmbientLight's 0.18 - the lampless inn black"
+  },
+  {
+    "name": "RPT1026-DARK-ROOM-no-night",
+    "file": "src/world/interior/interiorLights.js",
+    "old": "  return ambient === INTERIOR_NIGHT_AMBIENT ? INTERIOR_NIGHT_AMBIENT_ONLY : INTERIOR_AMBIENT_ONLY;",
+    "new": "  return INTERIOR_AMBIENT_ONLY;",
+    "tests": [
+      "test/world/interior/rpt1026_world_darkroom.test.js"
+    ],
+    "note": "a lampless room at the day's ambient-only level by night too"
+  },
+  {
+    "name": "RPT1026-DARK-ROOM-host-unwired",
+    "file": "src/scenes/worldModes.js",
+    "old": "renderer.setLighting(new Float32Array(roomAmbient(isNight(skyMinutes() % 1440) ? INTERIOR_NIGHT_AMBIENT : INTERIOR_AMBIENT, interiorCtx.lights)), 0);",
+    "new": "renderer.setLighting(new Float32Array(isNight(skyMinutes() % 1440) ? INTERIOR_NIGHT_AMBIENT : INTERIOR_AMBIENT), 0);",
+    "tests": [
+      "test/world/interior/rpt1026_world_darkroom.test.js",
+      "test/render/windows1_view.test.js"
+    ],
+    "note": "the world's building lit at the clock's ambient alone, as before"
+  },
+  {
+    "name": "RPT1026-WAGON-OUT-landing-unasked",
+    "file": "src/scenes/caravanRoom.js",
+    "old": "  return heldInSolid(collider, at) ? openGroundNear(collider, p[0], p[2], { dry: seaY ? (floor) => floor >= seaY() : null }) ?? at : at;",
+    "new": "  return at;",
+    "tests": [
+      "test/scenes/rpt1026_world_wagonout.test.js"
+    ],
+    "note": "the door's landing never asked what stands there: the body stood in the house"
+  },
+  {
+    "name": "RPT1026-WAGON-OUT-the-sea-is-ground",
+    "file": "src/scenes/caravanRoom.js",
+    "old": "{ dry: seaY ? (floor) => floor >= seaY() : null }",
+    "new": "{ dry: null }",
+    "tests": [
+      "test/scenes/rpt1026_world_wagonout.test.js"
+    ],
+    "note": "the nearest open ground may be the seabed"
+  },
+  {
+    "name": "RPT1026-WAGON-OUT-host-unwired",
+    "file": "src/scenes/world.js",
+    "old": "ground: (p) => caravanStepOut(collider, p, tvSeaY),",
+    "new": "ground: (p) => [p[0], repositionFeetY(collider.heightAt(p[0], p[2]), p[1]), p[2]],",
+    "tests": [
+      "test/scenes/rpt1026_world_wagonout.test.js"
+    ],
+    "note": "the world host's door keeps the old landing"
+  },
+  {
+    "name": "RPT1026-BANNER-WALL-both-hung",
+    "file": "src/scenes/hallBanners.js",
+    "old": "return [-1, 1].filter((s) => [-1, 1].every((e) => onWall(cx + rx * (side * s + e * BANNER_W_M / 2), cz + rz * (side * s + e * BANNER_W_M / 2)))).map((s) => ({",
+    "new": "return [-1, 1].map((s) => ({",
+    "tests": [
+      "test/scenes/rpt1026_world_bannerwall.test.js"
+    ],
+    "note": "both cloths hung whatever the wall does - one in the air past the small house's corner"
+  },
+  {
+    "name": "RPT1026-BANNER-WALL-one-end-asked",
+    "file": "src/scenes/hallBanners.js",
+    "old": "[-1, 1].every((e) => onWall(",
+    "new": "[1].every((e) => onWall(",
+    "tests": [
+      "test/scenes/rpt1026_world_bannerwall.test.js"
+    ],
+    "note": "only one end of the cloth asked"
+  },
+  {
+    "name": "RPT1026-BANNER-WALL-pad-a-metre",
+    "file": "src/scenes/hallBanners.js",
+    "old": "export const BANNER_WALL_PAD_M = 0.05;",
+    "new": "export const BANNER_WALL_PAD_M = 1;",
+    "tests": [
+      "test/scenes/rpt1026_world_bannerwall.test.js"
+    ],
+    "note": "a metre of air allowed past the corner"
+  },
+  {
+    "name": "RPT1026-RAIN-EYE-the-head-on-the-ground",
+    "file": "src/scenes/world.js",
+    "old": "    const wxEye = mwv.eye;",
+    "new": "    const wxEye = tvf ? mwv.eye : cam.pos;",
+    "tests": [
+      "test/net/peer/fb1001_overworld.test.js"
+    ],
+    "note": "OW-WEATHER's eye as it was: off the Overworld the falling weather wraps the head - a cube of rain round the ship seen from the helm's scrolled-out camera"
+  },
+  {
+    "name": "RPT1026-CAUSEWAY-the-sea-under-the-road",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  if (goal === 0 && isWater(bx, by) && !paved) return -1;",
+    "new": "  if (goal === 0 && isWater(bx, by)) return -1;",
+    "tests": [
+      "test/systems/travel/rpt1026_world_causeway.test.js",
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "every step into the sea refused, his road's too: Grayidge's route leaves the road at the causeway's foot and crosses the inlet"
+  },
+  {
+    "name": "RPT1026-CAUSEWAY-the-corner-refused",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "isWater(bx, ay) && isWater(ax, by) && !paved) return -1;",
+    "new": "isWater(bx, ay) && isWater(ax, by)) return -1;",
+    "tests": [
+      "test/systems/travel/rpt1026_world_causeway.test.js"
+    ],
+    "note": "his diagonal between two water pixels refused: the coast road in the sea is left at its first bend"
+  },
+  {
+    "name": "RPT1026-CAUSEWAY-the-boat-launches",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "(n !== goal && !pavedStep(cx, cy, nx, ny, STEP_BIT[d], width, height, roads))",
+    "new": "n !== goal",
+    "tests": [
+      "test/systems/travel/rpt1026_world_causeway.test.js"
+    ],
+    "note": "with a boat to hand the causeway is a launch and a landfall, never his road"
+  },
+  {
+    "name": "RPT1026-CAUSEWAY-a-track-paved",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "const paved = pavedStep(ax, ay, bx, by, bit, width, height, roads);",
+    "new": "const paved = pavedStep(ax, ay, bx, by, bit, width, height, tracks);",
+    "tests": [
+      "test/systems/travel/rpt1026_world_causeway.test.js"
+    ],
+    "note": "a track's ford walked as a causeway, and his road's causeway refused"
+  },
+  {
+    "name": "RPT1026-CAUSEWAY-one-end-asked",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  return edgeKindAt(ay * width + ax, by * width + bx, bit, roads, null) === 0;",
+    "new": "  return !!(roads[ay * width + ax] & bit);",
+    "tests": [
+      "test/systems/travel/rpt1026_world_causeway.test.js"
+    ],
+    "note": "a step paved where only the near end carries his road's edge"
+  }
+]

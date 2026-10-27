@@ -88,7 +88,7 @@ import { createCamps } from './camps.js';   // HEARTH1: not to STAND a camp indo
 import { CAMP_TEXT } from '../systems/survival/camp.js';   // AUDIT REST II H4: the carried-out word, said on the HUD outside
 import { collectHearths } from '../systems/survival/hearth.js';   // AUDIT HEARTH1 F4: the law's own collection, rather than a fourth hand-written copy of its test
 import { lanternColor, dungeonAmbient, dungeonTrilight, dungeonFog, interiorLightColor, interiorGrade } from '../render/enhancedLighting.js';   // EL1: the world host installed the lane; this reads it; EL4: the dark; AUDIT-EL F6: the fog with it; INTERIOR-DIM: a room's lamps and its grade
-import { INTERIOR_AMBIENT, INTERIOR_NIGHT_AMBIENT, INTERIOR_LIGHT_DIR } from '../world/interior/interiorLights.js';
+import { INTERIOR_AMBIENT, INTERIOR_NIGHT_AMBIENT, INTERIOR_LIGHT_DIR, roomAmbient } from '../world/interior/interiorLights.js';   // RPT1026-WORLD DARK-ROOM: roomAmbient
 import { isNight } from '../world/worldClock.js';   // AUDIT 23 (C12)
 import { worldMinutes, skyMinutes, setWorldMinutes, ownMinutes, ownTimeLeftText, ownTimeLeftShort, sharedClockOn, trustedWorldMinutes, worldSpanRealWords, tickInFlight } from '../systems/worldTick.js';   // AUDIT 23 (C12): the one clock; G4's probe moves it; LIVED1: the character's own clock, and its deadlines said in their time; AUDIT LIVED1b K1: the collapse box's guard is online's; AUDIT CARDS-6 B4: a round of damage over time stands nobody up from the cards
 import { exhaustionOutcome, exhaustedInWaterText } from '../systems/rest/rest.js';   // AUDIT 23 (C5)
@@ -11089,7 +11089,7 @@ export function createWorldModes(host) {
     if (pendingInteriorExit) { pendingInteriorExit = false; exitInteriorNow(); return true; } else if (standFromVoid(interiorCtx.voidRescue, player)) { cam.pos = [...player.eye]; say(INTERIOR_VOID_TEXT); }   // FIELD BUGS 2026-10-04d VOID-ENTRY: THE FAILSAFE (enterExit.js standFromVoid) - a body below everything the building stands on fell for good, in the black ("Complete darkness and possibly stuck"); it stands again where the door landed it, and is told
     // AUDIT 23 (C12: cross-6 = wts-3) - PlayerAmbientLight.cs:75-80: a
     // night interior takes the darker purple-tinted ambient.
-    renderer.setLighting(new Float32Array(isNight(skyMinutes() % 1440) ? INTERIOR_NIGHT_AMBIENT : INTERIOR_AMBIENT), 0);   // TIME1: the sky's night
+    renderer.setLighting(new Float32Array(roomAmbient(isNight(skyMinutes() % 1440) ? INTERIOR_NIGHT_AMBIENT : INTERIOR_AMBIENT, interiorCtx.lights)), 0);   // TIME1: the sky's night; RPT1026-WORLD DARK-ROOM: a room with no lamp of its own lit as DFU's Lit Interiors lights it (interiorLights.js roomAmbient)
     // AUDIT EV F-R1: no moonlight and no stale exterior indirect
     // through the walls - see the dungeon arm's note above.
     renderer.setMoonlight(null);
