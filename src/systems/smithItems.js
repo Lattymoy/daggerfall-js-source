@@ -92,7 +92,7 @@ import { itemLongName } from './item/itemInfo.js';
 import './professions/profTemplates.js';   // the Repair Kit's row (692), registered with the ores and ingots
 import { applyRarity, rarityEligible, RARE_FLAVOURS, reforgeAffix, reforgeableLines, lastPass } from './loot/lootRarity.js';   // CRAFT4: and the Reforge with Essence's roll; CRAFT-PROCS: the last pass
 import { pieceQuality, temperRefusal, temperStep, reforgeEssence } from '../net/temperLaw.js';   // CRAFT4: the temper
-import { readProductRecord, mintVersionOf, MINT_V_LAST_PASS, MINT_V_LINES, MINT_V_ARMOR_LEAN } from '../net/productRecord.js';   // CRAFT4: a tempered piece's record, re-signed; CRAFT-PROCS: the mint's version; AFFIX-LINES: its lines' law
+import { readProductRecord, mintVersionOf, MINT_V_LAST_PASS, MINT_V_LINES, MINT_V_ARMOR_LEAN, MINT_V_JEWEL_KIN } from '../net/productRecord.js';   // CRAFT4: a tempered piece's record, re-signed; CRAFT-PROCS: the mint's version; AFFIX-LINES: its lines' law
 import { itemIsIdentified } from './tradeModes.js';   // CRAFT4: a line the Reforge sees, known
 import { isEquipped } from './equip.js';   // CRAFT4: and never on a worn piece
 import { unitWeightInKg, ARROW_TEMPLATE } from './inventory.js';   // MEND-AIM: the arrow, never mended
@@ -208,10 +208,11 @@ export function mintPiece({ recipe, quality, seed, maker = null, marked = false,
     if (eff.rarity && rarityEligible(item)) {
       const rolls = seededRng(seed >>> 0);
       // AFFIX-LINES: a record of MINT_V_LINES on draws its lines over the lines and names the piece by them; one made
-      // before draws over the kinds, a Rare's last pick held to its empty name slot - the piece it always minted
-      // ARMOR-LEAN: and from MINT_V_ARMOR_LEAN a piece of armour's lines lean to its family; a record before draws evenly
-      applyRarity(item, eff.rarity, rolls, null, { fits, byLines: Number.isSafeInteger(version) && version >= MINT_V_LINES,
-        lean: Number.isSafeInteger(version) && version >= MINT_V_ARMOR_LEAN });
+      // before draws over the kinds, a Rare's last pick held to its empty name slot - the piece it always minted.
+      // ARMOR-LEAN: from MINT_V_ARMOR_LEAN a piece of armour's lines lean to its family; a record before draws evenly.
+      // JEWEL-KIN: from MINT_V_JEWEL_KIN a jewel's skill lines lean to the bare hand's two as well
+      const at = (v) => Number.isSafeInteger(version) && version >= v;
+      applyRarity(item, eff.rarity, rolls, null, { fits, byLines: at(MINT_V_LINES), lean: at(MINT_V_ARMOR_LEAN), fists: at(MINT_V_JEWEL_KIN) });
       // CRAFT-PROCS (FIELD BUGS 2026-10-13e): AND THE LADDER'S LAST PASS, on the same stream after the roll - a Superior's
       // (a Magic's) and a Masterwork's (a Rare's) chance at ONE line that does something, as every loot door's piece of its
       // tier takes it (lootRarity.js lastPass): a jewel's of four kinds (focus, castSpeed, potency, wellspring), a

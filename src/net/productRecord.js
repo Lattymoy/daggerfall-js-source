@@ -19,7 +19,9 @@
 //           - the law the piece is minted under (systems/smithItems.js mintPiece): 1 its quality's roll and the ladder's
 //           last pass (MINT_V_LAST_PASS); 2 its roll's lines drawn over the lines and its name following them
 //           (MINT_V_LINES, AFFIX-LINES); 3 a piece of armour's lines on its family's leans (MINT_V_ARMOR_LEAN,
-//           ARMOR-LEAN); absent on every record made before, which mints as it always did
+//           ARMOR-LEAN); 4 a jewel's skill lines leaning to the bare hand's two as well (MINT_V_JEWEL_KIN, JEWEL-KIN); stamped
+//           with the version the craft's client mints (craftMintVersion); absent on every record made before, which mints as
+//           it always did
 //
 // ONE KEY, SEVERAL THINGS, NEVER CONFUSED: the identity key signs tokens (`v1`) and orders; this is `p1`, the version
 // inside the signed bytes and read before a byte of the body is, and the claim shapes are disjoint besides - a record
@@ -52,8 +54,25 @@ export const MINT_V_LINES = 2;
  *  resistances, plate to its armour and Strength (systems/loot/lootRarity.js ARMOR_LEAN, rollAffixes `lean`). A record
  *  of 2 or less mints as it always did, so no piece crafted before changes when the market or a temper mints it again. */
 export const MINT_V_ARMOR_LEAN = 3;
-/** The mint version a craft stamps on its record now (`v`) - the service's (server-account/src/professions.js). */
-export const MINT_VERSION = MINT_V_ARMOR_LEAN;
+/** JEWEL-KIN (2026-10-26, Discord #feature-feedback "jewelcrafting, roll chances not equal (h2h, critical)";
+ *  bible/01-Overview/bugs/Field-Bugs-2026-10-26d.md): the first mint version whose jewellery's skill lines lean to
+ *  Hand-to-Hand and Critical Strike beside the mind's thirteen (systems/loot/lootRarity.js skillKin `fists`). A record
+ *  of 3 or less mints as it always did (3 on this branch, renumbered past ARMOR-LEAN's 3 at the merge). */
+export const MINT_V_JEWEL_KIN = 4;
+/** The mint version this build mints a craft at, and asks its record be stamped with (`v` - the service's,
+ *  server-account/src/professions.js, at most this; craftMintVersion). */
+export const MINT_VERSION = MINT_V_JEWEL_KIN;
+/**
+ * AUDIT FB1026d C3: THE VERSION A CRAFT'S RECORD IS STAMPED WITH - the one its client says it mints (`mint` on the craft,
+ * net/accountClient.js craft), and never past this service's MINT_VERSION; a client that says none is one from before
+ * the ask, which mints MINT_V_LINES. The service deploys before the site, and a tab left open or a desktop install keeps
+ * its own build: stamped with the service's version, a stale client's ring was minted in its pack with the old lean and
+ * re-minted by every other reader - the market, a listing's picture, a later temper - with the new, one piece with two
+ * sets of lines. AUDIT FB1026d II D1: only a build from the ask names one, and it names MINT_V_JEWEL_KIN or later - a
+ * name below it is no build's, and is stamped as a client that names none (a forged `mint: 1` had bought the law the
+ * owner retired, a damage line on every blade). @param {unknown} asked
+ */
+export const craftMintVersion = (asked) => (typeof asked === 'number' && Number.isSafeInteger(asked) && asked >= MINT_V_JEWEL_KIN ? Math.min(asked, MINT_VERSION) : MINT_V_LINES);
 /** A character id's shape (the account service's CHAR_ID_RE). */
 const CHAR_RE = /^[A-Za-z0-9_-]{4,64}$/;
 

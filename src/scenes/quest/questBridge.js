@@ -1041,6 +1041,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
       if (data.notebook) notebook.restoreSaveData(data.notebook);
       // STORY-AGAIN (#982): a save from before the story's record reads it off the journal's archive, once
       machine.seedStory(notebook.getFinishedQuests().map((e) => e[0]?.render).filter((r) => r?.kind === 'quest'));
+      machine.seedSpine(notebook.getFinishedQuests().map((e) => e[0]?.render));   // MAIN-SPINE: ...and an opener it files began in this game
       // AUDIT JOURNAL-CLEAN F3: ...and at the load, before any new quest can take a uid a stale id names
       notebook?.pruneHiddenQuests?.([...machine.quests.values()].filter((q) => !q.questComplete).map((q) => q.uid));
       questLists.oneTimeQuestsAccepted = data.oneTimeQuestsAccepted ? [...data.oneTimeQuestsAccepted] : null;

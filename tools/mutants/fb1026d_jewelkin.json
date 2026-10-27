@@ -1,0 +1,123 @@
+[
+  {
+    "name": "JEWEL-KIN-bare-hand-left-out",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "const JEWEL_KIN = Object.freeze([...MIND_KIN, S.HandToHand, S.CriticalStrike]);",
+    "new": "const JEWEL_KIN = Object.freeze([...MIND_KIN]);",
+    "tests": [
+      "test/systems/fb1026d_jewelkin.test.js",
+      "test/systems/loot1_kin.test.js"
+    ],
+    "note": "the report: a hundred Rare rings and never a Hand-to-Hand or a Critical Strike line"
+  },
+  {
+    "name": "JEWEL-KIN-critical-left-out",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "const JEWEL_KIN = Object.freeze([...MIND_KIN, S.HandToHand, S.CriticalStrike]);",
+    "new": "const JEWEL_KIN = Object.freeze([...MIND_KIN, S.HandToHand]);",
+    "tests": [
+      "test/systems/fb1026d_jewelkin.test.js"
+    ],
+    "note": "half the report fixed"
+  },
+  {
+    "name": "JEWEL-KIN-version-unread",
+    "file": "src/systems/smithItems.js",
+    "old": "fists: at(MINT_V_JEWEL_KIN) });",
+    "new": "fists: true });",
+    "tests": [
+      "test/systems/fb1026d_jewelkin.test.js"
+    ],
+    "note": "a ring already made re-mints with other skill lines"
+  },
+  {
+    "name": "JEWEL-KIN-new-records-old-lean",
+    "file": "src/systems/smithItems.js",
+    "old": "fists: at(MINT_V_JEWEL_KIN) });",
+    "new": "fists: false });",
+    "tests": [
+      "test/systems/fb1026d_jewelkin.test.js"
+    ],
+    "note": "the craft stamps 3 and mints on the old lean"
+  },
+  {
+    "name": "JEWEL-KIN-craft-stamps-old",
+    "file": "src/net/productRecord.js",
+    "old": "export const MINT_VERSION = MINT_V_JEWEL_KIN;",
+    "new": "export const MINT_VERSION = MINT_V_LINES;",
+    "tests": [
+      "test/systems/fb1026d_jewelkin.test.js"
+    ],
+    "note": "the service stamps the old lean on every new ring"
+  },
+  {
+    "name": "JEWEL-KIN-rollAffixes-drops-the-flag",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    affixes = rollAffixes(item, tier, rolls, { byLines, lean, fists });",
+    "new": "    affixes = rollAffixes(item, tier, rolls, { byLines, lean });",
+    "tests": [
+      "test/systems/fb1026d_jewelkin.test.js"
+    ],
+    "note": "applyRarity forgets the record's lean"
+  },
+  {
+    "name": "JEWEL-KIN-service-stamps-its-own",
+    "file": "server-account/src/professions.js",
+    "old": "v: craftMintVersion(mint) }",
+    "new": "v: craftMintVersion(4) }",
+    "tests": [
+      "test/systems/fb1026d_jewelkin.test.js"
+    ],
+    "note": "AUDIT FB1026d C3: a stale client's ring stamped with the service's version - two sets of lines on one piece"
+  },
+  {
+    "name": "JEWEL-KIN-client-names-none",
+    "file": "src/net/accountClient.js",
+    "old": ", mint: MINT_VERSION }),",
+    "new": " }),",
+    "tests": [
+      "test/systems/fb1026d_jewelkin.test.js"
+    ],
+    "note": "AUDIT FB1026d C3: this build's crafts stamped with the old law"
+  },
+  {
+    "name": "JEWEL-KIN-ask-unbounded",
+    "file": "src/net/productRecord.js",
+    "old": "Math.min(asked, MINT_VERSION)",
+    "new": "asked",
+    "tests": [
+      "test/systems/fb1026d_jewelkin.test.js"
+    ],
+    "note": "AUDIT FB1026d C3: a record stamped with a law this service does not mint"
+  },
+  {
+    "name": "JEWEL-KIN-silent-client-stamped-new",
+    "file": "src/net/productRecord.js",
+    "old": "asked >= MINT_V_JEWEL_KIN ? Math.min(asked, MINT_VERSION) : MINT_V_LINES);",
+    "new": "asked >= MINT_V_JEWEL_KIN ? Math.min(asked, MINT_VERSION) : MINT_VERSION);",
+    "tests": [
+      "test/systems/fb1026d_jewelkin.test.js"
+    ],
+    "note": "AUDIT FB1026d C3: a client from before the ask stamped with the new law it does not mint (re-aimed by content: AUDIT FB1026d II moved the line)"
+  },
+  {
+    "name": "JEWEL-KIN-fallback-drops-the-flag",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    if (!pool.length) return applyRarity(item, 'rare', rolls, null, { byLines, lean, fists });",
+    "new": "    if (!pool.length) return applyRarity(item, 'rare', rolls, null, { byLines, lean });",
+    "tests": [
+      "test/systems/fb1026d_jewelkin.test.js"
+    ],
+    "note": "AUDIT FB1026d E10: a Legendary with no record falls to Rare on the new lean whatever it was asked"
+  },
+  {
+    "name": "JEWEL-KIN-armour-version-read",
+    "file": "src/systems/smithItems.js",
+    "old": "fists: at(MINT_V_JEWEL_KIN) });",
+    "new": "fists: at(MINT_V_ARMOR_LEAN) });",
+    "tests": [
+      "test/systems/fb1026d_jewelkin.test.js"
+    ],
+    "note": "the merge: a record of 3 - ARMOR-LEAN's, stamped by main's service before this one - reads as the jewel kin's, and a ring made there changes its lines"
+  }
+]
