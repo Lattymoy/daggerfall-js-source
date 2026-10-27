@@ -1,6 +1,5 @@
-// RPT1026-MISC HEIR-WAITS (a private report: "Level 22 character selected to pass on with heritage system. Given option to
-// select an heir. Game crashes to menu before selecting an heir for character creation, and the parent character no longer
-// exists on the server"). A Bloodline's fall is the realm's tombstone at the death door, before the Succession; the page
+// RPT1026-MISC HEIR-WAITS (a private report: a high-level Bloodline character's death offered an heir, the game went back to
+// the menu before one was chosen, and the parent was gone from the realm). A Bloodline's fall is the realm's tombstone at the death door, before the Succession; the page
 // that went back to the title left the Succession waiting on the line's record - and HOUSE-WAITS, the Online page's one door
 // to a waiting line (systems/legacy/waitingHouses.js), named its LIVING members alone. The fall's own Succession offers a
 // newborn heir of the fallen too (legacyHost.js fallOutcome), and a fallen with no sibling or child left the house with

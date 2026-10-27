@@ -1,5 +1,5 @@
-// RPT1026-MISC FACE-ORPHAN (a private report: "I have 3 fake party member faces on my screen right now, and I can't get
-// rid of them. I've turned in and abandoned quests to no avail"). The escort faces (ui/hud/hudEscortFaces.js, DFU's
+// RPT1026-MISC FACE-ORPHAN (a private report: three escort portraits stood on the HUD, and neither finishing nor abandoning
+// quests cleared them). The escort faces (ui/hud/hudEscortFaces.js, DFU's
 // HUDEscortingNPCFaces) leave by DropFace or by the quest-end sweep, nothing else - so a face whose quest left the machine
 // without ending stood for good, with no quest left to end it. The producer here is the load's own: a quest the machine
 // cannot restore is skipped with DFU's warning (machine.js restoreSaveData, "This is expected after removing a mod with

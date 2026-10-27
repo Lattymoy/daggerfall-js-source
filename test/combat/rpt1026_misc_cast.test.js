@@ -1,5 +1,5 @@
-// RPT1026-MISC CAST-PACE (a private report: "MW model fires spells slower than DF models" - "DF models artificially fire
-// off spells faster due to the faster anim"). The classic hands let the spell go on their frame 5, 0.2 s after the cast
+// RPT1026-MISC CAST-PACE (a private report: a Morrowind-look caster's spells left later than a Daggerfall-look caster's,
+// whose hands move faster). The classic hands let the spell go on their frame 5, 0.2 s after the cast
 // at rate 1 (CAST-QUICK, DFU's own clock); with the Morrowind arm on screen the release waited for its spellcast
 // group's "<type> release" (MW-CAST1), played at the cast's rate - the Morrowind section's own length, longer, so the
 // same caster's spell left later and the next cast waited on it. The section is paced now to bring its release key to

@@ -1,4 +1,4 @@
-// RPT1026-MISC RUMOR-ORPHAN (a private report: an NPC asked for news said "_Sister_ died on %6g" - the quest's own words,
+// RPT1026-MISC RUMOR-ORPHAN (a private report: an NPC asked for news told of a death with a quest's placeholders bare - its words,
 // A0C01Y09's RumorsPostSuccess "_sister_ was found dead! And on the eve of %g3 wedding day too.", with every macro raw).
 // A quest's tombstone files its post-quest rumor in the mill (Quest.cs:637-640, machine.js tombstoneQuest), and a week
 // of the quest's clock later QuestMachine's removal drops the quest - leaving the rumor, whose telling asks for a quest

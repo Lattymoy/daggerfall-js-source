@@ -1,5 +1,5 @@
-// RPT1026-MISC SPELL-SHORT (a private report: "The character model 'Fighter Mage (Female)' becomes smaller during casting
-// animations in 3rd person view" - "I tested many other skins, but this is the only one I found with this bug"). The
+// RPT1026-MISC SPELL-SHORT (a private report: the Fighter Mage (female) skin shrank in third person while casting, and no
+// other skin the reporter tried did). The
 // Eye of the Beholder mod's set 10 draws its spell sheets (records 45-59) with the woman 80 pixels hood to boot, where
 // her idle is 110, and its XML scales them 1.0 - she shrank by a quarter as a spell came up. Measured on the vendored art
 // itself (the producer: the mod's own PNGs and spriteInfo.json, read through pngjs), sized through the real door

@@ -336,8 +336,8 @@ export function requestLook(canvas) {
   // act aimed by the look, which clears the flag). Nor a cursor an act
   // holds free, until it lets go.
   if (_cursorActive || _cursorHolds.size) return;
-  // RPT1026-MISC TOUCH-NO-LOCK (a private report from a phone: "This pops up every time I open menu: daggerfalljs.dev - To
-  // show your cursor, switch apps, reload the page, or go back"): A TOUCH SCREEN NEVER ASKS FOR THE LOCK. The look there is
+  // RPT1026-MISC TOUCH-NO-LOCK (a private report from a phone: Chrome's pointer-lock banner, how to get a cursor back,
+  // came up with every menu): A TOUCH SCREEN NEVER ASKS FOR THE LOCK. The look there is
   // the touch layer's drag (ui/touch/touch.js), and the lock is a mouse's - but every relock door (a window's close, the
   // look gate's close edge, a dial's goodbye) asked for it on a phone too, Chrome on Android granted it to the tap that
   // closed the window, and its banner said how to give back a cursor the phone does not have. The click net (PL3,

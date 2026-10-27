@@ -1,5 +1,5 @@
-// RPT1026-MISC JOURNEY-TRAMPLE (a private report: "I got hit with an Assault charge while traveling through town on the
-// overworld map on horseback"). Roleplay & Realism's Enhanced Riding tramples a townsperson a GALLOPING rider meets
+// RPT1026-MISC JOURNEY-TRAMPLE (a private report: charged with Assault for an Overworld journey on horseback that passed
+// through a town). Roleplay & Realism's Enhanced Riding tramples a townsperson a GALLOPING rider meets
 // (rrRidingHost.js contacts, EnhancedRiding.OnTriggerEnter) and charges Assault for it (rrTrampleOutcome). A journey -
 // the Overworld's view, or a Travel Options autopilot - drives the same motor at sixty or a hundred times the pace with
 // the player's own Run and AutoRun keys in its input, so a player who journeyed with AutoRun on rode through a town's

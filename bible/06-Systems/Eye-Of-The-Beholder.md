@@ -1096,8 +1096,8 @@ of every view of every sheet against its group's median found no other (the next
 and a standing pose). Pins: `test/net/skin2_class_skins.test.js` ACRO-SHORT (the exact 110 pixels, the sweep, her idle
 wheel through `spriteFor`); mutants `tools/mutants/skin2.json` +5. `01-Overview/bugs/Field-Bugs-2026-09-27.md`.
 
-**SPELL-SHORT (RPT1026-MISC, 2026-10-26, a private report: "The character model 'Fighter Mage (Female)' becomes smaller
-during casting animations in 3rd person view" - "the only one I found").** The same fault in the mod's OWN art. Set 10's
+**SPELL-SHORT (RPT1026-MISC, 2026-10-26, a private report: the Fighter Mage (female) skin shrank in third person while
+casting, and no other skin the reporter tried did).** The same fault in the mod's OWN art. Set 10's
 spell sheets (archive 112374, records 45-59: the readied spell, its walk and its cast) draw the woman 77-81 pixels from
 hood to boot, where every other sheet of hers draws her 107-112 (the idle 110), and the mod's XML gives each of those
 records scale 1.0 - so in Daggerfall Unity with the mod, as here, she shrank by a quarter as a spell came up. Measured

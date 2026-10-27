@@ -1,5 +1,5 @@
-// RPT1026-MISC TALK-SIDEWAYS (a private report from a phone's browser: "Dialogue Window cuts off / UI scaling issue on
-// mobile" - "Whenever I open the talk menu it's offscreen and I can't use it. Its too long"). Drawn in a real browser
+// RPT1026-MISC TALK-SIDEWAYS (a private report from a phone's browser: the talk window ran off the screen and could not be
+// used). Drawn in a real browser
 // at a phone's sizes before the fix (the enhanced talk panel mounted alone on Vite's dev server, Playwright's Chromium):
 // held sideways, 844 x 390, the panel stood 203 pixels tall (52dvh), and the head, the foot and the topics' two strips
 // took all of it - the topic list 12 pixels tall, drawn past its column under the foot; at 740 x 360 the category

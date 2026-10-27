@@ -3222,8 +3222,8 @@ html.plus-pad-prompts-visible .px-over > .px-stage.px-timersstage > .px-win { ma
   .talk-say { grid-template-columns: auto 1fr; }
   .talk-say .talk-q { grid-column: 1 / -1; }
 }
-/* RPT1026-MISC TALK-SIDEWAYS (a private report from a phone's browser: "Whenever I open the talk menu it's offscreen and
-   I can't use it"): A PHONE ON ITS SIDE GIVES THE PANEL THE SCREEN'S HEIGHT. The panel was 52dvh - two hundred pixels
+/* RPT1026-MISC TALK-SIDEWAYS (a private report from a phone's browser: the talk window ran off the screen and could not
+   be used): A PHONE ON ITS SIDE GIVES THE PANEL THE SCREEN'S HEIGHT. The panel was 52dvh - two hundred pixels
    of a phone's 390 - and the head, the foot and the topics' two strips (the modes, the categories) took all of it: the
    topic list stood 12 pixels tall, drawn past its column under the foot, and nothing could be asked. On a short screen
    the panel stands the height less a margin, and the columns stay side by side however narrow (stacked, the strips

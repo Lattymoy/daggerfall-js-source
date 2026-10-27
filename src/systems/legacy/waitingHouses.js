@@ -22,9 +22,8 @@ import { MODELS, isAlive, personOf, fullNameOf, setCurrent, touch, newbornAllowe
 import { loadFamily, storeFamily, leaveBirth } from './store.js';
 import { t } from '../textManager.js';   // RPT1026-MISC HEIR-WAITS: the newborn's door, in the player's language
 //
-// RPT1026-MISC HEIR-WAITS (a private report: "Level 22 character selected to pass on with heritage system. Given option to
-// select an heir. Game crashes to menu before selecting an heir for character creation, and the parent character no
-// longer exists on the server"). THE NEWBORN'S DOOR. The Succession the fall offers is every living member of the blood
+// RPT1026-MISC HEIR-WAITS (a private report: a high-level Bloodline character's death offered an heir, the game went back
+// to the menu before one was chosen, and the parent was gone from the realm). THE NEWBORN'S DOOR. The Succession the fall offers is every living member of the blood
 // AND, when the heir answer allows, a newborn heir of the fallen (legacyHost.js fallOutcome's `newborn`) - and this door
 // named the living members alone. A line whose fallen left no sibling or child, its Succession left waiting by a page
 // that went back to the title before the choice, had no card on the Online page and no character anywhere: the fallen is

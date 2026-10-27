@@ -1,5 +1,5 @@
-// RPT1026-MISC TAB-REPEAT (a private report, translated: "holding Tab a little longer than half a second makes the quick
-// menu vanish"). The dial is raised on Tab's press; the key is still down when the system's auto-repeat starts (about half
+// RPT1026-MISC TAB-REPEAT (a private report: the quick menu vanished when its key was held a little over half a second).
+// The dial is raised on Tab's press; the key is still down when the system's auto-repeat starts (about half
 // a second on, Windows' and most desktops' default delay), and every repeat reached the overlay stack's own Tab listener
 // (ui/enhanced/enhancedOverlays.js onTab), which put the top overlay - the dial itself - away. The dial's own listener
 // already let a repeat go (`if (!e.repeat) close()`), but its stopPropagation leaves the stack's listener on the same

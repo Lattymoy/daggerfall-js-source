@@ -7307,8 +7307,8 @@ have casting speed a new rarity affix along with scaling with speed"*.
 
 ## DECLARED DIVERGENCE (CAST-PACE, RPT1026-MISC, 2026-10-26): the Morrowind hands on the classic clock
 
-A private report: *"MW model fires spells slower than DF models"* - *"DF models
-artificially fire off spells faster due to the faster anim"*. True since
+A private report: a caster with the Morrowind look got spells off more
+slowly than one with the Daggerfall look, whose hands move faster. True since
 CAST-QUICK: the classic hands let the spell go on frame 5, 0.2 s after the
 cast at rate 1, and the Morrowind hands held it for their spellcast group's
 "<type> release" (MW-CAST1) with the group played at the cast's rate - the

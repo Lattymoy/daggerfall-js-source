@@ -153,8 +153,8 @@ export class HudText {
     // events and both belong on screen. Only the immediate repeat is
     // the spam.
     //
-    // RPT1026-MISC TOAST-STALL (two private reports: "when I get more than 3 notifications at once, they all stick to the
-    // HUD"; on a phone "they stay on screen for 20 seconds or more"). The ONE timer is the FRONT row's (PopupText's
+    // RPT1026-MISC TOAST-STALL (two private reports: several lines close together all stuck on the HUD; on a phone, lines
+    // that stood for many seconds). The ONE timer is the FRONT row's (PopupText's
     // single-timer model), so the refresh below was only ever that row's dwell while the repeated row WAS the front -
     // with others queued ahead of it, every repeat inside a second put the front row's timer back, and a line said
     // again and again (a state a producer keeps naming) held every row on screen for as long as it repeated. DFU's own

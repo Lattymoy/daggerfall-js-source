@@ -92,8 +92,8 @@ export function spriteOffset(archive, record) {
 }
 
 /**
- * RPT1026-MISC SPELL-SHORT (a private report: "The character model 'Fighter Mage (Female)' becomes smaller during casting
- * animations in 3rd person view" - "the only one I found"). THE MOD'S OWN ART, DRAWN SMALL. Set 10's spell sheets
+ * RPT1026-MISC SPELL-SHORT (a private report: the Fighter Mage (female) skin shrank in third person while casting, and no
+ * other skin tried did). THE MOD'S OWN ART, DRAWN SMALL. Set 10's spell sheets
  * (archive 112374, records 45-59: the readied spell, its walk and its cast) draw the woman 80 pixels from hood to boot,
  * where every other sheet of hers draws her 107-112 (the idle 110) - and the mod's XML gives those records scale 1.0, so
  * she shrank by a quarter as the spell came up, in Daggerfall Unity with the mod as here. Every other set's spell sheets

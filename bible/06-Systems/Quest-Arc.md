@@ -6711,7 +6711,7 @@ quest was set aside, and it rode the save.
 
 ## FACE-ORPHAN - a face whose quest is gone is never drawn, and not saved (RPT1026-MISC, 2026-10-26)
 
-A private report: *"3 fake party member faces on my screen ... I've turned in and abandoned quests to no avail."* The
+A private report: three escort portraits stood on the HUD, and neither finishing nor abandoning quests cleared them. The
 column loses a face by DropFace or by the quest-end sweep, and QUEST-SHELF-FACES hides one whose quest is set aside. A
 face whose quest left the machine WITHOUT ending - a quest a load could not restore (`machine.js` restoreSaveData skips
 it, "expected after removing a mod with custom quest actions", and the faces are restored all the same) - had neither,
@@ -6726,8 +6726,8 @@ and stood for good: no quest of it was left to turn in, abandon or end.
 
 ## RUMOR-ORPHAN - a quest's progress rumor goes with the quest (RPT1026-MISC, 2026-10-26)
 
-A private report: asked for news in a town, a resident said a quest's own words with their macros raw (`_sister_`,
-`%g3`). The tombstone files a quest's RumorsPostSuccess / RumorsPostFailure as its progress rumor (Quest.cs:637-640),
+A private report: asked for news in a town, a resident said a quest's own words with their macros bare (A0C01Y09's
+post-quest rumor, its `_sister_` and `%g3` unexpanded). The tombstone files a quest's RumorsPostSuccess / RumorsPostFailure as its progress rumor (Quest.cs:637-640),
 and `machine.js` removeQuest, a week of the quest's clock later, left it in the mill: the next telling asks for a quest
 the machine no longer holds, and the expansion's null-parent bail hands the words over unexpanded. DFU has the same
 orphan until its next load, whose RestoreConversationData sweep (TalkManager.cs:2522-2533; the port's

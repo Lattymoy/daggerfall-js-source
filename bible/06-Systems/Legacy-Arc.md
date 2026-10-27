@@ -904,9 +904,8 @@ real account Worker and its minute's clock, party wire, caster's cast, death scr
 
 ## HEIR-WAITS - a waiting line with no living kin offers its newborn (RPT1026-MISC, 2026-10-26)
 
-A private report: *"Level 22 character selected to pass on with heritage system. Given option to select an heir. Game
-crashes to menu before selecting an heir for character creation, and the parent character no longer exists on the
-server."* A Bloodline's fall is the realm's tombstone at the death door, before the Succession - so the fallen is gone
+A private report: a high-level Bloodline character's death offered an heir, the game went back to the menu before one
+was chosen, and the parent was gone from the realm. A Bloodline's fall is the realm's tombstone at the death door, before the Succession - so the fallen is gone
 from the roster by design, and a page that went back to the title left the Succession waiting on the line's record.
 HOUSE-WAITS (FIELD BUGS 2026-10-09f) is the Online page's door to such a line, and it named the line's LIVING members
 alone, where the fall's own Succession offers a newborn heir of the fallen too (`legacyHost.js` fallOutcome). A fallen

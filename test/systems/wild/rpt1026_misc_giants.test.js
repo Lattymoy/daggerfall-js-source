@@ -1,4 +1,4 @@
-// RPT1026-MISC GIANT-ROCK (a private report, "Pvp zone: Giants spawn in the rocks" - "Second time seeing this"). A Greater
+// RPT1026-MISC GIANT-ROCK (a private report, the second sighting: giants of the open zone standing inside rocks). A Greater
 // Giant is stood on the ground when the player comes near its walk (world.js wildGiantsFrame), on the flattest open spot
 // GIANT-FIELDS finds (giantFieldSpot) - chosen by the height map alone, so the zone's rocks (World of Daggerfall's landform
 // pieces, each a mesh in the world collider, standing on flat ground as often as not) were never seen, and a giant four

@@ -1,5 +1,5 @@
-// RPT1026-MISC TOAST-STALL (two private reports: "when I get notifications of more than 3 at once, or in small time, they
-// all stick to the HUD"; on a phone, "the notifications will stay on screen for like 20 seconds or more"). The HUD line's
+// RPT1026-MISC TOAST-STALL (two private reports: several lines close together all stuck on the HUD; on a phone, lines that
+// stood for many seconds). The HUD line's
 // model is PopupText's ONE timer - the front row's (ui/hud/hudText.js) - and NOTICE-SPAM's repeat of the back line put
 // that timer back on every repeat. With other rows queued ahead of the repeated one, a line said again inside every
 // second (a state its producer keeps naming) held every row on the screen for as long as it went on; DFU's AddText adds

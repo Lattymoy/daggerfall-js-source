@@ -29,7 +29,7 @@ export const WILD_GIANT_RESPAWN_MS = 30 * 60_000;
 /** A giant is stood in the world (out of its path, onto the ground) once the player is this near its place (metres). */
 export const WILD_GIANT_STAND_M = 320;
 /**
- * RPT1026-MISC GIANT-ROCK (a private report, the second time seen: "Pvp zone: Giants spawn in the rocks"): THE GROUND A GIANT
+ * RPT1026-MISC GIANT-ROCK (a private report, the second sighting: giants of the open zone standing inside rocks): THE GROUND A GIANT
  * IS STOOD ON IS CLEAR OF SOLIDS. GIANT-FIELDS chose its spot by the height map alone - flat, no crest, no water, inside
  * the zone - and the Wrothgarian Mountains' rocks (World of Daggerfall's landform pieces, a mesh each in the collider) stand
  * on flat ground too: a Greater Giant, four times its size (wildZone.js WILD_GIANT_SIZE), and the ten its call brings were

@@ -437,9 +437,8 @@ export function interiorRestPlace({
 
 
 /**
- * RPT1026-MISC BED-PRESS-INDOOR (a private report: "When resting in Fighter's Guild buildings, you get a message saying
- * 'You slept poorly on the bare ground' despite there clearly being beds to sleep in. This occurs even when clicking on
- * the beds directly"): WHERE A BUILDING'S REST LIES, AND WHAT IT IS - the interior host's restKind and restPoint, one
+ * RPT1026-MISC BED-PRESS-INDOOR (a private report: a rest in a Fighters Guild hall woke to the rough night's line though
+ * the hall has beds, a bed clicked or not): WHERE A BUILDING'S REST LIES, AND WHAT IT IS - the interior host's restKind and restPoint, one
  * law. A rented room, the player's house (an online home's bed among them - interiorRestPlace's `homeBed`) or a ship is a
  * bed; so is a BED PRESSED (CSA-J's bed's click, Roleplay Realism's BedActivation), as the street's and the dungeon's
  * hosts already price it (world.js, dungeonContext.js `_restFromBed`) - the interior host alone asked only the place, so

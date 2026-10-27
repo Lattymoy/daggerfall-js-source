@@ -333,8 +333,8 @@ export function setEscortQuestAway(questAway) {
 }
 
 /**
- * RPT1026-MISC FACE-ORPHAN (a private report: "3 fake party member faces on my screen ... I've turned in and abandoned
- * quests to no avail"): A FACE WHOSE QUEST IS GONE IS NEVER DRAWN, AND IS NOT SAVED. DFU's faces leave by DropFace or by
+ * RPT1026-MISC FACE-ORPHAN (a private report: three escort portraits stood on the HUD, and neither finishing nor
+ * abandoning quests cleared them): A FACE WHOSE QUEST IS GONE IS NEVER DRAWN, AND IS NOT SAVED. DFU's faces leave by DropFace or by
  * the quest-end sweep (escortQuestEnded) and nothing else, so a face whose quest left the machine without ending - a
  * quest a load could not restore (machine.js restoreSaveData: "This is expected after removing a mod with custom quest
  * actions", the quest skipped and its faces restored all the same) - stood for good: no quest of it was left to turn in,

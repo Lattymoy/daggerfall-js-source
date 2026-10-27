@@ -1,5 +1,5 @@
-// RPT1026-MISC TOUCH-NO-LOCK (a private report, from Chrome on a phone: "This pops up every time I open menu: daggerfalljs.dev -
-// To show your cursor, switch apps, reload the page, or go back"). That is Chrome for Android's pointer-lock banner: the
+// RPT1026-MISC TOUCH-NO-LOCK (a private report, from Chrome on a phone: a banner on how to get a cursor back came up with
+// every menu). That is Chrome for Android's pointer-lock banner: the
 // page held the lock. A phone's look is the touch layer's drag (ui/touch/touch.js), yet every relock door - a window's
 // close, the look gate's close edge, the dial's goodbye - asked for the lock there too, and Chrome granted it to the tap
 // that closed the window. requestLook is the one door they all go through (player/pointerLock.js).

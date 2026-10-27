@@ -1,5 +1,5 @@
-// RPT1026-MISC CONFIRM-SHEET (a private report: "I've tried removing data on the morrowind assets and it doesn't function,
-// or give any feedback when pressing the button"). Every destructive press on the Settings screen asks first - the
+// RPT1026-MISC CONFIRM-SHEET (a private report: Remove data on the Morrowind card seemed to do nothing, and said nothing).
+// Every destructive press on the Settings screen asks first - the
 // Morrowind card's Remove data, a pack's remove, All off, Reset everything, a tab's Restore defaults - and its question is
 // a card in the screen's detail pane. In the pause menu's Settings (and on a narrow or touch screen) that pane is a SHEET,
 // below the screen until it is opened (enhancedStyle.js `.px-setwrap .detail` / `.detail.open`), and the ask set the card

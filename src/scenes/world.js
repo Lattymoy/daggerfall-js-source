@@ -35352,8 +35352,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // RR2: EnhancedRiding.OnTriggerEnter / OnControllerColliderHit (:157-215)
         // - a galloping rider tramples the townsperson under the hooves and
         // charges down the foe in the way, once each
-        // RPT1026-MISC JOURNEY-TRAMPLE (a private report: "I got hit with an Assault charge while traveling through town on
-        // the overworld map on horseback"): never while a journey drives the ride (rideOnTheRoad: the Overworld's view, or
+        // RPT1026-MISC JOURNEY-TRAMPLE (a private report: charged with Assault for an Overworld journey on horseback that
+        // passed through a town): never while a journey drives the ride (rideOnTheRoad: the Overworld's view, or
         // a Travel Options autopilot - a held Run or AutoRun gallops it). DFU's mods run EnhancedRiding's OnTriggerEnter
         // under TravelOptions' journey too, the clip muted (RidingVolumeScale 0, AUDIT-TO1 J1); here a journey at sixty
         // times the pace charged an Assault for townsfolk under hooves the player never steered. Ledger A.

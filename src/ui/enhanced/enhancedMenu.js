@@ -970,8 +970,8 @@ function confirmCard() {
 }
 
 /**
- * RPT1026-MISC CONFIRM-SHEET (a private report: "I've tried removing data on the morrowind assets and it doesn't function,
- * or give any feedback when pressing the button"): THE QUESTION IS SHOWN WHERE IT IS ASKED. The confirm card stands in the
+ * RPT1026-MISC CONFIRM-SHEET (a private report: Remove data on the Morrowind card seemed to do nothing, and said nothing):
+ * THE QUESTION IS SHOWN WHERE IT IS ASKED. The confirm card stands in the
  * Settings screen's detail pane - a column beside the list on a wide screen, but a SHEET that slides up only when open
  * (`sheetOpen`, the `.open` class) in the pause menu's Settings (`.px-setwrap .detail`) and on a narrow or touch screen
  * (`@media (max-width: 860px), (pointer: coarse)`). The ask set the card and never opened the sheet, so every confirm a

@@ -283,9 +283,8 @@ Existing TEXTURE.210 fires are rest points too (2.1); the law only adds where no
   as beds so I can rest in a dungeon"). The page named no dungeon bed and the dungeon's point was a fire alone; its 108
   beds (Roleplay Realism's 41000-41002, 42 RDB blocks) are a bed's rest within a fire's reach of the box
   (`restAct.js` bedInReach), as is a bed pressed below deck. `01-Overview/bugs/Field-Bugs-2026-10-05.md`.
-- **A bed pressed indoors is a bed** (RPT1026-MISC BED-PRESS-INDOOR, 2026-10-26, a private report: "When resting in
-  Fighter's Guild buildings, you get a message saying 'You slept poorly on the bare ground' ... even when clicking on
-  the beds directly"). The world and dungeon hosts already priced a pressed bed (`_restFromBed`) as a bed; the interior
+- **A bed pressed indoors is a bed** (RPT1026-MISC BED-PRESS-INDOOR, 2026-10-26, a private report: a rest in a Fighters
+  Guild hall woke to the rough night's line, a bed clicked or not). The world and dungeon hosts already priced a pressed bed (`_restFromBed`) as a bed; the interior
   host's `restKind` and `restPoint` never read it, so a guild hall's bed pressed priced as its boards. Both ask
   `restSession.js:"export function interiorRestSpot"` now, handed the press. The R key in a guild hall is still the
   rough night SURV4 makes it. Pinned by `test/systems/rest/rpt1026_misc_rest.test.js` (2).

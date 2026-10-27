@@ -1,5 +1,5 @@
-// RPT1026-MISC TOUCH-FIELD (a private report from a phone, Chrome on a Samsung: "Mobile version bank broken. Can't enter the
-// amount of gold when I click in the enter amount section. The map enter name works just fine though"). The Bank's amount
+// RPT1026-MISC TOUCH-FIELD (a private report from a phone's browser: the Bank's amount could not be typed, while the map's
+// name field could). The Bank's amount
 // is the classic window's own typed field (ui/bankWindow.js, DFU's TextBox: the window takes its keys), drawn by the
 // enhanced port as words (ui/enhanced/enhancedPort.js 'field') - no element a phone can focus, so a finger on it raised
 // no keyboard. The held map's name field is a real input, which is why that one worked. The touch layer's own entry (the

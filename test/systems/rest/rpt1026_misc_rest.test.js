@@ -1,9 +1,8 @@
-// RPT1026-MISC BED-PRESS-INDOOR (a private report: "When resting in Fighter's Guild buildings, you get a message saying
-// 'You slept poorly on the bare ground' despite there clearly being beds to sleep in. This occurs even when clicking on the
-// beds directly."). SURV4 prices a rest by where it lies - a bed, a camp, the rough floor - and a bed's click (CSA-J's
+// RPT1026-MISC BED-PRESS-INDOOR (a private report: a rest in a Fighters Guild hall woke to the rough night's line though the
+// hall has beds, a bed clicked or not). SURV4 prices a rest by where it lies - a bed, a camp, the rough floor - and a bed's click (CSA-J's
 // `_restFromBed`, Roleplay Realism's BedActivation) is a bed's rest in the street's host and the dungeon's, never in a
 // building's: the interior host asked the place alone (a rented room, the player's house, a ship), so a member resting in
-// a guild hall slept its boards rough whatever they pressed, and woke "poorly on the bare ground". The law now lives in one
+// a guild hall slept its boards rough whatever they pressed. The law now lives in one
 // place (systems/rest/restSession.js interiorRestSpot), over the real bag the host builds (interiorRestPlace).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

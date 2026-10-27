@@ -6242,7 +6242,7 @@ export function createFpArm() {
      *  CAST-SPEED: `rate` is the cast's own (systems/castSpeed.js - the live Speed and the castSpeed loot line), the
      *  speed its spellcast group plays at from "<type> start" to "<type> stop", as the classic frames step at it.
      *
-     *  RPT1026-MISC CAST-PACE (a private report: "MW model fires spells slower than DF models"): `releaseIn`, when given,
+     *  RPT1026-MISC CAST-PACE (a private report: the Morrowind look cast slower than the Daggerfall one): `releaseIn`, when given,
      *  is the seconds from now the spell leaves (combat/fpsSpellCasting.js castReleaseS - the classic hands' frame 5), and
      *  the section plays at the pace that brings its "<type> release" there - MW-PACE1's fit of a blow to the machine's
      *  hit (blowRate, its bounds), here a cast's to the classic clock. The cast's time is then the same whatever the

@@ -125,8 +125,8 @@ export function setTouchSpire(fn) { _touchSpire = typeof fn === 'function' ? fn 
 const touchSpire = () => { try { return _touchSpire() ?? null; } catch { return null; } };
 
 /**
- * RPT1026-MISC TOUCH-FIELD (a private report from a phone: "Can't enter the amount of gold when I click in the enter amount
- * section. The map enter name works just fine though"): THE FIELD A FINGER PRESSES RAISES THE KEYBOARD. A classic window's
+ * RPT1026-MISC TOUCH-FIELD (a private report from a phone: the Bank's amount could not be typed, while the map's name field
+ * could): THE FIELD A FINGER PRESSES RAISES THE KEYBOARD. A classic window's
  * typed field (the Bank's amount; the spell and item makers' names) is the window's own keys, never an element a phone
  * can focus - the map's name field is a real input, which is why that one worked. The layer's own text entry (the nav
  * row's "abc", TI2) sends what is typed there to the window as its characters; a ported window's field opens it
