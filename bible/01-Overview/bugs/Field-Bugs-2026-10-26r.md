@@ -27,7 +27,7 @@ equivalent). Pins of other records that a fix moved say PIN MOVED beside the lin
 
 THE SERVICES. ACCOUNT_VERSION acct197 (`server-account/src/service.js`, `wrangler.toml`), migration 0178
 (`0178_rpt1026_ledgerlaw.sql`: `products.handed_to`, `realm_characters.law_v` - 0176 on its lane, renumbered past main's
-0176 and 0177 at the merge). RELAY_VERSION world270 (`src/net/wire.js`; the relay's law moved under RPT1026-FIGHTS,
+0176 and 0177 at the merge). RELAY_VERSION world271 (`src/net/wire.js`, world270 on its lane, renumbered past main's CHAT-POST at the merge; the relay's law moved under RPT1026-FIGHTS,
 -SECNET, -EVENTS and -PROGRESS). Either service may deploy first: every new field is one an older peer ignores, and every
 new refusal is one an older client reads as a refusal.
 

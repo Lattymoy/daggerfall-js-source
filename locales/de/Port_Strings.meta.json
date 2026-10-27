@@ -36258,5 +36258,15 @@
   "en": "23aa54c8359e",
   "tr": "80c895a52dcd",
   "by": "claude-in-session"
+ },
+ "net.chat.linkItem": {
+  "en": "10bc470a62de",
+  "tr": "10bc470a62de",
+  "by": "claude-in-session"
+ },
+ "net.chat.worn": {
+  "en": "cafe5884febc",
+  "tr": "cafe5884febc",
+  "by": "claude-in-session"
  }
 }
