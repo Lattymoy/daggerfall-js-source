@@ -266,9 +266,9 @@
   },
   {
     "name": "LW6-host-deep-from-the-land",
-    "file": "src/scenes/world.js",
-    "old": "    foesOf: ({ climateIndex, dungeonType, minute, level, size, rolls }) => (dungeonType != null",
-    "new": "    foesOf: ({ climateIndex, dungeonType, minute, level, size, rolls }) => (false",
+    "file": "src/scenes/livingWorld/troubleFoes.js",
+    "old": "  return ({ climateIndex, px, py, dungeonType, minute, level, size, rolls }) => (dungeonType != null",
+    "new": "  return ({ climateIndex, px, py, dungeonType, minute, level, size, rolls }) => (false",
     "tests": [
       "test/systems/livingWorld/lw6_deep.test.js"
     ]
