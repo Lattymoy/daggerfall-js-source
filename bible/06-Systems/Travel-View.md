@@ -2841,8 +2841,9 @@ from the Bay's edge.
   crossing's join carries a Bay road out, asks the layer (`stepKind`'s beyondKind: the road's bit out of the one pixel and
   its back bit into the other, the Bay's own byte ORed with its join on the table): a road's step 1, a track's 1.6, as on
   the Bay. The legs fold a road past the Bay as one run (`routeLegs`, unchanged).
-- **The host** grows no line: `scenes/world.js`'s `tvRouteGround()` is already spread into every Overworld plan, and the
-  living world's ground (`_livingGround`) takes the same default (its trips stay on the Bay, AUDIT TESA III E1-3).
+- **The host** grows no line: `scenes/world.js`'s `tvRouteGround()` is already spread into every Overworld plan. The
+  living world's trips past the Bay walk the same layer through their own planner's window (`03-World/World-Wide.md`
+  WW7-7, `systems/livingWorld/beyondWays.js`).
 - **The four hosts**: `scenes/world.js` as above; `scenes/exterior.js`, `scenes/worldModes.js` and
   `scenes/dungeonContext.js` plan no Overworld route.
 - **Measured** (the pins' grids): a town past the Bay reached by the road round, not the field across; a plan along a
