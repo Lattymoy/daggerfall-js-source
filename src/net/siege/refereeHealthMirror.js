@@ -1,21 +1,11 @@
 // @ts-check
-// SHARED-HEALTH (2026-10-26, bible/06-Systems/Integrity-Arc.md section 5): THE CLIENT'S HALF OF ONE HEALTH POOL.
-//
-// The relay's referee keeps the player's health in its own units while it holds a fight of theirs (the open zone, a
-// duel, a siege - net/siege/refereeHealthShare.js). This mirror keeps the two the same:
-//
-//   - REPORT. While a refereed fight may be held for me (`frame(active)`), my health as a share of my maximum goes to the
-//     relay whenever it moves, at most every HEALTH_REPORT_MS, with the last word I applied from each pool. A foe's
-//     blow, a fall, a potion or a party heal all reach the referee this way. The relay's `ask` (a pool made or reset)
-//     sends one at once, active or not.
-//   - APPLY. The referee's word on my pool sets my health to the same share of my own maximum, plus whatever my health
-//     did since the report that word includes (a foe's blow taken after it is not undone by a player's blow before it).
-//
-// The share I report is kept exact across the integer health the game holds: after a word, my share is the word's
-// share plus my health's own movement since, never my rounded health over my maximum - so a long fight's round trips
-// do not wear the count down.
-//
-// Pure of the game: the host hands in the health to read, the door that writes it, and the socket's send.
+// SHARED-HEALTH (2026-10-26, bible/06-Systems/Integrity-Arc.md section 5): THE CLIENT'S HALF OF ONE HEALTH POOL. While a
+// refereed fight may be held for me (`frame(active)`), my health as a share of my maximum goes to the relay when it moves, at
+// most every HEALTH_REPORT_MS, with the last word I applied from each pool; the relay's `ask` sends one at once. The relay's
+// word on my pool sets my health to the same share of my maximum plus what my health did since the report that word includes.
+// My share is kept exact across the integer health: after a word it is the word's share plus my own movement since, so round
+// trips do not wear the count down. Pure of the game: the host hands in the health to read, the door that writes it, and the
+// socket's send (net/siege/refereeHealthShare.js is the relay's half).
 
 import { HEALTH_SHARE_WHOLE } from './refereeHealthShare.js';
 

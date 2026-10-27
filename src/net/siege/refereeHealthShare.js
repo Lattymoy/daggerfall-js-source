@@ -1,32 +1,10 @@
 // @ts-check
-// SHARED-HEALTH (2026-10-26, bible/06-Systems/Integrity-Arc.md section 5, "Decisions (2026-10-26, SHARED-HEALTH)"):
-// ONE HEALTH POOL UNDER THE REFEREE.
-//
-// The open zone, a duel and a siege each referee their fights on the relay, in the referee's own units (siegeVitality:
-// 300 + 2 x Renown). Before this law that count was a second health pool: a player struck to none died with a full bar,
-// and a potion healed a bar that no player fight reads. Now the referee's count is the player's own health, as a share:
-//
-//   - The client reports its health as a share of its maximum (`share`, in HEALTH_SHARE_WHOLE parts) and the last
-//     referee word it applied (`seen`: the pool's epoch and word number). The referee's count for that report is the
-//     share of its own maximum, plus every change the referee made that the client had not yet seen (the word log).
-//     A lost report, a room changed or a word in flight therefore costs nothing: each report is the whole truth.
-//   - A report below the count is a loss the client took from a foe, a fall or a poison: taken at once, never below 1
-//     (the client's own death is its own word - the zone's `dd`, a duel's `dead`).
-//   - A report above the count is a heal. NO HEAL MID-PVP: a fight between players never healed anyone - the zone and a
-//     duel had no heal at all, a siege only its side-mates' heal spells - and a heal there is too strong. A heal is
-//     refused for PVP_HEAL_BLOCK_MS after a player's blow on the fighter, and for a whole duel (the caller's
-//     `healsBlocked`); the client's health is pulled back to the count. Outside a fight between players a heal is taken
-//     whole, so a potion after a monster fight in the zone works as anywhere else.
-//   - The referee's own changes (a blow, a cast, a relay foe's blow, a rise) are logged as words (`noteRefereeChange`),
-//     each told to the fighter with the count, so its client sets its health to the same share.
-//   - A pool the client has not reported into yet is not told to it: its count starts whole (newFighter), and a word
-//     from it would heal the client to full. The relay asks for a report (`ask`) where it makes or resets a pool.
-//
-// PvP damage is thereby scaled as a share: a blow of 30 on a 302-count pool takes a tenth of any player's health.
-//
-// Pure: no clock (every `now` an argument), no socket, no storage. The relay's referees keep a HealthShare on each
-// fighter (newFighter), and the client's mirror (net/siege/refereeHealthMirror.js) is the other half.
-
+// SHARED-HEALTH (2026-10-26, bible/06-Systems/Integrity-Arc.md section 5): ONE HEALTH POOL UNDER THE REFEREE. The referee's
+// count (siegeVitality: 300 + 2 x Renown) is the player's own health as a share, not a second pool. The client reports its
+// share and the last word it applied (`seen`); the count is that share of the referee's maximum plus every change the referee
+// made since (the word log), so a lost report or a word in flight costs nothing. A loss is taken at once, never below 1. A
+// heal is refused for PVP_HEAL_BLOCK_MS after a player's blow and for a whole duel (`healsBlocked`): the client is pulled back
+// to the count. A pool no report has anchored is told to nobody. Pure: no clock, socket or storage (client half: refereeHealthMirror.js).
 /** A share's whole, in parts: ten thousand, so a report rounds by a hundredth of a percent of the referee's count. */
 export const HEALTH_SHARE_WHOLE = 10_000;
 
@@ -37,35 +15,12 @@ export const PVP_HEAL_BLOCK_MS = 30_000;
 /** How many referee changes a pool remembers for reports that lag behind them. */
 export const HEALTH_SHARE_LOG_MAX = 32;
 
-/**
- * The share state the referee keeps on a fighter.
- * @typedef {object} HealthShare
- * @property {number} epoch   this pool's identity (its creation time, ms): a client's `seen` word number counts only
- *                            against the pool it came from
- * @property {number} word    the number of the referee's last change to the count
- * @property {Array<[number, number]>} log   `[word, change]` of the referee's recent changes (a blow negative)
- * @property {boolean} heard  a report has anchored this pool: only then is its count told to the client
- * @property {number} report  the number of the last report taken (echoed, so the client knows what the count includes)
- * @property {number} playerBlowAt  when a player's blow or harmful spell last landed on the count, ms (0: never)
- */
-
-/**
- * A client's report, as the wire projects it (net/wire.js validVitIn).
- * @typedef {object} HealthReport
- * @property {number} report  the report's number, rising through the client's session
- * @property {number} share   the client's health over its maximum, in HEALTH_SHARE_WHOLE parts
- * @property {Array<[number, number]>} seen  `[epoch, word]` pairs: the last word the client applied from each pool
- */
-
-/**
- * The referee's word on a pool, to its fighter (net/wire.js validVitOut, `k: 'h'`).
- * @typedef {object} PoolWord
- * @property {number} health  the count
- * @property {number} max     the count's whole
- * @property {number} epoch   the pool's epoch
- * @property {number} word    the pool's last change
- * @property {number} report  the last report the count includes
- */
+/** @typedef {{ epoch: number, word: number, log: Array<[number, number]>, heard: boolean, report: number, playerBlowAt: number }} HealthShare
+ *  The referee's state on a fighter: the pool's identity (creation ms), its last change's number, `[word, change]` of recent changes, whether a report anchored it, the last report taken, and when a player last struck it (ms, 0 never). */
+/** @typedef {{ report: number, share: number, seen: Array<[number, number]> }} HealthReport
+ *  A client's report (net/wire.js validVitIn): its number, its health over its maximum in HEALTH_SHARE_WHOLE parts, and `[epoch, word]` of the last word it applied from each pool. */
+/** @typedef {{ health: number, max: number, epoch: number, word: number, report: number }} PoolWord
+ *  The referee's word on a pool to its fighter (net/wire.js validVitOut, `k: 'h'`): the count, its whole, the pool's epoch and last change, the last report the count includes. */
 
 /** A fresh share state: unheard, never struck by a player. @param {number} now @returns {HealthShare} */
 export function newHealthShare(now) {

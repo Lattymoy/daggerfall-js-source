@@ -71,8 +71,7 @@ export const newWildRef = () => ({ fighters: new Map(), falls: new Map() });
  * `{ hp, max, down, downAt, at, heard }`, AUDIT INT9: a step into another cell was a fresh bar), unless that word is
  * older than WILD_REF.mendMs. A fighter down rises on its word that it stands in the zone again once WILD_REF.riseMs has
  * passed (its respawn - never at once), its count started again; so does one away from the zone WILD_REF.riseMs. One back
- * sooner keeps its bar (AUDIT INT9: a word off and on was a heal). SHARED-HEALTH: a count started again waits for the
- * player's report of its own health (net/siege/refereeHealthShare.js), which can lower it and never lift it.
+ * sooner keeps its bar (AUDIT INT9: a word off and on was a heal). SHARED-HEALTH: a count started again waits for the player's report, which can lower it and never lift it.
  * Answers the fighter, or null (none made: a word off, a full room).
  */
 export function wildZone(st, sub, { id, lv = 1, ci = '', carry = null }, z, pose, now) {

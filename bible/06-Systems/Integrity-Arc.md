@@ -769,10 +769,9 @@ receipt's carrier); `scenes/dungeonContext.js` and `scenes/worldModes.js` NO DUE
   and every client door's (`wildRef.js:"export function wildKin"`); the guild was the client's alone, and a guildmate the
   maps and nameplates counted a friend could kill. A socket's close takes its fighter out
   of the zone (`wildGone`).
-- **The fight.** Counted in the Royal Tourney's units, and since SHARED-HEALTH (below) the count is the player's own
-  health as a share; every blow and cast the referee's; `wref hp` to both, `wref fell` to the room. NO FREE BAR: no
-  count refills by itself - away from the zone `WILD_REF.riseMs` it starts again from the player's own report; a word off
-  and on keeps its bar. A fighter's bar is kept at the hub
+- **The fight.** Counted in the Royal Tourney's units; since SHARED-HEALTH (below) the count is the
+  player's own health as a share. Every blow and cast the referee's; `wref hp` to both, `wref fell` to the room. NO
+  FREE BAR: nothing refills by itself; away from the zone `WILD_REF.riseMs` a count starts again from the player's report. A fighter's bar is kept at the hub
   after each blow (`WILD_INTERNAL_VIT`, `wildCarry`) and taken by the next room it stands in (a step into another cell
   was a fresh bar); a fallen carried is down there too. A pose past any run is believed, and its fighter strikes nothing
   for `WILD_REF.jumpMs` (a jump was never believed, and a gallop left the place stale for good). A fallen rises whole on
@@ -969,21 +968,18 @@ healing too - only mid-PvP.
 - **ONE POOL, STILL REFEREED.** The referee keeps counting in the Royal Tourney's units (300 + 2 x Renown), and the
   count is the player's own health as a share of it (refereeHealthShare.js:"export function takeHealthReport"). A blow
   of 30 on a count of 302 takes a tenth of any player's health, so a fight lasts as long as it did. The client reports
-  its health as a share with the last referee word it applied (the `vit` frame, relay world271); the referee adds back
+  its health as a share with the last referee word it applied (the `vit` frame, relay world274); the referee adds back
   every change the client had not yet seen (its word log), so a lost report, a room changed or a blow in flight costs
   nothing. Each referee word on a count is told to its player, whose mirror sets its health to the same share
   (refereeHealthMirror.js:"export function createRefereeHealthMirror"), keeping what its health did since the report
   the word includes.
 - **A LOSS AT ONCE, NO HEAL MID-PVP.** A report below the count (a foe, a fall, a poison) is taken at once, never
-  below 1 - the client's own death is its own word, as before. A report above it is a heal, and a fight between players
-  heals nobody: refused for `PVP_HEAL_BLOCK_MS` (30 s, the old mend window) after a player's blow or harmful spell on
-  the fighter, and for a duel's whole length - the client's health is pulled back to the count, so a potion drunk then
-  is spent for nothing. A siege takes no heal by report at all, for its whole length as a duel does: every hurt in it is
-  the referee's, and a guard's blow opens no window of its own (review of PR 1335: a modified client reporting whole
-  after a guard's blow would have healed without limit). A siege's side-mate heal spells and the wave's rise stand as
-  before - the referee's own change, never a report. Out of a fight between players a heal in the zone is taken
-  whole: a potion after a monster fight in the zone heals as it does anywhere. A count no report has anchored is told to nobody (its whole would heal the client to
-  full); the relay asks for a report where it makes or starts one again.
+  below 1; the client's own death is its own word. A report above it is a heal, and a fight between players heals
+  nobody: refused for `PVP_HEAL_BLOCK_MS` (30 s) after a player's blow or harmful spell on the fighter, and for a
+  duel's whole length. The client is pulled back to the count, so a potion
+  drunk then is spent for nothing. A siege takes no heal by report at all; its side-mate heal spells and the wave's rise
+  stand, being the referee's own change. Out of a fight between players a zone heal is taken whole. A count no report has
+  anchored is told to nobody (its whole would heal the client to full); the relay asks for one where it makes a count.
 - **NO FREE REFILL.** The zone's mend (whole again unstruck `WILD_REF.mendMs`) is gone. A count started again - a rise
   after a fall, a return after `WILD_REF.riseMs` away - waits for the player's report, which can lower it and never lift
   it; a bar carried from another room keeps its anchor, its no-heal window and the last report it took (`wildCarry`'s
