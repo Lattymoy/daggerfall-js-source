@@ -32,7 +32,8 @@ export const BAY_DEFAULT_START = Object.freeze({ region: 'Daggerfall', loc: 'Dag
 /**
  * A start the Bay's tables do not hold, past the Bay: the address's kept map id (`seat`), or a province's region named
  * (formats/mapsTables.js 62..70) - `{ id, region, loc }`; null for any other name (a Bay name MAPS.BSA lacks still throws).
- * @param {URLSearchParams} params @param {string} regionName @param {string} locationName
+ * @param {{ get: (key: string) => string|null }} params the boot's address (its search's parameters, read once at boot)
+ * @param {string} regionName @param {string} locationName
  */
 export function farStartOf(params, regionName, locationName) {
   const seat = params.get('seat') ?? '';
