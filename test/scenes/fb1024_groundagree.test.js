@@ -125,7 +125,8 @@ test('GROUND-AGREE by source: the pixel build shapes its ground - the blend, the
   assert.match(w, /location: dfLocation \? dfLocation\.name : null,/, 'what stands is still the clocks\' (tvSpawnGone reads it)');
   assert.match(w, /const spawnGroundPlace = createSpawnGroundPlace\(\{/, 'the host makes the law once');
   assert.match(w, /_livingPatrons, _locationToBuild, spawnGroundPlace, _lptSway,/, 'and hands the build its ground\'s place');
-  assert.match(w, /const _liftLocationAt = \(x, y\) => spawnGroundPlace\.groundLocationAt\(x, y, locationIndex\.get\(`\$\{x\},\$\{y\}`\)\);/, 'and the lift reads it for a pixel not built yet');
+  // PIN MOVED (BAY-LEFT-GROUND, D5): on the Bay; past it the lift reads the build's own place (no spawn stands past the Bay)
+  assert.match(w, /const _liftLocationAt = \(x, y\) => \(onTheBay\(x, y\) \? spawnGroundPlace\.groundLocationAt\(x, y, locationIndex\.get\(`\$\{x\},\$\{y\}`\)\) : _locationToBuild\(x, y\)\);/, 'and the lift reads it for a pixel not built yet');
   assert.match(w, /const tvSpawnAt = spawnGroundPlace\.spawnAt;/, 'and the Overworld\'s far found spawn is the same law, the clocks asked');
 });
 
