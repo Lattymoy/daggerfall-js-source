@@ -288,5 +288,25 @@
       "test/player/eyeOfTheBeholder/rpt1026_misc_eotb.test.js"
     ],
     "note": "SPELL-SHORT: the scaled record loses the mod's XML offset - the figure stands off its feet"
+  },
+  {
+    "name": "rpt1026-misc-talk-sideways-short",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "  .talk-shell .talk-panel { height: calc(100dvh - 12px); bottom: 6px; }\n",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/rpt1026_misc_talk.test.js"
+    ],
+    "note": "TALK-SIDEWAYS: a phone on its side gets the 52dvh panel again - the topic list has no height"
+  },
+  {
+    "name": "rpt1026-misc-talk-sideways-stacked",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "  .talk-main { grid-template-columns: 1fr minmax(200px, 40%); grid-template-rows: minmax(0, 1fr); }\n",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/rpt1026_misc_talk.test.js"
+    ],
+    "note": "TALK-SIDEWAYS: a narrow phone on its side stacks the columns - the strips outgrow the topics' half"
   }
 ]
