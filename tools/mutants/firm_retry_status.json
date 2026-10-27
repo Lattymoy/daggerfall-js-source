@@ -3,7 +3,7 @@
     "name": "FIRM-RETRY-read-failure-no-retry",
     "file": "src/net/firmament/firmamentBook.js",
     "old": "      if (UNHEARD.has(state.error)) retryLater();\n",
-    "new": "",
+    "new": "      if (false) retryLater();\n",
     "tests": [
       "test/net/firmament/firm_book_retry.test.js"
     ]
@@ -83,7 +83,7 @@
   {
     "name": "FIRM-STATUS-mentoring-ignored",
     "file": "src/systems/firmamentLive.js",
-    "old": "  if (_mentoring) return 'mentoring';\n",
+    "old": "  if (_mentorScale < 1) return 'mentoring';\n",
     "new": "",
     "tests": [
       "test/systems/firm_status.test.js"
@@ -92,7 +92,7 @@
   {
     "name": "FIRM-STATUS-duel-ignored",
     "file": "src/systems/firmamentLive.js",
-    "old": "  if (dueling) return 'duel';\n",
+    "old": "  if (dueling) return 'duel';   // MENTOR2: the duel first - it puts the combat stars to sleep, mentoring only scales them\n",
     "new": "",
     "tests": [
       "test/systems/firm_status.test.js"
