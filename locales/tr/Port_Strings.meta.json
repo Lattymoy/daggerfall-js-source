@@ -1839,6 +1839,26 @@
   "tr": "e36ce187fa32",
   "by": "claude-in-session"
  },
+ "features.mwShoulder.left": {
+  "en": "8ae1c34bd37f",
+  "tr": "df5d46647631",
+  "by": "claude-in-session"
+ },
+ "features.mwShoulder.note": {
+  "en": "1ddfce5b69bc",
+  "tr": "65ab526df5d4",
+  "by": "claude-in-session"
+ },
+ "features.mwShoulder.right": {
+  "en": "954daa8b0033",
+  "tr": "3a761384cd22",
+  "by": "claude-in-session"
+ },
+ "features.mwShoulder.title": {
+  "en": "2a1bc9d46a00",
+  "tr": "6e3b4c7fb151",
+  "by": "claude-in-session"
+ },
  "features.npcMarks.note": {
   "en": "9ac4077e0fc2",
   "tr": "88a2b17c4c14",
