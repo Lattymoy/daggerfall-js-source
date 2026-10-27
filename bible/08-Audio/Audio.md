@@ -1232,3 +1232,38 @@ Pins: `test/systems/volume_sliders.test.js` (8: the readers; the animal flats; m
 the port's own; a peer's; the Warden's heave; the rows; the live master), and
 `test/systems/comeSailAway/csa_time_audio.test.js` (the stroke at both volumes; the loops after a Sound Volume change).
 `tools/mutants/volume_sliders.json`: 15 dead.
+
+## VOICE-CAP (2026-10-26): the real voices - at most thirty-two one-shots at once, the quietest let go
+
+A private report from a crowded Dagon's Breach: with that many players about, the sound failed and stayed silent for
+minutes after the event ended.
+
+**What DFU does.** DFU plays through Unity, which sounds at most `m_RealVoiceCount` sources at once (32 in DFU's own
+`ProjectSettings/AudioManager.asset`, with 512 virtual) and makes the rest virtual, the least audible first.
+
+**What the port did.** It had no bound. Every blow, step, cast and cry of forty players near was a source, a gain and an
+HRTF panner of its own, all sounding together. A one-shot's chain was never let go when it ended: the RAIN-LEAK law
+(`releaseNodes`) held for the loops alone, so the bus carried thousands of finished chains until the page's collector
+reached them. The context fell behind, and every sound stopped until it caught up.
+
+**Now** (`audio.js:"export function voiceRoom("`): a one-shot, flat or positional (`playOneShot`, `play3d`,
+`play3dVoice`), takes one of `REAL_VOICES` (32). Under the bound it plays. At the bound it plays only if it reaches the
+ear as loud as the quietest one sounding, or louder, and that one (the oldest of the quietest) is faded out over
+`VOICE_FADE_S` for it; a quieter shot does not start. A positional shot's level is what reaches the ear
+(`audio.js:"export function distanceGain("` - the Web Audio spec's distance models), so a blow at arm's length takes
+the voice of one across the court, never the other way. Every one-shot's chain is let go as it ends (`_voiceKeep`:
+`onended`, its own or a steal's stop) and its voice freed. Loops and beds are not counted: they are few and long, and a
+count would cut an ambience.
+
+**The departure.** Unity's count is DFU's, and the number is the same. The law is not Unity's: Unity virtualizes a
+voice (it keeps its place, silent, and can come back), while a one-shot here is short and is let go, and a shot that
+finds no voice never starts. No DFU volume moves. Ledger A (VOICE-CAP).
+
+The other half of the same report, that the crowd hid the boss, is the Other players card's **Players shown at once**
+(GATE-CROWD, CROWD-WIDE - `11-Multiplayer/World-Bosses.md` section 21) and GATE-COURTS' courts of fifty (section 29); the
+numbers a player's own blows raise are drawn for them alone.
+
+Pins: `test/systems/rpt1026_events_audio.test.js` (3: the law and the distance models; a crowd of forty round my ear -
+at most thirty-two sounding, the stolen faded and stopped, a far one past the bound refused, a flat shot always
+finding a voice; the chains let go and the voices freed as they end). The sixty-two audio pins that were there stand
+(886 tests). `tools/mutants/rpt1026_events.json` (VOICE-CAP, 6).

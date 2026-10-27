@@ -2497,8 +2497,23 @@ the same held places, the same doors asking it (`scenes/world.js` `visiblePeers`
 - NOTHING OF THEIRS STANDS WITHOUT THEM (AUDIT CROWD-WIDE B1, B3): a player the count leaves undrawn is hidden from the
   cart pool and the boat pool as a concealed one is (`hcc.setPeerLook`, `csaPeers.setPeerLook` answer 'hidden' - their
   team and wagon, their boat, kept in the world parked and moored as a hidden owner's are), and their torch lights
-  nothing (`peerTorchLights`). Nor are they handed a page (`pageReaders`, AUDIT CROWD-WIDE B5). Their companions are the
-  one thing left standing - see the audit's open item.
+  nothing (`peerTorchLights`). Nor are they handed a page (`pageReaders`, AUDIT CROWD-WIDE B5). Their companions were the
+  one thing left standing (the audit's open item) until CROWD-KIN, below.
+- THEIR OWN FOES GO WITH THEM (RPT1026-EVENTS CROWD-KIN, 2026-10-26; a private report: the count hid other players and
+  left their revenants standing). A player's revenants, their
+  bands and their companions are puppets of a foe pool, stood by the owner's screen about the owner - and a crowd of
+  forty cut to twelve still stood every revenant the forty brought, walking an empty ground. Every foe pool's one draw
+  question asks the page's one crowd now (`net/gate/gateCrowd.js` `crowdCutsPeer` - the crowd `createGateCrowd` made last,
+  the world host's; no host grew): one of a cut player's own (`crowdKinHidden` - its owner's word made it a revenant
+  (`nm`), a band's follower (`rt`) or a companion (`cp`)) is HIDDEN (`systems/combatVisuals.js` foeDraw, which the open
+  world's, a building's, a dungeon's and the watch's pools all ask where they draw) - no sprite, no body - and has no box
+  for the ray (`player/activate.js` foeAabb, which the plaque's sweep and the press's both read), so it is neither named
+  nor pressed. Never one on ME (`_pupMine`: its blow is mine to take, and nothing that strikes me stands unseen), and never
+  the world's foes a peer's screen happens to run (a cell's encounter, a camp, a raid) - those are everyone's. Pinned by
+  `test/scenes/rpt1026_events_crowdkin.test.js` (3: the crowd's word; the real open-world pool over the owner's own
+  records - the revenant, its band and the companion hidden and unpressable, the plain foe drawn, the revenant on me
+  drawn, all drawn again with the owner; a dungeon's by its records' shape, the draw question and the box);
+  `tools/mutants/rpt1026_events.json` (CROWD-KIN, 8).
 - WHO SHOWS (AUDIT CROWD-WIDE B4): `shows(id)` is false only for a player the last cut left out by the count - one it never
   saw (below deck, filtered before it; not yet in the room) is not its to answer for, as PEER-RANGE's is not. Before the
   audit it answered false for every player not handed to it wherever it ran, so a struck player below deck went unheard

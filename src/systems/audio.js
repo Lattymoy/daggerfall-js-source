@@ -66,6 +66,37 @@ export const PANNING_MODEL = 'HRTF';
  *  level pops. */
 export const VOICE_FADE_S = 0.08;
 
+/** RPT1026-EVENTS VOICE-CAP (a private report from a crowded Dagon's Breach: the sound failed, and stayed silent for minutes
+ *  after the event ended): THE REAL VOICES. DFU plays through Unity, which sounds at
+ *  most ProjectSettings/AudioManager.asset's `m_RealVoiceCount` at once - 32 in DFU's project - and makes the rest virtual,
+ *  the least audible first. The port had no bound: every blow, step, cast and cry of forty players near was a source, a
+ *  gain and an HRTF panner of its own, all sounding together, and a one-shot's chain was never let go when it ended (the
+ *  RAIN-LEAK law, `releaseNodes`, held for the loops alone), so the bus carried thousands of dead chains until the page's
+ *  collector reached them. Now a one-shot - flat or positional - takes one of REAL_VOICES (voiceRoom: past them, the
+ *  quietest sounding is faded out for it, or a quieter shot does not start), and lets its chain go as it ends. Loops and
+ *  beds are not counted: they are few and long, and Unity's own count would cut an ambience. */
+export const REAL_VOICES = 32;
+/** The share of a positional shot's level that reaches the ear at distance `d` - WebAudio's PannerNode distance models, as
+ *  the Web Audio spec writes them (`linear` clamped to [ref, max], `inverse`, `exponential`). Pure. */
+export function distanceGain(d, { refDistance = 1, maxDistance = 500, distanceModel = 'inverse', rolloffFactor = 1 } = {}) {
+  const ref = Math.max(1e-6, refDistance), r = Math.max(0, rolloffFactor), x = Math.max(ref, Number.isFinite(d) ? d : 0);
+  if (distanceModel === 'linear') {
+    const max = Math.max(ref, maxDistance);
+    return max > ref ? Math.max(0, 1 - (r * (Math.min(x, max) - ref)) / (max - ref)) : 1;
+  }
+  if (distanceModel === 'exponential') return (x / ref) ** -r;
+  return ref / (ref + r * (x - ref));
+}
+/** THE VOICE LAW: may a shot at `level` (what reaches the ear) sound while `live` sound (each `{ level }`, oldest first)?
+ *  Under `max`, it plays; at it, it plays only as loud as the quietest sounding or louder, and that one (the oldest of the
+ *  quietest) is stolen for it. Answers `{ play, steal }` - `steal` the one to fade, or null. Pure. */
+export function voiceRoom(live, level, max = REAL_VOICES) {
+  if (live.length < max) return { play: true, steal: null };
+  let q = null;
+  for (const v of live) if (!q || v.level < q.level) q = v;
+  return q && level >= q.level ? { play: true, steal: q } : { play: false, steal: null };
+}
+
 /** PEERFX1: one observer of every one-shot (index, volume) - the online layer hears "a blow landed on me" here
  *  (net/peer/peerFx.js isHurtClip). Null offline. */
 let _oneShotObserver = null;
@@ -582,14 +613,51 @@ export class AudioEngine {
     if (!this._ready()) return undefined;
     const buf = this._buffer(index);
     if (!buf) return undefined;
+    const level = volume * this._scale;
+    if (!this._voiceTake(level)) return undefined;   // RPT1026-EVENTS VOICE-CAP: past the real voices and quieter than every one sounding
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
     src.playbackRate.value = pitch;
     const gain = this.ctx.createGain();
-    gain.gain.value = volume * this._scale;   // EG-ZH: a scope's gain (scaled) - 1 outside one
+    gain.gain.value = level;   // EG-ZH: a scope's gain (scaled) - 1 outside one
     src.connect(gain).connect(this._out());
+    this._voiceKeep(src, gain, null, level, buf.duration / (pitch || 1));   // RPT1026-EVENTS VOICE-CAP: counted, and its chain let go at its end
     src.start();
     return buf.duration;
+  }
+
+  /** RPT1026-EVENTS VOICE-CAP: may a one-shot reaching the ear at `level` take a voice now (voiceRoom over the ones still
+   *  sounding - the quietest faded out for it at REAL_VOICES)? */
+  _voiceTake(level) {
+    const ctx = this.ctx, live = (this._voices ??= []), now = ctx.currentTime;
+    for (let i = live.length - 1; i >= 0; i--) if (live[i].ended || live[i].ctx !== ctx || live[i].until <= now) live.splice(i, 1);
+    const room = voiceRoom(live, level);
+    const v = room.steal;
+    if (v) {
+      live.splice(live.indexOf(v), 1);
+      v.ended = true;
+      try {
+        v.gain.gain.cancelScheduledValues(now);
+        v.gain.gain.setValueAtTime(v.gain.gain.value, now);
+        v.gain.gain.linearRampToValueAtTime(0, now + VOICE_FADE_S);
+        v.src.stop(now + VOICE_FADE_S + 0.02);
+      } catch { try { v.src.stop(); } catch { /* already stopped */ } }
+    }
+    return room.play;
+  }
+  /** RPT1026-EVENTS VOICE-CAP: a one-shot's voice kept while it sounds (`seconds` its clip at its pitch), and at its end
+   *  (`onended` - its own, or a steal's stop) its whole chain let go and its voice freed; `onEnd` told. Answers the voice. */
+  _voiceKeep(src, gain, pan, level, seconds, onEnd = null) {
+    const v = { ctx: this.ctx, src, gain, level, until: this.ctx.currentTime + seconds + VOICE_FADE_S, ended: false };
+    (this._voices ??= []).push(v);
+    let done = false;
+    src.onended = () => {
+      if (done) return;
+      done = true; v.ended = true;   // its voice free: the next take's sweep lets it go
+      releaseNodes(src, gain, pan);
+      onEnd?.();
+    };
+    return v;
   }
 
   /** AUDIT 58 - THE ID DOOR. SoundReader.GetSoundIndex (SoundReader.cs
@@ -818,6 +886,8 @@ export class AudioEngine {
     if (!this._ready()) return undefined;
     const buf = this._buffer(index);
     if (!buf) return undefined;
+    const L0 = this._listener, level = volume * this._scale * distanceGain(Math.hypot(pos[0] - L0.x, pos[1] - L0.y, pos[2] - L0.z), { refDistance, maxDistance, distanceModel });
+    if (!this._voiceTake(level)) return undefined;   // RPT1026-EVENTS VOICE-CAP: past the real voices and quieter at my ear than every one sounding
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
     src.playbackRate.value = pitch;
@@ -825,6 +895,7 @@ export class AudioEngine {
     const gain = this.ctx.createGain();
     gain.gain.value = volume * this._scale;   // EG-ZH: a scope's gain (scaled) - 1 outside one
     src.connect(gain).connect(pan).connect(this._out());
+    this._voiceKeep(src, gain, pan, level, buf.duration / (pitch || 1));   // RPT1026-EVENTS VOICE-CAP: counted, and its whole chain let go at its end
     src.start();
     if (far) {   // DISC17-B: its offset from the ear, held until the clip has run out
       const L = this._listener;
@@ -844,6 +915,8 @@ export class AudioEngine {
     const buf = this._buffer(index);
     if (!buf) return null;
     const ctx = this.ctx;
+    const L0 = this._listener, level = volume * distanceGain(Math.hypot(pos[0] - L0.x, pos[1] - L0.y, pos[2] - L0.z), { refDistance, maxDistance, distanceModel });
+    if (!this._voiceTake(level)) return null;   // RPT1026-EVENTS VOICE-CAP: the bus's voice is one of the real voices too
     const src = ctx.createBufferSource();
     src.buffer = buf;
     src.playbackRate.value = pitch;
@@ -851,12 +924,11 @@ export class AudioEngine {
     const gain = ctx.createGain();
     gain.gain.value = volume;
     src.connect(gain).connect(pan).connect(this._out());
-    let ended = false;
-    src.onended = () => { if (ended) return; ended = true; releaseNodes(src, gain, pan); onEnd?.(); };
+    const v = this._voiceKeep(src, gain, pan, level, buf.duration / (pitch || 1), onEnd);   // its chain let go and `onEnd` told as it ends, once (AUDIT GATHER-FEEL F7)
     src.start();
     return {
       stop(seconds = VOICE_FADE_S) {
-        if (ended) return;
+        if (v.ended) return;
         try {
           const t = ctx.currentTime;
           gain.gain.cancelScheduledValues(t);

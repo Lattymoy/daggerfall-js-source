@@ -102,8 +102,8 @@
   {
     "name": "KTK-a-paid-blow-owed-again",
     "file": "src/net/ketch/ketchLink.js",
-    "old": "    paid(i) { owed = owed.filter((o) => o.i !== i); },",
-    "new": "    paid(i) { void i; },",
+    "old": "      owed = owed.filter((o) => o.i !== i);\n    },",
+    "new": "      void i;\n    },",
     "tests": [
       "test/net/ketch/ketch_link.test.js"
     ]

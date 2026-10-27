@@ -26114,6 +26114,11 @@
   "tr": "a7f0ee25e93a",
   "by": "claude-in-session"
  },
+ "portal.refused.event": {
+  "en": "728feb1a67e6",
+  "tr": "5acc33f8bf01",
+  "by": "claude-in-session"
+ },
  "post.claimAll": {
   "en": "aa103d36fc93",
   "tr": "3b43be6d3bde",
@@ -32672,6 +32677,26 @@
  "schools.wardwright.spell": {
   "en": "7bfc23d6b57d",
   "tr": "126e4134db0f",
+  "by": "claude-in-session"
+ },
+ "sd.hall.lastBy": {
+  "en": "ba380c5a8929",
+  "tr": "89130f4ae799",
+  "by": "claude-in-session"
+ },
+ "sd.hall.snapLashes": {
+  "en": "0029d66990c6",
+  "tr": "29c188eff476",
+  "by": "claude-in-session"
+ },
+ "sd.hall.snapLashesMore": {
+  "en": "59276bb84184",
+  "tr": "a248cbc45cc5",
+  "by": "claude-in-session"
+ },
+ "sd.hall.you": {
+  "en": "8af56de68279",
+  "tr": "cc86ef708cb7",
   "by": "claude-in-session"
  },
  "sd.through.opens": {
