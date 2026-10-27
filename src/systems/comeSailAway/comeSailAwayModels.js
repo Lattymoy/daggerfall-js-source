@@ -246,7 +246,8 @@ async function keptShipBuilt(ship, json, prefabs, base, store) {
     return kept;
   }
   const built = shipBuilt(ship, json, prefabs, base);
-  await keepAnswer(store, key, built, shipBuildScope(ship.key));
+  // not awaited: the build is in hand, and a store that is slow or refuses the write must not hold the models back
+  keepAnswer(store, key, built, shipBuildScope(ship.key)).catch(() => {});
   return built;
 }
 

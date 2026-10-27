@@ -2633,7 +2633,9 @@ an update that changes a computation refreshes that cache for every player on th
 keeps it. Each key leads with its scope; writing an answer deletes every other key of its scope
 (`firstVisitStore.js staleKey`, `dataSource.js sweepDerived`), so the store holds one answer a scope and does not grow
 across updates. A write the store refuses (a full quota) sweeps nothing (`firstVisitStore.js keepAnswer`): the older
-answer is then the only one there is, and stays.
+answer is then the only one there is, and stays. The store's writes also reject when the transaction aborts (a
+commit the quota refuses raises no request error), and the two callers that waited on a write - the port ships' models and
+the ways' land pieces - answer with what they built without waiting for it (`test/systems/firstVisit/fv_abort.test.js`).
 
 | cache | module | key inputs | refreshed by | swept by |
 |---|---|---|---|---|
@@ -2699,7 +2701,7 @@ Runs: `E:/git-repos/travddm/dfo-verify/tools/perf/first-visit-2026-10-25/` (`bas
 Pins: `test/world/terrain/fv_groundtiles.test.js` (5), `test/systems/travel/fv_landpieces.test.js` (3),
 `test/world/fv_portsites.test.js` (2), `test/systems/comeSailAway/fv_shipbuilds.test.js` (2),
 `test/world/ships/fv_standins.test.js` (2), `test/world/fv_bayfit.test.js` (2),
-`test/player/eyeOfTheBeholder/fv_rigdecode.test.js` (2), `test/systems/firstVisit/fv_versions.test.js` (10).
+`test/player/eyeOfTheBeholder/fv_rigdecode.test.js` (2), `test/systems/firstVisit/fv_versions.test.js` (10), `test/systems/firstVisit/fv_abort.test.js` (3).
 
 ## For the owner
 

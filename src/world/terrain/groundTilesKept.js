@@ -60,6 +60,8 @@ export async function prefetchGroundTiles({ blocksBytes, serving, store = derive
   if (!key) { kept = null; return false; }
   if (kept?.key === key) return kept.walks.size > 0;
   const hit = store ? await store.get(key) : null;
+  // the record this one replaces must not save later: its sweep would delete this key
+  if (kept?.timer) clearTimeout(kept.timer);
   kept = { key, walks: isRecord(hit) ? hit : new Map(), store, added: false, timer: null };
   return isRecord(hit);
 }

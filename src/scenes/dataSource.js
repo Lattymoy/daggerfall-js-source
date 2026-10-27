@@ -517,6 +517,8 @@ export async function storeDerived(key, bytes) {
     tx.objectStore(DERIVED_STORE).put(bytes, key);
     tx.oncomplete = () => res();
     tx.onerror = () => rej(tx.error);
+    // a commit the quota refuses aborts the transaction with no request error, so without this the write never settles
+    tx.onabort = () => rej(tx.error ?? new Error("derived store: write aborted"));
   });
   return true;
 }
@@ -683,6 +685,7 @@ export async function sweepDerived(stale) {
     req.onsuccess = () => { for (const k of req.result ?? []) if (stale(k)) os.delete(k); };
     tx.oncomplete = () => res();
     tx.onerror = () => rej(tx.error);
+    tx.onabort = () => rej(tx.error ?? new Error("derived store: sweep aborted"));
   });
   return true;
 }

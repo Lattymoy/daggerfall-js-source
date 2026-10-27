@@ -46,7 +46,8 @@ export function keepLandPieces(ground, { roads = null, tracks = null } = {}, sto
       ground.adoptPieces(roads, tracks, hit);
       return true;
     }
-    await keepAnswer(store, key, ground.landPieces(roads, tracks), LAND_PIECES_SCOPE);
+    // not awaited: the pieces are folded and held by the ground, and the ways wait on this promise
+    keepAnswer(store, key, ground.landPieces(roads, tracks), LAND_PIECES_SCOPE).catch(() => {});
     return false;
   })();
 }
