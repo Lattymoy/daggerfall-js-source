@@ -182,11 +182,12 @@
   {
     "name": "FB1013d-REMAINS-STAND-the-height-dropped",
     "file": "src/scenes/world.js",
-    "old": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), terrainScale: STREAMING_TERRAIN_SCALE } : {}) } : null,",
+    "old": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), ...RECORD_GROUND_STAMP } : {}) } : null,",
     "new": "      world: mode === 'exterior' ? state.worldCoords(pos) : null,",
     "tests": [
       "test/systems/fb1013d_remains.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the remains' place stamps RECORD_GROUND_STAMP, the scale and the frame's law (D5)."
   },
   {
     "name": "FB1013d-REMAINS-STAND-the-height-unread",
@@ -201,11 +202,12 @@
   {
     "name": "FB1013d-REMAINS-STAND-the-height-in-the-landforms-frame",
     "file": "src/scenes/world.js",
-    "old": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), terrainScale: STREAMING_TERRAIN_SCALE } : {}) } : null,",
-    "new": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: pos[1] - state.compensation[1], terrainScale: STREAMING_TERRAIN_SCALE } : {}) } : null,",
+    "old": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), ...RECORD_GROUND_STAMP } : {}) } : null,",
+    "new": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: pos[1] - state.compensation[1], ...RECORD_GROUND_STAMP } : {}) } : null,",
     "tests": [
       "test/systems/fb1013d_remains.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the remains' place stamps RECORD_GROUND_STAMP, the scale and the frame's law (D5)."
   },
   {
     "name": "FB1013d-REMAINS-STAND-the-height-stood-raw",
@@ -392,11 +394,12 @@
   {
     "name": "FB1013d-AUDIT-B2-the-lift-on-every-read",
     "file": "src/scenes/world.js",
-    "old": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), terrainScale: STREAMING_TERRAIN_SCALE } : {}) } : null,",
-    "new": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(true ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), terrainScale: STREAMING_TERRAIN_SCALE } : {}) } : null,",
+    "old": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), ...RECORD_GROUND_STAMP } : {}) } : null,",
+    "new": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(true ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), ...RECORD_GROUND_STAMP } : {}) } : null,",
     "tests": [
       "test/systems/fb1013d_remains.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the remains' place stamps RECORD_GROUND_STAMP, the scale and the frame's law (D5)."
   },
   {
     "name": "FB1013d-AUDIT-B2-the-death-s-height-unasked",
@@ -492,20 +495,22 @@
   {
     "name": "FB1013d-AUDIT-C1-the-lift-at-x-and-z-swapped",
     "file": "src/scenes/world.js",
-    "old": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), terrainScale: STREAMING_TERRAIN_SCALE } : {}) } : null,",
-    "new": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[2], pos[0]), terrainScale: STREAMING_TERRAIN_SCALE } : {}) } : null,",
+    "old": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), ...RECORD_GROUND_STAMP } : {}) } : null,",
+    "new": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[2], pos[0]), ...RECORD_GROUND_STAMP } : {}) } : null,",
     "tests": [
       "test/systems/fb1013d_remains.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the remains' place stamps RECORD_GROUND_STAMP, the scale and the frame's law (D5)."
   },
   {
     "name": "FB1013d-AUDIT-C1-the-lift-at-no-spot",
     "file": "src/scenes/world.js",
-    "old": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), terrainScale: STREAMING_TERRAIN_SCALE } : {}) } : null,",
-    "new": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], 0, 0), terrainScale: STREAMING_TERRAIN_SCALE } : {}) } : null,",
+    "old": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), ...RECORD_GROUND_STAMP } : {}) } : null,",
+    "new": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], 0, 0), ...RECORD_GROUND_STAMP } : {}) } : null,",
     "tests": [
       "test/systems/fb1013d_remains.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the remains' place stamps RECORD_GROUND_STAMP, the scale and the frame's law (D5)."
   },
   {
     "name": "FB1013d-AUDIT-C6-in-the-air-outdoors",

@@ -83,11 +83,12 @@
   {
     "name": "TS1-restand-keeps-compensation",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "return y - (h - host.state.compensation[1] - now) * (r - 1)",
+    "old": "return y - (h - state.compensation[1] - now) * (r - 1)",
     "new": "return y - (h - now) * (r - 1)",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the law is recordFrame's, over its own `state` (D5)."
   },
   {
     "name": "TS1-restand-unbuilt-untouched",
@@ -119,11 +120,12 @@
   {
     "name": "TS1-quickload-row-in-scene-frame",
     "file": "src/scenes/world.js",
-    "old": "const restandNative = (nx, nz, y) => { const [x, z] = state.localFromWorld(nx, nz); return restandHeight(y, x, z, was); };",
-    "new": "const restandNative = (nx, nz, y) => restandHeight(y, nx, nz, was);",
+    "old": "const restandNative = (nx, nz, y) => { const [x, z] = state.localFromWorld(nx, nz); return restandHeight(y, x, z, was, extras.groundFrame); };",
+    "new": "const restandNative = (nx, nz, y) => restandHeight(y, nx, nz, was, extras.groundFrame);",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the record's stamp is RECORD_GROUND_STAMP, the scale and the frame's law, and every reader hands the law on (D5)."
   },
   {
     "name": "TS1-quickload-rows-untouched",
@@ -146,11 +148,12 @@
   {
     "name": "TS1-quickload-player-raw",
     "file": "src/scenes/world.js",
-    "old": "const ly = restandHeight(w.y ?? 2, lx, lz, was) + state.compensation[1];",
+    "old": "const ly = restandHeight(w.y ?? 2, lx, lz, was, extras.groundFrame) + state.compensation[1];",
     "new": "const ly = (w.y ?? 2) + state.compensation[1];",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the record's stamp is RECORD_GROUND_STAMP, the scale and the frame's law, and every reader hands the law on (D5)."
   },
   {
     "name": "TS1-quickload-inside-pools-raw",
@@ -173,11 +176,12 @@
   {
     "name": "TS1-exterior-cache-unstamped",
     "file": "src/scenes/world.js",
-    "old": "      terrainScale: STREAMING_TERRAIN_SCALE,   // TERRAIN-SCALE1: the ground these heights stand on\n",
+    "old": "      ...RECORD_GROUND_STAMP,   // TERRAIN-SCALE1: the ground these heights stand on; BAY-LEFT-GROUND: and their frame's law\n",
     "new": "",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the record's stamp is RECORD_GROUND_STAMP, the scale and the frame's law, and every reader hands the law on (D5)."
   },
   {
     "name": "TS1-exterior-cache-reads-today",
@@ -200,20 +204,22 @@
   {
     "name": "TS1-anchor-unstamped",
     "file": "src/scenes/world.js",
-    "old": "      terrainScale: STREAMING_TERRAIN_SCALE,   // TERRAIN-SCALE1: the ground that height stands on\n",
+    "old": "      ...RECORD_GROUND_STAMP,   // TERRAIN-SCALE1: the ground that height stands on; BAY-LEFT-GROUND: and its frame's law\n",
     "new": "",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the record's stamp is RECORD_GROUND_STAMP, the scale and the frame's law, and every reader hands the law on (D5)."
   },
   {
     "name": "TS1-anchor-landing-raw",
     "file": "src/scenes/world.js",
-    "old": "return [lx, restandHeight(a.y ?? 2, lx, lz, scaleOf(a.terrainScale)) + state.compensation[1], lz];",
+    "old": "return [lx, restandHeight(a.y ?? 2, lx, lz, scaleOf(a.terrainScale), a.groundFrame) + state.compensation[1], lz];",
     "new": "return [lx, (a.y ?? 2) + state.compensation[1], lz];",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the record's stamp is RECORD_GROUND_STAMP, the scale and the frame's law, and every reader hands the law on (D5)."
   },
   {
     "name": "TS1-scene-height-compensation",
@@ -227,20 +233,22 @@
   {
     "name": "TS1-save-unstamped",
     "file": "src/systems/save/save.js",
-    "old": "modData, terrainScale: STREAMING_TERRAIN_SCALE };",
-    "new": "modData };",
+    "old": "modData, terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: GROUND_FRAME_LAW };",
+    "new": "modData, groundFrame: GROUND_FRAME_LAW };",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the save stamps its frame's law beside its scale (D5)."
   },
   {
     "name": "TS1-restore-drops-stamp",
     "file": "src/systems/save/save.js",
-    "old": "terrainScale: snap.terrainScale ?? null };",
-    "new": "terrainScale: null };",
+    "old": "terrainScale: snap.terrainScale ?? null, groundFrame: snap.groundFrame ?? null };",
+    "new": "terrainScale: null, groundFrame: snap.groundFrame ?? null };",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the save stamps its frame's law beside its scale (D5)."
   },
   {
     "name": "TS1-cache-drops-frame",
@@ -515,11 +523,12 @@
   {
     "name": "TS1-ship-unstamped",
     "file": "src/scenes/world.js",
-    "old": "yaw: cam.yaw, terrainScale: STREAMING_TERRAIN_SCALE },",
+    "old": "yaw: cam.yaw, ...RECORD_GROUND_STAMP },",
     "new": "yaw: cam.yaw },",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the record's stamp is RECORD_GROUND_STAMP, the scale and the frame's law, and every reader hands the law on (D5)."
   },
   {
     "name": "TS1-ship-deck-raw",

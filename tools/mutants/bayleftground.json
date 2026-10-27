@@ -173,7 +173,7 @@
   {
     "name": "BAY-LEFT-GROUND-D1-table-keeps-the-Bays-rows",
     "file": "src/world/landforms.js",
-    "old": " || !inWorldGrid(px, py) || onSiteTable(px, py)) continue;",
+    "old": " || !inWorldGrid(px, py) || bayEdgeDistance(px, py) <= SITE_REACH_PIXELS) continue;",
     "new": " || !inWorldGrid(px, py)) continue;",
     "tests": [
       "test/world/terrain/bayleftground_sites.test.js"
@@ -182,8 +182,26 @@
   {
     "name": "BAY-LEFT-GROUND-D1-table-keeps-rows-off-the-grid",
     "file": "src/world/landforms.js",
-    "old": " || !inWorldGrid(px, py) || onSiteTable(px, py)) continue;",
-    "new": " || onSiteTable(px, py)) continue;",
+    "old": " || !inWorldGrid(px, py) || bayEdgeDistance(px, py) <= SITE_REACH_PIXELS) continue;",
+    "new": " || bayEdgeDistance(px, py) <= SITE_REACH_PIXELS) continue;",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-GROUND-AGREE-reach-unheld",
+    "file": "src/world/landforms.js",
+    "old": " || !inWorldGrid(px, py) || bayEdgeDistance(px, py) <= SITE_REACH_PIXELS) continue;",
+    "new": " || !inWorldGrid(px, py) || onSiteTable(px, py)) continue;",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-GROUND-AGREE-reach-held-short",
+    "file": "src/world/landforms.js",
+    "old": " || !inWorldGrid(px, py) || bayEdgeDistance(px, py) <= SITE_REACH_PIXELS) continue;",
+    "new": " || !inWorldGrid(px, py) || bayEdgeDistance(px, py) < SITE_REACH_PIXELS) continue;",
     "tests": [
       "test/world/terrain/bayleftground_sites.test.js"
     ]
@@ -406,7 +424,7 @@
   },
   {
     "name": "BAY-LEFT-GROUND-D1-host-reach-one",
-    "file": "src/scenes/landformSitesHost.js",
+    "file": "src/world/landforms.js",
     "old": "export const SITE_REACH_PIXELS = 2;",
     "new": "export const SITE_REACH_PIXELS = 1;",
     "tests": [

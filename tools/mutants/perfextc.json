@@ -786,11 +786,12 @@
   {
     "name": "PERF-EXT26-the-worker-builds-a-different-grid",
     "file": "src/world/terrain/terrainGenWorker.js",
-    "old": "    const { positions, normals, bed } = restrideGrid({ ...m, woods, roads, sites, climates });",
-    "new": "    const { positions, normals, bed } = restrideGrid({ ...m, woods, roads, sites, climates, stride: 4 });",
+    "old": "    const { positions, normals, bed } = restrideGrid({ ...m, woods, roads, sites, beyond, climates });",
+    "new": "    const { positions, normals, bed } = restrideGrid({ ...m, woods, roads, sites, beyond, climates, stride: 4 });",
     "tests": [
       "test/world/terrain/restrideworker.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the kernels carry the sites past the Bay (D1)."
   },
   {
     "name": "PERF-EXT26-the-client-routes-a-grid-reply-into-the-FIFO",
@@ -813,20 +814,22 @@
   {
     "name": "PERF-EXT26-a-failed-grid-is-left-unbuilt",
     "file": "src/world/terrain/terrainGenClient.js",
-    "old": "      g.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, climates: this._climates, ...g.job }));\n      return;",
+    "old": "      g.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, beyond: this._beyond, climates: this._climates, ...g.job }));\n      return;",
     "new": "      g.resolve(null);\n      return;",
     "tests": [
       "test/world/terrain/restrideworker.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the kernels carry the sites past the Bay (D1)."
   },
   {
     "name": "PERF-EXT26-a-dead-worker-strands-its-grids",
     "file": "src/world/terrain/terrainGenClient.js",
-    "old": "    for (const g of grids) g.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, climates: this._climates, ...g.job }));",
+    "old": "    for (const g of grids) g.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, beyond: this._beyond, climates: this._climates, ...g.job }));",
     "new": "    void grids;",
     "tests": [
       "test/world/terrain/restrideworker.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the kernels carry the sites past the Bay (D1)."
   },
   {
     "name": "PERF-EXT26-every-grid-shares-one-id",
