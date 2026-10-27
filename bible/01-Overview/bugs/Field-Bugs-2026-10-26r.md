@@ -2323,7 +2323,7 @@ Recorded on `03-World/Naval-Refit.md` beside BOARD-MAGNET.
 | 178 | A pad's A on the world map throws a NotFoundError from setPointerCapture, stuck until a reload | The pad's press is a synthetic pointer (id 1, the mouse's in Chromium); Firefox holds no pointer 1 and refused the map's capture with a throw out of its listener | RPT1026-CLIENT PAD-CAPTURE, DISMISS |
 | 85 | The game's lost-graphics message, which blamed a phone's memory, on a PC, loading into an Oblivion Gate | The browser lost the game's WebGL context (`webglcontextlost`). Nothing in the game lets the main context go but the page's own going (GL-LEAK); the line blamed a phone | NEEDS DATA (the words: RPT1026-CLIENT GL-SAID) |
 | 81 | FPS drops massively while travelling since the day before | Sent the day before OW-HITCH, which measured an Overworld journey frame by frame in the real game and took its hitches out (the grass's cell frees, the collector, the snow's catch-up, the ground sets) | ALREADY FIXED: OW-HITCH (`e394529e8`) |
-| 82 | FPS lower in general since an update | No build, setting or scene named; nothing to measure against | NEEDS DATA |
+| 82 | FPS lower in general since an update | Sent minutes after #81 by the same reporter from the same build (0.0.281), and tied to it in its own words; sent before OW-HITCH, whose hitches were the Overworld's. If the drop is #81's, OW-HITCH took it out; no scene or numbers to measure what stays (AUDIT RPT1026 K4: this row had read "no build named") | NEEDS DATA |
 | 129 | Stutter from three "Cast When Held: Tongues" items (Pacify checks?) | Traced: a held item's work is once a game minute (the magic round's payload, its reroll every six hours), not once a frame; the pacification roll is an edge, one roll a foe at first sight (`hostCombat.js` tryLanguagePacification) | NOT REPRODUCED |
 | 184 | FPS drops, nothing changed (under the "No freeze at the first aura, smoother fast travel" notes) | No scene or numbers | NEEDS DATA |
 | 260 | Lag spike and CPU use inside the Flying Scorpion in Magor | A tavern; no profile | NEEDS DATA |
@@ -2364,6 +2364,12 @@ so the button is put back each time; its click goes no further, so it never reac
 beneath it. A probe's first line under CRASH is still the error's (`tools/bootProbe.mjs`). English, as every line of the
 report is (main.js loads before the text core).
 
+AUDIT RPT1026 K2. A lost graphics context's report is the one report the game does not run on past: nothing draws
+again on that page, and the report is its way back (click or tap to reload). It carried the Dismiss too, and dismissed
+it left a dead picture with nothing on it to say how to reload. It is kept now: crashDismiss puts no button on a report
+marked kept, and the context's loss takes off the one a report already up had (`main.js:"  if (el._kept) return;"`).
+Every other report keeps its Dismiss. Pinned: `test/scenes/audit_rpt1026_client.test.js` (K2, 2).
+
 PINS: `test/scenes/rpt1026_client_crashdismiss.test.js` (2 - one here: the report and its button through main.js's own
 two functions on a document that keeps a real element's rules). PIN MOVED: `test/ai/nav/audit68_enemies.test.js`
 S02-contextlost-tap-dead runs `crashDismiss` beside `crashOverlay`, its fake elements given `appendChild`.
@@ -2387,7 +2393,7 @@ FIXED. Every face thrown is kept with the body's list it lies in (`weirKey.js:"e
 every restack sets the pack to the balance less the faces still lying (`weirKey.js:"  const want = Math.max(0, n - weirKeysLying());"`):
 one taken up - gone from its list, whatever door took it - leaves the count, so the pack and the bodies always show the
 balance together. Out of the dungeon (the find's tier door, `setWeirKeyFacesHere`, null outside a dungeon) the faces left
-behind are folded off their bodies at the next answer, so a cached dungeon entered again shows none and the pack holds
+behind are folded off their bodies at the next answer, so a dungeon entered again shows none and the pack holds
 the whole balance; a load keeps none as lying (`foldStrayWeirKeys`, KEY-FACE's fold, clears the list); the find let go
 keeps none. The throw is now `throwWeirKeyFace` then the restack to the balance
 (`egFind.js:"  if (Array.isArray(entity?.items)) throwWeirKeyFace(entity.items);"`).
@@ -2401,6 +2407,17 @@ for words the relay never reads - so no RELAY_VERSION is owed.
 Docs: `11-Multiplayer/Elite-Gates.md` section 5 (the OPEN sentence struck, "The faces lying on bodies count" in its
 place, the card's line); `Field-Bugs-2026-10-19f.md` KEY-FACE's "Left open" closed, its two anchors moved to the lines
 as they read now.
+
+AUDIT RPT1026 K1. "Out of the dungeon" was read only at an answer, and an answer comes every ten minutes: out of one
+dungeon and into the next (or into the same one, which the world's modes build anew at every entry) before one landed
+outside, the faces of the visit before were still counted as lying - on bodies its context took with it - and every
+restack there held the pack a key short of the balance for each, none of them on any body to take up, until an answer
+landed outside again. A face is kept against the visit it was thrown in: the world host's door is
+`egFind.js:"export const egFindPlace = (mode, modes) =>"` (the dungeon's tier and its context), and a face of another
+visit is folded as one away is (`weirKey.js:"  foldLyingWeirKeys((e) => e.at !== here);"`). A find answered after the
+player left the visit it was asked in puts its key in the pack, not on the body left behind. The world host's entry is
+rewritten in place (`placeNow` for `tierNow`), no host line added. Pinned: `test/scenes/audit_rpt1026_client.test.js`
+(K1, 5); PIN MOVED: `test/scenes/eliteGates/egeco_hosts.test.js` reads the world's `placeNow`.
 
 PINS: `test/systems/eliteGates/rpt1026_client_weirface.test.js` (4: two finds through the real find and the world host's
 own throw, each body taken up by `inventory.js` takeOneInto - the balance, never three; a balance answer between the
@@ -2466,6 +2483,11 @@ Half, Off none, an area blast too; my own bolt's whole kick whatever the share; 
 label, the tile's ceiling). The L10N4 ratchet's `features.js` count 127 -> 128: the mod key `'Camera Shake.maxShake'`,
 which the scan reads as words as it reads its three neighbours. PIN MOVED: `test/ui/settings/settingsUI.test.js` SO1 reads the port pool with the row in it.
 
+AUDIT RPT1026 K3. The pins held two claims above by nothing: an event's sky fire keeping its whole kick (a peer's
+share on it survived every pin) and the row's own values (Full 0.75, Half 0.25 or Off 0.1 survived). Pinned now through
+the engine's own skyFire at the share Off, and through the menu's own row (portPool) pressed through Off, Full and Half
+with the kick each gives: `test/scenes/audit_rpt1026_client.test.js` (K3, 2).
+
 ### RPT1026-CLIENT PAD-CAPTURE (178) - `src/ui/pointerCapture.js`, `src/ui/heldMap.js` and ten more
 
 WHAT THE PORT DID. A pad's press is a synthetic pointer (`plusPad.js` domPointer, `enhancedDialog.js` replayClick:
@@ -2477,7 +2499,7 @@ FIXED. A capture is a drag's comfort, never its law: refused, the press still la
 and release in the game's own windows goes through one door that answers a refusal
 (`pointerCapture.js:"export function capturePointer("`, releasePointer): the map's four, the Firmament's sky, the
 charts, the sky window, the work board, the pack's figure, the deck plan, the family tree, the chat's grip (both) and
-the POI editor's. The four that caught their own refusal on their line stand. The labs under `src/tools` are pages of
+the POI editor's. The six that catch their own refusal on their line stand - four captures and two releases, in five files (AUDIT RPT1026 K5: this said four; the door's own line said a missing element answers false, and it answers true - nothing to refuse). The labs under `src/tools` are pages of
 their own, mouse alone. Docs: `10-UI/Held-Map-Arc.md` PAD-CAPTURE; `10-UI/UI.md` counts the module (420).
 
 PINS: `test/ui/rpt1026_client_capture.test.js` (3: the press through the pad's own dispatch on a held map whose stage
@@ -2566,6 +2588,10 @@ Mutants: `tools/mutants/rpt1026_client.json` (27, all dead: SPARKS 2, DISMISS 5 
 LIFTED-CEILING 5, PEER-SHAKE 5, PAD-CAPTURE 4). Re-aimed by content and judged again, dead: `auditretro1.json`
 AUDITRETRO1-C7-no-tip (the tip's door now ends in portTip), `chatsize.json` CZ-capture-dropped, `egeco_relay.json`
 EGECO3-the-pack-the-whole-balance and EGECO3-PL-pack-short, `egaudit5_c.json` AUDIT-EG-V-c-L8-6-line-unshown.
+AUDIT RPT1026 (lane K): `tools/mutants/audit_rpt1026_client.json` (11, all dead - K1 5, K2 2, K3 4); re-aimed by content
+and judged again, dead: `egeco_relay.json` EGECO3-the-key-not-thrown and EGECO3-PL-key-on-the-copy (the throw's line as
+it reads now); `rpt1026_client.json` RPT1026-WEIR-away-not-folded names K1's pin beside its own (the visit's fold covers
+every face but one laid while away, which K1's fifth pin lays).
 
 ## Screens, phones, PvP loot and legacy (RPT1026-MISC)
 

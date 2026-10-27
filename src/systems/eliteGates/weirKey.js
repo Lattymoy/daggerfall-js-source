@@ -56,31 +56,45 @@ export const weirKeysHeld = (/** @type {any[]} */ items) => (Array.isArray(items
  * faces still lying: taken up - gone from its list, whatever door took it - a face leaves the count, so the pack and the
  * bodies together always show the balance. Away from the dungeon (the find's tier door, `setWeirKeyFacesHere`) the faces
  * left behind are folded off their bodies and the pack shows the whole balance again; a load folds every one (KEY-FACE).
- * @type {{ list: any[], face: any }[]}
+ * AUDIT RPT1026 K1: and a face is kept against the VISIT it was thrown in (the door's answer at the throw - the world host's
+ * dungeon context, built new at every entry): "away" is not only the answers that land outside a dungeon. Out of one and
+ * into the next (or the same one built again) before any answer landed outside, the faces of the visit before lay on
+ * bodies its context took with it, and every restack in the new one still counted them - the pack one key short of the
+ * balance for each, none of them on any body to take up. A face of another visit is folded as one away is.
+ * @type {{ list: any[], face: any, at: unknown }[]}
  */
 const _lying = [];
+/** @type {() => unknown} */
 let _facesHere = () => true;
-/** The find's door (egFind.js registerEgFind): whether the bodies its faces lie on are still about - null, the find let
- *  go with its world, keeps none as lying. */
-export function setWeirKeyFacesHere(/** @type {(() => boolean)|null} */ fn) {
+/** The find's door (egFind.js registerEgFind): the visit the player stands in (any token, the same for one dungeon's
+ *  stay - AUDIT RPT1026 K1), or null/false away from the bodies its faces lie on - null, the find let go with its world,
+ *  keeps none as lying. */
+export function setWeirKeyFacesHere(/** @type {(() => unknown)|null} */ fn) {
   _facesHere = typeof fn === 'function' ? fn : () => true;
   if (!fn) _lying.length = 0;
 }
-/** One face thrown into a body's `list` (egFind.js egFindThrow), and kept as lying there. */
+/** One face thrown into a body's `list` (egFind.js egFindThrow), and kept as lying there - in the visit it was thrown in. */
 export function throwWeirKeyFace(/** @type {any[]} */ list) {
   const face = weirKeys(1);
   list.push(face);
-  _lying.push({ list, face });
+  _lying.push({ list, face, at: _facesHere() });
   return face;
 }
-/** The faces off their bodies, all of them, and none kept as lying. */
-function foldLyingWeirKeys() {
-  for (const { list, face } of _lying) { const i = list.indexOf(face); if (i >= 0) list.splice(i, 1); }
-  _lying.length = 0;
+/** The faces off their bodies - those `gone` names, every one by default - and those no longer kept as lying. */
+function foldLyingWeirKeys(gone = (/** @type {{ at: unknown }} */ _e) => true) {
+  for (let i = _lying.length - 1; i >= 0; i--) {
+    const { list, face } = _lying[i];
+    if (!gone(_lying[i])) continue;
+    const k = list.indexOf(face);
+    if (k >= 0) list.splice(k, 1);
+    _lying.splice(i, 1);
+  }
 }
 /** How many keys the faces still lying on bodies show - a face taken up leaves the count; away, none lies (folded). */
 export function weirKeysLying() {
   if (!_facesHere()) { foldLyingWeirKeys(); return 0; }
+  const here = _facesHere();
+  foldLyingWeirKeys((e) => e.at !== here);   // AUDIT RPT1026 K1: a face of another visit lies on a body that visit took with it
   for (let i = _lying.length - 1; i >= 0; i--) if (!_lying[i].list.includes(_lying[i].face)) _lying.splice(i, 1);
   return _lying.reduce((s, e) => s + Math.max(1, e.face.stackCount ?? 1), 0);
 }

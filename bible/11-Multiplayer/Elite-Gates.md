@@ -390,10 +390,15 @@ real relay instance, so the key is a service-side balance and the item is its fa
   held and the next answer said the rust line for it. Every face thrown is kept with the body's list it lies in
   (`weirKey.js` throwWeirKeyFace), and every restack sets the pack to the balance less the faces still lying
   (`weirKeysLying`): one taken up - gone from its list - leaves the count, so the pack and the bodies always show the
-  balance together. Out of the dungeon (the find's tier door, `setWeirKeyFacesHere`) the faces left behind are folded off
+  balance together. Out of the dungeon (the find's place door, `setWeirKeyFacesHere`) the faces left behind are folded off
   their bodies at the next answer and the pack shows the whole balance; a load keeps none as lying (`foldStrayWeirKeys`).
+  AUDIT RPT1026 K1: a face is kept against the VISIT it was thrown in - the world host's door is `egFindPlace`, the
+  dungeon's tier and its context, built new at every entry - so one out of the dungeon and into the next (or the same one
+  built again) before any answer landed outside is folded too: it had been counted in the next dungeon, on a body that dungeon
+  never had, and the pack stood a key short of the balance for each. A find answered after the player left the visit it was
+  asked in puts its key in the pack, not on the body left behind.
   The key's card says the keys are the account's (above).
-  Pinned: `test/systems/eliteGates/rpt1026_client_weirface.test.js` (3).
+  Pinned: `test/systems/eliteGates/rpt1026_client_weirface.test.js` (3), `test/scenes/audit_rpt1026_client.test.js` (K1, 5).
 
 **Where they come from.** The service rolls every one with its own `rand`, at a claim it already verifies. This is
 the `sdHonoursRoll` way: AUDIT SD III R4 moved the Hour's honours off the receipt seed because the page can read the

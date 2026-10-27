@@ -31,7 +31,7 @@
 // no Weir Key and no online. Ledger A (ELITE-GATES).
 import { registerEnemyDeathHandler } from '../../scenes/corpseMarker.js';
 import { restackWeirKeys, throwWeirKeyFace, setWeirKeyFacesHere } from './weirKey.js';   // RPT1026-CLIENT: the face thrown is kept as lying
-import { DUNGEON_TIERS } from '../dungeon/dungeonTier.js';
+import { DUNGEON_TIERS, dungeonTier } from '../dungeon/dungeonTier.js';
 
 /** The death handler's name (corpseMarker.js registerEnemyDeathHandler). */
 export const EG_FIND_HANDLER = 'eg-find';
@@ -52,6 +52,13 @@ export function egFindThrow(entity, pack, keys) {
   restackWeirKeys(pack, keys);
 }
 
+/** AUDIT RPT1026 K1: WHERE THE FIND STANDS - the world host's door (scenes/world.js registerEgFind's `placeNow`): in a
+ *  dungeon, its tier and the VISIT, the dungeon's context the world's modes build new at every entry (worldModes.js
+ *  `dungeonCtx`), which the faces thrown in it are kept against (weirKey.js setWeirKeyFacesHere); null anywhere else.
+ *  @param {string|undefined|null} mode the world's mode @param {any} modes the world's modes */
+export const egFindPlace = (mode, modes) => (mode === 'dungeon' && modes?.dungeonLocation
+  ? { tier: dungeonTier(modes.dungeonLocation), visit: modes.dungeonCtx ?? modes.dungeonLocation } : null);
+
 /** The registered find (registerEgFind's), for the joiner's door the dungeon host reads (egFindStruck). */
 let _registered = null;
 /** THE JOINER'S DOOR (scenes/dungeonContext.js, where the owner's record names me the striker): ask for this body's find -
@@ -63,26 +70,32 @@ export const egFindKill = (/** @type {any} */ entity, /** @type {string|null} */
 /**
  * THE FIND, REGISTERED: a death handler for the owner's kills (`opts.by` the striker the host names - its `_killedBy`) and
  * the joiner's door (`struck`). `ask(tier)` is the service's call (accountEg's `find` - `{ ok, data: { found, keys,
- * asks } }`); `tierNow()` the dungeon's tier, null outside one; `selfId()` this client's peer id; `online()`; `say(line)`;
+ * asks } }`); `placeNow()` where the player stands (egFindPlace: the dungeon's tier and its visit, null outside one) - or
+ * `tierNow()`, the tier alone, every stay one visit; `selfId()` this client's peer id; `online()`; `say(line)`;
  * `throwKey(entity, keys)` on a yes. Answers `{ death, struck, dispose }` - `death(entity, by)` the owner's half (the
  * handler's), `struck(entity)` the joiner's, each a promise of whether a key was found.
- * @param {{ ask: (tier: string) => Promise<any>, tierNow: () => string|null, selfId: () => string|null, online: () => boolean, say?: (line: string) => void, throwKey: (entity: any, keys: number) => void }} doors
+ * @param {{ ask: (tier: string) => Promise<any>, placeNow?: () => ({ tier: string|null, visit: unknown }|null), tierNow?: () => string|null, selfId: () => string|null, online: () => boolean, say?: (line: string) => void, throwKey: (entity: any, keys: number) => void }} doors
  */
-export function registerEgFind({ ask, tierNow, selfId, online, say = () => {}, throwKey }) {
+export function registerEgFind({ ask, placeNow = undefined, tierNow = undefined, selfId, online, say = () => {}, throwKey }) {
   const asked = new WeakSet();
-  // RPT1026-CLIENT: the faces thrown lie on this dungeon's bodies - out of it, they are folded off them (weirKey.js weirKeysLying)
-  const here = () => tierNow() != null;
+  /** AUDIT RPT1026 K1: where the player stands - the place door's answer, or the tier door's as one long visit */
+  const where = () => { if (placeNow) return placeNow(); const tier = tierNow?.() ?? null; return tier == null ? null : { tier, visit: true }; };
+  // RPT1026-CLIENT: the faces thrown lie on this dungeon's bodies - out of it, they are folded off them (weirKey.js weirKeysLying);
+  // AUDIT RPT1026 K1: and out of this VISIT - the next dungeon, or this one built again, holds none of its bodies
+  const here = () => where()?.visit ?? null;
   setWeirKeyFacesHere(here);
   /** @param {any} entity @param {boolean} [room] a room's body - its key to the pack (PARTY-LOOT) */
   async function find(entity, room = false) {
-    const tier = tierNow();
+    const at = where(), tier = at?.tier ?? null;
     if (!egFindAsks(entity, tier, online()) || asked.has(entity)) return false;
     asked.add(entity);
     let a = null;
     try { a = await ask(/** @type {string} */ (tier)); } catch { return false; }
     const d = a?.ok ? a.data : null;
     if (d?.found !== true || !Number.isSafeInteger(d.keys)) return false;
-    throwKey(room ? null : entity, d.keys);
+    // AUDIT RPT1026 K1: an answer that lands in another visit finds the body gone with the one it was asked in - its key
+    // to the pack (no face on a body nobody can reach, counted as lying in the visit it landed in)
+    throwKey(room || here() !== at?.visit ? null : entity, d.keys);
     say(EG_FIND_TEXT.found);
     return true;
   }

@@ -95,9 +95,10 @@
     "old": "  if (!_facesHere()) { foldLyingWeirKeys(); return 0; }\n",
     "new": "",
     "tests": [
-      "test/systems/eliteGates/rpt1026_client_weirface.test.js"
+      "test/systems/eliteGates/rpt1026_client_weirface.test.js",
+      "test/scenes/audit_rpt1026_client.test.js"
     ],
-    "note": "out of the dungeon the faces left behind still lie - the pack short of them, and a face still there to take"
+    "note": "out of the dungeon the faces left behind still lie - the pack short of them, and a face still there to take. AUDIT RPT1026 K1: the next line folds every face of another visit, so only a face laid while away (no visit) needs this line - the K1 pin lays one"
   },
   {
     "name": "RPT1026-WEIR-load-keeps-lying",

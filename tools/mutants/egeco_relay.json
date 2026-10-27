@@ -470,7 +470,7 @@
   {
     "name": "EGECO3-the-key-not-thrown",
     "file": "src/systems/eliteGates/egFind.js",
-    "old": "    throwKey(room ? null : entity, d.keys);\n",
+    "old": "    throwKey(room || here() !== at?.visit ? null : entity, d.keys);\n",
     "new": "",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
@@ -659,8 +659,8 @@
   {
     "name": "EGECO3-PL-key-on-the-copy",
     "file": "src/systems/eliteGates/egFind.js",
-    "old": "    throwKey(room ? null : entity, d.keys);\n",
-    "new": "    throwKey(entity, d.keys);\n",
+    "old": "    throwKey(room || here() !== at?.visit ? null : entity, d.keys);\n",
+    "new": "    throwKey(here() !== at?.visit ? null : entity, d.keys);\n",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]

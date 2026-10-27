@@ -398,7 +398,7 @@ import { EG_SINK_EMBERS } from '../net/eliteGates/egPay.js';   // EG-E1: the sin
 import { openEgBoard, createEgBoardDoor } from '../ui/eliteGates/egBoardWindow.js';   // EG-E2: the Elite Breach's three boards; EG-ZM: their one door
 import { egStartPanelDoors } from '../ui/eliteGates/egStartPanel.js';   // EG-PLUS: the start window on Enhanced Plus
 import { egRecapsKept } from '../ui/eliteGates/egHud.js';   // AUDIT EG V (c, L7-19): the last runs this device kept, on the boards' own tab
-import { registerEgFind, egFindThrow } from '../systems/eliteGates/egFind.js';   // EG-E3: the dungeon's find
+import { registerEgFind, egFindThrow, egFindPlace } from '../systems/eliteGates/egFind.js';   // EG-E3: the dungeon's find; AUDIT RPT1026 K1: where it stands, the visit with the tier
 import { setSetPowersAllies, setSpireRecovery, spireRedoubtTaken } from '../systems/sigil/sigilSetPowers.js';   // EG15: the Reprieve's allies, the death saves held to a Redoubt in a breach
 import { brokerStock, brokerDay, brokerBought, makeBrokerSale, spendableStonesIn, lockedStonesIn, stoneCount, stonesText, brokerOwedDoor, brokerOwedText, emberHands } from '../systems/sigil/sigilBroker.js';   // SET7: the day's stock, the record, the sale   // SS1: the stones counted over their stacks   // BROKER-RID (AUDIT FB1024): her two sales by their request ids, an unheard one owed and settled at her next open
 import { drawGateBanner } from '../ui/gate/gateBanner.js';
@@ -24230,7 +24230,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // throws the key from the body and restacks the pack (systems/eliteGates/egFind.js)
   if (params.has('online')) registerEgFind({
     ask: (t) => _accountEg.find(t), selfId: () => online?.id ?? null, online: () => !!online && online.status === 'open', say: (l) => chatNotice(l),
-    tierNow: () => (_mode() === 'dungeon' && modes?.dungeonLocation ? dungeonTier(modes?.dungeonLocation) : null),
+    placeNow: () => egFindPlace(_mode(), modes),   // AUDIT RPT1026 K1: the dungeon's tier and its visit (a face of the visit before lies on no body here)
     throwKey: (e, n) => { egFindThrow(e, playerEntity.items ?? (playerEntity.items = []), n); saveSoon.changed(); },
   });
   egClient?.claimKeys();   // the Weir Key's use is this screen's open
