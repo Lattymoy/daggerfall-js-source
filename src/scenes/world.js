@@ -7,7 +7,7 @@
 // recenters the world (streamingWorld.js).
 
 import { DecisionBoxWindow } from '../ui/decisionBox.js';   // REST-WARN2: the Plus decision box
-import { wildGiantsAt, WILD_GIANT_STAND_M, WILD_GIANT_RESPAWN_MS } from '../systems/wild/wildGiants.js';   // ZONE-GIANTS   // GOTHWAY-BOARDS: at the north entrance
+import { wildGiantsAt, WILD_GIANT_STAND_M, WILD_GIANT_RESPAWN_MS, giantGroundBlocked } from '../systems/wild/wildGiants.js';   // ZONE-GIANTS   // GOTHWAY-BOARDS: at the north entrance
 import { pixelKeyText } from '../world/pixelKeys.js';   // PIXEL-KEYS: a built pixel's key text made once   // GOTHWAY-NORTH: the walk grid's cell
 import { resetPlayerGpsState } from '../world/playerGps.js';   // AUDIT DEX C1: PlayerGPS.ResetState, the jump core's
 import { restAilmentLines } from '../systems/rest/restWarning.js';   // REST-WARN
@@ -22531,7 +22531,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         for (const [dx, dz] of [[4, 0], [-4, 0], [0, 4], [0, -4]]) { const q = heightAt(x + dx, z + dz); if (Number.isFinite(q)) slope = Math.max(slope, Math.abs(q - h)); }
         for (let k = 0; k < 8; k++) { const b = (k / 8) * Math.PI * 2, q = heightAt(x + Math.cos(b) * 30, z + Math.sin(b) * 30); if (Number.isFinite(q)) { ring += q; m++; } }
         const crest = m ? Math.max(0, h - ring / m) : 0;
-        if (slope > 1.6 || crest > 4) continue;   // a slope steeper than ~22 degrees, or a rise over its surroundings
+        if (slope > 1.6 || crest > 4 || giantGroundBlocked(collider, x, h, z)) continue;   // a slope steeper than ~22 degrees, or a rise over its surroundings - RPT1026-MISC GIANT-ROCK: or a rock where it would stand
         { const c = state.worldCoords([x, h, z]), w = worldCoordToMapPixel(c.x, c.z); if (tvWater(w.x, w.y)) continue; const zm = wildMapMask(); if (zm && !wildInside(zm, w.x, w.y)) continue; }   // never in the water; GIANT-LEASH: never outside the zone
         const score = slope * 4 + crest * 2 + r * 0.02;
         if (score < bestScore) { bestScore = score; best = [x, h, z]; }
@@ -22636,7 +22636,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       const x = c[0] + Math.cos(a) * r, z = c[2] + Math.sin(a) * r, h = heightAt(x, z);
       if (!Number.isFinite(h)) continue;
       const [mx, my] = giantMapAt([x, h, z]);
-      if (!wildInside(mask, mx, my)) continue;
+      if (!wildInside(mask, mx, my) || giantGroundBlocked(collider, x, h, z)) continue;   // RPT1026-MISC GIANT-ROCK: nor one of its call inside a rock
       stood++;
       exteriorFoes.spawnFoe(WILD_GIANT, [x, h, z], { yaw: Math.atan2(c[0] - x, c[2] - z), eliteFoe: false, champion: null, transient: true })
         .then((g) => { if (g) { g.ai.target = f.ai.target ?? g.ai.target; g.ai.makeHostileToPlayer?.(undefined, g.ai.feet); } })
@@ -35354,7 +35354,12 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // RR2: EnhancedRiding.OnTriggerEnter / OnControllerColliderHit (:157-215)
         // - a galloping rider tramples the townsperson under the hooves and
         // charges down the foe in the way, once each
-        if (rrRidingOn() && player.riding && player.isRunning) rrRidingContacts();
+        // RPT1026-MISC JOURNEY-TRAMPLE (a private report: charged with Assault for an Overworld journey on horseback that
+        // passed through a town): never while a journey drives the ride (rideOnTheRoad: the Overworld's view, or
+        // a Travel Options autopilot - a held Run or AutoRun gallops it). DFU's mods run EnhancedRiding's OnTriggerEnter
+        // under TravelOptions' journey too, the clip muted (RidingVolumeScale 0, AUDIT-TO1 J1); here a journey at sixty
+        // times the pace charged an Assault for townsfolk under hooves the player never steered. Ledger A.
+        if (rrRidingOn() && player.riding && player.isRunning && !rideOnTheRoad()) rrRidingContacts();
       }
       // DISC14 (Starempire42 on Discord: "is there a way to make it so I can see my weapon above my horse?"): the
       // weapons draw OVER the mount. OnGUI puts the horse at GUI.depth 2, "behind other HUD elements & weapons"

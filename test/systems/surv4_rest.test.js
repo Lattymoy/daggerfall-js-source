@@ -155,7 +155,7 @@ test('SURV4: by source - the four hosts name their kind, the three rolls carry t
   assert.match(w, /restKind: \(\) => \(_restFromBed \? 'bed' : camps\.fireNear\(walkMode && playerSpawned \? player\.pos : cam\.pos\) \? 'camp' : 'rough'\),/);   // AUDIT REST-PARTY A3: a pressed bed first
   assert.match(x, /restKind: \(\) => \(camps\.fireNear\(walkMode \? player\.pos : cam\.pos\) \? 'camp' : 'rough'\),/);
   assert.match(dc, /restKind: \(\) => \(_restFromBed \|\| bedInReach\(dungeonBeds, _fpFeet\) \? 'bed' : _fpFeet && camps\.fireNear\(_fpFeet\) \? 'camp' : 'rough'\),/);   // FIELD BUGS 2026-10-05 DUNGEON-BEDS: a bed first
-  assert.match(wm, /restKind: \(\) => \{ const p = interiorRestPlaceHere\(\); return p\.houseOwned \|\| p\.isShip \|\| !!p\.room \? 'bed' : interiorCamps\.fireNear\(player\.pos\) \? 'camp' : 'rough'; \},/);
+  assert.match(wm, /restKind: \(\) => interiorRestSpot\(interiorRestPlaceHere\(\), \{ pressedBed: _restFromBed, fireNear: interiorCamps\.fireNear\(player\.pos\) \}\)\.kind,/);   // PIN MOVED (RPT1026-MISC BED-PRESS-INDOOR): the place's law in restSession.js interiorRestSpot (rpt1026_misc_rest.test.js pins its arms)
   // SURV-TIERS: the three rolls hand the rest's asks, its kind priced by the player's tier at the open (scenes/shared.js)
   assert.match(w, /restAsks: playerEntity\.isResting \? playerEntity\.restAsks : 1,/);
   assert.match(x, /restAsks: playerEntity\.isResting \? playerEntity\.restAsks : 1,/);

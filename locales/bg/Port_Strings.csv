@@ -3022,6 +3022,8 @@ lang.offer.machine,"Това е машинен превод и все още с�
 lang.offer.no,"Не, остави английски"
 lang.offer.yes,"Да"
 legacy.court.cooled,"{name} се сковава. „Не така се пита. Друг ден.“"
+legacy.houseWaits.newborn,"Отгледай дете на {name} като свой наследник"
+legacy.houseWaits.noNewborn,"За този род не може да бъде отгледан наследник."
 legacy.rez.refused,"Царството няма да ти позволи да станеш. Смъртта ти остава."
 legacy.rez.unheard,"Царството не чу зова, който би те възкресил. Друг още може да те достигне."
 level.renown.risen,"Достигнахте Слава {level}!"

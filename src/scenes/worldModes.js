@@ -436,7 +436,7 @@ import { stampLayout, layoutStampAt, layoutLocationKeyOfMapId, layoutsMatch } fr
 // the tavern rents through, and FightersGuild.CanRest.
 import { findRentedRoom, removeExpiredRooms } from '../systems/tavern.js';
 import { canRest as guildCanRest } from '../systems/guild/guildServices.js';
-import { interiorRestPlace, restDecision, getPreventedRestMessage } from '../systems/rest/restSession.js';   // CanRest's inside-a-building bag + the scene-free open gate above it   // ROAD-B B5: GetPreventedRestMessage
+import { interiorRestPlace, restDecision, getPreventedRestMessage, interiorRestSpot } from '../systems/rest/restSession.js';   // CanRest's inside-a-building bag + the scene-free open gate above it   // ROAD-B B5: GetPreventedRestMessage   // RPT1026-MISC BED-PRESS-INDOOR: where a building's rest lies
 import { racialRestBlock } from '../systems/vampirism.js';   // V2b: the vampire's rest gate
 import { setPassiveSpecialsHost, FIGHTER_TRAINERS_FACTION } from '../systems/passiveSpecials.js';   // V2c: the sunlight/holy-place seam
 import { DaedraSummonedWindow, REFUSAL_FOE_COUNT, COVEN_FAIL_FOE_COUNT } from '../ui/daedraSummonedWindow.js';   // G7b: the summoning's own film window
@@ -12395,10 +12395,10 @@ export function createWorldModes(host) {
     say,
     onLevelUp: onInteriorLevelUp,   // AUDIT 68 S23-levelup-closure-dup: the walk and the rest level up through ONE arm
     day: () => false, inside: () => true,   // a building interior, always
-    restKind: () => { const p = interiorRestPlaceHere(); return p.houseOwned || p.isShip || !!p.room ? 'bed' : interiorCamps.fireNear(player.pos) ? 'camp' : 'rough'; },
+    restKind: () => interiorRestSpot(interiorRestPlaceHere(), { pressedBed: _restFromBed, fireNear: interiorCamps.fireNear(player.pos) }).kind,   // RPT1026-MISC BED-PRESS-INDOOR: a bed pressed is a bed's rest, as the street's and the dungeon's hosts price it
     // REST1: online every building is a rest point and CanRest decides it (the rented room, the house, the ship, the hall),
     // as the window always has; a hearth in reach names the fire
-    restPoint: () => { const p = interiorRestPlaceHere(); return { kind: p.houseOwned || p.isShip || !!p.room ? 'bed' : interiorCamps.fireNear(player.pos) ? 'camp' : 'rough', where: !(p.houseOwned || p.isShip || p.room) && interiorCamps.fireNear(player.pos) ? 'fire' : null }; },   // SURV4: a rented room, your house or your ship is a bed; a guild hall's boards are rough - AUDIT SURV-TIERS: and its hearth a camp's rest, as a brazier is outdoors (HEARTH1 warmed the room and forgot the sleep)
+    restPoint: () => interiorRestSpot(interiorRestPlaceHere(), { pressedBed: _restFromBed, fireNear: interiorCamps.fireNear(player.pos) }),   // SURV4: a rented room, your house or your ship is a bed; a guild hall's boards are rough - AUDIT SURV-TIERS: and its hearth a camp's rest, as a brazier is outdoors (HEARTH1 warmed the room and forgot the sleep); RPT1026-MISC BED-PRESS-INDOOR: and a bed pressed, a bed (restSession.js interiorRestSpot)
   });
 
   /** ESC-BOOK (2026-09-27): THIS HOST'S PAUSE BAG, one arm for both doors that mount the pause window in a building -

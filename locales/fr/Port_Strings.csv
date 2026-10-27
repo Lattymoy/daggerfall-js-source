@@ -3022,6 +3022,8 @@ lang.offer.machine,"Cette traduction est automatique et encore en cours de relec
 lang.offer.no,"Non, rester en anglais"
 lang.offer.yes,"Oui"
 legacy.court.cooled,"{name} se raidit. « Ce n'est pas ainsi qu'on me le demande. Un autre jour. »"
+legacy.houseWaits.newborn,"Élever un enfant de {name} comme ton héritier"
+legacy.houseWaits.noNewborn,"Aucun héritier ne peut être élevé pour cette maison."
 legacy.rez.refused,"Le royaume ne vous laissera pas vous relever. Votre mort demeure."
 legacy.rez.unheard,"Le royaume n’a pas entendu l’appel qui vous aurait relevé. Un autre peut encore vous atteindre."
 level.renown.risen,"Vous avez atteint la Renommée {level} !"

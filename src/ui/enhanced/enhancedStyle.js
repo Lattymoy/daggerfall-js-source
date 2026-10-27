@@ -3222,6 +3222,17 @@ html.plus-pad-prompts-visible .px-over > .px-stage.px-timersstage > .px-win { ma
   .talk-say { grid-template-columns: auto 1fr; }
   .talk-say .talk-q { grid-column: 1 / -1; }
 }
+/* RPT1026-MISC TALK-SIDEWAYS (a private report from a phone's browser: the talk window ran off the screen and could not
+   be used): A PHONE ON ITS SIDE GIVES THE PANEL THE SCREEN'S HEIGHT. The panel was 52dvh - two hundred pixels
+   of a phone's 390 - and the head, the foot and the topics' two strips (the modes, the categories) took all of it: the
+   topic list stood 12 pixels tall, drawn past its column under the foot, and nothing could be asked. On a short screen
+   the panel stands the height less a margin, and the columns stay side by side however narrow (stacked, the strips
+   alone outgrew the topics' half). */
+@media (max-height: 500px) {
+  .talk-shell .talk-panel { height: calc(100dvh - 12px); bottom: 6px; }
+  .talk-main { grid-template-columns: 1fr minmax(200px, 40%); grid-template-rows: minmax(0, 1fr); }
+  .talk-topics { border-top: 0; border-left: 2px solid rgba(125,116,96,0.45); }
+}
 /* ── PX30: THE GAMEPLAY HUD ─────────────────────────────────────
    Mac's reference is ESO's Clean UI - a compass across the top, the
    target named beneath it, three vitals along the bottom and the

@@ -3022,6 +3022,8 @@ lang.offer.machine,"Diese Übersetzung ist maschinell erstellt und wird noch gep
 lang.offer.no,"Nein, Englisch behalten"
 lang.offer.yes,"Ja"
 legacy.court.cooled,"{name} erstarrt. „So fragt man mich nicht. Ein andermal.“"
+legacy.houseWaits.newborn,"Ein Kind von {name} als deinen Erben aufziehen"
+legacy.houseWaits.noNewborn,"Für dieses Haus kann kein Erbe aufgezogen werden."
 legacy.rez.refused,"Das Reich lässt dich nicht auferstehen. Dein Tod bleibt bestehen."
 legacy.rez.unheard,"Das Reich hat den Ruf nicht gehört, der dich erwecken würde. Ein anderer kann dich noch erreichen."
 level.renown.risen,"Du bist zu Ruhm {level} aufgestiegen!"

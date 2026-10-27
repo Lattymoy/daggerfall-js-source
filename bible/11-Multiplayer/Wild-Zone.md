@@ -687,6 +687,15 @@ half health", "everyone in the zone should see the same ... that the big giant i
   `wildGiants.js:"export const WILD_GIANT_LOW_SHARE"`), and a giant stood in the world stands on the flattest open
   spot within 160 m of its place - no slope over ~22 degrees, no crest, never the water, never outside the zone
   (`giantFieldSpot`, `world.js:"const giantFieldSpot"`).
+- GIANT-ROCK (RPT1026-MISC, 2026-10-26, a private report, the second sighting: giants standing inside the rocks): the field was the
+  height map's alone, and the mountains' rocks (World of Daggerfall's landform pieces, a mesh each in the world collider)
+  stand on flat ground as often as not - a Greater Giant, four times a man, and the ten its call brings were stood inside
+  them. A spot is asked of the collider now: refused where a solid's face lies within `GIANT_CLEAR_R` (2.5 m) of the
+  giant's lower body (`GIANT_CLEAR_LIFT`, 3 m over its feet - the collider's open-space test, `sphereOverlaps`, as a foe
+  placed freely is), or where that body is inside a solid whose faces are all farther off (`insideSolid` - a rock scaled
+  up holds a giant with no face near) - `wildGiants.js:"export function giantGroundBlocked"`, asked by `giantFieldSpot`
+  and by the call's ring (`world.js:"const greaterGiantCall"`). Pinned by `test/systems/wild/rpt1026_misc_giants.test.js`
+  (2, the real Collider with a rock filed as the pixel build files one); `tools/mutants/rpt1026_misc.json` (3).
 - GIANT-LEASH (the owner: "giant should not be able to walk out of the zone"): every waypoint is one it can walk to in
   a straight line inside the zone (GIANT-LEASH2 - a bay in the border is walked round, never across), a line that cuts
   the edge holds it at the nearer waypoint, and a giant stood in the world that steps over the edge is put back where

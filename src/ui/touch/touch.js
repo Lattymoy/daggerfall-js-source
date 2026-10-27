@@ -124,6 +124,19 @@ let _touchSpire = () => null;
 export function setTouchSpire(fn) { _touchSpire = typeof fn === 'function' ? fn : () => null; }
 const touchSpire = () => { try { return _touchSpire() ?? null; } catch { return null; } };
 
+/**
+ * RPT1026-MISC TOUCH-FIELD (a private report from a phone: the Bank's amount could not be typed, while the map's name field
+ * could): THE FIELD A FINGER PRESSES RAISES THE KEYBOARD. A classic window's
+ * typed field (the Bank's amount; the spell and item makers' names) is the window's own keys, never an element a phone
+ * can focus - the map's name field is a real input, which is why that one worked. The layer's own text entry (the nav
+ * row's "abc", TI2) sends what is typed there to the window as its characters; a ported window's field opens it
+ * (ui/enhanced/enhancedPort.js, the field's press), `numeric` with the number pad. Answers whether an entry is up - false
+ * off a touch screen, where the window's keys are the keyboard's.
+ * @param {{ numeric?: boolean }} [o]
+ */
+let _openEntry = null;
+export const openTouchEntry = (o = {}) => { try { return _openEntry?.(o) === true; } catch { return false; } };
+
 // TI2: the safe area. A phone's notch, rounded corners and home bar
 // sit INSIDE the viewport (play/index.html asks for viewport-fit=cover
 // so the canvas runs under them); every control is inset by the
@@ -476,13 +489,14 @@ export function attachTouch(canvas, hooks = {}) {
   let entry = null;
   const sendText = (text) => { for (const ch of text) window.dispatchEvent(new KeyboardEvent('keydown', { key: ch, code: '', bubbles: true })); };
   function closeEntry() { if (entry) { entry.remove(); entry = null; } }
-  function openEntry() {
-    if (entry) return;
+  function openEntry({ numeric = false } = {}) {
+    if (entry) { entry.focus?.(); return true; }
     entry = document.createElement('input');
     entry.type = 'text';
-    entry.autocapitalize = 'words';
+    entry.autocapitalize = numeric ? 'off' : 'words';
     entry.autocomplete = 'off';
-    entry.placeholder = 'name';
+    if (numeric) entry.inputMode = 'numeric';   // RPT1026-MISC TOUCH-FIELD: an amount gets the number pad
+    entry.placeholder = numeric ? '0' : 'name';
     entry.style.cssText = `position:absolute;left:50%;${edge('top', 76)};transform:translateX(-50%);width:min(70vw,360px);height:48px;padding:0 16px;box-sizing:border-box;${entryFace};color:#eee;background:rgba(14,16,19,.85);border:1px solid rgba(255,255,255,.3);border-radius:14px;outline:none;pointer-events:auto`;
     entry.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') { const t = entry.value; closeEntry(); if (t) sendText(t); }
@@ -490,9 +504,11 @@ export function attachTouch(canvas, hooks = {}) {
     });
     ui.appendChild(entry);
     entry.focus?.();
+    return true;
   }
+  _openEntry = openEntry;   // RPT1026-MISC TOUCH-FIELD: the layer's entry, for a window's field to raise
   {
-    const b = button('abc', edge('right', 312), edge('top', 16), 44, () => openEntry());
+    const b = button('abc', edge('right', 312), edge('top', 16), 44, () => { openEntry(); });
     nav.appendChild(b);
     const ok = button('✓', edge('right', 362), edge('top', 16), 44, () => { if (!entry) return; const t = entry.value; closeEntry(); if (t) sendText(t); });
     nav.appendChild(ok);
@@ -720,6 +736,6 @@ export function attachTouch(canvas, hooks = {}) {
     el: ui,
     setLockDot,
     axes: () => (stickId !== null && getPref('touchAnalogStick') ? { x: stickX, y: stickY } : null),   // TI2
-    dispose() { clearInterval(navTimer); setGyro(false); ui.remove(); },
+    dispose() { clearInterval(navTimer); setGyro(false); ui.remove(); if (_openEntry === openEntry) _openEntry = null; },   // RPT1026-MISC TOUCH-FIELD: a layer gone raises no entry
   };
 }
