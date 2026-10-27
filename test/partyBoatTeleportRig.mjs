@@ -12,6 +12,7 @@ import { colliderPoses, invertAffine, boxColliderTriangles, raycastColliders, BU
 import { quatAngleAxis } from '../src/world/quat.js';
 import { Collider } from '../src/player/collider.js';
 import { PlayerMotor, FIXED_DT, CAPSULE_HEIGHT } from '../src/player/motor.js';
+import { hullsStood, hullPassesMyDeck } from '../src/scenes/comeSailAway/peerHulls.js';   // AUDIT FB1026d D1: the deck's hulls, as world.js reads them
 
 const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const WORLD = src('src/scenes/world.js');
@@ -57,15 +58,15 @@ function liftWorld(s) {
   const body = `
     let { colliderPoses, invertAffine, boxColliderTriangles, csaModeCollider, csaAboard, csaColliderBoats, csaColliderMesh, _csaBoatIds, _csaBoatSerial,
           csa, csaPeers, csaOn, online, walkMode, playerSpawned, _teleporting, _traveling, modes, playerEntity, player, cam, CAPSULE_HEIGHT, _csaMovedPlayer,
-          surfaceAt, csaPixelAt, state, deepWaters } = s;
+          surfaceAt, csaPixelAt, state, deepWaters, hullsStood, hullPassesMyDeck, csaRuntime } = s;
     ${cutLine(WORLD, '  const _csaBuckets = new Map();')}${cutLine(WORLD, '  const csaBoatId = (boat) =>')}
     ${cut(WORLD, '  const csaShapeOf = (c) =>', ');\n')}${cutLine(WORLD, '  const CSA_RIGID_EPS =')}${cut(WORLD, '  function csaCarry(b, m) {')}
-    ${cut(WORLD, '  function csaSyncColliders() {')}${cutLine(WORLD, '  const _csaSlab = [0, 0, 0]')}
+    ${cutLine(WORLD, '  const csaBoatUnderMe = () =>')}${cut(WORLD, '  function csaSyncColliders() {')}${cutLine(WORLD, '  const _csaSlab = [0, 0, 0]')}
     ${cut(WORLD, '  function csaSphereCastAll(')}
     ${cutLine(WORLD, '  let _csaPeersPosed = false;')}${cutLine(WORLD, '  const deckMayCarry = ')}${cutLine(WORLD, '  const deckGround = ')}${cutLine(WORLD, '  const deckCarry = ')}${cut(WORLD, '  function csaPeersFrame(dt) {')}
     return { sync: csaSyncColliders, sweep: csaSphereCastAll, peersFrame: csaPeersFrame, rearm: () => { _csaPeersPosed = false; }, buckets: _csaBuckets, boatId: csaBoatId };`;
   // eslint-disable-next-line no-new-func
-  return new Function('s', body)(s);
+  return new Function('s', body)({ hullsStood, hullPassesMyDeck, ...s });
 }
 
 /**

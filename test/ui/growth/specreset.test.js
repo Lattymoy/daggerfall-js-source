@@ -50,6 +50,9 @@ function hero({ primary, major, minor, mastered = [] }) {
  *  and Short Blade minor - so with the two primaries and two majors mastered, the one minor slot left still reaches a
  *  second path of each family (Restoration and Mysticism; Long Blade and Short Blade). */
 const spellsword = (o = {}) => hero({ primary: [LB, AR, DES], major: [RES, ALT, AX], minor: [MYS, ILL, SB], ...o });
+/** MASTER-THREE (Field-Bugs-2026-10-26d): three primary masteries, so a spellsword whose every slot can be spent away
+ *  from the schools takes Axe as its third primary and Destruction as a major. */
+const swapped = { primary: [LB, AR, AX], major: [RES, ALT, DES], minor: [MYS, ILL, SB] };
 const letter = (value) => letterOfCredit(value);   // the game's own maker (inventory.js)
 const family = (m, id) => m.families.find((f) => f.id === id);
 /** A spellsword holding the Warden (Restoration and Alteration) and the Ranger (Long Blade and Archery), `gold` coins. */
@@ -253,7 +256,8 @@ test('SPEC-RESET THE GUIDE\'S MODEL: a held path\'s Reset - none with nothing he
   assert.equal(family(specGuideModel(held(250000, { mastered: [LB, AR, RES, ALT, MYS] })), 'martial').reset.refusal,
     'No other martial path can open for you, so a reset would only let you choose Ranger again.');
   // AUDIT SPEC-RESET L5-2: a skill at 100 with a slot left ('ready', a Master Skills press away) is within reach
-  const ready = hero({ primary: [LB, AR, DES], major: [RES, ALT, AX], minor: [MYS, SB, HH], mastered: [LB, AR, RES, ALT] });
+  // MASTER-THREE (Field-Bugs-2026-10-26d): every primary and major slot spent, so Mysticism's 'ready' is the only way on
+  const ready = hero({ primary: [LB, AR, AX], major: [RES, ALT, DES], minor: [MYS, SB, HH], mastered: [LB, AR, AX, RES, ALT] });
   assert.equal(AP.choosePath(ready, 'warden').ok, true);
   ready.skills[MYS] = 100; ready.goldPieces = 250000; ready.items = [];
   const rr = family(specGuideModel(ready), 'arcane').reset;
@@ -261,7 +265,7 @@ test('SPEC-RESET THE GUIDE\'S MODEL: a held path\'s Reset - none with nothing he
   assert.deepEqual(rr.rows().slice(-2), ['Open to you after the reset: Warden.', 'More paths unlock as you master more skills.']);
   // AUDIT SPEC-RESET L5-5, then L3-1: the reset that can never help says so first, short of the gold too - else the
   // player saves 200,000 for it
-  const never = held(5, { mastered: [LB, AR, RES, ALT, SB] });
+  const never = held(5, { ...swapped, mastered: [LB, AR, AX, RES, ALT, SB] });
   assert.equal(family(specGuideModel(never), 'arcane').reset.refusal, 'No other arcane path can open for you, so a reset would only let you choose Warden again.');
   assert.equal(family(specGuideModel(held(5)), 'arcane').reset.refusal, 'Resetting costs 200,000 gold. You have 5.', 'a reset that can help: the gold');
   // AUDIT SPEC-RESET L3-1: a path the class can never master, or whose slots are spent, is never 'closed' - a reset opens
@@ -273,12 +277,12 @@ test('SPEC-RESET THE GUIDE\'S MODEL: a held path\'s Reset - none with nothing he
   assert.equal(st(never, 'arcane', minors), 'slots', 'two minor schools, the minor slot spent');
   assert.equal(st(held(5), 'arcane', AP.PATHS.find((p) => p.schools.includes(RES) && p.schools.includes(MYS)).id), 'closed', 'within reach after a reset: closed');
   // three schools mastered (every slot spent): the other two paths open at once, and none left to reach
-  const three = held(250000, { mastered: [LB, AR, RES, ALT, MYS] });
+  const three = held(250000, { ...swapped, mastered: [LB, AR, AX, RES, ALT, MYS] });
   assert.equal(family(specGuideModel(three), 'arcane').reset.rows().at(-1), 'Open to you after the reset: Riftwalker, Warden, Necromancer.');
   assert.equal(three.arcanePath, 'warden', 'the model read it with nothing held, and wrote nothing');
   // the last slot spent on Short Blade: no other school can be mastered, so an arcane reset buys back the same path -
   // refused, and says so; the martial family, its third weapon mastered, may reset
-  const spent = held(250000, { mastered: [LB, AR, RES, ALT, SB] });
+  const spent = held(250000, { ...swapped, mastered: [LB, AR, AX, RES, ALT, SB] });
   assert.equal(family(specGuideModel(spent), 'arcane').reset.refusal, 'No other arcane path can open for you, so a reset would only let you choose Warden again.');
   assert.equal(family(specGuideModel(spent), 'martial').reset.refusal, null);
   assert.equal(resetSpec(spent, 'arcane').ok, true, 'the guard is the guide\'s: the law itself pays and clears');

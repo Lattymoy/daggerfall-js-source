@@ -60,7 +60,20 @@ own combat skills would be a tuning slice, not a fix". A skill affix's skill is 
 |---|---|---|---|
 | a weapon | its own weapon skill (the skill that swings it: a bow's Archery, a staff's Blunt Weapon) | the strike's kin: Critical Strike, Backstabbing, Dodging | any skill |
 | armour | - | the body's twelve: the seven ways of fighting (the six weapon skills, Critical Strike) and Dodging, Running, Jumping, Climbing, Swimming | any skill |
-| jewellery | - | the mind's thirteen: the six schools, Etiquette, Streetwise, Mercantile, Lockpicking, Pickpocket, Stealth, Medical | any skill |
+| jewellery | - | the mind's thirteen: the six schools, Etiquette, Streetwise, Mercantile, Lockpicking, Pickpocket, Stealth, Medical - and, since JEWEL-KIN, the bare hand's two: Hand-to-Hand and Critical Strike | any skill |
+
+JEWEL-KIN (2026-10-26, Discord #feature-feedback "jewelcrafting, roll chances not equal (h2h, critical)": "i crafted
+around 100 rare rings ... and h2h or critical not roll on them"; `01-Overview/bugs/Field-Bugs-2026-10-26d.md`): Hand-to-Hand
+is no weapon's own and Critical Strike a weapon's strike kin, but on a ring each was one of the open share's
+thirty-five - about 0.43% of its skill lines, one in 230, against a mind skill's 7% (AUDIT FB1026d II D4/D5). Jewellery's kin is fifteen now (`lootRarity.js` JEWEL_KIN), each
+about one skill line in sixteen. A crafted piece re-mints from its record, so a record before MINT_V_JEWEL_KIN (4,
+`net/productRecord.js`; ARMOR-LEAN's armour lean is 3) keeps the mind's thirteen (`skillKin`'s `fists` false) and a ring already made keeps its lines.
+A craft's record is stamped with the version its client mints, never past the service's (craftMintVersion; a client
+that names none, or names one below MINT_V_JEWEL_KIN, MINT_V_LINES - AUDIT FB1026d C3 and II D1), so a ring is minted
+alike by its maker and by every reader of this build or later; a reader still on a build from before reads a record of
+4 by its own last law, 3, and sees other lines on a new ring until it updates (AUDIT FB1026d II D2). A client that
+names none - one on the release before - is stamped 2, so its armour leaves ARMOR-LEAN's family lean until it updates
+(II D3): 2 is the newest law every build reads alike.
 
 A WEIGHTING, NEVER A FENCE: a language was a skill affix 9 times in 35; now about 1 in 30. A step with no free skill
 (a kind with a param never repeats one on a piece) gives way to the next, so the draw never comes back empty. The

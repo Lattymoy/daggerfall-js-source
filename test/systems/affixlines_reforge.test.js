@@ -19,7 +19,7 @@ import { setPref, _resetForTests } from '../../src/systems/uiPrefs.js';
 import * as LR from '../../src/systems/loot/lootRarity.js';
 import * as RF from '../../src/systems/reforge.js';
 import { reforgeEssence } from '../../src/net/temperLaw.js';
-import { MINT_VERSION, MINT_V_LAST_PASS, MINT_V_LINES, MINT_V_ARMOR_LEAN } from '../../src/net/productRecord.js';
+import { MINT_VERSION, MINT_V_LAST_PASS, MINT_V_LINES, MINT_V_ARMOR_LEAN, MINT_V_JEWEL_KIN } from '../../src/net/productRecord.js';
 import { mintPiece, asMinted, reforgeItem, essenceReforgeRefusal } from '../../src/systems/smithItems.js';
 import { RECIPES } from '../../src/net/recipeLaw.js';
 import { mintCondition } from '../../src/systems/item/itemTemplates.js';
@@ -129,7 +129,7 @@ test('AFFIX-LINES: one roll a pick, as `pick` took (LOOT1) - the roll\'s place l
 });
 
 test('AFFIX-LINES: the mint version - a record of 0 or 1 mints the old law\'s piece, one of 2 the new; a loot door the new; the old law\'s Rare names both parts', () => {
-  assert.deepEqual([MINT_V_LAST_PASS, MINT_V_LINES, MINT_V_ARMOR_LEAN, MINT_VERSION], [1, 2, 3, 3], 'the craft stamps the lines\' law and, ARMOR-LEAN, armour\'s family lean');
+  assert.deepEqual([MINT_V_LAST_PASS, MINT_V_LINES, MINT_V_ARMOR_LEAN, MINT_V_JEWEL_KIN, MINT_VERSION], [1, 2, 3, 4, 4], 'the craft stamps the lines\' law and, ARMOR-LEAN, armour\'s family lean - PIN MOVED (JEWEL-KIN, Field-Bugs-2026-10-26d): and the jewel kin\'s, 4 (3 on its branch, renumbered past ARMOR-LEAN at the merge)');
   const weapons = RECIPES.filter((r) => ['weapon', 'plate', 'shield'].includes(r.kind));
   let moved = 0;
   for (let i = 0; i < 300; i++) {

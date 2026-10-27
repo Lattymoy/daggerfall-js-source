@@ -37,6 +37,7 @@ import { SKILLS, SKILL_NAMES, skillValue, skillValueText, getSkillRecentlyIncrea
 import { applyLevelUp, bonusPoolFor, LEVELUP_SKILL_SUM_PER_LEVEL } from '../systems/advancement.js';
 import { refreshOnlineLayer } from '../systems/renownLayer.js';   // AUDIT LEVEL-EVEN L2-2: the rollout's points reach the online floor
 import { usesVirtueLeveling, levelBarProgress, LEVELUP_TOTAL } from '../systems/oblivionLeveling.js';   // ORL1: whose law levels this character
+import { LEVEL_CAP, atLevelCap, releaseCapLatch } from '../systems/levelCap.js';   // LEVEL-45: the Level box at the cap
 import { ActionTextBox } from './actionText.js';   // the mustDistributeBonusPoints refusal, ClickAnywhereToClose
 import { OGHMA_BONUS_POOL } from '../systems/artifactEffects.js';   // AUDIT 39: the sheet's oghmaBonusPool (:44)
 import { drawText, measureText } from './text.js';
@@ -301,6 +302,7 @@ export const NO_AFFILIATIONS_TEXT_ID = 19;
  *  levels nothing, so its fraction was a number about a rule they are
  *  not on - the Discord's "93%" here beside "12/100" on the Ascension. */
 export function levelProgressPercent(entity) {
+  if (atLevelCap(entity)) return 100;   // LEVEL-45 (systems/levelCap.js): no next level - the box reads it whole
   if (usesVirtueLeveling(entity)) return Math.trunc((levelBarProgress(entity) * 100) / LEVELUP_TOTAL);
   const current = Math.fround(((entity?.currentLevelUpSkillSum ?? 0)
     - (entity?.startingLevelUpSkillSum ?? 0) + 28) / LEVELUP_SKILL_SUM_PER_LEVEL);
@@ -414,6 +416,7 @@ export class CharSheet {
    *  PlayerEntity.Stats at CLOSE (:448), not at mount. */
   _mountStatsRollout(rolls) {
     const e = this.entity;
+    releaseCapLatch(e);   // LEVEL-45 (AUDIT FB1026d C2): no pool handed out with no level to go with it
     if (!e?.readyToLevelUp) return;
     // ORL1: ...and the sheet does NOT level a character who levels by
     // the mod's law. ui/charSheetDoor.js hands that character
@@ -498,7 +501,9 @@ export class CharSheet {
   /** LevelButton_OnMouseClick (:779-786). */
   _showLevel() {
     audio.playOneShot(SOUND.ButtonClick, 1);
-    this.child = new ActionTextBox([formatText(localizedText('levelProgress', 'Progress made to the next level: {0}%'), levelProgressPercent(this.entity))]);
+    // LEVEL-45 (systems/levelCap.js): at the cap there is no next level to measure - the box says the cap
+    this.child = new ActionTextBox([atLevelCap(this.entity) ? t('charsheet.levelCap', 'The highest level is {level, number}: no more levels are gained.', { level: LEVEL_CAP })
+      : formatText(localizedText('levelProgress', 'Progress made to the next level: {0}%'), levelProgressPercent(this.entity))]);
   }
 
   /** HealthButton_OnMouseClick (:801-806) -> CreateHealthStatusBox. */
@@ -883,7 +888,7 @@ export class CharSheet {
     }
     // SOFTCAP3: THE MASTER SKILLS ROW - its state and its key, in the dialog's highlight gold; a click on it or M
     // asks in DFU's Yes/No box (the rest of the plate still closes on a click, as ShowSkillsDialog's box does)
-    // SOFTCAP4: on a CAREER page, with Master Skills in force, the row is that group's masteries (2/2/1)
+    // SOFTCAP4: on a CAREER page, with Master Skills in force, the row is that group's masteries (3/2/1 - MASTER-THREE)
     const my = y + 13 + lines * 9;
     const grp = ['primary', 'major', 'minor'][this.page - 1] ?? null;
     const slots = grp && masterSkillsActive(e) ? masterySlots(e, grp) : null;

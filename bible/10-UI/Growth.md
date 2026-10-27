@@ -359,7 +359,7 @@ The Discord's #suggestions, 2026-10-19 (Brother Frank: *"I'd very much like it i
 one weapon skill"*), through Mac; asked, Mac: *"Paid skill swap"*. Record: `01-Overview/bugs/Field-Bugs-2026-10-19b.md`.
 
 - **The law** (`systems/skillSwap.js`): one class skill the character has not mastered out, one miscellaneous skill in,
-  in the same group (the 2/2/1 slots stand); a mastered skill never leaves; the values stay; the career becomes the
+  in the same group (the 3/2/1 slots stand); a mastered skill never leaves; the values stay; the career becomes the
   character's own copy, saved whole and marked `swapped`, so an heir keeps it (`legacy/family.js` careerFields, AUDIT
   SUGGESTIONS-1019 L5-4) and its household still wears the class. The level and the progress to the next stand, and a
   skill's training leaves with it (SWAP-CYCLE, `01-Overview/bugs/Field-Bugs-2026-10-20g.md`): the stored current sum is

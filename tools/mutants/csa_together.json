@@ -447,8 +447,8 @@
   {
     "name": "CSAK-host-deck-not-mine",
     "file": "src/scenes/world.js",
-    "old": "for (const boat of peers.length ? [...csaColliderBoats(), ...peers] : csaColliderBoats()) {",
-    "new": "for (const boat of csaColliderBoats()) {",
+    "old": "for (const boat of hullsStood(peers.length ? [...csaColliderBoats(), ...peers] : csaColliderBoats(),",
+    "new": "for (const boat of hullsStood(csaColliderBoats(),",
     "tests": [
       "test/systems/csa_together.test.js"
     ]

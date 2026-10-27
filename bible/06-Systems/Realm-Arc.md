@@ -246,7 +246,7 @@ last good checkpoint then stands, and the character is flagged for review.
 - **Caps (section 5):**
   - attributes 100;
   - skills at the online cap, item bonuses included;
-  - the online level cap (**OPEN**);
+  - the online level cap (**ANSWERED**: 45 on every lane, LEVEL-45 - `systems/levelCap.js`, FIELD BUGS 2026-10-26d; AUDIT FB1026d II C4);
   - online class rules;
   - item values within their template for their material;
   - no forbidden items (Test Room or dev items);
@@ -514,7 +514,7 @@ Mac, 2026-09-29, after HOUSE-LOSS: "I want people to get their stuff back" (REST
    - (b) a one-time migration through customs for characters that have played online (recommended);
    - (c) any offline character may move online through customs, at any time.
 4. **Custom classes online:** rebalanced points, a curated list, or standard classes only.
-5. **The numbers:** the online level cap, the customs allowance, the vendor spread, the trade tax, the upkeep and the
+5. **The numbers:** the online level cap (45 - LEVEL-45, FIELD BUGS 2026-10-26d), the customs allowance, the vendor spread, the trade tax, the upkeep and the
    death fee.
 
 Mac, 2026-09-30, answering AUDIT RESCUE-SAVE P1 (an edited device copy is a way into the realm): "1" - **accept it for
