@@ -54,7 +54,7 @@ test('IC-GRAND OFF THE PAGE\'S THREAD - a slice\'s pieces in the order its build
   assert.deepEqual(near, [...own.map(([r, c]) => ({ kind: 'block', name: imperialOwnName(r, c) })), ...parts, ...own.map(([r, c]) => ({ kind: 'model', id: imperialFabricModelId(r, c) }))]);
   const farCells = [];
   for (let i = 0; i < 64; i++) { const pr = 7 - Math.floor(i / 8), pc = i % 8; if (!['L', 'O', IMPERIAL_ARENA_CODE].includes(plan[pr][pc])) farCells.push([sy * 8 + pr, sx * 8 + pc]); }
-  assert.ok(farCells.length > own.length, 'Daggerfall\'s cells too');
+  assert.deepEqual(farCells, own, 'the city\'s own cells alone');   // PIN MOVED (IC-PROPS, 2026-10-27): no block of Daggerfall's among them since (world/imperialCity.js cellOf) - Daggerfall's cells stood far only
   assert.deepEqual(far.filter((w) => w.kind === 'block').map((w) => w.name), farCells.map(([r, c]) => imperialFarName(r, c)), 'every cell\'s far view but the lake\'s, the open shore\'s and the arena\'s');
   assert.deepEqual(far.filter((w) => w.kind === 'model'), [...parts, { kind: 'model', id: imperialSkylineId(MARKET) }], 'the parts, then the skyline once, on its carrier');
 });

@@ -267,7 +267,7 @@ export const YARD_LAW_STEPS = Object.freeze([{}, { edge: true, byExit: true }, {
 const lawSite = (g, kind) => {
   for (const [i, o] of YARD_LAW_STEPS.entries()) {
     if (i === 1 && kind === 'stable') continue;   // the Stable's first step is already by an exit, its edge land with it
-    const s = yardSite(g, kind, { ...(kind === 'stable' ? { edge: true, byExit: true } : {}), ...o });
+    const s = yardSite(g, kind, o);   // the Stable's edge and exit its own (yardSite's defaults)
     if (s) return s;
   }
   return null;

@@ -7556,8 +7556,8 @@ export function createWorldModes(host) {
       // stands and lists them (it drew none, and the click fell through to HOME-OFFER's box at every house)
       const houseVerbs = homeDoorVerbs(bd, home);
       _doorText = staticDoorName('building', {
-        displayName: home ? homeDoorTitle(home, questSiteHere(bd) && db.isOverrideName ? db.displayName : null) : (homeDoorName(shownBuildingName(db, bd.name), !!houseVerbs, bd.buildingType) || (bd.townName ?? currentLocationName())),   // IC-PROPS: a nameless house "Residence", as DFU discovers it (PlayerGPS.cs:1306-1309), and a building with no name of its own (a ship's deck) its place's; EMPIRE-BANK: a bank's name now; QUEST-RESIDENCE: a quest's home its name
-        locationName: bd.townName ?? currentLocationName(),   // IC-PROPS: the door's own town (its walls' "City Walls")
+        displayName: home ? homeDoorTitle(home, questSiteHere(bd) && db.isOverrideName ? db.displayName : null) : homeDoorName(shownBuildingName(db, bd.name), !!houseVerbs, bd.buildingType),   // IC-PROPS: a nameless house DFU's "Residence"; EMPIRE-BANK: a bank's name now; QUEST-RESIDENCE: a quest's home its name
+        locationName: bd.townName ?? currentLocationName(),   // IC-PROPS: the door's own town
         buildingType: bd.buildingType,
         unlocked: home ? true : resolveBuildingUnlocked(bd),
         quality: bd.quality ?? 0,

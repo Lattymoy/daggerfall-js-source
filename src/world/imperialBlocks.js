@@ -6,11 +6,11 @@
 // the models they place (world/customModels.js registerCustomModelFamily: a cell's fabric, a slice's skyline).
 //
 // NEAR AND FAR (the owner, at 20 km: "only near blocks get full detail, with a far LOD/impostor for the rest of the city"):
-// a slice of the city within NEAR_RING pixels of the player's is built near - Daggerfall's blocks of its trade with their
-// houses and their people, every own block's fabric whole and solid (world/imperialFabricModels.js fabricCellModel), its
+// a slice of the city within NEAR_RING pixels of the player's is built near - every own block's fabric whole and solid
+// (world/imperialFabricModels.js fabricCellModel; IC-PROPS: no block of Daggerfall's trade among them since 2026-10-27), its
 // walkers' grid and its trees; every other slice the stream holds is built far (imperialFarView) - its ground's stone and
-// grass and water, its landmarks' parts, and its skyline (skylineModel: its blocks as masses, Daggerfall's blocks as
-// rings of houses), no person, no tree but the lawns', no door, nothing solid but its landmarks. The location the index
+// grass and water, its landmarks' parts, and its skyline (skylineModel: its blocks as masses), no person, no tree but the
+// lawns', no door, nothing solid but its landmarks. The location the index
 // holds is the near one always (its buildings, its quests, its map); the build reads the view its distance wants, and the
 // stream builds a slice again when the player comes near it or leaves it (scenes/tamrielSweepsHost.js
 // sweepImperialViews, with a ring of slack so a walk along a pixel's edge does not build it again and again).
@@ -21,7 +21,7 @@
 import { BLOCK_M } from './spawnedDungeons.js';
 import {
   IMPERIAL, IMPERIAL_CELLS, IMPERIAL_SPAN, imperialCode, imperialCodeCell, imperialSlicePlan, imperialTile, imperialClosed, imperialTree,
-  imperialClassic, imperialDistrictAt, IMPERIAL_TREES, IMPERIAL_SLICE_PARTS, imperialFarPartId, IMPERIAL_ARENA_CODE, imperialCellRect, rectRadii, imperialLand,
+  imperialDistrictAt, IMPERIAL_TREES, IMPERIAL_SLICE_PARTS, imperialFarPartId, IMPERIAL_ARENA_CODE, imperialCellRect, rectRadii, imperialLand,
   imperialRoadsNear, imperialRoadAt, imperialGeo, pointSeg, imperialBearing,
 } from './imperialCity.js';
 import { fabricCell, fabricGroundIn, fabricTileOf, fabricClosedOf, fabricTreeOf, GROUND } from './imperialFabric.js';
@@ -145,16 +145,15 @@ export function imperialOwnLaws(r, c, footprint = null) {
     },
   };
 }
-/** A cell's far laws: its tile (the landmarks', else the district's stone or the park's grass, a classic cell's stone) and
- *  the lawns' trees - nothing closed (no walker stands in a far slice). */
+/** A cell's far laws: its tile (the landmarks', else the district's stone or the park's grass) and the lawns' trees -
+ *  nothing closed (no walker stands in a far slice). */
 export function imperialFarLaws(r, c) {
-  const plain = plainCell(r, c), classic = imperialClassic(imperialSlicePlan(sliceOfCell(r, c))[r % 8][c % 8]);
+  const plain = plainCell(r, c);
   const [x0, z0, x1, z1] = imperialCellRect(r, c), roads = plain ? imperialRoadsNear(x0, z0, x1, z1, 1) : null;
   return {
     tile: (x, z) => {
       const t = plain ? (roads && imperialRoadAt(x, z, 0, roads) ? 3 : -1) : imperialTile(x, z);
       if (t >= 0) return t;
-      if (classic) return 3;
       const d = imperialDistrictAt(x, z);
       return d === 'Arboretum' || d === 'City Isle' ? 2 : 3;
     },
@@ -237,7 +236,7 @@ export function imperialBlockJson(name, deps) {
   if (!b) return null;
   const { r, c, kind } = b;
   const at = [(HALF - c) * B, (r + 1 - HALF) * B];   // the anchor in the block's own metres
-  const anchorOf = (x, z) => [(c - HALF) * B + x, (r + 1 - HALF) * B - z];
+  const anchorOf = (x, z) => imperialAnchorOf(r, c, x, z);
   const rimmed = (laws) => ({
     tile: (x, z) => (deps.rim(r, c, x, z) ? deps.noGround : laws.tile(...anchorOf(x, z))),
     closed: (x, z) => deps.rim(r, c, x, z) || laws.closed(...anchorOf(x, z)),
@@ -263,9 +262,13 @@ export function imperialBlockJson(name, deps) {
   return deps.portBlockJson(name, { ...rimmed(laws), models, flats: [...markers.map(([dx, dz]) => deps.startMarkerAt(at[0] + dx, at[1] - dz)), ...lamps] });
 }
 
-/** A cell's block name in the view a slice is built in: near - its own block, Daggerfall's of its kind (`classic(kind)`,
- *  the location's own pick), the arena's, the lake's; far - its far view for every cell but the lake, the open shore and
- *  the arena. `near` the location's own name for the cell. */
+/** A POINT OF CELL (r, c)'s OWN BLOCK (its own metres: x east, z north from its south-west) in the anchor's metres - the one
+ *  sum every block's laws are asked through (imperialBlockJson), so a reader of them asks the same point to the last bit
+ *  (IC-PROPS: world/imperialYards.js - a law hashed on a metre's floor reads a tile's middle on its edge otherwise). */
+export const imperialAnchorOf = (r, c, x, z) => [(c - HALF) * B + x, (r + 1 - HALF) * B - z];
+/** A cell's block name in the view a slice is built in: near - its own block, the arena's, the lake's (IC-PROPS: no block of
+ *  Daggerfall's kinds since 2026-10-27 - world/imperialCity.js cellOf); far - its far view for every cell but the lake, the
+ *  open shore and the arena. `near` the location's own name for the cell. */
 export function imperialViewName(r, c, near, far) {
   if (!far) return near;
   const cell = imperialSlicePlan(sliceOfCell(r, c))[r % 8][c % 8];

@@ -18,12 +18,22 @@
 // then the Wagon Yard, then the joinery on what is left (YARD_GAP_M apart). Eighteen in all; a slice whose ground holds
 // none of them stands none.
 //
+// THE GROUND IS THE BLOCKS' OWN, asked as they are built (world/imperialBlocks.js imperialOwnLaws through imperialAnchorOf,
+// at world/tamrielCapitals.js's tile and automap middles - portBlockJson's): a cell open where its automap byte is, on its
+// tile's grass; and each of the isle's trees where the town stands it - Daggerfall's ground scenery at its tile's
+// north-west corner (world/rmbFlats.js collectBlockFlats; DFU's RMB nature flat), its cells closed as the yards' ground
+// closes a flat's (merchantYardSites.js yardGround, FLAT_CLEAR_M) - so every yard named here stands on the ground the host
+// places it on (merchantYardSites.js fixedSite: a site over a closed cell stands none; one did, at the Elven Gardens' gate,
+// under a tree the old reading set a tile off).
+//
 // Pure: the city's own laws (world/imperialCity.js, world/imperialBlocks.js imperialOwnLaws - the laws its blocks are built
 // from) and the yards' measures (merchantYardSites.js). Not a DFU member: the port's own (Port-Ledger A, MERCHANT-YARDS).
-import { IMPERIAL, IMPERIAL_SECTORS, IMPERIAL_SPAN, IMPERIAL_CELLS, polar, imperialLand, imperialTile, imperialDistrictAt, imperialClosed, imperialTree } from './imperialCity.js';
+import { IMPERIAL, IMPERIAL_SECTORS, IMPERIAL_SPAN, IMPERIAL_CELLS, polar, imperialLand, imperialDistrictAt } from './imperialCity.js';
+import { imperialOwnLaws, imperialAnchorOf } from './imperialBlocks.js';
+import { tileCentre, autoCentre } from './tamrielCapitals.js';
 import { BLOCK_M } from './blockHash.js';
 import { NAV_CELL } from './city/cityNavigation.js';
-import { YARD_TURNS, YARD_PAD_M, YARD_GAP_M, FRONT_ROAD_CELLS, yardSpans, summed } from './merchantYards/merchantYardSites.js';
+import { YARD_TURNS, YARD_PAD_M, YARD_GAP_M, FRONT_ROAD_CELLS, FLAT_CLEAR_M, yardSpans, summed } from './merchantYards/merchantYardSites.js';
 
 /** The gates the city's yards stand by - each district's grand avenue's gate in the city wall (bearings). */
 export const IMPERIAL_YARD_GATES = Object.freeze(IMPERIAL_SECTORS.map(([, b]) => b + 30));
@@ -51,9 +61,12 @@ const _gates = new Map();
 export const imperialYardSites = () => IMPERIAL_YARD_GATES.flatMap((b) => gateYards(b));
 /** A gate's foot outside the wall, the city's metres. @param {number} b */
 const gateFoot = (b) => polar(b, IMPERIAL_YARD_WALL);
-/** One gate's yards (imperialYardSites' rows), worked once: the ground about its foot read cell by cell (the isle's open
- *  grass, the way out, the isle's trees - each tile's), then each kind nearest the foot first, every place measured over
- *  summed tables (merchantYardSites.js summed). @param {number} b */
+/** A global cell's block (r its row from the north, c its column) and its place in it (ax, ay: the automap's - ay from the
+ *  north). @param {number} X @param {number} Z */
+const blockCellOf = (X, Z) => ({ r: IMPERIAL_CELLS - 1 - Math.floor(Z / 64), c: Math.floor(X / 64), ax: X & 63, ay: 63 - (Z & 63) });
+/** One gate's yards (imperialYardSites' rows), worked once: the ground about its foot read cell by cell as its blocks are
+ *  built (the header's THE GROUND: the isle's open grass, the way out, the isle's trees' feet), then each kind nearest the
+ *  foot first, every place measured over summed tables (merchantYardSites.js summed). @param {number} b */
 function gateYards(b) {
   if (_gates.has(b)) return /** @type {any[]} */ (_gates.get(b));
   const out = [];
@@ -65,20 +78,44 @@ function gateYards(b) {
   const R = reach + span + pad + 2, W = 2 * R + 1, X0 = GX - R, Z0 = GZ - R;
   /** A point's place against the gate's way: along it from the gate's foot outward, and across it. */
   const along = (x, z) => (x - gx0) * ux + (z - gz0) * uz, across = (x, z) => Math.abs((x - gx0) * -uz + (z - gz0) * ux);
-  const innerBad = new Uint8Array(W * W), ringBad = new Uint8Array(W * W), taken = new Uint8Array(W * W);
-  const trees = new Map();
+  const innerBad = new Uint8Array(W * W), ringBad = new Uint8Array(W * W), taken = new Uint8Array(W * W), tree = new Uint8Array(W * W);
+  /** @type {Map<number, any>} */
+  const lawsOf = new Map(), tiles = new Map();
+  const laws = (r, c) => { const k = r * IMPERIAL_CELLS + c; let L = lawsOf.get(k); if (!L) lawsOf.set(k, L = imperialOwnLaws(r, c)); return L; };
+  /** A block tile's [record, tree] - its laws at its middle, as portBlockJson asks them. */
+  const tileOf = (r, c, tx, ty) => {
+    const k = ((r * IMPERIAL_CELLS + c) * 16 + ty) * 16 + tx;
+    let t = tiles.get(k);
+    if (!t) { const L = laws(r, c), p = imperialAnchorOf(r, c, ...tileCentre(tx, ty)); tiles.set(k, t = [L.tile(...p), L.tree(...p)]); }
+    return t;
+  };
+  // the trees' feet: each tile of the window's blocks (and a tile past) whose law stands a tree closes the cells round its
+  // north-west corner a flat's reach (yardGround's closeDisc: a cell whose middle is within FLAT_CLEAR_M and half a cell)
+  const reach2 = ((FLAT_CLEAR_M + NAV_CELL / 2) / NAV_CELL) ** 2;
+  for (let TZ = Math.floor(Z0 / TILE_CELLS) - 1; TZ <= Math.floor((Z0 + W) / TILE_CELLS) + 1; TZ++) {
+    for (let TX = Math.floor(X0 / TILE_CELLS) - 1; TX <= Math.floor((X0 + W) / TILE_CELLS) + 1; TX++) {
+      const { r, c, ax, ay } = blockCellOf(TX * TILE_CELLS, TZ * TILE_CELLS);
+      if (tileOf(r, c, ax >> 2, ay >> 2)[1] < 0) continue;
+      const FX = TX * TILE_CELLS, FZ = TZ * TILE_CELLS + TILE_CELLS;   // the foot: the tile's north-west corner, in cells
+      for (let Z = FZ - 2; Z < FZ + 2; Z++) for (let X = FX - 2; X < FX + 2; X++) {
+        const i = X - X0, j = Z - Z0;
+        if (i >= 0 && j >= 0 && i < W && j < W && (X + 0.5 - FX) ** 2 + (Z + 0.5 - FZ) ** 2 <= reach2) tree[j * W + i] = 1;
+      }
+    }
+  }
   for (let j = 0; j < W; j++) {
     for (let i = 0; i < W; i++) {
       const X = X0 + i, Z = Z0 + j, x = (X + 0.5) * NAV_CELL - HALF * B, z = HALF * B - (Z + 0.5) * NAV_CELL;
-      // the isle's open grass past the wall, off every landmark (imperialOwnLaws' closed and tile there - the isle's laws)
-      const ground = Math.hypot(x, z) >= IMPERIAL_YARD_WALL && imperialLand(x, z) && imperialDistrictAt(x, z) === 'City Isle' && imperialTile(x, z) === 2 && !imperialClosed(x, z);
+      if ((X - GX) ** 2 + (Z - GZ) ** 2 > R * R) { innerBad[j * W + i] = ringBad[j * W + i] = 1; continue; }   // past any yard's reach
+      // the isle's open grass past the wall: its block's automap open there and its tile grass (imperialOwnLaws, asked as
+      // the block is built), on the isle's land
+      const { r, c, ax, ay } = blockCellOf(X, Z);
+      const ground = Math.hypot(x, z) >= IMPERIAL_YARD_WALL && imperialLand(x, z) && imperialDistrictAt(x, z) === 'City Isle'
+        && tileOf(r, c, ax >> 2, ay >> 2)[0] === 2 && !laws(r, c).closed(...imperialAnchorOf(r, c, ...autoCentre(ax, ay)));
       const onWay = along(x, z) > -IMPERIAL_YARD_LANE && across(x, z) < IMPERIAL_YARD_LANE;
-      // a tree of the isle on the ground tile holding the cell (its law at the tile's middle - imperialOwnLaws' tree there)
-      const TX = Math.floor(X / TILE_CELLS), TZ = Math.floor(Z / TILE_CELLS), tk = TZ * 65536 + TX;
-      if (!trees.has(tk)) { const tx = (TX * TILE_CELLS + 2) * NAV_CELL - HALF * B, tz = HALF * B - (TZ * TILE_CELLS + 2) * NAV_CELL; trees.set(tk, imperialTree(tx, tz) >= 0); }
-      const tree = trees.get(tk);
-      innerBad[j * W + i] = !ground || onWay || tree ? 1 : 0;
-      ringBad[j * W + i] = (!ground && !onWay) || tree ? 1 : 0;
+      const t = tree[j * W + i] === 1;
+      innerBad[j * W + i] = !ground || onWay || t ? 1 : 0;
+      ringBad[j * W + i] = (!ground && !onWay) || t ? 1 : 0;
     }
   }
   const sumIn = summed(W, W, (i, j) => innerBad[j * W + i]), sumRing = summed(W, W, (i, j) => ringBad[j * W + i]);

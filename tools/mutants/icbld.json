@@ -173,11 +173,12 @@
   {
     "name": "BLD-guild-of-no-faction",
     "file": "src/world/imperialFabricBuildings.js",
-    "old": "factionId: GUILD_FACTION[pool] ?? 0",
-    "new": "factionId: 0",
+    "old": "factionId: GUILD_FACTION[pool] ?? FABRIC_DONORS[donor].faction,",
+    "new": "factionId: 0,",
     "tests": [
       "test/world/icbld_buildings.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (IC-PROPS): a building's faction its guild's, else its donor's own (a temple its god's) - re-aimed by content."
   },
   {
     "name": "BLD-guild-anywhere",

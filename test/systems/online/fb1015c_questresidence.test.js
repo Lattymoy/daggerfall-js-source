@@ -19,6 +19,6 @@ test('QUEST-RESIDENCE: a home a quest still names says the quest\'s name first a
   const w = readFileSync(new URL('../../../src/scenes/worldModes.js', import.meta.url), 'utf8');
   const asked = 'homeDoorTitle(home, questSiteHere(bd) && db.isOverrideName ? db.displayName : null)';
   // PIN MOVED (IC-PROPS): a nameless house reads DFU's "Residence" on the plaque and at the Info click (homeDoorName with its type)
-  assert.ok(w.includes(`displayName: home ? ${asked} : (homeDoorName(`), 'the door\'s plaque');
+  assert.ok(w.includes(`displayName: home ? ${asked} : homeDoorName(`), 'the door\'s plaque');
   assert.ok(w.includes(`townTalk?.say?.(home ? ${asked} : homeDoorName(db.displayName, false, bd.buildingType));`), 'the info click');
 });

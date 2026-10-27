@@ -220,9 +220,12 @@ test('TESA10 the location: its plan\'s grid and its blocks\' buildings on a city
   assert.equal('arena' in synthesizeCapitalLocation({ cap: CAPITALS[0], k: 0 }, { base, names, blockOf: () => fh, px: 2177, py: 612 }), false, 'no Arena place, no slot');
   assert.equal(synthesizeCapitalLocation({ cap: CAPITALS[0], k: 0 }, { base: null, names, blockOf: () => fh, px: 0, py: 0 }), null);
   // PIN MOVED (TS5): the centre slice is the tower's grounds alone (its blocks all the city's own) - a slice of Daggerfall's
-  // blocks (PIN MOVED, IC-GRAND: the Market District's 110, the first that holds one) stands none with a kind missing
-  assert.ok(imperialSlicePlan(110).flat().some(isClassic));
-  assert.equal(synthesizeCapitalLocation({ cap: CAPITALS[0], k: 0, s: 110 }, { base, names: new Map(), blockOf: () => fh, px: 0, py: 0 }), null);
+  // blocks stands none with a kind missing (PIN MOVED, IC-PROPS, 2026-10-27: no slice of the city lays one now -
+  // world/imperialCity.js cellOf - so the law is held on a plan that lays them)
+  assert.equal(kinds.length, 0, 'IC-PROPS: no block of Daggerfall\'s in the city\'s plan');
+  const laid = { ...CAPITALS[0], slicePlan: () => Array.from({ length: 8 }, () => Array(8).fill('GENR')) };
+  assert.equal(synthesizeCapitalLocation({ cap: laid, k: 0, s: 110 }, { base, names: new Map(), blockOf: () => fh, px: 0, py: 0 }), null);
+  assert.ok(synthesizeCapitalLocation({ cap: laid, k: 0, s: 110 }, { base, names: new Map([['GENR', ['GENRAA00.RMB']]]), blockOf: () => fh, px: 0, py: 0 }), 'its kind named, it stands');
   assert.ok(synthesizeCapitalLocation({ cap: CAPITALS[0], k: 0 }, { base, names: new Map(), blockOf: () => fh, px: 0, py: 0 }), 'the centre needs none');
   const rows = [city(30, ['A']), city(10, ['A'], { hasDungeon: true }), city(20, ['A']), city(15, ['A'], { exterior: {} }), city(5, ['A'], { arena: {} }), city(6, ['A'])];
   assert.equal(capitalBase(rows, (mapId) => mapId === 6).mapTableData.mapId, 20, 'the first plain city of the game\'s, in map-id order');

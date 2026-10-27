@@ -46,18 +46,6 @@
     ]
   },
   {
-    "name": "TESA11-shore-a-house",
-    "file": "src/world/imperialCity.js",
-    "old": "if (land === 1 || !mix || imperialReserved(x0, z0, x1, z1, I) || !tradeCell(r, c, d, I)) return imperialCode(r, c);",
-    "new": "if (!mix || imperialReserved(x0, z0, x1, z1, I) || !tradeCell(r, c, d, I)) return imperialCode(r, c);",
-    "tests": [
-      "test/tesa11_imperial.test.js"
-    ],
-    "note": "PIN MOVED (IC-GRAND): the trade's cells asked too (tradeCell).",
-    "equivalent": true,
-    "why": "At twenty-five pixels (IC-GRAND, measured 2026-10-26: the whole plan with and without the guard, 0 of its 40,000 cells differ) no cell holding a shore can be one of Daggerfall's: the isle's shore is City Isle's (no trade), the Waterfront's quay and the compounds' grounds are reserved, the far shore is Rumare Shore's; the guard holds the law where a measure moves a trade's district onto a shore."
-  },
-  {
     "name": "TESA11-wall-band-unreserved",
     "file": "src/world/imperialCity.js",
     "old": "  if (rmin < cw.r + m && rmax > cw.r - m) return true;",
@@ -87,18 +75,6 @@
       "test/world/icgrand_arena.test.js"
     ],
     "note": "PIN MOVED (IC-GRAND): the Colosseum retired - re-aimed at its successor, the arena's cell kept for Daggerfall's block."
-  },
-  {
-    "name": "TESA11-no-signature",
-    "file": "src/world/imperialCity.js",
-    "old": "  if (sig && heart && signatureCell(d, I)?.[0] === r && signatureCell(d, I)?.[1] === c) return sig;\n",
-    "new": "",
-    "tests": [
-      "test/tesa11_imperial.test.js"
-    ],
-    "equivalent": true,
-    "why": "At twenty-five pixels (IC-GRAND, measured 2026-10-26) every district draws its signature kind off the hash elsewhere too - without the line the plan holds Market 23 GENR, Arena 10 FIGH, Temple 32 TEMP, Talos Plaza 13 BANK, Elven Gardens 24 TVRN, Waterfront 15 THIE, Arcane University 14 MAGE (one fewer each, the University's and the Waterfront's the same) - so every pin of a district's signature holds; the line guards a measure where a district's hash misses its kind.",
-    "note": "PIN MOVED (IC-GRAND): the signature laid on its heart's nearest trade cell (signatureCell)."
   },
   {
     "name": "TESA11-tile-lake-grass",
