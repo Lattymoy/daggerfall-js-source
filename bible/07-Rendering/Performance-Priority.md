@@ -1742,14 +1742,14 @@ Where the driver cannot say when a compile is done, nothing is queued, as before
 early waits its turn, so the auras can stand a little later than before where many are met at once.
 
 **Measured.** `tools/compileStallProbe.mjs queue`: ANGLE over SwiftShader with its parallel compile on, four compile
-threads, every source salted so no cache answered, two runs an arm. The build timed is the foes' telegraph, the warm's
-step after the start.
+threads, every source salted so no cache answered, two runs an arm on an idle machine. The build timed is the foes'
+telegraph, the warm's step after the start.
 
 | The play programs | Built at the start | Built 150 ms into their compile | All 26 done |
 |---|---|---|---|
-| none started | 12-13 ms | | |
-| all at once (before) | 452-648 ms | 774-1,068 ms | 0.5-1.3 s |
-| in turn (COMPILE-QUEUE) | 11-18 ms | 24-35 ms | 2.2-2.3 s |
+| none started | 6-7 ms | | |
+| all at once (before) | 342-361 ms | 454-734 ms | 0.4-0.9 s |
+| in turn (COMPILE-QUEUE) | 9-10 ms | 10-17 ms | 1.3-1.6 s |
 
 These are SwiftShader's milliseconds. On D3D11 the auras' fourteen looks took 4.1 s one after another on AURA-SPLIT's
 machine, before the fifteenth was added.
@@ -1762,9 +1762,10 @@ THE FOUR HOSTS: none is wired. `scenes/world.js` and `scenes/exterior.js` start 
 unchanged; `scenes/worldModes.js` and `scenes/dungeonContext.js` start none of these programs.
 
 Pins: `test/render/compilequeue.test.js` (8). Pins moved: `auditshaderstall.test.js` (the passes play meets, started in
-turn) and `shaderstall.test.js` (AURA-SPLIT: a look asked for waits its turn). Mutants: `tools/mutants/compilequeue.json`,
-11, all dead. The lists already on `glProgram.js` and `playPrograms.js` (`audit_perfpass`, `aurastall`, `egaudit5_e`,
-`shaderstall`) still apply, all dead.
+turn) and `shaderstall.test.js` (AURA-SPLIT: a look asked for waits its turn). `shaderstall.test.js`'s veil test now
+destroys its veil however it ends: failed under two of its mutants, it left the veil's warm polling, and the file never
+exited, on main as here. Mutants: `tools/mutants/compilequeue.json`, 11, all dead; `shaderstall.json`'s four records on
+`glProgram.js` re-aimed by content, its 17 dead; `audit_perfpass`, `aurastall` and `egaudit5_e`, all dead.
 
 ## HORSE-VIEW — a 3D horse is posed where it is seen
 

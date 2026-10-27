@@ -202,14 +202,16 @@ test('SHADER-STALL the veil: its warm (the first frame a gate stands, at idle) m
   const canvas = { style: {}, width: 0, height: 0, setAttribute() {}, remove() {}, getContext: () => f.gl };
   const doc = { body: { appendChild() {} }, createElement: () => canvas };
   const veil = createGateVeil({ doc, raf: () => {}, now: () => 1000, engine: { soundIndexForId: () => -1, playOneShot() {} }, win: { innerWidth: 1280, innerHeight: 720, devicePixelRatio: 1 } });
-  assert.equal(veil.warm(), true);
-  assert.equal(f.count('createProgram'), GATE_VEIL_PROGRAMS.length, 'its program started');
-  assert.equal(f.count('link?'), 0, 'and nothing waited on');
-  f.finish();
-  void veil.cover();
-  assert.equal(f.count('link?'), GATE_VEIL_PROGRAMS.length, 'the step builds it');
-  assert.equal(f.count('createProgram'), GATE_VEIL_PROGRAMS.length, 'on the started program');
-  veil.destroy();
+  // COMPILE-QUEUE: destroyed however the test ends - a warm left polling a door a mutant never lets finish kept the file running
+  try {
+    assert.equal(veil.warm(), true);
+    assert.equal(f.count('createProgram'), GATE_VEIL_PROGRAMS.length, 'its program started');
+    assert.equal(f.count('link?'), 0, 'and nothing waited on');
+    f.finish();
+    void veil.cover();
+    assert.equal(f.count('link?'), GATE_VEIL_PROGRAMS.length, 'the step builds it');
+    assert.equal(f.count('createProgram'), GATE_VEIL_PROGRAMS.length, 'on the started program');
+  } finally { veil.destroy(); }
 });
 
 test('SHADER-STALL the nodes\' glint (the outline before NODE-GLINT): the first node lit starts its programs, and the build waits at idle only once they are done (mutants: the idle build asked while they compile)', () => {

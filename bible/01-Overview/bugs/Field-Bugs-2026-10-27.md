@@ -21,8 +21,8 @@ passes before (SHADER-STALL, AURA-STALL). "Shortly after first login" is when th
 Sage's Smoke, on 2026-10-26 (NIRNROOT-SAGE).
 
 WHAT WAS DONE. The passes play meets are started one at a time, the next once the driver says the last is done. A build
-that reads its link now waits behind one of them at most. Measured on ANGLE here: the warm's next build took 452-1,068 ms
-behind the old start and 11-35 ms behind the new one, against 12-13 ms alone. The section in
+that reads its link now waits behind one of them at most. Measured on ANGLE here: the warm's next build took 342-734 ms
+behind the old start and 9-17 ms behind the new one, against 6-7 ms alone. The section in
 `07-Rendering/Performance-Priority.md` has the mechanism and the measurements.
 
 NOT MEASURED. A player's Windows machine, before or after. Whether the freeze comes back at every launch because
