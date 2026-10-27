@@ -92,7 +92,8 @@
 // CASK's - `k` a cask of your sea my boat sailed through, and with `a` 1 your ANSWER, that it is mine: its owner answers
 // the first claim and lets the cask go, the claimer draws its lot only on the answer, so one cask is one haul whoever
 // else reached it. BOARD-MAGNET (2026-10-26): the ram is gone, and with it a ram's foul (`u`, RAM-BOARD's) - an older
-// build's blow that still says one is taken as the blow alone.
+// build's blow that still says one is taken as the blow alone. RAM-RETURN (AUDIT, 2026-10-27): the ram back, never the
+// foul - a ram's blow carries `r` 1, and its stander takes it to her own line, never on a ship struck since it was sent.
 
 import { POSE_BOUND, POSE_Y_BOUND } from '../../net/wire.js';
 import { SHIP_CLASSES, CROWNS } from './navalShips.js';
@@ -337,23 +338,25 @@ export const navalRecordKey = (rec) => (rec ? JSON.stringify(rec) : '');
 /**
  * The blow's `nv`, as its striker sends it - `fire` true (a ball's), 'barrel' or false; `grapple` (AUDIT NAV1, online)
  * a grapple of my ship `n` on the player it goes to, no hurt; `cask` (AUDIT NAV1, online #15) a cask of theirs my boat
- * sailed through, no hurt - and with `answer`, their word that it is mine.
+ * sailed through, no hurt - and with `answer`, their word that it is mine; `ram` (AUDIT RAM-RETURN A3) a blow of a ram's
+ * (`r` 1), its stander's to take to her own line (scenes/naval/navalRams.js `peer`) - an older build reads the blow alone.
  * @param {string} to
  * @param {{ n: number, hull?: number, sail?: number, crew?: number, fire?: boolean | 'barrel', zone?: string, grapple?: boolean,
- *   cask?: number | null, answer?: boolean }} blow
+ *   cask?: number | null, answer?: boolean, ram?: boolean }} blow
  */
-export function navalHitData(to, { n, hull = 0, sail = 0, crew = 0, fire = false, zone = 'hull', grapple = false, cask = null, answer = false }) {
+export function navalHitData(to, { n, hull = 0, sail = 0, crew = 0, fire = false, zone = 'hull', grapple = false, cask = null, answer = false, ram = false }) {
   const nv = { n: n | 0, h: Math.round(hull), s: Math.round(sail), c: crew | 0, f: fire === 'barrel' ? 2 : fire ? 1 : 0, z: zone === 'rig' ? 1 : zone === 'holed' ? 2 : 0 };
+  if (ram && !grapple && cask == null) nv.r = 1;
   if (grapple) nv.g = 1;
   if (cask != null) { nv.k = cask >>> 0; if (answer) nv.a = 1; }
   return { to, nv };
 }
 
 /**
- * A blow on a ship I stand, through the door: bounded numbers, a known zone - or a grapple (`g` 1, no hurt), or a
- * cask's claim (`k`, no hurt) or its answer (`k` with `a` 1). Null for anything else.
+ * A blow on a ship I stand, through the door: bounded numbers, a known zone - a ram's (`r` 1) - or a grapple (`g` 1, no
+ * hurt), or a cask's claim (`k`, no hurt) or its answer (`k` with `a` 1). Null for anything else.
  * @returns {{ n: number, hull: number, sail: number, crew: number, fire: boolean | 'barrel', zone: string, grapple: boolean,
- *   cask: number | null, answer: boolean } | null}
+ *   cask: number | null, answer: boolean, ram: boolean } | null}
  */
 export function validNavalHit(data) {
   const nv = data?.nv;
@@ -363,8 +366,9 @@ export function validNavalHit(data) {
   if (nv.g !== undefined && (nv.g !== 1 || nv.h || nv.s || nv.c || nv.f)) return null;   // a grapple carries no hurt
   if (nv.k !== undefined && (!int(nv.k, 0, U32) || nv.g !== undefined || nv.h || nv.s || nv.c || nv.f)) return null;   // nor a cask's word
   if (nv.a !== undefined && (nv.a !== 1 || nv.k === undefined)) return null;   // an answer is a cask's
+  if (nv.r !== undefined && (nv.r !== 1 || nv.g !== undefined || nv.k !== undefined)) return null;   // a ram is a blow's
   return {
     n: nv.n, hull: nv.h, sail: nv.s, crew: nv.c, fire: nv.f === 2 ? 'barrel' : nv.f === 1, zone: ['hull', 'rig', 'holed'][nv.z], grapple: nv.g === 1,
-    cask: nv.k ?? null, answer: nv.a === 1,
+    cask: nv.k ?? null, answer: nv.a === 1, ram: nv.r === 1,
   };
 }

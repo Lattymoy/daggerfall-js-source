@@ -1321,6 +1321,23 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'mwBodyMotion', initial: true, online: 'player' }),
   }),
+  // MW-SHOULDER (FIELD BUGS 2026-10-26c, feature-feedback via Mac: "please, add an option to move camera a bit to the side
+  // ... for morrowind 3rd person models ... because crosshair is located on top of character's head"): the reference's
+  // view over the shoulder for the Morrowind body's camera (player/mwCamera.js) - behind the right or the left shoulder,
+  // and with a weapon or a spell out centred over the head, so a shot lands where the crosshair is. Off by default, as the
+  // reference ships it (settings.lua:44). The VIEWER'S: how this machine frames its own body, never the wire. Read every
+  // frame by player/mwView.js, so it lands at once. Eye Of The Beholder's sprite camera keeps its own offsets.
+  Object.freeze({
+    id: 'mw-shoulder-camera',
+    group: 'sight',
+    get title() { return t('features.mwShoulder.title', 'Over the Shoulder'); },
+    get note() { return t('features.mwShoulder.note', 'With a Morrowind body in third person, the camera sits behind a shoulder so your head no longer hides '
+      + 'your aim. With a weapon or a spell out it rises over your head instead, so shots land on the crosshair.'); },
+    get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'mwShoulderCam', initial: 'off', online: 'player', tiers: Object.freeze([
+      tier('off', OFF), tier('right', () => t('features.mwShoulder.right', 'Right')), tier('left', () => t('features.mwShoulder.left', 'Left'))]) }),
+  }),
   // MWNPC5b (2026-10-09, Mac: "I wanna do everything and ensure that performance isnt affected"): THE PEOPLE IN
   // MORROWIND BODIES - the NPC lanes (characters/npcBodies.js) under ONE frame budget (MWNPC11, NPC_FRAME_TIERS): Off, the
   // classic sprites; Near, the nearest 24 a frame within a street's width, whoever they are; All, 48 across a square. The

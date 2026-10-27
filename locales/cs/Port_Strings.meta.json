@@ -11029,6 +11029,26 @@
   "tr": "fc2ce6c1b9e7",
   "by": "claude-in-session"
  },
+ "features.mwShoulder.left": {
+  "en": "8ae1c34bd37f",
+  "tr": "e859cb767088",
+  "by": "claude-in-session"
+ },
+ "features.mwShoulder.note": {
+  "en": "1ddfce5b69bc",
+  "tr": "f1cdeaaec38f",
+  "by": "claude-in-session"
+ },
+ "features.mwShoulder.right": {
+  "en": "954daa8b0033",
+  "tr": "90026d97dd5a",
+  "by": "claude-in-session"
+ },
+ "features.mwShoulder.title": {
+  "en": "2a1bc9d46a00",
+  "tr": "3fe6924eb5dd",
+  "by": "claude-in-session"
+ },
  "features.navalCombat.aimCamera": {
   "en": "cfc12726e349",
   "tr": "5da886b03335",
@@ -22092,6 +22112,21 @@
  "naval.plaque.unnamed": {
   "en": "636b18003105",
   "tr": "64804275dfe2",
+  "by": "claude-in-session"
+ },
+ "naval.ram.galley": {
+  "en": "c694cf410e22",
+  "tr": "fe722b6c36fe",
+  "by": "claude-in-session"
+ },
+ "naval.ram.mine": {
+  "en": "78dda9b26926",
+  "tr": "17f8a734fa63",
+  "by": "claude-in-session"
+ },
+ "naval.ram.taken": {
+  "en": "54db41abdb97",
+  "tr": "9f008eda4eed",
   "by": "claude-in-session"
  },
  "naval.refit.asks": {
@@ -36067,6 +36102,16 @@
  "wild.zone.unstuckOut": {
   "en": "23aa54c8359e",
   "tr": "8c57285e1aab",
+  "by": "claude-in-session"
+ },
+ "net.chat.linkItem": {
+  "en": "10bc470a62de",
+  "tr": "10bc470a62de",
+  "by": "claude-in-session"
+ },
+ "net.chat.worn": {
+  "en": "cafe5884febc",
+  "tr": "cafe5884febc",
   "by": "claude-in-session"
  }
 }
