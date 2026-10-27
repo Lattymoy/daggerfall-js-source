@@ -12,8 +12,8 @@
   {
     "name": "LEVEL-45-sum-unread",
     "file": "src/systems/advancement.js",
-    "old": "const calculated = Math.min(LEVEL_CAP, calculatePlayerLevel(",
-    "new": "const calculated = Math.min(Infinity, calculatePlayerLevel(",
+    "old": ": Math.min(LEVEL_CAP, calculatePlayerLevel(entity.startingLevelUpSkillSum",
+    "new": ": Math.min(Infinity, calculatePlayerLevel(entity.startingLevelUpSkillSum",
     "tests": [
       "test/systems/fb1026d_levelcap.test.js"
     ],

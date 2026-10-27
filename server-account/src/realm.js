@@ -156,8 +156,9 @@ export async function listRealm({ db, nowS }, /** @type {string} */ playerId) {
   return (r?.results ?? []).map((row) => view(row, nowS));
 }
 
-/** ARENA4b: the highest level a token's `cl` claim says - the summary's own bound (realmSummaryOf's `level`). */
-export const REALM_LEVEL_CLAIM_MAX = 1000;
+/** ARENA4b: the highest level a token's `cl` claim says - the summary's own bound (realmSummaryOf's `level`). LEVEL-45: the
+ *  online cap (src/systems/levelCap.js ONLINE_LEVEL_CAP), as the judge's JUDGE_LEVEL_MAX. */
+export const REALM_LEVEL_CLAIM_MAX = 45;
 
 /** WHAT THE IDENTITY MINT SIGNS OF THE CHARACTER IT IS MINTED FOR - `{ rc, cl, wa, house, name }`, one read of its row.
  *  - `rc` REALM-DOOR (2026-09-29, the field): IS THIS ONE OF THE ACCOUNT'S REALM CHARACTERS? The relay's door refuses a
