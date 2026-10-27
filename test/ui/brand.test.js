@@ -479,3 +479,28 @@ test('BR5: the keys other systems hold keep their spelling, and what moving each
     linux: 'DaggerfallOnline-linux-x86_64.AppImage',
   }, 'the downloads a copy from before the rename asks for, by the names it was built with');
 });
+
+test('LOGO-CENTRE: the mark stands on its letters\' centre, not its box\'s - measured from the file, and every surface that centres it shifts it by that (mutants: the film unshifted; the door shifted by another amount)', async () => {
+  // Mac, 2026-10-26: "The main logo is off center". The box WAS centred (the film's last frame: 480.5 of 960); the
+  // dragon's wing and tail fill its left, so the letters were not. The letters at mid-height run from the D's bowl
+  // (its red) to the O's outline (the last paint); their centre, against the file's, is the shift.
+  const { readPng } = await import('../../tools/pngIO.mjs');
+  const { BRAND_LOGO_OPTICAL_SHIFT } = await import('../../src/ui/brandMark.js');
+  const { width, height, data } = readPng(readFileSync(join(root, 'src/assets/branding/dfo-online.png')));
+  let left = width, right = 0;
+  for (let y = Math.round(height * 0.4); y < Math.round(height * 0.5); y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4, r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
+      if (a > 200 && r > 200 && g < 110 && b < 80) left = Math.min(left, x);
+      if (a > 128) right = Math.max(right, x);
+    }
+  }
+  const shift = ((left + right) / 2 - width / 2) / width;
+  assert.ok(Math.abs(shift - BRAND_LOGO_OPTICAL_SHIFT) < 0.005, `the letters (x ${left} to ${right} of ${width}) centre ${(shift * 100).toFixed(2)}% right of the file's centre; brandMark.js says ${BRAND_LOGO_OPTICAL_SHIFT * 100}%`);
+  const back = `translateX(-${BRAND_LOGO_OPTICAL_SHIFT * 100}%)`;
+  const intro = read('src/ui/intro/introScreen.js'), style = read('src/ui/enhanced/enhancedStyle.js');
+  assert.ok(intro.match(/\.intro-title \.brand-logo\{[^}]*\}/)[0].includes(`transform:${back}`), 'the film\'s title');
+  assert.ok(style.match(/\n\.brand-logo \{[^}]*\}/)[0].includes(`transform: ${back};`), 'the door and the masthead');
+  assert.ok(read('index.html').match(/\.wordmark img \{[^}]*\}/)[0].includes(`transform: ${back};`), 'the site\'s page');
+  assert.doesNotMatch(read('app/launcher/launcher.css').match(/\.wordmark img \{[^}]*\}/)[0], /transform/, 'the launcher sets it at its left edge, where its box is what lines up');
+});

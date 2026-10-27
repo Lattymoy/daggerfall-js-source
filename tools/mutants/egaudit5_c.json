@@ -975,8 +975,8 @@
   {
     "name": "AUDIT-EG-V-c-L8-6-card-unbuilt",
     "file": "src/systems/item/itemInfo.js",
-    "old": " || isWeirKey(item) || isSoulCake(item) || isHearthOffering(item) || isStarglass(item)) record = survivalInfoTokens(item);",
-    "new": ") record = survivalInfoTokens(item);",
+    "old": " || isWeirKey(item) || isSoulCake(item) || isHearthOffering(item) || isStarglass(item) || isLockpick(item)) record = survivalInfoTokens(item);",
+    "new": " || isLockpick(item)) record = survivalInfoTokens(item);",
     "tests": [
       "test/ui/eliteGates/egaudit5_c_hud.test.js"
     ]

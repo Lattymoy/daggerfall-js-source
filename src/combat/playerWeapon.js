@@ -26,7 +26,7 @@ import {
   MAX_GESTURE_SECONDS, BOW_DRAWN_HOLD_FRAME, machineCancelBowDraw, THUNDERLOCK_NUM_FRAMES, CLASSIC_UPDATE_INTERVAL,
   blowSchedule,   // MW-PACE1: the strike just begun, timed - what the Morrowind arm fits its blow into
 } from '../characters/weaponStates.js';
-import { GUN_FEEL, GUN_TICK_SECONDS, GUN_COOLDOWN_SECONDS, PISTOLET_FEEL } from './gun/gunFeel.js';   // FIELD-GUN7: the lab's cadence, from the one home
+import { GUN_FEEL, GUN_TICK_SECONDS, thunderlockReloadSeconds, PISTOLET_FEEL } from './gun/gunFeel.js';   // FIELD-GUN7: the lab's cadence, from the one home
 import { DIRECTION_TO_STRIKE, ATTACKS_FP, sampleClip } from '../characters/anims.js';
 import { combinePose } from '../characters/animate.js';
 import { weaponTypeForItem, WEAPON_TYPES, isGunType, isPistoletType } from './fpsWeapon.js';
@@ -958,14 +958,11 @@ export class PlayerWeapon {
     const thunderlock = isGunType(t);   // PISTOL-PORT: the Thunderlock - a Pistolet never steps this machine (`_pistolsStep`, above)
     this.machine.ranged = t === WEAPON_TYPES.Bow || thunderlock;
     this.machine.frames = thunderlock ? THUNDERLOCK_NUM_FRAMES : null;
-    // FIELD-GUN7: and the three the lab settled that the game was
-    // answering with its own SPD-driven formulas - the frame clock
-    // (14fps, not ~5 at average speed), the reload (a fixed 1.7s, not
-    // a cooldown that moves with the character) and the hit frame
-    // (the muzzle flash, not the melee frame after it). Null for
-    // every other weapon, which is the classic answer untouched.
+    // FIELD-GUN7: the frame clock (14fps) and the hit frame (the muzzle flash) stay the lab's.
+    // BAL-ARCHERY: the reload is thunderlockReloadSeconds of live Speed, committed onto cooldownUntil
+    // when the shot ends, so a Speed change mid-pump does not move the pump already running.
     this.machine.tick = thunderlock ? GUN_TICK_SECONDS : null;
-    this.machine.cooldown = thunderlock ? GUN_COOLDOWN_SECONDS : null;
+    this.machine.cooldown = thunderlock ? thunderlockReloadSeconds(this.liveSpeed) : null;
     this.machine.hitFrame = thunderlock ? GUN_FEEL.hitFrame : null;
   }
 

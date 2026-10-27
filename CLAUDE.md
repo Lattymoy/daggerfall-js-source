@@ -40,6 +40,13 @@ change) and read `bible/01-Overview/Port-Doctrine.md` before touching code.
   release reads them there. Never commit a patch-notes file:
   `test/tooling/rel4_release.test.js` fails the suite on one. Editing a merged pull
   request's description rewrites its release's notes (`release-notes.yml`).
+- **Patch notes are written in STE** (STE-NOTES, the owner, 2026-10-26: "The law for patch notes is now ASD-STE100
+  Simplified Technical English (STE)"): STE's approved words in their approved meanings, one topic in a sentence,
+  25 words at most (20 in an instruction), six sentences to a paragraph, no semicolons, no -ing verb forms, no
+  contractions, the simple tenses, a control or an item **bold** (`bible/01-Overview/Desktop-App.md` STE-NOTES).
+  The pull request's `ste-notes` check reads the description each time it changes: write the description to a
+  file and run `node scripts/steNotes.mjs <file>` before you post it. A clean run is not proof - the dictionary is
+  the writer's.
 - **Discord is code** (DISCORD-CODE, Mac, 2026-10-17, `bible/11-Multiplayer/Chat-Safety-Arc.md`
   section 9): the bot's commands are declared in `server-account/src/discordCommands.js`, its cards
   and answers are `server-account/src/discord.js`, its channel and moderators are

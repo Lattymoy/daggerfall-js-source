@@ -2,7 +2,7 @@
   {
     "name": "AFFIX-LINES-even-over-kinds",
     "file": "src/systems/loot/lootRarity.js",
-    "old": "    const draw = () => (byLines ? pickByLines(pool, (k) => drawWeight(k, item, out), rolls) : pick(pool, rolls));",
+    "old": "    const draw = () => (byLines ? pickByLines(pool, (k) => drawWeight(k, item, out, lean), rolls) : pick(pool, rolls));",
     "new": "    const draw = () => pick(pool, rolls);",
     "tests": [
       "test/systems/affixlines_reforge.test.js",
@@ -12,8 +12,8 @@
   {
     "name": "AFFIX-LINES-old-law-over-lines",
     "file": "src/systems/loot/lootRarity.js",
-    "old": "    const draw = () => (byLines ? pickByLines(pool, (k) => drawWeight(k, item, out), rolls) : pick(pool, rolls));",
-    "new": "    const draw = () => pickByLines(pool, (k) => drawWeight(k, item, out), rolls);",
+    "old": "    const draw = () => (byLines ? pickByLines(pool, (k) => drawWeight(k, item, out, lean), rolls) : pick(pool, rolls));",
+    "new": "    const draw = () => pickByLines(pool, (k) => drawWeight(k, item, out, lean), rolls);",
     "tests": [
       "test/systems/affixlines_reforge.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "AFFIX-LINES-a-proc-by-its-flavours",
     "file": "src/systems/loot/lootRarity.js",
-    "old": "return AFFIX_KINDS[id]?.proc ? Math.min(1, n) : n; };",
-    "new": "return n; };",
+    "old": "return AFFIX_KINDS[id]?.proc ? Math.min(1, n) : n * (lean?.kinds[id] ?? 1);",
+    "new": "return n * (lean?.kinds[id] ?? 1);",
     "tests": [
       "test/systems/affixlines_reforge.test.js"
     ]
@@ -86,8 +86,8 @@
   {
     "name": "AFFIX-LINES-every-record-the-new-law",
     "file": "src/systems/smithItems.js",
-    "old": "byLines: Number.isSafeInteger(version) && version >= MINT_V_LINES });",
-    "new": "byLines: true });",
+    "old": "byLines: Number.isSafeInteger(version) && version >= MINT_V_LINES,",
+    "new": "byLines: true,",
     "tests": [
       "test/systems/affixlines_reforge.test.js",
       "test/systems/fb1013e_craftprocs.test.js"
@@ -96,8 +96,8 @@
   {
     "name": "AFFIX-LINES-no-record-the-new-law",
     "file": "src/systems/smithItems.js",
-    "old": "byLines: Number.isSafeInteger(version) && version >= MINT_V_LINES });",
-    "new": "byLines: false });",
+    "old": "byLines: Number.isSafeInteger(version) && version >= MINT_V_LINES,",
+    "new": "byLines: false,",
     "tests": [
       "test/systems/affixlines_reforge.test.js",
       "test/systems/fb1013e_craftprocs.test.js"
@@ -106,7 +106,7 @@
   {
     "name": "AFFIX-LINES-the-craft-stamps-1",
     "file": "src/net/productRecord.js",
-    "old": "export const MINT_VERSION = MINT_V_LINES;",
+    "old": "export const MINT_VERSION = MINT_V_ARMOR_LEAN;",
     "new": "export const MINT_VERSION = MINT_V_LAST_PASS;",
     "tests": [
       "test/systems/affixlines_reforge.test.js",

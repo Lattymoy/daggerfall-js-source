@@ -211,7 +211,7 @@
   },
   {
     "name": "RPT1026-LEDGERLAW-269-look-unsaid",
-    "file": "src/scenes/vendorHost.js",
+    "file": "src/systems/item/itemLook.js",
     "old": "stolen: isStolen(it) ? stolenLine() : null",
     "new": "stolen: null",
     "tests": [

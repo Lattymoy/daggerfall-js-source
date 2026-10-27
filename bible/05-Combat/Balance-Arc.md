@@ -1130,3 +1130,57 @@ source; both doors - a 10-point spell 20 at level 20 (`effects.js` casterDamageS
 pins and its mounted seam carry the hero; `arena2_seams`'s call names the ally; three `bal.json` records re-aimed by
 content (BAL3-the-place-alone-scales-nothing, -the-dungeon-needs-a-share, -the-dungeon-drops-the-place). Ledger A
 (BAL11).
+
+## 18. BAL-ARCHERY - the bow's blow and the shaft's flight (2026-10-26)
+
+The owner's balance call. DFU's FormulaHelper gives a Short Bow 4-16 and a Long Bow 4-18
+(CalculateWeaponMinDamage / CalculateWeaponMaxDamage). Physical Combat and Armor Overhaul doubles
+`floor((strength - 50) / 10)` for a two-handed weapon that is not a bow. DaggerfallMissile.MovementSpeed
+is 25 for a shaft and a spell alike.
+
+Both bows are one point higher at each end, in the tables those formulas read
+(`characters/weapons.js:"[[W.Short_Bow, W.Long_Bow], 5]"`, the Short Bow's max 17 and the Long Bow's 19;
+`combat/formulas.js`'s display table; Roleplay Realism's weaponBalance rows, so that module does not put
+the old span back). A bow takes the two-handed strength term even when BowLeftHandWithSwitching makes it
+a left-hand weapon (`combat/pcaao.js:"const bow = weapon.templateIndex === WEAPONS.Short_Bow || weapon.templateIndex === WEAPONS.Long_Bow;"`).
+The stock core, used when the overhaul is off, still adds strength once to every weapon: that core has
+no two-handed term to match. A shaft flies at `systems/spellcast.js:"export const ARROW_FLIGHT_SPEED = MISSILE_SPEED * 1.35;"`
+(`combat/arrowFlight.js:"(m.orb ? MISSILE_SPEED : ARROW_FLIGHT_SPEED)"`, `scenes/dungeonContext.js:"(m.arrow && !m.flatArchive ? ARROW_FLIGHT_SPEED : MISSILE_SPEED)"`).
+A spell and a gun's orb stay on MISSILE_SPEED. The bow's draw, its 0.0625 s tick and GetBowCooldownTime
+are unchanged. Archery Mastery is unchanged: +1% of the blow per effective point past 100, and never
+against a player, in a duel, while mentoring, in beast form, or through the Warden's ward.
+
+Measured at Strength 75, Speed 70, Daedric, weapon skill 100, every face of the die, a held shot at 60 fps
+(`test/combat/balArchery.test.js`). A Daedric Long Bow's sustained blow went from 23 to 26; the Longsword's
+click-average stays 17. Sustained DPS is 16.25 against the longsword's 18.55, 87.6% (the band asked was
+80-90%; the same clocks before this change were 77.5%). Against a Daedric cuirass the blows that remain
+are 9 and 6, and the bow's sustained DPS is 85.9% of the longsword's. The 70-80% PvP band is not met.
+No PvP multiplier was added to meet it. The paperdoll viewer still flies a shaft at MISSILE_SPEED.
+The Thunderlock's reload was the lab's fixed 1.7 s. It is now
+`Math.max(1, 1.7 * (1 - 0.004 * (speed - 50)))` on effective Speed
+(`combat/gun/gunFeel.js:"export function thunderlockReloadSeconds(speed) {"`), committed onto the machine's
+`cooldownUntil` when the shot ends, so the pump and the next trigger share that span. Speed 50 is 1.70 s,
+75 is 1.53 s, 100 is 1.36 s, 150 is 1.02 s, and it does not go under 1 s. The frame clock stays 14 fps.
+A Pistolet's reload stays 1.4 s. At this build the Thunderlock's sustained DPS went from 11.95 to 12.82.
+
+**BOW-TOPS (2026-10-26, the owner: "Deploy failed").** BAL-ARCHERY merged with the deploy red, and deploys 1705 to
+1707 failed on what it moved without moving its pins. The relay keeps its own copies of the weapon tops, and they
+kept the old bows, so the arena's and the siege's referees would have capped a bow's top blow one short of the game's.
+Both copies now take the bows' new tops, a Short Bow 17 and a Long Bow 19
+(`net/arena/arenaLaw.js:"export const ARENA_WEAPON_MAX = Object.freeze({"`,
+`net/siege/siegeRef.js:"export const SIEGE_WEAPON_MAX = Object.freeze({"`). Both files are in the relay's bundle,
+so RELAY_VERSION is `world269` with its LAW row, and every pin of `world268` is moved. relay-deploy.yml deploys it
+on the merge, which drops every open socket once. The pins that still read the old law are moved: the shaft fixtures
+of `arrowfoes.test.js`, `roadh_tail.test.js` and `audit65_constants.test.js` take a step of 1.25 at the shaft's own
+speed (`1.25 / ARROW_FLIGHT_SPEED`), so their geometry is unchanged, and a spell's flight stays on MISSILE_SPEED.
+`techfx1.test.js` times a volley's landing at ARROW_FLIGHT_SPEED. `audit39_worldmodes.test.js`'s Long Bow blow is 18,
+and `int7_arms.test.js`'s Long Bow reach is 19. `techfx1_audit.test.js` refuses any number a flight is divided by, not
+only 25. Seven mutant records are re-aimed by content (`techfx1.json`, `audit_martial.json`, `tell6d.json`,
+`pvpref.json`), and two that quote the version line (`nirnrootsage.json`, `soc1.json`). The 151 records these files
+touch were judged again: 150 dead, 1 equivalent as recorded. `tools/mutants/bowtops.json` (6, all dead).
+
+One cost is said out loud. A shaft's contact is tested after each step, not swept, and at the same frame time the
+step is now 1.35 times as long. A shaft through the middle of a body steps past it once the step is longer than the
+contact: 1.6 m for the player (MISSILE_COLLIDER_RADIUS 0.45 + 0.35) and 1.8 m for a foe (0.45 + 0.45). At
+ARROW_FLIGHT_SPEED that is a frame longer than 0.047 s for the player and 0.053 s for a foe (MISSILE_SPEED's were
+0.064 s and 0.072 s). A shaft off the middle meets a shorter chord, so it can pass at shorter frames.

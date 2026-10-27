@@ -9,7 +9,7 @@ import { fakePage } from '../../hudPage.mjs';
 import { qlObjectivesBlock, qlOfferDetail, offerRowWords, rewardWords, floorWords, qlLineDetail, lineStateWords, qlLadderDetail, pieceStatWords, offerWaitingWords } from '../../../src/ui/questlines/qlJournal.js';
 import { questRail, unloggedRail } from '../../../src/ui/quest/questRail.js';
 import { TIER_FLOORS, REWARD_CHOICES, rollRewardChoice } from '../../../src/systems/questlines/qlRewards.js';
-import { weaponDamageString, armourModString, weightString } from '../../../src/systems/item/itemInfo.js';
+import { weaponDamageString, armourModString, weightString, itemArmorTypeLine } from '../../../src/systems/item/itemInfo.js';
 import { PlayerNotebook, filedOutcome } from '../../../src/systems/notebook.js';
 import { QuestJournalWindow } from '../../../src/ui/quest/questJournal.js';
 import { createQuestlines } from '../../../src/systems/questlines/qlLayer.js';
@@ -264,7 +264,7 @@ test('AUDIT QUESTLINES UI-10, UI-11: each Take carries its own key and says when
   const stat = cards.map((c) => text(c.querySelector('.px-qpiece-stat')));
   assert.ok(stat[0].startsWith(`Damage ${weaponDamageString(w)} · `) && stat[0].endsWith(` · ${weightString(w)} kg`), stat[0]);
   assert.match(stat[0], / · (One|Two)-handed · /, 'and how it is held');
-  assert.equal(stat[1], `Armor ${armourModString(a)} · ${weightString(a)} kg`);   // PIN MOVED (AUDIT QUESTLINES VOICE-QL): Armor (Voice.md rule 8)
+  assert.equal(stat[1], `Armor ${armourModString(a)} · ${itemArmorTypeLine(a)} armor · ${weightString(a)} kg`);   // PIN MOVED (AUDIT QUESTLINES VOICE-QL): Armor (Voice.md rule 8); PIN MOVED (ARMOR-TYPE): and its family, as the pack's card says it
   assert.equal(stat[2], `${weightString(j)} kg`);
   assert.equal(pieceStatWords({ name: 'a test piece', affixes: [] }), '', 'no template, nothing to read');
   assert.equal(qlOfferDetail(doc, { id: 6, title: 'X', pieces: [{ kind: 'jewel', tier: 'magic', item: { name: 'Ring', affixes: [] } }] }, () => {}).querySelector('.px-qpiece-stat'), null);

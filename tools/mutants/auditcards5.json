@@ -3692,8 +3692,8 @@
   {
     "name": "AC5-C-M29",
     "file": "src/systems/item/itemInfo.js",
-    "old": "if (isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item) || isCardPack(item) || isWeirKey(item) || isSoulCake(item) || isHearthOffering(item) || isStarglass(item)) record = survivalInfoTokens(item);",
-    "new": "if (isPortalStone(item) || isWalletItem(item) || isCardPack(item) || isWeirKey(item) || isSoulCake(item) || isHearthOffering(item) || isStarglass(item)) record = survivalInfoTokens(item);",
+    "old": "if (isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item) || isCardPack(item) || isWeirKey(item) || isSoulCake(item) || isHearthOffering(item) || isStarglass(item) || isLockpick(item)) record = survivalInfoTokens(item);",
+    "new": "if (isPortalStone(item) || isWalletItem(item) || isCardPack(item) || isWeirKey(item) || isSoulCake(item) || isHearthOffering(item) || isStarglass(item) || isLockpick(item)) record = survivalInfoTokens(item);",
     "tests": [
       "test/systems/item/auditcards5_items.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -3711,8 +3711,8 @@
   {
     "name": "AC5-C-M30",
     "file": "src/systems/item/itemInfo.js",
-    "old": "isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item) || isCardPack(item) || isOatsItem(item) || isWagonKitItem(item);   // STEED1/WAGONS4",
-    "new": "isPortalStone(item) || isWalletItem(item) || isCardPack(item) || isOatsItem(item) || isWagonKitItem(item);   // STEED1/WAGONS4",
+    "old": "isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item) || isCardPack(item) || isOatsItem(item) || isWagonKitItem(item) || isLockpick(item);   // AUDIT LOCKPICK B2",
+    "new": "isPortalStone(item) || isWalletItem(item) || isCardPack(item) || isOatsItem(item) || isWagonKitItem(item) || isLockpick(item);   // AUDIT LOCKPICK B2",
     "tests": [
       "test/systems/item/auditcards5_items.test.js",
       "test/systems/item/cards8_binder.test.js",

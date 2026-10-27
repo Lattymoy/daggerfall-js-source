@@ -23,7 +23,7 @@ test('formulas: primitives verbatim', () => {
   assert.equal(handToHandMaxDamage(35), 8);         // 35/5+1 (sheet rule)
   assert.equal(WEAPON_MIN_DAMAGE['Dai-Katana'], 3);
   assert.equal(WEAPON_MAX_DAMAGE['Dai-Katana'], 21);
-  assert.equal(WEAPON_MIN_DAMAGE['Long Bow'], 4);
+  assert.equal(WEAPON_MIN_DAMAGE['Long Bow'], 5);   // BAL-ARCHERY: +1 over FormulaHelper's 4
   assert.equal(WEAPON_MAX_DAMAGE.Dagger, 6);
   assert.deepEqual(WEAPON_MATERIAL_MODIFIER, [-1, 0, 0, 1, 2, 3, 3, 4, 5, 6]);
   assert.equal(calculateStruckBodyPart(0), 0);

@@ -7454,6 +7454,31 @@
   "tr": "4c21e01568e5",
   "by": "claude-in-session"
  },
+ "menu.intro.narration1": {
+  "en": "6cdda13c60fe",
+  "tr": "b5c57eaca611",
+  "by": "claude-in-session"
+ },
+ "menu.intro.narration2": {
+  "en": "a73d722e6148",
+  "tr": "a010e675940e",
+  "by": "claude-in-session"
+ },
+ "menu.intro.narration3": {
+  "en": "b0db5c7d2264",
+  "tr": "6aa80c0c0ac4",
+  "by": "claude-in-session"
+ },
+ "menu.intro.narration4": {
+  "en": "02e54d9b7bf2",
+  "tr": "7d35f3405853",
+  "by": "claude-in-session"
+ },
+ "menu.intro.narration5": {
+  "en": "bb1aec630851",
+  "tr": "70d28aca9893",
+  "by": "claude-in-session"
+ },
  "menu.intro.opening": {
   "en": "b1b8530bbd68",
   "tr": "6eca8a50749a",
@@ -12640,23 +12665,23 @@
   "by": "claude-in-session"
  },
  "prof.craft.xpFirstBought": {
-  "en": "09224e528df1",
-  "tr": "aceeb244861f",
+  "en": "75f0476f9180",
+  "tr": "bc9b44cce0d2",
   "by": "claude-in-session"
  },
  "prof.page.craft.xpBought": {
-  "en": "796b3cae733a",
-  "tr": "77f1cb84b463",
+  "en": "64d819c83da0",
+  "tr": "3276df8f0d4d",
   "by": "claude-in-session"
  },
  "prof.page.craft.xpFirstOwn": {
-  "en": "0cd6f1e210c1",
-  "tr": "ce6449f25791",
+  "en": "6db8f28ac0da",
+  "tr": "90e71201fb02",
   "by": "claude-in-session"
  },
  "prof.page.enchant.cloth": {
-  "en": "5e3a1c7c87e4",
-  "tr": "abc02dc46891",
+  "en": "b93d723d0f31",
+  "tr": "3bc1ab3a0cff",
   "by": "claude-in-session"
  },
  "prof.page.forge.daedric": {
@@ -12670,8 +12695,8 @@
   "by": "claude-in-session"
  },
  "prof.page.how.outfitting": {
-  "en": "ac56dd54d5ac",
-  "tr": "6b74a0388fff",
+  "en": "85dc68e23b5f",
+  "tr": "73f7f516dbbd",
   "by": "claude-in-session"
  },
  "prof.page.jewel.grade.chipped": {
@@ -12752,6 +12777,21 @@
  "ql.journal.lineOffered": {
   "en": "07bf16996609",
   "tr": "188481e04e30",
+  "by": "claude-in-session"
+ },
+ "ql.journal.pieceChain": {
+  "en": "9fc9f25448a2",
+  "tr": "16952a6dd85b",
+  "by": "claude-in-session"
+ },
+ "ql.journal.pieceLeather": {
+  "en": "14786dce4b74",
+  "tr": "282902dbb891",
+  "by": "claude-in-session"
+ },
+ "ql.journal.piecePlate": {
+  "en": "71f27cb3d1c6",
+  "tr": "628dc347ce67",
   "by": "claude-in-session"
  },
  "ql.journal.postBoard": {

@@ -210,7 +210,7 @@ const HARDCODED = {
   'src/render/navalRender.js': 2,
   'src/render/nodeGlow.js': 1,
   'src/render/npcMarkPass.js': 1,   // NPC-MARKS: its vertex stage's source (GLSL, never a player's words)
-  'src/render/nodeGlint.js': 2,
+  'src/render/nodeGlint.js': 3,   // RESOURCE-HIGHLIGHTS: +1, the ring's program's label ('node outline ring') - a developer's word in a thrown fault
   'src/render/oceanHolesRender.js': 4,
   'src/render/orderedDither.js': 1,
   'src/render/partyPingDraw.js': 2,   // PARTY-PING: the route's two shaders - GLSL the scan reads as prose (`in vec3`), weaponGlowGlsl.js's same line
@@ -676,8 +676,8 @@ const HARDCODED = {
   'src/ui/ink/inkDungeonSolid.js': 6,
   'src/ui/input.js': 2,
   'src/ui/inputMessageBox.js': 1,
-  'src/ui/intro/introLandscape.js': 6,
   'src/ui/intro/introScreen.js': 3,
+  'src/ui/intro/introShaders.js': 2,   // INTRO4: introLandscape.js's 6 moved with its shaders - two GLSL sources the scan reads as words
   'src/ui/inventoryDoor.js': 1,
   'src/ui/joystickControlsWindow.js': 1,
   'src/ui/legacy/legacyModelChoice.js': 26,
@@ -688,7 +688,7 @@ const HARDCODED = {
   'src/ui/localeFaces.js': 27,
   'src/ui/lootBanner.js': 3,
   'src/ui/map/mapStrip.js': 1,
-  'src/ui/marketTab.js': 151,
+  'src/ui/marketTab.js': 140,   // PACK-PICK: the List form's piece and pack words through the text core; AUDIT PACK-PICK: its kinds' and empty forms' too
   'src/ui/merchant/merchantRepairDoor.js': 2,
   'src/ui/mouseControlsWindow.js': 2,
   'src/ui/native/nativeInventory.js': 5,
@@ -770,7 +770,7 @@ const HARDCODED = {
   'src/ui/tutorialsPane.js': 9,
   'src/ui/vendor/vendorMapMark.js': 1,
   'src/ui/vendor/vendorPage.js': 28,
-  'src/ui/vendor/vendorTab.js': 28,
+  'src/ui/vendor/vendorTab.js': 27,   // PACK-PICK
   'src/ui/virtueLevelUp.js': 4,   // AUDIT GROWTH LANE5-1: its purse label routed (and enhancedLevelUp.js, levelUpView.js and firmamentWindow.js down to none - the Level and Firmament faces said through t())
   'src/ui/waitWindow.js': 1,
   'src/ui/waypointMenu.js': 11,
@@ -785,6 +785,7 @@ const HARDCODED = {
   'src/world/buildingNames.js': 2,
   'src/world/caravanRoomModel.js': 1,
   'src/world/card/cardRegulars.js': 10,
+  'src/world/imperialCity.js': 23,   // TOWN-SHAPES TS5: 'Lake Rumare' names the lake's slices ('Rumare Shore' the land past it) - proper names, as the districts'
   'src/world/ships/carrackModel.js': 7,
   'src/world/ships/carrackRig.js': 2,
   'src/world/eliteGates/egHall.js': 1,
@@ -801,7 +802,7 @@ const HARDCODED = {
   'src/world/oceanHoles.js': 9,
   'src/world/outdoors.js': 2,
   'src/world/passiveFish.js': 5,
-  'src/world/eliteGates/pseudoArchives.js': 48,   // KETCH: +1, the Sky-Ketch's art row (KT_ARCHIVE) - the registry's own words for a developer; PISTOLET: +1, the Dwarven Pistolet's art row (PISTOLET_ARCHIVE) - the registry's own words for a developer; WITCH1: +1, the Witches' Festival's pictures' row (FESTIVAL_ARCHIVE) - the registry's own words for a developer; NAVAL-REFIT: +3, the ship's paint's, her cabin's and her name boards' rows (LIVERY_ARCHIVE, CABIN_ARCHIVE, PLAQUE_ARCHIVE) - the registry's own words for a developer, never a player's; STAR4/STAR7: +2, the star's two archives' rows
+  'src/world/eliteGates/pseudoArchives.js': 50,   // LOCKPICK: +1, the Lockpick's picture's row (LOCKPICK_ARCHIVE) - the registry's own words for a developer; KETCH: +1, the Sky-Ketch's art row (KT_ARCHIVE) - the registry's own words for a developer; TESA10 (INTRO4 brings TESA's modules to main): +1, the capitals' row (CAPITAL_ARCHIVE) - the registry's own words for a developer; PISTOLET: +1, the Dwarven Pistolet's art row (PISTOLET_ARCHIVE) - the registry's own words for a developer; WITCH1: +1, the Witches' Festival's pictures' row (FESTIVAL_ARCHIVE) - the registry's own words for a developer; NAVAL-REFIT: +3, the ship's paint's, her cabin's and her name boards' rows (LIVERY_ARCHIVE, CABIN_ARCHIVE, PLAQUE_ARCHIVE) - the registry's own words for a developer, never a player's; STAR4/STAR7: +2, the star's two archives' rows
   'src/world/superDungeon/sdDungeon.js': 6,
   'src/world/superDungeon/sdRealm.js': 10,
   'src/world/spawnedDungeons.js': 3,

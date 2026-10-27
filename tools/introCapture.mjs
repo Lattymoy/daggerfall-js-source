@@ -8,11 +8,13 @@ import { chromium } from 'playwright';
 import { createServer } from 'vite';
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, rmSync, readdirSync } from 'node:fs';
-import { TITLE_IMPACT_TIME } from '../src/ui/intro/introCue.js';
+import { TITLE_IMPACT_TIME, TITLE_READY_TIME } from '../src/ui/intro/introCue.js';
 
 const out = process.argv[2] ?? 'test-harness/intro';
 const frames = `${out}/frames`;
-const fps = 30, duration = 26;
+// INTRO4: the film runs to bar 16 and its prompt (~53 s), twice INTRO2's, and a software renderer draws each of its
+// frames in seconds - at 8 frames a second and 960 x 540, so the whole film is drawn inside the job
+const fps = 8, duration = Math.ceil(TITLE_READY_TIME + 2);
 mkdirSync(frames, { recursive: true });
 const server = await createServer({ server: { port: 5202, strictPort: true }, logLevel: 'error' });
 await server.listen();
@@ -22,7 +24,8 @@ const browser = await chromium.launch({ args: [
   '--disable-backgrounding-occluded-windows',
 ] });
 try {
-  const page = await browser.newPage({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
+  const page = await browser.newPage({ viewport: { width: 960, height: 540 }, deviceScaleFactor: 1 });
+  page.setDefaultTimeout(180000);
   await page.goto('http://localhost:5202/play/?introdebug&introat=0');
   // MAIN-RED (2026-10-26): a dev-server page is its whole graph before the intro runs - two minutes, as introProbe's ready
   await page.waitForFunction(() => window.__intro?.state.phase === 'playing' && window.__intro.state.landscapeReady, null, { timeout: 120000 });

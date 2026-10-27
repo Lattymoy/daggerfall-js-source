@@ -101,7 +101,7 @@ gl.bindFramebuffer(gl.FRAMEBUFFER, null);   // the atlas's status asked: the can
 /** The floor, the node's own pictures (and \`walled\` the wall), then (\`lit\`) the pass over them at \`alpha\`, its clock
  *  \`seconds\` (\`still\` reduced motion), seen from \`far\` (25 m off, a long lens on the herb) or near; the whole frame read
  *  back, row 0 at the bottom, with the pass's count, the glints' reach on the herb and the GL state it left. */
-window.draw = ({ walled = false, lit = true, alpha = 1, lpt = true, seconds = 0, still = false, far = false, leafy = false, strafe = 0, twin = false, behind = false, ambient = null } = {}) => {
+window.draw = ({ walled = false, lit = true, alpha = 1, lpt = true, seconds = 0, still = false, far = false, leafy = false, strafe = 0, twin = false, behind = false, ambient = null, highlight = undefined } = {}) => {
   const eye = far ? [-0.4, 1.0, 25] : [strafe, 1.0, 5.5];
   const proj = persp(far ? 0.1 : 0.9, W / H, 0.05, 100), view = look(eye, far ? [-0.4, 0.5, 0] : [strafe, 0.8, 0]), vp = mul(proj, view);
   const herbTex = leafy ? leafyTex : tex;
@@ -120,7 +120,7 @@ window.draw = ({ walled = false, lit = true, alpha = 1, lpt = true, seconds = 0,
   if (walled) { gl.useProgram(flat); gl.uniform3f(gl.getUniformLocation(flat, 'c'), 0.12, 0.12, 0.12); gl.bindVertexArray(wall.v); gl.drawArrays(gl.TRIANGLES, 0, wall.n); }
   gl.bindVertexArray(null);
   gl.enable(gl.CULL_FACE);
-  let drawn = 0, trees = 0, reach = 0, reaches = [], counts = [];
+  let drawn = 0, trees = 0, ringed = 0, reach = 0, reaches = [], counts = [];
   if (lit) {
     frame.eye = eye;
     const r = { gl, _proj: proj, _view: view, _camPos: new Float32Array(eye), _bbRight: right, _bbUp: new Float32Array([0, 1, 0]), _fogMode: 0, _fogDensity: 0, _haze: new Float32Array(8),
@@ -136,14 +136,14 @@ window.draw = ({ walled = false, lit = true, alpha = 1, lpt = true, seconds = 0,
     // AUDIT NODE-GLINT: flat 0 a node of its own (another seed); a node 15 m behind the eye (it was a full-screen pass)
     if (twin) list.push({ alpha, seed: 0.83, at: centers[0], rgb: nodeMarkRgb('herbalism'), mark: { pictures: [{ batch, first: 0, count: 1, centers: [centers[0]] }] } });
     if (behind) list.push({ alpha, seed: 0.5, at: [0, 0, 20], rgb: nodeMarkRgb('herbalism'), mark: { pictures: [{ batch, first: 1, count: 1, centers: [[0, 0, 20]] }] } });
-    drawn = pass.draw(list, r, seconds, still);
-    trees = pass.trees;
+    drawn = pass.draw(list, r, seconds, still, highlight);   // RESOURCE-HIGHLIGHTS: \`highlight\` the glints (the default), the ring, or both
+    trees = pass.trees; ringed = pass.ringed;
     reach = pass._nodes?.[0] ? Math.max(...pass._nodes.slice(0, 2).map((s) => s.glint)) : 0;
     reaches = pass._nodes.slice(0, 2).map((s) => s.glint); counts = pass._nodes.slice(0, 2).map((s) => s.count);   // NODE-CROWN: the herb's, the tree's
   }
   const state = { depthFunc: gl.getParameter(gl.DEPTH_FUNC) === gl.LESS, depthMask: gl.getParameter(gl.DEPTH_WRITEMASK) === true, blend: gl.isEnabled(gl.BLEND), cull: gl.isEnabled(gl.CULL_FACE) };
   const pix = new Uint8Array(W * H * 4); gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, pix);
-  return { error: gl.getError(), drawn, trees, reach, reaches, counts, state, pix: Array.from(pix) };
+  return { error: gl.getError(), drawn, trees, ringed, reach, reaches, counts, state, pix: Array.from(pix) };
 };
 window.ready = true;
 </script></body></html>`;
@@ -389,6 +389,40 @@ try {
     }
   }
   check('far, at night, no sheen crosses it (at every moment it crossed by day)', crossing.length >= 4 && nightBest <= 8, `the most lit row's median ${nightBest} over the day's ${crossing.length} crossing moments`);
+  // RESOURCE-HIGHLIGHTS (2026-10-26): NODE-OUTLINE's ring, back as a choice - round each picture in its profession's colour,
+  // never over it, within its width of it, hidden by a wall, the glints off; and with both, the ring and the glints
+  const RING = { glint: false, ring: true }, BOTH = { glint: true, ring: true };
+  const ringed = await draw({ seconds: 1.5, highlight: RING });
+  if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'node_outline_near.png') });
+  check('RESOURCE-HIGHLIGHTS: the outline builds and draws with no GL error; both nodes ringed, the baseline handed back', ringed.error === 0 && ringed.ringed === 2 && ringed.state.depthFunc && ringed.state.depthMask && !ringed.state.blend && ringed.state.cull,
+    `error ${ringed.error}, ringed ${ringed.ringed}, ${JSON.stringify(ringed.state)}`);
+  let rOn = 0, rHerb = 0, rTree = 0, rFlat0 = 0, rFar = 0, rRgb = [0, 0, 0];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    if (Math.abs(rise(bare.pix, ringed.pix, x, y)) <= 24) continue;
+    if (onPic(x, y)) { rOn++; continue; }
+    if (herbCol(x)) { rHerb++; const c = at(ringed.pix, x, y); rRgb = rRgb.map((v, i) => v + c[i]); if (!nearPic(x, y, 4)) rFar++; } else if (treeCol(x)) rTree++; else if (flat0Col(x)) rFlat0++;
+  }
+  check('RESOURCE-HIGHLIGHTS: the ring stands round the pictures - the herb\'s and the tree\'s - and never over them', rHerb > 20 && rTree > 20 && rOn === 0, `herb ${rHerb} px, tree ${rTree} px, ${rOn} px over a picture`);
+  check('RESOURCE-HIGHLIGHTS: within its width of the herb\'s picture; its neighbour flat unringed', rFar === 0 && rFlat0 === 0, `${rFar} px past it, flat 0 ${rFlat0} px`);
+  const hue = rRgb.map((v) => v / Math.max(1, rHerb));
+  check('RESOURCE-HIGHLIGHTS: the herb\'s ring in Herbalism\'s orchid (red and blue over green)', hue[0] > hue[1] + 30 && hue[2] > hue[1] + 30, `mean ${hue.map((v) => v.toFixed(0)).join(', ')}`);
+  const wr = await draw({ walled: true, seconds: 1.5, highlight: RING });
+  let rBehind = 0, rStill = 0;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { if (Math.abs(rise(wb.pix, wr.pix, x, y)) <= 24) continue; if (treeCol(x)) rBehind++; else rStill++; }
+  check('RESOURCE-HIGHLIGHTS: a wall in front hides the ring', rBehind === 0 && rStill > 20, `behind the wall ${rBehind} px, the herb's ${rStill} px`);
+  let bothOn = 0, bothOff = 0, ringOver = 0, ringTree = 0;
+  for (let t = 0; t < 3; t += 0.5) {
+    const b = await draw({ seconds: t, highlight: BOTH }), g = await draw({ seconds: t });
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      // the ring is what Both adds to the glints at the same moment: never on a picture - the tree's tile is FITTED here
+      // (the glints' room round it), its texels coarser than its pixels
+      if (Math.abs(rise(g.pix, b.pix, x, y)) > 24) { if (onPic(x, y)) ringOver++; else if (treeCol(x)) ringTree++; }
+      if (rise(bare.pix, b.pix, x, y) <= 24 || !herbCol(x)) continue;
+      if (onPic(x, y)) bothOn++; else bothOff++;
+    }
+  }
+  check('RESOURCE-HIGHLIGHTS: both - the glints on the picture and the ring round it', bothOn > 20 && bothOff > 20, `${bothOn} px on the herb, ${bothOff} round it`);
+  check('RESOURCE-HIGHLIGHTS: both - the ring round the tree fitted into its tile, never over a picture', ringTree > 20 && ringOver === 0, `${ringTree} px round the tree, ${ringOver} px over a picture`);
   check('no page error', errs.length === 0, errs.join('; '));
   if (process.env.DEBUG) writeFileSync('/dev/stderr', JSON.stringify(peaks) + '\n');
 } finally {

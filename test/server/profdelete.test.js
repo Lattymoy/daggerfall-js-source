@@ -110,6 +110,7 @@ test('PROF-DELETE a realm character deleted takes its Stores and its professions
   for (const c of [made.id, keep.id]) {
     db._raw.prepare("INSERT INTO prof_stores (player, char_id, material, origin, qty) VALUES (?, ?, 'herb:rose', 'own', 34)").run(P, c);
     db._raw.prepare("INSERT INTO prof_tracks (player, char_id, profession, xp, updated_at) VALUES (?, ?, 'herbalism', 1800, ?)").run(P, c, T0);
+    db._raw.prepare("INSERT INTO prof_silver_cloth (player, char_id, material, qty) VALUES (?, ?, 'cloth:linen', 3)").run(P, c);   // AUDIT WOVEN-PAYS: the silver count
   }
   // history: a courier's load delivered long ago, a piece collected
   const other = await player(db);
@@ -119,6 +120,7 @@ test('PROF-DELETE a realm character deleted takes its Stores and its professions
   assert.deepEqual([count(db, 'SELECT COUNT(*) AS n FROM prof_stores WHERE char_id = ?', made.id), count(db, 'SELECT COUNT(*) AS n FROM prof_tracks WHERE char_id = ?', made.id)], [0, 0], 'its Stores and its tracks went with it');
   assert.deepEqual([count(db, 'SELECT COUNT(*) AS n FROM prof_stores WHERE char_id = ?', keep.id), count(db, 'SELECT COUNT(*) AS n FROM prof_tracks WHERE char_id = ?', keep.id)], [1, 1], 'another character\'s stay');
   assert.equal(count(db, 'SELECT COUNT(*) AS n FROM market_sales WHERE char_id = ?', made.id), 1, 'the history stays');
+  assert.deepEqual([count(db, 'SELECT COUNT(*) AS n FROM prof_silver_cloth WHERE char_id = ?', made.id), count(db, 'SELECT COUNT(*) AS n FROM prof_silver_cloth WHERE char_id = ?', keep.id)], [0, 1], 'AUDIT WOVEN-PAYS: its cloth\'s silver count with it, another\'s kept');
   assert.equal(count(db, 'SELECT COUNT(*) AS n FROM realm_characters WHERE id = ?', made.id), 0);
 });
 

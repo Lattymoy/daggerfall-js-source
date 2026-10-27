@@ -21,8 +21,8 @@
   {
     "name": "BR4-door-logo-screen-blend",
     "file": "src/ui/enhanced/enhancedStyle.js",
-    "old": ".brand-logo { display: block; width: 100%; height: auto; object-fit: contain;\n  image-rendering: auto; }",
-    "new": ".brand-logo { display: block; width: 100%; height: auto; object-fit: contain;\n  mix-blend-mode: screen; image-rendering: auto; }",
+    "old": ".brand-logo { display: block; width: 100%; height: auto; object-fit: contain;\n  image-rendering: auto; transform: translateX(-10%); }",
+    "new": ".brand-logo { display: block; width: 100%; height: auto; object-fit: contain;\n  mix-blend-mode: screen; image-rendering: auto; transform: translateX(-10%); }",
     "tests": [
       "test/ui/brand.test.js"
     ]

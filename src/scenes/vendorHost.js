@@ -4,18 +4,13 @@
 // use as `host.<name>` - as the code read them where it was.
 import { accountRefusalText } from '../net/accountClient.js';
 import { clearVendorWaypoint, isVendorWaypoint, setVendorWaypoint, vendorWaypointKey } from '../systems/vendorWaypoint.js';
-import { isEnchanted } from '../systems/inventory.js';
-import { itemIsIdentified } from '../systems/tradeModes.js';
 import { itemPicture } from '../ui/menu/menuPicture.js';
-import { itemStatRows } from '../systems/item/itemInfo.js';
-import { lootRarityOn, rarityLines } from '../systems/loot/lootRarity.js';
-import { magicPowersLines } from '../systems/item/itemPowers.js';
+import { itemLookRows } from '../systems/item/itemLook.js';   // PACK-PICK: the look the Market's List form reads too
 import { REGION_NAMES } from '../formats/mapsFile.js';
 import { homeMayEnter as vendorDoorOpen } from '../net/homeLaw.js';
 import { goldText as vendorGoldText } from '../net/marketLaw.js';
 import { createMarketArrivals } from '../net/marketArrivals.js';   // RPT1026-MARKET ARRIVE: what the market sends reaches the pack on its own
 import { t } from '../systems/textManager.js';
-import { isStolen, stolenLine } from '../systems/stolenGoods.js';   // RPT1026-LEDGERLAW: a stolen piece's look says so
 
 /** @param {any} host */
 export function createVendorHost(host) {
@@ -37,22 +32,10 @@ export function createVendorHost(host) {
   const vendorRegionHere = () => { const p = playerTravelPixel(); try { const r = p ? maps.getRegionIndexAt(p.x, p.y) : null; return Number.isInteger(r) && r >= 0 ? r : null; } catch { return null; } };
   const vendorTownOf = (map) => _townOfMapId.get(Number(map) >>> 0)?.name || 'a town';
   const vendorNameOf = (it) => { try { return marketGoods.goodName(it); } catch { return 'a piece'; } };
-  /** A trader's piece LOOKED AT - `{ rows, magic, stolen }`: the look panel's own stat rows (systems/item/itemInfo.js
-   *  itemStatRows - damage, armour, hands, material, condition, weight), its magic as the trade window says it (its tier
-   *  with its affixes and set, and an enchanted piece's powers - or "powers unknown" unidentified), and RPT1026-LEDGERLAW
-   *  a stolen piece's card line (systems/stolenGoods.js stolenLine), or null. Null for no piece. */
-  const vendorItemStats = (it) => {
-    if (!it || typeof it !== 'object') return null;
-    let rows = [], magic = [];
-    try { rows = itemStatRows(it).map((r) => (r.label ? `${r.label}: ${r.text}` : r.text)); } catch { rows = []; }
-    try { magic = rarityLines(it, { sigil: true, set: true, lore: false }); } catch { magic = []; }
-    try {
-      if (!(it.rarity && lootRarityOn()) && isEnchanted(it)) {
-        for (const t of magicPowersLines(it, { identified: itemIsIdentified(it) })) if (t && !magic.includes(t)) magic.push(t);
-      }
-    } catch { /* a piece whose powers cannot be read says none */ }
-    return { rows, magic, stolen: isStolen(it) ? stolenLine() : null };
-  };
+  /** A trader's piece LOOKED AT - `{ rows, magic, stolen }` (systems/item/itemLook.js itemLookRows: the look panel's stat rows,
+   *  the trade window's magic and RPT1026-LEDGERLAW a stolen piece's card line); PACK-PICK moved it there, so the Market's
+   *  List form reads the same. Null for no piece. */
+  const vendorItemStats = itemLookRows;
   const vendorSaid = (r, ok) => (r?.ok ? { ok: true, text: ok } : { ok: false, text: accountRefusalText(r?.error) });
   /** RPT1026-MARKET ARRIVE: a press's own collect that did not land (another act of the record under way, a checkpoint
    *  still waiting, its answer lost) - the piece is a delivery the sweep collects shortly (`soon`), and the press says so.
@@ -140,7 +123,7 @@ export function createVendorHost(host) {
           return r;
         },
         nameOf: vendorNameOf, stats: vendorItemStats, purse: () => marketBook.purse(vendorRegionHere() ?? 0),
-        picture: (it, wake) => itemPicture(it, { onReady: wake }),   // MENU-ORDER
+        picture: (it, wake, box) => itemPicture(it, { onReady: wake, box }),   // MENU-ORDER; PACK-PICK: at the picker's box
         buy: (row) => vendorBuy(vendor, row), take: (row) => vendorTake(row),
         goods: () => marketGoods.goods(), put: (item, price) => vendorPut(vendor, item, price),
         settle: () => arrivals.sweep(),   // VENDOR-LOST: a kept buy's piece collected as the stall opens; RPT1026-MARKET ARRIVE: the road read first, so every piece arrived for this character is collected

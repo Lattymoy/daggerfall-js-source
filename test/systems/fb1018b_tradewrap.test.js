@@ -11,7 +11,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createWeapon } from '../../src/combat/enemyEquipment.js';
 import { tradeCost, getTradePrice, sellProceeds } from '../../src/systems/tradeModes.js';
-import { calculateTradePrice } from '../../src/systems/shopStock.js';
+import { calculateTradePrice, calculateCost } from '../../src/systems/shopStock.js';
+import { itemValueOf } from '../../src/systems/item/itemTemplates.js';
 import { deductGold } from '../../src/systems/court.js';
 import { letterOfCredit } from '../../src/systems/inventory.js';
 
@@ -32,10 +33,10 @@ function int32Price(cost, q, { mercantile, personality }, selling) {
   return ((((192 * dm) >> 8) + (dp >> 8)) * cost) >> 8;
 }
 
-test('TRADE-WRAP THE SALE: a lot of 250 Daedric claymores sells for a price past the old wrap - positive, more than 100 of them, and paid as a letter of credit; the old arithmetic paid it as millions below nothing (mutants: the sale\'s wrap back)', () => {
+test('TRADE-WRAP THE SALE: a lot of 500 Daedric claymores (250 before DAEDRIC-SALE halved what a counter pays for them) sells for a price past the old wrap - positive, more than 200 of them, and paid as a letter of credit; the old arithmetic paid it as millions below nothing (mutants: the sale\'s wrap back)', () => {
   for (const online of [true, false]) {
     for (const q of [1, 10, 20]) {
-      const big = tradeCost('Sell', lot(250), { quality: q, online }).cost, less = tradeCost('Sell', lot(100), { quality: q, online }).cost;
+      const big = tradeCost('Sell', lot(500), { quality: q, online }).cost, less = tradeCost('Sell', lot(200), { quality: q, online }).cost;
       assert.ok(big > 16_800_000, `the fixture is past the wrap at quality ${q} (its first at most 16.8 million)`);
       const price = calculateTradePrice(big, q, SKILLS, true, { online });
       assert.ok(price > calculateTradePrice(less, q, SKILLS, true, { online }) && price > 0, `quality ${q}, ${online ? 'online' : 'offline'}: more pieces, more gold`);
@@ -43,7 +44,9 @@ test('TRADE-WRAP THE SALE: a lot of 250 Daedric claymores sells for a price past
       assert.deepEqual(sellProceeds(price, { carriedWeightKg: 0, maxEncumbranceKg: 300 }), { kind: 'letterOfCredit', amount: price }, 'the lot pays in paper');
     }
   }
-  assert.ok(int32Price(tradeCost('Sell', lot(150), { quality: 10, online: false }).cost, 10, SKILLS, true) < -1_000_000, 'the field\'s price: 150 claymores at a quality-10 shop sold for millions below nothing');
+  // the field's sale was made before DAEDRIC-SALE: each claymore costed at its whole value, as the counter costed a plain piece then
+  const fieldCost = lot(150).reduce((n, it) => n + calculateCost(itemValueOf(it), 10), 0);
+  assert.ok(int32Price(fieldCost, 10, SKILLS, true) < -1_000_000, 'the field\'s price: 150 claymores at a quality-10 shop sold for millions below nothing');
   assert.equal(getTradePrice('Sell', 13_000_000, 10, SKILLS), calculateTradePrice(13_000_000, 10, SKILLS, true), 'the window\'s door asks the same');
 });
 

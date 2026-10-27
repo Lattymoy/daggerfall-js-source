@@ -225,8 +225,8 @@
  {
   "name": "AUDIT-STAR-I2-glass-classic-box",
   "file": "src/systems/item/itemInfo.js",
-  "old": "|| isHearthOffering(item) || isStarglass(item)) record = survivalInfoTokens(item);",
-  "new": "|| isHearthOffering(item)) record = survivalInfoTokens(item);",
+  "old": "|| isHearthOffering(item) || isStarglass(item) || isLockpick(item)) record = survivalInfoTokens(item);",
+  "new": "|| isHearthOffering(item) || isLockpick(item)) record = survivalInfoTokens(item);",
   "tests": [
    "test/systems/starfall/auditstar.test.js"
   ]
@@ -234,8 +234,8 @@
  {
   "name": "AUDIT-STAR-I2-glass-enhanced-card",
   "file": "src/ui/enhanced/enhancedInventory.js",
-  "old": "|| isStarglass(item) || isFestivalFace(item) ? { survival:",
-  "new": "|| isFestivalFace(item) ? { survival:",
+  "old": "|| isStarglass(item) || isFestivalFace(item) || isLockpick(item) ? { survival:",
+  "new": "|| isFestivalFace(item) || isLockpick(item) ? { survival:",
   "tests": [
    "test/systems/starfall/auditstar.test.js"
   ]

@@ -51,7 +51,7 @@ its `modsettings.json`:
 | `CalculateStruckBodyPart` | twenty slots, feet likelier than the head | `PCAAO_BODY_PARTS`, `pcaaoStruckBodyPart` |
 | `CriticalStrikeHandler` | luck's `Mathf.Floor((luck-50)/25f)` term (clamp discarded) bending the divisor | `pcaaoCriticalStrike` |
 | `GetBonusOrPenaltyByEnemyType` | willpower's `Random.Range(0, n)` bonus and the level penalty on the career's Bonus/Phobia bits, the Humanoid arm on GetEnemyGroup | `pcaaoBonusOrPenaltyByEnemyType` |
-| `CalculateHandToHandAttackDamage` / `CalculateWeaponAttackDamage` | the strength term, the Skeletal Warrior's halving and the silver six's doubling, a two-handed non-bow doubling the strength term (and the beast's claws their gauntlets' metal since BAL6-GAUNTLETS, the fifth departure) | `pcaaoHandToHandAttackDamage`, `pcaaoWeaponAttackDamage`, `SILVER_DOUBLED_CAREERS` |
+| `CalculateHandToHandAttackDamage` / `CalculateWeaponAttackDamage` | the strength term, the Skeletal Warrior's halving and the silver six's doubling, a two-handed weapon and a bow doubling the strength term (BAL-ARCHERY; the mod doubled a two-handed non-bow), and the beast's claws their gauntlets' metal since BAL6-GAUNTLETS | `pcaaoHandToHandAttackDamage`, `pcaaoWeaponAttackDamage`, `SILVER_DOUBLED_CAREERS` |
 | `AdjustWeaponHitChanceMod` / `AdjustWeaponAttackDamage` | Roleplay Realism's archery: the bow's draw time in ms bends hit and damage; registered on FormulaHelper whatever the armour module says (AUDIT PCO1) | Roleplay Realism's own `rrAdjustWeaponHitChanceMod`, `rrAdjustWeaponAttackDamage` (rrRealism.js - one export, AUDIT 68), registered on `formulas.adjustWeaponHitChanceMod` / `adjustWeaponAttackDamage` - DFU's two no-op hooks, grown into the stock core at the C#'s two sites (AUDIT PCO1); the draw timer is `playerWeapon.lastDrawMs` (below) |
 | `AlterDamageBasedOnWepCondition` / `AlterArmorReducBasedOnItemCondition` | the condition bands | `pcaaoAlterDamageBasedOnWepCondition`, `pcaaoAlterArmorReducBasedOnItemCondition` |
 | `ArmorMaterialIdentifier` / `ArmorMaterialModifierFinder` / `EqualizeMaterialConditions` / `SpecificWeaponConditionDamage` | the four material ladders | the four `pcaao*` of the same names |
@@ -344,7 +344,7 @@ The ladder; the half-to-even round through a float32 half; DamageModifier
 and the material hit bonus; every hit helper against a hand-worked cell;
 the unclamped hit; the body-part table; the luck-bent critical; the
 enemy-type bonus and penalty; the damage helpers (the silver six, the
-two-handed doubling, a bow's exception); the archery tables; the
+two-handed doubling, a bow taking that term); the archery tables; the
 condition bands; the four material ladders; the material-difference
 arithmetic; the wear (weapon, piece, shield, a fist, the fading removal,
 the warnings' words and delays); the reduction cells with the cap and

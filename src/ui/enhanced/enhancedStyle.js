@@ -2369,7 +2369,7 @@ ${badgeCss()}
    (36.4vw), and the short landscape screen's 171px (24.3vw). */
 .px-wordmark:has(.brand-logo) { width: min(234px, 36.4vw); line-height: 0; flex-shrink: 0; }
 .brand-logo { display: block; width: 100%; height: auto; object-fit: contain;
-  image-rendering: auto; }
+  image-rendering: auto; transform: translateX(-10%); }   /* LOGO-CENTRE: the letters on the centre line (brandMark.js) */
 /* BR5: the masthead's mark spent 769/2112 of the column's width in height
    (BR4's file less its empty rows); the DFO mark spends the same height at
    769/2112 x 526/322 = 59.5% of the width, centred. No margin pulls
