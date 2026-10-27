@@ -283,11 +283,12 @@
   {
     "name": "TIDE3-ed-claim-gate",
     "file": "src/systems/seatEdicts.js",
-    "old": "      if ((host.tideAt?.(region) ?? 'calm') === 'orcs' && host.orcCamp) {",
-    "new": "      if (host.orcCamp) {",
+    "old": "    if (camp && (host.tideAt?.(region) ?? 'calm') === 'orcs' && host.orcCamp) {",
+    "new": "    if (camp && host.orcCamp) {",
     "tests": [
       "test/net/tide_orcs.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (BAY-LEFT-SEA): the claim is a closure (an Orc Raid counts a camp alone, never a den past the Bay); the mutant still drops the Tide's gate."
   },
   {
     "name": "TIDE3-ed-said",

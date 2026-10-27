@@ -209,8 +209,8 @@ row names its town by map id (`market_listings.vendor_map`) and no pixel, and a 
   of another pixel's is none; the hour's reports a walk's (12, one a WATCH_TICK_MS); and a developer STRIKES a false
   town (`/town strike <map id>`, `POST /v1/towns/strike` - its row, reports, acts and days go, the map id never
   witnessed again: `town_econ_struck`, the halls' and the seats' strike) after reading the region's registry
-  (`/town audit`, `POST /v1/towns/audit` - each confirmed town beside the town this client's own map holds at its
-  pixel, a false one said FALSE, and the accounts that confirmed it). A town the registry did not take (its pixel or
+  (`/town audit [page]`, `POST /v1/towns/audit` - each confirmed town beside the town this client's own map holds at its
+  pixel, a false one said FALSE, and the accounts that confirmed it; 400 a page, a province's capitals first - section 10). A town the registry did not take (its pixel or
   place another's) is told `taken` and its reports let go (SVC-6: it was told `confirmed` and kept taking reports for
   good), and is reported again the next day, so a struck false town's true one stands. Every report of a key is read
   (SVC-4: the oldest 64 alone, so earlier dissents could hold a true town off), and the key is `1:<map>` (SVC-11, the
@@ -465,3 +465,31 @@ findings. Every finding, its probe and what was done: `01-Overview/audits/Audit-
 - **Pinned**: `test/systems/townecon_audit2.test.js` (4: the price lane's fixes) and each fix in the file of what it
   fixes; `node tools/mutate.mjs tools/mutants/townecon5.json`: 60 mutants, 59 dead and 1 equivalent as recorded.
 
+## 10. BAY-LEFT-SEA - the staff audit past the Bay (BUILT 2026-10-27)
+
+**What stood.** The registry's audit (`/town audit`, `POST /v1/towns/audit`, SVC-1 above; `server-account/src/townEcon.js`
+auditTowns) read a region's confirmed towns `ORDER BY location LIMIT 400`. Past the Bay a town's location index is its
+producer's own negative (WW7-5: `world/arenaLocations.js` ARENA_INDEX_BASE, `world/tamrielCountry.js` COUNTRY_INDEX_BASE,
+`world/tamrielCapitals.js` CAPITAL_INDEX_BASE), so the most negative came first: a province listed its farthest countryside
+hamlets, and its capitals never (AUDIT BAY-LEFT item 23, E4). Its witnesses were the region's first 4,000 reports, so a
+province's later towns read "nobody kept".
+
+**As built.**
+- THE ORDER (`net/townEconLaw.js` townAuditRank, the service's SQL the same order - `townEcon.js` AUDIT_ORDER_SQL): the
+  Bay's towns by their location's index, as they always were; a province's capitals' slices first (a capital's map id
+  carries `world/capitalLane.js` CAPITAL_LANE in its high bits - each capital's centre, then its other slices), then every
+  other by the size of its index: the producers' numbering puts Arena's city-states, towns and villages (1,000,000 on)
+  before the countryside's (2,000,000 on). Then the map id.
+- PAGES: TOWN_AUDIT_PAGE (400) a page - `/town audit [page]` (`net/townEconBook.js` parseTownCommand, the page from 1),
+  the service's `page` (0 the first, at most 9,999, else `bad-town`) and `more`; the client's last line names the next page
+  ("More confirmed towns of this region: /town audit 2") - a developer's words, as the rest of the audit's lines are (L10N4's
+  ratchet, `townEconBook.js` +1).
+- THE WITNESSES are the page's own towns' (`json_each` over its map ids), up to 4,000 - a later page's towns are read.
+- The account Worker now bundles `src/world/capitalLane.js` (`.github/workflows/account-deploy.yml`'s path filter). Folded
+  into the undeployed acct196. No migration.
+
+**Pins.** `test/server/bayleftsea_townaudit.test.js` (2: the order's law; the real Worker over node:sqlite - a province's
+429 towns, its capitals, places and countryside in that order over two pages, every town once, each page's witnesses, a
+Bay region's as ever, a bad page refused; the client's word for a page and its line). PIN MOVED:
+`test/net/townecon_client.test.js` (`/town audit 5` a page now, the host's and the door's page). Mutants:
+`tools/mutants/bayleftsea.json` BLS-audit-* (15), all dead.

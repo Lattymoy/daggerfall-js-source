@@ -350,11 +350,12 @@
   {
     "name": "AUDIT-TESA-A4-F4-travel-options-list",
     "file": "src/scenes/world.js",
-    "old": "loc.arena || loc.capital ? !!loc.arena?.port : modSetting('travel-options', 'Enabled')",
+    "old": "loc.arena || loc.capital ? (loc.exterior?.exteriorData?.portTownAndUnknown ?? 0) !== 0 : modSetting('travel-options', 'Enabled')",
     "new": "modSetting('travel-options', 'Enabled')",
     "tests": [
       "test/audit_tesa.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (BAY-LEFT-SEA): past the Bay the place's own port byte answers first (an Arena place's TESA6 word, a capital harbour's) - the mutant still drops that arm."
   },
   {
     "name": "AUDIT-TESA-A5-F3-deed-past-the-bay",

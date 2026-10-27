@@ -14,6 +14,7 @@ import {
   capitalPin, capitalBase, cityBlockNames, capitalBlockNames, capitalBuildings, portBlockJson, miscModelAt, tileCentre, autoCentre,
   capitalPortBlocks, synthesizeCapitalLocation, capitalDistrict, capitalCarrier, anchorMetres, SOLITUDE, SOLITUDE_PLAN, SOLITUDE_DISTRICTS,
   SOLITUDE_BLOCKS, capitalLakeName,
+  capitalSlicePort, capitalCentrePixel,   // BAY-LEFT-SEA: the host's ask hands its harbour's port word
 } from '../src/world/tamrielCapitals.js';
 import {
   buildSolitudeArch, buildBluePalace, buildSolitudeWall, buildCastleDour, buildSolitudeDocks, archTop, archOpening, solitudeWallCorners,
@@ -303,7 +304,7 @@ test('TESA10 the host\'s ask: the capital on its pixel stood once, its region th
   const kinds = [...new Set(Array.from({ length: IMPERIAL_SPAN ** 2 }, (_, s) => imperialSlicePlan(s).flat()).flat())].filter(imperialClassic);   // PIN MOVED (IC-GRAND): the plan by its law
   const names = new Map(kinds.map((k) => [k, [`${k}AA00.RMB`]]));
   const base = { ...city(9, ['X']), exterior: { exteriorData: { blockNames: ['X'] }, buildings: [] } };
-  const make = (open, arena) => new Function('capitalOnPixel', 'synthesizeCapitalLocation', 'base', 'names', 'arena', `
+  const make = (open, arena) => new Function('capitalOnPixel', 'synthesizeCapitalLocation', 'base', 'names', 'arena', 'capitalSlicePort', 'capitalCentrePixel', `
     const _capitalBase = ${open ? 'base' : 'null'}, _capitalNames = names, _arenaTemplates = {}, locationIndex = new Map();
     const arenaPlaceOnPixel = () => (arena.on ? arena.place : null), blocks = { getBlockByName: () => null };
     const maps = { getRegionIndexAt: () => 23, getClimateIndex: () => 231 }, REGION_NAMES = { 23: 'Wrothgarian Mountains' }, getWorldClimateSettings = (c) => ({ worldClimate: c });
@@ -312,7 +313,9 @@ test('TESA10 the host\'s ask: the capital on its pixel stood once, its region th
     const townClimateAt = (px, py, c) => c;   // PIN MOVED (AUDIT RELEASE R2-5f): the clone's own climate law - the city's ground stands on the pixel's
     ${lift('  function capitalLocationAt(px, py) {')}
     ${lift('  function capitalCloneOf(at, px, py, slot) {')}   // PIN MOVED (AUDIT RELEASE R2-5f): the clone laid out apart from its standing, as the quest layer reads it
-    return { capitalLocationAt, index: locationIndex, gen: () => host._locIndexGen };`)(capitalOnPixel, synthesizeCapitalLocation, base, names, arena);
+    const arenaPixels = () => null;   // PIN MOVED (BAY-LEFT-SEA): the clone handed its harbour's pin (tamrielPlacesHost.js capitalPinPort) - none pinned here
+    ${lift('  function capitalPinPort(k) {')}
+    return { capitalLocationAt, index: locationIndex, gen: () => host._locIndexGen };`)(capitalOnPixel, synthesizeCapitalLocation, base, names, arena, capitalSlicePort, capitalCentrePixel);
   const arena = { on: false, place: null };
   const h = make(true, arena);
   const loc = h.capitalLocationAt(2069, 658);

@@ -78,7 +78,7 @@ test('TESA6 the clone: a port answers a harbour (portTownAndUnknown 1) and says 
   assert.equal(not.arena.port, false);
 });
 
-test('TESA6 the host: an Arena port past the Bay answers where the Bay\'s ports are asked - Come Sail Away\'s port town, the naval host\'s port (no crown, the pixel\'s region), the harbour book\'s town, the nearest port\'s name and way, the waters\' port distance - and a city made a port is cloned again and built again (mutant: an arm, the crown, the clone\'s check, the sweep). PIN MOVED (AUDIT TESA II P7/P5): TESA\'s places are the world\'s registry\'s (world/pastBayRows.js), so past the Bay the port test, the port here, the nearest port and the waters\' distance are WW3\'s over them (world/worldWide/worldPorts.js - its port\'s region the province\'s, WW-R); the harbour book\'s town is still this host\'s', () => {
+test('TESA6 the host: an Arena port past the Bay answers where the Bay\'s ports are asked - Come Sail Away\'s port town, the naval host\'s port (the nearest Bay crown\'s office - BAY-LEFT-SEA, the pixel\'s region), the harbour book\'s town, the nearest port\'s name and way, the waters\' port distance - and a city made a port is cloned again and built again (mutant: an arm, the crown, the clone\'s check, the sweep). PIN MOVED (AUDIT TESA II P7/P5): TESA\'s places are the world\'s registry\'s (world/pastBayRows.js), so past the Bay the port test, the port here, the nearest port and the waters\' distance are WW3\'s over them (world/worldWide/worldPorts.js - its port\'s region the province\'s, WW-R); the harbour book\'s town is still this host\'s', () => {
   const w = hostText('src/scenes/world.js');
   assert.match(w, /const arenaPortAt = \(x, y\) => \{ if \(!_arenaTemplates \|\| onTheBay\(x, y\)\) return null; const q = arenaPlaceOnPixel\(x, y\); return q\?\.port \? q : null; \};/);
   assert.doesNotMatch(w, /arenaPorts\(\)|arenaPortOf/, 'the host\'s own list past the Bay and its port record gone - the world\'s ports answer');
@@ -89,7 +89,7 @@ test('TESA6 the host: an Arena port past the Bay answers where the Bay\'s ports 
   assert.match(w, /d = Math\.min\(d, worldPorts\.nearestPx\(p\.x, p\.y\) \?\? Infinity\);/, 'the waters\' port distance');
   assert.match(w, /had\.arena\.id === place\.id && had\.arena\.port === !!place\.port\) return had;/);
   assert.match(w, /`\$\{place\.provinceIndex\}\|\$\{place\.id\}\|\$\{!!place\.port\}`/);
-  assert.match(read('src/world/worldWide/worldPorts.js'), /region: p\.region, area: p\.area, theatre: p\.theatre, crown: null/, 'a port past the Bay: its province\'s region, no crown');
+  assert.match(read('src/world/worldWide/worldPorts.js'), /region: p\.region, area: p\.area, theatre: p\.theatre, crown: crownAt\(p\.px, p\.py\)/, 'a port past the Bay: its province\'s region, the nearest Bay crown\'s office');   // PIN MOVED (BAY-LEFT-SEA, the owner's call taken): a harbourmaster past the Bay keeps the nearest Bay crown's board
 });
 
 const ARENA2 = process.env.ARENA2_PATH;

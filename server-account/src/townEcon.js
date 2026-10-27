@@ -34,6 +34,7 @@ import { utcDay } from '../../src/net/marksLaw.js';
 import {
   TOWN_ECON_CAPS, TOWN_ECON_DAYS, TOWN_ECON_KEPT_S, TOWN_ECON_SHARE_LEAST, TOWN_WATCH_CLAIM_MAX, TOWN_WITNESS_KIND,
   TOWN_WITNESS_HOUR, TOWN_SEA_REACH_PX, townReportOf, townReportText, parseTownReport, townActivity, townPlayersShare, townShareShown,
+  TOWN_AUDIT_PAGE, TOWN_AUDIT_CAPITAL_LANE,   // BAY-LEFT-SEA: the audit's pages and its order's lane
 } from '../../src/net/townEconLaw.js';
 import { seatRegionOk } from '../../src/net/townSeatLaw.js';   // WW7-5: a town's region any of the world's
 
@@ -162,19 +163,28 @@ export async function strikeTown({ db, nowS }, dev, env, { map } = {}) {
 /**
  * AUDIT TOWN-ECON 2 SVC-1: THE REGISTRY'S AUDIT (`/town audit`, a developer's alone): a region's confirmed towns - map
  * id, pixel, place, when, and the accounts whose reports confirmed it - which the client sets beside the towns its own
- * map holds at those pixels. `{ ok, towns: [{ map, px, py, location, at, by: [handle] }] }` or `{ error }`.
+ * map holds at those pixels. BAY-LEFT-SEA (the audit's E4): TOWN_AUDIT_PAGE of them a `page` (0 the first), in the law's
+ * order (townEconLaw.js townAuditOrderSql: a province's capitals, then its places, then its countryside - where `ORDER BY
+ * location` over a province's negative indices listed its farthest hamlets and never a capital), `more` whether a page
+ * follows. `{ ok, towns: [{ map, px, py, location, at, by: [handle] }], page, more }` or `{ error }`.
  * @param {{ db: any }} ctx @param {any} dev @param {any} env @param {any} body
  */
-export async function auditTowns({ db }, dev, env, { region } = {}) {
+/** BAY-LEFT-SEA: the audit's order (townEconLaw.js townAuditRank, the same order): the rank - the Bay's, a capital's slice,
+ *  any other's past the Bay - then its index's size (a place's past the Bay before the countryside's), then the map id. */
+const AUDIT_ORDER_SQL = `CASE WHEN location >= 0 THEN 0 WHEN ((map >> 20) & 4095) = ${TOWN_AUDIT_CAPITAL_LANE} THEN 1 ELSE 2 END, ABS(location), map`;
+export async function auditTowns({ db }, dev, env, { region, page = 0 } = {}) {
   if (!isDeveloper(dev, env)) return { error: 'not-developer' };
-  if (!seatRegionOk(region)) return { error: 'bad-town' };   // WW7-5: any region's town, the provinces' too
-  const { results: towns = [] } = await db.prepare('SELECT map, px, py, location, at FROM town_econ_towns WHERE region = ?1 ORDER BY location LIMIT 400').bind(region).all();
-  const { results: by = [] } = await db.prepare(`SELECT w.key, p.handle FROM world_witness w JOIN town_econ_towns t ON w.key = '1:' || t.map
-    LEFT JOIN players p ON p.id = w.account WHERE w.kind = ?1 AND t.region = ?2 ORDER BY w.at LIMIT 4000`).bind(TOWN_WITNESS_KIND, region).all();
+  if (!seatRegionOk(region) || !Number.isSafeInteger(page) || page < 0 || page > 9999) return { error: 'bad-town' };   // WW7-5: any region's town, the provinces' too
+  const { results: rows = [] } = await db.prepare(`SELECT map, px, py, location, at FROM town_econ_towns WHERE region = ?1 ORDER BY ${AUDIT_ORDER_SQL} LIMIT ?2 OFFSET ?3`)
+    .bind(region, TOWN_AUDIT_PAGE + 1, page * TOWN_AUDIT_PAGE).all();
+  const more = rows.length > TOWN_AUDIT_PAGE, towns = rows.slice(0, TOWN_AUDIT_PAGE);
+  // BAY-LEFT-SEA: the page's own towns' witnesses (a province's thousands kept the region's first 4,000 reports)
+  const { results: by = [] } = await db.prepare(`SELECT w.key, p.handle FROM world_witness w LEFT JOIN players p ON p.id = w.account
+    WHERE w.kind = ?1 AND w.key IN (SELECT '1:' || value FROM json_each(?2)) ORDER BY w.at LIMIT 4000`).bind(TOWN_WITNESS_KIND, JSON.stringify(towns.map((r) => Number(r.map)))).all();
   /** @type {Map<string, string[]>} */
   const names = new Map();
   for (const r of by) { const k = String(r.key); if (!names.has(k)) names.set(k, []); names.get(k)?.push(r.handle ?? '?'); }
-  return { ok: true, towns: towns.map((r) => ({ map: Number(r.map), px: Number(r.px), py: Number(r.py), location: Number(r.location), at: Number(r.at), by: (names.get(townWitnessKey(Number(r.map))) ?? []).slice(0, 3) })) };
+  return { ok: true, page, more, towns: towns.map((r) => ({ map: Number(r.map), px: Number(r.px), py: Number(r.py), location: Number(r.location), at: Number(r.at), by: (names.get(townWitnessKey(Number(r.map))) ?? []).slice(0, 3) })) };
 }
 
 /** SEA-TRADE: the claim's `sea` - the indices of the receipts that vouch a dealing, each once, in range; none is none.

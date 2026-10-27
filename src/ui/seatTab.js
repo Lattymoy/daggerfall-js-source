@@ -364,7 +364,7 @@ export function createSeatTab(host, ui) {
     if (chosen) sel.value = chosen;
     sel.onchange = () => { edictAsk = sel.value; ui.rerender(); };
     out.append(sel);
-    const words = edictLine(chosen, seat.tier, data?.tides?.next ?? 'calm');   // SEASON1 part two: the coming week's Tide on its cost
+    const words = edictLine(chosen, seat.tier, data?.tides?.next ?? 'calm', seat);   // SEASON1 part two: the coming week's Tide on its cost; BAY-LEFT-SEA: a Bounty past the Bay its dens'
     if (words) out.append(el('p', 'notice-seat-mine', words));
     if (chosen === 'bounty') {
       const a = /** @type {HTMLInputElement} */ (el('input', 'notice-input notice-seat-bounty'));

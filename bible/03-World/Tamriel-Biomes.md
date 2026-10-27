@@ -92,7 +92,7 @@ summaries are quoted as UESP's, never as a book's. The Sources section, below, n
 **The ground** past the Bay is the zone's climate (`tamrielGround.js` tamrielClimateAt): its textures, its nature
 flats, the countryside's and the lairs' rates (TESA7, TESA8 - the Bay's own count of each kind on that climate), the
 weather's table at the player's pixel, and the weather map's field past the Bay's edge (`systems/weather/weatherMap.js`
-climateOfField reads a land climate there, the edge's own at sea), and the landforms' hills - a node past the Bay's
+climateOfField reads the zone's climate there, the Ocean's at sea - BAY-LEFT-SEA, `07-Rendering/Weather-Arc.md`), and the landforms' hills - a node past the Bay's
 seam band wears its zone's land (`world/landforms.js` nodeLand, AUDIT TESA II Z8), where every one had worn the nearest
 edge pixel's (86% of the land past the Bay had worn another land's hills); the Bay and its seam band keep the table's,
 to the bit. The four hosts: `scenes/world.js` WIRED (the streamed terrain, and its worker); `scenes/exterior.js` FLAGGED -

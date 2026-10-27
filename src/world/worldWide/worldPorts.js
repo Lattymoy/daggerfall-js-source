@@ -16,7 +16,12 @@
 //    directory's, its pixel id: what the lanes and the living world's sailors always filed a Bay port by) on the Bay, and
 //    the world's key past it, PORT_ID_WORLD on (worldGrid.js worldPixelKey - the grid's north-west keys are small, so they
 //    stand past every masked id, which is 20 bits), so a lane's key and seed are its two ports' and never another's.
-// A port past the Bay has no crown (the Bay's three crowns' writ is the Bay's); its region is its province's (WW-R: the
+// BAY-LEFT-SEA (2026-10-26, the audit "no system left behind in the Bay" item 30, C5; the owner's call taken: "Every
+// single thing here needs to be addressed. No exceptions."): A PORT PAST THE BAY KEEPS THE NEAREST BAY CROWN'S OFFICE
+// (`crownAt`, the host's - systems/naval/navalShips.js crownOf over the three capitals, the very law a Bay port's crown
+// is read by, and the crown whose colours its navy already flies there, WW7-8/WW7-10), so its harbourmaster's board,
+// contracts, letter of marque and Admiralty carrack stand there (scenes/harbourOffice.js) - and its exchange is that
+// crown's, as a Bay port's is (systems/naval/tradeGoods.js portTrade). Its region is its province's (WW-R: the
 // provinces are regions after the Bay's 62 - AUDIT TESA II P7, where it was -1 before the owner's call, and TESA6's own
 // port past the Bay read its pixel's), and it has its area and its theatre.
 //
@@ -31,7 +36,7 @@ import { longitudeLatitudeToMapPixel } from '../../formats/mapsFile.js';
 import { capitalOnPixel } from '../tamrielCapitals.js';   // NIBEN-SEA: a capital's harbour bears its capital's name
 
 /** @typedef {{ id: number, mapId: number, key: string, name: string, px: number, py: number, region: number, area: number,
- *   theatre: number, crown: null, reach?: number, neighbours?: number }} WorldPort - a port past the Bay, in the shape the host's port lists hand the
+ *   theatre: number, crown: string|null, reach?: number, neighbours?: number }} WorldPort - a port past the Bay, in the shape the host's port lists hand the
  *   sea; NIBEN-SEA: `reach` a harbour up a canal's packets' own (CANAL_PORT_REACH_PX); RUMARE-WATER: `neighbours` the ports its
  *   lanes are asked of (CANAL_PORT_NEIGHBOURS) */
 
@@ -66,16 +71,18 @@ export function portIdOfLocation(loc) {
  * The ports past the Bay: every LISTED place outside the Bay's rectangle its provider calls a port, of a port town's
  * kind, that the open sea (`openSea(x, y)` - the host's one open-sea law) bears on; the registry's order.
  * NIBEN-SEA: a capital's harbour is named for its capital (the Imperial City's, on its Waterfront's slice), and one up its
- * canal (world/tamrielCapitals.js `harbour`) runs its packets CANAL_PORT_REACH_PX (`reach`).
+ * canal (world/tamrielCapitals.js `harbour`) runs its packets CANAL_PORT_REACH_PX (`reach`). BAY-LEFT-SEA: its crown the
+ * nearest Bay crown's (`crownAt(px, py)`, the host's; none without one).
  * @param {import('./worldPlaces.js').WorldPlaces} places @param {(x: number, y: number) => boolean} openSea
+ * @param {(x: number, y: number) => (string|null)} [crownAt]
  * @returns {WorldPort[]}
  */
-export function beyondPorts(places, openSea) {
+export function beyondPorts(places, openSea, crownAt = () => null) {
   /** @type {WorldPort[]} */ const out = [];
   for (const p of places.all()) {
     if (!p.port || inBay(p.px, p.py) || !p.name || !isPortTownType(p.type) || !seaBears(p.px, p.py, openSea)) continue;
     const cap = capitalOnPixel(p.px, p.py)?.cap;
-    out.push({ id: portIdOf(p), mapId: p.mapId, key: `${p.px},${p.py}`, name: cap?.name ?? p.name, px: p.px, py: p.py, region: p.region, area: p.area, theatre: p.theatre, crown: null,   // AUDIT TESA II P7: its province's region (WW-R)
+    out.push({ id: portIdOf(p), mapId: p.mapId, key: `${p.px},${p.py}`, name: cap?.name ?? p.name, px: p.px, py: p.py, region: p.region, area: p.area, theatre: p.theatre, crown: crownAt(p.px, p.py),   // AUDIT TESA II P7: its province's region (WW-R); BAY-LEFT-SEA: the nearest Bay crown's office
       ...(cap?.harbour ? { reach: CANAL_PORT_REACH_PX, neighbours: CANAL_PORT_NEIGHBOURS } : {}) });   // NIBEN-SEA: a harbour up its canal, its packets' own reach; RUMARE-WATER: and its lanes asked of more of its nearest
   }
   return out;
@@ -83,11 +90,12 @@ export function beyondPorts(places, openSea) {
 
 /**
  * The world's ports past the Bay, kept by the registry's generation and the land's picture (`land()` - a version that
- * moves when the open sea's ground does). `regionAt` the Bay's region under a pixel (the host's).
+ * moves when the open sea's ground does). `regionAt` the Bay's region under a pixel (the host's); BAY-LEFT-SEA: `crownAt`
+ * the nearest Bay crown's name to a pixel (the host's navalShips.js crownOf over the three capitals).
  * @param {{ places: import('./worldPlaces.js').WorldPlaces, openSea: (x: number, y: number) => boolean, land?: () => number,
- *   regionAt?: (x: number, y: number) => number }} o
+ *   regionAt?: (x: number, y: number) => number, crownAt?: (x: number, y: number) => (string|null) }} o
  */
-export function createWorldPorts({ places, openSea, land = () => 0, regionAt = () => -1 }) {
+export function createWorldPorts({ places, openSea, land = () => 0, regionAt = () => -1, crownAt = () => null }) {
   let gen = -1, ver = -1;
   /** @type {WorldPort[]} */ let list = [];
   /** @type {{ bay: any[], list: WorldPort[], all: any[] }|null} */ let joined = null;
@@ -100,7 +108,7 @@ export function createWorldPorts({ places, openSea, land = () => 0, regionAt = (
   const fresh = () => {
     if (places.generation() === gen && land() === ver) return;
     gen = places.generation(); ver = land();
-    list = beyondPorts(places, openSea);
+    list = beyondPorts(places, openSea, crownAt);
   };
   return {
     /** The ports of the sea past the Bay. */

@@ -295,7 +295,7 @@ import { arenaTemplates, ARENA_LOAD_WAIT_MS, isArenaPlaceId } from '../world/are
 import { countryTemplates, countryCounts, isCountryPlaceId } from '../world/tamrielCountry.js';   // TESA7: the countryside past the Bay
 import { countrysideOn } from './shared.js';   // TESA7: its kill door
 import { capitalsOn } from './shared.js';   // TESA10: the capitals' kill door
-import { capitalBase, cityBlockNames, setCapitalsStanding } from '../world/tamrielCapitals.js';   // TESA10: the capitals, built by hand
+import { capitalBase, cityBlockNames, setCapitalsStanding, isCapitalLandmark } from '../world/tamrielCapitals.js';   // TESA10: the capitals, built by hand; BAY-LEFT-SEA: a landmark measured by its footprint
 import { lairTemplates, lairPools } from '../world/tamrielDungeons.js';   // TESA8: the lairs past the Bay
 import { pastBayPlacesIn } from '../world/pastBayPlaces.js';   // TESA15: the places past the Bay the roads' regions laid, for the held map
 import { provinceKeyBeyondBay } from '../world/tamriel/tamrielLand.js';   // TESA3: the province a pixel past the Bay stands on
@@ -359,8 +359,6 @@ import { createIliacClaims } from '../net/iliac/iliacClaims.js';   // CARDS10: t
 import { createGambitClaims } from '../net/gambit/gambitClaims.js';   // KG6: and The King's Gambit's rated games'
 import { seasonCounted, seasonKept, seasonGuest, seasonFoeGuest } from '../ui/gambitTableWords.js';   // KG6: what the season's claims say
 import { createWritBook } from '../net/writBook.js';   // PROF6: guild writs, commissions, the guild Stores
-import { wearCondition, wearOf, WEAR_WHOLE } from '../net/marketLaw.js';   // PROF5: a bought piece's wear; PROF6: a commission's piece unworn
-import { commissionFilledBy } from '../net/writLaw.js';   // AUDIT 31 L8: a piece that answers a commission, the law's own test
 
 import { unseenText } from '../net/boardLaw.js';   // NOTICE1: the count over a board
 import { alignSurvival, markOutCold } from '../systems/survival/needs.js';   // SURV7: the needs' markers at an arrival; AUDIT C&C N2: the collapse's hour a night on the ground
@@ -640,7 +638,7 @@ import { createPeerRiders, createPeerWalkers, createEotbArt } from '../net/peer/
 import { createHorseCartRuntime } from '../systems/horse/horseCart.js';   // HCC: TrailingWagonRuntime over this host's seams
 import { setForagingHost } from '../systems/foraging/foragingInstall.js';   // FORAGE1: Foraging's reaches into the world, answered by this host
 import { registerContainerLootHandler } from '../systems/containerLoot.js';   // THE MERGE: CSA-H's shelf subscriber, by its mod's name, on PlayerActivate.OnLootSpawned's one home
-import { mintPieces, mintPiece, craftedText, storedText, CRAFT_KEPT_TEXT, BENCH_KEPT_TEXT, LOOM_KEPT_TEXT, MASON_KEPT_TEXT, isCraftedFurniture, asMinted, pieceOfRecipe } from '../systems/smithItems.js';   // PROF3: a craft's pieces, minted into the pack; PROF4: furniture into the home's things; PROF11: the mason's word; SEAT2b part two: a siege work's
+import { mintPieces, craftedText, storedText, CRAFT_KEPT_TEXT, BENCH_KEPT_TEXT, LOOM_KEPT_TEXT, MASON_KEPT_TEXT, isCraftedFurniture } from '../systems/smithItems.js';   // PROF3: a craft's pieces, minted into the pack; PROF4: furniture into the home's things; PROF11: the mason's word; SEAT2b part two: a siege work's
 import { heatBand, planeBand, stitchBand, chiselBand, recipeById } from '../net/recipeLaw.js';   // PROF3: the heat's attribute band; PROF4: the plane's, and a recipe's station; PROF7: the stitch's; PROF11: the chisel's
 import { COOK_KEPT_TEXT } from '../systems/smithItems.js';   // PROF9: the fire's word, a dish whose answer did not come
 import { JEWEL_KEPT_TEXT } from '../systems/smithItems.js';   // PROF10: the jeweller's bench's word, a piece whose answer did not come
@@ -884,7 +882,7 @@ import { setSigilOnline, setSigilRenown } from '../systems/sigil/sigil.js';   //
 import { setSetsDueling, setsDueling, drinkWorn, setSetsWearer } from '../systems/sigil/sigilSets.js';   // SET2: the duel's word - sets sleep in one; SET4: the drink, whole; SET5: the wearer a tooltip reads
 import { lootHudChips } from '../systems/loot/lootPowers.js'; import { setSetPowersVoice, setHudChips, heldPlayerBlow, remarkPlayerBlow } from '../systems/sigil/sigilSetPowers.js'; import '../systems/loot/lootDrought.js'; import '../systems/loot/lootCodex.js'; import { createLootLines } from './lootLines.js'; import { createNpcMarks } from './npcMarksHost.js';   // NPC-MARKS: the marks over the street's people who do something; SET3: what the sets DO - every power registered at import; its voice is this host's; SET5: its chips; LOOT4: and lootPowers.js beside it, what a loot piece DOES (the Loot arc), every kind registered at import; LOOT8: lootDrought.js, the drought's finder and take listener, registered at import; LOOT10: lootCodex.js, the codex's take listener, round sweep and record; LOOT11: the lines of light over a find
 import { computeEntityMods, registerEntityFold, EMPTY_MODS } from '../systems/entityMods.js';   // SET3: the sets' stat fold, recomputed the moment they wake or sleep; SEAT1d: the Festive buff's
-import { createSeatEdicts, FESTIVE_FOLD, festiveMods } from '../systems/seatEdicts.js';   // SEAT1d: a held seat as this client lives it
+import { createSeatEdicts, FESTIVE_FOLD, festiveMods, lairDenOf } from '../systems/seatEdicts.js';   // SEAT1d: a held seat as this client lives it; BAY-LEFT-SEA: a lair's den
 import { createTownEconHost } from './townEconHost.js';   // TOWN-ECON TE1: every town's economy - its counters' factor, its card; TE2: the players' share
 import { SPELL_CAST_SOUND } from '../systems/enemySpells.js';   // SET3: the Wrath's and Eventide's sounds are the cast sounds of their schools
 import { itemLongName } from '../systems/item/itemInfo.js';   // SIGIL1: the weapon's name as its tooltip reads it
@@ -967,8 +965,7 @@ import { wireRealmHolds } from './realmHoldHost.js';   // INT3 + AUTO-HOLD: the 
 import { checkpointAllowed, checkpointWhenDue, checkpointedTradePack, createSaveSoon } from '../systems/online/onlineCheckpoint.js';   // REALM P0.5: the character saved as it plays online; PROF-SAVE: and at once after a professions act
 import { watchRealmUnsaved } from '../systems/online/realmUnsavedNotice.js';   // the player told while their saves do not reach the realm
 import { createTradeManager, TRADE_RANGE_M, inTradeRange, tradeDistance } from '../net/tradeSession.js';   // TRADE1: the player-to-player trade's state machine (pure)
-import { createTradePack, tradeRefusal, packTradeRefusal, createMarketGoods } from '../systems/tradePack.js';   // TRADE1: the trade's door into the real pack; PROF5: what may not be sold; MARKET-ANY: the pack's side of a piece from the pack
-import { isLocked } from '../systems/item/itemLock.js';   // PROF5: a locked piece is not listed
+import { createTradePack, packTradeRefusal } from '../systems/tradePack.js';   // TRADE1: the trade's door into the real pack; PROF5: what may not be sold; MARKET-ANY: the pack's side of a piece from the pack
 import { createPlayerTradeWindow, playerTradeReady } from '../ui/playerTradeDoor.js';   // TRADE1: the enhanced window two players share
 import { createPeerMenuReader } from '../systems/peerMenuBind.js';   // PEERMENU1: the player menu opens on a bind (hold E / hold A)
 import { createSocialMenu, socialPlaqueRows, plaqueRowFor } from '../ui/socialMenu.js';   // SOC5: the F-menu over that body - Add friend, Invite to party
@@ -1224,6 +1221,7 @@ import { createPortalStoneHost } from './portalStoneHost.js';   // HOST-SPLIT
 import { createWildDropHost } from './wildDropHost.js';   // HOST-SPLIT
 import { createWildInsureBook, setWildInsureBook } from '../net/wild/wildInsureBook.js';   // WILD-INSURE: my policies on my gear
 import { createWildGrace } from '../systems/wild/wildGrace.js';   // ZONE-GRACE: safe passage, as the referee says it
+import { createMarketPieces } from './marketPiecesHost.js';   // HOST-SPLIT
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -2349,97 +2347,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     }
     if (pieces.length) { townTalk.say(craftedText(pieces)); saveSoon.changed(); }
   };
-  /** AUDIT 31 H5: every list of the save a crafted piece can be in - the pack, the home's things, the wagon, and a
-   *  repairer's hands (DFU's OtherItems) - so a piece is minted, put back and dropped once wherever it lies. */
-  const pieceLists = () => [playerEntity.items, playerEntity.furnishings, playerEntity.wagonItems, playerEntity.otherItems].filter(Array.isArray);
-  const heldProvenances = () => new Set(pieceLists().flat().map((it) => it?.provenance).filter(Boolean));
-  /** PROF5: A PIECE FROM THE MARKET (bought here, collected off the road, or come back from a listing): minted from its
-   *  record as the anvil mints it, at its wear (marketLaw wearCondition), into the pack - or, furniture, the home's
-   *  things - once by its provenance id. */
-  const marketMint = (piece) => {
-    if (!piece?.provenance) return;
-    if (heldProvenances().has(piece.provenance)) return;
-    const it = mintPiece(piece, piece.provenance);
-    if (!it) return;
-    if (it.maxCondition > 0) it.currentCondition = wearCondition(it.maxCondition, piece.wear);
-    const home = isCraftedFurniture(it);
-    if (home) (playerEntity.furnishings ??= []).push(it); else addItem((playerEntity.items ??= []), it, 'back');
-    townTalk.say(`${itemLongName(it)} is ${home ? 'among your home\'s things' : 'in your pack'}.`);
-    saveSoon.changed();
-  };
-  /** PROF5: a piece's name as its record mints it (the Crafted view's and the road's), kept by its provenance id. */
-  const _pieceNames = new Map();
-  const marketPieceName = (piece) => {
-    if (!piece?.provenance) return 'a crafted piece';
-    let n = _pieceNames.get(piece.provenance);
-    if (!n) { const it = mintPiece(piece, piece.provenance); n = it ? itemLongName(it) : 'a crafted piece'; _pieceNames.set(piece.provenance, n); }
-    return n;
-  };
-  /** MENU-ORDER: a crafted piece's picture - the piece its record mints, minted once and kept by its provenance id. */
-  const _pieceItems = new Map();
-  const marketPiecePicture = (piece, wake) => {
-    if (!piece?.provenance) return null;
-    if (!_pieceItems.has(piece.provenance)) { let it = null; try { it = mintPiece(piece, piece.provenance); } catch { it = null; } _pieceItems.set(piece.provenance, it); }
-    return itemPicture(_pieceItems.get(piece.provenance), { onReady: wake });
-  };
-  /** PROF5: the crafted pieces this character may list - in the pack, none worn, locked or bound (TRADE1's refusals), and
-   *  the home's crafted furniture not set down. AUDIT 30 C2: none enchanted since its craft - the market mints a piece
-   *  again from its record, and the item maker's work would be lost on the way (smithItems asMinted). */
-  /** AUDIT 31 H1: a piece either book keeps an act on (a listing, an auction or a fill whose answer is still to come) - it
-   *  is offered to neither again until that answer comes. MARKET-ANY: and the pack's side of a piece from the pack (systems/tradePack.js createMarketGoods). */
-  const pieceKept = (pv) => !!marketBook?.holdsPiece(pv) || !!writBook?.holdsPiece(pv); const marketGoods = createMarketGoods(playerEntity, { kept: (pv) => pieceKept(pv), say: (t) => townTalk.say(t) });
-  const marketPieces = () => [
-    ...(playerEntity.items ?? []).filter((it) => it?.provenance && asMinted(it) && !tradeRefusal(it) && !isLocked(it) && !pieceKept(it.provenance))
-      .map((item) => ({ item, where: 'pack', name: itemLongName(item) })),
-    ...(playerEntity.furnishings ?? []).filter((it) => it?.provenance && asMinted(it) && !pieceKept(it.provenance)).map((item) => ({ item, where: 'home', name: itemLongName(item) })),
-  ];
-  /** PROF6: the pieces in the save that answer a commission - listable as the market's are (as minted, not worn,
-   *  locked or bound), of its recipe (smithItems pieceOfRecipe), at least its quality, and unworn (a commission is new
-   *  work, Professions-Arc 28) - each taken out of the save and put back as a listed piece is. AUDIT 31 U7: and, where
-   *  the service named the pieces that would fill it (`eligible` - its own make, on no sale), only those, the least
-   *  quality first. */
-  const commissionPieces = (c) => {
-    const named = Array.isArray(c.eligible) ? new Map(c.eligible.map((e, i) => [e.provenance, i])) : null;
-    // AUDIT 31 L8: the law's own test of a piece that answers it (writLaw commissionFilledBy), never its clause restated
-    const answers = (it) => (!named || named.has(it.provenance))
-      && commissionFilledBy(c, { recipe: pieceOfRecipe(it, c.recipe) ? c.recipe : null, quality: it.quality ?? null }) && wearOf(it) === WEAR_WHOLE;
-    const out = marketPieces()
-      .filter((p) => answers(p.item))
-      .sort((a, b) => (named ? named.get(a.item.provenance) - named.get(b.item.provenance) : (a.item.quality ?? 0) - (b.item.quality ?? 0)))
-      .map((p) => ({ ...p, quality: p.item.quality ?? null, take: () => marketTake(p.item, p.where), putBack: marketPutBack }));
-    // AUDIT 31 H8: one that answers it but will not leave the pack (equipped, locked, bound) - the tab says so
-    return Object.assign(out, { blocked: (playerEntity.items ?? []).filter((it) => it?.provenance && answers(it) && (tradeRefusal(it) || isLocked(it))).length });
-  };
-  /** PROF5: a listed piece out of the save (the book keeps it until the service answers), and back on a refusal. */
-  const marketTake = (item, where) => {
-    const list = where === 'home' ? playerEntity.furnishings : playerEntity.items;
-    const i = (list ?? []).indexOf(item);
-    if (i < 0 || (where === 'pack' && (tradeRefusal(item) || isLocked(item)))) return false;
-    list.splice(i, 1);
-    saveSoon.changed();
-    return true;
-  };
-  /** AUDIT 30 C3: a piece a settled listing took, out of the save - the take was made in a save that may not have been
-   *  kept since (a crash, a seat handed over), and the piece would stand both listed and in the pack. */
-  const marketDrop = (item) => {
-    if (!item?.provenance) return;
-    for (const list of pieceLists()) {   // AUDIT 31 H5: the wagon and a repairer's hands too
-      const i = list.findIndex((it) => it?.provenance === item.provenance);
-      if (i < 0) continue;
-      if (list === playerEntity.items) unequipItem(playerEntity, list[i]);
-      list.splice(i, 1);
-      saveSoon.changed();
-    }
-  };
-  const marketPutBack = (item, where) => {
-    if (!item?.provenance) return;
-    if (heldProvenances().has(item.provenance)) return;
-    if (where === 'home') (playerEntity.furnishings ??= []).push(item); else addItem((playerEntity.items ??= []), item, 'back');
-    saveSoon.changed();
-  };
-  /** PROF5: every region's hub as this client derived it (HUB1) - the courier's road's ends, handed with every market
-   *  request for the service to witness (PROF0 26). */
-  const marketHubs = Object.fromEntries([...(regionHubs?.byRegion?.values?.() ?? [])].map((h) => [h.regionIndex, [h.pixel.x, h.pixel.y]]));
+  const { commissionPieces, heldProvenances, marketDrop, marketGoods, marketHubs, marketMint, marketPieceName, marketPiecePicture, marketPieces, marketPutBack, marketTake, pieceKept } = createMarketPieces({   // HOST-SPLIT: src/scenes/marketPiecesHost.js
+    marketBook, regionHubs, saveSoon, townSeats, worldPlaces, writBook,   // BAY-LEFT-SEA: the seats and the places, the provinces' market hubs
+    get townTalk() { return townTalk; },
+  });
   /** NOTICE1: the town a board on map pixel (px, py) belongs to - its map id (unsigned), its name, and whether one of its
    *  boards is a bounty board (the Notices tab then pins the line that sends the reader there) - or null off a location. */
   const noticeTownOf = (px, py, bountyLine = false) => {
@@ -3986,6 +3897,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     inPool: (f) => exteriorFoes.foes.includes(f),
     relations: () => livingRelations,
     say: (text) => townTalk.say(text),
+    routed: seatEdicts.hideoutRouted,   // BAY-LEFT-SEA: a hideout routed past the Bay - a Bounty's den (systems/seatEdicts.js)
     chest: livingBandChest,
     dropPile: (items, feet) => droppedLoot.seedPile(items, feet, { archive: TREASURE_PILE_ARCHIVE, record: 0 }, null, null, { unsaved: true, owner: 'lw-hideout' }),
     removePile: (pile) => droppedLoot.removePile(pile),
@@ -4194,9 +4106,21 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  Ilessan Hills' blocks). Never a seat's members' harbour (hasPortFor's word is one guild's - every client stands the
    *  same shipyard), and never csaIsPortTown, declared below the stream (BOOT-TDZ). */
   const portOnSea = (dfLocation) => portTownOnSea(dfLocation, hasPort, openSea);
+  let _navalCapitals = null;
+  /** The three crowns' capitals' map pixels (navalShips.js crownOf reads the nearest as the waters' crown) - once.
+   *  BAY-LEFT-SEA: declared above the world's ports, whose harbours past the Bay keep the nearest crown's office. */
+  const navalCapitals = () => (_navalCapitals ??= NAVAL_CROWNS.map((c) => {
+    try {
+      const loc = maps.getLocationByName(REGION_NAMES[c.region], c.name);
+      if (!loc?.mapTableData) return null;
+      const px = longitudeLatitudeToMapPixel(loc.mapTableData.longitude, loc.mapTableData.latitude);
+      return { region: c.region, x: px.x, y: px.y };
+    } catch { return null; }
+  }).filter(Boolean));
   /** WW3 (bible/03-World/World-Wide.md WW3): THE WORLD'S PORTS PAST THE BAY (world/worldWide/worldPorts.js) - the places its
    *  providers call ports, of a port town's kind, that the open sea bears on; the Bay's are the game's data, as above. */
-  const worldPorts = createWorldPorts({ places: worldPlaces, openSea, land: tamrielLandVersion, regionAt: (x, y) => maps.getRegionIndexAt(x, y) });
+  const worldPorts = createWorldPorts({ places: worldPlaces, openSea, land: tamrielLandVersion, regionAt: (x, y) => maps.getRegionIndexAt(x, y),
+    crownAt: (x, y) => navalCrownOf(x, y, navalCapitals()).name });   // BAY-LEFT-SEA: a port past the Bay keeps the nearest Bay crown's office (its navy's colours)
   const _yardMemo = new Map();   // mapId -> { sig, sites, ports }, the latest few towns
   const _yardBoxes = new Map();   // a registered model's local box, by id
   const palaceIn = (b) => {
@@ -4219,7 +4143,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       const measures = {
         ...yardMeasuresOf(yl, {
           boxOf: (id, at) => placedModelBox(id, at, {
-            custom: (cid) => (hasCustomModel(cid) && !customModelNeeds(cid).length ? customModelFor(cid)?.positions ?? null : null),
+            custom: (cid) => (hasCustomModel(cid) && !customModelNeeds(cid).length && !isCapitalLandmark(cid) ? customModelFor(cid)?.positions ?? null : null),   // BAY-LEFT-SEA: a capital's landmark by its footprint, its blocks' own (tamrielCapitals.js isCapitalLandmark)
             classic: (cid) => dfMeshSize(classicModelIdOf(cid)),
             cache: _yardBoxes,
           }),
@@ -6753,7 +6677,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // AUDIT-RR2 G22: `travelOptionsEnabled` asks TO's "hasPort" (RoleplayRealism.cs:635-644; TravelOptionsMapWindow.cs:870-873 - the hand-written port list), else the flag - SEAT2b part two: a members' Harbour at a seat among them (travelPorts.js hasPortFor)
     // AUDIT CAPTAIN'S SEA P10: past the Veil an isle's place is a port by its own kind - TO's list knows only the Bay's, and a
     // ruin kept its template's port byte
-    shipLocation: () => { const loc = _questLoc(); return loc ? { locationLoaded: true, portTown: (loc.ether ? loc.etherKind === 'port' : loc.arena || loc.capital ? !!loc.arena?.port : modSetting('travel-options', 'Enabled') === true ? hasPortFor(loc.mapTableData?.mapId) : (loc.exterior?.exteriorData?.portTownAndUnknown ?? 0) !== 0), onShip: isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel()) } : { locationLoaded: false, onShip: false }; },   // DISC13-D: `locationLoaded`, the key isShipAvailable reads - `loaded` left shipPorts answering every port as the wilderness   // AUDIT CAPTAIN'S SEA P10: an isle's place a port by its kind, whatever Travel Options says   // AUDIT-TESA A4-F4: and a place past the Bay by its Arena place's port (TESA6) - Travel Options' list names none there
+    shipLocation: () => { const loc = _questLoc(); return loc ? { locationLoaded: true, portTown: (loc.ether ? loc.etherKind === 'port' : loc.arena || loc.capital ? (loc.exterior?.exteriorData?.portTownAndUnknown ?? 0) !== 0 : modSetting('travel-options', 'Enabled') === true ? hasPortFor(loc.mapTableData?.mapId) : (loc.exterior?.exteriorData?.portTownAndUnknown ?? 0) !== 0), onShip: isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel()) } : { locationLoaded: false, onShip: false }; },   // DISC13-D: `locationLoaded`, the key isShipAvailable reads - `loaded` left shipPorts answering every port as the wilderness   // AUDIT CAPTAIN'S SEA P10: an isle's place a port by its kind, whatever Travel Options says   // AUDIT-TESA A4-F4: and a place past the Bay by its Arena place's port (TESA6) - Travel Options' list names none there; BAY-LEFT-SEA: by its own port byte - an Arena place's TESA6 word, a capital's harbour's (tamrielCapitals.js capitalSlicePort: the Imperial City's Waterfront too)
     // RR2: EnhancedRiding's reads - the look, the ground, the module's settings
     lookPitch: () => cam.pitch, lookYaw: () => cam.yaw, groundHeightAt: (x, z) => heightAt(x, z),
     enhancedRiding: () => (rrRidingOn() ? { terrainFollowing: rrRidingSetting('followTerrainEnabled') === true, softenFollow: rrRidingSetting('followTerrainSoftenFactor') ?? 8 } : null),
@@ -9026,16 +8950,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const floor = surfaceAt(x, z);
     return Number.isFinite(floor) && floor < tvSeaY() - (hull < 0 ? 0.05 : navalDraftOf(hull));
   };
-  let _navalCapitals = null;
-  /** The three crowns' capitals' map pixels (navalShips.js crownOf reads the nearest as the waters' crown) - once. */
-  const navalCapitals = () => (_navalCapitals ??= NAVAL_CROWNS.map((c) => {
-    try {
-      const loc = maps.getLocationByName(REGION_NAMES[c.region], c.name);
-      if (!loc?.mapTableData) return null;
-      const px = longitudeLatitudeToMapPixel(loc.mapTableData.longitude, loc.mapTableData.latitude);
-      return { region: c.region, x: px.x, y: px.y };
-    } catch { return null; }
-  }).filter(Boolean));
   /** A port town within a pixel of the player (the merchantmen's and the navies' water, navalDirector.js PORT_WEIGHTS). */
   let _navalPortAt = null;   // { key, near } - the answer for the pixel it was asked at
   const navalNearPort = () => {
@@ -20357,7 +20271,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // in an hour the bound has spent, since nothing earned then counts). Built only online, like the tracker.
     setHudRenown(() => ({ level: renownNow, xp: renownXp, pending: _renownCapHour === renownHour() ? 0 : renownTracker.pending() }));
     globalThis.addEventListener?.('pagehide', () => { renownTracker.leave(); });   // RENOWN1: what was earned since the last report goes as the page does. AUDIT RENOWN1 GAME-8: by `keepalive`, under the report's own id
-    setRenownKillHandler((foe) => { const party = 1 + (partyNear()?.length ?? 0); const xp = renownPartyXp(renownKillXp(renownFoeLevel(foe), renownNow), Number.isInteger(foe?._fightN) ? Math.min(party, foe._fightN) : party); renownTracker.earn(xp); sigilDrinks(xp); seatEdicts.campCleared(foe?.site).catch(() => {}); });   // AUDIT PSCALE1 PLAY-4: a shared foe's bonus counts the partymates who FOUGHT it (its fighters, systems/party/partyScale.js) - a partymate idling in the cell pads nothing   // RENOWN3: read against my Renown, never above it by more than RENOWN_OVER_MAX
+    setRenownKillHandler((foe) => { const party = 1 + (partyNear()?.length ?? 0); const xp = renownPartyXp(renownKillXp(renownFoeLevel(foe), renownNow), Number.isInteger(foe?._fightN) ? Math.min(party, foe._fightN) : party); renownTracker.earn(xp); sigilDrinks(xp); seatEdicts.campCleared(foe?.site ?? lairDenOf(modes?.mode === 'dungeon' ? modes.dungeonLocation : null)).catch(() => {}); });   // BAY-LEFT-SEA: a lair's foe struck down past the Bay - its den, a Bounty's (systems/seatEdicts.js lairDenOf)   // AUDIT PSCALE1 PLAY-4: a shared foe's bonus counts the partymates who FOUGHT it (its fighters, systems/party/partyScale.js) - a partymate idling in the cell pads nothing   // RENOWN3: read against my Renown, never above it by more than RENOWN_OVER_MAX
     const paid = new Set();
     renownQuestEnded = (q) => {
       if (!q?.questSuccess) return;
@@ -26899,7 +26813,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // was opened again) - the market's own read says whether it is this account's (`market-closed`)
     const market = marketBook && profBook && profBook.state.open !== false && marksBook?.state?.open !== false && Number.isInteger(region) ? {
       book: marketBook, stores: () => profBook.state.stores, region, regionName: REGION_NAMES[region] ?? 'the region',
-      regionNameOf: (r) => REGION_NAMES[r] ?? 'another region', hubs: marketHubs, name: (k) => materialLabel(k), countName: materialCountLabel,
+      regionNameOf: (r) => REGION_NAMES[r] ?? 'another region', hubs: marketHubs(), name: (k) => materialLabel(k), countName: materialCountLabel,
       picture: (k, wake) => materialPicture(k, { onReady: wake }), itemPicture: (it, wake) => itemPicture(it, { onReady: wake }), piecePicture: marketPiecePicture,   // MENU-ORDER: a row's picture
       board: [town.px, town.py],   // SEAT1d (Seats-Arc 7.2): the board's town - the seat whose bailiwick takes the Tithe
       tithe: () => (seatBook?.open === true ? boardTithePct(seatBook.data?.seats ?? [], region, [town.px, town.py]) : null),   // AUDIT SEATS-3 D3: its rate as the seats' list says it (null: not read)

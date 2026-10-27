@@ -113,7 +113,7 @@ export function createTownEconHost({ locAt = () => null, portLanes = () => null,
         towns.strike(cmd.key).then((r) => say(r?.ok ? `Town ${cmd.key} is struck from the registry (${r.data?.reports ?? 0} reports).` : accountRefusalText(r?.error)), () => say(accountRefusalText('server')));
         return true;
       }
-      towns.audit(regionHere()).then((r) => {
+      towns.audit(regionHere(), cmd.page ?? 0).then((r) => {   // BAY-LEFT-SEA: its page
         if (!r?.ok) { say(accountRefusalText(r?.error)); return; }
         for (const line of townAuditLines(r.data, (x, y) => locAt(x, y)?.mapId)) say(line);
       }, () => say(accountRefusalText('server')));

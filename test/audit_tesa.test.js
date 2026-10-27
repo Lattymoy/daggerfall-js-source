@@ -261,7 +261,8 @@ test('AUDIT-TESA A4-F2/A4-F3: a capital\'s pixel is the capital\'s - never clone
   assert.match(W, /if \(had\?\.capital\) return capitalLocationAt\(px, py\);/);
   // A2-2: a portal's end past the Bay named by the place standing there, else its province
   assert.match(W, /const here = locationIndex\.get\(`\$\{x\},\$\{y\}`\) \?\? capitalLocationAt\(x, y\) \?\? \(_arenaTemplates \? arenaLocationAt\(x, y\) : null\);\n\s+const province = provinceByKey\(provinceKeyBeyondBay\(x, y\)\);\n\s+return here\?\.name \? \{ pixel: \{ x, y \}, name: here\.name \} : province \? \{ pixel: \{ x, y \}, name: province\.name \} : null;/);
-  assert.match(W, /\(had\.arena\?\.provinceIndex \?\? null\) === \(slot\?\.provinceIndex \?\? null\)\n\s+&& !!had\.arena\?\.port === !!slot\?\.port\) return had;/);
+  // PIN MOVED (BAY-LEFT-SEA): and its harbour's port word - a kept slice whose word moved (its canal opened) cloned again
+  assert.match(W, /\(had\.arena\?\.provinceIndex \?\? null\) === \(slot\?\.provinceIndex \?\? null\)\n\s+&& !!had\.arena\?\.port === !!slot\?\.port   \/\/ AUDIT-TESA A4-F2: its place made a port, its slot too\n\s+&& \(had\.exterior\?\.exteriorData\?\.portTownAndUnknown !== 0\) === capitalSlicePort\(at\.k, at\.s, capitalPinPort\(at\.k\)\)\) return had;/);
   assert.match(W, /const aloc = aq \? capitalLocationAt\(aq\.bx, aq\.by\) \|\| arenaLocationAt\(aq\.bx, aq\.by\) : null;/);
   // PIN MOVED (WORLD-WIDE folded into TESA, #1184): the port's id is WORLD-WIDE's own (world/worldWide/worldPorts.js portIdOfLocation)
   assert.match(W, /if \(aloc\?\.exterior\?\.exteriorData\) town = \{ id: portIdOfLocation\(aloc\), loc: aloc,/);
@@ -300,7 +301,8 @@ test('AUDIT-TESA A7-8: the capitals\' and the countryside\'s kill doors shut off
 });
 
 test('AUDIT-TESA A4-F4/A5-F3: past the Bay a ship is asked by its Arena place\'s port whatever Travel Options lists; and no deed is read in a place the port made', () => {
-  assert.match(W, /portTown: \(loc\.ether \? loc\.etherKind === 'port' : loc\.arena \|\| loc\.capital \? !!loc\.arena\?\.port : modSetting\('travel-options', 'Enabled'\) === true/);
+  // PIN MOVED (BAY-LEFT-SEA): by its own port byte - an Arena place's TESA6 word, a capital's harbour's (its Waterfront's too)
+  assert.match(W, /portTown: \(loc\.ether \? loc\.etherKind === 'port' : loc\.arena \|\| loc\.capital \? \(loc\.exterior\?\.exteriorData\?\.portTownAndUnknown \?\? 0\) !== 0 : modSetting\('travel-options', 'Enabled'\) === true/);
   assert.match(W, /ownsHouse: \(buildingKey\) => \{ const id = _questLoc\(\)\?\.mapTableData\?\.mapId \?\? 0; return !isEtherPlaceId\(id\) && !isArenaPlaceId\(id\) && !isCountryPlaceId\(id\) && isHouseOwned\(/);
 });
 

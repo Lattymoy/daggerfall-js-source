@@ -442,8 +442,10 @@ of the world's, so the bound is the law's (Port-Ledger).
   `nearestPx`, `nearestNamed` (the deed's nearest harbour and the way to it), `withBay` (the board's list: the Bay's, then
   the world's - the one array while neither moves) and `seaAreaAt` (THE WATERS' AREA: the Bay's region on the Bay, a
   province's district past it, at sea the nearest port's).
-- A port past the Bay has no crown (`crown: null`): the Bay's three crowns' writ is the Bay's. Its region is its
-  province's (WW-R; AUDIT TESA II P7 - it was -1 here, written before the owner's call on the provinces as regions).
+- A port past the Bay keeps the nearest Bay crown's office (`crown`, the host's `crownAt` - `systems/naval/navalShips.js`
+  crownOf over the three capitals, the crown whose colours its navy flies there; BAY-LEFT-SEA, the end of this page). Its
+  region is its province's (WW-R; AUDIT TESA II P7 - it was -1 here, written before the owner's call on the provinces as
+  regions).
 
 ### The world's lanes (`scenes/naval/worldLanes.js`)
 
@@ -495,8 +497,10 @@ stander did.
 
 ### What stays the Bay's (recorded)
 
-- **The crowns.** A ship past the Bay flies the nearest Bay crown's colours and a crime at sea is charged as on the Bay
-  until the provinces are regions (WW-R).
+- **The crowns.** A ship past the Bay flies the nearest Bay crown's colours and a crime at sea is charged as on the Bay.
+  The provinces became regions (WW-R) and the crowns stayed the Bay's three: seven provinces' navies are the owner's
+  call, recorded at WW7-8 (below). A port past the Bay keeps the nearest crown's harbour office (BAY-LEFT-SEA, the end of
+  this page).
 
 ### THE FOUR HOSTS (Home.md)
 
@@ -1374,3 +1378,41 @@ main through ASK-LONGER, into #1184 after START1-3 (#1216). What each side kept:
 - **Versions**: relay world260 (re-hashed in place, `1d0531dd...`: DOMAIN2's guild arm and WW7-3 to WW7-5 composed with the
   audit's), `GUILD_INSTANCE_RELAY_MIN` 260; account acct189; DOMAINS' and WW7-5's migrations 0174-0177 (0167-0170 on this
   branch, past main's 0167-0173). Neither deployed. `bootWorld`'s ceiling 36,116 (TESA's 45 and the audit's 40 lines out).
+
+## BAY-LEFT-SEA - the sea, the ports, the market and the seats past the Bay (BUILT, 2026-10-27)
+
+AUDIT BAY-LEFT (2026-10-26, "no system left behind in the Bay"; the owner after it: *"Every single thing here needs to be
+addressed. No exceptions."*) found six systems of the sea, the ports, the market and the seats that worked on the Bay and
+stood missing or wrong past it. Each is fixed where its system lives, and its record is there; the Bay's answer to every
+one is pinned unchanged.
+
+| Audit item | What stood past the Bay | What it is now | Record |
+|---|---|---|---|
+| 30, C5 | No Harbormaster tab at any of the 29 ports (`crown: null`): no board, contract, letter of marque or Admiralty carrack | A port keeps the nearest Bay crown's office (the owner's call taken) - Wayrest's at 18, Sentinel's at 10, Daggerfall's at Northpoint | `03-World/Captains-Sea.md` BAY-LEFT-SEA |
+| 31, C6 | Solitude, Alinor, Torval and the Imperial City's Waterfront stood no shipyard, crew hall or lighthouse and sold no ship (their byte 0) | Each harbour slice is a port to its own byte where the registry calls it one; a capital's landmarks measured by their footprint - all four stand all four places | `03-World/Arena-Provinces.md` BAY-LEFT-SEA |
+| 7, B2 = E1 | No buy, fill or bid between a province's board and any other region (`market-no-road`, both ways) | A province's hub its crown seat's pixel, else its largest listed city's, made again as the seats and the places move | `06-Systems/Professions-Arc.md` 56 |
+| 20, B8 = E3 | A seat could proclaim the Bounty, and it never paid (World of Daggerfall's camps are the Bay's) | It pays on its bailiwick's dens - an outlaws' hideout routed, a lair whose foe falls (the owner's call taken) | `11-Multiplayer/Seats-Arc.md` BAY-LEFT-SEA |
+| 23, E4 | Staff `/town audit` listed a province's 400 farthest countryside hamlets, never a capital | A province's capitals first, then its places, then its countryside, 400 a page | `06-Systems/Town-Economy-Arc.md` 10 |
+| 22, D4 | Weather born at sea read the nearest Bay edge's climate (the Sea of Ghosts: 142 of a winter's 400 words snow) | The sea's own (62 snow, 93 fog) | `07-Rendering/Weather-Arc.md` BAY-LEFT-SEA |
+
+**The owner's calls, taken** (*"Every single thing here needs to be addressed. No exceptions."*, 2026-10-26): a harbourmaster
+past the Bay keeps the nearest Bay crown's board; the Bounty edict past the Bay pays on hideouts and lairs (it is offered,
+never withheld).
+
+**The four hosts** (Home.md). `scenes/world.js` WIRED: the market's pieces and hubs out of `bootWorld` to
+`scenes/marketPiecesHost.js` (HOST-SPLIT, `01-Overview/Host-Split.md` BAY-LEFT-SEA) and handed the seats and the places;
+the crowns' capitals read above the world's ports and handed them as `crownAt`; a hideout's rout and a lair's fallen foe
+handed the seats' edicts; a capital's landmark measured by its footprint at the town's places; the ship sale's port test
+the place's own byte. `scenes/worldModes.js` FLAGGED, unchanged: the bank's ship sale already reads the location's byte
+(DaggerfallBankingWindow.cs:460's one read). `scenes/exterior.js` FLAGGED: the Bay's fixed city, no port or seat past the
+Bay. `scenes/dungeonContext.js` FLAGGED, unchanged: a lair's foe reaches the Bounty through the renown kill handler the world
+host sets (`net/renownTracker.js`). `bootWorld` 35,799 -> 35,700 (`test/scenes/hostceiling.test.js`).
+
+**The wire and the service.** No relay change. The account service: `server-account/src/townEcon.js` (E4) and
+`server-account/src/seatHolding.js` (B8 = E3), folded into the undeployed acct196 (re-hashed at integration); the Worker
+now bundles `src/world/capitalLane.js` (`.github/workflows/account-deploy.yml`'s path filter). No migration.
+
+**Pins and mutants.** `test/world/worldWide/bayleftsea_market.test.js`, `bayleftsea_harbour.test.js`,
+`bayleftsea_capitals.test.js`, `test/net/bayleftsea_bounty.test.js`, `test/server/bayleftsea_townaudit.test.js`,
+`test/systems/weather/bayleftsea_seaweather.test.js` - their freeware halves with `ARENA2_PATH`. `tools/mutants/bayleftsea.json`,
+81 records, all dead; the older records the slice moved re-aimed by content (each record's own `note`) and all dead.
