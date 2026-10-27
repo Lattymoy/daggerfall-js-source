@@ -5367,7 +5367,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       _sharedPending.set(r.i, r);
       standSharedPuppet(r).catch((e) => { _sharedPending.delete(r.i); console.error('[online] the room\'s encounter could not stand here:', e); });
     }
-    if (full) for (const [id, f] of [..._sharedById]) if (!seen.has(id) && !_sharedPending.has(id) && !(full === 2 && f.dead)) dropSharedFoe(id, f);   // RPT1026-ITEMS BODY-CAP: a body a capped frame shed stays
+    if (full) for (const [id, f] of [..._sharedById]) if (!seen.has(id) && !_sharedPending.has(id) && !(full === XF_STANDING && f.dead)) dropSharedFoe(id, f);   // RPT1026-ITEMS BODY-CAP: a body a capped frame shed stays (AUDIT RPT1026 M5: read by its name, as the frame says it)
   }
   /** REST-SYNC: one of the room's encounters stood here as a puppet - the build chain's own, where the host's record
    *  says, and posed by the newest record the stream has carried since. */
