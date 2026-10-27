@@ -76,7 +76,7 @@ export function createRefereeHealthMirror({ read, write, send, now = () => Date.
     asked = false;
   };
 
-  return {
+  const mirror = {
     /** The host's frame: a report when one is owed. `active` - a refereed fight may hold me now. */
     frame(active) {
       if (!active && !asked) return;
@@ -114,6 +114,11 @@ export function createRefereeHealthMirror({ read, write, send, now = () => Date.
       // The referee now holds the word's share: a report is owed only where my own movement since differs from it.
       lastSentShare = (w.health / w.max) * HEALTH_SHARE_WHOLE;
     },
+    /** A referee's word in (net/wire.js validVitOut): its ask, or its count on my pool. */
+    onVit(word) {
+      if (word.k === 'ask') mirror.ask();
+      else mirror.onWord(word);
+    },
     /** The player left the online world: nothing of a pool is kept. */
     reset() {
       base = null;
@@ -126,4 +131,21 @@ export function createRefereeHealthMirror({ read, write, send, now = () => Date.
       asked = false;
     },
   };
+  return mirror;
+}
+
+/**
+ * The world host's mirror: the player entity's health read and written, the reports on the online session's own room
+ * socket. A word never kills - a player at none stays at none, and the zone's fall is its own word (forcePlayerDeath).
+ * @param {{ health: number, maxHealth: number }} player
+ * @param {() => { sendVit?: (report: any) => boolean } | null | undefined} onlineOf   the session now, if any
+ */
+export function createPlayerHealthMirror(player, onlineOf) {
+  return createRefereeHealthMirror({
+    read: () => player,
+    write: (health) => {
+      if (player.health > 0) player.health = health;
+    },
+    send: (report) => onlineOf()?.sendVit?.(report) === true,
+  });
 }

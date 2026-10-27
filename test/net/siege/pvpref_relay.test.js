@@ -148,3 +148,29 @@ test('PVP-REF THE FIELD\'S BOUND: the room keeps SIEGE_FIGHTERS_MAX fighters; on
     assert.deepEqual(sieges(all.at(-1)).at(-1), { t: 'siege', k: 'no', m: 'the field is full' });
   });
 });
+
+const vits = (ws, k) => ws.sent.filter((m) => m.t === 'vit' && (!k || m.k === k));
+test('SHARED-HEALTH THE SIEGE\'S ROOM (2026-10-26, Integrity-Arc.md section 5): a fighter\'s `in` asks for its health; its report anchors its count at its own share; a blow is said on the struck player\'s own health; a fall leaves it at none and the rise at its wave heals it whole; a spectator\'s report reaches no pool (mutants: no ask at `in`; the blow unsaid; the rise unsaid)', async () => {
+  await withSiege(async ({ r, say, join, now, set }) => {
+    const a = await join('peer-0001', 0);
+    const b = await join('peer-0002', 2, { lv: 50 });
+    const eye = r.connect(); await r.hello(eye, 'peer-0003', at(30), { glyphs: ['dev'], look: LOOK });
+    await say(a, { k: 'in' }); await say(b, { k: 'in' });
+    assert.equal(vits(b, 'ask').length, 1, 'the fighter made waits for its health');
+    await r.raw(b, JSON.stringify({ t: 'vit', n: 1, s: 7500, seen: [] }));
+    const anchored = vits(b, 'h').at(-1);
+    assert.deepEqual([anchored.h, anchored.m], [300, 400], 'three quarters of its 400');
+    const top = siegeBlowMax(123, 9);
+    await say(a, { k: 'blow', to: 'peer-0002', w: 123, m: 9, d: 500, r: 0 });
+    assert.equal(vits(b, 'h').at(-1).h, 300 - top, 'the blow on its own health');
+    r.room._siege.fighters['acct-peer-0002'].hp = 1;
+    set(now() + 1000);
+    await say(a, { k: 'blow', to: 'peer-0002', w: 123, m: 9, d: 500, r: 0 });
+    assert.equal(vits(b, 'h').at(-1).h, 0, 'fallen: none left');
+    set(r.room._siege.fighters['acct-peer-0002'].upAt);
+    await r.fire();
+    assert.equal(vits(b, 'h').at(-1).h, 400, 'risen at its wave: whole');
+    await r.raw(eye, JSON.stringify({ t: 'vit', n: 1, s: 1, seen: [] }));
+    assert.equal(vits(eye).length, 0, 'a spectator holds no pool');
+  });
+});

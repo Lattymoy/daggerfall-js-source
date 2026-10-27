@@ -204,6 +204,7 @@ import { TITLES, GLYPHS, GLYPHS_MAX, AURAS, ICONS, titleClaimed, seatTitleClaimO
 import { nameAllowed, maskText, textCaught } from './nameFilter.js';   // NAME-F2: the filter runs INSIDE sanitizeName, so the relay carries it; TEXT-F1: and a player's words are starred inside sanitizeChat and wordsLine, the same way - nameFilter.js imports nothing, same as mat4.js above, so the worker's graph stays flat
 import { validRollSpec, validRoll, rollDice, ROLL_DICE_MAX, ROLL_SIDES_MAX, ROLL_MOD_MAX } from './dice.js';   // DICE1: the dice's law - one home for both ends (dice.js imports nothing, so the worker's graph stays flat)
 import { ribbonClaimOk } from './heraldryLaw.js';   // SEASON1 part two: a Season's banner ribbon - heraldryLaw.js imports nothing, so the worker's graph stays flat
+import { HEALTH_SHARE_WHOLE } from './siege/refereeHealthShare.js';   // SHARED-HEALTH: a report's share is in its parts - refereeHealthShare.js imports nothing, so the worker's graph stays flat
 import { GUILD_TAG_RE } from './guild/guildLaw.js';   // GUILD1c: a guild's tag is badged beside the name - guildLaw.js imports nothing, so the worker's graph stays flat
 import { homeMapIdOk, homeBuildingKeyOk, HOME_ORDER_KEYS_MAX } from './homeLaw.js';   // QUEST-HOME: a home word's town and buildings, the homes' own shapes - homeLaw.js imports nothing, so the worker's graph stays flat
 import { RAID_KEY_RE, RAID_SIG_RE, RAID_TARGET_MIN, RAID_TARGET_MAX, RAID_TYPES, RAID_WORD_KILLS_MAX, RAID_ACCOUNTS_MAX, RAID_TOP_MAX, RAID_TOWNS_SHA_RE, RAID_TOWNS_CHUNK, RAID_TOWNS_CHUNKS_MAX } from './raid/raidLaw.js';   // RAID3: a town raid's law - raidLaw.js imports nothing, so the worker's graph stays flat
@@ -2303,6 +2304,12 @@ export function parseClient(text, { hasHello = false } = {}) {
     if (text.length > DUEL_FRAME_MAX) return { error: 'frame too large' };
     const data = validDuelData(m.data);
     return data ? { t: 'duel', data } : { error: 'bad duel' };
+  }
+  if (m.t === 'vit') {   // SHARED-HEALTH: my health's share, for the referee that holds a fight of mine (net/siege/refereeHealthShare.js)
+    if (!hasHello) return { error: 'vit before hello' };
+    if (text.length > VIT_FRAME_MAX) return { error: 'frame too large' };
+    const report = validVitIn(m);
+    return report ? { t: 'vit', ...report } : { error: 'bad vit' };
   }
   if (m.t === 'wed') {   // LEGACY7 part three: a proposal, its answer, its end or the union's word - one directed frame, projected by validWedData; the relay reads none of it
     if (!hasHello) return { error: 'wed before hello' };
@@ -4896,6 +4903,53 @@ function validWildDown(/** @type {any} */ m) {
   const p = wildPoint(m.p);
   return p ? { k: 'down', ms: m.ms, r, p } : null;
 }
+// ─── SHARED-HEALTH (2026-10-26, net/siege/refereeHealthShare.js): ONE HEALTH POOL UNDER THE REFEREE ───
+// A client's report of its health (`{t:'vit', n, s, seen}`) to the referee that holds a fight of its - the open zone's, a
+// duel's or a siege's, in the room its socket stands in - and the referee's words back: its count for that client's
+// pool (`k: 'h'`), or an ask for a report (`k: 'ask'`) where a pool waits for one.
+
+/** The relay that takes the `vit` frame and says its words; a client sends none to an older one. */
+export const VIT_RELAY_MIN = 270;
+/** Whether the relay that welcomed a socket takes `vit` (an older one closes the socket on it). */
+export const relaySupportsVit = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= VIT_RELAY_MIN; };
+/** A report's bound: the fewest bytes a well-made one fits in, many times over. */
+export const VIT_FRAME_MAX = 512;
+/** Reports a second a socket may send (the client's mirror sends at most four - refereeHealthMirror.js HEALTH_REPORT_MS). */
+export const VIT_HZ_MAX = 8;
+export const vitGate = (bucket, nowMs) => tokenGate(bucket, nowMs, VIT_HZ_MAX);
+/** How many pools' last words a report may name. */
+export const VIT_SEEN_MAX = 4;
+const WORD_MAX = 0x7fffffff;
+const epochOk = (v) => Number.isSafeInteger(v) && v >= 0;
+
+/**
+ * A client's report, PROJECTED: `{ report, share, seen }` (refereeHealthShare.js HealthReport), or null.
+ * @param {any} m
+ */
+export function validVitIn(m) {
+  if (!m || typeof m !== 'object' || !intIn(m.n, 1, WORD_MAX) || !intIn(m.s, 0, HEALTH_SHARE_WHOLE)) return null;
+  if (!Array.isArray(m.seen) || m.seen.length > VIT_SEEN_MAX) return null;
+  /** @type {Array<[number, number]>} */
+  const seen = [];
+  for (const pair of m.seen) {
+    if (!Array.isArray(pair) || pair.length !== 2 || !epochOk(pair[0]) || !intIn(pair[1], 0, WORD_MAX)) return null;
+    seen.push([pair[0], pair[1]]);
+  }
+  return { report: m.n, share: m.s, seen };
+}
+
+/**
+ * The referee's word to a client, PROJECTED: `{ k: 'h', health, max, epoch, word, report }` (refereeHealthShare.js
+ * PoolWord) or `{ k: 'ask' }`, or null.
+ * @param {any} m
+ */
+export function validVitOut(m) {
+  if (!m || typeof m !== 'object' || m.t !== 'vit') return null;
+  if (m.k === 'ask') return { k: 'ask' };
+  if (m.k !== 'h' || !intIn(m.m, 1, CARD_VITAL_MAX) || !intIn(m.h, 0, m.m) || !epochOk(m.e) || !intIn(m.w, 0, WORD_MAX) || !intIn(m.n, 0, WORD_MAX)) return null;
+  return { k: 'h', health: m.h, max: m.m, epoch: m.e, word: m.w, report: m.n };
+}
+
 /** Is this projected frame one the relay routes to a socket (true), or the room's own (false)? */
 export const wildDirected = (d) => !!d && WILD_DIRECTED.includes(d.k);
 /**

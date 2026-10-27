@@ -758,7 +758,9 @@ function npcStep(b, fighters, nowMs, ground, out) {
       const to = n.atk.to, f = fighters.find((x) => x.sub === to);
       n.atk = null;
       if (foeOf(K, f) && fromMe(f) <= K.landM && nowMs >= (f.safeTo ?? 0)) {
-        f.hp -= Math.min(K.damage, f.hp);
+        const dealt = Math.min(K.damage, f.hp);
+        f.hp -= dealt;
+        if (dealt > 0) noteRefereeChange(f, -dealt, nowMs);   // SHARED-HEALTH: a relay foe's blow reaches the player's health too
         const fell = f.hp <= 0;
         if (fell) { f.down = true; f.upAt = siegeNextWave(nowMs, siegeWaveMs(b, f.side)); }
         out.push({ k: 'nhit', n: n.id, to, h: f.hp, m: f.max, fell });
