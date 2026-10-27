@@ -593,6 +593,10 @@ These are the working notes. The pull request holds the checks as they are run.
   registry (the `onHomeOrders` shape): `online.js` hands the yard words and the hub link's state to it, and
   `accountClient.js` hands it the orders. `homeYards.js` and `yardCellSync.js` subscribe to it. On the relay, the
   arm is a module of its own (the `staffFreeze.js` shape), with one dispatch line in `_message`.
+- **ACCOUNT_VERSION moves (acct198).** The site's deploy waits until the service serves the version in the tree
+  (`deploy.yml`, "Read the account service this build talks to"). Without the move, a new site could go live on
+  an old service: its writes would carry no order, and with a healthy hub socket its poll would be the slow one, which
+  is worse than YC1.
 - **The relay keeps no yard state on disk.** Words owed are held in memory, as the highest `v` for each `m:c`, and
   one timer sends them as one frame a second at most.
 
@@ -600,4 +604,3 @@ These are the working notes. The pull request holds the checks as they are run.
 
 - How a word carried to a hub shard reaches the sockets of the other shards. The yard arm takes the home arm's
   route. Whether that route reaches every shard is not yet checked.
-- Whether the site's deploy waits for an account version. If it does, YC2 moves ACCOUNT_VERSION too.
