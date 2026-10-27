@@ -151,9 +151,9 @@ export function factionWeights({ nearPort = false, notoriety = 0, deep = false }
 }
 
 /**
- * RPT1026-WORLD TRAFFIC-REAL (two private reports, 2026-10-22 and 10-24: "Every 20 seconds or less, pirates attack on
- * the large map ... traveling in search of legendary lairs becomes impossible"; "I just go to overworld in two secs and
- * had a failed encounters, every two sec"): THE SEA'S TRAFFIC COMES ON THE PLAYER'S OWN MINUTES. The host steps the sea
+ * RPT1026-WORLD TRAFFIC-REAL (two private reports, 2026-10-22 and 10-24: pirates fell on a ship on the large map within
+ * seconds of each other, so no voyage in search of a legendary lair could be made; on the Overworld an encounter came and
+ * failed every couple of seconds): THE SEA'S TRAFFIC COMES ON THE PLAYER'S OWN MINUTES. The host steps the sea
  * on the world's clock (navalHost.js frame: `dt * worldTimeScale()`, AUDIT NAV1's "the sea keeps the world's time"), and
  * the rolls' wait counted those seconds - so under the Overworld's x60 to x100 (RATE-LAW) a roll came every one to two
  * real seconds, not SEA-EASE's "a minute to two and a half", and a ship left DESPAWN_BEYOND astern in a breath freed her

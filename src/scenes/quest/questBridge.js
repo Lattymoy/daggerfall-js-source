@@ -737,9 +737,9 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
         const les = q.getLogMessages();
         if (!les?.length) {
           // QL2: a stamped quest with no journal entry yet, whose objectives the machine has opened - the pause tab's row.
-          // RPT1026-QUESTS ABANDON-ALWAYS (private reports: The Lost Artifact's knight paid, "all objectives crossed out",
-          // "Cannot even abandon this quest" - "we're basically locked out of the guild"; a Mages Guild's "I can't take more
-          // quests, but I don't have quests to do"): and DFU's own quest that holds its questor's door with nothing in its
+          // RPT1026-QUESTS ABANDON-ALWAYS (private reports: The Lost Artifact's knight paid, its objectives all struck, and
+          // the quest beyond abandoning - the guild's door shut by it; a Mages Guild that refused a new quest to a
+          // member with none to do): and DFU's own quest that holds its questor's door with nothing in its
           // journal - B0B81Y02's `remove log step 0` at the knight's word, N0B21Y14's letter not read - is a row too, so it
           // can be abandoned; and one set aside with no entry is an Abandoned row, so it can be reclaimed (AUDIT QUESTLINES
           // UI-8 had kept Abandon off a row with no entry because a quest set aside so was no row at all)

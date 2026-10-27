@@ -24,8 +24,8 @@ import { repositionFeetY, heldInSolid, openGroundNear } from '../player/enterExi
 export { CARAVAN_STANDS_NATIVES };
 
 /**
- * RPT1026-WORLD WAGON-OUT (a private report, 2026-10-20: "Spawn a Wagon with parts inside a building or really close to
- * one. Get inside the Wagon. Leave the wagon. Now you are stuck inside a building and need the command /unstuck"): THE
+ * RPT1026-WORLD WAGON-OUT (a private report, 2026-10-20: a wagon called up with part of it in a house, or hard by one,
+ * entered and left again, set the player down inside the house, and only /unstuck got them out): THE
  * CARAVAN'S DOOR NEVER LETS THE PLAYER OUT INTO A WALL. Its door's landing is the ground behind the rear door (world.js's
  * `ground`: the street's collider floor under it, the door's landing law - enterExit.js repositionFeetY), and nothing
  * asked what stands there: a caravan parked with its back to a house, a palisade or a rock put that ground inside the

@@ -1,5 +1,6 @@
-// RPT1026-WORLD TRAFFIC-REAL (two private reports, 2026-10-22 and 10-24: pirates "every 20 seconds or less" on the large
-// map at sea, "a failed encounter every two seconds"): THE SEA'S TRAFFIC COMES ON THE PLAYER'S OWN MINUTES. The real naval
+// RPT1026-WORLD TRAFFIC-REAL (two private reports, 2026-10-22 and 10-24: pirates on the large map at sea within
+// seconds of each other, and an encounter failing every couple of seconds): THE SEA'S TRAFFIC COMES ON THE PLAYER'S
+// OWN MINUTES. The real naval
 // host over Come Sail Away's real pool (test/navalSea.mjs), a boat at her helm on open water, stepped as the world host
 // steps it (world.js naval.frame(dt * worldTimeScale())) at the Overworld's x60 and at a helm's x1; and the director's
 // law itself (systems/naval/navalDirector.js trafficSeconds).

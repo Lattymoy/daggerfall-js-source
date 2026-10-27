@@ -17,7 +17,7 @@ import { readCardReceipt, CARD_RECEIPT_TTL_S } from './cardReceipt.js';
 import { ORDER_TTL_S } from '../identityToken.js';
 import { t } from '../../systems/textManager.js';
 
-/** RPT1026-CARDBANK (a private report: "I sat down at a red card table. Nobody sat down so I got up ... I have no gold"):
+/** RPT1026-CARDBANK (a private report: a player sat at a red card table alone, rose again, and found the purse empty):
  *  a cash-out is paid into the bank account of the region it was staked from (Tavern-Cards.md section 23, THE CLAIM), not
  *  the purse the buy-in came out of - and nothing said so, so a stake that came home looked like a stake lost. */
 export const cardBankedText = (/** @type {number} */ gold) => t('cards.cashout.banked', 'The card table paid {gold, number} gold into your account at the Bank of the Empire.', { gold });

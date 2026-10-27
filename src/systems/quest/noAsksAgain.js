@@ -117,8 +117,8 @@ export function clearingNo(quest, task, prompt) {
 }
 
 /**
- * RPT1026-QUESTS NO-GIVES-BACK (a private report, M0B11Y18: "When giving the letter to the queen of Sentinel, when i
- * pressed no ... i couldnt speak to the queen afterward"): the prompt's No task when its every action hands back what
+ * RPT1026-QUESTS NO-GIVES-BACK (a private report, M0B11Y18: Sentinel's queen, handed the letter and answered No, would
+ * not speak again after): the prompt's No task when its every action hands back what
  * the asking took - a `get item` of an item the asking task's own `toting X and Y clicked` totes (TotingItemAndClickedNpc
  * releases the item it reads: ReleaseQuestItemForReoffer, actions.js) - at least one, and nothing but this prompt naming
  * it; else null. K'avar Part I's queen: `_S.16_ task: toting _I.03_ and _ruler_ clicked` / `prompt 1050 yes _S.18_ no

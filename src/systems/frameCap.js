@@ -51,9 +51,9 @@ export function frameCapRate(n) {
   return Number.isFinite(n) && n >= FRAME_CAP_FLOOR ? Math.min(FRAME_CAP_MAX, Math.floor(n)) : 0;
 }
 
-/** RPT1026-CLIENT (a private report: "When VSync is disabled, the desktop app launches Chromium without its built-in frame
- *  rate limit. Because the in-game Frame Rate Cap also defaults to Off, the client renders as fast as the hardware
- *  allows"): OFF HAS A CEILING WHERE THE WAIT IS LIFTED. DFU's VSync off with no target runs free
+/** RPT1026-CLIENT (a private report: the desktop app with VSync off runs Chromium unthrottled, and with the game's own
+ *  Frame Rate Cap at its default, Off, nothing held the frames back at all): OFF HAS A CEILING WHERE THE WAIT IS LIFTED.
+ *  DFU's VSync off with no target runs free
  *  (StartGameBehaviour.cs:244-250, `Application.targetFrameRate` left at -1), and FPS-VSYNC followed it - so the app with
  *  VSync off and the cap at its default drew a thousand frames a second and more, each one's garbage collected with it
  *  (the report measured ~3,760 collections in ten seconds against 28 capped, the heap's peak 77% higher). Off there holds

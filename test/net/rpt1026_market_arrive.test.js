@@ -1,8 +1,8 @@
 // RPT1026-MARKET (private reports 2026-10-26) - the game's half of ARRIVE (net/marketArrivals.js: what the market sends a
 // character reaches its pack on its own) and COLLECT-LANDED (net/marketBook.js collectGood: a collect whose answer was lost
-// is received on the retry, never a session ended). Private reports: "bought axe from poh trader - it never arrived
-// anywhere"; "bought bow from other player house and didnt receive it"; legendaries that "disappeared" as they came off the
-// market. A tab playing a realm character over the real Worker (test/accountDb.mjs, test/realmSeat.mjs): its realm session
+// is received on the retry, never a session ended). Private reports: an axe paid for at a trader in a player's home
+// that came nowhere; a bow paid for at another player's house that never came; legendaries that went missing as they came
+// off the market. A tab playing a realm character over the real Worker (test/accountDb.mjs, test/realmSeat.mjs): its realm session
 // (systems/realmSaves.js createRealmSession), the real realmGoldAct, the pack side (systems/tradePack.js
 // createMarketGoods), the book over the account door; the pieces the loot producer mints.
 import '../chargenDom.mjs';

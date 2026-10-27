@@ -3128,7 +3128,7 @@ function portRowsGame({ pause = false } = {}) {
   row.append(ctl);
   return [row, techniqueMotionRow()];
 }
-/** RPT1026-CLIENT (a private report: allies' spell impacts shake the camera, "and no setting turns them down"): how much
+/** RPT1026-CLIENT (a private report: allies' spells shook the view where they landed, and no setting could soften it): how much
  *  another player's spell shakes the view where it lands (scenes/hostMagic.js peerKickShare); Settings > Accessibility >
  *  Motion lists it beside the recoil, which is the player's own injuries alone. */
 function peerSpellShakeRow() {

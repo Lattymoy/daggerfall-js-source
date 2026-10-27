@@ -1,6 +1,6 @@
 // @ts-check
-// RPT1026-EVENTS GATE-WAY (2026-10-26; two private reports: Portal Stone portals opened before breaches and other events to
-// carry the arriving crowd elsewhere, and a breach's gate walled with a parked wagon while a portal was laid in it as the gate
+// RPT1026-EVENTS GATE-WAY (2026-10-26; two private reports: Portal Stone portals opened at the mouth of a breach or another
+// event to carry the arriving crowd elsewhere, and a breach's gate walled with a parked wagon while a portal was laid in it as the gate
 // opened, more than once): AN EVENT'S GATE KEEPS ITS WAY CLEAR.
 //
 // A Portal Stone's portal takes whoever steps into it (systems/portalStone.js), and a crowd running at a Dagon's Breach as

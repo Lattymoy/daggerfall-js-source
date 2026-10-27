@@ -1351,8 +1351,8 @@ Pins: `test/ui/mappan.test.js`.
 
 ## PAD-CAPTURE - a pad's press on the map never throws (RPT1026-CLIENT, 2026-10-26)
 
-A private report: "If you play with a pad and open up the world map, then press A anywhere on it ... NotFoundError:
-Element.setPointerCapture: Invalid pointer id", and the crash report stood until a reload. The pad's press is a
+A private report: a pad's A pressed anywhere on the open world map threw a NotFoundError out of
+Element.setPointerCapture (an invalid pointer id), and the crash report stood until a reload. The pad's press is a
 synthetic pointer (`plusPad.js` domPointer, `enhancedDialog.js` replayClick: `pointerId: 1`, the mouse's id in
 Chromium). Firefox numbers its mouse 0 and holds no pointer 1, so the stage's capture on the press threw out of its
 listener to the page - each of the four arms of the stage's `pointerdown` (the turn, a pinch's second finger, a

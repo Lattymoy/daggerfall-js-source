@@ -92,7 +92,7 @@ test('RPT1026-FIGHTS TRAP-TO-OWNER MY CAST\'S TRAP ON A FOE ANOTHER PLAYER RUNS:
   for (const h of macHits) assert.equal(bob.applyHit('mac-0001', h), true);
   assert.equal(peerSoulTrapOf(rat.entity)?.by, 'mac-0001', 'the runner\'s foe holds my trap');
   assert.deepEqual(bobSaid, [], 'and says nothing of it');
-  // Bob's own blow kills it (the report's "both tried killing")
+  // Bob's own blow kills it (the report's two players each striking it)
   bob.damageFoe(rat, 1000, [30, 0, 30], null, { kind: 'melee' });
   assert.equal(rat.dead, true);
   assert.equal(bobE.items[0].trappedSoulType, null, 'not the runner\'s gem');

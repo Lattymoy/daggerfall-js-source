@@ -1,6 +1,6 @@
-// RPT1026-CLIENT (a private report, 2026-10-20: "Every spell that lands within about 14 meters of the player shakes the
-// camera, no matter who cast it. At Dagon's Breach ... the shakes overlap into a constant tremor", and "Screen Shake On
-// Damage ... has no effect on it"). Another player's cast is drawn as a missile of its element (hostMagic.js spellVisual:
+// RPT1026-CLIENT (a private report, 2026-10-20: any spell landing some fourteen metres off shook the view, the player's
+// or anyone's; at Dagon's Breach the shakes of many casts ran together without a pause, and the Screen Shake On Damage
+// setting did not touch it). Another player's cast is drawn as a missile of its element (hostMagic.js spellVisual:
 // SPELLFX1's `visual`, its caster named) and lands through the same impact as mine, which kicked the camera (Better
 // Ambience's weaponKick) at its whole strength. Driven through the one cast engine (createPlayerMagic) as
 // test/formats/morrowind/mwspellfx1.test.js stands it, a wall across the bolt's line 3 m from me.

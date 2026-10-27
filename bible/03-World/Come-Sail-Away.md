@@ -1445,7 +1445,7 @@ plain source's volume is handed over the bus with Sound Volume divided
 out, so every moored boat in earshot ran her wake's loop at full volume
 whatever the sliders said. RPT1026-WORLD LOOP-AWAKE (a private report,
 2026-10-25: every slider at 10%, in and out of a caravan by the
-shipwright - "insanely loud sound effects"; Port-Ledger A, LOOP-AWAKE): a
+shipwright - the boats' sound far over every slider; Port-Ledger A, LOOP-AWAKE): a
 loop comes back as it went - one that played as its object went inactive
 plays again from its start at the volume it had, one that did not stays
 silent, and a boat never put away this way wakes her slow loop alone, the

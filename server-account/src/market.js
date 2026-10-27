@@ -895,8 +895,8 @@ export async function marketRead(ctx, player, env, { character, region, view, fa
 }
 
 /**
- * RPT1026-MARKET ARRIVE (private reports 2026-10-26: "bought axe from poh trader - it never arrived anywhere, it's gone
- * and so is my gold"): THE ROAD ALONE - `{ character }`: the account's own market settled (settle: its listings and orders
+ * RPT1026-MARKET ARRIVE (private reports 2026-10-26: an axe paid for at a trader in a player's home that came nowhere,
+ * the gold spent all the same): THE ROAD ALONE - `{ character }`: the account's own market settled (settle: its listings and orders
  * past their time closed and their goods sent back as deliveries, the couriers' loads into the Stores) and what is on its
  * way to the account read, nothing else - no view's rows, no couriers' hubs, no medians. A piece bought or come back is a
  * delivery that only a collect puts into the pack (collectGood, marketCollect), and the one reader of the road was the
@@ -1780,7 +1780,7 @@ export async function marketCollect(ctx, player, env, { character, delivery: id,
  * where it stands, asked before any other word) in the collect's own batch, the delivery marked collected and GUARDED
  * (mustChange: a delivery another collect took first rolls the record back). Answers the piece's record and the record's
  * new sequence (`realm.seq`); asked again with the same id, the delivery again.
- * RPT1026-MARKET COLLECT-LANDED (private reports 2026-10-26: legendaries "disappeared" as they came off the market, their
+ * RPT1026-MARKET COLLECT-LANDED (private reports 2026-10-26: legendaries went missing as they came off the market, their
  * returns collected seven minutes before the report), VENDOR-LOST's departure from AUDIT REALM L1-F2 for a collect too: a
  * collect's tab needs its answer (the piece is the answer), so "one on" ended its session (realmGoldAct's `needsAnswer`)
  * with the piece in the record and none in the pack. A record one on from where the tab asked, under its lease, with a

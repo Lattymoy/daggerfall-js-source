@@ -242,10 +242,10 @@ export function settleRealmTrade(saveA, saveB, halfA, halfB) {
  *  AUTO-HOLD (2026-10-16): that third hold is a week (a month each time after) even once the piece is gone - no staff's
  *  look - and the piece still carried past it holds as any law hold does. */
 export const TRADE_HELD_STRIKES = ' Holds add up: from the third, the freeze stays for a week even after it is gone, and for a month each time after that.';   // RPT1026-MARKET HOLD-SAID: the freeze, never "trading" alone
-// RPT1026-MARKET HOLD-SAID (private reports 2026-10-26: "since today i am unable to gather materials. And it only says im
-// frozen from trading but gives no specifics. We might need something that leads us into discord"; "your system treats
-// crafting and gathering skills as 'trading'... it would really help if you could make the error messages and account
-// statuses a bit more clear"): A HOLD FREEZES MORE THAN TRADING - every progression claim is asked of an unheld seat
+// RPT1026-MARKET HOLD-SAID (private reports 2026-10-26: gathering stopped overnight under a notice that named only a
+// trade freeze, with no reason and no road to anyone who could help; another found crafting and gathering counted as
+// trading, and asked for clearer messages and a clearer account state): A HOLD FREEZES MORE THAN TRADING - every
+// progression claim is asked of an unheld seat
 // (server-account/src/progress.js seatRefusalOf: a harvest, a smelt, a craft, a brew, a disenchant, a temper, a writ's
 // delivery), so each notice says the three a player meets; and staff's, which names no reason (its note is staff's own -
 // staffRealm.js), says how to reach them: the private report (/bug, net/chatCommands.js) and the game's Discord. In the

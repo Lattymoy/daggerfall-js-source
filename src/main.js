@@ -441,8 +441,9 @@ function crashOverlay(msg) {
   document.body.appendChild(el);
   return el;
 }
-// RPT1026-CLIENT (private reports: the Firmament's Accept, a pad's A on the world map - "it blocks the bottom part of the
-// screen, so can't see Health and Hotkeys ... Must exit and come back"): not every throw that reaches the page kills the
+// RPT1026-CLIENT (private reports: the Firmament's Accept, a pad's A on the world map - the report covered the lower
+// screen, the Health bar and the hotkeys with it, until the game was left and loaded again): not every throw that
+// reaches the page kills the
 // game - a window's own frame, an input handler - and the report stood over the HUD of a session that ran on, with no
 // way off it (FIELD BUGS 2026-10-02c KEY-BOOT: "no dismiss"). Its body stays click-through (PL3); one button after the
 // text takes clicks and takes the report down, so a probe's first line is still the error's.
@@ -473,8 +474,8 @@ addEventListener('unhandledrejection', (e) => crashOverlay(`unhandled rejection\
 document.getElementById('c')?.addEventListener('webglcontextlost', (e) => {
   e.preventDefault();
   if (pageGoing) return;   // GL-LEAK: let go on purpose as the page goes - no "context lost" over a closing tab
-  // RPT1026-CLIENT (a private report from a PC, loading into an Oblivion Gate: "often low memory on phone but i am on pc
-  // and haven't got low memory"): the browser says only THAT its context is gone - a phone short of memory, or on any
+  // RPT1026-CLIENT (a private report from a PC, loading into an Oblivion Gate: the line blamed a phone's memory on a
+  // desktop with memory to spare): the browser says only THAT its context is gone - a phone short of memory, or on any
   // machine the graphics driver resetting the card - so the line names both and blames neither
   const el = crashOverlay('the graphics stopped: the graphics card was reset, or ran short of memory\n\nclick or tap here to reload');
   // AUDIT 68 S02-contextlost-tap-dead: PL3 made the report click-through,

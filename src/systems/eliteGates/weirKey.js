@@ -47,7 +47,7 @@ export function weirKeys(n = 1) {
 /** How many the pack holds (its stacks summed). */
 export const weirKeysHeld = (/** @type {any[]} */ items) => (Array.isArray(items) ? items.filter(isWeirKey).reduce((s, it) => s + Math.max(1, it.stackCount ?? 1), 0) : 0);
 /**
- * RPT1026-CLIENT (private reports: "Weir Keys randomly change number in inventory from more than 1 back to 1"): THE FACES
+ * RPT1026-CLIENT (private reports: a pack's count of Weir Keys fell back to one now and then from more): THE FACES
  * LYING ON BODIES. The find throws its face onto the body (egFind.js egFindThrow), and KEY-FACE left its count open: the
  * pack was restacked to the balance less THAT face alone, so a second find before the first body was looted, or any answer
  * landing before the take-up (the balance asked every ten minutes), restacked the pack as if no face lay anywhere - each

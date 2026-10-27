@@ -1,6 +1,6 @@
-// RPT1026-CLIENT (private reports, 2026-10-23 and 10-24: the Firmament's Accept threw, "it blocks the bottom part of the
-// screen, so can't see Health and Hotkeys ... Must exit and come back"; a pad's A on the world map, "This will stay on the
-// screen and won't disappear without a reload"). main.js's crash report had no way off it (FIELD BUGS 2026-10-02c
+// RPT1026-CLIENT (private reports, 2026-10-23 and 10-24: the Firmament's Accept threw, and the report covered the lower
+// screen, the Health bar and the hotkeys with it, until the game was left and loaded again; a pad's A on the world map,
+// whose report stayed until the page was reloaded). main.js's crash report had no way off it (FIELD BUGS 2026-10-02c
 // KEY-BOOT: "no dismiss") over a session that ran on. main.js touches the DOM at import, so its two functions run here
 // against a document that keeps a real element's rules: textContent replaces the children, remove() takes it down.
 import { test } from 'node:test';
@@ -42,7 +42,7 @@ const pointerOf = (style) => style.pointerEvents || /pointer-events:\s*([a-z]+)/
 
 test('RPT1026-CLIENT: the crash report can be dismissed, and its body still lets every click through', () => {
   const { els, crashOverlay } = page();
-  const el = crashOverlay("IndexSizeError: Failed to execute 'arc' on 'CanvasRenderingContext2D'");
+  const el = crashOverlay('IndexSizeError: an arc of negative radius');
   assert.equal(els.get('crash'), el);
   assert.equal(pointerOf(el.style), 'none', 'PL3: the report is no wall');
   assert.match(el.textContent.split('\n')[1], /^IndexSizeError/, 'the first line under CRASH is still the error');
@@ -50,7 +50,7 @@ test('RPT1026-CLIENT: the crash report can be dismissed, and its body still lets
   assert.ok(button, 'a Dismiss button');
   assert.equal(pointerOf(button.style), 'auto', 'which takes the click the body lets through');
   // a second throw replaces the text (and the children with it) - the button comes back once
-  crashOverlay('NotFoundError: Element.setPointerCapture: Invalid pointer id');
+  crashOverlay('NotFoundError: no pointer of that id to capture');
   assert.match(el.textContent, /^CRASH \(2\)\nNotFoundError/);
   assert.equal(el.children.filter((c) => c.tag === 'button').length, 1);
   let stopped = 0;

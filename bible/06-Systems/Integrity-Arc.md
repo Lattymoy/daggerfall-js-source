@@ -196,9 +196,9 @@ nothing again, a new one does - the same pieces and the same values of the chara
 the law finds nothing in (RPT1026-LEDGERLAW, below: the signature alone excused every purse after a cleared one). A verdict writes over the row only as it read it (`judge_rev`): a staff act landing in
 between stands, and the next checkpoint judges again.
 
-What the player is told (RPT1026-MARKET HOLD-SAID, private reports 2026-10-26: "since today i am unable to gather
-materials. And it only says im frozen from trading but gives no specifics"; "your system treats crafting and gathering
-skills as 'trading'"): a hold refuses every progression claim as well as every trade (INT16's seat, below - a harvest, a
+What the player is told (RPT1026-MARKET HOLD-SAID, private reports 2026-10-26: gathering stopped overnight under a
+notice that named only a trade freeze and gave no reason; crafting and gathering were found counted as
+trading): a hold refuses every progression claim as well as every trade (INT16's seat, below - a harvest, a
 smelt, a craft, a brew, a disenchant, a temper, a writ's delivery), so every notice says the three a player meets - its
 trading, gathering and crafting - and its lifting says them open again. Staff's names no reason (the note is staff's own,
 `staffRealm.js`, and stays so) and says how to reach them: a private report with /bug, or the game's Discord. A

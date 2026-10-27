@@ -1,6 +1,6 @@
-// RPT1026-CLIENT (a private report, 2026-10-22: "When VSync is disabled, the desktop app launches Chromium without its
-// built-in frame rate limit. Because the in-game Frame Rate Cap also defaults to Off, the client renders as fast as the
-// hardware allows ... roughly 3,760 garbage-collection passes compared to just 28 when capped"). FPS-VSYNC followed DFU:
+// RPT1026-CLIENT (a private report, 2026-10-22: the desktop app with VSync off runs Chromium unthrottled, and with the
+// game's own Frame Rate Cap at its default, Off, nothing held the frames back - some 3,760 garbage collections in the
+// report's sample against 28 with the cap on). FPS-VSYNC followed DFU:
 // VSync off with no target frame rate runs free (StartGameBehaviour.cs:244-250). Where the shell lifted the wait, Off now
 // holds at the row's own top (systems/frameCap.js LIFTED_OFF_FPS); a browser, which the screen paces, is unchanged.
 // Driven through the real install on a page whose compositor answers every ask half a millisecond later - Chromium with

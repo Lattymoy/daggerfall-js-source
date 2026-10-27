@@ -127,7 +127,7 @@
     "tests": [
       "test/systems/eliteGates/rpt1026_client_weirface.test.js"
     ],
-    "note": "the card says nothing of whose the keys are - the report's \"a new one on next login\" unexplained"
+    "note": "the card says nothing of whose the keys are - the report's key back at the next sign-in, unexplained"
   },
   {
     "name": "RPT1026-FRAMECAP-off-free",

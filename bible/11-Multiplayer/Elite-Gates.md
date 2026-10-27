@@ -384,7 +384,7 @@ real relay instance, so the key is a service-side balance and the item is its fa
   on a body and the player never took up is folded the same way at the next load. Pinned:
   `test/net/eliteGates/fb1019f_keyface.test.js` (5), `tools/mutants/fb1019f_keyface.json` (13, all dead).
 - **The faces lying on bodies count** (RPT1026-CLIENT, 2026-10-26, closing KEY-FACE's one open door; a private report:
-  the keys "randomly change number ... back to 1"). The find's throw is the one face made outside the pack, and it
+  a pack's count of Weir Keys falling back to one now and then). The find's throw is the one face made outside the pack, and it
   restacked the pack to the balance less that face alone: a second find before the first body was looted, or any answer
   landing before the take-up, restacked as if no face lay anywhere, so each face taken up showed a key the account never
   held and the next answer said the rust line for it. Every face thrown is kept with the body's list it lies in
@@ -1833,7 +1833,7 @@ byte. The Spire's lords are written to it. The gate's brain already exports the 
   - **From its wake no fall takes a share out of it.** The living finish what the fallen left, so a death makes a fight
     harder for the company, never easier. The gate and the Remnant retire a share only for absence (`ABSENT_RETIRE_MS`),
     at the fraction the boss stands at - and there a death IS an absence: the fallen's page leaves the room at once
-    (`world.js`'s death branch, `online.leave()`), so neither keeps a fallen fighter's share as a lord does. [Corrected by
+    (`world.js`'s death branch, `online.leave()`), so neither holds a fallen fighter's share as a lord does. [Corrected by
     RPT1026-FIGHTS (a private report, 2026-10-20): this said "and the Remnant keeps a fallen body's" - true of its law (a
     body seen dead in its arena keeps its share) and never of play, since no fallen body's pose stays in the arena.] A
     recall finds its member's share where it was. A member never seen whose

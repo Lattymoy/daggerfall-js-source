@@ -1222,8 +1222,8 @@ export class Place extends QuestResource {
   }
 
   /**
-   * RPT1026-QUESTS QUEST-ZONE (a private report, a vampire quest's dungeon: "I can't get into the vampire's dungeon; it's
-   * located almost in the center of the Open World and isn't marked as a dungeon on the map"): ONLINE, A DUNGEON THE OPEN
+   * RPT1026-QUESTS QUEST-ZONE (a private report, a vampire quest's dungeon: it lay near the middle of the Open World,
+   * unmarked on the map as any dungeon, and could not be entered): ONLINE, A DUNGEON THE OPEN
    * ZONE SEALS IS NO QUEST'S. Every real dungeon inside the Wrothgarian zone is sealed ("The way in is sealed. Only the
    * halls marked on the map are open today." - scenes/world.js wildDungeonGate; bible/11-Multiplayer/Wild-Zone.md, SPAWNED,
    * NOT CHOSEN), and its map draws only the day's halls - so a quest whose remote dungeon DFU's draw took there

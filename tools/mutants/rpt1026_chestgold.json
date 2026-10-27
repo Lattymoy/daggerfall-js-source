@@ -257,7 +257,7 @@
     "tests": [
       "test/net/card/rpt1026_chestgold_cards.test.js"
     ],
-    "note": "the stake comes home into the bank and nothing says so - the report's 'no gold'"
+    "note": "the stake comes home into the bank and nothing says so - the report's empty purse"
   },
   {
     "name": "CARDBANK-heard-claim-unsaid",

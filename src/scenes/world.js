@@ -34776,8 +34776,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // and under the Overworld cam.pos stays on the traveller's head (player/travelCamera.js) while the view stands
     // 150-450 m up and back - so the weather was a small cube round the sprite, seen from outside it. They wrap round
     // the eye the view is drawn from: the air in front of the camera is full of it, as it is when you stand in it.
-    // RPT1026-WORLD RAIN-EYE (a private report, 2026-10-20: "When at sea and a storm is there, if you scroll out the rain is
-    // localized around the ship only"): on the ground too - a camera drawn from behind the head (the third person's, a
+    // RPT1026-WORLD RAIN-EYE (a private report, 2026-10-20: at sea in a storm, the camera scrolled out, the rain fell in a
+    // small box round the ship and nowhere else): on the ground too - a camera drawn from behind the head (the third person's, a
     // helm's scrolled out over her stern, the broadside's aim) stood outside the box round the head, a cube of rain round
     // the ship; the head's eye and the view's are one in the first person, as they always were.
     const wxEye = mwv.eye;

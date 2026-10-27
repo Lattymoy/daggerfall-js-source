@@ -39,7 +39,7 @@ function beat(f, from, until, bodies, rng = seeded(5)) {
 
 // ── the law: the Remnant ────────────────────────────────────────────
 
-test('RPT1026-FIGHTS RETIRED-BLOW THE REPORT\'S NUMBERS: two level-60s bring 68,250; the one the beat has not seen for ABSENT_RETIRE_MS has its share out (34,125) - and its next blow brings it back, at the fraction the Remnant stands at, before it lands (it landed 780 on the other\'s share alone); with a level-1 partner the share left is 3,150, and the level-60\'s blow restores 37,275 (mutants: no sighting; a sighting that never restores)', () => {
+test('RPT1026-FIGHTS RETIRED-BLOW THE REPORT\'S NUMBERS: two level-60s bring 68,250; the one the beat has not seen for ABSENT_RETIRE_MS has its share out (34,125) - and its next blow brings it back, at the fraction the Remnant stands at, before it lands (it landed 780 on the other\'s share alone); beside a level-1 partner the share left is 3,150, and the level-60\'s blow restores 37,275 (mutants: no sighting; a sighting that never restores)', () => {
   assert.equal(share(60), 34_125); assert.equal(share(1), 3_150);
   const f = newRemnantFight(4, 1, T0);
   joinRemnant(f, 'a', 'A', 60, T0); joinRemnant(f, 'b', 'B', 60, T0);

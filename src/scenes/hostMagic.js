@@ -709,7 +709,7 @@ export function createPlayerMagic({
       return gy;
     } catch { return null; }   // feel is never worth a crash
   }
-  /** RPT1026-CLIENT (a private report: at Dagon's Breach "the shakes overlap into a constant tremor"): the share of its
+  /** RPT1026-CLIENT (a private report: at Dagon's Breach the shakes of many casts ran together without a pause): the share of its
    *  kick a landing missile gives - ANOTHER player's drawn one (SPELLFX1's `visual`, its caster named) the player's own
    *  choice (uiPrefs `peerSpellShake`, Settings > Accessibility > Motion), everything else its whole kick: my own, a foe's,
    *  an event's sky fire (no caster). Screen Shake When Hurt is DFU's recoil and never covered it. */

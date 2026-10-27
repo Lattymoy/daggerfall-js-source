@@ -1,5 +1,5 @@
 // RPT1026-WORLD WAGON-OUT (a private report, 2026-10-20: a caravan summoned in or right by a building, entered and left -
-// "Now you are stuck inside a building and need the command /unstuck"): THE CARAVAN'S DOOR NEVER LETS THE PLAYER OUT
+// the player set down inside the house, and only /unstuck got them out): THE CARAVAN'S DOOR NEVER LETS THE PLAYER OUT
 // INTO A WALL. The real door (scenes/caravanRoom.js createCaravanAccess: the room entered from the parked caravan, and
 // returnToWagon - the landing behind its rear door) over the real collider (player/collider.js), its ground the world
 // host's own (`caravanStepOut`, which world.js hands it), the caravan's door where the wagon's model puts it

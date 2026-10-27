@@ -1,5 +1,5 @@
 // RPT1026-WORLD LOOP-AWAKE (a private report, 2026-10-25: every volume slider at 10%, a caravan parked by the shipwright,
-// in and out of it - "insanely loud sound effects"): A BOAT'S LOOP COMES BACK AS IT WENT. The real Come Sail Away runtime
+// in and out of it - and the boats roared over the sliders): A BOAT'S LOOP COMES BACK AS IT WENT. The real Come Sail Away runtime
 // over the vendored hulls (test/csaScene.mjs), its loops heard through the world host's own law for a plain AudioSource
 // on the one bus (systems/audio.js plainSourceGain - the bus carries Sound Volume, the source's own volume over it).
 import { test } from 'node:test';

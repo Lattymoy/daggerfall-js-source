@@ -1,5 +1,5 @@
-// RPT1026-CLIENT (a private report, 2026-10-23: "If you play with a pad and open up the world map, then press A anywhere on
-// it, it will cause the following error message: NotFoundError: Element.setPointerCapture: Invalid pointer id"). The pad's
+// RPT1026-CLIENT (a private report, 2026-10-23: a pad's A pressed on the open world map threw a NotFoundError from
+// setPointerCapture, an invalid pointer id). The pad's
 // press is a synthetic pointer (ui/plus/plusPad.js domPointer: pointerId 1, the mouse's id in Chromium); Firefox numbers
 // its mouse 0, holds no pointer 1, and refuses the capture with a NotFoundError - thrown out of the held map's listener
 // to the page. Driven on the held map as test/ui/fb1001_orbitfree.test.js stands it, with a stage that refuses the
@@ -14,7 +14,7 @@ import { domPointer } from '../../src/ui/plus/plusPad.js';
 import { capturePointer, releasePointer } from '../../src/ui/pointerCapture.js';
 
 /** Firefox's refusal for a pointer it does not hold. */
-const refuse = () => { const e = new Error('Element.setPointerCapture: Invalid pointer id'); e.name = 'NotFoundError'; throw e; };
+const refuse = () => { const e = new Error('setPointerCapture: no pointer of that id'); e.name = 'NotFoundError'; throw e; };
 
 function fakeDocument() {
   const node = () => {

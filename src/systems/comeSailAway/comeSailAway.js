@@ -2362,7 +2362,7 @@ export function createComeSailAwayRuntime(deps) {
    *  its object goes inactive, and one left at AddComponent's playOnAwake (true - SpawnBoat never clears it) plays again
    *  as the object comes back, at the volume it last had.
    *  RPT1026-WORLD LOOP-AWAKE (a private report: every volume at 10%, a building or a caravan entered by the boats at a
-   *  port and left - "insanely loud sound effects"): A LOOP COMES BACK AS IT WENT. Unity woke BOTH - the fast loop too,
+   *  port and left - and the boats roared over the sliders): A LOOP COMES BACK AS IT WENT. Unity woke BOTH - the fast loop too,
    *  which a moored boat never plays, at its AddComponent volume of 1: a plain AudioSource's volume, which the bus hands
    *  over with Sound Volume divided out (audio.js plainSourceGain), so every moored boat in earshot ran her wake's loop at
    *  full volume whatever the sliders said, for as long as she stood. A departure from the mod's playOnAwake (Port-Ledger

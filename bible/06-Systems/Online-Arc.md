@@ -11085,7 +11085,7 @@ and `test/systems/decor/decor2b.test.js` (the sale's line, the tap under a fligh
   `ui/vendor/vendorTab.js`): a visitor buys off the purse; the owner takes a piece back or puts one up from the pack.
   VENDOR-LOST (FIELD BUGS 2026-10-25): the stall opened settles the market book's kept acts, so a buy whose answer was
   lost has its piece collected where its buyer comes back (only the Market tab settled before). RPT1026-MARKET ARRIVE
-  (private reports 2026-10-26: a trader's buyer whose piece "never arrived anywhere"; 154 deliveries stood uncollected
+  (private reports 2026-10-26: a trader's buyer whose piece came nowhere; 154 deliveries stood uncollected
   for 102 players, 123 of them past a day): a piece bought or come back is a delivery only a collect puts into the pack,
   and the only reader of the road was the Market tab - so the game reads it itself (`/v1/market/road`, `market.js`
   marketRoad: the account's market settled and the road, nothing else) and settles the book, collecting every piece
@@ -11482,7 +11482,7 @@ own module (`src/net/hallLaw.js`), never net/guild/guildLaw.js, which is in the 
   232 houses' faces from the normal's, a door on its box's middle line hanging its cloths inside its own building - a
   private report of 2026-10-20, a Chesterwark hall's flags seen from under it); each cloth 0.9 by 2.7 m, its top
   3.5 m over the door's foot, 0.35 m past the jamb, 0.15 m off the wall. RPT1026-WORLD BANNER-WALL (2026-10-26, a private
-  report of a Wildertown hall's banner "floating in the air"): a cloth either of whose ends would reach past its
+  report of a Wildertown hall's banner hanging in mid-air): a cloth either of whose ends would reach past its
   building's box along the wall is not hung - a door at its wall's end hangs the one, the small box house's (ARCH3D 118)
   among them; of Wildertown's 364 doors 105 hung one cloth in the air (`hallBanners.js` hallBannerAnchors,
   BANNER_WALL_PAD_M; the festival's tavern doors, a chapter's halls and a seat's palace door hang by the same law).
@@ -15463,7 +15463,7 @@ gold can now change hands the way a guild deposit or a house's price does - in t
   asked again by a settle when its answer is lost (a repeat of a sale made before it pays nothing; a sale made on the
   settle is paid on its answer, and VENDOR-LOST, a repeat naming the record's sequence is the settle's own sale; a piece
   from a pack bought here is collected on the answer). RPT1026-MARKET COLLECT-LANDED (private reports 2026-10-26:
-  legendaries that "disappeared" as they came off the market, their returns collected on the service): a collect of a
+  legendaries that went missing as they came off the market, their returns collected on the service): a collect of a
   piece from a pack is its own realm act with its own id, and VENDOR-LOST's departure from L1-F2 is a collect's too - a
   record one on from where the tab asked, under its lease, with a delivery this id collected, is that collect, landed,
   answered as the repeat with the record's sequence and the piece to a tab that sends `landed` (`market.js`

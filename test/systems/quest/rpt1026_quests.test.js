@@ -1,10 +1,10 @@
 // RPT1026-QUESTS (the private report inbox, 2026-10-26 - the batch's Field-Bugs page): the quest reports, read to their
 // roots. Each pin below names the report family it answers and the mutants (tools/mutants/rpt1026_quests.json) it kills.
 //
-// ABANDON-ALWAYS (The Lost Artifact shared in a party: the knight paid, "all objectives are crossed out", "Cannot even
-// abandon this quest", "we're basically locked out of the guild"; a Knights of the Dragon "GET QUEST tells me I already
-// have one. There is no quest in my quest log to abandon"; a Mages Guild's "it says that i can't take more quests, but i
-// dont have quests to do"). A quest whose questor is the NPC the player clicked shuts that questor's door while it runs
+// ABANDON-ALWAYS (The Lost Artifact shared in a party: the knight paid, its objectives all struck, and the quest beyond
+// abandoning - the guild's door shut by it; a Knights of the Dragon whose questor said a quest was already held while the
+// log showed none to abandon; a Mages Guild that refused a new quest to a member with none to do). A quest whose
+// questor is the NPC the player clicked shuts that questor's door while it runs
 // (DFU's IsLastNPCClickedAnActiveQuestor - machine.js lastNPCClickedQuestorOf). B0B81Y02's knight writes `remove log
 // step 0` with the reward and the quest runs on (RAVEN-CLOSE closes it online on the short wait now); N0B21Y14 writes its
 // first entry only when its letter is read. A quest with nothing in its journal was no row the player could abandon: the
@@ -183,8 +183,8 @@ test('ABANDON-ALWAYS: the questor\'s close names the way out - a row of its own 
 });
 
 // ── QUEST-CROWD ────────────────────────────────────────────────────────────────────────────────────────────────────
-// A private report: "if 2 quests (such as those from the tutorial spam quests) are in the same NPC location, one will eat
-// the other". Two quests whose Places took one building each draw their own marker (Place.cs GetSiteMarker); drawn the
+// A private report: two quests (the tutorial's run of starter quests among them) that met at one person's place left
+// only one of them there. Two quests whose Places took one building each draw their own marker (Place.cs GetSiteMarker); drawn the
 // same, DFU stands both Persons on it - one billboard over the other, one pick box. Two quests take one building where
 // both drew their sites before either ran (the questlines' board parses a line's first step to show its letter - its
 // places drawn then, `offerQuest` - and takes it later; GetAllActiveQuestSites reads the running quests alone), or where
@@ -308,8 +308,8 @@ test('QUEST-CROWD: crowdOf - a quest Person\'s stand drawn where it stands crowd
 });
 
 // ── NO-GIVES-BACK ──────────────────────────────────────────────────────────────────────────────────────────────────
-// A private report, Lord K'avar Part I (M0B11Y18): "When giving the letter to the queen of Sentinel, when i pressed no to
-// read the letter i couldnt speak to the queen afterward." `_S.16_ task: toting _I.03_ and _ruler_ clicked` asks 1050
+// A private report, Lord K'avar Part I (M0B11Y18): Sentinel's queen, handed the letter and answered No to reading it,
+// would not speak again after. `_S.16_ task: toting _I.03_ and _ruler_ clicked` asks 1050
 // ("Do you give the treasonous letter to _ruler_?") once - Prompt.cs's allowRearm false, the toting trigger answering
 // true for a set task - and its No, `_S.20_ task: get item _I.03_`, only hands back the letter the toting took. The
 // queen is the quest's (`_S.30_ clicked npc _ruler_`), so no talk window opens on her either: DFU's soft-lock on the
@@ -375,8 +375,8 @@ test('NO-GIVES-BACK: the Queen of Sentinel asks again after a No that only hands
 });
 
 // ── QUEST-ZONE ─────────────────────────────────────────────────────────────────────────────────────────────────────
-// A private report, a vampire quest: "I can't get into the vampire's dungeon; it's located almost in the center of the
-// Open World and isn't marked as a dungeon on the map". Every real dungeon inside the zone is sealed online (world.js
+// A private report, a vampire quest: its dungeon lay near the middle of the Open World, unmarked on the map as any
+// dungeon, and could not be entered. Every real dungeon inside the zone is sealed online (world.js
 // wildDungeonGate) and its map draws only the day's halls; DFU's SelectRemoteDungeonSite drew any of the region's. The
 // region below is the zone's (its map pixels region 16), the mask the map files' own (wildZone.js wildMaskOf); the quest
 // world is kvarhold.test.js's shape: the player's town, then two Human Strongholds - one inside the zone's cut, one
@@ -461,7 +461,7 @@ test('QUEST-ZONE: a save whose remote dungeon the zone seals has it drawn again 
 });
 
 // ── ARENA-ORDER ────────────────────────────────────────────────────────────────────────────────────────────────────
-// (two private reports: the arena questline's second bout, and "subsequent arena fights", on a floor with no opponent).
+// (two private reports: the arena questline's second bout, and the later bouts after it, on a floor with no opponent).
 // The client's own arena half (createArenaOnline) over the real account service, the receipt the relay's own shape.
 
 /** The account service's answer as net/accountClient.js call shapes it: the body on a 200, its `error` word otherwise. */

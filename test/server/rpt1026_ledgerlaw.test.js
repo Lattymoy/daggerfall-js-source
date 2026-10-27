@@ -192,7 +192,7 @@ test('RPT1026-LEDGERLAW (#105): a commission\'s fill moves the craft\'s record t
 test('RPT1026-LEDGERLAW (#99) lawValuesOf, pure: each character finding\'s key and the value it was found on, sorted - none for a lawful save; the excuse over the signature and the values, and one written before them (the signature alone) covers a finding of pieces alone (mutants: the values unread; the old excuse still covering a purse)', () => {
   assert.equal(lawValuesOf(freshSave(), null), null);
   assert.equal(lawValuesOf(freshSave({ goldPieces: -8_000_000 }), null), 'gold@=-8000000');
-  assert.equal(lawValuesOf(freshSave({ goldPieces: 9_000_000_000_000_000 }), null), 'gold@=9000000000000000');
+  assert.equal(lawValuesOf(freshSave({ goldPieces: 9e15 }), null), 'gold@=9000000000000000');
   assert.equal(lawValuesOf(freshSave({ stats: { strength: 100, agility: 101 }, skills: [5, 201] }), null), 'skill@1=201,stat@agility=101');
   assert.equal(lawValuesOf(freshSave({ bankAccounts: [{ accountGold: -5, loanTotal: 0 }] }), null), 'bank@0=[-5,0]');
   assert.equal(lawValuesOf(freshSave({ level: 3 }), { level: 4 }), 'level-claim@=[3,4]');
@@ -221,7 +221,7 @@ test('RPT1026-LEDGERLAW (#99, the report\'s steps): staff\'s clear of a negative
   await clear();
   assert.deepEqual(row(), { held: null, law_sig: 'gold:', law_v: 'gold@=-8000000', law_excused: 'gold:|gold@=-8000000' }, 'excused as staff read it');
   assert.equal((await s.put(vic, [], -8_000_000)).tradeHeld, null, 'the purse staff read: excused');
-  assert.equal((await s.put(vic, [], 9_000_000_000_000_000)).tradeHeld, 'law', '9e15 holds');
+  assert.equal((await s.put(vic, [], 9e15)).tradeHeld, 'law', '9e15 holds');
   const lastLaw = () => JSON.parse(s.raw.prepare("SELECT detail FROM realm_findings WHERE char_id = ? AND kind = 'law' ORDER BY id DESC").get(vic.character).detail);
   assert.equal(lastLaw().values, 'gold@=9000000000000000', 'and the hold it starts is a finding staff read, with its purse');
   assert.equal((await s.put(vic, [], 5_000_000_000)).tradeHeld, 'law', 'five billion holds');
@@ -234,8 +234,8 @@ test('RPT1026-LEDGERLAW (#99, the report\'s steps): staff\'s clear of a negative
   assert.equal((await s.put(vic, [], -8_000_000)).tradeHeld, 'law', 'the excuse was the one state, once');
   // an excuse staff wrote before this (the signature alone): every purse after it passed - none does now
   s.raw.prepare("UPDATE realm_characters SET held = NULL, held_at = NULL, law_excused = 'gold:', judge_rev = judge_rev + 1 WHERE id = ?").run(vic.character);
-  assert.equal((await s.put(vic, [], 9_000_000_000_000_000)).tradeHeld, 'law');
-  assert.ok(9_000_000_000_000_000 > GOLD_INT_MAX);
+  assert.equal((await s.put(vic, [], 9e15)).tradeHeld, 'law');
+  assert.ok(9e15 > GOLD_INT_MAX);
 });
 
 test('RPT1026-LEDGERLAW (#99): an attribute staff cleared is excused at its value and key alone - another value, or another attribute, holds', async () => {
