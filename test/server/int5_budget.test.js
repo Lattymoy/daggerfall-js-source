@@ -126,15 +126,15 @@ test('INT5 service: enforce on (staff) - a gain past the bucket holds the trade 
     assert.deepEqual(t.kinds(), ['staff', 'budget'], 'and nothing new found - the hold stands until it is paid');
     t.play(3_600);
     assert.equal(await t.put(100 + 80_000), null, 'an hour of play pays it back');
-    // the save claims level 1000; the realm trusts what its play reached - and a win's grant reads that one
+    // the save claims level 45 (PIN MOVED: LEVEL-45, the judge's top - it claimed 1000); the realm trusts what its play reached - and a win's grant reads that one
     t.play(LEVEL_RISE_S * 2);
-    await t.put(100 + 80_000, { level: 1000 });
+    await t.put(100 + 80_000, { level: 45 });
     assert.equal(t.row().level_seen, 1 + Math.floor((3_600 + LEVEL_RISE_S * 2) / LEVEL_RISE_S), 'the level its play reached');
     const before = t.row().allowance;
     await grantSpoils(t.s.env.DB, t.who.id);
-    assert.equal(t.row().allowance, before + spoilsGrant(t.row().level_seen), 'the trusted level\'s grant, never 1000\'s');
+    assert.equal(t.row().allowance, before + spoilsGrant(t.row().level_seen), 'the trusted level\'s grant, never 45\'s');
     assert.ok(t.row().allowance > 50_000, 'past the cap, kept');
-    assert.equal(await t.put(100 + 80_000, { level: 1000 }), null);
+    assert.equal(await t.put(100 + 80_000, { level: 45 }), null);
     assert.ok(t.row().allowance > 50_000, 'the next step never cuts it to the cap');
     // a win's spoils landing between a checkpoint's read and its write are kept (AUDIT INT: the verdict wrote its own
     // number over them) - hooked at the object's put, between the two (PRIMARY-TRIPS audit: SAVE-BATCH's reads are a
@@ -143,7 +143,7 @@ test('INT5 service: enforce on (staff) - a gain past the bucket holds the trade 
     let once = true;
     t.s.env.SAVES.put = async (...a) => { if (once) { once = false; await grantSpoils(t.s.env.DB, t.who.id); } return put(...a); };
     const was = t.row().allowance;
-    await t.put(100 + 80_000, { level: 1000 });
+    await t.put(100 + 80_000, { level: 45 });
     t.s.env.SAVES.put = put;
     assert.equal(once, false, 'the grant landed between the reads and the write');
     assert.equal(t.row().allowance, was + spoilsGrant(t.row().level_seen), 'the grant, and the step\'s nothing');

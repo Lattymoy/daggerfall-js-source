@@ -18,6 +18,7 @@ import * as MP from '../../src/systems/martialPaths.js';
 import * as POW from '../../src/systems/martialPowers.js';
 import * as WM from '../../src/systems/weaponMastery.js';
 import * as AP from '../../src/systems/arcanePaths.js';
+import { mentorProfile } from '../../src/systems/mentorMode.js';   // MENTOR2: the profile the producer mints
 import { createCharacter } from '../../src/systems/chargen.js';
 import { buildCustomCareer } from '../../src/systems/customClass.js';
 import { masterSkill, masterableCount } from '../../src/systems/masterSkills.js';
@@ -677,11 +678,13 @@ test('AUDIT MARTIAL L5 M1: EVERY LINE ON BOTH SIDES, EVERY WINDOW AT ITS END - S
   edge('Mark of the Hunt', () => { const me = pathFighter('ranger'); door([], me); const prey = realFoe(ORC); land('huntersMark', rec('p', prey), 10); return { me, prey }; }, ({ me, prey }) => POW.martialBlowPct(me, prey) === N.huntersMark.pct, N.huntersMark.seconds);
 }));
 
-test('AUDIT MARTIAL L5 M2 / L5 L1: THE LAW\'S GUARDS - a mentored Ranger keeps the pounce (held) though its powers sleep (awake); a path restored with one of its skills unmastered (the save restores the id alone) holds nothing; the Thunderlock past 100 is paid on Archery; the hand at rest (restingWeapon) names the form (mutants: the signature through awake; a mastery unread; the Thunderlock unpaid; the resting hand unread)', () => clean(() => {
+test('AUDIT MARTIAL L5 M2 / L5 L1: THE LAW\'S GUARDS - a mentored Ranger keeps the pounce (held), its powers at the mentor\'s share (MENTOR2 - they had slept); a path restored with one of its skills unmastered (the save restores the id alone) holds nothing; the Thunderlock past 100 is paid on Archery; the hand at rest (restingWeapon) names the form (mutants: the signature through awake; a mastery unread; the Thunderlock unpaid; the resting hand unread)', () => clean(() => {
   const ranger = pathFighter('ranger');
-  ranger._mentor = { level: 5 };
+  ranger.level = 30;
+  ranger._mentor = mentorProfile(ranger, [5]);
+  assert.ok(ranger._mentor.powerScale > 0.5 && ranger._mentor.powerScale < 1, 'a level 30 beside a level 5: mentoring, its share under whole');
   assert.equal(techniqueInHand(ranger, { weapon: weapon(WEAPONS.Longsword) })?.id, 'huntersPounce', 'held while mentoring');
-  assert.equal(POW.martialBlowPct(ranger, realFoe(RAT)), 0, 'its powers asleep');
+  assert.equal(POW.martialBlowPct(ranger, realFoe(RAT)), MP.MARTIAL_NUMBERS.huntersInstinct.pct * ranger._mentor.powerScale, 'its powers at the mentor\'s share');
   for (const [have, label] of [[[LB], 'Archery'], [[AR], 'Long Blade']]) {
     const forged = fighter(have, 150); forged.martialPath = 'ranger';
     assert.equal(MP.martialHeld(forged), null, `${label} unmastered: nothing held`);

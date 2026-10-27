@@ -51,7 +51,7 @@ test('AUDIT UPDATE L1: withRollerLevel - a scope\'s level beats the registered p
 
 test('AUDIT UPDATE L4: the corpse door names its roller\'s level - with no registry (a scene\'s first foes, before any host frame) a level-1 roller\'s body still rolls gated (mutants: the level unpassed; the door unwired)', () => {
   const src = readFileSync('src/scenes/hostCombat.js', 'utf8');
-  assert.match(src, /rollCorpseLoot\(entity, basics, \{ rolls, luck, find, qualityMult: lootQualityMult, weights: plain\?\.plainLadder \? plainFoeRarityWeights\(ease\) : null, level: effectiveLevel\(player\) \}\);/);
+  assert.match(src, /rollCorpseLoot\(entity, basics, \{ rolls, luck, find, qualityMult: lootQualityMult, weights: plain\?\.plainLadder \? plainFoeRarityWeights\(ease\) : null, level: lootGateLevel\(player\) \}\);/);
   // the same bodies on the same dice, the level handed in and not: a level 1 meets far fewer Rares (x0.15 - LOOT-GATE)
   const top = (level) => {
     let n = 0;
