@@ -71,12 +71,19 @@ FIXED. Every write stands on what its request proved, checked by the statement i
   honest sign-ins at once on an older-cost hash both get in (the second finds the first's rehash).
 - A recovery whose session a second recovery outran (another code of the same set) hears `codes-moved`. `/v1/auth/session`
   through a device that is gone answers `auth` (401).
+- AUDIT RPT1026 A3: and a recovery signs every device out only while the password is still the one it wrote, as a
+  change does. A second recovery that wrote after it had signed every device out itself and been answered with a
+  session, and the first one's sign-out, by the account's id alone, then deleted that session.
 
 SEEN, NOT CHANGED. The hot routes' pass (SESSION-SIGN) still lets a signed-out device's reads run up to
 `PASS_TTL_S - PASS_RENEW_S` past a recovery. That lag is the design's own (`sessionPass.js`'s header), and its writes ask
 the session. A staff panel session needs the extension key's signature as well as the password, so a thief who holds
 only the password opens none. `newRecoveryCodes` on a row with no codes asks the password alone, by RECOVERY-SET A1's
 decision. A race adds nothing there that the password alone does not already give.
+
+AUDIT RPT1026 (lane A): A3 above, pinned by `test/server/audit_rpt1026_secnet_acct.test.js` (two recoveries, the
+first held at its sign-out while the second runs whole), mutant `tools/mutants/audit_rpt1026_secnet.json`
+AUDIT-RPT1026-A3-recovery-signout-by-id (dead). `acc1c.json` ACC1c-11 re-aimed by content at the guarded sign-out.
 
 PINS: `test/server/rpt1026_secnet.test.js` (4), through the real service over the real migrations, on a database that
 holds one request between two of its statements while another runs whole. The change with the recovery landing before
@@ -102,8 +109,10 @@ and with no page.
 FIXED. The relay now stamps every request it routes to one player with the account it verified for the sender: a Room
 method of its own, `_directedFrame`, which the arms for trades and pages call (`_message` loses six object entries). The
 session asks the block list by the frame's account, else the account the room's roster said for that sender (a relay
-from before the stamp). An account nobody named is heard only while the list blocks nobody (`chatSafetyHost.js`
-hears(null)). The chat log and the social picture never ask for one, because a line with no account is a system line.
+from before the stamp). AUDIT RPT1026 A2: a place room's roster and joins name no account (MOD1), so that fallback has
+none to ask, and against a relay from before the stamp a player who blocks anyone hears no sender's trade or page. An
+account nobody named is heard only while the list blocks nobody (`chatSafetyHost.js` hears(null)). The chat log and the
+social picture never ask for one, because a line with no account is a system line.
 
 The relay's trade fan-out now carries ~33 more bytes, and the widest offer's fan-out can stand a few dozen bytes past
 TRADE_FRAME_MAX. No door reads it at that cap: the receiver's door is INBOUND_FRAME_MAX. `wire.js`'s TRADE_DATA_MAX note
@@ -112,13 +121,16 @@ says so.
 THE FOUR HOSTS. The block list's ear is `chatSafetyHost.js`'s, which `world.js` wires and hands every room it holds
 (unchanged). `worldModes.js`, `dungeonContext.js` and `exterior.js` hold no session of their own.
 
-PINS: `test/net/safety/safe_client.test.js` CLIENT-7 (PIN MOVED): its frames are now the relay's own. Three players stand
-in one place room of the real Room (real tokens), two of them ask the third for a trade, a card, a duel and a page, and
-the session drops the blocked one's four and takes the other's. `test/net/rpt1026_secnet_net.test.js` (1 of its 7): a
-frame with no account is checked against the roster's account, one nobody named is held back while anyone is blocked
-and heard while nobody is. PIN MOVED `test/net/journal1.test.js`: the relay's page frame carries the writer's account,
-and the arm's source pin reads `_directedFrame`. Mutants `tools/mutants/rpt1026_secnet.json` RPT1026-SECNET-relay-*,
--client-* (6, all dead). Re-aimed by content: `journal1.json` JRN-relay-page-fanned, JRN-relay-page-unstamped,
+PINS: `test/net/safety/safe_client.test.js` CLIENT-7 (PIN MOVED): its frames are now the relay's own. Three players
+stand in one place room of the real Room (real tokens), two of them ask the third for a trade, a card, a duel and a
+page, and the session drops the blocked one's four and takes the other's. `test/net/rpt1026_secnet_net.test.js` (1 of
+its 7): a frame with no account is held back while anyone is blocked and heard while nobody is. AUDIT RPT1026 A2: its
+first case stood on a hand-built roster naming each peer's account, which no place room sends; it is gone, and
+`test/net/audit_rpt1026_secnet.test.js` A2 reads the real Room's roster and join. PIN MOVED `test/net/journal1.test.js`:
+the relay's page frame carries the writer's account, and the arm's source pin reads `_directedFrame`. Mutants
+`tools/mutants/rpt1026_secnet.json` RPT1026-SECNET-relay-*, -client-* (6: five dead, and
+RPT1026-SECNET-client-roster-never-asked recorded equivalent by AUDIT RPT1026 A2 - no producer names the account it
+would ask). Re-aimed by content: `journal1.json` JRN-relay-page-fanned, JRN-relay-page-unstamped,
 JRN-relay-funnel-skipped; `safe_audit_client.json` SAFE-AUDIT-CLIENT-7-a-blocked-request-lands.
 
 DOCS. `11-Multiplayer/Chat-Safety-Arc.md` section 2 says what the stamp is and why it was missing.
@@ -145,6 +157,13 @@ refused act is kept by the same set, so changing `_actLive` too would change not
 hears from an honest page wait for the welcome already: `_send`, `_socketFor`, the pose's own check, or a flag reset at
 the hello (`host` for the world and the hit, `ownOk`, `grantMode`).
 
+AUDIT RPT1026 A5: `host` is no flag a hello resets. An AURA-LIVE rehello (an aura or a name chosen) opens a replacement
+socket that stands for the room from its hello on (`_promote`), its host kept from the welcome before. At an instance
+whose hub was slow to say the party, a member's blow at the owner's foe (`sendHit`'s world-room path) and, hosting, the
+room's memory (`sendWorld`) went down the replacement ahead of its welcome, and the room closed it for good ("hit before
+hello", "world before hello"). Both ask the welcome now: a refused blow waits in its queue, and the memory goes again
+after the welcome (`world.js` worldPublish, keyed on the welcome).
+
 AND THE THREE SENDS ONLINE-ARC CALLED LATENT. `06-Systems/Online-Arc.md` listed room sends that skip SD-HELLO's
 welcomed check. They wait now too, and each refusal is kept by its owner.
 - `sendDuel` to a bout's room. A refused blow is no blow (DUEL1: a late blow is a wrong one), and an end waits in the
@@ -166,6 +185,11 @@ PINS: `test/net/rpt1026_secnet_net.test.js` (2 of its 7):
 
 Mutants `tools/mutants/rpt1026_secnet.json`: RPT1026-SECNET-act-before-welcome, -duel-room-unwelcomed, -wild-unwelcomed,
 -hit-cell-unwelcomed (4, all dead).
+
+AUDIT RPT1026 A5: `test/net/audit_rpt1026_secnet.test.js` - a member's rehello at the owner's instance, the hub held,
+through the real Room: the blow at the owner's foe and, hosting, the memory wait for the replacement's welcome, go after
+it, and the socket stands. Mutants `tools/mutants/audit_rpt1026_secnet.json` AUDIT-RPT1026-A5-world-blow-unwelcomed,
+-memory-unwelcomed (dead).
 
 DOCS. `11-Multiplayer/Instances.md` section 3: a member's hello is held while the hub is asked, so its page says nothing
 past the hello until the welcome. `06-Systems/Online-Arc.md`'s latent list: the three sends it named wait now.
@@ -216,8 +240,12 @@ FIXED. The session hears its line and hands a stalled one no burst.
 - While stalled, its poses wait (`_poseHeld`). The latest goes the moment the line answers (`sendPose` is asked every
   frame), and one goes per HEARTBEAT_MS meanwhile. Its foes streams wait too (`sendFoes`, `sendOwnFoes`), and the host's
   next frame is whole (AUDIT WORLD2 A9).
+- AUDIT RPT1026 A1: and its blows (`sendHit`). A blow spends the relay's POSE meter (the hit arm's `_meter`), so a
+  fight's blows rode the burst beside its poses: at the session's own blow rate (HIT_HZ_MAX, 10) a held fight struck
+  out after ~11 s. A refused blow waits in its queue (`net/hitPend.js`), which ages it out.
 - A stall is known within PING_MS + LINE_STALL_MS (10 s). By then a walk has handed the line about 100 poses and a host
-  about 120 foes frames, both under the strike-out (cap + DROP_STRIKES_MAX = 220 and 212). The meter drops part of the
+  about 120 foes frames, both under the strike-out (cap + DROP_STRIKES_MAX = 220 and 212), and a fight about 100 poses
+  and 110 blows (AUDIT RPT1026 A1). The meter drops part of the
   burst and never closes on it.
 - THE RELAY'S METER DOES NOT MOVE. The flood guard stands as it was, and an honest page no longer meets it. The burst a
   page can still send is bounded by the session's own laws, and a pin holds that arithmetic to them, so a change to
@@ -225,10 +253,10 @@ FIXED. The session hears its line and hands a stalled one no burst.
 
 THE PROOF. Through the real Room, with the runtime's ping answer in front of it as in production, a player walks alone
 while the line is held 29 s, then let go at once. Before this change that is 290 poses in one burst and the strike-out
-(the mutants that remove the hold or the ping die on exactly that). Now it is about 90, the socket stands, and the latest
-pose reaches the room once the line answers. With ACT WAITS, every policy refusal a bad line could draw from an honest
-page is closed. The report is short and names neither cause, so a staff check (in the notes) can still confirm which
-one the player met.
+(the mutants that remove the hold or the ping die on exactly that). Now it is about 90, the socket stands, and the
+latest pose reaches the room once the line answers. With ACT WAITS and the blows held (AUDIT RPT1026 A1), the policy
+refusals a bad line could draw from a walk, a host's streams and a fight are closed. The report is short and names
+neither cause, so a staff check (in the notes) can still confirm which one the player met.
 
 THE FOUR HOSTS. The session is `net/online.js`'s. Its poses come from every host through `world.js`'s frame
 (`sendPose`), and its foes from the host's streams (`world.js` foesStream and ownStream, the exterior's handovers through
@@ -250,6 +278,10 @@ PINS: `test/net/rpt1026_secnet_net.test.js` (4 of its 7):
 - the arithmetic;
 - a host's stream and own lane held, and the heartbeat let through;
 - a halo's stalled line: the shared ping, a halo's own ping while my cell is busy, and its answer.
+
+AUDIT RPT1026 A1: `test/net/audit_rpt1026_secnet.test.js` - a fight through the real Room held 30 s from the moment the
+line was last heard, a world room's blow at the host, and the arithmetic with the blows; mutants
+`tools/mutants/audit_rpt1026_secnet.json` AUDIT-RPT1026-A1-blow-never-held and -stall-wait-doubled (dead).
 
 Mutants `tools/mutants/rpt1026_secnet.json`: RPT1026-SECNET-stall-*, -no-deaf-ping, -line-never-heard, -foes-never-held,
 -own-never-held, -halo-* (12, all dead).

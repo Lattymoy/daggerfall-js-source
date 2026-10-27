@@ -11,8 +11,9 @@
 // - and the sends ACT WAITS left skipping the welcome (Online-Arc's latent list): a bout's room (sendDuel), the open
 //   zone's room words (sendWild) and a cell's blow by a kept roster (sendHit), across a reconnect.
 // - BLOCK STAMP (from a private report, 2026-10-20), the session's half: a request that names no account (a relay before
-//   the stamp) is asked by the account the room's roster said, and one unknown to both is heard only while nobody is
-//   blocked. The relay's half is CLIENT-7's (safe_client.test.js), on the relay's own frames.
+//   the stamp) is heard only while nobody is blocked - a place room's roster names no account to stand in for it (AUDIT
+//   RPT1026 A2, test/net/audit_rpt1026_secnet.test.js). The relay's half is CLIENT-7's (safe_client.test.js), on the
+//   relay's own frames.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fakeRoom } from '../fakeRoom.mjs';
@@ -106,16 +107,10 @@ async function hearing(blocks, peers = []) {
 }
 const ASKS = [['trade', { k: 'ask', to: 'me-00001', s: 'abc123' }], ['page', { to: 'me-00001', page: { head: 'Morndas', lines: ['Meet me'] } }]];
 
-test('RPT1026-SECNET A REQUEST THAT NAMES NO ACCOUNT IS NOT HEARD AS NOBODY\'S: from a relay before the stamp, a blocked sender the room\'s roster names is held back; one no roster names is held back while the list blocks anyone and heard while it blocks nobody; a sender not blocked is heard (mutants: the roster never asked; an unknown account heard)', async () => {
-  const troll = { id: 'tro-0002', name: 'Troll', sub: 'acct-tro-0002', pose: POSE };
-  const pal = { id: 'pal-0003', name: 'Pal', sub: 'acct-pal-0003', pose: POSE };
-  // the roster names both - a frame without `sub` is the roster's account's
-  {
-    const { s, ws, got } = await hearing([{ sub: 'acct-tro-0002', name: 'Troll', at: 1 }], [troll, pal]);
-    assert.equal(s.peers.get('tro-0002')?.sub, 'acct-tro-0002', 'the roster said the account');
-    for (const [t, data] of ASKS) { ws.receive({ t, id: 'tro-0002', data }); ws.receive({ t, id: 'pal-0003', data }); }
-    assert.deepEqual(got, ['trade:pal-0003', 'page:pal-0003']);
-  }
+test('RPT1026-SECNET A REQUEST THAT NAMES NO ACCOUNT IS NOT HEARD AS NOBODY\'S: from a relay before the stamp, one no roster names is held back while the list blocks anyone and heard while it blocks nobody; a sender not blocked is heard (mutant: an unknown account heard)', async () => {
+  // PIN MOVED (AUDIT RPT1026 A2): a first case stood here on a welcome whose roster named each peer's account - a roster
+  // no producer sends: a place room's names none (MOD1), so the session's fallback to the roster's account has none to
+  // ask. Its pin through the real Room is test/net/audit_rpt1026_secnet.test.js A2.
   // nobody named the sender's account: held back while the list blocks anyone
   {
     const { ws, got } = await hearing([{ sub: 'acct-tro-0002', name: 'Troll', at: 1 }]);

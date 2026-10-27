@@ -90,7 +90,9 @@ An instance is its place's public world room with an owner and an epoch after it
     was older than INSTANCE_KIN_KEEP_MS (every return after a death, or a while away, or a deploy), and parseClient refused it.
     It asks the socket's welcome now (`online.welcomed`); a refused act stays in the world host's pending set (world.js
     actSend) and is sent once the welcome has come. Pinned through the real Room and session with the hub held
-    (`test/net/rpt1026_secnet_net.test.js`).
+    (`test/net/rpt1026_secnet_net.test.js`). A rehello (AURA-LIVE: an aura or a name chosen) says a hello the hub is
+    asked about too, and its replacement socket keeps the host it knew: a blow at the host and the host's memory wait for
+    its welcome as well (AUDIT RPT1026 A5, `test/net/audit_rpt1026_secnet.test.js`).
 - **A member let in as the party is asked again while it stays** (`ip` on its attachment, `_instanceRecheck` off its
   pose, at most every INSTANCE_KIN_KEEP_MS, never awaited by the pose): kicked, lapsed, or its party no longer the owner's,
   it is refused out (its leave said, the host's seat handed on). The hub silent leaves it in.

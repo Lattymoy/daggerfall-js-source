@@ -17141,6 +17141,8 @@ said fifteen); the seven worst fixed at the root and pinned, the rest recorded h
   swap from before the socket opened against BACKOFF_MAX_MS, the mint's own budget). The room sends this list named as
   skipping SD-HELLO's welcomed check - `sendHit`'s cell loop, `sendDuel`'s bout room, the zone's words (`sendWild`) -
   wait for the welcome since RPT1026-SECNET (2026-10-26), beside `sendAct`, the one an instance's slow hello caught.
+  And since AUDIT RPT1026 A5 (2026-10-27), `sendHit`'s world-room path and `sendWorld`: an AURA-LIVE rehello's
+  replacement keeps `host` before its own welcome.
 - Comment drift: orphaned doc blocks above `TOKEN_WAIT_MS`, `TRADE_IN_SENDERS_MAX`, `SEAT_TEXT`, `sendArena` and
   `poseAgeMs`; `tick`'s doc still describes the ease NET-SMOOTH 4 replaced; `_scheduleRetry`'s says its first retry is
   unjittered, which SLAM12 changed.
@@ -17497,12 +17499,17 @@ that was saying nothing (RELAY-H1), so a lone player who was walking heard nothi
   after LINE_STALL_MS means the line is stalled (`net/online.js` `_ear`, `_stalled`). Any frame in clears it.
 - **A stalled line is handed no burst.** Its poses wait (`_poseHeld`). The latest goes the moment the line answers,
   since `sendPose` is asked every frame, and one goes per HEARTBEAT_MS meanwhile. Its foes streams wait too
-  (`sendFoes`, `sendOwnFoes`): the host's next frame is whole, AUDIT WORLD2 A9's law. Events are not held: a door, a
-  blow and a word go as the player acts, far under their own meters, and each keeps its own queue.
+  (`sendFoes`, `sendOwnFoes`): the host's next frame is whole, AUDIT WORLD2 A9's law. Events are not held: a door and
+  a word go as the player acts, far under their own meters, and each keeps its own queue.
+- **And its blows** (AUDIT RPT1026 A1, 2026-10-27). This section first counted the blow among the events. It is not one:
+  a blow spends the relay's POSE meter (`server/src/index.js`, the hit arm's `_meter`), so a fight's blows rode the burst
+  beside its poses. At the session's own blow rate (HIT_HZ_MAX, which a quick fighter among several foes reaches) a held
+  fight struck out after about 11 s. `sendHit` refuses on a stalled line now, and a refused blow waits in its queue
+  (`net/hitPend.js`), which ages it out.
 - **The arithmetic.** A stall is known within PING_MS + LINE_STALL_MS (10 s). By then a walk has handed the line about
-  100 poses and a host about 120 foes frames. The meter passes its burst and drops the rest without reaching
-  DROP_STRIKES_MAX. **The relay's meter does not move:** the flood guard stands as it was, and an honest page no longer
-  meets it.
+  100 poses, a host about 120 foes frames, and a fight about 100 poses and 110 blows. The meter passes its burst and
+  drops the rest without reaching DROP_STRIKES_MAX. **The relay's meter does not move:** the flood guard stands as it
+  was, and an honest page no longer meets it.
 
 Pinned in `test/net/rpt1026_secnet_net.test.js`:
 - a walk through the real Room with the line held 29 s and let go at once (the runtime's ping answer in front of it);
@@ -17510,8 +17517,11 @@ Pinned in `test/net/rpt1026_secnet_net.test.js`:
 - a host's stream and own lane held, and the heartbeat let through;
 - a halo's stalled line, its shared ping and its own.
 
+And in `test/net/audit_rpt1026_secnet.test.js` (AUDIT RPT1026 A1): a fight through the real Room held 30 s from the
+moment the line was last heard, a world room's blow at the host, and the arithmetic with the blows.
+
 The mutants are in `tools/mutants/rpt1026_secnet.json` (RPT1026-SECNET-stall-*, -no-deaf-ping, -line-never-heard,
--foes-*, -own-*, -halo-*). Every one of them dies.
+-foes-*, -own-*, -halo-*) and `tools/mutants/audit_rpt1026_secnet.json` (AUDIT-RPT1026-A1-*). Every one of them dies.
 
 ## RPT1026-WORLD CONFIRM-REREAD, CONFIRM-ONCE, DECOR-VERBS - the decorator's Confirm and its press (2026-10-27, two private reports)
 

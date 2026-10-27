@@ -948,7 +948,11 @@ export async function recover({ db, subtle, rand, nowS }, { handle, code, passwo
   // AUDIT RECOVERY-SET A4: a code that WAS right and lost the race (two of one set's codes typed at once) is told to try
   // again, not that it was wrong - the caller has already shown a code, so the word leaks nothing
   if (!spent.meta.changes) return { error: 'codes-moved' };
-  await closeAllSessions({ db }, player.id);
+  // AUDIT RPT1026 A3: AND THE SIGN-OUT ONLY WHILE THE PASSWORD IS STILL THIS RECOVERY'S, as a change's is. A second
+  // recovery (another of the set's codes) that wrote after this one signed out every device itself and opened its own
+  // session - answered 200 - which this sign-out, by the account's id alone, then deleted. Every device from before the
+  // second is gone by its own sign-out, and nothing since stands on a password but the second's
+  await db.prepare('DELETE FROM sessions WHERE player_id = ? AND EXISTS (SELECT 1 FROM players WHERE id = ? AND password = ?)').bind(player.id, player.id, pw).run();
   await closeStaffSessions({ db }, player.id);   // STAFF-PANEL2-FIX: a new password ends the staff panel's sessions too
   await clearRate({ db }, `recover:${lc}`);
   // RPT1026-SECNET: on the password this recovery wrote - a second recovery (another of the set's codes) that signed

@@ -132,8 +132,10 @@
     "file": "src/net/online.js",
     "old": "!this.hears(subOf(m) ?? this.peers.get(m.id)?.sub ?? null)) return;",
     "new": "!this.hears(subOf(m) ?? null)) return;",
-    "tests": ["test/net/rpt1026_secnet_net.test.js"],
-    "note": "a request from a relay before the stamp is asked by no account: an honest sender the roster names is dropped while anyone is blocked"
+    "tests": ["test/net/rpt1026_secnet_net.test.js", "test/net/audit_rpt1026_secnet.test.js"],
+    "note": "a request from a relay before the stamp is asked by no account: an honest sender the roster names is dropped while anyone is blocked",
+    "equivalent": true,
+    "why": "AUDIT RPT1026 A2: no producer names a sender's account in a place room's roster or join (MOD1 - test/net/audit_rpt1026_secnet.test.js A2, through the real Room), so the fallback has no account to ask and this mutant changes nothing a relay sends; the pin that killed it hand-built a roster naming one. Kept as belt-and-braces for a roster that names one."
   },
   {
     "name": "RPT1026-SECNET-client-unknown-heard",
