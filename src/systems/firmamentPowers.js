@@ -36,6 +36,7 @@ import { ATTRIBUTES, COMBAT_SKILLS, LIFE_SKILLS, FIRM_ELEMENTS, blowPct, castCos
 import { firmamentStats, onFirmamentChange, firmamentInForce } from './firmamentLive.js';
 import { sigilDueling } from './sigil/sigil.js';
 import { registerEntityFold, registerWeaponBlowMod, newMods, EMPTY_MODS, NUMBER_BODY_PARTS, STANDING_CHANNELS, computeEntityMods } from './entityMods.js';
+import { blowRoom, guardRoom } from './powerCeiling.js';   // POWER-CEILING: the blow's one product, the guards' one share
 import { registerSpellPowerMod, registerSpellPierceMod } from './spell/spellPower.js';
 import { registerSpellCostMod, effectSchool } from './spellcost.js';
 import { registerCastSpeedMod } from './castSpeed.js';
@@ -142,7 +143,7 @@ export function firmamentBlow(weapon, damage, attacker, target, info) {
   if (c === NONE) return damage;
   const skill = weapon ? SKILL_KEYS[weaponSkillUsed(weapon.templateIndex)] ?? null : 'HandToHand';
   const wounded = Number.isFinite(attacker.health) && attacker.maxHealth > 0 && attacker.health < attacker.maxHealth / 2;
-  const pct = blowPct(c, { skill, group: foeGroup(target), unaware: !!info?.unaware, wounded });
+  const pct = blowRoom(blowPct(c, { skill, group: foeGroup(target), unaware: !!info?.unaware, wounded }), 'firmament');   // POWER-CEILING
   if (!pct) return damage;
   return Math.max(1, damage + shareOf(weapon ?? attacker, damage, pct, !info?.estimate));
 }
@@ -168,7 +169,7 @@ export function firmamentDamage(entity, dmg) {
   const c = fight(entity);
   if (c === NONE || !(dmg > 0)) return dmg;
   const ch = pendingPlayerBlow() ? 'blow' : 'spell';
-  const pct = ch === 'blow' ? (c.blowTaken ?? 0) : (c.spellTaken ?? 0);
+  const pct = -guardRoom(-(ch === 'blow' ? (c.blowTaken ?? 0) : (c.spellTaken ?? 0)), 'firmament');   // POWER-CEILING: a share off is the guards'; a price is taken whole
   if (!pct) return dmg;
   const exact = (dmg * pct) / 100 + _takenOwed[ch];
   const whole = pct >= 0 ? Math.floor(exact + 1e-9) : Math.ceil(exact - 1e-9);

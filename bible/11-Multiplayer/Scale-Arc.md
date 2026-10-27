@@ -1433,6 +1433,10 @@ Developer's alone - a token whose glyphs say `dev`), and `/relay <setting> -` ha
   foes room (a cell, a world room) refuses a hello that does not say the spawn grants its build stands on (`gv`), with
   GROUND-GATE's words; a cold room asks the hub before its first such hello. Off until the site serves the build that
   says it.
+- LOOT-DOOR (`06-Systems/Professions-Arc.md` 57.8, AUDIT HORIZONTAL B7): `lootDoor` (var LOOT_DOOR) on or off, off unset -
+  while on, a loot room (a world room, a cell) refuses a hello that does not say the loot its build reads (`ll`,
+  net/wire.js LOOT_HELLO_LAW), with GROUND-GATE's words; a cold room asks the hub before its first such hello. Off until
+  the site serves the build that says it.
 
 **A halo told when its cell judges poses** (`server/src/index.js` _refereesPoses, `_rfSay`). SCALE2c moved a halo's
 pose rate here because the relay judges fights off the poses that reach each cell, a halo's copies too:

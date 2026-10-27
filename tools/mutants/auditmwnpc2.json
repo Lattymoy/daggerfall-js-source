@@ -38,7 +38,7 @@
  {
   "name": "AUDITMWNPC2-K2-pending-forgets-look",
   "file": "src/scenes/exteriorFoes.js",
-  "old": "{ ...r, ls: r.ls ?? _pupPending.get(key).ls, lw: r.lw ?? _pupPending.get(key).lw, t:",
+  "old": "{ ...r, ls: r.ls ?? _pupPending.get(key).ls, ...(r.lw ? null : kitWire(_pupPending.get(key))), t:",
   "new": "{ ...r, t:",
   "tests": [
    "test/characters/mwnpc_audit2.test.js"
@@ -119,8 +119,8 @@
  {
   "name": "AUDITMWNPC2-K4-heir-streams-own-kit",
   "file": "src/characters/foeBodies.js",
-  "old": "    if (f._mwWornWireRaw) worn = f._mwWornWireRaw;",
-  "new": "    if (false) worn = f._mwWornWireRaw;",
+  "old": "    if (f._mwWornWireRaw) { worn = f._mwWornWireRaw; looks = f._mwWornWireLooks ?? null; }",
+  "new": "    if (false) { worn = f._mwWornWireRaw; looks = f._mwWornWireLooks ?? null; }",
   "tests": [
    "test/characters/mwnpc_audit2.test.js"
   ]

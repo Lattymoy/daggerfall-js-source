@@ -100,7 +100,9 @@ export const crossingWords = (way) => (way === 'out'
 /** Why a crossing is not asked (said once in those waters; AUDIT CAPTAIN'S SEA X1: asked as soon as the deck is clear,
  *  as the words promise - the refusal once marked the way asked, and the question never came back in those waters). */
 export const CROSS_REFUSED = Object.freeze({
-  passengers: 'Passengers can\'t cross the Veil. The crossing waits until no one else is aboard.',
+  // VEIL-PARTY: her captain's party crosses with her (scenes/naval/veilParty.js); a stranger aboard holds her back - AUDIT
+  // HORIZONTAL C7: and the words say so (it waited for "no one else", where her party may stay aboard)
+  get passengers() { return t('ether.cross.passengers', 'Only your party can cross the Veil with you. The crossing waits until only your party is aboard.'); },
   hostile: 'Not with an enemy at your heels.',
 });
 /** AUDIT CAPTAIN'S SEA X2: a Yes to a question the waters no longer ask (a load, a new helm, waters left) - said, and no

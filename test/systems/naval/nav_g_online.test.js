@@ -41,6 +41,8 @@ test('NAV-G my word: each ship I stand in the wire frame\'s natives, rounded as 
   const self = navalWireRecord({ me: { hull: 0.426, crippled: true, boarders: false }, law: { Wayrest: 80.4, Daggerfall: 0, Sentinel: 250 } });
   assert.deepEqual(self, { s: [], v: [], b: [], p: [43, 1, 0], n: [[1, 80], [2, 100]] });
   assert.equal(navalWireRecord({ law: { Wayrest: 0 } }), null, 'owed nothing and nothing else: null');
+  // AUDIT HORIZONTAL (lane C): my boat alone is a word - NAV1O-wire-self-alone-unsaid's own pin; `self` above says a law too
+  assert.deepEqual(navalWireRecord({ me: { hull: 0.5, crippled: false, boarders: true } }), { s: [], v: [], b: [], p: [50, 0, 1] });
   // AUDIT NAV1 (online #15): my Ships at sea by its row - never the default, which saying nothing already says
   assert.deepEqual(['few', 'many', 'off'].map((traffic) => navalWireRecord({ traffic })), [1, 3, 0].map((t) => ({ s: [], v: [], b: [], t })));
   assert.deepEqual([TRAFFIC_DEFAULT, 'lots', undefined].map((traffic) => navalWireRecord({ traffic })), [null, null, null]);

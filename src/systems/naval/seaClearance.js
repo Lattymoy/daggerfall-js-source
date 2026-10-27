@@ -68,16 +68,30 @@ export function hullAlong(p, dx, dz, far, boxes, clear = HULL_CLEAR_M) {
  * @param {{ sea: Map<any, any>, hullBox: (boat: any) => any, velocity: (ship: any) => number[], peerBoats: () => any[], myBoats: () => any[], myBoat: () => any, enabled: () => boolean }} host
  */
 export function createSeaHulls(host) {
-  function boxes(lead = false) {
+  /** Each hull about her and its way (flat, m/s): the sea's ships afloat, peers' boats, my other boats (lying still). */
+  function hulls() {
     if (!host.enabled()) return [];
     const out = [];
-    const at = (box, v) => (lead ? ledHulls(box, v) : box ? [box] : []);   // F4: the hand's, where her way carries her too
-    for (const e of host.sea.values()) if (e.boat && e.ship.damage.state !== SHIP_STATES.sunk) out.push(...at(host.hullBox(e.boat), host.velocity(e.ship)));
-    for (const p of host.peerBoats()) if (p?.boat) out.push(...at(host.hullBox(p.boat), p.vel));
+    for (const e of host.sea.values()) if (e.boat && e.ship.damage.state !== SHIP_STATES.sunk) out.push([host.hullBox(e.boat), host.velocity(e.ship)]);
+    for (const p of host.peerBoats()) if (p?.boat) out.push([host.hullBox(p.boat), p.vel]);
     const mine = host.myBoat();
-    for (const b of host.myBoats()) if (b !== mine) out.push(host.hullBox(b));
-    return out.filter(Boolean);
+    for (const b of host.myBoats()) if (b !== mine) out.push([host.hullBox(b), null]);
+    return out.filter(([box]) => box);
   }
-  return { boxes: () => boxes(false), along: (p, dx, dz, far) => hullAlong(p, dx, dz, far, boxes(true)) };
+  /** AUDIT HORIZONTAL C10: the first hull along a look (her led copies too, F4) - `{ d, way }`, `way` her speed (m/s),
+   *  so a look can tell a ship clearing its path from one lying across it. */
+  function ahead(p, dx, dz, far) {
+    let d = Infinity, way = 0;
+    for (const [box, v] of hulls()) {
+      const t = hullAlong(p, dx, dz, far, ledHulls(box, v));
+      if (t < d) { d = t; way = Math.hypot(v?.[0] ?? 0, v?.[2] ?? 0); }
+    }
+    return { d, way };
+  }
+  return {
+    boxes: () => hulls().map(([box]) => box),
+    along: (p, dx, dz, far) => hullAlong(p, dx, dz, far, hulls().flatMap(([box, v]) => (v ? ledHulls(box, v) : [box]))),   // F4: the hand's, where her way carries her too
+    ahead,
+  };
 }
 

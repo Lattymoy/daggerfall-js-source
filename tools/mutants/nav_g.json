@@ -11,7 +11,7 @@
   {
     "name": "NAV-G-the-ships-uncapped",
     "file": "src/systems/naval/navalWire.js",
-    "old": "    if (s.length >= NAVAL_WIRE_SHIPS) break;",
+    "old": "    if (s.length + h.length >= NAVAL_WIRE_SHIPS) break;",
     "new": "",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
@@ -20,7 +20,7 @@
   {
     "name": "NAV-G-the-variant-unchecked",
     "file": "src/systems/naval/navalWire.js",
-    "old": "    if (!int(w[2], 0, Math.max(0, variants - 1))) return null;",
+    "old": "  if (!int(w[2], 0, Math.max(0, variants - 1))) return null;",
     "new": "",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
@@ -38,8 +38,8 @@
   {
     "name": "NAV-G-one-bad-ship-let-through",
     "file": "src/systems/naval/navalWire.js",
-    "old": "    if (!Array.isArray(w) || (w.length !== 16 && w.length !== 17 && w.length !== 19) || !w.every(Number.isFinite)) return null;",
-    "new": "    if (!Array.isArray(w) || (w.length !== 16 && w.length !== 17 && w.length !== 19) || !w.every(Number.isFinite)) continue;",
+    "old": "    if (!ship) return null;",
+    "new": "    if (!ship) continue;",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
     ]

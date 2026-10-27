@@ -45,6 +45,7 @@ import { withIliacHonoursAll } from './iliac.js';   // CARDS10: and Iliac Hand's
 import { withGambitHonoursAll } from './gambit.js';   // KG6: and The King's Gambit's GRANDMASTER
 import { withArenaHonoursAll } from './arena.js';   // AUDIT PRE-MERGE 1003 S8: the arena's honours on an author's badge
 import { withEgHonoursAll } from './egHonours.js';   // EG-E2: and the Spire Champions
+import { withMasteryMarksAll } from './hunts.js';   // AUDIT HORIZONTAL F5: and the Marks of Mastery
 import { guildActorOf } from './guilds.js';
 import { heraldryOfRow } from './halls.js';   // GUILD1e: a recruitment note's guild's banner
 import { guildMay } from '../../src/net/guild/guildLaw.js';
@@ -133,6 +134,7 @@ export async function readBoard({ db, nowS, primary = db }, reader, env, map) { 
     for (const p of await withIliacHonoursAll({ db: primary }, await withArenaHonoursAll({ db: primary }, found, nowS), nowS)) rows.set(p.id, p);   // AUDIT PRE-MERGE 1003 S8: the Grand Champion's title, the #1's laurel
     for (const p of await withEgHonoursAll({ db: primary }, [...rows.values()], nowS)) rows.set(p.id, p);   // EG-E2: and Spire Champion (egHonours.js)
     for (const p of await withGambitHonoursAll({ db: primary }, [...rows.values()], nowS)) rows.set(p.id, p);   // KG6: and The King's Gambit's GRANDMASTER
+    for (const p of await withMasteryMarksAll({ db }, [...rows.values()])) rows.set(p.id, p);   // AUDIT HORIZONTAL F5: a worn Mark of Mastery (reads alone)
   }
   const live = await liveCount(db, reader.id, nowS);
   return {

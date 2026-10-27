@@ -276,9 +276,9 @@
   },
   {
     "name": "AUDIT-NAV2-F27-flight-not-counted",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "      const chased = new Set(ships.filter((y) => y.engaged && !y.theirs).map((y) => sea.get(y.id)?.ship.target));",
-    "new": "      const chased = new Set(ships.filter((y) => y.engaged && !y.theirs && y.afloat === false).map((y) => sea.get(y.id)?.ship.target));",
+    "file": "src/systems/naval/navalDirector.js",
+    "old": "  const chased = new Set(ships.filter((y) => y.engaged && !y.theirs && !entryOf(y.id)?.ship.cls.fisher).map((y) => entryOf(y.id)?.ship.target));",
+    "new": "  const chased = new Set(ships.filter((y) => y.engaged && !y.theirs && !entryOf(y.id)?.ship.cls.fisher && y.afloat === false).map((y) => entryOf(y.id)?.ship.target));",
     "tests": [
       "test/systems/naval/auditnav2_captains.test.js"
     ]

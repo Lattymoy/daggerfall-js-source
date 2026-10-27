@@ -27,7 +27,7 @@
 //   (44,33,43,15). Every word is painted in the art - the window's
 //   own four draw no text. (PORTAL1: the Portal Stone's row under the
 //   art is the port's own, and draws its label - merchantServiceWindow.js
-//   drawPortalRow.)
+//   drawPortalRow; APPEARANCES: the Wardrobe's under it, drawShopRow.)
 // - `ParentPanel.BackgroundColor = Color.clear` (:62): the room stays
 //   visible behind the panel.
 // - all four handlers are `PlayOneShot(ButtonClick); CloseWindow();`
@@ -47,7 +47,7 @@ import { drawScreenDimBackdrop } from '../chargenArt.js';
 import { audio } from '../../systems/audio.js';   // F141: the ButtonClick roster
 import { SOUND } from '../../systems/soundClips.js';
 import { firstHotkey } from '../../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
-import { portalRowRect, PORTAL_ROW_KEY, drawPortalRow } from './merchantServiceWindow.js';   // PORTAL1: the Portal Stone's row, the shop popups' one
+import { portalRowRect, PORTAL_ROW_KEY, drawPortalRow, shopRowRect, WARDROBE_ROW_KEY, wardrobeRowIndex, drawShopRow } from './merchantServiceWindow.js';   // PORTAL1: the Portal Stone's row, the shop popups' one; APPEARANCES: and the Wardrobe's under it
 
 /** The window's DaggerfallShortcut.Buttons in ctor ADD order (:82-103),
  *  which is the order Panel.ProcessHotkeySequences asks them in. */
@@ -86,7 +86,7 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx + REPAIR_PANEL_X && y >= ry +
  *   onTalk()    TalkManager.TalkToStaticNPC(merchantNPC) (:147)
  *   onSell()    WindowModes.Sell (:169)
  *   onClose()
- *   portal?: { label, onBuy() }   PORTAL1: the Portal Stone's row (merchantServiceWindow.js portalRowRect)
+ *   portal?: { label, onBuy() }, wardrobe?: { label, onOpen() }   PORTAL1, APPEARANCES: their rows (merchantServiceWindow.js shopRowRect)
  */
 export class MerchantRepairWindow {
   constructor(hooks) {
@@ -101,9 +101,11 @@ export class MerchantRepairWindow {
   _act(fn) { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); fn?.(); }
 
   input(code, e = null) {
+    if (e?.repeat) return;   // AUDIT HORIZONTAL E7: a key held as the popup opened is no press (merchantServiceWindow.js input)
     // Escape/Enter are the port host's close keys, not DFU buttons.
     if (code === 'Escape' || code === 'Enter') { this._act(null); return; }
     if (code === PORTAL_ROW_KEY && this.hooks.portal) { this._act(this.hooks.portal.onBuy); return; }   // PORTAL1
+    if (code === WARDROBE_ROW_KEY && this.hooks.wardrobe) { this._act(this.hooks.wardrobe.onOpen); return; }   // APPEARANCES
     const hit = firstHotkey(MERCHANT_REPAIR_BUTTONS, code, e);
     if (hit === null) return;
     switch (hit) {
@@ -120,6 +122,7 @@ export class MerchantRepairWindow {
     if (inRect(REPAIR_RECTS.sell, vx, vy)) { this._act(this.hooks.onSell); return true; }
     if (inRect(REPAIR_RECTS.exit, vx, vy)) { this._act(null); return true; }
     if (this.hooks.portal && inRect(portalRowRect(REPAIR_PANEL_H), vx, vy)) { this._act(this.hooks.portal.onBuy); return true; }   // PORTAL1
+    if (this.hooks.wardrobe && inRect(shopRowRect(REPAIR_PANEL_H, wardrobeRowIndex(this.hooks)), vx, vy)) { this._act(this.hooks.wardrobe.onOpen); return true; }   // APPEARANCES
     return true;   // the panel eats its own clicks
   }
 
@@ -131,5 +134,6 @@ export class MerchantRepairWindow {
     drawScreenDimBackdrop(renderer, canvas);
     drawImg(renderer, _art, m, REPAIR_PANEL_X, REPAIR_PANEL_Y);
     if (this.hooks.portal && font) drawPortalRow(renderer, m, font, REPAIR_PANEL_X, REPAIR_PANEL_Y, REPAIR_PANEL_H, this.hooks.portal.label);   // PORTAL1
+    if (this.hooks.wardrobe && font) drawShopRow(renderer, m, font, REPAIR_PANEL_X, REPAIR_PANEL_Y, REPAIR_PANEL_H, this.hooks.wardrobe.label, wardrobeRowIndex(this.hooks));   // APPEARANCES
   }
 }

@@ -56,7 +56,7 @@ import { growthPageAt } from './growth/growthPages.js';   // GROWTH1: the Growth
 import { revenantStarsOver } from './firmamentOver.js';   // RVN-STARS: a sworn one's stars, over Companions
 import { levelUpScreenFor } from './charSheetDoor.js';   // GROWTH1: a level owed's rollout, drawn in the Growth tab (the view is the tab's own)
 import { playerEntity } from '../characters/playerEntity.js';   // the shared entity the Stats page already reads (enhancedMenu's sheetModel)
-import { profPagesShown, PROF_PAGE_SECTIONS } from './professions/profPages.js';   // CLASSIC-PAGES: the professions' two pages, on either skin
+import { profPagesShown, PROF_PAGE_SECTIONS, professionsKeyAt } from './professions/profPages.js';   // CLASSIC-PAGES: the professions' pages, on either skin
 import { FAMILY_PAGE_SECTIONS, familyTabShown, familyProvider, noFamilyLine } from './familyPages.js';   // LEGACY3: Project Legacy's Family tab, on either skin; FAMILY-TAB: and only where the game is played with it
 import { hudText } from '../systems/notify.js';
 import { t } from '../systems/textManager.js';   // L10N4: the professions' closed line in the player's language
@@ -180,7 +180,7 @@ export function pauseMenuAct(hooks, close) {
  */
 /** CLASSIC-PAGES: what a door pressed for a professions page says when the pages are not this account's (offline, the
  *  professions' switch closed, the book not read yet). */
-export const PROF_PAGES_CLOSED_LINE = 'Professions are online only. Your Professions and Stores pages open while you play online.';
+export const PROF_PAGES_CLOSED_LINE = 'Professions are online only. Your Professions, Crafting and Stores pages open while you play online.';   // CRAFT-HALL: three pages
 /** L10N4: the line in the player's language (PROF_PAGES_CLOSED_LINE stays the English the pins read). */
 export const profPagesClosedLine = () => t('pause.profPagesClosed', PROF_PAGES_CLOSED_LINE);
 /** Whether a door's landing page is one of the professions' own (the Professions key's, a station's). */
@@ -219,7 +219,8 @@ export function openPauseFlow(show, hooks = {}) {
 function openPauseFlowNow(show, hooks) {
   if (profPageAt(hooks.at)) {
     if (!profPagesShown()) { hudText(profPagesClosedLine()); return null; }
-    if (typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);
+    // CRAFT-HALL: at a station the Professions key opens the Crafting page on it
+    if (typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks.at === 'professions' ? { ...hooks, at: professionsKeyAt() } : hooks);
   }
   // LEGACY3: Project Legacy's Family tab (its key, the death's Succession) - the classic pause has no tabs, so the family's
   // pages open the enhanced pause on either skin, as the professions' do

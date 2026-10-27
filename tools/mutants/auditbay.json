@@ -805,8 +805,8 @@
   {
     "name": "BAY-A18-wire-word-of-spent-alone",
     "file": "src/systems/naval/navalWire.js",
-    "old": "out.t !== undefined || out.f || out.w || out.l || out.g || out.q ? out : null;",
-    "new": "out.t !== undefined || out.f || out.w || out.g || out.q ? out : null;",
+    "old": "out.t !== undefined || out.f || out.w || out.j || out.l || out.g || out.q ? out : null;",
+    "new": "out.t !== undefined || out.f || out.w || out.j || out.g || out.q ? out : null;",
     "tests": [
       "test/systems/naval/auditbay_lanes.test.js"
     ]
