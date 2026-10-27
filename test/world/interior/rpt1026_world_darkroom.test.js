@@ -43,7 +43,7 @@ test('DARK-ROOM: The Howling Mug (MARKAA01.RMB #0) lays out its room and hangs n
   assert.equal(roomAmbient(INTERIOR_NIGHT_AMBIENT, lit.lights), INTERIOR_NIGHT_AMBIENT, 'and its night');
 });
 
-test('DARK-ROOM the law: DFU\'s own ambient-only pair (PlayerAmbientLight.cs:29-30); a room\'s placed lamp counts as a lamp; none, or no list, is a room with none', () => {
+test('DARK-ROOM the law: DFU\'s own ambient-only pair (PlayerAmbientLight.cs:29-30); a lamp in the list counts as a lamp; none, or no list, is a room with none', () => {
   assert.deepEqual([...INTERIOR_AMBIENT_ONLY], [0.8, 0.8, 0.8]);
   assert.deepEqual([...INTERIOR_NIGHT_AMBIENT_ONLY], [0.5, 0.5, 0.5]);
   assert.equal(roomAmbient(INTERIOR_AMBIENT, [{ record: 24 }]), INTERIOR_AMBIENT);
@@ -51,7 +51,7 @@ test('DARK-ROOM the law: DFU\'s own ambient-only pair (PlayerAmbientLight.cs:29-
   assert.equal(roomAmbient(INTERIOR_NIGHT_AMBIENT, []), INTERIOR_NIGHT_AMBIENT_ONLY);
 });
 
-test('DARK-ROOM by source: both interior hosts light the room through roomAmbient over the room\'s own lights - the world\'s building (worldModes.js) and the ?interior bench (interior.js) - on the sky\'s night', () => {
-  assert.ok(src('src/scenes/worldModes.js').includes('renderer.setLighting(new Float32Array(roomAmbient(isNight(skyMinutes() % 1440) ? INTERIOR_NIGHT_AMBIENT : INTERIOR_AMBIENT, interiorCtx.lights)), 0);'));
-  assert.ok(src('src/scenes/interior.js').includes('renderer.setLighting(new Float32Array(roomAmbient(isNight(skyMinutes() % 1440) ? INTERIOR_NIGHT_AMBIENT : INTERIOR_AMBIENT, ctx.lights)), 0);'));
+test('DARK-ROOM by source: both interior hosts light the room through roomAmbient over the lamps the room was built with (AUDIT RPT1026 J1: never its live list) - the world\'s building (worldModes.js) and the ?interior bench (interior.js) - on the sky\'s night', () => {
+  assert.ok(src('src/scenes/worldModes.js').includes('renderer.setLighting(new Float32Array(roomAmbient(isNight(skyMinutes() % 1440) ? INTERIOR_NIGHT_AMBIENT : INTERIOR_AMBIENT, interiorCtx.roomLamps)), 0);'));   // PIN MOVED (AUDIT RPT1026 J1): the lamps the room was built with
+  assert.ok(src('src/scenes/interior.js').includes('renderer.setLighting(new Float32Array(roomAmbient(isNight(skyMinutes() % 1440) ? INTERIOR_NIGHT_AMBIENT : INTERIOR_AMBIENT, ctx.roomLamps)), 0);'));
 });

@@ -46,6 +46,9 @@ test('RPT1026-WORLD guard: a navy cutter alongside fighting a pirate takes nothi
   const pirate = place(h, 'pirateBrig', [70, 0, 30], Math.PI);
   h.run(3);
   assert.ok(h.host._sea.has(cutter.id) && h.host._sea.has(pirate.id), 'both at sea');
+  // AUDIT RPT1026 J3: and at each other - the guard asked nothing of the fight it is named for, so a cutter that never
+  // engaged would have passed it as well
+  assert.deepEqual([cutter.ship.mode, cutter.ship.target, pirate.ship.mode, pirate.ship.target], ['engage', pirate.id, 'engage', cutter.id], 'the cutter and the pirate fight each other');
   assert.equal(h.host.boarding, null);
   assert.equal(h.host.brake(), 0, 'no brake');
   assert.equal(h.host.wayScale(false), 1, 'her oars whole');

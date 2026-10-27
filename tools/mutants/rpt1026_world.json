@@ -84,7 +84,7 @@
   {
     "name": "RPT1026-DARK-ROOM-host-unwired",
     "file": "src/scenes/worldModes.js",
-    "old": "renderer.setLighting(new Float32Array(roomAmbient(isNight(skyMinutes() % 1440) ? INTERIOR_NIGHT_AMBIENT : INTERIOR_AMBIENT, interiorCtx.lights)), 0);",
+    "old": "renderer.setLighting(new Float32Array(roomAmbient(isNight(skyMinutes() % 1440) ? INTERIOR_NIGHT_AMBIENT : INTERIOR_AMBIENT, interiorCtx.roomLamps)), 0);",
     "new": "renderer.setLighting(new Float32Array(isNight(skyMinutes() % 1440) ? INTERIOR_NIGHT_AMBIENT : INTERIOR_AMBIENT), 0);",
     "tests": [
       "test/world/interior/rpt1026_world_darkroom.test.js",
@@ -125,7 +125,7 @@
   {
     "name": "RPT1026-BANNER-WALL-both-hung",
     "file": "src/scenes/hallBanners.js",
-    "old": "return [-1, 1].filter((s) => [-1, 1].every((e) => onWall(cx + rx * (side * s + e * BANNER_W_M / 2), cz + rz * (side * s + e * BANNER_W_M / 2)))).map((s) => ({",
+    "old": "return [-1, 1].filter((s) => [-1, 1].every((e) => onWall(cx + rx * (side * s + e * BANNER_W_M / 2), cz + rz * (side * s + e * BANNER_W_M / 2))) && walled(s)).map((s) => ({",
     "new": "return [-1, 1].map((s) => ({",
     "tests": [
       "test/scenes/rpt1026_world_bannerwall.test.js"
