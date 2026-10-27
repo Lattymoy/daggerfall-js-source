@@ -83,7 +83,7 @@
  {
   "name": "EVENTS1-every-raid-announced",
   "file": "src/systems/eventBoard.js",
-  "old": "announce: (!!src?.region && r.region === src.region) || (!!way && way.m <= EVENT_RAID_REACH_M),",
+  "old": "announce: (r.home ?? (!!src?.region && r.region === src.region)) || (!!way && way.m <= EVENT_RAID_REACH_M),",
   "new": "announce: true,",
   "tests": [
    "test/systems/events1_board.test.js"
@@ -329,7 +329,7 @@
  {
   "name": "EVENTS1-the-reach-alone",
   "file": "src/systems/eventBoard.js",
-  "old": "announce: (!!src?.region && r.region === src.region) || (!!way && way.m <= EVENT_RAID_REACH_M),",
+  "old": "announce: (r.home ?? (!!src?.region && r.region === src.region)) || (!!way && way.m <= EVENT_RAID_REACH_M),",
   "new": "announce: (!!way && way.m <= EVENT_RAID_REACH_M),",
   "tests": [
    "test/systems/events1_board.test.js"
@@ -428,8 +428,8 @@
  {
   "name": "EVENTS1-a-roll-before-the-regions",
   "file": "src/systems/raidingParties.js",
-  "old": "if (regions) _ahead = { day: next, raids: raidsForDay(next, regions)",
-  "new": "_ahead = { day: next, raids: !regions ? [] : raidsForDay(next, regions)",
+  "old": "if (regions) _ahead = { day: next, gen, raids: [...raidsForDay(next, regions)",
+  "new": "_ahead = { day: next, gen, raids: !regions ? [] : [...raidsForDay(next, regions)",
   "tests": [
    "test/systems/events1_board.test.js"
   ]

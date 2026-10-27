@@ -121,6 +121,20 @@ export function readRaidMarks(fn, size = BAY) {
   }
   return out;
 }
+/**
+ * WW6 (bible/03-World/World-Wide.md WW6): the raids read over a SHEET - `box` the map's frame in the Bay's own pixels
+ * (`{ x0, y0, w, h }`: the Bay's 1000 x 500 from its corner, or the continent's frame the held map shows past it -
+ * LAIR-WORLD's readBountyMarksIn's law), so a town raided past the Bay stands its mark there. On the Bay's sheet each mark
+ * is readRaidMarks' own.
+ * @param {(() => any) | undefined} fn @param {{ x0: number, y0: number, w: number, h: number }} box
+ */
+export function readRaidMarksIn(fn, box) {
+  const shifted = () => {
+    const l = typeof fn === 'function' ? fn() : null;
+    return Array.isArray(l) ? l.map((m) => (m && typeof m === 'object' ? { ...m, key: m.key ?? `${m.px},${m.py}`, px: m.px - box.x0, py: m.py - box.y0 } : m)) : l;
+  };
+  return readRaidMarks(shifted, { width: box.w, height: box.h }).map((m) => Object.freeze({ ...m, px: m.px + box.x0, py: m.py + box.y0, x: m.x + box.x0, y: m.y + box.y0 }));
+}
 
 /** What the held map repaints its raids on: where they stand and what they say. */
 export const raidMarksKey = (marks) => marks.map((m) => `${m.key}@${m.px},${m.py}|${m.label}|${tipKey(m.tip)}`).join(';');

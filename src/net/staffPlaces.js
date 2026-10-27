@@ -63,8 +63,10 @@ export function staffPlaces(maps, r, places = keptPlaces()) {
 /**
  * AUDIT RELEASE R2-7 (bible/01-Overview/audits/Audit-Release-R2.md): A PROVINCE'S PLACES PAST THE BAY - the world's
  * registry's listed places of its theatre (the capitals, the cities, towns and villages TESA stands), towns first, then
- * by name, each OFFERED AS AN AREA (`loc` -1 at its pixel): a town's own event runs as the town's raid, and the raids are
- * the Bay's until WW6, so the picker offers only what runs there (net/staffEvent/staffEventLaw.js staffTownPixelOk).
+ * by name. WW6 (03-World/World-Wide.md WW6): a TOWN is offered as itself - its `loc` its place's own location index
+ * (the registry's `location`, negative: no MAPS.BSA row holds it), as the raids past the Bay key it - for a town's own
+ * event runs as the town's raid runs, and the raids stand past the Bay since WW6 (net/staffEvent/staffEventLaw.js
+ * staffTownPixelOk); a place with no location of its own, as an AREA at its pixel (`loc` -1).
  * @param {any} maps @param {number} region @param {any} places
  */
 function provincePlaces(maps, region, places) {
@@ -72,7 +74,9 @@ function provincePlaces(maps, region, places) {
   const list = [];
   for (const p of rows) {
     if (list.length >= STAFF_PLACES_MAX) break;
-    if (p?.name) list.push({ loc: -1, name: String(p.name).slice(0, 48), kind: placeKind(p.type), px: p.px, py: p.py });
+    const kind = placeKind(p?.type);
+    const loc = kind === 'town' && Number.isSafeInteger(p?.location) && p.location < -1 ? p.location : -1;   // WW6: a town past the Bay by its own index
+    if (p?.name) list.push({ loc, name: String(p.name).slice(0, 48), kind, px: p.px, py: p.py });
   }
   list.sort((a, b) => Number(b.kind === 'town') - Number(a.kind === 'town') || a.name.localeCompare(b.name));
   return { dfoStaff: 'places', region, name: String(maps?.getRegionName?.(region) ?? '').slice(0, 64) || null, list };

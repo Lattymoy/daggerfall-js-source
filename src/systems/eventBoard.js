@@ -171,7 +171,7 @@ function raidRow(r, now, src, soonMs) {
     id: r.key ? `raid:${r.key}` : `raid:${r.name}:${r.startMs}`, kind: 'raid', title: kindOn ? EVENT_BOARD_TEXT.raidKind(r.kind, r.name) : EVENT_BOARD_TEXT.raid(r.name), where: r.region || null,
     detail: count ?? (party ? (live ? EVENT_BOARD_TEXT.raidLive(party) : EVENT_BOARD_TEXT.raidComing(party)) : null),
     live, at: live ? r.endMs : r.startMs, way, since: live ? r.startMs : r.startMs - soonMs,
-    announce: (!!src?.region && r.region === src.region) || (!!way && way.m <= EVENT_RAID_REACH_M),
+    announce: (r.home ?? (!!src?.region && r.region === src.region)) || (!!way && way.m <= EVENT_RAID_REACH_M),   // WW6: a raid past the Bay says whether it is the player's own (its district - raidingParties.js raidTimerList `home`), its region naming the whole province
   };
 }
 

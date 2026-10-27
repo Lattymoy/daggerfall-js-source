@@ -68,7 +68,7 @@ was built on the Bay and stops at its edge. A survey of the tree on 2026-10-24 f
 | WW-C | Cyrodiil (the owner, 2026-10-24: "Each region becomes home to their own abundant harvesting resources with other resources sprinkled in. Cyrodil becomes the new open PvP area with the wrothgarian mountain area being retired in favor of this. Cryodil will be home to all abundent resources and everything else from the wrothgarian zone"): WW-C1 each province's ground rich in its own kinds and ore, Cyrodiil in all; WW-C2 the open zone moved from the Wrothgarian Mountains to Cyrodiil | BUILT (below) |
 | WW4 | The serpent in every sea: a serpent lane for each sea theatre | IN PART (WW7-12, below: the one serpent's site rolled over every lane of the world, the hub telling every game the site the accounts agree on; a serpent a sea theatre still planned) |
 | WW5 | The Hollows and the stars: an Abyss dungeon slot and a Starfall coven night in each theatre | BUILT (below, 2026-10-27: a coven night and a Hollow on the Bay's lane and each province's, Cyrodiil's open zone none) |
-| WW6 | The raids past the Bay: the raids' towns off the registry by area, the wire's world pixels | planned |
+| WW6 | The raids past the Bay: the raids' towns off the registry by area, the wire's world pixels; a staff town event past the Bay | BUILT (below) |
 | WW7 | The roads' PEOPLE past the Bay - not the roads: the network past the Bay is TESA's (PR #1184, TESA14 and TESA15 - laid by the Bay's own law, drawn on the map). WW7 puts the living world's travellers, patrols, bands and the Watch on it (WW7-7: the ways' planner walks the roads past the Bay) and keys the town economy by the world's key; it lands on #1184 once that merges | IN PROGRESS on #1184 (2026-10-25; section WW7 below) |
 
 ## WW1 - the world's grid and its places (BUILT, 2026-10-24)
@@ -936,6 +936,204 @@ law held from the other side) - every one run, all dead; and with the halo's wor
 step-down records (the stepped-down socket keeps `ww5Ok` beside `sdOk`).
 
 Section A, WW5 (OURS: DFU has no Starfall and no Abyss Dungeon - their lanes past the Bay are the port's own).
+
+## WW6 - the raids past the Bay, and a staff town event there (BUILT, 2026-10-27)
+
+The owner's call taken (2026-10-26, after the audit `01-Overview/audits/Audit-Left-In-The-Bay.md` item 27, "WW6 as
+planned"): *"Every single thing here needs to be addressed. No exceptions."* Kamer's raids (`03-World/Raiding-Parties.md`)
+struck the Iliac Bay alone. The roll walked MAPS.BSA's regions (`systems/raidingParties.js raidRegions` - the travel map
+picker's regions and the game's own rows), the key `region:location:day` held a MAPS.BSA location, the tuple and the
+wire's word (`net/wire.js validRaidIn`) held the town's pixel to 0..999 x 0..499, and a staff TOWN event, which runs as
+the town's raid, was refused past the Bay by name (AUDIT RELEASE R2-7's `town-past-bay`). Measured before, on the
+freeware: the day's table 43 regions and 3,444 towns, none past the Bay; `RAID_KEY_RE` refused Torbarke's key
+`64:-1000124:600`, `RAID_SIG_RE` its pixel (2425, 270), and the staff law Solitude's event (`place`). Now a town past the
+Bay is raided as the Bay's are, from the day's roll to the town's thanks, and staff may bring an event to it.
+
+### The lanes (`net/raid/raidLaw.js`)
+
+- **A LANE A THEATRE.** The Bay's raids are lane 0, the roll they always were; each province past the Bay is a lane of its
+  own, its theatre (`RAID_LANES` 10, pinned equal to `THEATRE_COUNT`; not imported - the law is the relay's too and
+  imports nothing). A raid's lane is its region's (`raidLaneOfRegion`: a Bay region 0..61 lane 0, a province's region
+  62..70 its theatre, WW-R's `regionOfTheatre`), and `raidLaneOfKey` reads it off the key. **Cyrodiil's lane (9) stands
+  no raid** (`RAID_ZONE_LANE`, `raidLaneOpen`): the owner's call, taken 2026-10-26 ("Every single thing here needs
+  to be addressed. No exceptions."): site-bound world events - gates, covens, Hollows, the ketch, raids - stand nowhere
+  in the open PvP zone (PVPDUNGEONS' law, WW2's gates).
+- **THE KEY** (`RAID_KEY_RE`) names every region of the world: a Bay region with its town's MAPS.BSA location (0..9999,
+  as it always was), a province's region (62..70) with its town's OWN location index - negative, up to eight digits
+  (`world/arenaLocations.js arenaLocationIndex`, `world/tamrielCapitals.js capitalLocationIndex`: no MAPS.BSA row holds a
+  place past the Bay; the town economy's `region:location` reads it so, `net/townEconLaw.js townReportOf`). A Bay region
+  with a negative location, or a province's with a MAPS.BSA one, is no key. Canonical still (AUDIT RAID R5).
+- **THE TUPLE** (`raidSig`, `RAID_SIG_RE`): the town's pixel the world's (four digits, either side of the Bay's corner).
+- **THE SIDE** (`raidSideOk`, read by `raidWordSane`): a Bay key's town stands on the Bay's own map, a province key's on
+  the world's grid off it, in a lane that stands raids. The day's roll never crosses the edge, so a word that does is no
+  honest machine's - junk, struck, as AUDIT RAID R6 strikes a start outside its day.
+- **THE DAY** (`raidDayRandom(day, lane)`): a lane's generator is the day's stirred by `RAID_LANE_SALT` times its lane -
+  the Bay's lane stirs nothing, so its generator is `systems/worldTick.js dayRng`'s to the bit (pinned). The relay's
+  slots are a lane's (`raidDaySlots(day, lane)` - its own generator and its own parties; the open zone's lane none), and
+  a lane's pace is the mod's (`raidLaneCount`: half a raid an area a game day - an area every four real hours, Mac's
+  "4" - never past the slots the relay reads, `RAID_SLOTS_MAX`).
+- **THE PARTIES ARE THE PROVINCE'S OWN FAUNA** (`RAID_LANE_PARTIES`, `raidLaneParties`). The mod's three - knights (the
+  Knight), bandits (the Rogue, the Thief, the Burglar), orcs - on the Bay, drawn as they always were; past it, those whose
+  kinds some roster of the province names, by day, by night or in its towns (TESA-BIOME, `systems/tamrielFauna.js` ROSTERS
+  and TOWN_ROSTERS - `03-World/Tamriel-Biomes.md`, pinned equal). One draw among the lane's parties, as the Bay's is one
+  among three, so the draws after it stand where they stood:
+
+  | Lane | Parties | Why |
+  |---|---|---|
+  | 0 the Bay | knights, bandits, orcs | the mod's own (RAID1) |
+  | 1 High Rock | knights, bandits, orcs | the Wrothgarian Mountains' Orsinium |
+  | 2 Hammerfell, 3 Skyrim, 7 Elsweyr | bandits | no Knight on their rosters, no orc |
+  | 4 Morrowind, 5 Summerset | knights, bandits | no orc |
+  | 6 Valenwood | bandits, orcs | Malabal Tor's Wood Orcs |
+  | 8 Black Marsh | bandits | no orc war band raids it (Tamriel-Biomes' Recorded choice 4) |
+  | 9 Cyrodiil | none | the open zone |
+
+- **THE BAY'S LANE IS THE LAW BEFORE WW6**, pinned to the byte against the old law written out in the test: its
+  generator draw for draw, its roll and its slots over three hundred days, and its raids' records the shape they were
+  (no `area` on one) - and on the freeware's own table (43 regions, 3,444 towns, 22 raids a day).
+
+### The towns past the Bay (`systems/raidingParties.js raidLaneGroups`)
+
+SelectRaids' lists for a lane: the world's registry's LISTED places of its theatre (`world/worldWide/worldPlaces.js
+inTheatre` - TESA's capitals and Arena's cities, towns and villages, WW7-1, the same rows on every client that stands the
+land) of the types SelectRaids takes (`RAID_TOWN_TYPES`), a capital one town - its centre (WW7-11's
+`scenes/livingWorld/livingIndex.js capitalStreet`: its streets are no town of their own) - each keyed by its own location
+index (the registry's `location`), grouped by AREA, the province's districts (decision 4: what a region is to the Bay's
+draw), the areas ascending and each its towns by map id, each beside its province's region. None for the Bay's lane
+(`raidRegions` is its own) or the open zone's. Made again when the registry's generation moves (TESA's land, trace or fit).
+
+Measured on the freeware's registry with TESA's places (the game's own templates), a game day:
+
+| Lane | Towns | Areas | Raids |
+|---|---|---|---|
+| High Rock | 29 | 28 | 14 |
+| Hammerfell | 31 | 31 | 16 |
+| Skyrim | 33 | 33 | 17 |
+| Morrowind | 31 | 31 | 16 |
+| Summerset | 32 | 30 | 15 |
+| Valenwood | 31 | 31 | 16 |
+| Elsweyr | 31 | 29 | 15 |
+| Black Marsh | 32 | 31 | 16 |
+| Cyrodiil | 0 | 0 | 0 |
+
+125 raids a game day past the Bay beside the Bay's 22, each province's towns at the Bay's own pace. Day 600's first
+Skyrim raid is on Torbarke (2425, 270), bandits, its key `64:-1000124:600`, its cell `world:151,16`.
+
+### The client (`systems/raidingParties.js`, wired by `scenes/raidHost.js`)
+
+- **THE LANES' DAY** (`syncLanes`): every lane past the Bay is rolled for the day the Bay's list was (fix 1's day), off its
+  towns as the registry holds them, and again when the day turns or the registry's places move. A raid already held (its
+  key and its tuple) keeps everything it has - its count, its words, its cleanse, its announcement; one the roll no longer
+  names (a town the registry dropped) stands down, its raiders routed and its words forgotten; one that has run out is
+  never rolled back in. The Bay's raids are never touched. A raid past the Bay is saved with its `area` and restored, and
+  the lanes are rolled again over it (kept by key and tuple). The next day's look-ahead (`raidTimerList`, AUDIT EVENTS1
+  A4) holds the lanes' too, made again when the registry moves.
+- **TOLD IN ITS AREA** (`raidHome`, `homeNow`): the announcement, the withdrawal and the cleanse's line go to a player in
+  the raid's area - on the Bay its region, as the mod has it; past the Bay the province's district the player stands in
+  (`world/worldWide/worldGrid.js areaAt`; a province is some thirty of a Bay region's size, and its every raid said to all
+  of it was a line every few minutes) - each line naming the province ("Torbarke in Skyrim is under attack by bandits!").
+  At sea, and past the Veil, none (fix 8). The event board's and the timers' rows read the same (`home` on a raid past
+  the Bay's row - `systems/eventBoard.js`, `systems/eventTimers.js`); a Bay raid's row is the one it was.
+- **STOOD IN ITS TOWN** (`world/raidShared.js raidTownIs`): the town the host's GPS names, a Bay town by its region and
+  MAPS.BSA location as RAID1 asked, a town past the Bay by its own index alone (one index a place of the world; its stood
+  record's region is its pixel's as the land read it). The host's `townHere` is the location the player stands outdoors in
+  (`_questLoc`, TESA's providers' records past the Bay - `scenes/tamrielPlacesHost.js`), so the raiders, the town watch's
+  defenders (`raidDefendingHere`), the town's sites (RAID5's kinds, `scenes/raidSitesHost.js` off the town's own pixel),
+  the words to the relay, the thanks (RAID4b) and the reputation run there as on the Bay. A capital's raid stands at its
+  centre - its square and its name; its streets are the capital's, not the raid's town.
+- **THE REPUTATION** (`grantRaidReputation`, by the raid's region): the legal reputation in the province's region (WW-R's
+  71), and the People's and the knightly order's where the faction dictionary holds the province's own (each read by its
+  region, never another's).
+- **THE WORD** goes to the town's cell on the world's grid (`net/wire.js worldRoom`), and the held map stands the raided
+  town on the continent's sheet (`ui/eventMapMarks.js readRaidMarksIn`, `ui/heldMap.js` - LAIR-WORLD's bounties' law), the
+  Bay's sheet the Bay's.
+
+### The relay (world270) and the account service (acct196)
+
+- The relay keeps a raid past the Bay in its town's cell as it keeps the Bay's (RAID3): its word's pixel the world's
+  (`validRaidIn` - `worldPixelOk`), its key and tuple the law's above, its ledger made, counted and cleansed once with a
+  receipt naming the province's key. `server/src/index.js _raidWord` reads the word's lane: its slots are its lane's
+  (`_raidSlotsOf(day, lane)` - the Bay's kept by its day as before, a lane's by day and lane), and the operator's pinned
+  towns table (`RAID_TOWNS_SHA256`, the hub's whole roll - MAPS.BSA's rows) is the Bay's lane's alone.
+- **THE SESSION** (`net/online.js sendRaid`): a raid past the Bay goes only to a relay that hears one
+  (`RAID_WORLD_RELAY_MIN` 270, `relaySupportsRaidWorld` - an older relay refuses the word as a bad frame), the primary and
+  each halo saying for itself (AUDIT RAID R8b's law); a Bay raid to any raid relay, as before.
+- **The account service** reads the same law, so a raid past the Bay's receipt is credited as the Bay's
+  (`server-account/src/townEcon.js` - RAID_KEY_RE: its `raid_cleanses` row under the province's key, the town economy's act
+  at the town past the Bay's map id), and a staff town event past the Bay is staged by `staffEventFault` (below). No
+  migration: the rows' keys are text.
+
+DEPLOY ORDER: the relay first (world270), then the account service (acct196), then the site - both are undeployed, and
+WW6 is folded into them (re-hashed in place). A client on an older relay raids the Bay alone online.
+
+### A staff town event past the Bay (`net/staffEvent/staffEventLaw.js`, `net/staffPlaces.js`)
+
+R2-7's remainder, done. `staffTownPixelOk(px, py, loc, rg)`: a Bay town's event (its MAPS.BSA location, 0..9999) on the
+Bay's own map, as it always was; a town past the Bay's (its place's own index, negative - `STAFF_TOWN_INDEX_MIN`) on the
+world's grid off the Bay, in a province's region (`STAFF_PROVINCE_REGIONS` 62..70, pinned equal). A town's location and
+its pixel on two sides of the edge is refused by name (`town` - the panel's `event-bad-town`; it was `town-past-bay`). An
+area is `loc` -1 alone (`STAFF_EVENT_AREA`, `isAreaEvent` - a town past the Bay's location is negative too). The picker
+offers a province's town as itself (its registry `location`), a place with no index of its own as an area at its pixel;
+the account service stages it, the hub's book holds it, and the game stands it in its town by its index
+(`systems/staffEvents.js staffRaidHere`, `raidTownIs`), naming it off its lane's towns (`staffTownOf`). On the freeware the
+picker offers Solitude as a town (`capitalLocationIndex(1, 0)`) and the law takes its event.
+
+### Decisions (recorded)
+
+- **Areas, not provinces, are told.** A province holds some thirty districts; its raids told to all of it would be a line
+  every few minutes. The line names the province; the board's row is the player's own by district.
+- **The parties by the province's fauna, not its climate.** The mod's parties are people and orcs; a province raids with
+  those its own rosters stand, so no orc war band raids Black Marsh.
+- **The pinned towns table is the Bay's.** The hub's whole-roll check reads MAPS.BSA's rows (the operator's
+  `tools/raidTowns.mjs`); a lane past the Bay is read against its slots alone - the relay holds no picture of the land, as
+  for the gates (WW2), and the slots are what the relay read before the pin was set.
+- **The listed places alone.** A lane's towns are the registry's listed rows; the countryside's places past the Bay (TESA7,
+  a pixel provider - found by place, never listed, WW1) are no raid's town, so every client rolls the same list.
+- **A capital one town**, its centre (WW7-11).
+- **A staff town event may stand in any province, Cyrodiil's included** - staff's call, as an area's event already may;
+  the open zone's rule is the day's roll's. The owner's call of 2026-10-26 names the site-bound world events the world
+  stands on its own (the gates, the covens, the Hollows, the ketch, the raids' day); a staff event is staged by hand, by
+  staff, wherever staff bring it - recorded here so the owner can say otherwise.
+- **Staff events are told by their region** (a province's), as on the Bay: an event is staff's, said to its region.
+
+### THE FOUR HOSTS (Home.md)
+
+`scenes/world.js` wired: its raids' host seams moved verbatim out of `bootWorld` to `scenes/raidHost.js` (HOST-SPLIT,
+`tools/hostMove.mjs`; bootWorld's ceiling 35,799 to 35,751), which hands the raids the registry (`net/staffPlaces.js
+keptPlaces` - the world's places as the boot keeps them) and the capital's street law. `scenes/exterior.js` FLAGGED - the
+fixed-city bench runs no raid; `scenes/worldModes.js` and `scenes/dungeonContext.js` FLAGGED - a raid is the street's.
+
+### Pins and mutants
+
+`test/world/worldWide/ww6_raids.test.js` (12): the law (every region's key, the tuple, the lanes, the zone shut, the side);
+the Bay's lane the law before it to the byte; the parties the province's fauna (the rosters read); a lane's day; a lane's
+towns off the registry; the client's day (kept, dropped, run out, saved); the client's raid past the Bay (told by area,
+stood by index, the board's and timers' rows, the defender, the word to the cell); the relay (the ledger, the cleanse,
+the receipt, the junk, the hub's table the Bay's); the session's gate; a staff town event; the held map and the host;
+and with ARENA2 every lane over the freeware's registry, the Bay's roll on the real table, Torbarke's raid through the
+relay's parse, law and cell, and Solitude's event. `test/server/townecon_service.test.js` (a raid past the Bay's receipt
+at the account service: its cleanse row and its town's act; a Bay region with a town past the Bay's index and a province's
+with a MAPS.BSA row refused at the receipt). Mutants `tools/mutants/ww6.json` (59, all dead).
+
+THE TWO SURVIVORS AND WW6'S FINISH (2026-10-27). `WW6-staff-index-unbounded` lived (its pin read the bound through
+the constant it mutates): the eight digits are pinned by value. `WW6-client-runout-rolled-in` lived because the check
+it mutated was redundant: the lanes' roll (`syncLanes`) has one caller, the frame, and the expiry pass follows it there
+unconditionally, before any reader - a run-out raid the roll names again goes there, never announced, so unsaid. The
+check went and the record with it. The finish pins the half the record had claimed and nothing held: standing in the
+raid's own district while the registry's places move, the run-out raids rolled again are neither kept nor said
+(`ww6_raids.test.js` the client's day; `WW6-client-runout-said`, RAID1-fix2's mutation through WW6's own test).
+
+PINS MOVED: `test/scenes/hostceiling.test.js` (bootWorld 35,751); `field_raid_ft.test.js`, `raid1_raidingParties.test.js`,
+`raid2_raidsOnline.test.js`, `raid4_rewards.test.js`, `raid4b_sets.test.js`, `raid5_kinds.test.js`,
+`staffevent_raid.test.js` and `raid3_raidLedger.test.js` (the host's seams in `scenes/raidHost.js`, its live names
+`host.<name>`); `raid3_raidLedger.test.js` (the wire's pixel the world's); `raidroll.test.js` and `auditraid.test.js`
+(the relay reads the word's lane); `staffevent_relay.test.js` and `auditrelease_r2_gaps.test.js` (a town's event refused
+as `town`, a town past the Bay taken). Mutant records re-aimed by content in `auditcaptsea.json`, `auditraid.json`,
+`auditrelease_r2_gaps.json`, `auditwe_cover.json`, `events1.json`, `eventtip.json`, `field_raid_ft.json`,
+`hostsplit.json`, `raid1.json`, `raid2.json`, `raid3.json`, `raid4.json` and `raidroll.json` (28) - all dead.
+
+Section A, WW6 (OURS: Kamer's mod raids the Iliac Bay alone - DFU's world ends there; the lanes past it, their parties by
+the province's fauna and a town past the Bay's event are the port's own).
 
 ## The audit (AUDIT WW, 2026-10-24)
 

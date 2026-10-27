@@ -339,12 +339,15 @@ test('RAID2 the world host by source: my word rides my cell frame, a peer\'s rea
   const w = rd('src/scenes/world.js');
   assert.match(w, /if \(cell\) duelRingWord\(frame, full\); if \(cell\) csaWord\(frame, full\);( if \(cell\) csaAboardWord\(frame, full\);)?(?: if \(cell\) bandWord\(frame, full\);)?( if \(cell\) navalWord\(frame, full\);)?(?: if \(cell\) seaRaidWord\(frame, full\);)? if \(cell\) \{ const rk = raidWireWord\(\), ro = raidObjWord\(\); if \(rk\) frame\.rk = rk; if \(ro\) frame\.ro = ro; \}[^\n]*\n\s+(?:\/\/[^\n]*\n\s*)*const said = [^\n]*\n\s*if \(_foesQuiet\.skip\(frame, said\)\)[^\n]*\n\s*if \(!online\.sendFoes\(frame\)\)/, 'on the riders\' own line (PIN MOVED, SCALE2c: the quiet frame\'s gate asked between it and the send), beside the camps, the horse, the ring and (THE MERGE) the boats - and (THE MERGE with NAV-G) the sea\'s word before it, and (OW6) the raiders\' after it, and (PIN MOVED, RAID5) their objective\'s word beside theirs');
   assert.match(w, /exteriorFoes\.setOnRaids\(\(from, rk, at, ro\) => raidPeerWord\(from, rk, at, ro\)\);/);
-  const at = w.indexOf('  setRaidingPartiesHost({');
-  const body = w.slice(at, w.indexOf('\n  });', at));
-  assert.match(body, /selfId: \(\) => online\?\.id \?\? null,/);
+  // PIN MOVED (WW6): the seams moved verbatim out of bootWorld to scenes/raidHost.js (HOST-SPLIT), the host's live names
+  // read there as `host.<name>`
+  const rh = rd('src/scenes/raidHost.js');
+  const at = rh.indexOf('  setRaidingPartiesHost({');
+  const body = rh.slice(at, rh.indexOf('\n  });', at));
+  assert.match(body, /selfId: \(\) => host\.online\?\.id \?\? null,/);
   assert.match(body, /wallNow: \(\) => performance\.now\(\),/, 'the clock the pool hands the word on');
   assert.match(w, /now: \(\) => performance\.now\(\),\n\s+staleMs: FOES_STALE_MS,/, 'which is the net\'s own');
-  assert.match(body, /peersInTown: \(\) => \(peersNear\(\) \?\? \[\]\)\.filter\(\(p\) => _foeInTownRect\(\{ ai: \{ feet: p\.feet \} \}\)\)\.map\(\(p\) => p\.id\),/);
+  assert.match(body, /peersInTown: \(\) => \(host\.peersNear\(\) \?\? \[\]\)\.filter\(\(p\) => _foeInTownRect\(\{ ai: \{ feet: p\.feet \} \}\)\)\.map\(\(p\) => p\.id\),/);
   assert.match(body, /raidPuppets: \(\) => exteriorFoes\.foes\.filter\(\(f\) => f\.puppet && f\._pupRaid\),/);   // PIN MOVED (STAFF-EVENT THE REWARD): the fallen too - the raid module skips them for the struck mark and counts a fallen one I fought as my kill
   assert.match(rd('src/systems/raidingParties.js'), /for \(const pup of puppets\) \{\n    if \(pup\.dead\) continue;/, 'a fallen puppet marks no raid fought');
   assert.match(body, /ownRaidFoes: \(\) => exteriorFoes\.foes\.filter\(\(f\) => !f\.puppet && f\.raidKey && !f\.dead\),/);

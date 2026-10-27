@@ -5577,6 +5577,12 @@ export const raidGate = (bucket, nowMs) => tokenGate(bucket, nowMs, RAID_HZ_MAX)
  *  client says none to it - the players' own words run the raid there (systems/raidingParties.js). */
 export const RAID_RELAY_MIN = 123;   // AUDIT RAID: world122's frames carried no signature - never deployed; and at the merge main's TV3 took world122 (no raid in it), the batch's relay world123
 export const relaySupportsRaid = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= RAID_RELAY_MIN; };
+/** WW6 (bible/03-World/World-Wide.md WW6): the first relay that hears a raid past the Bay - its word's town on the
+ *  world's grid (validRaidIn), its key a province's (net/raid/raidLaw.js RAID_KEY_RE), its lane's slots read. An older
+ *  relay refuses the word as a bad frame, so a client says a raid past the Bay to this one on alone (net/online.js
+ *  sendRaid); the Bay's words go to any raid relay, as before. world270, folded in while it is undeployed. */
+export const RAID_WORLD_RELAY_MIN = 270;
+export const relaySupportsRaidWorld = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= RAID_WORLD_RELAY_MIN; };
 /** The door between a cell and the hub: a raid's cleanse, said to everyone online (HCC-PARK's doors' law - the public
  *  worker forwards /room/<key> alone). */
 export const RAID_INTERNAL_CLEAN = '/internal/raid/clean';
@@ -5623,13 +5629,14 @@ export const mapPixelOfWire = (x, z) => [Math.floor(x / PIXEL_UNITS), 499 - Math
 /**
  * A client's raid word, projected: `{k:'w', key, st, tg, ty, px, py, n, s}` - the raid's key, its start (classic
  * minutes), its target, its party, its town's map pixel, the deaths of MY raiders in it so far, and 1 once I have
- * struck one of its raiders - or null.
+ * struck one of its raiders - or null. WW6: the town's pixel is the WORLD's (worldPixelOk - a province's town past the
+ * Bay; which side of the Bay's edge a key's town stands on is the ledger's own law, raidLaw.js raidSideOk).
  */
 export function validRaidIn(m) {
   if (!m || typeof m !== 'object' || !RAID_KINDS.includes(m.k)) return null;
   if (typeof m.key !== 'string' || !RAID_KEY_RE.test(m.key) || !Number.isSafeInteger(m.st) || m.st < 0) return null;
   if (!intIn(m.tg, RAID_TARGET_MIN, RAID_TARGET_MAX) || !intIn(m.ty, 0, RAID_TYPES - 1)) return null;
-  if (!intIn(m.px, 0, 999) || !intIn(m.py, 0, 499) || !intIn(m.n, 0, RAID_WORD_KILLS_MAX)) return null;
+  if (!worldPixelOk(m.px) || !worldPixelOk(m.py) || !intIn(m.n, 0, RAID_WORD_KILLS_MAX)) return null;
   if (m.s !== undefined && m.s !== 0 && m.s !== 1) return null;
   return { k: 'w', key: m.key, st: m.st, tg: m.tg, ty: m.ty, px: m.px, py: m.py, n: m.n, s: m.s === 1 ? 1 : 0 };
 }

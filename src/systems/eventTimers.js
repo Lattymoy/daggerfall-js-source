@@ -109,7 +109,7 @@ function sdLaneRows(src, now, live, coming, rows) {
  *           elite?: { op: number, rh?: number, h?: number, until?: number|null, end?: string|null } | null,
  *           doors?: { board?: () => any } | null,
  *           seatsOpen?: boolean, seats?: Array<any> | null, zero?: number | null, region?: string | null,
- *           raids?: Array<{ name: string, region?: string, type?: string, startMs: number, endMs: number, done?: boolean }> | null }} src
+ *           raids?: Array<{ name: string, region?: string, type?: string, startMs: number, endMs: number, done?: boolean, home?: boolean }> | null }} src
  */
 export function eventTimerRows(src) {
   const now = Number(src?.now);
@@ -224,7 +224,7 @@ export function eventTimerRows(src) {
   const raids = (src?.raids ?? []).filter((r) => r && Number.isFinite(r.startMs) && Number.isFinite(r.endMs) && r.endMs > now && !r.done);
   const home = src?.region ?? null;
   const elsewhere = [];
-  for (const r of raids) (home && r.region === home ? raidRow(r) : elsewhere.push(r));
+  for (const r of raids) ((r.home ?? (home && r.region === home)) ? raidRow(r) : elsewhere.push(r));   // WW6: a raid past the Bay is the player's own by its district (raidingParties.js raidTimerList `home`), not its province's name
   if (elsewhere.length) {
     // the soonest to matter: one under way (to its end), else the next to start
     const next = elsewhere.reduce((a, r) => ((r.startMs <= now ? r.endMs : r.startMs) < (a.startMs <= now ? a.endMs : a.startMs) ? r : a));
