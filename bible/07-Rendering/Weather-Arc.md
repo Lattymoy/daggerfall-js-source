@@ -44,6 +44,10 @@ ONLY throughout - the classic lane keeps DFU's word, 1:1.
   scale, a sand precipitation profile, a ground-hugging cloud profile
   and a tint - so the wall stands on the horizon in the field, the fog
   thickens as it is entered, and the wind blows sand.
+- **E - The ashfall (ASHFALL1, 2026-10-27, later).** The ninth word, the
+  volcano's: born over Red Mountain, the Ashlands and Stonefalls, a
+  brown-grey pall with its veil, grey ash falling and tiny embers
+  glowing among it. Below, at the page's end.
 
 ## A - NO RAIN OVER SNOW (WEATHER2a, 2026-09-14)
 
@@ -1380,3 +1384,108 @@ same map's.
 where the desert edge's never do; a map with -1 off it reads the edge). Mutants: `tools/mutants/bayleftsea.json`
 BLS-weather-land-off-read; `tools/mutants/tesabiome.json` TESA-BIOME-28-weather-clamped re-aimed by content and
 TESA-BIOME-29-weather-sea turned with the law (the mutant now the old law) - all dead.
+
+## E - THE ASHFALL (ASHFALL1, 2026-10-27)
+
+The owner: "I think with the volcanic isles we could do an ashfall sort of weather with tiny lava flakes. If that makes
+sense" - "I also definitely want to develop the new weather I mentioned".
+
+**The lore.** TES III's Vvardenfell has its own weather beside DFU's seven: the ash storm. Its Ashlands region rolls Ash
+30% of its days (Clear 10, Cloudy 25, Foggy 10, Overcast 25 - UESP, Morrowind:Ashlands), and only Molag Amur rolls ash
+besides. Red Mountain stands a Blight storm every hour of the main quest; the port's 3E 405 is before the Blight's
+worst, so its volcano gets the ash, at the most. ESO's Stonefalls loading screen: "the ashfall from the
+volcanoes of the Velothi Mountains and from great Ash Mountain itself is Stonefalls' bane and benefit, fertilizing the
+soil". The owner's flakes are the embers such a fall carries.
+
+**The word.** The port's own NINTH word, `ashfall`, APPENDED after the sandstorm (enum 8: DFU's seven and the sandstorm
+keep theirs - a save's byte, the classic array's mask, the Chronicles' columns, none touched). It is never rolled: on the
+enhanced lane the world weather map births it. Off the map's lane (`?wxmap=off`) WEATHER2b's field stands it.
+
+**Where - the volcano's country.** A zone past the Bay names its `ash` (`world/tamriel/tamrielBiomes.js`): the share of
+its sky's HOURS under the ash - Red Mountain 0.5, the Ashlands 0.3 (TES III's own), Stonefalls 0.15. No other zone names
+any. The map's law (`systems/weather/weatherMap.js` targetShares) takes that share out of the clear air and the dry
+words (cloud, the deck, fog, the desert's sand) in proportion, never out of what falls: the climate table's rain, storms
+and snow keep their hours, and the ash is the lore's share, all the dry sky at most. Each [climate, ash] the zones name
+is its own birth law (birthLaw's `ash`, `ASH_COUNTRY`), solved once, its ceilings among the map's. A birthplace reads its
+ash through `systems/weather/weatherField.js` ashAtPixel - the zone's `ash` where the host's map wears that zone there
+(its climate the zone's ground's). So the Bay, the sea and a map with nothing past the Bay read none, and the field and
+the map read the volcano one way.
+
+**The system.** A plume's pall - a core 15 to 28 km across (WEATHER3g's law: every system born on the land is
+regional), the overcast its skirt (0.8 of a core's area, thinned to fit where the table leaves less), living six to
+sixteen hours, riding the wind at 20 m a game minute (a fall of ash drifts downwind of its mountain onto the
+neighbouring land), born at every hour (the volcano keeps none), from a dusting at its heart to the heavy fall
+(`STRENGTH` 0.35 to 1). Priority between the sandstorm and fog: rain, a storm and snow are worn over it.
+
+**Measured** (the map with the continent round the Bay, 300 minutes across a year at each zone's middle pixel):
+Red Mountain 0.49 of the hours under ash (its law 0.5), the Ashlands 0.26 (0.3: a pall born at the zone's edge stands
+half outside it), Stonefalls 0.14 (0.15); the Grazelands, the Velothi wall, Deshaan and the Bay none. Off the volcano's
+country the map is the map it was, birth for birth (2,827 births over 720 nodes of every type compared against the
+code before the slice, none differing), and a warm query costs within a tenth of what it did.
+
+**THE BIRTHS FOLLOW THE LAND.** A node's births were memoised per climate lookup alone. Past the Bay the climates (and
+now the ash) are the zones', and the zones move once the trace lands after the boot or a fit is installed
+(`tamrielBiomes.js` biomeStamp). A node drawn over the authored rings kept their zones' weather after the provinces had
+moved. The memo is dropped when the stamp moves, as the air's tiles are (AUDIT TESA-BIOME Z5).
+
+**Every seam a word reaches.**
+- The fog row: `FOG_SETTINGS.ashfall`, exp 0.006, about half a kilometre to the fog's colour, the sky not in it (the
+  pall is seen); a mod's five settings have none, so the snow's stands in.
+- The sun at 0.4, a shade under a rain's deck.
+- An OVERCAST to every flag's reader (`weatherFlags` - Ambient Text hears "Cloudy", as for the sandstorm,
+  `06-Systems/Ambient-Text.md`), neither rain nor snow.
+- The sky row: a brown-grey lid, cover 0.96, an overcast's breeze.
+- The cloud profile (`VC_PROFILE`): base 450 m, top 3,400, dark 0.6 - low, deep and dark.
+- The cell's tint (`CELL_TINT`, a brown-grey).
+- A VEIL under the pall (`CURTAIN_FALL` 0.9, the rain's kind) in its cell's tint. The sky's curtains multiply by the
+  cell's tint (white for every other word: none changed), and so does the travel view's (`render/rainCurtains.js`
+  curtainsOf's `tint`, mixColor) - the ash's column is seen falling from three leagues off.
+- Cirrus 0.15.
+- The wind's violence 0.3 (the ash drifts, it is not driven); Windfall reads it as an Overcast.
+- The grass dim 0.58; the jungle haze's factor an overcast's.
+- The body's air -5 (`WEATHER_TEMP`: dry, its pall shading the sun as a fog's does - nothing wet in it to chill a body),
+  named "Ashfall".
+- The front's own kind `ash`: peak 0.1 to 1, skew 1.3, never the wet fall the rain and the snow share. Its edge's haze is
+  thinned and its sun lifted as a sprinkle's are (`fallTerms`).
+- The ear hears a cloudy day: DFU's ambience has no ash, and it falls without a sound.
+- The forecast says it ("Ashfall", "ashfall"; every language drafted).
+- The music takes DFU's default arm, as any word DFU never knew.
+
+**The fall** (`render/dryFall.js`). The dry falls - the sand and the ash - are one renderer the hosts hold
+(`DryFallRenderer`): the sand's wisps built at boot as they were, and the ash's program started beside them and built
+the first time the ash falls (SHADER-STALL's `compiledPass`: its compile runs while the world loads; a fault in it is
+the ash's alone, warned and never drawn). Two instance sets on one program, in a 40 m box that follows the eye and
+wraps by the lab's law:
+- THE ASH. 12,000 grey flakes (1.8 to 4.8 cm) at a full fall, falling 0.6 to 1.3 m/s - slower than the lab's snow and as
+  light, the one wind's travel carrying them - and tumbling as they go, wider in a stronger wind. Alpha-blended, dull
+  and unlit, as the lab's snow is.
+- THE EMBERS. 320 tiny flakes (0.8 to 2 cm) still glowing from the vents, falling 0.3 to 0.7 m/s. Each is kindled,
+  white-hot for a breath, then reddens and goes out over a four- to ten-second life, flickering four to six times a
+  second as it cools. They are ADDED to the frame (blend one, one), so they glow against the pall and in the night.
+- Both are faced to the screen and held at 1.5 pixels at least, their light thinned by what the hold added, so a far
+  flake never vanishes between pixels. Both take the front's intensity as the share of their counts.
+- THE CLOCK is the wisps' law: every rate is a whole number of cycles over 400 s and every flake's fall a whole number of
+  boxes, so the wrapped clock moves no flake; the travel wraps at the box times the gust's denominator.
+The hosts' one branch draws every dry fall, handing it its kind (`isDryFall`, `world/weather.js`); the rain program is
+never built for the ash.
+
+**The four hosts.** `scenes/world.js` WIRED and `scenes/exterior.js` WIRED - the same lines, respelled: the renderer
+built at boot, the rain program's gate, the branch, the kind handed. No host line was added (HOST-SPLIT). The two
+indoor hosts, `scenes/worldModes.js` and `scenes/dungeonContext.js`, are FLAGGED and unchanged: nothing falls indoors,
+and the ear hears the map's word there as a cloudy day.
+
+**Not seen.** The look - the pall's colour, the flakes' grey and count, the embers' glow - goes to the owner's eyes. The
+owner had asked for no more probes, so none was run. `?weather=ashfall` stands it anywhere for a look, and the volcano's
+country has it a third of the time and more.
+
+**Not DFU**: DFU has seven weathers and no ash; the word, its law and its fall are the port's (Port-Ledger section A,
+THE ASHFALL).
+
+**Pins.** `test/systems/weather/ashfall1.test.js`. PIN MOVED: weather2d_sandstorm (the ninth word after it, the tint
+table, the hosts' renderer and branch), weather.test.js and weather2b_weatherfield (the word lists), labGrass, tv1 and
+tv4 (the dim, the camera's floor under the pall, the veil), fb1001_rainsprinkle, rainhours, vc7c_curtains, precip1_air,
+ow_forecast (the front's skew, the strength, the curtain, the fall's spelling and the tinted veil, the forecast), and the
+hosts' spelling in weatherfront, weathersim and fb1001_overworld. `l10n4_hardcoded`: the ash's two shader stages.
+Mutants: `tools/mutants/ashfall1.json` (39, all dead); nine records re-aimed by content where the slice moved their text
+(fb1001_puddlerain, fb1001_rainsprinkle, ow_forecast, precip1, rainhours x2, time1, weather3a, windfall1).
+

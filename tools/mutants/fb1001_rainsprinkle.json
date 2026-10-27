@@ -38,7 +38,7 @@
   {
     "name": "RAIN-SPRINKLE-every-word-thinned",
     "file": "src/systems/weather/weatherFront.js",
-    "old": "  if (mode !== 'rain' && mode !== 'storm' && mode !== 'snow') return terms;\n",
+    "old": "  if (mode !== 'rain' && mode !== 'storm' && mode !== 'snow' && mode !== 'ash') return terms;\n",
     "new": "",
     "tests": [
       "test/systems/weather/fb1001_rainsprinkle.test.js"

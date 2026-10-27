@@ -47,8 +47,8 @@ export const JUNGLE_HAZE = Object.freeze({
     Object.freeze([0, 1.25]), Object.freeze([4.5, 1.35]), Object.freeze([6.5, 1.65]), Object.freeze([9, 1.15]),
     Object.freeze([13, 0.82]), Object.freeze([16, 0.9]), Object.freeze([18.5, 1.08]), Object.freeze([21, 1.2]), Object.freeze([24, 1.25]),
   ]),
-  /** ...by the weather (world/weather.js WEATHER_TYPES - DFU's WeatherType by name, and the port's sandstorm) */
-  weather: Object.freeze({ sunny: 1, cloudy: 1.05, overcast: 1.12, fog: 1.4, rain: 1.3, thunder: 1.42, snow: 1.15, sandstorm: 1 }),
+  /** ...by the weather (world/weather.js WEATHER_TYPES - DFU's WeatherType by name, and the port's sandstorm and ashfall) */
+  weather: Object.freeze({ sunny: 1, cloudy: 1.05, overcast: 1.12, fog: 1.4, rain: 1.3, thunder: 1.42, snow: 1.15, sandstorm: 1, ashfall: 1.12 }),
   /** the drifting banks: a value noise of `cell` metres, the density times 1 +- `amp`, blown at `speed` m/s along the
    *  wind (or `still` m/s east with none) */
   drift: Object.freeze({ cell: 540, amp: 0.24, speed: 1.6, still: 0.35, salt: 811 }),

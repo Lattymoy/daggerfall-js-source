@@ -20,6 +20,8 @@
 //     plains, keeps its sky;
 //   - its AIR, where the lore's air is not its ground's climate's (Morrowind's grey volcanic ground under a warm sky): the
 //     climate the air law reads there (tamrielGround.js groundAirClimateIndex, systems/weather/airGround.js);
+//   - its ASH (ASHFALL1): the share of its sky's hours the ashfall stands over it - the weather map's births there
+//     (systems/weather/weatherMap.js ashOfField), the volcano's country alone;
 //   - its FAUNA: systems/tamrielFauna.js, by the biome's key.
 // WHERE A ZONE IS: its province's land (tamrielLand.js provinceKeyBeyondBay - the player's own trace once it lands, the
 // authored rings before it or with `?tamrieltrace=off`), the zone whose SEEDS stand nearest the point moved first by two
@@ -74,7 +76,7 @@ const C = CLIMATES;
 /** @typedef {readonly [number, number]} Point */
 /** @typedef {{ key: string, province: string, name: string, climate: number, seeds: ReadonlyArray<Point>,
  *   places: ReadonlyArray<string>, peaks?: boolean|ReadonlyArray<string>, jungle?: boolean, canopy?: boolean, air?: number,
- *   hearts?: Readonly<{ range: string, at: ReadonlyArray<Point> }>, lore: string }} Biome - `hearts` (AUDIT TESA II G6) the
+ *   ash?: number, hearts?: Readonly<{ range: string, at: ReadonlyArray<Point> }>, lore: string }} Biome - `hearts` (AUDIT TESA II G6) the
  *   zone's hearts as offsets (picture units) from a named range's summit: the relief's where it stands (tamrielRelief.js
  *   namedSummit), the authored spine's middle else - a country that lies ABOUT a mountain stands about it on either land */
 const CITY_AT = new Map(CITIES.map((c) => [c.name, c.at]));
@@ -180,13 +182,19 @@ export const BIOMES = Object.freeze(/** @type {any[]} */ ([
   // volcano fifteen units south-west of its authored spine, and the hearts drawn about the spine left it ringed by the
   // Bitter Coast's swamp and Stonefalls, the Ashlands ten units off where the Grazelands lie (TES III: the Ashlands north
   // and west of the mountain, the Grazelands north-east, the Bitter Coast south-west)
-  { key: 'morrowindAshlands', province: 'Morrowind', name: 'the Ashlands', climate: C.Mountain, air: C.Desert2,
+  // ASHFALL1 (the owner: "with the volcanic isles we could do an ashfall sort of weather with tiny lava flakes"): `ash`, the
+  // share of a zone's hours under the ashfall - the Ashlands TES III's own (its region's weather: Ash 30%, beside Clear 10,
+  // Cloudy 25, Foggy 10, Overcast 25; Molag Amur's the only other ash), the volcano's own the most (TES III's main quest
+  // stands a Blight storm on Red Mountain every hour; the port's 3E 405 is before the Blight's worst, so the ash, at
+  // half), Stonefalls the least (ESO's loading screen: "the ashfall from the volcanoes of the Velothi Mountains and
+  // from great Ash Mountain itself is Stonefalls' bane and benefit, fertilizing the soil")
+  { key: 'morrowindAshlands', province: 'Morrowind', name: 'the Ashlands', climate: C.Mountain, air: C.Desert2, ash: 0.3,
     seeds: ['Ald\'ruhn'], hearts: { range: RED_MOUNTAIN, at: [[0, -9], [-9, -1]] },
     lore: 'Ald\'ruhn\'s grey country about Red Mountain - ash, pumice and basalt under the ash storms' },
   { key: 'morrowindGrazelands', province: 'Morrowind', name: 'the Grazelands', climate: C.Woodlands, air: C.Subtropical,
     seeds: [], hearts: { range: RED_MOUNTAIN, at: [[7, -7]] },
     lore: 'Vvardenfell\'s north-east between Red Mountain and Zafirbel Bay - grass plains and few trees, the Zainab\'s guar herds' },
-  { key: 'morrowindRedMountain', province: 'Morrowind', name: 'Red Mountain', climate: C.Mountain, air: C.Desert2,
+  { key: 'morrowindRedMountain', province: 'Morrowind', name: 'Red Mountain', climate: C.Mountain, air: C.Desert2, ash: 0.5,
     peaks: [RED_MOUNTAIN], seeds: [],
     lore: 'the volcano at Vvardenfell\'s heart - ash and blighted rock, never snow' },
   { key: 'morrowindAscadian', province: 'Morrowind', name: 'the Ascadian Isles', climate: C.Woodlands, air: C.Subtropical,
@@ -195,7 +203,7 @@ export const BIOMES = Object.freeze(/** @type {any[]} */ ([
   { key: 'morrowindBitterCoast', province: 'Morrowind', name: 'the Bitter Coast', climate: C.Swamp, air: C.Subtropical,
     seeds: [], hearts: { range: RED_MOUNTAIN, at: [[-7, 7], [-2, 9]] },
     lore: 'Vvardenfell\'s south-west shore - swamp, mangrove and smugglers\' coves' },
-  { key: 'morrowindStonefalls', province: 'Morrowind', name: 'Stonefalls', climate: C.Mountain, air: C.Desert2,
+  { key: 'morrowindStonefalls', province: 'Morrowind', name: 'Stonefalls', climate: C.Mountain, air: C.Desert2, ash: 0.15,
     seeds: ['Ebonheart', [236, 70]],
     lore: 'Ebonheart\'s and Kragenmoor\'s mainland coast across from Vvardenfell - lava fields and ash' },
   { key: 'morrowindDeshaan', province: 'Morrowind', name: 'Deshaan', climate: C.MountainWoods, air: C.Subtropical,
@@ -240,6 +248,11 @@ export const BIOMES = Object.freeze(/** @type {any[]} */ ([
 
 /** Each biome by its key; each province's zones - its seeded zones and its peaks (those naming their ranges first). */
 export const BIOME_BY_KEY = new Map(BIOMES.map((b) => [b.key, b]));
+/** ASHFALL1: THE VOLCANO'S COUNTRY - each ash share a zone names, with the climate its ground is laid on, once
+ *  ([climate, ash]): the weather map's ash laws (systems/weather/weatherMap.js birthLaw) and the ceilings its births
+ *  are drawn at - every law a birth can read. */
+export const ASH_COUNTRY = Object.freeze([...new Map(BIOMES.filter((b) => b.ash > 0).map((b) => [`${b.climate}:${b.ash}`, Object.freeze([b.climate, b.ash])])).values()]);
+for (const [, a] of ASH_COUNTRY) if (!(a < 1)) throw new Error(`tamrielBiomes: an ash share of ${a} - the ash takes a share of the sky's hours`);
 const ZONES = new Map();
 for (const b of BIOMES) {
   const z = ZONES.get(b.province) ?? { seeded: [], named: [], peaks: null };

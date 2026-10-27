@@ -20,8 +20,8 @@
   {
     "name": "PUDDLE-RAIN-the-sand-reads-nothing",
     "file": "src/scenes/world.js",
-    "old": "      if (sand && !_dwPrecipOff) {",
-    "new": "      if (sand) {",
+    "old": "      if (dryFall && !_dwPrecipOff) {",
+    "new": "      if (dryFall) {",
     "tests": [
       "test/player/fb1001_puddlerain.test.js"
     ]

@@ -244,7 +244,7 @@ import { pieceIndex } from '../render/labGrass.js';   // PERF8: the piece under 
 import { meterFor } from '../render/perfMeter.js';   // GRASS2: the field gets a zone of its own - it was inside the world's
 import { LabGrassRenderer, createGrassField, discSlotCount, LAB_GRASS, LAB_DIM, GRASS_TONES, GRASS_TONES_CLASSIC } from '../render/labGrass.js';   // GR1: the lab's grass, byte for byte; PERF-EXT20: the field's slot count, warmed at mount
 import { windDrive, floraSwayOn, gustPhaseAfterShift, gustClock } from '../systems/wind/windDrive.js';   // WIND3: the one wind in every consumer's units; the flats' sway
-import { WindWispsRenderer, wispsOn, SAND_LOOK } from '../render/windWisps.js';   // WIND3: the wind, seen; WEATHER2d: the sandstorm's sand in the same program
+import { WindWispsRenderer, wispsOn } from '../render/windWisps.js'; import { DryFallRenderer } from '../render/dryFall.js';   // WIND3: the wind, seen; WEATHER2d: the sandstorm's sand in the same program - ASHFALL1: the dry falls, the sand and the ash, one renderer
 import { HeatHazeRenderer } from '../render/heatHaze.js';   // HAZE1: Heat Haze's ring, drawn
 import { createHeatHaze, hazeFrameSettings } from '../systems/heatHaze.js';   // HAZE1: Heat Haze's law (demifiend000, vendor/heat-haze/)
 import { createWindfallHost } from './windfallHost.js';   // WINDFALL1: Windfall (demifiend000, vendor/windfall/) - its wind, its sounds, its leaves
@@ -1063,7 +1063,7 @@ import { discoverRandomLocation, discoverLocation, undiscoverBuilding, discoverB
 import { scryRows } from '../systems/loot/lootScry.js';   // LOOT19: the region a scrying reads
 import {
   WEATHER_TYPES, fogForWeather, scaleFogForDistance, skyOffsetForWeather, weatherSunlightScale,
-  weatherRng, fogFactor, precipitationForWeather,
+  weatherRng, fogFactor, precipitationForWeather, isDryFall,
   LightningPlayer,
 } from '../world/weather.js';
 import { PrecipitationRenderer } from '../render/precipitation.js';
@@ -2695,7 +2695,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   ]);
   const wisps = sky.enhanced ? new WindWispsRenderer(renderer.gl) : null;   // WIND3: built on the enhanced lane, so a shader fault is a boot fault; its row is read per frame
   const windAudio = createWindAudio();   // WIND3: the wind loop, ticked on the exterior frame and stopped on the modal one
-  const sand = sky.enhanced ? new WindWispsRenderer(renderer.gl, SAND_LOOK) : null;   // WEATHER2d: the sandstorm's sand - the wisps' program in the sand's look
+  const dryFall = sky.enhanced ? new DryFallRenderer(renderer.gl) : null;   // WEATHER2d: the sandstorm's sand - the wisps' program in the sand's look; ASHFALL1: and the ashfall's ash and embers (render/dryFall.js)
   // HAZE1 (Mac: "These should be on by default and integrate into our enhanced environments seamlessly"): HEAT HAZE -
   // built on the enhanced lane (a shader fault is a boot fault), its switch read per frame (hazeFrameSettings: the mod's
   // own, and `?haze=off`). The state is the mod's per-frame law; the ring is drawn once the opaque world is whole.
@@ -2846,7 +2846,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     weatherSkyOffset = skyOffsetForWeather(w, weatherSeed);   // SetRainOvercast's 50/50 pick, re-rolled per change
     weatherSun = weatherSunlightScale(w, season === SEASON.Winter);
     precipMode = precipitationForWeather(w);
-    if (precipMode && precipMode !== 'sand' && !precip) precip = new PrecipitationRenderer(renderer.gl, precipOpts);   // WEATHER2d: the sand is not the rain program's
+    if (precipMode && !isDryFall(precipMode) && !precip) precip = new PrecipitationRenderer(renderer.gl, precipOpts);   // WEATHER2d: the sand is not the rain program's; ASHFALL1: nor the ash
     lightning = systemWordOf(w) === 'thunder'   // AUDIT PRECIP FALL-2: a storm's strobe is its system's (a storm falling as snow still strikes)
       ? (lightning ?? new LightningPlayer(Number(params.get('wseed')) || 1)) : null;
     if (changed) _onWeatherChange?.(w);
@@ -7998,7 +7998,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     midScreenText: (text, seconds) => setMidScreenText(text, seconds),
     log: (text) => console.log(text),
     time: () => _csaTime,
-    weatherType: () => WEATHER_TYPES.indexOf(seaStormShown() ?? currentWeather()),   // SEA-EVENTS: the Aether Storm's wind; CSA-E: PlayerWeather.WeatherType (the port's eighth word, the sandstorm, is none of UpdateWind's three)
+    weatherType: () => WEATHER_TYPES.indexOf(seaStormShown() ?? currentWeather()),   // SEA-EVENTS: the Aether Storm's wind; CSA-E: PlayerWeather.WeatherType (the port's eighth word, the sandstorm, and ninth, the ashfall, are none of UpdateWind's three)
     hour: () => Math.floor(minuteNow() / 60),   // CSA-E: WorldTime.Now.Hour
     persistentDungeonBoats: () => { try { return modSetting('come-sail-away', 'Compatibility.PersistentDungeonBoats') === true; } catch { return false; } },
     packedItems: packedItemsCodec,   // SerializeItems / DeserializeItems: the save's own item copy (save.js)
@@ -33783,11 +33783,12 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const drawFalling = () => {
       wxEye32[0] = wxEye[0]; wxEye32[1] = wxEye[1]; wxEye32[2] = wxEye[2];   // RAIN-LEAK: filled here, not in the frame - PERF-V8's bytecode ceiling
       const precipShown = enhancedFront ? fx.shown : precipMode;
-      if (precipShown === 'sand') {
+      if (isDryFall(precipShown)) {
         // WEATHER2d: THE SANDSTORM'S SAND - the wisps' program in the sand's look, the front's intensity its
-        // strength, on the one wind's rate and travel; the rain program never draws it
-        if (sand && !_dwPrecipOff) {
-          sand.draw({ on: true, strength01: fx.intensity, windV: wd.windV, step: wd.step, gust: wd.gust }, proj, view, wxEye32, now / 1000);
+        // strength, on the one wind's rate and travel; the rain program never draws it. ASHFALL1: the ashfall's ash
+        // and embers the same way, by the fall's kind (render/dryFall.js)
+        if (dryFall && !_dwPrecipOff) {
+          dryFall.draw({ on: true, kind: precipShown, strength01: fx.intensity, windV: wd.windV, step: wd.step }, proj, view, wxEye32, now / 1000);
           renderer.markForeignPass();
         }
       } else if (precipShown && precip) {   // W1 review: the gate is the MODE, never the object - the renderer outlives a clear-up

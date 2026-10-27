@@ -190,6 +190,7 @@ const HARDCODED = {
   'src/render/courtCrystals.js': 3,
   'src/render/deadlands.js': 4,
   'src/render/deepWatersRender.js': 13,
+  'src/render/dryFall.js': 2,   // ASHFALL1: the ash's two shader stages (GLSL, never a player's text - as windWisps.js's two)
   'src/render/duelWall.js': 1,
   'src/render/dynamicSkiesRenderer.js': 1,
   'src/render/eliteGates/egLightPass.js': 1,

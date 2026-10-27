@@ -278,7 +278,7 @@ and `test/systems/disc20.test.js` (the publish entry's window, grown by the land
 `test/systems/l10n4_hardcoded.test.js` (the table's lore lines are data, not the player's words); and with the audit
 `test/render/fartrees.test.js` (a picture read where a wanted pixel's tree is of it, not an archive's every Tree - and a
 test of its own for the atlas's lent layers), `test/render/precip4_snowground.test.js` and `test/systems/ecotone1.test.js`
-(a pixel's own set and its neighbours' loaded together, each with its twin). `tools/mutants/tesalands.json` (90, all
+(a pixel's own set and its neighbours' loaded together, each with its twin). `tools/mutants/tesalands.json` (93, all
 dead); re-aimed by content: `farflora.json`, `fartrees.json`, `ecotone1.json`, `precip1.json`, `forest1.json` (one law
 for both forest fields).
 

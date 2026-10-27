@@ -70,7 +70,7 @@ test('PUDDLE-RAIN: under the water the falling weather is still hidden, swimmer 
   }
   assert.equal(gate(null, null, true, { isPlayerSwimming: true }).precip, false, 'no sea mod: the classic gate never hid it');
   const w = rd('src/scenes/world.js');
-  assert.match(w, /if \(sand && !_dwPrecipOff\) \{/, 'the sand reads it');
+  assert.match(w, /if \(dryFall && !_dwPrecipOff\) \{/, 'the sand reads it');   // PIN MOVED (ASHFALL1, 2026-10-27): the dry falls' one renderer - the sand, and the ash with it
   assert.match(w, /if \((?:\(!_travelWeatherOff \|\| tvf\)|!_travelWeatherOff) && !_dwPrecipOff\) \{\s*\n\s*precip\.drawFall\(precipShown, proj, view/, 'the rain and the snow read it (PRECIP1: the fall at the air\'s snow share)');
   assert.doesNotMatch(w.slice(w.indexOf('    const _dwAirOff = '), w.indexOf('    const precipShown = ')), /isPlayerSwimming/, 'the swim is no part of it');
 });

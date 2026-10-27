@@ -83,7 +83,7 @@
   {
     "name": "PRECIP2-the-fall-by-look",
     "file": "src/systems/weather/weatherFront.js",
-    "old": "const fallOf = (mode) => (mode && mode !== 'sand' && precipLawOn() ? 'wet' : precipKind(mode));",
+    "old": "const fallOf = (mode) => (mode && !isDryFall(mode) && precipLawOn() ? 'wet' : precipKind(mode));",
     "new": "const fallOf = (mode) => precipKind(mode);",
     "tests": [
       "test/systems/weather/precip1_air.test.js"

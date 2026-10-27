@@ -12854,6 +12854,11 @@
   "tr": "72a8ba282b70",
   "by": "claude-in-session"
  },
+ "forecast.turn.ashfall": {
+  "en": "5961a1411167",
+  "tr": "da96f87d6eaf",
+  "by": "claude-in-session"
+ },
  "forecast.turn.fog": {
   "en": "dfebbda7af18",
   "tr": "e5bf2a85a731",
@@ -12877,6 +12882,11 @@
  "forecast.turn.thunder": {
   "en": "f35ce8f01a65",
   "tr": "da9c23500beb",
+  "by": "claude-in-session"
+ },
+ "forecast.word.ashfall": {
+  "en": "71656606aa5c",
+  "tr": "d47c59959952",
   "by": "claude-in-session"
  },
  "forecast.word.fog": {

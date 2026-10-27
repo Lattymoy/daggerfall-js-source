@@ -59,19 +59,19 @@
 // word and the seconds come in; what is on screen comes out.
 
 import { seededRng } from '../wind/wind.js';
-import { precipitationForWeather } from '../../world/weather.js';
+import { precipitationForWeather, isDryFall } from '../../world/weather.js';   // WEATHER2d, ASHFALL1: the falls that are not the rain program's
 import { precipLawOn, currentSnowShare, systemWordOf } from './weatherSim.js';   // PRECIP1: rain and snow one fall, its phase the air's; AUDIT PRECIP FALL-2: a weather is its system
 
 /** Each mode's peak range, as a fraction of the profile's count: what
  *  a cut into that weather can roll. A rain can be a sprinkle; a storm
  *  never is; snow rarely buries the screen. */
-export const PRECIP_PEAK = Object.freeze({ rain: [0.05, 1.0], storm: [0.6, 1.0], snow: [0.05, 0.85], sand: [0.5, 1.0] });   // WEATHER2d: a sandstorm is never thin
+export const PRECIP_PEAK = Object.freeze({ rain: [0.05, 1.0], storm: [0.6, 1.0], snow: [0.05, 0.85], sand: [0.5, 1.0], ash: [0.1, 1.0] });   // WEATHER2d: a sandstorm is never thin; ASHFALL1: an ashfall's edge a dusting
 /** RAIN-SPRINKLE (FIELD BUGS 2026-10-01 #2, "Rain shouldnt always be a downpour, should sometimes sprinkle"): the roll
  *  is placed in the range by u^skew, so a rain is a sprinkle or a shower far more often than a downpour - on the map's
  *  lane the place's intensity is the roll, so a rain system's edge drizzles and only its heart pours. WX2's floors
  *  (rain 0.25, snow 0.2) under the map's own (WEATHER3i: the core's edge at a fifth) never drew under ~0.4 of the
  *  profile - ten thousand drops in the eye's 42 m box - and the fog and the sun took the whole row whatever fell. */
-export const PRECIP_SKEW = Object.freeze({ rain: 2, snow: 1.5, storm: 1, sand: 1 });
+export const PRECIP_SKEW = Object.freeze({ rain: 2, snow: 1.5, storm: 1, sand: 1, ash: 1.3 });
 /** The arrival window the drops fill in over: nothing falls until the
  *  front is past half in, and it is all down just before the front lands. */
 export const PRECIP_IN = Object.freeze([0.55, 0.95]);
@@ -100,11 +100,11 @@ import { smoothstep } from '../mathf.js';
 export { smoothstep };
 
 /** The LOOK a mode has: storm shares the rain's. null for no mode. */
-export const precipKind = (mode) => (mode === 'snow' ? 'snow' : mode === 'sand' ? 'sand' : mode ? 'rain' : null);   // WEATHER2d: the sand is its own look
+export const precipKind = (mode) => (mode === 'snow' ? 'snow' : isDryFall(mode) ? mode : mode ? 'rain' : null);   // WEATHER2d: the sand is its own look; ASHFALL1: and the ash
 /** PRECIP1: the FALL a mode belongs to, for the taper - under the air's law rain, a storm and snow are one fall whose
  *  phase is the air's (the drops and flakes drawn at its snow share, render/precipitation.js draw), so a phase change
  *  walks the peak across with no gap, as a shower thickening into a storm does; off it, the look (precipKind). */
-const fallOf = (mode) => (mode && mode !== 'sand' && precipLawOn() ? 'wet' : precipKind(mode));
+const fallOf = (mode) => (mode && !isDryFall(mode) && precipLawOn() ? 'wet' : precipKind(mode));
 
 /** A roll `u` in 0..1 placed in the mode's peak range, by its skew (RAIN-SPRINKLE). */
 export function rollPeak(mode, u) {
@@ -158,6 +158,7 @@ export const FALL_FOG_FLOOR = 0.25;
  * sprinkle too. Under the band the fog thins to FALL_FOG_FLOOR of its density and the sun and the grass come up to
  * `light`'s (never darker than the row). Any other word - a fog bank, a sandstorm, a clear sky with the last of a
  * shower draining - is handed back as it came. The host blends the answer on the front (blendTerms) as before.
+ * ASHFALL1: an ashfall is a fall like the rain's - its edge a dusting under an overcast's light, its haze thin there.
  * @param {{sun: number, dim?: number, fog: any}} terms - the weather's row
  * @param {number} intensity - the front's, the share of the profile on screen
  * @param {string} weather - the sim's word
@@ -165,7 +166,7 @@ export const FALL_FOG_FLOOR = 0.25;
  */
 export function fallTerms(terms, intensity, weather, light) {
   const mode = precipitationForWeather(weather);
-  if (mode !== 'rain' && mode !== 'storm' && mode !== 'snow') return terms;
+  if (mode !== 'rain' && mode !== 'storm' && mode !== 'snow' && mode !== 'ash') return terms;
   const k = smoothstep(FALL_LOOK[0], FALL_LOOK[1], intensity);
   if (k >= 1) return terms;
   const dim = terms.dim ?? 1;
@@ -199,15 +200,18 @@ const isWetWord = (w) => w === 'rain' || w === 'thunder' || w === 'snow';
  *  is the word's own. */
 export function soundWeather(sample, weather) {
   if (sample.rain != null) {
-    if (sample.rain >= SHOWN_FLOOR && sample.shown !== 'sand') return sample.shown === 'storm' ? 'thunder' : 'rain';
-    if (sample.shown === 'sand') return 'cloudy';
-    return weather === 'rain' || weather === 'thunder' || weather === 'sandstorm' ? 'cloudy' : weather;
+    if (sample.rain >= SHOWN_FLOOR && !isDryFall(sample.shown)) return sample.shown === 'storm' ? 'thunder' : 'rain';
+    if (isDryFall(sample.shown)) return 'cloudy';
+    return quietWord(weather);
   }
   if (sample.shown === 'storm') return 'thunder';
   if (sample.shown === 'rain') return 'rain';
-  if (sample.shown === 'sand') return 'cloudy';   // WEATHER2d: DFU's ambience has no sand; the wind loop (WIND3) is the storm's voice
-  return weather === 'rain' || weather === 'thunder' || weather === 'sandstorm' ? 'cloudy' : weather;
+  if (isDryFall(sample.shown)) return 'cloudy';   // WEATHER2d: DFU's ambience has no sand; the wind loop (WIND3) is the storm's voice. ASHFALL1: nor ash - it falls without a sound
+  return quietWord(weather);
 }
+/** A word nothing is heard falling under: a rain or a storm word with nothing down, and the port's own words DFU's
+ *  ambience never knew (WEATHER2d's sandstorm, ASHFALL1's ashfall), are a cloudy day to the ear. */
+const quietWord = (weather) => (weather === 'rain' || weather === 'thunder' || weather === 'sandstorm' || weather === 'ashfall' ? 'cloudy' : weather);
 
 /**
  * The front. `tick({ dt, weather, arrival, nowMinutes, tsec, jump, peak })`
@@ -309,7 +313,7 @@ export function createWeatherFront({ seed = 7 } = {}) {
       // PRECIP1: `snow` the fall's snow share on the law's lane (null off it - the mode is its own look); AUDIT PRECIP
       // AIR-5/FALL-4: `rain` and `flakes` the levels of its two looks - the drops' the ear, the soak and the water's
       // rings read, the flakes' beside them
-      const wet = law && shown !== 'sand' && !!shown;
+      const wet = law && !isDryFall(shown) && !!shown;
       out = {
         changed, from, to, t: a, shown, kind: precipKind(shown), intensity, peak: episode?.peak ?? 0,
         snow: law ? snow : null, rain: law ? (wet ? intensity * (1 - snow) : 0) : null, flakes: law ? (wet ? intensity * snow : 0) : null,

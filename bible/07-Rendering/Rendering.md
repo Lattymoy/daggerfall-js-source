@@ -1389,6 +1389,10 @@ directory by `test/bible/audit18_bible_docs.test.js`:
   instanced at the back of the pass before the body, a 16-bit depth step apart, the charge additive after; a
   third-person picture padded for them, `glowPad`).
   Fire, frost, shock and the arcane; every rate whole over its clock. `05-Combat/Weapon-Glow.md`.
+- `dryFall.js` - ASHFALL1 THE DRY FALLS: what falls that the rain program never
+  draws - the sandstorm's sand (the wisps in SAND_LOOK) and the ashfall's grey
+  ash with its glowing embers, one renderer the hosts hold
+  (`07-Rendering/Weather-Arc.md` E).
 - `windWisps.js` - WIND3 THE WISPS: the wind, seen - faint streaks of air
   stretched along the wind's velocity in a box that follows the eye and
   wraps by the lab's law, travelling by the one integrated step, their
