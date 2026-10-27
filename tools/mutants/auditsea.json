@@ -372,8 +372,8 @@
   {
     "name": "AUDIT-SEA-F1-hub-drops-the-ship",
     "file": "src/net/wild/wildRef.js",
-    "old": "at: v.at, ...(sea ? { sea } : {}) };",
-    "new": "at: v.at };",
+    "old": "at: v.at, heard: v.heard === true, ...(sea ? { sea } : {}) };",
+    "new": "at: v.at, heard: v.heard === true };",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]

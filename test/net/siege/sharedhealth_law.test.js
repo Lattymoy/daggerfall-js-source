@@ -116,10 +116,11 @@ test('SHARED-HEALTH: a REPORTED LOSS is taken at once and never fells - the clie
   const r = rig({ health: 60, maxHealth: 60 });
   r.mirror.ask();
   r.roundTrip();
-  r.client.health = 0.2;
+  r.client.health = 0;
   r.later();
   r.roundTrip();
-  assert.equal(r.fighter.hp, 1);
+  assert.equal(r.fighter.hp, 1, 'a report of none leaves the count at 1, standing');
+  assert.equal(r.fighter.down, false);
   r.fighter.down = true;
   assert.equal(takeHealthReport(r.fighter, { report: 99, share: HEALTH_SHARE_WHOLE, seen: [] }, r.clock.now), false);
 });
@@ -128,8 +129,7 @@ test('SHARED-HEALTH: A RESET (a rise, a return after long away) waits for a repo
   const r = rig({ health: 60, maxHealth: 60 });
   r.mirror.ask();
   r.roundTrip();
-  r.blow(100);
-  r.tell(poolWord(r.fighter));
+  r.blow(100);   // its word never reached the client before the reset
   r.fighter.hp = r.fighter.max;
   resetHealthShare(r.fighter, r.clock.now);
   assert.ok(poolUnheard(r.fighter));

@@ -698,9 +698,10 @@ receipt's carrier); `scenes/dungeonContext.js` and `scenes/worldModes.js` NO DUE
   and every client door's (`wildRef.js:"export function wildKin"`); the guild was the client's alone, and a guildmate the
   maps and nameplates counted a friend could kill. A socket's close takes its fighter out
   of the zone (`wildGone`).
-- **The fight.** The Royal Tourney's vitality; every blow and cast the referee's; `wref hp` to both, `wref fell` to the
-  room. NO FREE BAR: a fighter is whole again only unstruck `WILD_REF.mendMs` AND in the zone as long (its vitality alone -
-  INT10), or away from the zone `WILD_REF.riseMs`; a word off and on keeps its bar. A fighter's bar is kept at the hub
+- **The fight.** Counted in the Royal Tourney's units, and since SHARED-HEALTH (below) the count is the player's own
+  health as a share; every blow and cast the referee's; `wref hp` to both, `wref fell` to the room. NO FREE BAR: no
+  count refills by itself - away from the zone `WILD_REF.riseMs` it starts again from the player's own report; a word off
+  and on keeps its bar. A fighter's bar is kept at the hub
   after each blow (`WILD_INTERNAL_VIT`, `wildCarry`) and taken by the next room it stands in (a step into another cell
   was a fresh bar); a fallen carried is down there too. A pose past any run is believed, and its fighter strikes nothing
   for `WILD_REF.jumpMs` (a jump was never believed, and a gallop left the place stale for good). A fallen rises whole on
@@ -826,11 +827,11 @@ DORMANT: no caller sets it since INT8, kept as it stands and pinned so (`test/ne
 
 - **Customs** (Mac: "Your decision"): it stands as lane 1 left it - an offline character comes in whole, and its first
   judgement charges what it adds past its level's allowance to the budget, which holds nothing until staff turn it on.
-- A fight between players never touches the save's health (the sieges' law since PVP-REF), and a spell between players is
-  its harm alone: a paralysis, a drain or a slow from another player does not land, as a siege's never did. TWO
-  DEPARTURES FROM MAC'S DUEL1 ASKS, made by this lane and told to Mac in its pull request: "Loser drops to 1HP and both
-  are fully healed on duel end" - the duel's bar is the referee's vitality now, so the loser's health is never touched
-  and nothing needs healing; and "weapons, bows and spells all count" - a spell counts by its harm alone (its other
+- A spell between players is its harm alone: a paralysis, a drain or a slow from another player does not land, as a
+  siege's never did. Where a fight between players stands against the save's health is SHARED-HEALTH's (2026-10-26,
+  below): the referee's count IS that health. TWO DEPARTURES FROM MAC'S DUEL1 ASKS, made by this lane and told to Mac in
+  its pull request: "Loser drops to 1HP and both are fully healed on duel end" - since SHARED-HEALTH the loser does
+  drop, to 1, but nobody is healed at the end; and "weapons, bows and spells all count" - a spell counts by its harm alone (its other
   families, a paralysis or a drain, do not land on another player).
 - The zone's membership is each socket's own word, and its receipts are the relay's to sign and the service's to settle.
 
@@ -851,36 +852,65 @@ Mac, asked on a player's private report - in a duel, their own health bar did no
 bar read the save's health, which a duel never touches, and the referee's vitality stood in a line of its own under the
 battles' readout ("Your vitality: n / m"). **"Bar shows duel vitality."**
 
-- **DISPLAY ONLY.** For the length of a duel the HUD's health bar, on both skins, reads the referee's vitality - my own
-  entry of its word, off the duel manager's live duel (duelBar.js:"export function duelVitality") - and the save's
-  again when the duel ends: won, lost, yielded, left, called off, or let go where no word of the referee's comes (a
-  socket gone: the manager's own windows, as the ring and the readout end). The save's health is never written, and
-  the 2026-10-09 decision stands whole: nobody is hurt or healed by a duel. The read is a leaf of the client's own:
-  `net/duel/duelSession.js` is in the relay's bundle (the arena's bout reaches it), where a byte is a relay version,
-  and the HUD is no relay law.
+RETIRED BY SHARED-HEALTH (2026-10-26, below): the duel's count is the player's health now, so the world host hands
+drawHud no referee's pair and the bar reads the health it always read; neither readout prints "Your vitality" any more.
+What stands of DUEL-BAR is its seam, with no caller: the leaf (duelBar.js:"export function duelVitality") and the HUD's
+one pair below.
+
 - **ONE PAIR, BOTH SKINS.** The HUD reads one health (hudVitals.js:"export function hudHealth"): drawHud's
-  `healthBar`, which the world host hands it (world.js:"healthBar: duelVitality"), else the save's. The classic
+  `healthBar` where a host hands one (none does since SHARED-HEALTH), else the save's. The classic
   bars and the large HUD's draw off its snapshot (hud.js:"const health = hudHealth"), the enhanced HUD's off the pair
   drawHud hands on (enhancedHud.js:"const hp = opts.health"); and so does everything drawn off the HUD's health - the
   trails, the near-death tint, the blow's recoil, the lens. The turn each way is no blow and no heal
   (hudVitals.js:"if (_lastFrom !== null && _lastFrom !== from)"): the detector primes afresh, and the enhanced bar's
   held loss and its heal reading start again.
-- **THE OTHER BARS, THE HEALS, THE DEATH.** The referee holds vitality alone - no fatigue, no magicka, and no heal
-  between the two (duelRef.js:"last believed places") - so the fatigue and magicka bars are the save's, and a heal of
-  the save's under a duel (a potion of the player's own) moves no part of the duel's bar and floats no "+N". The death
-  screen reads the save's health as ever: a duel's fall is a loss, never a death, and a foe's blow that kills under a
-  duel ends it (the manager's `dead`).
 - **THE ARENA IS NOT THIS.** A bout between players on the arena's sand (ARENA4) writes its referee's share into the
   save's health and its healers come at the end (arenaBouts.js:"MY HEALTH IS THE"), so its bar already fell; it keeps
-  its own law. The open zone is not this either: its foes hurt the save, and a bar that read the zone's referee would
-  hide them.
-- **THE FOUR HOSTS.** `scenes/world.js` WIRED (one entry in its one drawHud call); `scenes/worldModes.js` and
-  `scenes/dungeonContext.js` NO DUEL on purpose (a duel is outdoors alone, INT8); `scenes/exterior.js` NOT WIRED on
-  purpose (offline, no other player).
+  its own law.
 
-A departure from DFU, whose vitals read PlayerEntity alone (HUDVitals.Update) - DFU has no other player to duel.
-Pinned: `test/ui/fb1019f_duelbar.test.js` (the real relay refereeing the bout into the real duel manager, read by the
-real drawHud on both skins); `tools/mutants/duel_bar.json`.
+Pinned: `test/ui/fb1019f_duelbar.test.js` (the seam read by the real drawHud on both skins, and the host handing it
+nothing); `tools/mutants/duel_bar.json`.
+
+### Decisions (2026-10-26, SHARED-HEALTH)
+
+Travis, on a field report from the open zone - a character of 67 health stood at 302 in a fight that only the other
+player could see, died there with a full health bar, and healed nothing a potion gave: "we should not have separate
+health pools for PvE and PvP - it should be the same health pool, synchronized properly, with scaling for pvp applied on
+top", the scaling a share of the player's own health, for the open zone, duels and sieges alike.
+
+- **ONE POOL, STILL REFEREED.** The referee keeps counting in the Royal Tourney's units (300 + 2 x Renown), and the
+  count is the player's own health as a share of it (refereeHealthShare.js:"export function takeHealthReport"). A blow
+  of 30 on a count of 302 takes a tenth of any player's health, so a fight lasts as long as it did. The client reports
+  its health as a share with the last referee word it applied (the `vit` frame, relay world270); the referee adds back
+  every change the client had not yet seen (its word log), so a lost report, a room changed or a blow in flight costs
+  nothing. Each referee word on a count is told to its player, whose mirror sets its health to the same share
+  (refereeHealthMirror.js:"export function createRefereeHealthMirror"), keeping what its health did since the report
+  the word includes.
+- **A LOSS AT ONCE, A HEAL IN A BUCKET.** A report below the count (a foe, a fall, a poison) is taken at once, never
+  below 1 - the client's own death is its own word, as before. A report above it is a heal, taken within a bucket as
+  deep as a siege's heal casts allow in their window (`REPORT_HEAL`, 120 a 5 s), so a crafted client heals no faster
+  than a side-mate's spells could. A count no report has anchored is told to nobody (its whole would heal the client to
+  full); the relay asks for a report where it makes or starts one again.
+- **NO FREE REFILL.** The zone's mend (whole again unstruck `WILD_REF.mendMs`) is gone. A count started again - a rise
+  after a fall, a return after `WILD_REF.riseMs` away - waits for the player's report, which can lower it and never lift
+  it; a bar carried from another room keeps its anchor (`wildCarry`'s `heard`).
+- **PER MODE.** The zone: a fall at none is a death, as before (forcePlayerDeath). A duel: its fall leaves the loser at
+  1, a loss and never a death, and the bout's end heals nobody - the loser leaves hurt. A siege: a fall leaves the
+  player at 1 until its wave, and the rise heals the player's own health whole (siegeRef.js:"the rise heals the player's
+  own health whole"); a relay foe's blow reaches the player's health as a player's does. THE ROYAL TOURNEY IS NOT THIS:
+  its contenders keep the tourney's own count between bouts, and the relay neither asks nor tells them.
+- **WHAT IT COSTS.** The relay cannot see a player's health, so a crafted client that never reports a foe's blow keeps
+  that health against players. It gains nothing a player could take from it (each blow still lands on the count), and
+  the health it keeps it could already keep on its own machine. A count starts at the client's own share, never above
+  its whole - no higher than the refereed bar started before.
+- **THE READOUTS.** The battles' readout shows the foe's count alone; my own is my health bar. DUEL-BAR above is retired.
+- **A KNOWN LIMIT.** A player struck in the zone while a duel of its own stands holds two counts, each told on its own;
+  a blow on one is not a report into the other.
+
+A departure from DFU only in that DFU has no other player; its health is PlayerEntity's alone, which is what the bar
+reads again. Pinned: `test/net/siege/sharedhealth_law.test.js` (the law and the mirror through the races),
+`test/net/int9_wild_ref.test.js`, `test/ui/fb1019f_duelbar.test.js` and `test/net/siege/pvpref_relay.test.js` (each mode
+on the real relay); `tools/mutants/shared_health.json`.
 
 ### What lane 2 leaves open
 

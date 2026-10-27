@@ -29,24 +29,6 @@
     "why": "refereeBlow and refereeCast (net/siege/siegeRef.js) refuse a down fighter on either side themselves - `if (by.down || to.down)` - and a fighter down here is down there (wildBlow sets both); the referee's own check is pinned by the siege's tests."
   },
   {
-    "name": "INT9-MEND-UNREAD",
-    "file": "src/net/wild/wildRef.js",
-    "old": "const mend = (x, now) => { if (!x.down && now - x.struckAt >= WILD_REF.mendMs && now - x.zoneAt >= WILD_REF.mendMs) x.f.hp = x.f.max; };",
-    "new": "const mend = (x, now) => { if (false) x.f.hp = x.f.max; };",
-    "tests": [
-      "test/net/int9_wild_ref.test.js"
-    ]
-  },
-  {
-    "name": "INT10-MEND-CLEARS-THE-CASTS",
-    "file": "src/net/wild/wildRef.js",
-    "old": "const mend = (x, now) => { if (!x.down && now - x.struckAt >= WILD_REF.mendMs && now - x.zoneAt >= WILD_REF.mendMs) x.f.hp = x.f.max; };",
-    "new": "const mend = (x, now) => { if (!x.down && now - x.struckAt >= WILD_REF.mendMs && now - x.zoneAt >= WILD_REF.mendMs) { x.f.hp = x.f.max; x.f.casts = []; } };",
-    "tests": [
-      "test/net/duel/int10_spells.test.js"
-    ]
-  },
-  {
     "name": "INT9-A-STRANGERS-PICK",
     "file": "src/net/wild/wildRef.js",
     "old": "  if (!fall || fall.killer !== killer || fall.picked ||",
@@ -421,17 +403,8 @@
   {
     "name": "INT9-AUDIT-A-WORD-OFF-AND-ON-A-HEAL",
     "file": "src/net/wild/wildRef.js",
-    "old": "    if (now - x.outAt >= WILD_REF.riseMs && !x.down) { x.f.hp = x.f.max; x.struckAt = -Infinity; }",
-    "new": "    if (!x.down) { x.f.hp = x.f.max; x.struckAt = -Infinity; }",
-    "tests": [
-      "test/net/int9_wild_ref.test.js"
-    ]
-  },
-  {
-    "name": "INT9-AUDIT-THE-MEND-IN-THE-ZONE-UNREAD",
-    "file": "src/net/wild/wildRef.js",
-    "old": "&& now - x.zoneAt >= WILD_REF.mendMs) x.f.hp = x.f.max; };",
-    "new": ") x.f.hp = x.f.max; };",
+    "old": "    if (now - x.outAt >= WILD_REF.riseMs && !x.down) { x.f.hp = x.f.max; x.struckAt = -Infinity; resetHealthShare(x.f, now); }",
+    "new": "    if (!x.down) { x.f.hp = x.f.max; x.struckAt = -Infinity; resetHealthShare(x.f, now); }",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]

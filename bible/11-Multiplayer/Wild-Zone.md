@@ -109,8 +109,9 @@ peer underground was refused. In a dungeon a room's peer is fair by the place no
 `wildHere`, the door's pixel). THE RELAY REFEREES EVERY BLOW
 (INT9, 2026-10-09, `06-Systems/Integrity-Arc.md` section 5; `src/net/wild/wildRef.js`): my own cell's socket says I stand in
 the zone (`zone` - its audit: never a halo's, again at each crossing and every `WILD_ZONE_KEEP_MS`) and a blow lands only
-where both fighters said so in the same cell, at the Royal Tourney's vitality (never the save's health; the bar kept at
-the hub as I cross, whole again only unstruck and in the zone `WILD_REF.mendMs`, or away `WILD_REF.riseMs`), every strike and spell a number the striker's own sheet rolled, judged on the weapon its look holds and the
+where both fighters said so in the same cell, counted in the Royal Tourney's units and, since SHARED-HEALTH (`06-Systems/Integrity-Arc.md` section 5, 2026-10-26),
+the player's own health as a share of that count (the bar kept at the hub as I cross; no refill by itself - away
+`WILD_REF.riseMs` it starts again from the player's own report), every strike and spell a number the striker's own sheet rolled, judged on the weapon its look holds and the
 arms its token signs, the reach from the places the relay believes; the referee's word (`wref`) says what landed, and
 a fall. There is no floor - a blow can kill. AUDIT FOE-KEEPS E2 (the owner, 2026-10-24, asked: "Credit the last
 player"): A DEATH THE REFEREE DID NOT SEE - a foe's, a fall's, the sea's - within `WILD_REF.creditMs` (10 s, pinned equal

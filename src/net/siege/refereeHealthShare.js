@@ -41,7 +41,6 @@ export const HEALTH_SHARE_LOG_MAX = 32;
  * @property {number} epoch   this pool's identity (its creation time, ms): a client's `seen` word number counts only
  *                            against the pool it came from
  * @property {number} word    the number of the referee's last change to the count
- * @property {number} since   changes up to this word number happened before the last reset; no report counts them
  * @property {Array<[number, number]>} log   `[word, change]` of the referee's recent changes (a blow negative)
  * @property {boolean} heard  a report has anchored this pool: only then is its count told to the client
  * @property {number} report  the number of the last report taken (echoed, so the client knows what the count includes)
@@ -69,7 +68,7 @@ export const HEALTH_SHARE_LOG_MAX = 32;
 
 /** A fresh share state: unheard, its bucket full. @param {number} now @returns {HealthShare} */
 export function newHealthShare(now) {
-  return { epoch: Math.trunc(now), word: 0, since: 0, log: [], heard: false, report: 0, healRoom: REPORT_HEAL.depth, healAt: now };
+  return { epoch: Math.trunc(now), word: 0, log: [], heard: false, report: 0, healRoom: REPORT_HEAL.depth, healAt: now };
 }
 
 /** A fighter's share state - made where a fighter kept from before this law (a siege's storage) has none. */
@@ -93,12 +92,12 @@ export function noteRefereeChange(fighter, change, now) {
 
 /**
  * THE POOL STARTS AGAIN (a rise after a fall, a return after long away, a count set whole): every earlier change is
- * forgotten and the pool waits for a report to anchor it.
+ * forgotten - the word numbers run on, so a report that saw a word from before counts every change after the reset -
+ * and the pool waits for a report to anchor it.
  * @param {{ share?: HealthShare }} fighter @param {number} now
  */
 export function resetHealthShare(fighter, now) {
   const share = shareOf(fighter, now);
-  share.since = share.word;
   share.log = [];
   share.heard = false;
 }
@@ -106,7 +105,7 @@ export function resetHealthShare(fighter, now) {
 /** The changes the client had not seen when it reported, summed. */
 function unseenChange(share, seen) {
   const pair = Array.isArray(seen) ? seen.find((s) => s[0] === share.epoch) : null;
-  const seenWord = Math.max(pair ? pair[1] : 0, share.since);
+  const seenWord = pair ? pair[1] : 0;
   let sum = 0;
   for (const [word, change] of share.log) if (word > seenWord) sum += change;
   return sum;
