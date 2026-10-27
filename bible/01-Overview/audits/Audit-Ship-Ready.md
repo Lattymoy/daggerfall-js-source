@@ -49,6 +49,26 @@ Every finding below is fixed, pinned and recorded where its system lives.
   a history clause renumbering world274 past itself into 47 relay pins, and moved one raids pin's refused version onto
   the accepted one (`ww6_raids.test.js`). Taken back by hand; the account's move (acct204 -> acct205) kept. The tool
   sweeps a relay pin whenever main's newest relay is below the branch's, moved or not - OPEN, the tool's own slice.
+- **S7 - CI's first run on the integrated head: 20 files red** (lane 4), each the meeting of two of the day's changes:
+  world274's row lost the release's history at the fourth merge; main's RPT1026 pins read code the host split had
+  moved; ROAD-LOOK, FLORA-GROUND and TESA4's bridges; HOST-SPLIT's seam; four new duplicate exports (audit24's
+  ratchet), named apart; IC-PROPS' "Residence" among the routed words. And the nine field fixes' code claimed Ledger
+  rows no one wrote: rowed (`Port-Ledger.md` section A, the tally 363 rows, 348 standing).
+- **S8 - PLAIN-TEXT at the fourth merge** (lane 4). Main's law (`tools/plainText.mjs`, `Home.md` SAY IT ONCE, PLAINLY)
+  came in at the fourth merge, and the merge never ran its `--seed` for a base without the law, so 360 of this branch's
+  own entries read as grown. Seeded from the branch's two tips without it (`9fe573f43f`, before the fourth merge, and
+  `9f852f57f4`, ROAD-FOLLOW's). Every baseline entry over main's (355) is at or under the branch's own figure.
+- **S8, the rest.** 27 entries stayed over: pages and files the merges filled from both sides, and text written since
+  the law (the tally's three new clauses, S2's paragraph, PORT-SHIPS' header). Each is within the law now - comment
+  blocks tightened, this branch's long paragraphs split at a sentence's end, the tally's new clauses a list of their
+  own - and the baseline lowered.
+- **S9 - CAUSEWAY and the window planner** (`test/world/worldWide/ww7_cross.test.js`). Main's RPT1026-WORLD CAUSEWAY (a
+  road over the water is the road's, `travelRoute.js` pavedStep) let the planner walk the water band the test laid
+  across a road - right, by the law. The band lies across a track now (a ford, never paved), and the road's crossing
+  over water is pinned as walked across the edge too. `tools/mutants/ww7_cross.json` 78, all dead.
+- **S10 - the film's set** (the third merge). INTRO4's set (`ui/intro/set/`, the city the film was shot on) declared its
+  own `CAPITAL_ARCHIVE = 38400`, a second owner of the game's registered number (`world/eliteGates/pseudoArchives.js`);
+  it takes the game's now. Its directory has its Code Map row (`Code-Map.md`).
 
 ## Lane 1 - the last audit's pins
 

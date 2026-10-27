@@ -9556,7 +9556,9 @@ took: three town homes a character, no upkeep.
   to one CHARACTER (the id its save carries, as Renown's tracks key on) of one REGISTERED account (ACCOUNT-HOMES,
   2026-10-06, below: to the ACCOUNT now, every character of it - `char_id` the one that bought it) - a guest's device
   can be lost with its browser, and a home held by an account nobody can sign back into would be a building gone
-  from the world - and its door names the account's handle, never the character. The claim is ONE statement that
+  from the world - and its door names the account's handle, never the character.
+
+  The claim is ONE statement that
   lands only while the building is nobody's and the character holds fewer than HOME_CAP (3; HOUSES-3, below: in the home's region), so two claims racing
   for one building, or for a character's last place, cannot both land; a claim sent again after a lost answer finds
   the building already the same character's and is answered as the claim. Twenty claims an hour an account. Every

@@ -258,9 +258,8 @@ export function boxesMeet(a, b) {
  * `isWater(x, z, hull)`. Answers `{ berths: [{ pos: [x, z], yaw, normal: [x, z], approach: [x, z] }], mouth: [x, z],
  * hull }`, the berths nearest the town first - or null where the town has no shore to berth at or no way out to sea.
  * AUDIT GN2-GN1: sounded for `hull`'s footprint in `deep`'s water too - the deepest keel that berths (BERTH_HULLS).
- * PORT-SHIPS: a berth kept only where it stands (berthStands) - out of its town (`keep(x, z)`, systems/naval/
- * harbourKeep.js) and over ground under the sea (`ground(x, z)`, its height over the sea's top), her approach's hull too;
- * either null asks nothing of it.
+ * PORT-SHIPS: a berth kept only where it stands (berthStands) - out of its town (`keep(x, z)`, harbourKeep.js) and over
+ * ground under the sea (`ground(x, z)`, its height over the sea's top), her approach's hull too; either null asks nothing.
  * ALDBRUGH-QUAY: `square` reads `reach` off the rect along each axis (a square), where it is read round by default.
  */
 export function findHarbour({ rect, isWater: own, hull = BERTH_HULL, deep = deepestBerther(), max = HARBOUR_BERTHS, reach = HARBOUR_REACH, keep = null, ground = null, square = false }) {

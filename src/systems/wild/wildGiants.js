@@ -7,12 +7,10 @@
 // one WANDERS: its place at any moment is a pure function of the time (the relay's clock, the same skew the halls read)
 // and the zone's mask, so every client sees every giant in the same place on the map, walking the same way.
 //
-// HOW A GIANT WALKS: each day it keeps a HOME, a free cell of its own tier (the low ground of a few the day draws); its
-// day is a chain of LEGS, each WILD_GIANT_LEG_MS long, from one waypoint to the next - every waypoint a free cell of its
-// own tier within WILD_GIANT_ROAM_PX of the day's home. Between two waypoints it walks a straight line. A day on, it has
-// a new home. WW-C2: the cells are the mask's (systems/wild/wildZone.js - Cyrodiil's of four pixels), every place it
-// answers a world map pixel, and the host's ground test (`free`) is asked of the cells a home or a leg draws - never of
-// every cell of a tier (a province's tier is tens of thousands; WILD-FREE's law).
+// HOW A GIANT WALKS: each day it keeps a HOME, the lowest of a few free cells of its tier the day draws, and walks a chain
+// of straight LEGS, each WILD_GIANT_LEG_MS long, between waypoints - free cells of its tier within WILD_GIANT_ROAM_PX of
+// the home; a day on, a new home. WW-C2: the cells are the mask's (wildZone.js, Cyrodiil's of four pixels), each place a
+// map pixel; `free`, the host's ground test, is asked of the cells a home or a leg draws, never a whole tier (WILD-FREE).
 //
 // DEAD: a giant killed is the hub's word (net/wild/wildLaw.js wdunGiantDie - kept with the halls), down for
 // WILD_GIANT_RESPAWN_MS for everyone, then it walks again from wherever its path has got to.
@@ -149,11 +147,11 @@ function lineInside(mask, a, b) {
 
 /**
  * Where every giant walks at `now` (the relay's clock): `[{ g, ring, x, y, heading }]` in map pixels (fractional - the
- * centre of a pixel is +0.5), `heading` the way it walks (radians on the map, 0 east). `dead(g)` a giant down.
+ * centre of a pixel is +0.5), `heading` the way it walks (radians on the map, 0 east).
  * @param {{ width:number, height:number, depth:ArrayLike<number>, maxDepth:number, box?:object, ox?:number, oy?:number, cell?:number }} mask
  * @param {(x:number, y:number) => boolean} free
  * @param {number} now
- * @param {(g:number) => boolean} [dead]
+ * @param {(g:number) => boolean} [dead] a giant down
  * @param {((x:number, y:number) => number)|null} [heightAt] the height map's byte - the giants keep to the low ground
  */
 export function wildGiantsAt(mask, free, now, dead = () => false, heightAt = null) {

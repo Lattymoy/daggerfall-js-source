@@ -1737,7 +1737,9 @@ accordingly (three minutes a wait).
 THE SET (the merge of main into #1184, 2026-10-27). INTRO4 brought TESA's city to main as it stood at 4d8200b01, the
 Imperial City at seven pixels a side, and shot the film on it: the camera's path, the fog, the lake and the dive past the
 Colosseum. TESA's IC-GRAND has since made the game's city twenty-five pixels a side (its wall 6,900 m out where it was
-1,950 m) and gave the Colosseum's ground to Daggerfall's arena (`03-World/Arena-Provinces.md` IC-GRAND). The two met at
+1,950 m) and gave the Colosseum's ground to Daggerfall's arena (`03-World/Arena-Provinces.md` IC-GRAND).
+
+The two met at
 the merge: the game's `world/imperialCity.js`, `capitalImperial.js` and `capitalShapes.js` are IC-GRAND's, and the film
 reads its own copy of the city it was shot on, `ui/intro/set/` (the three modules as main had them, their imports'
 paths and an export list the only changes), so every frame of the film stays the one pinned above
@@ -18950,7 +18952,9 @@ The classic skin has none of it, byte for byte.
 **IC-PROPS (2026-10-27, the owner: "Some doors in Imperial city can be entered but dont show the tooltip", then "a world
 wide issue").** The law above broke at two doors. A house with no name of its own had a plaque only where it listed verbs
 (online, for sale): offline and everywhere else the door entered and said nothing - 6,325 of the 8,295 building doors
-with a room over the freeware's blocks and both town packs. DFU names every residence "Residence" (PlayerGPS.cs:1306-1309)
+with a room over the freeware's blocks and both town packs.
+
+DFU names every residence "Residence" (PlayerGPS.cs:1306-1309)
 and the mod prints it (.cs:719-728), so the port does now, whatever the verbs
 (`online/onlineHomes.js:"export const homeDoorName = (name, hasVerbs, type = null) =>"`), and a nameless building of no
 house type (a ship's deck) says its place. And a door of a NEIGHBOURING location (the Imperial City's next slice, a town

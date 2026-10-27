@@ -111,8 +111,7 @@ export const BOUNTY_REFUSALS = Object.freeze({
  *   posePixel?: () => ({x:number, y:number} | null),   // the pixel my party pose says I stand on (AUDIT 28 B8)
  *   rolls?: () => number,
  *   hunt?: { door: any, storage?: any, character: () => (string|null), saved?: () => void } | null,   // HUNTERS-MARK: the hunt's ledger, online
- * }} deps `standPack` answers `far` when the group waits at its spot (the farm, the second group's): the host names
- *   the way and asks again as the hunter closes in
+ * }} deps `standPack` answers `far` while the group waits at its spot: the host names the way and asks again
  */
 export function createBountyHost(deps) {
   const rolls = deps.rolls ?? Math.random;
