@@ -378,6 +378,12 @@ the six waters, no strait anywhere, the fit to the cell). `test/world/tamriel3.t
 `tools/mutants/tamriel3.json`'s fit-on-count, off-the-picture and coast records re-aimed by content (the coast's now
 the smoothing's, with this file's pins beside it).
 
+INTRO4 (2026-10-26, `10-UI/UI-Arc.md` INTRO4): THE FILM PULLS BACK TO THIS TAMRIEL. The intro's last frame is the authored
+continent of `world/tamriel/tamrielGeography.js` - its rings, ranges, rivers, cities and names, nothing traced off the
+player's picture - rasterised once by `ui/intro/introTamriel.js` (`buildTamrielField`), with INTRO2's authored bay drawn
+in the Bay's hole. The film reads the geography and writes nothing back: the world's continent (TAMRIEL3's trace and
+fit) is untouched.
+
 ## TAMRIEL-RELIEF - the continent's own heights (2026-10-24)
 
 The owner, with a heightmap of the whole continent: *"Heres the entire tamriel height map btw"*, then *"This is the

@@ -7514,6 +7514,31 @@
   "tr": "064a190ab125",
   "by": "claude-in-session"
  },
+ "menu.intro.narration1": {
+  "en": "6cdda13c60fe",
+  "tr": "9a89e430d961",
+  "by": "claude-in-session"
+ },
+ "menu.intro.narration2": {
+  "en": "a73d722e6148",
+  "tr": "66236e45d0ed",
+  "by": "claude-in-session"
+ },
+ "menu.intro.narration3": {
+  "en": "b0db5c7d2264",
+  "tr": "4cb15244dc0c",
+  "by": "claude-in-session"
+ },
+ "menu.intro.narration4": {
+  "en": "02e54d9b7bf2",
+  "tr": "8857d414c415",
+  "by": "claude-in-session"
+ },
+ "menu.intro.narration5": {
+  "en": "bb1aec630851",
+  "tr": "5e3611f22807",
+  "by": "claude-in-session"
+ },
  "menu.intro.opening": {
   "en": "b1b8530bbd68",
   "tr": "f9b043440f93",
@@ -12030,8 +12055,8 @@
   "by": "claude-in-session"
  },
  "prof.craft.xpFirstBought": {
-  "en": "09224e528df1",
-  "tr": "07d032fcb044",
+  "en": "75f0476f9180",
+  "tr": "b8e683299772",
   "by": "claude-in-session"
  },
  "prof.maker.away": {
@@ -12370,13 +12395,13 @@
   "by": "claude-in-session"
  },
  "prof.page.craft.xpBought": {
-  "en": "796b3cae733a",
-  "tr": "69602c964b96",
+  "en": "64d819c83da0",
+  "tr": "a56c9c12c05f",
   "by": "claude-in-session"
  },
  "prof.page.craft.xpFirstOwn": {
-  "en": "0cd6f1e210c1",
-  "tr": "47e35426f9ed",
+  "en": "6db8f28ac0da",
+  "tr": "d3d68d7bcc45",
   "by": "claude-in-session"
  },
  "prof.page.crafting": {
@@ -12455,8 +12480,8 @@
   "by": "claude-in-session"
  },
  "prof.page.enchant.cloth": {
-  "en": "5e3a1c7c87e4",
-  "tr": "f951d76fd1e8",
+  "en": "b93d723d0f31",
+  "tr": "ab0d8fbae0b9",
   "by": "claude-in-session"
  },
  "prof.page.enchant.full": {
@@ -12760,8 +12785,8 @@
   "by": "claude-in-session"
  },
  "prof.page.how.outfitting": {
-  "en": "ac56dd54d5ac",
-  "tr": "6a1609cacc7b",
+  "en": "85dc68e23b5f",
+  "tr": "4ecd9f9e6133",
   "by": "claude-in-session"
  },
  "prof.page.jewel": {
@@ -14447,6 +14472,21 @@
  "ql.journal.lineOffered": {
   "en": "07bf16996609",
   "tr": "6ac61ea3adb2",
+  "by": "claude-in-session"
+ },
+ "ql.journal.pieceChain": {
+  "en": "9fc9f25448a2",
+  "tr": "6dbfbe2aed02",
+  "by": "claude-in-session"
+ },
+ "ql.journal.pieceLeather": {
+  "en": "14786dce4b74",
+  "tr": "aff81903cc79",
+  "by": "claude-in-session"
+ },
+ "ql.journal.piecePlate": {
+  "en": "71f27cb3d1c6",
+  "tr": "0ecc512ccaf4",
   "by": "claude-in-session"
  },
  "ql.journal.postBoard": {

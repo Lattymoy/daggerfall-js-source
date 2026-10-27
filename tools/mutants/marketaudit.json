@@ -102,8 +102,8 @@
   {
     "name": "MARKET-AUDIT-U2-labels-bare",
     "file": "src/ui/marketTab.js",
-    "old": "      const pieceLabel = (p) => [p.name, auction ? null : QUALITY_NAMES[p.item.quality] ?? null, wearText(wearOf(p.item)), p.where === 'home' ? 'your home' : null].filter(Boolean).join(', ');",
-    "new": "      const pieceLabel = (p) => p.name;",
+    "old": "      const pieceSub = (p) => [packTierWord(p.item), auction ? null : QUALITY_NAMES[p.item.quality] ?? null, wearText(wearOf(p.item)), p.where === 'home' ? 'your home' : null].filter(Boolean).join(' · ') || null;",
+    "new": "      const pieceSub = (p) => null;",
     "tests": [
       "test/net/marketaudit.test.js"
     ]

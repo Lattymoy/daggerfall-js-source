@@ -267,7 +267,7 @@ Considered and NOT done:
   (`regionHubs.js` hubClaim), a seat whose kind claims no hub after every one that does, the lower key last. Measured on
   the freeware (2026-10-24): 322 seats, 39 regions, 37 seats of power their hub (Wrothgaria for Newing, Aldcester for
   Koegria the two that are not), 33 named for their region - section 1's count, derived the client's way.
-- **The witness** (`server-account/src/domains.js`, migration 0179 - 0169 before main's own took it): the client standing in a seat town reports, beside the
+- **The witness** (`server-account/src/domains.js`, migration 0180 - 0169, then 0179, before main's own took them): the client standing in a seat town reports, beside the
   seat (`POST /v1/seats/witness` `{ seat, domain: { region, key } }`, `net/townSeatBook.js` witness off the derivation it
   is handed), its region's seat of power; three agreeing confirm it, the seats' own witnesses (a registered account a
   week old, never one the seats' law ignores - `townSeats.js` seatIgnored), each first answer standing, and a report

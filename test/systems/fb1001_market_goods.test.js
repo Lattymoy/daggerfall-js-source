@@ -466,20 +466,29 @@ test('MARKET-ANY tab: Goods after the Auctions - each piece its name, condition,
   const selects = () => [...root.querySelectorAll('select')];
   buttons().find((b) => b.textContent === 'My listings').onclick();
   await until(read(tab, 'mine'), 'My listings read');
-  const what = selects().find((x) => x.getAttribute('aria-label') === 'What to list');
-  assert.deepEqual(opts(what).map((o) => o.value), ['material', 'piece', 'auction', 'item']);
+  // PIN MOVED (PACK-PICK): the kinds are presses, the pack's first - and a realm character's form opens on it
+  const kindPress = (k) => buttons().find((b) => b.getAttribute('data-kind') === k);
+  assert.deepEqual(buttons().filter((b) => b.getAttribute('data-kind')).map((b) => b.getAttribute('data-kind')), ['item', 'material', 'piece', 'auction']);
+  assert.equal(kindPress('item').getAttribute('aria-pressed'), 'true', 'the pack\'s form first');
+  /** PACK-PICK: the tiles a picker offers (its pressable ones), and the refused it folds - [name, why] */
+  const tiles = () => [...root.querySelectorAll('.packpick')[0].querySelectorAll('button')].filter((b) => b.className.split(' ').includes('packpick-tile'));
+  const named = (n, c) => n.querySelectorAll(`.${c}`)[0]?.textContent;
   // a crafted piece: Eve's own alone, the other named
-  what.value = 'piece'; what.onchange();
-  assert.deepEqual(opts(selects().find((x) => x.getAttribute('aria-label') === 'Crafted piece')).map((o) => o.value), [own.provenance]);
+  kindPress('piece').onclick();
+  assert.deepEqual(tiles().map((b) => b.getAttribute('data-focus')), [`list-piece|piece|${own.provenance}`]);
   assert.match(text(), /1 crafted piece you hold is made by another player, and only the maker can sell it as crafted\. List it from your pack for gold instead\./);   // AUDIT 657 D7: BOARD-UI (PIN MOVED): the words cut
-  // a piece from the pack: the looted pieces and Mac's make; the stone and Eve's own make said
-  selects().find((x) => x.getAttribute('aria-label') === 'What to list').value = 'item';
-  selects().find((x) => x.getAttribute('aria-label') === 'What to list').onchange();
-  const pick = selects().find((x) => x.getAttribute('aria-label') === 'Piece from your pack');
-  assert.deepEqual(opts(pick).map((o) => o.textContent), [eve.goods.goodName(weapon), eve.goods.goodName(armour), eve.goods.goodName(theirs)]);
-  assert.match(text(), new RegExp(`Not for the market: Deadlands Ember \\(bound to you\\); ${eve.goods.goodName(own)} \\(made by you\\. List it as a crafted piece\\)\\.`));
+  // a piece from the pack: the looted pieces and Mac's make; the stone and Eve's own make said, each on its own tile
+  kindPress('item').onclick();
+  assert.deepEqual(tiles().map((b) => named(b, 'packpick-name')), [eve.goods.goodName(weapon), eve.goods.goodName(armour), eve.goods.goodName(theirs)]);
+  assert.deepEqual([...root.querySelectorAll('.packpick-refused')[0].querySelectorAll('.packpick-tile')].map((n) => [named(n, 'packpick-name'), named(n, 'packpick-why')]),
+    [['Deadlands Ember', 'bound to you'], [eve.goods.goodName(own), 'made by you. List it as a crafted piece']]);
   assert.match(text(), /No fee to list\. Up for 72 hours on every board\. If it sells you get \d+ gold \(after a 1% fee and 5% tax\), collected at a bank\. It leaves your pack now and comes back if it does not sell\./);   // AUDIT 657 B9 (PIN MOVED): the 1% the sale's fee; BOARD-UI (PIN MOVED): its form says gold, its terms one line
   assert.equal(selects().some((x) => x.getAttribute('aria-label') === 'Currency'), false, 'no Drakes to choose');
+  // PACK-PICK: none chosen until a tile is pressed - a sale takes it out of the pack - and the one pressed looked at
+  assert.equal(buttons().find((b) => b.textContent === 'List').disabled, true, 'nothing chosen yet');
+  tiles().find((b) => named(b, 'packpick-name') === eve.goods.goodName(weapon)).onclick();
+  assert.equal(named(root.querySelectorAll('.packpick-card')[0], 'packpick-name'), eve.goods.goodName(weapon));
+  assert.match(root.querySelectorAll('.packpick-card')[0].textContent, /Damage: \d+ - \d+/, 'the look panel\'s rows');
   const price = [...root.querySelectorAll('input')].find((i) => i.getAttribute('data-focus') === 'list-price');
   price.value = '75'; price.oninput();
   await buttons().find((b) => b.textContent === 'List').onclick();
@@ -493,12 +502,9 @@ test('MARKET-ANY tab: Goods after the Auctions - each piece its name, condition,
   await until(() => eve.entity.items.some((it) => it.templateIndex === weapon.templateIndex) && !eve.book.busy && read(tab, 'mine')(), 'the piece collected');
   assert.ok(eve.entity.items.some((it) => it.templateIndex === weapon.templateIndex), 'back in the pack');
   assert.ok(s.record(eve.who).save.items.some((it) => it.templateIndex === weapon.templateIndex), 'and the record');
-  // listed again for the Goods view below
-  selects().find((x) => x.getAttribute('aria-label') === 'What to list').value = 'item';
-  selects().find((x) => x.getAttribute('aria-label') === 'What to list').onchange();
-  const which = selects().find((x) => x.getAttribute('aria-label') === 'Piece from your pack');
-  which.value = opts(which).find((o) => o.textContent === eve.goods.goodName(weapon)).value;
-  which.onchange();
+  // listed again for the Goods view below - PIN MOVED (PACK-PICK): its tile pressed, the form still on the pack
+  assert.equal(kindPress('item').getAttribute('aria-pressed'), 'true');
+  tiles().find((b) => named(b, 'packpick-name') === eve.goods.goodName(weapon)).onclick();
   const again = [...root.querySelectorAll('input')].find((i) => i.getAttribute('data-focus') === 'list-price');
   again.value = '75'; again.oninput();
   await buttons().find((b) => b.textContent === 'List').onclick();
@@ -513,8 +519,8 @@ test('MARKET-ANY tab: Goods after the Auctions - each piece its name, condition,
   const body = noGold.body();
   [...body.querySelectorAll('button')].find((b) => b.textContent === 'My listings').onclick();
   await until(read(noGold, 'mine'), 'the other tab\'s My listings read');
-  const kinds = [...noGold.body().querySelectorAll('select')].find((x) => x.getAttribute('aria-label') === 'What to list');
-  assert.deepEqual(opts(kinds).map((o) => o.value), ['material', 'piece', 'auction'], 'gold is a realm character\'s');
+  const kinds = [...noGold.body().querySelectorAll('button')].filter((b) => b.getAttribute('data-kind')).map((b) => b.getAttribute('data-kind'));
+  assert.deepEqual(kinds, ['material', 'piece', 'auction'], 'gold is a realm character\'s');   // PIN MOVED (PACK-PICK): the kinds are presses
 });
 
 test('MARKET-ANY service: a listing the decision cannot write - the thirtieth place taken between the look and the batch - rolls the record back with it; a delivery another collect took between rolls the collector\'s record back - the piece never twice (mutants: either guard)', async () => {

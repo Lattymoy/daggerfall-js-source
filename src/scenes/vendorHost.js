@@ -4,12 +4,8 @@
 // use as `host.<name>` - as the code read them where it was.
 import { accountRefusalText } from '../net/accountClient.js';
 import { clearVendorWaypoint, isVendorWaypoint, setVendorWaypoint, vendorWaypointKey } from '../systems/vendorWaypoint.js';
-import { isEnchanted } from '../systems/inventory.js';
-import { itemIsIdentified } from '../systems/tradeModes.js';
 import { itemPicture } from '../ui/menu/menuPicture.js';
-import { itemStatRows } from '../systems/item/itemInfo.js';
-import { lootRarityOn, rarityLines } from '../systems/loot/lootRarity.js';
-import { magicPowersLines } from '../systems/item/itemPowers.js';
+import { itemLookRows } from '../systems/item/itemLook.js';   // PACK-PICK: the look the Market's List form reads too
 import { REGION_NAMES } from '../formats/mapsFile.js';
 import { homeMayEnter as vendorDoorOpen } from '../net/homeLaw.js';
 import { goldText as vendorGoldText } from '../net/marketLaw.js';
@@ -25,21 +21,9 @@ export function createVendorHost(host) {
   const vendorRegionHere = () => { const p = playerTravelPixel(); try { const r = p ? maps.getRegionIndexAt(p.x, p.y) : null; return Number.isInteger(r) && r >= 0 ? r : null; } catch { return null; } };
   const vendorTownOf = (map) => _townOfMapId.get(Number(map) >>> 0)?.name || 'a town';
   const vendorNameOf = (it) => { try { return marketGoods.goodName(it); } catch { return 'a piece'; } };
-  /** A trader's piece LOOKED AT - `{ rows, magic }`: the look panel's own stat rows (systems/item/itemInfo.js itemStatRows -
-   *  damage, armour, hands, material, condition, weight), and its magic as the trade window says it (its tier with its
-   *  affixes and set, and an enchanted piece's powers - or "powers unknown" unidentified). Null for no piece. */
-  const vendorItemStats = (it) => {
-    if (!it || typeof it !== 'object') return null;
-    let rows = [], magic = [];
-    try { rows = itemStatRows(it).map((r) => (r.label ? `${r.label}: ${r.text}` : r.text)); } catch { rows = []; }
-    try { magic = rarityLines(it, { sigil: true, set: true, lore: false }); } catch { magic = []; }
-    try {
-      if (!(it.rarity && lootRarityOn()) && isEnchanted(it)) {
-        for (const t of magicPowersLines(it, { identified: itemIsIdentified(it) })) if (t && !magic.includes(t)) magic.push(t);
-      }
-    } catch { /* a piece whose powers cannot be read says none */ }
-    return { rows, magic };
-  };
+  /** A trader's piece LOOKED AT - `{ rows, magic }` (systems/item/itemLook.js itemLookRows: the look panel's stat rows and the
+   *  trade window's magic); PACK-PICK moved it there, so the Market's List form reads the same. Null for no piece. */
+  const vendorItemStats = itemLookRows;
   const vendorSaid = (r, ok) => (r?.ok ? { ok: true, text: ok } : { ok: false, text: accountRefusalText(r?.error) });
   /** A trader's piece BOUGHT at its stall: off the purse at its own price, its delivery collected into the pack at once. */
   const vendorBuy = async (vendor, row) => {
@@ -104,7 +88,7 @@ export function createVendorHost(host) {
           return r;
         },
         nameOf: vendorNameOf, stats: vendorItemStats, purse: () => marketBook.purse(vendorRegionHere() ?? 0),
-        picture: (it, wake) => itemPicture(it, { onReady: wake }),   // MENU-ORDER
+        picture: (it, wake, box) => itemPicture(it, { onReady: wake, box }),   // MENU-ORDER; PACK-PICK: at the picker's box
         buy: (row) => vendorBuy(vendor, row), take: (row) => vendorTake(row),
         goods: () => marketGoods.goods(), put: (item, price) => vendorPut(vendor, item, price),
         settle: () => marketBook.settle(marketMint, marketPutBack, marketDrop),   // VENDOR-LOST: a kept buy's piece collected as the stall opens

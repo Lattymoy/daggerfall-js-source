@@ -117,6 +117,18 @@ lengthened is kept once), and the LAW row (V3: R2 re-hashed TESA's world260 in p
 the unpublished line its hash, and the pin's hash again). The branch-side fix (R3-2) is a commit on the branch head,
 before the merge.
 
+**The merge of main into #1184, 2026-10-27** (BOW-TOPS' world269, WOVEN-PAYS' acct196 and migration 0177, PACK-PICK,
+INTRO4, STE-NOTES): 201 hunks. The tool took the account pins, the line numbers and the imports (V2, N, I). Two places
+it does not reach, both done by hand: (1) the branch's relay was already past main's newest (world270 against world269),
+so the pins keep world270, and `mergePinLine`'s note would have read "renumbered past world270-world269" and dropped
+the branch's second clause - each pin took both of the branch's clauses, PVP-EASE's and the TESA fold's, both world270
+now, before main's BOW-TOPS clause; (2) a mutant record whose `old` names the account version both sides held
+(`'acct196'`, nine records) never conflicts and the sweep reads only `test/`, so those records' `old` were moved to
+acct197 by hand, with the V4 gates' records (`audittesa2z.json`, `audittesa3e2.json`, `domain2.json`,
+`release_r3.json`). Both sides had fixed BAL-ARCHERY's referees and shaft fixtures (ARCHERY-REF on the branch, BOW-TOPS
+on main) with the same values; the fixtures are main's, the notes both (`05-Combat/Balance-Arc.md`). INTRO4's film
+keeps the city it was shot on as its own set (`10-UI/UI-Arc.md` INTRO4, THE SET).
+
 ## The versions
 
 - **Relay world266** in the trial (TESA with WORLD-WIDE folded in, world260 on the branch), past main's world260 THE
@@ -237,7 +249,7 @@ On `r3-release-trial` (main a981d29c84, the branch through d80b5c9d23):
 
 | Id | Severity | Anchor | Finding | Status |
 |---|---|---|---|---|
-| R3-1 | High | `src/net/wire.js:"export const WORLD_WIDE_RELAY_MIN = 269;"`, `src/net/instanceRoom.js:"export const GUILD_INSTANCE_RELAY_MIN = 269;"` | The branch's world-wide and castle gates named world260, which main deployed as THE FOLD: a new client on any of main's world260-268 would open lanes, province channels, halls, grants past the Bay and the castle door against relays that know none of them. git merges these lines silently. | Fixed in the merge (266 in the trial, 269 at the second merge - a gate names the release's own row); pins `audittesa2z_worldwide`, `domain2_castles`; `tools/mutants/release_r3.json` R3-1-*. |
+| R3-1 | High | `src/net/wire.js:"export const WORLD_WIDE_RELAY_MIN = "`, `src/net/instanceRoom.js:"export const GUILD_INSTANCE_RELAY_MIN = "` | The branch's world-wide and castle gates named world260, which main deployed as THE FOLD: a new client on any of main's world260-268 would open lanes, province channels, halls, grants past the Bay and the castle door against relays that know none of them. git merges these lines silently. | Fixed in the merge (266 in the trial, 269 at the second merge - a gate names the release's own row); pins `audittesa2z_worldwide`, `domain2_castles`; `tools/mutants/release_r3.json` R3-1-*. |
 | R3-2 | Medium | `test/net/sleepcost.test.js:"function flushesOf(r) {"` | GRANT-SLEEP's cell pin waited 200 `setImmediate` turns for a signed post; under load (13 on four cores) the post landed later and the pin failed 1 run in 3 - CI's eight shards run under the same kind of load. | Fixed on the branch (a commit before the merge): it waits on every post the cell started, a condition. |
 | R3-3 | High | `src/net/hubShards.js:"? new Set(Array.from({ length: REGION_SPLIT }, (_, region) => region))"` | Main's REGION_SHARDS over the branch's 71 channels: `all` (or a province's number) sent a province's link to a shard key no Room opens. | Fixed in the merge; pins moved (`cost1_regions`, `sleepcost`); `release_r3.json` R3-3-*. |
 | R3-4 | Low | `src/systems/instancePlaces.js:"const mine = questHere"` | Main's party-first door order under the branch's nine-key bound: at a castle with seven partners and a quest of mine, my own row became the tenth, which no key chooses. | Fixed in the merge; `domain2_castles` PIN MOVED; `release_r3.json` R3-4. |

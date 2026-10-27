@@ -247,7 +247,7 @@ const shoot = (opts, rolls) => {
 test('AUDIT39 #64: a LANDED arrow runs the melee ladder - the swing mods and the backstab ride it', () => {
   // the plain shot, facing the foe, no screen weapon out
   const [plain, log] = shoot({ playerFeet: [0, 0, 5] }, seq(0, 0.99, 0.05, 0.999, 0.99));
-  assert.equal(plain, 18, 'Long Bow max, str bonus, iron: the weapon ladder ran');   // BAL-ARCHERY: the Long Bow's top 19
+  assert.equal(plain, 18, 'Long Bow max, str bonus, iron: the weapon ladder ran');   // PIN MOVED (BAL-ARCHERY, Balance-Arc.md section 18): the Long Bow's top is 19, so 17 is 18 throughout
   // and the payload rings in DFU's order - sound and splash BEFORE the
   // pool's damage door, which is the only thing that writes health
   assert.deepEqual(log, ['sound', ['blood', 2], ['deal', 18]],

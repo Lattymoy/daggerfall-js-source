@@ -162,23 +162,25 @@
   {
     "name": "CRAFT-LIMIT-SAID-words-line-first-scaled",
     "file": "src/ui/craftXpWords.js",
-    "old": "  const more = firstCraftXp(r, own);",
-    "new": "  const more = scaleXp(firstCraftXp(r, own), pay.pct ?? 0);",
+    "old": "  const more = walled ? 0 : firstCraftXp(r, true);",
+    "new": "  const more = walled ? 0 : scaleXp(firstCraftXp(r, true), pay.pct ?? 0);",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
     "why": "the first's XP scaled (FIRST-BUDGET: its share), which the service lays on whole",
-    "note": "PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
+    "note": "PIN MOVED (AUDIT WOVEN-PAYS): re-aimed by content - the line's share, beside the counted wall. PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
   },
   {
     "name": "CRAFT-LIMIT-SAID-words-line-most-plain",
     "file": "src/ui/craftXpWords.js",
-    "old": "  return capLine(profession, pay, xp + more) || (more",
-    "new": "  return capLine(profession, pay, xp) || (more",
+    "old": "  return capLine(profession, pay, xp + more) || (walled",
+    "new": "  return capLine(profession, pay, xp) || (walled",
     "tests": [
-      "test/net/fb1018f_craftlimit.test.js"
+      "test/net/fb1018f_craftlimit.test.js",
+      "test/net/fb1026b_wovenpays.test.js"
     ],
-    "why": "a room that takes the plain craft but not its first said as whole"
+    "why": "a room that takes the plain craft but not its first said as whole",
+    "note": "PIN MOVED (AUDIT WOVEN-PAYS): re-aimed by content - the cloth's branch selector now `walled`; and pinned there: no test held a cloth piece at a room between its own XP and its share, so the record survived (test/net/fb1026b_wovenpays.test.js, \"the loom's line under the crafter's limit\")."
   },
   {
     "name": "CRAFT-LIMIT-SAID-words-dish-cap-dropped",
@@ -295,13 +297,13 @@
   {
     "name": "CRAFT-LIMIT-SAID-pages-loom-unpaid",
     "file": "src/ui/professions/profPages.js",
-    "old": "craftXpLine(r, rank, professionName('outfitting'), craftPayOf(book, 'outfitting'), ownSpend(book, r))",
-    "new": "craftXpLine(r, rank, professionName('outfitting'), {}, ownSpend(book, r))",
+    "old": "craftXpLine(r, rank, professionName('outfitting'), craftPayOf(book, 'outfitting'), silverOf(book, r))",
+    "new": "craftXpLine(r, rank, professionName('outfitting'), {}, silverOf(book, r))",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
     "why": "the loom promises at the limit",
-    "note": "PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
+    "note": "PIN MOVED (AUDIT WOVEN-PAYS): re-aimed by content - the loom passes silverOf. PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
   },
   {
     "name": "CRAFT-LIMIT-SAID-pages-jewel-unpaid",

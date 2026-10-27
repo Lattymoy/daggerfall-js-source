@@ -1168,8 +1168,31 @@ player's blow in a siege, an arena bout, a duel and the open zone against its ow
 pinned equal to `characters/weapons.js`, and the account service signs a character's arms reach from one of them.
 Both copies still read 16 and 18, so a top bow blow stood over the referee's bucket. They read 17 and 19 now
 (`net/siege/siegeRef.js:"126: 18, 127: 12, 128: 16, 129: 17, 130: 19,"`,
-`net/arena/arenaLaw.js:"export const ARENA_WEAPON_MAX"`): relay world270 and account acct196, in the TESA fold's release
+`net/arena/arenaLaw.js:"export const ARENA_WEAPON_MAX"`): relay world270 and account acct196 (acct197 since the merge of main), in the TESA fold's release
 (#1184, which carried it while main stood red). The flight pins
 measured a shaft by MISSILE_SPEED's 1.25 m a 0.05 s step; they step it by the frame that flies those 1.25 m at
 ARROW_FLIGHT_SPEED now (`test/scenes/roadh_tail.test.js`, `test/systems/arrowfoes.test.js`, AUDIT 65 CV-2), and
-the volley's landings are timed at ARROW_FLIGHT_SPEED (TECHFX1). Mutants: `tools/mutants/archeryref.json`.
+the volley's landings are timed at ARROW_FLIGHT_SPEED (TECHFX1). Mutants: `tools/mutants/archeryref.json`. BOW-TOPS, below, made the same fix on main; at the merge of main into #1184 (2026-10-27)
+the two met with one set of values, and the relay's row is world270, past BOW-TOPS's world269.
+
+**BOW-TOPS (2026-10-26, the owner: "Deploy failed").** BAL-ARCHERY merged with the deploy red, and deploys 1705 to
+1707 failed on what it moved without moving its pins. The relay keeps its own copies of the weapon tops, and they
+kept the old bows, so the arena's and the siege's referees would have capped a bow's top blow one short of the game's.
+Both copies now take the bows' new tops, a Short Bow 17 and a Long Bow 19
+(`net/arena/arenaLaw.js:"export const ARENA_WEAPON_MAX = Object.freeze({"`,
+`net/siege/siegeRef.js:"export const SIEGE_WEAPON_MAX = Object.freeze({"`). Both files are in the relay's bundle,
+so RELAY_VERSION is `world269` with its LAW row, and every pin of `world268` is moved. relay-deploy.yml deploys it
+on the merge, which drops every open socket once. The pins that still read the old law are moved: the shaft fixtures
+of `arrowfoes.test.js`, `roadh_tail.test.js` and `audit65_constants.test.js` take a step of 1.25 at the shaft's own
+speed (`1.25 / ARROW_FLIGHT_SPEED`), so their geometry is unchanged, and a spell's flight stays on MISSILE_SPEED.
+`techfx1.test.js` times a volley's landing at ARROW_FLIGHT_SPEED. `audit39_worldmodes.test.js`'s Long Bow blow is 18,
+and `int7_arms.test.js`'s Long Bow reach is 19. `techfx1_audit.test.js` refuses any number a flight is divided by, not
+only 25. Seven mutant records are re-aimed by content (`techfx1.json`, `audit_martial.json`, `tell6d.json`,
+`pvpref.json`), and two that quote the version line (`nirnrootsage.json`, `soc1.json`). The 151 records these files
+touch were judged again: 150 dead, 1 equivalent as recorded. `tools/mutants/bowtops.json` (6, all dead).
+
+One cost is said out loud. A shaft's contact is tested after each step, not swept, and at the same frame time the
+step is now 1.35 times as long. A shaft through the middle of a body steps past it once the step is longer than the
+contact: 1.6 m for the player (MISSILE_COLLIDER_RADIUS 0.45 + 0.35) and 1.8 m for a foe (0.45 + 0.45). At
+ARROW_FLIGHT_SPEED that is a frame longer than 0.047 s for the player and 0.053 s for a foe (MISSILE_SPEED's were
+0.064 s and 0.072 s). A shaft off the middle meets a shorter chord, so it can pass at shorter frames.
