@@ -3497,6 +3497,42 @@ PIN MOVED: `test/render/farsea1.test.js` (the classic ring's land line, the cano
 the far ring as before (no line changed); `scenes/exterior.js`, `scenes/worldModes.js` and `scenes/dungeonContext.js` draw
 no far ring.
 
+### FLORA-GROUND - the band over built pixels, and the ground it stands on (FIELD BUGS 2026-10-27)
+
+What the player saw (the owner: "floating flora ... can be seen off the ground in first person"). Read off the code (NOT
+SEEN ON A GPU: this session's software renderer could not boot the world under the machine's load): after a load or a
+teleport, band trees with no trunk could stand against the sky over towns, roads and clearings near the player, and
+flat tree pictures beside the 3D trees.
+
+The cause. The band's pixels (`bandPixels`) were read at each pixel the traveller crossed. A grid pixel the stream built
+after that read kept its band trees until the next crossing, and after a load or a teleport that was the whole grid.
+The band is drawn at the far plane, so the built ground and its own flats covered a band tree wherever they stood in
+front of it, but not where the band tree stood against the sky. The band's layout keeps no town clearing, road or World
+of Daggerfall site (above), so a crown stood over each of them. A band tree is also a flat sprite of the classic record,
+and it showed round the 3D tree that stands in its place. And the band's trees were kept by the pixel on this thread
+for the session. When the ground's inputs moved (Basic Roads' network landing, the landforms' tables, the sites past
+the Bay, the continent's trace and its relief - the messages the worker drops its own kept grounds on), the kept trees
+stayed on the old heights and the middle ring under them did too, until the traveller drifted three pixels.
+
+The fix.
+- Each instance carries its pixel's slot about the base pixel (`bandSlot`: BAND_REACH pixels either way, the Land
+  View's most and the ring - the instance's two spare bytes). The program drops an instance whose slot the stream has
+  built (`uBuilt`, a bit a slot, `bandBuiltBits`). The bits are written the frame the built map changes
+  (`FarTreesBand._builtNow`, keyed by the map's `changes` and the drawn base). Nothing is laid again for it.
+- The terrain client counts the ground's inputs (`TerrainGenClient.groundEpoch`: setRoads, setRoadsData,
+  setLandformTables, setLandformBeyond, setTamriel). When it moves, the band lets every kept pixel go, drops an answer
+  on its way and asks the worker again (`_groundNow`), and the middle ring under it is asked again too
+  (`FarRingRenderer._groundStale`). A tree is never taken away before its new ground is laid: the drawn buffer stands
+  until the new one swaps in.
+- A band tree's height is the walk law's (`terrainSurface.js` walkGroundAt, through `layoutNature`), the ground the
+  player will stand on when the stream builds the pixel (`03-World/World-Arc.md` FLORA-GROUND).
+
+Pins: `test/world/terrain/floraground.test.js` (the slots, the bits, the program's drop, the book's frame and epoch, the
+middle ring's re-ask). Mutants: `tools/mutants/floraground.json`, all dead; `tools/mutants/midring.json`'s
+MID-RING-ask-every-frame and MID-RING-drift-late re-aimed by content (the ask's line grew the ground's test), dead. The
+four hosts: `scenes/world.js` draws the
+far ring and its band; `scenes/exterior.js`, `scenes/worldModes.js` and `scenes/dungeonContext.js` draw none.
+
 ## TVD-WORLD - the Overworld's dungeons past the Bay (2026-10-27, the audit NO SYSTEM LEFT BEHIND IN THE BAY)
 
 The audit's item 29 (C4); the owner: "Every single thing here needs to be addressed. No exceptions." (2026-10-26). TV6

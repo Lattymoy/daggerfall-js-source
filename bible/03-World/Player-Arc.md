@@ -2290,8 +2290,8 @@ UNSTUCK1, indoors and underground only - answered "There is nowhere to send you 
   mountains, no fast travel); `scenes/worldModes.js` and `scenes/dungeonContext.js` have no fast-travel landing.
 
 The landing is this law's; after it, a rock built round the body is ROCK-CLEAR's (below - the owner, 2026-10-19: "Apply to
-rocks too"). OPEN for Mac (the investigation's, not built here): the collider's floor is the bilinear read where the drawn
-landform ground is triangles, a gap that can reach metres on the steepest ridges. `test/player/unstuckout.test.js` (2) - the
+rocks too"). The collider's floor and the drawn ground are one law since FLORA-GROUND (2026-10-27, `03-World/World-Arc.md`
+Milestone 8: `terrainSurface.js` walkGroundAt). `test/player/unstuckout.test.js` (2) - the
 real collider over real closed rock meshes;
 `tools/mutants/unstuckout.json` (7), all dead. AUDIT FIELD-BUGS 1008 (`01-Overview/Audit-Log.md`): `tvSeaY` declared
 beside `state`, before the boot's own load reads it (the outdoor arm's refusals that audit worded went with the arm).

@@ -118,6 +118,90 @@ the grass grows by the ground under it. Behind the enhanced row
 `climateBlend`, forced on online. The record is `07-Rendering/Rendering.md`
 ECOTONE1; pins in test/systems/ecotone1.test.js.
 
+FLORA-GROUND (FIELD BUGS 2026-10-27, the owner: "Plus floating flora and
+reflective flora can be seen off the ground in first person"; the
+coordinator: "Make the flora's height and the walk height one law").
+
+What the player saw. Bushes, flowers, saplings and the feet of trees stood
+a hand or two over the ground in first person, worst in the woods and on
+the landforms' rolling ground; and 3D trees and bushes shone toward the
+viewer by night.
+
+The cause - three grounds where there should be one. The terrain is drawn
+as two triangles a quad (`terrainSurface.js` surfaceHeightAt, the
+`buildTerrainIndices` diagonal). The capsule walked a bilinear patch over
+the same samples (`world.js` heightAt). The plants stood on whichever read
+their placer took: DFU's scatter on the corner sample (on both), but
+FOREST1's woods and the jungle inside their tiles on the bilinear patch
+(`terrainNature.js` groundAt). Inside a quad the patch and the triangles
+part by the quad's twist. On the real data (ARENA2, the Bay, the Landforms
+row on, Real forests on, `scenes/world.js`'s own kernel), 3.4% of the
+woods' flats stood more than 5 cm over the drawn ground: 25,102 of 735,396
+over 176 sampled pixels, 8,005 over 10 cm, 232 over 25 cm, the worst
+46 cm. The capsule walked the same bilinear patch, off the drawn ground by
+the same twist (Player-Arc's UNSTUCK-OUT had flagged the gap as open:
+metres on the steepest ridges).
+
+The fix - one law. `terrainSurface.js` walkGroundAt is the ground's one
+law: the near grid's drawn triangles. The walk floor (`world.js` heightAt)
+walks it, and every plant stands on it:
+- FOREST1's woods, DFU's scatter at the tile's corner, a border's flats
+  (ECOTONE1) and a herb's stand (`natureStandsAt`), in `terrainNature.js`;
+- the jungle's four storeys and its graht-oaks' feet (`jungleNature.js`),
+  and its roadside pairs (`jungleRoadside.js`) with their fallback flats
+  (`pixelBuild.js`);
+- a town's nature flats lifted off its plane (`groundOffPlane`) and World
+  of Daggerfall's shrubs on their lowest ground (`lowestGroundUnder`);
+- the grass placer (`world.js`).
+What rides the ground reads it the same way: the ground moved under a
+rebuilt pixel (`pixelBuild.js` groundIn) and the landforms' lift field
+between its samples (`landforms.js` landformLiftField). A change to the
+ground's heights (a relief, a coast, a road's bed, a town's flattening)
+reaches the walker and the plants through the samples they share. A change
+to its law is made in walkGroundAt, and every reader moves with it.
+`groundAt` stays the bilinear read for what is not walked on or planted (a
+vein's foot, a fishing spot, a rock piece's footprint, the jungle's beach
+altitude).
+
+After it, on the same 176 pixels, no flat stands more than 5 cm over the
+walk floor. With ARENA2, `test/world/terrain/floraground_real.test.js` builds
+five cells as the stream builds them: the Bay's wilderness (500,340), a
+slope (780,460), a coast (540,300), Daggerfall itself (207,213) and past
+the Bay (1050,200, the continent's authored ground). None of their 23,334
+flats stands over the walk floor, and none is sunk past its slope (DFU's
+steepness / 70). On the bilinear patch, 559, 10, 239, 6 and 453 of them
+stood more than 5 cm over the drawn ground.
+
+The far trees (FAR-TREES, `06-Systems/Travel-View.md`) stand down over a
+pixel the stream has built the frame it is built, and are laid again when
+the ground's inputs move. A 3D tree's faces are matte
+(`07-Rendering/Low-Poly-Trees.md` FLORA-GROUND).
+
+NOT FIXED here, measured: the far grid's stride-4 ground (pixels three or
+more out, `world.js` LOD_STRIDE) is a coarser cut of the same samples, and
+the tall flats there (only trees draw past the second ring) stand on the
+walk law: on the same 176 pixels 12% of the flats stand more than 25 cm
+over the stride-4 surface and 0.1% more than 1 m, the worst 6.1 m, all of
+them 1.6 km or further from the player. That is the ground's level of detail, not the
+flora's law. Moving the plants onto it would be a per-ring offset; the fix
+belongs to the far grid.
+
+Pins: `test/world/terrain/floraground.test.js` (7: the law against the
+drawn mesh itself, the host's walk floor lifted off world.js, every
+placer on a saddle field, the build's readers, the lift field, the band's
+slots and bits, the band's book and the middle ring's ground) and
+`test/world/terrain/floraground_real.test.js` (1: the five real cells).
+Moved, each marked PIN MOVED (FLORA-GROUND):
+`test/world/terrain/auditlandforms.test.js` (H3; B2's read between
+samples; G1/G2's lifted publish), `test/world/terrain/grass3_surface.test.js`,
+`test/world/jungleroadside.test.js` (the pairs' fallback),
+`test/player/fb0930_respawnground.test.js`,
+`test/player/fb0930b_respawnheld.test.js` and `test/player/enterexit.test.js`
+(its message). Mutants: `tools/mutants/floraground.json` (32, all dead);
+re-aimed by content, each noted: `forest1.json`, `ecotone1.json`,
+`wodbush.json`, `natureground.json`, `jungleroadside.json`, `grass3.json`,
+`auditlandforms.json`, `midring.json` (all dead).
+
 ## Milestone 7 - locations on terrain (SHIPPED)
 
 `src/formats/umRandom.js` is a 1:1 translation of Unity.Mathematics

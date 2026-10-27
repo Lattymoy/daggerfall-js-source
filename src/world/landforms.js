@@ -1153,12 +1153,13 @@ export function landformLiftField(woods, px, py, locationRect = null, hDim = HEI
     blendLocationTerrain(field, sum / field.length, locationRect, hDim, classic, true);   // TOWN-SHAPES: the outline's, the sea read on DFU's own ground
     f = (x, y) => field[x * hDim + y];
   }
-  // the field between its samples: bilinear, the read the collider's own floor takes (world.js heightAt)
+  // the field between its samples: the read the collider's own floor takes (world.js heightAt) - FLORA-GROUND: the ground's
+  // one law, the drawn quad's two triangles cut on its (x, y)-(x+1, y+1) diagonal (terrainSurface.js walkGroundAt)
   return (sx, sy) => {
     const cx = Math.max(0, Math.min(span, sx)), cy = Math.max(0, Math.min(span, sy));
     const ix = Math.min(span - 1, Math.floor(cx)), iy = Math.min(span - 1, Math.floor(cy));
-    const fx = cx - ix, fy = cy - iy;
-    return f(ix, iy) * (1 - fx) * (1 - fy) + f(ix + 1, iy) * fx * (1 - fy) + f(ix, iy + 1) * (1 - fx) * fy + f(ix + 1, iy + 1) * fx * fy;
+    const fx = cx - ix, fy = cy - iy, f00 = f(ix, iy), f11 = f(ix + 1, iy + 1);
+    return fy >= fx ? f00 + fy * (f(ix, iy + 1) - f00) + fx * (f11 - f(ix, iy + 1)) : f00 + fx * (f(ix + 1, iy) - f00) + fy * (f11 - f(ix + 1, iy));
   };
 }
 

@@ -15,6 +15,7 @@ import { StreamingWorldState } from '../../src/world/streamingWorld.js';
 import { TERRAIN_SIZE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE } from '../../src/world/terrain/terrainSampler.js';
 import { floorLanding } from '../../src/player/enterExit.js';
 import { Collider } from '../../src/player/collider.js';
+import { walkGroundAt } from '../../src/world/terrain/terrainSurface.js';   // FLORA-GROUND: the ground heightAt walks
 import { PlayerMotor } from '../../src/player/motor.js';
 import { applyFallLanding, adjustFallStart } from '../../src/scenes/shared.js';
 
@@ -33,8 +34,9 @@ const heightCell = TERRAIN_SIZE / (HEIGHTMAP_DIMENSION - 1);
 /** The host's own ground over `built` (its heightAt, lifted) - one flat pixel at `h` a build. */
 function ground(state) {
   const built = new Map();
-  const heightAt = new Function('state', 'built', 'TERRAIN_SIZE', 'HEIGHTMAP_DIMENSION', 'heightCell', 'worldHeight', 'deepWaters', '_htT', HEIGHT)(
-    state, built, TERRAIN_SIZE, HEIGHTMAP_DIMENSION, heightCell, worldHeight, null, [0, 0, 0]);
+  // PIN MOVED (FLORA-GROUND): the lifted body walks the ground's one law, terrainSurface.js walkGroundAt
+  const heightAt = new Function('state', 'built', 'TERRAIN_SIZE', 'HEIGHTMAP_DIMENSION', 'heightCell', 'worldHeight', 'deepWaters', '_htT', 'walkGroundAt', HEIGHT)(
+    state, built, TERRAIN_SIZE, HEIGHTMAP_DIMENSION, heightCell, worldHeight, null, [0, 0, 0], walkGroundAt);
   const build = (px, py, h) => built.set(`${px},${py}`, { px, py, samples: new Float32Array(HEIGHTMAP_DIMENSION ** 2).fill(h / worldHeight) });
   return { heightAt, build, collider: new Collider(heightAt) };
 }

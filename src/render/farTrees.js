@@ -51,8 +51,46 @@ export const TREE_LAYERS = 48;
 /** The texture unit the atlas rides for the pass (inside the host's sky-to-markForeignPass span: render/farRing.js
  *  RING_SEA_UNIT's note). */
 export const TREES_UNIT = 13;
-/** Bytes an instance: x, y, z (float32) and its layer and hash (bytes), two spare. */
+/** Bytes an instance: x, y, z (float32), its layer and hash (bytes), and its pixel's slot in the band's grid (two bytes -
+ *  FLORA-GROUND, below). */
 export const TREE_STRIDE = 16;
+/**
+ * FLORA-GROUND (FIELD BUGS 2026-10-27, the owner: "floating flora ... can be seen off the ground in first person"): A
+ * BUILT PIXEL'S BAND TREES STAND DOWN THE FRAME IT IS BUILT. The band's pixels were read at each pixel the traveller
+ * crossed, so a pixel of the grid the stream built after that read kept its band trees until the next crossing - after a
+ * load or a teleport, the whole grid's. The band is drawn at the far plane, so the built ground and its flats covered a
+ * band tree wherever it stood in front of them, but not where it stood against the sky: a crown with no trunk over a
+ * town's roofs, on a road, in a clearing (the band's layout keeps none of them - bandTreesPixel), and the band's flat
+ * sprite beside the 3D tree that stands in its place. Each instance carries its pixel's slot (`BAND_REACH` pixels either
+ * way of the base pixel, a byte each way), and the program drops an instance whose slot the stream has built
+ * (`uBuilt`, a bit a slot, written whenever the built map changes). The reach covers the Land View's six and the ring.
+ */
+export const BAND_REACH = 8;
+/** The band's grid of slots a side, and the 32-bit words its built bits take. */
+export const BAND_SIDE = 2 * BAND_REACH + 1;
+export const BAND_BUILT_WORDS = Math.ceil((BAND_SIDE * BAND_SIDE) / 32);
+/** A slot no pixel of the reach holds: never built. */
+export const BAND_NO_SLOT = 255;
+/** FLORA-GROUND: pixel (px, py)'s slot about base (baseX, baseY) - [i east, j south], or BAND_NO_SLOT each past the
+ *  reach. Pure. */
+export function bandSlot(px, py, baseX, baseY) {
+  const i = px - baseX + BAND_REACH, j = baseY - py + BAND_REACH;
+  return i >= 0 && j >= 0 && i < BAND_SIDE && j < BAND_SIDE ? [i, j] : [BAND_NO_SLOT, BAND_NO_SLOT];
+}
+/** FLORA-GROUND: the built bits about base (baseX, baseY) - slot (i, j)'s bit j * BAND_SIDE + i, set where `built` (the
+ *  host's pixel map, keyed "x,y") holds its pixel - written into `out` (BAND_BUILT_WORDS words). Pure but for `out`. */
+export function bandBuiltBits(baseX, baseY, built, out = new Int32Array(BAND_BUILT_WORDS)) {
+  out.fill(0);
+  if (!built) return out;
+  for (let j = 0; j < BAND_SIDE; j++) {
+    for (let i = 0; i < BAND_SIDE; i++) {
+      if (!built.has(`${baseX - BAND_REACH + i},${baseY + BAND_REACH - j}`)) continue;
+      const k = j * BAND_SIDE + i;
+      out[k >> 5] |= 1 << (k & 31);
+    }
+  }
+  return out;
+}
 /** Bytes of the instance buffer uploaded a step. */
 export const UPLOAD_SLICE = 512 * 1024;
 
@@ -123,12 +161,14 @@ export function* bandInstanceSteps(pixels, baseX, baseY, layerOf) {
   for (const p of pixels) {
     yield;
     const ox = (p.px - baseX) * TERRAIN_SIZE, oz = (baseY - p.py) * TERRAIN_SIZE, t = p.trees;
+    const [si, sj] = bandSlot(p.px, p.py, baseX, baseY);   // FLORA-GROUND: its pixel's slot - stood down once built
     for (let i = 0; i < t.length; i += 4) {
       const layer = layerOf(p.archive, t[i + 3]);
       if (layer === undefined) continue;
       const o = k * (TREE_STRIDE / 4);
       f[o] = ox + t[i]; f[o + 1] = t[i + 1]; f[o + 2] = oz + t[i + 2];
       u[k * TREE_STRIDE + 12] = layer; u[k * TREE_STRIDE + 13] = treeHash(p.px, p.py, i >> 2);
+      u[k * TREE_STRIDE + 14] = si; u[k * TREE_STRIDE + 15] = sj;
       k++;
     }
   }
@@ -138,6 +178,8 @@ export function* bandInstanceSteps(pixels, baseX, baseY, layerOf) {
 const VS = `#version 300 es
 layout(location=0) in vec3 aPos;
 layout(location=1) in vec2 aMeta;   // the tree's layer and its dither byte
+layout(location=2) in vec2 aSlot;   // FLORA-GROUND: its pixel's slot in the band's grid (BAND_NO_SLOT past it)
+uniform highp int uBuilt[${BAND_BUILT_WORDS}];   // FLORA-GROUND: a bit a slot, set where the stream has built the pixel
 uniform mat4 uProj;
 uniform mat4 uView;
 uniform vec3 uOrigin;
@@ -160,6 +202,8 @@ void main() {
   vec2 d = abs(world.xz - uBandFrom.xz);
   float keep = min(px * px, 1.0) * (1.0 - smoothstep(uBand.x, uBand.y, max(d.x, d.y)));
   if ((aMeta.y + 0.5) / 256.0 > keep) gl_Position = vec4(2.0, 2.0, 2.0, 1.0);   // not drawn: outside the clip volume
+  int slot = aSlot.x < ${BAND_NO_SLOT - 0.5} ? int(aSlot.y) * ${BAND_SIDE} + int(aSlot.x) : -1;
+  if (slot >= 0 && ((uBuilt[slot >> 5] >> (slot & 31)) & 1) != 0) gl_Position = vec4(2.0, 2.0, 2.0, 1.0);   // FLORA-GROUND: its pixel the stream's now
   gl_PointSize = clamp(px, 1.0, 64.0);
 }`;
 
@@ -235,7 +279,10 @@ export class FarTreesBand {
     this.u = {};
     for (const name of ['uProj', 'uView', 'uOrigin', 'uSides', 'uBand', 'uBandFrom', 'uHazeFrom', 'uTrees', 'uAmbient', 'uSunScale', 'uSunColor',
       'uMoonScale', 'uMoonColor', 'uFogColor', 'uFogStart', 'uFogEnd', 'uRimStart', 'uRimEnd', 'uHazeHold', 'uCloudShadowMap', 'uCloudShadowRect',
-      'uCloudShadowFar', 'uCloudFar', 'uJungleHaze', 'uHazeEye', 'uELExposure', 'uAdapt']) this.u[name] = gl.getUniformLocation(this.program, name);
+      'uCloudShadowFar', 'uCloudFar', 'uJungleHaze', 'uHazeEye', 'uELExposure', 'uAdapt', 'uBuilt']) this.u[name] = gl.getUniformLocation(this.program, name);
+    this.builtBits = new Int32Array(BAND_BUILT_WORDS);   // FLORA-GROUND: the drawn base's built slots
+    this._builtKey = '';
+    this._groundEpoch = source?.groundEpoch ?? 0;   // FLORA-GROUND: the ground the kept trees were laid on
     /** @type {Map<string, { px: number, py: number, archive: number, trees: Float32Array }>} */ this.kept = new Map();
     this.layers = new Map();   // "archive,record" -> layer
     this.sides = new Float32Array(TREE_LAYERS);
@@ -262,6 +309,8 @@ export class FarTreesBand {
    * climate; `forests` the Real forests switch; `landform` the Landforms row.
    */
   frame({ curX, curY, radius, built, climateOf, forests, landform, work }) {
+    this._builtNow(built);   // FLORA-GROUND: a pixel built since the last crossing stands its band trees down at once
+    this._groundNow();   // FLORA-GROUND: the ground moved - every kept pixel's trees laid again on it
     const key = `${curX},${curY},${radius}`;
     if (key !== this._setKey) { this._setKey = key; this._want = this.pixelsFor(curX, curY, radius, built); this._wantAt = [curX, curY]; this._failed = false; }
     const missing = this._want.filter(([x, y]) => !this.kept.has(`${x},${y}`));
@@ -275,6 +324,30 @@ export class FarTreesBand {
     if (this._want.some(([x, y]) => this.arts.get(this.kept.get(`${x},${y}`).archive) === 'asking')) return;   // its art still being read
     this._laidKey = laidKey;
     this._lay(work, curX, curY);
+  }
+
+  /** FLORA-GROUND: the drawn instances' built bits (bandBuiltBits about the drawn base), written again when the built map
+   *  or the drawn base moves - a plain Map (no `changes`) by its size. */
+  _builtNow(built) {
+    const d = this.drawn, key = d ? `${d.baseX},${d.baseY},${built ? (built.changes ?? built.size) : -1}` : '';
+    if (key === this._builtKey) return;
+    this._builtKey = key;
+    if (d) bandBuiltBits(d.baseX, d.baseY, built, this.builtBits);
+  }
+
+  /** FLORA-GROUND: a band's trees stand on the ground the kernel stood them on, so when the ground's inputs move (the
+   *  terrain client's `groundEpoch`: the roads, the landforms' tables, the continent's trace and its relief) every kept
+   *  pixel is let go and asked again - an answer on its way is dropped - and the band is laid anew on what comes back.
+   *  The drawn buffer stands until then: a tree is never taken away for a ground it has not been laid on yet. */
+  _groundNow() {
+    const epoch = this.source?.groundEpoch ?? 0;
+    if (epoch === this._groundEpoch) return;
+    this._groundEpoch = epoch;
+    this.kept.clear();
+    this._gen = (this._gen ?? 0) + 1;
+    this._asking = false;
+    this._failed = false;
+    this._laidKey = '';
   }
 
   _ask(missing, climateOf, forests, landform) {
@@ -376,6 +449,8 @@ export class FarTreesBand {
     gl.vertexAttribPointer(0, 3, gl.FLOAT, false, TREE_STRIDE, 0);
     gl.enableVertexAttribArray(1);
     gl.vertexAttribPointer(1, 2, gl.UNSIGNED_BYTE, false, TREE_STRIDE, 12);
+    gl.enableVertexAttribArray(2);
+    gl.vertexAttribPointer(2, 2, gl.UNSIGNED_BYTE, false, TREE_STRIDE, 14);   // FLORA-GROUND: its pixel's slot
     gl.bindVertexArray(null);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     this._free(this.drawn);
@@ -404,6 +479,7 @@ export class FarTreesBand {
     gl.uniformMatrix4fv(u.uView, false, s.view);
     gl.uniform3f(u.uOrigin, s.origin[0], s.origin[1], s.origin[2]);
     gl.uniform1fv(u.uSides, this.sides);
+    gl.uniform1iv(u.uBuilt, this.builtBits);   // FLORA-GROUND: the built pixels' trees stood down
     gl.uniform4f(u.uBand, (s.radius + this.fade[0]) * TERRAIN_SIZE, (s.radius + this.fade[1]) * TERRAIN_SIZE, s.viewportH, s.proj[5]);
     gl.uniform3f(u.uBandFrom, s.origin[0] + 0.5 * TERRAIN_SIZE, 0, s.origin[2] + 0.5 * TERRAIN_SIZE);
     gl.uniform4fv(u.uHazeFrom, s.hazeFrom);

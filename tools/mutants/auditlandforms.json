@@ -434,8 +434,9 @@
   {
     "name": "AUDIT-LANDFORMS-D-liftfield-bilinear-axes-swapped",
     "file": "src/world/landforms.js",
-    "old": "return f(ix, iy) * (1 - fx) * (1 - fy) + f(ix + 1, iy) * fx * (1 - fy) + f(ix, iy + 1) * (1 - fx) * fy + f(ix + 1, iy + 1) * fx * fy;",
-    "new": "return f(ix, iy) * (1 - fx) * (1 - fy) + f(ix + 1, iy) * (1 - fx) * fy + f(ix, iy + 1) * fx * (1 - fy) + f(ix + 1, iy + 1) * fx * fy;",
+    "old": "return fy >= fx ? f00 + fy * (f(ix, iy + 1) - f00) + fx * (f11 - f(ix, iy + 1)) : f00 + fx * (f(ix + 1, iy) - f00) + fy * (f11 - f(ix + 1, iy));",
+    "new": "return fy >= fx ? f00 + fy * (f(ix + 1, iy) - f00) + fx * (f11 - f(ix + 1, iy)) : f00 + fx * (f(ix, iy + 1) - f00) + fy * (f11 - f(ix, iy + 1));",
+    "note": "FLORA-GROUND (PIN MOVED): re-aimed by content - the lift field is read on the ground's one law, the drawn triangles (its axes swapped the same way), where it was bilinear.",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -444,8 +445,9 @@
   {
     "name": "AUDIT-LANDFORMS-D-liftfield-nearest-sample",
     "file": "src/world/landforms.js",
-    "old": "return f(ix, iy) * (1 - fx) * (1 - fy) + f(ix + 1, iy) * fx * (1 - fy) + f(ix, iy + 1) * (1 - fx) * fy + f(ix + 1, iy + 1) * fx * fy;",
+    "old": "return fy >= fx ? f00 + fy * (f(ix, iy + 1) - f00) + fx * (f11 - f(ix, iy + 1)) : f00 + fx * (f(ix + 1, iy) - f00) + fy * (f11 - f(ix + 1, iy));",
     "new": "return f(Math.round(cx), Math.round(cy));",
+    "note": "FLORA-GROUND (PIN MOVED): re-aimed by content - the lift field read on the drawn triangles, where it was bilinear.",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"

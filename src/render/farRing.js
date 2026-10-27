@@ -684,7 +684,7 @@ export class FarRingRenderer {
     if (!this._midSource || !this._inputs) return null;
     const mid = this._mid;
     const drift = mid ? Math.max(Math.abs(curX - mid.baseX), Math.abs(curY - mid.baseY)) : Infinity;
-    if ((drift > MID_REBUILD_DRIFT || this._floraStale(mid)) && this._midAsk === null) this._askMid(curX, curY);   // FAR-FLORA: and a tree's art landed since
+    if ((drift > MID_REBUILD_DRIFT || this._floraStale(mid) || this._groundStale(mid)) && this._midAsk === null) this._askMid(curX, curY);   // FAR-FLORA: and a tree's art landed since; FLORA-GROUND: and the ground the band's trees stand on moved
     if (!mid?.built) return null;
     mid.reorder(curX, curY);
     mid.cut(built ? (k) => built.has(k) : () => false, built ? (built.changes ?? built.size) : -1);
@@ -704,6 +704,13 @@ export class FarRingRenderer {
     if (!layer) return false;
     const now = this._floraOf() ? /** @type {any} */ (this._flora).version : -1;
     return (layer.floraVersion ?? -1) !== now;
+  }
+
+  /** FLORA-GROUND: whether the middle ring was laid on a ground whose inputs have moved since (the terrain client's
+   *  `groundEpoch` - the band's trees are laid again on the moved ground, render/farTrees.js, so the ground under them is
+   *  too). */
+  _groundStale(layer) {
+    return !!layer && (layer.groundEpoch ?? 0) !== (this._midSource?.groundEpoch ?? 0);
   }
 
   /** MID-RING / FAR-FIELD: the frame's share of the grounds' builds - steps until HORIZON_BUDGET_MS is spent, one at the
@@ -768,6 +775,7 @@ export class FarRingRenderer {
     const floraVersion = floraOf ? /** @type {any} */ (this._flora).version : -1;
     this._midAsk = `${baseX},${baseY}`;
     const job = { baseX, baseY, radius: MID_RADIUS, sub: MID_SUB, landform: !!inputs.relief, flora: !!floraOf };   // FAR-FLORA: the near law's woods beside the heights
+    const groundEpoch = this._midSource.groundEpoch ?? 0;   // FLORA-GROUND: the ground this ask is laid on
     Promise.resolve(this._midSource.midRing?.(job) ?? null).then((answer) => {
       if (gen !== this._midGen) return;   // a newer ask, or the renderer disposed
       if (!answer?.heights || !this.gl) { this._midAsk = null; return; }   // the ask stands until its ground is laid
@@ -784,6 +792,7 @@ export class FarRingRenderer {
         this._midAsk = null;
         (this._mid ??= new MidRingMesh(this.gl)).build(v, { baseX, baseY, radius: MID_RADIUS, sub: MID_SUB, curX: baseX, curY: baseY });
         this._mid.floraVersion = floraVersion;
+        this._mid.groundEpoch = groundEpoch;   // FLORA-GROUND
         this._holeKey = '';   // the far ring's hole is the new footprint's
       } });
     }, (e) => { if (gen === this._midGen) this._midAsk = null; console.warn('[ring] the middle ring failed', e?.message ?? e); });

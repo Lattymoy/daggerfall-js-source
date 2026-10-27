@@ -42,7 +42,7 @@ import { getNameBankOfRegion } from '../characters/nameHelper.js';
 import { getStaticDoors } from '../world/staticDoors.js';
 import { getWorldClimateSettings, LOCATION_TYPES } from '../formats/mapsFile.js';
 import { gothwayNorthSpots, isGothwayGarden } from '../systems/gothwayBoards.js';
-import { groundOffPlane, lowestGroundUnder, surfaceHeightAt, TERRAIN_SKIRT_DEPTH, TERRAIN_TILE_DIM } from '../world/terrain/terrainSurface.js';
+import { groundOffPlane, lowestGroundUnder, surfaceHeightAt, walkGroundAt, TERRAIN_SKIRT_DEPTH, TERRAIN_TILE_DIM } from '../world/terrain/terrainSurface.js';   // FLORA-GROUND: walkGroundAt, the ground's one law
 import { hasPort } from '../systems/travel/travelPorts.js';
 import { portIdOf } from '../world/worldWide/worldPorts.js';   // WW3: a port's one number
 import { HEIGHTMAP_DIMENSION, TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
@@ -1100,7 +1100,7 @@ export function createPixelBuild(host) {
       for (const t of pairs.flatMap((p) => p.trees)) {
         const archive = getNatureArchive(JUNGLE_ARCHIVE, pixelSeason);
         if (archive !== natureArchive) borderNature.set(archive, JUNGLE_ARCHIVE);
-        addFlat(archive, t.record, t.x, surfaceHeightAt(samples, t.x, t.z), t.z, { wild: JUNGLE_ARCHIVE });
+        addFlat(archive, t.record, t.x, walkGroundAt(samples, t.x, t.z), t.z, { wild: JUNGLE_ARCHIVE });
       }
     }
     // WOD4: THE CAMP AT PRIVATEER'S HOLD (world/worldOfDaggerfall/wodPrivateersHold.js).
@@ -1528,12 +1528,8 @@ export function createPixelBuild(host) {
     if (groundWas) {
       _groundBefore.delete(pkey);
       const now = built.get(pkey).samples, t = host.state.pixelTranslation(px, py);
-      const groundIn = (smp, x, z) => {   // heightAt's own read: bilinear over the pixel's samples, pixel-local
-        const fx = Math.max(0, Math.min(TERRAIN_SIZE, x - t[0])) / heightCell, fz = Math.max(0, Math.min(TERRAIN_SIZE, z - t[2])) / heightCell;
-        const ix = Math.min(HEIGHTMAP_DIMENSION - 2, Math.floor(fx)), iz = Math.min(HEIGHTMAP_DIMENSION - 2, Math.floor(fz)), sx = fx - ix, sz = fz - iz;
-        const at = (a, b) => smp[a * HEIGHTMAP_DIMENSION + b];
-        return (at(ix, iz) * (1 - sx) * (1 - sz) + at(ix + 1, iz) * sx * (1 - sz) + at(ix, iz + 1) * (1 - sx) * sz + at(ix + 1, iz + 1) * sx * sz) * worldHeight;
-      };
+      // heightAt's own read over the pixel's samples, pixel-local - FLORA-GROUND: the ground's one law (walkGroundAt)
+      const groundIn = (smp, x, z) => walkGroundAt(smp, Math.max(0, Math.min(TERRAIN_SIZE, x - t[0])), Math.max(0, Math.min(TERRAIN_SIZE, z - t[2])));
       const moved = (x, z) => groundIn(now, x, z) - groundIn(groundWas, x, z);
       host.rideGround?.(t, pkey, moved, key !== pkey);   // IC-SWAP-BEHIND: the pixel's own key; behind, the player on the view swapped out rides it unheld
     }

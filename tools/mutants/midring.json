@@ -407,8 +407,9 @@
   {
     "name": "MID-RING-ask-every-frame",
     "file": "src/render/farRing.js",
-    "old": "if ((drift > MID_REBUILD_DRIFT || this._floraStale(mid)) && this._midAsk === null) this._askMid(curX, curY);",
-    "new": "if ((drift > MID_REBUILD_DRIFT || this._floraStale(mid))) this._askMid(curX, curY);",
+    "old": "if ((drift > MID_REBUILD_DRIFT || this._floraStale(mid) || this._groundStale(mid)) && this._midAsk === null) this._askMid(curX, curY);",
+    "new": "if ((drift > MID_REBUILD_DRIFT || this._floraStale(mid) || this._groundStale(mid))) this._askMid(curX, curY);",
+    "note": "FLORA-GROUND (PIN MOVED): re-aimed by content - the ask also stands when the ground the band stands on has moved (_groundStale).",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -416,8 +417,9 @@
   {
     "name": "MID-RING-drift-late",
     "file": "src/render/farRing.js",
-    "old": "if ((drift > MID_REBUILD_DRIFT || this._floraStale(mid)) && this._midAsk === null) this._askMid(curX, curY);",
-    "new": "if ((drift > MID_REBUILD_DRIFT + 1 || this._floraStale(mid)) && this._midAsk === null) this._askMid(curX, curY);",
+    "old": "if ((drift > MID_REBUILD_DRIFT || this._floraStale(mid) || this._groundStale(mid)) && this._midAsk === null) this._askMid(curX, curY);",
+    "new": "if ((drift > MID_REBUILD_DRIFT + 1 || this._floraStale(mid) || this._groundStale(mid)) && this._midAsk === null) this._askMid(curX, curY);",
+    "note": "FLORA-GROUND (PIN MOVED): re-aimed by content - the ask also stands when the ground the band stands on has moved (_groundStale).",
     "tests": [
       "test/render/midring.test.js"
     ]

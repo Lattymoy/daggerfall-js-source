@@ -675,13 +675,12 @@ const GROUND_NORMAL_STEP = 0.5;
 export class Collider {
   /** @param {(x:number,z:number)=>number} heightAt floor beneath everything
    *  @param {((x:number,z:number)=>number)|null} [surfaceAt] BLOOD1 AUDIT 3:
-   *  the DRAWN ground, where it differs from the floor the capsule
-   *  walks on. The world host's `heightAt` is a bilinear read of the
-   *  heightmap; the terrain it draws is two triangles a quad, and the
-   *  two surfaces are up to 0.08 apart on real grades (terrainSurface.js
-   *  measured it) - four times a mark's 2cm lift. The capsule keeps
-   *  the bilinear floor it has always had; a thing PLACED on the ground
-   *  (surfaceHit, groundNormal) asks where the ground is drawn. */
+   *  the DRAWN ground, at the ring class each pixel is drawn at; a thing
+   *  PLACED on the ground (surfaceHit, groundNormal) asks where the
+   *  ground is drawn. FLORA-GROUND: the world host's `heightAt` walks the
+   *  same two triangles a quad at the near grid's stride (terrainSurface.js
+   *  walkGroundAt, the ground's one law) - it was a bilinear read of the
+   *  heightmap, up to 46 cm off the drawn ground on the landforms. */
   constructor(heightAt = () => -Infinity, surfaceAt = null) {
     this.heightAt = heightAt;
     this.surfaceAt = typeof surfaceAt === 'function' ? surfaceAt : null;

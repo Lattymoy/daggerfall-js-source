@@ -480,7 +480,8 @@
     "name": "JUNGLE-ROADSIDE-a-cells-road-read-at-its-middle",
     "file": "src/world/jungle/jungleRoadside.js",
     "old": "return highestDrawn(heightmapData, square(ax + dx, az + dz, h, h)) + R.headroom > y + cy * js;",
-    "new": "return surfaceHeightAt(heightmapData, ax + dx, az + dz) + R.headroom > y + cy * js;",
+    "new": "return walkGroundAt(heightmapData, ax + dx, az + dz) + R.headroom > y + cy * js;",
+    "note": "FLORA-GROUND (PIN MOVED): the point read on the ground's one law, walkGroundAt - jungleRoadside.js imports it where it imported surfaceHeightAt.",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]
@@ -713,8 +714,9 @@
   {
     "name": "JUNGLE-ROADSIDE-a-pair-tree-loggings",
     "file": "src/scenes/pixelBuild.js",
-    "old": "addFlat(archive, t.record, t.x, surfaceHeightAt(samples, t.x, t.z), t.z, { wild: JUNGLE_ARCHIVE });",
-    "new": "addFlat(archive, t.record, t.x, surfaceHeightAt(samples, t.x, t.z), t.z, { wild: JUNGLE_ARCHIVE, tree: { id: pixelTrees.length } });",
+    "old": "addFlat(archive, t.record, t.x, walkGroundAt(samples, t.x, t.z), t.z, { wild: JUNGLE_ARCHIVE });",
+    "new": "addFlat(archive, t.record, t.x, walkGroundAt(samples, t.x, t.z), t.z, { wild: JUNGLE_ARCHIVE, tree: { id: pixelTrees.length } });",
+    "note": "FLORA-GROUND (PIN MOVED): re-aimed by content - the ground's one law, walkGroundAt (the walker's and the flora's), where it read surfaceHeightAt.",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]

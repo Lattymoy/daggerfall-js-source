@@ -11,6 +11,7 @@ import { CLOUD_SHADOW_GLSL, cloudFarOf } from './cloudShadow.js';   // EE5 / VC4
 import { BAYER_GLSL, DISSOLVE_GLSL } from './orderedDither.js';   // SHIP-FADE: the mesh shader's dissolve over the port's one bayer4
 import { pixelFadeShare } from './pixelFade.js';   // MID-RING: a just-built pixel's tint, eased out (a leaf)
 import { LPT_FS_HEAD, LPT_FS_KEEP, LPT_FS_TEXEL } from './lowPolyTreesGlsl.js';   // LPT1: a low-poly tree's fragment half, both lanes' billboard shaders
+import { LPT_IMPOSTOR_LIGHT } from '../world/lowPolyTrees.js';   // FLORA-GROUND: the sky's light a tree's faces take (a leaf: no imports of its own)
 import { FOG_GLSL } from './fogGlsl.js';
 import { WINDFALL_SWAY_GLSL, windfallLawOn, swayShare } from './windfallSway.js';   // WINDFALL1: Windfall's vertex wind - the flora's lean while the mod is on
 import { COLUMN_GLSL } from './columnGlsl.js';   // DW-F: the water column's share - a foe under Iliac Puddle No More's sea is in the depth texture its top reads   // AUDIT 68 S17-fog-glsl-dup: fogFactorAt's one home, for all seven world programs
@@ -682,13 +683,14 @@ void main() {
     }
     vBBBase = aInst.xyz;
     vUV = aCorner;
-    // its faces' light (AUDIT LPT A2): the far picture's own - from above and the eye's side, LPT_IMPOSTOR_LIGHT turned to
-    // face the eye - crossfaded to the sun's by its share, so at night and at the handover the two are one picture
-    vec2 toEye = uLptCut.xz - aInst.xz;
-    vec2 fe = length(toEye) > 1e-4 ? normalize(toEye) * 0.8 : vec2(0.0, 0.8);
-    float faceEye = clamp(0.72 + 0.28 * dot(wn, vec3(fe.x, 0.6, fe.y)), 0.5, 1.0);
+    // its faces' light (AUDIT LPT A2): the far picture's own - FLORA-GROUND: the sky's, from straight above
+    // (world/lowPolyTrees.js LPT_IMPOSTOR_LIGHT), which no viewer turns: a matte face, as DFU's Lambert billboard batch
+    // lights its flats - crossfaded to the sun's by its share, so at night and at the handover the two are one picture.
+    // It was LPT_IMPOSTOR_LIGHT turned to face the EYE: a face toward the viewer lit whole and one away at half, the
+    // light following the player round every 3D tree, bush and stump - a reflective sheen on the flora by night
+    float faceSky = clamp(0.72 + 0.28 * dot(wn, vec3(${LPT_IMPOSTOR_LIGHT.map((v) => v.toFixed(4)).join(', ')})), 0.5, 1.0);
     float faceSun = clamp(0.72 + 0.28 * dot(wn, uLptSun.xyz), 0.5, 1.0);
-    vShade = uMeshColor * mix(faceEye, faceSun, uLptSun.w);
+    vShade = uMeshColor * mix(faceSky, faceSun, uLptSun.w);
     vAlpha = uMeshAlpha;
     vFade = uLptCut.w > 0.0 ? 3.0 - clamp((distance(aInst.xz, uLptCut.xz) - uLptCut.w) / max(uLptBand, 1e-3), 0.0, 1.0) : 3.0;
   }

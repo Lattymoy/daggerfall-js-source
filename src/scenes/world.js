@@ -70,7 +70,7 @@ import { settlementsOf, loadModRoads, retryModRoads, basicRoadsPathsPoint, WATER
 import { modSetting, modSettingsOf, modSettingsGeneration, MOD_SETTINGS, latchModLoaded } from '../systems/modSettings.js';   // ROADS 24; HCC: the mod's eight switches; CSA-D: a mod's title for the load's failure line; AUDIT PRE-MERGE 0928 S4: the next-load mods latched at mount
 import { hasPortFor, hasPort, setSeatHarbours, PORT_LOCATION_IDS } from '../systems/travel/travelPorts.js';   // AUDIT-RR2 G22: Travel Options' port list for RR's ship gate; SEAT2b part two: a members' Harbour among them (hasPortFor)
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
-import { buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, surfaceHeightAt, surfaceNormalAt, terrainSampleHeightAt } from '../world/terrain/terrainSurface.js';   // GRASS-LIT2: the ground's normal under a blade; SNOWFALL1: and a pixel's that keeps none
+import { buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, surfaceHeightAt, surfaceNormalAt, terrainSampleHeightAt, walkGroundAt } from '../world/terrain/terrainSurface.js';   // GRASS-LIT2: the ground's normal under a blade; SNOWFALL1: and a pixel's that keeps none; FLORA-GROUND: the ground's one law
 import { waterUniforms, buildWaterIndices, waterSwitchOn } from '../render/waterSurface.js';   // WATER1: the enhanced water surface over the pixel's own grid; WATER-AUDIT: its own index set
 import { bedFields, sheetDepthsOf } from '../world/water/waterBed.js';   // WATER-NEXT 2: the bed under the water, carved for the eye alone (AUDIT WATER-NEXT H1: the cap's re-carve asks its depths)
 import { createRipples, createRippleStir, RIPPLE_SPAN, RIPPLE_CELLS, BOAT_STIR, BOAT_WAKE_SPEED } from '../world/water/waterRipples.js';   // WATER-NEXT 4: the rings and wakes
@@ -4339,7 +4339,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const MILL_SAIL_PAD = 30;
   // Player collision (P1): per-pixel triangle buckets in PIXEL-LOCAL
   // space, resolved through the live floating-origin translation; the
-  // floor is the terrain heightmap, bilinear over the stored samples.
+  // floor is the terrain heightmap's own drawn surface over the stored
+  // samples - the ground's one law (FLORA-GROUND, terrainSurface.js
+  // walkGroundAt), which every plant stands on too.
   const heightCell = TERRAIN_SIZE / (HEIGHTMAP_DIMENSION - 1);
   // EV2: the containing pixel is COMPUTABLE - pixelTranslation is an
   // affine map, so its inverse names the one pixel that can hold
@@ -4362,29 +4364,17 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       const lz = z - t[2];
       if (lx < 0 || lz < 0 || lx >= TERRAIN_SIZE || lz >= TERRAIN_SIZE) return -Infinity;
       if (p.deepWaters) { const f = deepWaters.floorLocalY(p, lx, lz); if (f != null) return terrainOnly ? -Infinity : f + t[1]; }   // DW-B: a carved cell's ground is the seafloor
-      const fx = lx / heightCell;
-      const fz = lz / heightCell;
-      const ix = Math.min(HEIGHTMAP_DIMENSION - 2, Math.floor(fx));
-      const iz = Math.min(HEIGHTMAP_DIMENSION - 2, Math.floor(fz));
-      const sx = fx - ix;
-      const sz = fz - iz;
-      const at = (a, b) => p.samples[a * HEIGHTMAP_DIMENSION + b] * worldHeight;
-      const h =
-        at(ix, iz) * (1 - sx) * (1 - sz) + at(ix + 1, iz) * sx * (1 - sz) +
-        at(ix, iz + 1) * (1 - sx) * sz + at(ix + 1, iz + 1) * sx * sz;
-      return h + t[1];
+      return walkGroundAt(p.samples, lx, lz) + t[1];   // FLORA-GROUND: the ground's one law - the drawn ground, the flora's ground (terrainSurface.js walkGroundAt)
     }
     return -Infinity;
   };
-  // BLOOD1 AUDIT 3: WHERE THE GROUND IS DRAWN. `heightAt` above is the
-  // bilinear read the capsule has always walked on; the terrain is cut
-  // into two triangles a quad (terrainSurface.js says why the two
-  // surfaces differ, and measured it: up to 0.08 apart on real grades).
-  // The grass placer asks this; the blood - lifted 2cm off "the
-  // ground" - was the one thing still placed by bilinear, so on a hill
-  // a mark lay clipped into the slope on one half of a quad and floated
-  // over it on the other. The capsule keeps its floor; what is PLACED
-  // asks this.
+  // BLOOD1 AUDIT 3: WHERE THE GROUND IS DRAWN. The terrain is cut into
+  // two triangles a quad (terrainSurface.js surfaceHeightAt), at the
+  // ring class the pixel is drawn at; the blood - lifted 2cm off "the
+  // ground" - asks this, so a mark lies on the slope it is drawn on.
+  // FLORA-GROUND: `heightAt` above walks the same triangles at the near
+  // grid's stride (walkGroundAt) - it was a bilinear patch over them,
+  // and the woods stood on that patch, up to 46 cm over the drawn ground.
   const _stT = [0, 0, 0];
   const surfaceAt = (x, z) => {
     const c = state.compensation;
@@ -33935,9 +33925,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // 0.25-0.72, so this is correctness rather than a fix anyone
         // would see; it is also the exact law a GPU-placed field has to
         // run, where there is no baked height to fall back on.
-        // `p._stride` is the ring class this pixel is drawn at, and the
-        // grass only stands on the stride-1 ring anyway.
-        const h = surfaceHeightAt(p.samples, lx, lz, p._stride ?? 1);
+        // The grass only stands on the stride-1 ring, so its drawn ground
+        // is the ground's one law (FLORA-GROUND: the walker's and every
+        // plant's, terrainSurface.js walkGroundAt).
+        const h = walkGroundAt(p.samples, lx, lz);
         if (h <= sea) return null;
         if (snowCover.on && snowCover.buries(p, lx, lz, h + t[1])) return null;   // PRECIP4: no blade through the snow the ground shows there (AUDIT PRECIP HOST-9: at the blade's own height)
         return h + t[1];
