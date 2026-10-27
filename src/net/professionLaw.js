@@ -245,7 +245,7 @@ const OWN_CHOICES = Object.freeze({
   }),
   jewelcrafting: Object.freeze({
     50: pair(spec('gemcutter', 'Gemcutter', 'A set gem adds +10% enchantment points.'),
-      spec('goldsmith', 'Goldsmith', 'Silver counts as Gold.')),
+      spec('goldsmith', 'Goldsmith', 'Silver jewelry you make has the enchantment points and worth of Gold.')),   // RPT1026-PROGRESS: "Silver counts as Gold" read as Silver standing in for Gold in a recipe, which it never did (recipeLaw.js jewelHand)
     100: pair(spec('master-jeweller', 'Master Jeweler', 'Jewelry Masterwork chance +5%.'),
       spec('lapidary', 'Lapidary', 'Siege-cracked Gems set as any gem.')),
   }),

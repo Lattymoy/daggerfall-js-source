@@ -884,8 +884,15 @@ export function createPlayerMagic({
     // even if the popup is cancelled, "confirmed in classic".
     if (r.dispelMagic) onDispelMagic?.(r.dispelMagic);
     if (r.identify) {
+      // RPT1026-PROGRESS (a private report: a discounted Identify gave back more than it took): NEVER MORE THAN
+      // THIS CAST SPENT - its release's token (`cast.cost`, the price stored at the ready). The refund is priced as the
+      // spell lands (spell/identifyRefund.js), floored at 5 after every discount, so a cast a modifier took to 1 gave
+      // back 5, and a discount gone between the ready and the release gave back the full price. A free cast (an item's,
+      // a trap's) spent nothing and gets nothing - DFU's own TODO (Identify.cs: "Only refund if spell cast from
+      // spellbook"). The window still charges the effect's price (`refund`, Identify.cs IdentifySpellCost).
+      const spent = caster?.entity === playerEntity ? (caster.cast?.cost ?? 0) : 0;
       playerEntity.magicka = Math.min(playerEntity.maxMagicka ?? Infinity,
-        (playerEntity.magicka ?? 0) + r.identify.refund);
+        (playerEntity.magicka ?? 0) + Math.min(r.identify.refund, spent));
       surfacePlayer();
       onIdentify?.(r.identify);
     }

@@ -4133,6 +4133,23 @@ beside the racial one. The Rose and the Skull gate on an enemy inside
 12 and speak the fail line; their ALLIED summon door
 (spawnAlliedFoe) is FLAGGED unmounted - the port has no ally/team
 combat - so the arm idles loudly until the team system exists.
+(MT-ii mounted it since, `scenes/hostEnchant.js` createEnchantCtx, and
+SD1 placed it.) RPT1026-PROGRESS (2026-10-26, a private report: the Skull's copies
+were looted like any foe): DFU's CreateFoe gives the allied copy its
+kind's whole loot (SetEnemyCareer's table and kit) and its corpse is
+looted like any foe's, so a Skull that never breaks (Repairs Objects)
+farmed a Daedra's drop from every copy it set on the original. A
+summon's body is a puppet's now: the door marks the foe it stood
+(`systems/foeLootCap.js` summonedBody - its carried list emptied, its
+hand and worn kit still fight) and the last word every body door asks
+empties whatever the death laid on it (capFoeLoot). Port-Ledger A.
+Pinned by `test/scenes/rpt1026_progress_summon.test.js` (the real Skull
+off MAGIC.DEF, a real street pool on the freeware's MONSTER.BSA). Left,
+for the owner: in a dungeon online the room's other players stand the
+copy as a loose stand's puppet (SUMMON-SYNC), built and rolled on their
+own machine, so its body there still carries their own roll - the own
+lane carries no mark of a summon; and a summon restored from a save is
+stood again with its empty list, its `summoned` mark not saved.
 
 AND THE ENUM WENT HOME. ENCHANTMENT_TYPES is FallExe's
 (ItemsFile.cs:111-141); it moved to formats/magicDef.js - the file
@@ -6465,8 +6482,9 @@ instead (`null` means "do not ask", which is every non-maker caller).
 its mirror, carrying DFU's own asymmetry verbatim: an ordinary trap
 counts only when its soul is `!= None && < 43` (`:115`), while a
 filled Azura's Star is counted with no bound at all (`:121-125`).
-`ui/item/itemMakerWindow.js` enumerates ONCE, in its constructor, and both
-picker seams read that snapshot - see the review round below for why.
+`ui/item/itemMakerWindow.js` enumerated ONCE, in its constructor, and both
+picker seams read that snapshot - see the review round below for why, and
+RPT1026-PROGRESS beneath it for why it reads the pack every time now.
 
 That makes a comment in `enchantmentCatalogue.js` false and it is
 rewritten with the law. The singleton shortcut
@@ -6537,6 +6555,17 @@ finds nothing), where the port dropped the row. The enumeration now
 happens once, in the constructor - which IS DFU's `Setup`+`OnPush`,
 since `scenes/worldModes.js`'s `guildServiceItemMaker` mounts a fresh
 window per open - and both picker seams read the frozen field.
+
+**RPT1026-PROGRESS (2026-10-26, a private report: one filled gem bound several items) - THE FREEZE IS GONE.** That second item
+was the exploit: a bound soul's costs are negative, so the soul DFU still offers after its gem is spent gave a second
+item the whole SoulBound budget from a gem that was no longer there, and a single gem paid for item after item while
+that window stayed open. The window reads the pack's souls every time it asks (`itemMakerWindow.js` `get _souls`), and the law
+refuses a bound soul the pack no longer holds whatever list the row came from (`enchanting.js` enchantDecision's
+`souls`: "That soul is no longer in your pack.", nothing paid). A departure from `EnumerateEnchantments`' once-a-window
+read and from `RemoveFilledTrap`'s silent miss (`SoulBound.cs:129-155`), Port-Ledger A. The account service's item law
+cannot tell such a piece: it reads one item (`itemLaw.js` makerFindings holds a SoulBound row to its forced set, not to a
+gem the save gave up). Pinned by `test/ui/rpt1026_progress_ui.test.js`; PIN MOVED in `audit63_effects.test.js` (the
+spent soul is no longer offered).
 
 ## AUDIT 63 F15 - A VAMPIRE CAUGHT THE PLAGUE FROM A QUEST (2026-09-08)
 

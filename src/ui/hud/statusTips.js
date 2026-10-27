@@ -186,7 +186,7 @@ export function statusTip(tile, entity, extra = {}) {
     const said = extra.setLine?.(tile) ?? null;
     if (said) lines.push(said);
     lines.push(tile.recovering ? 'Recovering.' : 'Active.');
-    return { title, meta: tile.set === 'technique' ? 'Weapon technique' : meta, lines, foot: tile.foot ? (tile.recovering ? `Ready in ${tile.foot}` : tile.foot) : null };
+    return { title, meta: tile.set === 'technique' ? 'Weapon technique' : tile.set === 'martial' ? 'Specialization' : meta, lines, foot: tile.foot ? (tile.recovering ? `Ready in ${tile.foot}` : tile.foot) : null };   // RPT1026-PROGRESS: a martial path's passive
   }
   if (String(tile.key).startsWith('spell')) {
     lines.push(...spellTipLines(entity, tile.bundle));

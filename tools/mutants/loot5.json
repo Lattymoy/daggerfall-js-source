@@ -335,8 +335,8 @@
   {
     "name": "LOOT5-the-chips-unwired",
     "file": "src/scenes/world.js",
-    "old": "  setHudSetChips((e) => [...setHudChips(e), ...lootHudChips(e)]);",
-    "new": "  setHudSetChips((e) => [...setHudChips(e)]);",
+    "old": "  setHudSetChips((e) => [...setHudChips(e), ...lootHudChips(e), ...martialHudChips(e)]);",
+    "new": "  setHudSetChips((e) => [...setHudChips(e), ...martialHudChips(e)]);",
     "tests": [
       "test/systems/loot5_powers.test.js"
     ]
