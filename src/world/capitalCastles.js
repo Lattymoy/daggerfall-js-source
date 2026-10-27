@@ -16,6 +16,8 @@
 // every person's flat (world/npcFlatArchives.js) but the castle's guards
 // (the 199 markers), its bards and its children is taken out, with the
 // quest markers (199.11, 199.18) - no King Gothryd in the Blue Palace.
+// PROVINCE-COURTS: and its court re-seated as the capital's own (CASTLE_SEATS
+// below - the region's court through DFU's generic factions, in their looks).
 // The halls' open sides are closed by the Bay castle's own border blocks.
 // The castle is the capital's centre's dungeon (its map id the crown
 // seat's key, scenes/tamrielPlacesHost.js seatPlaces), its door the
@@ -86,13 +88,47 @@ export function capitalCastleDungeon(k, mapId) {
 const CASTLE_FOLK = Object.freeze(new Set([0, 511, 512, 514]));
 /** The quest markers (archive 199): a quest's item (11) and its person (18) - the Bay's quests', none here. */
 const QUEST_MARKERS = Object.freeze(new Set([11, 18]));
-/** Does a castle's port copy keep this RDB object? Its court's people and its quest markers, no. */
+
+/** PROVINCE-COURTS (bible/03-World/World-Wide.md): THE CASTLE'S COURT, THE CAPITAL'S OWN. A province has its court now
+ *  (systems/faction/provinceFactions.js), so the Bay court's people are re-seated in the copy rather than stood down -
+ *  under DFU's own generic factions, which a person's talk and work read as the region's court (npcSession.js
+ *  getStaticNPCFactionData: Random_Ruler, Random_Noble and Random_Knight -> courtOfCurrentRegion; in the Blue Palace the
+ *  Court of Skyrim), and its people as the region's people (a factionless person). Each seat by the FACTION.TXT ids the
+ *  Bay's three palaces carry (measured on the freeware's BLOCKS.BSA - S0000160, S0000040-41, S0000080-81): the crown's
+ *  ruler (its Province's first child - Gothryd, Akorithi, Eadwyre) on the throne, its nobles and its court, its
+ *  knights, its commoners. A re-seated noble wears its generic faction's own flat (FACTION.TXT 852's and 242's 183.6 or
+ *  183.8, 853's 183.3 or 183.14) by its own gender (the flat's flags bit 32) - no Bay royal's likeness in the copy; a
+ *  commoner keeps the look it had. The rest of the Bay's people go as before: the vampire clans' spies, the scholars and
+ *  guild members a Bay story names, a mobile's record. */
+export const CASTLE_SEATS = Object.freeze({
+  ruler: Object.freeze({ faction: 852, flats: Object.freeze([[183, 6], [183, 8]]), ids: Object.freeze([364, 380, 390]) }),
+  noble: Object.freeze({ faction: 242, flats: Object.freeze([[183, 6], [183, 8]]),
+    ids: Object.freeze([365, 366, 367, 371, 377, 387, 381, 382, 383, 386, 391, 392, 393, 394, 397, 499, 595, 596]) }),
+  knight: Object.freeze({ faction: 853, flats: Object.freeze([[183, 3], [183, 14]]), ids: Object.freeze([368, 384, 408, 409]) }),
+  people: Object.freeze({ faction: 0, flats: null, ids: Object.freeze([518, 523, 526]) }),
+});
+const SEAT_OF = new Map(Object.values(CASTLE_SEATS).flatMap((seat) => seat.ids.map((id) => [id, seat])));
+/** The seat a Bay court person takes in a castle's copy - CASTLE_SEATS' - or null. @param {number} factionId */
+export const castleSeatOf = (factionId) => SEAT_OF.get(factionId) ?? null;
+
+/** Does a castle's port copy keep this RDB object? Its quest markers, no; a court person, only re-seated (castleSeated). */
 export function castleKeeps(o) {
   if (o?.type !== RDB_RESOURCE_TYPES.Flat) return true;
   const f = o.resources?.flatResource;
   if (!f) return true;
   if (f.textureArchive === 199) return !QUEST_MARKERS.has(f.textureRecord);
-  return !isNpcFlat(f.textureArchive) || CASTLE_FOLK.has(f.factionOrMobileId);
+  return !isNpcFlat(f.textureArchive) || CASTLE_FOLK.has(f.factionOrMobileId) || !!castleSeatOf(f.factionOrMobileId);
+}
+/** A kept object as the copy carries it: a court person under its seat's faction (its magnitude and sound index the id's
+ *  two bytes, as BLOCKS.BSA packs it) and, a noble, its seat's flat by its gender; anything else as it is. */
+export function castleSeated(o) {
+  const f = o?.type === RDB_RESOURCE_TYPES.Flat ? o.resources?.flatResource : null;
+  const seat = f && isNpcFlat(f.textureArchive) ? castleSeatOf(f.factionOrMobileId) : null;
+  if (!seat) return o;
+  const id = seat.faction;
+  const look = seat.flats ? seat.flats[(f.flags & 32) === 32 ? 1 : 0] : null;
+  return { ...o, resources: { ...o.resources, flatResource: { ...f, factionOrMobileId: id, magnitude: id & 0xff, soundIndex: id >> 8,
+    ...(look ? { textureArchive: look[0], textureRecord: look[1], textureBitfield: (look[0] << 7) | look[1] } : {}) } } };
 }
 /**
  * A BAY PALACE BLOCK'S PORT COPY (`dfBlock`, BLOCKS.BSA's, read): the same block under its port name and index, every
@@ -110,6 +146,6 @@ export function castleBlockOf(dfBlock, copy) {
   }
   return {
     ...dfBlock, index: copy.index, name: copy.name, servedName: copy.name,
-    rdbBlock: { ...rdb, objectRootList: (rdb.objectRootList ?? []).map((g) => ({ ...g, rdbObjects: g.rdbObjects ? g.rdbObjects.filter((o) => linked.has(o.position) || castleKeeps(o)) : g.rdbObjects })) },
+    rdbBlock: { ...rdb, objectRootList: (rdb.objectRootList ?? []).map((g) => ({ ...g, rdbObjects: g.rdbObjects ? g.rdbObjects.filter((o) => linked.has(o.position) || castleKeeps(o)).map(castleSeated) : g.rdbObjects })) },
   };
 }

@@ -57,6 +57,7 @@ import { randomRangeInclusive } from '../formats/dfRandom.js';
 import { isAlly, isEnemy, flatArchive, flatRecord } from '../formats/factionFile.js';
 import { tokensToString } from './rumorMill.js';
 import { GENDERS } from '../characters/nameHelper.js';
+import { BUILDING_TYPES } from '../world/buildingNames.js';   // PROVINCE-COURTS: the questor pool's palace is DFLocation.BuildingTypes.Palace
 import { getLocalizedFactionName } from './textManager.js';   // L10N3e: the greeting's faction names in the player's language
 import {
   NO_RESPONSE_TEXT_ID, MIN_NEUTRAL_REACTION, MIN_LIKE_REACTION,
@@ -188,11 +189,16 @@ export class NPCSession {
   /** GetStaticNPCFactionData: an NPC with a NULL faction id belongs to
    *  the region's court inside a palace and to its people anywhere
    *  else (matched to classic); the three generic Random_* factions
-   *  are redirected to the court, DFU's own change. */
+   *  are redirected to the court, DFU's own change.
+   *
+   *  PROVINCE-COURTS: `buildingType` is DFU's BuildingTypes either way it comes - the click's name ('Palace', the host's
+   *  buildingType()) or the building's own number (BUILDING_TYPES.Palace, 16), which is what the questor pool hands
+   *  in (talkTopics.js questorCandidateBuildings, GetBuildingList :2814-2816). The pool's palace compared 16 with
+   *  'Palace' and missed, so a factionless palace noble's work was the People's - commoner work - on the Bay and past it. */
   getStaticNPCFactionData(factionId, buildingType) {
     let id = factionId;
     if (id === 0) {
-      id = buildingType === 'Palace'
+      id = buildingType === 'Palace' || buildingType === BUILDING_TYPES.Palace
         ? (this.deps.courtOfCurrentRegion?.() ?? 0)
         : (this.deps.peopleOfCurrentRegion?.() ?? 0);
     } else if (id === RANDOM_RULER || id === RANDOM_NOBLE || id === RANDOM_KNIGHT) {

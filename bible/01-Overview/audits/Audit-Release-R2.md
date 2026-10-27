@@ -225,9 +225,10 @@ A departure (Port-Ledger A, IC-GRAND (10)).
   Since SPAWN-WORLD and TVD-WORLD (2026-10-27, `06-Systems/Systems-Arc.md`, `06-Systems/Travel-View.md`): online, spawns
   stand past the Bay too, each id in the world's spawn lane, and the Travel View's filed spawns read the world's grid.
 - **Courts, the watch, banishment**: region 62..70's own law, standing and banishment (`standing.js`, the 71 conditions);
-  a province's People faction is none (FACTION.TXT), which the court's paths take as their no-faction arm.
-- **Shops, banks, guilds**: prices and stock per region over the 71 (`worldTick.js`, `shopStock.js`); a province has no
-  Province faction, so no price tilt walks it (WW-R); a bank's account and a letter of credit the province's region's; a
+  a province's People faction is its own (PROVINCE-COURTS, `03-World/World-Wide.md`), the court's People half as a Bay
+  region's.
+- **Shops, banks, guilds**: prices and stock per region over the 71 (`worldTick.js`, `shopStock.js`); a province's own
+  Province faction tilts its walk (PROVINCE-COURTS); a bank's account and a letter of credit the province's region's; a
   tavern's menu by the climate where the region names none (`tavernMenu.js regionMenuDay`); a temple's divine and a
   knightly order by the building's faction where the region's table names none (`REGION_TEMPLES` padded with 0); the
   Mages Guild's scrying reads the province's table (BAY-LEFT-B, `06-Systems/Quest-Arc.md`: the quest layer's maps, its

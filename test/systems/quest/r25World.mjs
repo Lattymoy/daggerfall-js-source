@@ -44,6 +44,10 @@ export async function standWorldPastBay(ARENA2) {
   installWorldDataReplacement(); installCapitals(); installTownOutline();
   bindWorldDataBlocks(blocks);   // QUEST-FABRIC: as the world host binds it (scenes/world.js) - BLD-3's fabric buildings read off BLOCKS.BSA's donors
   const factions = new FactionFile(); factions.load(bytes('FACTION.TXT'));
+  // PROVINCE-COURTS: the talk host's reader as scenes/townTalk.js loads it - FACTION.TXT, then the door every non-FACTION.TXT
+  // faction comes in by (systems/faction/factionRep.js addCustomFactions: the provinces' own courts and people first)
+  const { addCustomFactions } = await import('../../../src/systems/faction/factionRep.js');
+  addCustomFactions(factions.factionDict, factions.factionNameToId);
   const rows = [];
   for (let r = 0; r < 62; r++) { if (!maps.getRegion(r)) continue; for (let l = 0; l < maps.baseLocationCount(r); l++) { const loc = maps.getLocation(r, l); if (loc) rows.push(loc); } }
   const climate = (x, y) => maps.getClimateIndex(x, y);
