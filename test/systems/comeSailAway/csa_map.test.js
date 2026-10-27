@@ -12,7 +12,11 @@ import {
   travelMapPicture, mapRect, guiMouse, mapPixelUnder, guiRectContains, vector2IntDistance, dayOfMonthWithSuffix, markerLabel,
   csFloatString, mapOverlayDraws, MAP_MARKER_MODE_COLORS, MAP_MARKER_MODE_LABELS, MAP_HELP_LINES, DAGGERFALL_DEFAULT_TEXT_COLOR,
   COLOR_BLACK, COLOR_RED, LINE_TEXTURE,
+  mapSheetAt, sheetOfPixel, sheetRect, tamrielMapPicture, TAMRIEL_MAP_IMG, MAP_SHEET_TAMRIEL, COLOR_WHITE,   // BAY-LEFT-MAPS C12
 } from '../../../src/systems/comeSailAway/comeSailAwayMap.js';
+import { bayToPicture, tamrielFrameInBay } from '../../../src/world/tamriel/tamrielFrame.js';   // BAY-LEFT-MAPS C12: the frame's fit
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { REGION_PANEL_OFFSET } from '../../../src/ui/travel/travelMapWindow.js';
 import { isEntityWaterWalking, assignModBundle, removeBundleNamed, WATER_WALKING_SILENT_KIND, hasActiveEffect, tickActiveEffects } from '../../../src/systems/effects.js';
 import { liveBundles } from '../../../src/systems/mysticism.js';
@@ -421,3 +425,92 @@ test('CSA-I: the host\'s seams - the map\'s window (a native window: every key, 
   assert.doesNotMatch(src('scenes/shared.js') + dc, /hasActiveEffect\((entity|playerEntity), 'waterWalking'\)/, 'no reader of the one kind alone');
 });
 
+// ── BAY-LEFT-MAPS C12 (2026-10-27, the owner after AUDIT LEFT IN THE BAY: "Every single thing here needs to be addressed. No
+// exceptions."; bible/03-World/Come-Sail-Away.md BAY-LEFT-MAPS) - THE READING PAST THE BAY ──────────────────────────────────
+// The mod's picture is the Bay's, so a boat past it had no cross. Past the Bay's map the reading is drawn on Daggerfall's
+// painting of Tamriel (TMAP00I0.IMG), the cross where the frame's fit puts the pixel; the markers are their sheet's.
+
+test('BAY-LEFT-MAPS C12 THE SHEET: on the Bay\'s map the mod\'s own picture (none); past it, inside the continent\'s frame, the painting; past both (the Eltheric Ocean\'s box, north of the painting) the mod\'s; the painting\'s rect its own 320 x 200 at the map\'s height, centred on the mod\'s (mutants: the Bay\'s sheet everywhere; the frame unread; the painting\'s rect the mod\'s; its rect off centre)', () => {
+  assert.deepEqual([[500, 250], [0, 0], [999, 499], [1000, 250], [1569, -430], [-1, 0], [2000, -5000], [NaN, 3]].map(mapSheetAt), [null, null, null, MAP_SHEET_TAMRIEL, MAP_SHEET_TAMRIEL, MAP_SHEET_TAMRIEL, null, null]);
+  const fr = tamrielFrameInBay();
+  assert.deepEqual([[fr.x0, fr.y0], [fr.x0 - 1, fr.y0], [fr.x0 + fr.w - 1, fr.y0 + fr.h - 1], [fr.x0 + fr.w, fr.y0], [fr.x0, fr.y0 + fr.h]].map(mapSheetAt), [MAP_SHEET_TAMRIEL, null, MAP_SHEET_TAMRIEL, null, null], 'the frame\'s edges');
+  assert.equal(sheetOfPixel({ X: 1569, Y: -430 }), MAP_SHEET_TAMRIEL);
+  assert.equal(sheetOfPixel({ X: 207, Y: 213 }), null);
+  assert.deepEqual(sheetRect(SCREEN, [1, 1], null), mapRect(SCREEN, [1, 1]), 'the Bay\'s: the mod\'s own rect');
+  assert.deepEqual(sheetRect(SCREEN, [1, 1], MAP_SHEET_TAMRIEL), { x: 560, y: 290, w: 800, h: 500 });
+  assert.deepEqual(sheetRect(SCREEN, [2, 2], MAP_SHEET_TAMRIEL), { x: 1120, y: 580, w: 1600, h: 1000 }, 'at the mod\'s scale, off its own rect as the mod\'s is');
+});
+
+test('BAY-LEFT-MAPS C12 THE DRAWS: past the Bay the painting stretched over its rect, the cross where the fit puts the pixel on it, the painting\'s markers alone and their labels; on the Bay the mod\'s picture and its markers, as before (mutants: the cross on the Bay\'s scale; the markers of every sheet; the painting\'s quad the Bay\'s)', () => {
+  const marks = [{ position: [15, 15], label: 'on the Bay', color: COLOR_RED }, { position: [15, 15], label: 'past it', color: COLOR_BLACK, sheet: MAP_SHEET_TAMRIEL }];
+  const o = { screenRect: SCREEN, screen: [1920, 1080], scale: [1, 1], mouse: [575, 305], unscaledTime: 0.1, showingPosition: true, pixel: [1569, -430],
+    markers: marks, markerMode: 0, opacity: 0.5, lineThickness: 1, markerThickness: 2, outlineThickness: 0, markerThicknessRaw: 2, clickRange: 5 };
+  const d = mapOverlayDraws(o), quads = d.filter((k) => k.kind === 'quad');
+  assert.deepEqual(quads[1], { kind: 'quad', tex: MAP_SHEET_TAMRIEL, rect: { x: 560, y: 290, w: 800, h: 500 }, color: COLOR_WHITE }, 'the painting over its rect');
+  const [px, py] = bayToPicture(1569, -430);
+  assert.ok(Math.abs(quads[2].rect.x - (560 + px * 2.5 - 1)) < 1e-3 && quads[2].rect.y === 290 && quads[2].rect.h === 500, `the cross's upright on Solitude's place (${quads[2].rect.x})`);
+  assert.ok(Math.abs(quads[3].rect.y - (290 + py * 2.5 - 1)) < 1e-3 && quads[3].rect.x === 560 && quads[3].rect.w === 800, 'and its bar');
+  assert.deepEqual(quads.slice(4).map((q) => [q.rect.x, q.rect.y, q.color]), [[573, 303, COLOR_BLACK]], 'the painting\'s marker alone');
+  assert.deepEqual(d.filter((k) => k.kind === 'text' && /^(on the Bay|past it)$/.test(k.text)).map((k) => k.text), ['past it'], 'and its label alone');
+  const bay = mapOverlayDraws({ ...o, pixel: [207, 213], mouse: [475, 305] }), bq = bay.filter((k) => k.kind === 'quad');
+  assert.deepEqual(bq[1], { kind: 'quad', tex: 'map', rect: { x: 460, y: 290, w: 1000, h: 500 }, color: COLOR_WHITE }, 'the Bay\'s own picture');
+  assert.deepEqual([bq[2].rect.x, bq[3].rect.y], [f(460 + 207 - 1), f(290 + 213 - 1)], 'its cross the mod\'s');
+  assert.deepEqual(bq.slice(4).map((q) => [q.rect.x, q.rect.y, q.color]), [[473, 303, COLOR_RED]]);
+  assert.deepEqual(bay.filter((k) => k.kind === 'text' && /^(on the Bay|past it)$/.test(k.text)).map((k) => k.text), ['on the Bay']);
+});
+
+test('BAY-LEFT-MAPS C12 THE READING PAST THE BAY: a marker placed on the painting is the painting\'s - beside a Bay marker of the same offset, off the painting nothing; the right button takes the painting\'s alone; the save keeps its sheet and a load gives it back; a Bay marker\'s record the one it was (mutants: the sheet not kept; IsPositionMarked across sheets; the right button across sheets; the save drops the sheet; the load drops the sheet; the mouse over the Bay\'s rect)', () => {
+  const s = scene();
+  s.world.pixel = { X: 1569, Y: -430 };
+  const boat = s.place(2);
+  s.rt.StartShowBoatPosition(boat);
+  s.world.box = false;
+  for (let i = 0; i < 4; i++) s.frame();
+  assert.equal(s.rt.state.mapShowing, true);
+  s.rt.AddMapMarker([20, 20], { ...MAP_MARKER_MODE_COLORS[1] }, 'a mod\'s mark');   // another mod's: the Bay's
+  s.rt.AddMapMarker([21, 21], { ...MAP_MARKER_MODE_COLORS[2] }, 'another');
+  s.mouseAtGui(580, 310);
+  s.frame({ down: ['Mouse0'] });
+  assert.deepEqual(s.rt.state.mapMarkers.map((m) => [m.position, m.sheet ?? null]), [[[20, 20], null], [[21, 21], null], [[20, 20], MAP_SHEET_TAMRIEL]], 'the painting\'s own, beside the Bay\'s');
+  assert.ok(s.out.log.includes('COME SAIL AWAY - MOUSE IS OVER MAP PIXEL (20, 20)'));
+  s.mouseAtGui(500, 300);
+  s.frame({ down: ['Mouse0'] });
+  assert.equal(s.rt.state.mapMarkers.length, 3, 'off the painting (on the Bay\'s rect): nothing');
+  const data = s.rt.getSaveData();
+  assert.deepEqual(data.placedMapMarkers.map((m) => [m.position, m.label, m.sheet]), [[{ x: 20, y: 20 }, 'a mod\'s mark', undefined], [{ x: 21, y: 21 }, 'another', undefined], [{ x: 20, y: 20 }, s.rt.state.mapMarkers[2].label, MAP_SHEET_TAMRIEL]]);
+  assert.deepEqual(Object.keys(data.placedMapMarkers[0]), ['position', 'label', 'color'], 'a Bay marker\'s record as it was');
+  s.mouseAtGui(581, 311);   // on the Bay's (21, 21) itself, the painting's (20, 20) a step off
+  s.frame({ down: ['Mouse1'] });
+  assert.deepEqual(s.rt.state.mapMarkers.map((m) => [m.position, m.sheet ?? null]), [[[20, 20], null], [[21, 21], null]], 'the painting\'s taken, the Bay\'s left - the nearer of them too');
+  s.rt.restoreSaveData(JSON.parse(JSON.stringify(data)));
+  assert.deepEqual(s.rt.state.mapMarkers.map((m) => [m.position, m.sheet ?? null]), [[[20, 20], null], [[21, 21], null], [[20, 20], MAP_SHEET_TAMRIEL]], 'a load gives the sheet back');
+});
+
+test('BAY-LEFT-MAPS C12 THE HOST: the painting built beside record 3, off its own file on its own palette; a quad drawn by its sheet\'s picture - the painting\'s its own, the map\'s and the line\'s as before (mutants: the painting drawn on the Bay\'s picture; the painting never built)', async () => {
+  const { createCsaMap } = await import('../../../src/scenes/csaMapHost.js');
+  const drawn = [];
+  const csaMap = createCsaMap({ CSA_MAP_TEXT_LAYER: 'csa', canvas: { width: 10, height: 10 }, getTexture: () => new Promise(() => {}), townTalk: { font: null },
+    renderer: { drawScreenQuad: (tex) => drawn.push(tex), uploadTexture: () => null } });
+  Object.assign(csaMap._csaPics, { map: 'MAP', line: 'LINE', tamriel: 'TAMRIEL', mapLoad: 1, lineLoad: 1, tamrielLoad: 1 });
+  const q = (tex) => ({ kind: 'quad', tex, rect: { x: 0, y: 0, w: 1, h: 1 }, color: COLOR_WHITE });
+  csaMap.csaDrawList([q('line'), q('map'), q(MAP_SHEET_TAMRIEL)]);
+  assert.deepEqual(drawn, ['LINE', 'MAP', 'TAMRIEL']);
+  const H = src('scenes/csaMapHost.js');
+  assert.match(H, /img\.load\(await fetchBytes\(TAMRIEL_MAP_IMG\), TAMRIEL_MAP_IMG\);/);
+  assert.match(H, /_csaPics\.tamriel = renderer\.uploadTexture\('img', 'csa-tamriel', csaToScreenOrder\(tamrielMapPicture\(img\.getDFBitmap\(0, 0\), \(i\) => pal\.get\(i\)\)\)\);/);
+});
+
+const ARENA2 = process.env.ARENA2_PATH ?? '';
+test('BAY-LEFT-MAPS C12 on the player\'s data: the painting is TMAP00I0.IMG whole on its own palette, opaque and top down (as the trace reads it)', { skip: !(ARENA2 && existsSync(join(ARENA2, TAMRIEL_MAP_IMG))) && 'no ARENA2_PATH' }, async () => {
+  const { ImgFile } = await import('../../../src/formats/imgFile.js');
+  const { DFPalette } = await import('../../../src/formats/dfPalette.js');
+  const img = new ImgFile();
+  img.load(new Uint8Array(readFileSync(join(ARENA2, TAMRIEL_MAP_IMG))), TAMRIEL_MAP_IMG);
+  const pal = new DFPalette();
+  pal.load(new Uint8Array(readFileSync(join(ARENA2, img.paletteName))), img.paletteName);
+  const bm = img.getDFBitmap(0, 0), pic = tamrielMapPicture(bm, (i) => pal.get(i));
+  assert.deepEqual([pic.width, pic.height, img.paletteName], [320, 200, 'MAP.PAL']);
+  let bad = 0;
+  for (let i = 0; i < 320 * 200; i++) { const c = pal.get(bm.data[i]); if (pic.data[i * 4] !== c.r || pic.data[i * 4 + 1] !== c.g || pic.data[i * 4 + 2] !== c.b || pic.data[i * 4 + 3] !== 255) bad++; }
+  assert.equal(bad, 0, 'every texel its index\'s colour');
+});

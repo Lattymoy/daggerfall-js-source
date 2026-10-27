@@ -2,7 +2,11 @@
 // The host constructs it where the code stood. What it reads of the host's scope comes through `host`: the
 // settled names by value at construction, every live one (a `let` someone writes, a `const` made below) read at its
 // use as `host.<name>` - as the code read them where it was.
-import { LINE_TEXTURE as CSA_LINE_TEXTURE, TRAVEL_MAP_IMG, travelMapPicture } from '../systems/comeSailAway/comeSailAwayMap.js';
+//
+// BAY-LEFT-MAPS (2026-10-27, AUDIT LEFT IN THE BAY C12; bible/03-World/Come-Sail-Away.md BAY-LEFT-MAPS) grew it, after the
+// move: the third picture, Daggerfall's painting of Tamriel (TMAP00I0.IMG on its own palette - the reading's sheet past the
+// Bay, systems/comeSailAway/comeSailAwayMap.js mapSheetAt), built beside record 3, and a quad drawn by its sheet's picture.
+import { LINE_TEXTURE as CSA_LINE_TEXTURE, TRAVEL_MAP_IMG, travelMapPicture, TAMRIEL_MAP_IMG, tamrielMapPicture } from '../systems/comeSailAway/comeSailAwayMap.js';
 import { toScreenOrder as csaToScreenOrder } from '../formats/color32Order.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { drawEnhancedTextLayer } from '../ui/enhanced/enhancedTextLayer.js';
@@ -17,8 +21,9 @@ export function createCsaMap(host) {
     CSA_MAP_TEXT_LAYER, canvas, getTexture, renderer, townTalk
   } = host;
   /** OnGUI's two pictures, built at the map's first draw: record 3 rebuilt from the player's TRAV0I00.IMG (the
-   *  port never carries it) and lineTexture, TEXTURE.000's solid record 112. */
-  const _csaPics = {};   // HOST-SPLIT (BAY-LEFT-MAPS): the pictures and their loads in a holder ({ map, mapLoad, line, lineLoad }), so the draw moves out whole
+   *  port never carries it) and lineTexture, TEXTURE.000's solid record 112 - BAY-LEFT-MAPS (C12): and a third, the
+   *  painting of Tamriel the reading is drawn on past the Bay (TMAP00I0.IMG). */
+  const _csaPics = {};   // HOST-SPLIT (BAY-LEFT-MAPS): the pictures and their loads in a holder ({ map, mapLoad, line, lineLoad }, C12's tamriel, tamrielLoad), so the draw moves out whole
   function csaMapPictures() {
     _csaPics.mapLoad ??= (async () => {
       const img = new ImgFile();
@@ -27,6 +32,14 @@ export function createCsaMap(host) {
       pal.load(await fetchBytes(img.paletteName), img.paletteName);
       _csaPics.map = renderer.uploadTexture('img', 'csa-map', csaToScreenOrder(travelMapPicture(img.getDFBitmap(0, 0), (i) => pal.get(i))));
     })().catch((e) => console.warn('[come-sail-away] the position reading\'s map did not build', e));
+    // BAY-LEFT-MAPS (C12): the painting of Tamriel, the reading's sheet past the Bay - its own file on its own palette
+    _csaPics.tamrielLoad ??= (async () => {
+      const img = new ImgFile();
+      img.load(await fetchBytes(TAMRIEL_MAP_IMG), TAMRIEL_MAP_IMG);
+      const pal = new DFPalette();
+      pal.load(await fetchBytes(img.paletteName), img.paletteName);
+      _csaPics.tamriel = renderer.uploadTexture('img', 'csa-tamriel', csaToScreenOrder(tamrielMapPicture(img.getDFBitmap(0, 0), (i) => pal.get(i))));
+    })().catch((e) => console.warn('[come-sail-away] the position reading\'s painting of Tamriel did not build', e));
     _csaPics.lineLoad ??= getTexture(CSA_LINE_TEXTURE.archive).then((t) => {
       _csaPics.line = renderer.uploadTexture('img', 'csa-line', t.getColor32(t.getDFBitmap(CSA_LINE_TEXTURE.record, CSA_LINE_TEXTURE.frame), 0));
     }).catch((e) => console.warn('[come-sail-away] the position reading\'s line texture did not load', e));
@@ -43,7 +56,7 @@ export function createCsaMap(host) {
     const words = layerId && isEnhanced() && typeof document !== 'undefined' ? [] : null;
     for (const d of draws) {
       if (d.kind === 'quad') {
-        const tex = d.tex === 'map' ? pics?.map : pics?.line;
+        const tex = d.tex === 'line' ? pics?.line : d.tex === 'tamriel' ? pics?.tamriel : pics?.map;   // BAY-LEFT-MAPS (C12): the painting's quad its own picture (comeSailAwayMap.js MAP_SHEET_TAMRIEL)
         if (tex) renderer.drawScreenQuad(tex, d.rect, undefined, rgba(d.color));
       } else if (words) {
         words.push({ text: d.text, x: d.x, y: d.y, cell: (font?.fnt?.fixedHeight ?? 7) * d.scale, color: rgba(d.color), shadow: rgba(d.shadow), shadowPos: d.shadowPos });

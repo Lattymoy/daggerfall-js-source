@@ -852,5 +852,187 @@
     "tests": [
       "test/systems/bayleft_disckey.test.js"
     ]
+  },
+  {
+    "name": "BLM-C12-the-bay's-sheet-everywhere",
+    "file": "src/systems/comeSailAway/comeSailAwayMap.js",
+    "old": "  if (!Number.isFinite(x) || !Number.isFinite(y) || inBay(x, y)) return null;",
+    "new": "  if (true) return null;",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ],
+    "note": "a boat past the Bay has no cross on the reading (AUDIT LEFT IN THE BAY C12)"
+  },
+  {
+    "name": "BLM-C12-the-frame-unread",
+    "file": "src/systems/comeSailAway/comeSailAwayMap.js",
+    "old": "  return x >= fr.x0 && y >= fr.y0 && x < fr.x0 + fr.w && y < fr.y0 + fr.h ? MAP_SHEET_TAMRIEL : null;",
+    "new": "  return MAP_SHEET_TAMRIEL;",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ],
+    "note": "the Eltheric Ocean's box read onto a painting that does not hold it"
+  },
+  {
+    "name": "BLM-C12-the-painting's-rect-the-mod's",
+    "file": "src/systems/comeSailAway/comeSailAwayMap.js",
+    "old": "  if (sheet !== MAP_SHEET_TAMRIEL) return r;",
+    "new": "  return r;",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-its-rect-off-centre",
+    "file": "src/systems/comeSailAway/comeSailAwayMap.js",
+    "old": "  return { x: f(r.x + f(f(r.w - w) / 2)), y: f(r.y + f(f(r.h - h) / 2)), w, h };",
+    "new": "  return { x: r.x, y: r.y, w, h };",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-the-cross-on-the-bay's-scale",
+    "file": "src/systems/comeSailAway/comeSailAwayMap.js",
+    "old": "    const [cx, cy] = sheet ? tamrielCrossAt(o.pixel, r) : [",
+    "new": "    const [cx, cy] = false ? tamrielCrossAt(o.pixel, r) : [",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-the-markers-of-every-sheet",
+    "file": "src/systems/comeSailAway/comeSailAwayMap.js",
+    "old": "  const shown = o.markers.filter((m) => (m.sheet ?? null) === sheet);",
+    "new": "  const shown = o.markers;",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-the-painting's-quad-the-bay's",
+    "file": "src/systems/comeSailAway/comeSailAwayMap.js",
+    "old": "  quad(sheet ?? 'map', r.x, r.y, r.w, r.h, COLOR_WHITE);",
+    "new": "  quad('map', r.x, r.y, r.w, r.h, COLOR_WHITE);",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-the-painting-off-its-indices",
+    "file": "src/systems/comeSailAway/comeSailAwayMap.js",
+    "old": "    const c = colorOf(bitmap.data[i]);",
+    "new": "    const c = colorOf(bitmap.data[0]);",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-the-sheet-not-kept",
+    "file": "src/systems/comeSailAway/comeSailAwayMap.js",
+    "old": "(sheet ? { position, label, color, sheet } : { position, label, color });",
+    "new": "({ position, label, color });",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-marked-across-sheets",
+    "file": "src/systems/comeSailAway/comeSailAwayMap.js",
+    "old": "export const markerOn = (m, pos, sheet = null) => (m.sheet ?? null) === (sheet ?? null) && m.position[0]",
+    "new": "export const markerOn = (m, pos, sheet = null) => m.position[0]",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-the-distance-across-sheets",
+    "file": "src/systems/comeSailAway/comeSailAwayMap.js",
+    "old": "((m.sheet ?? null) === (sheet ?? null) ? vector2IntDistance(m.position, pos) : Infinity);",
+    "new": "vector2IntDistance(m.position, pos);",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-the-save-drops-the-sheet",
+    "file": "src/systems/comeSailAway/comeSailAwayMap.js",
+    "old": "color: m.color, ...(m.sheet ? { sheet: m.sheet } : {}) });",
+    "new": "color: m.color });",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-the-load-drops-the-sheet",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "m.color, m.label, m.sheet ?? null);",
+    "new": "m.color, m.label);",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-the-mouse-over-the-bay's-rect",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    const r = sheetRect(sr, screenScaleOf(sr), sheetOfPixel(deps.currentMapPixel()));",
+    "new": "    const r = sheetRect(sr, screenScaleOf(sr), null);",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-a-click-the-bay's",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "{ ...MAP_MARKER_MODE_COLORS[state.mapMarkerMode] }, sheetOfPixel(deps.currentMapPixel())));",
+    "new": "{ ...MAP_MARKER_MODE_COLORS[state.mapMarkerMode] }, null));",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-marked-on-the-bay's",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "  const IsPositionMarked = (pos, sheet = sheetOfPixel(deps.currentMapPixel())) =>",
+    "new": "  const IsPositionMarked = (pos, sheet = null) =>",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-a-load-across-sheets",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    if (!state.mapMarkers.some((m) => markerOn(m, mapPixel, sheet))) state.mapMarkers.push(",
+    "new": "    if (!state.mapMarkers.some((m) => markerOn(m, mapPixel, m.sheet))) state.mapMarkers.push(",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-the-right-button-the-bay's",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "      const num3 = markerDistance(state.mapMarkers[num6], val3, sheetOfPixel(deps.currentMapPixel()));",
+    "new": "      const num3 = markerDistance(state.mapMarkers[num6], val3, null);",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-the-painting-drawn-on-the-bay's-picture",
+    "file": "src/scenes/csaMapHost.js",
+    "old": "        const tex = d.tex === 'line' ? pics?.line : d.tex === 'tamriel' ? pics?.tamriel : pics?.map;",
+    "new": "        const tex = d.tex === 'line' ? pics?.line : pics?.map;",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C12-the-painting-never-built",
+    "file": "src/scenes/csaMapHost.js",
+    "old": "      _csaPics.tamriel = renderer.uploadTexture(",
+    "new": "      _csaPics.painting = renderer.uploadTexture(",
+    "tests": [
+      "test/systems/comeSailAway/csa_map.test.js"
+    ]
   }
 ]
