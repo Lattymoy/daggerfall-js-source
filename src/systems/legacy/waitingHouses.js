@@ -35,11 +35,13 @@ import { t } from '../textManager.js';   // RPT1026-MISC HEIR-WAITS: the newborn
 export const DEFAULT_BIRTH_PLACE = Object.freeze({ region: 'Daggerfall', loc: 'Daggerfall' });
 
 /**
- * THE LINES WHOSE SUCCESSION WAITS, and who may answer it: `[{ family, fallen, heirs }]`. A line is listed while its fall
+ * THE LINES WHOSE SUCCESSION WAITS, and who may answer it: `[{ family, fallen, heirs, newborn }]`. A line is listed while its fall
  * is unanswered (`pending`) and it has not ended; an heir is a living member of the blood (never one wed in), not
  * retired, never the fallen - a child too (succeed brings them of age) - who has no living character to be played as
  * (`played(characterId)`: online the account's roster holds them, and they are joined from there).
- * @param {any[]} families @param {{ played?: (characterId: string) => boolean }} [opts]
+ * RPT1026-MISC HEIR-WAITS: `newborn` - the fall may raise a newborn heir (`settings`, the player's legacy settings,
+ * answer the Descendants dial), and a line with that alone is listed too.
+ * @param {any[]} families @param {{ played?: (characterId: string) => boolean, settings?: any }} [opts]
  */
 export function waitingHouses(families, { played = () => false, settings = null } = {}) {
   const out = [];
@@ -75,7 +77,9 @@ const newbornOffered = (family, fallen, settings) => !!fallen && (fallen.retired
  * current, stored - and their birth is left for the boot in their seat (or Daggerfall). Answers `{ ok: true, family }`
  * (the caller writes it to the realm and boots `?online&realmnew&legacyborn=<personId>&region&loc`) or `{ ok: false,
  * why }`. A member who has been played and whose character stands is no birth: the roster plays them.
- * @param {{ storage: any, tab: any, familyId: string, personId: number, now?: number }} a
+ * RPT1026-MISC HEIR-WAITS: `newborn` raises the fall's newborn heir instead of a member (`personId` unread), with the
+ * player's legacy `settings` and the child's dice (`rng`).
+ * @param {{ storage: any, tab: any, familyId: string, personId: number | null, now?: number, newborn?: boolean, settings?: any, rng?: () => number }} a
  */
 export function takeUpLine({ storage, tab, familyId, personId, now = Date.now(), newborn = false, settings = null, rng = Math.random }) {
   const family = loadFamily(storage, familyId);
