@@ -37,6 +37,8 @@ const NAMED = {
   'src/systems/decor/decorItems.js': 1,
   'src/systems/enchantmentCatalogue.js': 2,
   'src/systems/enemyExpansion/dexTroll.js': 1,   // DEX5: the troll's recovery line names its kind in the player's language
+  'src/systems/faction/factionStanding.js': 1,   // PROVINCE-COURTS: the Standing page's rows shown as GetFactionData shows a name
+  'src/systems/faction/provinceFactions.js': 1,   // PROVINCE-COURTS: a province's court and people by the region's shown name
   'src/systems/item/itemInfo.js': 4,
   'src/systems/loot/loot.js': 1,
   'src/systems/notebook.js': 2,   // L10N5: a header's place drawn again in the language of the load
