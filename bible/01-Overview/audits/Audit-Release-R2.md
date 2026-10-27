@@ -216,9 +216,10 @@ A departure (Port-Ledger A, IC-GRAND (10)).
   spawns stand (`travelDungeons.js filedSpawns`); a spawn's id throws only for a Bay-less pixel, and no pixel past the
   Bay asks it (`world.js _locationToBuild` hands those to the places past the Bay first, and `spawnedDungeonAt` catches).
 - **Courts, the watch, banishment**: region 62..70's own law, standing and banishment (`standing.js`, the 71 conditions);
-  a province's People faction is none (FACTION.TXT), which the court's paths take as their no-faction arm.
-- **Shops, banks, guilds**: prices and stock per region over the 71 (`worldTick.js`, `shopStock.js`); a province has no
-  Province faction, so no price tilt walks it (WW-R); a bank's account and a letter of credit the province's region's; a
+  a province's People faction is its own (PROVINCE-COURTS, `03-World/World-Wide.md`), the court's People half as a Bay
+  region's.
+- **Shops, banks, guilds**: prices and stock per region over the 71 (`worldTick.js`, `shopStock.js`); a province's own
+  Province faction tilts its walk (PROVINCE-COURTS); a bank's account and a letter of credit the province's region's; a
   tavern's menu by the climate where the region names none (`tavernMenu.js regionMenuDay`); a temple's divine and a
   knightly order by the building's faction where the region's table names none (`REGION_TEMPLES` padded with 0); the
   Mages Guild's scrying refuses where no region table loads (`lootScry.js scryRefusal`).

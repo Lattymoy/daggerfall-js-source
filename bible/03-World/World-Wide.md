@@ -64,6 +64,7 @@ was built on the Bay and stops at its edge. A survey of the tree on 2026-10-24 f
 | WW2 | The gates in every theatre: one Oblivion Gate a game day in each theatre that holds ground for one, lane = theatre, the Bay's lane 0 its own today; the site scan over the registry; the omen, ring, plaque, chat, timers and event board per gate; the relay's rooms, the receipts and the herald per lane | BUILT (below) |
 | WW3 | The sea, whole: the packet lanes over the registry's ports on the world's water; the raiders' and the director's sea world-wide; the port test's bounds | BUILT (below) |
 | WW-R | The provinces as regions: each province past the Bay a region of its own after the Bay's 62 (the owner, 2026-10-24: "Separate regions make sense"); the politic map past the Bay; the people, the law, the banks and the regional channels a province's | BUILT (below) |
+| PROVINCE-COURTS | Each province's own court and people: a Province, its named ruler, its Court and its People for each of regions 62..70 (the owner's call taken, 2026-10-26: "Every single thing here needs to be addressed. No exceptions."), read by every reader of a region's court and people; the capitals' castles their courts; a bloodline a province; a clan never a province's | BUILT (below) |
 | WW-C | Cyrodiil (the owner, 2026-10-24: "Each region becomes home to their own abundant harvesting resources with other resources sprinkled in. Cyrodil becomes the new open PvP area with the wrothgarian mountain area being retired in favor of this. Cryodil will be home to all abundent resources and everything else from the wrothgarian zone"): WW-C1 each province's ground rich in its own kinds and ore, Cyrodiil in all; WW-C2 the open zone moved from the Wrothgarian Mountains to Cyrodiil | BUILT (below) |
 | WW4 | The serpent in every sea: a serpent lane for each sea theatre | IN PART (WW7-12, below: the one serpent's site rolled over every lane of the world, the hub telling every game the site the accounts agree on; a serpent a sea theatre still planned) |
 | WW5 | The Hollows and the stars: an Abyss dungeon slot and a Starfall coven night in each theatre | planned |
@@ -474,8 +475,8 @@ word for a Bay region). An AREA is unchanged: the Bay's are its 62 regions (`BAY
 The law's (`systems/region/regionConditions.js REGION_COUNT`), the banks' and the houses' (`systems/banking.js
 BANK_REGION_COUNT`) are the 71; a save's 62 is padded on its restore (`padRegionTable` - its rows kept, the provinces'
 opened blank). A crime in Skyrim is Skyrim's (`systems/livingWorld/relations.js reportOk`). The regional price walk draws
-the provinces' rolls after the Bay's (the Bay's prices the ones they were); a province has no Province faction, so no
-tilt walks it.
+the provinces' rolls after the Bay's (the Bay's prices the ones they were); a province's own Province faction
+(PROVINCE-COURTS, below) tilts its walk as a Bay region's does.
 
 ### The relay (world255) and the account service (acct181)
 
@@ -498,7 +499,6 @@ DEPLOY ORDER: the relay first (world255), then the account service (acct181), th
 - The town-bound books (above) and the seats (`townSeatLaw.js seatRegionOk`), the homes (`homeLaw.js`), the town economy
   (`townEconLaw.js`) - their towns are the Bay's until WW7 stands the world's towns past it.
 - The Bay's three crowns (`kingdomLaw.js`): no province is a crown's, a march or a free land.
-- The faction tables (FACTION.TXT): no Province faction for a province; `BORDER_REGIONS` reads FACTION.TXT's regions.
 - The classic save formats (SAVEVARS, MAPSAVE) are the Bay's 62, as Daggerfall wrote them.
 
 ### Pins and mutants
@@ -521,6 +521,174 @@ politic, the chat key's bound, the save's padding, the naval wire's region, the 
 
 Section A, WW-R (OURS: DFU's regions are MAPS.BSA's 62; the provinces' regions past the Bay are the port's own, the Bay's
 answers DFU's to the byte).
+
+## PROVINCE-COURTS - each province its court and its people (BUILT, 2026-10-27)
+
+The audit "no system left behind in the Bay" (item 33) found FACTION.TXT's per-region factions the Bay's alone: a
+Province faction (type 7) for each of the Bay's regions, its Court (14) and its People (15) its children, and a crown's
+ruler its first child (Gothryd, Akorithi, Eadwyre) - and none for the provinces past the Bay (regions 62..70, WW-R). The
+owner's call taken (*"Every single thing here needs to be addressed. No exceptions."*, 2026-10-26): the provinces get
+courts and people of their own.
+
+### What stood (measured on the freeware, at e77eadc58f)
+
+- Regions 62..70: no People, no Court, no Province faction. `findFactionByTypeAndRegion(Province, r)` answered Random
+  Ruler (852, region -1 - the last region-less match, DFU's own fallback): `%rt` "Lord", `%rn` a stranger drawn afresh
+  at every read; the price walk tilted by Random Ruler's power (65, a tilt of -5 everywhere past the Bay).
+- The 56 palaces past the Bay carry Random Ruler, as 319 of the Bay's 322 do (the three crowns' carry their Province),
+  and `courtOfCurrentRegion` found no court: their nobles' work was the commoners'. A crime moved no People's
+  standing. No war, famine or plague walked a province. A vampire turned there was a Lyrezi (GetVampireClan's
+  default). The capitals' castles stood the Bay's court down (WW7-4) and had no court of their own.
+- A defect beside it, on the Bay too: the questor pool resolves a candidate with its building's own type, DFU's number
+  (`talkTopics.js` questorCandidateBuildings - GetBuildingList :2814-2816), and `npcSession.js`
+  getStaticNPCFactionData compared the palace with the click's name, `'Palace'` - so a factionless palace NPC's work
+  was the People's, commoner work, on the Bay and past it. The click mapped the type and was right.
+
+### The factions (`systems/faction/provinceFactions.js`)
+
+- **Four a province, keyed by the region**: its Province (6000 + region), its ruler (6100 +), its Court (6200 +) and
+  its People (6300 +) - past every id FACTION.TXT uses (0..977, the duplicates' resolver from 980) and the port's
+  registered mods' (Roleplay & Realism's 1020-1022, Immersive Travel's 8642-8643). Shaped as FACTION.TXT's crowns are
+  (Daggerfall 201, its Court 595, its People 518): the Province a root of the Nobility and the Region guild group, its
+  children the ruler, the Court and the People in that order (the ruler first, as Gothryd is Daggerfall's - `%rn`,
+  `%nrn` and the throne room read the first child); the Court the crowns' Courts' (power 25, flags 128); the People the
+  crowns' People's (Commoners, GeneralPopulace, power 5 - Wayrest's). Every field of FactionFile's record.
+- **The door**: `factionRep.js` addCustomFactions, DFU's AddCustomFactions - the one door a faction not in FACTION.TXT
+  comes in by - adds them first, then the registry's. Both dictionaries the game reads are filled through it: the
+  player's store at its Reset (`createFactionRep`) and the talk host's reader (`scenes/townTalk.js`). Their children
+  are their own, so no relink is asked and no Bay record moves.
+- **Their names**: the Province its region's name; the Court and the People `Court of {province}` and `People of
+  {province}` - the canonical English the key (a faction's name is one: factionNameToIDDict), each shown in the
+  player's language through `textManager.js` registerFactionNameText, the port's own door GetLocalizedFactionName asks
+  after a translation pack's Factions table (no pack holds an id the port minted). The Standing page's rows are shown
+  through GetLocalizedFactionName now (`factionStanding.js`), as GetFactionData shows a name - FACTION.TXT's through a
+  pack's table where one is installed, as before. Six keys, drafted in every language.
+
+### The nine (the decisions)
+
+| Region | Province | Ruler | Seat | Power | Bloodline | Why the bloodline |
+|---|---|---|---|---|---|---|
+| 62 | High Rock | Duke Alabynak Masterton | - (no crown, WW7-3) | 60 | Garlythi | Northmoor's and Phrygias' clan - the Bay's Breton north, whose land runs on past the Bay's edge into High Rock past it (both meet it on the politic map); the Wrothgarians on that edge are the Orcs', and Lyrezi is every clanless region's default already |
+| 63 | Hammerfell | Duchess Rlirptha | - (no crown) | 60 | Anthotis | the Alik'r Desert's and Dak'fron's clan - the desert runs on past the Bay to Skaven, Hegathe and Elinhir (527 of the edge's pixels against Hammerfell past it are theirs, more than any other clan's) |
+| 64 | Skyrim | High King Haran Jurgarnesen | Solitude | 80 | Haarvenu | the frost-casters (their Ice Storm) - the nearest of Daggerfall's nine to the north's own ice |
+| 65 | Morrowind | King Helil Sailathil | Mournhold | 80 | Montalion | Wayrest's clan, and Wayrest's court is Morrowind's royal line (Queen Barenziah, Prince Helseth); their Recall is Morrowind's own art |
+| 66 | Sumurset Isle | Queen Cymbana Larethwatch | Alinor | 80 | Thrafey | the healers (Heal) - the Altmer's Restoration |
+| 67 | Valenwood | King Legoman Ivywood | Falinesti | 70 | Khulari | the hunters (Paralysis) - the Green Pact's and the Wild Hunt's land |
+| 68 | Elsweyr | Queen Najjan Raihan | Torval | 70 | Lyrezi | the stealthy (Silence, Invisibility) - the Khajiit's own way |
+| 69 | Black Marsh | King Caligius Calissius | Helstrom | 65 | Selenu | the hardy (Resist Cold, Fire and Shock) - the Argonians' famed resilience |
+| 70 | Cyrodiil | Emperor Uriel Septim VII | the Imperial City | 90 | Vraseth | FACTION.TXT's own: The Septim Empire (350) carries vam 150, the Vraseth |
+
+- **Each clan once**: the nine bloodlines, one a province - no province takes another's, and the default Lyrezi is
+  Elsweyr's by choice, not by a miss. FACTION.TXT's own clans carry regions 62..70 (below) and are no mapping: their
+  numbers are sequential ids, not provinces.
+- **The titles** are the lore's: DFU's own King, Queen, Duke and Duchess (MacroHelper.GetRulerTitle's 1-4), and the
+  port's after DFU's twelve (`buildingNames.js` RULER_TITLES): High King 13, High Queen 14, Emperor 15, Empress 16 - the
+  same law, a man's odd, a woman's even. High Rock's and Hammerfell's land past the Bay is held by a duke and a duchess:
+  their crowns are the Bay's three (WW7-3), and a land held under a crown is a duke's on the Bay's own map (Northmoor's
+  Province carries ruler 3, a Duke). Elsweyr's is a queen: Torval was Pelletine's seat, a queen's. Sumurset's a queen,
+  as asked.
+- **The names** are drawn from the province's own name bank (WW-R's REGION_NAME_BANKS - an Argonian's the Imperial
+  bank, as NameHelper says) on the game's own banks (`withGameNameBanks` - a translation's NameGen.txt never moves a
+  key), seeded by the ruler's id, the DFRandom stream put back after (a dictionary is made mid-game). One departure,
+  recorded: Cyrodiil's ruler is Daggerfall's own Emperor, Uriel Septim VII (TEXT.RSC: "the true Emperor of Tamriel,
+  Uriel Septim VII"), never a stranger - the game's own story names him, and a bank's draw would contradict it.
+- **The powers**: the Bay's crowns stand at 75-80, its other regions about 50-70. Cyrodiil, the Empire's seat, 90;
+  Skyrim, Morrowind and Sumurset 80; Valenwood and Elsweyr 70; Black Marsh 65; the dukes' lands 60.
+- **Their flags**: a crowned province the crowns' 60 (RulerImmune with the crowns' other bits), a duke's land
+  RulerImmune alone - the named ruler stands, so `%rn` and the throne never change hands under them.
+
+### What reads them now
+
+- **The palaces' nobles** (`npcSession.js` getStaticNPCFactionData - Random Ruler's redirect, and a factionless palace
+  noble through the pool's own number now): the province's Court, the Nobility - noble work (the Nobility's list,
+  R0C10...). Every palace of Skyrim's eight cities (pinned).
+- **The capitals' castles** (`world/capitalCastles.js` CASTLE_SEATS): the Bay court's people re-seated in the copy
+  rather than stood down - through DFU's own generic factions, which talk and work read as the region's court
+  (Random_Ruler, Random_Noble, Random_Knight -> courtOfCurrentRegion): the crown's ruler on the throne under Random
+  Ruler, its nobles and its court under Random Noble, its knights under Random Knight, each in its generic faction's own
+  look (FACTION.TXT 852's and 242's 183.6 / 183.8, 853's 183.3 / 183.14) by its own gender - no Bay royal's likeness;
+  its commoners factionless (the region's People), in their own look. The clans' spies, the scholars and guild members
+  a Bay story names (Popudax, Karethys, Lady Northbridge, Charvek-si, Cyndassa) and the mobiles' records go, as WW7-4
+  stood them down. So the Blue Palace's nobles are the Court of Skyrim's, and a castle noble's work is noble work.
+- **The throne room** (`crownHall.js` crownRulerHere): a province's ruler sits a castle under Random Ruler (one copy
+  serves two capitals - Sentinel's Solitude and Torval), so the person on that seat is the throne room's ruler; a Bay
+  crown's is found by its own id alone. WW7-4's "a throne room's ruler past the Bay" is closed.
+- **`%rn`, `%rt`, `%t`, `%nrn`** (`questMacros.js`): the Province's first child and its title - "High King Haran
+  Jurgarnesen" in Skyrim, "Emperor Uriel Septim VII" in Cyrodiil; a shop's "The %rt's" (townTalk's regentRuler).
+- **A crime** (`court.js` lowerRepForCrime): the People's half of the legal loss, propagating through the province's
+  tree as a Bay crime walks Daggerfall's; the sentence's and the payment's refunds the same People.
+- **The price walk** (`shopStock.js` updateRegionalPrices, and the online world's - worldPriceTiltOf): Skyrim's own
+  power against The Merchants' - trunc((40 - 80) / 5) = -8, Random Ruler's -5 before; Cyrodiil's -10.
+- **The regional conditions** (`region/regionPower.js`): nine more Provinces walk - their power, their alliances and
+  rivalries with the world's factions (the Bay's among them, and the rumour mill tells them), famine, plague, crime
+  waves; no new ruler (RulerImmune), no persecuted temple (a province's REGION_TEMPLES is none) and no witch burnings
+  (no coven of a province's own).
+- **Wars** (`faction/factionRelations.js` PROVINCE_BORDERS): DFU's border table is the Bay's 62 rows. The pairs whose
+  land meets on the politic map past the Bay (measured on the freeware) - twelve between provinces (Sumurset Isle meets
+  none) and eleven across the Bay's edge (High Rock past it with the Wrothgarian Mountains, Northmoor, Phrygias and
+  Ykalon; Hammerfell past it with the Alik'r Desert, the Dragontail Mountains, Dak'fron, the Wrothgarian Mountains,
+  Abibon-Gora, Mournoth and Gavaudon). A pair with a province in it is read there alone, and for two Provinces alone;
+  every Bay pair answers DFU's table as before - whose rows name a 62 three times (Bantha's and the two High Rock
+  coasts', regions no faction holds), never the port's High Rock.
+- **A vampire turned** (`scenes/shared.js` clanOf -> `infection.js` vampireClanForFaction): the province's bloodline -
+  Skyrim's Haarvenu.
+- **The Standing page's Kingdoms** (`factionStanding.js`): the nine provinces among FACTION.TXT's 45, by name, in the
+  player's language.
+
+### The clans' regions (the latent hazard)
+
+FACTION.TXT's nine vampire clans (150-158) carry regions 62..70 - the provinces' very numbers, since WW-R numbered the
+provinces after the Bay's 62. A lookup of a faction by its region alone would take The Thrafey for Skyrim's. Every one
+is typed - the court's (Courts, the Region guild group), the people's (People, Commoners, GeneralPopulace), a region's
+Province (type 7: `%rn`/`%rt`, the hosts' region faction, the throne room's walk, the price walk), the coven's - and the
+test sweeps the source for it (every `findFactions` names a type; every `findFactionByTypeAndRegion` a FACTION_TYPES,
+the Province's 7, or its caller's type passed through; crownHall's walk the Province type). The war's border test past
+the Bay asks two Provinces: a clan's region reads as no province.
+
+### Saves and online
+
+- **The save**: `save.js` snapshotFactionRep carries every faction of the store, a province's with them; an old save
+  loads with the provinces at their default - restoreFactionRep skips what the snapshot lacks, and the store made them
+  fresh. A classic import (`classicFactionRep`) copies FACTION.TXT's ids alone, the provinces at their default.
+- **Online**: no book of the account service is a region's court or people - its standing book, the Roll (CHAP1), is
+  the twenty-two guild factions. A province's standing rides the realm's save, whose faction store takes any id; the
+  staff repair (`net/repairLaw.js` - an id to 0xffff) and Project Legacy's standing (`systems/legacy/influence.js` -
+  keys of six digits) take the new ids (pinned). No relay law reads a court or a people. The account Worker's bundle
+  carries `buildingNames.js` (the titles) and both workers' carry `textManager.js` (the name door): acct196 and
+  world270 are re-hashed in place for it at the integration (neither deployed), no behaviour of either service moving.
+
+### What stays (recorded)
+
+- FACTION.TXT's records are the Bay's to the byte (pinned: every record, its children, every Bay region's court,
+  people and Province); the reader is exact.
+- No knightly order, temple, coven or guild of a province's own: FACTION.TXT's groups stay the Bay's.
+- A castle's copy serves two capitals, so its seated ruler speaks as the region's court under a generated name; the
+  named ruler is `%rn`'s.
+
+### THE FOUR HOSTS (Home.md)
+
+No host line moved. `scenes/world.js` and `scenes/worldModes.js` (interiors, castles) wire their sessions' court,
+people and region faction off the store and the reader the door fills; `scenes/dungeonContext.js` stands the castle's
+people from the copy (rdbLayout's flats); `scenes/exterior.js`, the Bay's fixed city - FLAGGED: no province stands
+there, its region is the Bay's.
+
+### Pins and mutants
+
+`test/world/worldWide/provincecourts.test.js` (21): the records, the rulers and their titles, the bloodlines, the door,
+the shown names, the borders and the clans, the pool's palace, the castle's seats and the throne, the typed lookups
+swept; on the freeware the Bay's records to the byte, every reader's answer for every province (and none before), `%rn`
+and `%rt`, a crime in Skyrim, Skyrim's prices, a vampire turned there, the conditions and a war, the save and an old
+one, the online laws, the Blue Palace's noble's work, Skyrim's eight palaces' nobles' work, every court person seated by
+FACTION.TXT's own law. Mutants `tools/mutants/provincecourts.json` (36, all dead).
+
+PINS MOVED: `fb1009e_everystanding.test.js` (the kingdoms by name and their counts: the nine provinces with FACTION.TXT's
+45), `court.test.js` (every faction travels: FACTION.TXT's and the provinces'), `rr3_questline.test.js` (the door's
+count), `ww7_castles.test.js` (the court re-seated, not stood down), `l10n4_hardcoded.test.js` (+1 for the new module:
+Uriel Septim VII, a proper name). The test world (`test/systems/quest/r25World.mjs`) stands its reader through the
+door, as the talk host does.
+
+Section A, PROVINCE-COURTS (OURS: DFU's factions are FACTION.TXT's, and it has none past the Bay; the provinces' are the
+port's own, the Bay's to the byte).
 
 ## WW-C1 - the provinces' ground (BUILT, 2026-10-24)
 
@@ -857,7 +1025,8 @@ no capital had either: its palace's door was a dark face, and its location `hasD
   is stood down in the copy (`castleKeeps`): every person's flat but the castle's bards, prostitutes and children
   (FACTION.TXT 511, 512, 514) and a flat no faction claims goes - no King Gothryd in the Blue Palace - with the quest
   markers (199.11, 199.18); the guards (the 199 markers), the start, the models, lights and things stay, and so does any
-  object an action chain names. The copy is made when first read, of the player's own BLOCKS.BSA
+  object an action chain names. PROVINCE-COURTS (below) re-seats the court instead, as the capital's own (`CASTLE_SEATS`:
+  through DFU's generic factions, in their looks - still no King Gothryd). The copy is made when first read, of the player's own BLOCKS.BSA
   (`worldDataReplacement.js` registerPortBlockOf), never shipped.
 - **The castle** is the capital's centre's dungeon (`tamrielCapitals.js` synthesizeCapitalLocation: the slice of ordinal
   0 alone) - its map id the crown seat's key (WW7-3), its dungeon id that map id as a lair's is, its type a crown
@@ -876,9 +1045,7 @@ no capital had either: its palace's door was a dark face, and its location `hasD
   (`world.js` wildDungeonGate: a capital's castle is no ruin). AUDIT TESA III E2-2 (`01-Overview/audits/Audit-Tesa-III-E2.md`):
   the Guild window names a castle by its capital (`castleLaw.js` castleCityOf - "Castle Solitude", where it had said
   "Castle Skyrim"), and its line and the service's `castle-none` name a province's capital beside the Bay's three crowns.
-- **Not yet**: a throne room's ruler past the Bay (`crownHall.js` crownRulerFactionId reads FACTION.TXT's provinces,
-  the Bay's) - a guild's castle past the Bay is its halls without a court; the capitals' quests (none of the Bay's quest
-  places resolve there).
+- **Not yet**: the capitals' quests (none of the Bay's quest places resolve there).
 - Relay world256 changed in place again (not deployed: the guild arm's rooms). WW7's mutant records `tools/mutants/ww7.json`
   (WW7-1 to WW7-4, 28, all dead; WW7-5's ten and WW7-6's five with them).
 

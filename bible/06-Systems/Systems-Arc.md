@@ -3682,6 +3682,33 @@ predicate are exercised by their pins and by nothing in `src/` yet,
 which is a gap this arc closes in its next slice and not a defect to be
 discovered later.
 
+## PROVINCE-COURTS - the faction store past the Bay (2026-10-27)
+
+The record is `03-World/World-Wide.md` PROVINCE-COURTS; this is what it did to the faction system S25, S43 and S44
+built. FACTION.TXT gives each Bay region a Province, a Court and a People and the provinces past the Bay (regions 62..70,
+WW-R) none, so every reader of a region's court or people found nothing there. The port's own -
+`src/systems/faction/provinceFactions.js` - are four a province (the Province 6000 + region, its ruler 6100 +, its
+Court 6200 +, its People 6300 +), shaped on FACTION.TXT's crowns' rows, and ride every dictionary through S25's door:
+
+- **`factionRep.js` addCustomFactions** (PersistentFactionData.AddCustomFactions, the door DFU gives a faction not in
+  FACTION.TXT) adds them first, then the registry's. The store's Reset (`createFactionRep`) and the talk host's reader
+  (`scenes/townTalk.js`) both call it, so the player's store and the reader hold them alike; `zeroAllReputations`
+  refills from the reader, so they come back at their default with FACTION.TXT's. They bring their own children, so the
+  relink is not asked for them and no FACTION.TXT record moves (pinned to the byte on the freeware).
+- **S43's walk** (`region/regionPower.js`) walks nine more Provinces - power, alliances, rivalries, famine, plague,
+  crime waves - with no new ruler (they are RulerImmune: a named ruler stands) and no persecuted temple or witch
+  burning (a province holds neither). Every faction of the walk now draws its partners from a dictionary 36 longer, so
+  the Bay's own politics may now take a province for an ally or a rival - the world's politics, as the rumour mill
+  tells them.
+- **S44's border law** (`faction/factionRelations.js` isEnemyStatePermanentUntilWarOver): DFU's table is the Bay's 62
+  rows; a pair with a province in it reads `PROVINCE_BORDERS` (the politic map's: the provinces' land with each other,
+  and across the Bay's edge), and only for two Provinces - FACTION.TXT's vampire clans carry regions 62..70 too. Every
+  Bay pair is DFU's table's answer as before.
+- **The save** (S25's envelope, AUDIT 20/39): snapshotFactionRep carries them with every other faction; an old save
+  restores FACTION.TXT's and leaves them at their default.
+
+Pins: `test/world/worldWide/provincecourts.test.js`; mutants `tools/mutants/provincecourts.json`.
+
 ## AUDIO AUDIT - the music "just seemed off", and it was (2026-08-25)
 
 Reported by ear, confirmed by measurement, and all three findings were
