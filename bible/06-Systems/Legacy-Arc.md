@@ -967,3 +967,13 @@ as the old walk's; the address; the host's wiring), `test/systems/fb1009f.test.j
 kind and B4's unstood template key were killed by pins added at the package's finish). PIN MOVED: fb1012d's start pin runs the module where it ran world.js's
 text, and its two birth addresses carry the seat's id; classicstart's and enhancedMenu's start text pins read the
 module.
+
+At the slice's finish, with ARENA2_PATH, were run again: the seven smaller lists it re-aimed whole; of the four larger
+(auditcaptsea, icgrand, questsites, tesa10), every record on code it changed (within 80 lines of its hunks, or in a
+file under 2,000 lines) and auditcaptsea's first hundred besides; and every record of any list naming a pin it moved -
+781 records, 759 dead, 2 equivalent as recorded (auditcaptsea's ACS-B4 and ACS-D17). Twenty survive, every one outside this
+slice's code and surviving the same on the PR's head (`1d21d66137`) without it: auditdisc28_quests' AD28Q-J-host-no-party-word
+and its sixteen AD28Q-J2-cell-* (owed to their arc, `01-Overview/bugs/Field-Bugs-2026-10-20c.md`), and three found here -
+AD28Q-S4-grace-resynced (`systems/quest/machine.js` updateSharedQuest's grace guard), AUDIT-STARTS-V4-the-end-unpadded
+(`systems/travel/travelRoute.js` the landfall's `endPad`) and TESA11-wall-band-unreserved (`world/imperialCity.js` the
+wall's band). Each is its own arc's to pin or to mark.
