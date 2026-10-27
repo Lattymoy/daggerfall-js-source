@@ -5115,8 +5115,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // REST-SYNC: the room's encounters ride the same frame, numbered by the room (`i` their id); a full frame lists them
     // all (`xf`), so a joiner takes down the ones the host no longer has
     const shared = [];
-    for (const [id, f] of _sharedById) if ((f.dead && !f.corpse && !f.corpseDestroyed) || !foes.includes(f)) _sharedById.delete(id);   // Destroy()ed or gone: the room forgets it, and a full frame takes every puppet of it down
-    for (const f of [..._sharedById.values()].sort((a, b) => (a.dead ? 1 : 0) - (b.dead ? 1 : 0))) {   // the standing before the bodies
+    for (const [id, f] of _sharedById) if ((f.dead && !f.corpse && !f.corpseDestroyed) || !foes.includes(f)) _sharedById.delete(id);   // Destroy()ed or gone: the room forgets it, and a full frame takes every puppet of it down (AUDIT RPT1026 G1: a capped one, XF_STANDING, a standing puppet alone - a body forgotten past the cap lies on a joiner until a whole frame)
+    for (const f of [..._sharedById.values()].sort((a, b) => (a.dead ? 1 : 0) - (b.dead ? 1 : 0) || (a.dead ? (b._diedAt ?? 0) - (a._diedAt ?? 0) : 0))) {   // the standing before the bodies - AUDIT RPT1026 G1: and the newest dead first, so the cap sheds an old body a joiner holds, never a death no frame has told (spawnCorpse's stamp)
       if (shared.length >= SHARED_FOES_MAX) break;
       const r = roomRecord(f, f._encId, full, true);
       if (r) shared.push(r);
