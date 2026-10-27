@@ -697,8 +697,8 @@
   {
     "name": "AUDIT-HORIZONTAL-D7-mastery-read-at-the-raw-skill",
     "file": "tools/powerCeiling.mjs",
-    "old": "Math.round((EFFECTIVE_SKILL_MAX - SKILL_SOFT_CAP) *",
-    "new": "Math.round((200 - SKILL_SOFT_CAP) *",
+    "old": "(EFFECTIVE_SKILL_MAX - SKILL_SOFT_CAP) * Math.max(WEAPON_POTENCY_PER_POINT",
+    "new": "(200 - SKILL_SOFT_CAP) * Math.max(WEAPON_POTENCY_PER_POINT",
     "tests": [
       "test/combat/powerceiling.test.js"
     ]

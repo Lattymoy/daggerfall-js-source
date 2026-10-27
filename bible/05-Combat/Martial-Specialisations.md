@@ -143,22 +143,28 @@ Warden's ward, never in a refereed fight, never the beast's claws.
 "Find my level fix"). The climb above reads the TRAINED skill alone, so a weapon skill's gear - an Enhances Skill
 enchantment, a Rare's or a Legendary's skill line - bought the to-hit and nothing past it, while the fists read the live
 skill whole in their roll (H2H / 10 + 1 to H2H / 5 + 1). At one kit (skill 872, Critical Strike 860) a Daedric Longsword
-struck ~390 to a fist's ~1,360. Now every weapon's blow - the four melee families' and the bow's, the Thunderlock's on
-Archery - is also worth its LIVE skill (`skills.js` skillValue: the climb's effective value and every point on it) over
-`WEAPON_GEAR_DIVISOR` 200, and takes the greater of that and the climb's (`weaponMastery.js:"export function weaponGearPct("`):
+struck ~390 to a fist's ~1,360.
 
-| live skill | x | Daedric Longsword (1-hand) | Daedric Dai-Katana (2-hand) | fist |
-| --- | --- | --- | --- | --- |
-| 140, no gear | the climb's x1.4 | 97 | 124 | 77 |
-| 500 | x2.5 | 435 | 555 | 516 |
-| 872 | x4.36 | ~1,215 | ~1,550 | ~1,360 |
+Now every weapon's blow - the four melee families' and the bow's, the Thunderlock's on
+Archery - is also worth 0.44% for each point of gear on its skill (`skills.js` skillModOf), from the first point, ADDED
+to the climb's (`weaponMastery.js:"export function weaponGearPct("`; GEAR-ADDS, mob: "they should both just stack
+additively", "need to be the same end result but also help the begingin" - the first build took the greater of the
+two, and gear paid nothing below a live 200):
 
-(average blows that crit, Critical Strike at the same value, STR and AGI 100, an expert class - a paper measure, not a
-run). Below 200 nothing changes; the fists keep their own roll. Counted to `WEAPON_GEAR_SKILL_MOST` 1,000 (x5), the
-ceiling's mastery top (`Power-Ceiling.md`). The same doors as the climb: offline Daggerfall's, never a player, never
-refereed (the duel's wire clamps the skill to 100 in any case: `combat/duelCombat.js` DUEL_SKILL_MAX), never mentoring,
-never the beast. A DEPARTURE from DFU, whose weapon damage reads no skill at all. Pinned by
-`test/combat/weapon_gear.test.js` (4), `tools/mutants/weapon_gear.json` (7 dead).
+| trained + gear | the climb's | the gear's | the blow |
+| --- | --- | --- | --- |
+| 50 + 50 | 0 | +22% | x1.22 |
+| 100 + 100 | 0 | +44% | x1.44 |
+| 200 + 0 | +40% | 0 | x1.4 |
+| 200 + 300 | +40% | +132% | x2.72 |
+| 200 + 672 (a sheet of 872) | +40% | +296% | x4.36: Longsword ~1,215, Dai-Katana ~1,550 |
+
+(the Longsword and the Dai-Katana average blows that crit, Critical Strike 860, STR and AGI 100, an expert class - a
+paper measure, not a run). The fists keep their own roll. Gear's share is counted to `WEAPON_GEAR_PCT_MOST` 320, so the
+axe's finish and it meet the ceiling's mastery top of 400 (`Power-Ceiling.md`). The same doors as the climb: offline
+Daggerfall's, never a player, never refereed (the duel's wire clamps the skill to 100 in any case: `combat/duelCombat.js`
+DUEL_SKILL_MAX), never mentoring, never the beast. A DEPARTURE from DFU, whose weapon damage reads no skill at all.
+Pinned by `test/combat/weapon_gear.test.js` (4), `tools/mutants/weapon_gear.json` (7 dead).
 
 ## 5. MARTIAL3/4 - the fifteen paths
 
