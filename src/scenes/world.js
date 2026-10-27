@@ -260,7 +260,7 @@ import { nightDue, setNightListener, nightStamp, nightKindOf, isNightStamp, carr
 import { createNightWatch, carriedNightAction, createCampWatch, campPasses } from '../systems/party/partyRestLaw.js';   // AUDIT REST-PARTY: the party's night, pinned by execution   // AUDIT REST II P1/P2: its watch   // CAMP-ROLL: the camp's one roll
 import { ambushNight } from '../systems/rest/restAct.js';   // AUDIT REST-PARTY A1: a resting encounter stood breaks the night that rolled it
 import { createStandingWatch, installLegalNotices } from './standingHost.js';   // REP1: the watch's stop; REP5: the law's notices
-import { chooseRandomEnemy } from '../systems/encounters.js';   // LW6: a dungeon's own foes for a dive's trouble
+import { troubleFoesOf } from './livingWorld/troubleFoes.js';   // LW4/LW6: the road's trouble's foes - BAY-LEFT-GROUND: on the land's own wild past the Bay
 import { skillValue } from '../systems/skills.js';   // TO1: the avoid-encounter roll's live Stealth; WILD-ALERT: the notice's
 import { refreshMentor, mentorStatusText, effectiveLevel } from '../systems/mentorMode.js';
 import { setMasterSkillsGate, MASTER_SKILLS_DUNGEON_TEXT } from '../systems/masterSkills.js';   // SOFTCAP3
@@ -3306,9 +3306,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const livingCovered = (c) => { if (c === undefined) _livingCoverPending = true; return !!c; };
   const livingTroubleWorld = {
     climateAt: (px, py) => maps.getClimateIndex(px, py),
-    foesOf: ({ climateIndex, dungeonType, minute, level, size, rolls }) => (dungeonType != null
-      ? Array.from({ length: size }, () => chooseRandomEnemy({ dungeonType, playerLevel: level }, rolls)).filter((m) => m >= 0)   // LW6: the deep's own
-      : rollGroupComposition({ climateIndex, skyMinutes: minute, inLocationRect: false, playerLevel: level, size }, rolls)?.mobileTypes ?? null),
+    foesOf: troubleFoesOf({ faunaAt: (x, y) => maps.getFaunaBand?.(x, y) }),   // BAY-LEFT-GROUND (D2): the campers' group on the land's own wild where the trouble falls - past the Bay its zone's (scenes/livingWorld/troubleFoes.js); LW6: a dive's, the deep's own
     foeLevel: enemyLevelOf,   // a foe at its kind's level - the enemy table's law (enemyBasics.js), the roads' harness's too
     dies: (res, trip) => { const pl = livingTripPlace(res, trip); return pl.dies && pl.hand == null; },   // LW7: one a hand took first the road's trouble never takes
     diced: (res, trip) => livingTripPlace(res, trip).diced,   // AUDIT-B1: the dice's own death - the trouble's shape, never a turn's
