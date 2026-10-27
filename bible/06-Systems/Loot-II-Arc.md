@@ -808,3 +808,15 @@ cuirass's even draw; the helm and the ring at 45, the Gate-Shield whole; the cap
 off; the drought's garments; the Scry rows' rule; Sell junk's count; a question let go; a hidden line unread; one
 comparison a card; a honed piece not as minted; the shelf's mark. `tools/mutants/auditloot2.json` (29, all dead); every
 re-aimed record re-run dead.
+
+**QUICK-LOOT-WINDOW: the container's own window follows the loot filter** (a player's report: the window a body or a crate opens
+with the activate key ignored the take-everything key and the filter). In a container's window (`ui/enhanced/enhancedInventory.js`,
+a remote of kind `container`), **Take all** leaves what the take-all key would. The word is `systems/quickLoot.js` `takeAllSplit`,
+which asks `takeAllLeaves`: an unticked rarity or material, a skipped name, a junk mark. The window says "N left by your
+quick-loot filter" beside its other notice.
+
+**The rows, and the key.** The rows the take-all would leave are dimmed (`leftByFilter`, as a junk piece's picture is) and stay in
+the list, so the window is still the way to take one by hand. The take-everything key is the window's Take all. It is answered in
+`containerTakeAllKey`, ahead of the window's modifier guard, because a key bound to Control or Command is itself a modifier. It is
+never answered in a text field or on a repeat. A wagon's, a bag's and a chest's own store are the player's: their Take all is every
+row. With Quick loot off the window is Daggerfall's. Pins: `test/ui/lootwindow.test.js`. Mutants: `tools/mutants/lootwindow.json`.

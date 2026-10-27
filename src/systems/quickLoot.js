@@ -86,6 +86,19 @@ setTakeAllLeaves(takeAllLeaves);   // QUICK-LOOT-FILTER: the hover plaque asks t
 /** LOOT18: what the take-all's line adds for the pieces it left. */
 export const QUICK_LOOT_LEFT = (n) => `${n} left by your quick-loot filter.`;
 
+/** QUICK-LOOT-WINDOW (a player's report: the container's own window - opened with the activate key - ignored the quick-loot key and the
+ *  loot filter): THE SAME FILTER OVER A WINDOW'S ROWS. `takeAllSplit(items)` answers the pieces the take-all would take and how many it would
+ *  leave (a junk mark, a skipped name, an unticked rarity or material - takeAllLeaves, the one word), with the switch off every piece taken.
+ *  The window's Take all and its quick-loot key walk `take`; `leftByFilter` is what its rows dim. Pure over the prefs.
+ *  @param {any[]} items */
+export function takeAllSplit(items) {
+  if (!quickLootOn()) return { take: [...items], left: 0 };
+  const take = items.filter((it) => !takeAllLeaves(it));
+  return { take, left: items.length - take.length };
+}
+/** Is this piece one the take-all would leave (the window dims it)? Never with Quick loot off. */
+export const leftByFilter = (/** @type {any} */ item) => quickLootOn() && takeAllLeaves(item);
+
 /** What the HUD says when a row goes into the pack. The name is the
  *  row's own word, so the line and the row the player was looking at
  *  cannot say different things about one item. */
