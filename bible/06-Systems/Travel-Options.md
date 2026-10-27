@@ -1490,6 +1490,35 @@ Recorded, not changed: OW6's lead-in before an enemy's reach is THREAT_WARN_S of
 at the law's x60 and x100 it starts 1.5 to 2.5 times as far out as at the old dial's x40 (a rider at x100 slows about
 960 m short of a band's sight, not 384) - a tuning for the owner to call.
 
+## BAY-LEFT-MAPS - Travel Options' roads past the Bay (2026-10-27, AUDIT LEFT IN THE BAY C10)
+
+The owner, after AUDIT LEFT IN THE BAY (2026-10-26): *"Every single thing here needs to be addressed. No exceptions."*
+
+**What stood.** Basic Roads' path data is the Bay's 1000 x 500 table (`world/road/pathData.js` dataPoint), and every read
+past it answered 0. So on every road past the Bay Follow Paths said "no path"; the junction map was blank (its section
+skipped every pixel off the table, and the host read `y * 1000 + x` - another row past the Bay's edge); and a walk on a
+road ran at the open ground's rate (RATE-LAW's x60, not x100).
+
+**What it is now.** Past the table a road's and a track's byte are the roads past the Bay's own (`world/arenaRoads.js`
+arenaRoadByte - ROADS 1's compass, the bits the table holds); a river's and a stream's none (the roads past the Bay lay no
+water). With no layer installed it is 0, so a thread without the land reads what it read. On the table every byte is the
+mod's, unchanged. The junction map's section is bounded by the world's grid (`world/worldWide/worldGrid.js` inWorldGrid),
+and the host's bytes come through dataPoint (an in-place edit of `scenes/world.js`); its dots past the Bay are the places
+found there (`06-Systems/Travel-View.md` BAY-LEFT-MAPS). The spawns' road test reads the same law, so no ruin past the
+Bay stands on a road. The jungle's roadside pairs read the table alone (`tablePathsDataPoint`): they stand astride the
+table's straight lanes, and past the Bay a road is a curve (`03-World/Roads.md` VOYAGER2).
+
+**Measured** (lane C's p9 on the freeware): at (1569, -430) the paths read 0, and the junction section about Solitude
+asked 0 pixels and lit 0. Now, Solitude's region built and installed: 1,593 of 1,593 road pixels read by the follow's two
+reads, and the section about a road past the Bay asks 800 and lights 252.
+
+**The four hosts.** `scenes/world.js` reads its bytes through dataPoint (in place); `scenes/exterior.js`,
+`scenes/worldModes.js` and `scenes/dungeonContext.js` run no Travel Options journey.
+
+Pins `test/systems/travel/bayleft_paths.test.js` (5). Mutants `tools/mutants/bayleftmaps.json` BLM-C10-* (7 here, and the
+junction dots' 2), all dead; `tools/mutants/to1.json` data-point-unchecked and i6-discovery-by-map-id-again re-aimed by
+content and run (dead). A departure from Travel Options, whose data is the Bay's: Port-Ledger A, BAY-LEFT-MAPS.
+
 ## Pins
 
 `test/systems/travel/to1_travelOptions.test.js`. `tools/mutants/to1.json`.
