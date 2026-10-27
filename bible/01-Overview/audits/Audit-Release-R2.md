@@ -221,7 +221,8 @@ A departure (Port-Ledger A, IC-GRAND (10)).
   Province faction, so no price tilt walks it (WW-R); a bank's account and a letter of credit the province's region's; a
   tavern's menu by the climate where the region names none (`tavernMenu.js regionMenuDay`); a temple's divine and a
   knightly order by the building's faction where the region's table names none (`REGION_TEMPLES` padded with 0); the
-  Mages Guild's scrying refuses where no region table loads (`lootScry.js scryRefusal`).
+  Mages Guild's scrying reads the province's table (BAY-LEFT-B, `06-Systems/Quest-Arc.md`: the quest layer's maps, its
+  lairs nearest the player - it had read the host's MAPS.BSA reader, and refused "nowhere" past the Bay).
 - **Names and people**: WW-R's banks and races (`REGION_NAME_BANKS`, `REGION_RACES` + 1 is DFU's Races: a Nord in Skyrim),
   TESA3's province names on the loading screen, the Overworld and Travel Options.
 - **The calendar**: the Empire's holidays (`0xFF`, every region) fall past the Bay; a regional holy day is DFU's table's
