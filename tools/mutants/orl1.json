@@ -262,8 +262,8 @@
   {
     "name": "commit-without-an-owed-level",
     "file": "src/systems/oblivionLeveling.js",
-    "old": "  if (!entity.readyToLevelUp) return false;\n  if (purse !== 0) return false;",
-    "new": "  if (purse !== 0) return false;",
+    "old": "export function commitVirtueLevelUp(entity, deltas, purse, s, rolls = Math.random) {\n  if (!entity.readyToLevelUp) return false;",
+    "new": "export function commitVirtueLevelUp(entity, deltas, purse, s, rolls = Math.random) {",
     "tests": [
       "test/systems/orl1_leveling.test.js"
     ]
