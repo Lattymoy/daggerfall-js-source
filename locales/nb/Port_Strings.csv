@@ -3498,7 +3498,6 @@ menu.intro.readyReduced,"Trykk hvor som helst for å begynne. Redusert bevegelse
 menu.intro.resume,"Gjenoppta"
 menu.intro.resumeHint,"Trykk hvor som helst for å gjenoppta musikken og filmen."
 menu.intro.skip,"Hopp over intro"
-menu.intro.tapContinue,"Trykk for å fortsette"
 menu.load.deleteBody,"Slettingen av «{slot}» ({name}) kan ikke angres."
 menu.load.deleteTitle,"Slett denne lagringen"
 menu.load.noneHint,"De lagrede spillene dine vises her."

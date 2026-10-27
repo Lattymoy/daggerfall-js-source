@@ -1524,7 +1524,6 @@ menu.intro.readyReduced,"Tryck var som helst för att börja. Minskad rörelse �
 menu.intro.resume,"Återuppta"
 menu.intro.resumeHint,"Tryck var som helst för att återuppta musiken och filmen."
 menu.intro.skip,"Hoppa över intro"
-menu.intro.tapContinue,"Tryck för att fortsätta"
 menu.load.deleteBody,"Att radera {name}s ”{slot}” kan inte ångras."
 menu.load.deleteTitle,"Radera den här sparningen"
 menu.load.noneHint,"Dina sparade spel visas här."

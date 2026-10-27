@@ -3498,7 +3498,6 @@ menu.intro.readyReduced,"Ketuk di mana saja untuk mulai. Gerakan dikurangi sedan
 menu.intro.resume,"Lanjutkan"
 menu.intro.resumeHint,"Ketuk di mana saja untuk melanjutkan musik dan film."
 menu.intro.skip,"Lewati intro"
-menu.intro.tapContinue,"Ketuk untuk melanjutkan"
 menu.load.deleteBody,"Menghapus “{slot}” milik {name} tidak bisa dibatalkan."
 menu.load.deleteTitle,"Hapus simpanan ini"
 menu.load.noneHint,"Permainan tersimpanmu muncul di sini."

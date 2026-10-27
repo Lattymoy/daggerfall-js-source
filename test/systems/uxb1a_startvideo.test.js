@@ -13,6 +13,8 @@ import { PREF_DEFAULTS } from '../../src/systems/uiPrefs.js';
 import { ONLINE_PLAYERS_OWN_PREFS, ONLINE_FORCED_PREFS, onlineForcedPref } from '../../src/systems/online/onlineLane.js';
 import { runCinematicFrontDoor } from '../../src/ui/intro/introScreen.js';
 import { MENU_THEME_GAIN } from '../../src/systems/introTheme.js';
+import { titleHeld } from '../../src/ui/intro/titleHeld.js';
+import { introPage } from '../introDom.mjs';
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 
@@ -64,31 +66,36 @@ function fakeDoc() {
 }
 const settle = () => new Promise((r) => setImmediate(r));
 
-test('UXB1-A: a skip by the pref opens the menu with no film, and the first gesture starts the menu\'s music at the menu\'s level - once', async () => {
+// TITLE-DOOR (2026-10-27): the held title is the front door now, so the player's skip lands there too - the film's last
+// frame with no film before it, the menu at once on it - and the music law is unchanged
+test('UXB1-A: a skip by the pref lands on the title with no film before it, the menu at once on it, and the first gesture starts the menu\'s music at the menu\'s level - once', async () => {
   const theme = fakeTheme();
-  const doc = fakeDoc();
+  const page = introPage(), doc = page.doc;
   const warn = console.warn;
   const warned = [];
   console.warn = (...a) => warned.push(a.join(' '));
   let opened = 0;
   let resolveMenu;
+  const gesture = (type) => { for (const f of [...(doc.listeners[type] ?? [])]) f({ type }); };
   try {
-    const door = runCinematicFrontDoor(() => { opened++; return new Promise((r) => { resolveMenu = r; }); }, { skip: true, menuMusic: true, doc, theme });
+    const door = runCinematicFrontDoor(() => { opened++; page.mountMenu(); return new Promise((r) => { resolveMenu = r; }); }, { skip: true, menuMusic: true, doc, theme });
     await settle();
     assert.equal(opened, 1, 'the menu is revealed at once');
-    assert.deepEqual(warned, [], 'and no film was built (a film over this bare document would have thrown and warned)');
+    assert.ok(titleHeld(doc) && doc.getElementById('intro').querySelector('.intro-gate').hidden, 'on the held title, with no gate before it');
+    assert.deepEqual(warned, [], 'nothing failed on the way');
     assert.deepEqual(theme.calls, [], 'nothing plays before a gesture - a browser would refuse it');
-    doc.listeners.get('pointerdown')();
+    gesture('pointerdown');
     await settle();
     assert.deepEqual(theme.calls, ['unlock', 'prepare', ['setLevel', MENU_THEME_GAIN, 0], 'start'],
       'the Skip intro button\'s music: unlocked on the gesture, at the menu\'s gain');
-    doc.listeners.get('keydown')();
+    gesture('keydown');
     await settle();
     assert.equal(theme.calls.filter((c) => c === 'start').length, 1, 'a second gesture starts nothing more');
     resolveMenu('new');
     assert.equal(await door, 'new');
     assert.ok(theme.disposed, 'every exit releases the audio');
-    assert.equal(doc.listeners.size, 0, 'and every listener it added');
+    assert.equal(Object.values(doc.listeners).flat().length, 0, 'and every listener it added');
+    assert.equal(doc.getElementById('intro'), null, 'and the title it stood on');
   } finally { console.warn = warn; }
 });
 

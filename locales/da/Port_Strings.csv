@@ -3498,7 +3498,6 @@ menu.intro.readyReduced,"Tryk hvor som helst for at begynde. Reduceret bevægels
 menu.intro.resume,"Genoptag"
 menu.intro.resumeHint,"Tryk hvor som helst for at genoptage musikken og filmen."
 menu.intro.skip,"Spring intro over"
-menu.intro.tapContinue,"Tryk for at fortsætte"
 menu.load.deleteBody,"At slette »{slot}« ({name}) kan ikke fortrydes."
 menu.load.deleteTitle,"Slet dette gemte spil"
 menu.load.noneHint,"Dine gemte spil vises her."

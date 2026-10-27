@@ -1524,7 +1524,6 @@ menu.intro.readyReduced,"Πατήστε οπουδήποτε για να ξεκ�
 menu.intro.resume,"Συνέχεια"
 menu.intro.resumeHint,"Πατήστε οπουδήποτε για να συνεχιστούν η μουσική και η ταινία."
 menu.intro.skip,"Παράλειψη εισαγωγής"
-menu.intro.tapContinue,"Πατήστε για συνέχεια"
 menu.load.deleteBody,"Η διαγραφή της αποθήκευσης «{slot}» του χαρακτήρα {name} δεν αναιρείται."
 menu.load.deleteTitle,"Διαγραφή αυτής της αποθήκευσης"
 menu.load.noneHint,"Τα αποθηκευμένα παιχνίδια σας εμφανίζονται εδώ."

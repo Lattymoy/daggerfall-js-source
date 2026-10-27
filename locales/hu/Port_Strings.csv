@@ -1524,7 +1524,6 @@ menu.intro.readyReduced,"Koppints bárhová a kezdéshez. A csökkentett mozgás
 menu.intro.resume,"Folytatás"
 menu.intro.resumeHint,"Koppints bárhová a zene és a film folytatásához."
 menu.intro.skip,"Intró kihagyása"
-menu.intro.tapContinue,"Koppints a folytatáshoz"
 menu.load.deleteBody,"{name} „{slot}” mentésének törlése nem vonható vissza."
 menu.load.deleteTitle,"Mentés törlése"
 menu.load.noneHint,"A mentett játékaid itt jelennek meg."

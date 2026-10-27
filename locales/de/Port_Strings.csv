@@ -3498,7 +3498,6 @@ menu.intro.readyReduced,"Tippe irgendwo, um zu beginnen. Reduzierte Bewegung ist
 menu.intro.resume,"Fortsetzen"
 menu.intro.resumeHint,"Tippe irgendwo, um Musik und Film fortzusetzen."
 menu.intro.skip,"Intro überspringen"
-menu.intro.tapContinue,"Tippen zum Fortfahren"
 menu.load.deleteBody,"Das Löschen von „{slot}“ von {name} kann nicht rückgängig gemacht werden."
 menu.load.deleteTitle,"Diesen Spielstand löschen"
 menu.load.noneHint,"Deine gespeicherten Spiele erscheinen hier."

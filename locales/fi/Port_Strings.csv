@@ -1526,7 +1526,6 @@ menu.intro.readyReduced,"Napauta mihin tahansa aloittaaksesi. Vähennetty liike 
 menu.intro.resume,"Jatka"
 menu.intro.resumeHint,"Napauta mihin tahansa jatkaaksesi musiikkia ja elokuvaa."
 menu.intro.skip,"Ohita intro"
-menu.intro.tapContinue,"Napauta jatkaaksesi"
 menu.load.deleteBody,"Hahmon {name} tallennuksen ”{slot}” poistamista ei voi perua."
 menu.load.deleteTitle,"Poista tämä tallennus"
 menu.load.noneHint,"Tallennetut pelisi näkyvät tässä."

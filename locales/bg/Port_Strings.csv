@@ -3498,7 +3498,6 @@ menu.intro.readyReduced,"Докоснете където и да е, за да �
 menu.intro.resume,"Продължи"
 menu.intro.resumeHint,"Докоснете където и да е, за да продължат музиката и филмът."
 menu.intro.skip,"Пропусни въведението"
-menu.intro.tapContinue,"Докоснете, за да продължите"
 menu.load.deleteBody,"Изтриването на „{slot}“ на {name} не може да бъде отменено."
 menu.load.deleteTitle,"Изтриване на този запис"
 menu.load.noneHint,"Запазените ви игри се появяват тук."

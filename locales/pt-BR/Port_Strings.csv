@@ -3498,7 +3498,6 @@ menu.intro.readyReduced,"Toque em qualquer lugar para começar. O movimento redu
 menu.intro.resume,"Retomar"
 menu.intro.resumeHint,"Toque em qualquer lugar para retomar a música e o filme."
 menu.intro.skip,"Pular introdução"
-menu.intro.tapContinue,"Toque para continuar"
 menu.load.deleteBody,"Excluir “{slot}” de {name} não pode ser desfeito."
 menu.load.deleteTitle,"Excluir este jogo salvo"
 menu.load.noneHint,"Seus jogos salvos aparecem aqui."
