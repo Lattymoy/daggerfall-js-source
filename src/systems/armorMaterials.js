@@ -147,6 +147,10 @@ export const armorArchive = (gender = 'male', morphology = HUMAN_MORPHOLOGY) =>
  *  live here; paperdollArt re-exports the family-keyed adapter for
  *  the C6a callers that already speak families. */
 export const MATERIAL_FAMILY = Object.freeze({ Leather: 0, Chain: 1, Plate: 2 });
+/** ARMOR-TYPE: the family of a NativeMaterialValue - DFU's `>> 8` (DaggerfallInventoryWindow.cs:1352, the armour-type
+ *  restriction): 0 leather, 1 chain, 2 plate; null for ArmorMaterialTypes.None or a value that is no integer. The caller
+ *  hands in the CLASS's value (rriItems.js rriNativeMaterialValue), so a mail hauberk is chain - this file is a leaf. */
+export const familyOfNative = (m) => (Number.isInteger(m) && m >= 0 ? Math.min(m >> 8, MATERIAL_FAMILY.Plate) : null);
 const MATERIAL_OF_FAMILY = [ARMOR_MATERIAL.Leather, ARMOR_MATERIAL.Chain, ARMOR_MATERIAL.Iron];
 export const armorVariant = (templateIndex, family, requested = 0) =>
   clampArmorVariant(templateIndex, MATERIAL_OF_FAMILY[family] ?? ARMOR_MATERIAL.Iron, requested);

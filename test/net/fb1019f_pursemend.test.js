@@ -29,7 +29,8 @@ import { createCharacter } from '../../src/systems/chargen.js';
 import { snapshotPlayer } from '../../src/systems/save/save.js';
 import { createWeapon } from '../../src/combat/enemyEquipment.js';
 import { tradeCost, tradeMessageOffset, getTradePrice } from '../../src/systems/tradeModes.js';
-import { calculateTradePrice } from '../../src/systems/shopStock.js';
+import { calculateTradePrice, calculateCost } from '../../src/systems/shopStock.js';
+import { itemValueOf } from '../../src/systems/item/itemTemplates.js';
 import { addGoldPieces, carriedWeight, totalWeight, letterOfCredit } from '../../src/systems/inventory.js';
 import { totalGoldAmount } from '../../src/systems/court.js';
 import { cureOfferMessageOffset } from '../../src/systems/guild/guildServiceActions.js';
@@ -51,9 +52,12 @@ const SKILLS = { mercantile: 100, personality: 100 };
 const WRAP = 2 ** 24;
 const claymores = (n) => Array.from({ length: n }, () => createWeapon(CLAYMORE, DAEDRIC, () => 0.5));
 
-/** THE FIELD'S SALE: 150 Daedric claymores at a quality-10 counter - the price the counter pays now, and what 0.0.235 paid. */
+/** THE FIELD'S SALE: 150 Daedric claymores at a quality-10 counter - the price the counter pays now, and what 0.0.235 paid.
+ *  Costed as 0.0.235's Sell arm costed them, each at its whole value (CalculateCost of itemValueOf, the counter's value of
+ *  a plain piece then): DAEDRIC-SALE (2026-10-26) halves what a counter pays for Daedric gear now, and the field's sale
+ *  was made before it - the record a mend is reckoned from is that sale's. */
 function fieldSale() {
-  const cost = tradeCost('Sell', claymores(150), { quality: 10, online: false }).cost;
+  const cost = claymores(150).reduce((n, it) => n + calculateCost(itemValueOf(it), 10), 0);
   const price = calculateTradePrice(cost, 10, SKILLS, true, { online: false });
   return { price, paid: price - WRAP };
 }
@@ -336,8 +340,9 @@ test('PURSE-MEND THE COMMAND: `findings <id>` says the purse, and `mend <id> <ti
 });
 
 test('PURSE-MEND THE LEFTOVERS: a trade lot past 2^31 haggles by its halves and quarters - the right band, where `>> 1` wrapped and named the wrong one - and the same band as DFU\'s shifts for every cost an int holds; the Reforge\'s purse says the gold of letters past one int\'s worth (mutants: the shifts back; the purse\'s `| 0` back)', () => {
-  // 25,000 Daedric claymores at a quality-10 counter: a cost past 2^31
-  const lot = claymores(25_000);
+  // 50,000 Daedric claymores at a quality-10 counter: a cost past 2^31 either way (DAEDRIC-SALE: a counter pays half for
+  // Daedric now, so the 25,000 this sold before cost under it)
+  const lot = claymores(50_000);
   const bands = [];
   for (const [mode, sk] of [['Sell', { mercantile: 0, personality: 0 }], ['Buy', { mercantile: 0, personality: 0 }], ['Sell', SKILLS], ['Buy', SKILLS]]) {
     const cost = tradeCost(mode, lot, { quality: 10, online: false }).cost;

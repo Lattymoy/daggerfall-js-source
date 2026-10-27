@@ -1,0 +1,473 @@
+[
+  {
+    "name": "MW-SHOULDER-offset-moved",
+    "file": "src/player/mwCamera.js",
+    "old": "export const SHOULDER_OFFSET = Object.freeze([30, -10]);",
+    "new": "export const SHOULDER_OFFSET = Object.freeze([30, 0]);",
+    "tests": [
+      "test/player/fb1026c_shoulder.test.js"
+    ]
+  },
+  {
+    "name": "MW-SHOULDER-combat-centred-low",
+    "file": "src/player/mwCamera.js",
+    "old": "export const COMBAT_OFFSET = Object.freeze([0, 15]);",
+    "new": "export const COMBAT_OFFSET = Object.freeze([0, 0]);",
+    "tests": [
+      "test/player/fb1026c_shoulder.test.js"
+    ]
+  },
+  {
+    "name": "MW-SHOULDER-transition-linear",
+    "file": "src/player/mwCamera.js",
+    "old": "        const k = Math.min(1, dt * (1 + 5 / dl) * coef * (1 - prevInfluence));",
+    "new": "        const k = Math.min(1, dt * coef * (1 - prevInfluence));",
+    "tests": [
+      "test/player/fb1026c_shoulder.test.js"
+    ]
+  },
+  {
+    "name": "MW-SHOULDER-transition-carries-nothing",
+    "file": "src/player/mwCamera.js",
+    "old": "    setTarget(v) { target = [v[0], v[1]]; prevSpeed = [speed[0], speed[1]]; prevInfluence = 1; },",
+    "new": "    setTarget(v) { target = [v[0], v[1]]; prevSpeed = [0, 0]; prevInfluence = 0; },",
+    "tests": [
+      "test/player/fb1026c_shoulder.test.js"
+    ]
+  },
+  {
+    "name": "MW-SHOULDER-instant-ignored",
+    "file": "src/player/mwCamera.js",
+    "old": "    instant() { skip = true; },",
+    "new": "    instant() { },",
+    "tests": [
+      "test/player/fb1026c_shoulder.test.js"
+    ]
+  },
+  {
+    "name": "MW-SHOULDER-left-not-mirrored",
+    "file": "src/player/mwCamera.js",
+    "old": "shoulderState === 'left' ? [-SHOULDER_OFFSET[0], SHOULDER_OFFSET[1]] : COMBAT_OFFSET",
+    "new": "shoulderState === 'left' ? SHOULDER_OFFSET : COMBAT_OFFSET",
+    "tests": [
+      "test/player/fb1026c_shoulder.test.js"
+    ]
+  },
+  {
+    "name": "MW-SHOULDER-combat-ignored",
+    "file": "src/player/mwCamera.js",
+    "old": "      if (stance === 'combat') shoulderState = 'combat';",
+    "new": "      if (false) shoulderState = 'combat';",
+    "tests": [
+      "test/player/fb1026c_shoulder.test.js"
+    ]
+  },
+  {
+    "name": "MW-SHOULDER-swim-ignored",
+    "file": "src/player/mwCamera.js",
+    "old": "      else if (stance === 'swimming') shoulderState = 'swimming';",
+    "new": "      else if (false) shoulderState = 'swimming';",
+    "tests": [
+      "test/player/fb1026c_shoulder.test.js"
+    ]
+  },
+  {
+    "name": "MW-SHOULDER-entry-eased",
+    "file": "src/player/mwCamera.js",
+    "old": "      if (noThirdLast) { focalShift.instant(); noThirdLast = false; }",
+    "new": "      if (noThirdLast) { noThirdLast = false; }",
+    "tests": [
+      "test/player/fb1026c_shoulder.test.js"
+    ]
+  },
+  {
+    "name": "MW-SHOULDER-setting-change-eased",
+    "file": "src/player/mwCamera.js",
+    "old": "      if (next !== shoulder) { shoulder = next; noThirdLast = true; }",
+    "new": "      if (next !== shoulder) { shoulder = next; }",
+    "tests": [
+      "test/player/fb1026c_shoulder.test.js"
+    ]
+  },
+  {
+    "name": "MW-SHOULDER-right-is-left",
+    "file": "src/player/mwCamera.js",
+    "old": "        focal[0] += Math.cos(yaw) * fo[0] * u; focal[1] += fo[1] * u; focal[2] -= Math.sin(yaw) * fo[0] * u;",
+    "new": "        focal[0] -= Math.cos(yaw) * fo[0] * u; focal[1] += fo[1] * u; focal[2] += Math.sin(yaw) * fo[0] * u;",
+    "tests": [
+      "test/player/fb1026c_shoulder.test.js"
+    ]
+  },
+  {
+    "name": "MW-SHOULDER-offset-unscaled",
+    "file": "src/player/mwCamera.js",
+    "old": "        focal[0] += Math.cos(yaw) * fo[0] * u; focal[1] += fo[1] * u; focal[2] -= Math.sin(yaw) * fo[0] * u;",
+    "new": "        focal[0] += Math.cos(yaw) * fo[0] * u; focal[1] += fo[1] / 10 * u; focal[2] -= Math.sin(yaw) * fo[0] * u;",
+    "tests": [
+      "test/player/fb1026c_shoulder.test.js"
+    ]
+  },
+  {
+    "name": "MW-SHOULDER-guard-unread",
+    "file": "src/player/mwCamera.js",
+    "old": "        if (k != null) for (let i = 0; i < 3; i++) focal[i] = from[i] + dir[i] * k;",
+    "new": "        if (false) for (let i = 0; i < 3; i++) focal[i] = from[i] + dir[i] * k;",
+    "tests": [
+      "test/player/fb1026c_shoulder.test.js"
+    ]
+  },
+  {
+    "name": "MW-SHOULDER-guard-run-flat",
+    "file": "src/player/mwCamera.js",
+    "old": "        const run = [Math.cos(yaw) * fo[0] * u, (fo[1] + FOCAL_OBSTACLE_LIMIT) * u, -Math.sin(yaw) * fo[0] * u];",
+    "new": "        const run = [Math.cos(yaw) * fo[0] * u, fo[1] * u, -Math.sin(yaw) * fo[0] * u];",
+    "tests": [
+      "test/player/fb1026c_shoulder.test.js"
+    ]
+  },
+  {
+    "name": "MW-SHOULDER-offset-always",
+    "file": "src/player/mwCamera.js",
+    "old": "      const fo = focalShift.current();",
+    "new": "      const fo = [30, -10];",
+    "tests": [
+      "test/player/fb1026c_shoulder.test.js"
+    ]
+  },
+  {
+    "name": "MW-SHOULDER-pref-unread",
+    "file": "src/player/mwView.js",
+    "old": "  mwCamera.setShoulder(getPref('mwShoulderCam'));",
+    "new": "  mwCamera.setShoulder('off');",
+    "tests": [
+      "test/player/fb1026c_shoulder.test.js"
+    ]
+  },
+  {
+    "name": "MW-SHOULDER-stance-unread",
+    "file": "src/player/mwView.js",
+    "old": "  mwCamera.stepShoulder(state.dt ?? 0, fpArm.shoulderStance());",
+    "new": "  mwCamera.stepShoulder(state.dt ?? 0, null);",
+    "tests": [
+      "test/player/fb1026c_shoulder.test.js"
+    ]
+  },
+  {
+    "name": "MW-SHOULDER-sheathed-is-combat",
+    "file": "src/combat/fpArm.js",
+    "old": "    shoulderStance: () => (spellReady || !sheathed ? 'combat'",
+    "new": "    shoulderStance: () => (spellReady || sheathed ? 'combat'",
+    "tests": [
+      "test/player/fb1026c_shoulder.test.js"
+    ]
+  },
+  {
+    "name": "BOW-AIM-melee-pitches",
+    "file": "src/combat/spineAim.js",
+    "old": "  if (!AIMING_STATES.has(upper) || (cls !== MW_WEAPON_CLASS.Ranged && cls !== MW_WEAPON_CLASS.Thrown)) return 0;",
+    "new": "  if (!AIMING_STATES.has(upper)) return 0;",
+    "tests": [
+      "test/combat/fb1026c_bowaim.test.js"
+    ]
+  },
+  {
+    "name": "BOW-AIM-idle-pitches",
+    "file": "src/combat/spineAim.js",
+    "old": "  if (!AIMING_STATES.has(upper) || (cls !== MW_WEAPON_CLASS.Ranged && cls !== MW_WEAPON_CLASS.Thrown)) return 0;",
+    "new": "  if (cls !== MW_WEAPON_CLASS.Ranged && cls !== MW_WEAPON_CLASS.Thrown) return 0;",
+    "tests": [
+      "test/combat/fb1026c_bowaim.test.js"
+    ]
+  },
+  {
+    "name": "BOW-AIM-no-ramp-in",
+    "file": "src/combat/spineAim.js",
+    "old": "    if (startTime <= time && time < minAttackTime) return (time - startTime) / (minAttackTime - startTime);",
+    "new": "    if (false) return 0;",
+    "tests": [
+      "test/combat/fb1026c_bowaim.test.js"
+    ]
+  },
+  {
+    "name": "BOW-AIM-crossbow-slow",
+    "file": "src/combat/spineAim.js",
+    "old": "    return weaponType === MW_WEAPON_TYPE.MarksmanCrossbow ? Math.max(0, 1 - completion * 10) : 1 - completion;",
+    "new": "    return weaponType === MW_WEAPON_TYPE.MarksmanCrossbow ? Math.max(0, 1 - completion) : 1 - completion;",
+    "tests": [
+      "test/combat/fb1026c_bowaim.test.js"
+    ]
+  },
+  {
+    "name": "BOW-AIM-follow-held",
+    "file": "src/combat/spineAim.js",
+    "old": "    return weaponType === MW_WEAPON_TYPE.MarksmanCrossbow ? Math.max(0, 1 - completion * 10) : 1 - completion;",
+    "new": "    return weaponType === MW_WEAPON_TYPE.MarksmanCrossbow ? Math.max(0, 1 - completion * 10) : 1;",
+    "tests": [
+      "test/combat/fb1026c_bowaim.test.js"
+    ]
+  },
+  {
+    "name": "BOW-AIM-whole-pitch-each",
+    "file": "src/combat/spineAim.js",
+    "old": "  const half = rotNegX(pitch / 2);",
+    "new": "  const half = rotNegX(pitch);",
+    "tests": [
+      "test/combat/fb1026c_bowaim.test.js"
+    ]
+  },
+  {
+    "name": "BOW-AIM-pitch-up",
+    "file": "src/combat/spineAim.js",
+    "old": "  const half = rotNegX(pitch / 2);",
+    "new": "  const half = rotNegX(-pitch / 2);",
+    "tests": [
+      "test/combat/fb1026c_bowaim.test.js"
+    ]
+  },
+  {
+    "name": "BOW-AIM-local-frame",
+    "file": "src/formats/morrowind/mwFirstPerson.js",
+    "old": "  return mat33Mul(mat33Mul(mat33Mul(local, transpose33(w)), rotate), w);",
+    "new": "  return mat33Mul(local, rotate);",
+    "tests": [
+      "test/combat/fb1026c_bowaim.test.js",
+      "test/formats/morrowind/fparm.test.js"
+    ]
+  },
+  {
+    "name": "BOW-AIM-old-conjugation",
+    "file": "src/formats/morrowind/mwFirstPerson.js",
+    "old": "  return mat33Mul(mat33Mul(mat33Mul(local, transpose33(w)), rotate), w);",
+    "new": "  return mat33Mul(mat33Mul(mat33Mul(w, rotate), transpose33(w)), local);",
+    "tests": [
+      "test/combat/fb1026c_bowaim.test.js",
+      "test/formats/morrowind/fparm.test.js"
+    ]
+  },
+  {
+    "name": "BOW-AIM-slot-unread",
+    "file": "src/formats/morrowind/mwFirstPerson.js",
+    "old": "  assembly.aimFit = aim ? aim(skeleton, pose, GRAPH_ROOT, fns.skelMats) : null;",
+    "new": "  assembly.aimFit = null;",
+    "tests": [
+      "test/combat/fb1026c_bowaim.test.js"
+    ]
+  },
+  {
+    "name": "BOW-AIM-slot-after-motion",
+    "file": "src/formats/morrowind/mwFirstPerson.js",
+    "old": "  assembly.aimFit = aim ? aim(skeleton, pose, GRAPH_ROOT, fns.skelMats) : null;\n  // BODY-MOTION (characters/bodyMotion/bodyMotion.js, the third-person body's): the gait, the carry and a blow's body\n  // solved over the clip's pose - after the mirror (a pair's arm is the layer's to place) and UNDER the run, the climb,\n  // the seat and the long gun's hold, which still win the bones they ask for\n  assembly.motionFit = motion ? motion(skeleton, pose, GRAPH_ROOT, fns.skelMats) : null;\n",
+    "new": "  // BODY-MOTION (characters/bodyMotion/bodyMotion.js, the third-person body's): the gait, the carry and a blow's body\n  // solved over the clip's pose - after the mirror (a pair's arm is the layer's to place) and UNDER the run, the climb,\n  // the seat and the long gun's hold, which still win the bones they ask for\n  assembly.motionFit = motion ? motion(skeleton, pose, GRAPH_ROOT, fns.skelMats) : null;\n  assembly.aimFit = aim ? aim(skeleton, pose, GRAPH_ROOT, fns.skelMats) : null;\n",
+    "tests": [
+      "test/combat/fb1026c_bowaim.test.js"
+    ]
+  },
+  {
+    "name": "BOW-AIM-sign-kept",
+    "file": "src/combat/fpArm.js",
+    "old": "            aim: cam?.pitch && upper > UPPER_BODY.WeaponEquipped ? spineAimSlot(-cam.pitch * spinePitchFactor({ upper: UPPER_BODY_NAME[upper], weaponType: stanceOf(), group: weaponGroup, time: actionState ? actionState.time : -1, startTime: keyTime(attackKeys(attackType).windUp.start), minAttackTime: keyTime(attackKeys(attackType).minAttack), completion: clipCompletion(actionState) })) : null,",
+    "new": "            aim: cam?.pitch && upper > UPPER_BODY.WeaponEquipped ? spineAimSlot(cam.pitch * spinePitchFactor({ upper: UPPER_BODY_NAME[upper], weaponType: stanceOf(), group: weaponGroup, time: actionState ? actionState.time : -1, startTime: keyTime(attackKeys(attackType).windUp.start), minAttackTime: keyTime(attackKeys(attackType).minAttack), completion: clipCompletion(actionState) })) : null,",
+    "tests": [
+      "test/combat/fb1026c_bowaim.test.js"
+    ]
+  },
+  {
+    "name": "BOW-AIM-unwired",
+    "file": "src/combat/fpArm.js",
+    "old": "            aim: cam?.pitch && upper > UPPER_BODY.WeaponEquipped ? spineAimSlot(-cam.pitch * spinePitchFactor({ upper: UPPER_BODY_NAME[upper], weaponType: stanceOf(), group: weaponGroup, time: actionState ? actionState.time : -1, startTime: keyTime(attackKeys(attackType).windUp.start), minAttackTime: keyTime(attackKeys(attackType).minAttack), completion: clipCompletion(actionState) })) : null,",
+    "new": "            aim: null,",
+    "tests": [
+      "test/combat/fb1026c_bowaim.test.js"
+    ]
+  },
+  {
+    "name": "THRUST-CHAMBER-drawn-behind",
+    "file": "src/characters/bodyMotion/melee.js",
+    "old": "      k(0.3, { grip: [0.37, 0.57, -0.4], blade: [-0.2, 0.96, 0.2], edge: [0, 0, -1], chest: [-24, 0, -2], hip: -12, shift: -0.06, drop: 0.02, step: 0 }),",
+    "new": "      k(0.3, { grip: [0.44, -0.2, -0.36], blade: [-0.05, 1, 0.14], edge: [0, 0, -1], chest: [-22, 0, -2], hip: -12, shift: -0.06, drop: 0.02, step: 0 }),",
+    "tests": [
+      "test/characters/bodyMotion/fb1026c_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "THRUST-CHAMBER-chest-square",
+    "file": "src/characters/bodyMotion/melee.js",
+    "old": "      k(0.3, { grip: [0.37, 0.57, -0.4], blade: [-0.2, 0.96, 0.2], edge: [0, 0, -1], chest: [-24, 0, -2], hip: -12, shift: -0.06, drop: 0.02, step: 0 }),",
+    "new": "      k(0.3, { grip: [0.37, 0.57, -0.4], blade: [-0.2, 0.96, 0.2], edge: [0, 0, -1], chest: [0, 0, -2], hip: -12, shift: -0.06, drop: 0.02, step: 0 }),",
+    "tests": [
+      "test/characters/bodyMotion/fb1026c_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "ONE-RUN-the-old-row",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "    run: { R: row(8, 21, 16, -4, 0.35, { blade: dir(0.2, 0.97, -0.14), edge: dir(-0.15, -0.11, -0.98) }), L: row(8, 18, 0, -4, 1, { gaitElbow: 1 }) },",
+    "new": "    run: { R: row(16, -3, 46, -42, 0.35, { blade: dir(0.54, -0.51, -0.67), edge: dir(-0.21, 0.69, -0.69) }), L: row(8, 18, 0, -4, 1, { gaitElbow: 1 }) },",
+    "tests": [
+      "test/characters/bodyMotion/fb1026c_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "ONE-RUN-out-to-the-side",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "    run: { R: row(8, 21, 16, -4, 0.35, { blade: dir(0.2, 0.97, -0.14), edge: dir(-0.15, -0.11, -0.98) }), L: row(8, 18, 0, -4, 1, { gaitElbow: 1 }) },",
+    "new": "    run: { R: row(8, 21, 16, -4, 0.35, { blade: dir(0.54, 0.97, -0.14), edge: dir(-0.15, -0.11, -0.98) }), L: row(8, 18, 0, -4, 1, { gaitElbow: 1 }) },",
+    "tests": [
+      "test/characters/bodyMotion/fb1026c_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "ONE-RUN-twisted",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "    run: { R: row(8, 21, 16, -4, 0.35, { blade: dir(0.2, 0.97, -0.14), edge: dir(-0.15, -0.11, -0.98) }), L: row(8, 18, 0, -4, 1, { gaitElbow: 1 }) },",
+    "new": "    run: { R: row(8, 21, 16, -42, 0.35, { blade: dir(0.2, 0.97, -0.14), edge: dir(-0.15, -0.11, -0.98) }), L: row(8, 18, 0, -4, 1, { gaitElbow: 1 }) },",
+    "tests": [
+      "test/characters/bodyMotion/fb1026c_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "ONE-RUN-via-back",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "    stand: { feet: { L: [0, 0.05], R: [0.02, -0.03] }, hipYaw: -6 },",
+    "new": "    stand: { feet: { L: [0, 0.05], R: [0.02, -0.03] }, hipYaw: -6 },\n    via: dir(0, -0.643, 0.766),",
+    "tests": [
+      "test/characters/bodyMotion/fb1026c_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "BOW-AIM-asked-at-rest",
+    "file": "src/combat/fpArm.js",
+    "old": "            aim: cam?.pitch && upper > UPPER_BODY.WeaponEquipped ? spineAimSlot(-cam.pitch * spinePitchFactor({ upper: UPPER_BODY_NAME[upper], weaponType: stanceOf(), group: weaponGroup, time: actionState ? actionState.time : -1, startTime: keyTime(attackKeys(attackType).windUp.start), minAttackTime: keyTime(attackKeys(attackType).minAttack), completion: clipCompletion(actionState) })) : null,",
+    "new": "            aim: cam?.pitch ? spineAimSlot(-cam.pitch * spinePitchFactor({ upper: UPPER_BODY_NAME[upper], weaponType: stanceOf(), group: weaponGroup, time: actionState ? actionState.time : -1, startTime: keyTime(attackKeys(attackType).windUp.start), minAttackTime: keyTime(attackKeys(attackType).minAttack), completion: clipCompletion(actionState) })) : null,",
+    "tests": [
+      "test/combat/fb1026c_bowaim.test.js"
+    ]
+  },
+  {
+    "name": "TWO-CLEAR-guard-at-the-hip",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "    idle: { R: row(36, -3, 10, 52, 0, { blade: dir(-0.34, 0.89, -0.29), edge: dir(-0.41, -0.42, -0.81) }), L: row(0, 0, 0, 0, 0, { grip: true }) },",
+    "new": "    idle: { R: row(29, 7, 10, 42, 0, { blade: dir(-0.3, 0.89, -0.35), edge: dir(-0.08, -0.39, -0.92) }), L: row(0, 0, 0, 0, 0, { grip: true }) },",
+    "tests": [
+      "test/characters/bodyMotion/fb1026c_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "TWO-CLEAR-walk-guard-at-the-hip",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "    walk: { R: row(40, -7, 11, 11, 0.12, { blade: dir(-0.34, 0.94, -0.1), edge: dir(-0.35, -0.22, -0.91) }), L: row(0, 0, 0, 0, 0, { grip: true }) },",
+    "new": "    walk: { R: row(40, -5, 7, 56, 0.12, { blade: dir(-0.52, 0.84, -0.15), edge: dir(0.13, -0.1, -0.99) }), L: row(0, 0, 0, 0, 0, { grip: true }) },",
+    "tests": [
+      "test/characters/bodyMotion/fb1026c_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "TWO-CLEAR-sneak-guard-old",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "    sneak: { R: row(52, -2, 11, 52, 0.1, { blade: dir(-0.26, 0.95, 0.17), edge: dir(-0.21, 0.12, -0.97) }), L: row(0, 0, 0, 0, 0, { grip: true }) },",
+    "new": "    sneak: { R: row(51, 2, 7, 22, 0.1, { blade: dir(-0.34, 0.94, 0.09), edge: dir(-0.1, 0.06, -0.99) }), L: row(0, 0, 0, 0, 0, { grip: true }) },",
+    "tests": [
+      "test/characters/bodyMotion/fb1026c_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "TWO-CLEAR-haft-elbow-back",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "      haf.pole = norm(add(scale(F.right, -0.55), add(scale(F.up, -0.75), scale(F.fwd, 0.45))));",
+    "new": "      haf.pole = norm(add(scale(F.right, -0.55), add(scale(F.up, -0.75), scale(F.fwd, -0.2))));",
+    "tests": [
+      "test/characters/bodyMotion/fb1026c_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "TWO-CLEAR-blow-elbow-back",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "    if (haf) out.L = { ...haf, w: armW.L, pole: norm(add(scale(frames.right, -0.55), add(scale(frames.up, -0.75), scale(frames.fwd, 0.45)))) };",
+    "new": "    if (haf) out.L = { ...haf, w: armW.L, pole: norm([-0.55, -0.2, -0.75]) };",
+    "tests": [
+      "test/characters/bodyMotion/fb1026c_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "TWO-CLEAR-the-pair-unpushed",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "export const TRUNK_CLEAR = 0.29;",
+    "new": "export const TRUNK_CLEAR = 0;",
+    "tests": [
+      "test/characters/bodyMotion/fb1026c_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "TWO-CLEAR-push-backward",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "  return Math.max(0, (-vf + Math.sqrt(Math.max(0, vf * vf - ff * (dot(v, v) - clear * clear)))) / ff);",
+    "new": "  return Math.max(0, (-vf - Math.sqrt(Math.max(0, vf * vf - ff * (dot(v, v) - clear * clear)))) / ff);",
+    "tests": [
+      "test/characters/bodyMotion/fb1026c_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "TWO-CLEAR-chop-old",
+    "file": "src/characters/bodyMotion/melee.js",
+    "old": "      k(0.4, { grip: [0.12, 0.45, 0.68], blade: [0.03, 0.45, 0.89], edge: [0, 0.89, -0.45], chest: [-5, 0, -1], hip: -1, shift: 0, drop: 0.03, step: 0.1 }),\n",
+    "new": "",
+    "tests": [
+      "test/characters/bodyMotion/fb1026c_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "TWO-CLEAR-chop-raised-beside",
+    "file": "src/characters/bodyMotion/melee.js",
+    "old": "      k(0.18, { grip: [0.12, 0.47, 0.35], blade: [-0.05, 0.2, 0.98], edge: [0, 0.98, -0.2], chest: [-7, 0, -11], hip: -4, shift: -0.04, drop: 0, step: 0 }),\n",
+    "new": "",
+    "tests": [
+      "test/characters/bodyMotion/fb1026c_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "TWO-CLEAR-slash-old",
+    "file": "src/characters/bodyMotion/melee.js",
+    "old": "      k(0.4, { grip: [0.42, 0.6, 0.15], blade: [0.85, 0.36, 0.39], edge: [-0.39, 0.92, 0.01], chest: [-26, 1, 2], hip: -7, shift: 0, drop: 0.03, step: 0.1 }),\n",
+    "new": "",
+    "tests": [
+      "test/characters/bodyMotion/fb1026c_mwbody.test.js",
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "TWO-CLEAR-slash-drawn-behind",
+    "file": "src/characters/bodyMotion/melee.js",
+    "old": "      k(0.3, { grip: [0.5, 0.37, 0.3], blade: [0.45, -0.35, 0.82], edge: [0.89, 0.28, -0.37], chest: [-45, 0, -2], hip: -20, shift: -0.05, drop: 0.02, step: 0.02 }),",
+    "new": "      k(0.3, { grip: [0.5, -0.22, 0.22], blade: [0.4, -0.82, 0.42], edge: [0.85, 0.45, 0], chest: [-45, 0, -2], hip: -20, shift: -0.05, drop: 0.02, step: 0.02 }),",
+    "tests": [
+      "test/characters/bodyMotion/fb1026c_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "TWO-CLEAR-back-old",
+    "file": "src/characters/bodyMotion/melee.js",
+    "old": "      k(0.3, { grip: [-0.37, 0.32, 0.26], blade: [-0.35, -0.72, 0.6], edge: [-0.93, 0.18, -0.33], chest: [38, 0, -2], hip: 16, shift: -0.04, drop: 0.02, step: 0 }),",
+    "new": "      k(0.3, { grip: [-0.4, 0.25, 0.3], blade: [-0.55, -0.72, 0.42], edge: [-0.8, 0.55, 0], chest: [38, 0, -2], hip: 16, shift: -0.04, drop: 0.02, step: 0 }),",
+    "tests": [
+      "test/characters/bodyMotion/fb1026c_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "TWO-CLEAR-back-across-beside",
+    "file": "src/characters/bodyMotion/melee.js",
+    "old": "      k(0.4, { grip: [-0.32, 0.66, 0.08], blade: [-0.9, 0.25, 0.35], edge: [0.27, 0.96, 0.01], chest: [20, -1, 2], hip: 4, shift: 0.01, drop: 0.03, step: 0.07 }),\n",
+    "new": "",
+    "tests": [
+      "test/characters/bodyMotion/fb1026c_mwbody.test.js"
+    ]
+  },
+  {
+    "name": "TWO-CLEAR-the-hit-near",
+    "file": "src/characters/bodyMotion/melee.js",
+    "old": "      k(0.5, { grip: [0.06, 0.68, 0.06], blade: [0, 0.82, -0.57], edge: [0, -0.57, -0.82], chest: [4, 0, 18], hip: 4, shift: 0.07, drop: 0.07, step: 0.2 }),",
+    "new": "      k(0.5, { grip: [0.06, 0.55, 0.08], blade: [0, 0.82, -0.57], edge: [0, -0.57, -0.82], chest: [4, 0, 18], hip: 4, shift: 0.07, drop: 0.07, step: 0.2 }),",
+    "tests": [
+      "test/characters/bodyMotion/fb1026c_mwbody.test.js"
+    ]
+  }
+]

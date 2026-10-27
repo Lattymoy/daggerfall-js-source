@@ -85,7 +85,7 @@ export const CATEGORIES = Object.freeze([
     sec("start", "Starting a new game", [
       "Startup/StartInDungeon", "Startup/StartCellX", "Startup/StartCellY"]),
     sec("camera", "Camera", [
-      "feat:mod-eye-of-the-beholder"]),
+      "feat:mw-shoulder-camera", "feat:mod-eye-of-the-beholder"]),
     sec("others", "Other players", [
       "card:peerSprites"]),
     sec("advanced", "Advanced", [

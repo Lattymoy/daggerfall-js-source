@@ -1839,6 +1839,26 @@
   "tr": "e36ce187fa32",
   "by": "claude-in-session"
  },
+ "features.mwShoulder.left": {
+  "en": "8ae1c34bd37f",
+  "tr": "df5d46647631",
+  "by": "claude-in-session"
+ },
+ "features.mwShoulder.note": {
+  "en": "1ddfce5b69bc",
+  "tr": "65ab526df5d4",
+  "by": "claude-in-session"
+ },
+ "features.mwShoulder.right": {
+  "en": "954daa8b0033",
+  "tr": "3a761384cd22",
+  "by": "claude-in-session"
+ },
+ "features.mwShoulder.title": {
+  "en": "2a1bc9d46a00",
+  "tr": "6e3b4c7fb151",
+  "by": "claude-in-session"
+ },
  "features.npcMarks.note": {
   "en": "9ac4077e0fc2",
   "tr": "88a2b17c4c14",
@@ -3722,6 +3742,21 @@
  "ql.journal.lineOffered": {
   "en": "07bf16996609",
   "tr": "8ac52c278198",
+  "by": "claude-in-session"
+ },
+ "ql.journal.pieceChain": {
+  "en": "9fc9f25448a2",
+  "tr": "1eb77061bce7",
+  "by": "claude-in-session"
+ },
+ "ql.journal.pieceLeather": {
+  "en": "14786dce4b74",
+  "tr": "100a10a1a300",
+  "by": "claude-in-session"
+ },
+ "ql.journal.piecePlate": {
+  "en": "71f27cb3d1c6",
+  "tr": "40c48fda4439",
   "by": "claude-in-session"
  },
  "ql.journal.postBoard": {

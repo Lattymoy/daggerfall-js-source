@@ -132,7 +132,7 @@ import { STORE_FILTER_KINDS, filterStore, storeFilterOptions, storeRarityOptions
 import { bulkVerdict, runBulk, listAtCap, CONTAINER_LIST_CAP, containerFull } from '../storeBulk.js';   // LOOT-BULK: Take all / Stash all
 import { entityMaxEncumbrance } from '../../combat/formulas.js';   // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all
 import { liveStat } from '../../systems/statMods.js';
-import { conditionWord, conditionPercentage, itemNameParts, itemLongName, itemDamageLine, itemArmourLine, itemHandsLine } from '../../systems/item/itemInfo.js';   // RF6: the long name's two parts, ResolveItemLongName's arms once
+import { conditionWord, conditionPercentage, itemNameParts, itemLongName, itemDamageLine, itemArmourLine, itemArmorTypeLine, itemHandsLine } from '../../systems/item/itemInfo.js';   // RF6: the long name's two parts, ResolveItemLongName's arms once
 import { survivalInfoTokens, potionMacroName, potionRecipeIngredientNames } from '../../systems/item/itemInfo.js'; import { isPortalStone } from '../../systems/gate/gateSpoils.js';   // AUDIT SURV C: the survival items' tokens on this skin's card too
 import { isStarglass } from '../../systems/starfall/starglass.js';   // AUDIT STAR I2: Starfall Glass's lines on this skin's card
 import { isLockpick } from '../../systems/lockpick/lockpickItem.js';   // AUDIT LOCKPICK B2: the Lockpick's lines on this skin's card
@@ -453,6 +453,7 @@ export function itemLine(item, identity = undefined) {
     // show a row at all is this skin's (systems/item/itemInfo.js).
     damage: itemDamageLine(item),
     armour: itemArmourLine(item),
+    armorType: itemArmorTypeLine(item),   // ARMOR-TYPE: Leather, Chain or Plate (systems/item/itemInfo.js) - null for anything not armour
     // MAC-M2 (Mac: "The Tooltip of weapons should also show if the
     // weapon is 1h or 2h"): the same shape as the two above - the
     // ANSWER is systems/itemInfo's, off the port's one GetItemHands, so
@@ -3494,6 +3495,7 @@ function infoCard(picked, side, ready = render, { body = false, own = true } = {
   pair('Damage', line.damage);
   pair('Armour', line.armour);
   pair('Worth', letterWorthGold(picked));   // TRADE-LOC II: a letter of credit is its worth - the card every pack, shop and trade hover shows says it
+  pair('Type', line.armorType);   // ARMOR-TYPE: beside the number it sets - right under Armour, as Worth is a letter's alone
   // MAC-M2: under the damage, because it is the same question - how the
   // thing is swung - and above the weight, which is not. Null for
   // everything that is not a weapon, so no book grows an empty row.

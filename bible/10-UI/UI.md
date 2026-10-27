@@ -70,7 +70,8 @@ ESCORTING FACES - the quest escorts' portrait column, FE1 - and the CREDITS TABL
 - and BOX-ON-TOP's LAYER (`boxClickCatcher.js`: a message box drawn as the top window over an open enhanced window - a tutorial page over the Identify window, the Identify spell's magicka refusal - takes a click anywhere, as DFU's ClickAnywhereToClose does (`DaggerfallMessageBox.cs:645-660`), through a transparent layer over the whole screen above the window; the counter's own keys stand down while a box covers it (`ui/tradeDoor.js:"hooks.covered = () => windowCovered(overlay);"`). The refusal is a box over the window, as DFU's is (`DaggerfallTradeWindow.cs:962`), not a HUD line the window hides);
 - and the BUILDING DOOR'S RING (`interiorLoadMark.js`: a ring over the hotbar while a building's door loads, the full loading screen stepped aside so the street stays visible - `10-UI/Loading-Screens.md`);
 - and LOCKPICK's TWO (`lockpickDoor.js` and `lockpickWindow.js`: the lock's window - its pin tumblers in cross-section, the pick, the Auto attempt and Leave - `06-Systems/Lockpicking.md` section 4);
-426 modules
+- and PACK-PICK's PICKER (`packPicker.js`: the pack's pieces as pictured tiles in their tiers' frames, sifted as the pack's own stores are, what may not go folded with why, and the piece chosen looked at - the Market's List form and a trader's stall choose a piece to sell from it; `06-Systems/Professions-Arc.md` 10.14);
+427 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.
