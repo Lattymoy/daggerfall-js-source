@@ -420,6 +420,17 @@ export function heldInSolid(collider, feet, height = CAPSULE_HEIGHT) {
   return collider.insideSolid([feet[0], feet[1] + CAPSULE_RADIUS, feet[2]]) || collider.insideSolid([feet[0], feet[1] + height - CAPSULE_RADIUS, feet[2]]);
 }
 
+/** PACK-OPEN (mob 2026-10-26: "make sure they dont spawn in houses", "or building"): whether a raid's or a staff event's
+ *  monster may stand at `spot` ({ x, y, z }, its feet) - not held in a static solid (a closed building's shell, a rock)
+ *  and no solid over its head within RAID_SPOT_ROOF_M (a roof: a shell open below, a porch, an arch). Pure over the
+ *  collider's queries. */
+export const RAID_SPOT_ROOF_M = 30;
+export function raidSpotOpen(collider, spot) {
+  const feet = [spot.x, spot.y, spot.z];
+  if (heldInSolid(collider, feet)) return false;
+  return !Number.isFinite(collider.raycast([feet[0], feet[1] + CAPSULE_HEIGHT, feet[2]], [0, 1, 0], RAID_SPOT_ROOF_M));
+}
+
 /** floorLanding's footprint sweep: the highest floor its five rays (the centre and a ring at ~half the capsule's
  *  radius, each from 0.2 above `pos`) meet within `maxDist`, or -Infinity. */
 function footprintFloorY(collider, pos, maxDist) {

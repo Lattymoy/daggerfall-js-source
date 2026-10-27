@@ -16,7 +16,7 @@ import {
   CRAFTING, ACTS,
 } from '../src/net/firmament/firmamentLaw.js';
 import { FIRM_NODES } from '../src/net/firmament/firmamentTree.js';
-import { WEAPON_POTENCY_PER_POINT, WEAPON_HALF_PER_POINT } from '../src/systems/weaponMastery.js';
+import { WEAPON_POTENCY_PER_POINT, WEAPON_HALF_PER_POINT, WEAPON_GEAR_DIVISOR, WEAPON_GEAR_SKILL_MOST } from '../src/systems/weaponMastery.js';
 import { EFFECTIVE_SKILL_MAX, SKILL_SOFT_CAP } from '../src/systems/skillSoftcap.js';
 import { MARTIAL_BLOW_MOST } from '../src/systems/martialPowers.js';
 import { MARTIAL_NUMBERS } from '../src/systems/martialPaths.js';
@@ -159,8 +159,11 @@ export function firmamentBlowTop() {
   const c = Object.fromEntries(Object.entries(STAT_DEFS).map(([k, d]) => [k, d.max]));
   return blowPct(c, { skill: 'LongBlade', group: 'undead', unaware: true, wounded: true });
 }
-/** A weapon skill's climb past 100 at its most, at the axe's and the hammer's rate (weaponMastery.js). */
-export const masteryBlowTop = () => Math.round((EFFECTIVE_SKILL_MAX - SKILL_SOFT_CAP) * Math.max(WEAPON_POTENCY_PER_POINT, WEAPON_HALF_PER_POINT) * 100);
+/** A weapon skill's climb past 100 at its most, at the axe's and the hammer's rate - or, WEAPON-GEAR, its live skill at
+ *  the most counted over the divisor, whichever is more (weaponMastery.js weaponPastPct takes the greater). */
+export const masteryBlowTop = () => Math.max(
+  Math.round((EFFECTIVE_SKILL_MAX - SKILL_SOFT_CAP) * Math.max(WEAPON_POTENCY_PER_POINT, WEAPON_HALF_PER_POINT) * 100),
+  Math.round((WEAPON_GEAR_SKILL_MOST / WEAPON_GEAR_DIVISOR - 1) * 100));
 /** The most share a path's guard takes off a hurt - one path held at a time, each its own law. */
 const lighterTop = (numbers) => Math.max(0, ...Object.values(numbers).map((n) => n.lighter ?? 0));
 
