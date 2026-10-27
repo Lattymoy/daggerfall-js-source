@@ -42,6 +42,15 @@ import { ARENA_TEXT } from '../../../src/systems/arena/arenaText.js';
 import { arenaBoutRoom } from '../../../src/net/arena/arenaLaw.js';
 import { mintArenaReceipt } from '../../../src/net/arena/arenaReceipt.js';
 import { standService } from '../../accountDb.mjs';
+import { QUESTLINES_PREF, questlinesOn } from '../../../src/systems/questlines/qlLaw.js';
+import { questSource as qlQuestSource, loadTables as loadQlTables, ROOT as QL_ROOT } from '../../qlSources.mjs';
+import { addItem } from '../../../src/systems/inventory.js';
+import { keepsQuestItem } from '../../../src/systems/item/itemTransfer.js';
+import { useItem } from '../../../src/systems/useItem.js';
+import { join } from 'node:path';
+import { createBountyHost, bountyGroups } from '../../../src/scenes/bountyHost.js';
+import { bountySites, boardPostings } from '../../../src/systems/bounty/bountyBoard.js';
+import { tutorialById } from '../../../src/systems/tutorials.js';
 
 void Node_;
 // NO LIVE TIMER RUNS HERE (GUIDE2's law): the tab's intervals are recorded, never run
@@ -515,4 +524,116 @@ test('ARENA-ORDER: a ladder win the service has not counted yet holds the next F
   assert.deepEqual(attempts, [[0, 0, 'ticket'], [0, 1, 'ticket']], 'the next Fight asks the climb the service moved - never `order`');
   assert.equal(entered.length, 2);
   assert.ok(!said.some((l) => /not your next ladder bout/i.test(l)), 'never "not your next ladder bout"');
+});
+
+// ── CATALOG-READ ───────────────────────────────────────────────────────────────────────────────────────────────────
+// (two private reports of Azimuthal Vectors: the scholar's teleport to the catalogue's dungeon finding nothing there, and
+// the dead end's payment never coming). N0B00Y17 moves on READING its catalogue (`_map2_ used do _S.15_`,
+// `_I.03_ used do _S.16_`): the itemdung revealed, the dead end's last condition. The questlines' sheet struck "Look for the
+// old catalog" on CARRYING it, and nothing named the reading. DFU's own script through the real bridge and layer, the
+// world's placements left out (they are the world's part); the pickup the pack's, the reading the inventory's use.
+
+/** N0B00Y17 started on a branch (`rolls`: 0.4 the cousin's map, 0.9 the dead end) with the questlines on. */
+function catalogQuest(rolls) {
+  loadQlTables();
+  setPref(QUESTLINES_PREF, true);
+  const pack = [];
+  let now = 100000;
+  const bridge = createQuestBridge({
+    data: {
+      readListTable: (name) => { try { return readFileSync(join(QL_ROOT, 'vendor/dfu-quests/Tables', `QuestList-${name}.txt`), 'utf8'); } catch { return null; } },
+      getQuestSourceLines: (n) => (qlQuestSource(n, questlinesOn()) ?? []).filter((l) => !/^\s*(place npc|place item|create npc at|reveal|teleport pc)/.test(l)),
+    },
+    classicSeconds: () => now, nowSeconds: () => now, worldSeconds: () => now,
+    playerEntity: { name: 'Hero', level: 6, gender: 'female', skills: new Array(35).fill(30), stats: {} },
+    giveItemToPlayer: (it) => addItem(pack, it),
+    carriesQuestItem: (res) => keepsQuestItem({ items: pack }, res),
+    showPopup: () => {}, showPrompt: (_q, _m, respond) => respond(true), showChoice: () => {},
+  });
+  const quest = quiet(() => bridge.machine.startQuestByName('N0B00Y17', 0, { rolls: () => rolls }));
+  const tick = () => quiet(() => { for (let i = 0; i < 2; i++) { now += 5; bridge.machine.tick(); bridge.questlines.look(); } });
+  tick();
+  const rows = () => Object.fromEntries((bridge.questlines.rowOf(quest)?.objectives ?? []).map((o) => [o.id, o]));
+  const set = (n) => quest.getTask({ name: n })?.getTriggerValue();
+  return { bridge, quest, pack, tick, rows, set };
+}
+
+test('CATALOG-READ: Azimuthal Vectors\' catalogue carried and unread is a step still open - "Read the old catalog", the script not moved; read from the pack, it is done and the itemdung\'s search opens (the cousin\'s map) or the dead end can be reported (mutants: the reading objective gone; done on carrying)', () => {
+  try {
+    for (const [rolls, branch, cat, read] of [[0.4, 'cousin', 'map2', 'S.15'], [0.9, 'S.03', 'I.03', 'S.16']]) {
+      const c = catalogQuest(rolls);
+      assert.equal(c.set(branch), true, `${branch}: the branch the roll picks`);
+      assert.equal(c.rows().read, undefined, 'nothing to read before it is found');
+      addItem(c.pack, structuredClone(c.quest.getItem({ name: cat }).daggerfallUnityItem));   // picked up in the dungeon
+      c.tick();
+      assert.equal(c.rows().catalogue.state, 'done', 'found');
+      assert.equal(c.set(read), false, `${branch}: carried, the script has not moved (\`${cat} used do ${read}\`)`);
+      assert.equal(c.rows().read?.state, 'open', `${branch}: the reading is a step of its own, still open`);
+      assert.match(c.rows().read.text, /^Read the old catalog from .*, which is in your pack$/);
+      assert.equal(c.rows().find, undefined, 'the itemdung is not named yet');
+      useItem(c.pack.find((it) => it.questItem), c.pack, { getQuest: (uid) => c.bridge.machine.getQuest(uid) });   // the inventory's Use
+      c.tick();
+      assert.equal(c.set(read), true, `${branch}: read`);
+      assert.equal(c.rows().read.state, 'done');
+      if (branch === 'cousin') assert.equal(c.rows().find?.state, 'open', 'the cousin\'s map names where the item is');
+    }
+  } finally { setPref(QUESTLINES_PREF, false); }
+});
+
+// ── BOUNTY-WAY ─────────────────────────────────────────────────────────────────────────────────────────────────────
+// (a private report of a farm hunt whose rats never showed). Driven in the real game on the freeware's data (a board's
+// orchard hunt held, the hunter walked onto its pixel): the farm stood 330 to 350 metres from where the hunter came onto
+// the pixel, the way to it is said ONCE on the screen among the arrival's own lines, and the rats stand once the hunter is
+// within 150 metres. A hunt of one group (fewer than six) kept that way nowhere: the journal's trail lines were the split
+// hunt's alone. A hunter who missed the line stood on the right pixel with nothing to go on. The tutorial said to return
+// for the gold, which a hunt never asks.
+
+test('BOUNTY-WAY: a one-group farm hunt\'s way to its farmstead is said once and KEPT in the journal; walked, the pack stands and the last kill pays (mutant: the way kept for a split hunt alone)', async () => {
+  const TOWN = { px: 300, py: 200, name: 'Daggerfall' };
+  const sites = bountySites(TOWN.px, TOWN.py, () => true);
+  let day = 900, p = null;
+  for (; day < 1100 && !p; day++) p = boardPostings({ day, ...TOWN, level: 2, sites }).find((q) => q.farm && q.count < 6) ?? null;
+  day--;
+  assert.ok(p, 'a farm hunt of one group');
+  assert.equal(bountyGroups(p).length, 1);
+  const pool = [], said = [];
+  let far = true, board = null;
+  const entity = { goldPieces: 0, items: [] };
+  const host = createBountyHost({
+    now: () => day * 1440 + 60, level: () => 2, entity: () => entity, townName: () => 'Daggerfall', siteOk: () => true,
+    playerPixel: () => ({ x: p.target.px, y: p.target.py }), canStand: () => true,
+    standPack: (o) => {
+      assert.equal(o.farm, true, 'the first group waits at the farm');
+      if (far) return { far: true, dx: 250, dz: 250 };
+      const foes = Array.from({ length: o.count }, () => ({ dead: false, entity: { health: 5 } }));
+      pool.push(...foes);
+      return { foes: Promise.resolve(foes), dx: 0, dz: 20 };
+    },
+    foePool: () => pool, say: (l) => said.push(l), showNotice: () => true, openBoardWindow: (d) => { board = d; },
+  });
+  host.openBoard(TOWN);
+  board.take(board.rows().find((r) => r.posting.slot === p.slot).posting.id);
+  const flush = async () => { for (let i = 0; i < 4; i++) await Promise.resolve(); };
+  host.tick(1); await flush();
+  const way = said.filter((l) => /^The farmstead lies 350 meters to the north-east\.$/.test(l));
+  assert.equal(way.length, 1, 'the way named');
+  const journal = () => host.questLogEntries()[0].messages[0].map((m) => m.text ?? m);
+  assert.ok(journal().includes(way[0]), 'and the journal keeps it');
+  assert.ok(!journal().some((l) => /two groups/.test(l)), 'a hunt of one group says no groups');
+  host.tick(1); host.tick(1);
+  assert.equal(said.filter((l) => /farmstead lies/.test(l)).length, 1, 'said once');
+  far = false;
+  for (let i = 0; i < 3; i++) { host.tick(1); await flush(); }   // the host asks again as the hunter closes in
+  assert.equal(pool.length, p.count, 'walked within reach, the pack stands');
+  for (const f of pool) { f.dead = true; f.corpse = true; }
+  host.tick(1);
+  assert.equal(entity.goldPieces, p.gold, 'the last kill pays - no going back for it');
+});
+
+test('BOUNTY-WAY: the tutorial says where a hunt is found and that the last kill pays (mutant: the old page)', () => {
+  const words = tutorialById('bounties').body.join(' ');
+  assert.match(words, /middle of its black circle on your map, or the dungeon it names/);
+  assert.match(words, /which way it waits; the Quests tab keeps the way/);
+  assert.match(words, /The last kill pays gold and an item/);
+  assert.doesNotMatch(words, /return for gold/);
 });

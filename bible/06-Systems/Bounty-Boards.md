@@ -129,6 +129,19 @@ clear of roads, the sea and towns and of any farm that already stands (AUDIT 28 
 farms in one another), and each model sits on the ground under itself. The first group waits in the
 farmyard, 10 to 18 metres from the farmhouse, and stands within 150 metres.
 
+- **The way to it is kept** (RPT1026-QUESTS BOUNTY-WAY, 2026-10-27, a private report of an orchard hunt whose rats
+  never showed). Driven in the real game on the freeware's data - a board's orchard hunt held, the hunter walked onto
+  its pixel: the farm stood 330 to 350 metres from where the hunter came onto the pixel, the way was said once on the
+  screen in the same few seconds as the arrival's own lines (the season, the needs, the family seat), and the four rats
+  stood once the hunter walked it. The way was kept in the journal for a split hunt alone (section 4's BOUNTY-TRAIL
+  lines), so on a hunt of one group a hunter who missed the line stood on the right pixel with nothing to go on and no
+  rat within 150 metres. Now the journal keeps the last way named for every hunt whose group waits at its spot - a
+  farm's first group as a split hunt's second (`scenes/bountyHost.js` questLogEntries). The tutorial's Bounties page said
+  to return for the gold, which no hunt asks (the last kill pays); it now says where a hunt is found - the middle of its
+  black circle, or the dungeon it names - and that the Quests tab keeps the way (`systems/tutorialCatalogue.js`; its
+  words English, as every page's - the old ones held "return", which `tools/l10nHardcoded.mjs` reads as code, so the
+  ratchet counts the page once more). The port's own, Ledger A (THE TOWN'S BOUNTY BOARDS).
+
 - **Seen by its holders and by every member of their party** - a mate's farm stands for the whole party, whether or
   not they took the notice (they may help), never for a passer-by. One farm a NOTICE. (AUDIT 28 corrected "seen by its
   holders", which understated it.) A split hunt's second group never waits among a standing farm's buildings.
@@ -218,6 +231,8 @@ payday, the party, the wire, the circle, the dungeons, the farms, the journal, t
 `test/systems/auditbounty1.test.js` (5) - B1 to B4, and the wiring (the press, the plaque, the host alone).
 `tools/mutants/bounty1.json` - 25 mutations (the bounties' 20 and DEATH-PENALTY's 5), 25 dead.
 `test/scenes/audit28_bounty.test.js` (12) - section 11; `tools/mutants/audit28.json` B1-B13, dead.
+`test/systems/quest/rpt1026_quests.test.js` (2, BOUNTY-WAY) - a farm hunt of one group, its way said once and kept in
+the journal, walked, stood and paid at the last kill; the tutorial's page. `tools/mutants/rpt1026_quests.json` - 2, dead.
 
 ## 11. AUDIT 28 (2026-09-28, Mac: "let's audit everything we have so far before we continue")
 
