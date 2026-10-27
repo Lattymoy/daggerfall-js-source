@@ -71,8 +71,8 @@
   {
     "name": "QUESTOR-SAID-the-row-off-centre",
     "file": "src/scenes/quest/questBridge.js",
-    "old": "    : t('quest.offer.questorBusyUnnamed', 'You have not finished the work you were given here.'), center: true }];\n",
-    "new": "    : t('quest.offer.questorBusyUnnamed', 'You have not finished the work you were given here.') }];\n",
+    "old": "    : t('quest.offer.questorBusyUnnamed', 'You have not finished the work you were given here.'), center: true },\n",
+    "new": "    : t('quest.offer.questorBusyUnnamed', 'You have not finished the work you were given here.') },\n",
     "tests": [
       "test/systems/quest/fb1019f_questorsaid.test.js"
     ]

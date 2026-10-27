@@ -374,6 +374,10 @@ const endQuestRan = (quest) => [...quest.tasks.values()].some((t) => t.actions?.
 /** STORY-AGAIN: a Person whose questor is the NPC the player clicked (Person.setupQuestorNPC copies the click into its
  *  questorData; `add _x_ as questor` leaves C#'s zero struct). */
 const boundByClick = (person) => { const d = person.questorData; return !!(d && (d.hash || d.nameSeed || d.mapID || d.buildingKey)); };
+/** RPT1026-QUESTS ABANDON-ALWAYS: whether a running quest holds the door of a questor the player met - a Person its
+ *  questor by the click (boundByClick) - the one the guild's and the giver's door ask of it (lastNPCClickedQuestorOf).
+ *  The journal lists such a quest whether or not it has written anything (scenes/quest/questBridge.js questLog). */
+export const holdsQuestorDoor = (quest) => [...(quest?.resources?.values?.() ?? [])].some((r) => r?.isPerson && r.isQuestor && boundByClick(r));
 /** STORY-AGAIN: the quests a script's `start quest` lines start, by name (StartQuest's own law, actions.js), upper case. */
 export function storySuccessors(lines) {
   const out = new Set();
@@ -1981,7 +1985,7 @@ export class QuestMachine {
     // STORY-AGAIN (#982): a questor BOUND BY THE CLICK (Person.setupQuestorNPC - its questorData the clicked NPC's) is
     // whoever was clicked last when a parse runs again; one the script names and makes its questor (`add _Mynisera_ as
     // questor` - the main story's every step) binds the same person again, and its quest restarts as any other
-    if ([...quest.resources.values()].some((r) => r?.isPerson && r.isQuestor && boundByClick(r))) return 'questor';
+    if (holdsQuestorDoor(quest)) return 'questor';
     // QUEST-AUDIT III RESTART-PAID: a quest that has paid out runs on to its end - restarted, it paid again (S0000015's
     // diary money and standing, Nocturnal's artifact), as often as the button was pressed
     if (questPaidOut(quest)) return 'paid';

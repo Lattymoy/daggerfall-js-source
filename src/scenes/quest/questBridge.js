@@ -61,7 +61,7 @@
 // than ^, the famous precedence, kept; gender is flags & 32; the
 // billboard indices ride along for the questor flat-pick (Q4-iii).
 
-import { QuestMachine, TICKS_PER_SECOND } from '../../systems/quest/machine.js';
+import { QuestMachine, TICKS_PER_SECOND, holdsQuestorDoor } from '../../systems/quest/machine.js';   // RPT1026-QUESTS ABANDON-ALWAYS: a quest holding its questor's door is a journal row
 import { clockCounts } from '../../systems/quest/clock.js';   // DEAD-CLOCK: a clock whose end changes nothing is no deadline
 import { repairActiveQuests, relayOnlineDungeons, relayMovedLayouts, relayBuiltDungeon } from '../../systems/quest/questRepair.js';   // QREPAIR: the Settings' repair (AUDIT DELVE E1: and a frozen size, crossing online)
 import { t, getLocalizedFactionName, textRevision } from '../../systems/textManager.js';   // QUEST-RESET: the restart's words in the player's language (L10N4); QL12: a guild's name in it, its quests' titles kept while the text stands
@@ -313,7 +313,10 @@ export function shelfRefusalText(reason) {
 export function questorBusyRows(quest) {
   const name = quest?.displayName || '';
   return [{ text: name ? t('quest.offer.questorBusy', 'You have not finished the work you were given here: {quest}.', { quest: name })
-    : t('quest.offer.questorBusyUnnamed', 'You have not finished the work you were given here.'), center: true }];
+    : t('quest.offer.questorBusyUnnamed', 'You have not finished the work you were given here.'), center: true },
+  // RPT1026-QUESTS ABANDON-ALWAYS: and the way out - every quest that shuts this door is a row of the pause menu's Quests
+  // tab now, with its Abandon (the questor offers work again the moment it is set aside: machine.js shelveQuest)
+  { text: t('quest.offer.questorBusyAbandon', 'If you cannot finish it, you can abandon it from the Quests tab of the pause menu.'), center: true }];
 }
 /** QUEST-RESET: why a quest could not be restarted, in words (machine.js restartRefusal) - the player's language (L10N4). */
 export function restartRefusalText(reason) {
@@ -723,7 +726,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
       // QUEST-SHELF (2026-10-08): the quests set aside - walked as the running ones are, their clocks as they stopped
       // (frozen: no time counts while one is away), for the journal's Abandoned list and its Reclaim
       const shelved = [];
-      const unlogged = [];   // QL2: stamped quests whose objectives stand before their first journal entry
+      const unlogged = [];   // QL2: stamped quests whose objectives stand before their first journal entry; ABANDON-ALWAYS: and any holding its questor's door
       for (const q of machine.quests.values()) {
         if (q.questComplete) {
           notebook?.unhideQuest?.(q.uid);   // JOURNAL-CLEAN: an ended quest is no longer hidden (one that filed no entry never reached addFinishedQuest's drop)
@@ -732,9 +735,18 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
         }
         const les = q.getLogMessages();
         if (!les?.length) {
-          // QL2: a stamped quest with no journal entry yet, whose objectives the machine has opened - the pause tab's
-          const ql = isShelved(q) ? null : questlines.rowOf(q, quietText);
-          if (ql?.objectives?.length) unlogged.push({ id: String(q.uid), name: q.displayName || null, questName: q.questName || '', ql });
+          // QL2: a stamped quest with no journal entry yet, whose objectives the machine has opened - the pause tab's row.
+          // RPT1026-QUESTS ABANDON-ALWAYS (private reports: The Lost Artifact's knight paid, "all objectives crossed out",
+          // "Cannot even abandon this quest" - "we're basically locked out of the guild"; a Mages Guild's "I can't take more
+          // quests, but I don't have quests to do"): and DFU's own quest that holds its questor's door with nothing in its
+          // journal - B0B81Y02's `remove log step 0` at the knight's word, N0B21Y14's letter not read - is a row too, so it
+          // can be abandoned; and one set aside with no entry is an Abandoned row, so it can be reclaimed (AUDIT QUESTLINES
+          // UI-8 had kept Abandon off a row with no entry because a quest set aside so was no row at all)
+          const ql = questlines.rowOf(q, quietText);
+          if (!ql?.objectives?.length && !holdsQuestorDoor(q)) continue;
+          const row = { id: String(q.uid), name: q.displayName || null, questName: q.questName || '', ql };
+          if (isShelved(q)) shelved.push({ ...row, clockSeconds: null, clocks: [], messages: [], steps: [] });
+          else unlogged.push(row);
           continue;
         }
         // GUIDE1: each message beside the step it was written at -

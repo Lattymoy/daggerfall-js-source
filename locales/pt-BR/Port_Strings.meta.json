@@ -23794,6 +23794,11 @@
   "tr": "f167773b7d87",
   "by": "claude-in-session"
  },
+ "pause.journal.unwritten": {
+  "en": "c48ae301d4fe",
+  "tr": "fb885d78238e",
+  "by": "claude-in-session"
+ },
  "pause.law.banished": {
   "en": "a655d9991e41",
   "tr": "bb03ddf6967b",
@@ -29677,6 +29682,11 @@
  "quest.offer.questorBusy": {
   "en": "d9c7f3c4fe22",
   "tr": "5cdd101d6106",
+  "by": "claude-in-session"
+ },
+ "quest.offer.questorBusyAbandon": {
+  "en": "5c5d3a721181",
+  "tr": "ce035c744ccd",
   "by": "claude-in-session"
  },
  "quest.offer.questorBusyUnnamed": {

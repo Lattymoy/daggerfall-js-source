@@ -5877,9 +5877,10 @@ function pauseQuests(body) {
         // its audit: the selection follows the quest only where it went - a refusal is said under the quest it refused
         rc.onclick = () => { const out = clean.reclaim(sel.id); questShelfSaid = out?.text ?? null; if (out?.ok) questSel = `a:${sel.id}`; render(); };
         acts.append(rc);
-      // AUDIT QUESTLINES UI-8: and not on a quest with no journal entry yet - set aside, it was no row at all (the bridge's walk
-      // lists a quest set aside by its entries), so no Reclaim could reach it
-      } else if (sel.entries?.length && sel.id != null && clean.abandon && clean.canAbandon?.(sel.id)) {
+      // RPT1026-QUESTS ABANDON-ALWAYS: and on a quest with no journal entry yet too - the bridge's walk lists one set aside
+      // under Abandoned now, so its Reclaim is a row (AUDIT QUESTLINES UI-8 had kept Abandon off it while it was none), and
+      // a quest that shuts its questor's door with nothing written could not be given up at all
+      } else if (sel.entries && sel.id != null && clean.abandon && clean.canAbandon?.(sel.id)) {
         const armed = journalCleanArmed === `ab:${sel.id}`;
         const ab = el('button', 'act', armed ? t('pause.journal.abandonArmed', 'Click again to abandon') : t('pause.journal.abandonQuest', 'Abandon quest'));   // QUEST-AUDIT III SHELF-WORDS
         ab.onclick = () => {
@@ -5942,6 +5943,8 @@ function pauseQuests(body) {
       const desc = el('div', 'px-qdesc');
       for (const line of latest ?? []) desc.append(el('p', null, line));   // QL2: a quest with no entry yet has its objectives alone
       if (latest) detail.append(desc);
+      // RPT1026-QUESTS ABANDON-ALWAYS: DFU's quest with nothing written and no objectives of its own - said, not blank
+      else if (!sel.ql?.objectives?.length) detail.append(el('p', 'px-note', t('pause.journal.unwritten', 'Nothing is written in your journal for this quest yet.')));
       if (sel.entries.length > 1) {
         detail.append(pxDivider(t('pause.journal.title', 'Journal')));
         const offered = latestPlace(sel);   // GUIDE2: the place the where line above already offers
