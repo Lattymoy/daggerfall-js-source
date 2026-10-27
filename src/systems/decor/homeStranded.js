@@ -1,24 +1,9 @@
 // @ts-check
-// ═══════════════════════════════════════════════════════════════════
-// HOME-STRANDED (bible/01-Overview/bugs/Field-Bugs-2026-10-25d.md): GOODS THE OLD POUR LEFT UNDER A HOME'S BUILDING.
-//
-// From the decorations overhaul (#1223, 2026-10-25 05:00Z) to HOME-POUR's deploy (22:13Z the same day), a shared chest
-// set back to private had its goods written under the building's scene, `DaggerfallInterior [...]`. When that answer was
-// lost, the goods stayed there: out of the owner's reach (the client reads an online home from `OnlineHome [...]`), and
-// gone at the next world move, which clears a scene that is not permanent. This module brings them home, once:
-//
-//   - At the boot, keepStrandedHomes makes each held home's building scene that still holds such goods permanent, so a
-//     world move before the owner walks in keeps them.
-//   - When the owner walks in and the service's grants answer arrives (decorGrants.js noteDecorGrants), bringStrandedHome
-//     moves them into the chest the room stands, as the window reads it. A chest the service says is shared, or whose
-//     goods are in the bin, is skipped: the share took the goods into the bin, and what the building's scene holds of
-//     them is a ghost the client wrote back. A good the save holds anywhere else (the pack, the chest, another scene) is
-//     a ghost too, and is dropped. What is moved leaves the building's scene in the same step, so a second run finds
-//     nothing.
-//   - dropGhosts is the client's half of the service's own moves (decorTool.js keepChestGoods): a share takes the
-//     piece's goods out of every scene the cache holds, and a pour takes the poured goods out of them, as moveChest does
-//     in the record. Without it the next checkpoint wrote them back.
-// ═══════════════════════════════════════════════════════════════════
+// HOME-STRANDED (bible/01-Overview/bugs/Field-Bugs-2026-10-25d.md): goods the old pour left under a home's building scene
+// (`DaggerfallInterior [...]`) between #1223 and HOME-POUR's deploy, on 2026-10-25. The client reads an online home from
+// `OnlineHome [...]`, and a world move clears a scene that is not permanent. keepStrandedHomes (the boot) makes such a
+// scene permanent. bringStrandedHome (the visit) moves its goods into the room's private chests and skips shared or bin
+// chests and goods held elsewhere (ghosts). dropGhosts mirrors the service's own moves for decorTool.js keepChestGoods.
 import { interiorSceneName } from '../sceneCache.js';
 import { t } from '../textManager.js';
 
@@ -86,8 +71,7 @@ function emptyEntry(/** @type {any} */ entry) {
  * @param {{ scenes: Map<string, any>, permanent: Set<string> }} cache
  * @param {{ mapId: number, buildingKey: number }} home
  * @param {{ storage: string[], shared: Set<string>, itemsOf: (id: string) => any[], carried: any[] }} room
- *   `storage` the room's storage pieces, `shared` those the service shares or holds goods for, `itemsOf` the live list
- *   a chest's window reads, `carried` the pack
+ *   `shared`: pieces the service shares or holds goods for. `itemsOf`: the live list a chest's window reads.
  */
 export function bringStrandedHome(cache, home, { storage, shared, itemsOf, carried }) {
   const scenes = strandedScenes(cache, Number(home.mapId), Number(home.buildingKey));

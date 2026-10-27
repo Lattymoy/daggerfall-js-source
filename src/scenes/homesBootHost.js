@@ -33,9 +33,6 @@
 //     come sweeps nothing and is asked at the next landing. The save that
 //     holds the change is the next checkpoint's - until it lands the
 //     record still holds the scene, and the next boot sweeps it again.
-//     HOME-STRANDED rides the same list: a held home's building scene that
-//     still holds goods the old pour left there is made permanent, so they
-//     wait for the owner's visit (systems/decor/homeStranded.js).
 // ═══════════════════════════════════════════════════════════════════
 import { holdRealmDeeds, homesGoneFrom, homesGoneLine } from '../systems/online/onlineHomes.js';
 import { createSceneCache } from '../systems/sceneCache.js';
