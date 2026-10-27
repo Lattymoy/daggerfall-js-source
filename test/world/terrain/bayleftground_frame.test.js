@@ -59,7 +59,7 @@ test('BAY-LEFT-GROUND D5 the frame\'s law: past the Bay a record is DFU\'s frame
 });
 
 /** The world host's own frame over a stream at (X0, Y0) on the synthetic world's continent, a town past the Bay by its site. */
-function frameHost(X0, Y0, { built = new Map(), landform = true } = {}) {
+function frameHost(X0, Y0, { built = new Map(), landform = true, asked = [] } = {}) {
   const woods = world();
   const m = capitalPin({ name: 'Mournhold', province: 'Morrowind' });
   const town = { px: m.px + 6, py: m.py };
@@ -70,7 +70,7 @@ function frameHost(X0, Y0, { built = new Map(), landform = true } = {}) {
   const heightCell = TERRAIN_SIZE / (H - 1);
   const here = () => createLandforms({ woods, beyond }), was = () => createLandforms({ woods });
   const host = createGroundFrame({
-    _liftLocationAt: () => null, blocks: {}, built, heightAt: () => -Infinity, heightCell, landform, landformsHere: ({ before = false } = {}) => (before ? was() : here()),
+    _liftLocationAt: (x, y) => { asked.push([x, y]); return null; }, blocks: {}, built, heightAt: () => -Infinity, heightCell, landform, landformsHere: ({ before = false } = {}) => (before ? was() : here()),
     landformSites: { generation: () => 1 }, maps: {}, terrainGen: { roads: () => null }, state, woods,
   });
   const scene = (px, py, sx, sy) => { const t = state.pixelTranslation(px, py); return [t[0] + sx * heightCell, t[2] + sy * heightCell]; };
@@ -78,7 +78,8 @@ function frameHost(X0, Y0, { built = new Map(), landform = true } = {}) {
 }
 
 test('BAY-LEFT-GROUND D5 the host\'s lift answers on every pixel of the world\'s grid: past the Bay the kernel\'s own field there (the shaped ground less DFU\'s), by the old law the ground before its sites - the two parting by a town past the Bay and one away from it; off the grid none (mutants: the Bay\'s bound kept; the old law\'s landforms the new\'s)', () => {
-  const { host, scene, woods, town, here, was } = frameHost(3830, 760);
+  const asked = [];
+  const { host, scene, woods, town, here, was } = frameHost(3830, 760, { asked });
   const at = (px, py, sx, sy, lf) => landformLift(woods, px, py, sx, sy, null, H, lf()) * STREAMING_TERRAIN_SCALE;
   // beside the town past the Bay (its east neighbour, pulled to its level)
   const [x, z] = scene(town.px + 1, town.py, 20.5, 64.25);
@@ -90,8 +91,10 @@ test('BAY-LEFT-GROUND D5 the host\'s lift answers on every pixel of the world\'s
   const [fx, fz] = scene(town.px - 12, town.py + 4, 40, 40);
   assert.ok(Math.abs(host.landformLiftAt(fx, fz) - host.landformLiftAt(fx, fz, { before: true })) < 1e-9);
   assert.ok(Math.abs(host.landformLiftAt(fx, fz)) > 0.01, 'and a lift - it was 0 past the Bay');
-  // off the world's grid: none
+  // off the world's grid: none, and nothing asked for it - no place, no field (its keys are the grid's: worldPixelKey)
+  asked.length = 0;
   assert.equal(host.landformLiftAt(...scene(9000, 0, 10, 10)), 0);
+  assert.deepEqual(asked, [], 'no place asked off the grid');
   // the frame's pixel is the stream's own
   assert.deepEqual(framePixelAt(frameHost(3830, 760).state, ...scene(town.px, town.py, 64, 64)), [town.px, town.py]);
 });

@@ -402,7 +402,9 @@
     "new": "if (cap.shore || capitalCanalOpen(k) || !cap.plan) return;",
     "tests": [
       "test/world/terrain/bayleftground_sites.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "Every capital over several pixels the port authors today is also left out by another clause: Alinor (1x2) and Torval (1x2) stand at the sea (`cap.shore`), the Imperial City (25x25) has no plan to level as a town (`!cap.plan`) - so on the shipped CAPITALS the size's own test changes no site, and pastBaySites reads no other list. It is the law for the next capital authored inland over several pixels (TESA11's flatten, not a site's pull), kept, and the inland one-pixel capitals (Mournhold, Falinesti, Helstrom) are pinned exactly."
   },
   {
     "name": "BAY-LEFT-GROUND-D1-places-the-pinned-place-twice",
