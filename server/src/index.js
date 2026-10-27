@@ -6759,21 +6759,22 @@ export class Room {
   // ───────────────────────────── SHARED-HEALTH: ONE HEALTH POOL UNDER THE REFEREE (net/siege/refereeHealthShare.js) ─────────────────────────────
   /**
    * The pools this room's referees hold for an account: its open-zone fighter, its live duel's side, its siege fighter.
-   * Never a Royal Tourney contender's: the tourney keeps its own count between bouts. Each `{ fighter, kept }` - `kept`
-   * what the room does once the count has moved (the zone's carry at the hub, a siege's checkpoint).
+   * Never a Royal Tourney contender's: the tourney keeps its own count between bouts. Each `{ fighter, healsBlocked,
+   * kept }` - `healsBlocked` a duel's (no heal for its whole length), `kept` what the room does once the count has moved
+   * (the zone's carry at the hub, a siege's checkpoint).
    */
   async _vitPools(sub, now) {
     const pools = [];
     if (this._wildRef) {
       const st = await this._wildSt();
       const x = st.fighters.get(sub);
-      if (x && !x.down) pools.push({ fighter: x.f, kept: async () => this._wildCarryPut(sub, this._zoneCarry(st, sub, now)) });
+      if (x && !x.down) pools.push({ fighter: x.f, healsBlocked: false, kept: async () => this._wildCarryPut(sub, this._zoneCarry(st, sub, now)) });
     }
     const bout = this._duelRef ? duelBoutOf(this._duelRef, sub) : null;
-    if (bout) pools.push({ fighter: bout.a.sub === sub ? bout.a.f : bout.b.f, kept: async () => {} });
+    if (bout) pools.push({ fighter: bout.a.sub === sub ? bout.a.f : bout.b.f, healsBlocked: true, kept: async () => {} });   // a duel heals nobody for its whole length
     const siege = this._siege;
     const siegeFighter = siege?.fighters?.[sub];
-    if (siegeFighter && siege.battle?.kind !== 'royal') pools.push({ fighter: siegeFighter, kept: () => this._siegeSave(now, false) });
+    if (siegeFighter && siege.battle?.kind !== 'royal') pools.push({ fighter: siegeFighter, healsBlocked: false, kept: () => this._siegeSave(now, false) });
     return pools;
   }
   /** A FIGHTER'S REPORT of its health (`vit`): taken into each pool this room holds for it, each count told back. */
@@ -6781,7 +6782,7 @@ export class Room {
     if (!this._spend(ws, now, vitGate, 'vitBucket', 'vitDrops', 'too many vit frames')) return;
     if (typeof a.sub !== 'string' || !a.sub) return;
     for (const pool of await this._vitPools(a.sub, now)) {
-      if (!takeHealthReport(pool.fighter, m, now)) continue;
+      if (!takeHealthReport(pool.fighter, m, now, { healsBlocked: pool.healsBlocked })) continue;
       this._vitSay(a.sub, pool.fighter);
       await pool.kept();
     }

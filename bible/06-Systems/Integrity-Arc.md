@@ -876,7 +876,9 @@ nothing); `tools/mutants/duel_bar.json`.
 Travis, on a field report from the open zone - a character of 67 health stood at 302 in a fight that only the other
 player could see, died there with a full health bar, and healed nothing a potion gave: "we should not have separate
 health pools for PvE and PvP - it should be the same health pool, synchronized properly, with scaling for pvp applied on
-top", the scaling a share of the player's own health, for the open zone, duels and sieges alike.
+top", the scaling a share of the player's own health, for the open zone, duels and sieges alike. And, the same day: no
+heal where these fights had none ("that was intentional because it's too op"), asked whether that blocks the zone's PvE
+healing too - only mid-PvP.
 
 - **ONE POOL, STILL REFEREED.** The referee keeps counting in the Royal Tourney's units (300 + 2 x Renown), and the
   count is the player's own health as a share of it (refereeHealthShare.js:"export function takeHealthReport"). A blow
@@ -886,21 +888,25 @@ top", the scaling a share of the player's own health, for the open zone, duels a
   nothing. Each referee word on a count is told to its player, whose mirror sets its health to the same share
   (refereeHealthMirror.js:"export function createRefereeHealthMirror"), keeping what its health did since the report
   the word includes.
-- **A LOSS AT ONCE, A HEAL IN A BUCKET.** A report below the count (a foe, a fall, a poison) is taken at once, never
-  below 1 - the client's own death is its own word, as before. A report above it is a heal, taken within a bucket as
-  deep as a siege's heal casts allow in their window (`REPORT_HEAL`, 120 a 5 s), so a crafted client heals no faster
-  than a side-mate's spells could. A count no report has anchored is told to nobody (its whole would heal the client to
+- **A LOSS AT ONCE, NO HEAL MID-PVP.** A report below the count (a foe, a fall, a poison) is taken at once, never
+  below 1 - the client's own death is its own word, as before. A report above it is a heal, and a fight between players
+  heals nobody: refused for `PVP_HEAL_BLOCK_MS` (30 s, the old mend window) after a player's blow or harmful spell on
+  the fighter, and for a duel's whole length - the client's health is pulled back to the count, so a potion drunk then
+  is spent for nothing. A siege's side-mate heal spells stand as before (the referee's own cast, never a report). Out of
+  a fight between players a heal is taken whole: a potion after a monster fight in the zone heals as it does anywhere.
+  A relay foe's blow (a siege's guard) opens no window. A count no report has anchored is told to nobody (its whole would heal the client to
   full); the relay asks for a report where it makes or starts one again.
 - **NO FREE REFILL.** The zone's mend (whole again unstruck `WILD_REF.mendMs`) is gone. A count started again - a rise
   after a fall, a return after `WILD_REF.riseMs` away - waits for the player's report, which can lower it and never lift
-  it; a bar carried from another room keeps its anchor (`wildCarry`'s `heard`).
+  it; a bar carried from another room keeps its anchor and its no-heal window (`wildCarry`'s `heard`, `pvpAt`).
 - **PER MODE.** The zone: a fall at none is a death, as before (forcePlayerDeath). A duel: its fall leaves the loser at
   1, a loss and never a death, and the bout's end heals nobody - the loser leaves hurt. A siege: a fall leaves the
   player at 1 until its wave, and the rise heals the player's own health whole (siegeRef.js:"the rise heals the player's
   own health whole"); a relay foe's blow reaches the player's health as a player's does. THE ROYAL TOURNEY IS NOT THIS:
   its contenders keep the tourney's own count between bouts, and the relay neither asks nor tells them.
 - **WHAT IT COSTS.** The relay cannot see a player's health, so a crafted client that never reports a foe's blow keeps
-  that health against players. It gains nothing a player could take from it (each blow still lands on the count), and
+  that health against players, and one that claims a heal outside a fight between players is believed - as the zone's
+  old mend made a fighter whole after the same 30 s. It gains nothing a player could take from it (each blow still lands on the count), and
   the health it keeps it could already keep on its own machine. A count starts at the client's own share, never above
   its whole - no higher than the refereed bar started before.
 - **THE READOUTS.** The battles' readout shows the foe's count alone; my own is my health bar. DUEL-BAR above is retired.

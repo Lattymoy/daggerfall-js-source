@@ -266,6 +266,11 @@ test('SHARED-HEALTH THE DUEL ON THE REAL RELAY: the bout asks both fighters for 
   assert.equal(player.health, Math.round(1000 * ((WHOLE / 2 - hp.d) / WHOLE)), 'its share off my own health');
   assert.ok(player.health < 500);
   const after = player.health;
+  // a potion mid-duel, long after the blow: a duel heals nobody, and my health is pulled back
+  step(10 * 30_000);
+  player.health = 1000;
+  await vitPump();
+  assert.equal(player.health, after, 'no heal for the duel\'s whole length');
   await say(b, { to: 'peer-0001', s, k: 'end', why: 'yield' });
   await vitPump();
   assert.equal(player.health, after, 'the bout over: my health is where the fight left it');

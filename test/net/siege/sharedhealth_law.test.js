@@ -1,13 +1,14 @@
 // SHARED-HEALTH (2026-10-26; bible/06-Systems/Integrity-Arc.md section 5, "Decisions (2026-10-26, SHARED-HEALTH)") -
 // ONE HEALTH POOL UNDER THE REFEREE: the referee's law (net/siege/refereeHealthShare.js) and the client's mirror
 // (net/siege/refereeHealthMirror.js) driven together over the real referee (net/siege/siegeRef.js), through the races a
-// relay and a client meet: a blow before the first report, a foe's blow while a player's is in flight, a heal past the
-// bucket, many round trips over an integer health.
+// relay and a client meet: a blow before the first report, a foe's blow while a player's is in flight, a heal mid-PvP,
+// many round trips over an integer health.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { SIEGE_CASTS, SIEGE_HIT, SIEGE_UNITS_PER_M, newFighter, refereeBlow, siegeRise } from '../../../src/net/siege/siegeRef.js';
-import { HEALTH_SHARE_WHOLE, REPORT_HEAL, takeHealthReport, poolWord, poolUnheard, resetHealthShare } from '../../../src/net/siege/refereeHealthShare.js';
+import { SIEGE_HIT, SIEGE_UNITS_PER_M, newFighter, refereeBlow, siegeRise } from '../../../src/net/siege/siegeRef.js';
+import { HEALTH_SHARE_WHOLE, PVP_HEAL_BLOCK_MS, takeHealthReport, poolWord, poolUnheard, resetHealthShare, noteRefereeChange } from '../../../src/net/siege/refereeHealthShare.js';
+import { WILD_REF } from '../../../src/net/wild/wildRef.js';
 import { createRefereeHealthMirror, HEALTH_REPORT_MS } from '../../../src/net/siege/refereeHealthMirror.js';
 
 const fist = { w: -1, m: 0 };
@@ -35,11 +36,11 @@ function rig({ health, maxHealth, lv = 1, t0 = 1_000_000 }) {
   };
   const tell = (word) => { if (word) mirror.onWord(word); };
   /** The client's frame, then every report it sent taken by the referee and its count told back. */
-  const roundTrip = (active = true) => {
+  const roundTrip = (active = true, healsBlocked = false) => {
     mirror.frame(active);
     while (outbox.length) {
       const r = outbox.shift();
-      if (takeHealthReport(fighter, { report: r.n, share: r.s, seen: r.seen }, clock.now)) tell(poolWord(fighter));
+      if (takeHealthReport(fighter, { report: r.n, share: r.s, seen: r.seen }, clock.now, { healsBlocked })) tell(poolWord(fighter));
     }
   };
   const later = (ms = HEALTH_REPORT_MS) => { clock.now += ms; };
@@ -49,8 +50,8 @@ function rig({ health, maxHealth, lv = 1, t0 = 1_000_000 }) {
 /** The client's health as the share of the count, in health. */
 const expectedHealth = (fighter, maxHealth) => (fighter.hp / fighter.max) * maxHealth;
 
-test('SHARED-HEALTH: the heal bucket is the siege\'s heal casts\' own ceiling - three of 40 in their 5 s', () => {
-  assert.deepEqual(REPORT_HEAL, { depth: SIEGE_CASTS.max * SIEGE_CASTS.healMax, refillMs: SIEGE_CASTS.windowMs });
+test('SHARED-HEALTH: the no-heal window after a player\'s blow is the zone\'s old mend window', () => {
+  assert.equal(PVP_HEAL_BLOCK_MS, WILD_REF.mendMs);
 });
 
 test('SHARED-HEALTH: a fresh pool is told to nobody until a report anchors it - its whole count would heal the client to full (mutant: poolWord ignores heard)', () => {
@@ -93,23 +94,40 @@ test('SHARED-HEALTH: A FOE\'S BLOW WHILE A PLAYER\'S IS IN FLIGHT - both land, a
   assert.ok(Math.abs(r.client.health - expectedHealth(r.fighter, 60)) <= 0.5, 'the client and the count agree');
 });
 
-test('SHARED-HEALTH: A HEAL is taken within the bucket, and the client is pulled back to what the referee took; the bucket refills over its window (mutants: no bucket; the bucket never refilled; the refusal never told)', () => {
+test('SHARED-HEALTH: NO HEAL MID-PVP - a heal within PVP_HEAL_BLOCK_MS of a player\'s blow is refused and the client pulled back to the count; past it, a heal is taken whole; a relay foe\'s blow opens no window; a duel refuses every heal (mutants: the window unread; the window opened by a foe; the duel\'s block unread; the heal clipped)', () => {
   const r = rig({ health: 60, maxHealth: 60 });
   r.mirror.ask();
   r.roundTrip();
   r.blow(60); r.blow(60); r.blow(60);   // 302 - 180 = 122
   r.tell(poolWord(r.fighter));
   assert.equal(r.fighter.hp, 122);
-  r.client.health = 60;   // a potion: whole again
+  const hurt = r.client.health;
+  r.client.health = 60;   // a potion mid-fight
   r.later();
   r.roundTrip();
-  assert.equal(r.fighter.hp, 122 + REPORT_HEAL.depth, 'no more than the bucket holds');
-  assert.equal(r.client.health, Math.round(expectedHealth(r.fighter, 60)), 'the client is pulled back to the count');
-  r.client.health = 60;   // a second potion
-  r.later(REPORT_HEAL.refillMs);
+  assert.equal(r.fighter.hp, 122, 'refused: a fight between players heals nobody');
+  assert.equal(r.client.health, hurt, 'and the client is pulled back to the count');
+  r.later(PVP_HEAL_BLOCK_MS);
+  r.client.health = 60;   // a potion once the fight is over
   r.roundTrip();
-  assert.equal(r.fighter.hp, 302, 'the bucket refilled: the rest of the heal');
+  assert.equal(r.fighter.hp, 302, 'taken whole');
   assert.equal(r.client.health, 60);
+  // a relay foe's blow (a siege's guard) is no player's: a heal after it is taken
+  r.fighter.hp -= 50;
+  noteRefereeChange(r.fighter, -50, r.clock.now);
+  r.tell(poolWord(r.fighter));
+  r.client.health = 60;
+  r.later();
+  r.roundTrip();
+  assert.equal(r.fighter.hp, 302, 'a guard\'s blow opens no window');
+  // a duel: no heal for its whole length, however long since a blow
+  r.fighter.hp -= 50;
+  noteRefereeChange(r.fighter, -50, r.clock.now);
+  r.tell(poolWord(r.fighter));
+  r.client.health = 60;
+  r.later(10 * PVP_HEAL_BLOCK_MS);
+  r.roundTrip(true, true);
+  assert.equal(r.fighter.hp, 252, 'a duel heals nobody');
 });
 
 test('SHARED-HEALTH: a REPORTED LOSS is taken at once and never fells - the client\'s own death is its own word; a fallen fighter takes no report (mutants: the floor dropped; the fall reported into)', () => {

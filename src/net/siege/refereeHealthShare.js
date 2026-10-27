@@ -12,8 +12,11 @@
 //     A lost report, a room changed or a word in flight therefore costs nothing: each report is the whole truth.
 //   - A report below the count is a loss the client took from a foe, a fall or a poison: taken at once, never below 1
 //     (the client's own death is its own word - the zone's `dd`, a duel's `dead`).
-//   - A report above the count is a heal: taken within REPORT_HEAL's bucket, the siege's own heal-cast ceiling. A
-//     crafted client heals no faster than a side-mate's spells could.
+//   - A report above the count is a heal. NO HEAL MID-PVP: a fight between players never healed anyone - the zone and a
+//     duel had no heal at all, a siege only its side-mates' heal spells - and a heal there is too strong. A heal is
+//     refused for PVP_HEAL_BLOCK_MS after a player's blow on the fighter, and for a whole duel (the caller's
+//     `healsBlocked`); the client's health is pulled back to the count. Outside a fight between players a heal is taken
+//     whole, so a potion after a monster fight in the zone works as anywhere else.
 //   - The referee's own changes (a blow, a cast, a relay foe's blow, a rise) are logged as words (`noteRefereeChange`),
 //     each told to the fighter with the count, so its client sets its health to the same share.
 //   - A pool the client has not reported into yet is not told to it: its count starts whole (newFighter), and a word
@@ -27,10 +30,9 @@
 /** A share's whole, in parts: ten thousand, so a report rounds by a hundredth of a percent of the referee's count. */
 export const HEALTH_SHARE_WHOLE = 10_000;
 
-/** The heal a report may take: a bucket as deep as the siege's heal casts allow in their window (SIEGE_CASTS: three of 40
- *  in 5 s, pinned equal in the test), refilled over that window. A bucket and not a count of casts, because a potion's
- *  heal over time arrives as many small reports. */
-export const REPORT_HEAL = Object.freeze({ depth: 120, refillMs: 5000 });
+/** How long after a player's blow a report may not heal, ms: the zone's old mend window (net/wild/wildRef.js
+ *  WILD_REF.mendMs, pinned equal in the test) - a fighter that long unstruck by a player is out of the fight. */
+export const PVP_HEAL_BLOCK_MS = 30_000;
 
 /** How many referee changes a pool remembers for reports that lag behind them. */
 export const HEALTH_SHARE_LOG_MAX = 32;
@@ -44,8 +46,7 @@ export const HEALTH_SHARE_LOG_MAX = 32;
  * @property {Array<[number, number]>} log   `[word, change]` of the referee's recent changes (a blow negative)
  * @property {boolean} heard  a report has anchored this pool: only then is its count told to the client
  * @property {number} report  the number of the last report taken (echoed, so the client knows what the count includes)
- * @property {number} healRoom  the heal the bucket still holds, in referee units
- * @property {number} healAt    when the bucket was last refilled, ms
+ * @property {number} playerBlowAt  when a player's blow or harmful spell last landed on the count, ms (0: never)
  */
 
 /**
@@ -66,9 +67,9 @@ export const HEALTH_SHARE_LOG_MAX = 32;
  * @property {number} report  the last report the count includes
  */
 
-/** A fresh share state: unheard, its bucket full. @param {number} now @returns {HealthShare} */
+/** A fresh share state: unheard, never struck by a player. @param {number} now @returns {HealthShare} */
 export function newHealthShare(now) {
-  return { epoch: Math.trunc(now), word: 0, log: [], heard: false, report: 0, healRoom: REPORT_HEAL.depth, healAt: now };
+  return { epoch: Math.trunc(now), word: 0, log: [], heard: false, report: 0, playerBlowAt: 0 };
 }
 
 /** A fighter's share state - made where a fighter kept from before this law (a siege's storage) has none. */
@@ -79,11 +80,13 @@ function shareOf(fighter, now) {
 
 /**
  * THE REFEREE CHANGED THE COUNT (a blow, a cast, a relay foe's blow, a rise): logged, so a report that had not seen it
- * still counts it. `change` is the count after minus before. Answers the change's word number.
- * @param {{ share?: HealthShare }} fighter @param {number} change @param {number} now
+ * still counts it. `change` is the count after minus before; `byPlayer` - a player's blow or harmful spell, which
+ * opens the no-heal window. Answers the change's word number.
+ * @param {{ share?: HealthShare }} fighter @param {number} change @param {number} now @param {boolean} [byPlayer]
  */
-export function noteRefereeChange(fighter, change, now) {
+export function noteRefereeChange(fighter, change, now, byPlayer = false) {
   const share = shareOf(fighter, now);
+  if (byPlayer) share.playerBlowAt = now;
   share.word += 1;
   share.log.push([share.word, change]);
   if (share.log.length > HEALTH_SHARE_LOG_MAX) share.log.shift();
@@ -111,34 +114,26 @@ function unseenChange(share, seen) {
   return sum;
 }
 
-/** The bucket refilled to `now`. */
-function refillHeal(share, now) {
-  const gained = (Math.max(0, now - share.healAt) * REPORT_HEAL.depth) / REPORT_HEAL.refillMs;
-  share.healRoom = Math.min(REPORT_HEAL.depth, share.healRoom + gained);
-  share.healAt = now;
-}
+/** Whether a heal is refused now: mid-PvP, or where the caller says (a duel). */
+const healRefused = (share, now, healsBlocked) => healsBlocked || now - (share.playerBlowAt || 0) < PVP_HEAL_BLOCK_MS;
 
 /**
  * A CLIENT'S REPORT TAKEN into a fighter's count (`hp`, `max`, `down` - the referee's fighter). A fallen fighter takes
- * none. Answers whether the report was taken (the caller then tells the count back - poolWord).
+ * none. `healsBlocked`: the caller's word that no heal lands for this whole fight (a duel). Answers whether the report
+ * was taken (the caller then tells the count back - poolWord).
  * @param {{ hp: number, max: number, down: boolean, share?: HealthShare }} fighter
- * @param {HealthReport} report @param {number} now
+ * @param {HealthReport} report @param {number} now @param {{ healsBlocked?: boolean }} [o]
  */
-export function takeHealthReport(fighter, report, now) {
+export function takeHealthReport(fighter, report, now, { healsBlocked = false } = {}) {
   if (!fighter || fighter.down) return false;
   const share = shareOf(fighter, now);
   const target = (report.share * fighter.max) / HEALTH_SHARE_WHOLE + unseenChange(share, report.seen);
   const difference = target - fighter.hp;
   if (difference <= -0.5) {
     fighter.hp = Math.max(1, Math.round(target));
-  } else if (difference >= 0.5 && share.heard) {
-    // An unheard pool starts whole, so nothing can rise in it; a heard one rises within the bucket.
-    refillHeal(share, now);
-    const healed = Math.min(Math.floor(difference + 0.5), Math.floor(share.healRoom), fighter.max - fighter.hp);
-    if (healed > 0) {
-      fighter.hp += healed;
-      share.healRoom -= healed;
-    }
+  } else if (difference >= 0.5 && share.heard && !healRefused(share, now, healsBlocked)) {
+    // An unheard pool starts whole, so nothing can rise in it.
+    fighter.hp = Math.min(fighter.max, Math.round(target));
   }
   share.heard = true;
   share.report = Math.max(share.report, report.report);

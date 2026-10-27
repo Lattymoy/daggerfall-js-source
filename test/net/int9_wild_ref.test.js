@@ -187,6 +187,7 @@ test('INT9 (AUDIT) THE REFEREE\'S LAW, NO FREE BAR: a word off and on keeps the 
   const anchoredThere = newWildRef();
   wildZone(anchoredThere, 'acct-b', { id: 'peer-b', lv: 10, carry: anchored }, true, at(1), 11_000);
   assert.equal(anchoredThere.fighters.get('acct-b').f.share.heard, true, 'SHARED-HEALTH: and stays anchored in the next room - its report cannot lift it back to whole');
+  assert.equal(anchoredThere.fighters.get('acct-b').f.share.playerBlowAt, 10_300, 'SHARED-HEALTH: and keeps its no-heal window - a step into another cell is no way out of a fight');
   const next = newWildRef();
   wildZone(next, 'acct-b', { id: 'peer-b', lv: 10, carry: c }, true, at(1), 11_000);
   assert.equal(next.fighters.get('acct-b').f.hp, hit, 'a step into another cell keeps the bar');
@@ -801,7 +802,7 @@ test('INT9 (AUDIT) THE CLIENT\'S LINK: my zone word on MY OWN CELL\'S socket alo
 });
 
 const vits = (ws, k) => ws.sent.filter((m) => m.t === 'vit' && (!k || m.k === k));
-test('SHARED-HEALTH THE RELAY, THE ZONE: a fighter\'s zone word asks for its health; its report anchors the count at its share, told back; a player\'s blow is said on the struck player\'s own health; a foe\'s blow reported while that blow was in flight lands on top of it; a heal beyond the bucket is pulled back; a stranger\'s report reaches no pool (mutants: no ask; the blow unsaid; the in-flight blow undone)', () => withZone(async ({ r, say, join, step }) => {
+test('SHARED-HEALTH THE RELAY, THE ZONE: a fighter\'s zone word asks for its health; its report anchors the count at its share, told back; a player\'s blow is said on the struck player\'s own health; a foe\'s blow reported while that blow was in flight lands on top of it; a heal mid-PvP is refused and one after the window taken whole; a stranger\'s report reaches no pool (mutants: no ask; the blow unsaid; the in-flight blow undone; the window unread)', () => withZone(async ({ r, say, join, step }) => {
   const a = await join('peer-0001', -1), b = await join('peer-0002', 1, { rc: 1, ci: RC });
   const whole = siegeVitality(10), fist = Math.min(20, siegeBlowMax(-1, 0));
   await say(a, { k: 'zone', z: 1 });
@@ -824,10 +825,13 @@ test('SHARED-HEALTH THE RELAY, THE ZONE: a fighter\'s zone word asks for its hea
   // a foe's blow, reported against the word before the player's (the client fell from its anchored share to 40%): both land
   await r.raw(b, JSON.stringify({ t: 'vit', n: 2, s: 4000, seen: [[anchored.e, anchored.w]] }));
   assert.equal(vits(b, 'h').at(-1).h, Math.round(whole * 0.4) - fist, 'the share the client saw after the anchor, less the blow it had not');
-  // a potion to whole: no more than the bucket in one report
+  // a potion mid-fight: refused, the count told back unmoved; once no player has struck for the window, taken whole
   const before = vits(b, 'h').at(-1);
   await r.raw(b, JSON.stringify({ t: 'vit', n: 3, s: 10000, seen: [[before.e, before.w]] }));
-  assert.equal(vits(b, 'h').at(-1).h, before.h + 120);
+  assert.equal(vits(b, 'h').at(-1).h, before.h, 'no heal mid-PvP');
+  step(WILD_REF.mendMs);
+  await r.raw(b, JSON.stringify({ t: 'vit', n: 4, s: 10000, seen: [[before.e, before.w]] }));
+  assert.equal(vits(b, 'h').at(-1).h, whole, 'the fight over: healed whole');
   // a socket with no fighter here: nothing
   const c = await join('peer-0003', 30);
   await r.raw(c, JSON.stringify({ t: 'vit', n: 1, s: 1, seen: [] }));

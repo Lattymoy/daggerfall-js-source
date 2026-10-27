@@ -20,24 +20,76 @@
     "note": "A blow the client had already applied would be counted twice."
   },
   {
-    "name": "SHARED-HEALTH-the-heal-unbucketed",
+    "name": "SHARED-HEALTH-the-pvp-window-unread",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "    const healed = Math.min(Math.floor(difference + 0.5), Math.floor(share.healRoom), fighter.max - fighter.hp);",
-    "new": "    const healed = Math.min(Math.floor(difference + 0.5), fighter.max - fighter.hp);",
+    "old": "const healRefused = (share, now, healsBlocked) => healsBlocked || now - (share.playerBlowAt || 0) < PVP_HEAL_BLOCK_MS;",
+    "new": "const healRefused = (share, now, healsBlocked) => healsBlocked;",
     "tests": [
-      "test/net/siege/sharedhealth_law.test.js"
+      "test/net/siege/sharedhealth_law.test.js",
+      "test/net/int9_wild_ref.test.js"
     ],
-    "note": "A crafted client could heal to whole in one report, faster than any side-mate's spells."
+    "note": "A potion mid-fight would heal a player another player is striking - the heal the zone never had."
   },
   {
-    "name": "SHARED-HEALTH-the-bucket-never-refilled",
+    "name": "SHARED-HEALTH-the-duels-block-unread",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "  share.healRoom = Math.min(REPORT_HEAL.depth, share.healRoom + gained);",
-    "new": "  share.healRoom = Math.min(REPORT_HEAL.depth, share.healRoom);",
+    "old": "const healRefused = (share, now, healsBlocked) => healsBlocked || now - (share.playerBlowAt || 0) < PVP_HEAL_BLOCK_MS;",
+    "new": "const healRefused = (share, now, healsBlocked) => now - (share.playerBlowAt || 0) < PVP_HEAL_BLOCK_MS;",
+    "tests": [
+      "test/net/siege/sharedhealth_law.test.js",
+      "test/ui/fb1019f_duelbar.test.js"
+    ],
+    "note": "A duellist could heal once 30 s had passed since the last blow - a duel never healed anyone."
+  },
+  {
+    "name": "SHARED-HEALTH-a-foe-opens-the-window",
+    "file": "src/net/siege/refereeHealthShare.js",
+    "old": "  if (byPlayer) share.playerBlowAt = now;",
+    "new": "  share.playerBlowAt = now;",
     "tests": [
       "test/net/siege/sharedhealth_law.test.js"
     ],
-    "note": "A player could heal once and never again for the rest of the fight."
+    "note": "A siege guard's blow or a rise would refuse heals as a player's blow does."
+  },
+  {
+    "name": "SHARED-HEALTH-the-heal-clipped",
+    "file": "src/net/siege/refereeHealthShare.js",
+    "old": "    fighter.hp = Math.min(fighter.max, Math.round(target));",
+    "new": "    fighter.hp = Math.min(fighter.max, fighter.hp + 1);",
+    "tests": [
+      "test/net/siege/sharedhealth_law.test.js"
+    ],
+    "note": "A heal outside a fight between players would land as a single point."
+  },
+  {
+    "name": "SHARED-HEALTH-the-blow-opens-no-window",
+    "file": "src/net/siege/siegeRef.js",
+    "old": "  if (got > 0) noteRefereeChange(to, -got, now, true);   // SHARED-HEALTH: a report that has not seen this blow still counts it; no heal mid-PvP",
+    "new": "  if (got > 0) noteRefereeChange(to, -got, now);",
+    "tests": [
+      "test/net/siege/sharedhealth_law.test.js"
+    ],
+    "note": "A player's blow would leave the struck free to heal at once."
+  },
+  {
+    "name": "SHARED-HEALTH-the-duel-pool-unblocked",
+    "file": "server/src/index.js",
+    "old": "healsBlocked: true, kept: async () => {} });",
+    "new": "healsBlocked: false, kept: async () => {} });",
+    "tests": [
+      "test/ui/fb1019f_duelbar.test.js"
+    ],
+    "note": "The relay would let a duellist heal once the window passed."
+  },
+  {
+    "name": "SHARED-HEALTH-the-carry-drops-the-window",
+    "file": "src/net/wild/wildRef.js",
+    "old": "  if (x.f.share) x.f.share.playerBlowAt = carry.pvpAt;",
+    "new": "",
+    "tests": [
+      "test/net/int9_wild_ref.test.js"
+    ],
+    "note": "A step into another cell would end the no-heal window mid-fight."
   },
   {
     "name": "SHARED-HEALTH-the-loss-fells",
@@ -82,7 +134,7 @@
   {
     "name": "SHARED-HEALTH-the-blow-unlogged",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  if (got > 0) noteRefereeChange(to, -got, now);   // SHARED-HEALTH: a report that has not seen this blow still counts it",
+    "old": "  if (got > 0) noteRefereeChange(to, -got, now, true);   // SHARED-HEALTH: a report that has not seen this blow still counts it; no heal mid-PvP",
     "new": "",
     "tests": [
       "test/net/siege/sharedhealth_law.test.js"

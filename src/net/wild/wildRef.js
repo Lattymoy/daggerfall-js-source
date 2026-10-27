@@ -107,6 +107,7 @@ function takeCarry(x, carry, now) {
   // SHARED-HEALTH: a count anchored in the last room is the player's health already - its next report is a loss or a
   // heal on it, never an anchor that could lift it back to whole
   if (carry.heard && x.f.share) x.f.share.heard = true;
+  if (x.f.share) x.f.share.playerBlowAt = carry.pvpAt;   // and its no-heal window: a step into another cell is no way out of a fight
 }
 
 /** INT9 (AUDIT): a hub's word on a fighter's carry, checked for the shape wildCarry writes - or null. AUDIT SEA VENTURES
@@ -115,7 +116,7 @@ function takeCarry(x, carry, now) {
 export function wildCarryOf(v) {
   if (!v || typeof v !== 'object' || !Number.isFinite(v.at) || !Number.isFinite(v.hp) || !Number.isFinite(v.max)) return null;
   const sea = v.sea && typeof v.sea === 'object' && Number.isFinite(v.sea.h) && Number.isFinite(v.sea.at) ? { h: Math.max(0, Math.min(1, v.sea.h)), at: v.sea.at } : null;
-  return { hp: Math.max(0, Math.trunc(v.hp)), max: Math.max(1, Math.trunc(v.max)), down: v.down === true, downAt: Number.isFinite(v.downAt) ? v.downAt : 0, at: v.at, heard: v.heard === true, ...(sea ? { sea } : {}) };   // SHARED-HEALTH: `heard` - its count anchored to the player's health
+  return { hp: Math.max(0, Math.trunc(v.hp)), max: Math.max(1, Math.trunc(v.max)), down: v.down === true, downAt: Number.isFinite(v.downAt) ? v.downAt : 0, at: v.at, heard: v.heard === true, pvpAt: Number.isFinite(v.pvpAt) ? v.pvpAt : 0, ...(sea ? { sea } : {}) };   // SHARED-HEALTH: `heard` - its count anchored to the player's health
 }
 
 /** INT9 (AUDIT): A FALL WAITING ON ITS PICK is kept in the room's storage under this prefix (a relay object that restarts
@@ -136,7 +137,7 @@ export function wildGone(st, sub, now) {
 }
 
 /** What a fighter CARRIES out of this room (the hub keeps it for the next room it stands in): its vitality and its fall. */
-export const wildCarry = (st, sub, now) => { const x = st.fighters.get(sub); return x ? { hp: Math.max(0, x.f.hp), max: x.f.max, down: x.down, downAt: Number.isFinite(x.downAt) ? x.downAt : 0, at: now, heard: x.f.share?.heard === true } : null; };
+export const wildCarry = (st, sub, now) => { const x = st.fighters.get(sub); return x ? { hp: Math.max(0, x.f.hp), max: x.f.max, down: x.down, downAt: Number.isFinite(x.downAt) ? x.downAt : 0, at: now, heard: x.f.share?.heard === true, pvpAt: x.f.share?.playerBlowAt ?? 0 } : null; };
 
 /** A FIGHTER'S POSE (`{ x, y, z }`, the world frame): believed at a run the referee allows (refereeStep, on the fighter's
  *  own carried allowance); past it - a gallop, a respawn, a teleport - believed too, and the fighter JUMPED: it strikes

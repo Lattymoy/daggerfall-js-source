@@ -246,7 +246,7 @@ export function refereeBlow(by, to, { from = null, at = null, held = null, d = 0
   by.clipped += want - got;
   by.dealt += got;
   to.hp -= got;
-  if (got > 0) noteRefereeChange(to, -got, now);   // SHARED-HEALTH: a report that has not seen this blow still counts it
+  if (got > 0) noteRefereeChange(to, -got, now, true);   // SHARED-HEALTH: a report that has not seen this blow still counts it; no heal mid-PvP
   const fell = to.hp <= 0;
   if (fell) to.down = true;
   return { ok: true, dealt: got, fell, why: null };
@@ -284,7 +284,7 @@ export function refereeCast(by, to, { from = null, at = null, d = 0, heal = fals
   by.clipped += want - got;
   by.dealt += got;
   to.hp -= got;
-  if (got > 0) noteRefereeChange(to, -got, now);
+  if (got > 0) noteRefereeChange(to, -got, now, true);
   const fell = to.hp <= 0;
   if (fell) to.down = true;
   return { ok: true, dealt: got, fell, why: null };
