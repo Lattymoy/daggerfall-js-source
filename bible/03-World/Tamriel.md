@@ -178,14 +178,17 @@ places, from the player's ARENA folder - on the held map first, `03-World/Arena-
   `isTamrielGround`). `maps.getClimateIndex` is composed (`groundClimateIndex`: the Bay's own, dilation and all, on
   it). `StreamingWorldState.frame` is the continent's box and `streams` is what the load list and the range ask;
   `onMap` stays the map's law for World of Daggerfall's slots and every reader of the data. The far ring is handed
-  `byteAt` for the pixels past the map. World of Daggerfall's picks and Deep Waters' promotions are held to the Bay.
+  `byteAt` for the pixels past the map. World of Daggerfall's picks are held to the Bay; Deep Waters promotes past it on
+  its own bake (TAMRIEL-DEEP, `03-World/Deep-Waters.md`).
 - **The switch.** The Features row `tamriel-land` ("Land beyond the Bay", the world group, on by default, the player's
   own online), `scenes/shared.js` `tamrielLandOn` on the enhanced skin, `?tamrielland=off` the kill door, read once as
   the world mounts. Off - and on the classic skin - the edge of the world is DFU's: empty.
-- **Readings, honest.** The region past the Bay reads as `getRegionIndexAt`'s clamp (0, the Alik'r Desert) - DFU's own
-  clamp, kept; weather, quests and factions key on it and see the Alik'r. Online a player beyond the Bay is seen by
+- **Readings, honest.** The region past the Bay is its province's (WW-R, `03-World/World-Wide.md`: regions 62..70 off
+  `tamrielGround.js` groundPoliticIndex - DFU's clamp kept for the pixels the table has no region for); the weather keys
+  on the climate, quests and the law on the province's region. Online a player beyond the Bay is seen by
   whoever stands near, and the Overworld routes over the land there (TV-BEYOND, `01-Overview/bugs/Field-Bugs-2026-10-09.md`:
-  the wire and the planner held the Bay's bounds, and the field found both). The sea past the Bay is the kernel's own water tiles (Deep Waters' bathymetry is the Bay's) - TAMRIEL-DEEP (2026-10-26, `03-World/Deep-Waters.md`): carved by a bake of its own now, the Bay's law on the continent's frame. The Wrothgarians
+  the wire and the planner held the Bay's bounds, and the field found both). The sea past the Bay is carved by a bake of its own, the Bay's law on the continent's frame (TAMRIEL-DEEP, 2026-10-26,
+  `03-World/Deep-Waters.md`). The Wrothgarians
   and the Dragontails begin in WOODS' bytes and continue in the authored law past the edge; the seam band and the
   blend join them, and the probe's seam report says where the data and the authored shape disagree.
 - **Performance.** A pixel's ground past the Bay costs a point-in-province test, a coast distance over ~100 edges and a
@@ -741,13 +744,30 @@ is asked at the row past the span's south edge in the harbour's column, wherever
 - the port stands at (2069, 668), its roadstead at (2068, 668). It has two lanes: Senchal, 997 km, and Torval, 1,558 km.
   A voyage from the Topal Bay is 852 pixels and lands at (2069, 668).
 
+**AUDIT BAY-LEFT F1 - the bake's city off its law** (2026-10-27, `01-Overview/audits/Audit-Left-In-The-Bay.md`). The
+bake classed all 625 of the span's slices mixed, so every cell flood ran each of them through the kernel (11-13 ms a
+slice: the samples, the flatten, `capitalSeaGround`), and kept nothing past an eviction: a promote at the Waterfront
+waited 17.5 s on a fresh bake, 8.3 s at (2058, 664) and 23 s at the span's north edge (2069, 646). Now:
+- `world/tamrielWatersBake.js` rumareWaterSampler reads the plan's law at every vertex (`world/rumareWaters.js`
+  rumareSeaGrid - capitalSeaGround's own arithmetic, the city found once a slice) but the span's outer edge, where the
+  plain sampler answers as the kernel does there. On the freeware: the kernel's answer at every vertex of all 625
+  slices, and the same coarse and fine bits (0 differences).
+- rumareClass: a slice wholly inside City Isle's shore or wholly past the far shore clear of the mouth is LAND with no
+  vertex asked (rumareSliceAllLand, a metre's margin either side); else its grid's all-land, all-sea or MIXED. The bake
+  keeps each slice's class and bits for its life (the constructor's cityBits memo), a mixed slice's grid packed until
+  both its bit sets are made.
+- `world/imperialCity.js` imperialLand: the Prison's and the University's centres made once a plan (landCompounds).
+- After: 1.0 s the first promote at the Waterfront (the lake's cell, once a bake), 36-137 ms the others; a cell flooded
+  again after an eviction 54 ms (6.4 s before).
+
 **Not done, and why.** No ship berths at a particular pier: a packet lands at the harbour slice's roadstead, as every
 harbour's does. The lake's ships are the lanes' (to Senchal and Torval), and they cross it to the Waterfront; it has no
 traffic of its own.
 
 ### Pins
 
-- `test/world/rumarewater.test.js` (11): the plan's mouth; the city's law; the ground about it (the mouth's bytes, the
+- `test/world/rumarewater.test.js` (13): AUDIT BAY-LEFT F1's two (the sampler the kernel's on 11 slices, the classes,
+  the all-land slices, the memo kept past an eviction; imperialLand's compounds at the University's corner); the plan's mouth; the city's law; the ground about it (the mouth's bytes, the
   basin and its ramp, the large map, GROUND_ROLL_VERSION); the city's land and its slices' rects; a capital at the sea's
   ground (the pond, a shore tile's one corner, the rim's sea and its floor, the outer edge, the sea's seam); the Imperial
   City's slices (its seams one height, a tile at a seam never read, the mouth's edge, the far shore's rise); the harbour;
@@ -768,7 +788,9 @@ traffic of its own.
   the road network); `.github/workflows/account-deploy.yml`'s path filter carries the leaf, which the account Worker and
   the deploy's Discord step bundle through `spawnedDungeons.js` (`test/server/accountdeploy.test.js`,
   `test/server/discord_setup.test.js`).
-- Mutants: `tools/mutants/rumarewater.json` (42, all dead). Re-aimed by content, all dead: `auditcaptsea.json`'s
+- Mutants: `tools/mutants/rumarewater.json` (49: 47 dead, and AUDIT BAY-LEFT F1's RW-F1-the-all-land-test-unread and
+  RW-F1-the-outer-edge-the-law's equivalent - the first a fast path the grid answers the same, the second the outer edge's
+  law and kernel agreeing on the freeware's span - recorded `equivalent`). Re-aimed by content, all dead: `auditcaptsea.json`'s
   ACS-B10-sea-at; `audittesa2c.json`'s AUDIT-TESA-II-C2-shore-on-its-land and -no-sea-flag; `audittesa2p.json`'s
   P12-open-sea-a-lake; `breathtaker.json`'s BREATHTAKER3-the-large-map-hashed-again; `fb1009_beyond.json`'s
   TV-BEYOND-planner-handed-no-beyond; `fb1014_inlandports.json`'s INLAND-PORTS-the-bounds-unasked; `nibensea.json`'s
