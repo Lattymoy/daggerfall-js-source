@@ -22,6 +22,9 @@ import { BLOOD_MAX, HEARTH_MAX, ESTATE_SHARE, ESTATE_MAX } from './legacyLaw.js'
 import { readHouse } from '../../net/houseLaw.js';   // LEGACY7 part three: a player spouse's house
 import { validLook } from '../../net/wire.js';   // LEGACY7 part four: a member's look, the hello's own recipe
 
+/** COURT-DEEDS: the deeds a courtship keeps the days of (courtDeeds.js DEEDS - that module stands above this one). */
+export const COURT_DEEDS = Object.freeze(['compliment', 'gift', 'embrace', 'kiss']);
+
 /** The save-data vendor - `modData.ProjectLegacy` (systems/modSaveData.js), the mod's IHasModSaveData. */
 export const LEGACY_VENDOR = 'ProjectLegacy';
 /** Project Legacy's settings' vendor key (systems/modSettings.js - its Features tile's dials) and the Features row's. */
@@ -542,6 +545,8 @@ export function readFamily(rec) {
           // AUDIT LEGACY III A4/P2: who the courtship is with, for the wedding that needs no town loaded (marriage.js
           // court) - dropped here, every wedding after a load was a male Breton with no face
           sex: c.sex === 'female' ? 'female' : 'male', race: RACE_KEYS.includes(c.race) ? c.race : '', face: Number.isInteger(c.face) && c.face >= 0 ? c.face : 0,
+          // AUDIT FB1026d B1: the days a deed warmed it (marriage.js warmCourtship) - dropped here, a load handed every deed again
+          ...(c.deeds && typeof c.deeds === 'object' ? { deeds: Object.fromEntries(Object.entries(c.deeds).filter(([k, d]) => COURT_DEEDS.includes(k) && Number.isInteger(d))) } : {}),
         }]))
       : {};
     p.wedAt = Number.isFinite(raw.wedAt) ? raw.wedAt : null;

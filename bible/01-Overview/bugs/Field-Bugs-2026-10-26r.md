@@ -34,9 +34,9 @@ DATA both); they are the rows' now, held by `test/bible/audit_rpt1026_m.test.js`
 The pins are `test/**/rpt1026_*.test.js`, the mutants `tools/mutants/rpt1026_*.json` (all dead, a few recorded
 equivalent). Pins of other records that a fix moved say PIN MOVED beside the line they read now.
 
-THE SERVICES. ACCOUNT_VERSION acct197 (`server-account/src/service.js`, `wrangler.toml`), migration 0178
+THE SERVICES. ACCOUNT_VERSION acct198 (`server-account/src/service.js`, `wrangler.toml`; acct197 on its lane, renumbered past FIELD BUGS 2026-10-26d's at the merge), migration 0178
 (`0178_rpt1026_ledgerlaw.sql`: `products.handed_to`, `realm_characters.law_v` - 0176 on its lane, renumbered past main's
-0176 and 0177 at the merge). RELAY_VERSION world271 (`src/net/wire.js`, world270 on its lane, renumbered past main's CHAT-POST at the merge; the relay's law moved under RPT1026-FIGHTS,
+0176 and 0177 at the merge). RELAY_VERSION world272 (`src/net/wire.js`, world270 then world271 on its lane, renumbered past main's CHAT-POST and MASTER-THREE at the merges; the relay's law moved under RPT1026-FIGHTS,
 -SECNET, -EVENTS and -PROGRESS). Either service may deploy first: every new field is one an older peer ignores, and every
 new refusal is one an older client reads as a refusal.
 

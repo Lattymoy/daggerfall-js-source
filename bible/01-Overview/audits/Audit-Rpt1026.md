@@ -45,10 +45,11 @@ DESIGNED). On phones, the Bank's keypad entry opened behind the Bank (L1) and th
 - **Verdicts.** #277 FIXED to NEEDS DATA (G2: an elite dungeon is online, where magic repairs are on, so RARE-KEPT's door
   never broke anything there); #286 AS DESIGNED to FIXED (F3); the head's tally counted from the rows (M1, M3). The
   record counts 103 fixed, 67 already fixed, 46 as designed, 26 not reproduced, 38 needing data, 10 staff, 3 withdrawn.
-- **The services.** ACCOUNT_VERSION acct197 (undeployed) carries the audit's account changes - A3, B2, B3, C1, C2, C5,
-  and the shared law it bundles under F1 and F3; no new migration (0178's own words only). RELAY_VERSION is world271 -
-  main's CHAT-POST took world270 while the batch waited, and the batch renumbered past it - and carries I1's `sdBrain.js`
-  and F1's `masterSkills.js`; SLAM8's row is the merged graph's hash.
+- **The services.** ACCOUNT_VERSION acct198 (undeployed; acct197 until main's FIELD BUGS 2026-10-26d took that number)
+  carries the audit's account changes - A3, B2, B3, C1, C2, C5, and the shared law it bundles under F1 and F3; no new
+  migration (0178's own words only). RELAY_VERSION is world272 - main's CHAT-POST took world270 and its MASTER-THREE
+  world271 while the batch waited, and the batch renumbered past both - and carries I1's `sdBrain.js` and F1's
+  `masterSkills.js`; SLAM8's row is the merged graph's hash. The lanes' own notes below name the numbers they read.
 - **The patch notes** (the pull request's description): the last section.
 
 Each lane below: what it read and drove, then its findings, then what it suspects and what it found sound.
@@ -1009,10 +1010,11 @@ Merging the thirteen branches, and main twice, turned up what no one lane could 
   batch's own, RPT1026-QUESTS) waited a count of 40 timer turns for the service's SQLite and crypto answers and read the
   claim a step early on a loaded machine; it waits on the calls in flight now (16 runs in parallel green, its two mutants
   dead).
-- **Main's CHAT-POST took world270**, the batch's relay version, and merged with its own check red (eight tests: its chat
-  source pins and mutant records, `createWorldModes` two logical lines over its ceiling, a chat line at 10 px). Those
-  eight fail the same on main alone and are left to their fix there, said once on the pull request; the batch's relay
-  pins moved to world271.
+- **Main took the batch's version numbers twice.** CHAT-POST took world270 and merged with its own check red (eight
+  tests: its chat source pins and mutant records, `createWorldModes` two logical lines over its ceiling, a chat line at
+  10 px) - those eight fail the same on main alone and are left to their fix there, said once on the pull request; then
+  FIELD BUGS 2026-10-26d took world271 and acct197. The batch's pins moved to world272 and acct198, and Port-Status's
+  section-2 Ledger rows were re-aimed by their rows' own text (six rows of this batch now stand above them).
 - **A merge resolution that dropped a line.** Lane G's Active-Arcs conflict was first taken whole from the lane's side,
   and the hunk held main's 10-26c line beside the batch's; it was put back in the next commit.
 

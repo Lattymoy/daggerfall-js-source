@@ -1576,7 +1576,7 @@ export function raisePlayerSkills(entity, { say = () => {}, onLevelUp = null, ro
   // SOFTCAP3: THE MASTER SKILLS BOX - once per character, a primary mastered, on a quiet pass (the mastery pass put its
   // own box up, so this is the NEXT rest's or journey's). ONLINE it is always in force, so the box EXPLAINS it and has
   // one OK; OFFLINE it ASKS (Yes/No) and No leaves the switch in the skill screen (systems/masterSkills.js).
-  // SOFTCAP4: THE MASTERY CHOICE - a skill at 100 whose group (2 primary / 2 major / 1 minor) still has a slot is
+  // SOFTCAP4: THE MASTERY CHOICE - a skill at 100 whose group (3 primary / 2 major / 1 minor - MASTER-THREE) still has a slot is
   // asked about ONCE, permanently decided by Yes; No leaves it to the skill screen. Online the first one carries the
   // Master Skills explanation above it, so a new master reads the rules and the choice in one box.
   const due = ask && !windowed ? masterSkillsBoxDue(entity) : null;

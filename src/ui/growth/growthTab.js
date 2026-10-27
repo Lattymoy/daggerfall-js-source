@@ -22,6 +22,7 @@ import { drawStage, dropStage, stageBack, stageAsks, stageLive, STAGE_CSS } from
 import { firmamentBook } from '../../net/firmament/firmamentBook.js';
 import { pointsLeft } from '../../net/firmament/firmamentLaw.js';   // FIRM-STARS: the stars not yet placed, on the rail
 import { t } from '../../systems/textManager.js';
+import { atLevelCap, LEVEL_CAP } from '../../systems/levelCap.js';   // LEVEL-45 (AUDIT FB1026d II C3): the Level page at the cap
 import { usesVirtueLeveling } from '../../systems/oblivionLeveling.js';   // ORL1: which bar the view of the stars reads
 import { GROWTH_PAGE_SECTIONS, SPEC_LANDINGS, growthPageAt } from './growthPages.js';   // the leaf the boot doors read
 
@@ -152,6 +153,7 @@ function levelPage(detail, ctx) {
     badge: String(entity.level ?? 1),
     heading: owed ? t('growth.level.owedHead', 'A level up is waiting') : t('growth.level.viewHead', 'Level {n}', { n: entity.level ?? 1 }),
     lead: owed ? t('growth.level.owed', 'You have a level up waiting. Place your points, then press {ascend}. If you leave first, the points stay unspent.', { ascend: t('levelup.ok.ascend', 'Ascend') })   // AUDIT GROWTH LANE5-2: the button's own word, in every language
+      : atLevelCap(entity) ? t('charsheet.levelCap', 'The highest level is {level, number}: no more levels are gained.', { level: LEVEL_CAP })   // AUDIT FB1026d II C3: no next level at the cap - the sheet's own words
       : t('growth.level.view', 'Your attributes, skills and progress to the next level. When you level up, you spend your points here.'),
   });
 }

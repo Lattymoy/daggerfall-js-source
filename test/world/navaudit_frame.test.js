@@ -26,6 +26,7 @@ import {
 } from '../../src/render/navalRender.js';
 import { createNavalEffects, PARTICLE_BUDGET, EVICT_RANK } from '../../src/systems/naval/navalEffects.js';
 import { seeded } from '../navalSea.mjs';
+import { hullsStood } from '../../src/scenes/comeSailAway/peerHulls.js';   // AUDIT FB1026d D1: the deck's hulls, as world.js reads them
 
 const WORLD = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
 const cut = (src, start, end = '\n  }\n') => { const i = src.indexOf(start); assert.ok(i >= 0, `lifted: ${start}`); return src.slice(i, src.indexOf(end, i) + end.length); };
@@ -364,13 +365,13 @@ test('AUDIT NAV1 (#11/#12) A NODE\'S MATRIX AND ROTATION KEPT WHILE THEY READ TH
 /** world.js's own sync, lifted: csaSyncColliders over a stand-in scene (a real Collider, the boats given). */
 function liftedSync(scope) {
   const body = `
-    let { colliderPoses, invertAffine, boxColliderTriangles, csaModeCollider, csaAboard, csaColliderBoats, csaColliderMesh, _csaBoatIds, _csaBoatSerial, csa, modes } = s;
+    let { colliderPoses, invertAffine, boxColliderTriangles, csaModeCollider, csaAboard, csaColliderBoats, csaColliderMesh, _csaBoatIds, _csaBoatSerial, csa, modes, hullsStood, csaRuntime, player = { pos: [0, 0, 0] } } = s;   // AUDIT FB1026d D1: the deck's hulls (no body on a deck here)
     ${cutLine(WORLD, '  const _csaBuckets = new Map();')}${cutLine(WORLD, '  const csaBoatId = (boat) =>')}
     ${cut(WORLD, '  const csaShapeOf = (c) =>', ');\n')}${cutLine(WORLD, '  const CSA_RIGID_EPS =')}${cut(WORLD, '  function csaCarry(b, m) {')}
-    ${cut(WORLD, '  function csaSyncColliders() {')}
+    ${cutLine(WORLD, '  const csaBoatUnderMe = () =>')}${cut(WORLD, '  function csaSyncColliders() {')}
     return { sync: csaSyncColliders, buckets: _csaBuckets, box: boxColliderTriangles };`;
   // eslint-disable-next-line no-new-func
-  return new Function('s', body)(scope);
+  return new Function('s', body)({ hullsStood, ...scope });
 }
 
 test('AUDIT NAV1 (#12) THE WORLD\'S SYNC CARRIES A BOAT\'S BUCKETS: three ships sailing, turning and rolling on the swell for a hundred frames are baked once - no triangle baked again - and her buckets answer as a fresh bake where she stands; a way with no turn walks the plain bucket\'s path; a box resized, another mesh, a scale changed, the mode\'s collider changed: baked again, and answering as they stand; the sea\'s ships stand in the collider after the sea\'s own frame (mutants: the motion\'s rigidity unasked, the shape unasked, a still bucket turned by nothing, the second sync unwired)', async () => {

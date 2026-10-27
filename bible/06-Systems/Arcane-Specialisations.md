@@ -40,7 +40,7 @@ Three facts, each in the code before this arc:
    Master Skills lifts DFU's 95 lock (`masterSkills.js` SOFTCAP3), so nothing stops a mage at 95 in the schools they did
    not master. The Mages Guild trains all six to 50 (`guildServices.js` trainingMax). Reaching 100 in all six is a
    matter of casting.
-2. **A mastered school bought one thing: its price.** Five masteries (2 primary, 2 major, 1 minor - SOFTCAP4) let a
+2. **A mastered school bought one thing: its price.** Five masteries (2 primary, 2 major, 1 minor - SOFTCAP4; six, 3/2/1, since MASTER-THREE) let a
    school climb past 100, and past 100 the climb priced the school's spells cheaper (SPELL-COST-PAST) and raised the
    foes (`skillSoftcap.js` combatEdge). Only Destruction's climb did anything else (BAL9b, its damage). Balance-Arc
    section 15 says it outright: *"a school's read in nothing but its price"*, and left the other five as a call of
@@ -61,7 +61,7 @@ could see or play. That is where the identity goes.
   two of the six never meets a path - the masteries' own law (`pathPossible`; AUDIT SCHOOLS L4 8: the enhanced page
   shows such a class nothing to choose - since GROWTH2 the Growth tab's guide says so in its headline and the Master
   Skills page draws no specialisation line for it, AUDIT GROWTH LANE5-6). AUDIT MARTIAL L4 L3 (found on the sibling, fixed in both): the
-  count is of what the 2/2/1 slots can still master (`masterSkills.js` masterableCount) - two schools that were both
+  count is of what the 3/2/1 slots (MASTER-THREE) can still master (`masterSkills.js` masterableCount) - two schools that were both
   minor skills share one slot, and the card showed for good. And Yes says one short line, "Specialisation chosen:
   {name}." (AUDIT MARTIAL L4 M1: the spell's sentence ran the line past the classic screen's 312 px; where the spell is
   sold is the card's and the OK box's own line, `schools.sheet.sold`).

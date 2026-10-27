@@ -17,7 +17,7 @@ strike; a guest's kept hold locked an owner out of their chest; a fight on a sta
 one griefer stopped an Orrery a team had learned; a No made a choice in three questline quests; a purchase pressed
 during a sweep never arrived; a self-cast absorb at a full pool killed its caster (#286, AS DESIGNED no longer); the
 phone's Bank keypad behind the Bank; the record's tally not its rows'. Every one fixed or its record corrected, pinned
-red; 130 mutants, all dead. ACCOUNT_VERSION acct197, RELAY_VERSION world271 (main's CHAT-POST took world270). Record:
+red; 130 mutants, all dead. ACCOUNT_VERSION acct198, RELAY_VERSION world272 (main's CHAT-POST and MASTER-THREE took world270 and world271, and JEWEL-KIN acct197). Record:
 `audits/Audit-Rpt1026.md` (AUDIT RPT1026).
 
 **2026-10-26 - AUDIT LOCKPICK.** The owner: *"Audit this"* and *"Also ensure this is enhanced ui plus"*, of the branch

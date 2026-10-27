@@ -24,8 +24,11 @@
 //
 // SPECIALISING (Mac, 2026-09-29: "lets do 2/2/1 - when a skill reaches 100 the player gets to choose ... this
 // decision can not be undone"). Master Skills lets EVERY skill reach 100 (the 95 lock is lifted), but only the
-// skills a character MASTERS may pass it: 2 of the 3 primary, 2 of the 3 major, 1 of the 6 minor - five in all
-// (MASTERY_SLOTS). Miscellaneous skills never pass 100. The choice is offered the first quiet pass after a skill
+// skills a character MASTERS may pass it: all 3 primary, 2 of the 3 major, 1 of the 6 minor - six in all
+// (MASTERY_SLOTS). MASTER-THREE (2026-10-26, Discord #feature-feedback "Let us master all three primary skills": "1
+// minor, 2 major, 3 primary master skills ... helps alleviate the issue of trying to cram in two mastered weapon
+// skills"; bible/01-Overview/bugs/Field-Bugs-2026-10-26d.md) gave the primaries their third; it was 2/2/1 before.
+// A character who chose two primaries keeps them and gains the third slot. Miscellaneous skills never pass 100. The choice is offered the first quiet pass after a skill
 // reaches 100 while its group has a slot (and any time after from the skill screen), says how many that group
 // allows and how many remain, and is PERMANENT (entity.masteredSkills, saved). A skill not mastered simply stays at
 // 100 - classic Daggerfall's ceiling - and teaches nothing more.
@@ -47,7 +50,7 @@ export const MASTER_SKILLS_OFFER_ROWS = Object.freeze([
   'You have mastered a skill.',
   'Activate Master Skills?',
   '',
-  'You can master 2 primary, 2 major and 1 minor',
+  'You can master 3 primary, 2 major and 1 minor',
   'skill once each reaches 100. A mastered skill',
   'can climb past 100, up to 200.',
   'Each point past 100 is much slower to earn',
@@ -64,7 +67,7 @@ export const MASTER_SKILLS_OFFER_ROWS = Object.freeze([
 
 /** The skill screen's description (enhanced pane; the classic box shows it as rows). */
 export const MASTER_SKILLS_ABOUT = Object.freeze([
-  'Every skill can reach 100. You can master 2 primary, 2 major and 1 minor skill once each reaches 100, and only mastered skills climb past 100, up to 200. A mastery can never be undone. Miscellaneous skills stop at 100.',
+  'Every skill can reach 100. You can master 3 primary, 2 major and 1 minor skill once each reaches 100, and only mastered skills climb past 100, up to 200. A mastery can never be undone. Miscellaneous skills stop at 100.',
   'Each point past 100 is much slower to earn and gives 25% of the boost of a point below 100, with milestone bonuses at 125, 150, 175 and 200.',
   'Past 100 a skill only improves against enemies that are tough for it. Weak enemies and repetition do not help. Below 100, skills rise as before, and mastering a primary skill no longer holds your other skills at 95.',
   'Dangerous dungeons send stronger enemies as your skills pass 100. Easy dungeons, towns and the wilds stay as they are.',
@@ -82,7 +85,7 @@ export const MASTER_SKILLS_INFO_ROWS = Object.freeze([
   'You have mastered a skill.',
   'Master Skills',
   '',
-  'You can now master 2 primary, 2 major and',
+  'You can now master 3 primary, 2 major and',
   '1 minor skill once each reaches 100. A mastered',
   'skill can climb past 100, up to 200.',
   'Each point past 100 is much slower to earn',
@@ -107,10 +110,10 @@ export const MASTER_SKILLS_INTRO_ROWS = Object.freeze([
 /** In force: always online; offline only when the player switched it on. */
 export const masterSkillsActive = (entity) => (entity?._online === true ? true : entity?.masterSkills === true);
 
-// ---- specialising: the 2 / 2 / 1 masteries ----------------------------------
+// ---- specialising: the 3 / 2 / 1 masteries ----------------------------------
 
 /** How many skills of each career group may pass 100. */
-export const MASTERY_SLOTS = Object.freeze({ primary: 2, major: 2, minor: 1 });
+export const MASTERY_SLOTS = Object.freeze({ primary: 3, major: 2, minor: 1 });
 export const MASTERY_GROUP_NAMES = Object.freeze({ primary: 'Primary', major: 'Major', minor: 'Minor' });
 
 /** 'primary' | 'major' | 'minor' | null (a miscellaneous skill). */

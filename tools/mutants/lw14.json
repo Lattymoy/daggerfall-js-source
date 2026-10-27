@@ -329,8 +329,8 @@
   {
     "name": "LW14-poached-once",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "kind === 'poached' ? 'poach' : null;",
-    "new": "null;",
+    "old": "kind === 'poached' ? 'poach' : DEED_STAMPS[",
+    "new": "DEED_STAMPS[",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]

@@ -531,8 +531,8 @@ export { AIM_CAM_OUT, AIM_CAM_UP, AIM_CAM_AFT, AIM_CAM_TAU, AIM_CAM_CLEAR, AIM_C
  *  AUDIT GN2-GN3: real seconds, as that frame is - on my sea's clock Come Sail Away's time scale made 2 s ten at x5. */
 export const PEER_LAY_S = 3;
 
-/** A hull on the flat and the push out of another (BOARD-MAGNET: one law, navalShips.js's, for the hulls kept apart, the
- *  serpent's bumpers and the grapples' haul). */
+/** A hull on the flat and the push out of another (BOARD-MAGNET: one law, navalShips.js's, for the hulls kept apart and
+ *  the grapples' haul - SERPENT4's bumpers were the third, retired by HULL-PASS). */
 export { flatHull, hullOverlap };
 /** A boat's hull as an oriented box in the world: its MeshCollider's own bounds through its MeshObject (null before
  *  its mesh is known) - the shots' target, the target card's, and the host's deck rays'. */
@@ -625,36 +625,13 @@ const isMine = (id) => typeof id === 'string' && id.startsWith(`${MY_BOAT}:`);
 /** A shot a sea ship fired - never a player's own (mine, or a peer's `peer:`). */
 const shipShot = (shooter) => !(typeof shooter === 'string' && (shooter.startsWith('peer:') || isMine(shooter)));
 /**
- * SERPENT4 (2026-10-11, the players: "ships inevitably end up colliding and then phasing through each other with the lag.
- * I think ships need some kind of larger invisible box "aura" around them while this fight is in effect so they "bounce"
- * off each other"): THE SHIPS' BUMPERS - in the sea serpent's waters (navalHost drift) my ship's hull and every other
- * player's at her helm are met BUMPER_M out from each (both grown so far on every side), and my ship is pushed off along
- * the shallowest way out at BUMPER_GAIN a second of how deep the bumpers meet, BUMPER_V_MAX at most - on Come Sail Away's
- * drift seam, so her helm still answers. Each machine pushes its own ship, so two meeting are pushed apart by both: two
- * closing at 30 m/s hold 10 m inside the bumpers' 20, short of the hulls, and drift apart as their helms let go. A peer's
- * hull was met as a rock (comeSailAway.js CheckCollision) - at its own size, a frame stale, never while I lay still - so
- * with a wire's lag two hulls met and passed through each other. `me`, `others` are flatHull's; answers `[vx, 0, vz]` (the
- * flat's own axes, scene m/s) or null.
+ * SERPENT4 (2026-10-11)'s BUMPERS ARE GONE (HULL-PASS, 2026-10-26, Discord #feature-feedback "Boat Player Collision": "too
+ * many people out there bumping into each other ruining their shots"; bible/01-Overview/bugs/Field-Bugs-2026-10-26d.md).
+ * In the sea serpent's waters every other player's ship at her helm was met BUMPER_M (10 m) out and mine pushed off it
+ * at up to 30 m/s - the players' answer then to hulls phasing through each other. Another player's hull no longer meets
+ * my helm outside a PvP zone (scenes/comeSailAway/peerHulls.js), and the serpent's waters are never one, so there is
+ * nothing left there to bump: the fight's ships pass through each other and every broadside is the captain's own.
  */
-export const BUMPER_M = 10;
-export const BUMPER_GAIN = 1.5;
-export const BUMPER_V_MAX = 30;
-/** A hull farther than this (m, centre to centre) is never asked. */
-export const BUMPER_REACH_M = 150;
-export function bumperDrift(me, others) {
-  const grow = (h) => ({ ...h, hl: h.hl + BUMPER_M, hw: h.hw + BUMPER_M });
-  const A = grow(me);
-  let vx = 0, vz = 0;
-  for (const o of others) {
-    if (Math.hypot(o.c[0] - A.c[0], o.c[1] - A.c[1]) > BUMPER_REACH_M) continue;
-    const push = hullOverlap(A, grow(o));
-    if (push) { vx += push[0] * BUMPER_GAIN; vz += push[1] * BUMPER_GAIN; }
-  }
-  const v = Math.hypot(vx, vz);
-  if (!(v > 0)) return null;
-  const k = v > BUMPER_V_MAX ? BUMPER_V_MAX / v : 1;
-  return [vx * k, 0, vz * k];
-}
 const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
 const dist2d = (a, b) => Math.hypot(a[0] - b[0], a[2] - b[2]);
 /** A launch's arc to `t` seconds, in 18 points - an aim's line to where its ball stops short of the sea. */
@@ -4589,7 +4566,7 @@ export function createNavalHost(deps) {
   const chasesMe = (e) => (e.ship.mode === 'engage' || e.ship.mode === 'board') && e.ship.target === myId();
 
   // ── hulls kept apart (AUDIT NAV1) ────────────────────────────────────────────────────────────────────────────────
-  // (a hull on the flat and the push out of another - flatHull, hullOverlap - are navalShips.js's: SERPENT4's bumpers and the grapples' haul read them too)
+  // (a hull on the flat and the push out of another - flatHull, hullOverlap - are navalShips.js's: the grapples' haul reads them too)
   /**
    * Every sea ship of mine that stands in another hull - a ship of mine, another player's, one of my boats - is pushed
    * out along the shallowest axis (two of mine share it), and the way she made into it is taken off her.
@@ -4628,16 +4605,6 @@ export function createNavalHost(deps) {
         else shove(B, [-push[0], -push[1]]);
       }
     }
-  }
-  /** SERPENT4: the drift `d` (or null) with the ships' bumpers added while the sea serpent's waters are about me
-   *  (bumperDrift - every other player's ship at her helm, as the peers' pool poses her). */
-  function withBumpers(boat, d) {
-    if (!deps.serpent?.near?.()) return d;
-    const pose = boatPose(boat);
-    const others = [];
-    for (const p of deps.peerBoats?.() ?? []) if (p.boat !== boat && Array.isArray(p.pos) && Number.isInteger(p.hull)) others.push(flatHull(p.pos, p.yaw ?? 0, p.hull));
-    const b = others.length ? bumperDrift(flatHull(pose.position, yawOfRot(pose.rotation), boat.hull), others) : null;
-    return b ? (d ? [d[0] + b[0], 0, d[2] + b[2]] : b) : d;
   }
   // ── the others (NAV-G) ───────────────────────────────────────────────────────────────────────────────────────────
   /** My word: the ships I stand, my recent volleys and barrels. */
@@ -5333,9 +5300,9 @@ export function createNavalHost(deps) {
      *  fight song's word (scenes/soundscapeHost.js), where hostileNear's 700 m and no night law gave a dark ship away. */
     battle: () => aiming || crewAlarm() || !!boarding,
     /** SERPENT1: Come Sail Away's `drift` seam - the sea serpent's maelstrom pulling my ship, a blow's throw: scene m/s
-     *  `[vx, 0, vz]` added to the sea's current under her (scenes/serpentHost.js drift), or null. SERPENT4: and in its
-     *  waters, the ships' bumpers (withBumpers). */
-    drift: (boat) => (enabled ? withBumpers(boat, deps.serpent?.drift?.(boat) ?? null) : null),
+     *  `[vx, 0, vz]` added to the sea's current under her (scenes/serpentHost.js drift), or null. SERPENT4's bumpers are
+     *  gone (HULL-PASS - the module's top). */
+    drift: (boat) => (enabled ? deps.serpent?.drift?.(boat) ?? null : null),
     /** SERPENT4: Come Sail Away's `gale` seam - the sea serpent's gale about my ship (scenes/serpentHost.js gale), or null. */
     gale: (boat) => (enabled ? deps.serpent?.gale?.(boat) ?? null : null),
     /** SERPENT1: the boat of mine in play (at my helm, or one I stand aboard) as the serpent's blows read her - her root's
