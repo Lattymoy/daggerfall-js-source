@@ -15,6 +15,7 @@ import { homeMayEnter as vendorDoorOpen } from '../net/homeLaw.js';
 import { goldText as vendorGoldText } from '../net/marketLaw.js';
 import { createMarketArrivals } from '../net/marketArrivals.js';   // RPT1026-MARKET ARRIVE: what the market sends reaches the pack on its own
 import { t } from '../systems/textManager.js';
+import { isStolen, stolenLine } from '../systems/stolenGoods.js';   // RPT1026-LEDGERLAW: a stolen piece's look says so
 
 /** @param {any} host */
 export function createVendorHost(host) {
@@ -36,9 +37,10 @@ export function createVendorHost(host) {
   const vendorRegionHere = () => { const p = playerTravelPixel(); try { const r = p ? maps.getRegionIndexAt(p.x, p.y) : null; return Number.isInteger(r) && r >= 0 ? r : null; } catch { return null; } };
   const vendorTownOf = (map) => _townOfMapId.get(Number(map) >>> 0)?.name || 'a town';
   const vendorNameOf = (it) => { try { return marketGoods.goodName(it); } catch { return 'a piece'; } };
-  /** A trader's piece LOOKED AT - `{ rows, magic }`: the look panel's own stat rows (systems/item/itemInfo.js itemStatRows -
-   *  damage, armour, hands, material, condition, weight), and its magic as the trade window says it (its tier with its
-   *  affixes and set, and an enchanted piece's powers - or "powers unknown" unidentified). Null for no piece. */
+  /** A trader's piece LOOKED AT - `{ rows, magic, stolen }`: the look panel's own stat rows (systems/item/itemInfo.js
+   *  itemStatRows - damage, armour, hands, material, condition, weight), its magic as the trade window says it (its tier
+   *  with its affixes and set, and an enchanted piece's powers - or "powers unknown" unidentified), and RPT1026-LEDGERLAW
+   *  a stolen piece's card line (systems/stolenGoods.js stolenLine), or null. Null for no piece. */
   const vendorItemStats = (it) => {
     if (!it || typeof it !== 'object') return null;
     let rows = [], magic = [];
@@ -49,7 +51,7 @@ export function createVendorHost(host) {
         for (const t of magicPowersLines(it, { identified: itemIsIdentified(it) })) if (t && !magic.includes(t)) magic.push(t);
       }
     } catch { /* a piece whose powers cannot be read says none */ }
-    return { rows, magic };
+    return { rows, magic, stolen: isStolen(it) ? stolenLine() : null };
   };
   const vendorSaid = (r, ok) => (r?.ok ? { ok: true, text: ok } : { ok: false, text: accountRefusalText(r?.error) });
   /** RPT1026-MARKET ARRIVE: a press's own collect that did not land (another act of the record under way, a checkpoint

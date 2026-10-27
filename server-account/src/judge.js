@@ -167,6 +167,33 @@ export function characterFindings(save, summary) {
   return out;
 }
 
+/** RPT1026-LEDGERLAW: the most characters a judgement's values (lawValuesOf) keep. */
+export const LAW_VALUES_MAX = 1000;
+/** The value a character finding was found on, as the save holds it. */
+function lawValueOf(/** @type {any} */ save, /** @type {any} */ summary, /** @type {{ code: string, at?: any }} */ f) {
+  if (f.code === 'level') return save?.level;
+  if (f.code === 'level-claim') return [save?.level, summary?.level];
+  if (f.code === 'gold') return save?.goldPieces;
+  if (f.code === 'bank') { const a = arrayOf(save?.bankAccounts)[f.at]; return [a?.accountGold, a?.loanTotal]; }
+  if (f.code === 'stat') return save?.stats?.[f.at];
+  if (f.code === 'skill') return save?.skills?.[f.at];
+  if (f.code === 'path') return save?.arcanePath;
+  return undefined;
+}
+/**
+ * RPT1026-LEDGERLAW (a private report: staff's clear of one bad purse let every purse after it pass): THE
+ * VALUES THE CHARACTER LAW FOUND, each finding's key and the value it read - `gold@=-8000000`, `stat@agility=101` - sorted,
+ * or null for none. A law finding's signature (verdict.js lawSigOf) names a character finding by its code alone, so staff's
+ * clear of a negative purse excused every purse after it, however far past the game's own bound. The excuse is written over the
+ * signature AND these (review.js clear), so it excuses the state staff read and no other.
+ * @param {any} save @param {{ level?: unknown } | null} summary
+ */
+export function lawValuesOf(save, summary) {
+  const found = characterFindings(save, summary);
+  if (!found.length) return null;
+  return found.map((f) => `${f.code}@${f.at ?? ''}=${(JSON.stringify(lawValueOf(save, summary, f)) ?? 'none').slice(0, 40)}`).sort().join(',').slice(0, LAW_VALUES_MAX);
+}
+
 /** A law finding's item codes, safe: a piece the law cannot read without throwing (AUDIT INT: `enchantments: [null]`
  *  threw, and the checkpoint answered 500) is a piece of no shape the game writes. */
 const findingsOf = (/** @type {any} */ it) => { try { return itemFindings(it); } catch { return ['shape']; } };

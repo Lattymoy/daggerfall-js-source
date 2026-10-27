@@ -1259,8 +1259,9 @@ A purse already below nothing stays there. Every price is more than it, so every
 at every checkpoint (`judge.js:"if (!purseWord(save?.goldPieces)) out.push({ code: 'gold' });"`): the trade held, and a
 death in the zone burnt (BURNT-SAID). 18b left such a character to "a staff repair (`review.js`)", and none could be
 made. The review's one repair took a faction's flag or nothing (`repairLaw.js:"if (!REPAIR_FLAGS.includes(flag)) return null;"`)
-and never reached the purse. `clear` lifts the hold but EXCUSES its signature (`review.js:"law_excused = law_sig"`), so
-a later purse below nothing would hold nothing. A rollback loses every hour played since the clean checkpoint. And staff
+and never reached the purse. `clear` lifts the hold but EXCUSES its signature (`review.js`'s `law_excused = law_sig` at d5a4c9c6a), so
+a later purse below nothing would hold nothing (RPT1026-LEDGERLAW, 2026-10-26, since: the excuse is of the purse staff
+read, `06-Systems/Integrity-Arc.md`). A rollback loses every hour played since the clean checkpoint. And staff
 could not see the purse at all: the wealth counts a purse below nothing as none.
 
 THE FIX. The review's third act on one character, `realm-mend { id, ticket, was, gold, note? }`
