@@ -614,6 +614,12 @@ pin read the moved code's text; the stall's settle is held by a test that builds
 (`fb1025_vendorlost.test.js`). The tool wrote Windows absolute paths into the module's imports on this machine; they were
 set back to the host's relative ones by hand.
 
+RPT1026-MARKET (private reports 2026-10-26) put its arrivals' sweep there too (`net/marketArrivals.js`, built in
+`createVendorHost`), and the one thing it reads of `bootWorld` - the checkpoint's gate, `checkpointGateOpen` - is one
+entry of the host object. To pay for it, the Vendor page's Collect (`setVendorPage`'s `collectGold`, four statements)
+moved beside the stall's other acts as `vendorCollectGold`: `bootWorld` 36,222 -> 36,216 logical lines, net six out. The
+ceiling was left where it stood for the batch's merge (other branches of the batch edit the same row).
+
 ## PARTY-FOLLOW's move - the party arrival out of bootWorld (2026-10-25)
 
 PARTY-FOLLOW (`06-Systems/Online-Arc.md`) changes how a follower lands beside the party leader: it waits for a spot

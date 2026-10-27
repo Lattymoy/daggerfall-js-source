@@ -1898,6 +1898,8 @@ export const PROF_CSS = `/* ── PROF1: THE PROFESSIONS ── */
 .market-where, .market-quality, .market-units, .market-state { color: #c9bba1; font-size: 12px; }
 .market-median { color: #cdbd9f; font-size: 12px; white-space: nowrap; }
 .market-mine, .market-mod { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #efe0b8; }
+.market-stolen { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #e3a08f; }   /* RPT1026-LEDGERLAW: a stolen piece's row */
+.market-stolenline { flex: 1 1 100%; margin: 0; font-size: 12px; color: #e3a08f; }
 .market-line { width: 60px; height: 16px; }
 .market-line polyline { fill: none; stroke: #f3cf86; stroke-width: 1.4; vector-effect: non-scaling-stroke; }
 .market-bar, .market-counterrow, .market-order, .market-listing, .market-histrow { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center;

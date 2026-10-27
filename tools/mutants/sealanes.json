@@ -649,12 +649,12 @@
   },
   {
     "name": "FEED-harbour-unnamed",
-    "file": "src/scenes/world.js",
-    "old": "    return { key: `port:${t.id}`, name: t.name, rect, ready, reach };",
-    "new": "    return { key: `port:${t.id}`, rect, ready, reach };",
+    "file": "src/systems/naval/harbourBook.js",
+    "old": "  return { key: `port:${t.id}`, name: t.name ?? null, rect, ready, reach };",
+    "new": "  return { key: `port:${t.id}`, rect, ready, reach };",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ],
-    "note": "AUDIT HOLDINGS (PIN MOVED): re-aimed by content to the line the audit's fix rewrote - its law the same."
+    "note": "AUDIT HOLDINGS (PIN MOVED): re-aimed by content to the line the audit's fix rewrote - its law the same. RPT1026-WORLD FAR-QUAY: re-aimed by content - the line moved to harbourBook.js harbourOf."
   }
 ]

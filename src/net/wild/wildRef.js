@@ -151,7 +151,7 @@ export function wildPose(st, sub, p, now) {
   return true;
 }
 
-/** A client before world272 never answers the ask or reports its health, so its count stays unheard: it keeps the zone's old
+/** A client before world273 never answers the ask or reports its health, so its count stays unheard: it keeps the zone's old
  *  mend (whole again unstruck WILD_REF.mendMs and in the zone as long), or a struck player would lie at the lowered count
  *  until it died. A count a report has anchored is the player's own health and mends by its own report alone. */
 const mendUnheard = (x, now) => {

@@ -87,7 +87,25 @@ export function spriteOffset(archive, record) {
   const xml = o ? { scale: o.scale ?? 1, x: o.x ?? 0, y: o.y ?? 0 } : { scale: d.scale ?? 1, x: d.x ?? 0, y: d.y ?? 0 };
   // ACRO-SHORT: a class sheet's record drawn at another scale carries its own (player/classSkins.js classRecordScale)
   const k = classRecordScale(archive, record);
-  return k === 1 ? xml : { ...xml, scale: k };
+  const s = k * eotbRecordScale(archive, record);   // RPT1026-MISC SPELL-SHORT: and a set of the mod's own drawn so
+  return s === 1 ? xml : { ...xml, scale: xml.scale * s };
+}
+
+/**
+ * RPT1026-MISC SPELL-SHORT (a private report: the Fighter Mage (female) skin shrank in third person while casting, and no
+ * other skin tried did). THE MOD'S OWN ART, DRAWN SMALL. Set 10's spell sheets
+ * (archive 112374, records 45-59: the readied spell, its walk and its cast) draw the woman 80 pixels from hood to boot,
+ * where every other sheet of hers draws her 107-112 (the idle 110) - and the mod's XML gives those records scale 1.0, so
+ * she shrank by a quarter as the spell came up, in Daggerfall Unity with the mod as here. Every other set's spell sheets
+ * stand as tall as its idle or taller (the raised arm). The records are given the scale they were drawn at (80/110, the
+ * spell sheets' figure over the idle's), ACRO-SHORT's door for a class sheet: the XML scale `spriteOffset` hands every
+ * caller that sizes a sprite - the body, its placement, the peers. A DEPARTURE from the mod's XML (Ledger A).
+ */
+export const EOTB_RECORD_SCALE = Object.freeze({ 112374: Object.freeze({ from: 45, to: 59, scale: 80 / 110 }) });
+/** The scale a record of the mod's own sets was drawn at against its set (SPELL-SHORT); 1 for every other. */
+export function eotbRecordScale(archive, record) {
+  const r = EOTB_RECORD_SCALE[archive];
+  return r && record >= r.from && record <= r.to ? r.scale : 1;
 }
 
 /** [IL] The billboard's world size (IL_49dd-IL_4a15): the XML rect's

@@ -5,7 +5,9 @@
 // A piece the world hands over worn carries `foundCondition`, the condition it was handed over at: Roleplay & Realism:
 // Items' rolls on a pile, a body and a shelf, Unleveled Loot's death drops, a bounty, a foe's worn kit and a new
 // character's. `selfMended` counts the points its owner's OWN mends - a Repair Kit, Repairs Objects, the Varla Stone -
-// put above that mark (creditOwnMend); a smith's paid repair adds none. Online a counter reads a marked piece at its mark and
+// put above that mark (creditOwnMend); a smith's paid repair adds none. Wear spends them first: whatever wear took is
+// spent at the next rise of the piece's condition (spendOwnMends - RPT1026-LEDGERLAW), so no rise brings it back.
+// Online a counter reads a marked piece at its mark and
 // MEND_SALE_SHARE of what its owner's own mends hold above it (foundSalePercentage) - so a paid repair is for using a
 // piece, never for selling it, whatever the counter, the region or the guild's discount (AUDIT MEND-THIRD L1-1, L1-2:
 // a third of a smith's mend paid at a cheap smith and sold at a dear counter, or at the Fighters Guild's rank discount).
@@ -37,13 +39,31 @@ export function foundSalePercentage(item) {
   return conditionPercentage({ currentCondition: found + Math.trunc(own * MEND_SALE_SHARE), maxCondition: item.maxCondition });
 }
 
+/**
+ * RPT1026-LEDGERLAW (a private report: wear spent a found piece's own-mend credit and a smith's restore paid it out again): WHAT ITS
+ * OWNER'S OWN MENDS STILL HOLD above a found piece's mark - wear spends them first (MEND-THIRD's design), so `selfMended`
+ * is cut to what the piece holds above its mark at `at` (its condition now, unless given). The count had only ever
+ * grown: worn back down, a found piece's credit stood whole, and the smith's repair that raised its condition again
+ * made it count - a paid repair sold a third over its worth, and two kits a wear apart credited more than the piece ever
+ * held. Called at every rise: an own mend before it credits (creditOwnMend, at its `from`) and a smith's paid repair
+ * before it restores (repairService.js repairWhole) - a fall needs none, as a sale reads the count no higher than the
+ * piece holds (foundSalePercentage).
+ * @param {any} item @param {number} [at] the condition the piece holds @returns {any} the item
+ */
+export function spendOwnMends(item, at = item?.currentCondition) {
+  if (!isFoundMarked(item) || !Number.isInteger(item.selfMended)) return item;
+  item.selfMended = Math.min(item.selfMended, Math.max(0, Math.trunc(at ?? 0) - item.foundCondition));
+  return item;
+}
+
 /** AN OWNER'S OWN MEND, CREDITED (a Repair Kit, a tick of Repairs Objects, the Varla Stone - each writes the condition
  *  its own way, then calls this with where the piece stood): on a found piece the part of the mend above its mark - above
  *  `from`, or the mark if the piece stood below it - counted to `selfMended`, never past what the piece can hold above
- *  its mark. A smith's paid repair never calls it.
+ *  its mark, after what wear spent of the count before it (spendOwnMends at `from`). A smith's paid repair never calls it.
  * @param {any} item @param {number} from the condition before the mend @returns {any} the item */
 export function creditOwnMend(item, from) {
   if (!isFoundMarked(item)) return item;
+  spendOwnMends(item, from);   // RPT1026-LEDGERLAW: what wear took since the last mend is spent, never credited again
   const above = (item.currentCondition ?? 0) - Math.max(from ?? 0, item.foundCondition);
   if (above > 0) {
     const room = Math.max(0, (item.maxCondition ?? 0) - item.foundCondition);

@@ -49,6 +49,7 @@ import { registerModSaveData } from './modSaveData.js';
 import { healingSupplyChances, mintHealingPotion, mintMagickaPotion } from './healingSupply.js';
 import { restLootChances, restItemsAvailable, createRestItem, REST_PILE_CHANCES, REST_FOE_CHANCES } from './rest/restItems.js';
 import { WILD_TEXT } from './wild/wildZone.js';
+import { t } from './textManager.js';   // RPT1026-ITEMS LOOT-SKEW: the room's two new lines, read when said
 
 // ---- the dice -------------------------------------------------------------------------------------------------------
 
@@ -180,6 +181,16 @@ export const isRoomWord = (/** @type {any} */ rec) => !!rec && typeof rec === 'o
 
 /** What a loser is told - the remains' own line (systems/wild/wildZone.js), one string for one refusal. */
 export const ROOM_TAKEN_TEXT = WILD_TEXT.taken;
+/** RPT1026-ITEMS LOOT-SKEW (two private reports: piles that told a current, restarted client to update, and a take that
+ *  went back to the pile a few seconds later and never reached the pack): WHAT A ROOM CONTAINER SAYS WHEN ITS WORD IS ANOTHER
+ *  BUILD'S. A base is every client's own computation (THE BASE, above), and a word whose signature this build does not
+ *  compute is another build's chain - an OLDER one as often as a newer: a page open since the last update, a desktop copy
+ *  not restarted, beside a player who updated (an update a day moves some loot draw). M2's line told the reader its own
+ *  game was the old one whichever side was. The reader cannot tell which side is newer, so the line says what it knows. */
+export const LOOT_SKEW_TEXT = () => t('loot.room.skew', 'Another player here is on a different version of the game, so this can\'t be opened until you are both on the same one.');
+/** LOOT-SKEW: a take the room's host has not answered in ROOM_CLAIM_TIMEOUT_MS is undone (its piece back in the list),
+ *  where it had gone back in silence, and looked to the player like a pile refilling itself. */
+export const ROOM_LAPSED_TEXT = () => t('loot.room.lapsed', 'That take was not confirmed in time, so the item is back where it was.');
 /** How long a claim stands taken in its claimer's view with no verdict before the piece comes back. */
 export const ROOM_CLAIM_TIMEOUT_MS = 4000;
 /** How often a put with no verdict is said again (a put never comes back on its own: the piece is the room's). */

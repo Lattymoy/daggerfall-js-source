@@ -182,16 +182,21 @@ export function createBountyHost(deps) {
         ? `Where: ${p.place}, ${p.dir} of ${p.town.name}. Marked on your map with a black circle.`
         : `Where: ${p.far} ${p.dir} of ${p.town.name}. Marked on your map with a black circle.`;
       const lines = [p.tierLabel, p.story, '', `Slain: ${h.killed} of ${p.count} ${p.foes}.`, where, `Reward: ${p.gold} gold pieces and a piece of kit.`];
-      // BOUNTY-TRAIL: where the hunt stands in its two groups, and the last way named
+      // BOUNTY-TRAIL: where the hunt stands in its two groups
       const groups = bountyGroups(p);
+      const stage = bountyStage(p, h.killed);
       if (groups.length > 1) {
-        const stage = bountyStage(p, h.killed);
         lines.push(stage === 0
           ? `They move in two groups: ${groups[0]} first, then ${groups[1]} more.`
           : `The first group is dead. ${p.count - h.killed} ${p.foes} fled. Follow their trail.`);
-        const clue = clues.get(`${h.id}:${stage}`);
-        if (clue) lines.push(clue);
       }
+      // RPT1026-QUESTS BOUNTY-WAY (a private report: a farm hunt whose rats never showed): and the last way named, for
+      // EVERY hunt whose group waits at its spot - a farm's first group as a split hunt's second. A farm stands in the
+      // middle half of its pixel (330 to 350 metres from where the hunter came onto it, in the real game) and its rats
+      // stand within 150 metres of the hunter; the way, said once on the screen among the arrival's own lines, was kept for
+      // a split hunt alone, so a hunter of one group who missed it had nothing to go on
+      const clue = clues.get(`${h.id}:${stage}`);
+      if (clue) lines.push(clue);
       if (h.from) lines.push(`Shared with you by ${h.from}.`);
       return {
         id: `${BOUNTY_QUEST_PREFIX}${h.id}`, name: `Bounty: ${p.title}`, questName: 'BOUNTY', bounty: true,

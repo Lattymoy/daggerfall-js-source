@@ -15,6 +15,7 @@ import { itemLine, linePicture, markItemFrame, wearBar, itemBriefLines, questWor
 import { lockRefuses, lockedText } from '../../systems/item/itemLock.js';   // LOCK1: a locked piece is not held out
 import { setLines } from '../../systems/sigil/sigilSets.js';   // CARD-FIT U4: a set's tiers, under the pointer
 import { letterWorthLine } from '../../systems/walletItem.js';   // TRADE-LOC: a letter of credit says what it is worth
+import { isStolen, stolenTag, stolenLine } from '../../systems/stolenGoods.js';   // AUDIT RPT1026 C4: a stolen piece another player offers says so
 import { SLOT_BOX } from '../iconFit.js';   // UI1: the row's picture box
 import { fittedImg } from '../textureCanvas.js';   // UI1: the fitted picture's element
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
@@ -38,6 +39,7 @@ const PTRADE_CSS = `
 .ptrade-shell .lockmark.on { background: var(--brass, #c08a3e); color: var(--ink, #0e1013); }
 .ptrade-shell .ptrade-note { margin: 0; padding: 6px 4px; font-size: 12.5px; color: var(--dim, #9a9486); flex: 1 1 100%; }
 .ptrade-shell .itemrow.staged { outline: 1px solid var(--brass, #c08a3e); }
+.ptrade-shell .trade-detail-info .ptrade-stolen { color: #e3a08f; }   /* AUDIT RPT1026 C4: the market's stolen tone (enhancedPlusStyle.js .market-stolen) */
 /* CARD-FIT U4 (the card audit): THE STRIP IS BOUNDED. A set piece's words ran it to 2,174 px on a phone - the three
    lists fell to nothing and Offer and Close under the window's foot. Its words scroll in a box of their own and the
    buttons stay in the row; on a narrow screen the buttons wrap under the words rather than squeeze them a word a line. */
@@ -135,7 +137,7 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
     const mid = el('span', 'itemname');
     const n = count ?? (line.stack || 0);
     mid.append(el('span', null, line.name + (n > 1 ? ` ×${n}` : '')));
-    const sub = [letterWorthLine(item), line.material, line.word, line.quest != null ? questWord() : null].filter(Boolean).join(' · ');   // QUEST-MARK (AUDIT FB1025i B6): a quest's item says so, as the pack's row does; TRADE-LOC II: a letter's worth on its row - two letters told apart at a glance, on touch too (no hover there)
+    const sub = [letterWorthLine(item), line.material, line.word, line.quest != null ? questWord() : null, isStolen(item) ? stolenTag() : null].filter(Boolean).join(' · ');   // AUDIT RPT1026 C4: and a stolen piece's theft, theirs above all   // QUEST-MARK (AUDIT FB1025i B6): a quest's item says so, as the pack's row does; TRADE-LOC II: a letter's worth on its row - two letters told apart at a glance, on touch too (no hover there)
     if (sub) mid.append(el('small', null, sub));
     b.append(mid, el('span', 'itemwt', `${line.weight.toFixed(2)} kg`));
     // TRADE-INFO (Tabitha: "magic item stats on the trade hover"): the row's hover says what its magic is - mine and theirs
@@ -220,6 +222,7 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
     if (line.armorType != null) bits.push(`${line.armorType} armor`);   // ARMOR-TYPE (Voice.md rule 8: American spelling)
     for (const t of line.survival ?? []) bits.push(t);
     info.append(el('p', 'meta', bits.filter(Boolean).join(' · ')));
+    if (isStolen(selected.item)) info.append(el('p', 'meta ptrade-stolen', stolenLine()));   // AUDIT RPT1026 C4: what taking it means - the counter's and the court's
     // TRADE-INFO: and the item's magic, a line each - CARD-FIT U4: in brief (the tier, its affixes, the sigil, the set's
     // name and what I wear of it; its tiers under the pointer), in a box that scrolls rather than grows
     const powers = itemBriefLines(selected.item, deps, { worn: true });

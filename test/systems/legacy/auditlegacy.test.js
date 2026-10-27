@@ -273,8 +273,9 @@ test('AUDIT LEGACY B8 + F5: the maps ring nothing with the mod off; "Always have
 
 test('AUDIT LEGACY U2/U6/U10: the tree captures the pointer only once a drag is under way; its tools sit at the top, named', () => {
   const src = rd('src/ui/familyPages.js');
-  assert.doesNotMatch(src, /onpointerdown = \(e\) => \{[^\n]*setPointerCapture/, 'never at the press');
-  assert.match(src, /if \(!drag\.held\) \{ drag\.held = true; view\.classList\.add\('dragging'\); view\.setPointerCapture\?\.\(drag\.id\); \}/);
+  assert.doesNotMatch(src, /onpointerdown = \(e\) => \{[^\n]*(setPointerCapture|capturePointer)/, 'never at the press');
+  // RPT1026-CLIENT (PIN MOVED): the capture through ui/pointerCapture.js, which answers a pad's refused pointer
+  assert.match(src, /if \(!drag\.held\) \{ drag\.held = true; view\.classList\.add\('dragging'\); capturePointer\(view, drag\.id\); \}/);
   assert.match(src, /\.px-sys \.fam-tools \{ position: absolute; right: 6px; top: 6px;/);
   assert.match(src, /b\.setAttribute\('aria-label', title\);/);
 });

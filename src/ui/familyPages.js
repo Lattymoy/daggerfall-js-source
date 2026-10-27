@@ -34,6 +34,7 @@ import { AFFECTION_MAX, CHILD_DAYS, CHILD_CHANCE, CHILDREN_MAX } from '../system
 import { GIFT_GOLD, KISS_AT } from '../systems/legacy/courtDeeds.js';   // COURT-DEEDS: the deeds' numbers, said in the guide
 import { FRIEND_AT } from '../systems/livingWorld/relations.js';
 import { legacySettings } from '../systems/legacy/settings.js';
+import { capturePointer } from './pointerCapture.js';   // RPT1026-CLIENT: a pad's synthetic pointer is refused a capture, never thrown
 
 export const FAMILY_PAGE_SECTIONS = Object.freeze([
   Object.freeze(['tree', 'Family Tree']), Object.freeze(['house', 'The House']), Object.freeze(['hall', 'Hall of Ancestors']),
@@ -408,7 +409,7 @@ export function drawTreePage(detail, rerender, { el, divider, door = (fn) => fn(
     const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
     if (!moved && Math.abs(dx) + Math.abs(dy) <= 4) return;
     moved = true;
-    if (!drag.held) { drag.held = true; view.classList.add('dragging'); view.setPointerCapture?.(drag.id); }
+    if (!drag.held) { drag.held = true; view.classList.add('dragging'); capturePointer(view, drag.id); }
     _pan = { x: drag.px + dx, y: drag.py + dy };
     apply();
   };

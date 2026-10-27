@@ -143,7 +143,7 @@ const bank = {
             { label: w.hooks.marks.pending() ? 'Counting a sale...' : 'Sell silver', act: () => w._button('sellMarks'), disabled: !w.enabled('sellMarks') },
           ] },
         ] } : null,
-        busy ? { type: 'field', label: BANK_FIELD_LABEL[w.transactionType] ?? 'Amount', value: w.value, active: true } : null,
+        busy ? { type: 'field', label: BANK_FIELD_LABEL[w.transactionType] ?? 'Amount', value: w.value, active: true, numeric: true } : null,   // RPT1026-MISC TOUCH-FIELD: an amount, the number pad on a phone (bankWindow.js AMOUNT_FIELD)
       ],
       foot: busy
         ? [{ label: 'Confirm', key: 'Enter', primary: true, act: () => w.input('Enter') },

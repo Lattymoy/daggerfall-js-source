@@ -162,14 +162,21 @@ export function createKetchLink({ now, say = () => {}, me = () => null }) {
   let inAt = -Infinity, mine = 0, refused = null;
   /** @type {any[]} */
   let owed = [];
+  // RPT1026-EVENTS KETCH-OWED (a private report: in the Tonal Warden's resonator phase a crew took more than a whole health
+  // bar at once, spending every death-saving piece they wore): THE BLOWS PAID, by fight and number. A whole bridge's blow stays
+  // in the fight's list a breath past its landing (ktBlowDone, 1.5 s), and every word folded in that breath owed it again -
+  // the room's walks and health come several a second - so the page landed one Discord (a quarter of everyone's health)
+  // once for each word heard after it, and a crew of eight took it six or seven times over. Paid is paid for good.
+  const paidKeys = new Set();
+  const paidKey = (fi, i) => `${fi}:${i}`;
   const said = new Set();
   /** the songs whose forks were all broken before they landed (by their number in their fight) - never owed */
   const broken = new Set();
   const once = (key, text) => { if (said.has(key)) return; said.add(key); if (text) say(text); };
   function owe(was) {
     const ws = state.ws;
-    if (!ws || (was.ws && ws.fi !== was.ws.fi)) owed = owed.filter((b) => ws && b.fi === ws.fi);
-    if (ws && mine === ws.fi) for (const b of ws.bl ?? []) if (ktWholeBridge(b) && !owed.some((o) => o.i === b.i && o.fi === ws.fi)) owed.push({ ...b, fi: ws.fi });
+    if (!ws || (was.ws && ws.fi !== was.ws.fi)) { owed = owed.filter((b) => ws && b.fi === ws.fi); paidKeys.clear(); }
+    if (ws && mine === ws.fi) for (const b of ws.bl ?? []) if (ktWholeBridge(b) && !paidKeys.has(paidKey(ws.fi, b.i)) && !owed.some((o) => o.i === b.i && o.fi === ws.fi)) owed.push({ ...b, fi: ws.fi });   // RPT1026-EVENTS KETCH-OWED: never one already paid
     if (owed.length > KT_OWED_MAX) owed.splice(0, owed.length - KT_OWED_MAX);
     if (ws?.fell || ws?.lost) owed = owed.filter((b) => b.at <= (ws.fell?.at ?? ws.lost ?? Infinity));
   }
@@ -224,13 +231,17 @@ export function createKetchLink({ now, say = () => {}, me = () => null }) {
     /** Whether song `i` of the fight in hand was broken before it landed (its forks all down - the room's `stun`). */
     songBroken: (i) => broken.has(`${state.ws?.fi ?? 0}:${i}`),
     /** Blow `i` judged - owed no more. */
-    paid(i) { owed = owed.filter((o) => o.i !== i); },
+    paid(i) {
+      for (const o of owed) if (o.i === i) paidKeys.add(paidKey(o.fi, i));   // RPT1026-EVENTS KETCH-OWED: and remembered - the newest KT_OWED_MAX x 2
+      while (paidKeys.size > 2 * KT_OWED_MAX) paidKeys.delete(paidKeys.values().next().value);
+      owed = owed.filter((o) => o.i !== i);
+    },
     /** Who carries a cell (accounts). */
     carriers: () => (state.cl?.ca ?? []).map((c) => c[0]),
     /** Whether I carry a cell. */
     carrying: () => { const m = me(); return !!m && (state.cl?.ca ?? []).some((c) => c[0] === m); },
     /** Off the ship: its state forgotten, my place, the refusals and the words said with it. */
-    leave() { state = KT_EMPTY; inAt = -Infinity; mine = 0; refused = null; owed = []; said.clear(); broken.clear(); },
+    leave() { state = KT_EMPTY; inAt = -Infinity; mine = 0; refused = null; owed = []; paidKeys.clear(); said.clear(); broken.clear(); },
   };
 }
 /** A body's kind's record by its wire number. */

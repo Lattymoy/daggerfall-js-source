@@ -208,7 +208,11 @@ const GOLDEN = Object.freeze({
   gate: Object.freeze({ n: 190, h: '3db1852e7b7c714a313ceb3f19790f9cfb0e6348f2599c0905f35c97bdfe9c35' }),
   sd: Object.freeze({ n: 140, h: 'b0019f8f7fd56073923afc19176cba6cf95d3d295840299ee38804d233195ee9' }),
   serpent: Object.freeze({ n: 232, h: '8569aebc4ba221743d3191c8d952bcca99e72e164b032cfd37f00eb613ce3ded' }),
-  orrery: Object.freeze({ n: 288, h: '2a803880284730aad89cc34c064edbda5b846e4ffd6c3d76631cb95567ba3bc1' }),
+  // PIN MOVED (RPT1026-EVENTS ORRERY-HANDS, net/superDungeon/sdBrain.js orreryRightsSnapped): a hand's lengthening is counted for
+  // the Hollow, so past the snap Ann - ten long turns behind her - waits while Bo and the keepers turn (`w`, to her alone),
+  // and her stone's share of the way is never turned; every frame up to her first turn past the snap word for word as the
+  // seam's (2a803880..., 288 frames)
+  orrery: Object.freeze({ n: 229, h: 'f0f1a3ad99bfe623ea1e495c64370699a38c670ef1ce0d200c9e457e79ee1d77' }),
 });
 
 test('EG3 THE GOLDEN FRAMES: a gate\'s court, an Abyss Dungeon\'s realm and a serpent\'s cell, played through the real Room on a seeded clock and die, say word for word what they said before the seam - every frame the Warden, the Brass Remnant and the Sea Serpent send, the state, the blows, the health, the phases, the count\'s falls, the fall and its receipts, hashed whole (mutants: any brain\'s call through the seam moved)', async () => {

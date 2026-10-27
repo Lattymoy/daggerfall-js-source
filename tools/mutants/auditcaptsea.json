@@ -1214,17 +1214,17 @@
   {
     "name": "ACS-H1-host-town",
     "file": "src/scenes/world.js",
-    "old": "name: isle.name, reach: ETHER_HARBOUR_REACH };",
-    "new": "name: isle.name };",
+    "old": "name: isle.name, reach: ETHER_HARBOUR_REACH });",
+    "new": "name: isle.name });",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-H1-host-feed",
-    "file": "src/scenes/world.js",
-    "old": "    const reach = t.reach ?? HARBOUR_REACH;",
-    "new": "    const reach = HARBOUR_REACH;",
+    "file": "src/systems/naval/harbourBook.js",
+    "old": "  const reach = t.reach ?? HARBOUR_REACH;",
+    "new": "  const reach = HARBOUR_REACH;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]

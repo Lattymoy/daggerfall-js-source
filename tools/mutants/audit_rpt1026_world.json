@@ -1,0 +1,103 @@
+[
+  {
+    "name": "AUDIT-RPT1026-J1-the-world-host-asks-the-live-list",
+    "file": "src/scenes/worldModes.js",
+    "old": "INTERIOR_NIGHT_AMBIENT : INTERIOR_AMBIENT, interiorCtx.roomLamps)), 0);",
+    "new": "INTERIOR_NIGHT_AMBIENT : INTERIOR_AMBIENT, interiorCtx.lights)), 0);",
+    "tests": [
+      "test/scenes/audit_rpt1026_world.test.js"
+    ],
+    "note": "the building's room lit by its live list: the caravan's lantern taken out lights it at 0.8, a candle set down in an unlit room darkens it"
+  },
+  {
+    "name": "AUDIT-RPT1026-J1-the-bench-asks-the-live-list",
+    "file": "src/scenes/interior.js",
+    "old": "INTERIOR_NIGHT_AMBIENT : INTERIOR_AMBIENT, ctx.roomLamps)), 0);",
+    "new": "INTERIOR_NIGHT_AMBIENT : INTERIOR_AMBIENT, ctx.lights)), 0);",
+    "tests": [
+      "test/scenes/audit_rpt1026_world.test.js",
+      "test/world/interior/rpt1026_world_darkroom.test.js"
+    ],
+    "note": "the ?interior bench lit by its live list"
+  },
+  {
+    "name": "AUDIT-RPT1026-J1-the-built-lamps-live",
+    "file": "src/scenes/interiorContext.js",
+    "old": "roomLamps: Object.freeze(lights.slice()),",
+    "new": "roomLamps: lights,",
+    "tests": [
+      "test/scenes/audit_rpt1026_world.test.js"
+    ],
+    "note": "the room's built lamps the live list itself - a take-out and a placed lamp move them again"
+  },
+  {
+    "name": "AUDIT-RPT1026-J2-the-box-alone",
+    "file": "src/scenes/hallBanners.js",
+    "old": "cz + rz * (side * s + e * BANNER_W_M / 2))) && walled(s)).map((s) => ({",
+    "new": "cz + rz * (side * s + e * BANNER_W_M / 2)))).map((s) => ({",
+    "tests": [
+      "test/scenes/audit_rpt1026_world.test.js"
+    ],
+    "note": "BANNER-WALL's box alone: a cloth before no wall beside a vestibule or a porch"
+  },
+  {
+    "name": "AUDIT-RPT1026-J2-one-end-asked",
+    "file": "src/scenes/hallBanners.js",
+    "old": "memo.set(s, [-1, 1].every((e) => [bottom + 0.1, bottom + BANNER_H_M / 2].every((y) =>",
+    "new": "memo.set(s, [1].every((e) => [bottom + 0.1, bottom + BANNER_H_M / 2].every((y) =>",
+    "tests": [
+      "test/scenes/audit_rpt1026_world.test.js"
+    ],
+    "note": "one end of the cloth asked for its wall: the half past the vestibule hangs"
+  },
+  {
+    "name": "AUDIT-RPT1026-J2-the-reach-unbounded",
+    "file": "src/scenes/hallBanners.js",
+    "old": "const reach = WALL_RAY_FRONT_M + BANNER_WALL_BEHIND_M;",
+    "new": "const reach = WALL_RAY_FRONT_M + BANNER_WALL_BEHIND_M + 20;",
+    "tests": [
+      "test/scenes/audit_rpt1026_world.test.js"
+    ],
+    "note": "any face behind, however far: the facade 3.6 m back holds the vestibule's cloth"
+  },
+  {
+    "name": "AUDIT-RPT1026-J2-the-top-alone",
+    "file": "src/scenes/hallBanners.js",
+    "old": "[bottom + 0.1, bottom + BANNER_H_M / 2].every((y) =>",
+    "new": "[bottom + BANNER_H_M - 0.1].every((y) =>",
+    "tests": [
+      "test/scenes/audit_rpt1026_world.test.js"
+    ],
+    "note": "the cloth's top asked alone - over a small house's eave, where the lower edge stands on the wall"
+  },
+  {
+    "name": "AUDIT-RPT1026-J2-the-build-hands-no-models",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "faction: bd?.factionId ?? 0, parts: [[cpu, local]] });",
+    "new": "faction: bd?.factionId ?? 0 });",
+    "tests": [
+      "test/scenes/audit_rpt1026_world.test.js"
+    ],
+    "note": "the streets' frames without their models: the box alone"
+  },
+  {
+    "name": "AUDIT-RPT1026-J2-the-first-model-alone",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "f.rects.push(...rects); f.parts?.push([cpu, local]); }",
+    "new": "f.rects.push(...rects); }",
+    "tests": [
+      "test/scenes/audit_rpt1026_world.test.js"
+    ],
+    "note": "a building's later models not asked: a cloth on its second model's wall dropped"
+  },
+  {
+    "name": "AUDIT-RPT1026-J3-the-cutter-stands-off",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "if (f === 'navy') return g === 'pirate';",
+    "new": "if (f === 'navy') return false;",
+    "tests": [
+      "test/systems/naval/rpt1026_world_seabrake.test.js"
+    ],
+    "note": "a cutter that never engages the pirate: the guard named for her fight must notice"
+  }
+]
