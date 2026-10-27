@@ -1,0 +1,20 @@
+[
+  {
+    "name": "F3-the-key-dropped",
+    "file": "src/world/urban/townFabricStand.js",
+    "old": "  Object.defineProperty(both, 'key', { get: () => `${shut.key ?? 'shut'}|${townFabricOf(dfLocation) ? 'fabric' : ''}` });\n",
+    "new": "",
+    "tests": [
+      "test/world/townpaths.test.js"
+    ]
+  },
+  {
+    "name": "F3-the-town's-key-unread",
+    "file": "src/world/urban/townFabricStand.js",
+    "old": "`${shut.key ?? 'shut'}|${townFabricOf(dfLocation) ? 'fabric' : ''}`",
+    "new": "`shut|${townFabricOf(dfLocation) ? 'fabric' : ''}`",
+    "tests": [
+      "test/world/townpaths.test.js"
+    ]
+  }
+]

@@ -1,0 +1,14 @@
+import { setup, imp } from '/tmp/claude-0/-home-user-daggerfall-js-source/dae0405a-f226-582d-9131-f2490d1f38e5/scratchpad/audit/F/probes/setup.mjs';
+const { ground } = await setup({ maps: false });
+const { rumareWaterSampler, rumareClass } = await imp('src/world/tamrielWatersBake.js');
+const { coarseCandidateBits, classifyPixel, pixelWaterSampler } = await imp('src/world/deepWater/deepWatersBake.js');
+const { rumareSeaGrid, rumareSliceAllLand } = await imp('src/world/rumareWaters.js');
+const span = []; for (let py = 646; py <= 670; py++) for (let px = 2057; px <= 2081; px++) span.push([px, py]);
+const time = (label, f) => { const t = performance.now(); const r = f(); console.log(label, (performance.now() - t).toFixed(0), 'ms', r ?? ''); };
+time('warm', () => { for (const [x, y] of span.slice(0, 30)) rumareSeaGrid(x, y); });
+time('allLand checks (625)', () => span.filter(([x, y]) => rumareSliceAllLand(x, y)).length);
+time('grids of the non-all-land', () => { let n = 0; for (const [x, y] of span) if (!rumareSliceAllLand(x, y)) { rumareSeaGrid(x, y); n++; } return n; });
+time('classes (625)', () => { for (const [x, y] of span) rumareClass(x, y); });
+time('coarse of the mixed', () => { let n = 0; for (const [x, y] of span) if (rumareClass(x, y) === 2) { coarseCandidateBits(rumareWaterSampler(ground, x, y)); n++; } return n; });
+time('classifyPixel 64x64 window off the span', () => { let n = 0; for (let y = 640 - 16; y < 640 + 48; y++) for (let x = 2048 - 16; x < 2048 + 48; x++) { classifyPixel(ground, x, y); n++; } return n; });
+time('plain coarse x100 (a coast)', () => { for (let k = 0; k < 100; k++) coarseCandidateBits(pixelWaterSampler(ground, 2069 + (k % 3), 672 + (k % 10), null)); });

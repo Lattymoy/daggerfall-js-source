@@ -1,0 +1,21 @@
+import { setup, imp } from './setup.mjs';
+const { ground } = await setup({ maps: false });
+const { TamrielWatersBake, rumareWaterSampler, tamrielWaterFrame } = await imp('src/world/tamrielWatersBake.js');
+const { pixelWaterSampler, coarseCandidateBits, classifyPixel, fineMaskBits } = await imp('src/world/deepWater/deepWatersBake.js');
+const { rumareCity } = await imp('src/world/rumareWaters.js');
+console.log('city', rumareCity(), 'frame', tamrielWaterFrame());
+let t = performance.now();
+for (let k = 0; k < 5; k++) coarseCandidateBits(rumareWaterSampler(ground, 2069 + k, 660));
+console.log('rumareWaterSampler+coarse per city pixel ms', ((performance.now() - t) / 5).toFixed(2));
+t = performance.now();
+for (let k = 0; k < 5; k++) coarseCandidateBits(pixelWaterSampler(ground, 2300 + k, 1400, null));
+console.log('plain sampler+coarse per pixel ms', ((performance.now() - t) / 5).toFixed(2));
+const b = new TamrielWatersBake({ woods: ground });
+t = performance.now(); b.seaBits(2069, 669); console.log('first seaBits at the lake (cell flood) ms', (performance.now() - t).toFixed(0));
+t = performance.now(); b.seaBits(2069 + 40, 669); console.log('next cell east ms', (performance.now() - t).toFixed(0));
+t = performance.now(); b.seaBits(2069, 669 + 33); console.log('cell south ms', (performance.now() - t).toFixed(0));
+t = performance.now(); b.seaBits(2350, 1470); console.log('Topal Bay cell ms', (performance.now() - t).toFixed(0));
+// how many cells the city's span touches (incl. aprons)
+const f = b.frame, C = 32, A = 16; const cells = new Set();
+for (let y = 658 - 12 - A; y <= 658 + 12 + A; y++) for (let x = 2069 - 12 - A; x <= 2069 + 12 + A; x++) cells.add(`${Math.floor((x - f.x0) / C)},${Math.floor((y - f.y0) / C)}`);
+console.log('cells whose window (cell+apron) can hold city pixels', cells.size);

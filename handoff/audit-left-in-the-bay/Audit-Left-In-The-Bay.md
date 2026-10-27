@@ -1,0 +1,312 @@
+# AUDIT: NO SYSTEM LEFT BEHIND IN THE BAY (2026-10-26)
+
+The owner: *"Lets do one last deep comprehensive audit on everything and ensure no system is left behind in the bay.
+Take your time and be thorough and detailed"*.
+
+**Tree audited:** the PR #1321 head (3f3f2dd) with the base branch's 16 new commits merged in. That merge is staged
+in the working tree, not committed. The base's commits are main's archery and lockpick work, migrations 0177-0181, and
+QUEST-FABRIC.
+
+**How it was run.** Six cold lanes read the code, and every finding was reproduced on the real code. Most were
+reproduced with a node probe on the freeware data (`/home/claude/dfdata/arena2`, the freeware trace and fit, TESA's
+907 listed places registered).
+- A: world events.
+- B: the living world, towns, people and quests.
+- C: travel, the sea and the maps.
+- D: the ground, ambience and the wild.
+- E: the relay, the account service and the saves.
+- F: a cold correctness review of PR #1321's own work.
+
+The lead (me) re-ran or re-read every HIGH finding and the top findings of each lane. Five findings were found
+independently by two lanes: B2 = E1, B5 = C8, B8 = E3, C7 = E2, and A3 = C's note.
+
+Every lane worked read-only. Nothing in the repository was changed by this audit. The probes are under
+`/tmp/claude-0/-home-user-daggerfall-js-source/dae0405a-f226-582d-9131-f2490d1f38e5/scratchpad/audit/<lane>/`.
+
+**Terms used below:**
+- **"Past the Bay"** means Tamriel round the Iliac Bay: pixels outside 0..999 x 0..499, the provinces as regions
+  62..70, theatres 1..9, and TESA's places.
+- **"Recorded"** means written down as a deliberate exclusion in `bible/03-World/World-Wide.md` or a slice's record.
+
+---
+
+## TIER 1 - BROKEN: things that fail or stall today
+
+### 1. A1 - Rural pixels past the Bay fail to build online, and leave permanent holes in the ground
+- **Severity:** HIGH. **Status:** CONFIRMED by probe (re-run by the lead) and by reading.
+- **Where it came from:** the base branch's merge of main at 27a58c6ef7, which brought in GROUND-AGREE. It is not this
+  PR's code, but it is in this PR's head and in its base.
+- **What happens:**
+  1. `scenes/pixelBuild.js:243` asks `spawnGroundPlace.groundLocationAt` on every build.
+  2. When the spawn roll lands on dry, empty land, `world/spawnGroundPlace.js` `spawnAt` calls the host's `_spawnCloneAt`.
+  3. That reaches `spawnedMapId`, which throws `RangeError: pixel X,Y` for any pixel past the Bay
+     (`world/spawnedDungeons.js:192`).
+  4. The pump's catch (`scenes/world.js:16836`) destroys the pixel, and BUILD-RETRY asks for it again. It throws every
+     time, so the pixel never stands: no terrain and no collider.
+- **Probe:**
+  - A 40 x 20 box of Skyrim: 800 pixels asked, 39 threw.
+  - The same box on the Bay: 0 threw.
+- **Second path:** the party walk's `tvLocationAt` (`world.js:27202`) has no try around it.
+- **Fix:** one line. `spawnAt` returns null when `!inBay(px, py)`. Past the Bay no spawn ever stands anyway
+  (`_locationToBuild`'s branch past the Bay never asks `spawnedDungeonAt`), so the Bay is unchanged. Add a pin and a
+  mutant. No relay change.
+
+### 2. F1 - Arriving at the Imperial City stalls the world for 7-21 seconds
+- **Severity:** HIGH. **Status:** CONFIRMED by probe (re-run by the lead on the working tree). This PR's own
+  regression, from RUMARE-WATER.
+- **Cause:**
+  - `world/tamrielWatersBake.js` classes all 625 city pixels `PIXEL_MIXED`.
+  - Every cell flood then calls `rumareWaterSampler` for each city pixel in its 64 x 64 window. That is a full
+    `generateSamples`, a blend and `capitalSeaGround`, about 10-13 ms a pixel, and nothing is kept between cells. Fine
+    masks pay it again.
+  - The worker evicts planes past radius 12, which is the span's own half, so crossing the city floods again.
+- **Measured:**
+  - The lake's cell: 6,840 ms.
+  - The other cells over the span: 18,085 ms.
+  - Again after an eviction: 6,449 ms.
+  - A Topal Bay cell, for comparison: 45 ms.
+- **Why the player waits:** `scenes/pixelBuild.js:1361` awaits the near pixels' Deep Waters result with no timeout. The
+  NIBEN-SEA voyage lands the player exactly there, at (2069, 668).
+- **Fix:** one module.
+  - Derive a city pixel's coarse and fine bits from the plan's law (`rumareSeaAt`), with the land's own heights only on
+    the span's outer edge. At the least, keep them per pixel on the bake.
+  - Class the isle's all-land pixels `PIXEL_LAND`.
+  - The rumarewater and tamriel_deep tests already pin the bake against the ground.
+
+### 3. B1 - Project Legacy cannot start an heir whose family seat is past the Bay; the page fails to boot
+- **Severity:** HIGH. **Status:** CONFIRMED by probe and by reading (the lead read the seat and boot path). Project
+  Legacy is on by default.
+- **What happens:**
+  1. The seat is the first town the house stands in (`scenes/legacyHost.js:1188`). Places past the Bay enter the
+     location index as they build, so it can be `{ region: 'Skyrim', loc: 'Solitude' }`.
+  2. The birth boots with `?region=Skyrim&loc=Solitude`.
+  3. `scenes/world.js:2795` looks it up with `maps.getLocationByName`, which reads MAPS.BSA only.
+  4. It throws `location not found: Skyrim/Solitude`, so the page fails to boot. The URL keeps the birth's parameters,
+     so a reload fails too. The Online page's waiting-house birth takes the same route (`main.js:249-255`).
+- **Also:** a house with no seat walks the Bay's 62 regions only (`systems/legacy/places.js` `nearestTownAnywhere`). An
+  heir of someone who fell past the Bay is born hundreds of pixels away.
+- **Fix:** about a module. Boot a seat past the Bay the way a save made there loads: by its kept mapId and pixel, once
+  the trace has landed. Interim guard: the nearest Bay town.
+
+### 4. F2 - TS9's blended ring edges never reach towns past the Bay
+- **Severity:** MED. **Status:** CONFIRMED by probe and by reading. This PR's own; its record overstates it.
+- **What happens:**
+  - Past the Bay a pixel takes the curved painter (`world/road/roadPainter.js:128-131`).
+  - The curved painter's ring pass paves whole ring tiles only (`world/road/roadCurves.js:275`, `rect.ring[t] === 1`).
+  - The straight pass after it is handed road 0, so the half tiles are never laid.
+- **Probe:**
+  - On the Bay: 72 of 72 half tiles laid.
+  - Past the Bay, at three pixels: 2 of 72.
+- **Why the pin missed it:** the "past the Bay" freeware pin built its city on a Bay pixel
+  (`test/world/terrain/townring.test.js:121`), and Town-Shapes.md TS9 was measured the same way.
+- **Fix:** a few lines. Lay the ring's NW/NE/SE/SW halves with DIAG_OUT turned by RING_HALF in roadCurves' ring pass.
+  Move the pin onto a pixel past the Bay with a roads layer installed.
+
+### 5. F3 - TS10's "yards placed again once the roads land" never fires, on the Bay or past it
+- **Severity:** MED. **Status:** CONFIRMED by probe and by reading. This PR's own.
+- **What happens:**
+  - `townWalkShut`'s `.key` (`world/townWalls.js:673`) is lost through URBANIZER's wrapper
+    (`world/urban/townFabricStand.js:141` `fabricWalkShut` returns a new function with no key).
+  - The yard memo's signature then reads `'shut'` whatever the paths are (`scenes/world.js:4234`).
+  - So a town built before its roads arrived keeps the Stable, Wagon Yard and joinery it placed then, which can stand
+    on the roads painted on the rebuild.
+- **Why the pin missed it:** the host pin only matches source text.
+- **Fix:** one line. Carry `.key` onto the wrapper, and pin that a wrapped key survives.
+
+---
+
+## TIER 2 - LEFT BEHIND IN THE BAY: a system that works on the Bay, missing or wrong past it (clear fixes, low risk)
+
+| # | Finding | What a player past the Bay sees | Code | Fix |
+|---|---|---|---|---|
+| 6 | **C1 Held map drops marks** | Party members, other players, the trader's coin, the serpent's ring and Motherlodes are never drawn past the Bay. Gates, bounties and quests are. | `ui/heldMap.js:613` `_size` is 1000x500 (no host passes `mapSize`); the readers at :2230-2293 | ~6 lines: read over `sheet` like bounties |
+| 7 | **B2 = E1 Market has no road** | No buying, filling or bidding between a province board and any other region ("The couriers do not know the road there yet."), both ways. Confirmed with the real Worker over sqlite. | `scenes/world.js:1912/2441` hubs from MAPS.BSA rows only; `server-account/src/market.js:170` | Client-side module: a hub per province (its crown seat, `townSeats` powers), made again as the seats move; no account bump |
+| 8 | **C2 Waypoints** | Personal, party and guild waypoints can't be placed, shared or kept past the Bay. The open zone's remains flag (WILD-WAYPOINT) never plants, and the zone is all past the Bay since WW-C2. | `systems/map/mapWaypoints.js:75` `onMap` 1000x500 | 1 line: `worldPixelOk` |
+| 9 | **D2 Road trouble's foes** | Living-world caravans past the Bay are beset by Bay foes: Orcs and Centaurs in Black Marsh, against TESA-BIOME's own recorded choice 4. | `scenes/world.js:3309` `livingTroubleWorld.foesOf` passes no `fauna`; `systems/livingWorld/trouble.js:139` | ~3 lines: pass px/py, `fauna: maps.getFaunaBand` |
+| 10 | **D3 The Snowfall mod** | No deep snow, footprints, tracks or berms past the Bay, Skyrim included. The snow cover and the peaks' caps do stand. | `scenes/world.js:2905` `pixelOn` bound (and its `px*1000+py` key); `scenes/snowfallHost.js:390` and `systems/snowfallRuntime.js:121` clamps; `snowfallHost.js:347` roads | A few lines: world key, unclamp the boxes; later read TESA's roads for berms |
+| 11 | **C7 = E2 Building discovery book** | Same-named places in one province share one book. Door plaques and the town map show another town's building names, the I-box counts the other town's shops, a lockpick failure blocks the same key everywhere, and quest re-stamps land on the wrong town. 907 places on 296 keys; the Imperial City's 625 slices on 14 names. | `scenes/world.js:29269` `${regionIndex}:${name}` (and :6619, :6634, :16678, :18948) | One key-maker: `#mapId` past the Bay (the automap already does this); Bay keys unchanged |
+| 12 | **C3 Places by summary** | A booked passage to a port past the Bay, saved and reloaded, silently never resumes (every 20 s, aboard). Ports past the Bay found in an earlier session vanish from masters' lists. The Overworld's far plates are a one-time snapshot, so no countryside appears. Quest diamond presses do nothing. | `scenes/world.js:30068` `tvPlaceSummary` reads `locationIndex` only; `scenes/naval/passageHost.js:176-177`; `world.js:30725` | A host module: stand the place on demand (as `portalGates.destOf` does); a near query for TV5 |
+| 13 | **C9 Find box** | The travel, Portal Stone and teleport maps' Find can't find Solitude, Whiterun, the Imperial City or any of the 296 place names past the Bay. | `ui/heldMap.js:3446` loops over MAPS.BSA's 62 regions | Small: add the registry's listed rows |
+| 14 | **C10 Travel Options roads** | Follow Paths says "no path" on every road past the Bay, the junction map is blank, and a walk on a road runs at the open-ground rate (x60, not x100). | `world/road/pathData.js:66` `dataPoint` bound; `ui/travel/travelPathsOverlay.js:182` | A module: read `arenaRoadByte` past the table |
+| 15 | **B3 Quest directions** | `%di` says "...never mind..." for every site past the Bay (28 DFU quests use it). | `scenes/questWorld.js:324` raw `maps`; `systems/talk/talk.js:189` `regionCount` 62 | 2 lines |
+| 16 | **B4 Talk "Where is" (regional)** | Always "not found" past the Bay. | `scenes/world.js:18944` `maps.getRegion` is null for 62-70 | Small: the quest layer's province tables (and give their rows the `key`) |
+| 17 | **B5 = C8 Map reveals** | A map item is used up with nothing revealed; the Thieves Guild's rank 6/8 and the Dark Brotherhood's promotion reveals do nothing. | `scenes/world.js:12922` | Small: the province's registry places |
+| 18 | **B6 Mages Guild scrying** | Refused as "nowhere". The R2 record's reason ("no region table") is stale since R2-5. | `scenes/world.js:12950` | 1 line, the same table as B5 |
+| 19 | **B7 `%lp`** | Says "Hammerfell" everywhere past the Bay ("High Rock" in Cyrodiil), for example in Mid Year Celebration's text. | `systems/quest/questMacros.js:767` | 1 line: `REGION_NAMES[r]` for a province |
+| 20 | **B8 = E3 The Bounty edict** | A seat past the Bay may proclaim it, but it can never pay (World of Daggerfall's camps are the Bay's), so the week's edict is wasted. | `net/townSeatLaw.js:1077` `bountySitePixel` | Small: don't offer it past the Bay (an account change, folded into the undeployed acct196) |
+| 21 | **C11 Held-map small gaps** | No port anchors or Ports filter past the Bay. The teleport card shows no province. `carriageTown` decodes a map id as `y*1000+x`, so walled cities past the Bay never show the Overworld's carriage wheel. | `ui/heldMap.js:1331`, `:3048`; `scenes/world.js:30041` | Small each |
+| 22 | **D4 Weather born at sea** | Storms at sea past the Bay (the Sea of Ghosts, the Topal Bay, the Padomaic) follow the nearest Bay edge's climate (Mountain: 35% snow in winter). The player's own roll is right. | `systems/weather/weatherMap.js:526-533` | 1 line (moves weatherMap pins) |
+| 23 | **E4 Staff `/town audit`** | For a province it lists the wrong 400 towns (sorted by negative index). | `server-account/src/townEcon.js:171` | 1 line, an account change |
+
+---
+
+## TIER 3 - BIGGER: owner's calls or features
+
+| # | Finding | Today | What it takes |
+|---|---|---|---|
+| 24 | **A2 Oblivion Gates past the Bay** | `net/wire.js:5127` `GATE_LANES_OPEN = [0]`: only the Bay's gate ever stands. The probe ran the real theatre scans over the registry and found real gate sites in all eight provinces (Cyrodiil's lane stays shut: the open zone). The records contradict each other: WW2 says a lane opens with the change that registers a province's places (WW7-1 did that), while TESA x AUDIT TESA II P7 keeps the Bay's lane alone for the scans' 453 ms. | (a) lanes 0..8; (b) the relay: re-hash world270 in place while it is undeployed, or split `GATE_LANES_RELAY_MIN` from `WORLD_WIDE_RELAY_MIN`; relay first, then the site; (c) slice the province scans across idle time (A2c: they all run at once on the page's thread today); (d) **A2b**: a province gate's kill credits no seat, because `scenes/world.js:23078` `gateSeatWord` sends a region for lane 0 only - one line, `regionOfTheatre(lane)` |
+| 25 | **A3 Online spawned dungeons and the Elite tier** | On the Bay about 29% of empty land stands an online spawn, 7% of those Elite. Past the Bay only TESA8's lairs stand (~1-2% of land), none of them Elite. | The owner's call: Elite lairs by the same roll (small), or spawns under a world id lane (a module plus the relay's room law; needs A1 first) |
+| 26 | **WW5: Starfall's covens and the Hollows** | One coven a night on the Bay (`systems/starfall/starfallSites.js` `W = 1000`; the wire's `px` 0..999). The Abyss census counts the Bay's 62. A player past the Bay never meets either. The blockers named then are gone. The thirteen covens are all the Bay's FACTION.TXT witches, so content is needed for a province's night. | WW5 as planned |
+| 27 | **WW6: Raids past the Bay** | Raids walk MAPS.BSA's regions (`systems/raidingParties.js:210`; the wire 0..999). The registry's towns by area, which the plan needed, now exist (WW7-1). Staff town events follow the raids. | WW6 as planned |
+| 28 | **D1 Landforms' site pull (LANDFORM4)** | Towns past the Bay sit in their own levelling wall. No place past the Bay is a site (`world/landforms.js:819, 895, 897`; the table is 1000x500 from MAPS.BSA). Worst edge-to-town step: median 39 m and p90 104 m past the Bay, against 7.6 m and 37.7 m on the Bay. | A module: a site source keyed by the world's key, made from the registry. Medium risk: GROUND-AGREE (clients standing different places stand different ground) and the heights past the Bay move |
+| 29 | **C4 The Overworld's dungeons** | No lair plates, "?" marks, discover-on-approach or dungeon models past the Bay (`systems/travel/travelDungeons.js:48` `dungeonRows(mapDict)`). | A module: lairs near, bounded |
+| 30 | **C5 Harbourmasters** | None of the 29 ports past the Bay has a Harbormaster tab: no contracts, letter of marque or Admiralty carrack (`world/worldWide/worldPorts.js:78` `crown: null`; `scenes/harbourOffice.js:170`). The crowns past the Bay are the owner's recorded call; the lost board is not recorded. | Small: the nearest Bay crown's board (as the navy already flies it), or a crownless office |
+| 31 | **C6 The capitals' harbours** | Solitude, Alinor, Torval and the Imperial City's Waterfront stand no shipyard, crew hall, lighthouse or Docks row, and their banks sell no ship (`world/tamrielCapitals.js:785` `portTownAndUnknown: 0`). | ~1 line, but each capital's laid plan has to find seaward ground: measure per capital |
+| 32 | **House sales in Arena towns and the countryside** | No house for sale, no deed, and no rank-9 knight's house in any Arena town or country place. The recorded reason ("until TESA3") is stale. | ~1 line: extend R2-9's `deedHeldIn` by mapId |
+| 33 | **A province's court and people** | FACTION.TXT has none. So palace nobles past the Bay offer commoner work, `%rn` is "Random Ruler", commoner reputation never moves, and a vampire turned there is a Lyrezi. WW7-3 now stands crown seats past the Bay that could carry the port's own. Latent: FACTION.TXT's nine vampire clans (150-158) carry regions 62-70, so guard any lookup by region alone. | The owner's call (content) |
+| 34 | **A4 The Sky-Ketch** | One station, over Daggerfall's fields (the owner's KETCH wording). | The owner's call; a station per theatre needs no relay change but the sight |
+| 35 | **Ocean Holes pits** | Bay-only, because the abyss id is a 20-bit Bay pixel id. TAMRIEL-DEEP now carves the continent's sea, so the key is the only thing in the way. | A world id lane |
+| 36 | **D5 `landformLiftAt`** | Answers 0 past the Bay (`scenes/world.js:5510`). A record written past the Bay and loaded with the Landforms row off keeps the lift (AUDIT LANDFORMS C1/B4's case). | 1 line, plus a stamp for records already written |
+| 37 | **Bounty boards' quarry** (a note; Bay-wide too) | One global table by level, so a Black Marsh board posts Orc Warlords and Centaurs. | Read TESA-BIOME's rosters |
+| 38 | **C12 Come Sail Away's own map** | The Bay's picture, so a boat past the Bay has no dot. | The mod's window; low |
+
+---
+
+## RECORDED EXCLUSIONS - verdicts
+
+Still holding (deliberate, nothing to do):
+- World of Daggerfall's sites, rocks and the gate's clearing are the Bay's.
+- Cyrodiil's gate lane never opens.
+- One serpent for the world (WW7-12); a serpent per sea theatre stays planned.
+- TESA-NO-FAST, and the open owner item: a journey from past the Bay to the Bay is still DFU fast travel.
+- Per-region holy days and REGION_TEMPLES stay DFU's tables.
+- The Bay's three crowns, Tides and Marches; the navies are the owner's call.
+- Classic SAVEVARS/MAPSAVE are the Bay's 62.
+- The town economy's `py*1000+px` key phases the waves only.
+- A province chat channel is never sharded.
+- The naval wire's regions.
+- The PvP arena is in Daggerfall city.
+- The air law's latitude is held to the Bay's rows.
+- Lairs roll DFU's dungeon tables.
+- The classic lane's winters.
+- `scenes/exterior.js` is the Bay's fixed scene.
+- High Rock and Hammerfell past the Bay have no start of their own.
+- The TAMRIEL-DEEP bake reads no location rect past the Bay (the carve cuts no town).
+- A lake the picture draws is never seeded.
+- RUMARE-WATER's not-done: no pier berths.
+- NIBEN-SEA's picture guard.
+
+**Stale.** The code moved on and the doc line still says the old thing. Doc edits:
+- World-Wide.md WW1 (:154): "a crime on the road is charged ... 0 past the Bay (reportOk 0..61)". It is 0..70 since
+  WW-R.
+- World-Wide.md WW2: "The seats. A gate past the Bay credits none." Superseded by WW7-3's `gateRegionOk`, though the
+  client still sends none (A2b).
+- World-Wide.md WW-C1 (:579-580): "Motherlodes, Court writs and chapters' hall writs ... the Bay's until WW7". Done by
+  WW7-5.
+- World-Wide.md WW3 (:406): "Deep Waters is the Bay's". TAMRIEL-DEEP carves the continent.
+- Tamriel.md TAMRIEL2: "Deep Waters' promotions held to the Bay". The same.
+- Tamriel.md (:186): "weather, quests and factions key on [the region] and see the Alik'r". Weather keys on climate,
+  and the provinces are regions 62-70.
+- World-Wide.md WW3 "The crowns ... until the provinces are regions (WW-R)". Re-recorded later as the owner's call.
+- Arena-Provinces.md: "an Arena town ... its port byte is 0". TESA6 writes 1.
+- Travel-View.md VOYAGER2.1: "its trips stay on the Bay". WW7-7 moved them.
+- Audit-Release-R2.md:224: scrying "refuses where no region table loads". The tables exist since R2-5 (see B6).
+- World-Wide.md "Not yet": "the capitals' quests (none of the Bay's quest places resolve there)". Built by R2-5.
+- WW2 "Opening a lane" against TESA x AUDIT TESA II P7 "the gates stay the Bay's lane alone". They contradict each other
+  (see A2).
+
+---
+
+## COVERAGE - checked and world-correct
+
+**A: world events.**
+- Every lane's gate pieces: the omen, the timers, the board's rows, the hub's keys, the pixel laws and the rite.
+- Elite Gates.
+- The serpent (rolled over the world's lanes, the hub telling every game).
+- The bounty boards' sites (LAIR-WORLD).
+- Revenants' lairs.
+- Treasure charts (off ports past the Bay).
+- The wild zone, its halls and giants.
+- Harvesting nodes and Motherlodes.
+- Camp and road encounters.
+- Live sky events.
+- The firmament, the gambit and the herald.
+- Crown sieges (bounded by 1e9).
+- The Witches' Festival.
+- The PvP arena (in Daggerfall by design).
+
+**B: the living world, towns, people and quests.**
+- The living world: its index, trips, ways, outlaws and hideouts, patrols, census names and walker races.
+- The quest machine past the Bay: R2-5's sites, R2-4, START3, `%cn2`/`%reg`/`%crn`, QUEST-FABRIC.
+- The law: the courts, arrests, standing and `reportOk`.
+- Banks (71 regions), loans and the online Empire account.
+- Shop prices (71), stock, the tavern menu by climate, yards and keepers named by the province's bank.
+- NPC names and faces.
+- Guild services, guild hall reveals, crime guild invitations, questline posts and racial quests.
+- Festivals.
+- Champions, professions, upkeep, renown and affiliations.
+- Tavern rooms.
+- Online homes (HOME_REGION_MAX 70).
+- Seats, domains and castles (WW7-3/4/6).
+- The town economy and the Watch (WW7-5, WW7-10).
+- The rumour mill and the bulletin board.
+- Starts.
+- The universal holidays.
+
+**C: travel, the sea and the maps.**
+- Ports and lanes (the Bay's, the beyond's, the crossing's).
+- Raiders' and the director's sea.
+- Ship and crew names.
+- The passage law.
+- Come Sail Away's port test and harbour book.
+- The Overworld planner and its ground past the Bay, and the lon/lat round trip.
+- The Portal Stone and guild teleports.
+- Teleport anchors.
+- Location discovery by whole id, and its save round trip.
+- The held map's hover, picks, gates, bounties, lairs and quests.
+- The town walk.
+- Stables and yards.
+- Horses, riding, wagons and caravans.
+- Traveller marks.
+- Banking's letters of credit.
+- The compass, hover and tooltips.
+- The loading screen's place name.
+
+**D: the ground, ambience and the wild.**
+- Every raw climate, politic and height read (the host's readers are the composed ones; the workers compose their own).
+- Biomes and climate.
+- Every other encounter path (they pass `fauna`).
+- The weather table and sim.
+- The sky, NIGHT-FOG, dynamic skies, heat haze, lightning, storms and wind.
+- The snow cover, snowpack and peak caps.
+- Music, the soundscape, WORLD-AIR and ambience.
+- Survival and temperature.
+- Foraging, fishing, hunting, mining and herbs.
+- Seasons of the Iliac Bay (archive-based).
+- Death and respawn, the sea rise, `/unstuck` and resurrection.
+- Dungeon and interior textures.
+- The far views, FAR-FLORA and FAR-TREES.
+- Deep Waters' continent frame.
+- Underwater.
+- The jungle.
+- Diseases, lycanthropy and Daedra summoning.
+
+**E: the relay, the account service and the saves.**
+- Relay room keys, poses, cells and handover.
+- Traveller marks, the party pose, trades, duels and the overworld band.
+- The bounty pose, the living-world id, the wdun halls, sea rooms, gate sites and the serpent's word.
+- The Watch receipt, sieges, staff `/tp`, the chat whitelist (71) and the wild referee.
+- Account books: homes and halls, deeds, decor and rent, seats (71), domains, castles, guild halls, writs, contracts,
+  cards, the sea bounty, wild falls and insurance, nodes, chapter halls, notice boards, POIs, the staff economy, the
+  broker, letters and Discord.
+- Saves: padded region tables, legal reputation and prices, location and automap keys, a world save past the Bay loading
+  back at its pixel, dungeon and lair saves, realm, cloud and checkpoint.
+
+**F: this PR's own work.**
+- IC-PACE: x60 on all 625 slices, 5 round them.
+- CLIMB-CREST.
+- TS8.
+- TS10's law (apart from F3).
+- RUMARE-WATER: seams, caches, the shore capitals at 35 m, and the bake's rect equal to the streamed build's.
+- NIBEN-SEA: the zone mask's cost unchanged, and no place stands on the canal.
+- TAMRIEL-DEEP: both threads agree.
+- Ports and lanes.
+- The staged merge's QUEST-FABRIC: no clash (`bakeFabricSites --check` in step, questfabric 5/5, the worker purity pin
+  green).
+
+## Not covered, and why
+
+- **The running game past the Bay.** The headless game crashes past the Bay (#1184's J6), so everything above was
+  probed module by module on the real data.
+- **Two-player online behaviour.** For example GROUND-AGREE between a client with the land and one without.
+- **The account migrations against a real D1.**

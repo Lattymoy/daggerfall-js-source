@@ -1,0 +1,29 @@
+[
+ {
+  "name": "RW-BAKE-the-span's-class-the-bound's",
+  "file": "src/world/tamrielWatersBake.js",
+  "old": "c = (rumareSlice(px, py) ? this._cityBits(px, py, 'cls') : null) ?? classifyPixel(this.woods, px, py);",
+  "new": "c = classifyPixel(this.woods, px, py);",
+  "tests": [
+   "test/world/rumarewater.test.js"
+  ]
+ },
+ {
+  "name": "RW-BAKE-the-fine-water-the-plain-sampler's",
+  "file": "src/world/tamrielWatersBake.js",
+  "old": "fineAt: (px, py) => (rumareSlice(px, py) ? cityBits(px, py, 'fine') : fineMaskBits(pixelWaterSampler(woods, px, py, null))) });",
+  "new": "fineAt: (px, py) => fineMaskBits(pixelWaterSampler(woods, px, py, null)) });",
+  "tests": [
+   "test/world/rumarewater.test.js"
+  ]
+ },
+ {
+  "name": "RW-BAKE-the-coarse-water-the-plain-sampler's",
+  "file": "src/world/tamrielWatersBake.js",
+  "old": "(x, y) => (rumareSlice(x0 + x, y0 + y) ? this._cityBits(x0 + x, y0 + y, 'coarse') : coarseCandidateBits(pixelWaterSampler(this.woods, x0 + x, y0 + y, null))), seed);",
+  "new": "(x, y) => coarseCandidateBits(pixelWaterSampler(this.woods, x0 + x, y0 + y, null)), seed);",
+  "tests": [
+   "test/world/rumarewater.test.js"
+  ]
+ }
+]
