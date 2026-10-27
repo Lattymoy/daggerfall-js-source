@@ -308,6 +308,7 @@ holdings.horse.boons.starving,"Đói lả - không phi nước đại cho đến
 holdings.wagon.boons.failing,"Sắp hỏng, nhưng vẫn chạy hết tốc lực."
 holdings.wagon.boons.rickety,"Ọp ẹp, nhưng vẫn chạy hết tốc lực."
 holdings.wagon.boons.sound,"Chắc chắn - nhờ vậy chạy nhanh hơn."
+inventory.store.chestAct,"Hãy đóng rương trước khi làm việc đó."
 inventory.store.chestAlone,"Hãy đóng rương trước khi mở xe kéo hoặc túi của bạn."
 items.gold.sharedFull,"Ở đây không thể chứa thêm vàng. Mọi người ở đây dùng chung vật chứa này, và một đống vàng trong đó chứa tối đa {max, number}."
 items.gold.sharedRoom,"Ở đây chỉ còn chứa thêm được {n, number} đồng vàng. Mọi người ở đây dùng chung vật chứa này, và một đống vàng trong đó chứa tối đa {max, number}."

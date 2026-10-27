@@ -1157,6 +1157,7 @@ holdings.horse.boons.starving,"Utsvulten - ingen galopp förrän den ätit. Ge d
 holdings.wagon.boons.failing,"Faller isär, men rullar fortfarande i full fart."
 holdings.wagon.boons.rickety,"Skranglig, men rullar fortfarande i full fart."
 holdings.wagon.boons.sound,"Stadig - därför rullar den snabbare."
+inventory.store.chestAct,"Stäng kistan innan du gör det."
 inventory.store.chestAlone,"Stäng kistan innan du öppnar din vagn eller din väska."
 items.gold.sharedFull,"Det får inte plats mer guld här. Alla här delar på den här behållaren, och en hög guld i den rymmer högst {max, number}."
 items.gold.sharedRoom,"Det får bara plats {n, number} guldmynt till här. Alla här delar på den här behållaren, och en hög guld i den rymmer högst {max, number}."

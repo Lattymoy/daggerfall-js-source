@@ -1157,6 +1157,7 @@ holdings.horse.boons.starving,"Éhezik - nem vágtázik, amíg nem eszik. Etesd 
 holdings.wagon.boons.failing,"Szétesőben, de még teljes tempóban gurul."
 holdings.wagon.boons.rickety,"Rozoga, de még teljes tempóban gurul."
 holdings.wagon.boons.sound,"Szilárd - ezért gyorsabban gurul."
+inventory.store.chestAct,"Csukd be a ládát, mielőtt ezt megteszed."
 inventory.store.chestAlone,"Csukd be a ládát, mielőtt kinyitod a kocsidat vagy a zsákodat."
 items.gold.sharedFull,"Ide már nem fér több arany. Ezen a tárolón itt mindenki osztozik, és egy aranykupac benne legfeljebb {max, number} érmét bír el."
 items.gold.sharedRoom,"Ide már csak {n, number} aranyérme fér. Ezen a tárolón itt mindenki osztozik, és egy aranykupac benne legfeljebb {max, number} érmét bír el."

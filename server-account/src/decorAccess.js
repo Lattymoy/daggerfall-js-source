@@ -212,9 +212,12 @@ function accessStep(db, mapId, buildingKey, id, kind, kept, ids) {
 /** A personal chest's goods and its access move together. A good with no uid is marked here, and is not left behind. */
 async function moveChest(ctx, player, { mapId, buildingKey, character, id, kind, kept, ids, realm, at }) {
   const { db } = ctx;
-  // RPT1026-CHESTGOLD (a private report): never under another's open window. The bin went home to the owner's save
-  // while a guest still held it, and what the guest had taken was in both.
-  if (heldByOther(await holdRow(db, mapId, buildingKey, id), player, character, ctx.nowS)) return { error: 'decor-busy' };
+  // AUDIT RPT1026 B2: THE OWNER ALWAYS MAY, a guest's open window or not. RPT1026-CHESTGOLD refused the change while
+  // another held the chest, and a held chest's keeper keeps it (`op: 'hold'`) as long as it asks: a guest who asked every
+  // three minutes shut the owner out of their own chest's access, its window and its removal for good. What the refusal
+  // guarded is held without it - the guest's window pays its purse only with a landed settle, a settle the change shut is
+  // refused (decorMay), and the pour below takes only the bin it read. An older window's click paid its purse, and its
+  // refused close keeps that gold as its run-out did (Field-Bugs-2026-10-26r, LEFT AS IT IS).
   const blob = await getRealmBlob(ctx, player.id, character);
   if (!blob.ok) return blob;
   let save = null;
@@ -435,6 +438,12 @@ async function decorWithdraw(ctx, player, body) {
 
 /** The window's moves, one write: uids into the chest and uids out of it. The items are the save's and the bin's. */
 async function decorSettle(ctx, player, body) {
+  // AUDIT RPT1026 B3: THE RECORD, ASKED FIRST (realmActFirst, AUDIT REALM L1-F2) - a settle moves the record's gold now
+  // (`purse`). Its hold went with the batch that landed, so a settle sent again after a lost answer was told 'decor-busy',
+  // read as nothing moved: the window said someone else was using the chest, its purse unpaid, and the next checkpoint
+  // found the record one on and ended the session. One on, it is this settle, landed.
+  const first = await realmActFirst(ctx.db, player.id, body?.character, body?.realm);
+  if (first.error) return first;
   const gate = await decorMay(ctx, player, { ...body, kind: 'storage' });
   if (gate.error) return gate;
   const { db, bucket } = ctx;

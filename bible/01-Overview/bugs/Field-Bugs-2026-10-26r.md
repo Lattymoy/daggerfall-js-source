@@ -264,7 +264,7 @@ DOCS. `06-Systems/Online-Arc.md` LINE-STALL.
 | 283 | The same dupe with no wait: while a guest has the chest open and has taken gold, the owner sets it to Private, the chest's goods return to the owner's record, and the guest's gold stays | `setDecorAccess` -> `moveChest` never read `decor_hold`, and poured the bin it had read even if a settle had landed since. The guest's settle was refused (`decor-shut`), and the purse had been paid at the click | RPT1026-CHESTGOLD |
 | 224 | Sat at a gold card table with 336 gold, nobody sat, stood up, reloaded: no gold - yet the next buy-in offered the 336 again, with the 100 earned since | Not lost: a gold table's cash-out is paid into the bank account of the region it was staked from (Tavern-Cards section 23, THE CLAIM), and the buy-in's offer reads the purse and that account together. Nothing said where the stake had gone | RPT1026-CARDBANK |
 | 133 | Orcish greaves sell to a merchant for about 23,000 gold | DFU's own value ladder: a plate piece is its template's base price x 3 x the metal's multiplier, and Orcish is x256 (Greaves: 80 x 3 x 256 = 61,440 for a plain pair). A rarity grade or an enchantment adds its own worth. The online counter pays at most half of the least it asks (MERC-RISE, MERC-SLOPE), so 23,000 is an Orcish pair worth about 92,000 or more | AS DESIGNED |
-| 245 | (Its bank half) A bank account holding "billions" never earned, which could be withdrawn, after depositing looted gold into a guild treasury from inside dungeons | Traced and not found: no door credits a bank account from a guild deposit, and none multiplies one. What moved this character's gold is in the service's rows (notes). The trade-hold half is RPT1026-MARKET HOLD-SAID | NEEDS DATA / STAFF |
+| 245 | (Its bank half) A bank account holding a vast sum never earned, which could be withdrawn, after depositing looted gold into a guild treasury from inside dungeons | Traced and not found: no door credits a bank account from a guild deposit, and none multiplies one. What moved this character's gold is in the service's rows (notes). The trade-hold half is RPT1026-MARKET HOLD-SAID | NEEDS DATA / STAFF |
 | 12 | A sale worth some eighteen million left the purse and the carried weight both below zero | The counter's price wrapped int32 | ALREADY FIXED: TRADE-WRAP (`Field-Bugs-2026-10-18b.md`, update 0.0.249; `shopStock.js` calculateTradePrice). A purse that already wrapped is mended by PURSE-MEND (`Field-Bugs-2026-10-19f.md`, `/v1/staff/fix/mend`) |
 | 28 | About 2 million gold in letters of credit vanished from the wallet | The report FIELD BUGS 2026-10-18b answered: every door that takes a letter out of the pack, three of them bugs | ALREADY FIXED: LETTERS-HOME, BURNT-SAID, NO-NAN-PAY, TRADE-WRAP (`Field-Bugs-2026-10-18b.md`). Which door took this player's letters is in the service's rows (notes) |
 | 58 | Sold stolen loot for 129k: the gold is not in the inventory; the bank shows it but will not deposit it | A sale whose coin would push the seller past their carrying limit pays a letter of credit instead (DFU's own rule). 129,000 gold weighs 322 kg, more than any character carries | AS DESIGNED |
@@ -314,7 +314,9 @@ FIXED.
   so in both windows a pile taken from it lands in the window's pack as a pile. The close counts the coins leaving
   (whole piles and handfuls cut off one), tells the service (`purse` on the settle), and pays the purse in the act's
   `apply` (the door's new `pay`, `bindDecorHouseFrom`) - only once the settle lands, or a lost answer's record moved one
-  step. A refused close moves nothing: the pile is in the chest alone.
+  step (that half since AUDIT RPT1026 B3: the settle asked its hold before the record, so a settle sent again after a lost
+  answer was told `decor-busy`, its purse unpaid, and the next checkpoint ended the session; it answers where the record
+  stands first now, `realmActFirst`). A refused close moves nothing: the pile is in the chest alone.
 - THE SERVICE PAYS THE RECORD (`decorAccess.js` decorSettle). With `purse` said, the coins leaving are counted from the
   bin as it stands, a count the window did not see is refused (`no-item`), and they go into the record's purse in the
   settle's own batch (`creditSave`; witnessed, INT5). Unsaid - a window from before this build, whose click paid its
@@ -324,10 +326,13 @@ FIXED.
   (`decorAccess.js` keepHold). A hold that ran out is never that window's again - someone may have opened the chest
   since - so keep and settle answer `decor-lapsed`, and the window moves nothing more. The close says "The chest was
   left open too long, so nothing in it moved. Open it again."
-- NO POUR UNDER A GUEST, NOR OVER A BIN THAT MOVED (`decorAccess.js` moveChest). Another player's live hold refuses the
-  owner's access change (`decor-busy`, "Someone else is using this chest."). The Private pour deletes each row as it was
-  read (uid and text, each guarded), and a row added since refuses it: a settle that landed in between leaves the batch
-  undone (`decor-busy`).
+- NO POUR OVER A BIN THAT MOVED (`decorAccess.js` moveChest). ~~Another player's live hold refuses the owner's access
+  change (`decor-busy`, "Someone else is using this chest.").~~ AUDIT RPT1026 B2 took that half back: a hold is kept as
+  long as its window asks, so a guest who asked every three minutes shut the owner out of the chest's access, its window
+  and its removal for good. The owner's change lands whatever window is open; a guest's settle it shut is refused
+  (`decor-shut`) and moves nothing, and a window of this build pays its purse only with a landed settle. The Private pour
+  deletes each row as it was read (uid and text, each guarded), and a row added since refuses it: a settle that landed in
+  between leaves the batch undone (`decor-busy`).
 - A PIECE THE WINDOW TOOK GOES BACK AS IT CAME (`decorGrants.js` commit). A put of a piece in the window's pack and not
   the character's undoes its take, or joins the stack it was cut from and drops the cut; a part of it is refused
   ("The chest takes the whole stack."). Part of a piece put in this window, taken back, is the pack's again, not a cut.
@@ -340,22 +345,31 @@ FIXED.
   wagon and bag ladders refuse to open while the chest is up ("Shut the chest before you open your wagon or your bag."),
   and the chest's spec answers the floor (`decorGrants.js` openSharedChest's `dropRefusal`), so a shift-drop is refused
   in the chest's own words ("Shut the chest before you drop that.").
+- AND ITS PACK CHANGES BY THE CHEST'S DOOR ALONE (AUDIT RPT1026 B1, B4, B5 - `inventorySession.js` chestActRefusal). The
+  sweep above left the window's other acts, each of which took a piece out of the window's copy alone: a Use (a potion
+  drunk, a meal eaten, off the pack or off the chest's own list), a Salvage, the batch's and a Dismantle kept the piece
+  in the character's pack or the chest's bin, and a salvage's shards and a dismantle's embers landed on the stack the
+  pack shares - every opening of a chest the player shares, even with nobody. Those are refused in both skins ("Shut the
+  chest before you do that."). A piece taken this window is not worn from the pack either (a Remove and then an Equip
+  walked round the Equip-mode take's law). A map moves through the chest as a piece both ways, never read on the way
+  (TransferItem's map arm read it out of the window's list, and the chest or the pack kept it).
 
 THE FOUR HOSTS. The chest window is `decorGrants.js`'s, opened by `scenes/worldModes.js` (an interior home's or hall's
 chest, wired, unchanged); `world.js` hands the inventory window over (unchanged); `exterior.js` and `dungeonContext.js`
 open no home's chest. No host line moved.
 
-THE WORDS. `account.refusal.decorLapsed` and `inventory.store.chestAlone` (new), drafted in every language
+THE WORDS. `account.refusal.decorLapsed`, `inventory.store.chestAlone` and (AUDIT RPT1026 B1) `inventory.store.chestAct` (new), drafted in every language
 (`SCRATCH/drafts/chestgold.json`). The shift-drop reuses `decor.grants.noDrop`, a refused commit on the classic skin
 `inventory.store.chestShut`.
 
 LEFT AS IT IS.
 - A client from before this build still pays the purse at the click, and the service cannot tell its purse from an
-  honest one. The Private trigger is closed for every client by the service. The run-out trigger closes for a player
-  once their client runs this build.
+  honest one. ~~The Private trigger is closed for every client by the service.~~ The run-out trigger, and since AUDIT
+  RPT1026 B2 the Private one, close for a player once their client runs this build.
 
 DEPARTURE. DoTransferItem's gold interception, for the shared chest's list, and WagonButton_OnMouseClick's ladder,
-refused while such a chest is open: Port-Ledger A, RPT1026-CHESTGOLD.
+refused while such a chest is open; and (AUDIT RPT1026) UseItem refused in such a window, and TransferItem's map arm
+(DaggerfallInventoryWindow.cs:1471-1478) not run for such a chest: Port-Ledger A, RPT1026-CHESTGOLD.
 
 PINS. `test/systems/decor/rpt1026_chestgold.test.js` (11): the real window's moves (applyTransfer as both windows end a
 transfer), the host's door (bindDecorHouseFrom), realmGoldAct over a session whose checkpoint is the realm's own PUT, and
@@ -368,8 +382,12 @@ one never; the classic skin's own window (NativeInventoryWindow over the host's 
 its gold, a piece taken in Equip mode (taken, not worn) and a piece put in, all settled once at the close, the gold
 with the settle; its gold field shut; the wagon, the bag and the floor refused in a chest window (the three classic
 pins fail on the code before). PIN MOVED: `decorchest.test.js` (two tests: the take is the window's real transfer, the
-purse is paid by the settle). Mutants `tools/mutants/rpt1026_chestgold.json` (33 CHESTGOLD records, all dead). Re-aimed by content:
-`decor1.json` DECOR1-the-cap-not-a-conflict (the status line names `decor-lapsed`).
+purse is paid by the settle). Mutants `tools/mutants/rpt1026_chestgold.json` (32 CHESTGOLD records, all dead). Re-aimed by content:
+`decor1.json` DECOR1-the-cap-not-a-conflict (the status line names `decor-lapsed`). AUDIT RPT1026 (lane B):
+`test/systems/decor/audit_rpt1026_chestgold.test.js` (6 - the realm session itself under the window, both skins driven),
+`tools/mutants/audit_rpt1026_chestgold.json` (17, all dead); PIN MOVED: the owner's Private under a guest's window lands
+(rpt1026_chestgold.test.js), and its record CHESTGOLD-svc-pour-under-guest is retired (AUDIT-RPT1026-B2-owner-refused-under-guest
+is its inverse).
 
 ### RPT1026-CARDBANK (224) - `src/net/card/cardStakes.js`, `src/scenes/worldModes.js`
 
@@ -410,7 +428,7 @@ online counter pays at most half of the least it asks the best haggler, moved by
 or enchanted pair. No table is wrong. What to tell the player: Orcish is Daggerfall's second-dearest metal, priced so on
 purpose, and the online counters already pay well under what they ask.
 
-THE BANK'S "BILLIONS" (245), NEEDS DATA / STAFF. Traced: a guild deposit pays from the purse, its letters, then the
+THE BANK'S VAST SUM (245), NEEDS DATA / STAFF. Traced: a guild deposit pays from the purse, its letters, then the
 Empire's account, the same on both ends (`guildBook.js` deposit over `payUndoable`; `guilds.js` realmTreasury over
 `payFromSave`), with an undo that gives back exactly what it took (MARKET-AUDIT). A realm act whose checkpoint was refused
 (`onlineCheckpoint` false) settles against the older record, but the client's next checkpoint replaces that record
