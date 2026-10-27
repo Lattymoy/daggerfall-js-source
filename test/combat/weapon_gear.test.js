@@ -1,13 +1,13 @@
-// WEAPON-GEAR (2026-10-27, mob: "Bow and weapon fix", "Those are needed for pve"): online, a weapon's blow is also worth
-// its LIVE skill - the trained climb and every point of gear on it - over 200, the greater of that and MARTIAL2's climb,
-// so a weapon skill's gear pays in damage as Hand-to-Hand's always has; below 200 nothing changes, the fists are their
-// own, and nothing of it reaches a player, a refereed fight, a mentor or the beast.
+// WEAPON-GEAR (2026-10-27, mob: "Bow and weapon fix", "Those are needed for pve"): online, each point of gear on a weapon
+// skill adds 0.44% to its blow from the first point, added to MARTIAL2's climb (GEAR-ADDS, mob: "they should both just
+// stack additively", "need to be the same end result but also help the begingin"); the fists are their own, and nothing
+// of it reaches a player, a refereed fight, a mentor or the beast.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { WEAPONS, WEAPON_MATERIALS } from '../../src/characters/weapons.js';
 import { pcaaoWeaponAttackDamage, pcaaoModules } from '../../src/combat/pcaao.js';
 import {
-  weaponPastPct, weaponGearPct, weaponMasteryBlow, WEAPON_GEAR_DIVISOR, WEAPON_GEAR_SKILL_MOST, _resetWeaponMasteryForTests,
+  weaponPastPct, weaponGearPct, weaponMasteryBlow, WEAPON_GEAR_PER_POINT, WEAPON_GEAR_PCT_MOST, _resetWeaponMasteryForTests,
 } from '../../src/systems/weaponMastery.js';
 import { BLOW_TOPS } from '../../src/systems/powerCeiling.js';
 import { masteryBlowTop } from '../../tools/powerCeiling.mjs';
@@ -34,47 +34,50 @@ const online = (fn) => {
   try { return fn(); } finally { globalThis.location = loc; _resetWeaponMasteryForTests(); }
 };
 
-test('WEAPON-GEAR: the live skill over 200 - x4.36 at 872, nothing at or below 200, counted to 1,000 (x5)', () => {
-  assert.equal(WEAPON_GEAR_DIVISOR, 200);
-  const geared = player(100, 772);
-  assert.equal(skillValue(geared, SKILLS.LongBlade), 872, 'the gear on the skill counts');
-  assert.ok(Math.abs(weaponGearPct(geared, SKILLS.LongBlade, ON) - 336) < 1e-9);
-  assert.equal(weaponGearPct(player(100, 100), SKILLS.LongBlade, ON), 0, '200: x1');
-  assert.equal(weaponGearPct(player(100, 80), SKILLS.LongBlade, ON), 0, 'below 200: none');
-  assert.equal(weaponGearPct(player(100, 5000), SKILLS.LongBlade, ON), (WEAPON_GEAR_SKILL_MOST / WEAPON_GEAR_DIVISOR - 1) * 100, 'counted to the most');
-  assert.equal(BLOW_TOPS.mastery, masteryBlowTop(), 'the ceiling\'s mastery top is the most counted');
+const near = (a, b, why) => assert.ok(Math.abs(a - b) < 1e-9, `${why}: ${a} against ${b}`);
+
+test('WEAPON-GEAR: 0.44% a point of gear from the first point - the sheet of 872 (trained 200, 672 on it) x4.36, counted to 320', () => {
+  assert.equal(WEAPON_GEAR_PER_POINT, 0.44);
+  assert.equal(skillValue(player(200, 672), SKILLS.LongBlade), 140 + 672, 'the gear on the skill counts');
+  near(weaponGearPct(player(200, 672), SKILLS.LongBlade, ON), 295.68, 'the top kit');
+  near(weaponGearPct(player(50, 50), SKILLS.LongBlade, ON), 22, 'a low weapon player gains from the first point');
+  near(weaponGearPct(player(100, 100), SKILLS.LongBlade, ON), 44, 'below 200 live');
+  assert.equal(weaponGearPct(player(200), SKILLS.LongBlade, ON), 0, 'no gear: none');
+  assert.equal(weaponGearPct(player(100, 5000), SKILLS.LongBlade, ON), WEAPON_GEAR_PCT_MOST, 'counted to the most');
+  assert.equal(BLOW_TOPS.mastery, masteryBlowTop(), 'the ceiling\'s mastery top is the climb\'s most and the gear\'s');
   assert.equal(BLOW_TOPS.mastery, 400);
 });
 
-test('WEAPON-GEAR: every weapon family takes the greater of its climb and its gear - the sword, the axe, the bow, the dagger; never the fists', () => {
+test('WEAPON-GEAR: every weapon family adds its climb and its gear - the sword, the axe, the bow, the dagger; never the fists', () => {
   const sword = daedric(WEAPONS.Longsword), axe = daedric(WEAPONS.War_Axe), bow = daedric(WEAPONS.Long_Bow), dagger = daedric(WEAPONS.Dagger);
-  const geared = player(100, 772), trained = player(200), both = player(200, 140);
-  for (const w of [sword, bow, dagger]) assert.ok(Math.abs(weaponPastPct(w, geared, foe, ON) - 336) < 1e-9, `${w.templateIndex}: the gear's x4.36`);
-  assert.ok(Math.abs(weaponPastPct(axe, geared, foe, ON) - 336) < 1e-9, 'the axe at full health: its climb pays nothing there, its gear does');
+  const geared = player(200, 672), trained = player(200), both = player(200, 100);
+  for (const w of [sword, bow]) near(weaponPastPct(w, geared, foe, ON), 335.68, `${w.templateIndex}: the climb's 40 and the gear's`);
+  near(weaponPastPct(dagger, geared, foe, ON), 295.68, 'the dagger\'s climb is its pace, its gear its blow');
+  near(weaponPastPct(axe, geared, foe, ON), 295.68, 'the axe at full health: its climb pays nothing there, its gear does');
+  near(weaponPastPct(axe, geared, low, ON), 375.68, 'the axe\'s finish and its gear');
   assert.equal(weaponPastPct(sword, trained, foe, ON), 40, 'no gear: MARTIAL2\'s climb, as it was');
   assert.equal(weaponPastPct(axe, trained, low, ON), 80, 'the axe\'s finish, as it was');
-  assert.equal(weaponPastPct(axe, both, low, ON), 80, 'live 280 is x1.4 - the finish\'s x1.8 is more');
-  assert.ok(Math.abs(weaponPastPct(sword, both, foe, ON) - 40) < 1e-9, 'live 280 is x1.4, the climb\'s own');
+  near(weaponPastPct(sword, both, foe, ON), 84, '100 of gear on a trained 200 adds, never the greater');
   assert.equal(weaponPastPct(null, geared, foe, ON), 0, 'the fists read their skill in their roll already');
 });
 
 test('WEAPON-GEAR: only my blow online at a foe - offline, a mentor, the beast, a peer and a player target take nothing', () => {
   const sword = daedric(WEAPONS.Longsword);
-  assert.equal(weaponGearPct(player(100, 772), SKILLS.LongBlade, { online: false }), 0, 'offline is Daggerfall\'s');
-  assert.equal(weaponGearPct({ ...player(100, 772), _mentor: {} }, SKILLS.LongBlade, ON), 0);
-  assert.equal(weaponGearPct({ ...player(100, 772), isInBeastForm: true }, SKILLS.LongBlade, ON), 0);
-  assert.equal(weaponGearPct({ ...player(100, 772), peer: true }, SKILLS.LongBlade, ON), 0);
+  assert.equal(weaponGearPct(player(100, 672), SKILLS.LongBlade, { online: false }), 0, 'offline is Daggerfall\'s');
+  assert.equal(weaponGearPct({ ...player(100, 672), _mentor: {} }, SKILLS.LongBlade, ON), 0);
+  assert.equal(weaponGearPct({ ...player(100, 672), isInBeastForm: true }, SKILLS.LongBlade, ON), 0);
+  assert.equal(weaponGearPct({ ...player(100, 672), peer: true }, SKILLS.LongBlade, ON), 0);
   online(() => {
-    assert.equal(weaponMasteryBlow(sword, 100, player(100, 772), foe), 436, 'x4.36');
-    assert.equal(weaponMasteryBlow(sword, 100, player(100, 772), { isPlayer: true }), 100, 'a player takes the blow as struck');
-    assert.equal(weaponMasteryBlow(sword, 100, player(100, 100), foe), 100, 'skill 200 with gear: as struck');
+    assert.equal(weaponMasteryBlow(sword, 100, player(200, 672), foe), 435, 'x4.36, the fraction carried');
+    assert.equal(weaponMasteryBlow(sword, 100, player(200, 672), { isPlayer: true }), 100, 'a player takes the blow as struck');
+    assert.equal(weaponMasteryBlow(sword, 100, player(100), foe), 100, 'skill 100, no gear: as struck');
   });
 });
 
-test('WEAPON-GEAR: through the real core - a Daedric Longsword at the same roll strikes x4.36 for skill 872 against no gear', () => online(() => {
+test('WEAPON-GEAR: through the real core - a Daedric Longsword at the same roll strikes x3.96 for 672 gear against none', () => online(() => {
   const sword = daedric(WEAPONS.Longsword);
   const at = (p) => pcaaoWeaponAttackDamage(p, foe, 0, 0, sword, () => 0.5, M);
-  const bare = at(player(100)), geared = at(player(100, 772));
+  const bare = at(player(100)), geared = at(player(100, 672));
   assert.ok(bare > 0);
-  assert.ok(Math.abs(geared - bare * 4.36) <= 1, `${geared} against ${bare}`);
+  assert.ok(Math.abs(geared - bare * 3.9568) <= 1, `${geared} against ${bare}`);
 }));
