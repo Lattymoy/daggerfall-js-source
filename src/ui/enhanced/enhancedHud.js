@@ -1623,10 +1623,11 @@ function statTile(t, dpr, box) {
   } else if (t.set) {
     const set = setById(t.set);
     const colour = set?.colour ?? (t.set === 'legendary' ? RARITIES.legendary.colour : undefined);   // LOOT5: a Legendary power's chip wears the tier's own orange
-    const shade = t.set === 'technique' ? TECH_CHIP_COLOUR : colour;   // TECH1: a weapon's technique, its marks' own blue
+    const weapon = t.set === 'technique' || t.set === 'martial';   // RPT1026-PROGRESS: a martial path's passive wears its technique's blue and glyph
+    const shade = weapon ? TECH_CHIP_COLOUR : colour;   // TECH1: a weapon's technique, its marks' own blue
     cell.dataset.set = t.set;
     for (const [k, v] of Object.entries(setShades(shade))) cell.style.setProperty(k, v);
-    pic.src = t.set === 'technique' ? techniqueGlyphTileSrc(shade) : sigilRuneTileSrc(shade);   // TECH-CARD: the technique's own glyph, as its block on the card wears it
+    pic.src = weapon ? techniqueGlyphTileSrc(shade) : sigilRuneTileSrc(shade);   // TECH-CARD: the technique's own glyph, as its block on the card wears it
   } else if (t.glyph) {
     cell.dataset.glyph = t.glyph;
     pic.src = statusGlyphSrc(t.glyph) ?? '';

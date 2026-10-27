@@ -120,8 +120,8 @@
   {
     "name": "HALOTHIN-last-not-kept",
     "file": "src/net/online.js",
-    "old": "went = true; this._haloPosed.set(h.ws, { x: out.x, z: out.z, mv: out.mv | 0, at: now }); }",
-    "new": "went = true; }",
+    "old": "went = true; this._haloPosed.set(h.ws, { x: out.x, z: out.z, mv: out.mv | 0, at: now }); this._earOf(h.ws).posed = now; }",
+    "new": "went = true; this._earOf(h.ws).posed = now; }",
     "tests": [
       "test/net/halothin.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "HALOTHIN-last-per-room",
     "file": "src/net/online.js",
-    "old": "      if (!whole && !this._rfOn.get(h.ws) && !haloPoseDue(this._haloPosed.get(h.ws), out, now) && !this._haloAlone(room, out)) { this.stats.haloThinned++; continue; }\n      try { h.ws.send(s ??= JSON.stringify({ t: 'pose', p: out })); this.stats.sent++; went = true; this._haloPosed.set(h.ws, { x: out.x, z: out.z, mv: out.mv | 0, at: now }); } catch { /* the close will say */ }",
-    "new": "      if (!whole && !this._rfOn.get(h.ws) && !haloPoseDue(this._haloPosed.get(h), out, now) && !this._haloAlone(room, out)) { this.stats.haloThinned++; continue; }\n      try { h.ws.send(s ??= JSON.stringify({ t: 'pose', p: out })); this.stats.sent++; went = true; this._haloPosed.set(h, { x: out.x, z: out.z, mv: out.mv | 0, at: now }); } catch { /* the close will say */ }",
+    "old": "      if (!whole && !this._rfOn.get(h.ws) && !haloPoseDue(this._haloPosed.get(h.ws), out, now) && !this._haloAlone(room, out)) { this.stats.haloThinned++; continue; }\n      try { h.ws.send(s ??= JSON.stringify({ t: 'pose', p: out })); this.stats.sent++; went = true; this._haloPosed.set(h.ws, { x: out.x, z: out.z, mv: out.mv | 0, at: now }); this._earOf(h.ws).posed = now; } catch { /* the close will say */ }",
+    "new": "      if (!whole && !this._rfOn.get(h.ws) && !haloPoseDue(this._haloPosed.get(h), out, now) && !this._haloAlone(room, out)) { this.stats.haloThinned++; continue; }\n      try { h.ws.send(s ??= JSON.stringify({ t: 'pose', p: out })); this.stats.sent++; went = true; this._haloPosed.set(h, { x: out.x, z: out.z, mv: out.mv | 0, at: now }); this._earOf(h.ws).posed = now; } catch { /* the close will say */ }",
     "tests": [
       "test/net/halothin.test.js"
     ],
@@ -166,8 +166,8 @@
   {
     "name": "HALOTHIN-welcome-unasked",
     "file": "src/net/online.js",
-    "old": "      if (h.status !== 'open' || !h.ws || !this._welcomed.has(h.ws)) continue;\n      if (!whole",
-    "new": "      if (h.status !== 'open' || !h.ws) continue;\n      if (!whole",
+    "old": "      if (h.status !== 'open' || !h.ws || !this._welcomed.has(h.ws) || this._poseHeld(h.ws, now)) continue;",
+    "new": "      if (h.status !== 'open' || !h.ws || this._poseHeld(h.ws, now)) continue;",
     "tests": [
       "test/net/halothin.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "HALOTHIN-ping-none",
     "file": "src/net/online.js",
-    "old": "      try { h.ws.send('{\"t\":\"ping\"}'); this._haloPinged.set(h.ws, now); } catch",
-    "new": "      try { this._haloPinged.set(h.ws, now); } catch",
+    "old": "      try { this._askedOn(h.ws, now); h.ws.send('{\"t\":\"ping\"}'); this._haloPinged.set(h.ws, now); } catch",
+    "new": "      try { this._askedOn(h.ws, now); this._haloPinged.set(h.ws, now); } catch",
     "tests": [
       "test/net/halothin.test.js"
     ]

@@ -238,7 +238,13 @@ The room is the player's own:
   door law gives the wagon to any building whose door stands within 50 m.
 
 Leaving puts the player on the ground behind the caravan's rear door, grounded
-by the host.
+by the host. RPT1026-WORLD WAGON-OUT (2026-10-26, a private report: a caravan
+summoned by a building, entered and left, set the player down inside the house): that
+ground is asked as a fast travel's landing is (UNSTUCK-OUT) - a spot a static
+solid holds (a house the caravan backed up to, a palisade, a rock) stands the
+player on the nearest open ground instead, above the sea; with none open, where
+it was (`scenes/caravanRoom.js` caravanStepOut, the world host's `ground`).
+Pinned by `test/scenes/rpt1026_world_wagonout.test.js`.
 
 ## WAGONS2 (2026-10-09)
 

@@ -70,6 +70,7 @@ import { busyRead, busyAnswer, busyWaitMs, retryAfterMs, BUSY_HOLD_MS } from './
 import { ARENA_TEXT } from '../systems/arena/arenaText.js';   // ARENA4b: the arena's refusals, in its own frozen table
 import { cardById } from './iliac/iliacCards.js';   // AUDIT CARDS-6 D7: the card a short deck lacks, said by its name
 import { jittered } from './backoff.js';   // STORM-SHED: a failed mint's hold, jittered as every book's wait is
+import { tradeHeldSaid } from './realm/realmTradeLaw.js';   // RPT1026-MARKET HOLD-SAID: the standing hold's own notice
 import { MINT_VERSION } from './productRecord.js';   // AUDIT FB1026d C3: a craft asks its record be stamped with the version this build mints
 
 /** WHERE THE SERVICE IS. Its own constant beside the relay's
@@ -350,6 +351,7 @@ const REFUSAL_WORDS = {
   'bad-decor': () => t('account.refusal.badDecor', 'The account service could not read that piece.'),
   'decor-figure': () => t('account.refusal.decorFigure', 'That figure has been set back to its normal size. Look at the room again.'),   // AUDIT HOME-VOTE II C2: a stale copy of a figure grown before DECOR-FIGURE
   'decor-busy': () => t('account.refusal.decorBusy', 'Someone else is using this chest.'),
+  'decor-lapsed': () => t('account.refusal.decorLapsed', 'The chest was left open too long, so nothing in it moved. Open it again.'),   // RPT1026-CHESTGOLD
   'decor-shut': () => t('account.refusal.decorShut', 'You cannot use that.'),
   'decor-held': () => t('account.refusal.decorHeld', 'Empty it before it is removed.'),
   'decor-holds': () => t('account.refusal.decorHolds', 'Empty what a piece holds before you remove it.'),
@@ -380,7 +382,11 @@ const REFUSAL_WORDS = {
   'no-invite': () => t('account.refusal.noInvite', 'That invitation is no longer open.'),
   'guild-master-leaves': () => t('account.refusal.guildMasterLeaves', 'Hand the guild on to another member before you leave it.'),
   'guild-treasury': () => t('account.refusal.guildTreasury', 'Take the gold out of the treasury first.'),
-  'realm-market-open': () => t('account.refusal.realmMarketOpen', 'This character still has business on the market: a listing, an auction, a bid, a buy order, a commission, or goods on the way or waiting to be collected. Settle it first.'),   // PROF-DELETE   // AUDIT 28 M3: the Marks go to the guildmaster with the guild
+  // RPT1026-MARKET ARRIVE (private reports 2026-10-26: a character the delete refused while a trade with another player
+  // stood open, a trader's purchase still waiting for it): the goods waiting come to its pack on their own now as it plays
+  // (net/marketArrivals.js), and a trader's takings held for it are said too - they hold the delete (realm.js
+  // REALM_MARKET_OPEN_SQL's `market_gold`) and the line never named them
+  'realm-market-open': () => t('account.refusal.realmMarketOpen', 'This character still has business on the market: a listing, an auction, a bid, a buy order, a commission, goods on the way or waiting to be collected, or a trader\'s takings. Settle it first. Play it online once and goods waiting for it come to its pack on their own; takings are collected on the Vendor page.'),   // PROF-DELETE   // AUDIT 28 M3: the Marks go to the guildmaster with the guild
   'no-member': () => t('account.refusal.noMember', 'That member is no longer in the guild.'),
   'bad-ranks': () => t('account.refusal.badRanks', 'Each rank needs a name of its own, 1 to {max} letters, digits, spaces, apostrophes or hyphens.', { max: GUILD_RANK_NAME_MAX }),
   'bad-gold': () => t('account.refusal.badGold', 'Gold goes in or out 1 to {max} at a time.', { max: GUILD_MOVE_MAX }),
@@ -832,7 +838,9 @@ const REFUSAL_WORDS = {
   'sea-held': () => t('account.refusal.seaHeld', 'Bounties, prizes or hold goods are waiting for this character at a freeport. Collect them before the character is deleted.'),   // AUDIT SEA VENTURES B4
   // INT3/INT4 (bible/06-Systems/Integrity-Arc.md): the judge's own (server-account/src/realm.js holdRefusal,
   // prepareRealmRecord)
-  'trade-held': () => t('account.refusal.tradeHeld', 'This character\'s trading is frozen. The notice shown when it froze says why, and until when.'),   // AUDIT AUTO-HOLD: no review comes - a hold lifts on its own, or with the piece
+  // RPT1026-MARKET HOLD-SAID (private reports 2026-10-26): the hold's own notice as the session stands - why, and what it
+  // freezes - and with none heard yet, what a hold freezes: a harvest's and a craft's refusal too, which "trading" never said
+  'trade-held': () => tradeHeldSaid() ?? t('account.refusal.tradeHeld', 'This character\'s trading, gathering and crafting are frozen. The notice shown when it froze says why, and until when.'),   // AUDIT AUTO-HOLD: no review comes - a hold lifts on its own, or with the piece
   'record-unjudged': () => t('account.refusal.recordUnjudged', 'The realm has not checked this character\'s latest save yet. Play a moment and try again.'),
   // INT16-INT17 (bible/06-Systems/Integrity-Arc.md section 7): a progression claim's seat, and the play that pays for it
   // (server-account/src/progress.js)
@@ -2367,7 +2375,10 @@ export function accountMarket({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) 
     vendor: (vendor) => post('/v1/market/vendor', { vendor }),
     vendors: (region, character = null) => post('/v1/market/vendors', { region, ...(character ? { character } : {}) }),   // HOME-VENDOR: each house's door, for this character
     myVendors: (character) => post('/v1/market/myvendors', { character }),
-    collect: (character, delivery, rid, realm = null) => post('/v1/market/collect', { character, delivery, rid, ...(realm ? { realm } : {}) }),
+    // RPT1026-MARKET COLLECT-LANDED: `landed` - this tab reads a repeat with the record's sequence as its own collect, landed
+    collect: (character, delivery, rid, realm = null, { landed = false } = {}) => post('/v1/market/collect', { character, delivery, rid, ...(realm ? { realm } : {}), ...(landed ? { landed: true } : {}) }),
+    // RPT1026-MARKET ARRIVE: the road alone - the account's market settled and what is on its way to it (market.js marketRoad)
+    road: (character) => post('/v1/market/road', { character }),
     report: (listing) => post('/v1/market/report', { listing }),
     remove: (listing) => post('/v1/market/remove', { listing }),
     // PROF5b: an auction posted (a Masterwork at its opening bid), and a bid on one

@@ -30,7 +30,7 @@
   {
     "name": "CZ-capture-dropped",
     "file": "src/ui/chatPanel.js",
-    "old": "    if (id != null) grip.releasePointerCapture?.(id);",
+    "old": "    if (id != null) releasePointer(grip, id);",
     "new": "",
     "tests": ["test/ui/chatsize.test.js"]
   },

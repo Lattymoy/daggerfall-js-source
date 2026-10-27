@@ -52,6 +52,7 @@ import {
   BLEND_ALPHA, BLEND_SHIMMER, BLEND_HZ, SHADE_ALPHA, SHADE_DARK, REVEAL_SECONDS, REVEAL_ALPHA,
 } from './concealDraw.js';   // ECV1: the numbers, in a leaf the renderer can reach
 import { pageParam } from './pageQuery.js';   // PERF-URL: the page's query, parsed once a search
+import { crowdKinHidden } from '../net/gate/gateCrowd.js';   // RPT1026-EVENTS CROWD-KIN: a player the crowd's count leaves undrawn, their own foes with them
 
 /** The seven draw constants. AUDIT 65 PN-3: they are STORED in the leaf
  *  systems/concealDraw.js, because render/renderer.js interpolates
@@ -106,10 +107,15 @@ export function concealVisual(flags, { t, hitAt = -Infinity, phase = 0 }) {
  * its phase - the phase minted only on the concealed draw, so the
  * plain and classic paths touch nothing.
  *
+ * RPT1026-EVENTS CROWD-KIN: and not at all for one of a player the Players shown at once count leaves undrawn - their
+ * revenant, its band, their companion (net/gate/gateCrowd.js crowdKinHidden) - so every foe pool that asks (the open
+ * world's, a dungeon's, the watch's) stands what a player brings with them nowhere without them.
+ *
  * @param {{entity: object, _ecvHit?: number, _ecvPhase?: number}} foe
  * @returns {{kind: 'plain'} | {kind: 'hidden'} | {kind: 'conceal', visual: object}}
  */
 export function foeDraw(foe, on, t) {
+  if (crowdKinHidden(foe)) return HIDDEN;   // RPT1026-EVENTS CROWD-KIN: a cut player's own stand with them
   if (!isMagicallyConcealed(foe.entity)) return PLAIN;
   if (!on) return HIDDEN;   // A5, verbatim: EntityConcealmentBehaviour disables the renderer
   const visual = concealVisual(concealmentFlags(foe.entity), { t, hitAt: foe._ecvHit ?? -Infinity, phase: foePhase(foe) });

@@ -239,7 +239,7 @@ import { CLASSIC_UPDATE_INTERVAL } from '../characters/weaponStates.js';
 import { BUILD_TAG } from '../buildTag.js';
 import {
   generateItems as generateLootItems, addPileLootExtras,   // AUDIT 24 (wave 43)
-  validLootList, LOOT_LIST_MAX, LOOT_NEWER_TEXT,   // WORLD4: a container's list off the wire, projected and clamped (AUDIT WORLD3 A2's law); AUDIT WORLD4 A2: and the cap the SENDER obeys too
+  validLootList, LOOT_LIST_MAX,   // WORLD4: a container's list off the wire, projected and clamped (AUDIT WORLD3 A2's law); AUDIT WORLD4 A2: and the cap the SENDER obeys too
   RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS,
   RANDOM_TREASURE_MARKER_RECORD, DUNGEON_LOOT_KEYS, shownSpellName,   // L10N3e: a spell's name as shown
 } from '../systems/loot/loot.js';
@@ -315,7 +315,7 @@ import { createPopulationLane } from '../characters/npcBodies.js'; import { pers
 import { raiseEnemyDeath, playRareDrop, pileBody, sayEnemyDied, corpseEntityName, mintCorpseMarker, corpseTextureOf } from './corpseMarker.js';
 import { createDungeonCorpsePrefabs } from './corpsePrefabHost.js';   // DEX5 / AUDIT DEX D11: a mod's corpse prefab - the dungeon's reach   // UL1: OnEnemyDeath; LR3: the drop chime; LOOT-STACK: a body as the loot window's tab; LOOT7-CHECK DUNGEON-DIED: the kill notice; L10N3e: a body's name as shown
 import { egFindStruck, egFindKill } from '../systems/eliteGates/egFind.js';   // EG-E3: the dungeon's find - a joiner's kill, asked by the joiner; PARTY-LOOT: a room's body's kill
-import { rollCorpseKit, capFoeLoot } from '../systems/foeLootCap.js';   // KIT-ROLL: a foe's kit, laddered at its death by every body door; AUDIT 625 L5: a copy's cap
+import { rollCorpseKit, capFoeLoot, summonedWord, summonedRecord, markSummoned } from '../systems/foeLootCap.js';   // KIT-ROLL: a foe's kit, laddered at its death by every body door; AUDIT 625 L5: a copy's cap; RPT1026-PROGRESS: and a summon's puppet bare on every machine
 import { dropFoeCard } from '../systems/card/cardSources.js';   // AUDIT CARDS-6 A3: a joiner's copy of a body draws for its own card
 import { FOE_LEVEL_MAX, CELL_LOOSE_PUPPETS, sharedClassicMinutes, hitClassField, hitClassOf } from '../net/wire.js';   // TELL8: a blow's class on a hit   // SEARCH1: a room's search stamp, read as the world minute it was searched at   // AUDIT RENOWN1 GAME-3: the stream's bound on a class foe's level; SUMMON-SYNC: an owner's loose stands a reader stands, the cell's allowance
 import { grantKindOf } from '../net/grantLaw.js';   // GRANT4: the own lane's stands on their grants (bible/11-Multiplayer/Spawn-Grants.md section 14)
@@ -397,6 +397,9 @@ export const REST_ASK_BAND_MAX = 64;
 export const REST_ASK_SPOT_SLACK = 0.05;
 /** REST-SYNC: the most shared encounters one frame carries (the standing first) - a rest spawns one; past any honest room. */
 export const SHARED_FOES_MAX = 32;
+/** REST-SYNC's `xf` on a full frame: every shared foe listed (XF_WHOLE), or - RPT1026-ITEMS BODY-CAP - every standing one,
+ *  the cap having shed bodies past SHARED_FOES_MAX (XF_STANDING). An older build reads only XF_WHOLE. */
+export const XF_WHOLE = 1, XF_STANDING = 2;
 /** AUDIT FINAL F7: how long a death's record names the joiner whose blow it was (roomRecord's `v`) - two of the stream's
  *  full frames (net/online.js FOES_FULL_MS, 2000), so the one that heals a dropped delta carries it too. The name is for
  *  the joiner's own kill door, which hears the death once, as it lands; a corpse that named its striker for as long as it
@@ -1463,7 +1466,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   let _roomMintHold = 0;            // a restore lands the room's words before anything mints over them
   let _roomClaimN = 0;              // this context's claims, counted (roomClaimId)
   let _roomNowMs = 0;               // the frame's clock as the claims' tick last read it
-  const { _roomBase, _roomMine, _roomNextGen, _roomState, composeRoomContainer, forgetRoomContainer, holderList, isRoomBaseContainer, landRoomWord, letFindGo, lootBuiltOf, mintUnbornRoom, roomBaseHolder, roomBodyBorn, roomCanonOfFoe, roomClaimTick, roomGive, roomLootOn, roomRecordOf, roomSayNow, roomSettle, roomTakeSeat, roomUnborn, searchFound, settleRoomBonus } = createRoomLoot({   // HOST-SPLIT: src/scenes/roomLootHost.js
+  const { _roomBase, _roomMine, _roomNextGen, _roomState, composeRoomContainer, forgetRoomContainer, holderList, isRoomBaseContainer, landRoomWord, letFindGo, lootBuiltOf, mintUnbornRoom, roomBaseHolder, roomBodyBorn, roomCanonOfFoe, roomClaimTick, roomGive, roomLootOn, roomRecordOf, roomSayNow, roomSettle, roomTakeSeat, roomUnborn, roomUnreadableText, searchFound, settleRoomBonus } = createRoomLoot({   // HOST-SPLIT: src/scenes/roomLootHost.js
     _deepCleared, _deepFoeCleared, _sharedFoe, _wildDungeon, _wildRing, eliteLootOpts, fightN, foes, lootKeyOf,
     lootableBody, opts, respawnDue, rollPileItems, roomLootKey, searchHeard, searchables, settleLootFlat,
     dfLocation,   // SEA-SET: the place, whose piles of an isle's ruin roll the deep's Tidemail
@@ -3560,8 +3563,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // ARENA4b: MY OPPONENT ON A RELAY'S SAND as the one body my harmful spells reach (the duel's own seam, hostMagic.js
     // duelMarksFor - a touch, a missile or a blast that meets them), and the door such a spell leaves through
     // (spellOnRival: the number to the referee as a spell, as a swing's goes); none outside a bout between players
-    duelMark: opts.arenaRival ? () => { const rb = arenaRivalBody(); return rb ? { id: rb.rival, name: rb.entity?.name ?? '', feet: rb.ai.feet, height: rb.ai.height } : null; } : (opts.wildSpellMarks ? () => opts.wildSpellMarks() : null),   // PVPDUNGEON: no bout - the zone's fair players, as in the open
-    castAtDuel: opts.arenaRival ? (_id, sp) => spellOnRival(sp) : (opts.wildSpellOut ? (id, sp) => opts.wildSpellOut(id, sp) : null),
+    // RPT1026-FIGHTS (HALL-SPELLS; two private reports: no spell met a player in the PvP zone's dungeons): asked AT THE CAST, never at the
+    // build - the world-hosted dungeon is handed the arena's door always (worldModes.js `arenaRival`, answering null off the
+    // sand), so a choice made here at the build took the arena's branch in every dungeon and the zone's halls met no player
+    duelMark: () => { const rb = arenaRivalBody(); return rb ? { id: rb.rival, name: rb.entity?.name ?? '', feet: rb.ai.feet, height: rb.ai.height } : (opts.wildSpellMarks?.() ?? null); },   // PVPDUNGEON: no bout - the zone's fair players, as in the open
+    castAtDuel: (id, sp) => (arenaRivalBody()?.rival === id ? spellOnRival(sp) : !!opts.wildSpellOut?.(id, sp)),
     // A10: THE RECALL ARRIVAL, ROUTED. This used to be a stand-in line
     // saying the anchor machinery lived in the streaming host - true of
     // the machinery, false as a refusal: this context is the one the
@@ -4285,7 +4291,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       motor: () => opts.technique?.motor?.() ?? null,
       face: (p, from) => opts.technique?.face?.(p, from),   // AUDIT TECH1: from where the body lands
       fireArrow: (from, dir, o) => fireArrow(from, dir, o?.weapon ?? playerWeapon.weapon, true, null, null, o?.sky ? { world: [...from] } : weaponRig.thunderlockMuzzle(fieldOfView()), { technique: o?.technique ?? null, ...(o?.speedScale ? { speedScale: o.speedScale } : {}), ...(o?.summoned ? { summoned: true } : {}) }),   // STUCK-ARROWS: a conjured round's shaft is never given back
-      drainFatigue: (n) => drainFatigue(n),
+      drainFatigue,
+      // AUDIT RPT1026 E1: A WINDOW HOLDS THE KEY UNDERGROUND TOO (AUDIT TECH1's law - the street's door is `blocked: () =>
+      // gamePaused()`). This door had none because this rig never stepped under a window of this context's: drawFoes did not
+      // run. Since RPT1026-FIGHTS WINDOW-ONLINE it runs under one online (scenes/windowWorld.js), and the technique key -
+      // Mouse3, which reaches the held keys under any window - fired a weapon's technique from under the inventory or the map
+      blocked: dungeonPaused,
       fx: (recipe, at, o) => magic.techniqueFx?.(recipe, at, o),   // TECH-FX: a technique's burst, in this dungeon's cast engine's impact pass
       shake: (k) => opts.shakeCamera?.(k),   // TECH-FX: the outer host's shaker, as a stagger's and an execution's kick
       sound: (clip, volume, pitch) => audio.playOneShot(clip, volume, pitch),   // TECH-FX: the technique's layer over the swing's own
@@ -5109,8 +5120,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // REST-SYNC: the room's encounters ride the same frame, numbered by the room (`i` their id); a full frame lists them
     // all (`xf`), so a joiner takes down the ones the host no longer has
     const shared = [];
-    for (const [id, f] of _sharedById) if ((f.dead && !f.corpse && !f.corpseDestroyed) || !foes.includes(f)) _sharedById.delete(id);   // Destroy()ed or gone: the room forgets it, and a full frame takes every puppet of it down
-    for (const f of [..._sharedById.values()].sort((a, b) => (a.dead ? 1 : 0) - (b.dead ? 1 : 0))) {   // the standing before the bodies
+    for (const [id, f] of _sharedById) if ((f.dead && !f.corpse && !f.corpseDestroyed) || !foes.includes(f)) _sharedById.delete(id);   // Destroy()ed or gone: the room forgets it, and a full frame takes every puppet of it down (AUDIT RPT1026 G1: a capped one, XF_STANDING, a standing puppet alone - a body forgotten past the cap lies on a joiner until a whole frame)
+    for (const f of [..._sharedById.values()].sort((a, b) => (a.dead ? 1 : 0) - (b.dead ? 1 : 0) || (a.dead ? (b._diedAt ?? 0) - (a._diedAt ?? 0) : 0))) {   // the standing before the bodies - AUDIT RPT1026 G1: and the newest dead first, so the cap sheds an old body a joiner holds, never a death no frame has told (spawnCorpse's stamp)
       if (shared.length >= SHARED_FOES_MAX) break;
       const r = roomRecord(f, f._encId, full, true);
       if (r) shared.push(r);
@@ -5131,7 +5142,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       for (const r of shared.slice(n)) { const f = _sharedById.get(r.i); if (f) { f._sentKey = null; f._maxSent = undefined; f._lsSent = undefined; } }   // AUDIT SETS M1: and its maximum, if it carried one, is owed
       if (n) frame.x = shared.slice(0, n);
     }
-    if (full && n === shared.length) frame.xf = 1;
+    if (full && n === shared.length) frame.xf = shared.length < _sharedById.size ? XF_STANDING : XF_WHOLE;   // RPT1026-ITEMS BODY-CAP: past SHARED_FOES_MAX the bodies are what the cap shed, so the list is whole for the standing alone (2)
     if (full) fitMaxima(frame, [...out.map((r) => [r, foes[r.i]]), ...(frame.x ?? []).map((r) => [r, _sharedById.get(r.i)])]);
     return frame;
   }
@@ -5259,7 +5270,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       f._pupMismatch = false;
       applyFoeRecord(f, r);
     }
-    applySharedRecords(Array.isArray(data.x) ? data.x : [], data.xf === 1);   // REST-SYNC
+    applySharedRecords(Array.isArray(data.x) ? data.x : [], data.xf === XF_WHOLE || data.xf === XF_STANDING ? data.xf : 0);   // REST-SYNC; RPT1026-ITEMS BODY-CAP: 2, whole for the standing
     if (listed) for (const [i, f] of [..._surplus]) if (!listed.has(i) && !_surplusPending.has(i)) dropSurplus(i, f);   // DESYNC-ZERO: a host's surplus foe it no longer lists
     return true;
   }
@@ -5339,7 +5350,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   /** REST-SYNC: the host's word on the room's encounters - each record onto its puppet (the layout's door), a new id
    *  stood as a puppet from its first record (the newest record landing on it when the build does), and on a FULL
    *  frame every puppet the host no longer lists taken down. The room's count carries on past every id seen, so a
-   *  joiner who takes the seat numbers its own encounters after the host's. */
+   *  joiner who takes the seat numbers its own encounters after the host's. RPT1026-ITEMS BODY-CAP: `full` 2 is a full
+   *  frame the count cap cut (SHARED_FOES_MAX, the standing first) - whole for the standing, never for the bodies, so a
+   *  body it does not name stays; before, a room past 32 encounters (a party's rests in one dungeon, every body kept)
+   *  took each newly dead one down on every joiner's screen at the next full frame (FOES_FULL_MS). */
   function applySharedRecords(list, full) {
     if (_authority) return;
     const seen = new Set();
@@ -5358,7 +5372,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       _sharedPending.set(r.i, r);
       standSharedPuppet(r).catch((e) => { _sharedPending.delete(r.i); console.error('[online] the room\'s encounter could not stand here:', e); });
     }
-    if (full) for (const [id, f] of [..._sharedById]) if (!seen.has(id) && !_sharedPending.has(id)) dropSharedFoe(id, f);
+    if (full) for (const [id, f] of [..._sharedById]) if (!seen.has(id) && !_sharedPending.has(id) && !(full === XF_STANDING && f.dead)) dropSharedFoe(id, f);   // RPT1026-ITEMS BODY-CAP: a body a capped frame shed stays (AUDIT RPT1026 M5: read by its name, as the frame says it)
   }
   /** REST-SYNC: one of the room's encounters stood here as a puppet - the build chain's own, where the host's record
    *  says, and posed by the newest record the stream has carried since. */
@@ -5459,7 +5473,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       qf.push(fl ? [i, qt.q, qt.s, fl] : [i, qt.q, qt.s]);
     });
     const gs = grants?.()?.frameGrants(src.map(([f]) => f._grant), whole) ?? [];   // GRANT4: the grants these records name
-    const frame = { n: ++_ownFrameSeq, k: _locationKey, full: whole ? 1 : 0, f: out, ...(gs.length ? { gs } : {}), ...(qf.length ? { qf } : {}), ...(lf.length ? { lf } : {}), ...(cp.length ? { cp, cn } : {}) };
+    const frame = { n: ++_ownFrameSeq, k: _locationKey, full: whole ? 1 : 0, f: out, ...(gs.length ? { gs } : {}), ...(qf.length ? { qf } : {}), ...(lf.length ? { lf } : {}), ...summonedWord(src, out), ...(cp.length ? { cp, cn } : {}) };
     if (full || heirOf) fitMaxima(frame, src.map(([f], k) => [out[k], f]));
     return frame;
   }
@@ -5475,12 +5489,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!o) { o = { n: -1, at: 0, gen: ++_ownGen }; _ownOwners.set(from, o); }
     if (Number.isFinite(data.n)) { if (data.n <= o.n) return false; o.n = data.n; }
     o.at = performance.now();
-    const tags = validQuestTags(data.qf), loose = validLooseSeqs(data.lf), comp = validLooseSeqs(data.cp);   // AUDIT CC-E1: `cp` the owner's companions (the loose numbers' own law)
+    const tags = validQuestTags(data.qf), loose = validLooseSeqs(data.lf), comp = validLooseSeqs(data.cp), summ = validLooseSeqs(data.sm);   // AUDIT CC-E1: `cp` the owner's companions (the loose numbers' own law); RPT1026-PROGRESS: `sm` its summons (foeLootCap.js summonedWord)
     grants?.()?.heard(from, data.gs);   // GRANT4: the grants this frame carries, each checked once
     const compNames = companionNames(data.cp, data.cn);   // AUDIT WK-U3: and their names
     const seen = new Set(), marks = [], named = new Set();
     for (const raw of data.f.slice(0, CELL_FRAME_RECORDS_MAX)) {
-      const r = validFoeRecord(raw);
+      const r = summonedRecord(validFoeRecord(raw), summ);   // RPT1026-PROGRESS: a summon's record says so, to its stand and every update after
       if (!r) continue;
       named.add(r.i);
       const key = ownPupKey(from, r.i);
@@ -5581,7 +5595,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // this copy's own roll - a class foe built at my level rolled more health than the owner's, so the first sight of
     // an untouched foe read as a blow and fired the quest's `injured` before anyone had struck it
     const wasDead = f.dead, h0 = f._pupH;
-    applyFoeRecord(f, r);
+    applyFoeRecord(markSummoned(f, r), r);   // RPT1026-PROGRESS: its owner's summon is a summon here - bare, its death's finds emptied (capFoeLoot)
     if (Number.isFinite(r.h)) f._pupH = r.h;
     if (f._pupQuest && !f._qHurt && Number.isFinite(h0) && Number.isFinite(r.h) && r.h < h0) { f._qHurt = true; share?.onPuppetHurt?.(f._pupQuest, f._ownFrom); }
     if (f._pupQuest && !wasDead && f.dead) share?.onPuppetDied?.(f._pupQuest, f._ownFrom, f._ownI);   // KEPT-KILL: whose foe, by its number - the kill the owner's pose may say too counts once
@@ -6903,14 +6917,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // death, on every damage source alike. A successful roll with no
       // empty gem TETHERS the foe at 1 health instead of killing it,
       // and the next killing blow rolls again.
-      // AUDIT WORLD2 B9: a PEER's killing blow reads no gem of the host's and fills no Star of the host's - the kill
-      // is the peer's (their own gem is slice 4's, "who struck last" on the death)
+      // AUDIT WORLD2 B9: a PEER's killing blow fills no Star of the host's and tethers nothing - the kill is the peer's
       // STRIKE-SHARED: and a PEER's trap reads no gem of mine whoever struck - its soul is its caster's, named on the
       // body's record (roomRecord's `j`, `q`) for the caster to roll against its own pack
+      // RPT1026-FIGHTS (TRAP-TO-OWNER; a private report: soul traps on Daedra Lords in a party member's instance never
+      // trapped, whoever killed them): MY OWN trap's soul is mine WHOEVER struck - "every damage source alike", DFU's
+      // SetHealth law - so a peer's killing blow rolls it against my pack too; B9 had it read no gem of mine, and a trap I
+      // laid on my own foe was spent for nothing when my party member landed the blow. Only my own blow is tethered.
       const _peerTrap = peerSoulTrapOf(foe.entity);
-      const trap = peer || _peerTrap ? { allowDeath: true } : attemptSoulTrap(foe.entity, foe.mobileType, playerEntity.items, Math.random());
+      const trap = _peerTrap ? { allowDeath: true } : attemptSoulTrap(foe.entity, foe.mobileType, playerEntity.items, Math.random());
       if (trap.alert) hudText.add(SOUL_TRAP_TEXT[trap.alert]);
-      if (!trap.allowDeath) { foe.entity.health = 1; return; }
+      if (!trap.allowDeath && !peer) { foe.entity.health = 1; return; }
       foe._trapBy = _peerTrap ? _peerTrap.by : null;
       foe._trapQ = _peerTrap ? Math.max(0, Math.min(100, Math.trunc(Number(_peerTrap.chance) || 0))) : 0;
       // V3: the equipped AZURA'S STAR takes every slain MONSTER's soul
@@ -7498,7 +7515,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (playerFeet) {
       // AUDIT 27h S1: the breath waits under ANY window holding the player - this host's own (drawFoes does not run
       // under those) and the outer host's street slot (opts.breathHeld), which held the motor while the lungs ran on.
-      breathTick(opts.breathHeld?.() ? 0 : dt, playerFeet, playerHeight);
+      breathTick(opts.breathHeld?.() || dungeonPaused() ? 0 : dt, playerFeet, playerHeight);   // RPT1026-FIGHTS (WINDOW-ONLINE): this frame runs under my own window online too - its breath waits there still
       const _surf = waterSurfaceYAt(playerFeet[0], playerFeet[2]);
       if (!isGateArena(dfLocation) && !isArenaFloor(dfLocation) && !_sdRealm && !_egHall && !_ketch) sceneAmbience.update(dt, {   // KETCH: nor on a ship in the sky   // ARENA2: no drip nor dungeon door on the open sand - the crowd is its air (scenes/arena/arenaBouts.js)   // WB6b: the court has its own air (scenes/deadlandsAir.js) - no drip, no door, no bird in the Deadlands   // EG-ROAR: nor in the Spire - its air is its own (scenes/eliteGates/egAir.js)
         playerPos: [playerFeet[0], playerFeet[1] + playerHeight / 2, playerFeet[2]],   // the controller center (DFU transform.position)
@@ -7511,7 +7528,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         inCastle: castleBlockAt(playerFeet[0], playerFeet[2]),
       });
     }
-    magic.firePending(eye, [-aimed[2], -aimed[6], -aimed[10]], !!opts.breathHeld?.());   // classic: the readied spell fires on the click (AUDIT SPELL-HAND L4-6: never under the street's window - this frame runs under none of its own)
+    magic.firePending(eye, [-aimed[2], -aimed[6], -aimed[10]], !!opts.breathHeld?.() || dungeonPaused());   // classic: the readied spell fires on the click (AUDIT SPELL-HAND L4-6: never under the street's window; RPT1026-FIGHTS (WINDOW-ONLINE): nor the dungeon's own, which this frame now runs under online)
     // P13: the shared stealth senses context (EnemySenses' player-
     // side reads). S21: all three illusion branches are LIVE -
     // invisible always blocks (the 13 seers exempt), blending 8%
@@ -10641,7 +10658,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         if (p) lootHooks = droppedLootHooks(p);   // G5: playerOwned - the icon cycles
       }
       if (!source) return 0;
-      { const _u = roomLootKey(key); if (_u && _lootUnreadable.has(lootKeyOf(_u))) { setMidScreenText(LOOT_NEWER_TEXT); return 0; } }   // AUDIT SETS M2: not opened here - AUDIT GRAVE-PARTY G2: a room container too (PARTY-LOOT's), a target again so its press says so (roomLootHost.js roomUnborn)
+      { const _u = roomLootKey(key); if (_u && _lootUnreadable.has(lootKeyOf(_u))) { setMidScreenText(roomUnreadableText(lootKeyOf(_u))); return 0; } }   // RPT1026-ITEMS LOOT-SKEW: another build's base said as one (roomLootHost.js); AUDIT SETS M2: not opened here - AUDIT GRAVE-PARTY G2: a room container too (PARTY-LOOT's), a target again so its press says so (roomLootHost.js roomUnborn)
       if ((kind === 'loot' || kind === 'corpse') && roomUnborn(key)) return 0;   // PARTY-LOOT: the room's word for it has not come - nothing of this copy's own is taken
       // LOOT-STACK: a window that has CLOSED is no window - a tab closes
       // its body's window and opens the next through here in one click,

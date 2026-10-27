@@ -1462,6 +1462,19 @@ ladder out of the fade: it breaks and stays, repairable. DFU's own enchanted
 loot (MAGIC.DEF, made and soul-bound items - no rolled tier) still fades as the
 mod says. Pinned in `test/systems/pcaao.test.js`, mutants in
 `tools/mutants/rarebreak1.json`.
+
+**RARE-KEPT (RPT1026-ITEMS, 2026-10-26, a departure from DaggerfallUnityItem.LowerCondition's collection arm).**
+A private report: a two-handed Wyrmbane worn to nothing in a hard dungeon, and gone from the pack after.
+RARE-BREAK1's law held for the overhaul's fading alone. A Legendary's own enchantment is DFU's -
+Wyrmbane's is Cast When Strikes, which bills DURABILITY_LOSS_ON_STRIKE (10) a blow - and every enchantment payload's
+wear goes through LowerCondition with the wearer's collection (`systems/enchantments.js` enchantLowerCondition), which
+DESTROYS a broken enchanted piece wherever Allow Magic Repairs is off (DFU's default; the port's offline default and
+online rule are on). A piece the ladder stamped (`systems/rarityTier.js` stampedTier - Magic, Rare, Legendary,
+Aetheric, Gilded) breaks there, says "has broken", is taken off and stays, repairable; DFU's own enchanted items keep
+DFU's law. Port-Ledger A, RARE-KEPT. Pinned in `test/systems/rpt1026_items.test.js`; mutants in
+`tools/mutants/rpt1026_items.json`. AUDIT RPT1026 G2: an offline hardening, not that report's cause - its elite dungeon
+stands online alone, where the room's Allow Magic Repairs kept every enchanted piece at this door already
+(`test/systems/audit_rpt1026_items_kept.test.js`).
 ## WW1 - WEAPON WIDGET, THE MOD, 1:1, AND THE MORROWIND ARMS (2026-09-14, Mac's call) - SHIPPED
 
 Mac: "This is our next mod I want to add 1:1 while also having it work

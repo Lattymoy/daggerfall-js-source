@@ -1973,8 +1973,8 @@
   {
     "name": "AC5-E-S-claim-bank-repeat",
     "file": "src/net/card/cardStakes.js",
-    "old": "if (!a?.data?.repeat && Number.isSafeInteger(g) && g > 0) wallet(k.reg).bank(g);",
-    "new": "if (Number.isSafeInteger(g) && g > 0) wallet(k.reg).bank(g);",
+    "old": "if (!a?.data?.repeat && Number.isSafeInteger(g) && g > 0) { wallet(k.reg).bank(g);",
+    "new": "if (Number.isSafeInteger(g) && g > 0) { wallet(k.reg).bank(g);",
     "tests": [
       "test/world/card/auditcards3_host.test.js",
       "test/world/card/auditcards3_pins.test.js",

@@ -451,7 +451,7 @@
   {
     "name": "AUDITTELL-H1-world",
     "file": "src/scenes/world.js",
-    "old": "tickTactics(foeFrameDt(_questBoxHoldsFoes() || (_mode() === 'dungeon' && !!modes?.dungeonCtx?.uiOverlayActive) ? 0 : dt));",
+    "old": "tickTactics(foeFrameDt(_questBoxHoldsFoes() || (_mode() === 'dungeon' && windowHoldsDungeon(modes?.dungeonCtx?.uiOverlayActive, playerEntity.health > 0 && !modes?.deathUp?.())) ? 0 : dt));",
     "new": "tickTactics(foeFrameDt(_questBoxHoldsFoes() ? 0 : dt));",
     "tests": [
       "test/scenes/audittell.test.js",

@@ -382,11 +382,11 @@
   {
     "name": "QUEST-MARK-player-trade-unsaid",
     "file": "src/ui/enhanced/enhancedPlayerTrade.js",
-    "old": "line.material, line.word, line.quest != null ? questWord() : null].filter(Boolean).join(' · ');",
-    "new": "line.material, line.word, null].filter(Boolean).join(' · ');",
+    "old": "line.material, line.word, line.quest != null ? questWord() : null, isStolen(item) ? stolenTag() : null]",
+    "new": "line.material, line.word, null, isStolen(item) ? stolenTag() : null]",
     "tests": [
       "test/systems/questlines/fb1025i_daedraheart.test.js"
     ],
-    "note": "B6: the player trade's row"
+    "note": "B6: the player trade's row (AUDIT RPT1026 C4: re-aimed by content - the row says a stolen piece's theft after it)"
   }
 ]

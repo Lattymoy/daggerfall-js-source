@@ -12,11 +12,13 @@ import { itemIsIdentified } from '../tradeModes.js';
 import { itemStatRows } from './itemInfo.js';
 import { lootRarityOn, rarityLines } from '../loot/lootRarity.js';
 import { magicPowersLines } from './itemPowers.js';
+import { isStolen, stolenLine } from '../stolenGoods.js';   // RPT1026-LEDGERLAW: a stolen piece's look says so
 
 /**
- * A piece's look: `{ rows, magic }` - each row "Label: text" (or the text alone), each magic line as the card writes it.
+ * A piece's look: `{ rows, magic, stolen }` - each row "Label: text" (or the text alone), each magic line as the card writes
+ * it, and RPT1026-LEDGERLAW a stolen piece's card line (systems/stolenGoods.js stolenLine), or null.
  * @param {any} it
- * @returns {{ rows: string[], magic: string[] } | null}
+ * @returns {{ rows: string[], magic: string[], stolen: string | null } | null}
  */
 export function itemLookRows(it) {
   if (!it || typeof it !== 'object') return null;
@@ -28,5 +30,5 @@ export function itemLookRows(it) {
       for (const t of magicPowersLines(it, { identified: itemIsIdentified(it) })) if (t && !magic.includes(t)) magic.push(t);
     }
   } catch { /* a piece whose powers cannot be read says none */ }
-  return { rows, magic };
+  return { rows, magic, stolen: isStolen(it) ? stolenLine() : null };
 }

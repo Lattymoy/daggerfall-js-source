@@ -18,6 +18,7 @@ import { releaseCapLatch } from '../levelCap.js';   // AUDIT FB1026d C1: a level
 import { defineLiveMaxMagicka, defineLiveMaxHealth } from '../chargen.js';   // AUDIT 39: the live MaxMagicka accessor, on the LOAD arm too; DISC10-E L4: and MaxHealth's
 import { rebuildEquipState, isEquipped, unequipSlot } from '../equip.js';   // AUDIT 17e C1   // AUDIT 63 F28: RemoveItem takes an EQUIPPED item off the doll on its way out
 import { templateByIndex } from '../item/itemTemplates.js';   // AUDIT 63r F28: `shortName` is SetItem's template read, not an optional override
+import { heldOutOf } from '../item/heldOut.js';   // RPT1026-ITEMS HELD-OUT: a counter's staged lot is still the player's
 import { restartHeldEnchantments } from '../enchantments.js';   // E2: the held bundles' restore half
 import { snapshotWeather, restoreWeather, rollClimateWeathersForDay } from '../weather/weatherSim.js';   // W1: playerPosition.weather (SerializablePlayer.cs:225) - one value, every host; AUDIT WORLD5 C4: the shared day's sky over a loaded one
 import { snapshotRegionConditions, restoreRegionConditions } from '../region/regionConditions.js';
@@ -63,6 +64,7 @@ import { restoreKnightlyOrderFlags } from '../knightlyGifts.js';   // D9: Knight
 import { GUILD_GROUPS } from '../../formats/factionFile.js';   // the membership book's key IS the guild group
 import { appStorage } from '../appStorage.js';   // DA1: localStorage in a browser, real save files in the desktop shell
 import { normalTribute } from '../../world/lefayMonument.js';   // LEFAY1: the flowers a character laid at Julian LeFay's monument
+import { normalPracticeHeld } from '../masterSkills.js';   // AUDIT RPT1026 F1: the practice Master Skills switched off holds aside
 import { characterIdOf, adoptLegacyCards, mintCharacterId } from '../characterId.js';   // CHARID1: a character is an id, not a name
 import { isOnlinePage } from '../online/onlineLane.js';   // ONLINE-DEATH-FIX: the page is online
 import { STREAMING_TERRAIN_SCALE } from '../../world/terrain/terrainSampler.js';   // TERRAIN-SCALE1: the scale every saved exterior height stands on
@@ -361,6 +363,7 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   snap.masterSkills = entity.masterSkills === true;   // SOFTCAP3: the Master Skills switch
   snap.masterSkillsAsked = !!entity.masterSkillsAsked;   // SOFTCAP3: the one-time offline offer, made
   snap.masterSkillsInfoSeen = !!entity.masterSkillsInfoSeen;   // SOFTCAP3: the one-time online explanation, shown
+  snap.masterPracticeHeld = normalPracticeHeld(entity.masterPracticeHeld);   // AUDIT RPT1026 F1: the tough-foe practice held while the switch is off
   snap.lefayTribute = normalTribute(entity.lefayTribute);   // LEFAY1: the flowers laid at Julian LeFay's monument - how many, and the newest where they lay
   snap.masteredSkills = Array.isArray(entity.masteredSkills) ? [...entity.masteredSkills] : [];   // SOFTCAP4: the permanent 3/2/1 masteries (MASTER-THREE)
   snap.masteryPrompted = Array.isArray(entity.masteryPrompted) ? [...entity.masteryPrompted] : [];   // SOFTCAP4: the skills already asked about
@@ -381,7 +384,9 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
     // the book: the carry gave the path back with the 200,000 still spent, or swapped a newer choice for it, free
     snap.career.arcaneMirror = { path: snap.arcanePath, prompted: snap.pathPrompted, of: snap.characterId };
   }
-  snap.items = (entity.items ?? []).map((it) => ({ ...it }));
+  // RPT1026-ITEMS HELD-OUT (systems/item/heldOut.js): and the goods a counter holds out of the pack while it stands - an
+  // Identify's lot, a sale's - at the pack's end; a save written under the window lost them for good
+  snap.items = [...(entity.items ?? []), ...heldOutOf(entity)].map((it) => ({ ...it }));
   // E4: `data.playerEntity.goldPieces = entity.GoldPieces`
   // (SerializablePlayer.cs:133). Gold left the item list when it
   // became the counter DFU keeps it in, so the envelope carries it
@@ -850,6 +855,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   entity.masterSkills = snap.masterSkills === true;   // SOFTCAP3
   entity.masterSkillsAsked = snap.masterSkillsAsked === true;   // SOFTCAP3
   entity.masterSkillsInfoSeen = snap.masterSkillsInfoSeen === true;   // SOFTCAP3
+  entity.masterPracticeHeld = normalPracticeHeld(snap.masterPracticeHeld);   // AUDIT RPT1026 F1: a save from before it held none
   entity.lefayTribute = normalTribute(snap.lefayTribute);   // LEFAY1: a save from before it laid none
   entity.masteredSkills = Array.isArray(snap.masteredSkills) ? snap.masteredSkills.filter(Number.isInteger) : [];   // SOFTCAP4
   entity.masteryPrompted = Array.isArray(snap.masteryPrompted) ? snap.masteryPrompted.filter(Number.isInteger) : [];   // SOFTCAP4

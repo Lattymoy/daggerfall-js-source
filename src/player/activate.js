@@ -15,6 +15,7 @@ import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { isActionDoorObject } from '../world/actionSystem.js';   // MC-2: ActionDoorCheck's own classifier (PlayerActivate.cs:374 vs :380)
 import { noteBodyStack } from './lootStack.js';   // LOOT-STACK: the ray notes the pile of bodies its winner stands at the front of
 import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { crowdKinHidden } from '../net/gate/gateCrowd.js';   // RPT1026-EVENTS CROWD-KIN: a cut player's own foes are no target
 /** The pick's pardon (m): a surface met this far outside a target's box is still that target's own face (the box is
  *  the mesh's, rounded). AUDIT DELVE C8: one home - the dungeon's look round reads it (systems/dungeon/dungeonSense.js). */
 export const PICK_PARDON_M = 0.15;
@@ -267,7 +268,7 @@ export function pickFoeHit(eye, dir, foes, collider, distance = DEFAULT_ACTIVATI
  *  stays that way. */
 export function foeAabb(f) {
   const feet = f?.ai?.feet;
-  if (!feet) return null;
+  if (!feet || crowdKinHidden(f)) return null;   // RPT1026-EVENTS CROWD-KIN: undrawn with their cut owner, so no box - neither the plaque's sweep nor the press's finds it
   const h = f.ai?.height ?? 1.8;
   const half = 0.45;
   return {
