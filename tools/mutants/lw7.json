@@ -101,8 +101,8 @@
   {
     "name": "LW7-tone-twice",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "      if (tone) { if (e[tone] === day) delta = 0; else e[tone] = day; }",
-    "new": "      if (tone) { e[tone] = day; }",
+    "old": "      if (tone) { if (/** @type {any} */ (e)[tone] === day) delta = 0; else /** @type {any} */ (e)[tone] = day; }",
+    "new": "      if (tone) { /** @type {any} */ (e)[tone] = day; }",
     "tests": [
       "test/systems/livingWorld/lw7_deeds.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "LW7-tone-shared",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "      const tone = kind === 'polite' ? 'polite' : kind === 'insulted' ? 'blunt' : kind === 'poached' ? 'poach' : null;",
-    "new": "      const tone = kind === 'polite' ? 'polite' : kind === 'insulted' ? 'polite' : kind === 'poached' ? 'poach' : null;",
+    "old": "kind === 'insulted' ? 'blunt' : kind === 'poached'",
+    "new": "kind === 'insulted' ? 'polite' : kind === 'poached'",
     "tests": [
       "test/systems/livingWorld/lw7_deeds.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "LW7-tone-unloaded",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "const d = Number(/** @type {any} */ (e)[tone]); if (Number.isFinite(d)) got[tone] = d; }",
-    "new": "const d = Number(/** @type {any} */ (e)[tone]); if (false) got[tone] = d; }",
+    "old": "const d = Number(/** @type {any} */ (e)[tone]); if (Number.isFinite(d)) /** @type {any} */ (got)[tone] = d; }",
+    "new": "const d = Number(/** @type {any} */ (e)[tone]); if (false) /** @type {any} */ (got)[tone] = d; }",
     "tests": [
       "test/systems/livingWorld/lw7_deeds.test.js"
     ]

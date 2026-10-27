@@ -901,3 +901,41 @@ frame hears the Resurrect under them (`modes?.deathUp?.()`), their resets ask `l
 `test/systems/legacy/fb1016b_rezbloodline.test.js` (5, over the real death door, host, realm session and the line's realm copy on the
 real account Worker and its minute's clock, party wire, caster's cast, death screen and world.js's own statements);
 `tools/mutants/fb1016b_rezbloodline.json` (all dead - the record's count in the Field Bugs section).
+
+## COURT-DEEDS - a compliment, a gift, a hug, a kiss (FIELD BUGS 2026-10-26d)
+
+Discord #feature-feedback "Better Courtship" - lumin: "There should be specific interactions with NPC for courtship.
+Compliments, giving gifts, hugging, kissing ... Right now it's confusing on what exactly you're supposed to use to improve
+relationships"; Revy: "the only thing that seems to work is to have 1 conversation per day with an NPC, with specific
+attitude (blunt etc), to raise their disposition by 1 point". (The talk's +3 is noted before the window opens, so the
+panel showed only the tone's +1 move; a friend took about twelve days of talk, and a courtship eight to ten more.)
+
+- **The rows** (`systems/legacy/courtDeeds.js`, offered by `scenes/legacyHost.js` topicRows after the courtship's own):
+  Pay a compliment, Give a gift (50 gold), Hug, Kiss - to every courtable townsperson (section 8's `courtable`) and to the
+  member's spouse; a member wed to another offers no kiss to anyone else.
+- **Each once a day per resident**, stamped on the Living World's regard record and saved with it (`relations.js`
+  DEED_STAMPS, `deedDay`): regard +2, +8, +3, +4 (`EVENTS` - LW1's gift +8, which no door had paid, is the gift's); and
+  while a courtship is begun and not betrothed, affection +3 (+1 more in a tone taken kindly), +6, +5, +8
+  (`marriage.js` warmCourtship), the deed's day stamped on the courtship it warmed too, and kept by the house's loader
+  (`family.js`) - the affection rides the house's record, the regard the character's save, and a load that hands back the
+  one never hands the other again (AUDIT FB1026d B1). A compliment in a tone taken ill falls flat.
+- **A hug waits on a friend** (FRIEND_AT) or a courtship; **a kiss on a courtship at 34** (KISS_AT, MARRIAGE_TEXT.courted's
+  second tier), a betrothal or a marriage - read against the regard as it stands when the row is answered, never as
+  the page opened (AUDIT FB1026d B2). Refused, each says what it waits on and costs nothing - no gold, and no tone
+  heard (AUDIT FB1026d II B2).
+- **Every answer says what it moved**: "(Regard +2, now +14. Courtship +4, now 41 of 100.)" - the courtship's number was
+  never shown anywhere before. The regard's move is the whole answer's: a deed row hears the talk's tone itself
+  (`townTalk.js` `hearsTone`), as the deed lands (AUDIT FB1026d B3, II B2). The regard badge names the deeds as they
+  are offered, to a townsperson one could court with Project Legacy (B4, II B4), and the Family page's "Marriage and
+  children" names them.
+- **Once a day, on the save's own day**: the regard's stamp refuses a deed again that day; the courtship's stamp only
+  keeps its warm - a save loaded on a deed's day, or from days before later deeds, gives the regard as the save stands
+  and warms nothing until the courtship's own day for it is past (AUDIT FB1026d II B1: it had refused the whole deed for
+  every day rewound). The deeds' day is the Living World's, which turns at 4 in the morning (`regardClock.js`
+  regardDayOf); Courtship's own talk turns at midnight (`marriage.js` dayOf) - two laws older than the deeds (II B5).
+- With the talk, a compliment and a gift each day a friend comes in about three days of play (eight with the
+  compliment alone, twelve with the talk alone), and a courtship reaches Marriage in about four (AUDIT FB1026d II F3).
+
+Pinned by `test/systems/legacy/fb1026d_courtdeeds.test.js` (the real host over the real relations); pins moved by
+intent: `lw1_livingWorld` (EVENTS), `plainui` (the badge names the deeds as offered). `tools/mutants/fb1026d_courtdeeds.json`.
+
