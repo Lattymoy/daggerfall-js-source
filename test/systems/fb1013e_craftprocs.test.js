@@ -133,7 +133,7 @@ test('CRAFT-PROCS: a crafted weapon takes a weapon\'s kinds and armour thorns - 
 });
 
 test('CRAFT-PROCS: the record says the law - the service stamps the mint version at the craft and the answer\'s pieces mint at it (a Superior\'s and a Masterwork\'s cast lines through the real Worker); a version the record does not know is refused; a record made before is version 0', async () => {
-  assert.deepEqual([MINT_VERSION, MINT_V_LAST_PASS, MINT_V_LINES], [3, 1, 2], 'PIN MOVED (ARMOR-LEAN): the craft stamps 3 now - armour\'s lines on its family\'s leans');
+  assert.deepEqual([MINT_VERSION, MINT_V_LAST_PASS, MINT_V_LINES], [4, 1, 2], 'PIN MOVED (AFFIX-LINES): its lines drawn over the lines; PIN MOVED (ARMOR-LEAN): the craft stamps 3 - armour\'s lines on its family\'s leans; PIN MOVED (JEWEL-KIN, Field-Bugs-2026-10-26d): 4 now - a jewel\'s skill lines lean to the bare hand\'s two as well (3 on its branch, renumbered past ARMOR-LEAN at the merge)');
   const s = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on', BOARD_OPEN: 'on' });
   const raw = s.env.DB._raw;
   const mac = await s.seated('Mac');
@@ -149,7 +149,8 @@ test('CRAFT-PROCS: the record says the law - the service stamps the mint version
   const lined = { 3: [], 4: [] };
   let n = 0;
   for (let b = 0x60; b < 0x100; b += 2) {   // PIN MOVED (AFFIX-LINES): every second byte - version 2's roll moved the stream, and the fourth bytes' Masterworks drew no line
-    const res = await steered(b, () => s.call('/v1/prof/craft', { character: mac.character, recipe: r.id, clean: false, name: 'Silverthorn', rid: `craftprocs-${String(++n).padStart(6, '0')}` }, mac.secret));
+    // PIN MOVED (AUDIT FB1026d C3): the craft names the version its client mints, as net/accountClient.js craft does
+    const res = await steered(b, () => s.call('/v1/prof/craft', { character: mac.character, recipe: r.id, clean: false, name: 'Silverthorn', rid: `craftprocs-${String(++n).padStart(6, '0')}`, mint: MINT_VERSION }, mac.secret));
     assert.equal(res.status, 200, JSON.stringify(res.body));
     const [{ record, provenance }] = res.body.pieces;
     assert.equal(readProductRecord(record).v, MINT_VERSION, 'stamped at the craft');

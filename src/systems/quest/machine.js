@@ -292,6 +292,7 @@
 
 import { Parser } from './parser.js';
 import { globalVarsTable } from './tables.js';   // STORY-AGAIN (AUDIT QA3): a step's globals, by name
+import { spineOwed, spineRecord, SPINE, SPINE_OPENER, SPINE_CHECK_TICKS } from './mainSpine.js';   // MAIN-SPINE: the main quest's backbone kept
 import { defaultActionTemplates, heldPromptPlaces } from './actions.js';   // AUDIT QA3 A1: a box up here, asked in the envelope
 import { receivedState, mergeSharedState, freshState, QL_STAMP } from '../questlines/qlState.js';   // QL1: a shared copy's questline state (decision 7); AUDIT QUESTLINES BRANCH-14: a restart's stamp
 import { QuestResourceBehaviour } from './resourceBehaviour.js';
@@ -515,6 +516,7 @@ export class QuestMachine {
     this.storyStarted = new Set();
     this.storyEnded = new Set();
     this.storyLegacy = false;   // a load of an envelope from before the record (seedStory reads the journal's archive once)
+    this.spine = { opened: false, ran: false };   // MAIN-SPINE (mainSpine.js): this game's opener begun, its backbone begun
     this.actionTemplates = [];
     this.globalVars = new Map();      // link id -> bool
     this.siteLinks = [];              // QuestMachine.cs siteLinks - the world<->marker bridge (Q3-i)
@@ -811,6 +813,7 @@ export class QuestMachine {
     if (this.quests.has(quest.uid)) throw new Error('An item with the same key has already been added.');
     this.quests.set(quest.uid, quest);
     if (isMainStoryQuest(quest.questName)) { const n = quest.questName.toUpperCase(); this.storyStarted.add(n); this.storyEnded.delete(n); }   // STORY-AGAIN
+    if (questNameIn([SPINE], quest.questName)) this.spine.ran = true; else if (questNameIn([SPINE_OPENER], quest.questName)) this.spine.opened = true;   // MAIN-SPINE: the record the law reads
     this.deps.onQuestStarted?.(quest);
     revealNearSites(quest);   // FIELD BUGS 2026-10-12g QUEST-TOWN: its town on the map, once the quest is the machine's
     if (this.lastNPCClicked != null) {
@@ -1169,6 +1172,7 @@ export class QuestMachine {
       // up holds the tick (S0000012's hand-in: its reward box, then `start quest 20 20`), and a save then lost the child
       // for good, its `start quest` spent. Written only when one waits, so a save with none is the shape it always was
       ...(this.questsToInvoke.length ? { toInvoke: this.questsToInvoke.map((q) => q.getSaveData()) } : {}),
+      ...this._spineData(),   // MAIN-SPINE: written once the opener begins
       ...this._shareMemoryData(),
     };
   }
@@ -1236,6 +1240,8 @@ export class QuestMachine {
     // the all-false start, which is the additive-field shape DFU's own
     // serializer gives a missing member.
     if (data.globalVars) this.globalVars = new Map(data.globalVars);
+    // MAIN-SPINE: the record as saved, and what the saved table says - a backbone that will not rebuild below ran all the same
+    this.spine = spineRecord(data.spine, (data.quests ?? []).map((q) => q?.questName));
     const clocks = this._questClocks();   // TIME3
     for (const questData of data.quests ?? []) {
       try {
@@ -1793,6 +1799,7 @@ export class QuestMachine {
   /** One machine tick (QuestMachine.cs Tick). */
   tick() {
     this.beat++;   // AUDIT STAR8 S1 (questFoeStands)
+    if (this.beat % SPINE_CHECK_TICKS === 0) this.keepSpine();   // MAIN-SPINE: before the invoke loop, so a start lands this tick
     // Invoke scheduled quests (QuestMachine.cs StartQuest:719-725):
     // Start, then the talk-topic registration, then the live table.
     // The questor-behaviour relink that follows in C# is scene work
@@ -1842,6 +1849,31 @@ export class QuestMachine {
 
     for (const quest of questsToTombstone) this.tombstoneQuest(quest);
     for (const quest of questsToRemove) this.removeQuest(quest);
+  }
+
+  /** MAIN-SPINE (systems/quest/mainSpine.js): a game owed its backbone has it started - a parse that fails again (the
+   *  world's faction records still away) is asked again at the next check. Answers whether one was scheduled. */
+  keepSpine() {
+    if (!spineOwed(this)) return false;
+    // AUDIT FB1026d A6: said once a page that it is owed and failed, and once that it started - never every check
+    const lines = this.deps.getQuestSourceLines?.(SPINE);
+    let quest = null, why = 'no source';
+    if (lines) try { quest = this.scheduleQuest(lines); } catch (ex) { why = ex?.message ?? String(ex); }
+    this.spineTries = (this.spineTries ?? 0) + 1;
+    if (quest && !this.spineSaid) { this.spineSaid = true; console.warn(`[quest] ${SPINE} (the main quest's backbone) was owed - scheduled (try ${this.spineTries})`); }   // AUDIT FB1026d II A3: scheduled - its start is the invoke loop's - and said once
+    else if (this.spineTries === 1) console.warn(`[quest] ${SPINE} (the main quest's backbone) is owed and did not start (${why}) - asked again every ${SPINE_CHECK_TICKS} quest ticks`);
+    return !!quest;
+  }
+
+  /** MAIN-SPINE: an opener the journal's archive files began in this game - a load's word, beside seedStory's. */
+  seedSpine(entries) {
+    if ((entries ?? []).some((e) => e?.kind === 'quest' && questNameIn([SPINE_OPENER], String(e.quest ?? '')))) this.spine.opened = true;
+  }
+
+  /** MAIN-SPINE: the record as the save writes it - the machine's, and its table's word, as a load reads it (spineRecord). */
+  _spineData() {
+    const spine = spineRecord(this.spine, [...this.quests.values()].map((q) => q.questName));
+    return spine.opened || spine.ran ? { spine } : {};
   }
 
   /**

@@ -121,6 +121,7 @@ import { captainWorth, struckGun, statScale } from '../../systems/naval/captainT
 import { createNavalLoads } from './navalLoads.js';   // SHOT-KINDS: the captain's choice of load, at the helm
 import { createAimCamera } from './aimCamera.js';   // THE BROADSIDE CAMERA and AIM-ENDS: the helm's eye while a battery is laid
 import { createNavalHaul } from './navalHaul.js';   // BOARD-MAGNET: the grapples' haul - her berth, her way in, my way off
+import { createNavalRams } from './navalRams.js';   // RAM-RETURN: the rams, my helm's and a galley's - bounded (systems/naval/navalRam.js)
 import { createSeaHulls } from '../../systems/naval/seaClearance.js';   // FERRY-CLEAR: the hulls a journey's hand steers round
 import { createVolleyTally } from './navalTally.js';   // AUDIT NAV1 G17: my volley's tally - CARD-CREW: and her men it took
 import { seaLiveryOf, seaFlagsOf } from '../../systems/naval/seaColours.js';   // SEA-COLOURS: the sea's ships in their own paint and flags
@@ -295,7 +296,7 @@ export const PEER_HULL_FAR_M = 5500;
  * OWN-HULL-RANGE: WHETHER ONE OF MY OWN SEA'S SHIPS KEEPS HER HULL, however far: bodies on her deck, the boarding I am
  * in, a prize not yet settled (`claimPrize` moves her deck by her hull), a fight - hers (`mode` engage or board,
  * afloat) or one that targets her (`fought`, the targets of every ship in one): a shot lands only on a hull
- * (`targets`), so a fight between hull-less ships would never end.
+ * (`targets`) and a galley rams only one (navalRams.js `galleys`), so a fight between hull-less ships would never end.
  * @param {any} e a sea entry @param {{ fought: Set<string>, boardingId?: string|null }} at
  */
 export function hullKept(e, { fought, boardingId = null }) {
@@ -530,8 +531,8 @@ export { AIM_CAM_OUT, AIM_CAM_UP, AIM_CAM_AFT, AIM_CAM_TAU, AIM_CAM_CLEAR, AIM_C
  *  AUDIT GN2-GN3: real seconds, as that frame is - on my sea's clock Come Sail Away's time scale made 2 s ten at x5. */
 export const PEER_LAY_S = 3;
 
-/** A hull on the flat and the push out of another (BOARD-MAGNET: one law, navalShips.js's, for the hulls kept apart, the
- *  serpent's bumpers and the grapples' haul). */
+/** A hull on the flat and the push out of another (BOARD-MAGNET: one law, navalShips.js's, for the hulls kept apart and
+ *  the grapples' haul - SERPENT4's bumpers were the third, retired by HULL-PASS). */
 export { flatHull, hullOverlap };
 /** A boat's hull as an oriented box in the world: its MeshCollider's own bounds through its MeshObject (null before
  *  its mesh is known) - the shots' target, the target card's, and the host's deck rays'. */
@@ -624,36 +625,13 @@ const isMine = (id) => typeof id === 'string' && id.startsWith(`${MY_BOAT}:`);
 /** A shot a sea ship fired - never a player's own (mine, or a peer's `peer:`). */
 const shipShot = (shooter) => !(typeof shooter === 'string' && (shooter.startsWith('peer:') || isMine(shooter)));
 /**
- * SERPENT4 (2026-10-11, the players: "ships inevitably end up colliding and then phasing through each other with the lag.
- * I think ships need some kind of larger invisible box "aura" around them while this fight is in effect so they "bounce"
- * off each other"): THE SHIPS' BUMPERS - in the sea serpent's waters (navalHost drift) my ship's hull and every other
- * player's at her helm are met BUMPER_M out from each (both grown so far on every side), and my ship is pushed off along
- * the shallowest way out at BUMPER_GAIN a second of how deep the bumpers meet, BUMPER_V_MAX at most - on Come Sail Away's
- * drift seam, so her helm still answers. Each machine pushes its own ship, so two meeting are pushed apart by both: two
- * closing at 30 m/s hold 10 m inside the bumpers' 20, short of the hulls, and drift apart as their helms let go. A peer's
- * hull was met as a rock (comeSailAway.js CheckCollision) - at its own size, a frame stale, never while I lay still - so
- * with a wire's lag two hulls met and passed through each other. `me`, `others` are flatHull's; answers `[vx, 0, vz]` (the
- * flat's own axes, scene m/s) or null.
+ * SERPENT4 (2026-10-11)'s BUMPERS ARE GONE (HULL-PASS, 2026-10-26, Discord #feature-feedback "Boat Player Collision": "too
+ * many people out there bumping into each other ruining their shots"; bible/01-Overview/bugs/Field-Bugs-2026-10-26d.md).
+ * In the sea serpent's waters every other player's ship at her helm was met BUMPER_M (10 m) out and mine pushed off it
+ * at up to 30 m/s - the players' answer then to hulls phasing through each other. Another player's hull no longer meets
+ * my helm outside a PvP zone (scenes/comeSailAway/peerHulls.js), and the serpent's waters are never one, so there is
+ * nothing left there to bump: the fight's ships pass through each other and every broadside is the captain's own.
  */
-export const BUMPER_M = 10;
-export const BUMPER_GAIN = 1.5;
-export const BUMPER_V_MAX = 30;
-/** A hull farther than this (m, centre to centre) is never asked. */
-export const BUMPER_REACH_M = 150;
-export function bumperDrift(me, others) {
-  const grow = (h) => ({ ...h, hl: h.hl + BUMPER_M, hw: h.hw + BUMPER_M });
-  const A = grow(me);
-  let vx = 0, vz = 0;
-  for (const o of others) {
-    if (Math.hypot(o.c[0] - A.c[0], o.c[1] - A.c[1]) > BUMPER_REACH_M) continue;
-    const push = hullOverlap(A, grow(o));
-    if (push) { vx += push[0] * BUMPER_GAIN; vz += push[1] * BUMPER_GAIN; }
-  }
-  const v = Math.hypot(vx, vz);
-  if (!(v > 0)) return null;
-  const k = v > BUMPER_V_MAX ? BUMPER_V_MAX / v : 1;
-  return [vx * k, 0, vz * k];
-}
 const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
 const dist2d = (a, b) => Math.hypot(a[0] - b[0], a[2] - b[2]);
 /** A launch's arc to `t` seconds, in 18 points - an aim's line to where its ball stops short of the sea. */
@@ -1108,7 +1086,8 @@ export function createNavalHost(deps) {
    * A hurt on a ship I stand: its state, the word, the law's reckoning when the player sank her. AUDIT NAV1 (the guns):
    * a ball from a ship of her own trade - or between two lawful ones - provokes nothing (a stray is not a feud: the
    * audit's pirates turned on their sisters in six fights of sixteen); the rest of the volley that struck her cannot
-   * take her under one hull (STRUCK_GRACE_S), and striking puts her fires out (navalDamage.js). AUDIT NAV1 (B4): who
+   * take her under one hull (STRUCK_GRACE_S) - nor a ram her line (`hurt.floor`, RAM-RETURN) - and striking puts her
+   * fires out (navalDamage.js). AUDIT NAV1 (B4): who
    * set her afire is kept (`fireBy`) - her fires' own changes are theirs (stateChanged). `byPlayer`: the blow is a
    * player's - mine, or (AUDIT NAV1, online #6) a peer's landed here (applyPeerHit).
    */
@@ -1117,7 +1096,7 @@ export function createNavalHost(deps) {
     if (s.lashed) unlashPrize(entry);   // SEA-PEACE: a victor under fire leaves her prize to fight
     const striker = typeof by === 'string' ? sea.get(by)?.ship ?? null : null;
     if (!stray && (!striker || !kindred(striker, s))) provoke(s, by, clock);   // SEA-EASE: a stray on an aid is no feud
-    const floor = entry.struck && entry.struck.by === by && clock - entry.struck.at <= STRUCK_GRACE_S ? 1 : 0;
+    const floor = Math.max(hurt.floor ?? 0, entry.struck && entry.struck.by === by && clock - entry.struck.at <= STRUCK_GRACE_S ? 1 : 0);   // RAM-RETURN: a ram's, her line
     const before = s.damage.state;
     const change = s.damage.apply(hurt, clock, { floor });
     if (hurt.fire && s.damage.fire > 0) { igniteShip(entry); entry.fireBy = by; }
@@ -3987,6 +3966,16 @@ export function createNavalHost(deps) {
     return deal;
   }
 
+  // ── rams (RAM-RETURN: scenes/naval/navalRams.js, the law systems/naval/navalRam.js) ────────────────────────────────
+  const rams = createNavalRams({
+    ships: () => sea.values(), get: (id) => sea.get(id), myBoats, myId, now: () => clock, seaY: () => deps.seaY(), random,
+    boatPose, hullBox, state: myBoatState, boarding: () => boarding, called: (e) => calledName(e),
+    fair: (e) => hostileToMe(e) || !NAVAL_FACTIONS[e.ship.cls.faction]?.lawful,   // AUDIT RAM-RETURN A1: never the first act of fire on a lawful ship
+    strike: (e, hurt, by) => strike(e, hurt, by), sendHit: (d) => deps.sendHit?.(d),
+    charge: (e) => { chargePlayer('fire', e); e.myBlowAt = clock; },   // an act of fire, as a ball's - her sinking mine to answer for
+    hit: (at, dir) => effects.hit(at, dir, true), sound: (k, at, v) => sound(k, at, v), shake: (k) => deps.shake?.(k), mid: (x, sec) => deps.mid?.(x, sec),
+  });
+
   // ── the frame ────────────────────────────────────────────────────────────────────────────────────────────────────
   /**
    * One frame of the sea, the streaming world's exterior only. `paused` holds every clock (the shots, the ships, the
@@ -4031,6 +4020,7 @@ export function createNavalHost(deps) {
     knowStep();   // SPYGLASS: what this frame teaches me of each ship
     siteStep(boat);   // CAPT-BOARD: the held contracts' waters, and a delivery's berth
     if (clock - lastHailCheck >= SAIL_HO_CHECK_S) { lastHailCheck = clock; hailSails(boat); }   // AUDIT NAV1 (#14)
+    rams.helm(boat);   // RAM-RETURN: my stem, on the hulls as this frame poses them (AUDIT NAV1: never the last frame's)
     poseMyFires(total);
     feel.frame(total, (en) => (sea.get(en.id) === en && en.ship.damage.state === SHIP_STATES.sinking ? [en.ship.pos[0], seaY + 1.5, en.ship.pos[2]] : null));   // COMBAT-FEEL: magazines due, my hull's smoke
     // the aim, on the hulls as this frame stands them (AUDIT NAV1: it read the last frame's, a ship's way behind)
@@ -4521,6 +4511,7 @@ export function createNavalHost(deps) {
       } else if (out.grapple && out.grapple !== myId() && sea.has(out.grapple) && !s.lashed) lashPrize(e, sea.get(out.grapple));   // SEA-PEACE: alongside the ship that struck to her
     }
     stepPrizes();
+    rams.galleys();   // RAM-RETURN: a galley's ram on the ship she fights
     separateHulls();
     // NAV-R: a raider of mine sunk, struck, taken or boarding, or one that chased me and lost me, is spent for its life
     for (const e of sea.values()) {
@@ -4575,7 +4566,7 @@ export function createNavalHost(deps) {
   const chasesMe = (e) => (e.ship.mode === 'engage' || e.ship.mode === 'board') && e.ship.target === myId();
 
   // ── hulls kept apart (AUDIT NAV1) ────────────────────────────────────────────────────────────────────────────────
-  // (a hull on the flat and the push out of another - flatHull, hullOverlap - are navalShips.js's: SERPENT4's bumpers and the grapples' haul read them too)
+  // (a hull on the flat and the push out of another - flatHull, hullOverlap - are navalShips.js's: the grapples' haul reads them too)
   /**
    * Every sea ship of mine that stands in another hull - a ship of mine, another player's, one of my boats - is pushed
    * out along the shallowest axis (two of mine share it), and the way she made into it is taken off her.
@@ -4614,16 +4605,6 @@ export function createNavalHost(deps) {
         else shove(B, [-push[0], -push[1]]);
       }
     }
-  }
-  /** SERPENT4: the drift `d` (or null) with the ships' bumpers added while the sea serpent's waters are about me
-   *  (bumperDrift - every other player's ship at her helm, as the peers' pool poses her). */
-  function withBumpers(boat, d) {
-    if (!deps.serpent?.near?.()) return d;
-    const pose = boatPose(boat);
-    const others = [];
-    for (const p of deps.peerBoats?.() ?? []) if (p.boat !== boat && Array.isArray(p.pos) && Number.isInteger(p.hull)) others.push(flatHull(p.pos, p.yaw ?? 0, p.hull));
-    const b = others.length ? bumperDrift(flatHull(pose.position, yawOfRot(pose.rotation), boat.hull), others) : null;
-    return b ? (d ? [d[0] + b[0], 0, d[2] + b[2]] : b) : d;
   }
   // ── the others (NAV-G) ───────────────────────────────────────────────────────────────────────────────────────────
   /** My word: the ships I stand, my recent volleys and barrels. */
@@ -4805,7 +4786,8 @@ export function createNavalHost(deps) {
     }
     const entry = ownByN(hit.n);   // AUDIT NAV1 (online #8): by her number, whatever id she was minted under
     if (!entry) return false;
-    const hurt = { hull: hit.hull, sail: hit.sail, crew: ballMen(hit.crew, random()), fire: hit.fire };   // TOUGHER-SHIPS: the men said are a gun's (shotMen), her toughness reckoned here - an older build's word the same
+    const hurt = { hull: hit.hull, sail: hit.sail, crew: ballMen(hit.crew, random()), fire: hit.fire };   // TOUGHER-SHIPS: the men said are a gun's (shotMen) or a ram's, her toughness reckoned here - an older build's word the same
+    if (hit.ram && !rams.peer(entry, hurt)) return true;   // AUDIT RAM-RETURN A3: a ram, to her line as I stand her - none on a ship struck since
     strike(entry, hurt, from, true, strayOnAlly(entry, hurt, from));   // a player's blow - SEA-EASE: a stray on an aid weighed as mine
     return true;
   }
@@ -5145,6 +5127,7 @@ export function createNavalHost(deps) {
     hailCalls.clear();   // SHIP-WATCH
     flashes.length = 0;
     aiming = false; aim = null; aimHit = null;
+    rams.clear();   // RAM-RETURN: my way's memory
     for (const [b, f] of [...myFires]) douseMine(b, f);
     galleonGuns.clear();   // AUDIT GN2-GN5: every gun deck at rest - the sea's frame steps none while the arc is off
     if (boarding) {
@@ -5317,9 +5300,9 @@ export function createNavalHost(deps) {
      *  fight song's word (scenes/soundscapeHost.js), where hostileNear's 700 m and no night law gave a dark ship away. */
     battle: () => aiming || crewAlarm() || !!boarding,
     /** SERPENT1: Come Sail Away's `drift` seam - the sea serpent's maelstrom pulling my ship, a blow's throw: scene m/s
-     *  `[vx, 0, vz]` added to the sea's current under her (scenes/serpentHost.js drift), or null. SERPENT4: and in its
-     *  waters, the ships' bumpers (withBumpers). */
-    drift: (boat) => (enabled ? withBumpers(boat, deps.serpent?.drift?.(boat) ?? null) : null),
+     *  `[vx, 0, vz]` added to the sea's current under her (scenes/serpentHost.js drift), or null. SERPENT4's bumpers are
+     *  gone (HULL-PASS - the module's top). */
+    drift: (boat) => (enabled ? deps.serpent?.drift?.(boat) ?? null : null),
     /** SERPENT4: Come Sail Away's `gale` seam - the sea serpent's gale about my ship (scenes/serpentHost.js gale), or null. */
     gale: (boat) => (enabled ? deps.serpent?.gale?.(boat) ?? null : null),
     /** SERPENT1: the boat of mine in play (at my helm, or one I stand aboard) as the serpent's blows read her - her root's

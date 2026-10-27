@@ -1,0 +1,102 @@
+[
+  {
+    "name": "HULL-PASS-zone-unread",
+    "file": "src/scenes/comeSailAway/peerHulls.js",
+    "old": "export const peerHullsMeet = () => wildHere();",
+    "new": "export const peerHullsMeet = () => true;",
+    "tests": [
+      "test/scenes/fb1001b_peerboats.test.js"
+    ],
+    "note": "the report: another player's hull a rock to my helm everywhere, the serpent's waters among it"
+  },
+  {
+    "name": "HULL-PASS-my-own-dropped-with-hers",
+    "file": "src/scenes/comeSailAway/peerHulls.js",
+    "old": "return hits.filter((h) => !h.root || !peers.some((b) => b.GameObject === h.root));",
+    "new": "return hits.filter((h) => !h.root);",
+    "tests": [
+      "test/scenes/fb1001b_peerboats.test.js"
+    ],
+    "note": "my own boats pass through each other too"
+  },
+  {
+    "name": "HULL-PASS-host-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    sphereCastAll: peerHullSweep(csaSphereCastAll, csa),",
+    "new": "    sphereCastAll: csaSphereCastAll,",
+    "tests": [
+      "test/scenes/fb1001b_peerboats.test.js"
+    ],
+    "note": "the law stands and the helm never asks it"
+  },
+  {
+    "name": "HULL-PASS-deck-hulls-standing",
+    "file": "src/scenes/comeSailAway/peerHulls.js",
+    "old": "  return passing.size ? boats.filter((b) => !passing.has(b)) : boats;",
+    "new": "  return boats;",
+    "tests": [
+      "test/scenes/fb1001b_peerboats.test.js"
+    ],
+    "note": "AUDIT FB1026d D1: a ship let through my hull sails her deck through the body on mine - shoved off, or carried away aboard her"
+  },
+  {
+    "name": "HULL-PASS-deck-under-feet-unread",
+    "file": "src/scenes/world.js",
+    "old": "csaBoatUnderMe() ?? _csaBuckets.get(player.groundKey)?.boat ?? null, player.pos,",
+    "new": "csaBoatUnderMe() ?? null, player.pos,",
+    "tests": [
+      "test/scenes/fb1001b_peerboats.test.js"
+    ],
+    "note": "AUDIT FB1026d D1: the moored deck I stand on is no deck - only a helm's or one aboard a peer's covers harbours"
+  },
+  {
+    "name": "HULL-PASS-deck-kept-through-no-jump",
+    "file": "src/scenes/comeSailAway/peerHulls.js",
+    "old": "  const on = _pressed?.boat ?? deck ?? (over(_latch.deck) ? _latch.deck : null);",
+    "new": "  const on = _pressed?.boat ?? deck;",
+    "tests": [
+      "test/scenes/fb1001b_peerboats.test.js"
+    ],
+    "note": "AUDIT FB1026d D1: a jump off my deck stands her hull again under my falling feet (re-aimed by content: AUDIT FB1026d II moved the line)"
+  },
+  {
+    "name": "HULL-PASS-my-own-through-hers-standing",
+    "file": "src/scenes/comeSailAway/peerHulls.js",
+    "old": "  const mine = new Set(pool?.boats ?? []), hulls = [...mine, ...(pool?.peerBoats ?? [])];",
+    "new": "  const mine = new Set(pool?.boats ?? []), hulls = [...(pool?.peerBoats ?? [])];",
+    "tests": [
+      "test/scenes/fb1001b_peerboats.test.js"
+    ],
+    "note": "AUDIT FB1026d D1: aboard hers, my own moored ship knocks me off her deck as she sails through it (re-aimed by content: AUDIT FB1026d II moved the line)"
+  },
+  {
+    "name": "HULL-PASS-latch-dropped",
+    "file": "src/scenes/comeSailAway/peerHulls.js",
+    "old": "deck !== _latch.deck ? new Set() : new Set([..._latch.passing].filter((b) => over.has(b)));",
+    "new": "new Set();",
+    "tests": [
+      "test/scenes/fb1001b_peerboats.test.js"
+    ],
+    "note": "AUDIT FB1026d D2: hulls overlapping when the zone turns PvP are jammed together - each refusing the other's way and turn"
+  },
+  {
+    "name": "HULL-PASS-latch-never-let-go",
+    "file": "src/scenes/comeSailAway/peerHulls.js",
+    "old": "new Set([..._latch.passing].filter((b) => over.has(b)));",
+    "new": "new Set([..._latch.passing]);",
+    "tests": [
+      "test/scenes/fb1001b_peerboats.test.js"
+    ],
+    "note": "AUDIT FB1026d D2: a ship once through mine passes through it in a PvP zone for ever"
+  },
+  {
+    "name": "HULL-PASS-door-lands-on-a-passing-hull",
+    "file": "src/scenes/world.js",
+    "old": "(!player.grounded ? (hullPassesMyDeck(b) ? 'other' : null) :",
+    "new": "(!player.grounded ? null :",
+    "tests": [
+      "test/scenes/fb1001b_peerboats.test.js"
+    ],
+    "note": "AUDIT FB1026d D1: a jump on my deck as she sails under it lands me aboard hers, and I am carried away"
+  }
+]

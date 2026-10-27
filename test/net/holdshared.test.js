@@ -106,7 +106,7 @@ test('HOLD-SHARED: a staff /tp to a player in the Hold lands at their place, as 
 });
 
 test('HOLD-SHARED: in the Hold a Local line goes to the room, two party members there are together, and nothing says the Hold is the player\'s own (AUDIT FB1007b H5 reverted)', () => {
-  const at = W.indexOf('  const chatSend = (tabId, text, from = tabId, { me = false } = {}) => {');
+  const at = W.indexOf('  const chatSend = (tabId, text, from = tabId, { me = false, item = null, items = null } = {}) => {');
   const end = W.indexOf('\n  };\n', at);
   assert.ok(at > 0 && end > at, 'chatSend');
   const sent = [];
