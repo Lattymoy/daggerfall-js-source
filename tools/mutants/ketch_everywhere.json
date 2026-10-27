@@ -46,5 +46,7 @@
   { "name": "KTE-the-provinces-words-unsaid", "file": "src/scenes/ketch/ketchClient.js", "old": "      if (mine) voyageWords(t, mine);\n", "new": "", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
   { "name": "KTE-the-rings-on-an-older-relay", "file": "src/scenes/ketch/ketchClient.js", "old": "      if (!provincesOn()) return out;\n", "new": "", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
   { "name": "KTE-the-bays-voyage-boarded", "file": "src/scenes/ketch/ketchClient.js", "old": "const o = online(), t = now(), v = ketchVoyageAt(t, th);", "new": "const o = online(), t = now(), v = ketchVoyageAt(t);", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-session-unwelcomed", "file": "src/net/online.js", "old": "      if (primary) this.ktTheatresOk = relaySupportsKetchTheatres(relayV);", "new": "      if (primary) this.ktTheatresOk = true;", "tests": ["test/net/ketch/ketch_everywhere.test.js"] }
+  { "name": "KTE-the-session-unwelcomed", "file": "src/net/online.js", "old": "      if (primary) this.ktTheatresOk = relaySupportsKetchTheatres(relayV);", "new": "      if (primary) this.ktTheatresOk = true;", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
+  { "name": "KTE-the-held-maps-list-read-as-one", "file": "src/ui/heldMap.js", "old": "return Array.isArray(v) ? v : v ? [v] : [];", "new": "return v ? [Array.isArray(v) ? v[0] : v] : [];", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
+  { "name": "KTE-the-ink-maps-rings-past-the-first", "file": "src/ui/ink/inkMap.js", "old": "for (const k of opts.ketches ?? (opts.ketch ? [opts.ketch] : []))", "new": "for (const k of (opts.ketches ?? (opts.ketch ? [opts.ketch] : [])).slice(0, 1))", "tests": ["test/net/ketch/ketch_everywhere.test.js"] }
 ]

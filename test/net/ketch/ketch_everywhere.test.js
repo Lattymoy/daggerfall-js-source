@@ -302,6 +302,64 @@ test('KETCH-EVERYWHERE THE TIMERS AND THE WORDS: in a province whose station is 
   assert.equal(KT_STATION_REACH_PX, Math.ceil((KT_SKY.far + KT_SKY.approach) / TERRAIN_SIZE) + 1, 'the reach the sky\'s own numbers');
 });
 
+// ─── the maps ──────────────────────────────────────────────────────────────────────────────────
+
+function withDocument(fn) {
+  const node = () => {
+    const n = {
+      children: [], style: {}, dataset: {}, classList: { toggle() {}, add() {}, remove() {} },
+      append(...k) { n.children.push(...k); }, remove() { n.removed = true; }, addEventListener() {}, removeEventListener() {},
+      setPointerCapture() {}, querySelectorAll: () => [], set innerHTML(v) { n.children = []; }, get innerHTML() { return ''; },
+    };
+    return n;
+  };
+  globalThis.document = { createElement: () => node(), getElementById: () => null, head: node(), body: node(), addEventListener() {}, removeEventListener() {} };
+  try { return fn(); } finally { delete globalThis.document; }
+}
+
+test('KETCH-EVERYWHERE THE MAPS: the held map reads the host\'s every station\'s ring (a list - an older host\'s one ring read as one), each answering the pointer; the ink map paints each (mutants: the list read as one; the rings past the first unpainted)', { timeout: 120_000 }, async () => {
+  const { HeldMapWindow } = await import('../../../src/ui/heldMap.js');
+  const { toPaper, paintInkOverlay } = await import('../../../src/ui/ink/inkMap.js');
+  const { CLIMATES } = await import('../../../src/formats/mapsFile.js');
+  const { _resetForTests } = await import('../../../src/systems/uiPrefs.js');
+  const ring = (day, px) => ({ day, cx: px.x + 0.5, cy: px.y + 0.5, r: 2, label: 'The Sky-Ketch', phase: 'docked', tip: { title: 'The Sky-Ketch', lines: [] } });
+  const bay = ring(4, KT_BAY_STATION_ROWS[0].px), sen = ring(ketchVoyageNumber(4, 2), KT_BAY_STATION_ROWS[2].px);
+  _resetForTests(); globalThis.location = { search: '?skin=enhanced' };
+  try {
+    withDocument(() => {
+      let host = [bay, sen];
+      const win = new HeldMapWindow({
+        getPlayerPixel: () => ({ x: 300, y: 300 }), getClimateIndex: () => CLIMATES.Woodlands,
+        woods: { heightMapBuffer: new Uint8Array(1000 * 500).fill(10) }, mapSize: { width: 1000, height: 500 },
+        gold: () => 10000, goldPieces: () => 10000, hasHorse: false, hasCart: false, hasShip: false, diseaseCount: () => 0, poisonCount: () => 0,
+        ketch: () => host, mapDict: new Map(),
+        maps: { regionCount: 18, getRegion: () => ({ mapNames: [] }), getPoliticIndex: () => 128 + 17 },
+      });
+      win.tick(0);
+      assert.deepEqual(win._ketches.map((k) => [k.day, k.cx, k.cy]), [[bay.day, bay.cx, bay.cy], [sen.day, sen.cx, sen.cy]], 'every station\'s ring');
+      win._layout(); win._view = { ox: 0, oy: 0, scale: 1 }; win._goal = { ...win._view }; win._phase = 'map';
+      const [sx, sy] = toPaper(win._view, sen.cx, sen.cy);
+      assert.equal(win._gateAt(sx, sy)?.day, sen.day, 'Sentinel\'s ring answers the pointer');
+      host = bay;
+      win.tick(1);
+      assert.deepEqual(win._ketches.map((k) => k.day), [bay.day], 'an older host\'s one ring, read as one');
+      win.dispose();
+    });
+  } finally { delete globalThis.location; }
+  // the ink map paints every station's ring: each ring's arc drawn
+  const arcs = [];
+  const ctx = new Proxy({ canvas: { width: 1000, height: 500 } }, {
+    get: (t, k) => (k in t ? t[k] : k === 'arc' ? (x, y) => arcs.push([x, y]) : k === 'measureText' ? () => ({ width: 10 }) : k === 'createRadialGradient' || k === 'createLinearGradient' ? () => ({ addColorStop() {} }) : () => {}),
+    set: (t, k, v) => { t[k] = v; return true; },
+  });
+  const view = { ox: 0, oy: 0, scale: 1 };
+  paintInkOverlay(ctx, view, { paperW: 1000, paperH: 500, ketches: [bay] });
+  const one = arcs.length;
+  arcs.length = 0;
+  paintInkOverlay(ctx, view, { paperW: 1000, paperH: 500, ketches: [bay, sen] });
+  assert.ok(one > 0 && arcs.length === 2 * one, `both rings painted (${one} arcs a ring, ${arcs.length} for two)`);
+});
+
 // ─── the freeware: the stations' cities, and the page ─────────────────────────────────────────
 
 test('KETCH-EVERYWHERE (ARENA2) EACH STATION OVER ITS CROWN\'S SEAT: on the freeware the Bay\'s two crown stations are Daggerfall\'s and Sentinel\'s own MAPS.BSA rows, and every province\'s seat past the Bay stands in its own province on the trace; each anchor-lift\'s pixel (KT_STATION off the city\'s middle) the pixel east of it, its province\'s own dry land with no place on it; and the page frames a station\'s ship where she can be seen - Skyrim\'s at Solitude, Hammerfell\'s at Sentinel - says her words in her province, rings her on the map and boards her own voyage (mutants: the station\'s pixel; the reach; the page\'s province unasked; Sentinel\'s row)', { skip: HAVE ? false : 'ARENA2_PATH not set', timeout: 300_000 }, async () => {

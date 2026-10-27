@@ -183,9 +183,13 @@ test('WW2 the hub\'s records a lane: the Bay\'s keys the ones they always were, 
 
 test('WW2 the wire: a gate\'s pixel the Bay\'s map on the Bay\'s lane, as it always was, and a pixel of the world on a lane past it - the site word, the rite\'s word in and out; the lanes ride a relay that keeps them (mutants: the Bay\'s last column, the world\'s pixel refused, the lanes\' relay)', () => {
   const lane1 = gateNumber(900, 1);
+  // PIN MOVED (WW-GATES-EVERYWHERE): lane 1 stands now, so the lane that does not stand is Cyrodiil's (9) - its world
+  // pixel a lane's pixel, and no word heard on it
+  const lane9 = gateNumber(900, 9);
   for (const [d, px, py, ok] of [[900, 0, 0, true], [900, 999, 499, true], [900, 1000, 0, false], [900, -1, 5, false], [900, 5, 500, false],
     [lane1, -1200, 300, true], [lane1, 1800, -700, true], [lane1, WORLD_PIXEL_BOUND, 0, false], [lane1, 0.5, 0, false],
-    [lane1, 500, 200, false], [lane1, 999, 499, false], [lane1, 1000, 499, true], [lane1, 999, -1, true]]) {   // AUDIT WW F6: a lane past the Bay never on its map
+    [lane1, 500, 200, false], [lane1, 999, 499, false], [lane1, 1000, 499, true], [lane1, 999, -1, true],
+    [lane9, 2400, 900, true], [lane9, 500, 200, false]]) {   // AUDIT WW F6: a lane past the Bay never on its map
     assert.equal(gateLanePixelOk(gateLaneOf(d), px, py), ok, `${d} ${px},${py}`);
     const heard = ok && gateLaneOpen(gateLaneOf(d));   // AUDIT WW F2: a lane that does not stand takes no word at all
     assert.equal(gatePixelOk(d, px, py), heard, `${d} ${px},${py}`);
@@ -209,6 +213,8 @@ test('WW2 the wire: a gate\'s pixel the Bay\'s map on the Bay\'s lane, as it alw
   assert.equal(GATE_LANES_RELAY_MIN, WORLD_WIDE_RELAY_MIN);
   assert.equal(relaySupportsGateLanes(RELAY_VERSION), true, 'this relay keeps them');
   assert.equal(relaySupportsGateLanes(`world${WORLD_WIDE_RELAY_MIN - 1}`), false, 'the relay before the world-wide one keeps no lane');
+  // WW-GATES-EVERYWHERE: and no relay before it at all (WW2-the-lanes-relay lived on world259, between WW2's own and this)
+  for (let v = 200; v < WORLD_WIDE_RELAY_MIN; v++) assert.equal(relaySupportsGateLanes(`world${v}`), false, `world${v} keeps no lane`);
   assert.equal(relaySupportsGateLanes(`world${WORLD_WIDE_RELAY_MIN}`), true);
   assert.equal(relaySupportsGateLanes(null), false);
 });
