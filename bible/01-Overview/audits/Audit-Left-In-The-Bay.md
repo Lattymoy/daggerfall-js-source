@@ -34,8 +34,8 @@ of where the code stood, not a cite (`Home.md`, A CITE NAMES WHAT IT POINTS AT).
 
 ## Where each finding stands (2026-10-27)
 
-The owner, after the audit: **"Every single thing here needs to be addressed. No exceptions."** Every finding is to be
-built, the owner's calls with it. The calls, as taken:
+The owner, after the audit: **"Every single thing here needs to be addressed. No exceptions."** Every finding is built,
+the owner's calls with it. The calls, as taken:
 - Gate lanes 1..8 open; Cyrodiil's lane never (the open zone).
 - Site-bound world events (gates, covens, Hollows, the ketch, raids) stand nowhere in the open zone.
 - One Sky-Ketch station per province, at its crown capital.
@@ -46,7 +46,7 @@ built, the owner's calls with it. The calls, as taken:
 - The landforms' sites past the Bay come from places every client stands (GROUND-AGREE).
 - A vampire bloodline is mapped per province.
 
-On PR #1321 (`5e2d374204`, CI green):
+On PR #1321 before the packages (`5e2d374204`, CI green):
 - **F1** (item 2), FIXED: the bake reads the city's water off the plan's law and keeps it - a promote at the Waterfront
   1.0 s, the others 36-137 ms (`03-World/Tamriel.md` RUMARE-WATER, AUDIT BAY-LEFT F1).
 - **F2** (item 4), FIXED: the curved painter lays TS9's half tiles past the Bay - 72 of 72 (`03-World/Town-Shapes.md`
@@ -57,18 +57,94 @@ On PR #1321 (`5e2d374204`, CI green):
   town-bound books, WW-C1's Motherlodes and its writs, the "Not yet" capitals' quests; Tamriel.md TAMRIEL2's Deep Waters
   promotions and its region reading; Arena-Provinces.md's port byte.
 
-The rest, in nine packages, each on its own branch from `e77eadc58f`, merged into this PR as one when each is finished
-and checked; each finding's fix is written here as its package lands:
-- WP1 gates: A2, A2b, A2c (item 24), A4 (item 34); WW2's two stale lines.
-- WP2 starfall: WW5 (item 26).
-- WP3 raids: WW6 (item 27).
-- WP4 dungeons: A1 (item 1), A3 (item 25), C4 (item 29), the pits (item 35), the boards' quarry (item 37).
-- WP5 quests: B1 (item 3), B3-B7 (items 15-19), house sales (item 32); Audit-Release-R2.md's scrying line.
-- WP6 courts: a province's court and people (item 33) and the vampire clans' guard.
-- WP7 maps: C1 (item 6), C2 (item 8), C3 (item 12), C9 (item 13), C10 (item 14), C11 (item 21), C12 (item 38), C7 = E2
-  (item 11); Travel-View.md VOYAGER2.1's stale line.
-- WP8 sea: C5 (item 30), C6 (item 31), B2 = E1 (item 7), B8 = E3 (item 20), E4 (item 23), D4 (item 22); WW3's crowns line.
-- WP9 ground: D1 (item 28), D2 (item 9), D3 (item 10), D5 (item 36).
+The rest, in nine packages, each finished on its own branch from `e77eadc58f` and merged into this PR. Every finding is
+FIXED, each with its pins and its mutants (all dead, or `equivalent` with its reason), recorded where its system lives:
+
+- **WP1 gates** (`03-World/World-Wide.md` WW-GATES-EVERYWHERE, `11-Multiplayer/Sky-Ketch.md` section 22):
+  - A2 (item 24): gate lanes 0..8 stand (`net/wire.js` `GATE_LANES_OPEN`), Cyrodiil's never; a province's site names its
+    province's region, its court laid there. The scans found ground in all eight provinces, none in the open zone.
+  - A2b: a province gate's kill credits its province's seats (`scenes/gate/gateSeat.js`; the account's refusal
+    `'not-its-region'`) - three agreeing claims on a Skyrim gate, 300 influence to the guild pledged at Solitude.
+  - A2c: the province scans in the page's idle moments, a few ring pixels a slice (`theatreGateScanner`) - one task of
+    5.4 s cold before (the machine loaded), slices of 33-37 ms warm after.
+  - A4 (item 34): a Sky-Ketch station at each province's crown capital - Daggerfall (the Bay's own), Sentinel, Solitude,
+    Mournhold, Alinor, Falinesti, Torval, Helstrom; Cyrodiil's lane none.
+  - WW2's two stale lines retired.
+- **WP2 WW5** (item 26; `03-World/World-Wide.md` WW5, `11-Multiplayer/Starfall.md` section 16, `Super-Dungeons.md` WW5):
+  a coven night and a Hollow in every province but the open zone - eight province covens authored, three stars a night
+  in each, 48 province Hollows standing on the freeware; a halo socket says its own relay's word.
+- **WP3 WW6** (item 27; `03-World/World-Wide.md` WW6, `03-World/Raiding-Parties.md` WW6, `11-Multiplayer/Staff-Events.md`
+  section 6): raids at towns in every province but Cyrodiil, keyed on the world's grid at both ends; a staff town event
+  past the Bay.
+- **WP4 dungeons** (`03-World/World-Wide.md` WORLD-LANES, `06-Systems/Systems-Arc.md` SPAWN-HOLE and SPAWN-WORLD,
+  `03-World/Ocean-Holes.md` PITS-WORLD, `06-Systems/Travel-View.md` TVD-WORLD, `06-Systems/Bounty-Boards.md` section 13):
+  - A1 (item 1): no hole in the ground past the Bay - 39 pixel builds threw in the Skyrim box, 0 now.
+  - A3 (item 25): online spawns past the Bay in a world id lane (`SPAWN_WORLD_LANE` 0x380), Elite among them - 894 of
+    3,000 dry pixels (29.8%, 23.3% Elite) where none stood; the Bay's 869 unchanged.
+  - The pits (item 35): Ocean Holes past the Bay, the abyss in its own lane (0x600) - 152 of 152 pit pixels open.
+  - C4 (item 29): the Overworld's dungeons past the Bay (`systems/travel/travelLairs.js`) - 0 listed before; 9 of 9,
+    13 of 25, 12 of 23 at three places.
+  - The quarry (item 37): a bounty board's quarry the land's own wild (`systems/bounty/bountyQuarry.js`), Bay-wide.
+- **WP5 quests** (`06-Systems/Legacy-Arc.md`, `06-Systems/Quest-Arc.md`, `06-Systems/Talk-Arc.md` and
+  `03-World/Arena-Provinces.md` BAY-LEFT-B):
+  - B1 (item 3): a Legacy heir born at a seat past the Bay by its kept map id once the world stands, the Online page's
+    waiting house's seat carried; a house with no seat bears its heir in the world's nearest town.
+  - B3 (item 15) `%di`; B4 (item 16) the talk's regional "Where is", a place's own MapTable key (`world/locationKey.js`,
+    every one of MAPS.BSA's 15,251 rows matched); B5 = C8 (item 17) the map reveals; B6 (item 18) scrying; B7 (item 19)
+    `%lp` - regions 64-69 said "Hammerfell" and 70 "High Rock", now each its own province.
+  - Item 32: houses sold, deeded and given in every town the port made.
+  - Audit-Release-R2.md's scrying line retired.
+- **WP6 courts** (item 33; `03-World/World-Wide.md` PROVINCE-COURTS): each province its Province, its named ruler, its
+  Court and its People (content - FACTION.TXT has none); `%rn` its ruler where it read "Random Ruler"; the vampire
+  clans' regions guarded at every lookup by region alone; a bloodline a province (clans 150-158 over regions 62-70).
+- **WP7 maps** (`10-UI/Held-Map-Arc.md`, `06-Systems/Travel-View.md`, `06-Systems/Travel-Options.md` and
+  `03-World/Come-Sail-Away.md` BAY-LEFT-MAPS, `03-World/Arena-Provinces.md` BAY-LEFT-MAPS C7):
+  - C1 (item 6): every mark over the sheet's box (`ui/heldMap.js` `_marksBox`) - the party, travellers, the trader's
+    coin, the serpent, the Motherlodes past the Bay drawn.
+  - C2 (item 8): waypoints and the remains flag on the world's grid.
+  - C3 (item 12): a passage to a port past the Bay resumes after a load; far plates; the quest press.
+  - C7 = E2 (item 11): a town's book of buildings keyed `<region>:<name>#<mapId>` past the Bay - 907 places on 296
+    books before, 907 books now; the Bay's keys byte for byte.
+  - C9 (item 13): the Find box finds 296 of 296 names past the Bay (0 before).
+  - C10 (item 14): Travel Options' roads past the Bay - 1,593 of 1,593 road pixels read (0 before).
+  - C11 (item 21): port anchors, the Ports filter, the teleport card's province, the carriage wheel.
+  - C12 (item 38): Come Sail Away's reading on TMAP00I0 past the Bay (a DEPARTURE).
+  - Travel-View.md VOYAGER2.1's stale line retired.
+- **WP8 sea** (`03-World/World-Wide.md` BAY-LEFT-SEA and the pages its table names):
+  - C5 (item 30): a harbourmaster at every one of the 29 ports past the Bay, on the nearest Bay crown's board.
+  - C6 (item 31): Solitude, Alinor, Torval and the Waterfront stand a shipyard, crew hall, lighthouse and Docks, and their
+    banks sell ships (a capital's landmark measured by its footprint).
+  - B2 = E1 (item 7): the market's hubs a province's crown seat - a Solitude courier fills a Daggerfall order.
+  - B8 = E3 (item 20): the Bounty edict past the Bay pays on hideouts and lairs.
+  - E4 (item 23): staff `/town audit` lists a province's capitals first, 400 a page.
+  - D4 (item 22): weather born at sea past the Bay is the sea's - the Sea of Ghosts' winter snow 142 of 400 before, 62
+    after.
+  - WW3's crowns line retired.
+- **WP9 ground** (`03-World/Landforms.md`, `03-World/Snowfall.md` and `06-Systems/Living-World.md` BAY-LEFT-GROUND):
+  - D1 (item 28): the landforms' sites past the Bay (`landformSitesBeyond`), from places every client stands (GROUND-AGREE,
+    proved on the freeware) - a town's edge step past the Bay median 39.1 m and p90 104.0 m before, 15.1 m and 37.0 m
+    after; the Bay's byte for byte. GROUND_LAW 2.
+  - D2 (item 9): road trouble's foes the land's own fauna - at Helstrom 322 of 1,200 Orcs or Centaurs before, none after.
+  - D3 (item 10): the Snowfall mod past the Bay - deep snow, tracks, hollows and the roads' berms.
+  - D5 (item 36): `landformLiftAt` on the whole world grid, past the Bay the build's own place; every height a record
+    writes carries its ground frame.
+
+**The packages at their merge.** Each merged clean of its own checks; their meeting needed these, each pinned:
+- WW5's theatres asked the gate's `scanOf` in one idle moment, undoing A2c - the gate's scans answer `wholeScan` and the
+  events wait on them (`test/world/worldWide/bayleft_scanseam.test.js`, `tools/mutants/bayleft_scanseam.json`).
+- SPAWN-WORLD made the account Worker bundle the roads layer and the traced map through the living world's seed - the
+  seed takes `hash32` from its leaf (`tools/mutants/bayleft_merge.json`).
+- WW6 and BAY-LEFT-MAPS each added `readRaidMarksIn` to `ui/eventMapMarks.js` - merged with no conflict, the module did not
+  load; one kept, WW6's pin strengthened.
+- SPAWN-WORLD moved `_locationToBuild` and `_liftLocationAt` out of `bootWorld`; WW5's Hollow-first clause and
+  BAY-LEFT-GROUND's D5 lift were carried into the moved modules (`scenes/spawnStandHost.js`, `scenes/spawnGroundHost.js`).
+- The held map's Hollows and Ketch stations are lists read over BAY-LEFT-MAPS' sheet.
+- BAY-LEFT-GROUND's sites stand between the isles' templates and the classic rows' letting go (`etherplaces.test.js`,
+  PIN MOVED).
+- `bootWorld` measured at each merge, its ceiling at its measure (`test/scenes/hostceiling.test.js`): 35,799 at the
+  packages' base, 35,368 merged.
+- The relay's law re-hashed once, world270 in place (`test/net/relayversion.test.js`), and the version notes written on
+  `RELAY_VERSION` and `ACCOUNT_VERSION` (acct196): deploy the relay first, then the account service, then the site.
 
 ---
 
@@ -361,3 +437,22 @@ the freeware's data (`tools/fetch-data.sh`, `ARENA2_PATH`) when the branch was p
 - The suites F1-F3 moved a pin or a mutant in, and their neighbours (`audittesa3e1.test.js`, `audittesa3e1_ring.test.js`,
   `townshapes.test.js`, `townfollow.test.js`, `nibensea.test.js`, `urban3_stand.test.js`, `urban3_fabric.test.js`,
   `tamriel_deep.test.js`, `hostceiling.test.js`): 55 of 55 pass, none skipped.
+- `node tools/mutate.mjs tools/mutants/townring.json tools/mutants/townpaths.json tools/mutants/rumarewater.json`:
+  townring 11 of 11 dead, townpaths 10 of 10, rumarewater 47 dead and its 2 `equivalent` as recorded, 0 survived (two
+  rumarewater records judged in place: `audittesa2c_capitals.test.js` passes in no workspace).
+
+## Found on the way, not this audit's
+
+- `test/world/fb1009_yardfoot.test.js`'s ARENA2 half ("a point 2 m inside every door is still the house") fails 2,842 to 0
+  on main, the tamriel branch and this PR alike; it passes at b50b68abdd and fails at db5f441691 ("decor: fix placement
+  near roof overhangs", `scenes/homeYards.js`). CI runs no ARENA2 half, so nothing saw it.
+- `fb1002_audit`'s ARENA2 step-back case (N0000033) fails on the PR's head before the packages too.
+- The Eltheric isles' port towns stand in a levelling wall (median 54.9 m, p90 69.7 m over 60 ports): they are not
+  landform sites. This audit's "past the Bay" is Tamriel; their sites would move the ground again (GROUND_LAW 3).
+- A zone hall's map ids (top bits 0xf) overlap the Abyss Dungeons' salt lanes 0xf00-0xfff (WW-C2), named in
+  `world/worldWide/worldLanes.js`'s header.
+- Twenty mutant survivors in other arcs' lists, every one surviving on the PR's head without the packages: seventeen
+  already owed (AD28Q-J and AD28Q-J2, `01-Overview/bugs/Field-Bugs-2026-10-20c.md`), three named for their arcs in
+  `06-Systems/Legacy-Arc.md` (AD28Q-S4-grace-resynced, AUDIT-STARTS-V4-the-end-unpadded, TESA11-wall-band-unreserved).
+- `tools/mutate.mjs` counts a test file the machine's memory limit kills as a death; under eight agents' load a death
+  was checked against the run's own failing subtests where a package could (BAY-LEFT-GROUND did, for every one).
