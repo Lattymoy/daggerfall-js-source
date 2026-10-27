@@ -79,13 +79,22 @@ export function coneProfile(d) {
   for (const t of D.tiers) f += t.share * falloff(d / t.reach, t.power * 2);
   return D.lift * f;
 }
+/** The flank's fall at `d` metres past the rim, rise over run - coneProfile's own slope, each tier's power's derivative
+ *  (p (1 - t)^(p - 1) / reach: the falloff of one half fewer). */
+export function coneGrade(d) {
+  let g = 0;
+  for (const t of D.tiers) g += (t.share * t.power * falloff(d / t.reach, t.power * 2 - 2)) / t.reach;
+  return D.lift * g;
+}
+/** A foyada's segments a box (nearFoyada's skip). */
+const CHUNK = 8;
 /** The farthest the flank reaches past the rim, and the volcano from its centre, metres. */
 const FLANK_REACH = Math.max(...D.tiers.map((t) => t.reach));
 export const RED_MOUNTAIN_REACH = D.rim + FLANK_REACH;
 
 /**
  * @typedef {{ cx: number, cy: number, bx: number, by: number, reach: number,
- *   foyada: ReadonlyArray<{ name: string, pts: Float64Array, s: Float64Array, x0: number, x1: number, y0: number, y1: number }> }} RedMountainFrame
+ *   foyada: ReadonlyArray<{ name: string, pts: Float64Array, s: Float64Array, x0: number, x1: number, y0: number, y1: number, chunks: Float64Array }> }} RedMountainFrame
  *   the centre in world samples (cx, cy) and Bay pixels (bx, by, continuous: a pixel's centre is x + 0.5), the reach in
  *   samples, and each foyada's line (x, y pairs in world samples, `s` its length to each point in metres) and its box
  */
@@ -116,7 +125,17 @@ export function redMountainFrame() {
       if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
     }
     const pad = 2 * D.trough.halfFoot * k + 1;   // nearFoyada's reach: twice the half-width
-    return Object.freeze({ name: f.name, pts, s, x0: x0 - pad, x1: x1 + pad, y0: y0 - pad, y1: y1 + pad });
+    // a box a run of CHUNK segments (x0, x1, y0, y1), so a sample asks the few runs it stands in, not every segment
+    const runs = Math.ceil((n - 1) / CHUNK), chunks = new Float64Array(4 * runs);
+    for (let c = 0; c < runs; c++) {
+      let a0 = Infinity, a1 = -Infinity, b0 = Infinity, b1 = -Infinity;
+      for (let i = c * CHUNK; i <= Math.min(n - 1, (c + 1) * CHUNK); i++) {
+        const x = pts[2 * i], y = pts[2 * i + 1];
+        if (x < a0) a0 = x; if (x > a1) a1 = x; if (y < b0) b0 = y; if (y > b1) b1 = y;
+      }
+      chunks[4 * c] = a0 - pad; chunks[4 * c + 1] = a1 + pad; chunks[4 * c + 2] = b0 - pad; chunks[4 * c + 3] = b1 + pad;
+    }
+    return Object.freeze({ name: f.name, pts, s, x0: x0 - pad, x1: x1 + pad, y0: y0 - pad, y1: y1 + pad, chunks });
   });
   return (_frame = Object.freeze({ cx, cy, bx, by, reach: RED_MOUNTAIN_REACH * k, foyada: Object.freeze(foyada) }));
 }
@@ -178,8 +197,12 @@ function nearFoyada(f, ground, gx, gy, out) {
   for (let fi = 0; fi < f.foyada.length; fi++) {
     const line = f.foyada[fi];
     if (gx < line.x0 || gx > line.x1 || gy < line.y0 || gy > line.y1) continue;
-    const p = line.pts, n = line.s.length, len = line.s[n - 1], lv = ground.chan[fi];
+    const p = line.pts, n = line.s.length, len = line.s[n - 1], lv = ground.chan[fi], ch = line.chunks;
     for (let i = 0; i + 1 < n; i++) {
+      if (i % CHUNK === 0) {   // a run's box: past it, its segments are skipped whole
+        const c = 4 * (i / CHUNK);
+        if (gx < ch[c] || gx > ch[c + 1] || gy < ch[c + 2] || gy > ch[c + 3]) { i += CHUNK - 1; continue; }
+      }
       const ax = p[2 * i], ay = p[2 * i + 1], ex = p[2 * i + 2] - ax, ey = p[2 * i + 3] - ay, l2 = ex * ex + ey * ey;
       let t = l2 > 0 ? ((gx - ax) * ex + (gy - ay) * ey) / l2 : 0;
       t = t < 0 ? 0 : t > 1 ? 1 : t;
@@ -215,7 +238,7 @@ export function redMountainLand(gx, gy, base, hills, ground) {
   if (d > 0 && d < D.gully.reach) {   // the gullies: polar noise stretched down the fall line, deepest where it is steep
     const q = D.gully.grain * Math.sqrt(Math.sqrt(r));
     const v = 2 * perlinNoise(ux * q + 41.13, uy * q + 29.71) - 1;
-    const grade = (coneProfile(d) - coneProfile(d + 50)) / 50;   // the flank's own fall, rise over run
+    const grade = coneGrade(d);   // the flank's own fall, rise over run
     const reach = 1 - smooth01((d - 0.6 * D.gully.reach) / (0.4 * D.gully.reach));
     lift += D.gully.depth * (2 * (v < 0 ? -v : v) - 0.8) * (grade < 0.5 ? grade / 0.5 : 1) * reach * smooth01(d / 400) * still;
   }

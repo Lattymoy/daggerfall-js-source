@@ -298,5 +298,23 @@
     "tests": [
       "test/world/redmountain.test.js"
     ]
+  },
+  {
+    "name": "RED-MOUNTAIN-the-grade-one-power-off",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "  for (const t of D.tiers) g += (t.share * t.power * falloff(d / t.reach, t.power * 2 - 2)) / t.reach;",
+    "new": "  for (const t of D.tiers) g += (t.share * t.power * falloff(d / t.reach, t.power * 2)) / t.reach;",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
+  },
+  {
+    "name": "RED-MOUNTAIN-a-run's-box-skips-its-sample",
+    "file": "src/world/tamriel/redMountain.js",
+    "old": "        if (gx < ch[c] || gx > ch[c + 1] || gy < ch[c + 2] || gy > ch[c + 3]) { i += CHUNK - 1; continue; }",
+    "new": "        if (gx < ch[c] || gx > ch[c + 1] || gy < ch[c + 2] || gy < ch[c + 3]) { i += CHUNK - 1; continue; }",
+    "tests": [
+      "test/world/redmountain.test.js"
+    ]
   }
 ]

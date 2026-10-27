@@ -11,7 +11,7 @@ import { join } from 'node:path';
 import * as acorn from 'acorn';
 import {
   RED_MOUNTAIN_DIALS, RED_MOUNTAIN_REACH, RED_MOUNTAIN_TOP, CRATER_FLOOR_LIFT, coneProfile, redMountainFrame, redMountainLand,
-  redMountainReaches, redMountainTopNear, redMountainGround, dirOf,
+  redMountainReaches, redMountainTopNear, redMountainGround, coneGrade, dirOf,
 } from '../../src/world/tamriel/redMountain.js';
 import { createLandforms, redMountainGroundOf, byteBase, groundTopOf, reliefByteHeight, byteBeyond, landformSitesBeyond } from '../../src/world/landforms.js';
 import { groundWoods, tamrielHeightByte, dropGroundCache } from '../../src/world/tamriel/tamrielGround.js';
@@ -63,6 +63,7 @@ test('RED-MOUNTAIN the flank: the lift at the rim, half of it within 5 km, a qua
   assert.ok(deg(grade(0)) > 27 && deg(grade(0)) < 31, `the rim's flank ${deg(grade(0)).toFixed(1)} degrees`);
   assert.ok(deg(grade(30000)) < 2, `the shield's ${deg(grade(30000)).toFixed(2)} degrees`);
   assert.ok(Math.abs(D.tiers.reduce((a, t) => a + t.share, 0) - 1) < 1e-12, 'the tiers share the whole lift');
+  for (let d = 0; d < RED_MOUNTAIN_REACH; d += 997) assert.ok(Math.abs(coneGrade(d) - (coneProfile(d) - coneProfile(d + 0.01)) / 0.01) < 1e-5, `the grade the profile's own slope at ${d} m`);
   assert.deepEqual(dirOf(0).map((v) => +v.toFixed(12)), [1, 0]);
   assert.deepEqual(dirOf(0.25).map((v) => +v.toFixed(12)), [0, 1]);
   assert.deepEqual(dirOf(0.625).map((v) => +v.toFixed(12)), [+(-Math.SQRT1_2).toFixed(12), +(-Math.SQRT1_2).toFixed(12)]);
