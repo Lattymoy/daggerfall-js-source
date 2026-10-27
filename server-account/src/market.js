@@ -59,7 +59,7 @@ import { titheOf, TITHE_CAP } from '../../src/net/townSeatLaw.js';
 import { marketHallTitheCap } from '../../src/net/fortLaw.js';
 import { tideNow } from './tides.js';   // SEASON1 part two: a Bandit Summer's couriers (9.3)
 import { tideCourier } from '../../src/net/tideLaw.js';
-import { profOpenFor, spendStatements, spendOrigins, spendableSql, storeOf } from './professions.js';
+import { profOpenFor, spendStatements, spendOrigins, spendableSql, storeOf, silverClothIn } from './professions.js';   // WOVEN-PAYS: a cloth bought with Drakes, counted
 import { REALM_ID_RE, realmActFirst, prepareRealmRecord, mustChange, dropIfUnnamed, recordMovedOf, dropObjects, realmHoldOf, holdStandsSql } from './realm.js';   // GOLD-MARKET
 import { lawfulItem, itemWorth } from '../../src/systems/item/itemLaw.js';   // INT1: no piece the law cannot stand behind is listed; LW15: a patron's judge
 import {
@@ -420,6 +420,8 @@ async function settle(ctx, player, read = null) {
       db.prepare(`INSERT INTO prof_stores (player, char_id, material, origin, qty)
         SELECT buyer, char_id, material, ${BOUGHT_ORIGIN_SQL}, units FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND dn = ?3
         ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = prof_stores.qty + excluded.qty`).bind(me, s.rid, nonce),
+      // WOVEN-PAYS: a cloth bought with Drakes, counted bought with silver (a gold buy's is no silver)
+      silverClothIn(db, "SELECT buyer AS player, char_id, material, units AS qty FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND dn = ?3 AND currency IS NOT 'gold'", [me, s.rid, nonce]),
     );
     touched.add(`${s.char_id}|${s.material}`);
   }
@@ -1353,6 +1355,8 @@ export async function marketBuy(ctx, player, env, { character, region, listing: 
     db.prepare(`INSERT INTO prof_stores (player, char_id, material, origin, qty)
       SELECT buyer, char_id, material, 'bought', units FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND kind = 'material' AND delivered = 1
       ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = prof_stores.qty + excluded.qty`).bind(me, rid, nonce),
+    // WOVEN-PAYS: a cloth bought with Drakes, counted bought with silver - here, or as its courier's load lands
+    silverClothIn(db, "SELECT buyer AS player, char_id, material, units AS qty FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND kind = 'material' AND delivered = 1", [me, rid, nonce]),
     // a piece's owner moved, and by courier its delivery written
     db.prepare(`UPDATE products SET owner = ?1, credited = 0, listed = 0, bought_with = 'marks' WHERE provenance = (SELECT provenance FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND kind = 'piece')`)
       .bind(me, rid, nonce),   // GOLD-MARKET: bought with Drakes - it lists for Drakes alone
@@ -1648,6 +1652,8 @@ export async function marketFill(ctx, player, env, { character, region, order: i
     db.prepare(`INSERT INTO prof_stores (player, char_id, material, origin, qty)
       SELECT poster, ?4, material, 'bought', units FROM market_fills WHERE filler = ?1 AND rid = ?2 AND n = ?3
       ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = prof_stores.qty + excluded.qty`).bind(me, rid, nonce, o.char_id),
+    // WOVEN-PAYS: the orderer's cloth, bought with Drakes, counted bought with silver
+    silverClothIn(db, 'SELECT poster AS player, ?4 AS char_id, material, units AS qty FROM market_fills WHERE filler = ?1 AND rid = ?2 AND n = ?3', [me, rid, nonce, o.char_id]),
     // the Marks: the pay out of the escrow, the tax burnt from it
     db.prepare(`INSERT INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid)
       SELECT 'escrow', order_id, 'account', filler, 'order-fill', pay, day, at, filler, material, rid || ':fill'

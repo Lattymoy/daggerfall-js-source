@@ -113,8 +113,8 @@
   {
     "name": "AUDIT657-B3-the-stalls-controls-loose",
     "file": "src/ui/vendor/vendorTab.js",
-    "old": "fields.append(field('Piece', sel, 'market-field-wide'), field('Price in gold', price), go);\n    box.append(fields, el('p', 'notice-tip', VENDOR_TEXT.stockTip));",
-    "new": "box.append(sel, price, go, el('p', 'notice-tip', VENDOR_TEXT.stockTip));",
+    "old": "fields.append(field('Price in gold', price), go);   // PACK-PICK: the piece is the picker's, above\n    box.append(fields, el('p', 'notice-tip', VENDOR_TEXT.stockTip));",
+    "new": "box.append(price, go, el('p', 'notice-tip', VENDOR_TEXT.stockTip));",
     "tests": [
       "test/ui/audit657_board.test.js"
     ]

@@ -15824,6 +15824,81 @@
   "tr": "ca1335f85bb2",
   "by": "claude-in-session"
  },
+ "market.goods.sell": {
+  "en": "c136aded14cc",
+  "tr": "4be00724524a",
+  "by": "claude-in-session"
+ },
+ "market.list.craftedEmpty": {
+  "en": "8c65b17166cc",
+  "tr": "7677a06428d6",
+  "by": "claude-in-session"
+ },
+ "market.list.craftedLabel": {
+  "en": "28f64ab188cf",
+  "tr": "58777b9fa3d0",
+  "by": "claude-in-session"
+ },
+ "market.list.kindAuction": {
+  "en": "0774b0c33e43",
+  "tr": "4792ab102d2a",
+  "by": "claude-in-session"
+ },
+ "market.list.kindCrafted": {
+  "en": "42e1236ebb3b",
+  "tr": "f22e771c56f5",
+  "by": "claude-in-session"
+ },
+ "market.list.kindPack": {
+  "en": "33a51b3312f4",
+  "tr": "c8394c49f2b4",
+  "by": "claude-in-session"
+ },
+ "market.list.kindStores": {
+  "en": "561569fc83c4",
+  "tr": "a1d5b61a2efe",
+  "by": "claude-in-session"
+ },
+ "market.list.kinds": {
+  "en": "fa2e5cff35aa",
+  "tr": "c1b2b168abbb",
+  "by": "claude-in-session"
+ },
+ "market.list.mwEmpty": {
+  "en": "8eac23d4e384",
+  "tr": "d53aa89b84e0",
+  "by": "claude-in-session"
+ },
+ "market.list.mwLabel": {
+  "en": "44e952a4a519",
+  "tr": "69fe7b03f893",
+  "by": "claude-in-session"
+ },
+ "market.list.packEmpty": {
+  "en": "bf78a767392b",
+  "tr": "47e4aa5ebd69",
+  "by": "claude-in-session"
+ },
+ "market.list.packLabel": {
+  "en": "a4172827dadb",
+  "tr": "fcc196a45753",
+  "by": "claude-in-session"
+ },
+ "market.list.pickMw": {
+  "en": "8b7b5de5ff87",
+  "tr": "15c008e3bdcf",
+  "by": "claude-in-session"
+ },
+ "market.list.pickPack": {
+  "en": "7a7312e38b17",
+  "tr": "cfc8b2526de3",
+  "by": "claude-in-session"
+ },
+ "market.list.refused": {
+  "en": "2aa24c8a3346",
+  "tr": "89aa67999123",
+  "by": "claude-in-session"
+ },
  "market.page.label": {
   "en": "600584c2d5cc",
   "tr": "aeb17a3c876a",
@@ -17222,6 +17297,31 @@
  "menu.intro.musicFailed": {
   "en": "90465798688d",
   "tr": "bf2d6294890a",
+  "by": "claude-in-session"
+ },
+ "menu.intro.narration1": {
+  "en": "6cdda13c60fe",
+  "tr": "99adff6bb103",
+  "by": "claude-in-session"
+ },
+ "menu.intro.narration2": {
+  "en": "a73d722e6148",
+  "tr": "3ed98ae7c67b",
+  "by": "claude-in-session"
+ },
+ "menu.intro.narration3": {
+  "en": "b0db5c7d2264",
+  "tr": "ce2088e555d6",
+  "by": "claude-in-session"
+ },
+ "menu.intro.narration4": {
+  "en": "02e54d9b7bf2",
+  "tr": "ca16972cc9df",
+  "by": "claude-in-session"
+ },
+ "menu.intro.narration5": {
+  "en": "bb1aec630851",
+  "tr": "865376ac5a80",
   "by": "claude-in-session"
  },
  "menu.intro.opening": {
@@ -23394,6 +23494,61 @@
   "tr": "8b88346f192b",
   "by": "claude-in-session"
  },
+ "pack.pick.all": {
+  "en": "ab2d96c48c9c",
+  "tr": "431167381275",
+  "by": "claude-in-session"
+ },
+ "pack.pick.find": {
+  "en": "8c0399c9a415",
+  "tr": "1d10fdd37bd9",
+  "by": "claude-in-session"
+ },
+ "pack.pick.findLabel": {
+  "en": "592bcd67e1d6",
+  "tr": "22655a3bb364",
+  "by": "claude-in-session"
+ },
+ "pack.pick.many": {
+  "en": "97e536f7d07d",
+  "tr": "c1d11bfc5adf",
+  "by": "claude-in-session"
+ },
+ "pack.pick.metal": {
+  "en": "d8169782b57c",
+  "tr": "19114f713f60",
+  "by": "claude-in-session"
+ },
+ "pack.pick.none": {
+  "en": "a82b0aa9046c",
+  "tr": "4df33607a262",
+  "by": "claude-in-session"
+ },
+ "pack.pick.noneAny": {
+  "en": "9f85767365ab",
+  "tr": "0c886e8a1fcc",
+  "by": "claude-in-session"
+ },
+ "pack.pick.page": {
+  "en": "276deef5715f",
+  "tr": "c24898c291b1",
+  "by": "claude-in-session"
+ },
+ "pack.pick.refused": {
+  "en": "b5f2b59e9410",
+  "tr": "b5f2b59e9410",
+  "by": "claude-in-session"
+ },
+ "pack.pick.some": {
+  "en": "fb91f1f483fa",
+  "tr": "a7f8a8a0adcf",
+  "by": "claude-in-session"
+ },
+ "pack.pick.tier": {
+  "en": "a3e1e99f2620",
+  "tr": "79279f646ead",
+  "by": "claude-in-session"
+ },
  "party.travel.followOnceAble": {
   "en": "314d66a59d0d",
   "tr": "13c168b4b4d2",
@@ -26325,8 +26480,8 @@
   "by": "claude-in-session"
  },
  "prof.craft.xpFirstBought": {
-  "en": "09224e528df1",
-  "tr": "ae883e1be44c",
+  "en": "75f0476f9180",
+  "tr": "cf9cbb106bbd",
   "by": "claude-in-session"
  },
  "prof.craft.xpLimit": {
@@ -26770,8 +26925,8 @@
   "by": "claude-in-session"
  },
  "prof.page.craft.xpBought": {
-  "en": "796b3cae733a",
-  "tr": "4921a0442ab6",
+  "en": "64d819c83da0",
+  "tr": "5e9466237e48",
   "by": "claude-in-session"
  },
  "prof.page.craft.xpFirst": {
@@ -26780,8 +26935,8 @@
   "by": "claude-in-session"
  },
  "prof.page.craft.xpFirstOwn": {
-  "en": "0cd6f1e210c1",
-  "tr": "00b961c5cb5e",
+  "en": "6db8f28ac0da",
+  "tr": "d5db7da9783c",
   "by": "claude-in-session"
  },
  "prof.page.craft.xpLimit": {
@@ -26870,8 +27025,8 @@
   "by": "claude-in-session"
  },
  "prof.page.enchant.cloth": {
-  "en": "5e3a1c7c87e4",
-  "tr": "8f7761cdf6b3",
+  "en": "b93d723d0f31",
+  "tr": "44fc81138d97",
   "by": "claude-in-session"
  },
  "prof.page.enchant.full": {
@@ -27200,8 +27355,8 @@
   "by": "claude-in-session"
  },
  "prof.page.how.outfitting": {
-  "en": "ac56dd54d5ac",
-  "tr": "c9776bed4e46",
+  "en": "85dc68e23b5f",
+  "tr": "171bd8172010",
   "by": "claude-in-session"
  },
  "prof.page.how.smithing": {
@@ -29119,14 +29274,29 @@
   "tr": "babf22c575eb",
   "by": "claude-in-session"
  },
+ "ql.journal.pieceChain": {
+  "en": "9fc9f25448a2",
+  "tr": "61bcd3b1f282",
+  "by": "claude-in-session"
+ },
  "ql.journal.pieceDamage": {
   "en": "8d28c6a569cd",
   "tr": "aa788addaec8",
   "by": "claude-in-session"
  },
+ "ql.journal.pieceLeather": {
+  "en": "14786dce4b74",
+  "tr": "008d0b4076e6",
+  "by": "claude-in-session"
+ },
  "ql.journal.pieceOneHanded": {
   "en": "7ec4211fda0d",
   "tr": "f50a2567dcec",
+  "by": "claude-in-session"
+ },
+ "ql.journal.piecePlate": {
+  "en": "71f27cb3d1c6",
+  "tr": "e061cae61981",
   "by": "claude-in-session"
  },
  "ql.journal.pieceTwoHanded": {
@@ -35722,6 +35892,11 @@
  "tutorials.wildZone.body2": {
   "en": "3c759d3b73f2",
   "tr": "e83e03d4ed2b",
+  "by": "claude-in-session"
+ },
+ "vendor.put.refused": {
+  "en": "964e7da80274",
+  "tr": "8ec18cfad3d7",
   "by": "claude-in-session"
  },
  "wagon.upkeep.boons.failing": {

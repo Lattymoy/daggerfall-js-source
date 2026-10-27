@@ -1162,3 +1162,25 @@ The Thunderlock's reload was the lab's fixed 1.7 s. It is now
 `cooldownUntil` when the shot ends, so the pump and the next trigger share that span. Speed 50 is 1.70 s,
 75 is 1.53 s, 100 is 1.36 s, 150 is 1.02 s, and it does not go under 1 s. The frame clock stays 14 fps.
 A Pistolet's reload stays 1.4 s. At this build the Thunderlock's sustained DPS went from 11.95 to 12.82.
+
+**BOW-TOPS (2026-10-26, the owner: "Deploy failed").** BAL-ARCHERY merged with the deploy red, and deploys 1705 to
+1707 failed on what it moved without moving its pins. The relay keeps its own copies of the weapon tops, and they
+kept the old bows, so the arena's and the siege's referees would have capped a bow's top blow one short of the game's.
+Both copies now take the bows' new tops, a Short Bow 17 and a Long Bow 19
+(`net/arena/arenaLaw.js:"export const ARENA_WEAPON_MAX = Object.freeze({"`,
+`net/siege/siegeRef.js:"export const SIEGE_WEAPON_MAX = Object.freeze({"`). Both files are in the relay's bundle,
+so RELAY_VERSION is `world269` with its LAW row, and every pin of `world268` is moved. relay-deploy.yml deploys it
+on the merge, which drops every open socket once. The pins that still read the old law are moved: the shaft fixtures
+of `arrowfoes.test.js`, `roadh_tail.test.js` and `audit65_constants.test.js` take a step of 1.25 at the shaft's own
+speed (`1.25 / ARROW_FLIGHT_SPEED`), so their geometry is unchanged, and a spell's flight stays on MISSILE_SPEED.
+`techfx1.test.js` times a volley's landing at ARROW_FLIGHT_SPEED. `audit39_worldmodes.test.js`'s Long Bow blow is 18,
+and `int7_arms.test.js`'s Long Bow reach is 19. `techfx1_audit.test.js` refuses any number a flight is divided by, not
+only 25. Seven mutant records are re-aimed by content (`techfx1.json`, `audit_martial.json`, `tell6d.json`,
+`pvpref.json`), and two that quote the version line (`nirnrootsage.json`, `soc1.json`). The 151 records these files
+touch were judged again: 150 dead, 1 equivalent as recorded. `tools/mutants/bowtops.json` (6, all dead).
+
+One cost is said out loud. A shaft's contact is tested after each step, not swept, and at the same frame time the
+step is now 1.35 times as long. A shaft through the middle of a body steps past it once the step is longer than the
+contact: 1.6 m for the player (MISSILE_COLLIDER_RADIUS 0.45 + 0.35) and 1.8 m for a foe (0.45 + 0.45). At
+ARROW_FLIGHT_SPEED that is a frame longer than 0.047 s for the player and 0.053 s for a foe (MISSILE_SPEED's were
+0.064 s and 0.072 s). A shaft off the middle meets a shorter chord, so it can pass at shorter frames.

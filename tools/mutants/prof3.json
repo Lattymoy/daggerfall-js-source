@@ -258,13 +258,13 @@
   {
     "name": "PROF3-svc-no-first-bonus",
     "file": "server-account/src/professions.js",
-    "old": "FROM (SELECT CASE WHEN EXISTS (SELECT 1 FROM prof_crafts WHERE player = ?1 AND char_id = ?2 AND ${madeBefore}) THEN 0 ELSE 1 END AS f, ${pays} AS p)",
+    "old": "FROM (SELECT CASE WHEN EXISTS (SELECT 1 FROM prof_crafts WHERE player = ?1 AND char_id = ?2 AND ${patternMade}) THEN 0 ELSE 1 END AS f, ${pays} AS p)",
     "new": "FROM (SELECT 0 AS f, ${pays} AS p)",
     "tests": [
       "test/net/prof3_service.test.js",
       "test/systems/prof3_client.test.js"
     ],
-    "note": "PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
+    "note": "PIN MOVED (WOVEN-PAYS, FIELD BUGS 2026-10-26b): re-aimed by content - the decision's `f` reads `patternMade` (a judged pattern made by the craft that laid its first on). PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
   },
   {
     "name": "PROF3-svc-inputs-unheld",

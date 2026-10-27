@@ -4,10 +4,14 @@
 import { IntroTheme, MENU_THEME_GAIN } from '../../systems/introTheme.js';
 import { brandMark } from '../brandMark.js';
 import { createIntroLandscape } from './introLandscape.js';
-import { introFrameAt, introEase, INTRO_CREDITS, TITLE_READY_TIME, MENU_FADE_SECONDS } from './introCue.js';
+import { introFrameAt, introEase, INTRO_CREDITS, INTRO_NARRATION, TITLE_READY_TIME, MENU_FADE_SECONDS } from './introCue.js';
+import { INTRO_MAP_LABELS, pictureToFilm } from './introTamriel.js';   // INTRO4: the continent's words, where they sit
 import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS } from '../pixelifyFive.js';   // FONT3: the film's words in the enhanced face
 import { injectEnhancedFonts } from '../enhanced/enhancedStyle.js';   // FONT3: the one request, made when the film mounts
 import { t } from '../../systems/textManager.js';   // L10N4: the film's words in the player's language
+
+/** INTRO4: how long the gate waits for the film's city to be built (the score's own load is held to 15 s). */
+export const CITY_WAIT_MS = 20000;
 
 export const INTRO_CREDIT_URLS = Object.freeze({
   interkarma: new URL('../../assets/intro/interkarma.webp', import.meta.url).href,
@@ -34,9 +38,19 @@ const STYLE = `${PIXELIFY_FIVE_FACE}
 .intro-credit[data-credit=nexus] img{max-width:45vw;max-height:17dvh}
 /* BR5: the box keeps BR4's height - 86vw and 1240px x 850/2112 x 526/322 for the DFO mark's 1.63:1; BR6: x 1232/1034 for the dragon mark's 1.19:1 */
 .intro-title{position:absolute;left:50%;top:48%;width:min(41.2vw,595px);opacity:0;pointer-events:none;transform-origin:50% 50%;will-change:transform,opacity,filter}
-.intro-title .brand-logo{display:block;width:100%;height:auto}
+.intro-title .brand-logo{display:block;width:100%;height:auto;transform:translateX(-10%)}
 .intro-title-fallback{font-size:clamp(28px,7vw,100px);text-align:center;margin:0;letter-spacing:.05em}
 .intro-light{position:absolute;inset:0;opacity:0;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,#ebd3a025,transparent 58%)}
+/* INTRO4: the narrator's line, low in the frame over a soft dark of its own; the map's words over the continent */
+.intro-narration{position:absolute;left:50%;bottom:max(11.5dvh,58px);transform:translateX(-50%);width:min(880px,88vw);padding:14px 28px;text-align:center;opacity:0;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,#02050799,transparent 72%)}
+.intro-narration p{margin:0;font-size:clamp(13px,1.4vw,19px);line-height:1.6;letter-spacing:.05em;color:#efe3c4;text-shadow:0 2px 10px #000,0 0 3px #000}
+.intro-map{position:absolute;inset:0;pointer-events:none;opacity:0}
+.intro-label{position:absolute;left:0;top:0;white-space:nowrap;transform-origin:0 0;text-transform:uppercase;color:#f1e2b8;text-shadow:0 1px 6px #000,0 0 2px #000;will-change:transform}
+.intro-label span{display:block;transform:translate(-50%,-50%)}
+.intro-label[data-kind=province]{font-size:clamp(11px,1.3vw,18px);letter-spacing:.3em}
+.intro-label[data-kind=sea]{font-size:clamp(9px,.9vw,13px);letter-spacing:.24em;color:#b4cad2;opacity:.8}
+.intro-label[data-kind=capital]{font-size:clamp(9px,.95vw,13px);letter-spacing:.18em;color:#ffd98a}
+.intro-label[data-kind=capital] span:before{content:'◆';display:block;font-size:9px;margin-bottom:3px;color:#ffcf6a}
 .intro-gate{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:22px;text-align:center;background:radial-gradient(ellipse at 50% 42%,#14222dcc,#030609 75%);padding:28px;cursor:pointer}
 #intro button{font:inherit;cursor:pointer;touch-action:manipulation;color:inherit}
 .intro-begin{min-height:48px;min-width:168px;padding:13px 26px;background:#08101888;border:1px solid #8c7851;font-size:13px!important;letter-spacing:.18em;text-transform:uppercase}
@@ -48,7 +62,7 @@ const STYLE = `${PIXELIFY_FIVE_FACE}
 .intro-continue{position:absolute;left:50%;bottom:max(13dvh,60px);transform:translateX(-50%);white-space:nowrap;min-height:48px;padding:12px 28px;background:none;border:0;font-size:12px!important;letter-spacing:.25em;text-transform:uppercase;opacity:0}
 .intro-continue:before,.intro-continue:after{content:'◆';display:inline-block;font-size:7px;vertical-align:middle;color:#bfa878;margin:0 18px}
 .intro-footer{position:absolute;bottom:max(18px,env(safe-area-inset-bottom));left:20px;right:20px;text-align:center;font-size:11px;line-height:1.5;letter-spacing:.18em;text-transform:uppercase;color:#898a82;pointer-events:none}
-@media(max-width:600px){.intro-credit img{max-width:80vw;max-height:24dvh}.intro-credit[data-credit=nexus] img{max-width:72vw}.intro-credit p{font-size:11px;letter-spacing:.18em}.intro-continue{bottom:23dvh;font-size:11px!important;letter-spacing:.16em}.intro-title{width:68.6vw}.intro-letterbox{border-width:4dvh 0}.intro-footer{font-size:11px}}
+@media(max-width:600px){.intro-narration{bottom:18dvh;padding:10px 12px}.intro-narration p{font-size:12px;letter-spacing:.03em}.intro-label[data-kind=sea]{display:none}.intro-credit img{max-width:80vw;max-height:24dvh}.intro-credit[data-credit=nexus] img{max-width:72vw}.intro-credit p{font-size:11px;letter-spacing:.18em}.intro-continue{bottom:23dvh;font-size:11px!important;letter-spacing:.16em}.intro-title{width:68.6vw}.intro-letterbox{border-width:4dvh 0}.intro-footer{font-size:11px}}
 @media(max-height:450px){.intro-continue{bottom:7dvh}.intro-title{width:min(35.5vw,480px)}.intro-footer{bottom:6px}.intro-gate{gap:12px}}
 `;
 
@@ -79,7 +93,14 @@ export async function runIntro({ theme, onReveal, doc = document, freezeAt = nul
   const canvas = make(doc, 'canvas', 'intro-landscape'); canvas.setAttribute('aria-hidden', 'true');
   const cloud = make(doc, 'div', 'intro-cloud');
   const shade = make(doc, 'div', 'intro-shade');
-  film.append(canvas, cloud, shade, make(doc, 'div', 'intro-vignette'), make(doc, 'div', 'intro-letterbox'));
+  // INTRO4: the map's words - every name the geography's own - placed over the continent each frame
+  const map = make(doc, 'div', 'intro-map'); map.setAttribute('aria-hidden', 'true');
+  const labels = INTRO_MAP_LABELS.map((entry) => {
+    const node = make(doc, 'div', 'intro-label'); node.dataset.kind = entry.kind;
+    node.append(make(doc, 'span', null, entry.name)); map.append(node);
+    return { node, at: [...pictureToFilm(entry.at[0], entry.at[1])] };
+  });
+  film.append(canvas, map, cloud, shade, make(doc, 'div', 'intro-vignette'), make(doc, 'div', 'intro-letterbox'));
   const images = [];
   const credits = new Map();
   for (const entry of INTRO_CREDITS) {
@@ -93,7 +114,12 @@ export async function runIntro({ theme, onReveal, doc = document, freezeAt = nul
   const title = make(doc, 'div', 'intro-title');
   const logo = brandMark(doc); title.append(logo);
   images.push(decodedImage(logo).then((ok) => { if (!ok) title.append(make(doc, 'h1', 'intro-title-fallback', 'DFO Online')); }));
-  const light = make(doc, 'div', 'intro-light'); film.append(title, light);
+  const light = make(doc, 'div', 'intro-light');
+  // INTRO4: the narrator - one line at a time, in the player's language (introCue.js INTRO_NARRATION)
+  const narration = make(doc, 'div', 'intro-narration'); narration.setAttribute('aria-hidden', 'true');
+  const narrationLine = make(doc, 'p'); narration.append(narrationLine);
+  film.append(narration, title, light);
+  let narrationKey = null;
   const gate = make(doc, 'div', 'intro-gate');
   const begin = make(doc, 'button', 'intro-begin', t('menu.intro.begin', 'Begin')); begin.type = 'button'; begin.disabled = true;
   // MAC: the gate is the BUTTON and nothing else - no kicker, no title, no
@@ -251,6 +277,17 @@ export async function runIntro({ theme, onReveal, doc = document, freezeAt = nul
       cloud.style.opacity = String(reduced ? 0 : st.cloud * 0.88);
       shade.style.opacity = String(st.shade);
       for (const credit of st.credits) credits.get(credit.key).style.opacity = String(credit.opacity);
+      const line = st.narration.reduce((best, n) => (n.opacity > (best?.opacity ?? 0) ? n : best), null);
+      if (line && line.key !== narrationKey) { narrationKey = line.key; narrationLine.textContent = INTRO_NARRATION.find((n) => n.key === line.key).text; }
+      narration.style.opacity = String(line?.opacity ?? 0);
+      map.style.opacity = String(st.labels);
+      if (st.labels > 0 && landscape) {
+        for (const label of labels) {
+          const [x, y, front] = landscape.project([label.at[0], 0, label.at[1]]);
+          label.node.hidden = !front;
+          if (front) label.node.style.transform = `translate(${x.toFixed(1)}px,${y.toFixed(1)}px)`;
+        }
+      }
       title.style.opacity = String(st.title.opacity);
       title.style.transform = `translate(-50%,-50%) translateY(${(st.title.y * host.clientHeight).toFixed(3)}px) scale(${st.title.scale.toFixed(5)})`;
       // Depth of field only while the mark is travelling; 'none' at rest so
@@ -292,9 +329,12 @@ export async function runIntro({ theme, onReveal, doc = document, freezeAt = nul
     if (!over) {
       const musicReady = theme.prepare();
       landscape = createIntroLandscape(canvas);
-      debugState.landscapeReady = !!landscape;
+      // INTRO4: the city is built off this thread; the film opens on it, never on an empty lake - but a build that never
+      // answers (a worker that hangs without an error) holds the gate no longer than the score's own load may
+      const built = landscape ? Promise.race([landscape.ready, new Promise((resolve) => win.setTimeout(() => resolve(false), CITY_WAIT_MS))]) : Promise.resolve(false);
+      await Promise.all([musicReady, decoded, built]);
+      debugState.landscapeReady = !!landscape && await built;
       landscape?.render(0, host.clientWidth, host.clientHeight, reduced);
-      await Promise.all([musicReady, decoded]);
       if (!over && transitionAt === null && phase === 'preparing') {
         phase = 'ready'; begin.disabled = false;
         status.textContent = reduced ? t('menu.intro.readyReduced', 'Tap anywhere to begin. Reduced motion is on.') : t('menu.intro.ready', 'Tap anywhere to begin. Best with sound on.');

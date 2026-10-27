@@ -4,17 +4,11 @@
 // A western opening, northern and southern shores, and Balfiera are
 // described by primitives below; seeded noise supplies coast and relief.
 // It is composed for the cinematic and is not a gameplay travel map.
-// introLandscape.js uploads the matching height and RGB colour fields to
-// the GPU. SEA_LEVEL is the common water boundary for both fields.
-
-/** Grid size. Wider than tall - the bay's frame is a landscape one. */
-export const INTRO_MAP_W = 1024;
-export const INTRO_MAP_H = 640;
-
-/** The water floor, in heightmap units (0..255). Everything at or below
- *  this is water to the renderer, so coast is where the field crosses
- *  it rather than a separate mask that could disagree with the height. */
-export const SEA_LEVEL = 46;
+//
+// INTRO4 (bible/10-UI/UI-Arc.md INTRO4): INTRO2's own landscape of the Bay (buildIliac, its ranges, its sea floor) is
+// retired with INTRO2's film. The Bay's authored SHAPE stays and is drawn inside the continent the new film pulls back
+// to (introTamriel.js, in the hole tamrielGeography.js leaves for the Bay), and the seeded noise stays the one home
+// ui/tamrielInk.js and the continent read.
 
 /** The default seed. A constant, not a clock: the intro must draw the
  *  same province every boot, or two screenshots of it are two provinces
@@ -64,18 +58,6 @@ export const STROKES = Object.freeze([
  *  cut, which is what makes it an island rather than a peninsula the
  *  bay happens to flow round. */
 export const BALFIERA = Object.freeze({ x: 0.452, y: 0.470, r: 0.052 });
-
-/** Where the mountains stand: ridges banded along the two shores, away
- *  from the water. `lat` is the band's centre in normalised y, `spread`
- *  its falloff, `gain` how high it pushes. North is the Wrothgarians,
- *  south the Dragontails - named for what they evoke, not surveyed. */
-export const RANGES = Object.freeze([
-  { name: 'wrothgarian', lat: 0.055, spread: 0.115, gain: 1.00 },
-  { name: 'dragontail', lat: 0.930, spread: 0.125, gain: 0.94 },
-  // A low spur reaching toward the bay's head, so the eastern horizon
-  // is not a flat lid when the camera crests at the last cue.
-  { name: 'wrothspur', lat: 0.230, spread: 0.070, gain: 0.42 },
-]);
 
 // ── NOISE ──────────────────────────────────────────────────────────
 
@@ -183,113 +165,4 @@ export function seaDistance(nx, ny) {
   const bd = Math.hypot(nx - BALFIERA.x, ny - BALFIERA.y) - BALFIERA.r;
   if (-bd > d) d = -bd;
   return d;
-}
-
-/**
- * Build the province.
- *
- * Returns { w, h, height, colour }: a heightmap in 0..255 with water at
- * a flat SEA_LEVEL floor, and an RGB colourmap on the same grid.
- * Deterministic in `seed` alone.
- */
-export function buildIliac({ w = INTRO_MAP_W, h = INTRO_MAP_H, seed = INTRO_MAP_SEED } = {}) {
-  const coastN = makeNoise(seed);
-  const hillN = makeNoise(seed ^ 0x9e37);
-  const rangeN = makeNoise(seed ^ 0x51ed);
-  const tintN = makeNoise(seed ^ 0x2545);
-
-  const height = new Uint8Array(w * h);
-  const colour = new Uint8Array(w * h * 3);
-
-  // The range bands depend on LATITUDE ALONE, so they are a per-row
-  // constant and not a per-pixel exp(). Three exps a row instead of
-  // three a pixel is most of the build time this map used to cost.
-  const bands = new Float32Array(h * RANGES.length);
-  for (let y = 0; y < h; y++) {
-    const ny = y / h;
-    for (let k = 0; k < RANGES.length; k++) {
-      const rg = RANGES[k];
-      bands[y * RANGES.length + k] = Math.exp(-Math.pow((ny - rg.lat) / rg.spread, 2)) * rg.gain;
-    }
-  }
-
-  for (let y = 0; y < h; y++) {
-    const ny = y / h;
-    for (let x = 0; x < w; x++) {
-      const nx = x / w;
-      const i = y * w + x;
-
-      // COAST. The authored distance, displaced by fbm at three
-      // scales: headlands, bays, and the fret.
-      //
-      // THE FRET IS SCALED BY NEARNESS TO THE SHORE. Displacing the
-      // whole field equally moves the BAY as much as it roughens its
-      // edge, so the first build came back with a smooth blob at the
-      // right size - the noise was there and it was spent in the wrong
-      // place. `near` falls off over ~0.09 units, which is the only
-      // band where a displacement is visible as coastline at all.
-      const d0 = seaDistance(nx, ny);
-      const near = Math.exp(-Math.abs(d0) * 11);
-      const warp = (octaveNoise(coastN, nx * 5.5, ny * 5.5, 4) - 0.5) * 0.055
-                 + (octaveNoise(coastN, nx * 17, ny * 17, 3) - 0.5) * 0.050 * near
-                 + (octaveNoise(coastN, nx * 53, ny * 53, 2) - 0.5) * 0.018 * near;
-      const d = d0 + warp;
-
-      if (d <= 0) {
-        // Water. Flat floor; the renderer shades it, not the map.
-        height[i] = SEA_LEVEL;
-        // Depth only tints - shallows over the shelf, deep out west.
-        const deep = clamp01(-d * 5.5);
-        const r = 22 + (1 - deep) * 20;
-        const g = 48 + (1 - deep) * 34;
-        const b = 74 + (1 - deep) * 30;
-        colour[i * 3] = r; colour[i * 3 + 1] = g; colour[i * 3 + 2] = b;
-        continue;
-      }
-
-      // LAND. A coastal plain rising inland, plus rolling hills, plus
-      // the ridged ranges banded away from the bay.
-      const inland = clamp01(d * 3.4);                 // 0 at the shore
-      const plain = Math.pow(inland, 0.65) * 30;
-      const hills = octaveNoise(hillN, nx * 11, ny * 11, 4) * 26 * (0.30 + 0.70 * inland);
-
-      // ONE ridged sample serves every band - they differ in WHERE they
-      // stand, not in what the rock does.
-      let bandSum = 0;
-      for (let k = 0; k < RANGES.length; k++) bandSum += bands[y * RANGES.length + k];
-      let range = 0;
-      if (bandSum > 0.02) {
-        range = bandSum * ridged(rangeN, nx * 7.5, ny * 7.5, 5) * 168;
-      }
-      // The ranges keep off the water: a peak on the beach reads as an
-      // error even when the noise is happy to put one there.
-      range *= clamp01(d * 5);
-
-      const z = SEA_LEVEL + 2 + plain + hills + range;
-      const zi = z > 255 ? 255 : z | 0;
-      height[i] = zi;
-
-      // COLOUR by height and latitude, with a little noise so a band
-      // never reads as a contour line. Shore sand, then grass, then
-      // the moor, then rock, then snow on the crests.
-      const above = (zi - SEA_LEVEL) / (255 - SEA_LEVEL);
-      const t = clamp01(tintN(nx * 40, ny * 40) * 0.12 - 0.06 + above * 1.35);
-      let r, g, b;
-      if (d < 0.005) { r = 146; g = 132; b = 100; }                       // strand
-      else if (t < 0.09) { r = 82; g = 104; b = 56; }                      // low grass
-      else if (t < 0.22) { r = 56; g = 82; b = 44; }                       // wood
-      else if (t < 0.38) { r = 92; g = 96; b = 58; }                       // moor
-      else if (t < 0.55) { r = 104; g = 94; b = 72; }                      // scrub rock
-      else if (t < 0.72) { r = 118; g = 112; b = 104; }                    // bare rock
-      else { r = 198; g = 202; b = 210; }                                  // snow
-      // Hammerfell reads warmer than High Rock: a slow south-facing
-      // shift, so the two shores are not the same green.
-      const south = clamp01((ny - 0.50) * 2.2);
-      r += south * 26; g += south * 8; b -= south * 14;
-      colour[i * 3] = r > 255 ? 255 : r | 0;
-      colour[i * 3 + 1] = g > 255 ? 255 : g | 0;
-      colour[i * 3 + 2] = b < 0 ? 0 : b | 0;
-    }
-  }
-  return { w, h, height, colour };
 }

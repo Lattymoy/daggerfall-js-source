@@ -217,6 +217,7 @@ export function mountEnhancedPlayerTrade(hostEl, { session, deps }) {
     const bits = [letterWorthLine(selected.item), line.material, line.word, `${line.weight.toFixed(2)} kg`];   // TRADE-LOC: a letter's worth first
     if (line.damage != null) bits.push(`Damage ${line.damage}`);
     if (line.armour != null) bits.push(`Armour ${line.armour}`);
+    if (line.armorType != null) bits.push(`${line.armorType} armor`);   // ARMOR-TYPE (Voice.md rule 8: American spelling)
     for (const t of line.survival ?? []) bits.push(t);
     info.append(el('p', 'meta', bits.filter(Boolean).join(' · ')));
     // TRADE-INFO: and the item's magic, a line each - CARD-FIT U4: in brief (the tier, its affixes, the sigil, the set's
