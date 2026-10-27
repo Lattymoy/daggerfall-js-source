@@ -89,8 +89,8 @@
   {
     "name": "FIRM1-powers-awake-in-duels",
     "file": "src/systems/firmamentPowers.js",
-    "old": "export const firmamentAwake = (e) => mine(e) && firmamentInForce() && !sigilDueling() && !e?._mentor;",
-    "new": "export const firmamentAwake = (e) => mine(e) && firmamentInForce() && !e?._mentor;",
+    "old": "export const firmamentAwake = (e) => mine(e) && firmamentInForce() && !sigilDueling();",
+    "new": "export const firmamentAwake = (e) => mine(e) && firmamentInForce();",
     "tests": [
       "test/systems/firm1_powers.test.js"
     ]
