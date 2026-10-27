@@ -30,6 +30,7 @@ import { RAY_DISTANCE, DEFAULT_ACTIVATION_DISTANCE } from '../../../src/player/a
 import { plaqueActionFor } from '../../../src/systems/quickLoot.js';
 import { Collider } from '../../../src/player/collider.js';
 import { PlayerMotor, FIXED_DT } from '../../../src/player/motor.js';
+import { hullsStood, hullPassesMyDeck } from '../../../src/scenes/comeSailAway/peerHulls.js';   // AUDIT FB1026d D1: the deck's hulls, as world.js reads them
 
 const WORLD = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
 const cut = (start, end = '\n  }\n') => { const i = WORLD.indexOf(start); assert.ok(i >= 0, `lifted: ${start}`); return WORLD.slice(i, WORLD.indexOf(end, i) + end.length); };
@@ -45,10 +46,10 @@ function liftWorld(s) {
           collider, csaRuntime, csaOn, raycastColliders, RAY_DISTANCE, csaActivationModelOf, bedSleepingOn, csaCustomModelOf, BED_MODELS, CSA_TRIGGER_MODEL,
           getInteractionMode, DEFAULT_ACTIVATION_DISTANCE, CSA_ACTIVATION_DISTANCE, csaAboard, csaPeerActivate, toggleRest, _restFromBed, plaqueActionFor,
           csaBoatVerb, hasSailingCabin, csaOpenBoatMenu, csaCall, worldPlaqueOn, renderer, csaDrawParticlesOpaque, csaDrawParticlesBlended,
-          remotePlayers, peerRiders, peerWalkers, gateCourt, sdSpoilsPool, arenaBouts, cam } = s;   // SD9e: and the Brass Remnant's spoils (PIN MOVED)
+          remotePlayers, peerRiders, peerWalkers, gateCourt, sdSpoilsPool, arenaBouts, cam, hullsStood, hullPassesMyDeck, player = { pos: [0, 0, 0] } } = s;   // AUDIT FB1026d D1: the deck's hulls (no body on a deck here)   // SD9e: and the Brass Remnant's spoils (PIN MOVED)
     ${cutLine('  const _csaBuckets = new Map();')}${cutLine('  const csaBoatId = (boat) =>')}
     ${cut('  const csaShapeOf = (c) =>', ');\n')}${cutLine('  const CSA_RIGID_EPS =')}${cut('  function csaCarry(b, m) {')}
-    ${cut('  function csaSyncColliders() {')}
+    ${cutLine('  const csaBoatUnderMe = () =>')}${cut('  function csaSyncColliders() {')}
     ${cut('  function csaActivationPick(eye, dir) {')}
     ${cut('  function csaPeerActivationPick(eye, dir) {')}
     ${cut('  const csaActivate = (pick) => {', '\n  };\n')}
@@ -56,7 +57,7 @@ function liftWorld(s) {
     ${cutLine('    extraBillboards: () =>')}${cutLine('    drawModeMeshes: () =>')}${cutLine('    csaDrawParticlesBlended: () =>')}${cutLine('    modeLights: () =>')}    };
     return { sync: csaSyncColliders, pick: csaActivationPick, peerPick: csaPeerActivationPick, activate: csaActivate, host, boatId: csaBoatId };`;
   // eslint-disable-next-line no-new-func
-  return new Function('s', body)(s);
+  return new Function('s', body)({ hullsStood, hullPassesMyDeck, ...s });
 }
 
 /**

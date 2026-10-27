@@ -615,7 +615,7 @@ test('SERPENT1 hosts: THE WORLD HOST wires it whole - the naval host\'s seam rea
   assert.ok(/THE FOUR HOSTS RULE: THIS host \(scenes\/world\.js\) wires it whole\. scenes\/exterior\.js[\s\S]{0,200}scenes\/worldModes\.js[\s\S]{0,200}scenes\/dungeonContext\.js[\s\S]{0,200}named and left without it/.test(world), 'all four named');
   for (const other of ['exterior.js', 'worldModes.js', 'dungeonContext.js']) assert.ok(!/serpent/i.test(src(other)), `${other} carries no serpent`);
   const naval2 = src('naval/navalHost.js');
-  assert.ok(naval2.includes('drift: (boat) => (enabled ? withBumpers(boat, deps.serpent?.drift?.(boat) ?? null) : null)'));   // PIN MOVED: SERPENT4 - and the ships' bumpers
+  assert.ok(naval2.includes('drift: (boat) => (enabled ? deps.serpent?.drift?.(boat) ?? null : null)'));   // PIN MOVED: SERPENT4 - and the ships' bumpers; PIN MOVED: HULL-PASS (Field-Bugs-2026-10-26d) - the bumpers retired
   assert.ok(naval2.includes('gale: (boat) => (enabled ? deps.serpent?.gale?.(boat) ?? null : null)'), 'SERPENT4: the gale through the naval host');
   assert.ok(world.includes('gale: (boat) => naval?.gale?.(boat) ?? null,'), 'SERPENT4: Come Sail Away\'s gale beside its drift');
   assert.ok(naval2.includes('for (const t of deps.serpent?.targets?.() ?? []) out.push(t);'));

@@ -483,7 +483,7 @@ such duds before, none now. A departure (Port-Ledger A, HELD-BASE). `test/system
 ## AFFIX-LINES (2026-10-25) - A LINE IS DRAWN OVER THE LINES, NOT THE KINDS
 
 A player, SaberGGaming: carrying capacity on four Rare pieces in five, found and crafted alike; the owner: "No band
-aids". Measured over 10,000 mints through the craft's own door (`smithItems.js:"applyRarity(item, eff.rarity, rolls, null, { fits, byLines: Number.isSafeInteger(version) && version >= MINT_V_LINES,"`),
+aids". Measured over 10,000 mints through the craft's own door (`smithItems.js:"applyRarity(item, eff.rarity, rolls, null, { fits, byLines: at(MINT_V_LINES), lean: at(MINT_V_ARMOR_LEAN), fists: at(MINT_V_JEWEL_KIN) });"`),
 no bias in the stream - the law made it, twice over. A pick drew a KIND at even weight and then its param
 (`lootRarity.js:"const draw = () => (byLines ? pickByLines(pool, (k) => drawWeight(k, item, out, lean), rolls) : pick(pool, rolls));"`,
 the old law's `pick`): carrying capacity is one line, the attributes eight, the resistances five and the skills 35, so
@@ -572,7 +572,10 @@ THE NUMBERS, 20,000 seeded Rare cuirasses a row (share of all lines; the attribu
 | Chain | 51% | 15% | 2% | 13% | 16% | 55% | 25% | 29% |
 | Plate | 67% | 20% | 3% | 16% | 6% | 55% | 8% | 54% |
 
-THE RECORDS (`net/productRecord.js` MINT_V_ARMOR_LEAN): a craft stamps mint version 3; a record of 2 or less mints the
+THE RECORDS (`net/productRecord.js` MINT_V_ARMOR_LEAN): a craft stamped mint version 3 (JEWEL-KIN, FIELD BUGS
+2026-10-26d: a craft is stamped with the version its client names, 4 from that build - and a client that names none,
+this release's among them, 2, the newest law every build reads alike, so its armour leaves the family lean until it
+updates - `craftMintVersion`, AUDIT FB1026d II D3); a record of 2 or less mints the
 piece it always did (`rollAffixes` `lean` false), so no crafted piece changes when the market or a temper mints it
 again. Pinned: `test/systems/loot/armorlean.test.js`; `affixlines_reforge` (the lines' law measured with the lean off,
 the first pick's share at the family's, versions 2 and 3); `tools/mutants/armorlean.json` (7, all dead).
