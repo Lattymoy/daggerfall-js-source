@@ -363,7 +363,7 @@ const NV = NF + 10;
 
 /**
  * THE GROUND THE LANDFORMS READ: the macro height (kernel units, the bytes' with the lift - `height(x, y)` at Bay pixel
- * (x, y)'s own node, world/landforms.js reliefByteHeight) and the zone (`zoneAt(x, y)`: tamrielBiomes.js tamrielBiomeAt's,
+ * (x, y)'s own node, world/landforms.js nodeGround) and the zone (`zoneAt(x, y)`: tamrielBiomes.js tamrielBiomeAt's,
  * and its climate) - the caller's, so this module reads no reader of its own.
  * @typedef {{ height: (x: number, y: number) => number, zoneAt: (x: number, y: number) => ?{key: string, climate: number}, climateAt: (x: number, y: number) => number, mapH: number, knee: number }} LandformGround
  */
@@ -390,7 +390,34 @@ function macroAt(G, gx, gy, span, out) {
   return out;
 }
 
-const _m = new Float64Array(3), _o = new Float64Array(4), _pal = new Float64Array(PALETTE_SIZE);
+/** RELIEF-PEAKS: STRUCTURE_REACH - how far (map pixels) about a node the land's structure is summed: its tent's half-width. */
+export const STRUCTURE_REACH = 2;
+/** RELIEF-PEAKS: THE LAND'S STRUCTURE about a world sample - its byte nodes' central differences, each one's doubled angle
+ *  weighted by its gradient's square and a tent of STRUCTURE_REACH pixels (the structure tensor's own law: a ridge's two
+ *  flanks fall opposite ways along one line, and read as one), into `out` as the doubled angle at its coherence: [cos,
+ *  sin] of length 1 where the land falls one way, 0 where it falls every way - a summit, a saddle, a bowl. */
+function structureAt(G, gx, gy, span, out) {
+  const fx = gx / span - 1, fy = G.mapH - gy / span, X = Math.floor(fx), Y = Math.floor(fy), R = STRUCTURE_REACH;
+  let xx = 0, yy = 0, xy = 0;
+  for (let j = 1 - R; j <= R; j++) {
+    const wy = 1 - Math.abs(Y + j - fy) / R;
+    if (!(wy > 0)) continue;
+    for (let i = 1 - R; i <= R; i++) {
+      const w = (1 - Math.abs(X + i - fx) / R) * wy;
+      if (!(w > 0)) continue;
+      const x = X + i, y = Y + j, ex = (G.height(x + 1, y) - G.height(x - 1, y)) / 2, ny = (G.height(x, y - 1) - G.height(x, y + 1)) / 2;   // north is -Y
+      xx += w * ex * ex; yy += w * ny * ny; xy += w * ex * ny;
+    }
+  }
+  const e = xx + yy;
+  out[0] = e > 1e-9 ? (xx - yy) / e : 0; out[1] = e > 1e-9 ? (2 * xy) / e : 0;
+  return out;
+}
+/** RELIEF-PEAKS: the direction's strength (the slow fields' [cos, sin] length) from which the oriented families stand in
+ *  their two frames whole; under it they ease into the fixed frame (frame 0), which none of the land's turns can turn. */
+export const ORIENT_FULL = 0.5;
+
+const _m = new Float64Array(3), _o = new Float64Array(4), _pal = new Float64Array(PALETTE_SIZE), _st = new Float64Array(2);
 /** One node's slow fields into `vals` at `o` - the palettes of the 2x2 pixels about it blended (smoothstep, as the
  *  climates' shares are), the macro's height and slope, and the selector. Pure in its world position. */
 function landformNode(G, nx, ny, span, vals, o) {
@@ -437,14 +464,16 @@ function landformNode(G, nx, ny, span, vals, o) {
   vals[o + V_ACC + 1] = flank * (0.35 + 0.65 * dry) * smooth01((0.45 - variety) / 0.5) * (1 - wet);
   vals[o + V_ACC + 2] = (0.35 * up + 0.5 * rugged) * (1 - wet) * smooth01((variety + 0.6) / 0.6);
   vals[o + V_STEP] = D.terrace.low + (D.terrace.high - D.terrace.low) * (0.4 * region + 0.6 * plateau);
-  // the frames' direction: the macro slope's (its doubled angle), a slow field's where the land lies flat
-  const g2 = _m[1] * _m[1] + _m[2] * _m[2];
+  // the frames' direction: the macro slope's (its doubled angle), a slow field's where the land lies flat. RELIEF-PEAKS: the
+  // slope's is the land's STRUCTURE about the node (structureAt: its gradients' doubled angles summed over two map pixels
+  // either way), at its coherence, and the sum is left at its own length - the direction's strength, which
+  // tamrielLandformAt fades the frames by. A unit direction at every node turned through a half turn between two nodes
+  // where they disagreed (a summit, a saddle, the slow field's own turn), and the frames handed one field to another
+  // inside a sample: walls of 80 to 116 m, 85 degrees, 4.8% of the Jerall about Bruma over 37 degrees
   const fc = signed(gx / 5200 + 7.7, gy / 5200 + 1.9), fs = signed(gx / 5200 + 41.1, gy / 5200 + 63.5);
-  const a = smooth01(Math.sqrt(g2) * (1.25 / 6.4) / 0.02);
-  let c2 = (g2 > 0 ? (_m[1] * _m[1] - _m[2] * _m[2]) / g2 : 0) * a + fc * (1 - a), s2 = (g2 > 0 ? (2 * _m[1] * _m[2]) / g2 : 0) * a + fs * (1 - a);
-  const l = Math.sqrt(c2 * c2 + s2 * s2);
-  if (l > 1e-9) { c2 /= l; s2 /= l; } else { c2 = 1; s2 = 0; }
-  vals[o + V_C2] = c2; vals[o + V_S2] = s2;
+  const a = smooth01(grade / 0.02);
+  structureAt(G, gx, gy, span, _st);
+  vals[o + V_C2] = _st[0] * a + fc * (1 - a); vals[o + V_S2] = _st[1] * a + fs * (1 - a);
   vals[o + V_WX] = D.warp * signed(gx / D.warpScale + 5.2, gy / D.warpScale + 1.3);
   vals[o + V_WY] = D.warp * signed(gx / D.warpScale + 9.7, gy / D.warpScale + 3.1);
   vals[o + V_REG] = region;
@@ -552,11 +581,15 @@ export function tamrielLandformAt(L, gx, gy, macro, out = null) {
   const region = f[V_REG], up = f[V_UP];
   const wx = gx + f[V_WX], wy = gy + f[V_WY];
   // the direction between the nodes, made a unit again: two nodes that disagree average short, and every frame read it
-  // as none (the oriented families dropped out cell by cell)
+  // as none (the oriented families dropped out cell by cell). RELIEF-PEAKS: its length is its strength (landformNode) -
+  // the frames stand whole from ORIENT_FULL and ease into the fixed frame under it, so where the direction turns fast (it
+  // is short there) no family hands one field to another inside a sample
   let c2 = f[V_C2], s2 = f[V_S2];
-  const dl = Math.sqrt(c2 * c2 + s2 * s2);
+  const dl = Math.sqrt(c2 * c2 + s2 * s2), strong = smooth01(dl / ORIENT_FULL);
   if (dl > 1e-6) { c2 /= dl; s2 /= dl; } else { c2 = 1; s2 = 0; }
-  const o = orient(c2, s2, _o), k0 = o[0], w0 = o[1], k1 = o[2], w1 = o[3];
+  const o = orient(c2, s2, _o), k0 = o[0], k1 = o[2];
+  let w0 = o[1] * strong, w1 = o[3] * strong, w2 = 1 - strong;   // w2: the fixed frame's (frame 0)
+  if (k0 === 0) { w0 += w2; w2 = 0; } else if (k1 === 0) { w1 += w2; w2 = 0; }
   let sum = 0, top = 0;
   for (let k = 0; k < NF; k++) {
     const w = f[k] - QUIET;   // a family under QUIET is not asked - and fades to nothing at it, never steps
@@ -565,17 +598,17 @@ export function tamrielLandformAt(L, gx, gy, macro, out = null) {
     switch (k) {
       case F.roll: s = (rolling(wx, wy) - CENTRE.rolling) * GAIN.rolling; a = (D.roll.low + (D.roll.high - D.roll.low) * region) * (1 + 0.5 * up); break;
       case F.ridge: {
-        const r = (w0 > 0 ? w0 * ridgeIn(k0, wx, wy, D.ridge.across, D.ridge.stretch, false) : 0) + (w1 > 0 ? w1 * ridgeIn(k1, wx, wy, D.ridge.across, D.ridge.stretch, false) : 0);
+        const r = (w0 > 0 ? w0 * ridgeIn(k0, wx, wy, D.ridge.across, D.ridge.stretch, false) : 0) + (w1 > 0 ? w1 * ridgeIn(k1, wx, wy, D.ridge.across, D.ridge.stretch, false) : 0) + (w2 > 0 ? w2 * ridgeIn(0, wx, wy, D.ridge.across, D.ridge.stretch, false) : 0);
         s = (r - CENTRE.ridge) * GAIN.ridge; a = (D.ridge.low + (D.ridge.high - D.ridge.low) * region) * (0.45 + 0.55 * up); break;
       }
       case F.foot: {
-        const r = (w0 > 0 ? w0 * ridgeIn(k0, wx, wy, D.foot.across, D.foot.stretch, true) : 0) + (w1 > 0 ? w1 * ridgeIn(k1, wx, wy, D.foot.across, D.foot.stretch, true) : 0);
+        const r = (w0 > 0 ? w0 * ridgeIn(k0, wx, wy, D.foot.across, D.foot.stretch, true) : 0) + (w1 > 0 ? w1 * ridgeIn(k1, wx, wy, D.foot.across, D.foot.stretch, true) : 0) + (w2 > 0 ? w2 * ridgeIn(0, wx, wy, D.foot.across, D.foot.stretch, true) : 0);
         s = (r - CENTRE.foot) * GAIN.foot; a = (D.foot.low + (D.foot.high - D.foot.low) * region); break;
       }
       case F.mesa: s = (mesas(wx, wy) - CENTRE.mesa) * GAIN.mesa; a = (D.mesa.low + (D.mesa.high - D.mesa.low) * region); break;
       case F.dune: s = (dunes(gx, gy, D.dune.spacing) - CENTRE.dune) * GAIN.dune; a = (D.dune.low + (D.dune.high - D.dune.low) * region); break;
       case F.drum: {
-        const r = (w0 > 0 ? w0 * drumIn(k0, gx, gy, D.drum.cell) : 0) + (w1 > 0 ? w1 * drumIn(k1, gx, gy, D.drum.cell) : 0);
+        const r = (w0 > 0 ? w0 * drumIn(k0, gx, gy, D.drum.cell) : 0) + (w1 > 0 ? w1 * drumIn(k1, gx, gy, D.drum.cell) : 0) + (w2 > 0 ? w2 * drumIn(0, gx, gy, D.drum.cell) : 0);
         s = (r - CENTRE.drum) * GAIN.drum; a = (D.drum.low + (D.drum.high - D.drum.low) * region); break;
       }
       case F.karst: s = (cones(wx, wy, D.karst.cell) - 0.5 * knobs(wx, wy, D.karst.cell * 0.6, 0.2, 1, 151) - CENTRE.karst) * GAIN.karst; a = (D.karst.low + (D.karst.high - D.karst.low) * region); break;
@@ -591,7 +624,7 @@ export function tamrielLandformAt(L, gx, gy, macro, out = null) {
     sum += ta * terrace(macro + sum, step, D.terrace.riser, wob); top += ta * step / 2;
   }
   if (ga > 0) {
-    const g = (w0 > 0 ? w0 * gullyIn(k0, wx, wy, D.gully.across, D.gully.stretch) : 0) + (w1 > 0 ? w1 * gullyIn(k1, wx, wy, D.gully.across, D.gully.stretch) : 0);
+    const g = (w0 > 0 ? w0 * gullyIn(k0, wx, wy, D.gully.across, D.gully.stretch) : 0) + (w1 > 0 ? w1 * gullyIn(k1, wx, wy, D.gully.across, D.gully.stretch) : 0) + (w2 > 0 ? w2 * gullyIn(0, wx, wy, D.gully.across, D.gully.stretch) : 0);
     const a = (D.gully.low + (D.gully.high - D.gully.low) * region);
     sum += ga * a * (g - CENTRE.gully); top += ga * a;
   }

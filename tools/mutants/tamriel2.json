@@ -86,20 +86,22 @@
   {
     "name": "TAMRIEL2-the-large-map-past-the-seam-is-the-clamp",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "return bayEdgeDistance(x, y) <= SEAM_PX ? woods.getLargeMapData(x, y) : tamrielLargeMap(x, y);",
-    "new": "return woods.getLargeMapData(x, y);",
+    "old": "const own = tamrielLargeMap(x, y);",
+    "new": "const own = woods.getLargeMapData(x, y);",
     "tests": [
       "test/world/tamriel2.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): the large map past the seam is blended in from the edge's"
   },
   {
     "name": "TAMRIEL2-the-large-map-on-the-bay-is-the-continents",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "return bayEdgeDistance(x, y) <= SEAM_PX ? woods.getLargeMapData(x, y) : tamrielLargeMap(x, y);",
-    "new": "return bayEdgeDistance(x, y) < SEAM_PX ? woods.getLargeMapData(x, y) : tamrielLargeMap(x, y);",
+    "old": "if (d <= SEAM_PX) return woods.getLargeMapData(x, y);",
+    "new": "if (d <= 0) return woods.getLargeMapData(x, y);",
     "tests": [
       "test/world/tamriel2.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): the blend starts at the seam at the edge's own large map, so `<` for `<=` is the same ground - the seam band handed to the blend instead"
   },
   {
     "name": "TAMRIEL2-a-copy-not-a-child",

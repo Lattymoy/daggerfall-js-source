@@ -997,12 +997,13 @@
   {
     "name": "AUDIT-LANDFORMS-B2-wild-memo-blind-to-the-sample",
     "file": "src/world/landforms.js",
-    "old": "      const k = x * hDim + y;\n      let v = memo.get(k);",
-    "new": "      const k = x;\n      let v = memo.get(k);",
+    "old": "      const k = x * hDim + y;\n      let v = memo.get(k);\n      if (v === undefined) memo.set(k, v = (Math.fround(shaped(x, y))",
+    "new": "      const k = x;\n      let v = memo.get(k);\n      if (v === undefined) memo.set(k, v = (Math.fround(shaped(x, y))",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): groundMovedField keeps a memo of the same shape - the lift's named by its shaped sample"
   },
   {
     "name": "AUDIT-LANDFORMS-B2-host-hands-no-landforms",
@@ -1246,22 +1247,23 @@
   {
     "name": "AUDIT-LANDFORMS-II-I1-ring-unfaded",
     "file": "src/render/farRing.js",
-    "old": "let heightOf = relief ? (x, y) => ringHeightAt(x, y, byteAt(x, y), true, cliffFadeAt(byteAt, clampX(x), clampY(y))) :",
-    "new": "let heightOf = relief ? (x, y) => ringHeightAt(x, y, byteAt(x, y), true) :",
+    "old": "  if (fades) for (let j = 0; j < fside; j++) for (let i = 0; i < fside; i++) { const x = fx0 + i, y = fy0 + j; fades[j * fside + i] = own(x, y) ? cliffFadeAt(gridByte, x, y) : cliffFadeAt(byteAt, clampX(x), clampY(y)); }",
+    "new": "  if (fades) fades.fill(1);",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ],
-    "note": "Re-aimed by content (BREATHTAKER2 on the horizon): the ring's height law takes the pixel for the continent's share."
+    "note": "Re-aimed by content (RELIEF-PEAKS): the ring's vertex is the kernel's ground at its pixel's centre, its lift faded by its nodes' fades (the ring's grid of them, centreGround's law) - every one 1, the lift unfaded beside the sea. Re-aimed by content (BREATHTAKER2 on the horizon): the ring's height law takes the pixel for the continent's share."
   },
   {
     "name": "AUDIT-LANDFORMS-II-I1-view-unfaded",
-    "file": "src/scenes/world.js",
-    "old": "return [x, ringHeightAt(px.x, px.y, byte, !!landform, fade)",
-    "new": "return [x, ringHeightAt(px.x, px.y, byte, !!landform)",
+    "file": "src/world/landforms.js",
+    "old": "if (lift) fade += w * (fadeAt ? fadeAt(qx, qy) : cliffFadeAt(byteAt, qx, qy));",
+    "new": "if (lift) fade += w * (fadeAt ? fadeAt(qx, qy) : 1);",
     "tests": [
-      "test/world/terrain/auditlandforms.test.js",
-      "test/systems/landform.test.js"
-    ]
+      "test/world/reliefpeaks.test.js",
+      "test/world/terrain/auditlandforms.test.js"
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): the travel view past the grid stands on ringGroundAt, whose fades are centreGround's own cliffFadeAt when none is handed - that default unread"
   },
   {
     "name": "AUDIT-LANDFORMS-II-I3-reach-unscaled",

@@ -374,16 +374,17 @@ export class TerrainGenClient {
   /**
    * FAR-FIELD (render/farField.js): the far field's cells round {baseCX, baseCY} (world/terrain/midRingGrid.js
    * buildFarFieldBytes) - on the worker alone, as the middle ring: null with none, and the far ring closes into the sky.
-   * @param {{ baseCX: number, baseCY: number, radius: number, cell: number, seaByte: number }} job
-   * @returns {Promise<?{ high: Uint8Array, low: Uint8Array }>}
+   * RELIEF-PEAKS: `relief` (the Landforms row) and each cell's vertex's ground (`ground`, world units).
+   * @param {{ baseCX: number, baseCY: number, radius: number, cell: number, seaByte: number, relief?: boolean }} job
+   * @returns {Promise<?{ high: Uint8Array, low: Uint8Array, clim: Uint8Array, ground: Float32Array }>}
    */
   farField(job) {
     if (!this._worker) return Promise.resolve(null);
-    const side = farFieldSide(job.radius), high = new Uint8Array(side * side), low = new Uint8Array(side * side), clim = new Uint8Array(side * side);
+    const side = farFieldSide(job.radius), high = new Uint8Array(side * side), low = new Uint8Array(side * side), clim = new Uint8Array(side * side), ground = new Float32Array(side * side);
     return this._bands('farfield', job, side, HORIZON_BAND_ROWS.far, (m, j0, j1) => {
       if (!m?.high) return false;
-      high.set(m.high, j0 * side); low.set(m.low, j0 * side); clim.set(m.clim, j0 * side);
-      return j1 === side ? { high, low, clim } : true;
+      high.set(m.high, j0 * side); low.set(m.low, j0 * side); clim.set(m.clim, j0 * side); ground.set(m.ground, j0 * side);
+      return j1 === side ? { high, low, clim, ground } : true;
     });
   }
 
@@ -392,7 +393,7 @@ export class TerrainGenClient {
     if (!resolve) return;
     this._mids.delete(m.id);
     if (m.t === 'midError' || m.t === 'farError' || m.t === 'bandError') console.warn('[terrain] worker horizon failed -', m.message);
-    resolve(m.t === 'band' ? { trees: m.trees } : m.t === 'mid' ? { heights: m.heights, wet: m.wet ?? null, flora: m.flora ?? null } : m.t === 'far' ? { high: m.high, low: m.low, clim: m.clim } : null);
+    resolve(m.t === 'band' ? { trees: m.trees } : m.t === 'mid' ? { heights: m.heights, wet: m.wet ?? null, flora: m.flora ?? null } : m.t === 'far' ? { high: m.high, low: m.low, clim: m.clim, ground: m.ground } : null);
   }
 
   _gridAnswer(m) {

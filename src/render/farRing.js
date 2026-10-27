@@ -72,7 +72,7 @@
 
 import { SCALED_OCEAN_ELEVATION, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
 import { overworldTint, isWaterPixel, BASE_HEIGHT_SCALE } from '../ui/overworldModel.js';   // FAR-SEA1: and the overworld's own water rule, for the ring's sea
-import { reliefByteHeight, cliffFadeAt, CLIFF_REACH, byteBeyond } from '../world/landforms.js';   // LANDFORM1: the landforms' lift on a pixel's byte; AUDIT LANDFORMS II I1: faded beside the sea; BREATHTAKER2: and its continuation past the 7-bit top, past the Bay
+import { nodeGround, centreGround, cliffFadeAt, CLIFF_REACH, byteBeyond } from '../world/landforms.js';   // LANDFORM1: the landforms' lift on a pixel's byte; AUDIT LANDFORMS II I1: faded beside the sea; BREATHTAKER2: and its continuation past the 7-bit top, past the Bay; RELIEF-PEAKS: the kernel's own ground at a node and at a pixel's centre
 import { perspective, mirrorProjectionX } from '../world/mat4.js';
 import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
 import { RING_SEA_GLSL, FLORA_GLSL, FLORA_CROWN_M, FLORA_GROVE_M } from './horizonHaze.js';   // FAR-SEA1: the horizon's haze and the sea's own look, one text for the ring (both lanes) and the sea
@@ -112,17 +112,22 @@ export const RING_HAZE_HOLD = 0.85;
 export const RING_RIM_END = (RING_RADIUS - RING_REBUILD_DRIFT) * TERRAIN_SIZE * 0.95;
 export const RING_RIM_START = RING_RIM_END * 0.6;
 
-/** The streamed law's own macro height for one map-pixel byte. LANDFORM1: with `relief` (the Landforms row), the
- *  landforms' lift on it - world/landforms.js reliefByteHeight, the same lift the streamed kernel puts on the byte's own
- *  small-heightmap term - so the horizon stands the massifs the ground it hands over to stands; `fade`, the byte node's
- *  own cliffFadeAt beside the sea (AUDIT LANDFORMS II I1), as the kernel fades it. */
-export const ringHeight = (byte, relief = false, fade = 1, beyond = 0) =>
-  (relief ? reliefByteHeight(byte, fade, beyond) : Math.max(byte * BASE_HEIGHT_SCALE, SCALED_OCEAN_ELEVATION)) * STREAMING_TERRAIN_SCALE;
-/** BREATHTAKER2 (CYRODIIL-RELIEF, stream G): a pixel's macro height as the stream's ground stands it - ringHeight with the
+/** The streamed law's own macro height for one map-pixel byte, world units, at the byte's own NODE (where the kernel stands
+ *  it). RELIEF-PEAKS: world/landforms.js nodeGround - the kernel's two terms (the large map by its law of the small: it had
+ *  been left out, and the horizon stood the Bay's Dragontails some 470 m under the ground it hands over to) and, LANDFORM1,
+ *  with `relief` (the Landforms row) the landforms' lift on it; `fade`, the node's own cliffFadeAt beside the sea (AUDIT
+ *  LANDFORMS II I1), as the kernel fades it; `beyond` the continent's share there (BREATHTAKER2). */
+export const ringHeight = (byte, relief = false, fade = 1, beyond = 0) => nodeGround(byte, relief ? fade : 1, relief ? beyond : 0, relief) * STREAMING_TERRAIN_SCALE;
+/** BREATHTAKER2 (CYRODIIL-RELIEF, stream G): a byte's node height as the stream's ground stands it - ringHeight with the
  *  continent's share at its byte node (world/landforms.js byteBeyond: 0 on the Bay and its seam, past it the lift that
- *  goes on over the 7-bit top, CONTINENT_LIFT) - so the far ring, the middle ring's eased rim and the far field stand
- *  Skyrim's and the Jerall's peaks at the streamed ground's height, never a copy of the law. */
+ *  goes on over the 7-bit top, CONTINENT_LIFT), never a copy of the law. */
 export const ringHeightAt = (x, y, byte, relief = false, fade = 1) => ringHeight(byte, relief, fade, relief ? byteBeyond(x, y) : 0);
+/** RELIEF-PEAKS: THE RING'S GROUND AT PIXEL (x, y)'s CENTRE, where its vertex stands - the kernel's own mean ground there
+ *  (world/landforms.js centreGround: the small term's cubic over the pixel's window, the large map by its law, the lift
+ *  faded by its nodes' fades), world units. The ring stood a pixel's own byte at its centre, half a pixel from where the
+ *  kernel stands it, and 410 to 500 m off the kernel's ground in the continent's ranges; this is 1 to 12 m. `byteAt` the
+ *  ground's bytes; `fadeAt` a node's fade (cliffFadeAt on them, unless the caller holds its own). */
+export const ringGroundAt = (x, y, byteAt, relief = false, fadeAt = null) => centreGround(byteAt, x, y, relief, fadeAt) * STREAMING_TERRAIN_SCALE;
 /** FAR-SEA1: the ring's sea level - a vertex standing here over a water pixel is the sea (after ringHeight: a const). */
 const RING_SEA_Y = ringHeight(0);
 
@@ -165,19 +170,23 @@ export function buildFarRingGrid({ heightBytes, mapWidth, mapHeight, climateAt, 
   const clampX = (x) => Math.max(0, Math.min(mapWidth - 1, x));
   const clampY = (y) => Math.max(0, Math.min(mapHeight - 1, y));
   const { byteAt, climateOf } = ringReaders({ heightBytes, mapWidth, mapHeight, climateAt, byteAt: byteAtPast, climatePast });
+  // RELIEF-PEAKS: each vertex the kernel's own mean ground at its pixel's centre (ringGroundAt) - off the bytes read once
+  // into a grid padded by the normals' reach, the window's (two) and the fade's (the composed read is a law's, not an
+  // array's), and the nodes' fades once a node into a grid of their own (sixteen a vertex).
   // AUDIT LANDFORMS II I1: each node's lift faded beside the sea as the kernel fades it - from the same clamped bytes.
   // AUDIT CAPTAIN'S SEA G6: where the host hands the ground past the map, a node there faded at its OWN pixel (the clamped
-  // corner's fade, 1, stood every isle on the horizon with its whole lift) - off the bytes read once into a grid padded
-  // by the fade's reach (the composed read is a law's, not an array's: 49 reads a node, five nodes a vertex)
-  let heightOf = relief ? (x, y) => ringHeightAt(x, y, byteAt(x, y), true, cliffFadeAt(byteAt, clampX(x), clampY(y))) : (x, y) => ringHeight(byteAt(x, y));
-  if (relief && byteAtPast) {
-    const pad = radius + 1 + CLIFF_REACH, gside = 2 * pad + 1, gx0 = baseX - pad, gy0 = baseY - pad;
-    const grid = new Uint8Array(gside * gside);
-    for (let j = 0; j < gside; j++) for (let i = 0; i < gside; i++) grid[j * gside + i] = byteAt(gx0 + i, gy0 + j);
-    const gridByte = (x, y) => grid[(y - gy0) * gside + (x - gx0)];
-    const own = (x, y) => (x >= 0 && y >= 0 && x < mapWidth && y < mapHeight) || !pastOwn || pastOwn(x, y);
-    heightOf = (x, y) => ringHeightAt(x, y, gridByte(x, y), true, own(x, y) ? cliffFadeAt(gridByte, x, y) : cliffFadeAt(byteAt, clampX(x), clampY(y)));
-  }
+  // corner's fade, 1, stood every isle on the horizon with its whole lift)
+  const pad = radius + 3 + CLIFF_REACH, gside = 2 * pad + 1, gx0 = baseX - pad, gy0 = baseY - pad;
+  const grid = new Uint8Array(gside * gside);
+  for (let j = 0; j < gside; j++) for (let i = 0; i < gside; i++) grid[j * gside + i] = byteAt(gx0 + i, gy0 + j);
+  const gridByte = (x, y) => grid[(y - gy0) * gside + (x - gx0)];
+  const own = (x, y) => (x >= 0 && y >= 0 && x < mapWidth && y < mapHeight) || (!!byteAtPast && (!pastOwn || pastOwn(x, y)));
+  const fpad = radius + 3, fside = 2 * fpad + 1, fx0 = baseX - fpad, fy0 = baseY - fpad, fades = relief ? new Float32Array(fside * fside) : null;
+  if (fades) for (let j = 0; j < fside; j++) for (let i = 0; i < fside; i++) { const x = fx0 + i, y = fy0 + j; fades[j * fside + i] = own(x, y) ? cliffFadeAt(gridByte, x, y) : cliffFadeAt(byteAt, clampX(x), clampY(y)); }
+  const fadeAt = fades ? (x, y) => fades[(y - fy0) * fside + (x - fx0)] : null;
+  const hside = side + 2, heights = new Float64Array(hside * hside);   // the vertices' and the normals' one row beyond them
+  for (let j = 0; j < hside; j++) for (let i = 0; i < hside; i++) heights[j * hside + i] = ringGroundAt(baseX - radius - 1 + i, baseY - radius - 1 + j, gridByte, relief, fadeAt);
+  const heightOf = (x, y) => heights[(y - baseY + radius + 1) * hside + (x - baseX + radius + 1)];
   let o = 0;
   for (let j = 0; j < side; j++) {
     const py = baseY - radius + j;
@@ -738,13 +747,14 @@ export class FarRingRenderer {
   }
 
   /** FAR-FIELD: the far field's cells asked of the worker round (baseCX, baseCY); built into its mesh when they land - its
-   *  height the far ring's law on a cell's highest byte, its tint this ring's at the cell's centre. */
+   *  height RELIEF-PEAKS the ground at its vertex's own node (the worker's `ground`: world/landforms.js nodeGroundAt), its
+   *  tint this ring's at the cell's centre. */
   _askFar(baseCX, baseCY) {
     const gen = ++this._farGen, inputs = this._inputs, floraOf = this._floraOf();
     const floraVersion = floraOf ? /** @type {any} */ (this._flora).version : -1;
     this._farAsk = `${baseCX},${baseCY}`;
     const seaByte = Math.floor(OCEAN_Y / BYTE_SCALE);   // isWaterPixel's byte arm: byte x 8 at or under the ocean's floor
-    Promise.resolve(this._farSource.farField?.({ baseCX, baseCY, radius: FAR_RADIUS, cell: FAR_CELL, seaByte }) ?? null).then((answer) => {
+    Promise.resolve(this._farSource.farField?.({ baseCX, baseCY, radius: FAR_RADIUS, cell: FAR_CELL, seaByte, relief: !!inputs.relief }) ?? null).then((answer) => {
       if (gen !== this._farGen) return;
       if (!answer?.high || !this.gl) { this._farAsk = null; return; }   // the ask stands until its ground is laid
       const { climateOf } = ringReaders(inputs);
@@ -753,7 +763,7 @@ export class FarRingRenderer {
       const clim = answer.clim ?? null, climAt = (x, y, v) => (clim && clim[v] !== FAR_CLIMATE_ASK ? clim[v] : climateOf(x, y));
       const it = farFieldVertexSteps({
         high: answer.high, low: answer.low, baseCX, baseCY,
-        heightOf: (byte, x, y) => ringHeightAt(x, y, byte, !!inputs.relief),   // BREATHTAKER2: the continent's lift at the cell's centre
+        heightOf: (byte, x, y, v) => answer.ground[v],   // RELIEF-PEAKS: the ground at the vertex's node, worked out on the worker (the lift and its continuation, BREATHTAKER2)
         tintAt: (x, y, byte, v) => overworldTint(climAt(x, y, v), byte),
         oceanAt: (x, y, v) => climAt(x, y, v) === CLIMATES.Ocean,
         seaY: RING_SEA_Y,

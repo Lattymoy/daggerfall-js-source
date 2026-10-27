@@ -106,7 +106,9 @@ test('TAMRIEL2 ground: a pixel past the Bay answers the law at its centre, cache
   // PIN MOVED (TAMRIEL-DEEP, bible/03-World/Deep-Waters.md): the detail on the land - Skyrim's, above - and none at sea,
   // as WOODS.WLD's own sea carries none
   const lm = tamrielLargeMap(2200, -300);
-  assert.equal(lm.length, 5); assert.ok(lm.every((col) => col.length === 5 && col.every((v) => v >= 0 && v <= 9)));
+  // PIN MOVED (RELIEF-PEAKS, test/world/reliefpeaks.test.js): no "small detail" of 0..9 - WOODS.WLD's own law of the small
+  // byte (largeOfByte), about 1.18 times it: a third of the ground's height
+  assert.equal(lm.length, 5); assert.ok(lm.every((col) => col.length === 5 && col.every((v) => v >= 0 && v <= 120)));
   assert.ok(lm.some((col) => col.some((v) => v > 0)), 'detail on the land');
   assert.deepEqual(tamrielLargeMap(2200, -300), lm, 'deterministic');
   assert.notDeepEqual(tamrielLargeMap(2201, -300), lm);
@@ -219,8 +221,10 @@ test('TAMRIEL2 ring: the far ring reads the map\'s bytes as ever and, handed byt
   assert.ok(asked.length > 0 && asked.every(([x]) => x < 0), 'asked only past the map');
   const side = 13;
   const yOf = (grid, i, j) => grid.positions[(j * side + i) * 3 + 1];
-  assert.equal(yOf(clamped, 6, 6), yOf(past, 6, 6), 'the player\'s own pixel (on the map) unchanged');
-  assert.equal(yOf(clamped, 4, 6), yOf(past, 4, 6), 'pixel 0, on the map');
+  assert.equal(yOf(clamped, 6, 6), yOf(past, 6, 6), 'the player\'s own pixel (pixel 2, its window on the map) unchanged');
+  // PIN MOVED (RELIEF-PEAKS): the vertex the kernel's ground at its pixel's centre, off the bytes of its window (two west of
+  // it, one east) - pixel 0's reaches the continent's bytes west of the edge, as the kernel's does
+  assert.ok(yOf(past, 4, 6) > yOf(clamped, 4, 6), 'pixel 0, on the map: its window past the edge');
   assert.notEqual(yOf(clamped, 2, 6), yOf(past, 2, 6), 'pixel -2: the continent\'s byte');
   assert.ok(yOf(past, 2, 6) > yOf(clamped, 2, 6));
 });

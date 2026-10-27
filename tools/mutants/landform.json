@@ -275,11 +275,12 @@
   {
     "name": "LANDFORM-restand-scale-only",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "if ((!(was > 0) || was === STREAMING_TERRAIN_SCALE) && !landform) return y;",
-    "new": "if (!(was > 0) || was === STREAMING_TERRAIN_SCALE) return y;",
+    "old": "if ((!(was > 0) || was === STREAMING_TERRAIN_SCALE) && !landform) return y + moved;",
+    "new": "if (!(was > 0) || was === STREAMING_TERRAIN_SCALE) return y + moved;",
     "tests": [
       "test/systems/landform.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): the record rides its ground's move on that return too"
   },
   {
     "name": "LANDFORM-rivers-player-online",
