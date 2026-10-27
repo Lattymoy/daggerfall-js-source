@@ -149,8 +149,8 @@
   {
     "name": "WW2-the-neighbours-test",
     "file": "src/systems/gate/theatreGateSite.js",
-    "old": "near = !!placeAt(x + dx, y + dy);",
-    "new": "near = !!placeAt(x, y);",
+    "old": "near = placeOn(x + dx, y + dy);",
+    "new": "near = placeOn(x, y);",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]
@@ -167,8 +167,8 @@
   {
     "name": "WW2-the-spawned-dungeon",
     "file": "src/systems/gate/theatreGateSite.js",
-    "old": "if (near || wet(x, y) || spawnsDungeon(spawnSalt, x, y)) continue;",
-    "new": "if (near || wet(x, y)) continue;",
+    "old": "if (near || wet(x, y) || spawnsDungeon(spawnSalt, x, y)) return;",
+    "new": "if (near || wet(x, y)) return;",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]
@@ -176,8 +176,8 @@
   {
     "name": "WW2-the-water",
     "file": "src/systems/gate/theatreGateSite.js",
-    "old": "if (near || wet(x, y) || spawnsDungeon(spawnSalt, x, y)) continue;",
-    "new": "if (near || spawnsDungeon(spawnSalt, x, y)) continue;",
+    "old": "if (near || wet(x, y) || spawnsDungeon(spawnSalt, x, y)) return;",
+    "new": "if (near || spawnsDungeon(spawnSalt, x, y)) return;",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]
@@ -203,7 +203,7 @@
   {
     "name": "WW2-the-region-past-the-bay",
     "file": "src/systems/gate/theatreGateSite.js",
-    "old": "day: n, region: isBayArea(area) ? area : null,",
+    "old": "day: n, region: isBayArea(area) ? area : regionOfTheatre(scan.theatre),",
     "new": "day: n, region: area,",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
@@ -284,8 +284,8 @@
   {
     "name": "WW2-the-seats-lane",
     "file": "server-account/src/seatInfluence.js",
-    "old": "  if (!gateRegionOk(day, region)) return { counted: false, why: 'beyond-the-bay' };",
-    "new": "  if (false) return { counted: false, why: 'beyond-the-bay' };",
+    "old": "  if (!gateRegionOk(day, region)) return { counted: false, why: 'not-its-region' };",
+    "new": "  if (false) return { counted: false, why: 'not-its-region' };",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]

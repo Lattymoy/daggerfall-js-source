@@ -315,20 +315,28 @@ test('AUDIT TESA II P7 THE LIVING INDEX AT THE BAY\'S EDGE: asked from the Bay, 
   assert.equal(idx.townAt(-2, 100)?.name, 'Beyond', 'a record all the same');
 });
 
-test('AUDIT TESA II P7 THE GATES PAST THE BAY UNSCANNED WHILE THEIR LANES ARE SHUT: with the places past the Bay on the registry, a theatre whose gate lane does not stand (net/wire.js GATE_LANES_OPEN, the Bay\'s alone) is never scanned - the host\'s scans read the wire\'s law (mutant: the closed lanes scanned)', async () => {
+// PIN MOVED (WW-GATES-EVERYWHERE, bible/03-World/World-Wide.md): the lanes of the eight provinces stand now (net/wire.js
+// GATE_LANES_OPEN 0 to 8) - the lane that stays shut is Cyrodiil's, the open zone's, and its theatre is the one never scanned
+test('AUDIT TESA II P7 THE GATES PAST THE BAY UNSCANNED WHILE THEIR LANES ARE SHUT: with the places past the Bay on the registry, a theatre whose gate lane does not stand (net/wire.js GATE_LANES_OPEN - Cyrodiil\'s, the open zone\'s) is never scanned - the host\'s scans read the wire\'s law (mutant: the closed lanes scanned)', async () => {
   const { createTheatreGateScans } = await import('../../src/scenes/gate/gateLanes.js');
   const { GATE_LANES_OPEN } = await import('../../src/net/wire.js');
   const { CITIES } = await import('../../src/world/tamriel/tamrielGeography.js');
   const { pictureToBay, inBay } = await import('../../src/world/tamriel/tamrielFrame.js');
+  const { THEATRE_KEYS } = await import('../../src/world/worldWide/worldGrid.js');
+  const rows = (province, base) => CITIES.filter((c) => c.province === province).map((c, i) => { const [px, py] = pictureToBay(c.at[0], c.at[1]).map(Math.floor); return { mapId: base + i, name: c.name, px, py, type: LOCATION_TYPES.TownCity }; }).filter((r) => !inBay(r.px, r.py));
+  const cyrodiil = THEATRE_KEYS.indexOf('Imperial'), skyrim = THEATRE_KEYS.indexOf('Skyrim');
   const places = createWorldPlaces();
-  places.register('tesa', CITIES.filter((c) => c.province === 'Skyrim').map((c, i) => { const [px, py] = pictureToBay(c.at[0], c.at[1]).map(Math.floor); return { mapId: 50_000 + i, name: c.name, px, py, type: LOCATION_TYPES.TownCity }; }).filter((r) => !inBay(r.px, r.py)));
-  let scanned = 0;
-  const counted = { ...places, inTheatre: (t) => { scanned++; return places.inTheatre(t); }, theatres: places.theatres, generation: places.generation, at: places.at };
-  assert.deepEqual(GATE_LANES_OPEN, [0], 'the Bay\'s lane alone stands');
-  assert.deepEqual(createTheatreGateScans({ places: counted, wet: () => false }).theatres(), [], 'no lane past the Bay');
-  assert.equal(scanned, 0, 'and no theatre scanned for one');
-  assert.equal(createTheatreGateScans({ places: counted, wet: () => false, open: () => true }).theatres().length, 1, 'a lane opened: its theatre scanned');
-  assert.ok(scanned > 0);
+  places.register('tesa', rows('Imperial', 50_000));
+  const asked = [];
+  const counted = { ...places, inTheatre: (t) => { asked.push(t); return places.inTheatre(t); }, theatres: places.theatres, generation: places.generation, at: places.at };
+  assert.deepEqual(GATE_LANES_OPEN, [0, 1, 2, 3, 4, 5, 6, 7, 8], 'the Bay\'s and the eight provinces\' lanes stand; Cyrodiil\'s never');
+  assert.deepEqual(createTheatreGateScans({ places: counted, wet: () => false, idle: null }).theatres(), [], 'no lane in the open zone');
+  assert.deepEqual(asked, [], 'and its theatre never scanned for one');
+  places.register('tesa2', rows('Skyrim', 60_000));
+  assert.deepEqual(createTheatreGateScans({ places: counted, wet: () => false, idle: null }).theatres(), [skyrim], 'a province\'s lane: its theatre scanned');
+  assert.deepEqual(asked, [skyrim], 'Skyrim\'s alone');
+  assert.equal(createTheatreGateScans({ places: counted, wet: () => false, idle: null, open: () => true }).theatres().length, 1, 'opened, the zone\'s theatre is scanned (and the open zone\'s areas stand no gate - theatreGateSite.js)');
+  assert.ok(asked.includes(cyrodiil));
 });
 
 test('AUDIT TESA II P9 THE TRACE\'S DOOR is offline alone, as the land\'s others: online the land is the room\'s (mutant: the online arm dropped)', () => {

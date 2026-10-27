@@ -353,7 +353,7 @@ test('WW2 a theatre past the Bay: its gate\'s ground the law\'s - its own theatr
   for (let d = 900; d < 960; d++) {
     const n = gateNumber(d, skyrim), s = findTheatreGateSite(n, scan);
     assert.ok(s);
-    assert.deepEqual([s.day, s.region, s.theatre], [n, null, skyrim]);
+    assert.deepEqual([s.day, s.region, s.town.region, s.theatre], [n, 64, 64, skyrim]);   // PIN MOVED (WW-GATES-EVERYWHERE): its province's region (WW-R's 64, Skyrim's) - the court is laid in it, the seats' word names it; null before
     assert.ok(areas.includes(s.area));
     assert.ok([...(scan.byArea.get(s.area) ?? [])].includes(worldPixelKey(s.px, s.py)));
     assert.equal(s.place, `${s.town.name}, ${areaName(s.area)}`);
@@ -447,7 +447,9 @@ test('WW2 the wiring: the world host stands the lanes off the registry (its gate
   assert.match(world, /const gateOmen = params\.has\('online'\) \? createGateLanes\(\{/);
   assert.match(world, /scans: theatreGates, lanesOk: \(\) => !!online\?\.gateLanesOk && !!socialLink\(\)\?\.gateLanesOk, here: \(\) => playerTravelPixel\(\)/);
   assert.match(world, /for \(const \{ lane, c \} of gateOmen\?\.currents\(\) \?\? \[\]\) if \(lane && c\.site\) socialLink\(\)\?\.sendGateSite\?\.\(c\.site\.day, c\.site\.px, c\.site\.py, c\.site\.place\)/);
-  assert.match(world, /gateLaneOf\(c\.d\) === 0 \? findGateSite\(c\.d, _gateScan\) : null/);
+  // PIN MOVED (WW-GATES-EVERYWHERE A2b): a lane past the Bay's kill names its province's region (scenes/gate/gateSeat.js) - the
+  // Bay's lane's its scan's, as before
+  assert.match(world, /try \{ region = c \? gateSeatRegion\(c\.d, _gateScan\) : null; \} catch \{ region = null; \}/);
   const online = src('src/net/online.js');
   assert.match(online, /this\.gateLanesOk = relaySupportsGateLanes\(relayV\)/);
   assert.match(online, /if \(gateLaneWire\(day\) !== 0 && !this\.gateLanesOk\) return false;/);
@@ -460,5 +462,6 @@ test('WW2 the wiring: the world host stands the lanes off the registry (its gate
   assert.match(relay, /const k = gateReceiptKey\(sub, gateLaneOf\(day\)\);/);
   // PIN MOVED (WW7-3, bible/03-World/World-Wide.md WW7): a province's gate its own province's seats' (net/townSeatLaw.js gateRegionOk), no other's
   assert.match(src('server-account/src/accounts.js'), /c\.x !== 'rite' && gateRegionOk\(c\.d, region\) \? region : null/);
-  assert.match(src('server-account/src/seatInfluence.js'), /if \(!gateRegionOk\(day, region\)\) return \{ counted: false, why: 'beyond-the-bay' \};/);
+  // PIN MOVED (WW-GATES-EVERYWHERE): the refusal named for what it is - a region not the gate's lane's ('beyond-the-bay' before)
+  assert.match(src('server-account/src/seatInfluence.js'), /if \(!gateRegionOk\(day, region\)\) return \{ counted: false, why: 'not-its-region' \};/);
 });

@@ -274,7 +274,7 @@ export async function claimWatch({ db, nowS, subtle }, player, env, { character,
 export async function creditGate({ db, nowS }, player, env, { character, day, region } = {}) {
   if (!seatsOpenFor(player, env)) return { counted: false, why: 'seats-closed' };
   if (!seatRegionOk(region) || !Number.isSafeInteger(day) || day < 0) return { counted: false, why: 'no-region' };
-  if (!gateRegionOk(day, region)) return { counted: false, why: 'beyond-the-bay' };   // WW2: a gate past the Bay was no seat's; WW7-3: a province's gate its own province's seats' (net/townSeatLaw.js gateRegionOk)
+  if (!gateRegionOk(day, region)) return { counted: false, why: 'not-its-region' };   // WW7-3: a province's gate its own province's seats', the Bay's gate the Bay's (net/townSeatLaw.js gateRegionOk); WW-GATES-EVERYWHERE: its refusal named for what it is - 'beyond-the-bay' said a gate past the Bay was no seat's, as it was before WW7-3
   if (weekAt(Math.floor(gateTimes(day).riseAt / 1000)) !== weekAt(nowS)) return { counted: false, why: 'old-week' };
   const at = await countsAt(db, player, character, region, nowS, { anyCharacter: true });
   if ('counted' in at) return at;

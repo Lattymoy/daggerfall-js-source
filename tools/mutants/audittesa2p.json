@@ -594,8 +594,8 @@
   {
     "name": "P7-closed-lanes-scanned",
     "file": "src/scenes/gate/gateLanes.js",
-    "old": "t < GATE_LANES && open(t) && theatreGateAreas(scanOf(t)).length > 0",
-    "new": "t < GATE_LANES && theatreGateAreas(scanOf(t)).length > 0",
+    "old": "t < GATE_LANES && open(t));",
+    "new": "t < GATE_LANES);",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]

@@ -373,6 +373,7 @@ import { WORLD_SALT, spawnsDungeon, spawnedMapId, pathFreePixel, createSpawnGrou
 import { createSpawnGroundPlace } from '../world/spawnGroundPlace.js';   // GROUND-AGREE: the place a pixel's ground is shaped for
 import { insideGateRing, gateSceneXZ, fellLine, courtFellLine, OMEN_SETTLE_MS, GATE_STORM_RING } from '../systems/gate/gateOmen.js';   // WB1 (Mac: "on the timer, a large area would be shown on the map, also in chat"): the Oblivion Gate's omen - its lines, its ring, its compass mark
 import { createGateLanes, createTheatreGateScans } from './gate/gateLanes.js';   // WW2: a gate a game day in every theatre - the omen a lane at a time
+import { gateSeatRegion, gateClaimWaits } from './gate/gateSeat.js';   // WW-GATES-EVERYWHERE (A2b): where a gate's kill counts - a lane past the Bay's its own province's
 import { gateScanner, findGateSite, gateSeaPixel, politicClaimed } from '../systems/gate/gateSite.js';   // WB1: where the day's gate stands, over the map files every client holds alike
 import { createGatePool, GATE_TEXT } from './gate/gatePool.js';   // WB2: the gate the world stands - its stone, its fire and beacon, its collider and its door
 import { createStarfallHost } from './starfall/starfallHost.js';   // STAR4-STAR6: the Witches' Festival's fallen stars - in the sky, in the world, defended
@@ -23074,11 +23075,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  scan has finished, and the kill is claimed as before. */
   const gateSeatWord = (r) => {
     const c = readReceipt(r);
-    let site = null;
-    try { site = c && _gateScan && gateLaneOf(c.d) === 0 ? findGateSite(c.d, _gateScan) : null; } catch { site = null; }   // WW2: the Bay's lane's alone - a seat is the Bay's, and no gate past it is one's
+    let region = null;
+    try { region = c ? gateSeatRegion(c.d, _gateScan) : null; } catch { region = null; }   // WW-GATES-EVERYWHERE (A2b): the Bay's lane's off its scan, a lane past the Bay's its own province's (scenes/gate/gateSeat.js)
     const character = characterIdOf(playerEntity);
     // SILVER-WAYS: the claiming character always - its guild's deed asks it, where the scan has not found the region
-    return site ? { region: site.region, character } : character ? { character } : null;
+    return region != null ? { region, character } : character ? { character } : null;
   };
   /** CHAP2b (Chapters-Arc 3.3, 4): a receipt the service credited to the character's chapters moved its Roll on the
    *  service - the tab asks the Roll's word at once (npcRollTracker.js refresh) and the guilds' memory is said. */
@@ -23109,13 +23110,13 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  claim goes as before, with no region. */
   const GATE_SCAN_WAIT_MS = 90_000;
   const _gateClaimsFrom = Date.now();
-  const gateClaimReady = () => {
-    if (_gateScan || Date.now() - _gateClaimsFrom >= GATE_SCAN_WAIT_MS) return true;
+  const gateClaimReady = (r) => {
+    if (!gateClaimWaits(readReceipt(r)?.d, _gateScan) || Date.now() - _gateClaimsFrom >= GATE_SCAN_WAIT_MS) return true;   // WW-GATES-EVERYWHERE (A2b): a lane past the Bay's waits on no scan
     warmGateScan();
     return false;
   };
   const gateClaims = params.has('online') ? createGateClaims({
-    claim: (r) => (gateClaimReady() ? _accountGates.claim(r, gateSeatWord(r)).then(rollHeard) : Promise.resolve({ ok: false, error: 'offline' })),
+    claim: (r) => (gateClaimReady(r) ? _accountGates.claim(r, gateSeatWord(r)).then(rollHeard) : Promise.resolve({ ok: false, error: 'offline' })),
     me: _accountGates.me,
     nowS: relayNowS,
     store: _spoilsStore,

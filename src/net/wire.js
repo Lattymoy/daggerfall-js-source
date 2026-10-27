@@ -5121,10 +5121,12 @@ export const gateLaneWire = (d) => Math.floor(d / GATE_LANE_SPAN_WIRE);
  *  a client stands: scenes/gate/gateLanes.js). A lane past the Bay stands only where its theatre holds ground for a gate
  *  - places registered past the Bay (systems/gate/theatreGateSite.js) - and the relay holds no picture of any (its
  *  ground is the clients'): a lane the clock alone opened was a court no honest client could find, its receipts any two
- *  accounts' for the asking. So the lanes are named here, the law both ends read: the Bay's always; a province's from
- *  the change that registers its places (bible/03-World/World-Wide.md WW2, "Opening a lane"); Cyrodiil's (9) never -
- *  the open zone stands no gate (theatreGateSite.js). */
-export const GATE_LANES_OPEN = Object.freeze([0]);
+ *  accounts' for the asking. So the lanes are named here, the law both ends read. WW-GATES-EVERYWHERE (2026-10-26, the
+ *  owner: "Every single thing here needs to be addressed. No exceptions."; bible/03-World/World-Wide.md): the Bay's and
+ *  every province's past it, 1 to 8 - TESA's places stand in each (WW7-1), and the freeware's scan finds a gate's ground
+ *  in all eight (test/world/worldWide/ww_gates_everywhere.test.js); Cyrodiil's (9) never - the open zone stands no gate
+ *  (theatreGateSite.js). */
+export const GATE_LANES_OPEN = Object.freeze([0, 1, 2, 3, 4, 5, 6, 7, 8]);
 /** AUDIT WW F2: does lane `lane` stand. */
 export const gateLaneOpen = (lane) => GATE_LANES_OPEN.includes(lane);
 /** AUDIT WW F3: a gate's number as a client may name one - a safe integer on a lane that stands (the hub keeps its
