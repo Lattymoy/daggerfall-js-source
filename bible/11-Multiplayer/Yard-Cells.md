@@ -604,3 +604,26 @@ These are the working notes. The pull request holds the checks as they are run.
 
 - How a word carried to a hub shard reaches the sockets of the other shards. The yard arm takes the home arm's
   route. Whether that route reaches every shard is not yet checked.
+
+**What was built** (account acct198, relay world271 - over YC1's acct197 and world270):
+
+- Service: `settleYardCell` answers `{ cell, ver }` off `RETURNING built`; the decor routes answer `yardVer` and
+  `yardOrder` (`server-account/src/index.js` yardOrderOf); `net/identityToken.js` kind `yard`, `mintYardOrder`.
+- Relay: `server/src/yardWords.js` (takeYardOrder, the owed words, yardFan); one line in `_message`; `yd: 1` in the
+  hub's welcome; `parseClient` knows `{t:'yard', order}`. The law both ends read is `net/yardWordLaw.js`.
+- Client: `net/yardPush.js` (the carrier, the welcome and close, the frames' gate, the ears); three hooks in
+  `net/online.js` and one in `net/accountClient.js`; `scenes/yardCellSync.js` hears words, polls slowly while the push
+  is healthy and doubles over quiet polls; `scenes/homeYards.js` subscribes and hands each write's `yardVer` on.
+  `bootWorld` is not touched.
+
+**Departures from sections 3.6 and 3.7:**
+
+- **The order's own version, not the cell's.** The owner's write answers `yardVer`, which marks the held cell's
+  `ownVer`. The owner's own word is dropped by it. The cell's `ver` stays the last answer's: raising it to `yardVer`
+  would let a later poll answer "no change" and leave the owner's yard stale once its 60 s hold ended.
+- **No extra poll on leaving a skip.** Words heard while the yards are not drawn are kept and asked the moment they are
+  drawn again, and a poll that came due meanwhile goes then (YC1's rule). An extra poll on every edge would add nothing
+  while the push is healthy, and it moved YC1's timing (`fb1001_yard.test.js` PRIMARY-TRIPS).
+- **A pushed cell answered at an older version** (another isolate's kept answer, up to 30 s) is asked again after
+  `YARD_PUSH_RETRY_MS` (15 s), three asks in all. The slow poll finds what that misses.
+- **Words dropped at the version held** include words for a cell the page does not hold, for any town.
