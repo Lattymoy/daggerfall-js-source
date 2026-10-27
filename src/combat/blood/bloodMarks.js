@@ -65,8 +65,9 @@ export const TRACK_WET_STAGE = 2;
 export const PRINT_SIZE = 0.34;
 export const PRINT_SPREAD = 0.13;
 /** BLOOD AUDIT 5: how far above the feet the knee ray may find the floor
- *  and still call it the floor (the drawn terrain sits centimetres above
- *  the capsule's bilinear ground on a twisted quad). */
+ *  and still call it the floor (the drawn terrain at its ring class may sit
+ *  above the capsule's floor - FLORA-GROUND: on the near grid the two are
+ *  one law, terrainSurface.js walkGroundAt). */
 export const STEP_ABOVE = 0.25;
 
 /** Straight down, once. BLOOD1b casts up to SPRAY_MAX rays for one
@@ -616,11 +617,10 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     // ray. `pos` is the walker's FEET in every host, and a ray that
     // starts ON the floor never meets it: the mesh walk refuses a hit
     // nearer than its own epsilon (a ray is not inside the triangle it
-    // starts on), and the terrain's drawn surface sits above the
-    // capsule's bilinear floor on half the world's quads by their twist.
-    // So no walker ever printed underground or indoors, and outdoors one
-    // quad in two - the pin's stub floor answered "distance zero" and
-    // never knew.
+    // starts on). So no walker ever printed underground or indoors, and
+    // outdoors one quad in two (the terrain's drawn surface sat above the
+    // capsule's bilinear floor then - FLORA-GROUND made them one law) -
+    // the pin's stub floor answered "distance zero" and never knew.
     const h = col.surfaceHit([pos[0], pos[1] + DRIP_FROM, pos[2]], DOWN, MARK_DROP);
     if (!h || !Number.isFinite(h.dist) || h.dist > MARK_DROP) return null;
     // BLOOD AUDIT 5: a surface met ABOVE the feet - a foe whose streamed

@@ -30,9 +30,10 @@
   {
     "name": "WODBUSH-highest-ground",
     "file": "src/world/terrain/terrainSurface.js",
-    "old": "low = Math.min(low, surfaceHeightAt(heightmapData, x, z));",
-    "new": "low = Math.max(low === Infinity ? -Infinity : low, surfaceHeightAt(heightmapData, x, z));",
-    "tests": ["test/world/terrain/wodbush.test.js"]
+    "old": "low = Math.min(low, walkGroundAt(heightmapData, x, z));",
+    "new": "low = Math.max(low === Infinity ? -Infinity : low, walkGroundAt(heightmapData, x, z));",
+    "tests": ["test/world/terrain/wodbush.test.js"],
+    "note": "FLORA-GROUND (PIN MOVED): re-aimed by content - the ground's one law, walkGroundAt (the walker's and the flora's), where it read surfaceHeightAt."
   },
   {
     "name": "WODBUSH-no-sample-lines",

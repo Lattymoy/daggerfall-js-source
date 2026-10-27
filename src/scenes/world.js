@@ -70,7 +70,7 @@ import { settlementsOf, loadModRoads, retryModRoads, basicRoadsPathsPoint, WATER
 import { modSetting, modSettingsOf, modSettingsGeneration, MOD_SETTINGS, latchModLoaded } from '../systems/modSettings.js';   // ROADS 24; HCC: the mod's eight switches; CSA-D: a mod's title for the load's failure line; AUDIT PRE-MERGE 0928 S4: the next-load mods latched at mount
 import { hasPortFor, hasPort, setSeatHarbours, PORT_LOCATION_IDS } from '../systems/travel/travelPorts.js';   // AUDIT-RR2 G22: Travel Options' port list for RR's ship gate; SEAT2b part two: a members' Harbour among them (hasPortFor)
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
-import { buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, surfaceHeightAt, surfaceNormalAt, terrainSampleHeightAt } from '../world/terrain/terrainSurface.js';   // GRASS-LIT2: the ground's normal under a blade; SNOWFALL1: and a pixel's that keeps none
+import { buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, surfaceHeightAt, surfaceNormalAt, terrainSampleHeightAt, walkGroundAt } from '../world/terrain/terrainSurface.js';   // GRASS-LIT2: the ground's normal under a blade; SNOWFALL1: and a pixel's that keeps none; FLORA-GROUND: the ground's one law
 import { waterUniforms, buildWaterIndices, waterSwitchOn } from '../render/waterSurface.js';   // WATER1: the enhanced water surface over the pixel's own grid; WATER-AUDIT: its own index set
 import { bedFields, sheetDepthsOf } from '../world/water/waterBed.js';   // WATER-NEXT 2: the bed under the water, carved for the eye alone (AUDIT WATER-NEXT H1: the cap's re-carve asks its depths)
 import { createRipples, createRippleStir, RIPPLE_SPAN, RIPPLE_CELLS, BOAT_STIR, BOAT_WAKE_SPEED } from '../world/water/waterRipples.js';   // WATER-NEXT 4: the rings and wakes
@@ -279,6 +279,7 @@ import { createGatherHost } from './gatherHost.js'; // PROF1/PROF2: the gatherin
 import { herbKind } from './herbHost.js';   // PROF1: Herbalism's patches, a kind in it
 import { mineKind } from './mineHost.js'; import { nodeCompassPoints } from '../ui/nodeMarks.js'; import { createNodeGlintPass } from '../render/nodeGlint.js';   // PROF2: Mining's veins and Quarrying's boulders, a kind in it; NODE-MARKS: every profession's nodes on the compass in its colour, and lit where they stand; NODE-GLINT: glinting on their own pictures
 import { treeKind } from './treeHost.js';   // PROF4: Logging's trees - the forest's own - a kind in it
+import { seatFlora } from './floraSeat.js';   // FLORA-GROUND, THE RINGS: a pixel's plants drawn on the ground it draws, at every ring
 import { createTreesHost } from './treesHost.js';   // LPT1 / BANTHA1 (HOST-SPLIT): the near 3D trees - Low Poly Trees' door and the jungle's, and their frame
 import { createJungleHost } from './jungleHost.js';   // BANTHA1: Bantha's jungle - its field, its trees' door, its haze
 import { canopyLight, canopyKey, canopyMoon } from '../world/jungle/jungleCanopy.js';   // VALENWOOD-CANOPY: the light under a closed canopy
@@ -4339,7 +4340,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const MILL_SAIL_PAD = 30;
   // Player collision (P1): per-pixel triangle buckets in PIXEL-LOCAL
   // space, resolved through the live floating-origin translation; the
-  // floor is the terrain heightmap, bilinear over the stored samples.
+  // floor is the terrain heightmap's own drawn surface over the stored
+  // samples - the ground's one law (FLORA-GROUND, terrainSurface.js
+  // walkGroundAt), which every plant stands on too.
   const heightCell = TERRAIN_SIZE / (HEIGHTMAP_DIMENSION - 1);
   // EV2: the containing pixel is COMPUTABLE - pixelTranslation is an
   // affine map, so its inverse names the one pixel that can hold
@@ -4362,29 +4365,17 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       const lz = z - t[2];
       if (lx < 0 || lz < 0 || lx >= TERRAIN_SIZE || lz >= TERRAIN_SIZE) return -Infinity;
       if (p.deepWaters) { const f = deepWaters.floorLocalY(p, lx, lz); if (f != null) return terrainOnly ? -Infinity : f + t[1]; }   // DW-B: a carved cell's ground is the seafloor
-      const fx = lx / heightCell;
-      const fz = lz / heightCell;
-      const ix = Math.min(HEIGHTMAP_DIMENSION - 2, Math.floor(fx));
-      const iz = Math.min(HEIGHTMAP_DIMENSION - 2, Math.floor(fz));
-      const sx = fx - ix;
-      const sz = fz - iz;
-      const at = (a, b) => p.samples[a * HEIGHTMAP_DIMENSION + b] * worldHeight;
-      const h =
-        at(ix, iz) * (1 - sx) * (1 - sz) + at(ix + 1, iz) * sx * (1 - sz) +
-        at(ix, iz + 1) * (1 - sx) * sz + at(ix + 1, iz + 1) * sx * sz;
-      return h + t[1];
+      return walkGroundAt(p.samples, lx, lz) + t[1];   // FLORA-GROUND: the ground's one law - the drawn ground, the flora's ground (terrainSurface.js walkGroundAt)
     }
     return -Infinity;
   };
-  // BLOOD1 AUDIT 3: WHERE THE GROUND IS DRAWN. `heightAt` above is the
-  // bilinear read the capsule has always walked on; the terrain is cut
-  // into two triangles a quad (terrainSurface.js says why the two
-  // surfaces differ, and measured it: up to 0.08 apart on real grades).
-  // The grass placer asks this; the blood - lifted 2cm off "the
-  // ground" - was the one thing still placed by bilinear, so on a hill
-  // a mark lay clipped into the slope on one half of a quad and floated
-  // over it on the other. The capsule keeps its floor; what is PLACED
-  // asks this.
+  // BLOOD1 AUDIT 3: WHERE THE GROUND IS DRAWN. The terrain is cut into
+  // two triangles a quad (terrainSurface.js surfaceHeightAt), at the
+  // ring class the pixel is drawn at; the blood - lifted 2cm off "the
+  // ground" - asks this, so a mark lies on the slope it is drawn on.
+  // FLORA-GROUND: `heightAt` above walks the same triangles at the near
+  // grid's stride (walkGroundAt) - it was a bilinear patch over them,
+  // and the woods stood on that patch, up to 46 cm over the drawn ground.
   const _stT = [0, 0, 0];
   const surfaceAt = (x, z) => {
     const c = state.compensation;
@@ -4970,6 +4961,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     p.terrain = renderer.createTerrainSurface(bed?.positions ?? grid.positions, bed?.normals ?? grid.normals,
       stride === 1 ? TERRAIN_INDICES : TERRAIN_INDICES_LOD);
     p._bed = { sheet: grid.positions, normals: grid.normals, depths: bed?.depths ?? null, sheetDepths: bed?.sheetDepths ?? null, halo };   // the grid kept: a cap lifted carves it back
+    seatFlora(p, renderer);   // FLORA-GROUND, THE RINGS: its plants on the ground as carved now (scenes/floraSeat.js)
   }
   /** WATER-NEXT 2: a pixel's bed as the host keeps it - the grid AS IT STOOD (the water's sheet, and its normals for a
    *  re-carve) and the depths; the carved ground is uploaded and let go. null where no vertex is under water. */
@@ -5464,6 +5456,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     seasons, siegeFieldsByTown, snowCover, snowfall, standPixelNpcs, standWodPile, strideFor, terrainGen, tileSide,
     townEcon, townPlacesFor, townSeats, verges, waterOn, waterSheetOf, wod, wodForgetPeerSites, wodOpened, wodPathsPoint,
     worldHeight,
+    lodStride: lodOn ? LOD_STRIDE : 1,   // FLORA-GROUND, THE RINGS: the far ring's class, its plants' lifts made ahead in a near pixel's build
     provinceAt, arenaRoadsStale, _arenaRoadsStale, swap,   // TESA: the province past the Bay, the Arena roads' stale law and its set; IC-SWAP-BEHIND: a rebuild built behind its view
     get _gateClearNow() { return _gateClearNow; },
     get _homeLookV() { return _homeLookV; }, set _homeLookV(v) { _homeLookV = v; },
@@ -5572,7 +5565,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
 
   // EV4: a built pixel crosses between the full-res core and the far
   // ring without rebuilding anything but its terrain SURFACE - the
-  // models, flats, collider, doors and population all stay. The grid
+  // models, flats, collider, doors and population all stay (FLORA-GROUND,
+  // THE RINGS: its plants' pictures drawn on the new surface, their
+  // places where they stood - scenes/floraSeat.js seatFlora). The grid
   // re-builds from the pixel's own cached samples (blended, so a
   // location's flattening survives the round trip); the culling box is
   // already deep enough for either class (the skirt drop at build).
@@ -5650,6 +5645,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const waterIndices = waterOn ? buildWaterIndices(p._dwBytes ?? p.tilemapBytes, stride) : null;   // DW-F: the cap's TileMap, where it patched one
     p.water = waterIndices ? renderer.createWaterSheet(waterIndices, waterSheetOf(bed, p.terrain)) : null;
     p._stride = stride;
+    seatFlora(p, renderer);   // FLORA-GROUND, THE RINGS: its plants drawn on the ground it draws at the new ring class (scenes/floraSeat.js)
     p.groundNormals = labGrass && stride === 1 ? grid.normals : null;   // GRASS-LIT2: the grass's slope, at the ring class it stands on; AUDIT B1: only with grass
     if (p._dwBytes) dwClipTerrain(p);   // DW-C: the clip, at the new ring class
     // PERF-EXT21: a promotion is the other way a pixel joins the grass
@@ -33892,9 +33888,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // 0.25-0.72, so this is correctness rather than a fix anyone
         // would see; it is also the exact law a GPU-placed field has to
         // run, where there is no baked height to fall back on.
-        // `p._stride` is the ring class this pixel is drawn at, and the
-        // grass only stands on the stride-1 ring anyway.
-        const h = surfaceHeightAt(p.samples, lx, lz, p._stride ?? 1);
+        // The grass only stands on the stride-1 ring, so its drawn ground
+        // is the ground's one law (FLORA-GROUND: the walker's and every
+        // plant's, terrainSurface.js walkGroundAt).
+        const h = walkGroundAt(p.samples, lx, lz);
         if (h <= sea) return null;
         if (snowCover.on && snowCover.buries(p, lx, lz, h + t[1])) return null;   // PRECIP4: no blade through the snow the ground shows there (AUDIT PRECIP HOST-9: at the blade's own height)
         return h + t[1];

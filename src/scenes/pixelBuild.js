@@ -42,7 +42,7 @@ import { getNameBankOfRegion } from '../characters/nameHelper.js';
 import { getStaticDoors } from '../world/staticDoors.js';
 import { getWorldClimateSettings, LOCATION_TYPES } from '../formats/mapsFile.js';
 import { gothwayNorthSpots, isGothwayGarden } from '../systems/gothwayBoards.js';
-import { groundOffPlane, lowestGroundUnder, surfaceHeightAt, TERRAIN_SKIRT_DEPTH, TERRAIN_TILE_DIM } from '../world/terrain/terrainSurface.js';
+import { groundOffPlane, lowestGroundUnder, surfaceHeightAt, walkGroundAt, TERRAIN_SKIRT_DEPTH, TERRAIN_TILE_DIM } from '../world/terrain/terrainSurface.js';   // FLORA-GROUND: walkGroundAt, the ground's one law
 import { hasPort } from '../systems/travel/travelPorts.js';
 import { portIdOf } from '../world/worldWide/worldPorts.js';   // WW3: a port's one number
 import { HEIGHTMAP_DIMENSION, TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
@@ -64,6 +64,7 @@ import { isStandFlat, standFlatId, standFlatRecord } from '../world/standFlats.j
 import { isStandingHorseFlat } from '../world/standingHorses.js';
 import { isTombstoneModel } from '../systems/searchables.js';
 import { FOREST_STAMP, isTreeRecord, sinkFelled } from './treeHost.js';   // AUDIT PRECIP HOST-7: a re-skin's felled trees lie as they lay
+import { seatFlora, standsOnGround, warmFlora } from './floraSeat.js';   // FLORA-GROUND, THE RINGS: every plant drawn on the ground its pixel draws
 import { isWardenTown } from '../systems/wagon/wagonWarden.js';
 import { isWodShrub, rockSeatDrop, WOD_ROCK_SITES, wodLightPosition, wodLightProperties } from '../world/worldOfDaggerfall/wodLocationObjects.js';
 import { isYardTown } from '../systems/merchantYards.js';
@@ -124,7 +125,7 @@ export function createPixelBuild(host) {
     lowPolyTrees, maps, modelFeetOf, onlineHomes, personTex, playerTravelPixel, portOnSea, renderer, restrideTerrain,
     seasons, siegeFieldsByTown, snowCover, snowfall, standPixelNpcs, standWodPile, strideFor, terrainGen, tileSide,
     townEcon, townPlacesFor, townSeats, verges, waterOn, waterSheetOf, wod, wodForgetPeerSites, wodOpened, wodPathsPoint,
-    worldHeight,
+    worldHeight, lodStride,   // FLORA-GROUND, THE RINGS: the far ring's class (scenes/floraSeat.js warmFlora)
     provinceAt, arenaRoadsStale, _arenaRoadsStale, swap   // IC-SWAP-BEHIND: a rebuild built behind its view (scenes/swapBehind.js); TESA: the province past the Bay, the Arena roads' stale law and its set
   } = host;
   // ROCK-CLEAR (FIELD BUGS 2026-10-19f): the world collider's one gate - every solid the build files below goes through
@@ -416,7 +417,11 @@ export function createPixelBuild(host) {
     const light210 = await getTexture(LIGHTS_ARCHIVE);
     const lightSize = (record) =>
       billboardSize(light210, record);
-    const addFlat = (archive, record, x, y, z, skin = null) => { flatLog.push({ archive, record, c: [x, y, z], ...skin }); };
+    const addFlat = (archive, record, x, y, z, skin = null) => {
+      const c = [x, y, z];
+      flatLog.push({ archive, record, c, ...skin });
+      if (skin?.wild != null) standsOnGround(c);   // FLORA-GROUND, THE RINGS: the wild's flats stand on the ground by its law - the kernel's woods and scatter, the roadside pairs' fallback
+    };
     // WOD2: a flat the mod SCALES (LoadObject's `localScale *= scale`,
     // LocationHelper.cs:1243) is a batch of its own at its own size; the
     // shipped layouts scale four records, always uniformly.
@@ -737,6 +742,10 @@ export function createPixelBuild(host) {
           // of the nature range (the 504 trees stood on the pack's bigger hills) stands on the higher of the ground and the mounds.
           const lift = flat.archive === natureArchive ? groundOffPlane(samples, avg, fx, fz) : 0;
           addFlat(flat.archive, flat.record, fx, locLocal[1] + (hillSeat && isNatureArchive(flat.archive) ? seatNatureFlat(hillSeat, flat.x, flat.z, NATURE_FLATS_Y + groundOffPlane(samples, avg, fx, fz)) : flat.y + lift), fz, { block, n });
+          // FLORA-GROUND, THE RINGS (scenes/floraSeat.js): a nature flat stood on the ground - the climate's, the plane's
+          // band under it; a hill block's where no mound raised it - is drawn on the ground its pixel draws at every ring
+          const hillY = hillSeat && isNatureArchive(flat.archive) ? NATURE_FLATS_Y + groundOffPlane(samples, avg, fx, fz) : null;
+          if (hillY !== null ? seatNatureFlat(hillSeat, flat.x, flat.z, hillY) === hillY : flat.archive === natureArchive) standsOnGround(flatLog[flatLog.length - 1].c);
         }
         for (const light of collectCityLights(b.dfBlock, lightSize)) {
           const lp = [
@@ -1100,7 +1109,7 @@ export function createPixelBuild(host) {
       for (const t of pairs.flatMap((p) => p.trees)) {
         const archive = getNatureArchive(JUNGLE_ARCHIVE, pixelSeason);
         if (archive !== natureArchive) borderNature.set(archive, JUNGLE_ARCHIVE);
-        addFlat(archive, t.record, t.x, surfaceHeightAt(samples, t.x, t.z), t.z, { wild: JUNGLE_ARCHIVE });
+        addFlat(archive, t.record, t.x, walkGroundAt(samples, t.x, t.z), t.z, { wild: JUNGLE_ARCHIVE });
       }
     }
     // WOD4: THE CAMP AT PRIVATEER'S HOLD (world/worldOfDaggerfall/wodPrivateersHold.js).
@@ -1213,6 +1222,7 @@ export function createPixelBuild(host) {
     }
     for (const [gk, g] of jungleGroups) {
       await breather.breathe();
+      g.centers.forEach(standsOnGround);   // FLORA-GROUND, THE RINGS: the jungle's trees and its roadside pairs stand on the ground by its law
       const species = g.species, record = JUNGLE_SPECIES[species].record;
       g.centers.forEach((c, i) => coverItems.push(jungleBody(c, species, g.own[i])));   // PROP-BODIES: its trunk, whichever picture stands
       const pic = await speciesPic(species);
@@ -1260,6 +1270,15 @@ export function createPixelBuild(host) {
     // buttresses' bodies its cover, with the jungle's (kept through a re-skin as theirs are)
     const grahtStood = jungle?.graht?.stand(px, py, graht, (x, z) => !pointNearGate(gateClear, px, py, x, z, WOD_FLAT_GATE_CLEAR_M) && !insideRocks(pixelRocks, x, z)) ?? null;
     if (grahtStood) coverItems.push(...grahtStood.bodies);
+    // FLORA-GROUND, THE RINGS (scenes/floraSeat.js): ITS PLANTS DRAWN ON THE GROUND IT IS BUILT AT - every forest group's
+    // batch and its graht-oaks, on its ring's ground, its box grown to hold them - a breath of its own (the far ring's
+    // first read of its ground), before it publishes and its felled trees are sunk; the world host seats them again
+    // wherever that ground changes (world.js restrideTerrain, dwRecarve)
+    await breather.breathe();
+    seatFlora({ samples, _stride: stride, _bed: bed, _box: bounds, forest: { groups: forestGroups }, grahtOaks: grahtStood?.set ?? null }, renderer);
+    // and built near, the far ring's lifts made ahead in a breath of their own - the walk away from a pixel built about the
+    // player (a load, a landing) demotes five at a crossing, each then reading its ground in the crossing's frame
+    if (stride === 1 && lodStride > 1) { await breather.breathe(); warmFlora({ samples, forest: { groups: forestGroups }, grahtOaks: grahtStood?.set ?? null }, lodStride); }
     // WOD2: the scaled flats - billboardSize times the object's own scale.
     for (const { archive, record, scale, centers } of scaledGroups.values()) {
       const t = await getTexture(archive);
@@ -1528,12 +1547,8 @@ export function createPixelBuild(host) {
     if (groundWas) {
       _groundBefore.delete(pkey);
       const now = built.get(pkey).samples, t = host.state.pixelTranslation(px, py);
-      const groundIn = (smp, x, z) => {   // heightAt's own read: bilinear over the pixel's samples, pixel-local
-        const fx = Math.max(0, Math.min(TERRAIN_SIZE, x - t[0])) / heightCell, fz = Math.max(0, Math.min(TERRAIN_SIZE, z - t[2])) / heightCell;
-        const ix = Math.min(HEIGHTMAP_DIMENSION - 2, Math.floor(fx)), iz = Math.min(HEIGHTMAP_DIMENSION - 2, Math.floor(fz)), sx = fx - ix, sz = fz - iz;
-        const at = (a, b) => smp[a * HEIGHTMAP_DIMENSION + b];
-        return (at(ix, iz) * (1 - sx) * (1 - sz) + at(ix + 1, iz) * sx * (1 - sz) + at(ix, iz + 1) * (1 - sx) * sz + at(ix + 1, iz + 1) * sx * sz) * worldHeight;
-      };
+      // heightAt's own read over the pixel's samples, pixel-local - FLORA-GROUND: the ground's one law (walkGroundAt)
+      const groundIn = (smp, x, z) => walkGroundAt(smp, Math.max(0, Math.min(TERRAIN_SIZE, x - t[0])), Math.max(0, Math.min(TERRAIN_SIZE, z - t[2])));
       const moved = (x, z) => groundIn(now, x, z) - groundIn(groundWas, x, z);
       host.rideGround?.(t, pkey, moved, key !== pkey);   // IC-SWAP-BEHIND: the pixel's own key; behind, the player on the view swapped out rides it unheld
     }
@@ -1719,6 +1734,7 @@ export function createPixelBuild(host) {
         p._seasonsGen = flats.seasonsGen;
         sk.batches = made.batches;
         sk.forest = new Set(made.forestGroups.keys());
+        seatFlora(p, renderer);   // FLORA-GROUND, THE RINGS: the new pictures drawn on the ground the pixel draws (scenes/floraSeat.js)
       }
       sk.log.forEach((f, j) => { f.archive = pics[j][0]; f.record = pics[j][1]; });
       host.gatherHost?.restandAt(px, py);   // PROF4: a felled tree's stump in its season

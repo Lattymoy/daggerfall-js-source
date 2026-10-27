@@ -23,7 +23,8 @@ import { _setTimeScaleForTest, TRAVEL_ROAD_RATE } from '../../../src/systems/tim
 import { TRANSPORT_MODES } from '../../../src/systems/transport.js';
 import { createDroppedLoot } from '../../../src/scenes/droppedLoot.js';
 import { createSwapBehind } from '../../../src/scenes/swapBehind.js';
-import { natureStandsAt, layoutNature, groundAt } from '../../../src/world/terrain/terrainNature.js';
+import { natureStandsAt, layoutNature } from '../../../src/world/terrain/terrainNature.js';
+import { walkGroundAt } from '../../../src/world/terrain/terrainSurface.js';   // PIN MOVED (FLORA-GROUND): a plant's ground is the walker's, the drawn ground
 import { sampleHeight, blendLocationTerrain, calcAvgMaxHeight, generateTileData } from '../../../src/world/terrain/terrainTiles.js';
 import { hostText, movedOutOf } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 import { recordFrame, framePixelAt } from '../../../src/scenes/groundFrameHost.js';   // BAY-LEFT-GROUND (D5): the frame's law, its own export
@@ -367,10 +368,12 @@ test('AUDIT LANDFORMS B2: a record\'s frame follows the cuts - the field is the 
     }
     assert.ok(followed > 100, `${px},${py}: the cut followed where the lift alone was half a unit off (${followed} samples)`);
   }
-  // between samples, the read the collider takes
+  // between samples, the read the collider takes - PIN MOVED (FLORA-GROUND): the ground's one law, the drawn quad's two
+  // triangles cut on its (x, y)-(x+1, y+1) diagonal (terrainSurface.js walkGroundAt), where it was the bilinear patch
   const field = landformLiftField(woods, 300, 250, null, H, lf);
   const v = (x, y) => field(x, y);
-  assert.ok(Math.abs(field(60.5, 30.25) - (v(60, 30) * 0.5 * 0.75 + v(61, 30) * 0.5 * 0.75 + v(60, 31) * 0.5 * 0.25 + v(61, 31) * 0.5 * 0.25)) < 1e-9);
+  assert.ok(Math.abs(field(60.5, 30.25) - (v(60, 30) + 0.5 * (v(61, 30) - v(60, 30)) + 0.25 * (v(61, 31) - v(61, 30)))) < 1e-9, 'under the diagonal');
+  assert.ok(Math.abs(field(60.25, 30.5) - (v(60, 30) + 0.5 * (v(60, 31) - v(60, 30)) + 0.25 * (v(61, 31) - v(60, 31)))) < 1e-9, 'over it');
 });
 
 // ---- D3: the tiles ---------------------------------------------------------------------------------------------------------
@@ -994,6 +997,7 @@ test('AUDIT LANDFORMS II G1/G2: a pixel rebuilt under the live pools carries wha
       built, queue: [], droppedLoot: loot, walkMode: true, playerSpawned: true, player, _seasonHoldKey: null, _groundBefore: new Map(),
       state: { current: { x: px, y: py }, pixelTranslation: () => [0, 0, 0] }, nearestFirstFrom: () => () => 0,
       TERRAIN_SIZE, HEIGHTMAP_DIMENSION: H, heightCell: cell, worldHeight: M, swapOff: !behind,
+      walkGroundAt,   // PIN MOVED (FLORA-GROUND): the publish's ground read is the walk floor's own law
     });
     host.sweepRoadless();   // the network landed: the roadless pixel built again
     const rebuilt = { px, py, withRoads: true, samples: after, batches: [], models: [] };   // the rebuild, cut along the network
@@ -1117,7 +1121,7 @@ test('AUDIT LANDFORMS II H3: with the row on a town pixel\'s nature - its scatte
     const out = generatePixelTerrain({ woods, px, py, tilemap: new Uint8Array(128 * 128), locationRect: rect, hasLocation: true, climateType: 2, roads: NET, landform: true, forests, ecotone });
     assert.ok(out.beach, 'the town\'s own DFU blend rode beside it');
     for (const f of out.nature) {
-      const sink = groundAt(out.samples, f.x, f.z) - f.y;
+      const sink = walkGroundAt(out.samples, f.x, f.z) - f.y;   // PIN MOVED (FLORA-GROUND): the ground's one law the flat stands on, not the bilinear patch over it
       assert.ok(sink >= -1e-6 && sink <= 50 / 70 + 1e-6, `a flat at (${f.x.toFixed(1)}, ${f.z.toFixed(1)}) stands ${sink.toFixed(2)} under its ground`);
       checked++; if (f.archive != null) border++;
     }
