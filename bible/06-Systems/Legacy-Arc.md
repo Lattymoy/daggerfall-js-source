@@ -622,7 +622,10 @@ world, locked to its own family.
   region already, and the bank deeds one a region. Sell yours there to take it up."), taken up the first tick the slot is
   free. **Departure (recorded):** offered as "sold into the estate", it waits instead - DFU prices a house off its
   building's model (`housePrice(meshRadius)`), which only its own town's directory can read, and a waiting house is not
-  lost: the family still lives in it and the player chooses which to keep.
+  lost: the family still lives in it and the player chooses which to keep. HOUSES-3 (2026-10-27,
+  `06-Systems/Online-Arc.md` HOUSES-3): a region holds THREE houses now, so the inherited one waits only when the taker
+  holds three others there ("... you already own 3 houses in that region, as many as the bank allows. Sell one there to
+  take it."), and is taken up beside the region's others.
 
 **Handed over** (`deps.inheritHouse(row, fallen)` - `'given'`, `'waits'`, `'gone'`, or still asked):
 - **Offline** - Daggerfall's own deed (`allocateHouseToPlayer`: the slot, "<heir>'s residence" on the map, the notebook's
@@ -637,8 +640,8 @@ world, locked to its own family.
   its entry, its sale (its `paid` - the deed's share comes back to the heir's record if they sell). Its cupboards are the
   fallen's realm record's (HOME1: the owner's storage is the owner's save), read through `/v1/realm/<id>/data` (a
   tombstone's record is read, never written) and grafted under the home's scene. A Knightly Order's house the realm held
-  (KNIGHT-HOUSE's deed row) is Daggerfall's bank deed as well: one a region, and the deed and its house scene given as
-  offline. A home the fallen sold after their last save reached the line is `'gone'` and leaves the line's houses.
+  (KNIGHT-HOUSE's deed row) is Daggerfall's bank deed as well: one a region (HOUSES-3: three), and the deed and its house
+  scene given as offline. A home the fallen sold after their last save reached the line is `'gone'` and leaves the line's houses.
 
 ## 11. THE UI (Enhanced Plus)
 

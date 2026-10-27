@@ -802,8 +802,9 @@
   {
     "name": "BLM-C7-the-save-hands-no-deeds",
     "file": "src/systems/save/save.js",
-    "old": "  restoreDiscovery(snap.discovery, { houses: entity.houses });",
+    "old": "  restoreDiscovery(snap.discovery, { houses: allDeeds(entity.houses) });",
     "new": "  restoreDiscovery(snap.discovery);",
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
     "tests": [
       "test/systems/bayleft_disckey.test.js"
     ]

@@ -9535,7 +9535,7 @@ took: three town homes a character, no upkeep.
   2026-10-06, below: to the ACCOUNT now, every character of it - `char_id` the one that bought it) - a guest's device
   can be lost with its browser, and a home held by an account nobody can sign back into would be a building gone
   from the world - and its door names the account's handle, never the character. The claim is ONE statement that
-  lands only while the building is nobody's and the character holds fewer than HOME_CAP (3), so two claims racing
+  lands only while the building is nobody's and the character holds fewer than HOME_CAP (3; HOUSES-3, below: in the home's region), so two claims racing
   for one building, or for a character's last place, cannot both land; a claim sent again after a lost answer finds
   the building already the same character's and is answered as the claim. Twenty claims an hour an account. Every
   write names the owner in its WHERE, so another's home is exactly as absent as none (`no-home`). A town's homes are
@@ -17395,3 +17395,44 @@ slice's to widen.
 
 Pinned in `test/systems/decor/decoruse.test.js` (D1, D2, D4, D6, D8); `tools/mutants/decoruse.json` (23, all dead).
 
+## HOUSES-3 - THREE HOUSES A REGION, OFFLINE AND ONLINE (2026-10-27, the owner: "Up the house ownership limit to 3 houses per region")
+
+Asked whether that meant the bank's offline rule or the online cap too, the owner answered "What did I just say": three
+houses in each region, everywhere. Before it, the two were different rules. Offline, the bank and a Knightly Order kept
+Daggerfall's one house a region (DaggerfallBankManager `houses[regionIndex]`, OwnsHouse :136, Buy House's
+ALREADY_OWN_HOUSE, record 286). Online, a character could buy three homes in all (HOME_CAP), in any region. A Ledger A
+departure (`01-Overview/Port-Ledger.md`, A REGION HOLDS THREE HOUSES, OFFLINE AND ONLINE).
+
+- **One number.** `net/homeLaw.js` `HOME_CAP` (3) is a character's homes IN A REGION. The bank's `HOUSES_PER_REGION` is
+  the same constant (`systems/banking.js`).
+- **The bank's registry keeps its shape.** The region's slot is still its first deed, so a save from before reads as it
+  did. The others stand beside it in the slot's `more`, each a record of the slot's own shape. Every reader asks the
+  region's deeds (`regionDeedsOf` in `net/homeLaw.js`, which the service reads too, and banking.js `regionDeeds`,
+  `allDeeds`, `regionDeedOf`), never the slot alone. `allocateHouseToPlayer` fills the slot first, then `more`, and
+  refuses a fourth. A sale names the deed it sells, and the next deed stands in the slot (`dropDeed`). A purchase in a
+  full region takes no gold. The save copies each deed whole (`copyHouseSlot`).
+- **The bank.** Buy House refuses at the region's three, in record 286's words counted to three (`housesFullText`,
+  `bank.housesFull`). The market leaves the player's own houses off its list (the market's `owned`, through
+  `houseOwnedAt`): with one house a region Daggerfall never had to. Sell House offers the region's houses that this
+  town's directory resolves (`townDeeds`: AUDIT 64 F26's resolver, WD3 H1's sleeping deed and R2-9's slice, over the
+  three), one at a time: Yes sells the one offered, No offers the next, Escape closes (`ui/bankWindow.js`
+  `_offerHouse`). With more than one, a line under the offer says which (`bank.houseOffer`). A deed that came through
+  customs is passed by online and said only where it was all there was.
+- **A Knightly Order** gives its house while the region holds fewer than three (`knightlyGifts.js`
+  `receiveHouseDecision`'s `housesFull`). The deed it gives is the one held for it online and given back alone.
+- **Every other reader** reads all three: the realm's gold (`realmGoldLaw.js` `deedsOf`), customs' give-back
+  (`realmCustoms.js` `reclaimCustomsDeeds`: each kept deed back while the region has room), the deeds the service holds
+  (`onlineHomes.js` `realmDeedsOf`, the service's `holdDeed` through `homeDeedOf`), the town map's marks
+  (`townMapMarks.js` `townHomeRows`), the arena's move (`arenaMove.js` `moveArenaRecords`: every displaced deed, never
+  onto another of the region's), the layout pins, the discoveries' restore, the line's houses and an heir's inherited
+  deed (it waits only at the region's three).
+- **Online.** The claim's one write counts the character's homes in the claim's region (`server-account/src/homes.js`),
+  and a transfer counts the buyer's homes in the offered home's region (`homeTransfer.js`, at the read and in the write).
+  The region is the claim's word, so a town three players witnessed (`town_econ_towns`) is held to its own region: a
+  claim naming another there is `bad-home`. A town nobody has witnessed takes the claim's word, as the payment's region
+  always has. `home-cap` says "A character can buy at most 3 homes in a region".
+- **Versions.** `net/homeLaw.js` is in the relay's bundle, so world270 is re-hashed in place (not deployed). The account
+  service's change rides acct196, not deployed. No migration: the `homes` table has its `region` column since HOME1.
+- **Pinned.** `test/systems/houses.test.js` (HOUSES-3), `test/systems/houses3.test.js`, `test/systems/bankwindow.test.js`,
+  `test/server/home1.test.js`, `test/server/hometransfer.test.js`, `test/systems/restore.test.js`, and every pin the
+  hosts' lines moved, each with a PIN MOVED note. `tools/mutants/houses3.json` (32), and 28 records other arcs keep re-aimed by content.

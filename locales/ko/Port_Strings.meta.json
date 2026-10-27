@@ -1880,8 +1880,8 @@
   "by": "claude-in-session"
  },
  "account.refusal.homeCap": {
-  "en": "fa2166171344",
-  "tr": "2afb48cbdbad",
+  "en": "55bd14f83b0e",
+  "tr": "0c6d43e3cc37",
   "by": "claude-in-session"
  },
  "account.refusal.homeCharacter": {
@@ -3802,6 +3802,16 @@
  "account.wear.worn": {
   "en": "109ed08cf9d2",
   "tr": "952b09ffc910",
+  "by": "claude-in-session"
+ },
+ "bank.houseOffer": {
+  "en": "48b0ed1810bc",
+  "tr": "9bd87980e80a",
+  "by": "claude-in-session"
+ },
+ "bank.housesFull": {
+  "en": "60bb535f5d72",
+  "tr": "2fcd96b92db9",
   "by": "claude-in-session"
  },
  "body.beast.feet": {

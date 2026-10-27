@@ -56,7 +56,7 @@ import { questBlockOnOwnClock } from '../quest/questStamps.js';   // TIME3: an o
 import { alignSurvival, ALIGN_GRACE_MINUTES, savedNotes } from '../survival/needs.js';   // SURV7: the needs' markers on the load arm; AUDIT SURV-BOONS C3: the boons said; AUDIT C&C N6: and the stages
 import { saneSaveClock } from '../offlineCopy.js';   // AUDIT LIVED1b F3: the envelope's clocks, read once - the doors' law too
 import { isMembershipStore } from '../guild/guilds.js';   // V2e: the two-book membership store rides the save whole
-import { createBankAccounts, createHouses, LOAN_AMNESTY, padRegionTable, blankAccount, blankHouse } from '../banking.js';   // JAN1: a save with no accounts restores the full table - an EMPTY one is truthy and the host's `??=` never minted it
+import { createBankAccounts, createHouses, LOAN_AMNESTY, padRegionTable, blankAccount, blankHouse, allDeeds, copyHouseSlot } from '../banking.js';   // JAN1: a save with no accounts restores the full table - an EMPTY one is truthy and the host's `??=` never minted it
 import { setItemFields } from '../item/itemTemplates.js';   // JAN1: an item saved before MAC-N1 (no value) is set on the way in, so the trade strip never sums NaN
 import { restoreKnightlyOrderFlags } from '../knightlyGifts.js';   // D9: KnightlyOrder.RestoreGuildData's armour-bit back-fill
 import { GUILD_GROUPS } from '../../formats/factionFile.js';   // the membership book's key IS the guild group
@@ -413,7 +413,7 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // Without these a quicksave/load cleared every account and every
   // outstanding loan, which is a rather generous bug.
   snap.bankAccounts = (entity.bankAccounts ?? []).map((a) => ({ ...a }));
-  snap.houses = (entity.houses ?? []).map((h) => ({ ...h }));
+  snap.houses = (entity.houses ?? []).map(copyHouseSlot);   // HOUSES-3: a slot's own deed and the ones beside it (`more`)
   snap.ownedShip = entity.ownedShip ?? -1;
   snap.boatCabinLink = readBankCabinLink(entity.boatCabinLink);
   if (entity.shipCrossed === true) snap.shipCrossed = true;   // RESTORE: a ship that came through customs, which the realm's bank never buys back (banking.js)
@@ -901,7 +901,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // reader threw by DFU's own ValidateRegion law. No accounts saved is no accounts opened: the full table, as a new game.
   entity.bankAccounts = snap.bankAccounts?.length ? padRegionTable(snap.bankAccounts.map((a) => ({ ...a })), blankAccount) : createBankAccounts();   // B1; WW-R: a save's 62 padded to the provinces' regions
   entity.sceneCache = restoreSceneCache(createSceneCache(), snap.sceneCache);   // P1
-  entity.houses = snap.houses?.length ? padRegionTable(snap.houses.map((h) => ({ ...h })), blankHouse) : createHouses(entity.bankAccounts.length);   // JAN1: the same law for the house registry (H1 mints it beside the accounts)
+  entity.houses = snap.houses?.length ? padRegionTable(snap.houses.map(copyHouseSlot), blankHouse) : createHouses(entity.bankAccounts.length);   // JAN1: the same law for the house registry (H1 mints it beside the accounts)
   entity.ownedShip = snap.ownedShip ?? -1;
   entity.boatCabinLink = readBankCabinLink(snap.boatCabinLink);
   if (snap.shipCrossed === true) entity.shipCrossed = true; else delete entity.shipCrossed;   // RESTORE: its customs mark, or none
@@ -1180,7 +1180,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // T4: a load replaces the discovery store; a pre-T4 save carries no
   // field and restores an empty one (nothing was discoverable then).
   // BAY-LEFT-MAPS (C7 = E2): with the deeds restored above - a house past the Bay keeps its residence in its own town's book
-  restoreDiscovery(snap.discovery, { houses: entity.houses });
+  restoreDiscovery(snap.discovery, { houses: allDeeds(entity.houses) });   // HOUSES-3: every region's three
   // RR3b: WorldDataVariants.RestoreWorldVariationData (SaveLoadManager.cs:1465-1466); a save without the field restores nothing, as the C#'s null does
   clearWorldDataVariants();
   restoreWorldVariationData(snap.worldVariation ?? null);

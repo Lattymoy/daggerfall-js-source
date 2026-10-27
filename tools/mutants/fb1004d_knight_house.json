@@ -2,42 +2,42 @@
   {
     "name": "KNIGHT-HOUSE-crossed-deed-counted",
     "file": "src/net/homeLaw.js",
-    "old": "if (!slot || typeof slot !== 'object' || slot.crossed || !homeBuildingKeyOk(buildingKey)",
-    "new": "if (!slot || typeof slot !== 'object' || !homeBuildingKeyOk(buildingKey)",
+    "old": ".find((d) => !d.crossed && d.buildingKey",
+    "new": ".find((d) => d.buildingKey",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],
-    "note": "A deed customs carried in read as one the realm gave: an offline house held from everyone online (HOME1 keeps it offline only)."
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds. A deed customs carried in read as one the realm gave: an offline house held from everyone online (HOME1 keeps it offline only)."
   },
   {
     "name": "KNIGHT-HOUSE-key-unread",
     "file": "src/net/homeLaw.js",
-    "old": "|| slot.buildingKey !== buildingKey) return null;",
-    "new": ") return null;",
+    "old": "!d.crossed && d.buildingKey === buildingKey && (Number(d.mapId) >>> 0) === id)",
+    "new": "!d.crossed && (Number(d.mapId) >>> 0) === id)",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],
-    "note": "Any building of the town read as the deed's: every house next door unsellable to the knight, and held."
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds. Any building of the town read as the deed's: every house next door unsellable to the knight, and held."
   },
   {
     "name": "KNIGHT-HOUSE-map-id-signed",
     "file": "src/net/homeLaw.js",
-    "old": "(Number(slot.mapId) >>> 0) === id ? slot : null",
-    "new": "Number(slot.mapId) === id ? slot : null",
+    "old": "(Number(d.mapId) >>> 0) === id) ?? null",
+    "new": "Number(d.mapId) === id) ?? null",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],
-    "note": "The save's signed map id (MAPS.BSA reads it signed) compared to the door's unsigned one: a town past 2^31 never matches."
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds. The save's signed map id (MAPS.BSA reads it signed) compared to the door's unsigned one: a town past 2^31 never matches."
   },
   {
     "name": "KNIGHT-HOUSE-town-unread",
     "file": "src/net/homeLaw.js",
-    "old": "return homeMapIdOk(id) && (Number(slot.mapId) >>> 0) === id ? slot : null;",
-    "new": "return homeMapIdOk(id) ? slot : null;",
+    "old": " && (Number(d.mapId) >>> 0) === id) ?? null",
+    "new": ") ?? null",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],
-    "note": "The same key in another town read as the deed's building."
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds. The same key in another town read as the deed's building."
   },
   {
     "name": "KNIGHT-HOUSE-sleeping-deed-counted",
@@ -123,12 +123,12 @@
   {
     "name": "KNIGHT-HOUSE-market-host-none",
     "file": "src/scenes/worldModes.js",
-    "old": "      owned: host.onlineHomes ? (bs) => !!host.onlineHomes.homeAt(dir.mapId, bs.buildingKey) : null,\n",
+    "old": "      owned: (bs) => houseOwnedAt({ townMapId: dir.mapId, regionIndex: dir.regionIndex }, bs.buildingKey) || !!host.onlineHomes?.homeAt(dir.mapId, bs.buildingKey),\n",
     "new": "",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],
-    "note": "The host never says who owns what: the law reads nothing."
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds. The host never says who owns what: the law reads nothing."
   },
   {
     "name": "KNIGHT-HOUSE-record-unread",
@@ -313,12 +313,12 @@
   {
     "name": "KNIGHT-HOUSE-grant-unheld",
     "file": "src/scenes/worldModes.js",
-    "old": "      if (host.holdRealmDeed) holdGrantedHouse(region, kept);\n",
+    "old": "      if (host.holdRealmDeed && given) holdGrantedHouse(region, kept, given);   // HOUSES-3: the deed given, one of the region's three\n",
     "new": "",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],
-    "note": "The order's house never held: bought from under its knight."
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds. The order's house never held: bought from under its knight."
   },
   {
     "name": "KNIGHT-HOUSE-grant-before-layouts",

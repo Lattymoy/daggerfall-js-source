@@ -267,8 +267,11 @@ test('AUDIT 64 F25/F26: the one host that mounts the bank feeds the macro produc
   const modes = src('src/scenes/worldModes.js');
   // ONE resolver, asked by the price, the offer gate and the sale -
   // DFU's window and manager both run the same GetBuildingSummary.
-  assert.match(modes, /const ownedHouseSummary = \(\) => \{/);
-  assert.match(modes, /ownedHouseResolved: \(\) => ownedHouseSummary\(\) !== null/);
+  // PIN MOVED (HOUSES-3): the one resolver over the region's three (banking.js townDeeds) - the offers, their prices
+  // and the sale all read it; an offer only where it resolves (F26), the sale's miss DFU's no-op
+  assert.match(modes, /const townHouses = \(\) => townDeeds\(playerEntity\.houses \?\? \[\], bankRegion\(\), buildingDirectory\?\.\(\)\);/);
+  assert.match(modes, /houseOffers: \(\) => townHouses\(\)\.map\(/);
+  assert.match(modes, /const offered = townHouses\(\)\[i\] \?\? null;/);
   assert.match(modes, /found: owned !== null/);
   assert.equal(/dir\?\.buildings\?\.find\(\(b\) => b\.buildingKey === key\)/.test(modes), false,
     'the second, independent lookup is gone');

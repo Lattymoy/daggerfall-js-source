@@ -832,8 +832,9 @@
   {
     "name": "R2-9-deed-town-unread",
     "file": "src/systems/banking.js",
-    "old": " && deedStands(houses?.[regionIndex]) && deedHeldIn(houses?.[regionIndex], mapId);",
-    "new": " && deedStands(houses?.[regionIndex]);",
+    "old": "deedStands(d) && deedHeldIn(d, mapId));",
+    "new": "deedStands(d));",
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
     "tests": [
       "test/world/icgrand_living.test.js"
     ]
@@ -867,9 +868,10 @@
   },
   {
     "name": "R2-9-deed-sale-any-slice",
-    "file": "src/scenes/worldModes.js",
-    "old": " || !deedHeldIn(playerEntity.houses?.[bankRegion()], dir.mapId)) return null;",
-    "new": ") return null;",
+    "file": "src/systems/banking.js",
+    "old": ".filter((deed) => deedStands(deed) && deedHeldIn(deed, dir.mapId))",
+    "new": ".filter((deed) => deedStands(deed))",
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
     "tests": [
       "test/world/icgrand_living.test.js"
     ]

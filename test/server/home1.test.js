@@ -171,8 +171,18 @@ test('HOME1 the service: a town\'s homes are any session\'s to read (a guest\'s 
   const fourth = await buy(aldric, A, { buildingKey: 4 });
   assert.deepEqual([fourth.status, fourth.body.error], [409, 'home-cap']);
   assert.equal((await buy(aldric, A2, { buildingKey: 4 })).status, 200, 'another character has its own three');
+  // HOUSES-3 (2026-10-27, the owner: "Up the house ownership limit to 3 houses per region"): three a REGION - the fourth
+  // in another region lands, and its region has three of its own
+  for (const k of [5, 6, 7]) assert.equal((await buy(aldric, A, { mapId: 1291010264, buildingKey: k, region: 18 })).status, 200, 'another region\'s three');
+  const eighth = await buy(aldric, A, { mapId: 1291010264, buildingKey: 8, region: 18 });
+  assert.deepEqual([eighth.status, eighth.body.error], [409, 'home-cap'], 'and no fourth there');
+  // a town three players witnessed is held to its own region: a claim naming another (to pass its region's cap) is refused
+  raw.prepare('INSERT INTO town_econ_towns (map, px, py, region, location, at) VALUES (?, 263, 1291, 18, 4, ?)').run(1291010265, T0);
+  const forged = await buy(aldric, A, { mapId: 1291010265, buildingKey: 9, region: 19 });
+  assert.deepEqual([forged.status, forged.body.error], [400, 'bad-home'], 'a witnessed town\'s region, never the claim\'s word');
+  assert.deepEqual([(await buy(aldric, A, { mapId: 1291010265, buildingKey: 9, region: 18 })).body.error], ['home-cap'], 'its own region, and its cap');
   const mine = (await call('POST', '/v1/homes/mine', {}, aldric)).body;
-  assert.equal(mine.homes.length, 4);
+  assert.equal(mine.homes.length, 7);
   assert.equal(mine.cap, 3);
   // entry: the owner's to set
   const e1 = await call('POST', '/v1/homes/entry', { mapId: home().mapId, buildingKey: home().buildingKey, entry: 'party' }, mara);
@@ -198,7 +208,7 @@ test('HOME1 the service: a town\'s homes are any session\'s to read (a guest\'s 
   const db = env.DB._raw;
   const before = db.prepare('SELECT COUNT(*) AS n FROM homes').get().n;
   db.prepare("DELETE FROM players WHERE handle = 'Aldric'").run();
-  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM homes').get().n, before - 3, 'CASCADE');
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM homes').get().n, before - 6, 'CASCADE');   // HOUSES-3: and the three of another region
 });
 
 test('HOME1 the claim\'s rate: an account makes at most twenty claims an hour, answered home-rate - a cap stops a hoard, this stops a claim-and-release churn (mutants: the rate unread)', async (t) => {

@@ -113,7 +113,7 @@ test('BAY-LEFT-MAPS C7 A SAVE FROM BEFORE: a Bay book restores byte for byte; a 
   assert.deepEqual([Object.keys(book), book[9].displayName], [['4', '9'], 'Bran\'s residence'], 'the carried one beside its own');
   // the save hands the deeds in, restored before the discoveries
   const S = read('src/systems/save/save.js');
-  const at = S.indexOf('restoreDiscovery(snap.discovery, { houses: entity.houses });');
+  const at = S.indexOf('restoreDiscovery(snap.discovery, { houses: allDeeds(entity.houses) });');   // PIN MOVED (HOUSES-3): every region's three
   assert.ok(at > 0 && S.indexOf('entity.houses = snap.houses?.length') < at, 'with the deeds restored above');
 });
 

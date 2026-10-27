@@ -129,8 +129,9 @@
   {
     "name": "WWR-a-saves-houses-unpadded",
     "file": "src/systems/save/save.js",
-    "old": "padRegionTable(snap.houses.map((h) => ({ ...h })), blankHouse)",
-    "new": "snap.houses.map((h) => ({ ...h }))",
+    "old": "padRegionTable(snap.houses.map(copyHouseSlot), blankHouse)",
+    "new": "snap.houses.map(copyHouseSlot)",
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
     "tests": [
       "test/world/worldWide/wwr_regions.test.js"
     ]

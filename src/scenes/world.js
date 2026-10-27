@@ -190,7 +190,7 @@ import { maxFatigue, FATIGUE_MULTIPLIER, liveStat, STAT_KEYS_ORDER, clampFatigue
 // finished since U7; what was missing was a host outside the dungeon
 // that opens one, and CanRest's whole town half.
 import { restDecision, getPreventedRestMessage, REST_TEXT } from '../systems/rest/restSession.js';   // U48: the DISPATCH (DaggerfallUI.cs:651-688) above the rest window   // ROAD-B B5: GetPreventedRestMessage   // PARTY-REST5: enemiesNearby's own textId, for a follower's own relayed break
-import { isHouseOwned, deedStands, shipCoords, ownsShip, assignShipToPlayer, resetShip, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS, SHIP_TYPES, createBankAccounts, BANK_REGION_COUNT, createHouses, allocateHouseToPlayer, forgiveLoans, loanAmnestyLines, foldEmpireAccounts, empireAccountLines, goldRegion } from '../systems/banking.js';   // H1: the quest residence filter; GetShipCoords for the map-pixel scene clear; OwnsShip for the travel popup   // AUDIT 58: AssignShipToPlayer's permanent half, which the classic import owed
+import { isHouseOwned, deedStands, regionDeedOf, allDeeds, regionHousesFull, shipCoords, ownsShip, assignShipToPlayer, resetShip, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS, SHIP_TYPES, createBankAccounts, BANK_REGION_COUNT, createHouses, allocateHouseToPlayer, forgiveLoans, loanAmnestyLines, foldEmpireAccounts, empireAccountLines, goldRegion } from '../systems/banking.js';   // H1: the quest residence filter; GetShipCoords for the map-pixel scene clear; OwnsShip for the travel popup   // AUDIT 58: AssignShipToPlayer's permanent half, which the classic import owed
 import {
   clearSceneCache,           // P1: SaveLoadManager.ClearSceneCache, at PlayerGPS's map-pixel seam
   createSceneCache, cacheScene, restoreCachedScene, worldSceneName, LOOT_CONTAINER_TYPES,   // A10: the ship arm's Cache/RestoreCachedScene pair (TransportManager.cs:382-398)
@@ -15001,7 +15001,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // ONLINE THE TOWNS ARE THE ROOM'S: only the service's homes hold one (every client the same pins - a save's own
     // records would stand one player's town apart from the room's); offline, the save's
     const records = homeLayoutsOnline ? (_serverLayoutRecords ?? []) : layoutRecordsOf({
-      houses: playerEntity.houses, rooms: playerEntity.rentedRooms,
+      houses: allDeeds(playerEntity.houses), rooms: playerEntity.rentedRooms,   // HOUSES-3: every deed, the region's three
       sites: questBridge?.machine?.getAllActiveQuestSites?.() ?? [],
       questors: questBridge?.machine?.getAllActiveQuestors?.() ?? [],   // AUDIT WD3 S3
       repairs: (playerEntity.otherItems ?? []).map((it) => it?.repairData).filter(Boolean),
@@ -26300,16 +26300,16 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // (legacyHost.js takeDeeds). Offline it is Daggerfall's bank deed and the house as its owner left it - out of the
   // fallen's own newest save, the one record of what they kept there; online the account service's home (homes.js
   // inheritHome) and its cupboards, out of the fallen's realm record.
-  /** Daggerfall's deed into the one played's bank slot of its region - DaggerfallBankManager's one house a region, so a
-   *  slot holding another house 'waits' - and the house's scene as the fallen left it (`scenes()`, their scene cache's
+  /** Daggerfall's deed into the one played's bank slots of its region - HOUSES-3: three a region (banking.js), so a region
+   *  holding three others 'waits' - and the house's scene as the fallen left it (`scenes()`, their scene cache's
    *  snapshot) grafted in, permanent (sceneCache.js graftPermanentScene). */
   const legacyInheritDeed = (row, scenes) => {
     const region = row.regionIndex | 0;
     if (!playerEntity.houses?.length) playerEntity.houses = createHouses(BANK_REGION_COUNT);
-    const slot = playerEntity.houses[region];
-    if (!slot) return null;
-    if ((slot.buildingKey | 0) > 0) return (slot.mapId >>> 0) === (row.mapId >>> 0) && (slot.buildingKey | 0) === (row.buildingKey | 0) ? 'given' : 'waits';
-    allocateHouseToPlayer(playerEntity.houses, region, { buildingKey: row.buildingKey | 0, mapId: row.mapId, location: row.location ?? '' }, {
+    if (!playerEntity.houses[region]) return null;
+    if (regionDeedOf(playerEntity.houses, region, row.mapId, row.buildingKey)) return 'given';
+    if (regionHousesFull(playerEntity.houses, region)) return 'waits';
+    const slot = allocateHouseToPlayer(playerEntity.houses, region, { buildingKey: row.buildingKey | 0, mapId: row.mapId, location: row.location ?? '' }, {
       // the building named "<heir>'s residence" in its own town's discovery (`<regionIndex>:<name>`, discoveryLocationId's key)
       discoverBuilding: (key, name) => { if (row.location) discoverBuilding(townBookId(region, row.location, row.mapId), { buildingKey: key, buildingType: TALK_BUILDING_TYPES.House1 }, name); },   // BAY-LEFT-MAPS (C7 = E2): its own town's book, past the Bay by its map id
       addPermanentScene: () => {},   // the graft below makes the scene permanent, with what it held
@@ -26337,10 +26337,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       const mine = all.data.homes.find((h) => same(h) && h.character === me) ?? null;
       const theirs = all.data.homes.find((h) => same(h) && h.character === from) ?? null;
       if (!mine && !theirs) return 'gone';   // sold after their last save reached the line
-      // a deed the realm holds (KNIGHT-HOUSE: a Knightly Order's house) is Daggerfall's bank deed as well - one a region
+      // a deed the realm holds (KNIGHT-HOUSE: a Knightly Order's house) is Daggerfall's bank deed as well - three a region
+      // (HOUSES-3): it waits while the region holds three others
       const deed = (mine ?? theirs).deed === true;
-      const slot = playerEntity.houses?.[row.regionIndex | 0];
-      if (deed && (slot?.buildingKey | 0) > 0 && !((slot.mapId >>> 0) === (row.mapId >>> 0) && (slot.buildingKey | 0) === (row.buildingKey | 0))) return 'waits';
+      if (deed && !regionDeedOf(playerEntity.houses, row.regionIndex | 0, row.mapId, row.buildingKey) && regionHousesFull(playerEntity.houses, row.regionIndex | 0)) return 'waits';
       if (!mine) {
         const r = await homesApi.inherit({ mapId: row.mapId >>> 0, buildingKey: row.buildingKey | 0, character: me, from });
         if (!r?.ok) { if (r?.error === 'no-home') return 'gone'; throw new Error(r?.error ?? 'offline'); }
@@ -26431,7 +26431,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       return true;
     },
     // LEGACY-HOME: the houses the one played holds (a deed that stands - banking.js deedStands), and the house they are in
-    heldHouses: () => (isOnlinePage() ? (realmSession ? _legacyOnlineHomes : null) : (playerEntity.houses ?? []).filter((h) => (h?.buildingKey | 0) > 0 && deedStands(h))),   // LEGACY7 part five: online, the account's online homes (null until read)
+    heldHouses: () => (isOnlinePage() ? (realmSession ? _legacyOnlineHomes : null) : allDeeds(playerEntity.houses).filter(deedStands)),   // HOUSES-3: every region's three; LEGACY7 part five: online, the account's online homes (null until read)
     heldHousesWhole: () => isOnlinePage(),   // ACCOUNT-HOMES: online they are the line's whole - every member owns each, and one sold leaves
     inheritHouse: legacyInheritHouse,   // PERMADEATH-HOUSES: a house of the line's dead, the one played's
     // LEGACY6: what the world remembers - the town's regard of the one played and its day, the towns' minute for the

@@ -30,12 +30,12 @@
   {
     "name": "JAN1-the-houses-restore-empty",
     "file": "src/systems/save/save.js",
-    "old": "  entity.houses = snap.houses?.length ? padRegionTable(snap.houses.map((h) => ({ ...h })), blankHouse) : createHouses(entity.bankAccounts.length);",
-    "new": "  entity.houses = (snap.houses ?? []).map((h) => ({ ...h }));",
+    "old": "  entity.houses = snap.houses?.length ? padRegionTable(snap.houses.map(copyHouseSlot), blankHouse) : createHouses(entity.bankAccounts.length);",
+    "new": "  entity.houses = (snap.houses ?? []).map(copyHouseSlot);",
     "tests": [
       "test/systems/jan1_fixes.test.js"
     ],
-    "note": "Re-aimed by content (WW-R, bible/03-World/World-Wide.md): the provinces as regions."
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds. Re-aimed by content (WW-R, bible/03-World/World-Wide.md): the provinces as regions."
   },
   {
     "name": "JAN1-a-saved-table-is-thrown-away",

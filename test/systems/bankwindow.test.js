@@ -14,7 +14,7 @@ import { NATIVE_W, NATIVE_H } from '../../src/ui/native/nativePanel.js';
 import {
   TRANSACTION_TYPE, TRANSACTION_RESULT, createBankAccounts,
   accountTotal, loanedTotal, borrowLoan, bankButtonEnabled,
-  toggleTransactionInput, parseTransactionAmount,
+  toggleTransactionInput, parseTransactionAmount, housesFullText, houseOfferText,
 } from '../../src/systems/banking.js';
 import { GOLD_PIECE_WEIGHT_KG, letterOfCredit, LETTER_OF_CREDIT_TEMPLATE } from '../../src/systems/inventory.js';
 import { goldAmount, totalGoldAmount, deductGold, addGold } from '../../src/systems/court.js';
@@ -273,10 +273,14 @@ test('B2: the house and ship buttons refuse before opening anything (:417-472)',
   const a = win();
   clickRect(a.w, 'buyHouse');
   assert.equal(idOf(a.w.box), R.NO_HOUSES_FOR_SALE);
-  // already own one
-  const b = win({ ownsHouse: true });
+  // PIN MOVED (HOUSES-3): owning one refuses nothing - the region's THREE refuse, in the bank's words counted to three
+  const b = win({ ownsHouse: true, housesForSale: 3, hooks: { housesFull: () => true } });
   clickRect(b.w, 'buyHouse');
-  assert.equal(idOf(b.w.box), R.ALREADY_OWN_HOUSE);
+  assert.deepEqual(b.w.box.rows.map((r) => r.text), [housesFullText()]);
+  assert.match(housesFullText(), /already own 3 houses in this region/);
+  const b2 = win({ ownsHouse: true, housesForSale: 3, hooks: { housesFull: () => false, openPurchase: () => true } });
+  clickRect(b2.w, 'buyHouse');
+  assert.equal(b2.w.box, null, 'one or two owned: the market opens');
   // a ship outside a port town
   const c = win();
   clickRect(c.w, 'buyShip');
@@ -291,6 +295,31 @@ test('B2: the house and ship buttons refuse before opening anything (:417-472)',
   assert.equal(e.w.box, null);
   clickRect(e.w, 'sellShip');
   assert.equal(e.w.box, null);
+  // HOUSES-3: a town's houses offered in turn - No offers the next, Yes sells the one offered; one the bank does not buy
+  // back (customs' words) is passed by, and said only where it was all there was; Escape closes, offering nothing more
+  const sold = [];
+  const g = win({ hooks: { houseOffers: () => [{ price: 900, crossed: null }, { price: 0, crossed: ['kept'] }, { price: 700, crossed: null }], sellHouse: (i) => sold.push(i) } });
+  clickRect(g.w, 'sellHouse');
+  assert.equal(idOf(g.w.box), R.SELL_HOUSE_OFFER);
+  assert.equal(g.w.box.amount, 900);
+  assert.equal(g.w.box.rows.at(-1).text, houseOfferText(1, 3));
+  g.w.input('KeyN');
+  assert.equal(g.w.box.amount, 700, 'the next it buys back, past the crossed one');
+  assert.equal(g.w.box.rows.at(-1).text, houseOfferText(3, 3));
+  g.w.input('KeyY');
+  assert.deepEqual(sold, [2]);
+  clickRect(g.w, 'sellHouse');
+  g.w.input('Escape');
+  assert.equal(g.w.box, null, 'Escape offers no next house');
+  assert.deepEqual(sold, [2]);
+  const lone = win({ hooks: { houseOffers: () => [{ price: 500, crossed: null }], sellHouse: (i) => sold.push(i) } });
+  clickRect(lone.w, 'sellHouse');
+  assert.equal(lone.w.box.rows.some((r) => r.text === houseOfferText(1, 1)), false, 'one house: no count');
+  lone.w.input('KeyN');
+  assert.equal(lone.w.box, null);
+  const kept = win({ hooks: { houseOffers: () => [{ price: 0, crossed: ['That came into the realm through customs.'] }] } });
+  clickRect(kept.w, 'sellHouse');
+  assert.deepEqual(kept.w.box.rows.map((r) => r.text), ['That came into the realm through customs.']);
   // owning one raises the offer carrying its price
   const f = win({ ownsShip: true, ownedShip: 0 });
   clickRect(f.w, 'sellShip');

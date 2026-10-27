@@ -68,7 +68,8 @@ test('AUDIT RELEASE R2-9 A CAPITAL\'S DEED IS ITS SLICE\'S - a deed bought in on
   // the hosts that ask name their town
   const read = (f) => readFileSync(new URL(`../../${f}`, import.meta.url), 'utf8');
   assert.match(read('src/scenes/worldModes.js'), /isHouseOwned\(playerEntity\.houses \?\? \[\], b\?\.regionIndex \?\? 0, key, homeTownOf\(b\)\)/, 'a building where it stands');
-  assert.match(read('src/scenes/worldModes.js'), /!deedHeldIn\(playerEntity\.houses\?\.\[bankRegion\(\)\], dir\.mapId\)\) return null;/, 'the bank\'s sale: the town the bank stands in');
+  // PIN MOVED (HOUSES-3): the bank's resolver over the region's three (banking.js townDeeds)
+  assert.match(read('src/systems/banking.js'), /\.filter\(\(deed\) => deedStands\(deed\) && deedHeldIn\(deed, dir\.mapId\)\)/, 'the bank\'s sale: the town the bank stands in');
   assert.match(read('src/scenes/world.js'), /isHouseOwned\(playerEntity\.houses \?\? \[\], _questRegionIndex\(\), buildingKey, id\); \}/, 'the quest machine\'s');
   assert.match(read('src/scenes/questWorld.js'), /isHouseOwned\(playerEntity\.houses \?\? \[\], _questRegionIndex\(\), buildingKey, _questLoc\(\)\?\.mapTableData\?\.mapId \?\? null\)/, 'the quest world\'s');
   assert.match(read('src/scenes/exterior.js'), /isHouseOwned\(playerEntity\.houses \?\? \[\], dfLocation\.regionIndex, buildingKey, dfLocation\.mapTableData\?\.mapId \?\? null\)/, 'the town\'s locks\'');

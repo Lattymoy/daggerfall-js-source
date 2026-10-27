@@ -358,7 +358,8 @@ decorator's piece lines (placed, removed, an edit's cost) still print bare
 numbers, mostly hundreds.
 
 **The sink this leaves** (AUDIT HOME-PRICE E1). The home sink shrank and is
-capped: three homes a character sink at most 750,000 where the field's prices
+capped: three homes a character sink at most 750,000 (HOUSES-3, 2026-10-27: three in
+each region now, `06-Systems/Online-Arc.md` HOUSES-3, so the cap is a region's) where the field's prices
 reached about 2.1-2.5 million, a hall at most 375,000 where one asked
 1,274,880, and past the cap a home no longer scales with wealth. Held for good,
 a home costs 15% of its price (the sale's 85% back, no upkeep), so an account's
