@@ -98,10 +98,10 @@
   {
     "name": "R2-7-town-past-bay-taken",
     "file": "src/net/staffEvent/staffEventLaw.js",
-    "old": "  if (e.loc >= 0 && !staffTownPixelOk(e.px, e.py)) return 'town-past-bay';",
+    "old": "  if (!isAreaEvent(e) && !staffTownPixelOk(e.px, e.py, e.loc, e.rg)) return 'town';",
     "new": "",
     "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
-    "note": "a town's event past the Bay staged, which no raid runs"
+    "note": "WW6 (re-aimed by content): a town's event staged with its location and its pixel on two sides of the Bay's edge, which no raid runs"
   },
   {
     "name": "R2-7-word-pixel-the-bays",
@@ -122,10 +122,10 @@
   {
     "name": "R2-7-offered-as-town",
     "file": "src/net/staffPlaces.js",
-    "old": "    if (p?.name) list.push({ loc: -1, name: String(p.name).slice(0, 48), kind: placeKind(p.type), px: p.px, py: p.py });",
-    "new": "    if (p?.name) list.push({ loc: 0, name: String(p.name).slice(0, 48), kind: placeKind(p.type), px: p.px, py: p.py });",
+    "old": "    const loc = kind === 'town' && Number.isSafeInteger(p?.location) && p.location < -1 ? p.location : -1;",
+    "new": "    const loc = 0;",
     "tests": ["test/world/worldWide/auditrelease_r2_gaps.test.js"],
-    "note": "a place past the Bay offered as a town's event, which the law refuses"
+    "note": "WW6 (re-aimed by content): a place past the Bay offered by a Bay location's index, which the law refuses there"
   },
   {
     "name": "R2-7-other-theatre",
