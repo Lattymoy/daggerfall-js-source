@@ -17,7 +17,7 @@ import { etherPlaceId, etherPlacePixelOfId, PLACE_KINDS } from '../../../src/wor
 import { veilhaven, isleOfCell, CELLS_W } from '../../../src/world/ethericSea.js';
 import { capitalPlaceId } from '../../../src/world/tamrielCapitals.js';
 import { nearestSafePlace } from '../../../src/systems/deathRespawn.js';
-import { longitudeLatitudeToMapPixel } from '../../../src/formats/mapsFile.js';
+import { longitudeLatitudeToMapPixel, LOCATION_TYPES } from '../../../src/formats/mapsFile.js';
 import { REGION_NAMES } from '../../../src/formats/mapsTables.js';
 import { REPOSITION } from '../../../src/systems/ship.js';
 import { BOOT_DOOR_KEYS } from '../../../src/systems/online/onlineLane.js';
@@ -122,7 +122,7 @@ test('BAY-LEFT-B B1: countryPixelOfId reads a country place\'s map id back to it
   assert.equal(etherPlacePixelOfId(7707), null);
 });
 
-test('BAY-LEFT-B B1: a house with no seat bears its heir in the WORLD\'s nearest town - past the Bay a town of the province, its map id the birth\'s seat; on the Bay the Bay\'s town as before (mutants: the town\'s kind; the name\'s test; the map id)', { skip: NO_DATA }, async () => {
+test('BAY-LEFT-B B1: a house with no seat bears its heir in the WORLD\'s nearest town - past the Bay a town of the province, its map id the birth\'s seat; on the Bay the Bay\'s town as before (mutants: the town\'s kind - a temple nearer; the name\'s test; the map id)', { skip: NO_DATA }, async () => {
   const w = await world();
   const nearestOf = (px, accept) => nearestSafePlace([w.worldPlaces.all()], px, accept);
   const far = nearestTownAnywhere(nearestOf, REGION_NAMES, { x: 1571, y: -428 });
@@ -136,6 +136,20 @@ test('BAY-LEFT-B B1: a house with no seat bears its heir in the WORLD\'s nearest
     if (d < bestD) { bestD = d; best = { region: REGION_NAMES[l.regionIndex], loc: l.name, pixel: p }; }
   }
   assert.deepEqual({ region: bay.region, loc: bay.loc, pixel: bay.pixel }, best);
+  // a town alone: asked on a Bay temple's own pixel (the nearest safe place a temple, named), the heir's town is the
+  // nearest TOWN - never the temple, nor a graveyard
+  const temple = w.rows.find((l) => l.mapTableData.locationType === LOCATION_TYPES.ReligionTemple && l.name);
+  const tp = longitudeLatitudeToMapPixel(temple.mapTableData.longitude, temple.mapTableData.latitude);
+  assert.equal(nearestOf(tp, null)?.kind, 'temple', 'the nearest safe place there is the temple');
+  let town = null, townD = Infinity;
+  for (const l of w.rows) {
+    if (![0, 1, 2].includes(l.mapTableData.locationType)) continue;
+    const p = longitudeLatitudeToMapPixel(l.mapTableData.longitude, l.mapTableData.latitude), d = (p.x - tp.x) ** 2 + (p.y - tp.y) ** 2;
+    if (d < townD) { townD = d; town = { region: REGION_NAMES[l.regionIndex], loc: l.name, pixel: p }; }
+  }
+  const atTemple = nearestTownAnywhere(nearestOf, REGION_NAMES, tp);
+  assert.deepEqual({ region: atTemple.region, loc: atTemple.loc, pixel: atTemple.pixel }, town);
+  assert.notEqual(atTemple.loc, temple.name);
   assert.equal(nearestTownAnywhere(() => null, REGION_NAMES, { x: 1, y: 1 }), null);
   assert.equal(nearestTownAnywhere(nearestOf, REGION_NAMES, null), null);
 });

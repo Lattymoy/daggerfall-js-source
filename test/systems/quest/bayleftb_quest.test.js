@@ -99,6 +99,20 @@ test('BAY-LEFT-B B4: a province\'s table carries each place\'s MapTable key - it
   assert.equal(capital, 1, 'Solitude (stood by the suite before its table)');
   // a capital's slice not yet stood reads none; stood, its own buildings' and its fabric's
   const P = w.places.provinceQuestPlaces;
+  // an Arena town and a country place no test stood (Elsweyr's - far from every questor here) read their template's key
+  // without standing - the key their location carries once stood, a key of buildings (never none)
+  const unstood = (p) => !w.locationIndex.has(`${p.px},${p.py}`) && !(CAPITALS.some((c) => c.name === p.name));
+  const town = w.worldPlaces.inTheatre(7).find((p) => w.maps.getRegionIndexAt(p.px, p.py) === 68 && p.type === LOCATION_TYPES.TownCity && unstood(p));
+  assert.ok(town, 'an Elsweyr Arena town not stood');
+  const country = P.countryNear(town.px, town.py, 40, 8, 400).find((c) => unstood(c) && c.type !== LOCATION_TYPES.TownCity);
+  assert.ok(country, 'a country place near it, not stood');
+  for (const p of [town, country]) {
+    const read = P.tableKeyAt(p.px, p.py);
+    const stood = P.standAt(p.px, p.py);
+    assert.equal(read, stood.mapTableData.key >>> 0, `${p.name}: its template's key, read before it stood`);
+    assert.equal(read, locationKeyOf(stood.exterior?.buildings ?? []), `${p.name}: its buildings'`);
+  }
+  assert.ok(P.tableKeyAt(town.px, town.py) > 0, `${town.name}: a town's key names its buildings`);
   const ic = w.worldPlaces.inTheatre(9).find((p) => w.maps.getRegionIndexAt(p.px, p.py) === 70 && CAPITALS[0].family && !w.locationIndex.has(`${p.px},${p.py}`) && /quarter|District/.test(p.name));
   assert.ok(ic, 'an Imperial City slice not stood');
   assert.equal(P.tableKeyAt(ic.px, ic.py), null);

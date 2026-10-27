@@ -963,6 +963,7 @@ and is moved to Solitude by its id, and by its names; the Bay's starts, a Bay na
 standing yet move nothing; a lost seat is said; the id's read-backs; the world's nearest town past the Bay and the Bay's
 as the old walk's; the address; the host's wiring), `test/systems/fb1009f.test.js` and
 `test/systems/legacy/fb1012d_familytree.test.js` (the waiting house's seat id through the front door). Mutants:
-`tools/mutants/bayleftb.json` (BAY-LEFT-B-B1-*). PIN MOVED: fb1012d's start pin runs the module where it ran world.js's
+`tools/mutants/bayleftb.json` (BAY-LEFT-B-B1-*; the list's 46, B1 to B7 and the houses, all dead - the seatless town's
+kind and B4's unstood template key were killed by pins added at the package's finish). PIN MOVED: fb1012d's start pin runs the module where it ran world.js's
 text, and its two birth addresses carry the seat's id; classicstart's and enhancedMenu's start text pins read the
 module.
