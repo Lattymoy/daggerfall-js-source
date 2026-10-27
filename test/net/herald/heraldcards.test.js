@@ -155,6 +155,7 @@ async function withHub(fn, env) {
   const r = fakeRoom(SOCIAL_ROOM);
   Object.assign(r.env, { GATE_DISCORD_WEBHOOK: HOOK, ...env });
   r.store.set(SD_KEY, { s: 0, ph: 'gone', r: -1, at: clock, until: clock, next: clock + 10 * 365 * 86_400_000 });
+  for (let lane = 1; lane <= 8; lane++) r.store.set(`${SD_KEY}:${lane}`, { s: lane * 10_000_000, ph: 'gone', r: -1, at: clock, until: clock, next: clock + 10 * 365 * 86_400_000 });   // PIN MOVED (WW5): and every province lane's Hollow resting with it
   const posts = [];
   globalThis.fetch = async (url, init) => { posts.push({ url, body: JSON.parse(init.body) }); return { ok: true, status: 204 }; };
   try { await quiet(() => fn({ r, posts, tick: (ms) => { clock += ms; }, set: (t) => { clock = t; } })); } finally { Date.now = realNow; globalThis.fetch = realFetch; }

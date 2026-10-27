@@ -209,10 +209,11 @@
     "note": "Re-aimed by content (WORLD-WIDE folded into TESA, #1184: relay world256, account acct182, bootWorld 36,129)."
   },
   {
-    "name": "WWR-the-census-the-worlds",
+    "name": "WWR-the-census-the-bays",
     "file": "src/net/wire.js",
-    "old": "export const SD_REGION_COUNT = CHAT_BAY_REGIONS;",
-    "new": "export const SD_REGION_COUNT = CHAT_REGION_COUNT;",
+    "note": "WW5 (2026-10-27): the law moved on purpose - the census counts every region's channel now, each lane its own regions (bible/03-World/World-Wide.md WW5); WW-R's pin moved with it (test/world/worldWide/wwr_regions.test.js PIN MOVED), so this record holds the moved law from the other side.",
+    "old": "export const SD_REGION_COUNT = CHAT_REGION_COUNT;",
+    "new": "export const SD_REGION_COUNT = CHAT_BAY_REGIONS;",
     "tests": [
       "test/world/worldWide/wwr_regions.test.js"
     ]

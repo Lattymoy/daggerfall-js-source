@@ -229,7 +229,8 @@ A departure (Port-Ledger A, IC-GRAND (10)).
 - **The paper doll's backdrop**: a region past `REGION_BACKGROUND_CHARS` takes the race's, DFU's own fallback.
 - **The servers**: the account service's town books and nodes are any region's (WW7-5, WW-C1); the Watch's ground and the
   grants are the world's (WW7-5, AUDIT TESA II Z6); the Abyss census, the Hollows, the raids, the stars and World of
-  Daggerfall's camps are the Bay's by their records (WW-R, WW5, WW6).
+  Daggerfall's camps are the Bay's by their records (WW-R, WW5, WW6). (The Abyss census, the Hollows and the stars no
+  longer: WW5, 2026-10-27, keeps a coven night and a Hollow in every province but the open zone.)
 
 ## Findings in other streams' files
 

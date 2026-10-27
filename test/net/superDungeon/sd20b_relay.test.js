@@ -77,7 +77,7 @@ test('SD20b THE NEXT SLOT TOLD ONCE IT MAY HAVE RISEN (R3): the hub\'s answer sa
     set(riseAt - 60_000);
     const grief = cell.connect(); await cell.hello(grief, 'peer-grief', doorPose(0), { name: 'Grief' });
     await cell.raw(grief, found(1));
-    assert.deepEqual(cell.room._sdHubSlot, { s: 1, at: riseAt - 60_000, next: riseAt }, 'the hub\'s slot and when the next may rise');
+    assert.deepEqual(cell.room._sdHubSlot.get(0), { s: 1, at: riseAt - 60_000, next: riseAt }, 'the hub\'s slot and when the next may rise');   // PIN MOVED (WW5): the hub's word a lane at a time - the Bay's lane's
     const early = asks();
     await cell.raw(grief, found(2));
     assert.equal(asks(), early, 'before it may rise: held');

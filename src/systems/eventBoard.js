@@ -194,8 +194,10 @@ function timerRow(r, src) {
     Object.assign(row, { title: r.live ? EVENT_BOARD_TEXT.serpentHunts(boss) : EVENT_BOARD_TEXT.serpentRises(boss), detail: r.live ? EVENT_BOARD_TEXT.serpentLive() : EVENT_BOARD_TEXT.serpentSoon(), since: r.live ? T.riseAt : T.omenAt });
     if (r.where && src?.serpent?.place) { row.where = EVENT_BOARD_TEXT.off(src.serpent.place); row.way = isPixel(site) ? eventWay(src?.pixel, site) : null; }
   } else if (r.kind === 'super') {
-    const site = src?.sd?.site, place = src?.sd?.place ?? site?.cityName ?? null, rec = src?.sd?.rec;
-    Object.assign(row, { title: EVENT_BOARD_TEXT.superStands(src?.sd?.name || EVENT_KIND_TEXT.super()), detail: EVENT_BOARD_TEXT.superLive(), since: Number.isFinite(rec?.foundAt) ? rec.foundAt : NaN });
+    // WW5: a province's Hollow is its own lane's (`sd.lanes`, found by its slot), the Bay's the one it always was
+    const s = idNumber(r.id), sd = src?.sd?.lanes?.find((x) => x?.rec?.s === s) ?? src?.sd;
+    const site = sd?.site, place = sd?.place ?? site?.cityName ?? null, rec = sd?.rec;
+    Object.assign(row, { title: EVENT_BOARD_TEXT.superStands(sd?.name || EVENT_KIND_TEXT.super()), detail: EVENT_BOARD_TEXT.superLive(), since: Number.isFinite(rec?.foundAt) ? rec.foundAt : NaN });
     if (r.where && place) { row.where = EVENT_BOARD_TEXT.near(place); row.way = isPixel(site) ? eventWay(src?.pixel, site) : null; }
   } else if (r.kind === 'star') {
     const [n, k] = String(r.id).slice(5).split('.').map(Number), T = starTimes(n, k);

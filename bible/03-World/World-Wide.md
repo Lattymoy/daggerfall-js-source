@@ -67,7 +67,7 @@ was built on the Bay and stops at its edge. A survey of the tree on 2026-10-24 f
 | WW-R | The provinces as regions: each province past the Bay a region of its own after the Bay's 62 (the owner, 2026-10-24: "Separate regions make sense"); the politic map past the Bay; the people, the law, the banks and the regional channels a province's | BUILT (below) |
 | WW-C | Cyrodiil (the owner, 2026-10-24: "Each region becomes home to their own abundant harvesting resources with other resources sprinkled in. Cyrodil becomes the new open PvP area with the wrothgarian mountain area being retired in favor of this. Cryodil will be home to all abundent resources and everything else from the wrothgarian zone"): WW-C1 each province's ground rich in its own kinds and ore, Cyrodiil in all; WW-C2 the open zone moved from the Wrothgarian Mountains to Cyrodiil | BUILT (below) |
 | WW4 | The serpent in every sea: a serpent lane for each sea theatre | IN PART (WW7-12, below: the one serpent's site rolled over every lane of the world, the hub telling every game the site the accounts agree on; a serpent a sea theatre still planned) |
-| WW5 | The Hollows and the stars: an Abyss dungeon slot and a Starfall coven night in each theatre | planned |
+| WW5 | The Hollows and the stars: an Abyss dungeon slot and a Starfall coven night in each theatre | BUILT (below, 2026-10-27: a coven night and a Hollow on the Bay's lane and each province's, Cyrodiil's open zone none) |
 | WW6 | The raids past the Bay: the raids' towns off the registry by area, the wire's world pixels | planned |
 | WW7 | The roads' PEOPLE past the Bay - not the roads: the network past the Bay is TESA's (PR #1184, TESA14 and TESA15 - laid by the Bay's own law, drawn on the map). WW7 puts the living world's travellers, patrols, bands and the Watch on it (WW7-7: the ways' planner walks the roads past the Bay) and keys the town economy by the world's key; it lands on #1184 once that merges | IN PROGRESS on #1184 (2026-10-25; section WW7 below) |
 
@@ -288,7 +288,8 @@ walks only them (the receipts a hello reads, the falls, the rite, the herald); t
 - **The clearing** (`world/gate/gateClearance.js`) is World of Daggerfall's rock kept off the gate - the mod's rock
   stands on the Bay alone (its sites are the Bay's 62 regions' packs; a pixel past the Bay names none of them), so the
   clearing reads the Bay's lane alone and a gate past the Bay is owed none.
-- **Starfall's covens and the Abyss dungeon** read the Bay's scan until WW5.
+- **Starfall's covens and the Abyss dungeon** read the Bay's scan on the Bay's lane; past it each province's lane reads
+  its theatre's own scan (WW5, below).
 
 ### THE FOUR HOSTS (Home.md)
 
@@ -578,8 +579,8 @@ tilt walks it.
 - **The regional channels**: `CHAT_REGION_COUNT` 71 (`net/hubShards.js REGION_CHANNELS` - a province's channel, one
   object and unsplit: PROVINCE-SLEEP, `11-Multiplayer/Scale-Arc.md`); `PROVINCE_REGIONS_RELAY_MIN` 255: an older relay refuses the key, so a client on one keeps its region tab
   off past the Bay (`chatRegionRoom(index, provincesOk)`, `online.js provinceRegionsOk`).
-- **The Abyss census** is the Bay's 62 (`SD_REGION_COUNT` `CHAT_BAY_REGIONS`): a Hollow rises in a Bay town's region
-  (WW5 lanes it per theatre).
+- **The Abyss census** counts every region's channel (`SD_REGION_COUNT` `CHAT_REGION_COUNT`, WW5): each theatre's
+  Hollow rises in its own regions - the Bay's in a Bay town's region, a province's in its province (`sdLaneRegions`).
 - **The naval wire** says the Bay's regions alone (an older build refuses a whole ship word with a province's region;
   past the Bay a ship's names are her waters', WW3).
 - **The account service**: a node's region is any of the world's (`net/nodeLaw.js regionOk` - a province's ground
@@ -756,6 +757,185 @@ PINS MOVED: `wild1_zone.test.js` (the zone Cyrodiil, the grid's law; ZONE-CUT an
 all dead). Locales: six strings redrafted in the thirteen machine-made languages (`tools/l10nInSession.mjs`).
 
 Section A, WW-C2 (OURS: the open zone is the port's own; DFU has none).
+
+## WW5 - the Hollows and the stars in every theatre (BUILT, 2026-10-27)
+
+The owner's calls, taken (AUDIT NO SYSTEM LEFT BEHIND, item 26 - "Every single thing here needs to be addressed. No
+exceptions.", 2026-10-26): **a site-bound world event stands nowhere in the open PvP zone** (Cyrodiil's lane stands no
+night and no Hollow), and **a province's covens are authored as content** (the thirteen covens are all the Bay's
+FACTION.TXT witches, so a province's night needs its own - the eight below). Starfall's coven night and the Abyss Dungeon stood on the Bay alone - a coven's stars over the Bay
+scan's pixels (`px = id % 1000`), a star word the Bay's 0..999, one Hollow in the world with its census the Bay's 62.
+Now each theatre that holds ground for a site-bound world event keeps its own: a coven night and a Hollow on every LANE
+(a lane a theatre, WW2's word), the Bay's the night and the Hollow they always were. DFU has neither (Section A).
+
+### The lanes that stand (`net/wire.js` `SITE_EVENT_LANES`)
+
+The Bay's lane (0) and the eight provinces' (1..8) - every province holds ground for a site since TESA's places are the
+registry's (WW7-1; the gates' theatre scans found sites in all eight). **Cyrodiil's lane (9) never stands**: the open
+zone runs no site-bound world event (`systems/gate/theatreGateSite.js`, `systems/wild/wildZone.js`). The law both ends
+read - the relay holds no picture (`siteEventLaneOpen`, `siteEventPixelOk`: the Bay's own map on the Bay's lane as it
+always was, a world pixel off the Bay's map past it, `gateLanePixelOk`'s law). Not `GATE_LANES_OPEN`: the gate's lanes
+open by their own record (WW2).
+
+### Starfall (`11-Multiplayer/Starfall.md` section 16)
+
+- **ONE SKY.** Every theatre's night is the same hour and its three stars fall at the Bay's instants (the gates' stagger
+  would put a star in daylight). A star's NUMBER names its lane: lane t's three are `3t + 0..2`
+  (`net/starfall/starfallLaw.js` `starOfLane`, `starLaneOf`, `starIndexOf`; `STAR_LANES` = `THEATRE_COUNT`, the wire's
+  `STAR_LANES_WIRE` pinned equal), so the Bay's are the 0, 1 and 2 they always were and every ledger, receipt, row and
+  key keeps its shape. Its instant, master and Heart-Star read its place in the night; its rolls, spot and ledger its
+  number.
+- **THE PROVINCES' COVENS** (`systems/starfall/starfallCovens.js` `STAR_PROVINCE_COVENS`): the port's own, one a province,
+  named in its province's lore and worshipping as the rite does - the Sisters of the Moor (High Rock), the Sand Witches
+  (Hammerfell), the Witches of the Rime (Skyrim), the Ash Witches (Morrowind), the Sisters of Dusk (Sumurset), the
+  Briar Witches (Valenwood), the Daughters of Mafala (Elsweyr), the Fen Witches (Black Marsh). FACTION.TXT's covens are
+  the Bay's, so a province's carries no faction (`factionId` null: no number of FACTION.TXT's, nor one it could grow to)
+  and no MAPS.BSA place; its witches, its member and its LEADER are its own words through `t()`
+  (`starfall.coven.<id>`, `starfall.member.<id>`, `starfall.leader.<id>`, drafted in every complete locale), and its
+  leader comes for the star where a Bay coven's Coven Mother does (`systems/starfall/starCoven.js` `starMasterOf`). A
+  theatre's night is its own covens' (`covensOfLane`): the Bay's bag of thirteen night for night as before, a
+  province's one coven every night.
+- **A PROVINCE'S STARS** (`systems/starfall/starfallSites.js` `findTheatreStarSites`): findStarSites' own law over its
+  theatre's ground - the gate's suitable pixels of the theatre (`scanTheatreGate` over the registry's places), each star
+  `STAR_APART_PX` from the others and from its theatre's gate of that game day, by a town of its own where the province
+  has them, its pixel the world's key read back (`worldPixelOfKey`, never `y * 1000 + x`).
+- **THE PAGE** (`scenes/starfall/starfallHost.js`): every theatre's stars stand, each its own key, on a relay that keeps
+  them (`online.js` `ww5Ok`); the map's cards every theatre's; the Timers the theatre I stand in (the Bay's on the Bay,
+  at sea and in Cyrodiil - nine theatres' falls would bury the window); a province's hold said in its own theatre, the
+  Bay's to everyone as it always was.
+
+### The Hollows (`11-Multiplayer/Super-Dungeons.md` WW5)
+
+- **A SLOT A LANE.** Lane t's slots are `t x SD_LANE_SPAN + 1, + 2 ...` (`net/wire.js` `SD_LANE_SPAN` 10,000,000,
+  `sdLaneWire`; `net/superDungeon/sdLaw.js` `sdLaneOf`, `SD_LANES`): the Bay's the 1, 2, 3 they always were - every
+  realm, receipt, spoils key and sd_kills row keeps its number - and a slot is still one Hollow's whole identity, its
+  room `sd:<s>` nine digits at most. A lane's first beat its own zero (`sdFirst(now, lane)`), a rise its lane's next
+  slot (`sdRise`), never past its span.
+- **THE CENSUS COUNTS EVERY REGION** (`SD_REGION_COUNT` = `CHAT_REGION_COUNT`, 71): each lane's census asks its own
+  regions (`sdLaneRegions` - the Bay's 62, a province's one) and a lane's Hollow rises in its own (`sdLaneRegionOk`: a
+  Bay region on the Bay's lane, its province's region past it, or -1 - its great cities). A crowd in Skyrim draws
+  Skyrim's Hollow, never the Bay's.
+- **ITS SITE** (`systems/superDungeon/sdSite.js`): its cities the registry's places of its theatre, ranked by the hubs'
+  own claim (`sdTheatreCities` - TESA's places), its great cities its first cities by the slot's roll; its pixel a
+  suitable one of its theatre's scan whose nearest town is that city, on dry ground (`findSdTheatreSite`); its location
+  the Bay's own labyrinths and keeps cloned under the Hollows' world lane of map ids (`sdWorldMapId`, `SD_WORLD_LANE`
+  0x35d - no Bay pixel's, no TESA place's), built where it stands past the Bay (`scenes/world.js` `_locationToBuild`).
+- **ITS WORDS** in its province: "in Skyrim" where a Bay Hollow's say its region (`sdWhere`'s `province`; the
+  herald's rise "somewhere in Skyrim", its find, its end's field - `net/superDungeon/sdHerald.js` `sdProvinceName`).
+- **THE PAGE** (`scenes/superDungeon/sdLanes.js` `createSdLanes`): the Bay's lane is the host it always was
+  (`scenes/superDungeon/sdHost.js`); a province's lane a host of its own over its ground, its record the hub's `ln`.
+  A risen Hollow a province away is never asked of its ground (its scan is some hundreds of milliseconds of idle time);
+  one found, collapsing or in the theatre I stand in is. Each reader of ONE Hollow reads the one in focus (the lane I
+  stand in, else the nearest standing Hollow, else the Bay's); the held map's rings, the Timers' rows and the event board
+  every lane's - a province's found or collapsing Hollow news to every screen, its next rise its own players' row.
+
+### The theatres' ground (`scenes/eventTheatres.js`)
+
+Both read the gate's own theatre scans (`scenes/gate/gateLanes.js` `keptTheatreScans` - kept as the world host makes
+them, so a theatre's rings are walked once a registry generation and a picture for every event on them, with no wiring
+of their own in the host), warmed A THEATRE AT A TIME in the browser's idle moments (`createEventTheatres`): a frame
+never pays for more than one theatre's scan. A scan with no town yet (TESA's places not landed) is none, and a province's
+Hollow is found again when its ground is made anew (`sdHost.js` `rescan`) - standing while it is.
+
+### The relay (world270) and the account service (acct196)
+
+- **Stars**: the word in and out on its lane's pixel (`starWireOk`, `validStarIn`, `starWhere`), `STAR_HELD_MAX` 60 (a
+  night's and the night before's three in every lane, and room); the hub says the Bay's holds first (`starHeldOrder`), so
+  an older client - which reads the list's first twelve and drops a province's as junk - reads every Bay star it could.
+  A stored ledger stands on its own lane's pixel (`starLedgerSane`).
+- **Hollows**: the hub keeps a lane's record, mark, owed find and herald under `<key>:<lane>` (`sdLaneKey` - the Bay's
+  under the keys it always had), an account's receipt a lane (`sdReceiptKey(sub, lane)`); its beat runs every lane's
+  director a lane at a time (`_sdLaneBeat`), its census a lane's own regions, its fan and its hello a province's record
+  as `ln` (`SD_LANE_KIND` - an older client drops a kind it does not know; the Bay's stays `ev`); a find's word and a
+  cell's tell on the lane's pixel; the live door answers the asker's slot's lane (`_sdLiveInternal`, `sdLiveAsk`'s `s`);
+  the herald posts each lane's.
+- **`WW5_RELAY_MIN` 270** (`relaySupportsWw5`): world270 re-hashed in place while it is undeployed (world269 never
+  ran). A client stands no province's star and says no province's find to an older relay (`online.js` `ww5Ok`) - and,
+  since WW5's finish, each socket's own relay says for itself (AUDIT RAID R8b's law, AUDIT WB12d C6): a halo's welcome
+  sets its own `ww5Ok`, a province's star word or find goes down a halo only when that halo's relay keeps them, and the
+  word goes with its socket across a crossing. A halo on an older object while a deploy is under way refused the word as
+  a bad frame.
+- **The account service** moves no module and no migration: it bundles the star law (`server-account/src/stars.js`
+  `starDayOf` - a province's star's day its own fall's, the Bay's instants) and reads a province's slot and star as
+  numbers - folded into acct196, undeployed. `test/net/relayversion.test.js`'s world270 row is re-hashed at the
+  integration (the relay's bytes moved under a version that never ran).
+
+DEPLOY ORDER: the relay first (world270), then the account service (acct196), then the site.
+
+### What stays the Bay's (recorded)
+
+- **The Bay's lane** - its coven bag, nights, sites and stars (pinned against the law before WW5 written out, star for
+  star over the festival's every night on the freeware), its Hollow's record, census, site, map id, lines and herald.
+- **The Hour** (the realm past a Hollow's Rift) is every lane's alike: its room, its fight, its receipts and its spoils
+  are the slot's, whatever its lane.
+- **The questline and the claim** read a star by its number: a province's held star is The Thirteenth of Frostfall's
+  `star-held` as a Bay star's is (its Heart-Star the `heart-star-held`), inside the service's nine a day.
+
+### THE FOUR HOSTS (Home.md)
+
+`scenes/world.js` wired: the Hollows' lanes in place of the one host (`createSdLanes`, the same arguments and `here`),
+the Timers' source and the held map's rings the lanes' own, a slot's record and Hollow its own lane's (the Rift, the
+Hour's rec, the realm's way back), a province's Hollow built where it stands past the Bay - in place, `bootWorld`
+35,799 -> 35,798 logical lines (`test/scenes/hostceiling.test.js`). Starfall's lanes read the gate's kept scans and the
+registry's kept generation (`keptTheatreScans`, `net/staffPlaces.js` `keptPlaces`) - no wiring. `scenes/exterior.js`
+(the bench: no relay), `scenes/worldModes.js` (a building's inside) and `scenes/dungeonContext.js` (underground, the
+Hollow's own build) hold no star or Hollow site of their own, by design.
+
+### Pins and mutants
+
+`test/world/worldWide/ww5_stars.test.js` (8): the law (lanes, one sky, the Heart-Star, the master, the held order, the
+ledger's pixel); the wire and the relay (the word's pixel, the held bound, `WW5_RELAY_MIN`, the send's gate, the
+receipt); the provinces' covens (their words in English and German, the Bay's bag against the old law, the leader);
+a province's night over the producer's scan; the theatres warmed one an idle moment; the host (every theatre's stars,
+an older relay's, the Timers, the hold's line, the masters); a halo says for itself (its own relay's `ww5Ok`, a star
+word and a find); ON THE FREEWARE the Bay's nights star for star against the
+law before WW5 and every province's every festival night three stars in its own theatre by its own town, off its gate.
+`test/world/worldWide/ww5_hollows.test.js` (9): the law (the span, the lane's zero, the regions, the pick); the wire
+(the kinds, the pixels, the keys); the words and the herald; the relay (every lane's beat, census, fan, hello, find,
+live door, receipts, herald); a province's site (the claim, the nearest town, dry ground, the map id); the page (the
+routing, the ground asked, the focus, the end judged where I stand, the Timers and the map); a province's ground made
+again (it stands and moves; a townless ground's line waits and says its province); the Timers, the board and the map;
+ON THE FREEWARE every province's Hollow standing - 48 slots, each in its own theatre by its own city on dry ground - and
+the Bay's by its own rows. Mutants `tools/mutants/ww5_stars.json` (42: WW5's finish added the halo's five) and `tools/mutants/ww5_hollows.json`
+(65), all dead.
+
+**WW5 x WW-GATES-EVERYWHERE, at their merge (AUDIT BAY-LEFT, 2026-10-27).** A2c made a province's gate scan a few ring
+pixels an idle moment; WW5's theatres (`scenes/eventTheatres.js`) asked the same scans' `scanOf`, which makes a scan whole
+where it is asked - merged, each province's walk was one idle task of the events' again (A2c's probe: 200 to 700 ms a
+province cold). The gate's scans answer `wholeScan` (`scenes/gate/gateLanes.js`): the scan when whole, else none with
+their own warm begun - made where it is asked with no idle moments, or for a theatre no gate lane stands on - and an idle
+moment of the events' asks it and waits, the theatre owed until it is whole. `test/world/worldWide/bayleft_scanseam.test.js`
+(2: no place asked in any idle moment of the events', the theatre warm once the gate's slices are done with no ask again,
+the scan the same as one made at once). Mutants `tools/mutants/bayleft_scanseam.json` (5, all dead); `ketch_everywhere.json`'s
+KTE-the-held-maps-list-read-as-one and `ww5_hollows.json`'s WW5-SD-the-held-maps-one-ring, one line in two getters of
+`ui/heldMap.js`, re-aimed by content at their own (dead).
+
+PINS MOVED: `star1_law.test.js` (the 3 that was "no fourth star" is High Rock's first), `star3_relay.test.js` (the held
+bound), `sd1_sdlaw.test.js`, `sd3_relay.test.js`, `sd8b_fight.test.js`, `sd11b_relay.test.js`, `sd20b_relay.test.js`,
+`fb1020b_sdsea.test.js` (the census every region's, the Bay's lane its 62, `ln` among the kinds, the hub's word a lane),
+`sdherald.test.js`, `auditsoc.test.js`, `discordgates.test.js`, `heraldcards.test.js`, `serpent2_herald.test.js` (the
+province lanes' Hollows resting beside the Bay's), `sd2b_world.test.js`, `sd11c_page.test.js`, `sd20f_hosts.test.js`,
+`sd26_dungeon.test.js`, `sd4b_rift.test.js`, `sd19_presence.test.js`, `sd20e_text.test.js`, `sd2c_omen.test.js`,
+`events1_board_ui.test.js` (the lanes' host and its seams), `tesa2_arena.test.js`, `tesa13_mapink.test.js` (a Hollow
+built past the Bay), `hostceiling.test.js` (`bootWorld`'s ceiling at its measure), `wwr_regions.test.js` (WW-R's census the Bay's 62: every
+region's now), `tesa7_country.test.js`, `tesa8_lairs.test.js`, `tesa10_capitals.test.js` and `spawneddungeons.test.js`
+(the build's arm past the Bay, a province's Hollow first), `l10n3e_names.test.js` (the Timers' province name counted),
+`egseam_law.test.js` (EG3's golden Abyss realm: the hub's lanes draw the seeded die before the fight - with the die
+seeded afresh at the fight's first hello the realm says the same 148 frames on the trees before WW5 and after it) - the
+seven found at WW5's finish.
+
+THE OLDER RECORDS (WW5's finish, 2026-10-27): WW5 moved the lines 43 older mutant records name - 38 no longer applied
+(`test/tooling/mutantdrift.test.js` QS6 F7) and 5 named two sites once the province lanes copied their lines (MUT-AIM).
+Each is re-aimed BY CONTENT at the line its law lives on now, with a note: `sd2.json` (3, at the Bay's own `findSdSite`
+by a line only it has), `sd3.json` (6), `sd8b.json` (2), `sd9a.json` (4), `sd11b.json` (5), `sd11c.json`, `sd20b.json`,
+`sd20e.json` (3), `sd26_dungeon.json`, `sd26_text.json`, `sd2d.json`, `sdherald.json` (3), `star2.json`, `star3.json`
+(3), `star5.json`, `events1.json` (the Timers' site, now `scenes/superDungeon/sdLanes.js` `timers` - `ww5_hollows`
+pins the Bay's site there too), `audittesa2p.json` (2), `tesa2.json`, `tesa8.json` (the build's arm past the Bay, a
+province's Hollow first), `hostsplit.json` (the ceiling at 35,798) and `wwr.json` (`WWR-the-census-the-bays`: the moved
+law held from the other side) - every one run, all dead; and with the halo's word, `sd3.json`'s and `wb12d.json`'s
+step-down records (the stepped-down socket keeps `ww5Ok` beside `sdOk`).
+
+Section A, WW5 (OURS: DFU has no Starfall and no Abyss Dungeon - their lanes past the Bay are the port's own).
 
 ## The audit (AUDIT WW, 2026-10-24)
 

@@ -1,0 +1,381 @@
+[
+  {
+    "name": "WW5-STAR-cyrodiil-lane-open",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "k < STAR_PER_NIGHT * STAR_LANES && siteEventLaneOpen(starLaneOf(k));",
+    "new": "k < STAR_PER_NIGHT * STAR_LANES;",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-the-lane-bound",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "k < STAR_PER_NIGHT * STAR_LANES && siteEventLaneOpen(starLaneOf(k));",
+    "new": "k < STAR_PER_NIGHT && siteEventLaneOpen(starLaneOf(k));",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-the-lane-rounded",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "export const starLaneOf = (k) => Math.floor(k / STAR_PER_NIGHT);",
+    "new": "export const starLaneOf = (k) => Math.round(k / STAR_PER_NIGHT);",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-the-instant-by-the-raw-number",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "STAR_FALLS_MS[starIndexOf(k)]",
+    "new": "STAR_FALLS_MS[k]",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-the-ledger-pixel-unread",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": " && siteEventPixelOk(starLaneOf(v.k), v.px, v.py)",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-the-held-order",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": ".sort((a, b) => (starLaneOf(a[0][1]) === 0 ? 0 : 1) - (starLaneOf(b[0][1]) === 0 ? 0 : 1) || a[1] - b[1])",
+    "new": ".sort((a, b) => a[1] - b[1])",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-the-heart-star-by-the-raw-number",
+    "file": "src/systems/starfall/starfallNight.js",
+    "old": "export const heartStar = (n, k) => starIndexOf(k) === HEART_STAR && witchesNight(n);",
+    "new": "export const heartStar = (n, k) => k === HEART_STAR && witchesNight(n);",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-the-master-by-the-raw-number",
+    "file": "src/systems/starfall/starCoven.js",
+    "old": "Math.min(2, starIndexOf(Math.max(0, k | 0)))",
+    "new": "Math.min(2, Math.max(0, k | 0))",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-the-leader-lost",
+    "file": "src/systems/starfall/starCoven.js",
+    "old": "return M.id === 'mother' && typeof coven?.leader === 'function' ? leaderOf(coven) : M;",
+    "new": "return M;",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-cyrodiil-a-site-lane",
+    "file": "src/net/wire.js",
+    "old": "export const SITE_EVENT_LANES = Object.freeze([0, 1, 2, 3, 4, 5, 6, 7, 8]);",
+    "new": "export const SITE_EVENT_LANES = Object.freeze([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js",
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-the-wire-pixel-the-bays",
+    "file": "src/net/wire.js",
+    "old": "siteEventPixelOk(Math.floor(k / STAR_STARS_MAX), px, py)",
+    "new": "siteEventPixelOk(0, px, py)",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-the-held-bound",
+    "file": "src/net/wire.js",
+    "old": "export const STAR_HELD_MAX = 60;",
+    "new": "export const STAR_HELD_MAX = 12;",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-the-relay-gate",
+    "file": "src/net/wire.js",
+    "old": "export const WW5_RELAY_MIN = 270;",
+    "new": "export const WW5_RELAY_MIN = 269;",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-the-send-gate",
+    "file": "src/net/online.js",
+    "old": "    if (w.k >= STAR_PER_NIGHT_WIRE && !(this._mine(cell) ? this.ww5Ok : this._haloFor(cell)?.ww5Ok)) return false;   // WW5: a province's star, never to a relay that refuses it as junk - the socket's own relay's word (a halo says for itself)\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-the-hello-order",
+    "file": "server/src/index.js",
+    "old": "l: starHeldOrder(l) }",
+    "new": "l }",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-a-covens-region",
+    "file": "src/systems/starfall/starfallCovens.js",
+    "old": "region: regionOfTheatre(c.theatre), location: null",
+    "new": "region: -1, location: null",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-a-faction-id",
+    "file": "src/systems/starfall/starfallCovens.js",
+    "old": "location: null, place: null, factionId: null,",
+    "new": "location: null, place: null, factionId: 426,",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-a-province-night-the-bays",
+    "file": "src/systems/starfall/starfallCovens.js",
+    "old": "const covens = covensOfLane(lane), len = covens.length;",
+    "new": "const covens = covensOfLane(0), len = covens.length;",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-the-lane-covens-spill",
+    "file": "src/systems/starfall/starfallCovens.js",
+    "old": "STAR_PROVINCE_COVENS.filter((c) => c.theatre === lane)",
+    "new": "STAR_PROVINCE_COVENS.filter((c) => c.theatre <= lane)",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-the-witches-a-factions",
+    "file": "src/systems/starfall/starfallCovens.js",
+    "old": "export const covenWitches = (c) => (c.own ? c.name() : getLocalizedFactionName(c.factionId, covenFactionName(c)));",
+    "new": "export const covenWitches = (c) => getLocalizedFactionName(c.factionId, covenFactionName(c));",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-the-lanes-number",
+    "file": "src/systems/starfall/starfallSites.js",
+    "old": "    const k = starOfLane(lane, j);\n",
+    "new": "    const k = j;\n",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-the-gate-unasked",
+    "file": "src/systems/starfall/starfallSites.js",
+    "old": "    const gate = gateSiteOf(gameDayAt(times.fallAt, lane));\n",
+    "new": "    const gate = null;\n",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-the-towns-repeated",
+    "file": "src/systems/starfall/starfallSites.js",
+    "old": "      return !strict || !towns.has(scan.townOf.get(key));\n",
+    "new": "      return true;\n",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-the-pixel-of-the-key",
+    "file": "src/systems/starfall/starfallSites.js",
+    "old": "    const [px, py] = worldPixelOfKey(pick);\n",
+    "new": "    const px = pick % 1000, py = Math.floor(pick / 1000);\n",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-the-bays-lane-a-theatres",
+    "file": "src/systems/starfall/starfallSites.js",
+    "old": "const coven = lane > 0 ? starCovenOf(n, lane) : null;",
+    "new": "const coven = starCovenOf(n, lane);",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-every-theatre-one-idle-moment",
+    "file": "src/scenes/eventTheatres.js",
+    "old": "    if (owed.size && idle) { busy = true; idle(drain); }\n",
+    "new": "    if (owed.size) drain();\n",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-a-stale-scan-kept",
+    "file": "src/scenes/eventTheatres.js",
+    "old": "    if (warm.get(t) === stampOf(S)) return S.scanOf(t);\n",
+    "new": "    if (warm.has(t)) return S.scanOf(t);\n",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-the-open-zone-warmed",
+    "file": "src/scenes/eventTheatres.js",
+    "old": "    if (!S || !PROVINCE_EVENT_LANES.includes(t)) return null;\n",
+    "new": "    if (!S) return null;\n",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-the-bays-lane-a-province",
+    "file": "src/scenes/eventTheatres.js",
+    "old": "SITE_EVENT_LANES.filter((l) => l > 0)",
+    "new": "SITE_EVENT_LANES.filter((l) => l >= 0)",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-the-relay-unasked",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "const lanesOk = () => !!session()?.ww5Ok;",
+    "new": "const lanesOk = () => true;",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-the-lanes-unasked",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "    for (const [lane, sc] of theatres.warmLanes()) out.push(...laneSitesOf(n, /** @type {number} */ (lane), sc));\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-the-timers-every-theatres",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": ".filter((s) => laneOfSite(s) === lane), t, decided);",
+    "new": ", t, decided);",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-the-hold-to-everyone",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": " && (laneOfSite(site) === 0 || laneOfSite(site) === myLane())) {",
+    "new": ") {",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-cyrodiil-my-lane",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "return t > 0 && siteEventLaneOpen(t) ? t : 0;",
+    "new": "return t > 0 ? t : 0;",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-the-master-not-the-covens",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "const M = starMasterOf(L?.b ?? 1, S.site.k, S.site.coven);",
+    "new": "const M = starMasterOf(L?.b ?? 1, S.site.k);",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-the-map-master-not-the-covens",
+    "file": "src/systems/starfall/starfallClient.js",
+    "old": "starMasterOf(l.b, s.k, s.coven)",
+    "new": "starMasterOf(l.b, s.k)",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-the-world-hosts-scans-unkept",
+    "file": "src/scenes/gate/gateLanes.js",
+    "old": "  return (_kept = {\n",
+    "new": "  return ({\n",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-STAR-the-halo-on-the-primarys-word",
+    "file": "src/net/online.js",
+    "old": "if (w.k >= STAR_PER_NIGHT_WIRE && !(this._mine(cell) ? this.ww5Ok : this._haloFor(cell)?.ww5Ok)) return false;",
+    "new": "if (w.k >= STAR_PER_NIGHT_WIRE && !this.ww5Ok) return false;",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-halo-on-the-primarys-word",
+    "file": "src/net/online.js",
+    "old": "if (sdLaneWire(w.s) > 0 && !(this._mine(cell) ? this.ww5Ok : halo?.ww5Ok)) return false;",
+    "new": "if (sdLaneWire(w.s) > 0 && !this.ww5Ok) return false;",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-the-halo-never-told",
+    "file": "src/net/online.js",
+    "old": "if (h) { h.starOk = relaySupportsStar(relayV); h.ww5Ok = relaySupportsWw5(relayV); } }",
+    "new": "if (h) { h.starOk = relaySupportsStar(relayV); } }",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-the-crossing-keeps-the-old-word",
+    "file": "src/net/online.js",
+    "old": "this.egOk = !!h.egOk; this.ww5Ok = !!h.ww5Ok;",
+    "new": "this.egOk = !!h.egOk;",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  },
+  {
+    "name": "WW5-the-crossing-forgets-the-stepped-down",
+    "file": "src/net/online.js",
+    "old": "sdOk: this.sdOk, ww5Ok: this.ww5Ok, foeInventoryOk:",
+    "new": "sdOk: this.sdOk, foeInventoryOk:",
+    "tests": [
+      "test/world/worldWide/ww5_stars.test.js"
+    ]
+  }
+]

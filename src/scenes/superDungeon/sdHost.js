@@ -85,12 +85,19 @@ export const sdFadeReadout = (left, { hour = false } = {}) => `${hour ? 'The Hou
  *   inHour?: () => boolean,
  *   standing?: () => (number|null),
  *   ground?: (px: number, py: number) => boolean,
+ *   findSite?: (rec: { s: number, r: number }, scan: any, cities: any[], ground?: (px: number, py: number) => boolean) => any,
+ *   province?: string,
+ *   rescan?: boolean,
  * }} o SD10: `warn` the collapse's readouts (over the screen), `inHour` whether I stand in the Hour rather than the Hollow.
+ *   WW5 (scenes/superDungeon/sdLanes.js - a Hollow a theatre): `findSite` the site's law over the lane's own scan (a
+ *   province's systems/superDungeon/sdSite.js findSdTheatreSite; the Bay's findSdSite), `province` its province's name
+ *   (its lines say "in Skyrim" where a Bay Hollow's say its region), `rescan` its Hollow found again over a new scan (a
+ *   province's ground moves with the registry - TESA's places land after the boot; the Bay's scan is made once).
  *   AUDIT SD II (L1 F2, F3): `castOut` answers false when it could not act (the dead are the death's) - asked again the
  *   next frame; `standing` the slot of the Hollow or Hour I stand in, or null. AUDIT SD IV (F37): `ground` whether a pixel's
  *   plateau is dry (the spawns' own SPAWN-SHORE test)
  */
-export function createSdHost({ now, scan, warmScan = () => {}, cities, templates, where, stand, unstand, inside, door, feet, sendFound, say, regionName = () => '', castOut = () => {}, warn = () => {}, inHour = () => false, standing = () => null, ground = () => true }) {
+export function createSdHost({ now, scan, warmScan = () => {}, cities, templates, where, stand, unstand, inside, door, feet, sendFound, say, regionName = () => '', castOut = () => {}, warn = () => {}, inHour = () => false, standing = () => null, ground = () => true, findSite = findSdSite, province = '', rescan = false }) {
   /** @type {SdRecord|null} */
   let rec = null;
   let heardAny = false;
@@ -115,19 +122,20 @@ export function createSdHost({ now, scan, warmScan = () => {}, cities, templates
   /** The Hollow a record names, found once a slot; null while the scan is not ready (it is warmed). */
   function hollowOf(r) {
     if (!r || !r.s) return null;
-    if (memo && memo.s === r.s) return memo.none ? null : memo;
+    if (memo && memo.s === r.s && !rescan) return memo.none ? null : memo;
     const sc = scan();
-    if (!sc) { warmScan(); return null; }
+    if (rescan && memo && memo.s === r.s && memo.sc === sc) return memo.none ? null : memo;   // WW5: the same ground, the same Hollow
+    if (!sc) { if (rescan && memo && memo.s === r.s && !memo.none) return memo; warmScan(); return null; }   // WW5: what stands stands while its ground is made again
     // SD-SEA (FIELD BUGS 2026-10-20b): a region with no town to rise by - a relay before SD-SEA raised one where a crowd
     // stood at sea (net/superDungeon/sdLaw.js SD_TOWNLESS_REGIONS) - rises by the Bay's great cities, as one whose census
     // counted nobody does: the same city and pixel on every client, where it stood by none
     let at = r, near = cities(r.r);
     if (!near.length && r.r >= 0) { at = { ...r, r: -1 }; near = cities(-1); }
-    const site = findSdSite(at, sc, near, ground);   // AUDIT SD IV (F37): on dry ground
+    const site = findSite(at, sc, near, ground);   // AUDIT SD IV (F37): on dry ground; WW5: by the lane's own law
     const template = site ? pickSdTemplate(r.s, templates()) : null;
     const loc = site && template ? sdHollowLocation(r, site, template, where(site.px, site.py)) : null;
-    if (!loc) { memo = { s: r.s, none: true }; console.warn(`[sd] slot ${r.s}: the world offers no Hollow (${site ? 'no template' : 'no site'})`); return null; }
-    memo = { s: r.s, site, loc, key: `${site.px},${site.py}` };
+    if (!loc) { memo = { s: r.s, none: true, sc }; console.warn(`[sd] slot ${r.s}: the world offers no Hollow (${site ? 'no template' : 'no site'})`); return null; }
+    memo = { s: r.s, site, loc, key: `${site.px},${site.py}`, sc };
     return memo;
   }
 
@@ -154,9 +162,9 @@ export function createSdHost({ now, scan, warmScan = () => {}, cities, templates
       const h = hollowOf(o.rec);
       if (!h && t - o.at < SD_LINE_WAIT_MS && !(memo && memo.s === o.rec.s && memo.none)) return;
       owed.shift();
-      const near = h?.site?.cityName || '', region = regionName(o.rec.r) || '';   // AUDIT SD III (T19): its region said as a region
+      const near = h?.site?.cityName || '', region = province ? '' : regionName(o.rec.r) || '';   // AUDIT SD III (T19): its region said as a region; WW5: a province's Hollow in its province
       const name = h?.loc?.name || 'an Abyss Dungeon';
-      if (o.kind === 'found') { say(sdFoundLine({ who: o.rec.fb || 'Someone', near, region })); const m = sdMarksLine({ name: h?.loc?.name, s: o.rec.s }); if (m) say(m); }   // SD19: and its marks
+      if (o.kind === 'found') { say(sdFoundLine({ who: o.rec.fb || 'Someone', near, region, province })); const m = sdMarksLine({ name: h?.loc?.name, s: o.rec.s }); if (m) say(m); }   // SD19: and its marks
       else if (o.kind === 'fell') say(sdFellLine({ top: o.rec.top || 'Someone', n: o.rec.n ?? 1, name }));
       else say(sdFadeLine({ name }));
     }
@@ -172,7 +180,7 @@ export function createSdHost({ now, scan, warmScan = () => {}, cities, templates
     let asked = false;
     const again = (s) => castOutS !== s || t - castOutAt >= SD_CAST_OUT_AGAIN_MS;
     const ask = (s, key) => { if (castOut(key) !== false) { castOutS = s; castOutAt = t; } };
-    if (stood && (!h || h.s !== stood.s)) {
+    if (stood && (!h || h.s !== stood.s || h.key !== stood.key)) {   // WW5: or the same slot's Hollow found again elsewhere (a province's ground made anew - rescan)
       if (!inside(stood.loc)) { unstand(stood.key); stood = null; }
       // AUDIT SD II (L1 F2): latched once it ACTED - a player dead at the end and raised where they lay (a Resurrect) was
       // latched as cast out, and stood in an ended Hollow or Hour for good
@@ -211,7 +219,7 @@ export function createSdHost({ now, scan, warmScan = () => {}, cities, templates
     // SD19: A FOUND HOLLOW'S LAST HOUR, said to the realm once (its place known - or the world offering none: the region's name)
     if (phase === 'found' && rec && hourSaidS !== rec.s && Number.isFinite(rec.until) && rec.until > t && rec.until - t <= SD_HOUR_LEFT_MS) {
       const hh = hollowOf(rec);
-      if (hh || (memo && memo.s === rec.s && memo.none)) { hourSaidS = rec.s; say(sdHourLine({ name: hh?.loc?.name, near: hh?.site?.cityName || '', region: regionName(rec.r) || '' })); }
+      if (hh || (memo && memo.s === rec.s && memo.none)) { hourSaidS = rec.s; say(sdHourLine({ name: hh?.loc?.name, near: hh?.site?.cityName || '', region: province ? '' : regionName(rec.r) || '', province })); }
     }
   }
 
