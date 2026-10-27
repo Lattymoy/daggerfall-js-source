@@ -14,11 +14,11 @@ Every report has one verdict:
 
 | Verdict | Reports | What it means |
 |---|---|---|
-| FIXED | 100 | The cause found on the code, fixed, and pinned by a test that fails without the fix |
+| FIXED | 99 | The cause found on the code, fixed, and pinned by a test that fails without the fix |
 | ALREADY FIXED | 68 | Closed by a record newer than the build it was sent from (the update a report carries is its build - REL8) |
 | AS DESIGNED | 48 | The game's rule or DFU's, named; what to tell the player is in its row |
 | NOT REPRODUCED | 27 | Traced end to end on the real producers, and nothing there makes it; what was run is in its row |
-| NEEDS DATA | 36 | The cause is in one player's own record or machine; what to read is in its row |
+| NEEDS DATA | 37 | The cause is in one player's own record or machine; what to read is in its row |
 | STAFF | 11 | A staff action or a moderation call, not code (the last section) |
 | WITHDRAWN | 3 | Taken back by its own reporter |
 
@@ -1336,10 +1336,10 @@ Ring's points and more worth than a plain Silver one). Mutant 26 (dead).
 | 142 | A new character's pile asks for an update the client already has, or a take goes back to the pile within seconds and never reaches the pack | A dungeon pile's contents are computed by each client from the same dice, and the room's word carries their signature. A player on another build computes another signature. AUDIT SETS M2's line told the reader its own game was the old one even when the other player's was. The host, reading the joiner the same way, never judged that joiner's take, so the take went back after four seconds without a word. (A purse past 65,535 dropped into a pile was a second cause, fixed by GOLD-WIRE in 0.0.410) | RPT1026-ITEMS LOOT-SKEW |
 | 264 | Some piles tell a client that is current, and was restarted, to update | The same | RPT1026-ITEMS LOOT-SKEW |
 | 137 | The new Dremora's bodies vanish at death, leaving only a pool of blood and the loot; the pool can still be searched (written in Portuguese) | The new Dremora are Daggerfall Enemy Expansion's Dremora Churl (DEX, 10-20). The pool is BLOOD2c's corpse pool, and the loot is intact. Checked lane by lane: on the classic lane it dies into its row's own corpse picture (1708 record 25, the authors' picture of it lying), which the texture door carries, sizes and uploads; on the Morrowind lane it is Morrowind's dremora, laid in that body's death pose, with the flat under it casting only its shadow; and a body with no death to pose lets the flat draw. Neither lane lacks a body. The report's picture fits the Morrowind lane only if its body stands and draws nothing, and that lane needs Morrowind's own files to run (none here) | NEEDS DATA (the classic lane pinned: RPT1026-ITEMS DEX-CORPSE) |
-| 265 | Corpses vanish as foes fall | In a dungeon room, the host's foes frame carries at most 32 of the room's encounters (rest ambushes, shared). The standing go first, and every body stays the room's while its corpse lies. Past 32, the cap cut the newest bodies off a full frame that still said it listed them whole, and every joiner took each new body down within seconds of its death. The report names no room; this is the cause the code has for exactly this, and it is demonstrated | RPT1026-ITEMS BODY-CAP |
+| 265 | Corpses vanish as foes fall | In a dungeon room, the host's foes frame carries at most 32 of the room's encounters (rest ambushes, shared). The standing go first, and every body stays the room's while its corpse lies. Past 32, the cap cut the newest bodies off a full frame that still said it listed them whole, and every joiner took each new body down within seconds of its death. The report names no room; this is the cause the code has for exactly this, and it is demonstrated. AUDIT RPT1026 G1: the cap needs 33 of one visit's rest ambushes, the only shared encounters (one a broken rest), and the fix still lost one new body in ten there - the frame after its death the full one; now the newest dead go first | RPT1026-ITEMS BODY-CAP |
 | 89 | In dungeons (small, medium, elite), after looting some bodies and then dying or leaving, two or three of the bodies have their loot again on return; played in a party | Walked in a real two-player room (the relay keeping the memory and the seat): the looter is the host or its level-2 partner, the seat passes while the looter is away, and the room empties. Nothing taken is offered twice. The way it was offered is CHAMP-BASE's (Field-Bugs-2026-10-25b, after the report). A champion body was rolled at each player's own level, so the low-level partner held the host's word about it unread. A memory the partner then wrote as the room's host left that body out, and the looter's next visit rolled it afresh: two or three bodies, the champions and the elite. With CHAMP-BASE's line taken out, the walk fails that way | ALREADY FIXED: CHAMP-BASE (pinned: RPT1026-ITEMS RE-ENTRY) |
-| 257 | A magic axe was gone after a death to a boss the report names as a warden | No fight by that name was found. Each death door that takes a piece says so (a revenant's take in the wake box; an open zone's drop). Online keeps Allow Magic Repairs on, so a magic piece is never destroyed by breaking there. The character's saves around the death are what tell | NEEDS DATA |
-| 277 | A two-handed Wyrmbane, worn to nothing in a hard dungeon, was gone from the pack | DFU's LowerCondition destroys a broken enchanted item that its own enchantment wore out unless Allow Magic Repairs is on. Wyrmbane's Cast When Strikes bills ten a blow. RARE-BREAK1's "breaks, not destroyed" had reached the fading only | RPT1026-ITEMS RARE-KEPT |
+| 257 | A magic axe was gone after a death to a boss the report names as a warden | AUDIT RPT1026 G3: the fight is the Sky Ketch's Tonal Warden, who stands at the ship's helm (`net/ketch/ketchDeck.js` KT_WARDEN_HOME); a death aboard is a fall with no death penalty (`11-Multiplayer/Sky-Ketch.md`), so it takes nothing. Each death door that takes a piece says so (a revenant's take in the wake box; an open zone's drop). Online keeps Allow Magic Repairs on, so a magic piece is never destroyed by breaking there. The character's saves around the death are what tell | NEEDS DATA |
+| 277 | A two-handed Wyrmbane, worn to nothing in a hard dungeon, was gone from the pack | DFU's LowerCondition destroys a broken enchanted item that its own enchantment wore out unless Allow Magic Repairs is on. Wyrmbane's Cast When Strikes bills ten a blow. RARE-BREAK1's "breaks, not destroyed" had reached the fading only. AUDIT RPT1026 G2: but the report's dungeon was an elite one, a spawned dungeon, which stands online alone (`scenes/world.js` spawnedDungeonAt), and online the room forces Allow Magic Repairs on: that door kept every enchanted piece there before RARE-KEPT too. The piece went another way; its character's saves around the break are what tell | NEEDS DATA (RARE-KEPT stands, an offline hardening) |
 | 222 | After a dungeon death to a daedra, most of the inventory and the rare leg armour were gone | A revenant took the piece; the reporter's later report (withdrawn, #227) says so. The take is said at the wake ("{name} took your {item}.") | AS DESIGNED |
 | 132 | The Visor of King Lysandus does not say its material | DFU's Helm And Shield Metal setting (HelmAndShieldMaterialDisplay) defaults to classic, where a helm or shield never shows its metal (`itemInfo.js` armorShouldShowMaterial) | AS DESIGNED (tell: Settings, Helm And Shield Metal, On) |
 | 289 | Potions brewed at the home alchemy station did not count toward a writ (it showed none brewed by the character) | The home station is a brew door since POTION-DOOR (968d9bd43, in 0.0.421); a writ counted only brews of gathered goods until ANY-GOODS (20de263c1, 10-26, after 0.0.421) | ALREADY FIXED: ANY-GOODS |
@@ -1382,7 +1382,10 @@ FIXED. A counter's staged lot is still the player's, and every save holds it.
   sold piece is never written.
 
 THE FOUR HOSTS. The counters are opened by `worldModes.js` (shops, guild halls' Identify, Sell Magic and Repair,
-`openTradeWindow` through `ui/tradeDoor.js`), and a dungeon or the open world opens none. The save is one door
+`openTradeWindow` through `ui/tradeDoor.js`), and - AUDIT RPT1026 G4, where this said a dungeon or the open world
+opens none - the Identify SPELL opens one wherever it is cast: `worldModes.js` openIdentifyWindow in the street (the world
+host's slot) and underground (the dungeon's), and `dungeonContext.js` openIdentifySpellWindow in the standalone dungeon.
+The hold rides the window, so every one of them holds its lot as a guild's counter does. The save is one door
 (`snapshotPlayer`) for every host. No host grew.
 
 THE WORDS. None.
@@ -1397,7 +1400,11 @@ PINS. `test/systems/rpt1026_items.test.js` (three of its four): through the real
 classic counter (its slot pressed), identified (the mode's hotkey) and in the save while the window stands, then back
 in the pack once at Escape. The judge's own `ledgerPieces` reads the save's keys. A save written under the counter
 restores the piece. The enhanced counter is driven the same way (a row double-clicked, unmounted). A counter holds
-only its own player's goods, and a Buy's basket is never written. Mutants: 4.
+only its own player's goods, and a Buy's basket is never written. Mutants: 4. AUDIT RPT1026 G5: "a piece already back
+in the pack is written once" had no pin that could fail - every pin asked after the counter had closed and let go, and
+a mutant reading the held lot without the pack lived through them all. Pinned over a counter handed a selection of the
+pack (`nativeTrade.js` localList's F102 shape: the staged piece still in the pack), its save and its load
+(`test/systems/audit_rpt1026_items_heldout.test.js`).
 
 ### RPT1026-ITEMS LOOT-SKEW (142, 264) - `src/systems/roomLoot.js`, `src/scenes/roomLootHost.js`, `src/scenes/dungeonContext.js`
 
@@ -1459,6 +1466,14 @@ breaks at that door as a blow breaks it. It says "has broken", is taken off, and
 (`enchantments.js:"if (broke && !stampedTier(item) && !(ctx?.allowMagicRepairs ?? false)) {"`). DFU's own enchanted items
 (MAGIC.DEF's, the item maker's, soul-bound) keep DFU's law. A departure: Port-Ledger A, RARE-KEPT.
 
+AUDIT RPT1026 G2: NOT THE REPORT'S CAUSE. The report's dungeon was an elite one - a spawned dungeon, which stands on an
+online page alone (`scenes/world.js` spawnedDungeonAt) - and online the room forces Allow Magic Repairs on
+(`onlineLane.js` ONLINE_FORCED_SETTINGS), which the host's mounted ctx reads (`hostEnchant.js` createEnchantCtx). So this
+door kept every enchanted piece at its break online before RARE-KEPT as after it; it opens only offline, under a
+player's own Off. RARE-KEPT stays as that hardening, and #277 is NEEDS DATA: the character's saves around the break.
+Pinned: `test/systems/audit_rpt1026_items_kept.test.js` (online, DFU's own magic axe is kept at its break whatever
+the store holds).
+
 THE FOUR HOSTS. The dispatcher is one door for every host. No host changed.
 
 THE WORDS. None: the break says DFU's own "has broken" (lowerCondition).
@@ -1487,6 +1502,18 @@ FIXED. A full frame the count cap cut says `xf` 2: whole for the standing alone
 while a standing puppet the host no longer has still goes. An older build, which reads 1 alone, takes nothing down
 from such a frame. Three expressions changed, no statement added: the host does not grow.
 
+AUDIT RPT1026 G1: AND THE NEWEST DEAD FIRST. The frame named the bodies in the room's numbering, the oldest first, so
+the body the cap shed was the one that had just fallen. Its death rode a delta alone (a delta counts only what changed),
+and when the frame after the death was the full one (FOES_FULL_MS over FOES_MS: one in ten), the joiner's puppet still
+stood there, went as a standing puppet the frame did not name, and the death's record that followed named an encounter
+the joiner no longer held - "a body never seen standing" stands nothing. The bodies now go newest dead first
+(`dungeonContext.js:"sort((a, b) => (a.dead ? 1 : 0) - (b.dead ? 1 : 0) || (a.dead ? (b._diedAt ?? 0) - (a._diedAt ?? 0) : 0))"`,
+spawnCorpse's `_diedAt`), so the cap sheds an old body every joiner has held dead for a while, and keeps. The cap is
+reached only by 33 of one host's visit's rest ambushes (a rest's ambush is the only shared encounter, one a broken
+rest). A body the host forgets while the room is past the cap stays on a joiner until a frame is whole again.
+Pinned: `test/net/audit_rpt1026_items.test.js` (the death through the context's own corpse door, the full frame
+first).
+
 THE FOUR HOSTS. The shared encounters are the dungeon's alone (`dungeonContext.js`). `exterior.js`'s cells carry each
 owner's own foes (WORLD6b), and `world.js` and `worldModes.js` forward the frame unread.
 
@@ -1496,7 +1523,9 @@ PINS. `test/net/rpt1026_items_bodycap.test.js` (2): the context's own frame stat
 harness mounts them. A host with 2 standing encounters and 33 bodies says 2. A joiner holding all 35 keeps every body,
 and none is taken down. A frame within the cap is whole (1). A standing puppet the host no longer has is taken down
 under 2, and a word the joiner does not know takes nothing down. PIN MOVED: `restsync.test.js`'s source regex for the
-joiner's call. Mutants: 3, and `restsync.json`'s three records re-aimed by content, all dead.
+joiner's call. Mutants: 3, and `restsync.json`'s three records re-aimed by content, all dead. AUDIT RPT1026 G6: the
+pin said for an older build sends `xf` 3, a word no build says - it holds the unknown word to nothing taken down, not an
+older build's reading (that is the older build's own `=== 1`); its words say so now.
 
 ### RE-ENTRY (89) and DEX-CORPSE (137) - checks, no code change
 
@@ -1548,7 +1577,7 @@ joiner's call. Mutants: 3, and `restsync.json`'s three records re-aimed by conte
   Staff: read the character's kept saves (`prev`, `clean_obj`) for the stack. Roll back to the clean one if it holds
   the stones and nothing since matters, or give them with the item give (a bound piece, so check the preview's
   findings first).
-- **137, 257, 173 (NEEDS DATA).** See the rows. For each, the character, the time and the place let staff read the
+- **137, 257, 173, 277 (NEEDS DATA).** See the rows (277 by AUDIT RPT1026 G2). For each, the character, the time and the place let staff read the
   saves around it. For #137, whether a Morrowind folder is set and a picture of the spot.
 
 ## Quests (RPT1026-QUESTS)

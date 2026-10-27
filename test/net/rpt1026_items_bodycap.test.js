@@ -117,7 +117,8 @@ test('BODY-CAP: a frame within the cap is whole as before (1), and a standing en
   joiner.applyFoesFrame(frame, 'host');
   assert.equal(joiner.state._sharedById.has(99), false, 'a standing puppet the host no longer has is taken down');
   assert.deepEqual(joiner.dropped, [ghost], 'that one alone');
-  // and an older build's joiner, which reads 1 alone, takes nothing down from a capped frame
+  // and a word this build does not know (a newer build's) takes nothing down - AUDIT RPT1026 G6: this is no older
+  // build's reading (an older build reads `xf === 1` alone, so 2 is no whole list there either - its own code, not here)
   const old = side({ authority: false, shared: roomOf(2, SHARED_FOES_MAX + 1) });
   old.applyFoesFrame({ ...frame, xf: 3 }, 'host');
   assert.deepEqual(old.dropped, [], 'a word it does not know is no whole list');

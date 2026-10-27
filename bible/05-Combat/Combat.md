@@ -1472,7 +1472,9 @@ DESTROYS a broken enchanted piece wherever Allow Magic Repairs is off (DFU's def
 online rule are on). A piece the ladder stamped (`systems/rarityTier.js` stampedTier - Magic, Rare, Legendary,
 Aetheric, Gilded) breaks there, says "has broken", is taken off and stays, repairable; DFU's own enchanted items keep
 DFU's law. Port-Ledger A, RARE-KEPT. Pinned in `test/systems/rpt1026_items.test.js`; mutants in
-`tools/mutants/rpt1026_items.json`.
+`tools/mutants/rpt1026_items.json`. AUDIT RPT1026 G2: an offline hardening, not that report's cause - its elite dungeon
+stands online alone, where the room's Allow Magic Repairs kept every enchanted piece at this door already
+(`test/systems/audit_rpt1026_items_kept.test.js`).
 ## WW1 - WEAPON WIDGET, THE MOD, 1:1, AND THE MORROWIND ARMS (2026-09-14, Mac's call) - SHIPPED
 
 Mac: "This is our next mod I want to add 1:1 while also having it work
