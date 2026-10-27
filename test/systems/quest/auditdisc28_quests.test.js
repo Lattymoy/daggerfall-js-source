@@ -614,7 +614,8 @@ test('AUDIT DISC28 QS-K1: the re-stamp moves the name alone - the town map\'s re
   discovery.undiscoverBuilding(LOC, KEY, true, 'The Direnni Residence');   // that job's tombstone (Quest.cs's undiscover)
   assert.equal(discovery.getDiscoveredBuilding(LOC, KEY)?.displayName, "Mac's residence", 'and so never undiscovered by it');
   // PIN MOVED (AUDIT-TESA A5-F3): never in a place the port made - an isle's, an Arena place's, the countryside's
-  assert.match(W, /ownsHouse: \(buildingKey\) => \{ const id = _questLoc\(\)\?\.mapTableData\?\.mapId \?\? 0; return !isEtherPlaceId\(id\) && !isArenaPlaceId\(id\) && !isCountryPlaceId\(id\) && isHouseOwned\(playerEntity\.houses \?\? \[\], _questRegionIndex\(\), buildingKey, id\); \},/, 'the host\'s one quest source carries IsHouseOwned');   // PIN MOVED (AUDIT RELEASE R2-9): the town asking named
+  // PIN MOVED (BAY-LEFT-B): an Arena place's and the countryside's again - each held to its own town (banking.js deedHeldIn)
+  assert.match(W, /ownsHouse: \(buildingKey\) => \{ const id = _questLoc\(\)\?\.mapTableData\?\.mapId \?\? 0; return !isEtherPlaceId\(id\) && isHouseOwned\(playerEntity\.houses \?\? \[\], _questRegionIndex\(\), buildingKey, id\); \},/, 'the host\'s one quest source carries IsHouseOwned');   // PIN MOVED (AUDIT RELEASE R2-9): the town asking named
 });
 
 test('AUDIT DISC28 QS-K2: the town plan opened on arrival names the house for the live job, not the one before', () => {

@@ -850,7 +850,7 @@
   {
     "name": "R2-9-deed-every-town",
     "file": "src/systems/banking.js",
-    "old": "mapId == null || !isCapitalPlaceId(mapId) || ((slot",
+    "old": "mapId == null || !isMadePlaceId(mapId) || ((slot",
     "new": "mapId == null || ((slot",
     "tests": [
       "test/world/icgrand_living.test.js"

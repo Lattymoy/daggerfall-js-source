@@ -358,8 +358,6 @@ import { BankPurchaseWindow, preloadPurchaseArt, purchaseArtLoaded } from '../ui
 import { titleDeed, shipLabel, BOAT_DEED_TEMPLATE as FLEET_DEED_TEMPLATE } from '../systems/fleet.js';   // HOLDINGS: a bought deed into the Fleet's book
 import { createBankAccounts, createHouses, BANK_REGION_COUNT, TRANSACTION_RESULT, ownsHouse, isHouseOwned, deedStands, deedHeldIn, ownedHouseKey, houseSellPrice, housesForSale, allocateHouseToPlayer, purchaseHouse, ownsShip, ownedShipType, purchaseShip, sellShip, sellHouse, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS, creditMarksSale, marksSaleCredit, crossedDeedLines, goldRegion } from '../systems/banking.js';   // H1/H2   // H3: the two leaves - the sell price and the ship
 import { isEtherPlaceId } from '../world/etherPlaces.js';   // AUDIT CAPTAIN'S SEA P9: an isle town's buildings are no deed's
-import { isArenaPlaceId } from '../world/arenaLocations.js';   // TESA2: nor an Arena town's
-import { isCountryPlaceId } from '../world/tamrielCountry.js';   // TESA7: nor a country place's
 // HOME1: the online homes - the door's one answer, the offer, the owner's menu, and an owned home's own scene
 import {
   homeCandidate, homePurchasable, homeSceneName, homeDoorAnswer, homeDoorTitle, homeLockedLine, homeBelongsLine,
@@ -4645,10 +4643,10 @@ export function createWorldModes(host) {
   function currentHousesForSale() {
     const dir = buildingDirectory?.();
     if (!dir?.buildings?.length) return [];
-    // AUDIT CAPTAIN'S SEA P9: no house is sold past the Veil - its towns are no region's slot; TESA2: nor in an Arena town -
-    // every one answers the clamp's region (TAMRIEL2) until TESA3, so a deed's key would own the same key in all of them;
-    // TESA7: nor in a country place past the Bay - the same clamp's region, the same key
-    if (isEtherPlaceId(dir.mapId) || isArenaPlaceId(dir.mapId) || isCountryPlaceId(dir.mapId)) return [];
+    // AUDIT CAPTAIN'S SEA P9: no house is sold past the Veil - its towns are no region's slot. BAY-LEFT-B: an Arena town, a
+    // country place and a capital past the Bay sell theirs - each its province's region's (WW-R), its deed held to its own
+    // map id (banking.js deedHeldIn: a key bought in one never owns its twin in another of the province)
+    if (isEtherPlaceId(dir.mapId)) return [];
     return housesForSale(dir.buildings, {
       mapId: dir.mapId,
       month: Math.floor(worldMinutes() / (MINUTES_PER_DAY * DAYS_PER_MONTH)),
@@ -7591,7 +7589,7 @@ export function createWorldModes(host) {
   /** H1's IsHouseOwned for a building where it stands - DFU's (region, key) law; AUDIT CAPTAIN'S SEA P9: never a building
    *  of an isle's town (no house is sold past the Veil, and a Betony deed's key owned the same key in every isle town of
    *  region 19 - its residents gone, its cupboards the player's). */
-  const houseOwnedAt = (b, key) => !isEtherPlaceId(homeTownOf(b)) && !isArenaPlaceId(homeTownOf(b)) && !isCountryPlaceId(homeTownOf(b)) && isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, key, homeTownOf(b));   // AUDIT RELEASE R2-9: a capital's slice's deed in its own slice alone; TESA2: nor an Arena town's; TESA7: nor a country place's
+  const houseOwnedAt = (b, key) => !isEtherPlaceId(homeTownOf(b)) && isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, key, homeTownOf(b));   // AUDIT RELEASE R2-9: a capital's slice's deed in its own slice alone; BAY-LEFT-B: and every place past the Bay's in its own town (banking.js deedHeldIn)
   /** The online home a building is, as this client last heard - null offline, for a building no player can own, or
    *  while its town is not known yet. */
   function homeOf(b) {

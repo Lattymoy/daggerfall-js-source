@@ -72,7 +72,8 @@ export function countryPixelOfId(id) {
  *  (net/nodeLaw.js DUNGEON_ID_MAX, DFU's MapId & 0xfffff), and none a Bay place's. */
 export const LAIR_LANE = COUNTRY_LANE + COUNTRY_LANES;
 /** Is a map id a place the port made past the Bay - a country place's (TESA7), a lair's (TESA8) or a capital's (TESA10)?
- *  No house is sold in one and no deed read (scenes/worldModes.js): each answers the clamp's region. */
+ *  BAY-LEFT-B: a house is sold in one and its deed read there, held to its own map id (systems/banking.js deedHeldIn over
+ *  world/placeIds.js isMadePlaceId - every place the port made) - where none was, each its province's region's one slot. */
 export function isCountryPlaceId(id) {
   const v = Number(id) >>> 0, lane = (v >>> 20) & 0xfff;
   return lane >= COUNTRY_LANE && lane <= CAPITAL_LANE && (v & 0x80000) !== 0;

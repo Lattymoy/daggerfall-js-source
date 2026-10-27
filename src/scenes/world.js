@@ -291,8 +291,8 @@ import { preloadTamrielTrace } from '../ui/tamrielTrace.js';   // TAMRIEL3: Dagg
 import { fitBayToPicture, tamrielLandVersion } from '../world/tamriel/tamrielLand.js';   // TAMRIEL3: where the Bay stands on it; WW2: which picture a theatre's gate scan read
 import { arenaPlaces, arenaPixels, setArenaStanding, pastBayLakeAt } from '../world/arenaPlaces.js';   // TESA1: the places on it (TESA12: the port's own); TESA2: the pixels they stand on
 import { arenaRoadsLayer, setArenaRoads } from '../world/arenaRoads.js';   // TESA4: the roads past the Bay's layer
-import { arenaTemplates, ARENA_LOAD_WAIT_MS, isArenaPlaceId } from '../world/arenaLocations.js';   // TESA2: the places stood, each a Daggerfall town or dungeon cloned
-import { countryTemplates, countryCounts, isCountryPlaceId } from '../world/tamrielCountry.js';   // TESA7: the countryside past the Bay
+import { arenaTemplates, ARENA_LOAD_WAIT_MS } from '../world/arenaLocations.js';   // TESA2: the places stood, each a Daggerfall town or dungeon cloned
+import { countryTemplates, countryCounts } from '../world/tamrielCountry.js';   // TESA7: the countryside past the Bay
 import { countrysideOn } from './shared.js';   // TESA7: its kill door
 import { capitalsOn } from './shared.js';   // TESA10: the capitals' kill door
 import { capitalBase, cityBlockNames, setCapitalsStanding } from '../world/tamrielCapitals.js';   // TESA10: the capitals, built by hand
@@ -6636,7 +6636,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // never renames the player's own house, whose stored name is the purchase's, not a quest's
     // AUDIT-TESA A5-F3: never in a place the port made (an isle's, an Arena place's, the countryside's, a lair, a capital) -
     // each answers a region a Bay town's deed is keyed by, so the same key would own a house there (worldModes houseOwnedAt)
-    ownsHouse: (buildingKey) => { const id = _questLoc()?.mapTableData?.mapId ?? 0; return !isEtherPlaceId(id) && !isArenaPlaceId(id) && !isCountryPlaceId(id) && isHouseOwned(playerEntity.houses ?? [], _questRegionIndex(), buildingKey, id); },   // AUDIT RELEASE R2-9: a capital's slice's deed in its own slice alone
+    ownsHouse: (buildingKey) => { const id = _questLoc()?.mapTableData?.mapId ?? 0; return !isEtherPlaceId(id) && isHouseOwned(playerEntity.houses ?? [], _questRegionIndex(), buildingKey, id); },   // AUDIT RELEASE R2-9: a capital's slice's deed in its own slice alone; BAY-LEFT-B: every place past the Bay's in its own town (banking.js deedHeldIn)
   };
   const townTalk = createTownTalk({
     talkEngine: () => talkEngineRef,

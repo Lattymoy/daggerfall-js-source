@@ -301,7 +301,9 @@ test('AUDIT-TESA A7-8: the capitals\' and the countryside\'s kill doors shut off
 
 test('AUDIT-TESA A4-F4/A5-F3: past the Bay a ship is asked by its Arena place\'s port whatever Travel Options lists; and no deed is read in a place the port made', () => {
   assert.match(W, /portTown: \(loc\.ether \? loc\.etherKind === 'port' : loc\.arena \|\| loc\.capital \? !!loc\.arena\?\.port : modSetting\('travel-options', 'Enabled'\) === true/);
-  assert.match(W, /ownsHouse: \(buildingKey\) => \{ const id = _questLoc\(\)\?\.mapTableData\?\.mapId \?\? 0; return !isEtherPlaceId\(id\) && !isArenaPlaceId\(id\) && !isCountryPlaceId\(id\) && isHouseOwned\(/);
+  // PIN MOVED (BAY-LEFT-B, bible/03-World/Arena-Provinces.md): a deed is read in a place the port made - held to its own
+  // town (banking.js deedHeldIn by the town's map id), so the town asking is named
+  assert.match(W, /ownsHouse: \(buildingKey\) => \{ const id = _questLoc\(\)\?\.mapTableData\?\.mapId \?\? 0; return !isEtherPlaceId\(id\) && isHouseOwned\(playerEntity\.houses \?\? \[\], _questRegionIndex\(\), buildingKey, id\); \},/);
 });
 
 test('AUDIT-TESA A4-F5/A7-5: a capital\'s pixel walks each ring\'s own cells - the answer the whole square\'s walk gave, at a ring\'s cost', async () => {

@@ -209,8 +209,8 @@
   {
     "name": "TESA2-a-house-for-sale",
     "file": "src/scenes/worldModes.js",
-    "old": "isEtherPlaceId(dir.mapId) || isArenaPlaceId(dir.mapId) || isCountryPlaceId(dir.mapId)) return [];",
-    "new": "isEtherPlaceId(dir.mapId) || isCountryPlaceId(dir.mapId)) return [];",
+    "old": "if (isEtherPlaceId(dir.mapId)) return [];",
+    "new": "if (isEtherPlaceId(dir.mapId) || isArenaPlaceId(dir.mapId)) return [];",
     "tests": [
       "test/tesa2_arena.test.js"
     ]

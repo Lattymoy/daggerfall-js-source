@@ -205,7 +205,8 @@ test('H1: the four consumers are wired, and each goes through the law', () => {
   // four are host code with no node coverage.
   const modes = code('scenes/worldModes.js');
   // PIN MOVED (AUDIT CAPTAIN'S SEA P9): the deed read where the building stands - never an isle town's (houseOwnedAt) - the law itself, once
-  assert.match(modes, /const houseOwnedAt = \(b, key\) => !isEtherPlaceId\(homeTownOf\(b\)\) && !isArenaPlaceId\(homeTownOf\(b\)\) && !isCountryPlaceId\(homeTownOf\(b\)\) && isHouseOwned\(playerEntity\.houses \?\? \[\], b\?\.regionIndex \?\? 0, key, homeTownOf\(b\)\);/, 'the one reading of the law');   // PIN MOVED (TESA2): nor an Arena town's; PIN MOVED (TESA7): nor a country place's; PIN MOVED (AUDIT RELEASE R2-9): the town asking named - a capital's slice's deed its own slice's
+  // PIN MOVED (BAY-LEFT-B): an Arena town's and a country place's again - each held to its own town (banking.js deedHeldIn)
+  assert.match(modes, /const houseOwnedAt = \(b, key\) => !isEtherPlaceId\(homeTownOf\(b\)\) && isHouseOwned\(playerEntity\.houses \?\? \[\], b\?\.regionIndex \?\? 0, key, homeTownOf\(b\)\);/, 'the one reading of the law');   // PIN MOVED (TESA2): nor an Arena town's; PIN MOVED (TESA7): nor a country place's; PIN MOVED (AUDIT RELEASE R2-9): the town asking named - a capital's slice's deed its own slice's
   assert.match(modes, /houseOwned: !interiorHome && houseOwnedAt\(b, b\?\.buildingKey \?\? 0\), homeBed: homeBedIsMine\(interiorHome, /, 'CanRest sleeps in a house you own (V5 left this false)');   // HOME1 re-aim: online, in my online home too; HOME-RENT re-aim: and a room I rent in one; PIN MOVED (FIELD BUGS 2026-10-01 RENT-REST): an online home's bed rides as `homeBed`, the offline house as ever
   assert.match(modes, /isHouseOwned: \(key\) => houseOwnedAt\(bd, key\),/, 'the lock ladder knows your own front door');
   assert.match(modes, /ownsHouse: \(\) => ownsHouse\(/, 'the bank window asks the registry');

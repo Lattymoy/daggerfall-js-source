@@ -43,7 +43,7 @@ test('TESA8 the cell: 8 x 8 pixels of the countryside\'s grid, 2^19 of them; one
     assert.equal(id >>> 20, LAIR_LANE);
     assert.equal(id & 0xfffff, 0x80000 | c, 'its low 20 the cell');
     assert.ok((id & 0xfffff) >= 500000, 'past every Bay pixel id');
-    assert.ok(isCountryPlaceId(id), 'a place the countryside made: no house sold, no deed read');
+    assert.ok(isCountryPlaceId(id), 'a place the countryside made');   // BAY-LEFT-B: its deed (were a house in one) held to its own map id, banking.js deedHeldIn
     assert.equal(lairLocationIndex(c), -(LAIR_INDEX_BASE + c));
     assert.ok(lairLocationIndex(c) < -(COUNTRY_INDEX_BASE + (1 << 25)), 'past the countryside\'s indices');
     lows.add(id & 0xfffff);

@@ -569,8 +569,8 @@
   {
     "name": "TESA7-modes-deed-sold",
     "file": "src/scenes/worldModes.js",
-    "old": "isEtherPlaceId(dir.mapId) || isArenaPlaceId(dir.mapId) || isCountryPlaceId(dir.mapId)) return [];",
-    "new": "isEtherPlaceId(dir.mapId) || isArenaPlaceId(dir.mapId)) return [];",
+    "old": "if (isEtherPlaceId(dir.mapId)) return [];",
+    "new": "if (isEtherPlaceId(dir.mapId) || isCountryPlaceId(dir.mapId)) return [];",
     "tests": [
       "test/tesa7_country.test.js"
     ]
@@ -578,8 +578,8 @@
   {
     "name": "TESA7-modes-deed-owned",
     "file": "src/scenes/worldModes.js",
-    "old": "&& !isCountryPlaceId(homeTownOf(b)) && isHouseOwned(",
-    "new": "&& isHouseOwned(",
+    "old": "const houseOwnedAt = (b, key) => !isEtherPlaceId(homeTownOf(b)) && isHouseOwned(",
+    "new": "const houseOwnedAt = (b, key) => !isEtherPlaceId(homeTownOf(b)) && !isCountryPlaceId(homeTownOf(b)) && isHouseOwned(",
     "tests": [
       "test/tesa7_country.test.js"
     ]

@@ -17,7 +17,7 @@
 import { isResidence, BUILDING_TYPES } from '../world/buildingNames.js';   // RMBLayout.IsResidence (:753-760), House1-House4
 import { layoutStampOfTown, layoutsMatch, CLASSIC_LAYOUT } from './layoutPins.js';   // WD3: a town's discoveries keep the layout they were made in
 import { isHallMapId } from '../net/wire.js';   // AUDIT WW F1: a zone hall's id is no Bay pixel's
-import { MAX_MAP_PIXEL_X, MAX_MAP_PIXEL_Y } from '../formats/mapsTables.js';   // AUDIT TESA II P6: the Bay's pixel ids, under its 1000 x 500
+import { BAY_PIXEL_IDS } from '../world/placeIds.js';   // AUDIT TESA II P6: the Bay's pixel ids, under its 1000 x 500 (BAY-LEFT-B: the leaf's, the deeds' too)
 
 /** EMPIRE-BANK: the name a discovered building is SHOWN by, on its door and its plate - its stored one, but a BANK's is
  *  its name now (`live`, the directory's) wherever no quest renamed it: online every bank is the Empire's
@@ -263,8 +263,7 @@ export function discoveredBuildings(locationId) {
 // bits alone named a farm and every farm a multiple of 64 rows from it (the countryside's lanes are its grid's rows), a
 // lair and a farm, an isle's place and a country one: one found, the others found. Such a place keys by its whole id
 // (every one of them past 2^20, so no key of the Bay's meets it); a Bay place, a spawn on a Bay pixel, the Abyss's pits
-// keep DFU's mask.
-const BAY_PIXEL_IDS = MAX_MAP_PIXEL_X * MAX_MAP_PIXEL_Y;
+// keep DFU's mask. BAY-LEFT-B: the law's leaf is world/placeIds.js (isMadePlaceId), which the deeds read too.
 /** The store's key for a map id. @param {number} mapId */
 export const discoveryKeyOf = (mapId) => { const low = mapId & 0xfffff; return low < BAY_PIXEL_IDS ? low : mapId >>> 0; };
 let _locations = new Map();   // discoveryKeyOf(mapId) -> { regionName, locationName }
