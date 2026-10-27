@@ -26,6 +26,7 @@ import { snapshotPlayer, restorePlayer } from '../../src/systems/save/save.js';
 import { makeAnchor } from '../../src/systems/teleportAnchor.js';
 import { createSceneCache, cacheScene, restoreCachedScene, snapshotSceneCache, restoreSceneCache } from '../../src/systems/sceneCache.js';
 import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
+import { recordFrame } from '../../src/scenes/groundFrameHost.js';   // BAY-LEFT-GROUND (D5): the frame's law, its own export
 
 const H = HEIGHTMAP_DIMENSION;
 const UNIT = MAX_TERRAIN_HEIGHT;   // a normalized sample in kernel units
@@ -287,17 +288,14 @@ test('LANDFORM1: a point\'s lift is the lift field taken through the location\'s
   assert.ok(Math.abs(landformLift(woods, px, 230, 33, 77) - (at(wild, 33, 77) - at(wildDfu, 33, 77)) * UNIT) < 1e-3, 'in the wild: reliefLift of the kernel\'s own small-heightmap term');
 });
 
-/** world.js's own groundFrameHeight, groundFrameNative and restandHeight, sliced and run against a stub ground and a stub
- *  lift (terrainscale1.test.js's harness, with the landforms' two reads; test/world/terrain/auditlandforms.test.js runs the real lift). */
-function restander({ ground, comp = 0, landform = false, lift = () => 0 }) {
-  // PIN MOVED (BAY-LEFT-GROUND, HOST-SPLIT): the group left bootWorld for scenes/groundFrameHost.js, verbatim - read there,
-  // its live names through `host`
-  const i = WORLD.indexOf('  const groundFrameHeight = (y, x, z) =>');
-  const j = WORLD.indexOf('  return { groundFrameHeight, groundFrameNative, restandHeight, scaleOf };', i);
-  assert.ok(i > 0 && j > i && WORLD.slice(i, j).includes('  const restandHeight = (y, x, z, was) => {'));
+/** The world host's groundFrameHeight, groundFrameNative and restandHeight against a stub ground and a stub lift
+ *  (terrainscale1.test.js's harness, with the landforms' two reads; test/world/terrain/auditlandforms.test.js runs the real lift).
+ *  PIN MOVED (BAY-LEFT-GROUND, D5): the law is scenes/groundFrameHost.js recordFrame, run whole - never sliced; the Bay's
+ *  pixel (`bay`), as these pins were written for. */
+function restander({ ground, comp = 0, landform = false, lift = () => 0, bay = true }) {
   const state = { compensation: [0, comp, 0], localFromWorld: (nx, nz) => [nx - 100, nz - 200] };
   const heightAt = (x, z) => (ground(x, z) == null ? -Infinity : ground(x, z) + comp);
-  return new Function('heightAt', 'host', 'STREAMING_TERRAIN_SCALE', 'DEFAULT_TERRAIN_SCALE', 'landform', 'landformLiftAt', `${WORLD.slice(i, j)}\nreturn { groundFrameHeight, groundFrameNative, restandHeight };`)(heightAt, { state }, STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE, landform, lift);
+  return recordFrame({ landform, liftAt: lift, heightAt, state, bayAt: () => bay });
 }
 
 test('LANDFORM1: a record\'s height is DFU\'s frame - written with the landforms\' lift at its own spot taken off, stood again with it put back on; with the row off it lands as it came', () => {
@@ -388,7 +386,8 @@ test('LANDFORM1-3: the host reads the row once, cuts every pixel and every promo
   // every read (test/world/terrain/auditlandforms.test.js runs each path, row on and off)
   assert.match(WORLD, /const today = was === STREAMING_TERRAIN_SCALE && !landform;/, 'the quickload');
   assert.match(WORLD, /const rows = savedScale === STREAMING_TERRAIN_SCALE && !landform \? outer : outer\.map/, 'the camps left outside');
-  assert.match(WORLD, /return restandHeight\(y, x, z, was\); \};   \/\/ LANDFORM1: the row's lift put back on\n    droppedLoot\.restoreWorld\(arrived/, 'the exterior scene cache');
+  // PIN MOVED (BAY-LEFT-GROUND, D5): each record's frame's law (`groundFrame`) stamped beside its scale and read beside it
+  assert.match(WORLD, /return restandHeight\(y, x, z, was, arrived\.groundFrame\); \};   \/\/ LANDFORM1: the row's lift put back on[^\n]*\n    droppedLoot\.restoreWorld\(arrived/, 'the exterior scene cache');
   const tg = src('src/world/terrain/terrainGen.js');
   // AUDIT LANDFORMS D3 MOVED THIS PIN: the same pass writes DFU's own samples beside, for a location's tiles
   // PIN MOVED (BAY-LEFT-GROUND, D1): and the sites past the Bay beside the Bay's (test/world/terrain/bayleftground_sites.test.js)

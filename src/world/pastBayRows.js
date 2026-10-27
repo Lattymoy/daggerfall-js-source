@@ -93,7 +93,7 @@ export function pastBaySites({ pixels, templateOf, capitals }) {
     });
   }
   for (const p of pixels?.stood ?? []) {
-    if (p.pinned && capitals) continue;   // it stands as its capital (above)
+    if (p.pinned && capitals) continue;   // a site already: it stands as its capital (above)
     const template = templateOf(p);
     if (template) out.push({ px: p.bx, py: p.by, loc: template });
   }

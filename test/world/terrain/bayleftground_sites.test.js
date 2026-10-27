@@ -70,6 +70,19 @@ test('BAY-LEFT-GROUND D1 the kernel pulls the land past the Bay to a town\'s lev
   const without = createLandforms({ woods, climates }), withSite = createLandforms({ woods, beyond, climates });
   const walled = rise(woods, without, px, py), stands = rise(woods, withSite, px, py);
   assert.ok(walled > 2 * stands + 1, `the town's rise to its edge: ${walled.toFixed(1)} m walled, ${stands.toFixed(1)} m standing in its land`);
+  // its level is its own land's - the pixel's shaped mean as the continent's shaper stands it there, never the Bay's law
+  // (13 m under it at this pixel: the continent's lift and landforms left out)
+  const mean = (s, a = 0, b = H) => { let t = 0, n = 0; for (let x = a; x < b; x++) for (let y = a; y < b; y++) { t += s[x * H + y]; n++; } return (t / n) * M; };
+  const level = mean(generateSamples(woods, px, py, H, withSite), 48, 80), land = mean(generateSamples(woods, px, py, H, without));
+  assert.ok(Math.abs(level - land) < 2, `the town's level its land's (${level.toFixed(2)} m, its pixel's mean ${land.toFixed(2)} m)`);
+  // two sites the Bay's key would make one (`sy * 1000 + sx`: a pixel and the one a thousand east and a row north): each its
+  // own level, whichever is asked first
+  const twin = [px + 1000, py - 1], both = landformSitesBeyond([{ px, py, loc: loc(8, 8) }, { px: twin[0], py: twin[1], loc: loc(8, 8) }]);
+  const fresh = world(), alone = generateSamples(fresh, ...twin, H, createLandforms({ woods: fresh, beyond: both, climates }));
+  const after = world(), lf2 = createLandforms({ woods: after, beyond: both, climates });
+  generateSamples(after, px, py, H, lf2);
+  assert.deepEqual([...generateSamples(after, ...twin, H, lf2)], [...alone], 'its own level, not its twin\'s');
+  assert.ok(Math.abs(mean(alone, 48, 80) - level) > 1, 'the twins stand at their own levels');
   // its neighbour's land moved toward it; the shared edge one number from both pixels
   const own = generateSamples(woods, px, py, H, withSite), east = generateSamples(woods, px + 1, py, H, withSite), eastBare = generateSamples(woods, px + 1, py, H, without);
   assert.notDeepEqual([...east], [...eastBare], 'the neighbour pulled');
@@ -108,6 +121,13 @@ test('BAY-LEFT-GROUND D1 every kernel takes the table past the Bay: the job\'s a
     globalThis.onmessage({ data: { t: 'job', ...job, tilemap: job.tilemap.slice() } });
     assert.deepEqual([...posted.findLast((m) => m.t === 'done').samples], [...bare.samples], 'cleared, none');
   } finally { globalThis.postMessage = prevPost; globalThis.onmessage = prevOn; }
+  // TESA11's flatten: a city over several pixels flattened to its centre's average, kept by the kernel's inputs - the
+  // table past the Bay one of them (a centre beside a site, a slice three off it: only the average moves the slice)
+  const flatJob = { px: px + 4, py, stride: 1, climateType: 231, landform: true, hasLocation: true, locationRect: { xMin: 32, xMax: 96, yMin: 32, yMax: 96 }, flattenAt: { px: px + 1, py } };
+  const flatOn = generatePixelTerrain({ woods, beyond, ...flatJob, tilemap: new Uint8Array(128 * 128) });
+  const flatOff = generatePixelTerrain({ woods, ...flatJob, tilemap: new Uint8Array(128 * 128) });
+  assert.notEqual(flatOn.avg, flatOff.avg, 'the centre\'s average with the site beside it, and without');
+  assert.deepEqual([...generatePixelTerrain({ woods, beyond, ...flatJob, tilemap: new Uint8Array(128 * 128) }).samples], [...flatOn.samples], 'kept while the table stands');
   const worker = src('src/world/terrain/terrainGenWorker.js');
   assert.match(worker, /const landforms = m\.landform \? createLandforms\(\{ woods, roads, sites, beyond, climates \}\) : null;\n\s+const pixel = \(px, py\) => keptMid\(/, 'the middle ring');
   assert.match(worker, /m\.t === 'landform-beyond' \|\| m\.t === 'tamriel'\) \{ keptMid\.clear\(\); keptFar\.clear\(\); \}/, 'the horizon\'s books let go when it moves');
@@ -173,13 +193,13 @@ test('BAY-LEFT-GROUND D1 the host keeps the table with the places: made as the w
   assert.ok(!s.rebuilt.includes(`${m.px + 3},${m.py}`) || reach.has(worldPixelKey(m.px + 3, m.py)), 'three off: untouched unless a moved site is within two');
   // the one in flight: built again once it publishes
   const flying = `${m.px - 1},${m.py + 1}`, n0 = s.rebuilt.length;
-  if (reach.has(worldPixelKey(m.px - 1, m.py + 1))) {
-    s.inFlight.delete(flying); s.built.set(flying, { px: m.px - 1, py: m.py + 1 });
-    host.refresh();
-    assert.equal(s.rebuilt.slice(n0).join(), flying, 'published under the old table: built again, once');
-    host.refresh();
-    assert.equal(s.rebuilt.length, n0 + 1, 'and only once');
-  }
+  assert.ok(reach.has(worldPixelKey(m.px - 1, m.py + 1)), 'the one in flight, beside the capital\'s old pixel: reached');
+  assert.ok(!s.rebuilt.includes(flying), 'not built again while in flight');
+  s.inFlight.delete(flying); s.built.set(flying, { px: m.px - 1, py: m.py + 1 });
+  host.refresh();
+  assert.equal(s.rebuilt.slice(n0).join(), flying, 'published under the old table: built again, once');
+  host.refresh();
+  assert.equal(s.rebuilt.length, n0 + 1, 'and only once');
   assert.equal(SITE_REACH_PIXELS, 2, 'the 5x5 sitesAbout reads');
   // the row off: none, ever
   const off = createLandformSites({ terrainGen: { setLandformBeyond: () => { throw new Error('posted'); } }, landform: false, arena: null, capitals: true, built: new Map(), inFlight: new Map(), swap: s.swap });

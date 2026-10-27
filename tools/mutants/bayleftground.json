@@ -1,0 +1,767 @@
+[
+  {
+    "name": "BAY-LEFT-GROUND-D2-pixel-left-out-of-the-query",
+    "file": "src/systems/livingWorld/trouble.js",
+    "old": "world.foesOf({ climateIndex: world.climateAt(px, py), px, py, minute: t0, level, size, rolls: rng })",
+    "new": "world.foesOf({ climateIndex: world.climateAt(px, py), minute: t0, level, size, rolls: rng })",
+    "tests": [
+      "test/systems/livingWorld/bayleftground_trouble.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D2-band-never-read",
+    "file": "src/scenes/livingWorld/troubleFoes.js",
+    "old": "fauna: px != null && py != null ? faunaAt(px, py) : null,",
+    "new": "fauna: null,",
+    "tests": [
+      "test/systems/livingWorld/bayleftground_trouble.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D2-band-read-at-another-pixel",
+    "file": "src/scenes/livingWorld/troubleFoes.js",
+    "old": "fauna: px != null && py != null ? faunaAt(px, py) : null,",
+    "new": "fauna: px != null && py != null ? faunaAt(py, px) : null,",
+    "tests": [
+      "test/systems/livingWorld/bayleftground_trouble.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D2-the-Bay-given-a-band",
+    "file": "src/scenes/livingWorld/troubleFoes.js",
+    "old": "fauna: px != null && py != null ? faunaAt(px, py) : null,",
+    "new": "fauna: px != null && py != null ? (faunaAt(px, py) ?? [0]) : null,",
+    "tests": [
+      "test/systems/livingWorld/bayleftground_trouble.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D2-host-hands-no-band",
+    "file": "src/scenes/world.js",
+    "old": "foesOf: troubleFoesOf({ faunaAt: (x, y) => maps.getFaunaBand?.(x, y) }),",
+    "new": "foesOf: troubleFoesOf({}),",
+    "tests": [
+      "test/systems/livingWorld/bayleftground_trouble.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D3-ground-the-Bays-bound",
+    "file": "src/scenes/snowGround.js",
+    "old": "      if (!inWorldGrid(px, py)) return null;",
+    "new": "      if (!inBay(px, py)) return null;",
+    "tests": [
+      "test/render/bayleftground_snow.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D3-ground-the-Bays-key",
+    "file": "src/scenes/snowGround.js",
+    "old": "      const k = worldPixelKey(px, py);",
+    "new": "      const k = px * 1000 + py;",
+    "tests": [
+      "test/render/bayleftground_snow.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D3-ground-the-Bays-roads-past-the-Bay",
+    "file": "src/scenes/snowGround.js",
+    "old": "const net = !inBay(p.px, p.py) ? snowfallNetworkBeyond(p.px, p.py, p.paths) : raw?.source === 'basic-roads' ? snowfallNetwork(raw, p.px, p.py) : null;",
+    "new": "const net = raw?.source === 'basic-roads' ? snowfallNetwork(raw, p.px, p.py) : null;",
+    "tests": [
+      "test/render/bayleftground_snow.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D3-box-the-Bays-clamp",
+    "file": "src/scenes/snowfallHost.js",
+    "old": "    x0: onGrid(Math.min(a.x, b.x)), x1: onGrid(Math.max(a.x, b.x)),",
+    "new": "    x0: Math.max(0, Math.min(999, Math.min(a.x, b.x))), x1: Math.max(0, Math.min(999, Math.max(a.x, b.x))),",
+    "tests": [
+      "test/render/bayleftground_snow.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D3-box-the-grids-edge-dropped",
+    "file": "src/scenes/snowfallHost.js",
+    "old": "const onGrid = (v) => Math.max(-GRID_EDGE, Math.min(GRID_EDGE, v));",
+    "new": "const onGrid = (v) => v;",
+    "tests": [
+      "test/render/bayleftground_snow.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D3-paved-record-a-track",
+    "file": "src/scenes/snowfallHost.js",
+    "old": "    if (PAVED_RECORDS.includes(tile >> 2)) return ROAD_KIND.road;",
+    "new": "    if (PAVED_RECORDS.includes(tile >> 2)) return ROAD_KIND.path;",
+    "tests": [
+      "test/render/bayleftground_snow.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D3-tracks-reach-dropped",
+    "file": "src/scenes/snowfallHost.js",
+    "old": "    return tracks && tracks.tiles[t] <= TRACK_TILE_REACH ? ROAD_KIND.path : ROAD_KIND.none;",
+    "new": "    return tracks ? ROAD_KIND.path : ROAD_KIND.none;",
+    "tests": [
+      "test/render/bayleftground_snow.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D3-painted-word-unread",
+    "file": "src/scenes/snowfallHost.js",
+    "old": "    if (!painted[t]) return ROAD_KIND.none;\n",
+    "new": "",
+    "tests": [
+      "test/render/bayleftground_snow.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D3-nothing-painted-a-network",
+    "file": "src/scenes/snowfallHost.js",
+    "old": "  if (!painted) return null;\n  const road = ",
+    "new": "  const road = ",
+    "tests": [
+      "test/render/bayleftground_snow.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D3-the-Bays-join-unread",
+    "file": "src/scenes/snowfallHost.js",
+    "old": "    roads: at(net.roads, x) | joinAt(x, y), paths: at(net.tracks, x),",
+    "new": "    roads: at(net.roads, x), paths: at(net.tracks, x),",
+    "tests": [
+      "test/render/bayleftground_snow.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D3-metres-the-Bays-x",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "  minX: -(WORLD_PIXEL_SPAN - 1) * 819.2, maxX: WORLD_PIXEL_SPAN * 819.2,",
+    "new": "  minX: 0, maxX: 819200,",
+    "tests": [
+      "test/render/bayleftground_snow.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D3-metres-the-Bays-z",
+    "file": "src/systems/snowfallRuntime.js",
+    "old": "  minZ: (500 - WORLD_PIXEL_SPAN) * 819.2, maxZ: (499 + WORLD_PIXEL_SPAN) * 819.2,",
+    "new": "  minZ: 0, maxZ: 409600,",
+    "tests": [
+      "test/render/bayleftground_snow.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D3-kindAt-unread",
+    "file": "src/systems/snowfall.js",
+    "old": "const k = net.kindAt ? (authored[i] ? ROAD_KIND.none : net.kindAt(x, z, this.tiles[i])) : classifyRoadTile(x, z, this.tiles[i], net, rect, authored[i]);",
+    "new": "const k = classifyRoadTile(x, z, this.tiles[i], net, rect, authored[i]);",
+    "tests": [
+      "test/render/bayleftground_snow.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D3-kindAt-over-an-authored-tile",
+    "file": "src/systems/snowfall.js",
+    "old": "net.kindAt ? (authored[i] ? ROAD_KIND.none : net.kindAt(x, z, this.tiles[i]))",
+    "new": "net.kindAt ? net.kindAt(x, z, this.tiles[i])",
+    "tests": [
+      "test/render/bayleftground_snow.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-table-keeps-the-Bays-rows",
+    "file": "src/world/landforms.js",
+    "old": " || !inWorldGrid(px, py) || onSiteTable(px, py)) continue;",
+    "new": " || !inWorldGrid(px, py)) continue;",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-table-keeps-rows-off-the-grid",
+    "file": "src/world/landforms.js",
+    "old": " || !inWorldGrid(px, py) || onSiteTable(px, py)) continue;",
+    "new": " || onSiteTable(px, py)) continue;",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-table-unbiased",
+    "file": "src/world/landforms.js",
+    "old": "  const out = new Map();\n  const b = (v) => Math.max(1, Math.min(255, v + SITE_BIAS));",
+    "new": "  const out = new Map();\n  const b = (v) => Math.max(1, Math.min(255, v));",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-table-a-bytes-place",
+    "file": "src/world/landforms.js",
+    "old": "(b(r.xMin) | (b(r.xMax) << 8) | (b(r.yMin) << 16) | (b(r.yMax) << 24)) >>> 0",
+    "new": "(b(r.xMin) | (b(r.yMin) << 8) | (b(r.xMax) << 16) | (b(r.yMax) << 24)) >>> 0",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-kernel-table-past-the-Bay-unread",
+    "file": "src/world/landforms.js",
+    "old": "        const v = beyond?.get(worldPixelKey(qx, qy));",
+    "new": "        const v = undefined;",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-kernel-table-the-Bays-key",
+    "file": "src/world/landforms.js",
+    "old": "        const v = beyond?.get(worldPixelKey(qx, qy));",
+    "new": "        const v = beyond?.get(qy * MAP_W + qx);",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-kernel-a-bytes-place",
+    "file": "src/world/landforms.js",
+    "old": "ya = (v >>> 16) & 255;",
+    "new": "ya = (v >>> 8) & 255;",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-kernel-no-table-without-the-Bays",
+    "file": "src/world/landforms.js",
+    "old": "  if (!sites && !beyond?.size) return out;",
+    "new": "  if (!sites) return out;",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-level-the-Bays-key",
+    "file": "src/world/landforms.js",
+    "old": "const k = (worldPixelKey(sx, sy) * 1024 + hDim) * 2 + (ground.hills ? 0 : 1);",
+    "new": "const k = ((sy * MAP_W + sx) * 1024 + hDim) * 2 + (ground.hills ? 0 : 1);",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-level-on-the-Bays-law-past-the-seam",
+    "file": "src/world/landforms.js",
+    "old": "  const tl = ground.cont && continentPixel(sx, sy) ? landformLattice(ground.cont, ox, oy, span, span) : null;",
+    "new": "  const tl = null;",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-job-without-the-table",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "  const landforms = landform ? createLandforms({ woods, roads, sites, beyond, climates }) : null;   // BAY-LEFT-GROUND: and the sites past the Bay",
+    "new": "  const landforms = landform ? createLandforms({ woods, roads, sites, climates }) : null;",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-grid-without-the-table",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "  const lf = landforms ?? (landform ? createLandforms({ woods, roads, sites, beyond, climates }) : null);",
+    "new": "  const lf = landforms ?? (landform ? createLandforms({ woods, roads, sites, climates }) : null);",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-flatten-book-blind-to-the-table",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": " && had.beyond === inputs.beyond",
+    "new": "",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-flatten-book-not-handed-the-table",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "flattenAverage({ woods, roads, sites, beyond, climates }, landforms",
+    "new": "flattenAverage({ woods, roads, sites, climates }, landforms",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-client-kernel-without-the-table",
+    "file": "src/world/terrain/terrainGenClient.js",
+    "old": "return Promise.resolve(generatePixelTerrain({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, beyond: this._beyond, climates: this._climates, ...job }));",
+    "new": "return Promise.resolve(generatePixelTerrain({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, climates: this._climates, ...job }));",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-client-table-not-kept",
+    "file": "src/world/terrain/terrainGenClient.js",
+    "old": "    this._beyond = beyond;\n",
+    "new": "",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-client-table-not-posted",
+    "file": "src/world/terrain/terrainGenClient.js",
+    "old": "    if (this._worker) this._worker.postMessage({ t: 'landform-beyond', beyond });\n",
+    "new": "",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-worker-message-unread",
+    "file": "src/world/terrain/terrainGenWorker.js",
+    "old": "    if (m.t === 'landform-beyond') { beyond = m.beyond ?? null; return; }",
+    "new": "    if (m.t === 'landform-beyond') return;",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-worker-horizon-books-kept",
+    "file": "src/world/terrain/terrainGenWorker.js",
+    "old": " || m.t === 'landform-beyond' || m.t === 'tamriel') {",
+    "new": " || m.t === 'tamriel') {",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-worker-job-without-the-table",
+    "file": "src/world/terrain/terrainGenWorker.js",
+    "old": "    const out = generatePixelTerrain({ ...m, woods, roads, sites, beyond, climates });",
+    "new": "    const out = generatePixelTerrain({ ...m, woods, roads, sites, climates });",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-worker-middle-ring-without-the-table",
+    "file": "src/world/terrain/terrainGenWorker.js",
+    "old": "    const landforms = m.landform ? createLandforms({ woods, roads, sites, beyond, climates }) : null;\n    const pixel = (px, py) => keptMid(",
+    "new": "    const landforms = m.landform ? createLandforms({ woods, roads, sites, climates }) : null;\n    const pixel = (px, py) => keptMid(",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-worker-grid-without-the-table",
+    "file": "src/world/terrain/terrainGenWorker.js",
+    "old": "restrideGrid({ ...m, woods, roads, sites, beyond, climates });",
+    "new": "restrideGrid({ ...m, woods, roads, sites, climates });",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-places-shore-capitals-taken",
+    "file": "src/world/pastBayRows.js",
+    "old": "if (D.w * D.h > 1 || cap.shore || capitalCanalOpen(k) || !cap.plan) return;",
+    "new": "if (D.w * D.h > 1 || capitalCanalOpen(k) || !cap.plan) return;",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-places-capitals-over-several-pixels-taken",
+    "file": "src/world/pastBayRows.js",
+    "old": "if (D.w * D.h > 1 || cap.shore || capitalCanalOpen(k) || !cap.plan) return;",
+    "new": "if (cap.shore || capitalCanalOpen(k) || !cap.plan) return;",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-places-the-pinned-place-twice",
+    "file": "src/world/pastBayRows.js",
+    "old": "    if (p.pinned && capitals) continue;   // a site already: it stands as its capital (above)\n",
+    "new": "",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-places-no-capitals",
+    "file": "src/world/pastBayRows.js",
+    "old": "  const out = [];\n  if (capitals) {",
+    "new": "  const out = [];\n  if (false) {",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-host-reach-one",
+    "file": "src/scenes/landformSitesHost.js",
+    "old": "export const SITE_REACH_PIXELS = 2;",
+    "new": "export const SITE_REACH_PIXELS = 1;",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-host-stamp-unread",
+    "file": "src/scenes/landformSitesHost.js",
+    "old": "    if (stamp && s.every((v, i) => v === stamp?.[i])) return false;",
+    "new": "    if (stamp) return false;",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-host-in-flight-book-dropped",
+    "file": "src/scenes/landformSitesHost.js",
+    "old": "    for (const k of host.inFlight.keys()) { const [x, y] = k.split(',').map(Number); if (reach.has(worldPixelKey(x, y))) stale.add(k); }\n",
+    "new": "",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-host-owed-built-twice",
+    "file": "src/scenes/landformSitesHost.js",
+    "old": "if (reach.has(worldPixelKey(p.px, p.py)) && !host.swap.owes(k)) again.push",
+    "new": "if (reach.has(worldPixelKey(p.px, p.py))) again.push",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-host-generation-stuck",
+    "file": "src/scenes/landformSitesHost.js",
+    "old": "    generation++;\n",
+    "new": "",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-host-table-not-posted",
+    "file": "src/scenes/landformSitesHost.js",
+    "old": "    terrainGen.setLandformBeyond(next);\n",
+    "new": "",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-host-the-row-off-ignored",
+    "file": "src/scenes/landformSitesHost.js",
+    "old": "    if (!landform) return false;\n",
+    "new": "",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-world-this-threads-landforms-without",
+    "file": "src/scenes/world.js",
+    "old": "const landformsHere = () => (landform ? createLandforms({ woods, roads: terrainGen.roads(), sites: _landformSites, beyond: landformSites.beyond(), climates: _landformClimates }) : null);",
+    "new": "const landformsHere = () => (landform ? createLandforms({ woods, roads: terrainGen.roads(), sites: _landformSites, climates: _landformClimates }) : null);",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-world-promotions-grid-without",
+    "file": "src/scenes/world.js",
+    "old": "sites: _landformSites, beyond: landformSites.beyond(), climates: _landformClimates, bed: ",
+    "new": "sites: _landformSites, climates: _landformClimates, bed: ",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-world-never-asked-on-the-frame",
+    "file": "src/scenes/world.js",
+    "old": "    if (!building) landformSites.refresh();",
+    "new": "    if (false) landformSites.refresh();",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-world-gate-kernel-blind-to-the-generation",
+    "file": "src/scenes/world.js",
+    "old": ",${landformSites.generation()}`;",
+    "new": "`;",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D1-world-without-the-places-templates",
+    "file": "src/scenes/world.js",
+    "old": "createLandformSites({ terrainGen, landform, arena: _arenaTemplates,",
+    "new": "createLandformSites({ terrainGen, landform, arena: null,",
+    "tests": [
+      "test/world/terrain/bayleftground_sites.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-GROUND-LAW-not-moved",
+    "file": "src/net/wire.js",
+    "old": "export const GROUND_LAW = 2;",
+    "new": "export const GROUND_LAW = 1;",
+    "tests": [
+      "test/net/fb1017f_groundgate.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-GROUND-PRINT-past-the-Bay-without-its-sites",
+    "file": "tools/groundPrint.mjs",
+    "old": "climateType: CLIMATES.Woodlands, roads, sites, beyond, climates: null, landform: true });",
+    "new": "climateType: CLIMATES.Woodlands, roads, sites, climates: null, landform: true });",
+    "tests": [
+      "test/net/fb1017f_groundgate.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D5-old-laws-step-dropped",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "    if (landform && !(frame >= GROUND_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true });",
+    "new": "",
+    "tests": [
+      "test/world/terrain/bayleftground_frame.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D5-old-laws-step-on-the-Bay",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "    if (landform && !(frame >= GROUND_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true });",
+    "new": "    if (landform && !(frame >= GROUND_FRAME_LAW)) y -= landformLiftAt(x, z, { before: true });",
+    "tests": [
+      "test/world/terrain/bayleftground_frame.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D5-old-laws-step-on-a-stamped-record",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "    if (landform && !(frame >= GROUND_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true });",
+    "new": "    if (landform && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true });",
+    "tests": [
+      "test/world/terrain/bayleftground_frame.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D5-old-laws-step-with-the-row-off",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "    if (landform && !(frame >= GROUND_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true });",
+    "new": "    if (!(frame >= GROUND_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true });",
+    "tests": [
+      "test/world/terrain/bayleftground_frame.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D5-old-laws-step-by-todays-lift",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "    if (landform && !(frame >= GROUND_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true });",
+    "new": "    if (landform && !(frame >= GROUND_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z);",
+    "tests": [
+      "test/world/terrain/bayleftground_frame.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D5-lift-the-Bays-bound",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "    if (!host.woods || !inWorldGrid(px, py)) return 0;",
+    "new": "    if (!host.woods || !inBay(px, py)) return 0;",
+    "tests": [
+      "test/world/terrain/bayleftground_frame.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D5-lift-the-grids-bound-dropped",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "    if (!host.woods || !inWorldGrid(px, py)) return 0;",
+    "new": "    if (!host.woods) return 0;",
+    "tests": [
+      "test/world/terrain/bayleftground_frame.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D5-old-laws-landforms-the-new",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "before ? landformsBefore() : landformsHere()",
+    "new": "landformsHere()",
+    "tests": [
+      "test/world/terrain/bayleftground_frame.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D5-field-kept-across-the-generation",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "${before ? 'before' : landformSites.generation()}",
+    "new": "${before ? 'before' : 1}",
+    "tests": [
+      "test/world/terrain/bayleftground_frame.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D5-field-one-book-for-both-laws",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "${before ? 'before' : landformSites.generation()}",
+    "new": "${landformSites.generation()}",
+    "tests": [
+      "test/world/terrain/bayleftground_frame.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D5-the-Bay-everywhere",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "bayAt: (x, z) => inBay(...framePixelAt(host.state, x, z))",
+    "new": "bayAt: () => true",
+    "tests": [
+      "test/world/terrain/bayleftground_frame.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D5-stamp-without-the-law",
+    "file": "src/world/terrain/terrainSampler.js",
+    "old": "Object.freeze({ terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: GROUND_FRAME_LAW });",
+    "new": "Object.freeze({ terrainScale: STREAMING_TERRAIN_SCALE });",
+    "tests": [
+      "test/world/terrain/bayleftground_frame.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D5-save-unstamped",
+    "file": "src/systems/save/save.js",
+    "old": "terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: GROUND_FRAME_LAW };",
+    "new": "terrainScale: STREAMING_TERRAIN_SCALE };",
+    "tests": [
+      "test/world/terrain/bayleftground_frame.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D5-save-restore-drops-it",
+    "file": "src/systems/save/save.js",
+    "old": ", groundFrame: snap.groundFrame ?? null };",
+    "new": " };",
+    "tests": [
+      "test/world/terrain/bayleftground_frame.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D5-scene-cache-drops-it",
+    "file": "src/systems/sceneCache.js",
+    "old": "  groundFrame: d.groundFrame ?? null,\n",
+    "new": "",
+    "tests": [
+      "test/world/terrain/bayleftground_frame.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D5-anchor-drops-it",
+    "file": "src/systems/teleportAnchor.js",
+    "old": "    groundFrame: groundFrame > 0 ? groundFrame : null,",
+    "new": "    groundFrame: null,",
+    "tests": [
+      "test/world/terrain/bayleftground_frame.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D5-world-lift-place-the-spawns-past-the-Bay",
+    "file": "src/scenes/world.js",
+    "old": "const _liftLocationAt = (x, y) => (onTheBay(x, y) ? spawnGroundPlace.groundLocationAt(x, y, locationIndex.get(`${x},${y}`)) : _locationToBuild(x, y));",
+    "new": "const _liftLocationAt = (x, y) => spawnGroundPlace.groundLocationAt(x, y, locationIndex.get(`${x},${y}`));",
+    "tests": [
+      "test/world/terrain/bayleftground_frame.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D5-world-old-law-with-the-new-table",
+    "file": "src/scenes/world.js",
+    "old": "const landformsBefore = () => (landform ? createLandforms({ woods, roads: terrainGen.roads(), sites: _landformSites, climates: _landformClimates }) : null);",
+    "new": "const landformsBefore = () => (landform ? createLandforms({ woods, roads: terrainGen.roads(), sites: _landformSites, beyond: landformSites.beyond(), climates: _landformClimates }) : null);",
+    "tests": [
+      "test/world/terrain/bayleftground_frame.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D5-world-scene-cache-reader-blind",
+    "file": "src/scenes/world.js",
+    "old": "restandHeight(y, x, z, was, arrived.groundFrame)",
+    "new": "restandHeight(y, x, z, was)",
+    "tests": [
+      "test/world/terrain/bayleftground_frame.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D5-world-anchor-reader-blind",
+    "file": "src/scenes/world.js",
+    "old": "scaleOf(a.terrainScale), a.groundFrame)",
+    "new": "scaleOf(a.terrainScale))",
+    "tests": [
+      "test/world/terrain/bayleftground_frame.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D5-world-deck-reader-blind",
+    "file": "src/scenes/world.js",
+    "old": "scaleOf(t.restore.terrainScale), t.restore.groundFrame)",
+    "new": "scaleOf(t.restore.terrainScale))",
+    "tests": [
+      "test/world/terrain/bayleftground_frame.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D5-world-save-player-reader-blind",
+    "file": "src/scenes/world.js",
+    "old": "const ly = restandHeight(w.y ?? 2, lx, lz, was, extras.groundFrame)",
+    "new": "const ly = restandHeight(w.y ?? 2, lx, lz, was)",
+    "tests": [
+      "test/world/terrain/bayleftground_frame.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D5-world-save-rows-reader-blind",
+    "file": "src/scenes/world.js",
+    "old": "return restandHeight(y, x, z, was, extras.groundFrame); };",
+    "new": "return restandHeight(y, x, z, was); };",
+    "tests": [
+      "test/world/terrain/bayleftground_frame.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D5-world-camps-reader-blind",
+    "file": "src/scenes/world.js",
+    "old": "restandHeight(p[1], x, z, savedScale, extras.groundFrame)",
+    "new": "restandHeight(p[1], x, z, savedScale)",
+    "tests": [
+      "test/world/terrain/bayleftground_frame.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D5-world-remains-reader-blind",
+    "file": "src/scenes/world.js",
+    "old": "terrainScale: place.world.terrainScale, groundFrame: place.world.groundFrame })[1]",
+    "new": "terrainScale: place.world.terrainScale })[1]",
+    "tests": [
+      "test/world/terrain/bayleftground_frame.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D5-world-deck-unstamped",
+    "file": "src/scenes/world.js",
+    "old": "yaw: cam.yaw, ...RECORD_GROUND_STAMP }",
+    "new": "yaw: cam.yaw, terrainScale: STREAMING_TERRAIN_SCALE }",
+    "tests": [
+      "test/world/terrain/bayleftground_frame.test.js"
+    ]
+  }
+]

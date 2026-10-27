@@ -774,7 +774,7 @@ import { riddenHorseLook, birthHorses } from '../systems/horse/horseCoats.js';  
 import { giveNavalItems } from '../systems/naval/navalTransfer.js';
 import { InputMessageBoxWindow } from '../ui/inputMessageBox.js';   // HCC: the horse's name (DaggerfallInputMessageBox)
 import { getBool, getInt, getFloat } from '../systems/settings/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
-import { STREAMING_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION, sampleKernel } from '../world/terrain/terrainSampler.js';   // GR1: the sea plane, so no blade stands in water
+import { STREAMING_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION, sampleKernel, RECORD_GROUND_STAMP } from '../world/terrain/terrainSampler.js';   // GR1: the sea plane, so no blade stands in water; BAY-LEFT-GROUND: a record's ground stamp
 import { restrideGrid, gridBed } from '../world/terrain/terrainGen.js';   // PERF-EXT26: the restride's grid - the kernel's own law (EV4's ghost rows), on the worker or here
 import { getLocationTerrainTileOrigin, setLocationTiles, locationRectReader } from '../world/terrain/terrainTiles.js';
 // The start-marker arm (StreamingWorld's PositionPlayerToLocation), the
@@ -1679,6 +1679,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   /** LANDFORM1-3: this thread's landforms - the gate's beacon (gateGroundAt) and a record's frame (landformLiftAt)
    *  read them, over the network this thread holds: the same arrays the worker cuts along; LANDFORM4: and its sites. */
   const landformsHere = () => (landform ? createLandforms({ woods, roads: terrainGen.roads(), sites: _landformSites, beyond: landformSites.beyond(), climates: _landformClimates }) : null);   // BAY-LEFT-GROUND (D1): and the sites past the Bay (scenes/landformSitesHost.js)
+  /** BAY-LEFT-GROUND (D5): the landforms under a record's frame's OLD law - the Bay's table alone, the ground past the Bay
+   *  before its sites: what a record written past the Bay before GROUND_FRAME_LAW stood on (scenes/groundFrameHost.js). */
+  const landformsBefore = () => (landform ? createLandforms({ woods, roads: terrainGen.roads(), sites: _landformSites, climates: _landformClimates }) : null);
   // VERGE1: CLEAR ROADSIDES (world/road/roadVerge.js) - read once, as the world mounts, as the forests are: where the wild's
   // flats stand is one law for a world, and a flip of the row reaches the next.
   const verges = roadVergesOn();
@@ -2772,7 +2775,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  (`await worldQuickLoad({ ...bootLoadPick, snap })`) - online the only load - so that load stood a spawn's records on
    *  the wild lift and every later save wrote them on the spawn's: a camp at a spawned dungeon drifted by up to 24 m a
    *  session (the Citadel of Copperton), and a camp is never stood again. */
-  const _liftLocationAt = (x, y) => spawnGroundPlace.groundLocationAt(x, y, locationIndex.get(`${x},${y}`));
+  const _liftLocationAt = (x, y) => (onTheBay(x, y) ? spawnGroundPlace.groundLocationAt(x, y, locationIndex.get(`${x},${y}`)) : _locationToBuild(x, y));   // BAY-LEFT-GROUND (D5): past the Bay the build's own place - no spawn stands there (A1's reading), and what stands the build stands
 
   // U31 / THE CLASSIC START. StartGameBehaviour (:371-401) does not
   // resolve the start by NAME - it reads a map pixel out of settings
@@ -5442,7 +5445,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     renderer.markForeignPass();   // EV6: the surfaces' programs ran behind the shadows' back
   }
   const { groundFrameHeight, groundFrameNative, restandHeight, scaleOf } = createGroundFrame({   // HOST-SPLIT: src/scenes/groundFrameHost.js
-    _liftLocationAt, blocks, built, heightAt, heightCell, landform, landformsHere, maps, terrainGen,
+    _liftLocationAt, blocks, built, heightAt, heightCell, landform, landformsHere, maps, terrainGen, landformSites, landformsBefore,
     get state() { return state; },
     get woods() { return woods; },
   });
@@ -7305,7 +7308,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       const p = r?.pos;
       if (!Array.isArray(p)) return r;
       const [x, z] = state.localFromWorld(p[0], p[2]);
-      return { ...r, pos: [p[0], restandHeight(p[1], x, z, savedScale), p[2]] };
+      return { ...r, pos: [p[0], restandHeight(p[1], x, z, savedScale, extras.groundFrame), p[2]] };   // BAY-LEFT-GROUND: by its frame's law
     });
     camps.dropOwn(); camps.restore(rows, campFromNatives);
   }
@@ -13835,7 +13838,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       lootContainers: droppedLoot.snapshotWorld((pos) => state.worldCoords(pos))
         .map((sp) => ({ ...sp, containerType: LOOT_CONTAINER_TYPES.DroppedLoot, y: groundFrameNative(sp.nativeX, sp.nativeZ, sp.y - state.compensation[1]) })),   // AUDIT LANDFORMS C1: DFU's frame
       droppedTorches: droppedTorches.snapshot((pos) => { const wc = state.worldCoords(pos); return [wc.x, groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), wc.z]; }),
-      terrainScale: STREAMING_TERRAIN_SCALE,   // TERRAIN-SCALE1: the ground these heights stand on
+      ...RECORD_GROUND_STAMP,   // TERRAIN-SCALE1: the ground these heights stand on; BAY-LEFT-GROUND: and their frame's law
     });
   }
   /** A scene never cached answers null and the arrival stands as the
@@ -13846,7 +13849,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // TERRAIN-SCALE1: an entry a save carried from before the stamp stood on the prefab's 1.5 - stood again on today's
     // ground, which the arrival has just built
     const was = scaleOf(arrived.terrainScale);
-    const restand = (nx, nz, y) => { const [x, z] = state.localFromWorld(nx, nz); return restandHeight(y, x, z, was); };   // LANDFORM1: the row's lift put back on
+    const restand = (nx, nz, y) => { const [x, z] = state.localFromWorld(nx, nz); return restandHeight(y, x, z, was, arrived.groundFrame); };   // LANDFORM1: the row's lift put back on; BAY-LEFT-GROUND: by its frame's law
     droppedLoot.restoreWorld(arrived.lootContainers.map((c) => ({ ...c, y: restand(c.nativeX, c.nativeZ, c.y) })),
       (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
     droppedTorches.restore(arrived.droppedTorches.map((t) => { const p = t.position; return { ...t, position: [p[0], restand(p[0], p[2], p[1]), p[2]] }; }), (p) => { const [lx, lz] = state.localFromWorld(p[0], p[2]); return [lx, p[1] + state.compensation[1], lz]; });   // HT1
@@ -13904,7 +13907,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const t = shipTransition(playerEntity, {
       boardShipPosition: playerEntity.boardShipPosition ?? null,
       mapPixel: here,
-      position: shipMemory({ mapPixel: here, pos: [player.pos[0], groundFrameHeight(player.pos[1] - state.compensation[1], player.pos[0], player.pos[2]) + state.compensation[1], player.pos[2]], yaw: cam.yaw, terrainScale: STREAMING_TERRAIN_SCALE }, state.compensation[1]),   // AUDIT LANDFORMS C1: its height in DFU's frame   // TERRAIN-SCALE1 (audit): the ground `pos` stood on; AUDIT 68 S22: its height without the streamer's compensation
+      position: shipMemory({ mapPixel: here, pos: [player.pos[0], groundFrameHeight(player.pos[1] - state.compensation[1], player.pos[0], player.pos[2]) + state.compensation[1], player.pos[2]], yaw: cam.yaw, ...RECORD_GROUND_STAMP }, state.compensation[1]),   // AUDIT LANDFORMS C1: its height in DFU's frame   // TERRAIN-SCALE1 (audit): the ground `pos` stood on; AUDIT 68 S22: its height without the streamer's compensation
     });
     if (!t) return;
     // AUDIT ETHER-OW C2-3 (AUDIT CAPTAIN'S SEA P6's law): NO BOARDING ACROSS THE VEIL - "Your Ship" is the Bay's (its two
@@ -13968,7 +13971,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // teleport stood the player on it verbatim (not grounded); stood again now, over the pixel just built
     if (localPos && !legacy && (scaleOf(t.restore?.terrainScale) !== STREAMING_TERRAIN_SCALE || landform)) {   // LANDFORM1: or with the row's lift to put back on
       const c = state.compensation[1];
-      const y = restandHeight(localPos[1] - c, localPos[0], localPos[2], scaleOf(t.restore.terrainScale)) + c;
+      const y = restandHeight(localPos[1] - c, localPos[0], localPos[2], scaleOf(t.restore.terrainScale), t.restore.groundFrame) + c;   // BAY-LEFT-GROUND: by its frame's law
       if (walkMode) player.spawn(localPos[0], y, localPos[2]);
       cam.pos = [localPos[0], y + (walkMode ? 0 : 40), localPos[2]];
     }
@@ -14030,7 +14033,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // AUDIT LANDFORMS C1: DFU's frame - outside, and in a building (the exterior's frame); a dungeon's feet are its own
       // frame's, and its anchor lands on `local` alone (AUDIT LANDFORMS II F4: they were asked the lift as a scene point)
       y: inDungeon ? pf[1] - state.compensation[1] : groundFrameHeight(pf[1] - state.compensation[1], pf[0], pf[2]),
-      terrainScale: STREAMING_TERRAIN_SCALE,   // TERRAIN-SCALE1: the ground that height stands on
+      ...RECORD_GROUND_STAMP,   // TERRAIN-SCALE1: the ground that height stands on; BAY-LEFT-GROUND: and its frame's law
       local: inside.local,
       yaw: cam.yaw, pitch: cam.pitch,
       buildingKey: inside.buildingKey,
@@ -14053,7 +14056,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const anchorLanding = (a) => {
     if (a.insideDungeon && a.local) return [...a.local];
     const [lx, lz] = state.localFromWorld(a.nativeX, a.nativeZ);
-    return [lx, restandHeight(a.y ?? 2, lx, lz, scaleOf(a.terrainScale)) + state.compensation[1], lz];   // TERRAIN-SCALE1: an anchor set before the stamp stood on the prefab's 1.5; LANDFORM1: and the row's lift put back on
+    return [lx, restandHeight(a.y ?? 2, lx, lz, scaleOf(a.terrainScale), a.groundFrame) + state.compensation[1], lz];   // TERRAIN-SCALE1: an anchor set before the stamp stood on the prefab's 1.5; LANDFORM1: and the row's lift put back on
   };
 
   let _recalling = false;
@@ -15394,13 +15397,13 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
         // building an inside save re-enters)
         const was = scaleOf(extras.terrainScale);
         const today = was === STREAMING_TERRAIN_SCALE && !landform;   // LANDFORM1: every height DFU's frame - the row's lift goes back on
-        const restandNative = (nx, nz, y) => { const [x, z] = state.localFromWorld(nx, nz); return restandHeight(y, x, z, was); };
+        const restandNative = (nx, nz, y) => { const [x, z] = state.localFromWorld(nx, nz); return restandHeight(y, x, z, was, extras.groundFrame); };   // BAY-LEFT-GROUND: by its frame's law
         // a list the envelope does not carry passes through as it came, and a record without its position is the restore's to refuse
         const restandRows = (rows) => (today || !Array.isArray(rows) ? rows : rows.map((r) => (r ? { ...r, y: restandNative(r.nativeX, r.nativeZ, r.y) } : r)));
         const restandAt = (key) => (rows) => (today || !Array.isArray(rows) ? rows : rows.map((r) => { const p = r?.[key]; return Array.isArray(p) ? { ...r, [key]: [p[0], restandNative(p[0], p[2], p[1]), p[2]] } : r; }));
         if (extras.interior) { extras.interior.foes = restandRows(extras.interior.foes); extras.interior.guards = restandRows(extras.interior.guards); }
         const [lx, lz] = state.localFromWorld(w.nativeX, w.nativeZ);
-        const ly = restandHeight(w.y ?? 2, lx, lz, was) + state.compensation[1];
+        const ly = restandHeight(w.y ?? 2, lx, lz, was, extras.groundFrame) + state.compensation[1];
         // IS1: an inside save re-enters its building BEFORE the player
         // lands - the Respawner's building arm (PlayerEnterExit
         // .cs:559-567) with RestorePosition landing the saved
@@ -26458,7 +26461,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // (AUDIT LANDFORMS C1) on the ground it was measured on (TERRAIN-SCALE1), as the Recall anchor keeps its own.
       // AUDIT FB1013d B2: asked by the death alone (`height`) - the lift is a field's kernel pass on the first pixel the
       // main thread asks it of, and the slow tick asks where the one played stands every second
-      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), terrainScale: STREAMING_TERRAIN_SCALE } : {}) } : null,
+      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), ...RECORD_GROUND_STAMP } : {}) } : null,
     };
   };
   /** LEGACY4 + AUDIT LEGACY H1: whether `h` (legacyHere) stands in the dungeon a remains' `place` names - by its location
@@ -26513,7 +26516,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const [x, z] = state.localFromWorld(place.world.x, place.world.z);
     const ground = heightAt(x, z);
     if (!Number.isFinite(ground)) return null;   // its pixel not built yet - stood once it is
-    const y = Number.isFinite(place.world.y) ? anchorLanding({ nativeX: place.world.x, nativeZ: place.world.z, y: place.world.y, terrainScale: place.world.terrainScale })[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14)
+    const y = Number.isFinite(place.world.y) ? anchorLanding({ nativeX: place.world.x, nativeZ: place.world.z, y: place.world.y, terrainScale: place.world.terrainScale, groundFrame: place.world.groundFrame })[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14)
     return floorLanding(collider, [x, Math.max(y, ground) + 0.5, z]);
   };
   /** FB1013d REMAINS-STAND: the house's fallen, seen where they lie - a body in the street's pool, or the building's or the

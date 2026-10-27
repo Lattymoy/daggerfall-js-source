@@ -158,6 +158,19 @@ test('BAY-LEFT-GROUND D3 the roads past the Bay under the snow: a pixel the kern
   assert.equal(t.at(64, 20), ROAD_KIND.path, 'on the track');
   assert.equal(t.at(10, 10), ROAD_KIND.none, 'the wild');
   for (let i = 0; i < 16384; i++) if (t.kinds[i] === ROAD_KIND.road) assert.ok([46, 47, 55].includes(o.tilemapBytes[i] >> 2), 'every road tile a paved one');
+  // the road's worn shoulder (painted, not paved) away from the track: neither - the berm lies over it
+  let shoulder = 0;
+  for (let z = 50; z < 78; z++) for (let x = 4; x < 44; x++) {
+    const i = z * 128 + x;
+    if (o.paths[i] && ![46, 47, 55].includes(o.tilemapBytes[i] >> 2)) { shoulder++; assert.equal(t.kinds[i], ROAD_KIND.none, `the shoulder at (${x}, ${z})`); }
+  }
+  assert.ok(shoulder > 10, `the road's shoulder (${shoulder} tiles)`);
+  // the painter's word unread is no road: the same tiles with nothing painted stand none
+  const unpainted = new BasicRoadsTerrain(px, py, o.tilemapBytes, new Uint8Array(16384), snowfallNetworkBeyond(px, py, new Uint8Array(16384)), { xMin: 0, xMax: 0, yMin: 0, yMax: 0 });
+  assert.deepEqual([unpainted.roadTiles, unpainted.pathTiles], [0, 0], 'nothing painted: no road, no track');
+  // an authored tile (a town's own block) is no road's, as the mod's authored scan says on the Bay
+  const town = new BasicRoadsTerrain(px, py, o.tilemapBytes, new Uint8Array(16384).fill(1), net, { xMin: 0, xMax: 0, yMin: 0, yMax: 0 });
+  assert.deepEqual([town.roadTiles, town.pathTiles], [0, 0], 'every tile authored: none');
   // the snow reads them: a track packs, a road banks its edge
   const cov = new SnowCoverage(MASKS);
   assert.equal(t.samplePath(64.5, 20.5, SIZE / 128, 1), 255, 'the track\'s middle: packed whole');
@@ -166,6 +179,15 @@ test('BAY-LEFT-GROUND D3 the roads past the Bay under the snow: a pixel the kern
   assert.ok(berm > 0, `a berm beside the road (${berm})`);
   // a pixel the painter wrote nothing on stands no network
   assert.equal(snowfallNetworkBeyond(px, py, null), null);
+  // the world host's snow ground hands the snow these roads past the Bay - whatever network the Bay's own roads stand on;
+  // on the Bay Basic Roads' network alone, so none without it (mutants: the Bay's source asked past the Bay)
+  const { built, snowGround } = streamAt(px, py, { ring: 0 });
+  built.set(`${px},${py}`, { ...built.get(`${px},${py}`), tilemapBytes: o.tilemapBytes, paths: o.paths });
+  const fromHost = snowGround.roads(built.get(`${px},${py}`));
+  assert.equal(typeof fromHost?.kindAt, 'function', 'past the Bay: TESA\'s roads by the painter\'s word');
+  const hosted = new BasicRoadsTerrain(px, py, o.tilemapBytes, fromHost.authored, fromHost, fromHost.rect);
+  assert.deepEqual([hosted.roadTiles, hosted.pathTiles], [t.roadTiles, t.pathTiles]);
+  assert.equal(snowGround.roads({ px: 500, py: 250, paths: o.paths, locationRect: null }), null, 'the Bay without Basic Roads: none');
   // a BEND past the Bay is a curve (VOYAGER2), and Basic Roads' arms predict its tiles nowhere near it: the painter's word
   // finds the road and the track the arms' prediction misses
   setArenaRoads({ roads: new Map([[beyondKey(px, py), DIR.W | DIR.NE]]), tracks: new Map([[beyondKey(px, py), DIR.S | DIR.NW]]), join: new Map() });
