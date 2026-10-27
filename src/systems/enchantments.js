@@ -67,6 +67,7 @@ import { ITEM_TEMPLATES, templateByIndex, mendOrder, mintCondition, TRANSPORT_HO
 import { WEAPONS } from '../characters/weapons.js';   // MEND-WORN / MEND-ARMOUR: a tick is the classic Dagger's share
 import { repoolWeapon } from './conditionRepair.js';   // MEND-WORN: a weapon on its row's pool moves before a mend on the pool, as before a wear
 import { creditOwnMend } from './item/foundMark.js';   // MEND-THIRD: the ring's mend credited past a found piece's mark
+import { stampedTier } from './rarityTier.js';   // RPT1026-ITEMS RARE-KEPT: a laddered piece breaks and stays (RARE-BREAK1's law), a leaf
 export { ENCHANTMENT_TYPES };
 
 /** EnchantmentSettings.ClassicType (DaggerfallUnityItem.cs:1316-1320).
@@ -335,10 +336,16 @@ function instantiateHeldSpell({ param, entity, item, ctx, nowMinutes }, recast) 
  *  collection arm REMOVES a broken item from that collection unless
  *  the AllowMagicRepairs setting holds (DaggerfallUnityItem.cs:
  *  LowerCondition). Combat wear passes no collection and keeps the
- *  husk; enchantment wear consumes it. */
+ *  husk; enchantment wear consumes it.
+ *  RPT1026-ITEMS RARE-KEPT (a private report, 2026-10-26: a two-handed Wyrmbane worn to nothing in a hard dungeon, and
+ *  gone from the pack after): BUT NEVER A LADDERED PIECE - RARE-BREAK1's law (the owner, 2026-09-25:
+ *  "Rarity loot breaks, not destroyed"; combat/pcaao.js pcaaoFades) held for the overhaul's fading alone, and a
+ *  Legendary's own enchantment is DFU's (Wyrmbane's Cast When Strikes bills ten a blow), so where Allow Magic Repairs
+ *  is off its own blows destroyed it. It breaks, says so, and stays, repairable. A departure from LowerCondition's
+ *  collection arm (Port-Ledger A, RARE-KEPT). */
 function enchantLowerCondition(item, amount, entity, ctx, collection = null) {
   const broke = lowerCondition(item, amount, entity, ctx?.say);
-  if (broke && !(ctx?.allowMagicRepairs ?? false)) {
+  if (broke && !stampedTier(item) && !(ctx?.allowMagicRepairs ?? false)) {
     const col = collection ?? entity?.items;
     const i = col ? col.indexOf(item) : -1;
     if (i >= 0) col.splice(i, 1);

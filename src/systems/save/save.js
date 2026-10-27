@@ -17,6 +17,7 @@ import { clampLegalReputations } from '../court.js';   // AUDIT 23 (C4)
 import { defineLiveMaxMagicka, defineLiveMaxHealth } from '../chargen.js';   // AUDIT 39: the live MaxMagicka accessor, on the LOAD arm too; DISC10-E L4: and MaxHealth's
 import { rebuildEquipState, isEquipped, unequipSlot } from '../equip.js';   // AUDIT 17e C1   // AUDIT 63 F28: RemoveItem takes an EQUIPPED item off the doll on its way out
 import { templateByIndex } from '../item/itemTemplates.js';   // AUDIT 63r F28: `shortName` is SetItem's template read, not an optional override
+import { heldOutOf } from '../item/heldOut.js';   // RPT1026-ITEMS HELD-OUT: a counter's staged lot is still the player's
 import { restartHeldEnchantments } from '../enchantments.js';   // E2: the held bundles' restore half
 import { snapshotWeather, restoreWeather, rollClimateWeathersForDay } from '../weather/weatherSim.js';   // W1: playerPosition.weather (SerializablePlayer.cs:225) - one value, every host; AUDIT WORLD5 C4: the shared day's sky over a loaded one
 import { snapshotRegionConditions, restoreRegionConditions } from '../region/regionConditions.js';
@@ -379,7 +380,9 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
     // the book: the carry gave the path back with the 200,000 still spent, or swapped a newer choice for it, free
     snap.career.arcaneMirror = { path: snap.arcanePath, prompted: snap.pathPrompted, of: snap.characterId };
   }
-  snap.items = (entity.items ?? []).map((it) => ({ ...it }));
+  // RPT1026-ITEMS HELD-OUT (systems/item/heldOut.js): and the goods a counter holds out of the pack while it stands - an
+  // Identify's lot, a sale's - at the pack's end; a save written under the window lost them for good
+  snap.items = [...(entity.items ?? []), ...heldOutOf(entity)].map((it) => ({ ...it }));
   // E4: `data.playerEntity.goldPieces = entity.GoldPieces`
   // (SerializablePlayer.cs:133). Gold left the item list when it
   // became the counter DFU keeps it in, so the envelope carries it
