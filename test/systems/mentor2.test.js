@@ -183,6 +183,12 @@ test('MENTOR2 A: THE HOST HOLDS A FIGHT - a partner who walks off mid-fight leav
   state.fighting = false;
   host.frame(MENTOR_JOIN_MS + MENTOR_LEAVE_MS + 20);
   assert.equal(me._mentor, null, 'the fight over: the partner long gone');
+  // leaving the party is no change the fight holds: I am myself again the same frame (mutant: the party left unread)
+  const r = rig();
+  r.host.frame(0); r.host.frame(MENTOR_JOIN_MS);
+  r.state.fighting = true; r.state.party = false;
+  r.host.frame(MENTOR_JOIN_MS + 16);
+  assert.equal(r.me._mentor, null, 'left the party mid-fight: ended at once');
 });
 
 test('MENTOR2 A: THE WIRING - the streaming host builds the mentor host over the party members drawn in my room (partyNear), outdoors by its feet, its fight by the mode\'s foes, and frames it from the party frame; PARTY-LOOT keeps the whole party\'s levels; the old per-frame block is gone (mutants: the whole party read; the frame call dropped)', () => {

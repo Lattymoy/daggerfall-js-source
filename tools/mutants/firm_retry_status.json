@@ -3,7 +3,7 @@
     "name": "FIRM-RETRY-read-failure-no-retry",
     "file": "src/net/firmament/firmamentBook.js",
     "old": "      if (UNHEARD.has(state.error)) retryLater();\n",
-    "new": "",
+    "new": "      if (false) retryLater();\n",
     "tests": [
       "test/net/firmament/firm_book_retry.test.js"
     ]
