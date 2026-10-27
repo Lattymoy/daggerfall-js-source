@@ -178,5 +178,14 @@
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]
+  },
+  {
+    "name": "BLS-weather-land-off-read",
+    "file": "src/systems/weather/weatherMap.js",
+    "old": "    if (c != null && c >= 0) return c;",
+    "new": "    if (c != null) return c;",
+    "tests": [
+      "test/systems/weather/weather3a_weathermap.test.js"
+    ]
   }
 ]
