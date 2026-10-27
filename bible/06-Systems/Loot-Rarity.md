@@ -483,9 +483,9 @@ such duds before, none now. A departure (Port-Ledger A, HELD-BASE). `test/system
 ## AFFIX-LINES (2026-10-25) - A LINE IS DRAWN OVER THE LINES, NOT THE KINDS
 
 A player, SaberGGaming: carrying capacity on four Rare pieces in five, found and crafted alike; the owner: "No band
-aids". Measured over 10,000 mints through the craft's own door (`smithItems.js:"applyRarity(item, eff.rarity, rolls, null, { fits, byLines: Number.isSafeInteger(version) && version >= MINT_V_LINES });"`),
+aids". Measured over 10,000 mints through the craft's own door (`smithItems.js:"applyRarity(item, eff.rarity, rolls, null, { fits, byLines: Number.isSafeInteger(version) && version >= MINT_V_LINES,"`),
 no bias in the stream - the law made it, twice over. A pick drew a KIND at even weight and then its param
-(`lootRarity.js:"const draw = () => (byLines ? pickByLines(pool, (k) => drawWeight(k, item, out), rolls) : pick(pool, rolls));"`,
+(`lootRarity.js:"const draw = () => (byLines ? pickByLines(pool, (k) => drawWeight(k, item, out, lean), rolls) : pick(pool, rolls));"`,
 the old law's `pick`): carrying capacity is one line, the attributes eight, the resistances five and the skills 35, so
 it came up as often as all eight attributes together. And a Rare's LAST pick was held to whichever name slot its lines
 left empty (`lootRarity.js:"if (!byLines && tier === 'rare' && i === count - 1) {"`) - a jewel's one numeric prefix IS
@@ -539,3 +539,46 @@ and a Masterwork are DFU's off (AUDIT LOOT II A9). The temple's lift takes the c
 hold the drawback's very kind (`lootCurse.js` liftCurse; AUDIT MAKER-RARE A1). A departure (Port-Ledger A, THE ITEM MAKER
 TAKES A RARE); the record and its audit are `01-Overview/bugs/Field-Bugs-2026-10-26.md`.
 `test/systems/fb1026_makerrare.test.js`.
+
+## ARMOR-LEAN (2026-10-26) - LEATHER, CHAIN AND PLATE ROLL THEIR OWN LINES
+
+A player: "can we make differences regarding stat distribution for all types when stats are rolled on them". Before
+this, a piece of armour's family moved its armour rating, weight, worth and condition (`armorMaterials.js` and the
+item builder's tables) and nothing on the ladder: a Rare chain cuirass and a Rare plate one drew from one pool at one
+weight. THE LAW NOW (`lootRarity.js` ARMOR_LEAN, armorLean): the bands stay every piece's - a Rare is a Rare - and the
+family weighs WHICH lines it draws, by the class's NativeMaterialValue (the family the equip gate refuses by, so a
+Roleplay & Realism mail hauberk is chain and a brigandine or fur jerkin leather):
+
+| family | first line its armour | kinds after (x its lines) | attributes lean to | resistances lean to |
+| --- | --- | --- | --- | --- |
+| Leather | 35% | armour 0.5, carrying 2, attributes 1.5, resist 0.75 | Agility, Speed x3; Luck x1.5; Strength, Endurance x0.5 | Poison x2, Frost x1.5 |
+| Chain | 50% (as before) | resist 2 | Endurance x2; Agility, Willpower x1.5 | Magic x2; Fire, Frost x1.5; Shock x0.5 |
+| Plate | 65% | armour 3, carrying 2, attributes 1.25, resist 0.75 | Strength, Endurance x3; Agility, Speed x0.4 | Fire x2, Frost x1.5; Shock x0.5, Magic x0.75 |
+
+SKILLS ARE EVERY FAMILY'S ALIKE (the player: "plate shouldnt have weapon skills more often keep that for every type"):
+no family weighs the skill kind, and which skill a skill line names is LOOT1's body kin for all three.
+
+A weighting, never a fence: every line a piece of armour could roll, every family still can. It reaches the roll
+(rollAffixes), a curse's reward line and a reforge's - drawWeight and the stat and resistance param (leanedParam). An Exalted Legendary's line keeps A7's even param draw (`auditloot2`); its kind still weighs by
+the family. ONE roll a draw, as LOOT1 and AFFIX-LINES hold: a piece rolls as many lines as its seed gave it, and a line
+landing on another kind draws what that kind draws, so a seeded door holding armour moves as AFFIX-LINES' did.
+
+THE NUMBERS, 20,000 seeded Rare cuirasses a row (share of all lines; the attributes' share of the stat lines):
+
+| family | armour first | armour | carrying | attributes | resist | skills | Agility+Speed | Strength+Endurance |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| even (before) | 51% | 15% | 2% | 14% | 9% | 60% | 25% | 25% |
+| Leather | 35% | 11% | 3% | 20% | 6% | 59% | 51% | 9% |
+| Chain | 51% | 15% | 2% | 13% | 16% | 55% | 25% | 29% |
+| Plate | 67% | 20% | 3% | 16% | 6% | 55% | 8% | 54% |
+
+THE RECORDS (`net/productRecord.js` MINT_V_ARMOR_LEAN): a craft stamps mint version 3; a record of 2 or less mints the
+piece it always did (`rollAffixes` `lean` false), so no crafted piece changes when the market or a temper mints it
+again. Pinned: `test/systems/loot/armorlean.test.js`; `affixlines_reforge` (the lines' law measured with the lean off,
+the first pick's share at the family's, versions 2 and 3); `tools/mutants/armorlean.json` (7, all dead).
+
+DAEDRIC-SALE (2026-10-26, the same player: "tune down daedric selling price by 50%"): a counter pays half for Daedric
+gear - weapons, plate and shields - at `tradeModes.js` counterValueOf, the one value every selling arm reads; a gem set
+in the piece sells whole, and what a shop ASKS stands. A patron at a hired trader is no counter: patronWorth
+(`net/patronLaw.js`) reads the piece's whole worth and is untouched. A departure from DFU's Sell arms (Port-Ledger A,
+A COUNTER PAYS HALF FOR DAEDRIC GEAR).

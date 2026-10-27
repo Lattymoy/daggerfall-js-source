@@ -689,7 +689,7 @@ const HARDCODED = {
   'src/ui/localeFaces.js': 27,
   'src/ui/lootBanner.js': 3,
   'src/ui/map/mapStrip.js': 1,
-  'src/ui/marketTab.js': 151,
+  'src/ui/marketTab.js': 140,   // PACK-PICK: the List form's piece and pack words through the text core; AUDIT PACK-PICK: its kinds' and empty forms' too
   'src/ui/merchant/merchantRepairDoor.js': 2,
   'src/ui/mouseControlsWindow.js': 2,
   'src/ui/native/nativeInventory.js': 5,
@@ -771,7 +771,7 @@ const HARDCODED = {
   'src/ui/tutorialsPane.js': 9,
   'src/ui/vendor/vendorMapMark.js': 1,
   'src/ui/vendor/vendorPage.js': 28,
-  'src/ui/vendor/vendorTab.js': 28,
+  'src/ui/vendor/vendorTab.js': 27,   // PACK-PICK
   'src/ui/virtueLevelUp.js': 4,   // AUDIT GROWTH LANE5-1: its purse label routed (and enhancedLevelUp.js, levelUpView.js and firmamentWindow.js down to none - the Level and Firmament faces said through t())
   'src/ui/waitWindow.js': 1,
   'src/ui/waypointMenu.js': 11,

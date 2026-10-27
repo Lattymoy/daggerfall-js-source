@@ -12,6 +12,7 @@ import { readVendorMark, vendorMarkKey, vendorRingTexels, paintVendorMark, VENDO
 const tick = () => new Promise((r) => setTimeout(r, 0));
 const texts = (n) => [...n.querySelectorAll('*')].map((x) => x.textContent).join('|');
 const buttons = (n) => [...n.querySelectorAll('button')];
+const byClass = (n, c) => n.querySelectorAll('.' + c);   // PACK-PICK
 const rows = [
   { id: 'a', item: 'Iron Longsword', price: 50, owner: 'Eve', map: 11, buildingKey: 5, region: 17, expiresAt: 2e9 },
   { id: 'b', item: 'Steel Dagger', price: 70, owner: 'Tom', map: 12, buildingKey: 6, region: 17, expiresAt: 2e9 },
@@ -83,7 +84,12 @@ test('HOME-VENDOR the stall: a visitor buys off the purse; the owner takes back 
   assert.ok(!buttons(b).some((x) => x.textContent === 'Buy'), 'the owner buys nothing of their own');
   buttons(b).find((x) => x.textContent === 'Take back').onclick();
   b = mine.body();
-  assert.doesNotMatch(texts(b), /Quest Letter/, 'what may not go is not offered');
+  // PIN MOVED (PACK-PICK): what may not go is never a piece to press - it stands folded under the picker with why
+  const pressable = byClass(b, 'packpick-tile').filter((n) => n.tagName === 'BUTTON').map((n) => n.textContent);
+  assert.deepEqual(pressable, ['Leather Cuirass'], 'what may not go is not offered');
+  assert.match(texts(byClass(b, 'packpick-refused')[0]), /Quest Letter.*a quest's/, 'and is said, with why');
+  byClass(b, 'packpick-tile').find((n) => n.tagName === 'BUTTON').onclick();
+  b = mine.body();
   buttons(b).find((x) => x.textContent === 'Put up for sale').onclick();
   await tick();
   assert.deepEqual(did, [['buy', 'a'], ['take', 'b'], ['put', 'Leather Cuirass', 100]]);

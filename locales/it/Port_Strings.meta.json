@@ -15829,6 +15829,81 @@
   "tr": "aa26f796e53d",
   "by": "claude-in-session"
  },
+ "market.goods.sell": {
+  "en": "c136aded14cc",
+  "tr": "2c9b2ddf18fc",
+  "by": "claude-in-session"
+ },
+ "market.list.craftedEmpty": {
+  "en": "8c65b17166cc",
+  "tr": "4b3eaad7fbcd",
+  "by": "claude-in-session"
+ },
+ "market.list.craftedLabel": {
+  "en": "28f64ab188cf",
+  "tr": "23e41e5b8934",
+  "by": "claude-in-session"
+ },
+ "market.list.kindAuction": {
+  "en": "0774b0c33e43",
+  "tr": "25ba8b1d162a",
+  "by": "claude-in-session"
+ },
+ "market.list.kindCrafted": {
+  "en": "42e1236ebb3b",
+  "tr": "b4c83202f035",
+  "by": "claude-in-session"
+ },
+ "market.list.kindPack": {
+  "en": "33a51b3312f4",
+  "tr": "e7e51623f445",
+  "by": "claude-in-session"
+ },
+ "market.list.kindStores": {
+  "en": "561569fc83c4",
+  "tr": "06195d0895d5",
+  "by": "claude-in-session"
+ },
+ "market.list.kinds": {
+  "en": "fa2e5cff35aa",
+  "tr": "be64037457af",
+  "by": "claude-in-session"
+ },
+ "market.list.mwEmpty": {
+  "en": "8eac23d4e384",
+  "tr": "d946ee70a599",
+  "by": "claude-in-session"
+ },
+ "market.list.mwLabel": {
+  "en": "44e952a4a519",
+  "tr": "58639b47548d",
+  "by": "claude-in-session"
+ },
+ "market.list.packEmpty": {
+  "en": "bf78a767392b",
+  "tr": "d7a64c4668af",
+  "by": "claude-in-session"
+ },
+ "market.list.packLabel": {
+  "en": "a4172827dadb",
+  "tr": "54caca2e1a7b",
+  "by": "claude-in-session"
+ },
+ "market.list.pickMw": {
+  "en": "8b7b5de5ff87",
+  "tr": "edd4f22a0ab3",
+  "by": "claude-in-session"
+ },
+ "market.list.pickPack": {
+  "en": "7a7312e38b17",
+  "tr": "59763b1852a2",
+  "by": "claude-in-session"
+ },
+ "market.list.refused": {
+  "en": "2aa24c8a3346",
+  "tr": "0e129fec184e",
+  "by": "claude-in-session"
+ },
  "market.page.label": {
   "en": "600584c2d5cc",
   "tr": "a46c4d063de2",
@@ -23424,6 +23499,61 @@
   "tr": "044f60c02478",
   "by": "claude-in-session"
  },
+ "pack.pick.all": {
+  "en": "ab2d96c48c9c",
+  "tr": "d72ef3eec374",
+  "by": "claude-in-session"
+ },
+ "pack.pick.find": {
+  "en": "8c0399c9a415",
+  "tr": "e480dd0f72df",
+  "by": "claude-in-session"
+ },
+ "pack.pick.findLabel": {
+  "en": "592bcd67e1d6",
+  "tr": "6babe860d278",
+  "by": "claude-in-session"
+ },
+ "pack.pick.many": {
+  "en": "97e536f7d07d",
+  "tr": "12dfb8ccb88e",
+  "by": "claude-in-session"
+ },
+ "pack.pick.metal": {
+  "en": "d8169782b57c",
+  "tr": "d61a806fc5b7",
+  "by": "claude-in-session"
+ },
+ "pack.pick.none": {
+  "en": "a82b0aa9046c",
+  "tr": "5b4614fc77dd",
+  "by": "claude-in-session"
+ },
+ "pack.pick.noneAny": {
+  "en": "9f85767365ab",
+  "tr": "fdace4c2bacd",
+  "by": "claude-in-session"
+ },
+ "pack.pick.page": {
+  "en": "276deef5715f",
+  "tr": "e08275938c20",
+  "by": "claude-in-session"
+ },
+ "pack.pick.refused": {
+  "en": "b5f2b59e9410",
+  "tr": "b5f2b59e9410",
+  "by": "claude-in-session"
+ },
+ "pack.pick.some": {
+  "en": "fb91f1f483fa",
+  "tr": "a64d82625f33",
+  "by": "claude-in-session"
+ },
+ "pack.pick.tier": {
+  "en": "a3e1e99f2620",
+  "tr": "b5ed81dd0d39",
+  "by": "claude-in-session"
+ },
  "party.travel.followOnceAble": {
   "en": "314d66a59d0d",
   "tr": "b92d6c03fe66",
@@ -29149,14 +29279,29 @@
   "tr": "418d2668af53",
   "by": "claude-in-session"
  },
+ "ql.journal.pieceChain": {
+  "en": "9fc9f25448a2",
+  "tr": "782047e0aebb",
+  "by": "claude-in-session"
+ },
  "ql.journal.pieceDamage": {
   "en": "8d28c6a569cd",
   "tr": "105520248611",
   "by": "claude-in-session"
  },
+ "ql.journal.pieceLeather": {
+  "en": "14786dce4b74",
+  "tr": "19d98a6a16fd",
+  "by": "claude-in-session"
+ },
  "ql.journal.pieceOneHanded": {
   "en": "7ec4211fda0d",
   "tr": "ff17108ec91c",
+  "by": "claude-in-session"
+ },
+ "ql.journal.piecePlate": {
+  "en": "71f27cb3d1c6",
+  "tr": "916e57e10caa",
   "by": "claude-in-session"
  },
  "ql.journal.pieceTwoHanded": {
@@ -35752,6 +35897,11 @@
  "tutorials.wildZone.body2": {
   "en": "3c759d3b73f2",
   "tr": "6c4967892dd8",
+  "by": "claude-in-session"
+ },
+ "vendor.put.refused": {
+  "en": "964e7da80274",
+  "tr": "0c52e24b5e73",
   "by": "claude-in-session"
  },
  "wagon.upkeep.boons.failing": {

@@ -27462,7 +27462,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const market = marketBook && profBook && profBook.state.open !== false && marksBook?.state?.open !== false && Number.isInteger(region) ? {
       book: marketBook, stores: () => profBook.state.stores, region, regionName: REGION_NAMES[region] ?? 'the region',
       regionNameOf: (r) => REGION_NAMES[r] ?? 'another region', hubs: marketHubs, name: (k) => materialLabel(k), countName: materialCountLabel,
-      picture: (k, wake) => materialPicture(k, { onReady: wake }), itemPicture: (it, wake) => itemPicture(it, { onReady: wake }), piecePicture: marketPiecePicture,   // MENU-ORDER: a row's picture
+      picture: (k, wake) => materialPicture(k, { onReady: wake }), itemPicture: (it, wake, box) => itemPicture(it, { onReady: wake, box }), piecePicture: marketPiecePicture,   // MENU-ORDER: a row's picture
       board: [town.px, town.py],   // SEAT1d (Seats-Arc 7.2): the board's town - the seat whose bailiwick takes the Tithe
       tithe: () => (seatBook?.open === true ? boardTithePct(seatBook.data?.seats ?? [], region, [town.px, town.py]) : null),   // AUDIT SEATS-3 D3: its rate as the seats' list says it (null: not read)
       pieces: marketPieces, take: marketTake, putBack: marketPutBack, mint: marketMint, pieceName: marketPieceName, drop: marketDrop, goods: () => marketGoods.goods(), good: (it) => marketGoods.good(it), goodName: (rec) => marketGoods.goodName(rec),   // MARKET-ANY: a piece from the pack, for gold

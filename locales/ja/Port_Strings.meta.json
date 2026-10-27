@@ -14399,6 +14399,21 @@
   "tr": "6ac61ea3adb2",
   "by": "claude-in-session"
  },
+ "ql.journal.pieceChain": {
+  "en": "9fc9f25448a2",
+  "tr": "6dbfbe2aed02",
+  "by": "claude-in-session"
+ },
+ "ql.journal.pieceLeather": {
+  "en": "14786dce4b74",
+  "tr": "aff81903cc79",
+  "by": "claude-in-session"
+ },
+ "ql.journal.piecePlate": {
+  "en": "71f27cb3d1c6",
+  "tr": "0ecc512ccaf4",
+  "by": "claude-in-session"
+ },
  "ql.journal.postBoard": {
   "en": "b48aa46cc5ca",
   "tr": "0c9d5a7a0231",
