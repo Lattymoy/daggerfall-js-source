@@ -1150,12 +1150,17 @@ Chromium draws on its software renderer (WARP, 2 fps). So Vulkan is the player's
      (`PAGE_REPORT_TIMEOUT_MS`) fails the launch, so a hung or blank page cannot leave a player on a broken backend.
      The first report counts; a reload's is ignored.
   4. The GPU process gone within the first minute (its own `child-process-gone` listener). One lost after the first
-     minute is crash.log's alone.
+     minute is crash.log's alone, and so is a `clean-exit`, as main.cjs treats a renderer's.
 
   A failure writes the record, shows a one-button notice ("Vulkan could not start on this graphics card"), and
   `app.relaunch()`es, once. The relaunch has no switches, because the record holds it. `app.exit` skips `will-quit`,
   so the guard first flushes the GPU-gone entry that GPU-TRAIL-LOST holds back for crash.log (`beforeExit`). A launch
   that passes check 2 logs `[shell] GPU-BACKEND: vulkan up - the game page's WebGL2 renderer: ...`.
+  Before `app.relaunch()` the guard calls `app.releaseSingleInstanceLock()`: the new copy can start before this one has quit,
+  and one refused the lock quits, so the player's restart would close the app for good (AUDIT INSTALL R2-A1). If the
+  record did not land (`saveConfig` swallows a write error, as with a read-only userData), the relaunch carries
+  `--dagger-default-backend`, which holds that launch on the default; without it every start would fail and show the notice
+  again. The next start tries Vulkan again.
 - **The record's key and the retry.** The key is the physical GPU and its driver, `vvvv:dddd@driver`. A launch that fell
   to WARP cannot see the card: Chromium then lists only ANGLE's synthetic `0xffff` "SwANGLE" device. So its record is
   written with `gpu: null`, and the next launch, on D3D11, keys it with the card it runs on. The record also keeps the

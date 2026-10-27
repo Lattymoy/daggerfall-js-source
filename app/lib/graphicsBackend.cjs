@@ -47,6 +47,8 @@ const GPU_INFO_TIMEOUT_MS = 10_000;
 /** The game page's preload reports its WebGL2 context as the page's document commits; a page that has not reported this
  *  long after its window opened (hung, blank, or its preload stopped) counts as the backend failing. */
 const PAGE_REPORT_TIMEOUT_MS = 60_000;
+/** The relaunch's own argument when the failure record could not be written: that launch takes no switches. */
+const HOLD_DEFAULT_ARG = '--dagger-default-backend';
 
 /** Each backend's Chromium switches, as [name, value]. */
 const BACKEND_SWITCHES = Object.freeze({
@@ -86,8 +88,8 @@ function failureRecord(userDataRoot) {
 /** This launch's backend: { backend, switches, held }. `backend` is the one chosen (the env door over the pref);
  *  `switches` are the [name, value] pairs to append - none off Windows, for 'default', or while a failure record
  *  `held` the launch on the default. */
-function backendLaunch(userDataRoot, { platform = process.platform, env = process.env } = {}) {
-  if (platform !== 'win32') return { backend: 'default', switches: [], held: null };
+function backendLaunch(userDataRoot, { platform = process.platform, env = process.env, argv = process.argv } = {}) {
+  if (platform !== 'win32' || argv.includes(HOLD_DEFAULT_ARG)) return { backend: 'default', switches: [], held: null };
   const backend = Object.hasOwn(BACKEND_SWITCHES, env[BACKEND_ENV] ?? '') ? env[BACKEND_ENV] : savedBackend(userDataRoot);
   if (backend === 'default') return { backend, switches: [], held: null };
   const held = failureRecord(userDataRoot);
@@ -182,7 +184,7 @@ function gpuInfoWithin(app, level, ms) {
  * onGpuGone(details) from its child-process-gone handler for a GPU process, pageOpened() when the game window is made,
  * and pageAsks() / pageReport(report) for the game page's preload (whether to make its WebGL2 context, and what it got).
  */
-function watchBackend({ app, launch, loadConfig, saveConfig, notify, beforeExit = () => {}, chromium = process.versions.chrome ?? null, now = Date.now, log = console.warn, infoTimeoutMs = GPU_INFO_TIMEOUT_MS, reportTimeoutMs = PAGE_REPORT_TIMEOUT_MS }) {
+function watchBackend({ app, launch, loadConfig, saveConfig, notify, beforeExit = () => {}, chromium = process.versions.chrome ?? null, now = Date.now, log = console.warn, infoTimeoutMs = GPU_INFO_TIMEOUT_MS, reportTimeoutMs = PAGE_REPORT_TIMEOUT_MS, argv = process.argv }) {
   const startedAt = now();
   const armed = launch.switches.length > 0;
   let key = null;
@@ -193,11 +195,22 @@ function watchBackend({ app, launch, loadConfig, saveConfig, notify, beforeExit 
     failing = true;
     const record = { backend: launch.backend, gpu: key, chromium, reason, at: new Date(now()).toISOString() };
     saveConfig({ ...loadConfig(), [FAILURE_RECORD]: record });
+    // saveConfig swallows a write error. A record that did not land (a read-only or locked userData) cannot hold the next
+    // launch on the default, so the relaunch carries HOLD_DEFAULT_ARG instead; without it the next launch would fail and
+    // show the notice again, on every start.
+    const recorded = !!loadConfig()[FAILURE_RECORD];
     log(`[shell] GPU-BACKEND: ${launch.backend} failed (${reason}) on ${key ?? 'an unknown GPU'} - relaunching on the default`);
     return Promise.resolve()
       .then(() => notify(backendFailedNotice(launch.backend)))
       .catch(() => {})
-      .then(() => { try { beforeExit(); } catch { /* the relaunch goes ahead */ } app.relaunch(); app.exit(0); });
+      .then(() => {
+        try { beforeExit(); } catch { /* the relaunch goes ahead */ }
+        // The new copy can start before this one has quit; one that asks for the single-instance lock while this one holds
+        // it is refused and quits, so the player's restart would close the app for good (main.cjs AUDIT INSTALL R2-A1).
+        app.releaseSingleInstanceLock();
+        app.relaunch(recorded || argv.includes(HOLD_DEFAULT_ARG) ? undefined : { args: [...argv.slice(1), HOLD_DEFAULT_ARG] });
+        app.exit(0);
+      });
   }
 
   /** A held launch: clear a record made on another GPU, driver or Chromium, and key a record made before the key was
@@ -237,7 +250,8 @@ function watchBackend({ app, launch, loadConfig, saveConfig, notify, beforeExit 
   }
 
   async function onGpuGone(details) {
-    if (!armed || now() - startedAt > GPU_GONE_GRACE_MS) return;
+    // A clean exit is the GPU process leaving on purpose, as main.cjs treats a renderer's: not a backend that failed to start.
+    if (!armed || details?.reason === 'clean-exit' || now() - startedAt > GPU_GONE_GRACE_MS) return;
     if (!key) key = gpuKey(await gpuInfoWithin(app, 'basic', infoTimeoutMs));
     await fail(`GPU process gone: ${details?.reason ?? 'unknown'}`);
   }
@@ -276,7 +290,7 @@ function watchBackend({ app, launch, loadConfig, saveConfig, notify, beforeExit 
 }
 
 module.exports = {
-  UI_PREFS, GRAPHICS_BACKEND_PREF, CONFIG_NAME, FAILURE_RECORD, BACKEND_ENV, GPU_GONE_GRACE_MS, PAGE_REPORT_TIMEOUT_MS, BACKEND_SWITCHES,
+  UI_PREFS, GRAPHICS_BACKEND_PREF, CONFIG_NAME, FAILURE_RECORD, BACKEND_ENV, GPU_GONE_GRACE_MS, PAGE_REPORT_TIMEOUT_MS, HOLD_DEFAULT_ARG, BACKEND_SWITCHES,
   savedBackend, failureRecord, backendLaunch, isSoftwareRenderer, rendererMissesBackend, gpuKey, rendererOf, backendFailedNotice,
   webgl2Report, watchBackend,
 };

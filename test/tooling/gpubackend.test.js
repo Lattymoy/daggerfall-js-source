@@ -131,18 +131,19 @@ test('GPU-BACKEND: the record\'s key is the physical GPU and its driver, another
 });
 
 /** A fake Electron app and main.cjs's config store, over one launch. */
-function rig({ launch, info, config = {}, clock = 0, chromium = '142.0.7444.0', reportTimeoutMs = 50 }) {
+function rig({ launch, info, config = {}, clock = 0, chromium = '142.0.7444.0', reportTimeoutMs = 50, writable = true, argv = ['app.exe', 'main'] }) {
   const calls = [];
   const state = { config: structuredClone(config), now: clock };
   const app = {
     getGPUInfo: async () => (typeof info === 'function' ? info() : info),
-    relaunch: () => calls.push('relaunch'),
+    releaseSingleInstanceLock: () => calls.push('unlock'),
+    relaunch: (options) => { calls.push('relaunch'); state.relaunchOptions = options; },
     exit: (code) => calls.push(`exit ${code}`),
   };
   const guard = B.watchBackend({
     app, launch,
     loadConfig: () => structuredClone(state.config),
-    saveConfig: (c) => { state.config = structuredClone(c); calls.push('save'); },
+    saveConfig: (c) => { if (writable) state.config = structuredClone(c); calls.push('save'); },
     notify: async (opts) => { calls.push(`notice: ${opts.message}`); return { response: 0 }; },
     beforeExit: () => calls.push('flush'),
     chromium,
@@ -150,6 +151,7 @@ function rig({ launch, info, config = {}, clock = 0, chromium = '142.0.7444.0', 
     log: () => {},
     infoTimeoutMs: 50,
     reportTimeoutMs,
+    argv,
   });
   return { guard, calls, state };
 }
@@ -158,7 +160,7 @@ const ARMED = { backend: 'vulkan', switches: VULKAN, held: null };
 test('GPU-BACKEND: a launch on Vulkan that lands on a software renderer records the failure, tells the player, and relaunches; the relaunch on the card keys the record and keeps it (mutants: no record; no relaunch; the notice skipped; the unkeyed record cleared)', async () => {
   const { guard, calls, state } = rig({ launch: ARMED, info: infoOf(WARP, { warp: true }), config: { arena2Path: 'X' } });
   await guard.check();
-  assert.deepEqual(calls, ['save', 'notice: Vulkan could not start on this graphics card', 'flush', 'relaunch', 'exit 0']);
+  assert.deepEqual(calls, ['save', 'notice: Vulkan could not start on this graphics card', 'flush', 'unlock', 'relaunch', 'exit 0']);
   assert.equal(state.config.arena2Path, 'X', 'the rest of config.json kept');
   const record = state.config[B.FAILURE_RECORD];
   assert.equal(record.backend, 'vulkan');
@@ -185,7 +187,7 @@ test('GPU-BACKEND: the GPU process gone in the first minute of a Vulkan launch i
   const early = rig({ launch: ARMED, info: infoOf(VK) });
   early.state.now = B.GPU_GONE_GRACE_MS - 1;
   await early.guard.onGpuGone({ type: 'GPU', reason: 'crashed' });
-  assert.deepEqual(early.calls, ['save', 'notice: Vulkan could not start on this graphics card', 'flush', 'relaunch', 'exit 0']);
+  assert.deepEqual(early.calls, ['save', 'notice: Vulkan could not start on this graphics card', 'flush', 'unlock', 'relaunch', 'exit 0']);
   assert.equal(early.state.config[B.FAILURE_RECORD].reason, 'GPU process gone: crashed');
   assert.equal(early.state.config[B.FAILURE_RECORD].gpu, '10de:2c02@32.0.16.1088');
   const late = rig({ launch: ARMED, info: infoOf(VK) });
@@ -216,7 +218,7 @@ test('GPU-BACKEND: a held launch clears a record made on another driver, so the 
 test('GPU-BACKEND: a Vulkan launch that drew on the card through another backend is a failure too (mutant: the renderer\'s backend unread)', async () => {
   const { guard, calls, state } = rig({ launch: ARMED, info: infoOf('ANGLE (NVIDIA, NVIDIA GeForce RTX 5080 Direct3D9Ex vs_3_0 ps_3_0, nvldumdx.dll -32.0.16.1088)') });
   await guard.check();
-  assert.deepEqual(calls, ['save', 'notice: Vulkan could not start on this graphics card', 'flush', 'relaunch', 'exit 0']);
+  assert.deepEqual(calls, ['save', 'notice: Vulkan could not start on this graphics card', 'flush', 'unlock', 'relaunch', 'exit 0']);
   assert.match(state.config[B.FAILURE_RECORD].reason, /^renderer is not vulkan: .*Direct3D9Ex/);
 });
 
@@ -289,7 +291,7 @@ test('GPU-BACKEND: an armed launch whose game page got no WebGL2 context records
   assert.deepEqual(calls, [], 'Chromium\'s own renderer passes');
   assert.equal(guard.pageAsks(), true, 'an armed launch asks the page for its context');
   await guard.pageReport({ webgl2: false, renderer: '' });
-  assert.deepEqual(calls, ['save', 'notice: Vulkan could not start on this graphics card', 'flush', 'relaunch', 'exit 0']);
+  assert.deepEqual(calls, ['save', 'notice: Vulkan could not start on this graphics card', 'flush', 'unlock', 'relaunch', 'exit 0']);
   assert.equal(state.config[B.FAILURE_RECORD].reason, 'the game page got no WebGL2 context');
   assert.equal(state.config[B.FAILURE_RECORD].gpu, '10de:2c02@32.0.16.1088');
 });
@@ -317,7 +319,7 @@ test('GPU-BACKEND: the d3d9 probe door draws on the card under its own name, so 
   await guard.check();
   assert.deepEqual(calls, [], 'Chromium\'s renderer names the backend');
   await guard.pageReport(B.webgl2Report(docWith(null)));
-  assert.deepEqual(calls, ['save', 'notice: Direct3D 9 could not start on this graphics card', 'flush', 'relaunch', 'exit 0']);
+  assert.deepEqual(calls, ['save', 'notice: Direct3D 9 could not start on this graphics card', 'flush', 'unlock', 'relaunch', 'exit 0']);
   assert.equal(state.config[B.FAILURE_RECORD].reason, 'the game page got no WebGL2 context');
 });
 
@@ -328,7 +330,7 @@ test('GPU-BACKEND: a game page that never reports within the bound is a failure;
     const silent = rig({ launch: ARMED, info: infoOf(VK), reportTimeoutMs: 20 });
     silent.guard.pageOpened();
     await new Promise((r) => setTimeout(r, 60));
-    assert.deepEqual(silent.calls, ['save', 'notice: Vulkan could not start on this graphics card', 'flush', 'relaunch', 'exit 0']);
+    assert.deepEqual(silent.calls, ['save', 'notice: Vulkan could not start on this graphics card', 'flush', 'unlock', 'relaunch', 'exit 0']);
     assert.equal(silent.state.config[B.FAILURE_RECORD].reason, 'the game page reported no WebGL2 context within 0.02 s');
     const prompt = rig({ launch: ARMED, info: infoOf(VK), reportTimeoutMs: 20 });
     prompt.guard.pageOpened();
@@ -360,4 +362,34 @@ test('GPU-BACKEND by source: the game window starts the page\'s clock, the prelo
   codeHasOnce(main, /e\.sender === gameWindow\.webContents\) backendGuard\.pageReport\(report\);/);
   const preload = read('app/preload.cjs');
   codeHasOnce(preload, /\nif \(ipcRenderer\.sendSync\('dagger:backend-probe'\) === true\) ipcRenderer\.send\('dagger:backend-webgl2', webgl2Report\(document\)\);/);
+});
+
+test('GPU-BACKEND: the relaunch gives up the single-instance lock before it starts the new copy (mutant: the lock kept)', async () => {
+  const { guard, calls } = rig({ launch: ARMED, info: infoOf(WARP, { warp: true }) });
+  await guard.check();
+  assert.ok(calls.indexOf('unlock') > -1 && calls.indexOf('unlock') < calls.indexOf('relaunch'), 'released before app.relaunch');
+  assert.ok(calls.indexOf('unlock') < calls.indexOf('exit 0'));
+});
+
+test('GPU-BACKEND: a failure record that could not be written still ends the loop - the relaunch holds the default for that launch (mutants: relaunch with no hold; the hold ignored)', async () => {
+  const bad = rig({ launch: ARMED, info: infoOf(WARP, { warp: true }), writable: false, argv: ['app.exe', 'main', '--play'] });
+  await bad.guard.check();
+  assert.deepEqual(bad.state.relaunchOptions, { args: ['main', '--play', B.HOLD_DEFAULT_ARG] }, 'the hold rides the relaunch');
+  const kept = rig({ launch: ARMED, info: infoOf(WARP, { warp: true }) });
+  await kept.guard.check();
+  assert.equal(kept.state.relaunchOptions, undefined, 'a record that landed relaunches as before');
+  const held = B.backendLaunch('unused', { platform: 'win32', env: { [B.BACKEND_ENV]: 'vulkan' }, argv: ['app.exe', 'main', B.HOLD_DEFAULT_ARG] });
+  assert.deepEqual(held, { backend: 'default', switches: [], held: null }, 'the held launch takes no switches');
+  const again = rig({ launch: ARMED, info: infoOf(WARP, { warp: true }), writable: false, argv: ['app.exe', 'main', B.HOLD_DEFAULT_ARG] });
+  await again.guard.check();
+  assert.deepEqual(again.state.relaunchOptions, undefined, 'the hold is not added twice');
+});
+
+test('GPU-BACKEND: a GPU process that exited cleanly is not a backend that failed (mutant: every reason fails)', async () => {
+  const clean = rig({ launch: ARMED, info: infoOf(D3D11) });
+  await clean.guard.onGpuGone({ type: 'GPU', reason: 'clean-exit' });
+  assert.deepEqual(clean.calls, [], 'no record, no notice, no relaunch');
+  const crashed = rig({ launch: ARMED, info: infoOf(D3D11) });
+  await crashed.guard.onGpuGone({ type: 'GPU', reason: 'crashed' });
+  assert.ok(crashed.calls.includes('relaunch'));
 });
