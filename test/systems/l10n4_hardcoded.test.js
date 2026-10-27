@@ -138,7 +138,7 @@ const HARDCODED = {
   'src/net/professionLaw.js': 112,   // FIELD BUGS 2026-10-20h DEX-HIDES: the Wolf Pelt's, the Boar Hide's and the Mudcrab Chitin's names - an item's canonical name is its row's, as the ten hides' are
   'src/net/raid/raidClaims.js': 5,
   'src/net/realm/realmGoldLaw.js': 1,
-  'src/net/realm/realmTradeLaw.js': 21,
+  'src/net/realm/realmTradeLaw.js': 20,   // RPT1026-MARKET HOLD-SAID: -1, the law's named hold's words through t() (realm.held.lawNamed)
   'src/net/recipeLaw.js': 109,
   'src/net/relayCfg.js': 3,
   'src/net/renown.js': 2,
@@ -318,7 +318,7 @@ const HARDCODED = {
   'src/scenes/treeHost.js': 3,
   'src/scenes/windfallHost.js': 5,
   'src/scenes/vendorHost.js': 7,   // VENDOR-LOST: the home traders' words, moved verbatim out of world.js
-  'src/scenes/world.js': 331,   // VENDOR-LOST: -7, the home traders' words moved verbatim to vendorHost.js; QUEST-AUDIT III SHARE-WORDS: -4, the share's lines through questShare.js's t(); AUDIT QA3: -2, the sender's (shareSentLine); STAFF-PANEL5-FOLLOW-FIX: -1 already at the relay base (ec3d522d61), written down; FB1020c ONE-SAVE: the kept words moved to the Stores page (BAG_PAGE_WORDS.kept); CABIN-FOES: Transport > Ship's helm refusal read off CABIN_REFUSAL; AUDIT SEA VENTURES C6: -1, /unstuck's outdoor refusal read off the zone's words; SEASON-BOOK: -1, /mail's refusal read off chatCommands.js pauseCommandRefusal (344 at the merge of main #1161: both -1s stand)
+  'src/scenes/world.js': 329,   // RPT1026-MARKET: -2, the Vendor page's Collect moved to vendorHost.js, its two lines through t() there; VENDOR-LOST: -7, the home traders' words moved verbatim to vendorHost.js; QUEST-AUDIT III SHARE-WORDS: -4, the share's lines through questShare.js's t(); AUDIT QA3: -2, the sender's (shareSentLine); STAFF-PANEL5-FOLLOW-FIX: -1 already at the relay base (ec3d522d61), written down; FB1020c ONE-SAVE: the kept words moved to the Stores page (BAG_PAGE_WORDS.kept); CABIN-FOES: Transport > Ship's helm refusal read off CABIN_REFUSAL; AUDIT SEA VENTURES C6: -1, /unstuck's outdoor refusal read off the zone's words; SEASON-BOOK: -1, /mail's refusal read off chatCommands.js pauseCommandRefusal (344 at the merge of main #1161: both -1s stand)
   'src/scenes/worldModes.js': 83,
   'src/systems/aetheric.js': 168,   // SEA-SET: +17, the Eltheric Tidemail's nine names and lore, as the Weave's - the records' own data, minted onto the item; WITCH1: the Wyrd's Raiment's nine pieces, each its name and its affixes' names (+18) - an item's canonical name, as every Aetheric set's; STAR7: +18, the Starspun Weave's nine names and lore - the records' own data, minted onto the item, never read at load
   'src/systems/alchemyItems.js': 3,
@@ -382,7 +382,7 @@ const HARDCODED = {
   'src/systems/equip.js': 3,
   'src/systems/eventTimers.js': 50,
   'src/systems/faction/factionStanding.js': 3,
-  'src/systems/features.js': 127,
+  'src/systems/features.js': 128,   // RPT1026-CLIENT: the mod's 'Camera Shake.maxShake' on its tile - a mod's settings key the scan reads as words, as its three neighbours on the list are
   'src/systems/fleet.js': 10,
   'src/systems/fletching.js': 1,
   'src/systems/festival/soulCake.js': 2,   // WITCH1: the Soul Cake's and the Hearth Offering's names - an item's canonical name is its row's, as the Weir Key's
@@ -411,7 +411,6 @@ const HARDCODED = {
   'src/systems/inputActions.js': 86,
   'src/systems/inventory.js': 2,
   'src/systems/item/itemBound.js': 4,
-  'src/systems/item/itemIds.js': 2,
   'src/systems/item/itemInfo.js': 8,
   'src/systems/item/itemJunk.js': 1,
   'src/systems/item/itemLock.js': 2,
@@ -551,7 +550,7 @@ const HARDCODED = {
   'src/systems/travel/travelPace.js': 5,
   'src/systems/travel/travelPathMode.js': 3,
   'src/systems/travel/travelViewFilters.js': 7,   // HUD/GROWTH PATCHES (2026-10-20): counted as they arrived at their merge with main - English until a slice routes them through t() (MAP-PLAYERS: +1, the Players switch's tip)
-  'src/systems/tutorialCatalogue.js': 212,
+  'src/systems/tutorialCatalogue.js': 213,   // RPT1026-QUESTS BOUNTY-WAY: +1, the bounties page rewritten - its old words held "return", which the scan reads as code, so they were never counted; the catalogue is English, as every page's
   'src/systems/uiSkin.js': 1,
   'src/systems/upkeep/upkeepItemRows.js': 2,
   'src/systems/upkeep/upkeepRuntime.js': 8,

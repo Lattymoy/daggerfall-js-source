@@ -34,8 +34,9 @@ export const TILE = Object.freeze({
 });
 
 /** Indexed by the ground type under the tile: [water, dirt, grass, stone]
- *  -> the tile to write, or NO_CHANGE. Water is never paved: a road
- *  bit over water is a routing bug and this refuses to hide it. */
+ *  -> the tile to write, or NO_CHANGE. (ROADS 2's "water is never paved"
+ *  is history: his road table paves it - AUDIT 51 and RPT1026-WORLD
+ *  CAUSEWAY below.) */
 // ROADS 20: THE TABLES ARE THE MOD'S, read from its own painter. A
 // cardinal road is two tiles of 46 with no edge column; 47/55 are the
 // diagonal's flanks. A track's diagonal inner is 51/52, not the
@@ -55,8 +56,13 @@ export const TILE = Object.freeze({
 // wide and not four.
 const NC = TILE.NO_CHANGE;
 // AUDIT 51: the tables are the mod's COLUMNS TOO, water included. His
-// road table paves water (46/47 in column 0) - his data never routes a
-// road across it, so it never shows, but the oracle compares columns.
+// road table paves water (46/47 in column 0), and the oracle compares
+// columns. RPT1026-WORLD CAUSEWAY: his data does route a road across it -
+// 42 road pixels whose WOODS byte is the sea's (the Grayidge inlet's
+// (72, 131), a coast road in the sea at 515-559, 296-316), each a paved
+// strip with the water either side - and the Overworld's route walks it
+// (systems/travel/travelRoute.js pavedStep). His track's column 0 is
+// water: a track over the sea is a ford.
 export const ROAD_TILES = Object.freeze([
   [46, 46, 46, 46],   // cardinal inner
   null,               // cardinal outer

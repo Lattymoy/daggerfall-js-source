@@ -567,11 +567,17 @@ export function clearLightSourceOnLeave(item, entity, fromLocal) {
  * nothing to follow (LOOT-BULK's bulkMove, the quick door and the trade windows already ask `from.includes(item)`). Every
  * caller in src/ hands the list the piece is in (swept: the windows' own, quick loot, Physical Items, the naval plunder's
  * one-piece source, a decor take).
+ *
+ * RPT1026-CHESTGOLD (a private report): A LIST WHOSE MOVES A SERVICE SETTLES KEEPS ITS COIN A PILE (`from.pileCoins`, the
+ * shared chest's - systems/decor/decorGrants.js openSharedChest). The gold arm spent the pile into the purse at the click,
+ * every checkpoint after carried the purse, and a settle the service refused left the pile in the chest as well: gold
+ * twice. From such a list the pile lands in the window's pack as itself, and the purse takes it when the settle lands -
+ * in both windows, which both end their takes here. A departure from DoTransferItem's gold interception, Ledger A.
  */
 export function applyTransfer(item, plan, from, to, { entity = null, fromLocal = false, toPlayer = false, rolls = Math.random, stolenFrom = null, returnTo = null } = {}) {
   if (Array.isArray(from) && !from.includes(item)) return null;
   clearLightSourceOnLeave(item, entity, fromLocal);
-  if (toPlayer && isGoldPieces(item)) {
+  if (toPlayer && isGoldPieces(item) && from?.pileCoins !== true) {
     const coin = _splitOff(item, plan, from, rolls);
     const at = from.indexOf(coin);
     if (at >= 0) from.splice(at, 1);

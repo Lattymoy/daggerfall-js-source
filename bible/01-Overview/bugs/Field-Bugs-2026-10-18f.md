@@ -186,7 +186,7 @@ game.
   (`enhancedHotbar.js:"function onKey(e) {"`). It stands down only while the HUD's last frame said the game is paused
   (`hud.js:"paused: !!cursorActive,"`).
 - **Underground no frame said so.** Both dungeon hosts return above `drawFoes` while a window pauses the game
-  (`worldModes.js:"if (dungeonCtx.uiOverlayActive) { dungeonCtx.hideHudText?.();"`, `dungeon.js:"ctx.hideHudText?.(); hideWorldPlaque(); ctx.tickOverlay(dt); ctx.drawOverlay(canvas);"`),
+  (`worldModes.js:"if (windowHoldsDungeon(dungeonCtx.uiOverlayActive, aliveUnder())) { dungeonCtx.hideHudText?.();"`, `dungeon.js:"ctx.hideHudText?.(); hideWorldPlaque(); ctx.tickOverlay(dt); ctx.drawOverlay(canvas);"`),
   and `drawFoes` is their only drawHud. For the life of a window the bar kept the last frame of play's word; the
   enhanced HUD also stayed painted under every dungeon window.
 

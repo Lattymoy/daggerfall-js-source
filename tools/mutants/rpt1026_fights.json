@@ -1,0 +1,312 @@
+[
+  {
+    "name": "RETIRED-BLOW-remnant-unseen",
+    "file": "src/net/superDungeon/sdRemnant.js",
+    "old": "  sighted(f, p, now);   // RPT1026-FIGHTS (RETIRED-BLOW): its share in before its blow is judged",
+    "new": "",
+    "tests": [
+      "test/net/superDungeon/rpt1026_fights.test.js"
+    ],
+    "note": "the report as found: a retired fighter's blow on the Remnant lands whole on the others' share"
+  },
+  {
+    "name": "RETIRED-BLOW-echo-unseen",
+    "file": "src/net/superDungeon/sdRemnant.js",
+    "old": "  sighted(f, p, now);   // RPT1026-FIGHTS (RETIRED-BLOW): its share in - the Echoes rescaled with it - before its blow is judged",
+    "new": "",
+    "tests": [
+      "test/net/superDungeon/rpt1026_fights.test.js"
+    ],
+    "note": "an Echo struck by a retired fighter, its share left out"
+  },
+  {
+    "name": "RETIRED-BLOW-heart-unseen",
+    "file": "src/net/superDungeon/sdRemnant.js",
+    "old": "  sighted(f, p, now);   // RPT1026-FIGHTS (RETIRED-BLOW): a Heart's striker stands in the arena too",
+    "new": "",
+    "tests": [
+      "test/net/superDungeon/rpt1026_fights.test.js"
+    ],
+    "note": "a Heart struck by a retired fighter, its share left out"
+  },
+  {
+    "name": "RETIRED-BLOW-sighting-never-restores",
+    "file": "src/net/superDungeon/sdRemnant.js",
+    "old": "  if (!p.retired) return;\n  restoreShare(f, p);\n  rescaleEchoes(f);",
+    "new": "  if (p.retired) return;\n  restoreShare(f, p);\n  rescaleEchoes(f);",
+    "tests": [
+      "test/net/superDungeon/rpt1026_fights.test.js"
+    ],
+    "note": "the sighting's test inverted: a retired share is never brought back"
+  },
+  {
+    "name": "RETIRED-BLOW-echoes-not-rescaled",
+    "file": "src/net/superDungeon/sdRemnant.js",
+    "old": "  restoreShare(f, p);\n  rescaleEchoes(f);\n}",
+    "new": "  restoreShare(f, p);\n}",
+    "tests": [
+      "test/net/superDungeon/rpt1026_fights.test.js"
+    ],
+    "note": "the share back in the whole, the Echoes still standing for the break's pool of the share alone"
+  },
+  {
+    "name": "RETIRED-BLOW-relay-pose-never-ages",
+    "file": "server/src/index.js",
+    "old": "const pose = a.pose && !a.pose.dd && now - (a.pAt ?? a.since ?? 0) <= SD_POSE_FRESH_MS && !bodyOut(",
+    "new": "const pose = a.pose && !a.pose.dd && !bodyOut(",
+    "tests": [
+      "test/net/superDungeon/rpt1026_fights.test.js"
+    ],
+    "note": "the relay judges an Hour's blow from the socket's last pose however old, as the report found it"
+  },
+  {
+    "name": "RETIRED-BLOW-gate-unseen",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  p.seenAt = now; restoreShare(f, p);",
+    "new": "  p.seenAt = now;",
+    "tests": [
+      "test/net/superDungeon/rpt1026_fights.test.js"
+    ],
+    "note": "the Warden struck by a fighter whose share is retired, its share left out"
+  },
+  {
+    "name": "RETIRED-BLOW-ketch-warden-unseen",
+    "file": "src/net/ketch/ketchWarden.js",
+    "old": "  sighted(f, p, now);   // RPT1026-FIGHTS (RETIRED-BLOW): its share in before its blow is judged",
+    "new": "",
+    "tests": [
+      "test/net/superDungeon/rpt1026_fights.test.js"
+    ],
+    "note": "the Tonal Warden struck by a retired member, its share left out"
+  },
+  {
+    "name": "RETIRED-BLOW-ketch-fork-unseen",
+    "file": "src/net/ketch/ketchWarden.js",
+    "old": "  sighted(f, p, now);   // RPT1026-FIGHTS (RETIRED-BLOW): a fork's striker stands on the bridge too",
+    "new": "",
+    "tests": [
+      "test/net/superDungeon/rpt1026_fights.test.js"
+    ],
+    "note": "a tuning-fork struck by a retired member, its share left out"
+  },
+  {
+    "name": "RETIRED-BLOW-ketch-relay-pose-never-ages",
+    "file": "server/src/index.js",
+    "old": "const pose = a.pose && now - (a.pAt ?? a.since ?? 0) <= KT_POSE_FRESH_MS ? this._ktPoseOf(a.pose) : null;",
+    "new": "const pose = a.pose ? this._ktPoseOf(a.pose) : null;",
+    "tests": [
+      "test/net/superDungeon/rpt1026_fights.test.js"
+    ],
+    "note": "a word aboard judged from the socket's last pose however old"
+  },
+  {
+    "name": "HALL-SPELLS-marks-chosen-at-build",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    duelMark: () => { const rb = arenaRivalBody(); return rb ? { id: rb.rival, name: rb.entity?.name ?? '', feet: rb.ai.feet, height: rb.ai.height } : (opts.wildSpellMarks?.() ?? null); },",
+    "new": "    duelMark: opts.arenaRival ? () => { const rb = arenaRivalBody(); return rb ? { id: rb.rival, name: rb.entity?.name ?? '', feet: rb.ai.feet, height: rb.ai.height } : null; } : (opts.wildSpellMarks ? () => opts.wildSpellMarks() : null),",
+    "tests": [
+      "test/scenes/rpt1026_fights_halls.test.js"
+    ],
+    "note": "the marks chosen at the build, as the report found them: no fair player is a mark in any world-hosted dungeon"
+  },
+  {
+    "name": "HALL-SPELLS-send-chosen-at-build",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    castAtDuel: (id, sp) => (arenaRivalBody()?.rival === id ? spellOnRival(sp) : !!opts.wildSpellOut?.(id, sp)),",
+    "new": "    castAtDuel: opts.arenaRival ? (_id, sp) => spellOnRival(sp) : (opts.wildSpellOut ? (id, sp) => opts.wildSpellOut(id, sp) : null),",
+    "tests": [
+      "test/scenes/rpt1026_fights_halls.test.js"
+    ],
+    "note": "the send chosen at the build: a spell that met a fair player goes to the arena's door and lands nothing"
+  },
+  {
+    "name": "HALL-SPELLS-rival-never-asked",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    castAtDuel: (id, sp) => (arenaRivalBody()?.rival === id ? spellOnRival(sp) : !!opts.wildSpellOut?.(id, sp)),",
+    "new": "    castAtDuel: (id, sp) => (!!opts.wildSpellOut?.(id, sp)),",
+    "tests": [
+      "test/scenes/rpt1026_fights_halls.test.js"
+    ],
+    "note": "the bout's rival never reached by a spell"
+  },
+  {
+    "name": "STRIKE-UNVEILS-striker-never-unveiled",
+    "file": "src/combat/duelCombat.js",
+    "old": "  if (n > 0 && target?.struckBy) breakNormalPowerConcealment(target.struckBy);   // RPT1026-FIGHTS (STRIKE-UNVEILS): on the striker, never its stub",
+    "new": "",
+    "tests": [
+      "test/combat/rpt1026_fights_unveil.test.js"
+    ],
+    "note": "the report: a Chameleon stands through every blow on a player"
+  },
+  {
+    "name": "STRIKE-UNVEILS-unveiled-on-a-miss",
+    "file": "src/combat/duelCombat.js",
+    "old": "  if (n > 0 && target?.struckBy) breakNormalPowerConcealment(target.struckBy);   // RPT1026-FIGHTS (STRIKE-UNVEILS): on the striker, never its stub",
+    "new": "  if (target?.struckBy) breakNormalPowerConcealment(target.struckBy);   // RPT1026-FIGHTS (STRIKE-UNVEILS): on the striker, never its stub",
+    "tests": [
+      "test/combat/rpt1026_fights_unveil.test.js"
+    ],
+    "note": "a swing that rolled nothing unveils too - DFU's tail breaks it on damage alone"
+  },
+  {
+    "name": "STRIKE-UNVEILS-zone-blow-unnamed",
+    "file": "src/scenes/world.js",
+    "old": "    const r = resolveDuelStrike({ by, a, ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...at, ...(off ? { off } : {}) }, duelStandIn(playerEntity));\n    if (!(r.dmg > 0)) { reportPlayerAttack({ hit: false, damage: 0, critical: false, backstab: false, ineffective: false }); zoneWatchCall(); return true; }",
+    "new": "    const r = resolveDuelStrike({ by, a, ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...at, ...(off ? { off } : {}) }, duelStandIn());\n    if (!(r.dmg > 0)) { reportPlayerAttack({ hit: false, damage: 0, critical: false, backstab: false, ineffective: false }); zoneWatchCall(); return true; }",
+    "tests": [
+      "test/combat/rpt1026_fights_unveil.test.js"
+    ],
+    "note": "the zone's blow names no striker - the report's own place"
+  },
+  {
+    "name": "TRAP-TO-OWNER-cast-trap-on-the-copy",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      if (trapToOwner?.(foe, { ...spell, effects: trapFx }, casterLevel)) spell = { ...spell, effects: spell.effects.filter((e) => !trapFx.includes(e)) };",
+    "new": "",
+    "tests": [
+      "test/scenes/rpt1026_fights_trap.test.js"
+    ],
+    "note": "the report: my cast's trap laid on my copy of another player's foe, and no soul whoever kills it"
+  },
+  {
+    "name": "TRAP-TO-OWNER-trap-sent-and-laid-here-too",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      if (trapToOwner?.(foe, { ...spell, effects: trapFx }, casterLevel)) spell = { ...spell, effects: spell.effects.filter((e) => !trapFx.includes(e)) };",
+    "new": "      trapToOwner?.(foe, { ...spell, effects: trapFx }, casterLevel);",
+    "tests": [
+      "test/scenes/rpt1026_fights_trap.test.js"
+    ],
+    "note": "sent to the runner and laid on my copy as well - Trap active said for a trap rolled elsewhere"
+  },
+  {
+    "name": "TRAP-TO-OWNER-every-cast-sent-away",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    if (mine && typeof ctx?.peerCaster !== 'string' && (spell?.effects ?? []).some((e) => e && isSoulTrapEffect(e))) {",
+    "new": "    if (typeof ctx?.peerCaster !== 'string' && (spell?.effects ?? []).some((e) => e && isSoulTrapEffect(e))) {\n      trapToOwner = () => true;",
+    "tests": [
+      "test/scenes/rpt1026_fights_trap.test.js"
+    ],
+    "note": "a door that sends every trap away - my own foe's trap never laid"
+  },
+  {
+    "name": "TRAP-TO-OWNER-ctx-offers-no-door",
+    "file": "src/scenes/hostEnchant.js",
+    "old": "    spellToOwner: (f, record, level) => !!spellToOwner?.(f, record, level),",
+    "new": "",
+    "tests": [
+      "test/scenes/rpt1026_fights_trap.test.js"
+    ],
+    "note": "the session's ctx offers the cast engine no door - every cast's trap lands on the copy"
+  },
+  {
+    "name": "TRAP-TO-OWNER-session-door-dead",
+    "file": "src/systems/enchantments.js",
+    "old": "export const spellToFoeOwner = (foe, record, level) => { try { return !!_defaultCtx?.spellToOwner?.(foe, record, level); } catch { return false; } };",
+    "new": "export const spellToFoeOwner = (foe, record, level) => false;",
+    "tests": [
+      "test/scenes/rpt1026_fights_trap.test.js"
+    ],
+    "note": "the session's door never routes"
+  },
+  {
+    "name": "TRAP-TO-OWNER-street-peer-kill-reads-no-gem",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      const trap = _peerTrap ? { allowDeath: true } : attemptSoulTrap(f.entity, f.mobileType, playerEntity.items, Math.random());",
+    "new": "      const trap = peer || _peerTrap ? { allowDeath: true } : attemptSoulTrap(f.entity, f.mobileType, playerEntity.items, Math.random());",
+    "tests": [
+      "test/scenes/rpt1026_fights_trap.test.js"
+    ],
+    "note": "B9 as it was: a party member's killing blow spends the runner's own trap for nothing"
+  },
+  {
+    "name": "TRAP-TO-OWNER-street-peer-blow-tethered",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (!trap.allowDeath && !peer) { f.entity.health = 1; return; }",
+    "new": "      if (!trap.allowDeath) { f.entity.health = 1; return; }",
+    "tests": [
+      "test/scenes/rpt1026_fights_trap.test.js"
+    ],
+    "note": "a peer's blow held at 1 by the runner's trap with no empty gem - its kill refused"
+  },
+  {
+    "name": "TRAP-TO-OWNER-dungeon-peer-kill-reads-no-gem",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      const trap = _peerTrap ? { allowDeath: true } : attemptSoulTrap(foe.entity, foe.mobileType, playerEntity.items, Math.random());",
+    "new": "      const trap = peer || _peerTrap ? { allowDeath: true } : attemptSoulTrap(foe.entity, foe.mobileType, playerEntity.items, Math.random());",
+    "tests": [
+      "test/scenes/rpt1026_fights_trap.test.js"
+    ],
+    "note": "the dungeon's twin of B9 as it was"
+  },
+  {
+    "name": "TRAP-TO-OWNER-dungeon-peer-blow-tethered",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (!trap.allowDeath && !peer) { foe.entity.health = 1; return; }",
+    "new": "      if (!trap.allowDeath) { foe.entity.health = 1; return; }",
+    "tests": [
+      "test/scenes/rpt1026_fights_trap.test.js"
+    ],
+    "note": "the dungeon's peer blow tethered"
+  },
+  {
+    "name": "WINDOW-ONLINE-held-online-as-offline",
+    "file": "src/scenes/windowWorld.js",
+    "old": "export const windowHoldsDungeon = (up, alive) => !!up && !(sharedClockOn() && !!alive);",
+    "new": "export const windowHoldsDungeon = (up, alive) => !!up;",
+    "tests": [
+      "test/scenes/rpt1026_fights_window.test.js"
+    ],
+    "note": "the reports as found: online a window freezes the room's foes, and the character's rounds run out under it"
+  },
+  {
+    "name": "WINDOW-ONLINE-the-dead-let-run",
+    "file": "src/scenes/windowWorld.js",
+    "old": "export const windowHoldsDungeon = (up, alive) => !!up && !(sharedClockOn() && !!alive);",
+    "new": "export const windowHoldsDungeon = (up, alive) => !!up && !sharedClockOn();",
+    "tests": [
+      "test/scenes/rpt1026_fights_window.test.js"
+    ],
+    "note": "the death screen online lets the dungeon run over the dead"
+  },
+  {
+    "name": "WINDOW-ONLINE-early-return-by-the-window",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (windowHoldsDungeon(dungeonCtx.uiOverlayActive, aliveUnder())) { dungeonCtx.hideHudText?.(); hideWorldPlaque(); dungeonCtx.tickOverlay(dt);",
+    "new": "      if (dungeonCtx.uiOverlayActive) { dungeonCtx.hideHudText?.(); hideWorldPlaque(); dungeonCtx.tickOverlay(dt);",
+    "tests": [
+      "test/scenes/rpt1026_fights_window.test.js"
+    ],
+    "note": "the world-hosted dungeon's frame held by any window again"
+  },
+  {
+    "name": "WINDOW-ONLINE-no-window-over-a-running-frame",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (dungeonCtx.unpausedOverlay || dungeonCtx.uiOverlayActive) { dungeonCtx.tickOverlay(dt); dungeonCtx.drawOverlay(canvas); }",
+    "new": "      if (dungeonCtx.unpausedOverlay) { dungeonCtx.tickOverlay(dt); dungeonCtx.drawOverlay(canvas); }",
+    "tests": [
+      "test/scenes/rpt1026_fights_window.test.js"
+    ],
+    "note": "a pausing window the frame ran under online is never ticked nor drawn - the inventory vanishes"
+  },
+  {
+    "name": "WINDOW-ONLINE-breath-under-a-window",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      breathTick(opts.breathHeld?.() || dungeonPaused() ? 0 : dt, playerFeet, playerHeight);",
+    "new": "      breathTick(opts.breathHeld?.() ? 0 : dt, playerFeet, playerHeight);",
+    "tests": [
+      "test/scenes/rpt1026_fights_window.test.js"
+    ],
+    "note": "the lungs run on under my own window once its frame runs online (AUDIT 27h S1)"
+  },
+  {
+    "name": "WINDOW-ONLINE-tactics-clock-held-by-any-window",
+    "file": "src/scenes/world.js",
+    "old": "tickTactics(foeFrameDt(_questBoxHoldsFoes() || (_mode() === 'dungeon' && windowHoldsDungeon(modes?.dungeonCtx?.uiOverlayActive, playerEntity.health > 0 && !modes?.deathUp?.())) ? 0 : dt));",
+    "new": "tickTactics(foeFrameDt(_questBoxHoldsFoes() || (_mode() === 'dungeon' && !!modes?.dungeonCtx?.uiOverlayActive) ? 0 : dt));",
+    "tests": [
+      "test/scenes/rpt1026_fights_window.test.js"
+    ],
+    "note": "the foes step online under a window while their wind-ups stand still"
+  }
+]

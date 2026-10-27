@@ -1075,6 +1075,14 @@ only for another entity's spell and agrees trivially for a self-cast.
 GetEffectCastingCost carries the target multiplier and DFU's floor of
 5, which DFU spells out as the guard that stops an absorb from
 DRAINING the pool it is meant to fill.
+AUDIT RPT1026 F3 (2026-10-27, a private report: after a rest a
+player's own blast was never absorbed): since the port prices a
+player's cast with its cost modifiers (spellcost.js calculateCastCost)
+the two no longer agree - at a full pool a discounted cast made room
+for what it paid and the absorb asked room for the undiscounted price,
+so a rested absorber died to their own blast. A self-cast now asks
+room for, and drinks, no more than its release spent (tryAbsorption's
+`paid`); another entity's spell keeps DFU's price. Port-Ledger A.
 
 The target must have ROOM: `cost > (max - current)` refuses
 (:1180-1184). This is the throttle on the whole trait - an absorber at
@@ -4133,6 +4141,38 @@ beside the racial one. The Rose and the Skull gate on an enemy inside
 12 and speak the fail line; their ALLIED summon door
 (spawnAlliedFoe) is FLAGGED unmounted - the port has no ally/team
 combat - so the arm idles loudly until the team system exists.
+(MT-ii mounted it since, `scenes/hostEnchant.js` createEnchantCtx, and
+SD1 placed it.) RPT1026-PROGRESS (2026-10-26, a private report: the Skull's copies
+were looted like any foe): DFU's CreateFoe gives the allied copy its
+kind's whole loot (SetEnemyCareer's table and kit) and its corpse is
+looted like any foe's, so a Skull that never breaks (Repairs Objects)
+farmed a Daedra's drop from every copy it set on the original. A
+summon's body is a puppet's now: the door marks the foe it stood
+(`systems/foeLootCap.js` summonedBody - its carried list emptied, its
+hand and worn kit still fight) and the last word every body door asks
+empties whatever the death laid on it (capFoeLoot). Port-Ledger A.
+Pinned by `test/scenes/rpt1026_progress_summon.test.js` (the real Skull
+off MAGIC.DEF, a real street pool on the freeware's MONSTER.BSA). AND
+EVERY OTHER PLAYER'S COPY OF IT (RPT1026-PROGRESS, the same day): in a
+dungeon online the room's other players stand the copy as a loose
+stand's puppet (SUMMON-SYNC), built on their own machine - and that build
+rolled its kind's loot there, its death there its kit, food and card, so
+the farm stood open to a second player. The owner's own frame names its
+summons now (`sm`, beside `lf` - `systems/foeLootCap.js` summonedWord), a
+reader flags the record (summonedRecord) and marks the puppet it stands
+(markSummoned, in `scenes/dungeonContext.js` applyOwnRecord) - bare alive,
+its death's finds emptied by capFoeLoot; the mark rides the entity (no
+summon is handed to an heir - both `heirOf`s refuse a PlayerAlly; AUDIT
+RPT1026 F5). AUDIT RPT1026 F4: and a summon the street or a building
+saved alive is loaded one - the save carries the mark (`foeLootCap.js`
+savedSummon, restoredSummon), where a loaded copy had died with its
+finds on it. Each way at once: my summon
+on a friend's machine, theirs on mine. The street's and a building's
+lane needed nothing: a puppet there carries no loot (exteriorFoes.js
+WORLD6b B14). Pinned through the real lane by
+`test/scenes/rpt1026_progress_peersummon.test.js`. Left, for the owner: a
+summon restored from a save is stood again with its empty list, its
+`summoned` mark not saved.
 
 AND THE ENUM WENT HOME. ENCHANTMENT_TYPES is FallExe's
 (ItemsFile.cs:111-141); it moved to formats/magicDef.js - the file
@@ -6465,8 +6505,9 @@ instead (`null` means "do not ask", which is every non-maker caller).
 its mirror, carrying DFU's own asymmetry verbatim: an ordinary trap
 counts only when its soul is `!= None && < 43` (`:115`), while a
 filled Azura's Star is counted with no bound at all (`:121-125`).
-`ui/item/itemMakerWindow.js` enumerates ONCE, in its constructor, and both
-picker seams read that snapshot - see the review round below for why.
+`ui/item/itemMakerWindow.js` enumerated ONCE, in its constructor, and both
+picker seams read that snapshot - see the review round below for why, and
+RPT1026-PROGRESS beneath it for why it reads the pack every time now.
 
 That makes a comment in `enchantmentCatalogue.js` false and it is
 rewritten with the law. The singleton shortcut
@@ -6537,6 +6578,17 @@ finds nothing), where the port dropped the row. The enumeration now
 happens once, in the constructor - which IS DFU's `Setup`+`OnPush`,
 since `scenes/worldModes.js`'s `guildServiceItemMaker` mounts a fresh
 window per open - and both picker seams read the frozen field.
+
+**RPT1026-PROGRESS (2026-10-26, a private report: one filled gem bound several items) - THE FREEZE IS GONE.** That second item
+was the exploit: a bound soul's costs are negative, so the soul DFU still offers after its gem is spent gave a second
+item the whole SoulBound budget from a gem that was no longer there, and a single gem paid for item after item while
+that window stayed open. The window reads the pack's souls every time it asks (`itemMakerWindow.js` `get _souls`), and the law
+refuses a bound soul the pack no longer holds whatever list the row came from (`enchanting.js` enchantDecision's
+`souls`: "That soul is no longer in your pack.", nothing paid). A departure from `EnumerateEnchantments`' once-a-window
+read and from `RemoveFilledTrap`'s silent miss (`SoulBound.cs:129-155`), Port-Ledger A. The account service's item law
+cannot tell such a piece: it reads one item (`itemLaw.js` makerFindings holds a SoulBound row to its forced set, not to a
+gem the save gave up). Pinned by `test/ui/rpt1026_progress_ui.test.js`; PIN MOVED in `audit63_effects.test.js` (the
+spent soul is no longer offered).
 
 ## AUDIT 63 F15 - A VAMPIRE CAUGHT THE PLAGUE FROM A QUEST (2026-09-08)
 
@@ -8089,6 +8141,27 @@ for; the civilians still freeze under the talk overlay, and the pin
 says so. `test/scenes/winfoe1_foes_under_windows.test.js` - 1 pin; ROAD-G G2's
 review pin, the interior-foes pin and ROAD-B's indoor-watch pin
 re-aimed. **QUEST-POPUP-PAUSE (2026-09-26, Mac: "Pause them offline"):** offline, a quest's message box on top holds the pools again, as DFU's does; every other window keeps this law, and online nothing is held (`01-Overview/bugs/Field-Bugs-2026-09-26c.md`).
+
+**RPT1026-FIGHTS WINDOW-ONLINE (2026-10-26): the dungeon, online.** Two private
+reports: the room's host opening the inventory or the pause menu froze every foe of
+the shared dungeon while its party member killed them freely, and a paralysed player
+waited the paralysis out in the inventory. Both dungeon hosts returned before
+`drawFoes` under any pausing window, so WINFOE1 had never reached the dungeon: offline
+that is DFU's pause, whole; online the character's own clock runs with the world's
+(LIVED1) and was walked whole in one frame once the window shut, while the foes -
+the room's one simulation, stepped by its host (WORLD2) - stood frozen and took the
+party's blows. Online a window now holds no dungeon while the player lives under it
+(`scenes/windowWorld.js` windowHoldsDungeon, read by `worldModes.js`'s dungeon arm and
+`world.js`'s tactics clock): the frame runs and the window is drawn last over it; the
+motor, the input, the collision triggers, the breath and a pending cast stay held - and
+the weapon technique's key, by its door's `blocked` as on the street (AUDIT RPT1026 E1:
+the dungeon's door had none, and the key fired a technique from under the pack).
+Offline the dungeon pauses as before, and the death screen holds it in both. THE FOUR
+HOSTS: `scenes/worldModes.js` (the world-hosted dungeon) WIRED; `scenes/world.js` WIRED
+(the tactics clock); `scenes/dungeonContext.js` WIRED (the breath and the pending cast
+under its own window); `scenes/dungeon.js` and `scenes/exterior.js` FLAGGED - offline
+hosts, no shared clock: DFU's pause stands. Ledger A, WINDOW-ONLINE. Pins:
+`test/scenes/rpt1026_fights_window.test.js` (3).
 
 **JAIL-HIT (2026-09-27): the trial is the one window the watch waits
 out.** Discord: *"Guards will still chase you down and kill you, even

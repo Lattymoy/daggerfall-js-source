@@ -44,15 +44,15 @@
   {
     "name": "EM-any-truthy-me",
     "file": "src/net/wire.js",
-    "old": "    if (m.me !== undefined && m.me !== true) return { error: 'bad chat' };\n    const me = m.me === true ? { me: true } : {};",
-    "new": "    const me = m.me ? { me: true } : {};",
+    "old": "    if (m.me !== undefined && m.me !== true) return { error: 'bad chat' };\n    // CHAT-POST: optional linked items beside the words - `items` (1..CHAT_ITEMS_MAX) or a single legacy `item`\n    let items = null;\n    if (m.items !== undefined) {\n      items = validChatItems(m.items);\n      if (!items) return { error: 'bad chat' };\n    } else if (m.item !== undefined) {\n      const one = validChatItem(m.item);\n      if (!one) return { error: 'bad chat' };\n      items = [one];\n    }\n    const me = m.me === true ? { me: true } : {};",
+    "new": "    // CHAT-POST: optional linked items beside the words - `items` (1..CHAT_ITEMS_MAX) or a single legacy `item`\n    let items = null;\n    if (m.items !== undefined) {\n      items = validChatItems(m.items);\n      if (!items) return { error: 'bad chat' };\n    } else if (m.item !== undefined) {\n      const one = validChatItem(m.item);\n      if (!one) return { error: 'bad chat' };\n      items = [one];\n    }\n    const me = m.me ? { me: true } : {};",
     "tests": ["test/net/emote1.test.js"]
   },
   {
     "name": "EM-me-dropped-at-the-relay",
     "file": "server/src/index.js",
-    "old": "sub: a.sub, ...(m.me === true ? { me: true } : {}) }, now);",
-    "new": "sub: a.sub }, now);",
+    "old": "sub: a.sub, ...(m.me === true ? { me: true } : {}), ...(m.items",
+    "new": "sub: a.sub, ...(m.items",
     "tests": ["test/net/emote1.test.js"]
   },
   {
@@ -72,8 +72,8 @@
   {
     "name": "EM-truthy-me-believed",
     "file": "src/net/online.js",
-    "old": "ch, ...(m.me === true ? { me: true } : {}), ...(typeof m.sg",
-    "new": "ch, ...(m.me ? { me: true } : {}), ...(typeof m.sg",
+    "old": "ch, ...(m.me === true ? { me: true } : {}), ...linked, ...(typeof m.sg",
+    "new": "ch, ...(m.me ? { me: true } : {}), ...linked, ...(typeof m.sg",
     "tests": ["test/net/emote1.test.js"]
   },
   {
@@ -149,8 +149,8 @@
   {
     "name": "EM-escape-closes-the-chat-first",
     "file": "src/ui/chatPanel.js",
-    "old": "if (emojiOpen) { setEmojiOpen(false); return; } if (chanOpen) {",
-    "new": "if (chanOpen) {",
+    "old": "        if (emojiOpen) { setEmojiOpen(false); return; }\n        if (chanOpen) { setChanOpen(false); return; }",
+    "new": "        if (chanOpen) { setChanOpen(false); return; }",
     "tests": ["test/net/emote1.test.js"]
   },
   {
@@ -170,15 +170,15 @@
   {
     "name": "EM-gesture-on-this-tab",
     "file": "src/scenes/world.js",
-    "old": "        if (cmd.kind === 'emote') return chatSend('local', cmd.text, tabId, { me: true });",
-    "new": "        if (cmd.kind === 'emote') return chatSend(tabId, cmd.text, tabId, { me: true });",
+    "old": "        if (cmd.kind === 'emote') return chatSend('local', cmd.text, tabId, { ...opts, me: true });",
+    "new": "        if (cmd.kind === 'emote') return chatSend(tabId, cmd.text, tabId, { ...opts, me: true });",
     "tests": ["test/net/emote1.test.js"]
   },
   {
     "name": "EM-action-flag-dropped-at-send",
     "file": "src/scenes/world.js",
-    "old": "    return chatLinks.get(tabId)?.sendChat(text, { me }) ?? false;",
-    "new": "    return chatLinks.get(tabId)?.sendChat(text) ?? false;",
+    "old": "    return chatLinks.get(tabId)?.sendChat(text, { me, item, items }) ?? false;",
+    "new": "    return chatLinks.get(tabId)?.sendChat(text, { item, items }) ?? false;",
     "tests": ["test/net/emote1.test.js"]
   },
   {

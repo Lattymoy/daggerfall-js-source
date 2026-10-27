@@ -115,7 +115,7 @@ import { lookAt, perspective, mirrorProjectionX, trs, multiply } from '../../wor
 import { panelPicture, canvasBoxUnder } from '../panelPicture.js';   // MENU-ORDER: a model's own picture, drawn small
 import { remapLawOf } from '../../world/texRemap.js';   // AUDIT MENU-ORDER C3: a picture kept by the law its textures were built in
 import { isTextEntryTarget, eventActions } from '../../ui/input.js';
-import { plaqueListing, quickLootWheel } from '../../systems/quickLoot.js';
+import { plaqueListing, quickLootWheel, wantPlaqueVerbs } from '../../systems/quickLoot.js';
 import { HOTBAR_SLOT_ACTIONS } from '../../systems/inputActions.js';
 import { holdHotbarKeys, coverHotbar, hotbarKeyOf, ensureHotbarSkin } from '../../ui/enhanced/enhancedHotbar.js';
 import { walletReserve } from '../../net/realm/realmGoldLaw.js';   // MARKET-AUDIT: a refusal gives back exactly what the payment took
@@ -436,6 +436,8 @@ export function createDecorTool(deps) {
   /** @type {any} */ let scan = null;
   /** @type {any} */ let slot = null;
   /** @type {any} */ let placing = null;
+  // RPT1026-WORLD DECOR-VERBS: while it browses, its verbs are folded where no plaque is drawn (ui/worldPlaque.js)
+  const verbsOff = wantPlaqueVerbs(() => !!placing?.browse && !placing.suspended && !panel?.isOpen());
   let spin = 0;
   let named = false;
   let listening = false;
@@ -1348,6 +1350,7 @@ export function createDecorTool(deps) {
     draft = {
       key, rev: usesBatch(r) ? null : 0, txn: mintDecorTxn(), before,
       owns: pool.ownSnapshot?.() ?? null, moves: [], asked,   // AUDIT FB1025i E1: { op: 'out' (set down) | 'in' (taken down), id, item }, in order
+      keeping: false,   // RPT1026-WORLD CONFIRM-ONCE: a Confirm on its way
     };
     return draft;
   }
@@ -1478,14 +1481,34 @@ export function createDecorTool(deps) {
       if (kind === 'storage') noteDecorShared(id, mode !== 'private');
     }
   }
+  /** RPT1026-WORLD CONFIRM-REREAD (a private report, 2026-10-25: in a home, Confirm did nothing): the room's revision is
+   *  read once, as the draft opens - and a read the service left unanswered (DECOR_LIST_WAIT_MS, a slow database) left
+   *  every Confirm of the visit refused, the standing poll never mending it while the draft had changes. Confirm asks
+   *  again, and takes the revision only for the room the draft began from: a room another hand changed since is the
+   *  service's own stale-revision refusal, never written over. */
+  async function rereadRev(r, d) {
+    const res = await Promise.resolve(deps.homeDecor.list(r.mapId, r.buildingKey, false, !!r.yard)).catch(() => null);
+    const rev = Number(res?.data?.rev);
+    if (liveDraft() !== d) return false;
+    if (!res?.ok || !Number.isSafeInteger(rev)) { deps.say?.(t('decor.tool.unread', 'The room could not be read.')); return false; }
+    const held = (res.data.pieces ?? []).map((p) => decorPieceOf(p)).filter(Boolean);
+    const since = decorDelta([...d.before.values()], held);
+    if (since.put.length || since.drop.length) { deps.say?.(deps.refusal?.('decor-rev') ?? t('decor.tool.unkeptRoom', 'The changes could not be kept.')); return false; }
+    d.rev = rev;
+    return true;
+  }
   async function confirmDraft() {
     const r = deps.room?.();
     const d = liveDraft();
     if (!d) return false;
+    // RPT1026-WORLD CONFIRM-ONCE: a Confirm clicked again while one is on its way (the service slow, nothing on the bar
+    // yet) sent the same batch twice and paid the purse twice for one room
+    if (d.keeping) return false;
+    d.keeping = true;
     if (placing) placing.busy = true;
     try {
       await d.asked;
-      if (usesBatch(r) && !Number.isSafeInteger(d.rev)) { deps.say?.(t('decor.tool.unread', 'The room could not be read.')); return false; }
+      if (usesBatch(r) && !Number.isSafeInteger(d.rev) && !(await rereadRev(r, d))) return false;
       const before = [...d.before.values()];
       const after = roomPieces();
       const delta = decorDelta(before, after);
@@ -1535,6 +1558,7 @@ export function createDecorTool(deps) {
       deps.say?.(share ? t('decor.tool.keptShare', 'The room is kept. The guild has its share.') : t('decor.tool.kept', 'The room is kept.'));
       return true;
     } finally {
+      d.keeping = false;
       if (placing) placing.busy = false;
     }
   }
@@ -2588,6 +2612,7 @@ export function createDecorTool(deps) {
       button?.destroy(); panel?.destroy(); bar?.destroy(); hotbar?.destroy();
       button = panel = bar = hotbar = null;
       deps.win?.removeEventListener?.('keydown', onDecorateKey, true);
+      verbsOff();
     },
   };
 }

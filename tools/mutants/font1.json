@@ -497,8 +497,8 @@
   {
     "name": "AUDIT-FONT-F3-worldModes-overlay-branch-drops-the-hide-doors",
     "file": "src/scenes/worldModes.js",
-    "old": "if (dungeonCtx.uiOverlayActive) { dungeonCtx.hideHudText?.(); hideWorldPlaque(); dungeonCtx.tickOverlay(dt);",
-    "new": "if (dungeonCtx.uiOverlayActive) { hideWorldPlaque(); dungeonCtx.tickOverlay(dt);",
+    "old": "if (windowHoldsDungeon(dungeonCtx.uiOverlayActive, aliveUnder())) { dungeonCtx.hideHudText?.(); hideWorldPlaque(); dungeonCtx.tickOverlay(dt);",
+    "new": "if (windowHoldsDungeon(dungeonCtx.uiOverlayActive, aliveUnder())) { hideWorldPlaque(); dungeonCtx.tickOverlay(dt);",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
     ]

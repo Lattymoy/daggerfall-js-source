@@ -10,8 +10,9 @@
 //     living fighter has stood in for SD_LOST_MS is LOST, and the next is fresh: it is meant to be lost, many times.
 //   BELIEF (applyRemnantHit, applyEchoHit, applyHeartHit): the gate's hand and purse (net/gate/gateBrain.js spendBlow,
 //     spendPurse - one blow rate and one damage bucket for every body in the fight), a pose in the arena, a melee blow
-//     within reach of the body it meets. A phase holds its floor: no blow takes the Remnant past the phase it is in
-//     before the beat turns it.
+//     within reach of the body it meets - and the striker seen by it (RPT1026-FIGHTS RETIRED-BLOW: a share the beat
+//     retired is back before the blow is judged). A phase holds its floor: no blow takes the Remnant past the phase it
+//     is in before the beat turns it.
 //   THREE PHASES (SD_PHASE_NAMES):
 //     1 THE WALKING HOUR (100% to 70%) - it walks at whoever it has chosen and strikes: the BRASS STOMP (a 7 m circle,
 //       then a shock ring rolling out to 22 m - a body on the ground as the ring passes is struck: it is jumped), the
@@ -422,6 +423,21 @@ export function joinRemnant(f, sub, name, lv, now, present = null) {
 
 const poseIn = (pose) => !!pose && Number.isFinite(pose.x) && Number.isFinite(pose.z) && inArena(pose.x, pose.z, SD_ARENA_SLACK);
 const struck = (f, sub, p, got) => { if (got > 0) { f.threat[sub] = (f.threat[sub] ?? 0) + got; p.hits = (p.hits ?? 0) + 1; p.best = Math.max(p.best ?? 0, got); } };
+/** RPT1026-FIGHTS (RETIRED-BLOW; a private report: two fighters cleared the Remnant far faster than one could): A BLOW
+ *  IS A SIGHTING. A fighter the beat had not seen for ABSENT_RETIRE_MS has had its share taken out of the Remnant
+ *  (retireShare), and no arm asked it again - a level-60 who stopped posing beside a level-1 struck a Remnant holding
+ *  the level-1's share alone, its blows whole. A blow that reaches the purse comes from a pose in the arena (the relay
+ *  drops one older than SD_POSE_FRESH_MS), so the striker stands there as the beat would see it: seen now, and its share
+ *  back at the fraction the Remnant stands at (restoreShare - a return never heals it; the Dragon Break's Echoes with it)
+ *  before what it lands is judged. Restored rather than refused: the same blow a beat later would find its share in, so
+ *  a refusal only drops an honest blow struck between a return and the beat that sees it - the gate's join and the
+ *  serpent's guns (AUDIT SERPENT E2) bring a share back the same way. */
+function sighted(f, p, now) {
+  p.seenAt = now;
+  if (!p.retired) return;
+  restoreShare(f, p);
+  rescaleEchoes(f);
+}
 
 /**
  * A blow on the Remnant from `sub` standing at `pose` ({x, z}, the arena's frame), of kind `r`, claiming `d`: the damage
@@ -436,6 +452,7 @@ export function applyRemnantHit(f, sub, d, r, pose, now, seq = null) {
   if (!poseIn(pose)) return 0;
   const B = f.rem;
   if (r === HIT_KINDS.Melee && dist(pose.x, pose.z, B.x, B.z) - SD_REM.r > MELEE_REACH + POSE_SLACK) return 0;
+  sighted(f, p, now);   // RPT1026-FIGHTS (RETIRED-BLOW): its share in before its blow is judged
   const got = spendPurse(p, d * (now < f.stunUntil ? SD_STUN_HIT_X : 1), Math.max(0, f.hp - floorOf(f)), now);
   struck(f, sub, p, got);
   f.hp -= got;
@@ -464,6 +481,7 @@ export function applyEchoHit(f, sub, e, d, r, pose, now, seq = null) {
   if (!spendBlow(p, now, seq, `e${e}`)) return out;
   if (!poseIn(pose)) return out;
   if (r === HIT_KINDS.Melee && dist(pose.x, pose.z, E.body.x, E.body.z) - SD_ECHO.r > MELEE_REACH + POSE_SLACK) return out;
+  sighted(f, p, now);   // RPT1026-FIGHTS (RETIRED-BLOW): its share in - the Echoes rescaled with it - before its blow is judged
   const got = spendPurse(p, d, E.h, now);
   struck(f, sub, p, got);
   p.ed = (p.ed ?? 0) + got;
@@ -494,6 +512,7 @@ export function applyHeartHit(f, sub, c, d, r, pose, now, seq = null) {
   if (!spendBlow(p, now, seq, `x${c}`)) return out;
   if (!poseIn(pose)) return out;
   if (r === HIT_KINDS.Melee && dist(pose.x, pose.z, q.x, q.z) - SD_HEART.r > MELEE_REACH + POSE_SLACK) return out;
+  sighted(f, p, now);   // RPT1026-FIGHTS (RETIRED-BLOW): a Heart's striker stands in the arena too
   const got = spendPurse(p, d, q.h, now);
   p.cxd = (p.cxd ?? 0) + got;
   q.h -= got;
@@ -694,7 +713,10 @@ export function stepRemnant(f, now, bodies, rng) {
   for (const b of bodies) { const p = f.players[b.sub]; if (!p) continue; if (b.dead && !p.down) p.falls = (p.falls ?? 0) + 1; p.down = !!b.dead; }
   // AUDIT SD II (L7 M2): a fighter is SEEN while its pose stands in the arena (alive or fallen there) - anywhere else in
   // the realm it is away, and its share leaves the Remnant ABSENT_RETIRE_MS on: four who said `in` and walked back to
-  // the Threshold kept 34,000 health each in the Remnant from there, and six such made the Hour unwinnable for eight
+  // the Threshold kept 34,000 health each in the Remnant from there, and six such made the Hour unwinnable for eight.
+  // RPT1026-FIGHTS (a private report, as designed): a death is such an absence - the fallen's page leaves the realm at
+  // once (scenes/world.js's death branch), so its share goes 30 s on at the fraction, unlike an Elite Breach's lords
+  // (LORD-SHARES); a friend's raise inside SD_REZ_MS brings it back
   for (const b of bodies) { const p = f.players[b.sub]; if (p && inArena(b.x, b.z, SD_ARENA_SLACK)) { p.seenAt = now; restoreShare(f, p); } }
   for (const p of Object.values(f.players)) if (!p.retired && now - (p.seenAt ?? p.joinedAt) > ABSENT_RETIRE_MS) retireShare(f, p);
   rescaleEchoes(f);

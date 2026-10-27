@@ -51,6 +51,12 @@ function onTab(e) {
   if (!stack.length) return;
   e.preventDefault();
   e.stopPropagation();
+  // RPT1026-MISC TAB-REPEAT (a private report: the quick menu vanished when its key was held a little over half a
+  // second): the auto-repeat is swallowed and closes nothing - the line above always said so, and nothing did. The
+  // key the dial was raised with is still down when the system's repeat starts (about half a second on), and the dial's
+  // own listener lets a repeat go (pixelDial.js `if (!e.repeat) close()`) - but stopPropagation leaves this listener on
+  // the same window to run, and it put the dial away under the finger that opened it.
+  if (e.repeat) return;
   closeTopOverlay();
 }
 

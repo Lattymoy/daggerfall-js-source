@@ -301,8 +301,10 @@ export const MOD_CURATED = Object.freeze({
     'Camera.Speed', 'Animation.BillboardScale']),
   // IF1: the clip quality and the two volumes are what a player reaches for.
   'immersive-footsteps': Object.freeze(['AudioQualitySettings.SoundClipQuality', 'FootstepSettings.FootstepVolumeMulti', 'ArmorSwaySettings.ArmorSwayVolumeMulti']),
-  // BA1: the footsteps switch (off beside Immersive Footsteps), the echo, the darkness.
-  'better-ambience': Object.freeze(['Better Footsteps.enable', 'Dungeon Reverb.level', 'Dungeon Lighting.dungeonDarkness']),
+  // BA1: the footsteps switch (off beside Immersive Footsteps), the echo, the darkness. RPT1026-CLIENT (a private report:
+  // no setting on the mod's tile could hold a spell's shake down): and the camera
+  // shake's ceiling, the most one hit or landing spell can shake the view (betterAmbience.weaponKick).
+  'better-ambience': Object.freeze(['Better Footsteps.enable', 'Dungeon Reverb.level', 'Dungeon Lighting.dungeonDarkness', 'Camera Shake.maxShake']),
   // ORL1: the mod ships SEVEN knobs and `primarySkillsImpact` is the
   // port's own eighth (Daggerfall has a tier of chosen skills Morrowind
   // does not). All eight are on the tile - the

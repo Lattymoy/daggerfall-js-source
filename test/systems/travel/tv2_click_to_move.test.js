@@ -881,7 +881,8 @@ test('AUDIT OW4 J3: the planner\'s ground is READ ONCE (routeGround: the sea off
   assert.equal(asked([1000, 2000, 5000]), asked([1000]), 'the same box, searched once');
   // THE LAND'S PIECES - MOUNTAINS WALKABLE: a Mountain wall the map's height parts nothing now (one piece, walked across);
   // a STRAIT of sea the map's height does - a pick across it answered at once; bound for a harbour town IN it, or standing
-  // in it (a pixel no step enters), the search answers; a road laid over it joins nothing (the sea is never walked)
+  // in it (a pixel no step enters), the search answers; a road laid over it joins the two (RPT1026-WORLD CAUSEWAY, PIN
+  // MOVED: his road paves the water it crosses, travelRoute.js pavedStep - it joined nothing, the sea never walked)
   const PW = 60, PH = 40;
   const peaks = routeGround((x) => (x === 30 ? TV_MOUNTAIN_CLIMATE : 231), () => 20, 3, PW, PH);
   assert.equal(peaks.apart({ x: 20, y: 20 }, { x: 40, y: 20 }), false, 'MOUNTAINS WALKABLE: a Mountain wall the map\'s height parts no land');
@@ -910,8 +911,8 @@ test('AUDIT OW4 J3: the planner\'s ground is READ ONCE (routeGround: the sea off
   assert.ok(planRoute({ x: 30, y: 20 }, { x: 40, y: 20 }, { width: PW, height: PH, ...g2 }), '...and wades out');
   const pass = new Uint8Array(PW * PH);
   for (let x = 25; x < 35; x++) { pass[20 * PW + x] |= DIR.E; pass[20 * PW + x + 1] |= DIR.W; }
-  assert.equal(g2.apart({ x: 20, y: 20 }, { x: 40, y: 20 }, { roads: pass }), true, 'a road laid over the strait joins nothing (folded again for its network: the same answer)');
-  assert.equal(planRoute({ x: 20, y: 20 }, { x: 40, y: 20 }, { width: PW, height: PH, roads: pass, ...g2 }), null, '...and no way');
+  assert.equal(g2.apart({ x: 20, y: 20 }, { x: 40, y: 20 }, { roads: pass }), false, 'a road laid over the strait joins the two (folded again for its network)');
+  assert.ok(planRoute({ x: 20, y: 20 }, { x: 40, y: 20 }, { width: PW, height: PH, roads: pass, ...g2 })?.pixels.some((p) => p.x === 30 && p.y === 20), '...and the way is the road over it');
   // NEVER A FALSE "NO WAY": on seeded rough ground - a strait two pixels thick the map's height, a sound across the east,
   // scattered pools, peaks (walked - MOUNTAINS WALKABLE) and cliffs, a few roads in the west - every pick the pieces refuse
   // has no route in an unbounded search of the whole map, a place's or a spot's

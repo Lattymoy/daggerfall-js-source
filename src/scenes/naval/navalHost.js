@@ -4450,7 +4450,7 @@ export function createNavalHost(deps) {
         density: launchesTraffic() ? trafficDensity(feet) : 0, player: feet, players, level: deps.level?.() ?? 1, seaY, ships,   // SEA-TRAFFIC
         // AUDIT NAV1 (online #6): the waters draw the navy after the most notorious player in them, not the stander alone
         isOpenWater: (x, z, hull) => deps.isWater(x, z, hull), nearPort: !!w.nearPort, deep: w.waters === 'deep', notoriety: Math.max(notoriety.get(crown.name), ...[...peerSelf.values()].map((p) => p.law?.[crown.name] ?? 0)),
-        seedBase: seedBaseOf(w.px ?? 0, w.py ?? 0, w.day ?? 0, SEED_SALT ^ idSalt(myId())),
+        seedBase: seedBaseOf(w.px ?? 0, w.py ?? 0, w.day ?? 0, SEED_SALT ^ idSalt(myId())), real: realClock,   // RPT1026-WORLD TRAFFIC-REAL: the rolls' wait on the real clock (navalDirector.js trafficSeconds)
         distress, relieving,   // SEA-EASE: THE RELIEF
         reliefSure: !!distress && !!deps.captain?.reliefSure?.(crown.name),   // CAPT-BOARD: an Admiral's crown always answers
         ether: etherCtx(w),   // ETHER-SEA: the Eltheric Ocean's band, and the legend whose haunt it is
