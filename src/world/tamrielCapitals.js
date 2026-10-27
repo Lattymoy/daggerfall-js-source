@@ -62,7 +62,7 @@ import { WATER_BYTE } from './roadsProducer.js';
 import { IMPERIAL, IMPERIAL_MODELS, IMPERIAL_CARRY, IMPERIAL_SPAN, IMPERIAL_CELLS, IMPERIAL_PARTS, IMPERIAL_OUTSKIRTS, IMPERIAL_ARENA_CODE, imperialSlicePlan, imperialSliceName, imperialDistrictOfCell, imperialCodeCell, imperialCell } from './imperialCity.js';   // TESA11: the Imperial City over nine pixels; TS5 over forty-nine; IC-GRAND over 625, its plan a slice at a time
 import { imperialSliceMarkers, imperialOwnName, imperialAnchorCarrier, imperialSliceCarrier, imperialViewName, imperialBlockOf, NEAR_RING, NEAR_SLACK } from './imperialBlocks.js';   // IC-GRAND: its blocks a family, near and far
 import { ARENA_BLOCK } from './arena/arenaCity.js';   // IC-GRAND: Daggerfall's arena in the Arena District
-import { solitudeGroundTile, solitudeBlockLift, inDocks, SOLITUDE_TILES, SOLITUDE_DOCKS, SOLITUDE_LEVELS } from './solitudeRelief.js';   // SOLITUDE-RELIEF: its ground
+import { solitudeGroundTile, solitudeBlockLift, inDocks, gateRoadAt, SOLITUDE_TILES, SOLITUDE_DOCKS, SOLITUDE_LEVELS, SOLITUDE_MAIN_GATE, SOLITUDE_GATE_ROAD, SOLITUDE_EDGE_BAND } from './solitudeRelief.js';   // SOLITUDE-RELIEF: its ground
 import { TOWN_OUTLINE_BLOCK } from './townOutline.js';   // TS5: the open ground past the Imperial City's lake
 import { unwalledLocation } from './townShape.js';   // TS7: a Bay city's own grid
 import {
@@ -163,7 +163,7 @@ export const SOLITUDE = Object.freeze({
   // main gate on its lane between the tavern's block and Castle Dour's west curtain (it opened onto the tavern, 11 m in)
   wall: Object.freeze({
     west: -7, north: -108, east: 530, south: 416, thick: 5, h: 14, tower: 10, towerH: 20, gate: 10, gateH: 9,
-    northGate: 250, southGate: 318.4, archGap: 17,
+    northGate: 250, southGate: SOLITUDE_MAIN_GATE.x, archGap: 17,
     cliffSink: Object.freeze({ north: 22, west: 14 }), gatehouse: Object.freeze({ out: 1.5, up: 6 }),   // SOLITUDE-RELIEF: its feet in the cliffs, the main gate's storey
     along: Object.freeze({ north: Object.freeze([100, 430]), south: Object.freeze([120, 470]), west: Object.freeze([150, 290]), east: Object.freeze([40, 170, 300]) }),
   }),
@@ -197,11 +197,14 @@ const solitudeTile = (dx, dz) => solitudeGroundTile(dx, dz, SOLITUDE_TILES.stone
 /** Solitude's own blocks: the terrace (two), the quay (three), Castle Dour's square (four). */
 export const SOLITUDE_BLOCKS = Object.freeze(Object.fromEntries(['P0', 'P1', 'Q0', 'Q1', 'Q2', 'D0', 'D1', 'D2', 'D3'].map((code) => [code,
   Object.freeze({ name: `TESASO${code}.RMB`, tile: solitudeTile, closed: solitudeClosed })])));
+/** SOLITUDE-RELIEF: a garden's ground - the Gate Road's stone under its paving (no tree on the road), else its grass, the
+ *  rock where it climbs. */
+const solitudeGardenTile = (dx, dz) => (gateRoadAt(dx, dz).d <= SOLITUDE_GATE_ROAD.half + 1 ? SOLITUDE_TILES.stone : solitudeGroundTile(dx, dz, SOLITUDE_TILES.grass));
 /** SOLITUDE-RELIEF: its water and its gardens on its relief - a lake cell the sea where the relief is the water's and the
  *  cliff's rock elsewhere, a garden's grass the rock where it climbs; neither a walker's ground but a garden's grass. */
 const SOLITUDE_GROUND = Object.freeze({
   lake: Object.freeze({ tile: (dx, dz) => solitudeGroundTile(dx, dz, inDocks(dx, dz) ? SOLITUDE_TILES.stone : SOLITUDE_TILES.rock), closed: (dx, dz) => !inDocks(dx, dz) || solitudeGroundTile(dx, dz) !== SOLITUDE_TILES.stone }),
-  garden: Object.freeze({ tile: (dx, dz) => solitudeGroundTile(dx, dz, SOLITUDE_TILES.grass), closed: (dx, dz) => solitudeGroundTile(dx, dz, SOLITUDE_TILES.grass) !== SOLITUDE_TILES.grass }),
+  garden: Object.freeze({ tile: (dx, dz) => solitudeGardenTile(dx, dz), closed: (dx, dz) => solitudeGardenTile(dx, dz) !== SOLITUDE_TILES.grass }),
 });
 export const SOLITUDE_PLAN = Object.freeze([
   'L L L L L L L L',
@@ -251,6 +254,7 @@ export const CAPITALS = Object.freeze([
     sea: Object.freeze(['N', 'W']),   // AUDIT TESA II C9: the plan's water - the Sea of Ghosts north, the Karth west
     gates: Object.freeze(['S']),   // TESA14: the main gate south (the north gate is the docks')
     relief: 'solitude', ground: SOLITUDE_GROUND, lift: solitudeBlockLift,   // SOLITUDE-RELIEF: on its rock (world/terrain/capitalRelief.js), its water and gardens on it, its upper tier's blocks lifted
+    rimTiles: SOLITUDE_EDGE_BAND + 1,   // SOLITUDE-RELIEF: its own ground to its relief's edge band - the Gate Road's and the cliffs' - the land's own past it
     anchor: Object.freeze([2, 3]), markers: Object.freeze([[96, -60, SOLITUDE_LEVELS.upper - SOLITUDE_LEVELS.city], [96, 60, SOLITUDE_LEVELS.upper - SOLITUDE_LEVELS.city], [318.4, 398]]), blocks: SOLITUDE_BLOCKS, models: Object.freeze([CAPITAL_MODELS.solitudeArch, CAPITAL_MODELS.bluePalace, CAPITAL_MODELS.solitudeWall, CAPITAL_MODELS.castleDour, CAPITAL_MODELS.solitudeDocks, CAPITAL_MODELS.solitudeCliffs, CAPITAL_MODELS.solitudeTerraces]) }),   // SOLITUDE-RELIEF: its markers on its streets' own levels - the terrace stair's foot on the upper tier, inside the main gate
   capital({ key: 'mournhold', tag: 'MH', name: 'Mournhold', province: 'Morrowind', shore: false, plan: MOURNHOLD_PLAN, districts: MOURNHOLD_DISTRICTS,
     gates: Object.freeze(['N', 'E', 'S', 'W']),   // TESA14: a gate in each side of its wall
@@ -393,7 +397,7 @@ const _unroutable = new Set();
  * capital with none is said once a land. None for a capital with no pixel on the live fit and land.
  * @param {number} k the capital's ordinal
  * @param {{ walkable?: (x: number, y: number) => boolean }} [o] the roads' ground (the host's own, else the land's bytes)
- * @returns {Array<{ x: number, y: number, into: readonly number[], side: string }>}
+ * @returns {Array<{ x: number, y: number, into: readonly number[], side: string, inside?: boolean }>}
  */
 export function capitalGates(k, { walkable = gateGround } = {}) {
   const cap = CAPITALS[k], at = capitalPixels().pixels[k];
@@ -405,7 +409,9 @@ export function capitalGates(k, { walkable = gateGround } = {}) {
       const x = base[0] + dx * t, y = base[1] + dy * t;
       if (!walkable(x, y)) continue;
       if (!Object.values(GATE_STEPS).some(([sx, sy]) => walkable(x + sx, y + sy))) continue;
-      out.push({ x, y, into: Object.freeze([-dx, -dy]), side });
+      // SOLITUDE-RELIEF: a capital on a relief of its own takes the road's step in on its own byte too, where its gate is its
+      // neighbour - the country's road painted through its rim to its own ground, the Gate Road (world/tamrielRoads.js)
+      out.push({ x, y, into: Object.freeze([-dx, -dy]), side, ...(cap.relief && t === 0 ? { inside: true } : {}) });
       break;
     }
   }
@@ -507,9 +513,16 @@ export const onCapitalRing = (cap, cx, r) => r === 0 || cx === 0 || r === planRo
 /** AUDIT TESA II C1: a capital's lake or sea at its plan's outer ring - a block of its own, so its rim leaves the land's
  *  own ground there (the shared lake laid water to the pixel's edge). */
 export const capitalLakeName = capitalCellName('L');
+/** SOLITUDE-RELIEF: how many tiles a capital's rim is - Daggerfall's CAPITAL_RIM_TILES, or its own (`rimTiles`): a capital
+ *  on a relief of its own lays its own ground to its relief's edge band, the land's own past it. */
+export const capitalRimTiles = (cap) => cap?.rimTiles ?? CAPITAL_RIM_TILES;
 /** AUDIT TESA II C1: IS A POINT OF THE PLAN IN ITS RIM (`x` east and `z` south of the plan's north-west corner, metres) -
- *  within CAPITAL_RIM_M of its outer edge: the span's outer sides, never a seam between its own slices. */
-export const inCapitalRim = (cap, x, z) => x < CAPITAL_RIM_M || z < CAPITAL_RIM_M || x > planCols(cap) * BLOCK_M - CAPITAL_RIM_M || z > planRows(cap) * BLOCK_M - CAPITAL_RIM_M;
+ *  within its rim (CAPITAL_RIM_M, capitalRimTiles) of its outer edge: the span's outer sides, never a seam between its own
+ *  slices. */
+export function inCapitalRim(cap, x, z) {
+  const m = cap?.rimTiles ? cap.rimTiles * TILE_M : CAPITAL_RIM_M;
+  return x < m || z < m || x > planCols(cap) * BLOCK_M - m || z > planRows(cap) * BLOCK_M - m;
+}
 
 /** TESA11: the kinds a cell falls back to where the game's cities lay none of its own (a release short of one). */
 const FALLBACK_KINDS = Object.freeze(['RESI', 'GENR']);
@@ -830,7 +843,7 @@ export function synthesizeCapitalLocation({ cap, k, s = capitalCentre(cap) }, ct
     },
     // TESA11: its slice, and (over several pixels) the centre pixel every slice's ground is flattened to; TS5 x AUDIT TESA
     // II C1: its rim's tiles on each side (0 on a side its own slice shares - terrainTiles.js setLocationTiles' rect)
-    capital: Object.freeze({ key: cap.key, k, s, ...(flattenAt ? { flattenAt } : {}), rim: Object.freeze({ W: sx === 0 ? CAPITAL_RIM_TILES : 0, E: sx === D.w - 1 ? CAPITAL_RIM_TILES : 0, N: sy === 0 ? CAPITAL_RIM_TILES : 0, S: sy === D.h - 1 ? CAPITAL_RIM_TILES : 0 }) }),
+    capital: Object.freeze({ key: cap.key, k, s, ...(flattenAt ? { flattenAt } : {}), rim: Object.freeze({ W: sx === 0 ? capitalRimTiles(cap) : 0, E: sx === D.w - 1 ? capitalRimTiles(cap) : 0, N: sy === 0 ? capitalRimTiles(cap) : 0, S: sy === D.h - 1 ? capitalRimTiles(cap) : 0 }) }),
     ...(ctx.arena ? { arena: ctx.arena } : {}),
   };
 }

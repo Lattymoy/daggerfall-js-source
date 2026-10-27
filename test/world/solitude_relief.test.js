@@ -12,12 +12,12 @@ import { join } from 'node:path';
 import * as R from '../../src/world/solitudeRelief.js';
 import {
   CAPITALS, SOLITUDE, SOLITUDE_PLAN, BLOCK_M, capitalBlockLift, capitalPortBlocks, capitalBlockNames, capitalLakeName, synthesizeCapitalLocation,
-  startMarkerAt, capitalGardenName, anchorMetres, autoCentre, inCapitalRim, CAPITAL_CLOSED_BYTE,
+  startMarkerAt, capitalGardenName, anchorMetres, autoCentre, tileCentre, inCapitalRim, CAPITAL_CLOSED_BYTE,
 } from '../../src/world/tamrielCapitals.js';
 import { capitalReliefGround, reliefFlat, reliefSample, reliefOf, reliefVertexAt, CAPITAL_RELIEFS } from '../../src/world/terrain/capitalRelief.js';
 import {
   buildSolitudeArch, buildBluePalace, buildSolitudeWall, buildCastleDour, buildSolitudeDocks, buildSolitudeCliffs, buildSolitudeTerraces,
-  archTop, archOpening, levelY, CLIFF_STEEP, CLIFF_SKIN,
+  archTop, archOpening, levelY, CLIFF_STEEP, CLIFF_SKIN, solitudeDrawn,
 } from '../../src/world/capitalSolitude.js';
 import { CAPITAL_ARCHIVE, CAPITAL_ART } from '../../src/world/capitalModels.js';
 import { URBAN_ARCHIVE, URBAN_ART } from '../../src/world/urban/urbanRecords.js';
@@ -110,18 +110,36 @@ test('SOLITUDE-RELIEF the city on its rock: the Well District inside the main ga
   for (let z = W.north; z <= W.south; z += 6.4) assert.equal(R.solitudeHeight(W.east + W.thick / 2, z), L.upper, `the east wall's face at ${z}`);
 });
 
-test('SOLITUDE-RELIEF the Gate Road and the slope below the walls: the road climbs from where the country\'s road meets the pixel to the main gate, never falling, a road\'s grade, flat across; the slope falls from each tier to the country at the pixel\'s south edge', () => {
-  const pts = R.gateRoadPoints, G = R.SOLITUDE_GATE_ROAD;
+test('SOLITUDE-RELIEF the Gate Road and the slope below the walls: the road runs on from where the country\'s road ends at the pixel\'s south edge, heading as it came, climbs at a road\'s grade and never falls, flat across, and comes square into the main gate on the gate\'s own line, the gate\'s width, on through its passage; the slope falls from each tier to the country at the pixel\'s south edge', () => {
+  const pts = R.gateRoadPoints, line = R.gateRoadLine, G = R.SOLITUDE_GATE_ROAD, W = SOLITUDE.wall;
+  assert.deepEqual(pts.map((p) => p.slice(0, 2)), line.map((p) => [...p]), 'its points its line\'s');
+  // where the country's road ends (world/tamrielRoads.js: the gate pixel's step north ends at the pixel's middle column)
   assert.deepEqual(pts[0].slice(0, 2), [P.x0 + P.side / 2, P.z0 + P.side], 'from the pixel\'s south edge\'s middle');
-  assert.deepEqual(pts.at(-1), [SOLITUDE.wall.southGate, SOLITUDE.wall.south + 2, L.city], 'to the main gate on the Well District\'s level');
-  for (let i = 1; i < pts.length; i++) assert.ok(pts[i][2] >= pts[i - 1][2], 'never falling toward the gate');
-  for (let i = 2; i < pts.length; i++) {
+  assert.ok(near(pts[0][2], R.southSlope(...pts[0].slice(0, 2)), 1e-9), 'at the land\'s own height there');
+  // heading as the country's road came, north, out past the edge band
+  const band = P.z0 + P.side - R.SOLITUDE_EDGE_BAND * CELL;
+  for (const p of pts.filter(([, z]) => z >= band - 4)) assert.equal(p[0], P.x0 + P.side / 2, `due north from the edge at ${p[1]}`);
+  // never falling, never steeper than its grade, the gate's level at the most
+  for (let i = 1; i < pts.length; i++) {
     const g = (pts[i][2] - pts[i - 1][2]) / Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
-    assert.ok(g <= 0.22, `leg ${i} a road's grade (${g.toFixed(3)})`);
+    assert.ok(g >= 0 && g <= G.grade + 1e-9, `leg ${i} at ${pts[i][0].toFixed(1)},${pts[i][1].toFixed(1)}: ${g.toFixed(3)}`);
+    assert.ok(pts[i][2] <= L.city);
   }
-  // flat across: on its line and a half-width either side the same height
+  // square into the gate: its last straight run on the gate's own middle line, due north, at the gate's level, through
+  // its passage - and as wide as the gate
+  const last = pts.filter(([x]) => x === W.southGate);
+  assert.ok(last.length >= 3 && last.at(-1)[1] - 0 <= W.south - W.thick / 2 && last[0][1] - W.south >= 15, `the last run ${last.map((p) => p[1])}`);
+  assert.ok(last.every((p) => p[2] === L.city), 'at the gate\'s level');
+  assert.ok(near(2 * G.half, W.gate, 1e-9), 'the gate\'s width');
+  // no bend tighter than a cart turns, every run's direction turned smoothly (15 degrees a point at the most)
+  for (let i = 1; i + 1 < line.length; i++) {
+    const a = Math.atan2(line[i][1] - line[i - 1][1], line[i][0] - line[i - 1][0]), b = Math.atan2(line[i + 1][1] - line[i][1], line[i + 1][0] - line[i][0]);
+    assert.ok(Math.abs(((b - a + 3 * Math.PI) % (2 * Math.PI)) - Math.PI) <= Math.PI / 12 + 1e-9, `a turn at ${line[i]}`);
+  }
+  // flat across: on its line and a half-width either side the same height (south of the wall's slope's top)
   for (let i = 1; i < pts.length - 1; i++) {
     const [x, z, h] = pts[i];
+    if (z <= R.SOLITUDE_CLIFFS.south) continue;
     assert.ok(near(R.southHeight(x, z), h, 1e-6), `on its line at ${x},${z}`);
   }
   // the slope's top each tier's - the Well District's and the lane west of the spur, the castle's south yard east of it
@@ -129,6 +147,60 @@ test('SOLITUDE-RELIEF the Gate Road and the slope below the walls: the road clim
   assert.equal(R.southSlope(450, R.SOLITUDE_CLIFFS.south), L.upper);
   assert.ok(near(R.southSlope(300, P.z0 + P.side), 16 + (8 * 44) / 51.2, 1e-6), 'the country\'s own height at the south edge (the design line, between its 256 m and 307.2 m points)');
   assert.ok(G.half > 0 && G.shoulder > G.half);
+  assert.equal(W.southGate, R.SOLITUDE_MAIN_GATE.x, 'the gate where the road\'s law stands it');
+});
+
+test('SOLITUDE-RELIEF the country\'s road reaches the city\'s own ground: its gate steps into the city on the city\'s own byte too, its rim no more than its relief\'s edge band - the road painted through it to the Gate Road\'s paving; a gate past the city\'s neighbour, or a capital on Daggerfall\'s plane, as ever', async () => {
+  const { buildTamrielRegion, regionOf, regionLattice } = await import('../../src/world/tamrielRoads.js');
+  const { beyondKey } = await import('../../src/world/arenaRoads.js');
+  const { DIR } = await import('../../src/world/road/roadNetwork.js');
+  const { LOCATION_TYPES: T } = await import('../../src/formats/mapsFile.js');
+  const { capitalGates, capitalRimTiles, inCapitalRim, CAPITAL_RIM_TILES } = await import('../../src/world/tamrielCapitals.js');
+  const REGION = regionOf(regionLattice({ x0: 0, y0: -1000, w: 1600, h: 600 }), 0, 0);
+  const city = [];
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) city.push({ x: 400 + dx, y: -850 + dy });
+  const nodes = [{ x: 400, y: -848, type: T.TownCity }, { x: 400, y: -760, type: T.TownCity }];
+  const build = (gate) => buildTamrielRegion({ region: REGION, places: [], nodes, obstacles: city, gates: [gate], heightAt: () => 30 });
+  const inside = build({ x: 400, y: -848, into: [0, -1], inside: true }), plain = build({ x: 400, y: -848, into: [0, -1] });
+  assert.ok(inside.roads.get(beyondKey(400, -848)) & DIR.N, 'the gate\'s step north into the city');
+  assert.equal(inside.roads.get(beyondKey(400, -849)), DIR.S, 'and the city\'s own step back south to it - its one byte');
+  assert.equal(plain.roads.get(beyondKey(400, -849)) ?? 0, 0, 'none on a city on the plane');
+  // Solitude's: its gate its neighbour south, the city's own step on - where the gate stands further out, none
+  const k = CAPITALS.indexOf(sol);
+  const near1 = capitalGates(k, { walkable: () => true }), far = capitalGates(k, { walkable: (x, y) => y > capitalGates(k, { walkable: () => true })[0].y });
+  assert.deepEqual(near1.map((g) => [g.side, g.inside]), [['S', true]]);
+  assert.ok(far.length && !far[0].inside, 'a gate a pixel further out: the road ends there');
+  for (const c of CAPITALS) if (c !== sol) assert.ok(capitalGates(CAPITALS.indexOf(c), { walkable: () => true }).every((g) => !g.inside), c.key);
+  // its rim its relief's band and a tile: the country's road painted on the land's own tiles there, the city's own past it
+  assert.equal(capitalRimTiles(sol), R.SOLITUDE_EDGE_BAND + 1);
+  assert.ok(CAPITALS.filter((c) => c !== sol).every((c) => capitalRimTiles(c) === CAPITAL_RIM_TILES));
+  assert.ok(inCapitalRim(sol, 409.6, 8 * BLOCK_M - 25.5) && !inCapitalRim(sol, 409.6, 8 * BLOCK_M - 25.7), 'its south rim 25.6 m');
+  const loc = synthesizeCapitalLocation({ cap: sol, k }, { base: { name: 'B', regionIndex: 1, mapTableData: { mapId: 9, locationType: T.TownCity }, exterior: { exteriorData: { width: 8, height: 8 }, buildings: [] } }, names: new Map([['RESI', ['RESIAA00.RMB']]]), blockOf: () => ({ rmbBlock: { fldHeader: { numBlockDataRecords: 0, buildingDataList: [] } } }), px: 1, py: 1 });
+  assert.deepEqual({ ...loc.capital.rim }, { W: 4, E: 4, N: 4, S: 4 }, 'the location\'s rect four tiles in on every side');
+  // the paving from the band's last row: its south end within a cell of the painted road's end, never in the band
+  const wall = buildSolitudeWall(), band = P.z0 + P.side - R.SOLITUDE_EDGE_BAND * CELL;
+  let south = -Infinity;
+  for (let i = 0; i < wall.positions.length; i += 3) {
+    const x = wall.positions[i], z = wall.positions[i + 2];
+    if (Math.abs(x - (P.x0 + P.side / 2)) < 12 && z > 470) south = Math.max(south, z);
+  }
+  assert.ok(south <= band + 1e-6 && south >= band - CELL, `the paving's south end ${south}`);
+  // the paving on the ground the terrain draws, a hand over it, across its whole width - never under it where the ground
+  // creases (an embankment's crest), never floating
+  const D = solitudeDrawn(), G = R.SOLITUDE_GATE_ROAD, line = R.gateRoadLine.filter(([, z]) => z < band - 2 && z > SOLITUDE.wall.south + 4);
+  for (const [i, [x, z]] of line.entries()) {
+    if (i % 4) continue;
+    const at = i + 1 < line.length ? line[i + 1] : line[i - 1], l = Math.hypot(at[0] - x, at[1] - z), n = [-(at[1] - z) / l, (at[0] - x) / l];
+    for (const s of [-0.75, -0.3, 0, 0.3, 0.75]) {
+      const px = x + n[0] * G.half * s, pz = z + n[1] * G.half * s, g = levelY(D.at(px, pz));
+      let top = null;
+      for (let y = g + 1; y > g - 1 && top == null; y -= 0.02) if (crosses(wall, [px, y, pz], [px, y - 0.02, pz])) top = y;
+      assert.ok(top != null && top >= g && top <= g + 0.3, `the paving at ${px.toFixed(1)},${pz.toFixed(1)}: ${top} over ${g.toFixed(2)}`);
+    }
+  }
+  // the road's banks the ground's, not a cliff's rock
+  const rock = buildSolitudeCliffs();
+  for (let i = 0; i < rock.positions.length; i += 3) assert.ok(R.gateRoadAt(rock.positions[i], rock.positions[i + 2]).d >= G.half + G.shoulder - 2, `rock on the road's bank at ${rock.positions[i].toFixed(1)},${rock.positions[i + 2].toFixed(1)}`);
 });
 
 test('SOLITUDE-RELIEF the pixel stands on it: the city flattened to the Well District\'s level, every vertex the relief\'s height, the sea\'s where its water is, the land\'s own along the pixel\'s edge, eased in over the band', () => {
@@ -216,6 +288,20 @@ test('SOLITUDE-RELIEF its tiles: the sea only where all four corners are the wat
     }
   }));
   assert.ok(shut > 1000, `${shut} cells of the gardens' rock`);
+  // the Gate Road through the gardens: its tiles the stone under its paving, no tree on it
+  let road = 0;
+  SOLITUDE_PLAN.forEach((row, r) => row.forEach((cell, c) => {
+    if (cell !== 'G') return;
+    const g = blocks.find((b) => b.name === capitalGardenName(sol, c, r)).json.RmbBlock.FldHeader.GroundData;
+    for (let i = 0; i < 256; i++) {
+      const [x, z] = tileCentre(i % 16, Math.floor(i / 16)), [dx, dz] = anchorMetres(sol, c, r, x, z);
+      if (inCapitalRim(sol, c * BLOCK_M + x, (r + 1) * BLOCK_M - z) || R.gateRoadAt(dx, dz).d > R.SOLITUDE_GATE_ROAD.half) continue;
+      road++;
+      assert.equal(g.GroundTiles[i].TileBitfield, T.stone, `the road's tile at ${dx.toFixed(1)},${dz.toFixed(1)}`);
+      assert.equal(g.GroundScenery[i].TextureRecord, -1, `no tree on the road at ${dx.toFixed(1)},${dz.toFixed(1)}`);
+    }
+  }));
+  assert.ok(road > 40, `${road} tiles of the road`);
 });
 
 test('SOLITUDE-RELIEF its blocks\' tiers: every classic block of the upper tier stands 6 m over the location\'s flatten, the Well District\'s on it, its own blocks, gardens and water on it (their ground and models the relief\'s); no other capital, no other town lifted', () => {

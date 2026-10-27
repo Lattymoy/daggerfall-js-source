@@ -11,13 +11,18 @@
 //   BOOT_MS=3600000    how long the boot may take
 //   W=, H=             the viewport (default 1280 x 720)
 //   CHROMIUM=<path>    a browser other than the pinned Playwright's
-//   WALK=1             after the shots, walk the main gate's road to the docks and the gate to the palace (`__pose` in
-//                      walk mode, the ground under each step read back) and print each step's height
+//   WAYS=[[name, [[x, z], ...]], ...]   the ways walked after the shots (default: the Gate Road, the lane's stair, the
+//                      Well District to the Avenues, the Docks Way) - the ground under each step read back, held to the
+//                      relief's height there; exit 1 on a step off it or a page error
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
+import { solitudeHeight, gateRoadLine, SOLITUDE_PIXEL, SOLITUDE_EDGE_BAND } from '../src/world/solitudeRelief.js';
 
 const PORT = Number(process.env.PORT ?? 5182);
+/** How far the ground the game stands a walker on may be from the relief's height there (m): the terrain is drawn from
+ *  samples 6.4 m apart (its bilinear read between them), a stair's treads over its ramp. */
+const WAY_TOLERANCE = 1.0;
 const OUT = process.env.OUT ?? null;
 if (OUT) mkdirSync(OUT, { recursive: true });
 const deg = (d) => (d * Math.PI) / 180;
@@ -113,21 +118,28 @@ for (const [label, x, z, h, yaw, pitch] of STATIONS) {
   if (OUT) await page.screenshot({ path: `${OUT}/${label}.png` });
   console.log(JSON.stringify({ shot: label, at: [x, z], eye: +(y - (sea ?? 0)).toFixed(1), ground: g == null ? null : +(g - (sea ?? 0)).toFixed(1) }));
 }
-if (process.env.WALK) {
-  // the heights along the city's ways: the docks to the gate by its road, the gate to the palace by the Avenues
-  const WAYS = process.env.WAYS ? JSON.parse(process.env.WAYS) : [
-    ['gate-road', [[204.8, 500], [230, 498], [300, 478], [380, 462], [440, 450], [468, 440], [450, 430], [380, 428], [330, 426], [318.4, 418]]],
-    ['lane-to-castle', [[318, 410], [318, 300], [318, 240], [318, 225], [318, 214], [318, 205]]],
-    ['well-to-avenues', [[150, 260], [150, 215], [150, 206], [150, 200], [150, 150], [150, 50]]],
-    ['docks-way', [[250, -118], [160, -118], [90, -118], [70, -125], [90, -131], [200, -131], [300, -131], [390, -140], [300, -150]]],
-  ];
-  for (const [name, pts] of WAYS) {
-    const out = [];
-    for (const [x, z] of pts) { const [sx, sz] = scene(x, z); const g = await ground(sx, sz); out.push(g == null ? null : +(g - (sea ?? 0)).toFixed(1)); }
-    console.log(JSON.stringify({ way: name, heights: out }));
+// the ways walked: the ground under each step read back and held to the relief's height there (world/solitudeRelief.js) -
+// the Gate Road from the edge band to the main gate, the lane up its stair, the Well District to the Avenues, the Docks Way
+const step = (pts, k) => pts.filter((_, i) => i % k === 0);
+const WAYS = process.env.WAYS ? JSON.parse(process.env.WAYS) : [
+  ['gate-road', step(gateRoadLine.filter(([, z]) => z < SOLITUDE_PIXEL.z0 + SOLITUDE_PIXEL.side - (SOLITUDE_EDGE_BAND + 1) * 6.4), 3)],
+  ['lane-to-castle', [[318, 410], [318, 300], [318, 240], [318, 205]]],
+  ['well-to-avenues', [[150, 260], [150, 212], [150, 196], [150, 150], [150, 50]]],
+  ['docks-way', [[250, -118], [160, -118], [90, -118], [70, -125], [200, -131], [300, -131], [390, -140], [300, -150]]],
+];
+const bad = [];
+for (const [name, pts] of WAYS) {
+  const out = [];
+  for (const [x, z] of pts) {
+    const [sx, sz] = scene(x, z), g = await ground(sx, sz), h = g == null ? null : g - (sea ?? 0), want = solitudeHeight(x, z);
+    out.push(h == null ? null : +h.toFixed(1));
+    if (h == null || Math.abs(h - want) > WAY_TOLERANCE) bad.push(`${name} at ${x.toFixed(1)},${z.toFixed(1)}: ${h == null ? 'no ground' : h.toFixed(2)} for ${want.toFixed(2)}`);
   }
+  console.log(JSON.stringify({ way: name, heights: out }));
 }
-console.log(`errors: ${errors.length}`);
 for (const e of errors.slice(0, 12)) console.log(`  ${e.slice(0, 400)}`);
+if (errors.length) bad.push(`${errors.length} page errors`);
+console.log(bad.length ? `FAILED - ${bad.join('; ')}` : 'ok: every way on the relief, no page errors');
 await browser.close();
 await server.close();
+process.exit(bad.length ? 1 : 0);

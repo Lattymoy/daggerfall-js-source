@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-TESA-II-C1-no-west-rim",
     "file": "src/world/tamrielCapitals.js",
-    "old": "export const inCapitalRim = (cap, x, z) => x < CAPITAL_RIM_M || z < CAPITAL_RIM_M ||",
-    "new": "export const inCapitalRim = (cap, x, z) => z < CAPITAL_RIM_M ||",
+    "old": "  return x < m || z < m ||",
+    "new": "  return z < m ||",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ]
@@ -370,9 +370,9 @@
   },
   {
     "name": "AUDIT-TESA-II-C10-solitude-gate-on-the-tavern",
-    "file": "src/world/tamrielCapitals.js",
-    "old": "northGate: 250, southGate: 318.4,",
-    "new": "northGate: 250, southGate: 300,",
+    "file": "src/world/solitudeRelief.js",
+    "old": "export const SOLITUDE_MAIN_GATE = Object.freeze({ x: 318.4,",
+    "new": "export const SOLITUDE_MAIN_GATE = Object.freeze({ x: 300,",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ]

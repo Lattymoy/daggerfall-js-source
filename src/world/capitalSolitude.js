@@ -18,7 +18,7 @@ import {
 } from './capitalShapes.js';
 import { SOLITUDE } from './tamrielCapitals.js';
 import {
-  solitudeHeight, inDocks, gateRoadPoints, SOLITUDE_LEVELS, SOLITUDE_PIXEL, SOLITUDE_EDGE_BAND, SOLITUDE_DOCKS, SOLITUDE_GATE_ROAD,
+  solitudeHeight, inDocks, gateRoadPoints, gateRoadAt, SOLITUDE_LEVELS, SOLITUDE_PIXEL, SOLITUDE_EDGE_BAND, SOLITUDE_DOCKS, SOLITUDE_GATE_ROAD,
   SOLITUDE_CRAG, SOLITUDE_LANE, SOLITUDE_TERRACES,
 } from './solitudeRelief.js';   // SOLITUDE-RELIEF: its ground
 import { perlinNoise } from './perlin.js';
@@ -237,9 +237,11 @@ export function buildSolitudeWall(S = SOLITUDE) {
   on(up, () => { wallRun(mb, NORD, stepS, se, W.thick, W.h, 3 + up); merlons(mb, NORD, stepS, se, W.thick, W.h); });
   on(up, () => { wallRun(mb, NORD, se, ne, W.thick, W.h); merlons(mb, NORD, se, ne, W.thick, W.h); });
   // a tower stands on its run's tier: the west's below the step and the south's west of the lane's spur on the lower
-  const towerBase = (x, z) => ((x === W.west && z > T.line.z) || (z === W.south && x < T.spur.x) ? 0 : up);
+  // the main gate's east tower stands where the south wall steps at the spur: on the upper tier, its foot down to the lane
+  const step = (x, z) => z === W.south && Math.abs(x - T.spur.x) < W.tower;
+  const towerBase = (x, z) => ((x === W.west && z > T.line.z) || (z === W.south && x < T.spur.x && !step(x, z)) ? 0 : up);
   for (const [x, z] of [...solitudeTowers(W), stepW]) {
-    on(towerBase(x, z), () => squareTower(mb, x, z, W.tower, W.towerH, { wall: NORD, roof: ROOF, roofH: 7, foot: z === W.north ? -deep.north : x === W.west ? -deep.west : -3 }));
+    on(towerBase(x, z), () => squareTower(mb, x, z, W.tower, W.towerH, { wall: NORD, roof: ROOF, roofH: 7, foot: z === W.north ? -deep.north : x === W.west ? -deep.west : step(x, z) ? -up - 3 : -3 }));
   }
   // the main gate's gatehouse: a storey over the gate between its towers, crenellated
   const G = W.gatehouse, gx = W.southGate;
@@ -260,30 +262,58 @@ export function solitudeTowers(W = SOLITUDE.wall) {
     ...W.along.west.map((z) => [W.west, z]), ...W.along.east.map((z) => [W.east, z]),
   ];
 }
-/** How far short of the pixel's south edge the Gate Road's line stops - a cell past the edge band (the land's own ground
- *  there), so its paving's corners and its low walls, across a leg aslant, stand clear of the band. */
-const ROAD_SHORT = (SOLITUDE_EDGE_BAND + 1) * (SOLITUDE_PIXEL.side / 128);
+/** SOLITUDE-RELIEF: THE GROUND AS THE TERRAIN DRAWS IT - the relief at the terrain's own vertices (world/terrain/
+ *  capitalRelief.js), each cell cut south-west to north-east (world/terrain/terrainSurface.js surfaceHeightAt's): `h` its
+ *  vertices' metres over the sea (x east, y north, `N` + 1 a side, `cell` metres apart), `H(x, y)` one of them (held to
+ *  the pixel), `at(x, z)` the drawn ground's metres over the sea at a point of the anchor's metres. Made once. */
+let _drawn = null;
+export function solitudeDrawn() {
+  if (_drawn) return _drawn;
+  const P = SOLITUDE_PIXEL, N = 128, Hd = N + 1, cell = P.side / N, h = new Float32Array(Hd * Hd);
+  for (let x = 0; x <= N; x++) for (let y = 0; y <= N; y++) h[x * Hd + y] = solitudeHeight(P.x0 + x * cell, P.z0 + (N - y) * cell);
+  const clampI = (v) => Math.max(0, Math.min(N, v)), H = (x, y) => h[clampI(x) * Hd + clampI(y)];
+  const at = (ax, az) => {
+    const fx = (ax - P.x0) / cell, fy = N - (az - P.z0) / cell, qx = Math.max(0, Math.min(N - 1, Math.floor(fx))), qy = Math.max(0, Math.min(N - 1, Math.floor(fy)));
+    const u = fx - qx, v = fy - qy, h00 = H(qx, qy), h10 = H(qx + 1, qy), h01 = H(qx, qy + 1), h11 = H(qx + 1, qy + 1);
+    return v >= u ? h00 + v * (h01 - h00) + u * (h11 - h01) : h00 + u * (h10 - h00) + v * (h11 - h10);
+  };
+  return (_drawn = { h, H, at, N, Hd, cell });
+}
+/** The Gate Road's paving keeps north of this (anchor metres, z south): the edge band's last row of samples, the land's own
+ *  ground eased in south of it (world/terrain/capitalRelief.js) - the country's road painted over that stretch (the
+ *  city's own step, world/tamrielRoads.js). */
+const ROAD_FROM = SOLITUDE_PIXEL.z0 + SOLITUDE_PIXEL.side - SOLITUDE_EDGE_BAND * (SOLITUDE_PIXEL.side / 128);
+/** The Gate Road's paving's strips either side of its middle line. */
+const ACROSS = 4;
 /**
- * SOLITUDE-RELIEF: THE GATE ROAD, paved - its line's every few metres (world/solitudeRelief.js gateRoadPoints), its two edges
- * on the ground the relief flattens across it, a hand over it; a low wall on whichever side the slope falls more than a
- * man's height below it. From the gate to short of the pixel's edge band.
+ * SOLITUDE-RELIEF: THE GATE ROAD, paved (world/solitudeRelief.js SOLITUDE_GATE_ROAD): its line every 2 m, its width laid
+ * across it square to its run (through a bend, square to the bend - the paving never folds), every corner on the ground
+ * the terrain draws there a hand over it; a low wall on whichever side the ground falls more than a man's height below
+ * its edge. From the edge band's last row to the main gate's passage - its last straight run the gate's own line.
  */
 function gateRoad(mb) {
-  const P = gateRoadPoints, half = SOLITUDE_GATE_ROAD.half, end = SOLITUDE_PIXEL.z0 + SOLITUDE_PIXEL.side - ROAD_SHORT;
-  const line = [];
-  for (let i = P.length - 1; i > 0; i--) {
-    const [ax, az] = P[i], [bx, bz] = P[i - 1], n = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / 4));
-    for (let k = i === P.length - 1 ? 0 : 1; k <= n; k++) line.push([ax + ((bx - ax) * k) / n, az + ((bz - az) * k) / n]);
+  const G = SOLITUDE_GATE_ROAD, P = gateRoadPoints, D = solitudeDrawn(), pts = [];
+  for (let i = 1; i < P.length; i++) {
+    const [ax, az] = P[i - 1], [bx, bz] = P[i], n = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / 2));
+    for (let k = i === 1 ? 0 : 1; k <= n; k++) pts.push([ax + ((bx - ax) * k) / n, az + ((bz - az) * k) / n]);
   }
-  const pts = line.filter(([, z]) => z <= end);
-  for (let k = 0; k + 1 < pts.length; k++) {
-    const [ax, az] = pts[k], [bx, bz] = pts[k + 1], l = Math.hypot(bx - ax, bz - az) || 1, nx = -(bz - az) / l, nz = (bx - ax) / l;
-    const E = (x, z, s) => { const px = x + nx * half * s, pz = z + nz * half * s; return [px, levelY(solitudeHeight(px, pz)) + 0.06, pz]; };
-    const a0 = E(ax, az, -1), a1 = E(ax, az, 1), b0 = E(bx, bz, -1), b1 = E(bx, bz, 1);
-    mb.quad(BRIDGE, a0, b0, b1, a1, [0, 1, 0]);
+  const across = pts.map((_, i) => {
+    const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)], l = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    return [-(b[1] - a[1]) / l, (b[0] - a[0]) / l];
+  });
+  // a point across the road (s from -1, its right edge, to 1, its left), on the drawn ground a hand over it - ACROSS strips
+  // a side, so the paving bends with the ground where the terrain's own cells crease under it
+  const edge = (i, s) => { const x = pts[i][0] + across[i][0] * G.half * s, z = pts[i][1] + across[i][1] * G.half * s; return [x, levelY(D.at(x, z)) + 0.1, z]; };
+  const falls = (i, s) => { const [x, y, z] = edge(i, s); return y - levelY(D.at(x + across[i][0] * 6 * s, z + across[i][1] * 6 * s)) > 1.8; };
+  for (let i = 0; i + 1 < pts.length; i++) {
+    const a0 = edge(i, -1), a1 = edge(i, 1), b0 = edge(i + 1, -1), b1 = edge(i + 1, 1);
+    if (Math.max(a0[2], a1[2], b0[2], b1[2]) > ROAD_FROM) continue;   // the band's: the land's own ground, the country's road on it
+    for (let j = 0; j < 2 * ACROSS; j++) {
+      const s0 = j / ACROSS - 1, s1 = (j + 1) / ACROSS - 1;
+      mb.quad(BRIDGE, edge(i, s0), edge(i + 1, s0), edge(i + 1, s1), edge(i, s1), [0, 1, 0]);
+    }
     for (const s of [1, -1]) {
-      const fall = (x, z) => solitudeHeight(x, z) - solitudeHeight(x + nx * (half + 7) * s, z + nz * (half + 7) * s);
-      if (fall(ax, az) < 1.8 || fall(bx, bz) < 1.8) continue;
+      if (!falls(i, s) || !falls(i + 1, s)) continue;
       const pa = s > 0 ? a1 : a0, pb = s > 0 ? b1 : b0;
       wallRun(mb, NORD, [pa[0], pa[2]], [pb[0], pb[2]], 0.6, (pa[1] + pb[1]) / 2 + 0.9, -Math.min(pa[1], pb[1]) + 2.5, 3);
     }
@@ -435,19 +465,28 @@ export const CLIFF_SKIN = Object.freeze({ least: 0.15, bulge: 1.5, masonry: 0.25
  * docks' square it is the Docks Way's battered masonry, a hand's breadth proud.
  */
 export function buildSolitudeCliffs() {
-  const mb = new MeshBuilder(), P = SOLITUDE_PIXEL, N = 128, Hd = N + 1, cell = P.side / N, band = SOLITUDE_EDGE_BAND, K = CLIFF_SKIN.sub;
+  const mb = new MeshBuilder(), P = SOLITUDE_PIXEL, band = SOLITUDE_EDGE_BAND, K = CLIFF_SKIN.sub, { N, Hd, cell, H } = solitudeDrawn();
   const ax = (x) => P.x0 + x * cell, az = (y) => P.z0 + (N - y) * cell;   // a vertex (x east, y north) in the anchor's metres
-  const h = new Float32Array(Hd * Hd);
-  for (let x = 0; x <= N; x++) for (let y = 0; y <= N; y++) h[x * Hd + y] = solitudeHeight(ax(x), az(y));
-  const H = (x, y) => h[Math.max(0, Math.min(N, x)) * Hd + Math.max(0, Math.min(N, y))];
+  const G = SOLITUDE_GATE_ROAD, onRoad = (x, z) => gateRoadAt(x, z).d < G.half + G.shoulder + cell;   // the Gate Road's banks earth, not a cliff - a cell past their foot
   const steep = new Uint8Array(N * N), Wl = SOLITUDE.wall, inCity = (x, z) => x > Wl.west && x < Wl.east && z > Wl.north && z < Wl.south;
   for (let x = band + 1; x < N - band - 1; x++) {   // a cell clear of the band: its skin, stood off, never reaches into it
     for (let y = band + 1; y < N - band - 1; y++) {
-      if (inCity(ax(x + 0.5), az(y + 0.5))) continue;   // inside the walls the terraces' own works stand on the steps
+      if (inCity(ax(x + 0.5), az(y + 0.5)) || onRoad(ax(x + 0.5), az(y + 0.5))) continue;   // inside the walls the terraces' own works stand on the steps
       const c = [H(x, y), H(x + 1, y), H(x, y + 1), H(x + 1, y + 1)];
       if (Math.max(...c) - Math.min(...c) > CLIFF_STEEP) steep[x * N + y] = 1;
     }
   }
+  // a lone steep cell no cliff: one with fewer than two steep neighbours of its eight is the ground's own (a bank's foot)
+  const lone = [];
+  for (let x = 0; x < N; x++) {
+    for (let y = 0; y < N; y++) {
+      if (!steep[x * N + y]) continue;
+      let n = 0;
+      for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) if ((dx || dy) && x + dx >= 0 && y + dy >= 0 && x + dx < N && y + dy < N && steep[(x + dx) * N + y + dy]) n++;
+      if (n < 2) lone.push(x * N + y);
+    }
+  }
+  for (const i of lone) steep[i] = 0;
   const isSteep = (x, y) => x >= 0 && y >= 0 && x < N && y < N && steep[x * N + y] === 1;
   // a vertex's weight: whole where every cell round it is the cliff's; its normal the ground's (central differences)
   const W = new Float32Array(Hd * Hd), nrm = new Float32Array(Hd * Hd * 3);

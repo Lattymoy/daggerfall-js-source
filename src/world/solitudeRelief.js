@@ -70,14 +70,23 @@ export const SOLITUDE_DOCKS = Object.freeze({
   arrival: Object.freeze({ x0: 377.6, x1: 409.6, z1: -128 }),
 });
 
-/** THE GATE ROAD: its line from where the country's road meets the pixel's south edge (its north edge's middle, world/
- *  road/roadPainter.js - the pixel's middle column) to the main gate (world/tamrielCapitals.js SOLITUDE.wall.southGate) -
- *  east and up across the slope to a bend under the wall's south-east, then back west along the slope's top - its
- *  half-width and the shoulder over which the slope meets it. Its heights are the slope's own along it, never falling
- *  toward the gate (gateRoadPoints). */
+/** THE MAIN GATE: its middle on the south wall's line, on the gate's lane (world/tamrielCapitals.js SOLITUDE.wall's
+ *  `southGate` and `south` - AUDIT TESA II C10: between the tavern's block and Castle Dour's west curtain). */
+export const SOLITUDE_MAIN_GATE = Object.freeze({ x: 318.4, z: 416 });
+/**
+ * THE GATE ROAD, the country's road on to the main gate. The roads past the Bay end at the pixel's south edge's middle -
+ * the gate pixel's step north (world/tamrielRoads.js), and the city's own step south, painted through its rim
+ * (world/tamrielCapitals.js SOLITUDE `rimTiles`) - and the road runs on from there: north, then east along the foot of
+ * the slope, climbing under the walls to a bend below the wall's south-east, north up to the gate's level, west along
+ * under the wall, and north onto the gate's own line - its last straight run square into the gate, the gate's width, on
+ * through its passage to the lane.
+ * `corners` its line, each bend an arc of `bend` metres' radius (gateRoadLine); its heights the slope's own along it,
+ * never falling toward the gate, never steeper than `grade` (cut into the slope where the slope runs ahead of it), the
+ * gate's level at the most (gateRoadPoints); `half` its half-width and `shoulder` the bank over which the slope meets it.
+ */
 export const SOLITUDE_GATE_ROAD = Object.freeze({
-  line: Object.freeze([[204.8, 512], [230, 498], [300, 478], [380, 462], [440, 450], [468, 440], [450, 430], [380, 428], [330, 426], [318.4, 418]].map((p) => Object.freeze(p))),
-  half: 4, shoulder: 9,
+  corners: Object.freeze([[204.8, 512], [204.8, 480], [470, 480], [470, 444], [SOLITUDE_MAIN_GATE.x, 444], [SOLITUDE_MAIN_GATE.x, SOLITUDE_MAIN_GATE.z - 3]].map((p) => Object.freeze(p))),
+  bend: 10, half: 5, shoulder: 12, grade: 0.16,
 });
 /** THE EAST: the land's own height along the pixel's east edge the east cliff falls to - [z, metres] (the freeware's,
  *  measured: the sea north of the headland's neck, the hill rising south). A design line, as the south's. */
@@ -174,12 +183,36 @@ export function southSlope(x, z) {
   const C = SOLITUDE_CLIFFS, end = SOLITUDE_PIXEL.z0 + SOLITUDE_PIXEL.side, T = tableAt(SOLITUDE_SOUTH_EDGE, x), top = lowerTier(x, C.south - 6) ? SOLITUDE_LEVELS.city : SOLITUDE_LEVELS.upper;
   return T + (top - T) * (1 - clamp01((z - C.south) / (end - C.south))) ** 1.5;
 }
-/** The Gate Road's points, [x, z, height]: the slope's height at each, raised where it would fall toward the gate, never
- *  over the gate's - the city's level, at which it runs on under the castle's slope (cut into it) to the gate. */
+/** The Gate Road's line, [x, z]: its corners, each bend between two straight runs drawn as an arc (a point every 15
+ *  degrees of its turn), each straight run a point every ROAD_STEP metres at the most - so its heights follow the slope. */
+const ROAD_STEP = 12;
+export const gateRoadLine = (() => {
+  const C = SOLITUDE_GATE_ROAD.corners, R = SOLITUDE_GATE_ROAD.bend, out = [[C[0][0], C[0][1]]];
+  const run = (x, z) => {
+    const [px, pz] = out[out.length - 1], n = Math.ceil(Math.hypot(x - px, z - pz) / ROAD_STEP);
+    for (let k = 1; k <= n; k++) out.push([px + ((x - px) * k) / n, pz + ((z - pz) * k) / n]);
+  };
+  for (let i = 1; i < C.length - 1; i++) {
+    const [ax, az] = C[i - 1], [bx, bz] = C[i], [cx, cz] = C[i + 1];
+    const l1 = Math.hypot(bx - ax, bz - az), l2 = Math.hypot(cx - bx, cz - bz), d1 = [(bx - ax) / l1, (bz - az) / l1], d2 = [(cx - bx) / l2, (cz - bz) / l2];
+    const turn = Math.atan2(d1[0] * d2[1] - d1[1] * d2[0], d1[0] * d2[0] + d1[1] * d2[1]), t = R * Math.tan(Math.abs(turn) / 2);
+    const s0 = [bx - d1[0] * t, bz - d1[1] * t], side = Math.sign(turn), centre = [s0[0] - d1[1] * R * side, s0[1] + d1[0] * R * side];
+    const a0 = Math.atan2(s0[1] - centre[1], s0[0] - centre[0]), n = Math.max(1, Math.ceil(Math.abs(turn) / (Math.PI / 12)));
+    run(s0[0], s0[1]);
+    for (let k = 1; k <= n; k++) { const a = a0 + (turn * k) / n; out.push([centre[0] + Math.cos(a) * R, centre[1] + Math.sin(a) * R]); }
+  }
+  run(C[C.length - 1][0], C[C.length - 1][1]);
+  return Object.freeze(out.map((p) => Object.freeze(p)));
+})();
+/** The Gate Road's points, [x, z, height]: its line's, each at the slope's height there - never under the point before
+ *  it, never more than `grade` over it, never over the gate's level, the last the gate's. */
 export const gateRoadPoints = (() => {
-  const L = SOLITUDE_GATE_ROAD.line, city = SOLITUDE_LEVELS.city;
-  let lo = -Infinity;
-  return Object.freeze(L.map(([x, z], i) => { lo = i === L.length - 1 ? city : Math.min(city, Math.max(lo, southSlope(x, z))); return Object.freeze([x, z, lo]); }));
+  const L = gateRoadLine, G = SOLITUDE_GATE_ROAD, city = SOLITUDE_LEVELS.city;
+  let h = southSlope(L[0][0], L[0][1]);
+  return Object.freeze(L.map(([x, z], i) => {
+    if (i) h = i === L.length - 1 ? city : Math.min(city, Math.max(h, southSlope(x, z)), h + G.grade * Math.hypot(x - L[i - 1][0], z - L[i - 1][1]));
+    return Object.freeze([x, z, h]);
+  }));
 })();
 /** The nearest point of the Gate Road's line to (x, z): its distance and the road's height there. */
 export function gateRoadAt(x, z) {

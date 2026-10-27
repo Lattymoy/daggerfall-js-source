@@ -24,6 +24,8 @@ const STATIONS = [
   ['docks-quay', 260, -150, 4.2, 75, 6],
   ['docks-way', 120, -125, 34, 80, -8],
   ['gate-road', 330, 560, 60, 0, -8],
+  ['gate-front', 318.4, 470, 62, 0, -12],   // the main gate from its road
+  ['gate-air', 300, 455, 260, 0, -89],
   ['palace-court', 40, 0, 59.7, -90, 4],
   ['arch-deck', -90, 0, 63.7, 90, -2],
   ['castle-dour', 250, 230, 47.7, 90, 6],

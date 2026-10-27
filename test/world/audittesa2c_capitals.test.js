@@ -13,7 +13,7 @@ import { join } from 'node:path';
 import {
   CAPITALS, CAPITAL_BLOCK_INDEX, CAPITAL_RIM_M, CAPITAL_RIM_TILES, CAPITAL_NO_GROUND, CAPITAL_MODELS, BLOCK_M, CAPITAL_GATE_REACH, GATE_STEPS,
   capitalPortBlocks, inCapitalRim, onCapitalRing, capitalLakeName, capitalGardenName, spanSideBytes, capitalGates, capitalSpanPixels,
-  capitalDims, capitalSliceCarriers, capitalSliceMarkers, capitalCentre, tileCentre, synthesizeCapitalLocation, SOLITUDE,
+  capitalDims, capitalSliceCarriers, capitalSliceMarkers, capitalCentre, tileCentre, synthesizeCapitalLocation, SOLITUDE, capitalRimTiles,
 } from '../../src/world/tamrielCapitals.js';
 import { ALINOR, TORVAL, HELSTROM, FALINESTI, ALINOR_HARBOUR, TORVAL_DOCKS } from '../../src/world/capitalPlans.js';
 import { alinorTowers } from '../../src/world/capitalAlinor.js';
@@ -464,7 +464,7 @@ test('AUDIT TESA II C1/C2 with ARENA2: every capital meets the land round it lev
         if (own) inner = Math.max(inner, w); else outer = Math.max(outer, w);
         // DFU's rect on an outer side: its city's ground ends CAPITAL_RIM_TILES in
         const lim = { W: r.rect.xMin, E: 128 - r.rect.xMax, N: 128 - r.rect.yMax, S: r.rect.yMin }[side];
-        if (!own) assert.equal(lim, CAPITAL_RIM_TILES, `${cap.key} ${p.x},${p.y}: its ${side} rect`);
+        if (!own) assert.equal(lim, capitalRimTiles(cap), `${cap.key} ${p.x},${p.y}: its ${side} rect`);   // PIN MOVED (SOLITUDE-RELIEF): a relief's capital's its relief's band and a tile
       }
     }
     assert.ok(outer < 0.01 && inner < 0.01, `${cap.key}: its seams ${outer.toFixed(3)} m to its neighbours, ${inner.toFixed(3)} m inside`);

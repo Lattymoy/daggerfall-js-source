@@ -129,7 +129,7 @@ export const REGION_STEP_ROWS = 25;
  * (world/pastBayPlaces.js).
  * @param {{ region: ReturnType<typeof regionOf>, places: Array<{ x: number, y: number, type: number }>,
  *   nodes: Array<{ x: number, y: number, type: number }>, obstacles: Array<{ x: number, y: number }>,
- *   gates: Array<{ x: number, y: number, into: readonly number[] }>, held?: Array<{ x: number, y: number }>,
+ *   gates: Array<{ x: number, y: number, into: readonly number[], inside?: boolean }>, held?: Array<{ x: number, y: number }>,
  *   heightAt: (x: number, y: number) => number, dials?: object, trunks?: number[][][] }} o VOYAGER-CYRODIIL: `trunks` the named roads'
  *   legs (world/road/cyrodiilRoads.js planTrunkLegs), each [a, b] in Bay pixels
  * @returns {{ roads: Map<number, number>, tracks: Map<number, number>, land: ReturnType<typeof labelLand>, places: Array<{ x: number, y: number, type: number }>, stats: object }}
@@ -223,6 +223,9 @@ export function* tamrielRegionSteps({ region, places, nodes, obstacles, gates, h
     if (!roads.has(k)) continue;
     roads.set(k, /** @type {number} */ (roads.get(k)) | /** @type {number} */ (BIT_OF.get(`${g.into[0]},${g.into[1]}`)));
     gated++;
+    // SOLITUDE-RELIEF (world/tamrielCapitals.js capitalGates `inside`): and the step back out on the city's own byte, so the
+    // road is painted on through the city's rim to its own ground (world/road/roadPainter.js stops it at the city's rect)
+    if (g.inside) { const c = beyondKey(g.x + g.into[0], g.y + g.into[1]); roads.set(c, (roads.get(c) ?? 0) | /** @type {number} */ (BIT_OF.get(`${-g.into[0]},${-g.into[1]}`))); }
   }
   const standing = places.filter((p) => inCore(region, p.x, p.y) && !inBay(p.x, p.y) && !theirs.has(`${p.x},${p.y}`)).sort((a, b) => a.y - b.y || a.x - b.x);
   const trunkPath = (/** @type {any} */ (net.stats).trunkPath ?? []).map((v, k) => v + (k % 2 ? gy : gx));   // VOYAGER-CYRODIIL: the named roads' pixels, Bay pixels

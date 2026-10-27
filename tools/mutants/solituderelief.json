@@ -72,15 +72,6 @@
     ]
   },
   {
-    "name": "SR-ROAD-falls-past-the-gate",
-    "file": "src/world/solitudeRelief.js",
-    "old": "lo = i === L.length - 1 ? city : Math.min(city, Math.max(lo, southSlope(x, z)));",
-    "new": "lo = i === L.length - 1 ? city : southSlope(x, z);",
-    "tests": [
-      "test/world/solitude_relief.test.js"
-    ]
-  },
-  {
     "name": "SR-TILE-water-at-a-corner",
     "file": "src/world/solitudeRelief.js",
     "old": "  if (c.every((v) => v <= 1e-3)) return SOLITUDE_TILES.water;",
@@ -192,7 +183,7 @@
   {
     "name": "SR-CAP-gardens-grass-on-the-rock",
     "file": "src/world/tamrielCapitals.js",
-    "old": "closed: (dx, dz) => solitudeGroundTile(dx, dz, SOLITUDE_TILES.grass) !== SOLITUDE_TILES.grass }),",
+    "old": "closed: (dx, dz) => solitudeGardenTile(dx, dz) !== SOLITUDE_TILES.grass }),",
     "new": "closed: () => false }),",
     "tests": [
       "test/world/solitude_relief.test.js",
@@ -238,8 +229,8 @@
   {
     "name": "SR-SHAPE-cliffs-in-the-city",
     "file": "src/world/capitalSolitude.js",
-    "old": "      if (inCity(ax(x + 0.5), az(y + 0.5))) continue;",
-    "new": "      if (false && inCity(ax(x + 0.5), az(y + 0.5))) continue;",
+    "old": "      if (inCity(ax(x + 0.5), az(y + 0.5)) || onRoad(",
+    "new": "      if (false && inCity(ax(x + 0.5), az(y + 0.5)) || onRoad(",
     "tests": [
       "test/world/solitude_relief.test.js"
     ]
@@ -285,6 +276,132 @@
     "file": "src/world/witchesDecor.js",
     "old": "floor = floorAt ?? (() => floorY)",
     "new": "floor = (() => floorY)",
+    "tests": [
+      "test/world/solitude_relief.test.js"
+    ]
+  },
+  {
+    "name": "SR-ROAD-steeper-than-a-road",
+    "file": "src/world/solitudeRelief.js",
+    "old": "Math.min(city, Math.max(h, southSlope(x, z)), h + G.grade * Math.hypot(x - L[i - 1][0], z - L[i - 1][1]))",
+    "new": "Math.min(city, Math.max(h, southSlope(x, z)))",
+    "tests": [
+      "test/world/solitude_relief.test.js"
+    ]
+  },
+  {
+    "name": "SR-ROAD-into-the-gate-aslant",
+    "file": "src/world/solitudeRelief.js",
+    "old": "[SOLITUDE_MAIN_GATE.x, 444], [SOLITUDE_MAIN_GATE.x, SOLITUDE_MAIN_GATE.z - 3]]",
+    "new": "[SOLITUDE_MAIN_GATE.x + 8, 444], [SOLITUDE_MAIN_GATE.x, SOLITUDE_MAIN_GATE.z - 3]]",
+    "tests": [
+      "test/world/solitude_relief.test.js"
+    ]
+  },
+  {
+    "name": "SR-ROAD-off-the-country's-road",
+    "file": "src/world/solitudeRelief.js",
+    "old": "corners: Object.freeze([[204.8, 512], [204.8, 480],",
+    "new": "corners: Object.freeze([[204.8, 512], [214.8, 480],",
+    "tests": [
+      "test/world/solitude_relief.test.js"
+    ]
+  },
+  {
+    "name": "SR-ROAD-a-bend-a-corner",
+    "file": "src/world/solitudeRelief.js",
+    "old": "n = Math.max(1, Math.ceil(Math.abs(turn) / (Math.PI / 12)));",
+    "new": "n = 1;",
+    "tests": [
+      "test/world/solitude_relief.test.js"
+    ]
+  },
+  {
+    "name": "SR-ROAD-narrower-than-the-gate",
+    "file": "src/world/solitudeRelief.js",
+    "old": "  bend: 10, half: 5, shoulder: 12, grade: 0.16,",
+    "new": "  bend: 10, half: 4, shoulder: 12, grade: 0.16,",
+    "tests": [
+      "test/world/solitude_relief.test.js"
+    ]
+  },
+  {
+    "name": "SR-STEP-the-city's-unlaid",
+    "file": "src/world/tamrielRoads.js",
+    "old": "    if (g.inside) { const c",
+    "new": "    if (false && g.inside) { const c",
+    "tests": [
+      "test/world/solitude_relief.test.js"
+    ]
+  },
+  {
+    "name": "SR-STEP-never-asked",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "...(cap.relief && t === 0 ? { inside: true } : {})",
+    "new": "...({})",
+    "tests": [
+      "test/world/solitude_relief.test.js"
+    ]
+  },
+  {
+    "name": "SR-STEP-a-gate-far-out",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "...(cap.relief && t === 0 ? { inside: true } : {})",
+    "new": "...(cap.relief ? { inside: true } : {})",
+    "tests": [
+      "test/world/solitude_relief.test.js"
+    ]
+  },
+  {
+    "name": "SR-RIM-daggerfall's",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "    rimTiles: SOLITUDE_EDGE_BAND + 1,",
+    "new": "    rimTiles: undefined,",
+    "tests": [
+      "test/world/solitude_relief.test.js"
+    ]
+  },
+  {
+    "name": "SR-RIM-the-location's-daggerfall's",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "rim: Object.freeze({ W: sx === 0 ? capitalRimTiles(cap) : 0,",
+    "new": "rim: Object.freeze({ W: sx === 0 ? CAPITAL_RIM_TILES : 0,",
+    "tests": [
+      "test/world/solitude_relief.test.js"
+    ]
+  },
+  {
+    "name": "SR-GARDEN-trees-on-the-road",
+    "file": "src/world/tamrielCapitals.js",
+    "old": "(gateRoadAt(dx, dz).d <= SOLITUDE_GATE_ROAD.half + 1 ? SOLITUDE_TILES.stone :",
+    "new": "(false ? SOLITUDE_TILES.stone :",
+    "tests": [
+      "test/world/solitude_relief.test.js"
+    ]
+  },
+  {
+    "name": "SR-SHAPE-rock-on-the-road's-banks",
+    "file": "src/world/capitalSolitude.js",
+    "old": "inCity(ax(x + 0.5), az(y + 0.5)) || onRoad(ax(x + 0.5), az(y + 0.5))) continue;",
+    "new": "inCity(ax(x + 0.5), az(y + 0.5))) continue;",
+    "tests": [
+      "test/world/solitude_relief.test.js"
+    ]
+  },
+  {
+    "name": "SR-SHAPE-the-paving-flat-across",
+    "file": "src/world/capitalSolitude.js",
+    "old": "const ACROSS = 4;",
+    "new": "const ACROSS = 1;",
+    "tests": [
+      "test/world/solitude_relief.test.js"
+    ]
+  },
+  {
+    "name": "SR-SHAPE-the-paving-on-the-relief",
+    "file": "src/world/capitalSolitude.js",
+    "old": "return [x, levelY(D.at(x, z)) + 0.1, z]; };",
+    "new": "return [x, levelY(solitudeHeight(x, z)) + 0.1, z]; };",
     "tests": [
       "test/world/solitude_relief.test.js"
     ]

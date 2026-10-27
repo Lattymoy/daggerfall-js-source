@@ -2287,10 +2287,25 @@ the sea at any point of its pixel, in its anchor's metres - x east, z south):
   gate - a ledge west along the cliff face from the gate's landing (52 m to 34 m), a hairpin landing, and a causeway back
   east to the quay's east end (34 m to 2.4 m, a road's grade). Each deck lies between two rows of the terrain's samples,
   so the ground under a deck is the deck.
-- **The south** (`southSlope`, `SOLITUDE_GATE_ROAD`): the land below the main gate falls to the country's own height
-  (`SOLITUDE_SOUTH_EDGE`, measured), and the Gate Road climbs it from where the country's road meets the pixel - east
-  and up across the slope, a bend under the wall's south-east, back west at the gate's level (cut into the castle's
-  slope) to the main gate. It never falls toward the gate and is flat across.
+- **The south** (`southSlope`): the land below the main gate falls to the country's own height (`SOLITUDE_SOUTH_EDGE`,
+  measured).
+- **The Gate Road** (`SOLITUDE_GATE_ROAD`, `gateRoadLine`, `gateRoadPoints`): the country's road on to the main gate
+  (`SOLITUDE_MAIN_GATE`, the one home of the gate's place - `SOLITUDE.wall.southGate` reads it). The roads past the Bay
+  end at the pixel's south edge's middle: the gate pixel's step north (`world/tamrielRoads.js`), and now the city's own
+  step south too (`capitalGates`' `inside`, for a capital on a relief whose gate is its neighbour), so the country's road
+  is painted on through the city's rim. Solitude's rim is its relief's band and a tile (`rimTiles`, 4 tiles, where
+  Daggerfall's is 11): the land's own tiles and the country's road there, the city's own ground past it - no tree of the
+  land's stands on its road or its cliffs. From there the Gate Road runs on north as the road came, out past the band,
+  bends east along the foot of the slope and climbs under the walls, north below the wall's south-east up to the gate's
+  level, west under the wall, and north onto the gate's own line: its last straight run square into the gate, the
+  gate's width (10 m), on through its passage. Each bend an arc of 10 m radius; its heights the slope's own, never
+  falling, never steeper than 0.16 (cut up to 3.7 m into the slope where the slope runs ahead of it), the gate's level
+  at the most - the last run a raised approach up to 6.6 m over the slope, its parapet along it. Flat across over its
+  width, the slope meeting it over a 12 m bank.
+  WHAT STOOD before (the owner, 2026-10-27: *"Im noticing in your probe the gate doesnt line up with the road. I thought
+  this was fixed"*): the road came along the wall to the gate aslant, the cliffs' rock stood on its cut banks as ridges in
+  front of the gate, its paving lay on the relief's own heights (under the drawn ground where the terrain's cells crease),
+  and 25 m of grass lay between the country's road's end and the paving's start.
 - **Castle Dour's crag** (`SOLITUDE_CRAG`): its yard on the upper tier, a ramp inside its west gate from the lane up to it.
   **The lane's stair** (`SOLITUDE_LANE`) climbs from the gate's lane to Castle Dour's north court; its ends lie on the
   terrain's sample rows, so the drawn ground under it is a straight ramp and every tread stands on it.
@@ -2330,8 +2345,11 @@ than 3 m over its marker.
   with the door, the square tower with its blue spire and gilt finial (the city's highest point), round turrets.
 - **The walls** on their tiers, their feet sunk into the cliffs they stand on (`cliffSink`: 22 m north, 14 m west): the
   north and east and the west's upper reach on the upper tier, the west's lower reach and the south's as far as the
-  lane's spur on the Well District's, a tower where a run steps; the main gate's gatehouse storey; the Gate Road paved with
-  a low wall wherever the slope falls more than a man's height below it.
+  lane's spur on the Well District's, a tower where a run steps (the main gate's east tower is the step at the spur: on
+  the upper tier, its foot down to the lane); the main gate's gatehouse storey; the Gate Road paved on the ground the
+  terrain draws (`solitudeDrawn`: the relief at the terrain's own vertices, its cells cut as the terrain cuts them),
+  four strips either side of its line so it bends with the ground's creases, a low wall wherever the ground falls more
+  than a man's height below its edge.
 - **Castle Dour** on the upper tier: its west gate at the lane's level with the ramp inside, its north gate level with the
   upper tier's court, a plinth and a walk inside its west curtain.
 - **The docks**: a kerb along the quay's edge, two piers out over the sea with posts and bollards, the East Empire
@@ -2345,7 +2363,8 @@ than 3 m over its marker.
 - **The cliffs' rock** (`buildSolitudeCliffs`, a new model 910115): over every steep cell of the terrain outside the walls
   (`CLIFF_STEEP`, 3.2 m across a cell), drawn on the terrain's own triangles and stood off along the ground's normal -
   its strata bulging where every cell round a vertex is the cliff's, meeting the level ground at its lip, plunging under
-  the sea at its foot; the Docks Way's battered masonry inside the docks' square. A cell clear of the pixel's edge band.
+  the sea at its foot; the Docks Way's battered masonry inside the docks' square. A cell clear of the pixel's edge band,
+  never on the Gate Road's banks, and never on a lone steep cell (fewer than two steep neighbours: a bank's foot).
 
 **The harbour.** Solitude's shipyard and lighthouse (BAY-LEFT-SEA, `world/portSites.js`) now stand on the quay at the
 water under the north cliff, the west end of the docks' shelf - every corner of their footprints at 2.4 m on the
@@ -2358,14 +2377,15 @@ Daggerfall blocks' ponds on their tiers; the thirteen upper blocks (ALCH, ARMR, 
 MAGE, RESI x2, TEMP, TVRN) lifted; seams to the neighbours 0.00 m. The composition from the picture's own view - the city
 on its rock to the left, the arch and the palace on its stack to the right over the Karth, the sea behind - matches.
 
-Pins: `test/world/solitude_relief.test.js` (18: the relief's tiers, cliffs, docks and decks; the Gate Road and the south
-slope; the pixel's ground from the relief and the terrain job laying it; its tiles and its lake blocks; its blocks'
+Pins: `test/world/solitude_relief.test.js` (19: the relief's tiers, cliffs, docks and decks; the Gate Road from the
+country's road's end square into the gate, and the south slope; the country's road's step into the city and its rim,
+the paving on the drawn ground across its width, the road's banks no rock; the pixel's ground from the relief and the terrain job laying it; its tiles and its lake blocks; its blocks'
 lifts; its markers' heights; the arch, the stack and the palace; the walls on their tiers and their gates; Castle Dour;
 the docks; the terraces' stairs walkable; the cliffs' rock over the drawn ground and never inside the walls; the walk
 grid shut on the works; the fabric's lift; the festival's floor; the hosts' wiring; and with ARENA2 the city on the
 freeware - its streets, quay and the Karth at their heights, its own water on the relief's sea, Daggerfall's ponds on
 their tiers, the terraces' stairs and heads clear of every block's houses, its thirteen blocks lifted). Mutants
-`tools/mutants/solituderelief.json` (32, all dead); the 27 records this change's lines moved re-aimed by content and all
+`tools/mutants/solituderelief.json` (45, all dead); the 29 records this change's lines moved re-aimed by content and all
 dead again (`audittesa.json`, `audittesa2c.json`, `fb1003b_trees.json`, `hearth1.json`, `natureground.json`, `tesa10.json`,
 `tesalore.json`, `townfollow.json`, `urban.json`, `witch1.json`, `ww7.json`). Two of them found the parapets of the
 terraces and of the palace terrace built from the ground, their faces doubled on the walls' (they stand on the tops now).
