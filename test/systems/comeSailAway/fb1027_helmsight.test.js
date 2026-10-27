@@ -51,7 +51,10 @@ test('HELM-SIGHT: a landing that succeeds lets the helm go from afar - a ship it
   const px = { X: 10, Y: 20 };
   s.deps.currentMapPixel = () => ({ ...px });
   const boat = s.helm(s.place(4, 0));
-  boat.packable = false;   // her deed not in the pack: she stays where she lies
+  // AUDIT HELM-SIGHT C1: as the game mints her - crewed and packable, placed by her deed (its UID on her, takePlaceItem)
+  // and that deed not in the pack, so PackBoat refuses her and she stays where she lies
+  boat.uid = 7;
+  assert.deepEqual([boat.crewed, boat.packable], [true, true]);
   s.frame();
   s.rt.ToggleSails();
   for (let i = 0; i < 8; i++) s.frame();
@@ -59,6 +62,7 @@ test('HELM-SIGHT: a landing that succeeds lets the helm go from afar - a ship it
   s.rt.OnWorldReanchored([0, 0, 0]);
   s.rt.OnPreFastTravel();   // world.js fastTravelTo: the landing is sure
   assert.equal(s.rt.isSailing(), false);
+  assert.ok(s.rt.AllBoats.includes(boat), 'not packed: her deed is not in the pack');
   assert.deepEqual(boat.MapPixel, { X: 10, Y: 20 }, 'her own pixel, not the landing\'s');
   assert.equal(boat.GameObject.activeSelf, false, 'hidden from the landing');
   assert.equal(boat.AudioSourceSlow.isPlaying, false, 'her loop silent');

@@ -1017,7 +1017,7 @@ export function createComeSailAwayRuntime(deps) {
     state.TurnTarget = 0;
     state.lastWeight = 0;
     helmHanded = null;   // AUDIT NAV2 F14: the next helm takes the Ship handling as it stands then
-    // HELM-SIGHT: let go from a jump's landing (OnWorldReanchored), she keeps her own pixel and is hidden there
+    // HELM-SIGHT: let go from a jump's landing (OnWorldReanchored), she keeps her own pixel and is shown or hidden for it
     const afar = !!boat.helmAfar;
     boat.helmAfar = false;
     if (!afar) boat.MapPixel = deps.currentMapPixel();
@@ -2791,9 +2791,10 @@ export function createComeSailAwayRuntime(deps) {
       if (ridesTheWorld(boat)) shiftBoat(boat, offset);
       // HELM-SIGHT (FIELD BUGS 2026-10-27): a party's journey holds the helm until its landing is sure. Hidden and shown
       // again, her sails' Animators started over stowed under a helm that read them set, and she made no way under sail.
-      // She stays in sight; a helm let go from afar hides her then (stopSailingHead).
-      if (boat !== state.CurrentBoat) UpdateBoatVisibilityOf(boat);
-      else boat.helmAfar = boat.MapPixel != null && pixelsApart(deps.currentMapPixel(), boat.MapPixel) > 1;
+      // She stays in sight; a helm let go from afar asks her sight then (stopSailingHead). AUDIT HELM-SIGHT A3: a disembark in
+      // flight is a helm let go. A2: afar is any pixel but hers - one off, the let-go had stamped the landing's on her.
+      if (boat !== state.CurrentBoat || state.disembarking != null) UpdateBoatVisibilityOf(boat);
+      else boat.helmAfar = boat.MapPixel != null && pixelsApart(deps.currentMapPixel(), boat.MapPixel) > 0;
     }
   }
   /** OnPositionUpdateBoat (2012-2064): the boat's root moved by the offset, the wake stopped and its living particles

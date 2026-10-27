@@ -780,6 +780,12 @@ boat is gone ends at its next turn raising nothing, as Unity's destroyed
 transform ends the coroutine (AUDIT PRE-MERGE 0928 S1). The lantern key
 lights or douses the lanterns.
 
+HELM-SIGHT (2026-10-27, `01-Overview/bugs/Field-Bugs-2026-10-27.md`, read cold by
+`01-Overview/audits/Audit-Helm-Sight.md`) departs from StopSailing for a helm let
+go from another pixel than hers: a party's journey lets it go from its landing.
+Her own pixel stays on her, where the C# stamps the player's, and her visibility
+is asked for it (`stopSailingHead`).
+
 ### The collision and the beach
 
 CheckCollision sweeps the hull collider's half-beam (sharedMesh.bounds

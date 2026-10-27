@@ -56,8 +56,8 @@
   {
     "name": "FIELD-CSA1-reanchor-no-visibility",
     "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "      if (boat !== state.CurrentBoat) UpdateBoatVisibilityOf(boat);",
-    "new": "      if (boat !== state.CurrentBoat) {}",
+    "old": "      if (boat !== state.CurrentBoat || state.disembarking != null) UpdateBoatVisibilityOf(boat);",
+    "new": "      if (boat !== state.CurrentBoat || state.disembarking != null) {}",
     "tests": [
       "test/systems/comeSailAway/csa_placing.test.js"
     ]
