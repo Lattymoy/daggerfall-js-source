@@ -61,7 +61,8 @@ Every finding below is fixed, pinned and recorded where its system lives.
 - **S8, the rest.** 27 entries stayed over: pages and files the merges filled from both sides, and text written since
   the law (the tally's three new clauses, S2's paragraph, PORT-SHIPS' header). Each is within the law now - comment
   blocks tightened, this branch's long paragraphs split at a sentence's end, the tally's new clauses a list of their
-  own - and the baseline lowered.
+  own - and the baseline lowered. Two of those files are the relay's (`server/src/index.js`, `net/townSeatLaw.js`), so
+  world274, unpublished, is re-hashed (`test/net/relayversion.test.js`).
 - **S9 - CAUSEWAY and the window planner** (`test/world/worldWide/ww7_cross.test.js`). Main's RPT1026-WORLD CAUSEWAY (a
   road over the water is the road's, `travelRoute.js` pavedStep) let the planner walk the water band the test laid
   across a road - right, by the law. The band lies across a track now (a ford, never paved), and the road's crossing
@@ -69,6 +70,12 @@ Every finding below is fixed, pinned and recorded where its system lives.
 - **S10 - the film's set** (the third merge). INTRO4's set (`ui/intro/set/`, the city the film was shot on) declared its
   own `CAPITAL_ARCHIVE = 38400`, a second owner of the game's registered number (`world/eliteGates/pseudoArchives.js`);
   it takes the game's now. Its directory has its Code Map row (`Code-Map.md`).
+- **S11 - R2-5's nearest Mages Guild, after IC-STAIRS** (ARENA2, `auditrelease_r25_freeware.test.js`; bisected to
+  IC-STAIRS, `13b8bcc1fa` - IC-PROPS, IC-INTERIORS and IC-STUTTER pass alone). The quest's site was right: the nearest
+  slice whose index holds a Mages Guild hall, quarter 34 of the Elven Gardens. The pin searched again after the quest had
+  started, and the search leaves out a building a quest holds (Place.cs's IsBuildingAssigned); IC-STAIRS' doors left
+  that quarter one hall, so the pin walked on past it. Re-aimed: the site's own slice gives its kind by holding it, and a
+  nearer slice with a free hall still fails it.
 
 ## Lane 1 - the last audit's pins
 

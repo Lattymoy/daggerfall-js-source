@@ -143,10 +143,12 @@ test('R2-5 with ARENA2: a Fighters Guild, a Mages Guild, a temple, a social give
         const sd = place.siteDetails, p = sd.worldPixel;
         assert.equal(sliceQuestName(p.x, p.y), sd.locationName, `${name} ${place.symbol.name}: a slice of the city, under its quest name`);
         // the first slice, nearest the centre first, whose own search gives the site's kind (the order itself is pinned on
-        // its fixture: auditrelease_r25.test.js R2-5c)
+        // its fixture: auditrelease_r25.test.js R2-5c). PIN MOVED (AUDIT SHIP-READY S11): the search leaves out a building a
+        // quest holds (_isBuildingAssigned, Place.cs's), this quest's own site among them, so the site's slice gives its kind
+        // by holding it - IC-STAIRS' doors left quarter 34 one Mages Guild hall, and the search walked on past it
         const law = place.declaredSiteLaw();
         let first = null;
-        for (const sl of L.questWorld.capitalSlicesNear(L.questWorld.currentLocation())) if (place._searchTownSites(L.questWorld, sl, law.p2, law.p3).found.length) { first = sl; break; }
+        for (const sl of L.questWorld.capitalSlicesNear(L.questWorld.currentLocation())) if (sl.mapTableData.mapId === sd.mapId || place._searchTownSites(L.questWorld, sl, law.p2, law.p3).found.length) { first = sl; break; }
         assert.equal(first?.mapTableData.mapId, sd.mapId, `${name} ${place.symbol.name}: the nearest slice that gives its kind (${p.x},${p.y})`);
         assert.equal(L.questWorld.maps.getLocationByName(sd.regionName, sd.locationName)?.mapTableData.mapId, sd.mapId, `${sd.locationName}: found by its name`);
         assert.ok(place.siteBuilding(L.questWorld), `${sd.locationName}: its building stands`);
