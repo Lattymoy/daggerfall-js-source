@@ -39,6 +39,8 @@ const STATIONS = [
   ['terraces', 160, 300, 70, 0, -22],
   ['lane-stair', 318, 300, 49, 0, 4],
   ['gate-road', 330, 560, 'ground', 0, 4],
+  ['gate-front', 318.4, 470, 62, 0, -12],   // the main gate from its road
+  ['gate-air', 300, 455, 260, 0, -89],
   ['gate-street', 318, 360, 'ground', 0, 1],
   ['avenues', 330, -30, 'ground', -90, 2],
   ['palace-court', 40, 0, 'ground', -90, 4],
