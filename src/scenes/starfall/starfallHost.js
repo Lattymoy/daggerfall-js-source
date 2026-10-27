@@ -67,6 +67,7 @@ import { playerEntity } from '../../characters/playerEntity.js';
 import { audio as defaultAudio } from '../../systems/audio.js';
 import { betterAmbience } from '../../systems/betterAmbience.js';
 import { trs } from '../../world/mat4.js';
+import { setEventGround } from '../../systems/eventGround.js';   // RPT1026-EVENTS GATE-WAY: a fallen star's heart an event's ground
 
 /** The crater and its stone are built for a player this near (beyond it the beacon and the sky alone). */
 export const STAR_BUILD_M = 1500;
@@ -183,6 +184,9 @@ export function createStarfallHost(host) {
   const nights = new Map();
   /** starHeldKey -> the star's own record on this screen (made as it comes into its omen, let go when it is gone) */
   const stars = new Map();
+  // RPT1026-EVENTS GATE-WAY (systems/eventGround.js): a star falling or fallen is an event's ground about its heart, as a gate's
+  // foot is - its coven's ring and the ground its defenders run across
+  setEventGround('star', () => { const out = []; for (const S of stars.values()) if (S.phase === 'streak' || S.phase === 'fallen') out.push(S.heart); return out; });
   /** starHeldKey -> the cell's last word of it (`st`), and when it came */
   const ledgers = new Map();
   /** starHeldKey -> the hub's word of a hold: `{ top, c, at }` */

@@ -708,8 +708,9 @@ export async function fulfilCommission(ctx, player, env, { character, region, co
         AND COALESCE((SELECT balance FROM marks WHERE account = ?2), 0) + ?10 <= ?11`)
       .bind(id, me, nowS, provenance, character, tax, rid, nonce, region, pay, MARKS_MAX),
     mustChange(db),   // INT19: no fill, no piece out of the record - the record's step rolls back with it
-    // the piece the poster's, on its way to them at once (a delivery, PROF5's)
-    db.prepare(`UPDATE products SET credited = 0, owner = (SELECT poster FROM commissions WHERE id = ?1 AND fn = ?2), listed = 0, bought_with = 'marks'
+    // the piece the poster's, on its way to them at once (a delivery, PROF5's) - RPT1026-LEDGERLAW: the craft's record its
+    // owner's again, whoever the service last handed it to (ledger.js CRAFT_RECORD_SQL)
+    db.prepare(`UPDATE products SET credited = 0, owner = (SELECT poster FROM commissions WHERE id = ?1 AND fn = ?2), listed = 0, bought_with = 'marks', handed_to = NULL
       WHERE provenance = (SELECT provenance FROM commissions WHERE id = ?1 AND fn = ?2)`).bind(id, nonce),   // GOLD-MARKET: bought with Drakes
     db.prepare(`INSERT OR IGNORE INTO market_deliveries (id, player, char_id, provenance, wear, why, from_region, arrives_at, at)
       SELECT id, poster, poster_char, provenance, ?3, 'bought', region, ?4, ?4 FROM commissions WHERE id = ?1 AND fn = ?2`).bind(id, nonce, WEAR_WHOLE, nowS),

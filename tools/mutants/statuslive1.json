@@ -104,7 +104,7 @@
     "new": "    get uiOverlayActive() { return !!interiorOverlay; },",
     "tests": ["test/ui/statuslive.test.js"] },
   { "name": "the-dungeon-frame-never-paints-a-non-pausing-occupant", "file": "src/scenes/worldModes.js",
-    "old": "      if (dungeonCtx.unpausedOverlay) { dungeonCtx.tickOverlay(dt); dungeonCtx.drawOverlay(canvas); }",
+    "old": "      if (dungeonCtx.unpausedOverlay || dungeonCtx.uiOverlayActive) { dungeonCtx.tickOverlay(dt); dungeonCtx.drawOverlay(canvas); }",
     "new": "",
     "tests": ["test/ui/statuslive.test.js"] },
   { "name": "the-standalone-dungeon-never-paints-a-non-pausing-occupant", "file": "src/scenes/dungeon.js",

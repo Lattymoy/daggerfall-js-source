@@ -129,7 +129,9 @@ and every client door asks it of its targets, a guild by the tags the relay stam
 engine's marks reach fair players through the duel's own arms (each falls through to the zone when no duel or battle
 stands). Underground the dungeon's own swing takes a fair player in reach, in view and in sight before any foe
 (`dungeonContext.js:"function resolvePlayerHit"` resolvePlayerHit, over the host's `wildBodies`/`wildStrike`), and its
-cast engine's marks are the fair players (`wildSpellMarks`/`wildSpellOut`); no arrow is aimed at a player there. The
+cast engine's marks are the fair players (`wildSpellMarks`/`wildSpellOut`) - asked at the cast since RPT1026-FIGHTS
+HALL-SPELLS (2026-10-26: the seam had been chosen at the build, the world host hands every dungeon the arena's door, and
+no spell met a player underground until then; `06-Systems/Integrity-Arc.md` INT10); no arrow is aimed at a player there. The
 striker whose blow felled a fighter is its killer (the referee's word). Inside buildings
 there is no player fighting: the zone's danger there is its foes.
 
@@ -464,7 +466,7 @@ renumbered past main's SUPER-DUNGEONS (world176) - its parts written on their br
   before the receipts a socket is owed; an older client drops the kind. A fall receipt signed with its fallen gone from
   the room carries `g` 1. Deploy the account service first (an older one holds a `g` fall's killer to the grace - the
   killer's tab then asks again past it, `wildSeizeHost.js:"a?.error === 'grace'"`), then the relay, then the site.
-  WILD-REMAINS-LOSS (world272 - world265 to world271 on its branch, renumbered past GATE-COURTS, AUDIT KETCH II, KETCH-WORDS, NIRNROOT-SAGE, BOW-TOPS, CHAT-POST and MASTER-THREE at the merges - account acct198, acct193 to acct196 on its branch): the remains order's `wnm`, the fallen character's name (section 5) -
+  WILD-REMAINS-LOSS (world273 - world265 to world272 on its branch, renumbered past GATE-COURTS, AUDIT KETCH II, KETCH-WORDS, NIRNROOT-SAGE, BOW-TOPS, CHAT-POST, MASTER-THREE and FIELD BUGS 2026-10-26r at the merges - account acct199, acct193 to acct198 on its branch): the remains order's `wnm`, the fallen character's name (section 5) -
   an older relay ignores it; deploy the account service first.
   PVP-LOOT (world205 - world201 on its branch, one bump past main's world201 and world202 at the merge, and world203 on the integration, renumbered past main's world203 and world204 at the merge of main): the room's take asks the friend law of the drop's records alone (section 5); a guildmate is kin
   at the referee (section 3); and the two-phase handoff (section 4) - the order's `we`
@@ -696,6 +698,15 @@ half health", "everyone in the zone should see the same ... that the big giant i
   `wildGiants.js:"export const WILD_GIANT_LOW_SHARE"`), and a giant stood in the world stands on the flattest open
   spot within 160 m of its place - no slope over ~22 degrees, no crest, never the water, never outside the zone
   (`giantFieldSpot`, `world.js:"const giantFieldSpot"`).
+- GIANT-ROCK (RPT1026-MISC, 2026-10-26, a private report, the second sighting: giants standing inside the rocks): the field was the
+  height map's alone, and the mountains' rocks (World of Daggerfall's landform pieces, a mesh each in the world collider)
+  stand on flat ground as often as not - a Greater Giant, four times a man, and the ten its call brings were stood inside
+  them. A spot is asked of the collider now: refused where a solid's face lies within `GIANT_CLEAR_R` (2.5 m) of the
+  giant's lower body (`GIANT_CLEAR_LIFT`, 3 m over its feet - the collider's open-space test, `sphereOverlaps`, as a foe
+  placed freely is), or where that body is inside a solid whose faces are all farther off (`insideSolid` - a rock scaled
+  up holds a giant with no face near) - `wildGiants.js:"export function giantGroundBlocked"`, asked by `giantFieldSpot`
+  and by the call's ring (`world.js:"const greaterGiantCall"`). Pinned by `test/systems/wild/rpt1026_misc_giants.test.js`
+  (2, the real Collider with a rock filed as the pixel build files one); `tools/mutants/rpt1026_misc.json` (3).
 - GIANT-LEASH (the owner: "giant should not be able to walk out of the zone"): every waypoint is one it can walk to in
   a straight line inside the zone (GIANT-LEASH2 - a bay in the border is walked round, never across), a line that cuts
   the edge holds it at the nearer waypoint, and a giant stood in the world that steps over the edge is put back where
@@ -861,7 +872,7 @@ each is a line here, findable by its tag.
 - REST-WARN (the owner: "Poison/Disease warning on rest, there should be one for when you attempt to rest"): a rest
   begun while a poison or a plain disease works asks first - "You are poisoned." / "Resting will not cure it." / "Rest
   anyway?" (`restAilmentLines`, `restWarning.js:"export function restAilmentLines"`; `src/systems/rest/restWarning.js`),
-  the rest window opening on its Yes once the box has left the slot (`world.js:"const restNow = ()"`). Wired in all
+  the rest window opening on its Yes once the box has left the slot (`world.js:"const bed = _restFromBed, restNow = ()"` - AUDIT RPT1026 L3: with the bed's press read as the toggle runs). Wired in all
   four hosts' rests - the street's, the interior's, the dungeon's and the fixed city's (world.js, worldModes.js,
   dungeonContext.js, exterior.js; the last left out by the patch and wired after it, 2026-10-08, THE FOUR HOSTS RULE -
   `test/systems/pvpdungeons_game.test.js` sweeps all four). REST-WARN2 (the owner: "those are not enhanced

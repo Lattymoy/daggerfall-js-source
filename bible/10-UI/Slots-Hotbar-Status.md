@@ -123,7 +123,14 @@ cutter now tells every screen that waited on it (`sheetCutUrl`'s `onReady`).
 - a consumable used, a weapon readied, a light lit, a shield strapped on - as before;
 - a piece a slot of the body takes - armour, clothing, jewellery, a gem's crystal (the equip table's own answer) - is
   WORN: put on, or taken off when it is on, in its own words ("You put on your Steel Cuirass." / "You take off...";
-  a shield keeps SHIELD1's), the equip delay billed as the swap bills it, broken and forbidden refused;
+  a shield keeps SHIELD1's), the equip delay billed as the swap bills it, broken and forbidden refused - UNLESS it
+  carries Cast When Used (RPT1026-PROGRESS, 2026-10-26, a private report: a jewel's power slotted on the
+  bar only put the jewel on or took it off): such a piece is USED, the pack's Use, which casts it as DFU's UseItem does
+  (its enchanted arm, DoItemEnchantmentPayloads(Used)) - a slot saved as worn before the change asks the piece at the
+  press (`quickslots.js` hotbarKindOf, hotbarPress); a Cast When Held piece is still worn, and a weapon and a shield
+  keep their own arms. AUDIT RPT1026 F2 (2026-10-27): a piece whose wearing is worth something too - its armour, or
+  another power beside the Cast When Used (a Warlock's Ring, a Lord's Mail) - keeps its worn slot: the press puts it
+  on, and casts once it is on (`quickslots.js` wornForMore);
 - everything else is USED through the host's own quick use, which is the pack's Use: a book OPENED in the reader, the
   spellbook item opening the book, a map read, food eaten, a tent or a fire placed on the host's ground - every host
   (`scenes/world.js`, `exterior.js`, `dungeonContext.js`) now hands its quick use the pack's three window doors, one bag

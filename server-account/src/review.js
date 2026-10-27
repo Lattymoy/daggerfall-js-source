@@ -9,8 +9,12 @@
 //                            AUTO-HOLD: no hold waits on this tool to lift; staff's own aside, each lifts on its own)
 //   /v1/mod/realm-findings   one character's findings and its wealth by the hour
 //   /v1/mod/realm-clear      lift a hold (its strikes and timed holds with it), clear a flag - and the law's finding standing is EXCUSED
-//                            (`law_excused`: staff judged it wrong, and the same signature holds nothing again; a new
-//                            one does), the budget's bucket full again
+//                            (`law_excused`: staff judged it wrong, and the same finding holds nothing again; a new
+//                            one does), the budget's bucket full again. RPT1026-LEDGERLAW: the excuse is of the state
+//                            the law found - the same pieces, and the same purse, bank, level, attributes and skills
+//                            (verdict.js lawExcused): a purse that moves holds again, and the first checkpoint the law
+//                            finds nothing in ends the excuse of a purse, bank, level, attribute or skill (a piece's
+//                            stands - AUDIT RPT1026 C2). A purse a wrapped sale left below nothing is PURSE-MEND's (`mend`)
 //   /v1/mod/realm-hold       hold a character's trade by hand ('staff')
 //   /v1/mod/realm-rollback   the character back to its last checkpoint judged clean (kept by checkpointRealm), its seat
 //                            taken from any tab (the lease cleared - the next join loads the clean save). Never past a
@@ -201,10 +205,13 @@ export async function reviewAct(ctx, player, env, act, body = {}) {
   }
   if (act === 'clear') {
     // the hold lifted, the flag cleared, the law's standing finding excused (judged by a person and found wrong - the
-    // same signature holds nothing again, a new one does), the bucket full again (null: the next judgement fills it)
+    // same finding holds nothing again, a new one does), the bucket full again (null: the next judgement fills it).
+    // RPT1026-LEDGERLAW: excused with the values the law found it on (verdict.js lawExcuseOf - the signature names a
+    // character finding by its code alone, and `law_sig` alone excused every purse after a negative one)
     await db.batch([
-      db.prepare('UPDATE realm_characters SET held = NULL, held_at = NULL, held_until = NULL, strikes = 0, law_holds = 0, law_at = NULL, review = NULL, law_excused = law_sig, allowance = NULL, judge_rev = judge_rev + 1 WHERE id = ?').bind(row.id),
-      staffFinding(db, row, nowS, { act: 'clear', by, note, was: row.held, review: row.review, excused: row.law_sig ?? null }),
+      db.prepare(`UPDATE realm_characters SET held = NULL, held_at = NULL, held_until = NULL, strikes = 0, law_holds = 0, law_at = NULL, review = NULL,
+        law_excused = CASE WHEN law_v IS NULL THEN law_sig ELSE law_sig || '|' || law_v END, allowance = NULL, judge_rev = judge_rev + 1 WHERE id = ?`).bind(row.id),
+      staffFinding(db, row, nowS, { act: 'clear', by, note, was: row.held, review: row.review, excused: row.law_sig ?? null, ...(row.law_v != null ? { values: row.law_v } : {}) }),
     ]);
     return { ok: true };
   }

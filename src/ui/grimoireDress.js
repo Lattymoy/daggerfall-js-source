@@ -1705,7 +1705,7 @@ export function rosterCss() {
 
 /* THE FRONT DOOR - the pack's desk, its book open, and the doors written on its two pages in ink, the way the pack's
    own chooser writes "Would you like to:" - no stack of presses down the middle of the screen. */
-${G} .px-home:not(.px-over):not(.lv-sky) { --gbw: ${px(320, 'gd')}; --gbh: ${px(200, 'gd')};
+${G} .px-home:not(.px-over):not(.lv-sky):not(.px-title) { --gbw: ${px(320, 'gd')}; --gbh: ${px(200, 'gd')};
   --gbx: calc((100vw - var(--gbw)) / 2); --gby: calc((100vh - var(--gbh)) / 2); background: #120a05; }
 /* GRIM6 (Dudey: "the background around the book looks too pixelated washed out"): the desk is the pack's own painting at
    ITS resolution, drawn smooth, never the game-grid cut blown up pixel by pixel; it stands where GRIM3 set it.
@@ -1716,58 +1716,58 @@ ${G} .px-home:not(.px-over):not(.lv-sky) { --gbw: ${px(320, 'gd')}; --gbh: ${px(
    looks like i have not glasses on") */
 /* DESK-HD: the detailed desk (ui/grimoireArt.js grimoireDeskUrl), its room's dark edges already in it - so no
    vignette is laid over it again; the pack's BIOG00I0 stands under it, seen only if the painting cannot load */
-${G} .px-home:not(.px-over):not(.lv-sky)::before { content: ''; position: absolute; inset: 0; pointer-events: none;
+${G} .px-home:not(.px-over):not(.lv-sky):not(.px-title)::before { content: ''; position: absolute; inset: 0; pointer-events: none;
   background: url("${grimoireDeskUrl()}") var(--gbx) var(--gby) / var(--gbw) var(--gbh) no-repeat,
     url("${grimoireImg('BIOG00I0')}") var(--gbx) var(--gby) / var(--gbw) var(--gbh) no-repeat; image-rendering: auto; }
-${G}[data-grim-backdrop="map"] .px-home:not(.px-over):not(.lv-sky)::before { background: radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0) 35%, rgba(0,0,0,0.6) 100%),
+${G}[data-grim-backdrop="map"] .px-home:not(.px-over):not(.lv-sky):not(.px-title)::before { background: radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0) 35%, rgba(0,0,0,0.6) 100%),
   url("${grimoireImg('TMAP00I0')}") center / cover no-repeat; }
-${G} .px-home:not(.px-over):not(.lv-sky) .px-rule { display: none; }
+${G} .px-home:not(.px-over):not(.lv-sky):not(.px-title) .px-rule { display: none; }
 @media ${BOOK_MQ} {
-  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) > .px-stage:not(.px-acctstage) { display: block; padding: 0; }
-  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-wordmark { position: absolute; left: 50%; top: max(4px, calc(var(--gby) + var(--gbh) * 0.005));
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky):not(.px-title) > .px-stage:not(.px-acctstage) { display: block; padding: 0; }
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky):not(.px-title) .px-wordmark { position: absolute; left: 50%; top: max(4px, calc(var(--gby) + var(--gbh) * 0.005));
     translate: -50% 0; width: min(calc(var(--gbw) * 0.3), 470px); z-index: 1; filter: drop-shadow(0 6px 10px rgba(0,0,0,0.6)); }
   /* UI-CALM (ui/enhanced/enhancedMenu.js drawDoors): THE BOOK'S TWO LEAVES ARE THE DOOR'S TWO PAGES - the two questions, The
      Realm (Online) on the left and Thine Own Tale (Offline) on the right, each its own head, its word and a line in a
      smaller hand under it; the offline level its games on the left and the way back on the right; Settings and
      Overhauls two small plaques across the foot of the book */
-  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu {
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky):not(.px-title) .px-menu {
     position: absolute; box-sizing: border-box;
     left: calc(var(--gbx) + var(--gbw) * ${B.x.toFixed(4)}); top: calc(var(--gby) + var(--gbh) * ${B.y.toFixed(4)});
     width: calc(var(--gbw) * ${B.w.toFixed(4)}); height: calc(var(--gbh) * ${B.h.toFixed(4)});
     padding: calc(var(--gbh) * 0.05) calc(var(--gbw) * 0.045) calc(var(--gbh) * 0.04);
     display: grid; grid-template-columns: 1fr 1fr; column-gap: calc(var(--gbw) * 0.09); grid-template-rows: minmax(0, 1fr) auto;
     align-content: stretch; row-gap: calc(var(--gbh) * 0.012); }
-  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .px-page { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: calc(var(--gbh) * 0.012);
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky):not(.px-title) .px-menu .px-page { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: calc(var(--gbh) * 0.012);
     grid-row: 1; min-height: 0; min-width: 0; }
-  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .px-page:first-of-type { grid-column: 1; }
-  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .px-page + .px-page { grid-column: 2; }
-  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .px-pagehead { display: block; margin: 0 0 calc(var(--gbh) * 0.012); padding-bottom: calc(var(--gbh) * 0.012);
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky):not(.px-title) .px-menu .px-page:first-of-type { grid-column: 1; }
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky):not(.px-title) .px-menu .px-page + .px-page { grid-column: 2; }
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky):not(.px-title) .px-menu .px-pagehead { display: block; margin: 0 0 calc(var(--gbh) * 0.012); padding-bottom: calc(var(--gbh) * 0.012);
     font-family: ${GRIMOIRE_STACK}; font-weight: normal; font-size: 32px; letter-spacing: 0; text-transform: none; color: ${ink3};
     ${RULE_UNDER} width: 80%; text-align: center; text-shadow: none; }
-  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .px-pagenote { display: block; margin: 0; font-family: ${GRIMOIRE_STACK}; font-size: 22px; line-height: 1.2; color: ${T.ink};
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky):not(.px-title) .px-menu .px-pagenote { display: block; margin: 0; font-family: ${GRIMOIRE_STACK}; font-size: 22px; line-height: 1.2; color: ${T.ink};
     opacity: 0.8; text-align: center; text-shadow: none; }
-  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu[data-level="top"] .px-page { justify-content: center; }
-  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu[data-level="top"] .px-pagehead { margin-bottom: calc(var(--gbh) * 0.03); }
-  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu[data-level="top"] .doorbtn { font-size: 48px; }
-  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .door-word { gap: calc(var(--gbh) * 0.006); }
-  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .door-sub { font-family: ${GRIMOIRE_STACK}; font-size: 22px; line-height: 1.2; letter-spacing: 0; text-transform: none;
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky):not(.px-title) .px-menu[data-level="top"] .px-page { justify-content: center; }
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky):not(.px-title) .px-menu[data-level="top"] .px-pagehead { margin-bottom: calc(var(--gbh) * 0.03); }
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky):not(.px-title) .px-menu[data-level="top"] .doorbtn { font-size: 48px; }
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky):not(.px-title) .px-menu .door-word { gap: calc(var(--gbh) * 0.006); }
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky):not(.px-title) .px-menu .door-sub { font-family: ${GRIMOIRE_STACK}; font-size: 22px; line-height: 1.2; letter-spacing: 0; text-transform: none;
     color: ${T.ink}; opacity: 0.78; text-shadow: none; max-width: 15em; }
-  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .doorbtn:hover .door-sub, ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .doorbtn:focus-visible .door-sub { color: ${T.red}; text-shadow: none; opacity: 1; }
-  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .doorbtn.door-back { margin-top: auto; font-size: 26px; }
-  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .doorbtn {
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky):not(.px-title) .px-menu .doorbtn:hover .door-sub, ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky):not(.px-title) .px-menu .doorbtn:focus-visible .door-sub { color: ${T.red}; text-shadow: none; opacity: 1; }
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky):not(.px-title) .px-menu .doorbtn.door-back { margin-top: auto; font-size: 26px; }
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky):not(.px-title) .px-menu .doorbtn {
     width: auto; min-height: 0; margin: 0; padding: calc(var(--gbh) * 0.006) 0.4em; justify-content: center;
     background: none; border: 0; border-radius: 0; box-shadow: none; translate: none; filter: none;
     font-size: 32px; letter-spacing: 0; color: ${T.ink}; text-shadow: 0 1px 0 rgba(255,240,205,0.45); }
-  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .doorbtn .px-c { display: none; }
-  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .doorbtn:hover,
-  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .doorbtn:focus-visible {
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky):not(.px-title) .px-menu .doorbtn .px-c { display: none; }
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky):not(.px-title) .px-menu .doorbtn:hover,
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky):not(.px-title) .px-menu .doorbtn:focus-visible {
     background: none; color: ${T.red}; text-decoration: none; outline: none; }   /* UI-CALM: the red ink alone, no dotted rule */
-  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .doorbtn:disabled { background: none; filter: none; color: rgba(43,26,12,0.38); text-shadow: none; }
-  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-foot { position: absolute; left: 0; right: 0; bottom: 0; }
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky):not(.px-title) .px-menu .doorbtn:disabled { background: none; filter: none; color: rgba(43,26,12,0.38); text-shadow: none; }
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky):not(.px-title) .px-foot { position: absolute; left: 0; right: 0; bottom: 0; }
 }
 @media ${BOOK_MQ} and (min-height: 1250px) {
-  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .doorbtn,
-  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .px-pagehead { font-size: 48px; }
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky):not(.px-title) .px-menu .doorbtn,
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky):not(.px-title) .px-menu .px-pagehead { font-size: 48px; }
 }
 /* the map, or a screen too narrow for the book: the doors on one page, held up over it */
 @media not all and ${BOOK_MQ} {
@@ -1879,6 +1879,15 @@ ${G} .px-home:not(.px-over):not(.lv-sky) .px-menu .doorbtn { justify-content: ce
 ${G} .px-home:not(.px-over):not(.lv-sky) .px-menu .doorbtn:hover, ${G} .px-home:not(.px-over):not(.lv-sky) .px-menu .doorbtn:focus-visible {
   background: none; color: ${T.red}; text-decoration: none; outline: none; }   /* UI-CALM: the red ink alone, no dotted rule */
 ${G} .px-home:not(.px-over):not(.lv-sky) .px-wordmark { background: radial-gradient(ellipse 60% 55% at 50% 45%, rgba(28,17,8,0.92) 35%, rgba(28,17,8,0) 72%); }
+/* TITLE-DOOR (ui/enhanced/enhancedStyle.js .px-title): on the film's held title neither the desk nor the book - the map of
+   Tamriel is the ground, and the doors are the one page held up over it, in a row under the mark as Plus stands them. The
+   games and the way back share one size on that row (the page's way back is a size up in its column), after the page's
+   own door ink so they win by order */
+${G} .px-home.px-title { background: transparent; }
+${G} .px-home.px-title .px-menu { background: ${PAGE}; padding: 14px 22px; gap: 4px 18px;
+  border: 2px solid; border-image: ${v('frame')} ${FRAME_ART.band} / ${FRAME_ART.band}px / ${FRAME_ART.band - 14}px round; box-shadow: 6px 10px 26px rgba(0,0,0,0.65); }
+${G} .px-home.px-title:not(.px-over) .px-menu:not([data-level="top"]) .doorbtn { font-size: 22px; }
+@media (max-width: 600px), (max-height: 560px) { ${G} .px-home.px-title:not(.px-over) .px-menu:not([data-level="top"]) .doorbtn { font-size: 16px; } }
 
 /* THE INVENTORY - the pack's own: its wooden tab plates in one row across the top, the jewellery down the left as
    pairs of shelf boxes each named beneath, the body on the grey marble in the middle, the goods in shelf boxes on the

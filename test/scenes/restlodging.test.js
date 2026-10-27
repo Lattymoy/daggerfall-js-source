@@ -621,7 +621,7 @@ test('S40 hosts: all four can now rest, and each supplies its own place', () => 
     const close = ladder.indexOf('\n    }');
     assert.ok(at > 0, `${f}: the Rest arm is not below the guard at all`);
     assert.ok(close > 0 && at < close, `${f}: the Rest arm escaped the guard`);
-    assert.match(s, /createRestWindow\(outdoorRestDeps\)/, f);
+    assert.match(s, /createRestWindow\(outdoorRestDeps(?:, bed)?\)/, f);   // PIN MOVED (AUDIT RPT1026 L3): world.js's carries its ship bed's press
     assert.match(s, /setCrimeCommitted\(playerEntity, crime\)/, f);   // V4: through the one setter (SuppressCrime)
     assert.match(s, /if \(spawnGuards\) _crimeResponse\(\)/, f);
     assert.match(s, /inTownOutside: _isPlayerInTownStrict\(\)/, f);

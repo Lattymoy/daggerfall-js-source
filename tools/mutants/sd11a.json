@@ -437,7 +437,7 @@
   {
     "name": "SD11A-L2F10-never-posed-before-the-draws",
     "file": "src/scenes/worldModes.js",
-    "old": "      if (isSdRealm(dungeonLoc) && !dungeonCtx.uiOverlayActive) dungeonCtx.sdPose?.(dt, player.pos);",
+    "old": "      if (isSdRealm(dungeonLoc) && !windowHoldsDungeon(dungeonCtx.uiOverlayActive, aliveUnder())) dungeonCtx.sdPose?.(dt, player.pos);",
     "new": "      void 0;",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"

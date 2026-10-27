@@ -311,9 +311,11 @@ test('AUDIT HOLDINGS O1: a harbour is sounded only once every pixel its scan rea
   ready = true;
   h.run(0.2);
   assert.deepEqual(h.host.harbourList().map((x) => x.harbour.berths.map((b) => b.pos)), [HARBOUR.berths.map((b) => b.pos)], 'sounded once it is built - the berths every client finds');
-  const world = read('src/scenes/world.js');
-  assert.match(world, /for \(let i = 0; i <= nx; i\+\+\) for \(let k = 0; k <= nz; k\+\+\) if \(!csaPixelAt\(x0 \+ \(sx \* i\) \/ nx, z0 \+ \(sz \* k\) \/ nz\)\) return false;/);
-  assert.match(world, /return \{ key: `port:\$\{t\.id\}`, name: t\.name, rect, ready, reach \};/);   // PIN MOVED (AUDIT CAPTAIN'S SEA H1): and the reach it is sounded to - an isle port's its shore
+  // PIN MOVED (RPT1026-WORLD FAR-QUAY): the readiness moved out of world.js navalHarbourNear to systems/naval/harbourBook.js
+  // harbourOf, and a pixel it reads is known built - or dry for certain (harbourKnown: no build stands water there)
+  const world = read('src/systems/naval/harbourBook.js');
+  assert.ok(world.includes('for (let i = 0; i <= nx; i++) for (let k = 0; k <= nz; k++) if (!harbourKnown(built, state, woods, x0 + Math.min(sx * i / nx, sx - EDGE_IN), z0 + Math.min(sz * k / nz, sz - EDGE_IN))) return false;'), 'every point of the scan box known');
+  assert.match(world, /return \{ key: `port:\$\{t\.id\}`, name: t\.name \?\? null, rect, ready, reach \};/);   // PIN MOVED (AUDIT CAPTAIN'S SEA H1): and the reach it is sounded to - an isle port's its shore
   // PIN MOVED (FB1020c HARBOUR-REACH): any reach the book asks it at - its own, or the port law's ring's - every pixel built
   assert.match(world, /const reach = t\.reach \?\? HARBOUR_REACH;[^\n]*\n\s+const ready = \(r = reach\) => \{[^\n]*\n\s+const x0 = rect\.minX - r, z0 = rect\.minZ - r, sx = rect\.maxX - rect\.minX \+ 2 \* r, sz = rect\.maxZ - rect\.minZ \+ 2 \* r;/, 'every pixel of that reach built');
 });

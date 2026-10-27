@@ -154,7 +154,7 @@ export const EG_CALL_DEST = Object.freeze({ pixel: Object.freeze({ x: 0, y: 0 })
  *   `hold` the host's portalHold word on a step (the Portal Stone's holds keep this portal shut too).
  */
 export function createEgCallPortal({ renderer = null, audio = null, now = () => performance.now(), toScene = (p) => p, toWire = (p) => p, groundAt = null, onEnter = () => {}, onRefused = () => {}, hold = () => null } = {}) {
-  const pool = createPortalGates({ renderer, audio, now, toScene, toWire, groundAt, onEnter: () => onEnter(), onRefused: (hold) => onRefused(hold) });
+  const pool = createPortalGates({ renderer, audio, now, toScene, toWire, groundAt, onEnter: () => onEnter(), onRefused: (hold) => onRefused(hold), eventGround: false });   // RPT1026-EVENTS GATE-WAY: the call's portal is the way into the event - an arch's ground never closes it
   return {
     /** A portal torn open ahead of `feet` facing `yaw` (the host's two probes - portalPlace's); answers its place, or
      *  `{ refused }` ('room' | 'ground'). */

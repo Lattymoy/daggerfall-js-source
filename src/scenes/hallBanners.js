@@ -21,8 +21,9 @@
 // stand no street; exterior.js (the bench) not wired - it draws no online homes.
 // ═══════════════════════════════════════════════════════════════════
 import { heraldryKey } from '../net/heraldryLaw.js';   // GUILD2c: a banner's whole arms as its key
-import { BANNER_W_M, BANNERS_MAX } from '../render/bannerPass.js';
+import { BANNER_W_M, BANNER_H_M, BANNERS_MAX } from '../render/bannerPass.js';
 import { doorFaceSign } from '../systems/siegeField.js';
+import { rayTriangle } from '../systems/automap/automapPick.js';   // AUDIT RPT1026 J2: a cloth's wall asked of the building's own faces
 
 /** The cloth's top over the door's foot, its gap beyond each jamb, and how far it hangs off the wall - metres. */
 export const BANNER_TOP_M = 3.5;
@@ -54,10 +55,61 @@ export function doorNormalOf(door, matrix) {
   return l > 1e-9 ? v.map((c) => c / l) : null;
 }
 
+/** RPT1026-WORLD BANNER-WALL: how far past its building's box a cloth's end may reach along the wall and still hang on
+ *  it (m) - the box's floats' slack, no more. */
+export const BANNER_WALL_PAD_M = 0.05;
+
+/** AUDIT RPT1026 J2: how far behind its door's plane a cloth's wall may stand and the cloth still hang on it (m) - a
+ *  door's frame standing proud of its wall, no more - and where the ray that asks starts, before that plane. */
+export const BANNER_WALL_BEHIND_M = 1.2;
+const WALL_RAY_FRONT_M = 0.3;
+/** AUDIT RPT1026 J2: a frame's walls asked once, the frame's own (its build never changes under a session). */
+const WALLED = new WeakMap();
+
+/**
+ * AUDIT RPT1026 J2: WHETHER A FACE OF THE BUILDING STANDS BEHIND THE POINT (x, y, z) on its door's plane - a ray from
+ * WALL_RAY_FRONT_M before it, back along the face (`out`, [x, z]), met within BANNER_WALL_BEHIND_M behind the plane by a
+ * triangle of one of `parts` (`[model, matrix]`: each of the building's models as the pixel build stood it, its
+ * positions and indices through its column-major matrix, pixel-local - scenes/pixelBuild.js homeFrames' `parts`), both
+ * faces. Pure.
+ * @param {any[]} parts @param {number[]} p @param {number[]} out
+ */
+export function wallBehind(parts, p, out) {
+  const o = [p[0] + out[0] * WALL_RAY_FRONT_M, p[1], p[2] + out[1] * WALL_RAY_FRONT_M], d = [-out[0], 0, -out[1]];
+  const reach = WALL_RAY_FRONT_M + BANNER_WALL_BEHIND_M;
+  for (const [cpu, m] of parts ?? []) {
+    const P = cpu?.positions, I = cpu?.indices;
+    if (!P || !I || !m) continue;
+    const x = (i) => m[0] * P[i] + m[4] * P[i + 1] + m[8] * P[i + 2] + m[12];
+    const y = (i) => m[1] * P[i] + m[5] * P[i + 1] + m[9] * P[i + 2] + m[13];
+    const z = (i) => m[2] * P[i] + m[6] * P[i + 1] + m[10] * P[i + 2] + m[14];
+    for (let t = 0; t + 2 < I.length; t += 3) {
+      const a = I[t] * 3, b = I[t + 1] * 3, c = I[t + 2] * 3;
+      const hit = rayTriangle(o, d, x(a), y(a), z(a), x(b), y(b), z(b), x(c), y(c), z(c));
+      if (hit != null && hit <= reach) return true;
+    }
+  }
+  return false;
+}
+
 /**
  * THE TWO ANCHORS beside a hall's door - `frame` its `{ box, door: { a, b } }` in the pixel's frame (a castle's entrance's
  * also its `normal`, CASTLE-GATE). Each is the cloth's top edge's middle (`top`), the wall's direction (`right`) and the
  * face it hangs out along (`out`), pixel-local. Null for a door narrower than a man or none. Pure.
+ * RPT1026-WORLD BANNER-WALL (a private report, 2026-10-25: a small Wildertown guild hall, one of its door cloths
+ * hanging in mid-air): A CLOTH HANGS ON ITS WALL OR NOT AT ALL. Each cloth stood its jamb's gap beyond
+ * the door whatever the wall did there, so a door near its wall's end hung the far cloth past the building's corner, in
+ * the air - ARCH3D 118's door is the last 1.25 m of its west wall, and its second cloth hung wholly past the house (105 of
+ * Wildertown's 364 doors hung a cloth past their building's box, under the town packs). A cloth whose either end, at the wall, falls
+ * past the building's box (BANNER_WALL_PAD_M) is not hung - so this answers one anchor, or none, where its door leaves
+ * room for one, or none. The box is the frame's model's own: a turned building's box only grows, and drops no cloth on
+ * a wall.
+ * AUDIT RPT1026 J2: AND A WALL STANDS BEHIND IT. The box alone hung a cloth before no wall where a door stands on a porch
+ * or a vestibule, its facade stepped back beside it (ARCH3D 326's door on a vestibule, 339's in a porch: the cloth's
+ * half 3.6 to 10 m before the nearest face - 19 of Wildertown's doors, 29 of Daggerfall's, under the town packs). Where
+ * the frame carries its building's models (`parts`, the pixel build's), a cloth hangs only where a face of them stands
+ * behind both its ends, at its lower edge and its middle, within BANNER_WALL_BEHIND_M of the door's plane (wallBehind);
+ * a frame with none (a castle's gate, a test's) asks the box alone, as before.
  */
 export function hallBannerAnchors(frame) {
   const d = frame?.door;
@@ -76,7 +128,21 @@ export function hallBannerAnchors(frame) {
   // port's mirrored projection one of the two orders drew the device mirror-imaged
   rx = 0 - oz; rz = ox + 0;   // (+0: never a signed zero)
   const side = w / 2 + BANNER_SIDE_GAP_M + BANNER_W_M / 2;
-  return [-1, 1].map((s) => ({
+  const onWall = (x, z) => x >= box[0] - BANNER_WALL_PAD_M && x <= box[3] + BANNER_WALL_PAD_M && z >= box[2] - BANNER_WALL_PAD_M && z <= box[5] + BANNER_WALL_PAD_M;
+  // AUDIT RPT1026 J2: a face behind each end, at the cloth's lower edge and its middle - asked once a frame
+  const parts = Array.isArray(frame.parts) && frame.parts.length ? frame.parts : null;
+  const walled = (s) => {
+    if (!parts) return true;
+    let memo = WALLED.get(frame);
+    if (!memo) WALLED.set(frame, memo = new Map());
+    if (!memo.has(s)) {
+      const bottom = foot + BANNER_TOP_M - BANNER_H_M;
+      memo.set(s, [-1, 1].every((e) => [bottom + 0.1, bottom + BANNER_H_M / 2].every((y) =>
+        wallBehind(parts, [cx + rx * (side * s + e * BANNER_W_M / 2), y, cz + rz * (side * s + e * BANNER_W_M / 2)], [ox, oz]))));
+    }
+    return memo.get(s);
+  };
+  return [-1, 1].filter((s) => [-1, 1].every((e) => onWall(cx + rx * (side * s + e * BANNER_W_M / 2), cz + rz * (side * s + e * BANNER_W_M / 2))) && walled(s)).map((s) => ({
     top: [cx + rx * side * s + ox * BANNER_OUT_M, foot + BANNER_TOP_M, cz + rz * side * s + oz * BANNER_OUT_M],
     right: [rx, 0, rz], out: [ox, 0, oz],
   }));

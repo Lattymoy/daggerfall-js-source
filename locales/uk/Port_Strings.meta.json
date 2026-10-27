@@ -14,6 +14,11 @@
   "tr": "43cb86de7ea7",
   "by": "claude-in-session"
  },
+ "account.refusal.decorLapsed": {
+  "en": "18bf013073c6",
+  "tr": "0977eafc239f",
+  "by": "claude-in-session"
+ },
  "account.refusal.embers": {
   "en": "e9678673977b",
   "tr": "a4c314eaa640",
@@ -132,6 +137,11 @@
  "body.beast.noHelm": {
   "en": "48cfe45d7058",
   "tr": "cefe4d81d1f2",
+  "by": "claude-in-session"
+ },
+ "cards.cashout.banked": {
+  "en": "dbeb3e2bdded",
+  "tr": "b58cd8e02861",
   "by": "claude-in-session"
  },
  "chair.bench": {
@@ -1559,6 +1569,16 @@
   "tr": "8c6ccf371e82",
   "by": "claude-in-session"
  },
+ "inventory.store.chestAct": {
+  "en": "88d2f1cb9aea",
+  "tr": "a8e6dc831c0f",
+  "by": "claude-in-session"
+ },
+ "inventory.store.chestAlone": {
+  "en": "ff8f623bd887",
+  "tr": "62a64aeab5aa",
+  "by": "claude-in-session"
+ },
  "items.gold.sharedFull": {
   "en": "7eb608a65f56",
   "tr": "f38b31785799",
@@ -2479,6 +2499,16 @@
   "tr": "5cc3159c299f",
   "by": "claude-in-session"
  },
+ "legacy.houseWaits.newborn": {
+  "en": "28e7f5a06d17",
+  "tr": "f250087e2d40",
+  "by": "claude-in-session"
+ },
+ "legacy.houseWaits.noNewborn": {
+  "en": "862d8a89f3cf",
+  "tr": "9a48d6861f4a",
+  "by": "claude-in-session"
+ },
  "legacy.deed.again": {
   "en": "abeb3f30abb8",
   "tr": "d730f260b3e2",
@@ -3209,6 +3239,11 @@
   "tr": "dc958166d151",
   "by": "claude-in-session"
  },
+ "portal.refused.event": {
+  "en": "728feb1a67e6",
+  "tr": "9963c194fad4",
+  "by": "claude-in-session"
+ },
  "prof.craft.xpFirstBought": {
   "en": "75f0476f9180",
   "tr": "ca44d51b0994",
@@ -3502,6 +3537,26 @@
  "saddle.hello.none": {
   "en": "c4f18acb1d78",
   "tr": "deb3c07fba7f",
+  "by": "claude-in-session"
+ },
+ "sd.hall.lastBy": {
+  "en": "ba380c5a8929",
+  "tr": "618a10632e4b",
+  "by": "claude-in-session"
+ },
+ "sd.hall.snapLashes": {
+  "en": "0029d66990c6",
+  "tr": "0fdfc5890607",
+  "by": "claude-in-session"
+ },
+ "sd.hall.snapLashesMore": {
+  "en": "59276bb84184",
+  "tr": "a534ed6ff76b",
+  "by": "claude-in-session"
+ },
+ "sd.hall.you": {
+  "en": "8af56de68279",
+  "tr": "7a43976471fa",
   "by": "claude-in-session"
  },
  "sd.through.opens": {

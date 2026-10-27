@@ -2,8 +2,8 @@
   {
     "name": "CROWD-CLEAR-the-people-unread",
     "file": "src/scenes/worldModes.js",
-    "old": "isItem ? null : size.w, ctx.people);",
-    "new": "isItem ? null : size.w, null);",
+    "old": "isItem ? null : size.w, ctx.people, list, stand);",
+    "new": "isItem ? null : size.w, null, list, stand);",
     "tests": [
       "test/systems/quest/fb1020c_crowdclear.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "CROWD-CLEAR-items-moved",
     "file": "src/scenes/worldModes.js",
-    "old": "isItem ? null : size.w, ctx.people);",
-    "new": "size.w, ctx.people);",
+    "old": "isItem ? null : size.w, ctx.people, list, stand);",
+    "new": "size.w, ctx.people, list, stand);",
     "tests": [
       "test/systems/quest/fb1020c_crowdclear.test.js"
     ],
@@ -52,7 +52,7 @@
   {
     "name": "CROWD-CLEAR-always-moved",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "  if (w == null || !crowdingPerson(at, w, people)) return at;",
+    "old": "  if (w == null || !crowdingPerson(at, w, crowd)) return at;",
     "new": "  if (w == null) return at;",
     "tests": [
       "test/systems/quest/fb1020c_crowdclear.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "CROWD-CLEAR-floor-unasked",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "if (hasFloor(p) && !crowdingPerson(p, w, people)) return p;",
-    "new": "if (!crowdingPerson(p, w, people)) return p;",
+    "old": "if (hasFloor(p) && !crowdingPerson(p, w, crowd)) return p;",
+    "new": "if (!crowdingPerson(p, w, crowd)) return p;",
     "tests": [
       "test/systems/quest/fb1020c_crowdclear.test.js"
     ],

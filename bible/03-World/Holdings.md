@@ -388,12 +388,34 @@ once every pixel of that ring is built (the world's `ready` at any reach - O1's 
 half-streamed ring, the port waits and is asked again each step), and once a book's life (its scan is some five times
 the near one's; the B7 retry asks the near reach alone). 36 of the 37 then stand a harbour, its quays at the nearest
 shore - up to some 1.6 km from the town. Aldbrugh (Shalgora) sounds none still: OPEN, its port kept. An isle past the
-Veil sounds its own reach alone (AUDIT CAPTAIN'S SEA H1). Two things it leaves: the ring's ground is built about a player
+Veil sounds its own reach alone (AUDIT CAPTAIN'S SEA H1). Two things it left: the ring's ground was built about a player
 within a pixel of the town at TerrainDistance 3 (DFU's default), so a ship come in from the sea to a far shore 2 pixels
-off - Daggerfall's - stands its quays once the player has been to the town, never before; and under Deep Waters (on by
-default) a berth lies some 80 m farther out, which Daggerfall's 97 m inside the ring's edge was not measured against.
+off - Daggerfall's - stood its quays once the player had been to the town, never before (closed by FAR-QUAY, below); and
+under Deep Waters (on by default) a berth lies some 80 m farther out, which Daggerfall's 97 m inside the ring's edge was
+not measured against (still so).
 `test/systems/naval/fb1020c_harbourreach.test.js` (the 37 and the one, on ARENA2 - `test/portTerrain.mjs`, the pixel's
 TileMap as the build makes it), `tools/mutants/fb1020c_harbourreach.json`.
+
+**THE FAR HARBOUR FROM THE SEA** (RPT1026-WORLD FAR-QUAY, 2026-10-27 - a private report: sailing port to port, no other
+port's docks stood, so most of the harbour office's contracts could not be done). Measured on the player's own data with
+a ship at each of the 36 far harbours' first berth and the world built TerrainDistance 3 about her, the old law sounded
+12: 7 first berths lie 2 pixels off their town (Daggerfall, Wayrest, Holwych, Ripmore, Isfakabi, Pencart, Gallocart),
+where the world host's 3 x 3 found no port at all; Pencart's lies within a pixel of Longham, and the host named the
+nearest port alone; and 16 more waited on a pixel past the ring - the readiness read its box's far edges, a pixel's own
+edge, as the next pixel's. Now (`systems/naval/harbourBook.js`):
+- the host names EVERY port town within SEA_RING of the player (`HARBOUR_TOWN_ORDER`, the 3 x 3 first in the order it was
+  always walked), each handed as `harbourOf` hands it - its footprint and its readiness, moved out of world.js
+  `navalHarbourNear`; the book sounds each as it sounded the one;
+- the readiness's box is half-open (`EDGE_IN`), its far edges inside the ring;
+- a pixel the scan reads is known where it is built - or where no build can stand water (`harbourKnown`, `dryPixel`: the
+  kernel read without its ground noise, a strict lower bound of every sample, over the ocean's elevation everywhere -
+  no water corner can stand, a location's flattening keeps it so, Deep Waters carves only under water; a river painted
+  across such a pixel is too narrow for any hull or mouth). An unbuilt pixel reads as land, and there that is the truth:
+  the harbour sounded is the whole ring's, to the bit, whichever way the player came (AUDIT HOLDINGS O1 kept).
+All 36 are sounded from their first berth now, each to its whole ring's harbour exactly. Not a DFU member (QUAYS).
+`test/systems/naval/rpt1026_world_farquay.test.js` (6); `tools/mutants/rpt1026_world.json`. PINS MOVED: the readiness's
+source pins in `fb1020c_harbourreach.test.js`, `auditholdings.test.js` and `shiplife.test.js` read `harbourBook.js`; their
+mutant records (`fb1020c_harbourreach.json`, `sealanes.json`) re-aimed by content.
 
 THE FOUR HOSTS: `scenes/world.js` keeps the harbours, stands the quays and hands the warp; a building's frame
 (`worldModes.js`) and a dungeon's (`dungeonContext.js`) have no sea, and the standalone street (`exterior.js`) no harbour.

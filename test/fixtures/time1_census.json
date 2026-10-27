@@ -295,9 +295,9 @@
   },
   {
    "file": "src/scenes/interior.js",
-   "has": "Float32Array(isNight(skyMinutes() %",
+   "has": "Float32Array(roomAmbient(isNight(skyMinutes() %",
    "clock": "sky",
-   "why": "the interior's night light"
+   "why": "the interior's night light (RPT1026-WORLD DARK-ROOM: an unlit room keeps it as its ambient)"
   },
   {
    "file": "src/scenes/worldModes.js",
@@ -782,9 +782,9 @@
   },
   {
    "file": "src/scenes/worldModes.js",
-   "has": "Float32Array(isNight(skyMinutes() %",
+   "has": "Float32Array(roomAmbient(isNight(skyMinutes() %",
    "clock": "sky",
-   "why": "the interior's night light"
+   "why": "the interior's night light (RPT1026-WORLD DARK-ROOM: an unlit room keeps it as its ambient)"
   },
   {
    "file": "src/scenes/worldModes.js",

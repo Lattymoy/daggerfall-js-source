@@ -3723,7 +3723,10 @@ relay redeployed (`RELAY_VERSION` `world63`).
   `peer` (a failed trap even refused the death). Threaded line for
   line with the dungeon's (AUDIT WORLD2 B9): no trap, no Star, no
   notice for a blow I did not strike; the corpse, the alert clear and
-  `raiseEnemyDeath` stay.
+  `raiseEnemyDeath` stay. [RPT1026-FIGHTS TRAP-TO-OWNER (2026-10-26)
+  narrowed "no trap": a trap of MY OWN is read for a peer's kill - its
+  soul is its caster's whoever struck, DFU's every source alike - with
+  no tether; no Star and no notice stand.]
 - **B3 (critical, paid) / C2: puppets were unbounded.** One frame could
   stand 400 foes (batches, entities, careers, textures) at every reader
   - by accident in a crowded cell, on purpose from a hostile client.
@@ -7380,7 +7383,19 @@ summon stand where this section left them. `01-Overview/bugs/Field-Bugs-2026-09-
 REST-SYNC; `test/net/restsync.test.js`. AUDIT PRE-MERGE 0928 M1: an encounter whose species the
 host's Ocean Holes abyss changes keeps its number (the rebuilt body takes the old one's place in the room),
 and a joiner stands it anew by that number; a joiner's copy is no spawn of its own for the abyss to process
-(`test/characters/audit0928_merge.test.js`).
+(`test/characters/audit0928_merge.test.js`). RPT1026-ITEMS BODY-CAP (2026-10-27, a private report of bodies that
+disappear as their foes die): a frame carries at most SHARED_FOES_MAX (32) encounters, the standing first, and every
+body stays the room's while its corpse lies - so a room past 32 (a party that rests often in one dungeon) cut its
+newest bodies off the full frame, which still said `xf` 1, and every joiner took each new body down at the next full
+frame. A full frame the count cap cut now says `xf` 2 - whole for the standing alone - and a joiner keeps a body it
+does not name (`dungeonContext.js:"frame.xf = shared.length < _sharedById.size ? XF_STANDING : XF_WHOLE;"`, applySharedRecords'
+`full === 2`); a standing puppet the host no longer has still goes, and a joiner of an older build, which reads 1
+alone, takes nothing down from such a frame (`test/net/rpt1026_items_bodycap.test.js`). AUDIT RPT1026 G1: the bodies
+went in the room's numbering, the oldest first, so the cap shed the body that had just fallen; its death rode a delta
+alone, and when the frame after the death was the full one (one frame in ten), the joiner's puppet still stood, went as
+a standing puppet the frame did not name, and the death's record that followed named an encounter the joiner no longer
+held. The bodies now go newest dead first (spawnCorpse's `_diedAt`), so the cap sheds an old body every joiner holds
+dead and keeps (`test/net/audit_rpt1026_items.test.js`).
 
 **RETIRED 2026-09-27.** QUEST-PARTY phase 3c paid both halves for a shared quest's foe (its spawner's, on the room's
 own lane, to the party) and SUMMON-SYNC (below) for the summon's - a loose stand, its spawner's, on the same lane, to
@@ -8466,7 +8481,9 @@ Six lenses, each finding checked against the code before anything moved; `01-Ove
 - **THE ARM COUNTS MATES (B2).** The marks say `mate`; `hostMagic.js` allyNear skips a stranger's. A stranger near
   had armed every online player's self-buff in a town.
 - **MATES FIRST (B5)**, so an area gift's CAST burst reaches the party before the room's strangers; **THE BEST
-  ABSORPTION (B4)** - `spellAbsorptionChance` takes the best live entry, since a gift never merges with my own;
+  ABSORPTION (B4)** - `spellAbsorptionChance` takes the best live entry, since a gift never merges with my own (and,
+  RPT1026-PROGRESS 2026-10-26, so do Spell Resistance's, Reflection's and Comprehend Languages' - `effects.js`
+  bestLiveChance: a level-one mate's 6% Resistance gift had masked the player's 100% for its whole duration);
   **A STRANGER'S CURE LEAVES AN INFECTION (B6)** - `strangerCast` rides the receiver's ctx to `cureAllOfKind`;
   **A STRANGER STANDS WHERE I SEE THEM (B7)** - a stranger's gift needs their body in `peersNear`, and its lines are
   said once in three seconds a sender.
@@ -11077,7 +11094,20 @@ and `test/systems/decor/decor2b.test.js` (the sale's line, the tap under a fligh
   openHomeVendorWindow, moved out of `world.js` by VENDOR-LOST) opens its stall in the Notice Board's window (`ui/noticeWindow.js` `traderOnly`,
   `ui/vendor/vendorTab.js`): a visitor buys off the purse; the owner takes a piece back or puts one up from the pack.
   VENDOR-LOST (FIELD BUGS 2026-10-25): the stall opened settles the market book's kept acts, so a buy whose answer was
-  lost has its piece collected where its buyer comes back (only the Market tab settled before). The
+  lost has its piece collected where its buyer comes back (only the Market tab settled before). RPT1026-MARKET ARRIVE
+  (private reports 2026-10-26: a trader's buyer whose piece came nowhere; 154 deliveries stood uncollected
+  for 102 players, 123 of them past a day): a piece bought or come back is a delivery only a collect puts into the pack,
+  and the only reader of the road was the Market tab - so the game reads it itself (`/v1/market/road`, `market.js`
+  marketRoad: the account's market settled and the road, nothing else) and settles the book, collecting every piece
+  arrived for the character (`net/marketArrivals.js`, wired by `scenes/vendorHost.js`): once the checkpoint's gate is
+  open after the join, at a courier's arrival, shortly after a press whose own collect did not land (which says the
+  piece is on its way, never "Bought" alone), and as a stall opens (its settle is the sweep). Each piece is collected
+  once whoever asks: one realm act a delivery, guarded on it, a lost answer asked again with its own id (COLLECT-LANDED,
+  below). The pack says what came ("A purchase has arrived: ...", "... has come back from the market"). AUDIT RPT1026
+  (lane D): a press's `soon` asked while a sweep is under way is kept for that sweep's end, never cancelled by its clock
+  (D1); a clock ahead of the service's waits a minute for a courier the service still has on the road, never five
+  seconds at a time (D2); and a take-back kept unanswered has its piece collected by the settle that lands it, as a kept
+  buy's is (`marketBook.js` settle, D3). The
   board's Vendors tab lists the region's reachable traders, searched, a row setting the WAYPOINT
   (`systems/vendorWaypoint.js`) - a gold coin on both world maps (`ui/vendor/vendorMapMark.js`, apart from the map's one yellow
   mark, which stays the player's), the house named on the town map, the compass on the town from the street, a mark in
@@ -11085,7 +11115,8 @@ and `test/systems/decor/decor2b.test.js` (the sale's line, the tap under a fligh
   window's Character rail under the Professions (Mac: "add a Vendor tab under professions (not in)") holds my traders,
   their stock, what they sold and the takings, collected into the account of the region I stand in.
 - **Pinned** in `test/net/homevendor_service.test.js` and `test/ui/homevendor_ui.test.js`; `tools/mutants/homevendor.json`.
-  VENDOR-LOST: `test/net/fb1025_vendorlost.test.js`, `tools/mutants/fb1025_vendorlost.json`.
+  VENDOR-LOST: `test/net/fb1025_vendorlost.test.js`, `tools/mutants/fb1025_vendorlost.json`. RPT1026-MARKET:
+  `test/server/rpt1026_market_road.test.js`, `test/net/rpt1026_market_arrive.test.js`, `tools/mutants/rpt1026_market.json`.
 
 ### ACCOUNT-HOMES - a home is its account's; a deleted character's homes go (2026-10-06)
 
@@ -11460,8 +11491,20 @@ own module (`src/net/hallLaw.js`), never net/guild/guildLaw.js, which is in the 
 - **The banners** (`scenes/hallBanners.js`, `render/bannerPass.js`; Seats-Arc 3.4's anchor 2, the hall's first): a
   hall whose guild has chosen its heraldry hangs two banners, one each side of its door - the building's first door
   record measured where the pixel is built (`homeFrames[key].door`, its two corners through the model's matrix), its
-  span the wall's direction and its face the side away from the building's middle; each cloth 0.9 by 2.7 m, its top
-  3.5 m over the door's foot, 0.35 m past the jamb, 0.15 m off the wall. The cloth is its own foreign pass after the
+  span the wall's direction and its face the side away from the building's middle (AUDIT WITCH1 D1: the door record's
+  own outward normal where the build kept it, `homeFrames[key].normal` - the box's middle had turned 34 of Chesterwark's
+  232 houses' faces from the normal's, a door on its box's middle line hanging its cloths inside its own building - a
+  private report of 2026-10-20, a Chesterwark hall's flags seen from under it); each cloth 0.9 by 2.7 m, its top
+  3.5 m over the door's foot, 0.35 m past the jamb, 0.15 m off the wall. RPT1026-WORLD BANNER-WALL (2026-10-26, a private
+  report of a Wildertown hall's banner hanging in mid-air): a cloth either of whose ends would reach past its
+  building's box along the wall is not hung - a door at its wall's end hangs the one, the small box house's (ARCH3D 118)
+  among them; of Wildertown's 364 doors 105 hung one cloth in the air (`hallBanners.js` hallBannerAnchors,
+  BANNER_WALL_PAD_M; the festival's tavern doors, a chapter's halls and a seat's palace door hang by the same law).
+  Pinned by `test/scenes/rpt1026_world_bannerwall.test.js`. AUDIT RPT1026 J2: and a face of the building stands behind
+  it - the box let a cloth hang before no wall beside a door on a vestibule or in a porch (19 of Wildertown's doors, 29
+  of Daggerfall's), so the pixel build hands each frame its models (`homeFrames[key].parts`) and a cloth hangs only where
+  one of their faces stands behind both its ends within BANNER_WALL_BEHIND_M of the door's plane (`hallBanners.js`
+  wallBehind; `test/scenes/audit_rpt1026_world.test.js`). The cloth is its own foreign pass after the
   duel walls (the world host's twentieth seam): a strip of quads hung from its top edge, swinging out along its face
   on the weather's wind (the grass's own strength) with a ripple across it, every rate whole over a 120 s clock, the
   swallowtail cut, lit by the frame's ambient and sun and fogged as the ground is; each heraldry painted once.
@@ -13612,6 +13655,16 @@ as a cell's loose stand is (WORLD6b), on the room's own lane (`scenes/dungeonCon
   everyone's foe - it goes with its summoner, as DFU's does through a door.
 - **The Wabbajack re-stands only what this copy runs** (`replaceFoeInPool`): a joiner's change of the seat's foe, or
   of another's stand, would ride the room beside the runner's foe.
+- **An artifact's summon is bare on every machine** (RPT1026-PROGRESS, 2026-10-26, a private report: the Skull's copies
+  were looted like any foe). The summoner's own body carries nothing (SUMMON-BARE, Port-Ledger A), but a reader's
+  puppet is built on the reader's machine and `buildFoeAt` rolled its kind's loot there, its stream death its kit, food
+  and card - a friend's copy was the farm. The frame names my summons beside my loose stands (`sm`,
+  `systems/foeLootCap.js` summonedWord, by the entity's `summoned` mark); the reader flags the record (`summonedRecord`)
+  and marks its puppet in `applyOwnRecord` (`markSummoned`): bare alive, its death's finds emptied by capFoeLoot. The
+  mark rides the entity (no summon is ever handed - the line above; AUDIT RPT1026 F5). No relay or wire change, by OWN1's
+  law above. AUDIT RPT1026 F4: and a summon the street or a building saved alive is loaded one (`foeLootCap.js`
+  savedSummon and restoredSummon, in `exteriorFoes.js` snapshotWorld and restoreWorld).
+  Pinned: `test/scenes/rpt1026_progress_peersummon.test.js`, over the real lane, build and stream death.
 
 The ONLINE-DUNGEON-FOES flag is retired (above). Pinned: `test/scenes/summonsync.test.js` (9), mounted over the context's own
 statements (the two handovers over world.js's own). `tools/mutants/summonsync.json` (24 dead). Re-aimed: the flag's pin (`world2`), the candidates pins
@@ -15118,6 +15171,16 @@ else).
   number moved because the bundle's bytes did (`hitSpellOf`, `hitSpellFields` and `validFoeRecord` live in
   `src/net/wire.js`). An older relay carries both fields untouched, and an older client reads past them.
 - Pins: `test/scenes/strikeshared.test.js` (7). Mutants: `tools/mutants/strikeshared.json` (16, all dead).
+- **RPT1026-FIGHTS TRAP-TO-OWNER (2026-10-26, a private report: soul traps on Daedra Lords in a party member's instance
+  never trapped).** A CAST's Soul Trap - a missile's, a touch's, an area's - on such a foe went through the cast engine's
+  foe door onto my copy ("Trap active."), and the runner's foe fell with none: only a strike's crossed. The cast engine
+  now sends its Soul Trap effects through the same door (`hostMagic.js` applySpellToFoe's `trapToOwner`, the session's
+  door `systems/enchantments.js` spellToFoeOwner - the mounted enchantment ctx's `spellToOwner`, routed by the pool as a
+  strike's is) and lands the rest of the spell here as before; the soul is rolled at the fall as a strike's is. And the
+  runner's OWN trap is read whoever struck: AUDIT WORLD2 B9 had a peer's killing blow read no gem of the runner's, so a
+  trap laid on its own foe was spent for nothing when a party member landed the blow - DFU's SetHealth intercept takes
+  every damage source alike. A peer's blow is still never tethered and fills no Azura's Star (B9 stands for those).
+  Pins: `test/scenes/rpt1026_fights_trap.test.js` (4); `strikeshared.test.js`'s two trap-door pins moved.
 
 ## LOAN-AMNESTY (2026-09-29, Mac: "Can we reset the loans for everyone online. The bank of the empire has decided to forgive everyone's loans") - every online loan forgiven, once
 
@@ -15408,12 +15471,26 @@ gold can now change hands the way a guild deposit or a house's price does - in t
   (`market-drakes-goods`), so the market is never the Bank's way round its daily cap and its spread. STRICTER THAN ASKED:
   Mac's "walled" named Drakes sales, writs and first-craft XP; gold's goods are kept from every station and craft too,
   so no path from a gold purchase to a Drakes-earning act needs its own guard (a default closed, not a list to keep).
+  RPT1026-MARKET STORES-SAID (private reports 2026-10-26: Arcane Essence and Cured Leather in the Stores, missing from
+  the market's List form and from the guild Stores' Put in): the wall stands, and is said where a player
+  looks - the List form names the Stores' units its currency may not take (a silver listing's gold-bought and loose
+  ones, a gold listing's silver-bought and loose ones) and the guild Stores' Put in those the guild may not
+  (`ui/storesWalled.js` walledText), each with its count and why; it offered only what may go and said nothing of the
+  rest, so a Stores page full of essence and leather made of looted or gold-bought goods read as the market losing them.
 - **The client** (`src/net/marketBook.js`, `src/ui/marketTab.js`): for a realm character a currency switch beside the
   filters, gold rows priced in gold, a gold Buy through the host's realm act (`realmGoldAct`: the purse checkpointed,
   the exact cost out of it as the service is asked, given back on the service's refusal); KEPT as a Drakes buy is, and
   asked again by a settle when its answer is lost (a repeat of a sale made before it pays nothing; a sale made on the
   settle is paid on its answer, and VENDOR-LOST, a repeat naming the record's sequence is the settle's own sale; a piece
-  from a pack bought here is collected on the answer); the List form's "Priced in gold"; under My listings the gold held
+  from a pack bought here is collected on the answer). RPT1026-MARKET COLLECT-LANDED (private reports 2026-10-26:
+  legendaries that went missing as they came off the market, their returns collected on the service): a collect of a
+  piece from a pack is its own realm act with its own id, and VENDOR-LOST's departure from L1-F2 is a collect's too - a
+  record one on from where the tab asked, under its lease, with a delivery this id collected, is that collect, landed,
+  answered as the repeat with the record's sequence and the piece to a tab that sends `landed` (`market.js`
+  collectGood; the batch that ran while the first asking landed answered the same), and the book receives it into the
+  pack (`marketBook.js` collectGood's `apply`) where it ended the session, the piece in the record and none in the pack
+  until a join. A repeat that names no sequence is a collect made before this ask, and still ends it. The List form's
+  "Priced in gold"; under My listings the gold held
   and its Collect. The Stores page counts
   gold's units, splits them ("bought with gold") and says where they may go. Any other character sees the Drakes'
   market alone.
@@ -16454,12 +16531,28 @@ one breath should end - each keeping it, or the room deciding): **"Host arbitrat
   `composeRoomView`) from the base, the takes, the stored pieces, this player's claims and puts in flight and their own
   layer, in place. An OPEN says nothing (`sayRoomWord`): the base is every client's already. A word whose signature is
   not this client's own computation (another build's chain) is AUDIT SETS M2's unreadable word, never a list landed -
-  a live peer's word, and the memory's on a client that is not the host. CHAMP-BASE's STALE-MEMORY (2026-10-25,
+  a live peer's word, and the memory's on a client that is not the host. RPT1026-ITEMS LOOT-SKEW (2026-10-26, two
+  private reports: piles that told a current, restarted client to update): the press on such a
+  container says another player here is on a different version (`roomLoot.js` LOOT_SKEW_TEXT, chosen by
+  `roomLootHost.js` roomUnreadableText) - the other build is older as often as newer, and M2's "from a newer version of
+  the game. Reload to open it" told a current reader its own game was the old one; a word holding a piece this build
+  cannot read keeps M2's line. The host reads a joiner's word of another build the same way and never judges its
+  claims, so a take lapsed back to the pile after ROOM_CLAIM_TIMEOUT_MS in silence, a pile that seemed to refill; a lapse
+  says so now (ROOM_LAPSED_TEXT). Mixed builds still share a room - no relay law keeps them apart - and a building's
+  cupboard and the street's bodies keep M2's line (FLAGGED: the same law, not yet asked of them). CHAMP-BASE's STALE-MEMORY (2026-10-25,
   `01-Overview/bugs/Field-Bugs-2026-10-25b.md`): the memory's word on the HOST was the room's own, an earlier visit's
   (often the same player's, alone, on the build before an update), so the host starts the container over one
   generation on (`roomLootHost.js` `restartStaleContainer`) - the newer generation beats the old terms on every client
   - and a client that takes the seat does the same for a stale word it held unread; a body still being rebuilt as the
   memory's species is left to CORPSE-GOLD's second landing. What the earlier visit took from it is back once.
+  RPT1026-ITEMS RE-ENTRY (2026-10-27, a private report from a party: bodies looted, then a death or a walk out, and two
+  or three of them full again on the way back): walked in a real two-player room (`test/scenes/rpt1026_items_reentry.test.js`
+  - the relay's Room keeping the memory and the seat, the looter the host or its level-2 partner, the seat passed
+  while the looter is away, the room emptied), nothing taken is offered twice. The way it was offered is CHAMP-BASE's: a
+  champion body rolled at each builder's level was held unread by the low-level partner, whose memory as the room's
+  host then left the body out, so the looter's next visit rolled it afresh. A memory older than the looter's own
+  takes (inside the host's WORLD_PUBLISH_MS) shows them for a moment; the host refuses the press, and its answer
+  empties the body.
   AUDIT WORLD4 C1 stands: nothing lands under a window this player has open.
 - **THE CLAIMS** (Mac, 2026-10-15: "Host arbitrates"). A take of a shared piece - a base piece or a stored one, by the
   window, the quick door or Physical Items' one-item door - is a CLAIM, and the room's host (WORLD2's, the seat that
@@ -17056,9 +17149,11 @@ said fifteen); the seven worst fixed at the root and pinned, the rest recorded h
   memory shows the bare seat title until its recall is answered), *a thrown team's single `park` frame is kept a whole
   PARK_TTL_MS* (the `parks` arm subtracts the record's age; the single frame does not read its `at`), *a slow mint gets
   every rehello swept* (`_flushRehello` measures the
-  swap from before the socket opened against BACKOFF_MAX_MS, the mint's own budget), and *several room sends skip
-  SD-HELLO's welcomed check* (`sendHit`'s routing loop, `sendDuel`'s room path, the zone's word) - latent while no
-  cell's hello yields.
+  swap from before the socket opened against BACKOFF_MAX_MS, the mint's own budget). The room sends this list named as
+  skipping SD-HELLO's welcomed check - `sendHit`'s cell loop, `sendDuel`'s bout room, the zone's words (`sendWild`) -
+  wait for the welcome since RPT1026-SECNET (2026-10-26), beside `sendAct`, the one an instance's slow hello caught.
+  And since AUDIT RPT1026 A5 (2026-10-27), `sendHit`'s world-room path and `sendWorld`: an AURA-LIVE rehello's
+  replacement keeps `host` before its own welcome.
 - Comment drift: orphaned doc blocks above `TOKEN_WAIT_MS`, `TRADE_IN_SENDERS_MAX`, `SEAT_TEXT`, `sendArena` and
   `poseAgeMs`; `tick`'s doc still describes the ease NET-SMOOTH 4 replaced; `_scheduleRetry`'s says its first retry is
   unjittered, which SLAM12 changed.
@@ -17400,3 +17495,88 @@ slice's to widen.
 
 Pinned in `test/systems/decor/decoruse.test.js` (D1, D2, D4, D6, D8); `tools/mutants/decoruse.json` (23, all dead).
 
+## LINE-STALL - a stalled line is handed no burst (RPT1026-SECNET, 2026-10-26)
+
+A private report came from a player on a poor line who kept losing the online world. A stalled TCP line keeps
+every frame the page gives it and delivers them together when it clears. The relay meters each socket's poses at
+POSE_HZ_MAX with that much burst, and closes a socket after DROP_STRIKES_MAX over-rate frames in a row (AUDIT ONLINE A8's
+flood guard). A walk sends POSE_HZ poses a second, so about 22 s of stall arrived as 220 frames and read as a flood:
+"too many poses", CLOSE_POLICY, terminal in that room until the player moved room. A host's foes stream (FOES_HZ_MAX)
+struck out the same way after about 18 s. The session had no way to know its line was stalled. It pinged only a socket
+that was saying nothing (RELAY-H1), so a lone player who was walking heard nothing back, and nothing was asked.
+
+- **The line is asked.** A socket that has heard nothing for PING_MS is pinged, however busy it is sending, on every
+  socket the session holds (the halos too). The runtime answers every ping, asleep or awake, so a ping still unanswered
+  after LINE_STALL_MS means the line is stalled (`net/online.js` `_ear`, `_stalled`). Any frame in clears it.
+- **A stalled line is handed no burst.** Its poses wait (`_poseHeld`). The latest goes the moment the line answers,
+  since `sendPose` is asked every frame, and one goes per HEARTBEAT_MS meanwhile. Its foes streams wait too
+  (`sendFoes`, `sendOwnFoes`): the host's next frame is whole, AUDIT WORLD2 A9's law. Events are not held: a door and
+  a word go as the player acts, far under their own meters, and each keeps its own queue.
+- **And its blows** (AUDIT RPT1026 A1, 2026-10-27). This section first counted the blow among the events. It is not one:
+  a blow spends the relay's POSE meter (`server/src/index.js`, the hit arm's `_meter`), so a fight's blows rode the burst
+  beside its poses. At the session's own blow rate (HIT_HZ_MAX, which a quick fighter among several foes reaches) a held
+  fight struck out after about 11 s. `sendHit` refuses on a stalled line now, and a refused blow waits in its queue
+  (`net/hitPend.js`), which ages it out.
+- **The arithmetic.** A stall is known within PING_MS + LINE_STALL_MS (10 s). By then a walk has handed the line about
+  100 poses, a host about 120 foes frames, and a fight about 100 poses and 110 blows. The meter passes its burst and
+  drops the rest without reaching DROP_STRIKES_MAX. **The relay's meter does not move:** the flood guard stands as it
+  was, and an honest page no longer meets it.
+
+Pinned in `test/net/rpt1026_secnet_net.test.js`:
+- a walk through the real Room with the line held 29 s and let go at once (the runtime's ping answer in front of it);
+- the arithmetic, held to the laws;
+- a host's stream and own lane held, and the heartbeat let through;
+- a halo's stalled line, its shared ping and its own.
+
+And in `test/net/audit_rpt1026_secnet.test.js` (AUDIT RPT1026 A1): a fight through the real Room held 30 s from the
+moment the line was last heard, a world room's blow at the host, and the arithmetic with the blows.
+
+The mutants are in `tools/mutants/rpt1026_secnet.json` (RPT1026-SECNET-stall-*, -no-deaf-ping, -line-never-heard,
+-foes-*, -own-*, -halo-*) and `tools/mutants/audit_rpt1026_secnet.json` (AUDIT-RPT1026-A1-*). Every one of them dies.
+
+## RPT1026-WORLD CONFIRM-REREAD, CONFIRM-ONCE, DECOR-VERBS - the decorator's Confirm and its press (2026-10-27, two private reports)
+
+Two private reports of 2026-10-25: in a home, the decorator's Confirm did nothing; and since the decorator's new menus
+(the overhaul of 2026-10-24), nothing in the caravan could be moved. Both were driven through the real decorator
+(`scenes/decor/decorTool.js`), its bar and panel (`ui/decorPanel.js`) over the decorator rig's DOM, and the real hover
+seam (`ui/worldPlaque.js` worldHoverFrame, `systems/quickLoot.js`) - a click's own path: the decorator's capture leaves
+an unlocked press to the page, the bar's button takes its click, a locked left press in the flight is the plaque's lit
+row (`worldModes.js` tryExit's decor arm). What a click did wrong, each fixed:
+
+- **CONFIRM-REREAD.** A home's draft reads the room's revision once, as it opens (`openDraft`), beside the host's own
+  read of the room. A read the service left unanswered - a stalled request is given up after DECOR_LIST_WAIT_MS (10 s,
+  `net/accountClient.js`) and answered `offline`, the overloaded database of DECOR-BATCH's own record - left the draft
+  with no revision, and every Confirm of the visit said the room could not be read and sent nothing; the standing poll
+  (`hearRoom`) never mended it, as it stands down while the draft has changes, and the first revision it hears it only
+  remembers. Confirm reads the room again now (`rereadRev`), and takes the revision only for the room the draft began
+  from: a room another hand changed since (a hall's other keeper, the owner on another machine) is the service's own
+  stale-revision refusal (`decor-rev`), never written over; a read that fails again says so, and the draft stands to
+  Confirm again or Discard.
+- **CONFIRM-ONCE.** Nothing marks a Confirm on its way (the bar says nothing until the service answers), so a second
+  click sent the same batch again: the service answers a repeated `txn` with the first's receipt, and the client paid
+  the purse again for the same room - one piece paid twice. A Confirm while one is on its way does nothing now
+  (`d.keeping`), and is let go when it ends, kept or refused.
+- **DECOR-VERBS.** Since the overhaul the Decorate button opens the flight, and a placed piece is moved by a press on
+  it: the plaque's lit row, Move first (`systems/decor/decorLook.js` decorPlaque). The plaque is drawn on the enhanced
+  skin alone, never on a touch screen nor on the classic skin with quick loot off (`worldPlaque.js` worldPlaqueOn,
+  classicPlaqueOn), and the interior host's namer answers nothing with World Tooltips off - so there the hover folded no
+  row, and a press on a piece opened its chest or did nothing; the one Move left was the catalogue's In this room tab,
+  where the old menu had kept it. Now a decorator that browses asks for its verbs (`quickLoot.js` wantPlaqueVerbs), and
+  where no plaque is drawn the seam folds its frame with its first verb alone (`decorLook.js` decorPressFrame, the
+  decorator's keys alone - decorVerbKey): a press on a placed piece is Move, on the room's own furniture Take out, on a
+  swing door Remove - what the press does on the plaque - and no wheel steps a list nobody sees (one verb is no choice,
+  `quickLootWheel`). The interior namer's World Tooltips gate lets the decorator's keys through while it browses (the
+  one statement; createWorldModes grows by nothing). Duplicate, Rename, Who may use and Remove stay on the plaque's
+  wheel and the panel's In this room.
+
+Driven and found sound, and pinned as a guard: the decorator's Move in the caravan, a ship's cabin and a house - by the
+plaque's row and by the panel's In this room - stands the piece where the next click sets it down, at 0.0.392 (the
+report's build), 0.0.404 and now. Which skin, quick-loot and World Tooltips setting the report was made under is not in
+it; on the enhanced skin with World Tooltips on the press was always Move.
+
+**Pins.** `test/scenes/decor/rpt1026_world_decor.test.js` (the Confirm after an unanswered read, the room changed since,
+a read failed twice, the second click, the press where no plaque is drawn, the law, the host's gate, the guard). Pins
+moved: `test/ui/enhanced/enhancedInventory.test.js` (the seam's first act admits the verbs' line between the two faces
+and the gate) and `test/systems/disc22c_classic_loot.test.js`'s draw line kept by the order of the try's statements.
+Mutants: `tools/mutants/rpt1026_world.json` CONFIRM-REREAD (3), CONFIRM-ONCE (2), DECOR-VERBS (8), all dead;
+`worldhover.json`'s two gate records re-aimed by content (dead).

@@ -546,7 +546,7 @@ test('PORTAL1 the door, the pick and the arrival, as world.js runs them: every r
     playerEntity, player: { isPlayerSwimming: false, feetAt: () => [0, 0, 0] }, cam: { pos: [0, 1.6, 0], yaw: 0 },
     walkMode: true, playerSpawned: true, _modeNow: 'exterior', _teleporting: false, busy: false,
     duel: false, siege: false, enemies: false, journeyOn: false, boat: null,
-    PORTAL_TEXT: PS.PORTAL_TEXT, PORTAL_HOLD_TEXT: PS.PORTAL_HOLD_TEXT, portalHold: PS.portalHold, portalPlace: PS.portalPlace, spendPortalStone: PS.spendPortalStone,
+    PORTAL_TEXT: PS.PORTAL_TEXT, PORTAL_HOLD_TEXT: PS.PORTAL_HOLD_TEXT, portalHold: PS.portalHold, portalPlace: PS.portalPlace, portalStonePlace: PS.portalStonePlace, spendPortalStone: PS.spendPortalStone,   // PIN MOVED (RPT1026-EVENTS GATE-WAY): the pick asks the stone's place, off an event's gate's ground
     travelView: { state: 'off' }, cityGuards: { guards: [] }, exteriorFoes: { foes: [] },
     collider: { surfaceHit: () => ({ dist: 1 }), raycastHit: () => null },
     hudFade: fade, surfacePlayer: () => {}, _foesFullAt: 0, console: { warn: () => {} },

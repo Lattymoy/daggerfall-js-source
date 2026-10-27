@@ -3109,7 +3109,9 @@ test('MW-D39: the hosts wire it through the rig\u2019s one door, on the referenc
   // PIN MOVED (CAST-SPEED): and the caster's rate, read once here and handed to both lanes (systems/castSpeed.js)
   // PIN MOVED (AUDIT SPELL-HAND L2-4): and the cast's hands decided as it starts - kept only by a cast that does (was:
   // `return fpsSpellCasting.playOneShot(...)` straight)
-  assert.match(rig, /castSpellAnim: \(rangeType, element, onRelease = null\) => \{\n\s+cast\.n = \(cast\.n \+ 1\) & 0xffff; cast\.rangeType = rangeType \| 0;[^\n]*\n(?:\s+eotbBody\.cast\(\);[^\n]*\n)?(?:\s*\/\/[^\n]*\n)*\s+const rate = castRate\(entity\);\n\s+const armCasts = fpArm\.castSpell\(rangeType, rate\) && \(fpArm\.active\(\) \|\| fpArm\.thirdActive\(\)\);\n(?:\s*\/\/[^\n]*\n)*\s+const oneHand = spellHandFits\(\);[^\n]*\n\s+const started = fpsSpellCasting\.playOneShot\(element, onRelease, armCasts \? \{ hold: \(\) => fpArm\.takeCastRelease\(\) \|\| !fpArm\.castInFlight\(\), rate \} : \{ rate \}\);\n\s+if \(started\) _castOneHand = oneHand;\n\s+return started;/,
+  // PIN MOVED (RPT1026-MISC CAST-PACE): the arm is handed the spell's moment (castReleaseS) and paced to it, and only an
+  // arm it could not pace holds the release (armHolds - was: every arm on screen, `armCasts ? { hold: ...`)
+  assert.match(rig, /castSpellAnim: \(rangeType, element, onRelease = null\) => \{\n\s+cast\.n = \(cast\.n \+ 1\) & 0xffff; cast\.rangeType = rangeType \| 0;[^\n]*\n(?:\s+eotbBody\.cast\(\);[^\n]*\n)?(?:\s*\/\/[^\n]*\n)*\s+const rate = castRate\(entity\);\n\s+const armCasts = fpArm\.castSpell\(rangeType, rate, castReleaseS\(rate\)\) && \(fpArm\.active\(\) \|\| fpArm\.thirdActive\(\)\);\n(?:\s*\/\/[^\n]*\n)*\s+const armHolds = armCasts && !fpArm\.castPaced\?\.\(\);\n\s+const oneHand = spellHandFits\(\);[^\n]*\n\s+const started = fpsSpellCasting\.playOneShot\(element, onRelease, armHolds \? \{ hold: \(\) => fpArm\.takeCastRelease\(\) \|\| !fpArm\.castInFlight\(\), rate \} : \{ rate \}\);\n\s+if \(started\) _castOneHand = oneHand;\n\s+return started;/,
     'the cast must have one door, and it carries the range, the element and the release');
   for (const host of ['src/scenes/dungeonContext.js', 'src/scenes/world.js']) {
     const h = readFileSync(host, 'utf8');
@@ -3137,7 +3139,7 @@ test('AUDIT 36 F1: ALL THREE hosts run the cast animation, on the cast moment, w
 
 test('AUDIT 36 F2: an INSTANT self-cast animates - the cast latches its own stance', async () => {
   const src = readFileSync('src/combat/fpArm.js', 'utf8');
-  const fn = src.slice(src.indexOf('    castSpell(rangeType = 2, rate = 1) {'), src.indexOf('    /** The held bow comes up.'));   // PIN MOVED (CAST-SPEED): the cast's rate
+  const fn = src.slice(src.indexOf('    castSpell(rangeType = 2, rate = 1, releaseIn = 0) {'), src.indexOf('    /** The held bow comes up.'));   // PIN MOVED (CAST-SPEED): the cast's rate; PIN MOVED (RPT1026-MISC CAST-PACE): and the moment its release is paced to
   // the old gate refused a cast that arrived before any frame read the
   // ready - which is EVERY CasterOnly spell, readied and cast in one
   // synchronous call (hostMagic readySpell -> castInput for range 0).

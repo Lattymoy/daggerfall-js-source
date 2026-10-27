@@ -90,6 +90,7 @@ import { poseWhereSeen } from '../world/horseView.js';   // HORSE-VIEW: a 3D hor
 import { thrownRecord } from '../systems/wagon/wagonWarden.js';   // WARDEN1: a kept team the town watch threw, where it landed
 import { WAGON_HOVER_TEXT } from '../player/eyeOfTheBeholder/eotbWagon.js';   // the hover word for a wagon - the noun of Eye Of The Beholder's Info line, so both carts read alike
 import { hccWireRecord, validHccRecord, hccRecordKey, easeToward, HCC_WIRE_KIND } from '../systems/horse/horseCartWire.js';
+import { eventGroundAt } from '../systems/eventGround.js';   // RPT1026-EVENTS GATE-WAY: no other player's parked wagon drawn on an event's gate's ground
 import { decodePng } from '../systems/textureReplacement.js';
 import { toColor32 } from '../formats/color32Order.js';
 import { wagonGeometry, buildBakedWagonParts, rendererModelOf, pitchedPoint, teamSidesOf, TEAM, rigGrowOf, driverSeatFor, SHELL_CLEAR_M } from '../world/wagonModels.js';   // WAGONS1: Mac's wagons; WAGONS3: the team, the rig's grow, the bench; BENCH-CAM: the pivot's clearance
@@ -834,6 +835,12 @@ export function createHorseCartPool({
       p.hidden = look === 'hidden'; p.look = p.hidden ? null : look;
       groundPeer(p);   // DISC20-C: a parked wagon and a standing horse, on MY ground
       retarget(p);   // AUDIT HCC O1: the wire frame, converted THIS frame - a rebase or a re-anchor of mine moves nothing of theirs
+      // RPT1026-EVENTS GATE-WAY (a private report: a wagon parked across a breach's gate, and a portal laid there as it
+      // opened): THEIR WAGON LEFT ON AN EVENT'S GATE'S GROUND STANDS NOWHERE HERE (systems/eventGround.js). It walls nothing
+      // (PR-WAGON1: no collider of theirs), but parked across a gate it hid the fire and a portal laid inside it - so on this
+      // screen it and its team are not drawn there, nor pressed, as a concealed owner's are not
+      p.offGround = p.wagon?.kind === HCC_WIRE_KIND.Deployed && !!eventGroundAt(p.wagon.position);
+      if (p.offGround) { p.hidden = true; p.look = null; }
       // PERF-TEAMS: PAST THE REACH, THE WORD AND ITS EASE ALONE - no shafts' raycast, no stride, no wheels, no billboards
       // and no harness (a team gone from `_teams` lays none: harnessEnds). The ease keeps the drawn point following the
       // word, so a team walked back into the reach stands where it is, not where it was. The ground probe above stays:
@@ -985,7 +992,7 @@ export function createHorseCartPool({
       return { wagon: s.wagon, at, rotation: s.wagon.rotation, g, hitched: !!s.wagon.hitched, hitch };
     }
     const p = _peers.get(owner);
-    if (!p?.wagon || !p.shownWagon || (p.hidden && p.wagon.kind !== HCC_WIRE_KIND.Deployed)) return null;   // AUDIT (pre-merge) I-B: a hidden owner's trailing or following wagon rolls unseen with it; a parked one is a wagon in the world
+    if (!p?.wagon || !p.shownWagon || (p.hidden && p.wagon.kind !== HCC_WIRE_KIND.Deployed) || p.offGround) return null;   // AUDIT (pre-merge) I-B: a hidden owner's trailing or following wagon rolls unseen with it; a parked one is a wagon in the world - RPT1026-EVENTS GATE-WAY: save on an event's gate's ground
     const g = p.hitch && grow ? rigGrowOf(grow(p.hitch), p.wagon.model, hitchOf(p.wagon.model)) : 1;   // WAGONS3: the rig's own grow
     return { wagon: p.wagon, at: grownHitchedPosition(p.shownWagon, p.hitch, g, groundYAt), rotation: p.shownRotation ?? p.wagon.rotation, g, hitched: p.wagon.kind !== HCC_WIRE_KIND.Deployed || p.wagon.hitched, hitch: p.hitch ?? null };
   }
