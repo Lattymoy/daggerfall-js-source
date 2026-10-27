@@ -3555,8 +3555,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // ARENA4b: MY OPPONENT ON A RELAY'S SAND as the one body my harmful spells reach (the duel's own seam, hostMagic.js
     // duelMarksFor - a touch, a missile or a blast that meets them), and the door such a spell leaves through
     // (spellOnRival: the number to the referee as a spell, as a swing's goes); none outside a bout between players
-    duelMark: opts.arenaRival ? () => { const rb = arenaRivalBody(); return rb ? { id: rb.rival, name: rb.entity?.name ?? '', feet: rb.ai.feet, height: rb.ai.height } : null; } : (opts.wildSpellMarks ? () => opts.wildSpellMarks() : null),   // PVPDUNGEON: no bout - the zone's fair players, as in the open
-    castAtDuel: opts.arenaRival ? (_id, sp) => spellOnRival(sp) : (opts.wildSpellOut ? (id, sp) => opts.wildSpellOut(id, sp) : null),
+    // RPT1026-FIGHTS (HALL-SPELLS; two private reports: no spell met a player in the PvP zone's dungeons): asked AT THE CAST, never at the
+    // build - the world-hosted dungeon is handed the arena's door always (worldModes.js `arenaRival`, answering null off the
+    // sand), so a choice made here at the build took the arena's branch in every dungeon and the zone's halls met no player
+    duelMark: () => { const rb = arenaRivalBody(); return rb ? { id: rb.rival, name: rb.entity?.name ?? '', feet: rb.ai.feet, height: rb.ai.height } : (opts.wildSpellMarks?.() ?? null); },   // PVPDUNGEON: no bout - the zone's fair players, as in the open
+    castAtDuel: (id, sp) => (arenaRivalBody()?.rival === id ? spellOnRival(sp) : !!opts.wildSpellOut?.(id, sp)),
     // A10: THE RECALL ARRIVAL, ROUTED. This used to be a stand-in line
     // saying the anchor machinery lived in the streaming host - true of
     // the machinery, false as a refusal: this context is the one the
@@ -6898,14 +6901,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // death, on every damage source alike. A successful roll with no
       // empty gem TETHERS the foe at 1 health instead of killing it,
       // and the next killing blow rolls again.
-      // AUDIT WORLD2 B9: a PEER's killing blow reads no gem of the host's and fills no Star of the host's - the kill
-      // is the peer's (their own gem is slice 4's, "who struck last" on the death)
+      // AUDIT WORLD2 B9: a PEER's killing blow fills no Star of the host's and tethers nothing - the kill is the peer's
       // STRIKE-SHARED: and a PEER's trap reads no gem of mine whoever struck - its soul is its caster's, named on the
       // body's record (roomRecord's `j`, `q`) for the caster to roll against its own pack
+      // RPT1026-FIGHTS (TRAP-TO-OWNER; a private report: soul traps on Daedra Lords in a party member's instance never
+      // trapped, whoever killed them): MY OWN trap's soul is mine WHOEVER struck - "every damage source alike", DFU's
+      // SetHealth law - so a peer's killing blow rolls it against my pack too; B9 had it read no gem of mine, and a trap I
+      // laid on my own foe was spent for nothing when my party member landed the blow. Only my own blow is tethered.
       const _peerTrap = peerSoulTrapOf(foe.entity);
-      const trap = peer || _peerTrap ? { allowDeath: true } : attemptSoulTrap(foe.entity, foe.mobileType, playerEntity.items, Math.random());
+      const trap = _peerTrap ? { allowDeath: true } : attemptSoulTrap(foe.entity, foe.mobileType, playerEntity.items, Math.random());
       if (trap.alert) hudText.add(SOUL_TRAP_TEXT[trap.alert]);
-      if (!trap.allowDeath) { foe.entity.health = 1; return; }
+      if (!trap.allowDeath && !peer) { foe.entity.health = 1; return; }
       foe._trapBy = _peerTrap ? _peerTrap.by : null;
       foe._trapQ = _peerTrap ? Math.max(0, Math.min(100, Math.trunc(Number(_peerTrap.chance) || 0))) : 0;
       // V3: the equipped AZURA'S STAR takes every slain MONSTER's soul
@@ -7493,7 +7499,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (playerFeet) {
       // AUDIT 27h S1: the breath waits under ANY window holding the player - this host's own (drawFoes does not run
       // under those) and the outer host's street slot (opts.breathHeld), which held the motor while the lungs ran on.
-      breathTick(opts.breathHeld?.() ? 0 : dt, playerFeet, playerHeight);
+      breathTick(opts.breathHeld?.() || dungeonPaused() ? 0 : dt, playerFeet, playerHeight);   // RPT1026-FIGHTS (WINDOW-ONLINE): this frame runs under my own window online too - its breath waits there still
       const _surf = waterSurfaceYAt(playerFeet[0], playerFeet[2]);
       if (!isGateArena(dfLocation) && !isArenaFloor(dfLocation) && !_sdRealm && !_egHall && !_ketch) sceneAmbience.update(dt, {   // KETCH: nor on a ship in the sky   // ARENA2: no drip nor dungeon door on the open sand - the crowd is its air (scenes/arena/arenaBouts.js)   // WB6b: the court has its own air (scenes/deadlandsAir.js) - no drip, no door, no bird in the Deadlands   // EG-ROAR: nor in the Spire - its air is its own (scenes/eliteGates/egAir.js)
         playerPos: [playerFeet[0], playerFeet[1] + playerHeight / 2, playerFeet[2]],   // the controller center (DFU transform.position)
@@ -7506,7 +7512,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         inCastle: castleBlockAt(playerFeet[0], playerFeet[2]),
       });
     }
-    magic.firePending(eye, [-aimed[2], -aimed[6], -aimed[10]], !!opts.breathHeld?.());   // classic: the readied spell fires on the click (AUDIT SPELL-HAND L4-6: never under the street's window - this frame runs under none of its own)
+    magic.firePending(eye, [-aimed[2], -aimed[6], -aimed[10]], !!opts.breathHeld?.() || dungeonPaused());   // classic: the readied spell fires on the click (AUDIT SPELL-HAND L4-6: never under the street's window; RPT1026-FIGHTS (WINDOW-ONLINE): nor the dungeon's own, which this frame now runs under online)
     // P13: the shared stealth senses context (EnemySenses' player-
     // side reads). S21: all three illusion branches are LIVE -
     // invisible always blocks (the 13 seers exempt), blending 8%

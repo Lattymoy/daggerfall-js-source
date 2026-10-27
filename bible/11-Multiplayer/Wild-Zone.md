@@ -129,7 +129,9 @@ and every client door asks it of its targets, a guild by the tags the relay stam
 engine's marks reach fair players through the duel's own arms (each falls through to the zone when no duel or battle
 stands). Underground the dungeon's own swing takes a fair player in reach, in view and in sight before any foe
 (`dungeonContext.js:"function resolvePlayerHit"` resolvePlayerHit, over the host's `wildBodies`/`wildStrike`), and its
-cast engine's marks are the fair players (`wildSpellMarks`/`wildSpellOut`); no arrow is aimed at a player there. The
+cast engine's marks are the fair players (`wildSpellMarks`/`wildSpellOut`) - asked at the cast since RPT1026-FIGHTS
+HALL-SPELLS (2026-10-26: the seam had been chosen at the build, the world host hands every dungeon the arena's door, and
+no spell met a player underground until then; `06-Systems/Integrity-Arc.md` INT10); no arrow is aimed at a player there. The
 striker whose blow felled a fighter is its killer (the referee's word). Inside buildings
 there is no player fighting: the zone's danger there is its foes.
 

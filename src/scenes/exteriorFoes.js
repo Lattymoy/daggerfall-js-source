@@ -1049,14 +1049,16 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       if (fates && revenantMayYield(f)) { if (!ownersWholeKill(_whole, { fromPlayer, peer }) && revenantWillHolds(f)) tearAway(f); else yieldFoe(f); return; }
       // X5: the SOUL TRAP intercept, where EnemyEntity.SetHealth's
       // override sits (:157-177) - before the death, every source alike.
-      // AUDIT WORLD6b B2 (AUDIT WORLD2 B9's law, the dungeon's): a PEER's killing blow reads no gem of mine and fills
-      // no Star of mine, and speaks no kill notice of mine - the kill is the peer's
+      // AUDIT WORLD6b B2 (AUDIT WORLD2 B9's law, the dungeon's): a PEER's killing blow fills no Star of mine, tethers
+      // nothing and speaks no kill notice of mine - the kill is the peer's
       // STRIKE-SHARED: and a PEER's trap reads no gem of mine whoever struck - its soul is its caster's, named on the
       // body's record (foesFrame's `j`, `q`) for the caster to roll against its own pack
+      // RPT1026-FIGHTS (TRAP-TO-OWNER, the dungeon's law - dungeonContext.js damageFoe): MY OWN trap's soul is mine
+      // whoever struck, a peer's killing blow included (DFU's SetHealth, every source alike); my own blow alone is tethered
       const _peerTrap = peerSoulTrapOf(f.entity);
-      const trap = peer || _peerTrap ? { allowDeath: true } : attemptSoulTrap(f.entity, f.mobileType, playerEntity.items, Math.random());
+      const trap = _peerTrap ? { allowDeath: true } : attemptSoulTrap(f.entity, f.mobileType, playerEntity.items, Math.random());
       if (trap.alert) say?.(SOUL_TRAP_TEXT[trap.alert]);
-      if (!trap.allowDeath) { f.entity.health = 1; return; }
+      if (!trap.allowDeath && !peer) { f.entity.health = 1; return; }
       if (_peerTrap) { f._trapBy = _peerTrap.by; f._trapQ = Math.max(0, Math.min(100, Math.trunc(Number(_peerTrap.chance) || 0))); }
       // V3: the equipped AZURA'S STAR takes every slain MONSTER's soul
       // (DaggerfallEntityBehaviour.cs:240-247); after the trap, so a

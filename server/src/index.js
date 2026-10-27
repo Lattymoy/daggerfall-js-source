@@ -9835,8 +9835,9 @@ export class Room {
     if (w.k === 'vt') { bodySaid(p, w.v / 1000, now, line.body, { enforce: line.enforce }); return; }
     if (w.k === 'in' && !(w.bv >= KT_BRAIN_MIN)) { this._send(ws, JSON.stringify({ t: 'kt', k: 'no', m: 2 })); return; }
     if (w.k === 'in' && Number.isSafeInteger(a.cl) && a.cl >= 1) w.lv = a.cl;   // THE LEVEL IS THE TOKEN'S (the Hour's AUDIT SD II L7 M2)
-    // the struck nothing strike nothing: a member the count has fallen (enforced) speaks as the dead
-    const pose = a.pose ? this._ktPoseOf(a.pose) : null;
+    // the struck nothing strike nothing: a member the count has fallen (enforced) speaks as the dead. RPT1026-FIGHTS
+    // (RETIRED-BLOW): and a pose older than KT_POSE_FRESH_MS speaks for no body, as in the census (_ktBodies) - the Hour's law
+    const pose = a.pose && now - (a.pAt ?? a.since ?? 0) <= KT_POSE_FRESH_MS ? this._ktPoseOf(a.pose) : null;
     if (pose && bodyOut(p, line.enforce)) pose.dead = true;
     const out = voyageWord(V, a.sub, w, pose, now, rand01);
     for (const r of out) if (r.k === 'rez' && V.players[r.s]) { bodyLife(V.players[r.s], now, line.body); V.players[r.s].rzAt = now; }   // AUDIT WORLD-EVENTS L1-4: the raised, a new life on the count (AUDIT KETCH II L1-5: and its dying pose before it forgotten)
@@ -10076,9 +10077,10 @@ export class Room {
     if (this._sdFight !== f) return;
     now = Date.now();
     if (live !== undefined && !(live && live.s === s && sdHolds(live, now))) return;
-    // INT12: a blow from one the count has fallen lands nothing once `enforce` holds
-    const line = this._bodyLine();
-    const pose = a.pose && !a.pose.dd && !bodyOut(f.players[a.sub], line.enforce) ? this._arenaPoseOf(a.pose) : null;
+    // INT12: a blow from one the count has fallen lands nothing once `enforce` holds. RPT1026-FIGHTS (RETIRED-BLOW): nor one
+    // from a pose older than SD_POSE_FRESH_MS - the census's own law (_sdFightBodies): a page that stopped posing is absent
+    // there, its share retired ABSENT_RETIRE_MS on, and a blow judged from its last pose landed whole on the others' share
+    const pose = a.pose && !a.pose.dd && now - (a.pAt ?? a.since ?? 0) <= SD_POSE_FRESH_MS && !bodyOut(f.players[a.sub], this._bodyLine().enforce) ? this._arenaPoseOf(a.pose) : null;
     if (m.k === 'ehit') this._sdFightFan(applyEchoHit(f, a.sub, m.e, m.d, m.r, pose, now, m.q));
     else if (m.k === 'xhit') this._sdFightFan(applyHeartHit(f, a.sub, m.c, m.d, m.r, pose, now, m.q));
     else {

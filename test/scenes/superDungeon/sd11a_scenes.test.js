@@ -518,7 +518,8 @@ test('AUDIT SD II L2 F9: THE SAME LIGHTS AND THE SAME SKY, made in place - realm
 test('AUDIT SD II L2 F10, F11: THE HOUR POSED BEFORE THE WORLD PASS, AND A HIDDEN DRAW NO DRAW - the mode machine\'s dungeon arm poses the hall and the arena (the dungeon host\'s sdPose) before the frame begins and before its draws, with no window up, as the Steps are ridden before the motor (in drawFoes, after the world pass, they were drawn a frame late); its draw loop skips a draw that says it is hidden, and so its shadow\'s record (drawMesh makes it); and the sets say so - a gone step, a body not shown, an Echo out of the Break, the hall\'s bridge before the Concord, the breath between gusts (mutants: posed after the draws; a hidden step drawn) (ALLOC-RACE - mutant: a still body posed again)', () => {
   const W = read('src/scenes/worldModes.js');
   const arm = W.slice(W.indexOf("if (mode === 'dungeon') {"), W.indexOf('// Whole-pipeline swap: interior draws'));
-  const pose = arm.indexOf('if (isSdRealm(dungeonLoc) && !dungeonCtx.uiOverlayActive) dungeonCtx.sdPose?.(dt, player.pos);');
+  // PIN MOVED (RPT1026-FIGHTS WINDOW-ONLINE): the arm's window test is windowHoldsDungeon's - a window holds the dungeon offline, or over a death online (scenes/windowWorld.js)
+  const pose = arm.indexOf('if (isSdRealm(dungeonLoc) && !windowHoldsDungeon(dungeonCtx.uiOverlayActive, aliveUnder())) dungeonCtx.sdPose?.(dt, player.pos);');
   const draws = arm.indexOf('for (const d of dungeonCtx.dynamicDraws) if (!d.hidden && !d.culled) renderer.drawMesh(d.gpu, d.object.matrix, d.texRemap ?? dungeonCtx.texRemap, d.noShadow ? DRAW_NO_SHADOW : DRAW_SHADOW);');   // SD-LOOK (PIN MOVED): a draw's own remap, shadow and cull
   assert.ok(pose > 0 && pose < arm.indexOf('renderer.beginFrame(') && pose < draws, 'posed before the frame and its draws');
   assert.ok(draws < arm.indexOf('dungeonCtx.drawFoes('), 'the draws before drawFoes');

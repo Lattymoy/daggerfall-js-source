@@ -186,6 +186,9 @@ export function createEnchantCtx({
     inDarkness: () => playerInDarkness(),
     inHolyPlace: () => playerInHolyPlace(),
     applySpellToSelf: (record, _entity, item) => magic.castByItemSelf(record, item),   // D9: bundle.CastByItem (CastWhenUsed.cs:136)
+    // RPT1026-FIGHTS (TRAP-TO-OWNER): the door STRIKE-SHARED's strike takes, offered to the cast engine too (systems/
+    // enchantments.js spellToFoeOwner) - a cast's Soul Trap on a foe another player runs goes to that player
+    spellToOwner: (f, record, level) => !!spellToOwner?.(f, record, level),
     castBarred: () => magic.barCast?.() === true,   // HOME-MAGIC: a place that bars casting bars an item's, and it spends nothing
     setReadySpell: (record) => magic.readySpell(record, { free: true }),
     applySpellToTarget: (record, attacker, target) => {

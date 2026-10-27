@@ -1453,11 +1453,17 @@ origin - `arenaOf`).
   the Remnant at the far side facing the way in; it wakes 8 s on (`SD_OPENING_MS`). A share is the gate's law at its own
   numbers (`joinRemnant`: `SD_TTK_S` 420 x `dpsRef` x `SD_SHARE_X` 1.25, at the fraction it stands at, an empty bucket for
   one who comes to it bled, the first claim kept, 256 seats, an idle one freed); a fighter away 30 s takes its share out
-  (the gate's `retireShare`). LOST after 30 s with no living fighter in the arena (`SD_LOST_MS`).
+  (the gate's `retireShare`), at the fraction the Remnant stands at - a death too: the fallen's page leaves the realm at
+  once (SD-ONELIFE; `world.js`'s death branch, `online.leave()`), so its share goes 30 s on and the living fight what is
+  left at the fraction it stood at, each blow moving the bar further (RPT1026-FIGHTS, a private report: AS DESIGNED - the
+  Remnant does not keep the fallen's share as an Elite Breach's lords do, LORD-SHARES; a body a friend raises inside
+  `SD_REZ_MS` brings it back, at the fraction). LOST after 30 s with no living fighter in the arena (`SD_LOST_MS`).
 - **Belief** (`applyRemnantHit`, `applyEchoHit`, `applyHeartHit`): the gate's own hand and purse - `net/gate/gateBrain.js`
   exports `spendBlow` and `spendPurse` now, and the Remnant keeps no blow rate or bucket of its own: one hand and one purse
   for every body in the fight. A pose in the arena, a melee blow within reach of the body it meets; asleep, outside time or
-  past the Hour, nothing lands; a phase holds its floor; a stunned Remnant takes half again; the Last Moment's last blow
+  past the Hour, nothing lands; a blow that reaches the purse SEES its striker (RPT1026-FIGHTS RETIRED-BLOW: a share the
+  beat retired comes back first, at the fraction - `net/superDungeon/sdRemnant.js:"function sighted(f, p, now) {"` - and the relay drops a
+  blow from a pose older than `SD_POSE_FRESH_MS`, the census's own age); a phase holds its floor; a stunned Remnant takes half again; the Last Moment's last blow
   fells it - where it stands, the fight's best three and every fighter's part (the gate's `topDealers`, `damageChart`;
   `earned` reads it as the gate's does).
 - **The Walking Hour**: each body walks at its chosen (threat, then any) and strikes - the Stomp only within 5 m of its

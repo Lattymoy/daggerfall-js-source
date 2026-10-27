@@ -811,9 +811,24 @@ caster's cast window on every blow (the striker is unstruck), so a crafted clien
 vitality alone. **THE FOUR HOSTS.** `scenes/world.js` WIRED (the duel's, the zone's and a siege's casts, each a number
 for its referee); `scenes/dungeonContext.js` WIRED - the zone's halls through world.js's own `wildSpellOut`, the arena's
 rival through its own law pinned equal
-(`dungeonContext.js:"castAtDuel: opts.arenaRival ? (_id, sp) => spellOnRival(sp) : (opts.wildSpellOut ? (id, sp) => opts.wildSpellOut(id, sp) : null),"`);
+(`dungeonContext.js:"castAtDuel: (id, sp) => (arenaRivalBody()?.rival === id ? spellOnRival(sp) : !!opts.wildSpellOut?.(id, sp)),"`) -
+asked at the cast since RPT1026-FIGHTS HALL-SPELLS (2026-10-26, two private reports: no spell met a player in the PvP
+zone's dungeons): the seam had been chosen at the build by whether the context was handed the arena's door, and the world-hosted
+dungeon is handed it always (`worldModes.js` `arenaRival`, null off the sand), so until then no spell of a player met
+another in the zone's halls - only a swing did;
 `scenes/worldModes.js` (a building) no spell meets another player there - no fight is struck indoors; `scenes/exterior.js`
 NOT WIRED on purpose: offline, no other player.
+
+**RPT1026-FIGHTS STRIKE-UNVEILS (2026-10-26, a private report: a Chameleon stayed up after its wearer
+attacked a player).** A blow between players is rolled on a stub of the striker's sheet (INT8), so the
+formula's tail - EntityEffectManager.BreakNormalPowerConcealmentEffects, `formulas.js` calculateAttackDamage - took the
+normal-power concealment off the stub, and the striker's own Chameleon, Invisibility or Shadow stood through every blow
+it landed on a player. The one stand-in now carries the entity that strikes it (`duelCombat.js` duelStandIn(striker),
+`struckBy`), and a blow that lands damage unveils that entity (resolveDuelStrike) - DFU's law, on the striker, never its
+copy; the true powers stand. The world host's four rolls hand the player (a duel's, a siege work's, a battle's, the
+zone's - a hall's swing reaches the zone's). A spell's harm is counted with the player as its caster
+(`siegeCombat.js` siegeSpellNumbers), whose damage arms already unveil. Pins: `test/combat/rpt1026_fights_unveil.test.js`
+(2); the four rolls' pins (`auditcc_pvp`, `duel_combat`, `twohands`) moved with them.
 
 ### 5b. The audit (2026-10-09, Mac: "Lets audit this")
 

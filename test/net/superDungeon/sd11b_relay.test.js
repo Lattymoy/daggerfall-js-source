@@ -155,6 +155,7 @@ test('SD11b A BLOW WHOSE FIGHT WAS REPLACED IS DROPPED (L3 F1): a blow that awai
     // the purse judged at the landing: a blow held three seconds is spent at its resolving
     realm.room._sdFight = f;
     step(11_000);
+    await realm.pose(ann, inArenaAt(0, -12.1));   // PIN MOVED (RPT1026-FIGHTS RETIRED-BLOW): its heartbeat - a blow is judged from a pose no older than SD_POSE_FRESH_MS
     mode('hold');
     const sent = now();
     const p2 = realm.raw(ann, say({ k: 'hit', q: 2, d: 40, r: HIT_KINDS.Spell }));

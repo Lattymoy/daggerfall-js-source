@@ -152,6 +152,9 @@ keeps its range - a bolt, a volley at three), **the Dwarven Spider** (the hold's
 knocks a cell loose), **the Hammer Warden** (a hammer ahead, a sweep, a steam lane), **the Watch-Captain** (a stomp and the
 Tonal Wave rolling out of it - jumped - a cleave, a steam lane). Every blow a full shape stamp (`egBlowOf`) held at the
 wind-up floor. Health: `hpS` seconds of the crew's mean reference damage, the Wardens and the Captain a share a member.
+(RPT1026-FIGHTS RETIRED-BLOW, 2026-10-26: the Tonal Warden's shares are the Hour's law - a member away from the bridge
+`ABSENT_RETIRE_MS` takes its out, and its blow on the Warden or a fork brings it back first, `ketchWarden.js` sighted; the
+relay judges a word aboard from a pose no older than `KT_POSE_FRESH_MS`, the census's own.)
 A body walks round what stands on its floor (the waist's cover, the mast-lift's tower and the main mast). A blow on one
 is believed only risen, by the hand, from its storey, and a swing within reach; a sleeping Warden struck wakes.
 

@@ -260,6 +260,11 @@ export function legacyEnchantmentValue(enchantments, { spellOfIndex = null, soul
 // effects.js gets idle cast arms, the headless charter.
 let _defaultCtx = null;
 export function setDefaultEnchantCtx(ctx) { _defaultCtx = ctx; }
+/** RPT1026-FIGHTS (TRAP-TO-OWNER): THE SESSION'S DOOR TO A FOE ANOTHER PLAYER RUNS - the mounted ctx's `spellToOwner`
+ *  (STRIKE-SHARED's, routed by the pool the foe is in: scenes/world.js enchantSpellToOwner, or the standalone dungeon's
+ *  own), the one door a spell takes to that player whole. True when it went; false for a foe I run, a spell the wire
+ *  cannot carry, or no ctx mounted. The cast engine sends a cast's Soul Trap through it (scenes/hostMagic.js). */
+export const spellToFoeOwner = (foe, record, level) => { try { return !!_defaultCtx?.spellToOwner?.(foe, record, level); } catch { return false; } };
 const mergeCtx = (ctx) => (ctx && _defaultCtx ? { ..._defaultCtx, ...ctx } : ctx ?? _defaultCtx);
 // AUDIT 63 F14: removeFilledTrap rides the same bag, registered by
 // mysticism.js (the soul-trap law's home, beside fillEmptyTrap) - this

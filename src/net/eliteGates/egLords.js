@@ -248,8 +248,9 @@ function sharesOf(F, L) {
  *     damage to each lord, at the fraction the lord stands at (the gate's law for a newcomer: a late arrival never heals a
  *     lord) - a share brought as a retired one restored;
  *   FIELD BUGS 2026-10-19e LORD-SHARES: refused (fallen), its share STAYS in every lord awake - the living finish what the
- *     fallen left, so a death makes a fight harder for the company, never easier (the Remnant keeps a fallen body's share
- *     too: net/superDungeon/sdRemnant.js) - and leaves a lord still asleep in its ring (retireShare, at the fraction it
+ *     fallen left, so a death makes a fight harder for the company, never easier (the Remnant does not: a death in the
+ *     Hour leaves the realm, and its share retires on the absence's clock at the fraction - net/superDungeon/sdRemnant.js;
+ *     RPT1026-FIGHTS corrected "keeps a fallen body's share too") - and leaves a lord still asleep in its ring (retireShare, at the fraction it
  *     stands at), which wakes for the company standing before it; a recall's share comes back with it (restoreShare);
  *   the last share in a lord is never retired: a lord sized for nobody would stand at nought (and fall as nought), and the
  *     company's wipe ends the breach first.
