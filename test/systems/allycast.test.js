@@ -473,7 +473,7 @@ test('ALLY-CAST by source: world.js picks the party mate with the F key\'s own r
   assert.match(o, /this\._directedIn\(m, now, 'cast', this\._inCastBuckets, castInGate, CAST_IN_HZ_MAX, validCastData, \(id, d\) => this\.onCast\?\.\(id, d\)\);/, 'the cast arm through the directed door');
   assert.match(o, /const d = valid\(m\.data\);\s*\n\s*if \(d && d\.to === this\.id\) this\._deliver\(kind, \(\) => deliver\(m\.id, d\)\);/, '...and delivers only what is addressed to me');
   const h = rd('src/scenes/hostMagic.js');
-  assert.match(h, /const ally = !readiedFree && allyReach !== null && allyCastable\(sp\) \? allyInReach\(eye, dir, allyReach\) : null;\s*\n\s*if \(ally && castAtAlly\?\.\(ally\.id, allyCastFrame\(sp, effectiveLevel\(playerEntity\), ally\.id\)\)\) \{/, 'the release frame asks before the four range arms, never for a free ready');
+  assert.match(h, /const ally = !readiedFree && allyReach !== null && allyCastable\(sp\) \? allyInReach\(eye, dir, allyReach\) : null;\s*\n\s*if \(ally && castAtAlly\?\.\(ally\.id, allyCastFrame\(sp, castingLevel\(playerEntity\), ally\.id\)\)\) \{/, 'the release frame asks before the four range arms, never for a free ready');
   // PIN MOVED (AUDIT WATCH-KIT WK-M2, 2026-10-01): the gate admits my companion beside the mate, by the release frame's
   // own pick (companionInReach) - a level aim at his face was refused here while the release would have given it him
   assert.match(h, /if \(!pickTouch\(eye, dir, sp\) && !\(!readiedFree && allyCastable\(sp\) && \(allyInReach\(eye, dir, ALLY_TOUCH_REACH\) \|\| companionInReach\(eye, dir, ALLY_TOUCH_REACH\)\)\)\) return false;/, 'the touch gate');
