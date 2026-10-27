@@ -1945,10 +1945,9 @@ busy time standing and 17% moving; the middle ring's rebuild was 8% alone, and o
 - **Step 2 - the builds on a worker.** The two builds that sample the ground run whole on a module worker
   (`systems/snowfall/snowBuildWorker.js` over `snowBuildKernel.js`), driven through the runtime's own code - a
   `SnowfallRuntime` whose commits are the build's halves alone (`_midFinish`, `_localFinish`) - over a copy of the ground
-  it reads. The main thread posts a build where it would begin one, keeps the tracks, the masks, the snowpack, the save,
-  the blanket and the commit's tracks half, and takes the finished arrays, transferred, the first frame they are in
-  (`snowBuildClient.js`). The arrays it replaces go back to be written into again. A pixel's ground crosses once a
-  version of it, copied (`snowGroundLaw.js` `snowGroundSnapshot`), keyed by the arrays it was taken from. The drawn
+  it reads. The main thread posts a build where it would begin one and takes the finished arrays the first
+  frame they are in (`snowBuildClient.js`); the arrays they replace go back. A pixel's ground crosses once a version of
+  it, copied (`snowGroundLaw.js` `snowGroundSnapshot`), keyed by the arrays it was taken from. The drawn
   ground's laws moved out of `world.js`'s snow adapter into `snowGroundLaw.js`, which both threads call (`bootWorld`
   36,237 -> 36,233 logical lines); `carvedFloorLocalY` moved beside the floor it reads (`world/deepWater/deepWaterFloor.js`)
   and the base64 pair to `systems/save/base64Bytes.js`, so the worker loads 36 modules, not the 820 that
@@ -2015,12 +2014,10 @@ card; the snow on the ground is the same. Head against step 1 alone: 0.00%. (`ma
 fly camera lays no player tracks; the townspeople's are on the ground in both.
 
 Pins: `test/systems/snowthread.test.js` (4) - the ground law against its snapshot after a structured clone; every ring
-and window a same-thread runtime commits along a flight (a stride-2 pixel, a shore's bed, the carved sea, Basic Roads'
-tracks classified for real, a town, a floating origin's move, a slope limit changed) is, array for array, what the worker
-answers for the same build, and each window is the last one's texels where they shift and the context's samples
-elsewhere; a runtime on the worker builds nothing on the main thread, each of its rings is a fresh same-thread build's
-bytes, and a window recentred from the worker's own copy is the one recentred from the main thread's (a recentre the
-player outran leaves that copy untrusted); the fallbacks. Re-aimed by content: `audit_environs.json` (two P3 records, at
+and window a same-thread runtime commits along a flight (a stride-2 pixel, a shore's bed, the carved sea, Basic Roads,
+a town, a floating origin's move, a slope limit changed) is, array for array, what the worker answers for the same build;
+a runtime on the worker builds nothing on the main thread, and a window recentred from the worker's own copy is the one
+recentred from the main thread's; the fallbacks. Re-aimed by content: `audit_environs.json` (two P3 records, at
 the runs), `snowfall1.json` (the carved sea's, at the law's call), `hostsplit.json` (the ceiling). Mutants:
 `tools/mutants/snowthread.json` 17, all dead. A build a door or a teleport lets go before it lands keeps
 nothing: posting the next of its kind sends its arrays back (`_forget`).
