@@ -16449,7 +16449,15 @@ one breath should end - each keeping it, or the room deciding): **"Host arbitrat
   `composeRoomView`) from the base, the takes, the stored pieces, this player's claims and puts in flight and their own
   layer, in place. An OPEN says nothing (`sayRoomWord`): the base is every client's already. A word whose signature is
   not this client's own computation (another build's chain) is AUDIT SETS M2's unreadable word, never a list landed -
-  a live peer's word, and the memory's on a client that is not the host. CHAMP-BASE's STALE-MEMORY (2026-10-25,
+  a live peer's word, and the memory's on a client that is not the host. RPT1026-ITEMS LOOT-SKEW (2026-10-26, two
+  private reports: piles that told a current, restarted client to update): the press on such a
+  container says another player here is on a different version (`roomLoot.js` LOOT_SKEW_TEXT, chosen by
+  `roomLootHost.js` roomUnreadableText) - the other build is older as often as newer, and M2's "from a newer version of
+  the game. Reload to open it" told a current reader its own game was the old one; a word holding a piece this build
+  cannot read keeps M2's line. The host reads a joiner's word of another build the same way and never judges its
+  claims, so a take lapsed back to the pile after ROOM_CLAIM_TIMEOUT_MS in silence, a pile that seemed to refill; a lapse
+  says so now (ROOM_LAPSED_TEXT). Mixed builds still share a room - no relay law keeps them apart - and a building's
+  cupboard and the street's bodies keep M2's line (FLAGGED: the same law, not yet asked of them). CHAMP-BASE's STALE-MEMORY (2026-10-25,
   `01-Overview/bugs/Field-Bugs-2026-10-25b.md`): the memory's word on the HOST was the room's own, an earlier visit's
   (often the same player's, alone, on the build before an update), so the host starts the container over one
   generation on (`roomLootHost.js` `restartStaleContainer`) - the newer generation beats the old terms on every client
