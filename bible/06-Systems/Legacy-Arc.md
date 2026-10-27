@@ -945,6 +945,10 @@ WHAT IT IS NOW:
   and the countryside's towns the session stood, now named as the registry's are - deathRespawn.js nearestSafePlace's
   law, a town alone). The player's region's own nearest town first, as before; on the Bay the same town as the 62
   regions' walk (pinned against it).
+- **The Online page's waiting house with no seat** is unchanged: its heir is born in Daggerfall
+  (`systems/legacy/waitingHouses.js` DEFAULT_BIRTH_PLACE) wherever the fallen fell, on the Bay as past it. The menu has
+  no world loaded to find a nearest town in, and the waiting record keeps no place of the fall (`family.pending`). A
+  seatless line taken up in the world bears its heir in the world's nearest town, as above.
 
 THE FOUR HOSTS: `scenes/world.js` wired (the start, the birth's wait, the nearest town). `scenes/worldModes.js` and
 `scenes/dungeonContext.js` - a birth is the world host's boot; neither boots a start. FLAGGED: `scenes/exterior.js` (the

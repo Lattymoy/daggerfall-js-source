@@ -2151,7 +2151,7 @@ shut, Daggerfall's market as ever; the readers name the town and the account's d
 `tools/mutants/bayleftb.json` (BAY-LEFT-B-H-*). PIN MOVED: `test/tesa2_arena.test.js`, `test/tesa7_country.test.js`,
 `test/audit_tesa.test.js`, `test/systems/naval/auditcaptsea.test.js`, `test/systems/houses.test.js`,
 `test/world/housecontainers.test.js`, `test/systems/quest/auditdisc28_quests.test.js` (each pinned the gates this slice
-took down); their mutant records re-aimed by content (`tools/mutants/tesa2.json` TESA2-a-house-for-sale,
+took down), `test/tesa8_lairs.test.js` (its lair id's "no house sold, no deed read" words); their mutant records re-aimed by content (`tools/mutants/tesa2.json` TESA2-a-house-for-sale,
 `tesa7.json` TESA7-modes-deed-sold and -owned, `audittesa.json` AUDIT-TESA-A5-F3, `auditcaptsea.json` ACS-P9-deed and
 -sale, `auditdisc28_quests.json` AD28Q-K1, `icgrand.json` R2-9-deed-every-town).
 
