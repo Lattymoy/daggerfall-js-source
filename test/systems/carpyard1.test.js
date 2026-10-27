@@ -282,7 +282,7 @@ test('CARP-YARD THE HOSTS: the street\'s workbench is the host\'s own question -
   assert.match(w, /workbench: \(\) => workbenchHere\(\),/);
   assert.match(w, /: bench \? workbenchHere\(\) : modes\?\.forgeHere\?\.\(\)\) \?\? null;/);
   assert.match(w, /bench: \(\) => openYardBench\(\),/);
-  assert.match(w, /function openYardBench\(\) \{\n\s+if \(!forgeOffered\(\)\) \{ townTalk\.say\(stationColdLine\('workbench'\)\); return true; \}[^\n]*\n\s+focusStoresStation\('workbench'\);\n\s+hudCtx\.togglePause\(\{ at: 'stores' \}\);/);
+  assert.match(w, /function openYardBench\(\) \{\n\s+if \(!forgeOffered\(\)\) \{ townTalk\.say\(stationColdLine\('workbench'\)\); return true; \}[^\n]*\n\s+hudCtx\.togglePause\(\{ at: stationDoorAt\('workbench'\) \}\);/);   // PIN MOVED (CRAFT-HALL): the Crafting page at the bench, its focus handed by stationDoorAt
   assert.match(w, /`The \$\{f\.who \?\? st\.who\} asks \$\{f\.fee\} gold for the use of the \$\{st\.noun\}\.`/);
   assert.match(w, /bench \? \(f\.who \?\? 'furnisher'\) : 'smith'/);
   const pp = read('src/ui/professions/profPages.js');

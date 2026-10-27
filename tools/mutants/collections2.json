@@ -482,8 +482,8 @@
   {
     "name": "C2A-the-sheet-never-laid",
     "file": "src/ui/collectionsPage.js",
-    "old": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_PART_CSS}${WARDROBE_THEME_CSS}`;",
-    "new": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_THEME_CSS}`;",
+    "old": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_PART_CSS}${WARDROBE_THEME_CSS}${LOOKS_PART_CSS}`;",
+    "new": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_THEME_CSS}${LOOKS_PART_CSS}`;",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -554,8 +554,8 @@
   {
     "name": "C2A-the-stone-theme-never-laid",
     "file": "src/ui/collectionsPage.js",
-    "old": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_PART_CSS}${WARDROBE_THEME_CSS}`;",
-    "new": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_PART_CSS}`;",
+    "old": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_PART_CSS}${WARDROBE_THEME_CSS}${LOOKS_PART_CSS}`;",
+    "new": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_PART_CSS}${LOOKS_PART_CSS}`;",
     "tests": [
       "test/ui/collections2.test.js"
     ]

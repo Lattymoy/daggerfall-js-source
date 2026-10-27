@@ -1306,12 +1306,51 @@ cruise to random waypoints; a port had no ships at all. `systems/naval/shipLife.
   a transition forgets the harbours, found again where the world is next. **Online**: a ship taken over (`adopt`)
   draws her errand again where she lies.
 
-Not built: fishing boats (no fishing class exists), ~~a harbour's own lights and quays~~ (QUAYS, `03-World/Holdings.md` 7:
+Not built: ~~fishing boats~~ (FISH-BOATS, below), ~~a harbour's own lights and quays~~ (QUAYS, `03-World/Holdings.md` 7:
 a quay at every berth with its jetty, piles, bollards, cargo and lanterns lit in the lanterns' hours; the harbour's ships
 moored alongside it; the player's ship warped in, made fast and a gangway run out), ~~ships at anchor off a harbour
 with no berth, and a voyage's port-to-port route beyond the loaded terrain~~ (SEA-LANES, below: the Bay's packets sail
 the map's water between its ports, and lie off a port whose harbour no one has sounded).
 Pins: `test/systems/naval/shiplife.test.js` (11). Mutants: `tools/mutants/shiplife.json` (32).
+
+## FISH-BOATS (2026-10-27) - a port's fishing boats
+
+SHIP-LIFE left them unbuilt: no fishing class existed. Two classes now (`systems/naval/navalShips.js`, `fisher`): a
+Fishing Skiff, Come Sail Away's Rowboat pulled by two at FISH_OAR_MPS (1.8 m/s) and never under sail, and a Fishing
+Smack, its Large Boat under sail. Both are lawful merchantmen to the law and the captains. Neither is drawn by level or
+weight (FISHER_LEVEL), each takes a fishing boat's name (`fisherNameOf`: "The Lucky Herring"), and none leaves
+flotsam. The art is the mod's own hulls: nothing new is drawn.
+
+A harbour's fleet (`systems/naval/fishingBoats.js` fishersOf) is FISH_ROLL (2-4) boats a day, drawn off the harbour's
+key and the day, so every player in the port sees the same boats. Each lies at ANCHOR in the roads inside the mouth,
+past the berths' span and FISH_BERTH_CLEAR (25 m) off every berth and its lane in. She works her GROUND 450-900 m off
+the mouth, round a ring FISH_RING (45 m) wide at FISH_STROKE of her way. Her day is the lanterns': she puts out when
+the town's lanterns go out and comes home when they are lit, her sweeps out and any wind sailable.
+
+The naval host stands them (`scenes/naval/fishingFleet.js` createFishingFleet, wired by `navalHost.js`). The player
+who rolls the port stands them where the day finds them; every other player meets them on the wire, as the moored
+ships are met. One sunk or taken today is not stood again that day, and the director never counts them. Her hold is
+fish (`food:fish`, FISH_CATCH: a skiff 2-6, a smack 5-12). The naval word names a class by its place in SHIP_CLASSES:
+the two are rows 15 and 16, appended. No relay change.
+
+AUDIT HORIZONTAL C4: an older build's door refuses a class row it does not know, and with it the whole word, so an
+older-build player near a port saw none of a newer peer's ships, volleys, barrels or casks. A fishing boat rides a key
+of her own now (`navalWire.js` `h`), and her casks `j`; `s`, `f` and `w` carry only the rows every build knows
+(NAVAL_WIRE_OLD_CLASSES, 15). An older client passes the word and sees no fishing boat, as `k` and `l` are passed. The
+ships of both keys share NAVAL_WIRE_SHIPS, and the casks of a kind their NAVAL_WIRE_CASKS. Proven with the older
+build's own door (844ccc064^1): the snapshot's word with a skiff read null there; this one reads the pirate and her
+wreckage.
+
+AUDIT HORIZONTAL C6: a fleeing fishing boat's target is the pirate she runs from, and the host counted every engaged
+ship's target as in a fight, so that pirate was kept from the director while she ran. The director's ships are made
+whole in `navalDirector.js` directorShips now (AUDIT NAV2 F27's chase and the fleet's keep), out of createNavalHost,
+and a fishing boat's target marks no pursuer.
+
+THE FOUR HOSTS: `navalHost.js` (in `world.js`) stands them; `worldModes.js` and `dungeonContext.js` have no sea, and
+`exterior.js` stands no harbour. Pins: `test/systems/naval/fishboats.test.js` (9). Mutants: `tools/mutants/seaopen.json`
+(FISH-, all dead). PINS MOVED: `shiplife.test.js` (the open sea's ships and the errand kinds leave the fishers out),
+`nav_c_ships.test.js` (17 classes), `crewhold.test.js` (a skiff has no battery), `tougherships.test.js` (a skiff's
+salvage), `auditshiplife_host.test.js` (the moored ships alone).
 
 ## KEEP-PLUNDER and KEEP-BOATS (2026-09-30) - nothing of the player's goes with the sea
 
@@ -2141,11 +2180,10 @@ sides whole. What each met of the other, and what was decided:
   the panel's foot while it stands (The UI, above); and on a phone the plate stands over the touch corner.
 - **One raid at a time** (OWS3): above, in Boarding.
 - **An enemy nearby** (OWS2): a journey across the sea stops for a hostile ship (above).
-- OPEN: main's Overworld raiders are Warm Ashes' own raid seen coming - on the Overworld they are marks, and in play
-  their hull is not drawn (a ship's length off, `seaRaiders.js` RAIDER_CONTACT_PLAY_M) before the mod's raid boards the
-  player's ship. The sea's pirates are drawn ships on Come Sail Away's hulls. FOLD: an Overworld raider that closes
-  in play could be stood as one of the sea's pirates (seeded from its cell, so every player still meets the same
-  sail), her boarding the raid - one pirate of the Bay, seen from the map and met at the rail.
+- **Overworld raiders in play** are drawn ships since NAV-R (Warm Ashes' raiders as ships, above): with the sea fight
+  on, a raider near the player at sea is one of the sea's pirates, seeded from its cell, and the mod's raid is her
+  boarding. With the sea fight off they stay the Overworld's marks and the mod's raid, by that switch's law.
+  SEA-OPEN (2026-10-27) found the OPEN that stood here stale and struck it.
 
 ## Not seen
 

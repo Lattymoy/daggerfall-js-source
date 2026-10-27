@@ -111,8 +111,8 @@ test('PROF12 DONE WHEN: a Healing brewed at an Alchemist\'s from the Stores\' Re
   const page = pageOf();
   try {
     assert.match(page.text(), /The Alchemy Station/);
-    assert.match(page.text(), /The alchemist's station - 25 gold a brew\. Provisioning 0 \(Novice\): 2 potions a brew; Potent 0% \(\+25% magnitude or duration\), \+5% for each herb you picked unbruised\./);   // PIN MOVED (CRAFT-PAYS): 25 gold and a Novice's two. PIN MOVED (CRAFT3): the station reads Provisioning, Alchemy's craft's track
-    assert.equal(page.recipe('Healing').textContent, 'Healingneeds ingredients');
+    assert.match(page.text(), /ProvisioningNovice 0[^]*?The alchemist's station - 25 gold a brew\. 2 potions a brew\. Potent 0% \(\+25% magnitude or duration\)\. \+5% for each herb picked unbruised\./);   // PIN MOVED (CRAFT-HALL): the rank is the station header's bar, not the station's sentence;   // PIN MOVED (CRAFT-PAYS): 25 gold and a Novice's two. PIN MOVED (CRAFT3): the station reads Provisioning, Alchemy's craft's track
+    assert.equal(page.recipe('Healing').textContent, 'Healingneeds ingredientsFirst-time bonus');   // PIN MOVED (CRAFT-HALL): its first-time bonus still to earn
     assert.equal(page.recipe('Invisibility').textContent, 'Invisibilityrank 70');
     page.recipe('Healing').onclick();
     assert.match(page.text(), /Healing - rank 0Red Berries \(northern\) 1 \/ 1 \(1 stored\)Troll's Blood 0 \/ 1 \(0 stored\)Buy 1 from the Apothecaries - 4 silver/);
@@ -124,7 +124,7 @@ test('PROF12 DONE WHEN: a Healing brewed at an Alchemist\'s from the Stores\' Re
     await settle(_alchemyForTests());
     page.draw();
     assert.deepEqual([book.held('reagent:troll-blood'), book.held('reagent:elixir-vitae')], [1, 1], 'the counter\'s goods in the Stores');
-    assert.match(page.text(), /2 potions a brew\. Potent 0% \(\+25% magnitude\) - and \+5% for each of its herbs you picked unbruised\. 20 Provisioning experience, and 3,155 the first time\./);   // PIN MOVED (CRAFT3): the XP is Provisioning's; PIN MOVED (FIRST-BUDGET): Provisioning's share
+    assert.match(page.text(), /2 potions a brew\. Potent 0% \(\+25% magnitude\) - and \+5% for each of its herbs you picked unbruised\. 20 Provisioning experience, plus a 3,155 first-time bonus\./);   // PIN MOVED (CRAFT-HALL): the real Worker says it is still to earn;   // PIN MOVED (CRAFT3): the XP is Provisioning's; PIN MOVED (FIRST-BUDGET): Provisioning's share
     page.button('Brew').onclick();
     await settle(_alchemyForTests());
     assert.equal(player.items.length, 1);
@@ -142,7 +142,7 @@ test('PROF12 DONE WHEN: a Healing brewed at an Alchemist\'s from the Stores\' Re
     assert.equal((await book.refresh({ force: true })).ok, true);
     page.draw();
     page.recipe('Healing').onclick();
-    assert.match(page.text(), /Provisioning 100 \(Master\): 3 potions a brew; Potent 20% \(\+40% magnitude or duration\)/);   // PIN MOVED (CRAFT3): Provisioning's rank
+    assert.match(page.text(), /ProvisioningMaster 100[^]*?3 potions a brew\. Potent 20% \(\+40% magnitude or duration\)/);   // PIN MOVED (CRAFT3): Provisioning's rank;// PIN MOVED (CRAFT-HALL): the rank is the station header's bar, not the station's sentence
     await steered(0x00, async () => { page.button('Brew').onclick(); await settle(_alchemyForTests()); });
     const potent = player.items.find((it) => it.potent === 40);
     assert.deepEqual([potent?.stackCount ?? 1, potent?.value, itemLongName(potent)], [3, 70, 'Potent Potion of Healing'], 'three, stacked apart from the plain one; worth its share more');
@@ -154,7 +154,7 @@ test('PROF12 DONE WHEN: a Healing brewed at an Alchemist\'s from the Stores\' Re
     player.items.push({ group: 'Jewellery', templateIndex: 135, provenance: made.body.pieces[0].provenance, recipe: 'ring:gold:ruby', name: 'Gold Ruby Ring', enchantmentPoints: 2160 });
     layRecord(s.env, mac.character, freshSave({ name: 'Mac', items: [{ ...player.items.at(-1), stackCount: 1 }] }));   // INT16: the ring in the realm character's record, as its checkpoint would hold it
     page.draw();
-    assert.match(page.text(), /The Enchanting Station.*The guild's enchanter - 50 gold a piece\. Enchanting 0 \(Novice\)\./);
+    assert.match(page.text(), /The Enchanting StationEnchantingNovice 0[^]*?The guild's enchanter - 50 gold a piece\./);   // PIN MOVED (CRAFT-HALL): the rank is the station header's bar, not the station's sentence
     assert.match(page.text(), /2,160 points: 21 Arcane Essence, \+315 Enchanting experience/);   // AUDIT PROF12 E2: 5 x the Gold ring's tier 3 x 21
     page.button('Disenchant').onclick();
     assert.ok(page.button('Press again to destroy it'), 'pressed once: armed, nothing asked');
@@ -199,7 +199,7 @@ test('PROF12 pages: The Alchemy Station - away, the word; at a home\'s, no fee; 
   const { calls } = stubPages({ alchemy: { kind: 'home', fee: 0 }, alchemyTrack: { rank: 50, specs: { 50: 'brewer', 100: null } },
     held: { 'p2:16': 2, 'p1:16': 1, 'reagent:troll-blood': 1, 'reagent:elixir-vitae': 1, 'metal:mercury': 1 } });
   page = pageOf();
-  assert.match(page.text(), /Your alchemy station\. Provisioning 50 \(Journeyman\): 3 potions a brew; Potent 0%/);   // PIN MOVED (CRAFT3): the station reads Provisioning, Alchemy's craft's track
+  assert.match(page.text(), /ProvisioningJourneyman 50[^]*?Your alchemy station\. 3 potions a brew\. Potent 0%/);   // PIN MOVED (CRAFT-HALL): the rank is the station header's bar, not the station's sentence;   // PIN MOVED (CRAFT3): the station reads Provisioning, Alchemy's craft's track
   for (const [name, rank] of [['Stamina', 0], ['Resist Fire', 10], ['Cure Disease', 25], ['Levitation', 40], ['Shadow Form', 55], ['Invisibility', 70], ['Purification', 90]]) {
     assert.equal(page.recipe(name).textContent, `${name}${rank <= 50 ? 'needs ingredients' : `rank ${rank}`}`, 'open at Journeyman to rank 40, shut above it');
   }
@@ -220,7 +220,7 @@ test('PROF12 pages: The Alchemy Station - away, the word; at a home\'s, no fee; 
   page.done();
   const { calls: calls2 } = stubPages({ alchemy: { kind: 'shop', fee: ALCHEMY_FEE }, alchemyTrack: { rank: 100, specs: { 50: 'distiller', 100: 'transmuter' } }, held: { 'metal:tin': 3, 'metal:mercury': 1 } });
   page = pageOf();
-  assert.match(page.text(), /Provisioning 100 \(Master\): 3 potions a brew; Potent 30% \(\+25% magnitude or duration\)/, 'Master\'s 20 and a Distiller\'s 10');   // PIN MOVED (CRAFT3): Provisioning's rank
+  assert.match(page.text(), /ProvisioningMaster 100[^]*?3 potions a brew\. Potent 30% \(\+25% magnitude or duration\)/, 'Master\'s 20 and a Distiller\'s 10');   // PIN MOVED (CRAFT3): Provisioning's rank
   assert.match(page.text(), /metal:copper2 metal:tin \(3\) \+ 1 metal:mercury \(1\)/, 'Tin to Copper, its inputs as the Stores hold them');
   assert.match(page.text(), /metal:silver2 metal:copper \(0\) \+ 1 metal:mercury \(1\)/);
   const go = page.button('Transmute');
@@ -239,7 +239,7 @@ test('PROF12 pages: The Enchanting Station - away, the word; at a Mages Guild ha
   page.done();
   const { calls } = stubPages({ enchanter: { kind: 'shop', fee: ENCHANT_FEE }, enchantingTrack: { rank: 100, specs: { 50: 'efficient', 100: null } } });
   page = pageOf();
-  assert.match(page.text(), /The guild's enchanter - 50 gold a piece\. Enchanting 100 \(Master\): the item maker costs 25% less\./);
+  assert.match(page.text(), /EnchantingMaster 100[^]*?The guild's enchanter - 50 gold a piece\. The item maker costs you 25% less\./);   // PIN MOVED (CRAFT-HALL): the rank is the station header's bar, not the station's sentence
   // PIN MOVED (FIELD BUGS 2026-10-18f CRAFT-LIMIT-SAID): a Master's track takes no more XP - the service credits
   // MIN(earned, PROF_XP_MAX - held), none - so the piece says +0 and the station why (it said +7, which the Worker never
   // paid); AUDIT PROF12 E2's quarter is pinned at an Expert's 90 below, where it is paid
@@ -289,18 +289,19 @@ test('PROF12 pages: Alchemy and Enchanting practised on the Professions page - t
     assert.match(page.text(), /Alchemy: Orc Strength, Stamina, Healing, Water Walkingrank 0/);   // PIN MOVED (CRAFT3): each unlock its discipline's name
     assert.match(page.text(), /Alchemy: Purificationrank 90/);   // PIN MOVED (CRAFT3): as above
     // PIN MOVED (CRAFT3): the Unlocks both disciplines' lines, by the rank each opens at (unlocksOf) - Alchemy's first on a tie
-    assert.deepEqual([...document.body.querySelector('.prof-pane').querySelectorAll('.px-stat')].map((r) => r.textContent), [
+    // PIN MOVED (CRAFT-HALL): the unlocks' rows, not the What raises rows beside them (prof-raise)
+    assert.deepEqual([...document.body.querySelector('.prof-pane').querySelectorAll('.px-stat')].filter((r) => !r.className.includes('prof-raise')).map((r) => r.textContent), [
       'Alchemy: Orc Strength, Stamina, Healing, Water Walkingrank 0', 'Cooking: Hunter\'s Stew, Fisherman\'s Supperrank 0',
       'Alchemy: Resist Fire, Resist Frost, Resist Shock, Restore Powerrank 10', 'Cooking: Orchard Tartrank 10',
       'Alchemy: Slow Falling, Water Breathing, Cure Disease, Heal Truerank 25', 'Alchemy: Resist Poison, Free Action, Levitationrank 40',
       'Alchemy: Chameleon Form, Shadow Form, Cure Poisonrank 55', 'Alchemy: Invisibilityrank 70', 'Cooking: Feast of the Hearthrank 70', 'Alchemy: Purificationrank 90',
     ]);
-    assert.match(page.text(), /Brew at an alchemy station/);   // VOICE1 (PIN MOVED): the same law in plain words
+    assert.match(page.text(), /Brew on the Crafting page at an alchemy station/);   // VOICE1 (PIN MOVED): the same law in plain words; PIN MOVED (PLAIN-TEXT)
     assert.doesNotMatch(page.text(), /not practiced in the Bay yet/);
     page.buttonStarting('Enchanting').onclick();
     page.draw();
-    assert.match(page.text(), /Enchanting improves as you break crafted pieces down into Arcane Essence at an enchanting station/);   // VOICE1 (PIN MOVED): the same law in plain words
-    assert.match(page.text(), /From Journeyman on, your rank lowers its prices/);   // VOICE1 (PIN MOVED)
+    assert.match(page.text(), /Enchanting rises as you break crafted pieces into Arcane Essence at an enchanting station/);   // VOICE1 (PIN MOVED): the same law in plain words; PIN MOVED (PLAIN-TEXT)
+    assert.match(page.text(), /From Journeyman on, the item maker costs you less\./);   // VOICE1 (PIN MOVED); PIN MOVED (PLAIN-TEXT)
     assert.doesNotMatch(page.text(), /not practiced in the Bay yet/);
   } finally { page.done(); setProfessionsPages(null); }
 });
@@ -497,7 +498,7 @@ test('AUDIT PROF12 A3 client (Mac: "Potent lasts longer"): a Potent potion whose
   stubPages({ alchemy: { kind: 'home', fee: 0 }, alchemyTrack: { rank: 100, specs: { 50: null, 100: 'master-alchemist' } } });
   const page = pageOf();
   try {
-    assert.match(page.text(), /Provisioning 100 \(Master\): 3 potions a brew; Potent 20% \(\+40% magnitude or duration\)/);   // PIN MOVED (CRAFT3): Provisioning's rank
+    assert.match(page.text(), /ProvisioningMaster 100[^]*?3 potions a brew\. Potent 20% \(\+40% magnitude or duration\)/);   // PIN MOVED (CRAFT3): Provisioning's rank;// PIN MOVED (CRAFT-HALL): the rank is the station header's bar, not the station's sentence
     page.recipe('Resist Fire').onclick();
     assert.match(page.text(), /3 potions a brew\. Potent 20% \(lasts 40% longer\)/);
     page.recipe('Healing').onclick();
@@ -522,7 +523,7 @@ test('AUDIT PROF-541 B3/B4 client: the station\'s Potent chance carries the town
   stubPages({ alchemy: { kind: 'home', fee: 0 }, alchemyTrack: { rank: 75, specs: { 50: null, 100: null } }, over: { alchemySteps: () => 2 } });
   const page = pageOf();
   try {
-    assert.match(page.text(), /Provisioning 75 \(Expert\): 2 potions a brew; Potent 30% \(\+25% magnitude or duration\) \(the Apothecary's \+20% with it\)/);   // PIN MOVED (CRAFT3): Provisioning's rank
+    assert.match(page.text(), /ProvisioningExpert 75[^]*?2 potions a brew\. Potent 30% \(\+25% magnitude or duration\) \(the Apothecary's \+20% with it\)/);   // PIN MOVED (CRAFT-HALL): the rank is the station header's bar, not the station's sentence;   // PIN MOVED (CRAFT3): Provisioning's rank
     page.recipe('Healing').onclick();
     assert.match(page.text(), /2 potions a brew\. Potent 30% \(\+25% magnitude\) - and \+5% for each of its herbs/);
     page.recipe('Cure Disease').onclick();

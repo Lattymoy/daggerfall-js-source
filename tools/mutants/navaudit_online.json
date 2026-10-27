@@ -221,7 +221,7 @@
   {
     "name": "NAV1O-door-handover-unchecked",
     "file": "src/systems/naval/navalWire.js",
-    "old": "    if (w.length === 19 && (!int(w[17], 0, NAVAL_GEN_MAX) || !int(w[18], -1, REGION_NAMES.length - 1))) return null;\n",
+    "old": "  if (w.length === 19 && (!int(w[17], 0, NAVAL_GEN_MAX) || !int(w[18], -1, REGION_NAMES.length - 1))) return null;\n",
     "new": "",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
@@ -230,8 +230,8 @@
   {
     "name": "NAV1O-old-word-first-claim",
     "file": "src/systems/naval/navalWire.js",
-    "old": "      gen: w[17] ?? 0, region: w[18] ?? -1 });",
-    "new": "      gen: w[17] ?? 1, region: w[18] ?? -1 });",
+    "old": "    gen: w[17] ?? 0, region: w[18] ?? -1 };",
+    "new": "    gen: w[17] ?? 1, region: w[18] ?? -1 };",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
     ]
@@ -613,8 +613,8 @@
   {
     "name": "NAV1O-wire-self-alone-unsaid",
     "file": "src/systems/naval/navalWire.js",
-    "old": "return s.length || v.length || b.length || out.p || out.n || out.t !== undefined || out.f || out.w || out.l || out.g || out.q ? out : null;",
-    "new": "return s.length || v.length || b.length || out.t !== undefined || out.f || out.w || out.l || out.g || out.q ? out : null;",
+    "old": "return s.length || h.length || v.length || b.length || out.p || out.n || out.t !== undefined || out.f || out.w || out.j || out.l || out.g || out.q ? out : null;",
+    "new": "return s.length || h.length || v.length || b.length || out.n || out.t !== undefined || out.f || out.w || out.j || out.l || out.g || out.q ? out : null;",
     "tests": [
       "test/systems/naval/nav_g_online.test.js",
       "test/systems/naval/navaudit_online.test.js"
@@ -859,7 +859,7 @@
   {
     "name": "NAV1O-wire-casks-uncapped",
     "file": "src/systems/naval/navalWire.js",
-    "old": "    if ((salvage ? w : f).length >= NAVAL_WIRE_CASKS) continue;\n",
+    "old": "    if ((salvage ? w : f).length + j.filter((x) => (x.length === 5) === salvage).length >= NAVAL_WIRE_CASKS) continue;\n",
     "new": "",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
@@ -868,8 +868,8 @@
   {
     "name": "NAV1O-wire-casks-unread",
     "file": "src/systems/naval/navalWire.js",
-    "old": "      casks.push({ id: w[0], pos, from: SHIP_CLASSES[w[4]].id, lot: LOT_KEYS[w[5]] });",
-    "new": "      void pos;",
+    "old": "    casks.push(c);",
+    "new": "    void c;",
     "tests": [
       "test/systems/naval/nav_g_online.test.js",
       "test/systems/naval/navaudit_online.test.js"
@@ -887,8 +887,8 @@
   {
     "name": "NAV1O-wire-casks-over-word",
     "file": "src/systems/naval/navalWire.js",
-    "old": "if (!Array.isArray(raw.f) || raw.f.length > NAVAL_WIRE_CASKS) return null;",
-    "new": "if (!Array.isArray(raw.f)) return null;",
+    "old": "if (caskWords.filter((w) => w?.length === 6).length > NAVAL_WIRE_CASKS || caskWords.filter((w) => w?.length !== 6).length > NAVAL_WIRE_CASKS) return null;",
+    "new": "if (caskWords.filter((w) => w?.length !== 6).length > NAVAL_WIRE_CASKS) return null;",
     "tests": [
       "test/systems/naval/nav_g_online.test.js"
     ]

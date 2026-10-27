@@ -48,6 +48,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { registerWeaponBlowMod, registerEntityFold, newMods, EMPTY_MODS } from '../entityMods.js';
+import { blowRoom, guardRoom } from '../powerCeiling.js';   // POWER-CEILING: the blow's one product, the guards' one share
 import { effectSchool } from '../spellcost.js';   // LOOT15: Stendarr's Mercy reads a spell's school
 import { hoodUp } from '../survival/temperature.js';   // LOOT15: Unseen reads the hood (HOOD-SAID's one law)
 import { registerPlayerStrikeListener, enemyEntityGroup, ENEMY_GROUPS } from '../../combat/formulas.js';
@@ -260,6 +261,7 @@ export function lootBlow(weapon, damage, attacker, target, info) {
       default: break;
     }
   }
+  if (pct > 0) pct = blowRoom(pct, 'loot');   // POWER-CEILING: the loot's room under the blow's one product
   if (pct > 0) out += shareOf(weapon ?? attacker, damage, pct, !info?.estimate);
   return out + flat;
 }
@@ -411,13 +413,13 @@ export function lootDamageMod(entity, dmg) {
   }
   let d = dmg;
   const hex = kind('hex');
-  if (blow && hex && hexed(blow.attacker, now)) d *= 1 - hex.less / 100;
+  if (blow && hex && hexed(blow.attacker, now)) d *= 1 - guardRoom(hex.less, 'loot') / 100;   // POWER-CEILING: each share asks the guards' room
   const bed = kind('bedrock');
-  if (blow && bed) d *= 1 - (bed.less * bedrockStacks(now)) / 100;
+  if (blow && bed) d *= 1 - guardRoom(bed.less * bedrockStacks(now), 'loot') / 100;
   const wall = kind('bulwark');
   if (blow && wall) d = Math.max(1, d - wall.less);
   const last = kind('laststand');
-  if (last && share(entity) < last.below / 100) d *= 1 - last.less / 100;
+  if (last && share(entity) < last.below / 100) d *= 1 - guardRoom(last.less, 'loot') / 100;
   const titan = kind('unyielding');
   if (titan && entity.maxHealth > 0) d = Math.min(d, Math.max(1, Math.ceil((entity.maxHealth * titan.most) / 100)));
   return Math.max(dmg > 0 && d > 0 ? 1 : 0, Math.round(d));

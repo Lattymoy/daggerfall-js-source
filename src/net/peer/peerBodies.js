@@ -89,6 +89,7 @@ import { JUMP_UNITS, stepPeerPace } from './peerPace.js'; import { peerBodyYaw, 
 import { gatherActOf, peerGatherTool, peerGatherSwing, peerKneeling, GATHER_POSE_STRIKES } from './peerGather.js';   // PEER-ACTS: a gathering act's tool, blow and kneel
 import { weaponGlowOn, glowFromWord } from '../../systems/weaponGlow.js';   // WEAPON-GLOW1: a peer's weapon, glowing as its look says
 import { fieldOfView } from '../../ui/viewSettings.js';   // HORSE-VIEW (AUDIT): the frame's own lens, the cadence's base (lensOf)
+import { appearanceSig } from '../appearanceLaw.js';   // AUDIT HORIZONTAL E1: a held weapon's look is part of what the hand holds
 
 
 /** The most peers in a Morrowind body at once; the rest keep the paperdoll. */
@@ -235,6 +236,10 @@ export const cadenceD2 = (at, eye, lens = 1) => ((at[0] - eye[0]) ** 2 + (at[2] 
 /** DISC12: the weapon in the hand the peer USES - the look carries both hands, the pose's `lh` says which one is
  *  drawn (WeaponManager.ApplyWeapon :741-755: the other hand is never on screen). */
 const _stubSlots = new WeakMap();   // MW-CROWD: a look's stand-in's slots, once a look - a look is replaced, never mutated (lookKey's law)
+/** AUDIT HORIZONTAL E1 (bible/04-Characters/Wardrobe.md section 6): WHAT A HAND HOLDS, as its body draws it - the weapon's
+ *  template, metal, hand and the look it wears. A peer re-dressing the weapon in hand (or taking up its twin in another
+ *  metal) is a new weapon to the body; the template and the hand alone kept the old one, and its glow went out. */
+export const heldWeaponKey = (/** @type {any} */ it) => (it ? `${it.templateIndex}|${it.material ?? ''}|${it.equipSlot}|${appearanceSig(it)}` : '');
 export function peerWeaponOf(look, shown = null) {
   return stubSlotsOf(look)[shown?.lh ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand] ?? null;
 }
@@ -862,7 +867,7 @@ export class PeerBodies {
     const hands = look && !look.creature && !b.wolf && !tool ? peerHandsOf(look, shown) : null;
     if (look && !look.creature) {   // MWNPC9: a creature's claws are its body
       const want = b.wolf ? null : tool ?? (hands?.dual ? hands.right : peerWeaponOf(look, shown));   // WEREWOLF1: the wolf's hands are its claws; PEER-ACTS: the act's tool before the look's weapon; AUDIT MIXED-PAIR L4-3: a pair's right hand holds the right's
-      if (want !== b.weapon && (want?.templateIndex !== b.weapon?.templateIndex || want?.equipSlot !== b.weapon?.equipSlot)
+      if (want !== b.weapon && heldWeaponKey(want) !== heldWeaponKey(b.weapon)   // AUDIT HORIZONTAL E1: and its metal and its look
         && (b.rig.upperBodyReady?.() ?? true) && b.rig.setWeapon?.(want, { hasAmmo: !!shown.am }) !== false) { b.weapon = want; b.ammo = shown.am ? 1 : 0; }
     }
     // AUDIT WORLD C5/C6: the arrow lands only when the arm is quiet (setWeapon clears the action in flight, so the

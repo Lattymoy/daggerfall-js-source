@@ -383,17 +383,17 @@ TileMap's water), 37 of the 106 port towns sounded no harbour at all - Daggerfal
 their nearest berths 1,542 m, 721 m and 1,118 m off their footprints; Holwych's town stands at 272 m over a sea pixel
 whose shore the kernel lays 1.1 km off. A Bay port whose own shore gives no berth is sounded again out to the ring its
 port law read (`systems/naval/harbourBook.js` portRingReach: the pixels within SEA_RING of the town's -
-`harbourBook.js:"if (e && !e.harbour && !e.far && far > own && near.ready?.(far) !== false) { e.harbour = sound(far); e.far = true; }"`),
+`harbourBook.js:"if (e && !e.harbour && !e.far && far > own && near.ready?.(far) !== false) { e.harbour = sound(far) ?? sound(far, true); e.far = true; }"`),
 once every pixel of that ring is built (the world's `ready` at any reach - O1's law: never "no harbour" off a
 half-streamed ring, the port waits and is asked again each step), and once a book's life (its scan is some five times
 the near one's; the B7 retry asks the near reach alone). 36 of the 37 then stand a harbour, its quays at the nearest
-shore - up to some 1.6 km from the town. Aldbrugh (Shalgora) sounds none still: OPEN, its port kept. An isle past the
+shore - up to some 1.6 km from the town. Aldbrugh stands one since ALDBRUGH-QUAY (below). An isle past the
 Veil sounds its own reach alone (AUDIT CAPTAIN'S SEA H1). Two things it left: the ring's ground was built about a player
 within a pixel of the town at TerrainDistance 3 (DFU's default), so a ship come in from the sea to a far shore 2 pixels
 off - Daggerfall's - stood its quays once the player had been to the town, never before (closed by FAR-QUAY, below); and
 under Deep Waters (on by default) a berth lies some 80 m farther out, which Daggerfall's 97 m inside the ring's edge was
 not measured against (still so).
-`test/systems/naval/fb1020c_harbourreach.test.js` (the 37 and the one, on ARENA2 - `test/portTerrain.mjs`, the pixel's
+`test/systems/naval/fb1020c_harbourreach.test.js` (the 37 and all 106, on ARENA2 - `test/portTerrain.mjs`, the pixel's
 TileMap as the build makes it), `tools/mutants/fb1020c_harbourreach.json`.
 
 **THE FAR HARBOUR FROM THE SEA** (RPT1026-WORLD FAR-QUAY, 2026-10-27 - a private report: sailing port to port, no other
@@ -416,6 +416,16 @@ All 36 are sounded from their first berth now, each to its whole ring's harbour 
 `test/systems/naval/rpt1026_world_farquay.test.js` (6); `tools/mutants/rpt1026_world.json`. PINS MOVED: the readiness's
 source pins in `fb1020c_harbourreach.test.js`, `auditholdings.test.js` and `shiplife.test.js` read `harbourBook.js`; their
 mutant records (`fb1020c_harbourreach.json`, `sealanes.json`) re-aimed by content.
+
+**ALDBRUGH'S QUAY** (ALDBRUGH-QUAY, 2026-10-27, the SEA-OPEN slice). The port law reads a square of pixels about the town
+(`portSites.js` seaBears), and the ring's sounding read a circle. Aldbrugh's sea lies only in the square's south-east
+corner, some 2.3 km off, past the circle: a port with no quay. Where the round ring finds no shore, the book sounds the
+square (`shipLife.js` findHarbour's `square`, cited above).
+A port whose round ring finds a shore keeps that harbour: the corners never add a berth to it. On ARENA2 all 106 port
+towns stand a harbour; Aldbrugh's berths lie 2,318-2,341 m from its town. The departure is the port's own (DFU has
+no harbours). `test/systems/naval/fb1020c_harbourreach.test.js`, `tools/mutants/seaopen.json` (ALDBRUGH-, 3, dead).
+Pin moved: `auditcaptsea.test.js` H1/P2 (the sounding's text names its shape). THE FOUR HOSTS as below: only
+`world.js` sounds a harbour.
 
 THE FOUR HOSTS: `scenes/world.js` keeps the harbours, stands the quays and hands the warp; a building's frame
 (`worldModes.js`) and a dungeon's (`dungeonContext.js`) have no sea, and the standalone street (`exterior.js`) no harbour.

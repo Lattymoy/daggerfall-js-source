@@ -1205,8 +1205,8 @@
   {
     "name": "ACS-H1-reach-unread",
     "file": "src/systems/naval/shipLife.js",
-    "old": "      if (Math.hypot(dx, dz) > reach) continue;",
-    "new": "      if (Math.hypot(dx, dz) > HARBOUR_REACH) continue;",
+    "old": "      if ((square ? Math.max(dx, dz) : Math.hypot(dx, dz)) > reach) continue;",
+    "new": "      if ((square ? Math.max(dx, dz) : Math.hypot(dx, dz)) > HARBOUR_REACH) continue;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1379,7 +1379,7 @@
   {
     "name": "ACS-P6-party",
     "file": "src/scenes/world.js",
-    "old": "wildTeleportRefused(pick.pixel ?? null) || veilRefused(pick.pixel ?? null)",
+    "old": "wildTeleportRefused(pick.pixel ?? null) || (!pick.veil && veilRefused(pick.pixel ?? null))",
     "new": "wildTeleportRefused(pick.pixel ?? null)",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"

@@ -215,7 +215,8 @@ test('SET5 the set block, built: the name and the pieces of nine, the Prince and
     assert.deepEqual(places.map((p) => p.classList.contains('on')), [true, true, true, true, false, false, false, false, false]);
     assert.equal(places[0].title, 'Head - worn');
     assert.equal(places[8].title, 'Weapon');
-    assert.equal(one(box, 'set-stage').textContent, 'Kindled · Bright: grow your Helm, reach Renown 20');
+    // PIN MOVED (SET-CATCHUP, Sigil-Sets.md section 5): three pieces stand at Bright, so the helm below them drinks faster
+    assert.equal(one(box, 'set-stage').textContent, 'Kindled · Bright: grow your Helm (3x XP), reach Renown 20');
     const tiers = kids(box, 'set-tier');
     assert.deepEqual(tiers.map((t) => t.classList.contains('awake')), [true, true, false]);
     assert.deepEqual(tiers.map((t) => one(t, 'set-at').textContent), ['2', '4', '6']);
@@ -228,7 +229,7 @@ test('SET5 the set block, built: the name and the pieces of nine, the Prince and
     assert.equal(card.className, 'setbox compact');
     assert.equal(one(card, 'set-count').textContent, '4/9 · Kindled');
     assert.equal(one(card, 'set-role'), null, 'the Prince and the role are the Info box\'s');
-    assert.equal(one(card, 'set-stage').textContent, 'Bright: grow your Helm, reach Renown 20');
+    assert.equal(one(card, 'set-stage').textContent, 'Bright: grow your Helm (3x XP), reach Renown 20');   // PIN MOVED (SET-CATCHUP)
     const rows = kids(card, 'set-tier');
     assert.deepEqual(rows.map((t) => t.classList.contains('awake')), [true, true, false]);
     assert.equal(one(rows[1], 'set-tier-text').textContent, SIGIL_SETS.dagon.tiers[1].brief({ more: 6 }));

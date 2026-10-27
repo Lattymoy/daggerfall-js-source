@@ -27,6 +27,7 @@
 
 import manifest from '../../../vendor/layered-armor/manifest.json' with { type: 'json' };
 import cloakManifest from '../../../vendor/layered-armor/cloak/manifest.json' with { type: 'json' };
+import { drawnPiece } from '../../net/appearanceLaw.js';   // APPEARANCES: a worn piece's look
 
 /** The texture archives the composed pictures are uploaded under - one per body, clear of every vendored archive. */
 export const LAYERED_ARCHIVE = Object.freeze({ male: 1700, female: 1701 });
@@ -61,8 +62,8 @@ const PLATE_METAL = Object.freeze({
 const CHAIN = new Set([0x0100, 0x0103]);
 
 /** One slot's look: 'l' leather (or nothing worn), 'c' chain, 'p0'..'p6' plate in METALS[n]. */
-export function pieceCode(item) {
-  const m = item?.material;
+export function pieceCode(piece) {
+  const m = drawnPiece(piece)?.material;   // APPEARANCES (bible/04-Characters/Wardrobe.md): a piece wearing a look is drawn as the look - my body's and every peer walker's
   if (!Number.isInteger(m)) return 'l';
   if (CHAIN.has(m)) return 'c';
   if (m >= 0x0200) return `p${Math.max(0, METALS.indexOf(PLATE_METAL[m] ?? 'steel'))}`;

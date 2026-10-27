@@ -31,6 +31,12 @@ Five tiers, three of which Daggerfall already had:
 | Legendary | a fixed record: a name a player learns, a set affix signature, its own DFU enchantment, a line of lore | a roll, from `LEGENDARIES` (ten records over the three groups; thirty since LOOT3, `Loot-Arc.md`) |
 | Artifact | DFU's artifacts, untouched | DFU's own; the ceiling |
 
+THE CEILING HOLDS (POWER-CEILING, 2026-10-27; `05-Combat/Power-Ceiling.md`). The ladder
+is seven rungs now - Aetheric (SET6) and Gilded (GILDED1) came above the Legendary - and
+it stays seven: a new rung, a band above the Legendary, or a line past the Legendary
+band's top needs the owner's word, quoted on that page. `validAffix` is the per-line law;
+`test/combat/powerceiling_walk.test.js` walks every record and minted item against it.
+
 REPLACE, DON'T LAYER (decided, 2026-09-14). With the switch on there is
 one ladder: `rarityOf(item)` answers a rolled item's own field, an
 artifact as the ceiling, any enchanted item (a MAGIC.DEF drop, a made
@@ -585,3 +591,11 @@ gear - weapons, plate and shields - at `tradeModes.js` counterValueOf, the one v
 in the piece sells whole, and what a shop ASKS stands. A patron at a hired trader is no counter: patronWorth
 (`net/patronLaw.js`) reads the piece's whole worth and is untouched. A departure from DFU's Sell arms (Port-Ledger A,
 A COUNTER PAYS HALF FOR DAEDRIC GEAR).
+
+## MASTER-ART (2026-10-27) - A CRAFTED LEGENDARY
+
+A crafter at Master makes a Legendary of no record: three lines of its group's pool, chosen, their values rolled in the
+Legendary band by the account service (`AFFIX_RANGES`' `legendary` column, never past its top). It carries no record's
+name, no DFU enchantment and no power, so the codex and the powers stay the drops'. The item law knows it by its
+provenance and its shape; the judge holds its lines to its record. The item maker refuses every Legendary now, this one
+too. The record is `06-Systems/Professions-Arc.md` section 57.
