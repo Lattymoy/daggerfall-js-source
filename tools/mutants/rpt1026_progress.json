@@ -12,8 +12,8 @@
   {
     "name": "RPT1026-PROGRESS-switch-keeps-plain-practice",
     "file": "src/systems/masterSkills.js",
-    "old": "  if (!was && masterSkillsActive(entity)) for (const id of masteredSkills(entity)) dropPlainPractice(entity, id);\n",
-    "new": "",
+    "old": "for (const id of masteredSkills(entity)) dropPlainPractice(entity, id); returnMasterPractice(entity); }",
+    "new": "returnMasterPractice(entity); }",
     "tests": [
       "test/systems/rpt1026_progress.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "RPT1026-PROGRESS-switch-unmoved-drops",
     "file": "src/systems/masterSkills.js",
-    "old": "  if (!was && masterSkillsActive(entity)) for",
-    "new": "  if (masterSkillsActive(entity)) for",
+    "old": "  if (!was && masterSkillsActive(entity)) {",
+    "new": "  if (masterSkillsActive(entity)) {",
     "tests": [
       "test/systems/rpt1026_progress.test.js"
     ],
@@ -198,7 +198,7 @@
   {
     "name": "RPT1026-PROGRESS-hotbar-jewel-worn",
     "file": "src/systems/quickslots.js",
-    "old": "return castsWhenUsed(item) ? 'use' : 'wear';",
+    "old": "return castsWhenUsed(item) && !wornForMore(item) ? 'use' : 'wear';",
     "new": "return 'wear';",
     "tests": [
       "test/systems/rpt1026_progress.test.js"
@@ -208,8 +208,8 @@
   {
     "name": "RPT1026-PROGRESS-hotbar-saved-slot-worn",
     "file": "src/systems/quickslots.js",
-    "old": "  if (e.kind === 'wear' && castsWhenUsed(hotbarView(entity)[i]?.item) && typeof doors.quickUse === 'function') return",
-    "new": "  if (false && e.kind === 'wear' && castsWhenUsed(hotbarView(entity)[i]?.item) && typeof doors.quickUse === 'function') return",
+    "old": "  if (castsWhenUsed(worn) && (!wornForMore(worn) || isEquipped(worn)) && typeof doors.quickUse === 'function') return",
+    "new": "  if (false && castsWhenUsed(worn) && (!wornForMore(worn) || isEquipped(worn)) && typeof doors.quickUse === 'function') return",
     "tests": [
       "test/systems/rpt1026_progress.test.js"
     ],
@@ -221,7 +221,8 @@
     "old": "e?.type === ENCHANTMENT_TYPES.CastWhenUsed);",
     "new": "e?.type === ENCHANTMENT_TYPES.CastWhenUsed || e?.type === ENCHANTMENT_TYPES.CastWhenHeld);",
     "tests": [
-      "test/systems/rpt1026_progress.test.js"
+      "test/systems/rpt1026_progress.test.js",
+      "test/scenes/audit_rpt1026_progress.test.js"
     ],
     "note": "a Cast When Held jewel, whose power needs wearing, used instead of worn"
   },

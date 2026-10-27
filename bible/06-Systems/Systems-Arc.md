@@ -1075,6 +1075,14 @@ only for another entity's spell and agrees trivially for a self-cast.
 GetEffectCastingCost carries the target multiplier and DFU's floor of
 5, which DFU spells out as the guard that stops an absorb from
 DRAINING the pool it is meant to fill.
+AUDIT RPT1026 F3 (2026-10-27, a private report: after a rest a
+player's own blast was never absorbed): since the port prices a
+player's cast with its cost modifiers (spellcost.js calculateCastCost)
+the two no longer agree - at a full pool a discounted cast made room
+for what it paid and the absorb asked room for the undiscounted price,
+so a rested absorber died to their own blast. A self-cast now asks
+room for, and drinks, no more than its release spent (tryAbsorption's
+`paid`); another entity's spell keeps DFU's price. Port-Ledger A.
 
 The target must have ROOM: `cost > (max - current)` refuses
 (:1180-1184). This is the throttle on the whole trait - an absorber at
@@ -4153,8 +4161,12 @@ the farm stood open to a second player. The owner's own frame names its
 summons now (`sm`, beside `lf` - `systems/foeLootCap.js` summonedWord), a
 reader flags the record (summonedRecord) and marks the puppet it stands
 (markSummoned, in `scenes/dungeonContext.js` applyOwnRecord) - bare alive,
-its death's finds emptied by capFoeLoot; the mark rides the entity, so a
-summon handed to its heir streams on as one. Each way at once: my summon
+its death's finds emptied by capFoeLoot; the mark rides the entity (no
+summon is handed to an heir - both `heirOf`s refuse a PlayerAlly; AUDIT
+RPT1026 F5). AUDIT RPT1026 F4: and a summon the street or a building
+saved alive is loaded one - the save carries the mark (`foeLootCap.js`
+savedSummon, restoredSummon), where a loaded copy had died with its
+finds on it. Each way at once: my summon
 on a friend's machine, theirs on mine. The street's and a building's
 lane needed nothing: a puppet there carries no loot (exteriorFoes.js
 WORLD6b B14). Pinned through the real lane by

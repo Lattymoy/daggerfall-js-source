@@ -16,9 +16,9 @@ A row's verdict is its Done column's first words; an "Answer the player" row's i
 
 | Verdict | Reports | What it means |
 |---|---|---|
-| FIXED | 102 | The cause found on the code, fixed, and pinned by a test that fails without the fix |
+| FIXED | 103 | The cause found on the code, fixed, and pinned by a test that fails without the fix |
 | ALREADY FIXED | 67 | Closed by a record newer than the build it was sent from (the update a report carries is its build - REL8) |
-| AS DESIGNED | 47 | The game's rule or DFU's, named; what to tell the player is in its row |
+| AS DESIGNED | 46 | The game's rule or DFU's, named; what to tell the player is in its row |
 | NOT REPRODUCED | 26 | Traced end to end on the real producers, and nothing there makes it; what was run is in its row |
 | NEEDS DATA | 38 | The cause is in one player's own record or machine; what to read is in its row |
 | STAFF | 10 | A staff action or a moderation call, not code (the last section) |
@@ -1164,6 +1164,12 @@ the 7 other records whose lines this change touched were run again: 22 dead. The
 Read on main's `d5a4c9c6a`, with the freeware's data. The pins are named under each fix, the mutants
 `tools/mutants/rpt1026_progress.json` (33: 31 dead, 2 equivalent as recorded - `node tools/mutate.mjs --jobs 4 tools/mutants/rpt1026_progress.json`). Code comments carry `RPT1026-PROGRESS`.
 
+AUDIT RPT1026 (lane F, 2026-10-27) read the section cold and proved four defects, fixed beneath the fixes they follow
+(F1 PRACTICE-KEPT, F2 JEWEL-USED, F3 the absorption answer, F4 SUMMON-BARE's left item), corrected one claim (F5) and
+pinned one law end to end that only a hand-built entity held (F6, under F4); code comments carry `AUDIT RPT1026 F<n>`,
+the pins are `test/scenes/audit_rpt1026_progress.test.js` (7, each failing on the batch's head), the mutants
+`tools/mutants/audit_rpt1026_progress.json` (21, all dead).
+
 | # | Report | What it was | Done |
 |---|---|---|---|
 | 101 | Weak-foe practice banked on a skill at 100 paid out past the cap once the skill was mastered (the reporter measured some twenty points) | Real. A skill held at 100 unmastered (or mastered with Master Skills off) counts every use whole, to DFU's 20,000 clamp; mastering it later (or switching Master Skills on) let MOVE-BANK spend that plain practice at the over-cap price, a point a rest | PRACTICE-KEPT |
@@ -1171,7 +1177,7 @@ Read on main's `d5a4c9c6a`, with the freeware's data. The pins are named under e
 | 62 | Skull of Corruption's copies carry their original's full loot | Real, and DFU's own rule (CreateFoe gives an allied summon its kind's loot): a Skull that never breaks farmed Daedra loot | SUMMON-BARE |
 | 103 | A discounted Identify gave back more than it took | The report's profit was closed by `2000334cd` (2026-10-25); two leftovers were real: the 5-point floor applied after discounts (a cast of 1 gave back 5), and the refund was re-priced at the landing (a discount gone between ready and release gave back the whole price) | IDENTIFY-SPENT |
 | 284 | A single filled gem paid for several items in one sitting at the item maker | Real. The window froze its soul list as DFU's does, and a bind whose gem was already spent went ahead with the soul's negative (free) budget | SOUL-HELD |
-| 286 | Resting removes Spell Absorption; the player then dies to their own spell | AS DESIGNED (DFU's TryAbsorption): an absorb needs room in the pool for the spell's cost, and a rest fills the pool | Answer the player (below) |
+| 286 | Resting removes Spell Absorption; the player then dies to their own spell | Answered AS DESIGNED; REAL (AUDIT RPT1026 F3): at a full pool the cast makes room for what it spent, and DFU's absorb fits it - the port's discounts left that room short of the absorb's undiscounted price | AUDIT RPT1026 F3 |
 | 45 | Level progress barely moves when skills past 100 rise | AS DESIGNED (SOFTCAP1): past 100 a point enters the level sum at a quarter | Answer the player |
 | 46 | The same, measured: +15 school points gave 2/15 of a level | AS DESIGNED - the reporter's own numbers through `levelUpSkillSum` give exactly +2 | Answer the player |
 | 154 | Growth's specialization shows Restoration 90, the Stats page 115 | AS DESIGNED: the specialization reads the trained skill (mastery needs the trained 100); the Stats page adds gear and spells (the Amulet of the Nine is +25 Restoration) | Answer the player |
@@ -1212,6 +1218,14 @@ narrowed beside it. THE RELAY: masterSkills.js is a leaf of the relay's bundle (
 PINS: `test/systems/rpt1026_progress.test.js` (2: the report's grind - 20,000 plain uses, mastered, thirty rests, no
 point - and its control; the offline switch, a skill below 100 kept, an unmoved switch). Mutants 1-5 (4 dead, 1
 equivalent: the helper's own 100 guard, which no caller can reach below).
+
+AUDIT RPT1026 F1 (minor, fixed). The drop at the switch on took practice the tough-foe rule had counted. Past 100 a mastered
+skill's counter holds the tough-foe uses since its last rest's pass (MOVE-BANK banks them there), so Master Skills switched
+off and on again before a rest threw them all away - 119 uses of a level-30 foe's blows in the audit's probe - under the
+switch's own line, "Your progress is kept". The switch off now notes each mastered skill's counter at the cap
+(`masterSkills.js` holdMasterPractice, `entity.masterPracticeHeld`, saved by `save.js`), and the switch on drops the
+counter as before and gives the noted uses back (returnMasterPractice). masterSkills.js is in the relay's bundle and the
+account service's: the relay's `world270` row is re-hashed in place (undeployed); no version moves.
 
 ### WARD-BEST (100) - `src/systems/effects.js`
 
@@ -1258,13 +1272,20 @@ names its summons beside its loose stands (`sm`: `foeLootCap.js:"export function
 flags the record (`dungeonContext.js:"      const r = summonedRecord(validFoeRecord(raw), summ);"`) and marks the puppet
 it stands (`dungeonContext.js:"    applyFoeRecord(markSummoned(f, r), r);"`, in applyOwnRecord) - bare alive, its death's
 finds emptied by capFoeLoot. Both ways at once (my summon on a friend's machine, theirs on mine), and the mark rides the
-entity, so a summon handed to its heir streams on as one. No relay or wire change: the relay fans an own frame unread
+entity (AUDIT RPT1026 F5, record: no producer hands a summon to an heir - both `heirOf`s in world.js refuse a PlayerAlly,
+as Online-Arc's SUMMON-SYNC says; the pin's handover names its heir by hand). No relay or wire change: the relay fans an own frame unread
 (OWN1). Four edits inside existing statements of buildDungeonContext - its logical lines unchanged (8,429). The street's and
 a building's lane needed nothing: a puppet there carries no loot (exteriorFoes.js WORLD6b B14), and a handed one carries
 its owner's (empty) list.
 
-LEFT, FOR THE OWNER. A summon restored from a save stands again with its empty list, its mark not saved, so a death
-handler's find (food, a card) can land on it.
+~~LEFT, FOR THE OWNER. A summon restored from a save stands again with its empty list, its mark not saved, so a death
+handler's find (food, a card) can land on it.~~ AUDIT RPT1026 F4 (minor, fixed): proved on the street's pool - the Skull's
+copy of a Grizzly Bear, saved alive and loaded, stood unmarked and died with three pieces of meat on its body. The street's
+and a building's save carry the mark now and their restore re-marks the foe (`foeLootCap.js` savedSummon and
+restoredSummon, over two existing statements of `exteriorFoes.js` createExteriorFoes - no logical line added). A dungeon's
+fresh load stands no loose stand again, and a load in the same room patches the live, marked foe. Its pin also pins the
+death's finds emptied end to end: this section's own pin of capFoeLoot's first line was a hand-built entity, and its
+end-to-end test passed with that line gone (no death handler laid a find on the copy).
 
 PINS: `test/scenes/rpt1026_progress_summon.test.js` (2: the real Skull off MAGIC.DEF used through the payload door over the
 real ctx and a real street pool on the freeware's MONSTER.BSA - the copy empty alive and dead, the original looted; the cap's
@@ -1346,6 +1367,12 @@ shield still straps on. Slots-Hotbar-Status.md's UI2 line narrowed.
 PINS: `test/systems/rpt1026_progress.test.js` (1: two amulets the item maker enchanted - the Used one readies its spell from
 the bar, neither put on nor taken off, a saved worn slot too; the Held one put on). Mutants 20-22 (3 dead).
 
+AUDIT RPT1026 F2 (minor, fixed). A piece carrying Cast When Used beside armour or another power - a Warlock's Ring, a
+Lord's Mail, a made amulet of Lightning and Water Walking - became a used slot, and a slot saved as worn asked the piece
+and cast it too: no press could put it on from the bar again. Such a piece keeps its worn slot now; the press puts it on,
+and casts once it is on (`quickslots.js` wornForMore: its armour, or a power's row beside the Cast When Used, never a
+side effect's cost, a bound soul or Feather Weight). A piece whose only power is Cast When Used is cast unworn, as above.
+
 ### JOURNEY-REAL (117) - `src/systems/worldTick.js`
 
 WHAT DFU DOES. PlayerEntity tallies Running every fourth classic update (`PlayerEntity.cs:309-320`) and Jumping a jump;
@@ -1380,10 +1407,18 @@ Ring's points and more worth than a plain Silver one). Mutant 26 (dead).
 
 ### The answers (AS DESIGNED, NOT REPRODUCED, NEEDS DATA)
 
-- **286 - absorption after a rest.** DFU's TryAbsorption (`absorption.js` tryAbsorption): an absorb needs room in the pool
+- ~~**286 - absorption after a rest.** DFU's TryAbsorption (`absorption.js` tryAbsorption): an absorb needs room in the pool
   for the spell's cost; a rest fills the pool, so the first destruction spell of your own that catches you (your area, a
   reflection) lands whole. Tell the player: spend some magicka first, or keep out of your own blast. Rest touches no effect
-  (`systems/rest/` writes no active effect).
+  (`systems/rest/` writes no active effect).~~
+  AUDIT RPT1026 F3 (major, fixed): not DFU's rule. At a full pool the cast makes room for what it spent, and DFU prices
+  the absorb "as if the target cast the spell" - for a self-absorb the same price, so it fits. The port's cast is
+  priced with its modifiers (a focus piece, a set, the Firmament, a path's school) and the absorb without, so a
+  discounted cast left too little room: through the real cast engine, an absorber's own Area at Range blast at a full
+  pool, 42 spell points undiscounted, is drunk; at 30% off it costs 29, asks room for 42 and hurts for 24. Spending
+  first worked only because it made the room. The caster's own spell now asks room for, and drinks, no more than its
+  release spent (`absorption.js` tryAbsorption's `paid`, from `effects.js` applySpell), so the refund, half of it, is
+  never a profit; anyone else's spell asks DFU's whole price. Port-Ledger A. Tell the player: fixed.
 - **45, 46 - level past 100.** SOFTCAP1 (`skills.js` levelUpSkillSum): a point past 100 counts a quarter toward the level.
   The report's own skills (Destruction 128 to 131, Alteration 121 to 124, Thaumaturgy 112 to 115, Mysticism 120 to 123,
   Illusion 121 to 124) move the sum 627 to 629 - exactly the 2/15 seen. Levels past 30 come from skills still under 100.
