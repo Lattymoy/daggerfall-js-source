@@ -72,8 +72,9 @@ export const CELL_WORDS = Object.freeze({
   sandstorm: Object.freeze({ spacing: 30000, radius: [8000, 14000], p: 0.5, base: 'cloudy' }),
   // ASHFALL1: the ashfall - never a zone's word either; stood over the
   // volcano's country (a zone's `ash`, ashAtPixel) on a day whose word
-  // there falls nothing, every candidate drawn and the seat's ash its coin
-  ashfall: Object.freeze({ spacing: 30000, radius: [8000, 15000], p: 1, base: 'overcast' }),
+  // there falls nothing, the candidates its coin keeps thinned again by
+  // the seat's ash
+  ashfall: Object.freeze({ spacing: 30000, radius: [8000, 15000], p: 0.9, base: 'overcast' }),
 });
 /** WEATHER2d: the zone words a sandstorm cell may stand under. */
 export const SAND_FROM = Object.freeze(['cloudy', 'thunder']);
@@ -81,9 +82,10 @@ export const SAND_FROM = Object.freeze(['cloudy', 'thunder']);
 export const sandCountry = (climateIndex) => climateIndex === CLIMATES.Desert || climateIndex === CLIMATES.Desert2;
 /** ASHFALL1: the zone words an ashfall cell may stand under - the dry sky's (the ash never falls through rain or snow). */
 export const ASH_FROM = Object.freeze(['sunny', 'cloudy', 'overcast', 'fog']);
-/** ASHFALL1: a seat's ash share times this is its coin - about the zone's share of its dry days under the ash (a
- *  cell covers about half its lattice square, the overlaps aside). */
-export const ASH_FIELD_GAIN = 2.5;
+/** ASHFALL1: a seat's ash share times this is its second coin, after the word's own - about the zone's share of its dry
+ *  days under the ash (a cell covers about half its lattice square, the overlaps aside; Red Mountain's every candidate
+ *  the word's coin keeps). */
+export const ASH_FIELD_GAIN = 2.8;
 /** ASHFALL1: THE ASH AT A PIXEL - its zone's `ash` (world/tamriel/tamrielBiomes.js) where the host's map wears that zone
  *  there (its climate the zone's ground's), else none: the Bay and the sea have no zone, and a map with nothing past the
  *  Bay answers no zone's climate there. The one reading of the volcano's country, the field's and the map's

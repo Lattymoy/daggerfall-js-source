@@ -163,11 +163,11 @@ test('ASHFALL1 the map: under the volcano the ash stands its law\'s share of the
 });
 
 test('ASHFALL1 the field (?wxmap=off): an ash cell stands on the volcano\'s country under a dry word, its coin the seat\'s ash - never under what falls, never off the volcano (mutants: the coin; the dry words; the seat\'s ash unread)', () => {
-  assert.deepEqual(CELL_WORDS.ashfall, { spacing: 30000, radius: [8000, 15000], p: 1, base: 'overcast' });
+  assert.deepEqual(CELL_WORDS.ashfall, { spacing: 30000, radius: [8000, 15000], p: 0.9, base: 'overcast' });
   assert.deepEqual(ASH_FROM, ['sunny', 'cloudy', 'overcast', 'fog']);
-  assert.equal(ASH_FIELD_GAIN, 2.5);
-  assert.equal(cellSeats('ashfall', CLIMATES.Mountain, 'sunny', 0.3, 0.7), true);
-  assert.equal(cellSeats('ashfall', CLIMATES.Mountain, 'sunny', 0.3, 0.8), false, 'the coin: 0.3 x 2.5');
+  assert.equal(ASH_FIELD_GAIN, 2.8);
+  assert.equal(cellSeats('ashfall', CLIMATES.Mountain, 'sunny', 0.3, 0.8), true);
+  assert.equal(cellSeats('ashfall', CLIMATES.Mountain, 'sunny', 0.3, 0.85), false, 'the coin: 0.3 x 2.8');
   assert.equal(cellSeats('ashfall', CLIMATES.Mountain, 'rain', 0.5, 0), false, 'never through rain');
   assert.equal(cellSeats('ashfall', CLIMATES.Mountain, 'cloudy', 0, 0), false, 'never off the volcano');
   const [x, z] = fieldOfPixel(hearts().morrowindRedMountain);
