@@ -604,8 +604,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-order-kind",
     "file": "src/net/identityToken.js",
-    "old": "'staffcut', 'hide', 'freeze', 'staffline', 'sevent']);",
-    "new": "'staffcut', 'freeze', 'staffline', 'sevent']);",
+    "old": "'staffcut', 'hide', 'freeze', 'staffline', 'sevent', 'yard']);",
+    "new": "'staffcut', 'freeze', 'staffline', 'sevent', 'yard']);",
     "why": "no hide kind",
     "tests": [
       "test/server/staffpanel5hidden.test.js"

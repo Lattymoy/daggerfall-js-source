@@ -26,10 +26,10 @@
   {
     "name": "YARD-CELL-SYNC-never-let-go",
     "file": "src/scenes/yardCellSync.js",
-    "old": "      for (const cell of town.cells.keys()) if (!wanted.has(cell)) town.cells.delete(cell);\n",
+    "old": "        town.cells.delete(cell);\n",
     "new": "",
     "tests": ["test/scenes/yardcellsync.test.js"],
-    "note": "a cell out of reach held for ever - memory by the town, not the reach"
+    "note": "Re-aimed by content (YARD-CELL YC2): the line YC2 changed. a cell out of reach held for ever - memory by the town, not the reach"
   },
   {
     "name": "YARD-CELL-SYNC-the-versions-unsent",
@@ -42,18 +42,18 @@
   {
     "name": "YARD-CELL-SYNC-the-poll-unpaused",
     "file": "src/scenes/yardCellSync.js",
-    "old": "      const due = pollingNow && now() - town.polledAt >= YARD_TOWN_TTL_MS;",
-    "new": "      const due = now() - town.polledAt >= YARD_TOWN_TTL_MS;",
+    "old": "      const due = pollingNow && (now() - town.polledAt >=",
+    "new": "      const due = (now() - town.polledAt >=",
     "tests": ["test/scenes/yardcellsync.test.js"],
-    "note": "polls indoors, under a window and with the tab hidden"
+    "note": "Re-aimed by content (YARD-CELL YC2): the line YC2 changed. polls indoors, under a window and with the tab hidden"
   },
   {
     "name": "YARD-CELL-SYNC-the-first-ask-held-back",
     "file": "src/scenes/yardCellSync.js",
-    "old": "      } else if (fresh.length || town.more.length) {",
-    "new": "      } else if (pollingNow && (fresh.length || town.more.length)) {",
+    "old": "      } else if (fresh.length || town.more.length || pushedDue.length) {",
+    "new": "      } else if (pollingNow && (fresh.length || town.more.length || pushedDue.length)) {",
     "tests": ["test/scenes/yardcellsync.test.js"],
-    "note": "a cell new in reach not asked while the poll is paused"
+    "note": "Re-aimed by content (YARD-CELL YC2): the line YC2 changed. a cell new in reach not asked while the poll is paused"
   },
   {
     "name": "YARD-CELL-SYNC-the-backoff-flat",
