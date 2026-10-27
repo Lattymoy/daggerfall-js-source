@@ -1,7 +1,7 @@
 // FLORA-GROUND, THE RINGS (FIELD BUGS 2026-10-27, the owner: "No band aids or half assed work"; the coordinator: "Fix it
 // at the root in the terrain's level of detail, so the coarse surface the player sees and the ground the plants stand on
 // agree at every ring") - A BUILT PIXEL'S PLANTS DRAWN ON THE GROUND IT DRAWS: the ground a pixel draws one law
-// (world/terrain/terrainSurface.js ringGroundAt - its stride, its bed), which the snow lies on, and every plant of the
+// (world/terrain/terrainSurface.js drawnGroundAt - its stride, its bed), which the snow lies on, and every plant of the
 // ground drawn on it at every ring by the seat (scenes/floraSeat.js seatFlora) - the woods' batches, a town's nature
 // flats, the jungle's, a felled tree under it, the graht-oaks framed on it - and seated again wherever the hosts change
 // the ground they draw (a restride, a re-carve, the build's publish, a re-skin). Pinned on made ground (a saddle field
@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { HEIGHTMAP_DIMENSION as H, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE, SCALED_BEACH_ELEVATION } from '../../../src/world/terrain/terrainSampler.js';
-import { walkGroundAt, ringGroundAt, buildTerrainGrid, buildTerrainIndices } from '../../../src/world/terrain/terrainSurface.js';
+import { walkGroundAt, drawnGroundAt, buildTerrainGrid, buildTerrainIndices } from '../../../src/world/terrain/terrainSurface.js';
 import { carveBed } from '../../../src/world/water/waterBed.js';
 import { MAX_STEEPNESS, SLOPE_SINK_RATIO } from '../../../src/world/terrain/terrainNature.js';
 import { seatFlora, standsOnGround, drawnCentre, ringLifts, warmFlora } from '../../../src/scenes/floraSeat.js';
@@ -96,23 +96,23 @@ function drawRecorder() {
   return { at, get moves() { return moves; }, moveBillboardBatch(b, c) { moves++; at.set(b, c.map((v) => [...v])); return true; } };
 }
 
-test('FLORA-GROUND THE RINGS the ground a pixel draws is one law: ringGroundAt is the terrain surface\'s own vertices and triangles at the near grid\'s stride and the far ring\'s, with the bed its water carved and without, the walk floor its near ring with no bed - and on this field the far ring parts from the walk floor by metres (mutants: the ring\'s stride; the bed unread; the bed\'s cell)', () => {
+test('FLORA-GROUND THE RINGS the ground a pixel draws is one law: drawnGroundAt is the terrain surface\'s own vertices and triangles at the near grid\'s stride and the far ring\'s, with the bed its water carved and without, the walk floor its near ring with no bed - and on this field the far ring parts from the walk floor by metres (mutants: the ring\'s stride; the bed unread; the bed\'s cell)', () => {
   const hm = saddleField(), pts = lattice();
   let apart = 0;
   for (const stride of [1, 4]) {
     for (const carve of [null, bedOf(stride)]) {
       const drawn = drawnOracle(hm, stride, carve);
       let worst = 0;
-      for (const [x, z] of pts) worst = Math.max(worst, Math.abs(ringGroundAt(hm, x, z, stride, carve) - drawn(x, z)));
+      for (const [x, z] of pts) worst = Math.max(worst, Math.abs(drawnGroundAt(hm, x, z, stride, carve) - drawn(x, z)));
       assert.ok(worst < 1e-3, `stride ${stride}${carve ? ', the bed carved' : ''}: the law ${worst.toFixed(5)} m off the drawn mesh`);
     }
   }
   for (const [x, z] of pts) {
-    assert.equal(ringGroundAt(hm, x, z), walkGroundAt(hm, x, z), 'the near ring with no bed is the walk floor');
-    apart = Math.max(apart, Math.abs(ringGroundAt(hm, x, z, 4) - walkGroundAt(hm, x, z)));
+    assert.equal(drawnGroundAt(hm, x, z), walkGroundAt(hm, x, z), 'the near ring with no bed is the walk floor');
+    apart = Math.max(apart, Math.abs(drawnGroundAt(hm, x, z, 4) - walkGroundAt(hm, x, z)));
   }
   assert.ok(apart > 1, `the far ring's ground parts from the walk floor by ${apart.toFixed(2)} m on this field`);
-  assert.match(src('src/scenes/snowGround.js'), /return ringGroundAt\(p\.samples, lx, lz, p\._stride \?\? 1, p\._bed\?\.depths \?\? null\);/, 'the snow lies on the same law, its bed with it');
+  assert.match(src('src/scenes/snowGround.js'), /return drawnGroundAt\(p\.samples, lx, lz, p\._stride \?\? 1, p\._bed\?\.depths \?\? null\);/, 'the snow lies on the same law, its bed with it');
 });
 
 test('FLORA-GROUND THE RINGS every plant of the ground is drawn on the ground its pixel draws, at every ring: at stride 4 each on the far ring\'s mesh by its own sink, a mound\'s tree where it stands, the cull boxes with them; again at the same ring nothing moves; at stride 1 each back on the walk floor; a bed carved under it in the near ring, each on the carved ground (mutants: the mark unread; the lift reversed; the near ring\'s bed ignored; the seat that never moves; the box left behind; the pixel\'s box ungrown; the lift kept across a re-carve)', () => {
@@ -273,5 +273,5 @@ test('FLORA-GROUND THE RINGS a pixel built about the player makes its far ring\'
   const seat = B.indexOf('seatFlora({ samples, _stride: stride, _bed: bed, _box: bounds,'), warm = B.indexOf('if (stride === 1 && lodStride > 1) { await breather.breathe(); warmFlora({ samples, forest: { groups: forestGroups }, grahtOaks: grahtStood?.set ?? null }, lodStride); }');
   assert.ok(seat > 0 && warm > seat && warm < B.indexOf('swap.publish(px, py, key, made, {'), 'a near build makes them after its seat, before it publishes');
   assert.match(B, /worldHeight, lodStride,/, 'the build takes the far class');
-  assert.match(hostText('src/scenes/world.js'), /lodStride: lodOn \? LOD_STRIDE : 1,/, 'the world host hands it: EV4\'s stride, none on the 1:1 lane');
+  assert.match(hostText('src/scenes/world.js'), /const lodStride = lodOn \? LOD_STRIDE : 1;/, 'the world host hands it: EV4\'s stride, none on the 1:1 lane');   // PIN MOVED (AUDIT SHIP-READY S7, HOST-SPLIT's seam): a binding of the host's, handed by name
 });

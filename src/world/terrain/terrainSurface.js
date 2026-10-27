@@ -189,7 +189,7 @@ export const walkGroundAt = (heightmapData, lx, lz) => surfaceHeightAt(heightmap
  * @param {?ArrayLike<number>} [carve] the bed's depths at that stride, x fastest, or null where none was carved
  * @returns {number} world height
  */
-export function ringGroundAt(heightmapData, lx, lz, stride = 1, carve = null) {
+export function drawnGroundAt(heightmapData, lx, lz, stride = 1, carve = null) {
   const h = surfaceHeightAt(heightmapData, lx, lz, stride);
   if (!carve) return h;
   const g = (HEIGHTMAP_DIMENSION - 1) / stride + 1;

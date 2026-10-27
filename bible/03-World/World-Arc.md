@@ -209,7 +209,7 @@ other. So the far ring keeps its vertices (EV4's look and its cost), and
 the plants are drawn on what it draws.
 
 The fix - the ground a pixel draws is one law. `terrainSurface.js`
-ringGroundAt is the ground a built pixel draws at its ring class:
+drawnGroundAt is the ground a built pixel draws at its ring class:
 surfaceHeightAt at its stride, less the bed its water carved
 (`_bed.depths`). These are the very vertices and triangles its surface
 uploads. At stride 1 with no bed it is walkGroundAt; the player stands only
@@ -263,7 +263,7 @@ Pins: `test/world/terrain/floraground.test.js` (7: the law against the
 drawn mesh itself, the host's walk floor lifted off world.js, every
 placer on a saddle field, the build's readers, the lift field, the band's
 slots and bits, the band's book and the middle ring's ground),
-`test/world/terrain/floraground_rings.test.js` (6: ringGroundAt against
+`test/world/terrain/floraground_rings.test.js` (6: drawnGroundAt against
 the drawn mesh at both strides with and without a bed; the seat at stride
 4, again, at stride 1 and over a bed and its re-carve; a felled tree at
 both rings; the graht-oaks framed at their lift; the hosts' seats and the

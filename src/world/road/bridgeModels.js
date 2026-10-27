@@ -27,7 +27,7 @@ const STONE = art(CAPITAL_ART.bridgeStone), TIMBER = art(CAPITAL_ART.timber);
 /** The arches' springing over the water, metres. */
 export const SPRING = 0.4;
 /** A road's arch drawn in this many straight runs. */
-export const ARCH_STEPS = 8;
+const ARCH_STEPS = 8;
 
 /** The deck's top at `s` along the line: level on its length, its ramps down to the river's level past the abutments. */
 export function deckTop(b, s) {

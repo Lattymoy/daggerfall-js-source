@@ -231,8 +231,9 @@ test('RPT1026-MARKET ARRIVE stall: a press whose own collect did not land says t
       settle: async () => { calls.push(['settle']); return { ok: true, settled: 0, refused: [] }; },
     };
     let stallHost = null;
+    // PIN MOVED (the fourth merge of main into #1184): BAY-LEFT-SEA's hubs are read as they stand now - `marketHubs()`
     const host = createVendorHost({
-      marketBook, marketMint: () => {}, marketPutBack: () => {}, marketDrop: () => {}, marketHubs: {}, marketGoods: { goodName: () => 'Dwarven Mace' },
+      marketBook, marketMint: () => {}, marketPutBack: () => {}, marketDrop: () => {}, marketHubs: () => ({}), marketGoods: { goodName: () => 'Dwarven Mace' },
       profBook: { state: { open: true } }, marksBook: { state: { open: true } }, noticeBook: {},
       showNoticeWindow: (w) => { stallHost = w.vendors; return true; }, checkpointGateOpen: () => true,
     });

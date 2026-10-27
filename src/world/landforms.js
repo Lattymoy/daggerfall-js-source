@@ -140,7 +140,7 @@ import { tamrielBiomeAt } from './tamriel/tamrielBiomes.js';   // BREATHTAKER3: 
 import { landformLattice, tamrielLandformAt, continentShare, TAMRIEL_TOP, TAMRIEL_LANDFORM_DIALS } from './tamriel/tamrielLandforms.js';   // BREATHTAKER3: the land past the Bay below the heightmap's grain
 import { tamrielWatersShaper } from './tamriel/tamrielWaters.js';   // CYRODIIL-WATERS: the rivers and lakes past the Bay, carved
 import { worldPixelKey, inWorldGrid } from './worldWide/worldGrid.js';   // BAY-LEFT-GROUND: the sites past the Bay, by the world's key (worker-safe)
-import { rangeAt, rangeBound, rangeShaper } from './tamriel/tamrielRanges.js';   // RELIEF-PEAKS: the ranges past the Bay under the heightmap's grain, and Red Mountain (worker-safe)
+import { tamrielRangeAt, rangeBound, rangeShaper } from './tamriel/tamrielRanges.js';   // RELIEF-PEAKS: the ranges past the Bay under the heightmap's grain, and Red Mountain (worker-safe)
 
 
 /** At or under this, a height is DFU's: the beach line with its jitter, the highest height the tile classifier can
@@ -1056,13 +1056,13 @@ export function centreGround(byteAt, x, y, lift = true, fadeAt = null) {
   }
   const gx = x * 128 + 64, gy = (MAP_H - y) * 128 + 64, beyond = lift && !inEtherLaw(x, y) ? continentShare(gx, gy, 128, MAP_H, MAP_W, SEAM_PX) : 0;
   const land = nodeGround(b < 0 ? 0 : b, fade < 0 ? 0 : fade > 1 ? 1 : fade, beyond, lift);
-  return beyond > 0 ? land + beyond * rangeAt(gx, gy, land) : land;   // RELIEF-PEAKS: and the ranges, as the shaper lays them
+  return beyond > 0 ? land + beyond * tamrielRangeAt(gx, gy, land) : land;   // RELIEF-PEAKS: and the ranges, as the shaper lays them
 }
 /** RELIEF-PEAKS: the far views' ground at byte (x, y)'s own node - where the kernel stands it, exactly (its cubic passes
  *  through its nodes): nodeGround with the node's own fade and share, kernel units. The far field's vertex stands on one. */
 export function nodeGroundAt(byteAt, x, y, lift = true) {
   const beyond = lift ? byteBeyond(x, y) : 0, land = nodeGround(byteAt(x, y), lift ? cliffFadeAt(byteAt, x, y) : 1, beyond, lift);
-  return beyond > 0 ? land + beyond * rangeAt((x + 1) * 128, (MAP_H - y) * 128, land) : land;   // RELIEF-PEAKS: and the ranges, as the shaper lays them
+  return beyond > 0 ? land + beyond * tamrielRangeAt((x + 1) * 128, (MAP_H - y) * 128, land) : land;   // RELIEF-PEAKS: and the ranges, as the shaper lays them
 }
 
 /**
@@ -1086,7 +1086,7 @@ export function meanGroundField(woods, px, py, landforms, hDim = HEIGHTMAP_DIMEN
     if (!landforms) return h;
     const share = beyond ? continentShare(ox + x, oy + y, span, MAP_H, MAP_W, SEAM_PX) : 0;
     const land = h + (beyond ? reliefLift(low) + share * continentLift(low) : reliefLift(low)) * (fade ? fade(x, y) : 1);
-    return share > 0 ? land + share * rangeAt(ox + x, oy + y, land) : land;   // RELIEF-PEAKS: the ranges are no hills - not centred at the summits
+    return share > 0 ? land + share * tamrielRangeAt(ox + x, oy + y, land) : land;   // RELIEF-PEAKS: the ranges are no hills - not centred at the summits
   };
 }
 

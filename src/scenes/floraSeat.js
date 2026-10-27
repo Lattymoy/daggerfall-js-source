@@ -9,14 +9,14 @@
 // can carry the relief under it: on the real data 18.8% of the Bay's plants stood more than 25 cm over the far ring's
 // ground and 16.9% more than 25 cm in it, the worst 6.6 m in the air. Each coarse vertex the highest sample about it
 // would have buried 92% of them a metre or more instead, and drawn every ridge fat. So the plant is DRAWN on the ground
-// its pixel draws (terrainSurface.js ringGroundAt: its stride, its bed - the very vertices and triangles its surface
+// its pixel draws (terrainSurface.js drawnGroundAt: its stride, its bed - the very vertices and triangles its surface
 // uploads), by what that ground stands over or under the walk ground at its root, and drawn on the walk ground again
 // when the pixel comes near: one law at every ring, no ring's offset. Its PLACE stays the game's - its cover, its body,
 // Logging's tree, the near set of 3D trees and its outline read the walk ground's, as they read a felled tree's place
 // while its picture lies sunk (treeHost.js sinkFelled, which draws through drawnCentre below). A flat set on something
 // other than the ground - a town's tree a hill's mound raised (world/townStandIns.js seatNatureFlat), a World of
 // Daggerfall site's flats at its author's height - is no plant of the ground: it keeps its picture where it stands.
-import { ringGroundAt, walkGroundAt } from '../world/terrain/terrainSurface.js';
+import { drawnGroundAt, walkGroundAt } from '../world/terrain/terrainSurface.js';
 import { flatBatchAabb } from '../render/frustum.js';
 import { FELLED } from '../ai/cover.js';
 import { GRAHT_TREE_FLOATS } from '../world/jungle/grahtOaks.js';
@@ -30,7 +30,7 @@ export const standsOnGround = (c) => { ON_GROUND.add(c); };
 
 /** What the ground a pixel draws (`stride`, `carve`) stands over the walk ground at (x, z), m - 0 in the near ring
  *  with no bed under it. */
-const liftAt = (samples, x, z, stride, carve) => ringGroundAt(samples, x, z, stride, carve) - walkGroundAt(samples, x, z);
+const liftAt = (samples, x, z, stride, carve) => drawnGroundAt(samples, x, z, stride, carve) - walkGroundAt(samples, x, z);
 
 /**
  * Each ground-stood centre's lift at a ring, null where every one is 0 (the near ring, no bed under its plants).
