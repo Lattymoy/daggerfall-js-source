@@ -292,14 +292,23 @@ export const causewayLines = (I = IMPERIAL) => [
  *  land's). */
 export const bridgeLine = (I = IMPERIAL) => [polar(I.bridge.b, I.cityWall.r), polar(I.bridge.b, I.lake + I.bridge.landing)];
 
+/** AUDIT BAY-LEFT F1: the Prison's and the University's centres (polar's own), made once a plan - imperialLand is asked at
+ *  every vertex of the city's lake (world/rumareWaters.js rumareSeaGrid). @type {WeakMap<object, number[][]>} */
+const _landCompounds = new WeakMap();
+const landCompounds = (I) => {
+  let c = _landCompounds.get(I);
+  if (!c) _landCompounds.set(I, c = [polar(I.prison.b, I.prison.r), polar(I.university.b, I.university.r)]);
+  return c;
+};
 /** IS A POINT LAND - City Isle: within its shore, the Prison's and the University's grounds, or the Waterfront's quay; TS5:
  *  and the far shore past Lake Rumare's ring, RUMARE-WATER but the Waterfront's mouth through it. */
 export function imperialLand(x, z, I = IMPERIAL) {
   const r = Math.hypot(x, z);
   if (r >= I.lake && z > 0 && Math.abs(x) < I.mouth) return false;   // RUMARE-WATER: the Waterfront's mouth, through the far shore
   if (r <= I.isle || r >= I.lake) return true;
-  if (inBox(x, z, polar(I.prison.b, I.prison.r), I.prison.half + 24)) return true;
-  if (inBox(x, z, polar(I.university.b, I.university.r), I.university.half + 24)) return true;
+  const [prison, university] = landCompounds(I);
+  if (inBox(x, z, prison, I.prison.half + 24)) return true;
+  if (inBox(x, z, university, I.university.half + 24)) return true;
   const b = imperialBearing(x, z);
   return b >= I.waterfront.b0 && b <= I.waterfront.b1 && r <= I.waterfront.r1;
 }
