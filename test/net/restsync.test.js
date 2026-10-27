@@ -407,7 +407,7 @@ test('REST-SYNC by source: the rest, the hour\'s check, the act door, the frame,
   assert.match(D, /if \(hit\) \{ restEncounter\(hit\); break; \}/, 'the rest\'s spawn is the room\'s');
   assert.match(D, /enemiesNearby: \(\) => roomEncounterComing\(\) \|\| areEnemiesNearby\(foes, \{ resting: true \}\),/, 'the asker\'s rest breaks at the hour');
   assert.match(D, /const asked = data\.rs != null && roomEncounterAsked\(id, data\.rs\);[^\n]*\n[^\n]*\n\s*return n > 0 \|\| asked;/, 'the host hears the ask');
-  assert.match(D, /applySharedRecords\(Array\.isArray\(data\.x\) \? data\.x : \[\], data\.xf === 1\);/, 'the joiner hears the encounters');
+  assert.match(D, /applySharedRecords\(Array\.isArray\(data\.x\) \? data\.x : \[\], data\.xf === 1 \|\| data\.xf === 2 \? data\.xf : 0\);/, 'the joiner hears the encounters');   // PIN MOVED (RPT1026-ITEMS BODY-CAP): and a capped frame's 2
   assert.match(D, /const _roomFoe = isRoomFoe\(f, _fi\);[^\n]*\n\s*const _puppet = isPuppetFoe\(f, _fi\);/, 'a joiner\'s copy is a puppet (QUEST-PARTY phase 3c: and a party member\'s quest foe)');
   assert.match(D, /const isPuppetFoe = \(f, i = foes\.indexOf\(f\)\) => f != null && \(\(!_authority && isRoomFoe\(f, i\)\) \|\| f\._ownFrom != null\);/, 'AUDIT PRE-MERGE 0928 O6: the frame\'s one test - the room\'s foes (a shared encounter too) while another holds the seat');
   assert.match(D, /f\.ai\.update\(foeFrameDt\(dt\), _pf, _armed\(f, _senses, _roomFoe\), _fParalyzed, _fPaused\);/, 'and the host\'s hunts every player (FOE-CATCHUP re-aim: the frame at most three steps)');

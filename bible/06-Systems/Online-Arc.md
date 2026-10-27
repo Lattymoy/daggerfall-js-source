@@ -7383,7 +7383,14 @@ summon stand where this section left them. `01-Overview/bugs/Field-Bugs-2026-09-
 REST-SYNC; `test/net/restsync.test.js`. AUDIT PRE-MERGE 0928 M1: an encounter whose species the
 host's Ocean Holes abyss changes keeps its number (the rebuilt body takes the old one's place in the room),
 and a joiner stands it anew by that number; a joiner's copy is no spawn of its own for the abyss to process
-(`test/characters/audit0928_merge.test.js`).
+(`test/characters/audit0928_merge.test.js`). RPT1026-ITEMS BODY-CAP (2026-10-27, a private report of bodies that
+disappear as their foes die): a frame carries at most SHARED_FOES_MAX (32) encounters, the standing first, and every
+body stays the room's while its corpse lies - so a room past 32 (a party that rests often in one dungeon) cut its
+newest bodies off the full frame, which still said `xf` 1, and every joiner took each new body down at the next full
+frame. A full frame the count cap cut now says `xf` 2 - whole for the standing alone - and a joiner keeps a body it
+does not name (`dungeonContext.js:"frame.xf = shared.length < _sharedById.size ? 2 : 1;"`, applySharedRecords'
+`full === 2`); a standing puppet the host no longer has still goes, and a joiner of an older build, which reads 1
+alone, takes nothing down from such a frame (`test/net/rpt1026_items_bodycap.test.js`).
 
 **RETIRED 2026-09-27.** QUEST-PARTY phase 3c paid both halves for a shared quest's foe (its spawner's, on the room's
 own lane, to the party) and SUMMON-SYNC (below) for the summon's - a loose stand, its spawner's, on the same lane, to

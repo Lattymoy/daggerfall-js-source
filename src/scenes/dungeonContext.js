@@ -5129,7 +5129,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       for (const r of shared.slice(n)) { const f = _sharedById.get(r.i); if (f) { f._sentKey = null; f._maxSent = undefined; f._lsSent = undefined; } }   // AUDIT SETS M1: and its maximum, if it carried one, is owed
       if (n) frame.x = shared.slice(0, n);
     }
-    if (full && n === shared.length) frame.xf = 1;
+    if (full && n === shared.length) frame.xf = shared.length < _sharedById.size ? 2 : 1;   // RPT1026-ITEMS BODY-CAP: past SHARED_FOES_MAX the bodies are what the cap shed, so the list is whole for the standing alone (2)
     if (full) fitMaxima(frame, [...out.map((r) => [r, foes[r.i]]), ...(frame.x ?? []).map((r) => [r, _sharedById.get(r.i)])]);
     return frame;
   }
@@ -5257,7 +5257,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       f._pupMismatch = false;
       applyFoeRecord(f, r);
     }
-    applySharedRecords(Array.isArray(data.x) ? data.x : [], data.xf === 1);   // REST-SYNC
+    applySharedRecords(Array.isArray(data.x) ? data.x : [], data.xf === 1 || data.xf === 2 ? data.xf : 0);   // REST-SYNC; RPT1026-ITEMS BODY-CAP: 2, whole for the standing
     if (listed) for (const [i, f] of [..._surplus]) if (!listed.has(i) && !_surplusPending.has(i)) dropSurplus(i, f);   // DESYNC-ZERO: a host's surplus foe it no longer lists
     return true;
   }
@@ -5337,7 +5337,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   /** REST-SYNC: the host's word on the room's encounters - each record onto its puppet (the layout's door), a new id
    *  stood as a puppet from its first record (the newest record landing on it when the build does), and on a FULL
    *  frame every puppet the host no longer lists taken down. The room's count carries on past every id seen, so a
-   *  joiner who takes the seat numbers its own encounters after the host's. */
+   *  joiner who takes the seat numbers its own encounters after the host's. RPT1026-ITEMS BODY-CAP: `full` 2 is a full
+   *  frame the count cap cut (SHARED_FOES_MAX, the standing first) - whole for the standing, never for the bodies, so a
+   *  body it does not name stays; before, a room past 32 encounters (a party's rests in one dungeon, every body kept)
+   *  took each newly dead one down on every joiner's screen at the next full frame (FOES_FULL_MS). */
   function applySharedRecords(list, full) {
     if (_authority) return;
     const seen = new Set();
@@ -5356,7 +5359,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       _sharedPending.set(r.i, r);
       standSharedPuppet(r).catch((e) => { _sharedPending.delete(r.i); console.error('[online] the room\'s encounter could not stand here:', e); });
     }
-    if (full) for (const [id, f] of [..._sharedById]) if (!seen.has(id) && !_sharedPending.has(id)) dropSharedFoe(id, f);
+    if (full) for (const [id, f] of [..._sharedById]) if (!seen.has(id) && !_sharedPending.has(id) && !(full === 2 && f.dead)) dropSharedFoe(id, f);   // RPT1026-ITEMS BODY-CAP: a body a capped frame shed stays
   }
   /** REST-SYNC: one of the room's encounters stood here as a puppet - the build chain's own, where the host's record
    *  says, and posed by the newest record the stream has carried since. */
