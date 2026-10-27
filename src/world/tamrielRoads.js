@@ -38,6 +38,7 @@ import { WoodsFile } from '../formats/woodsFile.js';   // AUDIT TESA II R6: the 
 import { countryStandsAt } from './tamrielCountry.js';
 import { lairStandsAt, lairPlanned, lairBlockCount } from './tamrielDungeons.js';
 import { BIOMES_VERSION } from './tamriel/tamrielBiomes.js';   // AUDIT TESA-BIOME Z3: the zones' law decides each pixel's climate, so its places
+import { ghostfenceRoadBlocks } from './tamriel/ghostfence.js';   // GHOSTFENCE: its line no road's but at Ghostgate
 
 /** The regions' law's version - its cache's key moves with it. */
 export const TAMRIEL_ROADS_VERSION = 7;   // EXACT-PIECES: a region's land's pieces in its answer; ROAD-GAPS: a region's networks linked where they meet; RIVER-FORDS (AUDIT RELEASE R1-3): the carved rivers crossed as fords; TESA15: a region's places in its answer, Arena's dungeons routed round; AUDIT TESA II R7 and R9: a gate stepped by every region that routes onto it, the crossings' runs held; VOYAGER1: the land's law (the grade, the height, the shore, the fords), VOYAGER-CYRODIIL: the named roads' legs
@@ -51,7 +52,7 @@ export const TAMRIEL_ROADS_VERSION = 7;   // EXACT-PIECES: a region's land's pie
  * high fails that pin until this moves with it and the fingerprint is recorded again. The zones' climate is
  * BIOMES_VERSION's, in the print.
  */
-export const GROUND_ROLL_VERSION = 5;   // 1 the laws as AUDIT TESA II found them; 2 its lane G's beach-line floor (BIOMES_VERSION 5); 3 CYRODIIL-SHORES: Cyrodiil's lakes' smooth shores; 4 SMOOTH-LAND: every coast and border the land's smooth law (world/tamriel/tamrielLand.js landLabelAt); 5 RUMARE-WATER: the land let down about the Imperial City at the sea (world/rumareWaters.js rumareBasin)
+export const GROUND_ROLL_VERSION = 6;   // 1 the laws as AUDIT TESA II found them; 2 its lane G's beach-line floor (BIOMES_VERSION 5); 3 CYRODIIL-SHORES: Cyrodiil's lakes' smooth shores; 4 SMOOTH-LAND: every coast and border the land's smooth law (world/tamriel/tamrielLand.js landLabelAt); 5 RUMARE-WATER: the land let down about the Imperial City at the sea (world/rumareWaters.js rumareBasin); 6 GHOSTFENCE: no countryside within the Ghostfence, no lair and no road on its line but at Ghostgate (world/tamriel/ghostfence.js)
 /** How far, Bay pixels, a region's grid reaches past its core on every side: past the road builder's reach for a road's
  *  neighbours (ROAD_DIALS.roadReach, 70) and a track's (trackLink, 24), so an edge a region owns has both ends in view. */
 export const REGION_APRON = 100;
@@ -172,7 +173,7 @@ export function* tamrielRegionSteps({ region, places, nodes, obstacles, gates, h
     locations.push({ x: n.x - gx, y: n.y - gy, type: n.type });
   }
   const theirs = new Set();   // a capital's pixel or an Arena place's: no rolled place stands there
-  for (const o of [...obstacles, ...held]) {
+  for (const o of [...obstacles, ...held, ...ghostfenceRoadBlocks()]) {   // GHOSTFENCE: and the Ghostfence's line but at Ghostgate
     theirs.add(`${o.x},${o.y}`);
     if (inGrid(o.x, o.y) && !taken.has(`${o.x},${o.y}`)) { taken.add(`${o.x},${o.y}`); blocked.push({ x: o.x - gx, y: o.y - gy }); }
   }

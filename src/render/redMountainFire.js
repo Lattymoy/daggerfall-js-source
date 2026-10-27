@@ -297,6 +297,10 @@ ${BILLOWS}void main() {
   o = vec4(ash * a + glow, a);
 }`;
 
+/** The fire's shader text the Ghostfence's glow draws with in the same pass (render/ghostfenceGlow.js): the head, the
+ *  cone it hides behind, the noise and the haze. */
+export const FIRE_GLSL = Object.freeze({ HEAD, HIDE, NOISE, HAZE });
+
 /** FIRST-USE: the pass's two programs, as its constructor builds them. */
 export const FIRE_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[LAVA_VS, LAVA_FS], [PLUME_VS, PLUME_FS]]));
 
@@ -408,6 +412,14 @@ export class RedMountainFire {
     gl.bindVertexArray(null);
     gl.disable(gl.BLEND);
     gl.depthRange(0, 1);
+  }
+
+  /** The cone the far draw hides behind, in the scene: uCone's x, z and the land's level at the centre (`draw`'s own) -
+   *  null with no mesh. For the Ghostfence's glow, drawn after it in the pass (render/ghostfenceGlow.js). */
+  coneIn(ringOrigin, baseX, baseY) {
+    const m = this.mesh;
+    if (!m) return null;
+    return [ringOrigin[0] + (m.px - baseX) * TERRAIN_SIZE + m.centre[0], ringOrigin[2] - (m.py - baseY) * TERRAIN_SIZE + m.centre[2], ringOrigin[1] + m.base];
   }
 
   /** Free the GL objects (every allocation has an owner: the far ring's dispose). */

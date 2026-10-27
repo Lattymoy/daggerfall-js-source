@@ -543,8 +543,8 @@
   {
     "name": "TESA8-host-any-pixel",
     "file": "src/world/tamrielDungeons.js",
-    "old": "  const pick = site && site.px === px && site.py === py ? lairPick(",
-    "new": "  const pick = site ? lairPick(",
+    "old": "  const pick = site && site.px === px && site.py === py && !onGhostfence(px, py) ? lairPick(",
+    "new": "  const pick = site && !onGhostfence(px, py) ? lairPick(",
     "tests": [
       "test/tesa8_lairs.test.js"
     ]

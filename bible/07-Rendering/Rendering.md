@@ -1452,6 +1452,11 @@ directory by `test/bible/audit18_bible_docs.test.js`:
   plume, its foot lit by the fire. Drawn last of the far ring's pass, by its own
   lens past the world's far plane and by the world's nearer; far off, hidden by
   the cone's profile, never by depth. `?redfire=off`.
+- `ghostfenceGlow.js` - GHOSTFENCE the Ghostfence's ghost-light (`03-World/Red-Mountain.md`):
+  its curtain shimmering between the pylons and a halo about each orb, drawn by the
+  far ring after the fire in the fire's two lenses and hidden by its cone. Its feet
+  stand on the ground each layer draws: a built pixel's own, the middle ring's
+  kernel eased as it eases, the far ring's centres. `?fenceglow=off`.
 - `farFlora.js` - FAR-FLORA THE CANOPY'S ART: a climate's Trees' colour (the
   opaque texels' mean of its summer nature archive's Tree records, the
   picture drawn near - a decoded replacement, else the classic record

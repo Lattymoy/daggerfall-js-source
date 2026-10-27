@@ -109,7 +109,45 @@ itself by 6,500 m: the summit stands clear over the haze, and the rim still clos
   the plateau, so its error at the eye's own ground is given back - the first photograph from 60 km showed no fire,
   every ray starting "inside" the model. A river is never thinner than a few pixels: a line of fire at night.
 - **Its door** is `?redfire=off`. It stands with the Landforms row, and where the far ring is drawn - in a clear day's
-  linear fog, not in rain, snow or an ash storm.
+  linear fog, not in rain or snow.
+
+## The Ghostfence (GHOSTFENCE)
+
+Opened 2026-10-27, the owner: *"Im really wanting to push this beyond limits and make it some truely amazing and lore
+accurate."* UESP: the Tribunal raised the Ghostfence round Red Mountain after the Battle of Red Mountain to hold Dagoth
+Ur and the Blight within it, a ring of pylons the ancestors' spirits hold up; no body passes it but at Ghostgate, the
+fortress in its south, its Tower of Dawn and Tower of Dusk either side of the gate. In 3E 417 it stands, and nobody
+lives past it.
+
+- **The ring** (`world/tamriel/ghostfence.js`): 14 km from the volcano's centre, wandering 5% either way - past the
+  summit cone, where the flank eases to 3 degrees, every foyada's end within it. A pylon every 48 m (1,833), each on
+  its turn of the ring by `dirOf`'s series, so every engine stands the same fence. Ghostgate is the pylon due south.
+- **The pixels it crosses** (`band`): a closed, 4-connected line, so no step of eight directions crosses it. The
+  countryside keeps off every pixel whose centre lies within the fence or a pixel past it (`insideGhostfence`, read by
+  countryPick - the world host's roll, the held map's, the roads' worker's); no lair stands on its line
+  (`onGhostfence`, lairStandsAt and lairMayStandAt); and the roads' build routes round it, Ghostgate's pixels open
+  (`ghostfenceRoadBlocks`, tamrielRoads.js). The lairs within it stand - the mountain's own strongholds and ruins.
+  GROUND_ROLL_VERSION 6 lays every client's roads past the Bay again.
+- **On the freeware's trace** the line lies on Morrowind's land in Red Mountain's zone and the Ashlands'; it kept off
+  21 places of the countryside (farms, inns and temples up to 6 km high on the summit cone) and 2 lairs on its line. No
+  Arena place stands within it.
+
+**Stood in a pixel's build** (`scenes/ghostfenceBuild.js`, called by `scenes/pixelBuild.js` past the Bay, before the
+bucket settles - no host grows). Each pylon is seated on the lowest ground under its plinth and turned to the fence
+(`ghostfenceModel.js` PYLON): a basalt plinth, an eight-sided shaft banded at its middle, a collar, four horns curling
+in, and the orb they hold, 28.6 m over its foot. Ghostgate (GHOSTGATE) is its two towers 40 m tall and the lintel over
+the passage, an orb on each. Both go in the pixel's batch on GHOSTFENCE_ARCHIVE's own pictures - the stone in
+Daggerfall's colours (`dfLook`), the orb its own light (an emission map). Solid through the world's one gate
+(player/lateSolid.js): each pylon's plinth and shaft, the towers and the lintel, and the curtain between each pylon and
+the next from under the ground to the collars. The passage under the lintel is open.
+
+**Its ghost-light** (`render/ghostfenceGlow.js`): the curtain between the pylons, strands of light climbing it, and a
+halo about each orb, never under a few pixels. It is drawn by the far ring after the fire, in the fire's two lenses,
+and hidden past the world's far plane by the cone (`hidden`, a margin of 250 m: the profile stands on the land at the
+centre, the fence's own ground under it). Each foot stands on the ground its layer draws: a built pixel's own seat
+(`noteFenceFeet`), the middle ring's kernel heights eased onto the far ring as that ring eases, the far ring's centres:
+the kernel stands up to 97 m off the far views' smooth ground there. By day it keeps 30% of its night's light; the
+curtain fades out by 12 km, the halos by 45 km. Its door is `?fenceglow=off`.
 
 ## Recorded departures and readings
 
@@ -118,8 +156,12 @@ itself by 6,500 m: the summit stands clear over the haze, and the rim still clos
 - The snowpack's levels reach 8 km (section A's BIOME PRECIPITATION law; the classic lane is untouched).
 - The plume leans the same way every day: no wind is read (the rite smoke's own reading).
 - The lava casts no light on the ground, and the plume is not drawn when the far ring is not (bad weather, `?ring=off`).
-- Not yet: the Ghostfence and Ghostgate, Dagoth Ur's citadel in the crater, ash storms as weather, the held map's caret
-  for the cone (its bytes are the relief's).
+- The Ghostfence stands with the Landforms row or without it (the Tribunal's, not the land's). Its curtain and halos
+  are the far ring's pass: on the classic skin, in rain or snow and by `?ring=off` its pylons stand and their orbs
+  glow, without them.
+- Ghostgate is the gate alone: no Temple compound, no garrison, no road to it (nothing within the fence is a road's).
+- Not yet: Dagoth Ur's citadel in the crater, ash storms as weather, the held map's caret for the cone (its bytes are
+  the relief's).
 
 ## Pins
 
@@ -132,6 +174,17 @@ itself by 6,500 m: the summit stands clear over the haze, and the rim still clos
   6.5 km, 3 km over its plateau, its reach on land, no place on its cone.
 - **Mutants** `tools/mutants/redmountain.json` (37: 36 dead, 1 equivalent as recorded - the rim's crest, which the
   profile's crowded steps already catch).
+- **`test/world/ghostfence.test.js` (8, one gated on ARENA2):** the ring (its radius, wander, spacing, tangents,
+  Ghostgate due south, the line closed against an 8-step walk, the gate's pixels the only open ones); the places and
+  the roads (the countryside's keep pixel by pixel, a lair's site on the line, the blocks, GROUND_ROLL_VERSION); the
+  real roads' builder joining two towns round it; the models wound out of their solids, the passage open; the build
+  (each seat the lowest under its plinth, the solids, the curtain, the feet, Ghostgate, a pixel off it); the glow (the
+  feet on each layer, the meshes, the ease and the hiding run on their own sources, the far ring's wiring and door); by
+  source and the A8 law; and on the freeware's trace no countryside within it. **Mutants**
+  `tools/mutants/ghostfence.json`.
+- **PIN MOVED (GHOSTFENCE):** `test/world/road/river_fords.test.js` and `test/world/rumarewater.test.js`
+  (GROUND_ROLL_VERSION 6), `test/world/audittesa2r_roads.test.js` (6's fingerprint, its fixture off the fence),
+  `test/combat/blood1_decals.test.js` (the tenth bucket translation, the fence's).
 - **PIN MOVED:** `test/render/precip4_snowground.test.js` (the levels' count 44); `test/render/farsea1.test.js` and
   `test/systems/dynamicSkies.test.js` (the ring's haze line, `summitHold`); `test/systems/l10n4_hardcoded.test.js` (the
   fire's shader sources, 3; the range's key `RED_MOUNTAIN` exported from `tamrielBiomes.js`). Re-aimed by content:

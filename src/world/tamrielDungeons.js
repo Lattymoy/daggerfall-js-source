@@ -29,6 +29,7 @@ import { srand, rand, getSeed, setSeed } from '../formats/dfRandom.js';
 import { firstName, monsterName, GENDERS, BANK_TYPES, withGameNameBanks } from '../characters/nameHelper.js';   // AUDIT TESA II P10: a lair's name on the game's own banks
 import { COUNTRY_GRID, LAIR_LANE, countryName } from './tamrielCountry.js';
 import { WATER_BYTE } from './roadsProducer.js';   // TESA14: the beach line a lair stands over
+import { onGhostfence } from './tamriel/ghostfence.js';   // GHOSTFENCE: no lair on the Ghostfence's line
 
 /** The cell hash's salt. Changing it moves every lair. */
 export const LAIR_SALT = 0xd0c7;
@@ -134,7 +135,7 @@ export function lairPick(rates, templates, climate, c) {
 export function lairStandsAt({ rates, templates, climateAt, heightAt, ground }, px, py) {
   const c = templates ? lairCellOf(px, py) : -1;
   const site = c >= 0 ? lairSite(c) : null;
-  const pick = site && site.px === px && site.py === py ? lairPick(rates, templates, climateAt(px, py), c) : null;
+  const pick = site && site.px === px && site.py === py && !onGhostfence(px, py) ? lairPick(rates, templates, climateAt(px, py), c) : null;   // GHOSTFENCE: none on its line
   return pick && heightAt(px, py) > WATER_BYTE && ground(px, py) ? { c, pick } : null;
 }
 /** AUDIT TESA II Z7/Z9: MAY a lair stand on (px, py) - lairStandsAt without its dry plateau (tamrielCountry.js
@@ -142,7 +143,7 @@ export function lairStandsAt({ rates, templates, climateAt, heightAt, ground }, 
 export function lairMayStandAt({ rates, templates, climateAt, heightAt }, px, py) {
   const c = templates ? lairCellOf(px, py) : -1;
   const site = c >= 0 ? lairSite(c) : null;
-  return !!(site && site.px === px && site.py === py && lairPick(rates, templates, climateAt(px, py), c)) && heightAt(px, py) > WATER_BYTE;
+  return !!(site && site.px === px && site.py === py && !onGhostfence(px, py) && lairPick(rates, templates, climateAt(px, py), c)) && heightAt(px, py) > WATER_BYTE;
 }
 /** TESA14: a lair template's interior blocks - its plan's size (a border block is none). */
 export const lairBlockCount = (template) => template.dungeon.blocks.filter((b) => !/^b/i.test(b.blockName)).length;

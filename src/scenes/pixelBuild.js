@@ -90,6 +90,7 @@ import { multiply, trs } from '../world/mat4.js';
 import { naturePicture, junglePicture } from '../world/naturePicture.js';
 import { onFloatingFrame } from '../player/collider.js';
 import { inBay as onTheBay } from '../world/tamriel/tamrielFrame.js';
+import { standGhostfence } from './ghostfenceBuild.js';   // GHOSTFENCE: the Tribunal's fence round Red Mountain
 import { arenaRoadsLayer } from '../world/arenaRoads.js';   // TESA4: the roads past the Bay's layer
 import { provinceNameBank } from '../world/tamrielPeople.js';   // TESA3: a province's people's names
 import { ownMinutes, skyMinutes, trustedWorldMinutes } from '../systems/worldTick.js';
@@ -1141,6 +1142,9 @@ export function createPixelBuild(host) {
       privateersHold = { origins: holdBlocks.map((o) => [o[12], o[13], o[14]]), state: { rolled: false, foes: [], gone: false } };   // a carried roll replaces it at publish (m4)
     }
 
+    // GHOSTFENCE (scenes/ghostfenceBuild.js): the Ghostfence's pylons, its curtain's solid and Ghostgate where it crosses
+    // this pixel past the Bay, on its own ground
+    if (!onTheBay(px, py)) standGhostfence({ px, py, pkey, key, samples, renderer, addStatic, unionBox, late, translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])) });
     // OW-WOD-LAG: the pixel's wide faces (a World of Daggerfall massif's rocks) in their tree now, once every mesh of the
     // pixel's bucket is in - inside the build, never raised by the first query of a frame in play
     collider.settle(key);
