@@ -1,9 +1,9 @@
 // @ts-check
 // YARD-CELL (2026-10-26, bible/11-Multiplayer/Yard-Cells.md): A TOWN'S YARDS, ONE BLOCK AT A TIME.
-//
+
 // The law both ends read - the account service (server-account/src/yardCells.js), which keeps one row per block, and
 // the client (scenes/yardCellSync.js), which asks for the blocks within reach. Pure: no clock, no DOM, no network.
-//
+
 // A CELL is one RMB block of one town. A building key is (blockX << 16) + (blockY << 8) + record
 // (systems/talk/talkTopics.js makeBuildingKey), so `key >> 8` is the block. The one key outside that form,
 // BUILDING_KEY_0 (1 << 24, block 0,0 record 0), lands in a cell of its own (65536). The cell is a partition key, not a

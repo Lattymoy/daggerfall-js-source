@@ -186,15 +186,10 @@ export const YARD_SYNC_S = 0.5;
  *  stands every yard at once, and its merges are spread a frame each. */
 export const YARD_MERGES_A_FRAME = 1;
 /**
- * HOW LONG ONE FRAME SPENDS STANDING STRANGERS' YARDS, milliseconds. YARD-TOWN (2026-10-25, measured in Daggerfall's city
- * on a local build) found a town's answer landing in one sync cost a frame of 108 to 208 ms, and stood four yards a frame
- * in map order, so the far side of a city could stand before the yard beside the player. YARD-CELL stands them NEAREST
- * FIRST while the frame's standing time is under this budget - always one a frame - and the next frame syncs again until
- * all stand. The owner's own yard, and the one the decorator stands in, never wait.
- * Measured 2026-10-26 (bible/11-Multiplayer/Yard-Cells.md section 10, check 1): Daggerfall's city with 515-526 strangers'
- * yards (7,000 pieces) landing at once, the longest frame 38 ms at 3 ms, 54 ms at 6 and 46 ms at 10 in one run, and 62 ms
- * at 3 and 54 ms at 2 in another - the spread between runs is wider than the budget's, so most of a landing's long frames
- * are other work. 3 ms was the best measured.
+ * HOW LONG ONE FRAME SPENDS STANDING STRANGERS' YARDS, milliseconds. YARD-TOWN (2026-10-25) measured a town's answer
+ * stood in one sync at a frame of 108 to 208 ms. YARD-CELL stands them NEAREST FIRST while the frame's standing time is
+ * under this budget - always one a frame - and the next frame goes on until all stand. The owner's own yard, and the one
+ * the decorator stands in, never wait. 3 ms was the best measured (bible/11-Multiplayer/Yard-Cells.md section 10, check 1).
  */
 export const YARD_STAND_BUDGET_MS = 3;
 /** What the decorator says of a piece off the lot, in the house, or on another building's ground. */
@@ -494,9 +489,7 @@ export function yardLotQuads(lot, origin, high = YARD_MARK_HIGH, roads = []) {
 /**
  * THE TOWN'S YARDS, AND THE OWNER'S DECORATOR OUTSIDE. `deps` (the world host's - scenes/world.js):
  *   api          - net/accountClient.js accountDecor: yardCells(mapId, cells), place (with `yard`), move, remove
- *   polling()    - YARD-CELL: whether the cells in reach may be polled now - none: `outside()`, no window up (the frame's
- *                  `overlayUp`) and `doc` not hidden; a cell coming into reach is asked whatever it says
- *   standClock() - what a frame's standing time is read on (ms) - none: the page's clock
+ *   polling(), standClock() - YARD-CELL: whether the cells in reach may be polled now; the stand budget's clock (ms)
  *   homes        - systems/online/onlineHomes.js: homeAt(mapId, key) - whose a home is, and whether it is the character's own
  *   built()      - the world's built pixels (each `{ px, py, homeTown, homeFrames }` - homeFrames: key -> { at, box,
  *                  rects }, pixel-local; FB1009 HOME-FOOT: `rects` the ground its models' faces cover, footRectsAt's)

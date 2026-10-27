@@ -1,25 +1,11 @@
 // @ts-check
-// ═══════════════════════════════════════════════════════════════════
-// YARD-CELL (2026-10-26, bible/11-Multiplayer/Yard-Cells.md YC1) - THE YARDS A PAGE HOLDS, ONE BLOCK AT A TIME.
-//
-// The town-wide answer (a whole town every minute, cut at 6,500 pieces) is replaced by cells: one RMB block of one town
-// (net/yardCellLaw.js). The yards' host (scenes/homeYards.js) says each sync which cells it wants and how far each is;
-// this module asks the account service for them (server-account/src/yardCells.js) and holds what it answered:
-//
-//   which      the cells within YARD_ASK_M that hold a home the town's homes answer lists - a yard stands only for a
-//              listed home, so a cell with none is never asked;
-//   when       at once for a cell that comes into reach; again each YARD_TOWN_TTL_MS for the cells in reach, as one
-//              request with the versions held, which is answered only with the cells that moved. No poll goes while
-//              `polling()` says no (indoors, under a window, the tab hidden); one that came due meanwhile goes the
-//              moment it says yes again - the catch-up - and one that did not, at its time;
-//   order      every town's request nearest town first, each town's cells nearest first;
-//   memory     a cell that leaves the wishes (the host keeps a margin past YARD_ASK_M) is let go with its yards, so what
-//              a page holds follows its reach, never the size of the town.
-//
-// The owner's own writes stand over any answer for YARD_WRITE_HOLD_MS (FB1001 YARD-STALE and the PRIMARY-TRIPS audit:
-// the service keeps a cell 30 s an isolate and reads it off a replica, so an answer asked after a write can be from
-// before it), and over an answer asked before them whatever its age.
-// ═══════════════════════════════════════════════════════════════════
+// YARD-CELL (2026-10-26, bible/11-Multiplayer/Yard-Cells.md section 10): THE YARDS A PAGE HOLDS, ONE BLOCK AT A TIME.
+// The yards' host (scenes/homeYards.js) names each sync the cells it wants (net/yardCellLaw.js) and how far each is;
+// this module asks the account service (server-account/src/yardCells.js) and holds the answers. Only a cell within
+// YARD_ASK_M that holds a listed home is asked, nearest first; the cells in reach are polled each YARD_TOWN_TTL_MS with
+// the versions held and answered with the cells that moved, never while `polling()` says no. A cell that leaves the
+// wishes is let go, so a page holds its reach, not its town. The owner's own writes stand over any answer for
+// YARD_WRITE_HOLD_MS (the service keeps a cell 30 s and reads a replica) and over any answer asked before them.
 
 import { decorYardPieceOf, decorYardHighOk } from '../net/decorLaw.js';
 import { yardCellOf } from '../net/yardCellLaw.js';
@@ -40,40 +26,14 @@ export const YARD_ASK_M = YARD_DRAW_M + 200;
 /** How far past YARD_ASK_M a cell already held is kept, so a step back across the edge does not ask it again. */
 export const YARD_KEEP_MARGIN_M = 100;
 
-/**
- * @typedef {object} CellWish  a cell the host wants, this sync
- * @property {number} mapId
- * @property {number} cell
- * @property {number} distance  metres from the player's feet to the cell's nearest listed home
- */
-/**
- * @typedef {object} HeldCell
- * @property {number} ver                  the version the service answered (0: none yet)
- * @property {Map<number, any[]>} byKey     each home's pieces as the service answered them, by building key
- * @property {number} askedTurn            the page's write turn when the answer standing for this cell was asked - a
- *                                         write after it is not in it
- */
-/**
- * @typedef {object} HeldTown
- * @property {Map<number, HeldCell>} cells
- * @property {number} polledAt   when the last answer to a poll of the cells in reach landed (ms)
- * @property {boolean} asking
- * @property {number} failedAt
- * @property {number} failures   in a row
- * @property {number[]} more     cells the service left for the next request
- */
-/**
- * @typedef {object} OwnWrite  the owner's own write to one yard (FB1001 YARD-STALE)
- * @property {number} turn   the write's turn among this page's writes
- * @property {number} at     when (ms)
- * @property {any[]} list    the yard as it left it
- */
+/** @typedef {{ mapId: number, cell: number, distance: number }} CellWish  a cell the host wants, `distance` in metres */
+/** @typedef {{ ver: number, byKey: Map<number, any[]>, askedTurn: number }} HeldCell  `ver` 0 before an answer; `byKey` by building key; `askedTurn` the write turn its answer was asked at */
+/** @typedef {{ cells: Map<number, HeldCell>, polledAt: number, asking: boolean, failedAt: number, failures: number, more: number[] }} HeldTown  `failures` in a row; `more` the cells left for the next request */
+/** @typedef {{ turn: number, at: number, list: any[] }} OwnWrite  the owner's own write to one yard (FB1001 YARD-STALE): its turn, when (ms), the yard it left */
 
-/**
- * The page's yard cells. `api.yardCells(mapId, cells)` asks the service (net/accountClient.js accountDecor);
- * `polling()` says whether a poll may go now - first asks always go.
- * @param {{ api: any, now?: () => number, polling?: () => boolean }} deps
- */
+/** The page's yard cells. `api.yardCells(mapId, cells)` asks the service (net/accountClient.js accountDecor);
+ *  `polling()` says whether a poll may go now - first asks always go.
+ *  @param {{ api: any, now?: () => number, polling?: () => boolean }} deps */
 export function createYardCellSync({ api, now = () => Date.now(), polling = () => true }) {
   /** @type {Map<number, HeldTown>} */
   const towns = new Map();
