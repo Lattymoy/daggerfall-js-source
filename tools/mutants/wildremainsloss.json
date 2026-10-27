@@ -23,22 +23,29 @@
   {
     "name": "WILD-REMAINS-LOSS-mine-by-the-carriers-peer",
     "file": "src/net/wild/wildRemains.js",
-    "old": "  (rec.os ? rec.os === acct : !!rec.oid && rec.oid === peer) || (!!laid && rec.r === laid);",
+    "old": "  (rec.os && acct ? rec.os === acct : !!rec.oid && rec.oid === peer) || (!!laid && rec.r === laid);",
     "new": "  (!!rec.os && rec.os === acct) || (!!rec.oid && rec.oid === peer) || (!!laid && rec.r === laid);",
     "tests": ["test/net/wildremainsloss.test.js"]
   },
   {
     "name": "WILD-REMAINS-LOSS-the-peer-read-where-an-account-is-named",
     "file": "src/net/wild/wildRemains.js",
-    "old": "  (rec.os ? rec.os === acct : !!rec.oid && rec.oid === peer) || (!!laid && rec.r === laid);",
-    "new": "  (rec.os ? rec.os === acct || rec.oid === peer : !!rec.oid && rec.oid === peer) || (!!laid && rec.r === laid);",
+    "old": "  (rec.os && acct ? rec.os === acct : !!rec.oid && rec.oid === peer) || (!!laid && rec.r === laid);",
+    "new": "  (rec.os && acct ? rec.os === acct || rec.oid === peer : !!rec.oid && rec.oid === peer) || (!!laid && rec.r === laid);",
     "tests": ["test/net/wildremainsloss.test.js"]
   },
   {
     "name": "WILD-REMAINS-LOSS-the-laid-id-ignored",
     "file": "src/net/wild/wildRemains.js",
-    "old": "  (rec.os ? rec.os === acct : !!rec.oid && rec.oid === peer) || (!!laid && rec.r === laid);",
-    "new": "  (rec.os ? rec.os === acct : !!rec.oid && rec.oid === peer);",
+    "old": "  (rec.os && acct ? rec.os === acct : !!rec.oid && rec.oid === peer) || (!!laid && rec.r === laid);",
+    "new": "  (rec.os && acct ? rec.os === acct : !!rec.oid && rec.oid === peer);",
+    "tests": ["test/net/wildremainsloss.test.js"]
+  },
+  {
+    "name": "WILD-REMAINS-LOSS-the-account-trusted-when-null",
+    "file": "src/net/wild/wildRemains.js",
+    "old": "  (rec.os && acct ? rec.os === acct : !!rec.oid && rec.oid === peer) || (!!laid && rec.r === laid);",
+    "new": "  (rec.os ? rec.os === acct : !!rec.oid && rec.oid === peer) || (!!laid && rec.r === laid);",
     "tests": ["test/net/wildremainsloss.test.js"]
   },
   {

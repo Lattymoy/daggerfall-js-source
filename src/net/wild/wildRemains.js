@@ -55,13 +55,14 @@ export const WILD_NO_STORE = Object.freeze({ kg: 0, name: 'These remains' });
 
 /**
  * Is a remains mine: the fallen's account where the room names one (`os`, its order's word), else the peer that laid it,
- * or the remains my own deposit laid. WILD-REMAINS-LOSS: `oid` is the deposit's CARRIER - its killer on a seizure, whose
+ * or the remains my own deposit laid. While my game does not know its account yet (the social hub's snapshot has not
+ * arrived, or the hub does not seat a guest) the peer reading stands, so the fallen's own remains keep their mark. WILD-REMAINS-LOSS: `oid` is the deposit's CARRIER - its killer on a seizure, whose
  * game read the remains as its own while the fallen's never marked them.
  * @param {{ r: string, os: string|null, oid: string|null }} rec
  * @param {string|null} acct my account @param {string|null} peer my peer id @param {string|null} laid my own deposit's id
  */
 export const remainsMine = (rec, acct, peer, laid) =>
-  (rec.os ? rec.os === acct : !!rec.oid && rec.oid === peer) || (!!laid && rec.r === laid);
+  (rec.os && acct ? rec.os === acct : !!rec.oid && rec.oid === peer) || (!!laid && rec.r === laid);
 
 /**
  * @param {object} o

@@ -1055,4 +1055,4 @@ AUDIT FOE-KEEPS (`01-Overview/audits/Audit-Foe-Keeps.md`): `test/systems/wild/au
 `test/net/auditfoekeeps_relay.test.js`, `tools/mutants/auditfoekeeps.json`. WILD-REJOIN (`01-Overview/bugs/Field-Bugs-2026-10-25h.md`):
 `test/systems/wild/wildrejoin.test.js`, int9's WILD-REJOIN THE SERVICE, `tools/mutants/wildrejoin.json` (22, all dead).
 WILD-REMAINS-LOSS (`01-Overview/bugs/Field-Bugs-2026-10-25h.md`): `test/net/wildremainsloss.test.js`,
-`tools/mutants/wildremainsloss.json` (8, all dead).
+`tools/mutants/wildremainsloss.json` (9, all dead).

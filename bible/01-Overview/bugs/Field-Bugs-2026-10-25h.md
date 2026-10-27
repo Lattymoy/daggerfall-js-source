@@ -90,7 +90,7 @@ THE CHANGE:
   (`loadHarness.mjs:"const [gatePriv, gatePub] = gate.stdout.split"`, `tools/mintGateKeys.mjs`).
 
 Pinned by `test/net/wildremainsloss.test.js` (a deposit by the fallen and by its killer into a room woken since its
-last hello, through the real account service and the relay's Room); `tools/mutants/wildremainsloss.json` (8, all dead).
+last hello, through the real account service and the relay's Room); `tools/mutants/wildremainsloss.json` (9, all dead).
 
 NOT DONE, and asked: three other relay paths read the verifying key without loading it first - a ranked deck's vouch
 and the Iliac table's (`server/src/index.js:"async _iliacVouch(a, m, now, refuse) {"`), and a siege's admission

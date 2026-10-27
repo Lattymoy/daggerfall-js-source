@@ -120,6 +120,11 @@ test('WILD-REMAINS-LOSS: a remains from a room that names no account is mine by 
   assert.equal(remainsMine({ r: 'aaaaaaaaaaaa', os: 'acct-2', oid: 'peer-0002' }, 'acct-1', 'peer-0001', 'aaaaaaaaaaaa'), true);
 });
 
+test('WILD-REMAINS-LOSS: while my game does not know its account yet, the peer that laid the remains still marks them (mutant: the account trusted when null)', () => {
+  assert.equal(remainsMine({ r: 'aaaaaaaaaaaa', os: 'acct-2', oid: 'peer-0001' }, null, 'peer-0001', null), true);
+  assert.equal(remainsMine({ r: 'aaaaaaaaaaaa', os: 'acct-2', oid: 'peer-0002' }, null, 'peer-0001', null), false);
+});
+
 test('WILD-REMAINS-LOSS: a remains order carries a name only as the wire keeps one - an empty, unprintable or over-long `wnm` is refused before it is signed (mutant: any string a name)', async () => {
   const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   const base = { s: 'acct-1', wr: RID, wh: 'a'.repeat(64), wn: 3, wm: CELL };
