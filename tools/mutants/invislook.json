@@ -11,8 +11,8 @@
   {
     "name": "INVISLOOK-classic-draws",
     "file": "src/systems/combatVisuals.js",
-    "old": "  if (!on) return HIDDEN;\n  return { kind: 'conceal', visual: concealVisual(",
-    "new": "  if (false) return HIDDEN;\n  return { kind: 'conceal', visual: concealVisual(",
+    "old": "  if (!on || b === 7) return HIDDEN;",
+    "new": "  if (b === 7) return HIDDEN;",
     "tests": [
       "test/net/invislook.test.js"
     ]

@@ -9,7 +9,7 @@ import { inEther } from '../world/ethericSea.js';
 import { isTransformedLycanthrope } from '../systems/lycanthropy.js';
 import { playerEntity } from '../characters/playerEntity.js';
 import { politicClaimed } from '../systems/gate/gateSite.js';
-import { RAID_SPAWN_MAX_DISTANCE, RAID_SPAWN_MIN_DISTANCE, outOfSight as raidOutOfSight, raidSpawnRange, setRaidingPartiesHost } from '../systems/raidingParties.js';
+import { RAID_SPAWN_MAX_DISTANCE, RAID_SPAWN_MIN_DISTANCE, outOfSight as raidOutOfSight, peerInEventPlace as raidPeerInPlace, raidSpawnRange, setRaidingPartiesHost } from '../systems/raidingParties.js';
 import { REGION_NAMES } from '../formats/mapsFile.js';
 import { spoilsLock } from './spoilsPool.js';
 import { standLooseFoe } from './hostEnchant.js';
@@ -21,7 +21,7 @@ import { capitalStreet } from './livingWorld/livingIndex.js';   // WW6: a capita
 export function createRaidHost(host) {
   const {
     _foeInTownRect, _musicInLocationRect, _questLoc, _questRegionIndex, _questStore, cam, cityGuards, collider,
-    enchantFeet, etherSea, exteriorFoePool, exteriorFoes, maps, player, playerTravelPixel
+    enchantFeet, etherSea, exteriorFoePool, exteriorFoes, maps, player, playerTravelPixel, state
   } = host;
   // RAID1: World Events - Raiding Parties' reaches into GameManager, answered by this host (systems/raidingParties.js).
   // Its raiders stand in the street's pool through DFU's loose-foe placement on the mod's own band - loose, so no
@@ -54,7 +54,7 @@ export function createRaidHost(host) {
     wallNow: () => performance.now(),
     peersInTown: () => (host.peersNear() ?? []).filter((p) => _foeInTownRect({ ai: { feet: p.feet } })).map((p) => p.id),   // FIELD-RAID-FT: no room open (a fast travel between the old cell's room and the new) is nobody in town, never a null walked - the crash Discord reported arriving in a raided town
     sites: () => host.raidSites,   // RAID5: the town's places and people a raid's kind stands (scenes/raidSitesHost.js)
-    peerFeetInTown: () => [[host.online?.id ?? '', player.feetAt(), playerEntity.level ?? 1], ...(host.peersNear() ?? []).filter((p) => _foeInTownRect({ ai: { feet: p.feet } })).map((p) => [p.id, p.feet, host.online?.peers.get(p.id)?.lv ?? 0])],   // PACK-SPREAD: where each player in the town stands, for its share of the packs; BOSS-SPOT: me first, and each one's level
+    peerFeetInTown: () => [[host.online?.id ?? '', player.feetAt(), playerEntity.level ?? 1], ...(host.peersNear() ?? []).filter((p) => raidPeerInPlace(p.feet, host._musicLoc ? _foeInTownRect : null, state, playerTravelPixel())).map((p) => [p.id, p.feet, host.online?.peers.get(p.id)?.lv ?? 0])],   // PACK-SPREAD: where each player in the town stands, for its share of the packs; BOSS-SPOT: me first, and each one's level
     raidPuppets: () => exteriorFoes.foes.filter((f) => f.puppet && f._pupRaid),   // STAFF-EVENT THE REWARD: the fallen too - a puppet I fought that fell is my kill on the board
     ownRaidFoes: () => exteriorFoes.foes.filter((f) => !f.puppet && f.raidKey && !f.dead),
     // RAID3: the relay's arm - does it keep this world's raids, and my word to the town's cell

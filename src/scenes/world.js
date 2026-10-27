@@ -19061,7 +19061,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   }
   createRaidHost({   // HOST-SPLIT: src/scenes/raidHost.js
     _foeInTownRect, _musicInLocationRect, _questLoc, _questRegionIndex, _questStore, cam, cityGuards, collider,
-    enchantFeet, etherSea, exteriorFoePool, exteriorFoes, maps, player, playerTravelPixel,
+    enchantFeet, etherSea, exteriorFoePool, exteriorFoes, maps, player, playerTravelPixel, state,
+    get _musicLoc() { return _musicLoc; },
     get modes() { return modes; },
     get online() { return online; },
     get peersNear() { return peersNear; },
