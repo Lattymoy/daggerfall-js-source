@@ -25,7 +25,7 @@ import { getPref } from '../../systems/uiPrefs.js';
 import { algebra, ease, clamp01, RAD, bodyOf, bodyKindOf, reflect, bodyTurn, mul, transpose } from './bodyKit.js';
 import { rotAxisAngle, rotFraction } from '../../combat/climbRig.js';
 import { createGaitState, stepGait, gaitPose, TURN } from './gait.js';
-import { carryClassOf, carryHands, CARRY, TWO_HAND_GRIP, TWO_HAND_HAFT, armByAngles, mirrorRequest, hafHand, blendHand, gaitShares, turnAbout, strideRide } from './carry.js';
+import { carryClassOf, carryHands, CARRY, TWO_HAND_GRIP, TWO_HAND_HAFT, armByAngles, mirrorRequest, hafHand, trunkPush, blendHand, gaitShares, turnAbout, strideRide } from './carry.js';
 import { meleeFamilyOf, blowName, blowU, blowPose, windFor } from './melee.js';
 import { solveBody, gripRequest } from './bodySolve.js';
 
@@ -114,8 +114,12 @@ export function motionWord({
   };
 }
 
+/** TWO-CLEAR: the haft hand's wrist held this far (arm lengths) off the trunk's line - the audit's trunk, 9 units, and a
+ *  forearm's thickness. `createBodyMotion({ trunkClear: 0 })` reads a blow's keys alone (the pins). */
+export const TRUNK_CLEAR = 0.29;
 
-export function createBodyMotion() {
+
+export function createBodyMotion({ trunkClear = TRUNK_CLEAR } = {}) {
   const gait = createGaitState();
   let input = sceneInput({ on: false });
   let w = 0;
@@ -193,7 +197,7 @@ export function createBodyMotion() {
     // that cut another begun where that one stood (MELEE-6)
     const from = carryFrom(hands[bp.side], bp.side, ctx, bp.family === 'fists');
     const keyed = from || cut ? blowPose(bp.family, bp.name, bp.u, bp.side, { start: cut ?? from, end: from }) : null;
-    const strike = blowHands(keyed ? { ...bp, ...keyed } : bp, cls, ctx, armW);
+    const strike = blowHands(keyed ? { ...bp, ...keyed } : bp, cls, ctx, armW, trunkClear);
     const out = { L: blendHand(hands.L, strike.L, bp.w * (strike.L ? 1 : 0)), R: blendHand(hands.R, strike.R, bp.w * (strike.R ? 1 : 0)) };
     drawn = carryFrom(out[bp.side], bp.side, ctx, bp.family === 'fists');
     return out;
@@ -372,7 +376,7 @@ function carryFrom(h, side, ctx, fists) {
   return { grip: mx(scale(sub(grip, C), 1 / A)), blade: mx(blade), edge: mx(edge) };
 }
 
-function blowHands(bp, cls, ctx, armW) {
+function blowHands(bp, cls, ctx, armW, trunkClear = TRUNK_CLEAR) {
   const { body, mats, frames } = ctx;
   const C = scale(add(frames.shoulder.L, frames.shoulder.R), 0.5);
   const A = body.arm;
@@ -392,8 +396,20 @@ function blowHands(bp, cls, ctx, armW) {
   out[bp.side] = { ...strike, w: armW[bp.side] };
   const other = bp.side === 'L' ? 'R' : 'L';
   if (bp.family === 'two' && TWO_HAND_GRIP[cls] != null && req.frame) {
-    const haf = hafHand(req, req.grip, req.frame, TWO_HAND_GRIP[cls], A, { shoulder: frames.shoulder.L, reach: body.arms.L, range: TWO_HAND_HAFT[cls] });
-    if (haf) out.L = { ...haf, w: armW.L, pole: norm([-0.55, -0.2, -0.75]) };
+    const slide = { shoulder: frames.shoulder.L, reach: body.arms.L, range: TWO_HAND_HAFT[cls] };
+    let haf = hafHand(req, req.grip, req.frame, TWO_HAND_GRIP[cls], A, slide);
+    // TWO-CLEAR: the pair held before the trunk - where the haft hand would close inside it (a claymore's left a third of
+    // an arm down the grip, behind the right), both hands go forward by as much as it takes; the keys keep it near none
+    const pelvis = mats.get(body.bones.pelvis ?? body.hipBone)?.t, neck = mats.get(body.bones.neck)?.t;
+    const push = haf && pelvis && neck && bp.side === 'R' ? trunkPush(haf.at, pelvis, neck, frames.fwd, trunkClear * A) : 0;
+    if (push > 0) {
+      const d = scale(frames.fwd, push);
+      req = { ...req, at: add(req.at, d), grip: add(req.grip, d) };
+      out.R = { ...req, w: armW.R };
+      haf = hafHand(req, req.grip, req.frame, TWO_HAND_GRIP[cls], A, slide);
+    }
+    // its elbow out and FORWARD of the chest (TWO-CLEAR: a fixed way back and down, in the rig's frame, folded it into the chest)
+    if (haf) out.L = { ...haf, w: armW.L, pole: norm(add(scale(frames.right, -0.55), add(scale(frames.up, -0.75), scale(frames.fwd, 0.45)))) };
   } else if (bp.family === 'one' && cls === 'one' && bp.off) {
     const F = { right: frames.right, fwd: frames.fwd, up: frames.up };
     const limb = body.bones[other];

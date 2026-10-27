@@ -482,7 +482,7 @@ named in the second list.
   nearest first on `YARD_STAND_BUDGET_MS`. The town-full sentence left `net/accountClient.js` and every language.
 - **The deploy's smoke** (`account-deploy.yml`): the cell route read off a cell D1 built, the old route's 410 asked until
   this deploy answers it, the kept cells asked of D1 itself.
-- **The relay redeploys** as world270 (world266 on the branch, renumbered past AUDIT KETCH II, KETCH-WORDS, NIRNROOT-SAGE and BOW-TOPS): `net/homeLaw.js`, where HOME_TOWN_MAX lives, is in its import graph. No relay behaviour moves.
+- **The relay redeploys** as world271 (world266 on the branch, renumbered past AUDIT KETCH II, KETCH-WORDS, NIRNROOT-SAGE, BOW-TOPS and CHAT-POST): `net/homeLaw.js`, where HOME_TOWN_MAX lives, is in its import graph. No relay behaviour moves.
 
 Departures from the plan:
 
@@ -604,7 +604,7 @@ These are the working notes. The pull request holds the checks as they are run.
 the bus's fan reaches every shard's sockets. The yard arm takes that route, as the home arm does. Read in the code,
 not driven: no test stands a sharded hub for the yard word.
 
-**What was built** (account acct198, relay world271 - over YC1's acct197 and world270):
+**What was built** (account acct198, relay world272 - over YC1's acct197 and world271; world271 on the branch, renumbered past YC1 when YC1 took world271 past CHAT-POST):
 
 - Service: `settleYardCell` answers `{ cell, ver }` off `RETURNING built`; the decor routes answer `yardVer` and
   `yardOrder` (`server-account/src/index.js` yardOrderOf); `net/identityToken.js` kind `yard`, `mintYardOrder`.
@@ -626,3 +626,19 @@ not driven: no test stands a sharded hub for the yard word.
 - **A pushed cell answered at an older version** (another isolate's kept answer, up to 30 s) is asked again after
   `YARD_PUSH_RETRY_MS` (15 s), three asks in all. The slow poll finds what that misses.
 - **Words dropped at the version held** include words for a cell the page does not hold, for any town.
+
+**In the running game (PASS, 2026-10-27, at 37944c8b3a).** Two registered characters, A and B, online in Daggerfall
+on the real relay and account service in local workerd; headless Edge with the pointer lock answered in the page. B's
+sockets went through the probe, which logged the hub's yard frames and could cut and hold off B's hub link. A placed
+each piece through its own page's account client, so each write's YARD ORDER took the real path to the hub. A's home
+was block 1287, about 450 m from B.
+
+- **The slow poll.** While both pages' push was healthy, B asked for no cell in 75 s.
+- **The push.** B heard the hub's word 0.1 s after A's write and showed the piece after 1.6 s (2.2 s on a second run).
+- **A missed push.** B's hub link was cut and held off. The broken push fell back to the minute's poll, which was
+  overdue and went at once; A placed only after it. B did not show the piece in 8 s and heard no word. When the link
+  came back, B polled every cell in reach at the welcome and showed the piece 0.8 s after it.
+- **The skip.** With B's tab hidden, B heard the hub's word for A's next piece but asked nothing in 10 s. When the tab
+  showed, B asked that cell at once and showed the piece after 0.6 s.
+- Not driven here: a window over the world, which reads the same gate as the hidden tab and was driven in YC1's
+  checks, and the hub's shards (above). The relay was renumbered world272 after this run; the renumber moves no code.

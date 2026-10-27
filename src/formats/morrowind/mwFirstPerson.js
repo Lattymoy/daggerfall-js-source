@@ -2663,23 +2663,42 @@ const rotationOf = (m) => {
   return out;
 };
 /** Rotation about -X by `rad`, which is the axis the neck controller
- *  takes: `osg::Quat(pitch * rotateFactor, osg::Vec3f(-1, 0, 0))`. */
-const rotNegX = (rad) => {
+ *  takes: `osg::Quat(pitch * rotateFactor, osg::Vec3f(-1, 0, 0))` - and the third person's ranged aim
+ *  (combat/spineAim.js, BOW-AIM: `osg::Quat(pitch / 2, osg::Vec3f(-1, 0, 0))`). */
+export const rotNegX = (rad) => {
   const c = Math.cos(rad); const sn = Math.sin(rad);
   return Float32Array.from([1, 0, 0, 0, c, sn, 0, -sn, c]);
 };
 
 /**
- * The first-person neck rotation, applied the way RotateController does
- * it (mwrender/rotatecontroller.cpp:41-60):
+ * RotateController's turn (mwrender/rotatecontroller.cpp:41-60), the node's new local rotation:
  *
  *   worldOrient = rotation of the node's matrix relative to the object root
  *   orient = worldOrient * mRotate * worldOrient^-1 * matrix.getRotate()
  *
- * i.e. the pitch is expressed in the OBJECT ROOT's frame and conjugated
- * into the node's own, then PRE-multiplied onto whatever the animation
- * already put there. Doing it in the node's local frame instead would
- * pitch the head sideways as soon as the neck is not axis-aligned.
+ * i.e. `rotate` is a turn in the OBJECT ROOT's frame, laid on the node's world orientation as the animation left it -
+ * the node's world becomes `rotate * world`, its translation untouched.
+ *
+ * BOW-AIM (bible/01-Overview/bugs/Field-Bugs-2026-10-26c.md): THAT LINE IS OSG's, AND OSG MULTIPLIES ROW VECTORS. Its
+ * matrices (and the quaternion product, `q1 * q2` = q1 then q2) are the transposes of this port's: here a world is
+ * `parent * local` and a point is `M v` (mwNifMesh.js composeTransform). Written in this port's convention the line is
+ *
+ *   local' = local * W^T * rotate * W          (W the node's world rotation, its own local inside it)
+ *
+ * so the world is `parent * local' = rotate * parent * local` - `rotate` in the root's frame. The port had copied the
+ * line's letters (`W * rotate * W^T * local`), which turns the world by `rotate` conjugated by parent*W instead: on
+ * retail's third-person skeleton a "look down" of 0.3 tipped the chest BACK 0.3, about an axis 3 degrees off the
+ * root's X, where the corrected line turns it exactly `rotate`. Measured on the vendored retail biped
+ * (test/combat/fb1026c_bowaim.test.js); MW-D20's fixture (a file root turned Rz90) is the same law worked by hand.
+ */
+function rootSpaceTurn(local, w, rotate) {
+  return mat33Mul(mat33Mul(mat33Mul(local, transpose33(w)), rotate), w);
+}
+
+/**
+ * The first-person neck rotation, applied the way RotateController does it (rootSpaceTurn): the pitch is expressed in
+ * the OBJECT ROOT's frame and laid on whatever the animation already put there. Doing it in the node's local frame
+ * instead would pitch the head sideways as soon as the neck is not axis-aligned.
  */
 export function applyFirstPersonNeck(skeleton, pose, rootRef, skelMats, pitch, aim = 0, offset = null) {
   const ref = skeleton && skeleton.byName ? skeleton.byName.get(FP_NECK_BONE) : undefined;
@@ -2690,14 +2709,15 @@ export function applyFirstPersonNeck(skeleton, pose, rootRef, skelMats, pitch, a
   const local = pose.get(ref) ?? skeleton.nodes.get(ref).rest;
   const w = rotationOf(world.a);
   const rotate = rotNegX(pitch * neckRotateFactor(aim));
-  const rotation = mat33Mul(mat33Mul(mat33Mul(w, rotate), transpose33(w)), local.rotation);
+  const rotation = rootSpaceTurn(local.rotation, w, rotate);
   // RULE 32(a), and it rides the SAME controller as the pitch because it
   // is the same line of the same function:
   //   matrix.setTrans(matrix.getTrans() + worldOrientInverse * mOffset);
   //                                     (rotatecontroller.cpp:52)
   // worldOrientInverse turns a vector given in the OBJECT ROOT's space
   // into the neck's own, which is the transpose of the same world 3x3 the
-  // rotation is conjugated by. Applying the offset in the neck's local
+  // rotation is turned by (a quaternion applied to a vector is the same
+  // turn in either convention - only the product's order flips). Applying the offset in the neck's local
   // frame instead would sink the body along whatever way the neck
   // happens to be pointing.
   let translation = local.translation;
@@ -2710,6 +2730,21 @@ export function applyFirstPersonNeck(skeleton, pose, rootRef, skelMats, pitch, a
     ];
   }
   pose.set(ref, { rotation, translation, scale: local.scale });
+  return true;
+}
+
+/**
+ * BOW-AIM (bible/01-Overview/bugs/Field-Bugs-2026-10-26c.md): RotateController's rotation alone on node `ref`
+ * (rootSpaceTurn; applyFirstPersonNeck's law with no offset) - `rotate`, a 3x3 in the OBJECT ROOT's space, laid on the
+ * node's world rotation as the pose now stands it. Answers false where the skeleton has no such node.
+ */
+export function applyRotateController(skeleton, pose, rootRef, skelMats, ref, rotate) {
+  if (ref === undefined || ref === null || !skeleton?.nodes?.has(ref)) return false;
+  const world = skelMats(skeleton, pose, rootRef).get(ref);
+  if (!world) return false;
+  const local = pose.get(ref) ?? skeleton.nodes.get(ref).rest;
+  const w = rotationOf(world.a);
+  pose.set(ref, { rotation: rootSpaceTurn(local.rotation, w, rotate), translation: local.translation, scale: local.scale });
   return true;
 }
 
@@ -2755,7 +2790,7 @@ export function posePartClocks(assembly, value, { frameTime = value, slots = WEA
 }
 
 export function poseAssembly(assembly, { tracks = null, sampleTrack = null,
-  time = 0, accumRoot = null, neckPitch = 0, neckAim = 0, neckOffset = null, climb = null, skin = true, mirror = null, run = null, hold = null, motion = null } = {}) {
+  time = 0, accumRoot = null, neckPitch = 0, neckAim = 0, neckOffset = null, climb = null, skin = true, mirror = null, run = null, hold = null, motion = null, aim = null } = {}) {
   const { fns, skeleton, pieces } = assembly;
   if (!fns || !skeleton) return assembly;
   // MIRROR-BIND: an arm mirrored across the picture is mirrored by the binds of the skins it wears (mirrorBindsOf)
@@ -2775,6 +2810,10 @@ export function poseAssembly(assembly, { tracks = null, sampleTrack = null,
   // transform is identity - true of every fixture, false of retail data,
   // where the difference is a hand floating away from its forearm.
   applyFirstPersonNeck(skeleton, pose, GRAPH_ROOT, fns.skelMats, neckPitch, neckAim, neckOffset);
+  // BOW-AIM (combat/spineAim.js): the third person's ranged aim - the spine controllers over the clip's pose, as the
+  // reference's run after its animation (weaponanimation.cpp:175-211), and under the body motion, which keeps the clip's
+  // chest while the clip has the arms
+  assembly.aimFit = aim ? aim(skeleton, pose, GRAPH_ROOT, fns.skelMats) : null;
   // BODY-MOTION (characters/bodyMotion/bodyMotion.js, the third-person body's): the gait, the carry and a blow's body
   // solved over the clip's pose - after the mirror (a pair's arm is the layer's to place) and UNDER the run, the climb,
   // the seat and the long gun's hold, which still win the bones they ask for

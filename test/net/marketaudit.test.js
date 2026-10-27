@@ -274,9 +274,13 @@ test('MARKET-AUDIT U2, U3: a crafted piece is offered with its quality and wear;
   tab.state.view = 'mine';
   tab.state.list.kind = 'piece';
   await tab.load(true);
-  const options = [...tab.body().querySelectorAll('select')].find((s) => s.getAttribute('aria-label') === 'Crafted piece').querySelectorAll('option');
-  assert.equal(options.length, MARKET_HELD_MAX + 6, 'every piece offered');
-  assert.deepEqual([...options].slice(0, 3).map((o) => o.textContent), ['Mithril Longsword, Crude, worn to 62%', 'Mithril Longsword, Standard', 'Mithril Longsword, Fine']);
+  // PIN MOVED (PACK-PICK): each piece a pictured tile in the crafted pieces' picker - its name, and under it its quality
+  // and wear (the words the select's option had run on after the name)
+  const picker = [...tab.body().querySelectorAll('.packpick')].find((s) => s.getAttribute('aria-label') === 'Your crafted pieces');
+  const tiles = [...picker.querySelectorAll('button')].filter((b) => b.className.split(' ').includes('packpick-tile'));
+  assert.equal(tiles.length, MARKET_HELD_MAX + 6, 'every piece offered');
+  assert.deepEqual(tiles.slice(0, 3).map((b) => [b.querySelectorAll('.packpick-name')[0].textContent, b.querySelectorAll('.packpick-sub')[0].textContent]),
+    [['Mithril Longsword', 'Crude · worn to 62%'], ['Mithril Longsword', 'Standard'], ['Mithril Longsword', 'Fine']]);
 });
 
 test('MARKET-AUDIT U5, U7: a failed read keeps the filters and the counters, its word and Try again among them; another character\'s delivery waits for that one, never asked here', async () => {

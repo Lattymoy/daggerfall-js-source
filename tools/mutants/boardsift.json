@@ -473,8 +473,8 @@
   {
     "name": "BOARD-SIFT-window-the-paint-over-a-composed-word",
     "file": "src/ui/noticeWindow.js",
-    "old": "    if (composing()) return;\n",
-    "new": "",
+    "old": "    if (composing() || pressing()) return;\n",
+    "new": "    if (pressing()) return;\n",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -482,7 +482,7 @@
   {
     "name": "BOARD-SIFT-window-the-pages-unkeyed",
     "file": "src/ui/noticeWindow.js",
-    "old": "'input, select, textarea, button'",
+    "old": "'input, select, textarea, button, summary'",
     "new": "'input, select, textarea'",
     "tests": [
       "test/ui/boardsift.test.js"

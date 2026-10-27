@@ -64,13 +64,20 @@ test('AUDIT 657 B3 a stall\'s "Put up a piece" form: its fields under their name
     goods: () => [{ item: 'Leather Cuirass' }], put: async (it, p) => { did.push([it, p]); return { ok: true }; } },
   { busy: () => false, run: async (start) => start(), rerender: () => {}, nowS: () => 0, alive: () => true });
   await tab.open();
-  const form = byClass(tab.body(), 'market-listform')[0];
-  const fields = form.children.find((c) => c.className === 'market-fields');
-  assert.ok(fields, 'a row of fields');
-  assert.deepEqual(fields.children.map((c) => [c.tagName, c.tagName === 'BUTTON' ? c.textContent : c.className]), [['LABEL', 'market-field market-field-wide'], ['LABEL', 'market-field'], ['BUTTON', 'Put up for sale']]);
-  assert.deepEqual(byClass(fields, 'notice-label').map((l) => l.textContent), ['Piece', 'Price in gold']);
-  assert.equal(byClass(fields, 'market-field-wide').length, 1, 'the piece\'s field the wide one');
-  fields.children[2].onclick();
+  // PIN MOVED (PACK-PICK): the piece is the pack picker's, over the fields (ui/packPicker.js) - the row of fields its price
+  // under its name and the press beside it; the press waits for a tile pressed, then puts that piece up
+  const formOf = () => byClass(tab.body(), 'market-listform')[0];
+  let form = formOf();
+  assert.deepEqual(form.children.map((c) => c.className.split(' ')[0]), ['', 'packpick', 'notice-tip', 'market-fields', 'notice-tip'], 'the head, the picker, the card\'s place, the fields, the terms');
+  let fields = form.children.find((c) => c.className === 'market-fields');
+  assert.deepEqual(fields.children.map((c) => [c.tagName, c.tagName === 'BUTTON' ? c.textContent : c.className]), [['LABEL', 'market-field'], ['BUTTON', 'Put up for sale']]);
+  assert.deepEqual(byClass(fields, 'notice-label').map((l) => l.textContent), ['Price in gold']);
+  assert.equal(fields.children[1].disabled, true, 'nothing chosen yet');
+  byClass(form, 'packpick-tile')[0].onclick();
+  form = formOf();
+  fields = form.children.find((c) => c.className === 'market-fields');
+  assert.equal(form.children[2].className, 'packpick-card', 'the piece pressed looked at, over its price');
+  fields.children[1].onclick();
   await tick();
   assert.deepEqual(did, [['Leather Cuirass', 100]], 'the press still puts it up');
 });

@@ -201,11 +201,13 @@ test('PROF5b tab: Auctions - each Masterwork\'s standing bid, bids and end, wher
   // My listings: the auction form offers the Masterwork alone; the auctions and the bids
   buttons().find((b) => b.textContent === 'My listings').onclick();
   await tick();
-  const kind = [...root.querySelectorAll('select')].find((x) => x.getAttribute('aria-label') === 'What to list');
-  kind.value = 'auction'; kind.onchange();
-  const pick = [...root.querySelectorAll('select')].find((x) => x.getAttribute('aria-label') === 'Crafted piece');
-  assert.deepEqual([...pick.querySelectorAll('option')].map((o) => o.textContent), ['Silverthorn\'s Mithril Longsword']);
+  // PIN MOVED (PACK-PICK): the kind a press, the Masterworks pictured tiles - and none chosen until one is pressed
+  buttons().find((b) => b.getAttribute('data-kind') === 'auction').onclick();
+  const tiles = () => [...root.querySelectorAll('.packpick')[0].querySelectorAll('button')];
+  assert.deepEqual(tiles().map((b) => b.querySelectorAll('.packpick-name')[0].textContent), ['Silverthorn\'s Mithril Longsword']);
   assert.match(text(), new RegExp(`Runs ${AUCTION_S / 3600} hours on every board; each bid beats the last by 5%, and a bid in the last 2 minutes adds 2 minutes\\.`));   // AUDIT 657 B9 (PIN MOVED): the add's unit said; AUDIT 31 L4, L7: strictly less, the add its own number; BOARD-UI (PIN MOVED)
+  assert.equal(buttons().find((b) => b.textContent === 'List').disabled, true, 'nothing chosen yet');
+  tiles()[0].onclick();
   await buttons().find((b) => b.textContent === 'List').onclick();
   assert.deepEqual(calls.at(-1)[0], 'auction');
   assert.equal(calls.at(-1)[1].provenance, PV);

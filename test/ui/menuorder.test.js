@@ -304,8 +304,10 @@ test('MENU-ORDER the rest: the Vendor page\'s pieces and the Market\'s crafted p
   // THE HOST HANDS THE PICTURES OVER (scenes/world.js): the Stores page's, the board's market and traders, a stall's, the Vendor page's
   const W = hostText('src/scenes/world.js');
   assert.match(W, /book: profBook, name: \(k\) => materialLabel\(k\), withdraw: [^\n]*\n\s*picture: \(k, wake\) => materialPicture\(k, \{ onReady: wake \}\),/, 'the Stores page');
-  assert.match(W, /hubs: marketHubs, name: \(k\) => materialLabel\(k\), countName: materialCountLabel,\n\s*picture: \(k, wake\) => materialPicture\(k, \{ onReady: wake \}\), itemPicture: \(it, wake\) => itemPicture\(it, \{ onReady: wake \}\), piecePicture: marketPiecePicture,/, 'the market');
-  assert.equal((W.match(/picture: \(it, wake\) => itemPicture\(it, \{ onReady: wake \}\),/g) ?? []).length, 3, 'the board\'s traders, a stall and the Vendor page');
+  // PIN MOVED (AUDIT PACK-PICK A10): the market and a stall hand a pack picker's box through (its card asks the pack grid's)
+  assert.match(W, /hubs: marketHubs, name: \(k\) => materialLabel\(k\), countName: materialCountLabel,\n\s*picture: \(k, wake\) => materialPicture\(k, \{ onReady: wake \}\), itemPicture: \(it, wake, box\) => itemPicture\(it, \{ onReady: wake, box \}\), piecePicture: marketPiecePicture,/, 'the market');
+  assert.equal((W.match(/picture: \(it, wake\) => itemPicture\(it, \{ onReady: wake \}\),/g) ?? []).length, 2, 'the board\'s traders and the Vendor page');
+  assert.match(W, /picture: \(it, wake, box\) => itemPicture\(it, \{ onReady: wake, box \}\),   \/\/ MENU-ORDER; PACK-PICK/, 'a stall');
   assert.match(W, /const marketPiecePicture = \(piece, wake\) => \{[^]*?return itemPicture\(_pieceItems\.get\(piece\.provenance\), \{ onReady: wake \}\);/, 'a crafted piece, minted once');
 });
 
@@ -703,7 +705,7 @@ test('AUDIT MENU-ORDER the screens: a station the provider has here reads Here, 
   });
   // C5: the vendor board asks every row's picture with one wake
   const vsrc = readFileSync('src/ui/vendor/vendorTab.js', 'utf8');
-  assert.match(vsrc, /const wake = \(\) => ui\.rerender\(\);/);
+  assert.match(vsrc, /const wake = frameWake\(\(\) => ui\.rerender\(\)\);/);   // PIN MOVED (AUDIT PACK-PICK A1): one wake, and once a frame
   assert.match(vsrc, /v\.picture\?\.\(row\.item, wake\)/, 'one wake, never a closure a row');
   // U1 + U11: the decorator on a short screen and a narrow one
   assert.match(DECOR_CSS, /@media \(max-height: 500px\) \{\n  \.dfdecor-ftoggle \{ display: inline-block; flex: none; \}\n  \.dfdecor-filters:not\(\[data-open="1"\]\) \.dfdecor-fline-more \{ display: none; \}/, 'U1: a landscape phone folds the filters');

@@ -20639,3 +20639,18 @@ At 390x844 (a touch screen) the bar is two lines of 44px buttons, the Boards 46p
 sideways; at 844x390 the bar is one line and the list 216px. Not seen: the live pause face online. Pins:
 `test/ui/enhanced/timers2.test.js` (8: the law, the layout, the window, the bar, the sheet, and the audit's three);
 `test/ui/enhanced/timers1.test.js`'s window pin moved to the groups; `tools/mutants/timers2.json` (28), all dead.
+
+## ARMOR-TYPE - A PIECE OF ARMOUR SAYS ITS FAMILY (2026-10-26, a player: "can we add an info to every item what TYPE of armor it is (chain leather or plate)")
+
+A plate piece's name says its metal ("Iron Cuirass"), never the word "plate", and below Rare the metal is withheld - so
+nothing on the card said whether a piece was leather, chain or plate, the family a class's armour restriction refuses by.
+Now every piece of armour, a shield too, says Leather, Chain or Plate (`systems/item/itemInfo.js` itemArmorTypeLine):
+the enhanced card's **Type** row under **Armour** (`enhancedInventory.js` itemLine, armorType), the quick-loot and trader
+stat rows (itemStatRows), both trade windows' info line, and the questline reward card (`qlJournal.js` pieceStatWords,
+its words in `ql.journal.pieceLeather`, `pieceChain`, `piecePlate`). NO NEW LAW: it reads the class's NativeMaterialValue
+(`rriItems.js` rriNativeMaterialValue) `>> 8`, the equip gate's own read (DaggerfallInventoryWindow.cs:1352), so a
+Roleplay & Realism mail hauberk says Chain and a brigandine or fur jerkin Leather, as the gate treats them. The classic
+popup is DFU's records and does not change (THE NATIVE-WINDOW RULE). Pins: `test/systems/item/armortype_info.test.js` (5:
+every material, the shield and the rest, the gate agreeing, the stat rows' order, the card model and the reward card);
+`tools/mutants/armorlean.json` ARMOR-TYPE-no-row. The same update's loot and sale halves are `06-Systems/Loot-Rarity.md`
+ARMOR-LEAN.

@@ -85,9 +85,10 @@ test('SELL-AS-FOUND: online, repairing a found piece to sell it never pays - the
     assert.deepEqual([sword.value, sword.currentCondition, sword.maxCondition], [23040, 2560, 12800]);   // WEAPON-POOL: 1280 of 6400 on the row's pool
     const c = { quality: 10, skills: { mercantile: 40, personality: 50 } };
     // PIN MOVED (MERC-SLOPE, FIELD BUGS 2026-10-08): 1728 was the counter's flat half; a Mercantile 40 / Personality 50
-    // seller now stands under it, by their own offer against the best haggler's at half its strength
-    assert.equal(quote('Sell', sword, c), 1471, 'as found');
-    assert.equal(quote('Sell', mended(sword), c), 1471, 'whole, as found');
+    // seller now stands under it, by their own offer against the best haggler's at half its strength. PIN MOVED
+    // (DAEDRIC-SALE, 2026-10-26): 1471 was its whole Daedric value's - a counter pays half for Daedric gear now
+    assert.equal(quote('Sell', sword, c), 735, 'as found');
+    assert.equal(quote('Sell', mended(sword), c), 735, 'whole, as found');
     assert.ok(quote('Repair', sword, c) > 0);
   });
 });
