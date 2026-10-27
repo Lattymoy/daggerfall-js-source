@@ -415,6 +415,7 @@ holdings.horse.boons.starving,"Açlıktan bitkin - yiyene kadar dörtnala koşma
 holdings.wagon.boons.failing,"Dağılmak üzere, ama hâlâ tam hızla gider."
 holdings.wagon.boons.rickety,"Köhne, ama hâlâ tam hızla gider."
 holdings.wagon.boons.sound,"Sağlam - bu yüzden daha hızlı gider."
+inventory.store.chestAlone,"Arabanı ya da çantanı açmadan önce sandığı kapat."
 items.gold.sharedFull,"Buraya daha fazla altın sığmaz. Buradaki herkes bu kabı paylaşıyor ve içindeki bir altın yığını en fazla {max, number} alır."
 items.gold.sharedRoom,"Buraya yalnızca {n, number} altın daha sığar. Buradaki herkes bu kabı paylaşıyor ve içindeki bir altın yığını en fazla {max, number} alır."
 ketch.arrived,"Gök Gemisi Daggerfall üzerine geldi. Çapa asansörü şehrin doğusundaki tarlalara indi."

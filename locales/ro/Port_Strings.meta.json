@@ -14104,6 +14104,11 @@
   "tr": "0f9cfbe03330",
   "by": "claude-in-session"
  },
+ "inventory.store.chestAlone": {
+  "en": "ff8f623bd887",
+  "tr": "3aa14a7214c2",
+  "by": "claude-in-session"
+ },
  "inventory.store.chestShut": {
   "en": "58c210bee165",
   "tr": "eb1bc77e79bc",

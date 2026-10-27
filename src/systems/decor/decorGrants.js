@@ -324,6 +324,9 @@ export async function openSharedChest(id) {
     loot,
     items: () => draft,
     onDrop: (items) => { for (const it of items ?? []) draft.push(it); d.say?.(t('decor.grants.noDrop', 'Shut the chest before you drop that.')); return null; },
+    // RPT1026-CHESTGOLD: and Physical Items' shift-drop asks the floor the same (physicalItems.js shiftDrop's `dropRefusal`):
+    // it took the piece out of the window's pack alone and laid it in the room, while the character's pack kept it
+    dropRefusal: () => t('decor.grants.noDrop', 'Shut the chest before you drop that.'),
   });
   return true;
 }

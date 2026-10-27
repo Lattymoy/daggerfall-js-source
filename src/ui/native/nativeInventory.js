@@ -92,7 +92,7 @@ import { shiftDrop } from '../../systems/physicalItems.js';   // PI1: Physical I
 // U57: which list is the remote one, and what opening and closing
 // this window decide.
 import {
-  openState, remoteTarget, planWagonToggle, closeSession, holdChestSave,
+  openState, remoteTarget, planWagonToggle, closeSession, holdChestSave, settlesOwnPieces,   // RPT1026-CHESTGOLD: a store that settles its own pieces
   remoteTargetType, REMOTE_TARGET_TYPES,   // AUDIT MERGE-PLUS C3: whether a Remove drops on the ground
   // G5: the drop icon's five laws - the OnPush seed, CanChangeDropIcon,
   // the cycling arithmetic and dropIconIdxs' record lookup.
@@ -118,7 +118,7 @@ import { firstHotkey } from '../../systems/dialogShortcuts.js';   // A8: the Dag
 import { expandRowValues } from '../../systems/quest/questMacros.js';   // MACROS1: a used item's record through its own context (%map)
 import { magicPowersLines } from '../../systems/item/itemPowers.js';   // MACRO-3: %mpw
 import { itemIsIdentified } from '../../systems/tradeModes.js';   // MACRO-3: MagicPowers' identified arm
-import { localizedText, formatText } from '../../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { localizedText, formatText, t } from '../../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { getLocalizedItemName } from '../../systems/textManager.js';   // L10N3e: the equipping cue's template name, by its index
 import { bagMayLeave } from '../../systems/materialsBag.js';   // AUDIT2 BAG1 H11: a loaded bag stays - the one test
 import { noteFirstUse } from '../../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
@@ -866,6 +866,10 @@ export class NativeInventoryWindow {
    *  as the split popup's is (AUDIT-CM struck the " > " the first cut
    *  invented for the label). */
   _dropGold() {
+    // RPT1026-CHESTGOLD: never into a store that settles its own pieces, as the enhanced pack's field is not (its goldMayGo,
+    // AUDIT UPDATE II B1) - the shared chest's service keeps the pieces it can name, and the purse paid for a pile it never
+    // named was gone at the close
+    if (settlesOwnPieces(this.hooks) && !this.usingWagon) return;
     this.inputBox = new InputMessageBoxWindow({
       lines: expandRowValues(this.hooks.rows?.(GOLD_TO_DROP_TEXT_ID) ?? [{ text: 'How much gold?', center: true }], null),   // MACRO-3: %gii, the world's
       value: '0',
@@ -1024,11 +1028,11 @@ export class NativeInventoryWindow {
       // CM5: the split popup (:1515-1539), BELOW the quest arm the plan
       // already ran and above DoTransferItem. The popup's handler is
       // the same transfer with the typed count.
-      const perform = (amount) => {
+      const perform = (amount) => this._held('put', it, amount, () => {
         audio.playOneShot(SOUND.ButtonClick, 1);   // DoTransferItem (:1583)
-        applyTransfer(it, { ...plan, amount }, this.hooks.items(), to, { entity: this.hooks.entity, fromLocal: true,   // F157: a lit torch leaving the pack goes out
+        return applyTransfer(it, { ...plan, amount }, this.hooks.items(), to, { entity: this.hooks.entity, fromLocal: true,   // F157: a lit torch leaving the pack goes out
           returnTo: theftTarget(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }) });   // STOLEN-GOODS: the owner's piece put back is theirs again
-      };
+      });
       if (!whole && this._splitRequired(it, plan)) { this._openSplit(it, plan.amount, perform); return; }
       perform(plan.amount);
       return;
@@ -1132,7 +1136,7 @@ export class NativeInventoryWindow {
       if (plan.map) { this._use(it, remote); return; }   // F156: either direction
       // CM5: the same split gate on this side (:1515-1539); the tail
       // below is DoTransferItem's, run with the typed count.
-      const perform = (amount) => {
+      const perform = (amount) => this._held('take', it, amount, () => {
         // DoTransferItem: gold rides its own clink (:1569), everything
         // else the button click (:1583) - after the carry gate, so a
         // refused transfer stays silent.
@@ -1144,8 +1148,10 @@ export class NativeInventoryWindow {
         // equip (:1580), no choose-one close (:1585-1591).
         const taken = applyTransfer(it, { ...plan, amount }, remote, bag, { entity: this.hooks.entity, toPlayer: true,
           stolenFrom: theftTarget(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }) });   // STOLEN-GOODS: the owner's piece off a shut shop's shelf, a stranger's cupboard, a robbed caravan - marked as it lands
-        if (taken === null) return;
-        if (plan.equip && this.hooks.entity) {
+        if (taken === null) return taken;
+        // RPT1026-CHESTGOLD: a piece out of a store that settles its own is the window's pack's until the close - worn now,
+        // the character would wear a piece its pack does not hold yet. It is taken, not worn: worn from the pack once shut
+        if (plan.equip && this.hooks.entity && !settlesOwnPieces(this.hooks)) {
           // S23: the taken item still has to pass the career gate
           if (this._refuseForbidden(taken)) return;
           if (equipItem(this.hooks.entity, taken) !== null) refreshPaperDoll(this.hooks.entity);
@@ -1159,10 +1165,29 @@ export class NativeInventoryWindow {
           this._closeSilently();
           cb?.(taken);
         }
-      };
+        return taken;
+      });
       if (this._splitRequired(it, plan)) { this._openSplit(it, plan.amount, perform); return; }
       perform(plan.amount);
     }
+  }
+
+  /**
+   * RPT1026-CHESTGOLD (a private report): A STORE THAT SETTLES ITS OWN PIECES (`loot.commit` - the shared chest,
+   * systems/decor/decorGrants.js openSharedChest) MOVES THEM THROUGH THAT DOOR, on this skin as on the enhanced pack's
+   * (enhancedInventory.js heldThen): `go` is the move, run by the chest once it can answer, and the close sends what the
+   * door kept. This window ran `go` itself, so the close had nothing to settle and released the chest - every take and put
+   * undone, and before the gold arm kept a chest's coin a pile, its gold click paid the purse and left the pile in the
+   * chest. One move a piece at a time. Every other list moves at once, as it did.
+   */
+  _held(dir, it, amount, go) {
+    const commit = this.hooks.loot?.commit;
+    if (typeof commit !== 'function' || this.usingWagon || this.chooseOne) { go(); return; }
+    this._heldBusy ??= new Set();
+    if (this._heldBusy.has(it)) return;
+    this._heldBusy.add(it);
+    const done = () => { this._heldBusy.delete(it); };
+    Promise.resolve(commit(dir, it, amount, go)).then(done, () => { done(); this._refuse({ text: t('inventory.store.chestShut', 'The chest stays shut.') }); });
   }
 
   get topBox() { return this.boxes.length ? this.boxes[0] : null; }

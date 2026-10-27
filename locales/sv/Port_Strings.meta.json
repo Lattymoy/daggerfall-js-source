@@ -5789,6 +5789,11 @@
   "tr": "299bf7166f98",
   "by": "claude-in-session"
  },
+ "inventory.store.chestAlone": {
+  "en": "ff8f623bd887",
+  "tr": "50d1024e345d",
+  "by": "claude-in-session"
+ },
  "items.gold.sharedFull": {
   "en": "7eb608a65f56",
   "tr": "89033805cf2d",

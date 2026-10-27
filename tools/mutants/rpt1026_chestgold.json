@@ -278,5 +278,85 @@
       "test/net/card/rpt1026_chestgold_cards.test.js"
     ],
     "note": "the receipts kept across a reload are claimed without their words"
+  },
+  {
+    "name": "CLASSIC-put-unheld",
+    "file": "src/ui/native/nativeInventory.js",
+    "old": "const perform = (amount) => this._held('put', it, amount, () => {",
+    "new": "const perform = (amount) => ((go) => go())(() => {",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "the classic window's put runs itself again - the close settles nothing, and the piece put in stays in the pack"
+  },
+  {
+    "name": "CLASSIC-take-unheld",
+    "file": "src/ui/native/nativeInventory.js",
+    "old": "const perform = (amount) => this._held('take', it, amount, () => {",
+    "new": "const perform = (amount) => ((go) => go())(() => {",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "the classic window's take runs itself again - the close settles nothing, and the take is undone"
+  },
+  {
+    "name": "CLASSIC-held-never",
+    "file": "src/ui/native/nativeInventory.js",
+    "old": "    if (typeof commit !== 'function' || this.usingWagon || this.chooseOne) { go(); return; }",
+    "new": "    { go(); return; }",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "no move of the classic window goes through the chest's door"
+  },
+  {
+    "name": "CLASSIC-worn-from-chest",
+    "file": "src/ui/native/nativeInventory.js",
+    "old": "if (plan.equip && this.hooks.entity && !settlesOwnPieces(this.hooks)) {",
+    "new": "if (plan.equip && this.hooks.entity) {",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "an Equip-mode take off the chest wears a piece the pack does not hold yet"
+  },
+  {
+    "name": "CLASSIC-gold-into-chest",
+    "file": "src/ui/native/nativeInventory.js",
+    "old": "    if (settlesOwnPieces(this.hooks) && !this.usingWagon) return;",
+    "new": "",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "the classic gold field opens over the chest: the purse paid for a pile the service never names"
+  },
+  {
+    "name": "LADDER-wagon-over-chest",
+    "file": "src/systems/inventorySession.js",
+    "old": "  if (!state.usingWagon && settlesOwnPieces(deps)) return { ok: false, refusal: CHEST_ALONE_REFUSAL };   // RPT1026-CHESTGOLD",
+    "new": "",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "the wagon opens in a chest window: a piece moved to it is in the wagon and the pack at once"
+  },
+  {
+    "name": "LADDER-bag-over-chest",
+    "file": "src/systems/inventorySession.js",
+    "old": "  if (!state.usingBag && settlesOwnPieces(deps)) return { ok: false, refusal: CHEST_ALONE_REFUSAL };   // RPT1026-CHESTGOLD",
+    "new": "",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "the Materials Bag opens in a chest window: a piece stowed there is in the bag and the pack at once"
+  },
+  {
+    "name": "SPEC-floor-open",
+    "file": "src/systems/decor/decorGrants.js",
+    "old": "    dropRefusal: () => t('decor.grants.noDrop', 'Shut the chest before you drop that.'),",
+    "new": "",
+    "tests": [
+      "test/systems/decor/rpt1026_chestgold.test.js"
+    ],
+    "note": "a shift-drop from the chest window lays a piece on the floor that the pack keeps as well"
   }
 ]

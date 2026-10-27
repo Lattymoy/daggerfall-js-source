@@ -20,6 +20,9 @@ import { validLootList } from '../../../src/systems/loot/loot.js';
 import { createWeapon } from '../../../src/combat/enemyEquipment.js';
 import { seededRng } from '../../../src/systems/wind/wind.js';
 import { NativeInventoryWindow } from '../../../src/ui/native/nativeInventory.js';
+import { planWagonToggle, planBagToggle, SMALL_CART_TEMPLATE } from '../../../src/systems/inventorySession.js';
+import { BAG_TEMPLATE } from '../../../src/net/bagLaw.js';
+import { isEquipped } from '../../../src/systems/equip.js';
 
 const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const { subtle } = globalThis.crypto;
@@ -372,24 +375,93 @@ test('RPT1026-CHESTGOLD an open window keeps its hold while it is used, and a ho
   assert.equal(binGold(env), 60);
 });
 
-test('RPT1026-CHESTGOLD the classic skin\'s window: its gold click pays no purse, so the chest it never settles keeps its gold once', async () => {
+/** The classic window over the host's spec (inventoryDoor.js createInventoryWindow's other arm), the host's own doors
+ *  first and the chest's spec over them, as worldModes.js interiorInventory spreads it. */
+const classicOver = (spec, entity, hostDoors = {}) => new NativeInventoryWindow({
+  ...hostDoors, ...spec, entity, icons: { getTexture: async () => ({ recordCount: 0 }), uploadRecord: () => {}, textures: new Map() },
+});
+const settled = () => new Promise((r) => { setTimeout(r, 0); });
+
+test('RPT1026-CHESTGOLD the classic skin\'s window settles through the chest\'s door: what it takes and puts lands once, the gold with the settle', async () => {
   const t = await stand();
   const { mara, M } = await sharedChest(t);
+  const blade = { ...validLootList([createWeapon(113, 1, seededRng(1))])[0], uid: 'abcdef0123456789' };
+  const mine = { ...validLootList([createWeapon(114, 1, seededRng(2))])[0], uid: '9876543210fedcba' };
   layBin(t.env, coinRow(400));
+  layBin(t.env, blade);
   const g = gameOf(t, mara, M.id);
+  g.entity.items.push(mine);
+  await g.checkpoint();
   const spec = await g.open();
-  // the classic window over the host's spec (inventoryDoor.js createInventoryWindow's other arm): DFU's Remove off the chest
-  const win = new NativeInventoryWindow({ ...spec, entity: g.entity, icons: { getTexture: async () => ({ recordCount: 0 }), uploadRecord: () => {}, textures: new Map() } });
+  const win = classicOver(spec, g.entity);
   win.mode = 'remove';
   win._pickRemote(spec.loot.items().findIndex((it) => it.group === 'Currency'));
-  assert.equal(spec.loot.items().some((it) => it.group === 'Currency'), false, 'the pile left the chest\'s list');
-  assert.equal(spec.items().find((it) => it.group === 'Currency')?.stackCount, 400, 'and stands in the window\'s pack as a pile');
+  await settled();
+  assert.equal(spec.items().find((it) => it.group === 'Currency')?.stackCount, 400, 'the pile stands in the window\'s pack');
   assert.equal(g.entity.goldPieces, PURSE, 'the click pays no purse');
+  const row = spec.loot.items().find((it) => it.uid === blade.uid);
+  win._pickRemote(spec.loot.items().indexOf(row), 'equip');   // Equip mode takes, and would wear it
+  await settled();
+  assert.equal(isEquipped(row), false, 'a piece still the chest\'s until the close is taken, not worn');
+  win._pick(win._filtered().findIndex((it) => it.uid === mine.uid));
+  await settled();
+  assert.equal(g.entity.items.some((it) => it.uid === blade.uid), false, 'nothing reaches the pack before the close');
   win._close();
   await spec.loot.finish();
   await g.saved();
-  await g.checkpoint();
+  assert.ok(g.asked.includes('settle'), 'the close settled what the window moved');
+  assert.equal(g.entity.goldPieces, PURSE + 400);
+  assert.equal(recordOf(t.env, M.id).goldPieces, PURSE + 400);
+  assert.equal(g.entity.items.some((it) => it.uid === blade.uid), true, 'the blade taken is the pack\'s');
+  assert.equal(g.entity.items.some((it) => it.uid === mine.uid), false, 'the piece put in left it');
+  assert.equal(recordOf(t.env, M.id).items.some((it) => it.uid === blade.uid), true);
+  assert.deepEqual(binRows(t.env).map((it) => it.uid), [mine.uid], 'the chest holds the piece put in, and nothing taken');
+});
+
+test('RPT1026-CHESTGOLD the classic skin drops no gold into the chest, as the enhanced pack does not', async () => {
+  const t = await stand();
+  const { mara, M } = await sharedChest(t);
+  const g = gameOf(t, mara, M.id);
+  const spec = await g.open();
+  const win = classicOver(spec, g.entity);
+  win._dropGold();
+  assert.equal(win.inputBox, null, 'no gold field over a chest that settles its own pieces');
+  win._close();
+  await spec.loot.finish();
   assert.equal(g.entity.goldPieces, PURSE);
-  assert.equal(recordOf(t.env, M.id).goldPieces, PURSE, 'nor does any checkpoint carry it');
-  assert.equal(binGold(t.env), 400, 'the gold is in the chest, once');
+});
+
+test('RPT1026-CHESTGOLD a chest window shows the chest alone: no wagon, no bag, no piece shift-dropped on the floor', async () => {
+  const t = await stand();
+  const { mara, M } = await sharedChest(t);
+  const g = gameOf(t, mara, M.id);
+  const mine = { ...validLootList([createWeapon(114, 1, seededRng(2))])[0], uid: '9876543210fedcba' };
+  g.entity.items.push(mine, { group: 'Transportation', templateIndex: SMALL_CART_TEMPLATE, name: 'Small cart', stackCount: 1 },
+    { group: 'UselessItems2', templateIndex: BAG_TEMPLATE, name: 'Materials Bag', stackCount: 1 });
+  g.entity.wagonItems = [];
+  g.entity.bagItems = [];
+  const spec = await g.open();
+  // the host's own doors (world.js makeInventoryWindow, worldModes.js interiorInventory): the real wagon, bag and floor
+  const dropped = [];
+  const hostDoors = {
+    wagonItems: () => g.entity.wagonItems, bagItems: () => g.entity.bagItems,
+    physicalDropOn: () => true, physicalDrop: (list) => { dropped.push(...list); }, dropRefusal: () => null,
+  };
+  const deps = { ...hostDoors, ...spec };
+  // the one ladder both skins' toggles run (the enhanced pack's toggleWagon/toggleBag, the classic's _wagon)
+  assert.equal(planWagonToggle(deps, {}).refusal?.reason, 'chestAlone', 'the wagon stays shut while the chest is open');
+  assert.equal(planBagToggle(deps, {}).refusal?.reason, 'chestAlone', 'and the bag');
+  assert.equal(planWagonToggle({ ...hostDoors, items: () => g.entity.items }, {}).ok, true, 'any other window opens the wagon');
+  const win = classicOver(spec, g.entity, hostDoors);
+  win._wagon();
+  assert.equal(win.usingWagon, false);
+  assert.match(win.boxes[0]?.rows?.[0]?.text ?? '', /Shut the chest before you open your wagon or your bag/);
+  win.boxes = [];
+  win._physicalDrop(win._filtered().findIndex((it) => it.uid === mine.uid));
+  assert.deepEqual(dropped, [], 'nothing laid on the floor');
+  assert.match(win.boxes[0]?.rows?.[0]?.text ?? '', /Shut the chest before you drop that/);
+  assert.ok(spec.items().includes(mine), 'the window\'s pack keeps it');
+  assert.ok(g.entity.items.includes(mine), 'and the character\'s - once');
+  win._close();
+  await spec.loot.finish();
 });
