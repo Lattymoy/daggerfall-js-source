@@ -650,7 +650,7 @@ export function capitalSliceMarkers(cap, s) {
   return (typeof cap.sliceMarkers === 'function' ? cap.sliceMarkers(s) : cap.sliceMarkers?.[s]) ?? [];
 }
 /** A capital's own block at the plan's (cx, r): the anchor's metres (x east, z south) of its own metres (x east, z
- *  north - the block's, world/rmbLayout.js and tileCentre's). */
+ *  north - the block's, world/rmbLayout.js and tileCentre's). @returns {[number, number]} */
 export const anchorMetres = (cap, cx, r, x, z) => [(cx - cap.anchor[0]) * BLOCK_M + x, (r + 1 - cap.anchor[1]) * BLOCK_M - z];
 
 /** A garden's tree at a tile's centre (x, z, the block's metres): one in five off its hash, of the climate's own. */

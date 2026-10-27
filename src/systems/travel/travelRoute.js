@@ -655,7 +655,7 @@ const endLegOf = (from, to, ends) => (ax, ay, bx, by) => (Math.max(Math.abs(ax -
  * @param {{x:number,y:number}} from @param {{x:number,y:number}} to
  * @param {{ roads?: ArrayLike<number>|null, tracks?: ArrayLike<number>|null, isWater?: (x:number,y:number)=>boolean, width?: number, height?: number,
  *   openBlocked?: any, goalExempt?: boolean, beyond?: ((kind: string, x: number, y: number) => number)|null, maxExpansions?: number, tally?: { n: number }|null,
- *   ends?: { f: number, t: number, strict: boolean }|null }} [o]
+ *   ends?: { f: number, t: number, strict: boolean, bridges?: Set<number> }|null }} [o]
  * @returns {{ pixels: {x:number,y:number}[], cost: number, kinds: string[] } | null}
  */
 export function searchByRoad(from, to, o = {}) {
@@ -1004,7 +1004,7 @@ function* searchSteps(from, to, { roads, tracks, isWater, width, height, bounds,
  * spot beyond a town is reached round it - never across its streets. The spot's own leg then carries the spot (`at`), so
  * no road's lane is laid from the ring back to the town's middle (travelOptions.js routeLane).
  * @param {{ ringAt?: ((x:number, y:number, from:number[]|{x:number,z:number}, to:number[]|{x:number,z:number}) => ({x:number, z:number}[]|null))|null,
- *   start?: {x:number,z:number}|null, end?: {x:number,z:number}|null }} [opts]
+ *   start?: {x:number,z:number}|null, end?: {x:number,z:number}|null, roadBytes?: (kind: string, x: number, y: number) => number }} [opts]
  * @param {[{x:number,z:number}, {x:number,z:number}]|null|false} [ends] - `[start, end]`, in place of the options' two
  * ROAD-FOLLOW (systems/travel/roadLine.js roadLineLegs): a road's or a track's leg whose run turns on one of the curves
  * the roads past the Bay are drawn as carries `line` - the painted road's native points from the leg before's end to its
@@ -1089,7 +1089,7 @@ export function joinPoint(me, a, b) {
  * routed walk (round the peaks, along the road) left at its first bend, so the traveller walked beside their own line.
  * Both journeys draw through here. Native `{x, z}` in, `[x, z]` pairs out.
  * @param {{x:number,z:number}} me
- * @param {{x:number,y:number,at?:{x:number,z:number}}[]} legs
+ * @param {{x:number,y:number,at?:{x:number,z:number},line?:Array<[number, number]>}[]} legs
  * @param {{x:number,z:number}} end
  * @param {(leg: {x:number,y:number}) => number[]} centre - a leg's pixel middle, native
  */
