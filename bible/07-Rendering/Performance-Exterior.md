@@ -1985,11 +1985,29 @@ ms/s divide by the phase's seconds. Output: `E:/git-repos/travddm/dfo-verify/too
 | main thread standing: idle | 18.4% | 33.9% | 29.8% |
 | the snow's share standing | 6.1% (50 ms/s) | 7.4% (49 ms/s) | 6.2% (43 ms/s) |
 
-The frame rate stands at the display's 120 Hz cap (every phase's p50 is 8.3 ms), so the frames gained in flight show as
-fps up to the cap and the rest as idle. Standing, the snow costs the same (nothing builds while the player stands); the
+Every phase's p50 in those runs is 8.3 ms. They read it as a 120 Hz cap, but the display is 240 Hz: 120 fps was the
+CPU's ceiling for those builds, and the interleaved runs below replace the fps figures. Standing, the snow costs the same (nothing builds while the player stands); the
 standing idle moved between the runs with the rest of the frame, not the snow (busy 16.3, 13.2 and 14.1 s). On the move
 `_midProcess` is gone from the main thread's profile; what is left of the snow there is the commit and the blanket
 (`_midAwait` 0.7%, the ramp 0.7%, `_blanketTick` 2.6%, of it `terrainsNear` 2.0%) and the draw (3.4%).
+
+**The interleaved A/B (2026-10-27).** `dfo-verify/tools/perf/README.md` "A/B protocol": A is the branch's merge base with
+main (`56eb3cb15a`), B the branch (`633e7a2c7a`); one cold throwaway boot per arm, then A, B, A, B on each arm's warm
+profile, each launch after a census under 10% CPU with no other game run or test suite. Mean of an arm's two runs, the
+runs in brackets. Output: `p6-snow-2026-10-26/ab/` (each phase's `load` census and `<phase>.gaps.json`).
+
+| | A: base | B: the branch |
+|---|---|---|
+| standing fps | 164.9 (164.4, 165.3) | 164.2 (162.8, 165.6) |
+| flying fps | 150.7 (151.3, 150.0) | 172.4 (171.9, 172.8) |
+| flying frame p50 / p99, ms | 8.3 / 12.6 | 4.2 / 12.5 |
+| flying frames under 7 ms | 46.0% | 64.4% |
+| main thread busy per flying frame | 6.63 ms | 5.76 ms |
+| the snow's share flying | 16.6% (166 ms/s) | 7.3% (72 ms/s) |
+
+The frame gaps fall in two groups, one vsync of the 240 Hz display (about 4.2 ms) and two (about 8.3 ms), with none
+between 7 and 8 ms. The branch moves the median flying frame into the first group. The main thread is busy almost all
+of the time in both arms (idle 0.2% and 0.8% flying), so the gain shows as frames. Standing, the arms are the same.
 
 **The picture.** `pngdiff.cjs` and `pngmask.cjs` over the settled screenshots: base against head, 0.01% of the pixels
 differ by more than 8 and none by more than 64 - the walkers and lights in the far town and one glyph of the tutorial
