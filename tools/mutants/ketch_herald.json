@@ -38,8 +38,9 @@
   {
     "name": "KTH-the-floor-an-older-relay",
     "file": "src/net/relayCfg.js",
-    "old": "ktRole: 255, ktThread: 255, cellSeed: 260 });",
-    "new": "ktRole: 255, ktThread: 254, cellSeed: 260 });",
+    "old": "ktRole: 255, ktThread: 255, cellSeed: 260, lootDoor: 273 });",
+    "new": "ktRole: 255, ktThread: 254, cellSeed: 260, lootDoor: 273 });",
+    "note": "AUDIT HORIZONTAL B7 (LOOT-DOOR, re-aimed by content): lootDoor's floor stands at the line's end.",
     "tests": [
       "test/net/ketch/ketch_herald.test.js"
     ]

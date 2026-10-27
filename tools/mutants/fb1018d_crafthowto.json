@@ -2,7 +2,7 @@
   {
     "name": "CRAFT-HOWTO-smithing-dropped",
     "file": "src/ui/professions/profPages.js",
-    "old": "  smithing: () => t('prof.page.how.smithing', 'Smithing is done at a forge: a Weaponsmith\\'s, an Armorer\\'s or one in your own home. Open the Stores page there (Holdings > Stores). The Forge smelts the ore you mine into ingots, and the Anvil makes weapons, armor and tools from them, or from raw ore by smelting it first. Jewelry is made at a jeweler\\'s bench: a Pawn Shop\\'s, a Gem Store\\'s or one in your own home. Smelting and every piece you make earn Smithing experience.'),\n",
+    "old": "  smithing: () => t('prof.page.how.smithing', 'Smith at a forge: Weaponsmiths, Armorers and your home have one. It smelts ore into ingots; its anvil makes weapons, armor and tools, even from raw ore. Jewelry needs a jeweler\\'s bench, in Pawn Shops, Gem Stores and your home.'),\n",
     "new": "",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"
@@ -12,7 +12,7 @@
   {
     "name": "CRAFT-HOWTO-building-dropped",
     "file": "src/ui/professions/profPages.js",
-    "old": "  building: () => t('prof.page.how.building', 'Carpentry is done at a workbench: a Furniture Store\\'s, a joinery\\'s or one in your own home; Masonry at a mason\\'s bench: a General Store\\'s or one in your own home. Open the Stores page there (Holdings > Stores). The workbench saws the logs you fell into planks and makes staves, bows, arrows and furniture; the mason\\'s bench cuts the stone you quarry and mixes Mortar. Every piece, cut and mix earns Building experience; sawing earns none.'),\n",
+    "old": "  building: () => t('prof.page.how.building', 'Carpentry needs a workbench: Furniture Stores, joineries and your home have one. It saws logs into planks and makes staves, bows, arrows and furniture. A mason\\'s bench, in General Stores and your home, cuts stone and mixes Mortar.'),\n",
     "new": "",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"
@@ -22,7 +22,7 @@
   {
     "name": "CRAFT-HOWTO-outfitting-dropped",
     "file": "src/ui/professions/profPages.js",
-    "old": "  outfitting: () => t('prof.page.how.outfitting', 'Outfitting is done at a loom: a Clothing Store\\'s or one in your own home. Open the Stores page there (Holdings > Stores). The loom\\'s tanning rack cures the hides you skin into leather, the loom weaves Root Tendrils into Linen and spins furs into Wool, and it makes leather armor, clothing, rugs, tapestries and the Fishing-Net. The Weavers sell Linen and Wool too, at a Clothing Store\\'s loom or a Notice Board\\'s Market, but cloth bought with silver earns no first-time bonus. Every piece earns Outfitting experience; curing, weaving and spinning earn none.'),\n",
+    "old": "  outfitting: () => t('prof.page.how.outfitting', 'Outfitting needs a loom: Clothing Stores and your home have one. It cures hides into leather, weaves Root Tendrils into Linen and spins furs into Wool. It makes leather armor, clothing, rugs and tapestries. Weavers sell Linen and Wool too.'),\n",
     "new": "",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"
@@ -103,8 +103,8 @@
   {
     "name": "CRAFT-HOWTO-gem-store-unsaid",
     "file": "src/ui/professions/profPages.js",
-    "old": "a Pawn Shop\\'s, a Gem Store\\'s or one in your own home. Smelting",
-    "new": "a Pawn Shop\\'s or one in your own home. Smelting",
+    "old": "in Pawn Shops, Gem Stores and your home.'",
+    "new": "in Pawn Shops and your home.'",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"
     ],
@@ -113,8 +113,8 @@
   {
     "name": "CRAFT-HOWTO-loom-home-unsaid",
     "file": "src/ui/professions/profPages.js",
-    "old": "Outfitting is done at a loom: a Clothing Store\\'s or one in your own home.",
-    "new": "Outfitting is done at a loom: a Clothing Store\\'s.",
+    "old": "Outfitting needs a loom: Clothing Stores and your home have one.",
+    "new": "Outfitting needs a loom: Clothing Stores have one.",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"
     ],
@@ -123,8 +123,8 @@
   {
     "name": "CRAFT-HOWTO-joinery-unsaid",
     "file": "src/ui/professions/profPages.js",
-    "old": "a Furniture Store\\'s, a joinery\\'s or one in your own home;",
-    "new": "a Furniture Store\\'s or one in your own home;",
+    "old": "Furniture Stores, joineries and your home have one.",
+    "new": "Furniture Stores and your home have one.",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"
     ],
@@ -133,7 +133,7 @@
   {
     "name": "CRAFT-HOWTO-basket-unsaid",
     "file": "src/ui/professions/profPages.js",
-    "old": "herbs and the food a Basket finds, and go to your pack.",
+    "old": "herbs and Basket finds, and go to your pack.",
     "new": "and herbs, and go to your pack.",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"
@@ -143,8 +143,8 @@
   {
     "name": "CRAFT-HOWTO-brew-stores-only",
     "file": "src/ui/professions/profPages.js",
-    "old": "from the Stores page, with what you carry or keep in your Stores.",
-    "new": "from the Stores page, with what your Stores hold.",
+    "old": "from what you carry or store.",
+    "new": "from what your Stores hold.",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"
     ],
@@ -232,9 +232,9 @@
   },
   {
     "name": "CRAFT-HOWTO-cooking-unpaid",
-    "file": "src/ui/professions/profPages.js",
-    "old": "Brewing and cooking both earn Provisioning experience.",
-    "new": "Brewing earns Provisioning experience; cooking earns none.",
+    "file": "src/ui/professions/craftHall.js",
+    "old": "rows.push([t('prof.hall.src.dish', 'Cooking a dish'), ",
+    "new": "rows.push([t('prof.hall.src.dish', 'Cooking a dish'), none(), ",
     "why": "AUDIT FB1018D L1-5: the page tells a cook a dish pays nothing - the XP clause unread by the pin",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"
@@ -242,9 +242,9 @@
   },
   {
     "name": "CRAFT-HOWTO-building-unpaid",
-    "file": "src/ui/professions/profPages.js",
-    "old": "Every piece, cut and mix earns Building experience",
-    "new": "No piece, cut or mix earns Building experience",
+    "file": "src/ui/professions/craftHall.js",
+    "old": "rows.push([t('prof.hall.src.mason', 'A cut or mix at the mason\\'s bench'), ",
+    "new": "rows.push([t('prof.hall.src.mason', 'A cut or mix at the mason\\'s bench'), none(), ",
     "why": "AUDIT FB1018D L1-5: the workbench and the mason's bench said to pay nothing",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"
@@ -252,9 +252,9 @@
   },
   {
     "name": "CRAFT-HOWTO-outfitting-unpaid",
-    "file": "src/ui/professions/profPages.js",
-    "old": "Every piece earns Outfitting experience",
-    "new": "No piece earns Outfitting experience",
+    "file": "src/ui/professions/craftHall.js",
+    "old": "rows.push([t('prof.hall.src.loom', 'A piece at the loom'), ",
+    "new": "rows.push([t('prof.hall.src.loom', 'A piece at the loom'), none(), ",
     "why": "AUDIT FB1018D L1-5: the loom said to pay nothing",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"
@@ -263,8 +263,8 @@
   {
     "name": "CRAFT-HOWTO-raw-ore-unsaid",
     "file": "src/ui/professions/profPages.js",
-    "old": ", or from raw ore by smelting it first.",
-    "new": ".",
+    "old": "tools, even from raw ore.",
+    "new": "tools.",
     "why": "AUDIT FB1018D L1-5: the anvil's smelt-first chain (CRAFT1) unsaid",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"
@@ -273,8 +273,8 @@
   {
     "name": "CRAFT-HOWTO-menu-path",
     "file": "src/systems/tutorialCatalogue.js",
-    "old": "stand at one, press {Professions} and open Holdings > Stores.",
-    "new": "stand at one and open Menu > Holdings > Stores.",
+    "old": "stand at a station and press {Professions}: the Crafting page opens on it.",
+    "new": "stand at a station and open Menu > Holdings > Stores.",
     "why": "AUDIT FB1018D L1-6: a path the Classic skin has not - its Escape is DFU's pause, no tabs",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"
@@ -293,8 +293,8 @@
   {
     "name": "CRAFT-HOWTO-controls-row-stores",
     "file": "src/systems/inputActions.js",
-    "old": "['Professions', 'Open your Professions page (online)']",
-    "new": "['Professions', 'Open your Professions and Stores (online)']",
+    "old": "['Professions', t('input.action.professions', 'Open your Professions page, or the Crafting page at a station (online)')]",
+    "new": "['Professions', t('input.action.professions', 'Open your Professions and Stores (online)')]",
     "why": "AUDIT FB1018D L1-7: the key's Controls row keeps the claim the tutorial dropped - it lands on the Professions page",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"

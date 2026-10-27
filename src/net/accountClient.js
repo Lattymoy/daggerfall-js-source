@@ -555,6 +555,10 @@ const REFUSAL_WORDS = {
   'prof-temper-stale': () => t('account.refusal.profTemperStale', 'That piece\'s quality has changed. Check your Stores again.'),
   'prof-reforge': () => t('account.refusal.profReforge', 'Arcane Essence can reforge a line on a Magic or Rare piece, but never on a Legendary, Aetheric or artifact piece.'),
   'prof-no-essence': () => t('account.refusal.profNoEssence', 'That piece carries too little enchantment to give any Arcane Essence.'),
+  // MASTER-ART: a Master's work's refusals (server-account/src/masterWork.js)
+  'prof-master': () => t('account.refusal.profMaster', 'A Master\'s work is a weapon, armor, clothing or jewelry piece that can wear a tier.'),
+  'prof-master-lines': () => t('account.refusal.profMasterLines', 'Choose three different lines this piece can carry, with at most one effect.'),
+  'prof-master-day': () => t('account.refusal.profMasterDay', 'You have made today\'s Master\'s work. The next can be made after midnight UTC.'),
   'bad-qty': () => t('account.refusal.badQty', 'Take 1 to {max} at a time.', { max: WITHDRAW_MAX }),
   'bad-pixels': () => t('account.refusal.badPixels', 'That land could not be read.'),
   'bad-region': () => t('account.refusal.badRegion', 'That region could not be read.'),
@@ -823,6 +827,11 @@ const REFUSAL_WORDS = {
   // SHIP-PVP (server-account/src/seaWreck.js): a wreck's prizes
   'sea-prize-realm': () => t('account.refusal.seaPrizeRealm', 'Only an online character of the realm can take a prize from a wreck.'),
   'sea-prize-moved': () => t('account.refusal.seaPrizeMoved', 'Those goods were already taken. Look at the board again.'),
+  // CREW-SIGNED (server-account/src/crewSigns.js): a crew hall's recruit
+  'crew-bad': () => t('account.refusal.crewBad', 'The crewmaster does not know that sailor.'),
+  'crew-day': () => t('account.refusal.crewDay', 'The crewmaster has a new day\'s roster.'),
+  'crew-taken': () => t('account.refusal.crewTaken', 'That sailor has signed on elsewhere.'),
+  'crew-many': () => t('account.refusal.crewMany', 'You have signed on as many sailors as one day allows. Come back tomorrow.'),
   'cards-closed': () => t('account.refusal.cardsClosed', 'The realm is not holding stakes for card tables right now. Try again later.'),
   'cards-stake-paid': () => t('account.refusal.cardsStakePaid', 'That stake has already been settled.'),
   'bad-table': () => t('account.refusal.badTable', 'The account service could not read that card table.'),
@@ -902,6 +911,15 @@ const REFUSAL_WORDS = {
   'fallen-frozen': () => t('account.refusal.fallenFrozen', 'That player is held by staff. Nothing can be taken from them.'),
   'bad-text': () => t('account.refusal.badText', 'Write something to send.'),
   'no-thread': () => t('account.refusal.noThread', 'There is no staff chat open for you right now.'),
+  // HUNTERS-MARK (server-account/src/hunts.js): the hunt's ledger - a clear the service will not record
+  'hunt-need-account': () => t('account.refusal.huntNeedAccount', 'Only a registered account keeps a hunter\'s rank.'),
+  'hunt-character': () => t('account.refusal.huntCharacter', 'That character keeps no hunter\'s rank.'),
+  'hunt-rate': () => t('account.refusal.huntRate', 'Too many bounty reports at once. Try again later.'),
+  'hunt-id': () => t('account.refusal.huntId', 'That bounty notice cannot be read.'),
+  'hunt-late': () => t('account.refusal.huntLate', 'That bounty is too old to count.'),
+  'hunt-early': () => t('account.refusal.huntEarly', 'That bounty has not been posted yet.'),
+  'hunt-tier': () => t('account.refusal.huntTier', 'That bounty is not for your level.'),
+  'hunt-rung': () => t('account.refusal.huntRung', 'Named beasts are posted to Stalkers and above.'),
 };
 /** AUDIT SAFE CLIENT-2 (2026-10-17): THE SERVICE'S LAST WORD ON A BAN - `{ until, reason }` off the newest `banned`
  *  refusal any door answered (`call`), or null. The service refuses a banned account on every door but signing out
@@ -2336,12 +2354,24 @@ export function accountProf({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     stock: (character, material, qty, rid) => post('/v1/prof/stock', { character, material, qty, rid }),   // PROF3: the smith's stock
     brew: (character, potion, keys, rid, seat = null) => post('/v1/prof/brew', { character, potion, keys, rid, ...(seat == null ? {} : { seat }) }),   // PROF12: the alchemy station's brew - `keys` the cauldron as the Stores hold it, `seat` the held town it stands in
     temper: (character, recipe, quality, provenance, rid) => post('/v1/prof/temper', { character, recipe, quality, rid, ...(provenance ? { provenance } : {}) }),   // CRAFT4: a piece a quality step better
+    master: (character, recipe, lines, name, rid, dye = null) => post('/v1/prof/master', { character, recipe, lines, name, rid, ...(dye == null ? {} : { dye }) }),   // MASTER-ART: a Master's work, its three lines chosen
     reforge: (character, tier, rid, count = 0) => post('/v1/prof/reforge', { character, tier, count, rid }),   // CRAFT4: an Enchanter's Reforge for Arcane Essence - the seed its line is rolled with; REFORGE-REPLACE: the piece's reforges, its price doubled for each
     disenchant: (character, provenance, rid, realm = null) => post('/v1/prof/disenchant', { character, provenance, rid, ...(realm ? { realm } : {}) }),   // PROF12: a crafted piece into Arcane Essence; AUDIT PROF-541 B2: a realm character's record where it stands
     writs: (character, region) => post('/v1/writs/list', { character, region }),
     deliver: (character, id, rid) => post('/v1/writs/deliver', { character, id, rid }),
     craftWrit: (character, id, rid, realm, pieces = null) => post('/v1/writs/craft', { character, id, rid, realm, ...(pieces ? { pieces } : {}) }),   // CRAFT-WRITS: a crafting writ filled - its goods out of the realm record where it stands
     motherlodes: (character) => post('/v1/prof/motherlodes', { character }),   // PROF2b: today's three (a strike rides `harvest`)
+  };
+}
+
+/** HUNTERS-MARK: THE HUNT'S DOOR (server-account/src/hunts.js) - a character's clears read, and a paid bounty reported
+ *  with its board's region (the seats' influence). Every answer is `call`'s shape, waited for ACCOUNT_ACT_WAIT_MS at most. */
+export function accountHunt({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
+  const post = waitedPost({ fetch, storage }, waitMs);
+  return {
+    account: () => storedSession(storage)?.id ?? null,
+    state: (character) => post('/v1/hunt/state', { character }),
+    clear: (character, id, region = null) => post('/v1/hunt/clear', { character, id, ...(Number.isSafeInteger(region) ? { region } : {}) }),
   };
 }
 
@@ -2429,6 +2459,18 @@ export function accountSeaWreck({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }
 export function accountSeaSeason({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
   const post = waitedPost({ fetch, storage }, waitMs);
   return { board: (req) => post('/v1/sea/season/board', req) };
+}
+
+/** CREW-SIGNED: A CREW HALL'S DOOR (server-account/src/crewSigns.js) - a town's hall on a day (`hall`: `{ town, day }` -
+ *  the slots others hold and the asker's), a recruit held (`sign`: `{ id }`) and let go (`release`: `{ id }`). Every
+ *  answer is `call`'s shape. */
+export function accountCrewSigns({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
+  const post = waitedPost({ fetch, storage }, waitMs);
+  return {
+    hall: (req) => post('/v1/crew/hall', req),
+    sign: (req) => post('/v1/crew/sign', req),
+    release: (req) => post('/v1/crew/release', req),
+  };
 }
 
 /** CARDS10: ILIAC HAND'S DOOR (server-account/src/iliac.js) - a ranked seat's deck vouched for (`deck`: `{ character,

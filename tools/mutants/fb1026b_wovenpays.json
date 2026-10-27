@@ -98,7 +98,7 @@
   {
     "name": "WOVEN-PAYS-svc-any-craft-makes-the-pattern",
     "file": "server-account/src/professions.js",
-    "old": "  const patternMade = counterMade(r) ? `${madeBefore} AND (first_paid = 1 OR (first_paid IS NULL AND first = 1 AND xp >= ${FIRST_MAKE_FLOOR}))` : madeBefore;",
+    "old": "  const patternMade = counterMade(r) ? `${madeBefore} AND ${PAID_FIRST_SQL}` : madeBefore;",
     "new": "  const patternMade = madeBefore;",
     "tests": [
       "test/net/fb1026b_wovenpays.test.js"
@@ -125,8 +125,8 @@
   {
     "name": "WOVEN-PAYS-svc-floor-edge",
     "file": "server-account/src/professions.js",
-    "old": "AND first = 1 AND xp >= ${FIRST_MAKE_FLOOR}))` : madeBefore;",
-    "new": "AND first = 1 AND xp > ${FIRST_MAKE_FLOOR}))` : madeBefore;",
+    "old": "AND first = 1 AND xp >= ${FIRST_MAKE_FLOOR}))`;",
+    "new": "AND first = 1 AND xp > ${FIRST_MAKE_FLOOR}))`;",
     "tests": [
       "test/net/fb1026b_wovenpays.test.js"
     ],

@@ -127,7 +127,7 @@ test('SEAT2b part two THE HOST\'S SEAMS: a members\' Harbour is the travel map\'
   assert.match(W, /port: coastalAt\(town\.px, town\.py, seaPixel, csaIsPortTown\(town\.px, town\.py\)\),/);
   assert.match(W, /const \{ seat \} = myHall\(recipeById\(recipe\)\?\.profession\);/);   // PIN MOVED (AUDIT PROF-541 R2-H1): fortLaw.js hallStepsFor (prof9_client.test.js drives it)
   assert.match(W, /const myHall = \(profession\) => hallStepsFor\(seatHere\(_musicLoc\?\.mapTableData\?\.mapId\), guildBook\?\.guild\?\.id \?\? null, profession\);/);
-  assert.match(W, /name: typeof playerEntity\?\.name === 'string' \? playerEntity\.name : null, seat \}, profMintCraft\);/);
+  assert.match(W, /name: typeof playerEntity\?\.name === 'string' \? playerEntity\.name : null, seat, \.\.\.more \}, profMintCraft\);/);   // PIN MOVED (MASTER-ART): the page's other asks handed on after the seat
   assert.match(W, /\{ const g = guildBook\?\.guild\?\.id \?\? null; if \(g && seatBook\?\.towersDue\(g\)\) seatBook\.towers\(g, \(t\) => townTalk\.say\(t, 6\)\)\.catch\(\(\) => \{\}\); \}/);
   assert.match(W, /const made = rec\?\.kind === 'siege' \? storedText\(rec\.name, Number\(r\.data\.count\) \|\| 1\) : craftedText\(mintPieces\(r\.data\)\);/);
   assert.equal(storedText('Ram Kit'), 'You made a Ram Kit. It waits in your Stores');

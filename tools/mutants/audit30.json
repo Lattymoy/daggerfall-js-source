@@ -468,8 +468,8 @@
   {
     "name": "AUDIT30-A3-the-bench-s-rows-open-mid-pass",
     "file": "src/ui/professions/profPages.js",
-    "old": "word: (x, s) => (x.later ? LATER_WORDS.SEAT2 : s.open ? makeWord(s.can, s.raw) : rankWord(x.rank)), locked: planing });",
-    "new": "word: (x, s) => (x.later ? LATER_WORDS.SEAT2 : s.open ? makeWord(s.can, s.raw) : rankWord(x.rank)), locked: false });",
+    "old": "word: (x, s) => (x.later ? LATER_WORDS.SEAT2 : s.open ? makeWord(s.can, s.raw) : rankWord(x.rank)), locked: planing, first });",
+    "new": "word: (x, s) => (x.later ? LATER_WORDS.SEAT2 : s.open ? makeWord(s.can, s.raw) : rankWord(x.rank)), locked: false, first });",
     "tests": [
       "test/net/audit30_client.test.js"
     ]

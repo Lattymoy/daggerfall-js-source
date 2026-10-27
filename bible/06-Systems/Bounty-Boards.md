@@ -248,3 +248,204 @@ a bounty taken on another clock runs from now; B11 the board keeps the keyboard'
 armed Abandon never outlives its visit; B12 a mate's copy taken up is rebuilt at the taker's level; B13 a farm never
 stands on a farm, nor a trail spot among its buildings; B14 the claims above corrected (the farm's viewers, "1 coin"
 never "a coin", the four lines). The relay moves to `world123`.
+
+## 12. HUNTERS-MARK and MARKS-OF-MASTERY - the hunt's ledger, its rank and its sideways rewards (BUILT 2026-10-27)
+
+A player's feedback, handed on by the owner ("build all of it with autonomy and be as detailed as possible. No
+exceptions and no band aids"): *"The horizontal MMO approach was working really well imo ... Add more horizontal
+progression please!"* Until this a bounty had no progression of its own. **DECIDED**: the account service keeps a
+ledger of the hunt, a rank per character is read off it, and its rewards are sideways - titles, a weekly named beast, a
+mounted trophy and a little seat influence. The bounty's piece keeps Mac's ceiling ("Not more. And thats it till max
+level."). The port's own: DFU has no bounty boards (Port-Ledger section A, THE TOWN'S BOUNTY BOARDS).
+
+### 12.1 The ledger (`server-account/src/hunts.js`, migration 0181)
+
+`/v1/hunt/clear` takes `{ character, id, region? }`; `/v1/hunt/state` answers `{ clears, marks, markDone, regions,
+account }`. A row is keyed by account, character, kind and key: a board notice's slot (`bountySlotKey`), so one notice
+counts once a character at whatever level it was taken, or a named mark's week (`m.<week>`). A repeat is answered
+`repeat`, never refused.
+
+**A clear is the client's word: bounded, named, not closed**, as Renown's report is (`renownTracks.js`). The service
+checks the id's shape (`day.px.py.slot.level`, or `m.week.px.py.level`); the event clock's window (a notice of the last
+12 game days up to tomorrow's, a mark of this week or the last - `huntLaw.js` huntClearOf); the level at most two past
+the level the realm trusts (`realm_characters.level_seen`) and its tier at most one below (huntTierFits); and the
+account's UTC day, every character's together, under 750 clears (HUNT_CLEARS_DAY_MAX, measured - 12.10), decided in the
+INSERT. A modified client can report the day's ceiling and no more.
+
+The route is a progression claim of the seat
+(`progress.js` PROGRESS_ROUTES): the `bounty` stream, spent by a recorded clear alone. The stream is a seat's Bounty
+camps' too (the staff config holds the streams' set fixed); an enforced line refuses a clear as `progress-play`, which
+the book keeps and asks again.
+
+### 12.2 The book (`src/net/huntBook.js`)
+
+The bounty host reports every bounty it pays, with its board's region (`scenes/bountyHost.js` pay, through
+`scenes/huntersMark.js` cleared). Each report is kept in the device's storage, by account and character, until the
+service answers it, and asked again on the pump's beat, as the professions book keeps its acts. A refusal for good
+(`hunt-tier`, `hunt-id`) lets it go; a lost network, a seat this tab does not hold, a rate or no session on the device
+keeps it (HUNT_KEEP). An account's full day keeps it until the service's UTC day turns (12.10). A report past the
+clock's window is never kept. The state is read again every two minutes, and its answer redraws an open board.
+
+### 12.3 The rank
+
+Six rungs, a character's board clears each (HUNT_RUNGS): Unblooded 0, Tracker 5, Hunter 15, Stalker 40, Slayer 100,
+Huntmaster 250. The board's header shows the rung and the clears, this region's tally, a bar to the next rung and the
+reports still to count (`ui/bounty/huntRank.js` rankLine). The Standing page shows the same at its foot, with the named
+beasts slain and the account's way to its next hunt title (statsHunt). Offline neither shows: the rank is the service's.
+A guest's account keeps none: both say "Only a registered account keeps a hunter's rank." (12.10).
+
+### 12.4 The named mark (`src/scenes/huntersMark.js`)
+
+From Stalker, every board posts its reader the week's named beast, first in its list. It is one beast of the reader's
+tier, the same at every board for the week (huntMarkOf: the beast and one of sixteen names off the week's hash), on
+one of the board's own sites. Taken, it stands at its pixel through the board's pack stand: one elite, named over its
+head (`raidLeader`), with the week's two boss traits (`05-Combat/Boss-Traits.md`) in place of any its stand drew as an
+elite (HUNTERS-MARK-II, a raid's leader's law). Slain, it pays three full
+packs' purse of its tier (huntMarkGold) and a mounted trophy under its name, never kit. Its clear is reported as a
+board's; the service takes one a week a character, and only from the rung (`hunt-rung`). One is held at a time, Give
+up asks twice, and a mark held past the seats' Turning lapses.
+
+**A mate sees it named** (HUNTERS-MARK-II, 2026-10-27; it closes 12.8's FLAGGED line). A mark is a pure function of the
+week and the tier, so a mate's machine reads it off what the hunter's foe record already carries (`net/wire.js`
+validFoeRecord): an elite (`z`) and a leader (`rl`) that no raid tags (the frame's `rz`), of a kind that is its tier's
+mark this week or last, with that week's traits' mask (`bt`). That copy stands under the hunter's own title, with the
+same two traits at the same size (`systems/hunt/namedMark.js` huntMarkSeen, read where `scenes/exteriorFoes.js` names a
+puppet's leader, on the event clock). Last week's still reads because a mark stood before the Turning still stands after
+it: its hunt lapses, the beast stays. This week's is read first. The wire, the relay and the service are unchanged.
+
+**DECIDED**: anyone who sees the mark reads its name, a passer-by as well as a mate. The cell's stream reaches the
+whole cell, the elite and its traits were everyone's to see already, and the name is the week's own, posted on every
+board. Only "Unquiet" before its title stays the hunter's own, as on any special foe (`06-Systems/Revenants.md` section 46).
+
+**What a mate gets** (kept, not changed). The mark rides no pose: `bq` carries a bounty's id alone (`wire.js`
+BOUNTY_POSE_ID_RE), so no mate holds a share of it. The hunter's machine counts the kill, whoever lands it: only the
+hunter is paid (the purse and the trophy), and only the hunter's clear is reported. A mate who fought it gets what
+fighting a party mate's bounty beast gives one who does not hold the hunt: the kill's Renown if a blow of theirs
+landed in its last half minute, the party bonus counting who fought it (`net/renownTracker.js`), and a claim on its
+body as on any peer's foe (OUTDOOR-LOOT). No purse, no trophy, no clear, no rank.
+
+**A mark is never kit, held** (at the merge): a stand that rolled the mark an elite had laid an elite's drop on its
+body beside its kind's. `systems/eliteFoes.js` grantEliteLoot keeps what each elite roll laid, and the mark's crown takes
+exactly that back (`huntersMark.js` crown, `eliteFoes.js` withdrawEliteLoot) - bootWorld's stand untouched. Pinned in
+`huntersmark2_wire.test.js`.
+
+**NOT CHANGED, named**: two mates who took the same week's mark at one board each stand their own copy at its lair, and
+each is paid for their own; a board's one-pack law (section 6) is not the mark's.
+
+### 12.5 The mounted trophy
+
+Template 601 (`src/net/trophyLaw.js`; Professions-Arc 4.8), group UselessItems2, worth 40 at a counter. Its `message`
+is its beast and its `variant` a mark's name. Its pack picture is the beast's own front frame from the player's data. In
+a home it hangs as a mount of its own (`decorLaw.js` decorIsTrophy): a shield of dark wood with a brass plate, drawn in
+code, with that frame fitted on it and uploaded under its own key at runtime (`scenes/decor/trophyArt.js`). Nothing of
+ARENA2 is kept in the tree (Port-Doctrine's non-negotiables). A visitor reads its name off its numbers. Hunting 100's
+Trophy Hunter is built with it (`06-Systems/Professions-Arc.md` section 58).
+
+### 12.6 A seat's influence (migration 0182)
+
+A recorded clear on a board of a region where the hunter's war-guild pledged counts 25 as the `hunt` source, at most 250
+an account a week (`townSeatLaw.js` HUNT_INFLUENCE, HUNT_WEEK_CAP; `seatInfluence.js` creditHunt), inside the account's
+whole weekly cap: an Orc Raid's camps' weight, modest and bounded like the clears. Migration 0182 widens
+`town_seat_influence`'s source check to take it. The table's row is `11-Multiplayer/Seats-Arc.md` section 4.2.
+
+### 12.7 The Marks of Mastery
+
+Titles derived at every ask from what the service keeps, never stored (`hunts.js` masteryMarksRead, `titles.js`):
+Bloodhound, Beastbane, Grand Huntsman and Legend of the Hunt at 25, 100, 300 and 750 board clears of all the account's
+characters; a profession's Master (Master Miner to Master Enchanter, ten) while a living realm character of the account
+holds the track at rank 100; Serpent Hunter and Bane of the Deep at 10 and 40 Sea Serpents the account helped slay (the
+relay's receipts, `serpent_kills`). They are held on the wardrobe, worn, signed into the token and shown on the boards'
+names, a letter's sender and a notice-board note's author (12.10). A guest holds none.
+
+Sailing's other records are kept by the client or swept (a captain's level, a crown's standing, the sea season, wrecks
+after two hours, sea kills after the wanted days), so they earn no title. No sailing term joins a seat's influence: a
+serpent names no seat's region, and a port's trade the Watch vouches for already counts there.
+
+### 12.8 The four hosts
+
+**The streaming world** (`scenes/world.js`) wires it: the hunt's online deps (`huntersMark.js` huntOnline), the trophy
+door for the hunt's kind (`trophies.js` trophyDoor), and the gather host hands its entity to a kind's answer; bootWorld
+does not grow. **The fixed city** (`scenes/exterior.js`) keeps DFU's board: no rank and no marks there, **FLAGGED**.
+**The standalone dungeon** and **the interior viewer** have no boards. A mate sees the hunter's mark under its name
+(HUNTERS-MARK-II, 12.4): the foe pool the hosts share reads it (`scenes/exteriorFoes.js`), so the streaming world
+carries it and bootWorld wires nothing; an interior's pool (`scenes/worldModes.js`) reads alike, and no mark stands
+indoors; a dungeon's own stream (`scenes/dungeonContext.js`) has none to read, as no mark stands below; the fixed city
+streams no peer's foes. Offline none of it shows.
+
+### 12.9 Pins
+
+`test/server/huntersmark_service.test.js` (6), `test/scenes/huntersmark_client.test.js` (5),
+`test/systems/huntersmark_trophies.test.js` (5), `test/tooling/huntpace.test.js` (2, the second on the game's data);
+`tools/mutants/huntersmark.json`. PIN MOVED: TITLES' positions read
+from its end (sixteen joined last), the catalogue's rows, the Collections parts' lists, the l10n ratchet's badge words,
+the Trophy Hunter's spec (no longer waiting). Fifteen mutant records of other slices re-aimed by content.
+
+HUNTERS-MARK-II: `test/scenes/huntersmark2_wire.test.js` (3) - the law, and the whole way between two real pools (the
+real bounty host's mark crowned, its frame read, only the hunter paid, the mate's Renown); `tools/mutants/huntersmark2.json`,
+13, dead. No pin moved. `auditwe_cover.json`'s puppet-leader record re-aimed by content (the line now reads a mark too),
+dead. No version moves.
+
+**The versions** (at the merge onto the wardrobe's branch): ACCOUNT_VERSION acct203 (acct201 before JEWEL-KIN,
+acct202 before FIELD BUGS 2026-10-26r), its migrations 0181 and 0182 (0178 and 0179, then 0180 and 0181, on its branch). RELAY_VERSION world273 (world271 before MASTER-THREE,
+world272 before FIELD BUGS 2026-10-26r): the token's TITLES gained sixteen, the bundle's files unchanged.
+Either side may deploy first: a service without the routes leaves the book keeping its clears.
+
+### 12.10 AUDIT HORIZONTAL, lane F (2026-10-27, the owner: "Audit this")
+
+**AUDIT HORIZONTAL F3: the day's ceiling, measured.** It was 48, "four held, twelve game days a real day". Four held is
+not four cleared: a hunter clears, rides on and takes four more, and all 410 cities carry a bounty board. `tools/huntPace.mjs`
+walks the game's map (ARENA2): each board's notices where it posts them, in their shortest order, at the fastest legal ride
+(Speed 100, Running's top with every buff, the swiftest horse, Fleetfoot III: 34.6 m/s), no time fighting, the next board
+the cheapest a clear - ridden to, or by the carriage at the nearest city's gate (Immersive Travel's driver stands at every
+one). MEASURED over fourteen UTC days from 2026-10-27: the best day 677 to 706 clears; without the carriage 380 to 394.
+HUNT_CLEARS_DAY_MAX is 706 rounded up to the next fifty, 750.
+
+**What it still bounds (named, not closed).** No honest day reaches 750, so the ceiling bounds a modified client alone:
+it can report 750 a day - Huntmaster's 250 and Legend of the Hunt's 750 in one. The play-hour line's `bounty`
+stream (`Integrity-Arc.md` INT17) bounds the pace an hour of play once staff enforce it.
+
+**A full day waits (F3).** `day-full` is no refusal. The book (`net/huntBook.js` pump) keeps every report of the slot,
+marked with the service's UTC day (the state's `account.day`), asks none again that day, and asks them once the day has
+turned - each while its notice is inside the clock's window; one that leaves the window first is let go. A report made
+while the day is full waits with them, unasked. The board's "still to count" counts them.
+
+**F1, F2, F6: pinned.** The day is the account's, every character's rows together (a second character's rows fill it);
+`markDone` is this week's mark, never last week's; a seat's influence counts once a clear, never once a character.
+
+**F4: a guest.** A guest seated in the realm is answered `hunt-need-account`. The book takes it as final (`closed`),
+keeps no report and asks again every five minutes (HUNT_CLOSED_MS, so a registration opens it); the board's header and
+the Standing page say the refusal's own line once. The Standing page asks on the book's beat, never once a draw.
+
+**F7.** No session on the device (`no-session`) keeps a report, as the professions book keeps its acts.
+
+**F10: a mark's rung as its week ended.** The rung is the board clears recorded before the mark's week ended
+(`hunts.js` huntClear), in the write and in the refusal's read: a character that became a Stalker this week takes this
+week's mark, never last week's.
+
+**F5: a worn Mark of Mastery on letters and notes.** The inbox, a letter opened and a board's notes lay the Marks of
+Mastery as the boards' names do (`letters.js`, `board.js`, `hunts.js` withMasteryMarksAll). NOT CHANGED, named: a seat's
+Charter titles and a chapter's titles are blank on letters, notes and the boards' names alike. Their readers are one
+account's at a time (`seatTurning.js` seatTitlesOf, `npcChapters.js` chapterTitlesOfAccount - five reads); laying them
+there is a batch reader each, those slices' own.
+
+**Lane F's suspected items.** REPRODUCED and fixed: a profession's track whose character no realm row stands for (one
+written under an offline id before INT16's seat) counted as a living Master. A Master is a realm character alive now, as
+the crafting writs read it (`craftWrits.js` ranksOf), alone and in a batch. MEASURED and bounded: the Marks of Mastery's
+clears read visited every hunt row of the account on each mint, wardrobe read and board row (SQLite's steps grew with
+the rows: 5,000 at 1,000 clears, 250,000 at 50,000). It stops at the top title's 750 now (`hunts.js` CLEARS_READ),
+flat past it. NOT CHANGED, named: the hunter's own state read (`huntStateOf`, every two minutes on an open board and each
+clear) counts the character's and the account's rows whole; a counter is a migration this lane was not given.
+
+**F8 and G3: the record's numbers.** `11-Multiplayer/Seats-Arc.md` 4.2's row names migration 0182; the Trophy Hunter's
+cites in the code name `Professions-Arc.md` section 58. **G4**: 12.9's HUNTERS-MARK-II counts; `accountworker.test.js`
+names `crew_signed` and `hunt_clears` beside the tables it pins. **G9**: HUNT_INFLUENCE 25 and HUNT_WEEK_CAP 250 are
+pinned as the record says them.
+
+**G6: a mark's traits, named.** The card read "It is Warded and Flameproof." - a title's words glued into an adjective's
+sentence in every language. It reads "Its traits: Flameproof and Warded." (`hunt.mark.traitsList`), the names listed in
+the reader's language (Intl.ListFormat, as `gambitTableWords.js` lists); `hunt.mark.traits` and `hunt.mark.and` are gone.
+
+Pins: the tests and mutant records above, each named for its finding (`AUDIT-F*`, `AUDIT-G*` in
+`tools/mutants/huntersmark.json`). PIN MOVED: the ceiling's 48 (the law's test), the traits' line (the window's test),
+six records of this slice re-aimed by content; `mail1.test.js`'s D1 harness gained D1's own `batch`. The account service changed (ACCOUNT_VERSION at the merge); the relay
+and the wire did not.

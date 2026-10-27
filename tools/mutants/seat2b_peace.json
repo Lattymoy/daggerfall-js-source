@@ -537,8 +537,8 @@
   {
     "name": "SEAT2b2-host-craft-no-town",
     "file": "src/scenes/world.js",
-    "old": "name: typeof playerEntity?.name === 'string' ? playerEntity.name : null, seat }, profMintCraft);",
-    "new": "name: typeof playerEntity?.name === 'string' ? playerEntity.name : null }, profMintCraft);",
+    "old": "name: typeof playerEntity?.name === 'string' ? playerEntity.name : null, seat, ...more }, profMintCraft);",
+    "new": "name: typeof playerEntity?.name === 'string' ? playerEntity.name : null, ...more }, profMintCraft);",
     "tests": [
       "test/ui/seat2b_peace_client.test.js"
     ]

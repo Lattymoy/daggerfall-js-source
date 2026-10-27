@@ -23,8 +23,8 @@
 // them (their shores 1.5 km, 700 m and 1.1 km off their footprints). A Bay port whose own shore gives no berth is sounded
 // again out to the ring the port law read (`portRingReach`: the pixels within SEA_RING of the town's), once its ground is
 // built - never "no harbour" before it is (an unbuilt pixel reads as land) - and only once a book's life (its scan is some
-// five times the near one's): 36 of the 37 stand a harbour then. Aldbrugh (Shalgora) still sounds none - left open, no
-// port dropped. An isle's port past the Veil sounds its own reach (AUDIT CAPTAIN'S SEA H1) and asks no farther.
+// five times the near one's): 36 of the 37 stand a harbour, and Aldbrugh by the ring's square (ALDBRUGH-QUAY: its sea lies
+// in the corner alone, past the round reach). An isle's port past the Veil sounds its own reach (AUDIT CAPTAIN'S SEA H1).
 //
 // Not a DFU member. Ledger A (QUAYS).
 import { findHarbour, offsetHarbour, HARBOUR_REACH } from './shipLife.js';
@@ -166,12 +166,12 @@ export function createHarbourBook(deps) {
   /** One port's sounding (step's, for each port the host names). */
   function stepOne(near, clock) {
     const own = near.reach ?? HARBOUR_REACH;
-    const sound = (reach = own) => findHarbour({ rect: near.rect, isWater: (x, z, h) => deps.isWater(x, z, h), reach });   // AUDIT CAPTAIN'S SEA H1: an isle port's own reach
+    const sound = (reach = own, square = false) => findHarbour({ rect: near.rect, isWater: (x, z, h) => deps.isWater(x, z, h), reach, square });   // AUDIT CAPTAIN'S SEA H1: an isle port's own reach
     const h = book.get(near.key);
     if (!h) { if (near.ready?.() !== false) book.set(near.key, { key: near.key, name: near.name ?? null, harbour: sound(), at: clock }); }
     else if (!h.harbour && clock - h.at >= HARBOUR_RETRY_S && near.ready?.() !== false) { h.harbour = sound(); h.at = clock; }
     const e = book.get(near.key), far = own === HARBOUR_REACH ? portRingReach(near.rect) : 0;
-    if (e && !e.harbour && !e.far && far > own && near.ready?.(far) !== false) { e.harbour = sound(far); e.far = true; }
+    if (e && !e.harbour && !e.far && far > own && near.ready?.(far) !== false) { e.harbour = sound(far) ?? sound(far, true); e.far = true; }   // ALDBRUGH-QUAY: and its corners where the round reach finds no shore
   }
   /** The world moved (the floating origin): every harbour's berths, approaches and mouth with it, in place. */
   function offsetAll(o) { for (const h of book.values()) offsetHarbour(h.harbour, o); }

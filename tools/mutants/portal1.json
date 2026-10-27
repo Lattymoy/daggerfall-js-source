@@ -581,17 +581,17 @@
   {
     "name": "PORTAL1-a-teller-sells-stones",
     "file": "src/scenes/worldModes.js",
-    "old": "portal: banking || custom ? undefined : portalRow(),",
-    "new": "portal: portalRow(),",
+    "old": "...(banking || custom ? {} : shopRows.of(interiorBuilding?.buildingType)),",
+    "new": "...shopRows.of(interiorBuilding?.buildingType),",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
   },
   {
     "name": "PORTAL1-no-shop-check",
-    "file": "src/scenes/worldModes.js",
-    "old": "const portalRow = () => (mode === 'interior' && isShop(interiorBuilding?.buildingType)",
-    "new": "const portalRow = () => (mode === 'interior'",
+    "file": "src/scenes/shopRows.js",
+    "old": "...(isShop(/** @type {number} */ (buildingType)) ? { portal:",
+    "new": "...(true ? { portal:",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -994,7 +994,7 @@
   },
   {
     "name": "PORTAL-BULK-host-row-unwired",
-    "file": "src/scenes/worldModes.js",
+    "file": "src/scenes/shopRows.js",
     "old": "onBuy: () => portalCounter.ask() }",
     "new": "onBuy: () => {} }",
     "tests": [

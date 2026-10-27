@@ -53,6 +53,7 @@ import { SURVIVAL_TEMPLATES } from '../survival/items.js';   // PROF9: C&C's foo
 import { TEMPLATE as CC, FOOD, registerFoods } from '../survival/food.js';
 import { isOnlinePage } from '../online/onlineLane.js';
 import { BAG_ROW } from '../../net/bagLaw.js';   // BAG1: the Materials Bag (600)
+import { TROPHY_ROW } from '../../net/trophyLaw.js';   // HUNTERS-MARK: the Mounted Trophy (601)
 
 /** The group every new material mints in: DFU's miscellany (UselessItems2), where Foraging's own items sit - not an
  *  ingredient group, so no maker takes one for an ingredient. */
@@ -228,3 +229,8 @@ registerCustomTemplates(DISH_TEMPLATE_ROWS);
  *  stale word - under its own name. */
 export const DISH_FOOD_ROWS = Object.freeze(Object.fromEntries(DISHES.map((d) => [d.templateIndex, Object.freeze({ ...FOOD[DISH_FOODS[d.id]], name: d.name })])));
 registerFoods(DISH_FOOD_ROWS);
+
+// ─── HUNTERS-MARK: THE MOUNTED TROPHY (601; Bounty-Boards.md 12.5, Professions-Arc 58) ───
+/** A named mark's payday and a Trophy Hunter's clean pelt: one plaque template, its beast on the item (net/trophyLaw.js) -
+ *  registered here, so the save and the item law know it in any scene, as the rows above. */
+registerCustomTemplates([TROPHY_ROW]);

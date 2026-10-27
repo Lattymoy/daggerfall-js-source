@@ -98,7 +98,7 @@ const OWN_NONE = Object.freeze([
   'Zagoparia', 'Zagumba-Kom',
 ]);
 
-test('FB1020c HARBOUR-REACH (ARENA2): every one of the 106 port towns but Aldbrugh sounds a harbour with berths through the book on the ground the game builds - 69 at their own reach, 36 more out to the ring; 37 sounded none before, the three crowns\' capitals among them (Aldbrugh: open, its port kept)', { skip: !HAS_ARENA2 && 'ARENA2_PATH not set' }, () => {
+test('FB1020c HARBOUR-REACH (ARENA2): every one of the 106 port towns sounds a harbour with berths through the book on the ground the game builds - 69 at their own reach, 36 more out to the ring, and Aldbrugh in the ring\'s corner (ALDBRUGH-QUAY); 37 sounded none before, the three crowns\' capitals among them', { skip: !HAS_ARENA2 && 'ARENA2_PATH not set' }, () => {
   const t = portTerrain();
   assert.equal(t.towns.length, 106);
   const own = [], none = [];
@@ -109,5 +109,31 @@ test('FB1020c HARBOUR-REACH (ARENA2): every one of the 106 port towns but Aldbru
     if (!book.get(town.name).harbour?.berths?.length) none.push(town.name);
   }
   assert.deepEqual(own.sort(), [...OWN_NONE], 'the field\'s report: 37 harbour towns with no harbour');
-  assert.deepEqual(none, ['Aldbrugh'], 'out to the ring, all but one');
+  assert.deepEqual(none, [], 'out to the ring, every one');   // PIN MOVED (ALDBRUGH-QUAY): Aldbrugh's sea lies in the ring's corner, sounded now
+});
+
+/** ALDBRUGH-QUAY: a town whose sea lies only in the port law's ring's corner - south-east of it, past the round reach. */
+const cornerCoast = (x, z) => x - z > 3300;
+test('ALDBRUGH-QUAY the ring\'s corners: the port law reads a square of pixels (portSites.js seaBears), so a Bay port whose ring\'s round reach finds no shore is sounded out to its square - the corner water found, the berths there; a shore inside the round reach is never sounded to the corners, so no other port\'s harbour moves (mutants: the corners unsounded, the square read round, the corners sounded first)', () => {
+  const reach = portRingReach(TOWN);
+  assert.equal(findHarbour({ rect: TOWN, isWater: cornerCoast, reach }), null, 'round: no shore within reach');
+  const corner = findHarbour({ rect: TOWN, isWater: cornerCoast, reach, square: true });
+  assert.ok(corner?.berths?.length, 'square: the corner\'s berths');
+  for (const b of corner.berths) {
+    const dx = Math.max(TOWN.minX - b.pos[0], 0, b.pos[0] - TOWN.maxX), dz = Math.max(TOWN.minZ - b.pos[1], 0, b.pos[1] - TOWN.maxZ);
+    assert.ok(Math.max(dx, dz) <= reach && Math.hypot(dx, dz) > reach, 'in the corner: inside the square, past the round');
+  }
+  const book = createHarbourBook({ harbourNear: () => ({ ...PORT, ready: () => true, reach: HARBOUR_REACH }), isWater: (x, z) => cornerCoast(x, z) });
+  book.step(0);
+  assert.deepEqual(book.get('port:7').harbour, corner, 'the book sounds the corners');
+  // a shore within the round reach keeps the round reach's harbour, though the square would add the corners' berths:
+  // an inlet off the far sea, four berths in the round reach, six with the corners'
+  const inlet = (x, z) => z < -2000 || (z < -1600 && Math.abs(x) < 80);
+  const both = (x, z) => inlet(x, z) || cornerCoast(x, z);
+  const round = findHarbour({ rect: TOWN, isWater: both, reach });
+  assert.equal(round?.berths?.length, 4, 'the inlet\'s four');
+  assert.equal(findHarbour({ rect: TOWN, isWater: both, reach, square: true })?.berths?.length, 6, 'the square would add the corners\'');
+  const b2 = createHarbourBook({ harbourNear: () => ({ ...PORT, ready: () => true, reach: HARBOUR_REACH }), isWater: (x, z) => both(x, z) });
+  b2.step(0);
+  assert.deepEqual(b2.get('port:7').harbour, round, 'the round reach\'s, unchanged');
 });

@@ -850,6 +850,21 @@ export const workFirstXp = (w) => (!w?.xp ? 0 : firstMakeXp(w.xp, w.id));
 /** A brew's first time's XP (brewAtStation keys it by the potion): Provisioning's first-make share - 0 for one wholly
  *  of the Apothecaries' goods (brewFirstPays). */
 export const brewFirstXp = (potion) => (!potion ? 0 : firstMakeXp('alchemy', potion.id));
+/**
+ * CRAFT-HALL: the first-make keys of `track` a character has spent, from what the service says it made. Keyed as the
+ * service decides: a craft by pattern and grade (firstCraftKey), a mason's work by id, a brew by potion. A first made
+ * from bought cloth counts as spent, as the service counts it. Null when `made` is unknown.
+ * @param {{ crafts?: Iterable<string>, works?: Iterable<string>, brews?: Iterable<string> }|null|undefined} made @param {string} track
+ * @returns {Set<string>|null}
+ */
+export function firstMakesSpent(made, track) {
+  if (!made) return null;
+  const mine = new Set(firstMakesOf(track));
+  const out = new Set();
+  for (const id of made.crafts ?? []) { const k = firstCraftKey(recipeById(id)); if (k && mine.has(k)) out.add(k); }
+  for (const k of [...(made.works ?? []), ...(made.brews ?? [])]) if (mine.has(k)) out.add(k);
+  return out;
+}
 /** The pieces a craft makes: one, a Quartermaster's kit two (3.3); PROF9: a Cook's dish two (3.3: "+1 serving a dish" -
  *  a choice at 50). */
 export const craftCount = (r, spec100, spec50 = null) => ((r.kind === 'kit' && spec100 === 'quartermaster') || (r.kind === 'dish' && spec50 === COOK) ? 2 : 1);

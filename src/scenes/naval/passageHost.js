@@ -162,9 +162,22 @@ export function createPassageHost(deps) {
       // for it soon; a fare to the next port bought a crewed ship to sail where the passenger liked
       const to = deps.journeyTo?.();
       if (to && (to === 'spot' || to.x !== rec.to.px || to.y !== rec.to.py)) { stopJourney(); say(PASSAGE_TEXT.holds(rec.to.name)); idle = 0; first = true; return; }
+      // PASSAGE-QUAY (scenes/naval/passageQuay.js): her port's harbour near with a free berth - the voyage is over, and
+      // her master brings her in to its quay
+      if (deps.naval?.()?.bringIn?.(boat)) { stopJourney(); said = null; say(PASSAGE_TEXT.comesIn(rec.ship, rec.to.name)); }
       idle = 0;
       return;
     }
+    // PASSAGE-QUAY: brought in, no try of his is wanted - made fast, the helm is let go and the gangway named once; her way
+    // in given up (a hull foul of it), said once and the landfall's way sailed on
+    const quay = deps.naval?.()?.berthing?.(boat) ?? null;
+    if (quay === 'fast') { if (said !== 'fast') { said = 'fast'; if (r.isSailing() && r.state?.CurrentBoat === boat) r.StopSailing(); say(PASSAGE_TEXT.madeFast(rec.ship, rec.to.name)); } idle = 0; return; }
+    if (quay === 'in') {   // her crew warp her in at her helm (Come Sail Away moves the boat at it): off it, asked for it once
+      if (!(r.isSailing() && r.state?.CurrentBoat === boat) && said !== 'helm') { said = 'helm'; say(PASSAGE_TEXT.helm(rec.to.name)); }
+      idle = 0;
+      return;
+    }
+    if (quay === 'foul') say(PASSAGE_TEXT.quayFoul);
     idle += Math.max(0, dt);
     if (idle < (first ? PASSAGE_FIRST_S : fails >= PASSAGE_RESUMES ? PASSAGE_RESUME_S * PASSAGE_SLOW : PASSAGE_RESUME_S)) return;
     idle = 0;

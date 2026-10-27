@@ -43,6 +43,10 @@ instructions.
    its own spelling (the quests, the books, the monster names such as Sabretooth Tiger, the mods' setting names),
    and so do code names, save keys and ICU placeholders (`{metres}` stays as the translations have it).
 
+9. Say it once (PLAIN-TEXT, `Home.md`). One job a line, at most 40 words a string and 25 a sentence. Do not repeat
+   what the screen already shows, and do not pad: no "simply", "not just", "seamless", "embark" and the rest of
+   `tools/plainText.mjs` PADDING. Longer help goes on a page or in a fold the player opens.
+
 ## What is left as it was
 
 - The classic game's and Daggerfall Unity's own text: anything found in `vendor/` and anything whose comment cites
