@@ -49,6 +49,7 @@ import { martialAwake, MARTIAL_NUMBERS, MARTIAL_BY_ID, signatureById, martialWor
 import './weaponMastery.js';   // MARTIAL2: the weapons past 100 - registered at import beside the paths, so every host that has one has the other
 import { sigilDueling } from './sigil/sigil.js';
 import { registerEntityFold, registerWeaponBlowMod, newMods, EMPTY_MODS } from './entityMods.js';
+import { blowRoom, guardRoom } from './powerCeiling.js';   // POWER-CEILING: the blow's one product, the guards' one share
 import { registerPlayerDamageMod, registerPlayerHurtListener, registerPlayerBlowEvasion, playerEntity } from '../characters/playerEntity.js';
 import { registerPlayerStrikeListener } from '../combat/formulas.js';
 import { registerPlayerKillListener } from './playerKills.js';
@@ -165,7 +166,7 @@ export function martialBlowPct(attacker, target, info = null) {
 /** THE BLOW (entityMods.js registerWeaponBlowMod): my blow at a foe, the fraction carried. */
 export function martialBlow(weapon, damage, attacker, target, info) {
   if (!(damage > 0) || !attacker?.isPlayer || attacker.peer || !foeOf(target)) return damage;
-  const pct = martialBlowPct(attacker, target, info);
+  const pct = blowRoom(martialBlowPct(attacker, target, info), 'martial');   // POWER-CEILING
   if (!(pct > 0)) return damage;
   const key = weapon ?? attacker;
   const exact = (damage * pct) / 100 + (_carry.get(key) ?? 0);
@@ -223,7 +224,7 @@ export function martialGuardPct(entity) {
 export function martialDamageMod(entity, dmg) {
   const pct = martialGuardPct(entity);
   if (!(pct > 0) || !(dmg > 0)) return dmg;
-  const owed = (dmg * pct) / 100 + _s.guardOwed;
+  const owed = (dmg * guardRoom(pct, 'martial')) / 100 + _s.guardOwed;   // POWER-CEILING
   const cut = Math.floor(owed + 1e-9);
   _s.guardOwed = owed - cut;
   return Math.max(0, dmg - cut);

@@ -47,6 +47,8 @@ const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls)
 const kit = { el, divider: (w) => el('h3', null, w), meter: () => el('div') };
 const LIMIT = (room, prof, crafts) => `${room === 0 ? `No ${prof} experience` : `At most ${room} ${prof} experience`}: ${crafts} are past Journeyman, so the crafter's limit holds ${prof} at rank 50.`;   // PIN MOVED (VOICE2): experience, not XP; no dash aside (the craft-limit lines in the voice)
 const FIRST = (xp, prof) => `${xp} ${prof} experience, and 500 more the first time you make this piece at this grade.`;   // PIN MOVED (VOICE2): experience in a sentence, a crafting tier a grade (Voice.md rule 3)
+// PIN MOVED (CRAFT-HALL): a station read off the real Worker knows what was made, and says the first still to earn
+const OWED = (xp, prof) => `${xp} ${prof} experience, plus a 500 first-time bonus.`;
 
 /** A character on the real Worker, its tracks and Stores written as the service keeps them, and a book reading it. */
 async function standBook(env = {}) {
@@ -101,7 +103,7 @@ function standPage(book, here = {}) {
     return s;
   };
   const press = (title, label, exact = false) => {
-    const b = [...station(title).querySelectorAll('button')].find((x) => (exact ? x.textContent === label : x.textContent.startsWith(label)));
+    const b = [...station(title).querySelectorAll('button')].find((x) => (exact ? x.textContent.replace(/ \u2605$/, '') === label : x.textContent.startsWith(label)));   // PIN MOVED (CRAFT-HALL): a metal with a first-time bonus to earn carries a star
     assert.ok(b, `${title}: ${label}`);
     b.onclick();
   };
@@ -177,13 +179,13 @@ test('CRAFT-LIMIT-SAID THE REPORT, end to end: Smithing 50 one XP short of 51 be
   try {
     again.press('The Anvil', 'Tanto');
     again.press('The Anvil', 'Silver', true);
-    assert.equal(again.box('The Anvil')[1].at(-1), FIRST(60, 'Smithing'));
+    assert.equal(again.box('The Anvil')[1].at(-1), OWED(60, 'Smithing'));
     const r = await book.craft('tanto:silver', { clean: false, name: 'Mac' }, (data) => mintPieces(data));
     assert.equal(r.ok, true, JSON.stringify(r));
     assert.deepEqual([r.data.xp, r.data.first, xpOf('smithing')], [60 + FIRST_CRAFT_XP, true, HELD + 60 + FIRST_CRAFT_XP]);
     assert.equal(words.craftXpText(recipeById('tanto:silver'), r.data, 'Smithing', book.limit?.('smithing') ?? null), '(+560 Smithing experience, with the first-time bonus)');   // PIN MOVED (VOICE2)
   } finally { again.done(); }
-  assert.equal(tabOf(book, 'smithing').xp, '26,569 / 27,040 XP', 'past 51 now: the next rank\'s line');
+  assert.equal(tabOf(book, 'smithing').xp, '26,569 / 27,040 XP · 471 XP to rank 52', 'past 51 now: the next rank\'s line');   // PIN MOVED (CRAFT-HALL): what is left said
 });
 
 // ─── ONE LAW ─────────────────────────────────────────────────────────
@@ -244,9 +246,9 @@ test('CRAFT-LIMIT-SAID the Firmament\'s hand: a tree to Anvil\'s Song in force, 
     page.press('The Anvil', 'Dagger');
     page.press('The Anvil', 'Silver', true);
     assert.ok(xp > 60, `the percent moves it (${pct}%)`);
-    assert.equal(page.box('The Anvil')[1].at(-1), FIRST(xp, 'Smithing'));
+    assert.equal(page.box('The Anvil')[1].at(-1), OWED(xp, 'Smithing'));
     page.press('The Jeweler\'s Bench', 'Silver Ring');   // PIN MOVED (VOICE2): American spelling (Voice.md rule 8)
-    assert.equal(page.box('The Jeweler\'s Bench')[1].at(-1), FIRST(scaleXp(craftXp(1, 30), pct), 'Smithing'), 'a Ring is Smithing\'s, its percent the craft\'s');
+    assert.equal(page.box('The Jeweler\'s Bench')[1].at(-1), OWED(scaleXp(craftXp(1, 30), pct), 'Smithing'), 'a Ring is Smithing\'s, its percent the craft\'s');
     assert.match(page.text('Temper at the Anvil'), new RegExp(`Steel Longsword.*Standard to Fine - 2 ingot:steel, \\+${temper} Smithing XP`));
     const r = await book.craft('dagger:silver', { clean: false, name: 'Mac' }, (data) => mintPieces(data));
     assert.equal(r.ok, true, JSON.stringify(r));
@@ -410,7 +412,7 @@ test('CRAFT-LIMIT-SAID the tab before the choice and the top: none past - the ru
   track('smithing', xpForRank(40));
   assert.equal((await book.refresh()).ok, true);
   assert.deepEqual(tabOf(book, 'smithing'), {
-    xp: '16,000 / 16,810 XP',
+    xp: '16,000 / 16,810 XP · 810 XP to rank 41',   // PIN MOVED (CRAFT-HALL): the bar's line says what is left to the next rank
     limit: 'Crafts above Journeyman: 0 of 2',
     rule: 'Only 2 crafts can rise past Journeyman. Once 2 of yours pass rank 50, the others stop there. A craft never loses rank.',
   });
@@ -418,7 +420,7 @@ test('CRAFT-LIMIT-SAID the tab before the choice and the top: none past - the ru
   track('enchanting', xpForRank(51));
   track('mining', xpForRank(51) - 1);
   assert.equal((await book.refresh({ force: true })).ok, true);
-  assert.equal(tabOf(book, 'mining').xp, '26,009 / 26,010 XP', 'Gathering is unlimited (3.2): never the ceiling\'s line');
+  assert.equal(tabOf(book, 'mining').xp, '26,009 / 26,010 XP · 1 XP to rank 51', 'Gathering is unlimited (3.2): never the ceiling\'s line');   // PIN MOVED (CRAFT-HALL): what is left said
   assert.deepEqual(book.limit?.('mining'), { cap: PROF_XP_MAX, room: PROF_XP_MAX - HELD, by: [], rank: 100 });
   assert.deepEqual(book.limit?.('jewelcrafting'), { cap: HELD, room: HELD - xpForRank(40), by: ['building', 'enchanting'], rank: 50 }, 'a discipline its craft\'s');
   // a Master: the service's MIN(earned, PROF_XP_MAX - held) is none
@@ -467,8 +469,9 @@ test('AUDIT FB1018f L5-3 the tab: a third craft below the rank it is held at kee
     return [pages.xpLine(book.track('smithing'), book.limit('smithing')), tabOf(book, 'smithing').xp];
   };
   const HELD_AT = (xp, cap, rank) => `${xp} / ${cap} XP - the crafter's limit holds it at rank ${rank}`;
-  assert.deepEqual(await at(xpForRank(10) + 5), ['1,005 / 1,210 XP', '1,005 / 1,210 XP'], 'rank 10: its 11\'s figure');
-  assert.deepEqual(await at(xpForRank(49) + 9), ['24,019 / 25,000 XP', '24,019 / 25,000 XP'], 'rank 49: its 50 is still to reach');
+  // PIN MOVED (CRAFT-HALL): the tab's line says what is left to the next rank, and nothing where the limit holds it
+  assert.deepEqual(await at(xpForRank(10) + 5), ['1,005 / 1,210 XP', '1,005 / 1,210 XP · 205 XP to rank 11'], 'rank 10: its 11\'s figure');
+  assert.deepEqual(await at(xpForRank(49) + 9), ['24,019 / 25,000 XP', '24,019 / 25,000 XP · 981 XP to rank 50'], 'rank 49: its 50 is still to reach');
   assert.deepEqual(await at(xpForRank(50) + 500), Array(2).fill(HELD_AT('25,500', '26,009', 50)), 'rank 50, room left: 51 is past its ceiling');
   assert.deepEqual(await at(HELD), Array(2).fill(HELD_AT('26,009', '26,009', 50)), 'at the ceiling');
   assert.deepEqual(await at(xpForRank(60)), Array(2).fill(HELD_AT('36,000', '36,000', 60)), 'past its cap: never "36,000 / 26,009 XP - ... at rank 50"');
@@ -519,7 +522,7 @@ test('AUDIT FB1018f L5-7 the rooms between an act\'s own XP and its first\'s 500
       assert.equal(page.box('The Fire')[1].at(-1), LIMIT(room, 'Provisioning', SO), `the fire at room ${room}`);
       page.press('The Alchemy Station', 'Healing');
       if (room < 5 + 3155) assert.match(page.box('The Alchemy Station')[1].join('|'), new RegExp(`At most ${room} Provisioning experience`), 'Healing\'s first pays');   // PIN MOVED (VOICE2): experience, not XP; no dash aside (the craft-limit lines in the voice)
-      else assert.match(page.box('The Alchemy Station')[1].join('|'), /5 Provisioning experience, and 3,155 the first time/);   // PIN MOVED (VOICE2); PIN MOVED (FIRST-BUDGET)
+      else assert.match(page.box('The Alchemy Station')[1].join('|'), /5 Provisioning experience, plus a 3,155 first-time bonus/);   // PIN MOVED (VOICE2); PIN MOVED (FIRST-BUDGET); PIN MOVED (CRAFT-HALL): still to earn, as the Worker says
       assert.ok(page.notes('The Mason\'s Bench').includes(LIMIT(works, 'Building', SO)), page.notes('The Mason\'s Bench').join('|'));
     } finally { page.done(); }
   }
@@ -557,7 +560,7 @@ test('AUDIT FB1018f L5-6 the Firmament\'s hand at the fire, the alchemy station 
       page.press('The Fire', 'Hunter\'s Stew');
       assert.match(page.box('The Fire')[1].join('|'), new RegExp(`half as much again as its ${scaleXp(cookXp(30), pP)} Provisioning experience`));   // PIN MOVED (VOICE2)
       page.press('The Alchemy Station', 'Healing');
-      assert.match(page.box('The Alchemy Station')[1].join('|'), new RegExp(`${brew} Provisioning experience, and 3,155 the first time`));   // PIN MOVED (VOICE2); PIN MOVED (FIRST-BUDGET): Provisioning's share
+      assert.match(page.box('The Alchemy Station')[1].join('|'), new RegExp(`${brew} Provisioning experience, plus a 3,155 first-time bonus`));   // PIN MOVED (CRAFT-HALL): still to earn   // PIN MOVED (VOICE2); PIN MOVED (FIRST-BUDGET): Provisioning's share
       assert.match(page.text('The Enchanting Station'), new RegExp(`\\+${scaleXp(disenchantXp(ring, 30, 21), pE)} Enchanting experience`));   // PIN MOVED (VOICE2)
     } finally { page.done(); }
     const dish = await A.book.craft('stew:north', { clean: true, name: 'Mac' }, (d) => mintPieces(d));

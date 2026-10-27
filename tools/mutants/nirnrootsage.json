@@ -182,8 +182,8 @@
   {
     "name": "NIRNROOT-SAGE-title-not-in-vocabulary",
     "file": "src/net/identityToken.js",
-    "old": "'skyfarer', 'nirnrootsage']);",
-    "new": "'skyfarer']);",
+    "old": "'skyfarer', 'nirnrootsage', 'bloodhound'",
+    "new": "'skyfarer', 'bloodhound'",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
@@ -212,7 +212,7 @@
   {
     "name": "NIRNROOT-SAGE-relay-unmoved",
     "file": "src/net/wire.js",
-    "old": "export const RELAY_VERSION = 'world272';",
+    "old": "export const RELAY_VERSION = 'world273';",
     "new": "export const RELAY_VERSION = 'world267';",
     "tests": [
       "test/net/nirnrootsage.test.js"

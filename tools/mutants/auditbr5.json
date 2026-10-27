@@ -184,8 +184,8 @@
   {
     "name": "AUDITBR5-the-potion-maker-named",
     "file": "src/ui/professions/profPages.js",
-    "old": "A potion maker anywhere else, such as a temple\\'s, still works",
-    "new": "Daggerfall\\'s own potion maker still works",
+    "old": "Elsewhere, a potion maker earns no",
+    "new": "Elsewhere, Daggerfall\\'s own potion maker earns no",
     "tests": [
       "test/ui/brand.test.js"
     ],

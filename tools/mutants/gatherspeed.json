@@ -52,8 +52,8 @@
  {
   "name": "GATHER-SPEED-state-apart",
   "file": "server-account/src/professions.js",
-  "old": "  const [rows, stores, taken, carriedRows, today, writs, hunt, hauls, silverRows] = await readAll(db, [",
-  "new": "  const [rows, stores, taken, carriedRows, today, writs, hunt, hauls, silverRows] = await ((sts) => Promise.all(sts.map(async (st) => (await st.all()).results ?? [])))([",
+  "old": "  const [rows, stores, taken, carriedRows, today, writs, hunt, hauls, silverRows, made, master] = await readAll(db, [",
+  "new": "  const [rows, stores, taken, carriedRows, today, writs, hunt, hauls, silverRows, made, master] = await ((sts) => Promise.all(sts.map(async (st) => (await st.all()).results ?? [])))([",
   "tests": [
    "test/net/gatherspeed.test.js"
   ],

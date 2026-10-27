@@ -1247,8 +1247,8 @@
   {
     "name": "PROF10-pages-no-jewel-cold-line",
     "file": "src/ui/professions/profPages.js",
-    "old": "Jewelcrafting is done online, from your Stores page.';   // PROF10",
-    "new": "Smelting is done online, from your Stores page.';   // PROF10",
+    "old": "Jewelcrafting is done online, from your Crafting page.';   // PROF10",
+    "new": "Smelting is done online, from your Crafting page.';   // PROF10",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]

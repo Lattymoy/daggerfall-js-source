@@ -182,8 +182,8 @@
   {
     "name": "CARP-YARD-the-landing-lost",
     "file": "src/scenes/world.js",
-    "old": "    focusStoresStation('workbench');\n    hudCtx.togglePause({ at: 'stores' });",
-    "new": "    hudCtx.togglePause({ at: 'stores' });",
+    "old": "    hudCtx.togglePause({ at: stationDoorAt('workbench') });",
+    "new": "    hudCtx.togglePause({ at: 'crafting' });",
     "tests": [
       "test/systems/carpyard1.test.js"
     ]

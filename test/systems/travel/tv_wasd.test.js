@@ -11,7 +11,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { travelWalkRate, TRAVEL_VIEW_TEXT, TV_MOVE_ACTIONS } from '../../../src/scenes/travelView.js';
-import { createLoadGovernor, unbuiltAround, unbuiltCount, TV_GOV_HOLD_S } from '../../../src/systems/travel/travelGovernor.js';
+import { createLoadGovernor, travellerPace, unbuiltAround, unbuiltCount, TV_GOV_HOLD_S } from '../../../src/systems/travel/travelGovernor.js';
 import { timeScale, setTimeScale, resetTimeScale, MAX_TIME_SCALE, TRAVEL_ROAD_RATE, TRAVEL_OPEN_RATE } from '../../../src/systems/timeScale.js';
 import { foePaced, foeRate } from '../../../src/systems/travel/travelThreat.js';   // RATE-LAW: ENEMY-PACE's fixed floor, which the governor calls
 import { travelDriveForward } from '../../../src/systems/travel/travelAutopilot.js';
@@ -71,7 +71,7 @@ function rig({ onRoad = false } = {}) {
     csaBoatUnderMe: () => w.boat, gamePaused: () => w.paused,
     setWorldTimeScale: setTimeScale, worldTimeScale: timeScale, resetTimeScale,
     travelAsked: 20, csaHoldsTimeScale: () => false,
-    travelGovernor: createLoadGovernor({ max: MAX_TIME_SCALE }),
+    travellerPace, travelGovernor: createLoadGovernor({ max: MAX_TIME_SCALE }),
     // PIN MOVED (LOAD-OWED, test/systems/travel/ow_loadowed.test.js): the count asks the stream's own books - every pixel of this grid is
     // on them (`loaded`), so the rig's `unbuilt` are owed, as a stream still building them owes them
     // OW-LEAD: the feet in the middle of pixel (100, 200), native (streamingWorld.js worldCoordToMapPixel's law)

@@ -222,6 +222,7 @@ import { GATE_COURTS_MAX } from './gate/gateCourts.js';   // GATE-COURTS: a cour
 import { validGateMods, GATE_FEEDS_MAX, validGatePortents } from './gate/gateMods.js';   // WB8b: the Warden's marks on a gate's state - gateMods.js imports nothing, so the worker's graph stays flat
 import { egStampOk } from './eliteGates/egShape.js';   // EG-FULL: a Spire blow's FULL shape stamp, checked as the wire carries it - egShape.js imports nothing, so the worker's graph stays flat
 import { KT_WATCH_WAVES } from './ketch/ketchLaw.js';   // AUDIT KETCH II L2-2: the Watch's waves, one number for the `wave` and the `st` words (the `st`'s stood at three) - ketchLaw.js imports instanceRoom.js alone, which the relay walks already
+import { validWireAppearance } from './appearanceLaw.js';   // APPEARANCES: a worn piece's look on a look's item - appearanceLaw.js imports systems/armorMaterials.js alone, a leaf, so the worker's graph stays flat
 export { validRollSpec, validRoll, rollDice, ROLL_DICE_MAX, ROLL_SIDES_MAX, ROLL_MOD_MAX };
 export { validHoldemIn, validHoldemOut };
 export { validIliacIn, validIliacOut };
@@ -1189,6 +1190,19 @@ export const CELL_HELLO_LAW = 1;
 export const CELL_HELLO_LAW_WIRE_MAX = 65535;
 /** The cell door's close reason (a WebSocket close's reason is at most 123 bytes). */
 export const CELL_OLD_REASON = 'old cells';
+/** LOOT-DOOR (AUDIT HORIZONTAL B7; bible/06-Systems/Professions-Arc.md 57.8): THE LOOT THIS BUILD READS, by number - 1: a
+ *  Master's work and a Mounted Trophy. An older law drops a piece it cannot read, so an older build in a room's seat said
+ *  a container without it, and every peer landed that. A loot room's hello says it (`ll`); while `lootDoor` is on
+ *  (net/relayCfg.js) the relay refuses a hello there that says less or none (LOOT_OLD_REASON). It moves, and RELAY_VERSION
+ *  with it, when the item law takes a piece an older law refuses. */
+export const LOOT_HELLO_LAW = 1;
+/** The most `ll` a hello may say - a later build's number, read; past it, read as none. */
+export const LOOT_HELLO_LAW_WIRE_MAX = 65535;
+/** LOOT-DOOR: the rooms whose words carry a shared list - a world room's acts (a container) and a cell's or a world
+ *  room's foes and hits (a body's pile); the relay routes those frames in no other room. */
+export const lootRoom = (key) => streamsFoes(key);
+/** LOOT-DOOR: the refusal's close reason (a WebSocket close's reason is at most 123 bytes); the words are GROUND-GATE's. */
+export const LOOT_OLD_REASON = 'old loot';
 /** SCALE5d (2026-10-11, Mac's decision 3 - a full city overflows into a layer rather than refusing `room full`;
  *  bible/11-Multiplayer/Scale-Arc.md SCALE5d): A CROWDED PLACE OVERFLOWS INTO LAYERS - copies of the same place, each
  *  an object of its own, whose players do not see each other. A room is still its KEY everywhere (every law that reads
@@ -1432,6 +1446,22 @@ export function validFoeRecord(r) {
     }
     out.lw = lw;
   }
+  // APPEARANCES-II (bible/04-Characters/Wardrobe.md section 6): `la` the looks the kit's pieces wear - [its index in `lw`,
+  // t, m, v], each piece once, in order - and only beside `lw`. A look kept is one there is and of its piece's kind (net/
+  // appearanceLaw.js validWireAppearance, validLookItem's law); any other is dropped and its piece stands in its own
+  if (r.la !== undefined) {
+    if (!out.lw || !Array.isArray(r.la) || r.la.length > out.lw.length) return null;
+    const la = [];
+    let last = -1;
+    for (const it of r.la) {
+      if (!Array.isArray(it) || it.length !== 4 || !it.every(Number.isInteger) || it[0] <= last || it[0] >= out.lw.length) return null;
+      last = it[0];
+      const piece = out.lw[it[0]];
+      const ap = validWireAppearance({ templateIndex: piece[2], group: LOOK_GROUPS[piece[1]] }, it.slice(1));
+      if (ap) la.push([it[0], ...ap]);
+    }
+    if (la.length) out.la = la;
+  }
   // TELL8 (bible/12-Enhanced-AI/Feud-Arc.md 10.1): THE WIND-UP - `wk` its shape (0-6, ai/puppetBlows.js WIRE_KINDS) +8
   // iron +16 a feint (AUDIT TELL O2: +32 its landing, said after it; FEUD WIRE: +64 a revenant's signature), `wy` its yaw, `wl` ms to its landing
   // (0..FOE_WINDUP_MS - relative, each client's own clock), `wo` its origin (bounded as `f`), `wn` its serial (0-255),
@@ -1649,7 +1679,8 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
 // Integrated Arena spectator visibility with staff teleport, stable boat identity and private ownership; deploy relay before clients.
-export const RELAY_VERSION = 'world272';   // world272: FIELD BUGS 2026-10-26r (RPT1026, the private reports of 10-18 to 10-26; world270, then world271, on its branch, renumbered past CHAT-POST's world270 and MASTER-THREE's world271 at the merges; bible/01-Overview/bugs/Field-Bugs-2026-10-26r.md; NOT YET DEPLOYED): RETIRED-BLOW (a blow from a fighter whose share was retired brings the share back at the boss's fraction first - the Remnant, its Echoes and Hearts, the gate's Warden, the Tonal Warden and its forks - and a Hour or Ketch blow from a pose past SD_POSE_FRESH_MS is dropped), BLOCK STAMP (the trade and page frames carry the sender's account, `sub`, through Room _directedFrame), ORRERY-HANDS (a stone's last turner named, the wrong turner held for the Hollow), and PROGRESS's masterSkills.js in the bundle; the trade and page frames the relay routes gain the sender's `sub`, which an older client ignores (AUDIT RPT1026 M7); and AUDIT RPT1026 I1 (sdBrain.js orreryWaited): a turner refused behind turners all over the Orrery's limit has the snap free it; and AUDIT RPT1026 F1 (masterSkills.js): the switch off notes the tough-foe practice it gives back on
+export const RELAY_VERSION = 'world273';   // world273: APPEARANCES and HUNTERS-MARK, one release (2026-10-27; bible/04-Characters/Wardrobe.md section 6, bible/06-Systems/Bounty-Boards.md section 12; NOT YET DEPLOYED - world270, world271, then world272, on the branch, renumbered past main's CHAT-POST world270, MASTER-THREE world271 and FIELD BUGS 2026-10-26r world272 at the merges): a look item may carry `ap` - [t, m, v], the look a worn piece wears - kept only when it is a look there is and of the same kind as the piece (validLookItem, through net/appearanceLaw.js validWireAppearance); appearanceLaw.js and systems/armorMaterials.js join the bundle. Either side may deploy first: a relay before it drops `ap`, and the piece is seen in its own look; and net/identityToken.js's TITLES gains the hunt's four, the ten Marks of Mastery and the sea's two, last - the relay reads a token's title as every badge; the bundle's files unchanged; and APPEARANCES-II's sworn revenant's kit carries its look (validFoeRecord's `la`, each of its piece's kind - an older relay drops it and the piece is drawn in its own); and AUDIT HORIZONTAL B7's LOOT-DOOR: a loot room's hello (a world room or a cell - lootRoom) says the loot its build reads (`ll`, LOOT_HELLO_LAW), and while the setting `lootDoor` is on (net/relayCfg.js - off unset, and off until the site serves this build, since the relay deploys first) a hello there that says less or none is refused (LOOT_OLD_REASON, GROUND-GATE's words)
+// world272: FIELD BUGS 2026-10-26r (RPT1026, the private reports of 10-18 to 10-26; world270, then world271, on its branch, renumbered past CHAT-POST's world270 and MASTER-THREE's world271 at the merges; bible/01-Overview/bugs/Field-Bugs-2026-10-26r.md; NOT YET DEPLOYED): RETIRED-BLOW (a blow from a fighter whose share was retired brings the share back at the boss's fraction first - the Remnant, its Echoes and Hearts, the gate's Warden, the Tonal Warden and its forks - and a Hour or Ketch blow from a pose past SD_POSE_FRESH_MS is dropped), BLOCK STAMP (the trade and page frames carry the sender's account, `sub`, through Room _directedFrame), ORRERY-HANDS (a stone's last turner named, the wrong turner held for the Hollow), and PROGRESS's masterSkills.js in the bundle; the trade and page frames the relay routes gain the sender's `sub`, which an older client ignores (AUDIT RPT1026 M7); and AUDIT RPT1026 I1 (sdBrain.js orreryWaited): a turner refused behind turners all over the Orrery's limit has the snap free it; and AUDIT RPT1026 F1 (masterSkills.js): the switch off notes the tough-foe practice it gives back on
 // world271: MASTER-THREE (FIELD BUGS 2026-10-26d, world269, then world270, on its branch, renumbered past BOW-TOPS' world269 and CHAT-POST's world270 at the merges; Discord #feature-feedback "Let us master all three primary skills"; bible/01-Overview/bugs/Field-Bugs-2026-10-26d.md; NOT YET DEPLOYED) - systems/masterSkills.js, which the bundle reaches, holds MASTERY_SLOTS 3/2/1 (it was 2/2/1) and its boxes' words say 3; no relay code reads the slots, so nothing the relay does moved, but the bytes it ships did.
 // world270: CHAT-POST (2026-10-27; bible/06-Systems/Online-Arc.md CHAT-POST; NOT YET DEPLOYED): a chat frame may carry linked item records (`items`, and a legacy `item`) beside the words - the relay fans them with the line
 // world269: BOW-TOPS (2026-10-26; bible/05-Combat/Balance-Arc.md section 18 BAL-ARCHERY, BOW-TOPS; NOT YET DEPLOYED): the arena's and the siege's weapon tops take BAL-ARCHERY's bows - a Short Bow 17, a Long Bow 19 (net/arena/arenaLaw.js ARENA_WEAPON_MAX, net/siege/siegeRef.js SIEGE_WEAPON_MAX) - so neither referee caps a bow's top blow one short of the game's; nothing else in the law moved
@@ -2147,7 +2178,7 @@ const rideOf = (rd, rv, hs, rc) => {
   return r ? { rd: r, rv: uint(rv, POSE_RIDE_SPRITES - 1) ?? 0, ...(uint(hs, 1) ? { hs: 1 } : {}), ...(c ? { rc: c } : {}) } : {};   // AUDIT DISC7 B8: uint's law, as rd and rv
 };
 
-/** One equipped item as the look carries it - the six fields, clamped, and a weapon's glow - or null. */
+/** One equipped item as the look carries it - the six fields, clamped, a weapon's glow and a look worn over it - or null. */
 export function validLookItem(it) {
   if (!it || typeof it !== 'object') return null;
   const templateIndex = uint(it.templateIndex, 65535), equipSlot = uint(it.equipSlot, 1e6);
@@ -2155,6 +2186,8 @@ export function validLookItem(it) {
   const out = { templateIndex, group: it.group, equipSlot };
   for (const k of ['material', 'dye', 'variant']) { const v = uint(it[k], 4095); if (v != null) out[k] = v; }
   if (lookGlowOk({ ...out, glow: it.glow })) out.glow = it.glow;   // WEAPON-GLOW1: a weapon's in a hand, read off the clamped slot
+  const ap = validWireAppearance(out, it.ap);   // APPEARANCES (bible/04-Characters/Wardrobe.md): the look it is drawn in, a look of its kind - OMITTED when none, `class`'s law; a relay before this one drops it, and the piece is seen in its own
+  if (ap) out.ap = ap;
   return out;
 }
 
@@ -2523,6 +2556,7 @@ export function parseClient(text, { hasHello = false } = {}) {
     if (Number.isSafeInteger(m.gl) && m.gl >= 1 && m.gl <= GROUND_LAW_WIRE_MAX) hello.gl = m.gl;
     if (Number.isSafeInteger(m.gv) && m.gv >= 1 && m.gv <= GRANT_HELLO_LAW_WIRE_MAX) hello.gv = m.gv;   // GRANT-DOOR: the grants this build stands on - read as GROUND-GATE's `gl` is
     if (Number.isSafeInteger(m.cv) && m.cv >= 1 && m.cv <= CELL_HELLO_LAW_WIRE_MAX) hello.cv = m.cv;   // COST-2 part two: the cell law this build stands on - read as GROUND-GATE's `gl` is
+    if (Number.isSafeInteger(m.ll) && m.ll >= 1 && m.ll <= LOOT_HELLO_LAW_WIRE_MAX) hello.ll = m.ll;   // LOOT-DOOR (AUDIT HORIZONTAL B7): the loot this build reads - read as GROUND-GATE's `gl` is
     if (m.ls === 1) hello.ls = 1;   // LEASE1: this build hands its hub's lease to the room (net/roomLease.js) - 1 or nothing, the `w2` law
     if (m.sm === 1) hello.sm = 1;   // STAFF-PANEL5-MESSAGE: this build shows a staff message's box (net/staffMessages.js) - 1 or nothing, the `w2` law: a hub socket without it is "old game, not shown"
     if (m.fv === 1) hello.fv = 1;   // STAFF-PANEL5-FREEZE: this build shows the freeze screen (net/staffChat.js) - 1 or nothing; a frozen account's socket from a build without it is closed with the reload words

@@ -395,7 +395,7 @@ import { decorPieceOf, decorSaleBack, DECOR_STATION_SERVICES, DECOR_STATION_NAME
 import { noteDecorGrants, decorMayStorage, decorMayStation, decorIsShared, decorStationShut, bindDecorHouseFrom, openSharedChest, openDecorChest, openOwnChest } from '../systems/decor/decorGrants.js';   // DECOR-ACCESS
 import { openHomeTransfer, answerHomeTransfer } from '../ui/homeTransferWindow.js';
 import { VENDOR_STATION, VENDOR_COLD_LINE } from '../net/vendorLaw.js';   // HOME-VENDOR: a trader, and its word where none can trade
-import { forgeOffered, PROF_STATIONS, stationColdLine, enchantGoldPct, STORES_ACT_STATIONS, focusStoresStation } from '../ui/professions/profPages.js';   // AUDIT 29 B2: a Forge worked only where the Stores page is; PROF4: a Workbench
+import { forgeOffered, PROF_STATIONS, stationColdLine, enchantGoldPct, STORES_ACT_STATIONS, stationDoorAt, stationActLabel } from '../ui/professions/profPages.js';   // AUDIT 29 B2: a Forge worked only where the Stores page is; PROF4: a Workbench
 import { FORGE_FEE, WORKBENCH_FEE, LOOM_FEE, MASON_FEE, COOK_FIRE, JEWEL_FEE, ALCHEMY_FEE, ENCHANT_FEE } from '../net/professionLaw.js';   // PROF2: a smith's forge's use fee; PROF4: a furnisher's workbench's; PROF7: a tailor's loom's; PROF11: a General Store's mason's bench's; PROF10: a Pawn Shop's or a Gem Store's jeweller's bench's
 /** HOME-STATIONS: a station pressed whose maker's art has not landed yet. */
 const DECOR_STATION_NOT_READY = 'The station is not ready yet. Try again in a moment.';
@@ -443,7 +443,7 @@ import { setPassiveSpecialsHost, FIGHTER_TRAINERS_FACTION } from '../systems/pas
 import { DaedraSummonedWindow, REFUSAL_FOE_COUNT, COVEN_FAIL_FOE_COUNT } from '../ui/daedraSummonedWindow.js';   // G7b: the summoning's own film window
 import { orderOf } from '../systems/guild/guildVariants.js';
 import { joinedGuildOfGroup } from '../systems/guild/guilds.js';
-import { GUILD_GROUPS } from '../formats/factionFile.js'; import { lootRarityOn } from '../systems/loot/lootRarity.js'; import { reforgePiece, salvagePiece, honePiece, setGemPiece, unsetGemPiece, extractGemPiece } from '../systems/reforge.js'; import { PORTAL_TEXT } from '../systems/portalStone.js'; import { createPortalCounter } from './portalCounter.js'; import { createReforgeOverlay } from '../ui/reforgeDoor.js'; import { imprintPiece } from '../systems/loot/lootCodex.js';   // LOOT9: the Mages Guild's Reforge; LOOT10: its imprint
+import { GUILD_GROUPS } from '../formats/factionFile.js'; import { lootRarityOn } from '../systems/loot/lootRarity.js'; import { reforgePiece, salvagePiece, honePiece, setGemPiece, unsetGemPiece, extractGemPiece } from '../systems/reforge.js'; import { createShopRows } from './shopRows.js'; import { createReforgeOverlay } from '../ui/reforgeDoor.js'; import { imprintPiece } from '../systems/loot/lootCodex.js';   // LOOT9: the Mages Guild's Reforge; LOOT10: its imprint
 import { liftCurse } from '../systems/loot/lootCurse.js';   // LOOT16: the temple's lifting
 import { setJunk } from '../systems/item/itemJunk.js';   // AUDIT LOOT II C5: a sold piece's mark ends at the shelf
 import { scryPlace } from '../systems/loot/lootScry.js';   // LOOT19: the guild's scryers
@@ -4477,7 +4477,7 @@ export function createWorldModes(host) {
           onRepair: () => openRepairService({}),
           onTalk: () => openStaticNpc(pn, { forceTalk: true }),
           onSell: () => openMerchantSell(),
-          portal: portalRow(),   // PORTAL1: the Portal Stone's row, for shards
+          ...shopRows.of(interiorBuilding?.buildingType),   // PORTAL1: the Portal Stone's row, for shards; APPEARANCES: an Armorer's or a Weaponsmith's Wardrobe (scenes/shopRows.js)
           // The U24 identity guard: a window that dispatches to another
           // must not be nulled by its OWN onClose.
           onClose: () => { if (interiorOverlay === win) interiorOverlay = null; },
@@ -4516,7 +4516,7 @@ export function createWorldModes(host) {
         label: custom ? getCustomMerchantServiceLabel(pn.factionID) : undefined,
         onTalk: () => openStaticNpc(pn, { forceTalk: true }),
         onService: () => { if (custom) openCustomMerchantService(custom); else if (banking) openBank(); else openMerchantSell(); },
-        portal: banking || custom ? undefined : portalRow(),   // PORTAL1: a shop's keeper sells the Portal Stone for shards - a teller and a mod's service never
+        ...(banking || custom ? {} : shopRows.of(interiorBuilding?.buildingType)),   // PORTAL1: a shop's keeper sells the Portal Stone for shards - a teller and a mod's service never; APPEARANCES: and a Clothing Store's its Wardrobe (scenes/shopRows.js)
         // AUDIT PORTAL1 C1: the U24 identity guard the repair popup's has - a popup that dispatches (the Portal Stone's
         // question pushed over it) is out of the slot, not left in it done under the box the question is. The popup is
         // the one holding THESE hooks: both skins keep them as `hooks` and call onClose on them
@@ -5067,7 +5067,7 @@ export function createWorldModes(host) {
   function activateDecor(id) {
     const piece = interiorDecor.pieceOf(id);
     if (piece?.station === VENDOR_STATION) { openHomeVendor(piece, id); return; }   // HOME-VENDOR: anyone may trade with it
-    if (useDecorPiece(piece, interiorCamps, getInteractionMode, restFromInteriorBed, () => forgeOffered() && (focusStoresStation('fire'), interiorKeyCtx.togglePause({ at: 'stores' }), true))) return;   // DECOR-USE (systems/decor/decorUse.js): a placed fire or the cooking station opens what a brazier opens (a fire is nobody's), a placed bed is slept in as the room's own are (the rest window says who may)
+    if (useDecorPiece(piece, interiorCamps, getInteractionMode, restFromInteriorBed, () => forgeOffered() && (interiorKeyCtx.togglePause({ at: stationDoorAt('fire') }), true))) return;   // DECOR-USE (systems/decor/decorUse.js): a placed fire or the cooking station opens what a brazier opens (a fire is nobody's), a placed bed is slept in as the room's own are (the rest window says who may)
     if (piece?.station) { useDecorStation(piece); return; }   // HOME-STATIONS
     if (piece?.storage && caravanGuestHere()) { say(homeBelongsLine({ owner: privateVisitOwner })); return; }   // WAGONS2-VISIT: a caravan's storage is its owner's, as a home's cupboards are - shut to its visitor, in its owner's name
     if (isHallBoard(piece)) { openHallBoard(); return; }   // GUILD1e: the board in a guild's hall
@@ -5105,7 +5105,7 @@ export function createWorldModes(host) {
     // PROF2 (bible/06-Systems/Professions-Arc.md 23): a forge is no guild's maker - it opens the Stores' own forge, where
     // the player's smelting is done; where the Stores page is not (offline, the switch shut, the classic skin) it says
     // so (AUDIT 29 B2 - it landed on the Character page without a word)
-    if (PROF_STATIONS.includes(piece.station)) { if (forgeOffered()) interiorKeyCtx.togglePause({ at: 'stores' }); else say(stationColdLine(piece.station)); return; }   // PROF4: the workbench too; PROF7: the loom; PROF11: the mason's bench
+    if (PROF_STATIONS.includes(piece.station)) { if (forgeOffered()) interiorKeyCtx.togglePause({ at: stationDoorAt(piece.station) }); else say(stationColdLine(piece.station)); return; }   // PROF4: the workbench too; PROF7: the loom; PROF11: the mason's bench
     // STATION-DOOR (bible/01-Overview/bugs/Field-Bugs-2026-10-11f.md): an alchemy or enchanting station is Daggerfall's maker
     // AND its profession's act, which is the Stores page's (the brew, Disenchanting) - online the press offers both; the
     // maker alone where the page is not
@@ -5133,7 +5133,7 @@ export function createWorldModes(host) {
       lines: [DECOR_STATION_NAMES[kind]],
       options: [
         { code: 'Digit1', label: `1 - ${SERVICE_LABEL[maker]}`, action: () => { leave(); openStationMaker(piece); } },
-        { code: 'Digit2', label: `2 - ${STORES_ACT_STATIONS[kind]} (Stores page)`, action: () => { leave(); focusStoresStation(kind); interiorKeyCtx.togglePause({ at: 'stores' }); } },
+        { code: 'Digit2', label: stationActLabel(kind), action: () => { leave(); interiorKeyCtx.togglePause({ at: stationDoorAt(kind) }); } },   // AUDIT HORIZONTAL A7: in the player's language
         { code: 'Escape', label: 'Esc - close', action: () => {} },
       ],
     });
@@ -6222,14 +6222,11 @@ export function createWorldModes(host) {
     return o ? mountServiceWindow(o) : null;
   }
 
-  /** PORTAL1 (systems/portalStone.js): THE PORTAL STONE AT THE COUNTER - every shop's keeper (isShop's nine kinds) offers
-   *  one on their popup's own row (ui/merchant/merchantServiceWindow.js portalRowRect; the Enhanced Plus panel's button), in a
-   *  building and nowhere else (a bank's teller and a street's driver have none). The row is the hook; undefined, none. */
-  const portalRow = () => (mode === 'interior' && isShop(interiorBuilding?.buildingType)
-    ? { label: PORTAL_TEXT.row, onBuy: () => portalCounter.ask() } : undefined);
-  /** PORTAL-BULK: a press asks HOW MANY, then the offer, and Yes is the sale - or, with none to be had, says why at once
-   *  (AUDIT PORTAL1 C4) - in the counter's own module (scenes/portalCounter.js); the slot's door handed live. */
-  const portalCounter = createPortalCounter({ say: (l) => say(l), mount: (w) => mountInterior(w) });
+  /** PORTAL1 (systems/portalStone.js) and APPEARANCES (bible/04-Characters/Wardrobe.md): THE SHOP POPUPS' OWN ROWS - the
+   *  Portal Stone's at every shop and the Wardrobe's at a Clothing Store, an Armorer and a Weaponsmith, in a building and
+   *  nowhere else; their counters and the rows are scenes/shopRows.js. The slot's doors handed live (mountInterior is
+   *  declared below the construction). */
+  const shopRows = createShopRows({ say: (l) => say(l), mountInterior: (w) => mountInterior(w), mountService: mountServiceWindow });
 
   /** U42: the CLASSIC spellbook in CAST mode - the interior host's
    *  Backspace window, ONE construction. The player's own array is

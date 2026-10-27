@@ -16,7 +16,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { StreamingWorldState, worldCoordToMapPixel } from '../../../src/world/streamingWorld.js';
 import { TERRAIN_SIZE } from '../../../src/world/terrain/terrainSampler.js';
-import { createLoadGovernor, unbuiltAround, unbuiltCount, owedMetres, leadCap, TV_GOV_LEAD_S } from '../../../src/systems/travel/travelGovernor.js';
+import { createLoadGovernor, travellerPace, unbuiltAround, unbuiltCount, owedMetres, leadCap, TV_GOV_LEAD_S } from '../../../src/systems/travel/travelGovernor.js';
 import { threatCap, foePaced, foeRate } from '../../../src/systems/travel/travelThreat.js';
 import { foeHostile, foeAlerted } from '../../../src/systems/encounters.js';
 import { TRAVEL_VIEW_TEXT, travelWalkRate, TV_MOVE_ACTIONS } from '../../../src/scenes/travelView.js';
@@ -31,7 +31,7 @@ const DT = 0.05;
 
 /** The host over `W` (world.js's text): a rider driving east at x100 under the view, the stream's grid built about
  *  (500, 250), every later build BUILD_S of real time. */
-function rideHost(W, { buildS, mps }) {
+function rideHost(W, { buildS, mps, boatWay = null }) {
   const cut = (name) => {
     const m = new RegExp(`\\n {2}(?:async )?function ${name}\\([^)]*\\) \\{\\n[\\s\\S]*?\\n {2}\\}\\n`).exec(W);
     assert.ok(m, `world.js holds ${name}`);
@@ -47,10 +47,11 @@ function rideHost(W, { buildS, mps }) {
   const at = [TERRAIN_SIZE / 2, 0, TERRAIN_SIZE / 2];
   const d = { t: 0, pending: [] };
   const player = { pos: at, speed: mps, isPlayerSwimming: false, feetAt: () => [...player.pos] };
+  const boat = boatWay == null ? null : { way: boatWay };   // PASSAGE-PACE: a boat at the traveller's helm, her way Come Sail Away's
   const scope = {
     travelControlUI: { isShowing: true }, travelOptions: { state: { autopilot: {} } },
     travelView: { active: true, state: 'up' }, tvOwnsJourneys: () => true,
-    worldTimeScale: timeScale, setWorldTimeScale: setTimeScale, resetTimeScale, createLoadGovernor, MAX_TIME_SCALE,
+    worldTimeScale: timeScale, setWorldTimeScale: setTimeScale, resetTimeScale, createLoadGovernor, travellerPace, MAX_TIME_SCALE,
     state, built, queue, unbuiltAround, unbuiltCount, StreamingWorldState, worldCoordToMapPixel, modes: null, walkMode: true, playerSpawned: true,
     player, cam: { pos: at },
     // a build takes the pump BUILD_S of real time, then publishes (buildPixelNow's single atomic set)
@@ -65,10 +66,11 @@ function rideHost(W, { buildS, mps }) {
     exteriorFoes: { foes: [] }, foeHostile, foeAlerted, foeCampKey: () => null, SIGHT_RADIUS: 102.4,
     _wildStrangers: [], WILD_STRANGER_SLOW_M: 200, threatCap, foePaced, foeRate, _travelDrive: { yaw: 90 }, tvInTown: () => false, TOWN_PACE_MAX: 5,   /* OW-TOWN-WALK: out of town */
     tvSay: () => {}, TRAVEL_VIEW_TEXT, performance: { now: () => d.t * 1000 },
-    travelWalkRate, TV_MOVE_ACTIONS, held: () => false, keys: new Set(), csaBoatUnderMe: () => null, gamePaused: () => false,
+    travelWalkRate, TV_MOVE_ACTIONS, held: () => false, keys: new Set(), csaBoatUnderMe: () => boat, gamePaused: () => false,
     travellerOnRoad: () => true, csaHoldsTimeScale: () => false,
   };
-  const names = Object.keys(scope).filter((n) => n !== '_travelDrive');
+  scope.boatWay = boatWay;
+  const names = Object.keys(scope).filter((n) => n !== '_travelDrive' && n !== 'boatWay');
   const body = `
     let { ${names.join(', ')} } = s;
     let travelAsked = ${ASK};
@@ -79,7 +81,7 @@ function rideHost(W, { buildS, mps }) {
     ${cut('journeyThreats')}${cut('journeyThreatCap')}${cut('journeySlowSaid')}${cut('travelViewGovern')}
     function frame(dt) {
       travelViewGovern(dt);
-      player.pos[0] += player.speed * worldTimeScale() * dt;
+      player.pos[0] += (s.boatWay ?? player.speed) * worldTimeScale() * dt;   // PASSAGE-PACE: a boat carries the traveller at her way
       const r = state.update(player.pos);
       if (r.offset) for (let i = 0; i < 3; i++) player.pos[i] += r.offset[i];
       cam.pos = player.pos;
@@ -144,4 +146,26 @@ test('OW-LEAD host run: A RIDER AT x100 WITH EVERY BUILD TAKING THE PUMP A SECON
   assert.equal(now.x1, 0, `the lead law: never at walking pace (mean x${now.mean.toFixed(1)}, ${now.pixels} pixels on, the old ${was.pixels})`);
   assert.ok(now.pixels > was.pixels, 'and further in the same two minutes');
   assert.equal(now.inHole, 0, 'never standing in a pixel the stream has not built');
+});
+
+// PASSAGE-PACE (2026-10-27; bible/03-World/Passage.md, PASSAGE-PACE - FIELD BUGS 2026-10-21d found it and left it): the
+// leads are sized by the traveller's own pace, and at a helm that is her way (travelGovernor.js travellerPace).
+const PACE_SITES = /travellerPace\(player, csaBoatUnderMe\(\)\)/g;
+test('PASSAGE-PACE: the traveller\'s own pace is the walking motor\'s, or the way of the boat at their helm where it is more - Come Sail Away\'s `way`; none, or a way that reads as nothing, the motor\'s (mutants: the boat unread, the more of the two)', () => {
+  assert.equal(travellerPace({ speed: 4.43 }, { way: 12.5 }), 12.5, 'a Small Ship before the wind');
+  assert.equal(travellerPace({ speed: 4.43 }, { way: 1.2 }), 4.43, 'a boat slower than a walker: the walker\'s');
+  assert.equal(travellerPace({ speed: 4.43 }, null), 4.43);
+  assert.equal(travellerPace({ speed: 4.43 }, { way: NaN }), 4.43);
+  assert.equal(travellerPace(null, null), 0);
+  assert.equal([...WORLD.matchAll(PACE_SITES)].length, 2, 'the land\'s lead and the enemies\' read it');
+});
+
+test('PASSAGE-PACE host run: A SMALL SHIP AT x100 MAKING 12.5 m/s, THE WALKING MOTOR 4.43, EVERY BUILD TWO SECONDS (a slow machine) - sized by the motor the clock let her sail into pixels the stream still owed (an unbuilt pixel reads no water); sized by her way, never (mutant: the motor\'s pace)', async (t) => {
+  t.after(() => { resetTimeScale(); _resetTravelPace(); });
+  const now = await rideHost(WORLD, { buildS: 2, mps: 4.43, boatWay: 12.5 }).ride(120);
+  const was = await rideHost(WORLD.replace(PACE_SITES, 'player?.speed ?? 0'), { buildS: 2, mps: 4.43, boatWay: 12.5 }).ride(120);
+  t.diagnostic(`the motor's: ${was.inHole.toFixed(1)} s in owed pixels, ${was.pixels} px; her way's: ${now.inHole.toFixed(1)} s, ${now.pixels} px`);
+  assert.ok(was.inHole > 0, `the motor's pace: ${was.inHole.toFixed(1)} s in pixels the stream owed`);
+  assert.equal(now.inHole, 0, 'her own way: never in a pixel not yet built');
+  assert.ok(now.pixels > 10, `and still under way (${now.pixels} pixels)`);
 });

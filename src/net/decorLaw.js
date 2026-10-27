@@ -29,6 +29,7 @@ import { PROVENANCE_RE, makerName } from './recipeLaw.js';   // PROF4: a crafted
 import { TEMPLATES } from '../systems/item/itemKinds.js';   // INT9: the kept-back list's templates - a leaf
 import { isNpcFlat } from '../world/npcFlatArchives.js';   // DECOR-FIGURE: a person's flat (RDBLayout.NPCFlatArchives) - a leaf
 import { t } from '../systems/textManager.js';   // DECOR-USE: the cooking station's name in the player's language
+import { TROPHY_TEMPLATE } from './trophyLaw.js';   // HUNTERS-MARK: a mounted trophy hangs
 
 /** The items kept back by name: paper worth money or a house (a letter of credit, a deed) and the book of the
  *  player's own spells - set down in a home, it would be out of reach wherever the player went (DECOR2a; INT9: its home
@@ -130,8 +131,11 @@ export const DECOR_ARROW_TEMPLATE = 131;
 export function decorIsMount(piece) {
   const it = piece?.item;
   if (!it || piece.model != null || !Array.isArray(piece.flat)) return false;
-  return (it.g === DECOR_WEAPONS_GROUP && it.t !== DECOR_ARROW_TEMPLATE) || it.g === DECOR_ARMOR_GROUP;
+  return (it.g === DECOR_WEAPONS_GROUP && it.t !== DECOR_ARROW_TEMPLATE) || it.g === DECOR_ARMOR_GROUP || it.t === TROPHY_TEMPLATE;
 }
+/** HUNTERS-MARK (Bounty-Boards.md 12.5): A MOUNTED TROPHY - a mount of its own kind, its beast its item's message (`p`):
+ *  hung on its plaque (scenes/decor/trophyArt.js), never as a pack picture. */
+export const decorIsTrophy = (piece) => decorIsMount(piece) && piece.item.t === TROPHY_TEMPLATE && Number.isSafeInteger(piece.item.p);
 
 /** DECOR-FLIP (2026-09-27, Discord: "Some sprites flipped (allow rotation)"): A FLAT TURNED HALF ROUND FACES THE OTHER
  *  WAY. A billboard turns to the eye whatever its record says, so the one turn a picture has is WHICH WAY it faces:

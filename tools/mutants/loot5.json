@@ -200,8 +200,8 @@
   {
     "name": "LOOT5-the-last-stand-always",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  if (last && share(entity) < last.below / 100) d *= 1 - last.less / 100;",
-    "new": "  if (last) d *= 1 - last.less / 100;",
+    "old": "  if (last && share(entity) < last.below / 100) d *= 1 - guardRoom(last.less, 'loot') / 100;",
+    "new": "  if (last) d *= 1 - guardRoom(last.less, 'loot') / 100;",
     "tests": [
       "test/systems/loot5_powers.test.js"
     ]

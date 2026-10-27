@@ -153,11 +153,11 @@ ashore."* Read in the code, the ramming was two faults together:
   back on her, the other ship fouled - and the passenger charged with piracy for it. A booked ship's master never rams
   now: her stem in another's side deals nothing and takes nothing back (Come Sail Away's collider still stops her there).
 
-Running ashore, as read and left: THE ARRIVAL is the landfall by design (The voyage, above) - she runs in on her oars
-anywhere within VOYAGE_LANDFALL_PX of her port, never to a quay there; berthing her at her port's quay is its own
-slice. Between the marks the hand's look is the only thing keeping her off land (the marks float; the run between them
-is not traced), and once beached Come Sail Away holds her where she lies - PASSAGE-PACE's ground outrun at x60
-(`01-Overview/bugs/Field-Bugs-2026-10-21d.md`) is still the next slice's. The x60 is RATE-LAW's, the owner's.
+Running ashore, as read and left: THE ARRIVAL is the landfall (The voyage, above) where her port's quay cannot take
+her; within reach of a free berth she is brought in (PASSAGE-QUAY, below). Between the marks the hand's look is the
+only thing keeping her off land (the marks float; the run between them is not traced), and once beached Come Sail
+Away holds her where she lies. The clock's leads take her pace now (PASSAGE-PACE, below); the x60 is RATE-LAW's, the
+owner's.
 
 Pinned by `test/systems/auditships_sail.test.js` FERRY-CLEAR (world.js's own hand lifted over Come Sail Away's real
 runtime: a ship moored dead ahead on her line, one across her leg and one off her bow, a galleon and a Carrack in three
@@ -201,7 +201,7 @@ and one more stopped for no way.
 Left, each with its reason: the three crossings of 108 that still meet her and the one that stopped - a ship
 crossing her course: the hand looks for her where her way carries her (F4) and these legs meet her still - why each
 does is the next slice's to measure, not this audit's to guess. A quay or a pier is neither water's edge nor a hull to the hand (the terrain's water test
-reads the ground; a pier is a model) - berthing her at a quay is the passage's own next slice, above; another ship's
+reads the ground; a pier is a model) - her port's quay is her master's warp now (PASSAGE-QUAY, below); another ship's
 ram (a galley's, `checkShipRams`) can still strike a booked ship - the sea's fights are not the passage's to switch
 off; and a passenger can still lay and fire her guns while her master sails her - whether a passage takes them is the
 owner's call, not an audit's.
@@ -209,6 +209,66 @@ owner's call, not an audit's.
 Pinned by `test/systems/auditships_sail.test.js` AUDIT FERRY-CLEAR (F1, F2, F4 on the lifted hand) and the tightened A2
 and FERRY-CLEAR pins, and `test/systems/naval/ferryclear.test.js` AUDIT FERRY-CLEAR F3/F4 (the hulls about her);
 `tools/mutants/ferryclear.json` (17, all dead) and the re-aimed records of `auditships_sail.json` and `hostsplit.json`.
+
+## Her port's quay (PASSAGE-QUAY, 2026-10-27)
+
+The voyage ended at the landfall, run in on her oars to any shore near her port. Now, within BRING_IN_M (700 m) of her
+port's harbour mouth with a free berth there, her master brings her in (`scenes/naval/passageQuay.js`, wired by
+`navalHost.js`). The journey ends, and her crew warp her along the water's own way (the harbour grid's path) to the
+berth's approach and in along the shore at TOW_WAY (4 m/s), easing to TOW_SLOW in the last TOW_EASE_M. QUAYS'
+docking makes her fast, and the passenger is told to take the gangway ashore. Her place is laid by Come Sail Away's
+`warp` seam, as QUAYS' docking lays it. A hull within TOW_FOUL_M ahead of her stem holds her; held TOW_FOUL_S (40 s)
+by one lying still, or TOW_WAIT_S (120 s) by one under way, her master gives that quay up for this passage, says so,
+and the landfall sails on.
+
+The words (`passage.js` PASSAGE_TEXT): `comesIn`, `madeFast`, `quayFoul`. While she comes in no try of her master's is
+made. A boat of mine, a passage to another port, a harbour past BRING_IN_M, or the sea fight switched off: none is
+brought in, and the warp seam is QUAYS' own.
+
+AUDIT HORIZONTAL C3: she was moved along her own head while it came round (a turn some 16 m wide), never along the
+water's way, and the pin sampled her centreline alone from four starts facing open water. A Small Ship 30 m off a
+headland and heading for it was laid 12.8 m into it, a Carrack 21.4 m, and every start behind the headland clipped its
+tip by 2 m of beam. Her way is planned now over water clear TOW_CLEAR_M (3 m) past her beam all round (`beamWater`).
+She is warped along that way, never along her head, and makes way only with her head within TOW_SWING (10 degrees)
+of it; further off, she is warped round where she lies. A step whose footprint (`shipLife.js` footprintClear) would
+lie over land is held, as for a foul hull.
+
+AUDIT HORIZONTAL C10: every hull ahead ran TOW_FOUL_S down, a ship clearing her way as well as one lying across it.
+On one day in six a navy cutter leaving the next berth at 0.5 m/s, after a galleon put out, held her the 40 s, and the
+quay was given up some 30 m from her berth. The naval host's look now says the first hull's way too (`seaClearance.js`
+`ahead`). A hull making HULL_LEAD_MIN_MPS (0.5 m/s) or more is waited on without running TOW_FOUL_S down; a still
+hull, or land, keeps its 40 s.
+
+The wait is bounded at TOW_WAIT_S (120 s) in all, so a hull that never clears still ends in the landfall: a ship leaving her berth at that slowest way clears a Carrack's length and the hand's clearance
+(some 60 m) in two minutes, and the cutter's measured wait was 68 s. A step laid starts both clocks again. That day's
+tow is made fast at 401 s now.
+
+Pins: `test/scenes/naval/passagequay.test.js` (8, over the real naval host and pool: three hulls, a start behind a
+headland, and C3's sweep - ten starts about the headland at eight headings for the Small Ship and the Carrack, her
+bow, waist and stern at both sides never over land, each made fast - a rock risen across her way after it was
+planned, her way made along one line while her head still comes round, and C10's wait). The stated values are pinned
+as stated (G9: TOW_FOUL_S 40, BRING_IN_M 700; C10: TOW_WAIT_S 120). Mutants: `tools/mutants/seaopen.json` (QUAY-, all
+dead). The naval host hands the tow the water (`isWater`) where it handed the errands' grid, and `ahead` where it
+handed `along`.
+
+## The journey's leads at her pace (PASSAGE-PACE, 2026-10-27)
+
+The clock's two leads, the land's governor (OW-LEAD) and a foe's (OW6), sized themselves by the walking motor's pace
+(4.43 m/s): a Large Boat's, but a third of a Small Ship's on a crossing, so at x60 the clock let a fast hull sail into
+pixels the stream still owed. Their pace is now the traveller's own (`travelGovernor.js` travellerPace): the motor's,
+or the way of the boat at the helm where it is more. Come Sail Away lays that way on her each step (`boat.way`, her
+velocity's length), and none while a quay warps her. Measured on the host run (a Small Ship at x100 making 12.5 m/s,
+every build two seconds): sized by the motor she sailed 44.6 s in owed pixels; sized by her way, none. The x60 is
+RATE-LAW's and stands.
+
+AUDIT HORIZONTAL C9: her way was laid only while she floated free, so a ship run ashore at 12.5 m/s kept 12.5, and so
+did one whose helm was let go; the leads were sized as if she sailed. Each step lays her way nought before it lays it
+again (beached or warped it stays nought), and StopSailing lays it nought. Come Sail Away's runtime takes one logical
+line for it (2,498 -> 2,499, inside its ceiling): the way is its own field, laid nowhere else.
+
+PINS MOVED: `ow6_slowdown.test.js`, `tv2_click_to_move.test.js` (the pace's name); the rigs of
+`ow_loadowed`, `ow_queueowed`, `ow_toggle` and `tv_wasd` given `travellerPace`. Pins: `ow_lead.test.js`, `passage_csa.test.js` (PASSAGE-PACE). Mutants:
+`tools/mutants/seaopen.json` (PACE-, all dead).
 
 ## The words
 
@@ -223,7 +283,8 @@ the pack the player entity's own (`passageHost.js` reads `court.js` itself): at 
 logical-line ceiling found bootWorld 31 over with the first wiring, and the trim took it back under
 (`01-Overview/Host-Split.md`, PASSAGE's merge); `scenes/naval/navalHost.js` wires the sea's half
 (`passageBerths.js` - AUDIT PASSAGE D-M1: it grew createNavalHost's own scope, and moved out to its wiring; B5's word
-read and said, its roll and take-over asked, are lines of that wiring). `scenes/exterior.js`, the fixed-city bench, stands no
+read and said, its roll and take-over asked, are lines of that wiring); PASSAGE-QUAY's tow is built there too
+(`passageQuay.js`), and PASSAGE-PACE's two leads are `world.js`'s. `scenes/exterior.js`, the fixed-city bench, stands no
 harbour ships - no passage there. `scenes/worldModes.js` (interiors) and `scenes/dungeonContext.js` stand no sea.
 
 ## Pins

@@ -569,6 +569,9 @@ export function potionRecipeIngredientNames(item) {
 function templateText(t) {
   return t ? getLocalizedItemName(t.index, t.name ?? '') : '';
 }
+/** APPEARANCES (systems/appearances.js lookName): a piece's metal and its template's name as shown, past the
+ *  HelmAndShieldMaterialDisplay gate - one look is told from another by its metal. */
+export const lookNameParts = (item) => ({ material: materialText(item), name: templateText(templateByIndex(item?.templateIndex)) });
 
 /** A trapped soul's name as shown - GetLocalizedEnemyName(soul.ID)
  *  (ItemHelper.cs:361, and %hs at DaggerfallUnityItemMCP.cs:227) over

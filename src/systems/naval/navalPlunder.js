@@ -107,8 +107,10 @@ export function salvageOf(shipClass) {
   };
 }
 
-/** The lots that float free when she sinks: FLOTSAM_OF of them, at least one - the first of her keys. */
+/** The lots that float free when she sinks: FLOTSAM_OF of them, at least one - the first of her keys. FISH-BOATS: none
+ *  of a fishing boat's - her hold is her catch (scenes/naval/fishingFleet.js catchOf), and it goes down with her. */
 export function flotsamKeys(shipClass, seed) {
+  if (shipClass?.fisher) return [];
   const keys = holdKeys(shipClass, seed);
   return keys.slice(0, Math.max(1, Math.round(keys.length * FLOTSAM_OF)));
 }

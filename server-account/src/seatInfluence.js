@@ -69,6 +69,7 @@ import {
   seatWeekOf, seatWeekStartMs, seatPhaseOf, seatRegionOk, seatKeyOk, seatMay, SEAT_POWERS, SEAT_PLEDGE_REGIONS_MAX, SEAT_MEMBER_WAIT_S,
   SEAT_PLEDGES_HOUR, SEAT_WATCH_CLAIM_MAX, WATCH_DAY_CAP, GATE_INFLUENCE, GATE_REGION_AGREE, HOMES_SEAT_MAX, TRIBUTE_MARKS_PER_INFLUENCE,
   GATE_WEEK_RECEIPTS, RENOWN_WEEK_XP,   // AUDIT-SEATS S7: the account's week, every seat together
+  HUNT_INFLUENCE, HUNT_WEEK_CAP,   // HUNTERS-MARK: a bounty board's clear
   SEAT_WEEK_MS, SEAT_RECKONING_MS,
   accountSeatInfluence, guildSeatInfluence, tributeRoom, homeDaysIn, seatDefence, SEAT_CHRONICLE_SHOWN,
   overreachOf, unrestInfluence, crownsHeld, seatReach, withReach, FREE_LAND_WATCH_BONUS, pledgeBarred, fealtyKingdom, seasonOf, seasonZeroOf, bountySitePixel, HALL_OF_RECORDS_ROWS,
@@ -315,6 +316,30 @@ export async function claimOrcCamp({ db, nowS }, player, env, { character, site,
 }
 
 /**
+ * HUNTERS-MARK (Bounty-Boards.md 12.6): A BOUNTY CLEARED - a clear the hunt's ledger recorded (hunts.js huntClear), on a
+ * board of `region` (the client's): HUNT_INFLUENCE for the account's war-guild at its pledged seat there, at most
+ * HUNT_WEEK_CAP an account a week (asked in the write), `ref` the clear's own key, so it counts once. Bounded, not
+ * witnessed, as an Orc Raid's camps are. Answers `{ counted, why? }`; never refuses the clear it rode on.
+ * @param {{db: any, nowS: number}} ctx
+ */
+export async function creditHunt({ db, nowS }, player, env, { character, region, ref } = {}) {
+  if (!seatsOpenFor(player, env)) return { counted: false, why: 'seats-closed' };
+  if (!seatRegionOk(region) || typeof ref !== 'string' || !ref) return { counted: false, why: 'no-region' };
+  const at = await countsAt(db, player, character, region, nowS);
+  if ('counted' in at) return at;
+  const [, ins] = await db.batch([
+    bindStatement(db, at, player.id, nowS),
+    db.prepare(`INSERT OR IGNORE INTO town_seat_influence (week, key, guild_id, account, char_id, source, amount, region, day, ref, at)
+      SELECT ?1, ?2, ?3, ?4, ?5, 'hunt', ?6, ?7, ?8, ?9, ?10 WHERE ${STILL_COUNTS}
+        AND COALESCE((SELECT SUM(amount) FROM town_seat_influence WHERE account = ?4 AND source = 'hunt' AND week = ?1), 0) + ?6 <= ?11`)
+      .bind(at.week, at.key, at.guild, player.id, at.char, HUNT_INFLUENCE, region, utcDay(nowS), ref, nowS, HUNT_WEEK_CAP),
+  ]);
+  if (ins?.meta?.changes) return { counted: true, key: at.key };
+  if (await db.prepare("SELECT 1 FROM town_seat_influence WHERE source = 'hunt' AND ref = ?").bind(ref).first()) return { counted: false, why: 'claimed' };
+  return { counted: false, why: 'capped' };
+}
+
+/**
  * SEAT2b (4.2: "Writs ... 1 per Mark of the materials' value"): A SEAT WRIT'S DELIVERY AS INFLUENCE - `own` units at the
  * materials' value (`value` a unit's Marks, never the writ's pay, so a guild paying itself mints nothing) and `bought`
  * units at Tribute's rate inside Tribute's cap (their value as a `bought` row, read as Tribute's Marks); for the posting
@@ -402,9 +427,9 @@ export async function creditRenown({ db, nowS }, player, env, { character, regio
 export function standingsOf({ guilds, rows, renown, homes, binds, agreed, weekStartS, nowS, reach = new Map(), freeLand = false, tide = 'calm', shrine = null }) {
   const out = [];
   for (const g of guilds) {
-    /** @type {Map<string, { watch: number, gates: number, renownXp: number, writ: number, homeDays: number, raid: number }>} */
+    /** @type {Map<string, { watch: number, gates: number, renownXp: number, writ: number, homeDays: number, raid: number, hunt: number }>} */
     const acc = new Map();
-    const a = (id) => { let v = acc.get(id); if (!v) acc.set(id, v = { watch: 0, gates: 0, renownXp: 0, writ: 0, homeDays: 0, raid: 0 }); return v; };
+    const a = (id) => { let v = acc.get(id); if (!v) acc.set(id, v = { watch: 0, gates: 0, renownXp: 0, writ: 0, homeDays: 0, raid: 0, hunt: 0 }); return v; };
     let tributeMarks = 0;
     for (const r of rows) {
       if (r.guild_id !== g) continue;
@@ -414,6 +439,7 @@ export function standingsOf({ guilds, rows, renown, homes, binds, agreed, weekSt
       else if (r.source === 'gate') { if (agreed.get(Number(r.day)) === Number(r.region)) a(r.account).gates += Number(r.n ?? 1); }   // AUDIT-SEATS S11: a row the read grouped counts its receipts
       else if (r.source === 'writ') a(r.account).writ += Number(r.amount);
       else if (r.source === 'raid') a(r.account).raid += Number(r.amount);   // SEASON1 part two: an Orc Raid's camps
+      else if (r.source === 'hunt') a(r.account).hunt += Number(r.amount);   // HUNTERS-MARK: a bounty board's clears
     }
     for (const r of renown) if (binds.get(r.account) === g) a(r.account).renownXp += Number(r.xp);
     // HOMES: a 7-day member's, its account bound to this guild - the guild's HOMES_SEAT_MAX that stood longest this week

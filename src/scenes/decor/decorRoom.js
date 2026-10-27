@@ -41,7 +41,7 @@ import { RAY_DISTANCE, DEFAULT_ACTIVATION_DISTANCE } from '../../player/activate
 import { billboardSize } from '../../world/rmbFlats.js';
 import { armFlatAnim } from '../../render/flatAnimation.js';
 import { collectInteriorLights } from '../../world/interior/interiorLights.js';
-import { decorIsMount, decorMountFrame, DECOR_MOUNT_LIFT, decorFlatMirrored, decorDrawnScale, decorIsFigure } from '../../net/decorLaw.js';   // DECOR-FIGURE: a figure at its own size; MWNPC18: and in its body
+import { decorIsMount, decorIsTrophy, decorMountFrame, DECOR_MOUNT_LIFT, decorFlatMirrored, decorDrawnScale, decorIsFigure } from '../../net/decorLaw.js';   // DECOR-FIGURE: a figure at its own size; MWNPC18: and in its body
 import { figureLook, personActor } from '../../characters/peopleBodies.js';   // MWNPC18: a placed figure, read for its Morrowind body
 import { decorMountDye, decorMountDyeTarget, decorMountItem } from '../../systems/decor/decorItems.js';
 import { toColor32 } from '../../formats/color32Order.js';   // MW-MOUNT: a rendered picture's rows, as the upload reads them
@@ -52,6 +52,7 @@ import { drawnFlat } from '../../characters/nudeFlats.js';   // NUDE-DECOR: a nu
 import { StaticBatchBuilder, keyResolver } from '../../render/staticBatch.js';   // YARD-MERGE: a yard's models as one mesh, as a town's statics are
 import { lateSolidsOf } from '../../player/lateSolid.js';   // DECOR-CLEAR: a piece landing round the body is withheld until it is clear
 import { decorHearth } from '../../systems/decor/decorUse.js';   // DECOR-USE: a placed fire is one of the room's hearths
+import { loadTrophyArt } from './trophyArt.js';   // HUNTERS-MARK: a mounted trophy's plaque
 
 /** How far the eye reaches a placed piece - the room's own furniture's reach (a bed's, a shelf's: 128 units). */
 export const DECOR_REACH = DEFAULT_ACTIVATION_DISTANCE;
@@ -235,6 +236,7 @@ export const decorStandsOwn = (piece) => !!piece?.item && piece.model == null &&
  * picture, dyed (loadMountArt). The ghost and the room ask this one door, so what the ghost shows is what stands.
  */
 export function loadMountPicture(deps, flat, d) {
+  if (decorIsTrophy({ model: null, flat, item: d })) return loadTrophyArt(deps, flat[0]);   // HUNTERS-MARK: its beast on its plaque
   return loadMwMountArt(deps, decorMountItem(d))
     .then((mw) => mw ?? loadMountArt(deps, flat[0], flat[1], decorMountDye(d), decorMountDyeTarget(d)));
 }

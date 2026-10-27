@@ -1,0 +1,119 @@
+[
+  {
+    "name": "HUNTERS-MARK-II-law-kind-unchecked",
+    "file": "src/systems/hunt/namedMark.js",
+    "old": "if (foe !== mobileType || bossTraitMask",
+    "new": "if (bossTraitMask",
+    "tests": [
+      "test/scenes/huntersmark2_wire.test.js"
+    ]
+  },
+  {
+    "name": "HUNTERS-MARK-II-law-mask-unchecked",
+    "file": "src/systems/hunt/namedMark.js",
+    "old": "bossTraitMask(huntMarkTraits(w, tier)) !== mask) continue;",
+    "new": "bossTraitMask(huntMarkTraits(w, tier)) === -1) continue;",
+    "tests": [
+      "test/scenes/huntersmark2_wire.test.js"
+    ]
+  },
+  {
+    "name": "HUNTERS-MARK-II-law-last-week-dropped",
+    "file": "src/systems/hunt/namedMark.js",
+    "old": "for (const w of [week, week - 1])",
+    "new": "for (const w of [week])",
+    "tests": [
+      "test/scenes/huntersmark2_wire.test.js"
+    ]
+  },
+  {
+    "name": "HUNTERS-MARK-II-law-two-weeks-back",
+    "file": "src/systems/hunt/namedMark.js",
+    "old": "for (const w of [week, week - 1])",
+    "new": "for (const w of [week, week - 1, week - 2])",
+    "tests": [
+      "test/scenes/huntersmark2_wire.test.js"
+    ]
+  },
+  {
+    "name": "HUNTERS-MARK-II-law-last-week-first",
+    "file": "src/systems/hunt/namedMark.js",
+    "old": "for (const w of [week, week - 1])",
+    "new": "for (const w of [week - 1, week])",
+    "tests": [
+      "test/scenes/huntersmark2_wire.test.js"
+    ]
+  },
+  {
+    "name": "HUNTERS-MARK-II-crown-stand-trait-kept",
+    "file": "src/scenes/huntersMark.js",
+    "old": "    e.bossTraits = undefined; e.bossWard = undefined;",
+    "new": "    void e;",
+    "tests": [
+      "test/scenes/huntersmark2_wire.test.js"
+    ]
+  },
+  {
+    "name": "HUNTERS-MARK-II-wire-mark-unnamed",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "name: (f._pupRaid ? null : huntMarkSeen(f.mobileType, r.bt, wallMsForClassicMinutes(worldMinutes()))?.title) ?? raidLeaderNameOf(f.mobileType) });",
+    "new": "name: raidLeaderNameOf(f.mobileType) });",
+    "tests": [
+      "test/scenes/huntersmark2_wire.test.js"
+    ]
+  },
+  {
+    "name": "HUNTERS-MARK-II-wire-raid-read-as-mark",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "(f._pupRaid ? null : huntMarkSeen(",
+    "new": "(false ? null : huntMarkSeen(",
+    "tests": [
+      "test/scenes/huntersmark2_wire.test.js"
+    ]
+  },
+  {
+    "name": "HUNTERS-MARK-II-wire-clock",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "huntMarkSeen(f.mobileType, r.bt, wallMsForClassicMinutes(worldMinutes()))",
+    "new": "huntMarkSeen(f.mobileType, r.bt, wallMsForClassicMinutes(0))",
+    "tests": [
+      "test/scenes/huntersmark2_wire.test.js"
+    ]
+  },
+  {
+    "name": "HUNTERS-MARK-II-mate-renown-gone",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    f.dead = true;\n    renownFoeDied(f);\n    if (f._pupQuest)",
+    "new": "    f.dead = true;\n    if (f._pupQuest)",
+    "tests": [
+      "test/scenes/huntersmark2_wire.test.js"
+    ]
+  },
+  {
+    "name": "HUNTERS-MARK-II-the-mark-keeps-the-elite-kit",
+    "file": "src/scenes/huntersMark.js",
+    "old": "    withdrawEliteLoot(e);   // HUNTERS-MARK-II: an elite its stand rolled keeps no elite's pieces - a mark is never kit",
+    "new": "    ;",
+    "tests": [
+      "test/scenes/huntersmark2_wire.test.js"
+    ]
+  },
+  {
+    "name": "HUNTERS-MARK-II-the-record-never-kept",
+    "file": "src/systems/eliteFoes.js",
+    "old": "  _eliteLaid.set(entity, laid);",
+    "new": "  ;",
+    "tests": [
+      "test/scenes/huntersmark2_wire.test.js"
+    ]
+  },
+  {
+    "name": "HUNTERS-MARK-II-every-piece-taken",
+    "file": "src/systems/eliteFoes.js",
+    "old": "  entity.items = entity.items.filter((it) => !laid.includes(it));",
+    "new": "  entity.items = [];",
+    "tests": [
+      "test/scenes/huntersmark2_wire.test.js"
+    ]
+  }
+]

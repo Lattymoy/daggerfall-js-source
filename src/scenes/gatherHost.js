@@ -255,7 +255,7 @@ export function aimAt(eyePos, at, view) {
  *   and the service's word - so a kind learns what the refusal says of its node (REFUSALS-LEARNED)
  * @property {(data: any) => (string|null)} [haulName] HAUL-CARDS: the kind's own name for a harvest's goods on its card
  *   (PROF8's species - the material its sub), where the material's is not the word
- * @property {(data: any, toast: (text: string) => void, o?: { hauled?: boolean }) => void} [answered] PROF8: a harvest's answer heard - the kind's
+ * @property {(data: any, toast: (text: string) => void, o?: { hauled?: boolean, entity?: any }) => void} [answered] PROF8: a harvest's answer heard - the kind's
  *   own after-step (a trophy into the pack, once)
  * @property {(node: any, ctx: { specs: (profession: string) => any }) => ({ w: number, h: number, reach?: number }|null)} [mark]
  *   NODE-MARKS: the node on the compass and in the glow - its footprint about its base (`w` across, `h` up, metres) and
@@ -950,7 +950,7 @@ export function createGatherHost(deps) {
           if (at === 50 || at === 100) hud.toast('You can now choose a specialization on the Professions page (pause menu > Stats).');
         }
       }
-      try { k?.answered?.(d, (t) => hud.toast(t), { hauled }); } catch (e) { console.warn('[gather] an answer', e); }   // PROF8: a trophy into the pack; HAUL-CARDS: `hauled` - its card said the goods (a Motherlode's silver on it)
+      try { k?.answered?.(d, (t) => hud.toast(t), { hauled, entity: deps.entity?.() ?? null }); } catch (e) { console.warn('[gather] an answer', e); }   // PROF8: a trophy into the pack; HAUL-CARDS: `hauled` - its card said the goods (a Motherlode's silver on it)
       chipProfession = profession;
       chipLeft = CHIP_S;
       // PROF4: the node's fall (fell) - GATHER-SPEED: once, at the act's end where it went then (fallNow)
