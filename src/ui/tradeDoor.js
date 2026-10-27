@@ -15,6 +15,7 @@ import { NativeTradeWindow, preloadTradeArt, tradeArtLoaded } from './native/nat
 import { racialSuppressInventory } from '../systems/lycanthropy.js';   // DISC10-E L3: the trade window's inherited refusal
 import { messageBox } from '../systems/notify.js';   // DISC10-E L3: DaggerfallUI.MessageBox
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { windowCovered } from './windowStack.js';   // BOX-ON-TOP: a box over the counter has its keys
 
 export { preloadTradeArt };
 
@@ -99,6 +100,10 @@ function enhancedTradeOverlay(hooks) {
     draw() { /* DOM, not canvas */ },
     dispose() { close(); },
   };
+  // BOX-ON-TOP: the view hears every key on the window before any host does; while a box stands over the counter (a
+  // tutorial page, the magicka refusal) the keys are the box's - Enter would run the counter's action again, Escape
+  // would close the counter under the box.
+  hooks.covered = () => windowCovered(overlay);
 
   mountEnhancedChunk({
     load: () => import('./enhanced/enhancedTrade.js'),

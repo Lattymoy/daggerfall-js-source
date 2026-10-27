@@ -377,5 +377,15 @@
  "By chance / Automatic / Closed / Per character (Collections availability chips)": "Случайно / Автоматически / Закрыто / У персонажа",
  "Try again (button)": "Повторить",
  "sprout (the New account glyph)": "росток",
- "unwagered (a breach)": "без указов"
+ "unwagered (a breach)": "без указов",
+ "Lockpick": "отмычка",
+ "pin": "штифт",
+ "binding pin": "зажатый штифт",
+ "spool": "штифт-катушка",
+ "false set": "ложная посадка",
+ "Auto attempt": "Автопопытка",
+ "Gentle work": "Щадящая работа",
+ "Lockpicking": "Взлом",
+ "Glint": "Блеск",
+ "Outline": "Контур"
 }

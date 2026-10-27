@@ -2222,7 +2222,8 @@ export class EnemyAI {
         dzm = dir2d[2] * sp * dt;
       }
     }
-    const r = this.collider.move(this.feet, dxm, dy, dzm, this.controllerHeight, true, FOE_KEEPS_FLOOR);
+    // FIELD BUGS 2026-10-25i RAIL-HANG (AUDIT FB1025i G6): a walk from the ground is a walking step, gravity's fall and all
+    const r = this.collider.move(this.feet, dxm, dy, dzm, this.controllerHeight, true, FOE_KEEPS_FLOOR, false, this.isGrounded);
     this.isGrounded = r.grounded;
     this.collidedSides = !!r.sides;   // DOOR-JAM: the Move's CollidedSides, for HeightAdjust
     if (r.grounded) this.velY = 0;

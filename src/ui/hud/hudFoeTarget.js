@@ -52,6 +52,19 @@ export function markFoeStruck(foe, { fromPlayer = true } = {}) {
   _sinceStruck = 0;   // TELL9: a threat yields to it for THREAT_YIELD_S
 }
 
+/** STAND-IN-BAR (AUDIT KETCH II, 2026-10-26, the owner: "the additional enemies dont have health bars"): A BODY THE RELAY
+ *  KEEPS THE HEALTH OF - an event's host: the gate's legion, the Spire's, the Hour's Echoes, the Sky-Ketch's constructs
+ *  (world/gate/gateBoss.js hostStandIn) - is struck through the dungeon host's landOnHost, which never marked it, so none of
+ *  them ever had the bar; and its stand-in's own health is a count nothing empties (STAND_IN_WHOLE). A blow on one that
+ *  went (`went`, the event's own answer) marks it - `hb` the host's foe-shaped record, its stand-in its `entity` - and the bar
+ *  reads its health off the relay's word (`relayShare`, foeTarget). Answers `went`, so the host's return stays one line. */
+export function markHostStruck(hb, went) {
+  if (went) markFoeStruck(hb);
+  return went;
+}
+/** The relay's share of a stand-in's health (0 to 1), or null - its word not heard, or a reader that throws. */
+const relayShareOf = (e) => { try { const v = typeof e.relayShare === 'function' ? e.relayShare() : null; return typeof v === 'number' && Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : null; } catch { return null; } };
+
 /** TELL9 (11.1): a foe began a wind-up at the local player (scenes/hostCombat.js tellCues, at its wind's start): it is
  *  the bar's foe now, unless I struck another in the last THREAT_YIELD_S - the foe I am fighting keeps it; its own
  *  wind-up refreshes its welcome. A bout's fighter is the versus bar's (as markFoeStruck); a dead foe has none. */
@@ -79,10 +92,13 @@ export function tickFoeTarget(dt = 0) {
 export function foeTarget() {
   const e = _foe?.entity;
   if (!e || _foe.dead) return null;
+  // STAND-IN-BAR: a relay's body - its health the relay's share; none heard, or none left (its fall), no bar
+  const share = e.relayHealth ? relayShareOf(e) : null;
+  if (e.relayHealth && !(share > 0)) return null;
   const max = e.maxHealth || e.health || 1;
   return {
     name: String(titled(e, e.name ?? e.career?.name ?? 'Foe')),   // LOOT7: a champion's trait before its name; ELITE FOES: an elite's word; REVENANT: its own name
-    health: Math.max(0, e.health ?? 0),
+    health: share != null ? share * max : Math.max(0, e.health ?? 0),
     maxHealth: max,
     fade: Math.min(1, _left / 1.5),   // the last second and a half
     poise: _poiseOf ? _poiseOf(_foe) ?? null : null,   // TELL9: the poise track under the health (null: none drawn)
@@ -98,7 +114,7 @@ export function foeTarget() {
  *  the other's bar. Null when there is no target. */
 export function foeTargetRef() {
   const e = _foe?.entity;
-  return e && !_foe.dead ? e : null;
+  return e && !_foe.dead && !(e.relayHealth && !(relayShareOf(e) > 0)) ? e : null;   // STAND-IN-BAR: a relay's body fallen is no target
 }
 
 /** A host tearing down, and the tests. */

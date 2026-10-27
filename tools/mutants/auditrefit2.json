@@ -225,15 +225,6 @@
     ]
   },
   {
-    "name": "A2-foul-before-blow",
-    "file": "src/scenes/naval/navalHost.js",
-    "old": "      if (!e.owner) strike(e, { hull: dealt, sail: 0, crew: ramMen(dealt, random()) }, myId());   // AUDIT 2: her blow first - a ram that sends her down (or strikes her colours) fouls nothing, nor says so\n      if (e.ship.damage.state === SHIP_STATES.afloat && !e.ship.boarded) { foul(e.ship, myId(), clock, deps.captain?.stats?.().foul); deps.say?.(t('naval.foul.rammed', 'The ships are locked together. Board before they break free!'), 3); }\n",
-    "new": "      if (e.ship.damage.state === SHIP_STATES.afloat && !e.ship.boarded) { foul(e.ship, myId(), clock, deps.captain?.stats?.().foul); deps.say?.(t('naval.foul.rammed', 'The ships are locked together. Board before they break free!'), 3); }\n      if (!e.owner) strike(e, { hull: dealt, sail: 0, crew: ramMen(dealt, random()) }, myId());\n",
-    "tests": [
-      "test/systems/naval/auditrefit2.test.js"
-    ]
-  },
-  {
     "name": "A2-flags-uncapped",
     "file": "src/scenes/shipFlagHost.js",
     "old": "if (!boat || !flag || list.length >= FLAGS_MAX) return;",

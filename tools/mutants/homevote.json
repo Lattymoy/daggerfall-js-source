@@ -923,8 +923,8 @@
   {
     "name": "HOME-VOTE-II-D1-folded-is-drawn",
     "file": "src/scenes/worldModes.js",
-    "old": "listed = plaqueListing() && worldPlaqueOn() }",
-    "new": "listed = plaqueListing() }",
+    "old": "listed = plaqueListing() && worldPlaqueOn(), picked = false }",
+    "new": "listed = plaqueListing(), picked = false }",
     "tests": [
       "test/net/homevote.test.js"
     ],

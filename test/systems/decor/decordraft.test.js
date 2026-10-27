@@ -156,8 +156,10 @@ test('DECOR-BATCH a hall\'s draft is not the wagon\'s: Leave them behind puts th
   assert.deepEqual(rig.standing.map((p) => p.id).sort(), ['new', 'wagon']);
 });
 
-test('DECOR-BATCH a copy\'s access waits until Confirm has written the piece', async () => {
+test('DECOR-BATCH a copy\'s access waits until Confirm has written the piece - and a chest\'s goes through the record\'s act, as a press of it does (AUDIT FB1025i E2)', async () => {
   const use = [];
+  const acts = [];
+  const AT = { lease: 'L1', seq: 7 };   // the act's checkpoint, as realmSaves.js realmGoldAct hands it to its call
   const rig = toolRig({
     room: { kind: 'home', mapId: 11, buildingKey: 22 }, gold: 1000,
     homeDecor: {
@@ -165,6 +167,7 @@ test('DECOR-BATCH a copy\'s access waits until Confirm has written the piece', a
       batch: async (body) => ({ ok: true, data: { rev: body.rev + 1, gold: -180 } }),
       use: async (body) => { use.push(body); return body.op === 'grants' ? { ok: true, data: { use: [] } } : { ok: true, data: { mode: body.mode, names: body.names } }; },
     },
+    realm: async (o) => { acts.push(o.needsAnswer); const res = await o.call(AT); if (res?.ok) o.apply?.(res); return res; },
   });
   rig.frame();
   rig.doc.body.children.find((c) => c.className === 'dfdecor-open').fire('click');
@@ -175,7 +178,8 @@ test('DECOR-BATCH a copy\'s access waits until Confirm has written the piece', a
   assert.deepEqual(use.filter((b) => b.op === 'set'), [], 'the service has no row for a copy until Confirm');
   assert.ok(rig.said.includes('Who may use: Friends.'));
   assert.equal(await rig.tool.confirmDraft(), true);
-  assert.deepEqual(use.filter((b) => b.op === 'set'), [{ mapId: 11, buildingKey: 22, character: 'char-me', op: 'set', id: copy.id, kind: 'storage', mode: 'friends', names: [], realm: null }]);
+  assert.deepEqual(use.filter((b) => b.op === 'set'), [{ mapId: 11, buildingKey: 22, character: 'char-me', op: 'set', id: copy.id, kind: 'storage', mode: 'friends', names: [], realm: AT }]);
+  assert.equal(acts.at(-1), true, 'through the act (the batch\'s own before it), its answer asked for');
 });
 
 test('DECOR-BATCH a wagon Confirm keeps an owned item through a later Discard', async () => {

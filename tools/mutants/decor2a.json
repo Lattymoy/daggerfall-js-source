@@ -453,12 +453,13 @@
   },
   {
     "name": "DECOR2a-the-transfer-bypassed",
-    "file": "src/scenes/worldModes.js",
-    "old": "    return applyTransfer(item, { ok: true, amount: 1 }, pack, [], { entity: playerEntity, fromLocal: true }) ?? null;",
+    "file": "src/systems/decor/decorPack.js",
+    "old": "    return applyTransfer(item, { ok: true, amount: 1 }, pack, [], { entity: entity(), fromLocal: true }) ?? null;",
     "new": "    pack.splice(pack.indexOf(item), 1);\n    return item;",
     "tests": [
       "test/systems/decor2a.test.js"
-    ]
+    ],
+    "note": "AUDIT FB1025i E1 (PIN MOVED): re-aimed by content - the doors moved to systems/decor/decorPack.js."
   },
   {
     "name": "DECOR2a-the-save-forgetting-them",

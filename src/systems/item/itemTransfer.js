@@ -186,6 +186,29 @@ export function keepsQuestItem(entity, res) {
     .some((l) => Array.isArray(l) && l.some((it) => it?.questItem && it.questUID === uid && it.questSymbol?.name === name));
 }
 
+/**
+ * FIELD BUGS 2026-10-25i HEART-KEPT (AUDIT FB1025i B1): WHERE A QUEST'S OWN RECORD `dfItem` STANDS IN `items` - the
+ * host's playerHasItem and removeItemFromPlayer (scenes/world.js). DFU looks it up by its UID
+ * (ItemCollection.Contains(DaggerfallUnityItem) and RemoveItem, ItemCollection.cs:157-163 and :278-287), and the port's
+ * item IS its UID: the record itself. A load restores the pack's copy and the resource's record apart (AUDIT 24), so a
+ * copy of the same quest and symbol stands for it - but never a FOE'S CLONE (`questClone`, quest/foe.js
+ * getClonedItemQueue), which CloneAll gave a UID of its own. Q0C4XY04 gives its heart to each of four kinds as it is
+ * hurt (GiveItem.cs:117-121 takes the quest's own record from the pack): read by quest and symbol alone, the heart the
+ * player had taken off the first body was pulled out of the pack onto the second kind, and the witches had nothing to
+ * take. `clones` widens the match to a clone when no own copy stands - Item.Dispose's sweep, the port's (a quest that
+ * ends takes back what its foes gave as well; DFU's RemoveItem leaves a clone to the load's orphan sweep). -1 for none.
+ * @param {any[]} items @param {any} dfItem @param {{ clones?: boolean }} [opts]
+ */
+export function heldQuestRecordIndex(items, dfItem, { clones = false } = {}) {
+  const list = Array.isArray(items) ? items : [];
+  const direct = list.indexOf(dfItem);
+  if (direct >= 0) return direct;
+  if (!dfItem?.questItem) return -1;
+  const same = (it) => !!it?.questItem && it.questUID === dfItem.questUID && it.questSymbol?.name === dfItem.questSymbol?.name;
+  const own = list.findIndex((it) => same(it) && !it.questClone);
+  return own >= 0 || !clones ? own : list.findIndex(same);
+}
+
 /** MakePermanent over the pack's copies of a quest's item `sym` (item.js's sync) - the host's `makeHeldQuestItemsPermanent`,
  *  out of bootWorld (HOST-SPLIT) beside its quest-item kin. */
 export function makeHeldQuestItemsPermanent(entity, uid, sym) {

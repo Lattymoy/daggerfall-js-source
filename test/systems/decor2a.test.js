@@ -358,8 +358,11 @@ test('DECOR2a the host (worldModes.js) by source: the tool\'s pack is the player
   const m = src('src/scenes/worldModes.js');
   assert.match(m, /pack: \(\) => playerEntity\.items \?\? \[\], identity: \(\) => playerEntity,/);
   assert.match(m, /packHas: \(item\) => decorHome\(item\)\.includes\(item\), packTake: \(item\) => decorPackTake\(item\), packGive: \(item\) => decorPackGive\(item\),/);   // DECOR2b: furniture lives among the deliveries
-  assert.match(m, /return applyTransfer\(item, \{ ok: true, amount: 1 \}, pack, \[\], \{ entity: playerEntity, fromLocal: true \}\) \?\? null;/, 'as a drop moves it');
-  assert.match(m, /function decorPackGive\(item\) \{\n\s*if \(isFurnishing\(item\)\) \{ decorHome\(item\)\.push\(item\); return; \}\n\s*playerEntity\.items \?\?= \[\];\n\s*addItem\(playerEntity\.items, item\);/);   // DECOR2b: furniture first
+  // PIN MOVED (AUDIT FB1025i E1): the doors are systems/decor/decorPack.js's, over the host's entity
+  const pk = src('src/systems/decor/decorPack.js');
+  assert.match(m, /createDecorPack\(\(\) => playerEntity\)/);
+  assert.match(pk, /return applyTransfer\(item, \{ ok: true, amount: 1 \}, pack, \[\], \{ entity: entity\(\), fromLocal: true \}\) \?\? null;/, 'as a drop moves it');
+  assert.match(pk, /function decorPackGive\(\/\*\* @type \{any\} \*\/ item\) \{\n\s*if \(isFurnishing\(item\)\) \{ decorHome\(item\)\.push\(item\); return item; \}\n\s*entity\(\)\.items \?\?= \[\];\n\s*return addItem\(entity\(\)\.items, item\);/);   // DECOR2b: furniture first
   assert.match(m, /const decorOwn = interiorDecor\.ownSnapshot\(\);/);
   assert.match(m, /decor, decorItems, decorOwn, hiddenBase, frame: 'building'/);
   assert.match(m, /interiorDecor\.setItems\(data\.decorItems\);\n\s*interiorDecor\.setOwn\(data\.decorOwn\);/);

@@ -13,12 +13,16 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { ArrowFlight } from '../../src/combat/arrowFlight.js';
-import { MISSILE_SPEED, MISSILE_COLLIDER_RADIUS, BODY_CAPSULE_RADIUS, PLAYER_BODY_RADIUS, missileReach, missileHitsCapsule } from '../../src/systems/spellcast.js';
+import { ARROW_FLIGHT_SPEED, MISSILE_COLLIDER_RADIUS, BODY_CAPSULE_RADIUS, PLAYER_BODY_RADIUS, missileReach, missileHitsCapsule } from '../../src/systems/spellcast.js';
 import { CAPSULE_HEIGHT } from '../../src/player/motor.js';
 import { createPlayerMagic } from '../../src/scenes/hostMagic.js';
 
 const src = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
 const open = (raycast = () => Infinity) => new ArrowFlight({ getGpuMesh: () => null, collider: { raycast, heightAt: () => -100 } });
+/** One step of a shaft's flight that is 1.25 units long. PIN MOVED (BAL-ARCHERY, bible/05-Combat/Balance-Arc.md
+ *  section 18): a shaft flies at ARROW_FLIGHT_SPEED, so the fixtures' 0.05 s step (MISSILE_SPEED's 1.25) is read
+ *  off the shaft's own speed - the geometry below stays as it was written. A spell (the magic hosts) is still MISSILE_SPEED. */
+const STEP = 1.25 / ARROW_FLIGHT_SPEED;
 
 test('ROAD-H tail: an enemy shaft meets the player CAPSULE at its LIVE height - a crouched player is a shorter target', () => {
   // The old law tested a point at feet + 0.9 against 0.45 + 0.45: a shaft
@@ -31,13 +35,13 @@ test('ROAD-H tail: an enemy shaft meets the player CAPSULE at its LIVE height - 
   const crouched = open();
   const hits = [];
   crouched.fire([0, 1.6, 0], [0, 0, 1], { enemy: true, shooterFoe: { id: 1 }, weapon: {} });
-  for (let i = 0; i < 4; i++) crouched.update(0.05, { playerFeet: [0, 0, 5], playerHeight: 0.9, onPlayerHit: (m) => hits.push(m) });
+  for (let i = 0; i < 4; i++) crouched.update(STEP, { playerFeet: [0, 0, 5], playerHeight: 0.9, onPlayerHit: (m) => hits.push(m) });
   assert.equal(hits.length, 0, 'over a crouched player the shaft sails through (the capsule is 0.9 tall)');
   // the same shaft at a STANDING player (1.8): the axis runs 0.35..1.45,
   // the shaft at 1.6 is 0.15 from its top - a hit
   const standing = open();
   standing.fire([0, 1.6, 0], [0, 0, 1], { enemy: true, shooterFoe: { id: 1 }, weapon: {} });
-  for (let i = 0; i < 4; i++) standing.update(0.05, { playerFeet: [0, 0, 5], playerHeight: 1.8, onPlayerHit: (m) => hits.push(m) });
+  for (let i = 0; i < 4; i++) standing.update(STEP, { playerFeet: [0, 0, 5], playerHeight: 1.8, onPlayerHit: (m) => hits.push(m) });
   assert.equal(hits.length, 1, 'at a standing player the same shaft lands');
   // ...and the default height is the standing capsule for the bare
   // callers. REVIEW: a shaft at 1.6 only proves "tall enough to be
@@ -53,11 +57,11 @@ test('ROAD-H tail: an enemy shaft meets the player CAPSULE at its LIVE height - 
   const rim = CAPSULE_HEIGHT - PLAYER_BODY_RADIUS + MISSILE_COLLIDER_RADIUS + PLAYER_BODY_RADIUS;   // 2.25 - AUDIT 65 CV-2: the r cancels, but it is the PLAYER's r that does
   const bare = open();
   bare.fire([0, rim - 1e-4, 0], [0, 0, 1], { enemy: true, shooterFoe: { id: 1 }, weapon: {} });
-  for (let i = 0; i < 4; i++) bare.update(0.05, { playerFeet: [0, 0, 5], onPlayerHit: (m) => hits.push(m) });
+  for (let i = 0; i < 4; i++) bare.update(STEP, { playerFeet: [0, 0, 5], onPlayerHit: (m) => hits.push(m) });
   assert.equal(hits.length, 2, 'no playerHeight given: the standing capsule reaches the rim');
   const over = open();
   over.fire([0, rim + 1e-4, 0], [0, 0, 1], { enemy: true, shooterFoe: { id: 1 }, weapon: {} });
-  for (let i = 0; i < 4; i++) over.update(0.05, { playerFeet: [0, 0, 5], onPlayerHit: (m) => hits.push(m) });
+  for (let i = 0; i < 4; i++) over.update(STEP, { playerFeet: [0, 0, 5], onPlayerHit: (m) => hits.push(m) });
   assert.equal(hits.length, 2, '...and not past it - the default is 1.8 itself, not merely "tall enough"');
 });
 
@@ -70,14 +74,14 @@ test('ROAD-H tail: a shaft meets a FOE at its capsule, not at its centre - a tal
   const landed = [];
   const giant = { ai: { feet: [0, 0, 5], height: 3.2 }, dead: false };
   f.fire([0, 2.9, 0], [0, 0, 1], { enemy: true, shooterFoe: { id: 9 }, weapon: {}, aimFoe: giant });   // loosed AT the giant (the :669 gate, below)
-  for (let i = 0; i < 4; i++) f.update(0.05, { foeTargets: [{ feet: giant.ai.feet, ref: giant }], onFoeHit: (m, t) => landed.push(t) });
+  for (let i = 0; i < 4; i++) f.update(STEP, { foeTargets: [{ feet: giant.ai.feet, ref: giant }], onFoeHit: (m, t) => landed.push(t) });
   assert.equal(landed.length, 1, 'the giant is struck near its head');
   assert.equal(landed[0], giant);
   // a RAT (1.0) under the same shaft: axis 0.45..0.55, the shaft 2.35 up - nothing
   const r = open();
   const rat = { ai: { feet: [0, 0, 5], height: 1.0 }, dead: false };
   r.fire([0, 2.9, 0], [0, 0, 1], { enemy: true, shooterFoe: { id: 9 }, weapon: {}, aimFoe: rat });
-  for (let i = 0; i < 4; i++) r.update(0.05, { foeTargets: [{ feet: rat.ai.feet, ref: rat }], onFoeHit: (m, t) => landed.push(t) });
+  for (let i = 0; i < 4; i++) r.update(STEP, { foeTargets: [{ feet: rat.ai.feet, ref: rat }], onFoeHit: (m, t) => landed.push(t) });
   assert.equal(landed.length, 1, 'and sails over a rat');
   // the one body: the flight's test IS spellcast's capsule test
   assert.equal(missileHitsCapsule([0, 2.9, 5], [0, 0, 5], 3.2), true);
@@ -90,7 +94,7 @@ test('ROAD-H tail: the flight reach is displacement.magnitude + ColliderRadius a
   // along `direction` (which Physics normalises). A crouch-dipped
   // direction (:583-585, +down*0.05 after the normalise) has magnitude
   // sqrt(1 + 0.0025); the reach grows with it and the ray is unit.
-  const dt = 0.05, step = MISSILE_SPEED * dt;
+  const dt = 0.05, step = ARROW_FLIGHT_SPEED * dt;   // PIN MOVED (BAL-ARCHERY): a shaft's step is its own speed's
   const dipped = [0, -0.05, 1];
   const len = Math.hypot(0, -0.05, 1);
   const { unit, reach } = missileReach(dipped, step);
@@ -292,29 +296,29 @@ test('ROAD-H tail (review): an enemy shaft is SPENT on whatever it meets and DAM
   // (1) the player in the way of a foe-aimed shaft: stopped, unhurt
   const a = open();
   a.fire([0, 0.9, 0], [0, 0, 1], { enemy: true, shooterFoe: { id: 'archer' }, weapon: {}, aimFoe: bear });
-  for (let i = 0; i < 4; i++) a.update(0.05, { playerFeet: [0, 0, 5], playerHeight: 1.8, onPlayerHit: () => log.push('player hurt'), foeTargets: [{ feet: bear.ai.feet, ref: bear }], onFoeHit: (m, t) => log.push(t.id) });
+  for (let i = 0; i < 4; i++) a.update(STEP, { playerFeet: [0, 0, 5], playerHeight: 1.8, onPlayerHit: () => log.push('player hurt'), foeTargets: [{ feet: bear.ai.feet, ref: bear }], onFoeHit: (m, t) => log.push(t.id) });
   assert.deepEqual(log, [], 'the player took nothing');
   assert.equal(a.arrows[0].dead, true, 'and the shaft is spent on the player, not flown through');
   // (2) a NON-target foe in the way: stopped, unhurt, the target never reached
   const b = open();
   b.fire([0, 0.9, 0], [0, 0, 1], { enemy: true, shooterFoe: { id: 'archer' }, weapon: {}, aimFoe: bear });
-  for (let i = 0; i < 4; i++) b.update(0.05, { foeTargets: [{ feet: wolf.ai.feet, ref: wolf }, { feet: bear.ai.feet, ref: bear }], onFoeHit: (m, t) => log.push(t.id) });
+  for (let i = 0; i < 4; i++) b.update(STEP, { foeTargets: [{ feet: wolf.ai.feet, ref: wolf }, { feet: bear.ai.feet, ref: bear }], onFoeHit: (m, t) => log.push(t.id) });
   assert.deepEqual(log, [], 'the wolf took nothing');
   assert.equal(b.arrows[0].dead, true, 'the shaft stopped on the wolf');
   // (3) the same shaft with the wolf out of the way reaches its target
   const c = open();
   c.fire([0, 0.9, 0], [0, 0, 1], { enemy: true, shooterFoe: { id: 'archer' }, weapon: {}, aimFoe: bear });
-  for (let i = 0; i < 8; i++) c.update(0.05, { foeTargets: [{ feet: bear.ai.feet, ref: bear }], onFoeHit: (m, t) => log.push(t.id) });
+  for (let i = 0; i < 8; i++) c.update(STEP, { foeTargets: [{ feet: bear.ai.feet, ref: bear }], onFoeHit: (m, t) => log.push(t.id) });
   assert.deepEqual(log, ['bear'], 'the bear is struck');
   // (4) a shaft loosed at the PLAYER (aimFoe null) still lands on the player
   const d = open();
   d.fire([0, 0.9, 0], [0, 0, 1], { enemy: true, shooterFoe: { id: 'archer' }, weapon: {} });
-  for (let i = 0; i < 4; i++) d.update(0.05, { playerFeet: [0, 0, 5], onPlayerHit: () => log.push('player hurt') });
+  for (let i = 0; i < 4; i++) d.update(STEP, { playerFeet: [0, 0, 5], onPlayerHit: () => log.push('player hurt') });
   assert.deepEqual(log, ['bear', 'player hurt']);
   // (5) a PLAYER shaft has no such gate - WeaponDamage strikes what it hits
   const e = open();
   e.fire([0, 0.9, 0], [0, 0, 1], { fromPlayer: true });
-  for (let i = 0; i < 4; i++) e.update(0.05, { foeTargets: [{ feet: wolf.ai.feet, ref: wolf }], onPlayerArrowHitFoe: (m, t) => log.push('player shaft: ' + t.id) });
+  for (let i = 0; i < 4; i++) e.update(STEP, { foeTargets: [{ feet: wolf.ai.feet, ref: wolf }], onPlayerArrowHitFoe: (m, t) => log.push('player shaft: ' + t.id) });
   assert.deepEqual(log, ['bear', 'player hurt', 'player shaft: wolf']);
   // the pool decides the target ONCE and hands it to every host's fire
   const x = src('src/scenes/exteriorFoes.js');

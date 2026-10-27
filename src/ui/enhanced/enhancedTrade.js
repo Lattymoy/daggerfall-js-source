@@ -37,7 +37,7 @@
 // letters when that picture is unavailable, and never blocks on it.
 
 import { BAG_WORDS } from '../../net/bagLaw.js';   // BAG1
-import { itemLine, linePicture, markItemFrame, wearBar, showItemHover, hideItemHover } from './enhancedInventory.js';   // RF6/MW-D38: one item model, read by both packs; RARITY-UI: one frame marker; WEAR-UI: one wear bar
+import { itemLine, linePicture, markItemFrame, wearBar, showItemHover, hideItemHover, questWord } from './enhancedInventory.js';   // RF6/MW-D38: one item model, read by both packs; RARITY-UI: one frame marker; WEAR-UI: one wear bar
 import { SLOT_BOX } from '../iconFit.js';   // UI1: the row's picture box
 import { fittedImg } from '../textureCanvas.js';   // UI1: the fitted picture's element
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
@@ -819,7 +819,7 @@ function itemRow(item, from) {
   row.append(tile);
   const mid = el('span', 'itemname');
   mid.append(el('span', null, line.name + (line.stack ? ` ×${line.stack}` : '')));
-  const sub = [line.material, line.word].filter(Boolean).join(' · ');
+  const sub = [line.material, line.word, line.quest != null ? questWord() : null].filter(Boolean).join(' · ');   // QUEST-MARK (AUDIT FB1025i B6): a quest's item says so, as the pack's row does
   if (sub) mid.append(el('small', null, sub));
   row.append(mid);
   row.append(el('span', 'itemwt', `${line.weight.toFixed(2)} kg`));
@@ -951,6 +951,7 @@ function detailStrip() {
   const bits = [line.material, line.word, `${line.weight.toFixed(2)} kg`];
   if (line.damage != null) bits.push(`Damage ${line.damage}`);
   if (line.armour != null) bits.push(`Armour ${line.armour}`);
+  if (line.armorType != null) bits.push(`${line.armorType} armor`);   // ARMOR-TYPE (Voice.md rule 8: American spelling)
   if (line.hands != null) bits.push(line.hands);
   for (const t of line.survival ?? []) bits.push(t);
   info.append(el('p', 'meta', bits.filter(Boolean).join(' · ')));
@@ -1098,6 +1099,7 @@ function render() {
 
 function onKey(e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (deps.covered?.()) return;   // BOX-ON-TOP: a box stands over the counter (ui/tradeDoor.js)
   if (box) {
     if (box.buttons === 'YesNo') {
       if (e.code === 'KeyY') { e.preventDefault(); dismissBox(true); }

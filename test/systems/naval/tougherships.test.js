@@ -1,7 +1,7 @@
 // TOUGHER-SHIPS, QUICK-REPAIRS, SALVAGE (2026-10-03, Mac: "For naval combat and such I want to buff health of ships,
 // allow for more streamlined repairs, allow sunken vessels to provide nessecary materials so you dont have to rely on
 // the port"): every ship stands SHIP_TOUGHNESS times the punishment - her hull, her canvas and her men (a ball's, a
-// fire's, a ram's) - with the yard's prices and a store's work moved so a wreck costs what it did, the casks afloat and a
+// fire's) - with the yard's prices and a store's work moved so a wreck costs what it did, the casks afloat and a
 // pirate's run as long in seconds as they were, and a save on her first build's scale that every build reads right; her
 // hands spend her stores on their own once a fight is over (past the free mending, and a boat with no hand aboard only
 // under her captain's own) and the order MAKE REPAIRS works with an enemy near (DAMAGE CONTROL); a sunk ship leaves her
@@ -20,7 +20,7 @@ import { navalWireRecord, validNavalRecord, navalHitData, NAVAL_HIT_MAX } from '
 import { FLOTSAM_LIFE } from '../../../src/systems/naval/navalShots.js';
 import { PIRATE_RUNS_AT } from '../../../src/systems/naval/navalAI.js';
 import { mintStores, storesIn, spendStore, isStores } from '../../../src/systems/naval/navalStores.js';
-import { savedHurts, savedRecord, ramMen, ramMenSaid, RAM_A_MAN, STRUCK_GRACE_S } from '../../../src/scenes/naval/navalHost.js';
+import { savedHurts, savedRecord, STRUCK_GRACE_S } from '../../../src/scenes/naval/navalHost.js';
 import { CREW_ORDERS, mendScaleOf } from '../../../src/systems/naval/shipCrew.js';
 import { FEATURES } from '../../../src/systems/features.js';
 
@@ -75,7 +75,7 @@ function heldNear(h, id, seconds, at = [0, 0, 200]) {
 
 // ── TOUGHER-SHIPS ────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('TOUGHER-SHIPS every hull stands SHIP_TOUGHNESS times her first build\'s timbers and canvas; a ball\'s men, a ram\'s and a fire\'s her old loss over the toughness (on the roll, or a fire\'s carried from fire to fire - never nobody); the yard\'s whole for a wreck what it was; the casks afloat and a pirate\'s run as long in seconds as they were (mutants: a hull untoughened, the men untoughened, a fire\'s loss let go, the ram unrolled)', () => {
+test('TOUGHER-SHIPS every hull stands SHIP_TOUGHNESS times her first build\'s timbers and canvas; a ball\'s men and a fire\'s her old loss over the toughness (on the roll, or a fire\'s carried from fire to fire - never nobody); the yard\'s whole for a wreck what it was; the casks afloat and a pirate\'s run as long in seconds as they were (mutants: a hull untoughened, the men untoughened, a fire\'s loss let go)', () => {
   assert.equal(SHIP_TOUGHNESS, 1.6);
   for (const [i, b] of HULL_BUILDS.entries()) {
     assert.equal(b.hullHp, Math.round(firstBuildOf(i).hullHp * SHIP_TOUGHNESS), `hull ${i}`);
@@ -94,11 +94,6 @@ test('TOUGHER-SHIPS every hull stands SHIP_TOUGHNESS times her first build\'s ti
   assert.deepEqual([ballMen(1, 0), ballMen(1, 0.999)], [0, 1], 'the roll decides the odd man');
   near(mean((r) => shotDamage(swivel, 'hull', { roll: r }).crew), 2 / SHIP_TOUGHNESS, 1e-3, 'a swivel ball\'s men');
   near(mean((r) => shotDamage(long, 'rig', { roll: r }).crew), 1 / SHIP_TOUGHNESS, 1e-3, 'a ball through the rigging\'s man aloft');
-  // a ram's: a man every RAM_A_MAN of the hull dealt said on the wire, over the toughness on the roll where she is stood
-  assert.equal(RAM_A_MAN, 40);
-  assert.deepEqual([ramMenSaid(22), ramMenSaid(120)], [1, 3]);
-  near(mean((r) => ramMen(22, r)), 22 / RAM_A_MAN / SHIP_TOUGHNESS, 1e-3, 'a bow\'s light ram: a man now and then, never always none');
-  near(mean((r) => ramMen(235, r)), 235 / RAM_A_MAN / SHIP_TOUGHNESS, 1e-3, 'a galley\'s');
   // a fire's: a man's worth each FIRE_CREW_S of burning, the toughness's share of a man carried from fire to fire
   assert.equal(FIRE_CREW_S, 10);
   const d = createShipDamage({ hullHp: 5000, sailHp: 0, crew: 40 });
@@ -245,7 +240,7 @@ test('SALVAGE on the host: a ship sunk leaves her wreckage afloat beside her cas
   assert.equal(k.host._shots.floaters().filter((f) => f.kind === 'flotsam').length, 0);
 });
 
-test('TOUGHER-SHIPS online: a peer\'s blow says its men BEFORE her toughness - a ball\'s gun\'s, a ram\'s a man each RAM_A_MAN - and whoever stands her reckons it, so a ship falls at one pace whichever build fired (mutants: the toughness reckoned by the shooter, the stander taking the word\'s men whole)', async () => {
+test('TOUGHER-SHIPS online: a peer\'s blow says its men BEFORE her toughness - a ball\'s gun\'s - and whoever stands her reckons it, so a ship falls at one pace whichever build fired (mutants: the toughness reckoned by the shooter, the stander taking the word\'s men whole)', async () => {
   const h = await sea({ hull: HULL.SmallShip, settings: { ShipsAtSea: 'off' } });
   const e = place(h, 'navyGalley', [300, 0, 0]);
   const d = e.ship.damage;
@@ -253,7 +248,6 @@ test('TOUGHER-SHIPS online: a peer\'s blow says its men BEFORE her toughness - a
   near(d.maxCrew - d.crew, 40 / SHIP_TOUGHNESS, 6, 'forty men said, the toughness\'s share of them lost');
   const host = src('src/scenes/naval/navalHost.js');
   assert.match(host, /deps\.sendHit\?\.\(navalHitData\(target\.owner, \{ n: target\.n, hull: hurt\.hull, sail: hurt\.sail, crew: Math\.floor\(shotMen\(gun, zone\) \+ random\(\)\),/, 'a ball on another\'s ship says the gun\'s men');   // PIN MOVED (AUDIT 2: rounded on the ball's own roll - the word's are whole)
-  assert.match(host, /if \(e\.owner\) deps\.sendHit\?\.\(navalHitData\(e\.owner, \{ n: e\.n, hull: Math\.min\(400, dealt\), crew: ramMenSaid\(dealt\), zone: 'holed', foul: /, 'a ram on another\'s ship says the ram\'s');   // PIN MOVED (RAM-BOARD, AUDIT 2026-10-17: its foul with it)
 });
 
 // ── QUICK-REPAIRS ────────────────────────────────────────────────────────────────────────────────────────────────

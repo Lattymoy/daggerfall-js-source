@@ -13,7 +13,7 @@ import {
 } from '../../../src/net/ketch/ketchBrain.js';
 import { ketchRoomKey, ketchVoyageOf, KT_STAGE, KT_CREW_MAX, KT_WATCH_WAVES } from '../../../src/net/ketch/ketchLaw.js';
 import { KT_CRADLES, KT_BRIDGE_CRADLES, KT_SOCKETS, KT_RESONATORS, KT_GANGWAY, KT_WARDEN_WAKE_Z, KT_HOLD, KT_MAIN_TOP, engineNeeds } from '../../../src/net/ketch/ketchDeck.js';
-import { KW_ID, KW_FORK_ID0, KW_PHASE_AT, KW_LOST_MS } from '../../../src/net/ketch/ketchWarden.js';
+import { KW_ID, KW_FORK_ID0, KW_PHASE_AT, KW_LOST_MS, KW_ENDS_MS } from '../../../src/net/ketch/ketchWarden.js';
 import { HIT_KINDS, BUCKET_DEPTH_X, dpsRef } from '../../../src/net/gate/gateBrain.js';
 import { validKetchOut, validKetchIn, validKtRcTell, KT_OUT_KINDS, KT_CELL_SPOT_MAX, KT_BODY_ID_MAX, KT_CREW_WIRE_MAX, KT_KIND_MAX } from '../../../src/net/wire.js';
 import { KT_KIND_BY_K } from '../../../src/net/ketch/ketchConstructs.js';
@@ -254,7 +254,7 @@ test('KETCH THE TONAL WARDEN, WHOLE: `in` only on the bridge; the Discord asks t
     }
     return out;
   };
-  const run = sail(V, t0, core, { act, most: 14 * 60_000, until: (f) => f.k === 'fell' });
+  const run = sail(V, t0, core, { act, most: KW_ENDS_MS + KW_LOST_MS,   /* AUDIT KETCH II L5-7: the fight's own end, fourteen minutes before KETCH-LONGER */ until: (f) => f.k === 'fell' });
   assert.ok(run.now, 'felled');
   wireOk([...ins, ...run.out]);
   for (const f of run.out) { if (f.k === 'rs') rs = Math.max(rs, f.rs.filter((v) => v === 1).length); if (f.k === 'ward' && f.on === 0) retuned = true; if (f.k === 'fkb') forks += 1; if (f.k === 'stun') stuns += 1; }
@@ -387,7 +387,7 @@ test('KETCH THE FALL EMPTIES EVERY HAND: a member still carrying a bridge cell w
     }
     return out;
   };
-  const run = sail(V, t, core, { act, most: 14 * 60_000, until: (f) => f.k === 'fell' });
+  const run = sail(V, t, core, { act, most: KW_ENDS_MS + KW_LOST_MS,   /* AUDIT KETCH II L5-7: the fight's own end, fourteen minutes before KETCH-LONGER */ until: (f) => f.k === 'fell' });
   assert.ok(run.now, 'felled');
   assert.deepEqual(V.cells.carry, {}, 'no hand holds a cell');
 });

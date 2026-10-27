@@ -212,8 +212,8 @@
   {
     "name": "SHIPS2-C-the-mods-carracks-numbers-back",
     "file": "src/systems/naval/navalShips.js",
-    "old": "crew: 30, deck: 7.81, beam: 6.0, ram: false, bowZ: 26.14, aftZ: -23.31, halfWidth: 6.7, keel: -4.59, top: 11.55,",
-    "new": "crew: 30, deck: 3.64, beam: 7.4, ram: false, bowZ: 23.71, aftZ: -28.24, halfWidth: 8.43, keel: -3.35, top: 11.82,",
+    "old": "crew: 30, deck: 7.81, beam: 6.0, bowZ: 26.14, aftZ: -23.31, halfWidth: 6.7, keel: -4.59, top: 11.55,",
+    "new": "crew: 30, deck: 3.64, beam: 7.4, bowZ: 23.71, aftZ: -28.24, halfWidth: 8.43, keel: -3.35, top: 11.82,",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js"
     ],

@@ -452,8 +452,8 @@
   {
     "name": "NODE-GLINT-the-clock-unwrapped",
     "file": "src/render/nodeGlint.js",
-    "old": "pass.draw(list, renderer, t % 60, reduced(t))",
-    "new": "pass.draw(list, renderer, t, reduced(t))",
+    "old": "pass.draw(list, renderer, t % 60, reduced(t), look())",
+    "new": "pass.draw(list, renderer, t, reduced(t), look())",
     "tests": [
       "test/scenes/nodeglint.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "NODE-GLINT-reduced-motion-unread",
     "file": "src/render/nodeGlint.js",
-    "old": "pass.draw(list, renderer, t % 60, reduced(t))",
-    "new": "pass.draw(list, renderer, t % 60, false)",
+    "old": "pass.draw(list, renderer, t % 60, reduced(t), look())",
+    "new": "pass.draw(list, renderer, t % 60, false, look())",
     "tests": [
       "test/scenes/nodeglint.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "AUDIT-NODE-GLINT-every-node-one-seed",
     "file": "src/render/nodeGlint.js",
-    "old": "  uint seed = uint(uSeed * 1009.0 + 0.5) * 2654435761u;",
-    "new": "  uint seed = 2654435761u;",
+    "old": "return uint(uSeed * 1009.0 + 0.5) * 2654435761u;",
+    "new": "return 2654435761u;",
     "tests": [
       "test/scenes/nodeglint.test.js"
     ]
@@ -651,8 +651,8 @@
   {
     "name": "AUDIT-NODE-GLINT-the-room-halved",
     "file": "src/render/nodeGlint.js",
-    "old": "this._pad[0] = (2 * roomPx) / vw;",
-    "new": "this._pad[0] = roomPx / vw;",
+    "old": "this._pad[0] = (2 * room) / vw;",
+    "new": "this._pad[0] = room / vw;",
     "tests": [
       "test/scenes/nodeglint.test.js"
     ]

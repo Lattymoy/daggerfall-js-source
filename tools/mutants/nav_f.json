@@ -20,8 +20,8 @@
   {
     "name": "NAV-F-the-board-hint-shadowed",
     "file": "src/ui/naval/navalHud.js",
-    "old": "      : model.board ? (model.board.kind === 'heave'",
-    "new": "      : false ? (model.board.kind === 'heave'",
+    "old": "      : model.board ? `${boardKey}: ${model.board.kind === 'hold'",
+    "new": "      : false ? `${boardKey}: ${model.board.kind === 'hold'",
     "tests": [
       "test/ui/naval/nav_f_ui.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "NAV-F-the-scuttle-undressed",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "  warn: ['body .dfsocial-btn.warn', 'body .dfprofile-duel',\n    'body .dfnaval-scuttle',",
-    "new": "  warn: ['body .dfsocial-btn.warn', 'body .dfprofile-duel',",
+    "old": "  warn: ['body .lk-acts .lk-auto',   /* AUDIT LOCKPICK C6: the Auto attempt - a failed roll snaps a pick */ 'body .dfsocial-btn.warn', 'body .dfprofile-duel',\n    'body .dfnaval-scuttle',",
+    "new": "  warn: ['body .lk-acts .lk-auto',   /* AUDIT LOCKPICK C6: the Auto attempt - a failed roll snaps a pick */ 'body .dfsocial-btn.warn', 'body .dfprofile-duel',",
     "tests": [
       "test/ui/naval/nav_f_ui.test.js",
       "test/ui/plusdress1.test.js"

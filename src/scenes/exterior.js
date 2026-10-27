@@ -118,6 +118,7 @@ import { InputMessageBoxWindow } from '../ui/inputMessageBox.js';   // HCC: the 
 import { isLocalPlayerTarget } from '../characters/enemy/enemyTargets.js';   // HCC: CollectThreats' `senses.Target == player`
 import { SeasonHelper, archivePrefix as seasonPrefixOf } from '../systems/seasonsIliacBay.js';   // SIB1: Seasons of the Iliac Bay's SeasonHelper; WINDFALL1: and its atlases' prefixes, which Windfall's own tables key on
 import { loadSeasonsTextures, seasonsInstalled } from '../systems/seasonsIliacBayAssets.js';   // SIB1: its textures, from the player's own copy of the mod
+import { sightMarksOf } from '../world/signSolid.js';   // FIELD BUGS 2026-10-25i SIGN-PASS: a shop's sign stops a body where it stands, never where it hangs
 import { isBulletinBoard, isCityGate, CITY_GATE_OPEN_MODEL_ID, CITY_GATE_CLOSED_MODEL_ID } from '../world/rmbLayout.js';   // RMBLayout.cs:1013-1017 - the one model id a town sign wears; :1007-1011 - the two a city gate wears
 import { makeCityGate, updateCityGate } from '../world/city/cityGate.js';   // AUDIT 64 F14: DaggerfallCityGate
 import { staticBuildingBox, staticBuildingWorldAabb } from '../world/staticBuildings.js';   // AUDIT 64 F11: RMBLayout's StaticBuilding array
@@ -144,7 +145,7 @@ import { preloadRestArt } from '../ui/restWindow.js';   // S40: rest above groun
 import { createRestWindow } from '../ui/restDoor.js';   // RESTDOOR1: the enhanced/native fork, same law as ui/tradeDoor.js
 import { DecisionBoxWindow } from '../ui/decisionBox.js';   // REST-WARN2: the Plus decision box
 import { restAilmentLines } from '../systems/rest/restWarning.js';   // REST-WARN: the fourth host's rest asks too
-import { setEnemyAlert, areEnemiesNearby, intermittentEnemySpawn } from '../systems/encounters.js';
+import { setEnemyAlert, areEnemiesNearby, intermittentEnemySpawn, fightNear } from '../systems/encounters.js';
 import { revenantToReturn, revenantSpawnOptions, revenantPresence, takeRevenantNotice, revenantSay, releaseRevenantStand, revenantRoutSweep, revenantRoutedEvent } from '../systems/revenant/revenant.js';   // REVENANT: the world host's twin - who comes back, and what the player is told
 import { createStandingWatch, installLegalNotices } from './standingHost.js';   // REP1: the watch's stop; REP5: the law's notices
 import { setForagingHost } from '../systems/foraging/foragingInstall.js';   // FORAGE1: Foraging's reaches into the world, this host's answers
@@ -760,7 +761,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // ticks below.
       const bucketKey = isCityGate(placed.modelIdNum)
         ? `gate:${b.dfBlock.index}:${placed.recordIndex}:${cityGates.length}` : 'world';
-      collider.addMesh(bucketKey, cpu.positions, cpu.indices, matrix);
+      collider.addMesh(bucketKey, cpu.positions, cpu.indices, matrix, null, null, false, sightMarksOf(placed.modelIdNum, cpu));   // SIGN-PASS: a sign's board met by every ray, by no body
       if (isCityGate(placed.modelIdNum)) {
         cityGates.push({ gate: makeCityGate(placed.modelIdNum), entry, matrix, bucketKey });
       }
@@ -2002,7 +2003,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, hitEffects,
     playerWeaponSheathed: () => !!weaponRig.playerWeapon.sheathed,   // AUDIT 24 (wave 42): pacification's drawn-weapon penalty
     shake: (k) => betterAmbience.weaponKick(k),   // AUDIT TELL H6: my blow that staggers a watchman kicks the camera
-    fightHere: () => areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]),   // PROTECT-FIGHT: world.js's twin
+    fightHere: () => fightNear([...cityGuards.guards, ...exteriorFoes.foes], player.pos),   // PROTECT-FIGHT: world.js's twin (AUDIT FB1025i D3: encounters.js fightNear)
     say: (l) => townTalk.say(l),   // C-slice: equipment breaks speak
     currentMinute: () => Math.floor(playerTicker.ownMinutes),   // AUDIT 23 (hosts-3): a guard's poison anchors at NOW, not 0
     makeAreaHostile: _makeEnemiesHostile,   // ROAD-G G1: DaggerfallEntityBehaviour.cs:255-258 - a struck PASSIVE watchman turns the area

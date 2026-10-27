@@ -1,8 +1,7 @@
 // AUDIT NAVAL-REFIT (2026-10-17, the owner: "Lets do a comprehensive audit and ensure perfection"; bible/03-World/
 // Naval-Refit.md AUDIT) - what the audit of the refit found, each on the real module it lives in: a near miss searched
 // only past her bounding sphere's reach; a ship another player stands going down blows her magazine on my screen as on
-// hers (her seed's), and is heard going; the flag's cloth remembers a flag that will not paint; a ram on a ship another
-// stands says its foul to her stander; a classic record read for its picture through one door, guarded alike for the paint
+// hers (her seed's), and is heard going; the flag's cloth remembers a flag that will not paint; a classic record read for its picture through one door, guarded alike for the paint
 // shop and the cabin. tools/mutants/auditrefit.json.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -78,30 +77,6 @@ test('AUDIT NAVAL-REFIT the flag\'s cloth: a flag that will not paint is remembe
   pass.textureOf('b', {}, FLAG_REPAINT_S + 1);
   pass.prune(FLAG_REPAINT_S + 1 + BANNER_TEXTURE_IDLE_S + 1);
   assert.deepEqual([pass.textures.size, gl.deleted], [0, 1], 'idle: both let go, the one texture given back');
-});
-
-// ── RAM-BOARD: the rammer's word ───────────────────────────────────────────────────────────────────────────────────
-
-test('AUDIT NAVAL-REFIT RAM-BOARD the rammer\'s side: a ram on a ship another player stands sends her stander its blow and its foul together - the seconds it holds her (mutants: the foul unsaid)', async () => {
-  const sent = [];
-  const h = await sea({ hull: HULL.SmallShip, online: { id: () => 'a-player', peers: () => [], sendHit: (d) => { sent.push(d); return true; } }, pool: await freshPool(), settings: { ShipsAtSea: 'off', Boarders: false } });
-  const w = (pos) => navalWireRecord({ ships: [{ n: 4, classId: 'merchantGalleon', variant: 0, pos, yaw: Math.PI / 2, speed: 0, sails: 0, hull: 1, sail: 1, crew: 1, state: 'afloat', heel: 0, seed: 99, fire: false, gen: 0, region: 17 }] });
-  h.host.applyWord('b-player', w([0, 0, 200]), (p) => p);
-  h.run(0.3);
-  const e = h.host._sea.get('b-player:4');
-  assert.ok(e?.boat, 'her copy stands, a hull of her own');
-  // my way on, then her side under my stem - her stander's word holding her there
-  h.runtime.state.velocityCurrent = [0, 0, 6];
-  h.host.applyWord('b-player', w([0, 0, 40]), (p) => p);
-  h.run(0.3);
-  for (let z = 24; z >= 4 && !sent.length; z -= 1) {
-    h.host.applyWord('b-player', w([0, 0, z]), (p) => p);
-    e.ship.pos = [0, 0, z]; e.target = { ...e.target, pos: [0, 0, z], speed: 0 };
-    h.host.frame(0.1);
-  }
-  const blow = sent.find((d) => d?.nv && d.to === 'b-player');
-  assert.ok(blow, 'her blow sent to her stander');
-  assert.ok(blow.nv.u >= 19 && blow.nv.u <= 20, `and its foul: ${blow.nv.u} s`);
 });
 
 // ── one read of a classic record ───────────────────────────────────────────────────────────────────────────────────

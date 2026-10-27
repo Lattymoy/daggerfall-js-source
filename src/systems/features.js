@@ -732,6 +732,22 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'weaponGlow', initial: true, online: 'player' }),   // WEAPON-GLOW1: systems/weaponGlow.js WEAPON_GLOW_PREF
   }),
+  // RESOURCE-HIGHLIGHTS (2026-10-26, the owner: "Reintroduce resource highlights as an option" - bible/06-Systems/
+  // Professions-Arc.md section 54): what lights a gathering node - NODE-GLINT's glints on its own picture (the default, the
+  // owner's choice of 2026-10-20 after players found the ring unimmersive), NODE-OUTLINE's ring round it in its profession's
+  // colour (back as a choice, for a player who would rather find a node than see it catch the light), or both. The
+  // player's own: it lights nothing a peer sees and is never on the wire. Read each frame (render/nodeGlint.js
+  // createNodeGlintPass, RESOURCE_HIGHLIGHT_PREF), so it takes effect at once.
+  Object.freeze({
+    id: 'resource-highlights',
+    group: 'sight',
+    get title() { return t('features.resourceHighlights.title', 'Resource highlights'); },
+    get note() { return t('features.resourceHighlights.note', 'How herbs, veins, trees and other gathering spots near you stand out. Glint makes them '
+      + 'catch the light with sparkles; Outline rings each one in its profession\u2019s color, plain to see day or night; Both does both.'); },
+    get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'resourceHighlights', initial: 'glint', online: 'player', tiers: Object.freeze([tier('glint', () => t('features.resourceHighlights.glint', 'Glint')), tier('outline', () => t('features.resourceHighlights.outline', 'Outline')), tier('both', () => t('features.resourceHighlights.both', 'Both'))]) }),   // render/nodeGlint.js RESOURCE_HIGHLIGHT_PREF, RESOURCE_HIGHLIGHTS
+  }),
   // QUICK-LOOT B4 (2026-09-22, Mac: Arc B of the world-hover arcs, and
   // "How does skyrim do it" when the shape was put to him). Vanilla
   // Skyrim does not; what everyone means by it is the QuickLoot mod,

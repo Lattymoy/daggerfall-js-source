@@ -292,6 +292,57 @@ the next merge cuts the release the stalled ones would have.
 `test/tooling/audit_install2.test.js` (E-54's test), `tools/mutants/rel9.json`
 (2).
 
+**STE-NOTES (2026-10-26, the owner: "The law for patch notes is now
+ASD-STE100 Simplified Technical English (STE)"): THE NOTES ARE WRITTEN IN
+STE.** A pull request's `## Patch notes` (REL6) reach every player twice -
+the release's text and the launcher's news - and many of them read English
+as a second language. ASD-STE100 is the controlled English the aerospace
+industry writes its maintenance manuals in for that reader: a dictionary in
+which each approved word has one meaning and one part of speech, and
+writing rules that keep a sentence short and on one topic. The
+specification is the ASD's (asd-ste100.org, free on request); its
+dictionary is never copied into the tree. What binds the notes:
+- Words: STE's approved words only, in their approved meanings and parts of
+  speech. The game's own names - an item, a skill, a place, a setting, a
+  window, a control - are technical names, which STE permits; write a
+  control or an item as the game shows it, and mark it **bold**. One thing
+  has one name: the name the game shows.
+- Verbs: the simple present, the simple past and the future, with the past
+  participle only as an adjective. No -ing form of a verb outside a
+  technical name, and no helping verb that makes a complex verb ("has
+  been", "have fixed"). The active voice wherever it can be used.
+- Sentences: one topic. 25 words at most; an instruction 20 at most, one to
+  a sentence, in the imperative, with its condition first. An article or
+  "this" before a noun where it fits, no noun cluster past three words, and
+  no word left out to make a sentence short.
+- Paragraphs: one topic, six sentences at most; a list for steps or
+  choices, after a colon.
+- Punctuation: no semicolons, no contractions ("does not", never
+  "doesn't").
+`scripts/steNotes.mjs` holds the part a machine can read: it reads the
+notes as the release does (`patchNotesOf`) and reports each sentence and
+paragraph past its length, each semicolon, -ing form, contraction and
+complex verb. It counts a hyphenated word, a number with its unit, and a
+name in **bold**, `code` or quotes as one word each. Its -ing rule is
+stricter than STE in one place, said out loud: a lowercase word that ends
+in -ing is a verb form unless it is on `NOT_A_VERB` (`thing`, `setting`,
+`during`), so an -ing word the dictionary approves goes on that list with
+its reason. `.github/workflows/ste-notes.yml` runs it on a pull request
+when it opens, each time its description is edited and on every push -
+`pull_request`, a read-only token, the description handed over through the
+environment - and a description with no notes passes. The notes are not in
+the tree, so `verify` cannot read them; making `ste-notes` a required
+check is a branch rule, a person's setting. A clean run is not proof: the
+dictionary, one topic, the articles, the noun clusters and the voice are
+the writer's and the reviewer's. Draft first - write the description to a
+file and run `node scripts/steNotes.mjs <file>`. Unchanged: REL6 (the notes
+live on the pull request), REL7 (an edited description rewrites its
+release), LOOT-GATE (the notes never give the loot gate's numbers). Notes
+already published stay as written: rewriting an old description rewrites
+its release's notes (REL7), so an old one is put into STE only when its
+release's notes need a fix anyway. `test/tooling/ste_notes.test.js` (11),
+`tools/mutants/ste_notes.json` (31, all dead).
+
 
 `.github/workflows/release-desktop.yml` cuts a release through any
 of three doors: pushing a tag shaped `app-v*`, a workflow_dispatch
@@ -1083,20 +1134,26 @@ so `crash.log` carries the evidence.
 The page (`src/render/gpuTrail.js`) counts the live textures, buffers, vertex arrays, framebuffers and programs of the
 renderer's own WebGL2 context. The entry shadows the canvas's `getContext` before `new Renderer(canvas)`, so the count
 starts at the constructor's first object, and wraps that context's `create*` and `delete*` (a delete counts only an
-object the count saw made). Five seconds in, every 30 s from the start, and at the moment the context is lost, it takes
-a sample: those counts, the FPS counter's last second (`ui/fpsCounter.js` `last`: fps, mean and worst ms, the minute's
-worst hitch, draws, binds, the view out's and the shadow maps' draws - `-` when the counter has not moved since the last
-sample), the JS heap (`performance.memory`), and whether the page is hidden and the context lost. It keeps the last 20,
+object the count saw made). Five seconds in, every 30 s from the start, and at the moments the context is lost and given
+back, it takes a sample: those counts, the FPS counter's last second (`ui/fpsCounter.js` `last`: fps, mean and worst ms,
+the minute's worst hitch - 0 when the minute held none - draws, binds, the view out's and the shadow maps' draws, all `-`
+when the counter has not moved since the last sample), the JS heap (`performance.memory`), and three flags: the page
+hidden, the context lost, and `restored` on the sample taken as the context came back. It keeps the last 20,
 ten minutes, and hands all of them to the shell with each sample (`daggerShell.gpuTrail`, an async `dagger:gpu-trail`),
 so a page that stops between samples has already said its last. Nothing runs in the frame: no `getError`, no
 `getParameter`. The module is behind the entry's door, opened only when the shell's bridge offers `gpuTrail`, so a tab
 loads none of it and BOOT2's static reach is unchanged. There is no byte estimate: a texture uploaded again at a level
 and a buffer filled again make a running byte total mislead on exactly the question asked.
 
-The shell keeps the newest trail from the game's window only, read field by field (`trailFrom`: known numbers, two
+The shell keeps the newest trail from the game's window only, read field by field (`trailFrom`: known numbers, three
 flags, a GPU name of at most 160 characters, the newest 20 samples), and `logGone` writes it under the stop's line -
 the renderer's and the GPU process's alike - through `logWith`, so the 64 KB cap holds. A stopped page's trail is let go
-after it is written, so the page after it never writes the dead one's samples as its own. An entry:
+after it is written, so the page after it never writes the dead one's samples as its own.
+
+GPU-TRAIL-LOST (2026-10-25, the desktop app's crash run): the GPU process's death reaches the shell before the page's
+lost-context sample crosses the bridge, so its entry, written at once, never held the moment the GPU went. The entry now
+waits (`lib/rendererGone.cjs` `createGpuGoneWait`) until a trail lands whose newest sample is lost, or 2 s at most; a
+renderer stop or a quit in the meantime writes it first. Its line keeps the time the GPU died. An entry:
 
 ```text
 2026-10-24T07:47:31.000Z renderer oom exitCode=-536870904
@@ -1104,10 +1161,10 @@ after it is written, so the page after it never writes the dead one's samples as
   2026-10-24T07:47:00.000Z up=1234s tex=812 buf=2300 vao=1100 fbo=24 prog=140 fps=60 ms=16.7 worst=33 hitch=121 draws=430 binds=900 view=0 shadow=120 heap=512MB
 ```
 
-Verified on Windows (D3D11) by `forcefullyCrashRenderer()` on the built app: the entry, the GPU's name and both samples
-taken, and with the context lost first, a last sample marked `lost`. The GPU process's own stop cannot be forced from
-the shell and is not verified. Pins: `test/render/gputrail.test.js`, `test/tooling/gputrail_crashlog.test.js`; mutants:
-`tools/mutants/gputrail.json`.
+Verified on Windows (D3D11) in the built app: `forcefullyCrashRenderer()` wrote the entry, the GPU's name and the samples;
+the GPU process killed by `chrome://gpucrash` in a hidden window wrote its own entry (2026-10-25). Pins:
+`test/render/gputrail.test.js`, `test/tooling/gputrail_crashlog.test.js`, `test/tooling/gputrail_lost.test.js`; mutants:
+`tools/mutants/gputrail.json`, `tools/mutants/gputrail_lost.json`.
 
 ## What deliberately did NOT move
 

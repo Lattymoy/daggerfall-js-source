@@ -78,6 +78,7 @@ export const FRAME_ROLES = {
     'body .dfdecor-card',
     // SET7: the Sigil Broker's window - a shop over the world, the pack's own carved frame
     'body .broker-win',
+    'body .lk-win',   // AUDIT LOCKPICK C1: the lock's window - the Broker's carved frame (ui/lockpickWindow.js)
     // NAV-F: a taken ship's plunder window (ui/naval/navalPlunderWindow.js) - a whole window over the sea
     'body .dfnaval-win',
     // BOUNTY1: the bounty board and its payday notice - the Broker's carved frame
@@ -156,6 +157,7 @@ export const FRAME_ROLES = {
     '.px-qoffer .act',   // QL3: a reward waiting's Take (ui/questlines/qlJournal.js)
     'body .dfsocial-btn', 'body .dfsocial-close', 'body .dfprofile-close', '.dlg-shell .dlg-btn',
     'body .broker-shell .act',   // SET7: the Broker's Buy and Close
+    'body .lk-acts button',   // AUDIT LOCKPICK C1: the lock's Auto attempt and Leave - the Auto a warn as well (C6), Leave plain: leaving costs nothing
     'body .bounty-shell .act',   // BOUNTY1: Take, Give up, Share, Close, Take the reward
     'body .lgs-shell .act',   // LEGACY3: the Succession's choices and the line's end
     'body .notice-shell .act',   // NOTICE1: Pin a note, Pin it up, Report, Take it down, Close
@@ -212,7 +214,7 @@ export const FRAME_ROLES = {
     'body .eg-k-btn[data-kind="primary"]'],   // EG-PLUS: Open the breach, Close a recap - what the window is for
   // PLUS-DRESS: a press that COSTS something - leave or disband a guild, remove a member, challenge a player - the
   // button in blood rather than brass (the low-health frame's red). Each is a button above as well; this is its edge.
-  warn: ['body .dfsocial-btn.warn', 'body .dfprofile-duel',
+  warn: ['body .lk-acts .lk-auto',   /* AUDIT LOCKPICK C6: the Auto attempt - a failed roll snaps a pick */ 'body .dfsocial-btn.warn', 'body .dfprofile-duel',
     'body .dfnaval-scuttle',   // NAV-F: scuttling a prize - she and what is left in her go down
     '.pack-shell .fate-confirm .act.warn', '.px-sys .cmp-acts .act.warn',   // REVENANT-FATE: Execute; COMPANION-ROSTER: Release, confirmed
     'body .dfdecor-btn.warn',   // MENU-ORDER: the decorator's Remove - its piece and half its price go
@@ -240,7 +242,7 @@ export const FRAME_ROLES = {
     '.px-sys .coll-filter', '.px-sys .coll-with', '.px-sys .coll-retry',   // COLLECTIONS-II: the wardrobe's filters, and a "comes with" press - AUDIT COLLECTIONS-II: and a failed read's Try again
     'body .eg-k-tile'],   // EG-PLUS: a Vestige offered, a start, a decree for the Wager - the one taken brass   // COLLECTIONS (CARDS-PLUS): the Codex | Cards switch, the binder's kinds, a deck's cards
   // HOLDINGS: where a holding is (`.hld-state`)
-  chip: ['body .rvncard-rank', '.px-sys .rvn-rank', '.px-sys .hld-state', '.px-sys .fam-chip',   // LEGACY3: a person's state
+  chip: ['body .lk-meta > span',   /* AUDIT LOCKPICK C1: the picks, the pins set, the skill - read, never pressed */ 'body .rvncard-rank', '.px-sys .rvn-rank', '.px-sys .hld-state', '.px-sys .fam-chip',   // LEGACY3: a person's state
      'body .dfgambit-chip',   // KG3: the table's readouts - points, units, actions, potions, fallen, a unit's numbers
      'body .rvncard-mood', '.px-sys .rvn-mood', '.pack-shell .fate-mood', '.px-sys .cmp-rank', '.px-sys .cmp-mood', '.hud-qspell', '.hud-temp', '.pack-shell .sf-tile', '.pack-shell .sf-pill', '.hud-qstag', '.hud-readied', '.lv-note-key',   // (UI3: the effect and need chips are the status widget's tiles now)
     '.shell .subbtn .count', '.hb .hb-caption',
@@ -254,7 +256,7 @@ export const FRAME_ROLES = {
     '.px-sys .coll-tag',   // COLLECTIONS-II: a row's readouts - whose it is, whether it can be had
     'body .eg-k-chip', 'body .eg-spire.enhanced .eg-chip'],   // EG-PLUS: a breach window's readouts, and the Spire HUD's chips   // RVN-ERRAND: an errand's odds - a readout
   // HOLDINGS: a holding's picture, a name's field (`.hld-art`, `.hld-field`)
-  well: ['body .rvncard-face', '.px-sys .rvn-face', '.px-sys .hld-art', '.px-sys .hld-field', '.px-sys .fam-view', '.px-sys .fam-card .fam-face', 'body .lgs-face',   // LEGACY3: the tree's ground, the card's portrait
+  well: ['body .lk-canvas',   /* AUDIT LOCKPICK C1: the lock itself, sunk in the window */ 'body .rvncard-face', '.px-sys .rvn-face', '.px-sys .hld-art', '.px-sys .hld-field', '.px-sys .fam-view', '.px-sys .fam-card .fam-face', 'body .lgs-face',   // LEGACY3: the tree's ground, the card's portrait
      '.pack-shell .fate-face', '.px-sys .cmp-face', '.px-sys .cmp-slot', '.px-sys .cmp-gslot', '.trade-shell .packcol', '.pack-shell .sf-sec', '.shell .opt-search', '.shell .ft-tile-drawer',   // FT18: the Features search and a tile's opened drawer
     '.port-host .port-field', '.port-host .port-canvas', '.port-host .port-picture img', '.port-host .port-pictureword', '.wizard .namebox', '.sb-shell .sb-rename input', '.cr-shell .cr-compose input', '.hmsearch input',
     '.talk-face', '.pack-shell .figure-doll', '.pack-shell .wornmap-doll.noart', '.shell .look-pic',
@@ -280,6 +282,7 @@ export const FRAME_ROLES = {
   meterFill: ['.px-fill', 'body .dfgambit-fill'],   // KG3: a piece's health, banded like the vitals
   header: ['.port-host .port-head', '.px-win .px-tabs', '.talk-head', '.sb-shell .sb-top', '.cr-shell .sb-top', '.trade-shell .sb-top',
     'body .broker-head',   // SET7: the Broker's header - who, the purse, the turn of the day
+    'body .lk-head',   // AUDIT LOCKPICK C1: the lock's header - what is picked, DFU's look-at line
     'body .dfnaval-winhead',   // NAV-F: the prize's name, her colours and her captain
     'body .bounty-head',   // BOUNTY1: the board's header - the town, the day's turn
     'body .notice-head',   // NOTICE1: the Notice Board's header - the town, the notes up

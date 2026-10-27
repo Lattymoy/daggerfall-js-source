@@ -23,7 +23,8 @@
 // pulse the root under all of it, which is how the recording drives.
 //
 // THE TEMPO IS THE FILM'S. The intro is cut to two landmarks of the recording (ui/intro/introCue.js): the cloud break at
-// CLOUD_REVEAL_TIME and the logo's landing at TITLE_IMPACT_TIME, four bars apart and both downbeats. The song's one tempo
+// CLOUD_REVEAL_TIME and the logo's landing at CREST_TIME (INTRO4: INTRO2's landing, now the film's crest - its logo
+// lands later, on bar 16), four bars apart and both downbeats. The song's one tempo
 // is the one that puts those two bar lines exactly there (128.76 BPM, a hair over the recording's opening), after a
 // lead of INTRO_LEAD_TICKS of quiet - so the film's cue sheet stands as it was, and the score answers to it.
 //
@@ -45,7 +46,7 @@
 // Not a DFU member. Ledger A (INTRO3).
 
 import { midiNote } from './gate/gateScore.js';
-import { CLOUD_REVEAL_TIME, TITLE_IMPACT_TIME } from '../ui/intro/introCue.js';
+import { CLOUD_REVEAL_TIME, CREST_TIME } from '../ui/intro/introCue.js';
 
 /** The song's name - its own, beside MIDI.BSA's (no record there is called this). */
 export const INTRO_SONG = 'DFOTHEME.HMI';
@@ -62,7 +63,7 @@ export const IMPACT_BAR = 6;
 /** The last bar played: the close's G, left to ring to LAST_BAR. */
 const CLOSE_BAR = 80;
 /** One tempo, from the landmarks: four bars between them, to the tick. */
-export const INTRO_SECONDS_PER_TICK = (TITLE_IMPACT_TIME - CLOUD_REVEAL_TIME) / ((IMPACT_BAR - CLOUD_BAR) * BAR);
+export const INTRO_SECONDS_PER_TICK = (CREST_TIME - CLOUD_REVEAL_TIME) / ((IMPACT_BAR - CLOUD_BAR) * BAR);
 /** The quiet before the first bar - whatever puts the cloud break's bar line on CLOUD_REVEAL_TIME (68 ticks, 0.53 s:
  *  the recording's first sound is at 0.59 s). */
 export const INTRO_LEAD_TICKS = Math.round(CLOUD_REVEAL_TIME / INTRO_SECONDS_PER_TICK) - (CLOUD_BAR - FIRST_BAR) * BAR;
@@ -505,7 +506,7 @@ function makeTheme() {
   swellInto(w, CLOUD_BAR, 2);
   crescendoInto(w, CLOUD_BAR, 0.82);
   landOn(w, CLOUD_BAR, 'C', 0.96);
-  // the C holds; it settles, then rises again into the impact - on TITLE_IMPACT_TIME
+  // the C holds; it settles, then rises again into the impact - on CREST_TIME
   rollInto(w, IMPACT_BAR, 2, 'D3', 46, 116);
   swellInto(w, IMPACT_BAR, 4);
   crescendoInto(w, IMPACT_BAR, 0.76);

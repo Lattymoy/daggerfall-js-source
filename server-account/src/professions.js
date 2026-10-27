@@ -60,11 +60,13 @@ import {
   workOpen,   // PROF11: a mason's work asks its rank
   workSpecOk,   // PROF12: a Transmuter's transmutation asks its choice
   workEmbers,   // DAEDRIC-SMELT: the Deadlands Embers a work spends out of the account's purse
+  SCHOOL_HAULS_DAY,   // AUDIT GATHER F3: the school's fish bounded as the day's forty bound them
 } from '../../src/net/professionLaw.js';
 import {
   recipeById, recipeOpen, qualityOdds, rollQuality, qualitySteps, craftQuality, rollsQuality, craftXp, craftCount,
-  makerMark, firstCraftPays, counterMade, firstCraftKin, recipeInputs, takesHeartwood, carriesMark, dyeOk,   // CLOTH-GEMS: S1 judged by the units
-  firstCraftXp, workFirstXp,   // FIRST-BUDGET: its track's first-make share (Professions-Arc 52)
+  makerMark, counterMade, firstCraftKin, recipeInputs, takesHeartwood, carriesMark, dyeOk,   // CLOTH-GEMS: S1 judged by the units
+  JUDGED_CLOTH,   // WOVEN-PAYS: the cloth S1 counts when it is bought with silver
+  firstCraftXp, workFirstXp, FIRST_MAKE_FLOOR,   // FIRST-BUDGET: its track's first-make share (Professions-Arc 52); WOVEN-PAYS: an old row's paid first
   masonXp,   // PROF11: the mason's bench's XP
   cookXp, dishHand,   // PROF9: a dish's XP and its cook's hand
   jewelHand, takesCracked, masterworkSpec, LAPIDARY,   // PROF10: the jeweller's hand, a Lapidary's cracked gem, the Master Jeweller's points
@@ -161,8 +163,32 @@ const withGold = (s) => {
 /** One material's count in a character's Stores, own, bought and (GOLD-MARKET) bought with gold, where held. PROF5: the
  *  market's answers read it too. */
 export async function storeOf(db, player, character, key) {
-  return countFrom(key, (await storeStatement(db, player, character, key).all()).results ?? []);
+  const out = countFrom(key, (await storeStatement(db, player, character, key).all()).results ?? []);
+  // WOVEN-PAYS: a cloth's count says its silver count beside it, always (0 where none stands), so a client hearing any
+  // answer of it reads the loom's first-time line afresh
+  return JUDGED_CLOTH.includes(key) ? { ...out, silver: await silverOf(db, player, character, key) } : out;
 }
+/** WOVEN-PAYS (AUDIT WOVEN-PAYS; the owner: "Woven cloth pays"): A CLOTH'S SILVER COUNT in SQL - the bolts of it (recipeLaw
+ *  JUDGED_CLOTH) the character bought with silver that its stations have not used since (`prof_silver_cloth`, migration
+ *  0177). While it stands, the bolts a craft uses are those, and a piece made wholly of cloth lays no first on (AUDIT 32
+ *  S1 - recipeLaw firstCraftPays). `p`, `c` and `m` the player's, the character's and the material's SQL. */
+const silverSql = (p, c, m) => `COALESCE((SELECT qty FROM prof_silver_cloth WHERE player = ${p} AND char_id = ${c} AND material = ${m}), 0)`;
+const silverOf = async (db, player, character, key) => Number((await db.prepare(`SELECT ${silverSql('?1', '?2', '?3')} AS n`).bind(player, character, key).first())?.n ?? 0);
+const CLOTH_SQL = JUDGED_CLOTH.map((k) => `'${k}'`).join(', ');
+/** WOVEN-PAYS: THE CLOTH A PURCHASE HANDS A CHARACTER FOR SILVER, COUNTED - `select` the purchase's own rows as (player,
+ *  char_id, material, qty), read in its batch; every material but JUDGED_CLOTH passes uncounted. The Weavers' and the
+ *  furnisher's counters (buyStock) and the Drakes market (market.js: a buy, a courier's load, a buy order filled) - never
+ *  the gold market's (a gold buy is no silver, and its units no station's), a guild's or a weave's. */
+export const silverClothIn = (db, select, binds) => db.prepare(`INSERT INTO prof_silver_cloth (player, char_id, material, qty)
+  SELECT player, char_id, material, qty FROM (${select}) WHERE material IN (${CLOTH_SQL}) AND qty > 0
+  ON CONFLICT (player, char_id, material) DO UPDATE SET qty = prof_silver_cloth.qty + excluded.qty`).bind(...binds);
+/** WOVEN-PAYS: A STATION'S USE OF A CLOTH TAKES ITS BOLTS OFF THE SILVER COUNT - `qtySql` units of `materialSql` where `guard`
+ *  holds (the act's own row; ?1 the player, ?2 the character, `binds` from ?3), a row at nought deleted. A craft's and a
+ *  temper's, whatever the recipe: a bolt used is a bolt used. */
+const silverClothOut = (db, { player, character, materialSql, qtySql, guard, binds }) => [
+  db.prepare(`UPDATE prof_silver_cloth SET qty = qty - MIN(qty, ${qtySql}) WHERE player = ?1 AND char_id = ?2 AND material = ${materialSql} AND ${guard}`).bind(player, character, ...binds),
+  db.prepare('DELETE FROM prof_silver_cloth WHERE player = ?1 AND char_id = ?2 AND qty = 0').bind(player, character),
+];
 /** GATHER-SPEED: a Stores count's (and BAG1: a carried count's) rows as a statement, for a batch - and its count off them. */
 const storeStatement = (db, player, character, key) =>
   db.prepare('SELECT origin, qty FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = ?3').bind(player, character, key);
@@ -268,7 +294,7 @@ export async function profState({ db, nowS }, player, env, { character } = {}) {
   const day = utcDay(nowS);
   // GATHER-SPEED: the state's eight reads in ONE round trip - the tracks, the Stores, the day's nodes, the carried count,
   // the day's harvests, the Court's writs and the hides and hauls - where they were eight trips in a row
-  const [rows, stores, taken, carriedRows, today, writs, hunt, hauls] = await readAll(db, [
+  const [rows, stores, taken, carriedRows, today, writs, hunt, hauls, silverRows] = await readAll(db, [
     db.prepare('SELECT * FROM prof_tracks WHERE player = ?1 AND char_id = ?2').bind(player.id, character),
     db.prepare('SELECT material, origin, qty FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND qty > 0 ORDER BY material').bind(player.id, character),
     db.prepare('SELECT node, kind FROM node_harvests WHERE player = ?1 AND char_id = ?2 AND day = ?3').bind(player.id, character, day),
@@ -278,6 +304,8 @@ export async function profState({ db, nowS }, player, env, { character } = {}) {
     writsStatement(db, player.id, day),
     huntStatement(db, player.id, day),
     haulsStatement(db, player.id, day),
+    // WOVEN-PAYS: the silver counts of its cloth (the loom's first-time line reads them)
+    db.prepare('SELECT material, qty FROM prof_silver_cloth WHERE player = ?1 AND char_id = ?2 AND qty > 0').bind(player.id, character),
   ]);
   const byProf = new Map(rows.map((r) => [r.profession, r]));
   const held = new Map();
@@ -303,6 +331,7 @@ export async function profState({ db, nowS }, player, env, { character } = {}) {
     hunt: huntFrom(hunt[0]),   // PROF7: the account's hides today (PROF0 6)
     hauls: Number(hauls[0]?.n ?? 0),   // PROF8: the account's hauls today (PROF0 6)
     caps: { stores: STORES_MAX, withdraw: WITHDRAW_MAX, highHides: HIGH_HIDES_PER_DAY },   // CAP-OFF: no day's harvests, hides or hauls
+    silver: Object.fromEntries(silverRows.map((r) => [r.material, Number(r.qty)])),   // WOVEN-PAYS: the cloth's silver counts standing
   };
 }
 
@@ -471,6 +500,8 @@ const huntStatement = (db, player, day) => db.prepare(`SELECT COALESCE(SUM(qty),
 const huntFrom = (r) => ({ hides: Number(r?.n ?? 0), high: Number(r?.high ?? 0) });
 /** PROF8 - the account's hauls today (CAP-OFF: said, no longer bounded), every character's together - the rows, a haul each. */
 const haulsStatement = (db, player, day) => db.prepare("SELECT COUNT(*) AS n FROM node_harvests WHERE player = ?1 AND profession = 'fishing' AND day = ?2").bind(player, day);
+/** AUDIT LOCKPICK D2: an account's hauls a day whose school counted (migration 0176's `school`). */
+const schoolsStatement = (db, player, day) => db.prepare("SELECT COUNT(*) AS n FROM node_harvests WHERE player = ?1 AND profession = 'fishing' AND day = ?2 AND school = 1").bind(player, day);
 
 /** PROF8 - a net's report, bounded (PROF0 5.1): a full net is the clean act; a school, the cast's landing within one of
  *  the day's two (nodeLaw schoolSpots) - the client's word, its one or none. */
@@ -579,7 +610,7 @@ export async function harvestNode(ctx, player, env, body = {}) {
   // falsely earns no Harvest and dodges no Blight
   const tide = !deep && !isBody && confirmed ? tideNow(env, nowS, region) : 'calm';
   const roll = (lo, hi) => lo + Math.floor(dice(rand) * (hi - lo + 1));
-  let tier, key2, qty, clean, gem = null, extra = null, extraQty = 1, trophy = 0;
+  let tier, key2, qty, clean, gem = null, extra = null, extraQty = 1, trophy = 0, schooled = 0;
   let xpTier = /** @type {number|null} */ (null);   // HERB-XP: the tier the XP is reckoned at, where it is not the node's
   if (isHaul) {
     // PROF8: THE NET - a haul's Raw Fish, worked at the rank's own tier (Mac: "XP follows your rank"); a full net x1.5
@@ -592,7 +623,12 @@ export async function harvestNode(ctx, player, env, body = {}) {
     gem = finds.pearl;
     extra = finds.scales;
     trophy = finds.trophy ? 1 : 0;
-    qty = haulYield({ roll: roll(HAUL_YIELD[0], HAUL_YIELD[1]), clean, march, school: net.school, netter: specs[50] === 'netter', slaughterfish: !!finds.scales, tideMult: tideYield(tide, 'haul') }, dice(rand));
+    // AUDIT GATHER F3: a school's fish on the account's first SCHOOL_HAULS_DAY SCHOOLS of the day - the client's word,
+    // bounded as section 30 bound it (the day's forty), never on every haul. AUDIT LOCKPICK D2: the schools counted, never
+    // the hauls - an honest angler's first school after forty plain hauls earned nothing (migration 0176: its row says so)
+    const school = net.school && Number((await schoolsStatement(db, player.id, day).first())?.n ?? 0) < SCHOOL_HAULS_DAY;
+    schooled = school ? 1 : 0;
+    qty = haulYield({ roll: roll(HAUL_YIELD[0], HAUL_YIELD[1]), clean, march, school, netter: specs[50] === 'netter', slaughterfish: !!finds.scales, tideMult: tideYield(tide, 'haul') }, dice(rand));
   } else if (isBody) {
     // PROF7: THE SKINNING KNIFE - the hide of the foe the client names; a clean pelt x1.5 (the act's bound), a torn one's
     // DFU part lost; the part one body in four; the butchery beside it, a Butcher's two (PROF0 4.4, 29)
@@ -713,18 +749,18 @@ export async function harvestNode(ctx, player, env, body = {}) {
     // says what was credited); the second find kept where one of it fits, its count cut to its room (AUDIT 32 S3: a
     // Butcher's two at 4,999 were both lost). CAP-OFF: no day's cap - a character's sixty in a profession, an account's
     // 120 (A3), Hunting's thirty hides and Fishing's forty hauls are asked no more
-    db.prepare(`INSERT OR IGNORE INTO node_harvests (day, node, kind, player, char_id, profession, material, qty, xp, gem, at, rid, n, deep_unconfirmed, extra, tier, extra_qty, trophy, carry)
+    db.prepare(`INSERT OR IGNORE INTO node_harvests (day, node, kind, player, char_id, profession, material, qty, xp, gem, at, rid, n, deep_unconfirmed, extra, tier, extra_qty, trophy, carry, school)
       SELECT ?6, ?7, ?8, ?1, ?4, ?9, ?5, MIN(?10, ?11 - ${stored},
           CASE WHEN ?9 = 'hunting' AND ?19 >= ?20 THEN ?21 - ${huntedHigh} ELSE ?10 END),
         MAX(0, MIN(?12, ?17 - COALESCE((SELECT xp FROM prof_tracks WHERE player = ?1 AND char_id = ?4 AND profession = ?9), 0))),
         CASE WHEN COALESCE((SELECT SUM(qty) FROM ${T} WHERE player = ?1 AND char_id = ?4 AND material = ?14), 0) < ?11 THEN ?14 END, ?13, ?2, ?3, ?15,
-        CASE WHEN ${storedExtra} < ?11 THEN ?18 END, ?19, CASE WHEN ${storedExtra} < ?11 THEN MIN(?22, ?11 - ${storedExtra}) ELSE 1 END, ?23, ?24
+        CASE WHEN ${storedExtra} < ?11 THEN ?18 END, ?19, CASE WHEN ${storedExtra} < ?11 THEN MIN(?22, ?11 - ${storedExtra}) ELSE 1 END, ?23, ?24, ?25
       WHERE (?15 = 0 OR (SELECT COUNT(*) FROM node_harvests WHERE player = ?1 AND day = ?6 AND deep_unconfirmed = 1) < ?16)
         AND (?9 <> 'hunting' OR ?19 < ?20 OR ${huntedHigh} < ?21)
         AND ?11 - ${stored} >= 1`)
       .bind(player.id, rid, nonce, character, key2, day, node, kind, profession, kept, ROOM, xp, at, gem,
         deepUnconfirmed, DEEP_UNCONFIRMED_PER_DAY, PROF_XP_MAX, extra,
-        tier, HIGH_HIDE_TIER, HIGH_HIDES_PER_DAY, extraQty, trophy, carry ? 1 : 0),
+        tier, HIGH_HIDE_TIER, HIGH_HIDES_PER_DAY, extraQty, trophy, carry ? 1 : 0, schooled),
     db.prepare(`INSERT INTO ${T} (player, char_id, material, origin, qty)
       SELECT player, char_id, material, 'own', qty FROM node_harvests WHERE ${mine}
       ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = ${T}.qty + excluded.qty`).bind(player.id, rid, nonce),
@@ -1287,10 +1323,10 @@ async function craftAnswer(db, player, row, nowS, extra = {}) {
   return {
     ok: true, ...extra, recipe: row.recipe, quality: Number(row.quality), count: Number(row.count), seed: Number(row.seed),
     maker: by.get(row.provenance)?.maker ?? null, marked: Number(by.get(row.provenance)?.marked ?? 0) === 1, xp: Number(row.xp), first: Number(row.first) === 1,
-    // CLOTH-GEMS: whether that first laid its share on (AUDIT 32 S1, judged by the units) - a recipe S1 judges only where its
-    // piece is own, B7's `bought_with` none: the decision's own test, read off the piece as it stands (a repeat asked after
-    // a sale reads the sale's)
-    firstPaid: Number(row.first) === 1 && firstCraftPays(r, !!r && !siege && by.get(row.provenance)?.bought_with == null),
+    // CLOTH-GEMS: whether that first laid its share on (AUDIT 32 S1) - WOVEN-PAYS: the decision's own word (`first_paid`,
+    // migration 0177); AUDIT WOVEN-PAYS A4: a row from before it read as the decision reads it (`patternMade`) - a judged
+    // first laid its share on where its XP holds it, every other first did
+    firstPaid: row.first_paid == null ? Number(row.first) === 1 && (!counterMade(r) || Number(row.xp) >= FIRST_MAKE_FLOOR) : Number(row.first_paid) === 1,
     heartwood: Number(row.heartwood) === 1, dye: row.dye == null ? null : Number(row.dye),   // PROF7: a garment's dye
     ...(r?.kind === 'dish' || r?.kind === 'jewel' ? { hand: by.get(row.provenance)?.hand == null ? null : Number(by.get(row.provenance).hand) } : {}),   // PROF9: a dish's cook's hand; PROF10: a piece's jeweller's
     pieces: ids.map((p) => ({ provenance: p, record: by.get(p)?.record ?? null })),
@@ -1411,6 +1447,13 @@ export async function craftAtAnvil(ctx, player, env, { character, recipe: id, cl
   const kin = firstCraftKin(r);
   const madeBefore = `recipe IN (SELECT value FROM json_each(?${binds.length + 1}))`;
   binds.push(JSON.stringify(kin));
+  // WOVEN-PAYS (FIELD BUGS 2026-10-26b): A PATTERN S1 JUDGES IS MADE BY THE CRAFT THAT LAID ITS FIRST ON (`first_paid`,
+  // migration 0177) - a craft of silver-bought cloth before it lays none on and takes nothing, so the first is still owed
+  // to the next craft of it that can pay. A row from before the column (`first_paid` NULL) laid it on where it was the
+  // first and its XP holds the share (FIRST_MAKE_FLOOR: no share is under it, and no judged craft's own XP reaches it -
+  // tiers 1-2, pinned). Every other recipe's pattern is made by any craft of it, as before (FACT, pinned: no pattern at a
+  // tier holds both)
+  const patternMade = counterMade(r) ? `${madeBefore} AND (first_paid = 1 OR (first_paid IS NULL AND first = 1 AND xp >= ${FIRST_MAKE_FLOOR}))` : madeBefore;
   const decided = 'EXISTS (SELECT 1 FROM prof_crafts WHERE player = ?1 AND rid = ?5 AND n = ?6)';
   // AUDIT PROF-541 B7: A PIECE MADE OF BOUGHT GOODS IS BOUGHT - 'marks' (GOLD-MARKET's Drakes, products.bought_with) where
   // any input held a bought unit as the pieces are minted, BEFORE the spends (bought first - the smelt's rule, professionLaw
@@ -1426,24 +1469,24 @@ export async function craftAtAnvil(ctx, player, env, { character, recipe: id, cl
   // migration 0142) - so its disenchant's Essence is loose, a station's, as a smelt's products of loose goods are, and
   // never "bought with gold"
   const looseWall = `CASE WHEN ${anySql(13, LOOSE_ORIGIN)} THEN 1 ELSE 0 END`;
-  // AUDIT 32 S1, JUDGED BY THE UNITS (CLOTH-GEMS, Professions-Arc 50): a recipe wholly of the goods a counter sells without
-  // end (recipeLaw counterMade - the Weavers' Linen and Wool) lays its first's share on (FIRST-BUDGET) only where the piece is the
-  // character's own - none of its inputs held as loose or bought (spent first, so one held is one spent): B7's
-  // `boughtWith` none, read in the decision against the same rows (the inputs' keys at ?17 on, two a one). Every other
-  // recipe's first pays (firstCraftPays): the loom's own Linen and Wool pay, the Weavers' never do
-  const keysAt = inputs.map((_, i) => `?${17 + 2 * i}`);
-  const heldAs = (/** @type {string} */ origin) => keysAt.map((k) => `COALESCE((SELECT qty FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = ${k} AND origin = '${origin}'), 0) > 0`).join(' OR ') || '0';
-  const pays = counterMade(r) ? `CASE WHEN ${heldAs(LOOSE_ORIGIN)} OR ${heldAs('bought')} THEN 0 ELSE 1 END` : '1';
+  // AUDIT 32 S1 (CLOTH-GEMS, Professions-Arc 50): a recipe wholly of the goods a counter sells without end (recipeLaw
+  // counterMade - Linen and Wool) lays its first's share on (FIRST-BUDGET) only where no bolt it uses counts as bought with
+  // silver - WOVEN-PAYS (FIELD BUGS 2026-10-26b, the owner: "Woven cloth pays"; AUDIT WOVEN-PAYS): the cloth's silver count
+  // nought (`silverSql`, the inputs' keys at ?17 on), whatever its units' origins - the loom's own cloth of looted, shop-
+  // or market-bought goods pays, a guildmate's pays, and a Weavers' bolt set down and picked up again still counts. Every
+  // other recipe's first pays (firstCraftPays)
+  const silverHeld = inputs.map((_, i) => `${silverSql('?1', '?2', `?${17 + 2 * i}`)} > 0`).join(' OR ') || '0';
+  const pays = counterMade(r) ? `CASE WHEN ${silverHeld} THEN 0 ELSE 1 END` : '1';
   if (siege) held.push(`COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = '${RAM_KIT.key}'), 0) + ?6 <= ${STORES_MAX}`);   // SEAT2b part two: the kit's room
   await db.batch([
     // THE DECISION: every input held - and the XP what the track can take under the crafter's limit, the first craft's
     // share (FIRST-BUDGET, ?13) laid on when the character has made none of the recipe's pattern at its tier and its units pay it (`p` - AUDIT
-    // 32 S1, judged by the units: CLOTH-GEMS)
-    db.prepare(`INSERT OR IGNORE INTO prof_crafts (player, rid, char_id, recipe, quality, count, provenance, provenance2, seed, xp, first, at, n, heartwood, dye)
+    // 32 S1, judged by the units: CLOTH-GEMS; WOVEN-PAYS: `patternMade`, and whether it laid it on, `first_paid`)
+    db.prepare(`INSERT OR IGNORE INTO prof_crafts (player, rid, char_id, recipe, quality, count, provenance, provenance2, seed, xp, first, at, n, heartwood, dye, first_paid)
       SELECT ?1, ?3, ?2, ?4, ?5, ?6, ?7, ?8, ?9,
         MAX(0, MIN(?10 + f * p * ?13, ${cap} - COALESCE((SELECT xp FROM prof_tracks WHERE player = ?1 AND char_id = ?2 AND profession = ?14), 0))),
-        f, ?11, ?12, ?15, ?16
-      FROM (SELECT CASE WHEN EXISTS (SELECT 1 FROM prof_crafts WHERE player = ?1 AND char_id = ?2 AND ${madeBefore}) THEN 0 ELSE 1 END AS f, ${pays} AS p)
+        f, ?11, ?12, ?15, ?16, f * p
+      FROM (SELECT CASE WHEN EXISTS (SELECT 1 FROM prof_crafts WHERE player = ?1 AND char_id = ?2 AND ${patternMade}) THEN 0 ELSE 1 END AS f, ${pays} AS p)
       WHERE ${held.join(' AND ')}`).bind(...binds),
     // the pieces, each its provenance id, its owner (this account), its signed record, its mark and (PROF7) its dye -
     // AUDIT PROF-541 B7: and bought where its inputs were, minted BEFORE the inputs go (their bought units read as they stand) -
@@ -1456,6 +1499,10 @@ export async function craftAtAnvil(ctx, player, env, { character, recipe: id, cl
         .bind(player.id, character, rid, p, nonce, maker, r.id, r.templateIndex, r.material, records[i], marked, hand, ...inputs.map((inp) => inp.key)))),   // PROF9: a dish's hand (0069)
     // the inputs out, each bought first - AUDIT BAG-CRAFT A1: its loose units before them
     ...inputs.flatMap((inp) => workStatements(db, {
+      player: player.id, character, materialSql: '?3', qtySql: '?4', guard: decided, binds: [inp.key, inp.n, rid, nonce],
+    })),
+    // WOVEN-PAYS: a cloth's bolts used, off its silver count - after the decision read it
+    ...inputs.filter((inp) => JUDGED_CLOTH.includes(inp.key)).flatMap((inp) => silverClothOut(db, {
       player: player.id, character, materialSql: '?3', qtySql: '?4', guard: decided, binds: [inp.key, inp.n, rid, nonce],
     })),
     // the XP the decision credited, under the crafter's limit - the recipe's profession's
@@ -1559,6 +1606,8 @@ export async function temperPiece(ctx, player, env, { character, recipe: id, qua
       WHERE provenance = ?6 AND ${decided}`).bind(player.id, rid, nonce, quality + 1, record, provenance, character, cost.key)] : []),
     // the input out, bought first - AUDIT BAG-CRAFT A1: its loose units before them
     ...workStatements(db, { player: player.id, character, materialSql: '?3', qtySql: '?4', guard: 'EXISTS (SELECT 1 FROM prof_tempers WHERE player = ?1 AND rid = ?5 AND n = ?6)', binds: [cost.key, cost.n, rid, nonce] }),
+    // WOVEN-PAYS: a garment's cloth used, off its silver count
+    ...(JUDGED_CLOTH.includes(cost.key) ? silverClothOut(db, { player: player.id, character, materialSql: '?3', qtySql: '?4', guard: 'EXISTS (SELECT 1 FROM prof_tempers WHERE player = ?1 AND rid = ?5 AND n = ?6)', binds: [cost.key, cost.n, rid, nonce] }) : []),
     // the XP the decision credited, under the crafter's limit - the craft's
     db.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, updated_at)
       SELECT ?1, ?2, ?6, MIN(${cap}, xp), ?4 FROM prof_tempers WHERE player = ?1 AND rid = ?3 AND n = ?5
@@ -1623,6 +1672,8 @@ export async function buyStock(ctx, player, env, { character, material: key, qty
     db.prepare(`INSERT INTO prof_stores (player, char_id, material, origin, qty)
       SELECT player, char_id, material, 'bought', qty FROM prof_stock WHERE player = ?1 AND rid = ?2 AND n = ?3
       ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = prof_stores.qty + excluded.qty`).bind(player.id, rid, nonce),
+    // WOVEN-PAYS: the Weavers' and the furnisher's cloth, counted bought with silver
+    silverClothIn(db, 'SELECT player, char_id, material, qty FROM prof_stock WHERE player = ?1 AND rid = ?2 AND n = ?3', [player.id, rid, nonce]),
   ]);
   const made = await db.prepare('SELECT * FROM prof_stock WHERE player = ?1 AND rid = ?2').bind(player.id, rid).first();
   if (made?.n === nonce) return answer(made);

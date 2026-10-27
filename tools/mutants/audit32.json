@@ -568,26 +568,26 @@
   {
     "name": "AUDIT32-S1-service-always-pays",
     "file": "server-account/src/professions.js",
-    "old": "  const pays = counterMade(r) ? `CASE WHEN ${heldAs(LOOSE_ORIGIN)} OR ${heldAs('bought')} THEN 0 ELSE 1 END` : '1';",
+    "old": "  const pays = counterMade(r) ? `CASE WHEN ${silverHeld} THEN 0 ELSE 1 END` : '1';",
     "new": "  const pays = '1';",
     "tests": [
       "test/net/audit32_service.test.js",
       "test/net/prof7_service.test.js",
       "test/net/clothgems_service.test.js"
     ],
-    "note": "PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
+    "note": "PIN MOVED (AUDIT WOVEN-PAYS): re-aimed by content - the decision's `p` reads the cloth's silver count (`silverHeld`). PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
   },
   {
     "name": "AUDIT32-S1-service-pays-inverted",
     "file": "server-account/src/professions.js",
-    "old": "OR ${heldAs('bought')} THEN 0 ELSE 1 END` : '1';",
-    "new": "OR ${heldAs('bought')} THEN 1 ELSE 0 END` : '1';",
+    "old": "CASE WHEN ${silverHeld} THEN 0 ELSE 1 END` : '1';",
+    "new": "CASE WHEN ${silverHeld} THEN 1 ELSE 0 END` : '1';",
     "tests": [
       "test/net/audit32_service.test.js",
       "test/net/prof7_service.test.js",
       "test/net/clothgems_service.test.js"
     ],
-    "note": "PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
+    "note": "PIN MOVED (AUDIT WOVEN-PAYS): re-aimed by content - the decision's `p` reads the cloth's silver count (`silverHeld`). PIN MOVED (CLOTH-GEMS, Professions-Arc 50): re-aimed by content - AUDIT 32 S1 judges the units (recipeLaw counterMade, firstCraftPays's `own`; the service's decision `p`), and the loom weaves Linen and spins Wool (professionLaw WEAVE_RECIPES, SPIN_RECIPES)."
   },
   {
     "name": "AUDIT32-S1-law-any-counter-input",

@@ -366,8 +366,9 @@ export const ARENA_SPELL_MAX = 60;
  *  good one is not believed (the referee measures reach from the last good pose). */
 export const ARENA_SPEED_MAX = 12.5;
 export const ARENA_SPEED_SLACK = 0.5;
-/** DFU's CalculateWeaponMaxDamage, verbatim case groups, by template (characters/weapons.js, pinned). */
-export const ARENA_WEAPON_MAX = Object.freeze({ 113: 6, 114: 8, 115: 8, 116: 8, 117: 10, 118: 12, 119: 12, 120: 16, 121: 16, 122: 18, 123: 21, 124: 12, 125: 14, 126: 18, 127: 12, 128: 16, 129: 16, 130: 18 });
+/** DFU's CalculateWeaponMaxDamage, verbatim case groups, by template (characters/weapons.js, pinned) - the bows one
+ *  higher, BAL-ARCHERY's (bible/05-Combat/Balance-Arc.md section 18). */
+export const ARENA_WEAPON_MAX = Object.freeze({ 113: 6, 114: 8, 115: 8, 116: 8, 117: 10, 118: 12, 119: 12, 120: 16, 121: 16, 122: 18, 123: 21, 124: 12, 125: 14, 126: 18, 127: 12, 128: 16, 129: 17, 130: 19 });
 /** DFU's weapon material modifier (combat/formulas.js WEAPON_MATERIAL_MODIFIER, pinned), by material 0..9. */
 export const ARENA_MATERIAL_MOD = Object.freeze([-1, 0, 0, 1, 2, 3, 3, 4, 5, 6]);
 /** A bare hand's most (CalculateHandToHandMaxDamage at a skill past 100, the softcap's 200) and the room a fighter's own

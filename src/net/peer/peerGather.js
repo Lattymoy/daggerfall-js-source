@@ -147,12 +147,15 @@ export function peerGatherSwing(seen, shown) {
 
 // ---- the receiver: what a peer's act sounds like ---------------------------------------------------------------------
 
-/** The least time between two of one peer's beats (ms): one pose at the pose's top rate (net/online.js POSE_HZ, pinned
- *  equal - AUDIT GATHER-FEEL R7: it is no floor of the climb's). The wire carries an honest act's beats one a pose at
- *  most - a tool's a swing apart (0.45 s), the knife's strokes and the Basket's finds as often as a pose goes - and a
+/** The least time between two of one peer's beats (ms): three quarters of a pose at the pose's top rate (net/online.js
+ *  POSE_HZ, pinned - AUDIT GATHER-FEEL R7: it is no floor of the climb's). The wire carries an honest act's beats one a pose
+ *  at most - a tool's a swing apart (0.45 s), the knife's strokes and the Basket's finds as often as a pose goes - and a
  *  pose stream that flips its fields every pose would ask a one-shot of every drawn frame. A blow taken back is no cue:
- *  it is heard under the floor. */
-export const PEER_GATHER_CUE_MS = 100;
+ *  it is heard under the floor. AUDIT GATHER F8 (Professions-Arc section 55): it was a whole pose (100), and the receiver
+ *  measures a pose's gap on its own frames - a frame either side of 100 ms - so an honest beat a pose was dropped as often
+ *  as not (100 of 199 heard at 75 Hz, 333 of 399 at 60 with a frame's jitter): a quarter of a pose below it, every one is
+ *  heard at any refresh, and a flipping stream is still held to one a 75 ms. */
+export const PEER_GATHER_CUE_MS = 75;
 /** Where a peer's act is heard: this far before the body (metres, along its facing - a node is worked within DFU's
  *  activation distance), this high off its feet. */
 export const PEER_ACT_REACH_M = 1;

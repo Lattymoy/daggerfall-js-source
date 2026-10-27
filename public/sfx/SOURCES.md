@@ -28,16 +28,21 @@ section 44, GATHER-FEEL), built by `tools/gatherSfx.mjs` from the same kit and t
 parry, a splash and a lock's click, which the acts borrowed; it has no axe in wood, no pick on stone, no leaves and no
 tree coming down.
 
+The `lock-*.wav` files are ours outright as well: the lockpicking minigame's tumblers - a pin lifted, a free pin
+springing back, a pin set, a spool's false set, a slip and a pick snapping (bible/06-Systems/Lockpicking.md, LOCKPICK),
+built by `tools/lockSfx.mjs` from the same kit and the same bake. DAGGER.SND has the picked lock's chime, which the world
+still plays as a lock opens; it has no tumblers.
+
 The `horse-*.wav` files are ours outright as well: the horse's snorts, blows, breaths and spook, and its hooves on grass,
 in snow and in water (bible/08-Audio/Audio.md HORSE-VOICE), built by `tools/horseSfx.mjs` from the same kit and the same
 bake. DAGGER.SND has one neigh, two clops on hard ground and the cart; it has no snort, no breath and no hoof on soft
 ground.
 
 The `sea-*`, `shore-*`, `wild-*` and `town-*` files are the soundscape's (SOUNDSCAPE, bible/08-Audio/Audio.md): the
-deck's air at sea, the surf on a shore, the wild's voices and a town's smithies. Two kinds. OURS: the hull's slaps, the
-timbers' and the ropes' creaks, the canvas luffing, the spray, a wave breaking, the owls and the wolves, built by
-`tools/soundscapeSfx.mjs` from the same kit and the same bake - DAGGER.SND has splashes, a bell and a lap of water, and
-no hull, no rigging, no surf, no owl and no wolf. RECORDED, each **CC0** (public domain) from
+gulls at sea, the surf on a shore, the wild's voices and a town's smithies. Two kinds. OURS: a wave breaking, the owls
+and the wolves, built by `tools/soundscapeSfx.mjs` from the same kit and the same bake - DAGGER.SND has splashes, a bell
+and a lap of water, and no surf, no owl and no wolf (the deck's own eleven - the hull's slaps, the timbers' and the
+ropes' creaks, the canvas luffing, the spray - were removed with DECK-QUIET, 2026-10-26). RECORDED, each **CC0** (public domain) from
 [OpenGameArt](https://opengameart.org) - the gulls, a crow, the frogs and two anvils, whose character a synthesiser
 does badly - fetched from each page's own file and baked by `tools/soundscapeSfxInstall.mjs` (re-run it to rebuild them
 from the same sources). The soundscape's beds (the swell, the wash, the rigging, the surf, the marsh) are made at run
@@ -125,6 +130,13 @@ over 5 kHz, which DAGGER.SND's format cannot hold. **Source and license: to be f
 | `gather-clean.wav` | gathering: a clean finish | `tools/gatherSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - two soft bell notes a fourth apart (E6, A6) (GATHER-FEEL) |
 | `gather-haul.wav` | gathering: the goods into the bag | `tools/gatherSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a leather satchel's thump, its flap, the goods settling (GATHER-FEEL) |
 | `gather-rank.wav` | gathering: a rank risen | `tools/gatherSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - three bell notes rising (C6, E6, G6) and a fourth above them (GATHER-FEEL) |
+| `lock-tick-1.wav` | lockpicking: the pick lifting a pin | `tools/lockSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a tiny steel tick on brass and the pin's short ring (LOCKPICK) |
+| `lock-tick-2.wav` | lockpicking: the pick lifting a pin (the other) | `tools/lockSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the same, a breath lower - two, so no lift is the one just heard (LOCKPICK) |
+| `lock-spring.wav` | lockpicking: a free pin springing back | `tools/lockSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a light ting and the spring's short buzz (LOCKPICK) |
+| `lock-set.wav` | lockpicking: a pin set at the shear line | `tools/lockSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a crisp click, the plug giving a hair (LOCKPICK) |
+| `lock-false.wav` | lockpicking: a spool pin's false set | `tools/lockSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a dull clunk and the plug turning back against the tension (LOCKPICK) |
+| `lock-slip.wav` | lockpicking: the pick slipping off a pin | `tools/lockSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a thin steel scrape (LOCKPICK) |
+| `lock-snap.wav` | lockpicking: the pick snapping | `tools/lockSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a sharp crack, and the broken tip ringing as it falls and lands (LOCKPICK) |
 | `horse-snort-1.wav` | horse: a snort | `tools/horseSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a forceful breath out through the nose's two bands (300 Hz, 1.6 kHz), fluttering at ~32 Hz |
 | `horse-snort-2.wav` | horse: a snort | `tools/horseSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the same, a shade lower and longer |
 | `horse-snort-3.wav` | horse: a snort | `tools/horseSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the same, a shade higher and shorter |
@@ -140,17 +152,6 @@ over 5 kHz, which DAGGER.SND's format cannot hold. **Source and license: to be f
 | `horse-snow-fast.wav` | horse: hooves in snow, fast | `tools/horseSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the same on HorseClop2's cadence |
 | `horse-water-slow.wav` | horse: hooves in shallow water, slow | `tools/horseSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a splash and its drops, a low plop; HorseClop's cadence |
 | `horse-water-fast.wav` | horse: hooves in shallow water, fast | `tools/horseSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the same on HorseClop2's cadence |
-| `sea-slap-1.wav` | sea: a wave on the hull | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the water's mass under 320 Hz, the planking's three low modes, the slop thrown up and a smaller slosh behind it |
-| `sea-slap-2.wav` | sea: a wave on the hull | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the water's mass under 320 Hz, the planking's three low modes, the slop thrown up and a smaller slosh behind it |
-| `sea-slap-3.wav` | sea: a wave on the hull | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the water's mass under 320 Hz, the planking's three low modes, the slop thrown up and a smaller slosh behind it |
-| `sea-creak-1.wav` | sea: the timbers working | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a slow stick-slip groan through a hull's low bands (150 to 940 Hz), swelling and easing |
-| `sea-creak-2.wav` | sea: the timbers working | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a slow stick-slip groan through a hull's low bands (150 to 940 Hz), swelling and easing |
-| `sea-rope-1.wav` | sea: a rope in its block | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a quicker, higher stick-slip creak (690 to 1800 Hz) and the sheave's tick as it stops |
-| `sea-rope-2.wav` | sea: a rope in its block | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a quicker, higher stick-slip creak (690 to 1800 Hz) and the sheave's tick as it stops |
-| `sea-luff-1.wav` | sea: canvas luffing | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - flaps of a sail's band at uneven gaps, a low whump under each and a ripple after it |
-| `sea-luff-2.wav` | sea: canvas luffing | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - flaps of a sail's band at uneven gaps, a low whump under each and a ripple after it |
-| `sea-spray-1.wav` | sea: spray over the bow | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a crest's crack, a long hiss of water falling back losing its top, drops after |
-| `sea-spray-2.wav` | sea: spray over the bow | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a crest's crack, a long hiss of water falling back losing its top, drops after |
 | `shore-crash-1.wav` | shore: a wave breaking | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the roar rising as the wave curls (its top opening out), the crash, the foam running back with fizz in it |
 | `shore-crash-2.wav` | shore: a wave breaking | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - the roar rising as the wave curls (its top opening out), the crash, the foam running back with fizz in it |
 | `wild-owl-1.wav` | wild: an owl at night | `tools/soundscapeSfx.mjs` | ours | n/a | synthesised from noise and sine, deterministically - a tawny's hoot and its tremolo (470 Hz) - sines sliding down with a breath of their band |

@@ -13,7 +13,7 @@ import { ACCEL, DECEL, OARS_TURN, SWEEP_TURN, WIND_RATED, createSeaShip, maxTurn
 import { createShipDamage, SHIP_STATES, STRUCK_AT } from '../../../src/systems/naval/navalDamage.js';
 import { HULL } from '../../../src/systems/naval/navalShips.js';
 import { NAVAL_DEG } from '../../../src/systems/naval/navalBallistics.js';
-import { HEAVE_TO_DECEL } from '../../../src/scenes/naval/navalHost.js';
+import { haulBrake, GRAPPLE_S } from '../../../src/systems/naval/navalBoarding.js';
 import { FEATURES } from '../../../src/systems/features.js';
 import { scene } from '../../csaScene.mjs';
 
@@ -159,7 +159,7 @@ test('HELM-WAY a ship with no hands left: an AI hull whose every man is down str
   assert.equal(mine.state, SHIP_STATES.afloat, 'the player works her guns alone');
 });
 
-test('HELM-WAY the Features row\'s Ship handling (responsive, or the mod\'s own - classic), each player\'s own; the world hands it and the heave-to\'s brake (HEAVE_TO_DECEL, m/s^2) to Come Sail Away', () => {
+test('HELM-WAY the Features row\'s Ship handling (responsive, or the mod\'s own - classic), each player\'s own; the world hands it and the grapples\' haul brake (BOARD-MAGNET haulBrake, m/s^2) to Come Sail Away', () => {
   const row = FEATURES.find((r) => r.id === 'naval-combat');
   assert.ok(row.control.also.some((a) => a.key === 'naval-handling' && a.initial === 'responsive' && a.online === 'player'));
   const part = row.control.parts.find((p) => p.key === 'naval-handling');
@@ -168,5 +168,5 @@ test('HELM-WAY the Features row\'s Ship handling (responsive, or the mod\'s own 
   const w = src('src/scenes/world.js');
   assert.match(w, /brake: \(\) => naval\?\.brake\(\) \?\? 0,/);
   assert.match(w, /handling: \(\) => getPref\('naval-handling'\) \?\? 'responsive',/);
-  assert.ok(HEAVE_TO_DECEL > 0 && HEAVE_TO_DECEL < 5, 'a brake, not a wall');
+  assert.ok(haulBrake(8.2) > 0 && Math.abs(haulBrake(8.2) * GRAPPLE_S - 8.2) < 1e-12, 'a brake that takes her way off over the haul, not a wall');
 });

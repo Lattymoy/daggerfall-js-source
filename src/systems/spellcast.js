@@ -22,6 +22,8 @@ import { CAPSULE_RADIUS } from '../player/motor.js';   // AUDIT 65 CV-2: the PLA
 
 // ---- DaggerfallMissile constants, verbatim ----
 export const MISSILE_SPEED = 25.0;
+/** BAL-ARCHERY: a shaft flies 35% faster than DaggerfallMissile.MovementSpeed. Spells and a gun's orb stay on MISSILE_SPEED. */
+export const ARROW_FLIGHT_SPEED = MISSILE_SPEED * 1.35;
 export const MISSILE_COLLIDER_RADIUS = 0.45;
 export const MISSILE_LIFESPAN_S = 8;
 export const CASTSPELL_COOLDOWN_TICK = 45.454546;   // "Approximates classic based on observation"

@@ -134,6 +134,12 @@ standing raiders until they die or are culled, so for a moment two owners' raide
 is a client's: nothing stops a modified client saying a false share - at a RAID3 relay the count is the relay's, and
 RAID4's rewards pay from its signed receipt.
 
+MAIN-RED (2026-10-26): the pin that the relay reads nothing inside a foes frame (`test/systems/raid2_raidsOnline.test.js`)
+reads the relay's TREE now, not its text. Its regex took AUDIT KETCH II's local `rz = V.players[b.sub]?.rzAt` for a
+frame's field and reddened main, holding back the deploy; a field is a member read (`x.rz`), a pattern's key
+(`{ rz } = x`) or a literal's (`{ rk: 0 }`), outside `_grantStripped`, and a local of that name is none of them. No
+relay change, so no `RELAY_VERSION`; `tools/mutants/mainred1.json` holds four reads and writes the pin still fails.
+
 ## The relay holds the raid (RAID3, 2026-09-27)
 
 Mac's "1. Server": the relay tracks each raid's kill count, kept even if everyone leaves, the cleanse and the

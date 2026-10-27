@@ -494,17 +494,17 @@
   {
     "name": "MARKET-ANY-tab-the-option-without-gold",
     "file": "src/ui/marketTab.js",
-    "old": "      ...(goldOk() && m.goods ? [['item', 'A piece from your pack (gold)']] : [])];",
-    "new": "      ...(m.goods ? [['item', 'A piece from your pack (gold)']] : [])];",
+    "old": "    const packOk = goldOk() && !!m.goods;",
+    "new": "    const packOk = !!m.goods;",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]
   },
   {
     "name": "MARKET-ANY-tab-the-refused-unsaid",
-    "file": "src/ui/marketTab.js",
-    "old": "      if (refused.length) {",
-    "new": "      if (false) {",
+    "file": "src/ui/packPicker.js",
+    "old": "  if (refused.length) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]

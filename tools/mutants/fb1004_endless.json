@@ -20,8 +20,8 @@
   {
     "name": "ENDLESS-the-bag-not-endless",
     "file": "src/systems/shopStock.js",
-    "old": "export const isEndlessStock = (item) => isBagItem(item) || (isSurvivalItem(item) && isCampfireKit(item)) || isRations(item);",
-    "new": "export const isEndlessStock = (item) => (isSurvivalItem(item) && isCampfireKit(item)) || isRations(item);",
+    "old": "export const isEndlessStock = (item) => isBagItem(item) || (isSurvivalItem(item) && isCampfireKit(item)) || isRations(item) || isLockpick(item);",
+    "new": "export const isEndlessStock = (item) => (isSurvivalItem(item) && isCampfireKit(item)) || isRations(item) || isLockpick(item);",
     "tests": [
       "test/systems/fb1004_endless.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "ENDLESS-the-campfire-not-endless",
     "file": "src/systems/shopStock.js",
-    "old": "export const isEndlessStock = (item) => isBagItem(item) || (isSurvivalItem(item) && isCampfireKit(item)) || isRations(item);",
-    "new": "export const isEndlessStock = (item) => isBagItem(item) || isRations(item);",
+    "old": "export const isEndlessStock = (item) => isBagItem(item) || (isSurvivalItem(item) && isCampfireKit(item)) || isRations(item) || isLockpick(item);",
+    "new": "export const isEndlessStock = (item) => isBagItem(item) || isRations(item) || isLockpick(item);",
     "tests": [
       "test/systems/fb1004_endless.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "ENDLESS-a-campfire-of-any-group",
     "file": "src/systems/shopStock.js",
-    "old": "export const isEndlessStock = (item) => isBagItem(item) || (isSurvivalItem(item) && isCampfireKit(item)) || isRations(item);",
-    "new": "export const isEndlessStock = (item) => isBagItem(item) || isCampfireKit(item) || isRations(item);",
+    "old": "export const isEndlessStock = (item) => isBagItem(item) || (isSurvivalItem(item) && isCampfireKit(item)) || isRations(item) || isLockpick(item);",
+    "new": "export const isEndlessStock = (item) => isBagItem(item) || isCampfireKit(item) || isRations(item) || isLockpick(item);",
     "tests": [
       "test/systems/fb1004_endless.test.js"
     ]
