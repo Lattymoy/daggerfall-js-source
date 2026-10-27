@@ -1208,7 +1208,9 @@ whatever the throttling says. So the fix is in the breather: in the desktop app 
 yields one event-loop turn (a `MessageChannel` message) instead of a frame (`breathFrame`). The browser build keeps the
 frame - a hidden tab still waits, as Chrome's own background rules have it. A slice resumed by a turn is not lent to
 the frame clock (PERF-EXT24): no frame sampled it, and the first frame back would have read the whole hidden build as
-its own script.
+its own script. A page that is visible when a breath starts has a frame pending, and a window minimized before it fires
+gets none: the breath also resumes by a turn when `visibilitychange` shows the page hidden (not run in the built
+app; pinned by execution in the test).
 
 Measured in the built app, the throttling left as Electron's default: the cold boot took 26.6 s covered and 26.4 s
 minimized, where a visible one took 26.5-26.8 s; a warm minimized boot took 9.2 s. In play the throttling is the

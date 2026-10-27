@@ -109,8 +109,20 @@ export function breathFrame(fn, {
   raf = (f) => requestAnimationFrame(f),
   turn = nextTurn,
 } = {}) {
-  if (shell && doc?.hidden) turn(() => fn(TURNED));
-  else raf(fn);
+  if (!shell) return raf(fn);
+  if (doc?.hidden) return turn(() => fn(TURNED));
+  // Visible now, so a frame is pending - but a window minimized before it fires gets none. The first of the frame and
+  // the page turning hidden resumes the breath.
+  let settled = false;
+  const settle = (resumedBy) => {
+    if (settled) return;
+    settled = true;
+    doc?.removeEventListener?.('visibilitychange', onChange);
+    fn(resumedBy);
+  };
+  const onChange = () => { if (doc?.hidden) turn(() => settle(TURNED)); };
+  doc?.addEventListener?.('visibilitychange', onChange);
+  raf((t) => settle(t));
 }
 
 /**

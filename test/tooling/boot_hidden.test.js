@@ -16,6 +16,19 @@ test('BOOT-HIDDEN the build breathes a turn while the desktop page is hidden, a 
   assert.deepEqual(took, ['turn', 'frame', 'frame']);
 });
 
+test('BOOT-HIDDEN a window hidden while a frame is pending resumes the breath by a turn, once', () => {
+  const heard = [];
+  let onChange = null;
+  const doc = { hidden: false, addEventListener: (_, f) => { onChange = f; }, removeEventListener: () => { onChange = null; } };
+  let frame = null;
+  breathFrame((by) => heard.push(by), { shell: {}, doc, raf: (f) => { frame = f; }, turn: (f) => f() });
+  doc.hidden = true;
+  onChange();
+  frame(9);   // the dead frame, should it ever come
+  assert.deepEqual(heard, [TURNED]);
+  assert.equal(onChange, null, 'the listener is gone');
+});
+
 test('BOOT-HIDDEN the real turn resumes a breather with no frame ever coming', async () => {
   let t = 0;
   const b = createBreather({ now: () => t, sliceMs: 1, raf: (fn) => breathFrame(fn, { shell: {}, doc: { hidden: true }, raf: () => {} }) });
