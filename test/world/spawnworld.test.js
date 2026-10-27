@@ -44,7 +44,7 @@ const law = (o = {}) => createSpawnGroundPlace({
 
 test('SPAWN-WORLD the lanes (world/worldWide/worldLanes.js): a world pixel\'s key over a run of DFU\'s 12-bit lanes, under the port\'s own 0x80000 - every id unique per pixel and lane, and none of any other lane\'s: MAPS.BSA\'s, a Bay spawn\'s, the Abyss Dungeons\', the Bay\'s abyss, Arena\'s, the isles\', the countryside\'s, the halls\' (mutants: a lane\'s number, the flag, the run)', () => {
   assert.equal(WORLD_PIXEL_SPAN, WORLD_PIXEL_BOUND);
-  assert.deepEqual([SPAWN_WORLD_LANE, ABYSS_WORLD_LANE, WORLD_LANE_RUN], [0x380, 0x580, 512]);
+  assert.deepEqual([SPAWN_WORLD_LANE, ABYSS_WORLD_LANE, WORLD_LANE_RUN], [0x380, 0x600, 512]);
   for (const [x, y] of [[0, 0], [1400, -300], [-8191, -8191], [8191, 8191], [-8191, 8191], [8191, -8191], [2215, -371], [-1, 500]]) {
     for (const lane of [ABYSS_WORLD_LANE, SPAWN_WORLD_LANE]) {
       const id = worldLaneMapId(lane, x, y), high = id >>> 20;
@@ -54,11 +54,13 @@ test('SPAWN-WORLD the lanes (world/worldWide/worldLanes.js): a world pixel\'s ke
       assert.equal(isHallMapId(id), false, 'no hall');
     }
     assert.ok(worldLaneMapId(SPAWN_WORLD_LANE, x, y) < 0x60000000, 'a spawn under the abyss\'s 0x600');
+    const abyss = worldLaneMapId(ABYSS_WORLD_LANE, x, y);
+    assert.ok(abyss >= 0x60000000 && abyss < 0x80000000, 'an abyss in the abyss\'s own range (0x600 to 0x7ff), where its readers know it');
   }
   // every other lane's id, whatever its pixel: MAPS.BSA's (high 12 to 0x728, a Bay pixel low), the Bay's spawns (salt 1)
   // and the Abyss Dungeons\' (2049..4095), the Bay's abyss (0x600), Arena's (0xa7) and the isles\' (0xe7, 0xe8) over 500,000
   // and up, the countryside's, a lair's and a capital's (0x300..0x341, 0x80000), a hall's (0xf...)
-  const others = [0, 1, (0x728 << 20) | 499999, 0x7283288c, (0x400 << 20) | 499999, (0x57f << 20) | 499999, spawnedMapId(1, 999, 499), spawnedMapId(2049, 0, 0), spawnedMapId(4095, 999, 499),
+  const others = [0, 1, (0x728 << 20) | 499999, 0x7283288c, (0x400 << 20) | 499999, (0x57f << 20) | 499999, (0x7ff << 20) | 499999, spawnedMapId(1, 999, 499), spawnedMapId(2049, 0, 0), spawnedMapId(4095, 999, 499),
     (0x60000000 | 499999) >>> 0, ((0xa7 << 20) | 500000 + 431) >>> 0, ((0xe7 << 20) | 902193) >>> 0, ((0xe8 << 20) | 902193) >>> 0,
     ((0x33f << 20) | 0xfffff) >>> 0, ((0x340 << 20) | 0xfffff) >>> 0, ((0x341 << 20) | 0x80000 | 21) >>> 0, spawnedHallMapId(2215, -371), spawnedHallMapId(-8192, -8192), -1, 2 ** 32, 0.5];
   for (const id of others) assert.deepEqual([isWorldLaneMapId(id), worldLaneOf(id), worldLanePixel(id)], [false, -1, null], String(id));
@@ -176,6 +178,10 @@ test('SPAWN-WORLD the clocks on the wire: a spawn past the Bay\'s row is its cel
   L.note('9000,1', 1);
   assert.equal(L.wireRow('9000,1'), null, 'and none off the world\'s grid');
   assert.equal(owSpawnsDungeon(sx, sy), true, 'the relay\'s copy of the roll agrees past the Bay');
+  // pixel for pixel, either side of the Bay's corner and far out in each direction (the copy's hash takes a negative whole)
+  for (const [x0, y0] of [[2200, -380], [-860, 1200], [4900, 2700], [-40, -40]]) {
+    for (let y = y0; y < y0 + 40; y++) for (let x = x0; x < x0 + 40; x++) if (owSpawnsDungeon(x, y) !== spawnsDungeon(WORLD_SALT, x, y)) assert.fail(`the relay's roll at ${x},${y}`);
+  }
   const [nx, ny] = rolledAt(2200, -371, false);
   assert.equal(owSpawnsDungeon(nx, ny), false);
   const row = [sx, sy, 100, 150];

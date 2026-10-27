@@ -19,8 +19,10 @@
 //     (0x300-0x341) lanes are below these runs, and the zone halls' (net/wire.js WDUN_WORLD_LANE, the high 4 bits 0xf)
 //     above them;
 //   - unique per world pixel, and an unsigned 32-bit number the relay's room law admits (net/wire.js WORLD_ROOM,
-//     `dungeon:m<1-10 digits>`) - under 0x60000000 for a spawn, so no reader that takes the abyss's 0x600 for its own
-//     mistakes one.
+//     `dungeon:m<1-10 digits>`) - under 0x60000000 for a spawn, and for an abyss in the Bay's abyss's own range
+//     (0x60000000 to 0x7fffffff: the abyss's run starts at the Bay's 0x600, and only the flag tells the two apart), so the
+//     readers that know an abyss by that range (scenes/dungeonContext.js, world/oceanHoles.js isAbyssMapId) meet every
+//     abyss there and no spawn.
 // The zone halls kept the high 4 bits (WW-C2); a lane there is the Abyss Dungeons' salts' (0xd00-0xfff), so these runs
 // stand in DFU's 12 bits as the countryside's do.
 // ═══════════════════════════════════════════════════════════════════
@@ -30,8 +32,9 @@ import { worldPixelKey, worldPixelOfKey, inWorldGrid, WORLD_PIXEL_KEYS } from '.
 export const WORLD_LANE_RUN = WORLD_PIXEL_KEYS / 0x80000;
 /** SPAWN-WORLD: a spawned dungeon past the Bay - DFU's lanes 0x380 to 0x57f. */
 export const SPAWN_WORLD_LANE = 0x380;
-/** PITS-WORLD: an Ocean Hole's abyss past the Bay - DFU's lanes 0x580 to 0x77f. */
-export const ABYSS_WORLD_LANE = 0x580;
+/** PITS-WORLD: an Ocean Hole's abyss past the Bay - DFU's lanes 0x600 to 0x7ff, the Bay's abyss's own 0x600 the first
+ *  (its ids carry a Bay pixel's low 20, these the flag), the Abyss Dungeons' first salt (2049, 0x801) past the last. */
+export const ABYSS_WORLD_LANE = 0x600;
 const LANES = Object.freeze([SPAWN_WORLD_LANE, ABYSS_WORLD_LANE]);
 const FLAG = 0x80000, LOW = 0x7ffff;
 
