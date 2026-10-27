@@ -98,12 +98,13 @@ test('BAY-LEFT-GROUND D3 the world host\'s snow ground stands every pixel of the
   built.set('500,250', { px: 500, py: 250, samples: new Float32Array(129 * 129), tilemapBytes: new Uint8Array(16384) });
   assert.equal(1891 * 1000 + -202, 1890 * 1000 + 798, 'the Bay\'s key: one number for the two');
   _snowPixels.clear();
-  assert.equal(snowGround.pixelOn(1891, -202), built.get('1891,-202'), 'Whiterun');
-  assert.equal(snowGround.pixelOn(1890, 798), alias, 'and its alias, its own');
-  assert.equal(snowGround.pixelOn(1891, -202), built.get('1891,-202'), 'asked again, still Whiterun');
-  assert.equal(snowGround.pixelOn(500, 250), built.get('500,250'), 'the Bay');
-  assert.equal(snowGround.pixelOn(WORLD_PIXEL_SPAN, 0), null, 'off the grid');
-  assert.equal(snowGround.pixelAt(SIZE * 0.5, SIZE * 0.5), built.get('1891,-202'), 'the scene point over the player\'s pixel');
+  // identities by ===: a failing assert.equal inspects an entry's 16,641 floats whole, the size of the machine
+  assert.ok(snowGround.pixelOn(1891, -202) === built.get('1891,-202'), 'Whiterun');
+  assert.ok(snowGround.pixelOn(1890, 798) === alias, 'and its alias, its own');
+  assert.ok(snowGround.pixelOn(1891, -202) === built.get('1891,-202'), 'asked again, still Whiterun');
+  assert.ok(snowGround.pixelOn(500, 250) === built.get('500,250'), 'the Bay');
+  assert.ok(snowGround.pixelOn(WORLD_PIXEL_SPAN, 0) === null, 'off the grid');
+  assert.ok(snowGround.pixelAt(SIZE * 0.5, SIZE * 0.5) === built.get('1891,-202'), 'the scene point over the player\'s pixel');
 });
 
 /** The real snow host, its runtime and the world host's real ground (`stream`, streamAt's), a winter's minute of a walk
@@ -189,7 +190,7 @@ test('BAY-LEFT-GROUND D3 the roads past the Bay under the snow: a pixel the kern
   assert.equal(typeof fromHost?.kindAt, 'function', 'past the Bay: TESA\'s roads by the painter\'s word');
   const hosted = new BasicRoadsTerrain(px, py, o.tilemapBytes, fromHost.authored, fromHost, fromHost.rect);
   assert.deepEqual([hosted.roadTiles, hosted.pathTiles], [t.roadTiles, t.pathTiles]);
-  assert.equal(snowGround.roads({ px: 500, py: 250, paths: o.paths, locationRect: null }), null, 'the Bay without Basic Roads: none');
+  assert.ok(snowGround.roads({ px: 500, py: 250, paths: o.paths, locationRect: null }) === null, 'the Bay without Basic Roads: none');
   // a BEND past the Bay is a curve (VOYAGER2), and Basic Roads' arms predict its tiles nowhere near it: the painter's word
   // finds the road and the track the arms' prediction misses
   setArenaRoads({ roads: new Map([[beyondKey(px, py), DIR.W | DIR.NE]]), tracks: new Map([[beyondKey(px, py), DIR.S | DIR.NW]]), join: new Map() });
