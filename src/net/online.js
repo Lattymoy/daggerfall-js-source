@@ -118,7 +118,7 @@ import { isEgRoom } from './eliteGates/egLaw.js';   // SD3: the Super dungeon's 
 import { isSdRoom } from './superDungeon/sdLaw.js';
 import { validKetchIn, validKetchOut, ketchGate, relaySupportsKetch, KT_BRAIN_V } from './wire.js';   // KETCH: a crew's ship's words - mine to its room, its voyage and its fight to me
 import { isKetchRoom } from './ketch/ketchLaw.js';   // KETCH: a crew's ship's room   // SD6b: the realm's room, where the Orrery's turns go
-import { owGate, validOwIn, validOwOut, relaySupportsOverworld, OW_WORD_IDS_MAX, OW_WORD_ROWS_MAX, relaySupportsOwGraves, owGraveGate } from './wire.js';   // GRAVE-PARTY: and the graves' word's relay - AUDIT GRAVE-PARTY G3: and its own bucket
+import { owGate, validOwIn, validOwOut, relaySupportsOverworld, OW_WORD_IDS_MAX, OW_WORD_ROWS_MAX, relaySupportsOwGraves, owGraveGate, relaySupportsOwWorld } from './wire.js';   // GRAVE-PARTY: and the graves' word's relay - AUDIT GRAVE-PARTY G3: and its own bucket
 import { validSerpentIn, validSerpentOut, serpentGate, relaySupportsSerpent, relaySupportsSerpentSite } from './wire.js';   // SERPENT1: the sea serpent's frame, both ways   // OW6L: the overworld ledger's frame, both ways
 import { owIdInCell, owRowInCell, owRowSane } from './overworldLaw.js';   // OW6L: and the cell's law, held at home before a word is said
 import { reconnectWave } from './reconnectWave.js';   // SCALE2c: a relay deploy's reconnect, spread by the hub's count
@@ -897,6 +897,7 @@ export class OnlineSession {
     this.foeInventoryOk = false;
     this.owOk = false;            // OW6L: the relay that welcomed my primary socket keeps a cell's overworld ledger (relaySupportsOverworld) - an older one CLOSES the socket on the frame, so nothing is said to it
     this.owGraveOk = false;       // GRAVE-PARTY: ...and its graves searched (relaySupportsOwGraves) - an older one closes the socket on a `gr` word
+    this.owWorldOk = false;       // SPAWN-WORLD: ...and a spawn's row past the Bay (relaySupportsOwWorld) - an older one refuses the word whole, and closes the socket
     this.onOverworld = null;      // OW6L: (msg, room) => void - a cell's word on its overworld ledger, `{k:'sp', ids}` or `{k:'dg', rows}` (validOwOut), from my own cell or a halo's, its welcome's half by half
     this._owBucket = null;        // OW6L: my own `ow` words out - owGate's law
     this._grantBucket = null;     // GRANT2: my own grant asks out - grantGate's law, the relay's
@@ -1089,6 +1090,7 @@ export class OnlineSession {
       // AUDIT ONLINE 3 (the second read) C-1: nor the overworld's - `ow` goes down the primary alone, so the cell crossed
       // into reads its own relay's word, never the old cell's: a world211 cell sent `gr` closes the socket, terminal
       old.owOk = this.owOk; old.owGraveOk = this.owGraveOk; this.owOk = !!h.owOk; this.owGraveOk = !!h.owGraveOk;
+      old.owWorldOk = this.owWorldOk; this.owWorldOk = !!h.owWorldOk;   // SPAWN-WORLD: and whether its relay reads a row past the Bay
       // INT9 (AUDIT): MY ZONE WORD MOVES WITH MY CELL - the cell stepped down to a halo hears I left it, the one crossed into
       // that I stand in it (a fighter's bar is its own cell's; the hub carries it across)
       if (this._wildZone === 1) {
@@ -2242,7 +2244,7 @@ export class OnlineSession {
     if (!this.owOk || !isCellRoom(this.room) || this.status !== 'open' || !this._ws || !Array.isArray(payload)) return [];
     const room = this._cover ?? this.room;   // COST-2 (b): the square my socket covers
     const w = k === 'sp' ? validOwIn({ k, ids: payload.filter((id) => owIdInCell(id, room)).slice(0, OW_WORD_IDS_MAX) })
-      : k === 'dg' ? validOwIn({ k, rows: payload.filter((r) => owRowSane(r) && owRowInCell(r, room)).slice(0, OW_WORD_ROWS_MAX) })
+      : k === 'dg' ? validOwIn({ k, rows: payload.filter((r) => owRowSane(r) && owRowInCell(r, room) && (this.owWorldOk || bayMapPixel(r?.[0], r?.[1]))).slice(0, OW_WORD_ROWS_MAX) })   // SPAWN-WORLD: a row past the Bay to the relay that reads it alone
         : k === 'gr' && this.owGraveOk ? validOwIn({ k, rows: payload.filter((r) => owRowInCell(r, room) && (this.worldPixelsOk || bayMapPixel(r?.[0], r?.[1]))).slice(0, OW_WORD_ROWS_MAX) }) : null;   // AUDIT RELEASE R2-3: a headstone past the Bay to a relay that reads it
     if (!w) return [];
     const gate = owGate(this._owBucket, this._now());
@@ -3544,7 +3546,8 @@ export class OnlineSession {
       else { const h = this._halo.get(room); if (h) h.serpentOk = relaySupportsSerpent(relayV); }
       if (primary) this.owOk = relaySupportsOverworld(relayV);   // OW6L: the cell keeps the overworld's ledger - an older relay closes the socket on `ow` (the word goes down the primary alone)
       if (primary) this.owGraveOk = relaySupportsOwGraves(relayV);   // GRAVE-PARTY: and its graves searched - an older relay closes the socket on `gr`
-      else { const h = this._halo.get(room); if (h) { h.owOk = relaySupportsOverworld(relayV); h.owGraveOk = relaySupportsOwGraves(relayV); } }   // AUDIT ONLINE 3 (the second read) C-1: a halo says for itself, for the crossing that makes it my cell
+      if (primary) this.owWorldOk = relaySupportsOwWorld(relayV);   // SPAWN-WORLD: and a spawn's clocks past the Bay
+      else { const h = this._halo.get(room); if (h) { h.owOk = relaySupportsOverworld(relayV); h.owGraveOk = relaySupportsOwGraves(relayV); h.owWorldOk = relaySupportsOwWorld(relayV); } }   // AUDIT ONLINE 3 (the second read) C-1: a halo says for itself, for the crossing that makes it my cell
       // AUDIT RENOWN1 WIRE-3: THIS SOCKET'S OWN WORD, not the session's - a halo's welcome names its own relay, and a
       // socket whose welcome has not come is sent no renown order at all (the frame a relay behind would close it on)
       const _rnWs = primary ? this._ws : this._halo.get(room)?.ws;

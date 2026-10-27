@@ -11,6 +11,7 @@ import { join } from 'node:path';
 import { CLIMATES } from '../../src/formats/mapsTables.js';
 import { createSpawnGroundPlace } from '../../src/world/spawnGroundPlace.js';
 import { spawnsDungeon, spawnedMapId, synthesizeDungeonLocation, isEliteSpawn, pickTemplate, WORLD_SALT } from '../../src/world/spawnedDungeons.js';
+import { worldLaneMapId, SPAWN_WORLD_LANE } from '../../src/world/worldWide/worldLanes.js';
 
 /** A one-block dungeon, the shape spawnTemplates admits (a real one's rows, trimmed to what the clone reads). */
 const TEMPLATE = Object.freeze({
@@ -44,14 +45,17 @@ function rolled(x0, y0, w, h) {
   return out;
 }
 
-test('SPAWN-HOLE: past the Bay the ground\'s place never throws - a pixel the roll stands a spawn on builds - and the Bay\'s spawns stand as they did (mutant: the guard gone)', () => {
+// PIN MOVED (SPAWN-WORLD, the fix's next commit): the guard SPAWN-HOLE stood was the stop-gap - past the Bay the spawn now
+// stands under its own id, the world's spawn lane (world/worldWide/worldLanes.js), so the pin is that the build's ask
+// answers, and answers the spawn
+test('SPAWN-HOLE: past the Bay the ground\'s place never throws - a pixel the roll stands a spawn on builds, its ground the spawn\'s, under its world id - and the Bay\'s spawns stand as they did (mutants: the world lane gone from spawnedMapId)', () => {
   const { law, threw } = hostLaw();
   const past = rolled(2200, -380, 40, 20);   // Skyrim, about Windhelm's row
   assert.ok(past.length > 100, `the roll stands spawns past the Bay (${past.length})`);
-  const asked = past.map(([x, y]) => { try { return law.groundLocationAt(x, y, null); } catch (e) { return `threw: ${e.message}`; } });
-  assert.deepEqual(asked.filter((a) => a !== null), [], 'every pixel past the Bay answers - none throws, so none is a hole');
-  assert.equal(threw(), 0, 'and the clone whose id is a Bay pixel\'s is never asked past the Bay');
-  assert.deepEqual(past.map(([x, y]) => law.spawnAt(x, y)).filter((a) => a !== null), [], 'nor by the Overworld\'s far walk (tvLocationAt, tvSpawnAt)');
+  const asked = past.map(([x, y]) => { try { return law.groundLocationAt(x, y, null)?.mapTableData?.mapId; } catch (e) { return `threw: ${e.message}`; } });
+  assert.deepEqual(asked, past.map(([x, y]) => worldLaneMapId(SPAWN_WORLD_LANE, x, y)), 'every pixel past the Bay answers - none throws, so none is a hole - and its ground is its spawn\'s');
+  assert.equal(threw(), 0, 'the clone never throws past the Bay');
+  assert.deepEqual(past.map(([x, y]) => law.spawnAt(x, y)?.mapTableData?.mapId), asked, 'nor by the Overworld\'s far walk (tvLocationAt, tvSpawnAt)');
 
   const bay = rolled(600, 130, 40, 20);
   const stood = bay.map(([x, y]) => law.groundLocationAt(x, y, null)?.mapTableData?.mapId);
@@ -60,7 +64,7 @@ test('SPAWN-HOLE: past the Bay the ground\'s place never throws - a pixel the ro
 
 const ARENA2 = process.env.ARENA2_PATH;
 const HAVE = !!ARENA2 && ['MAPS.BSA', 'CLIMATE.PAK', 'POLITIC.PAK', 'WOODS.WLD', 'TMAP00I0.IMG', 'ART_PAL.COL'].every((f) => existsSync(join(ARENA2, f)));
-test('SPAWN-HOLE with ARENA2: the audit\'s box of Skyrim over the player\'s own maps, trace and woods - 800 pixels asked, 39 threw; now none - and the Bay\'s box the same answers', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
+test('SPAWN-HOLE with ARENA2: the audit\'s box of Skyrim over the player\'s own maps, trace and woods - 800 pixels asked, 39 threw; now none, and those 39 stand their spawns (SPAWN-WORLD) - and the Bay\'s box the same answers', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
   const bytes = (n) => new Uint8Array(readFileSync(join(ARENA2, n)));
   const { DFPalette } = await import('../../src/formats/dfPalette.js');
   const { preloadTamrielTrace } = await import('../../src/ui/tamrielTrace.js');
@@ -92,7 +96,7 @@ test('SPAWN-HOLE with ARENA2: the audit\'s box of Skyrim over the player\'s own 
       for (let y = y0; y < y0 + 20; y++) for (let x = x0; x < x0 + 40; x++) { try { if (law.groundLocationAt(x, y, null)) stood += 1; } catch { threw += 1; } }
       return { threw, stood };
     };
-    assert.deepEqual(ask(2200, -380), { threw: 0, stood: 0 }, 'Skyrim: no pixel throws, so every one builds');
+    assert.deepEqual(ask(2200, -380), { threw: 0, stood: 39 }, 'Skyrim: no pixel throws, so every one builds - and the 39 the audit counted shape their spawns\' ground (PIN MOVED, SPAWN-WORLD: none stood under SPAWN-HOLE\'s guard)');
     const bay = ask(600, 130);
     assert.equal(bay.threw, 0, 'the Bay: none throws');
     assert.equal(bay.stood, 14, 'and its box stands the 14 spawns the audit counted');

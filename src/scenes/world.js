@@ -2642,6 +2642,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     get capitalLocationAt() { return capitalLocationAt; },
     get countryLocationAt() { return countryLocationAt; },
     get lairLocationAt() { return lairLocationAt; },
+    get provinceQuestPlaces() { return provinceQuestPlaces; },   // SPAWN-WORLD: past the Bay a place stands first
   });
   /** ETHER-PLACES (world/etherPlaces.js): THE PLACE AN ISLE'S CENTRE PIXEL STANDS - a port's town or a ruin's dungeon,
    *  cloned off the game's own rows under the isle's own id, name and index, the region it answers for the Eltheric Isles'
@@ -2675,6 +2676,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   }
   const { _liftLocationAt, _spawnCloneAt, spawnGroundPlace, tvLocationAt, tvSpawnAt, tvSpawnGone } = createSpawnGroundHost({   // HOST-SPLIT: src/scenes/spawnGroundHost.js
     _insideSpawn, _spawnGround, _spawnLedger, _spawnSalt, etherSea, locationIndex, maps, params, terrainGen,
+    provinceQuestPlaces,   // SPAWN-WORLD: past the Bay a place stands first
     get _spawnClock() { return _spawnClock; },
     get _spawnTemplates() { return _spawnTemplates; }, set _spawnTemplates(v) { _spawnTemplates = v; },
     get built() { return built; },
@@ -26440,8 +26442,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     regionAt: (px, py) => maps.getRegionIndexAt(px, py),   // REP4: the board's region, for the law's thanks
     // the ground a pack may stand on: land (the height bytes say where the sea is, as the gate's scan reads them), no
     // location of the game's own on the pixel, no spawned dungeon - every client's map files answer alike
-    // LAIR-WORLD: past the Bay, no place the build stands there (scenes/tamrielPlacesHost.js placeOnPixel)
-    siteOk: (x, y) => (onTheBay(x, y) ? x > 0 && y > 0 && x < 999 && y < 499 && !_bountyLocPixels.has(`${x},${y}`) && !spawnsDungeon(_spawnSalt, x, y) : !provinceQuestPlaces.placeOnPixel(x, y))
+    // LAIR-WORLD: past the Bay, no place the build stands there (scenes/tamrielPlacesHost.js placeOnPixel); SPAWN-WORLD: nor,
+    // now they stand there, a spawned dungeon's pixel
+    siteOk: (x, y) => (onTheBay(x, y) ? x > 0 && y > 0 && x < 999 && y < 499 && !_bountyLocPixels.has(`${x},${y}`) && !spawnsDungeon(_spawnSalt, x, y) : !provinceQuestPlaces.placeOnPixel(x, y) && !spawnsDungeon(_spawnSalt, x, y))
       && !gateSeaPixel(maps.getClimateIndex(x, y), woods.getHeightMapValue(x, y))
       && maps.getClimateIndex(x, y) !== TV_MOUNTAIN_CLIMATE,   // BOUNTY-GROUND: never a mountain pixel - the Overworld cannot walk there
     dungeonAt: (x, y) => _bountyDungeonPixels.get(`${x},${y}`) || provinceQuestPlaces.lairAt(x, y)?.name || null,   // LAIR-WORLD: and the lairs past the Bay (TESA8)

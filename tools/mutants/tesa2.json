@@ -164,11 +164,12 @@
   {
     "name": "TESA2-no-arm",
     "file": "src/scenes/spawnStandHost.js",
-    "old": "    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py);   // AUDIT TESA II P1: the open zone's hall today (Cyrodiil's, past the Bay - it stood in the Bay's arm alone, never reached here); TESA10: a capital; TESA2: Arena's; TESA7-8: the land's\n",
+    "old": "    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);   // AUDIT TESA II P1: the open zone's hall today (Cyrodiil's, past the Bay - it stood in the Bay's arm alone, never reached here); TESA10: a capital; TESA2: Arena's; TESA7-8: the land's\n",
     "new": "\n",
     "tests": [
       "test/tesa2_arena.test.js"
-    ]
+    ],
+    "note": "SPAWN-WORLD re-aimed by content: the build past the Bay ends in the spawner (spawnPastBayAt)."
   },
   {
     "name": "TESA2-the-index-keeps-it",

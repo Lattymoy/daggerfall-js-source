@@ -10,7 +10,9 @@
 // THE ID keeps DFU's own law: MapId & 0xfffff IS the map pixel (systems/map/mapDirectory.js, systems/discovery.js key
 // on it), so the low 20 bits are this pixel's id and the high 12 are the salt - unique per (salt, pixel), an unsigned
 // 32-bit number the relay's room law admits (wire.js WORLD_ROOM, `dungeon:m<1-10 digits>`), and it cannot equal a real
-// location's id because a spawn only ever stands on a pixel that has no location.
+// location's id because a spawn only ever stands on a pixel that has no location. SPAWN-WORLD (2026-10-26): past the
+// Bay a pixel id names no one pixel, so a spawn there is named in the world's spawn lane (world/worldWide/worldLanes.js
+// SPAWN_WORLD_LANE over the pixel's world key) - never a Bay pixel id, unique per world pixel, as the zone halls are.
 
 import { mapPixelToLongitudeLatitude } from '../formats/mapsFile.js';
 import { MINUTES_PER_DAY } from '../systems/gameDate.js';   // TTL1: a day is the clock's own, never a second 1440
@@ -18,6 +20,10 @@ import { TERRAIN_SIZE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, SCALED_BEACH_ELE
 import { getLocationTerrainTileOrigin, WORLD_MAP_TILE_DIM, BEACH_JITTER } from './terrain/terrainTiles.js';   // SPAWNED-DUNGEONS3: where a location stands in its pixel
 import { dataPoint, PATH_KEYS } from '../systems/travel/travelPaths.js';   // SPAWN-ROADS: the network's own byte per pixel
 import { hash32, BLOCK_M } from './blockHash.js';   // RUMARE-WATER: their home a leaf, the Imperial City's plan's and the workers'
+import { inBay } from './tamriel/tamrielFrame.js';   // SPAWN-WORLD: the Bay's pixel ids, and its network, are its own
+import { worldLaneMapId, SPAWN_WORLD_LANE } from './worldWide/worldLanes.js';   // SPAWN-WORLD: a spawn's id past the Bay
+import { inWorldGrid } from './worldWide/worldGrid.js';   // SPAWN-WORLD: a ledger row's pixel the world's
+import { arenaPathsAt } from './arenaRoads.js';   // SPAWN-WORLD: the roads past the Bay - TESA's layer (TESA4, TESA14)
 
 /** The chance a pixel holds a NORMAL spawned dungeon. */
 export const SPAWN_CHANCE = 0.30;
@@ -84,6 +90,10 @@ export function spawnsDungeon(salt, px, py, chance = ANY_SPAWN_CHANCE) {
  *  `net` is the terrain's network (terrainGen.roads()); an array it does not carry (the generated
  *  network has no water) answers no path, which is dataPoint's own 0. */
 export function pathFreePixel(net, px, py) {
+  // SPAWN-WORLD: past the Bay the network is TESA's road layer (world/arenaRoads.js - the roads and tracks the regions laid,
+  // each pixel's compass byte, its curves its own: world/road/roadCurves.js), which lays no river or stream; the Bay's
+  // arrays carry nothing there (dataPoint's 0), so a ruin stood on every road past the Bay
+  if (!inBay(px, py)) return !arenaPathsAt(px, py);
   for (let t = 0; t < PATH_KEYS.length; t++) if (dataPoint(net, t, px, py)) return false;
   return true;
 }
@@ -185,9 +195,15 @@ export const isEliteSpawn = (salt, px, py, normal = SPAWN_CHANCE, elite = ELITE_
   return spawnKept(salt, px, py);
 };
 
-/** The spawned dungeon's MapId: salt in the high 12 bits, MapsFile.getMapPixelID in the low 20. */
+/** The spawned dungeon's MapId: salt in the high 12 bits, MapsFile.getMapPixelID in the low 20. SPAWN-WORLD: past the Bay,
+ *  the world's spawn lane over the pixel's world key (world/worldWide/worldLanes.js) - the world salt's alone (the one
+ *  salt any spawn past the Bay rolls with; a zone hall's id is its own lane's, handed in). */
 export function spawnedMapId(salt, px, py) {
   if (!Number.isInteger(salt) || salt < 1 || salt > SALT_MAX) throw new RangeError(`salt ${salt}`);
+  if (!inBay(px, py)) {
+    if (salt !== WORLD_SALT || !inWorldGrid(px, py)) throw new RangeError(`pixel ${px},${py}`);
+    return worldLaneMapId(SPAWN_WORLD_LANE, px, py);
+  }
   const id = py * 1000 + px;
   if (!Number.isInteger(id) || px < 0 || px > 999 || py < 0 || id >= PIXEL_ID_MAX) throw new RangeError(`pixel ${px},${py}`);
   return ((salt << 20) | id) >>> 0;
@@ -461,9 +477,10 @@ export function createSpawnLedger() {
      *  `note` first starts a row and when `clear` stamps one. */
     wireRow(key) {
       const r = rows.get(key);
-      const at = /^(\d{1,3}),(\d{1,3})$/.exec(String(key));
+      const at = /^(-?\d{1,4}),(-?\d{1,4})$/.exec(String(key));   // SPAWN-WORLD: a world pixel's - past the Bay its spawns' clocks are the cell's too
       if (!r || !at) return null;
       const px = Number(at[1]), py = Number(at[2]);
+      if (!inWorldGrid(px, py) || `${px},${py}` !== key) return null;   // the pixel's one spelling, on the world's grid
       return Number.isFinite(r.cleared) ? [px, py, r.seen, r.cleared] : [px, py, r.seen];
     },
     /** Gone for good: the pixel is free to be empty from here. */

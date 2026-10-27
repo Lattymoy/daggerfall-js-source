@@ -27,6 +27,9 @@ export function createSpawnStand(host) {
       // roads sweep (sweepRoadless) takes back every provisional one a path crosses before it rebuilds the pixels.
       const net = terrainGen.roads();
       if (net && !pathFreePixel(net, px, py)) return null;
+      // SPAWN-WORLD: past the Bay never on a place - a capital, an Arena place, the countryside's or a lair stands first
+      // (_locationToBuild asks them first; the ground's law asks the same, world/spawnGroundPlace.js placeAt)
+      if (!onTheBay(px, py) && host.provinceQuestPlaces?.placeOnPixel(px, py)) return null;
       // TTL1: ...AND NOT WHILE THE PLAYER IS IN IT. The creator's rule
       // says so twice ("when there is no player in it"), and this is
       // where it is kept: a pixel is only rebuilt from the overworld, so
@@ -60,7 +63,7 @@ export function createSpawnStand(host) {
    *  the Overworld (tvSpawnGone) had it gone. */
   function _locationToBuild(px, py) {
     if (etherSea && inEther(px, py)) return etherPlaceAt(px, py);   // ETHER-PLACES: an isle's place, or the open sea's none
-    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py);   // AUDIT TESA II P1: the open zone's hall today (Cyrodiil's, past the Bay - it stood in the Bay's arm alone, never reached here); TESA10: a capital; TESA2: Arena's; TESA7-8: the land's
+    if ((_arenaTemplates || _countryTemplates || _capitalBase) && !onTheBay(px, py)) return (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);   // AUDIT TESA II P1: the open zone's hall today (Cyrodiil's, past the Bay - it stood in the Bay's arm alone, never reached here); TESA10: a capital; TESA2: Arena's; TESA7-8: the land's
     const key = `${px},${py}`;
     const loc = locationIndex.get(key);
     if (loc?.spawned && !loc.wildHall && _spawnLedger.expired(key, host._spawnClock()) && !_insideSpawn(key)) {   // AUDIT SPAWN-REBIRTH F6: a hall's day is its own
@@ -69,6 +72,24 @@ export function createSpawnStand(host) {
       return null;
     }
     return loc || spawnedDungeonAt(px, py);
+  }
+  /** SPAWN-WORLD (2026-10-26, the audit NO SYSTEM LEFT BEHIND IN THE BAY A3): WHAT THE SPAWNER STANDS ON A PIXEL PAST THE
+   *  BAY that no place takes - the Bay's own law: the spawn the index holds, unless its clocks have run out with nobody in
+   *  it (out of the index, the pixel empty - the row kept, AUDIT OW5b D2), else what spawnedDungeonAt stands. One stood
+   *  before its region's roads landed (TESA14: a region's layer at a time) that a road crosses now is taken back as the
+   *  Bay's roads sweep takes one back (_dropRoadedSpawns: the index and its clocks), unless the player stands in it - the
+   *  layer's landing builds the pixels it reaches again (scenes/tamrielSweepsHost.js arenaRoadsLanded). */
+  function spawnPastBayAt(px, py) {
+    const key = `${px},${py}`;
+    const loc = locationIndex.get(key);
+    if (!loc?.spawned || loc.wildHall) return spawnedDungeonAt(px, py);
+    if (_insideSpawn(key)) return loc;
+    const net = terrainGen.roads(), roaded = !!net && !pathFreePixel(net, px, py);
+    if (!roaded && !_spawnLedger.expired(key, host._spawnClock())) return loc;
+    host._locIndexGen += 1;   // AUDIT OW4 D5
+    locationIndex.delete(key);
+    if (roaded) _spawnLedger.forget(key);
+    return null;
   }
   return { _locationToBuild };
 }

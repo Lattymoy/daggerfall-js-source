@@ -515,11 +515,12 @@
   {
     "name": "TESA8-host-no-lairs",
     "file": "src/scenes/spawnStandHost.js",
-    "old": "|| host.countryLocationAt(px, py) || host.lairLocationAt(px, py);   // AUDIT TESA II P1",
-    "new": "|| host.countryLocationAt(px, py);   // AUDIT TESA II P1",
+    "old": "|| host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);   // AUDIT TESA II P1",
+    "new": "|| host.countryLocationAt(px, py) || spawnPastBayAt(px, py);   // AUDIT TESA II P1",
     "tests": [
       "test/tesa8_lairs.test.js"
-    ]
+    ],
+    "note": "SPAWN-WORLD re-aimed by content: the build past the Bay ends in the spawner (spawnPastBayAt)."
   },
   {
     "name": "TESA8-host-country-takes-lairs",

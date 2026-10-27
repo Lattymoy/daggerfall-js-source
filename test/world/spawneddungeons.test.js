@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { SPAWN_CHANCE, ANY_SPAWN_CHANCE, SPAWN_KEEP, SALT_MAX, WORLD_SALT, hash32, spawnsDungeon, spawnRoll, spawnKept, isEliteSpawn, spawnedMapId, pickTemplate, synthesizeDungeonLocation, spawnTemplates, SPAWN_CLEARANCE_M, BLOCK_M, spawnClearance, spawnedLocationCentreLocal, dungeonSightLine } from '../../src/world/spawnedDungeons.js';
+import { worldLaneMapId, SPAWN_WORLD_LANE } from '../../src/world/worldWide/worldLanes.js';   // SPAWN-WORLD
 import { TERRAIN_SIZE } from '../../src/world/terrain/terrainSampler.js';
 import { isWorldRoom } from '../../src/net/wire.js';
 import { getMapPixelID, longitudeLatitudeToMapPixel } from '../../src/formats/mapsFile.js';
@@ -48,9 +49,18 @@ test('SPAWNED-DUNGEONS: the id carries the pixel id in its low 20 bits, the salt
   }
   assert.notEqual(spawnedMapId(1, 5, 5), spawnedMapId(2, 5, 5), 'another salt, another id');
   assert.throws(() => spawnedMapId(0, 1, 1), RangeError);
-  assert.throws(() => spawnedMapId(1, 1000, 1), RangeError);
-  assert.throws(() => spawnedMapId(1, 1, 500), RangeError);
-  assert.throws(() => spawnedMapId(1, -1, 1), RangeError);
+  // PIN MOVED (SPAWN-WORLD, 2026-10-26): past the Bay a spawn's id is the world's spawn lane's over its world pixel key
+  // (world/worldWide/worldLanes.js) - the world salt's alone, never a Bay pixel id; another salt, or off the world's
+  // grid, none. They threw for every pixel past the Bay, and the build that asked them failed for good (SPAWN-HOLE)
+  for (const [x, y] of [[1000, 1], [1, 500], [-1, 1], [2215, -371], [-8191, 8191]]) {
+    const id = spawnedMapId(1, x, y);
+    assert.equal(id, worldLaneMapId(SPAWN_WORLD_LANE, x, y), `${x},${y}`);
+    assert.ok((id & 0xfffff) >= 500000 && (id >>> 20) >= SPAWN_WORLD_LANE, 'its own lane\'s, its low bits no Bay pixel\'s');
+    assert.ok(isWorldRoom(`dungeon:m${id}`), `the relay keeps a world for ${id}`);
+  }
+  assert.throws(() => spawnedMapId(2, 1000, 1), RangeError, 'past the Bay the world salt\'s lane alone');
+  assert.throws(() => spawnedMapId(1, 8192, 1), RangeError, 'off the world\'s grid');
+  assert.throws(() => spawnedMapId(1, 1000.5, 1), RangeError);
 });
 
 test('SPAWNED-DUNGEONS: the clone stands on its pixel under its own id, and the template is never touched', () => {
@@ -442,6 +452,7 @@ test('AUDIT OW5b D2 host run (SPAWN-REBIRTH): A SPAWN PAST ITS TIME IS GONE UNTI
       const _capitalBase = null;   // PIN MOVED (TESA10): and the capitals
       let _locIndexGen = 0;
       const host = { get _locIndexGen() { return _locIndexGen; }, set _locIndexGen(v) { _locIndexGen = v; }, _spawnClock, _spawnCloneAt };   // PIN MOVED (HOST-SPLIT, SPAWN-WORLD): scenes/spawnStandHost.js's live names
+      const onTheBay = (x, y) => x >= 0 && y >= 0 && x < 1000 && y < 500;   // PIN MOVED (SPAWN-WORLD): past the Bay a place stands first - these pixels are the Bay's
       ${seen}
       ${spawned}
       ${build}

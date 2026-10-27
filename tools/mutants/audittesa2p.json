@@ -20,11 +20,12 @@
   {
     "name": "P1-hall-after-the-places",
     "file": "src/scenes/spawnStandHost.js",
-    "old": "return (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py);",
-    "new": "return host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py));",
+    "old": "return (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);",
+    "new": "return host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || spawnPastBayAt(px, py);",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
-    ]
+    ],
+    "note": "SPAWN-WORLD re-aimed by content: the build past the Bay ends in the spawner (spawnPastBayAt)."
   },
   {
     "name": "Z7-rolls-unread",

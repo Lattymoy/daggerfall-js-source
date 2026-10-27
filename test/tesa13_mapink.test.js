@@ -327,7 +327,7 @@ test('TESA13 the host: _locationToBuild\'s order - a capital, an Arena place, th
   // PIN MOVED (AUDIT TESA II P1): online the open zone's hall of the day first - Cyrodiil's lie past the Bay
   // PIN MOVED (HOST-SPLIT, SPAWN-WORLD 2026-10-26): _locationToBuild left world.js for scenes/spawnStandHost.js, the
   // places' rolls read through `host`
-  assert.match(W, /if \(\(_arenaTemplates \|\| _countryTemplates \|\| _capitalBase\) && !onTheBay\(px, py\)\) return \(params\.has\('online'\) && zoneHalls\.standIn\(cyrodiilMask\(\), px, py\)\) \|\| host\.capitalLocationAt\(px, py\) \|\| \(_arenaTemplates && host\.arenaLocationAt\(px, py\)\) \|\| host\.countryLocationAt\(px, py\) \|\| host\.lairLocationAt\(px, py\);/, 'the order it keeps');
+  assert.match(W, /if \(\(_arenaTemplates \|\| _countryTemplates \|\| _capitalBase\) && !onTheBay\(px, py\)\) return \(params\.has\('online'\) && zoneHalls\.standIn\(cyrodiilMask\(\), px, py\)\) \|\| host\.capitalLocationAt\(px, py\) \|\| \(_arenaTemplates && host\.arenaLocationAt\(px, py\)\) \|\| host\.countryLocationAt\(px, py\) \|\| host\.lairLocationAt\(px, py\) \|\| spawnPastBayAt\(px, py\);/, 'the order it keeps');   // PIN MOVED (SPAWN-WORLD 2026-10-26): online, the spawner's last - never on a place
   const body = (head) => { const k = W.indexOf(head); assert.ok(k > 0, head); return W.slice(k, W.indexOf('\n  }\n', k)); };
   assert.match(body('  function countryLocationAt(px, py) {'), /const at = countryRollAt\(px, py\);/);
   assert.match(body('  function lairLocationAt(px, py) {'), /at = lairRollAt\(px, py\);[\s\S]*const loc = at \? lairCloneOf\(at, px, py\) : null;/);   // PIN MOVED (START2): the clone its own function

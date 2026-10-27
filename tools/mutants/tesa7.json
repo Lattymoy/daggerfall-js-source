@@ -470,20 +470,22 @@
   {
     "name": "TESA7-host-arena-last",
     "file": "src/scenes/spawnStandHost.js",
-    "old": "|| host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py);",
-    "new": "|| host.capitalLocationAt(px, py) || host.countryLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.lairLocationAt(px, py);",
+    "old": "|| host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);",
+    "new": "|| host.capitalLocationAt(px, py) || host.countryLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);",
     "tests": [
       "test/tesa7_country.test.js"
-    ]
+    ],
+    "note": "SPAWN-WORLD re-aimed by content: the build past the Bay ends in the spawner (spawnPastBayAt)."
   },
   {
     "name": "TESA7-host-no-country",
     "file": "src/scenes/spawnStandHost.js",
-    "old": "|| host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py);",
-    "new": "|| host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.lairLocationAt(px, py);",
+    "old": "|| host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);",
+    "new": "|| host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);",
     "tests": [
       "test/tesa7_country.test.js"
-    ]
+    ],
+    "note": "SPAWN-WORLD re-aimed by content: the build past the Bay ends in the spawner (spawnPastBayAt)."
   },
   {
     "name": "TESA7-host-water",

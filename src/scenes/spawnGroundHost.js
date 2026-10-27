@@ -12,7 +12,7 @@ import { isMainStoryDungeon } from '../world/dungeon/dungeonTextures.js';
 /** @param {any} host */
 export function createSpawnGroundHost(host) {
   const {
-    _insideSpawn, _spawnGround, _spawnLedger, _spawnSalt, etherSea, locationIndex, maps, params, terrainGen
+    _insideSpawn, _spawnGround, _spawnLedger, _spawnSalt, etherSea, locationIndex, maps, params, terrainGen, provinceQuestPlaces
   } = host;
   /** AUDIT OW4 D4: THE CLONE a pixel's spawn IS - the template its hash picks, dressed as where it stands (region, politic,
    *  climate, elite). Pure in the salt, the pixel and the map files, so the one answer serves spawnedDungeonAt (which stands
@@ -48,6 +48,7 @@ export function createSpawnGroundHost(host) {
     cloneAt: _spawnCloneAt,
     spawnGone: tvSpawnGone,
     zoneMask: cyrodiilMask,   // AUDIT RELEASE R3-7: the open zone Cyrodiil's (WW-C2), as spawnedDungeonAt reads it
+    placeAt: (x, y) => !!provinceQuestPlaces?.placeOnPixel(x, y),   // SPAWN-WORLD: past the Bay a place stands first (scenes/tamrielPlacesHost.js)
   });
   /** AUDIT OW4 D4: WHAT spawnedDungeonAt WOULD STAND on a pixel it has not built - its own gates (the sea, a path across
    *  the pixel, the clocks; the roll and the page are asked by the caller) and its clone, with none of its writes (the

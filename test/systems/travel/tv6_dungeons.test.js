@@ -560,6 +560,7 @@ test('AUDIT OW4 D5/D3 host: every write to the index after the boot\'s fill bump
   const env = new Function('d', `let _locIndexGen = 0; const { params, spawnsDungeon, _spawnSalt, maps, CLIMATES, _spawnGround, terrainGen, pathFreePixel, _spawnLedger, _spawnClock, _insideSpawn,
     locationIndex, _spawnCloneAt, _spawnUnroaded, owSayRow, cyrodiilMask, wildInside, zoneHalls } = d;
     const host = { get _locIndexGen() { return _locIndexGen; }, set _locIndexGen(v) { _locIndexGen = v; }, _spawnClock, _spawnCloneAt };   // PIN MOVED (HOST-SPLIT, SPAWN-WORLD): the stand is scenes/spawnStandHost.js's, its live names through \`host\`
+    const onTheBay = (x, y) => x >= 0 && y >= 0 && x < 1000 && y < 500;   // PIN MOVED (SPAWN-WORLD): past the Bay a place stands first - these pixels are the Bay's
     ${seen[1]} ${s[1]} return { at: spawnedDungeonAt, enter: _spawnSeen, gen: () => _locIndexGen };`)({
     params: { has: () => true }, spawnsDungeon: () => true, _spawnSalt: 1, maps: { getClimateIndex: () => 231 }, CLIMATES, _spawnGround: () => true, terrainGen: { roads: () => ({}) },
     pathFreePixel: () => true, _spawnLedger: ledger, _spawnClock: () => clock, _insideSpawn: () => false, locationIndex: index,
