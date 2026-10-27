@@ -24,7 +24,7 @@
 //     its interior laid in that frame (the landing at its enter marker and its door, player/enterExit.js).
 // The back ranges in the courts (no street reaches them - the walkers' ground is shut there), and a front whose every
 // bay has a way up or a canal before it, keep no door: facades, as before.
-import { fabricCell, fabricGroundIn, outwardOf, streetKind, centroid, inQuad, GROUND, BAY } from './imperialFabric.js';
+import { fabricCell, fabricGroundIn, outwardOf, streetKind, centroid, inQuad, GROUND, BAY, stairGround } from './imperialFabric.js';
 import { IMPERIAL_CELLS, IMPERIAL_SPAN, imperialDistrictAt, imperialCell, imperialCodeCell } from './imperialCity.js';
 import { FABRIC_DONOR_MARKED, FABRIC_SITE_SETS, FABRIC_SLICE_SETS } from './imperialFabricSites.js';
 import { BUILDING_TYPES } from './buildingNames.js';
@@ -150,8 +150,11 @@ function doorOf(L, p) {
     const order = [...Array(bays).keys()].sort((i, j) => Math.abs(i + 0.5 - bays / 2) - Math.abs(j + 0.5 - bays / 2) || i - j);
     for (const k of order) {
       const s = (k + 0.5) * bay, at = [a[0] + t[0] * s, a[1] + t[1] * s];
+      // IC-STAIRS: its surround clear of a way up's shut ground (a stair's base, pier or low flight beside the bay)
+      const side = FABRIC_DOOR.w / 2 + FABRIC_DOOR.jamb;
+      if ([-1, 0, 1].some((k2) => L.ground.stairs.some((st) => stairGround(st, at[0] + t[0] * k2 * side + n[0] * 0.3, at[1] + t[1] * k2 * side + n[1] * 0.3) === GROUND.stair))) continue;
       const g = fabricGroundIn(L, at[0] + n[0] * 0.8, at[1] + n[1] * 0.8), g2 = fabricGroundIn(L, at[0] + n[0] * 2, at[1] + n[1] * 2);
-      if ((g === GROUND.street || g === GROUND.square) && (g2 === GROUND.street || g2 === GROUND.square)) return { edge: e, at, n, street: streetKind(p.sw?.[e] ?? 0) };
+      if ([GROUND.street, GROUND.square, GROUND.under].includes(g) && [GROUND.street, GROUND.square, GROUND.under].includes(g2)) return { edge: e, at, n, street: streetKind(p.sw?.[e] ?? 0) };   // IC-STAIRS: under a stair's upper flights too
     }
   }
   return null;

@@ -68,7 +68,8 @@ test('BLD EVERY STREET-FRONT BUILDING ITS RECORD AND ITS DOOR - each building of
       const s = ((x.door.at[0] - a[0]) * (b[0] - a[0]) + (x.door.at[1] - a[1]) * (b[1] - a[1])) / len, k = s / (len / bays) - 0.5;
       assert.ok(Math.abs(k - Math.round(k)) < 1e-6 && Math.round(k) >= 0 && Math.round(k) < bays, 'a bay\'s middle');
       assert.deepEqual(x.door.n, outwardOf(p.q, x.door.edge));
-      for (const out of [0.8, 2]) assert.ok([GROUND.street, GROUND.square].includes(fabricGroundIn(L, x.door.at[0] + x.door.n[0] * out, x.door.at[1] + x.door.n[1] * out)), 'the street open before the door');
+      // PIN MOVED (IC-STAIRS): the street under a stair's upper flights (GROUND.under, a door's height clear over it) is open too
+      for (const out of [0.8, 2]) assert.ok([GROUND.street, GROUND.square, GROUND.under].includes(fabricGroundIn(L, x.door.at[0] + x.door.n[0] * out, x.door.at[1] + x.door.n[1] * out)), 'the street open before the door');
     }
     assert.deepEqual(fabricCellBuildings(r, c), list, 'kept, the same');
   }
