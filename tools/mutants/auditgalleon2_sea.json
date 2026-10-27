@@ -29,11 +29,12 @@
   {
     "name": "AUDIT-GN2-GN1-sounded-in-the-berth-hulls-own-water",
     "file": "src/systems/naval/shipLife.js",
-    "old": "export function findHarbour({ rect, isWater: own, hull = BERTH_HULL, deep = deepestBerther(), max = HARBOUR_BERTHS, reach = HARBOUR_REACH }) {",
-    "new": "export function findHarbour({ rect, isWater: own, hull = BERTH_HULL, deep = hull, max = HARBOUR_BERTHS, reach = HARBOUR_REACH }) {",
+    "old": "export function findHarbour({ rect, isWater: own, hull = BERTH_HULL, deep = deepestBerther(), max = HARBOUR_BERTHS, reach = HARBOUR_REACH, keep = null, ground = null }) {",
+    "new": "export function findHarbour({ rect, isWater: own, hull = BERTH_HULL, deep = hull, max = HARBOUR_BERTHS, reach = HARBOUR_REACH, keep = null, ground = null }) {",
     "tests": [
       "test/systems/naval/auditgalleon2_sea.test.js"
-    ]
+    ],
+    "note": "PORT-SHIPS: re-aimed by content - the signature takes the town's keep and the ground, its deepest keel the same."
   },
   {
     "name": "AUDIT-GN2-PF6-her-draft-frozen-at-the-new-galleons",

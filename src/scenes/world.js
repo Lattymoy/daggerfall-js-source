@@ -304,7 +304,7 @@ import { provinceNameBank } from '../world/tamrielPeople.js';   // TESA3: its pe
 import { groundWoods, groundMaps, tamrielClimateAt, climateNeighbourIn } from '../world/tamriel/tamrielGround.js';   // TAMRIEL2: the continent's ground round the Bay, for the kernels and the far ring; WW2: a theatre's gate's ground; WW-R: the politic map past the Bay
 import { tamrielBiomeAt, biomeStamp } from '../world/tamriel/tamrielBiomes.js';   // TESA-BIOME: each province's zones - Cyrodiil's jungle among them
 import { faunaBandAt, installTamrielFauna, bandGroundPastBay } from '../systems/tamrielFauna.js';   // TESA-BIOME: each zone's wild, on the encounter tables' door; AUDIT TESA II F6: its bands' ground
-import { etherWoods, etherClimateIndex, etherPoliticIndex, etherFrame, inEther, inEtherLaw, onBayOrEther, isleAt, islesNear, veilhaven, ETHER_HARBOUR_REACH, ETHER_SEA_NAME, ETHER_SEA_TITLE, CROSS_X, etherLight, ETHER_KEY_TINT } from '../world/ethericSea.js';   // ETHER-SEA: the Eltheric Ocean's ground and its box
+import { etherWoods, etherClimateIndex, etherPoliticIndex, etherFrame, inEther, inEtherLaw, onBayOrEther, isleAt, islesNear, veilhaven, ETHER_SEA_NAME, ETHER_SEA_TITLE, CROSS_X, etherLight, ETHER_KEY_TINT } from '../world/ethericSea.js';   // ETHER-SEA: the Eltheric Ocean's ground and its box
 import { etherTemplates, etherTemplateOf, synthesizeEtherLocation, etherPlaceIsle, etherPlaceRows, ETHER_REGION, ETHER_REGION_NAME, isEtherPlaceId } from '../world/etherPlaces.js';   // ETHER-PLACES: the isles' towns and ruins; ETHER-OW: their pixels and far rows, the Overworld's
 import { tamrielFrameInBay, inBay, inBay as onTheBay } from '../world/tamriel/tamrielFrame.js';   // TAMRIEL2: the frame the world streams over, and the Bay's own ground (WW3 reads it as inBay, TESA as onTheBay)
 import { createLandforms, landformSites, landformClimates, cliffFadeAt } from '../world/landforms.js';   // LANDFORM1-3: the shaped ground, and what it lifts a point by; AUDIT LANDFORMS II I1: the lift's fade beside the sea
@@ -346,8 +346,6 @@ import { isYardTown, yardKeeper, ALL_YARD_KINDS, YARD_BENCH } from '../systems/m
 import { isPortTown, isPortTownType, portKeeper, portPlaceName, PORT_SITE_ORDER } from '../systems/portPlaces.js';   // SHIPYARDS: the port towns, their keepers and their places' names; FIELD BUGS 2026-10-13c PORT-TOWNS: the harbour board's ports are its towns
 import { townSeaOf, seaBearing, seaField, portSitesOn, portPlaceRows, sceneToLocationXZ, openSeaOf, seaBears, portTownOnSea, boardPortAt } from '../world/portSites.js';   // SHIPYARDS: where a port town's shipyard and lighthouse stand - its seaward ground; FIELD BUGS 2026-10-14 INLAND-PORTS: and which towns the open sea bears on
 import { SHIPYARD as SHIPYARD_LAYOUT } from '../world/shipyardModel.js';   // SHIPYARDS: the crew hall's table, for the talk directory's row
-import { HARBOUR_REACH } from '../systems/naval/shipLife.js';   // AUDIT HOLDINGS O1: the harbour's scan reach, its pixels built before it is sounded
-import { createHarbourBook } from '../systems/naval/harbourBook.js';   // HARBOUR-BOOK: the harbours near the player, the quays' and the sea's
 import { withdrawIntoPack, materialLabel, materialCountLabel } from '../systems/professions/profItems.js';   // PROF1: a Stores material as DFU's own item
 import { oreMapTip } from '../ui/oreMapTip.js';   // ORE-MAP: the held map's word on a pixel's ore
 import { heldOf as bagHeldOf, heldKeysOf as bagHeldKeysOf, roomFor as bagRoomFor, mintCarried, takeCarried, giveCarried, bagTakesOf, bagWeight, hasBag, emptyBagIntoPack } from '../systems/materialsBag.js';   // BAG1: the Materials Bag and the pack, the book's hands; UNCOUNTED: every material they hold
@@ -1231,6 +1229,7 @@ import { createCsaMap } from './csaMapHost.js';   // HOST-SPLIT
 import { createSnowGround } from './snowGround.js';   // HOST-SPLIT
 import { createLandformSites } from './landformSitesHost.js';   // BAY-LEFT-GROUND (D1): the landforms' sites past the Bay
 import { createGroundFrame } from './groundFrameHost.js';   // HOST-SPLIT
+import { createHarbourHost } from './harbourHost.js';   // HOST-SPLIT
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -8766,56 +8765,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     }
     return null;
   };
-  /** SHIP-LIFE (systems/naval/shipLife.js): the port town within a pixel of the player - its location's key and its
-   *  footprint in the scene NOW (the native rect, locationWorldRect, through the floating origin's localFromWorld), which
-   *  the naval host finds its harbour off - or null where no port stands near. The town asked once a pixel. */
-  let _navalHarbourAt = null;   // { key, town: { id, loc, x, y } | null }
-  const navalHarbourNear = () => {
-    const p = playerTravelPixel();
-    const key = `${p.x},${p.y}`;
-    if (_navalHarbourAt?.key !== key) {
-      let town = null;
-      const isle = etherSea && inEther(p.x, p.y) ? etherPortNear(p.x, p.y) : null;   // ETHER-PORTS: an isle's town, its harbour sounded as any port's
-      const loc = isle ? etherPlaceAt(isle.px, isle.py) : null;
-      if (loc?.exterior?.exteriorData) town = { id: `ether:${isle.key}`, loc, x: isle.px, y: isle.py, name: isle.name, reach: ETHER_HARBOUR_REACH };   // AUDIT CAPTAIN'S SEA H1/P2: its isle's shore, ETHER_PORT_SHORE_M about the town
-      const aq = !isle && !onTheBay(p.x, p.y) ? arenaPortNear(p.x, p.y) : null;   // TESA6: an Arena port's town, its harbour sounded as any port's
-      const aloc = aq ? capitalLocationAt(aq.bx, aq.by) || arenaLocationAt(aq.bx, aq.by) : null;   // AUDIT-TESA A4-F2: a capital's own
-      // AUDIT-TESA A4-F3: its book key the town's own port id, as docksBerthOf reads it - the Docks row and the docks' wait
-      // read the berth back by it (WW3's law at the merge: worldPorts.js portIdOfLocation, the world's key past the Bay)
-      if (aloc?.exterior?.exteriorData) town = { id: portIdOfLocation(aloc), loc: aloc, x: aq.bx, y: aq.by, name: aq.name };
-      for (let dy = -1; dy <= 1 && !town && !isle; dy++) for (let dx = -1; dx <= 1 && !town; dx++) {
-        if (!csaIsPortTown(p.x + dx, p.y + dy)) continue;
-        // AUDIT-TESA A2-3: the Bay's rows by the Bay's ids alone (WW3's directory answers none off the Bay's map)
-        const summary = travelLocationSummaryAt(mapDict, p.x + dx, p.y + dy), beyond = summary ? null : worldPlaces.at(p.x + dx, p.y + dy);   // WW3: past the Bay, the registry's port
-        const loc = summary ? maps.getLocation(summary.regionIndex, summary.locationIndex ?? summary.mapIndex) : beyond ? locationIndex.get(`${p.x + dx},${p.y + dy}`) : null;   // WW3: the town its provider stood
-        if (loc?.exterior?.exteriorData) town = { id: summary ? summary.id : portIdOf(beyond), loc, x: p.x + dx, y: p.y + dy, name: summary ? maps.getRegion(summary.regionIndex)?.mapNames?.[summary.mapIndex] ?? null : beyond.name };
-      }
-      _navalHarbourAt = { key, town };
-    }
-    const t = _navalHarbourAt.town;
-    if (!t) return null;
-    const r = locationWorldRect(t.loc, t.x, t.y);
-    const [ax, az] = state.localFromWorld(r.minX, r.minZ), [bx, bz] = state.localFromWorld(r.maxX, r.maxZ);
-    const rect = { minX: Math.min(ax, bx), maxX: Math.max(ax, bx), minZ: Math.min(az, bz), maxZ: Math.max(az, bz) };
-    // AUDIT HOLDINGS O1: whether every pixel the harbour's scan reads (the rect grown HARBOUR_REACH) is built - a pixel
-    // not built reads as land, so a harbour sounded early found its shore at the streamed world's edge and two players
-    // arriving by different roads found different berths and stood different quays; asked only before it is sounded
-    const reach = t.reach ?? HARBOUR_REACH;   // AUDIT CAPTAIN'S SEA H1: an isle port's sounding reaches its shore
-    const ready = (r = reach) => {   // FB1020c HARBOUR-REACH: or the port law's ring's (systems/naval/harbourBook.js portRingReach)
-      const x0 = rect.minX - r, z0 = rect.minZ - r, sx = rect.maxX - rect.minX + 2 * r, sz = rect.maxZ - rect.minZ + 2 * r;
-      const nx = Math.ceil(sx / 400), nz = Math.ceil(sz / 400);   // under 400 m apart, both edges read: no pixel (819.2 m) between two
-      for (let i = 0; i <= nx; i++) for (let k = 0; k <= nz; k++) if (!csaPixelAt(x0 + (sx * i) / nx, z0 + (sz * k) / nz)) return false;
-      return true;
-    };
-    return { key: `port:${t.id}`, name: t.name, rect, ready, reach };   // SHIP-TAGS: her name, the words a ship bound there is read by
-  };
-  // HARBOUR-BOOK (systems/naval/harbourBook.js; bible/03-World/Holdings.md section 7): THE HARBOURS NEAR THE PLAYER -
-  // this host's, sounded off the port near the player every exterior frame whatever runs on the water, moved with the
-  // floating origin and emptied at a transition, a jump and a load; the quays stand off it and the naval host reads it.
-  // It was the naval host's own and sounded only in its frame: with Naval Combat or Come Sail Away off, no port stood a quay.
-  const harbourBook = createHarbourBook({
-    harbourNear: navalHarbourNear,
-    isWater: navalIsWater,
+  const { harbourBook } = createHarbourHost({   // HOST-SPLIT: src/scenes/harbourHost.js
+    arenaLocationAt, arenaPortNear, capitalLocationAt, csaIsPortTown, csaPixelAt, etherPlaceAt, etherPortNear,
+    etherSea, locationIndex, mapDict, maps, navalIsWater, playerTravelPixel, state, surfaceAt, tvSeaY, worldPlaces,
   });
   /** DECK-WALK: a point in a hull's deck frame (her mesh node's, systems/naval/navalDeck.js) to the world, where her
    *  node stands, rolls and pitches now - and back; into `out` when given. */

@@ -650,12 +650,12 @@
   },
   {
     "name": "FEED-harbour-unnamed",
-    "file": "src/scenes/world.js",
-    "old": "    return { key: `port:${t.id}`, name: t.name, rect, ready, reach };",
-    "new": "    return { key: `port:${t.id}`, rect, ready, reach };",
+    "file": "src/scenes/harbourHost.js",
+    "old": "    return { key: `port:${t.id}`, name: t.name, rect, ready, reach, keep: harbourKeep(t.loc, rect) };",
+    "new": "    return { key: `port:${t.id}`, rect, ready, reach, keep: harbourKeep(t.loc, rect) };",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ],
-    "note": "AUDIT HOLDINGS (PIN MOVED): re-aimed by content to the line the audit's fix rewrote - its law the same."
+    "note": "AUDIT HOLDINGS (PIN MOVED): re-aimed by content to the line the audit's fix rewrote - its law the same. PORT-SHIPS: re-aimed by content - the line carries the town's keep beside them, its name the same."
   }
 ]

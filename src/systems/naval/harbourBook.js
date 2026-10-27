@@ -25,6 +25,11 @@
 // five times the near one's): 36 of the 37 stand a harbour then. Aldbrugh (Shalgora) still sounds none - left open, no
 // port dropped. An isle's port past the Veil sounds its own reach (AUDIT CAPTAIN'S SEA H1) and asks no farther.
 //
+// PORT-SHIPS (2026-10-27, the owner's field report, item 8: Solitude's ships inside its walls): A BERTH STANDS WHERE A SHIP
+// CAN (shipLife.js berthStands) - the port's town keeps its ships out (`near.keep`, the host's: systems/naval/harbourKeep.js
+// off the town's location and its footprint), and her waterplane floats over ground under the sea's top (`deps.ground`,
+// the ground's height over it - the host's world, as navalIsWater reads it). Either missing asks nothing of it.
+//
 // Not a DFU member. Ledger A (QUAYS).
 import { findHarbour, offsetHarbour, HARBOUR_REACH } from './shipLife.js';
 import { SEA_RING } from '../../world/portSites.js';
@@ -42,8 +47,9 @@ export const portRingReach = (rect) => (SEA_RING + 0.5) * TERRAIN_SIZE - Math.ma
  * `ready(reach)` - whether every pixel a sounding to `reach` (m, its own when none is named) reads is built.
  * @param {{
  *   harbourNear: () => ({ key: string, name?: string|null, rect: { minX: number, maxX: number, minZ: number, maxZ: number },
- *     ready?: (reach?: number) => boolean, reach?: number } | null),
+ *     ready?: (reach?: number) => boolean, reach?: number, keep?: ?((x: number, z: number) => boolean) } | null),
  *   isWater: (x: number, z: number, hull: number) => boolean,
+ *   ground?: (x: number, z: number) => number,
  * }} deps
  */
 export function createHarbourBook(deps) {
@@ -58,7 +64,7 @@ export function createHarbourBook(deps) {
     const near = deps.harbourNear() ?? null;
     if (!near) return;
     const own = near.reach ?? HARBOUR_REACH;
-    const sound = (reach = own) => findHarbour({ rect: near.rect, isWater: (x, z, h) => deps.isWater(x, z, h), reach });   // AUDIT CAPTAIN'S SEA H1: an isle port's own reach
+    const sound = (reach = own) => findHarbour({ rect: near.rect, isWater: (x, z, h) => deps.isWater(x, z, h), reach, keep: near.keep ?? null, ground: deps.ground ?? null });   // AUDIT CAPTAIN'S SEA H1: an isle port's own reach; PORT-SHIPS: its town's keep and the ground
     const h = book.get(near.key);
     if (!h) { if (near.ready?.() !== false) book.set(near.key, { key: near.key, name: near.name ?? null, harbour: sound(), at: clock }); }
     else if (!h.harbour && clock - h.at >= HARBOUR_RETRY_S && near.ready?.() !== false) { h.harbour = sound(); h.at = clock; }

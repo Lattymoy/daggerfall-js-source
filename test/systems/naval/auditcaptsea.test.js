@@ -581,7 +581,7 @@ test('AUDIT CAPTAIN\'S SEA H1/P2: every port isle has a harbour - its town whole
   // PIN MOVED (FB1020c HARBOUR-REACH): the book sounds the reach it is handed (its own, HARBOUR_REACH without one), and an
   // isle's own reach asks no farther (the port law's ring is a Bay port's - test/systems/naval/fb1020c_harbourreach.test.js)
   const book = rd('src/systems/naval/harbourBook.js');
-  assert.match(book, /const own = near\.reach \?\? HARBOUR_REACH;\n\s+const sound = \(reach = own\) => findHarbour\(\{ rect: near\.rect, isWater: \(x, z, h\) => deps\.isWater\(x, z, h\), reach \}\);/);
+  assert.match(book, /const own = near\.reach \?\? HARBOUR_REACH;\n\s+const sound = \(reach = own\) => findHarbour\(\{ rect: near\.rect, isWater: \(x, z, h\) => deps\.isWater\(x, z, h\), reach, keep: near\.keep \?\? null, ground: deps\.ground \?\? null \}\);/);   // PIN MOVED (PORT-SHIPS): the town's keep and the ground beside the reach
   assert.match(book, /far = own === HARBOUR_REACH \? portRingReach\(near\.rect\) : 0;/);
   assert.match(w, /const reach = t\.reach \?\? HARBOUR_REACH;/, 'the lanes\' harbour feed sounds it as far');
 });

@@ -395,7 +395,53 @@ default) a berth lies some 80 m farther out, which Daggerfall's 97 m inside the 
 `test/systems/naval/fb1020c_harbourreach.test.js` (the 37 and the one, on ARENA2 - `test/portTerrain.mjs`, the pixel's
 TileMap as the build makes it), `tools/mutants/fb1020c_harbourreach.json`.
 
-THE FOUR HOSTS: `scenes/world.js` keeps the harbours, stands the quays and hands the warp; a building's frame
+**SHIPS INSIDE THE WALLS** (PORT-SHIPS, 2026-10-27 - the owner's field report, item 8: *"I went to solitude and the ships
+at works were inside town walls"*; and after it: *"No band aids or half assed work"*). What the player saw: at Solitude
+the six ships moored at the port lay along the Karth at the city's west side, each one's hull through the west wall and
+her quay inside it, two of them under the arch. The cause is every port's, not Solitude's: a berth was kept on three
+lines of her footprint, a station every eighth of her length, asked of the water alone (`findHarbour` over the world's
+`navalIsWater`). The water says nothing of what stands on it, nor of the ground under it. Solitude's walls were drawn
+round its blocks clear of every house (AUDIT-TESA A6-3), and so 7 m out into the Karth on the west; the shore nearest
+the town's middle was the terrace's edge inside them. Measured on the freeware - every port past the Bay and the Bay's
+106 of the port law, as the game builds their ground (Deep Waters off, the tiles' water): Solitude's six through its
+walls; Alinor's six in the river that runs through the middle of its walled city; two of Torval's and one of the
+Waterfront's through a pier (a pier 6-10 m wide, a station 6.5 m from the next); and nine ships at seven ports with a
+side on a bank - water tiles a town's flatten lifts in its margin, or a bank's first slope: Windhelm's two, Winterhold's,
+Shimmerene's and Skywatch's past the Bay, Pilliweyn's, Chestertower's (28 m up) and Wadijerareg's two on the Bay.
+
+The fix, at every port: A BERTH STANDS WHERE A SHIP CAN (`systems/naval/shipLife.js` berthStands, asked by `findHarbour`
+of each berth and of her approach's hull), every KEEP_STEP (2 m) over her:
+- HER TOWN KEEPS ITS SHIPS OUT (`systems/naval/harbourKeep.js` harbourKeep - the port near the player hands it with the
+  port's footprint, `navalHarbourNear`, moved whole with the book to `scenes/harbourHost.js`, `01-Overview/Host-Split.md`
+  PORT-SHIPS - and the harbour book hands it on): a capital's ground inside its walls and their band, and every
+  landmark it stands over the water - Solitude's two piers, its sea stack and its arch; Alinor's and Torval's four piers
+  each (their walls three-sided, the quay's side open and its two end towers kept); the Imperial City's walled city, the
+  Waterfront's twenty-one piers, Talos Bridge and the causeways. A walled town - a city past the Bay on its outline (TS4),
+  a Bay city on its outline (TS7) - keeps the ground inside its wall's line and TOWN_WALL_KEEP either side of it (its
+  wall as registered, `world/townWalls.js` townWallOf), on a raster made once a wall. Her ship, her quay, her jetty's way
+  to the shore (walked landward from the quay's back, BERTH_JETTY_WALK at most) and her approach's hull are kept clear
+  of it.
+- HER WATERPLANE FLOATS (the world's `ground` - `surfaceAt` less `tvSeaY`, the depth `navalIsWater` reads): the ground
+  under her length, her beam drawn in to the stem over BOW_TAPER (0.3 of her length) and to the stern over STERN_TAPER
+  (0.12), stands no more than BERTH_DRY_M (0.1 m) over the sea's top.
+After it every berth of the 135 ports stands, and every port keeps as many berths as it had (the 29 past the Bay six
+each). Solitude's ships lie at its docks: five off the quay below its north wall, one of them between the two piers, and
+the sixth off the gardens outside its east wall. The quays, the Docks' place, the moored ships and the ones coming in
+read the same berths; under Deep Waters (on by default) the floor is her draft under the sea, so the ground asks no less.
+Two things it leaves: a berth refused beside a lifted bank is not stood farther out (on the freeware no port lost one by
+it), and a ship under way is not kept off a pier or a wall (the keep is the berth's; her ways are the water grid's).
+`test/systems/naval/portships.test.js` (the laws on shapes of the port's own, each capital's keep and a walled town's, the
+book and the host), `test/systems/naval/portships_real.test.js` and `portships_bay.test.js` (ARENA2, `test/portShipsWorld.mjs`:
+every port past the Bay and of the Bay before and after, each berth measured against the test's own reading of the town
+and the ground), `tools/mutants/portships.json` (29, all dead). PIN MOVED: `harbourbook.test.js`,
+`fb1020c_harbourreach.test.js`, `auditcaptsea.test.js`, `auditholdings.test.js` and `sealanes.test.js` (the book's and the
+host's lines carry the keep and the ground), and with `shiplife.test.js` and `etherplaces.test.js` they read the host whole
+(`hostText`: the port near the player is `scenes/harbourHost.js`'s now). Re-aimed by content: `shiplife.json`'s SHIPLIFE-WORLD-no-harbour-door and
+`sealanes.json`'s FEED-harbour-unnamed (dead); `auditgalleon2_sea.json`'s AUDIT-GN2-GN1-sounded-in-the-berth-hulls-own-water
+survives, as it did before this change - since SHIPS-2 the carrack's keel (4.65 m) stands within 0.05 m of the galleon's
+(4.7 m): OPEN, not this slice's.
+
+THE FOUR HOSTS: `scenes/world.js` keeps the harbours (PORT-SHIPS: through `scenes/harbourHost.js`, which it constructs), stands the quays and hands the warp; a building's frame
 (`worldModes.js`) and a dungeon's (`dungeonContext.js`) have no sea, and the standalone street (`exterior.js`) no harbour.
 
 ## 8. Crew roles
@@ -436,11 +482,11 @@ and her orders' answers; with none aboard, her first hand aboard as before.
 ## 9. Files, tests
 
 `systems/fleet.js`, `scenes/fleetHost.js`, `ui/holdingsPages.js`, `ui/fleetPage.js`, `systems/naval/quays.js`,
-`world/quayModel.js`, `scenes/quayPool.js`, `systems/naval/harbourBook.js`; seams in `systems/horse/horseCart.js`,
+`world/quayModel.js`, `scenes/quayPool.js`, `systems/naval/harbourBook.js`, `systems/naval/harbourKeep.js` (PORT-SHIPS); seams in `systems/horse/horseCart.js`,
 `systems/comeSailAway/comeSailAway.js` (SummonBoat, LayUpBoat, laidUpHold, the book's seams, the refits' reads),
 `systems/comeSailAway/comeSailAwayWire.js`, `scenes/naval/navalHost.js` (fleetStatus, repairAway, refitBoat, freeBerth, the refits' reads),
 `scenes/world.js`, `scenes/exterior.js`, `scenes/worldModes.js`, `ui/enhanced/enhancedMenu.js`, `ui/enhanced/enhancedFrame.js`; the quays'
-in `systems/naval/shipLife.js` (`alongside`), `systems/comeSailAway/comeSailAway.js` (`warp`), `world/deepWater/deepWaterFloor.js`
+in `systems/naval/shipLife.js` (`alongside`; PORT-SHIPS: `berthStands`), `world/townWalls.js` (PORT-SHIPS: `townWallOf`), `systems/comeSailAway/comeSailAway.js` (`warp`), `world/deepWater/deepWaterFloor.js`
 (`SHORE_TERRAIN_FIT_METERS`, exported for JETTY_MAX) and `scenes/naval/navalHost.js` (the book read, the docking, the
 gangways).
 
@@ -453,5 +499,5 @@ berth, the shore walked, what stands on it, its model, alongside, docking's law,
 gangway, Come Sail Away's seam, the Fleet's word, the world's wiring), `test/systems/naval/auditholdings.test.js` (AUDIT HOLDINGS,
 `01-Overview/audits/Audit-Holdings.md`: a pin a finding), `test/systems/naval/berthhidden.test.js` (BERTH-HIDDEN: a ship out of sight keeps
 her berth), `test/systems/naval/harbourbook.test.js` (HARBOUR-BOOK: the book, the sea reading the world's, the pier across the shelf,
-the world's wiring); `tools/mutants/holdings.json`, `tools/mutants/fb1015_wagonstabled.json`, `tools/mutants/quays.json`, `tools/mutants/auditholdings.json`,
+the world's wiring), `test/systems/naval/portships.test.js`, `portships_real.test.js` and `portships_bay.test.js` (PORT-SHIPS: a berth stands where a ship can, every port on ARENA2); `tools/mutants/holdings.json`, `tools/mutants/portships.json`, `tools/mutants/fb1015_wagonstabled.json`, `tools/mutants/quays.json`, `tools/mutants/auditholdings.json`,
 `tools/mutants/berthhidden.json`, `tools/mutants/harbourbook.json`.

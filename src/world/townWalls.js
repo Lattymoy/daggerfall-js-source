@@ -585,6 +585,13 @@ export function townWallCellsOf(dfLocation) {
   return wall ? (kept.cells ??= townWallCells(wall, kept.w, kept.h)) : null;
 }
 
+/** PORT-SHIPS (systems/naval/harbourKeep.js): a city's wall as it was registered this session - townWall's (its line, its
+ *  pieces: the location's metres from its grid's south-west corner) - or null for a town with no wall of its own. */
+export function townWallOf(dfLocation) {
+  const held = _walls.get((dfLocation?.mapTableData?.mapId ?? -1) >>> 0);
+  return held && dfLocation.outline?.walled ? held.of() : null;
+}
+
 /** URBANIZER U3 (world/urban/townFabricStand.js fabricEnds): a city's wall's gates as its wall was registered this session -
  *  each gate piece's middle and its outward normal (`at`, `out`: the carrier's metres, the location's - its carrier is the
  *  south-west cell) - or null for a town with no wall of its own. @param {any} dfLocation */
