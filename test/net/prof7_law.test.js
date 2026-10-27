@@ -294,10 +294,11 @@ test('PROF7 law: the stitch - the needle\'s beat every 0.75 s, a band 0.2 of it 
 
 // ─── THE SPECIALISATIONS, THE MARKET, THE HOME, THE LARDER ───────────
 
-test('PROF7 law: Trophy Hunter, Couturier and Saddler are named and never chosen - DFU gives them nothing to stand as (For Mac); the loom\'s pieces list on the market; a home\'s loom a sixth station at a workbench\'s licence; a Butcher\'s meat spoils half as fast', () => {
+test('PROF7 law: Couturier and Saddler are named and never chosen - DFU gives them nothing to stand as (For Mac); the Trophy Hunter chosen since HUNTERS-MARK built its trophy; the loom\'s pieces list on the market; a home\'s loom a sixth station at a workbench\'s licence; a Butcher\'s meat spoils half as fast', () => {
   const later = (p, r, id) => SPECIALISATIONS[p][r].find((s) => s.id === id)?.later ?? null;
-  assert.deepEqual([later('hunting', 100, 'trophy-hunter'), later('outfitting', 100, 'couturier'), later('outfitting', 100, 'saddler')], ['trophy', 'two-colour', 'wagon']);
-  assert.deepEqual([specOk('hunting', 100, 'trophy-hunter'), specOk('hunting', 100, 'butcher'), specOk('hunting', 50, 'tanner'), specOk('outfitting', 50, 'tailor'), specOk('outfitting', 100, 'couturier')], [false, true, true, true, false]);
+  // PIN MOVED (HUNTERS-MARK, Professions-Arc 58): the Trophy Hunter waits on nothing - its Mounted Trophy is built, chosen as any
+  assert.deepEqual([later('hunting', 100, 'trophy-hunter'), later('outfitting', 100, 'couturier'), later('outfitting', 100, 'saddler')], [null, 'two-colour', 'wagon']);
+  assert.deepEqual([specOk('hunting', 100, 'trophy-hunter'), specOk('hunting', 100, 'butcher'), specOk('hunting', 50, 'tanner'), specOk('outfitting', 50, 'tailor'), specOk('outfitting', 100, 'couturier')], [true, true, true, true, false]);
   assert.deepEqual(CRAFTED_FAMILIES.slice(-6, -3).map(([f]) => f), ['leather', 'clothing', 'furnishings']);   // PIN MOVED (PROF11): the mason's stonework lists after the loom's three; PIN MOVED (PROF9): and the fire's dishes after it; PIN MOVED (PROF10): and the jeweller's pieces after them
   assert.deepEqual(['leather-helm:cured', 'garment-141:linen', 'rug-237:wool', 'skins-244:bear', 'fishingnet:linen', 'knife:iron', 'arrows:harpy'].map(pieceListable), [true, true, true, true, true, true, false]);
   assert.deepEqual([DECOR_STATIONS.at(-4), DECOR_STATION_FEES.loom, DECOR_STATION_NAMES.loom], ['loom', 50_000, 'Loom']);   // PIN MOVED (PROF11): the mason's bench a seventh after it; PIN MOVED (PROF10): the jeweller's bench an eighth; PIN MOVED (HOME-VENDOR): the hired trader a ninth

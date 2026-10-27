@@ -27,7 +27,9 @@ function fakeSocketClass() {
   const sockets = [];
   class FakeWS {
     constructor(url) { this.url = url; this.readyState = 0; this.sent = []; this.raw = []; sockets.push(this); }
-    send(s) { this.raw.push(s); this.sent.push(JSON.parse(s)); }
+    // PIN MOVED (RPT1026-SECNET, LINE-STALL): the runtime answers its ping, as it does in front of every room - a session
+    // whose ping goes unanswered reads its line as stalled and holds its poses (test/fakeSocket.mjs says the same)
+    send(s) { this.raw.push(s); this.sent.push(JSON.parse(s)); if (s === AUTO_PAIR?.[1]) this.onmessage?.({ data: AUTO_PAIR[2] }); }
     close() { this.readyState = 3; this.onclose?.({ code: 1000, reason: '' }); }
     open() { this.readyState = 1; this.onopen?.(); }
     message(o) { this.onmessage?.({ data: JSON.stringify(o) }); }

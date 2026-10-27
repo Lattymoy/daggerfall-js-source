@@ -36,22 +36,24 @@
     ]
   },
   {
-    "name": "FAR-FIELD-cell-lowest",
+    "name": "FAR-FIELD-cell-off-its-node",
     "file": "src/world/terrain/midRingGrid.js",
-    "old": "if (b > m) m = b;",
-    "new": "if (b < m) m = b;",
+    "old": "const nx = cx * cell + cell / 2 - 1, ny = cy * cell + cell / 2 - 1,",
+    "new": "const nx = cx * cell + cell / 2, ny = cy * cell + cell / 2,",
     "tests": [
       "test/render/midring.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): was FAR-FIELD-cell-lowest: a cell no longer stands at its samples' highest byte - its vertex stands on the byte whose node its centre is; here the byte south-east of it"
   },
   {
     "name": "FAR-FIELD-sea-count-flipped",
     "file": "src/world/terrain/midRingGrid.js",
-    "old": "if (b <= seaByte) n++;",
-    "new": "if (b >= seaByte) n++;",
+    "old": "cy * cell + v) <= seaByte) n++;",
+    "new": "cy * cell + v) >= seaByte) n++;",
     "tests": [
       "test/render/midring.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): the sea's count is its own loop"
   },
   {
     "name": "FAR-FIELD-rows-south-first",
@@ -407,8 +409,9 @@
   {
     "name": "MID-RING-ask-every-frame",
     "file": "src/render/farRing.js",
-    "old": "if ((drift > MID_REBUILD_DRIFT || this._floraStale(mid)) && this._midAsk === null) this._askMid(curX, curY);",
-    "new": "if ((drift > MID_REBUILD_DRIFT || this._floraStale(mid))) this._askMid(curX, curY);",
+    "old": "if ((drift > MID_REBUILD_DRIFT || this._floraStale(mid) || this._groundStale(mid)) && this._midAsk === null) this._askMid(curX, curY);",
+    "new": "if ((drift > MID_REBUILD_DRIFT || this._floraStale(mid) || this._groundStale(mid))) this._askMid(curX, curY);",
+    "note": "FLORA-GROUND (PIN MOVED): re-aimed by content - the ask also stands when the ground the band stands on has moved (_groundStale).",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -416,8 +419,9 @@
   {
     "name": "MID-RING-drift-late",
     "file": "src/render/farRing.js",
-    "old": "if ((drift > MID_REBUILD_DRIFT || this._floraStale(mid)) && this._midAsk === null) this._askMid(curX, curY);",
-    "new": "if ((drift > MID_REBUILD_DRIFT + 1 || this._floraStale(mid)) && this._midAsk === null) this._askMid(curX, curY);",
+    "old": "if ((drift > MID_REBUILD_DRIFT || this._floraStale(mid) || this._groundStale(mid)) && this._midAsk === null) this._askMid(curX, curY);",
+    "new": "if ((drift > MID_REBUILD_DRIFT + 1 || this._floraStale(mid) || this._groundStale(mid)) && this._midAsk === null) this._askMid(curX, curY);",
+    "note": "FLORA-GROUND (PIN MOVED): re-aimed by content - the ask also stands when the ground the band stands on has moved (_groundStale).",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -704,11 +708,12 @@
   {
     "name": "FAR-FIELD-clim-not-answered",
     "file": "src/world/terrain/terrainGenClient.js",
-    "old": "m.t === 'far' ? { high: m.high, low: m.low, clim: m.clim }",
-    "new": "m.t === 'far' ? { high: m.high, low: m.low, clim: new Uint8Array(m.high.length) }",
+    "old": "m.t === 'far' ? { high: m.high, low: m.low, clim: m.clim, ground: m.ground }",
+    "new": "m.t === 'far' ? { high: m.high, low: m.low, clim: new Uint8Array(m.high.length), ground: m.ground }",
     "tests": [
       "test/render/midring.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): the answer carries the ground"
   },
   {
     "name": "FAR-FIELD-worker-climate-untraced",
@@ -731,20 +736,22 @@
   {
     "name": "FAR-FIELD-worker-climate-unasked",
     "file": "src/world/terrain/terrainGenWorker.js",
-    "old": "() => farFieldCell(woods, cx, cy, m.cell, m.seaByte, farCellClimate));",
-    "new": "() => farFieldCell(woods, cx, cy, m.cell, m.seaByte));",
+    "old": "() => farFieldCell(woods, cx, cy, m.cell, m.seaByte, farCellClimate, !!m.relief));",
+    "new": "() => farFieldCell(woods, cx, cy, m.cell, m.seaByte, null, !!m.relief));",
     "tests": [
       "test/render/midring.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): the cell is asked under the Landforms row"
   },
   {
     "name": "FAR-FIELD-clim-copied",
     "file": "src/world/terrain/terrainGenWorker.js",
-    "old": "[high.buffer, low.buffer, clim.buffer]",
-    "new": "[high.buffer, low.buffer]",
+    "old": "[high.buffer, low.buffer, clim.buffer, ground.buffer]",
+    "new": "[high.buffer, low.buffer, ground.buffer]",
     "tests": [
       "test/render/midring.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): the ground is transferred with them"
   },
   {
     "name": "HORIZON-probe-door-ungated",

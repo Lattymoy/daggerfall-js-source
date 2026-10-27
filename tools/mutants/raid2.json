@@ -205,8 +205,8 @@
   {
     "name": "RAID2-no-claim-says-an-age",
     "file": "src/systems/raidingParties.js",
-    "old": "Math.round(t - _myClaims.get(key))) : -1]);",
-    "new": "Math.round(t - _myClaims.get(key))) : 0]);",
+    "old": "Math.round(t - _myClaims.get(key)))) : -1]);",
+    "new": "Math.round(t - _myClaims.get(key)))) : 0]);",
     "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {

@@ -20,7 +20,8 @@
 // - the three buttons are panel-CHILD rects (:22-24): talk (5,5,120,7),
 //   service (5,14,120,7), exit (44,24,43,15).
 // - the service label is the one piece of text DFU's window draws
-//   (:70-73; PORTAL1's row under the art is the port's own): Position (0,1) INSIDE the service button,
+//   (:70-73; PORTAL1's row under the art is the port's own, and APPEARANCES' Wardrobe row under it - its design record
+//   bible/04-Characters/Wardrobe.md): Position (0,1) INSIDE the service button,
 //   HorizontalAlignment.Center, ShadowPosition = Vector2.zero - no
 //   shadow, unlike every other label in the port's native windows.
 // - `ParentPanel.BackgroundColor = Color.clear` (:39) and
@@ -61,14 +62,22 @@ const SERVICE_LABEL_OFFSET_Y = 1;
  *  merchantRepairWindow.js) has room for it, so this one row is the port's own, drawn just under the panel in the
  *  parchment's dark - the guild popup's Reforge row's law (guildServiceWindow.js REFORGE_RECT) - and its key is P.
  *  Panel-relative, at the panel's foot. */
-export const portalRowRect = (panelH) => Object.freeze([5, panelH + 2, 120, 10]);
+export const portalRowRect = (panelH) => shopRowRect(panelH, 0);
 export const PORTAL_ROW_KEY = 'KeyP';
-/** The row, drawn under a panel at (px, py) of height ph. */
-export function drawPortalRow(renderer, m, font, px, py, ph, label) {
-  const [rx, ry, rw, rh] = portalRowRect(ph);
+/** APPEARANCES (bible/04-Characters/Wardrobe.md): the port's rows STACK under the panel, the Portal Stone's first, a row
+ *  and a 2 px gap apart - the Wardrobe's (a Clothing Store's, an Armorer's, a Weaponsmith's keeper) under it, its key W. */
+export const shopRowRect = (panelH, i) => Object.freeze([5, panelH + 2 + 12 * i, 120, 10]);
+export const WARDROBE_ROW_KEY = 'KeyW';
+/** The Wardrobe's row's place: under the Portal Stone's where that stands. */
+export const wardrobeRowIndex = (hooks) => (hooks?.portal ? 1 : 0);
+/** Row `i`, drawn under a panel at (px, py) of height ph. */
+export function drawShopRow(renderer, m, font, px, py, ph, label, i) {
+  const [rx, ry, rw, rh] = shopRowRect(ph, i);
   drawRect(renderer, m, px + rx, py + ry, rw, rh, REFORGE_ROW_BG);
   shadowText(renderer, font, label, m, px + rx, py + ry + 2, { align: 'center', w: rw });
 }
+/** The Portal Stone's row, drawn under a panel at (px, py) of height ph. */
+export const drawPortalRow = (renderer, m, font, px, py, ph, label) => drawShopRow(renderer, m, font, px, py, ph, label, 0);
 
 /** GetServiceLabelText's switch (:78-88), with the `default:` folded
  *  into Sell exactly as the C# folds it - keyed by the service, each
@@ -90,7 +99,8 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx + MERCHANT_PANEL_X && y >= ry
 export class MerchantServiceWindow {
   /**
    * @param {{service:'Sell'|'Banking', onTalk:Function, onService:Function,
-   *          onClose?:Function, label?:string, portal?:{label:string, onBuy:Function}}} hooks   PORTAL1: `portal` the Portal Stone's row
+   *          onClose?:Function, label?:string, portal?:{label:string, onBuy:Function},
+   *          wardrobe?:{label:string, onOpen:Function}}} hooks   PORTAL1: `portal` the Portal Stone's row; APPEARANCES: `wardrobe` the Wardrobe's
    */
   constructor(hooks) {
     this.hooks = hooks;
@@ -108,8 +118,12 @@ export class MerchantServiceWindow {
   _service() { this._click(); this._close(); this.hooks.onService?.(); }
   _exit() { this._click(); this._close(); }
   _portal() { this._click(); this._close(); this.hooks.portal?.onBuy?.(); }   // PORTAL1: closes first, as the three do
+  _wardrobe() { this._click(); this._close(); this.hooks.wardrobe?.onOpen?.(); }   // APPEARANCES: the same
 
-  input(code) {
+  input(code, e = null) {
+    // AUDIT HORIZONTAL E7 (bible/04-Characters/Wardrobe.md section 4): a key's repeat is no press here - W, S and E move
+    // the player too, and one held as the popup opened ran its row (Unity's GetKeyDown: a press once, never its repeats)
+    if (e?.repeat) return;
     // ROAD-G G7: these three letters ARE the port's own, and the
     // reason written here was wrong. DFU does not "read its keybinds"
     // for this window - it binds NOTHING: unlike its guild sibling,
@@ -125,6 +139,7 @@ export class MerchantServiceWindow {
     if (code === 'KeyT') { this._talk(); return; }
     if (code === 'KeyS') { this._service(); return; }
     if (code === PORTAL_ROW_KEY && this.hooks.portal) this._portal();   // PORTAL1
+    if (code === WARDROBE_ROW_KEY && this.hooks.wardrobe) this._wardrobe();   // APPEARANCES
   }
 
   click(vx, vy) {
@@ -132,6 +147,7 @@ export class MerchantServiceWindow {
     if (inRect(MERCHANT_RECTS.service, vx, vy)) { this._service(); return true; }
     if (inRect(MERCHANT_RECTS.exit, vx, vy)) { this._exit(); return true; }
     if (this.hooks.portal && inRect(portalRowRect(MERCHANT_PANEL_H), vx, vy)) { this._portal(); return true; }   // PORTAL1
+    if (this.hooks.wardrobe && inRect(shopRowRect(MERCHANT_PANEL_H, wardrobeRowIndex(this.hooks)), vx, vy)) { this._wardrobe(); return true; }   // APPEARANCES
     return true;   // the panel eats its own clicks
   }
 
@@ -146,5 +162,6 @@ export class MerchantServiceWindow {
       m.ox + (MERCHANT_PANEL_X + sx + Math.round((sw - lw) / 2)) * m.s,
       m.oy + (MERCHANT_PANEL_Y + sy + SERVICE_LABEL_OFFSET_Y) * m.s, m.s, DEFAULT_TEXT_COLOR);
     if (this.hooks.portal) drawPortalRow(renderer, m, font, MERCHANT_PANEL_X, MERCHANT_PANEL_Y, MERCHANT_PANEL_H, this.hooks.portal.label);   // PORTAL1
+    if (this.hooks.wardrobe) drawShopRow(renderer, m, font, MERCHANT_PANEL_X, MERCHANT_PANEL_Y, MERCHANT_PANEL_H, this.hooks.wardrobe.label, wardrobeRowIndex(this.hooks));   // APPEARANCES
   }
 }

@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { THREAT_WARN_S, metresToReach, threatStep, threatCap, foePaced, foeRate } from '../../../src/systems/travel/travelThreat.js';
-import { createLoadGovernor, unbuiltCount } from '../../../src/systems/travel/travelGovernor.js';
+import { createLoadGovernor, travellerPace, unbuiltCount } from '../../../src/systems/travel/travelGovernor.js';
 import { TRAVEL_HELD_TEXT, TRAVEL_HELD_WHY } from '../../../src/ui/enhanced/enhancedTravelControl.js';
 import { foeHostile, foeAlerted, areEnemiesNearby } from '../../../src/systems/encounters.js';
 import { TRAVEL_VIEW_TEXT, travelWalkRate, TV_MOVE_ACTIONS } from '../../../src/scenes/travelView.js';
@@ -116,7 +116,7 @@ const governorHost = (over = {}) => {
     travelView: { get active() { return d.up; }, get state() { return d.up ? 'up' : 'off'; } }, tvOwnsJourneys: () => d.owns,
     worldTimeScale: () => d.scale, setWorldTimeScale: (n) => { d.scale = n; },
     // OW-LEAD: the feet in the middle of pixel (100, 100), native - the rig's owed pixels are that one (the hole underfoot)
-    travelGovernor: createLoadGovernor({ max: 100 }), state: { terrainDistance: 3, localFromWorld: (x, z) => [x, z], worldCoords: () => ({ x: 100.5 * 32768, z: 399.5 * 32768 }) },
+    travellerPace, travelGovernor: createLoadGovernor({ max: 100 }), state: { terrainDistance: 3, localFromWorld: (x, z) => [x, z], worldCoords: () => ({ x: 100.5 * 32768, z: 399.5 * 32768 }) },
     playerTravelPixel: () => ({ x: 100, y: 100 }), tvGroundGenNow: () => 1, _tvUnbuilt: { gen: -1, x: NaN, y: NaN, r: -1, n: 0 },
     unbuiltAround: (c, r, b, out) => { for (let i = 0; i < d.unbuilt; i++) out?.push([100, 100]); return d.unbuilt; }, built: new Set(),
     player: { feetAt: () => [0, 0, 0], get speed() { return d.speed; }, isPlayerSwimming: false },
@@ -316,5 +316,5 @@ test('OW6 host wiring: the governor runs before the frame reads its scale, the p
   assert.match(W, /const yaw = _travelDrive \? \(_travelDrive\.yaw \* Math\.PI\) \/ 180 : keys \? _tvWalkYaw : null;/);
   assert.match(W, /forward: 1 \}\) === 0\) \{ axes\.forward = 0; axes\.strafe = 0; \}\n\s*_tvWalkYaw = way;/, 'the keys\' way kept as they move the body');
   // PIN MOVED (PVPNEAR/STRANGER-PACE): the cap kept, and a near stranger's own pace carried beside it
-  assert.match(W, /const r = threatCap\(\{ threats: journeyThreats\(up\), heading: yaw == null \? null : \{ x: Math\.sin\(yaw\), z: Math\.cos\(yaw\) \}, speedMps: player\?\.speed \?\? 0 \}\);\n(?:[^\n]*\n){1,14}?\s*return sr \? \{ \.\.\.r, strangerRate: sr \} : r;/);
+  assert.match(W, /const r = threatCap\(\{ threats: journeyThreats\(up\), heading: yaw == null \? null : \{ x: Math\.sin\(yaw\), z: Math\.cos\(yaw\) \}, speedMps: travellerPace\(player, csaBoatUnderMe\(\)\) \}\);[^\n]*\n(?:[^\n]*\n){1,14}?\s*return sr \? \{ \.\.\.r, strangerRate: sr \} : r;/);   // PIN MOVED (PASSAGE-PACE): the traveller's own pace, a boat's way at her helm
 });

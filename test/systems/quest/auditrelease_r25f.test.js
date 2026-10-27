@@ -331,13 +331,14 @@ test('R2-5f end to end on a fixture city through the quest layer: a centre\'s lo
 
 test('QUEST-FABRIC (the owner: "Let quests use them") on a fixture city through the quest layer: a marked tavern in a fabric building of the centre\'s own cells is the centre\'s local tavern - its own site, no other slice stood, nothing picked; where R2-5f read those cells as holding none it was sent a slice away (mutants: the city\'s own cells skipped again)', () => {
   const { ic, slice } = icFixture();
-  // the plan's cell (33, 92) holds one tavern, its record 15 (world/imperialFabricBuildings.js fabricCellBuildings), its
+  // PIN MOVED (IC-PROPS, IC-STAIRS: the plan's cells laid again - Daggerfall's blocks gone, a building across a cell's corner
+  // that cell's ground): the plan's cell (34, 95) holds one tavern, its record 0 (world/imperialFabricBuildings.js fabricCellBuildings), its
   // donor TVRNBM04.RMB's record 5 - whose interior here holds a spawn marker; the fixture's other slices are the plan's
   // corner, no building
-  const tavern = fabricCellBuildings(33, 92).filter((b) => b.type === 15);
-  assert.deepEqual(tavern.map((b) => [b.recordIndex, FABRIC_DONORS[b.donor].block, FABRIC_DONORS[b.donor].record]), [[15, 'TVRNBM04.RMB', 5]]);
+  const tavern = fabricCellBuildings(34, 95).filter((b) => b.type === 15);
+  assert.deepEqual(tavern.map((b) => [b.recordIndex, FABRIC_DONORS[b.donor].block, FABRIC_DONORS[b.donor].record]), [[0, 'TVRNBM04.RMB', 5]]);
   _resetFabricInteriors();
-  const centre = slice(ic.px, ic.py, imperialOwnName(33, 92));
+  const centre = slice(ic.px, ic.py, imperialOwnName(34, 95));
   const made = [];
   const blocks = { getBlockByName: (name) => {
     if (imperialBlockOf(name)) made.push(name);
@@ -354,7 +355,7 @@ test('QUEST-FABRIC (the owner: "Let quests use them") on a fixture city through 
   const inn = placeOf(15, 0, '_inn_');
   inn._setupLocalSite(qw, 'Place _inn_ local tavern');
   assert.equal(inn.siteDetails.mapId, centre.mapTableData.mapId, 'the centre\'s own fabric tavern');
-  assert.equal(inn.siteDetails.buildingKey, makeBuildingKey(0, 0, 15), 'the plan\'s tavern, its record');
+  assert.equal(inn.siteDetails.buildingKey, makeBuildingKey(0, 0, 0), 'the plan\'s tavern, its record');
   assert.ok(inn.siteDetails.questSpawnMarkers?.length === 1, 'its donor\'s marker');
   assert.deepEqual(made, [], 'no cell made: read as a quest reads it');
   assert.ok(!inn.siteDetails.nearSite, 'a local site, not a slice away');

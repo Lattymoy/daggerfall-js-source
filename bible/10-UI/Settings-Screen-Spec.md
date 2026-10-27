@@ -252,7 +252,7 @@ Map/DunMicMapBorderColor                     Micro-Map Edge Colour
 ```
 ui.textScale               (PORT-LOCAL, LIVE)  Text Size
 Controls/HeadBobbing                           Head Bobbing
-Controls/CameraRecoilStrength                  Screen Shake On Damage
+Controls/CameraRecoilStrength                  Screen Shake When Hurt
 Effects/MotionBlurEnable                       Motion Blur
 Effects/MotionBlurShutterAngle                 Motion Blur Amount
 Effects/MotionBlurSampleCount                  Motion Blur Samples

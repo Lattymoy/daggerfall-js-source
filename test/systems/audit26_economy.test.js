@@ -150,10 +150,10 @@ test('audit26 F156: a map is intercepted in BOTH directions and never lands', ()
   const take = planTake(map, { bag: [], entity: null });
   assert.equal(take.map, true, 'remote -> local too');
   // the windows route a map plan to their use arm (the reveal), never
-  // to applyTransfer
+  // to applyTransfer - PIN MOVED (AUDIT RPT1026 B5): but over a chest that settles its own pieces, where it moves as a piece
   const w = rd('src/ui/native/nativeInventory.js');
-  assert.match(w, /if \(plan\.map\) \{ this\._use\(it, this\.hooks\.items\(\)\); return; \}/);
-  assert.match(w, /if \(plan\.map\) \{ this\._use\(it, remote\); return; \}/);
+  assert.match(w, /if \(plan\.map && !settlesOwnPieces\(this\.hooks\)\) \{ this\._use\(it, this\.hooks\.items\(\)\); return; \}/);
+  assert.match(w, /if \(plan\.map && !settlesOwnPieces\(this\.hooks\)\) \{ this\._use\(it, remote\); return; \}/);
 });
 
 test('audit26 F157: a lit light source leaving the pack goes out', () => {

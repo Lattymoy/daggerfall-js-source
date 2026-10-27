@@ -172,7 +172,9 @@ test('QUEST-HOME the wiring: the boot\'s read hands every town\'s homes to the r
   const reseat = w.indexOf('const reseated = homeLayoutsOnline');
   assert.ok(reseat > 0 && w.indexOf('homesLearned();   // QUEST-HOME', reseat) - reseat < 400, 'and a load\'s sites, once its layouts stand');
   assert.match(w, /questSiteMoved: \(quest, place, was\) => questSiteMovedHere\(place, was\),/);
-  assert.match(src('src/scenes/quest/questBridge.js'), /if \(siteType === SITE_TYPES\.Building\) machine\.noteSiteReached\(adapter\.currentMapId\?\.\(\) \?\? 0, buildingKey\);\n\s*addQuestResourceObjects\(/);
+  // PIN MOVED (IC-INTERIORS, 2026-10-27): a made building's quest markers are laid on its rooms between the reach and the
+  // resource objects (systems/quest/castMarkers.js) - the reach is still marked first, before anything stands
+  assert.match(src('src/scenes/quest/questBridge.js'), /if \(siteType === SITE_TYPES\.Building\) machine\.noteSiteReached\(adapter\.currentMapId\?\.\(\) \?\? 0, buildingKey\);\n(?:\s*\/\/[^\n]*\n|\s*if \(siteType === SITE_TYPES\.Building\) layMadeBuildingMarkers\([^\n]*\n)*\s*addQuestResourceObjects\(/);
 });
 
 test('QUEST-HOME the home order and the home word: an order names one town, its buildings homes now (`bu`) and none (`bd`) - at least one, at most HOME_ORDER_KEYS_MAX, never one twice - and carries no other kind\'s fields, as no other kind carries a home\'s; the wire takes `{t:\'home\', order}` as a shape after the hello, and a home word is the order\'s shapes, a frame a list of them (mutants: a home order with no building; a mute carrying a town)', async () => {

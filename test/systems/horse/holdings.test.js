@@ -53,8 +53,10 @@ test('HOLDINGS the pause window has a fourth tab, Holdings, between Stats and Sy
 
 test('HOLDINGS the Stats rail is the character sheet again - its six pages and the Professions online; the Holdings rail takes the Stable, the Fleet, the Companions, the Revenants and the Stores, each while it has a thing to show', () => {
   assert.match(MENU, /const statsSections = \(\) => \[\.\.\.STATS_SECTIONS, \.\.\.\(profPagesShown\(\) \? PROF_STATS_SECTIONS : \[\]\), \.\.\.\(vendorPageShown\(\) \? VENDOR_PAGE_SECTIONS : \[\]\)\];/);   // PIN MOVED (HOME-VENDOR): the Vendor page under the Professions
-  assert.match(MENU, /const PROF_STATS_SECTIONS = Object\.freeze\(PROF_PAGE_SECTIONS\.filter\(\(\[id\]\) => id === 'professions'\)\);/);
-  assert.match(MENU, /const PROF_HOLD_SECTIONS = Object\.freeze\(PROF_PAGE_SECTIONS\.filter\(\(\[id\]\) => id !== 'professions'\)\);/);
+  // PIN MOVED (CRAFT-HALL): the Stats rail's professions pages are PROF_STATS_PAGES (the Professions page and the Crafting
+  // page beside it); every other is the Holdings rail's (the Stores)
+  assert.match(MENU, /const PROF_STATS_SECTIONS = Object\.freeze\(PROF_PAGE_SECTIONS\.filter\(\(\[id\]\) => PROF_STATS_PAGES\.includes\(id\)\)\);/);
+  assert.match(MENU, /const PROF_HOLD_SECTIONS = Object\.freeze\(PROF_PAGE_SECTIONS\.filter\(\(\[id\]\) => !PROF_STATS_PAGES\.includes\(id\)\)\);/);
   assert.match(MENU, /const holdingsSections = \(\) => \[\.\.\.\(stablePageShown\(\) \? STABLE_PAGE_SECTIONS : \[\]\), \.\.\.\(fleetPageShown\(\) \? FLEET_PAGE_SECTIONS : \[\]\), \.\.\.\(captainPageShown\(\) \? CAPTAIN_PAGE_SECTIONS : \[\]\), \.\.\.\(companionPageShown\(\) \? COMPANION_PAGE_SECTIONS : \[\]\), \.\.\.\(revenantPageShown\(playerEntity\) \? REVENANT_PAGE_SECTIONS : \[\]\), \.\.\.\(profPagesShown\(\) \? PROF_HOLD_SECTIONS : \[\]\), \.\.\.\(collectionsPageShown\(playerEntity\) \? COLLECTION_PAGE_SECTIONS : \[\]\)\];   \/\/ COLLECTIONS/);   // COLLECTIONS (PIN MOVED): the codex and the cards, last - CAPT-LOG (PIN MOVED): the Captain page after the Fleet
   // the Stats page draws none of the moved pages; the Holdings page draws every one, the Fleet's with its door
   const stats = MENU.slice(MENU.indexOf('function pauseStats(body)'), MENU.indexOf('// PX25: THE DOORS THE F5 SHEET CARRIED'));

@@ -212,6 +212,11 @@ its arms to `rrInstall.js`.
   PickpocketByPlayerAttempted latch): its combat voice, knockback 100
   the way the rider faces, the rider spends 15 x DefaultFatigueLoss,
   and takes hand-to-hand's span + Agility / 10 + Willpower / 10.
+  JOURNEY-TRAMPLE (RPT1026-MISC, 2026-10-26, a private report: charged with Assault for a journey on the Overworld that
+  passed through a town on horseback): never while a journey drives the ride - the Overworld's view or a
+  Travel Options autopilot (`rideOnTheRoad`). The mod's OnTriggerEnter runs under TravelOptions' journey too, its clip
+  muted (RidingVolumeScale 0, AUDIT-TO1 J1); here a journey at sixty times the pace charged Assault for townsfolk under
+  hooves the player never steered. A DEPARTURE (Port-Ledger A, JOURNEY-TRAMPLE); `test/scenes/rpt1026_misc_trample.test.js`.
 - **RefinedTraining** (GuildServiceTrainingRR.cs) -
   `buildRefinedTrainingFlow`, chosen over DFU's training flow at
   worldModes' service arm while the switch is on

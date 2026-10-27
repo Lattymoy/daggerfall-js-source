@@ -41,6 +41,7 @@ import { injectEnhancedStyle, injectEnhancedFonts } from './enhanced/enhancedSty
 import { registerOverlay } from './enhanced/enhancedOverlays.js';
 import { audio } from '../systems/audio.js';   // the UI's own click, for a press on the sky (its buttons click through ui/uiClickSound.js)
 import { SOUND } from '../systems/soundClips.js';
+import { capturePointer } from './pointerCapture.js';   // RPT1026-CLIENT: a pad's synthetic pointer is refused a capture, never thrown
 
 export const FIRM_STYLE_ID = 'firmament-window-css';
 
@@ -389,7 +390,7 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
   let preview_ = /** @type {Set<string>} */ (new Set());   // the way a hover would allocate
   let refundPreview = /** @type {Set<string>} */ (new Set());
   let matches = /** @type {Set<string>} */ (new Set());
-  /** @type {{ key: string, t0: number }[]} */
+  /** @type {{ key: string, t0: number|null }[]} - t0 is the FRAME clock's, stamped by the first frame that draws it */
   let bursts = [];
   let dead = false;
   let dirty = true;
@@ -560,7 +561,12 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
     pending = { start: pending.start, keys: pending.keys.filter((k) => !takes.has(k)) };
     refresh();
   }
-  function burst(key) { if (!still) bursts.push({ key, t0: performance.now() }); }
+  // RPT1026-CLIENT (a private report: an IndexSizeError, an arc's radius below nought, on every Accept): a
+  // burst was stamped with performance.now() and drawn by the requestAnimationFrame clock, and every callback of one frame
+  // is handed that frame's START - so a burst stamped later in the same frame (Accept's answer lands in a microtask after
+  // the world's own frame callback, which can run for half a second) had t - t0 < 0, and the ring's radius went negative.
+  // A burst now starts on the first frame that draws it: one clock, so its age is never below nought.
+  function burst(key) { if (!still) bursts.push({ key, t0: null }); }
 
   // ── the confirm ──
   let confirming = /** @type {'accept'|'respec'|'share'} */ ('accept');
@@ -800,7 +806,7 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
   let longPress = 0;
   const local = (e) => { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
   canvas.addEventListener('pointerdown', (e) => {
-    canvas.setPointerCapture?.(e.pointerId);
+    capturePointer(canvas, e.pointerId);
     const p = local(e);
     pointers.set(e.pointerId, p);
     if (pointers.size === 2) {
@@ -1148,11 +1154,12 @@ export function mountFirmamentWindow(host, { book = firmamentBook(), preview = n
   function sparks(t) {
     if (!bursts.length) return;
     const life = 900;
-    bursts = bursts.filter((b) => t - b.t0 < life);
+    for (const b of bursts) b.t0 ??= t;
+    bursts = bursts.filter((b) => t - /** @type {number} */ (b.t0) < life);
     for (const b of bursts) {
       const n = FIRM_NODES.get(b.key);
       if (!n) continue;
-      const u = (t - b.t0) / life;
+      const u = (t - /** @type {number} */ (b.t0)) / life;
       ctx.beginPath();
       ctx.arc(n.x, n.y, NODE_R[n.kind] + u * 60, 0, Math.PI * 2);
       ctx.strokeStyle = n.ring === 'life' ? P.edgeLifeLit : P.edgeLit;

@@ -1628,7 +1628,7 @@ export function raisePlayerSkills(entity, { say = () => {}, onLevelUp = null, ro
   // SOFTCAP3: THE MASTER SKILLS BOX - once per character, a primary mastered, on a quiet pass (the mastery pass put its
   // own box up, so this is the NEXT rest's or journey's). ONLINE it is always in force, so the box EXPLAINS it and has
   // one OK; OFFLINE it ASKS (Yes/No) and No leaves the switch in the skill screen (systems/masterSkills.js).
-  // SOFTCAP4: THE MASTERY CHOICE - a skill at 100 whose group (2 primary / 2 major / 1 minor) still has a slot is
+  // SOFTCAP4: THE MASTERY CHOICE - a skill at 100 whose group (3 primary / 2 major / 1 minor - MASTER-THREE) still has a slot is
   // asked about ONCE, permanently decided by Yes; No leaves it to the skill screen. Online the first one carries the
   // Master Skills explanation above it, so a new master reads the rules and the choice in one box.
   const due = ask && !windowed ? masterSkillsBoxDue(entity) : null;
@@ -2504,6 +2504,8 @@ export const restFullyHealed = (entity) =>
  *   endLines(id)       its TEXT.RSC reader
  *   say / onLevelUp    its presenters
  */
+/** AUDIT RPT1026 L3: the place of a rest a bed's press opened (ui/restDoor.js marks the bag `bedPressed` for the open). */
+const pressedBedKind = () => REST_KIND.Bed;
 export function createRestDeps(entity, opts = {}) {
   const {
     say = () => {}, onLevelUp = null, day = () => false, inside = () => true,
@@ -2569,7 +2571,7 @@ export function createRestDeps(entity, opts = {}) {
       // price is the tier's: with the arc off every rest is DFU's whole hour (a bed's), in any place.
       if (b) {
         _rules = survivalRules();   // SURV-TIERS: the tier read beside the place prices it (restHour, stiffen, the asks)
-        _place = (_restKindOverride ?? restKind)();
+        _place = (_restKindOverride ?? (out.bedPressed ? pressedBedKind : restKind))();   // AUDIT RPT1026 L3: a window a bed's press opened rests in it (ui/restDoor.js createRestWindow) - however long a REST-WARN box held the open
         _kind = _rules ? _place : REST_KIND.Bed; _roughHours = 0;
         _spot = _place;   // AUDIT REST-PARTY: where the rest was opened - a pressed bed's flag lasts only the press, and a fire spends its fuel through the night
         // REST6: a Sleeping Draught makes a rough night a bed's - its yield, its sleep rate, no stiff morning - and is spent
@@ -2657,7 +2659,7 @@ export function createRestDeps(entity, opts = {}) {
   out.restAct = () => {
     if (litCandle(entity)) return { point: { kind: 'candle', where: 'candle' }, night: false, meditate: true, channelSeconds: REST_CHANNEL_SECONDS };
     if (!sharedClockOn()) return null;
-    const point = restPoint?.() ?? null;
+    const point = out.bedPressed ? { kind: REST_KIND.Bed, where: null } : (restPoint?.() ?? null);   // AUDIT RPT1026 L3: and its point is that bed
     return { point, night: nightDue(entity, ownMinutes()), channelSeconds: point?.channelSeconds ?? REST_CHANNEL_SECONDS };
   };
   out.restMeditate = () => {

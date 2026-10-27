@@ -52,6 +52,7 @@ import { tellSpellLanded } from '../systems/spell/spellPower.js';   // SCHOOLS3:
 import '../systems/arcanePowers.js';   // AUDIT SCHOOLS L2 F8: what the paths DO, registered with THE ONE CAST ENGINE every page builds - the standalone dungeon page (scenes/dungeon.js) had their price and potency and none of their powers
 import '../systems/firmamentPowers.js';   // FIRM1: what the Firmament DOES, registered with the one cast engine every page builds, as the paths' are
 import { applySpell, spellReflectedText, hasActiveEffect, isSoulTrapEffect, spellSways } from '../systems/effects.js';   // WBX7: a soul trap meets the court's boss too
+import { spellToFoeOwner } from '../systems/enchantments.js';   // RPT1026-FIGHTS (TRAP-TO-OWNER): the session's door to a foe another player runs
 import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { potionBundle } from '../systems/potions.js';   // U44: DrinkPotion's bundle
 import { potentEffect } from '../net/alchemyLaw.js';   // PROF12: a Potent potion's magnitudes
@@ -62,6 +63,7 @@ import { allyCastable, allyReachFor, allyCastFrame, allyCastCasterLine, allyCast
 import { hasResurrect, RESURRECT_REACH, RESURRECT_TEXT, pickFallenBody } from '../systems/resurrect.js';   // RESURRECT1: a fallen party member's body is the target   // ALLY-CAST: a beneficial spell at the party mate under the crosshair
 import { billboardSize, centredBase } from '../world/rmbFlats.js';
 import { betterAmbience } from '../systems/betterAmbience.js';   // IMPACTFEEL: the camera kick a landing spell gives
+import { getPref } from '../systems/uiPrefs.js';   // RPT1026-CLIENT: another player's spell's share of it
 import { SpellImpactFx, SpellImpactPass, SPELL_IMPACT_PROGRAMS, elementFxKind, IMPACT_FX_KINDS } from '../render/spellImpactFx.js';
 import { warmPrograms } from '../render/warmPrograms.js';   // PERF-COMPILE1: the impact pass at idle
 import { startPrograms } from '../render/glProgram.js';   // SHADER-STALL: and built once its compile is done
@@ -202,6 +204,7 @@ export function createPlayerMagic({
   // which is precisely why the machine latches instead of polling.
   lairHere = null,     // RVN7 (bible/12-Enhanced-AI/Feud-Arc.md 18.1): where a revenant's deed is done here, for its lair (systems/playerDoor.js)
   isPuppet = null,     // AUDIT FEUD 2: the host's word on a foe another client runs (a dungeon room's carries no `puppet`)
+  trapToOwner = spellToFoeOwner,   // RPT1026-FIGHTS (TRAP-TO-OWNER): (foe, spell, level) => bool - a cast's Soul Trap to the player who runs the foe
   onNewReadySpell = null,
   onCastReadySpell = null,
   // ROAD-E6: THE HANDS, AND THE RELEASE FRAME THEY OWN.
@@ -706,6 +709,15 @@ export function createPlayerMagic({
       return gy;
     } catch { return null; }   // feel is never worth a crash
   }
+  /** RPT1026-CLIENT (a private report: at Dagon's Breach the shakes of many casts ran together without a pause): the share of its
+   *  kick a landing missile gives - ANOTHER player's drawn one (SPELLFX1's `visual`, its caster named) the player's own
+   *  choice (uiPrefs `peerSpellShake`, Settings > Accessibility > Motion), everything else its whole kick: my own, a foe's,
+   *  an event's sky fire (no caster). Screen Shake When Hurt is DFU's recoil and never covered it. */
+  const peerKickShare = (/** @type {any} */ m) => {
+    if (!m?.visual || m.casterId == null) return 1;
+    const v = Number(getPref('peerSpellShake'));
+    return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 0.5;
+  };
   /** A body's middle, for a touch that met it (its feet and height, a person's when it states none). */
   const bodyMid = (t) => (t?.ai?.feet ? [t.ai.feet[0], t.ai.feet[1] + (t.ai.height ?? 1.8) * 0.55, t.ai.feet[2]] : null);
   /** Where a mate under the crosshair stands: `distance` along the aim. */
@@ -748,7 +760,7 @@ export function createPlayerMagic({
       // AOE-SIZE: an Area at Range blast is drawn to the sphere explodeAt sweeps (EXPLOSION_RADIUS about the impact); a
       // single-target bolt keeps its own smaller burst
       landFx(kind, kind === 'heal' ? [pos[0], ground, pos[2]] : pos, { back, ground, scale: sc, power: blast ? 1.25 : 1, radius: 0.8,
-        area: blast ? EXPLOSION_RADIUS : 0, areaFrom: blast ? pos : null, heard: m.sky ? SKY_FIRE_HEARD_M : 40, shake: blast ? 4.5 : 3,
+        area: blast ? EXPLOSION_RADIUS : 0, areaFrom: blast ? pos : null, heard: m.sky ? SKY_FIRE_HEARD_M : 40, shake: (blast ? 4.5 : 3) * peerKickShare(m),
         normal: kind === 'heal' ? null : normal, surfaceAt });   // WALL-RING: the shockwave lies on what it struck
     } catch { /* feel is never worth a crash */ }
     // SUNBABY2: and a sky fireball is HEARD where it lands - its element's cast clip (DFU has no impact clip; the
@@ -779,6 +791,18 @@ export function createPlayerMagic({
     // RVN1 (Feud-Arc.md section 12): MY spell's landing goes in the fight's ledger by its element (a later round is
     // systems/effects.js's to write - the round sink's own law); a peer's (its stand-in caster) and a foe's never
     const mine = striker === playerEntity;
+    // RPT1026-FIGHTS (TRAP-TO-OWNER; a private report: Soul Trap on Daedra Lords in a party member's dungeon said
+    // "Trap active." and never trapped a soul): MY CAST'S SOUL TRAP ON A FOE ANOTHER PLAYER RUNS is laid
+    // where the foe lives. Landed here it lay on my copy - a puppet its runner's stream poses, whose death is the runner's
+    // word - and the runner's foe fell with no trap on it: "Trap active." and no soul, whoever struck. STRIKE-SHARED carried
+    // a strike's trap to the runner; a cast's never went. Now its Soul Trap rides that door (the runner lands it marked
+    // mine, names me on the body as it falls, and I roll it against my own pack - dungeonContext.js applyFoeRecord's `j`),
+    // and the rest of the spell lands here as before. The runner's save is rolled there, so I hear no "Trap active." -
+    // STRIKE-SHARED's own word; the soul's line comes as the foe falls.
+    if (mine && typeof ctx?.peerCaster !== 'string' && (spell?.effects ?? []).some((e) => e && isSoulTrapEffect(e))) {
+      const trapFx = spell.effects.filter((e) => e && isSoulTrapEffect(e));
+      if (trapToOwner?.(foe, { ...spell, effects: trapFx }, casterLevel)) spell = { ...spell, effects: spell.effects.filter((e) => !trapFx.includes(e)) };
+    }
     // BAL9 (bible/05-Combat/Balance-Arc.md section 15): A SPELL ANSWERS ITS FOE. MY spell that reaches a foe - not my own
     // ally - remembers it as the fight's (skillSoftcap.js noteSkillChallenge, formulas.js's blow's own door), so past 100
     // a school's next uses learn by that foe, as a weapon's do; only a blow ever said so, and a fireball at an Ancient
@@ -884,8 +908,15 @@ export function createPlayerMagic({
     // even if the popup is cancelled, "confirmed in classic".
     if (r.dispelMagic) onDispelMagic?.(r.dispelMagic);
     if (r.identify) {
+      // RPT1026-PROGRESS (a private report: a discounted Identify gave back more than it took): NEVER MORE THAN
+      // THIS CAST SPENT - its release's token (`cast.cost`, the price stored at the ready). The refund is priced as the
+      // spell lands (spell/identifyRefund.js), floored at 5 after every discount, so a cast a modifier took to 1 gave
+      // back 5, and a discount gone between the ready and the release gave back the full price. A free cast (an item's,
+      // a trap's) spent nothing and gets nothing - DFU's own TODO (Identify.cs: "Only refund if spell cast from
+      // spellbook"). The window still charges the effect's price (`refund`, Identify.cs IdentifySpellCost).
+      const spent = caster?.entity === playerEntity ? (caster.cast?.cost ?? 0) : 0;
       playerEntity.magicka = Math.min(playerEntity.maxMagicka ?? Infinity,
-        (playerEntity.magicka ?? 0) + r.identify.refund);
+        (playerEntity.magicka ?? 0) + Math.min(r.identify.refund, spent));
       surfacePlayer();
       onIdentify?.(r.identify);
     }

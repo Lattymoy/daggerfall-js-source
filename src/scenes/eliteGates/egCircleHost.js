@@ -19,6 +19,9 @@ import { egBeatTellDown } from './egSpan.js';
 import { buildEgLookModel } from '../../world/eliteGates/egLook.js';
 import { createEgGroundLook } from './egGroundLook.js';   // EG-LOOK (Elite-Gates-Look.md sections 3-4): THE RUIN and THE WRECK
 
+/** RPT1026-EVENTS SPIRE-SPOILS: no target at all (the host's pool holds no pieces). */
+const NO_TARGETS = Object.freeze([]);
+
 /**
  * @param {{ renderer: any, host: any, wm: { readonly mode: string, readonly dungeonCtx: any, readonly dungeonLoc: any } }} deps
  */
@@ -145,6 +148,15 @@ export function createEgCircleHost({ renderer, host, wm }) {
       if (parts) egGateStand(ctx, spec.h, parts);   // EG-H3: the one gate stand (the swap's too)
     }
     ctx.addActivationNamer((key) => (typeof key === 'string' && key.startsWith('exit:') ? { title: EG_TEXT.wayHome } : null));   // the Redoubt's way home is the level's one exit door, stood by the outer host (before the dungeon exit's own namer)
+    // RPT1026-EVENTS SPIRE-SPOILS (two private reports: a Redoubt's spoils lay on the Court's floor and none of them could be
+    // taken): A REDOUBT'S SPOILS PRESSED. They
+    // are thrown from the Court's heart into the Hour's pool (scenes/world.js egSpoilsPaid), which the press takes as a piece
+    // of the gate's court or the Hour's arena: each resting piece a target the one ray can win, named by its own word. The
+    // gate's court (scenes/gate/gateStand.js) and the Hour's realm (worldModes.js standSdRealm) stand both; the Spire's circle
+    // stood neither, so every piece lay on its floor drawn, its line rising, and no press reached it - leaving the Spire took
+    // it to the pack, and since LOST-SPOILS to the mailbox. Asked of the host's floor pool, as theirs are.
+    ctx.addActivationTargets?.(() => host.spoilTargets?.() ?? NO_TARGETS);
+    ctx.addActivationNamer((key) => (typeof key === 'string' && key.startsWith('spoil') ? host.spoilName?.(key) ?? null : null));
   }
   /** EG-LOOK: THE CIRCLE'S FRAME - its portcullises (egGatesFrame), and its ruin and its band's wreck placed about `eye`
    *  (the dungeon's frame) on the realm's shared clock (scenes/eliteGates/egGroundLook.js). */

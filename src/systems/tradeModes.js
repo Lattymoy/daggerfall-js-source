@@ -56,7 +56,9 @@
 import { calculateCost, calculateTradePrice, essentialPrice } from './shopStock.js';   // ESSENTIALS-HALF: online, a potion costs half
 import { GOLD_PIECE_WEIGHT_KG, isEnchanted } from './inventory.js';
 import { calculateItemRepairCost, repairRefusal } from './repairService.js';
-import { itemValueOf, conditionPercentage } from './item/itemTemplates.js';
+import { itemValueOf, conditionPercentage, isAmmunition } from './item/itemTemplates.js';
+import { plateMetal } from './armorMaterials.js';   // DAEDRIC-SALE: a plate piece's metal, one decode
+import { WEAPON_MATERIALS } from '../characters/weapons.js';   // DAEDRIC-SALE: the Daedric metal's index
 import { craftedRarityWorth, socketsOf, gemWorthOf } from './loot/lootRarity.js';   // CRAFT-WORTH: a crafted piece's rolled worth, never a counter's
 import { isOnlinePage } from './online/onlineLane.js';   // SELL-AS-FOUND and MEND-THIRD: online, a sale reads a found piece through its mark
 import { foundSalePercentage, isFoundMarked } from './item/foundMark.js';   // SELL-AS-FOUND and MEND-THIRD: the mark's one home
@@ -304,9 +306,30 @@ export function markCounterBought(items, { online = isOnlinePage(), price = null
  *  piece's OWN value alone - a piece with none is priced at its template's base (itemValueOf), which never held the roll. */
 export function counterValueOf(item) {
   const v = itemValueOf(item);
-  if (!Number.isFinite(item?.value)) return v;   // AUDIT CRAFT-WORTH: the base the read falls back to carries no roll to take off
+  if (!Number.isFinite(item?.value)) return daedricSaleValue(item, v);   // AUDIT CRAFT-WORTH: the base the read falls back to carries no roll to take off
   const rolled = craftedRarityWorth(item);
-  return rolled > 0 ? Math.max(1, v - rolled) : v;
+  return daedricSaleValue(item, rolled > 0 ? Math.max(1, v - rolled) : v);
+}
+
+/** DAEDRIC-SALE (2026-10-26, a player: "tune down daedric selling price by 50%"): A COUNTER PAYS HALF FOR DAEDRIC GEAR.
+ *  Daedric's value ladder is 512x a weapon's or plate piece's base (characters/weapons.js valueMultipliersByMaterial),
+ *  twice Orcish, so one Daedric cuirass sold for more than a run's gold. Halved HERE, at the one value every selling arm
+ *  reads (Sell, SellMagic, the keyed shelf; LAW-3's marks), so a sale cannot be priced around it - and only the SELLING
+ *  side: what a shop ASKS for a Daedric piece (buyItemPrice) stands. A gem set in the piece is the player's own and sells
+ *  at its whole worth - it rides `value` (lootRarity.js socketGem) only where the piece carries a value of its own. */
+export const DAEDRIC_SALE_SHARE = 0.5;
+/** DAEDRIC-SALE: a Daedric weapon (ammunition prices off its template, never the metal) or a Daedric plate piece -
+ *  a shield too. */
+export function isDaedricGear(item) {
+  if (item?.group === 'Weapons') return !isAmmunition(item) && item.material === WEAPON_MATERIALS.Daedric;
+  if (item?.group === 'Armor') return plateMetal(item.material) === WEAPON_MATERIALS.Daedric;
+  return false;
+}
+function daedricSaleValue(item, v) {
+  if (!isDaedricGear(item) || !Number.isFinite(v)) return v;
+  const gems = Number.isFinite(item?.value) ? socketsOf(item).reduce((n, g) => n + (g ? (gemWorthOf(g) || 0) : 0), 0) : 0;
+  const own = Math.max(0, v - gems);
+  return Math.max(1, Math.round(own * DAEDRIC_SALE_SHARE) + Math.min(gems, v));
 }
 
 /**

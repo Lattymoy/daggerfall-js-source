@@ -15,6 +15,7 @@ import { isleOfCell, veilhaven, CELLS_W, CELLS_H, ETHER_BOX, ISLE_CELL_PX, VEIL_
 import { LOCATION_TYPES, longitudeLatitudeToMapPixel } from '../../src/formats/mapsFile.js';
 import { SALT_MAX } from '../../src/world/spawnedDungeons.js';
 import { REGION_NAMES } from '../../src/formats/mapsTables.js';
+import { hostText } from '../hostText.mjs';   // PORT-SHIPS: a host's whole, its moved modules with it
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 /** A place row as MAPS.BSA's reader shapes one - enough of it for the clone. */
@@ -140,12 +141,12 @@ test('ETHER-PLACES by source: the world host keeps the isles\' templates off the
 });
 
 test('ETHER-PORTS by source: a port isle answers as a port to the Come Sail Away deeds, the naval host\'s waters, the harbour book (its town\'s harbour sounded - its quays) and the harbour office (no crown\'s); the Eltheric freeport\'s harbourmaster its own tab; the crown\'s waters none past the Veil (mutants: each seam)', () => {
-  const src = read('src/scenes/world.js');
+  const src = hostText('src/scenes/world.js');   // PIN MOVED (PORT-SHIPS): the port near the player moved whole to scenes/harbourHost.js (HOST-SPLIT) - the host read whole
   assert.match(src, /if \(etherSea && inEther\(x, y\)\) return !!etherPortAt\(x, y\);/);
   assert.match(src, /const etherPortOf = \(i\) => \(\{ key: `\$\{i\.px\},\$\{i\.py\}`, name: i\.name, px: i\.px, py: i\.py, region: ETHER_REGION, crown: null, ether: true \}\);/);
   assert.match(src, /return i && i\.kind === 'port' && i\.px === x && i\.py === y \? i : null;/);
   assert.match(src, /const isle = etherSea && inEther\(p\.x, p\.y\) \? etherPortNear\(p\.x, p\.y\) : null;/);
-  assert.match(src, /if \(loc\?\.exterior\?\.exteriorData\) town = \{ id: `ether:\$\{isle\.key\}`, loc, x: isle\.px, y: isle\.py, name: isle\.name, reach: ETHER_HARBOUR_REACH \};/);   // PIN MOVED (AUDIT CAPTAIN'S SEA H1): sounded out to its isle's shore
+  assert.match(src, /if \(loc\?\.exterior\?\.exteriorData\) add\(\{ id: `ether:\$\{isle\.key\}`, loc, x: isle\.px, y: isle\.py, name: isle\.name, reach: ETHER_HARBOUR_REACH \}\);/);   // PIN MOVED (AUDIT CAPTAIN'S SEA H1): sounded out to its isle's shore; PIN MOVED (RPT1026-WORLD FAR-QUAY): one of every port town near; PIN MOVED (the fourth merge of main into #1184): each town once (`add`)
   assert.match(src, /_navalPortHereAt = \{ key, port: isle \? etherPortOf\(isle\) : null \};/);
   assert.match(src, /etherSea && inEther\(p\.x, p\.y\) \? null : navalCrownOf\(/);
   assert.match(src, /if \(port\?\.ether\) \{ const o = etherHost\.office\(port\);/);

@@ -137,8 +137,8 @@ test('SD1: the two enchant arms differ exactly as their DFU callers differ', () 
   const he = read('src/scenes/hostEnchant.js');
   assert.match(he, /spawnFoe: \(mobileType\) => \{ standFoe\?\.\(mobileType, \{ lineOfSightCheck: false \}\); \}/,
     'SoulBound.cs:100 passes false');
-  assert.match(he, /spawnAlliedFoe: \(mobileType\) => \{ standFoe\?\.\(mobileType, \{ allied: true \}\); \}/,
-    'SanguineRoseEffect.cs:56 takes the default true, and allied');
+  assert.match(he, /spawnAlliedFoe: \(mobileType\) => \{ Promise\.resolve\(standFoe\?\.\(mobileType, \{ allied: true \}\)\)\.then\(summonedBody, \(\) => null\); \}/,
+    'SanguineRoseEffect.cs:56 takes the default true, and allied');   // PIN MOVED (RPT1026-PROGRESS SUMMON-BARE, test/scenes/rpt1026_progress_summon.test.js): and the summon's body carries nothing
   // the fixed offset both used is gone
   const world = read('src/scenes/world.js');
   assert.equal(/spawnFoe\(mobileType, \[pf\[0\] \+ 2, pf\[1\] \+ 1, pf\[2\]\]/.test(world), false);

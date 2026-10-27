@@ -1870,8 +1870,27 @@ depends on `_resolveCapsule` capping a raised rung under a ceiling and
 the clamp removes that cap. The collider law therefore belongs to a lane
 that owns `collider.js`, and it is recorded here rather than half-done.
 
+STAND-THROUGH (RPT1026-WORLD, 2026-10-27; a private report, 2026-10-22: in
+dungeons a crouch and a jump left the level's geometry, and the treasure of
+an upper room was taken through its floor from below) closes the
+1.3-1.45 band's ejection, which was worse than measured above: the head
+sphere resolving from ABOVE the plane is pushed out of the level, not
+merely up. Crouched under a ceiling tilted 10 degrees at 1.35 m with a
+room's floor 0.15 m over it, one stand put the body on that floor 3.8 m
+along; a stand pressed at the top of a crouched jump does the same. The
+stand is refused now - a blocked stand, retried until timerFast and then
+forgotten, as CanStand's own refusal is - where the line the head's
+centre rises along (from the capsule's head now to the standing
+capsule's, feet+0.55 to feet+1.45 from a crouch) crosses a face
+(`motor.js` `standHeadClear`). A ceiling 1.45-1.8 m up keeps the head's
+centre under its face, and stands as DFU stands it, the sink residue
+above as it was. A departure from CanStand for that 0.2 m band (Port-Ledger
+A, STAND-THROUGH). Pinned by `test/player/rpt1026_world_standthrough.test.js`
+(4); `tools/mutants/rpt1026_world.json`.
+
 Pins: 3 in `test/player/audit64_motor.test.js` - the reference's own arithmetic
-(0.45, 0.35, feet+1.25), a 1.4 ceiling that must PERMIT the stand, and
+(0.45, 0.35, feet+1.25), a 1.6 ceiling that must PERMIT the stand (PIN MOVED
+by STAND-THROUGH: it was 1.4, in the band now refused), and
 the 1.2 ceiling that DFU's own sweep still refuses. Mutant: the
 predicate reverted to the full-capsule fit; 1 killed.
 
@@ -2290,8 +2309,8 @@ UNSTUCK1, indoors and underground only - answered "There is nowhere to send you 
   mountains, no fast travel); `scenes/worldModes.js` and `scenes/dungeonContext.js` have no fast-travel landing.
 
 The landing is this law's; after it, a rock built round the body is ROCK-CLEAR's (below - the owner, 2026-10-19: "Apply to
-rocks too"). OPEN for Mac (the investigation's, not built here): the collider's floor is the bilinear read where the drawn
-landform ground is triangles, a gap that can reach metres on the steepest ridges. `test/player/unstuckout.test.js` (2) - the
+rocks too"). The collider's floor and the drawn ground are one law since FLORA-GROUND (2026-10-27, `03-World/World-Arc.md`
+Milestone 8: `terrainSurface.js` walkGroundAt). `test/player/unstuckout.test.js` (2) - the
 real collider over real closed rock meshes;
 `tools/mutants/unstuckout.json` (7), all dead. AUDIT FIELD-BUGS 1008 (`01-Overview/Audit-Log.md`): `tvSeaY` declared
 beside `state`, before the boot's own load reads it (the outdoor arm's refusals that audit worded went with the arm).

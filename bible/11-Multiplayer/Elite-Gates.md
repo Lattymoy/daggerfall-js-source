@@ -347,7 +347,10 @@ row of its own, `WEIR_KEY_ROW` in `src/systems/eliteGates/weirKey.js`:
 - named in `BOUND_TEMPLATES` (`src/net/realm/realmTradeLaw.js`), so the realm's trade refuses it as the client does;
 - its line (`EG_TEXT.keyLine`), on its info card under its name and weight, as the Portal Stone's card is built
   (`src/systems/item/itemInfo.js` `survivalInfoTokens` - AUDIT EG V): *One of the Spire's portal keys, surrendered to the Kyn
-  in 3E 398. It opens the Weir Gate's road from this side.*
+  in 3E 398. Use it under open sky to open an Elite Breach.* - and under it, since RPT1026-CLIENT (the balance is the
+  account's, below, and nothing the player saw said so), *Every character on your account shares the same Weir Keys.*
+  (`itemInfo.js` weirKeySharedLine, `eg.key.shared`, in the player's language: EG_TEXT rides the relay's bundle, and a
+  line the relay never reads is the card's own)
 
 **The balance is the account's.** Every dungeon drop is the client's own `Math.random`: the Integrity arc's ledger
 (`06-Systems/Integrity-Arc.md`) measures it after the fact and does not enforce. A key from a forged drop would open a
@@ -378,10 +381,24 @@ real relay instance, so the key is a service-side balance and the item is its fa
   of the pack; it loads with every one folded away (`foldStrayWeirKeys`, called from `save.js` restorePlayer beside the
   load's item repairs, over every list the save holds but the pack - the one walk, `savedItemLists` - and a room's own
   things, `decorOwn`), so the account's balance restacks the pack whole and nothing turns to rust. A face the find threw
-  on a body and the player never took up is folded the same way at the next load. OPEN: that throw is the one face
-  still made outside the pack - taken up only after a later answer restacked the pack to the whole balance, it leaves
-  the pack one over, and the next answer says the rust line for it (the account loses nothing). Pinned:
+  on a body and the player never took up is folded the same way at the next load. Pinned:
   `test/net/eliteGates/fb1019f_keyface.test.js` (5), `tools/mutants/fb1019f_keyface.json` (13, all dead).
+- **The faces lying on bodies count** (RPT1026-CLIENT, 2026-10-26, closing KEY-FACE's one open door; a private report:
+  a pack's count of Weir Keys falling back to one now and then). The find's throw is the one face made outside the pack, and it
+  restacked the pack to the balance less that face alone: a second find before the first body was looted, or any answer
+  landing before the take-up, restacked as if no face lay anywhere, so each face taken up showed a key the account never
+  held and the next answer said the rust line for it. Every face thrown is kept with the body's list it lies in
+  (`weirKey.js` throwWeirKeyFace), and every restack sets the pack to the balance less the faces still lying
+  (`weirKeysLying`): one taken up - gone from its list - leaves the count, so the pack and the bodies always show the
+  balance together. Out of the dungeon (the find's place door, `setWeirKeyFacesHere`) the faces left behind are folded off
+  their bodies at the next answer and the pack shows the whole balance; a load keeps none as lying (`foldStrayWeirKeys`).
+  AUDIT RPT1026 K1: a face is kept against the VISIT it was thrown in - the world host's door is `egFindPlace`, the
+  dungeon's tier and its context, built new at every entry - so one out of the dungeon and into the next (or the same one
+  built again) before any answer landed outside is folded too: it had been counted in the next dungeon, on a body that dungeon
+  never had, and the pack stood a key short of the balance for each. A find answered after the player left the visit it was
+  asked in puts its key in the pack, not on the body left behind.
+  The key's card says the keys are the account's (above).
+  Pinned: `test/systems/eliteGates/rpt1026_client_weirface.test.js` (3), `test/scenes/audit_rpt1026_client.test.js` (K1, 5).
 
 **Where they come from.** The service rolls every one with its own `rand`, at a claim it already verifies. This is
 the `sdHonoursRoll` way: AUDIT SD III R4 moved the Hour's honours off the receipt seed because the page can read the
@@ -1820,7 +1837,11 @@ byte. The Spire's lords are written to it. The gate's brain already exports the 
     for the company standing before it.
   - **From its wake no fall takes a share out of it.** The living finish what the fallen left, so a death makes a fight
     harder for the company, never easier. The gate and the Remnant retire a share only for absence (`ABSENT_RETIRE_MS`),
-    and the Remnant keeps a fallen body's. A recall finds its member's share where it was. A member never seen whose
+    at the fraction the boss stands at - and there a death IS an absence: the fallen's page leaves the room at once
+    (`world.js`'s death branch, `online.leave()`), so neither holds a fallen fighter's share as a lord does. [Corrected by
+    RPT1026-FIGHTS (a private report, 2026-10-20): this said "and the Remnant keeps a fallen body's" - true of its law (a
+    body seen dead in its arena keeps its share) and never of play, since no fallen body's pose stays in the arena.] A
+    recall finds its member's share where it was. A member never seen whose
     absence becomes a fall (section 6.1's 180 s) takes nothing with it: it never brought any.
   - The members a hall can gain mid-fight are the late and those a Memento calls back into it (a member is admitted only
     in the open window, before the first wake: section 6.1), each bringing its share at the fraction. The last share in
@@ -10429,3 +10450,37 @@ EGZ-host-egnow-on-the-welcome).
 Anvil's arc's, and not touched here.
 
 **The game.** Nothing in `src/` moved. **The four hosts.** None touched (HOST-SPLIT).
+
+### RPT1026-EVENTS - 2026-10-26 - A REDOUBT'S SPOILS PRESSED IN THE SPIRE, AND A WINDOW THAT SLEPT TAKEN INTO THE NEXT CIRCLE
+
+Two private reports each, from players of the Elite Breach.
+
+**SPIRE-SPOILS** (two reports: a Redoubt's spoils lay on the Court's floor and none of them could be taken). A
+Redoubt's spoils are thrown from its Court's
+heart into the Hour's floor pool (`scenes/world.js` egSpoilsPaid, kept to the Court's floor by
+`scenes/eliteGates/egClient.js` beaconAt), and the press takes a piece as a target the one ray wins. The gate's court
+(`scenes/gate/gateStand.js`) and the Hour's realm (`scenes/worldModes.js` standSdRealm) stand the pool's targets and their
+names in the context they stand in. The Spire's circle stood neither, so every piece lay drawn on the Court's floor, its
+line rising, and no press reached it. Leaving the Spire took it to the pack, and since LOST-SPOILS to the mailbox, so
+nothing was lost, but nothing could be picked up where it lay. Now the circle (`scenes/eliteGates/egCircleHost.js`
+standEgHall) stands the pool's targets (`addActivationTargets`) and its names (`addActivationNamer`) as the court and the
+realm do.
+
+**SPIRE-CATCHUP** (a report: a member whose window was in the background when the rest ended stayed in the finished
+circle and lost what they carried). The company steps into its next circle in the rest's end. A member's page took that step on the frame that
+first saw the new circle, but only while the room's stage read `arrive` (the gather's seconds, thirty at most). A hidden
+window draws no frame, while its socket's words still come, so the state woke past the arrival into the trial. Every
+frame after it returned in the finished Court until the absent law (`EG_ABSENT_TRIAL_MS`, 180 s) cast the member out,
+and the Reliquaries they carried with them. Now a member is taken into the company's circle at whatever stage it first
+draws, unless that stage is the rest (the one stage whose next circle is still being built). They land on its arrival
+plate and walk to the fight as a late arrival does.
+
+**Not DFU members:** Daggerfall has no shared run, no Redoubt and no company. Ledger A (EG).
+
+**Pins:** `test/scenes/eliteGates/rpt1026_events_spire.test.js` (2). SPIRE-SPOILS: the real circle stood into a context
+of the dungeon host's shape, and the real pool throwing a Redoubt's real spoils (`egSpoilsList`) from the Court's heart
+over the circle's own collider; each piece offered, named and picked. SPIRE-CATCHUP: played against the relay's real Room
+(EG-PLAY's harness), with a hidden window's beats beside it (the room's words, no frame, no pose). The member stays in
+circle 1 while the room fights circle 2's trial; it is in circle 2, on its arrival plate and alive, at its first frame.
+It failed before the fix (circle 1, not 2). `tools/mutants/rpt1026_events.json` (SPIRE-SPOILS 2, SPIRE-CATCHUP 1, all
+dead). **The four hosts:** none grown; `createEgClient` changed in one existing line (its ceiling holds).

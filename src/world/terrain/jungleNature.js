@@ -45,6 +45,7 @@
 import {
   tileDraw, forestCover, placesPull, groundAt, isTreeRecord, TREE_RECORDS, SLOPE_SINK_RATIO, natureCleared,
 } from './terrainNature.js';
+import { walkGroundAt } from './terrainSurface.js';   // FLORA-GROUND: the jungle stands on the ground the player walks on - one law
 import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE, SCALED_BEACH_ELEVATION } from './terrainSampler.js';
 import { WORLD_MAP_TILE_DIM, sampleHeight } from './terrainTiles.js';
 import { jungleDepthAt, jungleShare, JUNGLE_EDGE, JUNGLE_WANDER_MAX } from '../jungle/jungleRegion.js';
@@ -306,7 +307,7 @@ export function jungleLayout(own, heightmapData, tilemapData, opts) {
       openOf[ti] = Math.min(1, Math.max(0, -pull));
     }
   }
-  const placeAt = (mx, mz, g2) => groundAt(heightmapData, mx, mz) - Math.atan(Math.sqrt(g2)) * (180 / Math.PI) / SLOPE_SINK_RATIO;
+  const placeAt = (mx, mz, g2) => walkGroundAt(heightmapData, mx, mz) - Math.atan(Math.sqrt(g2)) * (180 / Math.PI) / SLOPE_SINK_RATIO;   // FLORA-GROUND: on the ground the player walks on
   // JUNGLE-TRAILS: a tree keeps its FOOT off a trail's dirt as VERGE1 keeps it off a road - its roots, buttresses and
   // curtains at its own scale (jungleModels.js JUNGLE_MEASURES) - where the trails run: the jungle whole (the painter's
   // own gate, world/jungle/jungleTrails.js trailClear); the palms and the floor keep off its tiles (`paths`, above)
@@ -320,7 +321,7 @@ export function jungleLayout(own, heightmapData, tilemapData, opts) {
     share: (mx, mz) => canopyShare(jungleDepthAt(px, py, jg.canopy, mx, mz)),
     growsOn: (ti) => footOf[ti] > 0,
     steepAt: (ti) => g2Of[ti] > TAN_MAX_SQ,
-    ground: (mx, mz) => groundAt(heightmapData, mx, mz),
+    ground: (mx, mz) => walkGroundAt(heightmapData, mx, mz),   // FLORA-GROUND: a graht-oak's foot on the walk law
     trailOk: (mx, mz, reach) => !trails || trailClear(px, py, mx, mz, reach),
   }) : new Float32Array(0);
   const onFoot = grahtFootMask(graht, tDim, scale);

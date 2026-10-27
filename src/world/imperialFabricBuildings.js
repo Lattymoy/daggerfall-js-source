@@ -14,23 +14,38 @@
 //     every other a residence of its footprint's size), its quality by its district's wealth (DISTRICT_QUALITY), a guild's
 //     faction (systems/guild/guildFactions.js), a name seed of its own;
 //   - A DONOR: a building of Daggerfall's own blocks of that type (FABRIC_DONORS, read off the freeware: a ground-floor
-//     entrance, its keeper in) - its interior is the building's interior, read from the player's BLOCKS.BSA when the
-//     block is made (fabricBlockBuildings), the same donor on every client (the record's hash picks it, nearest the
-//     building's footprint in size);
+//     entrance, its keeper in), the same donor on every client (the record's hash picks it, nearest the building's
+//     footprint in size) - IC-INTERIORS (2026-10-27): its CAST, read from the player's BLOCKS.BSA when the interior is first
+//     asked for (its people, its quest, rest and treasure markers, its lights' pictures);
+//   - ITS OWN INTERIOR (IC-INTERIORS, world/interior/fabricInterior.js): laid from Daggerfall's own interior kit to the
+//     building's footprint, its storeys, its kind and its door, its windows where its walls show them, its rooms cut by
+//     its key - the donor's cast stood again in it. BLD had handed it the donor's interior whole: a long shop a square
+//     room, every house of a size the same three rooms;
 //   - A DOOR on its widest street's front, at the bay nearest the front's middle where the street before it is open: a
 //     model of a door (Daggerfall's own door picture, TEXTURE.374 - DFU's building door law, world/meshReader.js
 //     BUILDING_DOORS - in a stone surround) whose door face is the game's door (DOOR_TYPE.BUILDING), laid as a
-//     subrecord's one exterior model; the subrecord turned and placed so the donor's own entrance stands at that door,
-//     its interior laid in that frame (the landing at its enter marker and its door, player/enterExit.js).
+//     subrecord's one exterior model; the subrecord turned and placed so its interior's street door (FABRIC_ENTRANCE)
+//     stands at that door, its interior laid in that frame (the landing at its enter marker and its door,
+//     player/enterExit.js).
 // The back ranges in the courts (no street reaches them - the walkers' ground is shut there), and a front whose every
 // bay has a way up or a canal before it, keep no door: facades, as before.
-import { fabricCell, fabricGroundIn, outwardOf, streetKind, centroid, inQuad, GROUND, BAY } from './imperialFabric.js';
+//
+// IC-PROPS (2026-10-27, the owner: "Old daggerfall city layout placements are in imperial city"): the 671 of Daggerfall's
+// city blocks the plan laid among the city's own are gone (world/imperialCity.js cellOf), and what they carried that the
+// grand city means to keep is the fabric's now - each district's signature trade among its shops: the Temple District's
+// temples of the Eight (the `temple` donors, each its own god's - the record's faction), Talos Plaza's and the Market's
+// banks and general stores, the Waterfront's Thieves Guild (a house of the guild's faction, as Daggerfall's THIE blocks
+// keep it), and the Arcane University's Mages Guild halls and libraries inside its curtain (world/imperialFabric.js
+// universityGrounds).
+import { fabricCell, fabricGroundIn, outwardOf, streetKind, centroid, inQuad, GROUND, BAY, STOREY, stairGround } from './imperialFabric.js';
 import { IMPERIAL_CELLS, IMPERIAL_SPAN, imperialDistrictAt, imperialCell, imperialCodeCell } from './imperialCity.js';
 import { FABRIC_DONOR_MARKED, FABRIC_SITE_SETS, FABRIC_SLICE_SETS } from './imperialFabricSites.js';
 import { BUILDING_TYPES } from './buildingNames.js';
 import { GUILD_FACTION_IDS } from '../systems/guild/guildFactions.js';
 import { hash32, BLOCK_M } from './spawnedDungeons.js';
 import { MeshBuilder } from './detStandIns.js';
+import { partyEdges } from './imperialFabricModels.js';   // IC-INTERIORS: a party wall's windows are blind inside too
+import { fabricInteriorGrid, fabricInteriorPlan, fabricInteriorRecord } from './interior/fabricInterior.js';   // IC-INTERIORS
 import { DOOR_TYPE, GLOBAL_SCALE } from './meshReader.js';
 import { CAPITAL_ART, art } from './capitalShapes.js';
 import { registerCustomModelFamily } from './customModels.js';
@@ -40,6 +55,9 @@ import { ROTATION_DIVISOR, RMB_DIMENSION } from '../formats/blocksFile.js';
 import { makeBuildingKey } from '../systems/talk/talkTopics.js';
 
 const HALF = IMPERIAL_CELLS / 2, B = BLOCK_M;
+/** The ground a door opens onto: the street, the square, and (IC-STAIRS) the street under a stair's upper flights.
+ *  @type {ReadonlyArray<number>} */
+const DOOR_GROUND = Object.freeze([GROUND.street, GROUND.square, GROUND.under]);
 const SALT = 0xb1d5;
 /** The most buildings a cell's block carries: a classic block's list has 32 slots (BlocksFile), the world-data door's
  *  JSON as many as it lists (formats/worldData/worldDataReplacement.js blockFromJson, DFU's WorldDataReplacement), and a
@@ -47,88 +65,114 @@ const SALT = 0xb1d5;
 export const FABRIC_BUILDINGS_PER_CELL = 255;
 
 /**
- * THE DONORS - buildings of Daggerfall's own blocks whose interiors the fabric's take, by pool: [pool, block, record,
- * BuildingType, the entrance door's middle in the interior's own metres (x, z), the way out through it (degrees, x
- * toward z), the interior's extent (x, z metres)]. Read off the freeware's 920 RMB blocks (the BLD record): of each
+ * THE DONORS - buildings of Daggerfall's own blocks whose casts the fabric's take, by pool: [pool, block, record,
+ * BuildingType, the interior's extent (x, z metres)]. Read off the freeware's 920 RMB blocks (the BLD record): of each
  * pool's blocks one building a block, spread over the pool, each with an enter marker, a door on its ground floor and
  * (but a home's) its people in. Its numbers are pinned against the player's own BLOCKS.BSA where one is at hand
- * (test/world/icbld_buildings.test.js).
+ * (test/world/icbld_buildings.test.js). IC-INTERIORS: a donor gives its building its type, its cast (its people, its
+ * markers, its lights' pictures - fabricBuildingInterior) and its size (the pick's: donorOf); BLD's columns for the donor's
+ * own entrance (its door's middle and its way out) are gone with the donor's interior - the building's frame is
+ * FABRIC_ENTRANCE.
  */
-export const FABRIC_DONORS = Object.freeze(/** @type {Array<[string, string, number, number, number, number, number, number, number]>} */ ([
-  ['house3', 'RESIAL00.RMB', 0, 19, 2.58, -4.65, -90, 9.5, 9.6],
-  ['house3', 'RESIAL09.RMB', 8, 19, -4.65, -0.98, -180, 9.6, 12.7],
-  ['house3', 'RESIAM03.RMB', 13, 19, 2.58, -4.65, -90, 9.5, 9.6],
-  ['house3', 'RESIAM02.RMB', 3, 19, -4.65, -0.98, -180, 9.6, 12.7],
-  ['house2', 'RESIAL00.RMB', 2, 18, -4.65, -4.17, -180, 9.3, 13.6],
-  ['house2', 'RESIAL04.RMB', 0, 18, 1.45, -3.83, 0, 15.7, 15.7],
-  ['house2', 'RESIAL08.RMB', 0, 18, 3.05, -3.83, 0, 12.5, 15.7],
-  ['house2', 'RESIAM01.RMB', 0, 18, -4.65, -0.98, -180, 9.6, 12.7],
-  ['house2', 'RESIAM05.RMB', 0, 18, -1.75, 0.98, 0, 9.3, 12.5],
-  ['house2', 'RESIAM09.RMB', 0, 18, 0.15, 2.23, -180, 6.1, 12.5],
-  ['house2', 'RESIAS06.RMB', 0, 18, 4.65, -0.63, 0, 9.3, 15.7],
-  ['house2', 'RESIBS02.RMB', 0, 18, 4.65, 0.98, 0, 9.3, 18.9],
-  ['house1', 'MANRAL00.RMB', 0, 17, 6.25, 0.98, 0, 12.5, 18.9],
-  ['house1', 'MANRAM02.RMB', 14, 17, 6.25, 0.98, 0, 12.5, 18.9],
-  ['house1', 'MANRAS02.RMB', 8, 17, 6.25, 0.98, 0, 12.5, 18.9],
-  ['house4', 'RESIBL00.RMB', 0, 20, -5.33, -3.05, -90, 18.9, 9.3],
-  ['house4', 'RESIBM01.RMB', 0, 20, 4.18, -3.05, -90, 18.9, 9.3],
-  ['house4', 'RESIGL03.RMB', 0, 20, -7.38, 12.65, 90, 25.3, 25.3],
-  ['alchemist', 'ALCHAL00.RMB', 7, 0, -0.63, -6.25, -90, 12.5, 15.7],
-  ['alchemist', 'ALCHAS01.RMB', 0, 0, -0.63, -6.25, -90, 12.5, 15.7],
-  ['alchemist', 'ALCHBL01.RMB', 0, 0, -0.63, -3.05, -90, 9.5, 6.4],
-  ['armorer', 'ARMRAL00.RMB', 0, 2, -0.98, -9.45, -90, 12.5, 18.9],
-  ['armorer', 'ARMRAM01.RMB', 0, 2, -0.98, -9.45, -90, 12.5, 18.9],
-  ['armorer', 'ARMRGL01.RMB', 0, 2, -0.98, -9.45, -90, 12.5, 18.9],
-  ['bank', 'BANKAL00.RMB', 0, 3, 0.63, -6.25, -90, 12.5, 15.7],
-  ['bank', 'BANKAM00.RMB', 15, 3, 6.4, -8, 0, 13.8, 15.7],
-  ['bookseller', 'BOOKAL00.RMB', 1, 5, 4.65, -2.23, 0, 12.5, 15.7],
-  ['bookseller', 'BOOKAS01.RMB', 6, 5, 6.4, -8, 0, 13.8, 15.7],
-  ['bookseller', 'BOOKBM00.RMB', 7, 5, 3.83, 3.05, 90, 9.5, 6.4],
-  ['clothing', 'CLOTAL00.RMB', 1, 6, 8, -8, 0, 15.9, 18.9],
-  ['clothing', 'CLOTAM03.RMB', 0, 6, 8, -8, 0, 15.9, 18.9],
-  ['furniture', 'FURNAL01.RMB', 17, 7, 0.63, -6.25, -90, 12.5, 15.7],
-  ['furniture', 'FURNAM02.RMB', 0, 7, 0.63, -6.25, -90, 12.5, 15.7],
-  ['gems', 'GEMSAL00.RMB', 0, 8, 0.63, -6.25, -90, 12.5, 15.7],
-  ['gems', 'GEMSAS00.RMB', 11, 8, 0.63, -6.25, -90, 12.5, 15.7],
-  ['general', 'GENRAL00.RMB', 18, 9, 0.63, -6.25, -90, 12.5, 15.7],
-  ['general', 'GENRAM00.RMB', 14, 9, -2.23, -3.05, -90, 6.4, 6.4],
-  ['general', 'GENRAS01.RMB', 10, 9, 0.63, -6.25, -90, 12.5, 15.7],
-  ['general', 'GENRBL02.RMB', 0, 9, 0.63, -6.25, -90, 12.5, 15.7],
-  ['library', 'LIBRAL00.RMB', 0, 10, 6.4, -8, 0, 13.8, 15.7],
-  ['library', 'LIBRAL03.RMB', 3, 10, -9.45, -1.08, -180, 18.9, 18.9],
-  ['pawn', 'PAWNAL00.RMB', 14, 12, 0.63, -6.25, -90, 12.5, 15.7],
-  ['pawn', 'PAWNBS00.RMB', 0, 12, 9.45, -5.43, 0, 19.3, 15.9],
-  ['weaponsmith', 'WEAPAL00.RMB', 0, 13, 0.63, -6.25, -90, 12.5, 15.7],
-  ['weaponsmith', 'WEAPAM00.RMB', 0, 13, 7.03, -0.15, 90, 15.7, 18.9],
-  ['weaponsmith', 'WEAPBM00.RMB', 7, 13, -2.23, -3.05, -90, 6.4, 6.4],
-  ['tavern', 'TVRNAL00.RMB', 0, 15, 12.65, 0.98, 0, 25.5, 19.2],
-  ['tavern', 'TVRNAL10.RMB', 0, 15, -6.25, 0.63, -180, 12.5, 15.7],
-  ['tavern', 'TVRNBM04.RMB', 5, 15, 7.85, -0.63, 0, 15.7, 15.7],
-  ['mages', 'MAGEAA00.RMB', 0, 11, -9.45, 5.43, -180, 19.2, 25.3],
-  ['mages', 'MAGEBA03.RMB', 0, 11, 11.05, 0.98, 0, 28.5, 25.3],
-  ['fighters', 'FIGHAA00.RMB', 16, 11, -4.65, -2.58, -180, 9.3, 9.3],
-  ['fighters', 'FIGHAA01.RMB', 0, 11, -4.65, -2.58, -180, 9.3, 9.3],
-]).map(([pool, block, record, type, dx, dz, out, w, d]) => Object.freeze({ pool, block, record, type, door: Object.freeze([dx, dz]), out, size: Object.freeze([w, d]) })));
+export const FABRIC_DONORS = Object.freeze(/** @type {Array<[string, string, number, number, number, number, number?]>} */ ([
+  ['house3', 'RESIAL00.RMB', 0, 19, 9.5, 9.6],
+  ['house3', 'RESIAL09.RMB', 8, 19, 9.6, 12.7],
+  ['house3', 'RESIAM03.RMB', 13, 19, 9.5, 9.6],
+  ['house3', 'RESIAM02.RMB', 3, 19, 9.6, 12.7],
+  ['house2', 'RESIAL00.RMB', 2, 18, 9.3, 13.6],
+  ['house2', 'RESIAL04.RMB', 0, 18, 15.7, 15.7],
+  ['house2', 'RESIAL08.RMB', 0, 18, 12.5, 15.7],
+  ['house2', 'RESIAM01.RMB', 0, 18, 9.6, 12.7],
+  ['house2', 'RESIAM05.RMB', 0, 18, 9.3, 12.5],
+  ['house2', 'RESIAM09.RMB', 0, 18, 6.1, 12.5],
+  ['house2', 'RESIAS06.RMB', 0, 18, 9.3, 15.7],
+  ['house2', 'RESIBS02.RMB', 0, 18, 9.3, 18.9],
+  ['house1', 'MANRAL00.RMB', 0, 17, 12.5, 18.9],
+  ['house1', 'MANRAM02.RMB', 14, 17, 12.5, 18.9],
+  ['house1', 'MANRAS02.RMB', 8, 17, 12.5, 18.9],
+  ['house4', 'RESIBL00.RMB', 0, 20, 18.9, 9.3],
+  ['house4', 'RESIBM01.RMB', 0, 20, 18.9, 9.3],
+  ['house4', 'RESIGL03.RMB', 0, 20, 25.3, 25.3],
+  ['alchemist', 'ALCHAL00.RMB', 7, 0, 12.5, 15.7],
+  ['alchemist', 'ALCHAS01.RMB', 0, 0, 12.5, 15.7],
+  ['alchemist', 'ALCHBL01.RMB', 0, 0, 9.5, 6.4],
+  ['armorer', 'ARMRAL00.RMB', 0, 2, 12.5, 18.9],
+  ['armorer', 'ARMRAM01.RMB', 0, 2, 12.5, 18.9],
+  ['armorer', 'ARMRGL01.RMB', 0, 2, 12.5, 18.9],
+  ['bank', 'BANKAL00.RMB', 0, 3, 12.5, 15.7],
+  ['bank', 'BANKAM00.RMB', 15, 3, 13.8, 15.7],
+  ['bookseller', 'BOOKAL00.RMB', 1, 5, 12.5, 15.7],
+  ['bookseller', 'BOOKAS01.RMB', 6, 5, 13.8, 15.7],
+  ['bookseller', 'BOOKBM00.RMB', 7, 5, 9.5, 6.4],
+  ['clothing', 'CLOTAL00.RMB', 1, 6, 15.9, 18.9],
+  ['clothing', 'CLOTAM03.RMB', 0, 6, 15.9, 18.9],
+  ['furniture', 'FURNAL01.RMB', 17, 7, 12.5, 15.7],
+  ['furniture', 'FURNAM02.RMB', 0, 7, 12.5, 15.7],
+  ['gems', 'GEMSAL00.RMB', 0, 8, 12.5, 15.7],
+  ['gems', 'GEMSAS00.RMB', 11, 8, 12.5, 15.7],
+  ['general', 'GENRAL00.RMB', 18, 9, 12.5, 15.7],
+  ['general', 'GENRAM00.RMB', 14, 9, 6.4, 6.4],
+  ['general', 'GENRAS01.RMB', 10, 9, 12.5, 15.7],
+  ['general', 'GENRBL02.RMB', 0, 9, 12.5, 15.7],
+  ['library', 'LIBRAL00.RMB', 0, 10, 13.8, 15.7],
+  ['library', 'LIBRAL03.RMB', 3, 10, 18.9, 18.9],
+  ['pawn', 'PAWNAL00.RMB', 14, 12, 12.5, 15.7],
+  ['pawn', 'PAWNBS00.RMB', 0, 12, 19.3, 15.9],
+  ['weaponsmith', 'WEAPAL00.RMB', 0, 13, 12.5, 15.7],
+  ['weaponsmith', 'WEAPAM00.RMB', 0, 13, 15.7, 18.9],
+  ['weaponsmith', 'WEAPBM00.RMB', 7, 13, 6.4, 6.4],
+  ['tavern', 'TVRNAL00.RMB', 0, 15, 25.5, 19.2],
+  ['tavern', 'TVRNAL10.RMB', 0, 15, 12.5, 15.7],
+  ['tavern', 'TVRNBM04.RMB', 5, 15, 15.7, 15.7],
+  ['mages', 'MAGEAA00.RMB', 0, 11, 19.2, 25.3],
+  ['mages', 'MAGEBA03.RMB', 0, 11, 28.5, 25.3],
+  ['fighters', 'FIGHAA00.RMB', 16, 11, 9.3, 9.3],
+  ['fighters', 'FIGHAA01.RMB', 0, 11, 9.3, 9.3],
+  // IC-PROPS: the temples of the Eight, each block's temple (its record's faction its god's), and the Thieves Guild's
+  // houses (THIE blocks' House2 of the guild's faction) - the trade of Daggerfall's blocks the plan no longer lays
+  ['temple', 'TEMPAAA0.RMB', 0, 14, 16.8, 18.5, 21],
+  ['temple', 'TEMPAAB0.RMB', 16, 14, 18.4, 18.7, 22],
+  ['temple', 'TEMPAAC0.RMB', 21, 14, 16.8, 15.9, 24],
+  ['temple', 'TEMPAAD0.RMB', 22, 14, 12.8, 20.6, 92],
+  ['temple', 'TEMPAAE0.RMB', 0, 14, 15.9, 14.9, 29],
+  ['temple', 'TEMPAAF0.RMB', 21, 14, 16.6, 15.9, 27],
+  ['temple', 'TEMPAAG0.RMB', 20, 14, 17, 16.3, 33],
+  ['temple', 'TEMPAAH0.RMB', 13, 14, 16.4, 18.3, 35],
+  ['thieves', 'THIEAL00.RMB', 16, 18, 17.4, 14.6, 42],
+  ['thieves', 'THIEAM00.RMB', 0, 18, 23.4, 13.6, 42],
+]).map(([pool, block, record, type, w, d, faction = 0]) => Object.freeze({ pool, block, record, type, size: Object.freeze([w, d]), faction })));
+/** IC-INTERIORS: THE STREET DOOR OF A FABRIC BUILDING'S INTERIOR, in the interior's own metres - its middle at the frame's
+ *  origin, the way out toward -z (world/interior/fabricInterior.js lays every building's cells from it: x along its
+ *  front, z in from it). Every building's subrecord stands its interior so this stands at its door (subRecordFrame), and
+ *  its door model stands here (fabricDoorModel). */
+export const FABRIC_ENTRANCE = Object.freeze({ door: Object.freeze([0, 0]), out: -90 });
 /** Each pool's donors' indices. */
 const POOLS = (() => { const m = new Map(); FABRIC_DONORS.forEach((d, i) => { if (!m.has(d.pool)) m.set(d.pool, []); m.get(d.pool).push(i); }); return m; })();
 
 /** EACH DISTRICT'S TRADE on its streets: the shops its shopfronts keep (by pool), the share of them that are shops, and
- *  the guild that keeps a hall there (its pool), if any - the districts' own lore (the Market's stalls and smiths, the
- *  Arena District's armourers and the Fighters Guild, the Temple District's books and the Mages Guild, Talos Plaza's
- *  bank and jewellers, the Elven Gardens' alchemists, the Waterfront's general stores and pawnshops). */
+ *  the guild that keeps a hall there (its pool), if any - the districts' own lore (the Market's stalls, smiths and bank,
+ *  the Arena District's armourers and the Fighters Guild, the Temple District's books and the Mages Guild, Talos Plaza's
+ *  bank, jewellers and general stores, the Elven Gardens' alchemists, the Waterfront's general stores and pawnshops).
+ *  IC-PROPS: and its SIGNATURE HALLS (`halls`: [pool, one main street front in so many]) - what Daggerfall's blocks of
+ *  its signature (world/imperialCity.js's IMPERIAL_SIGNATURE, till 2026-10-27) stood it, about as many as they stood: the
+ *  Temple District's temples of the Eight (its 33 TEMP blocks, a temple each), the Waterfront's Thieves Guild houses
+ *  (its 15 THIE blocks, a guild house each), the Arcane University's Mages Guild halls (its 14 MAGE blocks, two or three
+ *  each) - the University its own trade besides, its libraries, books and alchemists; Talos Plaza's general stores and
+ *  the Market's bank (their GENR and BANK blocks) among their shops. */
 export const DISTRICT_TRADE = Object.freeze({
-  'Market District': Object.freeze({ shops: ['general', 'clothing', 'gems', 'alchemist', 'pawn', 'bookseller', 'furniture', 'armorer', 'weaponsmith', 'general'], share: 0.7, guild: null }),
+  'Market District': Object.freeze({ shops: ['general', 'clothing', 'gems', 'alchemist', 'pawn', 'bookseller', 'furniture', 'armorer', 'weaponsmith', 'general', 'bank'], share: 0.7, guild: null }),
   'Arena District': Object.freeze({ shops: ['armorer', 'weaponsmith', 'general', 'pawn', 'armorer'], share: 0.5, guild: 'fighters' }),
   'Arboretum': Object.freeze({ shops: ['bookseller', 'alchemist', 'library', 'clothing'], share: 0.4, guild: null }),
-  'Temple District': Object.freeze({ shops: ['alchemist', 'bookseller', 'library', 'general', 'clothing'], share: 0.5, guild: 'mages' }),
-  'Talos Plaza District': Object.freeze({ shops: ['bank', 'gems', 'clothing', 'furniture', 'gems', 'library'], share: 0.5, guild: null }),
+  'Temple District': Object.freeze({ shops: ['alchemist', 'bookseller', 'library', 'general', 'clothing'], share: 0.5, guild: 'mages', halls: [['temple', 340]] }),
+  'Talos Plaza District': Object.freeze({ shops: ['bank', 'gems', 'clothing', 'furniture', 'gems', 'library', 'general'], share: 0.5, guild: null }),
   'Elven Gardens District': Object.freeze({ shops: ['alchemist', 'clothing', 'bookseller', 'gems', 'alchemist'], share: 0.5, guild: 'mages' }),
-  'Waterfront District': Object.freeze({ shops: ['general', 'pawn', 'furniture', 'armorer', 'general'], share: 0.6, guild: 'fighters' }),
+  'Waterfront District': Object.freeze({ shops: ['general', 'pawn', 'furniture', 'armorer', 'general'], share: 0.6, guild: 'fighters', halls: [['thieves', 500]] }),
+  'Arcane University': Object.freeze({ shops: ['library', 'alchemist', 'bookseller', 'library'], share: 0.6, guild: 'mages', halls: [['mages', 10]] }),
 });
 /** Each district's buildings' quality (BuildingData.Quality, 1-20: a shop's stock and prices, its rooms' fittings). */
 export const DISTRICT_QUALITY = Object.freeze({
   'Market District': [8, 15], 'Arena District': [5, 11], 'Arboretum': [12, 18], 'Temple District': [10, 16],
-  'Talos Plaza District': [14, 20], 'Elven Gardens District': [12, 18], 'Waterfront District': [4, 10],
+  'Talos Plaza District': [14, 20], 'Elven Gardens District': [12, 18], 'Waterfront District': [4, 10], 'Arcane University': [14, 20],
 });
 /** A tavern is a corner building on a main or side street, one in FABRIC_TAVERN_EVERY; a guild hall a main street's front, one
  *  in FABRIC_GUILD_EVERY. */
@@ -150,8 +194,11 @@ function doorOf(L, p) {
     const order = [...Array(bays).keys()].sort((i, j) => Math.abs(i + 0.5 - bays / 2) - Math.abs(j + 0.5 - bays / 2) || i - j);
     for (const k of order) {
       const s = (k + 0.5) * bay, at = [a[0] + t[0] * s, a[1] + t[1] * s];
+      // IC-STAIRS: its surround clear of a way up's shut ground (a stair's base, pier or low flight beside the bay)
+      const side = FABRIC_DOOR.w / 2 + FABRIC_DOOR.jamb;
+      if ([-1, 0, 1].some((k2) => L.ground.stairs.some((st) => stairGround(st, at[0] + t[0] * k2 * side + n[0] * 0.3, at[1] + t[1] * k2 * side + n[1] * 0.3) === GROUND.stair))) continue;
       const g = fabricGroundIn(L, at[0] + n[0] * 0.8, at[1] + n[1] * 0.8), g2 = fabricGroundIn(L, at[0] + n[0] * 2, at[1] + n[1] * 2);
-      if ((g === GROUND.street || g === GROUND.square) && (g2 === GROUND.street || g2 === GROUND.square)) return { edge: e, at, n, street: streetKind(p.sw?.[e] ?? 0) };
+      if (DOOR_GROUND.includes(g) && DOOR_GROUND.includes(g2)) return { edge: e, at, n, street: streetKind(p.sw?.[e] ?? 0) };   // IC-STAIRS: under a stair's upper flights too
     }
   }
   return null;
@@ -160,17 +207,25 @@ function doorOf(L, p) {
 function poolOf(p, door, district, area) {
   const trade = DISTRICT_TRADE[district], h = p.key;
   const corner = [0, 1, 2, 3].filter((e) => p.out & (1 << e)).length >= 2;
+  // IC-PROPS: its signature halls first, each a main street's front off its own hash
+  if (door.street === 'main') for (const [pool, every] of trade?.halls ?? []) if (hash32(SALT, h, 14) % every === 0) return pool;
   if (trade?.guild && door.street === 'main' && hash32(SALT, h, 3) % FABRIC_GUILD_EVERY === 0) return trade.guild;
   if (corner && (door.street === 'main' || door.street === 'side') && hash32(SALT, h, 4) % FABRIC_TAVERN_EVERY === 0) return 'tavern';
   if (trade && (door.street === 'main' || door.street === 'side') && (p.ground === 'groundShop' || u01(h, 5) < 0.35) && u01(h, 6) < trade.share) return trade.shops[hash32(SALT, h, 7) % trade.shops.length];
   return HOMES.find(([max]) => area < max)[1];
 }
-/** The donor of a pool nearest a building's footprint, its hash breaking the ties (the same on every client). */
+/** The donor of a pool nearest a building's footprint, its hash breaking the ties (the same on every client). IC-PROPS: a
+ *  temple's donor is its god (its record's faction - DFU's temple is its faction's), each of the Eight alike off the
+ *  plot's hash, its hall's size no matter. */
 function donorOf(pool, p, area) {
-  const list = POOLS.get(pool), near = Math.min(...list.map((i) => Math.abs(FABRIC_DONORS[i].size[0] * FABRIC_DONORS[i].size[1] - area)));
+  const list = POOLS.get(pool);
+  if (pool === 'temple') return list[hash32(SALT, p.key, 9) % list.length];
+  const near = Math.min(...list.map((i) => Math.abs(FABRIC_DONORS[i].size[0] * FABRIC_DONORS[i].size[1] - area)));
   const fits = list.filter((i) => Math.abs(FABRIC_DONORS[i].size[0] * FABRIC_DONORS[i].size[1] - area) <= near + 60);
   return fits[hash32(SALT, p.key, 9) % fits.length];
 }
+/** IC-PROPS: the donor a building of a pool with a plot's `key` and footprint (`area`, m2) takes (donorOf) - for the pins. */
+export const fabricDonorOf = (pool, key, area) => donorOf(pool, { key }, area);
 /** A quad's area (m2). */
 const areaOf = (q) => Math.abs(q.reduce((s, v, i) => { const w = q[(i + 1) & 3]; return s + v[0] * w[1] - w[0] * v[1]; }, 0)) / 2;
 
@@ -178,8 +233,9 @@ const _cells = new Map();
 const KEEP = 1024;
 /**
  * A CELL'S BUILDINGS (row r, column c of the plan): each street-front building of its own with a door, in the order its
- * records stand in its block - `{ key, plot, recordIndex, type, pool, donor, quality, factionId, nameSeed, door: { edge,
- * at, n, street } }`, the city's metres (x east, z south). Kept (an LRU).
+ * records stand in its block - `{ key, plot, recordIndex, type, pool, donor, party, quality, factionId, nameSeed, door:
+ * { edge, at, n, street } }`, the city's metres (x east, z south); `party` its party walls' bits (world/
+ * imperialFabricModels.js partyEdges - IC-INTERIORS: blind inside as out). Kept (an LRU).
  */
 export function fabricCellBuildings(r, c) {
   const k = r * 4096 + c;
@@ -204,8 +260,8 @@ function makeBuildings(r, c) {
     const m = centroid(p.q), district = imperialDistrictAt(m[0], m[1]), area = areaOf(p.q);
     const pool = poolOf(p, door, district, area), donor = donorOf(pool, p, area), [qlo, qhi] = DISTRICT_QUALITY[district] ?? [8, 14];
     return Object.freeze({
-      key: p.key, plot: p, recordIndex, pool, donor, type: FABRIC_DONORS[donor].type,
-      quality: qlo + (hash32(SALT, p.key, 11) % (qhi - qlo + 1)), factionId: GUILD_FACTION[pool] ?? 0,
+      key: p.key, plot: p, recordIndex, pool, donor, type: FABRIC_DONORS[donor].type, party: partyEdges(L, p),
+      quality: qlo + (hash32(SALT, p.key, 11) % (qhi - qlo + 1)), factionId: GUILD_FACTION[pool] ?? FABRIC_DONORS[donor].faction,   // IC-PROPS: a temple its god's, the Thieves Guild's house the guild's (its donor's record's)
       nameSeed: (hash32(SALT, p.key, 13) % 65535) + 1, door: Object.freeze(door),
     });
   });
@@ -252,22 +308,23 @@ export const isFabricDoorId = (id) => id >= IMPERIAL_DOOR_MODEL && id < IMPERIAL
  *  for its climate as a block's are), how far proud of the wall it stands, and its stone surround (jambs and lintel) -
  *  26 triangles, solid as a block's door is. */
 export const FABRIC_DOOR = Object.freeze({ archive: 374, w: 1.3, h: 2.5, proud: 0.06, jamb: 0.22, lintel: 0.3, depth: 0.16 });
-/** The door picture a pool wears: a home's a plank door (its donor's parity), a shop's the barred one, a tavern's, a
- *  guild's, a bank's or a library's the iron-bound. */
-const doorPicture = (donor) => { const d = FABRIC_DONORS[donor]; return d.pool.startsWith('house') ? donor & 1 : ['tavern', 'mages', 'fighters', 'bank', 'library'].includes(d.pool) ? 3 : 2; };
+/** The door picture a pool wears: a home's a plank door (its donor's parity - IC-PROPS: the Thieves Guild's house's too), a
+ *  shop's the barred one, a tavern's, a guild's, a bank's, a library's or (IC-PROPS) a temple's the iron-bound. */
+const doorPicture = (donor) => { const d = FABRIC_DONORS[donor]; return d.pool.startsWith('house') || d.pool === 'thieves' ? donor & 1 : ['tavern', 'mages', 'fighters', 'bank', 'library', 'temple'].includes(d.pool) ? 3 : 2; };
 /**
  * A DONOR'S DOOR MODEL: in its interior's own frame (DaggerfallInterior lays the interior in the frame of the building
  * model the door is on - scenes/interiorContext.js, the door's `matrix`), so it stands at the origin of its subrecord and
- * its door at the donor's entrance: Daggerfall's door picture on a leaf FABRIC_DOOR.proud out of the wall in a stone
- * surround, and its door face (world/meshReader.js's door: three corners, the first and third across it, its normal out
- * of the building) the game's building door.
+ * its door at the interior's street door (FABRIC_ENTRANCE - IC-INTERIORS; BLD's stood at its donor's entrance): Daggerfall's
+ * door picture (its donor's pool's) on a leaf FABRIC_DOOR.proud out of the wall in a stone surround, and its door face
+ * (world/meshReader.js's door: three corners, the first and third across it, its normal out of the building) the game's
+ * building door.
  * @param {number} id
  */
 export function fabricDoorModel(id) {
-  const k = id - IMPERIAL_DOOR_MODEL, d = FABRIC_DONORS[k];
+  const k = id - IMPERIAL_DOOR_MODEL, d = FABRIC_DONORS[k], E = FABRIC_ENTRANCE;
   if (!d) return null;
-  const D = FABRIC_DOOR, a = (d.out * Math.PI) / 180, o = [Math.cos(a), Math.sin(a)], t = [-o[1], o[0]];
-  const P = (s, y, e) => [d.door[0] + t[0] * s + o[0] * e, y, d.door[1] + t[1] * s + o[1] * e];
+  const D = FABRIC_DOOR, a = (E.out * Math.PI) / 180, o = [Math.cos(a), Math.sin(a)], t = [-o[1], o[0]];
+  const P = (s, y, e) => [E.door[0] + t[0] * s + o[0] * e, y, E.door[1] + t[1] * s + o[1] * e];
   const mb = new MeshBuilder(), stone = art(CAPITAL_ART.wallStone), PIC = 1.6;
   /** A box against the wall: across s0-s1, up y0-y1, out e0-e1 - its front, its two ends and its top. */
   const box = (s0, s1, y0, y1, e0, e1) => {
@@ -297,13 +354,14 @@ export function installFabricDoors() {
 // ---------------------------------------------------------------- the block's buildings
 
 /**
- * A BUILDING'S SUBRECORD FRAME: turned so its donor's entrance faces its street (`door.n`) and placed so that entrance
- * stands at its door (`door.at`), in its block's record units (RMBLayout's subrecord matrix: T(XPos, 0, RMBDimension -
- * ZPos) * GlobalScale, R(0, -YRotation / RotationDivisor, 0) - world/rmbLayout.js). The block's frame: x east, z north.
- * @param {number} r @param {number} c @param {{ donor: number, door: { at: number[], n: number[] } }} b
+ * A BUILDING'S SUBRECORD FRAME: turned so its interior's street door (FABRIC_ENTRANCE) faces its street (`door.n`) and
+ * placed so that door stands at its door (`door.at`), in its block's record units (RMBLayout's subrecord matrix:
+ * T(XPos, 0, RMBDimension - ZPos) * GlobalScale, R(0, -YRotation / RotationDivisor, 0) - world/rmbLayout.js). The block's
+ * frame: x east, z north.
+ * @param {number} r @param {number} c @param {{ door: { at: number[], n: number[] } }} b
  */
 export function subRecordFrame(r, c, b) {
-  const d = FABRIC_DONORS[b.donor], [bx, bz] = blockLocal(r, c, b.door.at[0], b.door.at[1]), n = [b.door.n[0], -b.door.n[1]];
+  const d = FABRIC_ENTRANCE, [bx, bz] = blockLocal(r, c, b.door.at[0], b.door.at[1]), n = [b.door.n[0], -b.door.n[1]];
   // trs's turn about y by f takes a local (x, z) to (x cos f + z sin f, -x sin f + z cos f): a way turned by -f
   const phi = d.out - (Math.atan2(n[1], n[0]) * 180) / Math.PI, yRotation = Math.round(-phi * ROTATION_DIVISOR);
   const f = ((-yRotation / ROTATION_DIVISOR) * Math.PI) / 180, cf = Math.cos(f), sf = Math.sin(f);
@@ -313,15 +371,63 @@ export function subRecordFrame(r, c, b) {
 /** A building's grid sector in its slice's location (world/tamrielCapitals.js capitalBlockNames: rows from the south). */
 export const sectorOf = (r, c) => (7 - (r % 8)) * 8 + (c % 8);
 const EMPTY_DATA = Object.freeze({ Header: Object.freeze({ Num3dObjectRecords: 0, NumFlatObjectRecords: 0, NumSection3Records: 0, NumPeopleRecords: 0, NumDoorRecords: 0 }), Block3dObjectRecords: [], BlockFlatObjectRecords: [], BlockSection3Records: [], BlockPeopleRecords: [], BlockDoorRecords: [] });
-const _interiors = new Map();
-/** A donor's interior, read from the player's BLOCKS.BSA once (the parsed record's own - read, never written). */
+let _interiors = new WeakMap();
+/** A donor's interior, read from the player's BLOCKS.BSA once (the parsed record's own - read, never written): the cast a
+ *  fabric building's own interior takes (IC-INTERIORS) - kept by the file it was read from. */
 function donorInterior(blocksFile, d) {
+  if (!blocksFile) return null;
+  let byDonor = _interiors.get(blocksFile);
+  if (!byDonor) { byDonor = new Map(); _interiors.set(blocksFile, byDonor); }
   const k = `${d.block}#${d.record}`;
-  if (!_interiors.has(k)) _interiors.set(k, blocksFile?.getBlockByName?.(d.block)?.rmbBlock?.subRecords?.[d.record]?.interior ?? null);
-  return _interiors.get(k);
+  if (!byDonor.has(k)) byDonor.set(k, blocksFile.getBlockByName?.(d.block)?.rmbBlock?.subRecords?.[d.record]?.interior ?? null);
+  return byDonor.get(k);
 }
-/** Test seam: the donors' interiors read again. */
-export function _resetFabricInteriors() { _interiors.clear(); }
+/** IC-INTERIORS: the buildings' own interiors, by the BLOCKS.BSA their casts were read from and the plot's key (an LRU a
+ *  file - the same object every time a building is asked for while it is kept, its records made once). */
+let _built = new WeakMap();
+const BUILT_KEEP = 1024;
+let _madeCount = 0;
+/** The records a made interior makes when one of them is first read (RMB's subrecord interior's, interiorLayout.js's). */
+const MADE_RECORDS = Object.freeze(['header', 'block3dObjectRecords', 'blockFlatObjectRecords', 'blockSection3Records', 'blockPeopleRecords', 'blockDoorRecords']);
+/**
+ * IC-INTERIORS: A FABRIC BUILDING'S OWN INTERIOR (world/interior/fabricInterior.js) - its grid off its footprint and its
+ * door (fabricInteriorGrid: its party walls blind), its plan off its pool, the storeys its walls show (its eave over a
+ * storey, world/imperialFabric.js STOREY) and its plot's key, its record with its donor's cast (donorInterior) stood in
+ * it. A MADE interior (world/interior/interiorLayout.js interiorCast): its records are made when one is first read - the
+ * scene's layout, a quest's mount - and `cast` is its donor's, which a walk over the city's buildings reads instead (its
+ * people's names and its quest markers, in the donor's frame: the questor pool, a quest's site search - thousands of
+ * buildings a slice, none of them made). The same object for the same building and BLOCKS.BSA while it is kept.
+ * @param {{ key: number, pool: string, donor: number, party?: number, plot: { q: number[][], h: number }, door: { at: number[], n: number[] } }} b
+ * @param {any} blocksFile
+ */
+export function fabricBuildingInterior(b, blocksFile) {
+  const host = blocksFile ?? NO_FILE;
+  let byKey = _built.get(host);
+  if (!byKey) { byKey = new Map(); _built.set(host, byKey); }
+  let out = byKey.get(b.key);
+  if (out) { byKey.delete(b.key); byKey.set(b.key, out); return out; }
+  const cast = donorInterior(blocksFile, FABRIC_DONORS[b.donor]);
+  /** @type {any} */
+  let made = null;
+  const record = () => { if (!made) { made = fabricInteriorRecord(fabricBuildingPlan(b), cast); _madeCount++; } return made; };
+  out = { made: true, cast };
+  for (const k of MADE_RECORDS) Object.defineProperty(out, k, { get: () => record()[k], enumerable: true });
+  out = Object.freeze(out);
+  byKey.set(b.key, out);
+  if (byKey.size > BUILT_KEEP) byKey.delete(byKey.keys().next().value);
+  return out;
+}
+const NO_FILE = Object.freeze({});
+/** IC-INTERIORS: a fabric building's plan (world/interior/fabricInterior.js fabricInteriorPlan) - its grid off its footprint
+ *  and its door, its party walls blind, the storeys its eave shows, its key the seed. */
+export function fabricBuildingPlan(b) {
+  const grid = fabricInteriorGrid(b.plot.q, b.door.at, b.door.n, b.party ?? 0);
+  return fabricInteriorPlan({ key: b.key, pool: b.pool, cells: grid.cells, blind: grid.blind, storeys: Math.floor(b.plot.h / STOREY + 1e-6) });
+}
+/** Test seam: the donors' interiors read again, the buildings' made again. */
+export function _resetFabricInteriors() { _interiors = new WeakMap(); _built = new WeakMap(); _madeCount = 0; }
+/** Test seam (IC-INTERIORS): how many buildings' records have been made since the last reset - none by a walk over them. */
+export const _fabricInteriorsMade = () => _madeCount;
 /** A building's automap byte (RMBLayout's: its BuildingType + 1 - the town map's colour for it and its name's place). */
 export const automapByteOf = (type) => (type + 1) & 0xff;
 /**
@@ -329,7 +435,8 @@ export const automapByteOf = (type) => (type + 1) & 0xff;
  * imperialBlockJson, or the city's worker's), given each building's record (FldHeader.BuildingDataList: its type, its
  * quality, its faction, its name seed, its sector) and its subrecord (its door model, at subRecordFrame), its footprint's
  * automap bytes its type's, then read as the door reads every block (formats/worldData/worldDataReplacement.js
- * blockFromJson) - each subrecord's interior its donor's, read from the player's BLOCKS.BSA when first asked. The block
+ * blockFromJson) - each subrecord's interior its own (IC-INTERIORS), its donor's cast read from the player's BLOCKS.BSA
+ * when first asked. The block
  * names its own buildings (`ownNamedBuildings`: systems/talk/talkTopics.js drawNamedBuildings draws none of the
  * location's list for them). A far block, the lake's, a cell of no building, or no BLOCKS.BSA: handed back as it came.
  * @param {any} made @param {string} name @param {any} blocksFile
@@ -365,12 +472,12 @@ const fabricSubRecordJson = (r, c, x, exterior) => {
   const f = subRecordFrame(r, c, x);
   return { XPos: f.xPos, ZPos: f.zPos, YRotation: f.yRotation, Exterior: exterior, Interior: EMPTY_DATA };
 };
-/** A read block given its buildings' donors: each subrecord's interior its donor's, read when first asked, and the block
- *  naming its own buildings. */
+/** A read block given its buildings' donors: each subrecord's interior the building's own (IC-INTERIORS -
+ *  fabricBuildingInterior: its donor's cast in it), made when first asked, and the block naming its own buildings. */
 function withDonors(block, recs, blocksFile) {
   block.rmbBlock.subRecords.forEach((sub, i) => {
-    const d = FABRIC_DONORS[recs[i].donor], none = sub.interior;
-    Object.defineProperty(sub, 'interior', { get: () => donorInterior(blocksFile, d) ?? none, enumerable: true, configurable: true });
+    const b = recs[i];
+    Object.defineProperty(sub, 'interior', { get: () => fabricBuildingInterior(b, blocksFile), enumerable: true, configurable: true });
   });
   block.ownNamedBuildings = true;
   return block;

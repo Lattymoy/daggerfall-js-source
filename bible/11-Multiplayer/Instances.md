@@ -88,6 +88,17 @@ An instance is its place's public world room with an owner and an epoch after it
   (instanceAdmission: 'guild', after 'staff' and 'owner', before the party - no guest asks the hub of a guild's room,
   since no account's party holds a guild's digest). Let in as the guild, the socket is marked (`ig`); the moment
   `_setAttach` writes it another guild or none, it is refused out (`_instanceGuildOut`, once).
+  - **A member's hello is held while the hub is asked, so its page says nothing past the hello until the welcome** (SD-HELLO's law,
+    `Super-Dungeons.md`). The room takes the socket's next frame while the hello's ask is out, and a frame read before
+    the socket is named is refused with a policy close - terminal, the member offline in the room until it changes room.
+    The act sender went round SD-HELLO (RPT1026-SECNET, 2026-10-26, from a private report): `sendAct` asked only that the socket was open, which it is from the hello, and a door
+    touched while the socket was away went out the frame it opened - read ahead of the hello whenever the member's yes
+    was older than INSTANCE_KIN_KEEP_MS (every return after a death, or a while away, or a deploy), and parseClient refused it.
+    It asks the socket's welcome now (`online.welcomed`); a refused act stays in the world host's pending set (world.js
+    actSend) and is sent once the welcome has come. Pinned through the real Room and session with the hub held
+    (`test/net/rpt1026_secnet_net.test.js`). A rehello (AURA-LIVE: an aura or a name chosen) says a hello the hub is
+    asked about too, and its replacement socket keeps the host it knew: a blow at the host and the host's memory wait for
+    its welcome as well (AUDIT RPT1026 A5, `test/net/audit_rpt1026_secnet.test.js`).
 - **A member let in as the party is asked again while it stays** (`ip` on its attachment, `_instanceRecheck` off its
   pose, at most every INSTANCE_KIN_KEEP_MS, never awaited by the pose): kicked, lapsed, or its party no longer the owner's,
   it is refused out (its leave said, the host's seat handed on). The hub silent leaves it in.

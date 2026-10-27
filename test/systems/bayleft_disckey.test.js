@@ -142,7 +142,7 @@ test('BAY-LEFT-MAPS C7 ONE KEY-MAKER: every host and module that writes or reads
     assert.deepEqual(left, [], `${file}: every book by the key-maker`);
   }
   assert.match(hostText('src/scenes/worldModes.js'), /placeHoldOf\('dungeon', `\$\{dfLocation\.regionIndex\}:\$\{dfLocation\.name\}`\)/, 'the one left: a dungeon\'s place hold (PLACE-LRU), no book');
-  assert.match(hostText('src/scenes/worldModes.js'), /const locId = discoveryLocationId\?\.\(\) \?\? null;/, 'the interior host reads the world host\'s key-maker');
+  assert.match(hostText('src/scenes/worldModes.js'), /const locId = bd\?\.townBook \?\? discoveryLocationId\?\.\(\) \?\? null;/, 'the interior host reads the door\'s own town\'s book (the key-maker\'s, scenes/townTalk.js doorTownOf), else the world host\'s key-maker');   // PIN MOVED (IC-PROPS): a door is its own town's - a neighbouring slice's door no longer reads the player's slice's book
 });
 
 // ── ON THE PLAYER'S DATA ──────────────────────────────────────────────────────────────────────────────────────────

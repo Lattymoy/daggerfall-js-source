@@ -29,7 +29,7 @@
   {
     "name": "SD26-R1-drawn-before-the-flats-again",
     "file": "src/scenes/worldModes.js",
-    "old": "      if (_sdLate.on && dungeonCtx.uiOverlayActive) host.drawSdTelegraph?.(_sdLate);",
+    "old": "      if (_sdLate.on && windowHoldsDungeon(dungeonCtx.uiOverlayActive, aliveUnder())) host.drawSdTelegraph?.(_sdLate);",
     "new": "      if (_sdLate.on) host.drawSdTelegraph?.(_sdLate);",
     "tests": [
       "test/world/superDungeon/sd26_render.test.js"
@@ -47,7 +47,7 @@
   {
     "name": "SD26-R1-none-under-a-window",
     "file": "src/scenes/worldModes.js",
-    "old": "      if (_sdLate.on && dungeonCtx.uiOverlayActive) host.drawSdTelegraph?.(_sdLate);",
+    "old": "      if (_sdLate.on && windowHoldsDungeon(dungeonCtx.uiOverlayActive, aliveUnder())) host.drawSdTelegraph?.(_sdLate);",
     "new": "",
     "tests": [
       "test/world/superDungeon/sd26_render.test.js"

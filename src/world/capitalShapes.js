@@ -15,7 +15,32 @@ export const CAPITAL_ART = Object.freeze({
   // IC-GRAND: the Imperial City's street walls, a storey each (world/imperialArt.js - vanilla's 64 x 128 wall)
   facadeOchre: 21, facadeBrick: 22, facadeWhite: 23, facadeStone: 24, facadeTimber: 25, groundShop: 26, groundArcade: 27,
   water: 28,   // IC-GRAND: the palace gardens' fountains' water
+  // CAPITAL-TREES: the capitals' trees (world/capitalTreeArt.js) - Falinesti's Great Graht-Oak's bark, leaves and spray,
+  // Mournhold's garden trees' and the bed of their planters; from 40, clear of the Imperial City's run
+  grahtBark: 40, grahtLeaves: 41, grahtSpray: 42, mhBark: 43, mhLeaves: 44, mhSpray: 45, planterBed: 46,
 });
+/** CAPITAL-TREES: THE PICTURES A TREE HANGS AS FLATS - each cut by its alpha (a texel under half of it a hole: the
+ *  renderer's cutout, render/renderer.js uploadTexture `{ cutout: true }`, asked by the picture's own registration -
+ *  systems/textureReplacement.js vendorCutout) and laid on its cards by their own texture coordinates, never
+ *  vanillaTexels' box (world/capitalModels.js), so a card shows its spray whole. */
+export const CAPITAL_CUT_RECORDS = Object.freeze([CAPITAL_ART.grahtSpray, CAPITAL_ART.mhSpray]);
+/** Whether a capital picture is one a tree hangs as a flat (CAPITAL_CUT_RECORDS). @param {number} record */
+export const isCapitalCut = (record) => /** @type {ReadonlyArray<number>} */ (CAPITAL_CUT_RECORDS).includes(record);
+/**
+ * CAPITAL-TREES: A MODEL'S FLATS - a mark a triangle (1 where its sub-mesh wears a picture a tree hangs as a flat: a leaf
+ * spray's card, a liana), or null for a model with none. Two readers: world/capitalModels.js vanillaTexels lays every
+ * other face again by the box and leaves these on their own coordinates (the spray whole on its card), and
+ * world/signSolid.js sightMarksOf hands them to the collider as a sign's hung board is - met by every ray, by no body
+ * (Daggerfall's trees' flats stop nobody).
+ * @param {{ indices: ArrayLike<number>, subMeshes?: ReadonlyArray<any> }} m
+ */
+export function flatTriangles(m) {
+  const cut = (sm) => sm.textureArchive === CAPITAL_ARCHIVE && isCapitalCut(sm.textureRecord);
+  if (!m.subMeshes?.some(cut)) return null;
+  const marks = new Uint8Array(Math.floor(m.indices.length / 3));
+  for (const sm of m.subMeshes) if (cut(sm)) marks.fill(1, sm.startIndex / 3, sm.startIndex / 3 + sm.primitiveCount);
+  return marks;
+}
 /** A picture's [archive, record]. */
 export const art = (record) => [CAPITAL_ARCHIVE, record];
 const STONE = art(CAPITAL_ART.wallStone), ROOF = art(CAPITAL_ART.roof);

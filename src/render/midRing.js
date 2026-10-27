@@ -257,6 +257,14 @@ export function midRingRuns(order, total, solid) {
   return runs;
 }
 
+/** HORIZON-TREES: the heights of a ring's vertex positions (x, y, z a vertex), a vertex in turn - the ground the ring draws,
+ *  handed to the far trees' skyline (render/farTrees.js). Pure. @param {Float32Array} positions */
+export function groundHeights(positions) {
+  const out = new Float32Array(positions.length / 3);
+  for (let v = 0; v < out.length; v++) out[v] = positions[v * 3 + 1];
+  return out;
+}
+
 /**
  * The middle ring's GL side: the vertex arrays, the ordered index buffer and the runs, drawn by the far ring's program
  * (FarRingRenderer.draw hands its gl and its uOrigin). Owns every buffer it makes (`dispose`).
@@ -306,6 +314,7 @@ export class MidRingMesh {
     gl.bindVertexArray(null);
     this.vao = vao;
     Object.assign(this, { baseX, baseY, radius, sub });
+    this.heights = groundHeights(v.positions);   // HORIZON-TREES: the drawn ground, for the band's skyline (render/farTrees.js)
     this._orderKey = '';
     this.reorder(curX, curY);
   }

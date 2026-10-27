@@ -109,7 +109,12 @@ blow's sound); the music scheduler's lookahead stays 0.25 s (a longer one rides 
 every voice's chain alive on the audio thread). Asked of the reporter: browser or desktop app, and whether the sounds cut with the music or the music
 alone - the music alone is the scheduler's stall, both together the audio thread's.
 
-PINS: `test/systems/fb1024_themebuffer.test.js`; mutants BUF1 (2, dead).
+REVERTED (INTRO-REVERT II, 2026-10-26; the owner: "Intro music currently isnt working. We need to revert before we
+started tinkering with this"): the theme's context asks for `'interactive'` again, and `systems/introTheme.js` is INTRO2's
+file byte for byte, as it stood before INTRO3's #906 (`10-UI/UI-Arc.md` INTRO-REVERT II). The playback buffer was the one
+change to the theme's path left after INTRO-REVERT; the heavy score it was asked for is gone. Its pin
+(`fb1024_themebuffer.test.js`) and mutants BUF1 are retired with it; `test/ui/intro.test.js` INTRO-REVERT II pins the
+`'interactive'` context and the file's bytes.
 
 ## (4) - a weapon and a fist
 

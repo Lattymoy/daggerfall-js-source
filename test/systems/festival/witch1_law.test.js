@@ -89,7 +89,7 @@ test('WITCH1 THE WARES: every one in the window\'s order and its price; the acco
 });
 
 test('WITCH1 THE TOKEN\'S VOCABULARY: Witchwarden and Hearthkeeper last among the titles, Witchfire last among the auras, the four icons; a claim naming an icon it does not hold is refused whole', () => {
-  assert.deepEqual(TITLES.slice(-4, -2) /* PIN MOVED (NIRNROOT-SAGE): the Nirnroot Sage joined the list last */, ['witchwarden', 'hearthkeeper']);   // PIN MOVED (KETCH): the Skyfarer joined the list after them
+  assert.deepEqual(TITLES.slice(-20, -18) /* PIN MOVED (HUNTERS-MARK): the Marks of Mastery's sixteen joined the list last */ /* PIN MOVED (NIRNROOT-SAGE): the Nirnroot Sage joined the list last */, ['witchwarden', 'hearthkeeper']);   // PIN MOVED (KETCH): the Skyfarer joined the list after them
   assert.equal(AURAS.at(-2) /* PIN MOVED (NIRNROOT-SAGE): Sage's Smoke joined the list last */, 'witchfire');
   assert.deepEqual(ICONS, ['tallowskull', 'twinmoons', 'wyrdcauldron', 'soulcake']);
   assert.deepEqual(FESTIVAL_ICONS, ICONS);

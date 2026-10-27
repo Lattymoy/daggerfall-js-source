@@ -19,7 +19,7 @@ import {
 import {
   hallArt, hallAtlasArt, hallGlowArt, atlasUv, SD_SIGNS, SD_PIPS, SD_HALL_ATLAS, SD_HALL_ATLAS_RECORD, SD_HALL_GLOW_RECORD, SD_GLOW_COLORS,
 } from '../../../src/world/superDungeon/sdHallArt.js';
-import { createSdHall, sdStoneKey, sdPlaqueKey, SD_HALL_TEXT, SD_HALL_SOUNDS, SD_HAND_RATE, SD_FRAY_FULL_MS, SD_BRIDGE_LAY_MS, SD_CONCORD_MS } from '../../../src/scenes/superDungeon/sdHall.js';
+import { createSdHall, sdStoneKey, sdPlaqueKey, SD_HALL_TEXT, SD_HALL_SOUNDS, SD_HAND_RATE, SD_FRAY_FULL_MS, SD_BRIDGE_LAY_MS, SD_CONCORD_MS, sdHallNamed, sdSnapLine } from '../../../src/scenes/superDungeon/sdHall.js';
 import { SD_BRIDGE_PLATES } from '../../../src/world/superDungeon/sdHall.js';
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
@@ -340,6 +340,7 @@ function worldHall({ slot = 4, at = [0, 0, SD_ORRERY.z], health = 80, max = 100 
     modes: { sdRealmSlot: () => slot }, player: { pos: realmToDungeon(...at) }, playerEntity,
     hurtPlayer: (e, n, o) => { log.push(['hurt', n, !!o?.bypassShield]); e.health -= n; }, flashPlayerDamage: (n) => log.push(['flash', n]),
     setMidScreenText: (t) => log.push(['said', t]), sdSay: (t) => log.push(['said', t]), sdDungeonToRealm: dungeonToRealm, inOrreryHall, SD_FRAY_LASH, SD_HALL_TEXT,   // AUDIT SD II (SD11d, PIN MOVED): through the Hour's voice
+    sdHallNamed, sdSnapLine, peerName: (id) => ({ 'peer-x': 'Xan' })[id] ?? null,   // PIN MOVED (RPT1026-EVENTS ORRERY-HANDS): the word kept with its turner and the lashed named, the snap's line naming them
     online: { id: 'peer-me' }, SD_TURN_WAIT_LINE: 'wait',   // AUDIT SD II (PIN MOVED, L7 H2): the lash falls on whom the snap names
   };
   const body = `let _sdHall = null;\n${fn('sdHallHeard')}\n${line(/ {2}const sdHallWord = [^\n]*\n/)}${line(/ {2}const sdConcordHere = [^\n]*\n/)}return { sdHallHeard, sdHallWord, sdConcordHere };`;
@@ -350,15 +351,15 @@ test('SD6c the world host\'s hall, run from its own text: the realm\'s word kept
   const word = { k: 'pz', s: 4, st: [1, 2, 3, 4, 5, 6], f: 0, lit: 1, ok: false, i: 0, a: 1, id: 'peer-x', q: 9, x: 1, ls: ['peer-me'] };   // AUDIT SD II (PIN MOVED): naming me
   const inHall = worldHall();
   inHall.sdHallHeard(word);
-  assert.deepEqual(inHall.log, [['hurt', 25, true], ['flash', 25], ['said', SD_HALL_TEXT.snap]]);
-  assert.equal(inHall.sdHallWord(), word);
+  assert.deepEqual(inHall.log, [['hurt', 25, true], ['flash', 25], ['said', SD_HALL_TEXT.snapLashes(SD_HALL_TEXT.you, 0)]]);   // PIN MOVED (RPT1026-EVENTS ORRERY-HANDS): the snap names me
+  assert.deepEqual(inHall.sdHallWord(), { ...word, by: 'Xan', lsn: [SD_HALL_TEXT.you] }, 'the word kept, its turner and the lashed named');
   assert.equal(inHall.sdConcordHere(), false);
   inHall.sdHallHeard({ ...word, x: undefined, ok: true });
   assert.equal(inHall.sdConcordHere(), true, 'the Concord here');
   assert.equal(inHall.log.length, 3, 'no snap, no lash');
   const outside = worldHall({ at: [0, 0, 0] });
   outside.sdHallHeard(word);
-  assert.deepEqual(outside.log, [['said', SD_HALL_TEXT.snap]], 'on the Threshold, only the word');
+  assert.deepEqual(outside.log, [['said', SD_HALL_TEXT.snapLashes(SD_HALL_TEXT.you, 0)]], 'on the Threshold, only the word');
   const elsewhere = worldHall({ slot: 5 });
   elsewhere.sdHallHeard(word);
   assert.deepEqual(elsewhere.log, [], 'another realm\'s word');

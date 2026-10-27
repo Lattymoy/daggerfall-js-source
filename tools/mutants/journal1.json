@@ -186,18 +186,18 @@
   {
     "name": "JRN-relay-page-fanned",
     "file": "server/src/index.js",
-    "old": "      this._send(tws, JSON.stringify({ t: 'page', id: a.id, data: m.data }));",
-    "new": "      for (const [o] of [...this._all()]) if (o !== ws) this._send(o, JSON.stringify({ t: 'page', id: a.id, data: m.data }));",
+    "old": "      this._send(tws, this._directedFrame('page', a, m.data));",
+    "new": "      for (const [o] of [...this._all()]) if (o !== ws) this._send(o, this._directedFrame('page', a, m.data));",
     "tests": ["test/net/journal1.test.js"],
-    "note": "A page held out to one player is shown to the whole room."
+    "note": "A page held out to one player is shown to the whole room. RPT1026-SECNET (re-aimed by content): the frame by the directed frames' builder."
   },
   {
     "name": "JRN-relay-page-unstamped",
     "file": "server/src/index.js",
-    "old": "      this._send(tws, JSON.stringify({ t: 'page', id: a.id, data: m.data }));",
+    "old": "      this._send(tws, this._directedFrame('page', a, m.data));",
     "new": "      this._send(tws, JSON.stringify({ t: 'page', data: m.data }));",
     "tests": ["test/net/journal1.test.js"],
-    "note": "A page with no writer's id - the reader cannot say whose it is."
+    "note": "A page with no writer's id - the reader cannot say whose it is. RPT1026-SECNET (re-aimed by content): the frame by the directed frames' builder."
   },
   {
     "name": "JRN-relay-a-channel-carries-it",
@@ -218,10 +218,10 @@
   {
     "name": "JRN-relay-funnel-skipped",
     "file": "server/src/index.js",
-    "old": "      if (!this._senderFunnel(tws, a.id, now)) return;\n      this._send(tws, JSON.stringify({ t: 'page'",
-    "new": "      this._send(tws, JSON.stringify({ t: 'page'",
+    "old": "      if (!this._senderFunnel(tws, a.id, now)) return;\n      this._send(tws, this._directedFrame('page'",
+    "new": "      this._send(tws, this._directedFrame('page'",
     "tests": ["test/net/journal1.test.js"],
-    "note": "A page is not bounded with the spells and cards its writer sends the same reader."
+    "note": "A page is not bounded with the spells and cards its writer sends the same reader. RPT1026-SECNET (re-aimed by content): the frame by the directed frames' builder."
   },
   {
     "name": "JRN-relay-strikes-shared",

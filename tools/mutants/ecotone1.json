@@ -229,11 +229,12 @@
   {
     "name": "ECOTONE1-desert-inset",
     "file": "src/world/terrain/terrainNature.js",
-    "old": "return { record: 1 + Math.floor(tileDraw(wx, wz, 5) * 31), x: x * scale, y: heightAt(x, y) - steepness / SLOPE_SINK_RATIO, z: y * scale };",
-    "new": "return { record: 1 + Math.floor(tileDraw(wx, wz, 5) * 31), x: (x + 0.5) * scale, y: heightAt(x, y) - steepness / SLOPE_SINK_RATIO, z: y * scale };",
+    "old": "return { record: 1 + Math.floor(tileDraw(wx, wz, 5) * 31), x: x * scale, y: walkGroundAt(heightmapData, x * scale, y * scale) - steepness / SLOPE_SINK_RATIO, z: y * scale };",
+    "new": "return { record: 1 + Math.floor(tileDraw(wx, wz, 5) * 31), x: (x + 0.5) * scale, y: walkGroundAt(heightmapData, x * scale, y * scale) - steepness / SLOPE_SINK_RATIO, z: y * scale };",
     "tests": [
       "test/systems/ecotone1.test.js"
-    ]
+    ],
+    "note": "FLORA-GROUND (PIN MOVED): re-aimed by content - the border's desert flat stands on the walk law (walkGroundAt) at its corner, where it read the sample."
   },
   {
     "name": "ECOTONE1-woods-dice-the-climate's",

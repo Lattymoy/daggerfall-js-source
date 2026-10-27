@@ -47,7 +47,9 @@ every frame was folded through the wire's validator into the client's state, as 
 
 The other two relay bosses already keep what this restores: the Remnant keeps a fallen body's share while its pose stands
 in its arena (`net/superDungeon/sdRemnant.js` stepRemnant), and neither it nor the gate retires one but for absence
-(`ABSENT_RETIRE_MS`). EG-ZQ's "seven members never face a lord sized for eight" was this arc's own departure from them
+(`ABSENT_RETIRE_MS`). [RPT1026-FIGHTS (2026-10-26, a private report): narrowed - a death in the Hour or a court leaves
+its room at once, so no fallen body's pose stands in the arena and the absence retires its share 30 s on, at the
+fraction; neither boss holds a fallen fighter's share in play. `11-Multiplayer/Super-Dungeons.md` section 10's law says so.] EG-ZQ's "seven members never face a lord sized for eight" was this arc's own departure from them
 (Elite-Gates.md section 13.2, as written at EG-ZQ).
 
 FIXED. One law: THE LORD IS STOOD FOR THE COMPANY ON ITS HALL'S PLATE, AND KEEPS WHAT THE FALLEN LEAVE.

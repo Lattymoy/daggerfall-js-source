@@ -3,7 +3,7 @@
 // Wild-Zone.md section 4b): A POLICY ON A PIECE OF GEAR, WRITTEN AGAINST ITS PREMIUM OFF THE RECORD.
 //
 // The law is the leaf both ends read (src/systems/wild/wildInsureLaw.js): what may be insured, its premium, when it is in
-// force. This service keeps the policies (`wild_insurance`, migration 0181) - never the record, which its own tab writes:
+// force. This service keeps the policies (`wild_insurance`, migration 0182 - 0181 until main's WOVEN-PAYS took 0177) - never the record, which its own tab writes:
 // a policy a game could write onto a piece would be one it never paid for. A policy is written as a realm act
 // (`/v1/wild/insure`): the premium paid off the record where its tab says it stands (realm.js prepareRealmRecord;
 // net/realm/realmGoldLaw.js payFromSave - the purse, its letters, then the bank, as every act pays) and the rows written

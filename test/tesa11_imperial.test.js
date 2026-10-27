@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
-  IMPERIAL, IMPERIAL_SPAN, IMPERIAL_CELLS, IMPERIAL_SECTORS, IMPERIAL_MIX, IMPERIAL_SIGNATURE, IMPERIAL_MODELS, IMPERIAL_CARRY, PALACE,
+  IMPERIAL, IMPERIAL_SPAN, IMPERIAL_CELLS, IMPERIAL_SECTORS, IMPERIAL_MODELS, IMPERIAL_CARRY, PALACE,   // PIN MOVED (IC-PROPS): no IMPERIAL_MIX nor IMPERIAL_SIGNATURE - the trade is the fabric's
   polar, imperialBearing, imperialLand, imperialDistrictAt, imperialReserved, imperialCode, imperialCell, imperialSliceName, imperialSlicePlan,
   imperialTile, imperialClosed, imperialTree, districtWallLines, prisonAt, universityTowerAt, IMPERIAL_PARTS, imperialSliceRect, imperialPartId, OPEN_TILE,
   imperialArenaCell, IMPERIAL_ARENA_CODE, tombAt,
@@ -18,8 +18,9 @@ import {
 import {
   CAPITALS, CAPITAL_MODELS, BLOCK_M, capitalSpan, capitalCentre, capitalSliceOrdinal, capitalSliceName, capitalPlaceId, capitalLocationIndex, isCapitalPlaceId,
   capitalPixel, capitalOnPixel, capitalPin, capitalCarrier, capitalSliceCarriers, synthesizeCapitalLocation, capitalBlockNames, anchorMetres,
-  CAPITAL_RIM_M, CAPITAL_RIM_TILES,
+  CAPITAL_RIM_M, CAPITAL_RIM_TILES, capitalApproachName, capitalDims,
 } from '../src/world/tamrielCapitals.js';
+import { capitalApproachCells } from '../src/world/capitalApproaches.js';   // ROAD-FOLLOW: Talos Bridge's approach
 import {
   buildImperialTower, buildPalaceWall, buildEmperorsTombs, buildCityWall, buildDistrictWalls, buildTempleOfTheOne, buildTalosStatue,
   buildImperialPrison, buildArcaneUniversity, buildWaterfront, buildTalosBridge, nearRect,
@@ -55,7 +56,7 @@ const PLAN = () => (_plan ??= Array.from({ length: IMPERIAL_CELLS }, (_, r) => A
 
 // ── THE PLAN ────────────────────────────────────────────────────
 
-test('TESA11 the plan: 200 x 200 (PIN MOVED, IC-GRAND: twenty-five pixels; TS5 56 x 56), its anchor the middle grid point, worked by its law a slice at a time; the lake where a cell holds no land (IC-GRAND: or the city\'s own where a landmark crosses it), open ground past the lake\'s far shore, the arena\'s cell Daggerfall\'s arena, the city\'s own where it holds a shore, a wall, a landmark or its streets, else one of Daggerfall\'s blocks of its district\'s trade - every district its signature', () => {
+test('TESA11 the plan: 200 x 200 (PIN MOVED, IC-GRAND: twenty-five pixels; TS5 56 x 56), its anchor the middle grid point, worked by its law a slice at a time; the lake where a cell holds no land (IC-GRAND: or the city\'s own where a landmark crosses it), open ground past the lake\'s far shore, the arena\'s cell Daggerfall\'s arena, else the city\'s own (PIN MOVED, IC-PROPS - the owner, 2026-10-27: "Old daggerfall city layout placements are in imperial city": no block of Daggerfall\'s but the arena\'s; each district\'s trade and signature the fabric\'s, test/world/icprops_city.test.js)', () => {
   assert.equal(IMPERIAL_SPAN, 25);
   const plan = PLAN();
   assert.equal(plan.length, 200);
@@ -65,7 +66,6 @@ test('TESA11 the plan: 200 x 200 (PIN MOVED, IC-GRAND: twenty-five pixels; TS5 5
   assert.equal(IC.cellAt, imperialCell);
   assert.deepEqual(imperialSlicePlan(CENTRE), plan.slice(96, 104).map((r) => r.slice(96, 104)));
   const counts = { L: 0, O: 0, own: 0, classic: 0, arena: 0, bridged: 0 };
-  const signatures = new Map(), byDistrict = new Map();
   plan.forEach((row, r) => row.forEach((cell, c) => {
     const [x0, z0, x1, z1] = cellRect(r, c), pts = [];
     for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) pts.push(imperialLand(x0 + (i + 0.5) * (B / 5), z0 + (j + 0.5) * (B / 5)));
@@ -78,18 +78,10 @@ test('TESA11 the plan: 200 x 200 (PIN MOVED, IC-GRAND: twenty-five pixels; TS5 5
       if (!pts.some(Boolean)) { counts.bridged++; assert.equal(imperialReserved(x0, z0, x1, z1), true, `${c},${r} a lake cell its own only where a landmark crosses it`); }
       return;
     }
-    // one of Daggerfall's blocks: all land, no landmark, its district's trade
-    assert.ok(pts.every(Boolean), `${c},${r} ${cell} wholly land`);
-    assert.equal(imperialReserved(x0, z0, x1, z1), false, `${c},${r} ${cell} no landmark`);
-    const d = imperialDistrictAt(x0 + B / 2, z0 + B / 2);
-    assert.ok(IMPERIAL_MIX[d]?.includes(cell) || IMPERIAL_SIGNATURE[d] === cell, `${c},${r} ${cell} of ${d}'s trade`);
-    if (IMPERIAL_SIGNATURE[d] === cell) signatures.set(d, cell);
-    byDistrict.set(d, (byDistrict.get(d) ?? 0) + 1);
+    // PIN MOVED (IC-PROPS): no other cell - 671 of Daggerfall's blocks stood here till 2026-10-27
     counts.classic++;
   }));
-  assert.ok(counts.classic >= 600 && counts.O >= 9000 && counts.L >= 10000 && counts.own >= 19000 && counts.arena === 1 && counts.bridged > 0, JSON.stringify(counts));   // PIN MOVED (IC-GRAND)
-  for (const [d, kind] of Object.entries(IMPERIAL_SIGNATURE)) assert.equal(signatures.get(d), kind, `${d}'s ${kind}`);
-  for (const [d] of IMPERIAL_SECTORS) assert.ok((byDistrict.get(d) ?? 0) >= 8, `${d} its blocks`);
+  assert.ok(counts.classic === 0 && counts.O >= 9000 && counts.L >= 10000 && counts.own >= 19900 && counts.arena === 1 && counts.bridged > 0, JSON.stringify(counts));   // PIN MOVED (IC-GRAND; IC-PROPS: no block of Daggerfall's but the arena's)
 });
 
 test('TESA11 the districts on their sectors: the Palace District inside the palace wall (PIN MOVED, IC-GRAND: the team\'s list names it; TESA11\'s "Green Emperor Way" is its ring road\'s name); the Market north-east, the Arena District east, the Arboretum south-east, the Temple District south-west, Talos Plaza west, the Elven Gardens north-west; outside the walls the Prison, the University, the Waterfront and the isle; the lake past it', () => {
@@ -173,13 +165,15 @@ test('TESA11 Arena\'s places off the city\'s pixels: a place whose point falls o
   assert.deepEqual(standArenaPixels(model, trace, pin).stood.map((p) => [p.name, p.bx, p.by]).find(([n]) => n === 'Neighbour'), ['Neighbour', 1501, -100], 'no reserve, no change');
 });
 
-test('TESA11 a slice\'s location: its eight by eight of the plan (its hash the plan\'s), its name, id and index, its buildings\' seeds its own; every slice\'s ground flattened to the centre\'s pixel; Arena\'s slot on the centre alone (PIN MOVED, IC-GRAND: every slice of six hundred and twenty-five; Daggerfall\'s arena\'s block in the Arena District\'s cell; no garden)', () => {
+test('TESA11 a slice\'s location: its eight by eight of the plan (its hash the plan\'s), its name, id and index, its buildings\' seeds its own (PIN MOVED, IC-PROPS: on a plan that lays Daggerfall\'s blocks - the city\'s lays none); every slice\'s ground flattened to the centre\'s pixel; Arena\'s slot on the centre alone (PIN MOVED, IC-GRAND: every slice of six hundred and twenty-five; Daggerfall\'s arena\'s block in the Arena District\'s cell; no garden)', () => {
   const plan = PLAN();
   const kinds = [...new Set(plan.flat())].filter((c) => c !== 'L' && c !== 'O' && c !== IMPERIAL_ARENA_CODE && !isOwn(c));
   const names = new Map(kinds.map((k) => [k, [`${k}AA00.RMB`, `${k}AA01.RMB`]]));
   const fh = { rmbBlock: { fldHeader: { numBlockDataRecords: 1, buildingDataList: [{ buildingType: 9, factionId: 0, quality: 5 }] } } };
   const base = { name: 'Broadvale', regionIndex: 1, regionName: 'R', politic: 129, climate: {}, hasDungeon: false, mapTableData: { mapId: 9, locationType: LOCATION_TYPES.TownCity }, exterior: { exteriorData: { blockNames: ['X'], width: 1, height: 1 }, buildings: [] } };
   const seeds = new Set(), bySector = [];
+  const wayCells = new Set(capitalApproachCells(IC, capitalDims(IC)).map(([r, c]) => `${r},${c}`));
+  assert.equal(wayCells.size, 4, 'ROAD-FOLLOW: the approach over four open cells');
   let arenaSlices = 0;
   for (let s = 0; s < N * N; s++) {
     const sx = s % N, sy = Math.floor(s / N), px = 2069 + sx - (N - 1) / 2, py = 658 + sy - (N - 1) / 2;
@@ -192,7 +186,8 @@ test('TESA11 a slice\'s location: its eight by eight of the plan (its hash the p
     const R = CAPITAL_RIM_TILES, edge = N - 1;   // TESA x AUDIT TESA II: the rim's tiles on its outer sides
     assert.deepEqual(loc.capital, { key: 'imperial-city', k: 0, s, flattenAt: { px: 2069, py: 658 }, rim: { W: sx === 0 ? R : 0, E: sx === edge ? R : 0, N: sy === 0 ? R : 0, S: sy === edge ? R : 0 } }, `${s}: flattened to the centre's`);
     assert.equal('arena' in loc, s === CENTRE);
-    assert.ok(sub.flat().every((c, i) => c !== 'O' || ed.blockNames[(7 - Math.floor(i / 8)) * 8 + (i % 8)] === TOWN_OUTLINE_BLOCK), 'TS5: open ground the open block');
+    // PIN MOVED (ROAD-FOLLOW, 03-World/Town-Shapes.md ROAD-FOLLOW): but a cell Talos Bridge's approach crosses, a block of its own
+    assert.ok(sub.flat().every((c, i) => c !== 'O' || ed.blockNames[(7 - Math.floor(i / 8)) * 8 + (i % 8)] === (wayCells.has(`${sy * 8 + Math.floor(i / 8)},${sx * 8 + (i % 8)}`) ? capitalApproachName(IC, sx * 8 + (i % 8), sy * 8 + Math.floor(i / 8)) : TOWN_OUTLINE_BLOCK)), 'TS5: open ground the open block');
     sub.forEach((row, i) => row.forEach((c, j) => { if (isOwn(c)) assert.equal(ed.blockNames[(7 - i) * 8 + j], imperialOwnName(sy * 8 + i, sx * 8 + j)); }));
     if (ed.blockNames.includes(ARENA_BLOCK)) arenaSlices++;
     const classic = sub.flat().filter((c) => c !== 'L' && c !== 'O' && c !== IMPERIAL_ARENA_CODE && !isOwn(c)).length;
@@ -201,9 +196,19 @@ test('TESA11 a slice\'s location: its eight by eight of the plan (its hash the p
     if (loc.exterior.buildings.length) bySector.push(new Map(loc.exterior.buildings.map((b) => [b.sector, b.nameSeed])));
   }
   assert.equal(arenaSlices, 1, 'IC-GRAND: Daggerfall\'s arena in one slice, its block the arena\'s own');
-  // each slice's seeds its own: two slices' buildings in the same cell of their grids named apart (PIN MOVED, IC-GRAND:
-  // every slice with one of Daggerfall's blocks against the first such - the same sector's seed a shared one if the
-  // slice's ordinal were not in it)
+  // PIN MOVED (IC-PROPS, 2026-10-27: "Old daggerfall city layout placements are in imperial city"): no slice of the city
+  // stands one of Daggerfall's blocks now - its buildings are its fabric's, each record its own seed
+  // (world/imperialFabricBuildings.js, test/world/icbld_buildings.test.js) - so none is on a slice's list
+  assert.equal(bySector.length, 0, 'no slice a building of Daggerfall\'s list');
+  // each slice's seeds its own, held on a plan that lays Daggerfall's blocks: two slices' buildings in the same cell of
+  // their grids named apart (PIN MOVED, IC-GRAND: every slice against the first - the same sector's seed a shared one if
+  // the slice's ordinal were not in it)
+  const laid = { ...IC, slicePlan: () => Array.from({ length: 8 }, () => Array(8).fill('GENR')) };
+  for (const s of [1, 40, 300, 600]) {
+    const sx = s % N, sy = Math.floor(s / N);
+    const loc = synthesizeCapitalLocation({ cap: laid, k: 0, s }, { base, names: new Map([['GENR', ['GENRAA00.RMB']]]), blockOf: () => fh, px: 2069 + sx - (N - 1) / 2, py: 658 + sy - (N - 1) / 2 });
+    bySector.push(new Map(loc.exterior.buildings.map((b) => [b.sector, b.nameSeed])));
+  }
   let pairs = 0, same = 0;
   for (const m of bySector.slice(1)) for (const [sector, seed] of m) if (bySector[0].has(sector)) { pairs++; if (bySector[0].get(sector) === seed) same++; }
   assert.ok(pairs >= 10 && same < pairs / 10, `each slice's seeds its own: ${same} of ${pairs} the same`);

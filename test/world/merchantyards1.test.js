@@ -12,8 +12,8 @@ import {
   yardKeeper, yardName, yardCounter, validYardKind, YARD_PRICE_INDEX,
 } from '../../src/systems/merchantYards.js';
 import {
-  YARD_FOOT, YARD_PAD_M, BUILDING_CLEAR_M, PROP_CLEAR_M, FLAT_CLEAR_M, YARD_GAP_M, FRONT_ROAD_CELLS, NO_ROAD_COST, YARD_TURNS,
-  yardSpans, yardGround, yardSite, yardSitesOn, yardSitesOf, carveYards, yardMeasuresOf, placedModelBox, fieldRect,
+  YARD_FOOT, YARD_PAD_M, BUILDING_CLEAR_M, PROP_CLEAR_M, FLAT_CLEAR_M, YARD_GAP_M, FRONT_ROAD_CELLS, YARD_FRONT_COST, YARD_TURNS,
+  yardSpans, yardGround, yardSite, yardSitesOn, yardSitesOf, carveYards, yardMeasuresOf, placedModelBox, fieldRect, townGroundOf,
 } from '../../src/world/merchantYards/merchantYardSites.js';
 import { staticBuildingBox, staticBuildingWorldAabb } from '../../src/world/staticBuildings.js';   // AUDIT MERCHANT-YARDS R2
 import { buildYardModel, SIGN_BOARD, STABLE_YARD, WAGON_YARD, YARD_FLOOR_Y, signBoxOf, yardPoints } from '../../src/world/merchantYards/merchantYardModels.js';
@@ -131,7 +131,7 @@ test('MERCHANT-YARDS THE KEEPER: named on the region\'s bank on the town and the
   assert.match(hostText('src/scenes/world.js'), /const mapId = \(dfLocation\.mapTableData\?\.mapId \?\? 0\) >>> 0, regionIndex = dfLocation\.regionIndex \?\? 0, race = walkerRace\(people, dfLocation\.regionIndex\);/, 'the town\'s own region - its keepers\' bank and its counter\'s');
 });
 
-test('MERCHANT-YARDS THE PLACE: its own ground open and off every road, a ring round it open (a road allowed there), its front onto a road, nearest the middle (mutants: a road under it; the ring unread; the front unread)', () => {
+test('MERCHANT-YARDS THE PLACE: its own ground open and off every road, a ring round it open (a road allowed there), its front onto a road; IC-PROPS: the Wagon Yard nearest the middle, the Stable at the edge by the road (mutants: a road under it; the ring unread; the front unread)', () => {
   // 128 x 128 cells of grass, a road two cells wide across row 64
   const g = yardGround(grid(128, 128, (x, y) => (y === 64 || y === 65 ? ROAD_WEIGHT : 1)));
   const s = yardSite(g, 'stable');
@@ -148,15 +148,21 @@ test('MERCHANT-YARDS THE PLACE: its own ground open and off every road, a ring r
   for (let gy = s.gy - pad; gy < s.gy + s.nz + pad; gy++) for (let gx = s.gx - pad; gx < s.gx + s.nx + pad; gx++) assert.equal(g.blocked[gy * 128 + gx], 0);
   assert.deepEqual([s.x, s.z], [(s.gx + s.nx / 2) * NAV_CELL, (s.gy + s.nz / 2) * NAV_CELL]);
   assert.equal(s.yaw, YARD_TURNS[s.turn]);
-  // a place facing no road loses to one facing a road up to NO_ROAD_COST cells further out: a road at row 76, the middle
-  // open - the middle (no road before it) costs 12, a place whose gate opens on row 76 about 8 - so the road's wins
-  assert.equal(NO_ROAD_COST, 12);
-  const off = yardSite(yardGround(grid(128, 128, (x, y) => (y === 76 ? ROAD_WEIGHT : 1))), 'stable');
+  // PIN MOVED (IC-PROPS, 2026-10-27: "They have no logical placements"): a place facing no way ALWAYS loses to one facing
+  // one (YARD_FRONT_COST, more than any town is across - NO_ROAD_COST's 12 cells stay the ports'): a road at row 76, the
+  // middle open - the Wagon Yard's gate opens on the road, never on the middle's open ground
+  assert.ok(YARD_FRONT_COST >= 4096);
+  const off = yardSite(yardGround(grid(128, 128, (x, y) => (y === 76 ? ROAD_WEIGHT : 1))), 'transport');
   const strip = off.turn === 0 ? [off.gy + off.nz, off.gy + off.nz + FRONT_ROAD_CELLS - 1] : off.turn === 2 ? [off.gy - FRONT_ROAD_CELLS, off.gy - 1] : null;
   assert.ok(strip && strip[0] <= 76 && 76 <= strip[1], 'its gate opens on the road, not the middle\'s open ground');
-  const noRoad = yardSite(yardGround(grid(128, 128)), 'stable');
+  const noRoad = yardSite(yardGround(grid(128, 128)), 'transport');
   assert.ok(noRoad, 'a town with no road still stands it');
-  assert.ok(Math.hypot(noRoad.gx + noRoad.nx / 2 - 64, noRoad.gy + noRoad.nz / 2 - 64) < 1, 'and at its middle');
+  assert.ok(Math.hypot(noRoad.gx + noRoad.nx / 2 - 64, noRoad.gy + noRoad.nz / 2 - 64) < 1, 'and the Wagon Yard at its middle');
+  // ...and the Stable at its EDGE BY THE ROAD: nearest where the road leaves the town (an exit), its gate onto the road
+  const edge = yardSite(g, 'stable'), mid = edge.gx + edge.nx / 2;
+  assert.ok(Math.min(mid, 128 - mid) < edge.nx, `the Stable at the town's edge, by the road's end (${mid})`);
+  const bare = yardSite(yardGround(grid(128, 128)), 'stable'), bm = [bare.gx + bare.nx / 2, bare.gy + bare.nz / 2];
+  assert.ok(Math.min(bm[0], bm[1], 128 - bm[0], 128 - bm[1]) <= Math.max(bare.nx, bare.nz), 'no road at all: still at the edge');
   // the ring: two walls eight cells apart round the middle - a yard turned to fit between them exactly has no ring, so it
   // stands clear of both, its ring on open ground
   const walls = yardGround(grid(128, 128, (x) => (x === 60 || x === 69 ? 0 : 1)));
@@ -199,7 +205,10 @@ test('MERCHANT-YARDS BOTH YARDS: the Stable first, the Wagon Yard on what is lef
   const loc = { width: 1, height: 1, blocks: [{ x: 0, y: 0, dfBlock: { rmbBlock: { fldHeader: { autoMapData: auto, groundData: { groundTiles: tiles } } } } }] };
   const nav = new CityNavigation(1, 1);
   nav.setBlockData(0, 0, auto, (tx, ty) => tiles[tx][ty].textureRecord, { enhancedWater: true });
-  assert.deepEqual(yardSitesOf(loc), yardSitesOn(yardGround(nav)), 'the same ground the people walk');
+  // PIN MOVED (IC-PROPS): the yards' law lays its own reading over that ground (its ways, gardens, edge) - the ground itself is
+  // the people's
+  assert.deepEqual(townGroundOf(loc).blocked, yardGround(nav).blocked, 'the same ground the people walk');
+  assert.deepEqual(yardSitesOf(loc), yardSitesOn(townGroundOf(loc)));
   for (const s of yardSitesOf(loc)) for (const [gx] of cellsOf(s)) assert.ok(gx >= 20, 'never on the built half');
   assert.deepEqual(yardSitesOf({ width: 0, height: 0, blocks: [] }), []);
 });
@@ -418,7 +427,8 @@ test('MERCHANT-YARDS THE FOUR HOSTS - world.js places, stands, draws and names t
   const ext = read('src/scenes/exterior.js'), dungeon = read('src/scenes/dungeonContext.js');
   // PIN MOVED (AUDIT SHIPYARDS L3-3): a town's yards and its port's places in one pass - townPlacesFor asked once a build
   // PIN MOVED (TS7): and the town's walk shut handed on - its places on its own ground (world/townWalls.js townWalkShut)
-  assert.match(world, /const places = yardTown \|\| portTown \? townPlacesFor\(dfLocation, lefaySpot, climate\?\.people, loc, walkShut\) : null;[^\n]*\n\s*if \(yardTown\) yardSites = places\.yards;/);
+  // PIN MOVED (IC-STUTTER): awaited, a step at a time through the build's breather
+  assert.match(world, /const places = yardTown \|\| portTown \? await townPlacesFor\(dfLocation, lefaySpot, climate\?\.people, loc, walkShut, \(\) => breather\.breathe\(\)\) : null;[^\n]*\n\s*if \(yardTown\) yardSites = places\.yards;/);
   assert.match(world, /const yl = loc && isEnhanced\(\) && windmillsOn\(\) \? loc : layoutLocation\(dfLocation, maps, blocks, \{ enhanced: true, windmills: true \}\);/, 'one layout for every lane (the build\'s own where it is that one)');
   // AUDIT MERCHANT-YARDS G1, G3, G4, G2: the measures the host hands yardMeasuresOf, and the sites kept per town
   // PIN MOVED (BAY-LEFT-SEA): a capital's landmark by its footprint, its blocks' own (tamrielCapitals.js isCapitalLandmark)
@@ -430,7 +440,9 @@ test('MERCHANT-YARDS THE FOUR HOSTS - world.js places, stands, draws and names t
   assert.match(world, /const n = Math\.min\(list\.length, blockBuildingCount\(b\.dfBlock\)\);\n\s*for \(let i = 0; i < n; i\+\+\) if \(list\[i\]\?\.buildingType === TALK_BUILDING_TYPES\.Palace\) return true;/, 'a palace among the block\'s real buildings');
   // PIN MOVED (SHIPYARDS, 2026-10-11): yardSitesOf's own two steps (townGroundOf, yardSitesOn), so a port town's shipyard
   // and lighthouse stand on what its yards left (world.js townPlacesFor) - the yards' own sites the same
-  assert.match(world, /if \(!memo \|\| memo\.sig !== sig\) \{\n\s*const g = townGroundOf\(yl, measures, shut\);\n\s*const sites = g && yardTown \? yardSitesOn\(g\) : \[\];/, 'placed again only when its measures moved');
+  // PIN MOVED (IC-PROPS): the ground hands the yards' law the town's fabric's ways and a capital's own yards; PIN MOVED
+  // (IC-STUTTER): the same two steps, each walked through the build's breather (merchantYardSites.js ...Steps)
+  assert.match(world, /if \(!memo \|\| memo\.sig !== sig\) \{\n\s*const g = await stepsBreathing\(townGroundSteps\(yl, measures, shut, townYardsOf\(dfLocation\)\), breathe\);[^\n]*\n\s*const sites = g && yardTown \? await stepsBreathing\(yardSitesSteps\(g\), breathe\) : \[\];/, 'placed again only when its measures moved');
   assert.match(world, /renderer\.outsideViewDraws\?\.add\(\(\{ renderer: r \}\) => \{ merchantYards\?\.draw\(r\); \}\);/, 'and in the view out of a window (AUDIT G5)');
   assert.match(world, /if \(yardSites\?\.length\) carveYards\(nav, yardSites\);/, 'the people walk round them');
   assert.match(world, /merchantYards: yardSites,/);

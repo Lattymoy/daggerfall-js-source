@@ -207,7 +207,8 @@ test('STATUS-LIVE by source: every host gate that consumed on the SLOT now asks 
   const wm = src('src/scenes/worldModes.js');
   assert.match(wm, /get uiOverlayActive\(\) \{ return interiorPaused\(\); \},/, 'the interior ctx answers routeKey the way the dungeon twin always has');
   assert.equal(/get uiOverlayActive\(\) \{ return !!interiorOverlay; \}/.test(wm), false);
-  assert.match(wm, /if \(dungeonCtx\.unpausedOverlay\) \{ dungeonCtx\.tickOverlay\(dt\); dungeonCtx\.drawOverlay\(canvas\); \}/,
+  // PIN MOVED (RPT1026-FIGHTS WINDOW-ONLINE, scenes/windowWorld.js): and a pausing window the played frame ran under, online
+  assert.match(wm, /if \(dungeonCtx\.unpausedOverlay \|\| dungeonCtx\.uiOverlayActive\) \{ dungeonCtx\.tickOverlay\(dt\); dungeonCtx\.drawOverlay\(canvas\); \}/,
     'the dungeon frame paints a non-pausing occupant on the PLAYED frame - its paused arm returns above this');
   // THE FOUR HOSTS RULE: ?dungeon mounts the same context and routes
   // the same key table at it, so it owes the same line.

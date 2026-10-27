@@ -39,7 +39,7 @@ import { arenaPlaces, arenaPlacesVersion, arenaPixels, arenaStanding } from '../
 import { capitalPin, capitalsStanding, capitalsVersion, capitalPlaceId, capitalCanalOpen, capitalSpanPixels, capitalSliceName, capitalHarbourSlice, CAPITALS } from '../world/tamrielCapitals.js';   // TESA10d: a capital's pixel on the map, Arena or none; WW7-6: its seat's key; BAY-LEFT-MAPS: a capital's harbour, as the registry reads it
 import { arenaPlaceId } from '../world/arenaLocations.js';   // WW7-6: a place's seat's key
 import { seatMapMark } from '../net/townSeatLaw.js';   // WW7-6: how a seat is marked, the Bay's own law
-import { arenaRoadsLayer, arenaRoadTiles, arenaRoadTilePixels, arenaRoadsVersion, beyondKey, beyondPixel, ROAD_TILE, roadTileKey } from '../world/arenaRoads.js';
+import { arenaRoadsLayer, arenaRoadTiles, arenaRoadTilePixels, arenaRoadsVersion, beyondKey, beyondPixel, ROAD_TILE, roadTileKey, arenaRoadByte } from '../world/arenaRoads.js';
 import { DIR, DIR_DELTA } from '../world/road/roadNetwork.js';   // TESA15: a pixel's steps, as the far view draws them   // TESA13: the roads past the Bay, as the kernels paint them; TESA15: a tile at a time
 import { pastBayPlacesStamp, pastBayPlacesVersion } from '../world/pastBayPlaces.js';   // TESA15: the places the roads' regions laid, a bin at a time
 import { getPixelColorIndex } from './travel/travelMapWindow.js';   // TESA13: a place's classic bucket, under the map's filters
@@ -55,6 +55,7 @@ import { stampSquare, coveragePixels, clearCoverage, penRgb } from './inkRaster.
 import { labelPoint } from './provinceMap.js';   // TAMRIEL3: a province's name hangs where the chargen's map hangs it
 import { cyrodiilMask, zoneLineSteps } from '../systems/wild/cyrodiilZone.js';   // ZONE-LINE: Cyrodiil's outline is the zone's law's to draw
 import { watersInk, watersInkVersion } from '../world/tamriel/watersInk.js';   // MAP-WATERS: stream G's rivers and lakes past the Bay (the worker's copy), inked
+import { bridgesOf, inkBridgeLaw } from '../world/road/roadBridges.js';   // ROAD-LOOK: the bridges where the roads cross those rivers, marked
 import { lawLines, linkSteps, segKey, drain } from '../world/tamriel/tamrielLines.js';   // SMOOTH-LAND: the land's own lines
 
 /** @typedef {{ x: number, y: number }} Pt */
@@ -1044,6 +1045,7 @@ function* pastBayJob(ctx, view, opts, job) {
   } else {
     // in to the Bay's scale the walked chains, softened as the Bay's own - a mid or near tile is a few Bay pixels a side
     strokePaths(penOf(ctx, view, paperW, paperH).stroke, arenaRoadsIn(view.ox, view.oy, x1, y1), band, filters);
+    if (band === 'near' && waters) paintBridges(ctx, view, paperW, paperH, waters, filters);   // ROAD-LOOK: and their bridges over the rivers
   }
   if (!opts.continent) {
     yield;
@@ -1059,6 +1061,28 @@ function* pastBayJob(ctx, view, opts, job) {
       }
     }
   }
+}
+
+/** ROAD-LOOK: A BRIDGE'S MARK - the road's two parapets drawn either side of it along it, BRIDGE_MARK.gap paper pixels
+ *  out, over the river's width (never under BRIDGE_MARK.least), in the line's own pen. */
+export const BRIDGE_MARK = Object.freeze({ gap: 2.5, least: 3, width: 1.2 });
+/** ROAD-LOOK: THE BRIDGES ON THE SHEET, in to the Bay's scale (`near`): every bridge (world/road/roadBridges.js bridgesOf - its
+ *  crossings wider than a ford) of a pixel the map's copy of the rivers reaches and the view holds, off the installed layer
+ *  and that copy (inkBridgeLaw: the law's compile never the map's), a kind its filter hides drawn none. */
+export function paintBridges(ctx, view, paperW, paperH, waters, filters = {}) {
+  const law = inkBridgeLaw(waters), { stroke } = penOf(ctx, view, paperW, paperH);
+  const x1 = view.ox + paperW / view.scale, y1 = view.oy + paperH / view.scale, chains = [];
+  for (const k of law.index.keys()) {
+    const px = Math.round(k / 65536), py = k - px * 65536;   // the key x * 65536 + y: a row north of the Bay's (y < 0) its own
+    if (px < view.ox - 1 || px > x1 || py < view.oy - 1 || py > y1) continue;
+    for (const b of bridgesOf(px, py, arenaRoadByte, law)) {
+      if (filters[b.kind === 'road' ? 'roads' : 'tracks']) continue;
+      const L = Math.max(b.half / PIXEL_M, BRIDGE_MARK.least / view.scale), o = BRIDGE_MARK.gap / view.scale, nx = -b.uy, ny = b.ux;
+      for (const side of [-1, 1]) chains.push([{ x: b.x - b.ux * L + side * nx * o, y: b.y - b.uy * L + side * ny * o }, { x: b.x + b.ux * L + side * nx * o, y: b.y + b.uy * L + side * ny * o }]);
+    }
+  }
+  if (chains.length) stroke(chains, BRIDGE_MARK.width, PEN.line);
+  return chains.length / 2;
 }
 
 /** MAP-WATERS: a river's width on the map, paper pixels - its metres at the view's scale, in steps of `step` (so a river's

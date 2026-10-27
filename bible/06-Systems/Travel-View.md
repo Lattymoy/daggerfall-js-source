@@ -246,7 +246,12 @@ as lead and are recorded as such; each is one line to change if Mac calls otherw
   happens around the player at small scale"): the rain's, the snow's and the sand's boxes and the wind's wisps
   wrap round the eye they are handed, and round the head they were a little cube of weather about the sprite
   seen from 330 m outside it - they wrap round the view's own eye now (world.js `wxEye`), so the air in front
-  of the camera is full of it, as it is when you stand in it.
+  of the camera is full of it, as it is when you stand in it. RPT1026-WORLD RAIN-EYE (2026-10-20, a private
+  report: at sea in a storm, the camera scrolled out, the rain fell in a small box round the ship alone): on the
+  ground too - `wxEye` is the view's eye (`mwv.eye`) in every frame, where OW-WEATHER had kept the head's off the
+  Overworld, and a camera drawn from behind the head (the third person's, a helm's scrolled out over her
+  stern, the broadside's aim) stood outside the box round the head. Pinned by
+  `test/net/peer/fb1001_overworld.test.js` (OW-WEATHER's pin, moved).
 
 **The way in, and every way out.** In: the map's button, KeyO on the sheet, or the
 `TravelView` key if bound. The gate (world.js `travelViewAllowed`): the enhanced lane, a
@@ -327,7 +332,14 @@ change), and a plate's click is the same journey as a click on the town. No Trav
 **By the roads** (`systems/travel/travelRoute.js`). A* over the 1000x500 grid on Hazelnut's bytes -
 the very bytes Travel Options' follow key walks - with a step ON the road only where both
 ends carry the edge; a road 1, a track 1.6, the open 3.5 (x sqrt 2 diagonally); the sea
-refused (roadsProducer's WATER_BYTE); a straight run on one kind of ground folded into one
+refused (roadsProducer's WATER_BYTE) - but under his road (RPT1026-WORLD CAUSEWAY, 2026-10-26, a
+private report: on the bridge the guide turned off it and left the traveller stuck in the water, on the
+Grayidge-Westwall road): his road crosses 42 pixels whose byte is the sea's, and his painter
+paves each a strip of road tiles with the water either side (`world/road/roadPainter.js`
+ROAD_TILES), so a step ON his road is taken into the sea and through its corners (`pavedStep`);
+it had been refused, and the route left the road at the inlet's foot for the open pixel beside,
+across the water. A track's is not - his painter lays water over a track (a ford). Pinned by
+`test/systems/travel/rpt1026_world_causeway.test.js`. A straight run on one kind of ground folded into one
 leg. It walks roads; `world/road/roadNetwork.js route()` lays them - two laws, one compass.
 
 **The journeys are Travel Options'.** Two of the port's own (Ledger A, "THE TRAVEL VIEW'S
@@ -2278,7 +2290,7 @@ outlives the grid, and what holds the clock is the machine's build rate - TV2's 
 cleanly"). Recorded, not changed.
 
 **FIXED.** The pump asks the stream's books before it starts a build and as one ends (streamingWorld.js:"owes(queue) {",
-world.js:"if (building || !state.owes(queue)) return;"): the let-go pixels at the queue's head are dropped unbuilt, the
+world.js:"if (building || !state.owes(queue)"): the let-go pixels at the queue's head are dropped unbuilt, the
 rest keep their order, and with nothing owed the stream's run is over (PERF-EXT24's `_streamSince`). Both asks are
 needed - the one as a build ends catches what left the grid while it built, the one before a build what the frame's own
 crossing let go before the pump's turn. A pixel let go while its build is in flight is still torn down when it lands. The
@@ -2677,6 +2689,16 @@ edge thirteen from its centre); `tools/mutants/icpace.json` (9, all dead). PINS 
 `ow_lead`, `ow_loadowed`, `ow_queueowed`, `ow_toggle`, `tv_wasd`, `fb0929d_toroads`: `tvTownPace` for `tvInTown` and
 TOWN_PACE_MAX); `ow_townwalk.json` and `audit_owrevisited_walk.json` re-aimed by content, all dead.
 
+IC-STUTTER (2026-10-27, the owner: *"Traveling in the Imperial City at x60 presents really bad stuttering"*;
+`03-World/Arena-Provinces.md` IC-STUTTER, where the whole fix is recorded): at x60 a journey crosses a slice every two or
+three seconds, and its way through each slice (`scenes/townWalkHost.js` townWay: the slice's pieces flooded and up to six
+searches of its 512 by 512 grid) was one task of 12-215 ms on this machine. The way is searched a few thousand cells a
+step now (`systems/travel/townWalk.js` townWayCellsSteps, on a scratch of its own), the host walking WAY_STEPS_AN_ASK
+steps an ask and answering `pending` until it is found; the journey asks again every frame (`systems/travel/
+travelOptions.js` streetWait) and walks its leg meanwhile, then its streets - the pace, the way and the gates as before.
+The pieces themselves are flooded by the slice's build before it stands (componentsSteps), so the traveller's pace asks
+none.
+
 ## OW-HORIZON - as far as the eye can see, from the air (2026-10-20, the owner)
 
 The owner: "the overworld map as it stands doesnt allow you to see as far as the eye can see, this needs to change
@@ -2850,9 +2872,10 @@ from the Bay's edge.
 - **Measured** (the pins' grids): a town past the Bay reached by the road round, not the field across; a plan along a
   road past the Bay priced a road's (where it walked the open ground beside it at three and a half times it); the
   crossing, the Bay's road to its edge and its join past it, walked as one road.
-- **OPEN**: the walk aims pixel middle to pixel middle (OW-ROAD-TRUE's lane), and past the Bay a road is drawn as a curve
-  (`03-World/Roads.md` VOYAGER2), so on a bend the walker cuts up to 0.125 of a pixel inside it; the curve's apex is
-  `roadCurves.js` curveApex, not wired into the lane.
+- **OPEN** (closed by ROAD-FOLLOW, below - the walk and the line on the painted curves): the walk aims pixel middle to
+  pixel middle (OW-ROAD-TRUE's lane), and past the Bay a road is drawn as a curve (`03-World/Roads.md` VOYAGER2), so on
+  a bend the walker cuts up to 0.125 of a pixel inside it; the curve's apex is `roadCurves.js` curveApex, not wired into
+  the lane.
 - Pins `test/systems/travel/voyager21_beyond.test.js` (5); mutants `tools/mutants/voyager.json` (VOYAGER2.1's). PIN
   MOVED: none; TV-BEYOND's road-byte record re-aimed by content (`tools/mutants/fb1009_beyond.json`).
 
@@ -2882,11 +2905,13 @@ their cost:
   installed - VOYAGER2.1's `beyond`) and walking the land (no boat, or one to hand with a goal ashore), searches the roads
   and tracks alone - the Bay's arrays on the table, the layer past it, stepKind's law and TV2's prices (a road 1, a track
   1.6) - with the open ground (3.5) walked only about its two ends: BY_ROAD_REACH (24 pixels), or out past the nearest
-  road or track to an end in the wilds (within BY_ROAD_SEEK, 96). Its cells are kept by pixel (no table's edge), a step
+  road or track to an end in the wilds (within BY_ROAD_SEEK, 96). (ROAD-FOLLOW, below, retired BY_ROAD_REACH: a way by
+  the roads cut a field's corner anywhere within it - each end's own leg and a gap's crossing now.) Its cells are kept by pixel (no table's edge), a step
   away from the ends leaves by a road's or a track's edge (no other neighbour is asked), it leans on its goal by
   BY_ROAD_GREED (1.25: a way at most a quarter dearer than the roads' cheapest), and it gives up after
   BY_ROAD_MAX_EXPANSIONS cells (100,000). **TV2's law kept**: a way by the roads dearer than the straight walk across
-  the field (`ROUTE_COST.open` a step) is asked of the ladder too, and the cheaper kept.
+  the field (`ROUTE_COST.open` a step) is asked of the ladder too, and the cheaper kept. (ROAD-FOLLOW, below, retired
+  it: a way by the roads is kept, the ladder asked only where none joins the two.)
 - **The ladder past the table** (no way by the roads, FREE, a crossing): its box reaches `margin` past an end beyond the
   table (`reachOf` - the Imperial City walks out south of its lake), no rung wider than BEYOND_MARGIN (240 pixels: the
   whole map's rung there allotted a box of millions of cells for a spend that walks a hundred thousand), its whole spend
@@ -3501,6 +3526,78 @@ PIN MOVED: `test/render/farsea1.test.js` (the classic ring's land line, the cano
 the far ring as before (no line changed); `scenes/exterior.js`, `scenes/worldModes.js` and `scenes/dungeonContext.js` draw
 no far ring.
 
+### FLORA-GROUND - the band over built pixels, and the ground it stands on (FIELD BUGS 2026-10-27)
+
+What the player saw (the owner: "floating flora ... can be seen off the ground in first person"). Read off the code (NOT
+SEEN ON A GPU: this session's software renderer could not boot the world under the machine's load): after a load or a
+teleport, band trees with no trunk could stand against the sky over towns, roads and clearings near the player, and
+flat tree pictures beside the 3D trees.
+
+The cause. The band's pixels (`bandPixels`) were read at each pixel the traveller crossed. A grid pixel the stream built
+after that read kept its band trees until the next crossing, and after a load or a teleport that was the whole grid.
+The band is drawn at the far plane, so the built ground and its own flats covered a band tree wherever they stood in
+front of it, but not where the band tree stood against the sky. The band's layout keeps no town clearing, road or World
+of Daggerfall site (above), so a crown stood over each of them. A band tree is also a flat sprite of the classic record,
+and it showed round the 3D tree that stands in its place. And the band's trees were kept by the pixel on this thread
+for the session. When the ground's inputs moved (Basic Roads' network landing, the landforms' tables, the sites past
+the Bay, the continent's trace and its relief - the messages the worker drops its own kept grounds on), the kept trees
+stayed on the old heights and the middle ring under them did too, until the traveller drifted three pixels.
+
+The fix.
+- Each instance carries its pixel's slot about the base pixel (`bandSlot`: BAND_REACH pixels either way, the Land
+  View's most and the ring - the instance's two spare bytes). The program drops an instance whose slot the stream has
+  built (`uBuilt`, a bit a slot, `bandBuiltBits`). The bits are written the frame the built map changes
+  (`FarTreesBand._builtNow`, keyed by the map's `changes` and the drawn base). Nothing is laid again for it.
+- The terrain client counts the ground's inputs (`TerrainGenClient.groundEpoch`: setRoads, setRoadsData,
+  setLandformTables, setLandformBeyond, setTamriel). When it moves, the band lets every kept pixel go, drops an answer
+  on its way and asks the worker again (`_groundNow`), and the middle ring under it is asked again too
+  (`FarRingRenderer._groundStale`). A tree is never taken away before its new ground is laid: the drawn buffer stands
+  until the new one swaps in.
+- A band tree's height is the walk law's (`terrainSurface.js` walkGroundAt, through `layoutNature`), the ground the
+  player will stand on when the stream builds the pixel (`03-World/World-Arc.md` FLORA-GROUND).
+
+Pins: `test/world/terrain/floraground.test.js` (the slots, the bits, the program's drop, the book's frame and epoch, the
+middle ring's re-ask). Mutants: `tools/mutants/floraground.json`, all dead; `tools/mutants/midring.json`'s
+MID-RING-ask-every-frame and MID-RING-drift-late re-aimed by content (the ask's line grew the ground's test), dead. The
+four hosts: `scenes/world.js` draws the
+far ring and its band; `scenes/exterior.js`, `scenes/worldModes.js` and `scenes/dungeonContext.js` draw none.
+
+## HORIZON-TREES - the band's trees cut at the nearer ground's skyline (2026-10-27, KPbICA through the owner)
+
+KPbICA on the DFO Online Discord, forwarded by the owner (2026-10-27): "Strange projections above the horizon line"; the
+owner, the same day: "No band aids or half assed work". RELIEF-PEAKS named the cause and left it to this file's slice
+(`03-World/Tamriel.md` RELIEF-PEAKS, Cause 7).
+
+- **What the player saw.** Tree sprites standing over a hill's skyline at the edge of the streamed world - from the
+  Overworld most of all. The far pass (`render/farRing.js` draw) is depth-tested against the streamed world and writes no
+  depth (PERF2, FAR-SEA1 P1: every fragment at the far plane by `depthRange(1, 1)`), so its own layers stand in front of
+  one another by the painter's order alone: the far field, the far ring, the middle ring, and the band (FAR-TREES) last.
+  A band tree behind a nearer hill of the middle ring was drawn over that hill whole.
+- **Measured** (`tools/horizonTreesProbe.mjs`, the freeware, Bay pixel 2046,325, the eye 300 m up, Land View 5): of the
+  band ring's 185,688 trees, 45,068 (24.3%) stood wholly behind the middle ring's ground and 16,110 (8.7%) behind it in
+  part (a 12 m tree) - every one drawn whole over the hill before.
+- **The fix** (`render/farTrees.js:"float skyline(vec3 eye, vec3 foot) {"`): the middle ring keeps the heights it draws
+  (`render/midRing.js` groundHeights, `MidRingMesh.build`), and the far ring hands them to the band's draw with their corner
+  in the band's frame (`farRing.js:"_bandGround(origin) {"`). The band uploads them once a ring as a half float a vertex,
+  filtered, on GROUND_UNIT (`farTrees.js:"_ground(ground) {"`). Its vertex program takes the eye from the view and reads
+  the ground at HORIZON_STEPS - 1 points between the eye and each tree's foot - a point in a pixel the stream has built
+  left to the depth test its ground already passes (FLORA-GROUND's slot bits), a point past the ring not read - and the
+  highest line the ground lifts at the tree, less GROUND_SLACK (1.5 m: the drawn triangles against the heights'
+  bilinear, the half float's step), is the tree's cut: a tree under it whole is not drawn, and both fragment programs draw
+  a sprite above it alone. The JS twin (`farTrees.js:"export function skylineAt(eye, foot, ground, built = () => false) {"`)
+  is the law the pins and the probe read; the vertex program was run against it in WebGL2 by transform feedback (64 trees
+  over a synthetic ridge with two built pixels: every whole-hidden verdict the same, the cut within 0.004 of a tree's
+  height). The frames checked on the freeware: the ring's height under each band tree's foot is the tree's own ground
+  within 1.6 m at the median, 8.3 m at the 95th centile.
+- **The cost.** 23 filtered texel reads a tree in the vertex program (Land View 5's band some 190,000 trees: about 4.4
+  million reads a frame); one upload of 50,625 half floats each time the middle ring is built again (every
+  MID_REBUILD_DRIFT pixels). Nothing on the main thread a frame but four uniforms.
+- **The departure** (Port-Ledger A, with FAR-TREES): DFU stands no trees past its streamed terrain, so it has no band to
+  cut. THE FOUR HOSTS: the far ring is `scenes/world.js`'s alone (the Overworld and the streamed world); `exterior.js`,
+  `worldModes.js` and `dungeonContext.js` draw no far pass.
+- Pins `test/render/fartrees.test.js` (3: the skyline law; the programs; the band's ground and the far ring's hand-off).
+  Mutants `tools/mutants/horizontrees.json` (22, all dead).
+
 ## TVD-WORLD - the Overworld's dungeons past the Bay (2026-10-27, the audit NO SYSTEM LEFT BEHIND IN THE BAY)
 
 The audit's item 29 (C4); the owner: "Every single thing here needs to be addressed. No exceptions." (2026-10-26). TV6
@@ -3594,3 +3691,150 @@ Pins `test/scenes/bayleft_places.test.js` (8, three on the freeware). Mutants `t
 Re-aimed by content and run, all dead: AOWR-L5-1-mark-at-pixel-middle, AUDIT-TESA-A2-3-summary-undiscovered,
 EOW-settlements-isles, OWQ-press-unread, OWQ-pixel-swapped. A departure from DFU, whose places are MAPS.BSA's: Port-Ledger
 A, BAY-LEFT-MAPS.
+
+## RELIEF-PEAKS ON THE HORIZON - the far views on the kernel's own ground (2026-10-27, KPbICA through the owner)
+
+KPbICA: *"5) Strange projections above the horizon line. Probably because of the part of the renderer that draws
+details further than loading distance"*. The whole slice is `03-World/Tamriel.md` RELIEF-PEAKS; the far views' part is
+here.
+
+- **What stood.** The far ring stood each vertex (a pixel's centre) at its own byte's height, and that law left the
+  kernel's second term out (the large map, a third of the land's height) - so it stood 410 to 500 m off the kernel's
+  mean ground in the continent's ranges, the Bay's Dragontails some 470 m under it, and every byte half a pixel from
+  its own node. The far field stood each cell at the highest of its nine samples' bytes by that law: past the Bay up to
+  105 m over the ground at its place (29 m on the mean), on the Bay 266 m under it on the mean and up to 253 m over it.
+- **The law now** (`render/farRing.js` ringHeight, ringGroundAt; `world/landforms.js` nodeGround, centreGround,
+  nodeGroundAt): the far ring's vertex is the kernel's mean ground at its pixel's centre - the small term's cubic over
+  the pixel's window, the large map by its law (`tamrielGround.js` largeOfByte), the lift faded by its nodes' fades,
+  the continent's share, the ranges. Its grid reads the bytes once into a padded grid and the nodes' fades once a node.
+  The far field's vertex stands on the node its cell's centre is (`world/terrain/midRingGrid.js` farFieldCell's
+  `ground`): worked out on the terrain worker under the Landforms row, kept by the cell, transferred and assembled a
+  band at a time. The travel view past the grid (`scenes/world.js` tvSceneOf) reads the ring's ground. Measured: within
+  2 m of the kernel's mean ground past the Bay, within 35 m on the Bay (the law against WOODS.WLD's own cells); the far
+  field within 2 m past the Bay and 45 m on it.
+- **The ring's sea** stands where the ring's ground stands at the sea's height. A lone island byte now stands at its
+  node, the corner of four pixels, as the streamed ground stands it, so the four are its shore (FAR-SEA1's pins moved).
+- **The skyline.** At six viewpoints 300 m up (180 bearings each), the drawn skyline against the ground's own: before,
+  under one pixel over it everywhere; now the ranges' ridges stand under the ring's 819 m vertices, so the ring's skyline
+  is a few pixels under the ground's on the mean and at most 3.9 pixels over it at 5 bearings of one viewpoint (1080p,
+  65 degrees). The middle ring draws the ridges to 11.5 km.
+- **Not fixed here: FAR-TREES' band over the middle ring's hills.** The band is drawn last in the far pass with no depth
+  among the far layers, so a band tree behind a middle-ring hill is drawn over it: from Bay pixel 2046,325, 300 m up,
+  Land View 5, 442 of 3,072 band tree points (14.4%; 21.0% of those the streamed grid leaves). The fix is the band's
+  vertex shader marching its sight line over the middle ring's heights (handed as a texture with their frame and the
+  eye) and dropping a tree the ground hides - in `render/farTrees.js`, FLORA-GROUND's file, left to it.
+- **Pins:** `test/world/reliefpeaks.test.js` (the far views on the kernel's ground; their wiring; with ARENA2 the far
+  ring on the freeware's ground). PIN MOVED: `test/render/farlandmark.test.js`, `test/render/farsea1.test.js`,
+  `test/render/midring.test.js`, `test/ui/farring.test.js`, `test/scenes/tv3_travellers.test.js`,
+  `test/systems/naval/auditcaptsea.test.js`, `test/systems/landform.test.js`,
+  `test/world/terrain/auditlandforms.test.js`. Mutants: `tools/mutants/reliefpeaks.json` (the far views' records), and
+  the far views' records of `farlandmark.json`, `midring.json`, `auditcaptsea.json`, `auditlandforms.json` and
+  `terrainscale1.json` re-aimed by content. Port-Ledger A, RELIEF-PEAKS.
+
+## ROAD-FOLLOW - a road journey keeps to the roads, walked on the road as it is painted (2026-10-27, the owner)
+
+The owner's field report, item 6: *"Road travel is not following roads properly in overworld travel"*; then *"No band
+aids or half assed work"* - road travel follows the roads everywhere. Its walled towns' gates are the same record's other
+half (`03-World/Town-Shapes.md` ROAD-FOLLOW).
+
+**Measured first** on the freeware (ARENA2, every region of the roads past the Bay laid as the roads' worker lays them,
+the host's own route ground, the plan's legs as Travel Options walks them; the share of a walk on the painted road is
+its length within a tile of the road the terrain paints - the Bay's straight bands, VOYAGER2's curves past it). Two
+faults, both past the Bay; the Bay's plans were 100% on the road and are unchanged.
+
+- **THE WALK AND THE LINE CUT EVERY BEND.** A road leg walks its lane pixel middle to pixel middle (OW-ROAD-TRUE), and the
+  drawn line joins the same middles - Basic Roads' geometry, a band from the middle to each edge. Past the Bay a bend is
+  painted as one curve (VOYAGER2), 0.125 of a pixel (102 m) inside the middle at 45 degrees and 0.177 (145 m) at a right
+  angle, and the road is two tiles (12.8 m) wide: the party walked the grass inside every bend. 12 to 17% of every road
+  journey's walk past the Bay lay off the painted road (Kvatch to Leyawiin 88.1% on it, the Imperial City to Bruma 84.7%)
+  where the plan's own steps were 97 to 100% road; the real Travel Options walk of a road bending four times stood 16
+  tiles off it at every bend. VOYAGER2.1's OPEN, above.
+- **THE PLAN LEFT THE ROADS NEAR ITS ENDS.** The roads' search (ROAD-BEYOND) walked the open ground anywhere within
+  BY_ROAD_REACH (24 pixels, 20 km) of either end, at 3.5 a step against a road's 1: of 30 journeys between random places
+  past the Bay, 17 left the roads mid-way - 25 stretches across a field, 23 of them where one piece of the roads joined
+  both sides (the roads round them 3.3 to 133.5 times the field's length), every one within 24 pixels of an end. TV2's
+  law did the same on the Bay's ladder (a field's hop taken over a road round it more than three and a half times
+  longer), and past the Bay it asked the ladder whenever the roads were dearer than the straight walk and kept its cut.
+  The 2 stretches left were gaps: Adavi's and Tiberdes' roads (14 and 22 pixels) join no other road. Bemitor to Saurtja
+  (the Bay to Hammerfell's south) walked 413 pixels across country - the roads' search ran out its spend against the
+  Taneth network's gap, and the ladder too.
+
+**What holds now.**
+
+- **The walk on the curves** (`systems/travel/roadLine.js`): a route's pixel past the Bay that it turns in, one road (or
+  one track) in and out, is walked on the curve its byte paints between the two edges it crosses
+  (`roadLine.js:"export function routeCurveAt(pixels, kinds, i, {"`): the leg that ends there ends at the curve's apex,
+  and the next walks the curve's second half before its straight run - each such leg carries its `line`, the painted
+  road's native points (`roadLine.js:"export function roadLineLegs(legs, ix, pixels, kinds, o = {}) {"`, from
+  `travelRoute.js:"return roadLineLegs(legs, ix, pixels, kinds, { byteAt: roadBytes });"`). Travel Options walks a
+  line's points as its lane (`travelOptions.js:"...(leg.line && !leg.ring ? { pts: [[a.x, a.z], ...leg.line] } : {})"`,
+  the autopilot's `path`, OW-ROAD-TRUE's pursuit), aims a leg at its line's end (`legEnd`), rejoins a curve at its
+  nearest point (`travelOptions.js:"const near = lane?.pts ? nearestOnLine(lane.pts, me) : null;"`) and walks a last
+  leg's line to its place or its spot. The drawn line and the forecast run the same points (`routeDrawPoints`' `via`,
+  `drawRouteRuns`, `drawOwnRun`). A pair the byte paints no curve for (a T's stem, a junction's turn sharper than 45
+  degrees), a way straight through, the Bay's pixels and the route's two ends are the middles they were - on the road.
+- **The plan keeps to the roads** (`travelRoute.js:"export function* roadEndsSteps(from, to, {"`). A plan handed the roads
+  walks the open ground only on its ends' own legs and across a gap in them:
+  - **each end's leg**: none about an end on a road or a track (its pixel carries one - it starts or ends on the road), out
+    to ROAD_END_SLACK (2) rings past the nearest road about an end off them (a spot in the field, a dungeon off the road);
+  - **the roads' pieces**: the roads are flooded from both legs at once, ROAD_PIECE_CAP (8,192) pixels a side at most. A
+    side whose flood runs out first, never meeting the other's, holds roads that join none of the other's - **a gap**: the
+    narrowest crossing of the land from them to a road they do not hold (the shortest walk, a diagonal sqrt 2, out to
+    BY_ROAD_SEEK) is the plan's to walk (`bridges`), and the flood goes on from its far side. Measured: the roads past
+    the Bay are 801,136 pixels in 1,820 pieces - the land's network 671,973, the islands' own (Summerset's 58,286,
+    Vvardenfell's 24,016, Auridon's 10,046), Taneth's network (4,399, Taneth, Rihad, Saurtja and Tlarpka) and Necrom's
+    (3,911) joined to no other; 28 places' roads join no other road, their narrowest crossing 2 to 9 pixels (Taneth's 4,
+    Necrom's 2); 11 on islands none within 400.
+  - **the searches** walk those legs and crossings alone: the roads' search past the Bay
+    (`travelRoute.js:"if (kind < 0 || (kind === 2 && !endLeg(cx, cy, nx, ny))) continue;"`) and the ladder on the Bay
+    (`travelRoute.js:"if (kind < 0 || (kind === 2 && endLeg && !endLeg(cx, cy, nx, ny))) continue;"`). A way by the roads
+    is kept however much dearer than the straight walk (`travelRoute.js:"if (byRoad) return byRoad;"`).
+  - **no road joins the two** (an end no road comes within BY_ROAD_SEEK of; an island's roads with no crossing; every box
+    the ladder holds without a way by them): TV2's cost law, the plan's own again with `costLaw`
+    (`travelRoute.js:"if (!best && endLeg) return yield* planRouteSteps(from, to, { ...opts, costLaw: true, tally });"`),
+    then the walk across country as before. FREE mode hands no road and walks the cost law as it did.
+
+**Measured after** (the same sampling, seed 7: 60 tries a set, journeys of 20 to 900 pixels; "no way" a pair the land does
+not join or the spend did not reach):
+
+| set | journeys | open steps | open mid-way | walked line on the painted road |
+| --- | --- | --- | --- | --- |
+| the Bay | 38 / 38 | 0.05% / 0.02% | none / none | 100% / 100% |
+| past the Bay | 48 / 49 | 0.99% / 0.13% | 262 in 27 journeys / 43 in 4, every one a gap's crossing | 83.4% / 98.8% |
+| the Bay to past it | 53 / 57 | 1.17% / 0.20% | 192 in 22 / 115 in 7, every one a gap's crossing | 89.5% / 99.1% |
+
+The 30 journeys of the first count: 17 left the roads mid-way, 2 now; of 25 stretches across a field 23 were within
+one piece of the roads and none is now - the 3 left cross gaps: Adavi's stub to the land's network (5 pixels), and
+Tiberdes' stub by another to it (5 and 4). Bemitor to Saurtja walks 728 pixels, 96.5% of its walk on the painted road
+(3.2%), the gap to Taneth's network crossed in 19 pixels along a lake's north shore. The walk on the curves (the real Travel Options, at a hundred times walking pace and at walking
+pace) keeps within a tile of the road at every bend, where it stood 16 tiles off.
+
+**The spend**: the two floods cost a plan by the roads up to 16,384 pixels, more on a gap's crossing (Bemitor to Saurtja
+56,000); a Bay plan's ladder walks fewer cells, the field off every box's roads (Daggerfall to Wayrest 92,850 cells to
+37,793; Wayrest to Ykalon 193,259 to 57,639); a plan past the Bay more (Kvatch to Leyawiin 49,019 to 63,211; the
+Imperial City to Bruma 5,086 to 20,095) - PLAN-SLICES' cells a frame, the same plan.
+
+- **The four hosts**: none grows. `scenes/world.js`'s two lines that draw the route call `roadLine.js` drawRouteRuns and
+  drawOwnRun in place of their loops (the same logical lines); `scenes/exterior.js`, `scenes/worldModes.js` and
+  `scenes/dungeonContext.js` plan no Overworld route. Nothing crosses the wire.
+- **The departures, named**: DFU has no Overworld planner (Travel Options' follow walks Hazelnut's bytes, which the Bay's
+  plans walk as before). TV2's cost law - *a road worth a detour of three and a half times its length and no more* - is
+  retired where the roads join a journey's two ends: the road round a field is the way (TV2's own pin of a hop across a
+  field moved); it stays the law where no road joins them, and FREE's. ROAD-BEYOND's BY_ROAD_REACH and its *TV2's law
+  kept* are retired the same way (below, PIN MOVED).
+- **A river under the road** (ROAD-LOOK, `03-World/Roads.md`): the plan's water is the map's own water pixels; a river
+  CYRODIIL-WATERS carves inside a pixel is none of them, so a road over one is the plan's step as any road's, and walked on
+  ROAD-LOOK's bridge where the river is wider than a ford. A water pixel under the Bay's own road (a causeway) is
+  stepped onto by that road alone (`travelRoute.js:"if (goal === 0 && isWater(bx, by) && !pavedStep(ax, ay, bx, by, bit, width, height, roads)) return -1;"`,
+  main's RPT1026-WORLD CAUSEWAY), never a track's ford; roadEndsSteps' crossing of a gap walks no water pixel.
+- **OPEN**: a turn the painter draws no curve for (VOYAGER2's junction law pairs only turns of 45 degrees or less) is
+  walked through the middle, as the lane walked it - off the paint by up to half the road's width at a sharp junction
+  turn. Woodhearth's road grazes two pieces of its wall (`03-World/Town-Shapes.md` ROAD-FOLLOW).
+- Pins `test/systems/travel/road_follow.test.js` (6), `test/systems/travel/tv2_click_to_move.test.js` (ROAD-FOLLOW route,
+  and the U's hop PIN MOVED), `test/systems/travel/road_beyond.test.js` (PIN MOVED: the dials - BY_ROAD_REACH gone,
+  ROAD_END_SLACK and ROAD_PIECE_CAP; the road round the field kept, not the ladder's cut; the roads' own search crossing a
+  broken road's gap; the roads first only where they join). Mutants `tools/mutants/road_follow.json` (52); re-aimed by
+  content: AOWR-L2-2-line-drawn-straight, AOWR-L2-3-ring-approach-unlaned, OW-ROADSIDE-join-ignored, OW-ROADSIDE-drawn-beside,
+  ORT-lane-from-the-joins-point, ROAD-BEYOND-no-roads-first, ROAD-BEYOND-the-ends-open-ground-everywhere,
+  ROAD-BEYOND-the-seek-unasked, TV2-a-new-autopilot-each-leg, VOYAGER2.1-the-reader-unread; ROAD-BEYOND-the-dearer-road-kept
+  (its law retired) now ROAD-FOLLOW-the-cut-across-the-field-kept.

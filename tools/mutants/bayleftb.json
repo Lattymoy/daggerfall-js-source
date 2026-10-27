@@ -163,8 +163,8 @@
   {
     "name": "BAY-LEFT-B-B1-menu-id",
     "file": "src/ui/enhanced/enhancedMenu.js",
-    "old": "_pickedLegacyBirth = { personId, region: took.place.region, loc: took.place.loc, ...(Number.isInteger(took.place.mapId) ? { mapId: took.place.mapId } : {}) };",
-    "new": "_pickedLegacyBirth = { personId, region: took.place.region, loc: took.place.loc };",
+    "old": "_pickedLegacyBirth = { personId: took.heirId, region: took.place.region, loc: took.place.loc, ...(Number.isInteger(took.place.mapId) ? { mapId: took.place.mapId } : {}) };",
+    "new": "_pickedLegacyBirth = { personId: took.heirId, region: took.place.region, loc: took.place.loc };",
     "tests": ["test/systems/legacy/bayleftb_seat.test.js"]
   },
   {

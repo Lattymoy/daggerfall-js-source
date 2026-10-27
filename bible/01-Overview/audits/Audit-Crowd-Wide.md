@@ -59,7 +59,8 @@ edits too. Left for its own arc.
 
 ## What it left
 
-- The companions of a cut player (B1, OPEN above).
+- The companions of a cut player (B1, OPEN above) - CLOSED by RPT1026-EVENTS CROWD-KIN (2026-10-26,
+  `11-Multiplayer/World-Bosses.md` section 21): a cut player's revenants, bands and companions are not drawn.
 - A cut player's card seat (A3, recorded).
 - Not yet seen in a browser over a real crowd.
 

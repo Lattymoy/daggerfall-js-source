@@ -486,8 +486,8 @@
   {
     "name": "TESA14-the-gate-on-the-span",
     "file": "src/world/tamrielCapitals.js",
-    "old": "base = [at.px + (dx > 0 ? D.w - D.mx : dx < 0 ? -D.mx - 1 : 0), at.py + (dy > 0 ? D.h - D.my : dy < 0 ? -D.my - 1 : 0)];",
-    "new": "base = [at.px + (dx > 0 ? D.w - D.mx - 1 : dx < 0 ? -D.mx : 0), at.py + (dy > 0 ? D.h - D.my - 1 : dy < 0 ? -D.my : 0)];",
+    "old": "const base = [at.px + (dx > 0 ? D.w - D.mx : dx < 0 ? -D.mx - 1 : sl - D.mx), at.py + (dy > 0 ? D.h - D.my : dy < 0 ? -D.my - 1 : sl - D.my)];",
+    "new": "const base = [at.px + (dx > 0 ? D.w - D.mx - 1 : dx < 0 ? -D.mx : sl - D.mx), at.py + (dy > 0 ? D.h - D.my - 1 : dy < 0 ? -D.my : sl - D.my)];",
     "tests": [
       "test/tesa14_roads.test.js"
     ]

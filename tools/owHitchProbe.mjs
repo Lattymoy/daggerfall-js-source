@@ -20,11 +20,20 @@
 //   OUT=<file>       append the run's row (and its frame lists) as one JSON line
 //   LAND=<the streamed radius>  HEAP_MB=<the page's old space>  PORT=5182  W=320 H=180  DRAWS=on (rasterise too)  QUERY=<more of the page's query>  CHROMIUM=<a browser other than the
 //   pinned Playwright's>
+//   IC=<bearing>,<metres>,<yaw>   IC-STUTTER (2026-10-27, the owner: "Traveling in the Imperial City at x60 presents really
+//                    bad stuttering"; bible/03-World/Arena-Provinces.md IC-STUTTER): the journey in the Imperial City - after
+//                    the boot the jump to the city's slice at that point of its own metres (bearing degrees clockwise from
+//                    north, metres out from its middle: `90,6600,270` the Arena District's avenue by the city wall, facing
+//                    the tower), the stream let go idle, the body stood on the point facing `yaw` (degrees clockwise from
+//                    north) - then the Overworld and W as ever, at the city's own pace (IC-PACE, x60)
+//   TURN=<s>         turn about every s real seconds (IC: back along the avenue, so the run stays in the city)
+//   PROFILE=<file>   Chrome's sampler over the journey (CDP, 1 ms between samples) written as a .cpuprofile - its long
+//                    frames' functions read with a summariser of self time
 // The figures are this machine's CPU, shared, and only relative: run an A/B's arms one after the other, nothing else
 // beside them, and compare like with like.
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
-import { appendFileSync, existsSync } from 'node:fs';
+import { appendFileSync, existsSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 
@@ -75,26 +84,59 @@ await page.waitForFunction(() => window.__shotReady === true && !!window.__journ
 const frameAt = () => page.evaluate(() => window.__frame);
 const frames = async (n) => { const f0 = await frameAt(); await page.waitForFunction((f) => window.__frame >= f, f0 + n, { timeout: 600000, polling: 200 }); };
 await frames(30);
-let view = null;
+// IC=: the jump into the Imperial City (its centre pixel stands once the land past the Bay has landed - polled a frame at a
+// time), the stream idle, then the body on the avenue's point facing the way it walks
+const IC = process.env.IC ? process.env.IC.split(',').map(Number) : null;
+if (IC) {
+  console.log(`booted in ${Math.round((Date.now() - t0) / 1000)} s, heap ${await page.evaluate(() => Math.round((performance.memory?.usedJSHeapSize ?? 0) / 1048576))} MB`);
+  let at = null;
+  for (let i = 0; i < 3000 && !at; i++) { at = await page.evaluate(async () => (await import('/src/world/tamrielCapitals.js')).capitalCentrePixel(0)); if (!at) await frames(1); }
+  if (!at) throw new Error('owHitchProbe: the Imperial City never stood (no centre pixel)');
+  const [b, r, yaw] = IC;
+  const jump = await page.evaluate(async ([b, r, at]) => {
+    const ic = await import('/src/world/imperialCity.js'), B = 102.4, HALF = ic.IMPERIAL_CELLS / 2, N = ic.IMPERIAL_SPAN, [x, z] = ic.polar(b, r);
+    return [at.px - (N - 1) / 2 + Math.floor((x + HALF * B) / (8 * B)), at.py - (N - 1) / 2 + Math.floor((z + HALF * B) / (8 * B)), x, z];
+  }, [b, r, at]);
+  const tj = Date.now();
+  await page.evaluate(([x, y]) => { window.__tesaJump(x, y); }, jump);
+  await frames(2);
+  await page.waitForFunction(() => window.__streamIdle?.() === true, null, { timeout: 1800000, polling: 1000 });
+  await frames(10);
+  // the scene's frame: the jump's pixel's south-west corner its origin, the city's middle the centre pixel's (x east, z north;
+  // the city's own z runs south)
+  const [cx, cy] = (await page.evaluate(() => window.__currentPixel())).split(',').map(Number);
+  const y0 = (await page.evaluate(() => window.__cam()))[1];
+  const sx = (at.px - cx) * 819.2 + 409.6 + jump[2], sz = -(at.py - cy) * 819.2 + 409.6 - jump[3];
+  await page.evaluate(([x, y, z, yaw]) => window.__pose(x, y, z, yaw, 0), [sx, y0 + 1, sz, (yaw * Math.PI) / 180]);
+  await frames(10);
+  console.log(`the Imperial City: centre ${at.px},${at.py}, jumped to ${jump[0]},${jump[1]} in ${Math.round((Date.now() - tj) / 1000)} s, stood at ${b} degrees ${r} m facing ${yaw}`);
+}
+let view = null, rise = null;
 for (let i = 0; i < 20; i++) {
   await page.evaluate(() => window.__arenaCloseOverlays?.());
   if (WALK) { view = 'walk'; break; }
-  await page.evaluate(() => window.__overworld());
+  rise = await page.evaluate(() => window.__overworld());
   await frames(10);
   view = await page.evaluate(() => window.__journeyState().view);
   if (view === 'up') break;
 }
-if (!WALK && view !== 'up') throw new Error(`owHitchProbe: the Overworld did not rise (${view})`);
+if (!WALK && view !== 'up') throw new Error(`owHitchProbe: the Overworld did not rise (${view}: ${JSON.stringify(rise)})`);
 const boot = Math.round((Date.now() - t0) / 1000);
 const before = await page.evaluate(() => window.__journeyState());
+const cdp = process.env.PROFILE ? await page.context().newCDPSession(page) : null;
+if (cdp) { await cdp.send('Profiler.enable'); await cdp.send('Profiler.setSamplingInterval', { interval: 1000 }); await cdp.send('Profiler.start'); }
 await page.evaluate(() => { window.__owLog.on = true; });
 await page.keyboard.down('KeyW');
 const samples = [];
+const TURN = Number(process.env.TURN || 0);
+let turnAt = TURN ? Date.now() + TURN * 1000 : Infinity, heading = IC ? IC[2] : 0;
 for (const until = Date.now() + SECONDS * 1000; Date.now() < until;) {
   await frames(15);
-  samples.push(await page.evaluate(() => ({ ...window.__journeyState(), heapMB: Math.round((performance.memory?.usedJSHeapSize ?? 0) / 1048576) })));
+  samples.push(await page.evaluate(() => ({ ...window.__journeyState(), heapMB: Math.round((performance.memory?.usedJSHeapSize ?? 0) / 1048576), t: performance.now() })));
+  if (Date.now() >= turnAt) { turnAt += TURN * 1000; heading += 180; await page.evaluate((y) => window.__look((y * Math.PI) / 180, 0), heading); }
 }
 await page.keyboard.up('KeyW');
+if (cdp) { const { profile } = await cdp.send('Profiler.stop'); writeFileSync(process.env.PROFILE, JSON.stringify(profile)); }
 const log = await page.evaluate(() => { window.__owLog.on = false; return window.__owLog; });
 const gaps = log.start.slice(1).map((s, i) => s - log.start[i]);
 const after = samples.at(-1) ?? before;

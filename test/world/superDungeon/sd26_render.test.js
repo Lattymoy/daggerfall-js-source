@@ -117,8 +117,9 @@ test('AUDIT SD IV (R1): THE HOUR\'S LIGHT AFTER THE LAST FLAT - its blows, spoil
   // the arm: the record filled every frame, after the Rift's window; the Hour's light drawn here only under a window
   const rift = M.indexOf('if (dungeonCtx.sdEndLook) host.drawSdRift?.(');
   const kept = M.indexOf('_sdLate.on = isSdRealm(dungeonLoc); _sdLate.proj = proj; _sdLate.view = view; _sdLate.eye = mwv.eye;');
-  const under = M.indexOf('if (_sdLate.on && dungeonCtx.uiOverlayActive) host.drawSdTelegraph?.(_sdLate);');
-  const overlay = M.indexOf('if (dungeonCtx.uiOverlayActive) { dungeonCtx.hideHudText?.();');
+  // PIN MOVED (RPT1026-FIGHTS WINDOW-ONLINE): the arm's window test is windowHoldsDungeon's - a window holds the dungeon offline, or over a death online (scenes/windowWorld.js)
+  const under = M.indexOf('if (_sdLate.on && windowHoldsDungeon(dungeonCtx.uiOverlayActive, aliveUnder())) host.drawSdTelegraph?.(_sdLate);');
+  const overlay = M.indexOf('if (windowHoldsDungeon(dungeonCtx.uiOverlayActive, aliveUnder())) { dungeonCtx.hideHudText?.();');
   const foes = M.indexOf('dungeonCtx.drawFoes(dt, canvas, proj, view,');
   assert.ok(rift > 0 && kept > rift && under > kept && overlay > under && foes > overlay, 'kept after the window, drawn under a window before its return, else left to drawFoes');
   assert.equal((M.match(/host\.drawSdTelegraph\?\.\(/g) ?? []).length, 2, 'two doors, never both in a frame');

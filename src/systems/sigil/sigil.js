@@ -75,6 +75,7 @@
 
 import { PARTY_MAX } from '../../net/wire.js';
 import { registerWeaponBlowMod } from '../entityMods.js';
+import { blowRoom } from '../powerCeiling.js';   // POWER-CEILING: the blow's one product
 
 /** The power band per tier, per cent at full rank: [min, max] inclusive. */
 export const SIGIL_BANDS = Object.freeze({
@@ -242,7 +243,7 @@ let _carry = new WeakMap();
  */
 export function sigilBlow(weapon, damage, attacker, target, info = null) {
   if (!(damage > 0) || !weapon || !attacker?.isPlayer || attacker.peer || !target || target.isPlayer || _dueling) return damage;
-  const pct = sigilPercent(weapon.sigil, _renown);
+  const pct = blowRoom(sigilPercent(weapon.sigil, _renown), 'sigil');   // POWER-CEILING: its room under the blow's one product
   if (!(pct > 0)) return damage;
   const exact = (damage * pct) / 100 + (_carry.get(weapon) ?? 0);
   const more = Math.floor(exact + 1e-9);

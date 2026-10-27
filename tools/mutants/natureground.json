@@ -30,9 +30,10 @@
   {
     "name": "NATUREGROUND-sign-flipped",
     "file": "src/world/terrain/terrainSurface.js",
-    "old": "  return surfaceHeightAt(heightmapData, lx, lz) - Math.fround(avg)",
-    "new": "  return -surfaceHeightAt(heightmapData, lx, lz) + Math.fround(avg)",
-    "tests": ["test/world/terrain/natureground.test.js"]
+    "old": "  return walkGroundAt(heightmapData, lx, lz) - Math.fround(avg)",
+    "new": "  return -walkGroundAt(heightmapData, lx, lz) + Math.fround(avg)",
+    "tests": ["test/world/terrain/natureground.test.js"],
+    "note": "FLORA-GROUND (PIN MOVED): re-aimed by content - the ground's one law, walkGroundAt (the walker's and the flora's), where it read surfaceHeightAt."
   },
   {
     "name": "NATUREGROUND-plane-unscaled",

@@ -87,7 +87,7 @@ test('AUDIT-RR F2: a guild joined through its initiation quest\'s end runs the c
 
 test('AUDIT-RR F4: the expulsion squad places with CreateFoeSpawner\'s own arguments - no line-of-sight check, the mod\'s distances, a long attempt budget - and standLooseFoe takes all four', () => {
   const he = rd('src/scenes/hostEnchant.js');
-  assert.match(he, /mobileType, \{ allied = false, lineOfSightCheck = true, minDistance = 4, maxDistance = 20, attempts = LOOSE_FOE_PLACE_ATTEMPTS \} = \{\}\)/);
+  assert.match(he, /mobileType, \{ allied = false, lineOfSightCheck = true, minDistance = 4, maxDistance = 20, attempts = LOOSE_FOE_PLACE_ATTEMPTS, open = false \} = \{\}\)/);   // PIN MOVED (PACK-OPEN: and `open`, a raid stand's)
   assert.match(he, /for \(let i = 0; i < attempts && !spot; i\+\+\) \{\s+spot = placeFoeFreely\(env, \{ minDistance, maxDistance, lineOfSightCheck \}\);/);
   const ri = rd('src/systems/roleplayRealism/rrInstall.js');
   assert.match(ri, /export const RR_SQUAD_PLACE_ATTEMPTS = 600;/);
@@ -227,7 +227,7 @@ test('AUDIT-RR F32/F35: WorldDataVariants\' last key is THIS location\'s before 
   assert.match(rd('src/scenes/exterior.js'), /setLastLocationKeyTo\(dfLocation\.regionIndex, dfLocation\.locationIndex \?\? 0\);\s+\/\/ AUDIT-RR F32/);
   const w = hostText('src/scenes/world.js');
   const key = w.indexOf('setLastLocationKeyTo(dfLocation.regionIndex, dfLocation.locationIndex ?? 0);   // AUDIT-RR F32');
-  const layout = w.indexOf('layoutLocation(', key);
+  const layout = w.slice(key).search(/layoutLocation(?:Steps)?\(/) + key;   // PIN MOVED (IC-STUTTER): the streaming host's layout a block a step
   assert.ok(key > 0 && layout > key && layout - key < 4000, 'the key is set before the layout that reads it');
 });
 

@@ -145,6 +145,7 @@ test('AUDIT FONT3 L3/L6/L7: the corners and the narrow labels track none where t
 test('AUDIT FONT3 C2/C3: the dim a step under the mid, and the film\'s phone words at the floor', () => {
   assert.match(ENHANCED_CSS, /--dim: #9a9486;/);
   const intro = read('src/ui/intro/introScreen.js');
-  assert.match(intro, /intro-continue\{bottom:23dvh;font-size:11px!important;/);
+  // TITLE-DOOR (2026-10-27): Tap to continue is retired - the menu's doors stand on the held title in its place
+  assert.doesNotMatch(intro, /intro-continue/);
   assert.match(intro, /intro-footer\{font-size:11px\}/);
 });

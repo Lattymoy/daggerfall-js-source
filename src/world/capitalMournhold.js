@@ -7,14 +7,16 @@
 // walls with their domed towers - in metres, drawn as the map reads (+z south), every model's origin Mournhold's anchor
 // on its ground. Shapes of the port's own in the spirit of the city's look. No game data.
 import { MeshBuilder } from './detStandIns.js';
-import { CAPITAL_ART, art, taper, ring, ledge, translated, wallRun, gatedRun, hall, darkDoor, entranceDoor, dome, blob, limb, outward, framed, robedFigure } from './capitalShapes.js';
-import { MOURNHOLD } from './capitalPlans.js';
+import { CAPITAL_ART, art, taper, ring, ledge, cap, translated, wallRun, gatedRun, hall, darkDoor, entranceDoor, dome, blob, limb, outward, framed, robedFigure } from './capitalShapes.js';
+import { MOURNHOLD, mournholdTreeSites } from './capitalPlans.js';
+import { column, tube, mass, cards, treeRng, within } from './capitalTrees.js';   // CAPITAL-TREES: the capitals' trees' kit
 import { urbanArt } from './urban/urbanRecords.js';   // URBANIZER U2: the towns' own cut stone
 /** URBANIZER U2 (world/urban/urbanArt.js): the Royal Palace's dressed ochre stone. */
 const OCHRE_ASHLAR = urbanArt('ochreAshlar');
 
 const OCHRE = art(CAPITAL_ART.ochre), BRONZE = art(CAPITAL_ART.bronze), GOLD = art(CAPITAL_ART.gold), CLOTH = art(CAPITAL_ART.cloth);
 const MARBLE = art(CAPITAL_ART.marble), DARK = art(CAPITAL_ART.dark), TIMBER = art(CAPITAL_ART.timber), BLUE = art(CAPITAL_ART.blueSlate);
+const MH_BARK = art(CAPITAL_ART.mhBark), MH_LEAVES = art(CAPITAL_ART.mhLeaves), MH_SPRAY = art(CAPITAL_ART.mhSpray), BED = art(CAPITAL_ART.planterBed);
 
 /** A round tower of ochre under a bronze dome (Mournhold's wall's, the palace's). */
 export function domedTower(mb, x, z, r, h, { y = 0, wall = OCHRE, roof = BRONZE } = {}) {
@@ -168,3 +170,73 @@ export function mournholdTowers(W = MOURNHOLD.wall) {
   }
   return out;
 }
+
+/**
+ * CAPITAL-TREES (bible/03-World/Arena-Provinces.md CAPITAL-TREES; KPbICA, forwarded by the owner: "The main trees in
+ * Falinesti and Mournhold should get some love. They are too draftish for now"): MOURNHOLD'S GARDENS - the city's own
+ * trees in their planters, where its plaza had stood the Bay's scenery trees (a fir and an oak of the Iliac Bay's woods):
+ * Tribunal's Mournhold grows its plants in planters (UESP's Tribunal ingredients - Noble Sedge, Golden Sedge, Timsa-Come-By,
+ * Meadow Rye and Nirthfly "found growing in various planters in Mournhold", Plaza Brindisi Dorom's among them), and its
+ * Temple Courtyard is "an enclosed area with paths, water, and trees" (UESP). Each tree (mournholdGardenTree) a broadleaf of
+ * Deshaan's warm, wet lowlands - a smooth pale trunk, its limbs spreading from a fork at a man's height and a half into a
+ * rounded crown under its leaf sprays - in an octagonal planter of the city's ochre stone under a marble coping, its bed
+ * the sedges' and the rye's. The trees stand mournholdTreeSites' (world/capitalPlans.js); the statue over them all.
+ */
+export function buildMournholdGardens(M = MOURNHOLD) {
+  const mb = new MeshBuilder();
+  for (const site of mournholdTreeSites(M)) mournholdGardenTree(mb, site, M.gardens);
+  return mb.build();
+}
+
+/**
+ * CAPITAL-TREES: ONE OF MOURNHOLD'S TREES at `site` ({x, z, yaw, scale, variant}): its planter, its trunk to its fork,
+ * its three or four limbs each with a twig off it, and its crown - a mass at every limb's end and one over the fork, each
+ * with its sprays. Every draw its variant's own seed, so the city's four trees are four, turned and sized by the site.
+ */
+export function mournholdGardenTree(mb, { x, z, yaw, scale, variant }, G = MOURNHOLD.gardens) {
+  const r = treeRng(0x3b10 + variant * 977), c = Math.cos(yaw), s = Math.sin(yaw);
+  const W = (/** @type {number[]} */ p) => [x + (c * p[0] - s * p[2]) * scale, p[1] * scale, z + (s * p[0] + c * p[2]) * scale];
+  // the planter: an octagon of ochre stone, its coping of marble, its bed of sedges and rye
+  const pr = G.planter * scale, ph = 0.75;
+  translated(mb, x, 0, z, () => {
+    taper(mb, OCHRE, 8, pr, -0.5, pr, ph, { phase: Math.PI / 8, vRepeat: 1.25 });
+    taper(mb, MARBLE, 8, pr + 0.15, ph, pr + 0.15, ph + 0.18, { phase: Math.PI / 8, vRepeat: 0.18 });   // its coping, over the wall
+    ring(mb, MARBLE, 8, pr - 0.42, pr + 0.15, ph + 0.18, Math.PI / 8);
+    for (let i = 0; i < 8; i++) {   // its inner face, over the bed
+      const a0 = Math.PI / 8 + (i / 8) * Math.PI * 2, a1 = Math.PI / 8 + ((i + 1) / 8) * Math.PI * 2, am = (a0 + a1) / 2, ri = pr - 0.42;
+      mb.quad(OCHRE, [Math.cos(a0) * ri, ph - 0.16, Math.sin(a0) * ri], [Math.cos(a1) * ri, ph - 0.16, Math.sin(a1) * ri], [Math.cos(a1) * ri, ph + 0.18, Math.sin(a1) * ri], [Math.cos(a0) * ri, ph + 0.18, Math.sin(a0) * ri], [-Math.cos(am), 0, -Math.sin(am)]);
+    }
+    cap(mb, BED, 8, pr - 0.42, ph - 0.16, 1, Math.PI / 8);
+  });
+  // the trunk: smooth, a little flared at its foot, leaning, to its fork (its levels and its lean in the tree's own metres)
+  const height = within(r, G.height), fork = height * within(r, [0.32, 0.4]), lean = [within(r, [-0.35, 0.35]), within(r, [-0.35, 0.35])];
+  const axisAt = (/** @type {number} */ y) => { const k = (y / fork) ** 2; return [lean[0] * k, y, lean[1] * k]; };
+  const trunk = [[0.4, 0.5], [1.1, 0.4], [fork * 0.6, 0.35], [fork, 0.31]];
+  column(mb, MH_BARK, trunk.map(([y, rad]) => [y * scale, rad * scale]), { sides: 7, flute: (i) => 1 + 0.04 * Math.sin(i * 2.3 + variant), axis: (y) => { const w = W(axisAt(y / scale)); return [w[0], w[2]]; } });
+  // the limbs from the fork, spreading and climbing, each with a twig off it; the crown's masses at their ends
+  const [fx, , fz] = axisAt(fork), n = 3, a0 = r() * Math.PI * 2, crownR = height * 0.27;
+  for (let i = 0; i < n; i++) {
+    const a = a0 + (i / n) * Math.PI * 2 + within(r, [-0.25, 0.25]), el = within(r, [0.62, 0.95]), len = within(r, [0.36, 0.46]) * height;
+    const d = [Math.cos(a) * Math.cos(el), Math.sin(el), Math.sin(a) * Math.cos(el)];
+    const at = (/** @type {number} */ t, /** @type {number} */ sag = 0) => [fx + d[0] * len * t, fork + d[1] * len * t - sag, fz + d[2] * len * t];
+    tube(mb, MH_BARK, [W([fx, fork - 0.3, fz]), W(at(0.35, len * 0.05)), W(at(0.7, len * 0.02)), W(at(1))], 0.23 * scale, 0.08 * scale, { sides: 5, segs: 3, tip: 0.2 });
+    const t0 = at(within(r, [0.5, 0.62])), ta = a + (r() < 0.5 ? 0.75 : -0.75), tl = len * 0.42;
+    const T = (/** @type {number} */ u, /** @type {number} */ h) => [t0[0] + Math.cos(ta) * tl * u, t0[1] + tl * h, t0[2] + Math.sin(ta) * tl * u];
+    tube(mb, MH_BARK, [W(t0), W(T(0.4, 0.15)), W(T(0.75, 0.4)), W(T(1, 0.55))], 0.1 * scale, 0.04 * scale, { sides: 4, segs: 2, tip: 0.1 });
+    const end = at(1), twig = T(1, 0.55);
+    leaves(mb, W([end[0], end[1] + 0.6, end[2]]), crownR * within(r, [0.82, 1]) * scale, variant * 8 + i, 1, 7);
+    leaves(mb, W([twig[0], twig[1] + 0.4, twig[2]]), crownR * within(r, [0.58, 0.72]) * scale, variant * 8 + i + 4, 0, 4);
+  }
+  leaves(mb, W([fx, height - crownR * 0.7, fz]), crownR * within(r, [0.95, 1.1]) * scale, variant * 8 + 7, 1, 9);   // its crown's top over the fork
+}
+/** CAPITAL-TREES: a mass of a Mournhold tree's leaves at c (radius `rad`, its icosphere subdivided `detail` times - a
+ *  twig's small mass the icosahedron), near round, and its `n` sprays, each two cards crossed (from the side a spray's
+ *  face, never a card's edge across the crown) - its seed `k` - none hung lower than SPRAY_FLOOR over the ground (a
+ *  walker's head and a rider's under them). */
+function leaves(mb, c, rad, k, detail, n) {
+  const m = mass(mb, MH_LEAVES, c, rad, { squash: 0.86, under: 0.72, push: 0.16, detail, seed: 0x5a50 + k * 131 });
+  cards(mb, MH_SPRAY, m, { n, size: [3.4, 4.4], elev: [-0.95, 1.05], crossed: true, keep: (corners) => corners.every((p) => p[1] >= SPRAY_FLOOR) });
+}
+/** CAPITAL-TREES: the lowest a Mournhold tree's spray hangs, metres over the ground - over a rider (2.6 m, player/motor.js
+ *  RIDE_HEIGHT) and every walker's head, so the gardens' paths stay open under its crowns. */
+export const SPRAY_FLOOR = 2.8;

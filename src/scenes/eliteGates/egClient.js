@@ -1239,7 +1239,13 @@ export function createEgClient({ modes, online, hub, account, now: hostNow, enti
     const c = egCircleOfHall(E.h);
     if (E.sg === 'rest' && c === M.egHallCircle?.()) prebuild(E, c + 1);   // EG-H3 (EG10): THE SWAP'S BUILD - the next circle's level made while the Court rests (AUDIT EG V, E NEW-2: under another law from the halls the room gave)
     // EG-ZD (section 22): a circle - or a seed - my record had wrong is rebuilt in place on a return, as a new circle is
-    if (c !== M.egHallCircle?.() || (circleSeed != null && circleSeed !== E.seed >>> 0)) { if (E.sg === 'arrive' || returning === E.b) swapTo(E, c); return; }
+    // RPT1026-EVENTS SPIRE-CATCHUP (a private report: a member whose window was in the background when the rest ended was
+    // left behind in the finished circle, and lost what they carried): the company's circle stepped into
+    // whatever stage I first draw it in. The step was taken in the arrival alone - its gather's seconds, thirty at most - and
+    // a hidden window draws no frame: its words still came (a socket's events fire in a hidden tab), so the state woke past
+    // the arrival and every frame after returned here, in the finished Court, until the absent law (EG_ABSENT_TRIAL_MS)
+    // cast me out and my Reliquaries with me. A rest is the one stage with no new circle to step into (its next is built).
+    if (c !== M.egHallCircle?.() || (circleSeed != null && circleSeed !== E.seed >>> 0)) { if (E.sg !== 'rest' || returning === E.b) swapTo(E, c); return; }
     // EG-ZD (section 22): BACK IN - resumed at my last island in a trial (the dropped socket's rule), at the hall's arrival
     // plate between trials (a reload's); a witness's body is held as it was
     if (returning === E.b) {

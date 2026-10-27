@@ -173,8 +173,10 @@ test('ECOTONE1: both terrain programs sample their neighbours right after their 
   const classic = r.slice(r.indexOf('const TERRAIN_FS = `'), r.indexOf('}`;', r.indexOf('const TERRAIN_FS = `')));
   assert.match(classic, /\$\{ecotoneGlsl\(\)\}/);
   // AUDIT PRECIP GROUND-6 (PIN MOVED): the weights asked once, the blend by them - the snow crosses the border by the same
-  assert.match(classic, /vec3 tex = textureGrad\(uTileArr, vec3\(tuv, float\(layer\)\), gx, gy\)\.rgb;\n {2}vec4 ew = ecoWeights\(vLocalXZ\);[^\n]*\n {2}tex = ecotone\(tex, ew, vec3\(tuv, float\(layer\)\), gx, gy\);/);
-  assert.match(EL_TERRAIN_FS, /vec3 tex = elDecode\(textureGrad\(uTileArr, vec3\(tuv, float\(layer\)\), gx, gy\)\.rgb\);\n {2}vec4 ew = ecoWeights\(vLocalXZ\);[^\n]*\n {2}tex = ecotone\(tex, ew, vec3\(tuv, float\(layer\)\), gx, gy\);/);
+  // PIN MOVED (ROAD-LOOK): a road's edge blends into its ground on the own tile first (render/roadEdgeGlsl.js), so the
+  // neighbours' weights follow that one line - the road's edge then crosses a climate's border as any ground does
+  assert.match(classic, /vec3 tex = textureGrad\(uTileArr, vec3\(tuv, float\(layer\)\), gx, gy\)\.rgb;\n {2}tex = roadEdge\(tex, data, unwrapped, gx, gy, t\);[^\n]*\n {2}vec4 ew = ecoWeights\(vLocalXZ\);[^\n]*\n {2}tex = ecotone\(tex, ew, vec3\(tuv, float\(layer\)\), gx, gy\);/);
+  assert.match(EL_TERRAIN_FS, /vec3 tex = elDecode\(textureGrad\(uTileArr, vec3\(tuv, float\(layer\)\), gx, gy\)\.rgb\);\n {2}tex = roadEdge\(tex, data, unwrapped, gx, gy, t\);[^\n]*\n {2}vec4 ew = ecoWeights\(vLocalXZ\);[^\n]*\n {2}tex = ecotone\(tex, ew, vec3\(tuv, float\(layer\)\), gx, gy\);/);
   assert.match(EL_TERRAIN_FS, /c \+= w\.y \* elDecode\(textureGrad\(uEcoArr1, tl, gx, gy\)\.rgb\);/, 'the lane blends in its own linear light');
   assert.match(ecotoneGlsl(''), /c \+= w\.y \* \(textureGrad\(uEcoArr1, tl, gx, gy\)\.rgb\);/, 'the classic program in its display values');
   // a phone's mediump int is sixteen bits: the origin runs to 128,000 and the hash wraps at 2^32, so every integer of the

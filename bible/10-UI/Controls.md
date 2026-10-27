@@ -395,7 +395,7 @@ Generated from `ACTION_GROUPS` and the two default tables; the enhanced pane dra
 | Action | Key | Pad | What it does |
 |---|---|---|---|
 | `ActChoice` | UP |  | Next action at a profession node |
-| `Professions` | DOWN |  | Open your Professions page (online) |
+| `Professions` | DOWN |  | Open your Professions page, or the Crafting page at a station (online) |
 
 ### Game
 

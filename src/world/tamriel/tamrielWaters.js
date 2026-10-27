@@ -566,6 +566,24 @@ export function riverRaster(x0, y0, w, h) {
   return { dir, width };
 }
 
+/**
+ * ROAD-LOOK (bible/03-World/Roads.md ROAD-LOOK): THE LAKES' PIXELS OVER A BOX (Bay pixels x0..x0 + w - 1, y0..y0 + h - 1),
+ * row-major: 1 where the pixel's middle stands in a lake or within `margin` Bay pixels of its water - the roads' question:
+ * a lake is carved inside the kernel, narrower than the bytes say, and the router crossed it as dry ground (its water
+ * painted round the road's tiles - a dry strip across Lake Arrius and Lake Poppad).
+ * @param {number} x0 @param {number} y0 @param {number} w @param {number} h @param {number} [margin]
+ */
+export function lakeRaster(x0, y0, w, h, margin = 0) {
+  const out = new Uint8Array(w * h), law = tamrielWaters();
+  if (!law) return out;
+  for (const l of law.lakes) {
+    const u0 = Math.max(0, Math.floor(l.box[0] - margin) - x0), u1 = Math.min(w - 1, Math.floor(l.box[2] + margin) - x0);
+    const v0 = Math.max(0, Math.floor(l.box[1] - margin) - y0), v1 = Math.min(h - 1, Math.floor(l.box[3] + margin) - y0);
+    for (let v = v0; v <= v1; v++) for (let u = u0; u <= u1; u++) if (lakeDistance(l, x0 + u + 0.5, y0 + v + 0.5) < margin) out[v * w + u] = 1;
+  }
+  return out;
+}
+
 /** WHAT REACHES A BOX (Bay pixel coordinates, x0..x1, y0..y1): the rivers' and lakes' keys whose carve touches it. */
 export function watersIn(x0, y0, x1, y1) {
   const law = tamrielWaters();

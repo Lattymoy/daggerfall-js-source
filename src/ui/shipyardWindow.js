@@ -27,6 +27,7 @@ import { yardText, yardNote } from './naval/navalYardWindow.js';
 import { whereWords, refitLine, refitRowWords } from './fleetPage.js';
 import { SHIP_NAME_MAX, REFIT_NUMERALS } from '../systems/fleet.js';
 import { CREW_ROLES } from '../systems/naval/shipCrew.js';
+import { CREW_SIGN_TEXT } from '../systems/crewHall.js';
 
 export const SHIPYARD_STYLE_ID = 'dagger-shipyard-style';
 /** The tabs, in the host's page order (scenes/shipyardHost.js SHIPYARD_PAGES). */
@@ -103,6 +104,7 @@ export function shipCardText(s) {
   else figs.push('no crew (you sail it alone)');
   if (s.guns > 0) figs.push(`${s.guns} ${s.guns === 1 ? 'gun' : 'guns'}${s.barrels ? ' and fire barrels' : ''}`);
   else if (s.barrels) figs.push('fire barrels');
+  if (s.ram) figs.push('a ram');   // RAM-RETURN
   figs.push(`hull ${s.hullHp}${s.sailHp > 0 ? `, canvas ${s.sailHp}` : ''}`);
   return {
     name: s.name, line: s.line, figs: figs.join(' - '),
@@ -226,9 +228,22 @@ export function mountShipyardWindow(host, deps) {
     Promise.resolve(deps.picture(hull, () => (alive ? win.getBoundingClientRect?.() ?? null : null))).then(settle, () => settle(null));
   };
   const said = (r) => { if (r && typeof r.text === 'string' && r.text) note = { text: r.text, warn: !r.ok }; };
+  /** CREW-SIGNED: an act the account service answers first (a hire online) - no press is taken while it is out. */
+  let asking = false;
   const press = (verb, a, b) => {
+    if (asking) return;
     confirm = null;
     const r = deps.act(verb, a, b);
+    if (r && typeof r.then === 'function') {
+      asking = true;
+      note = { text: CREW_SIGN_TEXT.asking, warn: false };
+      render();
+      r.then((x) => x, () => ({ ok: false, text: CREW_SIGN_TEXT.unread })).then((x) => { asking = false; if (alive) answered(x); });
+      return;
+    }
+    answered(r);
+  };
+  const answered = (r) => {
     if (r?.door) { deps.onDoor?.(r.door); exit('door'); return; }   // a summons that wants the water clicked: the window makes way for it
     said(r);
     if (r?.ok && typeof r.page === 'string') { view.page = r.page; if (r.uid != null) view.uid = r.uid; }   // AUDIT SHIPYARDS L7-4: a bought ship's page
@@ -423,9 +438,12 @@ export function mountShipyardWindow(host, deps) {
     body.append(hall);
   }
 
+  let waited = null;
   function render() {
     if (!alive) return;
     const m = deps.model({ ...view });
+    // CREW-SIGNED: the hall's read in flight - painted again once it lands
+    if (m.wait && m.wait !== waited) { waited = m.wait; Promise.resolve(m.wait).then(() => render(), () => render()); }
     view.page = m.page;
     if (m.uid != null) view.uid = m.uid;
     h2.textContent = m.title;

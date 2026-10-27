@@ -8,7 +8,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  IMPERIAL_STYLES, HOOD_RINGS, ROOF_STEP, STOREY, BAY, ALLEY, LEDGE_Y, PARAPET, STACK_STEP, STACK_RUN, YARD_WALL, SHED, PAVEMENT, FABRIC_LAWS,
+  IMPERIAL_STYLES, HOOD_RINGS, ROOF_STEP, STOREY, BAY, ALLEY, LEDGE_Y, PARAPET, STAIR, YARD_WALL, SHED, PAVEMENT, FABRIC_LAWS,
   streetKind, hoodAt, fabricCell, inQuad, centroid, GROUND, fabricGroundAt, fabricKeptClear, _resetFabric, BACK, WELL, SQUARE_FOUNTAIN, ORCHARD, fabricTreeOf,
 } from '../../src/world/imperialFabric.js';
 import { fabricCellModel } from '../../src/world/imperialFabricModels.js';
@@ -36,13 +36,15 @@ function sampleCell(x, z, n = 8) {
 const DISTRICTS = [...IMPERIAL_SECTORS.map(([d, b]) => [d, b]), ['Waterfront District', 165]];
 const samples = (d, b) => (d === 'Waterfront District' ? [[b, 7300], [b + 25, 7300]] : [[b + 7.5, 3000], [b + 52.5, 5300], [b + 22.5, 6300]]).map(([bb, r]) => sampleCell(...polar(bb, r))).filter(Boolean);
 
-test('IC-GRAND THE ROOFTOPS ARE A WAY - the fabric laid to the movement\'s own numbers (player/parkour.js, player/motor.js): a roof\'s step a jump and a catch at Climbing 0, an alley under the running leap\'s shortest flight, a parapet and a way up\'s step under a vault, a ledge at a wall run\'s reach, a garden wall within a catch, a kerb under a step, every pitch a top the hands keep (mutants: a step past the reach; an alley past the leap; a parapet over a vault)', () => {
+test('IC-GRAND THE ROOFTOPS ARE A WAY - the fabric laid to the movement\'s own numbers (player/parkour.js, player/motor.js): a roof\'s step a jump and a catch at Climbing 0, an alley under the running leap\'s shortest flight, a parapet under a vault, a way up\'s riser under a step, a ledge at a wall run\'s reach, a garden wall within a catch, a kerb under a step, every pitch a top the hands keep (mutants: a step past the reach; an alley past the leap; a parapet over a vault)', () => {
   const rise = (JUMP_SPEED * JUMP_SPEED) / (2 * GRAVITY);
   assert.ok(Math.abs(FABRIC_LAWS.stepReach - (PARKOUR_REACH_MIN + PARKOUR_AIR_REACH + rise)) < 1e-9);
   assert.ok(ROOF_STEP <= FABRIC_LAWS.stepReach - 0.05 && ROOF_STEP === STOREY / 2, 'a half storey, under the reach less a hand\'s breadth');
   assert.ok(ALLEY + 0.6 <= FABRIC_LAWS.leapMin && FABRIC_LAWS.leapMin === PARKOUR_RUNLEAP_DIST_MIN, 'an alley leapt with a stride to spare');
   assert.ok(PARAPET < PARKOUR_VAULT_MAX && PARAPET > 0.5, 'a parapet vaulted, over a knee');
-  assert.ok(STACK_STEP <= PARKOUR_VAULT_MAX && STACK_RUN >= 0.8, 'a way up\'s steps vaulted, a foot\'s room on each');
+  // PIN MOVED (IC-STAIRS): the ways up are built stairs now - a riser the motor steps, a tread a foot's (test/world/icstairs.test.js
+  // holds their every law); the crates' 1.2 m steps under a vault are gone
+  assert.ok(2 * STAIR.rise < STEP_OFFSET && STAIR.tread >= 0.28, 'a way up\'s risers stepped, a foot\'s room on each');
   assert.ok(LEDGE_Y <= PARKOUR_WALLRUN_MIN + PARKOUR_REACH_MIN + PARKOUR_AIR_REACH - 0.04, 'a ledge in a wall run\'s reach');
   assert.ok(YARD_WALL.h <= FABRIC_LAWS.stepReach && SHED.h - YARD_WALL.h <= PARKOUR_VAULT_MAX, 'a garden wall caught, a shed vaulted from it');
   assert.ok(PAVEMENT.h < STEP_OFFSET, 'a kerb stepped');
@@ -69,9 +71,9 @@ test('IC-GRAND THE HEIGHT WALK - in every district a building beside a building 
 });
 
 test('IC-GRAND EACH DISTRICT ITS OWN - its frame of streets, its blocks\' sizes, its walls\' and roofs\' pictures; and inside it each neighbourhood its own frame off its own seed - five rings out by half, the heart\'s its landmark\'s (mutants: one frame for all; one neighbourhood a district)', () => {
-  assert.equal(Object.keys(IMPERIAL_STYLES).length, 7);
+  assert.equal(Object.keys(IMPERIAL_STYLES).length, 8);   // PIN MOVED (IC-PROPS): the Arcane University's halls a district's fabric of their own (test/world/icprops_city.test.js)
   const looks = new Set(Object.values(IMPERIAL_STYLES).map((st) => `${st.frame}|${st.walls[0]}|${st.roof}|${st.P}|${st.Q}`));
-  assert.equal(looks.size, 7, 'no two districts alike');
+  assert.equal(looks.size, 8, 'no two districts alike');
   assert.deepEqual(new Set(Object.values(IMPERIAL_STYLES).map((st) => st.frame)), new Set(['grid', 'polar', 'park', 'axial', 'organic', 'docks']));
   assert.deepEqual(HOOD_RINGS, [IMPERIAL.palaceWall.r, ...IMPERIAL.roads.rings.slice(0, 1), 4050, 5150, IMPERIAL.roads.rings[2], IMPERIAL.cityWall.r].map((v, i) => (i === 2 || i === 3 ? v : v)));
   for (const [d, b] of IMPERIAL_SECTORS) {
@@ -107,7 +109,7 @@ test('IC-GRAND THE STREETS\' HIERARCHY - an alley (ALLEY, leapt), a lane, a side
 
 test('IC-GRAND THE URBAN FABRIC - courts parted into backyards by garden walls with their sheds, alleys closed at an end (dead ends), ways up from the street and bridges between the roofs in every built district; the Arboretum\'s park with its statues; the Elven Gardens\' canals; the walls cut stone, brick and half-timbering (mutants: no yard; no dead end; no bridge; no statue)', () => {
   _resetFabric();
-  const total = { yards: 0, sheds: 0, deadEnds: 0, stacks: 0, bridges: 0, courts: 0, statues: 0, canals: 0, parks: 0 };
+  const total = { yards: 0, sheds: 0, deadEnds: 0, stairs: 0, bridges: 0, courts: 0, statues: 0, canals: 0, parks: 0 };
   const walls = new Set();
   for (const [d, b] of DISTRICTS) {
     for (const L of samples(d, b)) {
@@ -115,7 +117,7 @@ test('IC-GRAND THE URBAN FABRIC - courts parted into backyards by garden walls w
       for (const p of L.plots) walls.add(p.wall);
     }
   }
-  for (const k of ['yards', 'sheds', 'deadEnds', 'stacks', 'bridges', 'courts']) assert.ok(total[k] > 0, `${k}: ${total[k]}`);
+  for (const k of ['yards', 'sheds', 'deadEnds', 'stairs', 'bridges', 'courts']) assert.ok(total[k] > 0, `${k}: ${total[k]}`);
   // a garden wall parts a court: its middle in one of the cell's courts, never through a building
   for (const [d, b] of DISTRICTS) for (const L of samples(d, b)) for (const y of L.yards) {
     const m = [(y.a[0] + y.b[0]) / 2, (y.a[1] + y.b[1]) / 2];
@@ -128,10 +130,11 @@ test('IC-GRAND THE URBAN FABRIC - courts parted into backyards by garden walls w
   assert.ok(statues > 0, 'the Arboretum\'s statues');
   assert.ok(canals > 0, 'the Elven Gardens\' canals');
   for (const w of ['facadeStone', 'facadeBrick', 'facadeTimber']) assert.ok(walls.has(w), `${w} stands`);
-  // every way up's last step within a vault of its roof's edge; every bridge over a street too wide to leap, to a roof within a step
+  // every way up's head at its roof's edge (PIN MOVED, IC-STAIRS: a built stair's head landing at the roof, not the crates' last
+  // step a vault under it); every bridge over a street too wide to leap, to a roof within a step
   _resetFabric();
   for (const [d, b] of DISTRICTS) for (const L of samples(d, b)) {
-    for (const s of L.stacks) { const gap = s.top - s.steps * STACK_STEP; assert.ok(gap > 0 && gap <= PARKOUR_VAULT_MAX + 1e-9, `${d}: a way up's last step ${gap.toFixed(2)} under its roof's edge`); }
+    for (const s of L.stairs) assert.ok(s.runs.at(-1).kind === 'head' && s.runs.at(-1).y === s.top && Math.abs(s.risers * s.rise - (s.top - s.y0)) < 1e-9, `${d}: a way up's head at its roof's edge (${s.top})`);
     for (const br of L.bridges) assert.ok(br.len > ALLEY + 0.5 && br.len <= 18 && br.y - 0.3 >= 1.8 + 0.4, `${d}: a bridge ${br.len} long at ${br.y} - a body\'s headroom under it`);
   }
 });

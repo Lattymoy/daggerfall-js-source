@@ -101,15 +101,6 @@
     ]
   },
   {
-    "name": "AUDIT-QL-UI-8-abandon-on-an-entryless-row",
-    "file": "src/ui/enhanced/enhancedMenu.js",
-    "old": "      } else if (sel.entries?.length && sel.id != null && clean.abandon",
-    "new": "      } else if (sel.entries && sel.id != null && clean.abandon",
-    "tests": [
-      "test/ui/questlines/ql2_pause.test.js"
-    ]
-  },
-  {
     "name": "AUDIT-QL-UI-8-hide-on-an-entryless-row",
     "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "      if (sel.entries?.length && sel.id != null && !isShelvedRow) {",

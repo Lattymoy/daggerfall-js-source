@@ -1,0 +1,172 @@
+[
+  {
+    "name": "AUDIT-RPT1026-B1-law-never",
+    "file": "src/systems/inventorySession.js",
+    "old": "  if (!settlesOwnPieces(deps)) return null;",
+    "new": "  if (deps) return null;",
+    "tests": [
+      "test/systems/decor/audit_rpt1026_chestgold.test.js"
+    ],
+    "note": "no chest window refuses an act: a potion drunk out of the window's copy of the pack stands in the pack still"
+  },
+  {
+    "name": "AUDIT-RPT1026-B1-law-everywhere",
+    "file": "src/systems/inventorySession.js",
+    "old": "  if (!settlesOwnPieces(deps)) return null;",
+    "new": "  if (!deps) return null;",
+    "tests": [
+      "test/systems/decor/audit_rpt1026_chestgold.test.js"
+    ],
+    "note": "every window refuses a Use - a window over no chest drinks nothing"
+  },
+  {
+    "name": "AUDIT-RPT1026-B1-classic-use",
+    "file": "src/ui/native/nativeInventory.js",
+    "old": "    { const no = chestActRefusal(this.hooks); if (no) { this._refuse(no); return; } }   // AUDIT RPT1026 B1: never over a chest's copy of the pack",
+    "new": "    void chestActRefusal;",
+    "tests": [
+      "test/systems/decor/audit_rpt1026_chestgold.test.js"
+    ],
+    "note": "the classic window uses a piece out of the chest's copy of the pack, or the chest's own list - drunk, and kept"
+  },
+  {
+    "name": "AUDIT-RPT1026-B1-plus-use",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  { const no = chestActRefusal(deps); if (no) return refuse(no); }   // AUDIT RPT1026 B1: never over a chest's copy of the pack",
+    "new": "  void chestActRefusal;",
+    "tests": [
+      "test/systems/decor/audit_rpt1026_chestgold.test.js"
+    ],
+    "note": "the enhanced pack uses a piece out of the chest's copy of the pack - drunk, and kept"
+  },
+  {
+    "name": "AUDIT-RPT1026-B1-plus-salvage",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  { const no = chestActRefusal(deps); if (no) return refuse(no); }   // AUDIT RPT1026 B1: the piece left the chest's copy of the pack alone, its shards on the pack's own stack",
+    "new": "  void chestActRefusal;",
+    "tests": [
+      "test/systems/decor/audit_rpt1026_chestgold.test.js"
+    ],
+    "note": "a salvage in a chest window: the piece kept, its shards onto the pack's own stack"
+  },
+  {
+    "name": "AUDIT-RPT1026-B1-plus-batch",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  { const no = chestActRefusal(deps); if (no) return refuse(no); }   // AUDIT RPT1026 B1: the batch's, as the one piece's",
+    "new": "  void chestActRefusal;",
+    "tests": [
+      "test/systems/decor/audit_rpt1026_chestgold.test.js"
+    ],
+    "note": "the batch salvage in a chest window: every piece kept, the shards made"
+  },
+  {
+    "name": "AUDIT-RPT1026-B1-plus-dismantle",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  { const no = chestActRefusal(deps); if (no) return refuse(no); }   // AUDIT RPT1026 B1: the ware left the chest's copy of the pack alone",
+    "new": "  void chestActRefusal;",
+    "tests": [
+      "test/systems/decor/audit_rpt1026_chestgold.test.js"
+    ],
+    "note": "a dismantle in a chest window: the ware kept, its embers onto the pack's own stack"
+  },
+  {
+    "name": "AUDIT-RPT1026-B4-wear-any",
+    "file": "src/systems/inventorySession.js",
+    "old": "  return wear && (deps.entity?.items ?? []).includes(item) ? null : CHEST_ACT_REFUSAL;",
+    "new": "  return wear ? null : CHEST_ACT_REFUSAL;",
+    "tests": [
+      "test/systems/decor/audit_rpt1026_chestgold.test.js"
+    ],
+    "note": "a piece the chest still holds is worn from the window's pack"
+  },
+  {
+    "name": "AUDIT-RPT1026-B4-wear-none",
+    "file": "src/systems/inventorySession.js",
+    "old": "  return wear && (deps.entity?.items ?? []).includes(item) ? null : CHEST_ACT_REFUSAL;",
+    "new": "  return CHEST_ACT_REFUSAL;",
+    "tests": [
+      "test/systems/decor/audit_rpt1026_chestgold.test.js"
+    ],
+    "note": "the character's own piece cannot be worn while a chest is open"
+  },
+  {
+    "name": "AUDIT-RPT1026-B4-classic-wear",
+    "file": "src/ui/native/nativeInventory.js",
+    "old": "      { const no = chestActRefusal(this.hooks, { wear: true, item: it }); if (no) { this._refuse(no); return; } }   // AUDIT RPT1026 B4: a piece the pack does not hold yet",
+    "new": "      void chestActRefusal;",
+    "tests": [
+      "test/systems/decor/audit_rpt1026_chestgold.test.js"
+    ],
+    "note": "the classic window wears a piece taken this window - Remove, then Equip, walked round the Equip-mode take's law"
+  },
+  {
+    "name": "AUDIT-RPT1026-B4-plus-wear",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  { const no = chestActRefusal(deps, { wear: true, item }); if (no) return refuse(no); }   // AUDIT RPT1026 B4: a piece the pack does not hold yet",
+    "new": "  void chestActRefusal;",
+    "tests": [
+      "test/systems/decor/audit_rpt1026_chestgold.test.js"
+    ],
+    "note": "the enhanced pack wears a piece taken this window"
+  },
+  {
+    "name": "AUDIT-RPT1026-B5-classic-put-read",
+    "file": "src/ui/native/nativeInventory.js",
+    "old": "      if (plan.map && !settlesOwnPieces(this.hooks)) { this._use(it, this.hooks.items()); return; }",
+    "new": "      if (plan.map) { this._use(it, this.hooks.items()); return; }",
+    "tests": [
+      "test/systems/decor/audit_rpt1026_chestgold.test.js"
+    ],
+    "note": "a map Removed into the chest is read on the way - never put in"
+  },
+  {
+    "name": "AUDIT-RPT1026-B5-classic-take-read",
+    "file": "src/ui/native/nativeInventory.js",
+    "old": "      if (plan.map && !settlesOwnPieces(this.hooks)) { this._use(it, remote); return; }",
+    "new": "      if (plan.map) { this._use(it, remote); return; }",
+    "tests": [
+      "test/systems/decor/audit_rpt1026_chestgold.test.js"
+    ],
+    "note": "a map taken off the chest is read on the way - never taken"
+  },
+  {
+    "name": "AUDIT-RPT1026-B5-plus-put-read",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (plan.map && !settlesOwnPieces(deps)) { use(item, deps.items?.() ?? []); return; }",
+    "new": "  if (plan.map) { use(item, deps.items?.() ?? []); return; }",
+    "tests": [
+      "test/systems/decor/audit_rpt1026_chestgold.test.js"
+    ],
+    "note": "the enhanced pack's Store of a map into the chest reads it on the way"
+  },
+  {
+    "name": "AUDIT-RPT1026-B5-plus-take-read",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (plan.map && !settlesOwnPieces(deps)) { use(item, remoteTarget(deps, sessionState())); return; }",
+    "new": "  if (plan.map) { use(item, remoteTarget(deps, sessionState())); return; }",
+    "tests": [
+      "test/systems/decor/audit_rpt1026_chestgold.test.js"
+    ],
+    "note": "the enhanced pack's take of a map off the chest reads it on the way"
+  },
+  {
+    "name": "AUDIT-RPT1026-B2-owner-refused-under-guest",
+    "file": "server-account/src/decorAccess.js",
+    "old": "LEFT AS IT IS).\n  const blob = await getRealmBlob(ctx, player.id, character);",
+    "new": "LEFT AS IT IS).\n  if (heldByOther(await holdRow(db, mapId, buildingKey, id), player, character, ctx.nowS)) return { error: 'decor-busy' };\n  const blob = await getRealmBlob(ctx, player.id, character);",
+    "tests": [
+      "test/systems/decor/audit_rpt1026_chestgold.test.js"
+    ],
+    "note": "the owner's access change refused under a guest's open window - a guest who keeps the hold shuts the owner out for good"
+  },
+  {
+    "name": "AUDIT-RPT1026-B3-record-not-first",
+    "file": "server-account/src/decorAccess.js",
+    "old": "  if (first.error) return first;",
+    "new": "  void first;",
+    "tests": [
+      "test/systems/decor/audit_rpt1026_chestgold.test.js"
+    ],
+    "note": "a settle sent again after a lost answer is told 'decor-busy' - the purse unpaid, and the session ends at the next checkpoint"
+  }
+]

@@ -21,15 +21,16 @@
 // through its own heart to its own gate in the city wall; its heart its landmark (the Market's great square, the Arena
 // District's arena - Daggerfall's own, Kamer's colosseum block (world/arena/arenaCity.js ARENA_BLOCK), the Arboretum's
 // Divines, the Temple of the One, Talos's dragon, the Elven Gardens' pool); its streets and its buildings its own
-// (world/imperialFabric.js), Daggerfall's blocks of its trade along its avenue and round its heart (IMPERIAL_MIX). No
-// game data, and no other game's level: shapes and a layout of the port's own on the city's canon.
+// (world/imperialFabric.js) - IC-PROPS: its trade's too (world/imperialFabricBuildings.js DISTRICT_TRADE), where
+// Daggerfall's blocks of it stood along its avenue and round its heart until 2026-10-27. No game data, and no other game's
+// level: shapes and a layout of the port's own on the city's canon.
 //
 // A PLAN OF ITS OWN MEASURES: every cell of the IMPERIAL_CELLS-square grid is decided from the metres about the city's
 // middle (its anchor, the centre pixel's middle): the lake where the cell holds no land; open ground past the lake's far
-// shore; one of Daggerfall's blocks of its district's trade where the plan lays one; else a block of the city's own
-// (`I<row><column>`, base 36), its ground, its walls and its streets the city's laws. IC-GRAND: the plan is worked a slice
+// shore; Daggerfall's arena in its one cell; else a block of the city's own (`I<row><column>`, base 36), its ground, its
+// walls, its streets and its buildings the city's laws (IC-PROPS: no other block of Daggerfall's - cellOf). IC-GRAND: the plan is worked a slice
 // at a time, the first time a slice is asked (`imperialSlicePlan`) - 40,000 cells made at the module's load were seconds.
-// No landmark stands over a block of Daggerfall's (AUDIT-TESA A6-3's law, pinned on every vertex).
+// No landmark stands over a block of Daggerfall's (AUDIT-TESA A6-3's law, pinned on every vertex - the arena's, now).
 import { hash32, BLOCK_M } from './blockHash.js';   // RUMARE-WATER: the leaf, so the workers reading the plan (world/rumareWaters.js) reach world/ alone
 
 /** Pixels a side, and the plan's cells a side (eight a pixel) - its anchor the middle grid point. TS5 (the owner: "7x7
@@ -129,19 +130,6 @@ export const IMPERIAL_SECTORS = Object.freeze(/** @type {Array<readonly [string,
   ['Market District', 0], ['Arena District', 60], ['Arboretum', 120],
   ['Temple District', 180], ['Talos Plaza District', 240], ['Elven Gardens District', 300],
 ].map((e) => Object.freeze(e))));
-/** EACH DISTRICT'S TRADE: the kinds of Daggerfall's city blocks it lays where the plan lays one, one a cell off the cell's
- *  hash. IC-GRAND: no garden ('G') - the Arboretum's park, the Elven Gardens' lawns and every court are the city's own
- *  ground (world/imperialFabric.js). */
-export const IMPERIAL_MIX = Object.freeze({
-  'Market District': Object.freeze(['GENR', 'GENR', 'ARMR', 'ARMR', 'ALCH', 'GEMS', 'BOOK', 'PAWN', 'BANK', 'TVRN', 'GENR', 'RESI']),
-  'Arena District': Object.freeze(['FIGH', 'ARMR', 'TVRN', 'RESI', 'RESI', 'GENR', 'PAWN', 'RESI']),
-  'Arboretum': Object.freeze(['RESI', 'RESI', 'TVRN', 'LIBR']),
-  'Temple District': Object.freeze(['TEMP', 'TEMP', 'TEMP', 'RESI', 'RESI', 'TVRN', 'BOOK', 'LIBR', 'ALCH', 'RESI']),
-  'Talos Plaza District': Object.freeze(['RESI', 'RESI', 'RESI', 'RESI', 'TVRN', 'BANK', 'GENR', 'RESI']),
-  'Elven Gardens District': Object.freeze(['RESI', 'RESI', 'RESI', 'TVRN', 'ALCH', 'RESI']),
-  'Waterfront District': Object.freeze(['RESI', 'RESI', 'TVRN', 'PAWN', 'THIE', 'GENR']),
-  'Arcane University': Object.freeze(['MAGE', 'LIBR', 'MAGE']),
-});
 /** TS5 (the owner: "with the outskirt locations being circular also"): how far from the city's centre pixel, Bay pixels, a
  *  town past the Bay is of its outskirts - laid round (world/townOutline.js ROUND_OUTLINE): the city's own, and as far
  *  again on every side. */
@@ -200,7 +188,7 @@ export function segRect(a, b, x0, z0, x1, z1, cap = Infinity) {
   return Math.min(...[[x0, z0], [x1, z0], [x1, z1], [x0, z1]].map(([x, z]) => pointSeg(x, z, a, b)), ...edges.flatMap(([r, s]) => [pointSeg(a[0], a[1], r, s), pointSeg(b[0], b[1], r, s)]));
 }
 /** A rectangle's distance to a point.
- * @param {number} x0 @param {number} z0 @param {number} x1 @param {number} z1 @param {number[]} p */
+ * @param {number} x0 @param {number} z0 @param {number} x1 @param {number} z1 @param {ReadonlyArray<number>} p */
 export const rectPoint = (x0, z0, x1, z1, p) => Math.hypot(Math.max(x0 - p[0], 0, p[0] - x1), Math.max(z0 - p[1], 0, p[1] - z1));
 /** Two squares' overlap (the second centred at c, half h).
  * @param {number} x0 @param {number} z0 @param {number} x1 @param {number} z1 @param {number[]} c @param {number} h */
@@ -474,39 +462,15 @@ function landShare(x0, z0, I = IMPERIAL) {
   for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) if (imperialLand(x0 + (i + 0.5) * (B / 5), z0 + (j + 0.5) * (B / 5), I)) n++;
   return n === 0 ? 0 : n === 25 ? 2 : 1;
 }
-/** EACH DISTRICT'S SIGNATURE: the trade it is known by - the Market's general store, the Arena District's Fighters Guild,
- *  the Temple District's temple, Talos Plaza's bank, the Elven Gardens' tavern, the Waterfront's Thieves Guild, the
- *  University's Mages Guild. IC-GRAND: laid on the first of Daggerfall's cells round its heart (imperialCell). */
-export const IMPERIAL_SIGNATURE = Object.freeze({
-  'Market District': 'GENR', 'Arena District': 'FIGH', 'Temple District': 'TEMP', 'Talos Plaza District': 'BANK',
-  'Elven Gardens District': 'TVRN', 'Waterfront District': 'THIE', 'Arcane University': 'MAGE',
-});
-/** IC-GRAND: WHERE DAGGERFALL'S BLOCKS STAND in a district - the trade along its grand avenue (a cell beside it, one in
- *  `avenue` of them), round its heart (`heart` metres of it, one in `round`) and scattered (one in `scatter`); the
- *  Waterfront's along its causeway and its quay, the University's inside its curtain. */
-export const IMPERIAL_TRADE = Object.freeze({ avenue: 2, heart: 320, round: 2, scatter: 19, parkScatter: 41 });
-/** A cell's centre's distance to the nearest of a set of segments. */
-const toLines = (x, z, lines) => { let d = Infinity; for (const [a, b] of lines) d = Math.min(d, pointSeg(x, z, a, b)); return d; };
-/** IC-GRAND: is a cell (of a district's ground, no landmark on it) one of Daggerfall's? Off its hash: beside the avenue,
- *  round the heart, or scattered. */
-function tradeCell(r, c, d, I = IMPERIAL) {
-  const x = (c - HALF + 0.5) * B, z = (r - HALF + 0.5) * B, h = hash32(SALT, c, r, 23), T = IMPERIAL_TRADE, G = imperialGeo(I);
-  if (d === 'Arcane University') return true;   // inside its curtain: the Mages Guild's halls
-  if (d === 'Waterfront District') {
-    if (toLines(x, z, [G.ways[3]]) < B * 1.2) return h % T.avenue === 0;   // along the causeway to the quay
-    return h % 5 === 0;
-  }
-  if (d === 'City Isle' || d === PALACE || d === SHORE) return false;
-  const along = toLines(x, z, G.avenues);
-  if (along < I.avenue.w / 2 + B * 1.2) return h % T.avenue === 0;
-  const heart = districtHeart(d, I);
-  if (heart && Math.hypot(x - heart[0], z - heart[1]) < T.heart) return h % T.round === 0;
-  return h % (d === 'Arboretum' ? T.parkScatter : T.scatter) === 0;
-}
-/** One cell of the plan: 'L' the lake, 'O' (TS5) open ground past it, the arena's (IC-GRAND), an own block's code, or a
- *  kind of Daggerfall's blocks. Pure in its row and column. IC-GRAND: a cell of the lake a landmark crosses - Talos
- *  Bridge, the Waterfront's piers - an own block, so a slice of open lake the bridge runs over has a carrier for its part
- *  (and its own laws the deck's footprint over the water). */
+/** One cell of the plan: 'L' the lake, 'O' (TS5) open ground past it, the arena's (IC-GRAND), or an own block's code. Pure in
+ *  its row and column. IC-GRAND: a cell of the lake a landmark crosses - Talos Bridge, the Waterfront's piers - an own
+ *  block, so a slice of open lake the bridge runs over has a carrier for its part (and its own laws the deck's footprint
+ *  over the water). IC-PROPS (2026-10-27, the owner: "Old daggerfall city layout placements are in imperial city"): no
+ *  cell is one of Daggerfall's city blocks any more - 671 of them stood among the city's own (each district's trade along
+ *  its avenue, round its heart and scattered: a Daggerfall town's square of houses, garden walls, hedges and props dropped
+ *  into the grand plan); every district's trade - its shops, temples, guild halls, banks and libraries - is the fabric's
+ *  own buildings now (world/imperialFabricBuildings.js DISTRICT_TRADE), entered as theirs were. Daggerfall's arena alone
+ *  stays in its cell: the grand plan names it (IC-GRAND). */
 function cellOf(r, c, I = IMPERIAL) {
   if (r < 0 || c < 0 || r >= IMPERIAL_CELLS || c >= IMPERIAL_CELLS) return null;
   const [x0, z0, x1, z1] = imperialCellRect(r, c), xm = (x0 + x1) / 2, zm = (z0 + z1) / 2;
@@ -516,35 +480,7 @@ function cellOf(r, c, I = IMPERIAL) {
   if (land === 2 && d === SHORE) return 'O';   // TS5: the far shore wholly - open ground, the land's own
   const [ar, ac] = imperialArenaCell(I);
   if (r === ar && c === ac) return IMPERIAL_ARENA_CODE;
-  const mix = IMPERIAL_MIX[d ?? ''];
-  if (land === 1 || !mix || imperialReserved(x0, z0, x1, z1, I) || !tradeCell(r, c, d, I)) return imperialCode(r, c);
-  const sig = IMPERIAL_SIGNATURE[d ?? ''], heart = d ? districtHeart(d, I) : null;
-  if (sig && heart && signatureCell(d, I)?.[0] === r && signatureCell(d, I)?.[1] === c) return sig;
-  return mix[hash32(SALT, c, r, 11) % mix.length];
-}
-/** IC-GRAND: a district's signature's cell - its heart's nearest of Daggerfall's cells (the Waterfront's and the
- *  University's the nearest to their own middles). Worked once a district. */
-const _sig = new Map();
-function signatureCell(d, I = IMPERIAL) {
-  if (_sig.has(d)) return _sig.get(d);
-  _sig.set(d, null);   // no recursion through cellOf: a signature is chosen among the trade's cells
-  const at = districtHeart(d, I) ?? (d === 'Waterfront District' ? polar(180, (I.cityWall.r + I.waterfront.r1) / 2) : d === 'Arcane University' ? polar(I.university.b, I.university.r) : null);
-  let best = null;
-  if (at) {
-    const r0 = Math.floor(at[1] / B + HALF), c0 = Math.floor(at[0] / B + HALF);
-    for (let k = 0; k < 12 && !best; k++) {
-      for (let r = r0 - k; r <= r0 + k; r++) for (let c = c0 - k; c <= c0 + k; c++) {
-        if (Math.max(Math.abs(r - r0), Math.abs(c - c0)) !== k) continue;
-        const [x0, z0, x1, z1] = imperialCellRect(r, c), xm = (x0 + x1) / 2, zm = (z0 + z1) / 2;
-        if (imperialDistrictAt(xm, zm, I) !== d || landShare(x0, z0, I) !== 2 || imperialReserved(x0, z0, x1, z1, I) || !tradeCell(r, c, d, I)) continue;
-        const e = Math.hypot(xm - at[0], zm - at[1]);
-        if (!best || e < best[2] || (e === best[2] && (r < best[0] || (r === best[0] && c < best[1])))) best = [r, c, e];
-      }
-    }
-  }
-  const out = best ? Object.freeze([best[0], best[1]]) : null;
-  _sig.set(d, out);
-  return out;
+  return imperialCode(r, c);
 }
 /** The plan's slices, each its eight rows of eight cells - worked the first time a slice is asked (IC-GRAND). */
 const _slices = new Map();

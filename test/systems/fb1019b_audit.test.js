@@ -202,9 +202,11 @@ test('AUDIT L3-3: an unmastered 100 a mastery is open to says to master it; a lo
   p.skills[SKILLS.Axe] = 100;
   assert.equal(skillAdvanceProgress(p, SKILLS.Axe).held, 'master');
   assert.equal(skillTickText(skillAdvanceProgress(p, SKILLS.Axe)), 'At 100 - master it to climb further');
-  p.skills[SKILLS.LongBlade] = 100; masterSkill(p, SKILLS.LongBlade); masterSkill(p, SKILLS.Axe);
-  p.skills[SKILLS.CriticalStrike] = 100;
-  assert.equal(skillAdvanceProgress(p, SKILLS.CriticalStrike).held, 'cap', 'both primary slots spent: no mastery to be had');
+  // MASTER-THREE (Field-Bugs-2026-10-26d): three primary slots, so the spent group is the majors' two
+  p.skills[SKILLS.BluntWeapon] = 100; p.skills[SKILLS.Dodging] = 100;
+  assert.equal(masterSkill(p, SKILLS.BluntWeapon).ok, true); assert.equal(masterSkill(p, SKILLS.Dodging).ok, true);
+  p.skills[SKILLS.Jumping] = 100;
+  assert.equal(skillAdvanceProgress(p, SKILLS.Jumping).held, 'cap', 'both major slots spent: no mastery to be had');
 });
 
 // ── L5: the class skill swap ─────────────────────────────────────────
@@ -226,8 +228,8 @@ test('AUDIT L5-1: the hint is shown where one swap opens a path and not where no
   const p = frank();
   assert.equal(specGuideModel(p).families.find((f) => f.id === 'martial').swapOpens, true, 'Blunt mastered, one swap away');
   assert.equal(swapOpens(p, SE, LB, martialPossible), true);
-  // no weapon skill in the class, and every one of the 2/2/1 slots spent on others
-  const spent = frank({ primary: [ET, ST, ME], major: [CL, DO, LP], minor: [MD, RU, JU, SW, SE], mastered: [ET, ST, DO, LP, MD] });
+  // no weapon skill in the class, and every one of the 3/2/1 slots spent on others
+  const spent = frank({ primary: [ET, ST, ME], major: [CL, DO, LP], minor: [MD, RU, JU, SW, SE], mastered: [ET, ST, ME, DO, LP, MD] });
   const m = specGuideModel(spent).families.find((f) => f.id === 'martial');
   assert.equal(m.possible, false); assert.equal(m.swapOpens, false, 'no slot left to master a weapon in');
 });

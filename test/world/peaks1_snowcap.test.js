@@ -254,14 +254,17 @@ test('PEAKS1 with ARENA2: on the freeware\'s ground every range the relief stand
     const white = [
       ['Skyrim\'s summit (the Throat)', 2076, 106, 'skyrimPeaks', 3000],
       ['the Jerall', 2202, 332, 'cyrodiilJerall', 2600],
-      ['the Reach\'s shoulder', 1490, 198, 'skyrimPeaks', 2500],
+      ['the Reach\'s shoulder', 1490, 198, ['skyrimPeaks', 'hammerfellDragontail'], 2500],
       ['the Wrothgarians past the Bay', 1130, -92, 'highRockWrothgar', 1400],
       ['the Bay\'s Wrothgarians', 951, 3, null, 1500],
       ['the Bay\'s Dragontails', 964, 442, null, 2300],
     ];
     for (const [name, x, y, zone, least] of white) {
       const t = top(x, y);
-      assert.equal(t.zone, zone, `${name}'s zone`);
+      // PIN MOVED (RELIEF-PEAKS, bible/03-World/Tamriel.md): the ranges under the heightmap's grain stand the highest ground
+      // about a summit where their crests fall - the Reach's shoulder's on the border of Skyrim's peaks and Hammerfell's
+      // Dragontail, its top on either side; each top wears its own zone's cap
+      assert.ok([zone].flat().includes(t.zone), `${name}'s zone (${t.zone})`);
       assert.ok(t.h > least, `${name} stands ${t.h.toFixed(0)} m`);
       assert.ok(t.line < t.h - 150, `${name}: its line ${t.line} under its top ${t.h.toFixed(0)}`);
       assert.ok(capCover(t.h, t.line) > 0.95, `${name} white (${capCover(t.h, t.line).toFixed(3)})`);

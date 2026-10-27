@@ -1473,7 +1473,7 @@ an interior - WW7-4; each province's crown a kingdom of its own, its own icon an
 - **The laws**: a seat's region any of the 71 (`seatRegionOk`), its pixel the world's grid's (`SEAT_PIXEL_SPAN`, the
   services' bundle reading no map), a crown's name its capital's; a gate's kill counts at its own lane's province alone
   (`townSeatLaw.js:"export const gateRegionOk = (day, region) => {"` - the account service's ledger and influence read
-  it, so a province's gate is its own seats' and no other's). The domain tables' CHECKs (migrations 0177-0179 - 0167-0169 before main's own took those numbers - not yet
+  it, so a province's gate is its own seats' and no other's). The domain tables' CHECKs (migrations 0178-0180, 0177-0179 until main's WOVEN-PAYS took 0177, - 0167-0169 before main's own took those numbers - not yet
   deployed) take regions to 70; the renown tracker with them.
 - Relay world256 and account acct182 changed in place (neither deployed). Mutant records re-aimed by content (7).
 
@@ -1540,7 +1540,7 @@ code gates alone.
   `npcChapterLaw.js`) - so a seat past the Bay's Hall of Records and a province gate's receipt are read, where WW7-3
   had left them refused. A home any region's (`homeLaw.js` HOME_REGION_MAX 70 - its table keeps no CHECK); the staff's
   economy filter with them. `bayRegionOk` stays, read by no town book.
-- **The CHECKs** (migration 0180, `server-account/migrations/0180_world_books.sql` - 0170 before main's own took it): the market's listings, orders,
+- **The CHECKs** (migration 0181, `server-account/migrations/0186_world_books.sql` - 0180 until main's WOVEN-PAYS took 0177, - 0170 before main's own took it): the market's listings, orders,
   auctions and bids (`region < 62`), the guild writs, the commissions and the contracts (`region <= 61`) rebuilt as 0044
   rebuilt the market's - every row and column carried, every index and trigger made again as the migrations before left
   them (0137's vendor-board triggers on the listings with them: the board's guard asks a rebuild to make them again in
