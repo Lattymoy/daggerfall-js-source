@@ -93,12 +93,11 @@ export const covenFactionName = (c) => spoken(c.witches);
  *  words (it has no faction). */
 export const covenWitches = (c) => (c.own ? c.name() : getLocalizedFactionName(c.factionId, covenFactionName(c)));
 
-/** One round of the bag: the thirteen shuffled by the round's own rolls (the gate's bag, net/gate/gateLaw.js bagRound) -
- *  WW5: a lane's own rolls (`11 + 16 * lane`: the Bay's the 11 they always were). */
-function bagRound(round, n, lane = 0) {
+/** One round of the bag: the thirteen shuffled by the round's own rolls (the gate's bag, net/gate/gateLaw.js bagRound). */
+function bagRound(round, n) {
   const a = Array.from({ length: n }, (_, i) => i);
   for (let i = n - 1; i > 0; i--) {
-    const j = gateHash(STAR_SALT, round, 11 + 16 * lane, i) % (i + 1);
+    const j = gateHash(STAR_SALT, round, 11, i) % (i + 1);
     const tmp = a[i]; a[i] = a[j]; a[j] = tmp;
   }
   return a;
@@ -116,9 +115,9 @@ function bagRound(round, n, lane = 0) {
 export function starCovenOf(n, lane = 0) {
   const covens = covensOfLane(lane), len = covens.length;
   if (!len) return null;
-  if (len === 1) return covens[0];
+  if (len === 1) return covens[0];   // a province's one coven every night (a bag of one has no second to swap in)
   const round = Math.floor(n / len), at = n - round * len;
-  const bag = bagRound(round, len, lane);
-  if (bag[0] === bagRound(round - 1, len, lane)[len - 1]) { const tmp = bag[0]; bag[0] = bag[1]; bag[1] = tmp; }
+  const bag = bagRound(round, len);
+  if (bag[0] === bagRound(round - 1, len)[len - 1]) { const tmp = bag[0]; bag[0] = bag[1]; bag[1] = tmp; }
   return covens[bag[at]];
 }

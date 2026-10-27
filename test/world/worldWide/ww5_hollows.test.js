@@ -23,6 +23,7 @@ import { mintSdReceipt } from '../../../src/net/superDungeon/sdReceipt.js';
 import { sdTheatreCities, findSdTheatreSite, sdHollowLocation, sdWorldMapId, SD_WORLD_LANE, sdSalt, sdTemplates, pickSdTemplate, findSdSite, sdCities } from '../../../src/systems/superDungeon/sdSite.js';
 import { spawnedMapId } from '../../../src/world/spawnedDungeons.js';
 import { createSdLanes } from '../../../src/scenes/superDungeon/sdLanes.js';
+import { SD_LINE_WAIT_MS } from '../../../src/scenes/superDungeon/sdHost.js';
 import { scanTheatreGate } from '../../../src/systems/gate/theatreGateSite.js';
 import { eventTimerRows } from '../../../src/systems/eventTimers.js';
 import { eventBoardModel } from '../../../src/systems/eventBoard.js';
@@ -64,6 +65,7 @@ test('WW5 THE LAW: a slot names its lane - lane t\'s are t x SD_LANE_SPAN + 1, +
   assert.equal(sdRise(null, T0, -1, 9), null, 'the open zone: none');
   assert.equal(sdRise({ ...first, s: SKY_S + SD_LANE_SPAN - 1 }, T0 + SD_FIRST_RISE_MS, -1), null, 'never past its span');
   assert.equal(sdRise(first, T0 + SD_FIRST_RISE_MS, 64, 2), null, 'a record of another lane is no lane\'s');
+  assert.equal(sdRise({ ...first, s: SKY_S - 1 }, T0 + SD_FIRST_RISE_MS, 64, SKY), null, 'Hammerfell\'s last slot never rises into Skyrim\'s zero');
   const counts = Object.assign(new Array(71).fill(0), { 17: 3, 64: 5, 70: 9 });
   assert.equal(pickSdRegion(1, counts), 17, 'the Bay\'s lane: the Bay\'s crowd, however full Skyrim');
   assert.equal(pickSdRegion(SKY_S + 1, counts), 64, 'a crowd in Skyrim draws Skyrim\'s Hollow');
@@ -190,7 +192,7 @@ test('WW5 THE RELAY: the hub keeps a Hollow in every lane - each its own first b
 /** A province's world on the page: Skyrim's towns (the registry's records) and its theatre's scan by the producer. */
 function skyrim() {
   const towns = [];
-  for (let j = 0; j < 3; j++) for (let i = 0; i < 3; i++) towns.push({ key: 0, mapId: 0x34180000 + i + 3 * j, name: `Sky ${i}.${j}`, px: 1500 + i * 14, py: -200 + j * 14, type: j === 0 ? LOCATION_TYPES.TownCity : LOCATION_TYPES.TownHamlet, region: 64, area: 300, theatre: SKY, w: 3 - j, h: 3 - j, blocks: 1 });
+  for (let j = 2; j >= 0; j--) for (let i = 2; i >= 0; i--) towns.push({ key: 0, mapId: 0x34180000 + i + 3 * j, name: `Sky ${i}.${j}`, px: 1500 + i * 14, py: -200 + j * 14, type: j === 0 ? LOCATION_TYPES.TownCity : LOCATION_TYPES.TownHamlet, region: 64, area: 300, theatre: SKY, w: 3 - j, h: 3 - j, blocks: 1 });
   const at = new Map(towns.map((t) => [`${t.px},${t.py}`, t]));
   const scan = scanTheatreGate({ towns, placeAt: (x, y) => at.get(`${x},${y}`) ?? null, inTheatre: () => true, areaAt: () => 300, wet: () => false, theatre: SKY });
   const places = { inTheatre: (t) => (t === SKY ? towns : []), generation: () => 1 };
@@ -204,6 +206,9 @@ test('WW5 A PROVINCE\'S HOLLOW\'S SITE: its cities the registry\'s places of its
   assert.deepEqual(cities.slice(0, 3).map((c) => c.name), ['Sky 0.0', 'Sky 1.0', 'Sky 2.0'], 'a city over a hamlet, then its blocks, then the lower map id');
   assert.equal(cities.length, towns.length);
   assert.deepEqual(sdTheatreCities(places, SKY, -1).map((c) => c.type), [1, 1, 1].map(() => LOCATION_TYPES.TownCity), 'its great cities its cities alone');
+  const great = sdTheatreCities(places, SKY, -1), picked = new Set();
+  for (let k = 1; k <= 24; k++) picked.add(findSdTheatreSite({ s: SKY_S + k, r: -1 }, scan, great).city.name);
+  assert.ok(picked.size > 1, `by its great cities, the slot's roll where they begin (${[...picked]})`);
   const rec = { s: SKY_S + 1, r: 64 };
   const site = findSdTheatreSite(rec, scan, cities);
   assert.equal(site.city, cities[0]);
@@ -293,6 +298,49 @@ test('WW5 THE PAGE: the hub\'s `ev` to the Bay\'s host, a province\'s `ln` to it
   assert.deepEqual(tm.lanes.map((l) => [l.lane, l.province, l.rec.s, l.mine, !!l.site]), [[SKY, 'Skyrim', SKY_S + 1, true, true]]);
   assert.equal(Q.lanes.mapMarks().length, 1, 'the found Hollow\'s ring (the Bay\'s, only risen, is a find)');
   assert.deepEqual(Q.lanes.mapMark(), Q.lanes.mapMarks()[0], 'the one in focus: the nearest');
+});
+
+test('WW5 A PROVINCE\'S GROUND MADE AGAIN: its Hollow stands while its theatre is scanned anew (a new registry generation - TESA\'s places landing after the boot) and moves with the new ground; one whose ground has no town yet waits its line, then says it in its province (mutants: the Hollow kept over a new scan; the same slot\'s new site never stood; the Hollow taken down while its ground is made again; a townless scan read as ground; the province unsaid)', () => {
+  const sk = skyrim();
+  const movedTowns = sk.towns.map((t) => ({ ...t, px: t.px + 40 }));
+  const movedAt = new Map(movedTowns.map((t) => [`${t.px},${t.py}`, t]));
+  const moved = scanTheatreGate({ towns: movedTowns, placeAt: (x, y) => movedAt.get(`${x},${y}`) ?? null, inTheatre: () => true, areaAt: () => 300, wet: () => false, theatre: SKY });
+  const G = { gen: 1, cur: sk.scan, towns: sk.towns, queue: [], stood: new Map(), said: [], clock: T0 + SD_FIRST_RISE_MS + M };
+  const seams = (over) => createSdLanes({
+    now: () => G.clock, here: () => ({ x: 1520, y: -190 }), scan: () => null, cities: () => [], templates: () => [LAB], where: () => ({}),
+    stand: (key, loc) => G.stood.set(key, loc), unstand: (key) => G.stood.delete(key), inside: () => false,
+    door: () => null, feet: () => null, sendFound: () => true, say: (t) => G.said.push(t), regionName: (r) => `Region ${r}`, castOut: () => true, standing: () => null,
+    landVersion: () => 1, ...over,
+  });
+  const lanes = seams({
+    theatreScans: { scanOf: (t) => (t === SKY ? G.cur : { theatre: t, byArea: new Map(), towns: [], townOf: new Map() }), theatres: () => [SKY], siteOf: () => null },
+    places: { inTheatre: (t) => (t === SKY ? G.towns : []), generation: () => G.gen }, idle: (fn) => G.queue.push(fn),
+  });
+  const drain = () => { while (G.queue.length) G.queue.shift()(); };
+  const skyRec = sdRise(sdFirst(T0, SKY), T0 + SD_FIRST_RISE_MS, 64);
+  lanes.heard({ k: 'ln', ...skyRec });
+  lanes.frame(); drain(); lanes.frame();
+  const a = lanes.hollow(SKY_S + 1);
+  assert.ok(a && G.stood.has(a.key), 'Skyrim\'s Hollow stands');
+  G.gen = 2; G.cur = moved; G.towns = movedTowns;
+  lanes.frame();
+  assert.ok(G.stood.has(a.key), 'it stands while its ground is made again');
+  drain(); lanes.frame();
+  const b = lanes.hollow(SKY_S + 1);
+  assert.ok(b && b.key !== a.key && G.stood.has(b.key) && !G.stood.has(a.key), `it moves with the new ground (${a.key} -> ${b?.key})`);
+  // a province whose ground has no town yet: its find's line waits for its place, then says its province
+  G.said.length = 0;
+  const bare = seams({
+    theatreScans: { scanOf: (t) => ({ theatre: t, byArea: new Map(), towns: [], townOf: new Map() }), theatres: () => [SKY], siteOf: () => null },
+    places: { inTheatre: () => [], generation: () => 1 }, idle: null,
+  });
+  bare.heard({ k: 'ln', ...skyRec });   // the welcome's record: no news
+  bare.heard({ k: 'ln', ...sdFind(skyRec, G.clock, 'Mara') });
+  bare.frame();
+  assert.deepEqual(G.said, [], 'its line waits for its place');
+  G.clock += SD_LINE_WAIT_MS + 1;
+  bare.frame();
+  assert.equal(G.said[0], 'Mara has found an Abyss Dungeon in Skyrim!');
 });
 
 test('WW5 THE TIMERS, THE BOARD AND THE MAP: a province\'s Hollow in the same rows as the Bay\'s - found or collapsing, news to every screen, by its city; its next rise its own theatre\'s players\' alone; the board\'s row its own lane\'s site and way; the held map\'s rings every lane\'s over the continent\'s frame (mutants: a lane\'s found row lost; every lane\'s coming row; the board\'s site the Bay\'s)', () => {

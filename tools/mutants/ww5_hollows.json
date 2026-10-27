@@ -1,0 +1,587 @@
+[
+  {
+    "name": "WW5-SD-the-span",
+    "file": "src/net/wire.js",
+    "old": "export const SD_LANE_SPAN = 10_000_000;",
+    "new": "export const SD_LANE_SPAN = 1_000_000;",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-lane-rounded",
+    "file": "src/net/wire.js",
+    "old": "export const sdLaneWire = (s) => Math.floor(s / SD_LANE_SPAN);",
+    "new": "export const sdLaneWire = (s) => Math.round(s / SD_LANE_SPAN);",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-lanes-zero-a-slot",
+    "file": "src/net/wire.js",
+    "old": "intIn(s, 1, SD_SLOT_MAX) && s % SD_LANE_SPAN !== 0 && sdLaneOpen(sdLaneWire(s));",
+    "new": "intIn(s, 1, SD_SLOT_MAX) && sdLaneOpen(sdLaneWire(s));",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-a-province-region-on-the-bays-lane",
+    "file": "src/net/wire.js",
+    "old": "lane === 0 ? r >= 0 && r < CHAT_BAY_REGIONS :",
+    "new": "lane === 0 ? r >= 0 && r < CHAT_REGION_COUNT :",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-another-provinces-region",
+    "file": "src/net/wire.js",
+    "old": ": r === CHAT_BAY_REGIONS - 1 + lane));",
+    "new": ": r >= CHAT_BAY_REGIONS));",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-records-region-unread",
+    "file": "src/net/wire.js",
+    "old": "  if (!sdLaneOpen(lane) || !sdLaneRegionOk(lane, r.r)) return null;\n",
+    "new": "  if (!sdLaneOpen(lane)) return null;\n",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-a-lanes-zero-said",
+    "file": "src/net/wire.js",
+    "old": "  if (out.s % SD_LANE_SPAN === 0 && out.ph !== 'gone') return null;",
+    "new": "  if (out.s === 0 && out.ph !== 'gone') return null;",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-kinds-crossed",
+    "file": "src/net/wire.js",
+    "old": "(m.k === 'ev') !== (sdLaneWire(r.s) === 0)",
+    "new": "false",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-finds-pixel-the-bays",
+    "file": "src/net/wire.js",
+    "old": "sdSlotOk(m.s) && siteEventPixelOk(sdLaneWire(m.s), m.px, m.py)",
+    "new": "sdSlotOk(m.s) && siteEventPixelOk(0, m.px, m.py)",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-tells-pixel-the-bays",
+    "file": "src/net/wire.js",
+    "old": "!siteEventPixelOk(sdLaneWire(b.s), b.px, b.py)",
+    "new": "!siteEventPixelOk(0, b.px, b.py)",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-a-receipt-key-shared",
+    "file": "src/net/wire.js",
+    "old": "export const sdReceiptKey = (sub, lane = 0) => (lane ? `${SD_RC_PREFIX}${sub}.${lane}` : `${SD_RC_PREFIX}${sub}`);",
+    "new": "export const sdReceiptKey = (sub, lane = 0) => `${SD_RC_PREFIX}${sub}`;",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-a-hub-key-shared",
+    "file": "src/net/wire.js",
+    "old": "export const sdLaneKey = (key, lane = 0) => (lane ? `${key}:${lane}` : key);",
+    "new": "export const sdLaneKey = (key, lane = 0) => key;",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-census-the-bays",
+    "file": "src/net/wire.js",
+    "old": "export const SD_REGION_COUNT = CHAT_REGION_COUNT;",
+    "new": "export const SD_REGION_COUNT = CHAT_BAY_REGIONS;",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-a-provinces-census-region",
+    "file": "src/net/superDungeon/sdLaw.js",
+    "old": "[CHAT_BAY_REGIONS - 1 + lane]",
+    "new": "[CHAT_BAY_REGIONS + lane]",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-lanes-zero",
+    "file": "src/net/superDungeon/sdLaw.js",
+    "old": "({ s: lane * SD_LANE_SPAN, ph: 'gone'",
+    "new": "({ s: 0, ph: 'gone'",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-a-rise-across-lanes",
+    "file": "src/net/superDungeon/sdLaw.js",
+    "old": "  if (!sdLaneOpen(lane) || (prev && sdLaneOf(prev.s) !== lane)) return null;\n",
+    "new": "  if (!sdLaneOpen(lane)) return null;\n",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-a-rise-in-anothers-region",
+    "file": "src/net/superDungeon/sdLaw.js",
+    "old": " || !sdLaneRegionOk(lane, region)) return null;",
+    "new": ") return null;",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-lanes-overflow",
+    "file": "src/net/superDungeon/sdLaw.js",
+    "old": "  if (s > SD_SLOT_MAX || sdLaneOf(s) !== lane) return null;\n",
+    "new": "  if (s > SD_SLOT_MAX) return null;\n",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-pick-across-lanes",
+    "file": "src/net/superDungeon/sdLaw.js",
+    "old": "  for (const r of sdLaneRegions(sdLaneOf(s))) if",
+    "new": "  for (let r = 0; r < SD_REGION_COUNT; r++) if",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-province-unnamed",
+    "file": "src/net/superDungeon/sdHerald.js",
+    "old": "return lane > 0 ? PROVINCE_REGION_NAMES[lane - 1] ?? '' : '';",
+    "new": "return '';",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-bays-rise-text-moved",
+    "file": "src/net/superDungeon/sdHerald.js",
+    "old": "somewhere in ${sdProvinceName(rec.s) || SD_BAY_NAME}, and",
+    "new": "somewhere in ${SD_BAY_NAME}, and",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-province-unsaid",
+    "file": "src/net/superDungeon/sdLaw.js",
+    "old": "region ? `in the ${region} region` : province ? 'in ' + province : 'near ' + SD_BAY_NAME",
+    "new": "region ? `in the ${region} region` : 'near ' + SD_BAY_NAME",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-one-lane-beaten",
+    "file": "server/src/index.js",
+    "old": "    for (const lane of SD_LANES) await this._sdLaneBeat(now, lane);",
+    "new": "    await this._sdLaneBeat(now, 0);",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-census-across-lanes",
+    "file": "server/src/index.js",
+    "old": "    const regions = sdLaneRegions(lane);",
+    "new": "    const regions = sdLaneRegions(0);",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-fans-kind",
+    "file": "server/src/index.js",
+    "old": "k: sdLaneOf(rec.s) ? SD_LANE_KIND : 'ev', ...rec",
+    "new": "k: 'ev', ...rec",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-hellos-kind",
+    "file": "server/src/index.js",
+    "old": "k: lane ? SD_LANE_KIND : 'ev', ...r",
+    "new": "k: 'ev', ...r",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-finds-lane",
+    "file": "server/src/index.js",
+    "old": "    const lane = sdLaneOf(c.s);   // WW5: the find's own lane's record",
+    "new": "    const lane = 0;   // WW5: the find's own lane's record",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-live-doors-lane",
+    "file": "server/src/index.js",
+    "old": "    const lane = Number.isSafeInteger(body?.s) && body.s > 0 ? sdLaneOf(body.s) : 0;",
+    "new": "    const lane = 0;",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-receipts-lane",
+    "file": "server/src/index.js",
+    "old": "    const lane = sdLaneOf(c.s);   // WW5: kept under its lane's key",
+    "new": "    const lane = 0;   // WW5: kept under its lane's key",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-spent-lane",
+    "file": "server/src/index.js",
+    "old": "    const lane = sdLaneOf(slot);   // WW5: the slot's own lane",
+    "new": "    const lane = 0;   // WW5: the slot's own lane",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-heralds-lane",
+    "file": "server/src/index.js",
+    "old": "    for (const lane of SD_LANES) {\n      try {\n        let st = await this._sdHeraldState(lane);",
+    "new": "    for (const lane of [0]) {\n      try {\n        let st = await this._sdHeraldState(lane);",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-claims-order",
+    "file": "src/systems/superDungeon/sdSite.js",
+    "old": "  rows.sort((a, b) => (outranks(a.claim, b.claim) ? -1 : outranks(b.claim, a.claim) ? 1 : 0));\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-claims-tie",
+    "file": "src/systems/superDungeon/sdSite.js",
+    "old": "return claim ? [...claim.slice(0, 4), -(p.mapId >>> 0)] : null;",
+    "new": "return claim ? [...claim.slice(0, 4)] : null;",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-great-cities-any-town",
+    "file": "src/systems/superDungeon/sdSite.js",
+    "old": "    if (r < 0 && p.type !== LOCATION_TYPES.TownCity) continue;\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-nearest-town",
+    "file": "src/systems/superDungeon/sdSite.js",
+    "old": "    const ti = scan.towns.findIndex((t) => t.px === city.px && t.py === city.py);\n    const pixels = ti >= 0 ? byTown.get(ti) : null;",
+    "new": "    const ti = scan.towns.findIndex((t) => t.px === city.px && t.py === city.py);\n    const pixels = ti >= 0 ? [...scan.townOf.keys()] : null;",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-dry-ground",
+    "file": "src/systems/superDungeon/sdSite.js",
+    "old": "      if (!ground(px, py)) continue;\n      return { s: rec.s, px, py, city,",
+    "new": "      return { s: rec.s, px, py, city,",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-great-cities-unrolled",
+    "file": "src/systems/superDungeon/sdSite.js",
+    "old": "  const byTown = theatrePixelsByTown(scan);\n  const start = rec.r < 0 ? sdRoll(rec.s, 5) % cities.length : 0;",
+    "new": "  const byTown = theatrePixelsByTown(scan);\n  const start = 0;",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-map-ids-lane",
+    "file": "src/systems/superDungeon/sdSite.js",
+    "old": " | ((sdLaneOf(s) & 0xf) << 15)",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-bays-id-moved",
+    "file": "src/systems/superDungeon/sdSite.js",
+    "old": "mapId: inBay(site.px, site.py) ? null : sdWorldMapId(rec.s)",
+    "new": "mapId: sdWorldMapId(rec.s)",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-a-provinces-id-a-bay-pixels",
+    "file": "src/systems/superDungeon/sdSite.js",
+    "old": "mapId: inBay(site.px, site.py) ? null : sdWorldMapId(rec.s)",
+    "new": "mapId: null",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-lane-routing",
+    "file": "src/scenes/superDungeon/sdLanes.js",
+    "old": "      if (lane === 0) bay.heard(w);\n      else if (SD_LANES.includes(lane)) laneHost(lane).heard(w);\n",
+    "new": "      bay.heard(w);\n",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-ground-asked-far-away",
+    "file": "src/scenes/superDungeon/sdLanes.js",
+    "old": "    return ph === 'found' || ph === 'fell';\n",
+    "new": "    return true;\n",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-ground-unasked-where-i-stand",
+    "file": "src/scenes/superDungeon/sdLanes.js",
+    "old": "    if (p && theatreAt(p.x, p.y) === lane) return true;\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-a-townless-scan-read-as-ground",
+    "file": "src/scenes/superDungeon/sdLanes.js",
+    "old": "return sc && sc.towns.length ? sc : null; },",
+    "new": "return sc; },",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-focus-not-the-nearest",
+    "file": "src/scenes/superDungeon/sdLanes.js",
+    "old": "      const d = p ? Math.hypot(site.px - p.x, site.py - p.y) : h === bay ? 0 : Infinity;\n",
+    "new": "      const d = h === bay ? 0 : 1;\n",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-focus-not-where-i-stand",
+    "file": "src/scenes/superDungeon/sdLanes.js",
+    "old": "    if (s != null) return hostOf(s) ?? bay;\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-bays-host-judging-a-provinces-slot",
+    "file": "src/scenes/superDungeon/sdLanes.js",
+    "old": "  const bay = createSdHost({ ...o, standing: () => { const s = standing(); return s != null && sdLaneOf(s) === 0 ? s : null; } });",
+    "new": "  const bay = createSdHost(o);",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-a-provinces-host-judging-the-bays-slot",
+    "file": "src/scenes/superDungeon/sdLanes.js",
+    "old": "        standing: () => { const s = standing(); return s != null && sdLaneOf(s) === lane ? s : null; },\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-a-lanes-timers-lost",
+    "file": "src/scenes/superDungeon/sdLanes.js",
+    "old": "lanes: [...lanes.entries()].map(",
+    "new": "lanes: [].map(",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-mine-every-lane",
+    "file": "src/scenes/superDungeon/sdLanes.js",
+    "old": "mine: lane === at",
+    "new": "mine: false",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-map-the-bays-ring",
+    "file": "src/scenes/superDungeon/sdLanes.js",
+    "old": "    mapMarks: () => all().map((h) => h.mapMark()).filter(Boolean),",
+    "new": "    mapMarks: () => [bay.mapMark()].filter(Boolean),",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-hollow-kept-over-a-new-scan",
+    "file": "src/scenes/superDungeon/sdHost.js",
+    "old": "    if (memo && memo.s === r.s && !rescan) return memo.none ? null : memo;",
+    "new": "    if (memo && memo.s === r.s) return memo.none ? null : memo;",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-hollow-down-while-its-ground-is-made",
+    "file": "src/scenes/superDungeon/sdHost.js",
+    "old": "    if (!sc) { if (rescan && memo && memo.s === r.s && !memo.none) return memo; warmScan(); return null; }",
+    "new": "    if (!sc) { warmScan(); return null; }",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-new-site-never-stood",
+    "file": "src/scenes/superDungeon/sdHost.js",
+    "old": "    if (stood && (!h || h.s !== stood.s || h.key !== stood.key)) {",
+    "new": "    if (stood && (!h || h.s !== stood.s)) {",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-region-for-a-province",
+    "file": "src/scenes/superDungeon/sdHost.js",
+    "old": "const near = h?.site?.cityName || '', region = province ? '' : regionName(o.rec.r) || '';",
+    "new": "const near = h?.site?.cityName || '', region = regionName(o.rec.r) || '';",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-found-line-no-province",
+    "file": "src/scenes/superDungeon/sdHost.js",
+    "old": "say(sdFoundLine({ who: o.rec.fb || 'Someone', near, region, province }));",
+    "new": "say(sdFoundLine({ who: o.rec.fb || 'Someone', near, region }));",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-a-lanes-rows-lost",
+    "file": "src/systems/eventTimers.js",
+    "old": "  sdLaneRows(src, now, live, coming, rows);\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-every-lanes-coming-row",
+    "file": "src/systems/eventTimers.js",
+    "old": "lp === 'gone' && L.mine && Number.isFinite(lr.next)",
+    "new": "lp === 'gone' && Number.isFinite(lr.next)",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-boards-site-the-bays",
+    "file": "src/systems/eventBoard.js",
+    "old": "sd = src?.sd?.lanes?.find((x) => x?.rec?.s === s) ?? src?.sd;",
+    "new": "sd = src?.sd;",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-held-maps-one-ring",
+    "file": "src/ui/heldMap.js",
+    "old": "return Array.isArray(v) ? v : v ? [v] : [];",
+    "new": "return Array.isArray(v) ? v.slice(0, 1) : v ? [v] : [];",
+    "tests": [
+      "test/ui/enhanced/sd2c_omen.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-inks-one-ring",
+    "file": "src/ui/ink/inkMap.js",
+    "old": "for (const m of opts.sds ?? (opts.sd ? [opts.sd] : []))",
+    "new": "for (const m of (opts.sd ? [opts.sd] : []))",
+    "tests": [
+      "test/ui/enhanced/sd2c_omen.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-older-relays-find",
+    "file": "src/net/online.js",
+    "old": "    if (sdLaneWire(w.s) > 0 && !this.ww5Ok) return false;   // WW5: a province's Hollow, never to a relay that keeps none\n",
+    "new": "",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-a-lanes-record-a-fight",
+    "file": "src/net/online.js",
+    "old": "else if (r && r.k !== 'ev' && r.k !== SD_LANE_KIND) {",
+    "new": "else if (r && r.k !== 'ev') {",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-world-host-one-lane",
+    "file": "src/scenes/world.js",
+    "old": "  const sdHost = params.has('online') ? createSdLanes({",
+    "new": "  const sdHost = params.has('online') ? createSdHost({",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  },
+  {
+    "name": "WW5-SD-the-province-hollow-unbuilt",
+    "file": "src/scenes/world.js",
+    "old": "return (locationIndex.get(`${px},${py}`)?.superTier ? locationIndex.get(`${px},${py}`) : null) || (params.has('online')",
+    "new": "return (params.has('online')",
+    "tests": [
+      "test/world/worldWide/ww5_hollows.test.js"
+    ]
+  }
+]

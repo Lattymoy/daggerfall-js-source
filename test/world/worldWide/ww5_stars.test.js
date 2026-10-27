@@ -33,6 +33,7 @@ import { THEATRE_COUNT, THEATRE_KEYS, theatreAt, worldPixelKey } from '../../../
 import { REGION_NAMES, LOCATION_TYPES } from '../../../src/formats/mapsFile.js';
 import { regionOfTheatre } from '../../../src/formats/mapsTables.js';
 import { FESTIVALS } from '../../../src/net/festivalLaw.js';
+import * as TM from '../../../src/systems/textManager.js';
 import { codeOnly } from '../../codeOnly.mjs';
 import { HAVE, ww5World } from './ww5World.mjs';
 
@@ -163,6 +164,16 @@ test('WW5 THE PROVINCES\' COVENS: the port\'s own, one a province theatre (Cyrod
     ['The Daughters of Mafala', 'Daughter of Mafala', 'Clan Mother Ri\'shazra'], ['The Fen Witches', 'Fen Witch', 'Mother Neeta-Hei'],
   ]);
   for (const c of STAR_PROVINCE_COVENS) assert.equal(covenWitches(c), c.name(), 'its own words, never a faction\'s');
+  // in the player's language: its own row (a faction's name read for it would answer the English)
+  const row = readFileSync(new URL('../../../locales/de/Port_Strings.csv', import.meta.url), 'utf8').split('\n').find((l) => l.startsWith('starfall.coven.moor,'));
+  const de = JSON.parse(row.slice('starfall.coven.moor,'.length));
+  TM.registerLocale({ code: 'de', name: 'Deutsch' });
+  TM.patchLocaleTable('de', TM.runtimeCollectionName(TM.TextCollections.Port), [['starfall.coven.moor', de]]);
+  try {
+    TM.setLocale('de');
+    assert.notEqual(de, 'The Sisters of the Moor');
+    assert.equal(covenWitches(STAR_PROVINCE_COVENS[0]), de, 'said in German');
+  } finally { TM.setLocale('en'); }
   assert.equal(covensOfLane(0), STAR_COVENS);
   assert.deepEqual(covensOfLane(9), []);
   assert.equal(starCovenOf(N, 9), null, 'the open zone stands no coven night');
@@ -199,6 +210,14 @@ test('WW5 A PROVINCE\'S NIGHT: its coven\'s three stars over its theatre\'s own 
   const first = sites[0];
   const kept = findTheatreStarSites(N, 3, scan, { gateSiteOf: (day) => (day === gameDayAt(starTimes(N, 9).fallAt, 3) ? { px: first.px, py: first.py } : null) });
   assert.ok(Math.max(Math.abs(kept[0].px - first.px), Math.abs(kept[0].py - first.py)) >= STAR_APART_PX, 'off its gate');
+  // a town a star where the province has them: two towns, the night's first two by one each, night after night
+  const pair = [{ name: 'East', px: 1500, py: -200 }, { name: 'West', px: 1530, py: -200 }].map((t) => ({ ...t, area: 203, type: LOCATION_TYPES.TownCity }));
+  const pairAt = new Map(pair.map((t) => [`${t.px},${t.py}`, t]));
+  const two = scanTheatreGate({ towns: pair, placeAt: (x, y) => pairAt.get(`${x},${y}`) ?? null, inTheatre: () => true, areaAt: () => 203, wet: () => false, theatre: 3 });
+  for (let n = N; n < N + 40; n++) {
+    const l = findTheatreStarSites(n, 3, two);
+    assert.ok(l.length >= 2 && l[0].town.name !== l[1].town.name, `night ${n}: ${l.map((x) => x.town.name)}`);
+  }
   assert.deepEqual(findTheatreStarSites(N, 0, scan), [], 'the Bay\'s night is its own law\'s');
   assert.deepEqual(findTheatreStarSites(N, 9, scan), [], 'the open zone: none');
   assert.equal(STAR_DRAWS, 32);
@@ -221,6 +240,7 @@ test('WW5 THE THEATRES WARMED A THEATRE AT A TIME: a province\'s scan is asked o
   assert.deepEqual(made, [1, 2, 3, 4, 5, 6, 7, 8]);
   assert.deepEqual(T.warmLanes().map(([t]) => t), [1, 2, 3, 4, 5, 6, 7, 8]);
   assert.equal(T.scanOf(9), null, 'the open zone: none');
+  assert.equal(queue.length, 0, 'and never owed an idle moment');
   gen = 2;
   assert.equal(T.scanOf(3), null, 'a new generation: warmed again');
   assert.equal(T.ready(3), false);
@@ -271,7 +291,8 @@ test('WW5 THE HOST: every theatre\'s stars stand - the Bay\'s and a province\'s,
     const rows = host.timerRows();
     assert.ok(rows.length > 0 && rows.every((r) => /^star:\d+\.(9|10|11)$/.test(r.id)), `in Skyrim: Skyrim's rows alone (${rows.map((r) => r.id)})`);
     w.region = 70;   // Cyrodiil: the Bay's, as they were
-    assert.ok(host.timerRows().every((r) => /^star:\d+\.[0-2]$/.test(r.id)));
+    const cy = host.timerRows();
+    assert.ok(cy.length > 0 && cy.every((r) => /^star:\d+\.[0-2]$/.test(r.id)), 'in Cyrodiil: the Bay\'s rows');
     // a hold past the Bay: said where it stands
     w.t = starTimes(N, 0).fallAt + 1000; host.frame();
     w.region = 17; w.said.length = 0;
@@ -296,6 +317,11 @@ test('WW5 THE HOST: every theatre\'s stars stand - the Bay\'s and a province\'s,
   assert.match(h, /const lanesOk = \(\) => !!session\(\)\?\.ww5Ok;/);
   assert.match(h, /for \(const \[lane, sc\] of theatres\.warmLanes\(\)\) out\.push\(\.\.\.laneSitesOf\(n, +\(lane\), sc\)\);/);
   assert.match(h, /try \{ return findTheatreGateSite\(gateNumber\(day, lane\), sc\); \}/, 'a province\'s stars keep off its own gate');
+  // every master the host and the client name is its star's coven's (a province's leader where a Bay coven's Coven Mother)
+  for (const f of ['src/scenes/starfall/starfallHost.js', 'src/systems/starfall/starfallClient.js']) {
+    const calls = src(f).match(/starMasterOf\((?:[^()]|\([^()]*\))*\)/g) ?? [];
+    assert.ok(calls.length > 0 && calls.every((c) => /\.coven\)$/.test(c)), `${f}: ${calls.filter((c) => !/\.coven\)$/.test(c))}`);
+  }
 });
 
 test('WW5 ON THE FREEWARE\'S WORLD: the Bay\'s nights the law before WW5, star for star over the festival\'s every night (its covens, its pixels, its towns); every province\'s every night of the festival three stars, each in its own theatre on its scan\'s ground by a town of its own, its theatre\'s gate of the day kept off (TESA\'s places registered, WW7-1)', { skip: HAVE ? false : 'ARENA2_PATH not set (sh tools/fetch-data.sh)', timeout: 600_000 }, async () => {
