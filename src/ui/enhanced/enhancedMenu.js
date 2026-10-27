@@ -1778,7 +1778,8 @@ const OPT_FILTERS = Object.freeze([['all', 'All'], ['changed', 'Changed'], ['enh
  *  total over it.) */
 export function portPool({ pause = false } = {}) {
   const pool = new Map();
-  for (const r of [...portRowsGame({ pause }), peerSpellShakeRow(), ...portRowsAudio(), ...portRowsControls({ pause }), ...portRowsInterface({ pause })]) {   // RPT1026-CLIENT: the Motion section's other players' shake
+  // RPT1026-CLIENT: and the Motion section's other players' shake beside the Game rows
+  for (const r of [...portRowsGame({ pause }), peerSpellShakeRow(), ...portRowsAudio(), ...portRowsControls({ pause }), ...portRowsInterface({ pause })]) {
     if (r?.dataset?.opt) pool.set(r.dataset.opt, r);
   }
   return pool;

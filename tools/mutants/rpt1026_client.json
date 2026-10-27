@@ -120,6 +120,16 @@
     "note": "the find never tells the faces where its bodies are - they lie for ever"
   },
   {
+    "name": "RPT1026-WEIR-card-unsaid",
+    "file": "src/systems/item/itemInfo.js",
+    "old": "out.push({ text: EG_TEXT.keyLine, center: true }, { text: weirKeySharedLine(), center: true });",
+    "new": "out.push({ text: EG_TEXT.keyLine, center: true });",
+    "tests": [
+      "test/systems/eliteGates/rpt1026_client_weirface.test.js"
+    ],
+    "note": "the card says nothing of whose the keys are - the report's \"a new one on next login\" unexplained"
+  },
+  {
     "name": "RPT1026-FRAMECAP-off-free",
     "file": "src/systems/frameCap.js",
     "old": "  return frameCapRate(getInt('Video', 'TargetFrameRate', 0, 300)) || (_lifted ? LIFTED_OFF_FPS : 0);",

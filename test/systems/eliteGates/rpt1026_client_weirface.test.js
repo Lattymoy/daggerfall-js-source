@@ -11,6 +11,9 @@ import { registerEgFind, egFindThrow } from '../../../src/systems/eliteGates/egF
 import { raiseEnemyDeath, registerEnemyDeathHandler } from '../../../src/scenes/corpseMarker.js';
 import { weirKeysHeld, restackWeirKeys, foldStrayWeirKeys, weirKeysLying, isWeirKey, _resetWeirKeyFacesForTests } from '../../../src/systems/eliteGates/weirKey.js';
 import { takeOneInto } from '../../../src/systems/inventory.js';
+import { itemInfoRows } from '../../../src/systems/item/itemInfo.js';
+import { weirKeys } from '../../../src/systems/eliteGates/weirKey.js';
+import { EG_TEXT } from '../../../src/net/eliteGates/egLaw.js';
 
 const tick = () => new Promise((r) => setImmediate(r));
 const elite = () => ({ eliteFoe: true, items: [], mobileType: 1 });
@@ -83,4 +86,11 @@ test('RPT1026-CLIENT: out of the dungeon a face left on a body is folded off it 
     restackWeirKeys(R.player.items, 2);
     assert.equal(weirKeysHeld(R.player.items), 2);
   } finally { R.done(); }
+});
+
+test('RPT1026-CLIENT: the key\'s card says the keys are the account\'s, under its own line', () => {
+  const rows = itemInfoRows(weirKeys(3), () => null);
+  const at = rows.findIndex((r) => r.text === EG_TEXT.keyLine);
+  assert.ok(at > 0, 'the key\'s own line');
+  assert.equal(rows[at + 1]?.text, 'Every character on your account shares the same Weir Keys.');
 });
