@@ -14,7 +14,7 @@ import { restAilmentLines } from '../systems/rest/restWarning.js';   // REST-WAR
 import { walkModeOn, bindWalkMode } from '../player/walkMode.js';   // PADWALK: walk mode, one button on and off
 import { iilSyncLane } from '../systems/improvedInteriorLighting.js';   // IIL2
 import { RESURRECT_HOLD_MS, RESURRECT_HEALTH_PCT, RESURRECT_TEXT, rezSnapshot, rezFor } from '../systems/resurrect.js';   // RESURRECT1
-import { createPortalGates } from './portalGates.js'; import { PORTAL_TEXT, PORTAL_HOLD_TEXT, PORTAL_REGROUND, portalHold, spendPortalStone, portalPlace } from '../systems/portalStone.js'; import { takePortalGiftNotice } from '../systems/gate/gateSpoils.js'; import { restoresSoFar } from '../systems/save/save.js';   // PORTAL1: the Portal Stone's portals
+import { createPortalGates } from './portalGates.js'; import { PORTAL_TEXT, PORTAL_HOLD_TEXT, PORTAL_REGROUND, portalHold, spendPortalStone, portalStonePlace } from '../systems/portalStone.js'; import { takePortalGiftNotice } from '../systems/gate/gateSpoils.js'; import { restoresSoFar } from '../systems/save/save.js';   // PORTAL1: the Portal Stone's portals
 import { createPartyMapSender, hasSharedCartography } from '../systems/party/partyMap.js';   // PARTY-MAP
 import { liveDungeonAutomapKey, getDungeonAutomap, mergePartyAutomap } from '../systems/automap/automap.js';   // PARTY-MAP: the live dungeon's record, and a mate's rows merged into it
 import { armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
@@ -380,7 +380,7 @@ import { sdPillarLook, sdPillarLookAt, sdArenaMarksAt, sdLampDimInto } from './s
 import { SdRiftRenderer } from '../render/superDungeon/sdRiftPass.js';   // SD-LOOK: the Rift's window into the Hour, its floor light, the Return's window home
 import { SdHaloRenderer, SD_HALO_GAIN } from '../render/superDungeon/sdHalo.js';   // SD-LOOK: their hearts' halos
 import { SD_HALL_FLOORS } from '../world/superDungeon/sdHall.js';   // SD6c: the bridge and the first step, the Concord's floors
-import { SD_HALL_TEXT, SD_HALL_SOUNDS } from './superDungeon/sdHall.js';   // SD6c: the snap's line; SD9d: the hall's clunk and toll, the Brass's powers' sounds
+import { sdSnapLine, sdHallNamed, SD_HALL_SOUNDS } from './superDungeon/sdHall.js';   // SD6c: the snap's line (RPT1026-EVENTS ORRERY-HANDS: naming whom it lashes, and the hall's word its turner); SD9d: the hall's clunk and toll, the Brass's powers' sounds
 import { SD_STEPS_FLOORS, SD_CAST_BACK_LOSS } from '../world/superDungeon/sdSteps.js';   // SD7b: the Steps' band and the arena, the Concord's floors too; what the void costs
 import { SD_STEPS_TEXT } from './superDungeon/sdSteps.js';   // SD7b: the cast-back's line
 import { inOrreryHall, dungeonToRealm as sdDungeonToRealm, SD_FRAY_LASH, SD_ARENA, realmToDungeon as sdRealmToDungeon, SD_TURN_WAIT_LINE } from '../net/superDungeon/sdBrain.js';   // SD6c: the snap's lash, on whoever stands in the hall; SD10: the arena, where the way home stands; AUDIT SD II (L7 H2): a turn the stones refused
@@ -16287,7 +16287,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     return true;
   }
   /** The pick: the door asked again (the world moved on while the map stood - a foe came, a duel was called, death),
-   *  the place found (portalPlace: short of a wall, on the ground), ONE stone spent, the portal torn open, and - online
+   *  the place found (portalStonePlace: short of a wall, on the ground, off an event's gate's ground), ONE stone spent, the portal torn open, and - online
    *  - the next foes frame owed full, so the cell hears of it at once. The classic teleport box smashed the screen to
    *  black for an arrival that is not coming yet, so a black screen lifts; the held map smashes nothing, and nothing is
    *  faded there (AUDIT PORTAL1 U4: every pick on it flashed the screen black). */
@@ -16298,7 +16298,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (why) { townTalk.say(why); return; }
     if (veilRefused(pick.pixel)) return;   // AUDIT CAPTAIN'S SEA P6
     const feet = walkMode && playerSpawned ? player.feetAt() : cam.pos;
-    const place = portalPlace(feet, cam.yaw, {
+    const place = portalStonePlace(feet, cam.yaw, {   // RPT1026-EVENTS GATE-WAY: refused before an event's gate (systems/eventGround.js), nothing spent
       ground: (o, d, m) => collider.surfaceHit(o, d, m)?.dist,   // the ground there - a mesh or the terrain, whichever is nearer (CAMP-GROUND's probe)
       wall: (o, d, m) => collider.raycastHit(o, d, m)?.dist,   // a wall, a fence, a house in the way
     });
@@ -24986,7 +24986,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  stands); a word to me alone that the stones refused my turn (`w`) says why. */
   let _sdHall = null;
   function sdHallHeard(w) {
-    _sdHall = w;
+    _sdHall = sdHallNamed(w, peerName, online?.id ?? null);   // RPT1026-EVENTS ORRERY-HANDS: its turner and the lashed named off the roster, seen or not
     if (modes?.sdRealmSlot?.() !== w.s) return;
     if (w.w === 1) { sdSay(SD_TURN_WAIT_LINE); return; }
     if (w.x !== 1) return;
@@ -24996,7 +24996,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       hurtPlayer(playerEntity, dmg, { bypassShield: true, spare: () => {} });   // AUDIT SD III (F10): it leaves me at one, never dead - one life a Hollow
       flashPlayerDamage(dmg);
     }
-    sdSay(SD_HALL_TEXT.snap);
+    sdSay(sdSnapLine(_sdHall));   // RPT1026-EVENTS ORRERY-HANDS: the snap, and whom it lashes by name
   }
   /** SD7b: THE HOUR CASTS ME BACK (the mode machine has stood me on my span's checkpoint - scenes/superDungeon/sdSteps.js): what the
    *  void costs, a share of my health no shield takes, and the line. */

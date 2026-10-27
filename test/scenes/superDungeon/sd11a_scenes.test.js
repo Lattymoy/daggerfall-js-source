@@ -28,7 +28,7 @@ import {
   SD_STONE_SIZE, SD_DIAL, SD_EMBLEM, SD_HAND, SD_PLAQUE,
 } from '../../../src/world/superDungeon/sdHall.js';
 import { SD_HALL_ATLAS, SD_HALL_ATLAS_RECORD, SD_HALL_GLOW_RECORD } from '../../../src/world/superDungeon/sdHallArt.js';
-import { createSdHall, ensureSdHallArt, sdStoneKey, SD_HALL_TEXT } from '../../../src/scenes/superDungeon/sdHall.js';
+import { createSdHall, ensureSdHallArt, sdStoneKey, SD_HALL_TEXT, sdHallNamed, sdSnapLine } from '../../../src/scenes/superDungeon/sdHall.js';
 import { createSdSteps, ensureSdStepsArt, sdStepKey, SD_CHECKS_KEY } from '../../../src/scenes/superDungeon/sdSteps.js';
 import { createSdRemnant, ensureSdRemnantArt, SD_GEAR_DRAWS, SD_DECOR_DRAWS } from '../../../src/scenes/superDungeon/sdRemnant.js';
 import { SD_RIG_PARTS } from '../../../src/scenes/superDungeon/sdRemnantRig.js';   // SD17 (PIN MOVED): the bodies' parts
@@ -620,6 +620,7 @@ test('AUDIT SD II L2 F17: THE HALL\'S WORD FORGOTTEN OUT OF THE REALM, run from 
     sdSpoilsBurst: { leave() {}, frame() {} }, sdBlows: { leave() {}, frame() {} }, player: { pos: [0, 0, 0] }, playerEntity: { health: 10, maxHealth: 10 },
     sdDungeonToRealm: () => [0, 0, 1e9], sdBarNear: () => false, remnantBarModel: () => null, drawGateBossBar() {}, gamePaused: () => false, townTalk: { hudHidden: false },
     inOrreryHall, SD_FRAY_LASH, hurtPlayer() {}, flashPlayerDamage() {}, setMidScreenText() {}, SD_HALL_TEXT,
+    sdHallNamed, sdSnapLine, peerName: () => null, online: null,   // PIN MOVED (RPT1026-EVENTS ORRERY-HANDS): the hall's word kept named off the roster - a copy of the realm's
     // SD14a, SD15 (PIN MOVED): the voice and the arena read in the fight's frame
     sdRemVoice: { leave() {}, frame() {} }, cam: { yaw: 0 }, SD_ARENA: { x: 0, z: 0 }, sdPerilAt: () => null, sdGroundModel: () => null,
     sdBeats: { frame: () => null, leave() {} }, titleCardModel: () => null, drawGateGround() {}, drawSdTitleCard() {},
@@ -631,7 +632,7 @@ test('AUDIT SD II L2 F17: THE HALL\'S WORD FORGOTTEN OUT OF THE REALM, run from 
   const word = { k: 'pz', s: 3, st: [1, 2, 3, 4, 5, 6], f: 0, lit: 6, ok: true };
   h.sdHallHeard(word);
   h.sdFightFrame();
-  assert.equal(h.sdHallWord(), word, 'in its Hour: the hall\'s');
+  assert.deepEqual(h.sdHallWord(), word, 'in its Hour: the hall\'s');
   assert.equal(h.sdConcordHere(), true);
   slot = null;
   h.sdFightFrame();
@@ -639,7 +640,7 @@ test('AUDIT SD II L2 F17: THE HALL\'S WORD FORGOTTEN OUT OF THE REALM, run from 
   assert.equal(h.sdHallWord(), null, 'back in the same slot\'s Hour: forgotten, until the realm says it again');
   assert.equal(h.sdConcordHere(), false, 'and no Concord held over');
   h.sdHallHeard(word);
-  assert.equal(h.sdHallWord(), word, 'the realm\'s own word, heard');
+  assert.deepEqual(h.sdHallWord(), word, 'the realm\'s own word, heard');
   // the hall's set hears a first word as where the stones ARE - no turn, no chime, no line (SD6c)
   const said = [], hall = createSdHall({ renderer: fakeRenderer(), s: 3, say: (x) => said.push(x) });
   hall.stand({ dynamicDraws: [], collider: null });

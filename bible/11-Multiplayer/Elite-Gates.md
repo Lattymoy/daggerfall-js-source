@@ -10445,3 +10445,37 @@ EGZ-host-egnow-on-the-welcome).
 Anvil's arc's, and not touched here.
 
 **The game.** Nothing in `src/` moved. **The four hosts.** None touched (HOST-SPLIT).
+
+### RPT1026-EVENTS - 2026-10-26 - A REDOUBT'S SPOILS PRESSED IN THE SPIRE, AND A WINDOW THAT SLEPT TAKEN INTO THE NEXT CIRCLE
+
+Two private reports each, from players of the Elite Breach.
+
+**SPIRE-SPOILS** (two reports: a Redoubt's spoils lay on the Court's floor and none of them could be taken). A
+Redoubt's spoils are thrown from its Court's
+heart into the Hour's floor pool (`scenes/world.js` egSpoilsPaid, kept to the Court's floor by
+`scenes/eliteGates/egClient.js` beaconAt), and the press takes a piece as a target the one ray wins. The gate's court
+(`scenes/gate/gateStand.js`) and the Hour's realm (`scenes/worldModes.js` standSdRealm) stand the pool's targets and their
+names in the context they stand in. The Spire's circle stood neither, so every piece lay drawn on the Court's floor, its
+line rising, and no press reached it. Leaving the Spire took it to the pack, and since LOST-SPOILS to the mailbox, so
+nothing was lost, but nothing could be picked up where it lay. Now the circle (`scenes/eliteGates/egCircleHost.js`
+standEgHall) stands the pool's targets (`addActivationTargets`) and its names (`addActivationNamer`) as the court and the
+realm do.
+
+**SPIRE-CATCHUP** (a report: a member whose window was in the background when the rest ended stayed in the finished
+circle and lost what they carried). The company steps into its next circle in the rest's end. A member's page took that step on the frame that
+first saw the new circle, but only while the room's stage read `arrive` (the gather's seconds, thirty at most). A hidden
+window draws no frame, while its socket's words still come, so the state woke past the arrival into the trial. Every
+frame after it returned in the finished Court until the absent law (`EG_ABSENT_TRIAL_MS`, 180 s) cast the member out,
+and the Reliquaries they carried with them. Now a member is taken into the company's circle at whatever stage it first
+draws, unless that stage is the rest (the one stage whose next circle is still being built). They land on its arrival
+plate and walk to the fight as a late arrival does.
+
+**Not DFU members:** Daggerfall has no shared run, no Redoubt and no company. Ledger A (EG).
+
+**Pins:** `test/scenes/eliteGates/rpt1026_events_spire.test.js` (2). SPIRE-SPOILS: the real circle stood into a context
+of the dungeon host's shape, and the real pool throwing a Redoubt's real spoils (`egSpoilsList`) from the Court's heart
+over the circle's own collider; each piece offered, named and picked. SPIRE-CATCHUP: played against the relay's real Room
+(EG-PLAY's harness), with a hidden window's beats beside it (the room's words, no frame, no pose). The member stays in
+circle 1 while the room fights circle 2's trial; it is in circle 2, on its arrival plate and alive, at its first frame.
+It failed before the fix (circle 1, not 2). `tools/mutants/rpt1026_events.json` (SPIRE-SPOILS 2, SPIRE-CATCHUP 1, all
+dead). **The four hosts:** none grown; `createEgClient` changed in one existing line (its ceiling holds).

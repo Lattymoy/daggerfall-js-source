@@ -239,12 +239,19 @@ export function orreryStep(o, state, i, a) {
  * every one of 200 slots, against a perfect team of six). Every turn moves the road (orreryShortest) by exactly one -
  * a turn changes its own stone's share of the way alone, the gearing's back-substitution cancelling the rest - so a turn
  * either brings the Concord nearer or puts it further off, and the law counts the second. A turner that has lengthened
- * the road SD_TURN_LONG_MAX times this thread turns no more while another turner has turned within SD_TURN_COMPANY_MS:
- * a lone learner is never held (the thread is all theirs), a solver who knows the way is never held (its turns shorten
- * it), and a griefer spends at most a dozen of the forty-eight - six turns the wrong way and their six mendings - however
- * it alternates. Guests turn as ONE turner (orreryTurnerOf - the census's law: a guest is one click). A turn refused is
+ * the road SD_TURN_LONG_MAX times in this Hollow (this thread, until RPT1026-EVENTS ORRERY-HANDS, below) turns no more while
+ * another turner has turned within SD_TURN_COMPANY_MS: a lone learner is never held (the thread is all theirs), a solver
+ * who knows the way is never held (its turns shorten it), and a griefer spends at most a dozen of the forty-eight - six
+ * turns the wrong way and their six mendings - however it alternates, once a Hollow. Guests turn as ONE turner (orreryTurnerOf - the census's law: a guest is one click). A turn refused is
  * nothing (no fray, no word but the refusal) and reads nothing a turn's own word does not already carry. The state is
- * the realm's, in memory, fresh at every snap: `{ by: { [turner]: { long, at } }, ids: { [peer id]: net } }`.
+ * the realm's, in memory: `{ by: { [turner]: { long, at } }, ids: { [peer id]: net } }` - the lash's nets (`ids`) fresh at
+ * every snap, the turners' counts (`by`) kept for the Hollow (orreryRightsSnapped).
+ * RPT1026-EVENTS ORRERY-HANDS (a private report: a crowded Orrery held unsolved for half an hour, the reporter blaming unseen
+ * players turning the stones the wrong way on purpose): the snap began a
+ * fresh thread for the counts too, so every griefer's dozen came back at every snap - a handful of them spent the fray's
+ * forty-eight between them, the Hour snapped back, and they spent it again, for as long as they cared to. A hand's
+ * lengthening is counted for the Hollow now: its six spent, it waits while others turn until the Hollow is gone, whatever
+ * the snaps. A lone learner is still never held, and a solver who knows the way never is.
  */
 export const SD_TURN_LONG_MAX = 6;
 export const SD_TURN_COMPANY_MS = 60_000;
@@ -252,6 +259,9 @@ export const SD_TURN_COMPANY_MS = 60_000;
 export const SD_TURN_WAIT_LINE = 'The stones will not answer you while others turn them.';
 /** A thread's rights, fresh. */
 export const orreryRightsFresh = () => ({ by: /** @type {Record<string, { long: number, at: number }>} */ ({}), ids: /** @type {Record<string, number>} */ ({}) });
+/** RPT1026-EVENTS ORRERY-HANDS: the rights past a snap - the lash's nets begun again with the thread, each turner's count of
+ *  the road it lengthened kept for the Hollow. */
+export const orreryRightsSnapped = (R) => ({ by: R.by, ids: /** @type {Record<string, number>} */ ({}) });
 /** Who a turn is counted to: a registered account by its own name, every guest as one. */
 export const orreryTurnerOf = (sub, guest) => (guest ? 'guests' : `a:${sub}`);
 /** May `who` turn at `now`? */
