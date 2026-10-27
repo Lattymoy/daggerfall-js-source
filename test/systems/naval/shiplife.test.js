@@ -345,6 +345,9 @@ test('SHIP-LIFE A SHIP TAKEN OVER: her errand never rides the word - the heir wh
 
 test('SHIP-LIFE the world\'s wiring by source: the host is handed the port near the player, its footprint in the scene from its native rect through the floating origin, asked once a pixel', () => {
   assert.match(WORLD, /harbourNear: navalHarbourNear,/);
-  assert.match(WORLD, /const r = locationWorldRect\(t\.loc, t\.x, t\.y\);\n\s*const \[ax, az\] = state\.localFromWorld\(r\.minX, r\.minZ\), \[bx, bz\] = state\.localFromWorld\(r\.maxX, r\.maxZ\);/);
+  // PIN MOVED (RPT1026-WORLD FAR-QUAY): the footprint is made in systems/naval/harbourBook.js harbourOf, which the host
+  // maps over every port town near the player
+  assert.match(readFileSync(new URL('../../../src/systems/naval/harbourBook.js', import.meta.url), 'utf8'), /const r = locationWorldRect\(t\.loc, t\.x, t\.y\);\n\s*const \[ax, az\] = state\.localFromWorld\(r\.minX, r\.minZ\), \[bx, bz\] = state\.localFromWorld\(r\.maxX, r\.maxZ\);/);
+  assert.match(WORLD, /harbourOf\(t, \{ state, built: csaPixelAt, woods \}\)/);
   assert.match(WORLD, /if \(_navalHarbourAt\?\.key !== key\) \{/);
 });

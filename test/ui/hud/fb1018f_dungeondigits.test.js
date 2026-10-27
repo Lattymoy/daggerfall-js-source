@@ -182,7 +182,8 @@ test('DUNGEON-DIGITS WHY OUTSIDE WORKED: the street\'s and a building\'s frames 
   assert.match(hud('src/scenes/exterior.js'), /cursorActive: gamePaused\(\),/, 'exterior.js');
   assert.match(hud('src/scenes/worldModes.js'), /cursorActive: overlayHeld,/, 'worldModes.js, the interior arm');
   assert.match(hud('src/scenes/dungeonContext.js'), /cursorActive: !!activeOverlay,/, 'dungeonContext.js, drawFoes\' own');
-  assert.match(rd('src/scenes/worldModes.js'), /if \(dungeonCtx\.uiOverlayActive\) \{ dungeonCtx\.hideHudText\?\.\(\); hideWorldPlaque\(\); dungeonCtx\.tickOverlay\(dt\);/, 'worldModes.js, the dungeon arm\'s window branch');
+  // PIN MOVED (RPT1026-FIGHTS WINDOW-ONLINE): the arm's window test is windowHoldsDungeon's - a window holds the dungeon offline, or over a death online (scenes/windowWorld.js)
+  assert.match(rd('src/scenes/worldModes.js'), /if \(windowHoldsDungeon\(dungeonCtx\.uiOverlayActive, aliveUnder\(\)\)\) \{ dungeonCtx\.hideHudText\?\.\(\); hideWorldPlaque\(\); dungeonCtx\.tickOverlay\(dt\);/, 'worldModes.js, the dungeon arm\'s window branch');
   assert.match(rd('src/scenes/dungeon.js'), /if \(ctx\.uiOverlayActive\) \{\n\s+ctx\.hideHudText\?\.\(\); hideWorldPlaque\(\); ctx\.tickOverlay\(dt\); ctx\.drawOverlay\(canvas\);/, 'dungeon.js');
   assert.match(rd('src/scenes/dungeonContext.js'), /hideHudText: \(\) => hideHudTextSurfaces\(hudText\),/, 'the context\'s door is hud.js\'s');
   assert.match(rd('src/scenes/dungeonContext.js'), /get overlayIsNative\(\) \{ return !!activeOverlay\?\.isChoiceWindow; \},/, 'the slot this test stands for: a native window is handed the raw code');

@@ -51,6 +51,8 @@ import { isShieldTemplate } from './armorMaterials.js';
 import { lanternAtWaist } from './playerTorch.js';   // BELT-WAIST: a lantern at the waist takes no hand
 import { itemLongName, conditionPercentage } from './item/itemInfo.js';
 import { isEnchanted } from './inventory.js';   // UI2: an enchanted piece shows its wear (its powers spend its condition - the pack's rule)
+import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';   // RPT1026-PROGRESS: a worn piece's Cast When Used
+import { isPower } from './enchantmentCatalogue.js';   // AUDIT RPT1026 F2: a power beside Cast When Used, never a side effect's cost
 import { shownSpellName } from './loot/loot.js';   // L10N3e: a slotted spell's name as the book shows it - the stored name stays the canonical one
 import { isAmmunition } from './item/itemTemplates.js';   // THUNDERLOCK-ART: a stack of shot shows its count, never a wear bar (the pack's rule)
 
@@ -1006,9 +1008,27 @@ export function hotbarKindOf(item) {
   if (isLightSource(item)) return 'light';
   if (isShieldItem(item)) return 'shield';   // SHIELD1: a shield goes on the bar and a press straps it on
   if (item.group === 'Weapons' && item.templateIndex !== ARROW) return 'weapon';
-  if (getEquipSlot({}, item) !== EQUIP_SLOTS.None) return 'wear';   // UI2: a throwaway table - the rule is the item's
+  if (getEquipSlot({}, item) !== EQUIP_SLOTS.None) return castsWhenUsed(item) && !wornForMore(item) ? 'use' : 'wear';   // UI2: a throwaway table - the rule is the item's; RPT1026-PROGRESS: a power to use is used; AUDIT RPT1026 F2: unless wearing it is worth something too
   return 'use';
 }
+
+/** RPT1026-PROGRESS (a private report: a jewel's power slotted on the bar only put the jewel
+ *  on or took it off): A WORN PIECE WITH A POWER TO USE IS USED. A piece carrying Cast When Used (a jewel, a robe, a helm) is put on
+ *  the bar to cast it - the pack's Use, which is DFU's (DaggerfallInventoryWindow.UseItem's enchanted arm:
+ *  DoItemEnchantmentPayloads(Used)) - where UI2 had every piece a body slot takes worn or taken off. A weapon still
+ *  readies and a shield still straps on: in hand is where theirs work. A slot saved as 'wear' asks the piece at the
+ *  press (hotbarPress). */
+const castsWhenUsed = (item) => Array.isArray(item?.enchantments) && item.enchantments.some((e) => e?.type === ENCHANTMENT_TYPES.CastWhenUsed);
+/** AUDIT RPT1026 F2 (JEWEL-USED made such a piece cast and nothing else): A PIECE WHOSE WEARING IS WORTH SOMETHING TOO - its
+ *  armour, or another power beside its Cast When Used (Cast When Held, Enhances Skill, Absorbs Spells, Regens Health: a
+ *  power's price, never a side effect's or a bound soul's - enchantmentCatalogue.js isPower), each of which works only
+ *  worn; Feather Weight is the one that weighs the piece wherever it lies (enchantments.js worksUnworn's note). Every press
+ *  cast such a piece, so a Warlock's Ring, a Lord's Mail or a made amulet of Lightning and Water Walking could not be put
+ *  on from the bar, a slot saved as worn included. Its slot stays worn: the press puts it on, and casts once it is on
+ *  (hotbarPress). */
+const ENCHANTMENT_NAME = Object.freeze(Object.fromEntries(Object.entries(ENCHANTMENT_TYPES).map(([name, type]) => [type, name])));
+const wornForMore = (item) => item?.group === 'Armor'
+  || (Array.isArray(item?.enchantments) && item.enchantments.some((e) => e?.type !== ENCHANTMENT_TYPES.CastWhenUsed && e?.type !== ENCHANTMENT_TYPES.FeatherWeight && isPower(ENCHANTMENT_NAME[e?.type])));
 
 /** SHIELD1: a shield is Armor with a shield template (armorMaterials.js SHIELD_VALUES) - buckler to tower. */
 const isShieldItem = (item) => item?.group === 'Armor' && isShieldTemplate(item?.templateIndex);
@@ -1217,6 +1237,8 @@ export function hotbarPress(i, { entity = null, doors = {}, say = null } = {}) {
     if (typeof doors.quickSwap !== 'function') return { kind: 'none' };
     return through('swap', { key: e.key, name: e.name }, () => doors.quickSwap(), 'equipped');
   }
+  const worn = e.kind === 'wear' ? hotbarView(entity)[i]?.item : null;   // AUDIT RPT1026 F2: a piece worth wearing is cast once it is on
+  if (castsWhenUsed(worn) && (!wornForMore(worn) || isEquipped(worn)) && typeof doors.quickUse === 'function') return through('c1', { key: e.key, name: e.name }, () => doors.quickUse(1), 'used');   // RPT1026-PROGRESS: a slot saved before it, its piece's power used
   if (e.kind === 'shield' || e.kind === 'wear') return (_performed = hotbarWear(entity, e, say));   // UI2: any worn piece, the shield's way
   // UI2: ANYTHING ELSE IS USED, the consumable's own door - the host's quick use is the pack's Use (useItem and its
   // ladder: a book, a map, the spellbook, food, a tent), refusals and all

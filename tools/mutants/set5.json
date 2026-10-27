@@ -182,7 +182,7 @@
   {
     "name": "SET5-the-huds-chips-unwired",
     "file": "src/scenes/world.js",
-    "old": "  setHudSetChips((e) => [...setHudChips(e), ...lootHudChips(e)]);   // SET5: the set powers' windows and recoveries, as chips after the HUD's effects; LOOT5: and the Legendary powers' beside them\n",
+    "old": "  setHudSetChips((e) => [...setHudChips(e), ...lootHudChips(e), ...martialHudChips(e)]);   // SET5: the set powers' windows and recoveries, as chips after the HUD's effects; LOOT5: and the Legendary powers' beside them; RPT1026-PROGRESS: and a martial path's passive (Flowing Steel's stacks)\n",
     "new": "",
     "tests": [
       "test/systems/set5_ui.test.js"

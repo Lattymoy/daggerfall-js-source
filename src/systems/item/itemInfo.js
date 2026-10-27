@@ -54,10 +54,14 @@ import { isWeirKey } from '../eliteGates/weirKey.js'; import { EG_TEXT } from '.
 import { isIliacCard, isCardBinder, iliacCardName, iliacCardLines, BINDER_CARD_LINES, isCardPack, CARD_PACK_LINES } from '../iliac/iliacItems.js';   // CARDS8: a card's name and lines, the binder's
 import { isSurvivalItem, isCampingEquipment, isCampfireKit, isSkillet } from '../survival/items.js';   // SURV5: the survival items' own info box
 import { isFood, foodOf, foodStage, foodSatiety, isWaterskin, waterIn, WATERSKIN_CAPACITY_KG, STAGE_WORDS, FOOD_STAGE } from '../survival/food.js';   // ROAD-U: the identity DFU reads off the item's own record
-import { localizedText, localizedTable, formatText } from '../textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { localizedText, localizedTable, formatText, t } from '../textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; RPT1026-CLIENT: and the Weir Key's account line
 import { getLocalizedItemName, getLocalizedMagicItemName, getLocalizedEnemyName } from '../textManager.js';   // L10N3e: the names of things, by their own ids
 import { getMagicItemTemplates } from '../loot/loot.js';   // L10N3e: the MAGIC.DEF template a magic item's name came from
 import { makerMark, PROVENANCE_RE } from '../../net/recipeLaw.js';   // AUDIT 30 C7: a maker's mark as the law writes it
+/** RPT1026-CLIENT (private reports: Weir Keys that seemed to vanish, and one back again at the next sign-in): the Weir Keys are the
+ *  account's balance (Elite-Gates.md section 5), shared by every character on it, and nothing the player saw said so. The
+ *  card's second line - EG_TEXT's own lines ride the relay's bundle, so this one is the card's. */
+export const weirKeySharedLine = () => t('eg.key.shared', 'Every character on your account shares the same Weir Keys.');
 
 /** The thirteen ids GetItemInfo names as constants (:750-762). */
 export const INFO_TEXT = Object.freeze({
@@ -872,7 +876,7 @@ export function survivalInfoTokens(item) {
   else if (isSkillet(item)) out.push({ text: 'Cooking at a campfire goes twice as fast.', center: true });
   else if (isRestItem(item)) for (const text of restItemLines(item)) out.push({ text, center: true });   // REST6
   else if (isPortalStone(item)) for (const text of portalStoneLines()) out.push({ text, center: true });   // PORTAL1
-  else if (isWeirKey(item)) out.push({ text: EG_TEXT.keyLine, center: true });   // AUDIT EG V (c, L8-6): the Weir Key's line (section 5), its name and weight above it
+  else if (isWeirKey(item)) out.push({ text: EG_TEXT.keyLine, center: true }, { text: weirKeySharedLine(), center: true });   // AUDIT EG V (c, L8-6): the Weir Key's line (section 5), its name and weight above it; RPT1026-CLIENT: and whose the keys are
   else if (isSoulCake(item)) for (const text of SOUL_CAKE_TEXT.cake()) out.push({ text, center: true });   // WITCH1
   else if (isHearthOffering(item)) for (const text of SOUL_CAKE_TEXT.offering()) out.push({ text, center: true });   // WITCH1
   else if (isStarglass(item)) for (const text of STARGLASS_TEXT.glass()) out.push({ text, center: true });   // AUDIT STAR I2

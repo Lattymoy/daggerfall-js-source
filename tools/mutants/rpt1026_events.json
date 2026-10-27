@@ -1,0 +1,404 @@
+[
+  {
+    "name": "KETCH-OWED-paid-owed-again",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "ktWholeBridge(b) && !paidKeys.has(paidKey(ws.fi, b.i)) && ",
+    "new": "ktWholeBridge(b) && ",
+    "tests": [
+      "test/net/ketch/rpt1026_events_ketch.test.js"
+    ],
+    "note": "the defect as reported: a whole bridge's blow paid is owed again by the next word folded in its breath - the Discord lands once a word"
+  },
+  {
+    "name": "KETCH-OWED-paid-not-remembered",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "      for (const o of owed) if (o.i === i) paidKeys.add(paidKey(o.fi, i));",
+    "new": "      for (const o of owed) if (o.i === -1) paidKeys.add(paidKey(o.fi, i));",
+    "tests": [
+      "test/net/ketch/rpt1026_events_ketch.test.js"
+    ],
+    "note": "paid, never kept: the same defect from the other end"
+  },
+  {
+    "name": "KETCH-OWED-paid-kept-past-the-fight",
+    "file": "src/net/ketch/ketchLink.js",
+    "old": "if (!ws || (was.ws && ws.fi !== was.ws.fi)) { owed = owed.filter((b) => ws && b.fi === ws.fi); paidKeys.clear(); }",
+    "new": "if (!ws || (was.ws && ws.fi !== was.ws.fi)) { owed = owed.filter((b) => ws && b.fi === ws.fi); }",
+    "tests": [
+      "test/net/ketch/rpt1026_events_ketch.test.js"
+    ],
+    "equivalent": true,
+    "why": "the keys carry their fight's number (`fi:i`), so a later fight's blow of the same number is a new key whether or not the old ones are cleared - the clear only bounds the set, which the trim also does"
+  },
+  {
+    "name": "SPIRE-SPOILS-targets-never-offered",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "    ctx.addActivationTargets?.(() => host.spoilTargets?.() ?? NO_TARGETS);",
+    "new": "",
+    "tests": [
+      "test/scenes/eliteGates/rpt1026_events_spire.test.js"
+    ],
+    "note": "the defect as reported: the Spire's circle offers the ray none of the Redoubt's pieces"
+  },
+  {
+    "name": "SPIRE-SPOILS-pieces-never-named",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "key.startsWith('spoil') ? host.spoilName?.(key) ?? null : null));",
+    "new": "key.startsWith('spoil') ? null : null));",
+    "tests": [
+      "test/scenes/eliteGates/rpt1026_events_spire.test.js"
+    ],
+    "note": "a piece offered and never named: the plaque says nothing over it"
+  },
+  {
+    "name": "SPIRE-CATCHUP-arrival-alone",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "{ if (E.sg !== 'rest' || returning === E.b) swapTo(E, c); return; }",
+    "new": "{ if (E.sg === 'arrive' || returning === E.b) swapTo(E, c); return; }",
+    "tests": [
+      "test/scenes/eliteGates/rpt1026_events_spire.test.js"
+    ],
+    "note": "the defect as reported: the company's circle stepped into in its arrival alone - a hidden window that slept through it stays in the finished Court"
+  },
+  {
+    "name": "VOICE-CAP-bound-off",
+    "file": "src/systems/audio.js",
+    "old": "  if (live.length < max) return { play: true, steal: null };",
+    "new": "  if (live.length < max || true) return { play: true, steal: null };",
+    "tests": [
+      "test/systems/rpt1026_events_audio.test.js"
+    ],
+    "note": "the defect as reported: every shot a voice, without end"
+  },
+  {
+    "name": "VOICE-CAP-quietest-never-stolen",
+    "file": "src/systems/audio.js",
+    "old": "  return q && level >= q.level ? { play: true, steal: q } : { play: false, steal: null };",
+    "new": "  return q && level >= q.level ? { play: true, steal: null } : { play: false, steal: null };",
+    "tests": [
+      "test/systems/rpt1026_events_audio.test.js"
+    ],
+    "note": "past the bound a louder shot plays over the quietest without fading it out - the count runs past the bound"
+  },
+  {
+    "name": "VOICE-CAP-stolen-left-sounding",
+    "file": "src/systems/audio.js",
+    "old": "        v.src.stop(now + VOICE_FADE_S + 0.02);",
+    "new": "        void 0;",
+    "tests": [
+      "test/systems/rpt1026_events_audio.test.js"
+    ],
+    "note": "a stolen voice faded but never stopped"
+  },
+  {
+    "name": "VOICE-CAP-distance-unread",
+    "file": "src/systems/audio.js",
+    "old": "const L0 = this._listener, level = volume * this._scale * distanceGain(",
+    "new": "const L0 = this._listener, level = volume * this._scale * 1 * (",
+    "tests": [
+      "test/systems/rpt1026_events_audio.test.js"
+    ],
+    "note": "a positional shot judged at its own level wherever it stands - the far one steals a near one's voice"
+  },
+  {
+    "name": "VOICE-CAP-chain-kept",
+    "file": "src/systems/audio.js",
+    "old": "      done = true; v.ended = true;   // its voice free: the next take's sweep lets it go\n      releaseNodes(src, gain, pan);",
+    "new": "      done = true; v.ended = true;   // its voice free: the next take's sweep lets it go",
+    "tests": [
+      "test/systems/rpt1026_events_audio.test.js"
+    ],
+    "note": "a one-shot's chain left wired into the bus as it ends - the leak as it was"
+  },
+  {
+    "name": "VOICE-CAP-voice-never-freed",
+    "file": "src/systems/audio.js",
+    "old": "      done = true; v.ended = true;   // its voice free: the next take's sweep lets it go",
+    "new": "      done = true;",
+    "tests": [
+      "test/systems/rpt1026_events_audio.test.js"
+    ],
+    "note": "an ended shot keeps its voice until its clip's time is out - the bus counts the dead"
+  },
+  {
+    "name": "GATE-WAY-reach-off",
+    "file": "src/systems/eventGround.js",
+    "old": "  for (const f of feet) if (f && Math.hypot(f[0] - p[0], f[2] - p[2]) <= r) return f;",
+    "new": "  for (const f of feet) if (f && Math.hypot(f[0] - p[0], f[2] - p[2]) <= 0) return f;",
+    "tests": [
+      "test/scenes/rpt1026_events_gateway.test.js"
+    ],
+    "note": "the ground shrunk to the gate's own point"
+  },
+  {
+    "name": "GATE-WAY-pool-unread",
+    "file": "src/systems/eventGround.js",
+    "old": "    if (feet?.length && groundNear(feet, p, r)) return name;",
+    "new": "    if (false && feet?.length && groundNear(feet, p, r)) return name;",
+    "tests": [
+      "test/scenes/rpt1026_events_gateway.test.js"
+    ],
+    "note": "no pool's gate read"
+  },
+  {
+    "name": "GATE-WAY-gate-never-said",
+    "file": "src/scenes/gate/gatePool.js",
+    "old": "  setEventGround('gate', () => (place ? [place.origin] : null));",
+    "new": "  setEventGround('gate', () => null);",
+    "tests": [
+      "test/scenes/rpt1026_events_gateway.test.js"
+    ],
+    "note": "the defect as reported: a Dagon's Breach keeps no ground"
+  },
+  {
+    "name": "GATE-WAY-arches-never-said",
+    "file": "src/scenes/eliteGates/egArch.js",
+    "old": "  setEventGround('arch', () => (arches.size ? [...arches.values()].filter((a) => a.place).map((a) => a.place.origin) : NO_LIST));",
+    "new": "  setEventGround('arch', () => NO_LIST);",
+    "tests": [
+      "test/scenes/rpt1026_events_gateway.test.js"
+    ],
+    "note": "an Elite Breach's arch keeps no ground"
+  },
+  {
+    "name": "GATE-WAY-stars-never-said",
+    "file": "src/scenes/starfall/starfallHost.js",
+    "old": "for (const S of stars.values()) if (S.phase === 'streak' || S.phase === 'fallen') out.push(S.heart); return out; });",
+    "new": "for (const S of stars.values()) if (S.phase === 'none') out.push(S.heart); return out; });",
+    "tests": [
+      "test/scenes/rpt1026_events_gateway.test.js"
+    ],
+    "note": "a fallen star keeps no ground"
+  },
+  {
+    "name": "GATE-WAY-stone-pick-unasked",
+    "file": "src/systems/portalStone.js",
+    "old": "  return p.at && eventGroundAt(p.at) ? { refused: 'event' } : p;",
+    "new": "  return p;",
+    "tests": [
+      "test/scenes/rpt1026_events_gateway.test.js"
+    ],
+    "note": "the defect as reported: the stone's portal opens before the gate"
+  },
+  {
+    "name": "GATE-WAY-host-pick-unasked",
+    "file": "src/scenes/world.js",
+    "old": "    const place = portalStonePlace(feet, cam.yaw, {",
+    "new": "    const place = portalPlace(feet, cam.yaw, {",
+    "tests": [
+      "test/scenes/rpt1026_events_gateway.test.js"
+    ],
+    "note": "the world host's pick asks the place law alone"
+  },
+  {
+    "name": "GATE-WAY-peer-word-believed",
+    "file": "src/scenes/portalGates.js",
+    "old": "    if (offGround(toScene(r.p))) return false;",
+    "new": "    void 0;",
+    "tests": [
+      "test/scenes/rpt1026_events_gateway.test.js"
+    ],
+    "note": "a peer's word of a portal on the gate's ground believed - a modded opener's stands"
+  },
+  {
+    "name": "GATE-WAY-standing-left-open",
+    "file": "src/scenes/portalGates.js",
+    "old": "      if (offGround(at)) { drop(g); continue; }",
+    "new": "      void 0;",
+    "tests": [
+      "test/scenes/rpt1026_events_gateway.test.js"
+    ],
+    "note": "the defect as reported: a portal laid as the gate rose takes the crowd running to the fire"
+  },
+  {
+    "name": "GATE-WAY-call-portal-dropped",
+    "file": "src/scenes/eliteGates/egCall.js",
+    "old": "eventGround: false",
+    "new": "eventGround: true",
+    "tests": [
+      "test/scenes/rpt1026_events_gateway.test.js"
+    ],
+    "note": "the Elite Breach's call's own portal closed on its own arch's ground - the way in shut"
+  },
+  {
+    "name": "GATE-WAY-wagon-drawn",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "      p.offGround = p.wagon?.kind === HCC_WIRE_KIND.Deployed && !!eventGroundAt(p.wagon.position);",
+    "new": "      p.offGround = false;",
+    "tests": [
+      "test/scenes/rpt1026_events_gateway.test.js"
+    ],
+    "note": "the defect as reported: their caravan parked across the gate draws"
+  },
+  {
+    "name": "ORRERY-HANDS-counts-begun-again",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "  for (const [k, v] of Object.entries(R.by)) by[k] = R.wt?.[k] ? { long: 0, at: v.at } : v;",
+    "new": "  for (const [k, v] of Object.entries(R.by)) by[k] = { long: 0, at: v.at };",
+    "tests": [
+      "test/net/superDungeon/rpt1026_events_orrery.test.js"
+    ],
+    "note": "the defect as reported: every griefer's dozen back at every snap - the Concord never comes (re-aimed by content, AUDIT RPT1026 I1: orreryRightsSnapped rebuilds the counts)"
+  },
+  {
+    "name": "ORRERY-HANDS-nets-kept",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "  return { by, ids: /** @type {Record<string, number>} */ ({}), wt:",
+    "new": "  return { by, ids: R.ids, wt:",
+    "tests": [
+      "test/net/superDungeon/rpt1026_events_orrery.test.js"
+    ],
+    "note": "the lash's nets carried past the snap - a thread's lash counts the last thread's turns (re-aimed by content, AUDIT RPT1026 I1)"
+  },
+  {
+    "name": "ORRERY-HANDS-relay-fresh",
+    "file": "server/src/index.js",
+    "old": "if (res.x) this._sdRights = { s, R: orreryRightsSnapped(R) };",
+    "new": "if (res.x) this._sdRights = { s, R: orreryRightsFresh() };",
+    "tests": [
+      "test/net/superDungeon/rpt1026_events_orrery.test.js",
+      "test/net/superDungeon/sd11b_relay.test.js"
+    ],
+    "note": "the realm begins the counts again at the snap"
+  },
+  {
+    "name": "ORRERY-HANDS-turner-unnamed",
+    "file": "src/scenes/superDungeon/sdHall.js",
+    "old": "  const by = name(w.id);",
+    "new": "  const by = null;",
+    "tests": [
+      "test/net/superDungeon/rpt1026_events_orrery.test.js"
+    ],
+    "note": "the turner named nowhere"
+  },
+  {
+    "name": "ORRERY-HANDS-lashed-unnamed",
+    "file": "src/scenes/superDungeon/sdHall.js",
+    "old": "  const lsn = Array.isArray(w.ls) ? w.ls.map(name).filter(Boolean) : null;",
+    "new": "  const lsn = null;",
+    "tests": [
+      "test/net/superDungeon/rpt1026_events_orrery.test.js"
+    ],
+    "note": "the snap's lashed named nowhere"
+  },
+  {
+    "name": "ORRERY-HANDS-snap-line-unnamed",
+    "file": "src/scenes/superDungeon/sdHall.js",
+    "old": "  if (!lsn.length) return SD_HALL_TEXT.snap;",
+    "new": "  if (!lsn.length || true) return SD_HALL_TEXT.snap;",
+    "tests": [
+      "test/net/superDungeon/rpt1026_events_orrery.test.js"
+    ],
+    "note": "the snap said as before, its names dropped"
+  },
+  {
+    "name": "ORRERY-HANDS-turner-never-kept",
+    "file": "src/scenes/superDungeon/sdHall.js",
+    "old": "      lastBy[w.i] = typeof w.by === 'string' ? w.by : '';",
+    "new": "      lastBy[w.i] = '';",
+    "tests": [
+      "test/net/superDungeon/rpt1026_events_orrery.test.js"
+    ],
+    "note": "the stone forgets whose hand it was"
+  },
+  {
+    "name": "ORRERY-HANDS-hover-unnamed",
+    "file": "src/scenes/superDungeon/sdHall.js",
+    "old": "...(lastBy[i] ? [SD_HALL_TEXT.lastBy(lastBy[i])] : [])",
+    "new": "...([])",
+    "tests": [
+      "test/net/superDungeon/rpt1026_events_orrery.test.js"
+    ],
+    "note": "the stone's hover names nobody"
+  },
+  {
+    "name": "ORRERY-HANDS-host-unnamed",
+    "file": "src/scenes/world.js",
+    "old": "    _sdHall = sdHallNamed(w, peerName, online?.id ?? null);",
+    "new": "    _sdHall = w;",
+    "tests": [
+      "test/net/superDungeon/rpt1026_events_orrery.test.js"
+    ],
+    "note": "the world host keeps the realm's word unnamed"
+  },
+  {
+    "name": "CROWD-KIN-crowd-never-said",
+    "file": "src/net/gate/gateCrowd.js",
+    "old": "  _crowdGone = gone;",
+    "new": "  void gone;",
+    "tests": [
+      "test/scenes/rpt1026_events_crowdkin.test.js"
+    ],
+    "note": "the crowd's cut asked by nobody"
+  },
+  {
+    "name": "CROWD-KIN-kin-drawn",
+    "file": "src/systems/combatVisuals.js",
+    "old": "  if (crowdKinHidden(foe)) return HIDDEN;   // RPT1026-EVENTS CROWD-KIN: a cut player's own stand with them\n",
+    "new": "",
+    "tests": [
+      "test/scenes/rpt1026_events_crowdkin.test.js"
+    ],
+    "note": "the defect as reported: a cut player's revenants drawn"
+  },
+  {
+    "name": "CROWD-KIN-ray-offered",
+    "file": "src/player/activate.js",
+    "old": "  if (!feet || crowdKinHidden(f)) return null;",
+    "new": "  if (!feet) return null;",
+    "tests": [
+      "test/scenes/rpt1026_events_crowdkin.test.js"
+    ],
+    "note": "an undrawn revenant still pressed and named under the crosshair"
+  },
+  {
+    "name": "CROWD-KIN-on-me-hidden",
+    "file": "src/net/gate/gateCrowd.js",
+    "old": "  return owner != null && !f._pupMine && (",
+    "new": "  return owner != null && (",
+    "tests": [
+      "test/scenes/rpt1026_events_crowdkin.test.js"
+    ],
+    "note": "a cut player's revenant hidden while it strikes me"
+  },
+  {
+    "name": "CROWD-KIN-world-foes-hidden",
+    "file": "src/net/gate/gateCrowd.js",
+    "old": "(f.companion != null || !!f.entity?.revenant || !!f.entity?.bandName) && crowdCutsPeer(owner);",
+    "new": "(true) && crowdCutsPeer(owner);",
+    "tests": [
+      "test/scenes/rpt1026_events_crowdkin.test.js"
+    ],
+    "note": "every foe a cut player's screen runs hidden - the street's encounter with them"
+  },
+  {
+    "name": "CROWD-KIN-companion-shown",
+    "file": "src/net/gate/gateCrowd.js",
+    "old": "(f.companion != null || !!f.entity?.revenant",
+    "new": "(false || !!f.entity?.revenant",
+    "tests": [
+      "test/scenes/rpt1026_events_crowdkin.test.js"
+    ],
+    "note": "a cut player's companion left standing"
+  },
+  {
+    "name": "CROWD-KIN-band-shown",
+    "file": "src/net/gate/gateCrowd.js",
+    "old": "|| !!f.entity?.bandName) && crowdCutsPeer(owner);",
+    "new": "|| false) && crowdCutsPeer(owner);",
+    "tests": [
+      "test/scenes/rpt1026_events_crowdkin.test.js"
+    ],
+    "note": "a cut player's revenant's band left standing"
+  },
+  {
+    "name": "CROWD-KIN-dungeon-owner-unread",
+    "file": "src/net/gate/gateCrowd.js",
+    "old": "  const owner = f?.puppet ?? f?._ownFrom ?? null;",
+    "new": "  const owner = f?.puppet ?? null;",
+    "tests": [
+      "test/scenes/rpt1026_events_crowdkin.test.js"
+    ],
+    "note": "a dungeon's puppet's owner never read - its companions stand"
+  }
+]

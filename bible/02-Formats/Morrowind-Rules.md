@@ -7155,7 +7155,9 @@ of it reached the screen. Four faults, each pinned in `test/combat/mwcast1.test.
   `combat/fpsSpellCasting.js` HOLDS its release for the Morrowind hands on
   screen - on their key, or when they stop casting without one, or at
   `HELD_RELEASE_MAX_S` (1.5 s) whatever happens, so nothing waits for ever.
-  The classic lane's frame 5 is untouched.
+  The classic lane's frame 5 is untouched. (CAST-PACE, below: an arm whose
+  group carries the key is now paced to bring it onto the classic frame 5,
+  and the spell leaves on that frame; the hold is an unpaced arm's.)
 - **The weapon stayed in the casting hand.** OpenMW shows no weapon in the
   Spell stance; a readied spell and a cast in flight put it out of the hand
   on both rigs (`weaponInHand`).
@@ -7257,7 +7259,11 @@ have casting speed a new rarity affix along with scaling with speed"*.
   base_anim.1st.kf, and no committed file carries them
   (`test/fixtures/mw/castClip.mjs` uses made-up times a pin can step to).
   If Mac's eye on a Morrowind cast says the classic lane is still quick or
-  now slow, change this one constant.
+  now slow, change this one constant. CAST-QUICK (2026-10-09, the owner:
+  "the casting got slowed in a update i think") put it back to DFU's 0.04 s
+  - the release at 0.2 s - and CAST-RECOVER holds the next cast 0.7 s from
+  the click; the 0.1 s here is history, and CAST-PACE (below) is how the
+  Morrowind hands keep that clock.
 - **The hands own their whole motion.** castInProgress closes at the
   release, and the hands play on for two more steps. A click in that tail
   found PlayOneShot refusing ("Do nothing if already playing anim"), and
@@ -7302,6 +7308,36 @@ have casting speed a new rarity affix along with scaling with speed"*.
 
 `test/systems/castspeed.test.js` (5), `test/systems/hostmagic.test.js` (the tail gate),
 `tools/mutants/castspeed.json` (17, all dead).
+
+## DECLARED DIVERGENCE (CAST-PACE, RPT1026-MISC, 2026-10-26): the Morrowind hands on the classic clock
+
+A private report: a caster with the Morrowind look got spells off more
+slowly than one with the Daggerfall look, whose hands move faster. True since
+CAST-QUICK: the classic hands let the spell go on frame 5, 0.2 s after the
+cast at rate 1, and the Morrowind hands held it for their spellcast group's
+"<type> release" (MW-CAST1) with the group played at the cast's rate - the
+section's own lead, longer, so the same caster's spell left later, and the
+next cast (castBusy reads the held release) waited on it.
+
+- **The section is paced to the spell's moment.** `combat/fpsSpellCasting.js`
+  `castReleaseS(rate)` is frame 5 at the cast's rate; `combat/weapon/weaponRig.js`
+  castSpellAnim hands it to `fpArm.castSpell(rangeType, rate, releaseIn)`,
+  and the arm plays its section at the pace that brings "<type> release" there
+  from "<type> start" (`blowRate`, MW-PACE1's fit of a blow to the machine's
+  hit and its bounds). `castPaced()` says the fit was made.
+- **A paced arm's spell leaves on frame 5**, the classic lane's own moment
+  (castSpellAnim's `armHolds`): the cast's time is the same whatever the hands
+  look like, to the frame. Only an arm with no release key to pace is still
+  held for its end (MW-CAST1's never-traps hold and its ceiling).
+- OpenMW plays the spellcast group at 1 and casts on the key; the port plays
+  it at the pace the classic clock asks. A DEPARTURE, Port-Ledger A
+  (CAST-PACE). A peer's and an NPC's arm are unchanged (they play at 1, as
+  CAST-SPEED says - only how it looks).
+
+`test/combat/rpt1026_misc_cast.test.js` (2: the real arm on MW-CAST1's
+fixture releasing within one step of the classic hands at rate 1 and 1.25,
+the rig's frame-5 release and the unpaced hold), `test/formats/morrowind/fparm.test.js`
+and `tools/mutants/mwcast1.json` (pins moved by content); `tools/mutants/rpt1026_misc.json` (5).
 
 ## DECLARED DIVERGENCE (BODY-MOTION, 2026-10-18): the third-person body's own motion over the clips
 

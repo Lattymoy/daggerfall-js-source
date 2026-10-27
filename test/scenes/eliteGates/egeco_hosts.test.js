@@ -36,7 +36,7 @@ test('EG-E3 THE FIND\'S HOST DOORS (section 5): the owner\'s death names the str
   assert.match(d, /raiseEnemyDeath\(foe\.entity, \{ luck: liveStat\(playerEntity, 'luck'\), by: foe\._killedBy \?\? null \}\);/);
   assert.match(d, /r\.v === \(opts\.selfId\?\.\(\) \?\? null\)\) egFindStruck\(f\.entity, roomLootOn\(\) && roomCanonOfFoe\(f\) != null\)\.catch\(\(\) => \{\}\);/);   // PIN MOVED (the merge of main into PR #800 - PARTY-LOOT): a room's body's key to the pack (test/systems/eliteGates/egeco_find.test.js)
   assert.match(w, /registerEgFind\(\{\s*ask: \(t\) => _accountEg\.find\(t\)/);
-  assert.match(w, /tierNow: \(\) => \(_mode\(\) === 'dungeon' && modes\?\.dungeonLocation \? dungeonTier\(modes\?\.dungeonLocation\) : null\)/);
+  assert.match(w, /placeNow: \(\) => egFindPlace\(_mode\(\), modes\),/);   // PIN MOVED (AUDIT RPT1026 K1): the tier and the visit - egFindPlace reads the dungeon's tier as this door did
   // the seam: the joiner's door reaches the registered find, and nothing once it is disposed
   const asked = [];
   const elite = { eliteFoe: true, items: [] };

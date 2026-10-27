@@ -291,7 +291,7 @@ test('TIME1 by source - THE FOUR HOSTS RULE: world.js installs the sky beside th
     assert.match(src, /let season = seasonPin \?\? climateSeasonFromMinutes\(skyMinutes\(\)\);/, `${name}: the season`);
     assert.match(src, /classicMinutes: playerTicker\.classicMinutes, skyMinutes: skyMinutes\(\),/, `${name}: the sky feed's two minutes`);
   }
-  assert.match(modes, /renderer\.setLighting\(new Float32Array\(isNight\(skyMinutes\(\) % 1440\)/, "worldModes.js: the interior's night");
+  assert.match(modes, /renderer\.setLighting\(new Float32Array\(roomAmbient\(isNight\(skyMinutes\(\) % 1440\)/, "worldModes.js: the interior's night");   // PIN MOVED (RPT1026-WORLD DARK-ROOM): an unlit room keeps the sky's ambient
   assert.match(modes, /now: \(\) => Math\.floor\(skyMinutes\(\)\),   \/\/ a VIEW on the one world clock; TIME1/, 'worldModes.js: the sunlight seam');
   assert.match(dungeon, /skyMinutes: sharedClockOn\(\) \? Math\.floor\(skyMinutes\(\)\) : null \}\)/, "dungeonContext.js: the rest's rounds read the sky");
   assert.match(dungeon, /now: \(\) => Math\.floor\(skyMinutes\(\)\),   \/\/ LIVED1: the sunlight seam/, 'dungeonContext.js: the sunlight seam');

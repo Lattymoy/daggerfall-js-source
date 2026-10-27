@@ -9,34 +9,69 @@ import { itemLookRows } from '../systems/item/itemLook.js';   // PACK-PICK: the 
 import { REGION_NAMES } from '../formats/mapsFile.js';
 import { homeMayEnter as vendorDoorOpen } from '../net/homeLaw.js';
 import { goldText as vendorGoldText } from '../net/marketLaw.js';
+import { createMarketArrivals } from '../net/marketArrivals.js';   // RPT1026-MARKET ARRIVE: what the market sends reaches the pack on its own
+import { t } from '../systems/textManager.js';
 
 /** @param {any} host */
 export function createVendorHost(host) {
   const {
     _townOfMapId, maps, marketBook, marketDrop, marketGoods, marketHubs, marketMint, marketPutBack, marksBook,
-    noticeBook, playerTravelPixel, profBook, showNoticeWindow, townTalk
+    noticeBook, playerTravelPixel, profBook, showNoticeWindow, townTalk, checkpointGateOpen
   } = host;
+  // RPT1026-MARKET ARRIVE (net/marketArrivals.js): the road read and the book settled as the character's session stands -
+  // once the checkpoint's own gate is open (the character spawned, its save the realm's, no duel) and the page is seen -
+  // at a courier's arrival, after a press whose own collect did not land, and as a trader's stall opens. A host that hands
+  // no gate (a test's) starts no clock.
+  const arrivals = createMarketArrivals({
+    book: marketBook, settle: () => marketBook.settle(marketMint, marketPutBack, marketDrop),
+    ready: () => checkpointGateOpen?.() === true && globalThis.document?.visibilityState !== 'hidden',
+  });
+  if (marketBook && typeof checkpointGateOpen === 'function') arrivals.start();
   // ═══ HOME-VENDOR (net/vendorLaw.js): THE TRADERS - a home's stall, the board's Vendors tab, the Vendor page ═══
   /** The region the player stands in (the purse's and the page's), or null. */
   const vendorRegionHere = () => { const p = playerTravelPixel(); try { const r = p ? maps.getRegionIndexAt(p.x, p.y) : null; return Number.isInteger(r) && r >= 0 ? r : null; } catch { return null; } };
   const vendorTownOf = (map) => _townOfMapId.get(Number(map) >>> 0)?.name || 'a town';
   const vendorNameOf = (it) => { try { return marketGoods.goodName(it); } catch { return 'a piece'; } };
-  /** A trader's piece LOOKED AT - `{ rows, magic }` (systems/item/itemLook.js itemLookRows: the look panel's stat rows and the
-   *  trade window's magic); PACK-PICK moved it there, so the Market's List form reads the same. Null for no piece. */
+  /** A trader's piece LOOKED AT - `{ rows, magic, stolen }` (systems/item/itemLook.js itemLookRows: the look panel's stat rows,
+   *  the trade window's magic and RPT1026-LEDGERLAW a stolen piece's card line); PACK-PICK moved it there, so the Market's
+   *  List form reads the same. Null for no piece. */
   const vendorItemStats = itemLookRows;
   const vendorSaid = (r, ok) => (r?.ok ? { ok: true, text: ok } : { ok: false, text: accountRefusalText(r?.error) });
+  /** RPT1026-MARKET ARRIVE: a press's own collect that did not land (another act of the record under way, a checkpoint
+   *  still waiting, its answer lost) - the piece is a delivery the sweep collects shortly (`soon`), and the press says so.
+   *  It said "Bought" and the piece waited on the service for good. `market-gone` is a collect another door made first:
+   *  the piece is in the pack, and the press's own words stand. */
+  const collectedAtPress = async (delivery) => {
+    const c = await marketBook.collectGood(delivery);
+    if (c?.ok || c?.error === 'market-gone') return true;
+    arrivals.soon();
+    return false;
+  };
   /** A trader's piece BOUGHT at its stall: off the purse at its own price, its delivery collected into the pack at once. */
   const vendorBuy = async (vendor, row) => {
     const hub = marketHubs[row.region];
     const r = await marketBook.buy({ region: row.region, listing: row.id, units: 1, max: row.price, hubs: hub ? { [row.region]: hub } : {}, currency: 'gold', vendor }, marketMint);
-    if (r?.ok && r.data?.delivery?.id) await marketBook.collectGood(r.data.delivery.id);
+    if (r?.ok && r.data?.delivery?.id && !(await collectedAtPress(r.data.delivery.id))) {
+      return { ok: true, text: t('vendor.buy.onWay', 'Bought {name} for {price}. It is on its way to your pack and will reach it on its own.', { name: vendorNameOf(row.item), price: vendorGoldText(row.price) }) };
+    }
     return vendorSaid(r, `Bought ${vendorNameOf(row.item)} for ${vendorGoldText(row.price)}.`);
   };
   /** A piece TAKEN BACK off my trader: the listing cancelled, the piece collected back into the pack at once. */
   const vendorTake = async (row) => {
     const r = await marketBook.cancel(row.id, marketMint);
-    if (r?.ok && r.data?.delivery?.id) await marketBook.collectGood(r.data.delivery.id);
+    if (r?.ok && r.data?.delivery?.id && !(await collectedAtPress(r.data.delivery.id))) {
+      return { ok: true, text: t('vendor.take.onWay', '{name} is on its way back to your pack and will reach it on its own.', { name: vendorNameOf(row.item) }) };
+    }
     return vendorSaid(r, `${vendorNameOf(row.item)} is back in your pack.`);
+  };
+  /** GOLD-MARKET: a trader's takings COLLECTED into the account of the region the player stands in (the Vendor page's
+   *  Collect) - moved out of bootWorld's setVendorPage by RPT1026-MARKET, beside the stall's other acts, its two lines into
+   *  the player's language on the way. */
+  const vendorCollectGold = async () => {
+    const region = vendorRegionHere();
+    if (region == null) return { ok: false, text: t('vendor.collect.noBank', 'You can only collect your takings in a region with a bank.') };
+    const r = await marketBook.collectGold(region);
+    return vendorSaid(r, t('vendor.collect.done', 'Your takings are in your account in {region}.', { region: REGION_NAMES[region] ?? t('vendor.collect.thisRegion', 'this region') }));
   };
   /** A piece from my pack PUT UP at my trader, for gold, for the trader's thirty days. */
   const vendorPut = async (vendor, item, price) => {
@@ -91,9 +126,9 @@ export function createVendorHost(host) {
         picture: (it, wake, box) => itemPicture(it, { onReady: wake, box }),   // MENU-ORDER; PACK-PICK: at the picker's box
         buy: (row) => vendorBuy(vendor, row), take: (row) => vendorTake(row),
         goods: () => marketGoods.goods(), put: (item, price) => vendorPut(vendor, item, price),
-        settle: () => marketBook.settle(marketMint, marketPutBack, marketDrop),   // VENDOR-LOST: a kept buy's piece collected as the stall opens
+        settle: () => arrivals.sweep(),   // VENDOR-LOST: a kept buy's piece collected as the stall opens; RPT1026-MARKET ARRIVE: the road read first, so every piece arrived for this character is collected
       },
     });
   };
-  return { openHomeVendorWindow, vendorBoardHost, vendorItemStats, vendorMarketOpen, vendorNameOf, vendorReachable, vendorRegionHere, vendorSaid, vendorTake, vendorTownOf, vendorWaypointOn };
+  return { openHomeVendorWindow, vendorBoardHost, vendorCollectGold, vendorItemStats, vendorMarketOpen, vendorNameOf, vendorReachable, vendorRegionHere, vendorSaid, vendorTake, vendorTownOf, vendorWaypointOn };
 }

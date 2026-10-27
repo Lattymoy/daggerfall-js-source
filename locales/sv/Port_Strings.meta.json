@@ -1139,6 +1139,11 @@
   "tr": "b05fb45983cc",
   "by": "claude-in-session"
  },
+ "account.refusal.decorLapsed": {
+  "en": "18bf013073c6",
+  "tr": "f93e196c06f1",
+  "by": "claude-in-session"
+ },
  "account.refusal.decorRate": {
   "en": "c2a0d6f99c79",
   "tr": "45ca6918d2d6",
@@ -2535,8 +2540,8 @@
   "by": "claude-in-session"
  },
  "account.refusal.realmMarketOpen": {
-  "en": "2d9b393f1aa5",
-  "tr": "a265bd549945",
+  "en": "cedd790c5bcf",
+  "tr": "4a2b417556a8",
   "by": "claude-in-session"
  },
  "account.refusal.realmNeeded": {
@@ -2855,8 +2860,8 @@
   "by": "claude-in-session"
  },
  "account.refusal.tradeHeld": {
-  "en": "f10818e3de8b",
-  "tr": "b46193c6aea4",
+  "en": "980758baea68",
+  "tr": "c7c2bfc8e907",
   "by": "claude-in-session"
  },
  "account.refusal.tradeSpent": {
@@ -3042,6 +3047,11 @@
  "broker.owed": {
   "en": "d66d34978dca",
   "tr": "404d53e17a17",
+  "by": "claude-in-session"
+ },
+ "cards.cashout.banked": {
+  "en": "dbeb3e2bdded",
+  "tr": "74a6561ae1e3",
   "by": "claude-in-session"
  },
  "chair.bench": {
@@ -5804,6 +5814,16 @@
   "tr": "299bf7166f98",
   "by": "claude-in-session"
  },
+ "inventory.store.chestAct": {
+  "en": "88d2f1cb9aea",
+  "tr": "65b9f76b38ee",
+  "by": "claude-in-session"
+ },
+ "inventory.store.chestAlone": {
+  "en": "ff8f623bd887",
+  "tr": "50d1024e345d",
+  "by": "claude-in-session"
+ },
  "items.gold.sharedFull": {
   "en": "7eb608a65f56",
   "tr": "89033805cf2d",
@@ -6722,6 +6742,16 @@
  "lang.offer.yes": {
   "en": "5397e0583f14",
   "tr": "283c735c8901",
+  "by": "claude-in-session"
+ },
+ "legacy.houseWaits.newborn": {
+  "en": "28e7f5a06d17",
+  "tr": "40ef7d7a44f0",
+  "by": "claude-in-session"
+ },
+ "legacy.houseWaits.noNewborn": {
+  "en": "862d8a89f3cf",
+  "tr": "96c252f035cc",
   "by": "claude-in-session"
  },
  "legacy.deed.again": {
@@ -10659,6 +10689,11 @@
   "tr": "7ba358f57a1e",
   "by": "claude-in-session"
  },
+ "portal.refused.event": {
+  "en": "728feb1a67e6",
+  "tr": "afbfc02cb192",
+  "by": "claude-in-session"
+ },
  "prof.craft.xpFirstBought": {
   "en": "75f0476f9180",
   "tr": "86267a5a85dd",
@@ -10952,6 +10987,26 @@
  "saddle.hello.none": {
   "en": "c4f18acb1d78",
   "tr": "6174c93f7955",
+  "by": "claude-in-session"
+ },
+ "sd.hall.lastBy": {
+  "en": "ba380c5a8929",
+  "tr": "1cc0ce2c1677",
+  "by": "claude-in-session"
+ },
+ "sd.hall.snapLashes": {
+  "en": "0029d66990c6",
+  "tr": "88382523bb89",
+  "by": "claude-in-session"
+ },
+ "sd.hall.snapLashesMore": {
+  "en": "59276bb84184",
+  "tr": "793ccefd9d2d",
+  "by": "claude-in-session"
+ },
+ "sd.hall.you": {
+  "en": "8af56de68279",
+  "tr": "fa114377ef35",
   "by": "claude-in-session"
  },
  "sd.through.opens": {

@@ -926,6 +926,20 @@ turning helm, a throw from rest, a ship across my bow, a berth too far for HAUL_
 and phases on `drawHaul` (the long way round, the haul that waits); `tools/mutants/boardmagnet.json` (25, all dead) and
 `nav_d.json`'s side and short-way records re-aimed (dead).
 
+**RPT1026-WORLD (2026-10-27), two private reports of a ship that would not make way** - one capped far under her speed
+after the sailing patch of 2026-10-23 (in the Overworld and at the helm alike), one frozen in fights with pirates and
+beside the navy's cutters (at 0.0.416, before this haul). Traced and driven, and none left a hold on her: the patch of
+2026-10-23 is #1177's DECK-POSE, SEA-DECK and SEA-DROPS (SEA-DROPS asks a boat's collider buckets only where she
+stands - its own replay pins the same answers in the same order), and none of them reaches her way; the heave-to of
+0.0.416 let go under BOARD_SPEED or at HEAVE_TO_S, and this haul lets go by HAUL_MAX_S; the host's holds on my way - the
+haul's `brake` and `wayScale`, her hurts (BARE_POLES and WRECKED_OARS, 35% at the least) and the quay's `warp` - hold
+her only while their cause stands, after a fight and beside a cutter alike (`test/systems/naval/rpt1026_world_seabrake.test.js`,
+a guard). The one law that holds a ship under 5% of her way under sail and oars alike is Come Sail Away's cargo rule
+(`comeSailAway.js` UpdateBoatCargoMod: `2 - load / threshold`, her load her hold's, the player's own weight, what is
+carried and the wagon's load) - and under the Classic helm a hull with no Cargo node weighs against a hold of nothing,
+the mod's own, kept (HELM-WAY), so only the current moves her. Neither report says her hull, her load or the helm
+chosen; both stay open on that.
+
 ## RAM-RETURN - the ram back, bounded (2026-10-26)
 
 The owner, 2026-10-26: *"So players are complaining about ship ramming being removed. So I would like to reintegrate it

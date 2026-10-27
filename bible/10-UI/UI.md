@@ -69,10 +69,11 @@ ESCORTING FACES - the quest escorts' portrait column, FE1 - and the CREDITS TABL
 - and REALM-COPY's BUTTON (`enhanced/bringOnlineButton.js`: the Online pane's Bring online button on an offline character's tile - dead, with the reason in its words, for a Test Room character and for a copy of an online character, which customs can never let in; `06-Systems/Realm-Arc.md` REALM-COPY);
 - and BOX-ON-TOP's LAYER (`boxClickCatcher.js`: a message box drawn as the top window over an open enhanced window - a tutorial page over the Identify window, the Identify spell's magicka refusal - takes a click anywhere, as DFU's ClickAnywhereToClose does (`DaggerfallMessageBox.cs:645-660`), through a transparent layer over the whole screen above the window; the counter's own keys stand down while a box covers it (`ui/tradeDoor.js:"hooks.covered = () => windowCovered(overlay);"`). The refusal is a box over the window, as DFU's is (`DaggerfallTradeWindow.cs:962`), not a HUD line the window hides);
 - and the BUILDING DOOR'S RING (`interiorLoadMark.js`: a ring over the hotbar while a building's door loads, the full loading screen stepped aside so the street stays visible - `10-UI/Loading-Screens.md`);
+- and RPT1026-CLIENT's DOOR (`pointerCapture.js`: every pointer capture and release in the game's own windows, a refusal answered - a pad's synthetic press holds no pointer Firefox knows, and its capture threw out of the world map's listener; `10-UI/Held-Map-Arc.md` PAD-CAPTURE);
 - and LOCKPICK's TWO (`lockpickDoor.js` and `lockpickWindow.js`: the lock's window - its pin tumblers in cross-section, the pick, the Auto attempt and Leave - `06-Systems/Lockpicking.md` section 4);
 - and PACK-PICK's PICKER (`packPicker.js`: the pack's pieces as pictured tiles in their tiers' frames, sifted as the pack's own stores are, what may not go folded with why, and the piece chosen looked at - the Market's List form and a trader's stall choose a piece to sell from it; `06-Systems/Professions-Arc.md` 10.14);
 - and TITLE-DOOR's MARK (`intro/titleHeld.js`: the page's word that the film's title stands under the menu - the film writes it when it lands, the menu reads it and draws its home over the film; `10-UI/UI-Arc.md` TITLE-DOOR);
-429 modules
+431 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.

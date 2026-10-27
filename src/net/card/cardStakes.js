@@ -15,6 +15,12 @@
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
 import { readCardReceipt, CARD_RECEIPT_TTL_S } from './cardReceipt.js';
 import { ORDER_TTL_S } from '../identityToken.js';
+import { t } from '../../systems/textManager.js';
+
+/** RPT1026-CARDBANK (a private report: a gold table's stake gone from the purse after a stand with nobody seated):
+ *  a cash-out is paid into the bank account of the region it was staked from (Tavern-Cards.md section 23, THE CLAIM), not
+ *  the purse the buy-in came out of - and nothing said so, so a stake that came home looked like a stake lost. */
+export const cardBankedText = (/** @type {number} */ gold) => t('cards.cashout.banked', 'The card table paid {gold, number} gold into your account at the Bank of the Empire.', { gold });
 
 /** The device's stakes and receipts not yet settled. */
 export const CARD_STAKES_KEY = 'cards6.stakes';
@@ -141,8 +147,9 @@ export function createCardStakes({ door, realm, wallet, character, region, stora
       return c.j;
     },
     /** Every kept receipt of this character's claimed - the gold the service paid into the record's account at the
-     *  region it was staked in. One claim at a time. */
-    claim() {
+     *  region it was staked in. One claim at a time. RPT1026-CARDBANK: `say` hears where each paid receipt's gold went
+     *  (cardBankedText) - the first caller's, while a claim already runs. */
+    claim(say = null) {
       // AUDIT CARDS-4 E2: the latch let go in the promise's own `finally`, after it is set - a round with nothing to await
       // ran its `finally` inside the call, before `??=` assigned, and every later claim answered that spent promise
       claiming ??= (async () => {
@@ -155,7 +162,7 @@ export function createCardStakes({ door, realm, wallet, character, region, stora
               const who = k.c ?? character();
               const r = await realm.act({
                 needsAnswer: true,
-                apply: (/** @type {any} */ a) => { const g = a?.data?.gold; if (!a?.data?.repeat && Number.isSafeInteger(g) && g > 0) wallet(k.reg).bank(g); },
+                apply: (/** @type {any} */ a) => { const g = a?.data?.gold; if (!a?.data?.repeat && Number.isSafeInteger(g) && g > 0) { wallet(k.reg).bank(g); say?.(cardBankedText(g)); } },
                 call: (/** @type {any} */ at) => door.cashout({ character: who, realm: at, receipt: k.receipt }),
               });
               if (r?.ok || CARD_CLAIM_DONE.includes(r?.error) || (r?.error === 'cards-receipt' && CARD_RECEIPT_DEAD.includes(r?.why))) write(CARD_RECEIPTS_KEY, read(CARD_RECEIPTS_KEY).filter((x) => x.j !== k.j));

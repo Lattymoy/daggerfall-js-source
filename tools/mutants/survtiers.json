@@ -538,12 +538,14 @@
   },
   {
     "name": "SURVTIERS-the-interiors-hearth-is-bare-ground",
-    "file": "src/scenes/worldModes.js",
-    "old": " : interiorCamps.fireNear(player.pos) ? 'camp' : 'rough'; },",
-    "new": " : 'rough'; },",
+    "file": "src/systems/rest/restSession.js",
+    "old": "  return fireNear ? { kind: 'camp', where: 'fire' } : { kind: 'rough', where: null };",
+    "new": "  return { kind: 'rough', where: null };",
     "tests": [
-      "test/systems/surv4_rest.test.js"
-    ]
+      "test/systems/surv4_rest.test.js",
+      "test/systems/rest/rpt1026_misc_rest.test.js"
+    ],
+    "note": "PIN MOVED (RPT1026-MISC): re-aimed by content - BED-PRESS-INDOOR moved the interior's place law to restSession.js interiorRestSpot."
   },
   {
     "name": "SURVTIERS-the-kitchen-sells-casual-a-waste",

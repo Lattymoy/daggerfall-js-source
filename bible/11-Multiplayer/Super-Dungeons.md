@@ -342,10 +342,18 @@ Six Ending-stones stand on a ring in the hall, each carved with one of the Bay's
   a hand that mended another's turns, or never touched a stone, stands (AUDIT SD II, L7 H2: it was everyone in the hall,
   a griefer's weapon). Turning at random does not get there.
 - **The stones' rights** (AUDIT SD II, L7 H2). The thread is the hall's, and no one hand spends it: every turn moves
-  the road to the Concord by exactly one, and a turner that has turned the long way six times since the last snap is
+  the road to the Concord by exactly one, and a turner that has turned the long way six times in this Hollow is
   refused while anyone else has turned in the last minute - *"The stones will not answer you while others turn them."*
   A lone learner is never held, and a solver who knows the way never is; every guest turns as one (a guest is one
-  click). One griefer spends at most a dozen turns of the forty-eight.
+  click). One griefer spends at most a dozen turns of the forty-eight, once a Hollow. (RPT1026-EVENTS ORRERY-HANDS: the
+  count was begun again at every snap, so each griefer's dozen came back with the thread - below.) A hand the thread
+  held out behind held hands alone - a team that spent its six learning the gearing, kept out while one held hand
+  turned on - begins its count again at the snap (AUDIT RPT1026 I1, below).
+- **The hands named** (RPT1026-EVENTS ORRERY-HANDS). A stone's plaque, under the crosshair, names the last hand that
+  turned it - *"Last turned by Ash"* - and the snap's line names the turners it found no help in, the peers its lash
+  falls on: *"The Hour snaps back. No help came from Ash, Bram and 2 others."* (five named at most). The names
+  are this screen's roster's (the room's peers), so a turner whose body is concealed is named as any other. Nothing says
+  which way a turn went: the dial still says how many stones stand true, and nothing more.
 - **New every time.** The gearing, the starting hours, the true hours and the riddles are drawn from the slot's seed,
   so no Hollow's answer is another's.
 
@@ -1453,11 +1461,17 @@ origin - `arenaOf`).
   the Remnant at the far side facing the way in; it wakes 8 s on (`SD_OPENING_MS`). A share is the gate's law at its own
   numbers (`joinRemnant`: `SD_TTK_S` 420 x `dpsRef` x `SD_SHARE_X` 1.25, at the fraction it stands at, an empty bucket for
   one who comes to it bled, the first claim kept, 256 seats, an idle one freed); a fighter away 30 s takes its share out
-  (the gate's `retireShare`). LOST after 30 s with no living fighter in the arena (`SD_LOST_MS`).
+  (the gate's `retireShare`), at the fraction the Remnant stands at - a death too: the fallen's page leaves the realm at
+  once (SD-ONELIFE; `world.js`'s death branch, `online.leave()`), so its share goes 30 s on and the living fight what is
+  left at the fraction it stood at, each blow moving the bar further (RPT1026-FIGHTS, a private report: AS DESIGNED - the
+  Remnant does not keep the fallen's share as an Elite Breach's lords do, LORD-SHARES; a body a friend raises inside
+  `SD_REZ_MS` brings it back, at the fraction). LOST after 30 s with no living fighter in the arena (`SD_LOST_MS`).
 - **Belief** (`applyRemnantHit`, `applyEchoHit`, `applyHeartHit`): the gate's own hand and purse - `net/gate/gateBrain.js`
   exports `spendBlow` and `spendPurse` now, and the Remnant keeps no blow rate or bucket of its own: one hand and one purse
   for every body in the fight. A pose in the arena, a melee blow within reach of the body it meets; asleep, outside time or
-  past the Hour, nothing lands; a phase holds its floor; a stunned Remnant takes half again; the Last Moment's last blow
+  past the Hour, nothing lands; a blow that reaches the purse SEES its striker (RPT1026-FIGHTS RETIRED-BLOW: a share the
+  beat retired comes back first, at the fraction - `net/superDungeon/sdRemnant.js:"function sighted(f, p, now) {"` - and the relay drops a
+  blow from a pose older than `SD_POSE_FRESH_MS`, the census's own age); a phase holds its floor; a stunned Remnant takes half again; the Last Moment's last blow
   fells it - where it stands, the fight's best three and every fighter's part (the gate's `topDealers`, `damageChart`;
   `earned` reads it as the gate's does).
 - **The Walking Hour**: each body walks at its chosen (threat, then any) and strikes - the Stomp only within 5 m of its
@@ -3564,3 +3578,55 @@ lines, as the slice left it, of 8,463); `scenes/world.js` WIRED (the windows far
 36,158); `scenes/worldModes.js` WIRED (the look's forward, B4 - 10,956 of 10,998); `scenes/exterior.js` FLAGGED - offline,
 no Hollow.
 
+
+### RPT1026-EVENTS ORRERY-HANDS - 2026-10-26 (the stones' rights for the Hollow, and the hands named)
+
+A private report: a crowded Orrery stayed unsolved for half an hour, the reporter blaming concealed players who turned
+the stones the wrong way on purpose, and asking to see who they were.
+
+**What it was.** THE STONES' RIGHTS (AUDIT SD II, L7 H2) hold a turner that has lengthened the road six times while
+others turn, so one griefer spends at most a dozen of the fray's forty-eight turns. But the snap began the rights afresh
+(`server/src/index.js` `_sdTurn`: `orreryRightsFresh()` at every `res.x`), so each griefer's dozen came back with every
+thread. Four accounts spent the forty-eight between them, the Hour snapped back, and they spent it again, for as long as
+they cared to. Measured over the realm's own law (`orreryMayTurn`, `orreryTurned`): with four, five or eight griefer
+accounts against a team of three that knows the way, the Concord came in no slot of 24 within 1,200 turns. And a
+concealed body is drawn by nobody (INVIS-NET), so the forty could not tell which hand it was.
+
+**Chosen: both.** The puzzle is made hard to grief, and the hands are named.
+- **Counted for the Hollow** (`net/superDungeon/sdBrain.js` `orreryRightsSnapped`): past a snap the lash's nets (`ids`)
+  begin again with the thread, and each turner's count of the road it lengthened (`by`) is kept. Once a hand's six are
+  spent, it waits while others turn until the Hollow is gone, whatever the snaps. Over the same contest the Concord
+  comes in every slot, the Hour snapping back at most once for every two griefer accounts. A lone learner is still
+  never held (the company's minute is the law's), and a solver who knows the way never is. The bound is now per account
+  per Hollow: a griefer with many accounts still spends a dozen turns with each.
+- **AUDIT RPT1026 I1 (2026-10-27): the hands held out by held hands, freed at the snap.** Held hands hold each other:
+  a held hand waits while ANY other has turned in the company's minute, so the first held hand to turn keeps the thread
+  while it turns. The snap had freed every hand; counted for the Hollow, nothing did. A team that spent its six apiece
+  learning the gearing (each long turn mended) was held out of every thread by one held griefer account turning on: over
+  the realm's own judge the Concord came in no slot of 24 against a single griefer, where the old law's came in all 24.
+  Now a hand told to wait while every hand it waits behind is held too is marked
+  (`sdBrain.js:"export function orreryWaited("`), and the snap begins its count again (`orreryRightsSnapped`); a hand
+  held out by a free hand's turns -
+  a solver's, a learner's inside its six - keeps its count, so the contest above stands. The learned team reaches the
+  Concord in every slot against one, two, four or eight griefer accounts. Pinned by
+  `test/net/superDungeon/audit_rpt1026_events.test.js`; `tools/mutants/audit_rpt1026_events.json` (I1, 5).
+- **Named** (`scenes/superDungeon/sdHall.js` `sdHallNamed`, `sdSnapLine`; `scenes/world.js` sdHallHeard): the realm's
+  word on a turn already carried its turner's peer (`id`), and the snap's carried the peers its lash falls on (`ls`).
+  The world host names both off its roster (`peerName`, every peer of the room, drawn or concealed - "you" for me). The
+  stone's hover names its last turner (`Last turned by`), and the snap's line names the lashed, five at most and then a
+  count (`SD_LASH_NAMED`). Nothing says which way a turn went, so the riddles stay the puzzle.
+
+**Not a DFU member:** Daggerfall has no shared puzzle and no other players. Ledger A (ORRERY-HANDS).
+
+**Pins:** `test/net/superDungeon/rpt1026_events_orrery.test.js` (4): the contest (the old rights never reach the Concord
+in any slot, the kept ones always); the rights past a snap (the nets begun again, the count kept, the realm's judge
+refusing, a lone learner never held, and the relay's own line); the names (the turner, me as "you", an unknown id, the
+lashed, five then a count, nothing of the way); the plaque over the real hall. PIN MOVED: `sd11b_relay` (the snap no
+longer frees a griefer: she turns only after the company's minute; a second snap's lash is its own thread's; the page
+lashes named), `sd6c_hall`, `sd11a_scenes`
+and `sd20a_fight` (the world host's hall word as named), and `egseam_law`'s golden Orrery frames, the Hour's realm
+played through the real Room, taken again (229 frames): past its snap, a turner ten long turns behind waits while the
+others turn, and every frame up to that turn is the seam's word for word.
+`tools/mutants/rpt1026_events.json` (ORRERY-HANDS, 9). **The relay changed** (`sdBrain.js` and `index.js` are in its
+bundle): a RELAY_VERSION bump is owed (not taken here). THE FOUR HOSTS: `scenes/world.js` WIRED in two existing lines
+(no growth); the relay's `_message` untouched (`_sdTurn` is a Room method of its own).

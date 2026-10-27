@@ -2362,13 +2362,20 @@ export function createComeSailAwayRuntime(deps) {
   }
   /** GameObject.SetActive on a boat's root, with what Unity does to the two loops on it (CSA-G): an AudioSource stops as
    *  its object goes inactive, and one left at AddComponent's playOnAwake (true - SpawnBoat never clears it) plays again
-   *  as the object comes back, at the volume it last had (kept: the fast loop's may be its first, 1). */
+   *  as the object comes back, at the volume it last had.
+   *  RPT1026-WORLD LOOP-AWAKE (a private report: every volume at 10%, a building or a caravan entered by the boats at a
+   *  port and left - and the boats roared over the sliders): A LOOP COMES BACK AS IT WENT. Unity woke BOTH - the fast loop too,
+   *  which a moored boat never plays, at its AddComponent volume of 1: a plain AudioSource's volume, which the bus hands
+   *  over with Sound Volume divided out (audio.js plainSourceGain), so every moored boat in earshot ran her wake's loop at
+   *  full volume whatever the sliders said, for as long as she stood. A departure from the mod's playOnAwake (Port-Ledger
+   *  A, LOOP-AWAKE): each loop plays again only if it played as its object went (`awake`), at the volume it had then; a
+   *  boat never put away this way wakes her slow loop alone, the one every placement starts (PlaySlow). */
   function setBoatActive(boat, on) {
     boat.GameObject.setActive(on);
     for (const src of [boat.AudioSourceSlow, boat.AudioSourceFast]) {
       if (!src) continue;
-      if (on) { if (src.playOnAwake !== false && src.clip != null) audioPlay(src); }
-      else if (src.isPlaying) audioStop(src);
+      if (on) { if (src.playOnAwake !== false && (src.awake ?? src === boat.AudioSourceSlow) && src.clip != null) audioPlay(src); }
+      else { src.awake = src.isPlaying; if (src.isPlaying) audioStop(src); }
     }
   }
 

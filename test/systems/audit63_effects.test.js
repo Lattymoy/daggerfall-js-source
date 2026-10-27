@@ -282,23 +282,26 @@ test('AUDIT 63 F14: the item maker WINDOW offers Soul Bound only to a player car
     'and its one row is the soul he actually carries (EnemyBasics.cs:997-1001)');
 });
 
-test('AUDIT 63 F14: the window freezes its enumeration for its lifetime, as DFU does', () => {
+test('AUDIT 63 F14: the window reads the pack\'s souls live - PIN MOVED (RPT1026-PROGRESS), DFU froze them', () => {
   // EnumerateEnchantments has exactly three lines in the C#: the tail of
   // Setup (DaggerfallItemMakerWindow.cs:171), OnPush (:182) and its own
   // definition (:239). Refresh (:190-215) rebuilds the labels and the
-  // filtered item list and does NOT re-enumerate - so a soul spent on
-  // one item is STILL offered for a second in the same session, and
+  // filtered item list and does NOT re-enumerate - so in DFU a soul spent
+  // on one item is STILL offered for a second in the same session, and
   // RemoveFilledTrap simply walks the pack and finds nothing (:135-147).
+  // RPT1026-PROGRESS (a private report: one filled gem bound several items):
+  // that second item bound the soul's whole negative budget from a gem that
+  // was gone. The port departs: the window asks the pack every time.
   const { w, player } = makerWin([trap(WRAITH)]);
   w._openPicker(false);
-  assert.ok(w.picker.items.includes(enchantmentName('SoulBound')), 'offered at Setup time');
+  assert.ok(w.picker.items.includes(enchantmentName('SoulBound')), 'offered while the trap is carried');
   player.items.length = 0;            // the trap is spent by the enchant
   w.picker = null;
   w._openPicker(false);
-  assert.ok(w.picker.items.includes(enchantmentName('SoulBound')),
-    'the window keeps the enumeration it was pushed with - a live re-read would drop the row');
+  assert.ok(!w.picker.items.includes(enchantmentName('SoulBound')),
+    'the spent soul is no longer offered');
   assert.deepEqual(primaryPickerList(false, { item: {}, souls: enumerateFilledTraps(player.items) })
-    .includes('SoulBound'), false, 'and the seam itself still answers on the LIVE pack, so the freeze is the window\'s');
+    .includes('SoulBound'), false, 'the seam answers on the live pack, as the window now does');
 });
 
 test('AUDIT 63 F14: enchanting SPENDS the soul - RemoveFilledTrap, control flow verbatim', () => {

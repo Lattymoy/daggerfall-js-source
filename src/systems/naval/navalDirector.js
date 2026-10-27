@@ -151,6 +151,28 @@ export function factionWeights({ nearPort = false, notoriety = 0, deep = false }
 }
 
 /**
+ * RPT1026-WORLD TRAFFIC-REAL (two private reports, 2026-10-22 and 10-24: pirates fell on a ship on the large map within
+ * seconds of each other, so no voyage in search of a legendary lair could be made; on the Overworld an encounter came and
+ * failed every couple of seconds): THE SEA'S TRAFFIC COMES ON THE PLAYER'S OWN MINUTES. The host steps the sea
+ * on the world's clock (navalHost.js frame: `dt * worldTimeScale()`, AUDIT NAV1's "the sea keeps the world's time"), and
+ * the rolls' wait counted those seconds - so under the Overworld's x60 to x100 (RATE-LAW) a roll came every one to two
+ * real seconds, not SEA-EASE's "a minute to two and a half", and a ship left DESPAWN_BEYOND astern in a breath freed her
+ * berth for the next. A ship stood SPAWN_RING out - inside HOSTILE_NEAR_M (700 m) on a seventh of it - and a pirate
+ * among them stopped the journey (NAV-H, Travel Options' enemies stop and its avoid roll), held it at
+ * x1 inside her ring (TIME-DILATION), and the next came as soon as it ran again. The wait counts the REAL seconds now,
+ * when the host hands its real clock (`real`): a ship rolled for every SPAWN_EVERY of play whatever the clock's scale;
+ * the ships at sea, their sailing and their fights keep the world's time as before. With no clock handed (`real` not a
+ * number), the step's own `dt`. Never negative. Pure.
+ * @param {number} dt the step's sea seconds
+ * @param {number | undefined} real the host's real clock now
+ * @param {number | null} lastReal its reading at the last step that read one
+ */
+export function trafficSeconds(dt, real, lastReal) {
+  if (!Number.isFinite(real)) return Math.max(0, Number(dt) || 0);
+  return Number.isFinite(lastReal) ? Math.max(0, /** @type {number} */ (real) - /** @type {number} */ (lastReal)) : 0;
+}
+
+/**
  * The director. `step(dt, ctx)` answers `{ spawn: spec | null, despawn: id[] }`:
  *   ctx = { density, player: [x, y, z], players: [x, y, z][] (every player the host places - itself included),
  *           level, ships: [{ id, pos, classId, engaged, afloat, theirs, berthed }], isOpenWater(x, z, hull), nearPort, notoriety,
@@ -163,10 +185,14 @@ export function factionWeights({ nearPort = false, notoriety = 0, deep = false }
  * Only a ship `afloat` (not false) counts against the density - a prize, a struck hulk, a ship going down is still at
  * sea but fills no berth (AUDIT NAV1 B1: three prizes emptied the sea until the next transition).
  * A spec is `{ seed, classId, variant, pos, yaw, hunter }`.
+ * RPT1026-WORLD TRAFFIC-REAL: `ctx.real`, the host's real clock (s, unscaled) - when given, the rolls' wait counts ITS
+ * seconds, never the sea's `dt` (trafficSeconds).
  */
 export function createNavalDirector({ random = Math.random } = {}) {
   let wait = FIRST_ROLL_S;
   let count = 0;
+  /** RPT1026-WORLD TRAFFIC-REAL: the real clock's reading at the last step that read one (null: none yet, or a reset). */
+  let lastReal = null;
   /** SEA-PEACE: the pair a launching roll stands on its own stream - the hunter's spec with the quarry's as `company` -
    *  or null (the roll missed, no pair at this level, or no water for both). */
   function encounterSpawn(seed, ctx, nearest) {
@@ -236,6 +262,8 @@ export function createNavalDirector({ random = Math.random } = {}) {
   const director = {
     step(dt, ctx) {
       const out = { spawn: null, despawn: [] };
+      const spent = trafficSeconds(dt, ctx.real, lastReal);   // TRAFFIC-REAL: read on every step, the density's or not - a wait is spent only while it counts
+      lastReal = Number.isFinite(ctx.real) ? ctx.real : null;
       const players = ctx.players?.length ? ctx.players : [ctx.player];
       const nearest = (p) => Math.min(...players.map((q) => Math.hypot(p[0] - q[0], p[2] - q[2])));
       for (const s of ctx.ships ?? []) if (!s.engaged && !s.theirs && nearest(s.pos) > DESPAWN_BEYOND) out.despawn.push(s.id);
@@ -244,7 +272,7 @@ export function createNavalDirector({ random = Math.random } = {}) {
       // berth of its own, one relief at a time
       const distress = Array.isArray(ctx.distress) && !ctx.relieving && !ctx.ether ? ctx.distress : null;   // ETHER-SEA: no navy to answer past the Veil
       if (distress) wait = Math.min(wait, RELIEF_WAIT_S);
-      wait -= Math.max(0, dt);
+      wait -= spent;
       if (wait > 0) return out;
       wait = SPAWN_EVERY[0] + random() * (SPAWN_EVERY[1] - SPAWN_EVERY[0]);
       // AUDIT NAV1 (B1): a prize, a hulk or a wreck going down fills no berth; SHIP-LIFE: nor a ship moored in a harbour
@@ -288,8 +316,9 @@ export function createNavalDirector({ random = Math.random } = {}) {
       }
       return out;
     },
-    /** The water was left, or a transition: the next roll waits its first wait again. */
-    reset() { wait = FIRST_ROLL_S; },
+    /** The water was left, or a transition: the next roll waits its first wait again (TRAFFIC-REAL: from the next clock
+     *  read - the time ashore is no wait spent). */
+    reset() { wait = FIRST_ROLL_S; lastReal = null; },
     get count() { return count; },
     set count(n) { count = Math.max(0, n | 0); },
   };

@@ -19799,6 +19799,13 @@ touch near is the player's Escape as before, so a mouse and a keyboard are untou
 the layer off, is covered too). Not proven on a device. Pinned in `test/player/fb1009c_touchunlock.test.js` (2);
 `tools/mutants/fb1009c_touchunlock.json` (4, all dead; `esc_lock.json`'s relock record re-aimed by content).
 
+**A FOURTH - A TOUCH SCREEN NEVER ASKS (TOUCH-NO-LOCK, RPT1026-MISC, 2026-10-26).** A private report from a phone:
+Chrome's pointer-lock banner (how to get a cursor back) came up with every menu. "A finger never holds a lock" held for the canvas's click net only: every RELOCK door - a window's close, the
+look gate's close edge, a dial's goodbye - asked for the lock on a phone too, Chrome on Android granted it to the tap
+that closed the window, and its banner said how to give back a cursor the phone does not have. `requestLook`
+(`player/pointerLock.js`), the one door the others go through, returns on a touch device (`isTouchDevice`); the look
+there is the touch layer's drag. Pinned in `test/player/rpt1026_misc_lock.test.js` (1).
+
 ## CARD-FIT - the item card fits its window and says what a glance needs (2026-09-28)
 
 The Discord (#bug-reports, Cruor): *"New sigil items descriptor is a bit long! ... all the buttons on it's pop-up card
@@ -20707,6 +20714,42 @@ At 390x844 (a touch screen) the bar is two lines of 44px buttons, the Boards 46p
 sideways; at 844x390 the bar is one line and the list 216px. Not seen: the live pause face online. Pins:
 `test/ui/enhanced/timers2.test.js` (8: the law, the layout, the window, the bar, the sheet, and the audit's three);
 `test/ui/enhanced/timers1.test.js`'s window pin moved to the groups; `tools/mutants/timers2.json` (28), all dead.
+
+## RPT1026-MISC - the private reports' screens (2026-10-26)
+
+The batch's other screen faults, each read to its root in a private report and pinned by a test that fails without it
+(mutants in `tools/mutants/rpt1026_misc.json`, all dead):
+
+- **TAB-REPEAT** - a held Tab put the dial away. The overlay stack's Tab listener (`ui/enhanced/enhancedOverlays.js`
+  onTab) closed the top overlay on the key's auto-repeat as on a press; a repeat is ignored now, as the listener's own
+  comment said it was. `test/ui/enhanced/rpt1026_misc_tab.test.js` (1).
+- **TOAST-STALL** - HUD lines stuck on screen when several came close together, on a phone for many seconds. The HUD
+  text keeps PopupText's one timer, the FRONT row's; a repeat of the BACK row refreshed it, so a line said
+  again and again held every row up for as long as it repeated. A repeat behind other rows is dropped now - its row is
+  on screen, with its own dwell to come (`ui/hud/hudText.js` add). `test/ui/hud/rpt1026_misc_toasts.test.js` (2).
+- **CONFIRM-SHEET** - Remove data on the Morrowind card seemed to do nothing, and said nothing. Every
+  destructive press on the Settings screen asks first (the Morrowind card's Remove data, a pack's remove, All off, Reset
+  everything, Restore defaults), its question a card in the detail pane - and in the pause menu's Settings, and on a
+  narrow or touch screen, that pane is a sheet below the screen until opened. The ask set the card without opening it.
+  It opens the sheet now, and shuts it again when answered if it opened it (`ui/enhanced/enhancedMenu.js` ask,
+  `answered`). `test/ui/enhanced/rpt1026_misc_confirm.test.js` (1).
+- **TOUCH-FIELD** - on a phone the Bank's amount could not be typed, while the map's name field could. The
+  enhanced port draws a classic window's typed field as words (`ui/enhanced/enhancedPort.js` 'field'); the touch layer's
+  own entry (TI2's "abc") is opened by a press on a live field now, with the number pad for an amount
+  (`ui/touch/touch.js` openTouchEntry; the bank's field marked `numeric` in `enhancedPorts.js`).
+  `test/ui/enhanced/rpt1026_misc_field.test.js` (1). AUDIT RPT1026 L1: the entry was the layer's child, under every DOM
+  window (the layer is one stacking context at z-index 5, the port's host 13), so the amount typed stood hidden behind the
+  Bank until Enter; it is the page's own now, at `TOUCH_ENTRY_Z` (39) over the window that raised it
+  (`test/ui/audit_rpt1026_l.test.js`).
+- **TALK-SIDEWAYS** - on a phone the talk panel ran off the screen and could not be used.
+  Measured in Chromium at 844 x 390 before the fix: the panel 52dvh, 203 pixels, its topic list 12 pixels tall and drawn
+  under the foot; at 740 x 360 the category buttons under it. On a screen 500 pixels high or less the panel stands the
+  height less a margin and keeps its two columns (`ui/enhanced/enhancedStyle.js`, after the talk's phone rule): the list
+  166 pixels at 844 x 390, upright and desktop untouched. `test/ui/enhanced/rpt1026_misc_talk.test.js` (1, the sheet's
+  cascade read at each size). AUDIT RPT1026 L2: and narrower than 720 pixels (640 x 360, 667 x 375, 568 x 320) the phone
+  rule had still stacked the head and the foot, the list 66 pixels at 640 x 360 and 26 at 568 x 320, Work cut off; on a
+  short screen the head and the foot are one row each and the categories shrink to their strip - the list 152, 167 and
+  112 pixels (`test/ui/audit_rpt1026_l.test.js`).
 
 ## ARMOR-TYPE - A PIECE OF ARMOUR SAYS ITS FAMILY (2026-10-26, a player: "can we add an info to every item what TYPE of armor it is (chain leather or plate)")
 

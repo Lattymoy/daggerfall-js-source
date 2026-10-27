@@ -80,7 +80,7 @@ import { WEAPON_REACH } from '../combat/playerWeapon.js';   // AUDIT WATCH1 B2: 
 import { createWeapon, bowDamageArrow } from '../combat/enemyEquipment.js';   // MAC-N1: the recovered shaft is CreateWeapon's arrow, value and all   // AUDIT WORLD6b-ii B2: a puppet's weapon is its owner's word, rebuilt from the descriptor   // AUDIT WORLD6b B3/C2: a cell's record projected and its puppets capped, the wire's law
 import { mintCorpseMarker, corpseTextureOf, tickCorpseMarkers, playBodyFall, playRareDrop, corpseLootTargets, physicalCorpseSources, corpseEntryFor, corpseContents, openCorpseLoot, pileBody, sayEnemyDied, raiseEnemyDeath, corpseEntityName } from './corpseMarker.js';
 import { createStreetCorpsePrefabs } from './corpsePrefabHost.js';   // DEX5 / AUDIT DEX D11: a mod's corpse prefab - the pool's reach
-import { rollCorpseKit } from '../systems/foeLootCap.js';   // KIT-ROLL: a plain foe's kit, laddered at its death by every body door
+import { rollCorpseKit, savedSummon, restoredSummon } from '../systems/foeLootCap.js';   // KIT-ROLL: a plain foe's kit, laddered at its death by every body door; AUDIT RPT1026 F4: a summon's mark through a save
 import { floorLanding } from '../player/enterExit.js';   // REVENANT-FATE (the 2026-10-02 audit): a flyer kneels, and its pile lies, on the ground below
 import { renownFoeStruck, renownFoeDied } from '../net/renownTracker.js';   // RENOWN1: a foe the player fought pays its Renown XP when it dies, by any hand
 import { reportPlayerKill } from '../systems/playerKills.js';   // SET2: my own kills, told
@@ -1049,14 +1049,16 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       if (fates && revenantMayYield(f)) { if (!ownersWholeKill(_whole, { fromPlayer, peer }) && revenantWillHolds(f)) tearAway(f); else yieldFoe(f); return; }
       // X5: the SOUL TRAP intercept, where EnemyEntity.SetHealth's
       // override sits (:157-177) - before the death, every source alike.
-      // AUDIT WORLD6b B2 (AUDIT WORLD2 B9's law, the dungeon's): a PEER's killing blow reads no gem of mine and fills
-      // no Star of mine, and speaks no kill notice of mine - the kill is the peer's
+      // AUDIT WORLD6b B2 (AUDIT WORLD2 B9's law, the dungeon's): a PEER's killing blow fills no Star of mine, tethers
+      // nothing and speaks no kill notice of mine - the kill is the peer's
       // STRIKE-SHARED: and a PEER's trap reads no gem of mine whoever struck - its soul is its caster's, named on the
       // body's record (foesFrame's `j`, `q`) for the caster to roll against its own pack
+      // RPT1026-FIGHTS (TRAP-TO-OWNER, the dungeon's law - dungeonContext.js damageFoe): MY OWN trap's soul is mine
+      // whoever struck, a peer's killing blow included (DFU's SetHealth, every source alike); my own blow alone is tethered
       const _peerTrap = peerSoulTrapOf(f.entity);
-      const trap = peer || _peerTrap ? { allowDeath: true } : attemptSoulTrap(f.entity, f.mobileType, playerEntity.items, Math.random());
+      const trap = _peerTrap ? { allowDeath: true } : attemptSoulTrap(f.entity, f.mobileType, playerEntity.items, Math.random());
       if (trap.alert) say?.(SOUL_TRAP_TEXT[trap.alert]);
-      if (!trap.allowDeath) { f.entity.health = 1; return; }
+      if (!trap.allowDeath && !peer) { f.entity.health = 1; return; }
       if (_peerTrap) { f._trapBy = _peerTrap.by; f._trapQ = Math.max(0, Math.min(100, Math.trunc(Number(_peerTrap.chance) || 0))); }
       // V3: the equipped AZURA'S STAR takes every slain MONSTER's soul
       // (DaggerfallEntityBehaviour.cs:240-247); after the trap, so a
@@ -2313,7 +2315,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   function snapshotWorld(toNative) {
     return foes.filter((f) => !f.dead && !f.puppet && !f.transient && !f.entity?.revenant).map((f) => {   // REVENANT (the 2026-10-02 audit): a revenant standing - fighting, kneeling, burning, sworn and going - is its record's to stand again (systems/revenant/revenant.js getSaveData), never a nameless copy   // REVENANT-FATE: a kneeling revenant is the moment's, never the save's   // WORLD6b: a puppet is its owner's, never this save's; DW-E4: nor a foe with no LoadID
       const wc = toNative(f.ai.feet);
-      return {
+      return savedSummon(f, {   // AUDIT RPT1026 F4: a summon saved one (foeLootCap.js savedSummon)
         mobileType: f.mobileType, gender: f.gender,
         nativeX: wc.x, nativeZ: wc.z, y: f.ai.feet[1], yaw: f.ai.yaw,
         health: f.entity.health, maxHealth: f.entity.maxHealth,
@@ -2359,7 +2361,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         questMarker: !!f._questMarker,   // AUDIT (pre-merge) F1: a marker's foe restored indoors (the marker walk is suppressed there) is still one
         placed: !!f.placed,   // WOD3: a mod-placed foe stays out of the encounter cap across a load
         site: f.site ?? null,   // WOD7: and a shared camp's foe keeps riding for its site
-      };
+      });
     });
   }
   /** The restore half: re-mint through the pool's ONE spawn chain,
@@ -2390,7 +2392,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       // SEALED-SAVE (FIELD BUGS 2026-10-05c): a quest foe the host stands elsewhere (its marker moved since the save)
       const feet = (questBehaviour && restandQuestFoe?.(questBehaviour, [lx, sf.y + yOffset, lz])) || [lx, sf.y + yOffset, lz];
       spawnFoe(sf.mobileType, feet, { gender: sf.gender, feetGiven: true, questBehaviour, placed: !!sf.placed, eliteFoe: sf.eliteFoe === true, champion: sf.champion ? championIndex(sf.champion) : null }).then((f) => {   // REVIEW 2026-09-05: the snapshot holds FEET - a flyer must not take the centre drop twice
-        if (!f) return;
+        if (!restoredSummon(f, sf)) return;   // AUDIT RPT1026 F4: and loaded one - bare, its death's finds emptied (foeLootCap.js restoredSummon)
         if (typeof sf.site === 'string') f.site = sf.site;   // WOD7: a shared camp's foe keeps riding for its site
         if (sf.questMarker === true) f._questMarker = true;   // AUDIT (pre-merge) F1
         f.ai.yaw = sf.yaw ?? f.ai.yaw;
