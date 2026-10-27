@@ -12,11 +12,12 @@ import { itemPicture } from '../ui/menu/menuPicture.js';
 import { playerEntity } from '../characters/playerEntity.js';
 import { unequipItem } from '../systems/equip.js';
 import { WEAR_WHOLE, wearCondition, wearOf } from '../net/marketLaw.js';
+import { createMarketHubs } from '../systems/region/marketHubs.js';   // BAY-LEFT-SEA: the provinces' hubs too
 
 /** @param {any} host */
 export function createMarketPieces(host) {
   const {
-    marketBook, regionHubs, saveSoon, writBook
+    marketBook, regionHubs, saveSoon, townSeats, worldPlaces, writBook
   } = host;
   /** AUDIT 31 H5: every list of the save a crafted piece can be in - the pack, the home's things, the wagon, and a
    *  repairer's hands (DFU's OtherItems) - so a piece is minted, put back and dropped once wherever it lies. */
@@ -107,7 +108,8 @@ export function createMarketPieces(host) {
     saveSoon.changed();
   };
   /** PROF5: every region's hub as this client derived it (HUB1) - the courier's road's ends, handed with every market
-   *  request for the service to witness (PROF0 26). */
-  const marketHubs = Object.fromEntries([...(regionHubs?.byRegion?.values?.() ?? [])].map((h) => [h.regionIndex, [h.pixel.x, h.pixel.y]]));
+   *  request for the service to witness (PROF0 26). BAY-LEFT-SEA (systems/region/marketHubs.js): and each province's -
+   *  its crown seat's, else its largest listed city's - made again as the seats and the places move: `marketHubs()`. */
+  const marketHubs = createMarketHubs({ regionHubs, seats: townSeats, places: worldPlaces });
   return { commissionPieces, heldProvenances, marketDrop, marketGoods, marketHubs, marketMint, marketPieceName, marketPiecePicture, marketPieces, marketPutBack, marketTake, pieceKept };
 }

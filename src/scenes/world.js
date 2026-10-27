@@ -2347,7 +2347,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (pieces.length) { townTalk.say(craftedText(pieces)); saveSoon.changed(); }
   };
   const { commissionPieces, heldProvenances, marketDrop, marketGoods, marketHubs, marketMint, marketPieceName, marketPiecePicture, marketPieces, marketPutBack, marketTake, pieceKept } = createMarketPieces({   // HOST-SPLIT: src/scenes/marketPiecesHost.js
-    marketBook, regionHubs, saveSoon, writBook,
+    marketBook, regionHubs, saveSoon, townSeats, worldPlaces, writBook,   // BAY-LEFT-SEA: the seats and the places, the provinces' market hubs
     get townTalk() { return townTalk; },
   });
   /** NOTICE1: the town a board on map pixel (px, py) belongs to - its map id (unsigned), its name, and whether one of its
@@ -26809,7 +26809,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // was opened again) - the market's own read says whether it is this account's (`market-closed`)
     const market = marketBook && profBook && profBook.state.open !== false && marksBook?.state?.open !== false && Number.isInteger(region) ? {
       book: marketBook, stores: () => profBook.state.stores, region, regionName: REGION_NAMES[region] ?? 'the region',
-      regionNameOf: (r) => REGION_NAMES[r] ?? 'another region', hubs: marketHubs, name: (k) => materialLabel(k), countName: materialCountLabel,
+      regionNameOf: (r) => REGION_NAMES[r] ?? 'another region', hubs: marketHubs(), name: (k) => materialLabel(k), countName: materialCountLabel,
       picture: (k, wake) => materialPicture(k, { onReady: wake }), itemPicture: (it, wake) => itemPicture(it, { onReady: wake }), piecePicture: marketPiecePicture,   // MENU-ORDER: a row's picture
       board: [town.px, town.py],   // SEAT1d (Seats-Arc 7.2): the board's town - the seat whose bailiwick takes the Tithe
       tithe: () => (seatBook?.open === true ? boardTithePct(seatBook.data?.seats ?? [], region, [town.px, town.py]) : null),   // AUDIT SEATS-3 D3: its rate as the seats' list says it (null: not read)
