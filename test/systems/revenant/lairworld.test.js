@@ -153,7 +153,8 @@ test('LAIR-WORLD THE HOSTS BY SOURCE: the world host hands the lair door and the
   assert.ok(w.includes('lairHere: createLairDoor({ maps, blocks, arch, locations: locationIndex, dungeons: _bountyDungeonPixels, regions: _dungeonRegionPixels, here: playerTravelPixel, pastBay: provinceQuestPlaces }),'));
   assert.ok(w.includes('dungeonAt: (x, y) => _bountyDungeonPixels.get(`${x},${y}`) || provinceQuestPlaces.lairAt(x, y)?.name || null,'));
   assert.ok(w.includes('graveyardAt: (x, y) => _bountyGraveyardPixels.has(`${x},${y}`) || provinceQuestPlaces.lairAt(x, y)?.type === LOCATION_TYPES.Graveyard,'));
-  assert.ok(w.includes('siteOk: (x, y) => (onTheBay(x, y) ? x > 0 && y > 0 && x < 999 && y < 499 && !_bountyLocPixels.has(`${x},${y}`) && !spawnsDungeon(_spawnSalt, x, y) : !provinceQuestPlaces.placeOnPixel(x, y))'));
+  // PIN MOVED (SPAWN-WORLD, 2026-10-27): spawned dungeons stand past the Bay now, so a pack keeps off a spawn's pixel there too
+  assert.ok(w.includes('siteOk: (x, y) => (onTheBay(x, y) ? x > 0 && y > 0 && x < 999 && y < 499 && !_bountyLocPixels.has(`${x},${y}`) && !spawnsDungeon(_spawnSalt, x, y) : !provinceQuestPlaces.placeOnPixel(x, y) && !spawnsDungeon(_spawnSalt, x, y))'));
   assert.ok(w.includes('placesVersion: provinceQuestPlaces.version,'));
   const places = read('src/scenes/tamrielPlacesHost.js');
   assert.ok(places.includes('    lairAt, lairCloneAt, placeOnPixel, version: placesVersion,'), 'the places host hands them on');

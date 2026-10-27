@@ -275,7 +275,9 @@ test('AUDIT FEUD 2 W4: NO ROUT OF A ROOM\'S PUPPET - the door\'s word on a foe a
 
 test('AUDIT FEUD 2 W5: THE HOSTS - no lair in the Ocean Holes abyss (its pixel its template\'s); every player\'s shaft carries its bow (a metal weakness rides); the stale comment gone (mutants: the abyss lairable; a bow dropped)', () => {
   const d = read('src/scenes/dungeonContext.js');
-  assert.match(d, /function lairable\(\) \{ return !\(dfLocation\?\.spawned \|\| isGateArena\(dfLocation\) \|\| isArenaFloor\(dfLocation\) \|\| \(Number\(dfLocation\?\.mapTableData\?\.mapId\) >>> 0\) >= 0x60000000\); \}/);
+  // PIN MOVED (PITS-WORLD, 2026-10-27): the abyss is known by its own law (world/oceanHoles.js isAbyssMapId - the Bay's 0x600
+  // and the world's abyss lane past the Bay), where every id from 0x60000000 up had been one
+  assert.match(d, /function lairable\(\) \{ return !\(dfLocation\?\.spawned \|\| isGateArena\(dfLocation\) \|\| isArenaFloor\(dfLocation\) \|\| isAbyssMapId\(dfLocation\?\.mapTableData\?\.mapId\)\); \}/);
   assert.ok(d.includes("damageFoe(t, d, lastPlayerFeet, m.dir, { kind: 'arrow', weapon: m.weapon ?? null })"));
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) assert.ok(read(f).includes("exteriorFoes.damageFoe(f, d, player.pos, m.dir, { kind: 'arrow', weapon: m.weapon ?? null })"), f);
   assert.ok(read('src/scenes/worldModes.js').includes("interiorFoes?.damageFoe(f, d, player.pos, m.dir, { kind: 'arrow', weapon: m.weapon ?? null })"));

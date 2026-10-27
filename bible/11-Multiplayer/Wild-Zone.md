@@ -671,7 +671,7 @@ Then "as centered as possible not on the border to the other tier... dont overri
 - SPAWNED, NOT CHOSEN: every real dungeon inside the zone is SEALED ("The way in is sealed. Only the halls marked on
   the map are open today.", `wildDungeonGate`, `world.js:"const wildDungeonGate"`, asked by the interior door,
   `worldModes.js:"(host.wildDungeonGate && !(await host.wildDungeonGate(hit, fromLoad)))"`), and the wandering spawner
-  stands none there (`world.js:"{ const _wm = cyrodiilMask();"`). A hall is a clone of a real dungeon on an EMPTY pixel -
+  stands none there (`spawnStandHost.js:"{ const _wm = cyrodiilMask();"`). A hall is a clone of a real dungeon on an EMPTY pixel -
   never a place's, never beside one, never the sea (WW-C2: `zoneHallsHost.js:"const free = (x, y) =>"` - the
   registry's places - AUDIT TESA II P7/Z7: TESA's past the Bay among them, and the countryside's and the lairs' rolls
   beside them - the continent's own ground whatever the land switch) - so a tier always has its count wherever

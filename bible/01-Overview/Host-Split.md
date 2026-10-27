@@ -753,3 +753,33 @@ lines (`audit31.json`, `fb1001_market.json`, `prof5.json`, `prof6.json`, `profsa
 `audit31_client`, `prof5_client`, `fb1001_market_goods`, `profsave`, PIN MOVED). The slice's wiring then went in: the
 seats and the places handed the module (2 entries), the world's ports handed `crownAt` (2), the hideouts' rout handed the
 seats' edicts (1) - `bootWorld` 35,700, the ceiling at it (`03-World/World-Wide.md` BAY-LEFT-SEA).
+
+## SPAWN-WORLD's moves - the spawn's stand, its ground and the Overworld's dungeon lists out of bootWorld (2026-10-26)
+
+The fix for the audit NO SYSTEM LEFT BEHIND IN THE BAY (work package 4: the spawned dungeons and the Overworld's
+dungeons past the Bay, `06-Systems/Systems-Arc.md` SPAWN-WORLD, `06-Systems/Travel-View.md` TVD-WORLD) changes three
+blocks of `bootWorld`, so each left it first, verbatim, by `tools/hostMove.mjs`, in a commit of its own:
+
+- **The spawn's ground law** (`scenes/spawnGroundHost.js` `createSpawnGroundHost`, 6 members: `_spawnCloneAt`,
+  `tvSpawnGone`, `spawnGroundPlace`, `tvSpawnAt`, `tvLocationAt`, `_liftLocationAt`) - moved first, so the stand below
+  reads its clone live (a `const` made below it).
+- **The spawn's stand** (`scenes/spawnStandHost.js` `createSpawnStand`, 2 members: `spawnedDungeonAt`,
+  `_locationToBuild`) - the build's answer for a pixel.
+- **The Overworld's dungeon lists** (`scenes/travelViewDungeonsHost.js` `createTravelViewDungeons`, 6 members:
+  `tvDungeonRowsAt`, `tvDungeonAt`, `tvSpawnFound`, `tvSpawnKnown`, `tvFiledSpawns`, `travelViewDungeons`). The
+  dungeons' models (`scenes/travelViewDungeonModels.js`) stay the host's to construct (`test/tooling/hostseam.test.js`:
+  a moved module is its host's own construction), so the group stops above them; `_tvDungeonRows` stays the host's
+  `let`, handed live.
+
+`bootWorld` 35,799 -> 35,736 logical lines. The ceiling came down with them, to 35,740 in the moves' commit - four kept for
+the wiring the fix's next commits hand these modules - and to its measure in the fix's last commit
+(`test/scenes/hostceiling.test.js`). The tool re-aimed the mutant records over the moved lines (52 of them, every one run
+dead after the move; `auditlandforms.json`'s F1 probe record did not parse before the move either, and is re-aimed by
+content); the pins that lift the members from world.js's text lift them from the modules, the harnesses handing them their
+`host` (PIN MOVED, HOST-SPLIT, SPAWN-WORLD).
+
+The fix's last commit (2026-10-27) found `bootWorld` at 35,740, the ceiling: the four kept were spent - SPAWN-WORLD's
+wiring three (the places' getter, their handle to the spawn's ground, the boards' ground kept off a spawn past the Bay),
+TVD-WORLD's handle none (an edit in place), QUARRY-WORLD's one (`wildAt: bountyLandWild(maps)`). The ceiling stays at its
+measure, 35,740. `createWorldModes` 11,025 and `buildDungeonContext` 8,436 (two lines edited in place, `isAbyssMapId`)
+did not move.

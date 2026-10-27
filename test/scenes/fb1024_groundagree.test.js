@@ -82,6 +82,8 @@ test('GROUND-AGREE the ground\'s place (world/spawnGroundPlace.js): what stands,
   const [ex, ey] = rolledPixel(ETHER_BOX.x0 + 10, ETHER_BOX.y0 + 10);
   ({ law } = makeLaw());
   assert.equal(law.groundLocationAt(ex, ey, null), null, 'past the Veil the isles stand their own places');
+  // PIN MOVED (SPAWN-HOLE, then SPAWN-WORLD): past the Bay a spawn's id is the world's spawn lane's, so with no Eltheric
+  // Ocean the box stands the roll's spawn again, as it did before SPAWN-HOLE's stop-gap guard
   ({ law } = makeLaw({ etherSea: false }));
   assert.deepEqual(law.groundLocationAt(ex, ey, null), { name: `Spawn ${ex},${ey}` }, 'with no Eltheric Ocean that box is no isle\'s');
 

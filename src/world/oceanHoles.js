@@ -31,6 +31,9 @@ import { colorLerp } from '../systems/mathf.js';          // Color.Lerp
 import { dice100 } from '../combat/formulas.js';   // Dice100.SuccessRoll, one home
 import { dropFoundMark } from '../systems/item/foundMark.js';   // AUDIT MEND-THIRD L3-4: a re-mint is handed over whole
 import { clampArmorVariant } from '../systems/armorMaterials.js';   // ItemBuilder.SetVariant's clamps: CurrentVariant
+import { inBay } from './tamriel/tamrielFrame.js';   // PITS-WORLD: the Bay's pixel ids are the Bay's
+import { worldLaneMapId, worldLaneOf, ABYSS_WORLD_LANE } from './worldWide/worldLanes.js';   // PITS-WORLD: an abyss past the Bay
+import { inWorldGrid } from './worldWide/worldGrid.js';   // PITS-WORLD: the pits' ground the world's grid
 
 const f32 = Math.fround;
 const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
@@ -214,8 +217,30 @@ export function buildDungeonName(mapPixelX, mapPixelY) {
 /** BuildGpsDungeonName: the name with the pit's pixel, "[x,y]". */
 export const buildGpsDungeonName = (dungeonName, pitMapX, pitMapY) => `${dungeonName} [${pitMapX},${pitMapY}]`;
 
-/** GetAbyssMapId: 0x60000000 over the pit pixel's id's low twenty bits. */
-export const getAbyssMapId = (pitMapX, pitMapY) => (0x60000000 | (getMapPixelID(pitMapX, pitMapY) & 0xfffff)) >>> 0;
+/** GetAbyssMapId: 0x60000000 over the pit pixel's id's low twenty bits. PITS-WORLD (2026-10-27, bible/03-World/World-Wide.md
+ *  WORLD-LANES; the owner, after the audit NO SYSTEM LEFT BEHIND IN THE BAY item 35: "Every single thing here needs to be
+ *  addressed. No exceptions."): past the Bay a pixel id names no one pixel - a pit a thousand pixels from a Bay pit had
+ *  shared its abyss - so the abyss there is named in the world's abyss lane over the pit's world pixel key
+ *  (world/worldWide/worldLanes.js ABYSS_WORLD_LANE: 0x600 to 0x7ff with the lane's flag, never a Bay abyss's id). The
+ *  Bay's is the mod's own, to the bit. */
+export const getAbyssMapId = (pitMapX, pitMapY) => (inBay(pitMapX, pitMapY)
+  ? (0x60000000 | (getMapPixelID(pitMapX, pitMapY) & 0xfffff)) >>> 0
+  : worldLaneMapId(ABYSS_WORLD_LANE, pitMapX, pitMapY));
+
+/** PITS-WORLD: IS A MAP ID AN ABYSS'S - a Bay pit's (GetAbyssMapId's 0x600 over a Bay pixel id, under 500,000) or one past
+ *  the Bay (the world's abyss lane). The readers that had taken every id from 0x60000000 up for an abyss's (scenes/
+ *  dungeonContext.js: a lair's home, the tutorial's page) took the zone halls' (0xf0000000 and up) and the Abyss
+ *  Dungeons' (0x80100000 and up) for one too. @param {unknown} id */
+export function isAbyssMapId(id) {
+  const v = Number(id);
+  if (!Number.isSafeInteger(v) || v < 0 || v > 0xffffffff) return false;
+  return ((v >>> 20) === 0x600 && (v & 0xfffff) < 500000) || worldLaneOf(v) === ABYSS_WORLD_LANE;
+}
+
+/** PITS-WORLD: MAY A PIXEL OPEN A PIT - IsValidMapPixel's guard, the Bay's 1000 x 500 (ETHER-DEEP held the pits there for
+ *  the abyss's id alone), now every pixel of the world's grid an abyss can be named on: the Bay's, the continent's sea
+ *  past it (TAMRIEL-DEEP carves it) and the Eltheric Ocean's (ETHER-DEEP). The bake still says where the sea is. */
+export const pitPixelOk = (mapPixelX, mapPixelY) => inWorldGrid(mapPixelX, mapPixelY);
 
 /** IsFlameEnemy: the fire daedra, the fire atronach and both dragonlings - they do not go under the sea. */
 export function isFlameEnemy(type) {

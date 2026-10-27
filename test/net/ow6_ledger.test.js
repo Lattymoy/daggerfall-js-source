@@ -283,13 +283,16 @@ test('OW6L wire: the `ow` word - after a hello, projected by validOwIn, the whol
   assert.deepEqual(parseClient(JSON.stringify({ t: 'ow', k: 'xx', ids: [] }), { hasHello: true }), { error: 'bad ow' });
   assert.deepEqual(validOwIn({ k: 'sp', ids: [bandIn(0), bandIn(0)] }), { k: 'sp', ids: [bandIn(0)] }, 'each id once');
   for (const bad of [{ k: 'sp', ids: [] }, { k: 'sp', ids: 'x' }, { k: 'sp', ids: [bandIn(0), 'x1.2.3'] }, { k: 'sp', ids: Array.from({ length: OW_WORD_IDS_MAX + 1 }, (_, i) => bandIn(i)) },
-    { k: 'dg', rows: [] }, { k: 'dg', rows: [[...S1]] }, { k: 'dg', rows: [[...S1, M0], [1000, 1, M0]] }, { k: 'dg', rows: [[...S1, -1]] }, { k: 'dg', rows: [[...S1, M0, 'x']] },
+    { k: 'dg', rows: [] }, { k: 'dg', rows: [[...S1]] }, { k: 'dg', rows: [[...S1, M0], [8192, 1, M0]] }, { k: 'dg', rows: [[...S1, M0], [1.5, 1, M0]] },   // PIN MOVED (SPAWN-WORLD): off the world's grid - a pixel past the Bay is a row now { k: 'dg', rows: [[...S1, -1]] }, { k: 'dg', rows: [[...S1, M0, 'x']] },
     { k: 'dg', rows: Array.from({ length: OW_WORD_ROWS_MAX + 1 }, () => [...S1, M0]) }, { k: 'dg', ids: [bandIn(0)] }, null, 'ow']) {
     assert.equal(validOwIn(bad), null, JSON.stringify(bad));
   }
   assert.equal(validOwIn({ k: 'sp', ids: Array.from({ length: OW_WORD_IDS_MAX }, (_, i) => bandIn(i)) }).ids.length, OW_WORD_IDS_MAX, 'the top end is in');
   assert.equal(validOwIn({ k: 'dg', rows: Array.from({ length: OW_WORD_ROWS_MAX }, () => [...S1, M0]) }).rows.length, OW_WORD_ROWS_MAX);
   assert.deepEqual(owWireRow([999, 499, 0]), [999, 499, 0]); assert.equal(owWireRow([999, 499, 0, -1]), null);
+  // SPAWN-WORLD (2026-10-26): a spawn past the Bay keeps its clocks in its cell too - a world pixel's row, either side of
+  // the Bay's corner, to the world's grid's edge and no further
+  assert.deepEqual([owWireRow([1000, 1, 0]), owWireRow([-5, 600, 7, 9]), owWireRow([8191, -8191, 0]), owWireRow([-8192, 0, 0])], [[1000, 1, 0], [-5, 600, 7, 9], [8191, -8191, 0], null]);
   // out
   assert.deepEqual(validOwOut({ k: 'sp', ids: [bandIn(0), 'junk', bandIn(0), 5, raiderIn()], x: 1 }), { k: 'sp', ids: [bandIn(0), raiderIn()] }, 'the good ones, each once');
   assert.deepEqual(validOwOut({ k: 'dg', rows: [[...S1, M0], 'x', [1, 2], [...S2, M0, M0]] }), { k: 'dg', rows: [[...S1, M0], [...S2, M0, M0]] });

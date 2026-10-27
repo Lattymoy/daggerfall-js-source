@@ -273,22 +273,22 @@
   {
     "name": "AEOW-T-find-rows-bay",
     "file": "src/scenes/world.js",
-    "old": "    const list = nearDungeons({ at, range: TV_FIND_REACH, max: Infinity, dungeons: tvDungeonRowsAt(at, TV_FIND_REACH),\n      locAt: tvDungeonAt, isFound: (x, y) => !!tvPlaceSummary(x, y) }).filter((g) => !g.found).map((g) => {",
-    "new": "    const list = nearDungeons({ at, range: TV_FIND_REACH, max: Infinity, dungeons: (_tvDungeonRows ??= dungeonRows(mapDict)),\n      locAt: tvDungeonAt, isFound: (x, y) => !!tvPlaceSummary(x, y) }).filter((g) => !g.found).map((g) => {",
+    "old": "    const list = nearDungeons({ at, range: TV_FIND_REACH, max: Infinity, dungeons: tvDungeonRowsAt(at, TV_FIND_REACH),\n      locAt: tvDungeonAt, isFound: tvDungeonFound }).filter((g) => !g.found).map((g) => {",
+    "new": "    const list = nearDungeons({ at, range: TV_FIND_REACH, max: Infinity, dungeons: (_tvDungeonRows ??= dungeonRows(mapDict)),\n      locAt: tvDungeonAt, isFound: tvDungeonFound }).filter((g) => !g.found).map((g) => {",
     "tests": [
       "test/systems/travel/ether_ow.test.js"
     ],
-    "note": "The find on approach reads the Bay's rows alone: no isle ruin past the Veil is ever found by walking up to it."
+    "note": "The find on approach reads the Bay's rows alone: no isle ruin past the Veil is ever found by walking up to it. TVD-WORLD re-aimed by content: the find's found test is tvDungeonFound."
   },
   {
     "name": "AEOW-T-find-loc-index",
     "file": "src/scenes/world.js",
-    "old": "    const list = nearDungeons({ at, range: TV_FIND_REACH, max: Infinity, dungeons: tvDungeonRowsAt(at, TV_FIND_REACH),\n      locAt: tvDungeonAt, isFound: (x, y) => !!tvPlaceSummary(x, y) }).filter((g) => !g.found).map((g) => {",
-    "new": "    const list = nearDungeons({ at, range: TV_FIND_REACH, max: Infinity, dungeons: tvDungeonRowsAt(at, TV_FIND_REACH),\n      locAt: (x, y) => locationIndex.get(`${x},${y}`), isFound: (x, y) => !!tvPlaceSummary(x, y) }).filter((g) => !g.found).map((g) => {",
+    "old": "    const list = nearDungeons({ at, range: TV_FIND_REACH, max: Infinity, dungeons: tvDungeonRowsAt(at, TV_FIND_REACH),\n      locAt: tvDungeonAt, isFound: tvDungeonFound }).filter((g) => !g.found).map((g) => {",
+    "new": "    const list = nearDungeons({ at, range: TV_FIND_REACH, max: Infinity, dungeons: tvDungeonRowsAt(at, TV_FIND_REACH),\n      locAt: (x, y) => locationIndex.get(`${x},${y}`), isFound: tvDungeonFound }).filter((g) => !g.found).map((g) => {",
     "tests": [
       "test/systems/travel/ether_ow.test.js"
     ],
-    "note": "The find reads the index alone: an isle's ruin not yet built has no place to find."
+    "note": "The find reads the index alone: an isle's ruin not yet built has no place to find. TVD-WORLD re-aimed by content: the find's found test is tvDungeonFound."
   },
   {
     "name": "AEOW-T-models-rows-bay",
@@ -453,12 +453,12 @@
   {
     "name": "AEOW-T-pits-ether-only",
     "file": "src/scenes/oceanHolesHost.js",
-    "old": "    if (!isValidMapPixel(st.mapX, st.mapY)) { markTerrainProcessed(st, v, 'rejected:off-the-map'); return; }",
+    "old": "    if (!pitPixelOk(st.mapX, st.mapY)) { markTerrainProcessed(st, v, 'rejected:off-the-map'); return; }",
     "new": "    if (st.mapY < -2688 && st.mapY >= -7680 && st.mapX >= 64 && st.mapX < 8128) { markTerrainProcessed(st, v, 'rejected:off-the-map'); return; }",
     "tests": [
       "test/scenes/oh_host.test.js"
     ],
-    "note": "The pit hold refuses the box alone: a pixel of the continent west of the Bay cut for an abyss."
+    "note": "The pit hold refuses the box alone: a pixel of the continent west of the Bay cut for an abyss. PITS-WORLD re-aimed by content: the hold is the world's grid (oceanHoles.js pitPixelOk) - the mutant's box refused is a pit past the Veil lost, and a pixel off the grid cut."
   },
   {
     "name": "AEOW-T-band-ground-dropped",

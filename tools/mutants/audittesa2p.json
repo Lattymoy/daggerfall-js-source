@@ -1,17 +1,17 @@
 [
   {
     "name": "P1-hall-unasked",
-    "file": "src/scenes/world.js",
-    "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
-    "old": ": null) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || capitalLocationAt(px, py)",
-    "new": ": null) || capitalLocationAt(px, py)",
+    "file": "src/scenes/spawnStandHost.js",
+    "old": ": null) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || host.capitalLocationAt(px, py)",
+    "new": ": null) || host.capitalLocationAt(px, py)",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
-    ]
+    ],
+    "note": "AUDIT BAY-LEFT (its packages merged, 2026-10-27): re-aimed by content - WW5's Hollow-first clause and SPAWN-WORLD's spawner both on the build past the Bay, in scenes/spawnStandHost.js."
   },
   {
     "name": "P1-hall-offline-too",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/spawnStandHost.js",
     "old": "(params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py))",
     "new": "(zoneHalls.standIn(cyrodiilMask(), px, py))",
     "tests": [
@@ -20,13 +20,13 @@
   },
   {
     "name": "P1-hall-after-the-places",
-    "file": "src/scenes/world.js",
-    "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
-    "old": ": null) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py) || lairLocationAt(px, py);",
-    "new": ": null) || capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py) || lairLocationAt(px, py) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py));",
+    "file": "src/scenes/spawnStandHost.js",
+    "old": ": null) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);",
+    "new": ": null) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || spawnPastBayAt(px, py);",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
-    ]
+    ],
+    "note": "AUDIT BAY-LEFT (its packages merged, 2026-10-27): re-aimed by content - WW5's Hollow-first clause and SPAWN-WORLD's spawner both on the build past the Bay, in scenes/spawnStandHost.js. SPAWN-WORLD re-aimed by content: the build past the Bay ends in the spawner (spawnPastBayAt)."
   },
   {
     "name": "Z7-rolls-unread",

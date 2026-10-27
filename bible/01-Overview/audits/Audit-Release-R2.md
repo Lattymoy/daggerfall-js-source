@@ -222,6 +222,8 @@ A departure (Port-Ledger A, IC-GRAND (10)).
   question, AUDIT TESA II P4); the Travel View's spawned dungeons and filed spawns are clamped to the Bay's map, where
   spawns stand (`travelDungeons.js filedSpawns`); a spawn's id throws only for a Bay-less pixel, and no pixel past the
   Bay asks it (`world.js _locationToBuild` hands those to the places past the Bay first, and `spawnedDungeonAt` catches).
+  Since SPAWN-WORLD and TVD-WORLD (2026-10-27, `06-Systems/Systems-Arc.md`, `06-Systems/Travel-View.md`): online, spawns
+  stand past the Bay too, each id in the world's spawn lane, and the Travel View's filed spawns read the world's grid.
 - **Courts, the watch, banishment**: region 62..70's own law, standing and banishment (`standing.js`, the 71 conditions);
   a province's People faction is none (FACTION.TXT), which the court's paths take as their no-faction arm.
 - **Shops, banks, guilds**: prices and stock per region over the 71 (`worldTick.js`, `shopStock.js`); a province has no

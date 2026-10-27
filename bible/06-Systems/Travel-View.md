@@ -3494,3 +3494,39 @@ PIN MOVED: `test/render/farsea1.test.js` (the classic ring's land line, the cano
 (FAR-FLORA's own pins: the canopy four bytes, its colour in the program). The four hosts: `scenes/world.js` builds and draws
 the far ring as before (no line changed); `scenes/exterior.js`, `scenes/worldModes.js` and `scenes/dungeonContext.js` draw
 no far ring.
+
+## TVD-WORLD - the Overworld's dungeons past the Bay (2026-10-27, the audit NO SYSTEM LEFT BEHIND IN THE BAY)
+
+The audit's item 29 (C4); the owner: "Every single thing here needs to be addressed. No exceptions." (2026-10-26). TV6
+stands every dungeon within the far range - a found one a plate and a journey, the rest a "?", found within a kilometre -
+and OW-DUNGEONS its model. But its dungeons were MAPS.BSA's rows (`dungeonRows`): past the Bay no lair (TESA8, the land's
+dungeons there) was plated, marked, found or drawn. The found spawns past the stream (`filedSpawns`) were read on the
+Bay's 1000 x 500 alone.
+
+What stands now:
+- **The lairs about the traveller** (`systems/travel/travelLairs.js` createTravelLairs): the places host's own lairs
+  (`provinceQuestPlaces` lairAt, lairCloneAt - the law the build stands), nearest cell first. A cell's first read is its
+  plateau and its plan, and the far range holds some forty, so a call reads at most four new cells (TV_LAIR_READS) and its
+  `gen` moves while any cell in reach is unread: the lists fill in over a few frames. Kept under the places host's stamp
+  (the trace landing reads them again). The Bay's own cells are never asked: the Bay's dungeons are the map's rows.
+- **The rows** (`scenes/travelViewDungeonsHost.js`): the map's and the lairs'. A lair's pixel not built stands its lair laid
+  out, marked and never built (`tvDungeonAt`). A lair found by its own id is a plate whose summary journeys to it
+  (`tvDungeonSummary`, `tvDungeonFound`), the find's found test the same pair. The list and the models' list
+  (`scenes/travelViewDungeonModels.js`) are keyed on the index's generation and the lairs' `gen`.
+- **The found spawns past the stream** (`systems/travel/travelDungeons.js` filedSpawns) are read on the world's grid, where
+  SPAWN-WORLD (`06-Systems/Systems-Arc.md`) stands spawns past the Bay.
+
+Measured over the freeware (the places host over the player's own data): about Windhelm's road (2215,-371), Bravil
+(2170,485) and Black Marsh (2900,900) the Overworld listed 0 dungeons before; now 9 of the 9 lairs in reach, 13 of 25 and
+12 of 23 (twelve past the grid, the grid's own "?" besides), settled in 7-8 frames.
+
+THE FOUR HOSTS (Home.md): `scenes/world.js` hands the places in (one entry) and keeps the find's found test and key in
+place; `scenes/worldModes.js`, `scenes/dungeonContext.js` and `scenes/exterior.js` have no Overworld. A departure from
+nothing in DFU, whose travel map has no Overworld (Port-Ledger, the Overworld's row: OURS).
+
+Proof: `test/systems/travel/tvdworld.test.js` (6; with ARENA2 every lair in reach listed). Mutants:
+`tools/mutants/tvdworld.json` (19, dead). PIN MOVED: `tv6_dungeons.test.js` (the circle's corners on the world's grid; the
+key and the found test; the lifted rows run through `tvDungeonFound`), `ow5_audit.test.js`, `owdungeons.test.js`,
+`ether_ow.test.js` (the lifted rows). Re-aimed by content, all dead: `audit_etherow` AEOW-T-find-rows-bay and
+AEOW-T-find-loc-index, `ether_ow` EOW-far-ruins-unread, `ow4d` OW4D4-off-the-map-y, OW4D4-off-the-map-x and
+OW4D5-size-again.

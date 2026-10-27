@@ -695,7 +695,10 @@ test('AUDIT LANDFORMS II F1: what a pixel not built yet will stand - a spawn inc
   const stmts = bootStatements();
   const load = stmts.findIndex((t) => t.includes('await worldQuickLoad({ ...bootLoadPick, snap });'));
   assert.ok(load > 0, 'the boot\'s load door');
-  const makes = stmts.map((t, i) => [i, t]).filter(([, t]) => /^(?:(?:let|const) )?_liftLocationAt = /.test(t));
+  // PIN MOVED (HOST-SPLIT, SPAWN-WORLD 2026-10-26): the lift and the spawn law it asks are scenes/spawnGroundHost.js's,
+  // constructed where they stood - the statement that binds them is that construction
+  const binds = (name) => (t) => new RegExp(`^(?:(?:let|const) )?${name} = |^const \\{[^}]*\\b${name}\\b[^}]*\\} = createSpawnGroundHost\\(`).test(t);
+  const makes = stmts.map((t, i) => [i, t]).filter(([, t]) => binds('_liftLocationAt')(t));
   const before = makes.filter(([i]) => i < load);
   assert.ok(before.length, 'made before the load');
   assert.deepEqual(makes.filter(([i]) => i > load).map(([, t]) => t), [], 'and not bound again after it');
@@ -703,12 +706,13 @@ test('AUDIT LANDFORMS II F1: what a pixel not built yet will stand - a spawn inc
   // hold until its pixel builds (_locationToBuild's answer) - it was the index alone there
   const spawn = { name: 'Spawn', spawned: true }, town = { name: 'Town' };
   const index = new Map([['1,1', town]]);
-  const probe = new Function('locationIndex', 'spawnGroundPlace', `${before.at(-1)[1].replace(/^(?:let|const) /, 'let ')}\nreturn _liftLocationAt;`)(
+  const lifted = /\n {2}(const _liftLocationAt = [^\n]*;)\n/.exec(src('src/scenes/spawnGroundHost.js'))[1];
+  const probe = new Function('locationIndex', 'spawnGroundPlace', `${lifted}\nreturn _liftLocationAt;`)(
     index, { groundLocationAt: (x, y, stood) => stood ?? (x === 3 ? spawn : null) });   // PIN MOVED (GROUND-AGREE): the ground's place, world/spawnGroundPlace.js
   assert.equal(probe(1, 1), town);
   assert.equal(probe(3, 3), spawn, 'a spawn not in the index yet: its own place, not the wild');
   // GROUND-AGREE: and the ground's place it asks is standing before the load too
-  const ground = stmts.findIndex((t) => /^const spawnGroundPlace = /.test(t));
+  const ground = stmts.findIndex(binds('spawnGroundPlace'));
   assert.ok(ground >= 0 && ground < load, 'the spawn law it asks made before the load');
 });
 

@@ -425,9 +425,9 @@
   },
   {
     "name": "TESA10-host-arena-first",
-    "file": "src/scenes/world.js",
-    "old": "|| capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py)",
-    "new": "|| (_arenaTemplates && arenaLocationAt(px, py)) || capitalLocationAt(px, py) || countryLocationAt(px, py)",
+    "file": "src/scenes/spawnStandHost.js",
+    "old": "|| host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py)",
+    "new": "|| (_arenaTemplates && host.arenaLocationAt(px, py)) || host.capitalLocationAt(px, py) || host.countryLocationAt(px, py)",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]

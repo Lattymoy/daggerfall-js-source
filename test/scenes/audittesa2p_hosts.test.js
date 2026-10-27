@@ -30,6 +30,7 @@ const HAVE = !!ARENA2 && existsSync(join(ARENA2, 'MAPS.BSA'));
 const bytes = (n) => new Uint8Array(readFileSync(join(ARENA2, n)));
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const W = rd('src/scenes/world.js');
+const STAND = rd('src/scenes/spawnStandHost.js');   // PIN MOVED (HOST-SPLIT, SPAWN-WORLD 2026-10-26): _locationToBuild left world.js, its live names read through `host`
 const lift = (text, head, end = '\n  }\n') => { const i = text.indexOf(head); assert.ok(i >= 0, head); return text.slice(i, text.indexOf(end, i) + end.length); };
 afterEach(() => { setTamrielTrace(null); setTamrielFit(null); });
 
@@ -70,7 +71,8 @@ test('AUDIT TESA II P1 THE BUILD PAST THE BAY: online, a pixel of the open zone 
     const locationIndex = new Map([['5,5', { name: 'Daggerfall' }]]);
     const _spawnLedger = { expired: () => false }, _spawnClock = () => 0, _insideSpawn = () => false, spawnedDungeonAt = () => null;
     let _locIndexGen = 0;
-    ${lift(W, '  function _locationToBuild(px, py) {')}
+    const host = { get _locIndexGen() { return _locIndexGen; }, set _locIndexGen(v) { _locIndexGen = v; }, _spawnClock, capitalLocationAt, arenaLocationAt, countryLocationAt, lairLocationAt };
+    ${lift(STAND, '  function _locationToBuild(px, py) {')}
     return _locationToBuild;`)(URLSearchParams, asked);
   const online = make('online');
   assert.equal(online(2069, 700).name, 'Elite Hall', 'the zone\'s hall first, where a capital\'s slice would stand');

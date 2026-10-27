@@ -578,11 +578,12 @@
   },
   {
     "name": "WW5-SD-the-province-hollow-unbuilt",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/spawnStandHost.js",
     "old": "return (locationIndex.get(`${px},${py}`)?.superTier ? locationIndex.get(`${px},${py}`) : null) || (params.has('online')",
     "new": "return (params.has('online')",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT BAY-LEFT, its packages merged): _locationToBuild left world.js for scenes/spawnStandHost.js (SPAWN-WORLD's HOST-SPLIT), the Hollow-first clause with it."
   }
 ]

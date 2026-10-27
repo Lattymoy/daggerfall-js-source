@@ -21,7 +21,7 @@
   },
   {
     "name": "SHORE-build-ungated",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/spawnStandHost.js",
     "old": "maps.getClimateIndex(px, py) === CLIMATES.Ocean || !_spawnGround(px, py)) return null;",
     "new": "maps.getClimateIndex(px, py) === CLIMATES.Ocean) return null;",
     "tests": [

@@ -523,11 +523,13 @@ the drawn floor the bathymetry's within the mesh's step), shallowing to every is
 pixel's ground; the surface stands; the swim's column reads carved water. Every Deep Waters system that works off a
 floor - the decorations, the fish, the foes, the loot, the remains - works past the Veil with it.
 
-HELD: THE PITS. There's a Hole in the Bottom of the Ocean cuts its pits into Iliac Puddle No More's floors, and a pit's
-drowned dungeon is named by its pixel's id's low twenty bits (`oceanHoles.js` GetAbyssMapId) - the Bay's 1000 x 500
-alone keeps those apart. A pixel off the Bay's map is refused before the hash is asked
-(`oceanHolesHost.js:"if (!isValidMapPixel(st.mapX, st.mapY)) { markTerrainProcessed(st, v, 'rejected:off-the-map'); return; }"`):
-no pit past the Veil until it has an abyss of its own.
+HELD: THE PITS - LIFTED (PITS-WORLD, 2026-10-27). There's a Hole in the Bottom of the Ocean cuts its pits into Iliac
+Puddle No More's floors, and a pit's drowned dungeon was named by its pixel's id's low twenty bits (`oceanHoles.js`
+GetAbyssMapId) - the Bay's 1000 x 500 alone keeps those apart - so a pixel off the Bay's map was refused before the hash
+was asked: no pit past the Veil until it had an abyss of its own. It has one now: an abyss past the Bay is named in the
+world's abyss lane (`03-World/World-Wide.md` WORLD-LANES), and the hold is the world's grid
+(`oceanHolesHost.js:"if (!pitPixelOk(st.mapX, st.mapY)) { markTerrainProcessed(st, v, 'rejected:off-the-map'); return; }"`),
+so the Veil's open sea opens pits as the Bay's does (`03-World/Ocean-Holes.md` PITS-WORLD).
 
 ## ETHER-NODES - the professions' nodes
 
@@ -1294,10 +1296,11 @@ the Veil", "Legends ended"; its trades count 'ether' and 'legend' ships.
   fifty" was not).
 - **The light, not the sky.** The dome, the clouds and the fog are the world's own past the Veil; a grade of the sky's
   four passes (as the brass's) is a later slice's.
-- **Deep Waters by its own bake; the pits the Bay's.** ETHER-HOLD (from play, 2026-10-11: a player over the side
+- **Deep Waters by its own bake; the pits the Bay's (until PITS-WORLD).** ETHER-HOLD (from play, 2026-10-11: a player over the side
   stood on a floor carved against the Bay's clamped corner, and could neither swim nor float back) held the carve off
   the box; ETHER-DEEP (above) carves it by its own frame, and a host told nothing of the sea still holds it
-  (test/world/ethersea_dwhold.test.js). Ocean Holes' pits stay the Bay's.
+  (test/world/ethersea_dwhold.test.js). Ocean Holes' pits stood the Bay's until PITS-WORLD (2026-10-27,
+  `03-World/Ocean-Holes.md`): they open past the Veil now, each abyss in the world's abyss lane.
 - **Online**, the crossing is each player's own; a party is not carried across together, and a player aboard another's
   ship holds the crossing back.
 - **The Overworld's enemies, seeded on the sea** (ETHER-OW): the bands roam the isles and Warm Ashes' raiders sail the

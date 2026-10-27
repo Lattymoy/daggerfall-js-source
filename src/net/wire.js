@@ -5929,6 +5929,12 @@ export const owRoomGate = (bucket, nowMs) => tokenGate(bucket, nowMs, OW_ROOM_HZ
  *  law), so a client says none to it. 127, never 125 or 126: RELAY_VERSION's history says why. */
 export const OW_RELAY_MIN = 127;
 export const relaySupportsOverworld = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= OW_RELAY_MIN; };
+/** SPAWN-WORLD (2026-10-26, folded into world270 while it is undeployed): the first relay whose `dg` row reads a pixel
+ *  past the Bay (owWireRow). An older one refuses the whole word for one such row - `bad ow`, the socket closed - so a
+ *  client says a row past the Bay to it never (net/online.js owWorldOk). It moves with world270's row if a merge
+ *  renumbers it. */
+export const OW_WORLD_RELAY_MIN = 270;
+export const relaySupportsOwWorld = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= OW_WORLD_RELAY_MIN; };
 /** A cell's storage key for its ledger - never under `world:`, the prefix a cell's alarm sweeps (a world room's memory). */
 export const OW_LEDGER_KEY = 'ow:led';
 // GRAVE-PARTY (FIELD BUGS 2026-10-16b): THE GRAVES' SEARCHES, the ledger's third kind (net/overworldLaw.js owFoldGraves):
@@ -5983,13 +5989,16 @@ export const cellOfRoom = (key) => (isCellRoom(key) ? String(key).slice(6).split
 export const owWireId = (id) => typeof id === 'string' && (OW_BAND_ID_RE.test(id) || OW_RAIDER_ID_RE.test(id));
 /**
  * A spawned dungeon's row, projected: `[px, py, seen]` or `[px, py, seen, cleared]` - a map pixel and the two clocks in
- * shared classic minutes (a null fourth is none: JSON's own spelling of a missing one) - or null.
+ * shared classic minutes (a null fourth is none: JSON's own spelling of a missing one) - or null. SPAWN-WORLD
+ * (2026-10-26): the pixel the world's (worldPixelOk) - the spawns stand past the Bay too, and their clocks are their
+ * cell's as the Bay's are; it was the Bay's 1000 x 500 (a client says one past it only to the relay that reads it,
+ * OW_WORLD_RELAY_MIN - an older one refuses the whole word, and closes the socket on it).
  * @param {unknown} r @returns {number[]|null}
  */
 export function owWireRow(r) {
   if (!Array.isArray(r) || (r.length !== 3 && r.length !== 4)) return null;
   const [px, py, seen, cleared] = r;
-  if (!intIn(px, 0, 999) || !intIn(py, 0, 499) || !finite(seen) || seen < 0) return null;
+  if (!worldPixelOk(px) || !worldPixelOk(py) || !finite(seen) || seen < 0) return null;
   if (r.length === 3 || cleared === null) return [px, py, seen];
   return finite(cleared) && cleared >= 0 ? [px, py, seen, cleared] : null;
 }

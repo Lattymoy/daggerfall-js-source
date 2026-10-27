@@ -358,6 +358,7 @@ import { takeOwed } from '../systems/playerDoor.js';   // FIELD BUGS 2026-10-12g
 import { createRoomLoot } from './roomLootHost.js';   // HOST-SPLIT
 import { createSearchRoom } from './searchRoom.js';   // GRAVE-PARTY: whose a searched object's word is - the searcher's party's, never a stranger's
 import { monsterVolume } from '../systems/monsterVolume.js';   // MONSTER-VOL: a monster's pain cry rides the Audio tab's Monster Volume
+import { isAbyssMapId } from '../world/oceanHoles.js';   // PITS-WORLD: an Ocean Hole's abyss, the Bay's or one past it - never a hall's or an Abyss Dungeon's id
 
 
 
@@ -1867,8 +1868,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   /** AUDIT FEUD: may this level be a lair - never the Burning Court nor the Arena's floor ("dungeon 0", the map's corner),
    *  nor a spawned dungeon (it comes and goes with its clock - no home to come back to): profIdentity's own guard. AUDIT
    *  FEUD 2: nor the Ocean Holes abyss - it borrows its template's map table (its pixel another dungeon's), its id the
-   *  abyss's own (world/oceanHoles.js getAbyssMapId, 0x60000000 and up). */
-  function lairable() { return !(dfLocation?.spawned || isGateArena(dfLocation) || isArenaFloor(dfLocation) || (Number(dfLocation?.mapTableData?.mapId) >>> 0) >= 0x60000000); }
+   *  abyss's own (world/oceanHoles.js getAbyssMapId; PITS-WORLD: isAbyssMapId, the Bay's 0x600 and the world's abyss lane). */
+  function lairable() { return !(dfLocation?.spawned || isGateArena(dfLocation) || isArenaFloor(dfLocation) || isAbyssMapId(dfLocation?.mapTableData?.mapId)); }
   /** This dungeon's map pixel - a revenant's lair is named by it (RVN7a's door, `lairHere`, names the same). */
   function lairPixel() {
     const mt = dfLocation.mapTableData;
@@ -1982,11 +1983,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const sdThrough = _superTier ? createSdThrough({ renderer, audio, word: () => sdEndWord(), look: sdRiftLookNow, clock: sdEndClock, onStep: () => sdRiftStep(), say: sdSayHere, probe: { ...sdProbeOf(collider), water: waterSurfaceYAt }, riftOf: () => sdEnd.rift, dynamicDraws }) : null;   // AUDIT SD-THROUGH (B2): and the block's water, for a dry foot
   // TUT1: the page of the place this build stands - read inside it, a beat after the step through and never while the
   // loading screen stands (ui/tutorialPopup.js holds it): Dagon's Breach's court, the arena's sand, the Abyss Dungeon or
-  // its Shattered Hour, an Ocean Hole's flooded dungeon (its id the abyss's own, 0x60000000 and up - getAbyssMapId), or
+  // its Shattered Hour, an Ocean Hole's flooded dungeon (its id the abyss's own - getAbyssMapId; PITS-WORLD: isAbyssMapId,
+  // where every id from 0x60000000 up was one and a zone hall's opened the Ocean Holes' page), or
   // the first dungeon past the starting cave (the welcome tour told that one). ONE page a build (AUDIT TUT1: an Ocean
   // Hole's door popped its own and the build a second, back to back).
   noteFirstUse(isGateArena(dfLocation) ? 'oblivion-gate' : isArenaFloor(dfLocation) ? 'arena' : _ketch ? 'sky-ketch' : _superTier || _sdRealm ? 'abyss'
-    : (Number(dfLocation?.mapTableData?.mapId) >>> 0) >= 0x60000000 ? 'ocean-holes'
+    : isAbyssMapId(dfLocation?.mapTableData?.mapId) ? 'ocean-holes'
       : isStartDungeon(dfLocation) ? null : 'dungeons', { after: SCENE_CHANGE_TUTORIAL_MS });
   // SD6c (Super-Dungeons.md section 8): THE ORRERY'S HALL in the Shattered Hour (scenes/superDungeon/sdHall.js) - its stones,
   // plaques, dial and bridge, stood the first frame I stand here; a handle's turn sent through the outer host (the realm

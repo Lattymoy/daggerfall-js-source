@@ -137,11 +137,12 @@
   {
     "name": "LW-host-boards-ground-held-to-the-bay",
     "file": "src/scenes/world.js",
-    "old": ": !provinceQuestPlaces.placeOnPixel(x, y))\n      && !gateSeaPixel(",
+    "old": ": !provinceQuestPlaces.placeOnPixel(x, y) && !spawnsDungeon(_spawnSalt, x, y))\n      && !gateSeaPixel(",
     "new": ": false)\n      && !gateSeaPixel(",
     "tests": [
       "test/systems/revenant/lairworld.test.js"
-    ]
+    ],
+    "note": "SPAWN-WORLD re-aimed by content: past the Bay the boards' ground keeps off a spawn's pixel too."
   },
   {
     "name": "LW-host-boards-stamp-unread",

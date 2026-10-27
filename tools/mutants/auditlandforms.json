@@ -859,7 +859,7 @@
   },
   {
     "name": "GROUND-AGREE-the-lift-asks-the-clocks",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/spawnGroundHost.js",
     "old": "  const _liftLocationAt = (x, y) => spawnGroundPlace.groundLocationAt(x, y, locationIndex.get(`${x},${y}`));\n",
     "new": "  const _liftLocationAt = (x, y) => tvLocationAt(x, y);\n",
     "note": "GROUND-AGREE (Field-Bugs-2026-10-24b): re-aimed - the lift asks the clocks again (a spent spawn read as bare ground) where its build shapes the ground for the spawn alive or dead.",
@@ -870,7 +870,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-B1-never-bound",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/spawnGroundHost.js",
     "old": "  const _liftLocationAt = (x, y) => spawnGroundPlace.groundLocationAt(x, y, locationIndex.get(`${x},${y}`));\n",
     "new": "  const _liftLocationAt = (x, y) => locationIndex.get(`${x},${y}`);\n",
     "tests": [
@@ -1015,8 +1015,8 @@
   },
   {
     "name": "AUDIT-LANDFORMS-II-F1-the-probe-skips-the-roll",
-    "file": "src/scenes/world.js",
-    "old": "groundLocationAt(x, y, locationIndex.get(`${x},${y}`));",
+    "file": "src/scenes/spawnGroundHost.js",
+    "old": "spawnGroundPlace.groundLocationAt(x, y, locationIndex.get(`${x},${y}`));",
     "new": "(locationIndex.get(`${x},${y}`) ?? null);",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
@@ -1460,7 +1460,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-II-J3-probe-transposed",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/spawnGroundHost.js",
     "old": "groundLocationAt(x, y, locationIndex",
     "new": "groundLocationAt(y, x, locationIndex",
     "tests": [
@@ -1469,7 +1469,7 @@
   },
   {
     "name": "AUDIT-LANDFORMS-II-J3-index-transposed",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/spawnGroundHost.js",
     "old": "groundLocationAt(x, y, locationIndex.get(`${x},${y}`));",
     "new": "groundLocationAt(x, y, locationIndex.get(`${y},${x}`));",
     "tests": [

@@ -792,7 +792,8 @@ test('AUDIT OW5b D3 (run on the host\'s own code): THE LEADER\'S SPAWN IS A DOOR
   const w8 = rd('src/scenes/world.js');
   assert.match(w8, /const there = summary \? null : tvLocationAt\(tw\.x, tw\.y\);/, 'the host asks what stands there');
   // PIN MOVED (ETHER-PLACES, bible/03-World/Eltheric-Ocean.md): no spawn past the Veil (`!inEtherLaw` - the isles stand their own)
-  assert.match(w8, /const tvLocationAt = \(x, y\) => locationIndex\.get\(`\$\{x\},\$\{y\}`\) \?\? \(params\.has\('online'\) && !inEtherLaw\(x, y\) && spawnsDungeon\(_spawnSalt, x, y\) \? tvSpawnAt\(x, y\) : null\);/, 'the index, else the spawn its roll would stand (online; side-effect free)');
+  // PIN MOVED (HOST-SPLIT, SPAWN-WORLD 2026-10-26): the stand left world.js for scenes/spawnGroundHost.js
+  assert.match(rd('src/scenes/spawnGroundHost.js'), /const tvLocationAt = \(x, y\) => locationIndex\.get\(`\$\{x\},\$\{y\}`\) \?\? \(params\.has\('online'\) && !inEtherLaw\(x, y\) && spawnsDungeon\(_spawnSalt, x, y\) \? tvSpawnAt\(x, y\) : null\);/, 'the index, else the spawn its roll would stand (online; side-effect free)');
 });
 
 test('PARTY-TRUCE (FIELD BUGS 2026-10-09b): a party\'s walk that ends in the open PvP zone, or at its edge, says so in its question - the walk is the one door into the zone no journey\'s gate asks; a walk elsewhere asks as it did (mutant: the row never asked)', () => {

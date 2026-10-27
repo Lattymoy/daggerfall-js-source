@@ -335,7 +335,7 @@ const HARDCODED = {
   'src/systems/banking.js': 20,
   'src/systems/betterAmbience.js': 42,
   'src/systems/booksData.js': 85,
-  'src/systems/bounty/bountyBoard.js': 49,
+  'src/systems/bounty/bountyBoard.js': 41,   // QUARRY-WORLD (2026-10-27): the beasts' words through t() (bounty.foes.*)
   'src/systems/bounty/bountyReward.js': 2,
   'src/systems/breachBook.js': 1,
   'src/systems/buildingLocks.js': 1,

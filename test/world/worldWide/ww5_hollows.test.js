@@ -371,7 +371,7 @@ test('WW5 THE TIMERS, THE BOARD AND THE MAP: a province\'s Hollow in the same ro
   assert.match(w, /const sdHost = params\.has\('online'\) \? createSdLanes\(\{\n {4}now: \(\) => Date\.now\(\) \+ _sharedOffsetMs, here: \(\) => playerTravelPixel\(\),/);
   assert.match(w, /sd: sdHost\?\.timers\(\) \?\? null,/);
   assert.match(w, /sd: \(\) => sdHost\?\.mapMarks\(\) \?\? null,/);
-  assert.match(w, /return \(locationIndex\.get\(`\$\{px\},\$\{py\}`\)\?\.superTier \? locationIndex\.get\(`\$\{px\},\$\{py\}`\) : null\) \|\| \(params\.has\('online'\)/, 'a province\'s Hollow built where it stands past the Bay');
+  assert.match(src('src/scenes/spawnStandHost.js'), /return \(locationIndex\.get\(`\$\{px\},\$\{py\}`\)\?\.superTier \? locationIndex\.get\(`\$\{px\},\$\{py\}`\) : null\) \|\| \(params\.has\('online'\)/, 'a province\'s Hollow built where it stands past the Bay');   // PIN MOVED (AUDIT BAY-LEFT, its packages merged): _locationToBuild left world.js for scenes/spawnStandHost.js (SPAWN-WORLD's HOST-SPLIT), the Hollow-first clause with it
   for (const re of [/const rec = sdHost\.record\(s\), now/, /riftLook\(sdHost\.record\(s\), s,/, /rec = sdHost\?\.record\?\.\(slot\) \?\? null;/, /const h = sdHost\?\.hollow\(s\);/, /if \(sdHost\?\.hollow\(loc\.sdRealm\)\?\.key !== back\.key\) return true;/]) assert.match(w, re);
   const on = src('src/net/online.js');
   assert.match(on, /else if \(r && r\.k !== 'ev' && r\.k !== SD_LANE_KIND\) \{/, 'a province\'s record is the hub\'s word, never a realm\'s fight');
