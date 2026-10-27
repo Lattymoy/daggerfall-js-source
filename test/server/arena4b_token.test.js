@@ -48,8 +48,8 @@ test('ARENA4b the mint signs a realm character\'s level as `cl` - INT7: the leve
   tile({ level: 0 });
   assert.equal('cl' in (await claimsOf({ character: R.id })), false, 'a level under one');
   tile({ level: REALM_LEVEL_CLAIM_MAX });
-  assert.equal((await claimsOf({ character: R.id })).cl, 1000, 'the top of the bound');
-  tile({ level: 1001 });
+  assert.equal((await claimsOf({ character: R.id })).cl, REALM_LEVEL_CLAIM_MAX, 'the top of the bound');   // PIN MOVED: LEVEL-45, the bound is the online cap
+  tile({ level: REALM_LEVEL_CLAIM_MAX + 1 });
   assert.equal('cl' in (await claimsOf({ character: R.id })), false, 'past the bound');
   // the checkpoint's own word moves it
   const put = await S.fetch(`https://accounts.invalid/v1/realm/${R.id}/data`, {

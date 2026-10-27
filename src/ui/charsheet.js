@@ -35,6 +35,7 @@ import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { statDescriptionRows } from '../systems/talk/talkMacros.js';   // ATTRMACRO1: SetTextTokens' macro pass over TEXT.RSC records 0..7
 import { SKILLS, SKILL_NAMES, skillValue, skillValueText, getSkillRecentlyIncreased, resetSkillsRecentlyRaised } from '../systems/skills.js';
 import { applyLevelUp, bonusPoolFor, LEVELUP_SKILL_SUM_PER_LEVEL } from '../systems/advancement.js';
+import { onlineLevelFraction } from '../systems/levelClimb.js';   // LEVEL-45
 import { refreshOnlineLayer } from '../systems/renownLayer.js';   // AUDIT LEVEL-EVEN L2-2: the rollout's points reach the online floor
 import { usesVirtueLeveling, levelBarProgress, LEVELUP_TOTAL } from '../systems/oblivionLeveling.js';   // ORL1: whose law levels this character
 import { LEVEL_CAP, atLevelCap, releaseCapLatch } from '../systems/levelCap.js';   // LEVEL-45: the Level box at the cap
@@ -304,6 +305,7 @@ export const NO_AFFILIATIONS_TEXT_ID = 19;
 export function levelProgressPercent(entity) {
   if (atLevelCap(entity)) return 100;   // LEVEL-45 (systems/levelCap.js): no next level - the box reads it whole
   if (usesVirtueLeveling(entity)) return Math.trunc((levelBarProgress(entity) * 100) / LEVELUP_TOTAL);
+  if (entity?._online === true) return Math.trunc(onlineLevelFraction(entity.startingLevelUpSkillSum ?? 0, entity.currentLevelUpSkillSum ?? 0) * 100);   // LEVEL-45: the online law's bar (systems/levelClimb.js)
   const current = Math.fround(((entity?.currentLevelUpSkillSum ?? 0)
     - (entity?.startingLevelUpSkillSum ?? 0) + 28) / LEVELUP_SKILL_SUM_PER_LEVEL);
   return Math.trunc((current % 1) * 100);

@@ -124,7 +124,7 @@ export class EnemyAttack {
     // paralysis - so the machine step below still runs: a swing
     // already in flight keeps being stepped, and only the DECISION
     // half stops.
-    if (paused) return machineStep(this.machine, dt, this.liveSpeed);
+    if (paused || ai?._pilot?.swing) return machineStep(this.machine, dt, this.liveSpeed);   // STAFF-PILOT (systems/staffBossPilot.js): a boss a staff member steers decides no swing of its own - a swing in flight still steps
     this.meleeTimer -= dt;
     if (this.meleeTimer < 0) this.meleeTimer = 0;
     const dist = ai._dist;
