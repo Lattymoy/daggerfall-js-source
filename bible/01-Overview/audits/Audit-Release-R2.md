@@ -43,7 +43,7 @@ finding there would be routed, not fixed - none was. The code says what each fix
 | R2-4 | MED | The quest layer's region name was `''` past the Bay: no NPC there knew a quest's place or person there (START3's province starts among them), and "Where am I?" in a lair said "in ." | FIXED and pinned |
 | R2-5 | MED | A quest giver past the Bay has no remote site to give: every quest that wants another town or a dungeon parses to no work (a guild's "no work", a Daedra's "no task here, keep your gold") | TAKEN - the proposal built, FIXED and pinned (below) |
 | R2-6 | LOW | A vampire turned past the Bay is not carried to a cemetery (the region's MAPS rows are the transfer's search) | FIXED and pinned (the second pass) |
-| R2-7 | LOW | A staff event cannot be staged past the Bay: its place's pixel is the Bay's (`staffEventLaw.js`), the place picker lists no province's places, and the event runs as a raid, which is the Bay's until WW6 | FIXED and pinned for an area's event (the second pass); a town's own event past the Bay recorded as WW6's |
+| R2-7 | LOW | A staff event cannot be staged past the Bay: its place's pixel is the Bay's (`staffEventLaw.js`), the place picker lists no province's places, and the event runs as a raid, which is the Bay's until WW6 | FIXED and pinned for an area's event (the second pass); a town's own event past the Bay FIXED by WW6 (2026-10-27) |
 | R2-8 | LOW | A POI (the builder's tool) stands on the Bay's map alone: its law, its id `py * 1000 + px` and its feed's key | FIXED and pinned (the second pass) - no stored id moves, no migration |
 | R2-9 | NOTE | A deed in one of a capital's slices (the Imperial City is 25 pixels, each slice its own map id) is DFU's (region, key) law: a house of the same key in another slice of the same capital would read as owned | REPRODUCED and FIXED by IC-GRAND (5 mutants, all dead) - was routed to the Imperial City's stream |
 
@@ -148,7 +148,7 @@ the same province; none at all (no lair stands - their templates unread), the ne
 host's own skip stands (AUDIT CAPTAIN'S SEA P4). HOST-SPLIT: the law is the module's, and bootWorld is two logical lines
 shorter (the host asks one positional call).
 
-### R2-7 - a staff event past the Bay (FIXED for an area, the second pass; a town's is WW6's)
+### R2-7 - a staff event past the Bay (FIXED for an area, the second pass; a town's by WW6)
 
 `src/net/staffEvent/staffEventLaw.js:"export const STAFF_EVENT_PIXEL_BOUND = 8192;"`,
 `src/net/staffPlaces.js:"function provincePlaces(maps, region, places) {"`. The event's place was a Bay pixel by its law
@@ -164,6 +164,13 @@ province's places (the world's registry's listed places of its theatre, kept for
 the Bay needs the raids' words on the world's pixels (`net/wire.js` validRaidIn), a town past the Bay keyed by its own
 index (a province's places are no MAPS.BSA row), and the raid's rect, walls and watch there. Relay `world260` re-hashed in
 place (undeployed). `11-Multiplayer/Staff-Events.md` section 6 says the same.
+
+WW6 (2026-10-27, `03-World/World-Wide.md` WW6) DID THE REMAINDER, so the record above is history: the raids stand past
+the Bay (their words on the world's pixels, a town past the Bay keyed by its own location index, its raid in its own rect
+with its own watch), so a TOWN's event stands past the Bay too - `staffTownPixelOk(px, py, loc, rg)` takes a town past the
+Bay by its own index at a pixel off the Bay in a province's region, refuses a location and a pixel on two sides of the edge
+by name (`town`, the panel's `event-bad-town`), and the picker offers a province's town as itself (its registry
+`location`).
 
 ### R2-8 - a POI past the Bay (FIXED, the second pass)
 
@@ -229,7 +236,8 @@ A departure (Port-Ledger A, IC-GRAND (10)).
 - **The paper doll's backdrop**: a region past `REGION_BACKGROUND_CHARS` takes the race's, DFU's own fallback.
 - **The servers**: the account service's town books and nodes are any region's (WW7-5, WW-C1); the Watch's ground and the
   grants are the world's (WW7-5, AUDIT TESA II Z6); the Abyss census, the Hollows, the raids, the stars and World of
-  Daggerfall's camps are the Bay's by their records (WW-R, WW5, WW6).
+  Daggerfall's camps are the Bay's by their records (WW-R, WW5, WW6). (The raids no longer: WW6, 2026-10-27, stands them
+  in every province but the open zone.)
 
 ## Findings in other streams' files
 
