@@ -1859,3 +1859,12 @@ says such a row only to a relay that reads it (`relaySupportsOwWorld`, `OW_WORLD
 whole word and closes the socket). Deploy the relay before clients. Nothing else of the relay moves: a spawn's or an abyss's
 room is a world room as before. The relay's law hash (`test/net/relayversion.test.js`, SLAM8) is re-hashed where world270
 is folded together, not in this package: until then that test fails on the moved row law, as it should.
+
+**The account Worker's graph (AUDIT BAY-LEFT, its packages merged, 2026-10-27).** The living world's seed
+(`systems/livingWorld/seed.js`, which the account Worker bundles through `lostSpoils.js`, `itemLaw.js` and `keepsake.js`)
+took `hash32` from `world/spawnedDungeons.js`, so SPAWN-WORLD's imports there - `arenaRoads.js`, `worldLanes.js`,
+`worldGrid.js`, `tamrielFrame.js`, and the traced map behind them (`tamrielLand.js`, `tamrielGeography.js`, `segment.js`) -
+rode into the Worker's bundle outside `.github/workflows/account-deploy.yml`'s path filter (`test/server/accountdeploy.test.js`
+ACC1-CI, `test/server/discord_setup.test.js` DISCORD-CODE). The seed takes the mix from its own leaf (`world/blockHash.js`,
+which `spawnedDungeons.js` re-exports - the same function), so none of them is bundled and the filter is unchanged. Mutant
+`tools/mutants/bayleft_merge.json` BAYLEFT-MERGE-the-seed-through-the-spawns (dead).
