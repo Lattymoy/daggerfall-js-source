@@ -8363,20 +8363,24 @@ frame, and the commit the goods will ride is the longer frame - it is measured n
 
 ## CHAT-POST (2026-09-27, Discord - Tabitha: "Link in chat / Post in chat"; "random magic items' details in chat") - an item posted in chat
 
-**ONE LINE** (`ui/enhanced/enhancedInventory.js` itemChatText): the item's name in brackets, its headline stat (damage or
-armour), and its magic (itemPowerLines - TRADE-INFO's list, the card's own words). It is cut at a whole word to the
-chat's bound (net/wire.js CHAT_MAX) and ends "..." when cut. A chat line is words - the relay rebuilds a chat frame
-from its text alone - so the item travels as what a player would type to describe it; nothing is sent that a
-receiver could mistake for the item itself.
+**ONE LINE** (`ui/enhanced/enhancedInventory.js` itemChatText / itemChatLabel): the item's name in brackets - a stack
+of more than one as `[Ruby x260]` - and (for an older relay) its headline stat and its magic (itemBriefLines), cut at
+a whole word to CHAT_MAX. Beside the words the frame carries the linked records (`items`, net/wire.js validChatItems -
+shape only, at most CHAT_ITEMS_MAX; a single legacy `item` still reads). The receiving client projects each through
+validLootItem and draws coloured `[Name]`s inside the words (`ui/chatItemLink.js` chatTextParts); hover opens the
+pack's own tip card (`showItemHover`). Nothing on the line is put in a pack - the card is a look, as a trade offer's
+is before a commit. An older relay drops the records and the line is the words alone.
 
-**THE DOOR.** "Post in chat" sits on the pack's card and its right-click menu (both are built from `itemActs`), and
-only where the host hands the door (`deps.canPostItem` - online, with a chat tab open). The host says it on the
-chat's open tab through `chatSend` (`scenes/world.js` postItemInChat), so every tab's own reasons hold: no party for
-the Party tab, no guild for the Guild tab, an older relay. The building's pack posts through world.js's host object,
-and the dungeon's through worldModes into dungeonContext (THE FOUR HOSTS; exterior.js has no chat).
+**THE DOOR.** "Link in chat" inserts `[Label]` into the chat field (`chatPanel.linkItem`) so a typed message can carry
+the piece; "Post in chat" still says the item as its own line. Both sit on the pack's card and its right-click menu
+(`itemActs`), only where the host hands the door (`deps.canPostItem` - online, with a chat tab open). Typing `[` in
+the field also lists matching bag pieces (`bagItems` → `matchBagItems`); Tab or Enter finishes the bracket. The host
+sends through `chatSend` (`scenes/world.js`), so every tab's own reasons hold. The building's pack posts through
+world.js's host object, and the dungeon's through worldModes into dungeonContext (THE FOUR HOSTS; exterior.js has no
+chat).
 
-**Not changed:** the chat's wire, its bound, its filters. Pins: `test/systems/chatpost.test.js` (2),
-`tools/mutants/chat_post.json` (8 dead).
+**Deploy the relay** that fans `items` before the site that draws the links, or every post is words alone. Pins:
+`test/systems/chatpost.test.js`, `tools/mutants/chat_post.json`.
 
 ## CHAT-FIND (2026-10-11, the owner: "search for a player's name in the chat in every ui"; "put the search bar above the player list for better visibility") - the chat's search
 

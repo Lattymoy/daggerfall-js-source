@@ -192,8 +192,8 @@
   {
     "name": "E2-4-gate-behind-its-row",
     "file": "src/net/instanceRoom.js",
-    "old": "export const GUILD_INSTANCE_RELAY_MIN = 270;",
-    "new": "export const GUILD_INSTANCE_RELAY_MIN = 269;",
+    "old": "export const GUILD_INSTANCE_RELAY_MIN = 271;",
+    "new": "export const GUILD_INSTANCE_RELAY_MIN = 270;",
     "tests": [
       "test/net/domain2_castles.test.js"
     ],

@@ -74,7 +74,7 @@ ESCORTING FACES - the quest escorts' portrait column, FE1 - and the CREDITS TABL
 - and IC-TOWNMAP's SHEET (`town/imperialSheet.js`: the Imperial City's own map on the held map - its plan at city zoom, its district's fabric near the player - `10-UI/Enhanced-Maps-Arc.md` IC-TOWNMAP 3);
 - and LOCKPICK's TWO (`lockpickDoor.js` and `lockpickWindow.js`: the lock's window - its pin tumblers in cross-section, the pick, the Auto attempt and Leave - `06-Systems/Lockpicking.md` section 4);
 - and PACK-PICK's PICKER (`packPicker.js`: the pack's pieces as pictured tiles in their tiers' frames, sifted as the pack's own stores are, what may not go folded with why, and the piece chosen looked at - the Market's List form and a trader's stall choose a piece to sell from it; `06-Systems/Professions-Arc.md` 10.14);
-435 modules
+436 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.

@@ -132,8 +132,8 @@ test('WW5 THE WIRE AND THE RELAY: the star word on its lane\'s pixel - the Bay\'
   assert.deepEqual(validStarOut({ k: 'hd', n: N, s: 10, px: 1600, py: -120, at: 9, top: ['Ann'], c: 1 }), { k: 'hd', n: N, s: 10, px: 1600, py: -120, at: 9, top: ['Ann'], c: 1 });
   assert.deepEqual(validStarOut({ k: 'hds', l: [[N, 10, 1600, -120, 9], [N, 10, 300, 200, 9], [N, 1, 300, 200, 9]] }).l, [[N, 10, 1600, -120, 9], [N, 1, 300, 200, 9]]);
   assert.equal(STAR_HELD_MAX, 9 * 3 * 2 + 6, 'a night\'s and the night before\'s three in every lane, and room');
-  assert.equal(WW5_RELAY_MIN, 270);
-  assert.ok(relaySupportsWw5(RELAY_VERSION) && relaySupportsWw5('world270') && !relaySupportsWw5('world269') && !relaySupportsWw5('acct270') && !relaySupportsWw5(undefined));
+  assert.equal(WW5_RELAY_MIN, 271);
+  assert.ok(relaySupportsWw5(RELAY_VERSION) && relaySupportsWw5('world271') && !relaySupportsWw5('world270') && !relaySupportsWw5('acct271') && !relaySupportsWw5(undefined));   // PIN MOVED (the second merge of main into #1184): the gate is world271, past CHAT-POST's world270 (main's), which refuses
   const on = src('src/net/online.js');
   assert.match(on, /if \(primary\) \{ this\.starOk = relaySupportsStar\(relayV\); this\.ww5Ok = relaySupportsWw5\(relayV\); \}/);
   assert.match(on, /if \(w\.k >= STAR_PER_NIGHT_WIRE && !\(this\._mine\(cell\) \? this\.ww5Ok : this\._haloFor\(cell\)\?\.ww5Ok\)\) return false;/, 'a province\'s star word never to a relay that refuses it as junk - the socket\'s own relay\'s word');

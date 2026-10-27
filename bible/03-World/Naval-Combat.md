@@ -104,7 +104,7 @@ rail's height, the beam); the table is what each carries, a side at a time:
 | Rowboat | 96 / 0 / 0 | none - it rams, it does not fight |
 | Large Boat | 240 / 96 / 0 | 3 swivels a side, 1 on the bow |
 | Small Ship | 672 / 256 / 24 | 5 long guns a side (GALLEON: a gun a port of Mac's galleon - the mod's had 6; GALLEON-WEIGHT: a player's throws the six guns' weight, below), 2 chain-shot chasers, a fire barrel over the stern |
-| Large Galley | 832 / 144 / 60 | 4 long guns a side, 3 great guns on the bow - and the ram (GALLEY_RAM) |
+| Large Galley | 832 / 144 / 60 | 4 long guns a side, 3 great guns on the bow - and the ram (GALLEY_SHARE, RAM-RETURN) |
 | Carrack | 896 / 352 / 30 | 7 long guns a side, 2 chain-shot chasers, a fire barrel over the stern |
 
 TOUGHER-SHIPS (2026-10-03, below): the hulls and sails are SHIP_TOUGHNESS (1.6) times the 60 / 150 / 420 / 520 / 560
@@ -178,12 +178,22 @@ FIELD_MEND_CAP and never past it, never while she burns (a fire strikes her ever
 again past FIELD_REFLOAT of her hull. Hands
 are never mended - they are hired, or pressed from a prize. The plate says MENDING while they work.
 
-**Rams**: a stem striking a hull - her own bow's (`bowZ`) within RAM_REACH of the other's box - at a closing speed of
-RAM_SPEED or more (the way she came in with, the most of the last RAM_MEMORY_S, less the other's along her course)
-deals RAM_DAMAGE a metre a second (a galley's ram GALLEY_RAM times that) and takes RAM_RECOIL of it back - BOW_RECOIL
-times that for a stem not built to ram, a GALLEY_RAM-th of it for a galley's, half braced (AUDIT NAV1). AUDIT NAV2
-F26: one captain's ram on another's sound ship brings her to strike and never under (`checkShipRams` caps it at
-STRUCK_AT) - a corsair galley's stem sank a coaster outright, her prize and her plunder with her.
+**Rams** (RAM-RETURN, 2026-10-26, and AUDIT RAM-RETURN, 2026-10-27, `03-World/Naval-Refit.md`; the law
+`systems/naval/navalRam.js`, the stems `scenes/naval/navalRams.js`): a stem striking a hull - her own bow's (`bowZ`)
+within RAM_REACH of the other's box - meets a FACE of it (`ramContact`: her side, or her bow or stern) at a closing
+speed toward that face of RAM_SPEED or more (`ramClosing`: the way she came in with, the most of the last RAM_MEMORY_S,
+less the other's, along the face's normal - a scrape along her side closes on nothing). It deals a SHARE OF THE LESSER
+HULL of the two - RAM_SHARE (0.15) from a plain stem, GALLEY_SHARE (0.3) from a galley's ram - times the pace (the
+closing way over RAM_FULL_SPEED, whole at 8 m/s and no more past it) and the face (all of it into her side, RAM_GLANCE
+of it into her bow or stern). It lands with her line as its floor (`ramLine`, STRUCK_AT of her hull - AUDIT NAV2 F26's
+law, now every ram's): it brings a fighting ship to strike and never under, and a ship whose colours are down is not
+rammed - she is the grapples'. The rammer takes RAM_RECOIL of the blow back - BOW_RECOIL times that for a stem not built
+to ram, a GALLEY_RAM-th of it for a galley's, half braced (AUDIT NAV1), under the Captain's Due - and rams only as hard
+as her own room over her line pays for (`ramPaid`), so never to her own strike. My stem strikes fair game alone: a ship
+that would take me or that I have provoked, or one flying no lawful flag - a lawful ship at peace with me is bumped. A
+captain's galley rams the ship she fights alone (engaged on her, or closing to board her). Online a ram says so (the
+hit's `r`) and her stander takes it to her own line. The ram before it dealt RAM_DAMAGE (14) a metre a second unbounded,
+and was retired for it by BOARD-MAGNET the same day: a galley's sank a sloop in one.
 
 ## The ships of the Iliac Bay (NAV-C)
 

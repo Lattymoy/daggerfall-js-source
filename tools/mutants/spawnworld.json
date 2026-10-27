@@ -192,8 +192,8 @@
   {
     "name": "SPAWN-WORLD-the-relay-the-world-row-first-reads",
     "file": "src/net/wire.js",
-    "old": "export const OW_WORLD_RELAY_MIN = 270;",
-    "new": "export const OW_WORLD_RELAY_MIN = 269;",
+    "old": "export const OW_WORLD_RELAY_MIN = 271;",
+    "new": "export const OW_WORLD_RELAY_MIN = 270;",
     "tests": [
       "test/world/spawnworld.test.js"
     ]
