@@ -17923,7 +17923,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // DOORS, below the duel's). AUDIT REALM2 C2: the lease given up as the page GOES (pagehide, the unload guard answered) - the leave alone, with
     // keepalive (the browser finishes it; a save that large it cannot) - and taken again when a page the back-forward cache kept is shown.
     // CLOSE-SAVE (FIELD BUGS 2026-10-26): the leave asks the page-hide checkpoint first (whenPageHides below hands it to the session) and
-    // keeps it on the device - a close or a reload fires pagehide before visibilitychange, where the lease has gone
+    // keeps it on the device - a close or a reload fires pagehide first, before the page counts as hidden, and there the lease has gone
     whenPageGoes(globalThis, () => { legacyHost?.pageGone(); realmSession.leave({ keepalive: true }); }, () => { realmSession.rejoin(); });   // REZ-BLOODLINE: a death held for a Resurrect decided first - its tombstone takes the lease, the leave then sends nothing
   }
   /** REALM P1.3: A CHARACTER BORN ONLINE - made at the service once chargen is done, its first save the service's
