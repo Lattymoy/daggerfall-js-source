@@ -220,7 +220,7 @@
   {
     "name": "WB1-an-off-map-ring-drawn",
     "file": "src/ui/gate/gateMapMark.js",
-    "old": "  if (cx + r < 0 || cy + r < 0 || cx - r > size.width || cy - r > size.height) return null;\n",
+    "old": "  if (cx + r < box.x0 || cy + r < box.y0 || cx - r > box.x0 + box.w || cy - r > box.y0 + box.h) return null;\n",
     "new": "",
     "tests": [
       "test/ui/wb1_gate_omen.test.js"

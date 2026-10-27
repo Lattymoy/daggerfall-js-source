@@ -103,16 +103,16 @@ import { noticeHold, noticeRelease } from './enhanced/enhancedNotice.js';   // E
 import { TRAVEL_OPTIONS_TEXT as TO_TEXT, format as toFormat } from '../systems/travel/travelOptionsText.js';
 import { getDaggerfallDistance, MatchesCutOff } from '../systems/editDistance.js';
 import { checkLocationDiscovered, flipTravelMapFilter, travelMapDotColors } from './travel/travelMapWindow.js';   // MAP-KEY: the classic's filter flip and its dots' colours
-import { readGateMark, gateMarkKey, readGateMarks, gateMarksKey, GATE_RING_CSS, GATE_LEGEND_TEXT } from './gate/gateMapMark.js';   // WB1: the Oblivion Gate's ring, read as the party is (SERPENT1: and the serpent's, by the same reader)
+import { readGateMarkIn, gateMarkKey, readGateMarks, gateMarksKey, GATE_RING_CSS, GATE_LEGEND_TEXT } from './gate/gateMapMark.js';   // WB1: the Oblivion Gate's ring, read as the party is (SERPENT1: and the serpent's, by the same reader)
 import { SERPENT_RING_MAP_CSS, SERPENT_LEGEND_TEXT } from './serpentMapMark.js';   // SERPENT1: the sea serpent's ring, in the sea's colours
 import { SD_RING_MAP_CSS, SD_LEGEND_TEXT } from './superDungeon/sdMapMark.js';   // SD2c: the Super dungeon's ring once it is found, in its omen's brass
 import { EG_ARCH_RING_CSS, EG_ARCH_LEGEND_TEXT } from './eliteGates/egArchMapMark.js';   // EG-F: my company's Elite arch, in its gold
 import { KT_RING_CSS, ketchLegendText } from './ketch/ketchMapMark.js';   // KETCH: the Sky-Ketch over Daggerfall
 import { LODE_RING_CSS, LODE_LEGEND_TEXT, lodeLegendText } from './lodeMapMark.js';   // MINE-PERKS: a Motherlode Sense's day's Motherlodes, read by the bounty's reader
 import { POI_RING_CSS, POI_MARKS_MAX, poiLegendText } from './poi/poiMapMark.js';   // POI-2: the approved POIs' marks, read by the bounty's reader
-import { readBountyMarks, readBountyMarksIn, bountyMarksKey, BOUNTY_RING_CSS, BOUNTY_LEGEND_TEXT, BOUNTY_LEGEND_RIM_CSS, REVENANT_RING_CSS, REVENANT_LEGEND_TEXT } from './bounty/bountyMapMark.js';   // BOUNTY1: held bounties' black circles, read as the gate's ring is
-import { readRaidMarks, raidMarksKey, placeTip, tipKey, readTip, RAID_MARK_CSS, RAID_LEGEND_TEXT, RAID_HIT_PX, SEAT_TIP_TEXT_MAX, TOWN_TIP_LINES_MAX } from './eventMapMarks.js';   // EVENT-TIP: the raided towns, and the card a world event answers a hover with
-import { readVendorMark, vendorMarkKey, VENDOR_MARK_CSS, VENDOR_RIM_CSS, VENDOR_LEGEND_TEXT } from './vendor/vendorMapMark.js';   // HOME-VENDOR: the trader's waypoint
+import { readBountyMarksIn, bountyMarksKey, BOUNTY_RING_CSS, BOUNTY_LEGEND_TEXT, BOUNTY_LEGEND_RIM_CSS, REVENANT_RING_CSS, REVENANT_LEGEND_TEXT } from './bounty/bountyMapMark.js';   // BOUNTY1: held bounties' black circles, read as the gate's ring is
+import { readRaidMarksIn, raidMarksKey, placeTip, tipKey, readTip, RAID_MARK_CSS, RAID_LEGEND_TEXT, RAID_HIT_PX, SEAT_TIP_TEXT_MAX, TOWN_TIP_LINES_MAX } from './eventMapMarks.js';   // EVENT-TIP: the raided towns, and the card a world event answers a hover with
+import { readVendorMarkIn, vendorMarkKey, VENDOR_MARK_CSS, VENDOR_RIM_CSS, VENDOR_LEGEND_TEXT } from './vendor/vendorMapMark.js';   // HOME-VENDOR: the trader's waypoint
 import { readQuestMarks, questMarksKey, QUEST_MARK_CSS, QUEST_LEGEND_TEXT, QUEST_HIT_PX, QUEST_MARK_LIFT, QUEST_RAID_LIFT, QUEST_FOLLOWED_TEXT } from './quest/questMarks.js';   // GUIDE5: where the quests point
 import {
   buildInkModel, buildInkMarks, paintInkStatic, paintInkOverlay, zoomBand, clampView, scaleMinOf, SCALE_MAX,   // MAP-FIELD2: placeNames is inkMap's law still, but this sheet no longer inks the names
@@ -124,9 +124,9 @@ import {
 } from './ink/inkMap.js';
 // SOC6: the party's marks, read the one way both maps read them.
 import {
-  readPartyMarks, partyMarksKey, partyHoverText, partyLabelText,
+  readPartyMarksIn, partyMarksKey, partyHoverText, partyLabelText,
   PARTY_MARK_CSS, PARTY_OFFLINE_CSS, PARTY_LEGEND_TEXT,
-  readTravellerMarks, travellerMarksKey, TRAVELLER_MARK_CSS, TRAVELLER_LEGEND_TEXT,   // TV3
+  readTravellerMarksIn, travellerMarksKey, TRAVELLER_MARK_CSS, TRAVELLER_LEGEND_TEXT,   // TV3
 } from './partyMapMarks.js';
 // EM1: the tab strip inked on the paper, the slot under it, and the
 // contract whatever is inked answers. `mapContextOf` turns the flags
@@ -2204,6 +2204,14 @@ export class HeldMapWindow {
     return [(clientX - r.left) / k, (clientY - r.top) / k];
   }
 
+  /** BAY-LEFT-MAPS (bible/10-UI/Held-Map-Arc.md): THE BOX THE SHEET'S MARKS AND FLAGS ARE READ OVER - the continent's frame
+   *  (world/tamriel/tamrielFrame.js tamrielFrameInBay) while the sheet shows it, or the zone map (Cyrodiil's, past the Bay
+   *  since WW-C2) is up; the Bay's own sheet else. One box for every reader, so no mark the sheet can draw is dropped by a
+   *  bound the sheet does not have. */
+  _marksBox() {
+    return this._tamriel || this._zoneMap ? tamrielFrameInBay() : { x0: 0, y0: 0, w: this._size.width, h: this._size.height };
+  }
+
   // ── SOC6: THE PARTY ON THE MAP ─────────────────────────────────
 
   /** The host's party, read and placed. Returns whether anything the
@@ -2215,36 +2223,40 @@ export class HeldMapWindow {
     // opened during a journey, the cross keeps up with the rings
     const p = this.deps.getPlayerPixel?.();
     if (p && (p.x !== this._player.x || p.y !== this._player.y)) { this._player = { x: p.x, y: p.y }; this._dirty = true; }
+    // BAY-LEFT-MAPS (bible/10-UI/Held-Map-Arc.md): EVERY MARK OVER THE SHEET'S OWN BOX - the continent's frame while it is
+    // shown (the zone map's too, which is Cyrodiil's), the Bay's own sheet else (_marksBox). The gates past the Bay, the
+    // bounties and the quests were read so; the party, the travellers, the trader's coin, the serpent's ring, the Super
+    // dungeon's, the arch's, the Ketch's, the Motherlodes, the POIs, the raids and the stars were read against the Bay's
+    // 1000 x 500 and dropped past it
+    const sheet = this._marksBox();
     // WB1: the gate's ring rides the same poll - its words tick each second, so its key is its own and a changed
     // ring repaints without touching the party's labels
-    const gate = readGateMark(this.deps.gate, this._size);
+    const gate = readGateMarkIn(this.deps.gate, sheet);
     const gateKey = gateMarkKey(gate);
     let gateMoved = false;
     if (gateKey !== this._gateKey) { this._gateKey = gateKey; this._gate = gate; gateMoved = true; this._dirty = true; }
     // WW2: and every lane's past the Bay, over the continent's frame while it is shown
-    const f = this._tamriel ? tamrielFrameInBay() : null;
-    const gates = readGateMarks(this.deps.gates, f ?? { x0: 0, y0: 0, w: this._size.width, h: this._size.height });
+    const gates = readGateMarks(this.deps.gates, sheet);
     const gatesKey = gateMarksKey(gates);
     if (gatesKey !== this._gatesKey) { this._gatesKey = gatesKey; this._gates = gates; gateMoved = true; this._dirty = true; }
     // SERPENT1: the sea serpent's ring rides the same poll, on its own key
-    const serpent = readGateMark(this.deps.serpent, this._size);
+    const serpent = readGateMarkIn(this.deps.serpent, sheet);
     const serpentKey = gateMarkKey(serpent);
     if (serpentKey !== this._serpentKey) { this._serpentKey = serpentKey; this._serpent = serpent; gateMoved = true; this._dirty = true; }
     // SD2c: and the Super dungeon's, on its own key
-    const sd = readGateMark(this.deps.sd, this._size);
+    const sd = readGateMarkIn(this.deps.sd, sheet);
     const sdKey = gateMarkKey(sd);
     if (sdKey !== this._sdKey) { this._sdKey = sdKey; this._sd = sd; gateMoved = true; this._dirty = true; }
     // EG-F: and my company's Elite arch, on its own key
-    const arch = readGateMark(this.deps.arch, this._size);
+    const arch = readGateMarkIn(this.deps.arch, sheet);
     const archKey = gateMarkKey(arch);
     if (archKey !== this._archKey) { this._archKey = archKey; this._arch = arch; gateMoved = true; this._dirty = true; }
     // KETCH: and the Sky-Ketch's, on its own key
-    const ketch = readGateMark(this.deps.ketch, this._size);
+    const ketch = readGateMarkIn(this.deps.ketch, sheet);
     const ketchKey = gateMarkKey(ketch);
     if (ketchKey !== this._ketchKey) { this._ketchKey = ketchKey; this._ketch = ketch; gateMoved = true; this._dirty = true; }
     // BOUNTY1: the circles ride the gate's poll and its repaint - a bounty taken or paid with the map open
     // LAIR-WORLD: and past the Bay, over the continent's frame while it is shown (as WW2's rings above)
-    const sheet = f ?? { x0: 0, y0: 0, w: this._size.width, h: this._size.height };
     const bounties = readBountyMarksIn(this.deps.bounties, sheet);
     const bKey = bountyMarksKey(bounties);
     if (bKey !== this._bountiesKey) { this._bountiesKey = bKey; this._bounties = bounties; gateMoved = true; this._dirty = true; }
@@ -2253,36 +2265,36 @@ export class HeldMapWindow {
     const lKey = bountyMarksKey(lairs);
     if (lKey !== this._revenantsKey) { this._revenantsKey = lKey; this._revenants = lairs; gateMoved = true; this._dirty = true; }
     // MINE-PERKS: and a Motherlode Sense's Motherlodes - one rising, spent or gone, or the day's find made, with the map open
-    const lodes = readBountyMarks(this.deps.lodes, this._size, LODE_LEGEND_TEXT);
+    const lodes = readBountyMarksIn(this.deps.lodes, sheet, LODE_LEGEND_TEXT);
     const mKey = bountyMarksKey(lodes);
     if (mKey !== this._lodesKey) { this._lodesKey = mKey; this._lodes = lodes; gateMoved = true; this._dirty = true; }
     // POI-2: and the approved POIs - one approved, moved or retired with the map open
-    const pois = readBountyMarks(this.deps.pois, this._size, poiLegendText(), POI_MARKS_MAX);   // AUDIT POI R7: every marked POI, past the bounty's eight
+    const pois = readBountyMarksIn(this.deps.pois, sheet, poiLegendText(), POI_MARKS_MAX);   // AUDIT POI R7: every marked POI, past the bounty's eight
     const pKey = bountyMarksKey(pois);
     if (pKey !== this._poisKey) { this._poisKey = pKey; this._pois = pois; gateMoved = true; this._dirty = true; }
     // EVENT-TIP: the raided towns ride the same poll (a raid begins, withdraws or is cleansed while the map stands
     // open), and the card under a still pointer follows the marks - a countdown's second, a town cleansed under it
-    const raids = readRaidMarks(this.deps.raids, this._size);
+    const raids = readRaidMarksIn(this.deps.raids, sheet);
     const raidsKey = raidMarksKey(raids);
     if (raidsKey !== this._raidsKey) { this._raidsKey = raidsKey; this._raids = raids; gateMoved = true; this._dirty = true; }
     // STAR6: and the night's stars - an omen, a fall, a hold while the map stands open
-    const stars = readRaidMarks(this.deps.stars, this._size);
+    const stars = readRaidMarksIn(this.deps.stars, sheet);
     const starsKey = raidMarksKey(stars);
     if (starsKey !== this._starsKey) { this._starsKey = starsKey; this._stars = stars; gateMoved = true; this._dirty = true; }
     // GUIDE5: the quests' places ride the same poll (a step logged, a place found, the followed quest changed while the
     // map stands open); a card is bounded by the world events' own reader
-    const quests = readQuestMarks(this.deps.quests, this._size, f).map((m) => ({ ...m, tip: readTip(m.tip),   // START3: past the Bay over the continent's frame, as WW2's rings
+    const quests = readQuestMarks(this.deps.quests, this._size, sheet).map((m) => ({ ...m, tip: readTip(m.tip),   // START3: past the Bay over the continent's frame, as WW2's rings
       // AUDIT GUIDE K7: over a raided town the diamond stands clear of the blades
       lift: this._raids.some((r) => r.px === m.px && r.py === m.py) ? QUEST_RAID_LIFT : QUEST_MARK_LIFT }));
     const questsKey = `${questMarksKey(quests)}#${quests.map((m) => m.lift).join(',')}`;
     if (questsKey !== this._questsKey) { this._questsKey = questsKey; this._quests = quests; gateMoved = true; this._dirty = true; }
     // HOME-VENDOR: the trader's waypoint rides the same poll (set or cleared with the map open)
-    const vendor = readVendorMark(this.deps.vendor, this._size);
+    const vendor = readVendorMarkIn(this.deps.vendor, sheet);
     const vendorKey = vendorMarkKey(vendor);
     if (vendorKey !== this._vendorKey) { this._vendorKey = vendorKey; this._vendor = vendor; gateMoved = true; this._dirty = true; }
     // TV3: the region's travellers ride the same poll, on their own key
     const hid = this.deps.travellerHidden;   // WILD1: the open zone's hiding - my party and my guild alone are seen there
-    const trav = readTravellerMarks(this.deps.travellers, this._size).filter((t) => !hid?.(t));
+    const trav = readTravellerMarksIn(this.deps.travellers, sheet).filter((t) => !hid?.(t));
     const travKey = travellerMarksKey(trav);
     if (travKey !== this._travKey) { this._travKey = travKey; this._trav = trav; gateMoved = true; this._dirty = true; }
     if (gateMoved) this._refreshTip();
@@ -2290,7 +2302,7 @@ export class HeldMapWindow {
     // Edict proclaimed, a day turned move no mark - asked at the poll's cadence while a card shows, rewritten only when
     // its words change (_showTip)
     if (!gateMoved && this._tipKey && this._hoverAt) this._refreshTip();
-    const marks = readPartyMarks(this.deps.party, this._size);
+    const marks = readPartyMarksIn(this.deps.party, sheet);
     const key = partyMarksKey(marks);
     if (key === this._partyKey) { if (gateMoved) this._renderLegend(); return gateMoved; }
     this._partyKey = key;
@@ -2636,16 +2648,20 @@ export class HeldMapWindow {
     const w = this._waypointAt(pp[0], pp[1]);
     if (w) {
       openWaypointMenu({ x: clientX, y: clientY, id: w.id, by: ctx.by, canKind: ctx.canKind ?? { party: false, guild: false }, owner: 'heldmap', onNote: note,
-        onTravel: this._coordsAllowedHere() ? (wp) => this._waypointTravel(wp) : null });
+        onTravel: this._coordsAllowedHere() && inBay(Math.floor(w.mx), Math.floor(w.my)) ? (wp) => this._waypointTravel(wp) : null });   // BAY-LEFT-MAPS: no "Travel here" on a flag past the Bay (TESA-NO-FAST)
       return true;
     }
     const [mx, my] = toMap(this._view, pp[0], pp[1]);
-    if (!(mx >= 0 && my >= 0 && mx < this._size.width && my < this._size.height)) return false;
+    // BAY-LEFT-MAPS: a flag anywhere the sheet shows - the continent's frame while it is up, the Bay's sheet else (_marksBox);
+    // the store holds it to the world's grid (systems/map/mapWaypoints.js onMap)
+    const box = this._marksBox();
+    if (!(mx >= box.x0 && my >= box.y0 && mx < box.x0 + box.w && my < box.y0 + box.h)) return false;
     openWaypointMenu({ x: clientX, y: clientY, point: { mx, my }, by: ctx.by, canKind: ctx.canKind ?? { party: false, guild: false }, owner: 'heldmap', onNote: note });
     return true;
   }
 
-  /** "Travel here" on a flag: the bare pixel's own journey, as a click there opens it (MAP2's coordinates decision). */
+  /** "Travel here" on a flag: the bare pixel's own journey, as a click there opens it (MAP2's coordinates decision) - on the
+   *  Bay alone (BAY-LEFT-MAPS: TESA-NO-FAST - a flag past the Bay is walked to on the Overworld, never travelled to here). */
   _waypointTravel(w) {
     if (this._phase !== 'map' || !this._coordsAllowedHere()) return;
     const px = Math.floor(w.mx), py = Math.floor(w.my);

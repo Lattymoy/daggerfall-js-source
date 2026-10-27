@@ -195,8 +195,8 @@
   {
     "name": "MINE-PERKS-held-map-unread",
     "file": "src/ui/heldMap.js",
-    "old": "const lodes = readBountyMarks(this.deps.lodes, this._size, LODE_LEGEND_TEXT);",
-    "new": "const lodes = readBountyMarks(null, this._size, LODE_LEGEND_TEXT);",
+    "old": "const lodes = readBountyMarksIn(this.deps.lodes, sheet, LODE_LEGEND_TEXT);",
+    "new": "const lodes = readBountyMarksIn(null, sheet, LODE_LEGEND_TEXT);",
     "tests": [
       "test/ui/mineperks.test.js"
     ]

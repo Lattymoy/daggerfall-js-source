@@ -1,0 +1,185 @@
+[
+  {
+    "name": "BLM-C1-the-party-read-over-the-bay",
+    "file": "src/ui/heldMap.js",
+    "old": "    const marks = readPartyMarksIn(this.deps.party, sheet);",
+    "new": "    const marks = readPartyMarksIn(this.deps.party, { x0: 0, y0: 0, w: this._size.width, h: this._size.height });",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C1-the-travellers-read-over-the-bay",
+    "file": "src/ui/heldMap.js",
+    "old": "    const trav = readTravellerMarksIn(this.deps.travellers, sheet)",
+    "new": "    const trav = readTravellerMarksIn(this.deps.travellers, { x0: 0, y0: 0, w: 1000, h: 500 })",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C1-the-coin-read-over-the-bay",
+    "file": "src/ui/heldMap.js",
+    "old": "    const vendor = readVendorMarkIn(this.deps.vendor, sheet);",
+    "new": "    const vendor = readVendorMarkIn(this.deps.vendor, { x0: 0, y0: 0, w: 1000, h: 500 });",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C1-the-serpent-read-over-the-bay",
+    "file": "src/ui/heldMap.js",
+    "old": "    const serpent = readGateMarkIn(this.deps.serpent, sheet);",
+    "new": "    const serpent = readGateMarkIn(this.deps.serpent, { x0: 0, y0: 0, w: 1000, h: 500 });",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C1-the-ketch-read-over-the-bay",
+    "file": "src/ui/heldMap.js",
+    "old": "    const ketch = readGateMarkIn(this.deps.ketch, sheet);",
+    "new": "    const ketch = readGateMarkIn(this.deps.ketch, { x0: 0, y0: 0, w: 1000, h: 500 });",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C1-the-lodes-read-over-the-bay",
+    "file": "src/ui/heldMap.js",
+    "old": "    const lodes = readBountyMarksIn(this.deps.lodes, sheet, LODE_LEGEND_TEXT);",
+    "new": "    const lodes = readBountyMarksIn(this.deps.lodes, { x0: 0, y0: 0, w: 1000, h: 500 }, LODE_LEGEND_TEXT);",
+    "tests": [
+      "test/ui/bayleft_marks.test.js",
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C1-the-pois-read-over-the-bay",
+    "file": "src/ui/heldMap.js",
+    "old": "    const pois = readBountyMarksIn(this.deps.pois, sheet, poiLegendText(), POI_MARKS_MAX);",
+    "new": "    const pois = readBountyMarksIn(this.deps.pois, { x0: 0, y0: 0, w: 1000, h: 500 }, poiLegendText(), POI_MARKS_MAX);",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C1-the-raids-read-over-the-bay",
+    "file": "src/ui/heldMap.js",
+    "old": "    const raids = readRaidMarksIn(this.deps.raids, sheet);",
+    "new": "    const raids = readRaidMarksIn(this.deps.raids, { x0: 0, y0: 0, w: 1000, h: 500 });",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C1-the-box-the-continent-with-it-off",
+    "file": "src/ui/heldMap.js",
+    "old": "    return this._tamriel || this._zoneMap ? tamrielFrameInBay() : { x0: 0, y0: 0, w: this._size.width, h: this._size.height };",
+    "new": "    return tamrielFrameInBay();",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C1-the-party-box-far-edge-in",
+    "file": "src/ui/partyMapMarks.js",
+    "old": "    if (px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;\n    marks.push({",
+    "new": "    if (px < box.x0 || py < box.y0 || px > box.x0 + box.w || py >= box.y0 + box.h) continue;\n    marks.push({",
+    "tests": [
+      "test/ui/bayleft_marks.test.js",
+      "test/ui/soc6_partymap.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C1-the-party-box-west-the-bay's",
+    "file": "src/ui/partyMapMarks.js",
+    "old": "    if (px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;\n    marks.push({",
+    "new": "    if (px < 0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;\n    marks.push({",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C1-the-ring-box-west-the-bay's",
+    "file": "src/ui/gate/gateMapMark.js",
+    "old": "  if (cx + r < box.x0 || cy + r < box.y0 || cx - r > box.x0 + box.w || cy - r > box.y0 + box.h) return null;",
+    "new": "  if (cx + r < 0 || cy + r < box.y0 || cx - r > box.x0 + box.w || cy - r > box.y0 + box.h) return null;",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C1-the-ring-box-east-unshifted",
+    "file": "src/ui/gate/gateMapMark.js",
+    "old": "  if (cx + r < box.x0 || cy + r < box.y0 || cx - r > box.x0 + box.w || cy - r > box.y0 + box.h) return null;",
+    "new": "  if (cx + r < box.x0 || cy + r < box.y0 || cx - r > box.w || cy - r > box.y0 + box.h) return null;",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C1-the-coin-box-west-the-bay's",
+    "file": "src/ui/vendor/vendorMapMark.js",
+    "old": "px < box.x0 || py < box.y0 || px >= box.x0 + box.w",
+    "new": "px < 0 || py < box.y0 || px >= box.x0 + box.w",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C1-the-travellers-box-west-the-bay's",
+    "file": "src/ui/partyMapMarks.js",
+    "old": "    if (!Number.isFinite(px) || !Number.isFinite(py) || px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;",
+    "new": "    if (!Number.isFinite(px) || !Number.isFinite(py) || px < 0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C1-the-raids-box-west-the-bay's",
+    "file": "src/ui/eventMapMarks.js",
+    "old": "px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;",
+    "new": "px < 0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C2-the-flags-held-to-the-bay",
+    "file": "src/systems/map/mapWaypoints.js",
+    "old": "const onMap = (mx, my) => Number.isFinite(mx) && Number.isFinite(my) && worldPixelOk(Math.floor(mx)) && worldPixelOk(Math.floor(my));",
+    "new": "const onMap = (mx, my) => Number.isFinite(mx) && Number.isFinite(my) && mx >= 0 && my >= 0 && mx < 1000 && my < 500;",
+    "tests": [
+      "test/ui/bayleft_marks.test.js",
+      "test/systems/map/waypoints.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C2-the-world's-edge-a-pixel-short",
+    "file": "src/systems/map/mapWaypoints.js",
+    "old": "worldPixelOk(Math.floor(mx)) && worldPixelOk(Math.floor(my));",
+    "new": "worldPixelOk(Math.ceil(mx)) && worldPixelOk(Math.floor(my));",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C2-the-menu-held-to-the-bay",
+    "file": "src/ui/heldMap.js",
+    "old": "    const box = this._marksBox();\n    if (!(mx >= box.x0",
+    "new": "    const box = { x0: 0, y0: 0, w: this._size.width, h: this._size.height };\n    if (!(mx >= box.x0",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  },
+  {
+    "name": "BLM-C2-travel-here-past-the-bay",
+    "file": "src/ui/heldMap.js",
+    "old": "onTravel: this._coordsAllowedHere() && inBay(Math.floor(w.mx), Math.floor(w.my)) ?",
+    "new": "onTravel: this._coordsAllowedHere() ?",
+    "tests": [
+      "test/ui/bayleft_marks.test.js"
+    ]
+  }
+]

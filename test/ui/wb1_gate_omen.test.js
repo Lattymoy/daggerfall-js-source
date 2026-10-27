@@ -375,7 +375,7 @@ test('WB1 the seams: online alone, the omen before the dead return, both maps ha
   assert.match(ehud, /drawGateMark\(opts\.gate \?\? null, opts\.playerXZ \?\? null, heading01\);/);
   assert.match(ehud, /compassMarkerLerp\(gate, playerXZ, heading01\)/, 'the Detect markers\' own bearing law');
   const held = read('src/ui/heldMap.js');
-  assert.match(held, /readGateMark\(this\.deps\.gate, this\._size\)/);
+  assert.match(held, /readGateMarkIn\(this\.deps\.gate, sheet\)/);   // PIN MOVED (BAY-LEFT-MAPS): over the sheet's box (_marksBox), the Bay's own sheet the Bay's bound
   assert.match(held, /gate: this\._gate,/);
   const page = read('src/ui/travel/travelMapWindow.js');
   assert.match(page, /gateRingTexels\(gate, originX, originY, width, height\)\) plot\(x, y, gatePx\)/);

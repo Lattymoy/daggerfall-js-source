@@ -252,7 +252,7 @@ test('SD2c the hosts by source: world.js hands the held map, the compass, the Ti
   assert.ok(gateFire > 0 && omen > gateFire, 'after the gate\'s fire');
   assert.match(w, /if \(_sdOmenPass === undefined\) \{ try \{ _sdOmenPass = new SdOmenPassRenderer\(renderer\.gl\); \}/, 'built once, the first time');
   const hm = read('src/ui/heldMap.js');
-  assert.match(hm, /const sd = readGateMark\(this\.deps\.sd, this\._size\);/);
+  assert.match(hm, /const sd = readGateMarkIn\(this\.deps\.sd, sheet\);/);   // PIN MOVED (BAY-LEFT-MAPS): over the sheet's box (_marksBox) - a ring past the Bay is drawn
   assert.match(hm, /\n {10}sd: this\._sd,   \/\/ SD2c/);
   assert.match(read('src/ui/ink/inkMap.js'), /if \(opts\.sd && visible\(opts\.sd\.cx, opts\.sd\.cy, opts\.sd\.r \+ 2\)\) paintGateRing\(ctx, view, opts\.sd, pulse, SD_MAP_INK\);/);
   assert.match(read('src/ui/enhanced/enhancedHud.js'), /drawSdMark\(opts\.sd \?\? null, opts\.playerXZ \?\? null, heading01\);/);

@@ -158,7 +158,7 @@ test('LAIR-WORLD THE HOSTS BY SOURCE: the world host hands the lair door and the
   const places = read('src/scenes/tamrielPlacesHost.js');
   assert.ok(places.includes('    lairAt, lairCloneAt, placeOnPixel, version: placesVersion,'), 'the places host hands them on');
   const held = read('src/ui/heldMap.js');
-  assert.ok(held.includes('const sheet = f ?? { x0: 0, y0: 0, w: this._size.width, h: this._size.height };'));
+  assert.ok(held.includes('    const sheet = this._marksBox();'));   // PIN MOVED (BAY-LEFT-MAPS): the sheet's one box, every mark's (heldMap.js _marksBox)
   assert.ok(held.includes('const bounties = readBountyMarksIn(this.deps.bounties, sheet);'));
   assert.ok(held.includes('const lairs = readBountyMarksIn(this.deps.revenants, sheet, REVENANT_LEGEND_TEXT);'));
 });

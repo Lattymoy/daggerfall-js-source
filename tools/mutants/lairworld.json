@@ -164,11 +164,9 @@
   {
     "name": "LW-heldmap-the-bays-sheet",
     "file": "src/ui/heldMap.js",
-    "old": "    const sheet = f ?? { x0: 0, y0: 0, w: this._size.width, h: this._size.height };",
-    "new": "    const sheet = { x0: 0, y0: 0, w: this._size.width, h: this._size.height };",
-    "tests": [
-      "test/systems/revenant/lairworld.test.js"
-    ]
+    "old": "    return this._tamriel || this._zoneMap ? tamrielFrameInBay() : { x0: 0, y0: 0, w: this._size.width, h: this._size.height };",
+    "new": "    return { x0: 0, y0: 0, w: this._size.width, h: this._size.height };",
+    "tests": ["test/systems/revenant/lairworld.test.js", "test/ui/bayleft_marks.test.js"]
   },
   {
     "name": "LW-marks-unshifted",
