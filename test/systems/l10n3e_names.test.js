@@ -27,7 +27,7 @@ const NAMED = {
   'src/scenes/hostCombat.js': 1,
   'src/scenes/instanceDoor.js': 1,   // INSTANCES (the audit): the door's popup names its dungeon in the player's language
   'src/scenes/quest/questBridge.js': 1,   // QL12: a guild's ladder named by its faction, in the player's language
-  'src/scenes/townTalk.js': 2,
+  'src/scenes/townTalk.js': 4,   // IC-PROPS: a door's building named in its own town - its town's and region's shown names (buildingNameIn)
   'src/scenes/world.js': 6,
   'src/scenes/worldModes.js': 5,   // SUMMON-OFFER: the summoning's no-offer line moved to the law module (daedraSummoning.js noQuestText)
   'src/systems/affiliations.js': 1,

@@ -315,8 +315,9 @@
   {
     "name": "WORLD-HOVER-city-walls-lose-their-special-case",
     "file": "src/systems/worldTooltips.js",
-    "old": "  const to = buildingType === BUILDING_TYPES.Town23\n    ? (locationName ? `${locationName} City Walls` : '')\n    : displayName;",
-    "new": "  const to = displayName;",
+    "old": "  const to = buildingType === BUILDING_TYPES.Town23\n    ? (locationName ? `${locationName} City Walls` : '')\n    : displayName || locationName;",
+    "new": "  const to = displayName || locationName;",
+    "note": "Re-aimed by content (IC-PROPS): a nameless building of another kind says its place; the mutant still drops the city walls' own word.",
     "tests": [
       "test/systems/worldhover.test.js"
     ]

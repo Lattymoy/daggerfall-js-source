@@ -2302,7 +2302,8 @@ issue. They have no logical placements"*, and *"No band aids or half assed work"
 - EVERY HOUSE DOOR A "RESIDENCE" (`online/onlineHomes.js:"export const homeDoorName = (name, hasVerbs, type = null) =>"`):
   a House1 to House6 with no name of its own is named as DFU discovers it - DFU's own `residence` text, no new string -
   whatever its verbs; a quest's home, a player's home and a guild's hall keep theirs. A building of no house type with no
-  name (a ship's deck) is named by its place. The Info say reads the same word.
+  name (a ship's deck) says the place it stands in (`worldTooltips.js:"    : displayName || locationName;"` - the mod
+  would print "To" and nothing). The Info say reads the same word.
 - A DOOR IS ITS OWN TOWN'S (`scenes/townTalk.js:"const doorTownOf = (place, data) =>"`, from `scenes/world.js:"...townTalk.doorTownOf(dfLoc, d) };"`): the host's record
   for a door carries the town it stands in - its book of buildings, its name, and its building's name in that town
   (`scenes/townTalk.js:"function buildingNameIn(place, data) {"` - the directory's row where that town is the talk's own,
@@ -2348,8 +2349,17 @@ land and the port cells, a capital's own sites and the city's slices, the gate y
 their blocks build), `test/world/icprops_city.test.js` (3: no block of Daggerfall's but the arena's, each district's
 signature in its fabric, the University's halls and walks), `test/systems/icprops_doors.test.js` (3: the "Residence"
 law, a house's and a ship's plaque through the real mode machine, a neighbouring slice's door its own town's).
-PIN MOVED: PINS_MOVED_LIST. Mutants: `tools/mutants/icprops.json` (MUTANT_COUNT, all dead); re-aimed by content:
-REAIMED_LIST; retired with the code they held (the trade cells and their signatures): `tesa11.json` TESA11-shore-a-house,
+PIN MOVED: `test/tesa11_imperial.test.js` (the plan: no block of Daggerfall's but the arena's; a slice's seeds its own,
+held on a plan that lays them), `test/tesa10_capitals.test.js` (a kind missing stands no slice, held the same way),
+`test/world/icbld_buildings.test.js` (a temple's god's faction and the Thieves Guild's; the signature halls among a
+district's trade; each donor's faction against the freeware), `test/world/icgrand_fabric.test.js` (eight districts' styles,
+the University's among them), `test/world/icgrand_living.test.js` (R2-9's hazard - one key a residence in two slices - on
+the fabric's homes), `test/world/icgrand_prebuild.test.js` (the far cells the city's own alone),
+`test/world/audit68_worldjs.test.js` (the door's own town asked of the talk), `test/systems/worldhover.test.js` (the
+door's town's name where the record carries it), `test/server/home1.test.js`, `test/systems/empirebank.test.js`,
+`test/systems/fb0930b_questresidence.test.js` and `test/systems/online/fb1015c_questresidence.test.js` (a house's
+"Residence" by its type). Mutants: `tools/mutants/icprops.json` (25, all dead); re-aimed by content:
+`icbld.json` BLD-guild-of-no-faction (a building's faction its guild's, else its donor's); retired with the code they held (the trade cells and their signatures): `tesa11.json` TESA11-shore-a-house,
 TESA11-no-signature.
 
 ## Pins

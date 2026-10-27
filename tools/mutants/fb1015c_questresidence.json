@@ -11,9 +11,9 @@
   {
     "name": "QUEST-RESIDENCE-the-door-unwired",
     "file": "src/scenes/worldModes.js",
-    "old": "        displayName: home ? homeDoorTitle(home, questSiteHere(bd) && db.isOverrideName ? db.displayName : null) : (homeDoorName(",
-    "new": "        displayName: home ? homeDoorTitle(home, null) : (homeDoorName(",
-    "note": "Re-aimed by content (IC-PROPS): the nameless door's word is bracketed with its place's fallback; the mutant still drops the quest's name.",
+    "old": "        displayName: home ? homeDoorTitle(home, questSiteHere(bd) && db.isOverrideName ? db.displayName : null) : homeDoorName(",
+    "new": "        displayName: home ? homeDoorTitle(home, null) : homeDoorName(",
+    "note": "Re-aimed by content (IC-PROPS): the nameless door's word is its house type's (a nameless building's place is systems/worldTooltips.js's); the mutant still drops the quest's name.",
     "tests": [
       "test/systems/online/fb1015c_questresidence.test.js"
     ]
