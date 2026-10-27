@@ -1,0 +1,110 @@
+[
+  {
+    "name": "TB-the-old-band-in-straight-lines",
+    "file": "src/world/urban/townFabric.js",
+    "old": "    const round = maxNear(carriageway, g.W, g.H, FABRIC.kerb);   // the carriageway and its ring, by the eight ways",
+    "new": "    const round = Float32Array.from(carriageway, (v, i) => (v || paths.some((p) => p.some((q) => Math.hypot((q % g.W) - (i % g.W), Math.floor(q / g.W) - Math.floor(i / g.W)) <= 3.5)) ? 1 : 0));",
+    "tests": [
+      "test/world/urban/townboards.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-ring-by-four-ways",
+    "file": "src/world/urban/townFabric.js",
+    "old": "    const round = maxNear(carriageway, g.W, g.H, FABRIC.kerb);   // the carriageway and its ring, by the eight ways",
+    "new": "    const round = Uint8Array.from(carriageway, (v, i) => (v || carriageway[i - 1] || carriageway[i + 1] || carriageway[i - g.W] || carriageway[i + g.W] ? 1 : 0));",
+    "tests": [
+      "test/world/urban/townboards.test.js"
+    ]
+  },
+  {
+    "name": "TB-no-ring",
+    "file": "src/world/urban/townFabric.js",
+    "old": "    const round = maxNear(carriageway, g.W, g.H, FABRIC.kerb);   // the carriageway and its ring, by the eight ways",
+    "new": "    const round = maxNear(carriageway, g.W, g.H, 0);",
+    "tests": [
+      "test/world/urban/townboards.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-kerb-two-deep",
+    "file": "src/world/urban/townFabric.js",
+    "old": "  kerb: 1,           // its pavements' width round the carriageway",
+    "new": "  kerb: 2,           // its pavements' width round the carriageway",
+    "tests": [
+      "test/world/urban/townboards.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-ground-unread",
+    "file": "src/world/urban/townFabric.js",
+    "old": "          town[i] = !onGround || onGround(i % W, (i - (i % W)) / W) ? 1 : 0;",
+    "new": "          town[i] = 1;",
+    "tests": [
+      "test/world/urban/townboards.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-stands-ground-dropped",
+    "file": "src/world/urban/townFabricStand.js",
+    "old": "  const onGround = ground ? (x, z) => onTownGround(ground, tilePos, x, z) : null;",
+    "new": "  const onGround = null;",
+    "tests": [
+      "test/world/urban/townboards.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-plan-kept-on-another-ground",
+    "file": "src/world/urban/townFabricStand.js",
+    "old": "  if (had && had.groundKey === groundKey) { _fabrics.delete(mapId); _fabrics.set(mapId, had); return had; }",
+    "new": "  if (had) { _fabrics.delete(mapId); _fabrics.set(mapId, had); return had; }",
+    "tests": [
+      "test/world/urban/townboards.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-old-model-left-on-the-door",
+    "file": "src/world/urban/townFabricStand.js",
+    "old": "  if (had) { _fabrics.delete(mapId); unregisterCustomModel(had.modelId); }",
+    "new": "  if (had) { _fabrics.delete(mapId); }",
+    "tests": [
+      "test/world/urban/townboards.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-grounds-key-blind",
+    "file": "src/world/urban/townFabricStand.js",
+    "old": "h = Math.imul(h ^ (onTownGround(ground, tilePos, x * 4, y * 4) ? 1 : 2), 0x01000193) >>> 0;",
+    "new": "h = Math.imul(h ^ 1, 0x01000193) >>> 0;",
+    "tests": [
+      "test/world/urban/townboards.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-meanwhile-planned-over",
+    "file": "src/world/urban/townFabricStand.js",
+    "old": "  if (meanwhile) return meanwhile;",
+    "new": "  if (meanwhile && false) return meanwhile;",
+    "tests": [
+      "test/world/urban/townboards.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-host-unwired",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "breathe: () => breather.breathe(), ground: townGround });",
+    "new": "breathe: () => breather.breathe(), ground: null });",
+    "tests": [
+      "test/world/urban/townboards.test.js"
+    ]
+  },
+  {
+    "name": "TB-the-tiles-turned",
+    "file": "src/world/townShape.js",
+    "old": "  const ty = tilePos.y + (gy >> 2);\n  const tx = tilePos.x + (gx >> 2);",
+    "new": "  const ty = tilePos.y + (gx >> 2);\n  const tx = tilePos.x + (gy >> 2);",
+    "tests": [
+      "test/world/urban/townboards.test.js"
+    ]
+  }
+]

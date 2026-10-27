@@ -13,8 +13,9 @@
 //   - its MAIN STREETS: the ways from its gates (a walled city's own, world/townWalls.js townWallGatesOf; a capital's by
 //     the sides its gates face; any other town's from the middle of each side) to its middle, each the cheapest walk
 //     through the town that keeps FABRIC.mainWant clear of the houses where it can (Dijkstra over the open cells) - and
-//     the street it runs down, every open cell within its clearance of the walk, wall to wall. Where the way is wide
-//     enough (FABRIC.pavedLeast), its cells within FABRIC.pave of a house are its PAVEMENT;
+//     the street it runs down: its CARRIAGEWAY every open cell within FABRIC.carriage of the walk, its PAVEMENT the open
+//     cells round the carriageway FABRIC.kerb deep by the eight ways and its carriageway's cells within FABRIC.pave of a
+//     house (TOWN-BOARDS: a band measured by the eight ways runs unbroken along a walk's every step);
 //   - its SIDE STREETS: the rest of its ways - Daggerfall's road and dirt - FABRIC.side clear or more;
 //   - its ALLEYS: the narrower ways between the houses;
 //   - its YARDS: each piece of grass a house backs onto (Daggerfall's own gardens - FABRIC.yard's size, touching a house
@@ -42,7 +43,7 @@ export const FABRIC = Object.freeze({
   mainCost: 4,       // what a cell short of mainWant costs the walk, a cell short
   offRoad: 2,        // what a cell off Daggerfall's roads costs the walk more than one on them
   carriage: 2.5,     // a main street's carriageway's half-width (8 m between its kerbs)
-  kerb: 3.5,         // its pavements' outer edge from its middle (1.6 m of pavement either side)
+  kerb: 1,           // its pavements' width round the carriageway, by the eight ways (1.6 m either side; TOWN-BOARDS)
   pave: 1,           // a main street's cell this near a house is pavement, however near its middle
   side: 2,           // a way whose corridor is this clear in its middle is a street; narrower, an alley
   reach: 2,          // how far a cell looks for its corridor's middle
@@ -69,15 +70,20 @@ const ROADS = new Set(ROAD_RECORDS);
 
 /**
  * THE TOWN'S GROUND, cell by cell (row-major from the south-west, x east, z north - the walkers' grid): `town` its blocks'
- * own cells (none for a block `blockAt` answers null - a left-out cell, a wall's carrier, a capital's own), `built` a
+ * own cells on the town's ground (none for a block `blockAt` answers null - a left-out cell, a wall's carrier, a
+ * capital's own - and none `onGround` refuses: TOWN-BOARDS, the land past the outline TS2 flattens), `built` a
  * building's, a prop's, a flat's or the water's, `house` a building's alone, `grass` Daggerfall's grass (ground record 2),
  * `road` its other ground.
  * @param {number} w @param {number} h
  * @param {(bx: number, by: number) => (null | { automap: ArrayLike<number>, ground: (tx: number, ty: number) => number,
  *   records?: Array<{ x: number, z: number }> })} blockAt a block's town map (rows from the north), its ground tile's record
  *   (tx, ty: ty from the north - GroundTiles[x][y]) and its misc models' and flats' places (the block's metres, x east, z north)
+ * @param {((x: number, z: number) => boolean) | null} [onGround] TOWN-BOARDS: whether a cell (x east, z north, in the grid's cells)
+ *   stands on the town's ground - the tiles TS2 flattens to the town's level (world/townShape.js onTownGround, the walkers'
+ *   own law). The fabric is stood at that level, so a cell past it is none of the town's, as a left-out cell is: its yard
+ *   is fenced where the town's ground ends, never down the land's slope past it. None: every cell of its blocks the town's.
  */
-export function fabricGrid(w, h, blockAt) {
+export function fabricGrid(w, h, blockAt, onGround = null) {
   const C = FABRIC_CELLS, W = w * C, H = h * C, n = W * H;
   const town = new Uint8Array(n), built = new Uint8Array(n), house = new Uint8Array(n), grass = new Uint8Array(n), road = new Uint8Array(n);
   for (let by = 0; by < h; by++) {
@@ -87,7 +93,7 @@ export function fabricGrid(w, h, blockAt) {
       for (let ay = 0; ay < C; ay++) {
         for (let ax = 0; ax < C; ax++) {
           const i = (by * C + (C - 1 - ay)) * W + bx * C + ax;
-          town[i] = 1;
+          town[i] = !onGround || onGround(i % W, (i - (i % W)) / W) ? 1 : 0;   // TOWN-BOARDS: on the town's ground alone
           const a = b.automap?.[ay * C + ax] ?? 0;
           if (a) { built[i] = 1; if (isHouseByte(a)) house[i] = 1; continue; }
           const rec = b.ground(ax >> 2, ay >> 2) & 0x3f;
@@ -310,21 +316,28 @@ export function* planSteps(g, { ends = [], centre = null, seed = 0, mains = true
       for (let i = e; i >= 0; i = walk.from[i]) path.push(i);
       paths.push(path);   // from its end to the middle
     }
-    // the street: every open cell within FABRIC.kerb of the walk - its carriageway within FABRIC.carriage, its pavements past
-    // it and wherever a house stands beside it
-    const fromWalk = new Float32Array(n).fill(Infinity), r = Math.ceil(FABRIC.kerb);
+    // the street: its carriageway every open cell within FABRIC.carriage of the walk; its pavements the open cells round the
+    // carriageway FABRIC.kerb deep by the eight ways (beside it or across its corner), and its carriageway wherever a house
+    // stands beside it. TOWN-BOARDS: the pavement had been the cells between FABRIC.carriage and 3.5 of the walk in straight
+    // lines - a band a cell wide, which along a walk's every step (four ways, a staircase wherever the street runs aslant)
+    // met its next cell at a corner alone: a pavement of single flags apart, a boardwalk of single boards on the forest
+    // floor (the planks' styles lay no carriageway between them) - 31,419 of the 40,052 pieces under four cells over every
+    // hamlet past the Bay (tools/townBoardsSweep.mjs). A ring by the eight ways runs on round every step, side by side.
+    const fromWalk = new Float32Array(n).fill(Infinity), r = Math.ceil(FABRIC.carriage);
     for (const path of paths) {
       for (const p of path) {
         const px = p % g.W, pz = (p - px) / g.W;
         for (let dz = -r; dz <= r; dz++) for (let dx = -r; dx <= r; dx++) {
           const x = px + dx, z = pz + dz, d = Math.hypot(dx, dz);
-          if (d > FABRIC.kerb || x < 0 || z < 0 || x >= g.W || z >= g.H) continue;
+          if (d > FABRIC.carriage || x < 0 || z < 0 || x >= g.W || z >= g.H) continue;
           const i = z * g.W + x;
           if (open[i] && d < fromWalk[i]) fromWalk[i] = d;
         }
       }
     }
-    for (let i = 0; i < n; i++) if (fromWalk[i] <= FABRIC.kerb) kind[i] = fromWalk[i] > FABRIC.carriage || nearHouse[i] <= FABRIC.pave ? K.pave : K.main;
+    const carriageway = Uint8Array.from(fromWalk, (d) => (d <= FABRIC.carriage ? 1 : 0));
+    const round = maxNear(carriageway, g.W, g.H, FABRIC.kerb);   // the carriageway and its ring, by the eight ways
+    for (let i = 0; i < n; i++) if (open[i] && round[i]) kind[i] = carriageway[i] && nearHouse[i] > FABRIC.pave ? K.main : K.pave;
   }
 
   yield;

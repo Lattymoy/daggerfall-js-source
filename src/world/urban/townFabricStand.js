@@ -13,7 +13,10 @@
 // their ways are Daggerfall's, their yards fenced.
 // THE HOST (scenes/pixelBuild.js): a town pixel's build asks townFabricFor as it lays the town out - before its yards and
 // its walkers are placed (world/townWalls.js townWalkShut reads shutTownFabric) - and stands the model at the location's
-// origin, merged into the pixel's static batch and solid as its blocks' models are.
+// origin, merged into the pixel's static batch and solid as its blocks' models are. TOWN-BOARDS: on the town's ground
+// alone - the terrain job's townGround, the outline TS2 flattens to the level the model stands at (world/townShape.js
+// onTownGround, the walkers' law): a yard, a street or a woodpile planned past it stood in the land's slope, its fences
+// buried to their top rail or hung over falling ground at a village's and a hamlet's edges.
 // KEPT (EVERY ALLOCATION HAS AN OWNER): the plans and their models, by the town's map id, the TOWN_FABRIC_KEEP most
 // recently built - a town past them has its model taken off the model door (its GPU mesh is the pixel's hold's, freed with
 // the pixel, scenes/dataPipeline.js PLACE-LRU) and is planned again when it is built again, the same plan. A model's id is
@@ -24,6 +27,8 @@ import { LOCATION_TYPES } from '../../formats/mapsFile.js';
 import { provinceKeyBeyondBay } from '../tamriel/tamrielLand.js';
 import { CAPITALS, BLOCK_M } from '../tamrielCapitals.js';
 import { townWallGatesOf } from '../townWalls.js';
+import { onTownGround } from '../townShape.js';
+import { getLocationTerrainTileOrigin } from '../terrain/terrainTiles.js';
 import { FABRIC_CELLS, fabricGrid, planSteps } from './townFabric.js';
 import { townFabricModel, townFabricModelSliced, FABRIC_PIECES } from './townFabricModel.js';
 import { styleOf } from './urbanRecords.js';
@@ -86,21 +91,36 @@ export function fabricBlockOf(b) {
   };
 }
 
-const _fabrics = new Map();   // map id -> { plan, modelId, style }
+const _fabrics = new Map();   // map id -> { plan, modelId, style, groundKey }
 let _next = 0;
+
+/** TOWN-BOARDS: the town's ground under its grid as a key (FNV-1a over its tiles on and off it) - a plan is its town's
+ *  and its ground's; '' where there is none (a capital: its whole grid its own). @param {?ArrayLike<number>} ground
+ *  @param {{x: number, y: number}} tilePos @param {number} tw @param {number} th the grid's tiles a side */
+export function fabricGroundKey(ground, tilePos, tw, th) {
+  if (!ground) return '';
+  let h = 0x811c9dc5;
+  for (let y = 0; y < th; y++) for (let x = 0; x < tw; x++) h = Math.imul(h ^ (onTownGround(ground, tilePos, x * 4, y * 4) ? 1 : 2), 0x01000193) >>> 0;
+  return h.toString(36);
+}
 
 /**
  * A TOWN'S FABRIC: its plan and its model's id, planned when first asked (the plan's steps each a breath apart -
- * `breathe`, the build's), kept by its map id; null for a town the fabric does not dress.
+ * `breathe`, the build's) on the town's own ground, kept by its map id (planned again when asked on another ground than
+ * the one it was planned on); null for a town the fabric does not dress.
  * @param {any} dfLocation @param {Array<any>} blocks layoutLocation's blocks
- * @param {{ px: number, py: number, breathe?: () => any }} at the town's pixel, and the build's breather
+ * @param {{ px: number, py: number, breathe?: () => any, ground?: ?ArrayLike<number> }} at the town's pixel, the build's
+ *   breather, and TOWN-BOARDS: its ground (the terrain job's townGround, 128 x 128 tiles - null, its whole grid)
  */
-export async function townFabricFor(dfLocation, blocks, { px, py, breathe = () => null }) {
+export async function townFabricFor(dfLocation, blocks, { px, py, breathe = () => null, ground = null }) {
   if (!fabricTown(dfLocation)) return null;
-  const mapId = (dfLocation.mapTableData?.mapId ?? 0) >>> 0, had = _fabrics.get(mapId);
-  if (had) { _fabrics.delete(mapId); _fabrics.set(mapId, had); return had; }
-  const ed = dfLocation.exterior.exteriorData, at = new Map(blocks.map((b) => [b.y * ed.width + b.x, b]));
-  const grid = fabricGrid(ed.width, ed.height, (bx, by) => fabricBlockOf(at.get(by * ed.width + bx)));
+  const ed = dfLocation.exterior.exteriorData, tilePos = getLocationTerrainTileOrigin(dfLocation);
+  const mapId = (dfLocation.mapTableData?.mapId ?? 0) >>> 0, had = _fabrics.get(mapId), groundKey = fabricGroundKey(ground, tilePos, ed.width * 16, ed.height * 16);
+  if (had && had.groundKey === groundKey) { _fabrics.delete(mapId); _fabrics.set(mapId, had); return had; }
+  if (had) { _fabrics.delete(mapId); unregisterCustomModel(had.modelId); }   // its ground moved under it (the land landed): planned again
+  const at = new Map(blocks.map((b) => [b.y * ed.width + b.x, b]));
+  const onGround = ground ? (x, z) => onTownGround(ground, tilePos, x, z) : null;
+  const grid = fabricGrid(ed.width, ed.height, (bx, by) => fabricBlockOf(at.get(by * ed.width + bx)), onGround);
   const { mains, ends, centre } = fabricEnds(dfLocation, grid.W, grid.H);
   const steps = planSteps(grid, { ends, centre, seed: mapId, mains });
   let r = steps.next();
@@ -108,14 +128,17 @@ export async function townFabricFor(dfLocation, blocks, { px, py, breathe = () =
   const plan = r.value;
   const province = dfLocation.arena?.province ?? (dfLocation.capital ? CAPITALS[dfLocation.capital.k]?.province : null) ?? provinceKeyBeyondBay(px, py);
   const style = styleOf(province), cobbles = dfLocation.mapTableData?.locationType === LOCATION_TYPES.TownCity;
-  if (_fabrics.has(mapId)) return _fabrics.get(mapId);   // planned meanwhile by another build of it
+  // planned meanwhile by another build of it: that one kept, whatever its ground - its model is never pulled from under a
+  // build that has it in hand and has not stood it yet (a later build on another ground plans it again)
+  const meanwhile = _fabrics.get(mapId);
+  if (meanwhile) return meanwhile;
   const modelId = TOWN_FABRIC_MODEL_BASE + _next++;
   const opts = (ctx) => ({ cobbles, classicModel: (id) => ctx?.classicModel?.(id) ?? null });
   registerCustomModel(modelId, (ctx) => townFabricModel(plan, style, opts(ctx)), () => true, {
     needs: Object.values(FABRIC_PIECES),
     buildSliced: (ctx, breathe) => townFabricModelSliced(plan, style, opts(ctx), breathe),   // made a breath at a time as it was planned
   });
-  const made = Object.freeze({ plan, modelId, style });
+  const made = Object.freeze({ plan, modelId, style, groundKey });
   _fabrics.set(mapId, made);
   for (const [id, f] of _fabrics) {
     if (_fabrics.size <= TOWN_FABRIC_KEEP) break;

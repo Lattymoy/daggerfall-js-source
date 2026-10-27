@@ -230,14 +230,25 @@ export function townShape(occ, W, H, seed, o = {}) {
  * @param {{width: number, height: number, grid: Uint8Array}} nav @param {Uint8Array} ground @param {{x: number, y: number}} tilePos
  */
 export function shutOffGround(nav, ground, tilePos) {
-  const D = 128;
   for (let gy = 0; gy < nav.height; gy++) {
-    const ty = tilePos.y + (gy >> 2);
     for (let gx = 0; gx < nav.width; gx++) {
-      const tx = tilePos.x + (gx >> 2);
-      if (!(tx >= 0 && ty >= 0 && tx < D && ty < D && ground[tx + ty * D])) nav.grid[gy * nav.width + gx] = 0;
+      if (!onTownGround(ground, tilePos, gx, gy)) nav.grid[gy * nav.width + gx] = 0;
     }
   }
+}
+/**
+ * TS6, TOWN-BOARDS: DOES A CELL OF A TOWN'S GRID STAND ON ITS GROUND - the walk grid's cell (gx, gy), four a ground tile,
+ * x east and y north from the grid's south-west tile at `tilePos`; `ground` the pixel's tiles that are the town's
+ * (world/terrain/terrainTiles.js townGroundMask, index x + y * 128). The one law the walkers are shut by (shutOffGround)
+ * and the town's fabric is planned on (world/urban/townFabricStand.js townFabricFor): the ground TS2 flattens, never the
+ * land it eases back to. @param {ArrayLike<number>} ground @param {{x: number, y: number}} tilePos @param {number} gx
+ * @param {number} gy
+ */
+export function onTownGround(ground, tilePos, gx, gy) {
+  const D = 128;
+  const ty = tilePos.y + (gy >> 2);
+  const tx = tilePos.x + (gx >> 2);
+  return tx >= 0 && ty >= 0 && tx < D && ty < D && !!ground[tx + ty * D];
 }
 /** TS7: a location as its template was read - a Bay city world/townOutline.js wallBayCity walled, its own ring again and
  *  no outline (the places past the Bay clone their templates' grids, rings and gates and all); any other location itself.

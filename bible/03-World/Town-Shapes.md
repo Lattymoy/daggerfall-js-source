@@ -274,7 +274,9 @@ DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from `DefaultTerrainNatur
 - **The walkers** (`world/townShape.js` shutOffGround, the terrain job's `townGround` - townGroundMask's): a walk grid cell
   whose tile is none of the town's ground walks no one - a town past the Bay's open cells, a Bay town's square past its
   outline, its tiles the sea took back (TS2); `scenes/pixelBuild.js` shuts it as it builds the grid. Four cells a tile, the
-  grid's rows the stamp's (`setLocationTiles`: a block's tile (tx, 15 - ty)), pinned against both.
+  grid's rows the stamp's (`setLocationTiles`: a block's tile (tx, 15 - ty)), pinned against both. TOWN-BOARDS
+  (2026-10-27, `03-World/Urban-Fabric.md` section 9): the law is one function, `world/townShape.js` onTownGround - the
+  walkers are shut by it and URBANIZER's fabric is planned on it, so no fence of a yard runs down the land past the ground.
 - **The wall** (`world/townWalls.js` townWallCells, townWallCellsOf): a city past the Bay's wall as cells of its town map
   (64 a block, 1.6 m) - a length its stretched 25.6 m by 9.6, a tower 16.8 m square, each turned to its line. Its walkers
   never cross it (shutTownWall - its gates shut, as Daggerfall's gate blocks carve theirs); its town map draws it in

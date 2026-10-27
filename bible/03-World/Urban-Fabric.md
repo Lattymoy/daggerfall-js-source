@@ -12,6 +12,7 @@ TESA12), the countryside's towns (TESA7), the Imperial City's outskirts (TS5) an
 | U1 | a town's buildings in its province's own set of Daggerfall's stone, brick and half-timber (`world/urban/townLook.js`) | BUILT |
 | U2 | the towns' own pictures - each province's paving, cobbles and walls; cut stone, brick and half-timbering on the capitals' landmarks (`world/urban/urbanArt.js`, `world/urban/urbanRecords.js`) | BUILT |
 | U3 | a town's fabric - main streets with pavements, side streets, alleys, dead ends, fenced yards with gates and woodpiles (`world/urban/townFabric.js`, `townFabricModel.js`, `townFabricStand.js`) | BUILT |
+| TOWN-BOARDS | the boards on the ground in the smaller towns: the pavement a ring round the carriageway, the fabric on the town's ground alone (section 9) | FIXED |
 
 ## 1. What stood (DFU's reference, measured on the freeware)
 
@@ -100,13 +101,16 @@ NAV_CELL), so the plan and the people agree - and ordered:
 - **The grid** (`fabricGrid`): a block's town-map bytes built (a building's - bytes 1 to 23 - a house), the water's
   records built, Daggerfall's grass (2) and road (46, 47, 55) kept apart, every misc model's and flat's cell and the eight
   round it built. A cell no block lays - a left-out cell (TS3), a wall's carrier (TS4), a capital's own blocks, gardens
-  and lakes - is off the town (`isPortCell`).
+  and lakes - is off the town (`isPortCell`), and so is a cell past the town's ground (TOWN-BOARDS, section 9: the
+  outline TS2 flattens, `world/townShape.js` onTownGround - the walkers' own law).
 - **The main streets**: the ways from the town's ends to its middle (`world/urban/townFabricStand.js` fabricEnds, below),
   each the cheapest walk over the open cells (Dijkstra, four ways) - a cell 1 on Daggerfall's road and FABRIC.offRoad (2)
   more off it, FABRIC.mainCost (4) more for each cell its clearance falls short of FABRIC.mainWant (2.5): the town's own
-  lanes, kept off its walls. The street is every open cell within FABRIC.kerb (3.5 cells) of the walk: its carriageway
-  within FABRIC.carriage (2.5 - 8 m between its kerbs), its pavements past it, and wherever a house stands within
-  FABRIC.pave (1) - a street as wide as the houses let it be, its pavements along their fronts.
+  lanes, kept off its walls. Its carriageway is every open cell within FABRIC.carriage (2.5 - 8 m between its kerbs) of
+  the walk; its pavements the open cells round the carriageway FABRIC.kerb (1) deep by the eight ways - beside it or
+  across its corner, so they run on unbroken round every step of the walk (TOWN-BOARDS, section 9) - and its carriageway
+  wherever a house stands within FABRIC.pave (1): a street as wide as the houses let it be, its pavements along their
+  fronts.
 - **The side streets** are Daggerfall's road; **the alleys** the open ground between houses whose corridor is narrower
   than FABRIC.side (2) at its middle (`maxNear` - the most clearance within FABRIC.reach: a street's margin by a house is
   the street's).
@@ -178,10 +182,11 @@ the flattened ground TS2 lays):
 - **Kept** (EVERY ALLOCATION HAS AN OWNER): the plan and its model, by the town's map id, the TOWN_FABRIC_KEEP (24) most
   recently built; a town past them has its model taken off the model door (its GPU mesh is its pixel's hold's - freed with
   the pixel, PLACE-LRU) and is planned again, the same plan, when built again. A model's id (TOWN_FABRIC_MODEL_BASE,
-  5,000,000, and on) is never reused in a session.
+  5,000,000, and on) is never reused in a session. TOWN-BOARDS: a plan is its town's and its ground's (`fabricGroundKey`) -
+  asked on another ground (the land landing under a standing town) it is planned again and its old model let go.
 - **THE FOUR HOSTS.** `scenes/world.js` - WIRED, through its pixel build (`scenes/pixelBuild.js`): the fabric planned as the
-  town is laid out (`townFabricFor`, a breath between its steps) - before its yards (MERCHANT-YARDS, SHIPYARDS) and its
-  walkers are placed, so both keep off its fences (`fabricWalkShut`: the town's own walk shut, then the fabric's) - and
+  town is laid out (`townFabricFor`, a breath between its steps, on the terrain job's `townGround` - TOWN-BOARDS) - before
+  its yards (MERCHANT-YARDS, SHIPYARDS) and its walkers are placed, so both keep off its fences (`fabricWalkShut`: the town's own walk shut, then the fabric's) - and
   its model stood at the location's origin, its Daggerfall pieces in the town's climate, merged into the pixel's static
   batch and solid as its blocks' models are. `scenes/worldModes.js` (interiors) - WIRED for U1 alone: an interior's
   pictures follow the location's `climateType`; a building's inside stands no street. `scenes/dungeonContext.js` - no
@@ -227,3 +232,83 @@ fabric's), the town meshes in the town's climate (`test/systems/wd3_door.test.js
 its state (`test/combat/blood1_decals.test.js`, nine; `test/scenes/perfcol2.test.js`, eight providers). Mutant records
 re-aimed by content: `tools/mutants/tesa10.json` TESA10-host-politic (the capital's climate line),
 `tools/mutants/tesalore.json` TESA-LORE-estate-gate-shut (the estate's wall now sandstone brick).
+
+## 9. TOWN-BOARDS - the boards on the ground in the smaller towns (FIXED, 2026-10-27)
+
+The owner's field report, 2026-10-27, item 3: *"Random wooden board placement in smaller towns on the ground"*.
+
+**What the player saw.** Wood lying at the ground's level where no board belongs, in the towns past the Bay - two
+things of this page's fabric, nothing of Daggerfall's:
+
+- **A boardwalk of single boards.** Valenwood's and Black Marsh's main streets (the planks' style lays no carriageway:
+  a street is its forest floor between two boardwalks) came apart into boards a cell (1.6 m) or two long, each on its
+  own, stepped one behind the next down the street. The stone styles showed the same as single flags apart.
+- **Fences sunk into the land.** At a village's or a hamlet's edge a yard's fence ran on down the land past the town -
+  buried to its top rail, the rail and its posts' tops lying along the slope, or hung where the land fell away; a
+  woodpile with it, a hamlet's pavement under the land.
+
+**Why (1) - the pavement a band in straight lines.** A main street's pavement was its open cells between
+FABRIC.carriage (2.5) and 3.5 of its walk, measured in straight lines: a band one cell wide. The walk is four ways (a
+staircase wherever the street turns or runs aslant), and a band one cell wide round a staircase meets its next cell at
+a corner alone at every step - each of its cells a piece of its own, laid as its own board with a kerb on every side.
+
+**Why (2) - the fabric past the town's ground.** `fabricGrid` took every cell of a town's blocks as the town's. TS2
+(`03-World/Town-Shapes.md`) flattens only the town's outline - its buildings', walls' and props' tiles and a wandering
+margin, its sea given back (`world/terrain/terrainTiles.js` townGroundMask, the terrain job's `townGround`) - and eases
+the rest of its blocks' ground back to the land over 77 m. The fabric is one model stood at the flattened level
+(`scenes/pixelBuild.js` locLocal), so a yard of Daggerfall's grass reaching past the outline (a village's blocks are
+mostly grass round a few houses) was fenced down the land's slope. A city past the Bay stands on its wall's round (TS4),
+which holds nearly all of it.
+
+**The fix.** (1) The pavement is the carriageway's ring by the eight ways, FABRIC.kerb (now 1) deep - every open cell
+beside the carriageway or across its corner (`maxNear` of the carriageway, `world/urban/townFabric.js` planSteps) - and
+the carriageway's cells within FABRIC.pave of a house, as before: it runs on unbroken round every step of the walk. (2)
+The plan is made on the town's ground: `fabricGrid` takes `onGround`, the stand hands it the terrain job's townGround
+(`townFabricFor`'s `ground`, `scenes/pixelBuild.js`), and a cell past it is off the town as a left-out cell is - its
+yard fenced where the ground ends, on the flattened edge. The law is the walkers' own: `world/townShape.js`
+onTownGround, which shutOffGround now reads too (TS6). A plan is its town's and its ground's (`fabricGroundKey`): asked
+on another ground it is planned again and its old model let go (a build that planned it meanwhile is kept for both:
+its model is never pulled from under a build that has it in hand). Nothing is filtered after the fact: every board and fence the fabric lays has a cell of the
+street or a yard of the town's own ground under it.
+
+**Measured on the freeware** (`tools/townBoardsSweep.mjs --every 1 --land 10`, before on the branch's base and after:
+every template past the Bay cloned under a map id of its own, outlined, its wall stood and its fabric planned through
+the stand; every tenth laid on its template's own pixel as the terrain kernel flattens it, each fence edge, woodpile and
+pavement cell read against the ground under it - buried past 0.4 m, hung past 0.4 m, a pavement under the land past
+its own 0.13 m):
+
+| | before | after |
+|---|---|---|
+| 1,200 hamlets: pavement pieces, under four cells, steps | 79,428, 40,052, 31,419 | 37,886, 8,732, 4 |
+| 407 cities: the same | 74,938, 36,045, 27,845 | 37,299, 8,369, 0 |
+| 1,834 villages off their ground: fence edges, gates, woodpiles | 15,640 (25 km), 84, 154 - in 588 villages | 0 |
+| 1,200 hamlets off their ground: fence edges, gates, woodpiles, pavement, carriageway | 11,605, 165, 107, 6,222, 19,681 - in 465 | 0 |
+| 407 cities off their ground: fence edges, gates, woodpiles | 620, 4, 2 - in 18 | 0 |
+| on the land, 184 villages: fence edges buried, hung; woodpiles | 101, 142; 1 - in 16 villages | 0 |
+| on the land, 120 hamlets: fence edges buried, hung; woodpiles; pavement cells under it | 85, 154; 3; 242 - in 19 hamlets | 0 |
+| on the land, 41 cities | 0 | 0 |
+
+The worst: Holmarket's yard fence buried 13.1 m in its hillside, Hortower Derry's and Aldingmoth Wood's hung 2.0 and
+2.1 m, Blackcester's buried 1.9 m. The short pavements left (under four cells) each lie along a house's front or round
+its corner (6,432 in the hamlets) or between the carriageway's edge and one of Daggerfall's props (2,293 - a fence, a
+well, a lamp, each standing in its cell and the eight round it); 4 steps remain in three hamlets (Deershire, Khajinria,
+Longwell), each where a main street squeezes between two houses' corners and the pavement before both fronts all but
+fills the neck. ON THE BAY: every village and hamlet (3,034, their 298 blocks as the door serves them, both town packs
+on) stands no fabric, and nothing of Daggerfall's timber (TEXTURE.067) lies on the ground in any of their blocks - the
+pieces that do lie flat are grave slabs (43035-43038, 43051, 43053: TEXTURE.041/073/141/341) and rugs (74804, 74806:
+TEXTURE.049).
+
+**Seen** - the scratch rasterizer of section 7 (never committed), the game's own layout and the fabric's model over
+the player's ARCH3D and BLOCKS, with the terrain kernel's ground under it: before, Westtale's planks main street a
+scatter of boards one and two cells long and a village's yard fence buried to its top rail along its south edge; after,
+two boardwalks unbroken down the street and the fence standing on the town's flattened edge. The running game was not
+photographed: this session's shared machine killed the probe's browser before the stream went idle (a Bay village, 16
+minutes, 60 frames).
+
+**Pins**: `test/world/urban/townboards.test.js` (6 - the ring round a turning street, the fabric on its ground, the one
+ground law, the stand's ground and its keeping, the host's wiring, and with ARENA2 the world's small towns, on the Bay
+and past it). Mutants `tools/mutants/townboards.json` (12, all dead). PINS MOVED (TOWN-BOARDS):
+`test/world/urban/urban3_fabric.test.js` (FABRIC.kerb 1; a pavement round the carriageway, not within 3.5 of the
+walk), `test/world/urban/urban3_stand.test.js` (the host's line, its `ground`). Mutant records re-aimed by content:
+`tools/mutants/urban.json` U3-the-pavement-band-swapped (the ring's line), `tools/mutants/townfollow.json`
+TF-the-origin-unread and TF-the-rows-turned (shutOffGround through onTownGround).

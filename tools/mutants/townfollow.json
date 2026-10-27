@@ -83,20 +83,22 @@
  {
   "name": "TF-the-origin-unread",
   "file": "src/world/townShape.js",
-  "old": "    const ty = tilePos.y + (gy >> 2);",
-  "new": "    const ty = (gy >> 2);",
+  "old": "  const ty = tilePos.y + (gy >> 2);",
+  "new": "  const ty = (gy >> 2);",
   "tests": [
    "test/world/townfollow.test.js"
-  ]
+  ],
+  "note": "TOWN-BOARDS: re-aimed by content - shutOffGround reads the one ground law, world/townShape.js onTownGround (the fabric is planned on it too)."
  },
  {
   "name": "TF-the-rows-turned",
   "file": "src/world/townShape.js",
-  "old": "    const ty = tilePos.y + (gy >> 2);",
-  "new": "    const ty = tilePos.y + ((nav.height - 1 - gy) >> 2);",
+  "old": "      if (!onTownGround(ground, tilePos, gx, gy)) nav.grid[gy * nav.width + gx] = 0;",
+  "new": "      if (!onTownGround(ground, tilePos, gx, nav.height - 1 - gy)) nav.grid[gy * nav.width + gx] = 0;",
   "tests": [
    "test/world/townfollow.test.js"
-  ]
+  ],
+  "note": "TOWN-BOARDS: re-aimed by content - the rows turned where shutOffGround asks the one ground law (world/townShape.js onTownGround)."
  },
  {
   "name": "TF-the-ground-unhanded",
