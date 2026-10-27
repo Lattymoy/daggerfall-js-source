@@ -76,9 +76,10 @@ test('BAY-LEFT-GROUND D1 the kernel pulls the land past the Bay to a town\'s lev
   const mean = (s, a = 0, b = H) => { let t = 0, n = 0; for (let x = a; x < b; x++) for (let y = a; y < b; y++) { t += s[x * H + y]; n++; } return (t / n) * M; };
   const level = mean(generateSamples(woods, px, py, H, withSite), 48, 80), land = mean(generateSamples(woods, px, py, H, without));
   assert.ok(Math.abs(level - land) < 2, `the town's level its land's (${level.toFixed(2)} m, its pixel's mean ${land.toFixed(2)} m)`);
-  // two sites the Bay's key would make one (`sy * 1000 + sx`: a pixel and the one a thousand east and a row north): each its
+  // two sites the Bay's key would make one (`sy * 1000 + sx`: a pixel and the one a thousand west and a row south, on
+  // Cyrodiil's rolling land - the land a thousand east is the sea, level whatever its site's level says): each its
   // own level, whichever is asked first
-  const twin = [px + 1000, py - 1], both = landformSitesBeyond([{ px, py, loc: loc(8, 8) }, { px: twin[0], py: twin[1], loc: loc(8, 8) }]);
+  const twin = [px - 1000, py + 1], both = landformSitesBeyond([{ px, py, loc: loc(8, 8) }, { px: twin[0], py: twin[1], loc: loc(8, 8) }]);
   const fresh = world(), alone = generateSamples(fresh, ...twin, H, createLandforms({ woods: fresh, beyond: both, climates }));
   const after = world(), lf2 = createLandforms({ woods: after, beyond: both, climates });
   generateSamples(after, px, py, H, lf2);
@@ -107,6 +108,9 @@ test('BAY-LEFT-GROUND D1 every kernel takes the table past the Bay: the job\'s a
   const here = generatePixelTerrain({ woods, beyond, ...job, tilemap: job.tilemap.slice() });
   const bare = generatePixelTerrain({ woods, ...job, tilemap: job.tilemap.slice() });
   assert.notDeepEqual([...here.samples], [...bare.samples], 'the site next door moved it');
+  // a promotion's ghost rows (its neighbours' edges, the kernel's own) are pulled by the site next door too
+  const promote = (o) => [...restrideGrid({ woods, px: px + 1, py, stride: 4, samples: here.samples, landform: true, ...o }).normals];
+  assert.notDeepEqual(promote({ beyond }), promote({}), 'the promotion\'s ghost rows: pulled');
   const posted = [];
   const prevPost = globalThis.postMessage, prevOn = globalThis.onmessage;
   globalThis.postMessage = (msg) => posted.push(msg);
