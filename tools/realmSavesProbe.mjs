@@ -17,7 +17,7 @@
 //   (f) The Roll is stopped on device A, A earns standing, and device B joins: after a claim whose save never landed,
 //       does B keep what A earned?
 //
-//   ARENA2_PATH=/path/to/arena2 PW_CHANNEL=msedge node tools/realmSavesProbe.mjs     ONLY=a,b,c,d,e,f (default all);
+//   ARENA2_PATH=/path/to/arena2 PW_CHANNEL=msedge node tools/realmSavesProbe.mjs     ONLY=a,b,c,d,e,f,g,h (default all);
 //                                                                                     TREE=<dir>; PORT / SVC_PORT
 // Not in the suite (a toolchain and an hour); the laws it plays are pinned in test/net/rollUnheard.test.js,
 // test/systems/online/*.test.js and test/server/rescuesave.test.js.
@@ -40,7 +40,7 @@ import { ACCEPTED } from '../src/net/legalLaw.js';
 const ROOT = process.env.TREE || fileURLToPath(new URL('..', import.meta.url));
 const PORT = Number(process.env.PORT || 5243);
 const SVC_PORT = Number(process.env.SVC_PORT || 8872);
-const ONLY = new Set((process.env.ONLY || 'a,b,c,d,e,f').split(','));
+const ONLY = new Set((process.env.ONLY || 'a,b,c,d,e,f,g,h').split(','));
 const MINUTE = 60_000;
 const W = 640, H = 360;
 /** The guild faction (Chapters-Arc's twenty-two) whose standing (f) moves. */
@@ -344,6 +344,66 @@ async function main() {
       // what nothing lost looks like: the Roll's word after A0's claim, and everything A1 earned while its Roll was silent
       const want = rollAfterA0 + (a1End - a1Start);
       record('f', bSees === want && stopSaid, `standing with ${FACTION}: start ${start}; A0 claimed +4 (Roll ${rollAfterA0}) and died before its save; A1 (Roll stopped: ${stopSaid ? 'said' : 'NOT said'}) began at ${a1Start} and earned ${a1End - a1Start}; B shows ${bSees} (the Roll ${bRoll}), nothing lost is ${want}${bSees < want ? ` - DROPPED ${want - bSees}` : ''}`);
+      await ctxA.close(); await ctxB.close();
+    }
+
+    if (ONLY.has('g') || ONLY.has('h')) {
+      console.log('== (g) A plays on after its last landed save, device B joins; (h) the set-aside save recovered at the Online door');
+      const id = await character(x);
+      const ctxA = await device(x), ctxB = await device(x);
+      const a = await boot(ctxA, id, 'A');
+      await checkpointLanded(a);
+      await a.page.evaluate(() => { window.__playerEntity.goldPieces = 7777; });   // play the realm has not taken
+      const b = await boot(ctxB, id, 'B');
+      const bReady = Date.now();
+      while (!a.lostAt() && Date.now() < bReady + 6 * MINUTE) await sleep(1000);
+      const unsent = await unsentRecord(a, id);
+      record('g', unsent?.missed === true, `A's copy at the seat's loss: ${JSON.stringify(unsent)} (${a.lostAt() ? 'A went to the door' : 'A NEVER went to the door'})`);
+      const seqB = await checkpointLanded(b);
+      await b.page.close();
+      const again = await boot(ctxA, id, 'A again');
+      await waitFrames(again.page, 5);
+      const setAside = await again.page.evaluate(async (cid) => {
+        const { readStranded, unpackUnsent } = await import('/src/systems/realmSaves.js');
+        const copy = readStranded(localStorage, cid);
+        const text = copy ? (copy.packed ? await unpackUnsent(copy.packed) : copy.text) : null;
+        return text ? JSON.parse(text).goldPieces : null;
+      }, id);
+      const said = (await again.heard()).filter((l) => /set aside|recover it/i.test(l));
+      const played = await again.page.evaluate(() => window.__playerEntity?.goldPieces ?? null);
+      record('g', setAside === 7777 && said.length > 0, `B's save landed at seq ${seqB}; A's next join plays gold ${played} (the realm's) and set aside gold ${setAside} (7777 played on A), said: ${JSON.stringify(said)}`);
+      await again.page.close();
+      if (ONLY.has('h')) {
+        const door = await ctxA.newPage();
+        door.on('dialog', (d) => d.accept());
+        await door.goto(`http://localhost:${PORT}/play/index.html`);
+        let tile = false;
+        for (let i = 0; i < 120 && !tile; i++) {
+          tile = await door.evaluate((name) => {
+            const skip = [...document.querySelectorAll('button, [role=button], .act')].find((el) => /skip intro/i.test(el.textContent ?? ''));
+            if (skip) { skip.click(); return false; }
+            const online = document.querySelector('.door-online');
+            if (online && !document.body.innerText.includes(name)) { online.click(); return false; }
+            return [...document.querySelectorAll('button')].some((el) => /recover it/i.test(el.textContent ?? ''));
+          }, x.name).catch(() => false);
+          if (!tile) await sleep(1000);
+        }
+        const press = () => door.evaluate(() => { const all = [...document.querySelectorAll('button')].filter((el) => /recover it/i.test(el.textContent ?? '')); all.at(-1)?.click(); return all.length; });
+        const before = tile ? await press() : 0;
+        await sleep(1500);
+        const asked = tile ? await press() : 0;   // the question's own Recover it
+        await sleep(2000);
+        const after = await door.evaluate(async (cid) => {
+          const { enumerateSaves, loadSlot } = await import('/src/systems/save/saveSlots.js');
+          const { REALM_COPY_SAVE_NAME } = await import('/src/systems/realmCopyMark.js');
+          const { readStranded } = await import('/src/systems/realmSaves.js');
+          const slots = [...enumerateSaves(localStorage).info].filter(([, info]) => info.saveName === REALM_COPY_SAVE_NAME);
+          const snap = slots.length ? loadSlot(slots[0][0], localStorage) : null;
+          return { copies: slots.length, gold: snap?.goldPieces ?? null, copy: snap?.realmCopy === true, stillSetAside: !!readStranded(localStorage, cid), notice: [...document.querySelectorAll('button')].some((el) => /recover it/i.test(el.textContent ?? '')) };
+        }, id);
+        record('h', tile && after.copies === 1 && after.gold === 7777 && after.copy && !after.stillSetAside && !after.notice, `the door showed Recover it: ${tile} (${before} button, then ${asked} with the question); after: ${JSON.stringify(after)}`);
+        await door.close();
+      }
       await ctxA.close(); await ctxB.close();
     }
 

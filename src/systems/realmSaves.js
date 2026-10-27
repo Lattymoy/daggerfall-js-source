@@ -728,12 +728,12 @@ export function createRealmSession({
         if (REALM_LOST.includes(r.error) || r.error === 'seq' || !putMayClear(r)) {
           // RESCUE-SAVE: kept for the next join to decide (another tab took the lease, the account signed out), or a copy
           // no join may play, dropped
-          // STRANDED: a `lease` refusal marks the copy missed only when it differs from the last save that landed. A copy
-          // identical to it holds nothing the realm lacks (an idle tab at the seat's loss), so it is not set aside as one
-          // that "may hold progress". Any other copy holds play since the last landed put, up to a checkpoint's worth, and
-          // stays marked: the next join sets it aside unless the realm already holds it.
+          // STRANDED: a `lease` refusal marks the copy missed only when it differs from the last save that landed but for its
+          // clock and its look (idleKeyOf). Such a copy holds nothing the realm lacks (an idle tab at the seat's loss), so it
+          // is not set aside as one that "may hold progress". Any other copy holds play since the last landed put, up to a
+          // checkpoint's worth, and stays marked: the next join sets it aside unless the realm already holds it.
           if (UNSENT_KEPT_ON.includes(r.error)) {
-            if (r.error !== 'lease' || job.text !== landedText) { markMissed(); revise({ missed: true }); }
+            if (r.error !== 'lease' || idleKeyOf(job.text, job.summary) !== landedKey) { markMissed(); revise({ missed: true }); }
             keepNow();
           } else dropCopy();
           lose(r.error); last = { ok: false, error: r.error }; answer(job, last); break;

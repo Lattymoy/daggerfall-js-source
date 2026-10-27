@@ -956,19 +956,21 @@ test('STRANDED: the player\'s own delete takes the set-aside copy with the chara
   assert.equal(readStranded(dev.storage, c.id), null);
 });
 
-test('STRANDED with SEAT-SAVES: a tab with nothing unsent when another device joined its character is refused `lease` at its next save - its copy, the save that last landed, kept for a join the record still waits at, but not marked: its own device\'s next join, past the other device\'s save, drops it and says nothing', async () => {
+test('STRANDED with SEAT-SAVES: a tab with nothing unsent when another device joined its character is refused `lease` at its next save - its copy, the save that last landed but for its clock, kept for a join the record still waits at, but not marked: its own device\'s next join, past the other device\'s save, drops it and says nothing', async () => {
   const acct = await account();
   const dev = acct.device();
   const c = await joined(acct, dev);
-  assert.equal((await c.session.checkpoint(JSON.stringify(save(16, 3)))).ok, true);
+  assert.equal((await c.session.checkpoint(JSON.stringify({ ...save(16, 3), worldMinutes: 600 }))).ok, true);
   const other = acct.device();
   const theirs = await openRealmBoot({ io: other.io, id: c.id });   // the browser joins while the desktop app still plays
-  const refused = await c.session.checkpoint(JSON.stringify(save(16, 3)));
+  const idle = JSON.stringify({ ...save(16, 3), worldMinutes: 604 });   // the world's clock ran on, nothing else
+  const refused = await c.session.checkpoint(idle);
   assert.equal(refused.ok, false);
   assert.deepEqual(c.lost, ['lease'], 'to the door');
-  // PIN MOVED (the STRANDED false positive): the copy is the save the realm took, so it is not marked as one it missed.
+  // PIN MOVED (the STRANDED false positive): the copy is the save the realm took but for its clock, so it is not marked
+  // as one it missed.
   // A copy that differs holds unsent play and stays marked (the next test)
-  assert.deepEqual({ ...readUnsent(dev.storage, c.id), at: null }, { seq: 2, text: JSON.stringify(save(16, 3)), at: null, missed: false }, 'kept, unmarked');
+  assert.deepEqual({ ...readUnsent(dev.storage, c.id), at: null }, { seq: 2, text: idle, at: null, missed: false }, 'kept, unmarked');
   await sessionOf(other, c.id, theirs).checkpoint(JSON.stringify(save(13, 9)));
   const boot = await openRealmBoot({ io: dev.io, id: c.id });
   assert.equal(boot.snap.level, 13, 'the realm\'s save is played');

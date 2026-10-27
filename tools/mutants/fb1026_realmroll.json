@@ -155,8 +155,17 @@
   {
     "name": "STRANDED-lease-alone-marks-missed",
     "file": "src/systems/realmSaves.js",
-    "old": "            if (r.error !== 'lease' || job.text !== landedText) { markMissed(); revise({ missed: true }); }",
+    "old": "            if (r.error !== 'lease' || idleKeyOf(job.text, job.summary) !== landedKey) { markMissed(); revise({ missed: true }); }",
     "new": "            { markMissed(); revise({ missed: true }); }",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "STRANDED-yield-never-restores",
+    "file": "src/systems/realmSaves.js",
+    "old": "      try { storage.setItem(strandedKey(stranded), held); storage.setItem(strandedAtKey(stranded), at); } catch { /* storage away */ }",
+    "new": "      void stranded; void held; void at;",
     "tests": [
       "test/server/rescuesave.test.js"
     ]
@@ -164,7 +173,7 @@
   {
     "name": "STRANDED-lease-copy-never-marked",
     "file": "src/systems/realmSaves.js",
-    "old": "            if (r.error !== 'lease' || job.text !== landedText) { markMissed(); revise({ missed: true }); }",
+    "old": "            if (r.error !== 'lease' || idleKeyOf(job.text, job.summary) !== landedKey) { markMissed(); revise({ missed: true }); }",
     "new": "            if (r.error !== 'lease') { markMissed(); revise({ missed: true }); }",
     "tests": [
       "test/server/rescuesave.test.js"
