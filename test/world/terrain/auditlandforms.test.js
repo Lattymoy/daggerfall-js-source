@@ -26,6 +26,9 @@ import { createSwapBehind } from '../../../src/scenes/swapBehind.js';
 import { natureStandsAt, layoutNature, groundAt } from '../../../src/world/terrain/terrainNature.js';
 import { sampleHeight, blendLocationTerrain, calcAvgMaxHeight, generateTileData } from '../../../src/world/terrain/terrainTiles.js';
 import { hostText, movedOutOf } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
+import { recordFrame, framePixelAt } from '../../../src/scenes/groundFrameHost.js';   // BAY-LEFT-GROUND (D5): the frame's law, its own export
+import { inWorldGrid } from '../../../src/world/worldWide/worldGrid.js';
+import { RECORD_GROUND_STAMP } from '../../../src/world/terrain/terrainSampler.js';
 
 const H = HEIGHTMAP_DIMENSION;
 const UNIT = MAX_TERRAIN_HEIGHT;
@@ -142,13 +145,14 @@ test('AUDIT LANDFORMS E1: a road on a hillside is cut into the high side and fil
 
 // ---- C1/B4: a record's heights in DFU's frame --------------------------------------------------------------------------
 
-/** world.js's groundFrameHeight, groundFrameNative, restandHeight and scaleOf, sliced and run over a stub ground and lift
- *  (test/systems/landform.test.js's restander; the frame stub's natives are scene coordinates offset by (100, 200)). */
-function frame({ landform = true, lift = () => 0, ground = () => null, comp = 0 } = {}) {
-  const body = between('  const groundFrameHeight = (y, x, z) =>', '  // Building doors (P3)');
+/** The world host's groundFrameHeight, groundFrameNative, restandHeight and scaleOf over a stub ground and lift
+ *  (test/systems/landform.test.js's restander; the frame stub's natives are scene coordinates offset by (100, 200)).
+ *  PIN MOVED (BAY-LEFT-GROUND, D5): the law is scenes/groundFrameHost.js recordFrame, run whole - never sliced; the Bay's
+ *  pixel (`bay`), as these pins were written for. */
+function frame({ landform = true, lift = () => 0, ground = () => null, comp = 0, bay = true } = {}) {
   const state = { compensation: [0, comp, 0], localFromWorld: (nx, nz) => [nx - 100, nz - 200], worldCoords: (p) => ({ x: p[0] + 100, z: p[2] + 200 }) };
   const heightAt = (x, z) => (ground(x, z) == null ? -Infinity : ground(x, z) + comp);
-  const f = new Function('heightAt', 'state', 'STREAMING_TERRAIN_SCALE', 'DEFAULT_TERRAIN_SCALE', 'landform', 'landformLiftAt', `${body}\nreturn { groundFrameHeight, groundFrameNative, restandHeight, scaleOf };`)(heightAt, state, STREAMING_TERRAIN_SCALE, 1.5, landform, lift);
+  const f = recordFrame({ landform, liftAt: lift, heightAt, state, bayAt: () => bay });
   return { ...f, state };
 }
 
@@ -163,8 +167,8 @@ test('AUDIT LANDFORMS C1: every exterior height a record carries is written in D
     ['const shed = (rows) => (rows ?? []).map((r) => ({ ...r, y: groundFrameNative(r.nativeX, r.nativeZ, r.y - state.compensation[1]) }));', 1, 'the inside pools'],
     ['.map((sp) => ({ ...sp, containerType: LOOT_CONTAINER_TYPES.DroppedLoot, y: groundFrameNative(sp.nativeX, sp.nativeZ, sp.y - state.compensation[1]) })),', 1, 'the scene cache\'s piles'],
     // PIN MOVED (AUDIT LANDFORMS II F4): a dungeon's anchor keeps its own frame's feet - it lands on `local` alone
-    ['y: inDungeon ? pf[1] - state.compensation[1] : groundFrameHeight(pf[1] - state.compensation[1], pf[0], pf[2]),\n      terrainScale: STREAMING_TERRAIN_SCALE,   // TERRAIN-SCALE1: the ground that height stands on', 1, 'the anchor'],
-    ['pos: [player.pos[0], groundFrameHeight(player.pos[1] - state.compensation[1], player.pos[0], player.pos[2]) + state.compensation[1], player.pos[2]], yaw: cam.yaw, terrainScale: STREAMING_TERRAIN_SCALE }', 1, 'the ship\'s deck'],
+    ['y: inDungeon ? pf[1] - state.compensation[1] : groundFrameHeight(pf[1] - state.compensation[1], pf[0], pf[2]),\n      ...RECORD_GROUND_STAMP,   // TERRAIN-SCALE1: the ground that height stands on; BAY-LEFT-GROUND: and its frame\'s law', 1, 'the anchor'],   // PIN MOVED (BAY-LEFT-GROUND, D5): its frame's law stamped beside its scale
+    ['pos: [player.pos[0], groundFrameHeight(player.pos[1] - state.compensation[1], player.pos[0], player.pos[2]) + state.compensation[1], player.pos[2]], yaw: cam.yaw, ...RECORD_GROUND_STAMP }', 1, 'the ship\'s deck'],   // PIN MOVED (BAY-LEFT-GROUND, D5)
     ['outerCampsSave: () => camps.snapshot(campToRecord),', 1, 'a dungeon\'s outer camps'],
     ['const campToRecord = (pos) => { const n = campToNatives(pos); return [n[0], groundFrameHeight(n[1], pos[0], pos[2]), n[2]]; };', 1, 'a camp as a record keeps it'],
   ];
@@ -187,6 +191,7 @@ test('AUDIT LANDFORMS C1: a scene cache\'s piles and torches go in DFU\'s frame 
       droppedLoot: { snapshotWorld: (to) => [{ ...to([3, 0, 4]), nativeX: 103, nativeZ: 204, y: 950, items: [] }] },
       droppedTorches: { snapshot: (to) => [{ position: to([5, 960, 6]) }] }, LOOT_CONTAINER_TYPES: { DroppedLoot: 7 },
       state: w.state, STREAMING_TERRAIN_SCALE, groundFrameNative: w.groundFrameNative, groundFrameHeight: w.groundFrameHeight,
+      RECORD_GROUND_STAMP,   // PIN MOVED (BAY-LEFT-GROUND, D5): the scale and the frame's law, stamped together
     })({ x: 1, y: 2 });
     const got = {};
     mount(`${fnOf('restoreExteriorScene')}\nreturn restoreExteriorScene;`, {
@@ -244,7 +249,7 @@ test('AUDIT LANDFORMS C1: the quickload and the camps left outside stand every h
  *  yet will stand (_liftLocationAt - the index alone until bound; PIN MOVED, AUDIT LANDFORMS II F1/F3: the probe is
  *  declared with the spawned dungeons' own, and the slice starts at the fields' cap), `fields` counts the fields made. */
 function liftAtHost({ built = new Map(), index = new Map(), rects = new Map(), net = { at: NET }, fields = { made: 0 } } = {}) {
-  const body = between('  const LIFT_FIELDS_KEPT = ', '  /** AUDIT LANDFORMS C1/B4: A HEIGHT GOES INTO A RECORD IN DFU\'S FRAME.');
+  const body = between('  const LIFT_FIELDS_KEPT = ', '  /** The stream\'s frame, read live');   // PIN MOVED (BAY-LEFT-GROUND, D5): the lift's last line, the module's own
   const state = new StreamingWorldState();
   state.init(329, 251);
   state.compensation = [37.5, 12, -91.25];
@@ -252,8 +257,10 @@ function liftAtHost({ built = new Map(), index = new Map(), rects = new Map(), n
   const asked = [];
   const setLocationTiles = (loc, maps, blocks, tilemap) => { asked.push(loc.name); assert.equal(tilemap.length, 128 * 128); return rects.get(loc.name) ?? null; };
   const counted = (...a) => { fields.made += 1; return landformLiftField(...a); };
-  const host = new Function('state', 'woods', 'built', 'locationIndex', 'setLocationTiles', 'maps', 'blocks', 'TERRAIN_SIZE', 'heightCell', 'MAP_WIDTH', 'MAP_HEIGHT', 'landformLiftField', 'STREAMING_TERRAIN_SCALE', 'HEIGHTMAP_DIMENSION', 'terrainGen', 'landformsHere', '_liftLocationAt',
-    `${body}\nreturn { landformLiftAt, bind: (f) => { _liftLocationAt = f; } };`)(state, woods, built, index, setLocationTiles, {}, {}, TERRAIN_SIZE, heightCell, MAP_WIDTH, MAP_HEIGHT, counted, STREAMING_TERRAIN_SCALE, H, { roads: () => net.at }, () => createLandforms({ woods, roads: net.at }), (x, y) => index.get(`${x},${y}`));
+  // PIN MOVED (BAY-LEFT-GROUND, HOST-SPLIT and D5): scenes/groundFrameHost.js's text - the stream's frame and its reader
+  // live, through `host`; the world's grid, the frame's pixel and the sites' generation its new reads
+  const host = new Function('framePixelAt', 'inWorldGrid', 'beyondSites', 'host', 'built', 'locationIndex', 'setLocationTiles', 'maps', 'blocks', 'TERRAIN_SIZE', 'heightCell', 'MAP_WIDTH', 'MAP_HEIGHT', 'landformLiftField', 'STREAMING_TERRAIN_SCALE', 'HEIGHTMAP_DIMENSION', 'terrainGen', 'landformsHere', '_liftLocationAt',
+    `${body}\nreturn { landformLiftAt, bind: (f) => { _liftLocationAt = f; } };`)(framePixelAt, inWorldGrid, { generation: () => 1 }, { state, woods }, built, index, setLocationTiles, {}, {}, TERRAIN_SIZE, heightCell, MAP_WIDTH, MAP_HEIGHT, counted, STREAMING_TERRAIN_SCALE, H, { roads: () => net.at }, () => createLandforms({ woods, roads: net.at }), (x, y) => index.get(`${x},${y}`));
   const scene = (px, py, sx, sy) => { const t = state.pixelTranslation(px, py); return [t[0] + sx * heightCell, t[2] + sy * heightCell]; };
   return { ...host, scene, asked, state };
 }
@@ -292,9 +299,11 @@ test('AUDIT LANDFORMS B1: the lift a record takes is the scene point\'s own - it
   assert.ok(Math.abs(bare.landformLiftAt(ex, ez) - landformLift(woods, px, 240, 127.5, 0.5, null, H, LF) * STREAMING_TERRAIN_SCALE) < 1e-9);
   assert.ok(Math.abs(landformLift(woods, px, 240, 127.5, 0.5, null, H, LF) - landformLift(woods, px, 241, 127.5, 0.5, null, H, LF)) > 0.01, 'a row its neighbour differs from');
   assert.ok(bare.landformLiftAt(...bare.scene(500, 0, 64, 64)) > 1, 'the map\'s north row takes its lift');
-  assert.equal(bare.landformLiftAt(...bare.scene(500, -1, 64, 64)), 0, 'and past it none');
+  // PIN MOVED (BAY-LEFT-GROUND, D5): and past it its own - a record past the Bay is DFU's frame too; off the world's grid none
+  assert.ok(Math.abs(bare.landformLiftAt(...bare.scene(500, -1, 64, 64)) - landformLift(woods, 500, -1, 64, 64, null, H, LF) * STREAMING_TERRAIN_SCALE) < 1e-9, 'and past it its own');
   const far = bare.scene(-5, py, 10, 10);
-  assert.equal(bare.landformLiftAt(...far), 0, 'off the map: no lift');
+  assert.ok(Math.abs(bare.landformLiftAt(...far) - landformLift(woods, -5, py, 10, 10, null, H, LF) * STREAMING_TERRAIN_SCALE) < 1e-9, 'west of the Bay: its own');
+  assert.equal(bare.landformLiftAt(...bare.scene(9000, py, 10, 10)), 0, 'off the world\'s grid: no lift');
   // B2: by a road the lift a record takes is the cut's too, over the network this thread holds - and made again once
   // the network lands
   const net = { at: null };
@@ -320,7 +329,8 @@ test('AUDIT LANDFORMS B1: a pixel not built yet is asked what its build will sta
   // the binding itself: _locationToBuild's answer, side-effect free
   const line = WORLD.match(/\n {2}const (_liftLocationAt = \(x, y\) => [^\n]*;)/);   // PIN MOVED (AUDIT LANDFORMS II F1): declared, not bound later
   assert.ok(line, 'the boot declares it');
-  const probe = (index, ground) => new Function('locationIndex', 'spawnGroundPlace', `let _liftLocationAt = null; ${line[1]}\nreturn _liftLocationAt;`)(index, { groundLocationAt: ground });
+  // PIN MOVED (BAY-LEFT-GROUND, D5): on the Bay (`onTheBay`) - past it the build's own place, pinned in II F1 below
+  const probe = (index, ground) => new Function('locationIndex', 'spawnGroundPlace', 'onTheBay', '_locationToBuild', `let _liftLocationAt = null; ${line[1]}\nreturn _liftLocationAt;`)(index, { groundLocationAt: ground }, () => true, () => { throw new Error('the Bay asks the build of nothing'); });
   // AUDIT LANDFORMS II J3: every key OFF the diagonal, each asked with its mirror - on (1, 1), (2, 2) and (3, 3) a probe that
   // swapped its x and y answered the same, so three transposed bindings survived
   const town = { name: 'Town' }, rolled = { name: 'Rolled', spawned: true };
@@ -649,7 +659,8 @@ test('AUDIT LANDFORMS D9: the gate\'s beacon kernel is made again once the netwo
   const state = new StreamingWorldState();
   state.init(300, 250);
   const heightCell = TERRAIN_SIZE / (H - 1), worldHeight = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;
-  const gateGroundAt = new Function('woods', 'landform', 'terrainGen', 'sampleKernel', 'HEIGHTMAP_DIMENSION', 'landformsHere', 'state', 'TERRAIN_SIZE', 'heightCell', 'worldHeight', `${body}\nreturn gateGroundAt;`)(woods, true, { roads: () => net }, sampleKernel, H, () => createLandforms({ woods, roads: net }), state, TERRAIN_SIZE, heightCell, worldHeight);
+  // PIN MOVED (BAY-LEFT-GROUND, D1): the kernel kept by the sites past the Bay's generation too - a stub's, one
+  const gateGroundAt = new Function('woods', 'landform', 'terrainGen', 'sampleKernel', 'HEIGHTMAP_DIMENSION', 'landformsHere', 'state', 'TERRAIN_SIZE', 'heightCell', 'worldHeight', 'beyondSites', `${body}\nreturn gateGroundAt;`)(woods, true, { roads: () => net }, sampleKernel, H, () => createLandforms({ woods, roads: net }), state, TERRAIN_SIZE, heightCell, worldHeight, { generation: () => 1 });
   const t = state.pixelTranslation(300, 250);
   const x = t[0] + 64 * heightCell, z = t[2] + 30 * heightCell;
   const before = gateGroundAt(300, 250, x, z);
@@ -695,7 +706,10 @@ test('AUDIT LANDFORMS II F1: what a pixel not built yet will stand - a spawn inc
   const stmts = bootStatements();
   const load = stmts.findIndex((t) => t.includes('await worldQuickLoad({ ...bootLoadPick, snap });'));
   assert.ok(load > 0, 'the boot\'s load door');
-  const makes = stmts.map((t, i) => [i, t]).filter(([, t]) => /^(?:(?:let|const) )?_liftLocationAt = /.test(t));
+  // PIN MOVED (HOST-SPLIT, SPAWN-WORLD 2026-10-26): the lift and the spawn law it asks are scenes/spawnGroundHost.js's,
+  // constructed where they stood - the statement that binds them is that construction
+  const binds = (name) => (t) => new RegExp(`^(?:(?:let|const) )?${name} = |^const \\{[^}]*\\b${name}\\b[^}]*\\} = createSpawnGroundHost\\(`).test(t);
+  const makes = stmts.map((t, i) => [i, t]).filter(([, t]) => binds('_liftLocationAt')(t));
   const before = makes.filter(([i]) => i < load);
   assert.ok(before.length, 'made before the load');
   assert.deepEqual(makes.filter(([i]) => i > load).map(([, t]) => t), [], 'and not bound again after it');
@@ -703,12 +717,18 @@ test('AUDIT LANDFORMS II F1: what a pixel not built yet will stand - a spawn inc
   // hold until its pixel builds (_locationToBuild's answer) - it was the index alone there
   const spawn = { name: 'Spawn', spawned: true }, town = { name: 'Town' };
   const index = new Map([['1,1', town]]);
-  const probe = new Function('locationIndex', 'spawnGroundPlace', `${before.at(-1)[1].replace(/^(?:let|const) /, 'let ')}\nreturn _liftLocationAt;`)(
-    index, { groundLocationAt: (x, y, stood) => stood ?? (x === 3 ? spawn : null) });   // PIN MOVED (GROUND-AGREE): the ground's place, world/spawnGroundPlace.js
+  // PIN MOVED (BAY-LEFT-GROUND, D5): and past the Bay the build's own place (_locationToBuild), no spawn's roll asked there
+  // PIN MOVED (AUDIT BAY-LEFT, its packages merged): the lift is scenes/spawnGroundHost.js's (SPAWN-WORLD's move) - D5 carried there
+  const beyond = { name: 'Beyond' };
+  const lifted = /\n {2}(const _liftLocationAt = [^\n]*?;)(?: {3}\/\/[^\n]*)?\n/.exec(src('src/scenes/spawnGroundHost.js'))[1];
+  const probe = new Function('locationIndex', 'spawnGroundPlace', 'onTheBay', '_locationToBuild', `${lifted}\nreturn _liftLocationAt;`)(
+    index, { groundLocationAt: (x, y, stood) => stood ?? (x === 3 ? spawn : null) }, (x) => x >= 0, (x) => (x === -5 ? beyond : null));   // PIN MOVED (GROUND-AGREE): the ground's place, world/spawnGroundPlace.js
   assert.equal(probe(1, 1), town);
   assert.equal(probe(3, 3), spawn, 'a spawn not in the index yet: its own place, not the wild');
+  assert.equal(probe(-5, 3), beyond, 'past the Bay: what its build stands');
+  assert.equal(probe(-3, 3), null, 'and no spawn there');
   // GROUND-AGREE: and the ground's place it asks is standing before the load too
-  const ground = stmts.findIndex((t) => /^const spawnGroundPlace = /.test(t));
+  const ground = stmts.findIndex(binds('spawnGroundPlace'));
   assert.ok(ground >= 0 && ground < load, 'the spawn law it asks made before the load');
 });
 
@@ -1109,7 +1129,7 @@ test('AUDIT LANDFORMS II H1: THE ONE CONSTRUCTION SEAM for C1 - every height wor
   // C1's own pin names the twelve writers of today and cannot fail on a thirteenth; this sweeps the host. (It cannot see a
   // writer outside world.js - the hosts' others hand world.js their heights, THE FOUR HOSTS in Landforms.md.)
   const TRANSIENT = new Map([
-    ['if (Number.isFinite(h)) return y - (h - state.compensation[1] - now) * (r - 1) + now;', 'restandHeight itself: the read side'],
+    ['if (Number.isFinite(h)) return y - (h - state.compensation[1] - now) * (r - 1) + now;', 'restandHeight itself: the read side'],   // PIN MOVED (BAY-LEFT-GROUND, D5): scenes/groundFrameHost.js recordFrame's own frame
     ['const campToNatives = (pos) => { const wc = state.worldCoords(pos); return [wc.x, pos[1] - state.compensation[1], wc.z]; };', 'a recenter, this ground both ways (campToRecord is the record\'s)'],
     ['toNative: (p) => { const w = state.worldCoords(p); return [w.x, p[1] - state.compensation[1], w.z]; },', 'the sailing cabins\' live access'],
     ['const cabin = { v: 1, uid: boat.uid, hull: boat.hull, origin: [origin.x, boat.GameObject.position[1] - state.compensation[1], origin.z],', 'a boat at sea - its pixel is what is read, under the knee'],

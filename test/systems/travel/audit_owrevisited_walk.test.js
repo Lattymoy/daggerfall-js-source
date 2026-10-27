@@ -9,7 +9,7 @@ import { TravelAutopilot, pathPursuit, rectOf, LANE_CORNER_FORCE_MIN } from '../
 import { createTravelOptions, readTravelOptionsSettings, ringPassPoints } from '../../../src/systems/travel/travelOptions.js';
 import { createTravelSteer, steerDrive } from '../../../src/systems/travel/travelSteer.js';
 import { finalRoadVia, routeDrawPoints, joinPoint } from '../../../src/systems/travel/travelRoute.js';
-import { clearLine, simplifyWay, townWayCells, componentsOf, edgePieces, TOWN_WAY_MARGIN } from '../../../src/systems/travel/townWalk.js';
+import { clearLine, simplifyWay, townWayCells, componentsOf, edgePieces, TOWN_WAY_MARGIN, TOWN_PACE_MAX } from '../../../src/systems/travel/townWalk.js';
 import { createTownWalk, JOURNEY_GRIDS_MAX } from '../../../src/scenes/townWalkHost.js';
 import { TRAVEL_NAV_TEXT } from '../../../src/systems/travel/travelOptionsText.js';
 import { TravelControlUI } from '../../../src/ui/travel/travelControlUI.js';
@@ -225,18 +225,18 @@ function walledTown({ yard = false } = {}) {
 
 test('AUDIT OW-REVISITED L1-4: A TOWN\'S PACE IS ITS STREETS\' - a walled city\'s fields (inside its grid, outside its wall: where every route round it walks its ring) are not "in town", its streets and their doorsteps are; a town with no wall is all town; townKey still answers the fields (the way out through the gate is asked there) (mutants: the fields in town; the walls unread)', () => {
   const { tw, cellAt, nav } = walledTown();
-  assert.equal(tw.townPace(cellAt(32, 32)), '100,200', 'within the walls');
+  assert.equal(tw.townPace(cellAt(32, 32)), TOWN_PACE_MAX, 'within the walls: a town\'s pace (IC-PACE: the pace, where it was the key)');
   assert.equal(tw.townPace(cellAt(5, 5)), null, 'the fields: no town\'s pace');
   assert.equal(tw.townKey(cellAt(5, 5)), '100,200', 'but in the grid: its way is asked');
-  assert.equal(tw.townPace(cellAt(22, 32)), '100,200', 'in the wall, nearest the streets inside: a doorstep reads as its street');
+  assert.equal(tw.townPace(cellAt(22, 32)), TOWN_PACE_MAX, 'in the wall, nearest the streets inside: a doorstep reads as its street');
   const pieces = edgePieces(nav);
   assert.ok(pieces.edge.size >= 1 && pieces.all === 2, `two pieces, the fields' at the edge (${pieces.edge.size} of ${pieces.all})`);
   const open = createTownWalk({ built: new Map([['100,200', { population: { nav: new CityNavigation(1, 1) }, locOrigin: walledTown().built.get('100,200').locOrigin }]]), state: walledTown().state });
-  assert.equal(open.townPace(cellAt(5, 5)), '100,200', 'a town with no wall: all of it');
+  assert.equal(open.townPace(cellAt(5, 5)), TOWN_PACE_MAX, 'a town with no wall: all of it');
   // gates, but a wall that does not close (a breach): one piece - all of it town
   const breach = walledTown();
   for (let y = 30; y <= 34; y++) for (let x = 20; x <= 22; x++) breach.nav.grid[y * 64 + x] = 15 << 4;
-  assert.equal(breach.tw.townPace(breach.cellAt(5, 5)), '100,200', 'a wall that does not close: no fields apart, all town');
+  assert.equal(breach.tw.townPace(breach.cellAt(5, 5)), TOWN_PACE_MAX, 'a wall that does not close: no fields apart, all town');
 });
 
 test('AUDIT OW-REVISITED L6-3 / L1-6: THE GATES BLAMED ONLY WHEN THEY ARE THE REASON - a way short behind a gate shut is `shut` only if the gates open would have let it through; a yard the houses close in is walked as far as it reaches, by day or night; the journey grids kept a town and its gates\' state, JOURNEY_GRIDS_MAX at most, made again when the pixel is built again (mutants: every short way blamed on the gates; the grids unbounded; a rebuilt pixel\'s stale grid)', () => {

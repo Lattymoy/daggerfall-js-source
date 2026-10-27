@@ -137,11 +137,12 @@
   {
     "name": "LW-host-boards-ground-held-to-the-bay",
     "file": "src/scenes/world.js",
-    "old": ": !provinceQuestPlaces.placeOnPixel(x, y))\n      && !gateSeaPixel(",
+    "old": ": !provinceQuestPlaces.placeOnPixel(x, y) && !spawnsDungeon(_spawnSalt, x, y))\n      && !gateSeaPixel(",
     "new": ": false)\n      && !gateSeaPixel(",
     "tests": [
       "test/systems/revenant/lairworld.test.js"
-    ]
+    ],
+    "note": "SPAWN-WORLD re-aimed by content: past the Bay the boards' ground keeps off a spawn's pixel too."
   },
   {
     "name": "LW-host-boards-stamp-unread",
@@ -164,11 +165,9 @@
   {
     "name": "LW-heldmap-the-bays-sheet",
     "file": "src/ui/heldMap.js",
-    "old": "    const sheet = f ?? { x0: 0, y0: 0, w: this._size.width, h: this._size.height };",
-    "new": "    const sheet = { x0: 0, y0: 0, w: this._size.width, h: this._size.height };",
-    "tests": [
-      "test/systems/revenant/lairworld.test.js"
-    ]
+    "old": "    return this._tamriel || this._zoneMap ? tamrielFrameInBay() : { x0: 0, y0: 0, w: this._size.width, h: this._size.height };",
+    "new": "    return { x0: 0, y0: 0, w: this._size.width, h: this._size.height };",
+    "tests": ["test/systems/revenant/lairworld.test.js", "test/ui/bayleft_marks.test.js"]
   },
   {
     "name": "LW-marks-unshifted",

@@ -375,8 +375,8 @@
   {
     "name": "search-no-focus",
     "file": "src/ui/heldMap.js",
-    "old": "    this._focusOn(entry.pos.x + 0.5, entry.pos.y + 0.5);\n    this._select(",
-    "new": "    this._select(",
+    "old": "    if (pick) { this._focusOn(pick.x, pick.y); this._select(pick); }",
+    "new": "    if (pick) { this._select(pick); }",
     "tests": [
       "test/ui/heldmap.test.js"
     ]

@@ -34,11 +34,11 @@
 // the authored shape still stands in for a missing trace.
 // ═══════════════════════════════════════════════════════════════════
 import { buildWildMask, wildInside } from './wildZone.js';
-import { lawLines, linkSteps, segKey, drain } from '../../world/tamriel/tamrielLines.js';   // SMOOTH-LAND: the land's own lines
+import { lawLines, linkSteps, segKey, drain, squareEnds } from '../../world/tamriel/tamrielLines.js';   // SMOOTH-LAND: the land's own lines
 import { theatreAt } from '../../world/worldWide/worldGrid.js';
 import { IMPERIAL_ID, PROVINCE_OF_ID, provinceKeyAt, tamrielLandVersion, tamrielTrace } from '../../world/tamriel/tamrielLand.js';
 import { isOnlinePage } from '../online/onlineLane.js';   // AUDIT TESA II Z8: online, the traced picture's zone alone
-import { tamrielFit, pictureToBay, PICTURE_W, PICTURE_H } from '../../world/tamriel/tamrielFrame.js';
+import { tamrielFit, pictureToBay, bayToPicture, PICTURE_W, PICTURE_H } from '../../world/tamriel/tamrielFrame.js';
 
 /** The province's theatre (world/worldWide/worldGrid.js: the Imperial Province, the picker's 9). */
 export const CYRODIIL_THEATRE = IMPERIAL_ID;
@@ -67,6 +67,38 @@ export function cyrodiilBox() {
 /** Is world map pixel (x, y) the Imperial Province's? */
 export const inCyrodiil = (x, y) => theatreAt(Math.floor(x), Math.floor(y)) === CYRODIIL_THEATRE;
 
+/** NIBEN-SEA: how far (picture units) a water pixel looks along its row and its column for the province's land each side. */
+export const PROVINCE_WATER_REACH = 12;
+/**
+ * NIBEN-SEA (bible/03-World/Tamriel.md NIBEN-SEA; AUDIT TESA II Z4's law, kept): THE PROVINCE'S OWN WATER - a map pixel whose
+ * picture pixel is water with the Imperial Province's land the nearest on both its sides, west and east or north and
+ * south, within PROVINCE_WATER_REACH. Lake Rumare and the Niben were holes in the picture's land, and the zone took what
+ * it enclosed (wildZone.js fillEnclosed); joined to the sea down the Niben (ui/tamrielTrace.js NIBEN_COURSE) they are
+ * enclosed no more, and the sea would reach up the river to the Imperial City's isle - the city in The Borderlands, a
+ * lake's water nobody's fight. The river's own banks keep them the zone's; its last reach, between Elsweyr's banks, is not.
+ * Water by the land's own law (SMOOTH-LAND: provinceKeyAt's null - a sliver of a picture pixel of land past the smooth
+ * coast is the water's, a sliver of water inside it the land's), its banks the picture's own pixels - so the Waterfront
+ * canal's water (world/tamriel/tamrielLand.js canalAt), a picture pixel of the province's land between its own, is the
+ * province's.
+ */
+export function provinceWaterAt(x, y) {
+  const trace = tamrielTrace();
+  if (!trace) return false;
+  const [qx, qy] = bayToPicture(x + 0.5, y + 0.5);
+  if (provinceKeyAt(qx, qy) !== null) return false;   // land, by the land's own law (SMOOTH-LAND)
+  const px = Math.floor(qx), py = Math.floor(qy), { w, h, land, province } = trace;
+  if (px < 0 || py < 0 || px >= w || py >= h) return false;
+  const bank = (dx, dy) => {
+    for (let k = 1; k <= PROVINCE_WATER_REACH; k++) {
+      const bx = px + dx * k, by = py + dy * k;
+      if (bx < 0 || by < 0 || bx >= w || by >= h) return false;
+      if (land[by * w + bx]) return province[by * w + bx] === IMPERIAL_ID;
+    }
+    return false;
+  };
+  return (bank(-1, 0) && bank(1, 0)) || (bank(0, -1) && bank(0, 1));
+}
+
 let _mask = /** @type {any} */ (null);
 let _key = /** @type {string|null} */ (null);
 /**
@@ -85,7 +117,7 @@ export function cyrodiilMask() {
   const cell = CYRODIIL_CELL_PX;
   const ox = Math.floor(box.x0 / cell) * cell, oy = Math.floor(box.y0 / cell) * cell;   // the world's one lattice
   const width = Math.ceil((box.x1 + 1 - ox) / cell), height = Math.ceil((box.y1 + 1 - oy) / cell);
-  _mask = buildWildMask({ width, height, ox, oy, cell, pixelIn: (x, y) => theatreAt(x, y) === CYRODIIL_THEATRE });   // ZONE-LINE: the province's own law, a pixel at a time
+  _mask = buildWildMask({ width, height, ox, oy, cell, pixelIn: (x, y) => theatreAt(x, y) === CYRODIIL_THEATRE || provinceWaterAt(x, y) });   // ZONE-LINE: the province's own law, a pixel at a time; NIBEN-SEA: and its own water
   const trace = tamrielTrace();
   // ZONE-LINE: the line the maps draw (untraced, the zone's own pixel edge); SMOOTH-LAND: the law's own, made the first
   // time a map asks it (the mask is the boot's; the line the map's)
@@ -130,6 +162,22 @@ export function* zoneLineSteps(trace, mask) {
   // the squares the zone's outline can cross: those about every cell of the mask that is neither whole nor empty, or
   // whose neighbour east or south is otherwise - each asked of the law's lines once (its labels and its crossings)
   const { width, height, cell, bits } = mask, full = (1 << (cell * cell)) - 1, asked = new Set();
+  /** NIBEN-SEA: a dam's own crossings (an edge between two pixels of one label - the law has none there): its middle. */
+  const own = new Map(), points = { get: (/** @type {number} */ id) => own.get(id) ?? lines.points.get(id) };
+  /** NIBEN-SEA: A DAM - a square the zone changes across where the law's label does not: its pieces the zone's own
+   *  marching case, each edge crossed at the law's crossing where its labels differ and at its middle where they do not
+   *  (a saddle's two zone pixels joined), `kind` 'water' - the red line's, never the held map's coast or border. */
+  const dam = (/** @type {number} */ bx, /** @type {number} */ by, /** @type {boolean[]} */ [a, b, c, d]) => {
+    const { top, right, bottom, left } = squareEnds(bx, by);
+    const E = [[a !== b, top, bx + 1, by + 0.5, [bx, by, bx + 1, by]], [b !== c, right, bx + 1.5, by + 1, [bx + 1, by, bx + 1, by + 1]],
+      [d !== c, bottom, bx + 1, by + 1.5, [bx, by + 1, bx + 1, by + 1]], [a !== d, left, bx + 0.5, by + 1, [bx, by, bx, by + 1]]];
+    for (const [cut, id, x, y] of E) if (cut && !lines.points.has(/** @type {number} */ (id)) && !own.has(id)) own.set(id, { x, y });
+    const piece = (/** @type {number} */ i, /** @type {number} */ j) => segs.push({ a: /** @type {number} */ (E[i][1]), b: /** @type {number} */ (E[j][1]), kind: 'water', pair: 0, side: /** @type {number[]} */ (E[i][4]) });
+    const cuts = [0, 1, 2, 3].filter((k) => E[k][0]);
+    if (cuts.length === 2) piece(cuts[0], cuts[1]);
+    else if (a) { piece(0, 1); piece(3, 2); }   // a saddle, a and c the zone's: b's corner and d's cut off
+    else { piece(0, 3); piece(1, 2); }
+  };
   /** @type {Array<[number, number]>} */
   const cand = [];
   const fill = (/** @type {number} */ cx, /** @type {number} */ cy) => (cx < 0 || cy < 0 || cx >= width || cy >= height ? 0 : bits[cy * width + cx]);
@@ -148,7 +196,14 @@ export function* zoneLineSteps(trace, mask) {
     const ia = inside(bx, by), ib = inside(bx + 1, by), ic = inside(bx + 1, by + 1), id = inside(bx, by + 1);
     if (ia === ib && ia === ic && ia === id) continue;
     const rec = lines.square(bx, by);
-    if (!rec) continue;   // never: the zone changes only where the law's label does
+    // NIBEN-SEA: the zone changes where the law's label does not - its own water (provinceWaterAt) against the sea's, a
+    // river where its banks stop being the province's: the square is the zone's own marching case (`dam`)
+    const one = (/** @type {number} */ x, /** @type {number} */ y, /** @type {number} */ qx, /** @type {number} */ qy) => lines.label(x, y) === lines.label(qx, qy);
+    if ((ia !== ib && one(bx, by, bx + 1, by)) || (ib !== ic && one(bx + 1, by, bx + 1, by + 1)) || (id !== ic && one(bx, by + 1, bx + 1, by + 1)) || (ia !== id && one(bx, by, bx, by + 1))) {
+      dam(bx, by, [ia, ib, ic, id]);
+      continue;
+    }
+    if (!rec) continue;   // never: the zone changes only where the law's label does, or a dam's
     // the law's own pieces of the square the zone's outline is: those the zone changes across (its two pixels one in the
     // zone, one out), each by what lies past the zone there - the water it does not enclose (a coast), or another
     // province's land (a border)
@@ -159,7 +214,7 @@ export function* zoneLineSteps(trace, mask) {
       segs.push({ a: s.a, b: s.b, kind: past === 0 ? 'coast' : 'border', pair: 0, side: s.side });
     }
   }
-  const chains = yield* linkSteps(segs, lines.points);
+  const chains = yield* linkSteps(segs, /** @type {any} */ (points));
   const coast = yield* linkSteps(segs.filter((s) => s.kind === 'coast'), lines.points);
   const borders = yield* linkSteps(segs.filter((s) => s.kind === 'border'), lines.points);
   const line = {
@@ -167,7 +222,7 @@ export function* zoneLineSteps(trace, mask) {
     coast,
     borders,
     /** The pieces the outline draws (tamrielLines.js segKey): the province ink's own are left off where they are these. */
-    keys: new Set(segs.map(segKey)),
+    keys: new Set(segs.filter((s) => s.kind !== 'water').map(segKey)),   // NIBEN-SEA: a dam's never the ink's to leave off
   };
   _line = { land: trace.land, province: trace.province, mask, key, line };
   return line;

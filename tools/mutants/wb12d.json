@@ -1382,8 +1382,9 @@
   {
     "name": "AUDIT-WB12d-the-stepped-down-forgets",
     "file": "src/net/online.js",
-    "old": "raidOk: this.raidOk, riteOk: this.riteOk, serpentOk: this.serpentOk, sdOk: this.sdOk, foeInventoryOk: this.foeInventoryOk",
-    "new": "sdOk: this.sdOk, foeInventoryOk: this.foeInventoryOk",
+    "note": "WW5 (2026-10-27): re-aimed by content - the step-down keeps the halo's WW5 word beside it (a halo says for itself).",
+    "old": "raidOk: this.raidOk, riteOk: this.riteOk, serpentOk: this.serpentOk, sdOk: this.sdOk, ww5Ok: this.ww5Ok, foeInventoryOk: this.foeInventoryOk",
+    "new": "sdOk: this.sdOk, ww5Ok: this.ww5Ok, foeInventoryOk: this.foeInventoryOk",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]

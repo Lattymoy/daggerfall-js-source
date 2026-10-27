@@ -79,7 +79,11 @@ test('R2-7 a staff event past the Bay: an AREA\'s event stands on the world\'s p
   const EV = { id: 'ab12cd34ef', rg: 64, loc: -1, px: WHITERUN.x, py: WHITERUN.y, nm: 'Whiterun', ct: 0, mt: [7, 12], n: 50, m: 25, b: 24, bs: 200, bh: 10, at: 1_700_000_000_000, ue: 0, eb: 1, fb: 0, by: 'Mob' };
   assert.deepEqual(validStaffEvent(EV), { ...EV, hp: 0 }, 'an area past the Bay');
   assert.equal(isAreaEvent(validStaffEvent(EV)), true);
-  assert.equal(staffEventFault({ ...EV, loc: 3, ct: 1 }), 'town-past-bay', 'a town\'s event past the Bay: the raids are the Bay\'s until WW6');
+  // PIN MOVED (WW6, bible/03-World/World-Wide.md WW6): the raids stand past the Bay, and a town's event with them - where its
+  // town does: a Bay location's index at a pixel past the Bay is refused by name (`town`), a town past the Bay's own index
+  // there taken (test/world/worldWide/ww6_raids.test.js)
+  assert.equal(staffEventFault({ ...EV, loc: 3, ct: 1 }), 'town', 'a Bay town\'s location at a pixel past the Bay: two sides of the edge');
+  assert.equal(staffEventFault({ ...EV, loc: -1000123, ct: 1 }), null, 'a town past the Bay at its own pixel, by its own index');
   assert.equal(staffEventFault({ ...EV, rg: 17, loc: 0, px: 207, py: 213, ct: 1 }), null, 'a Bay town\'s as it was');
   for (const [px, py] of [[WORLD_PIXEL_BOUND, 0], [0, -WORLD_PIXEL_BOUND], [1.5, 0]]) assert.equal(staffEventFault({ ...EV, px, py }), 'pixel', `${px},${py}`);
   assert.equal(staffTownPixelOk(999, 499), true);

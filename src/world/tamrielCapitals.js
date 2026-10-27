@@ -53,11 +53,11 @@ import { mapPixelToLongitudeLatitude, LOCATION_TYPES } from '../formats/mapsFile
 import { hash32, BLOCK_M } from './spawnedDungeons.js';
 import { capitalCastleDungeon, CASTLE_DUNGEON_TYPE } from './capitalCastles.js';   // WW7-4
 import { pictureToBay, tamrielFit, inBay } from './tamriel/tamrielFrame.js';
-import { provinceKeyBeyondBay, tamrielLandVersion } from './tamriel/tamrielLand.js';
+import { provinceKeyBeyondBay, tamrielLandVersion, canalAt } from './tamriel/tamrielLand.js';   // NIBEN-SEA: the Waterfront's canal
 import { CITIES } from './tamriel/tamrielGeography.js';   // AUDIT TESA II C15: a capital's point TAMRIEL1's city's, one home
 import { tamrielHeightByte } from './tamriel/tamrielGround.js';   // AUDIT TESA II (lane R's R2): a gate the roads can reach
 import { WATER_BYTE } from './roadsProducer.js';
-import { IMPERIAL_MODELS, IMPERIAL_CARRY, IMPERIAL_SPAN, IMPERIAL_CELLS, IMPERIAL_PARTS, IMPERIAL_OUTSKIRTS, IMPERIAL_ARENA_CODE, imperialSlicePlan, imperialSliceName, imperialDistrictOfCell, imperialCodeCell, imperialCell } from './imperialCity.js';   // TESA11: the Imperial City over nine pixels; TS5 over forty-nine; IC-GRAND over 625, its plan a slice at a time
+import { IMPERIAL, IMPERIAL_MODELS, IMPERIAL_CARRY, IMPERIAL_SPAN, IMPERIAL_CELLS, IMPERIAL_PARTS, IMPERIAL_OUTSKIRTS, IMPERIAL_ARENA_CODE, imperialSlicePlan, imperialSliceName, imperialDistrictOfCell, imperialCodeCell, imperialCell } from './imperialCity.js';   // TESA11: the Imperial City over nine pixels; TS5 over forty-nine; IC-GRAND over 625, its plan a slice at a time
 import { imperialSliceMarkers, imperialOwnName, imperialAnchorCarrier, imperialSliceCarrier, imperialViewName, imperialBlockOf, NEAR_RING, NEAR_SLACK } from './imperialBlocks.js';   // IC-GRAND: its blocks a family, near and far
 import { ARENA_BLOCK } from './arena/arenaCity.js';   // IC-GRAND: Daggerfall's arena in the Arena District
 import { TOWN_OUTLINE_BLOCK } from './townOutline.js';   // TS5: the open ground past the Imperial City's lake
@@ -96,6 +96,15 @@ export const CAPITAL_MODELS = Object.freeze({
   manePalace: 910150, twoMoonsTemple: 910151, torvalQuay: 910152, torvalWall: 910153, maneEstate: 910154,   // TESA-LORE: the estate
   xanmeer: 910160, hist: 910161, helstromWalks: 910162, palisade: 910163,
 });
+/** BAY-LEFT-SEA (2026-10-26; the audit "no system left behind in the Bay", item 31 - C6): IS A MODEL ONE OF A CAPITAL'S
+ *  LANDMARKS - a CAPITAL_MODELS model, or an Imperial City part its slices carry (IMPERIAL_PARTS). Its FOOTPRINT is its
+ *  blocks' own: every block it stands over closes its automap where its faces stand (capitalPortBlocks' `footprint`,
+ *  world/capitalModels.js capitalFootprint and imperialSliceFootprint - a wall to the walkers, not ground to cross), so the
+ *  town's yards and its port's places read it there (scenes/world.js townPlacesFor) and never by its box: a ring wall's
+ *  box is the whole city, and closed every yard and the harbour's shipyard off a capital's ground but its rim's strips. */
+const LANDMARK_IDS = new Set([...Object.values(CAPITAL_MODELS), ...IMPERIAL_PARTS.map((p) => p.id)]);
+/** @param {number} id */
+export const isCapitalLandmark = (id) => LANDMARK_IDS.has(id);
 /** RMB geometry: a block's side in its own units and in metres, its ground tiles, its automap cells. */
 export const RMB_UNITS = 4096;
 export { BLOCK_M };   // a block's side, metres (world/spawnedDungeons.js's: the terrain's eighth)
@@ -219,6 +228,7 @@ export const CAPITALS = Object.freeze([
     span: IMPERIAL_SPAN, sliceName: imperialSliceName, carry: IMPERIAL_CARRY,   // TESA11: nine pixels, each slice its district's; TS5: forty-nine, each landmark carried in parts; IC-GRAND: 625
     sliceMarkers: imperialSliceMarkers,   // AUDIT TESA II C7: every slice its own start markers (each worked when first read)
     gates: Object.freeze(['W']),   // TESA14: Talos Bridge, west to the mainland
+    harbour: Object.freeze([(IMPERIAL_SPAN - 1) / 2, Math.floor(IMPERIAL.waterfront.pierTo / 819.2 + IMPERIAL_SPAN / 2)]),   // NIBEN-SEA: its harbour; RUMARE-WATER: the Waterfront's own slice, its quay and its piers' ends, the lake's way to the canal open (capitalCanalOpen)
     anchor: Object.freeze([IMPERIAL_SPAN * 4, IMPERIAL_SPAN * 4]), markers: Object.freeze([[220, 0], [-220, 0], [0, 220], [0, -220]]), blocks: null, models: Object.freeze(IMPERIAL_PARTS.map((p) => p.id)), drawn: Object.freeze(Object.values(IMPERIAL_MODELS)) }),   // TS5: its markers on the plaza round the tower; its landmarks' parts the slices' models, the whole ones drawn once
   capital({ key: 'solitude', tag: 'SO', name: 'Solitude', province: 'Skyrim', shore: true, plan: SOLITUDE_PLAN, districts: SOLITUDE_DISTRICTS,
     sea: Object.freeze(['N', 'W']),   // AUDIT TESA II C9: the plan's water - the Sea of Ghosts north, the Karth west
@@ -385,6 +395,26 @@ export function capitalGates(k, { walkable = gateGround } = {}) {
   if (!out.length && (cap.gates ?? []).length && !_unroutable.has(key)) { _unroutable.add(key); console.warn(`[capitals] ${cap.name}: no gate the roads can reach within ${CAPITAL_GATE_REACH} pixels of its sides`); }
   return out;
 }
+/** NIBEN-SEA: A CAPITAL'S HARBOUR - the slice its port stands on: its `harbour` (the Imperial City's: RUMARE-WATER the
+ *  Waterfront's own slice on the middle line, its quay and the ends of its piers over the lake), else its centre (a shore
+ *  capital's own slice, TESA10b). */
+export const capitalHarbourSlice = (cap) => (cap.harbour ? cap.harbour[1] * capitalDims(cap).w + cap.harbour[0] : capitalCentre(cap));
+/** NIBEN-SEA: whether a capital's harbour meets its canal (world/tamriel/tamrielLand.js waterfrontCanal) - RUMARE-WATER: the
+ *  pixel past its span's south edge in its harbour's column the canal's, the city's lake joined to it through the
+ *  Waterfront's mouth (world/imperialCity.js IMPERIAL.mouth) - on the live fit and land. @param {number} k */
+export function capitalCanalOpen(k) {
+  const cap = CAPITALS[k], at = capitalPixels().pixels[k];
+  if (!cap?.harbour || !at) return false;
+  const D = capitalDims(cap);
+  return canalAt(at.px + cap.harbour[0] - D.mx, at.py + D.h - D.my);
+}
+/** BAY-LEFT-SEA (2026-10-26; the audit "no system left behind in the Bay", item 31 - C6): A CAPITAL SLICE'S PORT WORD - its
+ *  harbour's slice (capitalHarbourSlice) where the place of its name pinned on its centre is a port (`pinPort`, TESA6's
+ *  coastal word) or its harbour meets its canal (capitalCanalOpen): the registry's row (world/pastBayRows.js) and the
+ *  slice's own PortTownAndUnknown byte (synthesizeCapitalLocation), one law - so the harbour the sea's systems call a port
+ *  stands its shipyard, crew hall, lighthouse and Docks and its bank sells a ship (scenes/pixelBuild.js portTown).
+ *  @param {number} k @param {number} s @param {unknown} pinPort */
+export const capitalSlicePort = (k, s, pinPort) => !!CAPITALS[k] && s === capitalHarbourSlice(CAPITALS[k]) && (!!pinPort || capitalCanalOpen(k));
 /** TS5: a capital's centre pixel on the live fit and land, or null. @param {number} k */
 export const capitalCentrePixel = (k) => capitalPixels().pixels[k] ?? null;
 /** TS5: whether a Bay pixel is of the Imperial City's outskirts (world/imperialCity.js IMPERIAL_OUTSKIRTS from its centre
@@ -733,8 +763,10 @@ export function dryKinds(names, blockOf) {
  * (`flattenAt.sea`, world/terrain/terrainGen.js) - its harbour's water the sea's own height, where it stood the city's
  * average, 16 to 59 m over the sea beside it.
  * @param {{ cap: any, k: number, s?: number }} at capitalOnPixel's
+ * BAY-LEFT-SEA: its PortTownAndUnknown byte its port word (capitalSlicePort - `pinPort` whether the place pinned on its
+ * centre is a port).
  * @param {{ base: any, names: Map<string, string[]>, blockOf: (name: string) => any, px: number, py: number,
- *   where?: { regionIndex?: number, regionName?: string, politic?: number, climate?: any }, arena?: any }} ctx
+ *   where?: { regionIndex?: number, regionName?: string, politic?: number, climate?: any }, arena?: any, pinPort?: boolean }} ctx
  */
 export function synthesizeCapitalLocation({ cap, k, s = capitalCentre(cap) }, ctx) {
   // TESA11: a capital over several pixels - the slice's eight-by-eight of the plan, its hash and its gardens the plan's
@@ -750,7 +782,10 @@ export function synthesizeCapitalLocation({ cap, k, s = capitalCentre(cap) }, ct
   const castle = so === 0 ? capitalCastleDungeon(k, mapId) : null;   // WW7-4: the centre's - the capital's own - its castle's halls
   const where = ctx.where ?? {};
   const base = ctx.base;
-  const flattenAt = many || cap.shore ? Object.freeze({ px: ctx.px - (sx - D.mx), py: ctx.py - (sy - D.my), ...(cap.shore ? { sea: true } : {}) }) : null;
+  // RUMARE-WATER (world/terrain/capitalSea.js): at the sea a shore capital, and the Imperial City where its canal stands;
+  // a seam with the capital's sea slice water on both its sides
+  const sea = cap.shore || capitalCanalOpen(k), seaEdges = sea && D.sea ? seaEdgesOf(D, sx, sy) : null;
+  const flattenAt = many || cap.shore ? Object.freeze({ px: ctx.px - (sx - D.mx), py: ctx.py - (sy - D.my), ...(sea ? { sea: true } : {}), ...(seaEdges ? { seaEdges } : {}) }) : null;
   return {
     ...base,
     name: capitalSliceName(cap, s),
@@ -765,7 +800,7 @@ export function synthesizeCapitalLocation({ cap, k, s = capitalCentre(cap) }, ct
     exterior: {
       ...base.exterior,
       buildings,
-      exteriorData: { ...base.exterior?.exteriorData, width, height, blockNames, blockIndex: null, blockNumber: null, blockCharacter: null, locationId: mapId, mapId, portTownAndUnknown: 0, buildingCount: buildings.length },
+      exteriorData: { ...base.exterior?.exteriorData, width, height, blockNames, blockIndex: null, blockNumber: null, blockCharacter: null, locationId: mapId, mapId, portTownAndUnknown: capitalSlicePort(k, s, ctx.pinPort) ? 1 : 0, buildingCount: buildings.length },   // BAY-LEFT-SEA: its harbour's port word
       ...(base.exterior?.recordElement ? { recordElement: { ...base.exterior.recordElement, header: { ...base.exterior.recordElement.header, locationId: mapId } } } : {}),
     },
     // TESA11: its slice, and (over several pixels) the centre pixel every slice's ground is flattened to; TS5 x AUDIT TESA
@@ -773,6 +808,15 @@ export function synthesizeCapitalLocation({ cap, k, s = capitalCentre(cap) }, ct
     capital: Object.freeze({ key: cap.key, k, s, ...(flattenAt ? { flattenAt } : {}), rim: Object.freeze({ W: sx === 0 ? CAPITAL_RIM_TILES : 0, E: sx === D.w - 1 ? CAPITAL_RIM_TILES : 0, N: sy === 0 ? CAPITAL_RIM_TILES : 0, S: sy === D.h - 1 ? CAPITAL_RIM_TILES : 0 }) }),
     ...(ctx.arena ? { arena: ctx.arena } : {}),
   };
+}
+
+/** RUMARE-WATER: a slice's sides shared with its capital's sea slice - or every inner side of a sea slice's own - each side
+ *  water on both its slices (world/terrain/capitalSea.js capitalSeaGround's `seaEdges`); null where none is. */
+function seaEdgesOf(D, sx, sy) {
+  const sea = (x, y) => x >= 0 && y >= 0 && x < D.w && y < D.h && D.sea.includes(y * D.w + x);
+  const own = sea(sx, sy), side = (x, y) => x >= 0 && y >= 0 && x < D.w && y < D.h && (own || sea(x, y));
+  const e = { N: side(sx, sy - 1), E: side(sx + 1, sy), S: side(sx, sy + 1), W: side(sx - 1, sy) };
+  return e.N || e.E || e.S || e.W ? Object.freeze(e) : null;
 }
 
 /** The district a cell of a capital's grid belongs to, or null - IC-GRAND: the Imperial City's by its law. */

@@ -121,10 +121,14 @@ test('ETHER-PLACES the clone: the template never written; its ids the place\'s (
 });
 
 test('ETHER-PLACES by source: the world host keeps the isles\' templates off the classic rows before they go, builds an isle\'s pixel through etherPlaceAt (stood in the index once), never clones a spawn past the Veil, wakes an isle\'s ruin\'s sleeper at its own door, and answers its region the isles\' (mutants: each seam)', () => {
-  const src = read('src/scenes/world.js');
-  assert.match(src, /const _etherTemplates = etherSea \? etherTemplates\(_classicRows \?\? _hubRows\.map\(classicRow\)\.filter\(Boolean\), isMainStoryDungeon\) : null;\n  _classicRows = null;/);
+  // PIN MOVED (HOST-SPLIT, SPAWN-WORLD 2026-10-26): the build's answer and the spawn's stand left world.js for
+  // scenes/spawnStandHost.js and scenes/spawnGroundHost.js - read with it, the isles' place up to the stand's construction
+  const src = ['src/scenes/world.js', 'src/scenes/spawnStandHost.js', 'src/scenes/spawnGroundHost.js'].map(read).join('\n');
+  // PIN MOVED (AUDIT BAY-LEFT, its packages merged): BAY-LEFT-GROUND's sites past the Bay are made between the isles'
+  // templates and the rows' letting go (they read no row) - the rows are still let go after the isles' read
+  assert.match(src, /const _etherTemplates = etherSea \? etherTemplates\(_classicRows \?\? _hubRows\.map\(classicRow\)\.filter\(Boolean\), isMainStoryDungeon\) : null;\n(?:  \/\/[^\n]*\n)*  const beyondSites = createLandformSites\(\{[^\n]*\n  _classicRows = null;/);
   assert.match(src, /if \(etherSea && inEther\(px, py\)\) return etherPlaceAt\(px, py\);/);
-  const body = src.slice(src.indexOf('function etherPlaceAt(px, py) {'), src.indexOf('/** AUDIT OW4 D4: THE CLONE a pixel\'s spawn IS'));
+  const body = src.slice(src.indexOf('function etherPlaceAt(px, py) {'), src.indexOf('  const { _liftLocationAt, _spawnCloneAt, spawnGroundPlace'));
   assert.match(body, /if \(had\?\.ether\) return had;/);
   assert.match(body, /if \(!isle \|\| isle\.px !== px \|\| isle\.py !== py\) return null;/);
   assert.match(body, /synthesizeEtherLocation\(template, isle, \{ regionIndex: ETHER_REGION, regionName: REGION_NAMES\[ETHER_REGION\] \?\? ETHER_REGION_NAME, politic: 128 \+ ETHER_REGION, climate: getWorldClimateSettings\(isle\.climate\) \}\)/);   // PIN MOVED (AUDIT CAPTAIN'S SEA P8)

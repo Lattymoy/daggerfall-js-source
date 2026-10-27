@@ -469,21 +469,23 @@
   },
   {
     "name": "TESA7-host-arena-last",
-    "file": "src/scenes/world.js",
-    "old": "|| capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py) || lairLocationAt(px, py);",
-    "new": "|| capitalLocationAt(px, py) || countryLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || lairLocationAt(px, py);",
+    "file": "src/scenes/spawnStandHost.js",
+    "old": "|| host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);",
+    "new": "|| host.capitalLocationAt(px, py) || host.countryLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);",
     "tests": [
       "test/tesa7_country.test.js"
-    ]
+    ],
+    "note": "SPAWN-WORLD re-aimed by content: the build past the Bay ends in the spawner (spawnPastBayAt)."
   },
   {
     "name": "TESA7-host-no-country",
-    "file": "src/scenes/world.js",
-    "old": "|| capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py) || lairLocationAt(px, py);",
-    "new": "|| capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || lairLocationAt(px, py);",
+    "file": "src/scenes/spawnStandHost.js",
+    "old": "|| host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);",
+    "new": "|| host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);",
     "tests": [
       "test/tesa7_country.test.js"
-    ]
+    ],
+    "note": "SPAWN-WORLD re-aimed by content: the build past the Bay ends in the spawner (spawnPastBayAt)."
   },
   {
     "name": "TESA7-host-water",
@@ -569,8 +571,8 @@
   {
     "name": "TESA7-modes-deed-sold",
     "file": "src/scenes/worldModes.js",
-    "old": "isEtherPlaceId(dir.mapId) || isArenaPlaceId(dir.mapId) || isCountryPlaceId(dir.mapId)) return [];",
-    "new": "isEtherPlaceId(dir.mapId) || isArenaPlaceId(dir.mapId)) return [];",
+    "old": "if (isEtherPlaceId(dir.mapId)) return [];",
+    "new": "if (isEtherPlaceId(dir.mapId) || isCountryPlaceId(dir.mapId)) return [];",
     "tests": [
       "test/tesa7_country.test.js"
     ]
@@ -578,8 +580,8 @@
   {
     "name": "TESA7-modes-deed-owned",
     "file": "src/scenes/worldModes.js",
-    "old": "&& !isCountryPlaceId(homeTownOf(b)) && isHouseOwned(",
-    "new": "&& isHouseOwned(",
+    "old": "const houseOwnedAt = (b, key) => !isEtherPlaceId(homeTownOf(b)) && isHouseOwned(",
+    "new": "const houseOwnedAt = (b, key) => !isEtherPlaceId(homeTownOf(b)) && !isCountryPlaceId(homeTownOf(b)) && isHouseOwned(",
     "tests": [
       "test/tesa7_country.test.js"
     ]

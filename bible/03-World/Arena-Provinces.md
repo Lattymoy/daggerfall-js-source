@@ -211,14 +211,12 @@ into, a dungeon to go down - and the held map takes the player there.
   The owner's words ("fast travel shouldnt be a thing ... the player can traverse using the overworld") read for both
   ways; the recommendation is to refuse that leg too (the same law, its `from` asked as its `to` is - the zone's
   journeys excepted), so the land past the Bay is left as it is reached: walked, sailed, or through a stone.
-- **What an Arena town is not yet**: no house is sold in one (`scenes/worldModes.js`, the isles' rule, AUDIT CAPTAIN'S SEA
-  P9 - every Arena town answers the clamp's region until TESA3, so a deed's key would own the same key in all of them);
-  no spawn ever clones one (`spawnTemplates`, AUDIT CAPTAIN'S SEA P3's law); its port byte is 0. `/tp` names Arena's
+- **What an Arena town is not yet**: no spawn ever clones one (`spawnTemplates`, AUDIT CAPTAIN'S SEA P3's law); its port byte is its place's (TESA6: `arenaLocations.js` portTownAndUnknown 1 for a port). `/tp` names Arena's
   places, stood or not yet. Shot mode's probe hooks `__tesaJump` and `__tesaPlace` jump to a pixel and read what it
   stands.
 - **THE FOUR HOSTS.** `scenes/world.js` stands them. `scenes/worldModes.js` (interiors - an Arena town's buildings are its
   template's, entered the same way) and `scenes/dungeonContext.js` (an Arena dungeon's halls are its template's, built
-  as any clone's) run in the world host's page over the same index; `worldModes.js` keeps the house rule above.
+  as any clone's) run in the world host's page over the same index; `worldModes.js` keeps the market's and the deed's laws (BAY-LEFT-B, below: a house sold in an Arena town, its deed held to its own town).
   `scenes/exterior.js`, the single-town bench, streams no land beyond the Bay: no place stands there.
 
 ## TESA-ONLINE - one Tamriel a room (2026-10-12)
@@ -322,8 +320,9 @@ ROADS 1-21, the dials untouched) over Arena's places and draws what it routes on
   each byte and its corners (`terrainGen.js:"const arena = !inBay(px, py);"`), the kernel saying whether Arena's roads
   reached its paint; and the verge, which keeps the wild's flats and the Low Poly crowns off a road
   (`roadVerge.js` roadRoom). What follows the painter follows it: the grass keeps off the tiles it wrote (GRASS-PATH1),
-  the Low Poly crowns off its tiles (LPT-FIT). Not read: the landforms do not cut the land along it (`landforms.js`
-  armsAbout asks the Bay's pixels alone), Snowfall's tracks are Basic Roads' alone, the Bay's travel map draws the Bay.
+  the Low Poly crowns off its tiles (LPT-FIT), and the snow's tracks and berms (`03-World/Snowfall.md` BAY-LEFT-GROUND:
+  each painted tile by the painter's word). Not read: the landforms do not cut the land along it (`landforms.js`
+  armsAbout asks the Bay's pixels alone), the Bay's travel map draws the Bay.
 - **Where it is built.** On the terrain worker, on its own ground, synchronously in its message loop - the jobs' answers
   keep their order. The client asks the roads' cache first (`roadsCache.js`, keyed by the generator's version and dials,
   this layer's own version, the towns, the window, WOODS.WLD's length, the fit and the trace's land): a hit's network
@@ -383,8 +382,9 @@ on past it (766, 863 and 489 of the edges' pixels land on both sides; the west i
 
 On the freeware with Basic Roads: seven crossings - three north (366, 548, 726), three south (169, 394, 639), one east
 (row 300) - every gate on Arena's roads, 19 join pixels on the Bay; 158 roads and 54 tracks routed past the Bay.
-Recorded: the joins are not drawn on the Bay's travel map, not cut by the landforms, not read by Snowfall or by World of
-Daggerfall's road clearance (its camps are the Bay's, and a join is a few pixels at its edge).
+Recorded: the joins are not drawn on the Bay's travel map, not cut by the landforms, not read by World of Daggerfall's
+road clearance (its camps are the Bay's, and a join is a few pixels at its edge). Snowfall reads them on its road bits
+(BAY-LEFT-GROUND, `03-World/Snowfall.md`), so the snow banks the road the ground paints there.
 
 ## TESA6 - the ports (2026-10-12)
 
@@ -416,10 +416,11 @@ CoastalCityList, 58 global city ids (OpenTESArena's ExeData, its address maps `a
   waters' distance past the Bay are WW3's over them - `03-World/World-Wide.md` "Folded into TESA"; the harbour book's town
   is still `arenaPortNear`'s): Come Sail
   Away's port town (`csaIsPortTown`, and with it `navalNearPort`), the naval host's port here (`navalPortHere` -
-  `{ key, name, px, py, region, crown: null }`: no crown's writ past the Bay, the region the pixel's own read), the
+  `{ key, name, px, py, region, crown }`: the nearest Bay crown's office - BAY-LEFT-SEA, `03-World/Captains-Sea.md` - the
+  region the pixel's own read), the
   harbour book's town (`navalHarbourNear` - its harbour sounded as any port's, its quays by QUAYS' law), the nearest
   port's name and way past the Bay (`csaNearestPort`), and the waters' distance to a port (`navalPortPx`). An Arena port
-  trades the one good its key draws (`portTrade`: no crown's table). The harbour office's contract board lists them
+  trades its crown's makes and wants and the good its key draws (`portTrade`, BAY-LEFT-SEA). The harbour office's contract board lists them
   (AUDIT TESA II P7: the board's list is the Bay's and the world's - `worldPorts.withBay`); the travel window's ship
   passage is Travel Options' hand-written list.
 - **Online** (TESA-ONLINE's law, widened): the list moves places, so a room stands Arena's places only from a known
@@ -483,8 +484,7 @@ farms, homes, inns, temples and shrines the Bay stands, as thick on the ground.
   pixels past the Bay would share it). TESA14 retired a third law - none on a pixel an Arena road or track crossed
   (SPAWN-ROADS'): the roads are laid round the places now (`world/tamrielCountry.js` countryStandsAt, the roll's one home). Stood in the index once, and cloned again when what the pixel stands moves (the
   trace landing moves a climate). Arena attached late: the Arena sweep builds the pixel again and Arena's place
-  takes it. No house is sold in a country place and no deed read in one (`scenes/worldModes.js`, the isles' and Arena's
-  rule: every one answers the clamp's region). `/tp` names a stood one; `__tesaPlace` reads its `country` and kind.
+  takes it. A country place sells its houses and reads its deed, held to its own map id (BAY-LEFT-B, below). `/tp` names a stood one; `__tesaPlace` reads its `country` and kind.
 - **What a country place is not yet**: a row of the world's registry (AUDIT TESA II P7: the cities, towns and villages
   and the capitals are, `world/pastBayRows.js`; the countryside's pixel provider is not - a district's walk through its
   roll was 276 ms on the page's thread - so the rise and `/unstuck` read the country towns a session stood, and the
@@ -512,7 +512,7 @@ each is laid out to a plan of its own from Daggerfall's dungeon blocks.
   (LAIR_LANE, 0x340, after the country places' 64) with the cell in its low 19 bits and 0x80000 set - no two lairs share a
   dungeon's identity (`net/nodeLaw.js` DUNGEON_ID_MAX, DFU's MapId & 0xfffff: a profession's veins, PROF2's witnessed
   dungeon), none a Bay place's. Its location index counts down from -LAIR_INDEX_BASE (-40,000,000), past the
-  countryside's. `isCountryPlaceId` answers for it too: no house is sold and no deed read in a keep's grounds.
+  countryside's. `isCountryPlaceId` answers for it too.
 - **The rate is the Bay's** (lairPick): the site's climate's count of each kind over the Bay's land (TESA7's count and
   land, `countryRates` over LAIR_TYPES), times the cell's 64 pixels, at most 1; the kind in proportion; the template off
   the cell's hash in map-id order. On the freeware, lairs a thousand land pixels: MountainWoods 20.2, HauntedWoodlands
@@ -602,8 +602,8 @@ Imperial City is the first; Solitude (its arch over the water, the Blue Palace, 
   of the game's rows in map-id order), its own id (CAPITAL_LANE 0x341, after the lairs', the ordinal in the low 20 with
   0x80000), its own index (-41,000,000 and down), the pixel's longitude and latitude, the region and climate the pixel
   answers, no dungeon (WW7-4: the centre's its castle's halls - World-Wide.md WW7-4),
-  no harbour, `capital`, and Arena's slot where Arena's place stands on it. A place the port made:
-  no house is sold in it and no deed read (`isCountryPlaceId`).
+  its harbour slice's port byte its port word (BAY-LEFT-SEA, below), `capital`, and Arena's slot where Arena's place stands on it. A place the port made:
+  its houses sold and its deed held to its own slice (AUDIT RELEASE R2-9, BAY-LEFT-B below).
 - **The doors** (`world/capitalModels.js` installCapitals, from `scenes/modWorldData.js` beside installArena - behind no
   switch, as the arena's block is): the six port blocks at fixed indices from 900200 (900400 since AUDIT-TESA - past the
   Shadow Realm's 900200; 901000 since AUDIT TESA II C13 - 900400 was the Sky-Ketch's, `world/ketch/ketchShip.js`
@@ -680,8 +680,8 @@ The owner: "skyrims solitude". The second capital, and the laws the next ones ne
 - **Measured** (the freeware, its trace, the fit (38, 57) x15.5, node and a stand-in view): Solitude's port blocks
   resolve; its landmarks draw in the stand-in view as laid. Not yet seen in the game.
 - **Arena's coastal place pinned beside the sea stays a port** (standArenaPixels: A.EXE's list, and the sea among the
-  pinned pixel's eight): Solitude's place is a port on its docks. The capital's own harbour byte stays 0 - its ships
-  are not yet.
+  pinned pixel's eight): Solitude's place is a port on its docks, and so is the capital's own harbour slice, to its own
+  byte (BAY-LEFT-SEA, below).
 - **Then**: TESA10c, the other five.
 - **Moved by TESA-LORE** (below): Castle Dour to just within the main gate, its two gates and the temple on its grounds;
   the Bards College and the Hall of the Dead the Avenues'.
@@ -745,6 +745,10 @@ mossy stone). No game data.
   hummocks before its two gates, the north and south rows' middle cells (C6: they opened onto the marsh's water, 82 m of
   it to the pixel's edge); Falinesti's walkway clear to its platforms (C4, TESA-LORE below); the plans' measures in BLOCK_M
   (C15). The crystal picture deleted (lane K's K15: no model wore it since TESA-LORE).
+- **Moved by RUMARE-WATER** (2026-10-26, `03-World/Tamriel.md`): a shore capital's land a metre over the sea
+  (`world/terrain/capitalSea.js` CAPITAL_LAND, CAPITAL_FREEBOARD) and only its water at the sea's own height - its
+  streets had stood at the sea's floor, where the continent's Deep Waters carve and Come Sail Away's hull read them as
+  water; a slice's seam with its capital's sea slice water on both sides (`seaEdges`).
 
 ## TESA10d - a capital on the map, Arena or none (2026-10-13)
 
@@ -774,7 +778,7 @@ lanes, every finding's verdict. What it changed here, by id:
   standing there (AUDIT TESA II P3: the nearest town of the world at any distance - the index's within 48 pixels left a
   death at sea past the Bay where it fell, in the water); the province's people's names in its towns and buildings; a capital's pixel never cloned over; the
   harbour book by map id; the Bay's pixel ids read on the Bay alone; a ship's port past the Bay its Arena place's; no
-  deed read in a place the port made.
+  deed read in a place the port made (since BAY-LEFT-B, below: read, held to its own town).
 - **The roads** (A3-1): a shore town's cell its land. **The switches** (A7-8): `?capitals=off` and `?country=off`
   offline alone - AUDIT TESA II P9: and `?tamrieltrace=off` (`scenes/shared.js` tamrielTraceOn), which A7-8 missed: online
   it took every place past the Bay off one client and stood its capitals and countryside on the authored coasts.
@@ -800,7 +804,9 @@ at 317 m); Solitude and the other five stand as they were. SUPERSEDED in its mea
   by its inputs), so the nine meet level; the outer edge steps to the land as any city's does. AUDIT TESA II C1: it did
   not - its ground ran to its pixels' edges and left the blend no land, 45 m over its neighbours; its outer sides leave
   Daggerfall's rim to the land now (TESA10's rim), so it meets the land level (0.000 m measured). A shore capital's every
-  slice is flattened to the sea's floor (AUDIT TESA II C2: `flattenAt`'s `sea`).
+  slice is flattened to the sea's floor (AUDIT TESA II C2: `flattenAt`'s `sea`); RUMARE-WATER (`03-World/Tamriel.md`): its
+  land a metre over the sea, its water at the sea's own height, and the Imperial City flattened so too where its canal
+  stands, its lake the sea's.
 - **The layout is the city's canon** - the wheel the later games mapped, in Daggerfall's day (3E 405, Uriel Septim VII)
   and of Daggerfall's own blocks (`world/imperialCity.js`, every cell decided from the metres about the city's middle):
   City Isle in Lake Rumare (1010 m from the middle - since IC-RING the city's own ring of water, a moat in the trace's
@@ -1188,7 +1194,7 @@ pixel again on each of the forty-eight landings (6 to 13 s a landing on the page
   contract board and the ship passage.
 - **The capitals, the rest** - Solitude (Skyrim: the arch over the Karth's mouth, the Blue Palace, Castle Dour, the docks),
   then Mournhold, Alinor, Falinesti, Torval and Helstrom, each its own plan and landmarks; the Imperial City's
-  Waterfront docks and its Arena's colosseum (both TESA11's now); houses for sale in a capital (its own region's deed key first).
+  Waterfront docks and its Arena's colosseum (both TESA11's now). Houses for sale in a capital: BAY-LEFT-B, below.
 - **Morrowind of Morrowind's own** (TESA9) - set aside by the owner, 2026-10-12: "Dont worry about morrowind".
 - **The countryside and the lairs, the rest** - their places on the classic travel map (TESA13 inks them on the held
   map, TESA15 from the regions' own roll), a discovery law of their own (TESA13's departure), and quest sites in them.
@@ -1540,7 +1546,8 @@ when first read; the city past the stream's reach is drawn on the far ring's pas
   the Palace District below), the palace wall at 2.3 km round the PALACE DISTRICT (the team's list names it; TESA11's
   "Green Emperor Way" is its ring road's name now), the city wall at 6.9 km (TS5's
   1.95), City Isle's shore at 7.9 km, Lake Rumare's far shore at 10 km, the land past it Rumare Shore (TS5's open
-  ground). Each district on its sector as TESA11 laid them (the Market north-east, the Arena District east, the
+  ground; RUMARE-WATER, `03-World/Tamriel.md`: a mouth through it south of the isle, `IMPERIAL.mouth` 1,228.8 m either
+  side of the middle line, the Waterfront canal's width, so the lake meets the canal). Each district on its sector as TESA11 laid them (the Market north-east, the Arena District east, the
   Arboretum south-east, the Temple District south-west, Talos Plaza - the team's Nobles District - west, the Elven
   Gardens north-west), its heart on its avenue at 4.6 km: the Market's great square, the arena, the Nine Divines,
   the Temple of the One, Talos's dragon, the Elven Gardens' pool. Outside the wall on the isle the Prison (45 degrees,
@@ -2110,6 +2117,144 @@ all dead; SMOOTH-LAND retired the four on the lake ink - 15). PIN MOVED: `test/w
 `test/world/terrain/terrainworker.test.js` (the worker's imports: `../tamriel/watersInk.js`). Not seen in a running
 frame here (every browser probe of the world page on this shared machine was killed for memory): pinned by recorded
 strokes. Daggerfall Unity's map has no land past the Bay to draw a river on: Port-Ledger row TESA13.
+
+## BAY-LEFT-SEA - the capitals' harbours (2026-10-27)
+
+**What stood.** A capital's slice wrote `portTownAndUnknown: 0` (synthesizeCapitalLocation; TESA10b: "its ships are not
+yet"). So a harbour the registry calls a port - Solitude's, Alinor's and Torval's own slice and the Imperial City's
+Waterfront - stood no shipyard, crew hall or lighthouse (`scenes/pixelBuild.js` portTown asks the byte through
+`world/portSites.js` portTownOnSea) and its bank sold no ship (DaggerfallBankingWindow.cs:460, DFU's one read of the
+byte) - AUDIT BAY-LEFT item 31, C6. Its Docks row stood: the harbour book reads no byte.
+
+**As built.**
+- ONE LAW, ONE WORD (`world/tamrielCapitals.js` capitalSlicePort): a slice is a port where it is its capital's harbour slice
+  (`capitalHarbourSlice`) and the place of its name pinned on its centre is a port (TESA6's coastal word, `pinPort`) or its
+  harbour meets its canal (`capitalCanalOpen`). The registry's row (`world/pastBayRows.js`) and the slice's own byte
+  (synthesizeCapitalLocation, `pinPort` handed by `scenes/tamrielPlacesHost.js` capitalPinPort - the registry's own read of
+  the centre's place) are that law, so a harbour is a port to its own byte exactly where the board, the lanes and the
+  voyages call it one. A kept slice whose word moved (its canal opened, its place made a port) is cloned again.
+- A CAPITAL'S LANDMARKS BY THEIR FOOTPRINT (`isCapitalLandmark`: every CAPITAL_MODELS model and every Imperial City part).
+  The town's places (`scenes/world.js` townPlacesFor, `world/merchantYards/merchantYardSites.js` yardMeasuresOf) closed
+  each model's box on the town's ground; a ring wall's box is the whole city, so by it the yards and the port's two places
+  found no ground but the rim's strips. A landmark's ground is its blocks' own - the automap its footprint closes
+  (capitalPortBlocks' `footprint`, `world/capitalModels.js` capitalFootprint and imperialSliceFootprint) - so the measure
+  leaves it to them. Every other model is measured by its box, as ever.
+- THE SHIP SALE'S PORT TEST (`scenes/world.js` shipLocation's `portTown`, DISC13-D) reads a place past the Bay's own byte -
+  an Arena place's TESA6 word and a capital's harbour's alike (it read Arena's slot, which the Waterfront never has).
+
+**On the freeware** (every slice of the seven capitals, 625 + 6): four ports to their own byte and no other slice - the
+Waterfront District (2069, 668), Solitude (1569, -430), Alinor (8, 1533), Torval (1922, 1705) - each with the open sea
+bearing on it. Measured as townPlacesFor measures a town: by a landmark's box the Waterfront stood its shipyard and its
+lighthouse, Solitude its lighthouse alone, Alinor and Torval neither. By its footprint all four stand both - the
+Waterfront's on its lake, Alinor's and Torval's on their sea, each one's back within a few cells of its water; Solitude's
+blocks hold no water a navgrid reaches, so its two stand by the sea's bearing at its land's north-west corner, against the
+Sea of Ghosts. Each shipyard carries its crew hall (the crewmaster's table, `world/portSites.js` portPlaceRows), and each
+harbour sounds six berths at its own reach (420 m) on the ground the game builds - its Docks row. So each of the four
+stands its shipyard, crew hall, lighthouse and Docks, and its bank sells a ship.
+
+**Not DFU**: the capitals are the port's own (Port-Ledger section A, TESA10's row and BAY-LEFT-SEA's).
+
+**The four hosts.** `scenes/world.js` WIRED (the yards' measure, the ship sale's port test); `scenes/worldModes.js`
+FLAGGED, unchanged: the bank reads the byte as before; `scenes/exterior.js` and `scenes/dungeonContext.js` FLAGGED: no
+capital stands there.
+
+**Pins.** `test/world/worldWide/bayleftsea_capitals.test.js` (3: the port word, the landmarks and the host, the freeware's
+seven capitals and four harbours). PIN MOVED: `test/tesa10_capitals.test.js` (the host's ask lifts capitalPinPort),
+`test/systems/auditrr2.test.js` (G22's port test by the byte), `test/audit_tesa.test.js` (A4-F2's kept slot and its port
+word; A4-F4's ship by the byte), `test/world/merchantyards1.test.js` (the yards' measure: a capital's landmark by its
+footprint), `test/systems/naval/auditcaptsea.test.js` and `test/ui/seat2b_peace_client.test.js` (the ship sale's port
+test by the byte). Mutants: `tools/mutants/bayleftsea.json` BLS-cap-*, BLS-landmark-*, BLS-rows-*,
+BLS-host-pin-*, BLS-host-kept-*, BLS-yards-*, BLS-ship-* (12), all dead; re-aimed by content, all dead: `tesa10.json`
+TESA10-loc-harbour, TESA10-host-stale-slot and TESA10-host-not-deleted, `nibensea.json` ROWS-harbour-unported (onto
+capitalSlicePort), `audittesa2p.json` P7-capital-port-unsaid, `audittesa.json` AUDIT-TESA-A4-F4-travel-options-list,
+`merchantyards1_audit.json` AUDIT-MERCHANT-YARDS-G1-a-registered-model-unread.
+
+## BAY-LEFT-MAPS C7 - a town's book of buildings by its own key (2026-10-27, AUDIT LEFT IN THE BAY C7 = E2)
+
+The owner, after AUDIT LEFT IN THE BAY (2026-10-26): *"Every single thing here needs to be addressed. No exceptions."*
+
+**What stood.** AUDIT TESA II P6 keyed the location half of the discovery store by a place's whole id past the Bay; the
+building half - DFU's PlayerGPS discovered buildings, the store's `buildings` - was filed under `<regionIndex>:<name>` by
+every writer and reader: the door's plaque and its lockpick's anti-grind record (`scenes/worldModes.js` through the world
+host's `discoveryLocationId`), the town map, the talk's map reveals and its reads, the guild halls' reveal, the quest's
+undiscover and its moved site, the I box, a deed inherited, Roleplay Realism's armorer. Past the Bay a province is ONE
+region and its names repeat: the registry's 907 listed places stood on 296 books, the Imperial City's 625 slices on 14,
+the countryside's hamlets on a few hundred names across tens of thousands of pixels. So a door's plaque and the town map
+named another town's buildings, the I box counted its shops, a failed lock barred the same key in every town of the
+name, and a quest's re-stamp landed in the wrong one (lane C's p6 and lane E's E2).
+
+**What it is now.** ONE key-maker (`systems/discovery.js` townBookId, townBookOf for a location): a Bay place's book is the
+key every save holds, `<regionIndex>:<name>`, byte for byte; a place off the Bay's pixel ids - past the Bay or past the
+Veil, discoveryKeyOf's whole id - takes its map id after it, `<regionIndex>:<name>#<mapId>`, as the automap keys a lair
+past the Bay (`systems/automap/automap.js` automapKeyOf). Every site takes it: `scenes/world.js` (the door's key, the
+talk's reveal and read, the guild halls, the quest's undiscover and moved site, the I box, the deed inherited, the
+armorer, Daggerfall's own arena city - in-place edits, bootWorld unchanged), `scenes/exteriorAutomapToggle.js` (the town
+map), `scenes/townTalk.js` (the talk's reveal, by the topics' map id) and `scenes/exterior.js` (the fixed city's four,
+the Bay's key by the same law). The layout pins read a book's town by its region and name (`systems/layoutPins.js`
+layoutStampOfTown): a book past the Bay names no MAPS.BSA town there, as before.
+
+**A save from before.** A book keyed the old way past the Bay (a province's region, no map id) named every place of its
+name in its province, and its records cannot be told apart by town: it is let go on load, as P6 lets go the location
+keys that named several places - a building is found again at its door, DFU's own law. A deed's house in it keeps its
+record: `systems/save/save.js` hands the restored deeds in, and the residence's record is carried to its own town's
+book (the slot names its town and its map id), a book's own records standing over a carried one. The Bay's books load
+byte for byte; a book of the new key loads as it is.
+
+**Measured** (the freeware, `test/systems/bayleft_disckey.test.js`): the registry's 907 listed places past the Bay on 907
+books (296 before); every one of MAPS.BSA's 15,000-odd places keeps its book byte for byte.
+
+**The four hosts.** `scenes/world.js` and `scenes/exterior.js` call the key-maker; `scenes/worldModes.js` reads the world
+host's `discoveryLocationId` (the door, the lock, the house's deed); `scenes/dungeonContext.js` keeps no building book. The
+one `<region>:<name>` literal left in a host is a dungeon's place hold (`scenes/worldModes.js` placeHoldOf, PLACE-LRU's
+texture keep), no book: the sweep pins it so.
+
+Pins `test/systems/bayleft_disckey.test.js` (5, one on the freeware). Mutants `tools/mutants/bayleftmaps.json` BLM-C7-*
+(17, all dead). PIN MOVED (BAY-LEFT-MAPS C7): `test/scenes/regionlive.test.js`, `test/systems/audit63_quests_talk.test.js`
+(the talk's reveal; F0's undiscover), `test/systems/l10n3e_places.test.js`, `test/systems/quest/rr3_questline.test.js` (the
+armorer), `test/systems/travel/to1_travelOptions.test.js` I6 (the I box, the door's key). Re-aimed by content and run
+(dead): `tools/mutants/to1.json` i6-discovery-by-map-id-again. DFU files a location's buildings by the location itself
+(PlayerGPS's MapPixelID); the port's `<region>:<name>` is its own key, and past the Bay the map id after it: Port-Ledger A,
+BAY-LEFT-MAPS.
+
+## BAY-LEFT-B - houses for sale in the towns past the Bay (2026-10-27)
+
+The audit "no system left behind in the Bay" (item 32; the owner: *"Every single thing here needs to be addressed. No
+exceptions."*, 2026-10-26). WHAT STOOD: no house was sold, no deed read and no rank-9 knight's house given in any Arena
+town, country place or capital - the market's gate (`scenes/worldModes.js` currentHousesForSale) and the deed's two
+readers (worldModes houseOwnedAt, world.js's quest-world ownsHouse) refused every place the port made
+(`isArenaPlaceId`, `isCountryPlaceId` - whose lanes take the capitals' too). The recorded reason, "every Arena town
+answers the clamp's region until TESA3, so a deed's key would own the same key in all of them", was stale: the regions
+are the provinces' since WW-R, and AUDIT RELEASE R2-9 had already held a capital's deed to its own slice by map id.
+
+WHAT IT IS NOW. **The deed of every place the port made is held to its own town**
+(`systems/banking.js:"export const deedHeldIn = (slot, mapId = null) =>"` over
+`world/placeIds.js:"export const isMadePlaceId = (id) =>"` - a map id whose low 20 bits stand past the Bay's pixel ids,
+AUDIT TESA II P6's law, which `systems/discovery.js` discoveryKeyOf reads from the same leaf): asked in an Arena town, a
+country place or a capital, a deed stands only if its slot's map id (allocateHouseToPlayer's) is that town's - one
+province is one region over a hundred towns, many of them clones of one Bay town with its keys. A Bay town keeps DFU's
+(region, key) law byte for byte (IsHouseOwned :140-148). So the gates came down: the market sells a town's houses past
+the Bay (the isles' gate alone stands - AUDIT CAPTAIN'S SEA P9, recorded: an isle's towns are no region's slot of their
+own), the deed is read where the building stands (`worldModes.js:"const houseOwnedAt = (b, key) =>"`, world.js's
+ownsHouse) - its door, its cupboards, its bed - the bank sells it in its own town (its directory's, as DFU's bank only
+ever finds its house in its own town's directory), and the Knightly Order's rank-9 house is given there (its list is the
+market's, `systems/knightlyGifts.js` receiveHouseDecision). Online homes key by the town's map id in any region already
+(HOME1, `net/homeLaw.js` homeDeedOf: the region 0..70, the slot's own map id): both ends agree - a knight's house held
+by the account is its own town's on the service as on the page.
+
+THE FOUR HOSTS: `scenes/worldModes.js` (the market, the deed where the building stands, the bank) and `scenes/world.js`
+(the quest world's residence read) wired. `scenes/dungeonContext.js` sells no house. `scenes/exterior.js` (the bench)
+asks `isHouseOwned` with its town's map id (R2-9) - the Bay's alone stand there.
+
+Pins: `test/systems/bayleftb_houses.test.js` (4: a place the port made by its id; a deed in its own town alone, past the
+Bay against the Bay's law; the market's own gate run off worldModes.js's text over the freeware's Whiterun, a country
+hamlet the countryside mints and Solitude - houses for sale, the knight's house given, bought and owned there, the isles'
+shut, Daggerfall's market as ever; the readers name the town and the account's deed agrees). Mutants:
+`tools/mutants/bayleftb.json` (BAY-LEFT-B-H-*). PIN MOVED: `test/tesa2_arena.test.js`, `test/tesa7_country.test.js`,
+`test/audit_tesa.test.js`, `test/systems/naval/auditcaptsea.test.js`, `test/systems/houses.test.js`,
+`test/world/housecontainers.test.js`, `test/systems/quest/auditdisc28_quests.test.js` (each pinned the gates this slice
+took down), `test/tesa8_lairs.test.js` (its lair id's "no house sold, no deed read" words); their mutant records re-aimed by content (`tools/mutants/tesa2.json` TESA2-a-house-for-sale,
+`tesa7.json` TESA7-modes-deed-sold and -owned, `audittesa.json` AUDIT-TESA-A5-F3, `auditcaptsea.json` ACS-P9-deed and
+-sale, `auditdisc28_quests.json` AD28Q-K1, `icgrand.json` R2-9-deed-every-town).
 
 ## Pins
 

@@ -128,7 +128,7 @@
   {
     "name": "START3-heldmap-frame-unpassed",
     "file": "src/ui/heldMap.js",
-    "old": "const quests = readQuestMarks(this.deps.quests, this._size, f)",
+    "old": "const quests = readQuestMarks(this.deps.quests, this._size, sheet)",
     "new": "const quests = readQuestMarks(this.deps.quests, this._size)",
     "tests": [
       "test/systems/starts/start3_pastbay_marks.test.js"

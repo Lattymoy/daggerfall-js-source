@@ -37,9 +37,10 @@ export const squareEnds = (/** @type {number} */ bx, /** @type {number} */ by) =
 };
 
 /** @typedef {{ x: number, y: number }} Pt */
-/** @typedef {{ a: number, b: number, kind: 'coast'|'border', pair: number, side: number[] }} Seg - its ends' ids (a
- *  crossing's edge, or a square's meeting point), what it divides, the pair of labels (low * 16 + high; 0 for the zone's
- *  own), and two map pixels it divides (`[x, y, qx, qy]`, one of each label) */
+/** @typedef {{ a: number, b: number, kind: 'coast'|'border'|'water', pair: number, side: number[] }} Seg - its ends' ids (a
+ *  crossing's edge, or a square's meeting point), what it divides (NIBEN-SEA: 'water' a zone's dam across one label's
+ *  water, systems/wild/cyrodiilZone.js zoneLineSteps), the pair of labels (low * 16 + high; 0 for the zone's own), and
+ *  two map pixels it divides (`[x, y, qx, qy]`, one of each label) */
 /** @typedef {{ bx: number, by: number, l: number[], segs: Seg[] }} Square */
 
 /** The tiles a map pixel's label and a square's record are kept in: TILE pixels a side. */

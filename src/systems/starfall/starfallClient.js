@@ -147,7 +147,7 @@ export function starMapMarks(sites, t, { held = new Map(), led = new Map(), loca
       : l?.p === P_LOST || phase === 'after' ? STAR_CARD_TEXT.lost()
         : phase === 'omen' ? STAR_CARD_TEXT.falls(localTime(T.fallAt))
           : phase === 'streak' ? STAR_CARD_TEXT.falling()
-            : starPhaseLine(l, l ? starMasterOf(l.b, s.k).name() : '');
+            : starPhaseLine(l, l ? starMasterOf(l.b, s.k, s.coven).name() : '');
     out.push({ key, px: s.px, py: s.py, label: `${title}, ${s.near}`, tip: { title, lines: [STAR_CARD_TEXT.near(s.near), covenWitches(s.coven), state] } });
   }
   return out;

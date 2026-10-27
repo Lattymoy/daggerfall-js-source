@@ -114,7 +114,7 @@ test('URBANIZER U3 the walkers: a town\'s walk grid shut where its fabric shuts 
 
 test('URBANIZER U3 the pixel build\'s wiring by source: the fabric planned as the town is laid out, before its yards and walkers are placed; its walk shut the town\'s and the fabric\'s; the model stood at the location\'s origin, its Daggerfall pieces in the town\'s climate, merged and solid as its blocks\' are (mutants: the model unmerged; no collider; planned after the yards)', () => {
   const pb = rd('src/scenes/pixelBuild.js');
-  assert.match(pb, /const walkShut = dfLocation \? fabricWalkShut\(townWalkShut\(dfLocation, townGround\), dfLocation\) : null;/);
+  assert.match(pb, /const walkShut = dfLocation \? fabricWalkShut\(townWalkShut\(dfLocation, townGround, paths\), dfLocation\) : null;/);   // PIN MOVED (TS10): and the paths its terrain painted
   const plan = pb.indexOf('const fabric = await townFabricFor(dfLocation, loc.blocks, { px, py, breathe: () => breather.breathe() });');
   assert.ok(plan > 0 && plan < pb.indexOf('const places = yardTown || portTown ? townPlacesFor('), 'before the yards');
   const stand = pb.slice(pb.indexOf('      if (fabric) {'), pb.indexOf('      // T2 towns: the streaming host\'s wandering population'));

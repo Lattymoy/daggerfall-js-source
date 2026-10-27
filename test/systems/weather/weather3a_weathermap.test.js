@@ -393,8 +393,19 @@ test('WEATHER3a: the land under a birth - off the map is its edge\'s climate, an
   let rained = 0;
   for (let i = 0; i < 200; i++) if (weatherAt(-300000 - i * 3001, -150000, YEAR + 190 * 1440 + i * 13, beyond).word === 'rain') rained++;
   assert.ok(rained > 10, `past the Bay its own land's weather (${rained} of 200 rained)`);
-  const sea = (px, py) => (inMap(px, py) ? CLIMATES.Desert : CLIMATES.Ocean);
-  for (let i = 0; i < 200; i++) assert.notEqual(weatherAt(-300000 - i * 3001, -150000, YEAR + 190 * 1440 + i * 13, sea).word, 'rain', 'the sea off the map is read as the edge (WEATHER3g)');
+  // PIN MOVED (BAY-LEFT-SEA, the audit's D4): the sea off the map is the sea's own - a storm born over the Sea of Ghosts,
+  // the Topal Bay or the Padomaic the Ocean's (DFU's Swamp table: a summer's rain the desert edge never has), where it had
+  // read the nearest Bay edge's; a map with nothing off it answers -1 there, never the Ocean, and reads the edge, as ever
+  const sea = (px, py) => (inMap(px, py) ? CLIMATES.Desert : CLIMATES.Ocean), landOff = (px, py) => (inMap(px, py) ? CLIMATES.Desert : -1);
+  let seaRained = 0, offRained = 0;
+  for (let i = 0; i < 200; i++) {
+    if (weatherAt(-300000 - i * 3001, -150000, YEAR + 190 * 1440 + i * 13, sea).word === 'rain') seaRained++;
+    if (weatherAt(-300000 - i * 3001, -150000, YEAR + 190 * 1440 + i * 13, landOff).word === 'rain') offRained++;
+  }
+  assert.deepEqual([seaRained, offRained], [9, 0], 'the sea past the Bay its own weather; the edge\'s where nothing is past it');
+  const seaCalls = [];
+  weatherAt(-500000, -500000, YEAR, (px, py) => { seaCalls.push([px, py]); return sea(px, py); });
+  assert.ok(seaCalls.length > 0 && seaCalls.every(([px, py]) => !inMap(px, py)), 'the sea answered off the map: its edge never asked');
   // WEATHER3g: past the edge is the edge's own climate - a system born there is the land's weather, not the sea's
   const edge = (px, py) => (!inMap(px, py) ? -1 : px === 0 || py === 0 ? CLIMATES.Mountain : CLIMATES.Swamp);   // a map with nothing past its edge (PIN MOVED, Z8)
   let snowed = 0;

@@ -327,7 +327,7 @@ if (isMain(import.meta.url)) {
   const { MapsFile } = await import('../src/formats/mapsFile.js');
   const { setTamrielFit, bayToPicture } = await import('../src/world/tamriel/tamrielFrame.js');
   const pal = new DFPalette(); pal.load(await fetchBytes('ART_PAL.COL'), 'ART_PAL.COL');
-  const trace = await preloadTamrielTrace({ fetchBytes, palette: pal, relief: false });   // AUDIT TESA II G2: never its own output
+  const trace = await preloadTamrielTrace({ fetchBytes, palette: pal, relief: false, niben: false });   // AUDIT TESA II G2: never its own output; NIBEN-SEA: the painting's own coasts (the player's trace masks the river)
   const woods = new WoodsFile(); woods.load(await fetchBytes('WOODS.WLD'));
   const maps = new MapsFile(); maps.load(await fetchBytes('MAPS.BSA'), await fetchBytes('CLIMATE.PAK'), await fetchBytes('POLITIC.PAK'));
   setTamrielFit(bakeFit({ trace, woods, maps }));

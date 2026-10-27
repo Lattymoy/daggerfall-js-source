@@ -98,7 +98,11 @@ test('AUDIT TESA II P7/P13 (ARENA2) THE ROWS PAST THE BAY on the freeware\'s tra
   assert.deepEqual(icRows.map((r) => [r.px - at.px, r.py - at.py]).sort(), Array.from({ length: span * span }, (_, s) => [s % span - h, Math.floor(s / span) - h]).sort());
   assert.ok(icRows.every((r) => r.type === LOCATION_TYPES.TownCity && r.w === 8 && r.h === 8));
   for (const p of px.stood.filter((q) => q.pinned)) assert.ok(!rows.some((r) => r.mapId === arenaPlaceId(p)), `${p.name} stands as its capital alone`);
-  assert.equal(rows.filter((r) => r.port).length, 28, 'the lore\'s ports, a pinned one its capital\'s centre');
+  // PIN MOVED (NIBEN-SEA): 29 - the Imperial City's Waterfront a port, its canal through to the lake's arm
+  assert.equal(rows.filter((r) => r.port).length, 29, 'the lore\'s ports, a pinned one its capital\'s centre, and the Imperial City\'s Waterfront');
+  // PIN MOVED (RUMARE-WATER): the Waterfront's own slice, row 22 - its quay and its piers' ends, the lake the sea's - where
+  // it was the south edge's
+  assert.deepEqual(icRows.filter((r) => r.port).map((r) => [r.px - at.px, r.py - at.py]), [[0, 22 - h]], 'the Imperial City\'s port its Waterfront\'s slice');
   assert.equal(pastBayPlaceRows({ pixels: px, templateOf: () => null, capitals: true }).length, slices, 'no clone, no place');
   // on the registry: a town of its province's area (P13)
   const places = createWorldPlaces();
@@ -145,7 +149,7 @@ test('AUDIT TESA II P12 THE PICTURE\'S LAKES: the water its border joins - eight
   assert.equal(pastBayLakeAt(bx, by), false, 'no picture, no lake');
 });
 
-test('AUDIT TESA II P12 (ARENA2): the freeware\'s picture holds five lakes - Lake Rumare\'s ring round the Imperial City among them - and the open sea none (mutant: the lakes unflooded)', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
+test('AUDIT TESA II P12 (ARENA2): the freeware\'s picture holds two lakes (PIN MOVED, NIBEN-SEA: Lake Rumare\'s ring round the Imperial City and the Niben the sea\'s, down the river) - and the open sea none (mutant: the lakes unflooded)', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
   await freewareTrace();
   const tr = tamrielTrace(), L = pictureLakes(tr), seen = new Uint8Array(L.length), sizes = [];
   for (let i = 0; i < L.length; i++) {
@@ -162,13 +166,13 @@ test('AUDIT TESA II P12 (ARENA2): the freeware\'s picture holds five lakes - Lak
     }
     sizes.push(n);
   }
-  assert.deepEqual(sizes.sort((a, b) => b - a), [115, 49, 20, 15, 11]);
+  assert.deepEqual(sizes.sort((a, b) => b - a), [20, 15], 'Hammerfell\'s two');   // PIN MOVED (NIBEN-SEA): [115, 49, 20, 15, 11] - the Niben and Lake Rumare's two pieces joined to the sea
   // Lake Rumare: the water on the picture within six picture pixels of the Imperial City's pin (the city's isle is four
-  // across), every such cell a lake's
+  // across) - PIN MOVED (NIBEN-SEA): every such cell the open sea's, joined to the Topal Bay down the Niben
   const ic = CAPITALS.find((c) => c.name === 'Imperial City'), at = capitalPin({ name: ic.name, province: ic.province });
   const [cx, cy] = bayToPicture(at.px + 0.5, at.py + 0.5).map(Math.floor);
   let water = 0;
-  for (let dy = -6; dy <= 6; dy++) for (let dx = -6; dx <= 6; dx++) { const k = (cy + dy) * tr.w + cx + dx; if (!tr.land[k]) { water++; assert.equal(L[k], 1, `(${cx + dx}, ${cy + dy}) Lake Rumare's`); } }
+  for (let dy = -6; dy <= 6; dy++) for (let dx = -6; dx <= 6; dx++) { const k = (cy + dy) * tr.w + cx + dx; if (!tr.land[k]) { water++; assert.equal(L[k], 0, `(${cx + dx}, ${cy + dy}) Lake Rumare's, the sea's`); } }
   assert.ok(water > 30, `Lake Rumare round the city (${water})`);
 });
 

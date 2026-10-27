@@ -15,6 +15,7 @@
 import { gateHash } from '../../net/gate/gateLaw.js';
 import { STAR_SALT } from '../../net/starfall/starfallLaw.js';
 import { t, getLocalizedFactionName } from '../textManager.js';
+import { regionOfTheatre } from '../../formats/mapsTables.js';   // WW5: a province's coven is its province's region's
 
 /**
  * @typedef {{ id: string, region: number, location: string, place: string|null, factionId: number, witches: string,
@@ -25,6 +26,15 @@ import { t, getLocalizedFactionName } from '../textManager.js';
  */
 /** @param {StarCoven} c @returns {Readonly<StarCoven>} */
 const coven = (c) => Object.freeze(c);
+/**
+ * @typedef {StarCoven & { theatre: number, own: true, name: () => string, leader: () => string }} StarProvinceCoven
+ *   WW5: a coven of the port's own past the Bay - FACTION.TXT has none there (its witches are the Bay's), so it carries no
+ *   faction (`factionId` null: no number of FACTION.TXT's, nor one it could ever grow to name, is a province coven's) and
+ *   no MAPS.BSA location (`location`, `place` null); its words are its own through t() - its witches' name, what one of
+ *   them is called, and its LEADER, who comes for the star as its master where a Bay coven's Coven Mother does
+ *   (systems/starfall/starCoven.js starMasterOf). `theatre` the province (world/worldWide/worldGrid.js THEATRE_KEYS),
+ *   `region` its WW-R region.
+ */
 
 /** The thirteen, in MAPS.BSA's region order (the bag's order is its own) - WW-C2: the Daughters of Wroth back among them. */
 export const STAR_COVENS = Object.freeze([
@@ -42,6 +52,31 @@ export const STAR_COVENS = Object.freeze([
   coven({ id: 'tide', region: 46, location: 'Coven_of_the_Tide', place: 'MyrkwasaCoven', factionId: 431, witches: 'The_Tide_Witches', member: () => t('starfall.member.tide', 'Tide Witch') }),
   coven({ id: 'dust', region: 55, location: 'Coven_of_Dust', place: 'Coven_of_Dust', factionId: 420, witches: 'The_Dust_Witches', member: () => t('starfall.member.dust', 'Dust Witch') }),
 ]);
+/**
+ * WW5 (bible/03-World/World-Wide.md WW5; Starfall.md section 2, WW5): THE PROVINCES' COVENS - the port's own, one a
+ * province theatre that stands a coven night (net/wire.js SITE_EVENT_LANES: Cyrodiil's open zone none), each named in its
+ * province's own lore and worshipping as the rite does, Mephala: the Moor's Breton hedge-witches; the Sand Witches of the
+ * Alik'r's far side; the Witches of the Rime, Skyrim's; the Ash Witches under the Dunmer's wise-woman's title; the
+ * Sisters of Dusk on Sumurset; the Briar Witches, who keep the Green Pact's wood and break it for her; the Daughters of
+ * Mafala - the Khajiit's own name for Mephala, the Clan Mother; the Fen Witches of Black Marsh. A coven's words are the
+ * text core's (`starfall.coven.<id>`, `starfall.member.<id>`, `starfall.leader.<id>`); its leader comes for the star.
+ * In the provinces' order (theatre 1..8). Not DFU's (FACTION.TXT's covens are the Bay's alone). Ledger A (WW5).
+ */
+/** @param {Omit<StarProvinceCoven, 'region'|'location'|'place'|'factionId'|'own'>} c @returns {Readonly<StarProvinceCoven>} */
+const provinceCoven = (c) => Object.freeze({ ...c, region: regionOfTheatre(c.theatre), location: null, place: null, factionId: null, own: /** @type {true} */ (true) });
+export const STAR_PROVINCE_COVENS = Object.freeze([
+  provinceCoven({ id: 'moor', theatre: 1, witches: 'The_Sisters_of_the_Moor', name: () => t('starfall.coven.moor', 'The Sisters of the Moor'), member: () => t('starfall.member.moor', 'Sister of the Moor'), leader: () => t('starfall.leader.moor', 'Mother Gwenllian') }),
+  provinceCoven({ id: 'sand', theatre: 2, witches: 'The_Sand_Witches', name: () => t('starfall.coven.sand', 'The Sand Witches'), member: () => t('starfall.member.sand', 'Sand Witch'), leader: () => t('starfall.leader.sand', 'Mother Adara') }),
+  provinceCoven({ id: 'rime', theatre: 3, witches: 'The_Witches_of_the_Rime', name: () => t('starfall.coven.rime', 'The Witches of the Rime'), member: () => t('starfall.member.rime', 'Witch of the Rime'), leader: () => t('starfall.leader.rime', 'Mother Hjordis') }),
+  provinceCoven({ id: 'ash', theatre: 4, witches: 'The_Ash_Witches', name: () => t('starfall.coven.ash', 'The Ash Witches'), member: () => t('starfall.member.ash', 'Ash Witch'), leader: () => t('starfall.leader.ash', 'Wise Woman Ulyne') }),
+  provinceCoven({ id: 'dusk', theatre: 5, witches: 'The_Sisters_of_Dusk', name: () => t('starfall.coven.dusk', 'The Sisters of Dusk'), member: () => t('starfall.member.dusk', 'Sister of Dusk'), leader: () => t('starfall.leader.dusk', 'Mother Calanwe') }),
+  provinceCoven({ id: 'briar', theatre: 6, witches: 'The_Briar_Witches', name: () => t('starfall.coven.briar', 'The Briar Witches'), member: () => t('starfall.member.briar', 'Briar Witch'), leader: () => t('starfall.leader.briar', 'Mother Thaewen') }),
+  provinceCoven({ id: 'mafala', theatre: 7, witches: 'The_Daughters_of_Mafala', name: () => t('starfall.coven.mafala', 'The Daughters of Mafala'), member: () => t('starfall.member.mafala', 'Daughter of Mafala'), leader: () => t('starfall.leader.mafala', 'Clan Mother Ri\'shazra') }),
+  provinceCoven({ id: 'fen', theatre: 8, witches: 'The_Fen_Witches', name: () => t('starfall.coven.fen', 'The Fen Witches'), member: () => t('starfall.member.fen', 'Fen Witch'), leader: () => t('starfall.leader.fen', 'Mother Neeta-Hei') }),
+]);
+/** WW5: the covens whose rite a theatre's night is - the Bay's thirteen on lane 0, a province's own past it, none on a
+ *  lane that stands no coven night (Cyrodiil's). @param {number} lane @returns {readonly Readonly<StarCoven>[]} */
+export const covensOfLane = (lane) => (lane === 0 ? STAR_COVENS : STAR_PROVINCE_COVENS.filter((c) => c.theatre === lane));
 /** The one left out, and why (section 2): Hircine's own. */
 export const STAR_COVENS_APART = Object.freeze([
   Object.freeze({ id: 'glenmoril', region: 60, location: 'Glenmoril_Coven', place: 'GlenmorilCoven', factionId: 419, witches: 'The_Glenmoril_Witches' }),
@@ -54,8 +89,9 @@ const spoken = (name) => name.replace(/_/g, ' ');
 export const covenLocation = (c) => spoken(c.location);
 /** The witches' FACTION.TXT name, as the file has it. */
 export const covenFactionName = (c) => spoken(c.witches);
-/** The witches' name as the player's language has it (the faction's own record, canon). */
-export const covenWitches = (c) => getLocalizedFactionName(c.factionId, covenFactionName(c));
+/** The witches' name as the player's language has it (the faction's own record, canon) - WW5: a province coven's its own
+ *  words (it has no faction). */
+export const covenWitches = (c) => (c.own ? c.name() : getLocalizedFactionName(c.factionId, covenFactionName(c)));
 
 /** One round of the bag: the thirteen shuffled by the round's own rolls (the gate's bag, net/gate/gateLaw.js bagRound). */
 function bagRound(round, n) {
@@ -69,14 +105,19 @@ function bagRound(round, n) {
 /**
  * THE NIGHT'S COVEN: a shuffle bag over the twelve (the gate's region bag's law) - every coven takes a night, in an order
  * each round of thirteen shuffles, before any takes a second, and a round never opens on the coven the last one closed on.
- * Pure: every client names the same coven for a night with no word sent.
+ * Pure: every client names the same coven for a night with no word sent. WW5: a theatre's night is its own covens' bag
+ * (covensOfLane - a province's one coven every night it has), the Bay's the thirteen's it always was; null on a lane with
+ * no coven.
  * @param {number} n the night (net/starfall/starfallLaw.js starNightAt)
- * @returns {Readonly<StarCoven>}
+ * @param {number} [lane] the theatre (net/starfall/starfallLaw.js starLaneOf)
+ * @returns {Readonly<StarCoven>|null}
  */
-export function starCovenOf(n) {
-  const len = STAR_COVENS.length;
+export function starCovenOf(n, lane = 0) {
+  const covens = covensOfLane(lane), len = covens.length;
+  if (!len) return null;
+  if (len === 1) return covens[0];   // a province's one coven every night (a bag of one has no second to swap in)
   const round = Math.floor(n / len), at = n - round * len;
   const bag = bagRound(round, len);
   if (bag[0] === bagRound(round - 1, len)[len - 1]) { const tmp = bag[0]; bag[0] = bag[1]; bag[1] = tmp; }
-  return STAR_COVENS[bag[at]];
+  return covens[bag[at]];
 }

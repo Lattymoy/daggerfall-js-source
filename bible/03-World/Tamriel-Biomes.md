@@ -92,7 +92,7 @@ summaries are quoted as UESP's, never as a book's. The Sources section, below, n
 **The ground** past the Bay is the zone's climate (`tamrielGround.js` tamrielClimateAt): its textures, its nature
 flats, the countryside's and the lairs' rates (TESA7, TESA8 - the Bay's own count of each kind on that climate), the
 weather's table at the player's pixel, and the weather map's field past the Bay's edge (`systems/weather/weatherMap.js`
-climateOfField reads a land climate there, the edge's own at sea), and the landforms' hills - a node past the Bay's
+climateOfField reads the zone's climate there, the Ocean's at sea - BAY-LEFT-SEA, `07-Rendering/Weather-Arc.md`), and the landforms' hills - a node past the Bay's
 seam band wears its zone's land (`world/landforms.js` nodeLand, AUDIT TESA II Z8), where every one had worn the nearest
 edge pixel's (86% of the land past the Bay had worn another land's hills); the Bay and its seam band keep the table's,
 to the bit. The four hosts: `scenes/world.js` WIRED (the streamed terrain, and its worker); `scenes/exterior.js` FLAGGED -
@@ -284,7 +284,9 @@ sabre cat it also hunts, its trolls as its giants. Both variants are made; the s
 (`faunaBandAt` - null on the Bay and at sea), and `resolveEncounterTableIndex` reads it before the climate's.
 
 **The hosts.** `scenes/world.js` WIRED - the wild's minute roll (IntermittentEnemySpawn) and a camp's group carry the
-player's or the camp's pixel's band; a roaming band's make carries it too - AUDIT TESA II F6: the world host's bandOk
+player's or the camp's pixel's band; the living world's road trouble rolls a caravan's foes on the band where it falls
+(BAY-LEFT-GROUND, `scenes/livingWorld/troubleFoes.js`: it handed none, and Black Marsh's caravans met Daggerfall's Orcs
+and Centaurs - `06-Systems/Living-World.md`); a roaming band's make carries it too - AUDIT TESA II F6: the world host's bandOk
 admits the land past the Bay once the trace stands, off every place (`systems/tamrielFauna.js` bandGroundPastBay), where
 no band had been born past the Bay at all;
 the online grants' species law (`scenes/grantHost.js` `faunaAt`, `grantDiceRefusal`) reads the grant's zone, and a grant

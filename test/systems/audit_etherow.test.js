@@ -9,6 +9,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { hostText } from '../hostText.mjs';
 
 import { standService, T0 } from '../accountDb.mjs';
 import { watchPixelOk, watchReceiptValid } from '../../src/net/watchReceipt.js';
@@ -19,12 +20,13 @@ import { LOCATION_TYPES, getWorldClimateSettings } from '../../src/formats/mapsF
 import * as ES from '../../src/world/ethericSea.js';
 import { etherPlaceIsle, etherPlaceRows, etherTemplateOf, synthesizeEtherLocation, etherPlaceId, ETHER_REGION, ETHER_REGION_NAME } from '../../src/world/etherPlaces.js';
 import { createCaptainLedger } from '../../src/systems/naval/captainLedger.js';
-import { farPlaces, settlementPixels, TV_FAR_RANGE } from '../../src/systems/travel/travelFarPlaces.js';
+import { farPlaces, settlementPixels, TV_FAR_RANGE, TV_FAR_TYPES } from '../../src/systems/travel/travelFarPlaces.js';
+import { inBay } from '../../src/world/tamriel/tamrielFrame.js';   // BAY-LEFT-MAPS: the lifted near query's own
 import { shipTransition } from '../../src/systems/ship.js';
 import { SHIP_TYPES } from '../../src/systems/banking.js';
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
-const W = src('src/scenes/world.js');
+const W = hostText('src/scenes/world.js');   // HOST-SPLIT 2: the host WHOLE - BAY-LEFT-MAPS moved the places by summary to scenes/mapPlacesHost.js
 const lift = (head, close = '\n  }\n') => {
   const at = W.indexOf(head);
   assert.ok(at >= 0, `world.js holds ${head.trim()}`);
@@ -108,14 +110,18 @@ test('AUDIT ETHER-OW C2-2: an isle charted while the captain stands on one pixel
     wildHallAt: () => false, wildActiveNow: () => null, wildHallStand: () => null, spawnedHallMapId: () => 0, maps: { getClimateIndex: () => 223 },
     travelLocationSummaryAt: () => null, mapDict: new Map(), travelCheckDiscovered: () => false,
     playerTravelPixel: () => at, state: { terrainDistance: 6 }, tvPlaceRect: (s) => ({ cx: s.pixel.x, cz: s.pixel.y }), farPlaces, settlementPixels, etherPlaceRows, TV_FAR_RANGE,
+    provinceQuestPlaces: null, pendingSummary: () => null, onTheBay: inBay, MAX_MAP_PIXEL_X: 1000, MAX_MAP_PIXEL_Y: 500, worldPlaces: null, pastBayPlacesIn: () => [], TV_FAR_TYPES, isCapitalPlaceId: () => false,   // PIN MOVED (BAY-LEFT-MAPS): `named`; TV5's near query (scenes/mapPlacesHost.js)
   };
   const v = run(env, `let tvPlates = { at: null, dg: -1, list: [] }, tvFar = { at: null, near: -1, list: [] }, _tvSettlements = null;
     ${lift('  function etherPlaceClone(isle) {')}
     ${liftLine('  const tvEtherPlace = ')}
     ${liftLine('  const tvEtherKnown = ')}
     ${liftLine('  const tvKnownGen = ')}
-    ${lift('  const tvPlaceSummary = (px, py) => {', '\n  };\n')}
+    ${lift('  const tvPlaceSummary = (px, py, named = false) => {', '\n  };\n')}
     ${lift('  function travelViewPlaces() {')}
+    ${liftLine('  let _baySettlements = ')}
+    ${liftLine('  const _pastBayTowns = ')}
+    ${lift('  function tvFarSettlements(at, range = TV_FAR_RANGE) {')}
     ${lift('  function travelViewFarPlaces() {')}
     return { travelViewPlaces, travelViewFarPlaces };`);
   assert.deepEqual([v.travelViewPlaces(), v.travelViewFarPlaces()], [[], []], 'nothing charted: no plates');
@@ -139,6 +145,7 @@ test('AUDIT ETHER-OW C2-3: "Your Ship" is boarded from the Bay alone - past the 
       etherSea: ether, inEther: ES.inEther, townTalk: { say: (t) => said.push(t) }, worldMoveBusy: () => false, enterLinkedBankCabin: async () => false,
       playerTravelPixel: () => pixel, shipTransition, playerEntity: { ownedShip: SHIP_TYPES.Small, boardShipPosition: board },
       shipMemory: (m) => m, player: { pos: [0, 0, 0] }, groundFrameHeight: () => 0, state: { compensation: [0, 0, 0] }, cam: { yaw: 0 }, STREAMING_TERRAIN_SCALE: 1,
+      RECORD_GROUND_STAMP: { terrainScale: 1, groundFrame: 2 },   // PIN MOVED (BAY-LEFT-GROUND, D5): the deck stamps its frame's law beside its scale
     };
     return run(env, `${lift('  const veilRefused = (to = null) => {', '\n  };\n')}
       ${W.slice(at, end)}    return t;\n  }\n  return boardOrDisembark;`);

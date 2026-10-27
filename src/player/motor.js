@@ -2114,11 +2114,17 @@ export class PlayerMotor {
     this.toggleSink = false;
   }
 
-  /** CLIMB1: onto the top (a mantle), or over a thin one (the clamber). */
+  /** CLIMB1: onto the top (a mantle), or over a thin one (the clamber). CLIMB-CREST: over a crest (parkour.js crestTop)
+   *  onto the walk behind it as far down as a hang's let-go (AUDIT CLIMB-ARC D3's law - a city wall's walk lies 1.6 m
+   *  under its coping), else over it into a hang on its far face (CLIMB-DOWN's over-hang - the wall's outside, from its
+   *  walk) - from the ground, a jump, a hang or the top of a free climb alike. */
   _pkOnto(ledge, geo, skill) {
     if (ledge.mantle) return planMantle(this.pos, ledge, skill);
-    const over = senseOver(this.collider, this.pos, ledge, geo, PARKOUR_OVER_DROP);
-    return over ? planClamber(this.pos, ledge, over, skill) : null;
+    const over = senseOver(this.collider, this.pos, ledge, geo, PARKOUR_OVER_DROP)
+      ?? (ledge.crest ? senseOver(this.collider, this.pos, ledge, geo, PARKOUR_HANG_DROP + PARKOUR_VAULT_CLEAR) : null);
+    if (over) return planClamber(this.pos, ledge, over, skill);
+    const oh = ledge.crest ? senseOverHang(this.collider, this.pos, ledge, geo) : null;
+    return oh ? planOverHang(this.pos, ledge, oh, skill) : null;
   }
 
   /** CLIMB2: the catch into a hang - the hand-hold at the lip, the body fitting

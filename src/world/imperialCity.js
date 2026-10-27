@@ -30,7 +30,7 @@
 // (`I<row><column>`, base 36), its ground, its walls and its streets the city's laws. IC-GRAND: the plan is worked a slice
 // at a time, the first time a slice is asked (`imperialSlicePlan`) - 40,000 cells made at the module's load were seconds.
 // No landmark stands over a block of Daggerfall's (AUDIT-TESA A6-3's law, pinned on every vertex).
-import { hash32, BLOCK_M } from './spawnedDungeons.js';
+import { hash32, BLOCK_M } from './blockHash.js';   // RUMARE-WATER: the leaf, so the workers reading the plan (world/rumareWaters.js) reach world/ alone
 
 /** Pixels a side, and the plan's cells a side (eight a pixel) - its anchor the middle grid point. TS5 (the owner: "7x7
  *  pixels"): seven; IC-GRAND (the owner: "Lets do 20km"): twenty-five, 20.48 km - an odd span keeps a centre pixel, the
@@ -95,6 +95,10 @@ export const IMPERIAL = Object.freeze({
   /** City Isle's shore round the city wall, and Lake Rumare's far shore round the isle (the land past it its own). */
   isle: 7900,
   lake: 10000,   // AUDIT TESA II C1 at IC-GRAND's scale: its far shore and the bridge's landing short of the rim's inner edge (10,169.6 m: the plan's half less CAPITAL_RIM_M) and inside the city's own blocks (10,137.6 m: AUDIT-TESA A6-3, none in the land's)
+  /** RUMARE-WATER (bible/03-World/Tamriel.md RUMARE-WATER): the Waterfront's mouth - the lake south through its far shore
+   *  to the span's edge, `mouth` metres either side of the city's middle line: the Waterfront canal's three pixels
+   *  (world/tamriel/tamrielGeography.js WATERFRONT_CANAL's `half` and a half, pinned equal), so the lake meets it. */
+  mouth: 1228.8,
   /** The districts' grand avenues: from each palace gate out along its sector's middle to the city wall, `w` wide. */
   avenue: Object.freeze({ w: 30 }),
   /** Each district's heart, on its avenue `r` out (the Temple District's the Temple of the One's). */
@@ -288,13 +292,23 @@ export const causewayLines = (I = IMPERIAL) => [
  *  land's). */
 export const bridgeLine = (I = IMPERIAL) => [polar(I.bridge.b, I.cityWall.r), polar(I.bridge.b, I.lake + I.bridge.landing)];
 
+/** AUDIT BAY-LEFT F1: the Prison's and the University's centres (polar's own), made once a plan - imperialLand is asked at
+ *  every vertex of the city's lake (world/rumareWaters.js rumareSeaGrid). @type {WeakMap<object, number[][]>} */
+const _landCompounds = new WeakMap();
+const landCompounds = (I) => {
+  let c = _landCompounds.get(I);
+  if (!c) _landCompounds.set(I, c = [polar(I.prison.b, I.prison.r), polar(I.university.b, I.university.r)]);
+  return c;
+};
 /** IS A POINT LAND - City Isle: within its shore, the Prison's and the University's grounds, or the Waterfront's quay; TS5:
- *  and the far shore past Lake Rumare's ring. */
+ *  and the far shore past Lake Rumare's ring, RUMARE-WATER but the Waterfront's mouth through it. */
 export function imperialLand(x, z, I = IMPERIAL) {
   const r = Math.hypot(x, z);
+  if (r >= I.lake && z > 0 && Math.abs(x) < I.mouth) return false;   // RUMARE-WATER: the Waterfront's mouth, through the far shore
   if (r <= I.isle || r >= I.lake) return true;
-  if (inBox(x, z, polar(I.prison.b, I.prison.r), I.prison.half + 24)) return true;
-  if (inBox(x, z, polar(I.university.b, I.university.r), I.university.half + 24)) return true;
+  const [prison, university] = landCompounds(I);
+  if (inBox(x, z, prison, I.prison.half + 24)) return true;
+  if (inBox(x, z, university, I.university.half + 24)) return true;
   const b = imperialBearing(x, z);
   return b >= I.waterfront.b0 && b <= I.waterfront.b1 && r <= I.waterfront.r1;
 }

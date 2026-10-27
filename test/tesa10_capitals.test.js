@@ -14,6 +14,7 @@ import {
   capitalPin, capitalBase, cityBlockNames, capitalBlockNames, capitalBuildings, portBlockJson, miscModelAt, tileCentre, autoCentre,
   capitalPortBlocks, synthesizeCapitalLocation, capitalDistrict, capitalCarrier, anchorMetres, SOLITUDE, SOLITUDE_PLAN, SOLITUDE_DISTRICTS,
   SOLITUDE_BLOCKS, capitalLakeName,
+  capitalSlicePort, capitalCentrePixel,   // BAY-LEFT-SEA: the host's ask hands its harbour's port word
 } from '../src/world/tamrielCapitals.js';
 import {
   buildSolitudeArch, buildBluePalace, buildSolitudeWall, buildCastleDour, buildSolitudeDocks, archTop, archOpening, solitudeWallCorners,
@@ -38,6 +39,8 @@ import { customModelFor } from '../src/world/customModels.js';
 import { hash32 } from '../src/world/spawnedDungeons.js';
 import { LOCATION_TYPES, mapPixelToLongitudeLatitude } from '../src/formats/mapsFile.js';
 import { capitalsOn } from '../src/scenes/shared.js';
+import { locationKeyOf } from '../src/world/locationKey.js';   // PIN MOVED (BAY-LEFT-B): the clone carries its own buildings' key
+import { fabricSliceSites } from '../src/world/imperialFabricBuildings.js';   // PIN MOVED (BAY-LEFT-B): and the Imperial City's fabric's
 import { hostText } from './hostText.mjs';   // HOST-SPLIT (at the merge of main): the world host read whole - its pixel build stands in scenes/pixelBuild.js
 import { createSwapBehind } from '../src/scenes/swapBehind.js';
 
@@ -295,7 +298,7 @@ test('TESA10 the host by source: the base and the blocks off the game\'s rows be
   assert.match(W, /const _capitalNames = _capitalBase \? cityBlockNames\(_classicRows \?\? _hubRows\.map\(classicRow\)\.filter\(Boolean\)\) : null;/);
   assert.ok(W.indexOf('const _capitalNames = ') < W.indexOf('  _classicRows = null;   // read, let go'));
   // PIN MOVED (AUDIT TESA II P1): online the open zone's hall of the day first - Cyrodiil's lie past the Bay
-  assert.match(W, /if \(\(_arenaTemplates \|\| _countryTemplates \|\| _capitalBase\) && !onTheBay\(px, py\)\) return \(params\.has\('online'\) && zoneHalls\.standIn\(cyrodiilMask\(\), px, py\)\) \|\| capitalLocationAt\(px, py\) \|\| \(_arenaTemplates && arenaLocationAt\(px, py\)\) \|\| countryLocationAt\(px, py\) \|\| lairLocationAt\(px, py\);/);
+  assert.match(W, /if \(\(_arenaTemplates \|\| _countryTemplates \|\| _capitalBase\) && !onTheBay\(px, py\)\) return \(locationIndex\.get\(`\$\{px\},\$\{py\}`\)\?\.superTier \? locationIndex\.get\(`\$\{px\},\$\{py\}`\) : null\) \|\| \(params\.has\('online'\) && zoneHalls\.standIn\(cyrodiilMask\(\), px, py\)\) \|\| host\.capitalLocationAt\(px, py\) \|\| \(_arenaTemplates && host\.arenaLocationAt\(px, py\)\) \|\| host\.countryLocationAt\(px, py\) \|\| host\.lairLocationAt\(px, py\) \|\| spawnPastBayAt\(px, py\);/);   // PIN MOVED (HOST-SPLIT, SPAWN-WORLD 2026-10-26): _locationToBuild is scenes/spawnStandHost.js's, the places' rolls through `host`   // PIN MOVED (SPAWN-WORLD 2026-10-26): online, the spawner's last - never on a place   // PIN MOVED (WW5, bible/03-World/World-Wide.md WW5): a province's Hollow first, as its lane stands it in the index (scenes/superDungeon/sdLanes.js) - carried into scenes/spawnStandHost.js at the packages' merge (AUDIT BAY-LEFT)
 });
 
 test('TESA10 the host\'s ask: the capital on its pixel stood once, its region the pixel\'s; Arena\'s place on it its slot, and stood again when the slot changes; none elsewhere, and none with the door shut', () => {
@@ -303,7 +306,9 @@ test('TESA10 the host\'s ask: the capital on its pixel stood once, its region th
   const kinds = [...new Set(Array.from({ length: IMPERIAL_SPAN ** 2 }, (_, s) => imperialSlicePlan(s).flat()).flat())].filter(imperialClassic);   // PIN MOVED (IC-GRAND): the plan by its law
   const names = new Map(kinds.map((k) => [k, [`${k}AA00.RMB`]]));
   const base = { ...city(9, ['X']), exterior: { exteriorData: { blockNames: ['X'] }, buildings: [] } };
-  const make = (open, arena) => new Function('capitalOnPixel', 'synthesizeCapitalLocation', 'base', 'names', 'arena', `
+  // PIN MOVED (BAY-LEFT-B): the clone's MapTable key its own buildings' (world/locationKey.js), the Imperial City's fabric's
+  // with them - the harness hands the clone its three leaves
+  const make = (open, arena) => new Function('capitalOnPixel', 'synthesizeCapitalLocation', 'base', 'names', 'arena', 'capitalSlicePort', 'capitalCentrePixel', 'locationKeyOf', 'CAPITALS', 'fabricSliceSites', `
     const _capitalBase = ${open ? 'base' : 'null'}, _capitalNames = names, _arenaTemplates = {}, locationIndex = new Map();
     const arenaPlaceOnPixel = () => (arena.on ? arena.place : null), blocks = { getBlockByName: () => null };
     const maps = { getRegionIndexAt: () => 23, getClimateIndex: () => 231 }, REGION_NAMES = { 23: 'Wrothgarian Mountains' }, getWorldClimateSettings = (c) => ({ worldClimate: c });
@@ -312,7 +317,9 @@ test('TESA10 the host\'s ask: the capital on its pixel stood once, its region th
     const townClimateAt = (px, py, c) => c;   // PIN MOVED (AUDIT RELEASE R2-5f): the clone's own climate law - the city's ground stands on the pixel's
     ${lift('  function capitalLocationAt(px, py) {')}
     ${lift('  function capitalCloneOf(at, px, py, slot) {')}   // PIN MOVED (AUDIT RELEASE R2-5f): the clone laid out apart from its standing, as the quest layer reads it
-    return { capitalLocationAt, index: locationIndex, gen: () => host._locIndexGen };`)(capitalOnPixel, synthesizeCapitalLocation, base, names, arena);
+    const arenaPixels = () => null;   // PIN MOVED (BAY-LEFT-SEA): the clone handed its harbour's pin (tamrielPlacesHost.js capitalPinPort) - none pinned here
+    ${lift('  function capitalPinPort(k) {')}
+    return { capitalLocationAt, index: locationIndex, gen: () => host._locIndexGen };`)(capitalOnPixel, synthesizeCapitalLocation, base, names, arena, capitalSlicePort, capitalCentrePixel, locationKeyOf, CAPITALS, fabricSliceSites);
   const arena = { on: false, place: null };
   const h = make(true, arena);
   const loc = h.capitalLocationAt(2069, 658);

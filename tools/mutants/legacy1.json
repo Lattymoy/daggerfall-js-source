@@ -129,8 +129,8 @@
   {
     "name": "LEGACY1-B11-birth-carries-load",
     "file": "src/systems/legacy/places.js",
-    "old": "  for (const k of ['load', 'loadkey', 'classicload', 'classic', 'class', 'test', 'realm', 'realmnew', 'spawn', 'legacyborn', 'start']) p.delete(k);",
-    "new": "  for (const k of ['classicload', 'class', 'test', 'realm', 'realmnew', 'spawn', 'legacyborn', 'start']) p.delete(k);",
+    "old": "  for (const k of ['load', 'loadkey', 'classicload', 'classic', 'class', 'test', 'realm', 'realmnew', 'spawn', 'legacyborn', 'seat', 'start']) p.delete(k);",
+    "new": "  for (const k of ['classicload', 'class', 'test', 'realm', 'realmnew', 'spawn', 'legacyborn', 'seat', 'start']) p.delete(k);",
     "tests": [
       "test/systems/legacy1_family.test.js"
     ],

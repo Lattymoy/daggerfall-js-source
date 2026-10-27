@@ -30,6 +30,9 @@ and take organic ground, walls and shores round them.
 | TS5 | the Imperial City 7 x 7, round, its lake round inside its outline; its outskirts' towns round | BUILT (below) |
 | TS6 | trees, walkers and the town map follow the outline | BUILT (below) |
 | TS7 | the Bay's walled cities walled on their outline; what stood at Daggerfall's gates at the new gates; a town's yards on its own ground | BUILT (below) |
+| TS8 | a bend's tower the corner tower's body alone - no stub of wall into the town or out past the wall | BUILT (below) |
+| TS9 | the road's ring painted whole, its angled edges blended | BUILT (below) |
+| TS10 | the roads painted through a town's ground its grid's roads - no yard on one | BUILT (below) |
 
 **DEPLOY RULE**: TS3 ships in the same release as WW7-5 (homes past the Bay, `bible/03-World/World-Wide.md` WW7-5): a home
 past the Bay is bought only in a town's final outline, so no block a home stands in is ever left out.
@@ -85,7 +88,7 @@ DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from `TerrainHelper.SetLo
   diagonals and the rect - proven against the rect's law alone - and the ring lies past the rect, so 82% of it was never
   paved (259,606 of 1,451,249 ring tiles over the Bay's 3,444 towns; a road's stubs where its arms cross it); and the ring
   paved the sea where TS2 keeps it (2,670 ring tiles over water). Now the guard passes no ring tile, the ring paves no
-  water and `smoothRoadHeights` keeps off it (`roadPainter.js:"&& !locationRect?.ring?.[y * DIM + x]) continue;"`): the
+  water and `smoothRoadHeights` keeps off it (`roadPainter.js:"&& !locationRect?.ring?.[i]) continue;"`): the
   whole dry ring paved (the audit page's record).
 - Measured on the freeware: Daggerfall stands within its walls as before (its rect 11..116, its tiles' histogram
   unchanged, its ground 0.166139 for DFU's 0.166147 - its own land's mean); Antelibuton keeps its sea (thousands of water
@@ -332,3 +335,112 @@ and gate dressing standing only where Daggerfall's blocks put them.
 Tests `test/world/baywalls.test.js`. Mutants `tools/mutants/baywalls.json`. PINS MOVED: `test/world/townwalls.test.js` (the
 host hands its blocks both ways), `test/world/townfollow.test.js` (one walk shut), `test/world/merchantyards1.test.js` and
 `test/systems/shipyards1_found.test.js` (the places handed the walk shut).
+
+## 10. TS8 - a bend's tower (BUILT)
+
+The owner, on the tamriel branch: *"The new city layout structure is broken. Town walls and their curvature expose thin
+open extruding walls"*. Measured on the freeware: Daggerfall's tower (ARCH3D 444) is a CORNER's - its body a 9.6 m square
+(the wall's own thickness, where two walls cross) centred at (-2.8, 2.85) of its origin under a crown from 12.85 m, and
+off its +x and -z sides two stubs of wall 6.4 m long, 8.05 m tall, open at their ends, where a corner's two lengths meet
+it (its 16.8 m "square" in TS4 was this whole: the body and its stubs). TS4 stood it at every bend of a line that is no
+corner, its origin on the line and its +z out: one stub stood 3.55 m into the town past the wall's inner face and one
+2.85 m out past its outer face, both ends open, and the body off the line (the owner's thin open walls - rendered on
+Gallobrugh's wall, every tower).
+
+- **The bend's tower** (`world/townWalls.js` bendTower, CORNER_TOWER): the corner tower's body alone, its middle the
+  origin - every face under the crown past the body's +x or -z side (the stubs) left out, and with them the faces on
+  those two sides (they stood only over the wall walk, a door in each - the stubs closed them under it); the two sides
+  closed with the body's own outer faces (its -x and +z, whole from the ground to the crown) turned a half round about
+  its middle, so a side's stone and pictures are the tower's own. Kept a model; a tower not of 444's measure (to 5 cm -
+  a mod's) stands as it is. `townWallModel` stands it for every tower piece. A length's end (open, as Daggerfall's are:
+  they meet a tower or the next length in its ring) now stands inside the tower's body at every bend - the body is the
+  wall's thickness, and a length's end is a 9.6 m segment through its middle, whatever the turn.
+- **Its cells** (`townWallCells`, WALL_FOOT): a tower's square on the town map and the walk grid is its body's, 9.6 m -
+  every wall still closed on its walk grid (TS6's measure, re-run), every board and carriage still clear (TS7's).
+- The one law for every town the new layout walls - a city past the Bay (TS4) and every one of the Bay's 410 walled
+  cities (TS7, Daggerfall itself among them): `registerTownWall`'s model is `townWallModel`'s. Measured with its faces
+  drawn one-sided, from outside and inside the wall: every 23rd city past the Bay (18 cities, 1,285 views), back faces
+  seen (an open end) 599,878 pixels before, 2,044 after; every 23rd of the Bay's walled cities (18, 1,267 views), 591,570
+  before, 2,013 after - the rest the coping's knife edge seen at a grazing angle, as on Daggerfall's own straight walls.
+
+DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from the corner tower stood whole - a bend's tower is its body.
+Tests `test/world/townbends.test.js` (4, two on ARENA2: the game's 444 made a bend's, its sides closed to the crown;
+every ninth city past the Bay - every length's and gate's end in a tower's body or square on the next length, every
+face under the crowns within a piece's footprint). Mutants `tools/mutants/townbends.json` (9, all dead). PINS MOVED:
+`test/world/townfollow.test.js` (a tower's cells 6 by 6, where 10 by 10). `townwalls.json`'s TW-the-carrier-shaping
+survives on the branch's base as here (its pin no longer reaches the carrier's shaping) - recorded, not changed.
+
+The owner's next words on the same walls - *"walls cant be climbed over"* - were the enhanced climb's, not the walls':
+`03-World/Parkour-Arc.md` CLIMB-CREST.
+
+## 11. TS9 - the road's ring whole, its angled edges blended (BUILT)
+
+The owner, on the tamriel branch: *"Roads around the city arent properly blended when they are angled"*. TS2 moved the
+mod's "Paint roads around locations" ring from the rect's padding onto the outline (`townRoadRing`: the tiles off the
+town's ground within two and a half of it). Rendered on the freeware's tiles (Gothway Garden, and Gallobrugh's template
+walled past the Bay on the same pixel), two faults:
+
+- **The ring in pieces.** The painter passes by every tile it cannot reach (FAST-SUITE's guard: off the pixel's centre
+  cross, its two diagonals and the location RECT). The outline's ring runs outside the rect - a walled city's ground is its
+  round and its apron, a Bay town's margin wanders past its blocks - so its tiles were passed by, but where the cross
+  and the diagonals ran through them: the ring stood as a bar across each road into the town and a stub at each
+  diagonal. The guard now lets a ring tile through (`roadPainter.js` paintRoads: `locationRect.ring`), and the ring is
+  painted whole.
+- **Its stairs.** Where the outline runs at an angle, the ring's edges were stairs of whole road tiles (46), where the
+  mod's own diagonal roads blend theirs with the diagonal's edge (DIAG_OUT: 47 over dirt, 55 over grass) on their flanks.
+  `townRoadRing` now codes the half tiles (`RING`, `world/townShape.js`): a tile off the ring and off the town's ground
+  with the ring on two sides at a corner and neither on the other two (a step's notch, outside) takes a half with its
+  road toward that corner; a ring tile with the town's ground on two sides at a corner and the ring on the other two (a
+  step's corner, inside) one with its road away - so a 45-degree stair is one straight edge each side, as a diagonal
+  road's is. The painter turns each as the mod turns its flanks (RING_HALF: a NE-SW road's flank with its road north and
+  west is flipped, south and east as it stands; a NW-SE road's north and east rotated, south and west both - pinned
+  against the mod's own flanks), never over the sea (its tile kept) nor over a road an arm laid there; GRASS-PATH1's mask
+  takes it as a path.
+
+**AUDIT BAY-LEFT F2 - the half tiles past the Bay** (2026-10-27, `01-Overview/audits/Audit-Left-In-The-Bay.md`). A pixel
+past the Bay takes VOYAGER2's curved painter (`world/road/roadCurves.js` paintCurvedPaths), whose ring pass paved the
+ring's whole tiles alone, and the straight pass after it is handed no road: on three pixels past the Bay 2 of 72 half
+tiles were laid, 72 of 72 on the Bay. The ring pass now lays them as `roadPainter.js` paintPath does - the diagonal's own
+edge by the ground, turned by RING_HALF, never over the sea - and RING_HALF's home is `roadCurves.js`, both painters
+reading it. After: 72 of 72 past the Bay.
+
+DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): the mod paves its rect's padding square and whole; the outline's
+ring (TS2) is blended where it runs at an angle. Tests `test/world/terrain/townring.test.js` (4, its last on ARENA2: both
+towns' rings painted whole, their angled edges blended, and a third built on a pixel truly past the Bay with the roads
+layer's road, its half tiles every one its code's; F2's synthetic case the curved painter's ring tiles the Bay painter's
+bytes for every code - grass, dirt, the sea). Mutants `tools/mutants/townring.json` (11, all dead). PIN MOVED (F2): the
+ARENA2 case's "past the Bay" city had stood on Gothway Garden's own Bay pixel, so the curved painter never ran;
+TS9-notch-turned's file is `roadCurves.js` now and `audittesa3e1.json`'s E1-1-the-curved-ring-paves-the-sea re-aimed by
+content (dead). PINS MOVED:
+`test/world/terrain/townshapes.test.js` (the ring's whole tiles by their code); `townshapes.json` TS-the-square-ring and
+`fastsuite_roads.json` FAST-road-rect-dropped re-aimed by content (dead).
+
+## 12. TS10 - no yard on a painted road (BUILT)
+
+The owner, on the tamriel branch: *"Sometimes locations like the horse stable, etc can be placed on pathways"*. A town's
+yards (the Stable, the Wagon Yard, the joinery - MERCHANT-YARDS, CARP-YARD - and a port's places) are placed on its walk
+grid off every road cell, a road cell being one its block's own ground tile lays as road (CityNavigation's weight 15 for
+46, 47, 55). But the roads the TERRAIN paints through a town's ground stand on cells its blocks lay as open land: an arm
+of the pixel's road or track across a cell a town past the Bay leaves open (TS3, `TESAOPEN.RMB`: record 63, weight 7),
+or across a Bay city's old wall ring (TS7). Measured over every twelfth city and town past the Bay on a pixel with roads
+every way (N, S, E, W, NE, SW): 8 of 373 yards stood on a painted road (Ripwark's Wagon Yard on 82 of its cells).
+
+- **The paving** (`world/townWalls.js` paveOnGrid, PATH_WEIGHT): every open cell of a town's grid whose terrain tile the
+  road painter wrote - GRASS-PATH1's `paths` mask, the painter's own record (a track's dirt reads as the land's by its
+  record alone) - is a road of the grid (weight 15, CityNavigation's for a road tile; a building's cell stays shut, a
+  walker's flag kept). A yard keeps off it and may face it, as it keeps off and faces the town's own streets.
+- **The walk** (`townWalkShut`, its third argument): the pixel's walk shut paves its terrain job's paths
+  (`scenes/pixelBuild.js`), for its walkers and its yards alike - the walkers take a painted road as a street. Its `key`
+  names the paths it read, so a town's places (`scenes/world.js` townPlacesFor's memo) are placed again when its pixel is
+  built again once the roads land (ROADS 25's rebuild), never kept from the roadless build.
+- Measured again: 0 of the 373 on a painted road, every one of them still placed.
+- **AUDIT BAY-LEFT F3 - the key through the fabric** (2026-10-27, `01-Overview/audits/Audit-Left-In-The-Bay.md`): the
+  pixel build wraps the walk shut in URBANIZER U3's (`world/urban/townFabricStand.js` fabricWalkShut), a new function
+  that carried no `key`, so the memo read 'shut' whatever the roads and kept the yards placed before them - on the Bay
+  and past it. The wrapper's key is now the town's shut's and whether its fabric stands, read when asked.
+
+DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from CityNavigation.SetRMBData's weights, which read a block's own
+ground tile alone - a road the terrain painted on a town's ground is its grid's road. Tests `test/world/townpaths.test.js`
+(6, its last on ARENA2; F3's the fabric's key moving with its roads). Mutants `tools/mutants/townpaths.json` (10, all dead). PINS MOVED: `test/world/townfollow.test.js`
+(the walk shut reads the paths and paves them between its ground and its wall); `townfollow.json` TF-the-wall-unwired and
+TF-the-ground-unshut re-aimed by content (dead).

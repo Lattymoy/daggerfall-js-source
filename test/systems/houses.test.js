@@ -25,7 +25,9 @@ import {
   createHouses, createBankAccounts, ownsHouse, ownedHouseKey, isHouseOwned,
   allocateHouseToPlayer, sellHouse, housesForSale, houseSellPrice, housePrice,
   MAX_HOUSES_FOR_SALE, TRANSACTION_RESULT, purchaseHouse,
+  HOUSES_PER_REGION, regionDeeds, allDeeds, regionHousesFull, regionDeedOf, dropDeed, townDeeds, copyHouseSlot, housesFullText,
 } from '../../src/systems/banking.js';
+import { HOME_CAP, homeDeedOf } from '../../src/net/homeLaw.js';
 import {
   receiveHouseDecision, claimHouse, HOUSE_FLAG_MASK, RECEIVE_HOUSE_RANK,
   NO_HOUSE_TEXT_ID, HOUSE_TEXT_ID, ALREADY_GIVEN_HOUSE, armorMaskForRank,
@@ -69,6 +71,54 @@ test('H1: the registry is keyed by REGION, and that is verbatim', () => {
   assert.equal(isHouseOwned(houses, 1, 9999), false, 'a different building in the same region');
   // :142 - key 0 means "no building", and answers false before any lookup
   assert.equal(isHouseOwned(houses, 1, 0), false);
+});
+
+test('HOUSES-3 (the owner: "Up the house ownership limit to 3 houses per region"): a region holds THREE deeds - the slot its first, the others beside it (`more`), a fourth refused; any of them is the region\'s house to every reader; a sale takes the deed sold and the next stands in the slot; a purchase with no room takes no gold; a save\'s copy shares nothing (mutants: the number; the slot overwritten; a fourth kept; only the first read; the promotion; the guard; the copy shallow)', () => {
+  assert.equal(HOUSES_PER_REGION, 3);
+  assert.equal(HOUSES_PER_REGION, HOME_CAP, 'the online homes\' own number');
+  const houses = createHouses(4);
+  const put = (key, mapId = 12) => allocateHouseToPlayer(houses, 1, { buildingKey: key, mapId, location: 'Burgley' });
+  assert.equal(regionHousesFull(houses, 1), false);
+  const a = put(10), b = put(20), c = put(30, 13);
+  assert.equal(houses[1], a, 'the first in the slot');
+  assert.deepEqual(houses[1].more, [b, c], 'the others beside it');
+  assert.deepEqual(b, { regionIndex: 1, location: 'Burgley', mapId: 12, buildingKey: 20 });
+  assert.deepEqual(regionDeeds(houses, 1).map((d) => d.buildingKey), [10, 20, 30]);
+  assert.equal(regionHousesFull(houses, 1), true);
+  assert.equal(put(40), null, 'no fourth');
+  assert.deepEqual(regionDeeds(houses, 1).map((d) => d.buildingKey), [10, 20, 30]);
+  assert.equal(regionDeeds(houses, 2).length, 0, 'another region its own three');
+  assert.equal(ownsHouse(houses, 1), true);
+  for (const key of [10, 20, 30]) assert.equal(isHouseOwned(houses, 1, key), true, `${key} owned`);
+  assert.equal(isHouseOwned(houses, 2, 20), false);
+  assert.equal(regionDeedOf(houses, 1, 13, 30), c);
+  assert.equal(regionDeedOf(houses, 1, 12, 30), null, 'its own town');
+  assert.equal(homeDeedOf(houses, 1, 12, 20), b, 'the service\'s hold reads the ones beside the slot too');
+  assert.deepEqual(allDeeds(houses).map((d) => d.buildingKey), [10, 20, 30]);
+  // the copy a save takes shares no record
+  const copy = copyHouseSlot(houses[1]);
+  copy.more[0].buildingKey = 99;
+  assert.equal(b.buildingKey, 20);
+  // a sale takes the deed sold; the slot's own sold, the next stands in it
+  const accounts = createBankAccounts(4);
+  assert.equal(sellHouse(accounts, houses, 1, { meshRadius: 10, online: false, deed: b }).kind, 'sold');
+  assert.deepEqual(regionDeeds(houses, 1).map((d) => d.buildingKey), [10, 30]);
+  assert.equal(sellHouse(accounts, houses, 1, { meshRadius: 10, online: false }).kind, 'sold', 'no deed named: the first');
+  assert.deepEqual(houses[1], { regionIndex: 1, location: 'Burgley', mapId: 13, buildingKey: 30 }, 'the next in the slot, nothing beside it');
+  assert.equal(sellHouse(accounts, houses, 1, { meshRadius: 10, online: false, deed: { ...houses[1] } }).kind, 'none', 'a deed not the region\'s sells nothing');
+  dropDeed(houses, 1, houses[1]);
+  assert.deepEqual(houses[1], { regionIndex: 1, location: '', mapId: 0, buildingKey: 0 });
+  // a purchase in a full region takes no gold
+  for (const key of [1, 2, 3]) put(key);
+  let paid = 0;
+  const player = { gold: () => 1e9, deductGold: (n) => { paid += n; return 0; } };
+  assert.deepEqual(purchaseHouse(accounts, houses, 1, { buildingKey: 4 }, player, { meshRadius: 10, online: false }), { result: TRANSACTION_RESULT.NONE });
+  assert.equal(paid, 0);
+  assert.match(housesFullText(), /3 houses in this region/);
+  // the bank's town: the deeds held there that its directory resolves, the first first
+  const dir = { mapId: 12, buildings: [{ buildingKey: 3 }, { buildingKey: 1 }] };
+  assert.deepEqual(townDeeds(houses, 1, dir).map((o) => [o.deed.buildingKey, o.summary.buildingKey]), [[1, 1], [3, 3]]);
+  assert.deepEqual(townDeeds(houses, 1, { mapId: 12, buildings: [] }), [], 'no directory, nothing offered');
 });
 
 test('H1: allocation is four things, and three of them are what make it a HOME', () => {
@@ -160,7 +210,7 @@ test('H1: ReceiveHouse - four refusals in order, then a grant', () => {
   const at = (rank, flags = 0) => ({ guild: 'Order:Dragon', rank, flags });
   const market = town(100).slice(0, 3);
   const opts = {
-    housesForSale: market, ownsHouse: false, rolls: () => 0,
+    housesForSale: market, housesFull: false, rolls: () => 0,
     alreadyOwnResult: TRANSACTION_RESULT.ALREADY_OWN_HOUSE,
     noneForSaleResult: TRANSACTION_RESULT.NO_HOUSES_FOR_SALE,
   };
@@ -171,9 +221,10 @@ test('H1: ReceiveHouse - four refusals in order, then a grant', () => {
   assert.deepEqual(receiveHouseDecision(at(9, HOUSE_FLAG_MASK), opts),
     { kind: 'refuse', line: ALREADY_GIVEN_HOUSE });
   // 3. you already own one FROM ANY SOURCE - a different refusal on
-  //    purpose: the flag is the order's record, the registry is yours
-  assert.deepEqual(receiveHouseDecision(at(9), { ...opts, ownsHouse: true }),
-    { kind: 'refuse', result: TRANSACTION_RESULT.ALREADY_OWN_HOUSE });
+  //    purpose: the flag is the order's record, the registry is yours.
+  //    PIN MOVED (HOUSES-3): the region's THREE, in the bank's words counted to three
+  assert.deepEqual(receiveHouseDecision(at(9), { ...opts, housesFull: true }),
+    { kind: 'refuse', result: TRANSACTION_RESULT.ALREADY_OWN_HOUSE, line: housesFullText() });
   // 4. nothing on the market
   assert.deepEqual(receiveHouseDecision(at(9), { ...opts, housesForSale: [] }),
     { kind: 'refuse', result: TRANSACTION_RESULT.NO_HOUSES_FOR_SALE });
@@ -205,7 +256,8 @@ test('H1: the four consumers are wired, and each goes through the law', () => {
   // four are host code with no node coverage.
   const modes = code('scenes/worldModes.js');
   // PIN MOVED (AUDIT CAPTAIN'S SEA P9): the deed read where the building stands - never an isle town's (houseOwnedAt) - the law itself, once
-  assert.match(modes, /const houseOwnedAt = \(b, key\) => !isEtherPlaceId\(homeTownOf\(b\)\) && !isArenaPlaceId\(homeTownOf\(b\)\) && !isCountryPlaceId\(homeTownOf\(b\)\) && isHouseOwned\(playerEntity\.houses \?\? \[\], b\?\.regionIndex \?\? 0, key, homeTownOf\(b\)\);/, 'the one reading of the law');   // PIN MOVED (TESA2): nor an Arena town's; PIN MOVED (TESA7): nor a country place's; PIN MOVED (AUDIT RELEASE R2-9): the town asking named - a capital's slice's deed its own slice's
+  // PIN MOVED (BAY-LEFT-B): an Arena town's and a country place's again - each held to its own town (banking.js deedHeldIn)
+  assert.match(modes, /const houseOwnedAt = \(b, key\) => !isEtherPlaceId\(homeTownOf\(b\)\) && isHouseOwned\(playerEntity\.houses \?\? \[\], b\?\.regionIndex \?\? 0, key, homeTownOf\(b\)\);/, 'the one reading of the law');   // PIN MOVED (TESA2): nor an Arena town's; PIN MOVED (TESA7): nor a country place's; PIN MOVED (AUDIT RELEASE R2-9): the town asking named - a capital's slice's deed its own slice's
   assert.match(modes, /houseOwned: !interiorHome && houseOwnedAt\(b, b\?\.buildingKey \?\? 0\), homeBed: homeBedIsMine\(interiorHome, /, 'CanRest sleeps in a house you own (V5 left this false)');   // HOME1 re-aim: online, in my online home too; HOME-RENT re-aim: and a room I rent in one; PIN MOVED (FIELD BUGS 2026-10-01 RENT-REST): an online home's bed rides as `homeBed`, the offline house as ever
   assert.match(modes, /isHouseOwned: \(key\) => houseOwnedAt\(bd, key\),/, 'the lock ladder knows your own front door');
   assert.match(modes, /ownsHouse: \(\) => ownsHouse\(/, 'the bank window asks the registry');
@@ -398,8 +450,9 @@ test('H2: a refused purchase closes the list too - the message shows over the BA
 
 test('H2: the bank routes BUY HOUSE to the window, and the refusals stay the law\'s', () => {
   const bank = code('ui/bankWindow.js');
-  assert.match(bank, /if \(d\.kind === 'refuse'\) \{ this\._popup\(d\.result\); return; \}/,
-    'already-own-one and nothing-for-sale still answer through buyHouseDecision');
+  // PIN MOVED (HOUSES-3): the region's three answered in the bank's words counted to three (`lines`), nothing for sale DFU's
+  assert.match(bank, /if \(d\.kind === 'refuse'\) \{ if \(d\.lines\) this\._lines\(d\.lines\); else this\._popup\(d\.result\); return; \}/,
+    'the region\'s three and nothing-for-sale still answer through buyHouseDecision');
   assert.match(bank, /this\.hooks\.openPurchase\?\.\(\)/, 'and a pick opens the purchase window');
   // the host mounts it, restoring the bank when it closes (PushWindow/PopWindow)
   const modes = code('scenes/worldModes.js');

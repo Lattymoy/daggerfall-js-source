@@ -23,8 +23,8 @@
   {
     "name": "EVERY-STANDING-the-rep-not-read",
     "file": "src/systems/faction/factionStanding.js",
-    "old": "      rows.push({ factionId: id, name: String(f.name ?? id), rep: getReputation(store, id) });",
-    "new": "      rows.push({ factionId: id, name: String(f.name ?? id), rep: 0 });",
+    "old": "name: getLocalizedFactionName(id, String(f.name ?? id)), rep: getReputation(store, id) });",
+    "new": "name: getLocalizedFactionName(id, String(f.name ?? id)), rep: 0 });",
     "tests": ["test/systems/fb1009e_everystanding.test.js"]
   },
   {

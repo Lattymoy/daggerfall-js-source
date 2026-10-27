@@ -253,7 +253,11 @@ async function boot() {
       params.set('legacyborn', String(legacyBirth.personId));
       params.set('region', legacyBirth.region);
       params.set('loc', legacyBirth.loc);
-    } else { params.delete('legacyborn'); params.delete('region'); params.delete('loc'); }
+      // BAY-LEFT-B: and the seat's map id - a seat past the Bay is in no MAPS.BSA table, and the world host stands it by
+      // its id (scenes/bootStartHost.js); a seat that never learnt its id is found by its names
+      if (Number.isInteger(legacyBirth.mapId)) params.set('seat', String(legacyBirth.mapId >>> 0));
+      else params.delete('seat');
+    } else { params.delete('legacyborn'); params.delete('region'); params.delete('loc'); params.delete('seat'); }
     // TR3: the Test Room door - the pane answers 'test:<preset>' and
     // the world host seeds the character and the armory off the same
     // testRoom home the pane showed. The param family follows F12's

@@ -17,7 +17,37 @@
 import { isResidence, BUILDING_TYPES } from '../world/buildingNames.js';   // RMBLayout.IsResidence (:753-760), House1-House4
 import { layoutStampOfTown, layoutsMatch, CLASSIC_LAYOUT } from './layoutPins.js';   // WD3: a town's discoveries keep the layout they were made in
 import { isHallMapId } from '../net/wire.js';   // AUDIT WW F1: a zone hall's id is no Bay pixel's
-import { MAX_MAP_PIXEL_X, MAX_MAP_PIXEL_Y } from '../formats/mapsTables.js';   // AUDIT TESA II P6: the Bay's pixel ids, under its 1000 x 500
+import { isProvinceRegion } from '../formats/mapsTables.js';   // BAY-LEFT-MAPS: a province's region
+import { BAY_PIXEL_IDS } from '../world/placeIds.js';   // AUDIT TESA II P6: the Bay's pixel ids, under its 1000 x 500 (BAY-LEFT-B: the leaf's, the deeds' too)
+
+/**
+ * BAY-LEFT-MAPS (2026-10-27, the owner after AUDIT LEFT IN THE BAY: "Every single thing here needs to be addressed. No
+ * exceptions."; its C7 = E2; bible/03-World/Arena-Provinces.md BAY-LEFT-MAPS C7): A TOWN'S BOOK OF DISCOVERED BUILDINGS,
+ * BY ITS OWN KEY - the one key-maker every writer and reader of the building half calls (the door, the town map, the
+ * talk's reveals, the guild halls' reveals, the lockpick's anti-grind record, the quest re-stamps, a deed's residence). A
+ * Bay place keeps the key every save holds, `<regionIndex>:<name>`, byte for byte (DFU's PlayerGPS files the record by
+ * the location; one region's names are its own). A place off the Bay's pixel ids - past the Bay, past the Veil
+ * (discoveryKeyOf's whole id, AUDIT TESA II P6) - takes its map id after it, `<regionIndex>:<name>#<mapId>`, as the
+ * automap keys a lair past the Bay (systems/automap/automap.js automapKeyOf): past the Bay a province is ONE region and
+ * its names repeat - the registry's 907 listed places stood on 296 books, the Imperial City's 625 slices on 14 - so a
+ * door's plaque and the town map named another town's buildings, the I box counted its shops, a failed lock barred the
+ * same key in every town of the name, and a quest's re-stamp landed in the wrong one.
+ * @param {number} regionIndex @param {string} name @param {number} [mapId]
+ */
+export const townBookId = (regionIndex, name, mapId = 0) => {
+  const book = `${regionIndex}:${name}`;
+  const id = Number(mapId) || 0;
+  return discoveryKeyOf(id) < BAY_PIXEL_IDS ? book : `${book}#${id >>> 0}`;
+};
+/** A location's book (townBookId over its region, name and map id) - no location `-1:`, as the hosts' reads were.
+ *  @param {any} loc */
+export const townBookOf = (loc) => townBookId(loc?.regionIndex ?? -1, loc?.name ?? '', loc?.mapTableData?.mapId ?? 0);
+/** BAY-LEFT-MAPS: a book a save from before filed a town past the Bay under - a province's region and a name, no map id -
+ *  as `{ region, name }`, or null. */
+const pastBayBookOfOld = (locId) => {
+  const m = /^(\d+):([^#]*)$/.exec(locId);
+  return m && isProvinceRegion(Number(m[1])) ? { region: Number(m[1]), name: m[2] } : null;
+};
 
 /** EMPIRE-BANK: the name a discovered building is SHOWN by, on its door and its plate - its stored one, but a BANK's is
  *  its name now (`live`, the directory's) wherever no quest renamed it: online every bank is the Empire's
@@ -263,8 +293,7 @@ export function discoveredBuildings(locationId) {
 // bits alone named a farm and every farm a multiple of 64 rows from it (the countryside's lanes are its grid's rows), a
 // lair and a farm, an isle's place and a country one: one found, the others found. Such a place keys by its whole id
 // (every one of them past 2^20, so no key of the Bay's meets it); a Bay place, a spawn on a Bay pixel, the Abyss's pits
-// keep DFU's mask.
-const BAY_PIXEL_IDS = MAX_MAP_PIXEL_X * MAX_MAP_PIXEL_Y;
+// keep DFU's mask. BAY-LEFT-B: the law's leaf is world/placeIds.js (isMadePlaceId), which the deeds read too.
 /** The store's key for a map id. @param {number} mapId */
 export const discoveryKeyOf = (mapId) => { const low = mapId & 0xfffff; return low < BAY_PIXEL_IDS ? low : mapId >>> 0; };
 let _locations = new Map();   // discoveryKeyOf(mapId) -> { regionName, locationName }
@@ -318,8 +347,13 @@ export function snapshotDiscovery() {
   return out;
 }
 
-/** A load REPLACES both stores (missing on old saves = nothing found). */
-export function restoreDiscovery(snap) {
+/** A load REPLACES both stores (missing on old saves = nothing found).
+ *  BAY-LEFT-MAPS (C7 = E2, townBookId): `houses` the character's deeds (systems/banking.js createHouses' slots, restored
+ *  before this) - a save from before filed a town past the Bay's buildings under `<region>:<name>` alone, one book for
+ *  every place of that name in its province, whose records cannot be told apart by town: it is let go (a building is
+ *  found again at its door, DFU's own law - as AUDIT TESA II P6 lets go the location keys that named several places),
+ *  and a deed's house in it keeps its record, moved to its own town's book (the slot names its town and its map id). */
+export function restoreDiscovery(snap, { houses = null } = {}) {
   _discovered = new Map();
   _locations = new Map();
   _layouts = new Map(Object.entries(snap?.layouts ?? {}).filter(([, v]) => typeof v === 'string' && v));   // WD3: none on a save from before - classic
@@ -327,16 +361,27 @@ export function restoreDiscovery(snap) {
   if (!snap) return;
   const legacy = !snap.buildings && !snap.locations;
   const buildings = legacy ? snap : (snap.buildings ?? {});
+  const deeds = (Array.isArray(houses) ? houses : []).filter((h) => h && (h.buildingKey | 0) > 0 && discoveryKeyOf(Number(h.mapId) || 0) >= BAY_PIXEL_IDS);
   for (const [locId, b] of Object.entries(buildings)) {
     // c2/S10: the missing-field discipline the rest of this store
     // already keeps - a record written before the rename shipped
     // restores with an EMPTY custom name, never `undefined`, so the
     // plate's `custom || name` fallback cannot read a hole.
-    _discovered.set(locId, new Map(
+    const recs = new Map(
       // AUDIT 63 F49: the override columns join the same discipline -
       // a record written before the quest arm shipped restores with
       // the flag down and no displaced name, never `undefined`.
-      Object.entries(b).map(([k, r]) => [Number(k), { customUserDisplayName: '', isOverrideName: false, oldDisplayName: null, ...r }])));
+      Object.entries(b).map(([k, r]) => [Number(k), { customUserDisplayName: '', isOverrideName: false, oldDisplayName: null, ...r }]));
+    const old = pastBayBookOfOld(locId);
+    if (!old) { const had = _discovered.get(locId); if (had) for (const [k, r] of recs) had.set(k, r); else _discovered.set(locId, recs); continue; }   // a book's own records over a deed's carried one
+    _layouts.delete(locId);
+    for (const h of deeds) {
+      const rec = h.location === old.name ? recs.get(h.buildingKey | 0) : null;
+      const to = rec ? townBookId(old.region, old.name, h.mapId) : null;
+      if (!to) continue;
+      if (!_discovered.has(to)) _discovered.set(to, new Map());
+      if (!_discovered.get(to).has(rec.buildingKey)) _discovered.get(to).set(rec.buildingKey, rec);
+    }
   }
   for (const [k, r] of Object.entries(snap.locations ?? {})) {
     const key = Number(k);

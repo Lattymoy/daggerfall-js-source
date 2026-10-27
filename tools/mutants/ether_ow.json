@@ -82,7 +82,7 @@
   },
   {
     "name": "EOW-places-bay-alone",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/mapPlacesHost.js",
     "old": "    if (etherSea && inEther(px, py)) {\n      const loc = tvEtherPlace(px, py);",
     "new": "    if (false) {\n      const loc = tvEtherPlace(px, py);",
     "tests": [
@@ -92,7 +92,7 @@
   },
   {
     "name": "EOW-places-known-always",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/mapPlacesHost.js",
     "old": "  const tvEtherKnown = (loc) => captainLedger.isCharted(loc.ether) || hasDiscoveredLocationId(loc.mapTableData.mapId);",
     "new": "  const tvEtherKnown = (loc) => !!loc;",
     "tests": [
@@ -102,7 +102,7 @@
   },
   {
     "name": "EOW-places-found-unread",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/mapPlacesHost.js",
     "old": "  const tvEtherKnown = (loc) => captainLedger.isCharted(loc.ether) || hasDiscoveredLocationId(loc.mapTableData.mapId);",
     "new": "  const tvEtherKnown = (loc) => captainLedger.isCharted(loc.ether);",
     "tests": [
@@ -112,7 +112,7 @@
   },
   {
     "name": "EOW-places-index-unread",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/mapPlacesHost.js",
     "old": "return isle ? (locationIndex.get(`${px},${py}`) ?? etherPlaceClone(isle)) : null; };",
     "new": "return isle ? etherPlaceClone(isle) : null; };",
     "tests": [
@@ -132,17 +132,17 @@
   },
   {
     "name": "EOW-far-ruins-unread",
-    "file": "src/scenes/world.js",
-    "old": "    return etherSea && inEther(at.x, at.y) ? [...bay, ...etherPlaceRows(at, range, 'ruin')] : bay;",
-    "new": "    return bay;",
+    "file": "src/scenes/travelViewDungeonsHost.js",
+    "old": "    const rows = etherSea && inEther(at.x, at.y) ? [...bay, ...etherPlaceRows(at, range, 'ruin')] : bay;",
+    "new": "    const rows = bay;",
     "tests": [
       "test/systems/travel/ether_ow.test.js"
     ],
-    "note": "Past the Veil TV6 knows no ruin."
+    "note": "Past the Veil TV6 knows no ruin. TVD-WORLD re-aimed by content: the rows are named before the lairs past the Bay join them."
   },
   {
     "name": "EOW-far-ruins-as-ports",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewDungeonsHost.js",
     "old": "[...bay, ...etherPlaceRows(at, range, 'ruin')]",
     "new": "[...bay, ...etherPlaceRows(at, range, 'port')]",
     "tests": [
@@ -152,13 +152,14 @@
   },
   {
     "name": "EOW-settlements-isles",
-    "file": "src/scenes/world.js",
-    "old": "    const settlements = (_tvSettlements ??= settlementPixels(locationIndex).filter((t) => !t.loc.ether));",
-    "new": "    const settlements = (_tvSettlements ??= settlementPixels(locationIndex));",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "    const bay = (_baySettlements ??= settlementPixels(locationIndex).filter((t) => !t.loc.ether && onTheBay(t.x, t.y)));",
+    "new": "    const bay = (_baySettlements ??= settlementPixels(locationIndex));",
     "tests": [
-      "test/systems/travel/ether_ow.test.js"
+      "test/systems/travel/ether_ow.test.js",
+      "test/scenes/bayleft_places.test.js"
     ],
-    "note": "The once-gathered settlements keep an isle's place the index held at the first ask."
+    "note": "The once-gathered settlements keep an isle's place the index held at the first ask (BAY-LEFT-MAPS: and a place past the Bay's - the Bay's gathered alone)."
   },
   {
     "name": "EOW-bands-bay-alone",

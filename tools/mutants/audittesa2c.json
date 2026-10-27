@@ -104,8 +104,8 @@
   {
     "name": "AUDIT-TESA-II-C2-shore-on-its-land",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "(flattenAt.sea ? SEA_FLAT : flattenAverage(",
-    "new": "(flattenAt.sea && false ? SEA_FLAT : flattenAverage(",
+    "old": "(flattenAt.sea ? CAPITAL_SEA_FLAT : flattenAverage(",
+    "new": "(flattenAt.sea && false ? CAPITAL_SEA_FLAT : flattenAverage(",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ]
@@ -113,7 +113,7 @@
   {
     "name": "AUDIT-TESA-II-C2-no-sea-flag",
     "file": "src/world/tamrielCapitals.js",
-    "old": "...(cap.shore ? { sea: true } : {}) }) : null;",
+    "old": "...(sea ? { sea: true } : {}), ...(seaEdges ? { seaEdges } : {}) }) : null;",
     "new": "}) : null;",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"

@@ -148,7 +148,7 @@ about a second of the page's thread and one of the worker's each boot. **Propose
 the trace, its relief and the fit in IndexedDB under a print of TMAP00I0, TAMRIEL2, WOODS.WLD and the relief module's
 version - the roads' own `inputsPrint` already hashes all four.
 **Fixed (the coast's stream, 2026-10-26; the owner: "Take care of exclusions and gaps"):**
-`src/world/tamriel/tamrielBootCache.js:"export const BOOT_CACHE_VERSION = 1;"` keeps in IndexedDB, and a returning boot
+`src/world/tamriel/tamrielBootCache.js:"export const BOOT_CACHE_VERSION ="` keeps in IndexedDB, and a returning boot
 takes: the trace and its relief (`preloadTamrielTrace`), under a print of the two pictures' bytes, the palette read and
 the relief's own data, each record checked against its key, its sizes and its arrays' checksum; the fit (`fitBayToPicture`
 takes a kept fit for the very land it samples - its masks' print); and the roads' regions to build (the roads' start - since EXACT-PIECES the regions it wants, the Bay's own with those with land, the kept set's key tagged `w1`,

@@ -199,6 +199,6 @@ test('START3 the wiring, by source: every place builder in place.js stamps the s
   assert.match(W, /const questPixel = \(find\) => find\?\.worldPixel \?\? questPlacePixel\(maps, find\?\.regionName \?\? '', find\?\.locationName \?\? ''\);/);
   assert.equal([...W.matchAll(/\(regionName, name, site\) => canFindPlace\(maps, mapDict, regionName, name, questPlacePixel, site\)/g)].length, 5, 'every host question, the site handed on');
   assert.doesNotMatch(W, /\(regionName, name\) => canFindPlace\(/, 'none without it');
-  assert.match(rd('src/ui/heldMap.js'), /const quests = readQuestMarks\(this\.deps\.quests, this\._size, f\)/);
+  assert.match(rd('src/ui/heldMap.js'), /const quests = readQuestMarks\(this\.deps\.quests, this\._size, sheet\)/);   // PIN MOVED (BAY-LEFT-MAPS): the sheet's one box (_marksBox), the continent's frame while it is shown
   assert.match(rd('src/ui/quest/questJournal.js'), /this\.deps\.canFindPlace\(site\.regionName, site\.locationName, site\)/, 'the classic journal\'s find');
 });

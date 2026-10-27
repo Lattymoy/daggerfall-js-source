@@ -106,7 +106,7 @@ test('TOWN-SHAPES wired: the terrain job flattens to the outline on DFU\'s own s
   assert.match(gen, /avg = blendLocationTerrain\(samples, avg, locationRect, HEIGHTMAP_DIMENSION, ground \?\? samples\);/);
   assert.match(gen, /unstampOffShape\(tilemap, locationRect\.shape, mask\);/);
   assert.match(gen, /locationRect = \{ \.\.\.locationRect, mask, ring: townRoadRing\(mask\) \};/);
-  assert.match(rd('src/world/road/roadPainter.js'), /\(ctx\.rect\.ring \? ctx\.rect\.ring\[ctx\.i\] === 1 && ctx\.ground !== TILE\.water : x > ctx\.rect\.xMin/);   // PIN MOVED (AUDIT TESA III E1-1): never over the sea
+  assert.match(rd('src/world/road/roadPainter.js'), /\(ctx\.rect\.ring \? ctx\.rect\.ring\[ctx\.i\] === RING\.road && ctx\.ground !== TILE\.water : x > ctx\.rect\.xMin/);   // PIN MOVED (TS9): the ring's whole tiles by their code; (AUDIT TESA III E1-1): never over the sea
   assert.match(rd('src/world/landforms.js'), /blendLocationTerrain\(field, sum \/ field\.length, locationRect, hDim, classic, true\);/);
   assert.match(rd('src/world/terrain/terrainTiles.js'), /autoMapData: rmb\.fldHeader\.autoMapData \}, misc3dObjectRecords: rmb\.misc3dObjectRecords, miscFlatObjectRecords: rmb\.miscFlatObjectRecords/);
 });

@@ -94,8 +94,8 @@
   {
     "name": "TV-BEYOND-planner-handed-no-beyond",
     "file": "src/scenes/world.js",
-    "old": "WATER_BYTE, 1000, 500, (x, y) => !tvWater(x, y))).setRocks(tvWodRocks());",
-    "new": "WATER_BYTE, 1000, 500, null)).setRocks(tvWodRocks());",
+    "old": "WATER_BYTE, 1000, 500, (x, y) => !tvWater(x, y), undefined, rumareSeaPixel)).setRocks(tvWodRocks());",
+    "new": "WATER_BYTE, 1000, 500, null, undefined, rumareSeaPixel)).setRocks(tvWodRocks());",
     "tests": [
       "test/systems/travel/fb1009_beyond.test.js"
     ]

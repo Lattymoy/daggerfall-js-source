@@ -671,7 +671,7 @@ Then "as centered as possible not on the border to the other tier... dont overri
 - SPAWNED, NOT CHOSEN: every real dungeon inside the zone is SEALED ("The way in is sealed. Only the halls marked on
   the map are open today.", `wildDungeonGate`, `world.js:"const wildDungeonGate"`, asked by the interior door,
   `worldModes.js:"(host.wildDungeonGate && !(await host.wildDungeonGate(hit, fromLoad)))"`), and the wandering spawner
-  stands none there (`world.js:"{ const _wm = cyrodiilMask();"`). A hall is a clone of a real dungeon on an EMPTY pixel -
+  stands none there (`spawnStandHost.js:"{ const _wm = cyrodiilMask();"`). A hall is a clone of a real dungeon on an EMPTY pixel -
   never a place's, never beside one, never the sea (WW-C2: `zoneHallsHost.js:"const free = (x, y) =>"` - the
   registry's places - AUDIT TESA II P7/Z7: TESA's past the Bay among them, and the countryside's and the lairs' rolls
   beside them - the continent's own ground whatever the land switch) - so a tier always has its count wherever
@@ -761,7 +761,7 @@ wdun*); the hub reads, calls it and writes.
 A hall is no row of the map files (it is spawned, by the day), so every door that reads a place by its row missed it:
 
 - HALL-JOURNEY (the owner: "when i want to travel there with begin journey nothing happens"): the Overworld's place
-  summary is the hall's own, always known (`tvPlaceSummary`, `world.js:"const tvPlaceSummary"`), so it walks to its
+  summary is the hall's own, always known (`tvPlaceSummary`, `mapPlacesHost.js:"const tvPlaceSummary"`), so it walks to its
   door as to any place's.
 - HALL-ARRIVE (the owner: "when i arrive at the Dungeon it shows this thats wrong" - the journey ran on at the door):
   the journey's arrival rect is read off the hall's spawned location (`world.js:"i arrive at the Dungeon"`).
@@ -1158,7 +1158,10 @@ Cryodil will be home to all abundent resources and everything else from the wrot
   Z4, `wildZone.js:"export function fillEnclosed"`): the painting's waters within the province - Lake Rumare round the
   Imperial City's isle, the Niben - are the zone's, so the rings run from its outer side alone (the Imperial City stands
   in The Heart; as holes, their shores were the zone's edge and put it in The Borderlands) and a lake is no door (a
-  journey from it or to it crossed no line, and its water was nobody's fight). ONLINE, THE TRACE'S ALONE (AUDIT TESA II
+  journey from it or to it crossed no line, and its water was nobody's fight). NIBEN-SEA (2026-10-26,
+  `03-World/Tamriel.md`): joined to the Topal Bay down the Niben they are enclosed no more, so THE PROVINCE'S OWN WATER is
+  the zone's (`cyrodiilZone.js:"export function provinceWaterAt"`: a water pixel with the province's land its nearest on
+  both sides of a row or a column, the Waterfront canal's too) - the river's last reach, between Elsweyr's banks, is not. ONLINE, THE TRACE'S ALONE (AUDIT TESA II
   Z8): no zone until the trace lands, and none where it never does - the authored rings' Cyrodiil is 56% of the two
   shapes' union apart from the trace's, and such a client, saying no zone, is in nobody's fight and nobody in its.
   In a dungeon too (`scenes/dungeonContext.js`): NO MASK IS NO ZONE - the mountains' fallback stood a maskless dungeon of

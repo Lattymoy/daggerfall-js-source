@@ -19,6 +19,9 @@ import { tvMooredDry } from '../../../src/systems/travel/seaAsk.js';   // PIN MO
 const WORLD = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
 // PIN MOVED (HOST-SPLIT 1, 2026-10-15): the Overworld's marks left world.js for scenes/travelViewMarks.js
 const TVM = readFileSync(new URL('../../../src/scenes/travelViewMarks.js', import.meta.url), 'utf8');
+// PIN MOVED (HOST-SPLIT, SPAWN-WORLD 2026-10-26): the Overworld's dungeon rows and their stand left world.js for
+// scenes/travelViewDungeonsHost.js (its live `let`s read through `host`)
+const TVD = readFileSync(new URL('../../../src/scenes/travelViewDungeonsHost.js', import.meta.url), 'utf8');
 
 /** One of world.js's functions, by name: a one-line declaration, or up to its closing brace at the host's indent. */
 function fnSource(name) {
@@ -51,10 +54,13 @@ test('AUDIT OW5 D1: the find asks every unfound dungeon in reach - a dozen found
     locationWorldRect: (l, x, y) => ({ minX: x * 32768, maxX: x * 32768 + 4096, minZ: y * 32768, maxZ: y * 32768 + 4096 }),
   };
   // ETHER-OW: the lists' rows and their stand (world.js tvDungeonRowsAt, tvDungeonAt), lifted beside it - the sea off here
-  const rowsOf = /\n {2}(const tvDungeonRowsAt = \(at, range = TV_FAR_RANGE\) => \{\n[\s\S]*?\n {2}\};\n {2}const tvDungeonAt = [^\n]*;)\n/.exec(WORLD);
+  // PIN MOVED (TVD-WORLD, 2026-10-27): the rows, their stand and the found test run through to tvDungeonFound (the lairs past the
+  // Bay with them - none here: `tvLairs` null), and the find keys on their gen
+  const rowsOf = /\n {2}(const tvDungeonRowsAt = \(at, range = TV_FAR_RANGE\) => \{\n[\s\S]*?\n {2}const tvDungeonFound = [^\n]*;)\n/.exec(TVD);
   assert.ok(rowsOf, 'the rows lifted');
-  const host = mount(env, `let tvFind = { at: null, dg: -1, n: -1, list: [] }; let _tvDungeonRows = null;
+  const host = mount(env, `let tvFind = { at: null, dg: -1, n: -1, list: [] }; const host = { _tvDungeonRows: null };
 const etherSea = false, inEther = () => false, etherPlaceRows = () => [], tvEtherPlace = () => null, TV_FAR_RANGE = 24, tvKnownGen = () => discoveryGeneration();
+const tvLairs = null, onTheBay = () => true, hasDiscoveredLocationId = () => false;
 ${rowsOf[1]}
 ${fnSource('travelViewFindList')}
 return { travelViewFindList };`);

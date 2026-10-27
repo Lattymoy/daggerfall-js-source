@@ -27,6 +27,7 @@ import { snapshotPlayer, restorePlayer } from '../../../src/systems/save/save.js
 import { createSceneCache, cacheScene, restoreCachedScene, snapshotSceneCache, restoreSceneCache } from '../../../src/systems/sceneCache.js';
 import { makeAnchor } from '../../../src/systems/teleportAnchor.js';
 import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
+import { recordFrame } from '../../../src/scenes/groundFrameHost.js';   // BAY-LEFT-GROUND (D5): the frame's law, its own export
 import { createSwapBehind } from '../../../src/scenes/swapBehind.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
@@ -74,15 +75,14 @@ test('TERRAIN-SCALE1: a save carries the scale its heights stood on; one without
   assert.equal(makeAnchor({ pixel: { x: 1, y: 2 }, nativeX: 0, nativeZ: 0, y: 5 }).terrainScale, null);
 });
 
-/** world.js's own restandHeight and scaleOf, run against a stub ground. */
+/** The world host's restandHeight and scaleOf, run against a stub ground. PIN MOVED (BAY-LEFT-GROUND, D5): the law is
+ *  scenes/groundFrameHost.js recordFrame, run whole - never sliced - on the Bay's pixel these pins were written for. */
 function restander(ground, comp = 0, { landform = null, lift = () => 0 } = {}) {
-  const i = WORLD.indexOf('  const restandHeight = (y, x, z, was) => {');
-  const j = WORLD.indexOf('  // Building doors (P3)', i);
-  assert.ok(i > 0 && j > i, 'the helper stands where the rig reads it');
   const state = { compensation: [0, comp, 0] };
   const heightAt = (x, z) => (ground(x, z) == null ? -Infinity : ground(x, z) + comp);
   // LANDFORM1: the law's two new reads - the row's state and the lift at a spot (test/systems/landform.test.js runs them)
-  return new Function('heightAt', 'state', 'STREAMING_TERRAIN_SCALE', 'DEFAULT_TERRAIN_SCALE', 'landform', 'landformLiftAt', `${WORLD.slice(i, j)}\nreturn { restandHeight, scaleOf };`)(heightAt, state, STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE, landform, lift);
+  const { restandHeight, scaleOf } = recordFrame({ landform, liftAt: lift, heightAt, state, bayAt: () => true });
+  return { restandHeight, scaleOf };
 }
 
 test('TERRAIN-SCALE1: a height written on the old scale stands again on today\'s ground - the same height above it where the ground is built, the ratio where it is not', () => {
@@ -100,23 +100,24 @@ test('TERRAIN-SCALE1: a height written on the old scale stands again on today\'s
 
 test('TERRAIN-SCALE1: the host stands every saved exterior height again as it lands it - the player, the piles, torches, camps, foes, guards, the inside pools, the exterior scene cache, the anchor', () => {
   assert.match(WORLD, /const was = scaleOf\(extras\.terrainScale\);/);
-  assert.match(WORLD, /const ly = restandHeight\(w\.y \?\? 2, lx, lz, was\) \+ state\.compensation\[1\];/, 'the player, after the arrival pixel is built');
+  // PIN MOVED (BAY-LEFT-GROUND, D5): each record's frame's law (`groundFrame`) stamped beside its scale and read beside it
+  assert.match(WORLD, /const ly = restandHeight\(w\.y \?\? 2, lx, lz, was, extras\.groundFrame\) \+ state\.compensation\[1\];/, 'the player, after the arrival pixel is built');
   assert.match(WORLD, /extras\.interior\.foes = restandRows\(extras\.interior\.foes\); extras\.interior\.guards = restandRows\(extras\.interior\.guards\);/);
   assert.match(WORLD, /droppedLoot\.restoreWorld\(restandRows\(w\.piles\)/);
   assert.match(WORLD, /droppedTorches\.restore\(restandAt\('position'\)\(w\.droppedTorches\)/);
   assert.match(WORLD, /camps\.restore\(restandAt\('pos'\)\(w\.camps\)/);
   assert.match(WORLD, /exteriorFoes\.restoreWorld\(restandRows\(w\.foes\)/);
   assert.match(WORLD, /cityGuards\.restoreWorld\(restandRows\(w\.guards\)/);
-  assert.match(WORLD, /terrainScale: STREAMING_TERRAIN_SCALE,   \/\/ TERRAIN-SCALE1: the ground these heights stand on/, 'the exterior scene cache is stamped...');
+  assert.match(WORLD, /\.\.\.RECORD_GROUND_STAMP,   \/\/ TERRAIN-SCALE1: the ground these heights stand on/, 'the exterior scene cache is stamped...');
   assert.match(WORLD, /const was = scaleOf\(arrived\.terrainScale\);/, '...and read');
-  assert.match(WORLD, /terrainScale: STREAMING_TERRAIN_SCALE,   \/\/ TERRAIN-SCALE1: the ground that height stands on/, 'the anchor is stamped...');
-  assert.match(WORLD, /return \[lx, restandHeight\(a\.y \?\? 2, lx, lz, scaleOf\(a\.terrainScale\)\) \+ state\.compensation\[1\], lz\];/, '...and stood again at the recall');
+  assert.match(WORLD, /\.\.\.RECORD_GROUND_STAMP,   \/\/ TERRAIN-SCALE1: the ground that height stands on/, 'the anchor is stamped...');
+  assert.match(WORLD, /return \[lx, restandHeight\(a\.y \?\? 2, lx, lz, scaleOf\(a\.terrainScale\), a\.groundFrame\) \+ state\.compensation\[1\], lz\];/, '...and stood again at the recall');
   // audit: the ship's remembered deck - stamped at boarding, stood again after the teleport built its pixel (the
   // teleport stands a deck verbatim, never grounded)
   // AUDIT LANDFORMS C1 MOVED THIS PIN: the deck's height goes in DFU's frame (groundFrameHeight), as every record's
-  assert.match(WORLD, /position: shipMemory\(\{ mapPixel: here, pos: \[player\.pos\[0\], groundFrameHeight\(player\.pos\[1\] - state\.compensation\[1\], player\.pos\[0\], player\.pos\[2\]\) \+ state\.compensation\[1\], player\.pos\[2\]\], yaw: cam\.yaw, terrainScale: STREAMING_TERRAIN_SCALE \}, state\.compensation\[1\]\),/);   // AUDIT 68 S22: and compensation-free
+  assert.match(WORLD, /position: shipMemory\(\{ mapPixel: here, pos: \[player\.pos\[0\], groundFrameHeight\(player\.pos\[1\] - state\.compensation\[1\], player\.pos\[0\], player\.pos\[2\]\) \+ state\.compensation\[1\], player\.pos\[2\]\], yaw: cam\.yaw, \.\.\.RECORD_GROUND_STAMP \}, state\.compensation\[1\]\),/);   // AUDIT 68 S22: and compensation-free
   const ship = WORLD.slice(WORLD.indexOf('    await _teleportToPixel(t.go.x, t.go.y, localPos, { reposition: t.reposition, grounded: legacy });'));
-  assert.match(ship, /^    await _teleportToPixel[^\n]*\n(?:\s*\/\/[^\n]*\n)*    if \(localPos && !legacy && \(scaleOf\(t\.restore\?\.terrainScale\) !== STREAMING_TERRAIN_SCALE \|\| landform\)\) \{[^\n]*\n      const c = state\.compensation\[1\];\n      const y = restandHeight\(localPos\[1\] - c, localPos\[0\], localPos\[2\], scaleOf\(t\.restore\.terrainScale\)\) \+ c;\n      if \(walkMode\) player\.spawn\(localPos\[0\], y, localPos\[2\]\);/);
+  assert.match(ship, /^    await _teleportToPixel[^\n]*\n(?:\s*\/\/[^\n]*\n)*    if \(localPos && !legacy && \(scaleOf\(t\.restore\?\.terrainScale\) !== STREAMING_TERRAIN_SCALE \|\| landform\)\) \{[^\n]*\n      const c = state\.compensation\[1\];\n      const y = restandHeight\(localPos\[1\] - c, localPos\[0\], localPos\[2\], scaleOf\(t\.restore\.terrainScale\), t\.restore\.groundFrame\) \+ c;[^\n]*\n      if \(walkMode\) player\.spawn\(localPos\[0\], y, localPos\[2\]\);/);
 });
 
 /** The quickload's own re-stand helpers, sliced from world.js and run over a stub frame and ground. */

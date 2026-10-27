@@ -34,6 +34,7 @@ import { LOCATION_TYPES } from '../../src/formats/mapsFile.js';
 import { generatePixelTerrain } from '../../src/world/terrain/terrainGen.js';
 import { SCALED_OCEAN_ELEVATION, MAX_TERRAIN_HEIGHT } from '../../src/world/terrain/terrainSampler.js';
 import { syntheticWoodsBytes } from '../landformWorld.mjs';
+import { CAPITAL_LAND, CAPITAL_SEA, CAPITAL_FREEBOARD } from '../../src/world/terrain/capitalSea.js';
 
 const root = new URL('../../', import.meta.url);
 const read = (p) => readFileSync(new URL(p, root), 'utf8');
@@ -106,7 +107,7 @@ test('AUDIT TESA II C1: no landmark stands in the rim on a side of land - every 
 
 // ── C2 / C9: THE SHORE CAPITALS ─────────────────────────────────
 
-test('AUDIT TESA II C2: a shore capital stands at the sea\'s floor - every slice flattened to the kernel\'s ocean clamp, its harbour\'s water the sea\'s; Alinor and Torval over the sea pixel off their harbours, its own block the slice\'s carrier, named its district\'s', () => {
+test('AUDIT TESA II C2: a shore capital stands at the sea\'s floor - every slice flattened to the kernel\'s ocean clamp, its harbour\'s water the sea\'s (PIN MOVED, RUMARE-WATER: its land a freeboard over it, its water at it); Alinor and Torval over the sea pixel off their harbours, its own block the slice\'s carrier, named its district\'s', () => {
   assert.deepEqual([ALINOR_HARBOUR, TORVAL_DOCKS], ['Alinor Harbour', 'Torval Docks']);
   for (const key of ['alinor', 'torval']) {
     const cap = CAPITALS.find((c) => c.key === key), D = capitalDims(cap);
@@ -124,7 +125,9 @@ test('AUDIT TESA II C2: a shore capital stands at the sea\'s floor - every slice
     for (let s = 0; s < D.w * D.h; s++) {
       const px = 100 + (s % D.w), py = 100 + Math.floor(s / D.w), loc = synthesizeCapitalLocation({ cap, k, s }, { base, names, blockOf: () => fh, px, py });
       const f = loc.capital.flattenAt;
-      if (cap.shore) assert.deepEqual(f, { px: 100 + D.mx, py: 100 + D.my, sea: true }, `${cap.key} slice ${s}`);
+      // PIN MOVED (RUMARE-WATER, world/terrain/capitalSea.js): and the seam with its sea slice water on both its sides
+      const seaEdges = D.sea ? (s === 0 ? { N: false, E: false, S: true, W: false } : { N: true, E: false, S: false, W: false }) : null;
+      if (cap.shore) assert.deepEqual(f, { px: 100 + D.mx, py: 100 + D.my, sea: true, ...(seaEdges ? { seaEdges } : {}) }, `${cap.key} slice ${s}`);
       else assert.equal(f?.sea, undefined, `${cap.key}: inland, its own ground`);
     }
   });
@@ -133,9 +136,17 @@ test('AUDIT TESA II C2: a shore capital stands at the sea\'s floor - every slice
   assert.equal(woods.load(syntheticWoodsBytes()), true);
   const job = (flattenAt) => generatePixelTerrain({ woods, px: 400, py: 200, tilemap: new Uint8Array(128 * 128), locationRect: { xMin: 11, xMax: 117, yMin: 11, yMax: 117 }, hasLocation: true, climateType: 0, flattenAt });
   const sea = job({ px: 400, py: 200, sea: true }), land = job({ px: 400, py: 200 });
-  assert.equal(sea.avg, SCALED_OCEAN_ELEVATION / MAX_TERRAIN_HEIGHT);
+  // PIN MOVED (RUMARE-WATER): its land CAPITAL_FREEBOARD over the clamp - the carve's headroom and the hull's line past
+  assert.equal(sea.avg, CAPITAL_LAND);
+  assert.equal(CAPITAL_LAND, Math.fround((SCALED_OCEAN_ELEVATION + CAPITAL_FREEBOARD) / MAX_TERRAIN_HEIGHT));
   assert.notEqual(land.avg, sea.avg, 'a land of its own height');
-  assert.equal(sea.samples[64 * 129 + 64], Math.fround(sea.avg), 'flat at the sea\'s floor');
+  assert.equal(sea.samples[64 * 129 + 64], CAPITAL_LAND, 'its land a freeboard over the sea\'s floor');
+  // a tile of its own water: its four corners at the sea's own height, the land beside it the land's
+  const tm = new Uint8Array(128 * 128);
+  tm[60 + 60 * 128] = 0xff;   // record 0, the stamp's sentinel
+  const pond = generatePixelTerrain({ woods, px: 400, py: 200, tilemap: tm, locationRect: { xMin: 11, xMax: 117, yMin: 11, yMax: 117 }, hasLocation: true, climateType: 0, flattenAt: { px: 400, py: 200, sea: true } });
+  for (const [x, y] of [[60, 60], [61, 60], [60, 61], [61, 61]]) assert.equal(pond.samples[x * 129 + y], CAPITAL_SEA, `corner ${x},${y} the sea's`);
+  for (const [x, y] of [[59, 60], [62, 61], [60, 62]]) assert.equal(pond.samples[x * 129 + y], CAPITAL_LAND, `${x},${y} the land's`);
 });
 
 test('AUDIT TESA II C9: a span\'s side is read from the heights Daggerfall\'s patches are laid from - the north edge the row above from the column before, the west the column before from the row above, the south and east its own last row and column', () => {
@@ -415,7 +426,7 @@ async function world() {
 }
 const onTrace = async () => { const w = await world(); setTamrielTrace(w.trace); setTamrielFit({ ox: 38 * 15.5, oy: 57 * 15.5, ppu: 15.5 }); return w; };
 
-test('AUDIT TESA II C1/C2 with ARENA2: every capital meets the land round it level - its seams to its neighbours and between its own slices 0.00 m on the drawn samples, DFU\'s cities\' tolerance; its rect Daggerfall\'s 11..116 on its outer sides; a shore capital at the sea\'s floor, the sea along its water\'s sides', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
+test('AUDIT TESA II C1/C2 with ARENA2: every capital meets the land round it level - its seams to its neighbours and between its own slices 0.00 m on the drawn samples, DFU\'s cities\' tolerance; its rect Daggerfall\'s 11..116 on its outer sides; a shore capital at the sea\'s floor (PIN MOVED, RUMARE-WATER: its land a freeboard over it, the Imperial City\'s too), the sea along its water\'s sides', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
   const { rows, blocks, maps, ground } = await onTrace();
   const tc = await import('../../src/world/tamrielCapitals.js');
   const { isMainStoryDungeon } = await import('../../src/world/dungeon/dungeonTextures.js');
@@ -453,7 +464,8 @@ test('AUDIT TESA II C1/C2 with ARENA2: every capital meets the land round it lev
     }
     assert.ok(outer < 0.01 && inner < 0.01, `${cap.key}: its seams ${outer.toFixed(3)} m to its neighbours, ${inner.toFixed(3)} m inside`);
     const flat = gen(pix[0].x, pix[0].y).avg * M;
-    if (cap.shore) assert.ok(Math.abs(flat - SCALED_OCEAN_ELEVATION * STREAMING_TERRAIN_SCALE) < 0.01, `${cap.key} at ${flat.toFixed(2)} m, the sea's floor`);
+    // PIN MOVED (RUMARE-WATER): its land a freeboard over the sea's floor - and the Imperial City's, its canal standing
+    if (cap.shore || cap.harbour) assert.ok(Math.abs(flat - (SCALED_OCEAN_ELEVATION + CAPITAL_FREEBOARD) * STREAMING_TERRAIN_SCALE) < 0.01, `${cap.key} at ${flat.toFixed(2)} m, a freeboard over the sea's floor`);
     // a water side: its shared edge the sea's height along most of it, its rim's tiles water out to it
     for (const side of cap.sea ?? []) {
       let sea = 0, all = 0, wet = 0, lanes = 0;

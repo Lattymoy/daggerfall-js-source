@@ -70,6 +70,6 @@ test('AUDIT TESA III E1-4 THE ISLES\' BAKE STANDS EACH ISLE\'S OWN OUTLINE: ethe
 test('AUDIT TESA III E1-4 the isles\' rects reach both bakes whole (by source): the host hands the template walk to etherPlaceRects, the client posts the rects to the worker as they are and builds this thread\'s bake on them', () => {
   assert.match(src('src/scenes/world.js'), /ether: etherSea \? etherPlaceRects\(_etherTemplates, locationRectReader\(maps, blocks, \{ regionIndex: ETHER_REGION, locationIndex: -1000 \}\)\) : null,/);
   const client = src('src/world/deepWater/deepWatersClient.js');
-  assert.match(client, /worker\.postMessage\(\{ t: 'build', woodsBytes: bytes, rects, ether \}, \[bytes\.buffer\]\);/);
-  assert.match(client, /worldBakes\(new DeepWatersBake\(\{ woods, global: record, locationRectAt: rectsLookup\(rects\) \}\), \{ woods: ether \? etherGround\(woods\) : woods, ether \}\)/);
+  assert.match(client, /worker\.postMessage\(\{ t: 'build', woodsBytes: bytes, rects, ether, continent \}, \[bytes\.buffer\]\);/);   // PIN MOVED (TAMRIEL-DEEP): and whether the continent's bake has room
+  assert.match(client, /worldBakes\(new DeepWatersBake\(\{ woods, global: record, locationRectAt: rectsLookup\(rects\) \}\), \{ woods: ether \? etherGround\(woods\) : woods, ether, continent \}\)/);   // PIN MOVED (TAMRIEL-DEEP)
 });

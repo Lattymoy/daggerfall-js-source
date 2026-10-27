@@ -282,7 +282,7 @@ test('SEAT1d THE HOSTS BY SOURCE: the service\'s routes and the Turning\'s write
   assert.match(w, /setCrimeRepFactor\(\(\) => seatEdicts\.crimeFactor\(\)\);/);
   assert.match(w, /levelBonus: \(\) => seatEdicts\.guardLevelBonus\(Math\.floor\(skyMinutes\(\)\)\),/);   // PIN MOVED (AUDIT SEATS-3 E1): the sky's night
   assert.match(w, /if \(seatEdicts\.bountyAt\(p\.px, p\.py\)\) items\.push\(\.\.\.generateLootItems\(lootKey,/);
-  assert.match(w, /sigilDrinks\(xp\); seatEdicts\.campCleared\(foe\?\.site\)\.catch\(\(\) => \{\}\); \}\);/);
+  assert.match(w, /sigilDrinks\(xp\); seatEdicts\.campCleared\(foe\?\.site \?\? lairDenOf\(modes\?\.mode === 'dungeon' \? modes\?\.dungeonLocation : null\)\)\.catch\(\(\) => \{\}\); \}\);/);   // PIN MOVED (AUDIT BAY-LEFT, its packages merged: the mode read guarded on its object, audit24_wave37). PIN MOVED (BAY-LEFT-SEA): a foe of no camp in a lair past the Bay - its den's (seatEdicts.js lairDenOf)
   assert.match(w, /minutes: \(\) => worldMinutes\(\),\n\s*regionAt: \(px, py\) => maps\.getRegionIndexAt\(px, py\),/);   // PIN MOVED (AUDIT SEATS-3 F5): the edicts' own, not REP4's
   assert.match(w, /board: \[town\.px, town\.py\],/);
   const wm = rd('src/scenes/worldModes.js');

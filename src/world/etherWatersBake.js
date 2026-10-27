@@ -36,6 +36,7 @@ import {
 import { ETHER_BOX, ISLE_CELL_PX, etherCellOf, etherFrame, isleAt } from './ethericSea.js';
 import { etherTemplateOf, etherPlaceId } from './etherPlaces.js';
 import { outlineOfBasis, rectOfBasis } from './terrain/terrainTiles.js';   // AUDIT TESA III E1-4: an isle's outline off its template's basis
+import { TAMRIEL_ROW } from './tamrielWatersBake.js';   // TAMRIEL-DEEP: the continent's rows routed to its bake
 
 /** The Eltheric Ocean's frame: its box, as the stream holds it (world/ethericSea.js etherFrame). */
 export const ETHER_FRAME = Object.freeze(etherFrame());
@@ -187,22 +188,30 @@ export class EtherWatersBake extends DeepWatersBake {
 }
 
 /**
- * THE BAKES A WORLD CARVES BY: the Bay's, and with the Eltheric Ocean standing (ETHER-DEEP), its own beside it - every
- * query answered by the bake whose frame holds its pixel (a pixel in neither the Bay's, which answers as the mod does
- * off its map). The frames lie thousands of pixels apart: no query's window reaches from one into the other.
+ * THE BAKES A WORLD CARVES BY: the Bay's, and with the Eltheric Ocean standing (ETHER-DEEP), its own beside it, and with
+ * the land past the Bay standing (TAMRIEL-DEEP, world/tamrielWatersBake.js), the continent's, set when its trace lands -
+ * every query answered by the bake whose frame holds its pixel (a pixel in none the Bay's, which answers as the mod does
+ * off its map). The Eltheric's box lies thousands of pixels from the others; the continent's frame holds the Bay's map,
+ * whose pixels stay the Bay's bake's (its seam reads the Bay's sea from the Bay's bake).
  */
 export class DeepWatersBakes {
-  /** @param {DeepWatersBake} bay @param {EtherWatersBake} ether */
-  constructor(bay, ether) {
+  /** @param {DeepWatersBake} bay @param {?EtherWatersBake} ether @param {?DeepWatersBake} [tamriel] */
+  constructor(bay, ether, tamriel = null) {
     this.bay = bay;
     this.ether = ether;
+    this.tamriel = tamriel;
     this.loaded = true;
     this.hasFineWaterMask = true;
   }
+  /** TAMRIEL-DEEP: the continent's bake, set when the trace lands (or null: none again). @param {?DeepWatersBake} bake */
+  setTamriel(bake) { this.tamriel = bake; }
   /** @returns {DeepWatersBake} - AUDIT ETHER-OW C1-5: the bake whose frame answers the pixel, by the one law of it
    *  (waterFrameOf, the host's own) */
-  of(px, py) { return waterFrameOf(px, py, true) === ETHER_FRAME ? this.ether : this.bay; }
-  frameOf(px, py) { return waterFrameOf(px, py, true); }
+  of(px, py) {
+    const f = waterFrameOf(px, py, !!this.ether, this.tamriel?.frame ?? null);
+    return f === ETHER_FRAME ? /** @type {DeepWatersBake} */ (this.ether) : f === BAY_FRAME ? this.bay : /** @type {DeepWatersBake} */ (this.tamriel);
+  }
+  frameOf(px, py) { return this.of(px, py).frameOf(); }
   holdsSea(px, py) { return this.of(px, py).holdsSea(px, py); }
   sampleDistanceMeters(x, y, fx, fz) { return this.of(x, y).sampleDistanceMeters(x, y, fx, fz); }
   sampleEdgeDistanceMeters(x, y, fx, fz) { return this.of(x, y).sampleEdgeDistanceMeters(x, y, fx, fz); }
@@ -217,22 +226,28 @@ export class DeepWatersBakes {
   exportPlanes(px, py) { return this.of(px, py).exportPlanes(px, py); }
   adoptPlanes(rows) {
     const list = rows ?? [];
-    this.bay.adoptPlanes(list.filter((r) => r?.f !== ETHER_ROW));
-    this.ether.adoptPlanes(list.filter((r) => r?.f === ETHER_ROW));
+    this.bay.adoptPlanes(list.filter((r) => r?.f !== ETHER_ROW && r?.f !== TAMRIEL_ROW));
+    this.ether?.adoptPlanes(list.filter((r) => r?.f === ETHER_ROW));
+    this.tamriel?.adoptPlanes(list.filter((r) => r?.f === TAMRIEL_ROW));
   }
-  evictOutside(px, py, radius) { this.bay.evictOutside(px, py, radius); this.ether.evictOutside(px, py, radius); }
+  evictOutside(px, py, radius) { this.bay.evictOutside(px, py, radius); this.ether?.evictOutside(px, py, radius); this.tamriel?.evictOutside(px, py, radius); }
 }
 
 /**
- * The world's bakes: the Bay's alone, or with the Eltheric's beside it (`ether` its rects, or true for none known).
+ * The world's bakes: the Bay's alone, or with the Eltheric's beside it (`ether` its rects, or true for none known), or
+ * with room for the continent's (`continent`: the land past the Bay streams - TAMRIEL-DEEP; its bake is set when the trace
+ * lands, DeepWatersBakes.setTamriel).
  * @param {any} bay
- * @param {{ woods?: any, ether?: any }} [opts]
+ * @param {{ woods?: any, ether?: any, continent?: boolean }} [opts]
  */
-export function worldBakes(bay, { woods = null, ether = null } = {}) {
-  if (!bay || !ether) return bay;
-  return new DeepWatersBakes(bay, new EtherWatersBake({ woods, rects: ether === true ? null : ether }));
+export function worldBakes(bay, { woods = null, ether = null, continent = false } = {}) {
+  if (!bay || (!ether && !continent)) return bay;
+  return new DeepWatersBakes(bay, ether ? new EtherWatersBake({ woods, rects: ether === true ? null : ether }) : null);
 }
 
-/** A pixel's frame for a world with the Eltheric standing or not: the Eltheric's in its box, the Bay's else (the mod's
- *  own clamps, off its map). Pure - the host asks it before the bake is in. */
-export const waterFrameOf = (px, py, ether) => (ether && inFrame(ETHER_FRAME, px, py) ? ETHER_FRAME : BAY_FRAME);
+/** A pixel's frame for a world with the Eltheric standing or not, and TAMRIEL-DEEP the continent's frame where its bake
+ *  stands (`tamriel`, that bake's frame, or null): the Eltheric's in its box, the continent's past the Bay's map within
+ *  its frame, the Bay's else (the mod's own clamps, off its map). Pure - the host asks it before the bake is in.
+ *  @param {number} px @param {number} py @param {boolean} ether @param {?{ x0: number, y0: number, w: number, h: number }} [tamriel] */
+export const waterFrameOf = (px, py, ether, tamriel = null) => (ether && inFrame(ETHER_FRAME, px, py) ? ETHER_FRAME
+  : tamriel && !inFrame(BAY_FRAME, px, py) && inFrame(tamriel, px, py) ? tamriel : BAY_FRAME);

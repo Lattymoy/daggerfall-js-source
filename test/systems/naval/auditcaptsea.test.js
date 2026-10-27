@@ -645,10 +645,10 @@ test('AUDIT CAPTAIN\'S SEA P4/P6/P8/P9/P10: a death past the Veil rises at the n
   assert.match(w, /\?\? \[\.\.\.locationIndex\.values\(\)\]\.find\(\(l\) => \(l\?\.ether \|\| l\?\.arena \|\| l\?\.country \|\| l\?\.capital\) && l\.name === locationName && l\.regionName === regionName\) \?\? null;/);
   assert.match(w, /regionName: REGION_NAMES\[ETHER_REGION\] \?\? ETHER_REGION_NAME/);
   const m = rd('src/scenes/worldModes.js');
-  assert.match(m, /const houseOwnedAt = \(b, key\) => !isEtherPlaceId\(homeTownOf\(b\)\) && !isArenaPlaceId\(homeTownOf\(b\)\) && !isCountryPlaceId\(homeTownOf\(b\)\) && isHouseOwned\(playerEntity\.houses \?\? \[\], b\?\.regionIndex \?\? 0, key, homeTownOf\(b\)\);/);   // PIN MOVED (AUDIT RELEASE R2-9): the town asking named; PIN MOVED (TESA2, bible/03-World/Arena-Provinces.md): nor an Arena town's - each answers the clamp's region, so a deed's key would own the same key in all of them; PIN MOVED (TESA7): nor a country place's, the same way
+  assert.match(m, /const houseOwnedAt = \(b, key\) => !isEtherPlaceId\(homeTownOf\(b\)\) && isHouseOwned\(playerEntity\.houses \?\? \[\], b\?\.regionIndex \?\? 0, key, homeTownOf\(b\)\);/);   // PIN MOVED (BAY-LEFT-B): an Arena town's and a country place's read - held to its own town (banking.js deedHeldIn); the Veil's guard stands   // PIN MOVED (AUDIT RELEASE R2-9): the town asking named; PIN MOVED (TESA2, bible/03-World/Arena-Provinces.md): nor an Arena town's - each answers the clamp's region, so a deed's key would own the same key in all of them; PIN MOVED (TESA7): nor a country place's, the same way
   assert.equal((m.match(/isHouseOwned\(playerEntity\.houses \?\? \[\]/g) ?? []).length, 1, 'every town building through it');
-  assert.match(m, /if \(isEtherPlaceId\(dir\.mapId\) \|\| /);   // PIN MOVED (at the merge of main into TESA): one guard with the Arena town's and the country place's
-  assert.match(w, /portTown: \(loc\.ether \? loc\.etherKind === 'port' : loc\.arena \|\| loc\.capital \? !!loc\.arena\?\.port : modSetting\('travel-options', 'Enabled'\) === true/);   // PIN MOVED (AUDIT-TESA A4-F4): a place past the Bay by its Arena place's port
+  assert.match(m, /if \(isEtherPlaceId\(dir\.mapId\)\) return \[\];/);   // PIN MOVED (at the merge of main into TESA): one guard with the Arena town's and the country place's; PIN MOVED (BAY-LEFT-B): the Veil's alone - past the Bay houses are sold
+  assert.match(w, /portTown: \(loc\.ether \? loc\.etherKind === 'port' : loc\.arena \|\| loc\.capital \? \(loc\.exterior\?\.exteriorData\?\.portTownAndUnknown \?\? 0\) !== 0 : modSetting\('travel-options', 'Enabled'\) === true/);   // PIN MOVED (BAY-LEFT-SEA): a place past the Bay by its own port byte, a capital's harbour's too; PIN MOVED (AUDIT-TESA A4-F4): a place past the Bay by its Arena place's port
 });
 
 test('AUDIT CAPTAIN\'S SEA P5: the Fleet never carries a ship across the Veil - no Summon to the far side, no Send away from it; laid up she keeps her side; past the Veil the nearest port is the sea\'s (mutants: the summon\'s, the away\'s, the side kept, the near port)', async () => {
@@ -1568,8 +1568,9 @@ test('AUDIT CAPTAIN\'S SEA B6/B8/B10: a chart\'s port drawn again till one has o
   // B10's edge - past the map only where the land beyond the Bay stands - is the open sea's own (run by
   // test/systems/naval/fb1014_inlandports.test.js)
   assert.match(rd('src/scenes/world.js'), /\n {4}seaAt: openSea, {3}\/\//);
-  // PIN MOVED (AUDIT TESA II P12): past the map's edge the continent's sea leaves the picture's lakes out (world/arenaPlaces.js pastBayLakeAt)
-  assert.match(rd('src/scenes/world.js'), /\n {4}if \(!\(x >= 0 && y >= 0 && x < MAP_WIDTH && y < MAP_HEIGHT\)\) return tamrielLand && seaPixel\(x, y\) && !pastBayLakeAt\(x, y\);[^\n]*\n {4}_openSea \?\?= openSeaOf\(seaPixel, MAP_WIDTH, MAP_HEIGHT\);/);
+  // PIN MOVED (AUDIT TESA II P12): past the map's edge the continent's sea leaves the picture's lakes out (world/arenaPlaces.js pastBayLakeAt);
+  // PIN MOVED (RUMARE-WATER): and takes the Imperial City's lake (world/rumareWaters.js rumareSeaPixel)
+  assert.match(rd('src/scenes/world.js'), /\n {4}if \(!\(x >= 0 && y >= 0 && x < MAP_WIDTH && y < MAP_HEIGHT\)\) return tamrielLand && \(\(seaPixel\(x, y\) && !pastBayLakeAt\(x, y\)\) \|\| rumareSeaPixel\(x, y\)\);[^\n]*\n {4}_openSea \?\?= openSeaOf\(seaPixel, MAP_WIDTH, MAP_HEIGHT\);/);
 });
 
 test('AUDIT CAPTAIN\'S SEA B9/B11/B13: a cache\'s and a chart\'s things kept in an overladen pack (they went down unsaid); the exchange caps a purchase at her room before she would lie dead in the water, and says the room; "1 hour left" (mutants: the force, the room\'s cap, the lede, the noun)', async () => {

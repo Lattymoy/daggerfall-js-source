@@ -39,6 +39,11 @@ import { findTownPath } from '../livingWorld/townPaths.js';
  *  a road). Five times a walk: a town of eight blocks crossed in under a minute, the streets' turns taken at a pace the
  *  motor and the collider meet a frame at a time. */
 export const TOWN_PACE_MAX = 5;
+/** IC-PACE (2026-10-26, the owner: "For the Imperial City specifically, the travel speed should be 60x instead of 5"):
+ *  the fastest a journey runs in the Imperial City's streets - forty-nine pixels of them (5.7 km across: TS5, bible/03-World/
+ *  Town-Shapes.md), which at five times a walk took a quarter of an hour of real time to cross. Its streets are still
+ *  walked as a town's (the way, the gates, the steering); only the clock is let run. */
+export const IMPERIAL_PACE_MAX = 60;
 /** How far round a cell that is no street (a doorstep, a building's footprint the traveller stands at the edge of) the
  *  nearest street cell is looked for, cells. */
 export const TOWN_SNAP_CELLS = 8;

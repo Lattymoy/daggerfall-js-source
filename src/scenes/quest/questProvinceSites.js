@@ -46,7 +46,7 @@
 // Not a DFU member: DFU has no provinces. Ledger A (R2-5).
 // ═══════════════════════════════════════════════════════════════════
 import { REGION_NAMES, isProvinceRegion, theatreOfRegion } from '../../formats/mapsTables.js';
-import { mapPixelToLongitudeLatitude, longitudeLatitudeToMapPixel } from '../../formats/mapsFile.js';
+import { mapPixelToLongitudeLatitude, longitudeLatitudeToMapPixel, DUNGEON_TYPES } from '../../formats/mapsFile.js';
 import { CAPITALS, capitalOnPixel, capitalSliceName, capitalDims, capitalCentre, capitalSpanPixels } from '../../world/tamrielCapitals.js';
 
 /** R2-5e: how far, map pixels (the travel reckoning's longest axis), a province's countryside places are drawn from the
@@ -158,12 +158,17 @@ export function* capitalSlicesNear(loc, standAt, admits = null, indexAt = () => 
 }
 
 /**
- * A MapTable row for a place past the Bay.
- * @param {{ mapId: number, name: string, px: number, py: number, type: number, dungeonType?: number }} p
+ * A MapTable row for a place past the Bay. BAY-LEFT-B: with its location's KEY (`tableKey` - DFU's MapTable.Key, its
+ * buildings' directory, world/locationKey.js; the talk's regional "Where is" counts a region's rows by it,
+ * answerPipeline.js getLocationWithRegionalBuilding - 0, none, where it is not known), and a place with no dungeon
+ * (a registry's town - its `hasDungeon` false - or a row that names no dungeon type) NoDungeon, as MAPS.BSA's towns are
+ * (255): a town's row read as type 0, a crypt, to the Mages Guild's scrying (systems/loot/lootScry.js nearestHidden).
+ * @param {{ mapId: number, name: string, px: number, py: number, type: number, dungeonType?: number, hasDungeon?: boolean, tableKey?: ?number }} p
  */
 export function provinceRow(p) {
   const ll = mapPixelToLongitudeLatitude(p.px, p.py);
-  return Object.freeze({ mapId: p.mapId >>> 0, name: p.name, px: p.px, py: p.py, locationType: p.type, dungeonType: p.dungeonType ?? 0, longitude: ll.x, latitude: ll.y, discovered: false });
+  const dungeonType = p.hasDungeon === false ? DUNGEON_TYPES.NoDungeon : p.dungeonType ?? DUNGEON_TYPES.NoDungeon;
+  return Object.freeze({ mapId: p.mapId >>> 0, name: p.name, px: p.px, py: p.py, locationType: p.type, dungeonType, key: (p.tableKey ?? 0) >>> 0, longitude: ll.x, latitude: ll.y, discovered: false });
 }
 
 /**
@@ -179,14 +184,16 @@ export function provinceRow(p) {
  *   refresh?: () => void,
  *   sliceAt?: (px: number, py: number) => any,
  *   sitesIndexOf?: (loc: any) => readonly any[],
+ *   tableKeyAt?: (px: number, py: number) => ?number,
  * }} deps `regionAt` the politic map's region (maps.getRegionIndexAt); `standAt` the location the build stands on a pixel
  *   past the Bay, or null; `lairsNear` the lairs the build stands within a reach of a pixel; `origin` the questor's pixel
  *   (the quest layer's playerPixel); `heldSites` every quest's site details (the machine's); `refresh` the places'
  *   registry brought up to date (tamrielPlacesHost.js registerTamrielPlaces); `sliceAt` a capital's slice on a pixel laid
  *   out before it stands (tamrielPlacesHost.js capitalSliceAt), `sitesIndexOf` its sites by kind (quest/place.js
- *   townSitesIndex) - AUDIT RELEASE R2-5f
+ *   townSitesIndex) - AUDIT RELEASE R2-5f; `tableKeyAt` a place's MapTable key as its location carries it, read without
+ *   standing it (tamrielPlacesHost.js tableKeyAt, BAY-LEFT-B), or null
  */
-export function createQuestProvinceSites({ worldPlaces, regionAt, standAt, lairsNear = () => [], countryNear = () => [], origin = () => null, heldSites = () => [], refresh = () => {}, sliceAt = () => null, sitesIndexOf = () => [] }) {
+export function createQuestProvinceSites({ worldPlaces, regionAt, standAt, lairsNear = () => [], countryNear = () => [], origin = () => null, heldSites = () => [], refresh = () => {}, sliceAt = () => null, sitesIndexOf = () => [], tableKeyAt = () => null }) {
   /** R2-5f: A CAPITAL SLICE'S SITES BY KIND, kept a slice (by its pixel) for the session - quest/place.js townSitesIndex over
    *  the slice as the build stands it, read off its clone where it has not stood (`sliceAt`, scenes/tamrielPlacesHost.js
    *  capitalSliceAt): the law no quest or owner changes, the same on every client. @type {Map<string, readonly any[]>} */
@@ -236,12 +243,12 @@ export function createQuestProvinceSites({ worldPlaces, regionAt, standAt, lairs
     const add = (/** @type {any} */ row) => { if (!ids.has(row.mapId) && !names.has(row.name)) { ids.add(row.mapId); names.add(row.name); rows.push(row); } };
     for (const p of worldPlaces.inTheatre(theatreOfRegion(r))) {
       if (regionAt(p.px, p.py) !== r || isUnsitedSlice(p.px, p.py)) continue;
-      add(provinceRow({ ...p, name: sliceQuestName(p.px, p.py) ?? p.name }));   // R2-5b: a slice under its quest name
+      add(provinceRow({ ...p, name: sliceQuestName(p.px, p.py) ?? p.name, tableKey: tableKeyAt(p.px, p.py) }));   // R2-5b: a slice under its quest name; BAY-LEFT-B: its key
     }
     if (o && Number.isFinite(o.x) && Number.isFinite(o.y)) {
       // R2-5e: the countryside's places nearest the questor, after the listed towns - a courier's town near, as on the Bay
-      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS)) if (regionAt(c.px, c.py) === r) add(provinceRow(c));
-      for (const l of lairsNear(o.x, o.y, PROVINCE_LAIR_REACH, PROVINCE_LAIR_COUNT, PROVINCE_LAIR_ROLLS)) if (regionAt(l.px, l.py) === r) add(provinceRow(l));
+      for (const c of countryNear(o.x, o.y, PROVINCE_COUNTRY_REACH, PROVINCE_COUNTRY_COUNT, PROVINCE_COUNTRY_ROLLS)) if (regionAt(c.px, c.py) === r) add(provinceRow({ ...c, tableKey: tableKeyAt(c.px, c.py) }));
+      for (const l of lairsNear(o.x, o.y, PROVINCE_LAIR_REACH, PROVINCE_LAIR_COUNT, PROVINCE_LAIR_ROLLS)) if (regionAt(l.px, l.py) === r) add(provinceRow({ ...l, tableKey: tableKeyAt(l.px, l.py) }));
     }
     for (const row of found.get(r)?.values() ?? []) add(row);
     const region = regionOf(r, rows);
@@ -265,7 +272,7 @@ export function createQuestProvinceSites({ worldPlaces, regionAt, standAt, lairs
       if (sd?.regionIndex !== r || sd.locationName !== name || !p) continue;
       const loc = questView(standAt(p.x, p.y));
       if (!loc || loc.name !== name || (loc.mapTableData?.mapId >>> 0) !== (sd.mapId >>> 0)) continue;
-      const row = provinceRow({ mapId: sd.mapId, name, px: p.x, py: p.y, type: loc.mapTableData?.locationType ?? 0, dungeonType: loc.mapTableData?.dungeonType ?? 0 });
+      const row = provinceRow({ mapId: sd.mapId, name, px: p.x, py: p.y, type: loc.mapTableData?.locationType ?? 0, dungeonType: loc.mapTableData?.dungeonType ?? 0, tableKey: loc.mapTableData?.key });
       if (!found.has(r)) found.set(r, new Map());
       /** @type {Map<string, any>} */ (found.get(r)).set(name, row);
       const table = tables.get(r)?.region;

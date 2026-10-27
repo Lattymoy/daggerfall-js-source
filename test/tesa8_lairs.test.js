@@ -43,7 +43,7 @@ test('TESA8 the cell: 8 x 8 pixels of the countryside\'s grid, 2^19 of them; one
     assert.equal(id >>> 20, LAIR_LANE);
     assert.equal(id & 0xfffff, 0x80000 | c, 'its low 20 the cell');
     assert.ok((id & 0xfffff) >= 500000, 'past every Bay pixel id');
-    assert.ok(isCountryPlaceId(id), 'a place the countryside made: no house sold, no deed read');
+    assert.ok(isCountryPlaceId(id), 'a place the countryside made');   // BAY-LEFT-B: its deed (were a house in one) held to its own map id, banking.js deedHeldIn
     assert.equal(lairLocationIndex(c), -(LAIR_INDEX_BASE + c));
     assert.ok(lairLocationIndex(c) < -(COUNTRY_INDEX_BASE + (1 << 25)), 'past the countryside\'s indices');
     lows.add(id & 0xfffff);
@@ -252,7 +252,7 @@ test('TESA8 the host by source: the lairs\' templates, count and pools off the g
   assert.match(W, /const bayLandNow = \(\) => \(_pastBay\.bayLand \?\?= bayLand\(/);
   assert.match(W, /const countryRatesNow = \(\) => \(_pastBay\.countryRates \?\?= countryRates\(_countryCounts, bayLandNow\(\)\)\);/);
   assert.match(W, /const lairRatesNow = \(\) => \(_pastBay\.lairRates \?\?= countryRates\(_lairCounts, bayLandNow\(\), LAIR_TYPES\)\);/);
-  assert.match(W, /return \(params\.has\('online'\) && zoneHalls\.standIn\(cyrodiilMask\(\), px, py\)\) \|\| capitalLocationAt\(px, py\) \|\| \(_arenaTemplates && arenaLocationAt\(px, py\)\) \|\| countryLocationAt\(px, py\) \|\| lairLocationAt\(px, py\);/);   // PIN MOVED (TESA10): a capital first; PIN MOVED (AUDIT TESA II P1): the open zone's hall before them
+  assert.match(W, /return \(locationIndex\.get\(`\$\{px\},\$\{py\}`\)\?\.superTier \? locationIndex\.get\(`\$\{px\},\$\{py\}`\) : null\) \|\| \(params\.has\('online'\) && zoneHalls\.standIn\(cyrodiilMask\(\), px, py\)\) \|\| host\.capitalLocationAt\(px, py\) \|\| \(_arenaTemplates && host\.arenaLocationAt\(px, py\)\) \|\| host\.countryLocationAt\(px, py\) \|\| host\.lairLocationAt\(px, py\) \|\| spawnPastBayAt\(px, py\);/);   // PIN MOVED (TESA10): a capital first; PIN MOVED (AUDIT TESA II P1): the open zone's hall before them   // PIN MOVED (HOST-SPLIT, SPAWN-WORLD 2026-10-26): _locationToBuild is scenes/spawnStandHost.js's, the places' rolls through `host`   // PIN MOVED (SPAWN-WORLD 2026-10-26): online, the spawner's last - never on a place   // PIN MOVED (WW5, bible/03-World/World-Wide.md WW5): a province's Hollow first, as its lane stands it in the index (scenes/superDungeon/sdLanes.js) - carried into scenes/spawnStandHost.js at the packages' merge (AUDIT BAY-LEFT)
   assert.match(W, /if \(had\?\.country && !had\.country\.dungeon\) \{/, 'the countryside leaves a lair to its own');
 });
 

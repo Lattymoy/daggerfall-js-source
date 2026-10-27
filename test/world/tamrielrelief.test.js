@@ -216,7 +216,7 @@ test('TAMRIEL-RELIEF the wiring, by source: the data its own chunk (no static im
   assert.match(read('src/world/tamriel/tamrielRelief.js'), /return maskRelief\(decodeRelief\(RELIEF_DATA\), trace\);/, 'AUDIT TESA II G1: the trace\'s mask laid on the player\'s machine');
   assert.match(read('src/ui/tamrielTrace.js'), /if \(trace && relief\) trace\.relief = await loadRelief\(trace\)\.catch\(\(e\) => \(console\.warn\([^\n]*, null\)\);/, 'AUDIT TESA II G2: a relief that does not load is its own loss');
   assert.match(read('tools/bakeTamrielRelief.mjs'), /import \{ RELIEF_SCALE \} from '\.\.\/src\/world\/tamriel\/tamrielRelief\.js';/, 'AUDIT TESA II G8: the grid\'s one home');
-  assert.match(read('tools/bakeTamrielRelief.mjs'), /const trace = await preloadTamrielTrace\(\{ fetchBytes, palette: pal, relief: false \}\);/, 'AUDIT TESA II G2: the bake never reads its own output');
+  assert.match(read('tools/bakeTamrielRelief.mjs'), /const trace = await preloadTamrielTrace\(\{ fetchBytes, palette: pal, relief: false, niben: false \}\);/, 'AUDIT TESA II G2: the bake never reads its own output - PIN MOVED (NIBEN-SEA): and reads the painting\'s own coasts');
   assert.doesNotMatch(read('tools/bakeTamrielRelief.mjs'), /export const (RELIEF_SCALE|FIT) =/, 'AUDIT TESA II G8: no second literal of the grid or the fit');
   assert.match(read('src/world/tamriel/tamrielLand.js'), /relief: trace\.relief \?\? null \};/);
   const client = read('src/world/terrain/terrainGenClient.js');
@@ -240,6 +240,7 @@ test('TAMRIEL-RELIEF with ARENA2: the bake re-run is the module byte for byte, o
   const { bayToPicture, pictureToBay, tamrielFrameInBay } = await import('../../src/world/tamriel/tamrielFrame.js');
   const { groundWoods, bayEdgeDistance, SEAM_PX, BLEND_PX } = await import('../../src/world/tamriel/tamrielGround.js');
   const { provinceKeyAt } = await import('../../src/world/tamriel/tamrielLand.js');
+  const { rumareMouthPixel } = await import('../../src/world/rumareWaters.js');
   const { tamrielBiomeAt } = await import('../../src/world/tamriel/tamrielBiomes.js');
   const pal = new DFPalette(); pal.load(await fetchBytes('ART_PAL.COL'), 'ART_PAL.COL');
   const trace = await preloadTamrielTrace({ fetchBytes, palette: pal });
@@ -249,7 +250,8 @@ test('TAMRIEL-RELIEF with ARENA2: the bake re-run is the module byte for byte, o
     const fit = bakeFit({ trace, woods, maps });
     assert.deepEqual(fit, { ox: 38 * 15.5, oy: 57 * 15.5, ppu: 15.5 }, 'the freeware\'s fit (test/ui/tamriel4.test.js)');
     setTamrielFit(fit);
-    const r = await bakeRelief({ heightmapBytes: readFileSync(join(ROOT, SOURCE)), trace: { ...trace, relief: null }, woods, bayToPicture });
+    const painted = await preloadTamrielTrace({ fetchBytes, palette: pal, relief: false, niben: false });   // PIN MOVED (NIBEN-SEA): the bake's own reading
+    const r = await bakeRelief({ heightmapBytes: readFileSync(join(ROOT, SOURCE)), trace: painted, woods, bayToPicture });
     assert.equal(moduleText(r), read(OUT), 'the module is the bake\'s');
     assert.ok(r.iouWarp > r.iouFit && r.iouWarp > 0.9, `the warp brings the coasts on (${r.iouFit} -> ${r.iouWarp})`);
     // AUDIT TESA II G1: the module carries none of the trace - its own land (the heightmap's, at LAND_LEVEL's byte) is not the
@@ -276,7 +278,9 @@ test('TAMRIEL-RELIEF with ARENA2: the bake re-run is the module byte for byte, o
       // trace's own side at each of its pixels' centres, a smooth waterline between them; CYRODIIL-SHORES' lakes' own
       // shore folded into it
       const [qx, qy] = bayToPicture(x + 0.5, y + 0.5), strait = straitAt(qx, qy), v = g.getHeightMapValue(x, y);   // TESA x AUDIT TESA II: a traced strait's corner the sea's
-      const land = !!provinceKeyAt(qx, qy) && !strait;
+      // PIN MOVED (RUMARE-WATER, test/world/rumarewater.test.js): the Imperial City's three span pixels the Waterfront's mouth
+      // crosses the sea's (world/rumareWaters.js rumareMouthPixel), the canal's water laid on into the city
+      const land = !!provinceKeyAt(qx, qy) && !strait && !rumareMouthPixel(x, y);
       if (d <= SEAM_PX + BLEND_PX) { if (land && v <= WATER_BYTE) blendWet++; continue; }
       if (strait) straits++;
       if ((v > 3) !== land) bad++;

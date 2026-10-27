@@ -167,14 +167,16 @@ export function roadsteadOf(port, open) {
  * its LANE_NEIGHBOURS nearest within LANE_MAX_PX, each pair once (the lower id first). Answers `[{ key, a, b }]`, `a`
  * and `b` `{ id, name, px, py, region, road }` - the same list on every client, whatever port it stands by. AUDIT TESA
  * II P7: `maxPx` the reach - the Bay's LANE_MAX_PX by default; the lanes past the Bay have their own
- * (scenes/naval/worldLanes.js BEYOND_LANE_MAX_PX: their ports stand hundreds of pixels apart).
+ * (scenes/naval/worldLanes.js BEYOND_LANE_MAX_PX: their ports stand hundreds of pixels apart); NIBEN-SEA: a port's own
+ * `reach` where it is farther (a harbour up a canal, world/worldWide/worldPorts.js CANAL_PORT_REACH_PX).
  */
 export function laneNetwork(ports, open, maxPx = LANE_MAX_PX) {
   const sea = [...ports].sort((p, q) => p.id - q.id).map((p) => ({ ...p, road: roadsteadOf(p, open) })).filter((p) => p.road);
   const pairs = new Map();
   for (const p of sea) {
+    const reach = Math.max(maxPx, p.reach ?? 0);   // NIBEN-SEA: a harbour up a canal reaches farther (world/worldWide/worldPorts.js)
     const near = sea.filter((q) => q !== p).map((q) => ({ q, d: Math.hypot(q.road.x - p.road.x, q.road.y - p.road.y) }))
-      .filter((x) => x.d > 0 && x.d <= maxPx).sort((x, y) => x.d - y.d || x.q.id - y.q.id).slice(0, LANE_NEIGHBOURS);
+      .filter((x) => x.d > 0 && x.d <= reach).sort((x, y) => x.d - y.d || x.q.id - y.q.id).slice(0, p.neighbours ?? LANE_NEIGHBOURS);   // RUMARE-WATER: a canal harbour's own count
     for (const { q } of near) {
       const [a, b] = p.id < q.id ? [p, q] : [q, p];
       const key = `${a.id}-${b.id}`;

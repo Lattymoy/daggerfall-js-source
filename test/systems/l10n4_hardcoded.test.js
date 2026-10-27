@@ -165,7 +165,7 @@ const HARDCODED = {
   'src/net/staffCommands.js': 10,
   'src/net/staffTeleport.js': 7,
   'src/net/tideLaw.js': 21,
-  'src/net/townEconBook.js': 5,   // AUDIT TOWN-ECON 2 SVC-1: a developer's `/town audit` and `/town strike` - their usage and the audit's lines, a developer's words (as npcHallBook.js's `/hall` and townSeatBook.js's `/seat`), never a player's
+  'src/net/townEconBook.js': 6,   // AUDIT TOWN-ECON 2 SVC-1: a developer's `/town audit` and `/town strike` - their usage and the audit's lines, a developer's words (as npcHallBook.js's `/hall` and townSeatBook.js's `/seat`), never a player's; BAY-LEFT-SEA (+1): the audit's next page, the same developer's
   'src/net/townSeatBook.js': 37,
   'src/net/townSeatLaw.js': 176,   // AUDIT DOMAINS C2: the seat's info line through the text core whole
   'src/net/tradeSession.js': 44,
@@ -289,6 +289,7 @@ const HARDCODED = {
   'src/scenes/interior.js': 1,
   'src/scenes/legacyHost.js': 66,
   'src/scenes/livingWorld/livingRoads.js': 3,
+  'src/scenes/marketPiecesHost.js': 4,   // BAY-LEFT-SEA (HOST-SPLIT): the market's pieces' words, moved verbatim out of world.js
   'src/scenes/merchantYardsHost.js': 2,
   'src/scenes/mineHost.js': 13,
   'src/scenes/naval/navalHost.js': 136,
@@ -320,7 +321,7 @@ const HARDCODED = {
   'src/scenes/treeHost.js': 3,
   'src/scenes/windfallHost.js': 5,
   'src/scenes/vendorHost.js': 7,   // VENDOR-LOST: the home traders' words, moved verbatim out of world.js
-  'src/scenes/world.js': 325,   // TESA x MAIN (the merge of main into TESA, AUDIT RELEASE R3): 325 measured - TESA's -6 (the quick save's words moved whole to scenes/worldQuickSave.js) on main's 331. VENDOR-LOST: -7, the home traders' words moved verbatim to vendorHost.js; QUEST-AUDIT III SHARE-WORDS: -4, the share's lines through questShare.js's t(); AUDIT QA3: -2, the sender's (shareSentLine); STAFF-PANEL5-FOLLOW-FIX: -1 already at the relay base (ec3d522d61), written down; FB1020c ONE-SAVE: the kept words moved to the Stores page (BAG_PAGE_WORDS.kept); CABIN-FOES: Transport > Ship's helm refusal read off CABIN_REFUSAL; AUDIT SEA VENTURES C6: -1, /unstuck's outdoor refusal read off the zone's words; SEASON-BOOK: -1, /mail's refusal read off chatCommands.js pauseCommandRefusal (344 at the merge of main #1161: both -1s stand)
+  'src/scenes/world.js': 321,   // BAY-LEFT-SEA: -4, the market's pieces' words moved verbatim to scenes/marketPiecesHost.js (HOST-SPLIT). TESA x MAIN (the merge of main into TESA, AUDIT RELEASE R3): 325 measured - TESA's -6 (the quick save's words moved whole to scenes/worldQuickSave.js) on main's 331. VENDOR-LOST: -7, the home traders' words moved verbatim to vendorHost.js; QUEST-AUDIT III SHARE-WORDS: -4, the share's lines through questShare.js's t(); AUDIT QA3: -2, the sender's (shareSentLine); STAFF-PANEL5-FOLLOW-FIX: -1 already at the relay base (ec3d522d61), written down; FB1020c ONE-SAVE: the kept words moved to the Stores page (BAG_PAGE_WORDS.kept); CABIN-FOES: Transport > Ship's helm refusal read off CABIN_REFUSAL; AUDIT SEA VENTURES C6: -1, /unstuck's outdoor refusal read off the zone's words; SEASON-BOOK: -1, /mail's refusal read off chatCommands.js pauseCommandRefusal (344 at the merge of main #1161: both -1s stand)
   'src/scenes/worldModes.js': 83,
   'src/systems/aetheric.js': 168,   // SEA-SET: +17, the Eltheric Tidemail's nine names and lore, as the Weave's - the records' own data, minted onto the item; WITCH1: the Wyrd's Raiment's nine pieces, each its name and its affixes' names (+18) - an item's canonical name, as every Aetheric set's; STAR7: +18, the Starspun Weave's nine names and lore - the records' own data, minted onto the item, never read at load
   'src/systems/alchemyItems.js': 3,
@@ -334,7 +335,7 @@ const HARDCODED = {
   'src/systems/banking.js': 20,
   'src/systems/betterAmbience.js': 42,
   'src/systems/booksData.js': 85,
-  'src/systems/bounty/bountyBoard.js': 49,
+  'src/systems/bounty/bountyBoard.js': 41,   // QUARRY-WORLD (2026-10-27): the beasts' words through t() (bounty.foes.*)
   'src/systems/bounty/bountyReward.js': 2,
   'src/systems/breachBook.js': 1,
   'src/systems/buildingLocks.js': 1,
@@ -384,6 +385,7 @@ const HARDCODED = {
   'src/systems/equip.js': 3,
   'src/systems/eventTimers.js': 50,
   'src/systems/faction/factionStanding.js': 3,
+  'src/systems/faction/provinceFactions.js': 1,   // PROVINCE-COURTS (bible/03-World/World-Wide.md): Cyrodiil's ruler, Uriel Septim VII - a proper name, Daggerfall's own Emperor (TEXT.RSC), a faction's name and its key
   'src/systems/features.js': 127,
   'src/systems/fleet.js': 10,
   'src/systems/fletching.js': 1,

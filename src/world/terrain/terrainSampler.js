@@ -37,6 +37,14 @@ export const DEFAULT_TERRAIN_SCALE = 1.5; // TerrainHelper.defaultTerrainScale -
  *  commented-out constant is 1539 * 1.25 = 1923.75): every hill stood a fifth taller than DFU's. Every height the
  *  streamed world draws, collides with or stands things on reads THIS. */
 export const STREAMING_TERRAIN_SCALE = 1.25;
+/** BAY-LEFT-GROUND (bible/03-World/Landforms.md "BAY-LEFT-GROUND", D5): THE LAW OF A RECORD'S HEIGHT'S FRAME, stamped
+ *  beside its scale (`groundFrame`). None (1, every record before it): DFU's frame on the Bay, the shaped ground past
+ *  it - the landforms' lift answered 0 off the Bay's 1000 x 500. 2: DFU's frame on every pixel of the world's grid
+ *  (scenes/groundFrameHost.js). It says nothing of the Landforms row (AUDIT LANDFORMS C1's law): a build without the
+ *  row, or one that never knew the stamp, reads a record as it always read one. */
+export const GROUND_FRAME_LAW = 2;
+/** What a record carrying an exterior height writes beside it: the scale the ground stood at, and its frame's law. */
+export const RECORD_GROUND_STAMP = Object.freeze({ terrainScale: STREAMING_TERRAIN_SCALE, groundFrame: GROUND_FRAME_LAW });
 export const WORLD_MAP_TERRAIN_DIM = 32768; // MapsFile.WorldMapTerrainDim
 export const TERRAIN_SIZE = WORLD_MAP_TERRAIN_DIM * GLOBAL_SCALE; // 819.2
 const MAX_MAP_PIXEL_Y = 500; // MapsFile.MaxMapPixelY

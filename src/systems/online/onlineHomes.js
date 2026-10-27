@@ -43,6 +43,7 @@ import {
   HOME_ENTRIES, HOME_ENTRY_DEFAULT, homeMapIdOk, homeBuildingKeyOk, homePriceOk, homeMayEnter, rentPriceOk, rentDaysLeft, homeLookOf,
   homeInArenaCell,   // ARENA4b: the arena's cell, the service's own law
   homeDeedOf,   // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: the deed a save holds to a building, as the service's hold reads it
+  regionDeedsOf,   // HOUSES-3: a region's three deeds
 } from '../../net/homeLaw.js';
 import { homeSceneName } from '../../net/homeScene.js';   // HOME-POUR: the home's scene, one name for the client and the service
 import { ARENA_TEXT } from '../arena/arenaText.js';   // ARENA4b: the bank's letter for a home the arena displaced
@@ -800,11 +801,11 @@ export const realmDeedAt = (houses, regionIndex, mapId, buildingKey) => {
   return !!slot && deedStands(slot);
 };
 /** Every deed of `houses` the realm gave that stands - `{ region, mapId, buildingKey }`, the map id unsigned - the buildings
- *  the service holds for the character. */
-export const realmDeedsOf = (houses) => (Array.isArray(houses) ? houses : []).flatMap((slot, region) => {
-  const mapId = Number(slot?.mapId) >>> 0;
-  return slot?.buildingKey > 0 && realmDeedAt(houses, region, mapId, slot.buildingKey) ? [{ region, mapId, buildingKey: slot.buildingKey }] : [];
-});
+ *  the service holds for the character. HOUSES-3: every region's three (net/homeLaw.js regionDeedsOf). */
+export const realmDeedsOf = (houses) => (Array.isArray(houses) ? houses : []).flatMap((_, region) => regionDeedsOf(houses, region).flatMap((slot) => {
+  const mapId = Number(slot.mapId) >>> 0;
+  return realmDeedAt(houses, region, mapId, slot.buildingKey) ? [{ region, mapId, buildingKey: slot.buildingKey }] : [];
+}));
 /** Every deed the realm gave the character, held (the registry's holdDeed), each in the layout its town stands in now -
  *  answers each deed with the service's word, `r`. A hold already made answers `repeat`; a refusal moves nothing.
  *  @param {any} homes @param {{ houses: any, layoutOf?: (mapId: number) => (string|null) }} o */

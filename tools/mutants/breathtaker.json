@@ -93,8 +93,8 @@
  {
   "name": "BREATHTAKER3-the-large-map-hashed-again",
   "file": "src/world/tamriel/tamrielGround.js",
-  "old": "    for (let iy = 0; iy < 5; iy++) col[iy] = Math.round(mean + swing * (2 * perlinNoise((x * 5 + ix) / wave + 0.37, (y * 5 + iy) / wave + 0.61) - 1));",
-  "new": "    for (let iy = 0; iy < 5; iy++) col[iy] = Math.floor(groundHash(x * 5 + ix, y * 5 + iy, 0x2545) * 10);",
+  "old": "    if (!sea) for (let iy = 0; iy < 5; iy++) col[iy] = Math.round(keep * (mean + swing * (2 * perlinNoise((x * 5 + ix) / wave + 0.37, (y * 5 + iy) / wave + 0.61) - 1)));",
+  "new": "    if (!sea) for (let iy = 0; iy < 5; iy++) col[iy] = Math.floor(groundHash(x * 5 + ix, y * 5 + iy, 0x2545) * 10);",
   "tests": ["test/world/breathtaker.test.js"]
  },
  {

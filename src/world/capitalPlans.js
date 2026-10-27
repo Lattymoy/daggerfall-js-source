@@ -4,7 +4,7 @@
 // its own blocks' laws of the metres from the anchor (x east, z south) and its landmarks' measures
 // (world/tamrielCapitals.js lays them; world/capitalMournhold.js and its kin build the landmarks). Pure.
 
-import { hash32, BLOCK_M } from './spawnedDungeons.js';
+import { hash32, BLOCK_M } from './blockHash.js';   // RUMARE-WATER: the leaf - the Deep Waters worker reads CAPITAL_RIM_TILES (world/tamrielWatersBake.js)
 
 /** AUDIT TESA II C1: THE CAPITALS' RIM - Daggerfall's own blend round a location (world/terrain/terrainTiles.js
  *  blendLocationTerrain, DFU's BlendLocationTerrain) needs ground the location leaves to the land: Daggerfall's three 8 x 8

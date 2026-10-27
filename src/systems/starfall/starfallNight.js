@@ -11,7 +11,7 @@
 //
 // Not a DFU member. Ledger A (STARFALL).
 import { skyClassicMinutes } from '../../net/skyLaw.js';
-import { STAR_HOUR_MS, STAR_FALLS_MS, STAR_PER_NIGHT } from '../../net/starfall/starfallLaw.js';
+import { STAR_HOUR_MS, STAR_FALLS_MS, STAR_PER_NIGHT, starIndexOf } from '../../net/starfall/starfallLaw.js';
 import { dayOfYearFromMinutes } from '../gameDate.js';
 import { HOLIDAYS, holidayDayOfYear } from '../holidays.js';
 
@@ -24,5 +24,6 @@ export const HEART_STAR = STAR_PER_NIGHT - 1;
 export const nightDayOfYear = (n) => dayOfYearFromMinutes(Math.floor(skyClassicMinutes(n * STAR_HOUR_MS + STAR_FALLS_MS[0])));
 /** Whether night `n` is the Witches' Night - its dusk on the festival's day. */
 export const witchesNight = (n) => nightDayOfYear(n) === WITCHES_FESTIVAL_DAY;
-/** Whether star (n, k) is the Heart-Star. */
-export const heartStar = (n, k) => k === HEART_STAR && witchesNight(n);
+/** Whether star (n, k) is the Heart-Star - WW5: every theatre's night's last on the Witches' Night (its place in the night,
+ *  net/starfall/starfallLaw.js starIndexOf - the Bay's is its 2, as it always was). */
+export const heartStar = (n, k) => starIndexOf(k) === HEART_STAR && witchesNight(n);

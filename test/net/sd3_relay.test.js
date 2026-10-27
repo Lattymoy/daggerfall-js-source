@@ -30,7 +30,7 @@ const CELL = worldRoom(PX, PY);
 const UNITS_PER_M = PIXEL_UNITS / PIXEL_M;
 /** A pose `east` metres east of pixel (px, py)'s centre - where a spawned dungeon stands (MapsFile's frame). */
 const doorPose = (east = 10, px = PX, py = PY) => ({ x: (px + 0.5) * PIXEL_UNITS + east * UNITS_PER_M, y: 0, z: (500 - py - 0.5) * PIXEL_UNITS, yaw: 0, pitch: 0 });
-const sds = (ws) => ws.sent.filter((m) => m.t === 'sd');
+const sds = (ws) => ws.sent.filter((m) => m.t === 'sd' && m.k !== 'ln');   // PIN MOVED (WW5): the Bay's lane's words - each province's lane rises beside it on the same beats, its record a kind of its own (`ln`, test/world/worldWide/ww5_hollows.test.js)
 const T0 = 1_800_000_000_000;
 
 async function withWorld(fn, { start = T0 } = {}) {
@@ -66,7 +66,7 @@ test('SD3 the wire: the frame\'s one kind each way, projected; the record\'s law
   assert.equal(relaySupportsSd('world174'), false, 'LEGACY7\'s relay closes the socket on `sd`');
   for (const v of [undefined, null, '', 'world', 'world17x', 'acct172', 172]) assert.equal(relaySupportsSd(v), false, String(v));
   assert.deepEqual([...SD_KINDS], ['found', 'pz', 'in', 'hit', 'ehit', 'xhit', 'spent', 'vt', 'rz']);   // AUDIT WORLD-EVENTS L1-1 (PIN MOVED): and `rz`, a friend's Resurrect for the realm to record   // INT12: and a body's word (PIN MOVED)   // SD9a: and a slot's spoils taken (PIN MOVED)   // SD6b: and `pz`, the Orrery's turn (PIN MOVED); SD8b: and the fight's words (PIN MOVED)
-  assert.deepEqual([...SD_OUT_KINDS], ['ev', 'pz', 'st', 'mv', 'atk', 'hp', 'ph', 'ec', 'cx', 'cxh', 'cxb', 'stun', 'fell', 'lost', 'no', 'rcpt', 'bd']);   // INT12: and the count's fall (PIN MOVED)   // SD9a: and the fall's receipt (PIN MOVED)   // SD6b: and `pz`, the Orrery's hall (PIN MOVED); SD8b: and the fight's (PIN MOVED)
+  assert.deepEqual([...SD_OUT_KINDS], ['ev', 'pz', 'st', 'mv', 'atk', 'hp', 'ph', 'ec', 'cx', 'cxh', 'cxb', 'stun', 'fell', 'lost', 'no', 'rcpt', 'bd', 'ln']);   // PIN MOVED (WW5): and `ln`, a province lane's record   // INT12: and the count's fall (PIN MOVED)   // SD9a: and the fall's receipt (PIN MOVED)   // SD6b: and `pz`, the Orrery's hall (PIN MOVED); SD8b: and the fight's (PIN MOVED)
   assert.deepEqual(validSdIn({ k: 'found', s: 3, px: PX, py: PY, junk: 1 }), { k: 'found', s: 3, px: PX, py: PY }, 'projected');
   for (const bad of [{ k: 'found', s: 0, px: 1, py: 1 }, { k: 'found', s: 1e9, px: 1, py: 1 }, { k: 'found', s: 1.5, px: 1, py: 1 }, { k: 'found', s: 1, px: 1000, py: 1 }, { k: 'found', s: 1, px: 1, py: 500 }, { k: 'found', s: 1, px: -1, py: 1 }, { k: 'ev', s: 1, px: 1, py: 1 }, null, 'found']) assert.equal(validSdIn(bad), null, JSON.stringify(bad));
   assert.equal(parseClient(JSON.stringify({ t: 'sd', k: 'found', s: 1, px: 1, py: 1 })).error, 'sd before hello');
@@ -82,8 +82,8 @@ test('SD3 the wire: the frame\'s one kind each way, projected; the record\'s law
   assert.equal(validSdOut({ t: 'sd', k: 'ev', ...rec, top: 'x'.repeat(200) }).top, sanitizeName('x'.repeat(200)), 'and bounded');
   // the record's law is the wire's, and the law's module hands on the same one
   assert.equal(sdLaw.validSdRecord, validSdRecord);
-  assert.equal(SD_REGION_COUNT, 62, 'a census region is a Bay region\'s channel');   // PIN MOVED (WW-R): the Bay's 62 - a Hollow rises in a Bay town's region (WW5: the theatres')
-  assert.ok(SD_REGION_COUNT < CHAT_REGION_COUNT);
+  assert.equal(SD_REGION_COUNT, 71, 'a census region is any region\'s channel');   // PIN MOVED (WW5): every region of the world's - a crowd in Skyrim counts and draws Skyrim's Hollow (each lane its own regions, wire.js sdLaneRegionOk); PIN MOVED (WW-R): the Bay's 62
+  assert.equal(SD_REGION_COUNT, CHAT_REGION_COUNT);
   // the cell's tell to the hub
   assert.deepEqual(validSdFoundTell({ s: 1, px: 2, py: 3, x: 4.5, z: 6, fb: 'Mara', extra: 1 }), { s: 1, px: 2, py: 3, x: 4.5, z: 6, fb: 'Mara' });
   for (const bad of [{ s: 0, px: 2, py: 3, x: 4, z: 6, fb: 'M' }, { s: 1, px: 2, py: 3, x: NaN, z: 6, fb: 'M' }, { s: 1, px: 2, py: 3, x: 4, z: 6 }, null]) assert.equal(validSdFoundTell(bad), null);
@@ -350,14 +350,15 @@ test('SD3 the relay by source: the hub\'s alarm beats the director beside the sw
   const r = read('server/src/index.js');
   assert.match(r, /await this\._serpentHeraldBeat\(Date\.now\(\)\); await this\._sdBeat\(Date\.now\(\)\); await this\._sdHeraldBeat\(Date\.now\(\)\); await this\._ktHeraldBeat\(Date\.now\(\)\); return; \}/);   // SD-HERALD (PIN MOVED): the Abyss Dungeon's herald after the director's beat; KETCH (PIN MOVED): the Sky-Ketch's herald last
   assert.match(r, /await this\._sdArm\(now\);   \/\/ SD3/);
-  assert.match(r, /\{ try \{ const r = await this\._sdOf\(\); if \(r && r\.s > 0\) this\._send\(ws, JSON\.stringify\(\{ t: 'sd', k: 'ev', \.\.\.r \}\)\); \}/);   // PIN MOVED, SCALE5c: among the hub's words (`_hubHelloWords`), said to the bus's socket or a shard's
+  assert.match(r, /\{ try \{ await this\._sdHelloWords\(ws\); \}/);   // PIN MOVED (WW5): every lane's record - the Bay's `ev` first, as it always was, each province's `ln` - from a method of its own; PIN MOVED, SCALE5c: among the hub's words (`_hubHelloWords`), said to the bus's socket or a shard's
+  assert.match(r, /if \(r && r\.s % SD_LANE_SPAN > 0\) this\._send\(ws, JSON\.stringify\(\{ t: 'sd', k: lane \? SD_LANE_KIND : 'ev', \.\.\.r \}\)\);/);
   assert.match(r, /if \(isSocialRoom\(a\.key\)\) await this\._hubHelloWords\(ws, m, who\.subject, now\);/);   // and those, the hub's alone
   assert.match(r, /const sdOwed = await this\._sdTellHub\(Date\.now\(\)\);/);
   assert.match(r, /if \(sdOwed\) await this\._sdCellArm\(Date\.now\(\) \+ SD_TELL_RETRY_MS\); if \(starDue\) await this\._starArm\(starDue\); return; \}/);   // PIN MOVED (STAR3): and a star's, after it
   const upgrade = r.indexOf("!== 'websocket') return json({ error: 'websocket only' }, 426);");
   const asked = r.indexOf('const rec = await sdLiveAsk(env.ROOMS, s);');
   assert.ok(upgrade > 0 && asked > upgrade, 'the hub asked after the socket\'s own check');
-  for (const [path, fn] of [['SD_INTERNAL_CENSUS', '_sdCensusInternal()'], ['SD_INTERNAL_FOUND', '_sdFoundInternal(request)'], ['SD_INTERNAL_LIVE', '_sdLiveInternal()']]) assert.ok(r.includes(`if (path === ${path}) return this.${fn};`), path);
+  for (const [path, fn] of [['SD_INTERNAL_CENSUS', '_sdCensusInternal()'], ['SD_INTERNAL_FOUND', '_sdFoundInternal(request)'], ['SD_INTERNAL_LIVE', '_sdLiveInternal(request)']]) assert.ok(r.includes(`if (path === ${path}) return this.${fn};`), path);   // PIN MOVED (WW5): the live door reads its asker's slot, and answers its lane's record
   assert.match(r, /const linked = \(isRegionRoom\(a\.key\) \|\| realmRoom\) && who\.kind === 'linked' \? \{ lk: 1 \} : \{\};/);   // AUDIT SD II (PIN MOVED, L7 H2): and a realm's
   assert.match(r, /if \(b\.id && b\.lk && typeof b\.sub === 'string' && b\.sub\) subs\.add\(b\.sub\);/);
   // AUDIT SD II (PIN MOVED, L7 M1/M3): the realm's own gate after the token, by account, then the admission - a guest as one

@@ -356,10 +356,8 @@ import { freeTavernRooms } from '../systems/guild/guildServices.js';
 import { BankWindow, preloadBankArt, bankArtLoaded, BANK_RECTS, BANK_PANEL_X, BANK_PANEL_Y } from '../ui/bankWindow.js';
 import { BankPurchaseWindow, preloadPurchaseArt, purchaseArtLoaded } from '../ui/bankPurchaseWindow.js';   // H2
 import { titleDeed, shipLabel, BOAT_DEED_TEMPLATE as FLEET_DEED_TEMPLATE } from '../systems/fleet.js';   // HOLDINGS: a bought deed into the Fleet's book
-import { createBankAccounts, createHouses, BANK_REGION_COUNT, TRANSACTION_RESULT, ownsHouse, isHouseOwned, deedStands, deedHeldIn, ownedHouseKey, houseSellPrice, housesForSale, allocateHouseToPlayer, purchaseHouse, ownsShip, ownedShipType, purchaseShip, sellShip, sellHouse, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS, creditMarksSale, marksSaleCredit, crossedDeedLines, goldRegion } from '../systems/banking.js';   // H1/H2   // H3: the two leaves - the sell price and the ship
+import { createBankAccounts, createHouses, BANK_REGION_COUNT, TRANSACTION_RESULT, ownsHouse, isHouseOwned, deedStands, deedHeldIn, regionDeeds, regionHousesFull, dropDeed, townDeeds, houseSellPrice, housesForSale, allocateHouseToPlayer, purchaseHouse, ownsShip, ownedShipType, purchaseShip, sellShip, sellHouse, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS, creditMarksSale, marksSaleCredit, crossedDeedLines, goldRegion } from '../systems/banking.js';   // H1/H2   // H3: the two leaves - the sell price and the ship
 import { isEtherPlaceId } from '../world/etherPlaces.js';   // AUDIT CAPTAIN'S SEA P9: an isle town's buildings are no deed's
-import { isArenaPlaceId } from '../world/arenaLocations.js';   // TESA2: nor an Arena town's
-import { isCountryPlaceId } from '../world/tamrielCountry.js';   // TESA7: nor a country place's
 // HOME1: the online homes - the door's one answer, the offer, the owner's menu, and an owned home's own scene
 import {
   homeCandidate, homePurchasable, homeSceneName, homeDoorAnswer, homeDoorTitle, homeLockedLine, homeBelongsLine,
@@ -4645,10 +4643,10 @@ export function createWorldModes(host) {
   function currentHousesForSale() {
     const dir = buildingDirectory?.();
     if (!dir?.buildings?.length) return [];
-    // AUDIT CAPTAIN'S SEA P9: no house is sold past the Veil - its towns are no region's slot; TESA2: nor in an Arena town -
-    // every one answers the clamp's region (TAMRIEL2) until TESA3, so a deed's key would own the same key in all of them;
-    // TESA7: nor in a country place past the Bay - the same clamp's region, the same key
-    if (isEtherPlaceId(dir.mapId) || isArenaPlaceId(dir.mapId) || isCountryPlaceId(dir.mapId)) return [];
+    // AUDIT CAPTAIN'S SEA P9: no house is sold past the Veil - its towns are no region's slot. BAY-LEFT-B: an Arena town, a
+    // country place and a capital past the Bay sell theirs - each its province's region's (WW-R), its deed held to its own
+    // map id (banking.js deedHeldIn: a key bought in one never owns its twin in another of the province)
+    if (isEtherPlaceId(dir.mapId)) return [];
     return housesForSale(dir.buildings, {
       mapId: dir.mapId,
       month: Math.floor(worldMinutes() / (MINUTES_PER_DAY * DAYS_PER_MONTH)),
@@ -4657,8 +4655,9 @@ export function createWorldModes(host) {
       isActiveQuestBuilding: (bs) => (questBridge ? questBridge.machine.isActiveQuestBuilding(dir.mapId, bs.buildingKey, bs.buildingType) : false),   // DISC28-I
       stands: (bs) => houseMeshRadius(bs) > 0,   // AUDIT WD3 H2: a house with no model of its own is no house to sell
       // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: online, never a building the town's answer names - a player's home, or a deed
-      // the service holds for another knight - which the Seneschal handed on (the market is ReceiveHouse's list too)
-      owned: host.onlineHomes ? (bs) => !!host.onlineHomes.homeAt(dir.mapId, bs.buildingKey) : null,
+      // the service holds for another knight - which the Seneschal handed on (the market is ReceiveHouse's list too).
+      // HOUSES-3: nor one of the region's deeds - a region holds three, and the market is asked with one of them owned
+      owned: (bs) => houseOwnedAt({ townMapId: dir.mapId, regionIndex: dir.regionIndex }, bs.buildingKey) || !!host.onlineHomes?.homeAt(dir.mapId, bs.buildingKey),
     });
   }
   /**
@@ -4778,14 +4777,14 @@ export function createWorldModes(host) {
    * buyOnlineHome); the deed's note stays, as Daggerfall's SellHouse leaves it. Any other refusal keeps the deed, held at
    * the next boot.
    */
-  function holdGrantedHouse(region, membership) {
-    const slot = playerEntity.houses[region];
+  function holdGrantedHouse(region, membership, slot) {
     const mapId = Number(slot.mapId) >>> 0, key = slot.buildingKey;
     Promise.resolve(host.holdRealmDeed({ region, mapId, buildingKey: key })).then((r) => {
       if (r?.ok || (r?.error !== 'home-taken' && r?.error !== 'home-layout')) return;
-      const now = playerEntity.houses?.[region];
-      if (now?.buildingKey !== key || (Number(now.mapId) >>> 0) !== mapId) return;   // the deed moved on meanwhile
-      playerEntity.houses[region] = { regionIndex: region, location: '', mapId: 0, buildingKey: 0 };
+      // HOUSES-3: the deed given, among the region's three - none when it moved on meanwhile
+      const now = regionDeeds(playerEntity.houses, region).find((d) => d.buildingKey === key && (Number(d.mapId) >>> 0) === mapId);
+      if (!now) return;
+      dropDeed(playerEntity.houses, region, now);
       membership.flags = (membership.flags ?? 0) & ~HOUSE_FLAG_MASK;
       removePermanentScene(sceneCache(), interiorSceneName(now.mapId, key));
       const locId = discoveryLocationId?.();
@@ -5533,13 +5532,9 @@ export function createWorldModes(host) {
      *  - and the price, the offer box and the sale must never disagree
      *  about the answer. Null covers BOTH of DFU's arms: no directory
      *  at all (:452) and a key the directory does not hold. */
-    const ownedHouseSummary = () => {
-      const dir = buildingDirectory?.();
-      const key = ownedHouseKey(playerEntity.houses ?? [], bankRegion());
-      if (!key || !dir?.buildings?.length) return null;
-      if (!deedStands(playerEntity.houses?.[bankRegion()]) || !deedHeldIn(playerEntity.houses?.[bankRegion()], dir.mapId)) return null;   // AUDIT WD3 H1: a sleeping deed is neither priced nor sold; AUDIT RELEASE R2-9: nor a capital's slice's in another slice
-      return dir.buildings.find((bs) => bs.buildingKey === key) ?? null;
-    };
+    // HOUSES-3: the region's houses this town's directory resolves - what the bank prices, offers in turn and buys back
+    // here (banking.js townDeeds: AUDIT 64 F26's resolver, WD3 H1's sleeping deed and R2-9's slice, over the region's three)
+    const townHouses = () => townDeeds(playerEntity.houses ?? [], bankRegion(), buildingDirectory?.());
     let win = null;
     // D6: ONE mount for BOTH arms of DaggerfallBankPurchasePopUp -
     // there is only one popup class in DFU and the arms differ only in
@@ -5607,6 +5602,7 @@ export function createWorldModes(host) {
       // and the SELL path has been adding and dropping them since),
       // only the shipyard list was, and openShipPurchase below is it.
       ownsHouse: () => ownsHouse(playerEntity.houses ?? [], bankRegion()),
+      housesFull: () => regionHousesFull(playerEntity.houses ?? [], bankRegion()),   // HOUSES-3: the region's three owned
       housesForSale: () => currentHousesForSale().length,
       onlineHomeLines: () => (host.onlineHomes ? HOME_BANK_LINES : null),   // HOME1: online, a home is bought at its door
       // H2: BUY HOUSE reaches the purchase window. The U24 identity
@@ -5651,27 +5647,34 @@ export function createWorldModes(host) {
       // `houseMeshRadius` already reads exactly that for the market
       // list, and the location directory already carries `modelIdNum`
       // on every building - the owned one just had to be found in it.
-      houseSellPrice: () => deedSellPrice(ownedHouseSummary()),   // AUDIT HOME-PRICE C1: online, the online price's share
       // AUDIT 64 F26: SellHouseButton_OnMouseClick raises SELL_HOUSE_OFFER
       // ONLY inside the two nested successes (DaggerfallBankingWindow
       // .cs:443-451) and has no else, so an owned-but-unresolved house
-      // gets no box at all - not a box priced at zero.
-      ownedHouseResolved: () => ownedHouseSummary() !== null,
+      // gets no box at all - not a box priced at zero. HOUSES-3: each
+      // house of the region this town resolves is an offer, in turn,
+      // priced as H3 prices one (AUDIT HOME-PRICE C1: online, the online
+      // price's share) - and RESTORE's crossed words beside it: what
+      // came through customs is never bought back online.
+      houseOffers: () => townHouses().map(({ deed, summary }) => ({
+        price: deedSellPrice(summary),
+        crossed: crossedDeedLines('house', { houses: playerEntity.houses, regionIndex: bankRegion(), player: playerEntity, deed }),
+      })),
       ownsShip: () => ownsShip(playerEntity),
       ownedShip: () => ownedShipType(playerEntity),
-      // RESTORE: what came through customs is never bought back online - the house of this region, or the ship
-      crossedDeed: (kind) => crossedDeedLines(kind, { houses: playerEntity.houses, regionIndex: bankRegion(), player: playerEntity }),
+      crossedDeed: (kind) => crossedDeedLines(kind, { houses: playerEntity.houses, regionIndex: bankRegion(), player: playerEntity }),   // RESTORE: the ship's
       // The two SALES themselves. Both credit the bank ACCOUNT rather
       // than the purse - DFU pays a deed into the account - and both
       // drop what they made permanent.
-      sellHouse: () => {
+      sellHouse: (i = 0) => {
         const region = bankRegion();
         // AUDIT 64 F26: the SAME resolver the price and the offer box
         // ask, and its miss is DFU's own no-op (DaggerfallBankManager
-        // .cs:452-462) rather than a sale at a price of zero.
-        const owned = ownedHouseSummary();
+        // .cs:452-462) rather than a sale at a price of zero. HOUSES-3:
+        // the i-th house offered here, the deed itself sold.
+        const offered = townHouses()[i] ?? null;
+        const owned = offered?.summary ?? null;
         const sell = () => sellHouse(playerEntity.bankAccounts, playerEntity.houses, region,
-          { meshRadius: owned ? houseMeshRadius(owned) : 0, found: owned !== null, price: deedSellPrice(owned) }, {   // AUDIT HOME-PRICE C1
+          { meshRadius: owned ? houseMeshRadius(owned) : 0, found: owned !== null, price: deedSellPrice(owned), deed: offered?.deed ?? null }, {   // AUDIT HOME-PRICE C1
             removePermanentScene: (mapId, k) => { decorSold(interiorSceneName(mapId, k), region); removePermanentScene(sceneCache(), interiorSceneName(mapId, k)); },   // DECOR1e: its placed pieces' half first
             // the deed named the building "<player>'s residence"; selling
             // takes that name back off the map
@@ -5683,7 +5686,7 @@ export function createWorldModes(host) {
         // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: online, the house the realm gave is held by the account service - the hold
         // goes first and the deed sells once the service agrees (HOME1's order: credited only once it is gone), or a
         // building sold here stayed held from every buyer; a deed it never held (`no-home`) sells as Daggerfall's
-        const slot = playerEntity.houses?.[region];
+        const slot = offered?.deed;
         if (host.onlineHomes && owned && realmDeedAt(playerEntity.houses, region, slot?.mapId, owned.buildingKey)) {
           host.onlineHomes.releaseDeed(slot.mapId, owned.buildingKey)
             .then((r) => { if (r.ok || r.error === 'no-home') sell(); else townTalk?.say?.(accountRefusalText(r.error)); })
@@ -6629,7 +6632,7 @@ export function createWorldModes(host) {
         return { rows: [{ text: accountRefusalText('home-layout'), center: true }] };
       }
       const decision = receiveHouseDecision(kept, { rankCeiling: host.rollPace?.(guild.factionId)?.book ?? null,   // AUDIT CHAP4 E2: the book's rank; SEAT-WORDS: online none (II F-3)
-        ownsHouse: ownsHouse(playerEntity.houses, region),
+        housesFull: regionHousesFull(playerEntity.houses, region),   // HOUSES-3: an order gives one while the region holds fewer than three
         housesForSale: homes ? currentHousesForSale().filter((h) => !homes.homeAt(dir?.mapId ?? 0, h.buildingKey)) : currentHousesForSale(),
         alreadyOwnResult: TRANSACTION_RESULT.ALREADY_OWN_HOUSE,
         noneForSaleResult: TRANSACTION_RESULT.NO_HOUSES_FOR_SALE,
@@ -6644,7 +6647,7 @@ export function createWorldModes(host) {
       // towns are heard (buyHomeAt's gates, AUDIT WD3 O1/O2/B1)
       if (host.homeTownsMissing?.()) return { rows: [{ text: accountRefusalText('home-towns'), center: true }] };
       if (host.homeLayoutsHeard?.() === false) { host.hearHomeLayouts?.(); return { rows: [{ text: accountRefusalText('home-layout'), center: true }] }; }
-      allocateHouseToPlayer(playerEntity.houses, region, {
+      const given = allocateHouseToPlayer(playerEntity.houses, region, {
         buildingKey: decision.house.buildingKey,
         mapId: dir?.mapId ?? 0,
         location: dir?.locationName ?? '',
@@ -6655,7 +6658,7 @@ export function createWorldModes(host) {
       });
       claimHouse(kept);
       surfacePlayer();
-      if (host.holdRealmDeed) holdGrantedHouse(region, kept);
+      if (host.holdRealmDeed && given) holdGrantedHouse(region, kept, given);   // HOUSES-3: the deed given, one of the region's three
       return { rows: rows?.(decision.textId) ?? [{ text: 'I have a house for you.', center: true }] };
     }
     if (destination === 'guildServiceTeleport') {
@@ -7591,7 +7594,7 @@ export function createWorldModes(host) {
   /** H1's IsHouseOwned for a building where it stands - DFU's (region, key) law; AUDIT CAPTAIN'S SEA P9: never a building
    *  of an isle's town (no house is sold past the Veil, and a Betony deed's key owned the same key in every isle town of
    *  region 19 - its residents gone, its cupboards the player's). */
-  const houseOwnedAt = (b, key) => !isEtherPlaceId(homeTownOf(b)) && !isArenaPlaceId(homeTownOf(b)) && !isCountryPlaceId(homeTownOf(b)) && isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, key, homeTownOf(b));   // AUDIT RELEASE R2-9: a capital's slice's deed in its own slice alone; TESA2: nor an Arena town's; TESA7: nor a country place's
+  const houseOwnedAt = (b, key) => !isEtherPlaceId(homeTownOf(b)) && isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, key, homeTownOf(b));   // AUDIT RELEASE R2-9: a capital's slice's deed in its own slice alone; BAY-LEFT-B: and every place past the Bay's in its own town (banking.js deedHeldIn)
   /** The online home a building is, as this client last heard - null offline, for a building no player can own, or
    *  while its town is not known yet. */
   function homeOf(b) {

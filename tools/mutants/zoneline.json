@@ -110,8 +110,8 @@
   {
     "name": "ZONELINE-the-zones-cells-again",
     "file": "src/systems/wild/cyrodiilZone.js",
-    "old": "  _mask = buildWildMask({ width, height, ox, oy, cell, pixelIn: (x, y) => theatreAt(x, y) === CYRODIIL_THEATRE });",
-    "new": "  _mask = buildWildMask({ width, height, ox, oy, cell, inZone: (cx, cy) => theatreAt(ox + cx * cell + 2, oy + cy * cell + 2) === CYRODIIL_THEATRE });",
+    "old": "  _mask = buildWildMask({ width, height, ox, oy, cell, pixelIn: (x, y) => theatreAt(x, y) === CYRODIIL_THEATRE || provinceWaterAt(x, y) });",
+    "new": "  _mask = buildWildMask({ width, height, ox, oy, cell, inZone: (cx, cy) => theatreAt(ox + cx * cell + 2, oy + cy * cell + 2) === CYRODIIL_THEATRE || provinceWaterAt(ox + cx * cell + 2, oy + cy * cell + 2) });",
     "tests": [
       "test/systems/wild/zoneline.test.js",
       "test/world/worldWide/wwc2_zone.test.js"

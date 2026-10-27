@@ -107,6 +107,13 @@
 // level is its pixel's mean over a coarse grid (siteLevel), so DFU's own
 // blend after the kernel - still run, still the location's - finds the
 // pixel already all but level and moves little.
+// BAY-LEFT-GROUND (2026-10-26, the audit "no system left behind in the Bay", D1): AND PAST THE BAY. The table is MAPS.BSA's
+// 1000 x 500, so no town past the Bay was a site, and every one of them stood in its own levelling wall (a median 39 m,
+// p90 104 m from its pixel's edge to its level, against the Bay's 7.6 m and 37.7 m). The places past the Bay every
+// client stands alike (world/pastBayRows.js pastBaySites - TESA12's cities, towns and villages, and the capitals levelled
+// as a town is) are a second table keyed by the world's key (`beyond`, landformSitesBeyond), handed to every kernel
+// beside the first; a site's level past the Bay is its land as the continent's shaper stands it (its lift's continuation
+// and its own landforms, BREATHTAKER2/3).
 //
 // LANDFORM5 - THE LAND ROLLS. A field of hills over every land sample
 // (hillsAt): a domain-warped sum of three octaves, its height set by a
@@ -132,6 +139,7 @@ import { tamrielClimateAt, bayEdgeDistance, SEAM_PX } from './tamriel/tamrielGro
 import { tamrielBiomeAt } from './tamriel/tamrielBiomes.js';   // BREATHTAKER3: a zone's own landforms
 import { landformLattice, tamrielLandformAt, continentShare, TAMRIEL_TOP, TAMRIEL_LANDFORM_DIALS } from './tamriel/tamrielLandforms.js';   // BREATHTAKER3: the land past the Bay below the heightmap's grain
 import { tamrielWatersShaper } from './tamriel/tamrielWaters.js';   // CYRODIIL-WATERS: the rivers and lakes past the Bay, carved
+import { worldPixelKey, inWorldGrid } from './worldWide/worldGrid.js';   // BAY-LEFT-GROUND: the sites past the Bay, by the world's key (worker-safe)
 
 
 /** At or under this, a height is DFU's: the beach line with its jitter, the highest height the tile classifier can
@@ -824,6 +832,38 @@ export function landformSites(rows) {
   return out;
 }
 
+/** BAY-LEFT-GROUND (D1): is a pixel one of the Bay's table's (MAPS.BSA's 1000 x 500)? */
+const onSiteTable = (px, py) => px >= 0 && py >= 0 && px < MAP_W && py < MAP_H;
+
+/** LANDFORM4: how many pixels round its own a site's pull reaches - the 5x5 sitesAbout reads (and what a moved site
+ *  builds again, scenes/landformSitesHost.js). */
+export const SITE_REACH_PIXELS = 2;
+
+/**
+ * BAY-LEFT-GROUND (the audit "no system left behind in the Bay", D1): THE SITES PAST THE BAY - the places past the Bay
+ * every client stands alike (world/pastBayRows.js pastBaySites), as landformSites reads the Bay's: for each pixel of the
+ * world's grid off the Bay's table that stands one, its footprint rect (terrainTiles.js locationFootprintRect), its four
+ * bytes SITE_BIAS over their tile values packed in one number (xMin, xMax << 8, yMin << 16, yMax << 24), keyed by its
+ * worldPixelKey. A Map, so it crosses to the worker whole. A row on the Bay's table is the table's, never this - NOR ONE
+ * WITHIN A SITE'S REACH OF IT (GROUND-AGREE across the land, the owner's call): the Bay's ground is every client's, the
+ * land's or not - the land past the Bay is the player's own row online too (scenes/shared.js tamrielLandOn), and a client
+ * without it stands the Bay with no table past it, so a site past the Bay that pulled a Bay pixel (sitesAbout's 5x5) would
+ * stand the two on two grounds there. TESA's places stand a picture pixel clear of the Bay (tamrielPlaces.js BAY_MARGIN;
+ * on the freeware's trace the nearest 21 pixels off it), so none is left out today: the law holds whatever trace stands them.
+ * @param {Iterable<{px: number, py: number, loc: object}>} rows
+ * @returns {Map<number, number>}
+ */
+export function landformSitesBeyond(rows) {
+  const out = new Map();
+  const b = (v) => Math.max(1, Math.min(255, v + SITE_BIAS));
+  for (const { px, py, loc } of rows) {
+    if (!loc?.exterior?.exteriorData || !loc.mapTableData || !inWorldGrid(px, py) || bayEdgeDistance(px, py) <= SITE_REACH_PIXELS) continue;   // GROUND-AGREE: never the Bay's table, nor within a site's reach of it
+    const r = locationFootprintRect(loc);
+    out.set(worldPixelKey(px, py), (b(r.xMin) | (b(r.xMax) << 8) | (b(r.yMin) << 16) | (b(r.yMax) << 24)) >>> 0);
+  }
+  return out;
+}
+
 /** LANDFORM4: the levels asked, per world (its WoodsFile) and its climates (LANDFORM6) - a pure function of the bytes,
  *  kept while they are read. */
 const _siteLevels = new WeakMap();
@@ -842,8 +882,9 @@ const SITE_LEVELS_KEPT = 4096;
  * @param {number} sx
  * @param {number} sy
  * @param {number} hDim
- * @param {{hills: boolean, climates: ?Uint8Array}} ground - whether the shaper stands hills, and on which climates (the
- *   hills unstilled: a level is one number however the network stands)
+ * @param {{hills: boolean, climates: ?Uint8Array, cont?: ?object}} ground - whether the shaper stands hills, and on which
+ *   climates (the hills unstilled: a level is one number however the network stands); BAY-LEFT-GROUND: `cont` the
+ *   continent's ground its landforms read (continentGround) - a site past the Bay's seam stands the continent's land
  * @returns {number}
  */
 function siteLevel(woods, sx, sy, hDim, ground) {
@@ -851,7 +892,7 @@ function siteLevel(woods, sx, sy, hDim, ground) {
   if (!byWorld) _siteLevels.set(woods, byWorld = new WeakMap());
   let kept = byWorld.get(ground.climates ?? NO_CLIMATES);
   if (!kept) byWorld.set(ground.climates ?? NO_CLIMATES, kept = new Map());
-  const k = ((sy * MAP_W + sx) * 1024 + hDim) * 2 + (ground.hills ? 0 : 1);
+  const k = (worldPixelKey(sx, sy) * 1024 + hDim) * 2 + (ground.hills ? 0 : 1);   // BAY-LEFT-GROUND: the world's key - `sy * MAP_W + sx` is two pixels' past the Bay
   let level = kept.get(k);
   if (level !== undefined) return level;
   const span = hDim - 1, step = LANDFORM_DIALS.site.grid;
@@ -859,7 +900,12 @@ function siteLevel(woods, sx, sy, hDim, ground) {
   const { base, noise } = kernelTerms(woods, sx, sy, hDim);
   const cliff = cliffFade(woods, sx, sy, hDim);
   const ox = sx * span, oy = (MAP_H - sy) * span;
-  const lattice = ground.hills ? hillLattice(ox, oy, span) : null;
+  // BAY-LEFT-GROUND: past the Bay's seam its land as the shaper stands it there (pixelShaper's landAt): the lift's
+  // continuation by the continent's share of the sample, and the continent's own landforms come in from the Bay's hills
+  // over the ramp - no water's carve, as no river's valley is a level's on the Bay
+  const tl = ground.cont && continentPixel(sx, sy) ? landformLattice(ground.cont, ox, oy, span, span) : null;
+  const whole = !!tl && bayEdgeDistance(sx, sy) >= SEAM_PX + 1 + TAMRIEL_LANDFORM_DIALS.ramp;
+  const lattice = ground.hills && !whole ? hillLattice(ox, oy, span) : null;
   let sum = 0, n = 0, wet = 0, nw = 0;
   for (let x = 0; x <= span; x += step) {
     for (let y = 0; y <= span; y += step) {
@@ -868,7 +914,18 @@ function siteLevel(woods, sx, sy, hDim, ground) {
       n++;
       const low = base(x, y) * BASE_HEIGHT_SCALE;
       const macro = Math.min(Math.max(low + noise(x, y) * NOISE_MAP_SCALE, SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT);
-      sum += h + (cliff ? reliefLift(low) * cliff(x, y) : reliefLift(low)) + (ground.hills ? hillsAt(ox + x, oy + y, macro, low, lattice, ground.climates, null, span) : 0);
+      if (!tl) {   // the Bay's own law, as LANDFORM4 wrote it
+        sum += h + (cliff ? reliefLift(low) * cliff(x, y) : reliefLift(low)) + (ground.hills ? hillsAt(ox + x, oy + y, macro, low, lattice, ground.climates, null, span) : 0);
+        continue;
+      }
+      const t = whole ? 1 : continentShare(ox + x, oy + y, span, MAP_H, MAP_W, SEAM_PX);
+      const fade = cliff ? cliff(x, y) : 1, lift = t > 0 ? reliefLift(low) + t * continentLift(low) : reliefLift(low);
+      let hh = 0;
+      if (ground.hills) {
+        if (t < 1) hh = hillsAt(ox + x, oy + y, macro, low, lattice, ground.climates, null, span);
+        if (t > 0) { const c = tamrielLandformAt(tl, ox + x, oy + y, macro + lift * fade); hh = t >= 1 ? c : hh + (c - hh) * t; }
+      }
+      sum += h + lift * fade + hh;
     }
   }
   level = n ? sum / n : wet / nw;
@@ -884,22 +941,30 @@ function siteLevel(woods, sx, sy, hDim, ground) {
  * LANDFORMS III C4: a margin - a sample reads a neighbour's arm only at its last two profile points, on their shared
  * edge, where a site two pixels off stands its reach away at the nearest (124 samples, its clearance 3 past its pixel),
  * so the 3x3's sites would land on the same floats; the 5x5 keeps a seam whole should a dial reach further.
+ * BAY-LEFT-GROUND (D1): a pixel off the Bay's table reads the sites past it (`beyond`, landformSitesBeyond) in the same
+ * order, so a seam with the Bay is one number from both its pixels too.
  * @returns {Array<{x0: number, x1: number, y0: number, y1: number, reach: number, level: () => number}>}
  */
-function sitesAbout(woods, sites, px, py, span, hDim, ground) {
+function sitesAbout(woods, sites, beyond, px, py, span, hDim, ground) {
   const out = [];
-  if (!sites) return out;
+  if (!sites && !beyond?.size) return out;
   const { reach, per, most } = LANDFORM_DIALS.site;
   const scale = span / WORLD_MAP_TILE_DIM;
-  for (let qy = py - 2; qy <= py + 2; qy++) {
-    if (qy < 0 || qy >= MAP_H) continue;
-    for (let qx = px - 2; qx <= px + 2; qx++) {
-      if (qx < 0 || qx >= MAP_W) continue;
-      const i = 4 * (qy * MAP_W + qx);
-      if (!sites[i]) continue;
+  for (let qy = py - SITE_REACH_PIXELS; qy <= py + SITE_REACH_PIXELS; qy++) {
+    for (let qx = px - SITE_REACH_PIXELS; qx <= px + SITE_REACH_PIXELS; qx++) {
+      let xa, xb, ya, yb;
+      if (onSiteTable(qx, qy)) {
+        const i = 4 * (qy * MAP_W + qx);
+        if (!sites?.[i]) continue;
+        xa = sites[i]; xb = sites[i + 1]; ya = sites[i + 2]; yb = sites[i + 3];
+      } else {
+        const v = beyond?.get(worldPixelKey(qx, qy));
+        if (!v) continue;
+        xa = v & 255; xb = (v >>> 8) & 255; ya = (v >>> 16) & 255; yb = v >>> 24;
+      }
       const ox = qx * span, oy = (MAP_H - qy) * span;
-      const x0 = ox + (sites[i] - SITE_BIAS) * scale, x1 = ox + (sites[i + 1] - SITE_BIAS) * scale;
-      const y0 = oy + (sites[i + 2] - SITE_BIAS) * scale, y1 = oy + (sites[i + 3] - SITE_BIAS) * scale;
+      const x0 = ox + (xa - SITE_BIAS) * scale, x1 = ox + (xb - SITE_BIAS) * scale;
+      const y0 = oy + (ya - SITE_BIAS) * scale, y1 = oy + (yb - SITE_BIAS) * scale;
       let level;
       out.push({ x0, x1, y0, y1, reach: Math.min(most, reach + per * Math.max(x1 - x0, y1 - y0) / 2), level: () => (level ??= siteLevel(woods, qx, qy, hDim, ground)) });
     }
@@ -1111,6 +1176,8 @@ export function landformLiftField(woods, px, py, locationRect = null, hDim = HEI
  *   room's online): a channel with no water in it is a ditch. `rivers` answers whether they are.
  * @param {?Uint8Array} [o.sites] - LANDFORM4: landformSites' table, the game's own locations; null pulls no ground (a
  *   world whose map table is not read - a test, a tool).
+ * @param {?Map<number, number>} [o.beyond] - BAY-LEFT-GROUND: landformSitesBeyond's, the places past the Bay; null
+ *   pulls none there.
  * @param {boolean} [o.hills] - LANDFORM5: false leaves the hills out - the land the paths' own pins read their cuts on
  *   (test/world/terrain/auditlandforms.test.js); no kernel of the game passes it.
  * @param {?Uint8Array} [o.climates] - LANDFORM6: landformClimates' table, the land each climate wears; null stands every
@@ -1118,7 +1185,7 @@ export function landformLiftField(woods, px, py, locationRect = null, hDim = HEI
  * @param {number} [o.hDim]
  * @returns {{ pixel: (px: number, py: number) => (x: number, y: number, h: number, low: number, g: number) => number, rivers: boolean }}
  */
-export function createLandforms({ woods, roads = null, sites = null, hills = true, climates = null, hDim = HEIGHTMAP_DIMENSION } = {}) {
+export function createLandforms({ woods, roads = null, sites = null, beyond = null, hills = true, climates = null, hDim = HEIGHTMAP_DIMENSION } = {}) {
   const span = hDim - 1;
   const half = span / 2;
   const cutRivers = !!roads?.water;
@@ -1126,9 +1193,9 @@ export function createLandforms({ woods, roads = null, sites = null, hills = tru
   // LANDFORM6: the hills on the world's climates (a pixel's shaper carves them along its painted water - AUDIT LANDFORMS
   // III C1)
   const hill = !hills ? NO_HILLS : (gx, gy, macro, low, lattice, out) => hillsAt(gx, gy, macro, low, lattice, climates, out, span);
-  const ground = { hills: !!hills, climates };   // what a site's level stands on
   const cont = hills ? continentGround(woods, climates) : null;   // BREATHTAKER3: what the continent's landforms read
-  return { pixel: (px, py) => pixelShaper(woods, nets, hill, ground, sites, px, py, span, half, hDim, cont), rivers: cutRivers };
+  const ground = { hills: !!hills, climates, cont };   // what a site's level stands on - BAY-LEFT-GROUND: past the seam the continent's
+  return { pixel: (px, py) => pixelShaper(woods, nets, hill, ground, sites, beyond, px, py, span, half, hDim, cont), rivers: cutRivers };
 }
 
 /**
@@ -1185,7 +1252,7 @@ function nearestD2(segs, gx, gy, r2) {
 
 /** One pixel's shaper: its paths' segments gathered from the 3x3 pixels round it, the sites about it, and the closure
  *  the kernel calls. */
-function pixelShaper(woods, nets, hill, ground, sites, px, py, span, half, hDim, cont = null) {
+function pixelShaper(woods, nets, hill, ground, sites, beyond, px, py, span, half, hDim, cont = null) {
   // the pixel's own sample origin in world samples: x east from the map's west edge, y NORTH from its south edge (the
   // ground noise's own frame, terrainSampler.js `noisey`), so pixel (px, py)'s (128, y) is (px + 1, py)'s (0, y) and
   // its (x, 128) is (px, py - 1)'s (x, 0) - one number each, from either pixel
@@ -1193,7 +1260,7 @@ function pixelShaper(woods, nets, hill, ground, sites, px, py, span, half, hDim,
   const oy = (MAP_H - py) * span;
   const cliff = cliffFade(woods, px, py, hDim);   // AUDIT LANDFORMS II I1: the lift's fade beside the sea, null inland
   // LANDFORM4: the sites a path's profile may meet (the 5x5), and the ones that reach this pixel's own box
-  const around = sitesAbout(woods, sites, px, py, span, hDim, ground);
+  const around = sitesAbout(woods, sites, beyond, px, py, span, hDim, ground);
   const near = around.filter((s) => s.x1 + s.reach > ox && s.x0 - s.reach < ox + span && s.y1 + s.reach > oy && s.y0 - s.reach < oy + span);
   const kept = new Float64Array(1);
   // BREATHTAKER3: past the Bay's seam the continent's own landforms (world/tamriel/tamrielLandforms.js) - their lattice over

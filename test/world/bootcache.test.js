@@ -119,7 +119,7 @@ test('BOOT-CACHE (AUDIT RELEASE R4-4) the laws a kept continent stands for, prin
   const cells = maskRelief(Uint8Array.from({ length: 640 * 400 }, (_, i) => 1 + (i % 200)), t);
   const fit = fitBayToPicture({ bayLand: (x, y) => x > 100 && x < BAY_W - 100 && y > 60 && y < BAY_H - 60, trace: t, around: { ox: 20, oy: 40 }, span: 6, ppus: [18, 19.5] });
   const print = fnv32(cells, fnv32(JSON.stringify(fit))).toString(36);
-  const PRINTS = Object.freeze({ 1: 'ua6qdv' });
+  const PRINTS = Object.freeze({ 1: 'ua6qdv', 2: 'ua6qdv' });   // 2 (NIBEN-SEA): the trace's law moved, the mask's and the fit's not
   assert.equal(print, PRINTS[BOOT_CACHE_VERSION], `the laws answer otherwise than under BOOT_CACHE_VERSION ${BOOT_CACHE_VERSION}: move it and record '${print}' under the new number`);
 });
 
@@ -145,7 +145,7 @@ test('BOOT-CACHE (AUDIT RELEASE R4-4) with ARENA2: the freeware\'s trace and rel
   await keepTrace(store, fresh.cacheKey, fresh);
   // the trace's law and the relief's mask on the freeware's pictures, printed under BOOT_CACHE_VERSION
   const print = fnv32(fresh.relief, fnv32(fresh.province, fnv32(fresh.land))).toString(36);
-  assert.equal(print, Object.freeze({ 1: '1akglnx' })[BOOT_CACHE_VERSION], `the trace or the relief answers otherwise than under BOOT_CACHE_VERSION ${BOOT_CACHE_VERSION}: move it and record '${print}' under the new number`);
+  assert.equal(print, Object.freeze({ 1: '1akglnx', 2: 'cev4vj' })[BOOT_CACHE_VERSION], `the trace or the relief answers otherwise than under BOOT_CACHE_VERSION ${BOOT_CACHE_VERSION}: move it and record '${print}' under the new number`);
   const plain = await preloadTamrielTrace({ fetchBytes: async (n) => bytes(n), palette: pal, indexedDBRef: null });
   assert.equal(plain.cacheKey, undefined);
   for (const f of ['land', 'province', 'relief']) assert.ok(Buffer.from(plain[f]).equals(Buffer.from(fresh[f])));

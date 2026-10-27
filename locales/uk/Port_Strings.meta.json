@@ -1174,6 +1174,36 @@
   "tr": "185461c0bce4",
   "by": "claude-in-session"
  },
+ "faction.province.court": {
+  "en": "98410ffe452a",
+  "tr": "8c9cd41fce45",
+  "by": "claude-in-session"
+ },
+ "faction.province.people": {
+  "en": "1fe50d111e13",
+  "tr": "61b32e70b34e",
+  "by": "claude-in-session"
+ },
+ "faction.ruler.emperor": {
+  "en": "c3e50305720d",
+  "tr": "d28ce7341df0",
+  "by": "claude-in-session"
+ },
+ "faction.ruler.empress": {
+  "en": "f69a52bb1f2a",
+  "tr": "834531611a85",
+  "by": "claude-in-session"
+ },
+ "faction.ruler.highKing": {
+  "en": "f87c0c714a80",
+  "tr": "0c3c0218a113",
+  "by": "claude-in-session"
+ },
+ "faction.ruler.highQueen": {
+  "en": "7b51fe50f158",
+  "tr": "390b017a1ec5",
+  "by": "claude-in-session"
+ },
  "features.banthaJungle.note": {
   "en": "717babf84b80",
   "tr": "918c6f186198",
@@ -1549,6 +1579,11 @@
   "tr": "47d2ff1a1df3",
   "by": "claude-in-session"
  },
+ "ketch.arrivedAt": {
+  "en": "5a91649260fe",
+  "tr": "713d4f4eea91",
+  "by": "claude-in-session"
+ },
  "ketch.bar.endsIn": {
   "en": "71cc8d614899",
   "tr": "3869057423c7",
@@ -1667,6 +1702,11 @@
  "ketch.client.away": {
   "en": "66a9751a1766",
   "tr": "a1ee225ad2ae",
+  "by": "claude-in-session"
+ },
+ "ketch.client.awayAt": {
+  "en": "5e7c51653190",
+  "tr": "75450087af5e",
   "by": "claude-in-session"
  },
  "ketch.client.cell": {
@@ -1954,6 +1994,11 @@
   "tr": "5f0d9505c821",
   "by": "claude-in-session"
  },
+ "ketch.left.dockedAt": {
+  "en": "814a7ac81159",
+  "tr": "42c5ec29bfd1",
+  "by": "claude-in-session"
+ },
  "ketch.left.sighted": {
   "en": "3ac248d06a71",
   "tr": "919f69569e7c",
@@ -2129,6 +2174,11 @@
   "tr": "a699ca6ae288",
   "by": "claude-in-session"
  },
+ "ketch.loweredAt": {
+  "en": "7c0ab0c5e3c4",
+  "tr": "aa05bece29b3",
+  "by": "claude-in-session"
+ },
  "ketch.name": {
   "en": "1ef6cf3bd938",
   "tr": "73418aed8758",
@@ -2189,6 +2239,11 @@
   "tr": "3084d2ff17f4",
   "by": "claude-in-session"
  },
+ "ketch.refuse.awayAt": {
+  "en": "250974de0d78",
+  "tr": "fe60a79fa5a7",
+  "by": "claude-in-session"
+ },
  "ketch.refuse.busy": {
   "en": "7dda41422090",
   "tr": "83306132511e",
@@ -2222,6 +2277,11 @@
  "ketch.sighted": {
   "en": "eef2aa8bfa5a",
   "tr": "fbaebe498c9b",
+  "by": "claude-in-session"
+ },
+ "ketch.sightedAt": {
+  "en": "fc1ab67eff41",
+  "tr": "a527ec263737",
   "by": "claude-in-session"
  },
  "ketch.sky.departing": {
@@ -2342,6 +2402,11 @@
  "ketch.timers.where": {
   "en": "1a31ab704829",
   "tr": "24929e340abd",
+  "by": "claude-in-session"
+ },
+ "ketch.timers.whereAt": {
+  "en": "39a08fa1c893",
+  "tr": "c0a5a8e00fa9",
   "by": "claude-in-session"
  },
  "ketch.when.days": {

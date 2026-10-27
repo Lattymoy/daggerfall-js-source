@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { traceTamrielPicture, closeBorderLines, fillSpecks, HOLE_PX, pieces, paletteReader } from '../../src/ui/tamrielTrace.js';
+import { traceTamrielPicture, closeBorderLines, fillSpecks, HOLE_PX, pieces, paletteReader, nibenCells } from '../../src/ui/tamrielTrace.js';
 import { fitBayToPicture, FIT_PPUS, FIT_AREA_WEIGHT, setTamrielTrace, PROVINCE_OF_ID } from '../../src/world/tamriel/tamrielLand.js';
 import { setTamrielFit, bayToPicture, BAY_W, BAY_H } from '../../src/world/tamriel/tamrielFrame.js';
 import {
@@ -267,7 +267,7 @@ test('TAMRIEL4 by source: the trace closes the lines and the dabs after the rema
   assert.match(read('src/scenes/world.js'), /% of its cells and \$\{fit \? Math\.round\(\(100 \* fit\.seam\) \/ fit\.edge\) : 0\}% of its edge agreeing`\);/);
 });
 
-test('TAMRIEL4 with ARENA2: the player\'s own picture - no strait down any border, the painting\'s six waters and nothing else enclosed, 26,636 land pixels; the Bay fitted at (38, 57) x15.5 with 190 of its 192 edge cells agreeing', { skip: HAVE_ARENA2 ? false : 'ARENA2_PATH not set' }, async () => {
+test('TAMRIEL4 with ARENA2: the player\'s own picture - no strait down any border, the painting\'s three enclosed waters and nothing else (PIN MOVED, NIBEN-SEA: Lake Rumare and the Niben the sea\'s), 26,599 land pixels; the Bay fitted at (38, 57) x15.5 with 190 of its 192 edge cells agreeing', { skip: HAVE_ARENA2 ? false : 'ARENA2_PATH not set' }, async () => {
   const { ImgFile } = await import('../../src/formats/imgFile.js');
   const { DFPalette } = await import('../../src/formats/dfPalette.js');
   const { WoodsFile } = await import('../../src/formats/woodsFile.js');
@@ -278,13 +278,17 @@ test('TAMRIEL4 with ARENA2: the player\'s own picture - no strait down any borde
   const pal = new DFPalette(); pal.load(f('MAP.PAL'), 'MAP.PAL');
   const pk = new ImgFile(); pk.load(f('TAMRIEL2.IMG'), 'TAMRIEL2.IMG');
   const t = traceTamrielPicture(pk.getDFBitmap(), pic.getDFBitmap(), paletteReader(pal));
-  assert.equal(t.land.reduce((n, v) => n + v, 0), 26636);
+  // PIN MOVED (NIBEN-SEA, ui/tamrielTrace.js openNiben): 26,599 land pixels (26,636 before the Niben's course, 37 of them,
+  // was opened), and Lake Rumare's two pieces and the Niben no holes - the sea's, down the river to the Topal Bay
+  assert.equal(t.land.reduce((n, v) => n + v, 0), 26599);
   const holes = pieces(t.land.map((v) => 1 - v), t.w, t.h).filter((p) => !p.edge).map((p) => p.cells.length).sort((a, b) => a - b);
-  assert.deepEqual(holes, [11, 15, 20, 49, 115, 281], 'Lake Rumare\'s two pieces, Hammerfell\'s two lakes, the Niben, the Inner Sea');
-  // no strait: every pixel between two provinces' land is land
+  assert.deepEqual(holes, [15, 20, 281], 'Hammerfell\'s two lakes, the Inner Sea');
+  // no strait: every pixel between two provinces' land is land - PIN MOVED (NIBEN-SEA): but the Niben's own course, whose
+  // last reach runs on Elsweyr's border with the Imperial Province
+  const niben = new Set(nibenCells().map(([x, y]) => y * t.w + x));
   for (let y = 1; y < t.h - 1; y++) for (let x = 1; x < t.w - 1; x++) {
     const i = y * t.w + x;
-    if (t.land[i]) continue;
+    if (t.land[i] || niben.has(i)) continue;
     for (const [a, b] of [[i - 1, i + 1], [i - t.w, i + t.w]]) assert.ok(!(t.land[a] && t.land[b] && t.province[a] !== t.province[b]), `a strait at ${x}, ${y} between ${PROVINCE_OF_ID[t.province[a]]} and ${PROVINCE_OF_ID[t.province[b]]}`);
   }
   const woods = new WoodsFile(); woods.load(f('WOODS.WLD'));

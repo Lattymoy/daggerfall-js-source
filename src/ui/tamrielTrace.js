@@ -162,11 +162,65 @@ export function fillSpecks(land, province, w, h, maxPx = HOLE_PX) {
 }
 
 /**
- * The trace over the two bitmaps (ImgFile.getDFBitmap's shape) and the painting's palette ((i) => [r, g, b]).
+ * NIBEN-SEA (2026-10-26, bible/03-World/Tamriel.md NIBEN-SEA; the owner, with the lore map: "the ocean that connects to
+ * the imperial city is missing from our map") - THE NIBEN, JOINED TO THE SEA. The painting draws Lake Rumare as a ring
+ * round the Imperial City and the Niben from it down to the Topal Bay, and the trace read four waters nothing joined:
+ * the ring's two pieces (49 and 11 pixels - its lower arc and its outlet lie under the painting's own label, IMPERIAL
+ * PROVINCE), the Niben's bay (115), and, below the bay, the river's painted line - a pixel of the coastline's blue the
+ * trace reads as the land it is painted on. The course, each run a row or a column of picture pixels from one corner to
+ * the next: the city's own arm of the lake, from below the isle's south shore (IC-GRAND: a pixel of it stays, under the
+ * city's twenty-five - the Waterfront canal cuts the rest, world/tamriel/tamrielLand.js waterfrontCanal) down to the ring's bottom;
+ * the ring's lower arc east under the label, and its east side down to the Upper Niben and the bay; and the Lower Niben,
+ * the painted line from the bay's tail to the Topal Bay. The ring's west stays land: the isle's way to the mainland
+ * (Talos Bridge, the city's one gate - world/tamrielCapitals.js).
+ */
+export const NIBEN_COURSE = Object.freeze([
+  [[171, 101], [171, 103]],
+  [[172, 105], [176, 105]],
+  [[177, 102], [177, 107], [178, 107], [178, 108]],
+  [[189, 133], [188, 133], [188, 137], [187, 137], [187, 146], [188, 146], [188, 148], [189, 148], [189, 149]],
+]);
+/** NIBEN-SEA: the waters the course joins, each the picture's own (a pixel of it): the ring's bottom piece, its top
+ *  piece's east side, the Niben's head and its tail, and the Topal Bay off the river's mouth. A picture without every
+ *  one is not the one the course was read off, and is left as it traced. */
+export const NIBEN_JOINS = Object.freeze([[171, 104], [177, 101], [178, 109], [189, 132], [189, 150]]);
+
+/** NIBEN-SEA: the course's picture pixels ([x, y], each once), its runs walked corner to corner. */
+export function nibenCells() {
+  const out = new Map();
+  for (const run of NIBEN_COURSE) {
+    for (let k = 0; k < run.length; k++) {
+      const [ax, ay] = run[Math.max(0, k - 1)], [bx, by] = run[k];
+      for (let x = ax, y = ay; ; x += Math.sign(bx - ax), y += Math.sign(by - ay)) {
+        out.set(`${x},${y}`, [x, y]);
+        if (x === bx && y === by) break;
+      }
+    }
+  }
+  return [...out.values()];
+}
+/** NIBEN-SEA: open the Niben's course (nibenCells) on a trace of Daggerfall's own picture (320 x 200) whose every join
+ *  (NIBEN_JOINS) is water - its pixels sea, of no province. Its last reach runs on the line between Elsweyr and the
+ *  Imperial Province, a river one pixel wide between two provinces' land - the one such strait the trace keeps
+ *  (TAMRIEL4's closeBorderLines reads every other as a border). Mutates `land` and `province`; answers how many. */
+export function openNiben(land, province, w, h) {
+  if (w !== 320 || h !== 200 || NIBEN_JOINS.some(([x, y]) => land[y * w + x])) return 0;
+  let opened = 0;
+  for (const [x, y] of nibenCells()) {
+    const i = y * w + x;
+    if (land[i]) { land[i] = 0; province[i] = 0; opened++; }
+  }
+  return opened;
+}
+
+/**
+ * The trace over the two bitmaps (ImgFile.getDFBitmap's shape) and the painting's palette ((i) => [r, g, b]). NIBEN-SEA:
+ * `niben` false leaves the Niben's course as the painting traced it (tools/bakeTamrielRelief.mjs: the heightmap is laid
+ * on the painting's own coasts, and the player's own trace masks it).
  * Answers { w, h, land, province } - province 1..8 the race ids, IMPERIAL_ID the remainder, 0 at sea - or null
  * when the two files do not share a grid.
  */
-export function traceTamrielPicture(picker, picture, palette) {
+export function traceTamrielPicture(picker, picture, palette, { niben = true } = {}) {
   if (!picker?.data?.length || !picture?.data?.length || picker.data.length !== picture.data.length) return null;
   const { width: w, height: h, data } = picker;
   const land = new Uint8Array(w * h), province = new Uint8Array(w * h);
@@ -189,6 +243,7 @@ export function traceTamrielPicture(picker, picture, palette) {
   if (rem) for (let i = 0; i < rem.length; i++) if (rem[i] && !land[i]) { land[i] = 1; province[i] = IMPERIAL_ID; }
   closeBorderLines(land, province, w, h);   // TAMRIEL4: the picker's border lines are land, not straits
   fillSpecks(land, province, w, h);   // TAMRIEL4: and the painting's dabs of blue in the land are not lakes
+  if (niben) openNiben(land, province, w, h);   // NIBEN-SEA: and Lake Rumare joined to the sea down the Niben
   return { w, h, land, province };
 }
 
@@ -201,7 +256,7 @@ export const paletteReader = (pal) => (i) => [pal.getRed(i), pal.getGreen(i), pa
  * ImgFile's paletteName for it, the way scenes/shared.js reads a sky's) - the given one stands in when that file is
  * missing. Answers the trace, or null when the files do not share a grid; a missing IMG rejects (the host says so).
  * `relief` false leaves the heightmap's cells off (tools/bakeTamrielRelief.mjs - the bake makes them, and never reads
- * its own output). AUDIT TESA II G2: a relief that does not load (its chunk not fetched, its module not read) is the
+ * its own output); NIBEN-SEA: `niben` false the painting's own coasts, the bake's. AUDIT TESA II G2: a relief that does not load (its chunk not fetched, its module not read) is the
  * relief's loss alone - the trace stands with none, and the authored heights with it (tamrielRelief.js reliefStands);
  * it had rejected the whole trace, and every place, road and capital past the Bay with it.
  * AUDIT RELEASE R4-4 (world/tamriel/tamrielBootCache.js): with IndexedDB (`indexedDBRef`), the trace and its relief are
@@ -209,7 +264,7 @@ export const paletteReader = (pal) => (i) => [pal.getRed(i), pal.getGreen(i), pa
  * checked against their key, their sizes and their checksum - where it traced and masked them again; the fits kept for
  * the trace are loaded with it, and the trace carries `fitKeep` for tamrielLand.js fitBayToPicture. No store: as before.
  */
-export async function preloadTamrielTrace({ fetchBytes, palette, relief = true, indexedDBRef = globalThis.indexedDB }) {
+export async function preloadTamrielTrace({ fetchBytes, palette, relief = true, niben = true, indexedDBRef = globalThis.indexedDB }) {
   const pictureBytes = await fetchBytes('TMAP00I0.IMG');
   const picture = new ImgFile();
   picture.load(pictureBytes, 'TMAP00I0.IMG', palette);
@@ -218,14 +273,14 @@ export async function preloadTamrielTrace({ fetchBytes, palette, relief = true, 
     try { const own = new DFPalette(); own.load(await fetchBytes(picture.paletteName), picture.paletteName); pal = own; } catch { /* the given palette stands */ }
   }
   const pickerBytes = await fetchBytes('TAMRIEL2.IMG');
-  const store = bootStore(indexedDBRef);
+  const store = niben ? bootStore(indexedDBRef) : null;   // NIBEN-SEA: the painting's own coasts (the relief bake's) are never kept
   const colors = paletteReader(pal), palBytes = Uint8Array.from({ length: 768 }, (_, k) => colors(Math.floor(k / 3))[k % 3]);
   const key = store ? traceKey({ picture: pictureBytes, picker: pickerBytes, palette: palBytes, relief: relief ? await reliefSource().catch(() => null) : null }) : null;
   const kept = key ? await keptTrace(store, key) : null;
   if (kept && key) return keepsFits(kept, store, key);
   const picker = new ImgFile();
   picker.load(pickerBytes, 'TAMRIEL2.IMG', palette);
-  const trace = traceTamrielPicture(picker.getDFBitmap(), picture.getDFBitmap(), paletteReader(pal));
+  const trace = traceTamrielPicture(picker.getDFBitmap(), picture.getDFBitmap(), paletteReader(pal), { niben });
   if (trace && relief) trace.relief = await loadRelief(trace).catch((e) => (console.warn('[tamriel] the relief did not load; the authored heights stand:', e?.message ?? e), null));   // TAMRIEL-RELIEF: the owner's heightmap, laid on this picture (world/tamriel/tamrielRelief.js); AUDIT TESA II G2: its loss its own
   if (!trace || !key) return trace;
   keepTrace(store, key, trace);

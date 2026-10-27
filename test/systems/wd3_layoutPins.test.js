@@ -247,7 +247,8 @@ test('WD3 an interior\'s cached scene carries its town\'s layout through the sav
   // the held scene is never written over by the visit's own leaving; the visit is kept beside it (AUDIT WD3 S1/R1)
   assert.match(W, /if \(_sceneHeldForLayout === name\) \{\n {6}const alt = layoutSceneName\(name, _visitLayout\);\n {6}cacheScene\(sceneCache\(\), alt, state\);\n {6}addPermanentScene\(sceneCache\(\), alt\);\n {6}return;\n {4}\}/);
   // nor furnished there: the deed sleeps where its town stands in another layout (banking.js deedStands, AUDIT WD3 H1)
-  assert.match(src('src/systems/banking.js'), /return ownedHouseKey\(houses, regionIndex\) === buildingKey && deedStands\(houses\?\.\[regionIndex\]\) && deedHeldIn\(houses\?\.\[regionIndex\], mapId\);/);
+  // PIN MOVED (HOUSES-3): any of the region's three deeds, each standing and held in the town asking
+  assert.match(src('src/systems/banking.js'), /return regionDeeds\(houses, regionIndex\)\.some\(\(d\) => d\.buildingKey === buildingKey && deedStands\(d\) && deedHeldIn\(d, mapId\)\);/);
   // AUDIT WD3 R4: stamped with the layout the visit began in
   assert.match(W, /_visitLayout = visitLayoutNow\(\);/);
   assert.match(W, /const visitLayoutNow = \(\) => \{ const k = layoutLocationKeyOfMapId\(questSceneCtx\?\.\(\)\?\.mapId \?\? 0\); return k != null \? layoutStampAt\(k\) : null; \};/);
@@ -282,7 +283,8 @@ test('WD3 the load: the save\'s towns in the layouts its things were made in, be
   const at = W.indexOf('async function applyLayoutPins(extras = null) {');
   assert.ok(at > 0);
   const body = W.slice(at, W.indexOf('\n  async function worldQuickLoad', at));
-  assert.match(body, /const records = homeLayoutsOnline \? \(_serverLayoutRecords \?\? \[\]\) : layoutRecordsOf\(\{\n {6}houses: playerEntity\.houses, rooms: playerEntity\.rentedRooms,/);
+  // PIN MOVED (HOUSES-3): every deed's town pinned, the region's three (banking.js allDeeds)
+  assert.match(body, /const records = homeLayoutsOnline \? \(_serverLayoutRecords \?\? \[\]\) : layoutRecordsOf\(\{\n {6}houses: allDeeds\(playerEntity\.houses\), rooms: playerEntity\.rentedRooms,/);
   assert.match(body, /repairs: \(playerEntity\.otherItems \?\? \[\]\)\.map\(\(it\) => it\?\.repairData\)\.filter\(Boolean\),\n {6}anchor: playerEntity\.anchorPosition,/);
   // PIN MOVED (QUEST-AUDIT II PIN-SLEEP): and the town is held back - its records sleep (test/systems/quest/qa2_layouts.test.js)
   // AUDIT QA2: the loop is layoutPins' admitPinnedPacks, run in test/systems/quest/qa2_layouts.test.js
@@ -332,7 +334,9 @@ test('WD3 a deed SLEEPS where its town stands in another layout (AUDIT WD3 H1) -
   assert.equal(deedStands({ mapId: 424242, buildingKey: 5, layout: BV + '@1.4.2' }), true, 'a town the host cannot place');
   assert.equal(deedStands({ buildingKey: 5 }), true, 'a deed naming no town');
   const src2 = src('src/scenes/worldModes.js');
-  assert.match(src2, /if \(!deedStands\(playerEntity\.houses\?\.\[bankRegion\(\)\]\) \|\| !deedHeldIn\(playerEntity\.houses\?\.\[bankRegion\(\)\], dir\.mapId\)\) return null;/, 'the bank prices and sells no sleeping deed');
+  // PIN MOVED (HOUSES-3): the bank's resolver over the region's three (banking.js townDeeds)
+  assert.match(src('src/systems/banking.js'), /\.filter\(\(deed\) => deedStands\(deed\) && deedHeldIn\(deed, dir\.mapId\)\)/, 'the bank prices and sells no sleeping deed');
+  assert.match(src2, /const townHouses = \(\) => townDeeds\(playerEntity\.houses \?\? \[\], bankRegion\(\), buildingDirectory\?\.\(\)\);/);
   // H2: the market's candidates - a house standing on no model is skipped, every other as before
   const { BUILDING_TYPES } = await import('../../src/world/buildingNames.js');
   const b = (k, t, m = 1) => ({ buildingKey: k, buildingType: t, modelIdNum: m });

@@ -28,7 +28,7 @@ import { domainsFor } from './domains.js';   // DOMAIN3: the region law, where D
 import { charterSeats } from '../../src/net/domainLaw.js';
 import { MARKS_MAX, utcDay } from '../../src/net/marksLaw.js';
 import {
-  seatWeekOf, seatWeekStartMs, SEAT_WEEK_MS, seatKeyOk, seatRegionOk, edictOk, edictForTier, edictMayFollow, bailiwickOf, bountySitePixel, overreachOf, seatUpkeep,
+  seatWeekOf, seatWeekStartMs, SEAT_WEEK_MS, seatKeyOk, seatRegionOk, edictOk, edictForTier, edictMayFollow, bailiwickOf, bountyClaimPixel, overreachOf, seatUpkeep,
   SEAT_LEVER_RANKS, SEAT_EDICTS_HOUR, BOUNTY_MARKS, BOUNTY_CAMPS_DAY, CROWN_SCALE, TITHE_CAP,
 } from '../../src/net/townSeatLaw.js';
 
@@ -198,14 +198,16 @@ export const openGatesRead = (db, nowS, mapId) => db.prepare("SELECT 1 FROM town
  * at the reader, never the relay ... an account is paid for at most 5 camps a UTC day"): `site` the World of Daggerfall
  * camp the character cleared (its id names its map pixel), `region` the client's - in the bailiwick of a seat whose
  * Bounty rules this week. 20 Drakes from the Bounty's escrow to the account; a camp paid once a day, whoever cleared it.
- * Bounded, not witnessed: a modified client can claim camps it never fought, five a day.
+ * Bounded, not witnessed: a modified client can claim camps it never fought, five a day. BAY-LEFT-SEA (the audit's B8 =
+ * E3): past the Bay `site` a den's id (townSeatLaw.js bountyDenPixel - an outlaws' hideout or a lair, its map pixel the
+ * world's), claimed and bounded as a camp's is.
  * @param {{db: any, nowS: number, rand: (b: Uint8Array) => any}} ctx
  */
 export async function claimBounty({ db, nowS, rand }, player, env, { character, site, region } = {}) {
   if (accountKind(player) !== 'linked') return { error: 'seats-need-account' };
   if (!seatsOpenFor(player, env)) return { error: 'seats-closed' };
   if (typeof character !== 'string' || !character) return { error: 'bad-bounty' };
-  const pixel = bountySitePixel(site);
+  const pixel = bountyClaimPixel(site);   // BAY-LEFT-SEA: a camp's on the Bay, a den's past it
   if (!pixel || !seatRegionOk(region)) return { error: 'bad-bounty' };
   const week = weekAt(nowS), day = utcDay(nowS);
   const { results: rules = [] } = await db.prepare("SELECT key FROM town_seat_edicts WHERE week = ? AND state = 'law' AND edict = 'bounty'").bind(week).all();

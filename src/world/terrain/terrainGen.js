@@ -21,7 +21,8 @@
 // first and its tilemap + rect ride INTO the job as plain data.
 // ═══════════════════════════════════════════════════════════════════
 
-import { generateSamples, ghostSampler, HEIGHTMAP_DIMENSION, SCALED_OCEAN_ELEVATION, MAX_TERRAIN_HEIGHT } from './terrainSampler.js';
+import { generateSamples, ghostSampler, HEIGHTMAP_DIMENSION } from './terrainSampler.js';
+import { CAPITAL_SEA_FLAT, capitalSeaGround } from './capitalSea.js';   // RUMARE-WATER: a capital at the sea, its water the sea's
 import { buildTerrainGrid, convertTilemap } from './terrainSurface.js';
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, townGroundMask, unstampOffShape, townRoadRing } from './terrainTiles.js';
 import { layoutNature } from './terrainNature.js';
@@ -67,6 +68,8 @@ import { paintTamrielWaters } from '../tamriel/tamrielWaters.js';   // CYRODIIL-
  *   is pulled to (the client's, never the job's: it rides beside the woods and the network).
  * @param {?Uint8Array} [job.climates] - LANDFORM6: landforms.js landformClimates, the land each climate wears (the
  *   client's, beside the sites).
+ * @param {?Map<number, number>} [job.beyond] - BAY-LEFT-GROUND: landforms.js landformSitesBeyond, the places past the Bay
+ *   the shaped ground is pulled to (the client's, beside the sites).
  * @param {?{nine:number[], hidden?:boolean, canopy?:?number[]}} [job.jungle] - BANTHA1: the
  *   jungle's field about this pixel (world/jungle/jungleRegion.js jungleNine)
  *   and whether its location is one the woods hide; null where the jungle
@@ -76,9 +79,11 @@ import { paintTamrielWaters } from '../tamriel/tamrielWaters.js';   // CYRODIIL-
  *   3x3 of pixels' climates about this one (world/terrain/terrainNature.js
  *   layoutNature's `ecotone`), null with the Blended climates row off or
  *   every neighbour this pixel's own climate.
- * @param {?{px: number, py: number, sea?: boolean}} [job.flattenAt] - TESA11: a capital that spans several pixels (world/tamrielCapitals.js
+ * @param {?{px: number, py: number, sea?: boolean, seaEdges?: { N?: boolean, E?: boolean, S?: boolean, W?: boolean }}} [job.flattenAt] - TESA11: a capital that spans several pixels (world/tamrielCapitals.js
  *   `span`): the pixel whose average every one of its pixels is flattened to - its centre's - so they meet level. AUDIT TESA II
- *   C2: `sea` a shore capital's, flattened to the sea's floor (SEA_FLAT) - its harbour's water the sea's.
+ *   C2: `sea` a shore capital's, flattened to the sea's floor - its harbour's water the sea's; RUMARE-WATER: its land a freeboard
+ *   over it (world/terrain/capitalSea.js CAPITAL_SEA_FLAT), its water let down to it (capitalSeaGround) - the Imperial City's
+ *   too, where its canal stands; `seaEdges` its sides shared with its sea slice.
  * @returns {{samples: Float32Array, tilemap: Uint8Array,
  *   positions: Float32Array, normals: Float32Array,
  *   tilemapBytes: Uint8Array, avg: number, paths: ?Uint8Array,
@@ -86,10 +91,6 @@ import { paintTamrielWaters } from '../tamriel/tamrielWaters.js';   // CYRODIIL-
  *   roadside: Array<any>, graht: ?Float32Array}} `roadside` JUNGLE-ROADSIDE's pairs (world/jungle/jungleRoadside.js standPairs);
  *   `graht` GRAHT1's graht-oaks (world/jungle/grahtOaks.js grahtSites, GRAHT_TREE_FLOATS a tree - empty where none stands)
  */
-/** AUDIT TESA II C2: THE SEA'S FLOOR - the kernel's own clamp (sampleKernel: no ground under SCALED_OCEAN_ELEVATION), where
- *  every sea's water tile stands: a shore capital's ground, so its harbour is that water (it stood the city's average, 16
- *  to 59 m over the sea beside it). */
-const SEA_FLAT = Object.freeze({ avg: SCALED_OCEAN_ELEVATION / MAX_TERRAIN_HEIGHT, classic: SCALED_OCEAN_ELEVATION / MAX_TERRAIN_HEIGHT });
 /** TESA11: the averages a city over several pixels is flattened to, by its centre pixel and whether the ground is shaped -
  *  kept while the kernel's inputs are the same (its woods, its network, its sites, its climates). */
 const _flatAverages = new Map();
@@ -97,7 +98,7 @@ const _flatAverages = new Map();
  *  pixel's own samples when this job is the pixel's (`own`), else generated for it once. */
 function flattenAverage(inputs, landforms, at, own) {
   const key = `${at.px},${at.py}|${landforms ? 1 : 0}`, had = _flatAverages.get(key);
-  if (had && had.woods === inputs.woods && had.roads === inputs.roads && had.sites === inputs.sites && had.climates === inputs.climates) return had;
+  if (had && had.woods === inputs.woods && had.roads === inputs.roads && had.sites === inputs.sites && had.beyond === inputs.beyond && had.climates === inputs.climates) return had;   // BAY-LEFT-GROUND: and the sites past the Bay
   let samples = own?.samples ?? null, classic = own?.classic ?? null;
   if (!samples) {
     classic = landforms ? new Float32Array(HEIGHTMAP_DIMENSION * HEIGHTMAP_DIMENSION) : null;
@@ -108,12 +109,12 @@ function flattenAverage(inputs, landforms, at, own) {
   return out;
 }
 
-export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null, sites = null, climates = null, wod = null, forests = null, landform = false, ecotone = null, bed = false, flattenAt = null, jungle = null }) {
+export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null, sites = null, beyond = null, climates = null, wod = null, forests = null, landform = false, ecotone = null, bed = false, flattenAt = null, jungle = null }) {
   // LANDFORM1-3: built from the network THIS kernel holds - the one the painter below paints - so the cut and the paint
   // are the same roads; restrideGrid's ghost rows take the same landforms, so the edge normals read the shaped ground.
   // LANDFORM4: and the sites this kernel holds (landforms.js landformSites, the client's to hand both threads); LANDFORM6:
   // and the world's climates beside them.
-  const landforms = landform ? createLandforms({ woods, roads, sites, climates }) : null;
+  const landforms = landform ? createLandforms({ woods, roads, sites, beyond, climates }) : null;   // BAY-LEFT-GROUND: and the sites past the Bay
   // AUDIT LANDFORMS D3: THE LANDFORMS MOVE THE GROUND, NEVER A TILE. A location's blend pulls its whole pixel toward the
   // pixel's mean, and the landforms move that mean (a road's bed and a river's channel by centimetres, a massif in the
   // pixel by up to 268 m - Chesterbrugh), so a beach sample the classifier read on the shaped blend crossed the beach
@@ -125,13 +126,15 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   let avg = 0;
   if (hasLocation) {
     // TESA11: a city over several pixels stands on one ground - each of its pixels flattened to its centre's average
-    const flat = flattenAt ? (flattenAt.sea ? SEA_FLAT : flattenAverage({ woods, roads, sites, climates }, landforms, flattenAt, px === flattenAt.px && py === flattenAt.py ? { samples, classic } : null)) : null;   // AUDIT TESA II C2: a shore capital at the sea's floor
+    const flat = flattenAt ? (flattenAt.sea ? CAPITAL_SEA_FLAT : flattenAverage({ woods, roads, sites, beyond, climates }, landforms, flattenAt, px === flattenAt.px && py === flattenAt.py ? { samples, classic } : null)) : null;   // AUDIT TESA II C2: a shore capital at the sea's floor
+    const natural = flattenAt?.sea ? [Float32Array.from(samples), classic ? Float32Array.from(classic) : null] : null;   // RUMARE-WATER: the land's own ground, the far shore's and the rim's
     avg = flat ? flat.avg : calcAvgMaxHeight(samples)[0];
     // TOWN-SHAPES (bible/03-World/Town-Shapes.md): a town with an outline flattens to it, at its own land's height - the sea
     // past its margin read on DFU's own samples (the classic pass's, where the ground is shaped), as its tiles are
     const ground = locationRect?.shape ? Float32Array.from(classic ?? samples) : null;
     avg = blendLocationTerrain(samples, avg, locationRect, HEIGHTMAP_DIMENSION, ground ?? samples);
     if (classic) blendLocationTerrain(classic, flat?.classic ?? calcAvgMaxHeight(classic)[0], locationRect, HEIGHTMAP_DIMENSION, ground ?? classic);
+    if (natural) for (const [S, n] of [[samples, natural[0]], [classic, natural[1]]]) if (S && n) capitalSeaGround(S, n, tilemap, locationRect, px, py, flattenAt.seaEdges);   // RUMARE-WATER: its water the sea's, its land over it
     if (ground) {
       const mask = townGroundMask(locationRect.shape, ground);
       unstampOffShape(tilemap, locationRect.shape, mask);   // its tiles over the sea the sea's
@@ -266,11 +269,11 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
  * ground, null where no vertex is under water) beside the grid as it stood. WATER-NEXT 2 carved on the host's thread at
  * every build and restride, 0.3 ms for a pixel with no water at all and a millisecond or two for a coast's; here it rides
  * the worker with the grid it carves, the build's, the promotion's and the restride's alike.
- * @param {{ woods: object, px: number, py: number, stride?: number, samples: Float32Array, landform?: boolean, roads?: ?object, sites?: ?Uint8Array, climates?: ?Uint8Array, landforms?: ?object, bed?: ?Uint8Array }} job
+ * @param {{ woods: object, px: number, py: number, stride?: number, samples: Float32Array, landform?: boolean, roads?: ?object, sites?: ?Uint8Array, beyond?: ?Map<number, number>, climates?: ?Uint8Array, landforms?: ?object, bed?: ?Uint8Array }} job
  * @returns {{ positions: Float32Array, normals: Float32Array, bed: ?{depths: Float32Array, sheetDepths: Float32Array, positions: Float32Array, normals: Float32Array} }}
  */
-export function restrideGrid({ woods, px, py, stride = 1, samples, landform = false, roads = null, sites = null, climates = null, landforms = null, bed = null }) {   // AUDIT WATER-NEXT P1: `bed` the TileMap to carve by
-  const lf = landforms ?? (landform ? createLandforms({ woods, roads, sites, climates }) : null);
+export function restrideGrid({ woods, px, py, stride = 1, samples, landform = false, roads = null, sites = null, beyond = null, climates = null, landforms = null, bed = null }) {   // AUDIT WATER-NEXT P1: `bed` the TileMap to carve by
+  const lf = landforms ?? (landform ? createLandforms({ woods, roads, sites, beyond, climates }) : null);   // BAY-LEFT-GROUND: and the sites past the Bay
   const ghost = ghostSampler(woods, px, py, HEIGHTMAP_DIMENSION, lf);
   const grid = buildTerrainGrid(samples, stride, ghost);
   // AUDIT WATER-NEXT F2: a near grid's bed reads its neighbours' tiles across the seams (the ghost is their own kernel),

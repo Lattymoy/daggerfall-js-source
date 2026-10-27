@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildWildMask, fillEnclosed, wildInside, wildNear, wildRingAt, wildEdgeChains, wildOutline, wildJourney, ringOfCell, maskWorld, WILD_NEAR_PX } from '../../../src/systems/wild/wildZone.js';
-import { cyrodiilMask, cyrodiilBox, zoneLineOf, CYRODIIL_THEATRE } from '../../../src/systems/wild/cyrodiilZone.js';
+import { cyrodiilMask, cyrodiilBox, zoneLineOf, provinceWaterAt, CYRODIIL_THEATRE } from '../../../src/systems/wild/cyrodiilZone.js';
 import { wildGiantsAt } from '../../../src/systems/wild/wildGiants.js';
 import { wildHallPicks } from '../../../src/systems/wild/wildDungeons.js';
 import { zoneLine, zoneMapInk } from '../../../src/ui/wild/wildZoneMap.js';
@@ -244,7 +244,9 @@ test('ZONE-LINE ON THE PLAYER\'S OWN PICTURE: every pixel of Cyrodiil\'s box the
   assert.ok(m?.bits && m.line, 'the zone, to the pixel, and its line');
   const box = /** @type {any} */ (cyrodiilBox());
   const bx0 = box.x0 - 8, by0 = box.y0 - 8, bw = box.x1 - box.x0 + 17, bh = box.y1 - box.y0 + 17;
-  const law = (x, y) => theatreAt(bx0 + x, by0 + y) === CYRODIIL_THEATRE;
+  // PIN MOVED (NIBEN-SEA, bible/03-World/Tamriel.md): and the province's own water (provinceWaterAt) - Lake Rumare and the
+  // Niben joined to the sea, the province encloses them no more, and its banks keep them the zone's
+  const law = (x, y) => theatreAt(bx0 + x, by0 + y) === CYRODIIL_THEATRE || provinceWaterAt(bx0 + x, by0 + y);
   const z = expected(law, bw, bh);
   let apart = 0, zone = 0;
   for (let y = 0; y < bh; y++) for (let x = 0; x < bw; x++) { const v = wildInside(m, bx0 + x, by0 + y); zone += v ? 1 : 0; if (v !== (z[y * bw + x] === 1)) apart++; }

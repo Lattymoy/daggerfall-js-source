@@ -37,6 +37,9 @@ const NAMED = {
   'src/systems/decor/decorItems.js': 1,
   'src/systems/enchantmentCatalogue.js': 2,
   'src/systems/enemyExpansion/dexTroll.js': 1,   // DEX5: the troll's recovery line names its kind in the player's language
+  'src/systems/eventTimers.js': 1,   // WW5: a province lane's Hollow said in its province, by the region list's own name in the player's language
+  'src/systems/faction/factionStanding.js': 1,   // PROVINCE-COURTS: the Standing page's rows shown as GetFactionData shows a name
+  'src/systems/faction/provinceFactions.js': 1,   // PROVINCE-COURTS: a province's court and people by the region's shown name
   'src/systems/item/itemInfo.js': 4,
   'src/systems/loot/loot.js': 1,
   'src/systems/notebook.js': 2,   // L10N5: a header's place drawn again in the language of the load
@@ -44,7 +47,7 @@ const NAMED = {
   'src/systems/quest/foe.js': 1,
   'src/systems/quest/person.js': 5,
   'src/systems/quest/place.js': 4,
-  'src/systems/quest/questMacros.js': 8,
+  'src/systems/quest/questMacros.js': 9,   // BAY-LEFT-B: %lp past the Bay, its province's name as shown (GetLocalizedRegionName)
   'src/systems/starfall/starCoven.js': 4,   // STAR5: a master's name, in the player's language
   'src/systems/starfall/starfallCovens.js': 1,   // STAR2: a coven's witches by their faction, in the player's language
   'src/systems/talk/talk.js': 1,

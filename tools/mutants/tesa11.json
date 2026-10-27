@@ -317,11 +317,12 @@
   {
     "name": "TESA11-flatten-cache-any",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "  if (had && had.woods === inputs.woods && had.roads === inputs.roads && had.sites === inputs.sites && had.climates === inputs.climates) return had;",
+    "old": "  if (had && had.woods === inputs.woods && had.roads === inputs.roads && had.sites === inputs.sites && had.beyond === inputs.beyond && had.climates === inputs.climates) return had;",
     "new": "  if (had) return had;",
     "tests": [
       "test/tesa11_imperial.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the flatten book keyed by the sites past the Bay too (D1)."
   },
   {
     "name": "TESA11-host-flatten-unsent",

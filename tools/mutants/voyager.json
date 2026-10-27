@@ -479,8 +479,8 @@
   {
     "name": "VOYAGER2.1-no-reader-by-default",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "beyond = null, pathsBeyond = arenaRoadByte) {",
-    "new": "beyond = null, pathsBeyond = null) {",
+    "old": "beyond = null, pathsBeyond = arenaRoadByte, seaAlso = null) {",
+    "new": "beyond = null, pathsBeyond = null, seaAlso = null) {",
     "tests": [
       "test/systems/travel/voyager21_beyond.test.js"
     ]

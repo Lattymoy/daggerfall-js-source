@@ -1,16 +1,17 @@
 [
   {
     "name": "P1-hall-unasked",
-    "file": "src/scenes/world.js",
-    "old": "return (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || capitalLocationAt(px, py)",
-    "new": "return capitalLocationAt(px, py)",
+    "file": "src/scenes/spawnStandHost.js",
+    "old": ": null) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || host.capitalLocationAt(px, py)",
+    "new": ": null) || host.capitalLocationAt(px, py)",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
-    ]
+    ],
+    "note": "AUDIT BAY-LEFT (its packages merged, 2026-10-27): re-aimed by content - WW5's Hollow-first clause and SPAWN-WORLD's spawner both on the build past the Bay, in scenes/spawnStandHost.js."
   },
   {
     "name": "P1-hall-offline-too",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/spawnStandHost.js",
     "old": "(params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py))",
     "new": "(zoneHalls.standIn(cyrodiilMask(), px, py))",
     "tests": [
@@ -19,12 +20,13 @@
   },
   {
     "name": "P1-hall-after-the-places",
-    "file": "src/scenes/world.js",
-    "old": "return (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py) || lairLocationAt(px, py);",
-    "new": "return capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py) || lairLocationAt(px, py) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py));",
+    "file": "src/scenes/spawnStandHost.js",
+    "old": ": null) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);",
+    "new": ": null) || host.capitalLocationAt(px, py) || (_arenaTemplates && host.arenaLocationAt(px, py)) || host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || (params.has('online') && zoneHalls.standIn(cyrodiilMask(), px, py)) || spawnPastBayAt(px, py);",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
-    ]
+    ],
+    "note": "AUDIT BAY-LEFT (its packages merged, 2026-10-27): re-aimed by content - WW5's Hollow-first clause and SPAWN-WORLD's spawner both on the build past the Bay, in scenes/spawnStandHost.js. SPAWN-WORLD re-aimed by content: the build past the Bay ends in the spawner (spawnPastBayAt)."
   },
   {
     "name": "Z7-rolls-unread",
@@ -298,11 +300,12 @@
   {
     "name": "P7-capital-port-unsaid",
     "file": "src/world/pastBayRows.js",
-    "old": "port: s === centre && !!pin?.port,",
+    "old": "port: capitalSlicePort(k, s, pin?.port),",
     "new": "port: false,",
     "tests": [
       "test/world/audittesa2p_world.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (BAY-LEFT-SEA): a capital's harbour slice's port word is tamrielCapitals.js capitalSlicePort's now."
   },
   {
     "name": "P7-no-clone-stands",
@@ -367,7 +370,7 @@
   {
     "name": "P7-near-the-bays",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "      return da + db <= BEYOND_LANE_PATH_PX + 2 * LANE_NEAR_PX;",
+    "old": "      return da + db <= beyondPathPx(lane) + 2 * LANE_NEAR_PX;",
     "new": "      return Math.min(da, db) <= LANE_PATH_PX / 2 + LANE_NEAR_PX;",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
@@ -376,8 +379,8 @@
   {
     "name": "P7-near-no-margin",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "      return da + db <= BEYOND_LANE_PATH_PX + 2 * LANE_NEAR_PX;",
-    "new": "      return da + db <= BEYOND_LANE_PATH_PX;",
+    "old": "      return da + db <= beyondPathPx(lane) + 2 * LANE_NEAR_PX;",
+    "new": "      return da + db <= beyondPathPx(lane);",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]
@@ -432,11 +435,12 @@
   {
     "name": "P7-port-region-unsaid",
     "file": "src/world/worldWide/worldPorts.js",
-    "old": "region: p.region, area: p.area, theatre: p.theatre, crown: null });",
-    "new": "region: -1, area: p.area, theatre: p.theatre, crown: null });",
+    "old": "region: p.region, area: p.area, theatre: p.theatre, crown: crownAt(p.px, p.py),",
+    "new": "region: -1, area: p.area, theatre: p.theatre, crown: crownAt(p.px, p.py),",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (BAY-LEFT-SEA): the line carries the port's crown now."
   },
   {
     "name": "P8-dry-unread",
@@ -485,9 +489,9 @@
   },
   {
     "name": "P12-flood-four-ways",
-    "file": "src/world/arenaPlaces.js",
-    "old": "    for (const [dx, dy] of RING8) { const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < w && ny < h) reach(nx, ny); }",
-    "new": "    for (const [dx, dy] of RING8) { if (dx && dy) continue; const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < w && ny < h) reach(nx, ny); }",
+    "file": "src/world/tamriel/tamrielLand.js",
+    "old": "    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const nx = x + dx, ny = y + dy; if ((dx || dy) && nx >= 0 && ny >= 0 && nx < w && ny < h) reach(nx, ny); }",
+    "new": "    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const nx = x + dx, ny = y + dy; if ((dx || dy) && !(dx && dy) && nx >= 0 && ny >= 0 && nx < w && ny < h) reach(nx, ny); }",
     "tests": [
       "test/world/audittesa2p_world.test.js"
     ]
@@ -513,8 +517,8 @@
   {
     "name": "P12-open-sea-a-lake",
     "file": "src/scenes/world.js",
-    "old": "return tamrielLand && seaPixel(x, y) && !pastBayLakeAt(x, y);",
-    "new": "return tamrielLand && seaPixel(x, y);",
+    "old": "return tamrielLand && ((seaPixel(x, y) && !pastBayLakeAt(x, y)) || rumareSeaPixel(x, y));",
+    "new": "return tamrielLand && ((seaPixel(x, y)) || rumareSeaPixel(x, y));",
     "tests": [
       "test/systems/naval/fb1014_inlandports.test.js"
     ]
@@ -594,8 +598,8 @@
   {
     "name": "P7-closed-lanes-scanned",
     "file": "src/scenes/gate/gateLanes.js",
-    "old": "t < GATE_LANES && open(t) && theatreGateAreas(scanOf(t)).length > 0",
-    "new": "t < GATE_LANES && theatreGateAreas(scanOf(t)).length > 0",
+    "old": "t < GATE_LANES && open(t));",
+    "new": "t < GATE_LANES);",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]

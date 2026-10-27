@@ -83,8 +83,9 @@
   {
     "name": "SD-HERALD-found-region-unnamed",
     "file": "src/net/superDungeon/sdHerald.js",
-    "old": "region: sdRegionName(rec.r) })",
-    "new": "region: '' })",
+    "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
+    "old": "region: sdRegionName(rec.r), province: sdProvinceName(rec.s) })",
+    "new": "region: '', province: sdProvinceName(rec.s) })",
     "tests": [
       "test/net/superDungeon/sdherald.test.js"
     ]
@@ -111,8 +112,9 @@
   {
     "name": "SD-HERALD-fell-next-stamp-until",
     "file": "src/net/superDungeon/sdHerald.js",
-    "old": "fields: [['Dungeon', name], ['Where', whereField(rec.r)], ['Next may rise', heraldWhen(rec.next)]],",
-    "new": "fields: [['Dungeon', name], ['Where', whereField(rec.r)], ['Next may rise', heraldWhen(rec.until)]],",
+    "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
+    "old": "fields: [['Dungeon', name], ['Where', whereField(rec)], ['Next may rise', heraldWhen(rec.next)]],",
+    "new": "fields: [['Dungeon', name], ['Where', whereField(rec)], ['Next may rise', heraldWhen(rec.until)]],",
     "tests": [
       "test/net/superDungeon/sdherald.test.js"
     ]
@@ -283,8 +285,9 @@
   {
     "name": "SD-HERALD-state-never-kept",
     "file": "server/src/index.js",
-    "old": "if (JSON.stringify(st) !== was) await this.state.storage.put('sdherald', st);",
-    "new": "if (false) await this.state.storage.put('sdherald', st);",
+    "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
+    "old": "if (JSON.stringify(st) !== was) await this.state.storage.put(sdLaneKey('sdherald', lane), st);",
+    "new": "if (false) await this.state.storage.put(sdLaneKey('sdherald', lane), st);",
     "tests": [
       "test/net/superDungeon/sdherald.test.js"
     ]

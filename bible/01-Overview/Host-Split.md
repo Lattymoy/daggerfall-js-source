@@ -722,6 +722,25 @@ handed the player's hall and pixel through the module's `place` handle, and both
 (36,387 -> 36,383); the ceiling comes down by them (36,389 -> 36,385). Pinned by `wildrejoin.test.js` THE BODY RECORD,
 three more records in `tools/mutants/wildrejoin.json`.
 
+## BAY-LEFT-GROUND's moves - the trouble's foes, the snow's ground and a record's frame out of bootWorld (2026-10-26)
+
+The audit "no system left behind in the Bay" (WP9, the ground: `03-World/Landforms.md` and `03-World/Snowfall.md`
+BAY-LEFT-GROUND, `06-Systems/Living-World.md` BAY-LEFT-GROUND) changed three blocks of `bootWorld`, each moved out first,
+verbatim, and changed in its module:
+
+- the living world's trouble's `foesOf` to `scenes/livingWorld/troubleFoes.js` troubleFoesOf (9 logical lines out) -
+  the roads' harness's producer too;
+- SNOWFALL1's adapter, the snow's ground, to `scenes/snowGround.js` createSnowGround (68 out; one edit before the move:
+  the stamp's id counter a holder, as the tool moves no group-declared `let`; `snowfall1.json`'s carved-sea record
+  retargeted by the tool);
+- LANDFORM1's lift and its two books, `groundFrameHeight`, `groundFrameNative`, `restandHeight` and `scaleOf` to
+  `scenes/groundFrameHost.js` createGroundFrame (39 out; the tool retargeted 27 mutant records and one bible anchor).
+
+The landforms' sites past the Bay are a module the host wires (`scenes/landformSitesHost.js`, 14 in), and D5's record
+stamp and old law are read through the moved frame (this thread's landforms asked `before`, a remains' place read whole -
+5 out net). `bootWorld` 35,799 -> 35,692 logical lines, its ceiling with it (`test/scenes/hostceiling.test.js`);
+`hostsplit.json`'s ceiling record re-aimed onto the new row.
+
 ## PORTAL-BAY - the Portal Stone's door, pick and step out of bootWorld (2026-10-26)
 
 The stone's teleport past the Bay (`06-Systems/Portal-Stone.md` PORTAL-BAY) needed its gate asked at the pick and at the
@@ -737,3 +756,49 @@ its branch; merged with the branch head (the merge of main, relay world269), 35,
 (`test/scenes/hostceiling.test.js`, its mutant re-aimed under it). The tool re-aimed eighteen mutant records over the moved lines
 (`portal1.json`, `audittesa2z.json`, `auditcaptsea.json`, `egmade.json`); the pins that cut the members from world.js's
 text cut them from the module's (`portal1_stone.test.js`, `egmade_law.test.js`, PIN MOVED).
+
+## BAY-LEFT-SEA - the market's pieces and hubs out of bootWorld (2026-10-26)
+
+The market's hubs past the Bay (`06-Systems/Professions-Arc.md` BAY-LEFT-SEA: a province's hub, made again as the seats
+and the places move) needed `marketHubs` - one statement in `bootWorld`, built once at boot - changed, and a move of it
+alone grew the host (its handles cost more than its line). It went out with the market's other pieces, the contiguous
+fifteen members from `pieceLists` to `marketHubs`, verbatim, by `tools/hostMove.mjs`, to `scenes/marketPiecesHost.js`
+`createMarketPieces`: four names by value (`marketBook`, `regionHubs`, `saveSoon`, `writBook`), one live (`townTalk`),
+twelve returned; two used above the construction (`marketGoods` by `marketBook`, `heldProvenances` by `profMintCraft`)
+are read inside closures run after it. `bootWorld` 35,799 -> 35,695 logical lines, and the ceiling at it
+(`test/scenes/hostceiling.test.js`, its mutant re-aimed under it). The tool re-aimed ten mutant records over the moved
+lines (`audit31.json`, `fb1001_market.json`, `prof5.json`, `prof6.json`, `profsave.json` - all dead, with the ceiling's,
+11 of 11); the pins that cut the members from world.js's text cut them from the module's too (`audit30_client`,
+`audit31_client`, `prof5_client`, `fb1001_market_goods`, `profsave`, PIN MOVED). The slice's wiring then went in: the
+seats and the places handed the module (2 entries), the world's ports handed `crownAt` (2), the hideouts' rout handed the
+seats' edicts (1) - `bootWorld` 35,700, the ceiling at it (`03-World/World-Wide.md` BAY-LEFT-SEA).
+
+## SPAWN-WORLD's moves - the spawn's stand, its ground and the Overworld's dungeon lists out of bootWorld (2026-10-26)
+
+The fix for the audit NO SYSTEM LEFT BEHIND IN THE BAY (work package 4: the spawned dungeons and the Overworld's
+dungeons past the Bay, `06-Systems/Systems-Arc.md` SPAWN-WORLD, `06-Systems/Travel-View.md` TVD-WORLD) changes three
+blocks of `bootWorld`, so each left it first, verbatim, by `tools/hostMove.mjs`, in a commit of its own:
+
+- **The spawn's ground law** (`scenes/spawnGroundHost.js` `createSpawnGroundHost`, 6 members: `_spawnCloneAt`,
+  `tvSpawnGone`, `spawnGroundPlace`, `tvSpawnAt`, `tvLocationAt`, `_liftLocationAt`) - moved first, so the stand below
+  reads its clone live (a `const` made below it).
+- **The spawn's stand** (`scenes/spawnStandHost.js` `createSpawnStand`, 2 members: `spawnedDungeonAt`,
+  `_locationToBuild`) - the build's answer for a pixel.
+- **The Overworld's dungeon lists** (`scenes/travelViewDungeonsHost.js` `createTravelViewDungeons`, 6 members:
+  `tvDungeonRowsAt`, `tvDungeonAt`, `tvSpawnFound`, `tvSpawnKnown`, `tvFiledSpawns`, `travelViewDungeons`). The
+  dungeons' models (`scenes/travelViewDungeonModels.js`) stay the host's to construct (`test/tooling/hostseam.test.js`:
+  a moved module is its host's own construction), so the group stops above them; `_tvDungeonRows` stays the host's
+  `let`, handed live.
+
+`bootWorld` 35,799 -> 35,736 logical lines. The ceiling came down with them, to 35,740 in the moves' commit - four kept for
+the wiring the fix's next commits hand these modules - and to its measure in the fix's last commit
+(`test/scenes/hostceiling.test.js`). The tool re-aimed the mutant records over the moved lines (52 of them, every one run
+dead after the move; `auditlandforms.json`'s F1 probe record did not parse before the move either, and is re-aimed by
+content); the pins that lift the members from world.js's text lift them from the modules, the harnesses handing them their
+`host` (PIN MOVED, HOST-SPLIT, SPAWN-WORLD).
+
+The fix's last commit (2026-10-27) found `bootWorld` at 35,740, the ceiling: the four kept were spent - SPAWN-WORLD's
+wiring three (the places' getter, their handle to the spawn's ground, the boards' ground kept off a spawn past the Bay),
+TVD-WORLD's handle none (an edit in place), QUARRY-WORLD's one (`wildAt: bountyLandWild(maps)`). The ceiling stays at its
+measure, 35,740. `createWorldModes` 11,025 and `buildDungeonContext` 8,436 (two lines edited in place, `isAbyssMapId`)
+did not move.

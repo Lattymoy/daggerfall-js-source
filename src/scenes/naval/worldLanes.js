@@ -31,6 +31,7 @@ import { pictureLakes } from '../../world/arenaPlaces.js';   // AUDIT TESA II P7
 import { inWorldGrid } from '../../world/worldWide/worldGrid.js';
 import { inEther, onBayOrEther } from '../../world/ethericSea.js';
 import { NATIVE_PIXEL } from '../../systems/seaRaiders.js';
+import { rumareSeaPixel } from '../../world/rumareWaters.js';   // RUMARE-WATER: the Imperial City's lake the sea's
 
 /**
  * The Bay's ports as its lanes read them - Travel Options' list (`portIds`, the host's: systems/travel/travelPorts.js
@@ -52,13 +53,15 @@ export function bayLanePorts(mapDict, maps, portIds) {
 /**
  * The world's lane water: the Bay's own (`bayOpen`) on the Bay, and past it the continent's sea - the Ocean climate on
  * water (`water`, `climateAt`: the host's composed readers) where the land past the Bay stands (`beyond()`), never the
- * Eltheric Ocean's box (its isles keep their own ports). Its native twin reads a point's pixel FLOORED (a pixel west of
- * the map's edge is its own - the map pixel law truncates, seaRaiders.js tvRaidSea's own reading).
+ * Eltheric Ocean's box (its isles keep their own ports); RUMARE-WATER: and the Imperial City's lake and its mouth, where its
+ * canal stands (world/rumareWaters.js rumareSeaPixel - its harbour's packets sail up to its Waterfront). Its native twin
+ * reads a point's pixel FLOORED (a pixel west of the map's edge is its own - the map pixel law truncates, seaRaiders.js
+ * tvRaidSea's own reading).
  * @param {{ bayOpen: (x: number, y: number) => boolean, water: (x: number, y: number) => boolean, climateAt: (x: number, y: number) => number, beyond: () => boolean }} o
  */
 export function worldLaneWater({ bayOpen, water, climateAt, beyond }) {
   const open = (/** @type {number} */ px, /** @type {number} */ py) => (inBay(px, py) ? bayOpen(px, py)
-    : beyond() && inWorldGrid(px, py) && !inEther(px, py) && water(px, py) && climateAt(px, py) === CLIMATES.Ocean);
+    : beyond() && inWorldGrid(px, py) && !inEther(px, py) && ((water(px, py) && climateAt(px, py) === CLIMATES.Ocean) || rumareSeaPixel(px, py)));
   return { open, openNative: (/** @type {number} */ x, /** @type {number} */ z) => open(Math.floor(x / NATIVE_PIXEL), 499 - Math.floor(z / NATIVE_PIXEL)) };
 }
 
@@ -73,6 +76,10 @@ export const onWorldSea = (x, y, beyond) => onBayOrEther(x, y) || (beyond && inW
  *  a lane's way past it is no longer than this. */
 export const BEYOND_LANE_MAX_PX = 400;
 export const BEYOND_LANE_PATH_PX = 800;
+/** NIBEN-SEA: the longest a lane's way past the Bay runs (map pixels) - BEYOND_LANE_PATH_PX, or twice the reach of a harbour
+ *  up a canal at either end (world/worldWide/worldPorts.js CANAL_PORT_REACH_PX), as the rest run twice theirs.
+ *  @param {{ a: { reach?: number }, b: { reach?: number } }} lane */
+export const beyondPathPx = (lane) => Math.max(BEYOND_LANE_PATH_PX, 2 * Math.max(lane.a.reach ?? 0, lane.b.reach ?? 0));
 /** SEA-LANES: a player within this of a lane's water (map pixels) has its packets listed (the host's laneShips). */
 export const LANE_NEAR_PX = 4;
 /** Metres a native unit. */
@@ -118,12 +125,13 @@ export function moorCell(px, py, sea, native, holds) {
 /**
  * AUDIT TESA II P7: A LANE'S WAY PAST THE BAY at the picture's scale - `{ pts, len }` (native points, roadstead to
  * roadstead, and its length in metres) or null: no trace, a roadstead with no cell of the picture's open sea to moor off
- * (moorCell, SMOOTH-LAND), no way of it within BEYOND_LANE_PATH_PX. The picture's open sea is its water its border joins (world/arenaPlaces.js pictureLakes: the lakes
- * left out) outside the Bay's rectangle; a move is one of eight with no corner cut past land; the chain of pixel
+ * (moorCell, SMOOTH-LAND; NIBEN-SEA: the Imperial City's Waterfront canal is such a roadstead), no way of it within
+ * BEYOND_LANE_PATH_PX (NIBEN-SEA: beyondPathPx). The picture's open sea is its water its border joins (world/arenaPlaces.js
+ * pictureLakes: the lakes left out) outside the Bay's rectangle; a move is one of eight with no corner cut past land; the chain of pixel
  * centres is straightened wherever the picture's sea holds the line (a quarter of a picture pixel at a time), and each
  * straightened leg is asked again of `openNative` (the world's lane water, LANE_STRAIGHT_STEPS a map pixel) - one that
  * fails keeps the chain it stood for.
- * @param {{ a: { road: { x: number, y: number } }, b: { road: { x: number, y: number } } }} lane
+ * @param {{ a: { road: { x: number, y: number }, reach?: number }, b: { road: { x: number, y: number }, reach?: number } }} lane
  * @param {(x: number, z: number) => boolean} openNative
  */
 export function beyondLaneWay(lane, openNative) {
@@ -140,7 +148,7 @@ export function beyondLaneWay(lane, openNative) {
   };
   const from = moorCell(ax, ay, sea, native, holdsNative), to = moorCell(bx, by, sea, native, holdsNative);
   if (!from || !to) return null;
-  const ppu = fit.ppu, maxG = BEYOND_LANE_PATH_PX / ppu;   // the A*'s costs in picture pixels
+  const ppu = fit.ppu, maxG = beyondPathPx(lane) / ppu;   // the A*'s costs in picture pixels (NIBEN-SEA: a canal harbour's lane its own)
   const key = (/** @type {number} */ x, /** @type {number} */ y) => y * w + x;
   const g = new Float64Array(w * h).fill(Infinity), came = new Int32Array(w * h).fill(-1), shut = new Uint8Array(w * h);
   const hEst = (/** @type {number} */ x, /** @type {number} */ y) => Math.hypot(x - to[0], y - to[1]);
@@ -452,14 +460,14 @@ export function createWorldLanes({ mapDict, maps, portIds, ports, bayOpen, bayOp
     },
     /** SEA-LANES: whether a player at map pixel `here` may have a packet of `lane` in reach - asked before its way is:
      *  on the Bay every point of a way lies within half its longest (LANE_PATH_PX) of one of its ports; AUDIT TESA II P7:
-     *  past it within the ellipse its two roadsteads bound for a way no longer than BEYOND_LANE_PATH_PX; WW7-10: across the
-     *  Bay's edge, the ellipse for one no longer than CROSS_LANE_PATH_PX.
+     *  past it within the ellipse its two roadsteads bound for a way no longer than BEYOND_LANE_PATH_PX (NIBEN-SEA:
+     *  beyondPathPx); WW7-10: across the Bay's edge, the ellipse for one no longer than CROSS_LANE_PATH_PX.
      *  @param {{ a: any, b: any, cross?: boolean }} lane @param {{ x: number, y: number }} here */
     near(lane, here) {
       const da = Math.hypot(lane.a.road.x - here.x, lane.a.road.y - here.y), db = Math.hypot(lane.b.road.x - here.x, lane.b.road.y - here.y);
       if (lane.cross) return da + db <= CROSS_LANE_PATH_PX + 2 * LANE_NEAR_PX;
       if (inBay(lane.a.px, lane.a.py)) return Math.min(da, db) <= LANE_PATH_PX / 2 + LANE_NEAR_PX;
-      return da + db <= BEYOND_LANE_PATH_PX + 2 * LANE_NEAR_PX;
+      return da + db <= beyondPathPx(lane) + 2 * LANE_NEAR_PX;   // NIBEN-SEA: a canal harbour's lane its own
     },
   };
 }

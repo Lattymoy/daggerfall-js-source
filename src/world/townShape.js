@@ -120,6 +120,11 @@ export function shapeWander(seed, x, y, scale = TOWN_SHAPE.scale) {
   return (v / sum) * 2 - 1;
 }
 
+/** TS9: a town's road ring's codes (terrain/terrainTiles.js townRoadRing, road/roadPainter.js): a whole road tile, and the
+ *  half tiles that blend its angled edges - each the road's own diagonal edge (the painter's DIAG_OUT: 47 over dirt, 55
+ *  over grass) with its road toward a corner. */
+export const RING = Object.freeze({ road: 1, NW: 2, NE: 3, SE: 4, SW: 5 });
+
 /**
  * Each tile's distance (in tiles) to the nearest taken one - an exact Euclidean transform (Felzenszwalb's, two passes of
  * the lower envelope) over the town's tiles; Infinity on a town with none.

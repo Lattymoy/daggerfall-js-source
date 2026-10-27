@@ -313,9 +313,9 @@
   },
   {
     "name": "AUDIT-TESA-A2-3-summary-undiscovered",
-    "file": "src/scenes/world.js",
-    "old": "return loc?.name && id && hasDiscoveredLocationId(id) ? { pixel: { x: px, y: py }, name: loc.name, mapId: id,",
-    "new": "return loc?.name && id ? { pixel: { x: px, y: py }, name: loc.name, mapId: id,",
+    "file": "src/scenes/mapPlacesHost.js",
+    "old": "return loc.name && id && (named || hasDiscoveredLocationId(id)) ? { pixel: { x: px, y: py }, name: loc.name, mapId: id,",
+    "new": "return loc.name && id ? { pixel: { x: px, y: py }, name: loc.name, mapId: id,",
     "tests": [
       "test/audit_tesa.test.js"
     ]
@@ -350,17 +350,18 @@
   {
     "name": "AUDIT-TESA-A4-F4-travel-options-list",
     "file": "src/scenes/world.js",
-    "old": "loc.arena || loc.capital ? !!loc.arena?.port : modSetting('travel-options', 'Enabled')",
+    "old": "loc.arena || loc.capital ? (loc.exterior?.exteriorData?.portTownAndUnknown ?? 0) !== 0 : modSetting('travel-options', 'Enabled')",
     "new": "modSetting('travel-options', 'Enabled')",
     "tests": [
       "test/audit_tesa.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (BAY-LEFT-SEA): past the Bay the place's own port byte answers first (an Arena place's TESA6 word, a capital harbour's) - the mutant still drops that arm."
   },
   {
     "name": "AUDIT-TESA-A5-F3-deed-past-the-bay",
     "file": "src/scenes/world.js",
-    "old": "return !isEtherPlaceId(id) && !isArenaPlaceId(id) && !isCountryPlaceId(id) && isHouseOwned(",
-    "new": "return !isEtherPlaceId(id) && !isArenaPlaceId(id) && isHouseOwned(",
+    "old": "return !isEtherPlaceId(id) && isHouseOwned(playerEntity.houses ?? [], _questRegionIndex(), buildingKey, id); },",
+    "new": "return !isEtherPlaceId(id) && isHouseOwned(playerEntity.houses ?? [], _questRegionIndex(), buildingKey); },",
     "tests": [
       "test/audit_tesa.test.js"
     ]

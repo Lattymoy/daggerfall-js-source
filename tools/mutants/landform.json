@@ -219,20 +219,22 @@
   {
     "name": "LANDFORM-job-uncut",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "  const landforms = landform ? createLandforms({ woods, roads, sites, climates }) : null;\n  // AUDIT LANDFORMS D3",
-    "new": "  const landforms = landform ? createLandforms({ woods, sites, climates }) : null;\n  // AUDIT LANDFORMS D3",
+    "old": "  const landforms = landform ? createLandforms({ woods, roads, sites, beyond, climates }) : null;",
+    "new": "  const landforms = landform ? createLandforms({ woods, sites, beyond, climates }) : null;",
     "tests": [
       "test/systems/landform.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the kernels carry the sites past the Bay (D1)."
   },
   {
     "name": "LANDFORM-worker-grid-no-network",
     "file": "src/world/terrain/terrainGenWorker.js",
-    "old": "const { positions, normals, bed } = restrideGrid({ ...m, woods, roads, sites, climates });",
-    "new": "const { positions, normals, bed } = restrideGrid({ ...m, woods, sites, climates });",
+    "old": "    const { positions, normals, bed } = restrideGrid({ ...m, woods, roads, sites, beyond, climates });",
+    "new": "    const { positions, normals, bed } = restrideGrid({ ...m, woods, sites, beyond, climates });",
     "tests": [
       "test/systems/landform.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND: re-aimed by content - the kernels carry the sites past the Bay (D1)."
   },
   {
     "name": "LANDFORM-ring-unlifted",
@@ -263,7 +265,7 @@
   },
   {
     "name": "LANDFORM-restand-backwards",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "const groundFrameHeight = (y, x, z) => (landform && Number.isFinite(y) ? y - landformLiftAt(x, z) : y);",
     "new": "const groundFrameHeight = (y, x, z) => (landform && Number.isFinite(y) ? y + landformLiftAt(x, z) : y);",
     "tests": [
@@ -272,7 +274,7 @@
   },
   {
     "name": "LANDFORM-restand-scale-only",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/groundFrameHost.js",
     "old": "if ((!(was > 0) || was === STREAMING_TERRAIN_SCALE) && !landform) return y;",
     "new": "if (!(was > 0) || was === STREAMING_TERRAIN_SCALE) return y;",
     "tests": [

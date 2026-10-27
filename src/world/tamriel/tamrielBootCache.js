@@ -19,7 +19,7 @@ import { idbStore } from '../roadsCache.js';
 
 /** Moved whenever the trace's law (ui/tamrielTrace.js traceTamrielPicture), the relief's mask (tamrielRelief.js
  *  maskRelief) or the fit's (tamrielLand.js fitBayToPicture) moves - every kept continent is then built again. */
-export const BOOT_CACHE_VERSION = 1;
+export const BOOT_CACHE_VERSION = 2;   // 2: NIBEN-SEA - the trace opens the Niben's mouth (ui/tamrielTrace.js openNiben)
 const DB = 'dfo-tamriel-boot', STORE = 'continent';
 
 /** FNV-1a over bytes (or a string's char codes), from `h`. @param {ArrayLike<number>|string} data @param {number} [h] */

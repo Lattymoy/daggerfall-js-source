@@ -770,8 +770,8 @@ deed underground makes that dungeon its lair.
   (`world/tamrielDungeons.js`, one to an 8 x 8 cell on its site), and the places host now answers a pixel
   (`scenes/tamrielPlacesHost.js` `lairAt`, the build's own row; `lairCloneAt`, the lair laid unstood; its region the
   politic map's). The door reads them after the Bay's index (`scenes/lairHost.js` `pastBay`), judges each by the same
-  door test - a graveyard past the Bay is laid on a Bay template: 13 of the 364 within 200 px of the Imperial City place
-  no door, and are never offered - and the mend seeks the world's pixels (`net/wire.js` `worldPixelOk`). A lair's rumour,
+  door test - a graveyard past the Bay is laid on a Bay template: 12 of the 350 within 200 px of the Imperial City place
+  no door, and are never offered (13 of 364 before NIBEN-SEA opened the Niben, `03-World/Tamriel.md`) - and the mend seeks the world's pixels (`net/wire.js` `worldPixelOk`). A lair's rumour,
   circle (the held map reads it over the continent's sheet: `ui/bounty/bountyMapMark.js` `readBountyMarksIn`), hunt and
   trail follow it. Pinned by `test/systems/revenant/lairworld.test.js`, `tools/mutants/lairworld.json` (20, all dead).
 

@@ -25,6 +25,7 @@
 
 import { seatTipOf, seatShopFactor, kingdomName, CROWN_SEAT_REGIONS, seatRegionOk, SEAT_PIXEL_SPAN } from './townSeatLaw.js';   // TE0 decision 5: a seat town's card, its area's holder; AUDIT TOWN-ECON UI-4: Market Day on the card's price
 import { t } from '../systems/textManager.js';   // L10N4: the card's words in the player's language, each read when it is said
+import { CAPITAL_LANE } from '../world/capitalLane.js';   // BAY-LEFT-SEA: the staff audit's order - a capital's map id
 
 /** The location types that are towns (mapsFile.js LOCATION_TYPES TownCity, TownHamlet, TownVillage). */
 export const TOWN_ECON_TYPES = Object.freeze([0, 1, 2]);
@@ -230,6 +231,23 @@ export function townReportOf(raw) {
   }
   return { map, px, py, region, location };
 }
+/**
+ * BAY-LEFT-SEA (2026-10-26; the audit "no system left behind in the Bay", item 23 - E4): THE STAFF AUDIT'S ORDER
+ * (server-account/src/townEcon.js auditTowns, `/town audit [page]`) - a region's confirmed towns TOWN_AUDIT_PAGE a page:
+ * the Bay's by their location's index, as they always were; a province's (WW7-5: their indices their own negatives, so
+ * `ORDER BY location` listed the countryside's farthest hamlets first and the capitals never) its capitals' slices first
+ * (world/capitalLane.js - each capital's centre, then its other slices), then the rest by the size of their index: the
+ * producers' own numbering puts the places' city-states, towns and villages (world/arenaLocations.js ARENA_INDEX_BASE,
+ * 1,000,000) before the countryside's (world/tamrielCountry.js COUNTRY_INDEX_BASE, 2,000,000). `townAuditRank` the rank
+ * (TOWN_AUDIT_CAPITAL_LANE the lane it reads) - the service's SQL reads the same order (townEcon.js AUDIT_ORDER_SQL;
+ * pinned row for row).
+ */
+export const TOWN_AUDIT_PAGE = 400;
+/** The lane a capital's map id carries in its high 12 bits (world/capitalLane.js), the rank's one read. */
+export const TOWN_AUDIT_CAPITAL_LANE = CAPITAL_LANE;
+/** A confirmed town's rank in the audit: 0 the Bay's, 1 a capital's slice, 2 any other's past the Bay.
+ *  @param {number} map @param {number} location */
+export const townAuditRank = (map, location) => (location >= 0 ? 0 : ((map >>> 20) & 0xfff) === CAPITAL_LANE ? 1 : 2);
 /** A report as world_witness keeps it. @param {{ map: number, px: number, py: number, region: number, location: number }} t */
 export const townReportText = (t) => JSON.stringify([t.map, t.px, t.py, t.region, t.location]);
 /** A kept report read back, or null. @param {unknown} s */

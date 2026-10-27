@@ -56,7 +56,7 @@
   {
     "name": "ED-rows-misrouted",
     "file": "src/world/etherWatersBake.js",
-    "old": "    this.bay.adoptPlanes(list.filter((r) => r?.f !== ETHER_ROW));",
+    "old": "    this.bay.adoptPlanes(list.filter((r) => r?.f !== ETHER_ROW && r?.f !== TAMRIEL_ROW));",
     "new": "    this.bay.adoptPlanes(list);",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
@@ -92,7 +92,7 @@
   {
     "name": "ED-bay-alone",
     "file": "src/world/etherWatersBake.js",
-    "old": "  if (!bay || !ether) return bay;",
+    "old": "  if (!bay || (!ether && !continent)) return bay;",
     "new": "  return bay;",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
@@ -101,8 +101,8 @@
   {
     "name": "ED-routing-bay",
     "file": "src/world/etherWatersBake.js",
-    "old": "  of(px, py) { return waterFrameOf(px, py, true) === ETHER_FRAME ? this.ether : this.bay; }",
-    "new": "  of(px, py) { return this.bay; }",
+    "old": "    const f = waterFrameOf(px, py, !!this.ether, this.tamriel?.frame ?? null);",
+    "new": "    const f = BAY_FRAME;",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "ED-client-unsaid",
     "file": "src/world/deepWater/deepWatersClient.js",
-    "old": "          worker.postMessage({ t: 'build', woodsBytes: bytes, rects, ether }, [bytes.buffer]);",
-    "new": "          worker.postMessage({ t: 'build', woodsBytes: bytes, rects }, [bytes.buffer]);",
+    "old": "          worker.postMessage({ t: 'build', woodsBytes: bytes, rects, ether, continent }, [bytes.buffer]);",
+    "new": "          worker.postMessage({ t: 'build', woodsBytes: bytes, rects, continent }, [bytes.buffer]);",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ]
@@ -128,7 +128,7 @@
   {
     "name": "ED-client-no-ether",
     "file": "src/world/deepWater/deepWatersClient.js",
-    "old": "    bake = worldBakes(new DeepWatersBake({ woods, global: record, locationRectAt: rectsLookup(rects) }), { woods: ether ? etherGround(woods) : woods, ether });",
+    "old": "    bake = worldBakes(new DeepWatersBake({ woods, global: record, locationRectAt: rectsLookup(rects) }), { woods: ether ? etherGround(woods) : woods, ether, continent });",
     "new": "    bake = new DeepWatersBake({ woods, global: record, locationRectAt: rectsLookup(rects) });",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
@@ -137,8 +137,8 @@
   {
     "name": "ED-worker-raw",
     "file": "src/world/deepWater/deepWatersWorker.js",
-    "old": "{ woods: m.ether ? etherWoods(woods) : woods, ether: m.ether ?? null }",
-    "new": "{ woods, ether: m.ether ?? null }",
+    "old": "{ woods: m.ether ? etherWoods(woods) : woods, ether: m.ether ?? null, continent: !!m.continent }",
+    "new": "{ woods, ether: m.ether ?? null, continent: !!m.continent }",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "ED-host-bay-gate",
     "file": "src/scenes/deepWater/deepWatersHost.js",
-    "old": "    if (!inFrame(waterFrameOf(pixel.px, pixel.py, ether), pixel.px, pixel.py) || isDry(pixel)) return Promise.resolve(null);",
-    "new": "    if (!inFrame(waterFrameOf(pixel.px, pixel.py, null), pixel.px, pixel.py) || isDry(pixel)) return Promise.resolve(null);",
+    "old": "    if (!inFrame(waterFrameOf(pixel.px, pixel.py, ether, continentFrame), pixel.px, pixel.py) || isDry(pixel)) return Promise.resolve(null);",
+    "new": "    if (!inFrame(waterFrameOf(pixel.px, pixel.py, null, continentFrame), pixel.px, pixel.py) || isDry(pixel)) return Promise.resolve(null);",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ]
@@ -155,7 +155,7 @@
   {
     "name": "ED-host-any-pixel",
     "file": "src/scenes/deepWater/deepWatersHost.js",
-    "old": "    if (!inFrame(waterFrameOf(pixel.px, pixel.py, ether), pixel.px, pixel.py) || isDry(pixel)) return Promise.resolve(null);",
+    "old": "    if (!inFrame(waterFrameOf(pixel.px, pixel.py, ether, continentFrame), pixel.px, pixel.py) || isDry(pixel)) return Promise.resolve(null);",
     "new": "    if (isDry(pixel)) return Promise.resolve(null);",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
@@ -164,8 +164,8 @@
   {
     "name": "ED-host-bay-climates",
     "file": "src/scenes/deepWater/deepWatersHost.js",
-    "old": "  const climateIn = (px, py) => { const f = waterFrameOf(px, py, ether);",
-    "new": "  const climateIn = (px, py) => { const f = waterFrameOf(px, py, null);",
+    "old": "  const climateIn = (px, py) => { const f = waterFrameOf(px, py, ether, continentFrame);",
+    "new": "  const climateIn = (px, py) => { const f = waterFrameOf(px, py, null, continentFrame);",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "ED-host-unsaid",
     "file": "src/scenes/deepWater/deepWatersHost.js",
-    "old": "rects: deepWatersLocationRects(woods, locations, maps, blocks), ether });",
-    "new": "rects: deepWatersLocationRects(woods, locations, maps, blocks) });",
+    "old": "rects: deepWatersLocationRects(woods, locations, maps, blocks), ether, continent });",
+    "new": "rects: deepWatersLocationRects(woods, locations, maps, blocks), continent });",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ]
@@ -182,11 +182,12 @@
   {
     "name": "ED-pits-everywhere",
     "file": "src/scenes/oceanHolesHost.js",
-    "old": "    if (!isValidMapPixel(st.mapX, st.mapY)) { markTerrainProcessed(st, v, 'rejected:off-the-map'); return; }",
+    "old": "    if (!pitPixelOk(st.mapX, st.mapY)) { markTerrainProcessed(st, v, 'rejected:off-the-map'); return; }",
     "new": "",
     "tests": [
       "test/scenes/oh_host.test.js"
-    ]
+    ],
+    "note": "PITS-WORLD re-aimed by content: the hold is the world's grid (world/oceanHoles.js pitPixelOk) - gone, a pixel off the grid is cut."
   },
   {
     "name": "ED-world-unsaid",

@@ -547,8 +547,9 @@
   {
     "name": "SD11c-G13-no-Hollow-no-region",
     "file": "src/scenes/superDungeon/sdHost.js",
-    "old": "const near = h?.site?.cityName || '', region = regionName(o.rec.r) || '';",
-    "new": "const near = h?.site?.cityName || '', region = '';",
+    "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
+    "old": "const near = h?.site?.cityName || '', region = province ? '' : regionName(o.rec.r) || '';",
+    "new": "const near = h?.site?.cityName || '', region = province ? '' : '';",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]

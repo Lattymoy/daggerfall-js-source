@@ -131,6 +131,9 @@ function worldReveal() {
     return { revealLocation, revealMap, mapMacro: () => _locationRevealedByMapItem };
   `, {
     locationIndex: new Map([['5,6', { regionIndex: 17 }]]), playerTravelPixel: () => ({ x: 5, y: 6 }),
+    // PIN MOVED (BAY-LEFT-B, 06-Systems/Quest-Arc.md): the reveal reads the politic region (_questRegionIndex,
+    // PlayerGPS.CurrentRegion) over the quest layer's maps - a province's region its table of the places past the Bay
+    _questRegionIndex: () => 17, questWorld: { maps: { getRegion: () => CRYPT_REGION } },
     maps: { getRegion: () => CRYPT_REGION }, discoverRandomLocation, questBridge: { notebook: { addNote: (t) => notes.push(t) } },
     localizedStrings: tm.localizedStrings, getLocalizedLocationName: tm.getLocalizedLocationName,
   });

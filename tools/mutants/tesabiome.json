@@ -245,8 +245,9 @@
   {
     "name": "TESA-BIOME-28-weather-clamped",
     "file": "src/systems/weather/weatherMap.js",
-    "old": "    if (c != null && c >= 0 && c !== CLIMATES.Ocean) return c;",
+    "old": "    if (c != null && c >= 0) return c;",
     "new": "    if (false) return c;",
+    "note": "Re-aimed by content (BAY-LEFT-SEA, the audit's D4): the line takes the sea's own climate past the map now.",
     "tests": [
       "test/systems/weather/weather3a_weathermap.test.js"
     ]
@@ -254,10 +255,12 @@
   {
     "name": "TESA-BIOME-29-weather-sea",
     "file": "src/systems/weather/weatherMap.js",
-    "old": "    if (c != null && c >= 0 && c !== CLIMATES.Ocean) return c;",
-    "new": "    if (c != null && c >= 0) return c;",
+    "old": "    if (c != null && c >= 0) return c;",
+    "new": "    if (c != null && c >= 0 && c !== CLIMATES.Ocean) return c;",
+    "note": "PIN MOVED (BAY-LEFT-SEA, the audit's D4): the law turned - the sea past the map is the sea's own, so the mutant is the old law (the Ocean read as the nearest edge), killed by weather3a's moved pin and bayleftsea_seaweather's freeware winter.",
     "tests": [
-      "test/systems/weather/weather3a_weathermap.test.js"
+      "test/systems/weather/weather3a_weathermap.test.js",
+      "test/systems/weather/bayleftsea_seaweather.test.js"
     ]
   },
   {

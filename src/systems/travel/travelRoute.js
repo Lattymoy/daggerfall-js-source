@@ -102,8 +102,12 @@ export function openStepBlocked(climateAt, heightAt, ax, ay, bx, by, leaving = f
  * @param {number} [width]
  * @param {number} [height]
  * @param {((x:number, y:number) => boolean)|null} [beyond]
+ * @param {any} [pathsBeyond]
+ * @param {((x:number, y:number) => boolean)|null} [seaAlso] RUMARE-WATER: water a boat sails that no step on foot is refused
+ *   (world/rumareWaters.js rumareSeaPixel - the Imperial City's lake, its isle's way by Talos Bridge walked as the city's
+ *   streets): the sea lanes' (`seaWater`), never the land's
  */
-export function routeGround(climateAt, heightAt, waterByte, width = MAP_W, height = MAP_H, beyond = null, pathsBeyond = arenaRoadByte) {
+export function routeGround(climateAt, heightAt, waterByte, width = MAP_W, height = MAP_H, beyond = null, pathsBeyond = arenaRoadByte, seaAlso = null) {
   const climate = new Uint8Array(width * height), heights = new Uint8Array(width * height);
   // OW-WOD-PATH: the World of Daggerfall massifs (WodWorld mountainPixels), one byte a pixel - set by the host when the
   // mod's list is read or grows (setRocks), null while it stands none
@@ -134,6 +138,8 @@ export function routeGround(climateAt, heightAt, waterByte, width = MAP_W, heigh
   };
   const waterOn = () => (x, y) => (x < 0 || y < 0 || x >= width || y >= height ? !beyondDry(x, y) : heights[y * width + x] <= waterByte);
   let isWater = waterOn();
+  /** RUMARE-WATER: the sea lanes' water, made once a water. @type {any} */
+  let seaFor = null, seaFn = null;
   /** AUDIT RELEASE R1-2: the water as the land stands now - a new function when the land past the table has moved. */
   const waterNow = () => { if (beyond && waterMoved()) isWater = waterOn(); return isWater; };
   // OW-WOD-PATH: an open step into a massif's pixel is refused as one into the Mountain climate is - and the start's own
@@ -184,6 +190,9 @@ export function routeGround(climateAt, heightAt, waterByte, width = MAP_W, heigh
     /** The water (AUDIT RELEASE R1-2: as the land past the table stands now - a host's spread, `...ground`, reads it at
      *  each plan). */
     get isWater() { return waterNow(); },
+    /** RUMARE-WATER: the sea a boat sails - the water, and `seaAlso`'s (planSeaLanes' own; one function a water, so its
+     *  kept lanes are kept by it). */
+    get seaWater() { const w = waterNow(); if (!seaAlso) return w; if (seaFor !== w) { seaFor = w; seaFn = (x, y) => w(x, y) || seaAlso(x, y); } return seaFn; },
     /** VOYAGER2.1: the roads past the Bay (world/arenaRoads.js's installed layer - `kind` 'roads', 'tracks' or 'join'),
      *  which the planner walks as roads where it is handed the Bay's (planRoute `pathsBeyond`) - none while no layer is
      *  installed (the reader read nothing there and cost a long route past the table a fifth more), as the host's spread
@@ -599,7 +608,8 @@ export function planSeaLanes(from, to, opts = {}) {
  *  plan's `tally`. @param {{x:number,y:number}} from @param {{x:number,y:number}} to @param {any} opts
  *  @returns {Generator<void, ReturnType<typeof planRoute>, void>} */
 function* planSeaLanesSteps(from, to, opts = {}) {
-  const { isWater = () => false, sea = null, laneMargin = LANE_MARGIN, tally = null } = opts;
+  const { isWater: landWater = () => false, seaWater = landWater, sea = null, laneMargin = LANE_MARGIN, tally = null } = opts;
+  const isWater = seaWater;   // RUMARE-WATER: the water a boat sails (routeGround's seaWater) - the land's where none is said
   if (!sea || sea.start !== 'sea') return null;
   let tiles = _laneGround.get(isWater);
   if (!tiles) { tiles = new Map(); _laneGround.set(isWater, tiles); }

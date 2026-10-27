@@ -256,7 +256,8 @@ test('KNIGHT-HOUSE the market: a building someone owns is never on it - housesFo
   // the host's one producer reads the town's answer
   const m = src('src/scenes/worldModes.js');
   const fn = m.slice(m.indexOf('function currentHousesForSale() {'), m.indexOf('function houseMeshRadius(building)'));
-  assert.match(fn, /owned: host\.onlineHomes \? \(bs\) => !!host\.onlineHomes\.homeAt\(dir\.mapId, bs\.buildingKey\) : null,/);
+  // PIN MOVED (HOUSES-3): and offline too, never one of the player's own region's deeds (a region holds three)
+  assert.match(fn, /owned: \(bs\) => houseOwnedAt\(\{ townMapId: dir\.mapId, regionIndex: dir\.regionIndex \}, bs\.buildingKey\) \|\| !!host\.onlineHomes\?\.homeAt\(dir\.mapId, bs\.buildingKey\),/);
   // and the Seneschal's grant and the bank's market both read that producer (the grant through HOME-PRICE C1's filter,
   // which asks the same answer again)
   assert.match(m, /housesForSale: homes \? currentHousesForSale\(\)\.filter\(\(h\) => !homes\.homeAt\(dir\?\.mapId \?\? 0, h\.buildingKey\)\) : currentHousesForSale\(\),\n\s*alreadyOwnResult: TRANSACTION_RESULT\.ALREADY_OWN_HOUSE,/);
@@ -276,17 +277,18 @@ test('KNIGHT-HOUSE the hosts, by source: the door never prices the knight\'s own
   assert.match(arm, /if \(host\.homeTownsMissing\?\.\(\)\) return \{ rows: \[\{ text: accountRefusalText\('home-towns'\), center: true \}\] \};/);
   assert.match(arm, /if \(host\.homeLayoutsHeard\?\.\(\) === false\) \{ host\.hearHomeLayouts\?\.\(\); return \{ rows: \[\{ text: accountRefusalText\('home-layout'\), center: true \}\] \}; \}/);
   assert.ok(arm.indexOf('homeLayoutsHeard') < arm.indexOf('allocateHouseToPlayer('), 'the gates before the gift');
-  assert.match(arm, /claimHouse\(kept\);\n\s*surfacePlayer\(\);\n\s*if \(host\.holdRealmDeed\) holdGrantedHouse\(region, kept\);/);   // PIN MOVED (AUDIT CHAP4 E2): the book's membership, never a seat's
-  const give = m.slice(m.indexOf('function holdGrantedHouse(region, membership) {'), m.indexOf('function currentInteriorScene()'));
+  // PIN MOVED (HOUSES-3): the deed given held, one of the region's three - and given back alone
+  assert.match(arm, /claimHouse\(kept\);\n\s*surfacePlayer\(\);\n\s*if \(host\.holdRealmDeed && given\) holdGrantedHouse\(region, kept, given\);/);   // PIN MOVED (AUDIT CHAP4 E2): the book's membership, never a seat's
+  const give = m.slice(m.indexOf('function holdGrantedHouse(region, membership, slot) {'), m.indexOf('function currentInteriorScene()'));
   assert.match(give, /if \(r\?\.ok \|\| \(r\?\.error !== 'home-taken' && r\?\.error !== 'home-layout'\)\) return;/, 'given back for a taken building or another layout alone');
-  assert.match(give, /if \(now\?\.buildingKey !== key \|\| \(Number\(now\.mapId\) >>> 0\) !== mapId\) return;/, 'never a deed that moved on');
-  assert.match(give, /playerEntity\.houses\[region\] = \{ regionIndex: region, location: '', mapId: 0, buildingKey: 0 \};/);
+  assert.match(give, /const now = regionDeeds\(playerEntity\.houses, region\)\.find\(\(d\) => d\.buildingKey === key && \(Number\(d\.mapId\) >>> 0\) === mapId\);\n\s*if \(!now\) return;/, 'never a deed that moved on');
+  assert.match(give, /dropDeed\(playerEntity\.houses, region, now\);/);
   assert.match(give, /membership\.flags = \(membership\.flags \?\? 0\) & ~HOUSE_FLAG_MASK;/, 'the order gives again');
   assert.match(give, /removePermanentScene\(sceneCache\(\), interiorSceneName\(now\.mapId, key\)\);/);
   assert.match(give, /if \(locId\) undiscoverBuilding\(locId, key\);/);
   assert.equal(HOUSE_FLAG_MASK, 2);
   // the bank's sale
-  const sale = m.slice(m.indexOf('      sellHouse: () => {'), m.indexOf('      sellShip: () =>'));
+  const sale = m.slice(m.indexOf('      sellHouse: (i = 0) => {'), m.indexOf('      sellShip: () =>'));   // PIN MOVED (HOUSES-3): the i-th house offered
   assert.match(sale, /if \(host\.onlineHomes && owned && realmDeedAt\(playerEntity\.houses, region, slot\?\.mapId, owned\.buildingKey\)\) \{\n\s*host\.onlineHomes\.releaseDeed\(slot\.mapId, owned\.buildingKey\)\n\s*\.then\(\(r\) => \{ if \(r\.ok \|\| r\.error === 'no-home'\) sell\(\); else townTalk\?\.say\?\.\(accountRefusalText\(r\.error\)\); \}\)/);
   assert.match(sale, /found: owned !== null/, 'DFU\'s resolver still guards the sale (AUDIT 64 F26)');
   // world.js
@@ -298,7 +300,8 @@ test('KNIGHT-HOUSE the hosts, by source: the door never prices the knight\'s own
   const boot = bootHost.slice(bootHost.indexOf('async function holdDeeds() {'), bootHost.indexOf('async function sweepGone() {'));
   assert.match(boot, /if \(!await standing\(\)\) \{ deedsAsked = false; return null; \}/, 'never the boot\'s stand-in character');
   assert.match(bootHost, /async function standing\(\) \{\n\s*for \(let i = 0; !\(loaded\(\) && stands\(\)\) && i < STAND_LOOKS; i\+\+\) await wait\(STAND_LOOK_MS\);\n\s*return loaded\(\);/);
-  assert.match(w, /loaded: \(\) => playerSpawned && _bootLoaded && !_loading, stands: \(\) => !!modes,/);
+  // PIN MOVED (AUDIT BAY-LEFT, its packages merged): the readiness one function of world.js's, the start's and START2's too
+  assert.match(w, /const _worldReady = \(\) => playerSpawned && _bootLoaded && !_loading;\n\s*const homesBoot = createHomesBoot\(\{\n[^\n]*\n\s*loaded: _worldReady, stands: \(\) => !!modes,/);
   assert.match(boot, /const held = await holdRealmDeeds\(onlineHomes, \{ houses: player\(\)\.houses \}\);/);
   assert.match(w, /async function holdGrantedDeed\(\{ region, mapId, buildingKey \}\) \{\n\s*if \(!onlineHomes \|\| !checkpointLanded\(await onlineCheckpointLanded\(\)\)\) return \{ ok: false, error: 'offline' \};[^\n]*\n\s*return onlineHomes\.holdDeed\(\{ region, mapId, buildingKey, layout: homeClaimLayout\(mapId\) \}\);/);
   assert.match(w, /holdRealmDeed: onlineHomes \? \(d\) => holdGrantedDeed\(d\) : null,/);

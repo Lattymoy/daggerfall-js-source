@@ -364,7 +364,8 @@
     "new": "",
     "tests": [
       "test/world/smoothland.test.js",
-      "test/scenes/audittesa2p_hosts.test.js"
+      "test/scenes/audittesa2p_hosts.test.js",
+      "test/world/nibensea.test.js"
     ]
   },
   {
@@ -373,7 +374,8 @@
     "old": "  for (const [, x, y] of near) if (holds(at, native([x + 0.5, y + 0.5]))) return [x, y];",
     "new": "  for (const [, x, y] of near) return [x, y];",
     "tests": [
-      "test/world/smoothland.test.js"
+      "test/world/smoothland.test.js",
+      "test/world/nibensea.test.js"
     ]
   },
   {

@@ -178,14 +178,17 @@ places, from the player's ARENA folder - on the held map first, `03-World/Arena-
   `isTamrielGround`). `maps.getClimateIndex` is composed (`groundClimateIndex`: the Bay's own, dilation and all, on
   it). `StreamingWorldState.frame` is the continent's box and `streams` is what the load list and the range ask;
   `onMap` stays the map's law for World of Daggerfall's slots and every reader of the data. The far ring is handed
-  `byteAt` for the pixels past the map. World of Daggerfall's picks and Deep Waters' promotions are held to the Bay.
+  `byteAt` for the pixels past the map. World of Daggerfall's picks are held to the Bay; Deep Waters promotes past it on
+  its own bake (TAMRIEL-DEEP, `03-World/Deep-Waters.md`).
 - **The switch.** The Features row `tamriel-land` ("Land beyond the Bay", the world group, on by default, the player's
   own online), `scenes/shared.js` `tamrielLandOn` on the enhanced skin, `?tamrielland=off` the kill door, read once as
   the world mounts. Off - and on the classic skin - the edge of the world is DFU's: empty.
-- **Readings, honest.** The region past the Bay reads as `getRegionIndexAt`'s clamp (0, the Alik'r Desert) - DFU's own
-  clamp, kept; weather, quests and factions key on it and see the Alik'r. Online a player beyond the Bay is seen by
+- **Readings, honest.** The region past the Bay is its province's (WW-R, `03-World/World-Wide.md`: regions 62..70 off
+  `tamrielGround.js` groundPoliticIndex - DFU's clamp kept for the pixels the table has no region for); the weather keys
+  on the climate, quests and the law on the province's region. Online a player beyond the Bay is seen by
   whoever stands near, and the Overworld routes over the land there (TV-BEYOND, `01-Overview/bugs/Field-Bugs-2026-10-09.md`:
-  the wire and the planner held the Bay's bounds, and the field found both). The sea past the Bay is the kernel's own water tiles (Deep Waters' bathymetry is the Bay's). The Wrothgarians
+  the wire and the planner held the Bay's bounds, and the field found both). The sea past the Bay is carved by a bake of its own, the Bay's law on the continent's frame (TAMRIEL-DEEP, 2026-10-26,
+  `03-World/Deep-Waters.md`). The Wrothgarians
   and the Dragontails begin in WOODS' bytes and continue in the authored law past the edge; the seam band and the
   blend join them, and the probe's seam report says where the data and the authored shape disagree.
 - **Performance.** A pixel's ground past the Bay costs a point-in-province test, a coast distance over ~100 edges and a
@@ -510,6 +513,296 @@ the heightmap says how high that land stands.
   PROF7-svc-body-witnesses, equivalent as recorded.
 
 Section A, TAMRIEL-RELIEF (OURS: DFU stops at the Bay's edge; the land past it is the port's own).
+
+## NIBEN-SEA - the Imperial City's water joined to the sea (2026-10-26)
+
+The owner, with the lore map of Tamriel in hand: *"If you look at this image youll see the ocean that connects to the
+imperial city is missing from our map"*, and *"The port that connects to the imperial city should allow for AI/player
+ship voyages through this canal"*.
+
+**What the trace read.** The race screen's painting draws Lake Rumare as a ring round the Imperial City and the Niben
+from it down to the Topal Bay. TAMRIEL4 read four waters from that, and nothing joined them. Lake Rumare was two pieces
+(49 and 11 pixels), because its lower arc and its outlet lie under the painting's own label, IMPERIAL PROVINCE. The
+Niben's bay was 115 pixels. Below the bay, the river's painted line was one pixel of the coastline's blue, which the trace
+read as the land it is painted on. Every one of them was a lake (`world/arenaPlaces.js` pictureLakes). So the open sea
+never reached the city, no port stood on it, and no voyage or packet could sail it.
+
+**The course** (`ui/tamrielTrace.js` `NIBEN_COURSE`, `nibenCells`, `openNiben`, run after `fillSpecks`; `niben` false
+skips it - the relief's bake, `tools/bakeTamrielRelief.mjs`, fits the owner's heightmap to the painting's own coasts). Each run is a
+row or a column of picture pixels from one corner to the next:
+- the city's own arm of the lake, from a pixel below the isle's south shore down to the ring's bottom piece (the isle's
+  last pixel stays land, under IC-GRAND's twenty-five - `03-World/Arena-Provinces.md`; the canal cuts the rest);
+- the ring's lower arc, east under the label;
+- the ring's east side, down to the Upper Niben and the bay's head;
+- the Lower Niben, the painted line from the bay's tail to the Topal Bay.
+
+The ring's west stays land. That is the isle's way to the mainland: Talos Bridge, the city's one gate. The course opens
+only on a 320 x 200 picture whose every join (`NIBEN_JOINS`: the ring's two pieces, the bay's head and tail, the sea off
+the river's mouth) is water. Any other picture is left as it traced. On the freeware this opens 37 pixels, leaving
+26,599 land pixels (the boot's kept trace is traced again: `world/tamriel/tamrielBootCache.js` BOOT_CACHE_VERSION 2, and
+the painting's own coasts, `niben` false, are never kept). The enclosed waters left are Hammerfell's two lakes and the Inner Sea (4-connected), or Hammerfell's
+two alone (`pictureLakes`, 8-connected). The Lower Niben runs on Elsweyr's border with the Imperial Province, a river
+one pixel wide between two provinces' land. It is the one such strait the trace keeps; TAMRIEL4's closeBorderLines reads
+every other one as a border. Everything that reads the trace follows: the held map's coast, the streamed ground (the
+course is the sea's - its height 0, the Ocean's climate), the relief's mask, the places' shores, and the open sea that
+the ports, the board and the lanes ask (AUDIT TESA II P12's lakes are now Hammerfell's alone). SMOOTH-LAND's one law
+reads the opened trace as it reads the rest: the course is a picture pixel of sea, its shores the law's smooth contour.
+CYRODIIL-WATERS' Lower Niben (`world/tamriel/tamrielWaters.js`, a carved river 320-460 m wide) runs down the same reach;
+the reach is the sea's now, a picture pixel wide, and the river's carve only ever lowers, so it reaches its water as
+before (`test/world/breathtaker.test.js`), and NAMED_WATERS still names the reach the Lower Niben.
+
+**The Waterfront canal** (`world/tamriel/tamrielGeography.js` `WATERFRONT_CANAL`, `world/tamriel/tamrielLand.js`
+`waterfrontCanal`, `canalAt`). The city's arm of the lake starts two picture pixels south of the city's own, and
+IC-GRAND's twenty-five pixels (`span`, pinned to `world/imperialCity.js` IMPERIAL_SPAN) end inside the one between. So
+the arm's water starts short of the city's south edge, and the canal cuts the rest at the Bay's scale. It runs from the
+row past the span to the last row before the water, along the city's middle column and one column either side: Bay
+pixels 2068-2070 by 671-683 on the freeware's fit (the arm's end rounded by the smooth law). It reads the land's own law
+(`landLabelAt`, never `provinceKeyAt`), so it ends where every reader's water begins. `provinceKeyAt` answers null inside
+it, so the ground, the climate and every reader of the land see it as sea.
+
+There is no canal when:
+- the city's span is not all its province's land at its point (the capitals' own law would stand it elsewhere);
+- the water meets the city's edge (nothing to cut);
+- no water lies within `reach` (24).
+
+The canal is kept for a trace and a fit, the same on every thread.
+
+**The harbour.** The Imperial City's port is the middle slice of its span's bottom row, below the Waterfront district
+(`world/tamrielCapitals.js` `harbour`, `capitalHarbourSlice`, `capitalCanalOpen`; `world/pastBayRows.js`): Bay pixel
+(2069, 670) on the freeware. That slice is a port where the canal meets it. RUMARE-WATER (below) moved it onto the
+Waterfront's own slice, (2069, 668), when the lake became the sea's. Every other capital's harbour is its centre,
+as before. A capital's harbour is named for its capital: it is the "Imperial City" on the boards
+(`world/worldWide/worldPorts.js`).
+
+**The packets.** The city lies some 850 pixels of river from the Topal Bay and a thousand from the nearest port of the
+sea, past the lanes' own reach (BEYOND_LANE_MAX_PX, 400). A harbour up a canal therefore runs its packets
+`CANAL_PORT_REACH_PX` (1200, the port's `reach`; `systems/naval/seaLanes.js` laneNetwork). Its way runs up to twice that
+(`scenes/naval/worldLanes.js` `beyondPathPx`), and the lane's `near` test uses the same bound. The city's roadstead lies
+on the canal, which is a picture pixel of land, so its way puts out from the picture's sea beside it - SMOOTH-LAND's
+`moorCell`, which took the law this arc had written as `seaFrom` (a cell within two whose leg the world's lane water
+holds). On the freeware this gives the city two packet lanes: to Senchal, 995 km down the Niben and across the Topal Bay,
+and to Torval, 1,555 km.
+
+**The voyage.** The voyage planner (`systems/travel/travelRoute.js` planSeaLanes) floods the water at the Bay's scale.
+The canal and the course are both water to it. A voyage from the Topal Bay lands at the harbour's slice: 848 pixels
+on the freeware.
+
+**The zone** (`systems/wild/cyrodiilZone.js` `provinceWaterAt`). AUDIT TESA II Z4 made the zone take what it encloses,
+so Lake Rumare and the Niben were the zone's. Joined to the sea, they would no longer be enclosed. The sea would reach up
+the river to the city's isle, and the city would fall into The Borderlands. The rule now: a pixel the land's law calls water
+(`provinceKeyAt`'s null) whose nearest land on the picture on both sides of a row or a column (within
+PROVINCE_WATER_REACH, 12) is the Imperial Province's is the zone's. The Waterfront canal counts too: its picture pixel is
+the province's land between its own. The river's last reach, between Elsweyr's banks, does not. The city stands in The
+Heart, as Z4 pins it.
+
+ZONE-LINE's outline (`zoneLineSteps`) is the law's own lines wherever the zone changes - the coast, a border. Where the
+zone's water meets the sea's, the law has no line: one label's water on both sides. So that square is the zone's own
+marching case, a DAM: each edge it crosses at the law's crossing where the labels differ and at its middle where they do
+not, its pieces `kind` 'water'. The dam is the red line's, the fog's cut and the zone map's ring alone. It is never the
+held map's coast or border, and never a piece the ink leaves off for the zone (`keys`). On the freeware the outline
+crosses the Niben where its banks turn Elsweyr's.
+
+**Not done, and why.** A boat sails the Niben and the canal to the city's edge. The city's own lake (IC-GRAND's, inside
+its twenty-five pixels, out to 10 km) is the location's ground, flattened to the city's height, so a boat does not cross
+from the canal onto it, nor reach the Waterfront's piers. Voyages and packets land at the harbour's slice. DONE by RUMARE-WATER (below): the lake is the sea's,
+at its height and carved deep, joined to the canal through a mouth in the far shore, and the harbour is the Waterfront's.
+
+### Pins
+
+- `test/world/nibensea.test.js` (10): the course (its runs, its joins, the opening and its guard); the canal (its box,
+  the land's key and the ground on it, the four nulls); the harbour (the slice, the canal's word, the other capitals' as
+  before); the port's name and reach; the lanes' reach and the way's cap; the way off the canal; the zone's water; the
+  zone's line across its water (every chain closed, the centre rule, the dam the red line's alone); and on the player's
+  own files the joined Niben, the painting's trace never kept, the port, the lane to Senchal and the voyage.
+- PIN MOVED: `test/ui/tamriel4.test.js` (26,599 land pixels, three holes, the course exempt from the strait sweep);
+  `test/systems/wild/zoneline.test.js` (the zone the province's law and its own water); `test/world/bootcache.test.js`
+  (the laws' prints under BOOT_CACHE_VERSION 2);
+  `test/systems/revenant/lairworld.test.js` (350 graveyards within 200 px of the city, 12 doorless: 13 stood on the
+  course, and one on Lake Rumare's east shore goes with the sea's large-map detail, TAMRIEL-DEEP);
+  `test/world/audittesa2p_world.test.js` (P12: two lakes, Lake Rumare the sea's; P7: 29 ports, the city's its
+  Waterfront); `test/world/tamrielrelief.test.js` (the relief's bake reads the painting's own coasts -
+  `preloadTamrielTrace`'s `niben` false: the owner's heightmap is laid on the painting, and the player's trace masks the
+  river on it at load, so the module is the same to the byte).
+- Mutants: `tools/mutants/nibensea.json` (24, all dead). At the merge of SMOOTH-LAND, IC-GRAND and ZONE-LINE:
+  CANAL-province-unread and ZONE-water-unasked re-aimed by content; WAY-roadstead-held-to-picture and WAY-leg-unasked
+  retired with `seaFrom` (`smoothland.json`'s SMOOTH-LAND-LANES-the-mooring-refused and -the-moorings-leg-unasked hold
+  `moorCell`, and name this file's test too); ZONE-dam-unbuilt, ZONE-dam-the-laws, ZONE-water-by-the-picture and
+  BOOT-the-bake-kept added. Re-aimed by content, all dead: `audittesa2g.json`'s
+  AUDITTESA2G-G2-the-bake-reads-its-own-output; `audittesa2p.json`'s
+  P7-capital-port-unsaid, P7-near-the-bays, P7-near-no-margin and P7-port-region-unsaid; `sealanes.json`'s
+  NET-three-neighbours and NET-reach-short; `tamriel3.json`'s TAMRIEL3-the-sea-has-a-province; `tesa6.json`'s
+  TESA6-a-crown-past-the-bay; `wwc2.json`'s WWC2-a-cell-by-its-corner.
+
+Section A, NIBEN-SEA (OURS: DFU stops at the Bay's edge; the land past it, its water and its ports are the port's own).
+
+## RUMARE-WATER - the Imperial City's lake is the sea's (2026-10-26)
+
+The owner: *"City lake needs to be apart of the overall water structure. Not just a flattened land. Make this work and be
+detailed about it"*.
+
+**What stood.** NIBEN-SEA joined Lake Rumare to the Topal Bay and cut the Waterfront canal to the city's south edge. The
+city's own lake - IC-GRAND's ring between City Isle's shore (7.9 km) and the far shore (10 km), inside its twenty-five
+pixels - was not part of it:
+- the city was a location like any other, so its ground was flattened (TESA11's `flattenAt`) to its centre pixel's
+  average, about 100 units over the sea. The lake was a sheet of water tiles laid on that ground, a hundred metres up;
+- the plan's far shore ran all the way round, so a wall of land stood between the lake and the canal's head;
+- the canal ended at the span's edge, where the land's bytes about it lifted the kernel's water into a bar;
+- the Deep Waters bake never asked for the lake, and nothing carved it. A boat could not sail it, and no packet or
+  voyage could reach the Waterfront's piers. The harbour was the span's south edge, on the far shore.
+
+**What it is now.** Where the canal stands, the city's lake is the sea's own water. It stands at the sea's height, is
+carved as deep as the sea, and is reached through a mouth in the far shore. The city's land stands just over it.
+
+**The mouth** (`world/imperialCity.js` `IMPERIAL.mouth`, `imperialLand`). The plan's land law now opens the far shore
+south of the isle: `mouth` metres either side of the middle line (1,228.8 m - the canal's three pixels, WATERFRONT_CANAL's
+`half` and a half, pinned equal), from the lake to the span's edge. The mouth is no land, and its tiles are the lake's.
+The Waterfront's quay and piers stand inside the ring, so they are untouched. The far shore either side of the mouth, and
+the whole shore north, east and west, are land as before. Talos Bridge still lands on the west shore.
+
+**The city's water law** (`world/rumareWaters.js`, pure, read by the terrain worker, the Deep Waters worker and this
+thread off the same trace and fit):
+- `rumareCity()`: the city's centre pixel where the canal stands (`waterfrontCanal`, which now carries its `cx`, `cy`),
+  else null. With no canal, nothing below applies, and the city keeps its own ground as before;
+- `rumareSeaAt(bx, by)`: a Bay point of the span that the plan calls no land - the lake round the isle and the mouth;
+- `rumareSeaPixel(px, py)`: the same law at a pixel's middle. This is the map-scale reading for the lanes, the voyages
+  and the ports' shore;
+- `rumareLandHeight`: the city's land. Inside the far shore it is the freeboard's height (below). Past the far shore it
+  rises to the land's own height at the span's edge, smoothstepped over the way from the water (the far shore or the
+  mouth's side) to the edge. It is exactly the land's own on the edge, which is the neighbour pixel's sample, and never
+  under the freeboard;
+- `rumareMouthPixel`: the span's south-edge pixels the mouth crosses (2068-2070 on the freeware);
+- `rumareBasin`: the share by which the land round the span is let down to the shore - 1 on the span, easing to 0 over
+  `RUMARE_BASIN.ramp` (10) pixels past it, measured from the span's square on a superellipse (power 4) so its sides are
+  straight and its corners round;
+- `rumareSliceRect`: a slice's rect as `setLocationTiles` gives a capital's - the rim on the span's outer sides, a town's
+  clearance on its inner ones.
+
+**A capital at the sea's ground** (`world/terrain/capitalSea.js`; `world/terrain/terrainGen.js` runs it after the blend).
+AUDIT TESA II C2 flattened a shore capital's every slice to the sea's floor so its harbour stood at the sea's height. Its
+streets stood there too, and every reader that asks heights of water read them as water: the Deep Waters carve
+(`isLocalPointWater` counts a height at the ocean as water whatever its tile), which TAMRIEL-DEEP's continent bake now
+reaches, would cut a shore capital's streets to the seabed, and Come Sail Away's hull (under 34 m is water) would sail
+them. So a capital at the sea is now laid in two heights:
+- its LAND at `CAPITAL_LAND`, `CAPITAL_FREEBOARD` (0.8 kernel units, 1 m) over the sea. That is past the carve's 0.25
+  headroom (`DW_CARVE_THRESHOLD`) and the hull's 34 m line. The flatten (`CAPITAL_SEA_FLAT`) is the land's height, so the
+  location's models stand on it;
+- its WATER at `CAPITAL_SEA`, the sea's own height (the sampler's ocean clamp). A vertex is water where:
+  - a stamped tile of the location's own ground has water at that corner (`WATER_DRAW_MASK_TABLE`, so the sheet laid on
+    it is level);
+  - the Imperial City's law says so (`rumareSeaAt`). On a seam between two of its slices the law alone decides - both
+    slices ask the same law, so the seam is one height from both sides;
+  - past the rect, in the rim, the land's own ground there is the sea (the sea reaching in);
+  - it lies on a seam with the capital's sea slice (`seaEdges`, `world/tamrielCapitals.js` seaEdgesOf). Both sides of that
+    seam are water;
+- every other vertex is land - `CAPITAL_LAND` inside the rect, the rim's blend never under it, and the Imperial City's
+  far shore rising to the land's own (`rumareLandHeight`);
+- a vertex on the span's outer edge (a side with a rim) is the land's own height, water or land, as the pixel past it
+  stands, so no seam opens.
+
+The Imperial City is flattened to the sea (`flattenAt.sea`) only where its canal stands (`capitalCanalOpen`). Alinor,
+Torval and Solitude take the same law as shore capitals: their water is unchanged, and their streets are a metre over it.
+
+**The ground about it** (`world/tamriel/tamrielGround.js` tamrielHeightByte, tamrielLargeMap; GROUND_ROLL_VERSION 5):
+- the mouth's pixels are the sea's (byte 0), so the kernel lays the canal's water on into the city. They had stood the
+  land's height, a bar across the mouth that the kernel's interpolation lifted to about 90 m;
+- the land round the span is let down toward the shore (SHORE_BYTE) by the basin, whole on the span and eased back
+  over ten pixels. Without it the far shore's rise met land at 86 m on the span's edge, a cliff over the lake. It meets it
+  at 62 m now. The sea and any land already that low never move;
+- the large map's detail (BREATHTAKER3's swell) is faded by the same share, so the basin's floor is a shore's.
+
+**The bake** (`world/tamrielWatersBake.js`). The continent's Deep Waters bake reads the city as the streamed build lays
+it. `rumareWaterSampler` gives a span pixel's samples flattened to `CAPITAL_LAND`, its water let down by
+`capitalSeaGround` with the law alone (no tile is laid in the bake), and every other pixel the plain sampler's. Its
+classes call every span pixel mixed (`PIXEL_MIXED`), so the span is always asked whole. Its fine and coarse water are that
+sampler's, and its flood is seeded from the city's sea pixels as well as the trace's open sea, so the lake is reached
+through the mouth from the canal. The carve then takes the lake into the deep with its shelf, as the sea's.
+
+**The harbour** (`world/tamrielCapitals.js` `harbour`, `capitalHarbourSlice`, `capitalCanalOpen`). The Imperial City's
+port is now the Waterfront's own slice on the middle line: slice row 22, which holds the quay (8.1 km) and the piers' ends
+(8.45 km). That is Bay pixel (2069, 668) on the freeware; it was the span's edge (2069, 670), on the far shore. The canal
+is asked at the row past the span's south edge in the harbour's column, wherever the harbour's own row is.
+
+**The ways at the map's scale:**
+- the lanes' water (`scenes/naval/worldLanes.js` worldLaneWater) is the Ocean's water past the Bay or the city's sea
+  (`rumareSeaPixel`);
+- the ports' open sea (`scenes/world.js` openSea, past the map's edge) takes the city's sea, so the Waterfront's port
+  bears on it;
+- a voyage's sea (`systems/travel/travelRoute.js` routeGround's `seaAlso` and `seaWater`; planSeaLanes reads `seaWater`)
+  takes it as well. The land's own water (`isWater`) does not, so the isle's way by Talos Bridge is still walked as the
+  city's streets. `seaWater` is one function per water, so the kept lane tiles are kept by it;
+- a harbour up a canal asks its lanes of `CANAL_PORT_NEIGHBOURS` (4) nearest ports (`world/worldWide/worldPorts.js`,
+  `systems/naval/seaLanes.js` laneNetwork's `p.neighbours`), not the lanes' own two. From the Waterfront the nearest as
+  the crow flies are Senchal, then Winterhold and Windhelm across Skyrim (no way to either), then Torval. With two it lost
+  its Torval lane.
+
+**On the freeware** (`ARENA2_PATH`; the city at (2069, 658)):
+- the city slice at the centre is all land at 35.00 m. The Waterfront's slice has 10,307 samples of sea at 34 m and 6,334
+  of land at 35 m. The mouth's south edge is 34 m all the way, the canal's own water;
+- Come Sail Away's hull reads the lake as water (under 34 m) and the streets as land (over it);
+- the bake floods the canal, the mouth and the lake's south, east and west pixels whole, and the north's where the
+  isle's shore crosses it in part. The city's are none. The carve takes the lake's south down to 76.1 m, its north to 48.9 m, and the Waterfront's own slice to 31.6 m;
+- the port stands at (2069, 668), its roadstead at (2068, 668). It has two lanes: Senchal, 997 km, and Torval, 1,558 km.
+  A voyage from the Topal Bay is 852 pixels and lands at (2069, 668).
+
+**AUDIT BAY-LEFT F1 - the bake's city off its law** (2026-10-27, `01-Overview/audits/Audit-Left-In-The-Bay.md`). The
+bake classed all 625 of the span's slices mixed, so every cell flood ran each of them through the kernel (11-13 ms a
+slice: the samples, the flatten, `capitalSeaGround`), and kept nothing past an eviction: a promote at the Waterfront
+waited 17.5 s on a fresh bake, 8.3 s at (2058, 664) and 23 s at the span's north edge (2069, 646). Now:
+- `world/tamrielWatersBake.js` rumareWaterSampler reads the plan's law at every vertex (`world/rumareWaters.js`
+  rumareSeaGrid - capitalSeaGround's own arithmetic, the city found once a slice) but the span's outer edge, where the
+  plain sampler answers as the kernel does there. On the freeware: the kernel's answer at every vertex of all 625
+  slices, and the same coarse and fine bits (0 differences).
+- rumareClass: a slice wholly inside City Isle's shore or wholly past the far shore clear of the mouth is LAND with no
+  vertex asked (rumareSliceAllLand, a metre's margin either side); else its grid's all-land, all-sea or MIXED. The bake
+  keeps each slice's class and bits for its life (the constructor's cityBits memo), a mixed slice's grid packed until
+  both its bit sets are made.
+- `world/imperialCity.js` imperialLand: the Prison's and the University's centres made once a plan (landCompounds).
+- After: 1.0 s the first promote at the Waterfront (the lake's cell, once a bake), 36-137 ms the others; a cell flooded
+  again after an eviction 54 ms (6.4 s before).
+
+**Not done, and why.** No ship berths at a particular pier: a packet lands at the harbour slice's roadstead, as every
+harbour's does. The lake's ships are the lanes' (to Senchal and Torval), and they cross it to the Waterfront; it has no
+traffic of its own.
+
+### Pins
+
+- `test/world/rumarewater.test.js` (13): AUDIT BAY-LEFT F1's two (the sampler the kernel's on 11 slices, the classes,
+  the all-land slices, a mixed slice's fine water the
+  kernel's, the memo kept past an eviction; imperialLand's compounds at the University's corner); the plan's mouth; the city's law; the ground about it (the mouth's bytes, the
+  basin and its ramp, the large map, GROUND_ROLL_VERSION); the city's land and its slices' rects; a capital at the sea's
+  ground (the pond, a shore tile's one corner, the rim's sea and its floor, the outer edge, the sea's seam); the Imperial
+  City's slices (its seams one height, a tile at a seam never read, the mouth's edge, the far shore's rise); the harbour;
+  the bake; the ways (the lanes, the voyage's sea, the neighbours, the port's shore); the host's wiring; and on the
+  player's own files the lake and the city's heights, the hull, the carve, the port, its lanes and a voyage.
+- PIN MOVED: `test/world/audittesa2c_capitals.test.js` (C2: a shore capital's land a freeboard over the sea, its water
+  the sea's; Alinor's and Torval's sea edges); `test/systems/naval/fb1014_inlandports.test.js` and
+  `test/systems/naval/auditcaptsea.test.js` (the host's open sea takes the city's sea);
+  `test/systems/travel/fb0929d_toroads.test.js`, `test/systems/travel/fb1009_beyond.test.js`,
+  `test/systems/travel/tv2_click_to_move.test.js` and `test/world/worldOfDaggerfall/ow_wod.test.js` (the planner's ground
+  handed the city's sea); `test/world/nibensea.test.js` and `test/world/audittesa2p_world.test.js` (the harbour the
+  Waterfront's slice, (2069, 668)); `test/world/breathtaker.test.js` and `test/world/tamrielrelief.test.js` (the mouth's
+  three pixels the sea's, the land's law calling them the city's); `test/world/audittesa2r_roads.test.js` (R6:
+  GROUND_ROLL_VERSION 5 recorded - the fixture has no canal, so its print is 4's) and
+  `test/world/road/river_fords.test.js` (the version 5); `test/world/tamriel2.test.js` (TAMRIEL2-WORKER: the terrain
+  worker's graph 62 modules, every one under world/ and formats/ - the plan's mix and block side moved to a leaf of
+  their own, `world/blockHash.js`, which `world/spawnedDungeons.js` re-exports, since its own imports reach the clock and
+  the road network); `.github/workflows/account-deploy.yml`'s path filter carries the leaf, which the account Worker and
+  the deploy's Discord step bundle through `spawnedDungeons.js` (`test/server/accountdeploy.test.js`,
+  `test/server/discord_setup.test.js`).
+- Mutants: `tools/mutants/rumarewater.json` (49: 47 dead, and AUDIT BAY-LEFT F1's RW-F1-the-all-land-test-unread and
+  RW-F1-the-outer-edge-the-law's equivalent - the first a fast path the grid answers the same, the second the outer edge's
+  law and kernel agreeing on the freeware's span - recorded `equivalent`); F1 re-aimed RW-BAKE-the-span's-class-the-bound's,
+  -the-fine-water-the-plain-sampler's and -the-coarse-water-the-plain-sampler's by content onto the cityBits reads (dead). Re-aimed by content, all dead: `auditcaptsea.json`'s
+  ACS-B10-sea-at; `audittesa2c.json`'s AUDIT-TESA-II-C2-shore-on-its-land and -no-sea-flag; `audittesa2p.json`'s
+  P12-open-sea-a-lake; `breathtaker.json`'s BREATHTAKER3-the-large-map-hashed-again; `fb1009_beyond.json`'s
+  TV-BEYOND-planner-handed-no-beyond; `fb1014_inlandports.json`'s INLAND-PORTS-the-bounds-unasked; `nibensea.json`'s
+  HARBOUR-canal-unasked and PORT-reach-unset; `sealanes.json`'s NET-three-neighbours; `tamrieldeep.json`'s
+  TDEEP-detail-at-sea; `voyager.json`'s VOYAGER2.1-no-reader-by-default; `ww3.json`'s WW3-the-lane-water-unswitched,
+  -in-the-box and -any-climate.
+
+Section A, RUMARE-WATER (OURS: DFU's BlendLocationTerrain flattens a location to one height; a capital at the sea stands
+its water at the sea's and its land a metre over it, and the Imperial City's lake is the sea's - the land past the Bay is
+the port's own).
 
 ## PEAKS - the ranges snow-capped (2026-10-26)
 

@@ -644,6 +644,12 @@ on, PlaceBoatAtRayHit refuses a water tile whose ground stands over the
 line - a town's harbour basin at its ground's height - with a word
 (PLACE_RAISED_TEXT), where it placed her beached; the mod off, the tile
 alone decides, as the C#'s.
+RUMARE-WATER (`03-World/Tamriel.md`): AUDIT TESA II C2 had stood a shore
+capital's every slice at the sea's floor, its streets 33.994 m and so
+water to the nodes. Its land stands a metre over the sea now (35 m,
+`world/terrain/capitalSea.js` CAPITAL_FREEBOARD) and only its water at
+the sea's height; the Imperial City's lake is that water too, so a boat
+sails up the canal and across the lake to the Waterfront.
 `01-Overview/bugs/Field-Bugs-2026-10-02.md`. The Terrain form reads the player's
 terrain unless one is given; the pixel form reads its own pixel's, and
 nothing where none is built. UpdateAllBoatsNodes is kept as the C# has
@@ -3024,6 +3030,41 @@ Animators past 600 m of the player one frame in four on the time she missed, as 
 `createBoatLives`, from the pool's eye - and a boat switched on or off since she last lived lives that frame, so a far
 boat of mine stood again still starts over from her default state as she stands. All in
 `07-Rendering/Performance-Priority.md`.
+
+## The reading past the Bay (BAY-LEFT-MAPS, 2026-10-27 - DEPARTURE)
+
+AUDIT LEFT IN THE BAY C12, the lowest of its findings; the owner (2026-10-26): *"Every single thing here needs to be
+addressed. No exceptions."* - so it is built. The position reading's map is the mod's picture of the Bay (record 3, the
+travel map's), and the cross is drawn at the player's pixel on it: a boat past the Bay had no cross, its red lines off the
+rect.
+
+- **The sheet** (`systems/comeSailAway/comeSailAwayMap.js` mapSheetAt). While the player's pixel is on the Bay's map, the
+  reading is the mod's own, every draw unchanged. Past it, where the continent's frame holds the pixel, it is drawn on
+  Daggerfall's own painting of Tamriel - TMAP00I0.IMG, the picture the continent's trace is read off
+  (`ui/tamrielTrace.js`), rebuilt from the player's file on its own palette (MAP.PAL) as record 3 is
+  (`tamrielMapPicture`), and never carried. Past both (the Eltheric Ocean's box, north of the painting) it is the mod's.
+- **The rect and the cross.** The painting stands at its own 320 x 200 at the map's height (`TAMRIEL_SHEET_PX`, 2.5
+  screen pixels a picture pixel at scale 1, so 800 x 500), centred on the mod's rect (`sheetRect`). The cross stands where
+  the frame's fit puts the pixel on it (`tamrielCrossAt`, `world/tamriel/tamrielFrame.js` bayToPicture). The blink, the
+  thicknesses, the help lines and the backdrop are the mod's.
+- **The markers are their sheet's.** A marker placed on the painting carries `sheet: 'tamriel'` (`placedMarker`); every
+  marker before, and every one another mod adds (AddMapMarker), is the Bay's (no field). Each sheet draws, labels, marks
+  and removes its own markers alone (`markerOn` for IsPositionMarked, `markerDistance` for the right button), and the
+  save keeps a marker's sheet (`savedMarker`; a Bay marker's record is the one it was) and a load gives it back. A
+  marker's position stays the mod's: its offset off its sheet's rect corner (kept, as on the Bay).
+- **The runtime** (`createComeSailAwayRuntime`, a host that does not grow) changed in place alone: its mouse read, its
+  click, its right button, AddMapMarker, IsPositionMarked and the save's two lines take the module's laws - 2,496 -> 2,485
+  logical lines. **The world host's half** moved out first (HOST-SPLIT: `scenes/csaMapHost.js` createCsaMap, bootWorld
+  35,734 -> 35,688): the third picture is built beside record 3, and a quad is drawn by its sheet's picture.
+- **The four hosts.** `scenes/world.js` builds and draws the reading through `scenes/csaMapHost.js`; `scenes/exterior.js`,
+  `scenes/worldModes.js` and `scenes/dungeonContext.js` draw no reading.
+
+A departure from Come Sail Away, which knows the Bay alone: Port-Ledger A, BAY-LEFT-MAPS. Proof:
+`test/systems/comeSailAway/csa_map.test.js` - the sheet, the draws, the reading past the Bay and the save, the host's
+pictures, and the painting off the freeware (5 more); `tools/mutants/bayleftmaps.json` BLM-C12-* (20, all dead). PIN MOVED
+(HOST-SPLIT): the CSA-I host seams and FONT3's draw-list pin read the host whole; CSA-I-host-shadow-order retargeted by the
+tool (dead). Re-aimed by content and run (dead): CSA-I-cross-unscaled, CSA-I-cross-width, CSA-I-marked-any (`markerOn`'s
+now), CSA-I-left-colour, CSA-C-marker-twice.
 
 ## What was already waiting in the port
 

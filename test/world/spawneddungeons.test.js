@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { SPAWN_CHANCE, ANY_SPAWN_CHANCE, SPAWN_KEEP, SALT_MAX, WORLD_SALT, hash32, spawnsDungeon, spawnRoll, spawnKept, isEliteSpawn, spawnedMapId, pickTemplate, synthesizeDungeonLocation, spawnTemplates, SPAWN_CLEARANCE_M, BLOCK_M, spawnClearance, spawnedLocationCentreLocal, dungeonSightLine } from '../../src/world/spawnedDungeons.js';
+import { worldLaneMapId, SPAWN_WORLD_LANE } from '../../src/world/worldWide/worldLanes.js';   // SPAWN-WORLD
 import { TERRAIN_SIZE } from '../../src/world/terrain/terrainSampler.js';
 import { isWorldRoom } from '../../src/net/wire.js';
 import { getMapPixelID, longitudeLatitudeToMapPixel } from '../../src/formats/mapsFile.js';
@@ -48,9 +49,18 @@ test('SPAWNED-DUNGEONS: the id carries the pixel id in its low 20 bits, the salt
   }
   assert.notEqual(spawnedMapId(1, 5, 5), spawnedMapId(2, 5, 5), 'another salt, another id');
   assert.throws(() => spawnedMapId(0, 1, 1), RangeError);
-  assert.throws(() => spawnedMapId(1, 1000, 1), RangeError);
-  assert.throws(() => spawnedMapId(1, 1, 500), RangeError);
-  assert.throws(() => spawnedMapId(1, -1, 1), RangeError);
+  // PIN MOVED (SPAWN-WORLD, 2026-10-26): past the Bay a spawn's id is the world's spawn lane's over its world pixel key
+  // (world/worldWide/worldLanes.js) - the world salt's alone, never a Bay pixel id; another salt, or off the world's
+  // grid, none. They threw for every pixel past the Bay, and the build that asked them failed for good (SPAWN-HOLE)
+  for (const [x, y] of [[1000, 1], [1, 500], [-1, 1], [2215, -371], [-8191, 8191]]) {
+    const id = spawnedMapId(1, x, y);
+    assert.equal(id, worldLaneMapId(SPAWN_WORLD_LANE, x, y), `${x},${y}`);
+    assert.ok((id & 0xfffff) >= 500000 && (id >>> 20) >= SPAWN_WORLD_LANE, 'its own lane\'s, its low bits no Bay pixel\'s');
+    assert.ok(isWorldRoom(`dungeon:m${id}`), `the relay keeps a world for ${id}`);
+  }
+  assert.throws(() => spawnedMapId(2, 1000, 1), RangeError, 'past the Bay the world salt\'s lane alone');
+  assert.throws(() => spawnedMapId(1, 8192, 1), RangeError, 'off the world\'s grid');
+  assert.throws(() => spawnedMapId(1, 1000.5, 1), RangeError);
 });
 
 test('SPAWNED-DUNGEONS: the clone stands on its pixel under its own id, and the template is never touched', () => {
@@ -107,7 +117,7 @@ test('SPAWNED-DUNGEONS by source: ONE choke point (buildPixelNow), online-only o
   // PIN MOVED (IC-GRAND, test/world/icgrand_lod.test.js): the ask's answer through capitalBuildView - a far slice of the
   // Imperial City its far view, every other location as it stands
   assert.match(w, /const dfLocation = capitalBuildView\(_locationToBuild\(px, py\), px, py, host\.state\.current\) \|\| null;/, 'the build asks what stands (AUDIT OW5b D2)');
-  assert.match(w, /function _locationToBuild\(px, py\) \{[\s\S]{0,1000}?return loc \|\| spawnedDungeonAt\(px, py\);\n  \}/, 'a real location always wins; only an empty pixel is asked');   // PIN MOVED (TESA8): 600 -> 640, past the Bay the lair's ask after the country's; PIN MOVED (TESA10): 640 -> 700; 700 -> 800 at the merge of main into TESA (main's ether place beside the arc's), a capital's before them; PIN MOVED (AUDIT TESA II P1): 800 -> 1000, online the zone's hall of the day first past the Bay
+  assert.match(w, /function _locationToBuild\(px, py\) \{[\s\S]{0,1300}?return loc \|\| spawnedDungeonAt\(px, py\);\n  \}/, 'a real location always wins; only an empty pixel is asked');   // PIN MOVED (TESA8): 600 -> 640, past the Bay the lair's ask after the country's; PIN MOVED (TESA10): 640 -> 700; 700 -> 800 at the merge of main into TESA (main's ether place beside the arc's), a capital's before them; PIN MOVED (AUDIT TESA II P1): 800 -> 1000, online the zone's hall of the day first past the Bay; PIN MOVED (WW5): 1000 -> 1200, a province's Hollow first past the Bay; 1200 -> 1300 at AUDIT BAY-LEFT's merge (WW5's Hollow-first clause and SPAWN-WORLD's host reads on the one line past the Bay, 1,233 measured)
   const i = w.indexOf('const spawnedDungeonAt = (px, py) => {');
   const fn = w.slice(i, w.indexOf('\n  };\n', i));
   assert.match(fn, /if \(!params\.has\('online'\)\) return null;/, 'online only - and off params: `onlineOn` is a const declared far below this build');
@@ -330,8 +340,10 @@ test('TTL1 by source: expiry is checked on the pixel build, and never while the 
   const w = hostText('src/scenes/world.js');
   const i = w.indexOf('const spawnedDungeonAt = (px, py) => {');
   const fn = w.slice(i, w.indexOf('\n  };\n', i));
-  assert.match(fn, /_spawnLedger\.expired\(key, _spawnClock\(\)\) && !_insideSpawn\(key\)/, 'both clocks AND the creator\'s "no player in it"');
-  assert.match(fn, /_locIndexGen \+= 1;[^\n]*\n\s*locationIndex\.delete\(key\);\s*\n\s*return null;/, 'expired: the location goes, the pixel is empty land');
+  // PIN MOVED (HOST-SPLIT, SPAWN-WORLD 2026-10-26): the stand is scenes/spawnStandHost.js's, the clock and the index's
+  // generation the host's, read through `host`
+  assert.match(fn, /_spawnLedger\.expired\(key, host\._spawnClock\(\)\) && !_insideSpawn\(key\)/, 'both clocks AND the creator\'s "no player in it"');
+  assert.match(fn, /host\._locIndexGen \+= 1;[^\n]*\n\s*locationIndex\.delete\(key\);\s*\n\s*return null;/, 'expired: the location goes, the pixel is empty land');
   assert.ok(!/_spawnLedger\.forget\(key\)/.test(fn), 'AUDIT OW5b D2: and the row STAYS - its clocks keep it gone; forgotten, the pure roll stood the same dungeon again on a fresh seven days');
   assert.doesNotMatch(fn, /_spawnSeen\(/, 'SPAWN-REBIRTH: standing a spawn starts no clock - a pixel streaming in is nobody entering it');
   const seenAt = w.indexOf('  function _spawnSeen(key) {');
@@ -339,7 +351,7 @@ test('TTL1 by source: expiry is checked on the pixel build, and never while the 
   // the boot builds the player's OWN pixel through this function before
   // `playerTicker` is declared - a temporal dead zone `?.` cannot save
   assert.match(w, /let _spawnClock = \(\) => NaN;/, 'the clock is ASKED, not read: until the ticker stands every ledger call is a no-op');
-  assert.ok(w.indexOf('let _spawnClock = () => NaN;') < w.indexOf('const spawnedDungeonAt = (px, py) => {'), 'declared above its first use');
+  assert.ok(w.indexOf('let _spawnClock = () => NaN;') < w.indexOf('const { _locationToBuild } = createSpawnStand({'), 'declared above its first use');   // PIN MOVED (HOST-SPLIT, SPAWN-WORLD): the stand constructed where it stood
   assert.match(w, /_spawnClock = \(\) => Math\.floor\(playerTicker\.classicMinutes\);/, 'armed the moment the ticker stands');
   assert.ok(w.indexOf('_spawnClock = () => Math.floor(playerTicker.classicMinutes);') > w.indexOf('const playerTicker = createPlayerTicker('), 'and never before it');
   // the ONE thing that holds a spawn past its time
@@ -439,6 +451,8 @@ test('AUDIT OW5b D2 host run (SPAWN-REBIRTH): A SPAWN PAST ITS TIME IS GONE UNTI
       const _countryTemplates = null;   // PIN MOVED (TESA7): and the countryside's
       const _capitalBase = null;   // PIN MOVED (TESA10): and the capitals
       let _locIndexGen = 0;
+      const host = { get _locIndexGen() { return _locIndexGen; }, set _locIndexGen(v) { _locIndexGen = v; }, _spawnClock, _spawnCloneAt };   // PIN MOVED (HOST-SPLIT, SPAWN-WORLD): scenes/spawnStandHost.js's live names
+      const onTheBay = (x, y) => x >= 0 && y >= 0 && x < 1000 && y < 500;   // PIN MOVED (SPAWN-WORLD): past the Bay a place stands first - these pixels are the Bay's
       ${seen}
       ${spawned}
       ${build}

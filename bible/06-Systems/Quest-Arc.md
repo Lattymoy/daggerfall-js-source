@@ -7120,3 +7120,43 @@ site or the probe's missing questor click, never a remote site.
 Not checked here: the running game (no browser). That covers the parse's frame time in a live boot, where each dart
 stands a town's clone the first time (a parse measured 0.1-1.4 s in Node), and a party's shared copy over the wire,
 whose sites resolve by the held-site lookup above.
+
+## BAY-LEFT-B - %di, the map reveals, scrying and %lp past the Bay (2026-10-27)
+
+The audit "no system left behind in the Bay" (B3, B5 = C8, B6, B7; the owner: *"Every single thing here needs to be
+addressed. No exceptions."*, 2026-10-26). R2-5 (above) gave the quest layer a province's table; four readers still read
+the host's raw MAPS.BSA reader, which holds no table for a province's region (62..70). One table now answers all of
+them - the quest layer's maps (`scenes/questWorld.js`, a province's region `scenes/quest/questProvinceSites.js`'s), the
+same table the talk's regional "Where is" reads (`06-Systems/Talk-Arc.md` BAY-LEFT-B, where each row's key is recorded).
+
+- **%di's remote arm** (GetLocationCompassDirection, TalkManager.cs:1238-1281) said "...never mind..." for every site past
+  the Bay (28 of DFU's quests use it): `questWorld.js` handed it the raw `maps`, and `systems/talk/talk.js` bounded the
+  politic region by MapFileReader.RegionCount (62). It reads `questWorld.maps`, the region bounded by the world's regions
+  (`talk.js:"if (region < 0 || region >= REGION_NAMES.length) region = -1;"`). On the freeware Solitude's Fighters Guild
+  sends the player to Fenrarik Manor, "northeast", and to the Citadel of Alarne, "east"; the Bay's directions are as they
+  were (Daggerfall's: Uplech and Greenfield's Hold, "northwest").
+- **The map item's and the guilds' reveals** (DiscoverRandomLocation, PlayerGPS.cs:892-910: the map item, the Thieves
+  Guild's ranks 6 and 8, the Dark Brotherhood's promotion) read the region of the LOCATION under the player
+  (`locationIndex`), so a map read in the wilderness, on a road or at sea found none and was spent - on the Bay too; and
+  past the Bay no table at all. DFU reads PlayerGPS.CurrentRegion - the politic map's. The reveal now reads the politic
+  region (`_questRegionIndex`) over the quest layer's table (`world.js:"const region = questWorld.maps.getRegion(_questRegionIndex());"`):
+  a province's places (its towns, the countryside and lairs nearest the player, R2-5e), each discovered by its whole id
+  (AUDIT TESA II P6). The map is still spent either way, as DFU spends it (RemoveItem outside its catch).
+- **The Mages Guild's scrying** (LOOT19, `systems/loot/lootScry.js`) refused "nowhere" past the Bay (`scryWhere` read the
+  raw maps): it reads the same table, and finds the family's nearest lair. A town's row past the Bay is NoDungeon (255) as
+  MAPS.BSA's towns are (`questProvinceSites.js:"export function provinceRow(p) {"`): it had read as type 0, a crypt, so an
+  undead scrying would have named a town.
+- **%lp** (MacroHelper LocalProvince: "High Rock" in a Breton region, else "Hammerfell") said "Hammerfell" everywhere past
+  the Bay ("High Rock" in Cyrodiil - its people's race): a province's region answers its own name, as shown
+  (`systems/quest/questMacros.js`, GetLocalizedRegionName, %reg's): Skyrim, Morrowind, Cyrodiil. The Bay's two answers are
+  DFU's.
+
+A departure each where DFU has no province (Port-Ledger A, BAY-LEFT-B); the reveal's politic region is DFU's own read,
+restored. THE FOUR HOSTS: `scenes/world.js` wired (the reveal and the scrying are its; `scenes/worldModes.js` reaches both
+through it - the interior's map item and the Reforge's scry); `scenes/dungeonContext.js` reads the reveal through the
+world host's `revealMap` (MAPLOOT1); `scenes/exterior.js` (the bench) has no region table past the Bay to read - FLAGGED.
+
+Pins: `test/systems/quest/bayleftb_quest.test.js` (8, the freeware: the quests' directions past the Bay and on it; the
+compass's bound; the table's keys; the pipeline over the province; provinceRow; the reveal run off world.js's own text
+past the Bay and on the Bay's road; the scrying's lair; %lp's eleven). Mutants: `tools/mutants/bayleftb.json`
+(BAY-LEFT-B-B3-*, -B5-*, -B6-*, -B7-*).

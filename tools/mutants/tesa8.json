@@ -514,12 +514,13 @@
   },
   {
     "name": "TESA8-host-no-lairs",
-    "file": "src/scenes/world.js",
-    "old": "|| countryLocationAt(px, py) || lairLocationAt(px, py);   // AUDIT TESA II P1",
-    "new": "|| countryLocationAt(px, py);   // AUDIT TESA II P1",
+    "file": "src/scenes/spawnStandHost.js",
+    "old": "|| host.countryLocationAt(px, py) || host.lairLocationAt(px, py) || spawnPastBayAt(px, py);   // WW5: a province's Hollow first",
+    "new": "|| host.countryLocationAt(px, py) || spawnPastBayAt(px, py);   // WW5: a province's Hollow first",
     "tests": [
       "test/tesa8_lairs.test.js"
-    ]
+    ],
+    "note": "AUDIT BAY-LEFT (its packages merged, 2026-10-27): re-aimed by content - WW5's Hollow-first clause and SPAWN-WORLD's spawner both on the build past the Bay, in scenes/spawnStandHost.js. SPAWN-WORLD re-aimed by content: the build past the Bay ends in the spawner (spawnPastBayAt)."
   },
   {
     "name": "TESA8-host-country-takes-lairs",

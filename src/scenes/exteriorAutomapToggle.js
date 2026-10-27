@@ -5,7 +5,7 @@
 import { arenaTownLandmark } from '../world/arena/arenaCity.js';
 import { buildingSummaries } from '../world/buildingSummaries.js';
 import { createTownMapWindow, townMapDoorReady, townSheetBag } from '../ui/town/townMapDoor.js';   // FB1020c STREETS-TAB: the streets' one bag
-import { discoveredBuildings, restampQuestNames } from '../systems/discovery.js';
+import { discoveredBuildings, restampQuestNames, townBookOf } from '../systems/discovery.js';   // BAY-LEFT-MAPS (C7 = E2): a town's own book
 import { getLocalizedLocationName, getLocalizedRegionName } from '../systems/textManager.js';
 import { hasCustomLocationPosition } from '../world/locationLayout.js';
 import { isVendorWaypoint, vendorWaypointLabel, vendorWaypointVersion } from '../systems/vendorWaypoint.js';
@@ -41,7 +41,7 @@ export function createExteriorAutomapToggle(host) {
     // conversion (setTopics' playerPos closure); the overlay holds
     // the motor, so the open-time capture stays truthful
     const local = [feet[0] - t[0] - b.locOrigin[0], feet[1] - t[1] - b.locOrigin[1], feet[2] - t[2] - b.locOrigin[2]];
-    const locId = `${dfLoc.regionIndex}:${dfLoc.name}`;
+    const locId = townBookOf(dfLoc);   // BAY-LEFT-MAPS (C7 = E2): past the Bay a town's own book, by its map id
     // ROAD-C c2/S10: the arrow/stamp is the REAL mesh 99900, rasterised
     // once from its CPU data (ui/meshStamp.js). Kicked off here and
     // read lazily - the window draws its two other layers meanwhile.

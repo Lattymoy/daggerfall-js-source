@@ -31,8 +31,8 @@
   {
     "name": "NET-three-neighbours",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "      .filter((x) => x.d > 0 && x.d <= maxPx).sort((x, y) => x.d - y.d || x.q.id - y.q.id).slice(0, LANE_NEIGHBOURS);",
-    "new": "      .filter((x) => x.d > 0 && x.d <= maxPx).sort((x, y) => x.d - y.d || x.q.id - y.q.id).slice(0, LANE_NEIGHBOURS + 1);",
+    "old": "      .filter((x) => x.d > 0 && x.d <= reach).sort((x, y) => x.d - y.d || x.q.id - y.q.id).slice(0, p.neighbours ?? LANE_NEIGHBOURS);",
+    "new": "      .filter((x) => x.d > 0 && x.d <= reach).sort((x, y) => x.d - y.d || x.q.id - y.q.id).slice(0, (p.neighbours ?? LANE_NEIGHBOURS) + 1);",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ]
@@ -40,8 +40,8 @@
   {
     "name": "NET-reach-short",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "      .filter((x) => x.d > 0 && x.d <= maxPx).sort(",
-    "new": "      .filter((x) => x.d > 0 && x.d < maxPx).sort(",
+    "old": "      .filter((x) => x.d > 0 && x.d <= reach).sort(",
+    "new": "      .filter((x) => x.d > 0 && x.d < reach).sort(",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ]

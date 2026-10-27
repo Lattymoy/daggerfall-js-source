@@ -1,0 +1,83 @@
+[
+  {
+    "name": "ICP-city-a-town",
+    "file": "src/systems/travel/townWalk.js",
+    "old": "export const IMPERIAL_PACE_MAX = 60;",
+    "new": "export const IMPERIAL_PACE_MAX = 5;",
+    "tests": [
+      "test/systems/travel/icpace.test.js"
+    ]
+  },
+  {
+    "name": "ICP-slices-unread",
+    "file": "src/scenes/townWalkHost.js",
+    "old": "export const paceAt = (x, y) => (capitalOnPixel(x, y)?.cap.key === 'imperial-city' ? IMPERIAL_PACE_MAX : TOWN_PACE_MAX);",
+    "new": "export const paceAt = (x, y) => TOWN_PACE_MAX;",
+    "tests": [
+      "test/systems/travel/icpace.test.js"
+    ]
+  },
+  {
+    "name": "ICP-every-capital",
+    "file": "src/scenes/townWalkHost.js",
+    "old": "export const paceAt = (x, y) => (capitalOnPixel(x, y)?.cap.key === 'imperial-city' ? IMPERIAL_PACE_MAX : TOWN_PACE_MAX);",
+    "new": "export const paceAt = (x, y) => (capitalOnPixel(x, y) ? IMPERIAL_PACE_MAX : TOWN_PACE_MAX);",
+    "tests": [
+      "test/systems/travel/icpace.test.js"
+    ]
+  },
+  {
+    "name": "ICP-pace-the-key",
+    "file": "src/scenes/townWalkHost.js",
+    "old": "      if (!town.b.cityGates?.length || pieces.edge.size >= pieces.all) return pace;",
+    "new": "      if (!town.b.cityGates?.length || pieces.edge.size >= pieces.all) return town.key;",
+    "tests": [
+      "test/systems/travel/icpace.test.js"
+    ]
+  },
+  {
+    "name": "ICP-way-pace-unset",
+    "file": "src/scenes/townWalkHost.js",
+    "old": "inside: way.inside, shut: false, pace };",
+    "new": "inside: way.inside, shut: false };",
+    "tests": [
+      "test/systems/travel/icpace.test.js"
+    ]
+  },
+  {
+    "name": "ICP-street-pace-unread",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "pace: way.pace ?? TOWN_PACE_MAX } : null;",
+    "new": "pace: TOWN_PACE_MAX } : null;",
+    "tests": [
+      "test/systems/travel/icpace.test.js"
+    ]
+  },
+  {
+    "name": "ICP-rate-a-town",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    const rate = street ? Math.min(st.route.street.pace ?? TOWN_PACE_MAX, travelRateOf(true))",
+    "new": "    const rate = street ? Math.min(TOWN_PACE_MAX, travelRateOf(true))",
+    "tests": [
+      "test/systems/travel/icpace.test.js"
+    ]
+  },
+  {
+    "name": "ICP-city-unbounded",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "    const rate = street ? Math.min(st.route.street.pace ?? TOWN_PACE_MAX, travelRateOf(true))",
+    "new": "    const rate = street ? Math.min(st.route.street.pace > TOWN_PACE_MAX ? Infinity : TOWN_PACE_MAX, travelRateOf(true))",
+    "tests": [
+      "test/systems/travel/icpace.test.js"
+    ]
+  },
+  {
+    "name": "ICP-keys-unheld",
+    "file": "src/scenes/world.js",
+    "old": "    const town = tvTownPace() ?? Infinity;",
+    "new": "    const town = tvTownPace() ? 5 : Infinity;",
+    "tests": [
+      "test/systems/travel/icpace.test.js"
+    ]
+  }
+]

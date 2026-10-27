@@ -214,8 +214,8 @@
   {
     "name": "ACS-B10-sea-at",
     "file": "src/scenes/world.js",
-    "old": "return tamrielLand && seaPixel(x, y) && !pastBayLakeAt(x, y);",
-    "new": "return seaPixel(x, y) && !pastBayLakeAt(x, y);",
+    "old": "return tamrielLand && ((seaPixel(x, y) && !pastBayLakeAt(x, y)) || rumareSeaPixel(x, y));",
+    "new": "return ((seaPixel(x, y) && !pastBayLakeAt(x, y)) || rumareSeaPixel(x, y));",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js",
       "test/systems/naval/fb1014_inlandports.test.js"
@@ -1097,7 +1097,7 @@
   },
   {
     "name": "ACS-G7-raids",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/raidHost.js",
     "old": "return !(etherSea && inEther(px.x, px.y)) && politicClaimed(",
     "new": "return politicClaimed(",
     "tests": [
@@ -1436,8 +1436,8 @@
   {
     "name": "ACS-P9-deed",
     "file": "src/scenes/worldModes.js",
-    "old": "const houseOwnedAt = (b, key) => !isEtherPlaceId(homeTownOf(b)) && !isArenaPlaceId(",
-    "new": "const houseOwnedAt = (b, key) => !isArenaPlaceId(",
+    "old": "const houseOwnedAt = (b, key) => !isEtherPlaceId(homeTownOf(b)) && isHouseOwned(",
+    "new": "const houseOwnedAt = (b, key) => isHouseOwned(",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1445,8 +1445,8 @@
   {
     "name": "ACS-P9-sale",
     "file": "src/scenes/worldModes.js",
-    "old": "if (isEtherPlaceId(dir.mapId) || isArenaPlaceId(dir.mapId)",
-    "new": "if (false || isArenaPlaceId(dir.mapId)",
+    "old": "if (isEtherPlaceId(dir.mapId)) return [];",
+    "new": "if (false) return [];",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]

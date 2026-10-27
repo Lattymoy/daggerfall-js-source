@@ -47,8 +47,8 @@
   {
     "name": "TESA13-marks-at-far",
     "file": "src/ui/tamrielInk.js",
-    "old": "  if (!placesIn || band === 'far') return [];",
-    "new": "  if (!placesIn) return [];",
+    "old": "  if (!placesIn || band === 'far' || opts.portsOnly) return [];",
+    "new": "  if (!placesIn || opts.portsOnly) return [];",
     "tests": [
       "test/tesa13_mapink.test.js"
     ]

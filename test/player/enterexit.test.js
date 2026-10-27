@@ -169,11 +169,12 @@ test('the exits and the arrivals stand the player, they do not drop them', () =>
   // And a saved position is restored as saved - a load or an anchor
   // recall keeps its own y (DFU restores the transform verbatim).
   // TERRAIN-SCALE1: as saved - on the ground it was saved over; only a save from before the stamp is stood again
-  assert.match(w, /const ly = restandHeight\(w\.y \?\? 2, lx, lz, was\) \+ state\.compensation\[1\];/);
+  // PIN MOVED (BAY-LEFT-GROUND, D5): and the save's frame's law beside its scale
+  assert.match(w, /const ly = restandHeight\(w\.y \?\? 2, lx, lz, was, extras\.groundFrame\) \+ state\.compensation\[1\];/);
   // ROAD A10 MOVED THIS PIN: the anchor arrival folded into ONE helper
   // (anchorLanding) shared by the exterior, dungeon and interior recall
-  // arms - the compensated-y law lives on its return now.
-  assert.match(w, /return \[lx, restandHeight\(a\.y \?\? 2, lx, lz, scaleOf\(a\.terrainScale\)\) \+ state\.compensation\[1\], lz\];/);
+  // arms - the compensated-y law lives on its return now. PIN MOVED (BAY-LEFT-GROUND, D5): the anchor's frame's law beside its scale
+  assert.match(w, /return \[lx, restandHeight\(a\.y \?\? 2, lx, lz, scaleOf\(a\.terrainScale\), a\.groundFrame\) \+ state\.compensation\[1\], lz\];/);
 });
 
 // ── TL1: THE ARRIVAL LOOKS FURTHER FOR ITS FLOOR ──────────────────

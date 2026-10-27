@@ -153,12 +153,13 @@ test('LAIR-WORLD THE HOSTS BY SOURCE: the world host hands the lair door and the
   assert.ok(w.includes('lairHere: createLairDoor({ maps, blocks, arch, locations: locationIndex, dungeons: _bountyDungeonPixels, regions: _dungeonRegionPixels, here: playerTravelPixel, pastBay: provinceQuestPlaces }),'));
   assert.ok(w.includes('dungeonAt: (x, y) => _bountyDungeonPixels.get(`${x},${y}`) || provinceQuestPlaces.lairAt(x, y)?.name || null,'));
   assert.ok(w.includes('graveyardAt: (x, y) => _bountyGraveyardPixels.has(`${x},${y}`) || provinceQuestPlaces.lairAt(x, y)?.type === LOCATION_TYPES.Graveyard,'));
-  assert.ok(w.includes('siteOk: (x, y) => (onTheBay(x, y) ? x > 0 && y > 0 && x < 999 && y < 499 && !_bountyLocPixels.has(`${x},${y}`) && !spawnsDungeon(_spawnSalt, x, y) : !provinceQuestPlaces.placeOnPixel(x, y))'));
+  // PIN MOVED (SPAWN-WORLD, 2026-10-27): spawned dungeons stand past the Bay now, so a pack keeps off a spawn's pixel there too
+  assert.ok(w.includes('siteOk: (x, y) => (onTheBay(x, y) ? x > 0 && y > 0 && x < 999 && y < 499 && !_bountyLocPixels.has(`${x},${y}`) && !spawnsDungeon(_spawnSalt, x, y) : !provinceQuestPlaces.placeOnPixel(x, y) && !spawnsDungeon(_spawnSalt, x, y))'));
   assert.ok(w.includes('placesVersion: provinceQuestPlaces.version,'));
   const places = read('src/scenes/tamrielPlacesHost.js');
   assert.ok(places.includes('    lairAt, lairCloneAt, placeOnPixel, version: placesVersion,'), 'the places host hands them on');
   const held = read('src/ui/heldMap.js');
-  assert.ok(held.includes('const sheet = f ?? { x0: 0, y0: 0, w: this._size.width, h: this._size.height };'));
+  assert.ok(held.includes('    const sheet = this._marksBox();'));   // PIN MOVED (BAY-LEFT-MAPS): the sheet's one box, every mark's (heldMap.js _marksBox)
   assert.ok(held.includes('const bounties = readBountyMarksIn(this.deps.bounties, sheet);'));
   assert.ok(held.includes('const lairs = readBountyMarksIn(this.deps.revenants, sheet, REVENANT_LEGEND_TEXT);'));
 });
@@ -204,7 +205,7 @@ test('LAIR-WORLD on the player\'s data: THE PLACES HOST - `lairAt` is the build\
   assert.equal(P.lairCloneAt(2170, 485), null);
 });
 
-test('LAIR-WORLD on the player\'s data: THE DOOR - the ring about a pixel past the Bay names its lairs, each one the player can go down into, in Cyrodiil\'s region; of the 364 graveyards past the Bay within 200 pixels of the Imperial City 13 are laid on a doorless template - never offered, each mended to an enterable lair (mutants: the door\'s lairs past the Bay unread; their plan unlaid)', { skip: !HAS && 'no ARENA2_PATH' }, async () => {
+test('LAIR-WORLD on the player\'s data: THE DOOR - the ring about a pixel past the Bay names its lairs, each one the player can go down into, in Cyrodiil\'s region; of the 350 graveyards past the Bay within 200 pixels of the Imperial City 12 are laid on a doorless template - never offered, each mended to an enterable lair (mutants: the door\'s lairs past the Bay unread; their plan unlaid)', { skip: !HAS && 'no ARENA2_PATH' }, async () => {
   const { P, door } = await world();
   const ring = door({ x: 2170, y: 485 }).dungeons;
   for (const name of ["Caelus's Hold", 'The Androgulus Reformatory', 'The Hall of Barivoth']) assert.ok(ring.some((d) => d.name === name), name);
@@ -212,7 +213,10 @@ test('LAIR-WORLD on the player\'s data: THE DOOR - the ring about a pixel past t
   assert.ok(!ring.some((d) => d.name === 'The Cassius Vaults'), 'its doorless graveyard never offered');
   const graves = P.lairsNear(2069, 658, 200).filter((r) => r.type === LOCATION_TYPES.Graveyard);
   const shut = graves.filter((r) => !door().enterable(r.px, r.py));
-  assert.deepEqual([graves.length, shut.length], [364, 13]);
+  // PIN MOVED (NIBEN-SEA, TAMRIEL-DEEP, bible/03-World/Tamriel.md): 364 and 13 on the tamriel branch - thirteen stood on
+  // the Niben's course, the sea's now, one of them doorless; and The Galgulus Burial Ground on Lake Rumare's east shore
+  // (2171, 649) is no place once the sea beside it carries no large-map detail
+  assert.deepEqual([graves.length, shut.length], [350, 12]);
   for (const g of shut) {
     const to = door({ x: g.px, y: g.py }).nearest(g.px, g.py);
     assert.ok(to && door().enterable(to.px, to.py) && to.px >= 1000, `${g.name}: mended past the Bay`);
