@@ -94,6 +94,25 @@ test('TS9 the painter: a ring tile painted wherever it stands (past the rect, of
   assert.equal(at(t3, 63, 20), TILE.road, 'the arm\'s road kept');
 });
 
+test('AUDIT BAY-LEFT F2 TS9 past the Bay: the curved painter (VOYAGER2) lays the ring\'s half tiles as Basic Roads\' painter lays them on the Bay - the same byte for every code, the dirt edge over dirt, nothing over the sea, a path written; no road, no ring (mutants: the halves unlaid past the Bay; a half turned; over the sea)', () => {
+  const ground = new Uint8Array(129 * 129).fill(TILE.grass);
+  ground[20 * 129 + 16] = TILE.dirt; ground[20 * 129 + 17] = TILE.water;
+  const rect = { xMin: 60, xMax: 68, yMin: 60, yMax: 68, ring: new Uint8Array(D * D) };
+  const spots = [[RING.road, 10], [RING.NW, 11], [RING.NE, 12], [RING.SE, 13], [RING.SW, 14], [RING.NW, 16], [RING.SE, 17]];
+  for (const [code, x] of spots) rect.ring[20 * D + x] = code;
+  const bay = new Uint8Array(D * D);
+  paintRoads(ground, bay, DIR.N | DIR.S, 0, rect, 129);
+  const past = new Uint8Array(D * D), paths = new Uint8Array(D * D);
+  paintRoads(ground, past, DIR.N | DIR.S, 0, rect, 129, { paths, curve: { px: 1500, py: 300, byteAt: () => 0 } });
+  assert.deepEqual(spots.map(([, x]) => at(past, x, 20)), spots.map(([, x]) => at(bay, x, 20)), 'every ring tile the Bay painter\'s byte');
+  assert.deepEqual(spots.map(([, x]) => at(past, x, 20) & 0x3f), [TILE.road, TILE.roadGrass, TILE.roadGrass, TILE.roadGrass, TILE.roadGrass, TILE.roadDirt, 0]);
+  assert.equal(new Set([11, 12, 13, 14].map((x) => at(past, x, 20) >> 6)).size, 4, 'each half turned its own way');
+  assert.deepEqual([11, 12, 13, 14, 16, 17].map((x) => at(paths, x, 20)), [1, 1, 1, 1, 1, 0], 'a path the painter wrote, never the sea');
+  const none = new Uint8Array(D * D);
+  paintRoads(ground, none, 0, DIR.E | DIR.W, rect, 129, { curve: { px: 1500, py: 300, byteAt: () => 0 } });
+  assert.equal(at(none, 11, 20), 0, 'no road through the pixel: no ring');
+});
+
 test('TS9 with ARENA2: a town of the Bay and a walled city past it - every ring tile painted (none bare where the guard passed it by), every outer step on dry ground blended', { skip: skipReal }, async () => {
   const { MapsFile, longitudeLatitudeToMapPixel } = await import('../../../src/formats/mapsFile.js');
   const { WoodsFile } = await import('../../../src/formats/woodsFile.js');
@@ -105,6 +124,7 @@ test('TS9 with ARENA2: a town of the Bay and a walled city past it - every ring 
   const { standTownWall } = await import('../../../src/world/townWalls.js');
   const { arenaTemplates } = await import('../../../src/world/arenaLocations.js');
   const { unwalledLocation } = await import('../../../src/world/townShape.js');
+  const { setArenaRoads, beyondKey } = await import('../../../src/world/arenaRoads.js');
   const b = (f) => new Uint8Array(readFileSync(join(ARENA2, f)));
   const maps = new MapsFile(); maps.load(b('MAPS.BSA'), b('CLIMATE.PAK'), b('POLITIC.PAK')); maps.autoDiscard = false;
   const woods = new WoodsFile(); woods.load(b('WOODS.WLD'));
@@ -118,22 +138,32 @@ test('TS9 with ARENA2: a town of the Bay and a walled city past it - every ring 
   const io = { classicOf: (n) => blocks.readClassicBlock(blocks.getBlockIndex(blocks.checkName(n))), servedOf: (n) => blocks.getBlockByName(n) };
   const city = outlineTownLocation({ ...t, mapTableData: { ...t.mapTableData, mapId: ((0xa7 << 20) | 500009) >>> 0, longitude: bay.mapTableData.longitude, latitude: bay.mapTableData.latitude } }, io);
   if (city.outline?.walled) standTownWall(city, t.exterior.exteriorData.blockNames, io, townOutlineBlockJson);
-  for (const [what, loc] of [['Gothway Garden', bay], [`${t.name} past the Bay`, city]]) {
+  // AUDIT BAY-LEFT F2 (PIN MOVED): and the walled city built on a pixel truly past the Bay, its road the roads' layer's -
+  // the curved painter's (VOYAGER2), which the city on the Bay's own pixel never reached
+  const P = { x: 1500, y: 300 };
+  const far = outlineTownLocation({ ...t, mapTableData: { ...t.mapTableData, mapId: ((0xa7 << 20) | 500010) >>> 0 } }, io);
+  if (far.outline?.walled) standTownWall(far, t.exterior.exteriorData.blockNames, io, townOutlineBlockJson);
+  const counts = [];
+  for (const [what, loc, at0] of [['Gothway Garden', bay, p], [`${t.name} past the Bay`, city, p], [`${t.name} on a pixel past the Bay`, far, P]]) {
     const tilemap = new Uint8Array(D * D), rect = setLocationTiles(loc, maps, blocks, tilemap);
-    const roads = new Uint8Array(1000 * 500); roads[p.y * 1000 + p.x] = DIR.N | DIR.S | DIR.E | DIR.W;
-    const g = generatePixelTerrain({ woods, px: p.x, py: p.y, tilemap, locationRect: rect, hasLocation: true, climateType: 0, roads: { roads, tracks: new Uint8Array(1000 * 500), smooth: true } });
+    const roads = new Uint8Array(1000 * 500); if (at0 === p) roads[p.y * 1000 + p.x] = DIR.N | DIR.S | DIR.E | DIR.W;
+    setArenaRoads(at0 === P ? { roads: new Map([[beyondKey(P.x, P.y), DIR.N | DIR.S | DIR.E | DIR.W]]), tracks: new Map(), join: new Map() } : null);
+    const g = generatePixelTerrain({ woods, px: at0.x, py: at0.y, tilemap, locationRect: rect, hasLocation: true, climateType: 0, roads: { roads, tracks: new Uint8Array(1000 * 500), smooth: true } });
+    setArenaRoads(null);
     // the ring as the job laid it: off the town's ground (townGroundMask, on its own samples), which the job answers
     const ground = g.townGround;
     assert.ok(ground, `${what}: the job answers its ground`);
     const ring = townRoadRing(ground);
-    let whole = 0, halves = 0, painted = 0;
+    let whole = 0, halves = 0, painted = 0, codes = 0;
     for (let i = 0; i < ring.length; i++) {
       if (!ring[i]) continue;
       const v = g.tilemap[i];
       if (ring[i] === RING.road) { whole++; if ((v & 0x3f) === TILE.road || v === 0xff) painted++; else assert.ok(v !== 0, `${what}: a ring tile (${i % D}, ${Math.floor(i / D)}) bare`); }
-      else if (v !== 0 && v !== 0xff) { halves++; assert.ok([TILE.roadDirt, TILE.roadGrass, TILE.road].includes(v & 0x3f), `${what}: a half its edge (${v})`); }
+      else { codes++; if (v !== 0 && v !== 0xff) { halves++; assert.ok([TILE.roadDirt, TILE.roadGrass, TILE.road].includes(v & 0x3f), `${what}: a half its edge (${v})`); } }
     }
     assert.ok(whole > 200 && painted > whole * 0.9, `${what}: the ring whole (${painted} of ${whole})`);
     assert.ok(halves > 8, `${what}: its angled edges blended (${halves})`);
+    counts.push([halves, codes]);
   }
+  assert.equal(counts[2][0], counts[2][1], `past the Bay every angled edge blended (${counts[2][0]} of ${counts[2][1]})`);
 });

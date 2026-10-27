@@ -20,7 +20,7 @@ import { capitalSeaGround, CAPITAL_LAND, CAPITAL_SEA, CAPITAL_FREEBOARD } from '
 import { tamrielHeightByte, tamrielLargeMap, dropGroundCache, groundWoods, SHORE_BYTE } from '../../src/world/tamriel/tamrielGround.js';
 import { GROUND_ROLL_VERSION } from '../../src/world/tamrielRoads.js';
 import { CAPITALS, CAPITAL_RIM_TILES, capitalHarbourSlice, capitalCanalOpen, synthesizeCapitalLocation } from '../../src/world/tamrielCapitals.js';
-import { TamrielWatersBake } from '../../src/world/tamrielWatersBake.js';
+import { TamrielWatersBake, rumareWaterSampler } from '../../src/world/tamrielWatersBake.js';
 import { worldLaneWater } from '../../src/scenes/naval/worldLanes.js';
 import { laneNetwork, LANE_NEIGHBOURS } from '../../src/systems/naval/seaLanes.js';
 import { beyondPorts, CANAL_PORT_NEIGHBOURS, CANAL_PORT_REACH_PX } from '../../src/world/worldWide/worldPorts.js';
@@ -216,6 +216,65 @@ test('RUMARE-WATER the continent\'s bake: the city\'s span asked whole, its wate
   assert.equal(kind(b.seaBits(2069, 660)), 'none', 'the city');
   assert.ok(b.mapPixelHasFineWaterCells(2080, 658), 'the lake east: fine water');
   assert.equal(b.mapPixelHasFineWaterCells(2069, 660), false);
+});
+
+test('AUDIT BAY-LEFT F1 the city\'s water to the bake off its law: every vertex of every kind of slice the kernel\'s answer (generateSamples, the flatten, capitalSeaGround), with no kernel run; the isle and the far shore LAND, the lake SEA, a shore MIXED; the all-land test exact; a mixed slice\'s fine water the kernel\'s; the city\'s bits kept past an eviction (mutants: the span all mixed; the fine water the plain sampler\'s; the all-land test unread; a vertex the kernel\'s grid turned; the bits made again)', async () => {
+  lakeBelow();
+  const { rumareClass } = await import('../../src/world/tamrielWatersBake.js');
+  const { rumareSliceAllLand, rumareSeaGrid } = await import('../../src/world/rumareWaters.js');
+  const { generateSamples } = await import('../../src/world/terrain/terrainSampler.js');
+  const { blendLocationTerrain } = await import('../../src/world/terrain/terrainTiles.js');
+  const { WATER_THRESHOLD, PIXEL_LAND, PIXEL_SEA, PIXEL_MIXED, fineMaskBits } = await import('../../src/world/deepWater/deepWatersBake.js');
+  const woods = groundWoods(rawWoods());
+  const kernel = (px, py) => {
+    const rect = rumareSliceRect(px, py, CAPITAL_RIM_TILES), S = generateSamples(woods, px, py), natural = Float32Array.from(S);
+    blendLocationTerrain(S, CAPITAL_LAND, rect);
+    capitalSeaGround(S, natural, null, rect, px, py);
+    return (x, y) => S[x * H129 + y] <= WATER_THRESHOLD;
+  };
+  // the centre, the isle by its shore, the lake south and north, the mouth, the span's corners and edges, the Waterfront
+  for (const [px, py] of [[2069, 658], [2067, 667], [2069, 669], [2069, 648], [2069, 670], [2057, 646], [2081, 670], [2081, 658], [2069, 646], [2076, 666], [2069, 668]]) {
+    const law = rumareWaterSampler(woods, px, py), k = kernel(px, py);
+    let diff = 0;
+    for (let x = 0; x < H129; x++) for (let y = 0; y < H129; y++) if (law.water(x, y) !== k(x, y)) diff++;
+    assert.equal(diff, 0, `(${px}, ${py}) its vertices the kernel's`);
+  }
+  assert.equal(rumareClass(2069, 658), PIXEL_LAND, 'the centre');
+  assert.equal(rumareClass(2069, 669), PIXEL_SEA, 'the lake south of the isle');
+  assert.equal(rumareClass(2069, 668), PIXEL_MIXED, 'the isle\'s shore: the Waterfront');
+  assert.equal(rumareClass(2067, 667), PIXEL_LAND, 'land by its every vertex, past the quick test\'s margin');
+  assert.equal(rumareClass(2069, 646), PIXEL_MIXED, 'the span\'s outer edge: its land\'s own');
+  assert.equal(rumareClass(2050, 658), null, 'off the span');
+  for (const [px, py, all] of [[2069, 658, true], [2058, 647, true], [2069, 666, true], [2069, 669, false], [2067, 667, false], [2069, 668, false], [2075, 670, true]]) {   // (2075, 670): the far shore by the law, its class MIXED for the outer edge alone
+    assert.equal(rumareSliceAllLand(px, py), all, `(${px}, ${py}) all land`);
+    if (all) assert.ok(rumareSeaGrid(px, py).every((v) => v === 0), 'and the grid agrees');
+  }
+  const b = new TamrielWatersBake({ woods });
+  for (const [px, py] of [[2069, 668], [2069, 646]]) {   // a mixed slice's fine water - the only slices the bake asks it of - the kernel's
+    const k = kernel(px, py);
+    assert.deepEqual([...b.fineBits(px, py)], [...fineMaskBits({ water: k, quick: (x, y) => (k(x, y) ? 1 : 0), exact: k })], `(${px}, ${py}) its fine water the kernel's`);
+  }
+  b.seaBits(2069, 669);
+  const coarse =b._cityBits(2069, 669, 'coarse') ?? null, mixed = b._cityBits(2069, 668, 'coarse');
+  b.evictOutside(0, 0, 4);
+  b.seaBits(2069, 669);
+  assert.equal(b._cityBits(2069, 668, 'coarse'), mixed, 'a shore slice\'s bits kept past the eviction');
+  assert.equal(b._cityBits(2069, 669, 'coarse') ?? null, coarse);
+});
+
+test('AUDIT BAY-LEFT F1 imperialLand with its compounds\' centres made once a plan answers as it did - the Prison\'s and the University\'s grounds land, the lake beside them water (mutant: the centres turned)', () => {
+  const { prison, university } = IMPERIAL;
+  for (const c of [prison, university]) {
+    const b = (c.b * Math.PI) / 180, [x, z] = [c.r * Math.sin(b), -c.r * Math.cos(b)];
+    assert.equal(imperialLand(x, z), true, 'the compound\'s middle');
+    assert.equal(imperialLand(x + c.half + 23, z), true, 'its edge');
+  }
+  const a = (prison.b * Math.PI) / 180, r = (IMPERIAL.isle + IMPERIAL.lake) / 2;
+  assert.equal(imperialLand(r * Math.sin(a + 0.3), -r * Math.cos(a + 0.3)), false, 'the lake beside it');
+  // the University's grounds' corner past City Isle's shore (the Prison's lie inside the shore whole): land to 8,000 m along
+  // its bearing - its box's own half, never the Prison's - and the lake past it
+  const u = (university.b * Math.PI) / 180, at = (d) => imperialLand(d * Math.sin(u), -d * Math.cos(u));
+  assert.deepEqual([at(7950), at(8000), at(8030)], [true, true, false], 'the University\'s corner in the lake');
 });
 
 test('RUMARE-WATER the sea\'s ways at the map\'s scale: the lanes\' water and a voyage\'s sea take the city\'s lake, the land\'s step never; a canal harbour asks its lanes of CANAL_PORT_NEIGHBOURS ports (mutants: the lanes\' water unread; the voyage\'s sea the land\'s; the neighbours the lanes\')', () => {
