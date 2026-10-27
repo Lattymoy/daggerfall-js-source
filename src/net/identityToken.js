@@ -781,9 +781,7 @@ export async function verifyStakeOrderAnyAge(token, publicKey, { subtle }) {
  * a deposit only whose records digest to `wh` (net/wild/wildLaw.js), and opens it to takes only then. MAC'S DECISION
  * (2026-10-14, the two-phase handoff): `we` 1 - the killer's piece is held by the service in ESCROW (server-account/src/
  * wild.js), never the room's to hand: the killer's take is a COLLECT the room signs (net/wild/wildReceipt.js `g1`), and the
- * service commits the piece to the killer's record against it. WILD-REMAINS-LOSS: `wnm` the name the fallen wears (its token's), the
- * service's word - the room names the remains for the fallen whoever carries the order (a seizure named its killer's
- * deposit "Traveller").
+ * service commits the piece to the killer's record against it. `wnm` is the name the fallen wears: the room names the remains for it.
  */
 /** A remains order's fields - no other order kind carries one. */
 export const REMAINS_FIELDS = Object.freeze(['wr', 'wh', 'wn', 'wm', 'wk', 'wi', 'wg', 'we', 'wnm']);

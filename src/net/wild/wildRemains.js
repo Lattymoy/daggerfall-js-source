@@ -16,9 +16,8 @@
 // back, because nothing was kept. So a take is never a copy, whatever the window did and however the race went.
 // Nothing can be PUT on remains: the pile says it can carry nothing (its `noStore`, droppedLootHooks' capacity).
 //
-// MINE: a remains whose owner the room named as me (my account - its order's fallen, whoever carried the deposit; my peer
-// id only where a room names no account) is marked - its pile's line of light (scenes/lootLines.js) and the world map's
-// mark - so I can find my things again (remainsMine).
+// MINE: a remains named for me (remainsMine) is marked - its pile's line of light (scenes/lootLines.js) and the world map's
+// mark - so I can find my things again.
 //
 // INT9: THE KILLER'S PIECE. A remains the account service signed for a fall at another player's hand holds the worn piece
 // the killer picked off the body (the room's `wk` and `wi`: whose, and which record) - the room grants it to that account

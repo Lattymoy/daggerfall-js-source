@@ -466,8 +466,6 @@ renumbered past main's SUPER-DUNGEONS (world176) - its parts written on their br
   before the receipts a socket is owed; an older client drops the kind. A fall receipt signed with its fallen gone from
   the room carries `g` 1. Deploy the account service first (an older one holds a `g` fall's killer to the grace - the
   killer's tab then asks again past it, `wildSeizeHost.js:"a?.error === 'grace'"`), then the relay, then the site.
-  WILD-REMAINS-LOSS (world274 - world265 to world273 on its branch, renumbered past GATE-COURTS, AUDIT KETCH II, KETCH-WORDS, NIRNROOT-SAGE, BOW-TOPS, CHAT-POST, MASTER-THREE, FIELD BUGS 2026-10-26r and APPEARANCES and HUNTERS-MARK at the merges - account acct204, acct193 to acct199 on its branch): the remains order's `wnm`, the fallen character's name (section 5) -
-  an older relay ignores it; deploy the account service first.
   PVP-LOOT (world205 - world201 on its branch, one bump past main's world201 and world202 at the merge, and world203 on the integration, renumbered past main's world203 and world204 at the merge of main): the room's take asks the friend law of the drop's records alone (section 5); a guildmate is kin
   at the referee (section 3); and the two-phase handoff (section 4) - the order's `we`
   (`identityToken.js:"if (c.we !== undefined && c.we !== 1) return false;"`), the room's `cr` word to the killer
@@ -1067,6 +1065,7 @@ nothing; a kill's tenth): `test/systems/wild/foekeeps.test.js`, int9's FOE-KEEPS
 AUDIT FOE-KEEPS (`01-Overview/audits/Audit-Foe-Keeps.md`): `test/systems/wild/auditfoekeeps.test.js`,
 `test/net/auditfoekeeps_relay.test.js`, `tools/mutants/auditfoekeeps.json`. WILD-REJOIN (`01-Overview/bugs/Field-Bugs-2026-10-25h.md`):
 `test/systems/wild/wildrejoin.test.js`, int9's WILD-REJOIN THE SERVICE, `tools/mutants/wildrejoin.json` (22, all dead).
+
 WILD-REMAINS-LOSS (`01-Overview/bugs/Field-Bugs-2026-10-25h.md`): `test/net/wildremainsloss.test.js`,
 `tools/mutants/wildremainsloss.json` (9, all dead); WILD-HUBLESS `test/net/wildself.test.js`,
 `tools/mutants/wildself.json` (2, all dead).
