@@ -9904,6 +9904,11 @@
   "tr": "c222e4cb9ff0",
   "by": "claude-in-session"
  },
+ "eg.key.shared": {
+  "en": "8e4b43bba0d0",
+  "tr": "3079c373a342",
+  "by": "claude-in-session"
+ },
  "eg.objective.gauntlet": {
   "en": "01c638f93cdc",
   "tr": "c2714b61b2bd",
@@ -17154,6 +17159,31 @@
   "tr": "7935f5a2f5d3",
   "by": "claude-in-session"
  },
+ "menu.motion.peerShake.full": {
+  "en": "10b28a8c1e44",
+  "tr": "26275ebd668f",
+  "by": "claude-in-session"
+ },
+ "menu.motion.peerShake.half": {
+  "en": "45d31208222c",
+  "tr": "111dfa4c7529",
+  "by": "claude-in-session"
+ },
+ "menu.motion.peerShake.name": {
+  "en": "da2636d180e2",
+  "tr": "f4c9c8438769",
+  "by": "claude-in-session"
+ },
+ "menu.motion.peerShake.note": {
+  "en": "093ae6aeb48a",
+  "tr": "ba4cbfde033b",
+  "by": "claude-in-session"
+ },
+ "menu.motion.peerShake.off": {
+  "en": "e3de5ab0ca4c",
+  "tr": "b47514e5fb7c",
+  "by": "claude-in-session"
+ },
  "menu.mw.archives": {
   "en": "8ebb43e7d7e7",
   "tr": "e7a63b2958b7",
@@ -18232,6 +18262,11 @@
  "menu.settings.tabStatus": {
   "en": "03662c8d2f8f",
   "tr": "35182772b8c5",
+  "by": "claude-in-session"
+ },
+ "menu.settings.tip.frameCap": {
+  "en": "b03b5e76ccb8",
+  "tr": "7c2774ad0bdf",
   "by": "claude-in-session"
  },
  "menu.settings.unavailableBlurb": {

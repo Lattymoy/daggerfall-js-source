@@ -3316,7 +3316,7 @@ The Discord (Regi: "Settings are also set for 300 FPS but it seems it's limited 
 asked whether the desktop app should run above the screen's refresh: "Yes". The departure above was a browser's: a
 page cannot stop waiting for the screen. The app's Chromium can, if told at launch, so the app now keeps DFU's own
 rule for VSync off (StartGameBehaviour.cs:238-250): frames do not wait for the screen, and the Frame Rate Cap holds
-them (Off lets them run free). VSync on, frames wait for the screen as before - and the cap still holds them back below
+them (Off let them run free until RPT1026-CLIENT, below: it holds at 300 now). VSync on, frames wait for the screen as before - and the cap still holds them back below
 it, where DFU's does nothing: the departure above stands there, in the app as in a browser (AUDIT 28e). The shell reads the saved `Video/VSync` before it is ready
 (`app/lib/frameRate.cjs`, over the page's own settings blob and its GetBool reading) and, with it off, launches with
 `disable-gpu-vsync` and `disable-frame-rate-limit`; this file's gate then does the holding, up to 300. VSync on, the
@@ -3333,3 +3333,16 @@ rides one browser frame with one stamp, and that frame IS the slot (`capTake`), 
 hosts' own gate reads "drawn". It paces every rAF loop, the menus' included; CSS animations are the compositor's and
 are not paced. Measured in Electron 42 under Xvfb (the frame lane's harness): 144/240/300 draw 144/240/300; VSync on,
 nothing is installed and the gate works as before.
+
+**OFF HAS A CEILING WHERE THE WAIT IS LIFTED (RPT1026-CLIENT, 2026-10-26; a private report: "the client renders as fast
+as the hardware allows").** DFU's VSync off with no target frame rate runs free (`Application.targetFrameRate` left at
+-1), and the app followed it: with VSync off and the cap at its default, Off, a frame's garbage was made and collected a
+thousand times a second and more (the report measured about 3,760 collections in ten seconds against 28 capped, and a
+heap peak 77% higher). Where the shell lifted the wait (`installFramePacer`), Off now holds at `LIFTED_OFF_FPS` - the
+row's own top, `FRAME_CAP_MAX` (300): never faster than any rate the row offers (`systems/frameCap.js` frameCapFps). A
+cap the player chose stands; a browser and the app with VSync on are unchanged (the screen paces them, and Off is no
+cap). The row's tip says so (`settingsCopy.js` portTip, `menu.settings.tip.frameCap` - DFU wrote no tip for it), and the
+FPS counter's pace line reads `vsync off  cap 300`. A departure from DFU's targetFrameRate, Port-Ledger A (FPS-CAP1's
+row). The report's other asks - a warning beside the two rows, the crash log's lines - are not done: the ceiling makes
+the warning's case go away, and nothing proves the uncapped rate caused a crash. Pins
+`test/systems/rpt1026_client_framecap.test.js` (3).

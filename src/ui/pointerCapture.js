@@ -1,0 +1,20 @@
+// @ts-check
+// RPT1026-CLIENT (a private report, 2026-10-23: "If you play with a pad and open up the world map, then press A anywhere on
+// it, it will cause the following error message: NotFoundError: Element.setPointerCapture: Invalid pointer id. This will
+// stay on the screen and won't disappear without a reload"). THE CAPTURE THAT CANNOT THROW. A pad's press is a synthetic
+// pointer (ui/plus/plusPad.js domPointer, ui/enhanced/enhancedDialog.js replayClick: `pointerId: 1`, the mouse's id in
+// Chromium), and a browser holding no pointer of that id - Firefox numbers its mouse 0 - refuses to capture or release
+// it with a NotFoundError, thrown out of the listener to the page: the crash report over a game that ran on. A capture
+// is a drag's comfort, never its law - refused, the press still lands where it was pressed - so every capture and
+// release in the game's own windows goes through here (test/ui/rpt1026_client_capture.test.js sweeps for one that does
+// not).
+
+/** Capture pointer `id` on `el`; false where the browser refused it (no such pointer) or `el` cannot. */
+export function capturePointer(/** @type {any} */ el, /** @type {number} */ id) {
+  try { el?.setPointerCapture?.(id); return true; } catch { return false; }
+}
+
+/** Release pointer `id` from `el`; false where the browser refused it. */
+export function releasePointer(/** @type {any} */ el, /** @type {number} */ id) {
+  try { el?.releasePointerCapture?.(id); return true; } catch { return false; }
+}
