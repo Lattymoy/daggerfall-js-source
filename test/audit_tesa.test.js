@@ -276,10 +276,13 @@ test('AUDIT-TESA A2-3: a pixel id past the Bay aliases a Bay row (y * 1000 + x) 
   assert.match(read('src/scenes/pixelBuild.js'), /const livingTown = livingTownAt\(px, py\) \?\? \{/);
   for (const re of [
     /if \(!csaIsPortTown\(p\.x \+ dx, p\.y \+ dy\)\) continue;\n\s+\/\/ AUDIT-TESA A2-3: the Bay's rows by the Bay's ids alone/,
-    /const summary = onTheBay\(x, y\) \? travelLocationSummaryAt\(mapDict, x, y\) : null;/,
+    // PIN MOVED (BAY-LEFT-MAPS, test/scenes/bayleft_places.test.js): the junction map's dot reads the Bay's row on the Bay
+    // alone and past it the place found there (scenes/mapPlacesHost.js junctionPlaceAt)
+    /if \(onTheBay\(x, y\)\) \{\n\s+const summary = travelLocationSummaryAt\(mapDict, x, y\);/,
     /const summary = onTheBay\(pixel\.x, pixel\.y\) \? travelLocationSummaryAt\(mapDict, pixel\.x, pixel\.y\) : null;/,
     /locationSummary: \(\) => \(onTheBay\(to\.x, to\.y\) \? travelLocationSummaryAt\(mapDict, to\.x, to\.y\) : null\),/,
-    /return loc\?\.name && id && hasDiscoveredLocationId\(id\) \? \{ pixel: \{ x: px, y: py \}, name: loc\.name, mapId: id,/,
+    // PIN MOVED (BAY-LEFT-MAPS): past the Bay a place found - or one a quest names (`named`, OW-QUEST's press)
+    /return loc\.name && id && \(named \|\| hasDiscoveredLocationId\(id\)\) \? \{ pixel: \{ x: px, y: py \}, name: loc\.name, mapId: id,/,
   ]) assert.match(W, re);
   // PIN MOVED (WORLD-WIDE folded into TESA, #1184): the harbour's loop no longer bounds itself - WW3's directory answers no
   // row off the Bay's map (systems/map/mapDirectory.js locationSummaryAt), so a pixel past the Bay aliases none
@@ -398,7 +401,9 @@ test('AUDIT-TESA A6-5: a closed cell\'s byte is no building\'s - in no quarter o
 
 test('AUDIT-TESA A7-4: a place on a capital\'s pixel is inked on that pixel - its pin\'s, or the capital\'s where Arena\'s places do not stand - never its own point a pixel away', () => {
   const ink = read('src/ui/tamrielInk.js');
-  assert.match(ink, /stood\.set\(`\$\{p\.provinceIndex\}\|\$\{p\.id\}`, \{ x: p\.bx, y: p\.by, pinned: !!p\.pinned \}\);/);
+  // PIN MOVED (BAY-LEFT-MAPS C11, test/ui/bayleft_find.test.js): and its port as it stands (a lore port only on its shore, TESA6)
+  assert.match(ink, /stood\.set\(`\$\{p\.provinceIndex\}\|\$\{p\.id\}`, \{ x: p\.bx, y: p\.by, pinned: !!p\.pinned, port: !!p\.port \}\);/);
   assert.match(ink, /const on = pixel && \(st\?\.pinned \|\| !st\) \? \[pixel\.x \+ 0\.5, pixel\.y \+ 0\.5\] : \[x, y\];/);
-  assert.match(ink, /kind: p\.kind, x: on\[0\], y: on\[1\], pixel, mapId: k >= 0 \? capitalPlaceId\(k, 0\) : arenaPlaceId\(p\) \}\);/);   // PIN MOVED (WW7-6): with its map id - the seat ring's key (ww7_seatrings)
+  // PIN MOVED (BAY-LEFT-MAPS C11): and its port, the anchor's and the Ports filter's word
+  assert.match(ink, /kind: p\.kind, x: on\[0\], y: on\[1\], pixel, mapId: k >= 0 \? capitalPlaceId\(k, 0\) : arenaPlaceId\(p\), port \}\);/);   // PIN MOVED (WW7-6): with its map id - the seat ring's key (ww7_seatrings)
 });

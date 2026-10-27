@@ -109,6 +109,16 @@ export const tipKey = (tip) => (tip ? `${tip.title}\n${tip.lines.join('\n')}` : 
  * @param {{width:number, height:number}} [size]
  */
 export function readRaidMarks(fn, size = BAY) {
+  return readRaidMarksIn(fn, { x0: 0, y0: 0, w: size.width, h: size.height });
+}
+
+/** BAY-LEFT-MAPS (bible/10-UI/Held-Map-Arc.md): the raided towns (and STAR6's stars) over a BOX of map pixels (`box` {x0, y0,
+ *  w, h} - the held map's sheet: the continent's frame while it is shown, the Bay's own rectangle else), as the bounties
+ *  are read (ui/bounty/bountyMapMark.js readBountyMarksIn): a town past the Bay the host marks is drawn where the Bay's
+ *  1000 x 500 dropped it. The Bay's own box is readRaidMarks', to the pixel. WW6 (bible/03-World/World-Wide.md WW6) read
+ *  its raids over the same sheet with a reader of its own; the two met at AUDIT BAY-LEFT's merge, and this is the one.
+ *  @param {(() => any) | undefined} fn @param {{x0:number, y0:number, w:number, h:number}} box */
+export function readRaidMarksIn(fn, box) {
   let list = null;
   try { list = typeof fn === 'function' ? fn() : null; } catch { return []; }
   if (!Array.isArray(list)) return [];
@@ -116,26 +126,11 @@ export function readRaidMarks(fn, size = BAY) {
   for (const m of list) {
     if (!m || typeof m !== 'object') continue;
     const { px, py } = m;
-    if (!Number.isInteger(px) || !Number.isInteger(py) || px < 0 || py < 0 || px >= size.width || py >= size.height) continue;
+    if (!Number.isInteger(px) || !Number.isInteger(py) || px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;
     out.push(Object.freeze({ key: String(m.key ?? `${px},${py}`), px, py, x: px + 0.5, y: py + 0.5, label: String(m.label ?? '').slice(0, TIP_TEXT_MAX), tip: readTip(m.tip) }));
   }
   return out;
 }
-/**
- * WW6 (bible/03-World/World-Wide.md WW6): the raids read over a SHEET - `box` the map's frame in the Bay's own pixels
- * (`{ x0, y0, w, h }`: the Bay's 1000 x 500 from its corner, or the continent's frame the held map shows past it -
- * LAIR-WORLD's readBountyMarksIn's law), so a town raided past the Bay stands its mark there. On the Bay's sheet each mark
- * is readRaidMarks' own.
- * @param {(() => any) | undefined} fn @param {{ x0: number, y0: number, w: number, h: number }} box
- */
-export function readRaidMarksIn(fn, box) {
-  const shifted = () => {
-    const l = typeof fn === 'function' ? fn() : null;
-    return Array.isArray(l) ? l.map((m) => (m && typeof m === 'object' ? { ...m, key: m.key ?? `${m.px},${m.py}`, px: m.px - box.x0, py: m.py - box.y0 } : m)) : l;
-  };
-  return readRaidMarks(shifted, { width: box.w, height: box.h }).map((m) => Object.freeze({ ...m, px: m.px + box.x0, py: m.py + box.y0, x: m.x + box.x0, y: m.y + box.y0 }));
-}
-
 /** What the held map repaints its raids on: where they stand and what they say. */
 export const raidMarksKey = (marks) => marks.map((m) => `${m.key}@${m.px},${m.py}|${m.label}|${tipKey(m.tip)}`).join(';');
 

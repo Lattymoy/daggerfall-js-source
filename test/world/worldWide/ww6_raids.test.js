@@ -512,11 +512,14 @@ test('WW6 a staff TOWN event past the Bay: the law takes a town past the Bay by 
 // ═══ THE MAP AND THE HOST ════════════════════════════════════════════════════════════════════════
 
 test('WW6 the held map stands a raid past the Bay on the continent\'s sheet (the bounties\' law), the Bay\'s sheet the Bay\'s; the host\'s seams: the raids\' host hands the registry and the capital\'s street, the host constructs it (mutants: the sheet unread; the registry unhanded)', () => {
-  const marks = () => [{ key: 'a', px: 2425, py: 270, label: 'T', tip: null }, { key: 'b', px: 100, py: 100, label: 'B', tip: null }, { key: 'c', px: 9000, py: 0, label: 'X' }];
+  // PIN MOVED (AUDIT BAY-LEFT, its packages merged): WW6's readRaidMarksIn and BAY-LEFT-MAPS' met, and the one kept bounds the
+  // marks by the box itself - so the sheet is asked of a mark north of the Bay (Solitude's pixel, kept) and one past the
+  // frame's east edge though under its width (dropped), which only the box's origin tells apart
+  const marks = () => [{ key: 'a', px: 2425, py: 270, label: 'T', tip: null }, { key: 'b', px: 100, py: 100, label: 'B', tip: null }, { key: 'c', px: 9000, py: 0, label: 'X' }, { key: 'd', px: 1569, py: -430, label: 'S', tip: null }, { key: 'e', px: 5500, py: 10, label: 'E', tip: null }];
   assert.deepEqual(readRaidMarksIn(marks, { x0: 0, y0: 0, w: 1000, h: 500 }).map((m) => m.key), ['b'], 'the Bay\'s sheet');
   assert.deepEqual(readRaidMarksIn(marks, { x0: 0, y0: 0, w: 1000, h: 500 }), readRaidMarks(marks), 'the Bay\'s as before');
   const sheet = readRaidMarksIn(marks, { x0: -862, y0: -975, w: 6000, h: 3750 });
-  assert.deepEqual(sheet.map((m) => [m.key, m.px, m.py, m.x, m.y]), [['a', 2425, 270, 2425.5, 270.5], ['b', 100, 100, 100.5, 100.5]], 'past the Bay over the continent\'s frame');
+  assert.deepEqual(sheet.map((m) => [m.key, m.px, m.py, m.x, m.y]), [['a', 2425, 270, 2425.5, 270.5], ['b', 100, 100, 100.5, 100.5], ['d', 1569, -430, 1569.5, -429.5]], 'past the Bay over the continent\'s frame');
   assert.deepEqual(readRaidMarksIn(() => { throw new Error('x'); }, { x0: 0, y0: 0, w: 1000, h: 500 }), []);
   const hm = codeOnly(rd('src/ui/heldMap.js'));
   assert.match(hm, /const raids = readRaidMarksIn\(this\.deps\.raids, sheet\);/);

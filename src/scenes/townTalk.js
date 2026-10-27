@@ -68,7 +68,7 @@ import { yardDirectoryRows } from '../systems/merchantYards.js';   // YARDS-FOUN
 import { portDirectoryRows, FOUND_KIND_ORDER, FOUND_TALK_GROUPS, lettersOnMap } from '../systems/portPlaces.js';   // SHIPYARDS-FOUND: and a port town's shipyard, crew hall, lighthouse and docks - the found places' one order
 import { OPENED_SHOP_TYPES, OPENED_SHOP_GROUPS } from '../world/buildingNames.js';   // PROF-FOUND: the shops the port opened, asked after
 import { LIST_ITEM_TYPE, QUESTION_TYPE } from '../systems/topicTree.js';   // TK-vi: the window's rows are the tree's ListItems; B6: the Work question type
-import { discoverBuilding } from '../systems/discovery.js';   // T4: %loc's mark side effect
+import { discoverBuilding, townBookId } from '../systems/discovery.js';   // T4: %loc's mark side effect; BAY-LEFT-MAPS (C7 = E2): its town's own book
 import { getNameBankOfRegion, fullName as nameHelperFullName, GENDERS } from '../characters/nameHelper.js';   // MACRO-6: %fn/%mn in the engine-less answer
 import { talkMacroSource } from '../systems/talk/talkMacros.js';
 import { bumpSeed } from '../formats/dfRandom.js';
@@ -1269,7 +1269,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       // boot region, so a building revealed after streaming across a
       // border was filed under the region the session started in and
       // the map never showed it where the player actually was.
-      if (h.reveal) discoverBuilding(`${regionNow()}:${cityName()}`, building, null, questBuildingSource);   // AUDIT 63 F49: TalkManager.cs:1290's DiscoverBuilding takes the quest name-override arm too (PlayerGPS.cs:945-959)
+      if (h.reveal) discoverBuilding(townBookId(regionNow(), cityName(), topics?.mapId), building, null, questBuildingSource);   // AUDIT 63 F49: TalkManager.cs:1290's DiscoverBuilding takes the quest name-override arm too (PlayerGPS.cs:945-959)
       return text;
     };
     // MACRO-6: FemaleName/MaleName off TalkManagerMCP's own source (the

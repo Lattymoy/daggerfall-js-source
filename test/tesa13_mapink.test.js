@@ -344,7 +344,8 @@ test('TESA13 the window: the continent painted with the Bay\'s band, filters and
   const H = read('src/ui/heldMap.js');
   assert.match(H, /const tamOpts = \{ paperW: env\.paperW, paperH: env\.paperH, continent: onContinent\(env\.view\.scale, bayFit\), bayFit,\n\s+band: env\.band, filters: this\.filters, inks: this\._markInks\(\), placesIn: this\.deps\.tamrielPlacesIn \?\? null,/);
   // PIN MOVED (AUDIT TESA II M7, M14): the hover through tamrielHoverAt, the continent's capitals alone on the continent
-  assert.match(H, /tamrielHoverAt\(mx, my, this\._view, ink, \{ placesIn: continent \? null : this\.deps\.tamrielPlacesIn \?\? null, nameOf: this\.deps\.tamrielPlaceName \?\? null, filters: this\.filters, band: zoomBand\(this\._view\.scale\), continent \}\)/);
+  // PIN MOVED (BAY-LEFT-MAPS C11, test/ui/bayleft_find.test.js): and the Ports filter
+  assert.match(H, /tamrielHoverAt\(mx, my, this\._view, ink, \{ placesIn: continent \? null : this\.deps\.tamrielPlacesIn \?\? null, nameOf: this\.deps\.tamrielPlaceName \?\? null, filters: this\.filters, band: zoomBand\(this\._view\.scale\), continent, portsOnly: this\.portsFilter \}\)/);
   // PIN MOVED (AUDIT TESA II M9): the roads landing repaint the window from its tick, no part of the static key
   const tick0 = H.slice(H.indexOf('      tick: (dt) => {'), H.indexOf('      mount: () => {', H.indexOf('      tick: (dt) => {')));
   assert.match(tick0, /const pastBay = `\$\{arenaRoadsVersion\(\)\}\|\$\{pastBayPlacesVersion\(\)\}`;/, 'the window repainted when the roads land');

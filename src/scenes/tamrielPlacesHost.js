@@ -422,14 +422,46 @@ export function createTamrielPlaces(host) {
     _countryPixels.rows.set(k, row);
     return row;
   }
+  /** The place the build stands on a pixel past the Bay, stood now - its own order (world.js _locationToBuild): a capital,
+   *  an Arena place, the countryside, a lair; null on the Bay or where none stands. */
+  const standAt = (px, py) => (inBay(px, py) ? null : capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py) || lairLocationAt(px, py) || null);
+  /** BAY-LEFT-MAPS (bible/06-Systems/Travel-View.md BAY-LEFT-MAPS): THE MAP IDS A PIXEL PAST THE BAY COULD HOLD, in the
+   *  build's own order - a capital's slice (synthesizeCapitalLocation's capitalPlaceId), an Arena place (arenaPlaceId), the
+   *  countryside's (countryPlaceId of the pixel's ordinal), a lair on its cell's site (lairPlaceId) - each read off its own
+   *  law with no roll: no plateau summed, no name drawn, nothing stood. None on the Bay. */
+  function idsOnPixel(px, py) {
+    const out = [];
+    if (inBay(px, py)) return out;
+    const cap = _capitalBase ? capitalOnPixel(px, py) : null;
+    if (cap) out.push(capitalPlaceId(cap.k, capitalSliceOrdinal(CAPITALS[cap.k], cap.s)));
+    const place = _arenaTemplates ? arenaPlaceOnPixel(px, py) : null;
+    if (place) out.push(arenaPlaceId(place));
+    const n = _countryTemplates ? countryOrdinal(px, py) : -1;
+    if (n >= 0) out.push(countryPlaceId(n));
+    const c = _lairTemplates ? lairCellOf(px, py) : -1;
+    if (c >= 0) { const s = lairSite(c); if (s.px === px && s.py === py) out.push(lairPlaceId(c)); }
+    return out;
+  }
+  /** BAY-LEFT-MAPS: THE PLACE THE BUILD WOULD STAND ON A PIXEL PAST THE BAY, AS A ROW - read, never stood: the registry's
+   *  (a capital's slice and an Arena place off its list; where the land stands, the countryside's and a lair's off its pixel
+   *  providers), else the countryside's roll (countryRow) and the lair on its cell's site (lairAt) - the registry's own
+   *  order, and the build's. Its region the pixel's, as the location stood there carries. Null on the Bay or where none
+   *  would stand. */
+  function rowAt(px, py) {
+    if (inBay(px, py)) return null;
+    registerTamrielPlaces();
+    const row = worldPlaces?.at(px, py) ?? countryRow(px, py) ?? lairAt(px, py);
+    return row ? { ...row, region: maps.getRegionIndexAt(px, py) } : null;
+  }
   /** AUDIT RELEASE R2-5: what the quest layer's provinces read of the places past the Bay (scenes/quest/questProvinceSites.js
    *  createQuestProvinceSites' deps) - the registry, the politic map's region, the place the build stands on a pixel (its
-   *  own order: a capital, an Arena place, the countryside, a lair), the lairs near one, and the registry kept up. */
+   *  own order: a capital, an Arena place, the countryside, a lair), the lairs near one, and the registry kept up.
+   *  BAY-LEFT-MAPS: and the ids a pixel could hold (a place found there is known by them before it stands), and its row. */
   const provinceQuestPlaces = Object.freeze({
     worldPlaces, lairsNear, countryNear, refresh: registerTamrielPlaces, startLairAt, sliceAt: capitalSliceAt,   // R2-5f: a capital slice read before it stands   // START2's start lair rides with them (the quest layer's startSiteOfId)
     lairAt, lairCloneAt, placeOnPixel, version: placesVersion,   // LAIR-WORLD: a lair, a place and their stamp on a pixel past the Bay - the revenants' lairs and the boards' hunts
     regionAt: (px, py) => maps.getRegionIndexAt(px, py),
-    standAt: (px, py) => (inBay(px, py) ? null : capitalLocationAt(px, py) || (_arenaTemplates && arenaLocationAt(px, py)) || countryLocationAt(px, py) || lairLocationAt(px, py) || null),
+    standAt, idsOnPixel, rowAt,   // BAY-LEFT-MAPS
   });
   return { _tamrielRoads, arenaLocationAt, arenaWarm, capitalLocationAt, countryLocationAt, lairLocationAt, nearestTownOf, provinceQuestPlaces, registerTamrielPlaces, startLairAt, tamrielPlaceName };
 }

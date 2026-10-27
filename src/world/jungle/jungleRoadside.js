@@ -30,7 +30,7 @@ import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, TERRA
 import { WORLD_MAP_TILE_DIM } from '../terrain/terrainTiles.js';
 import { surfaceHeightAt } from '../terrain/terrainSurface.js';
 import { ARMS, roadRoom, PATH_HALF_M } from '../road/roadBand.js';
-import { pathsDataPoint } from '../road/pathData.js';
+import { tablePathsDataPoint } from '../road/pathData.js';   // BAY-LEFT-MAPS: the mod's table's lanes alone - past the Bay a road is a curve
 import { tileDraw } from '../terrain/terrainNature.js';
 
 /**
@@ -337,7 +337,7 @@ export function highestDrawn(heightmapData, corners) {
  *   trailOk: (x: number, z: number, r: number) => boolean }} job
  */
 export function standPairs({ px, py, net, heightmapData, tileOk, trailOk }) {
-  const bits = net ? pathsDataPoint(net, px, py) : 0;
+  const bits = net ? tablePathsDataPoint(net, px, py) : 0;
   if (!bits) return [];
   const R = JUNGLE_ROADSIDE, tile = PIXEL / WORLD_MAP_TILE_DIM;
   const ox = px * WORLD_MAP_TILE_DIM, oz = -py * WORLD_MAP_TILE_DIM;

@@ -161,7 +161,7 @@ import { invertAffine } from '../../world/prefabColliders.js';
 import { buildWaveMesh, stepWaveFrame, waveFrameTimeOf, isDayHour, WAVE_FRAME_COUNT, WAVE_SCALE } from './comeSailAwayWaves.js';
 import { monthNames } from '../gameDate.js';   // CSA-I: WorldTime.Now.MonthName, a marker's label (L10N3d: in the player's language, as DFU's GetMonthName reads it)
 import { HELM_WAY, CARGO_HOLD_MISSING, steerage, isResponsive, pointOfSail, seaWind, SAIL_FREE, sailFreeGain, WIND_RATED } from '../helmWay.js';   // HELM-WAY: the responsive helm; SAIL-FREE: her way under sail
-import { MAP_MARKER_MODE_COLORS, mapRect, guiMouse, mapPixelUnder, guiRectContains, vector2IntDistance, markerLabel, dayOfMonthWithSuffix, mapOverlayDraws, csFloatString, COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_BLACK, DAGGERFALL_DEFAULT_SHADOW_POS } from './comeSailAwayMap.js';   // CSA-I: the position reading
+import { MAP_MARKER_MODE_COLORS, guiMouse, mapPixelUnder, guiRectContains, markerLabel, dayOfMonthWithSuffix, mapOverlayDraws, csFloatString, COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_BLACK, DAGGERFALL_DEFAULT_SHADOW_POS, sheetOfPixel, sheetRect, placedMarker, markerOn, markerDistance, savedMarker } from './comeSailAwayMap.js';   // CSA-I: the position reading; BAY-LEFT-MAPS (C12): its sheet past the Bay, the painting of Tamriel
 import { noteFirstUse } from '../tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 import { BOAT_ACTIONS } from './comeSailAwayActions.js';   // HUD-HELM: the helm keys' table, a leaf the HUD's helm panel reads
 import { peaceShare } from './peaceWay.js';   // PEACE-WAY: her way out of a fight
@@ -2176,11 +2176,11 @@ export function createComeSailAwayRuntime(deps) {
     }
   }
   /** IsPositionMarked (5681-5693): a marker on the pixel already. */
-  const IsPositionMarked = (pos) => state.mapMarkers.some((m) => m.position[0] === pos[0] && m.position[1] === pos[1]);
+  const IsPositionMarked = (pos, sheet = sheetOfPixel(deps.currentMapPixel())) => state.mapMarkers.some((m) => markerOn(m, pos, sheet));   // BAY-LEFT-MAPS (C12): on the sheet shown
   /** The map's rect and the mouse over it, as LeftClickOnMap and RightClickOnMap both take them (5708-5714, 5740-5746). */
   function mapUnderMouse() {
     const sr = deps.screenRect();
-    const r = mapRect(sr, screenScaleOf(sr));
+    const r = sheetRect(sr, screenScaleOf(sr), sheetOfPixel(deps.currentMapPixel()));   // BAY-LEFT-MAPS (C12): the painting's rect past the Bay
     const val2 = guiMouse(sr, deps.mousePosition());
     return guiRectContains(r, val2) ? mapPixelUnder(r, val2) : null;
   }
@@ -2193,7 +2193,7 @@ export function createComeSailAwayRuntime(deps) {
     if (!IsPositionMarked(val3)) {
       const d = deps.date();
       const newLabel = markerLabel(val3, dayOfMonthWithSuffix(d.day), monthNames()[d.month]);
-      state.mapMarkers.push({ position: val3, label: newLabel, color: { ...MAP_MARKER_MODE_COLORS[state.mapMarkerMode] } });
+      state.mapMarkers.push(placedMarker(val3, newLabel, { ...MAP_MARKER_MODE_COLORS[state.mapMarkerMode] }, sheetOfPixel(deps.currentMapPixel())));   // BAY-LEFT-MAPS (C12): the sheet it was placed on
     }
   }
   /** RightClickOnMap (5738-5776): over the map, the nearest marker within the click range removed - walked from the
@@ -2205,7 +2205,7 @@ export function createComeSailAwayRuntime(deps) {
     let num4 = Infinity;
     let num5 = -1;
     for (let num6 = state.mapMarkers.length - 1; num6 > -1; num6--) {
-      const num3 = vector2IntDistance(state.mapMarkers[num6].position, val3);
+      const num3 = markerDistance(state.mapMarkers[num6], val3, sheetOfPixel(deps.currentMapPixel()));   // BAY-LEFT-MAPS (C12): the shown sheet's markers alone
       if (num3 <= mapMarkerClickRange() && num3 < num4) { num4 = num3; num5 = num6; }
     }
     if (num5 !== -1) state.mapMarkers.splice(num5, 1);
@@ -3117,7 +3117,7 @@ export function createComeSailAwayRuntime(deps) {
     }
     if (state.mapMarkers.length > 0) {
       log('COME SAIL AWAY - SAVING MAP MARKERS!');
-      for (const m of state.mapMarkers) data.placedMapMarkers.push({ position: { x: m.position[0], y: m.position[1] }, label: m.label, color: m.color });
+      for (const m of state.mapMarkers) data.placedMapMarkers.push(savedMarker(m));   // BAY-LEFT-MAPS (C12): and a marker's sheet past the Bay
     }
     data.currentBoat = num;
     data.TemporaryShip = state.TemporaryShip;
@@ -3168,7 +3168,7 @@ export function createComeSailAwayRuntime(deps) {
     if (data.placedMapMarkers.length > 0) {
       log('COME SAIL AWAY - LOADED SAVE HAS MAP MARKERS!');
       for (const m of data.placedMapMarkers) {
-        AddMapMarker([roundToInt(m.position.x), roundToInt(m.position.y)], m.color, m.label);
+        AddMapMarker([roundToInt(m.position.x), roundToInt(m.position.y)], m.color, m.label, m.sheet ?? null);   // BAY-LEFT-MAPS (C12): its sheet
       }
     }
     if (state.AllBoats.length > 0 && data.currentBoat !== -1) {
@@ -3193,8 +3193,8 @@ export function createComeSailAwayRuntime(deps) {
     state.currentVectorPrevious = [0, 0, 0];
   }
   /** AddMapMarker (5695-5701): a marker, once per pixel. */
-  function AddMapMarker(mapPixel, color, label = '') {
-    if (!state.mapMarkers.some((m) => m.position[0] === mapPixel[0] && m.position[1] === mapPixel[1])) state.mapMarkers.push({ position: mapPixel, label, color });
+  function AddMapMarker(mapPixel, color, label = '', sheet = null) {   // BAY-LEFT-MAPS (C12): `sheet` a save's marker past the Bay's (none: the Bay's)
+    if (!state.mapMarkers.some((m) => markerOn(m, mapPixel, sheet))) state.mapMarkers.push(placedMarker(mapPixel, label, color, sheet));
   }
 
   /** A frame: a held restore lands the first frame the models are in, then OnLoad's visibility runs for it. */

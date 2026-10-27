@@ -255,8 +255,8 @@
  {
   "name": "WW7-6-the-capital-keyed-as-a-city",
   "file": "src/ui/tamrielInk.js",
-  "old": "mapId: k >= 0 ? capitalPlaceId(k, 0) : arenaPlaceId(p) });",
-  "new": "mapId: arenaPlaceId(p) });",
+  "old": "mapId: k >= 0 ? capitalPlaceId(k, 0) : arenaPlaceId(p), port });",
+  "new": "mapId: arenaPlaceId(p), port });",
   "tests": [
    "test/ui/ww7_seatrings.test.js"
   ]

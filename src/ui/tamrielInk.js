@@ -36,7 +36,7 @@ import { pictureToBay, bayToPicture, inBay, BAY_W, BAY_H, tamrielFit, tamrielFra
 import { tamrielTrace, tamrielLandVersion, provinceKeyAt, PROVINCE_OF_ID, onTamrielTrace } from '../world/tamriel/tamrielLand.js';
 // TESA1: the places past the Bay where the trace stands them (world/arenaPlaces.js; TESA12: the port's own)
 import { arenaPlaces, arenaPlacesVersion, arenaPixels, arenaStanding } from '../world/arenaPlaces.js';
-import { capitalPin, capitalsStanding, capitalsVersion, capitalPlaceId, CAPITALS } from '../world/tamrielCapitals.js';   // TESA10d: a capital's pixel on the map, Arena or none; WW7-6: its seat's key
+import { capitalPin, capitalsStanding, capitalsVersion, capitalPlaceId, capitalCanalOpen, capitalSpanPixels, capitalSliceName, capitalHarbourSlice, CAPITALS } from '../world/tamrielCapitals.js';   // TESA10d: a capital's pixel on the map, Arena or none; WW7-6: its seat's key; BAY-LEFT-MAPS: a capital's harbour, as the registry reads it
 import { arenaPlaceId } from '../world/arenaLocations.js';   // WW7-6: a place's seat's key
 import { seatMapMark } from '../net/townSeatLaw.js';   // WW7-6: how a seat is marked, the Bay's own law
 import { arenaRoadsLayer, arenaRoadTiles, arenaRoadTilePixels, arenaRoadsVersion, beyondKey, beyondPixel, ROAD_TILE, roadTileKey } from '../world/arenaRoads.js';
@@ -44,9 +44,11 @@ import { DIR, DIR_DELTA } from '../world/road/roadNetwork.js';   // TESA15: a pi
 import { pastBayPlacesStamp, pastBayPlacesVersion } from '../world/pastBayPlaces.js';   // TESA15: the places the roads' regions laid, a bin at a time
 import { getPixelColorIndex } from './travel/travelMapWindow.js';   // TESA13: a place's classic bucket, under the map's filters
 import { LOCATION_TYPES } from '../formats/mapsFile.js';   // AUDIT TESA II M7: a place past the Bay's type, the Bay's own
+import { REGION_NAMES, regionOfTheatre } from '../formats/mapsTables.js';   // BAY-LEFT-MAPS C9: a place's province by its region's name (WW-R)
+import { THEATRE_KEYS } from '../world/worldWide/worldGrid.js';   // BAY-LEFT-MAPS C9: a province's theatre by its key
 import { locationTypeName } from '../systems/travel/travelOptions.js';   // TESA13: MacroHelper.LocationTypeName - a place's kind in words
 import { makeNoise, octaveNoise } from './intro/introMap.js';   // the intro's own seeded value noise - ONE home for it
-import { PEN, NAME_FACE, HALO_PEN, FAR_TRACK_PEN, penOf, pathPen, PATH_KINDS, penSolid, toPaper, paintGlyph, paintSeatRing, markReach, roundCorners, inkChain, spacedName, boundarySegments, linkSegments, pathChains, strokePaths, zoomBand, BAND_MARKS, markKind } from './ink/inkMap.js';
+import { PEN, NAME_FACE, HALO_PEN, FAR_TRACK_PEN, penOf, pathPen, PATH_KINDS, penSolid, toPaper, paintGlyph, paintSeatRing, paintHarbour, markReach, roundCorners, inkChain, spacedName, boundarySegments, linkSegments, pathChains, strokePaths, zoomBand, BAND_MARKS, markKind } from './ink/inkMap.js';   // BAY-LEFT-MAPS: a port's anchor, the Bay's own
 import { HUB_CAPITALS } from '../systems/region/regionHubs.js';   // REGION-LINES: the Bay's three kingdoms' capitals, with every province's
 import { simplifyChain } from './overworldModel.js';   // TAMRIEL3: the coast's chain thinned as the overworld's are
 import { stampSquare, coveragePixels, clearCoverage, penRgb } from './inkRaster.js';   // MAP-WHOLE: the continent's dots rasterised by hand
@@ -493,7 +495,7 @@ export function placeCity(city) {
 export function arenaInkCities(model) {
   const capital = new Set(CITIES.filter((c) => c.capital).map((c) => `${c.province}|${c.name}`));
   const stood = new Map();
-  if (arenaStanding()) for (const p of arenaPixels()?.stood ?? []) stood.set(`${p.provinceIndex}|${p.id}`, { x: p.bx, y: p.by, pinned: !!p.pinned });
+  if (arenaStanding()) for (const p of arenaPixels()?.stood ?? []) stood.set(`${p.provinceIndex}|${p.id}`, { x: p.bx, y: p.by, pinned: !!p.pinned, port: !!p.port });   // BAY-LEFT-MAPS C11: a port where it stands on its shore (TESA6)
   const out = [];
   for (const p of model.places) {
     if (!p.name) continue;
@@ -504,8 +506,42 @@ export function arenaInkCities(model) {
     // there - on the city the world stands, not on its own point a pixel or more away
     const on = pixel && (st?.pinned || !st) ? [pixel.x + 0.5, pixel.y + 0.5] : [x, y];
     const isCapital = capital.has(`${p.province}|${p.name}`), k = isCapital ? CAPITALS.findIndex((cap) => cap.name === p.name) : -1;
-    // WW7-6: its map id - the seat's key (scenes/tamrielPlacesHost.js seatPlaces: a capital's its centre's, a city's its own)
-    out.push({ name: p.name, province: p.province, capital: isCapital, kind: p.kind, x: on[0], y: on[1], pixel, mapId: k >= 0 ? capitalPlaceId(k, 0) : arenaPlaceId(p) });
+    // WW7-6: its map id - the seat's key (scenes/tamrielPlacesHost.js seatPlaces: a capital's its centre's, a city's its own).
+    // BAY-LEFT-MAPS (C11): whether it is a port, by its provider's word as the registry reads it (world/pastBayRows.js): the
+    // place as it stands - the lore's port a port only on its shore (TESA6, world/arenaPlaces.js standArenaPixels), the lore's
+    // word where no host stands the places - and a capital's whose own place is one, or whose harbour's canal is open
+    // (NIBEN-SEA)
+    const port = (st ? st.port : !!p.port) || (k >= 0 && capitalCanalOpen(k));
+    out.push({ name: p.name, province: p.province, capital: isCapital, kind: p.kind, x: on[0], y: on[1], pixel, mapId: k >= 0 ? capitalPlaceId(k, 0) : arenaPlaceId(p), port });
+  }
+  return out;
+}
+
+/** BAY-LEFT-MAPS (AUDIT LEFT IN THE BAY C9): THE FIND BOX'S PLACES PAST THE BAY - the ink's cities (every named place the
+ *  continent's sheet inks: Arena's and the capitals), each on the pixel the world stands it on (`pixel`, else its ink
+ *  point's), and a standing capital's slices by their names: the registry's listed rows (world/pastBayRows.js - a capital's
+ *  every slice a place of its own), one row a name a capital, the slice of it nearest the centre - its harbour's slice for
+ *  its own name (the Imperial City is 625 slices on 14 names; the Waterfront District's is many). Each `{ name, regionName, x, y, port }` - its province's region's name (WW-R's, as the Bay's rows
+ *  name theirs: Cyrodiil, not the painting's Imperial Province), and whether it is a port (the city's own word,
+ *  arenaInkCities; a capital's harbour slice its capital's). The find box's index read MAPS.BSA's 62 regions alone.
+ *  @param {?{ cities: any[] }} ink */
+export function tamrielFindRows(ink) {
+  const out = [];
+  for (const c of ink?.cities ?? []) {
+    const x = c.pixel ? c.pixel.x : Math.floor(c.x), y = c.pixel ? c.pixel.y : Math.floor(c.y);
+    const regionName = REGION_NAMES[regionOfTheatre(THEATRE_KEYS.indexOf(c.province))] ?? provinceByKey(c.province)?.name ?? '';
+    out.push({ name: c.name, regionName, x, y, port: !!c.port });
+    const k = c.capital && c.pixel ? CAPITALS.findIndex((cap) => cap.name === c.name && cap.province === c.province) : -1;
+    if (k < 0) continue;
+    const cap = CAPITALS[k], seen = new Set([c.name]), harbour = capitalHarbourSlice(cap);
+    // the harbour's slice first - its name's row its own, a port where its capital is (the registry's) - then nearest the centre
+    const slices = capitalSpanPixels(k).map((p, s) => ({ p, s, d: s === harbour ? -1 : Math.hypot(p.x - x, p.y - y) })).sort((a, b) => a.d - b.d || a.s - b.s);
+    for (const { p, s } of slices) {
+      const name = capitalSliceName(cap, s);
+      if (!name || seen.has(name)) continue;
+      seen.add(name);
+      out.push({ name, regionName, x: p.x, y: p.y, port: s === harbour && !!c.port });
+    }
   }
   return out;
 }
@@ -718,12 +754,14 @@ export function pastBayStamp(x0, y0, x1, y1) {
  *  (world/tamrielAtlas.js placesIn, within the continent's frame) that the band inks and no filter hides - the Bay's own
  *  laws for its marks (travelMapWindow getPixelColorIndex, inkMap BAND_MARKS and markKind) - as `{ place, kind, x, y }`
  *  on the pixel's centre, in the sheet's coordinates. None at far: far inks the cities alone, and none is the
- *  countryside's. No discovery law: every place past the Bay is inked, as TESA1's are.
+ *  countryside's. No discovery law: every place past the Bay is inked, as TESA1's are. BAY-LEFT-MAPS (C11): none under
+ *  the Ports filter (`portsOnly`, the travel map's Ports button) - the countryside and the lairs stand no harbour (TESA7),
+ *  and on the Bay the filter keeps a port's mark alone.
  *  @param {{ox:number,oy:number,scale:number}} view @param {?PlacesIn} placesIn
- *  @param {{ paperW: number, paperH: number, band?: string, filters?: any, frame?: ?{ x0: number, y0: number, w: number, h: number } }} opts */
+ *  @param {{ paperW: number, paperH: number, band?: string, filters?: any, portsOnly?: boolean, frame?: ?{ x0: number, y0: number, w: number, h: number } }} opts */
 export function tamrielMarksIn(view, placesIn, opts) {
   const { paperW, paperH, band = zoomBand(view.scale), filters = {}, frame = null } = opts;
-  if (!placesIn || band === 'far') return [];
+  if (!placesIn || band === 'far' || opts.portsOnly) return [];
   const shown = BAND_MARKS[band] ?? BAND_MARKS.near;
   let x0 = Math.floor(view.ox), y0 = Math.floor(view.oy);
   let x1 = Math.ceil(view.ox + paperW / view.scale), y1 = Math.ceil(view.oy + paperH / view.scale);
@@ -742,7 +780,7 @@ export function tamrielMarksIn(view, placesIn, opts) {
 
 /** TESA13: the countryside's or a lair's mark within CITY_HIT_PX of a sheet point, among the ones the view inks - or
  *  null. @param {{ox:number,oy:number,scale:number}} view @param {?PlacesIn} placesIn
- *  @param {{ band?: string, filters?: any, frame?: any }} [opts] */
+ *  @param {{ band?: string, filters?: any, portsOnly?: boolean, frame?: any }} [opts] */
 export function tamrielMarkAt(mx, my, view, placesIn, opts = {}) {
   const reach = CITY_HIT_PX / view.scale;
   if (!placesIn || farInBay(mx, my, reach)) return null;   // AUDIT TESA II M14: a mark on the seam answers from the Bay's side too
@@ -764,13 +802,14 @@ function capitalStandsAt(city) {
 
 /** The continent's city within CITY_HIT_PX of a sheet point (paper pixels at the view's scale), or null - the hover's
  *  read and, TESA2, the press's. */
-export function tamrielCityAt(mx, my, view, ink, { filters = {}, continent = false } = {}) {
+export function tamrielCityAt(mx, my, view, ink, { filters = {}, continent = false, portsOnly = false } = {}) {
   const reach = CITY_HIT_PX / view.scale;
   if (!ink || farInBay(mx, my, reach)) return null;   // AUDIT TESA II M14: a city on the seam answers from the Bay's side too
   let best = null, bd = reach;
   for (const c of ink.cities) {
     // AUDIT TESA II M7: only a city the sheet inks - under the map's filters, and on the continent the capitals alone
-    if ((continent && !c.capital) || tamrielCityBucket(c, filters) < 0) continue;
+    // (BAY-LEFT-MAPS C11: and under the Ports filter a port alone, as paintTamrielInk inks them)
+    if ((continent && !c.capital) || tamrielCityBucket(c, filters) < 0 || (portsOnly && !c.port)) continue;
     const d = Math.hypot(c.x - mx, c.y - my);
     if (d < bd) { bd = d; best = c; }
   }
@@ -872,7 +911,7 @@ export const MARK_REACH_PX = 10;
  * AUDIT TESA II M10: handed a tile's `job` it answers its paint as steps (pastBayJob) - the tile painted a step at a time
  * under the frame's budget, each translucent pass laid on the job's scratch and down whole - and with none paints whole.
  * @param {CanvasRenderingContext2D} ctx @param {{ox:number,oy:number,scale:number}} view
- * @param {{ paperW: number, paperH: number, band?: string, continent?: boolean, filters?: any, inks?: any,
+ * @param {{ paperW: number, paperH: number, band?: string, continent?: boolean, filters?: any, inks?: any, portsOnly?: boolean,
  *   placesIn?: ?PlacesIn, frame?: ?{ x0: number, y0: number, w: number, h: number } }} opts
  * @param {?{ scratch: () => any, coverage?: () => any, pixels?: () => Uint8ClampedArray }} [job] - MAP-WHOLE: `coverage` the job's mask and `pixels` its RGBA, the continent's dots rasterised by hand (ui/inkRaster.js)
  */
@@ -1010,7 +1049,7 @@ function* pastBayJob(ctx, view, opts, job) {
     yield;
     const pad = MARK_REACH_PX / view.scale;
     const near = { ox: view.ox - pad, oy: view.oy - pad, scale: view.scale };
-    const marks = tamrielMarksIn(near, opts.placesIn ?? null, { paperW: paperW + 2 * MARK_REACH_PX, paperH: paperH + 2 * MARK_REACH_PX, band, filters, frame: opts.frame ?? null });
+    const marks = tamrielMarksIn(near, opts.placesIn ?? null, { paperW: paperW + 2 * MARK_REACH_PX, paperH: paperH + 2 * MARK_REACH_PX, band, filters, portsOnly: !!opts.portsOnly, frame: opts.frame ?? null });   // BAY-LEFT-MAPS C11: the Ports filter
     const at = marks.map((m) => toPaper(view, m.x, m.y));
     // MAP-FIELD6: every halo before every glyph - each its own path, so the steps change nothing of how they lie
     for (const halo of [true, false]) {
@@ -1116,14 +1155,16 @@ function provinceLines(ctx, view, paperW, paperH, chains) {
  * TESA15: off the window's kept tiles (`tiles`, at its `dpr`) where it keeps them.
  * @param {{ paperW: number, paperH: number, continent?: boolean, bayFit?: number, band?: string, filters?: any,
  *   inks?: any, placesIn?: ?PlacesIn, tiles?: ?ReturnType<typeof import('./tamrielTiles.js').createTamrielTiles>, dpr?: number,
- *   under?: () => void, part?: 'under' | 'roads' | 'over', settling?: boolean, seatAt?: (city: any) => any, nameless?: ?((c: any) => boolean) }} opts -
+ *   under?: () => void, part?: 'under' | 'roads' | 'over', settling?: boolean, seatAt?: (city: any) => any, nameless?: ?((c: any) => boolean),
+ *   portsOnly?: boolean }} opts -
  *   AUDIT TESA II M6: `nameless` a city whose name the window letters itself (the zone map's, inside its zone); `under` painted over the land, the
  *   roads and the borders and under the cities and the names. ZOOM-FAST: `part` paints one third alone - the land under the
  *   roads (the shore, the high ground, the rivers), the roads' tiles, or what stands over them (the borders, the window's
  *   `under`, the Bay's frame, the cities, the names) - so the window keeps the first and the last on layers of their own and
  *   a frame that only paints the roads' owed tiles is three drawImages; `settling` (the view's scale still moving) paints no
  *   tile, only the kept ones and their stand-ins. WW7-6: `seatAt` the seat a city is (its `mapId`, the seat's key), or
- *   null - ringed under its glyph.
+ *   null - ringed under its glyph. BAY-LEFT-MAPS (C11): `portsOnly` the travel map's Ports filter - a port alone inked, as
+ *   on the Bay - and a port's anchor beside its glyph in to the Bay's own scale.
  */
 export function paintTamrielInk(ctx, view, ink, opts) {
   const { paperW, paperH } = opts;
@@ -1159,9 +1200,9 @@ export function paintTamrielInk(ctx, view, ink, opts) {
   }
   // TESA13: the roads, the tracks, the countryside and the lairs past the Bay - TESA15: off the window's kept tiles of
   // them (ui/tamrielTiles.js, paintPastBay's paint a tile at a time), or painted here where it keeps none
-  const past = { paperW, paperH, band, continent, filters: opts.filters ?? {}, inks: opts.inks ?? null, placesIn: opts.placesIn ?? null, frame: ink.frame };
+  const past = { paperW, paperH, band, continent, filters: opts.filters ?? {}, inks: opts.inks ?? null, placesIn: opts.placesIn ?? null, frame: ink.frame, portsOnly: !!opts.portsOnly };   // BAY-LEFT-MAPS C11: the Ports filter
   if (!part || part === 'roads') {
-    if (opts.tiles) opts.tiles.draw(ctx, view, { paperW, paperH, dpr: opts.dpr ?? 1, key: `${band}|${continent ? 1 : 0}|${JSON.stringify(past.filters)}|${JSON.stringify(past.inks)}`, paint: past, ...(opts.settling ? { budgetMs: 0, force: false } : {}), base: baseOf(past, ink) });
+    if (opts.tiles) opts.tiles.draw(ctx, view, { paperW, paperH, dpr: opts.dpr ?? 1, key: `${band}|${continent ? 1 : 0}|${JSON.stringify(past.filters)}|${JSON.stringify(past.inks)}|${past.portsOnly ? 1 : 0}`, paint: past, ...(opts.settling ? { budgetMs: 0, force: false } : {}), base: baseOf(past, ink) });
     else paintPastBay(ctx, view, past);
   }
   if (part && part !== 'over') { ctx.restore(); return true; }
@@ -1190,15 +1231,20 @@ export function paintTamrielInk(ctx, view, ink, opts) {
     // bucket's and in its classic hue (MAP-KEY), as the Bay's own towns and the countryside's
     const bucket = tamrielCityBucket(c, opts.filters ?? {});
     if (bucket < 0) continue;
+    // BAY-LEFT-MAPS (AUDIT LEFT IN THE BAY C11): the Ports filter keeps a port alone, as the Bay's own marks (heldMap.js
+    // _discovered, portsFilterAllows) - and a port's anchor beside its glyph wherever the sheet is in to the Bay's own scale
+    // (inkMap paintHarbour, PORT-MAP's: out on the continent the Bay draws none either, REGION-LINES)
+    if (opts.portsOnly && !c.port) continue;
     const glyph = markKind(bucket);
     const [x, y] = toPaper(view, c.x, c.y);
-    marks.push({ kind: glyph, seat: c.mapId != null ? opts.seatAt?.(c) ?? null : null, x, y });   // WW7-6: its seat's ring under its glyph
+    marks.push({ kind: glyph, seat: c.mapId != null ? opts.seatAt?.(c) ?? null : null, x, y, port: all && !!c.port });   // WW7-6: its seat's ring under its glyph
     if (!opts.nameless?.(c)) named.push([c, x, y]);   // AUDIT TESA II M6: a name the window letters itself (the zone map's)
   }
   // WW7-6: a seat's ring past the Bay as the Bay rings its own (inkMap paintSeatRing, Seats-Arc 3.3) - under the glyph
   for (const m of marks) if (m.seat) paintSeatRing(ctx, m.x, m.y, markReach(m), seatMapMark(m.seat));
   for (const m of marks) paintGlyph(ctx, m.kind, m.x, m.y, true);
   for (const m of marks) paintGlyph(ctx, m.kind, m.x, m.y, false, opts.inks?.[m.kind]);   // AUDIT TESA II M7: in its classic hue (MAP-KEY)
+  for (const m of marks) if (m.port) paintHarbour(ctx, m.x, m.y, true);   // BAY-LEFT-MAPS C11: a port's anchor, beside its glyph
   const size = continent ? 11 : 12;
   ctx.font = `${size}px ${NAME_FACE}`;
   ctx.strokeStyle = PEN.halo;
@@ -1236,7 +1282,7 @@ export function paintTamrielInk(ctx, view, ink, opts) {
  * Bay's own ground (the Bay's reads are the window's).
  * @param {number} mx @param {number} my sheet coordinates @param {{ox:number,oy:number,scale:number}} view
  * @param {?ReturnType<typeof buildTamrielInk>} [ink]
- * @param {?{ placesIn: ?PlacesIn, nameOf?: ?((x: number, y: number) => string), band?: string, filters?: any }} [marks]
+ * @param {?{ placesIn: ?PlacesIn, nameOf?: ?((x: number, y: number) => string), band?: string, filters?: any, portsOnly?: boolean, continent?: boolean }} [marks]
  */
 export function tamrielPlaceAt(mx, my, view, ink = null, marks = null) {
   return tamrielHoverAt(mx, my, view, ink, marks)?.label ?? null;
@@ -1247,7 +1293,7 @@ export function tamrielPlaceAt(mx, my, view, ink = null, marks = null) {
  *  edge (the Bay's own reads come first; the land and the sea answer past the Bay alone).
  *  `marks.continent`: on the continent the cities' hover is the capitals', as the sheet inks them. */
 export function tamrielHoverAt(mx, my, view, ink = null, marks = null) {
-  const best = tamrielCityAt(mx, my, view, ink, { filters: marks?.filters ?? {}, continent: !!marks?.continent });
+  const best = tamrielCityAt(mx, my, view, ink, { filters: marks?.filters ?? {}, continent: !!marks?.continent, portsOnly: !!marks?.portsOnly });   // BAY-LEFT-MAPS C11: the Ports filter
   if (best) return { on: 'city', label: TAMRIEL_TEXT.city(provinceByKey(best.province)?.name ?? best.province, best.name, best.kind) };
   // TESA13: a mark of the countryside's or a lair's the view inks, named with its kind in DFU's own words - its province
   // its own pixel's (AUDIT TESA II M14: the pointer may stand on the Bay's side)

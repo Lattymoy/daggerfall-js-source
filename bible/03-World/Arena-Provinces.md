@@ -2170,6 +2170,53 @@ TESA10-loc-harbour, TESA10-host-stale-slot and TESA10-host-not-deleted, `nibense
 capitalSlicePort), `audittesa2p.json` P7-capital-port-unsaid, `audittesa.json` AUDIT-TESA-A4-F4-travel-options-list,
 `merchantyards1_audit.json` AUDIT-MERCHANT-YARDS-G1-a-registered-model-unread.
 
+## BAY-LEFT-MAPS C7 - a town's book of buildings by its own key (2026-10-27, AUDIT LEFT IN THE BAY C7 = E2)
+
+The owner, after AUDIT LEFT IN THE BAY (2026-10-26): *"Every single thing here needs to be addressed. No exceptions."*
+
+**What stood.** AUDIT TESA II P6 keyed the location half of the discovery store by a place's whole id past the Bay; the
+building half - DFU's PlayerGPS discovered buildings, the store's `buildings` - was filed under `<regionIndex>:<name>` by
+every writer and reader: the door's plaque and its lockpick's anti-grind record (`scenes/worldModes.js` through the world
+host's `discoveryLocationId`), the town map, the talk's map reveals and its reads, the guild halls' reveal, the quest's
+undiscover and its moved site, the I box, a deed inherited, Roleplay Realism's armorer. Past the Bay a province is ONE
+region and its names repeat: the registry's 907 listed places stood on 296 books, the Imperial City's 625 slices on 14,
+the countryside's hamlets on a few hundred names across tens of thousands of pixels. So a door's plaque and the town map
+named another town's buildings, the I box counted its shops, a failed lock barred the same key in every town of the
+name, and a quest's re-stamp landed in the wrong one (lane C's p6 and lane E's E2).
+
+**What it is now.** ONE key-maker (`systems/discovery.js` townBookId, townBookOf for a location): a Bay place's book is the
+key every save holds, `<regionIndex>:<name>`, byte for byte; a place off the Bay's pixel ids - past the Bay or past the
+Veil, discoveryKeyOf's whole id - takes its map id after it, `<regionIndex>:<name>#<mapId>`, as the automap keys a lair
+past the Bay (`systems/automap/automap.js` automapKeyOf). Every site takes it: `scenes/world.js` (the door's key, the
+talk's reveal and read, the guild halls, the quest's undiscover and moved site, the I box, the deed inherited, the
+armorer, Daggerfall's own arena city - in-place edits, bootWorld unchanged), `scenes/exteriorAutomapToggle.js` (the town
+map), `scenes/townTalk.js` (the talk's reveal, by the topics' map id) and `scenes/exterior.js` (the fixed city's four,
+the Bay's key by the same law). The layout pins read a book's town by its region and name (`systems/layoutPins.js`
+layoutStampOfTown): a book past the Bay names no MAPS.BSA town there, as before.
+
+**A save from before.** A book keyed the old way past the Bay (a province's region, no map id) named every place of its
+name in its province, and its records cannot be told apart by town: it is let go on load, as P6 lets go the location
+keys that named several places - a building is found again at its door, DFU's own law. A deed's house in it keeps its
+record: `systems/save/save.js` hands the restored deeds in, and the residence's record is carried to its own town's
+book (the slot names its town and its map id), a book's own records standing over a carried one. The Bay's books load
+byte for byte; a book of the new key loads as it is.
+
+**Measured** (the freeware, `test/systems/bayleft_disckey.test.js`): the registry's 907 listed places past the Bay on 907
+books (296 before); every one of MAPS.BSA's 15,000-odd places keeps its book byte for byte.
+
+**The four hosts.** `scenes/world.js` and `scenes/exterior.js` call the key-maker; `scenes/worldModes.js` reads the world
+host's `discoveryLocationId` (the door, the lock, the house's deed); `scenes/dungeonContext.js` keeps no building book. The
+one `<region>:<name>` literal left in a host is a dungeon's place hold (`scenes/worldModes.js` placeHoldOf, PLACE-LRU's
+texture keep), no book: the sweep pins it so.
+
+Pins `test/systems/bayleft_disckey.test.js` (5, one on the freeware). Mutants `tools/mutants/bayleftmaps.json` BLM-C7-*
+(17, all dead). PIN MOVED (BAY-LEFT-MAPS C7): `test/scenes/regionlive.test.js`, `test/systems/audit63_quests_talk.test.js`
+(the talk's reveal; F0's undiscover), `test/systems/l10n3e_places.test.js`, `test/systems/quest/rr3_questline.test.js` (the
+armorer), `test/systems/travel/to1_travelOptions.test.js` I6 (the I box, the door's key). Re-aimed by content and run
+(dead): `tools/mutants/to1.json` i6-discovery-by-map-id-again. DFU files a location's buildings by the location itself
+(PlayerGPS's MapPixelID); the port's `<region>:<name>` is its own key, and past the Bay the map id after it: Port-Ledger A,
+BAY-LEFT-MAPS.
+
 ## Pins
 
 `test/world/audittesa2c_capitals.test.js` (16, AUDIT TESA II lane C): the rim (eleven tiles, 70.4 m, the span's outer

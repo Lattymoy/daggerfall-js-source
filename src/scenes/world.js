@@ -201,7 +201,7 @@ import {
 import { WORLD_CONTEXT, makeAnchor, teleportPlan } from '../systems/teleportAnchor.js';   // A10: the Recall anchor's law - shape, IsSameInterior, the cross-context plan
 import { isPlayerInTown } from '../systems/nearbyObjects.js';
 import { createTravelMapWindow, travelMapDoorReady, preloadTravelMapArt, canFindPlace, placePixelMemo } from '../ui/travel/travelMapDoor.js';
-import { checkLocationDiscovered as travelCheckDiscovered, getPixelColorIndex as travelPixelColorIndex } from '../ui/travel/travelMapWindow.js';
+import { getPixelColorIndex as travelPixelColorIndex } from '../ui/travel/travelMapWindow.js';
 import { travelMapFilters, travelMapMarkedMapId } from '../systems/travel/travelMapState.js';   // AUDIT-TO1 F2: the junction map honours the map's four filters; AUDIT-MAP: and reads the mark from the store
 import { shortcutBinding, sequenceString } from '../systems/dialogShortcuts.js';   // AUDIT-TO1 H2: TravelExit is a dialog SHORTCUT, as DFU reads it   // TO1: the junction map draws by the same two laws the page does
 // TO1 (2026-09-17, Mac: "This is the next daggerfall mod we are to
@@ -543,9 +543,9 @@ import { createSeaHelm, seaHelmStep, seaHelmLook, headingOf as seaHeadingOf, squ
 import { createLoadGovernor, unbuiltAround, unbuiltCount } from '../systems/travel/travelGovernor.js';   // TV2: "Cap it to what loads cleanly"
 import { createWildAlert, noticeRoll, WILD_MARK_S } from '../systems/wild/wildAlert.js';   // WILD-ALERT: the wilderness notices a fast traveller on a stealth check
 import { drawWildMarks, WILD_MARK_RANGE } from '../ui/wild/wildMarks.js';   // WILD-ALERT: the "!" over an alerted foe
-import { playerOnPathAt, pathsDataPoint } from '../systems/travel/travelPaths.js';   // RATE-LAW: the traveller on a road's lane or off it
+import { playerOnPathAt, pathsDataPoint, dataPoint } from '../systems/travel/travelPaths.js';   // RATE-LAW: the traveller on a road's lane or off it; BAY-LEFT-MAPS: the junction map's bytes, past the Bay its roads'
 import { threatCap, foeRate } from '../systems/travel/travelThreat.js';   // OW6: the journey slows as enemies close; ENEMY-PACE's floor, fixed (RATE-LAW) - TIME-DILATION: x1 inside a hostile ship's hold
-import { farPlaces, settlementPixels, farDistanceText, PIXEL_KM, TV_FAR_RANGE } from '../systems/travel/travelFarPlaces.js';   // TV5: the far places, held at the view's edge
+import { farPlaces, farDistanceText, PIXEL_KM, TV_FAR_RANGE } from '../systems/travel/travelFarPlaces.js';   // TV5: the far places, held at the view's edge
 import { nearDungeons, dungeonApproach, pixelBox, lastLegStart, dungeonToFind, dungeonFoundText, NATIVE_PER_M } from '../systems/travel/travelDungeons.js';   // TV6: the dungeons, discovered on approach; AUDIT OW3 D1/D3: off the map rows, and the spawns with them; AUDIT OW4 D4/D6: the far found spawns, the last leg's start
 import { routeGround, joinPoint, routeDrawPoints, TV_MOUNTAIN_CLIMATE } from '../systems/travel/travelRoute.js';   // OW-MOUNTAINS, OW-ROADSIDE; AUDIT OW3 J4: the drawn route's points; AUDIT OW4 J3: the ground read once
 import { bandsNear, wanderAt, bandSight, bandChaseStep, bandMakeSeed, bandSizeOf, bandLevelOf, BAND_LIFE_MS, BAND_CONTACT_M, BAND_CHASE_MPS, BAND_STAND_M, BAND_STAND_MIN_M, BAND_STAND_RETRY_MS, BAND_STAND_TRIES } from '../systems/travel/travelBands.js';   // TV7: the roaming bands; OW6: their number and their level
@@ -675,7 +675,6 @@ import { RIDE_TEXT, RIDE_ASK_TTL_MS } from '../systems/wagon/wagonSeats.js';
 import { createSailingCabinLink } from '../net/sailingCabinLink.js';
 import { capsuleFits } from '../player/parkour.js';
 import { TRIGGER_MODEL as CSA_TRIGGER_MODEL, setLights as csaSetLights, HULL_NAMES as CSA_HULL_NAMES, AUDIO_CLIPS as CSA_AUDIO_CLIPS, colliderBoundsInChildren as csaColliderBoundsInChildren, animatorOf as csaAnimatorOf, meshLocalBounds as csaMeshLocalBounds } from '../systems/comeSailAway/comeSailAwayBoat.js';   // CSA-B: the probe's lanterns; CSA-D: the plaque's word for a boat; CSA-G: the loops' objects and the five clips; CSA-J: Eye of the Beholder's Collider.bounds
-import { travelMapPicture, TRAVEL_MAP_IMG, LINE_TEXTURE as CSA_LINE_TEXTURE } from '../systems/comeSailAway/comeSailAwayMap.js';   // CSA-I: the position reading's picture and lines
 import { createComeSailAwayRuntime, cargoModWords, comeSailAwayCarrier, WATER_WALKING_SILENT, COME_SAIL_AWAY_VENDOR, CONSOLE as CSA_CONSOLE, NO_WATER_LEVEL, NICE_BOAT_TEXT as CSA_NICE_BOAT_TEXT, activationModelOf as csaActivationModelOf, customModelOf as csaCustomModelOf, ACTIVATION_DISTANCE as CSA_ACTIVATION_DISTANCE, windWidgetFrameCount as csaWindWidgetFrameCount, BOAT_ACTIONS as CSA_BOAT_ACTIONS, hullFromMessage as csaHullFromMessage, tileMapIndexAtPosition as csaTileMapIndexAtPosition } from '../systems/comeSailAway/comeSailAway.js';   // NAV-H: the tile a sea ship floats on
 import { windWidgetFrameUrl as csaWindWidgetFrameUrl, waveDerivedUrl as csaWaveDerivedUrl, wavePaintUrl as csaWavePaintUrl, soundUrl as csaSoundUrl } from '../systems/comeSailAway/comeSailAwayModels.js';   // CSA-E: the wind widget's pictures; CSA-F: the waves' recipes and paints
 import { WAVE_FRAME_COUNT as CSA_WAVE_FRAME_COUNT, waveDitherOf as csaWaveDitherOf } from '../systems/comeSailAway/comeSailAwayWaves.js';   // CSA-F
@@ -869,7 +868,6 @@ import { dungeonTier, tierPhrase } from '../systems/dungeon/dungeonTier.js';   /
 import { dungeonTierLabel } from '../world/dungeon/dungeonLabel.js';   // ...with its size, never over a place the port made
 import { deriveTownSeats, seatAtMapId } from '../systems/town/townSeats.js';   // SEAT1a: every palace a seat, the three capitals crowns
 import { createTownSeatBook, parseSeatCommand, parseSiegeCommand } from '../net/townSeatBook.js';   // SEAT1a: the seats open, confirmed, witnessed   // VOID: a moderator's /siege void
-import { hasCarriageGate } from '../world/immersiveTravelGates.js';   // OW-HUBS: a town with a carriage at its gate
 import { seatArrivalLine, boardTithePct } from '../net/townSeatLaw.js';   // SEAT1a: the seat's arrival line; AUDIT SEATS-3 D3: a board's Tithe (SEAT-HALL's and CROWN-HALL's halls: scenes/seatHallHost.js)
 import { createSeatHallHost } from './seatHallHost.js';   // DOMAIN2 (HOST-SPLIT): a seat's halls and the guild's castle
 import { createOnlineHomes, moveArenaHomes, homeSceneName, homeTownBlocks, homeClaimLayout, checkpointLanded, HOME_RETRY_MS } from '../systems/online/onlineHomes.js';   // HOME1: the account service's homes, one town at a time; ARENA4b: the ones the arena displaced, moved; HOME-PRICE: a town's size; FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed the realm gave, held
@@ -988,7 +986,7 @@ import { createWildFight } from '../net/wild/wildFight.js';
 import { createWildRemains, WILD_PILE_ICON, WILD_NO_STORE } from '../net/wild/wildRemains.js';   // WILD-WAYPOINT: my remains' flag on both maps (below)
 import { markRemains, remainsMarkTick, remainsGone, keepMine, keptMine, forgetMine } from '../systems/wild/wildRemainsWaypoint.js';   // WILD-KEEP: and my remains' record, kept on the device
 import { setLootMarksLive } from './lootLines.js';   // WILD1: my remains' line with the rarity row off
-import { WILD_REMAINS_MS, WDUN_DAY_MS, WDUN_LOCK_MS, WDUN_HERE_MS, spawnedHallMapId, isHallMapId } from '../net/wire.js';
+import { WILD_REMAINS_MS, WDUN_DAY_MS, WDUN_LOCK_MS, WDUN_HERE_MS, spawnedHallMapId } from '../net/wire.js';
 import { validLootList } from '../systems/loot/loot.js';
 import { stacksWith } from '../systems/inventory.js';
 import { setHudZone } from '../ui/enhanced/enhancedHud.js';
@@ -1059,7 +1057,7 @@ const RACE_BY_NAME_BANK = Object.freeze(Object.fromEntries(
   Object.entries(BANK_TYPES).map(([race, bank]) => [bank, race])));
 import { startDisease, endDisease, diseaseCount } from '../systems/diseases.js';   // AUDIT 24: the quest bridge's MakePcDiseased / CurePcDisease seams; U41: the popup's diseased warning
 import { poisonCount } from '../systems/poisons.js';   // U41: the warning's other half
-import { discoverRandomLocation, discoverLocation, undiscoverBuilding, discoverBuilding, discoveredBuildings, hasDiscoveredLocationId, setDiscoveredBuildingCustomName, getDiscoveredBuilding, discoveryGeneration, pruneDiscoveryLayouts } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer; TK-ii: the quest-residence undiscover; AUDIT DISC28 QS-K2: the town map's re-stamp
+import { discoverRandomLocation, discoverLocation, undiscoverBuilding, discoverBuilding, discoveredBuildings, hasDiscoveredLocationId, setDiscoveredBuildingCustomName, getDiscoveredBuilding, pruneDiscoveryLayouts, townBookOf, townBookId } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer; TK-ii: the quest-residence undiscover; AUDIT DISC28 QS-K2: the town map's re-stamp
 import { scryRows } from '../systems/loot/lootScry.js';   // LOOT19: the region a scrying reads
 import {
   WEATHER_TYPES, fogForWeather, scaleFogForDistance, skyOffsetForWeather, weatherSunlightScale,
@@ -1130,7 +1128,7 @@ import { isEnhanced, isEnhancedPlus } from '../systems/uiSkin.js';   // WM2d: th
 import { beginLoading, syncLoading, setLoadingPlace, setLoadingAside, loadingPlaceOf, bootLine, BOOT_HOLD_MAX_MS } from '../ui/loadingScreen.js';   // LOAD1: the loading screen - the boot's, and every world move's
 import { syncInteriorLoad } from '../ui/interiorLoadMark.js';   // a building's load: the ring over the hotbar, and this screen aside
 import { setShotPlace, deliverOwedShots } from '../ui/screenshot.js';   // LOAD1: a kept screenshot says where it was taken; SHOT1: and it is read at this host's frame foot
-import { drawEnhancedTextLayer, hideEnhancedTextLayer } from '../ui/enhanced/enhancedTextLayer.js';   // FONT3: a draw list's words in the enhanced face (Come Sail Away's position reading)
+import { hideEnhancedTextLayer } from '../ui/enhanced/enhancedTextLayer.js';   // FONT3: a draw list's words in the enhanced face (Come Sail Away's position reading)
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
 import { drawEnhancedStatusLine } from '../ui/enhanced/enhancedHudText.js';   // FONT1: the online status line in the skin's own face
 import { rrRidingOn, rrRidingSetting, BED_MODELS, bedSleepingOn } from '../systems/roleplayRealism/rrRealism.js';   // RR2: EnhancedRiding's switches; CSA-G: the boat's bed is RR1's BedActivation
@@ -1225,6 +1223,8 @@ import { createRaidHost } from './raidHost.js';   // HOST-SPLIT
 import { createSpawnGroundHost } from './spawnGroundHost.js';   // HOST-SPLIT
 import { createSpawnStand } from './spawnStandHost.js';   // HOST-SPLIT
 import { createTravelViewDungeons } from './travelViewDungeonsHost.js';   // HOST-SPLIT
+import { createMapPlaces } from './mapPlacesHost.js';   // HOST-SPLIT
+import { createCsaMap } from './csaMapHost.js';   // HOST-SPLIT
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -6457,7 +6457,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  returns early when none is loaded, so a quest that tombstones
    *  while the player is elsewhere is a no-op in DFU too. */
   const undiscoverBuildingHere = (buildingKey, buildingName) => undiscoverBuilding(
-    `${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`, buildingKey, true, buildingName ?? null);
+    townBookOf(_questLoc()), buildingKey, true, buildingName ?? null);   // BAY-LEFT-MAPS (C7 = E2): its town's book by the one key-maker
   /** QUEST-HOME (Mac, 2026-10-15: "Close both"): every quest site not yet reached whose building a player's home is now,
    *  chosen again in its own town (QuestMachine.reseatHomedSites) - asked whenever the online homes learn of one (the
    *  boot's read, the hub's word, a town's answer) and after a load's layouts stand. Before the quest machine stands it
@@ -6472,7 +6472,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  quest's name (the tombstone's own undiscover, Quest.cs:655: residences only, the name matched), and where it did, the
    *  new building is discovered under the quest's name in its town (a record the player's map had, moved). */
   function questSiteMovedHere(place, was) {
-    const town = `${was?.regionIndex ?? -1}:${was?.locationName ?? ''}`;
+    const town = townBookId(was?.regionIndex ?? -1, was?.locationName ?? '', was?.mapId);   // BAY-LEFT-MAPS (C7 = E2): the site's own town's book
     const had = getDiscoveredBuilding(town, was?.buildingKey);
     const marked = !!had && had.displayName === was.buildingName;
     undiscoverBuilding(town, was?.buildingKey, true, was?.buildingName ?? null);
@@ -8091,52 +8091,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     hideEnhancedTextLayer(CSA_MAP_TEXT_LAYER);   // AUDIT FONT3 F1: here, not in dispose alone - the interior and dungeon slots close a window without disposing it
     modes?.closeWindow?.(w);
   }
-  /** OnGUI's two pictures, built at the map's first draw: record 3 rebuilt from the player's TRAV0I00.IMG (the
-   *  port never carries it) and lineTexture, TEXTURE.000's solid record 112. */
-  let _csaMapTex = null, _csaMapTexLoad = null, _csaLineTex = null, _csaLineTexLoad = null;
-  function csaMapPictures() {
-    _csaMapTexLoad ??= (async () => {
-      const img = new ImgFile();
-      img.load(await fetchBytes(TRAVEL_MAP_IMG), TRAVEL_MAP_IMG);
-      const pal = new DFPalette();
-      pal.load(await fetchBytes(img.paletteName), img.paletteName);
-      _csaMapTex = renderer.uploadTexture('img', 'csa-map', csaToScreenOrder(travelMapPicture(img.getDFBitmap(0, 0), (i) => pal.get(i))));
-    })().catch((e) => console.warn('[come-sail-away] the position reading\'s map did not build', e));
-    _csaLineTexLoad ??= getTexture(CSA_LINE_TEXTURE.archive).then((t) => {
-      _csaLineTex = renderer.uploadTexture('img', 'csa-line', t.getColor32(t.getDFBitmap(CSA_LINE_TEXTURE.record, CSA_LINE_TEXTURE.frame), 0));
-    }).catch((e) => console.warn('[come-sail-away] the position reading\'s line texture did not load', e));
-    return { map: _csaMapTex, line: _csaLineTex };
-  }
-  /** A draw list the runtime answers (OnGUI's): each quad its picture stretched and tinted, each text
-   *  DaggerfallFont.DrawText's two passes - the shadow, then the text. */
-  function csaDrawList(draws, layerId = null) {
-    const pics = draws.some((d) => d.kind === 'quad') ? csaMapPictures() : null;
-    const font = townTalk.font;
-    const rgba = (c) => [c.r, c.g, c.b, c.a];
-    // FONT3: under the enhanced skin a list that names a layer says its words in the pixel face (ui/enhanced/enhancedTextLayer.js)
-    // - the pictures stay on the canvas. The debug values name none and keep the bitmap face, as F8's lines do.
-    const words = layerId && isEnhanced() && typeof document !== 'undefined' ? [] : null;
-    for (const d of draws) {
-      if (d.kind === 'quad') {
-        const tex = d.tex === 'map' ? pics?.map : pics?.line;
-        if (tex) renderer.drawScreenQuad(tex, d.rect, undefined, rgba(d.color));
-      } else if (words) {
-        words.push({ text: d.text, x: d.x, y: d.y, cell: (font?.fnt?.fixedHeight ?? 7) * d.scale, color: rgba(d.color), shadow: rgba(d.shadow), shadowPos: d.shadowPos });
-      } else if (font) {
-        drawText(renderer, font, d.text, d.x + d.shadowPos[0], d.y + d.shadowPos[1], d.scale, rgba(d.shadow));
-        drawText(renderer, font, d.text, d.x, d.y, d.scale, rgba(d.color));
-      }
-    }
-    if (words) drawEnhancedTextLayer(layerId, words, canvas);
-  }
-  /** OnGUI's map, while the reading has it up - drawn by its window, the slot's last. */
-  function csaDrawMap() {
-    if (!csaRuntime) return;
-    csaCall(() => {
-      const draws = csaRuntime.mapOverlay({ screenRect: { x: 0, y: 0, width: canvas.width, height: canvas.height }, screen: [canvas.width, canvas.height], unscaledTime: performance.now() / 1000 });
-      if (draws) csaDrawList(draws, CSA_MAP_TEXT_LAYER);
-    });
-  }
+  const { _csaPics, csaDrawList, csaDrawMap } = createCsaMap({   // HOST-SPLIT: src/scenes/csaMapHost.js
+    CSA_MAP_TEXT_LAYER, canvas, getTexture, renderer, townTalk,
+    get csaCall() { return csaCall; },
+    get csaRuntime() { return csaRuntime; },
+  });
   /** CSA-K: the others' words standing them on this boat of mine (the pack's refusal; OWS2: and a landfall's pack). */
   const csaPassengersOn = (boat) => { const i = csaRuntime?.AllBoats.filter((b) => b.GameObject?.activeSelf).indexOf(boat) ?? -1; return i < 0 || !online?.id ? 0 : csaAboard.passengersOn(online.id, i); };
   /** SerializeItems / DeserializeItems: the save's own item copy (save.js) - AUDIT WK-D11: ONE codec, the cargo's and
@@ -15070,7 +15029,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     }
     const summaries = buildingSummaries(city.exterior.buildings, list, { locationIndex: city.locationIndex, locationName: city.name, regionName: city.regionName });
     const took = blocks.getBlockByName(ed.arenaTook);
-    const locId = `${city.regionIndex}:${city.name}`;
+    const locId = townBookOf(city);   // BAY-LEFT-MAPS (C7 = E2): the one key-maker (Daggerfall's, the Bay's own key)
     return {
       city, summaries, mapId: city.mapTableData.mapId, locId,
       oldTypeOf: (key) => took?.rmbBlock?.fldHeader?.buildingDataList?.[key & 0xff]?.buildingType ?? null,
@@ -15942,14 +15901,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       settings: () => travelOptionsSettings,
       pathsAt: (x, y, type) => {
         const net = terrainGen.roads();
-        if (!net || net.source !== 'basic-roads') return 0;
-        const arr = [net.roads, net.tracks, net.rivers, net.streams][type];
-        return arr ? (arr[y * 1000 + x] & 0xff) : 0;
+        return net?.source === 'basic-roads' ? dataPoint(net, type, x, y) : 0;   // BAY-LEFT-MAPS: the mod's table, and past it the roads past the Bay (it read `y * 1000 + x` - another row past the Bay's edge)
       },
-      locationAt: (x, y) => {
-        const summary = onTheBay(x, y) ? travelLocationSummaryAt(mapDict, x, y) : null;   // AUDIT-TESA A2-3: past the Bay a pixel id aliases a Bay row
-        return summary ? { locationType: summary.locationType, mapId: summary.mapID ?? summary.mapId, discovered: travelCheckDiscovered(summary) } : null;
-      },
+      locationAt: (x, y) => junctionPlaceAt(x, y),   // AUDIT-TESA A2-3: past the Bay a pixel id aliases a Bay row - BAY-LEFT-MAPS: the place found there (scenes/mapPlacesHost.js)
       locationColorOf: (t) => {
         // AUDIT-TO1 F2: through the map's LIVE filter set - the mod's
         // DrawMapSection calls GetPixelColorIndex on the persistent window
@@ -16502,11 +16456,14 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // by every writer (this host's own discoveryLocationId, exterior.js,
       // townTalk's reveal) - it was read here by NUMERIC map id, so the I
       // key answered "no knowledge" for every place in the game, a city
-      // whose every shop the player had entered included.
+      // whose every shop the player had entered included. BAY-LEFT-MAPS
+      // (C7 = E2): every writer and reader takes ONE key-maker now
+      // (systems/discovery.js townBookId - the Bay's key byte for byte,
+      // a place past the Bay its map id after it).
       discoveredBuildings: (summary) => {
         if (!summary) return [];
         const loc = maps.getLocation(summary.regionIndex, summary.locationIndex ?? summary.mapIndex);
-        return loc?.name ? discoveredBuildings(`${summary.regionIndex}:${loc.name}`) : [];
+        return loc?.name ? discoveredBuildings(townBookOf(loc)) : [];   // BAY-LEFT-MAPS (C7 = E2): the one key-maker
       },
       // :432-433 - DFU reads `exteriorAutomapBuildingType<Type>` out of
       // its own text table; the port has the enum and no such table, so
@@ -16550,7 +16507,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (!dfLoc || !b?.locBlocks) return;
     // The location this edge fired for, resolved NOW - the wait below
     // is a microtask and the player must not be re-read after it.
-    const locationId = `${dfLoc.regionIndex}:${dfLoc.name}`;
+    const locationId = townBookOf(dfLoc);   // BAY-LEFT-MAPS (C7 = E2): its own town's book
     const buildings = buildingSummaries(dfLoc.exterior?.buildings ?? [], b.locBlocks,
       { locationName: dfLoc.name, regionName: maps.getRegionName(dfLoc.regionIndex), locationIndex: dfLoc.locationIndex ?? 0 });
     // AUDIT 63 F9 (review round): THE NAME IS A FILE READ, so the
@@ -17994,7 +17951,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     /** CSA-I probe: the position reading's state, and the water walk as the effect list stands. */
     window.__csaMapState = () => (csaRuntime ? { showing: csaRuntime.state.mapShowing, reading: csaRuntime.state.mapShowingPosition, running: csaRuntime.state.showingBoatPosition != null,
       mode: csaRuntime.state.mapMarkerMode, markers: csaRuntime.state.mapMarkers.map((m) => ({ position: m.position, label: m.label })), window: !!_csaMapWindow, mouse: _csaMouse.map((v) => +v.toFixed(1)),
-      pictures: { map: !!_csaMapTex, line: !!_csaLineTex } } : null);
+      pictures: { map: !!_csaPics.map, line: !!_csaPics.line } } : null);
     window.__csaWaterWalk = () => ({ walking: isEntityWaterWalking(playerEntity), flag: !!player.waterWalking, bundles: liveBundles(playerEntity).map((b) => ({ name: b.name, icon: b.showIcon })) });
     window.__csaOverlay = () => { const o = townTalk?.overlay; return o ? { name: o.constructor?.name ?? null, keys: Object.keys(o).slice(0, 12), done: !!townTalk.overlayDone, active: !!townTalk.overlayActive } : null; };   // the street's window slot, what holds it
     window.__csaOarWatch = (i = 0) => {
@@ -18776,10 +18733,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     getLocation: (r, i) => maps.getLocation(r, i),
     currentRegionIndex: () => _questRegionIndex(),
     currentExteriorDoorBuildingKey: () => modes?.interiorBuilding?.buildingKey ?? null,
-    getAnyBuilding: (buildingKey) => discoveredBuildings(`${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`)
+    getAnyBuilding: (buildingKey) => discoveredBuildings(townBookOf(_questLoc()))   // BAY-LEFT-MAPS (C7 = E2)
       .find((b) => b.buildingKey === buildingKey) ?? null,
     discoverBuilding: (buildingKey) => discoverBuilding(
-      `${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`,
+      townBookOf(_questLoc()),   // BAY-LEFT-MAPS (C7 = E2)
       (topicTree.listBuildings ?? []).find((b) => b.buildingKey === buildingKey) ?? { buildingKey },
       null, questBuildingSource),   // AUDIT 63 F49: the quest name-override arm (PlayerGPS.cs:945-959)
     // S44: the real member (PersistentFactionData.cs:675-689). This hook
@@ -26488,7 +26445,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if ((slot.buildingKey | 0) > 0) return (slot.mapId >>> 0) === (row.mapId >>> 0) && (slot.buildingKey | 0) === (row.buildingKey | 0) ? 'given' : 'waits';
     allocateHouseToPlayer(playerEntity.houses, region, { buildingKey: row.buildingKey | 0, mapId: row.mapId, location: row.location ?? '' }, {
       // the building named "<heir>'s residence" in its own town's discovery (`<regionIndex>:<name>`, discoveryLocationId's key)
-      discoverBuilding: (key, name) => { if (row.location) discoverBuilding(`${region}:${row.location}`, { buildingKey: key, buildingType: TALK_BUILDING_TYPES.House1 }, name); },
+      discoverBuilding: (key, name) => { if (row.location) discoverBuilding(townBookId(region, row.location, row.mapId), { buildingKey: key, buildingType: TALK_BUILDING_TYPES.House1 }, name); },   // BAY-LEFT-MAPS (C7 = E2): its own town's book, past the Bay by its map id
       addPermanentScene: () => {},   // the graft below makes the scene permanent, with what it held
       addNote: (text) => questBridge?.notebook?.addNote?.(text),
       playerName: playerEntity.name ?? '', regionName: REGION_NAMES[region] ?? '',
@@ -29069,7 +29026,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // R1: the discovery store's location key - the SAME string the
     // quest bridge's discoverBuilding uses, so the exterior lockpick
     // anti-grind record and the talk reveals share one namespace.
-    discoveryLocationId: () => `${_questLoc()?.regionIndex ?? -1}:${_questLoc()?.name ?? ''}`,
+    discoveryLocationId: () => townBookOf(_questLoc()),   // BAY-LEFT-MAPS (C7 = E2): the one key-maker (systems/discovery.js townBookId) - past the Bay a town's own book
     questBuildingSource,   // AUDIT 63 F49: PlayerGPS.DiscoverBuilding's quest name-override pair (PlayerGPS.cs:945-959)
     // G8 (guilds-8): the DiscoverRandomLocation seam for the guild
     // promotion reveals - candidates are the CURRENT pixel's region
@@ -29832,52 +29789,13 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // but the seabed lies under the sea, and land over it cuts the veil by its own depth
     return Math.max(g, tvSeaY() + CURTAIN_FOOT_MARGIN_M);
   };
-  /** OW-HUBS (FIELD BUGS 2026-10-04e): a town with a carriage at its gate, by its map id - while Immersive Travel is
-   *  loaded (online it is always). Kept per id until the location index moves (a spawn stood or taken back). */
-  const _carriageOf = new Map();
-  let _carriageGen = -1;
-  const carriageTown = (mapId) => {
-    if (!immersiveTravelLoaded() || !Number.isFinite(mapId) || isHallMapId(mapId)) return false;   // AUDIT WW F1: a zone hall's id is no Bay town's
-    if (_carriageGen !== _locIndexGen) { _carriageOf.clear(); _carriageGen = _locIndexGen; }
-    const id = mapId & 0xfffff;
-    let on = _carriageOf.get(id);
-    if (on === undefined) { on = hasCarriageGate(locationIndex.get(`${id % 1000},${Math.floor(id / 1000)}`)); _carriageOf.set(id, on); }
-    return on;
-  };
-  // ETHER-OW (2026-10-13, the owner: "Also allow the player to zoom out into the overworld like in the Iliac Bay for easy
-  // travel"): THE ISLES' PLACES ON THE OVERWORLD. Past the Veil no place is a row of the Bay's dictionary - an isle's town
-  // or ruin is its own (world/etherPlaces.js), the index's once its pixel has built, else its clone, marked and never
-  // stood (etherPlaceClone). KNOWN as the Eltheric knows a place: its isle on the captain's charts (etherHost.js `sight`
-  // within three pixels, a harbourmaster's chart, a corsair's papers - the chart's own isles), or the place found.
-  const tvEtherPlace = (px, py) => { const isle = etherPlaceIsle(px, py); return isle ? (locationIndex.get(`${px},${py}`) ?? etherPlaceClone(isle)) : null; };
-  const tvEtherKnown = (loc) => captainLedger.isCharted(loc.ether) || hasDiscoveredLocationId(loc.mapTableData.mapId);
-  /** AUDIT ETHER-OW C2-2: WHAT IS KNOWN, as the Overworld's lists key it - DFU's finds and the captain's charts: an isle
-   *  charted by sight, a harbourmaster's chart or a corsair's papers is a plate at once, never a pixel later. */
-  const tvKnownGen = () => `${discoveryGeneration()}:${captainLedger.chartedCount()}`;
-  const tvPlaceSummary = (px, py) => {
-    // ETHER-OW: past the Veil, an isle's place - known, it is its own summary (HALL-JOURNEY's way), its region the isles'
-    if (etherSea && inEther(px, py)) {
-      const loc = tvEtherPlace(px, py);
-      return loc && tvEtherKnown(loc) ? { pixel: { x: px, y: py }, name: loc.name, mapId: loc.mapTableData.mapId, regionIndex: loc.regionIndex, locationIndex: loc.locationIndex, loc } : null;
-    }
-    // HALL-JOURNEY (2026-10-08, the owner: "when i want to travel there with begin journey nothing happens"): a zone hall
-    // is no row of the map's dictionary (it is spawned, by the day) - it is its own summary, always known, so the
-    // Overworld walks to its door as to any place's
-    const hall = wildHallAt(wildActiveNow(), px, py) ? wildHallStand(px, py) : null;
-    if (hall) return { pixel: { x: px, y: py }, name: hall.name, mapId: spawnedHallMapId(px, py), regionIndex: hall.regionIndex, locationIndex: -1, loc: hall };
-    const loc = locationIndex.get(`${px},${py}`);
-    // AUDIT-TESA A2-3: past the Bay a pixel id aliases a Bay row - the place the world stands there is its own summary,
-    // known once discovered (entering it discovers it), so the Overworld walks to its door as to a Bay place's
-    if (!onTheBay(px, py)) {
-      const id = (loc?.mapTableData?.mapId ?? 0) >>> 0;
-      return loc?.name && id && hasDiscoveredLocationId(id) ? { pixel: { x: px, y: py }, name: loc.name, mapId: id, regionIndex: loc.regionIndex, locationIndex: loc.locationIndex, loc } : null;
-    }
-    const row = loc?.name ? travelLocationSummaryAt(mapDict, px, py) : null;
-    if (!row || !travelCheckDiscovered(row)) return null;   // DFU's own law: an undiscovered place has no name to go to
-    return { pixel: { x: px, y: py }, name: loc.name, mapId: row.mapID, regionIndex: row.regionIndex, locationIndex: row.mapIndex, loc };
-  };
+  const { carriageTown, tvEtherPlace, tvKnownGen, tvPlaceSummary, tvFarSettlements, junctionPlaceAt } = createMapPlaces({   // HOST-SPLIT: src/scenes/mapPlacesHost.js
+    captainLedger, etherPlaceClone, etherSea, locationIndex, mapDict, wildActiveNow, wildHallStand,
+    provinceQuestPlaces, worldPlaces,   // BAY-LEFT-MAPS: a place past the Bay stood where it was found; TV5's near query
+    get _locIndexGen() { return _locIndexGen; },
+  });
   const tvPlaceRect = (summary) => {
-    const r = locationWorldRect(summary.loc, summary.pixel.x, summary.pixel.y);
+    const r = summary.lightRect?.() ?? locationWorldRect(summary.loc, summary.pixel.x, summary.pixel.y);   // BAY-LEFT-MAPS: a place past the Bay not standing yet - its row's grid (scenes/mapPlacesHost.js pendingSummary)
     return { minX: r.minX - TV_PLACE_GROW, maxX: r.maxX + TV_PLACE_GROW, minZ: r.minZ - TV_PLACE_GROW, maxZ: r.maxZ + TV_PLACE_GROW, cx: (r.minX + r.maxX) / 2, cz: (r.minZ + r.maxZ) / 2 };
   };
   // TV-BEYOND: off the map is the sea where the world streams nothing there (DFU's empty edge), and the ground's own
@@ -30491,8 +30409,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (key.startsWith('wp:')) { travelViewWaypointWalk(key.slice(3)); return; }   // WAYPOINTS: a flag - a walk to it
     if (key === 'dest') { const summary = tvTripLive() ? tvTrip.plan?.summary : null; if (summary && travelViewCanGo()) travelViewRouteTo(summary); return; }
     if (key.startsWith('spawn:')) { travelViewSpawnWalk(key); return; }   // AUDIT OW3 D1: a spawn's plate - a walk to its door
-    const qp = /^quest:(\d+),(\d+)$/.exec(key);   // OW-QUEST: a quest's diamond - its place, by the roads, wherever on the map it lies
-    const plate = qp ? { summary: tvPlaceSummary(Number(qp[1]), Number(qp[2])) } : tvPlates.list.find((p) => p.key === key) ?? tvFar.list.find((p) => p.key === key) ?? tvDng.list.find((p) => p.key === key && p.summary);   // TV5: a far place's plate is the same journey
+    const qp = /^quest:(-?\d+),(-?\d+)$/.exec(key);   // OW-QUEST: a quest's diamond - its place, by the roads, wherever on the map it lies (BAY-LEFT-MAPS: west and north of the Bay's corner too, the place the quest names)
+    const plate = qp ? { summary: tvPlaceSummary(Number(qp[1]), Number(qp[2]), true) } : tvPlates.list.find((p) => p.key === key) ?? tvFar.list.find((p) => p.key === key) ?? tvDng.list.find((p) => p.key === key && p.summary);   // TV5: a far place's plate is the same journey
     if (plate?.summary && travelViewCanGo()) travelViewRouteTo(plate.summary);
   }
   /** The known places whose pixels lie in the view's reach (the grid's own radius), rebuilt when the traveller's pixel
@@ -30517,15 +30435,15 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   // TV5 (2026-09-28, Mac: "Edge markers"; systems/travel/travelFarPlaces.js): THE FAR PLACES - the discovered settlements past
   // the grid, nearest first, rebuilt when the traveller's pixel (or the grid's reach) changes; each a plate held at the
   // screen's edge, its distance under its name, a click a journey there by the roads.
-  let _tvSettlements = null;   // the world's settlements, gathered once, the first time the view asks
   function travelViewFarPlaces() {
     const at = playerTravelPixel();
     const near = Math.max(1, state.terrainDistance ?? 3);
     const dg = tvKnownGen();   // AUDIT DEEP2 B-3: and a far one found (a quest, a map) stands at the edge at once (AUDIT ETHER-OW C2-2: or charted)
     if (tvFar.at && tvFar.at.x === at.x && tvFar.at.y === at.y && tvFar.near === near && tvFar.dg === dg) return tvFar.list;
-    // ETHER-OW: the map's settlements (gathered once - never an isle's, which the index holds only once built), and past the
-    // Veil the port isles within the edge's range
-    const settlements = (_tvSettlements ??= settlementPixels(locationIndex).filter((t) => !t.loc.ether));
+    // ETHER-OW: the map's settlements (never an isle's, which the index holds only once built), and past the Veil the port
+    // isles within the edge's range. BAY-LEFT-MAPS: the Bay's gathered once, and past the Bay a near query - the registry's
+    // towns and the countryside's the roads laid (scenes/mapPlacesHost.js tvFarSettlements; it was one snapshot of the index)
+    const settlements = tvFarSettlements(at);
     const list = farPlaces({ at, near, settlements: etherSea && inEther(at.x, at.y) ? [...settlements, ...etherPlaceRows(at, TV_FAR_RANGE, 'port')] : settlements, summaryOf: tvPlaceSummary })
       .map((f) => { const rect = tvPlaceRect(f.summary); return { key: f.key, summary: f.summary, x: rect.cx, z: rect.cz }; });
     tvFar = { at, near, dg, list };
@@ -33779,7 +33697,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         if (rrEnabled()) {
           const arm = rrMasterArmorerDiscovery(_musicLoc, getBuildingVariant);
           const armRec = arm ? (topicTree.listBuildings ?? []).find((b) => b.buildingKey === arm.buildingKey) : null;
-          if (arm && armRec) discoverBuilding(`${_musicLoc.regionIndex}:${_musicLoc.name}`, armRec, arm.name);   // AUDIT-RR F36: DiscoverBuilding returns when GetBaseBuildingDiscoveryData fails (PlayerGPS.cs:932-933) - no phantom record
+          if (arm && armRec) discoverBuilding(townBookOf(_musicLoc), armRec, arm.name);   // BAY-LEFT-MAPS (C7 = E2): the one key-maker   // AUDIT-RR F36: DiscoverBuilding returns when GetBaseBuildingDiscoveryData fails (PlayerGPS.cs:932-933) - no phantom record
         }
         // AUDIT 64 F10: the THIRD law on this edge - PlayerEnterExit
         // .PlayerGPS_OnEnterLocationRect primes the holiday text

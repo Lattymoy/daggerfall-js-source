@@ -711,8 +711,9 @@ roads - TV2's own planner and route; the journey's own end wears the flag, not a
 The grid's own places keep TV2's plates on the land; the far places start where the grid
 ends, so no town is marked twice.
 
-**How** (`systems/travel/travelFarPlaces.js`, pure): `settlementPixels` gathers the world's
-settlements once from the host's pixel index; `farPlaces` picks them by Chebyshev distance
+**How** (`systems/travel/travelFarPlaces.js`, pure): `settlementPixels` gathers the Bay's
+settlements once from the host's pixel index, and past the Bay the host asks a near query each
+time (`scenes/mapPlacesHost.js` tvFarSettlements, BAY-LEFT-MAPS below); `farPlaces` picks them by Chebyshev distance
 (beyond the grid's radius, within the range), keeps the discovered ones (`tvPlaceSummary`,
 DFU's discovery law: an undiscovered place has no name to go to), nearest first. The host
 (`travelViewFarPlaces`) rebuilds the list only when the traveller's pixel or the grid's
@@ -2841,8 +2842,9 @@ from the Bay's edge.
   crossing's join carries a Bay road out, asks the layer (`stepKind`'s beyondKind: the road's bit out of the one pixel and
   its back bit into the other, the Bay's own byte ORed with its join on the table): a road's step 1, a track's 1.6, as on
   the Bay. The legs fold a road past the Bay as one run (`routeLegs`, unchanged).
-- **The host** grows no line: `scenes/world.js`'s `tvRouteGround()` is already spread into every Overworld plan, and the
-  living world's ground (`_livingGround`) takes the same default (its trips stay on the Bay, AUDIT TESA III E1-3).
+- **The host** grows no line: `scenes/world.js`'s `tvRouteGround()` is already spread into every Overworld plan. The
+  living world's trips past the Bay walk the same layer through their own planner's window (`03-World/World-Wide.md`
+  WW7-7, `systems/livingWorld/beyondWays.js`).
 - **The four hosts**: `scenes/world.js` as above; `scenes/exterior.js`, `scenes/worldModes.js` and
   `scenes/dungeonContext.js` plan no Overworld route.
 - **Measured** (the pins' grids): a town past the Bay reached by the road round, not the field across; a plan along a
@@ -3530,3 +3532,61 @@ key and the found test; the lifted rows run through `tvDungeonFound`), `ow5_audi
 `ether_ow.test.js` (the lifted rows). Re-aimed by content, all dead: `audit_etherow` AEOW-T-find-rows-bay and
 AEOW-T-find-loc-index, `ether_ow` EOW-far-ruins-unread, `ow4d` OW4D4-off-the-map-y, OW4D4-off-the-map-x and
 OW4D5-size-again.
+
+## BAY-LEFT-MAPS - the Overworld's places past the Bay by their summary (2026-10-27, AUDIT LEFT IN THE BAY C3; C10's dots, C11's wheels)
+
+The owner, after AUDIT LEFT IN THE BAY (2026-10-26): *"Every single thing here needs to be addressed. No exceptions."*
+
+**What stood.** `tvPlaceSummary` read the location index alone past the Bay, and the index holds a place past the Bay only
+once its pixel has built. So a passage booked to a port past the Bay, saved and loaded, never resumed: her master asked
+every 20 s (`scenes/naval/passageHost.js` frame) and was answered nothing. A port past the Bay found in an earlier session
+was off her masters' lists (`passageDestinations`' `known`). TV5's far plates were one snapshot of the index at the view's
+first ask - the Bay's rows and whatever stood past it then - so no country town, and none of a province not built yet,
+ever reached the edge (lane C's p5: a mean of 0.00 far plates about a town past the Bay). A quest's diamond past the Bay
+did nothing: its key's pixel was unread west and north of the Bay's corner (`^quest:(\d+),(\d+)$`), and its place unfound.
+
+**What it is now** (`scenes/mapPlacesHost.js` createMapPlaces - moved out of bootWorld verbatim by HOST-SPLIT first):
+- **A place found and not standing yet is its row's summary.** On a pixel past the Bay with no location, the place found
+  there is known by the ids the pixel could hold (`scenes/tamrielPlacesHost.js` idsOnPixel: a capital's slice, an Arena
+  place, the countryside's ordinal, a lair on its cell's site - each read off its own law with no roll), and is its row's
+  summary (`rowAt`: the registry's list, else the countryside's roll and the lair on its cell - the rolls the build stands,
+  so the same id, name, region, location and type). The row's own id must be the one found. Its location stands the first
+  time something reads `summary.loc` (a journey's arrival and its door - `standAt`, the build's own order), never to answer
+  a list: standing one is the build's own 24-152 ms. Until then a plate stands over its row's block grid (`lightRect`,
+  which `scenes/world.js` tvPlaceRect reads first).
+- **A place a quest names** (`named`: OW-QUEST's press, and its diamond's middle in `scenes/travelViewMarks.js`) is its
+  summary found or not - past the Bay a quest's site is on the map either way (START3) - and the press reads a key west and
+  north of the Bay's corner (`-?\d+`).
+- **TV5's settlements** (`tvFarSettlements`): the Bay's gathered once (the index's Bay rows - never an isle's, never a place
+  past the Bay the index held then), and wherever the edge's circle leaves the Bay a near query each ask - the registry's
+  listed towns in range (a capital once, by its centre slice: the Imperial City is 625 of them), kept by the registry's
+  generation, and the countryside's towns the roads' regions laid there (`world/pastBayPlaces.js` pastBayPlacesIn).
+  `farPlaces` keeps the found ones.
+- **The junction map's dots** (C10, `junctionPlaceAt`, the host's `locationAt`): on the Bay its row and DFU's discovery
+  law as the host read it; past the Bay the place found there, its type its row's, nothing stood.
+- **The carriage towns** (C11, `carriageTown`): by the place's own key - a Bay place by its pixel id (DFU's mask,
+  `y * 1000 + x`), a place past the Bay by its whole id (`systems/discovery.js` discoveryKeyOf) where the registry stands
+  it, and only when the place standing there is that id's. It read every map id as the Bay's pixel id, so a walled city
+  past the Bay never showed its wheel (lane C's p12: 283 listed places asked, each on an aliased Bay pixel with no listed
+  place).
+
+**Measured** (the freeware, `test/scenes/bayleft_places.test.js`): an Arena village, Solitude and a country hamlet of
+Skyrim, found and not built, are the summaries their locations carry once stood; a passage booked to an unbuilt port past
+the Bay resumes after a save and a load, and the port is on her masters' lists; about a village of Skyrim the edge marks
+its found settlements (ten, its most), none stood, under 100 ms a pixel.
+
+**Decisions.** A list never stands a place - a far plate, a dot, a master's list; only a read of the location does. A Bay
+place is answered as before, byte for byte, and the isles' and the halls' arms are unchanged.
+
+**The four hosts.** `scenes/world.js` wires the module (handed `provinceQuestPlaces` and `worldPlaces`; the junction map's
+`locationAt`, the far list's settlements, tvPlaceRect's light rect and the quest press are in-place edits);
+`scenes/exterior.js`, `scenes/worldModes.js` and `scenes/dungeonContext.js` hold no Overworld and no passage.
+
+Pins `test/scenes/bayleft_places.test.js` (8, three on the freeware). Mutants `tools/mutants/bayleftmaps.json`: BLM-C3-*
+(15), the carriage key's three BLM-C11 records and the junction dots' two BLM-C10 records - all dead. PIN MOVED
+(BAY-LEFT-MAPS): `test/systems/travel/ether_ow.test.js` and `test/systems/audit_etherow.test.js` (the lifted near query,
+`named`), `test/ui/travel/owquest.test.js` (the press), `test/ui/travel/tv5_far_places.test.js` (the settlements),
+`test/audit_tesa.test.js` A2-3 (the dot, `named`), `test/ui/fb1004e_overworld.test.js` OW-KIN (the carriage key).
+Re-aimed by content and run, all dead: AOWR-L5-1-mark-at-pixel-middle, AUDIT-TESA-A2-3-summary-undiscovered,
+EOW-settlements-isles, OWQ-press-unread, OWQ-pixel-swapped. A departure from DFU, whose places are MAPS.BSA's: Port-Ledger
+A, BAY-LEFT-MAPS.

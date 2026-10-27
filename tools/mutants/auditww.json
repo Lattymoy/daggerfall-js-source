@@ -37,7 +37,7 @@
   },
   {
     "name": "AUDITWW-F1-the-carriage-guard",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/mapPlacesHost.js",
     "old": "!Number.isFinite(mapId) || isHallMapId(mapId)) return false;",
     "new": "!Number.isFinite(mapId)) return false;",
     "tests": [

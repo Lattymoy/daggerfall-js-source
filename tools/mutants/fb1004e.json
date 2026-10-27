@@ -711,7 +711,7 @@
   },
   {
     "name": "OWHUBS-carriages-without-the-mod",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/mapPlacesHost.js",
     "old": "    if (!immersiveTravelLoaded() || !Number.isFinite(mapId) || isHallMapId(mapId)) return false;",
     "new": "    if (!Number.isFinite(mapId) || isHallMapId(mapId)) return false;",
     "tests": [

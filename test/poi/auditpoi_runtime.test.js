@@ -289,7 +289,8 @@ test('AUDIT POI R7: every marked POI is on the map, past the bounty\'s eight - t
   assert.ok(POI_MARKS_MAX > BOUNTY_MARKS_MAX);
   for (const f of ['src/ui/heldMap.js', 'src/ui/travel/travelMapWindow.js']) {
     const s = src(f);
-    const reads = s.match(/readBountyMarks\(this\.deps\.pois,[^\n]*?poiLegendText\(\)(, POI_MARKS_MAX)?\)/g);
+    // PIN MOVED (BAY-LEFT-MAPS C1, test/ui/bayleft_marks.test.js): the held map reads its POIs over its sheet's box (readBountyMarksIn)
+    const reads = s.match(/readBountyMarks(?:In)?\(this\.deps\.pois,[^\n]*?poiLegendText\(\)(, POI_MARKS_MAX)?\)/g);
     assert.ok(reads.length >= 1 && reads.every((r) => r.endsWith(', POI_MARKS_MAX)')), `${f}: the POIs read under their cap`);
   }
 });
