@@ -238,8 +238,8 @@
   {
     "name": "SALVAGE-the-wire-key-unread",
     "file": "src/systems/naval/navalWire.js",
-    "old": "  if (raw.w !== undefined) {",
-    "new": "  if (false) {",
+    "old": "const lots = raw.f ?? [], wrecks = raw.w ?? [],",
+    "new": "const lots = raw.f ?? [], wrecks = [],",
     "tests": [
       "test/systems/naval/tougherships.test.js"
     ]

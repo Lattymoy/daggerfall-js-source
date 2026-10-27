@@ -38,8 +38,8 @@
   {
     "name": "STATION-DOOR-focus-never-handed",
     "file": "src/scenes/worldModes.js",
-    "old": "action: () => { leave(); focusStoresStation(kind); interiorKeyCtx.togglePause({ at: 'stores' }); } },",
-    "new": "action: () => { leave(); interiorKeyCtx.togglePause({ at: 'stores' }); } },",
+    "old": "action: () => { leave(); interiorKeyCtx.togglePause({ at: stationDoorAt(kind) }); } },",
+    "new": "action: () => { leave(); interiorKeyCtx.togglePause({ at: 'crafting' }); } },",
     "tests": [
       "test/net/fb1011f_stationdoor.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "STATION-DOOR-the-wrong-page",
     "file": "src/scenes/worldModes.js",
-    "old": "action: () => { leave(); focusStoresStation(kind); interiorKeyCtx.togglePause({ at: 'stores' }); } },",
-    "new": "action: () => { leave(); focusStoresStation(kind); interiorKeyCtx.togglePause({ at: 'professions' }); } },",
+    "old": "action: () => { leave(); interiorKeyCtx.togglePause({ at: stationDoorAt(kind) }); } },",
+    "new": "action: () => { leave(); interiorKeyCtx.togglePause({ at: (stationDoorAt(kind), 'professions') }); } },",
     "tests": [
       "test/net/fb1011f_stationdoor.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "STATION-DOOR-how-says-nowhere",
     "file": "src/ui/professions/profPages.js",
-    "old": "in a Mages Guild hall or your own home, from the Stores page. ",
-    "new": "in a Mages Guild hall or your own home. ",
+    "old": "at an enchanting station, on the Crafting page.",
+    "new": "at an enchanting station.",
     "tests": [
       "test/net/fb1011f_stationdoor.test.js"
     ]

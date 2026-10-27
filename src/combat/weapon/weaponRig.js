@@ -104,6 +104,7 @@ import '../../systems/martialPowers.js';   // MARTIAL3/4 (bible/05-Combat/Martia
 import { techniqueHands } from '../technique/techniqueFx.js';   // TECH-FX: a technique's push of the first-person layer
 import { playerHarmedWithin } from '../../systems/harmMark.js';   // RIFLE-STANCE: a foe's harm on the player - the fight a long gun's aim reads
 import { RIFLE_EASE } from '../gun/rifleStance.js';
+import { drawnPiece } from '../../net/appearanceLaw.js';   // APPEARANCES: a held weapon's look
 
 /**
  * TR2: THE ARMS-BUILD OPTS, ONE HOME. The pause card and the Test
@@ -127,6 +128,11 @@ import { RIFLE_EASE } from '../gun/rifleStance.js';
 export function isMwWerewolf(entity) {
   return !!entity && isTransformedLycanthrope(entity) && ((liveLycanthropy(entity)?.infectionType | 0) === 1);
 }
+
+/** APPEARANCES-II: the renderer the player's arm and body were last bound to (bindArm, where every host's rig attaches
+ *  the singleton) - the Wardrobe's preview body draws with it (ui/wardrobe/wardrobePreview.js). Null before a rig. */
+let _armRenderer = null;
+export const armRenderer = () => _armRenderer;
 
 export function armBuildOptsOf(entity) {
   // the ammunition question is asked OF THE WEAPON, and the weapon this
@@ -596,8 +602,8 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   function cloneFrame(item, hand, f) {
     const c = f.c;
     return {
-      renderer, canvas: c, entity, art: c ? artFor(item) : null, weapon: item,
-      weaponType: heldType(item), material: item?.material ?? -1, glow: glowOf(item),   // WEAPON-GLOW1: the set the art is - the plain one while an element shows - and its outline: each hand's own item's
+      renderer, canvas: c, entity, art: c ? artFor(item) : null, weapon: drawnPiece(item),   // APPEARANCES: the clone's atlas is the look's (one copy a look - the clone compares its weapon by identity)
+      weaponType: heldType(item), material: drawnPiece(item)?.material ?? -1, glow: glowOf(item),   // WEAPON-GLOW1: the set the art is - the plain one while an element shows - and its outline: each hand's own item's
       equipCountdown: entity?.equipCountdown ?? 0, castPlaying: fpsSpellCasting.isPlayingAnim, spellArmed: spellArmed(),
       thirdPerson: fpArm.thirdActive() || eotbHidesWeapon(), reach: WEAPON_REACH,   // AUDIT-EOTB2: the widget's third-person gate asked the Morrowind arm alone
       motion: f.motion,
@@ -691,9 +697,12 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   const shieldItem = () => {
     const item = entity?.equip?.slots?.[EQUIP_SLOTS.LeftHand] ?? null;
     if (!item) return null;
+    // AUDIT HORIZONTAL E2 (bible/04-Characters/Wardrobe.md section 5): the sprite is the shield as it is drawn - a look worn
+    // over it - while the parts it covers stay the piece's own (`coverTemplate`: a Buckler covers less than a Tower Shield)
+    const drawn = drawnPiece(item);
     return {
       // AUDIT 68 S09-v-shield-material-ignored: minted armor carries NativeMaterialValue in `material`, not `nativeMaterialValue`
-      templateIndex: item.templateIndex, nativeMaterialValue: rriNativeMaterialValue(item),
+      templateIndex: drawn.templateIndex, nativeMaterialValue: rriNativeMaterialValue(drawn), coverTemplate: item.templateIndex,
       conditionPercentage: conditionPercentage(item), isShield: isShieldTemplate(item.templateIndex),
     };
   };
@@ -757,6 +766,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   // writes, so the rig that is stepping the arm re-claims it first.
   const bindArm = () => {
     fpArm.attach(renderer, camera);
+    _armRenderer = renderer ?? null;   // APPEARANCES-II: the preview body's
     // BEAST-SELF: the Morrowind arm and body stand aside while they are not the form the curse holds (combat/fpArm.js
     // setStandIn). SHADOW-FANG (the merge): Bloodmoon's wolf IS a Morrowind beast (WEREWOLF1), so a werewolf whose wolf
     // stands keeps them; a wolf refused or still building, a wereboar (Morrowind has none), and the wolf still standing
@@ -910,10 +920,11 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   let _dx = 0, _dy = 0, _held = false;
   let wolfForm = false, wolfSkin = null;   // WEREWOLF1 / SHADOW-FANG (AUDIT D5): the form handed to the rig last, and the skin read at its change
 
-  function artFor(item) {
-    const plain = !!glowOf(item);   // WEAPON-GLOW1: an element shown swings the plain sheet
-    const type = heldType(item);
+  function artFor(held) {
+    const plain = !!glowOf(held);   // WEAPON-GLOW1: an element shown swings the plain sheet
+    const type = heldType(held);
     if (type === WEAPON_TYPES.None) return null;
+    const item = drawnPiece(held);   // APPEARANCES (bible/04-Characters/Wardrobe.md): the sheet of the look the weapon wears - its kind's, so the type and the swing are the weapon's own
     // THE PORT'S OWN WEAPON takes the OTHER loader. Its art is ours,
     // shipped with the build, and needs no palette - which is also why
     // this test sits ahead of the palette guard: a Thunderlock draws

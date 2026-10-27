@@ -156,6 +156,12 @@ export function owedMetres(feet, owed) {
 }
 /** The highest rate at which `metres` takes `leadS` real seconds or more at `speedMps` (the motor's own pace) - on the
  *  spinner's ladder (1, 2, 3, 4, 5, then fives), never under walking pace; Infinity with no owed pixel or no pace. */
+/** PASSAGE-PACE (FIELD BUGS 2026-10-21d, found and left then): THE TRAVELLER'S OWN PACE (m/s) the leads are sized by -
+ *  the walking motor's, or the way of the boat under them where it is more (Come Sail Away's `way`, laid on the boat
+ *  each step at her helm). Sized by the motor alone, a Small Ship or a Carrack at three times a walker's pace outran
+ *  the land being built under a clock held for a walker, and an unbuilt pixel reads no water. */
+export const travellerPace = (player, boat) => Math.max(player?.speed ?? 0, Number(boat?.way) || 0);
+
 export function leadCap(metres, speedMps, leadS = TV_GOV_LEAD_S) {
   if (!Number.isFinite(metres) || !(speedMps > 0)) return Infinity;
   const n = metres / (speedMps * leadS);

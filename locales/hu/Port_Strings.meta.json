@@ -6744,16 +6744,6 @@
   "tr": "307a73c4add8",
   "by": "claude-in-session"
  },
- "legacy.houseWaits.newborn": {
-  "en": "28e7f5a06d17",
-  "tr": "b70a8e872257",
-  "by": "claude-in-session"
- },
- "legacy.houseWaits.noNewborn": {
-  "en": "862d8a89f3cf",
-  "tr": "767e07930606",
-  "by": "claude-in-session"
- },
  "legacy.deed.again": {
   "en": "abeb3f30abb8",
   "tr": "62c41063c680",
@@ -6857,6 +6847,16 @@
  "legacy.deed.tallyRegard": {
   "en": "cfb4aecdc4e0",
   "tr": "04781cb81f42",
+  "by": "claude-in-session"
+ },
+ "legacy.houseWaits.newborn": {
+  "en": "28e7f5a06d17",
+  "tr": "b70a8e872257",
+  "by": "claude-in-session"
+ },
+ "legacy.houseWaits.noNewborn": {
+  "en": "862d8a89f3cf",
+  "tr": "767e07930606",
   "by": "claude-in-session"
  },
  "levelup.progress.cap": {
@@ -12640,8 +12640,8 @@
   "by": "claude-in-session"
  },
  "pause.profPagesClosed": {
-  "en": "111d98c684bb",
-  "tr": "4852f207c56e",
+  "en": "b65d6206bc4d",
+  "tr": "9cac6d1c6d84",
   "by": "claude-in-session"
  },
  "pause.quitConfirm": {
@@ -12830,8 +12830,8 @@
   "by": "claude-in-session"
  },
  "prof.page.how.outfitting": {
-  "en": "85dc68e23b5f",
-  "tr": "73f7f516dbbd",
+  "en": "b4271774202f",
+  "tr": "64eac3663925",
   "by": "claude-in-session"
  },
  "prof.page.jewel.grade.chipped": {

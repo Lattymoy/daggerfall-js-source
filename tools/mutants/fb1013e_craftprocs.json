@@ -84,8 +84,8 @@
   {
     "name": "CRAFT-PROCS-the-answer-mints-at-no-record",
     "file": "src/systems/smithItems.js",
-    "old": "mintPiece({ ...data, version: mintVersionOf(p.record) }, p.provenance)",
-    "new": "mintPiece(data, p.provenance)",
+    "old": "mintPiece({ ...data, version: mintVersionOf(p.record), lines: masterLinesOf(p.record) }, p.provenance)",
+    "new": "mintPiece({ ...data, lines: masterLinesOf(p.record) }, p.provenance)",
     "tests": [
       "test/systems/fb1013e_craftprocs.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "CRAFT-PROCS-the-temper-mints-at-the-old-law",
     "file": "src/systems/smithItems.js",
-    "old": "hand: c.f ?? null, version: c.v ?? 0 }, c.p)",
-    "new": "hand: c.f ?? null, version: 0 }, c.p)",
+    "old": "hand: c.f ?? null, version: c.v ?? 0, lines: c.l ?? null }, c.p)",
+    "new": "hand: c.f ?? null, version: 0, lines: c.l ?? null }, c.p)",
     "tests": [
       "test/systems/fb1013e_craftprocs.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "CRAFT-PROCS-the-record-drops-its-version",
     "file": "src/net/productRecord.js",
-    "old": ", ...(v == null ? {} : { v }) };",
-    "new": " };",
+    "old": ", ...(v == null ? {} : { v }), ...(l == null ? {} : { l }) };",
+    "new": ", ...(l == null ? {} : { l }) };",
     "tests": [
       "test/systems/fb1013e_craftprocs.test.js"
     ]

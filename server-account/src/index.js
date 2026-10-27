@@ -251,6 +251,7 @@ import { takeReactionFeed, REACTION_FEED_PATH } from './staffReactions.js';   //
 import { STAFF_FEED_SIG_HEADER, STAFF_FEED_MAX_BYTES } from '../../server/src/staffFeedLaw.js';
 import { stakeCards, cashoutCards } from './cards.js';   // CARDS6: a card table's stakes, escrowed
 import { seaBountyBoard, seaBountyPost, seaBountyCollect } from './seaBounty.js';   // SEA-BOUNTY: a freeport's bounty board on the open sea's killers
+import { crewHall, crewSign, crewRelease, CREW_STATUS } from './crewSigns.js';   // CREW-SIGNED: a crew hall's recruit signed once online
 import { seaSeasonBoard } from './seaSeason.js';   // SEA-SEASON: the sea's season boards
 import { seaWreck, seaPrizeCollect, seaPrizeReclaim } from './seaWreck.js';   // SHIP-PVP: a wreck at sea, and its prize
 import { deckOrderOf, claimIliac, iliacBoardOf } from './iliac.js';
@@ -315,9 +316,11 @@ import { fundFort, readForts } from './seatForts.js';   // SEAT2b: a seat's fort
 /** SEAT1c: the account's row with the Charter titles it may wear laid on it (`seatTitles`, titles.js titlesHeld), while the
  *  seats are open to it - for the wardrobe's read and its write. */
 const withSeatTitles = async (ctx, player, env) => withChapterTitles(ctx, seatsOpenFor(player, env) ? { ...player, seatTitles: await seatTitlesOf(ctx.db, player.id) } : player, env);
-/** CHAP4c: and the chapters' seats' titles its characters hold, while CHAPTER_TITLES is on (npcChapters.js). */
-const withChapterTitles = async (/** @type {any} */ ctx, /** @type {any} */ player, /** @type {any} */ env) => (chapterTitlesOpenFor(player, env)
+/** CHAP4c: and the chapters' seats' titles its characters hold, while CHAPTER_TITLES is on (npcChapters.js). MARKS-OF-MASTERY:
+ *  and the Marks of Mastery its rows earn (hunts.js) - the mint reads this one too. */
+const withChapterTitles = async (/** @type {any} */ ctx, /** @type {any} */ player, /** @type {any} */ env) => withMasteryMarks(ctx, chapterTitlesOpenFor(player, env)
   ? { ...player, chapterTitles: [...new Set((await chapterTitlesOfAccount(ctx.db, player.id, ctx.nowS, seasonZeroOf(env.SEASON_ZERO_WEEK))).map((t) => t.title))] } : player);
+import { huntState, huntClear, withMasteryMarks, HUNT_STATUS } from './hunts.js';   // HUNTERS-MARK: the hunt's ledger; MARKS-OF-MASTERY: the titles read off it
 import { decorOf, placeDecor, moveDecor, removeDecor, hideDecorBase, yardsKept, forgetYards, settleYards } from './decor.js';   // YARD-SHED: a town's yards kept   // DECOR1: an online home's decor; BASE-HIDE: what its owner took out
 import { commitDecorBatch } from './decorBatch.js';   // DECOR-BATCH: one Confirm for a home's draft
 import { decorUse } from './decorAccess.js';   // DECOR-ACCESS: who may use a container or a station
@@ -326,6 +329,7 @@ import { gateStrikeStatement, gateStrikeAnswer, raidStrikeStatement, combatStrik
 import { readBoard, pinNote, takeDownNote, reportNote, moderateNote, postNotice, removeNotice } from './board.js';   // NOTICE1: the Notice Board
 import { craftWritBoard, deliverCraftWrit } from './craftWrits.js';   // CRAFT-WRITS: the guilds' asks of a crafter
 import { profState, profPixels, harvestNode, chooseSpec, withdrawStores, depositStores, smeltAtForge, craftAtAnvil, temperPiece, buyStock, listWrits, deliverWrit } from './professions.js';   // BAG1: a deposit   // PROF1: the professions; PROF2: the forge; PROF3: the anvil and the smith's stock
+import { masterWork } from './masterWork.js';   // MASTER-ART: a Master's work (bible/06-Systems/Professions-Arc.md section 57)
 import { brewAtStation, disenchantPiece, reforgeWithEssence } from './alchemy.js';   // PROF12: Alchemy's brew, Enchanting's disenchant
 import {
   writBoard, postGuildWrit, supplyGuildWrit, withdrawGuildWrit, setWritBudget, postCommission, fulfilCommission, cancelCommission, declineCommission,
@@ -611,6 +615,7 @@ const PROF_STATUS = Object.freeze({
   'prof-later': 409,   // PROF4: a recipe whose slice is to come - the Ram Kit (PROF0 25)
   'prof-hunt-high': 409, 'prof-foe': 400, 'prof-dye': 400,   // PROF7: Hunting's rare hides (3 of tiers 5-6 a day - CAP-OFF: no `prof-hunt-cap`, nor PROF8's `prof-fish-cap`), a body no knife skins, a dye asked of what takes none
   'prof-sculptor': 403,   // PROF11: the stone decor is a Sculptor's - a skill's door, as the rank's
+  'prof-master': 400, 'prof-master-lines': 400, 'prof-master-day': 409,   // MASTER-ART: no tier, lines the piece may not carry, the day's work made
   'prof-lapidary': 403,   // PROF10: a Siege-cracked Gem is set as a gem by a Lapidary alone - a skill's door, as the Sculptor's
   // PROF12: a transmutation is a Transmuter's (a skill's door); a cauldron DFU's law answers with no such potion, a bad piece's id;
   // no such piece, another's; one listed, on the road or set down; one that makes no Essence
@@ -1320,7 +1325,7 @@ const service = {
           // list of the characters' tracks again (RENOWN-ACCOUNT sent the account's one, `{ xp, level }`)
           // MARKS1: and the Marks balance, where Marks are this account's (null where not - a guest, the switch)
           account: { ...accountView(who.player, nowS), duels: await duelRecordOf(ctx, who.player.id), gates: await gateRecordOf(ctx, who.player.id), raids: await raidRecordOf(ctx, who.player.id), serpents: await serpentRecordOf(ctx, who.player.id), sds: await sdRecordOf(ctx, who.player.id), stars: await starRecordOf(ctx, who.player.id), ketch: await ketchRecordOf(ctx, who.player.id), renown: await renownTracksOf(ctx, who.player.id), marks: await marksCardOf(ctx, who.player, env) },
-          wardrobe: { ...accountWardrobe(await withSeatTitles(ctx, who.player, env), env, nowS), purse: await insigniaPurse(ctx, who.player) },   // SEAT1c: and a Charter's titles   // WB9g: and what the account's closed gates could still pay the Broker's insignia
+          wardrobe: { ...accountWardrobe(await withSeatTitles(ctx, who.player, env), env, nowS), purse: await insigniaPurse(ctx, who.player), annals: Number(who.player.eg_annals) || 0 },   // HUNTERS-MARK: the Annals' pages kept, the Collections page's   // SEAT1c: and a Charter's titles   // WB9g: and what the account's closed gates could still pay the Broker's insignia
           devices: await devicesOf(ctx, who.player.id),
           // PATREON-LINK: the card's Patreon row - whether linking is on, whether this account is linked, the titles its
           // pledge holds, and the link to follow (a state sealed for this account, under the origin that served this)
@@ -2036,6 +2041,7 @@ const service = {
           '/v1/prof/stock': () => buyStock(ctx, who.player, env, body),   // PROF3: the smith's stock; PROF4: the furnisher's
           '/v1/prof/temper': () => temperPiece(ctx, who.player, env, body),   // CRAFT4: a piece a quality step better
           '/v1/prof/reforge': () => reforgeWithEssence(ctx, who.player, env, body),   // CRAFT4: a line rolled again for Arcane Essence
+          '/v1/prof/master': () => masterWork(ctx, who.player, env, body),   // MASTER-ART: a Master's work, its lines chosen
           '/v1/stores/withdraw': () => withdrawStores(ctx, who.player, env, body),
           '/v1/stores/deposit': () => depositStores(ctx, who.player, env, body),   // BAG1: what is carried, into the Stores
           // PROF6: the Court's writs, and beside them this board's guild writs and commissions (writs.js writBoard)
@@ -2071,6 +2077,22 @@ const service = {
         return json(r, 200, origin);
       }
 
+      // ═══ HUNTERS-MARK: THE HUNT'S LEDGER ═══════════════════════════════
+      //
+      // bible/06-Systems/Bounty-Boards.md section 12: a character's clears read, and a paid bounty reported - bounded, not
+      // witnessed (hunts.js). The report is a progression claim, asked of the seat at the door (progress.js PROGRESS_ROUTES).
+      if (path.startsWith('/v1/hunt/')) {
+        if (request.method !== 'POST') return no('method', 405, origin);
+        const act = {
+          '/v1/hunt/state': () => huntState(ctx, who.player, env, body),
+          '/v1/hunt/clear': () => huntClear(ctx, who.player, env, body),
+        }[path];
+        if (!act) return no('not-found', 404, origin);
+        const r = await act();
+        if (progressRoute) await progressSpent(ctx, who.player.id, path, r);   // INT17: a clear recorded spends the bounties' stream
+        return 'error' in r ? no(r.error, HUNT_STATUS[r.error] ?? 400, origin) : json(r, 200, origin);
+      }
+
       // ═══ SEA-BOUNTY: A FREEPORT'S BOUNTY BOARD ══════════════════════════
       //
       // bible/03-World/Eltheric-Ocean.md SEA-BOUNTY: the wanted captains of the open sea and the gold on their heads; a post
@@ -2088,6 +2110,17 @@ const service = {
         const r = await act();
         if (r.error === 'seq') return json({ error: 'seq', seq: r.seq }, 409, origin);   // the record moved under the act, as a checkpoint's
         if ('error' in r) return json({ error: r.error }, REALM_STATUS[r.error] ?? JUDGE_STATUS[r.error] ?? 400, origin);
+        return json(r, 200, origin);
+      }
+
+      // CREW-SIGNED (2026-10-27, bible/03-World/Shipyards.md CREW-SIGNED): a crew hall's recruit held by the first account
+      // to sign him for his day, let go when he is paid off (crewSigns.js) - no gold moves here
+      if (path.startsWith('/v1/crew/')) {
+        if (request.method !== 'POST') return no('method', 405, origin);
+        const act = { '/v1/crew/hall': crewHall, '/v1/crew/sign': crewSign, '/v1/crew/release': crewRelease }[path];
+        if (!act) return no('not-found', 404, origin);
+        const r = await act(ctx, who.player, body);
+        if ('error' in r) return json({ error: r.error }, CREW_STATUS[r.error] ?? 400, origin);
         return json(r, 200, origin);
       }
 

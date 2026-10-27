@@ -43,6 +43,7 @@ import { isOutdoorWaterTile } from '../world/terrain/terrainSurface.js';
 import { WORLD_MAP_TILE_DIM } from '../world/terrain/terrainTiles.js';
 import { TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
 import { sceneCompassWord } from '../systems/compassWords.js';   // AUDIT DELVE C8: the eight ways, one home
+import { noteGathered } from '../systems/hunt/gatheredLog.js';   // HUNTERS-MARK: the Collections page's Fish part
 import { noteAct } from '../systems/questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
 
 /** The cast stands this far ahead of the look (m), and is reached from this far. */
@@ -208,6 +209,8 @@ export function fishKind({ book, host }) {
   let translation = /** @type {((e: any) => number[]|null)|null} */ (null);
   /** the trophies put in the pack, by haul - once each, however many answers say it */
   const trophied = new Set();
+  /** HUNTERS-MARK: the hauls the Collections page's log has counted - once each, as the trophies */
+  const logged = new Set();
   /** the climate each cast was made on, by key - its species' water */
   const climates = new Map();
   /** FISH-TIRED: the act this kind started and its angler - ended when the pool falls under the line in the water */
@@ -356,6 +359,11 @@ export function fishKind({ book, host }) {
      *  service answered is a catch. */
     answered(d, toast) {
       noteAct('fish-caught');   // QL11: a fish caught - the net's haul, in the Stores or the bag
+      if (d?.node && !logged.has(d.node)) {   // HUNTERS-MARK: the species into the character's log, on the haul key's UTC day
+        logged.add(d.node);
+        const kind = speciesOfHaul(d.node, climateOf(d.node));
+        if (kind) noteGathered('fish', kind.templateIndex, parseNodeKey(d.node)?.day ?? Math.floor(Date.now() / 86_400_000));
+      }
       if (!d?.trophy || trophied.has(d.node)) return;
       trophied.add(d.node);
       const species = speciesOfHaul(d.node, climateOf(d.node));

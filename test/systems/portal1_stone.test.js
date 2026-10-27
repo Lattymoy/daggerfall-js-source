@@ -30,6 +30,8 @@ import { itemFindings } from '../../src/systems/item/itemLaw.js';
 import { ServiceFlowWindow } from '../../src/ui/guildServiceWindows.js';
 import { HOW_MANY_ITEMS, SPLIT_INPUT_MAX } from '../../src/systems/item/itemTransfer.js';
 import { createPortalCounter, portalCountField } from '../../src/scenes/portalCounter.js';
+import { createShopRows } from '../../src/scenes/shopRows.js';   // APPEARANCES: the shop popups' rows, the Portal Stone's among them
+import { BUILDING_TYPES } from '../../src/world/buildingNames.js';
 import { templateByIndex } from '../../src/systems/item/itemTemplates.js';
 import { equipItem, isEquipped } from '../../src/systems/equip.js';
 import { useItem, USE_PENDING } from '../../src/systems/useItem.js';
@@ -692,13 +694,22 @@ test('PORTAL1 the counter\'s row on the classic popups: under the art, drawn in 
 
 test('PORTAL1 the hosts: every shop\'s keeper sells it (a teller and a mod\'s service never), its popup out of the slot before the question, a short purse told at once; the open world opens, draws, steps and forgets; says and hears it on the foes frame; every load ends it; a building\'s pack refuses in words, the dungeon\'s has no door and the street says its own', () => {
   const wm = read('src/scenes/worldModes.js');
-  assert.match(wm, /const portalRow = \(\) => \(mode === 'interior' && isShop\(interiorBuilding\?\.buildingType\)\n\s+\? \{ label: PORTAL_TEXT\.row, onBuy: \(\) => portalCounter\.ask\(\) \} : undefined\);/);
-  assert.match(wm, /onSell: \(\) => openMerchantSell\(\),\n\s+portal: portalRow\(\),/, 'the repair shop\'s popup');
-  assert.match(wm, /portal: banking \|\| custom \? undefined : portalRow\(\),/, 'the plain shop\'s - never a bank\'s or a mod\'s service');
+  // PIN MOVED (APPEARANCES): the row and its counter left the host for scenes/shopRows.js with the Wardrobe's - every shop
+  // a row, every other building none, and its press the counter's question, driven
+  const said = [];
+  const rows = createShopRows({ say: (l) => said.push(l), mountInterior: () => {}, mountService: () => {} });
+  for (const b of [BUILDING_TYPES.GeneralStore, BUILDING_TYPES.Alchemist, BUILDING_TYPES.ClothingStore]) assert.equal(rows.of(b).portal?.label, PS.PORTAL_TEXT.row, String(b));
+  for (const b of [BUILDING_TYPES.Bank, BUILDING_TYPES.Tavern, undefined]) assert.equal('portal' in rows.of(b), false, `${b}: no shop, no row`);
+  rows.of(BUILDING_TYPES.GeneralStore).portal.onBuy();
+  assert.equal(said.length, 1, 'pressed: the counter asks (a purse with no shards is told at once)');
+  assert.match(wm, /onSell: \(\) => openMerchantSell\(\),\n\s+\.\.\.shopRows\.of\(interiorBuilding\?\.buildingType\),/, 'the repair shop\'s popup');
+  assert.match(wm, /\.\.\.\(banking \|\| custom \? \{\} : shopRows\.of\(interiorBuilding\?\.buildingType\)\),/, 'the plain shop\'s - never a bank\'s or a mod\'s service');
   assert.match(wm, /onClose\(\) \{ if \(interiorOverlay\?\.hooks === this\) interiorOverlay = null; \},\n\s+\}\)\);/, 'AUDIT PORTAL1 C1: the plain popup leaves the slot as the repair one does');
   // PIN MOVED (PORTAL-BULK): the question and the sale left the host for scenes/portalCounter.js - the host builds it
   // once, its slot's door handed live (mountInterior is declared below the construction), and asks nothing itself
-  assert.match(wm, /const portalCounter = createPortalCounter\(\{ say: \(l\) => say\(l\), mount: \(w\) => mountInterior\(w\) \}\);/);
+  // PIN MOVED (APPEARANCES): built by scenes/shopRows.js, which the host builds once with the same live door
+  assert.match(wm, /const shopRows = createShopRows\(\{ say: \(l\) => say\(l\), mountInterior: \(w\) => mountInterior\(w\), mountService: mountServiceWindow \}\);/);
+  assert.match(read('src/scenes/shopRows.js'), /const portalCounter = createPortalCounter\(\{ say, mount: mountInterior \}\);/);
   assert.doesNotMatch(wm, /askPortalStone|buyPortalStoneNow|buyPortalStones?\(/, 'no second sale in the host');
   const pc = read('src/scenes/portalCounter.js');
   assert.match(pc, /if \(max < 1\) \{ say\(portalStoneRefusalText\(pack\(\), portalStoneRefusal\(pack\(\), 1\)\)\); return null; \}/, 'a short purse (or a full stack) is told at once, nothing raised - AUDIT PORTAL1 C4');

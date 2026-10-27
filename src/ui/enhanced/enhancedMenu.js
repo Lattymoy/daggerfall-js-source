@@ -89,6 +89,7 @@
 // the pick is a zip upload.
 // ═══════════════════════════════════════════════════════════════════
 
+import { statsHunt } from '../bounty/huntRank.js';   // HUNTERS-MARK (Bounty-Boards.md 12.3)
 import { fpArm, hasDaggerfallArrows } from '../../combat/fpArm.js';
 import { dressStanding } from '../../systems/clothingStanding.js';   // DRESS1 (2026-09-30, Discord): the Standing page's Dress line
 import { questRail, shelvedRail, unloggedRail, journalLines, questTitleOf, QUEST_URGENT_SECONDS, remainWords } from '../quest/questRail.js';   // MAC-K2: the ONE quest walk, shared with the chronicle
@@ -165,6 +166,8 @@ import { drawPixelGround } from '../pixelGround.js';
 // renders the tab, so the front door still reads no game state.
 import { sheetModel } from './enhancedCharSheet.js';
 import { profPagesShown, PROF_PAGE_SECTIONS, drawProfessionsPage, drawStoresPage, resetProfPages, profActUnderWay, setDownProfAct } from '../professions/profPages.js';   // PROF1: the Professions and Stores pages, online
+import { drawCraftingPage, PROF_STATS_PAGES } from '../professions/profPages.js';   // CRAFT-HALL
+import { boundKeyName } from '../tutorialPopup.js';   // CRAFT-HALL: names the Professions key on the Crafting page
 import { vendorPageShown, VENDOR_PAGE_SECTIONS, drawVendorPage } from '../vendor/vendorPage.js';   // HOME-VENDOR: the Vendor page
 import { REVENANT_PAGE_SECTIONS, revenantPageShown, drawRevenantsPage } from '../revenant/revenantPage.js';
 import { COMPANION_PAGE_SECTIONS, companionPageShown, drawCompanionsPage, resetCompanionRoster } from '../companionRoster.js';   // COMPANION-ROSTER: the sworn and the slots
@@ -4985,9 +4988,16 @@ function meterRow(label, now, max, tone) {
 }
 
 /** PROF1: the rail's pages - the sheet's six, and online, while the professions are this account's, the Professions
- *  page (ui/professions/profPages.js). HOLDINGS: the Stores page, the Revenants and the Companions went to the Holdings rail. */
-const PROF_STATS_SECTIONS = Object.freeze(PROF_PAGE_SECTIONS.filter(([id]) => id === 'professions'));
-const PROF_HOLD_SECTIONS = Object.freeze(PROF_PAGE_SECTIONS.filter(([id]) => id !== 'professions'));
+ *  page (ui/professions/profPages.js). HOLDINGS: the Stores page, the Revenants and the Companions went to the Holdings rail.
+ *  CRAFT-HALL: the Crafting page joins Professions on the Stats rail. */
+const PROF_STATS_SECTIONS = Object.freeze(PROF_PAGE_SECTIONS.filter(([id]) => PROF_STATS_PAGES.includes(id)));
+const PROF_HOLD_SECTIONS = Object.freeze(PROF_PAGE_SECTIONS.filter(([id]) => !PROF_STATS_PAGES.includes(id)));
+/** CRAFT-HALL: opens a professions page from another one, on whichever rail it lives. */
+function profGo(at) {
+  if (PROF_STATS_SECTIONS.some(([id]) => id === at)) { pauseTab = 'stats'; statsSec = at; }
+  else if (PROF_HOLD_SECTIONS.some(([id]) => id === at)) { pauseTab = 'holdings'; holdSec = at; }
+  render();
+}
 const statsSections = () => [...STATS_SECTIONS, ...(profPagesShown() ? PROF_STATS_SECTIONS : []), ...(vendorPageShown() ? VENDOR_PAGE_SECTIONS : [])];   // HOME-VENDOR: the Vendor page, under the Professions
 /** HOLDINGS: the Holdings rail's pages - what the player owns (the Stable, the Fleet while ships sail, the Stores
  *  online) and who follows them (the Companions, the Revenants), each while it has a thing to show. */
@@ -5014,11 +5024,12 @@ function pauseStats(body) {
   // pauseSystem) carries. The kit's button role (enhancedFrame.js FRAME_ROLES) reads `.px-sys .act`,
   // so without it these four fell through to the bare, unpainted base .act under Plus.
   const detail = el('div', 'px-qdetail px-sys');   // DROPS-AUDIT F3: the system-page dress (Plus's; PLUS-DEAD: the only one)
-  if (statsSec === 'professions' || statsSec === 'stores') detail.classList.add('prof-detail');
-  const profKit = { el, divider: pxDivider, meter: pxMeter };
+  if (statsSec === 'professions' || statsSec === 'crafting' || statsSec === 'stores') detail.classList.add('prof-detail');
+  const profKit = { el, divider: pxDivider, meter: pxMeter, go: profGo, keyName: (/** @type {string} */ a) => boundKeyName(a) };   // CRAFT-HALL: page links and the key's name
   ({
     character: statsCharacter, attributes: statsAttributes, skills: statsSkills, specials: statsSpecials, standing: statsStanding, effects: statsEffects, master: statsMaster,   // SOFTCAP4: `master` - the Master Skills door's page
     professions: (d) => drawProfessionsPage(d, render, profKit),
+    crafting: (d) => drawCraftingPage(d, render, profKit),   // CRAFT-HALL
     vendor: (d) => drawVendorPage(d, render, profKit),   // HOME-VENDOR
   })[statsSec](detail, m);
   // PX25: THE DOORS THE F5 SHEET CARRIED. The classic character sheet
@@ -5403,6 +5414,7 @@ function statsStanding(detail) {
   statsLaw(detail, playerEntity);
   statsGuilds(detail, playerEntity);
   if (getPref('standingAll')) statsEveryStanding(detail, playerEntity);   // EVERY-STANDING
+  statsHunt(detail, { el, divider: pxDivider, meter: pxMeter });   // HUNTERS-MARK: the hunter's rank, online
 }
 
 /** FIELD BUGS 2026-10-09e EVERY-STANDING ("Could we have a setting to see our reputation with every guild/kingdoms?" -
