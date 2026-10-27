@@ -311,7 +311,7 @@ account.refusal.heraldryMoved,"Killan vaakuna muuttui sillä välin. Katso uudel
 account.refusal.heraldrySame,"Se on jo kiltasi vaakuna."
 account.refusal.hireNone,"Tuolla palkkasoturilla ei ole peruttavaa sopimusta."
 account.refusal.hireTwice,"Tuolla tilillä on jo sopimus täällä."
-account.refusal.homeCap,"Hahmo voi ostaa enintään {max} kotia. Myy yksi sen ostamista kodeista ostaaksesi toisen."
+account.refusal.homeCap,"Hahmo voi ostaa enintään {max} kotia yhdeltä alueelta. Myy yksi sieltä ostamistaan kodeista ostaaksesi toisen."
 account.refusal.homeCharacter,"Tilipalvelu ei saanut selville, mille hahmolle tämä on."
 account.refusal.homeCrossed,"Se tuli valtakuntaan tullin kautta. Keisarikunnan pankki ei osta sitä takaisin. Se pysyy kotinasi."
 account.refusal.homeLayout,"Kaupunki latautuu vielä. Yritä hetken päästä uudelleen."

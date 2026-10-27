@@ -311,7 +311,7 @@ account.refusal.heraldryMoved,"Herb gildii zmienił się w międzyczasie. Spójr
 account.refusal.heraldrySame,"To już jest herb twojej gildii."
 account.refusal.hireNone,"Ten Najemnik nie ma kontraktu do wycofania."
 account.refusal.hireTwice,"To konto ma już tu kontrakt."
-account.refusal.homeCap,"Postać może kupić najwyżej {max} domów. Sprzedaj jeden z kupionych przez nią, aby kupić inny."
+account.refusal.homeCap,"Postać może kupić najwyżej {max} domów w jednym regionie. Sprzedaj jeden z kupionych tam przez nią, aby kupić inny."
 account.refusal.homeCharacter,"Serwer kont nie rozpoznał, dla której postaci to jest."
 account.refusal.homeCrossed,"To trafiło do królestwa przez cło. Bank Cesarstwa tego nie odkupuje. Zostaje twoim domem."
 account.refusal.homeLayout,"To miasto wciąż się wczytuje. Spróbuj za chwilę."
