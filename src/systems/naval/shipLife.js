@@ -33,6 +33,22 @@
 // a merchantman's dwell spent after dark keeps her at her berth till morning (no master puts out into a night sea
 // with a hold to lose), and a pirate's lurk closes on the harbour's mouth to NIGHT_LURK_K of its reach - under cover
 // of the dark, where the last ships in of the evening pass.
+//
+// PORT-SHIPS (2026-10-27, the owner's field report, item 8: "I went to solitude and the ships at works were inside town
+// walls"; the owner: "No band aids") - A BERTH STANDS WHERE A SHIP CAN (`berthStands`). A berth was kept on three lines
+// of her footprint, a station every eighth of her length, asked of the water alone - and the water says nothing of what
+// stands on it, nor of the ground under it:
+//   - THE TOWN (`keep`, systems/naval/harbourKeep.js): a town's walls, its piers, a sea stack stand in the water. A
+//     capital's walls stand in its own water (Solitude's west wall 7 m out in the Karth: every one of its six ships through
+//     it, her quay inside; Alinor's river through the middle of its city: its six inside), and a pier is narrower than a
+//     station (Torval's two, the Waterfront's one). Her ship and her quay (quayBox), her jetty's way to the shore
+//     (BERTH_JETTY_WALK, landward from the quay's back) and her approach's hull are all kept clear of it.
+//   - THE GROUND (`ground`, its height over the sea's top - the host's): a water tile is a picture of the ground
+//     (world/water/waterBed.js), and a town's flatten lifts the sea in its margin to the town's ground - a ship's side
+//     stood against the bank there, up to 20 m of it (Chestertower's on the Bay; Shimmerene's and Winterhold's past it).
+//     Her waterplane (her length, her beam drawn in to the stem over BOW_TAPER and to the stern over STERN_TAPER) stands
+//     only where the ground under it lies under the sea's top, BERTH_DRY_M at most over it.
+// Both every KEEP_STEP over her - finer than the narrowest pier.
 
 import { hash32 } from '../../world/spawnedDungeons.js';
 import { mulberry32 } from '../../combat/blood/bloodArt.js';
@@ -170,6 +186,59 @@ export function quayBox(pos, yaw, normal, hull = BERTH_HULL) {
   return [[aftZ - BERTH_QUAY_ENDS, -halfWidth], [bowZ + BERTH_QUAY_ENDS, -halfWidth], [bowZ + BERTH_QUAY_ENDS, halfWidth + BERTH_QUAY_IN], [aftZ - BERTH_QUAY_ENDS, halfWidth + BERTH_QUAY_IN]]
     .map(([z, x]) => [pos[0] + fx * z + lx * x, pos[1] + fz * z + lz * x]);
 }
+/** PORT-SHIPS: a berth asked of her town and her ground this often over her (m) - under the narrowest pier a capital
+ *  stands (Alinor's and Torval's, 6 m). */
+export const KEEP_STEP = 2;
+/** PORT-SHIPS: her jetty's way walked landward from her quay's back for the town's keep, at most (m) - the land lies within
+ *  a SHORE_STEP of the shore point her berth was stood off, and a step past it. */
+export const BERTH_JETTY_WALK = 2 * SHORE_STEP;
+/** PORT-SHIPS: the most the ground under her waterplane stands over the sea's top (m) - a hand's breadth of the sea's own
+ *  floor's reading, never a bank. */
+export const BERTH_DRY_M = 0.1;
+/** PORT-SHIPS: her waterplane drawn in from her full beam to her stem over this share of her length, and to her stern
+ *  over this - her footprint's corners are no hull. */
+export const BOW_TAPER = 0.3;
+export const STERN_TAPER = 0.12;
+/** PORT-SHIPS: her waterplane's half beam `z` along her (berthSize's frame, bow +). */
+export function waterplaneHalf(z, hull = BERTH_HULL) {
+  const { halfWidth, bowZ, aftZ } = berthSize(hull), L = bowZ - aftZ;
+  return halfWidth * Math.max(0, Math.min(1, (bowZ - z) / (BOW_TAPER * L), (z - aftZ) / (STERN_TAPER * L)));
+}
+/**
+ * PORT-SHIPS: WHETHER A BERTH STANDS (the header's) - every KEEP_STEP over her:
+ *   - `ground(x, z)` (the ground's height over the sea's top, m; or null): under her waterplane never over BERTH_DRY_M;
+ *   - `keep(x, z)` (her town's, systems/naval/harbourKeep.js; or null): never under her ship beam to beam and bow to
+ *     stern, her quay (quayBox's band past her landward side, and its ends) or her jetty's way, walked landward from the
+ *     quay's back at her waist until it meets ground no water (`water(x, z)`), BERTH_JETTY_WALK at most.
+ * `quay` false: her hull alone (her approach's).
+ * @param {number[]} pos @param {number} yaw @param {number[]} normal @param {number} hull
+ * @param {{ keep?: ?((x: number, z: number) => boolean), ground?: ?((x: number, z: number) => number), water: (x: number, z: number) => boolean }} o
+ */
+export function berthStands(pos, yaw, normal, hull, { keep = null, ground = null, water }, quay = true) {
+  const { halfWidth, bowZ, aftZ } = berthSize(hull);
+  const fx = Math.sin(yaw), fz = Math.cos(yaw), lx = -normal[0], lz = -normal[1];
+  const at = (z, x) => [pos[0] + fx * z + lx * x, pos[1] + fz * z + lz * x];
+  if (ground) {
+    const n = Math.ceil((bowZ - aftZ) / KEEP_STEP);
+    for (let i = 0; i <= n; i++) {
+      const z = aftZ + ((bowZ - aftZ) * i) / n, w = waterplaneHalf(z, hull), m = Math.ceil((2 * w) / KEEP_STEP);
+      for (let j = 0; j <= m; j++) { const p = at(z, -w + (m ? (2 * w * j) / m : 0)); if (ground(p[0], p[1]) > BERTH_DRY_M) return false; }
+    }
+  }
+  if (!keep) return true;
+  const ends = quay ? BERTH_QUAY_ENDS : 0, inn = halfWidth + (quay ? BERTH_QUAY_IN : 0);
+  const z0 = aftZ - ends, z1 = bowZ + ends, nz = Math.ceil((z1 - z0) / KEEP_STEP), nx = Math.ceil((inn + halfWidth) / KEEP_STEP);
+  for (let i = 0; i <= nz; i++) {
+    for (let j = 0; j <= nx; j++) { const p = at(z0 + ((z1 - z0) * i) / nz, -halfWidth + ((inn + halfWidth) * j) / nx); if (keep(p[0], p[1])) return false; }
+  }
+  if (!quay) return true;
+  for (let t = KEEP_STEP; t <= BERTH_JETTY_WALK; t += KEEP_STEP) {
+    const p = at((aftZ + bowZ) / 2, inn + t);
+    if (keep(p[0], p[1])) return false;
+    if (!water(p[0], p[1])) break;
+  }
+  return true;
+}
 /** Whether two convex quads overlap (separating axes; touching is apart). */
 export function boxesMeet(a, b) {
   for (const box of [a, b]) {
@@ -188,11 +257,15 @@ export function boxesMeet(a, b) {
  * `isWater(x, z, hull)`. Answers `{ berths: [{ pos: [x, z], yaw, normal: [x, z], approach: [x, z] }], mouth: [x, z],
  * hull }`, the berths nearest the town first - or null where the town has no shore to berth at or no way out to sea.
  * AUDIT GN2-GN1: sounded for `hull`'s footprint in `deep`'s water too - the deepest keel that berths (BERTH_HULLS).
+ * PORT-SHIPS: a berth kept only where it stands (berthStands) - out of its town (`keep(x, z)`, systems/naval/
+ * harbourKeep.js) and over ground under the sea (`ground(x, z)`, its height over the sea's top), her approach's hull too;
+ * either null asks nothing of it.
  */
-export function findHarbour({ rect, isWater: own, hull = BERTH_HULL, deep = deepestBerther(), max = HARBOUR_BERTHS, reach = HARBOUR_REACH }) {
+export function findHarbour({ rect, isWater: own, hull = BERTH_HULL, deep = deepestBerther(), max = HARBOUR_BERTHS, reach = HARBOUR_REACH, keep = null, ground = null }) {
   const { length, halfWidth } = berthSize(hull);   // SHIPS-2: the berths' template's
   const isWater = (x, z, h) => !!own(x, z, h) && (h === deep || !!own(x, z, deep));
   const water = (x, z) => isWater(x, z, hull);
+  const stands = keep || ground ? { keep, ground, water } : null;   // PORT-SHIPS
   const cx = (rect.minX + rect.maxX) / 2, cz = (rect.minZ + rect.maxZ) / 2;
   const x0 = rect.minX - reach, x1 = rect.maxX + reach, z0 = rect.minZ - reach, z1 = rect.maxZ + reach;
   const cands = [];
@@ -226,9 +299,11 @@ export function findHarbour({ rect, isWater: own, hull = BERTH_HULL, deep = deep
     // she lies along the shore, whichever way her approach astern of her is open water
     for (const yaw of [wrap(along), wrap(along + Math.PI)]) {
       if (!footprintClear(c.pos, yaw, hull, isWater)) continue;
+      if (stands && !berthStands(c.pos, yaw, c.normal, hull, stands)) continue;   // PORT-SHIPS: afloat, and her ship, her quay and her jetty's way out of the town
       const back = length * APPROACH_LENGTHS;
       const approach = [c.pos[0] - Math.sin(yaw) * back + c.normal[0] * APPROACH_OUT, c.pos[1] - Math.cos(yaw) * back + c.normal[1] * APPROACH_OUT];
       if (!footprintClear(approach, yaw, hull, isWater)) continue;
+      if (stands && !berthStands(approach, yaw, c.normal, hull, stands, false)) continue;   // PORT-SHIPS: and her approach's hull
       // QUAY-CROSSING: her quay never laid across another berth's - round a point of land two berths BERTH_SPACING
       // apart turned to each other stood their quays' ends one over the other
       const box = quayBox(c.pos, yaw, c.normal, hull);

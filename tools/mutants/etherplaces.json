@@ -316,7 +316,7 @@
   },
   {
     "name": "PORT-harbour",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/harbourHost.js",
     "old": "      if (loc?.exterior?.exteriorData) town = { id: `ether:${isle.key}`, loc, x: isle.px, y: isle.py, name: isle.name, reach: ETHER_HARBOUR_REACH };",
     "new": "",
     "tests": [

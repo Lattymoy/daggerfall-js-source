@@ -1214,7 +1214,7 @@
   },
   {
     "name": "ACS-H1-host-town",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/harbourHost.js",
     "old": "name: isle.name, reach: ETHER_HARBOUR_REACH };",
     "new": "name: isle.name };",
     "tests": [
@@ -1223,7 +1223,7 @@
   },
   {
     "name": "ACS-H1-host-feed",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/harbourHost.js",
     "old": "    const reach = t.reach ?? HARBOUR_REACH;",
     "new": "    const reach = HARBOUR_REACH;",
     "tests": [

@@ -73,7 +73,7 @@
   },
   {
     "name": "HARBOUR-REACH-the-world-ready-at-its-own-reach",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/harbourHost.js",
     "old": "    const ready = (r = reach) => {",
     "new": "    const ready = (_r) => { const r = reach;",
     "tests": [

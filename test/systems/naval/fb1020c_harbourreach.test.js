@@ -83,7 +83,7 @@ test('FB1020c HARBOUR-REACH never "no harbour" before the ground is built: the r
 test('FB1020c HARBOUR-REACH by source: the world hands its harbour\'s readiness at any reach - the scan\'s every pixel built - and its own reach beside it', () => {
   const W = hostText('src/scenes/world.js');
   assert.match(W, /const ready = \(r = reach\) => \{[^\n]*\n {6}const x0 = rect\.minX - r, z0 = rect\.minZ - r, sx = rect\.maxX - rect\.minX \+ 2 \* r, sz = rect\.maxZ - rect\.minZ \+ 2 \* r;/);
-  assert.match(W, /return \{ key: `port:\$\{t\.id\}`, name: t\.name, rect, ready, reach \};/);
+  assert.match(W, /return \{ key: `port:\$\{t\.id\}`, name: t\.name, rect, ready, reach, keep: harbourKeep\(t\.loc, rect\) \};/);   // PIN MOVED (PORT-SHIPS): and its town's keep beside them (systems/naval/harbourKeep.js)
 });
 
 /** The 37 port towns whose own reach sounds no harbour on the ground DFU's kernel builds - the field's report. */

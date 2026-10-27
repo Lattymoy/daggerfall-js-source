@@ -34,6 +34,7 @@ import { hullBoxOf } from '../../../src/scenes/naval/navalHost.js';
 import { whereWords } from '../../../src/ui/fleetPage.js';
 
 const read = (f) => readFileSync(new URL(`../../../${f}`, import.meta.url), 'utf8');
+import { hostText } from '../../hostText.mjs';   // PORT-SHIPS: a host's whole, its moved modules with it
 const AT = [100, 34, 200], DIR = [0, 0, 1];
 
 /** Come Sail Away's real runtime with the world host's item seams - the pack, the Fleet's book and its retitle. */
@@ -311,9 +312,9 @@ test('AUDIT HOLDINGS O1: a harbour is sounded only once every pixel its scan rea
   ready = true;
   h.run(0.2);
   assert.deepEqual(h.host.harbourList().map((x) => x.harbour.berths.map((b) => b.pos)), [HARBOUR.berths.map((b) => b.pos)], 'sounded once it is built - the berths every client finds');
-  const world = read('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');   // PIN MOVED (PORT-SHIPS): the port near the player moved whole to scenes/harbourHost.js (HOST-SPLIT) - the host read whole
   assert.match(world, /for \(let i = 0; i <= nx; i\+\+\) for \(let k = 0; k <= nz; k\+\+\) if \(!csaPixelAt\(x0 \+ \(sx \* i\) \/ nx, z0 \+ \(sz \* k\) \/ nz\)\) return false;/);
-  assert.match(world, /return \{ key: `port:\$\{t\.id\}`, name: t\.name, rect, ready, reach \};/);   // PIN MOVED (AUDIT CAPTAIN'S SEA H1): and the reach it is sounded to - an isle port's its shore
+  assert.match(world, /return \{ key: `port:\$\{t\.id\}`, name: t\.name, rect, ready, reach, keep: harbourKeep\(t\.loc, rect\) \};/);   // PIN MOVED (PORT-SHIPS): and its town's keep beside them. PIN MOVED (AUDIT CAPTAIN'S SEA H1): and the reach it is sounded to - an isle port's its shore
   // PIN MOVED (FB1020c HARBOUR-REACH): any reach the book asks it at - its own, or the port law's ring's - every pixel built
   assert.match(world, /const reach = t\.reach \?\? HARBOUR_REACH;[^\n]*\n\s+const ready = \(r = reach\) => \{[^\n]*\n\s+const x0 = rect\.minX - r, z0 = rect\.minZ - r, sx = rect\.maxX - rect\.minX \+ 2 \* r, sz = rect\.maxZ - rect\.minZ \+ 2 \* r;/, 'every pixel of that reach built');
 });
