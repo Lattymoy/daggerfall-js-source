@@ -1068,6 +1068,29 @@ test('STRANDED: a copy refused `lease` that differs from the last save to land s
   assert.equal(readUnsent(dev.storage, c.id)?.missed, true, 'it holds play since the last put that landed');
 });
 
+test('STRANDED: an idle tab\'s copy refused `lease` is not marked though the game clock moved its quests\', automap\'s and survival\'s numbers (the two-client run\'s seven fields); a meal eaten, its item spent, keeps it marked', async () => {
+  const acct = await account();
+  const dev = acct.device();
+  const c = await joined(acct, dev);
+  // the seven fields the two-client run saw move in an idle tab in six game minutes
+  const at = (minute, pack = ['Bread']) => ({
+    ...save(16, 3), worldMinutes: minute, pack,
+    quest: { machine: { quests: [{ id: 1, ownSecondsAt: minute * 60 }, { id: 2, ownSecondsAt: minute * 60 }] } },
+    survival: { thirst: minute / 6, fed: minute - 600, rotMinutes: minute - 539, lastMinute: minute, sick: false },
+    automap: { "17/Privateer's Hold": { lastVisited: minute + 0.25, seen: [1, 2] } },
+  });
+  assert.equal((await c.session.checkpoint(JSON.stringify(at(600)))).ok, true);
+  assert.equal((await realmLeave(dev.io, c.id, c.row().lease, { keepalive: true })).ok, true);   // the seat is taken
+  assert.deepEqual(await c.session.checkpoint(JSON.stringify(at(606))), { ok: false, error: 'lease' });
+  assert.equal(readUnsent(dev.storage, c.id)?.missed, false, 'idle: the clock alone moved');
+
+  const fed = await joined(acct, dev);
+  assert.equal((await fed.session.checkpoint(JSON.stringify(at(600)))).ok, true);
+  assert.equal((await realmLeave(dev.io, fed.id, fed.row().lease, { keepalive: true })).ok, true);
+  assert.deepEqual(await fed.session.checkpoint(JSON.stringify({ ...at(606, []), survival: { ...at(606).survival, fed: 0 } })), { ok: false, error: 'lease' });
+  assert.equal(readUnsent(dev.storage, fed.id)?.missed, true, 'the bread eaten: the pack differs, so the copy holds play');
+});
+
 test('STRANDED: a full device keeps every set-aside save when it still cannot keep the unsent copy', async () => {
   const acct = await account();
   const dev = acct.device();

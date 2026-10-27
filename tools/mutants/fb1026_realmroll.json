@@ -207,6 +207,33 @@
     ]
   },
   {
+    "name": "STRANDED-idle-survival-kept",
+    "file": "src/systems/realmSaves.js",
+    "old": "if (rest.survival && typeof rest.survival === 'object') { const { lastMinute, rotMinutes, thirst, fed, ...survival } = rest.survival; rest.survival = survival; }",
+    "new": "",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "STRANDED-idle-quest-stamps-kept",
+    "file": "src/systems/realmSaves.js",
+    "old": "  for (const quest of Object.values(rest.quest?.machine?.quests ?? {})) if (quest && typeof quest === 'object') delete quest.ownSecondsAt;\n",
+    "new": "",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
+    "name": "STRANDED-idle-automap-stamps-kept",
+    "file": "src/systems/realmSaves.js",
+    "old": "  for (const map of Object.values(rest.automap ?? {})) if (map && typeof map === 'object') delete map.lastVisited;\n",
+    "new": "",
+    "tests": [
+      "test/server/rescuesave.test.js"
+    ]
+  },
+  {
     "name": "STRANDED-set-aside-never-yields-room",
     "file": "src/systems/realmSaves.js",
     "old": "    setYieldingStranded(storage, unsentKey(id), text, id);",

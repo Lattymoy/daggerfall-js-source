@@ -247,15 +247,21 @@ export const REALM_UNSENT_GRACE_MS = 1_500;
 /** SCALE2b (Scale-Arc "Checkpoints: every 120 s, sent even when the save has not changed"): a checkpoint whose save is
  *  the one that last landed, but for its clock and its look, goes at least this often - and otherwise not at all. */
 export const REALM_IDLE_CHECKPOINT_MS = 10 * 60 * 1000;
-/** SCALE2b: what a save says once its clock and its look are set aside - the character's two minutes (`classicMinutes`,
- *  the world's `worldMinutes`) and where the camera points (`pose.yaw`, `pose.pitch`, `pose.camera`) move every
- *  checkpoint of a player standing still; nothing else does. Null for a text that is not a save's JSON (no skip). */
+/** SCALE2b: what a save says once its clock and its look are set aside: the two minutes (`classicMinutes`,
+ *  `worldMinutes`), where the camera points (`pose.yaw`, `pitch`, `camera`), and what the clock moves in an idle tab -
+ *  each quest's `ownSecondsAt`, the automap's `lastVisited`, and `survival`'s `lastMinute`, `rotMinutes`, `thirst` and
+ *  `fed` (STRANDED's idle test, 2026-10-27). Thirst and fed also fall when the player eats or drinks, but eating spends
+ *  an item and a waterskin drink its charge, so the pack still differs: only a fountain's or a well's drink since the
+ *  last landed save is not told apart. Null for a text that is not a save's JSON (no skip). */
 export function idleKeyOf(text, summary = null) {
   let s;
   try { s = JSON.parse(text); } catch { return null; }
   if (!s || typeof s !== 'object' || Array.isArray(s)) return null;
   const { classicMinutes, worldMinutes, ...rest } = s;
   if (rest.pose && typeof rest.pose === 'object') { const { yaw, pitch, camera, ...pose } = rest.pose; rest.pose = pose; }
+  if (rest.survival && typeof rest.survival === 'object') { const { lastMinute, rotMinutes, thirst, fed, ...survival } = rest.survival; rest.survival = survival; }
+  for (const quest of Object.values(rest.quest?.machine?.quests ?? {})) if (quest && typeof quest === 'object') delete quest.ownSecondsAt;
+  for (const map of Object.values(rest.automap ?? {})) if (map && typeof map === 'object') delete map.lastVisited;
   return JSON.stringify([rest, summary]);
 }
 
