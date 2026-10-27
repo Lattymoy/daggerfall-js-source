@@ -89,7 +89,7 @@ What a cell holds is bounded by the game:
   BLOCKS.BSA does not hold. Their building count is bounded only by the key's record byte (256), and 256 x 60 pieces
   would pass the kept bound. YC1 must show they hold at most 32 (section 4.1, gap 1).
 
-### 3.2 Schema (migration 0178_yard_cell, account service acct197)
+### 3.2 Schema (migration 0178_yard_cell, account service acct198)
 
 ```sql
 -- a cell's version, moved by the database on every yard row written; `built`, the version its row was last built at
@@ -129,7 +129,7 @@ CREATE TABLE home_yard_cells (
   live without a rollback. Nothing builds a town row any more; the old triggers still move the town's version, so
   acct192's read (the rows as they stand where the built row is behind) stays correct if the service is rolled back.
   YC3 drops them.
-- **The number.** 0178 and acct197 (0176 and acct193 when this was written, renumbered past main's COPY-LIFT, NIRNROOT-SAGE, LOCKPICK and WOVEN-PAYS) are the next free ones on main. #1184 carries 0174-0177 and acct189 on its
+- **The number.** 0178 and acct198 (0176 and acct193 when this was written, renumbered past main's COPY-LIFT, NIRNROOT-SAGE, LOCKPICK, WOVEN-PAYS and JEWEL-KIN) are the next free ones on main. #1184 carries 0174-0177 and acct189 on its
   branch and renumbers at its merge, as its own pages say; whichever lands second renumbers.
 
 ### 3.3 Writes
@@ -457,7 +457,7 @@ by version, the same shape as the yards', is a slice of its own after the yards 
 
 | Slice | What | Deploy |
 |---|---|---|
-| YC1 | Service: migration 0178 (cell tables, triggers, backfill), `settleYardCell`, the stale clock, the cell route, the per-cell kept answers, the town cap removed, the old route refused (`410`, `client-update`), `HOME_TOWN_MAX` 2,048, the capitals' test (section 4.1). Client: `yardCellSync.js`, nearest first across towns, standing on a time budget, the poll at 60 s with section 3.7's skips, the refusal text removed | one release, on main before #1184: account service acct197 first, the site after it (its deploy waits for the version) |
+| YC1 | Service: migration 0178 (cell tables, triggers, backfill), `settleYardCell`, the stale clock, the cell route, the per-cell kept answers, the town cap removed, the old route refused (`410`, `client-update`), `HOME_TOWN_MAX` 2,048, the capitals' test (section 4.1). Client: `yardCellSync.js`, nearest first across towns, standing on a time budget, the poll at 60 s with section 3.7's skips, the refusal text removed | one release, on main before #1184: account service acct198 first, the site after it (its deploy waits for the version) |
 | YC2 | The push: the YARD ORDER (service), the hub's yard arm and welcome field (relay, RELAY_VERSION), the client's carrier and listener; the slow poll and its doubling | the relay and the service before the site; one release |
 | YC3 | `home_yards`, `home_yards_ver` and their triggers dropped | account service alone, after YC1 has been live without a rollback |
 | YC4 | The town's homes answer by cell and by version (section 6) | its own slice, after YC2 |
@@ -466,7 +466,7 @@ Each slice is its own pull request, opened as a draft and made ready only after 
 
 ## 10. YC1 - built (2026-10-26)
 
-The service and the client of section 3, in one release (acct197, migration 0178; acct193 and 0176 on its branch, renumbered past main's COPY-LIFT, NIRNROOT-SAGE, LOCKPICK and WOVEN-PAYS at the merges). Departures from the plan above are
+The service and the client of section 3, in one release (acct198, migration 0178; acct193 and 0176 on its branch, renumbered past main's COPY-LIFT, NIRNROOT-SAGE, LOCKPICK, WOVEN-PAYS and JEWEL-KIN at the merges). Departures from the plan above are
 named in the second list.
 
 - **The law both ends read**: `src/net/yardCellLaw.js` - `yardCellOf`, the request's shape (`yardCellAskOf`, at most
@@ -482,7 +482,7 @@ named in the second list.
   nearest first on `YARD_STAND_BUDGET_MS`. The town-full sentence left `net/accountClient.js` and every language.
 - **The deploy's smoke** (`account-deploy.yml`): the cell route read off a cell D1 built, the old route's 410 asked until
   this deploy answers it, the kept cells asked of D1 itself.
-- **The relay redeploys** as world271 (world266 on the branch, renumbered past AUDIT KETCH II, KETCH-WORDS, NIRNROOT-SAGE, BOW-TOPS and CHAT-POST): `net/homeLaw.js`, where HOME_TOWN_MAX lives, is in its import graph. No relay behaviour moves.
+- **The relay redeploys** as world272 (world266 on the branch, renumbered past AUDIT KETCH II, KETCH-WORDS, NIRNROOT-SAGE, BOW-TOPS, CHAT-POST and MASTER-THREE): `net/homeLaw.js`, where HOME_TOWN_MAX lives, is in its import graph. No relay behaviour moves.
 
 Departures from the plan:
 
@@ -593,7 +593,7 @@ These are the working notes. The pull request holds the checks as they are run.
   registry (the `onHomeOrders` shape): `online.js` hands the yard words and the hub link's state to it, and
   `accountClient.js` hands it the orders. `homeYards.js` and `yardCellSync.js` subscribe to it. On the relay, the
   arm is a module of its own (the `staffFreeze.js` shape), with one dispatch line in `_message`.
-- **ACCOUNT_VERSION moves (acct198).** The site's deploy waits until the service serves the version in the tree
+- **ACCOUNT_VERSION moves (acct199).** The site's deploy waits until the service serves the version in the tree
   (`deploy.yml`, "Read the account service this build talks to"). Without the move, a new site could go live on
   an old service: its writes would carry no order, and with a healthy hub socket its poll would be the slow one, which
   is worse than YC1.
@@ -604,7 +604,7 @@ These are the working notes. The pull request holds the checks as they are run.
 the bus's fan reaches every shard's sockets. The yard arm takes that route, as the home arm does. Read in the code,
 not driven: no test stands a sharded hub for the yard word.
 
-**What was built** (account acct198, relay world272 - over YC1's acct197 and world271; world271 on the branch, renumbered past YC1 when YC1 took world271 past CHAT-POST):
+**What was built** (account acct199, relay world273 - over YC1's acct198 and world272; world271, then world272, and acct198 on the branch, renumbered past YC1 at the merges):
 
 - Service: `settleYardCell` answers `{ cell, ver }` off `RETURNING built`; the decor routes answer `yardVer` and
   `yardOrder` (`server-account/src/index.js` yardOrderOf); `net/identityToken.js` kind `yard`, `mintYardOrder`.
@@ -641,4 +641,4 @@ was block 1287, about 450 m from B.
 - **The skip.** With B's tab hidden, B heard the hub's word for A's next piece but asked nothing in 10 s. When the tab
   showed, B asked that cell at once and showed the piece after 0.6 s.
 - Not driven here: a window over the world, which reads the same gate as the hidden tab and was driven in YC1's
-  checks, and the hub's shards (above). The relay was renumbered world272 after this run; the renumber moves no code.
+  checks, and the hub's shards (above). The relay was renumbered world272, then world273, and the account acct199, after this run; the renumbers move no code.

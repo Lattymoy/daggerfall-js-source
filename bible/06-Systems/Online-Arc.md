@@ -8123,7 +8123,8 @@ the wire, the relay and the receiver are as they were. Raising the bound instead
 crafted gift - Mac's call, not taken here. `net/wire.js`'s comment over CAST_LEVEL_MAX still says "A player is level
 30 at most (classic's cap)", which is wrong; the file is the relay's fingerprinted law (SLAM8 hashes its bytes, so a
 comment edit is a relay version and a redeploy), and the sentence is to be corrected with the next relay change -
-the bound is the frame's, and the sender clamps to it.
+the bound is the frame's, and the sender clamps to it. (Corrected with MASTER-THREE's relay change, world271: AUDIT
+FB1026d II C4, `01-Overview/bugs/Field-Bugs-2026-10-26d.md` - the level cap is 45 now, LEVEL-45, and the bound stays 30.)
 
 Pinned in `test/systems/allycast.test.js` PEER-CAST (every level from 1 to a million mints a frame the wire takes, clamped at
 30; the magic host driven with the wire's own door - a level-34 CasterOnly Heal leaves at 30 and the caster is not
@@ -10892,7 +10893,7 @@ than half of Daggerfall city cannot place outdoor decorations due to bug with ya
 - **Replaced: YARD-CELL (2026-10-26).** The owner and a maintainer judged the town-wide bound a band-aid: it is the
   size of a D1 row, not a game rule. `11-Multiplayer/Yard-Cells.md` replaces it - the yards kept, synced by version and
   stood by block (`cell = building_key >> 8`), with no town-wide cap - and fits it to the rest of Tamriel (#1184). YC1
-  built it (acct197, migration 0178): DECOR_YARDS_TOWN_MAX, `yard-town-full` and YARD_STANDS_A_FRAME are gone.
+  built it (acct198, migration 0178): DECOR_YARDS_TOWN_MAX, `yard-town-full` and YARD_STANDS_A_FRAME are gone.
 - **The four hosts.** Yards stand in `scenes/world.js` alone (unchanged); `scenes/exterior.js`, `scenes/worldModes.js`
   (interiors) and `scenes/dungeonContext.js` stand none. No relay change. acct191 (acct177 and migration 0163 on its branch, renumbered past main's acct177-acct190
   and 0163-0174 at its merges).

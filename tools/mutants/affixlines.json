@@ -86,8 +86,8 @@
   {
     "name": "AFFIX-LINES-every-record-the-new-law",
     "file": "src/systems/smithItems.js",
-    "old": "byLines: Number.isSafeInteger(version) && version >= MINT_V_LINES,",
-    "new": "byLines: true,",
+    "old": "byLines: at(MINT_V_LINES), lean",
+    "new": "byLines: true, lean",
     "tests": [
       "test/systems/affixlines_reforge.test.js",
       "test/systems/fb1013e_craftprocs.test.js"
@@ -96,8 +96,8 @@
   {
     "name": "AFFIX-LINES-no-record-the-new-law",
     "file": "src/systems/smithItems.js",
-    "old": "byLines: Number.isSafeInteger(version) && version >= MINT_V_LINES,",
-    "new": "byLines: false,",
+    "old": "byLines: at(MINT_V_LINES), lean",
+    "new": "byLines: false, lean",
     "tests": [
       "test/systems/affixlines_reforge.test.js",
       "test/systems/fb1013e_craftprocs.test.js"
@@ -106,7 +106,7 @@
   {
     "name": "AFFIX-LINES-the-craft-stamps-1",
     "file": "src/net/productRecord.js",
-    "old": "export const MINT_VERSION = MINT_V_ARMOR_LEAN;",
+    "old": "export const MINT_VERSION = MINT_V_JEWEL_KIN;",
     "new": "export const MINT_VERSION = MINT_V_LAST_PASS;",
     "tests": [
       "test/systems/affixlines_reforge.test.js",

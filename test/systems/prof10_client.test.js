@@ -469,7 +469,7 @@ test('PROF10 book: a piece carries a Lapidary\'s cracked gem to the door - `crac
   assert.equal(minted[0]?.name, 'Gold Diamond Ring');
   await book.craft('ring:gold:diamond', { clean: true }, () => {});
   assert.equal(asked.at(-1)[2], false);
-  assert.match(src('src/net/accountClient.js'), /craft: \(character, recipe, clean, name, rid, heartwood = false, dye = null, seat = null, cracked = false\) => post\('\/v1\/prof\/craft', \{ character, recipe, clean, name, rid, heartwood, \.\.\.\(dye == null \? \{\} : \{ dye \}\), \.\.\.\(seat == null \? \{\} : \{ seat \}\), \.\.\.\(cracked === true \? \{ cracked: true \} : \{\}\) \}\),/);
+  assert.match(src('src/net/accountClient.js'), /craft: \(character, recipe, clean, name, rid, heartwood = false, dye = null, seat = null, cracked = false\) => post\('\/v1\/prof\/craft', \{ character, recipe, clean, name, rid, heartwood, \.\.\.\(dye == null \? \{\} : \{ dye \}\), \.\.\.\(seat == null \? \{\} : \{ seat \}\), \.\.\.\(cracked === true \? \{ cracked: true \} : \{\}\), mint: MINT_VERSION \}\),/);   // PIN MOVED (AUDIT FB1026d C3): a craft names the mint version this build mints
   assert.doesNotMatch(accountRefusalText('prof-lapidary'), /problem|could not be read/);
   assert.match(accountRefusalText('prof-lapidary'), /Only a Lapidary/);
 });
@@ -491,13 +491,13 @@ test('PROF10 wiring: the jeweller\'s bench a Pawn Shop\'s or a Gem Store\'s (ope
   assert.match(b, /\.\.\.\(cracked === true \? \{ cracked: true \} : \{\}\) \};/);
   assert.match(b, /Number\.isSafeInteger\(w\.seat\) \? w\.seat : null, w\.cracked === true\)\), key\);/);   // PIN MOVED (PROF12): a brew kept as a craft is asks its own door first
   const svc = src('server-account/src/professions.js');
-  assert.match(svc, /export async function craftAtAnvil\(ctx, player, env, \{ character, recipe: id, clean, name, heartwood = false, dye = null, rid, seat = null, cracked = false \} = \{\}\)/);
+  assert.match(svc, /export async function craftAtAnvil\(ctx, player, env, \{ character, recipe: id, clean, name, heartwood = false, dye = null, rid, seat = null, cracked = false, mint = null \} = \{\}\)/);   // PIN MOVED (AUDIT FB1026d C3): and the service stamps it, at most its own
   assert.match(svc, /if \(crack && !\(takesCracked\(r\) && specs\[100\] === LAPIDARY\)\) return \{ error: 'prof-lapidary' \};/);
   assert.match(svc, /const hand = dishHand\(r, specs\[100\]\) \?\? jewelHand\(r, specs\[50\]\);/);
   assert.match(svc, /qualityOdds\(rank - r\.rank, \{ masterwright: masterworkSpec\(specs\[100\], r\) \}\)/);   // PIN MOVED (CRAFT3): the Master Jeweler's points asked of the recipe (a jewel's alone)
   const idx = src('server-account/src/index.js');
   assert.match(idx, /'prof-lapidary': 403,/);
-  assert.match(idx, /POST \/v1\/prof\/craft \{ character, recipe, clean, name\?, heartwood\?, dye\?, cracked\?, rid \}/);
+  assert.match(idx, /POST \/v1\/prof\/craft \{ character, recipe, clean, name\?, heartwood\?, dye\?, cracked\?, mint\?, rid \}/);   // PIN MOVED (AUDIT FB1026d II D5): JEWEL-KIN's `mint` in the route's contract
   const p = src('src/ui/professions/profPages.js');
   assert.match(p, /\['fire', \(d\) => drawCookFire\(d, rerender, kit\)\],   \/\/ PROF9\n\s*\['jeweller', \(d\) => drawJewellerBench\(d, rerender, kit\)\],   \/\/ PROF10/);   // PIN MOVED (MENU-ORDER): the stations a list of tiles
   assert.match(src('src/ui/enhanced/enhancedPlusStyle.js'), /\.prof-heatbar\.prof-facetbar \{/);
