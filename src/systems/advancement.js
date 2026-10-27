@@ -66,6 +66,18 @@ export const SKILL_RAISE_CHECK_INTERVAL = 360;   // classic minutes
 export const LEVELUP_BONUS_POOL_MIN = 4;         // FormulaHelper.BonusPool
 export const LEVELUP_BONUS_POOL_MAX = 6;
 
+/** LEVEL-45 (2026-10-27, a player through mob: "-4% exp/level to apply even to people who stuck to lvl 1 - could u level
+ *  skill and not level up?"): THE LEVEL A RAISE IS PRICED AT. A level owed is never taken until the player opens the
+ *  window (LV2), and the 1.04^level above read the level TAKEN - so a character that left every level owed trained at
+ *  level 1's price for good. Online the price reads the level its skills have earned (levelCap.js), owed or not; offline
+ *  it is DFU's `Level`. */
+export function raisePriceLevel(entity) {
+  const level = entity?.level ?? 1;
+  if (entity?._online !== true || !entity.career || !Array.isArray(entity.skills)) return level;
+  const live = levelUpSkillSum(entity), held = entity.currentLevelUpSkillSum;
+  return Math.max(level, onlineLevelFor(entity.startingLevelUpSkillSum ?? live, held >= live ? held : live));
+}
+
 export function skillUsesForAdvancement(skillValue, skillMult, careerAdvMult, level) {
   const levelMod = Math.pow(1.04, level);
   return Math.floor((skillValue * skillMult * careerAdvMult * levelMod * 2) / 5) + 1;
@@ -146,9 +158,10 @@ export function raiseSkills(entity, classicTimeMinutes, rolls = Math.random, onL
   const virtue = usesVirtueLeveling(entity);
   const virtueSettings = virtue ? levelingSettings() : null;
   const raised = [];
+  const priceLevel = raisePriceLevel(entity);   // LEVEL-45: online, the level its skills earned
   for (let i = 0; i < entity.skillUses.length; i++) {
     const needed = skillUsesForAdvancement(
-      entity.skills[i], SKILL_ADVANCEMENT_MULTIPLIER[i], entity.career.advancementMultiplier, entity.level);
+      entity.skills[i], SKILL_ADVANCEMENT_MULTIPLIER[i], entity.career.advancementMultiplier, priceLevel);
     const reflexesMod = 0x10000 - ((entity.reflexes - 2) << 13);
     const calcUses = (entity.skillUses[i] * reflexesMod) >> 16;
     // SOFTCAP1: PAST 100 the ladder's cost can exceed the 20000 tally clamp
@@ -169,7 +182,7 @@ export function raiseSkills(entity, classicTimeMinutes, rolls = Math.random, onL
       prog[i] = (prog[i] ?? 0) + uses / cost;
       entity.skillUses[i] = 0;
       if (!(prog[i] >= 1)) continue;
-      const nextCost = softcapUsesForAdvancement(entity.skills[i] + 1, SKILL_ADVANCEMENT_MULTIPLIER[i], entity.career.advancementMultiplier, entity.level);
+      const nextCost = softcapUsesForAdvancement(entity.skills[i] + 1, SKILL_ADVANCEMENT_MULTIPLIER[i], entity.career.advancementMultiplier, priceLevel);
       prog[i] = (prog[i] - 1) * cost / nextCost;   // 0 at the hard cap (the next point costs Infinity)
       entity.skills[i] += 1;
       setSkillRecentlyIncreased(entity, i);
@@ -255,7 +268,7 @@ export function raiseSkills(entity, classicTimeMinutes, rolls = Math.random, onL
 export function skillAdvanceProgress(entity, i, { now = null } = {}) {
   const wait = skillCheckWait(entity, now);
   const value = entity.skills?.[i] ?? 0;
-  const needed = skillUsesForAdvancement(value, SKILL_ADVANCEMENT_MULTIPLIER[i], entity.career?.advancementMultiplier ?? 1, entity.level ?? 1);
+  const needed = skillUsesForAdvancement(value, SKILL_ADVANCEMENT_MULTIPLIER[i], entity.career?.advancementMultiplier ?? 1, raisePriceLevel(entity));
   const reflexesMod = 0x10000 - (((entity.reflexes ?? 2) - 2) << 13);
   const tally = entity.skillUses?.[i] ?? 0;
   if (value >= SKILL_SOFT_CAP && skillCanPassCap(entity, i)) {
@@ -277,7 +290,7 @@ export function skillCheckWait(entity, now = null) {
 }
 /** The pass's raise of skill `i` below 100: its uses reach the requirement (the uses as Reflexes scales them). */
 const meetsBelowCap = (entity, i) => ((((entity.skillUses?.[i] ?? 0) * (0x10000 - (((entity.reflexes ?? 2) - 2) << 13))) >> 16)
-  >= skillUsesForAdvancement(entity.skills?.[i] ?? 0, SKILL_ADVANCEMENT_MULTIPLIER[i], entity.career?.advancementMultiplier ?? 1, entity.level ?? 1));
+  >= skillUsesForAdvancement(entity.skills?.[i] ?? 0, SKILL_ADVANCEMENT_MULTIPLIER[i], entity.career?.advancementMultiplier ?? 1, raisePriceLevel(entity)));
 /** AUDIT SUGGESTIONS-1019 L3-2: whether DFU's 95 lock stands for skill `i` when the pass reaches it - a primary at 100
  *  already, or a primary before it in the pass at 99 that the pass raises to 100 (its own lock not standing). */
 function lockedBy(entity, i) {

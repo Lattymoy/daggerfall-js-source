@@ -146,3 +146,20 @@ test('LEVEL-45: online character creation has no biography - the class goes stra
   assert.equal(on.state, 'name');
   assert.deepEqual(on.biographyEffects, []);
 });
+
+test('LEVEL-45: online a raise is priced at the level the skills earned - leaving every level owed no longer trains at level 1\'s price; offline DFU\'s taken level', async () => {
+  const { raisePriceLevel, skillAdvanceProgress } = await import('../../src/systems/advancement.js');
+  const career = { advancementMultiplier: 1, primarySkills: [0, 1, 2], majorSkills: [3, 4, 5], minorSkills: [6, 7, 8, 9, 10, 11] };
+  const skills = new Array(35).fill(5);
+  [0, 1, 2].forEach((i) => { skills[i] = 90; });
+  [3, 4, 5].forEach((i) => { skills[i] = 80; });
+  skills[6] = 70;
+  const held = (online) => ({ _online: online, isPlayer: true, level: 1, career, skills: [...skills], skillUses: new Array(35).fill(0), reflexes: 2, startingLevelUpSkillSum: 150, currentLevelUpSkillSum: 0 });
+  const on = held(true), off = held(false);
+  const earned = onlineLevelFor(150, levelUpSkillSum(on));
+  assert.ok(earned > 20);
+  assert.equal(raisePriceLevel(on), earned, 'online: the earned level');
+  assert.equal(raisePriceLevel(off), 1, 'offline: the level taken');
+  assert.ok(skillAdvanceProgress(on, 0).need > 2 * skillAdvanceProgress(off, 0).need, 'the held level pays the earned price');
+  assert.equal(raisePriceLevel({ ...on, level: 44 }), 44, 'never below the level taken');
+});
