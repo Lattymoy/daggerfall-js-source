@@ -2240,7 +2240,7 @@ export function accountTowns({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     econ: () => post('/v1/towns/econ', {}),
     witness: (town, receipt) => post('/v1/towns/witness', { town, receipt }),   // AUDIT TOWN-ECON 2 SVC-1: a walk's tick
     strike: (map) => post('/v1/towns/strike', { map }),   // SVC-1: a developer's
-    audit: (region) => post('/v1/towns/audit', { region }),
+    audit: (region, page = 0) => post('/v1/towns/audit', page ? { region, page } : { region }),   // BAY-LEFT-SEA: a page past the first
     /** SEA-TRADE: `sea` the indices of the receipts that vouch a dealing at a port's exchange (none sent, none) */
     watch: (receipts, sea = []) => post('/v1/towns/watch', sea.length ? { receipts, sea } : { receipts }),
     /** the signed-in account - whose ticks are kept */

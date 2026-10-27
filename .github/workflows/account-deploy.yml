@@ -393,6 +393,7 @@ on:
       - "src/systems/upkeep/upkeepTiers.js"
       - "src/world/blockHash.js"
       - "src/world/buildingNames.js"
+      - "src/world/capitalLane.js"
       - "src/world/meshReader.js"
       - "src/world/perlin.js"
       - "src/world/puddleDry.js"
