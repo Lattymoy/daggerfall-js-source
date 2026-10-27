@@ -17051,9 +17051,9 @@ said fifteen); the seven worst fixed at the root and pinned, the rest recorded h
   memory shows the bare seat title until its recall is answered), *a thrown team's single `park` frame is kept a whole
   PARK_TTL_MS* (the `parks` arm subtracts the record's age; the single frame does not read its `at`), *a slow mint gets
   every rehello swept* (`_flushRehello` measures the
-  swap from before the socket opened against BACKOFF_MAX_MS, the mint's own budget), and *several room sends skip
-  SD-HELLO's welcomed check* (`sendHit`'s routing loop, `sendDuel`'s room path, the zone's word) - latent while no
-  cell's hello yields.
+  swap from before the socket opened against BACKOFF_MAX_MS, the mint's own budget). The room sends this list named as
+  skipping SD-HELLO's welcomed check - `sendHit`'s cell loop, `sendDuel`'s bout room, the zone's words (`sendWild`) -
+  wait for the welcome since RPT1026-SECNET (2026-10-26), beside `sendAct`, the one an instance's slow hello caught.
 - Comment drift: orphaned doc blocks above `TOKEN_WAIT_MS`, `TRADE_IN_SENDERS_MAX`, `SEAT_TEXT`, `sendArena` and
   `poseAgeMs`; `tick`'s doc still describes the ease NET-SMOOTH 4 replaced; `_scheduleRetry`'s says its first retry is
   unjittered, which SLAM12 changed.
@@ -17394,4 +17394,35 @@ hearth stands at its middle, so its far end is out of a brazier's reach - the ca
 slice's to widen.
 
 Pinned in `test/systems/decor/decoruse.test.js` (D1, D2, D4, D6, D8); `tools/mutants/decoruse.json` (23, all dead).
+
+## LINE-STALL - a stalled line is handed no burst (RPT1026-SECNET, 2026-10-26)
+
+A private report came from a player on a poor line who kept losing the online world. A stalled TCP line keeps
+every frame the page gives it and delivers them together when it clears. The relay meters each socket's poses at
+POSE_HZ_MAX with that much burst, and closes a socket after DROP_STRIKES_MAX over-rate frames in a row (AUDIT ONLINE A8's
+flood guard). A walk sends POSE_HZ poses a second, so about 22 s of stall arrived as 220 frames and read as a flood:
+"too many poses", CLOSE_POLICY, terminal in that room until the player moved room. A host's foes stream (FOES_HZ_MAX)
+struck out the same way after about 18 s. The session had no way to know its line was stalled. It pinged only a socket
+that was saying nothing (RELAY-H1), so a lone player who was walking heard nothing back, and nothing was asked.
+
+- **The line is asked.** A socket that has heard nothing for PING_MS is pinged, however busy it is sending, on every
+  socket the session holds (the halos too). The runtime answers every ping, asleep or awake, so a ping still unanswered
+  after LINE_STALL_MS means the line is stalled (`net/online.js` `_ear`, `_stalled`). Any frame in clears it.
+- **A stalled line is handed no burst.** Its poses wait (`_poseHeld`). The latest goes the moment the line answers,
+  since `sendPose` is asked every frame, and one goes per HEARTBEAT_MS meanwhile. Its foes streams wait too
+  (`sendFoes`, `sendOwnFoes`): the host's next frame is whole, AUDIT WORLD2 A9's law. Events are not held: a door, a
+  blow and a word go as the player acts, far under their own meters, and each keeps its own queue.
+- **The arithmetic.** A stall is known within PING_MS + LINE_STALL_MS (10 s). By then a walk has handed the line about
+  100 poses and a host about 120 foes frames. The meter passes its burst and drops the rest without reaching
+  DROP_STRIKES_MAX. **The relay's meter does not move:** the flood guard stands as it was, and an honest page no longer
+  meets it.
+
+Pinned in `test/net/rpt1026_secnet_net.test.js`:
+- a walk through the real Room with the line held 29 s and let go at once (the runtime's ping answer in front of it);
+- the arithmetic, held to the laws;
+- a host's stream and own lane held, and the heartbeat let through;
+- a halo's stalled line, its shared ping and its own.
+
+The mutants are in `tools/mutants/rpt1026_secnet.json` (RPT1026-SECNET-stall-*, -no-deaf-ping, -line-never-heard,
+-foes-*, -own-*, -halo-*). Every one of them dies.
 

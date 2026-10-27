@@ -1303,8 +1303,10 @@ const service = {
         // A SECOND DEVICE, admitted by a device that is already in.
         // This is the whole of "two devices at once" and it is why a
         // session is the credential rather than the player.
-        const made = await openSession(ctx, who.player.id, body.label ?? null);
-        return json(made, 200, origin);
+        // RPT1026-SECNET: and only while that device IS in - a recovery that signed every device out while this ran
+        // (accounts.js openSession's guard) leaves no device its admitted one could outlive it on
+        const made = await openSession(ctx, who.player.id, body.label ?? null, { session: who.session.id });
+        return made ? json(made, 200, origin) : no('auth', 401, origin);
       }
 
       if (path === '/v1/account' && request.method === 'GET') {

@@ -153,7 +153,8 @@ test('JOURNAL1 relay: a page reaches the one player it names, stamped with its w
   const c = r.connect(); await r.hello(c, 'peer-0003');
   for (const ws of [a, b, c]) ws.sent.length = 0;
   await r.raw(a, JSON.stringify({ t: 'page', data: { to: 'peer-0002', page: { head: ' Morndas in Daggerfall: ', lines: [`${RLO}Meet me`, '', '', 'at the Relic.'] } } }));
-  assert.deepEqual(pages(b), [{ t: 'page', id: 'peer-0001', data: { to: 'peer-0002', page: PAGE } }]);
+  // PIN MOVED (RPT1026-SECNET): and its writer's verified account (the token's), so a reader who blocked it never sees it
+  assert.deepEqual(pages(b), [{ t: 'page', id: 'peer-0001', sub: 'acct-peer-0001', data: { to: 'peer-0002', page: PAGE } }]);
   assert.equal(pages(a).length + pages(c).length, 0, 'the writer and a bystander see nothing');
   assert.equal(a.meters.junk ?? 0, 0);
   tick(1000);   // a page a second (PAGE_HZ_MAX): the next is the meter's to pass, so the arm behind it is what is read
@@ -627,6 +628,7 @@ test('JOURNAL1 host by source: a page held out to me is HELD with its writer\'s 
   const relay = rd('server/src/index.js');
   const arm = relay.slice(relay.indexOf("if (m.t === 'page') {"), relay.indexOf("if (m.t === 'park') {"));
   assert.match(arm, /a = this\._meterPage\(ws, a, now\); if \(!a\) return;\s*\n\s*if \(a\.mu && a\.mu > Math\.floor\(now \/ 1000\)\) \{ this\._send\(ws, JSON\.stringify\(\{ t: 'muted', until: a\.mu \}\)\); return; \}\s*\n\s*if \(isChatRoom\(a\.key\) \|\| isSocialRoom\(a\.key\)\) return;/, 'its meter, then the mute, then a place room alone');
-  assert.match(arm, /if \(!this\._senderFunnel\(tws, a\.id, now\)\) return;\s*\n\s*this\._send\(tws, JSON\.stringify\(\{ t: 'page', id: a\.id, data: m\.data \}\)\);/, 'the funnel shared');
+  // PIN MOVED (RPT1026-SECNET): the page goes out by the directed frames' one builder, the writer's account beside its id
+  assert.match(arm, /if \(!this\._senderFunnel\(tws, a\.id, now\)\) return;\s*\n\s*this\._send\(tws, this\._directedFrame\('page', a, m\.data\)\);/, 'the funnel shared');
   assert.match(relay, /_meterPage\(ws, a, now\) \{ return this\._spend\(ws, now, pageGate, 'pageBucket', 'pageDrops', 'too many page frames'\) \? a : null; \}/);
 });

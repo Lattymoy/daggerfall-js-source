@@ -2653,6 +2653,11 @@ export class Room {
   _meterDuel(ws, a, now) { return this._spend(ws, now, duelGate, 'duelBucket', 'duelDrops', 'too many duel frames') ? a : null; }
   /** LEGACY7 part three: the wed frames' own bucket (WED_HZ_MAX), the same strikes as a duel's. */
   _meterWed(ws, a, now) { return this._spend(ws, now, wedGate, 'wedBucket', 'wedDrops', 'too many wed frames') ? a : null; }
+  /** RPT1026-SECNET (from a private report): A REQUEST ROUTED TO ONE PLAYER, as it goes out - the sender's id AND its
+   *  verified account (`sub`, off the identity token), so the reader's block list (net/online.js _directedIn,
+   *  Chat-Safety-Arc section 2) can hold it back. Four arms carried the account already; the two written before the block
+   *  list existed carried the id alone, and what they carried reached the very player who had blocked its sender. */
+  _directedFrame(t, a, data) { return JSON.stringify({ t, id: a.id, ...(typeof a.sub === 'string' && a.sub ? { sub: a.sub } : {}), data }); }
   /** AUDIT ALLY-CAST B2 + INSPECT1 + JOURNAL1: THE FUNNEL ONTO ONE DESTINATION, PER SENDER - a bounded list of sender
    *  buckets among the destination's meters (`cin`), the stalest sender's slot evicted for a newcomer. One bucket for
    *  every sender together let five strangers at their own rate starve a mate's heals, and this relay cannot tell a mate
@@ -4118,7 +4123,8 @@ export class Room {
     if (m.t === 'trade') {
       // TRADE1: ONE DIRECTED FRAME, THE `hit` FRAME'S OWN ROUTING - from a hello'd socket in a PLACE room (a channel or the
       // hub is no place to stand and trade), on the trade bucket, to the socket `to` names in this room and to it alone,
-      // the sender's id stamped on it. The relay reads none of the items (wire.js validTradeData checked the SHAPE;
+      // the sender's id and its verified account stamped on it (RPT1026-SECNET: `_directedFrame`). The relay reads none of
+      // the items (wire.js validTradeData checked the SHAPE;
       // the receiver projects every record through validLootItem before it reads a field). A peer that is gone is not
       // junk - a leave races a frame - and the sender's own session times out on it.
       const now = Date.now();
@@ -4134,7 +4140,7 @@ export class Room {
       const funnel = tokenGate(tm.tinbucket ?? null, now, TRADE_ROOM_HZ_MAX);
       tm.tinbucket = funnel.bucket;
       if (!funnel.pass) return;
-      const out = JSON.stringify({ t: 'trade', id: a.id, data: m.data });
+      const out = this._directedFrame('trade', a, m.data);   // RPT1026-SECNET: and the sender's account, for the reader's block list
       // AUDIT DROPS B3: the byte budget is the SENDER's, not the room's - a room-wide bucket let two sockets at
       // TRADE_HZ_MAX x TRADE_FRAME_MAX spend the whole room and drop an honest commit that had already cost its
       // sender their goods (LOOT-DUP: sent means gone). Per sender, a flood only starves the flooder.
@@ -4291,7 +4297,8 @@ export class Room {
     if (m.t === 'page') {
       // JOURNAL1: ONE DIRECTED FRAME, the card arm's own routing - a page of the sender's journal held out to the socket
       // `to` names, from a hello'd socket in a PLACE room (a page is shown to someone standing there; a channel or the
-      // hub is nowhere to stand) on the page bucket, the sender's id stamped on it. A MUTED player's page goes nowhere,
+      // hub is nowhere to stand) on the page bucket, the sender's id and its verified account stamped on it (RPT1026-SECNET:
+      // `_directedFrame`). A MUTED player's page goes nowhere,
       // and they are told why and until when, as their line is (MOD1) - after the gate, so a muted player hammering
       // Share is struck out exactly as anyone would be. The relay reads nothing of the page but its law (wire.js
       // validPageData cleaned its words and refused it past its bound); the reader draws it as the sender's own word.
@@ -4307,7 +4314,7 @@ export class Room {
       const [tws] = target;
       // the funnel onto the destination, per sender - the cast's and the card's ONE (_senderFunnel says why)
       if (!this._senderFunnel(tws, a.id, now)) return;
-      this._send(tws, JSON.stringify({ t: 'page', id: a.id, data: m.data }));
+      this._send(tws, this._directedFrame('page', a, m.data));   // RPT1026-SECNET: and the writer's account, for the reader's block list
       return;
     }
     if (m.t === 'park') {
