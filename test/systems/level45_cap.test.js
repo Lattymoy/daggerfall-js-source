@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   ONLINE_LEVEL_CAP, LEVEL_SUM_TOP, ROLLED_START_MIN, ROLLED_START_AVERAGE,
-  onlineLevelFor, onlineLevelFraction, onlineLevelConvert,
+  onlineLevelFor, onlineLevelFraction, onlineLevelConvert, onlineLevelPoints,
 } from '../../src/systems/levelClimb.js';
 import { calculatePlayerLevel, checkForLevelUp } from '../../src/systems/advancement.js';
 import { evenHpFloor } from '../../src/systems/levelEven.js';
@@ -165,4 +165,29 @@ test('LEVEL-45: online a raise is priced at the level the skills earned - leavin
   assert.equal(raisePriceLevel(off), 1, 'offline: the level taken');
   assert.ok(skillAdvanceProgress(on, 0).need > 2 * skillAdvanceProgress(off, 0).need, 'the held level pays the earned price');
   assert.equal(raisePriceLevel({ ...on, level: 44 }), 44, 'never below the level taken');
+});
+
+test('LEVEL-BAR: online the level bar reads skill points - each level\'s span is the points between its start and the next, they add to the whole climb, and the bar is full at the cap (mob: "800/45")', async () => {
+  for (const start of [133, 144, 154, 169, 193, 400]) {
+    const room = LEVEL_SUM_TOP - start;
+    let total = 0;
+    for (let sum = start; sum <= LEVEL_SUM_TOP; sum++) {
+      const { now, max } = onlineLevelPoints(start, sum);
+      const lv = onlineLevelFor(start, sum);
+      if (lv < 45) {
+        assert.ok(now >= 0 && now < max, `start ${start}, sum ${sum}: ${now}/${max}`);
+        if (now === 0 && sum > start) assert.equal(onlineLevelFor(start, sum - 1), lv - 1, 'a level begins where the bar empties');
+      } else assert.equal(now, max, 'full at the cap');
+    }
+    for (let lv = 1; lv < 45; lv++) {
+      let sum = start; while (onlineLevelFor(start, sum) < lv) sum++;
+      total += onlineLevelPoints(start, sum).max;
+    }
+    assert.equal(total, room, `start ${start}: the spans add to the climb`);
+  }
+  const avg = onlineLevelPoints(ROLLED_START_AVERAGE, 420);
+  assert.deepEqual([onlineLevelFor(ROLLED_START_AVERAGE, 420), avg.max], [18, 16], 'about 16 points a level at the average start');
+  const { levelProgress } = await import('../../src/ui/levelUp/levelUpView.js');
+  const bar = levelProgress({ _online: true, level: 17, startingLevelUpSkillSum: ROLLED_START_AVERAGE, currentLevelUpSkillSum: 409 }, 'classic');
+  assert.deepEqual([bar.now, bar.max], [14, 16], 'the window says points, not a percent');
 });

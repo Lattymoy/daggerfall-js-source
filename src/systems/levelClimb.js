@@ -55,6 +55,23 @@ export function onlineLevelFraction(startingSum, currentSum) {
   return exact >= ONLINE_LEVEL_CAP ? 1 : exact - Math.floor(exact);
 }
 
+/** The climbed points at which level `level` begins (0 for level 1): the least `climbed` onlineLevelFor gives it at. */
+const levelStart = (level, room) => Math.max(0, Math.ceil(((PER_LEVEL * level - HEAD_START) * room) / CLIMB_SHARE));
+
+/** LEVEL-BAR (2026-10-27, mob: "800/45", "yessss"): the level bar in skill points - `now` of the `max` this level takes
+ *  (about 16 at an average start). The level the sums earn; at the cap the bar is full. */
+export function onlineLevelPoints(startingSum, currentSum) {
+  const room = LEVEL_SUM_TOP - startingSum;
+  const level = onlineLevelFor(startingSum, currentSum);
+  if (!(room > 0) || level >= ONLINE_LEVEL_CAP) {
+    const max = room > 0 ? levelStart(ONLINE_LEVEL_CAP, room) - levelStart(ONLINE_LEVEL_CAP - 1, room) : 1;
+    return { now: max, max };
+  }
+  const climbed = Math.max(0, Math.min(currentSum - startingSum, room));
+  const from = levelStart(level, room);
+  return { now: climbed - from, max: levelStart(level + 1, room) - from };
+}
+
 /**
  * THE CONVERSION, on a save snapshot (realmCustoms.js crossLeveling runs it at every join and at customs). Moves the
  * start, the level, the stored maximum health and the owed level-up; skills, attributes and items are never touched.
