@@ -717,7 +717,7 @@ export class HeldMapWindow {
     // EG-F: my company's Elite arch's ring - the host's `arch`, read as the gate's is, while the arch stands
     this._arch = null;
     this._archKey = '';
-    this._ketch = null;   // KETCH: the Sky-Ketch over Daggerfall while she is in its sky
+    this._ketches = [];   // KETCH: the Sky-Ketch over Daggerfall while she is in its sky; KETCH-EVERYWHERE: and every province's station's
     this._ketchKey = '';
     // BOUNTY1: the held bounties' black circles - the host's `bounties`, read on the same poll
     this._bounties = [];
@@ -1452,7 +1452,7 @@ export class HeldMapWindow {
           serpent: this._serpent,   // SERPENT1
           sd: this._sd,   // SD2c
           arch: this._arch,   // EG-F
-          ketch: this._ketch,   // KETCH
+          ketches: this._ketches,   // KETCH; KETCH-EVERYWHERE: every station's
           bounties: this._bounties,   // BOUNTY1
           revenants: this._revenants,   // RVN7c
           lodes: this._lodes,   // MINE-PERKS
@@ -2238,10 +2238,11 @@ export class HeldMapWindow {
     const arch = readGateMark(this.deps.arch, this._size);
     const archKey = gateMarkKey(arch);
     if (archKey !== this._archKey) { this._archKey = archKey; this._arch = arch; gateMoved = true; this._dirty = true; }
-    // KETCH: and the Sky-Ketch's, on its own key
-    const ketch = readGateMark(this.deps.ketch, this._size);
-    const ketchKey = gateMarkKey(ketch);
-    if (ketchKey !== this._ketchKey) { this._ketchKey = ketchKey; this._ketch = ketch; gateMoved = true; this._dirty = true; }
+    // KETCH: and the Sky-Ketch's, on its own key - KETCH-EVERYWHERE: every station's (the host's `ketch`, a list - a single
+    // ring read as one), over the sheet's box as WW2's rings are: the Bay's own rectangle while the continent is not shown
+    const ketches = readGateMarks(() => { const v = this.deps.ketch?.(); return Array.isArray(v) ? v : v ? [v] : []; }, f ?? { x0: 0, y0: 0, w: this._size.width, h: this._size.height });
+    const ketchKey = gateMarksKey(ketches);
+    if (ketchKey !== this._ketchKey) { this._ketchKey = ketchKey; this._ketches = ketches; gateMoved = true; this._dirty = true; }
     // BOUNTY1: the circles ride the gate's poll and its repaint - a bounty taken or paid with the map open
     // LAIR-WORLD: and past the Bay, over the continent's frame while it is shown (as WW2's rings above)
     const sheet = f ?? { x0: 0, y0: 0, w: this._size.width, h: this._size.height };
@@ -2317,7 +2318,7 @@ export class HeldMapWindow {
     if (!leg) return;
     leg.innerHTML = '';
     const trav = this._trav.filter((t) => playersOnMaps() && playerShown(t));   // OW-WHO; MAP-PLAYERS: the legend speaks for the players the sheet draws
-    if (!this._party.length && !this._gate && !this._gates.length && !this._serpent && !this._sd && !this._arch && !this._ketch && !this._bounties.length && !this._revenants.length && !this._raids.length && !this._stars.length && !trav.length && !this._quests.length && !this._pois.length && !this._vendor && !this._lodes.length) { leg.classList.toggle('open', false); leg.style.display = 'none'; return; }
+    if (!this._party.length && !this._gate && !this._gates.length && !this._serpent && !this._sd && !this._arch && !this._ketches.length && !this._bounties.length && !this._revenants.length && !this._raids.length && !this._stars.length && !trav.length && !this._quests.length && !this._pois.length && !this._vendor && !this._lodes.length) { leg.classList.toggle('open', false); leg.style.display = 'none'; return; }
     if (this._party.length) {
       const dot = el('span', 'hmlegdot');
       dot.style.background = this._party.some((m) => m.online) ? PARTY_MARK_CSS : PARTY_OFFLINE_CSS;
@@ -2354,7 +2355,7 @@ export class HeldMapWindow {
       dot.style.background = EG_ARCH_RING_CSS;
       leg.append(dot, el('span', 'hmlegtext', EG_ARCH_LEGEND_TEXT));
     }
-    if (this._ketch) {   // KETCH: and the Sky-Ketch
+    if (this._ketches.length) {   // KETCH: and the Sky-Ketch (KETCH-EVERYWHERE: any station's)
       const dot = el('span', 'hmlegdot');
       dot.style.background = KT_RING_CSS;
       leg.append(dot, el('span', 'hmlegtext', ketchLegendText()));
@@ -2725,7 +2726,7 @@ export class HeldMapWindow {
     const [mx, my] = toMap(this._view, sx, sy);
     // AUDIT SD III (T7): a ring answers all it is drawn over - at a far zoom the paper draws it larger than its reach
     const least = GATE_RING_MIN_PX / this._view.scale;
-    for (const g of [this._gate, ...this._gates, this._serpent, this._sd, this._arch, this._ketch]) if (g && Math.hypot(mx - g.cx, my - g.cy) <= Math.max(g.r, least)) return g;   // EG-F: and my company's arch   // SERPENT1: the sea serpent's ring answers as the gate's does (SD2c: and the Super dungeon's)
+    for (const g of [this._gate, ...this._gates, this._serpent, this._sd, this._arch, ...this._ketches]) if (g && Math.hypot(mx - g.cx, my - g.cy) <= Math.max(g.r, least)) return g;   // EG-F: and my company's arch   // SERPENT1: the sea serpent's ring answers as the gate's does (SD2c: and the Super dungeon's)
     return null;
   }
 
@@ -2736,7 +2737,7 @@ export class HeldMapWindow {
     let best = null, bestD = Infinity;
     if (m) { const [x, y] = toPaper(this._view, m.x, m.y); bestD = (x - sx) * (x - sx) + (y - sy) * (y - sy); }
     const scale = this._view.scale;
-    for (const g of [this._gate, ...this._gates, this._serpent, this._sd, this._arch, this._ketch]) {   // EG-F: and my company's arch; WW2: and the gates past the Bay; KETCH: and the Sky-Ketch
+    for (const g of [this._gate, ...this._gates, this._serpent, this._sd, this._arch, ...this._ketches]) {   // EG-F: and my company's arch; WW2: and the gates past the Bay; KETCH: and the Sky-Ketch
       if (!g) continue;
       const [x, y] = toPaper(this._view, g.cx, g.cy), d = (x - sx) * (x - sx) + (y - sy) * (y - sy);
       const r = Math.max(GATE_RING_MIN_PX, g.r * scale);

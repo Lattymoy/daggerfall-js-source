@@ -6988,6 +6988,12 @@ export function validEgOpenTell(v) {
 /** The relay that keeps ships (RELAY_VERSION world255 - world253 on its branch). */
 export const KT_RELAY_MIN = 255;
 export const relaySupportsKetch = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= KT_RELAY_MIN; };
+/** KETCH-EVERYWHERE (bible/11-Multiplayer/Sky-Ketch.md section 22): the first relay that keeps a ship of a station past the
+ *  Bay (its voyage's number naming its theatre - ketchLaw.js ketchTheatreOf); an older one mints no room for its voyage (its
+ *  clock reads that number as a voyage a hundred thousand years on), so a client boards none of them there and stands only
+ *  the Bay's. The world-wide relay's one number (WORLD_WIDE_RELAY_MIN - shipped in it). */
+export const KT_THEATRES_RELAY_MIN = WORLD_WIDE_RELAY_MIN;
+export const relaySupportsKetchTheatres = relaySupportsWorldWide;
 /** What a member may say: its `in` to the bridge's fight, a blow (`hit`), a cell taken, set, let go or knocked from its
  *  hands, and its body's word (`vt`). */
 export const KT_IN_KINDS = Object.freeze(['in', 'hit', 'pick', 'bank', 'drop', 'hurt', 'vt', 'spent', 'rz']);   // AUDIT WORLD-EVENTS L1-4: `rz` my Resurrect at a crewmate lying down   // AUDIT KETCH L1-2: `spent`, a voyage's share given - to the hub alone
@@ -7117,7 +7123,10 @@ export const KT_VOYAGE_KEY = 'ktvoyage';
  *  `{ n, spent: true, e }` once its account says that voyage's share is given (`kt` `spent`, on the hub's socket) - for
  *  the receipt's life, handed at its account's next hello (the Hour's SD9a, rung for rung). */
 export const KT_RC_PREFIX = 'ktrc:';
-export const ketchReceiptKey = (sub) => `${KT_RC_PREFIX}${sub}`;
+/** KETCH-EVERYWHERE: one a STATION (net/ketch/ketchLaw.js ketchTheatreOf - the gate's receipt-a-lane, gateReceiptKey): the
+ *  Bay's station's key the one it always was, and a station past the Bay keeps its own - two voyages of one round are two
+ *  receipts, and one sailed over another province never stands over the other's. */
+export const ketchReceiptKey = (sub, theatre = 0) => (theatre ? `${KT_RC_PREFIX}${sub}.${theatre}` : `${KT_RC_PREFIX}${sub}`);
 /** The hub's internal door a ship's room tells its fall's receipts at, and how long it waits to tell again. */
 export const KT_INTERNAL_RC = '/internal/ketch/rc';
 export const KT_TELL_RETRY_MS = 30_000;

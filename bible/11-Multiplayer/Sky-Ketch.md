@@ -77,7 +77,8 @@ her arrival to her going (`ketchHolds`).
 **In the sky** (`scenes/ketch/ketchSky.js`), on the clock alone so every screen sees one ship in one place: sighted,
 she comes in from the east six kilometres out and ninety metres over her station, slowing, bow west, and turns to her
 station's heading (bow south) over the sighting's last share; at station she hangs still **700 m east and 140 m south of
-Daggerfall's centre, 260 m over the fields** (`world/ketch/ketchModel.js` KT_STATION, KT_GROUND), and lets her
+Daggerfall's centre, 260 m over the fields** (`world/ketch/ketchModel.js` KT_STATION, KT_GROUND - KETCH-EVERYWHERE:
+and a station in each province past the Bay over its own city, section 22), and lets her
 anchor-lift down on its chain over forty seconds; weighing anchor, she draws it up, turns west over a minute, and goes,
 gaining way and height, over the city and out of sight. Her mesh is the made level's own, drawn in the exterior's world
 pass; she stands to the world's collider while she keeps station (a body levitated up finds her hull), never while she
@@ -319,7 +320,8 @@ her helm; the charm's hum is Imrah's tale and the hammer's metal the roll's; the
 
 ## 14. The herald
 
-`net/ketch/ketchHerald.js`: three cards a voyage on the clock alone - **sighted** (pinging the Ketch's role, else the
+`net/ketch/ketchHerald.js`: three cards a voyage on the clock alone (KETCH-EVERYWHERE: a station's, each naming its own
+city - section 22) - **sighted** (pinging the Ketch's role, else the
 gate's), **arrived** and **weighing anchor** (quiet) - each owed once in its window and let go past it, in her family's
 card (`net/herald/heraldCard.js` `ketch`, her blue) and her own thread when the operator names one (`KT_DISCORD_ROLE`,
 `KT_DISCORD_THREAD`, `server/wrangler.toml`). The hub's alarm beats it (`_ktHeraldBeat`).
@@ -633,3 +635,93 @@ above.
 
 PIN MOVED: `ketch_hud` (the clock's words), `l10n4_hardcoded` (the books' count, 57 -> 56), and every `RELAY_VERSION`
 pin (world267).
+
+## 22. KETCH-EVERYWHERE - a station in every province (2026-10-26)
+
+The owner, after the audit "no system left behind in the Bay" (item 34: one station, over Daggerfall's fields): *"Every
+single thing here needs to be addressed. No exceptions."* - the owner's call taken: a Sky-Ketch station in each province
+past the Bay besides Daggerfall's, on the same round, its voyages its own. The record beside the gates' is
+`03-World/World-Wide.md` WW-GATES-EVERYWHERE.
+
+**The stations** (`net/ketch/ketchLaw.js` KT_THEATRES, KT_STATION_CITIES): the Bay's (theatre 0, Daggerfall) and each
+province's past it (1 to 8); the open zone (Cyrodiil, 9) keeps none, as it stands no gate. Each keeps station over the
+fields outside its city:
+
+| Theatre | City | Why |
+|---|---|---|
+| 0 Iliac Bay | Daggerfall | as it always was |
+| 1 High Rock past the Bay | Shornhelm | the province's crowns are the Bay's (WW7-3); the lore's great city past the Bay (`world/tamriel/tamrielGeography.js` CITIES) |
+| 2 Hammerfell past the Bay | Hegathe | the same; the lore's capital there (CITIES `capital`) |
+| 3 Skyrim | Solitude | its crown seat (`world/tamrielCapitals.js` CAPITALS, `net/kingdomLaw.js` KINGDOMS `seat`) |
+| 4 Morrowind | Mournhold | its crown seat |
+| 5 Sumurset Isle | Alinor | its crown seat |
+| 6 Valenwood | Falinesti | its crown seat |
+| 7 Elsweyr | Torval | its crown seat |
+| 8 Black Marsh | Helstrom | its crown seat |
+
+A station's city is the place of its name in its province among TESA's places (`scenes/ketch/ketchStations.js`
+ketchStationPixel, `world/arenaPlaces.js` arenaPixels - every client's alike on the room's trace and fit); her middle is
+its pixel's (every location is centred in its pixel - `world/terrain/terrainTiles.js` getLocationTerrainTileOrigin), and
+she keeps station KT_STATION off it, Daggerfall's own law. On the freeware every city stands in its own province, and its
+anchor-lift comes down on the pixel east of it - its own province's dry land, no place on it, as Daggerfall's
+(`test/net/ketch/ketch_everywhere.test.js`). Evermore and Farrun were measured and refused for High Rock: Evermore's
+lift falls in Hammerfell, Farrun's in the sea.
+
+**The round** (`ketchLaw.js`): every station on Daggerfall's cadence - ten hours, sighted an hour, seven at station,
+forty-five minutes more - each KT_THEATRE_STAGGER_MS (a ninth of the round, 4,000,000 ms: an hour, six minutes and forty
+seconds) behind the one before, so the nine arrivals walk evenly round the ten hours and never come at once.
+
+**The numbers** (`ketchLaw.js` ketchVoyageNumber, ketchTheatreOf): as the gates number a lane - voyage k of theatre t is
+k + t x KT_THEATRE_SPAN (100,000,000, the gates' GATE_LANE_SPAN, pinned equal) - so the Bay's numbers are the ones they
+always were and no theatre's ever meets another's. Everything that reads a voyage's number reads its theatre off it:
+`ketchVoyageOf` its times, `ketchBoards`/`ketchHolds` refuse a theatre with no station, `ketchVoyageAt(now, theatre)` a
+station's voyage. **The room's key is unchanged** - `kt:<voyage in eight hex>.<captain>` holds every station's numbers.
+The Bay's law is pinned to the millisecond over every edge against the old one, written out.
+
+**The relay** (folded into world270, undeployed): the Worker mints a station's ship while its voyage holds and never the
+open zone's; the hub keeps an earner's receipt A STATION (`net/wire.js` ketchReceiptKey - the Bay's `ktrc:<account>` as it
+always was, a station past it `ktrc:<account>.<theatre>`; a station's numbers are in their own order, so one never
+stands over another's), hands every station's at a hello, and spends a station's own on its `spent` word, none past its
+own clock's voyage and none of a theatre with no station. **The herald** (`net/ketch/ketchHerald.js`): every station's
+three cards, each naming its own city (the Bay's word for word as they were), each station's moments owed on its own
+state (`ketchHeraldKey` - `ktherald` the Bay's, `ktherald:<theatre>` a station's). A client stands a station past the Bay
+only on a relay that keeps its ships (`net/wire.js` relaySupportsKetchTheatres, the world-wide relay's number;
+`net/online.js` ktTheatresOk) - an older one reads its number as a voyage a hundred thousand years on and mints none.
+
+**The account** (`server-account/src/ketch.js`, unchanged): a station's voyage is its own share - one row a (voyage,
+account), as each gate lane is its own gate_kills row; the hold's rates and the budget's fill are unchanged.
+
+**The page** (`scenes/ketch/ketchClient.js`): a sky a station (`scenes/ketch/ketchSky.js` createKetchSky's `theatre`, her
+meshes made once for every sky - createKetchSkyArt - and her collider a bucket a station, `ketchSkyBucket`). The Bay's
+sky is framed as it always was; a province's while I stand within KT_STATION_REACH_PX (17 pixels - as far as she flies
+from her station, and one more) of its city. Her words said while I stand in her province (the Bay's as they always
+were); her ring on the held map and the ink map for every station (`ui/heldMap.js` `ketch` a list, the Bay's rectangle
+while the continent is not shown); her Timers rows for the province I stand in beside the Bay's (`systems/eventTimers.js`,
+`scenes/ketch/ketchStanding.js` - eight more would bury the Bay's); her anchor-lift boarding her own station's voyage;
+the way down and the voyage's end said in her own city's fields; a province's ship laid in its province
+(`scenes/ketch/ketchDeckHost.js` ketchShipHit - the site's region's name, where every ship was 'Daggerfall').
+
+**Every line in the player's language** (L10N4): the seven lines that name her city have a station's twin with `{city}`
+(`ketch.sightedAt`, `ketch.arrivedAt`, `ketch.loweredAt`, `ketch.refuse.awayAt`, `ketch.left.dockedAt`,
+`ketch.timers.whereAt`, `ketch.client.awayAt`), drafted in every language from the Bay's own; the Bay's keys and words
+are unchanged.
+
+**Decisions taken.** The made level is one ship's plan, every station's - the tracker names her the Sky-Ketch Mzunthar
+wherever she keeps station, and her two books stay the Bay's account of her (Imrah Bel-Tavir of Sentinel watches the
+Bay's skies). The city off the starboard beam of the made level stays the generic city it draws (`world/ketch/
+ketchModel.js` KT_CITY). Each station's sighting pings the herald's role, as each gate lane's omen pings the gate's.
+
+**The four hosts** (Home.md): `scenes/world.js` wired in place - the held map's `ketch` reads `mapMarks()` (one entry,
+no line added). `scenes/exterior.js` FLAGGED - the Bay's fixed scene draws the Bay's Ketch alone, as before.
+`scenes/worldModes.js` FLAGGED - its `enterKetch` lays the made level from the client's record (`ketchShipHit`).
+`scenes/dungeonContext.js` FLAGGED - the made level is the dungeon arm's, unchanged.
+
+**Pins:** `test/net/ketch/ketch_everywhere.test.js` (7: the stations; the voyages, the Bay's to the millisecond; the
+herald and the hub's beat; the relay; the account; the Timers and the words; ARENA2 the cities and the page). **Mutants:**
+`tools/mutants/ketch_everywhere.json` (31, all dead). The Bay's every pin stands unmoved - no PIN MOVED. Mutant records
+re-aimed by content: `ketch_law.json` (the sighting late, the voyage gone, boarding through the last minutes, holding
+before the arrival - the law's lines a station's now) and `ketch_relay.json` (a spent receipt handed again - the hello's
+walk a station each); with the Ketch's lists on the files this changed (the law, the herald, the sky, the client, the
+words, AUDIT KETCH II's and AUDIT WORLD-EVENTS' records on the client, the Timers' and the maps' Ketch records), seventy,
+all dead. Every test is bounded (a mutant that numbered every voyage the Bay's put the clock past the year 340,000,
+where the Timers' walk of the gate's days never ends - each test asks the round's own clock first).

@@ -192,7 +192,7 @@ import { STAFF_ORDER_KINDS, takeStaffOrder, frozenHello, busFreeze, frozenFrame,
 import { privateInteriorOf, privateInteriorAdmits, caravanKeyOf } from '../../src/net/privateInterior.js';   // WAGONS2-VISIT: and a caravan's own room
 import { isInstanceRoom, instanceOf, instanceAdmission, partyHoldsOwner, INSTANCE_INTERNAL_KIN, INSTANCE_KIN_KEEP_MS, INSTANCE_DOOR_WORD } from '../../src/net/instanceRoom.js';   // INSTANCES: an instance's room, its door and the hub's party answer (bible/11-Multiplayer/Instances.md)
 import { isStaff } from '../../src/net/staffCommands.js';
-import { isKetchRoom, ketchRoomOf, ketchRoomHolds, ketchAdmits, ketchHolds, ketchVoyageOf, ketchVoyageAt, KT_TEXT } from '../../src/net/ketch/ketchLaw.js';   // KETCH: the sky-ketch's law - its voyages, its ships' rooms, its door
+import { isKetchRoom, ketchRoomOf, ketchRoomHolds, ketchAdmits, ketchHolds, ketchVoyageOf, ketchVoyageAt, ketchTheatreOf, ketchStationOk, KT_THEATRES, KT_TEXT } from '../../src/net/ketch/ketchLaw.js';   // KETCH: the sky-ketch's law - its voyages, its ships' rooms, its door
 import { newVoyage, joinVoyage, stepVoyage, voyageWord, voyageStateOf, voyageEarners, voyageLive, dropCell, idlePlaces, freePlace, stampFightFall, fightBodyOf, KT_POSE_FRESH_MS } from '../../src/net/ketch/ketchBrain.js';   // KETCH: a crew's voyage, run by its room
 import { judgeVoyage } from '../../src/net/ketch/ketchJudge.js';   // KETCH: its constructs' blows and its hazards, judged on the trails
 import { KETCH_SEAM } from '../../src/net/ketch/ketchWarden.js';   // KETCH: the Tonal Warden on the boss seam
@@ -374,7 +374,7 @@ import { sdFirst, sdRise, sdFind, sdEnter, sdFell, sdGone, sdDue, pickSdRegion, 
 // gateHerald.js, both here) and formats/mapsTables.js (MapsFile's verbatim tables, which import nothing - the region a
 // post names). The hub posts off its own alarm, after the director's beat.
 import { sdHeraldDue, sdHeraldPost, readSdHeraldState } from '../../src/net/superDungeon/sdHerald.js';
-import { ketchHeraldDue, ketchHeraldPost, ketchHeraldRole, readKetchHeraldState } from '../../src/net/ketch/ketchHerald.js';   // KETCH: the Sky-Ketch's Discord cards - the clock's alone
+import { ketchHeraldDue, ketchHeraldPost, ketchHeraldRole, readKetchHeraldState, ketchHeraldKey } from '../../src/net/ketch/ketchHerald.js';   // KETCH: the Sky-Ketch's Discord cards - the clock's alone
 import { sdMarksOf } from '../../src/net/superDungeon/sdMarks.js';   // SD18a: a Hollow's marks by its slot - the Remnant's profile and the Orrery's fray
 import { orreryOf, orreryJudge, orreryLit, orreryFresh, orreryRightsFresh, orreryTurnerOf, orreryLashed, stoneInReach, dungeonToRealm, SD_STONES, SD_HOURS, SD_FRAY_MAX, SD_STONE_REACH_SLACK } from '../../src/net/superDungeon/sdBrain.js';   // SD6b: the Orrery's law - the realm judges every turn by it; AUDIT SD II (L7 H2): and who may turn while others turn
 import { applyEchoHit, applyHeartHit, arenaOf, inArena, SD_ARENA_SLACK, SD_LOST_MS, SD_POSE_FRESH_MS } from '../../src/net/superDungeon/sdRemnant.js';   // SD8b: the Brass Remnant's law - the realm runs its fight by it
@@ -8619,34 +8619,42 @@ export class Room {
   // ───────────────────────────── KETCH: THE SKY-KETCH'S HERALD ───────────────────────────
   // net/ketch/ketchHerald.js. The gate's channel and door (_heraldOf, _heraldSend); its own state (`ktherald`: the voyage and
   // the moment last posted, or let go) - the voyage itself is the clock's, so nothing else is kept.
-  /** What the Sky-Ketch's herald has posted: the voyage and the moment (net/ketch/ketchHerald.js readKetchHeraldState). */
-  async _ktHeraldState() {
-    return readKetchHeraldState(await this.state.storage.get('ktherald'));
+  /** What the Sky-Ketch's herald has posted: the voyage and the moment (net/ketch/ketchHerald.js readKetchHeraldState).
+   *  KETCH-EVERYWHERE: a station's (ketchHeraldKey - the Bay's under `ktherald`, as it always was). */
+  async _ktHeraldState(theatre = 0) {
+    return readKetchHeraldState(await this.state.storage.get(ketchHeraldKey(theatre)));
   }
-  /** The alarm armed for the Ketch's next moment, when the herald owes one before the sweep's. */
+  /** The alarm armed for the Ketch's next moment, when the herald owes one before the sweep's. KETCH-EVERYWHERE: every
+   *  station's. */
   async _ktHeraldArm(now) {
     if (!this._heraldOf()) return;
-    const due = ketchHeraldDue(now, await this._ktHeraldState());
-    if (due) await this._hubArm(due.at);
+    for (const theatre of KT_THEATRES) {
+      const due = ketchHeraldDue(now, await this._ktHeraldState(theatre), theatre);
+      if (due) await this._hubArm(due.at);
+    }
   }
-  /** THE SKY-KETCH'S HERALD'S BEAT, on the hub's alarm beside the others: each moment due posted in the voyage's order (a
-   *  moment whose window passed unposted let go), and the alarm armed for the next - a post Discord did not take,
-   *  HERALD_RETRY_MS on. */
+  /** THE SKY-KETCH'S HERALD'S BEAT, on the hub's alarm beside the others. KETCH-EVERYWHERE: every station's, each against
+   *  its own state (_ktHeraldStationBeat). */
   async _ktHeraldBeat(now) {
     const h = this._heraldOf();
     if (!h) return;
+    for (const theatre of KT_THEATRES) await this._ktHeraldStationBeat(h, theatre, now);
+  }
+  /** One station's beat (the Bay's the beat it always was): each moment due posted in the voyage's order (a moment whose
+   *  window passed unposted let go), and the alarm armed for the next - a post Discord did not take, HERALD_RETRY_MS on. */
+  async _ktHeraldStationBeat(h, theatre, now) {
     try {
-      let st = await this._ktHeraldState();
+      let st = await this._ktHeraldState(theatre);
       const was = JSON.stringify(st);
       let retry = null;
       for (let step = 0; step < 3; step++) {
-        const due = ketchHeraldDue(now, st);
+        const due = ketchHeraldDue(now, st, theatre);
         if (!due || due.at > now) break;
         if (!(await this._heraldSend(ketchHeraldPost(due.n, due.k, h.ktRole), 'ketch'))) { retry = now + HERALD_RETRY_MS; break; }
         st = { n: due.n, k: due.i };
       }
-      if (JSON.stringify(st) !== was) await this.state.storage.put('ktherald', st);   // the alarm alone writes it (its beats never overlap)
-      const owed = ketchHeraldDue(now, st);
+      if (JSON.stringify(st) !== was) await this.state.storage.put(ketchHeraldKey(theatre), st);   // the alarm alone writes it (its beats never overlap)
+      const owed = ketchHeraldDue(now, st, theatre);
       const next = [retry, owed && owed.at > now ? owed.at : null].filter((x) => x != null);
       if (next.length) await this._hubArm(Math.min(...next));
     } catch (e) { console.warn('[herald] ketch beat failed', e?.message ?? e); await this._hubArm(now + HERALD_RETRY_MS); }
@@ -10002,30 +10010,39 @@ export class Room {
     for (const [sub, r] of c.rc) { const cl = readKetchReceipt(r); if (cl && cl.s === sub && cl.d === c.n) keep.push([sub, { n: c.n, r, e: cl.e }]); }
     if (!keep.length) return json({ ok: true });
     this._noKtRcpt.clear();
-    const had = await this.state.storage.get(keep.map(([sub]) => ketchReceiptKey(sub)));
-    const fresh = keep.filter(([sub]) => { const v = had.get(ketchReceiptKey(sub)); return !(v && typeof v === 'object' && Number.isSafeInteger(v.n) && (v.n > c.n || (v.n === c.n && (v.spent || v.r)))); });
-    if (fresh.length) await this.state.storage.put(Object.fromEntries(fresh.map(([sub, v]) => [ketchReceiptKey(sub), v])));
+    const th = ketchTheatreOf(c.n);   // KETCH-EVERYWHERE: kept on its station's key - a station's numbers are in its own order
+    const had = await this.state.storage.get(keep.map(([sub]) => ketchReceiptKey(sub, th)));
+    const fresh = keep.filter(([sub]) => { const v = had.get(ketchReceiptKey(sub, th)); return !(v && typeof v === 'object' && Number.isSafeInteger(v.n) && (v.n > c.n || (v.n === c.n && (v.spent || v.r)))); });
+    if (fresh.length) await this.state.storage.put(Object.fromEntries(fresh.map(([sub, v]) => [ketchReceiptKey(sub, th), v])));
     const owed = new Map(fresh);
     for (const [sub, [ws]] of this._siegeSockets()) if (owed.has(sub)) this._send(ws, JSON.stringify({ t: 'kt', k: 'rcpt', r: owed.get(sub).r }));
     return json({ ok: true });
   }
   /** AUDIT KETCH L1-2: an account's kept Ketch receipt to its hello while it is good - an expired one forgotten, a spent one
-   *  not said. */
+   *  not said. KETCH-EVERYWHERE: every station's (one ask of the keys). */
   async _ktReceiptTo(ws, sub, now) {
     if (this._noKtRcpt.has(sub)) return;
-    const k = ketchReceiptKey(sub), v = await this.state.storage.get(k);
-    if (!v || typeof v !== 'object') { this._noKtRcpt.set(sub, 1); return; }
-    const gone = !(Number.isFinite(v.e) && v.e * 1000 > now) || (v.spent !== true && typeof v.r !== 'string');
-    if (gone) { await this.state.storage.delete(k); return; }
-    if (v.spent === true) return;
-    this._send(ws, JSON.stringify({ t: 'kt', k: 'rcpt', r: v.r }));
+    const keys = KT_THEATRES.map((theatre) => ketchReceiptKey(sub, theatre));
+    const got = await this.state.storage.get(keys);
+    let any = false;
+    for (const k of keys) {
+      const v = got.get(k);
+      if (!v || typeof v !== 'object') continue;
+      any = true;
+      const gone = !(Number.isFinite(v.e) && v.e * 1000 > now) || (v.spent !== true && typeof v.r !== 'string');
+      if (gone) { await this.state.storage.delete(k); continue; }
+      if (v.spent === true) continue;
+      this._send(ws, JSON.stringify({ t: 'kt', k: 'rcpt', r: v.r }));
+    }
+    if (!any) this._noKtRcpt.set(sub, 1);
   }
   /** AUDIT KETCH L1-2: the account's word that a voyage's share is given - REMEMBERED AS SPENT in its kept copy's place for a
    *  receipt's life (the word may come before the fall's own tell, and must stand over it); a newer voyage's left alone, and
    *  none past the clock's own voyage. */
   async _ktSpent(sub, n, now) {
-    if (!(n <= ketchVoyageAt(now).n)) return;
-    const k = ketchReceiptKey(sub), v = await this.state.storage.get(k);
+    const th = ketchTheatreOf(n);   // KETCH-EVERYWHERE: its station's - none past its own clock's voyage, none of a theatre with no station
+    if (!ketchStationOk(th) || !(n <= ketchVoyageAt(now, th).n)) return;
+    const k = ketchReceiptKey(sub, th), v = await this.state.storage.get(k);
     if (v && typeof v === 'object' && Number.isSafeInteger(v.n) && (v.n > n || (v.n === n && v.spent === true))) return;
     this._noKtRcpt.delete(sub);
     await this.state.storage.put(k, { n, spent: true, e: Math.floor(now / 1000) + KT_RECEIPT_TTL_S });

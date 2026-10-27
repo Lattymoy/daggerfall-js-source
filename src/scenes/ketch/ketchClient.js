@@ -23,10 +23,16 @@
 //     (net/ketch/ketchClaims.js); a share it pays waits in the Ketchmaster's chest while I stand aboard (opened, it spills
 //     across the cabin floor - the Hour's spoils pool), and goes into the pack if I leave without opening it.
 //
+//   KETCH-EVERYWHERE (bible/11-Multiplayer/Sky-Ketch.md section 22): A STATION IN EVERY PROVINCE - a sky a station
+//     (net/ketch/ketchLaw.js KT_THEATRES): the Bay's over Daggerfall, as it always was; each province's over its city
+//     (scenes/ketch/ketchStations.js), framed while I stand within reach of it, on a relay that keeps its ships; its
+//     voyage's words said while I stand in its province, its ring on the map, its anchor-lift boarding its own voyage.
+//
 // Not a DFU member. Ledger A (KETCH).
-import { KT_STAGE, KT_TEXT, ketchVoyageAt, ketchVoyageOf, ketchBoards, ketchRoomKey } from '../../net/ketch/ketchLaw.js';
+import { KT_STAGE, KT_TEXT, ketchVoyageAt, ketchVoyageOf, ketchBoards, ketchRoomKey, ketchTheatreOf, KT_THEATRES } from '../../net/ketch/ketchLaw.js';
 import { t } from '../../systems/textManager.js';
-import { KT_WORDS, KT_REFUSE_WORDS, ketchRefusal, ketchSkyPhase, ketchWhenLine } from '../../systems/ketch/ketchWords.js';
+import { KT_WORDS, KT_REFUSE_WORDS, KT_STATION_WORDS, ketchCity, ketchRefusal, ketchSkyPhase, ketchWhenLine } from '../../systems/ketch/ketchWords.js';
+import { ketchStationPixel, ketchStationHere, ketchStationNear, setKetchStationsStanding, KT_STATION_MIDDLE } from './ketchStations.js';
 import {
   KT_CRADLES, KT_BRIDGE_CRADLES, KT_SOCKETS, KT_RESONATORS, KT_HOLD, KT_BRIDGE, KT_LINE, KT_MAIN_TOP, KT_ANCHOR_LIFT, KT_STERN_LIFT, KT_VAULT,
   KT_REACH, KT_LINE_LAND, deckToDungeon, dungeonToDeck, deckZoneAt,
@@ -37,7 +43,7 @@ import { createKetchClaims } from '../../net/ketch/ketchClaims.js';
 import { instanceOwnerOf } from '../../net/instanceRoom.js';
 import { bodySayer } from '../../net/bossBody.js';
 import { createKetchFight } from './ketchFight.js';
-import { createKetchSky, ketchSkyPose } from './ketchSky.js';
+import { createKetchSky, createKetchSkyArt, ketchSkyPose } from './ketchSky.js';
 import { bosunLineAt } from '../../world/ketch/ketchModel.js';
 import { ketchSpoilsOf, KT_SPOILS_TEXT, KT_SPOILS_KEYS, KT_SPOILS_RECORDS_MAX, KT_SPOILS_GATHERED, ketchConstructPellets, ketchPelletsDue, KT_PELLETS_KEY } from '../../systems/ketch/ketchSpoils.js';
 import { createPellets } from '../../systems/thunderlock.js';   // KETCH-PELLETS: what her constructs drop
@@ -95,6 +101,8 @@ export const KT_CLIENT_TEXT = Object.freeze({
   get stern() { return t('ketch.client.stern', 'The stern lift'); },
   get downSub() { return t('ketch.client.downSub', 'Ride it down'); },
   get away() { return t('ketch.client.away', 'The Ketch has gone. You are back in the fields outside Daggerfall.'); },
+  /** KETCH-EVERYWHERE: the same, of station `theatre`'s city (the Bay's the line above). */
+  awayAt: (theatre = 0) => (theatre ? t('ketch.client.awayAt', 'The Ketch has gone. You are back in the fields outside {city}.', { city: ketchCity(theatre) }) : KT_CLIENT_TEXT.away),
 });
 /** MY SHIP THIS VOYAGE (AUDIT KETCH L1-6 - after the party's lead passed on, a member riding back up boarded the new
  *  leader's empty ship): the room's `st` naming me in its crew keeps {n, a, o, p} under KT_SHIP_KEY on the device - `p`
@@ -239,32 +247,56 @@ export function createKetchClient(deps) {
   /** @returns {[number, number]|null} */
   const city = () => { const c = cityRead(); if (!c || !deps.state?.pixelTranslation) return null; const t = deps.state.pixelTranslation(c.px.x, c.px.y, _t); return [t[0] + c.local[0], t[2] + c.local[1]]; };
   const frameY = () => { const c = cityRead(); return c && deps.state?.pixelTranslation ? deps.state.pixelTranslation(c.px.x, c.px.y, _t)[1] : 0; };
-  const sky = createKetchSky({
-    renderer: deps.renderer, collider: deps.collider, city, groundAt: (x, z) => deps.heightAt?.(x, z) ?? NaN, frameY, now,
-    feet: () => deps.feetOutside?.() ?? null, say: (t) => mid(t), onBoard: () => { void board(); }, mayBoard: () => !boarding && !onShip(),
-  });
+  // KETCH-EVERYWHERE: A STATION'S CITY IN THE SCENE - the Bay's Daggerfall's row (above), a province's its city's pixel
+  // (scenes/ketch/ketchStations.js), her middle its pixel's
+  const stationPx = (/** @type {number} */ th) => (th ? ketchStationPixel(th) : cityRead()?.px ?? null);
+  const stationCity = (/** @type {number} */ th) => {
+    if (!th) return city();
+    const p = ketchStationPixel(th);
+    if (!p || !deps.state?.pixelTranslation) return null;
+    const q = deps.state.pixelTranslation(p.x, p.y, _t);
+    return /** @type {[number, number]} */ ([q[0] + KT_STATION_MIDDLE, q[2] + KT_STATION_MIDDLE]);
+  };
+  const stationFrameY = (/** @type {number} */ th) => { if (!th) return frameY(); const p = ketchStationPixel(th); return p && deps.state?.pixelTranslation ? deps.state.pixelTranslation(p.x, p.y, _t)[1] : 0; };
+  const art = createKetchSkyArt(deps.renderer);   // her meshes, made once for every station's sky
+  /** KETCH-EVERYWHERE: THE STATIONS, a sky each - the Bay's first; each with the voyage's words it has said. */
+  const stations = KT_THEATRES.map((th) => ({
+    theatre: th,
+    sky: createKetchSky({
+      renderer: deps.renderer, collider: deps.collider, city: () => stationCity(th), groundAt: (x, z) => deps.heightAt?.(x, z) ?? NaN, frameY: () => stationFrameY(th), now,
+      feet: () => deps.feetOutside?.() ?? null, say: (t) => mid(t), onBoard: () => { void board(th); }, mayBoard: () => !boarding && !onShip(), theatre: th, art,
+    }),
+    said: new Set(), saw: /** @type {{ n: number, phase: string } | null} */ (null),
+  }));
+  const sky = stations[0].sky;   // the Bay's
+  /** The stations past the Bay stand on this screen: the relay keeps their ships (net/online.js ktTheatresOk). */
+  const provincesOn = () => !!online()?.ktTheatresOk;
+  /** Where I stand on the map - the streaming frame's pixel. */
+  const herePx = () => deps.state?.current ?? null;
+  /** The station a voyage's ship (my ship) is of. */
+  const shipStation = () => { const sh = ship(); return sh && Number.isSafeInteger(sh.n) ? ketchTheatreOf(sh.n) : 0; };
   const sayBody = bodySayer((v) => !!online()?.sendKetch?.('vt', { v }));
-  // ── the voyage's words, once each ──
-  const said = new Set();
-  let sawPhase = null;
-  function voyageWords(t) {
-    const v = ketchVoyageAt(t), key = `${v.n}:${v.phase}`;
-    if (v.phase === 'away') { if (sawPhase && sawPhase.n === v.n - 1 && !said.has(`${v.n - 1}:gone`)) { said.add(`${v.n - 1}:gone`); say(KT_WORDS.departed); } sawPhase = null; return v; }
+  // ── the voyage's words, once each - KETCH-EVERYWHERE: a station's own (the Bay's as they always were, a province's while
+  // I stand in it) ──
+  function voyageWords(t, st = stations[0]) {
+    const th = st.theatre, said = st.said, v = ketchVoyageAt(t, th), key = `${v.n}:${v.phase}`;
+    if (v.phase === 'away') { if (st.saw && st.saw.n === v.n - 1 && !said.has(`${v.n - 1}:gone`)) { said.add(`${v.n - 1}:gone`); say(KT_WORDS.departed); } st.saw = null; return v; }
     if (!said.has(key)) {
       said.add(key);
-      say(v.phase === 'sighted' ? KT_WORDS.sighted : v.phase === 'docked' ? KT_WORDS.arrived : KT_WORDS.departing);
+      say(v.phase === 'sighted' ? KT_STATION_WORDS.sighted(th) : v.phase === 'docked' ? KT_STATION_WORDS.arrived(th) : KT_WORDS.departing);
     }
-    sawPhase = { n: v.n, phase: v.phase };
+    st.saw = { n: v.n, phase: v.phase };
     return v;
   }
   // ── boarding ──
   let boarding = false, boardedAt = -Infinity, wasOnShip = false, falling = null, wake = null;
-  async function board() {
+  /** KETCH-EVERYWHERE: up to station `th`'s ship (the station I stand at - my province's where it keeps one, else the Bay's). */
+  async function board(th = (() => { const h = herePx(); return (h && ketchStationHere(h.x, h.y)) ?? 0; })()) {
     if (boarding || onShip()) return false;
-    const o = online(), t = now(), v = ketchVoyageAt(t);
+    const o = online(), t = now(), v = ketchVoyageAt(t, th);
     if (!o || o.status !== 'open') { mid(KT_REFUSE_WORDS.offline); return false; }
-    if (!o.ktOk) { mid(KT_CLIENT_TEXT.older); return false; }
-    if (v.phase !== 'docked' || !ketchBoards(v.n, t)) { mid(v.phase === 'departing' ? KT_REFUSE_WORDS.closed : KT_REFUSE_WORDS.away); return false; }
+    if (!o.ktOk || (th && !o.ktTheatresOk)) { mid(KT_CLIENT_TEXT.older); return false; }
+    if (v.phase !== 'docked' || !ketchBoards(v.n, t)) { mid(v.phase === 'departing' ? KT_REFUSE_WORDS.closed : KT_STATION_WORDS.away(th)); return false; }
     const mine = me();
     if (!mine) { mid(KT_CLIENT_TEXT.signIn); return false; }
     if (!(entity.health > 0)) return false;
@@ -282,9 +314,10 @@ export function createKetchClient(deps) {
   /** Down from the ship (the way down, the voyage's end, a refusal): out at the next frame, to where I boarded. */
   function leave(text) {
     if (!onShip()) return false;
+    const th = shipStation();   // KETCH-EVERYWHERE: set down under her own station's lift
     if (!modes()?.ktLeave?.()) return false;
     if (text) mid(text);
-    sky.hold();
+    (stations.find((st) => st.theatre === th) ?? stations[0]).sky.hold();
     return true;
   }
   /** AUDIT WORLD-EVENTS L1-4 - RAISE BEFORE THE FALL (net/ketch/ketchBrain.js ketchRaise): a death aboard with a crewmate on
@@ -398,7 +431,7 @@ export function createKetchClient(deps) {
     if (k.startsWith('kt:sk:')) return !!o?.sendKetch?.('bank', { s: n });
     if (k.startsWith('kt:rs:')) return !!o?.sendKetch?.('bank', { s: KT_RESONATOR0 + n });
     if (k === 'kt:line') { if (link.state().sg >= KT_STAGE.bridge) takeLine(); else mid(KT_WORDS.bridgeBarred); return true; }
-    if (k === 'kt:down' || k === 'kt:stern') return leave(KT_WORDS.lowered);
+    if (k === 'kt:down' || k === 'kt:stern') return leave(KT_STATION_WORDS.lowered(shipStation()));   // KETCH-EVERYWHERE: her own city's fields
     if (k === 'kt:vault') { openChest(); return true; }
     return false;
   }
@@ -409,11 +442,11 @@ export function createKetchClient(deps) {
     // the room walks me out: its socket's terminal close (a refusal at the door, the voyage gone)
     if (o?.terminal && o.status !== 'open' && Date.now() - boardedAt > 1500) {
       if (o.error === KT_TEXT.refuse.crew) keepShip(null);   // that ship's crew no longer mine: my party's next
-      leave(o.error ? ketchRefusal(o.error) : KT_CLIENT_TEXT.away); return;
+      leave(o.error ? ketchRefusal(o.error) : KT_CLIENT_TEXT.awayAt(shipStation())); return;
     }
     if (ketchShipUnheard(V, Date.now() - boardedAt)) { leave(KT_REFUSE_WORDS.busy); return; }
     const sh = ship();
-    if (sh && t >= ketchVoyageOf(sh.n).endAt) { leave(KT_CLIENT_TEXT.away); return; }
+    if (sh && t >= ketchVoyageOf(sh.n).endAt) { leave(KT_CLIENT_TEXT.awayAt(shipStation())); return; }
     // my `in` to the bridge's fight, my body's word
     if (zone === 'bridge' && entity.health > 0 && link.inDue(t) && o?.sendKetch?.('in', { lv: Math.max(1, entity.level | 0) })) link.sentIn(t);
     // AUDIT KETCH II L2-3: my body's word the whole voyage - the room counts every blow on me aboard, and heard my health
@@ -458,6 +491,11 @@ export function createKetchClient(deps) {
     frame() {
       const t = now();
       voyageWords(t);
+      // KETCH-EVERYWHERE: and my province's station's, while the relay keeps its ships
+      const on = provincesOn(), h = herePx(), here = on && h ? ketchStationHere(h.x, h.y) : null;
+      setKetchStationsStanding(on);
+      const mine = here ? stations.find((st) => st.theatre === here) : null;
+      if (mine) voyageWords(t, mine);
       const aboard = onShip();
       if (aboard && !wasOnShip) { link.leave(); fight.leave(); }
       if (!aboard && wasOnShip) offShip();
@@ -471,6 +509,11 @@ export function createKetchClient(deps) {
         down = null;
         if ((modes()?.mode ?? 'exterior') === 'exterior') {
           try { sky.frame(); } catch (e) { console.warn('[kt] sky', e?.message ?? e); }
+          // KETCH-EVERYWHERE: each province's while I stand within reach of it, on a relay that keeps its ships
+          for (const st of stations) {
+            if (!st.theatre) continue;
+            if (on && h && ketchStationNear(st.theatre, h.x, h.y)) { try { st.sky.frame(); } catch (e) { console.warn('[kt] sky', e?.message ?? e); } } else st.sky.away();
+          }
           if (falling) {
             // woken in the fields under her lift
             falling = null;
@@ -482,7 +525,7 @@ export function createKetchClient(deps) {
       claims.tick();
     },
     /** She and her lift in the exterior's world pass. */
-    drawSky: (r) => ((modes()?.mode ?? 'exterior') === 'exterior' ? sky.draw(r) : 0),
+    drawSky: (r) => ((modes()?.mode ?? 'exterior') === 'exterior' ? stations.reduce((n, st) => n + st.sky.draw(r), 0) : 0),   // KETCH-EVERYWHERE: every station's framed
     /** THE NETS' CAST-BACK (the dungeon host's, after it stood me back): its cost and its line. */
     castBack() {
       if (entity.health > 0) { const n = Math.max(1, Math.round((entity.maxHealth ?? 0) * KT_CAST_BACK_LOSS)); hurtPlayer(entity, n, { bypassShield: true, spare: () => {} }); flashPlayerDamage(n); }   // a setback, never a death (the Steps' own law)
@@ -542,6 +585,22 @@ export function createKetchClient(deps) {
       const px = cityRead()?.px ?? KT_CITY_PX;
       return { day: pose.v.n, cx: px.x + 0.5, cy: px.y + 0.5, r: KT_RING_R, label: KT_WORDS.name, phase: pose.phase, tip: { title: KT_WORDS.name, lines } };
     },
+    /** KETCH-EVERYWHERE: every station's ring - the Bay's (mapMark), and each province's while she is in its sky, on a relay
+     *  that keeps its ships (ui/heldMap.js `ketch`). */
+    mapMarks() {
+      const out = [];
+      const bay = this.mapMark();
+      if (bay) out.push(bay);
+      if (!provincesOn()) return out;
+      const t = now();
+      for (const st of stations) {
+        if (!st.theatre) continue;
+        const pose = ketchSkyPose(t, st.theatre), px = pose ? stationPx(st.theatre) : null;
+        if (!pose || !px) continue;
+        out.push({ day: pose.v.n, cx: px.x + 0.5, cy: px.y + 0.5, r: KT_RING_R, label: KT_WORDS.name, phase: pose.phase, tip: { title: KT_WORDS.name, lines: [ketchSkyPhase(pose.phase), ketchWhenLine(t, st.theatre)] } });
+      }
+      return out;
+    },
     /** The ship's crew aboard as the room says it (the party panel's, tests). */
     crew: () => link.state().crew,
     /** Is the made level a ship now. */
@@ -549,6 +608,6 @@ export function createKetchClient(deps) {
     /** Board now (tests, `/ketch board`). */
     board,
     /** The parts (tests). */
-    link, claims, fight, sky,
+    link, claims, fight, sky, stations,
   };
 }

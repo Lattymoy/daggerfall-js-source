@@ -3142,6 +3142,17 @@ section 29), and WB3b-a-kill-said-twice, open since section 29: a court's own `f
 word said again (every hello hears it while the gate holds) reaches the link's guard - `wb3b_gate_arena` now says it
 twice (PIN MOVED).
 
+## 31. A gate in every province (WW-GATES-EVERYWHERE, 2026-10-26)
+
+The owner, after the audit "no system left behind in the Bay": *"Every single thing here needs to be addressed. No
+exceptions."* The lanes WW2 built for every theatre stand now past the Bay: the Bay's and the eight provinces' (`net/wire.js`
+GATE_LANES_OPEN 0 to 8; Cyrodiil's, the open zone's, never). A province's gate has everything the Bay's has - its omen
+on its own card, its ring, its stone and plaque, its court of courts, its Warden, its marks and portents, its receipts,
+its rite, the herald's posts once two accounts agree where it stands - and its kill counts at its own province's seats
+(`scenes/gate/gateSeat.js`); its court is laid in its province (the site's region, WW-R's). The provinces' scans are made
+in the page's idle moments, a lane at a time (1,741 ms in one task before; the longest slice 42 ms). The record:
+`03-World/World-Wide.md` WW-GATES-EVERYWHERE.
+
 ## Shipped
 
 **WB1 (2026-09-25) - the omen.** `net/gate/gateLaw.js` (the schedule, the room's key and window, the rolls, the boss table,
