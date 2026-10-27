@@ -581,7 +581,7 @@ test('GRAVE-PARTY + AUDIT G2: a PARTY-LOOT pile whose room word this build canno
     ${fnSrc('lootableBody')}
     ${fnSrc('lootHolder')}
     ${fnSrc('roomLootKey')}
-    const { _roomState, _roomMine, isRoomBaseContainer, landRoomWord, roomClaimTick, roomRecordOf, roomSayNow, roomSettle, roomUnborn, settleRoomBonus, holderList, roomBaseHolder, composeRoomContainer, mintUnbornRoom } = createRoomLoot(${handles});
+    const { _roomState, _roomMine, isRoomBaseContainer, landRoomWord, roomClaimTick, roomRecordOf, roomSayNow, roomSettle, roomUnborn, roomUnreadableText, settleRoomBonus, holderList, roomBaseHolder, composeRoomContainer, mintUnbornRoom } = createRoomLoot(${handles});   // PIN MOVED (RPT1026-ITEMS LOOT-SKEW): the press asks the module which line
     ${fnSrc('lootRecords')}
     ${fnSrc('publishLoot')}
     ${fnSrc('sayRoomWord')}

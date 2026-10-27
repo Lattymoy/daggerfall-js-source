@@ -1234,3 +1234,51 @@ Pins: `test/systems/volume_sliders.test.js` (8: the readers; the animal flats; m
 the port's own; a peer's; the Warden's heave; the rows; the live master), and
 `test/systems/comeSailAway/csa_time_audio.test.js` (the stroke at both volumes; the loops after a Sound Volume change).
 `tools/mutants/volume_sliders.json`: 15 dead.
+
+## VOICE-CAP (2026-10-26): the real voices - at most thirty-two one-shots at once, the quietest let go
+
+A private report from a crowded Dagon's Breach: with that many players about, the sound failed and stayed silent long
+after the event was over.
+
+**What DFU does.** DFU plays through Unity, which sounds at most `m_RealVoiceCount` sources at once (32 in DFU's own
+`ProjectSettings/AudioManager.asset`, with 512 virtual) and makes the rest virtual, the least audible first.
+
+**What the port did.** It had no bound. Every blow, step, cast and cry of forty players near was a source, a gain and an
+HRTF panner of its own, all sounding together. A one-shot's chain was never let go when it ended: the RAIN-LEAK law
+(`releaseNodes`) held for the loops alone, so the bus carried thousands of finished chains until the page's collector
+reached them. The context fell behind, and every sound stopped until it caught up.
+
+**Now** (`audio.js:"export function voiceRoom("`): a one-shot, flat or positional (`playOneShot`, `play3d`,
+`play3dVoice`), takes one of `REAL_VOICES` (32). Under the bound it plays. At the bound a positional shot plays only if
+it reaches the ear as loud as the quietest positional one sounding, or louder, and that one (the oldest of the quietest)
+is faded out over `VOICE_FADE_S` for it; a quieter shot does not start. A flat shot always plays (AUDIT RPT1026 I2,
+below). A positional shot's level is what reaches the ear
+(`audio.js:"export function distanceGain("` - the Web Audio spec's distance models), so a blow at arm's length takes
+the voice of one across the court, never the other way. Every one-shot's chain is let go as it ends (`_voiceKeep`:
+`onended`, its own or a steal's stop) and its voice freed. Loops and beds are not counted: they are few and long, and a
+count would cut an ambience.
+
+**The departure.** Unity's count is DFU's, and the number is the same. The law is not Unity's: Unity virtualizes a
+voice (it keeps its place, silent, and can come back), while a one-shot here is short and is let go, and a shot that
+finds no voice never starts. No DFU volume moves. Ledger A (VOICE-CAP).
+
+The other half of the same report, that the crowd hid the boss, is the Other players card's **Players shown at once**
+(GATE-CROWD, CROWD-WIDE - `11-Multiplayer/World-Bosses.md` section 21) and GATE-COURTS' courts of fifty (section 29); the
+numbers a player's own blows raise are drawn for them alone.
+
+Pins: `test/systems/rpt1026_events_audio.test.js` (3: the law and the distance models; a crowd of forty round my ear -
+at most thirty-two sounding, the stolen faded and stopped, a far one past the bound refused, a flat shot at the crowd's
+own level finding a voice; the chains let go and the voices freed as they end). The sixty-two audio pins that were there stand
+(886 tests). `tools/mutants/rpt1026_events.json` (VOICE-CAP, 6).
+
+**AUDIT RPT1026 I2 (2026-10-27): the page's own first.** The pins above said a flat shot always finds a voice; their crowd
+was built by hand at the flat shot's own volume. The crowd's own producer (`net/remotePlayers.js` `_syncAttackSound`)
+plays a peer's swing at 1.1 through `PEER_SOUND_PROFILE`, whole inside six metres - louder at the ear than the blow that
+lands on me (`PLAYER_HIT_VOLUME`, 1), my cry (1) and my steps (`FOOTSTEP_VOLUME`, 0.7). Thirty-two peers swinging about me
+refused every one of mine, and a near swing stole any that did sound. Now the law has two ranks
+(`audio.js:"export function voiceRoom("`): a flat one-shot (`playOneShot` - the page's own, at the ear) always plays, the
+quietest positional voice stolen for it (the quietest flat one only when every voice is flat), and a positional shot never
+steals a flat voice. Unity ranks its voices by each source's priority before their audibility; the two ranks stand in for
+that. Pinned by `test/systems/audit_rpt1026_events_audio.test.js` (2: forty peers' swings from their own producer, and the
+hit, the cry and the step each sounding, a crowd's swing stolen for each and never one of mine; the law's two ranks);
+`tools/mutants/audit_rpt1026_events.json` (I2, 6).

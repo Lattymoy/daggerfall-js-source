@@ -325,7 +325,9 @@ test('AUDIT TELL L9: the swing and the cast are barred while the body is down - 
 });
 
 test('AUDIT TELL H1/L6/H6/P1 by source: the foes\' clock held under a dungeon\'s window in every host; the building\'s blow frame runs under a window as the street\'s; the stagger\'s kick reaches every pool and host - the watch, the exterior route, its modes, the standalone dungeon - for my own blow alone; a peer\'s blow on my watch carries its kind (mutants: any one unwired)', () => {
-  for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js']) assert.match(rd(h), /tickTactics\(foeFrameDt\(_questBoxHoldsFoes\(\) \|\| \(_mode\(\) === 'dungeon' && !!modes\?\.dungeonCtx\?\.uiOverlayActive\) \? 0 : dt\)\);/, h);
+  // PIN MOVED (RPT1026-FIGHTS WINDOW-ONLINE, scenes/windowWorld.js): online ?world's dungeon window holds its foes over a death alone; ?exterior, offline, holds them under any
+  assert.match(rd('src/scenes/world.js'), /tickTactics\(foeFrameDt\(_questBoxHoldsFoes\(\) \|\| \(_mode\(\) === 'dungeon' && windowHoldsDungeon\(modes\?\.dungeonCtx\?\.uiOverlayActive, playerEntity\.health > 0 && !modes\?\.deathUp\?\.\(\)\)\) \? 0 : dt\)\);/, 'src/scenes/world.js');
+  assert.match(rd('src/scenes/exterior.js'), /tickTactics\(foeFrameDt\(_questBoxHoldsFoes\(\) \|\| \(_mode\(\) === 'dungeon' && !!modes\?\.dungeonCtx\?\.uiOverlayActive\) \? 0 : dt\)\);/, 'src/scenes/exterior.js');
   assert.match(rd('src/scenes/dungeon.js'), /tickTactics\(foeFrameDt\(ctx\.uiOverlayActive \? 0 : dt\)\);/);
   const wm = rd('src/scenes/worldModes.js');
   assert.match(wm, /playerBlowFrame\([^\n]*\n\s*if \(!overlayHeld\) \{/, 'L6: above the window gate');

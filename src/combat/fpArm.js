@@ -3668,6 +3668,7 @@ export function createFpArm() {
   let unreadyAfterCast = false;  // MW-CAST1: the spell went (its ready cleared) mid-cast - the stance drops when the cast ends
   let castReleased = false;      // MW-CAST1: the cast crossed its "<type> release" - consumed by takeCastRelease
   let castRate = 1;              // CAST-SPEED: the rate this cast's spellcast group plays at (systems/castSpeed.js)
+  let castPaced = false;         // RPT1026-MISC CAST-PACE: this cast's section was paced to bring its release to `releaseIn`
   // MW-D51: THE HELD TORCH. `torchLit` is the game's word (a lit
   // Daggerfall torch in PlayerEntity.LightSource, handed over per frame
   // by weaponRig's setTorch); the state/source/group triple is the
@@ -6240,8 +6241,15 @@ export function createFpArm() {
      *  still flies.
      *
      *  CAST-SPEED: `rate` is the cast's own (systems/castSpeed.js - the live Speed and the castSpeed loot line), the
-     *  speed its spellcast group plays at from "<type> start" to "<type> stop", as the classic frames step at it. */
-    castSpell(rangeType = 2, rate = 1) {
+     *  speed its spellcast group plays at from "<type> start" to "<type> stop", as the classic frames step at it.
+     *
+     *  RPT1026-MISC CAST-PACE (a private report: the Morrowind look cast slower than the Daggerfall one): `releaseIn`, when given,
+     *  is the seconds from now the spell leaves (combat/fpsSpellCasting.js castReleaseS - the classic hands' frame 5), and
+     *  the section plays at the pace that brings its "<type> release" there - MW-PACE1's fit of a blow to the machine's
+     *  hit (blowRate, its bounds), here a cast's to the classic clock. The cast's time is then the same whatever the
+     *  hands look like; castPaced() says the fit was made. A group with no release key plays at `rate`, unpaced. */
+    castSpell(rangeType = 2, rate = 1, releaseIn = 0) {
+      castPaced = false;   // RPT1026-MISC CAST-PACE: this cast's own word
       if (dead) return false;   // MWNPC4: the dead cast nothing
       // MWNPC9: a non-biped casts in one of its attacks ("No 'release' text key to use, so cast immediately" -
       // character.cpp:1459-1464: its spellcast group is a random attack, played start to stop)
@@ -6284,8 +6292,13 @@ export function createFpArm() {
         attackType = null;
         return false;
       }
+      const lead = releaseIn > 0 ? keyTime(`${type} release`) - actionState.startTime : 0;   // RPT1026-MISC CAST-PACE: start to release, file seconds (-1 with no key)
+      if (lead > 0) { castRate = blowRate(lead, releaseIn); castPaced = true; }
       return true;
     },
+
+    /** RPT1026-MISC CAST-PACE: was the cast just started paced to the spell's moment (castSpell's `releaseIn`)? */
+    castPaced: () => castPaced,
 
     /** MW-SPELLFX1: VFX_Hands for the cast that just started - the world's spell effects (scenes/mwMagicFx.js) hand
      *  the spell over at the cast's own start, which is where the reference adds it (character.cpp :1593-1613). Only

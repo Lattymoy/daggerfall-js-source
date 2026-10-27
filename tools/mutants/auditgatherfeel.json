@@ -804,8 +804,8 @@
   {
     "name": "AUDITGF-F7-the-chain-kept",
     "file": "src/systems/audio.js",
-    "old": "src.onended = () => { if (ended) return; ended = true; releaseNodes(src, gain, pan); onEnd?.(); };",
-    "new": "src.onended = () => { if (ended) return; ended = true; onEnd?.(); };",
+    "old": "      done = true; v.ended = true;   // its voice free: the next take's sweep lets it go\n      releaseNodes(src, gain, pan);\n      onEnd?.();",
+    "new": "      done = true; v.ended = true;   // its voice free: the next take's sweep lets it go\n      onEnd?.();",
     "tests": [
       "test/systems/audit_gatherfeel.test.js"
     ],
@@ -814,8 +814,8 @@
   {
     "name": "AUDITGF-F7-the-end-untold",
     "file": "src/systems/audio.js",
-    "old": "src.onended = () => { if (ended) return; ended = true; releaseNodes(src, gain, pan); onEnd?.(); };",
-    "new": "src.onended = () => { if (ended) return; ended = true; releaseNodes(src, gain, pan); };",
+    "old": "      releaseNodes(src, gain, pan);\n      onEnd?.();",
+    "new": "      releaseNodes(src, gain, pan);",
     "tests": [
       "test/systems/audit_gatherfeel.test.js"
     ],

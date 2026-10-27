@@ -23,7 +23,8 @@
 
 import { ITEM_UID_RE, PROVENANCE_RE, lawTemplate } from './itemLaw.js';
 import { LETTER_OF_CREDIT_TEMPLATE } from '../inventory.js';
-import { TRADE_HELD_NOTICES, TRADE_HELD_STRIKES, tradeHeldUntilNotice } from '../../net/realm/realmTradeLaw.js';   // FIELD BUGS 2026-10-11g HELD-SIDE: the hold's words, one home
+import { t } from '../textManager.js';   // RPT1026-MARKET HOLD-SAID: the hold's lifting in the player's language
+import { TRADE_HELD_NOTICES, tradeHeldLawNotice, tradeHeldUntilNotice } from '../../net/realm/realmTradeLaw.js';   // FIELD BUGS 2026-10-11g HELD-SIDE: the hold's words, one home; RPT1026-MARKET HOLD-SAID: the law's named one with them
 /** The tiers a piece wears that make it valuable (rarityTier.js ROLLED_TIERS, and the two minted whole). */
 const VALUABLE_TIERS = Object.freeze(['magic', 'rare', 'legendary', 'aetheric', 'gilded']);
 
@@ -106,17 +107,16 @@ export function stampItemIds(entity, rand) {
 
 /** The hold, as its player hears it (server-account/src/verdict.js holdOf's reasons) - kept in net/realm/realmTradeLaw.js, the
  *  leaf a trade's refusal reads it from too (FIELD BUGS 2026-10-11g HELD-SIDE). */
-export { TRADE_HELD_NOTICES };
-export const TRADE_OPEN_NOTICE = 'This character\'s trading is open again.';
-/** The law's hold, naming the piece it found (`name`, its template's). */
-export const tradeHeldLawNotice = (/** @type {string} */ name) => `The realm is reviewing this character: it carries a ${name} the game could not have made. Trading is frozen until it is gone.${TRADE_HELD_STRIKES}`;   // RING-WARN: the strikes said
+export { TRADE_HELD_NOTICES, tradeHeldLawNotice };   // RPT1026-MARKET HOLD-SAID: the law's named hold lives beside the others, in the player's language
+/** RPT1026-MARKET HOLD-SAID: what the hold froze, open again - in the player's language. */
+export const TRADE_OPEN_NOTICE = 'This character\'s trading, gathering and crafting are open again.';
 /** What to say when a checkpoint's answer moves the hold from `prev` to `now` (each a reason or null) - a notice, or
  *  null when nothing changed or nothing is known (`undefined`: no answer that says). `why`: the first thing the law found
  *  (`{ t }`, its template) - the notice names it, so a player held over a piece can find it - or (AUTO-HOLD) the law's
  *  timed hold, `{ code: 'until', until }`, said with its end. */
 export function tradeHeldNotice(/** @type {string | null | undefined} */ prev, /** @type {string | null | undefined} */ now, /** @type {{ code?: string, t?: number | null, until?: number } | null} */ why = null) {
   if (now === undefined || (now === prev && why?.code !== 'until')) return null;
-  if (now == null) return prev ? TRADE_OPEN_NOTICE : null;
+  if (now == null) return prev ? t('realm.held.open', TRADE_OPEN_NOTICE) : null;
   const name = now === 'law' && why ? lawTemplate(why.t)?.name : null;
   if (now === 'law' && why?.code === 'until' && Number.isSafeInteger(why.until)) return tradeHeldUntilNotice(/** @type {number} */ (why.until), typeof name === 'string' && name ? name : null);
   if (typeof name === 'string' && name) return tradeHeldLawNotice(name);

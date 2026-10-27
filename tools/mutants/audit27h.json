@@ -155,8 +155,8 @@
   {
     "name": "S1-dungeon-breath-under-the-street-slot",
     "file": "src/scenes/dungeonContext.js",
-    "old": "breathTick(opts.breathHeld?.() ? 0 : dt, playerFeet, playerHeight);",
-    "new": "breathTick(dt, playerFeet, playerHeight);",
+    "old": "breathTick(opts.breathHeld?.() || dungeonPaused() ? 0 : dt, playerFeet, playerHeight);",
+    "new": "breathTick(dungeonPaused() ? 0 : dt, playerFeet, playerHeight);",
     "tests": [
       "test/player/searise.test.js"
     ]

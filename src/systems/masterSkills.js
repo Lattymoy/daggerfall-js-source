@@ -161,11 +161,48 @@ export function masteryRefusal(entity, id) {
   return null;
 }
 
+/** RPT1026-PROGRESS (a private report: weak-foe practice banked at 100 paid out after a mastery): THE PRACTICE A SKILL KEPT
+ *  UNDER THE PLAIN RULE IS DROPPED THE MOMENT IT MAY PASS 100. Below the cap - and at 100 for a skill that cannot pass it
+ *  - every use counts whole (skills.js tallySkill, DFU's TallySkill and its 20000 clamp); past it a use counts only
+ *  against a tough foe, and raiseSkills spends the counter as progress (advancement.js MOVE-BANK) without knowing which
+ *  rule counted it. A skill held at 100, practised on weak foes to the clamp and only then mastered (or Master Skills
+ *  switched on) turned 20,000 plain uses into a point every rest. The counter of a skill that may now pass 100 held
+ *  only plain uses, so it goes (the weighted fraction, skillUseFrac, is the tough-foe rule's own and stays). */
+function dropPlainPractice(entity, id) {
+  if ((entity?.skills?.[id] ?? 0) >= 100 && Array.isArray(entity.skillUses) && id < entity.skillUses.length) entity.skillUses[id] = 0;
+}
+
+/** AUDIT RPT1026 F1 (the drop above took practice the tough-foe rule had counted): THE SWITCH OFF HOLDS IT ASIDE. A
+ *  mastered skill past 100 counts only tough-foe uses while Master Skills is on, and its counter holds them until the
+ *  next rest's pass banks them (advancement.js MOVE-BANK) - so switched off and on before a rest, the drop threw away
+ *  every tough blow since the last one, under a line that says "Your progress is kept". At the switch off each such
+ *  counter is noted (`entity.masterPracticeHeld`, saved); the switch on drops the counter as before and gives the noted
+ *  uses back. (Off, a rest's pass may spend the counter - plain uses to a raise that never comes - but not the note.)
+ *  `{ [skill id]: uses }`, or null. */
+export function normalPracticeHeld(held) {
+  if (!held || typeof held !== 'object') return null;
+  const out = {};
+  for (const [k, n] of Object.entries(held)) if (/^\d+$/.test(k) && Number.isFinite(n) && n > 0) out[k] = n;
+  return Object.keys(out).length ? out : null;
+}
+function holdMasterPractice(entity) {
+  const held = {};
+  for (const id of masteredSkills(entity)) if ((entity.skills?.[id] ?? 0) >= 100) held[id] = entity.skillUses?.[id];
+  entity.masterPracticeHeld = normalPracticeHeld(held);
+}
+function returnMasterPractice(entity) {
+  const held = normalPracticeHeld(entity.masterPracticeHeld);
+  entity.masterPracticeHeld = null;
+  if (!held || !Array.isArray(entity.skillUses)) return;
+  for (const [k, n] of Object.entries(held)) if (Number(k) < entity.skillUses.length) entity.skillUses[Number(k)] = n;
+}
+
 /** Master it - PERMANENT. Returns { ok, text }. */
 export function masterSkill(entity, id, names = null) {
   const why = masteryRefusal(entity, id);
   if (why) return { ok: false, text: why };
   entity.masteredSkills = [...masteredSkills(entity), id];
+  dropPlainPractice(entity, id);   // RPT1026-PROGRESS: what it practised unmastered was counted whole
   const n = names?.[id] ?? 'The skill';
   return { ok: true, text: `${n} mastered: it can now pass 100.` };
 }
@@ -226,7 +263,11 @@ export function masterSkillsBlockReason(entity) {
 export function setMasterSkills(entity, on) {
   const reason = masterSkillsBlockReason(entity);
   if (reason) return { ok: false, text: reason };
+  const was = masterSkillsActive(entity);
   entity.masterSkills = !!on;
+  if (was && !masterSkillsActive(entity)) holdMasterPractice(entity);   // AUDIT RPT1026 F1: switched off - the tough-foe practice set aside
+  // RPT1026-PROGRESS: switched on - while it was off, every skill mastered and at the cap or beyond counted each use whole
+  if (!was && masterSkillsActive(entity)) { for (const id of masteredSkills(entity)) dropPlainPractice(entity, id); returnMasterPractice(entity); }   // AUDIT RPT1026 F1: and what it held comes back
   entity.masterSkillsAsked = true;
   return { ok: true, text: on ? MASTER_SKILLS_ON_TEXT : MASTER_SKILLS_OFF_TEXT };
 }

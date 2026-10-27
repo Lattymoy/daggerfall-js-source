@@ -1752,3 +1752,12 @@ named lines this audit moved and were re-aimed by content (`unquiet.json` 22, `u
 dead; five whose law went with U11 or became redundant were dropped. Every
 revenant list was swept on the audited law (42 lists, 1,755 records): 1,749 dead, the two equivalents as recorded, and the
 four survivors above, each answered and dead or gone.
+
+## 50. Another player's revenants and the crowd's count (RPT1026-EVENTS CROWD-KIN, 2026-10-26)
+
+A private report: the Players shown at once count hid other players and left their revenants standing. Another player's
+revenant is a puppet on my screen, stood by theirs and named by their word
+(`nm`). When the Other players card's **Players shown at once** count leaves its owner undrawn, it goes with them: it,
+its band and the owner's sworn companions draw nothing here and offer the ray nothing, unless it is on me
+(`net/gate/gateCrowd.js` `crowdKinHidden`; `11-Multiplayer/World-Bosses.md` section 21, CROWD-KIN). My own revenants
+are never hidden: they hunt me.

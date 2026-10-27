@@ -166,8 +166,9 @@ test('X11 Spell Reflection: it lands as an incumbent whose chance the incoming c
   // being vacuous under red-proof.
   cast(e, 21, 255, { durationBase: 8, chanceBase: 90 }, { ctx: { heldItem: { id: 1 } } });
   assert.equal(e.activeEffects.length, 2, 'the pinned entry stands beside the spell\'s');
-  assert.equal(spellReflectionChance(e), 71,
-    'FindIncumbentEffect returns the FIRST and nothing else (EEM:666-678) - never 71 + 91');
+  // PIN MOVED (RPT1026-PROGRESS): FindIncumbentEffect's FIRST match (EEM:666-678) let a weaker entry first in the list mask
+  // a stronger one (a mate's gift, a worn item's bundle) - the reader takes the BEST live entry now, still never a sum
+  assert.equal(spellReflectionChance(e), 91, 'the better of the two - never 71 + 91');
 });
 
 test('X11 Spell Reflection: a made roll drops the effect at the target and raises the re-target flag', () => {

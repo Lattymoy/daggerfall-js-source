@@ -430,14 +430,33 @@ function crashOverlay(msg) {
     // that names the cause - keep a count and the newest text.
     prior._count = (prior._count ?? 1) + 1;
     prior.textContent = `CRASH (${prior._count})\n${msg}`;
+    crashDismiss(prior);
     return prior;
   }
   const el = document.createElement('pre');
   el.id = 'crash';
   el.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;max-height:45%;overflow:auto;background:#300;color:#f88;font:12px monospace;-webkit-font-smoothing:antialiased;letter-spacing:normal;padding:8px;border:1px solid #f66;z-index:20;white-space:pre-wrap;pointer-events:none';   // PL3: a report, not a wall - it sat over the bottom half of the canvas and ate every click that should have relocked the pointer
   el.textContent = `CRASH\n${msg}`;
+  crashDismiss(el);
   document.body.appendChild(el);
   return el;
+}
+// RPT1026-CLIENT (private reports: the Firmament's Accept, a pad's A on the world map - the report covered the lower
+// screen, the Health bar and the hotkeys with it, until the game was left and loaded again): not every throw that
+// reaches the page kills the
+// game - a window's own frame, an input handler - and the report stood over the HUD of a session that ran on, with no
+// way off it (FIELD BUGS 2026-10-02c KEY-BOOT: "no dismiss"). Its body stays click-through (PL3); one button after the
+// text takes clicks and takes the report down, so a probe's first line is still the error's.
+function crashDismiss(el) {
+  // AUDIT RPT1026 K2: never on a report that is the game's way back - a lost graphics context's (below): nothing draws
+  // again on that page, and dismissed, its click-to-reload went with it and left a dead picture saying nothing
+  if (el._kept) return;
+  const b = document.createElement('button');
+  b.textContent = 'Dismiss';
+  b.style.cssText = 'display:block;margin-top:6px;padding:2px 10px;font:12px monospace;pointer-events:auto;cursor:pointer';
+  b.onclick = (e) => { e?.stopPropagation?.(); el.remove(); };   // never the lost context's tap-to-reload beneath it
+  el._dismiss = b;
+  el.appendChild(b);
 }
 
 // GL-LEAK (FIELD BUGS 2026-10-03, Swololo: "GPU memory leaks that do not lower down even after closing the tab"): every
@@ -459,10 +478,14 @@ addEventListener('unhandledrejection', (e) => crashOverlay(`unhandled rejection\
 document.getElementById('c')?.addEventListener('webglcontextlost', (e) => {
   e.preventDefault();
   if (pageGoing) return;   // GL-LEAK: let go on purpose as the page goes - no "context lost" over a closing tab
-  const el = crashOverlay('the graphics stopped (often low memory on a phone)\n\ntap here to reload');
+  // RPT1026-CLIENT (a private report from a PC, loading into an Oblivion Gate: the line blamed a phone's memory on a
+  // desktop with memory to spare): the browser says only THAT its context is gone - a phone short of memory, or on any
+  // machine the graphics driver resetting the card - so the line names both and blames neither
+  const el = crashOverlay('the graphics stopped: the graphics card was reset, or ran short of memory\n\nclick or tap here to reload');
   // AUDIT 68 S02-contextlost-tap-dead: PL3 made the report click-through,
   // so the promised tap fell to the dead canvas. This one takes taps, and
   // by onclick - a second loss must not stack a second listener.
   el.style.pointerEvents = 'auto';
   el.onclick = () => location.reload();
+  el._kept = true; el._dismiss?.remove?.();   // AUDIT RPT1026 K2: the way back is never dismissed (crashDismiss), nor given a Dismiss by a later throw
 });

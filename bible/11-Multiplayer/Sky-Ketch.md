@@ -152,6 +152,9 @@ keeps its range - a bolt, a volley at three), **the Dwarven Spider** (the hold's
 knocks a cell loose), **the Hammer Warden** (a hammer ahead, a sweep, a steam lane), **the Watch-Captain** (a stomp and the
 Tonal Wave rolling out of it - jumped - a cleave, a steam lane). Every blow a full shape stamp (`egBlowOf`) held at the
 wind-up floor. Health: `hpS` seconds of the crew's mean reference damage, the Wardens and the Captain a share a member.
+(RPT1026-FIGHTS RETIRED-BLOW, 2026-10-26: the Tonal Warden's shares are the Hour's law - a member away from the bridge
+`ABSENT_RETIRE_MS` takes its out, and its blow on the Warden or a fork brings it back first, `ketchWarden.js` sighted; the
+relay judges a word aboard from a pose no older than `KT_POSE_FRESH_MS`, the census's own.)
 A body walks round what stands on its floor (the waist's cover, the mast-lift's tower and the main mast). A blow on one
 is believed only risen, by the hand, from its storey, and a swing within reach; a sleeping Warden struck wakes.
 
@@ -633,3 +636,29 @@ above.
 
 PIN MOVED: `ketch_hud` (the clock's words), `l10n4_hardcoded` (the books' count, 57 -> 56), and every `RELAY_VERSION`
 pin (world267).
+
+## 22. RPT1026-EVENTS KETCH-OWED - a whole bridge's blow lands once (2026-10-26)
+
+A private report, from the Tonal Warden's fight: in its resonator phase a crew took more than a whole health bar at once,
+and every death-saving piece they wore was spent.
+
+**What it was.** The Warden's whole-bridge blows - the Discord (a quarter of everyone's health), the Keel-Song and the
+turn west - are owed to every screen in the fight, so a hidden tab still pays them (`net/ketch/ketchLink.js` `owed`,
+section 10). The page pays each as it lands and calls `paid(i)` (`scenes/ketch/ketchFight.js`). But a blow stays in the
+fight's list a breath past its landing (`ktBlowDone`: its landing, its spell and 1.5 s more), and the room's walks and
+health words come several a second. Each word folded in that breath found the blow in the list, not in `owed`, and owed
+it again. So one Discord landed once for every word heard after it: on the real voyage, a crew of eight took it six or
+seven times over, more than a full health bar. A piece that saves its wearer from death answered each one.
+
+**The fix.** The link keeps the blows it has paid, by fight and number (`paidKeys`, `fi:i`), and never owes one of them
+again. The keys go with the fight (a new fight number clears them) and with `leave()`, and the newest 64 are kept
+(twice `KT_OWED_MAX`). Nothing else moved: the room says the same words, and the blow's damage and its law are as they
+were (a share of the struck player's maximum health, `gateStrike`).
+
+**Not a DFU member:** Daggerfall has no raid, no airship and no blow owed to a screen. Ledger A (KETCH).
+
+**Pins:** `test/net/ketch/rpt1026_events_ketch.test.js` (2): the real voyage (`test/net/ketch/ketchSim.mjs`) heard by the
+real link and judged by the real fight, my feet on the bridge - each Discord lands once, at a quarter of the health; a
+blow paid and then heard again is owed no more, and `leave()` empties the list. `tools/mutants/rpt1026_events.json`
+(KETCH-OWED, 3: two dead, one recorded equivalent - the clear at a new fight only bounds the set, since the keys carry
+their fight's number). The relay is not touched.

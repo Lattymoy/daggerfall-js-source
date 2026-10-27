@@ -104,6 +104,7 @@ import { chainPlan, chainNeeded, chainYield, storesRoom } from '../../net/chainL
 import { getPref, setPref } from '../../systems/uiPrefs.js';
 import { pictureNode } from '../menu/menuGlyphs.js';   // MENU-ORDER: a material's picture, the host's
 import { t, localizedText, formatMessage, formatNumber, intlLocale } from '../../systems/textManager.js';   // L10N4: the pages' words in the player's language; the smith's lone metals, Leather, Arrows and All are DFU's own
+import { capturePointer } from '../pointerCapture.js';   // RPT1026-CLIENT: a pad's synthetic pointer is refused a capture, never thrown
 
 /**
  * @typedef {object} ProfPagesProvider
@@ -1721,7 +1722,7 @@ function planeBoard(el, act, finish, rerender) {
   board.onpointerdown = (e) => {
     const [x, y] = at(e);
     if (!act.press(x, y, now())) return;
-    board.setPointerCapture?.(e.pointerId);
+    capturePointer(board, e.pointerId);
     pts.length = 0; pts.push(`${(x * 100).toFixed(1)},${(20 - y * 20).toFixed(2)}`);
     trail?.setAttribute('points', pts.join(' '));
   };

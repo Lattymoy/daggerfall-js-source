@@ -246,6 +246,9 @@ test('AUDIT 18 F5: every host that gates on uiOverlayActive also ticks the overl
       // ticking, correctly - a click is not a frame. drawOverlay is
       // what marks the frame-loop branch.
       if (!/drawOverlay\(/.test(branch)) return;
+      // PIN MOVED (RPT1026-FIGHTS WINDOW-ONLINE): a one-line block that holds no return is no gate - the frame goes on
+      // past it (the world-hosted dungeon's window drawn last over a frame that ran under it, online)
+      if (/\{[^{}]*\}\s*(?:\/\/.*)?$/.test(line) && !/\breturn\b/.test(line)) return;
       assert.ok(/\breturn\b/.test(branch), `${rel}: the uiOverlayActive gate does not return`);
       gates++;
       assert.ok(/tickOverlay\(/.test(branch),

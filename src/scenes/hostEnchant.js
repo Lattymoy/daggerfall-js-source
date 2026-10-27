@@ -33,6 +33,7 @@ import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: Create
 import { placeFoeEnv, entityOccupancy, heldSpots, holdSpotWhile } from './quest/questFoeHost.js';   // QUEST-WAVE: the held spots' one home
 import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
 import { sparedByPlayer } from '../combat/friendlyFire.js';   // AUDIT NAV2 F55: who the drain passes by
+import { summonedBody } from '../systems/foeLootCap.js';   // RPT1026-PROGRESS: an artifact's summon carries no loot
 
 /** The law REFUSES a spot DFU would have rejected - no floor under it,
  *  something already there, too close to the wall the ray found - and
@@ -186,6 +187,9 @@ export function createEnchantCtx({
     inDarkness: () => playerInDarkness(),
     inHolyPlace: () => playerInHolyPlace(),
     applySpellToSelf: (record, _entity, item) => magic.castByItemSelf(record, item),   // D9: bundle.CastByItem (CastWhenUsed.cs:136)
+    // RPT1026-FIGHTS (TRAP-TO-OWNER): the door STRIKE-SHARED's strike takes, offered to the cast engine too (systems/
+    // enchantments.js spellToFoeOwner) - a cast's Soul Trap on a foe another player runs goes to that player
+    spellToOwner: (f, record, level) => !!spellToOwner?.(f, record, level),
     castBarred: () => magic.barCast?.() === true,   // HOME-MAGIC: a place that bars casting bars an item's, and it spends nothing
     setReadySpell: (record) => magic.readySpell(record, { free: true }),
     applySpellToTarget: (record, attacker, target) => {
@@ -246,7 +250,9 @@ export function createEnchantCtx({
     // - a released soul may appear in front of you), the Sanguine Rose
     // takes the default TRUE and allied TRUE (SanguineRoseEffect.cs:56).
     spawnFoe: (mobileType) => { standFoe?.(mobileType, { lineOfSightCheck: false }); },
-    spawnAlliedFoe: (mobileType) => { standFoe?.(mobileType, { allied: true }); },
+    // RPT1026-PROGRESS: and the allied summon's body carries nothing (foeLootCap.js summonedBody) - every host's stand
+    // answers the foe it stood (the street's and a building's pool, the dungeon's loose stand), or null
+    spawnAlliedFoe: (mobileType) => { Promise.resolve(standFoe?.(mobileType, { allied: true })).then(summonedBody, () => null); },
     // V3: the artifact doors. messageBox is Azura's TEXT.RSC popup,
     // openCharacterSheet the Oghma's sheet push, replaceFoe the
     // Wabbajack's transform over the host's own pool.

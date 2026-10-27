@@ -81,9 +81,12 @@ test('FB1020c HARBOUR-REACH never "no harbour" before the ground is built: the r
 });
 
 test('FB1020c HARBOUR-REACH by source: the world hands its harbour\'s readiness at any reach - the scan\'s every pixel built - and its own reach beside it', () => {
-  const W = hostText('src/scenes/world.js');
-  assert.match(W, /const ready = \(r = reach\) => \{[^\n]*\n {6}const x0 = rect\.minX - r, z0 = rect\.minZ - r, sx = rect\.maxX - rect\.minX \+ 2 \* r, sz = rect\.maxZ - rect\.minZ \+ 2 \* r;/);
-  assert.match(W, /return \{ key: `port:\$\{t\.id\}`, name: t\.name, rect, ready, reach \};/);
+  // PIN MOVED (RPT1026-WORLD FAR-QUAY): the harbour a town is handed as is moved out of world.js navalHarbourNear to
+  // systems/naval/harbourBook.js harbourOf, which the host maps over every port town near
+  const B = hostText('src/systems/naval/harbourBook.js');
+  assert.match(B, /const ready = \(r = reach\) => \{\n {4}const x0 = rect\.minX - r, z0 = rect\.minZ - r, sx = rect\.maxX - rect\.minX \+ 2 \* r, sz = rect\.maxZ - rect\.minZ \+ 2 \* r;/);
+  assert.match(B, /return \{ key: `port:\$\{t\.id\}`, name: t\.name \?\? null, rect, ready, reach \};/);
+  assert.ok(hostText('src/scenes/world.js').includes('return _navalHarbourAt.towns.map((t) => harbourOf(t, { state, built: csaPixelAt, woods }));'));
 });
 
 /** The 37 port towns whose own reach sounds no harbour on the ground DFU's kernel builds - the field's report. */

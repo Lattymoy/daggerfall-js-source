@@ -84,7 +84,7 @@ test('LOOT5: thirty powers - one a record, named, briefed inside the card\'s 32,
     ['registerPlayerKillListener', 'lootKill'], ['registerAbsorptionChance', 'lootAbsorbChance'], ['registerMagicRoundHook', 'lootRound'], ['registerLegendaryFind', 'lootFind']]) {
     assert.match(src, new RegExp(`\\n${seam}\\(LOOT_POWERS, ${fn}\\);`), `${seam} -> ${fn}`);
   }
-  assert.match(read('src/scenes/world.js'), /setHudSetChips\(\(e\) => \[\.\.\.setHudChips\(e\), \.\.\.lootHudChips\(e\)\]\);/, 'the HUD hears both');
+  assert.match(read('src/scenes/world.js'), /setHudSetChips\(\(e\) => \[\.\.\.setHudChips\(e\), \.\.\.lootHudChips\(e\), \.\.\.martialHudChips\(e\)\]\);/, 'the HUD hears both');   // PIN MOVED (RPT1026-PROGRESS): and a martial path's passive beside them
 });
 
 test('LOOT5: who - my worn pieces, one count a power, a weapon\'s on its own blows, asleep in a duel, nothing off', () => {

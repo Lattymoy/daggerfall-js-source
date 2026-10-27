@@ -29,7 +29,9 @@ const rd = (p) => readFileSync(new URL('../../' + p, import.meta.url), 'utf8');
 // The outdoor toggleRest's tail (REST-WARN, the owner: "Poison/Disease warning on rest"): gated, then ONE act - the
 // spend through the shared function and the real window (restNow) - run at once, or, poisoned or diseased, on the
 // warning's Yes once its box has left the slot (the close callback, THE SLOT IS EMPTIED BEFORE THE OCCUPANT IS TOLD)
-const REST_OUTDOORS = /const partyRefusal = modes \? partyRestGate\(\) : null;[^\n]*\n\s*if \(partyRefusal\) \{ townTalk\.showOverlay\(new ActionTextBox\(\[partyRefusal\]\)\); return; \}\s*(?:\/\/[^\n]*\n\s*)*const restNow = \(\) => \{ if \(modes\) markPartyRestSpent\(\); townTalk\.showOverlay\(createRestWindow\(outdoorRestDeps\)\); \};[^\n]*\n\s*const ail = restAilmentLines\(playerEntity\);\s*\n\s*if \(ail\) \{ let yes = false; townTalk\.showOverlay\(new DecisionBoxWindow\(\{ rows: ail, onYes: \(\) => \{ yes = true; \} \}\), \(\) => \{ if \(yes\) restNow\(\); \}\); return; \}\s*\n\s*restNow\(\);/;
+// PIN MOVED (AUDIT RPT1026 L3): the window opens with the bed's press read at the toggle (`bed`) - a REST-WARN box opens it
+// on its Yes, after the press
+const REST_OUTDOORS = /const partyRefusal = modes \? partyRestGate\(\) : null;[^\n]*\n\s*if \(partyRefusal\) \{ townTalk\.showOverlay\(new ActionTextBox\(\[partyRefusal\]\)\); return; \}\s*(?:\/\/[^\n]*\n\s*)*const bed = _restFromBed, restNow = \(\) => \{ if \(modes\) markPartyRestSpent\(\); townTalk\.showOverlay\(createRestWindow\(outdoorRestDeps, bed\)\); \};[^\n]*\n\s*const ail = restAilmentLines\(playerEntity\);\s*\n\s*if \(ail\) \{ let yes = false; townTalk\.showOverlay\(new DecisionBoxWindow\(\{ rows: ail, onYes: \(\) => \{ yes = true; \} \}\), \(\) => \{ if \(yes\) restNow\(\); \}\); return; \}\s*\n\s*restNow\(\);/;
 
 // ── THE MODE CODE, BOTH WAYS ─────────────────────────────────────────────
 
@@ -372,7 +374,9 @@ test('PARTY-REST4 (2026-09-21, per-request: "15m away from the leader do not cha
   const sh = rd('src/scenes/shared.js');
   assert.match(sh, /overrideRestKind: \(fn\) => \{[^\n]*_restKindOverride = fn \?\? null;[^\n]*\},/,
     'the override door itself - null/undefined goes back to inheriting restKind(), a function wins over it');
-  assert.match(sh, /\(_restKindOverride \?\? restKind\)\(\)/,
+  // PIN MOVED (AUDIT RPT1026 L3): between the two, a window a bed's press opened (ui/restDoor.js `bedPressed`) - the override
+  // still first
+  assert.match(sh, /\(_restKindOverride \?\? \(out\.bedPressed \? pressedBedKind : restKind\)\)\(\)/,
     'setResting reads the override FIRST when one is set, falling back to the inherited position-based restKind() only when none was broadcast at all');
 });
 

@@ -169,6 +169,7 @@ import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS, PIXEL_TEXT_SHADOW } from './pixelif
 import { t } from '../systems/textManager.js';   // CHAT-TRADE: the channel picker's words in the player's language
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 import { voiceMeText, voiceRedText } from '../net/chatVoice.js';   // STAFF-CHAT-RED: the voice switch's two words
+import { capturePointer, releasePointer } from './pointerCapture.js';   // RPT1026-CLIENT: a pad's synthetic pointer is refused a capture, never thrown
 import { chatItemsOf, chatItemLink, chatTextParts, hideChatItemTip, openLinkQuery, matchBagItems, takePendingLinks, prunePendingLinks } from './chatItemLink.js';   // CHAT-POST: coloured [Name] + the pack's hover card; `[` opens a bag picker in the field
 import { itemChatLabel, itemLine, linePictureUrl } from './enhanced/enhancedInventory.js';   // CHAT-POST: label + pack icon for the [ picker
 
@@ -258,7 +259,7 @@ ${PIXELIFY_FIVE_FACE}
 .dfchat-suggest-icon { width: 28px; height: 28px; flex: none; object-fit: contain; image-rendering: pixelated;
   background: rgba(0, 0, 0, 0.25); border-radius: 2px; }
 .dfchat-suggest-label { flex: none; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dfchat-suggest-worn { flex: none; margin-left: auto; font-size: 10px; letter-spacing: .04em; text-transform: uppercase;
+.dfchat-suggest-worn { flex: none; margin-left: auto; font-size: 11px; letter-spacing: .04em; text-transform: uppercase;
   color: var(--brass, #c08a3e); }
 /* ...and it is the DESKTOP's: every phone keyboard carries an emoji key of its own, and on a 320px phone this button
    took the field down to 67px (tools/chatChanProbe.mjs). The touch skin keeps the field; the shortcodes work on both. */
@@ -1645,7 +1646,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     if (e.button != null && e.button !== 0) return;
     e.preventDefault?.();
     drag = { id: e.pointerId ?? null, x: Number(e.clientX) || 0, y: Number(e.clientY) || 0, w: widthNow(), h: listNow(), follow: unseen === 0 && atNewest() };
-    if (e.pointerId != null) grip.setPointerCapture?.(e.pointerId);
+    if (e.pointerId != null) capturePointer(grip, e.pointerId);
   });
   grip.addEventListener('pointermove', (e) => {
     if (!drag || (drag.id != null && e.pointerId != null && e.pointerId !== drag.id)) return;
@@ -1655,7 +1656,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     if (!drag) return;
     const id = drag.id;
     drag = null;
-    if (id != null) grip.releasePointerCapture?.(id);
+    if (id != null) releasePointer(grip, id);
     keepSize();
   };
   grip.addEventListener('pointerup', endDrag);

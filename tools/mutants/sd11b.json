@@ -290,8 +290,8 @@
   {
     "name": "SD11b-L7H2-the-rights-unasked",
     "file": "src/net/superDungeon/sdBrain.js",
-    "old": "  if (R && !orreryMayTurn(R, who, now)) return { wait: true };",
-    "new": "  if (false) return { wait: true };",
+    "old": "  if (R && !orreryMayTurn(R, who, now)) { orreryWaited(R, who, now); return { wait: true }; }",
+    "new": "  if (false) { orreryWaited(R, who, now); return { wait: true }; }",
     "tests": [
       "test/net/superDungeon/sd11b_relay.test.js"
     ]
@@ -335,7 +335,7 @@
   {
     "name": "SD11b-L7H2-a-fresh-thread-never",
     "file": "server/src/index.js",
-    "old": "    if (res.x) this._sdRights = { s, R: orreryRightsFresh() };   // the snap begins a fresh thread",
+    "old": "    if (res.x) this._sdRights = { s, R: orreryRightsSnapped(R) };   // the snap begins a fresh thread - RPT1026-EVENTS ORRERY-HANDS: for the lash alone; a hand's lengthening is counted for the Hollow",
     "new": "    void 0;",
     "tests": [
       "test/net/superDungeon/sd11b_relay.test.js"

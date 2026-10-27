@@ -299,7 +299,7 @@ test('GRIM5: THE LAST PIXELS - the sheet\'s vitals are the HUD\'s vial drawn to 
 
 test('GRIM6: the front door\'s desk is the pack\'s painting at its own resolution, drawn smooth; the settings never jump (Plus\'s ground out of the page); the held map\'s Find me gone; a slot\'s word inside its shelf box; the chat\'s words in ink on its page and outlined over the world; the points the ledger\'s own size in the figures\' column (mutants: the desk the grid cut again; the ground kept; a slot\'s word on the frame; the typed word white; the points at 48)', () => {
   const css = kitCss() + rosterCss();
-  assert.match(css, /\.px-home:not\(\.px-over\):not\(\.lv-sky\)::before \{[^}]*BIOG00I0\.IMG\.png"\) var\(--gbx\) var\(--gby\) \/ var\(--gbw\) var\(--gbh\) no-repeat; image-rendering: auto; \}/);
+  assert.match(css, /\.px-home:not\(\.px-over\):not\(\.lv-sky\):not\(\.px-title\)::before \{[^}]*BIOG00I0\.IMG\.png"\) var\(--gbx\) var\(--gby\) \/ var\(--gbw\) var\(--gbh\) no-repeat; image-rendering: auto; \}/);
   assert.match(css, /\.px-ground \{ display: none !important; \}/);
   assert.match(css, /\.hmroot\[data-hm-sheet="automap"\] \.hmfindme \{ display: none !important; \}/, 'Find me goes on the dungeon\'s sheet alone (FINDME-SHEET)');
   assert.doesNotMatch(css, /[^\]] \.hmfindme \{ display: none/, 'never off the world map\'s and the town\'s');
@@ -377,7 +377,8 @@ test('DESK-HD: the front door stands on the detailed desk (public/art/grimoire-d
   assert.equal(buf[0], 0xff, 'a JPEG'); assert.equal(buf[1], 0xd8);
   assert.ok(buf.length > 100_000, 'the detailed painting, not a stand-in');
   const css = grimoireKitCss();
-  const at = css.indexOf('.px-home:not(.px-over):not(.lv-sky)::before { content: \'\'; position: absolute; inset: 0; pointer-events: none;');
+  // TITLE-DOOR: the boot home on the film's held title stands on the map, not the desk - the desk's door is every other home
+  const at = css.indexOf('.px-home:not(.px-over):not(.lv-sky):not(.px-title)::before { content: \'\'; position: absolute; inset: 0; pointer-events: none;');
   assert.ok(at > 0);
   const rule = css.slice(at, css.indexOf('}', at));
   assert.ok(rule.includes(`url("${grimoireDeskUrl()}") var(--gbx) var(--gby) / var(--gbw) var(--gbh) no-repeat,`), 'the painting first');

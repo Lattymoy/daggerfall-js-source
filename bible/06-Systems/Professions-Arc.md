@@ -556,7 +556,10 @@ GATHER-OW (2026-10-02, Mac: "allow them to appear in the overworld without being
   which goes to the pack or back on the market for gold and to nothing else - or, AUDIT BAG-CRAFT (`Materials-Bag.md`
   15), **loose**: a station's put-in from the pack that the service never handed out, which goes to a station (spent
   first) or back to the pack uncounted and to nothing else; a smelt's products of it are loose, a craft's piece of it
-  lists for gold alone. Own: this character's harvest (section 6), a craft whose every input
+  lists for gold alone. RPT1026-MARKET STORES-SAID (private reports 2026-10-26): the market's List form and the guild
+  Stores' Put in name the units of each origin they may not take, with their counts and why (`ui/storesWalled.js`) - they
+  offered only what may go, and Cured Leather and Arcane Essence made of looted or gold-bought goods read as lost. Own:
+  this character's harvest (section 6), a craft whose every input
   was own (section 9), Disenchanting's Essence from an own provenance item (one this character made, never sold), a
   Siege Honour's Spoils. Bought: a market purchase, a filled buy order, a counter's goods (4.5), a craft with any
   bought input, Essence from any other provenance item. A craft spends bought units first, so a character's own stay
@@ -3845,7 +3848,9 @@ Mac: **"2 and 4"** (2026-10-02: the Apothecary waits on Alchemy, Cooking and Jew
   "worth one quality step in any recipe"); no family step (no jeweller's choice is a quality step).
 - **The specialisations** (3.3), all four chosen now. **Gemcutter** (50) - a set gem +20%, not +10%. **Goldsmith** (50) -
   DECIDED: "Silver counts as Gold" is the **piece's** - a Goldsmith's Silver piece holds Gold's +10% and so its worth; its
-  rank stays Silver's, the metal it was made of. **THE JEWELLER'S HAND** (`jewelHand`): what of the choice at 50 a piece
+  rank stays Silver's, the metal it was made of. (RPT1026-PROGRESS, 2026-10-26: the card's own words were the design's
+  shorthand, and a private report read them as Silver standing in for Gold in a recipe; they say what
+  it does now - "Silver jewelry you make has the enchantment points and worth of Gold." - `net/professionLaw.js`.) **THE JEWELLER'S HAND** (`jewelHand`): what of the choice at 50 a piece
   carries wherever it goes - 1 a Goldsmith's Silver piece, 2 a Gemcutter's gemmed piece - signed into its record (`f`,
   `net/productRecord.js`, `jewelHandOk`) and kept on it in **0069's `products.hand`** (the cook's column - its `CHECK (1,
   2)` holds both: **no migration**); so a Gemcutter's ring bought at the market holds its points in the buyer's hands.

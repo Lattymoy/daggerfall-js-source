@@ -228,7 +228,7 @@ function dungeon(id, { authority, level, luck, renown, seed, foraging, partners,
     ${declSrc('onlineRoom')}
     ${declSrc('isRoomFoe')}
     ${declSrc('REMOTE_KILL')}
-    ${declSrc('SHARED_FOES_MAX')} ${declSrc('q2')} ${declSrc('q3')}
+    ${declSrc('SHARED_FOES_MAX')} ${declSrc('XF_WHOLE')} ${declSrc('q2')} ${declSrc('q3')}
     ${declSrc('FOES_FRAME_SLACK')} ${declSrc('FOE_MAX_PER_FRAME')} ${declSrc('_maxLeft')} ${declSrc('foeMaxOf')}
     ${['lootKeyOf', 'lootableBody', 'lootHolder', 'roomLootKey', 'lootRecords', 'publishLoot', 'sayRoomWord', 'applyLoot', 'applyActions'].map(fnSrc).join('\n')}
     ${BLOCK}

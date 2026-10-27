@@ -1437,12 +1437,20 @@ minDistance over the distance past it, and no quieter past maxDistance,
 where Unity's (FMOD's inverse) rolloff stops attenuating: a boat's loops
 are heard at half their volume however far off while it is active (kept)
 - with the panner only placing it (`systems/audio.js` logarithmicRolloff;
-the loops' handle a live volume). They live as Unity's do: an AudioSource
-stops as its object goes inactive, and one left at AddComponent's
-playOnAwake (true: SpawnBoat never clears it) plays again from its start
-as its object comes back - so a boat back in view plays both loops, each
-at the volume it last had, the fast one's its first (1) if it never faded
-(kept). UpdateAudioSource (1904-1920) runs on a change of the mod's Audio
+the loops' handle a live volume). An AudioSource stops as its object goes
+inactive, as Unity's does. Unity's AddComponent leaves playOnAwake true
+(SpawnBoat never clears it), so a boat back in view played BOTH loops
+again, the fast one at its first volume (1) if it never faded - and a
+plain source's volume is handed over the bus with Sound Volume divided
+out, so every moored boat in earshot ran her wake's loop at full volume
+whatever the sliders said. RPT1026-WORLD LOOP-AWAKE (a private report,
+2026-10-25: every slider at 10%, in and out of a caravan by the
+shipwright - the boats' sound far over every slider; Port-Ledger A, LOOP-AWAKE): a
+loop comes back as it went - one that played as its object went inactive
+plays again from its start at the volume it had, one that did not stays
+silent, and a boat never put away this way wakes her slow loop alone, the
+one every placement starts (`comeSailAway.js` setBoatActive; pinned by
+`test/systems/comeSailAway/rpt1026_world_loops.test.js`). UpdateAudioSource (1904-1920) runs on a change of the mod's Audio
 section (LoadSettings 846-850; the host asks each frame, `checkSettings`,
 seeded at Start): each loop still heard takes SoundVolume times the new
 volume, one faded to nothing stays there.

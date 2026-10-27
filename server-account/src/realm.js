@@ -486,9 +486,10 @@ export function firstSaveRefusal(text, row) {
   return cardWorthOf(save) <= customsCardAllowance(level) ? null : { error: 'customs-cards' };
 }
 
-/** INT2-INT6: the judge's columns on a character's row (migration 0096; AUTO-HOLD's timed hold, 0120), as verdict.js reads them. */
+/** INT2-INT6: the judge's columns on a character's row (migration 0096; AUTO-HOLD's timed hold, 0120; RPT1026-LEDGERLAW's
+ *  `law_v`, 0178), as verdict.js reads them. */
 export const JUDGE_COLUMNS = 'judged_seq, held, held_at, strikes, review, wealth, witnessed, allowance, played_at, clean_obj, clean_seq,'
-  + ' dupes, judge_rev, svc_seq, level_seen, level_at, law_sig, law_excused, wealth_v, held_until, law_holds, law_at';
+  + ' dupes, judge_rev, svc_seq, level_seen, level_at, law_sig, law_excused, law_v, wealth_v, held_until, law_holds, law_at';
 
 /**
  * INT3: THE HOLD, AS A ROUTE ASKS IT - before any act that hands a realm character's value to another player (a market

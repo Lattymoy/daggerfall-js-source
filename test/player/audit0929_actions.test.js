@@ -89,9 +89,10 @@ test('AUDIT PRE-MERGE 0929 D1/D2: the pass hands the contact the direction the b
   assert.match(motor, /vx = \(sin \* input\.forward \+ cos \* input\.strafe\)/, 'the motor\'s own direction, which the pass mirrors');
   assert.match(motor, /vz = \(cos \* input\.forward - sin \* input\.strafe\)/);
   assert.match(dc, /collisionTriggers\(dt, playerFeet, moveHeld, playerHeight, playerMove\);/);
-  for (const host of ['src/scenes/worldModes.js', 'src/scenes/dungeon.js']) {
+  // PIN MOVED (RPT1026-FIGHTS WINDOW-ONLINE, scenes/windowWorld.js): online ?world's dungeon frame runs under a window, and walks no trigger while one is up
+  for (const [host, moved] of [['src/scenes/worldModes.js', '!dungeonCtx\\.uiOverlayActive && '], ['src/scenes/dungeon.js', '']]) {
     const h = readFileSync(new URL(`../../${host}`, import.meta.url), 'utf8');
-    assert.match(h, /rawFoes\(dt, canvas, proj, view, cam\.pos, player\.pos, anyMove\(moveHeld\(keys\)\), player\.height, !!player\.isSneaking, motionBagOf\(player\)/, `${host}: the one motion bag`);
+    assert.match(h, new RegExp(String.raw`rawFoes\(dt, canvas, proj, view, cam\.pos, player\.pos, ${moved}anyMove\(moveHeld\(keys\)\), player\.height, !!player\.isSneaking, motionBagOf\(player\)`), `${host}: the one motion bag`);
   }
   // the real motor: the yaw it moved by rides its bag, and the press the pass derives from the bag is the way it moved
   const floor = new Collider(() => 0);
