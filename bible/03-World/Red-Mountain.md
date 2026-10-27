@@ -99,8 +99,9 @@ itself by 6,500 m: the summit stands clear over the haze, and the rim still clos
 
 - **The lava lake** on the crater's floor, a fan of 1.2 km, and **the lava** down the upper 70% of each foyada on its
   floor - a crust and its melt churning, hottest at the breach, its own light.
-- **The ash plume** from the lake: 7.5 km tall, 0.9 km at its foot, 6.5 km at its top, leaning east-north-east; the rite
-  smoke's law (`riteSmoke.js`) at a volcano's size. Lit as the frame is; the crater's fire a glow in its foot.
+- **The ash plume** from the lake: 8.5 km tall, 1.5 km in radius at its foot and 9 km at its top, leaning
+  east-north-east. Its billows are noise in the world's own space, rising through it, so it is a column of ash and
+  never a funnel. The sun lights its sunward side, and the crater's fire is a glow in its foot, muted by day.
 - **Drawn last of the far ring's pass**, twice: by the world's lens nearer than its far plane, against the world's depth,
   and past it by its own lens at the far plane. The far pass has no depth, so there the cone hides the fire
   analytically (`hidden`): the eye's ray stepped against the cone's profile within 22.6 km of its centre, and tested
@@ -129,7 +130,7 @@ itself by 6,500 m: the summit stands clear over the haze, and the rim still clos
   cap line, the air's heat, the levels, the ring and the field, the mean ground); the fire (its profile, its mesh, the
   shader's hiding run on its own source, the far ring's wiring and door); and on the freeware's trace the rim over
   6.5 km, 3 km over its plateau, its reach on land, no place on its cone.
-- **Mutants** `tools/mutants/redmountain.json` (33: 32 dead, 1 equivalent as recorded - the rim's crest, which the
+- **Mutants** `tools/mutants/redmountain.json` (37: 36 dead, 1 equivalent as recorded - the rim's crest, which the
   profile's crowded steps already catch).
 - **PIN MOVED:** `test/render/precip4_snowground.test.js` (the levels' count 44); `test/render/farsea1.test.js` and
   `test/systems/dynamicSkies.test.js` (the ring's haze line, `summitHold`); `test/systems/l10n4_hardcoded.test.js` (the
