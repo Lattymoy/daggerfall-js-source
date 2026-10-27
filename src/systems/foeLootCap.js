@@ -184,6 +184,39 @@ export function summonedBody(f) {
   return f;
 }
 
+/**
+ * RPT1026-PROGRESS: AND EVERY OTHER PLAYER'S COPY OF IT. Online in a dungeon a summon is its player's loose stand
+ * (SUMMON-SYNC): it rides the room's own lane (dungeonContext.js ownFrame, named in `lf`) and every other player in the
+ * room stands it as a puppet built on their own machine - and that build rolls its kind's whole loot there
+ * (buildFoeAt's spawnEnemyLoot), its death there its kit, food and card (applyFoeRecord's copy roll). So the summoner's
+ * own body was bare and a friend's copy of it was a Daedra Lord's loot, the farm with a second player. The owner's frame
+ * now names its summons beside its loose stands (`sm`, these numbers); a reader marks the puppet it stands for one
+ * (markSummoned) - bare from then, and capFoeLoot empties its death's finds as it empties the summoner's. The mark
+ * stays on the entity, so a puppet handed over (adoptOwn) streams on as a summon from its heir. The street's and a
+ * building's lane needed none of this: a puppet there carries nothing (exteriorFoes.js WORLD6b B14).
+ *
+ * summonedWord: the frame's field for an own frame's records - `src` its `[foe, questTag]` pairs, `out` the records
+ * beside them - `{ sm: [numbers] }`, or nothing when no summon rides.
+ */
+export function summonedWord(src, out) {
+  const sm = [];
+  src.forEach(([f, qt], k) => { if (!qt && f?.entity?.summoned === true && out[k]) sm.push(out[k].i); });
+  return sm.length ? { sm } : {};
+}
+
+/** RPT1026-PROGRESS: a reader's record its owner's frame named a summon (`seqs`, the frame's `sm` through
+ *  validLooseSeqs) - flagged `sm: 1` for the stand and the updates after it. Answers `r`. */
+export function summonedRecord(r, seqs) {
+  if (r && seqs?.has?.(r.i)) r.sm = 1;
+  return r;
+}
+
+/** RPT1026-PROGRESS: a puppet whose record says it is a summon is one here too (summonedBody, once). Answers `f`. */
+export function markSummoned(f, r) {
+  if (r?.sm === 1 && f?.entity && f.entity.summoned !== true) summonedBody(f);
+  return f;
+}
+
 /** The body's own cap, as its spawn stamped it (`entity.lootCap`); nothing for a foe without one. RPT1026-PROGRESS: a
  *  summon's (`summoned`) nothing at all. */
 export function capFoeLoot(entity) {
