@@ -70,7 +70,7 @@ function frameHost(X0, Y0, { built = new Map(), landform = true } = {}) {
   const heightCell = TERRAIN_SIZE / (H - 1);
   const here = () => createLandforms({ woods, beyond }), was = () => createLandforms({ woods });
   const host = createGroundFrame({
-    _liftLocationAt: () => null, blocks: {}, built, heightAt: () => -Infinity, heightCell, landform, landformsHere: here, landformsBefore: was,
+    _liftLocationAt: () => null, blocks: {}, built, heightAt: () => -Infinity, heightCell, landform, landformsHere: ({ before = false } = {}) => (before ? was() : here()),
     landformSites: { generation: () => 1 }, maps: {}, terrainGen: { roads: () => null }, state, woods,
   });
   const scene = (px, py, sx, sy) => { const t = state.pixelTranslation(px, py); return [t[0] + sx * heightCell, t[2] + sy * heightCell]; };
@@ -107,7 +107,7 @@ test('BAY-LEFT-GROUND D5 the lift\'s field is the sites\' own: made again when t
   let table = beyond, gen = 1;
   const host = createGroundFrame({
     _liftLocationAt: () => null, blocks: {}, built: new Map(), heightAt: () => -Infinity, heightCell, landform: true,
-    landformsHere: () => createLandforms({ woods, beyond: table }), landformsBefore: () => createLandforms({ woods }),
+    landformsHere: ({ before = false } = {}) => createLandforms({ woods, beyond: before ? null : table }),
     landformSites: { generation: () => gen }, maps: {}, terrainGen: { roads: () => null }, state, woods,
   });
   const t = state.pixelTranslation(town.px + 1, town.py), x = t[0] + 20.5 * heightCell, z = t[2] + 64.25 * heightCell;
@@ -152,8 +152,9 @@ test('BAY-LEFT-GROUND D5 every record that carries an exterior height stamps its
 test('BAY-LEFT-GROUND D5 the world host: the lift\'s place past the Bay the build\'s own, the old law\'s landforms the Bay\'s table alone, the frame handed both; the four writers stamp the frame\'s law and every reader hands it on (mutants: each seam)', () => {
   const w = hostText('src/scenes/world.js');
   assert.match(w, /const _liftLocationAt = \(x, y\) => \(onTheBay\(x, y\) \? spawnGroundPlace\.groundLocationAt\(x, y, locationIndex\.get\(`\$\{x\},\$\{y\}`\)\) : _locationToBuild\(x, y\)\);/);
-  assert.match(w, /const landformsBefore = \(\) => \(landform \? createLandforms\(\{ woods, roads: terrainGen\.roads\(\), sites: _landformSites, climates: _landformClimates \}\) : null\);/);
-  assert.match(w, /createGroundFrame\(\{[^\n]*\n\s+_liftLocationAt, blocks, built, heightAt, heightCell, landform, landformsHere, maps, terrainGen, landformSites, landformsBefore,/);
+  assert.match(w, /const landformsHere = \(\{ before = false \} = \{\}\) => \(landform \? createLandforms\(\{ woods, roads: terrainGen\.roads\(\), sites: _landformSites, beyond: before \? null : landformSites\.beyond\(\), climates: _landformClimates \}\) : null\);/, 'the old law\'s landforms: the Bay\'s table alone');
+  assert.match(w, /createGroundFrame\(\{[^\n]*\n\s+_liftLocationAt, blocks, built, heightAt, heightCell, landform, landformsHere, maps, terrainGen, landformSites,\n/);
+  assert.match(readFileSync(new URL('../../../src/scenes/groundFrameHost.js', import.meta.url), 'utf8'), /field = landformLiftField\(host\.woods, px, py, rect, HEIGHTMAP_DIMENSION, landformsHere\(\{ before \}\)\);/, 'the lift asks the law it reads by');
   assert.equal((w.match(/\.\.\.RECORD_GROUND_STAMP/g) ?? []).length, 4, 'the scene cache, the deck, the anchor, a remains\' place');
   assert.match(w, /restandHeight\(p\[1\], x, z, savedScale, extras\.groundFrame\)/, 'the camps left outside');
   assert.match(w, /restandHeight\(y, x, z, was, arrived\.groundFrame\)/, 'the scene cache');
@@ -161,6 +162,6 @@ test('BAY-LEFT-GROUND D5 the world host: the lift\'s place past the Bay the buil
   assert.match(w, /scaleOf\(a\.terrainScale\), a\.groundFrame\)/, 'the anchor');
   assert.match(w, /restandHeight\(y, x, z, was, extras\.groundFrame\); \};/, 'the save\'s rows');
   assert.match(w, /restandHeight\(w\.y \?\? 2, lx, lz, was, extras\.groundFrame\)/, 'the save\'s player');
-  assert.match(w, /terrainScale: place\.world\.terrainScale, groundFrame: place\.world\.groundFrame \}/, 'a remains\' place');
+  assert.match(w, /anchorLanding\(\{ \.\.\.place\.world, nativeX: place\.world\.x, nativeZ: place\.world\.z \}\)\[1\]/, 'a remains\' place: the record whole, its stamp with it');
   assert.doesNotMatch(readFileSync(new URL('../../../src/scenes/groundFrameHost.js', import.meta.url), 'utf8'), /MAP_WIDTH|MAP_HEIGHT/, 'no Bay bound left');
 });

@@ -372,8 +372,9 @@ test('LANDFORM1-3: the switch is the Features row on the enhanced skin, the room
 
 test('LANDFORM1-3: the host reads the row once, cuts every pixel and every promotion with it, raises the ring and the beacon by it, and stands every record\'s height again by it', () => {
   assert.match(WORLD, /\n  const landform = landformsOn\(\);\n/, 'once, at the mount - the same job online and off: the room\'s river switch decides online');
-  // PIN MOVED (BAY-LEFT-GROUND, D1): and the sites past the Bay beside the Bay's (test/world/terrain/bayleftground_sites.test.js)
-  assert.match(WORLD, /const landformsHere = \(\) => \(landform \? createLandforms\(\{ woods, roads: terrainGen\.roads\(\), sites: _landformSites, beyond: landformSites\.beyond\(\), climates: _landformClimates \}\) : null\);/, 'this thread\'s landforms, over its own network and the sites and climates it handed both kernels');
+  // PIN MOVED (BAY-LEFT-GROUND, D1): and the sites past the Bay beside the Bay's (test/world/terrain/bayleftground_sites.test.js);
+  // D5: `before`, the old law's ground - the Bay's table alone (test/world/terrain/bayleftground_frame.test.js)
+  assert.match(WORLD, /const landformsHere = \(\{ before = false \} = \{\}\) => \(landform \? createLandforms\(\{ woods, roads: terrainGen\.roads\(\), sites: _landformSites, beyond: before \? null : landformSites\.beyond\(\), climates: _landformClimates \}\) : null\);/, 'this thread\'s landforms, over its own network and the sites and climates it handed both kernels');
   assert.equal((WORLD.match(/landformsOn\(/g) ?? []).length, 1);
   assert.match(WORLD, /\n      landform,   \/\/ LANDFORM1-3: the shaped ground, cut along the kernel's own network\n    \}\);/, 'the pixel job');
   assert.match(WORLD, /terrainGen\.grid\(\{ px: p\.px, py: p\.py, stride: 1, samples: p\.samples, landform, bed: bedBytes \}\)/, 'the promotion off the thread');   // PIN MOVED (AUDIT WATER-NEXT P1): the bed carved with it

@@ -191,11 +191,12 @@
   {
     "name": "FB1013d-REMAINS-STAND-the-height-unread",
     "file": "src/scenes/world.js",
-    "old": "    const y = Number.isFinite(place.world.y) ? anchorLanding({ nativeX: place.world.x, nativeZ: place.world.z, y: place.world.y, terrainScale: place.world.terrainScale })[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14)",
+    "old": "    const y = Number.isFinite(place.world.y) ? anchorLanding({ ...place.world, nativeX: place.world.x, nativeZ: place.world.z })[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14) - the record whole, its scale and its frame's law (BAY-LEFT-GROUND, D5) beside its height",
     "new": "    const y = ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14)",
     "tests": [
       "test/systems/fb1013d_remains.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND (D5): re-aimed by content - the remains' read hands the anchor the record whole (its scale and its frame's law beside its height)."
   },
   {
     "name": "FB1013d-REMAINS-STAND-the-height-in-the-landforms-frame",
@@ -209,20 +210,22 @@
   {
     "name": "FB1013d-REMAINS-STAND-the-height-stood-raw",
     "file": "src/scenes/world.js",
-    "old": "    const y = Number.isFinite(place.world.y) ? anchorLanding({ nativeX: place.world.x, nativeZ: place.world.z, y: place.world.y, terrainScale: place.world.terrainScale })[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14)",
+    "old": "    const y = Number.isFinite(place.world.y) ? anchorLanding({ ...place.world, nativeX: place.world.x, nativeZ: place.world.z })[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14) - the record whole, its scale and its frame's law (BAY-LEFT-GROUND, D5) beside its height",
     "new": "    const y = Number.isFinite(place.world.y) ? place.world.y + state.compensation[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14)",
     "tests": [
       "test/systems/fb1013d_remains.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND (D5): re-aimed by content - the remains' read hands the anchor the record whole (its scale and its frame's law beside its height)."
   },
   {
     "name": "FB1013d-REMAINS-STAND-the-stamp-dropped",
     "file": "src/scenes/world.js",
-    "old": "    const y = Number.isFinite(place.world.y) ? anchorLanding({ nativeX: place.world.x, nativeZ: place.world.z, y: place.world.y, terrainScale: place.world.terrainScale })[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14)",
-    "new": "    const y = Number.isFinite(place.world.y) ? anchorLanding({ nativeX: place.world.x, nativeZ: place.world.z, y: place.world.y, terrainScale: undefined })[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14)",
+    "old": "    const y = Number.isFinite(place.world.y) ? anchorLanding({ ...place.world, nativeX: place.world.x, nativeZ: place.world.z })[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14) - the record whole, its scale and its frame's law (BAY-LEFT-GROUND, D5) beside its height",
+    "new": "    const y = Number.isFinite(place.world.y) ? anchorLanding({ ...place.world, nativeX: place.world.x, nativeZ: place.world.z, terrainScale: undefined })[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14) - the record whole, its scale and its frame's law (BAY-LEFT-GROUND, D5) beside its height",
     "tests": [
       "test/systems/fb1013d_remains.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND (D5): re-aimed by content - the remains' read hands the anchor the record whole (its scale and its frame's law beside its height)."
   },
   {
     "name": "FB1013d-REMAINS-STAND-stood-on-an-unbuilt-pixel",
@@ -479,11 +482,12 @@
   {
     "name": "FB1013d-AUDIT-C1-the-height-read-in-the-scene-frame",
     "file": "src/scenes/world.js",
-    "old": "    const y = Number.isFinite(place.world.y) ? anchorLanding({ nativeX: place.world.x, nativeZ: place.world.z, y: place.world.y, terrainScale: place.world.terrainScale })[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14)",
-    "new": "    const y = Number.isFinite(place.world.y) ? anchorLanding({ nativeX: x, nativeZ: z, y: place.world.y, terrainScale: place.world.terrainScale })[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14)",
+    "old": "    const y = Number.isFinite(place.world.y) ? anchorLanding({ ...place.world, nativeX: place.world.x, nativeZ: place.world.z })[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14) - the record whole, its scale and its frame's law (BAY-LEFT-GROUND, D5) beside its height",
+    "new": "    const y = Number.isFinite(place.world.y) ? anchorLanding({ ...place.world, nativeX: x, nativeZ: z })[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14) - the record whole, its scale and its frame's law (BAY-LEFT-GROUND, D5) beside its height",
     "tests": [
       "test/systems/fb1013d_remains.test.js"
-    ]
+    ],
+    "note": "BAY-LEFT-GROUND (D5): re-aimed by content - the remains' read hands the anchor the record whole (its scale and its frame's law beside its height)."
   },
   {
     "name": "FB1013d-AUDIT-C1-the-lift-at-x-and-z-swapped",

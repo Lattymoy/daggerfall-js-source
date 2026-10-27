@@ -470,8 +470,8 @@
   {
     "name": "BAY-LEFT-GROUND-D1-world-this-threads-landforms-without",
     "file": "src/scenes/world.js",
-    "old": "const landformsHere = () => (landform ? createLandforms({ woods, roads: terrainGen.roads(), sites: _landformSites, beyond: landformSites.beyond(), climates: _landformClimates }) : null);",
-    "new": "const landformsHere = () => (landform ? createLandforms({ woods, roads: terrainGen.roads(), sites: _landformSites, climates: _landformClimates }) : null);",
+    "old": "sites: _landformSites, beyond: before ? null : landformSites.beyond(), climates: _landformClimates }) : null);",
+    "new": "sites: _landformSites, beyond: null, climates: _landformClimates }) : null);",
     "tests": [
       "test/world/terrain/bayleftground_sites.test.js"
     ]
@@ -596,7 +596,7 @@
   {
     "name": "BAY-LEFT-GROUND-D5-old-laws-landforms-the-new",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "before ? landformsBefore() : landformsHere()",
+    "old": "landformsHere({ before })",
     "new": "landformsHere()",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
@@ -686,8 +686,8 @@
   {
     "name": "BAY-LEFT-GROUND-D5-world-old-law-with-the-new-table",
     "file": "src/scenes/world.js",
-    "old": "const landformsBefore = () => (landform ? createLandforms({ woods, roads: terrainGen.roads(), sites: _landformSites, climates: _landformClimates }) : null);",
-    "new": "const landformsBefore = () => (landform ? createLandforms({ woods, roads: terrainGen.roads(), sites: _landformSites, beyond: landformSites.beyond(), climates: _landformClimates }) : null);",
+    "old": "beyond: before ? null : landformSites.beyond(), climates: _landformClimates",
+    "new": "beyond: landformSites.beyond(), climates: _landformClimates",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
     ]
@@ -749,8 +749,8 @@
   {
     "name": "BAY-LEFT-GROUND-D5-world-remains-reader-blind",
     "file": "src/scenes/world.js",
-    "old": "terrainScale: place.world.terrainScale, groundFrame: place.world.groundFrame })[1]",
-    "new": "terrainScale: place.world.terrainScale })[1]",
+    "old": "anchorLanding({ ...place.world, nativeX: place.world.x, nativeZ: place.world.z })[1]",
+    "new": "anchorLanding({ ...place.world, nativeX: place.world.x, nativeZ: place.world.z, groundFrame: undefined })[1]",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
     ]
@@ -762,6 +762,33 @@
     "new": "yaw: cam.yaw, terrainScale: STREAMING_TERRAIN_SCALE }",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D5-world-scene-cache-unstamped",
+    "file": "src/scenes/world.js",
+    "old": "      ...RECORD_GROUND_STAMP,   // TERRAIN-SCALE1: the ground these heights stand on",
+    "new": "      terrainScale: STREAMING_TERRAIN_SCALE,   // TERRAIN-SCALE1: the ground these heights stand on",
+    "tests": [
+      "test/world/terrain/bayleftground_frame.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D5-world-anchor-unstamped",
+    "file": "src/scenes/world.js",
+    "old": "      ...RECORD_GROUND_STAMP,   // TERRAIN-SCALE1: the ground that height stands on",
+    "new": "      terrainScale: STREAMING_TERRAIN_SCALE,   // TERRAIN-SCALE1: the ground that height stands on",
+    "tests": [
+      "test/world/terrain/bayleftground_frame.test.js"
+    ]
+  },
+  {
+    "name": "BAY-LEFT-GROUND-D5-world-remains-unstamped",
+    "file": "src/scenes/world.js",
+    "old": "groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), ...RECORD_GROUND_STAMP }",
+    "new": "groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), terrainScale: STREAMING_TERRAIN_SCALE }",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
     ]
   }
 ]

@@ -1677,11 +1677,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  is asked of either kernel, and handed to both (setLandformTables). */
   let _landformSites = null, _landformClimates = null;
   /** LANDFORM1-3: this thread's landforms - the gate's beacon (gateGroundAt) and a record's frame (landformLiftAt)
-   *  read them, over the network this thread holds: the same arrays the worker cuts along; LANDFORM4: and its sites. */
-  const landformsHere = () => (landform ? createLandforms({ woods, roads: terrainGen.roads(), sites: _landformSites, beyond: landformSites.beyond(), climates: _landformClimates }) : null);   // BAY-LEFT-GROUND (D1): and the sites past the Bay (scenes/landformSitesHost.js)
-  /** BAY-LEFT-GROUND (D5): the landforms under a record's frame's OLD law - the Bay's table alone, the ground past the Bay
-   *  before its sites: what a record written past the Bay before GROUND_FRAME_LAW stood on (scenes/groundFrameHost.js). */
-  const landformsBefore = () => (landform ? createLandforms({ woods, roads: terrainGen.roads(), sites: _landformSites, climates: _landformClimates }) : null);
+   *  read them, over the network this thread holds: the same arrays the worker cuts along; LANDFORM4: and its sites.
+   *  BAY-LEFT-GROUND (D1): and the sites past the Bay (scenes/landformSitesHost.js); D5: `before` the landforms under a
+   *  record's frame's OLD law - the Bay's table alone, the ground past the Bay before its sites: what a record written past
+   *  the Bay before GROUND_FRAME_LAW stood on (scenes/groundFrameHost.js). */
+  const landformsHere = ({ before = false } = {}) => (landform ? createLandforms({ woods, roads: terrainGen.roads(), sites: _landformSites, beyond: before ? null : landformSites.beyond(), climates: _landformClimates }) : null);
   // VERGE1: CLEAR ROADSIDES (world/road/roadVerge.js) - read once, as the world mounts, as the forests are: where the wild's
   // flats stand is one law for a world, and a flip of the row reaches the next.
   const verges = roadVergesOn();
@@ -5445,7 +5445,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     renderer.markForeignPass();   // EV6: the surfaces' programs ran behind the shadows' back
   }
   const { groundFrameHeight, groundFrameNative, restandHeight, scaleOf } = createGroundFrame({   // HOST-SPLIT: src/scenes/groundFrameHost.js
-    _liftLocationAt, blocks, built, heightAt, heightCell, landform, landformsHere, maps, terrainGen, landformSites, landformsBefore,
+    _liftLocationAt, blocks, built, heightAt, heightCell, landform, landformsHere, maps, terrainGen, landformSites,
     get state() { return state; },
     get woods() { return woods; },
   });
@@ -26516,7 +26516,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const [x, z] = state.localFromWorld(place.world.x, place.world.z);
     const ground = heightAt(x, z);
     if (!Number.isFinite(ground)) return null;   // its pixel not built yet - stood once it is
-    const y = Number.isFinite(place.world.y) ? anchorLanding({ nativeX: place.world.x, nativeZ: place.world.z, y: place.world.y, terrainScale: place.world.terrainScale, groundFrame: place.world.groundFrame })[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14)
+    const y = Number.isFinite(place.world.y) ? anchorLanding({ ...place.world, nativeX: place.world.x, nativeZ: place.world.z })[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14) - the record whole, its scale and its frame's law (BAY-LEFT-GROUND, D5) beside its height
     return floorLanding(collider, [x, Math.max(y, ground) + 0.5, z]);
   };
   /** FB1013d REMAINS-STAND: the house's fallen, seen where they lie - a body in the street's pool, or the building's or the

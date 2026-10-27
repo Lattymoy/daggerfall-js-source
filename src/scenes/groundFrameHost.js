@@ -12,7 +12,7 @@
 // FRAME'S LAW IS STAMPED (world/terrain/terrainSampler.js GROUND_FRAME_LAW, RECORD_GROUND_STAMP): a record without it,
 // past the Bay, was written under the old law - its height the shaped ground of its day plus its own `off` - so it is put
 // into DFU's frame by that day's lift first (`before`: the landforms with the Bay's table alone, the host's
-// `landformsBefore`), then stood again as any record is: the lift is never put on twice. On the Bay a record was DFU's
+// `landformsHere({ before: true })`), then stood again as any record is: the lift is never put on twice. On the Bay a record was DFU's
 // frame already. The law is `recordFrame` (below), run over the lift this host makes.
 import { DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE, GROUND_FRAME_LAW } from '../world/terrain/terrainSampler.js';
 import { landformLiftField } from '../world/landforms.js';
@@ -94,7 +94,7 @@ export function recordFrame({ landform, liftAt, heightAt, state, bayAt }) {
 /** @param {any} host */
 export function createGroundFrame(host) {
   const {
-    _liftLocationAt, blocks, built, heightAt, heightCell, landform, landformsHere, landformsBefore, landformSites, maps, terrainGen
+    _liftLocationAt, blocks, built, heightAt, heightCell, landform, landformsHere, landformSites, maps, terrainGen
   } = host;
   /** LANDFORM1: how far the landforms move DFU's ground at a scene point, in world units (world/landforms.js
    *  landformLift - the kernel's own shaped ground less DFU's over the network this thread holds, the cuts with the
@@ -137,7 +137,7 @@ export function createGroundFrame(host) {
     if (field) _liftFields.delete(key);   // asked again: the last to be let go
     else {
       if (_liftFields.size >= LIFT_FIELDS_KEPT) _liftFields.delete(_liftFields.keys().next().value);   // the longest unasked
-      field = landformLiftField(host.woods, px, py, rect, HEIGHTMAP_DIMENSION, before ? landformsBefore() : landformsHere());
+      field = landformLiftField(host.woods, px, py, rect, HEIGHTMAP_DIMENSION, landformsHere({ before }));
     }
     _liftFields.set(key, field);
     return field((x - t[0]) / heightCell, (z - t[2]) / heightCell) * STREAMING_TERRAIN_SCALE;
