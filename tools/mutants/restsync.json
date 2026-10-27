@@ -148,7 +148,7 @@
   {
     "name": "RESTSYNC-bodies-before-the-standing",
     "file": "src/scenes/dungeonContext.js",
-    "old": ".sort((a, b) => (a.dead ? 1 : 0) - (b.dead ? 1 : 0))) {",
+    "old": ".sort((a, b) => (a.dead ? 1 : 0) - (b.dead ? 1 : 0) || (a.dead ? (b._diedAt ?? 0) - (a._diedAt ?? 0) : 0))) {",
     "new": ") {",
     "tests": [
       "test/net/restsync.test.js"

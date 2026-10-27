@@ -7390,7 +7390,12 @@ newest bodies off the full frame, which still said `xf` 1, and every joiner took
 frame. A full frame the count cap cut now says `xf` 2 - whole for the standing alone - and a joiner keeps a body it
 does not name (`dungeonContext.js:"frame.xf = shared.length < _sharedById.size ? XF_STANDING : XF_WHOLE;"`, applySharedRecords'
 `full === 2`); a standing puppet the host no longer has still goes, and a joiner of an older build, which reads 1
-alone, takes nothing down from such a frame (`test/net/rpt1026_items_bodycap.test.js`).
+alone, takes nothing down from such a frame (`test/net/rpt1026_items_bodycap.test.js`). AUDIT RPT1026 G1: the bodies
+went in the room's numbering, the oldest first, so the cap shed the body that had just fallen; its death rode a delta
+alone, and when the frame after the death was the full one (one frame in ten), the joiner's puppet still stood, went as
+a standing puppet the frame did not name, and the death's record that followed named an encounter the joiner no longer
+held. The bodies now go newest dead first (spawnCorpse's `_diedAt`), so the cap sheds an old body every joiner holds
+dead and keeps (`test/net/audit_rpt1026_items.test.js`).
 
 **RETIRED 2026-09-27.** QUEST-PARTY phase 3c paid both halves for a shared quest's foe (its spawner's, on the room's
 own lane, to the party) and SUMMON-SYNC (below) for the summon's - a loose stand, its spawner's, on the same lane, to
