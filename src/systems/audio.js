@@ -87,13 +87,24 @@ export function distanceGain(d, { refDistance = 1, maxDistance = 500, distanceMo
   if (distanceModel === 'exponential') return (x / ref) ** -r;
   return ref / (ref + r * (x - ref));
 }
-/** THE VOICE LAW: may a shot at `level` (what reaches the ear) sound while `live` sound (each `{ level }`, oldest first)?
- *  Under `max`, it plays; at it, it plays only as loud as the quietest sounding or louder, and that one (the oldest of the
- *  quietest) is stolen for it. Answers `{ play, steal }` - `steal` the one to fade, or null. Pure. */
-export function voiceRoom(live, level, max = REAL_VOICES) {
+/** THE VOICE LAW: may a shot at `level` (what reaches the ear) sound while `live` sound (each `{ level, flat? }`, oldest
+ *  first)? Under `max`, it plays; at it, it plays only as loud as the quietest sounding or louder, and that one (the oldest
+ *  of the quietest) is stolen for it. Answers `{ play, steal }` - `steal` the one to fade, or null. Pure.
+ *  AUDIT RPT1026 I2: THE PAGE'S OWN FIRST. A FLAT shot (`flat` - playOneShot's: the page's own, at the ear - the blow that
+ *  lands on me, my cry, my steps, a press, a quest's sound) always plays, the quietest positional voice stolen for it (the
+ *  quietest flat one only when every voice is flat); a positional shot never steals a flat voice. A peer's swing inside
+ *  its profile's six metres reaches the ear whole at 1.1 (net/remotePlayers.js PEER_SOUND_PROFILE) - louder than the blow
+ *  that lands on me (PLAYER_HIT_VOLUME 1), my cry (1) and my steps (0.7) - so thirty-two of them refused every one of
+ *  mine, and a near one stole any that did sound. (Unity ranks its voices by each source's priority before their
+ *  audibility; these two ranks stand in for that.) */
+export function voiceRoom(live, level, max = REAL_VOICES, flat = false) {
   if (live.length < max) return { play: true, steal: null };
-  let q = null;
-  for (const v of live) if (!q || v.level < q.level) q = v;
+  let q = null, qf = null;
+  for (const v of live) {
+    if (v.flat) { if (!qf || v.level < qf.level) qf = v; }
+    else if (!q || v.level < q.level) q = v;
+  }
+  if (flat) { const s = q ?? qf; return s ? { play: true, steal: s } : { play: false, steal: null }; }
   return q && level >= q.level ? { play: true, steal: q } : { play: false, steal: null };
 }
 
@@ -614,7 +625,7 @@ export class AudioEngine {
     const buf = this._buffer(index);
     if (!buf) return undefined;
     const level = volume * this._scale;
-    if (!this._voiceTake(level)) return undefined;   // RPT1026-EVENTS VOICE-CAP: past the real voices and quieter than every one sounding
+    if (!this._voiceTake(level, true)) return undefined;   // RPT1026-EVENTS VOICE-CAP: counted; AUDIT RPT1026 I2: flat - the page's own at the ear, always a voice
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
     src.playbackRate.value = pitch;
@@ -627,11 +638,11 @@ export class AudioEngine {
   }
 
   /** RPT1026-EVENTS VOICE-CAP: may a one-shot reaching the ear at `level` take a voice now (voiceRoom over the ones still
-   *  sounding - the quietest faded out for it at REAL_VOICES)? */
-  _voiceTake(level) {
+   *  sounding - the quietest faded out for it at REAL_VOICES)? AUDIT RPT1026 I2: `flat` a flat shot's, which always may. */
+  _voiceTake(level, flat = false) {
     const ctx = this.ctx, live = (this._voices ??= []), now = ctx.currentTime;
     for (let i = live.length - 1; i >= 0; i--) if (live[i].ended || live[i].ctx !== ctx || live[i].until <= now) live.splice(i, 1);
-    const room = voiceRoom(live, level);
+    const room = voiceRoom(live, level, REAL_VOICES, flat);
     const v = room.steal;
     if (v) {
       live.splice(live.indexOf(v), 1);
@@ -648,7 +659,7 @@ export class AudioEngine {
   /** RPT1026-EVENTS VOICE-CAP: a one-shot's voice kept while it sounds (`seconds` its clip at its pitch), and at its end
    *  (`onended` - its own, or a steal's stop) its whole chain let go and its voice freed; `onEnd` told. Answers the voice. */
   _voiceKeep(src, gain, pan, level, seconds, onEnd = null) {
-    const v = { ctx: this.ctx, src, gain, level, until: this.ctx.currentTime + seconds + VOICE_FADE_S, ended: false };
+    const v = { ctx: this.ctx, src, gain, level, until: this.ctx.currentTime + seconds + VOICE_FADE_S, ended: false, flat: pan == null };   // AUDIT RPT1026 I2: no panner, the page's own
     (this._voices ??= []).push(v);
     let done = false;
     src.onended = () => {

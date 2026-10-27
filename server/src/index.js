@@ -9001,7 +9001,8 @@ export class Room {
    * L7 H2 - `ls` the peers its lash falls on). Anything else is nothing: no word, no strike. Once the Concord holds, a
    * turn is nothing. AUDIT SD II (L7 H2): and THE STONES' RIGHTS (net/superDungeon/sdBrain.js orreryMayTurn) - a turner that has
    * lengthened the road SD_TURN_LONG_MAX times in this Hollow (RPT1026-EVENTS ORRERY-HANDS: this thread, before) waits while
-   * others turn, told so (`w`, to its socket alone, at most every SD_PZ_WAIT_SAY_MS).
+   * others turn, told so (`w`, to its socket alone, at most every SD_PZ_WAIT_SAY_MS) - AUDIT RPT1026 I1: and a hand held out
+   * behind held hands alone begins its count again at the snap (orreryJudge marks it, orreryRightsSnapped frees it).
    */
   async _sdTurn(ws, a, m, now) {
     if (typeof a.sub !== 'string' || !a.sub || !a.pose || a.pose.dd) return;

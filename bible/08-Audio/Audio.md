@@ -1249,9 +1249,10 @@ HRTF panner of its own, all sounding together. A one-shot's chain was never let 
 reached them. The context fell behind, and every sound stopped until it caught up.
 
 **Now** (`audio.js:"export function voiceRoom("`): a one-shot, flat or positional (`playOneShot`, `play3d`,
-`play3dVoice`), takes one of `REAL_VOICES` (32). Under the bound it plays. At the bound it plays only if it reaches the
-ear as loud as the quietest one sounding, or louder, and that one (the oldest of the quietest) is faded out over
-`VOICE_FADE_S` for it; a quieter shot does not start. A positional shot's level is what reaches the ear
+`play3dVoice`), takes one of `REAL_VOICES` (32). Under the bound it plays. At the bound a positional shot plays only if
+it reaches the ear as loud as the quietest positional one sounding, or louder, and that one (the oldest of the quietest)
+is faded out over `VOICE_FADE_S` for it; a quieter shot does not start. A flat shot always plays (AUDIT RPT1026 I2,
+below). A positional shot's level is what reaches the ear
 (`audio.js:"export function distanceGain("` - the Web Audio spec's distance models), so a blow at arm's length takes
 the voice of one across the court, never the other way. Every one-shot's chain is let go as it ends (`_voiceKeep`:
 `onended`, its own or a steal's stop) and its voice freed. Loops and beds are not counted: they are few and long, and a
@@ -1266,6 +1267,18 @@ The other half of the same report, that the crowd hid the boss, is the Other pla
 numbers a player's own blows raise are drawn for them alone.
 
 Pins: `test/systems/rpt1026_events_audio.test.js` (3: the law and the distance models; a crowd of forty round my ear -
-at most thirty-two sounding, the stolen faded and stopped, a far one past the bound refused, a flat shot always
-finding a voice; the chains let go and the voices freed as they end). The sixty-two audio pins that were there stand
+at most thirty-two sounding, the stolen faded and stopped, a far one past the bound refused, a flat shot at the crowd's
+own level finding a voice; the chains let go and the voices freed as they end). The sixty-two audio pins that were there stand
 (886 tests). `tools/mutants/rpt1026_events.json` (VOICE-CAP, 6).
+
+**AUDIT RPT1026 I2 (2026-10-27): the page's own first.** The pins above said a flat shot always finds a voice; their crowd
+was built by hand at the flat shot's own volume. The crowd's own producer (`net/remotePlayers.js` `_syncAttackSound`)
+plays a peer's swing at 1.1 through `PEER_SOUND_PROFILE`, whole inside six metres - louder at the ear than the blow that
+lands on me (`PLAYER_HIT_VOLUME`, 1), my cry (1) and my steps (`FOOTSTEP_VOLUME`, 0.7). Thirty-two peers swinging about me
+refused every one of mine, and a near swing stole any that did sound. Now the law has two ranks
+(`audio.js:"export function voiceRoom("`): a flat one-shot (`playOneShot` - the page's own, at the ear) always plays, the
+quietest positional voice stolen for it (the quietest flat one only when every voice is flat), and a positional shot never
+steals a flat voice. Unity ranks its voices by each source's priority before their audibility; the two ranks stand in for
+that. Pinned by `test/systems/audit_rpt1026_events_audio.test.js` (2: forty peers' swings from their own producer, and the
+hit, the cry and the step each sounding, a crowd's swing stolen for each and never one of mine; the law's two ranks);
+`tools/mutants/audit_rpt1026_events.json` (I2, 6).

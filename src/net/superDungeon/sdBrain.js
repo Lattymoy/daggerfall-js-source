@@ -251,17 +251,26 @@ export function orreryStep(o, state, i, a) {
  * fresh thread for the counts too, so every griefer's dozen came back at every snap - a handful of them spent the fray's
  * forty-eight between them, the Hour snapped back, and they spent it again, for as long as they cared to. A hand's
  * lengthening is counted for the Hollow now: its six spent, it waits while others turn until the Hollow is gone, whatever
- * the snaps. A lone learner is still never held, and a solver who knows the way never is.
+ * the snaps. A lone learner is still never held, and a solver who knows the way never is. AUDIT RPT1026 I1: save a hand
+ * the thread held out behind held hands alone (orreryWaited) - the snap begins its count again (orreryRightsSnapped).
  */
 export const SD_TURN_LONG_MAX = 6;
 export const SD_TURN_COMPANY_MS = 60_000;
 /** The line a refused turner reads. */
 export const SD_TURN_WAIT_LINE = 'The stones will not answer you while others turn them.';
 /** A thread's rights, fresh. */
-export const orreryRightsFresh = () => ({ by: /** @type {Record<string, { long: number, at: number }>} */ ({}), ids: /** @type {Record<string, number>} */ ({}) });
+export const orreryRightsFresh = () => ({ by: /** @type {Record<string, { long: number, at: number }>} */ ({}), ids: /** @type {Record<string, number>} */ ({}), wt: /** @type {Record<string, 1>} */ ({}) });
 /** RPT1026-EVENTS ORRERY-HANDS: the rights past a snap - the lash's nets begun again with the thread, each turner's count of
- *  the road it lengthened kept for the Hollow. */
-export const orreryRightsSnapped = (R) => ({ by: R.by, ids: /** @type {Record<string, number>} */ ({}) });
+ *  the road it lengthened kept for the Hollow. AUDIT RPT1026 I1: save a hand the thread held out behind held hands alone
+ *  (`wt`, orreryWaited) - its count begins again with the thread. Held hands hold each other: once a team has spent its six
+ *  learning the gearing, the first held hand to turn keeps the thread while it turns, so one griefer account turning on
+ *  held the team out of every thread of the Hollow (the old law's snap freed every hand; counted for the Hollow, it freed
+ *  none). A hand held out by a FREE hand's turns - a solver's, a learner's inside its six - keeps its count. */
+export const orreryRightsSnapped = (R) => {
+  const by = /** @type {Record<string, { long: number, at: number }>} */ ({});
+  for (const [k, v] of Object.entries(R.by)) by[k] = R.wt?.[k] ? { long: 0, at: v.at } : v;
+  return { by, ids: /** @type {Record<string, number>} */ ({}), wt: /** @type {Record<string, 1>} */ ({}) };
+};
 /** Who a turn is counted to: a registered account by its own name, every guest as one. */
 export const orreryTurnerOf = (sub, guest) => (guest ? 'guests' : `a:${sub}`);
 /** May `who` turn at `now`? */
@@ -270,6 +279,13 @@ export function orreryMayTurn(R, who, now) {
   if (!me || me.long < SD_TURN_LONG_MAX) return true;
   for (const [k, v] of Object.entries(R.by)) if (k !== who && now - v.at < SD_TURN_COMPANY_MS) return false;
   return true;
+}
+/** AUDIT RPT1026 I1: `who` told to wait at `now` (orreryMayTurn false) - marked (`wt`) when every hand it waits behind is
+ *  held too, so the snap a held hand brings on frees it (orreryRightsSnapped); a free hand turning (a solver, a learner
+ *  inside its six) marks nobody. */
+export function orreryWaited(R, who, now) {
+  for (const [k, v] of Object.entries(R.by)) if (k !== who && now - v.at < SD_TURN_COMPANY_MS && v.long < SD_TURN_LONG_MAX) return;
+  (R.wt ??= {})[who] = 1;
 }
 /** A turn by `who` (its socket's peer `id`) taken at `now`: `road` the fewest turns to the Concord before it, `after`
  *  after it. */
@@ -294,7 +310,7 @@ export const orreryLashed = (R, max = 256) => Object.entries(R.ids).filter(([, n
  */
 export function orreryJudge(o, lock, last, i, a, now, R = null, who = '', id = '') {
   if (lock.ok || now - (last[i] ?? 0) < SD_STONE_SETTLE_MS) return null;
-  if (R && !orreryMayTurn(R, who, now)) return { wait: true };
+  if (R && !orreryMayTurn(R, who, now)) { orreryWaited(R, who, now); return { wait: true }; }   // AUDIT RPT1026 I1: held out behind held hands alone - freed at the snap
   const road = R ? orreryShortest(o, lock.st) : 0;
   const res = orreryStep(o, lock, i, a);
   if (!res) return null;

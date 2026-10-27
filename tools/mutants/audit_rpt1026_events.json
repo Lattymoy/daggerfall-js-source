@@ -1,0 +1,112 @@
+[
+  {
+    "name": "AUDIT-RPT1026-I1-mark-never-set",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "  (R.wt ??= {})[who] = 1;",
+    "new": "  void (R.wt ??= {});",
+    "tests": [
+      "test/net/superDungeon/audit_rpt1026_events.test.js"
+    ],
+    "note": "the defect as found: a hand held out behind held hands alone is never freed - one held griefer keeps every thread from a team that learned the gearing"
+  },
+  {
+    "name": "AUDIT-RPT1026-I1-snap-forgives-nobody",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "by[k] = R.wt?.[k] ? { long: 0, at: v.at } : v;",
+    "new": "by[k] = v;",
+    "tests": [
+      "test/net/superDungeon/audit_rpt1026_events.test.js"
+    ],
+    "note": "the head's law: the marks kept and never read at the snap"
+  },
+  {
+    "name": "AUDIT-RPT1026-I1-judge-never-marks",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "  if (R && !orreryMayTurn(R, who, now)) { orreryWaited(R, who, now); return { wait: true }; }",
+    "new": "  if (R && !orreryMayTurn(R, who, now)) { return { wait: true }; }",
+    "tests": [
+      "test/net/superDungeon/audit_rpt1026_events.test.js"
+    ],
+    "note": "the realm's judge refuses without marking - the law's mark never reached from the relay"
+  },
+  {
+    "name": "AUDIT-RPT1026-I1-marked-behind-a-free-hand-too",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "now - v.at < SD_TURN_COMPANY_MS && v.long < SD_TURN_LONG_MAX) return;",
+    "new": "now - v.at < SD_TURN_COMPANY_MS && false) return;",
+    "tests": [
+      "test/net/superDungeon/audit_rpt1026_events.test.js"
+    ],
+    "note": "every refused hand freed at the snap - a griefer held out by a solver's turns gets its dozen back, the old law"
+  },
+  {
+    "name": "AUDIT-RPT1026-I1-marks-kept-past-the-snap",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "  return { by, ids: /** @type {Record<string, number>} */ ({}), wt: /** @type {Record<string, 1>} */ ({}) };",
+    "new": "  return { by, ids: /** @type {Record<string, number>} */ ({}), wt: R.wt };",
+    "tests": [
+      "test/net/superDungeon/audit_rpt1026_events.test.js"
+    ],
+    "note": "a thread's marks carried into the next - a hand freed again at every snap for one wait long ago"
+  },
+  {
+    "name": "AUDIT-RPT1026-I2-flat-shot-not-flat",
+    "file": "src/systems/audio.js",
+    "old": "    if (!this._voiceTake(level, true)) return undefined;",
+    "new": "    if (!this._voiceTake(level, false)) return undefined;",
+    "tests": [
+      "test/systems/audit_rpt1026_events_audio.test.js"
+    ],
+    "note": "the defect as found: the blow that lands on me, my cry and my step refused by thirty-two peers' swings"
+  },
+  {
+    "name": "AUDIT-RPT1026-I2-law-flat-unread",
+    "file": "src/systems/audio.js",
+    "old": "  if (flat) { const s = q ?? qf; return s ? { play: true, steal: s } : { play: false, steal: null }; }",
+    "new": "  if (false) { const s = q ?? qf; return s ? { play: true, steal: s } : { play: false, steal: null }; }",
+    "tests": [
+      "test/systems/audit_rpt1026_events_audio.test.js"
+    ],
+    "note": "a flat shot judged as a positional one"
+  },
+  {
+    "name": "AUDIT-RPT1026-I2-take-flat-dropped",
+    "file": "src/systems/audio.js",
+    "old": "    const room = voiceRoom(live, level, REAL_VOICES, flat);",
+    "new": "    const room = voiceRoom(live, level, REAL_VOICES, false);",
+    "tests": [
+      "test/systems/audit_rpt1026_events_audio.test.js"
+    ],
+    "note": "the engine never tells the law a shot is flat"
+  },
+  {
+    "name": "AUDIT-RPT1026-I2-every-shot-flat",
+    "file": "src/systems/audio.js",
+    "old": "    const room = voiceRoom(live, level, REAL_VOICES, flat);",
+    "new": "    const room = voiceRoom(live, level, REAL_VOICES, true);",
+    "tests": [
+      "test/systems/audit_rpt1026_events_audio.test.js"
+    ],
+    "note": "every positional shot always a voice - a far peer's swing steals a near one"
+  },
+  {
+    "name": "AUDIT-RPT1026-I2-voice-never-flat",
+    "file": "src/systems/audio.js",
+    "old": "ended: false, flat: pan == null };",
+    "new": "ended: false, flat: false };",
+    "tests": [
+      "test/systems/audit_rpt1026_events_audio.test.js"
+    ],
+    "note": "my sounding voices ranked with the crowd's - a peer's swing steals my step, my cry steals my hit"
+  },
+  {
+    "name": "AUDIT-RPT1026-I2-flat-voice-stealable",
+    "file": "src/systems/audio.js",
+    "old": "    if (v.flat) { if (!qf || v.level < qf.level) qf = v; }",
+    "new": "    if (false) { if (!qf || v.level < qf.level) qf = v; }",
+    "tests": [
+      "test/systems/audit_rpt1026_events_audio.test.js"
+    ],
+    "note": "the law ranks every voice alike"
+  }
+]
