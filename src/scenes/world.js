@@ -89,7 +89,7 @@ import { lookAt, multiply, perspective, mirrorProjectionX, identity, UP_Y, wrapA
 import { aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // GHOST1: the plane extraction comes through bounds.js's `spherePlanes` now - `_planes` serves the sphere test too
 import { spherePlanes, batchVisible, setFlatLean, batchSphere } from '../render/bounds.js';   // PERF-CROWD: the batch's own bounding sphere, the test the shadow replay already uses   // GHOST1: through its ONE home, on the NORMALISED planes it needs   // EV3: the frustum
 import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient
-import { FarRingRenderer, ringDisabled, ringHeightAt, RING_HAZE_HOLD, BuiltPixels } from '../render/farRing.js';   // EV8: the province's mountains on the horizon; FAR-SEA1: its haze, the sea's too; OW-HORIZON: the built pixels, counting their changes for the ring's hole
+import { FarRingRenderer, ringDisabled, ringGroundAt, RING_HAZE_HOLD, BuiltPixels } from '../render/farRing.js';   // EV8: the province's mountains on the horizon; FAR-SEA1: its haze, the sea's too; OW-HORIZON: the built pixels, counting their changes for the ring's hole
 import { syncLightingLane, lanternColor } from '../render/enhancedLighting.js';   // EL1: the Enhanced Lighting lane, installed at mount
 import { collectBlockFlats, billboardSize, mobileBillboardSize, centredBase, classicBillboardSize } from '../world/rmbFlats.js'; // TREES-SEATED: a block's trees on the hills drawn under them; FIELD BUGS 2026-10-13e HILL-SEAT: and the pads under what its author stood on them
 import { flatFieldFor } from '../world/flatFields.js';   // FIELD BUGS 2026-10-04d CROPS: a crop field keeps a metre off the block's solids; AUDIT MERCHANT-YARDS G1: and a yard off the field
@@ -307,7 +307,7 @@ import { faunaBandAt, installTamrielFauna, bandGroundPastBay } from '../systems/
 import { etherWoods, etherClimateIndex, etherPoliticIndex, etherFrame, inEther, inEtherLaw, onBayOrEther, isleAt, islesNear, veilhaven, ETHER_HARBOUR_REACH, ETHER_SEA_NAME, ETHER_SEA_TITLE, CROSS_X, etherLight, ETHER_KEY_TINT } from '../world/ethericSea.js';   // ETHER-SEA: the Eltheric Ocean's ground and its box
 import { etherTemplates, etherTemplateOf, synthesizeEtherLocation, etherPlaceIsle, etherPlaceRows, ETHER_REGION, ETHER_REGION_NAME, isEtherPlaceId } from '../world/etherPlaces.js';   // ETHER-PLACES: the isles' towns and ruins; ETHER-OW: their pixels and far rows, the Overworld's
 import { tamrielFrameInBay, inBay, inBay as onTheBay } from '../world/tamriel/tamrielFrame.js';   // TAMRIEL2: the frame the world streams over, and the Bay's own ground (WW3 reads it as inBay, TESA as onTheBay)
-import { createLandforms, landformSites, landformClimates, cliffFadeAt } from '../world/landforms.js';   // LANDFORM1-3: the shaped ground, and what it lifts a point by; AUDIT LANDFORMS II I1: the lift's fade beside the sea
+import { createLandforms, landformSites, landformClimates } from '../world/landforms.js';   // LANDFORM1-3: the shaped ground, and what it lifts a point by; AUDIT LANDFORMS II I1: the lift's fade beside the sea
 import { ecotoneOwner } from '../world/ecotone.js'; import { MAP_W, MAP_H } from '../world/road/roadNetwork.js';   // ECOTONE1: a border point's owner, the pixel's lattice origin, the map's edges
 import { forestAt } from '../world/terrain/terrainNature.js';   // FOREST1 (AUDIT F1): a wood's flats keep out of the rock pieces; GRASS-LIT2: the shot hook's woods
 import { huntKind, createBodyStamps, bodiesHere, trackerMarks } from './huntHost.js';   // PROF7: Hunting's bodies - a kind in it, the kills that stamp them, a Tracker's marks; INDOOR-SKIN: the pool by the mode
@@ -1684,8 +1684,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  read them, over the network this thread holds: the same arrays the worker cuts along; LANDFORM4: and its sites.
    *  BAY-LEFT-GROUND (D1): and the sites past the Bay (scenes/landformSitesHost.js); D5: `before` the landforms under a
    *  record's frame's OLD law - the Bay's table alone, the ground past the Bay before its sites: what a record written past
-   *  the Bay before GROUND_FRAME_LAW stood on (scenes/groundFrameHost.js). */
-  const landformsHere = ({ before = false } = {}) => (landform ? createLandforms({ woods, roads: terrainGen.roads(), sites: _landformSites, beyond: before ? null : beyondSites.beyond(), climates: _landformClimates }) : null);
+   *  the Bay before LIFT_FRAME_LAW stood on (scenes/groundFrameHost.js) - RELIEF-PEAKS: with no ranges, which it never stood. */
+  const landformsHere = ({ before = false } = {}) => (landform ? createLandforms({ woods, roads: terrainGen.roads(), sites: _landformSites, beyond: before ? null : beyondSites.beyond(), climates: _landformClimates, ranges: !before }) : null);   // RELIEF-PEAKS: the old law's without the ranges
   // VERGE1: CLEAR ROADSIDES (world/road/roadVerge.js) - read once, as the world mounts, as the forests are: where the wild's
   // flats stand is one law for a world, and a flip of the row reaches the next.
   const verges = roadVergesOn();
@@ -29632,15 +29632,14 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const [x, z] = state.localFromWorld(nx, nz);
     const h = heightAt(x, z);
     if (Number.isFinite(h)) return [x, h + lift, z];
-    // TV3: past the built grid, the far ring's own macro height for the pixel (render/farRing.js ringHeightAt) - the
-    // ground the view shows out there - under the grid's current compensation
+    // TV3: past the built grid, the far ring's own ground for the pixel (render/farRing.js ringGroundAt, RELIEF-PEAKS: the
+    // kernel's mean ground at its centre, where the ring's vertex stands) - the ground the view shows out there - under the
+    // grid's current compensation
     const px = worldCoordToMapPixel(nx, nz);
     // AUDIT CAPTAIN'S SEA G5: past the map the ground the ring reads there (the continent's, the Eltheric Ocean's) - an isle's
     // plate stood at the sea's height under its silhouette
     const ground = (px.x >= 0 && px.y >= 0 && px.x < 1000 && px.y < 500) || !!woods.isTamrielGround || !!woods.etherLaw?.(px.x, px.y);
-    const byte = ground ? woods.getHeightMapValue(px.x, px.y) : 0;
-    const fade = landform && ground ? cliffFadeAt((bx, by) => woods.getHeightMapValue(bx, by), px.x, px.y) : 1;   // AUDIT LANDFORMS II I1: faded beside the sea, as the ring is
-    return [x, ringHeightAt(px.x, px.y, byte, !!landform, fade) + state.pixelTranslation(px.x, px.y)[1] + lift, z];   // LANDFORM1: the raised massif; BREATHTAKER2: and the continent's lift, as the ring stands it
+    return [x, ringGroundAt(px.x, px.y, ground ? (bx, by) => woods.getHeightMapValue(bx, by) : () => 0, !!landform) + state.pixelTranslation(px.x, px.y)[1] + lift, z];   // LANDFORM1: the raised massif; BREATHTAKER2: and the continent's lift; AUDIT LANDFORMS II I1: faded beside the sea - as the ring stands it
   };
   /** TV4 (AUDIT TV D3): the land's height at a scene point - the built grid's, the far ring's past it. */
   // AUDIT DEEP R-4: on the SEA, its surface (and the margin with it - the sea is flat and known): the seabed Deep Waters

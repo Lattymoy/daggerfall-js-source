@@ -3590,3 +3590,42 @@ Pins `test/scenes/bayleft_places.test.js` (8, three on the freeware). Mutants `t
 Re-aimed by content and run, all dead: AOWR-L5-1-mark-at-pixel-middle, AUDIT-TESA-A2-3-summary-undiscovered,
 EOW-settlements-isles, OWQ-press-unread, OWQ-pixel-swapped. A departure from DFU, whose places are MAPS.BSA's: Port-Ledger
 A, BAY-LEFT-MAPS.
+
+## RELIEF-PEAKS ON THE HORIZON - the far views on the kernel's own ground (2026-10-27, KPbICA through the owner)
+
+KPbICA: *"5) Strange projections above the horizon line. Probably because of the part of the renderer that draws
+details further than loading distance"*. The whole slice is `03-World/Tamriel.md` RELIEF-PEAKS; the far views' part is
+here.
+
+- **What stood.** The far ring stood each vertex (a pixel's centre) at its own byte's height, and that law left the
+  kernel's second term out (the large map, a third of the land's height) - so it stood 410 to 500 m off the kernel's
+  mean ground in the continent's ranges, the Bay's Dragontails some 470 m under it, and every byte half a pixel from
+  its own node. The far field stood each cell at the highest of its nine samples' bytes by that law: past the Bay up to
+  105 m over the ground at its place (29 m on the mean), on the Bay 266 m under it on the mean and up to 253 m over it.
+- **The law now** (`render/farRing.js` ringHeight, ringGroundAt; `world/landforms.js` nodeGround, centreGround,
+  nodeGroundAt): the far ring's vertex is the kernel's mean ground at its pixel's centre - the small term's cubic over
+  the pixel's window, the large map by its law (`tamrielGround.js` largeOfByte), the lift faded by its nodes' fades,
+  the continent's share, the ranges. Its grid reads the bytes once into a padded grid and the nodes' fades once a node.
+  The far field's vertex stands on the node its cell's centre is (`world/terrain/midRingGrid.js` farFieldCell's
+  `ground`): worked out on the terrain worker under the Landforms row, kept by the cell, transferred and assembled a
+  band at a time. The travel view past the grid (`scenes/world.js` tvSceneOf) reads the ring's ground. Measured: within
+  2 m of the kernel's mean ground past the Bay, within 35 m on the Bay (the law against WOODS.WLD's own cells); the far
+  field within 2 m past the Bay and 45 m on it.
+- **The ring's sea** stands where the ring's ground stands at the sea's height. A lone island byte now stands at its
+  node, the corner of four pixels, as the streamed ground stands it, so the four are its shore (FAR-SEA1's pins moved).
+- **The skyline.** At six viewpoints 300 m up (180 bearings each), the drawn skyline against the ground's own: before,
+  under one pixel over it everywhere; now the ranges' ridges stand under the ring's 819 m vertices, so the ring's skyline
+  is a few pixels under the ground's on the mean and at most 3.9 pixels over it at 5 bearings of one viewpoint (1080p,
+  65 degrees). The middle ring draws the ridges to 11.5 km.
+- **Not fixed here: FAR-TREES' band over the middle ring's hills.** The band is drawn last in the far pass with no depth
+  among the far layers, so a band tree behind a middle-ring hill is drawn over it: from Bay pixel 2046,325, 300 m up,
+  Land View 5, 442 of 3,072 band tree points (14.4%; 21.0% of those the streamed grid leaves). The fix is the band's
+  vertex shader marching its sight line over the middle ring's heights (handed as a texture with their frame and the
+  eye) and dropping a tree the ground hides - in `render/farTrees.js`, FLORA-GROUND's file, left to it.
+- **Pins:** `test/world/reliefpeaks.test.js` (the far views on the kernel's ground; their wiring; with ARENA2 the far
+  ring on the freeware's ground). PIN MOVED: `test/render/farlandmark.test.js`, `test/render/farsea1.test.js`,
+  `test/render/midring.test.js`, `test/ui/farring.test.js`, `test/scenes/tv3_travellers.test.js`,
+  `test/systems/naval/auditcaptsea.test.js`, `test/systems/landform.test.js`,
+  `test/world/terrain/auditlandforms.test.js`. Mutants: `tools/mutants/reliefpeaks.json` (the far views' records), and
+  the far views' records of `farlandmark.json`, `midring.json`, `auditcaptsea.json`, `auditlandforms.json` and
+  `terrainscale1.json` re-aimed by content. Port-Ledger A, RELIEF-PEAKS.

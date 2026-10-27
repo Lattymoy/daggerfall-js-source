@@ -1080,11 +1080,12 @@
   {
     "name": "ACS-G6-ring-grid",
     "file": "src/render/farRing.js",
-    "old": "  if (relief && byteAtPast) {",
-    "new": "  if (false) {",
+    "old": "own(x, y) ? cliffFadeAt(gridByte, x, y) : cliffFadeAt(byteAt, clampX(x), clampY(y));",
+    "new": "cliffFadeAt(byteAt, clampX(x), clampY(y));",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (RELIEF-PEAKS): the ring's nodes' fades are read once a node into a grid of their own; an isle's node past the map faded at the clamped corner again"
   },
   {
     "name": "ACS-G6-ring-own",

@@ -14,7 +14,7 @@ import { generatePixelTerrain, restrideGrid } from '../../../src/world/terrain/t
 import { waterCorners, WATER_DRAW_MASK_TABLE } from '../../../src/world/water/waterCorners.js';
 import { DIR, DIR_DELTA } from '../../../src/world/road/roadNetwork.js';
 import { retryModRoads, loadModRoads, MOD_ROADS, MOD_ROADS_RETRY_MAX, MOD_ROADS_FETCH_TIMEOUT_MS } from '../../../src/world/roadsProducer.js';
-import { ringHeight, buildFarRingGrid } from '../../../src/render/farRing.js';
+import { ringGroundAt, buildFarRingGrid } from '../../../src/render/farRing.js';
 import { StreamingWorldState } from '../../../src/world/streamingWorld.js';
 import { syntheticWoodsBytes, network } from '../../landformWorld.mjs';
 import { PlayerMotor } from '../../../src/player/motor.js';
@@ -642,7 +642,7 @@ test('AUDIT LANDFORMS D7: a point\'s lift between samples, and on the pixel\'s f
 test('AUDIT LANDFORMS D6: the far ring\'s normals are the lifted ring\'s slopes - on the mountain\'s flank, off its plateau', () => {
   const baseX = 350, baseY = 200, R = 2, side = 2 * R + 1;
   const g = buildFarRingGrid({ heightBytes: woods.heightMapBuffer, mapWidth: MAP_WIDTH, mapHeight: MAP_HEIGHT, climateAt: () => 231, baseX, baseY, radius: R, relief: true });
-  const rh = (x, y) => ringHeight(woods.getHeightMapValue(x, y), true);
+  const rh = (x, y) => ringGroundAt(x, y, (a, b) => woods.getHeightMapValue(a, b), true);   // PIN MOVED (RELIEF-PEAKS): the ring's ground at a pixel's centre
   let both = 0;
   for (let j = 0; j < side; j++) for (let i = 0; i < side; i++) {
     const px = baseX - R + i, py = baseY - R + j, o = (j * side + i) * 3;
@@ -1267,10 +1267,14 @@ test('AUDIT LANDFORMS II I1: the lift fades beside the sea - a sea cliff\'s rim 
   // the far ring stands the rim's node as DFU stands it and the plateau's three in at the whole lift - and so the view
   const ring = buildFarRingGrid({ heightBytes: cw.heightMapBuffer, mapWidth: MAP_WIDTH, mapHeight: MAP_HEIGHT, climateAt: () => 231, baseX: 104, baseY: 430, radius: 6, relief: true });
   const ringY = (x) => ring.positions[((430 - 430 + 6) * 13 + (x - 104 + 6)) * 3 + 1];
-  assert.equal(ringY(100), Math.fround(ringHeight(75)), 'the rim\'s node: no lift');
-  assert.equal(ringY(101), Math.fround(ringHeight(75, true, 0.5)));
-  assert.equal(ringY(103), Math.fround(ringHeight(75, true)), 'three in: the whole lift');
-  assert.match(WORLD, /cliffFadeAt\(\(bx, by\) => woods\.getHeightMapValue\(bx, by\), px\.x, px\.y\) : 1;[^\n]*\n\s+return \[x, ringHeightAt\(px\.x, px\.y, byte, !!landform, fade\)/, 'the travel view past the grid fades it the same');   // PIN MOVED (BREATHTAKER2 on the horizon): at its pixel, the continent's lift with it
+  // PIN MOVED (RELIEF-PEAKS): the ring's vertex the kernel's ground at its pixel's centre (ringGroundAt) - its lift faded by
+  // the cubic of its window's nodes' fades, as the kernel fades it: the rim's pixel none of it, one in part, three in all
+  const ringAt = (x, fade) => Math.fround(ringGroundAt(x, 430, byteAt, true, fade));
+  assert.equal(ringY(100), Math.fround(ringGroundAt(100, 430, byteAt, false)), 'the rim\'s pixel: no lift');
+  assert.equal(ringY(101), ringAt(101, (x, y) => cliffFadeAt(byteAt, x, y)));
+  assert.ok(ringY(101) > Math.fround(ringGroundAt(101, 430, byteAt, false)) && ringY(101) < ringAt(101, () => 1), 'one in: a part of it');
+  assert.equal(ringY(103), ringAt(103, () => 1), 'three in: the whole lift');
+  assert.match(WORLD, /return \[x, ringGroundAt\(px\.x, px\.y, ground \? \(bx, by\) => woods\.getHeightMapValue\(bx, by\) : \(\) => 0, !!landform\)/, 'the travel view past the grid fades it the same (ringGroundAt\'s own fades, on the ground\'s bytes)');   // PIN MOVED (RELIEF-PEAKS): the ring's ground at the pixel's centre; PIN MOVED (BREATHTAKER2 on the horizon): at its pixel, the continent's lift with it
   // and every edge across the fade, a road over it, is one number from both pixels
   const cut = (px, py) => generateSamples(cw, px, py, H, CUT);
   for (const px of [99, 100, 101, 102]) {

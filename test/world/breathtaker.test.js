@@ -10,20 +10,20 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import {
-  continentLift, byteBeyond, continentPixel, CONTINENT_LIFT, CONTINENT_CEILING, LANDFORM_CEILING, reliefLift, reliefByteHeight, LANDFORM_KNEE, LANDFORM_FLOOR,
+  continentLift, byteBeyond, continentPixel, CONTINENT_LIFT, CONTINENT_CEILING, LANDFORM_CEILING, reliefLift, nodeGround, LANDFORM_KNEE, LANDFORM_FLOOR,
 } from '../../src/world/landforms.js';
 import {
   FAMILIES, TAMRIEL_LANDFORM_DIALS, TAMRIEL_TOP, topClip, ZONE_LANDS, CLIMATE_LANDS, zonePalette, landformLattice, tamrielLandformAt,
   LANDFORM_SHAPES, LANDFORM_CENTRES, continentShare, NODE,
 } from '../../src/world/tamriel/tamrielLandforms.js';
-import { tamrielLargeMap, LARGE_SWELL, SEAM_PX, bayEdgeDistance, tamrielClimateAt } from '../../src/world/tamriel/tamrielGround.js';
+import { tamrielLargeMap, largeOfByte, SEAM_PX, bayEdgeDistance, tamrielClimateAt } from '../../src/world/tamriel/tamrielGround.js';
 import { setTamrielTrace as installTrace, tamrielTrace } from '../../src/world/tamriel/tamrielLand.js';
 import { setTamrielFit as installFit } from '../../src/world/tamriel/tamrielFrame.js';
 import { DIR } from '../../src/world/road/roadNetwork.js';
 import { veilhaven, inEtherLaw } from '../../src/world/ethericSea.js';
 import { BIOME_BY_KEY } from '../../src/world/tamriel/tamrielBiomes.js';
 import { CLIMATES } from '../../src/formats/mapsTables.js';
-import { MAX_TERRAIN_HEIGHT, SCALED_OCEAN_ELEVATION, BASE_HEIGHT_SCALE, HEIGHTMAP_DIMENSION } from '../../src/world/terrain/terrainSampler.js';
+import { MAX_TERRAIN_HEIGHT, SCALED_OCEAN_ELEVATION, BASE_HEIGHT_SCALE, HEIGHTMAP_DIMENSION, NOISE_MAP_SCALE } from '../../src/world/terrain/terrainSampler.js';
 import { MAP_HEIGHT, MAP_WIDTH } from '../../src/formats/woodsFile.js';
 
 const LOW_TOP = 127 * BASE_HEIGHT_SCALE;
@@ -38,11 +38,13 @@ test('BREATHTAKER2: the lift goes on past the 7-bit top at CONTINENT_LIFT.gain t
   assert.equal(CONTINENT_LIFT.top, 180 * BASE_HEIGHT_SCALE, 'the relief\'s ceiling byte (TAMRIEL-RELIEF CEILING_BYTE)');
   assert.equal(CONTINENT_CEILING, MAX_TERRAIN_HEIGHT + reliefLift(LOW_TOP) + continentLift(CONTINENT_LIFT.top) + TAMRIEL_TOP);
   assert.ok(CONTINENT_CEILING <= LANDFORM_CEILING, `${CONTINENT_CEILING} under ${LANDFORM_CEILING}`);
+  // PIN MOVED (RELIEF-PEAKS): a byte's height is its node's ground (world/landforms.js nodeGround) - the large map by its
+  // law with the small term, held as the kernel holds them, where reliefByteHeight left the large map out
   for (let b = 0; b < 256; b++) {
-    const low = b * BASE_HEIGHT_SCALE;
-    assert.equal(reliefByteHeight(b), Math.max(low, SCALED_OCEAN_ELEVATION) + reliefLift(low), `byte ${b}: the Bay's law`);
-    assert.equal(reliefByteHeight(b, 1, 0), reliefByteHeight(b));
-    assert.ok(Math.abs(reliefByteHeight(b, 1, 1) - reliefByteHeight(b, 1, 0) - continentLift(low)) < 1e-9, `byte ${b}: the continuation past the seam`);
+    const low = b * BASE_HEIGHT_SCALE, held = Math.min(MAX_TERRAIN_HEIGHT, Math.max(low + largeOfByte(b) * NOISE_MAP_SCALE, SCALED_OCEAN_ELEVATION));
+    assert.equal(nodeGround(b), held + reliefLift(low), `byte ${b}: the Bay's law`);
+    assert.equal(nodeGround(b, 1, 0), nodeGround(b));
+    assert.ok(Math.abs(nodeGround(b, 1, 1) - nodeGround(b, 1, 0) - continentLift(low)) < 1e-9, `byte ${b}: the continuation past the seam`);
   }
 });
 
@@ -169,20 +171,15 @@ test('BREATHTAKER3: every zone the landforms name is one of tamrielBiomes.js\'s,
   assert.equal(zonePalette({ key: 'skyrimPeaks', climate: 0 }, 0)[FAMILIES.indexOf('ridge')], 1);
 });
 
-test('BREATHTAKER3: the large map past the Bay is a smooth swell about LARGE_SWELL.mean - every byte within its swing, two cells side by side (a pixel\'s edge too) never a byte apart, where the lattice hash stepped up to nine; deterministic and kept (mutants: the swell back to the hash, its wavelength)', () => {
-  const { mean, swing } = LARGE_SWELL;
-  const cell = (cx, cy) => tamrielLargeMap(Math.floor(cx / 5), Math.floor(cy / 5))[((cx % 5) + 5) % 5][((cy % 5) + 5) % 5];
-  let lo = 9, hi = 0;
-  for (let cy = -400; cy < -300; cy++) {
-    for (let cx = 7000; cx < 7100; cx++) {
-      const v = cell(cx, cy);
-      lo = Math.min(lo, v); hi = Math.max(hi, v);
-      assert.ok(Math.abs(v - cell(cx + 1, cy)) <= 1 && Math.abs(v - cell(cx, cy + 1)) <= 1, `${cx},${cy}`);
-    }
-  }
-  assert.ok(lo >= Math.floor(mean - swing) && hi <= Math.ceil(mean + swing) && hi - lo >= 3, `${lo}..${hi}`);
+// PIN MOVED (RELIEF-PEAKS, test/world/reliefpeaks.test.js): the large map past the Bay is no swell about a mean of 4.5 -
+// a third of the ground's height left out of every range - but WOODS.WLD's own law of the small heightmap, read where the
+// kernel reads each cell (tamrielGround.js largeOfByte, tamrielLargeMap). It stays kept and deterministic here.
+test('BREATHTAKER3: the large map past the Bay is deterministic and kept, and within the law\'s own range', () => {
   assert.equal(tamrielLargeMap(1400, -80), tamrielLargeMap(1400, -80), 'kept');
   assert.deepEqual(tamrielLargeMap(1400, -80).map((c) => [...c]), tamrielLargeMap(1400, -80).map((c) => [...c]));
+  let top = 0;
+  for (let b = 0; b < 256; b++) top = Math.max(top, largeOfByte(b));
+  for (let cy = -80; cy < -60; cy++) for (let cx = 1400; cx < 1420; cx++) for (const col of tamrielLargeMap(cx, cy)) for (const v of col) assert.ok(v >= 0 && v <= Math.round(top), `${cx},${cy}: ${v}`);
 });
 
 // PIN MOVED (SMOOTH-LAND, test/world/smoothland.test.js): CYRODIIL-SHORES' own smooth shore for Cyrodiil's lakes

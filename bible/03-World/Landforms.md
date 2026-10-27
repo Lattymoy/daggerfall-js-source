@@ -1001,6 +1001,11 @@ it too: BAY-LEFT-GROUND, below). Past the Bay's seam (SEAM_PX) the land is the c
   LANDFORMS III C1) as the hills do.
 - Cyrodiil's rivers and lakes are carved into it (`world/tamriel/tamrielWaters.js`, the shaper's last step: the
   channel level at its surface, never raising the land).
+- RELIEF-PEAKS (`03-World/Tamriel.md`, 2026-10-27): the kernel's large map past the Bay is WOODS.WLD's own law of the
+  small byte, where it was a swell; the continent's ranges and Red Mountain's cone are laid in the shaper under its
+  landforms (`world/tamriel/tamrielRanges.js`), never in the bytes; and the landforms' oriented frames ease into a fixed
+  frame where their direction is weak, so no family hands one field to another inside a sample (the "canyons"). A
+  site's level past the Bay counts the ranges.
 
 The shaper's samples stay one function of world position, every seam one number from both pixels.
 
@@ -1092,6 +1097,14 @@ was written under, so one written with the row off and read with it on stands un
 collider lifts a body: the side away from a fall), and one written with it on and read with it off keeps that lift, as
 it always did. Online the row is the room's and always on, so an online record is read in the frame it was written in;
 a record written from now on is DFU's frame both ways, on either side of the row.
+
+THE FRAME'S LAW 3 (RELIEF-PEAKS, 2026-10-27, `03-World/Tamriel.md`). DFU's own ground past the Bay moved: its large map
+is WOODS.WLD's law of the small byte, where it stood a swell. A record written past the Bay before GROUND_FRAME_LAW 3
+rides its ground's own move there (`groundMovedAt`: `world/landforms.js` groundMovedField, today's reader against the
+one with the swell, `tamrielGround.js` groundBefore; over a town's rect the move of DFU's blend, its level's mean), with
+the row on or off: the large map is the kernel's own term. The lift a record before LIFT_FRAME_LAW (2, D5's law) takes
+off is the old law's without the ranges (`landformsHere({ before: true })`), which it never stood on. On the Bay nothing
+moved.
 
 THE FOUR HOSTS. `scenes/world.js` WIRED - the one host that streams the ground past the Bay: the sites' host, the
 kernels' tables, the lift on the world's grid, the stamp on every writer and the law on every reader.

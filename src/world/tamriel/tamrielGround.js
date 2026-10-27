@@ -33,8 +33,10 @@ import { tamrielBiomeAt } from './tamrielBiomes.js';   // TESA-BIOME: each provi
 import { reliefStands, reliefAt, RELIEF_COAST_REACH, RELIEF_FLOOR } from './tamrielRelief.js';   // TAMRIEL-RELIEF: the owner's heightmap on the trace
 import { theatreAt } from '../worldWide/worldGrid.js';   // WW-R: a province's land is its region's
 import { WATER_BYTE } from '../roadsProducer.js';   // AUDIT TESA II R1: the beach line the land stands over - one constant
-import { perlinNoise } from '../perlin.js';   // BREATHTAKER3: the large map's swell
 import { rumareBasin, rumareMouthPixel } from '../rumareWaters.js';   // RUMARE-WATER: the land let down about the Imperial City at the sea
+import { perlinNoise } from '../perlin.js';   // RELIEF-PEAKS: the large map before it (largeMapBefore), for the records written on it
+import { inEtherLaw } from '../ethericSea.js';   // RELIEF-PEAKS: the Eltheric Ocean's box keeps its own large map
+import { BASE_HEIGHT_SCALE, NOISE_MAP_SCALE, MAX_TERRAIN_HEIGHT, EXTRA_NOISE_SCALE, cubicInterpolator } from '../terrain/terrainSampler.js';   // RELIEF-PEAKS: the kernel's own two terms
 
 /** The height law's bytes (WOODS' own units: byte * 8 metres; the sea at 3 and under). AUDIT TESA II R1/G12: the shore - the
  *  least any land past the Bay stands, the relief's and the authored law's alike - is one over the beach line every
@@ -151,32 +153,92 @@ export function climateNeighbourIn(px, py, x, y) {
   return x >= f.x0 && y >= f.y0 && x < f.x0 + f.w && y < f.y0 + f.h;
 }
 
-/** The large map's 5 x 5 of detail for a pixel beyond the Bay - data[x][y] as WoodsFile.getLargeMapData shapes it: small
- *  bytes (0..9; the kernel scales them by NOISE_MAP_SCALE), deterministic in the pixel. BREATHTAKER3: a smooth swell about
- *  the old mean (LARGE_SWELL: its wavelength in the large map's own cells, its swing), where it was a lattice hash - a
- *  bump of up to 45 m every 273 m (the kernel reads three of its five cells a pixel), the same everywhere: the "very monotonous noise" a walker saw past the Bay. The land's
- *  own shapes are the landforms' (world/tamriel/tamrielLandforms.js). TAMRIEL-DEEP (bible/03-World/Deep-Waters.md): none
- *  at sea, as WOODS.WLD's own sea carries none (0 over 406 of 411 sampled Bay sea pixels, 1 the most) - the detail lifted
- *  the seabed past the Bay into the beach line's reach, so not one pixel of the continent's sea was the sea to the Deep
- *  Waters bake's bound (world/deepWater/deepWatersBake.js classifyPixel). */
-export const LARGE_SWELL = Object.freeze({ wave: 11, swing: 2.5, mean: 4.5 });
-/** @type {Map<number, Uint8Array[]>} the swell's pixels, kept (a kernel reads nine a pixel, a neighbour's again) */
+/** RELIEF-PEAKS: WOODS.WLD'S LARGE MAP IS ITS SMALL ONE'S OWN LAW. The kernel's second term (terrainSampler.js kernelTerms'
+ *  `noise`, x NOISE_MAP_SCALE) was read as detail - "small bytes (0..9)", a swell about 4.5 past the Bay (BREATHTAKER3) - and
+ *  it is a third of Daggerfall's height: measured on the freeware's file, a land pixel's inner 3 x 3 stands at 1.18 times
+ *  its small byte to byte 85 (12.2 at byte 12, 47.6 at 40, 82.3 at 70, 100.6 at 85, each byte's quartiles within one of its
+ *  median) and at the byte itself by the Bay's top (109) - 75 m at byte 15, 265 m at 45, 500 m from 80. So the same byte
+ *  stood 50 to 540 m lower past the Bay than on it, and the Wrothgarians fell some 600 m in half a pixel at the Bay's north
+ *  edge, where the large map handed from WOODS.WLD's to the swell. Past the Bay's top the continent's bytes run on to
+ *  `byteTop` (TAMRIEL-RELIEF's CEILING_BYTE): there the kernel's own height (the small term and the large) runs on from the
+ *  top's to DFU's ceiling less the ground noise and a cell's rounding, so a byte past the Bay's tallest is never stood on
+ *  DFU's clamp as a plateau - the lift's continuation carries the rest (world/landforms.js continentLift). */
+export const LARGE_LAW = Object.freeze({ gain: 1.18, knee: 85, top: 109, byteTop: 180 });
+/** The large map's cell for a small byte `b` (fractional) by the law, 0 at sea. */
+export function largeOfByte(b) {
+  const { gain, knee, top, byteTop } = LARGE_LAW;
+  if (!(b > 0)) return 0;
+  if (b <= knee) return gain * b;
+  if (b <= top) return gain * knee + ((top - gain * knee) * (b - knee)) / (top - knee);
+  const h0 = (BASE_HEIGHT_SCALE + NOISE_MAP_SCALE) * top, h1 = MAX_TERRAIN_HEIGHT - EXTRA_NOISE_SCALE - NOISE_MAP_SCALE;
+  const h = h0 + (h1 - h0) * Math.min(1, (b - top) / (byteTop - top));
+  return Math.max(0, (h - BASE_HEIGHT_SCALE * b) / NOISE_MAP_SCALE);
+}
+
+/** The large map's 5 x 5 for a pixel beyond the Bay - data[x][y] as WoodsFile.getLargeMapData shapes it (x east, y south;
+ *  the kernel reads the inner 3 x 3). RELIEF-PEAKS: WOODS.WLD's own law (LARGE_LAW, largeOfByte) of the continent's bytes,
+ *  each cell the law of the small byte at its own place - a pixel's cells stand about its byte's node (the pixel's
+ *  south-east corner) a third of a pixel apart, so a cell's byte is the small term there, the bytes about the node read by
+ *  the kernel's own cubic - where it was BREATHTAKER3's swell about 4.5. Deterministic in the pixel, kept. TAMRIEL-DEEP
+ *  (bible/03-World/Deep-Waters.md): none at sea, as WOODS.WLD's own sea carries none (0 over 406 of 411 sampled Bay sea
+ *  pixels, 1 the most) - detail there lifted the seabed past the Bay into the beach line's reach
+ *  (world/deepWater/deepWatersBake.js classifyPixel). RUMARE-WATER: none on the basin's span about the Imperial City, eased
+ *  back over its ramp (world/rumareWaters.js rumareBasin), as its bytes are let down to the shore - the city at the sea
+ *  stands where it stood. */
+/** @type {Map<number, Uint8Array[]>} the pixels' cells, kept (a kernel reads nine a pixel, a neighbour's again) */
 const _large = new Map();
 export function tamrielLargeMap(x, y) {
   const k = cacheKey(x, y), hit = _large.get(k);
   if (hit) return hit;
-  const data = [], { wave, swing, mean } = LARGE_SWELL, sea = tamrielHeightByte(x, y) === 0, keep = 1 - rumareBasin(x, y);   // RUMARE-WATER: the basin's floor the shore's
+  const data = [], sea = tamrielHeightByte(x, y) === 0, keep = 1 - rumareBasin(x, y);   // RUMARE-WATER: the basin's floor the shore's
+  // the bytes about the node (x - 2 .. x + 3 each way), and the small term between them as the kernel reads it
+  // (terrainSampler.js kernelTerms' `base`: DFU's cubic east, and north from a row to the one above it) - so the two terms
+  // are one law at every sample, where a cell read bilinearly stood a pixel-wide ripple of up to 19 m against the cubic
+  const win = new Float64Array(36);
+  if (!sea) for (let j = 0; j < 6; j++) for (let i = 0; i < 6; i++) win[j * 6 + i] = tamrielHeightByte(x - 2 + i, y - 2 + j);
+  const b = (i, j) => win[(j + 2) * 6 + i + 2];
   for (let ix = 0; ix < 5; ix++) {
     const col = new Uint8Array(5);
-    if (!sea) for (let iy = 0; iy < 5; iy++) col[iy] = Math.round(keep * (mean + swing * (2 * perlinNoise((x * 5 + ix) / wave + 0.37, (y * 5 + iy) / wave + 0.61) - 1)));
+    if (!sea) {
+      const fx = (ix - 2) / 3, X = Math.floor(fx), tx = fx - X;
+      for (let iy = 0; iy < 5; iy++) {
+        const fy = (iy - 2) / 3, Y = Math.floor(fy), ty = fy - Y;
+        const row = (r) => cubicInterpolator(b(X - 1, r), b(X, r), b(X + 1, r), b(X + 2, r), tx);
+        col[iy] = Math.round(keep * largeOfByte(cubicInterpolator(row(Y + 2), row(Y + 1), row(Y), row(Y - 1), 1 - ty)));
+      }
+    }
     data.push(col);
   }
   if (_large.size >= LARGE_CACHE_MAX) _large.clear();
   _large.set(k, data);
   return data;
 }
-/** The swell's kept pixels before they are dropped whole. */
+/** The large map's kept pixels before they are dropped whole. */
 const LARGE_CACHE_MAX = 16384;
+
+/** RELIEF-PEAKS: THE LARGE MAP A RECORD PAST THE BAY WAS WRITTEN ON before GROUND_FRAME_LAW 3 (world/terrain/
+ *  terrainSampler.js): BREATHTAKER3's swell about 4.5 past the Bay's seam, handed over at the seam, none at sea, the Rumare
+ *  basin's let down - kept for that one reader (scenes/groundFrameHost.js groundMovedField: DFU's own ground moved under
+ *  the record, stood again by the move). Never the world's ground. */
+export const LARGE_SWELL_BEFORE = Object.freeze({ wave: 11, swing: 2.5, mean: 4.5 });
+/** The swell's 5 x 5 for a pixel past the Bay, as tamrielLargeMap answered it before RELIEF-PEAKS. */
+export function largeMapBefore(x, y) {
+  const data = [], { wave, swing, mean } = LARGE_SWELL_BEFORE, sea = tamrielHeightByte(x, y) === 0, keep = 1 - rumareBasin(x, y);
+  for (let ix = 0; ix < 5; ix++) {
+    const col = new Uint8Array(5);
+    if (!sea) for (let iy = 0; iy < 5; iy++) col[iy] = Math.round(keep * (mean + swing * (2 * perlinNoise((x * 5 + ix) / wave + 0.37, (y * 5 + iy) / wave + 0.61) - 1)));
+    data.push(col);
+  }
+  return data;
+}
+/** RELIEF-PEAKS: the world's composed reader (`woods`: groundWoods' composition, the Eltheric Ocean's over it or not) with
+ *  the large map before GROUND_FRAME_LAW 3 past the Bay's seam (largeMapBefore) - DFU's own ground a record written then
+ *  stood on. The Bay and its seam band, the Eltheric Ocean's box and the bytes are the reader's own. */
+export function groundBefore(woods) {
+  const before = Object.create(woods);
+  before.getLargeMapData = (x, y) => (bayEdgeDistance(x, y) > SEAM_PX && !inEtherLaw(x, y) ? largeMapBefore(x, y) : woods.getLargeMapData(x, y));
+  return before;
+}
 
 /**
  * THE COMPOSITION: a WoodsFile with the continent round it. A prototype child of the Bay's own reader, so every
@@ -197,7 +259,19 @@ export function groundWoods(woods) {
     return own > 0 ? Math.max(SHORE_BYTE, b) : b;   // AUDIT TESA II R1: the trace's land over the beach line in the blend too (an edge at sea had blended it under)
   };
   ground.getLargeMapData = function (x, y) {
-    return bayEdgeDistance(x, y) <= SEAM_PX ? woods.getLargeMapData(x, y) : tamrielLargeMap(x, y);
+    const d = bayEdgeDistance(x, y);
+    if (d <= SEAM_PX) return woods.getLargeMapData(x, y);
+    const own = tamrielLargeMap(x, y);
+    if (d >= SEAM_PX + BLEND_PX) return own;
+    // RELIEF-PEAKS: blended in from the edge's own large map (the clamp's answer) over the bytes' own BLEND_PX - it handed
+    // over at the seam, a wall of some 600 m along the Wrothgarians' edge
+    const edge = woods.getLargeMapData(x, y), t = (d - SEAM_PX) / BLEND_PX, out = [];
+    for (let i = 0; i < 5; i++) {
+      const col = new Uint8Array(5);
+      for (let j = 0; j < 5; j++) col[j] = Math.round(edge[i][j] * (1 - t) + own[i][j] * t);
+      out.push(col);
+    }
+    return out;
   };
   ground.isTamrielGround = true;
   ground.bay = woods;

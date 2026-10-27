@@ -514,7 +514,8 @@ test('AUDIT CAPTAIN\'S SEA G4/G5/G6/G7/G8/G9/G14: the ring\'s climate past the m
   assert.equal(sea(8068, -5185), false, 'an isle past the map is land - the continent switched off');
   assert.equal(sea(8100, -5185), true, 'its sea the sea');
   assert.equal(tvWaterOf({ getHeightMapValue: () => 60 })(-1, 5), true, 'past the Bay with nothing composed: the sea, as ever');
-  assert.match(w, /const ground = \(px\.x >= 0 && px\.y >= 0 && px\.x < 1000 && px\.y < 500\) \|\| !!woods\.isTamrielGround \|\| !!woods\.etherLaw\?\.\(px\.x, px\.y\);\n\s+const byte = ground \? woods\.getHeightMapValue\(px\.x, px\.y\) : 0;/);
+  // PIN MOVED (RELIEF-PEAKS): the ring's ground at the pixel's centre reads the bytes about it, the ground's or none
+  assert.match(w, /const ground = \(px\.x >= 0 && px\.y >= 0 && px\.x < 1000 && px\.y < 500\) \|\| !!woods\.isTamrielGround \|\| !!woods\.etherLaw\?\.\(px\.x, px\.y\);\n\s+return \[x, ringGroundAt\(px\.x, px\.y, ground \? \(bx, by\) => woods\.getHeightMapValue\(bx, by\) : \(\) => 0, !!landform\)/);
   assert.match(w, /regionIndex: \(\) => \{ const px = playerTravelPixel\(\); return !\(etherSea && inEther\(px\.x, px\.y\)\) && politicClaimed\(/);
   assert.match(w, /if \(wod && onTheBay\(px, py\) && await wodOpened\) \{/);
   assert.match(w, /renderer\.setMoonlight\(canopyMoon\(moonNow && etherAirW \? \{ scale: moonNow\.scale, dir: moonNow\.dir, color: etherLight\(moonNow\.color, etherAirW, ETHER_KEY_TINT\) \} : moonNow, jungle\?\.canopy\)\);/);   // PIN MOVED (VALENWOOD-CANOPY): under a closed canopy the moon's key leaned with the sun's
@@ -526,9 +527,11 @@ test('AUDIT CAPTAIN\'S SEA G4/G5/G6/G7/G8/G9/G14: the ring\'s climate past the m
   const opts = { heightBytes: new Uint8Array(1000 * 500).fill(200), mapWidth: 1000, mapHeight: 500, climateAt: () => CLIMATES.Mountain, baseX: h.px, baseY: h.py, radius: 4, relief: true, byteAt: (x, y) => E.etherHeightByte(x, y) };
   const own = buildFarRingGrid({ ...opts, pastOwn: E.inEtherLaw }), clamped = buildFarRingGrid({ ...opts, pastOwn: () => false });
   const mid = (g) => g.positions[(4 * g.side + 4) * 3 + 1];
-  const { ringHeight } = await import('../../../src/render/farRing.js');
+  const { ringGroundAt } = await import('../../../src/render/farRing.js');
   const { cliffFadeAt } = await import('../../../src/world/landforms.js');
-  const want = ringHeight(E.etherHeightByte(h.px, h.py), true, cliffFadeAt((x, y) => E.etherHeightByte(x, y), h.px, h.py));
+  // PIN MOVED (RELIEF-PEAKS): the vertex the kernel's ground at the pixel's centre - its nodes' fades each its own shore's
+  const isle = (x, y) => E.etherHeightByte(x, y);
+  const want = ringGroundAt(h.px, h.py, isle, true, (x, y) => cliffFadeAt(isle, x, y));
   assert.equal(mid(own), Math.fround(want), 'faded by its own shore');
   assert.notEqual(mid(clamped), mid(own), 'the clamped pixel\'s fade is another');
   void RING_RADIUS;
