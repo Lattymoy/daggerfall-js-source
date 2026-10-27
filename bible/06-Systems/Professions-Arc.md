@@ -135,9 +135,10 @@ Enchanting - ten professions a character holds, with the five that gather.
   held Fishing at a Novice's pace and quartered every herb past rank 70 (the Basket's food keeps its tier). DECIDED, AUDIT 32 S1 - Mac: "Whatever you think is best": **no +500 for a recipe made wholly of the goods
   a counter sells** (4.5's Linen and Wool) **out of the counter's units** - the counter's supply has no end, and 152
   recipes of it bought Outfitting 87 for 811 Marks. CLOTH-GEMS (section 50; the owner: "No band aids"): S1 judges the
-  UNITS, never the material - the loom weaves Linen and spins Wool of the world's goods (4.5), so a piece of the
-  character's own cloth pays its 500 and one of the Weavers' (bought) or of a pack's word (loose) never does. Said at
-  every station and in the craft's word since CRAFT-FIRST-SHOWN (41.9).
+  UNITS, never the material - the loom weaves Linen and spins Wool of the world's goods (4.5). WOVEN-PAYS (the owner:
+  "Woven cloth pays"; AUDIT WOVEN-PAYS, section 50.3): a piece of cloth the character wove or spun pays its first,
+  whatever its goods, and cloth bought with silver never does - counted, the bolts a character buys with silver against
+  the bolts its stations use. Said at every station and in the craft's word since CRAFT-FIRST-SHOWN (41.9).
 - All XP is service-witnessed: the service performed the harvest, the craft, the delivery.
 - **Tiers**, the ladder every material, node and recipe sits on - the rank each needs:
 
@@ -295,8 +296,9 @@ corpse feeds its body (L2-2).
   (DFU's plant 12, either land's - a common herb of the MountainWoods, the HauntedWoodlands and the Swamp, 4.3), two a
   bolt; **Wool** spun from a **fur** Hunting gives (the Rat, Wolf and Tiger Pelts, the Boar and Bear Hides, 4.4), two a
   bolt - no XP, and a bolt is own where its goods were. A Ledger A departure: Daggerfall keeps no sheep, grows no flax
-  and weaves nothing. The counter's bolts stay **bought**, and AUDIT 32 S1 (3.2) withholds the first-make 500 from them
-  alone. **Silk Bolt** is woven from Spider Silk (3:1).
+  and weaves nothing. The counter's bolts stay **bought**, and AUDIT 32 S1 (3.2) withholds the first-make share from
+  cloth bought with silver - the counter's and the Drakes market's, counted (WOVEN-PAYS, 50.3). **Silk Bolt** is woven
+  from Spider Silk (3:1).
 - **The Apothecaries' counter**, the supplier's second, sells into the Stores the sixteen DFU ingredients that DFU's
   potion recipes need and no gathering route yields (FACT, `POTION_RECIPES`, `src/systems/potions.js`), at **a fifth of
   DFU's price in Marks**, rounded up: Werewolf's Blood 5, Fairy Dragon's Scales 18, Unicorn Horn 40, Ectoplasm 12,
@@ -5594,30 +5596,43 @@ and the jeweller ACCEPTS EVERY GRADE of gem.
 - **The chain** (41.3): a cloth's works are planned from raw now (`chainLaw.js` `producersOf` - the cheapest fur first),
   so a Wool shirt is offered "from raw" to a loom holding four Bear Hides.
 
-### 50.3 AUDIT 32 S1, judged by the units
+### 50.3 AUDIT 32 S1, judged by the units - WOVEN-PAYS, counted
 
 - **The law** - `recipeLaw.js`: `counterMade` names the recipes S1 judges (made wholly of `COUNTER_ONLY`'s goods - the
-  152, every one the loom's); `firstCraftPays(r, own)` pays every other recipe's first as before, and a judged one's only
-  where `own` - its units the character's own, no bought and no loose one among them. Unasked, a judged recipe pays none
-  (a station that cannot see the units says the rule). FACT, pinned: every Outfitting first-craft key at tiers 1-2 (171)
-  is reachable with the character's own goods, and no key of the 332 can never pay.
-- **The service** - `server-account/src/professions.js` `craftAtAnvil`: the decision's `p` - for a judged recipe, none of
-  its inputs held as loose or bought (a station spends those first, so one held is one spent) - the very test AUDIT
-  PROF-541 B7's `bought_with` reads in the same batch; `f * p * ?13` lays the 500 on. The answer says `firstPaid` (read off
-  the piece as it stands - a repeat asked after a sale reads the sale's). A disenchant (`alchemy.js`) pays a piece wholly
-  of cloth its Enchanting XP only where the piece is its maker's own and never sold (`alchemyLaw.js` `disenchantXp`'s
-  `own`: `products.bought_with` none) - AUDIT PROF12 E2's wall, judged by the units too.
-- DECIDED: S1 stays the cloth's. A recipe partly of cloth (a boot, a bed, the Cloth Amulet) was never judged and is not;
-  the smith's stock stays outside it (every one of its goods is gathered too); and a brew keeps its own rule
-  (`alchemyLaw.js` `brewFirstPays` - the Apothecaries' sixteen have no world source, so a brew of them is bought or loose,
-  never own).
-- **The words** - `ui/craftXpWords.js`: the loom's box says the made cloth's 500 (`prof.page.craft.xpFirstOwn`) where
-  `profPages.js` `ownSpend` reads no bought or loose cloth in the Stores and none bought carried, and otherwise that such
-  cloth goes first and earns none (`prof.page.craft.xpBought`); the craft's word reads the answer's `firstPaid`
-  (`prof.craft.xpFirstBought`, an older service's answer read by the recipe); the Enchanting Station says an own piece's
-  figure and, once, the rule (`prof.page.enchant.cloth`); the loom lists its spins (`Spin`) and says where Linen and Wool
-  come from where it holds none of their goods (`prof.page.loom.noCloth`); the Outfitting how-to says it all
-  (`prof.page.how.outfitting`).
+  152, every one the loom's, single-input, of Linen or Wool: `JUDGED_CLOTH`); `firstCraftPays(r, own)` pays every other
+  recipe's first as before, and a judged one's only where `own`. WOVEN-PAYS (`01-Overview/bugs/Field-Bugs-2026-10-26b.md`;
+  the owner: "Woven cloth pays" - any cloth the character wove or spun pays its first, whatever its goods; only cloth
+  bought with silver stays walled), and its audit: `own` is NO BOLT THE CRAFT USES COUNTED AS BOUGHT WITH SILVER. A
+  unit's origin cannot say it - `bought` is also the loom's own cloth of bought goods and a guildmate's cloth out of the
+  guild Stores, `loose` also a Weavers' bolt set down and picked up again - so the service counts the bolts a character
+  buys with silver against the bolts its stations use. Unasked, a judged recipe pays none. FACT, pinned: every
+  Outfitting first-craft key at tiers 1-2 (171) is reachable with the character's own goods, and no key of the 332 can
+  never pay.
+- **The service** - `server-account/src/professions.js`: THE SILVER COUNT (`prof_silver_cloth`, migration 0177) - one a
+  bolt of `JUDGED_CLOTH` bought with silver (`buyStock`; `market.js` a Drakes buy, a courier's load as it lands, a buy
+  order filled - `silverClothIn`; never a gold buy), one off a bolt a station uses (`craftAtAnvil`, `temperPiece` -
+  `silverClothOut`), a row at nought deleted, gone with the character (`realm.js`); it began as the bought cloth held.
+  The decision's `p` - for a judged recipe, the count nought (`silverHeld`); `f * p * ?13` lays the share on. A JUDGED
+  PATTERN IS MADE BY THE CRAFT THAT LAID ITS FIRST ON (`patternMade`, `prof_crafts.first_paid`) - a craft of
+  silver-bought cloth lays none on and takes nothing, so the next craft of it that can pay still pays; a row from before
+  the column made its pattern where it was the first and its XP holds the share (`FIRST_MAKE_FLOOR`, pinned above every
+  judged craft's own XP). Every other pattern is made by any craft of it. The answer says `firstPaid` off `first_paid` (a
+  row from before it read as the decision reads it); a cloth's Stores count says its silver count beside it (`storeOf`,
+  the state's `silver`). A disenchant (`alchemy.js`) pays a piece wholly of cloth its Enchanting XP only where nothing
+  bought or looted went into it and it was never sold (`alchemyLaw.js` `disenchantXp`'s `own`: `products.bought_with`
+  none) - AUDIT PROF12 E2's wall, unchanged by WOVEN-PAYS: its XP comes again with every piece.
+- DECIDED: S1 stays the cloth's. A recipe partly of cloth (a boot, a bed, the Cloth Amulet) was never judged and is not
+  (its bolts still come off the count); the smith's stock stays outside it (every one of its goods is gathered too); and
+  a brew keeps its own rule (`alchemyLaw.js` `brewFirstPays` - the Apothecaries' sixteen have no world source, so a brew
+  of them is bought or loose, never own).
+- **The words** - `ui/craftXpWords.js`: the loom's box says the share "from cloth not bought with silver"
+  (`prof.page.craft.xpFirstOwn`) where the cloth's silver count is nought (`profPages.js` silverOf, the book's `silver`),
+  and the count and that no piece of the cloth earns its first until that many are used where one stands
+  (`prof.page.craft.xpBought`); the craft's word reads the answer's `firstPaid` (`prof.craft.xpFirstBought`: cloth
+  bought with silver, the piece's first still owed; an older service's answer read by the recipe); the Enchanting
+  Station says an own piece's figure and, once, the rule (`prof.page.enchant.cloth`: "only if nothing bought or looted
+  went into it and it was never sold"); the loom lists its spins (`Spin`) and says where Linen and Wool come from where
+  it holds none of their goods (`prof.page.loom.noCloth`); the Outfitting how-to says it all (`prof.page.how.outfitting`).
 
 ### 50.4 Every gem's grade at the jeweller's bench (Gem-Sockets 7's next slice)
 
@@ -5680,7 +5695,7 @@ twelve drafting languages owe the rest of their backlog as before (`06-Systems/L
 `src/ui/craftXpWords.js`, `src/ui/professions/profPages.js`, `server-account/src/professions.js`, `alchemy.js`, `market.js`,
 `service.js`, `wrangler.toml`, `locales/*/Port_Strings.csv` and their records. Pinned: `test/net/clothgems_law.test.js`
 (4), `test/net/clothgems_service.test.js` (2), `test/systems/clothgems_client.test.js` (2), `test/net/clothgems_gems.test.js`
-(4), `test/systems/clothgems_jewel.test.js` (2). `tools/mutants/clothgems.json` (50, all dead); re-aimed by content, each
+(4), `test/systems/clothgems_jewel.test.js` (2). `tools/mutants/clothgems.json` (50, all dead - 45 since WOVEN-PAYS and its audit retired five with the laws they killed, `01-Overview/bugs/Field-Bugs-2026-10-26b.md`); re-aimed by content, each
 still dead: `audit32` (5), `audit_uicalm_firm1`, `prof3` (2), `prof11`, `prof12` (4), `fb1015f_firstcraft` (7),
 `fb1018d_crafthowto`, `fb1018f_craftlimit` (5), `craft2`, `prof10` (4), `gem1`, `loot20`, and the version's ten. PIN MOVED:
 `prof7_law`, `prof4_law`, `craft1_chain` (the loom's works, the chain's), `fb1015f_firstcraft` (the words), `prof12_service`

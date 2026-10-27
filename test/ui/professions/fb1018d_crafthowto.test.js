@@ -165,7 +165,7 @@ test('CRAFT-HOWTO THE WORDS ARE THE CODE\'S: each craft names the shops its stat
   }
   assert.deepEqual(WEAVERS_STOCK.map((s) => s.key), ['cloth:linen', 'cloth:wool']);
   assert.ok(COUNTER_ONLY.includes('cloth:linen') && COUNTER_ONLY.includes('cloth:wool'));
-  assert.match(CRAFT_HOW.outfitting(), /The Weavers sell Linen and Wool too, at a Clothing Store's loom or a Notice Board's Market, but only cloth you make yourself earns a first-time bonus/);   // PIN MOVED (CLOTH-GEMS)
+  assert.match(CRAFT_HOW.outfitting(), /The Weavers sell Linen and Wool too, at a Clothing Store's loom or a Notice Board's Market, but cloth bought with silver earns no first-time bonus/);   // PIN MOVED (CLOTH-GEMS); (WOVEN-PAYS): the wall named silver
   assert.ok(RECIPES.some((r) => r.kind === 'dish') && RECIPES.filter((r) => r.kind === 'dish').every((r) => trackOf(r.profession) === 'provisioning'), 'a dish pays Provisioning');
   assert.match(CRAFT_HOW.provisioning(), /Brewing and cooking both earn Provisioning experience\.$/);
   // a dish's goods: the meat a body gives, the net's fish, the herbs and the Basket's food

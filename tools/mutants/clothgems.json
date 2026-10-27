@@ -105,32 +105,15 @@
     ]
   },
   {
-    "name": "CLOTHGEMS-svc-loose-pays",
-    "file": "server-account/src/professions.js",
-    "old": "CASE WHEN ${heldAs(LOOSE_ORIGIN)} OR ${heldAs('bought')} THEN 0",
-    "new": "CASE WHEN ${heldAs('bought')} THEN 0",
-    "tests": [
-      "test/net/clothgems_service.test.js"
-    ]
-  },
-  {
-    "name": "CLOTHGEMS-svc-bought-pays",
-    "file": "server-account/src/professions.js",
-    "old": "CASE WHEN ${heldAs(LOOSE_ORIGIN)} OR ${heldAs('bought')} THEN 0",
-    "new": "CASE WHEN ${heldAs(LOOSE_ORIGIN)} THEN 0",
-    "tests": [
-      "test/net/clothgems_service.test.js",
-      "test/net/audit32_service.test.js"
-    ]
-  },
-  {
     "name": "CLOTHGEMS-svc-keys-misread",
     "file": "server-account/src/professions.js",
-    "old": "  const keysAt = inputs.map((_, i) => `?${17 + 2 * i}`);",
-    "new": "  const keysAt = inputs.map((_, i) => `?${18 + 2 * i}`);",
+    "old": "${silverSql('?1', '?2', `?${17 + 2 * i}`)} > 0",
+    "new": "${silverSql('?1', '?2', `?${18 + 2 * i}`)} > 0",
     "tests": [
+      "test/net/fb1026b_wovenpays.test.js",
       "test/net/clothgems_service.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (AUDIT WOVEN-PAYS): re-aimed by content - the inputs' keys bound to the silver count's read."
   },
   {
     "name": "CLOTHGEMS-svc-p-unread",
@@ -144,20 +127,23 @@
   {
     "name": "CLOTHGEMS-svc-answer-paid-always",
     "file": "server-account/src/professions.js",
-    "old": "    firstPaid: Number(row.first) === 1 && firstCraftPays(r, !!r && !siege && by.get(row.provenance)?.bought_with == null),",
+    "old": "    firstPaid: row.first_paid == null ? Number(row.first) === 1 && (!counterMade(r) || Number(row.xp) >= FIRST_MAKE_FLOOR) : Number(row.first_paid) === 1,",
     "new": "    firstPaid: Number(row.first) === 1,",
     "tests": [
-      "test/net/clothgems_service.test.js"
-    ]
+      "test/net/clothgems_service.test.js",
+      "test/net/fb1026b_wovenpays.test.js"
+    ],
+    "note": "PIN MOVED (AUDIT WOVEN-PAYS): re-aimed by content - the answer's `firstPaid` off `first_paid`, an old row read as the decision reads it."
   },
   {
     "name": "CLOTHGEMS-svc-answer-by-recipe",
     "file": "server-account/src/professions.js",
-    "old": "firstCraftPays(r, !!r && !siege && by.get(row.provenance)?.bought_with == null)",
-    "new": "firstCraftPays(r)",
+    "old": "(!counterMade(r) || Number(row.xp) >= FIRST_MAKE_FLOOR)",
+    "new": "!counterMade(r)",
     "tests": [
-      "test/net/clothgems_service.test.js"
-    ]
+      "test/net/fb1026b_wovenpays.test.js"
+    ],
+    "note": "PIN MOVED (AUDIT WOVEN-PAYS): re-aimed by content - an old row's answer read by its recipe alone (a judged first never paid), against its XP."
   },
   {
     "name": "CLOTHGEMS-dis-own-unread",
@@ -189,13 +175,13 @@
   {
     "name": "CLOTHGEMS-words-own-unread",
     "file": "src/ui/craftXpWords.js",
-    "old": "  const more = firstCraftXp(r, own);",
-    "new": "  const more = firstCraftXp(r);",
+    "old": "  const more = walled ? 0 : firstCraftXp(r, true);",
+    "new": "  const more = walled ? 0 : firstCraftXp(r);",
     "tests": [
       "test/net/fb1015f_firstcraft.test.js",
       "test/systems/clothgems_client.test.js"
     ],
-    "note": "FIRST-BUDGET (re-aimed at the merge, Professions-Arc 52): the line's first is firstCraftXp(r, own) - the share where the units are own - where it was firstCraftPays(r, own) ? FIRST_CRAFT_XP : 0."
+    "note": "PIN MOVED (AUDIT WOVEN-PAYS): re-aimed by content - the line's share asked as its cloth's (the count none), never unasked. FIRST-BUDGET (re-aimed at the merge, Professions-Arc 52): the line's first is firstCraftXp(r, own) - the share where the units are own - where it was firstCraftPays(r, own) ? FIRST_CRAFT_XP : 0."
   },
   {
     "name": "CLOTHGEMS-words-branch-inverted",
@@ -218,39 +204,13 @@
   {
     "name": "CLOTHGEMS-pages-own-unpassed",
     "file": "src/ui/professions/profPages.js",
-    "old": "craftPayOf(book, 'outfitting'), ownSpend(book, r))));",
+    "old": "craftPayOf(book, 'outfitting'), silverOf(book, r))));",
     "new": "craftPayOf(book, 'outfitting'))));",
     "tests": [
       "test/systems/clothgems_client.test.js",
       "test/net/fb1015f_firstcraft.test.js"
-    ]
-  },
-  {
-    "name": "CLOTHGEMS-pages-bought-unread",
-    "file": "src/ui/professions/profPages.js",
-    "old": "  return !((s.bought | 0) > 0) && ",
-    "new": "  return ",
-    "tests": [
-      "test/systems/clothgems_client.test.js"
-    ]
-  },
-  {
-    "name": "CLOTHGEMS-pages-loose-unread",
-    "file": "src/ui/professions/profPages.js",
-    "old": "!((s[LOOSE_ORIGIN] | 0) > 0) && ",
-    "new": "",
-    "tests": [
-      "test/systems/clothgems_client.test.js"
-    ]
-  },
-  {
-    "name": "CLOTHGEMS-pages-carried-unread",
-    "file": "src/ui/professions/profPages.js",
-    "old": " && !((book?.carried?.(i.key)?.bought | 0) > 0);",
-    "new": ";",
-    "tests": [
-      "test/systems/clothgems_client.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (AUDIT WOVEN-PAYS): re-aimed by content - the loom passes the cloth's silver count (silverOf)."
   },
   {
     "name": "CLOTHGEMS-pages-spins-unlisted",
