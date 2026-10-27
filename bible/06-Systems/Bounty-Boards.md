@@ -76,6 +76,9 @@ Each is quoted where the code keeps it, beside the line it decided.
   condition; 4-5 three-quarter condition; 6 and up full condition; from level 4 a coin for Magic (blue) through the
   loot ladder's own applyRarity - never higher, and white when Loot Rarity is off.
 - **The werebeasts are off the board**: a bounty is not a way to catch a curse.
+- **QUARRY-WORLD** (section 13): the ladder's beasts are the board's only where it knows no wild about its town. A tier
+  hunts the land's own beasts in its band - its ladder's beasts' own levels (1-4, 4-5, 5-10, 10-13, 14 up) - and the
+  purse is as above.
 
 ## 3. Where
 
@@ -256,3 +259,43 @@ sought on the Bay's pixels alone (`bountySites`, `bountyDungeons`); the world ho
   `readBountyMarksIn`), as WW2's gate rings are.
 
 Pinned by `test/systems/revenant/lairworld.test.js` (with the revenants' half), `tools/mutants/lairworld.json` (20, dead).
+
+## 13. QUARRY-WORLD - a board hunts its own land's wild (2026-10-27)
+
+The audit NO SYSTEM LEFT BEHIND IN THE BAY (2026-10-26), item 37 ("a note; Bay-wide too"); the owner: "Every single thing
+here needs to be addressed. No exceptions." A board's beasts were the ladder (section 2), one list by level for the whole
+world: a Black Marsh board posted Orc Warlords and Centaurs, an Alik'r board Grizzly Bears, and LAIR-WORLD (section 12)
+carried that ladder past the Bay with the ids. Now a tier hunts the land's own wild about the board's town.
+
+- **The land's wild** (`systems/bounty/bountyQuarry.js` landWildOf): what the encounter law rolls on the town's pixel
+  (`systems/encounters.js` resolveEncounterTableIndex) by day and by night - DFU's climate tables on the Bay
+  (RandomEncounters.cs), a zone's past it (TESA-BIOME, `systems/tamrielFauna.js` faunaBandAt) - every table a mod's
+  selector answers for that band (`characters/encounterTableDoor.js` encounterTableChoices: Daggerfall Enemy Expansion's or
+  the classic, the same on every machine of a game), its monsters alone (never a person, never an aquatic beast), each at
+  its level as the game loaded it (`tamrielFauna.js` faunaLevelIn). The world host hands it to the boards over its maps
+  (`scenes/world.js` `wildAt: bountyLandWild(maps)`), kept a pixel while the tables, the land and the mods stand.
+- **A tier's band** is its ladder's own beasts' levels as Daggerfall has them (`BOUNTY_TIERS` `levels`: 1-4, 4-5, 5-10,
+  10-13, 14 up). The tier hunts the land's beasts in that band, weakest first; where none lies in it, the land's nearest it
+  (all of them that are nearest); where the board knows no wild (or can name none of it), the ladder, exactly as before.
+- **Never a curse-bearer**: the board has no words for the werewolf, the wereboar or the vampires, so none is posted
+  (section 2's rule, kept for every land).
+- **The words**: every monster the land's wild may hold has a plural on the board (`bountyBoard.js` FOES, 56 of them),
+  through the text core (`bounty.foes.*`, in English and the thirteen complete languages); the ladder's English words are
+  as they were. A beast's story is its kind's (vermin, beast, giant, orc, undead, dread).
+- **The purse**: the 15+ purse's rank is the beast's rank in the list the posting drew from.
+- **The id alone rebuilds it** with the same wild (`postingFromId`, `scenes/bountyHost.js` wildFor): a taken notice, a
+  party mate's, a save's, hunts the beast the board posted. Every machine of a party reads the same tables, so they agree.
+- **A dungeon's pack** is drawn from the town's land too (the board's town, not the dungeon's own foes).
+
+Measured over the freeware (60 days x the five tiers, `boardPostings`): a Black Marsh board (3300,915) posted the ladder
+(Orc Warlords 68, Centaurs 42, ...) and posts now Wraiths, Spiders, Lizard Men, Zombies, Ghosts, Giant Scorpions,
+Will-o'-wisps, Lizard Warriors, Giant Bats, Skeletal Warriors, Mudcrabs and Rats; a Skyrim board (1800,-385) Grizzly
+Bears, Wolves, Sabretooth Tigers, Giants, Snow Wolves and, at 15+, Ancient Liches; an Alik'r board on the Bay (391,404)
+Sabretooth Tigers, Orcs, Spiders, Centaurs, Giants, Dragonlings, Iron Atronachs and Orc Warlords.
+
+THE FOUR HOSTS (Home.md): `scenes/world.js` hands the boards the wild (one entry: bootWorld 35,740, at its ceiling);
+`scenes/worldModes.js` and `scenes/dungeonContext.js` - nothing (the pack is stood as before); `scenes/exterior.js` keeps
+DFU's board (section 8).
+
+Pinned by `test/systems/quarryworld.test.js` (6; with ARENA2 a Black Marsh and an Alik'r board over every tier and 60
+days), `tools/mutants/quarryworld.json` (20, dead). The L10N4 ratchet for `bountyBoard.js` moved 49 -> 41.

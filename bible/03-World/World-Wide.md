@@ -69,6 +69,7 @@ was built on the Bay and stops at its edge. A survey of the tree on 2026-10-24 f
 | WW5 | The Hollows and the stars: an Abyss dungeon slot and a Starfall coven night in each theatre | planned |
 | WW6 | The raids past the Bay: the raids' towns off the registry by area, the wire's world pixels | planned |
 | WW7 | The roads' PEOPLE past the Bay - not the roads: the network past the Bay is TESA's (PR #1184, TESA14 and TESA15 - laid by the Bay's own law, drawn on the map). WW7 puts the living world's travellers, patrols, bands and the Watch on it (WW7-7: the ways' planner walks the roads past the Bay) and keys the town economy by the world's key; it lands on #1184 once that merges | IN PROGRESS on #1184 (2026-10-25; section WW7 below) |
+| WORLD-LANES | The world's lanes of map ids (AUDIT BAY-LEFT items 1, 25 and 35): the spawned dungeons and their Elite tier past the Bay in the spawn lane, the Ocean Holes' pits past the Bay and past the Veil in the abyss lane; neither in the open zone | BUILT (section WORLD-LANES below) |
 
 ## WW1 - the world's grid and its places (BUILT, 2026-10-24)
 
@@ -1280,3 +1281,67 @@ main through ASK-LONGER, into #1184 after START1-3 (#1216). What each side kept:
 - **Versions**: relay world260 (re-hashed in place, `1d0531dd...`: DOMAIN2's guild arm and WW7-3 to WW7-5 composed with the
   audit's), `GUILD_INSTANCE_RELAY_MIN` 260; account acct189; DOMAINS' and WW7-5's migrations 0174-0177 (0167-0170 on this
   branch, past main's 0167-0173). Neither deployed. `bootWorld`'s ceiling 36,116 (TESA's 45 and the audit's 40 lines out).
+
+## WORLD-LANES - the world's lanes of map ids: the spawned dungeons and the Ocean Holes' pits past the Bay (BUILT, 2026-10-27)
+
+The audit NO SYSTEM LEFT BEHIND IN THE BAY (2026-10-26) found two of the port's own places held to the Bay by their ids
+alone: a spawned dungeon's (item 25, A3 - and item 1, A1: the id threw for a pixel past the Bay and the pixel build that
+asked it failed for good, a hole in the ground) and an Ocean Hole's drowned dungeon's (item 35). Each was DFU's MapId law -
+the low 20 bits the map pixel's `y * 1000 + x`, unique on the Bay's 1000 x 500 and nowhere else (decision 2 above). The
+owner's call taken ("Every single thing here needs to be addressed. No exceptions.", 2026-10-26): the spawns past the Bay
+stand in a world id lane, and the pits' abyss likewise.
+
+### The lanes (`world/worldWide/worldLanes.js`)
+
+A place the port makes on a pixel of its own past the Bay is named in a LANE of the world's: a run of DFU's 12-bit lanes
+over the world pixel's key (`worldPixelKey`, under 2^28) - its low 19 bits under the flag 0x80000 in the id's low 20, its
+high 9 the lane's step in the high 12 (`worldLaneMapId`, `worldLaneOf`, `worldLanePixel`). Two runs of 512:
+- **the spawns', `SPAWN_WORLD_LANE` 0x380 to 0x57f** - under 0x60000000, so no reader that knows the abyss by its range
+  meets a spawn;
+- **the abyss's, `ABYSS_WORLD_LANE` 0x600 to 0x7ff** - the Bay's abyss's own range (GetAbyssMapId's 0x600 over a Bay pixel
+  id; only the flag tells the two apart), the Abyss Dungeons' first salt (2049, 0x801) past it.
+
+Every such id is never a Bay pixel id's (its low 20 bits 500,000 and up - TESA II P6's law: the discovered places file it by
+its whole id, Immersive Travel's docks and capitals meet none of their pixel ids in it), none of another lane's (MAPS.BSA's,
+the Bay's spawns', the Abyss Dungeons', Arena's, the isles', the countryside's, the lairs', the capitals', the zone halls'),
+unique per world pixel, and an unsigned 32-bit room the relay's room law already admits (`net/wire.js` WORLD_ROOM).
+
+### SPAWN-WORLD - the spawned dungeons and their Elite tier past the Bay
+
+`06-Systems/Systems-Arc.md` SPAWN-WORLD is the record. Online, the land past the Bay stands the world roll's spawns as the
+Bay does - the same roll, density, Elite tier, gates and clocks - under the spawn lane (`world/spawnedDungeons.js`
+spawnedMapId), never on a place (a capital, an Arena place, the countryside's or a lair stands first), never on TESA's
+roads (`pathFreePixel` past the Bay reads `world/arenaRoads.js`), their clocks their cell's (the `dg` row past the Bay,
+world270 - `OW_WORLD_RELAY_MIN`). The probe over the freeware: 3,000 dry empty pixels past the Bay stood 0 spawns before
+(894 of the asks threw) and 894 now (29.8%, 23.3% of them Elite), the Bay's 869 (29.0%, 25.1%) unchanged.
+
+### PITS-WORLD - the Ocean Holes' pits past the Bay
+
+`03-World/Ocean-Holes.md` PITS-WORLD is the record. `world/oceanHoles.js` getAbyssMapId names a pit past the Bay's abyss in
+the abyss lane (the Bay's the mod's own, to the bit), `isAbyssMapId` knows both, and the hold (`pitPixelOk`) is the world's
+grid: the continent's sea (TAMRIEL-DEEP) and the Eltheric Ocean's (ETHER-DEEP) open pits as the Bay's. Online the open zone
+(Cyrodiil's mask, its enclosed water among it) stands none. Probe: of 152 pit pixels the hash picks in the Topal Bay and the
+Sea of Ghosts, 0 stood before and 152 now, 152 abyss ids.
+
+### The open zone (the owner's call taken)
+
+"Site-bound world events stand nowhere in the open PvP zone (Cyrodiil)" (2026-10-26). Neither a spawn nor a pit is a world
+event, but each is a dungeon's door, and the zone stands its tier's halls and no other dungeon (PVPDUNGEONS): the spawns
+already kept out of it (`spawnedDungeonAt`'s first gate, and now the far reads' too - `spawnGroundPlace.js` spawnAt), the
+pits now kept out of it (`scenes/oceanHolesHost.js` openZoneAtNow).
+
+### THE FOUR HOSTS (Home.md)
+
+`scenes/world.js` wires them (the spawn's stand and ground through `scenes/spawnStandHost.js` and
+`scenes/spawnGroundHost.js`, the boards' ground); `scenes/dungeonContext.js` reads the abyss by `isAbyssMapId` (a lair's
+home, the tutorial's page - an in-place edit of two lines); `scenes/worldModes.js` - nothing (a spawned dungeon past the
+Bay is entered and left as the Bay's, by its id); `scenes/exterior.js` - FLAGGED: the Bay's fixed scene, no spawn and no pit
+(the recorded exclusion).
+
+### The relay (folded into world270, not yet deployed) - and no account change
+
+`net/wire.js` owWireRow reads a world pixel's row (`worldPixelOk`), so the cell keeps a spawn past the Bay's clocks; a client
+says such a row only to a relay that reads it (`relaySupportsOwWorld`, `OW_WORLD_RELAY_MIN` 270 - an older one refuses the
+whole word and closes the socket). Deploy the relay before clients. Nothing else of the relay moves: a spawn's or an abyss's
+room is a world room as before. The relay's law hash (`test/net/relayversion.test.js`, SLAM8) is re-hashed where world270
+is folded together, not in this package: until then that test fails on the moved row law, as it should.

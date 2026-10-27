@@ -8314,12 +8314,66 @@ any pixel past the Bay. The pump destroyed the pixel and BUILD-RETRY asked for i
 collider. A 40 x 20 box of Skyrim (about Windhelm's row): 800 pixels asked, 39 threw; the same box on the Bay, none. The
 party walk's far spawn (`tvLocationAt`, through `spawnAt`) threw the same way, with no try about it.
 
-What stands now: `spawnAt` answers none past the Bay (`world/spawnGroundPlace.js:"if (!inBay(px, py)) return null;"`), so
-the clone is never asked there; the Bay to the byte. It is the first commit of the fix and the guard SPAWN-WORLD (below)
-replaces with the spawn's own law past the Bay. Pins: `test/world/spawnhole.test.js` (the host's clone over the real
+What stood then: `spawnAt` answered none past the Bay (its first gate `inBay`), so the clone was never asked there; the
+Bay to the byte. It was the first commit of the fix, a guard SPAWN-WORLD (below) replaced with the spawn's own law past the
+Bay - the spawner's id in the world's spawn lane, and past the Bay a place first
+(`world/spawnGroundPlace.js:"if (!inBay(px, py) && placeAt(px, py)) return null;"`). Pins: `test/world/spawnhole.test.js` (the host's clone over the real
 producer, and with ARENA2 the audit's own box: 0 threw, the Bay's 14 spawns as they stood). Mutants:
 `tools/mutants/spawnhole.json`. PIN MOVED: `test/scenes/fb1024_groundagree.test.js` (the Eltheric box with no Eltheric
 Ocean is past the Bay).
+
+### SPAWN-WORLD - THE SPAWNED DUNGEONS AND THEIR ELITE TIER PAST THE BAY (2026-10-27)
+
+The audit NO SYSTEM LEFT BEHIND IN THE BAY (2026-10-26), item 25 (A3). On the Bay about 29% of empty land stands an online
+spawn of the world roll, a quarter of them Elite; past the Bay only TESA8's lairs stood (some 1-2% of the land), none of
+them Elite - the spawn's id (`world/spawnedDungeons.js:"export function spawnedMapId(salt, px, py) {"`) was a Bay pixel's,
+so the build never asked for one there, and where it did (the ground's place, SPAWN-HOLE above) it threw. The owner's call
+taken ("Every single thing here needs to be addressed. No exceptions.", 2026-10-26): the spawns past the Bay stand in a
+world id lane (`03-World/World-Wide.md` WORLD-LANES).
+
+What stands now, online, past the Bay:
+- **The same roll, density and Elite tier** as the Bay's (`spawnsDungeon`, `isEliteSpawn`), their template the game's, their
+  region and climate their province's (the host's clone, `scenes/spawnGroundHost.js` `_spawnCloneAt`), their id the world's
+  spawn lane over the pixel's world key (`world/worldWide/worldLanes.js` `SPAWN_WORLD_LANE`, the world salt's alone).
+- **Never on a place.** A capital, an Arena place, the countryside's or a lair stands first: the build asks them before the
+  spawner (`scenes/spawnStandHost.js:"function spawnPastBayAt(px, py) {"`, the last of `_locationToBuild`'s arm past the
+  Bay), and the spawner and the ground's law ask `placeOnPixel` themselves (`spawnedDungeonAt`; `world/spawnGroundPlace.js`
+  `placeAt`, the host's `scenes/tamrielPlacesHost.js` placeOnPixel) - so the ground, the Overworld's far reads and the build
+  agree.
+- **Never on a road past the Bay**: `pathFreePixel` past the Bay reads TESA's layer (`world/arenaRoads.js` arenaPathsAt -
+  the roads and tracks the regions laid), where the Bay's arrays answered nothing; a spawn stood before its region's layer
+  landed that a road crosses now is taken back as the Bay's sweep takes one back, its clocks with it, unless the player
+  stands in it (`spawnPastBayAt`; the layer's landing builds the pixels it reaches again).
+- **Its clocks the Bay's** (TTL1, SPAWN-REBIRTH): kept in the index, gone past its time with nobody in it, its row kept.
+- **Its clocks its cell's** (OW6L): the spawn ledger says a world pixel's row (`createSpawnLedger` `wireRow`, the pixel's one
+  spelling on the world's grid), the relay's law reads one (`net/wire.js` owWireRow, `worldPixelOk`; the relay's copy of the
+  roll agrees pixel for pixel past the Bay), and a client says one only to a relay that reads it (`net/online.js` owWorldOk,
+  `relaySupportsOwWorld`, `OW_WORLD_RELAY_MIN` 270 - an older relay refuses the whole word and closes the socket).
+- **The far reads keep out of the Veil's sea and the open zone** (`spawnGroundPlace.js` spawnAt): those two gates were the
+  ground's alone, so once spawns stood past the Bay the Overworld's far reads (tvSpawnAt, tvLocationAt) would have cloned a
+  spawn in Cyrodiil's halls' zone. The zone stands its tier's halls and no spawn (PVPDUNGEONS; the owner's call on site-bound
+  events in the open zone holds for it).
+- **A board's pack** keeps off a spawn's pixel past the Bay as on it (`scenes/world.js` siteOk).
+- **Entered**, a spawn past the Bay is a world room the relay keeps (public and instanced), filed by its whole id when found,
+  and no dock of Immersive Travel's.
+
+Measured over the freeware (the player's own maps, trace and woods): 3,000 dry empty land pixels past the Bay (Skyrim and
+Hammerfell) stood 0 spawns before - 894 of the asks threw - and stand 894 now (29.8%, 23.3% of them Elite); the Bay's 3,000
+stand 869 (29.0%, 25.1% Elite), as before. The audit's Skyrim box: 39 threw, now 0 with 39 spawns standing.
+
+THE FOUR HOSTS (Home.md): `scenes/world.js` wires it (the stand and the ground through their modules, the boards' ground);
+`scenes/worldModes.js` and `scenes/dungeonContext.js` - nothing new (a spawn past the Bay is entered and run as the Bay's,
+by its id); `scenes/exterior.js` - FLAGGED: the Bay's fixed scene, no spawn past the Bay.
+
+Pins: `test/world/spawnworld.test.js` (8, the ARENA2 half the density and the Elite share), `test/world/spawnhole.test.js`
+(moved), `test/world/spawneddungeons.test.js` (the id past the Bay). Mutants: `tools/mutants/spawnworld.json` (29, dead),
+`tools/mutants/spawnhole.json` (1, dead). PIN MOVED: `fb1024_groundagree.test.js` (the Eltheric box with no Eltheric Ocean
+stands its spawn again), `spawneddungeons.test.js`, `spawnhole.test.js`, `ow6_ledger.test.js` (a row past the Bay is a row),
+`tv6_dungeons.test.js` (the harnesses' Bay), `tesa2_arena.test.js`, `tesa7_country.test.js`, `tesa8_lairs.test.js`,
+`tesa10_capitals.test.js`, `tesa13_mapink.test.js` (the order ends in the spawner), `lairworld.test.js` (the boards' ground).
+Re-aimed by content, all dead: `audittesa2p` P1-hall-after-the-places, `tesa2` TESA2-no-arm, `tesa7` TESA7-host-arena-last
+and TESA7-host-no-country, `tesa8` TESA8-host-no-lairs, `auditonline3b` C1-a-halo-keeps-no-grave-word, `lairworld`
+LW-host-boards-ground-held-to-the-bay.
 
 ### DISC29-F - a mode change stops the riding loop, as UpdateMode does (2026-09-28, Skibbster)
 

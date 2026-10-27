@@ -761,3 +761,9 @@ the wiring the fix's next commits hand these modules - and to its measure in the
 dead after the move; `auditlandforms.json`'s F1 probe record did not parse before the move either, and is re-aimed by
 content); the pins that lift the members from world.js's text lift them from the modules, the harnesses handing them their
 `host` (PIN MOVED, HOST-SPLIT, SPAWN-WORLD).
+
+The fix's last commit (2026-10-27) found `bootWorld` at 35,740, the ceiling: the four kept were spent - SPAWN-WORLD's
+wiring three (the places' getter, their handle to the spawn's ground, the boards' ground kept off a spawn past the Bay),
+TVD-WORLD's handle none (an edit in place), QUARRY-WORLD's one (`wildAt: bountyLandWild(maps)`). The ceiling stays at its
+measure, 35,740. `createWorldModes` 11,025 and `buildDungeonContext` 8,436 (two lines edited in place, `isAbyssMapId`)
+did not move.

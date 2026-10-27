@@ -83,7 +83,8 @@ PLANE_KEEP_RADIUS from the pixel last asked or sent are let go (asked again, the
 are built again; the bytes are the same). The main thread's Bay bake had only
 added the worker's rows, for the session. The host's dry check reads only the sea
 bits its thread holds (C1-3): a fresh Eltheric cell is the worker's trip to answer.
-There's a Hole in the Bottom of the Ocean's pits stay the Bay's.
+There's a Hole in the Bottom of the Ocean's pits stood the Bay's until PITS-WORLD
+(2026-10-27, `03-World/Ocean-Holes.md`): they open in the Eltheric's frame too now.
 
 ## The floor (DW-B)
 
@@ -795,7 +796,9 @@ Nothing in `scenes/world.js` waits on it.
 **Not done, and why.** A place past the Bay blends its pixel's ground as a classic location's, and the bake samples the
 continent's pixels without a location's rect. A coastal town's cells may therefore read as water in the planes where the
 town raised them. The carve itself takes a cell only where its four corners stand at the ocean's height, so no town is
-cut. The Ocean Holes' pits stay the Bay's, as they were. RUMARE-WATER (`03-World/Tamriel.md`): a shore capital stood its
+cut. The Ocean Holes' pits stood the Bay's until PITS-WORLD (2026-10-27, `03-World/Ocean-Holes.md`): the continent's
+carved sea opens them now, each abyss in the world's abyss lane, and online the open zone's water (Lake Rumare, the
+Niben) none. RUMARE-WATER (`03-World/Tamriel.md`): a shore capital stood its
 every slice at the ocean's height (AUDIT TESA II C2), so its streets were such cells. Its land now stands a metre over
 the sea (`world/terrain/capitalSea.js` CAPITAL_FREEBOARD, past the carve's 0.25 headroom) and only its water at the sea's
 height. The Imperial City's span is read by this bake as the streamed build lays it (`tamrielWatersBake.js`
