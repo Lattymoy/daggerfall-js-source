@@ -2278,7 +2278,7 @@ outlives the grid, and what holds the clock is the machine's build rate - TV2's 
 cleanly"). Recorded, not changed.
 
 **FIXED.** The pump asks the stream's books before it starts a build and as one ends (streamingWorld.js:"owes(queue) {",
-world.js:"if (building || !state.owes(queue)) return;"): the let-go pixels at the queue's head are dropped unbuilt, the
+world.js:"if (building || !state.owes(queue)"): the let-go pixels at the queue's head are dropped unbuilt, the
 rest keep their order, and with nothing owed the stream's run is over (PERF-EXT24's `_streamSince`). Both asks are
 needed - the one as a build ends catches what left the grid while it built, the one before a build what the frame's own
 crossing let go before the pump's turn. A pixel let go while its build is in flight is still torn down when it lands. The
@@ -2676,6 +2676,16 @@ edge thirteen from its centre); `tools/mutants/icpace.json` (9, all dead). PINS 
 (the host's wiring), `audit_owrevisited_walk` (`townPace` answers the pace), and the governor's mounts (`ow6_slowdown`,
 `ow_lead`, `ow_loadowed`, `ow_queueowed`, `ow_toggle`, `tv_wasd`, `fb0929d_toroads`: `tvTownPace` for `tvInTown` and
 TOWN_PACE_MAX); `ow_townwalk.json` and `audit_owrevisited_walk.json` re-aimed by content, all dead.
+
+IC-STUTTER (2026-10-27, the owner: *"Traveling in the Imperial City at x60 presents really bad stuttering"*;
+`03-World/Arena-Provinces.md` IC-STUTTER, where the whole fix is recorded): at x60 a journey crosses a slice every two or
+three seconds, and its way through each slice (`scenes/townWalkHost.js` townWay: the slice's pieces flooded and up to six
+searches of its 512 by 512 grid) was one task of 12-215 ms on this machine. The way is searched a few thousand cells a
+step now (`systems/travel/townWalk.js` townWayCellsSteps, on a scratch of its own), the host walking WAY_STEPS_AN_ASK
+steps an ask and answering `pending` until it is found; the journey asks again every frame (`systems/travel/
+travelOptions.js` streetWait) and walks its leg meanwhile, then its streets - the pace, the way and the gates as before.
+The pieces themselves are flooded by the slice's build before it stands (componentsSteps), so the traveller's pace asks
+none.
 
 ## OW-HORIZON - as far as the eye can see, from the air (2026-10-20, the owner)
 

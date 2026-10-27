@@ -688,6 +688,7 @@ export function createTravelOptions(deps = {}) {
     r.streetFor = key;
     const aim = routeAim(r);
     const way = aim ? deps.townWay(pos(), aim) : null;
+    if (way?.pending) { r.streetFor = null; r.streetWait = true; return null; }   // IC-STUTTER: the host's search a few thousand cells an ask - asked again next frame (update), the leg walked meanwhile
     if (way?.shut) st.shutStop = true;   // a walled city's gates shut for the night between the traveller and the point: said, never walked into
     return way?.pts?.length ? { pts: way.pts.map((q) => ({ x: q.x, z: q.z })), pace: way.pace ?? TOWN_PACE_MAX } : null;   // IC-PACE: its town's pace
   }
@@ -1306,6 +1307,9 @@ export function createTravelOptions(deps = {}) {
       const k = deps.townKey(pos());
       if (k !== st.route.townAt) { st.route.townAt = k; if (k) { startRouteLeg(); applyRate(); } else st.route.streetFor = null; }   // AUDIT OW-REVISITED L1-9: left, the town is asked again if walked back into
     }
+    // IC-STUTTER (bible/03-World/Arena-Provinces.md IC-STUTTER): A TOWN'S WAY STILL IN THE MAKING (scenes/townWalkHost.js:
+    // a search of a city's grid a few thousand cells a frame, never one task) asked again until it is found
+    if (st.autopilot && st.route?.streetWait && !st.route.street) { st.route.streetWait = false; startRouteLeg(); applyRate(); }
     // AUDIT FB1021d PS-1: A SAILED LEG AIMED AGAIN once its pixel's ground is built - aimed before it was, at its middle
     if (st.autopilot && st.route && st.route.seaUnbuilt === st.route.i && seaLegBuilt(st.route.legs[st.route.i])) startRouteLeg();
     // OW-TOWN-WALK: THE GATES SHUT - the way out of a walled city lies behind its gates at night (offline: DaggerfallCityGate

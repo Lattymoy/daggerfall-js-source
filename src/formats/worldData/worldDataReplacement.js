@@ -247,6 +247,9 @@ export function registerPortBlockFamily(f) {
   return true;
 }
 const familyIndex = (name) => { for (const f of _blockFamilies) { const i = f.indexOf(name); if (i >= 0) return i; } return -1; };
+/** IC-STUTTER (bible/03-World/Arena-Provinces.md IC-STUTTER): whether a family's block is made and kept - a read of it
+ *  makes nothing (scenes/capitalPrebuild.js asks before a build). @param {string} name */
+export const portBlockFamilyHas = (name) => _blockFamilies.some((f) => f.cache.has(name));   // a family's cache holds its own names alone
 const familyName = (index) => { for (const f of _blockFamilies) { const n = f.nameOf(index); if (n) return n; } return null; };
 function familyBlock(name) {
   for (const f of _blockFamilies) {

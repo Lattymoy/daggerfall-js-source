@@ -60,6 +60,9 @@ function journeyHost() {
   const d = { t: 0, pBuilds: 0, failP: null, said: [] };
   const player = { pos: at, speed: WALK_MPS, isPlayerSwimming: false, feetAt: () => [...player.pos] };
   const scope = {
+    // PIN MOVED (IC-STUTTER): the pump asks the Imperial City's workers which pixel is ready (scenes/capitalPrebuild.js
+    // firstReady) - none of the city's here, every pixel ready
+    capitalPrebuild: { firstReady: () => true },
     // the journey and the view
     travelControlUI: { isShowing: true }, travelOptions: { state: { autopilot: {} } },
     travelView: { active: true, state: 'up' }, tvOwnsJourneys: () => true,

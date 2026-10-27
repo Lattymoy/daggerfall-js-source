@@ -48,6 +48,7 @@ function rideHost(W, { buildS, mps }) {
   const d = { t: 0, pending: [] };
   const player = { pos: at, speed: mps, isPlayerSwimming: false, feetAt: () => [...player.pos] };
   const scope = {
+    capitalPrebuild: { firstReady: () => true },   // PIN MOVED (IC-STUTTER): the pump asks the Imperial City's workers - none here
     travelControlUI: { isShowing: true }, travelOptions: { state: { autopilot: {} } },
     travelView: { active: true, state: 'up' }, tvOwnsJourneys: () => true,
     worldTimeScale: timeScale, setWorldTimeScale: setTimeScale, resetTimeScale, createLoadGovernor, MAX_TIME_SCALE,

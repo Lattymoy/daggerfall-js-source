@@ -127,7 +127,7 @@ test('IC-PROPS A CAPITAL THAT NAMES ITS OWN - a ground handed `fixed` sites stan
   const s = imperialYardSites()[0].s;
   assert.deepEqual(townYardsOf({ capital: { k: IC, s } }).fixed, imperialSliceYards(s));
   assert.equal(townYardsOf({ name: 'Daggerfall', mapTableData: { mapId: 1 } }).fixed, null);
-  assert.match(hostText('src/scenes/world.js'), /const g = townGroundOf\(yl, measures, shut, townYardsOf\(dfLocation\)\);/);
+  assert.match(hostText('src/scenes/world.js'), /const g = await stepsBreathing\(townGroundSteps\(yl, measures, shut, townYardsOf\(dfLocation\)\), breathe\);/);   // PIN MOVED (IC-STUTTER): a step at a time
 });
 
 test('IC-PROPS THE IMPERIAL CITY\'S YARDS AT ITS GATES - a Stable, a Wagon Yard and a joinery outside each district\'s avenue gate in the city wall: on City Isle\'s own land past the wall\'s towers, off the way out, within IMPERIAL_YARD_REACH of the gate, each wholly in one slice, the Stable nearest, none on another (mutants: the way out unread; the wall\'s reach unread; the kinds placed over one another)', () => {

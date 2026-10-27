@@ -177,8 +177,8 @@ test('TS7 the ground under a carrier never read for the terrain (its wall made w
   const g = townGroundOf(layout, {}, (n) => { shut++; n.grid.fill(0); });
   assert.equal(shut, 1);
   assert.ok(g.blocked.every((v) => v === 1), 'nothing left to place on');
-  assert.match(rd('src/scenes/pixelBuild.js'), /townPlacesFor\(dfLocation, lefaySpot, climate\?\.people, loc, walkShut\)/);
-  assert.match(rd('src/scenes/world.js'), /const g = townGroundOf\(yl, measures, shut, townYardsOf\(dfLocation\)\);/);   // PIN MOVED (IC-PROPS): and what the town tells its yards' law - its fabric's ways, a capital's own yards
+  assert.match(rd('src/scenes/pixelBuild.js'), /townPlacesFor\(dfLocation, lefaySpot, climate\?\.people, loc, walkShut, \(\) => breather\.breathe\(\)\)/);   // PIN MOVED (IC-STUTTER): and the build's breather
+  assert.match(rd('src/scenes/world.js'), /const g = await stepsBreathing\(townGroundSteps\(yl, measures, shut, townYardsOf\(dfLocation\)\), breathe\);/);   // PIN MOVED (IC-PROPS): and what the town tells its yards' law - its fabric's ways, a capital's own yards; PIN MOVED (IC-STUTTER): a step at a time
   assert.equal(typeof registerTownWall, 'function');
 });
 

@@ -70,9 +70,11 @@ import { isWodShrub, rockSeatDrop, WOD_ROCK_SITES, wodLightPosition, wodLightPro
 import { isYardTown } from '../systems/merchantYards.js';
 import { keyResolver, StaticBatchBuilder } from '../render/staticBatch.js';
 import { knownCriminal } from '../systems/standing.js';
-import { layoutLocation } from '../world/locationLayout.js';
+import { layoutLocationSteps } from '../world/locationLayout.js';   // IC-STUTTER: a town laid out a block a step
 import { legalRepOf } from '../systems/court.js';
-import { LivingTown } from '../systems/livingWorld/livingTown.js';
+import { LivingTown, livingTownPlaces } from '../systems/livingWorld/livingTown.js';   // IC-STUTTER: its places a step at a time
+import { componentsSteps } from '../systems/travel/townWalk.js';   // IC-STUTTER: the town walk's pieces, flooded a step at a time
+import { stepsBreathing } from '../world/puddleMask.js';   // IC-STUTTER: OW-HITCH's runner
 import { livingWorldOn } from '../systems/livingWorld/livingSwitch.js';
 import { LPT_CROWNS, LPT_TRUNKS } from '../world/lptCrowns.js';   // FB1020c TRUNK-FIT: and each prototype's trunk at the ground
 import { LPT_SCALE_MAX, lptVariety } from '../world/lowPolyTrees.js';
@@ -477,14 +479,14 @@ export function createPixelBuild(host) {
       // subrecord widens the block's building count and must not exist
       // on the classic one.
       setLastLocationKeyTo(dfLocation.regionIndex, dfLocation.locationIndex ?? 0);   // AUDIT-RR F32: WorldDataVariants' last key is THIS location's before its blocks are read - DFU reads the DFLocation right before RMBLayout (MapsFile.cs:999 sets it); the boot index here read every location and left the key on the last
-      const loc = layoutLocation(dfLocation, maps, blocks, { enhanced: isEnhanced(), windmills: windmillsOn() });   // WM3: the pack's own switch
+      const loc = await stepsBreathing(layoutLocationSteps(dfLocation, maps, blocks, { enhanced: isEnhanced(), windmills: windmillsOn() }), () => breather.breathe());   // WM3: the pack's own switch; IC-STUTTER: a block a step
       locBlocks = loc.blocks;
       const fabric = await townFabricFor(dfLocation, loc.blocks, { px, py, breathe: () => breather.breathe(), ground: townGround, paths });   // URBANIZER U3 (world/urban/townFabricStand.js): planned before its yards and its walkers are placed - TOWN-BOARDS: on the town's ground, the outline TS2 flattens, its painted roads its roads (TS10)
       const lefayExitDoors = [];   // HOLD-MONUMENT (AUDIT FIVE-ASKS B1): the Hold's dungeon-entrance doors as its blocks stand them - its way out
       // MERCHANT-YARDS: the town's open ground, clear of its buildings, roads and lots; SHIPYARDS: and a port town's seaward
       // ground, on what the yards left - one pass (AUDIT SHIPYARDS L3-3: the yards' and the port's each asked it whole)
       const yardTown = !farView && isYardTown(dfLocation), portTown = !farView && isPortTown(dfLocation, portOnSea(dfLocation));
-      const places = yardTown || portTown ? townPlacesFor(dfLocation, lefaySpot, climate?.people, loc, walkShut) : null;   // TS7: on the town's own ground
+      const places = yardTown || portTown ? await townPlacesFor(dfLocation, lefaySpot, climate?.people, loc, walkShut, () => breather.breathe()) : null;   // TS7: on the town's own ground; IC-STUTTER: a step at a time through the build's breather
       if (yardTown) yardSites = places.yards;
       if (portTown) portSites = places.ports;
       const tilePos = getLocationTerrainTileOrigin(dfLocation);
@@ -834,6 +836,7 @@ export function createPixelBuild(host) {
           // draws water, a wandering NPC will not walk into it.
           nav.setBlockData(b.x, b.y, b.dfBlock.rmbBlock.fldHeader.autoMapData,
             (tx, ty) => srcTiles[tx][ty].textureRecord, { enhancedWater: waterSwitchOn() });
+          await breather.breathe();   // IC-STUTTER: a block of the walkers' grid a breath (a city's sixty-four were one task)
         }
         walkShut?.(nav);   // TS6: and only on the town's own ground, never through its wall (world/townWalls.js townWalkShut)
         if (lefaySpot) carveLefay(nav, lefaySpot);   // LEFAY1: the people walk round the monument, never through it
@@ -871,7 +874,11 @@ export function createPixelBuild(host) {
           type: dfLocation.mapTableData?.locationType, region: dfLocation.regionIndex, people: climate?.people,
           blocks: loc.width * loc.height, port: hasPort(dfLocation.mapTableData?.mapId),
         };   // LW3: the roads' own record of the town (the same row the trips read - WW1: the world's registry's, wherever it stands), a mod's town its own
-        population = livingWorldOn() ? new LivingTown(nav, {
+        // IC-STUTTER (bible/03-World/Arena-Provinces.md IC-STUTTER): the town's buildings and doors first, and its places
+        // made of them a step at a time through the build's breather (livingTown.js livingTownPlaces) - one task of
+        // 0.1-0.4 s on a near slice of the Imperial City where the town made them itself
+        /** @type {any} */
+        const livingOf = {
           town: livingTown,
           buildings: buildingSummaries(dfLocation.exterior?.buildings ?? [], loc.blocks, { locationIndex: dfLocation.locationIndex ?? 0, locationName: dfLocation.name })
             .map((b) => ({ key: b.buildingKey, type: b.buildingType, quality: b.quality, factionId: b.factionId })).concat(cityHomesOf(dfLocation).buildings),   // IC-GRAND: the fabric's homes (world/imperialHomes.js)
@@ -883,6 +890,14 @@ export function createPixelBuild(host) {
               nx: m[0] * n.x + m[4] * n.y + m[8] * n.z, nz: m[2] * n.x + m[6] * n.y + m[10] * n.z,
             };
           }).concat(cityHomesOf(dfLocation).doors),
+        };
+        if (livingWorldOn()) livingOf.places = await livingTownPlaces(nav, livingOf, () => breather.breathe());
+        // IC-STUTTER: and its streets' pieces flooded a step at a time before it stands - the town walk's (systems/travel/
+        // townWalk.js componentsOf: the traveller's pace and way ask them), kept on the grid; asked whole by the first
+        // frame of a traveller in it, a slice of the Imperial City's 512 by 512 cells was a task of its own
+        await stepsBreathing(componentsSteps(nav), () => breather.breathe());
+        population = livingWorldOn() ? new LivingTown(nav, {
+          ...livingOf,
           makePerson: (archive, guard) => {
             const person = new ResidentWalker(nav, { archive, guard, frameCount: (rec, a) => personTex.get(a).getFrameCount(rec), collider: personCollider, groundY: personGroundY });
             personBatches.set(person, renderer.createBillboardBatch(archive, 0, { w: 1, h: 1 }, [[0, 0, 0]]));

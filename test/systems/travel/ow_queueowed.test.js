@@ -70,8 +70,10 @@ test('QUEUE-OWED, the host\'s pump: crossings that leave queued pixels behind - 
     return Promise.resolve(built.get(k));
   };
   const destroyPixel = (px, py) => { built.delete(`${px},${py}`); };
-  const s = { state, built, queue, buildPixel, destroyPixel, _wodArrival: { keys: new Set() }, console: { error() {} }, performance: { now: () => 0 } };
-  const pump = new Function('s', `let { state, built, queue, buildPixel, destroyPixel, _wodArrival, console, performance } = s;
+  // PIN MOVED (IC-STUTTER): the pump asks the Imperial City's workers which pixel is ready (scenes/capitalPrebuild.js
+  // firstReady) - none of the city's here, every pixel ready
+  const s = { state, built, queue, buildPixel, destroyPixel, _wodArrival: { keys: new Set() }, console: { error() {} }, performance: { now: () => 0 }, capitalPrebuild: { firstReady: () => true } };
+  const pump = new Function('s', `let { state, built, queue, buildPixel, destroyPixel, _wodArrival, console, performance, capitalPrebuild } = s;
     let building = false, _streamSince = null;
     ${cut('pump')}
     return pump;`)(s);
@@ -121,6 +123,7 @@ async function journey({ mps, buildS, turnS, seconds }) {
   const player = { pos: at, speed: mps, isPlayerSwimming: false, feetAt: () => [...player.pos] };
   let cur = null;
   const scope = {
+    capitalPrebuild: { firstReady: () => true },   // PIN MOVED (IC-STUTTER): the pump asks the Imperial City's workers - none here
     travelControlUI: { isShowing: true }, travelOptions: { state: { autopilot: {} } },
     travelView: { active: true, state: 'up' }, tvOwnsJourneys: () => true,
     worldTimeScale: timeScale, setWorldTimeScale: setTimeScale, resetTimeScale, createLoadGovernor, MAX_TIME_SCALE,

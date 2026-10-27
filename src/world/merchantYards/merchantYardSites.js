@@ -41,6 +41,17 @@
 // A town with no room for one stands none of it (said once, in the console), never a yard over a house, a road or a lot.
 //
 // Pure: no renderer, no GL, no clock. Not a DFU member. Ledger A (MERCHANT-YARDS).
+//
+// IC-STUTTER (2026-10-27, the owner: "Traveling in the Imperial City at x60 presents really bad stuttering"; bible/03-World/
+// Arena-Provinces.md IC-STUTTER): EVERY PASS A STEP AT A TIME. A city of eight blocks a side is a grid of 512 by 512 cells,
+// and every near slice of the Imperial City is one: its measures (two thousand placed models' boxes), its ground and its
+// yards' search (four turns over every cell, a yard a pass) ran in one task of the pixel's build, 0.2-0.4 s of the page's
+// thread on each - at x60 several a second. Each pass is a generator (`...Steps`) that yields between blocks and between
+// bands of rows; the host walks it through the build's breather (world/puddleMask.js stepsBreathing - OW-HITCH's), and
+// every function below keeps its name and its answer, run to its end (stepsDone): the same work in the same order, the
+// same sites. IC-PROPS x IC-STUTTER: the yards' law of a town (yardLaw - its fabric's ways, its edge land, its gardens),
+// a ground's exits' field and each yard's place by the law's steps are passes over the same grid, stepped the same way.
+import { stepsDone } from '../puddleMask.js';   // IC-STUTTER: OW-HITCH's runner, the one export
 import { CityNavigation, NAV_CELL, NAV_CELLS_PER_BLOCK } from '../city/cityNavigation.js';
 import { trs, multiply } from '../mat4.js';   // AUDIT MERCHANT-YARDS R2: the blocks' measures, here where they are pinned
 import { staticBuildingBox, staticBuildingWorldAabb } from '../staticBuildings.js';
@@ -111,17 +122,27 @@ export function yardSpans(kind, turn) {
  * THE GRID THE YARDS ARE PLACED ON: `blocked` 1 where a yard may not stand (closed, water, a building's or a prop's
  * clearance, a flat's, a palace's block, the monument's), `road` 1 on a road or a path. Pure.
  * @param {{width: number, height: number, weightAt: (gx: number, gy: number) => number}} nav
- * @param {{buildings?: number[][], props?: number[][], flats?: number[][], closedBlocks?: number[][], keep?: number[][]}} [o]
+ * @param {YardMeasures} [measures]
  *   `buildings`/`props` boxes [x0, z0, x1, z1] in the location frame (metres), `flats` [x, z] feet, `closedBlocks`
  *   [bx, by], `keep` discs [x, z, r] kept clear
+ * @returns {YardGround}
  */
-export function yardGround(nav, { buildings = [], props = [], flats = [], closedBlocks = [], keep = [] } = {}) {
+export const yardGround = (nav, measures = {}) => stepsDone(yardGroundSteps(nav, measures));
+/** @typedef {{buildings?: number[][], props?: number[][], flats?: number[][], closedBlocks?: number[][], keep?: number[][]}} YardMeasures */
+/** @typedef {{width: number, height: number, blocked: Uint8Array, road: Uint8Array}} YardGround */
+/** IC-STUTTER: yardGround a band of rows and a few hundred boxes at a time.
+ *  @param {{width: number, height: number, weightAt: (gx: number, gy: number) => number}} nav @param {YardMeasures} [measures]
+ *  @returns {Generator<void, YardGround, void>} */
+export function* yardGroundSteps(nav, { buildings = [], props = [], flats = [], closedBlocks = [], keep = [] } = {}) {
   const W = nav.width, H = nav.height;
   const blocked = new Uint8Array(W * H), road = new Uint8Array(W * H);
-  for (let gy = 0; gy < H; gy++) for (let gx = 0; gx < W; gx++) {
-    const w = nav.weightAt(gx, gy), i = gy * W + gx;
-    if (!(w > 0)) blocked[i] = 1;
-    else if (w === ROAD_WEIGHT) road[i] = 1;
+  for (let gy = 0; gy < H; gy++) {
+    if (gy && gy % YARD_ROWS_A_STEP === 0) yield;
+    for (let gx = 0; gx < W; gx++) {
+      const w = nav.weightAt(gx, gy), i = gy * W + gx;
+      if (!(w > 0)) blocked[i] = 1;
+      else if (w === ROAD_WEIGHT) road[i] = 1;
+    }
   }
   // a box grown by `pad` closes every cell whose centre is in it
   const closeBox = (b, pad) => {
@@ -142,8 +163,11 @@ export function yardGround(nav, { buildings = [], props = [], flats = [], closed
       if (dx * dx + dz * dz <= reach) blocked[gy * W + gx] = 1;
     }
   };
+  yield;
   for (const b of buildings) closeBox(b, BUILDING_CLEAR_M);
+  yield;
   for (const b of props) closeBox(b, PROP_CLEAR_M);
+  yield;
   for (const f of flats) closeDisc(f[0], f[1], FLAT_CLEAR_M);
   for (const k of keep) closeDisc(k[0], k[1], k[2]);
   for (const [bx, by] of closedBlocks) {
@@ -151,6 +175,9 @@ export function yardGround(nav, { buildings = [], props = [], flats = [], closed
   }
   return { width: W, height: H, blocked, road };
 }
+
+/** IC-STUTTER: the rows of a pass between two steps - a 512-cell city's grid in sixteen. */
+export const YARD_ROWS_A_STEP = 32;
 
 /** The cells a yard's front looks onto, FRONT_ROAD_CELLS deep: [x0, y0, x1, y1). Pure. SHIPYARDS: and a port place's. */
 export function frontStrip(gx, gy, nx, nz, turn) {
@@ -168,39 +195,51 @@ export function frontStrip(gx, gy, nx, nz, turn) {
  * a gate. Where the town has none, the distance to the edge itself. Made once a ground (`g.toExit`). Pure.
  * @param {any} g @returns {Int32Array}
  */
-export function exitField(g) {
+export const exitField = (g) => stepsDone(exitFieldSteps(g));
+/** IC-PROPS x IC-STUTTER: exitField a band of rows at a time. @param {any} g @returns {Generator<void, Int32Array, void>} */
+export function* exitFieldSteps(g) {
   if (g.toExit) return g.toExit;
   const W = g.width, H = g.height, n = W * H, street = g.street ?? g.road, town = g.town, INF = 0x3fffffff;
   const own = (x, y) => x >= 0 && y >= 0 && x < W && y < H && (!town || town[y * W + x] === 1);
   const edge = new Uint8Array(n);
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    if (!own(x, y)) continue;
-    if (!own(x - 1, y) || !own(x + 1, y) || !own(x, y - 1) || !own(x, y + 1)) edge[y * W + x] = 1;
+  for (let y = 0; y < H; y++) {
+    if (y && y % YARD_ROWS_A_STEP === 0) yield;
+    for (let x = 0; x < W; x++) {
+      if (!own(x, y)) continue;
+      if (!own(x - 1, y) || !own(x + 1, y) || !own(x, y - 1) || !own(x, y + 1)) edge[y * W + x] = 1;
+    }
   }
-  const near = chamfer(W, H, edge, INF);
+  const near = yield* chamferSteps(W, H, edge, INF);
   const seeds = new Uint8Array(n);
   let any = false;
   for (let i = 0; i < n; i++) if (street[i] && near[i] <= 3 * EXIT_REACH) { seeds[i] = 1; any = true; }
-  g.toExit = any ? chamfer(W, H, seeds, INF) : near;
+  g.toExit = any ? yield* chamferSteps(W, H, seeds, INF) : near;
   return g.toExit;
 }
-/** A two-pass chamfer distance (3 orthogonal, 4 diagonal) from the cells `seed` marks. Pure. */
-function chamfer(W, H, seed, INF) {
+/** A two-pass chamfer distance (3 orthogonal, 4 diagonal) from the cells `seed` marks - YARD_ROWS_A_STEP rows a step
+ *  (IC-STUTTER). Pure. */
+function* chamferSteps(W, H, seed, INF) {
   const d = new Int32Array(W * H);
   for (let i = 0; i < d.length; i++) d[i] = seed[i] ? 0 : INF;
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const i = y * W + x;
-    let v = d[i];
-    if (x > 0) v = Math.min(v, d[i - 1] + 3);
-    if (y > 0) { v = Math.min(v, d[i - W] + 3); if (x > 0) v = Math.min(v, d[i - W - 1] + 4); if (x < W - 1) v = Math.min(v, d[i - W + 1] + 4); }
-    d[i] = v;
+  for (let y = 0; y < H; y++) {
+    if (y && y % YARD_ROWS_A_STEP === 0) yield;
+    for (let x = 0; x < W; x++) {
+      const i = y * W + x;
+      let v = d[i];
+      if (x > 0) v = Math.min(v, d[i - 1] + 3);
+      if (y > 0) { v = Math.min(v, d[i - W] + 3); if (x > 0) v = Math.min(v, d[i - W - 1] + 4); if (x < W - 1) v = Math.min(v, d[i - W + 1] + 4); }
+      d[i] = v;
+    }
   }
-  for (let y = H - 1; y >= 0; y--) for (let x = W - 1; x >= 0; x--) {
-    const i = y * W + x;
-    let v = d[i];
-    if (x < W - 1) v = Math.min(v, d[i + 1] + 3);
-    if (y < H - 1) { v = Math.min(v, d[i + W] + 3); if (x < W - 1) v = Math.min(v, d[i + W + 1] + 4); if (x > 0) v = Math.min(v, d[i + W - 1] + 4); }
-    d[i] = v;
+  for (let y = H - 1; y >= 0; y--) {
+    if ((H - 1 - y) && (H - 1 - y) % YARD_ROWS_A_STEP === 0) yield;
+    for (let x = W - 1; x >= 0; x--) {
+      const i = y * W + x;
+      let v = d[i];
+      if (x < W - 1) v = Math.min(v, d[i + 1] + 3);
+      if (y < H - 1) { v = Math.min(v, d[i + W] + 3); if (x < W - 1) v = Math.min(v, d[i + W + 1] + 4); if (x > 0) v = Math.min(v, d[i + W - 1] + 4); }
+      d[i] = v;
+    }
   }
   return d;
 }
@@ -217,7 +256,10 @@ function chamfer(W, H, seed, INF) {
  *   edgeLand?: Uint8Array, square?: Uint8Array}} g @param {string} kind
  * @param {{ edge?: boolean, square?: boolean, byExit?: boolean, garden?: boolean }} [o]
  */
-export function yardSite(g, kind, { edge = kind === 'stable', square = kind !== 'stable', byExit = kind === 'stable', garden = false } = {}) {
+export const yardSite = (g, kind, o = {}) => stepsDone(yardSiteSteps(g, kind, o));
+/** IC-STUTTER: yardSite a band of rows of a turn at a time - the same places weighed in the same order.
+ *  @param {any} g @param {string} kind @param {{ edge?: boolean, square?: boolean, byExit?: boolean, garden?: boolean }} [o] */
+export function* yardSiteSteps(g, kind, { edge = kind === 'stable', square = kind !== 'stable', byExit = kind === 'stable', garden = false } = {}) {
   if (!g || !YARD_FOOT[kind]) return null;
   const { width: W, height: H } = g;
   const closed = summed(W, H, (x, y) => g.blocked[y * W + x]);
@@ -226,13 +268,15 @@ export function yardSite(g, kind, { edge = kind === 'stable', square = kind !== 
   const own = shut ? summed(W, H, (x, y) => (shut[y * W + x] || (!edge && land?.[y * W + x]) || (!square && paving?.[y * W + x]) || (!garden && gardens?.[y * W + x]) ? 1 : 0)) : null;
   const plaza = paving && square ? summed(W, H, (x, y) => paving[y * W + x]) : null;
   const street = ways ? summed(W, H, (x, y) => ways[y * W + x]) : roads;
-  const toExit = byExit ? exitField(g) : null;
+  yield;
+  const toExit = byExit ? yield* exitFieldSteps(g) : null;
   const pad = Math.ceil(YARD_PAD_M / NAV_CELL - 1e-9), m = Math.max(pad, SQUARE_MARGIN);
   const mx = W / 2, my = H / 2;
   let best = null, bestScore = Infinity;
   for (let turn = 0; turn < 4; turn++) {
     const [nx, nz] = yardSpans(kind, turn);
     for (let gy = pad; gy + nz + pad <= H; gy++) {
+      if ((gy - pad) % YARD_ROWS_A_STEP === YARD_ROWS_A_STEP - 1) yield;
       for (let gx = pad; gx + nx + pad <= W; gx++) {
         const cx = gx + nx / 2, cy = gy + nz / 2;
         // AUDIT MERCHANT-YARDS G2: Math.sqrt of an exact sum (half-cells squared), the same on every engine - Math.hypot
@@ -264,14 +308,14 @@ export function yardSite(g, kind, { edge = kind === 'stable', square = kind !== 
  *  with it); the Wagon Yard and the joinery by an exit on the open land past the town, as the Stable stands; and last, a
  *  house's garden with the rest (YARD_LAW_STEPS) - so no town that stood a yard before stands none now. */
 export const YARD_LAW_STEPS = Object.freeze([{}, { edge: true, byExit: true }, { edge: true, garden: true, square: true }]);
-const lawSite = (g, kind) => {
+function* lawSiteSteps(g, kind) {
   for (const [i, o] of YARD_LAW_STEPS.entries()) {
     if (i === 1 && kind === 'stable') continue;   // the Stable's first step is already by an exit, its edge land with it
-    const s = yardSite(g, kind, o);   // the Stable's edge and exit its own (yardSite's defaults)
+    const s = yield* yardSiteSteps(g, kind, o);   // the Stable's edge and exit its own (yardSite's defaults)
     if (s) return s;
   }
   return null;
-};
+}
 
 /** IC-PROPS: a kind's site among the ones a capital names for this ground (`g.fixed`, world/imperialYards.js), or null -
  *  never one over ground the ground has closed since (a yard placed before it). @param {any} g @param {string} kind */
@@ -293,11 +337,13 @@ export function closeSite(g, s) {
 
 /** BOTH YARDS on a ground, in YARD_KIND_ORDER: each placed on what the last left. Answers the sites found (none, one or
  *  both). Pure (it closes `g` as it goes - a ground is placed on once). */
-export function yardSitesOn(g) {
-  const place = (order) => {
+export const yardSitesOn = (g) => stepsDone(yardSitesSteps(g));
+/** IC-STUTTER: yardSitesOn a step at a time. @param {any} g */
+export function* yardSitesSteps(g) {
+  const place = function* (order) {
     const out = [];
     for (const kind of order) {
-      const s = g.fixed ? fixedSite(g, kind) : lawSite(g, kind);   // IC-PROPS: a capital that names its own stands those
+      const s = g.fixed ? fixedSite(g, kind) : yield* lawSiteSteps(g, kind);   // IC-PROPS: a capital that names its own stands those
       if (!s) continue;
       out.push(s);
       closeSite(g, s);
@@ -308,11 +354,11 @@ export function yardSitesOn(g) {
   // fewer than both, the Wagon Yard is placed first on the same ground, and the order that stands more is kept (the first
   // on a tie), the sites in YARD_KIND_ORDER either way
   const was = Uint8Array.from(g.blocked), toExit = g.toExit;
-  const out = place(YARD_KIND_ORDER);
+  const out = yield* place(YARD_KIND_ORDER);
   if (out.length >= YARD_KIND_ORDER.length || g.fixed) return out;
   const kept = Uint8Array.from(g.blocked);
   g.blocked.set(was); g.toExit = toExit;
-  const other = place([...YARD_KIND_ORDER].reverse());
+  const other = yield* place([...YARD_KIND_ORDER].reverse());
   if (other.length > out.length) return YARD_KIND_ORDER.flatMap((k) => other.filter((t) => t.kind === k));
   g.blocked.set(kept);
   return out;
@@ -321,10 +367,12 @@ export function yardSitesOn(g) {
 /** CARP-YARD: THE PROFESSIONS' YARDS on a ground, in CRAFT_YARD_ORDER, each on what the last left - placed by the host
  *  AFTER the two yards and a port town's places (scenes/world.js townPlacesFor), so none of theirs moves. Pure (it closes
  *  `g` as it goes). */
-export function craftYardSitesOn(g) {
+export const craftYardSitesOn = (g) => stepsDone(craftYardSitesSteps(g));
+/** IC-STUTTER: craftYardSitesOn a step at a time. @param {any} g */
+export function* craftYardSitesSteps(g) {
   const out = [];
   for (const kind of CRAFT_YARD_ORDER) {
-    const s = g.fixed ? fixedSite(g, kind) : lawSite(g, kind);   // IC-PROPS
+    const s = g.fixed ? fixedSite(g, kind) : yield* lawSiteSteps(g, kind);   // IC-PROPS
     if (!s) continue;
     out.push(s);
     closeSite(g, s);
@@ -348,7 +396,11 @@ export function yardSitesOf(loc, measures = {}) {
  * on (yardSitesOf), and the port's two after them (world/portSites.js portSitesOn: on what the yards left). Pure.
  * @param {{width: number, height: number, blocks: any[]}} loc @param {Parameters<typeof yardGround>[1]} [measures]
  */
-export function townGroundOf(loc, measures = {}, shut = null, ways = null) {
+export const townGroundOf = (loc, measures = {}, shut = null, ways = null) => stepsDone(townGroundSteps(loc, measures, shut, ways));
+/** IC-STUTTER: townGroundOf a block at a time, then yardGround's steps and the yards' law's. @param {{width: number, height: number, blocks: any[]}} loc
+ *  @param {YardMeasures} [measures] @param {?((nav: any) => void)} [shut] @param {?{ plan?: any, fixed?: any[] | null }} [ways]
+ *  @returns {Generator<void, ?YardGround, void>} */
+export function* townGroundSteps(loc, measures = {}, shut = null, ways = null) {
   if (!loc?.blocks?.length || !(loc.width > 0) || !(loc.height > 0)) return null;
   const nav = new CityNavigation(loc.width, loc.height);
   for (const b of loc.blocks) {
@@ -356,10 +408,11 @@ export function townGroundOf(loc, measures = {}, shut = null, ways = null) {
     if (!fld?.autoMapData || !fld.groundData?.groundTiles) continue;
     const tiles = fld.groundData.groundTiles;
     nav.setBlockData(b.x, b.y, fld.autoMapData, (tx, ty) => tiles[tx][ty].textureRecord, { enhancedWater: true });
+    yield;
   }
   shut?.(nav);   // TS7: the town's own ground, off its wall (world/townWalls.js townWalkShut)
-  const g = yardGround(nav, measures);
-  yardLaw(g, loc, nav, ways);   // IC-PROPS: the yards' own ground, the town's streets and its edge
+  const g = yield* yardGroundSteps(nav, measures);
+  yield* yardLawSteps(g, loc, nav, ways);   // IC-PROPS: the yards' own ground, the town's streets and its edge
   return g;
 }
 
@@ -382,12 +435,16 @@ const isCapitalOwnBlock = (name) => /^TESA/i.test(String(name ?? '')) && !isEdge
  * @param {any} g @param {{width: number, height: number, blocks: any[]}} loc @param {any} nav
  * @param {?{ plan?: any, fixed?: any[] | null }} ways
  */
-export function yardLaw(g, loc, nav, ways = null) {
+export const yardLaw = (g, loc, nav, ways = null) => stepsDone(yardLawSteps(g, loc, nav, ways));
+/** IC-STUTTER: yardLaw a block, a band of rows or a garden's flood at a time. @param {any} g @param {any} loc @param {any} nav
+ *  @param {?{ plan?: any, fixed?: any[] | null }} [ways] */
+export function* yardLawSteps(g, loc, nav, ways = null) {
   const W = g.width, H = g.height, n = W * H, C = NAV_CELLS_PER_BLOCK;
   const shut = new Uint8Array(n), street = Uint8Array.from(g.road), town = new Uint8Array(n), land = new Uint8Array(n), square = new Uint8Array(n);
   const grass = new Uint8Array(n), house = new Uint8Array(n), garden = new Uint8Array(n);
   const open = (i) => nav.grid[i] >> 4 > 0;
   for (const b of loc.blocks) {
+    yield;
     const fld = b.dfBlock?.rmbBlock?.fldHeader, tiles = fld?.groundData?.groundTiles, auto = fld?.autoMapData;
     const name = b.blockName ?? b.dfBlock?.name, port = isPortCell(name), edgeLand = port && isEdgeLandBlock(name), plaza = port && isCapitalOwnBlock(name);
     for (let ay = 0; ay < C; ay++) {
@@ -404,14 +461,16 @@ export function yardLaw(g, loc, nav, ways = null) {
   let anyTown = false;
   for (let i = 0; i < n; i++) if (town[i]) { anyTown = true; break; }
   if (anyTown) {
-    const near = chamferOf(W, H, town);
+    const near = yield* chamferSteps(W, H, town, 0x3fffffff);
     for (let i = 0; i < n; i++) if (land[i] && near[i] > 3 * EDGE_LAND_CELLS) land[i] = 0;
   } else land.fill(0);
+  yield;
   for (let i = 0; i < n; i++) if (!town[i] && !land[i] && !square[i]) shut[i] = 1;
   // a house's garden: each piece of open grass (four-connected), FABRIC.yard[0] to FABRIC.yard[1] cells, touching a house
   // along FABRIC.yardTouch cell edges at the least - URBANIZER's yard, read as its plan reads it
   const seen = new Uint8Array(n), stack = [];
   for (let i0 = 0; i0 < n; i0++) {
+    if (i0 && i0 % (YARD_ROWS_A_STEP * W) === 0) yield;
     if (!grass[i0] || seen[i0]) continue;
     const cells = [];
     let touch = 0;
@@ -430,6 +489,7 @@ export function yardLaw(g, loc, nav, ways = null) {
     if (cells.length >= FABRIC.yard[0] && cells.length <= FABRIC.yard[1] && touch >= FABRIC.yardTouch) for (const i of cells) garden[i] = 1;
   }
   // the town's fabric where it is planned: its ways and its yards (URBANIZER, past the Bay)
+  yield;
   const plan = ways?.plan, K = FABRIC_KIND;
   if (plan?.kind && plan.W === W && plan.H === H) {
     for (let i = 0; i < n; i++) {
@@ -442,8 +502,6 @@ export function yardLaw(g, loc, nav, ways = null) {
   Object.assign(g, { town, shut, garden, street, edgeLand: land, square, toExit: null, fixed: Array.isArray(ways?.fixed) ? ways.fixed : null });
   return g;
 }
-/** A chamfer distance from the cells `seed` marks (exitField's). */
-const chamferOf = (W, H, seed) => chamfer(W, H, seed, 0x3fffffff);
 
 /**
  * AUDIT MERCHANT-YARDS R2 (the host measured these itself, and nothing pinned a line of it): WHAT A TOWN'S BLOCKS PUT IN
@@ -463,9 +521,14 @@ const chamferOf = (W, H, seed) => chamfer(W, H, seed, 0x3fffffff);
  * @param {{boxOf?: (id: number, at: ArrayLike<number>) => (number[]|null), fieldOf?: (id: number) => any, millBox?: (at: ArrayLike<number>) => (number[]|null),
  *   flatsOf?: (block: any) => any[], closedBlock?: (block: any) => boolean}} [measure]
  */
-export function yardMeasuresOf(yl, { boxOf = () => null, fieldOf = () => null, millBox = () => null, flatsOf = () => [], closedBlock = () => false } = {}) {
+export const yardMeasuresOf = (yl, measure = {}) => stepsDone(yardMeasuresSteps(yl, measure));
+/** IC-STUTTER: yardMeasuresOf a block at a time. @param {any} yl
+ *  @param {{boxOf?: (id: number, at: ArrayLike<number>) => (number[]|null), fieldOf?: (id: number) => any, millBox?: (at: ArrayLike<number>) => (number[]|null),
+ *   flatsOf?: (block: any) => any[], closedBlock?: (block: any) => boolean}} [measure] */
+export function* yardMeasuresSteps(yl, { boxOf = () => null, fieldOf = () => null, millBox = () => null, flatsOf = () => [], closedBlock = () => false } = {}) {
   const buildings = [], props = [], flats = [], closedBlocks = [];
   for (const b of yl?.blocks ?? []) {
+    yield;
     const origin = trs(b.originX, 0, b.originZ, 0, 0, 0);
     if (closedBlock(b)) closedBlocks.push([b.x, b.y]);
     for (const m of b.layout?.models ?? []) {

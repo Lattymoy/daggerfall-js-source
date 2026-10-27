@@ -14,7 +14,7 @@
 //
 // Pure but for the client's own registry (setImperialPrebuild / imperialPrebuilt) - the worker imports the work's half.
 import { IMPERIAL_SPAN, IMPERIAL_ARENA_CODE, IMPERIAL_SLICE_PARTS, imperialSlicePlan, imperialCodeCell, imperialFarPartId } from './imperialCity.js';
-import { imperialOwnName, imperialFarName, imperialFabricModelId, imperialSkylineId, imperialBlockJson, imperialModelBuild, isCarrier } from './imperialBlocks.js';
+import { imperialOwnName, imperialFarName, imperialFabricModelId, imperialSkylineId, imperialBlockJson, imperialModelBuild, isCarrier, imperialBlockOf, sliceOfCell, isFabricModelId, isSkylineId, IMPERIAL_FABRIC_MODEL, IMPERIAL_SKYLINE_MODEL } from './imperialBlocks.js';
 import { CAPITALS, portBlockJson, miscModelAt, startMarkerAt, inCapitalRim, CAPITAL_NO_GROUND, BLOCK_M } from './tamrielCapitals.js';
 
 const B = BLOCK_M;
@@ -43,6 +43,29 @@ export function sliceWork(s, near) {
     }
   }
   return [...blocks, ...IMPERIAL_SLICE_PARTS[s].map((id) => /** @type {{ kind: 'model', id: number }} */ ({ kind: 'model', id: near ? id : imperialFarPartId(id) })), ...models];   // IC-TOWER-LOD: a far view's coarse
+}
+
+/** IC-STUTTER: each landmark part's slice (its first, where a long wall's runs stand in several), near and far ids alike. */
+let _partSlices = null;
+/**
+ * IC-STUTTER (bible/03-World/Arena-Provinces.md IC-STUTTER): THE SLICE A PIECE IS OF, by its key ('b:<name>' a block,
+ * 'm:<id>' a model) - a cell's block or fabric its cell's slice, a skyline its own, a landmark's part the first slice that
+ * stands it; null for a key of none of the city's. The worker pool makes each slice's pieces on one worker
+ * (world/imperialPrebuildClient.js ownerOf).
+ * @param {string} key
+ */
+export function pieceSlice(key) {
+  if (typeof key !== 'string') return null;
+  if (key.startsWith('b:')) { const b = imperialBlockOf(key.slice(2)); return b ? sliceOfCell(b.r, b.c) : null; }
+  const id = key.startsWith('m:') ? Number(key.slice(2)) : NaN;
+  if (!Number.isInteger(id)) return null;
+  if (isFabricModelId(id)) { const k = id - IMPERIAL_FABRIC_MODEL; return sliceOfCell(Math.floor(k / (8 * IMPERIAL_SPAN)), k % (8 * IMPERIAL_SPAN)); }
+  if (isSkylineId(id)) return id - IMPERIAL_SKYLINE_MODEL;
+  if (!_partSlices) {
+    _partSlices = new Map();
+    IMPERIAL_SLICE_PARTS.forEach((ids, s) => { for (const p of ids) for (const q of [p, imperialFarPartId(p)]) if (!_partSlices.has(q)) _partSlices.set(q, s); });
+  }
+  return _partSlices.get(id) ?? null;
 }
 
 /** The world-data door's writers and the city's own rim and markers - world/capitalModels.js installImperialFamilies's;

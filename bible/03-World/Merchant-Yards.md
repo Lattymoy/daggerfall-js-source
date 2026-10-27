@@ -353,7 +353,7 @@ heart, in a house's garden (a house's plot of grass, nothing to say it was one),
 earth, or - past the Bay, where a town's outline leaves open land round it - on that land wherever the middle of the grid
 fell; and a place facing no way at all won over one beside a road a dozen cells further (NO_ROAD_COST, 12 cells).
 
-**What stands** (`merchantYards/merchantYardSites.js:"export function yardLaw(g, loc, nav, ways = null) {"`, read once a
+**What stands** (`merchantYards/merchantYardSites.js:"export function* yardLawSteps(g, loc, nav, ways = null) {"`, read once a
 ground by townGroundOf):
 - NO YARD ON A WAY: the roads and paths as before, and where URBANIZER planned the town its main and side streets,
   pavements and alleys (`ways.plan` - `world/merchantYards/townYards.js` hands the town's fabric); NOR ON GROUND NOT THE
@@ -396,7 +396,7 @@ stands all three.
 **Not DFU**: the yards are the port's own (Ledger A, MERCHANT-YARDS).
 
 **The four hosts.** `scenes/world.js` WIRED (townPlacesFor hands the town's ways and a capital's own yards:
-`world.js:"const g = townGroundOf(yl, measures, shut, townYardsOf(dfLocation));"`). `scenes/exterior.js` - stands no yard
+`world.js:"const g = await stepsBreathing(townGroundSteps(yl, measures, shut, townYardsOf(dfLocation)), breathe);"`). `scenes/exterior.js` - stands no yard
 (FLAGGED above). `scenes/worldModes.js` - reads the sites the world host placed. `scenes/dungeonContext.js` - no town.
 
 **Pins.** `test/world/icprops_yards.test.js` (6). PIN MOVED: `test/world/merchantyards1.test.js` (the front's law - a place
