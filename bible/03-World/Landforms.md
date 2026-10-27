@@ -1109,10 +1109,14 @@ and back over the real lift, every store keeping the stamp, the host's wiring), 
 (the print past the Bay under law 2). PIN MOVED: `landform`, `roads`, `audit_waternext`, `auditlandforms` (the gate
 harness, the lift's harness), `distantland`, `landform45`, `restrideworker`, `terrainworker`, `wod2_loader`,
 `terrainscale1` (the frame's law run whole, the stamps), `fb1013d_remains` - the lines that carry the table past the Bay
-and the frame's law. Mutants: `tools/mutants/bayleftground.json`'s D1 (40), GROUND_LAW (2) and D5 (29), all dead; and
-re-aimed by content onto the lines that now hold their laws, run whole: `auditlandforms.json` (16 records),
-`terrainscale1.json` (9), `fb1013d_remains.json` (9), `perfextc.json` (3), `landform.json` (2), `ttl1.json` (2),
-`landform45.json`, `landform6.json`, `tesa11.json`, `auditlandforms3.json` (one each).
+and the frame's law. Mutants: `tools/mutants/bayleftground.json`'s D1 (40: 39 dead, one recorded equivalent - a capital over several pixels
+left out by its size, which every such capital the port authors today is by the sea or its plan too), GROUND_LAW (2)
+and D5 (29), the rest all dead; and
+the 68 records of other lists the moves out of bootWorld and these laws moved - retargeted by `tools/hostMove.mjs` or
+re-aimed by content onto the lines that now hold their laws, each run: `auditlandforms.json` (30), `terrainscale1.json`
+(12), `fb1013d_remains.json` (9), `landform.json` (4), `perfextc.json` (3), `auditlandforms3.json` (2), `ttl1.json` (2)
+and one each in `hostsplit.json`, `landform45.json`, `landform6.json`, `lw6.json`, `snowfall1.json` and `tesa11.json` -
+66 dead, 2 equivalent as recorded (AUDIT-LANDFORMS-D-restand-ratio-unguarded, AUDIT-LANDFORMS-III-C4-sites-of-the-3x3).
 
 ## Pins
 
