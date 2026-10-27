@@ -101,6 +101,7 @@ test('INT9 THE REFEREE\'S LAW, A FALL: a strike clipped to the weapon the look h
   const c = wildBlow(st, 'acct-a', 'acct-b', { d: 999, r: SIEGE_HIT.Spell, rid: 'aaaaaaaaaaab' }, t += 300);
   assert.equal(c.dealt, SIEGE_CASTS.damageMax, 'a cast to its harm\'s most');
   // SHARED-HEALTH: unstruck for mendMs, still hurt - the count is the player's health, healed by its own report alone
+  st.fighters.get('acct-b').f.share.heard = true;   // a client that reported: its count is its health, and mends by its own report alone
   const hurt = wildVitals(st, 'acct-a', 'acct-b')[1][1];
   t += WILD_REF.mendMs;
   wildBlow(st, 'acct-b', 'acct-a', { d: 1, held: FIST, rid: 'aaaaaaaaaaac' }, t);
@@ -163,6 +164,7 @@ test('INT9 (AUDIT) THE REFEREE\'S LAW, NO FREE BAR: a word off and on keeps the 
   wildBlow(st, 'acct-a', 'acct-b', { d: 999, held: FIST, rid: 'eeeeeeeeeee1' }, 10_300);
   const hit = wildVitals(st, 'acct-a', 'acct-b')[1][1];
   assert.ok(hit < whole);
+  st.fighters.get('acct-b').f.share.heard = true;
   wildZone(st, 'acct-b', { id: 'peer-b', lv: 10 }, false, at(1), 10_400);
   wildZone(st, 'acct-b', { id: 'peer-b', lv: 10 }, true, at(1), 10_500);
   assert.equal(wildVitals(st, 'acct-a', 'acct-b')[1][1], hit, 'a word off and on: the bar kept');
@@ -836,4 +838,49 @@ test('SHARED-HEALTH THE RELAY, THE ZONE: a fighter\'s zone word asks for its hea
   const c = await join('peer-0003', 30);
   await r.raw(c, JSON.stringify({ t: 'vit', n: 1, s: 1, seen: [] }));
   assert.equal(vits(c).length, 0);
+}));
+
+test('SHARED-HEALTH (review): a client before world270 never reports, so its count stays unheard and keeps the zone\'s old mend - whole again unstruck WILD_REF.mendMs; a count a report anchored never mends by itself (mutants: the fallback dropped; the fallback applied to an anchored count)', () => {
+  const unheard = zone();
+  wildBlow(unheard, 'acct-a', 'acct-b', { d: 20, held: FIST, rid: 'ffffffffff01' }, 10_300);
+  const hurt = wildVitals(unheard, 'acct-a', 'acct-b')[1][1];
+  assert.ok(hurt < siegeVitality(10));
+  wildBlow(unheard, 'acct-b', 'acct-a', { d: 1, held: FIST, rid: 'ffffffffff02' }, 10_300 + WILD_REF.mendMs + 1);
+  assert.equal(wildVitals(unheard, 'acct-a', 'acct-b')[1][1], siegeVitality(10), 'an old client\'s struck player is whole again');
+  const anchored = zone();
+  anchored.fighters.get('acct-b').f.share.heard = true;
+  wildBlow(anchored, 'acct-a', 'acct-b', { d: 20, held: FIST, rid: 'ffffffffff03' }, 10_300);
+  const kept = wildVitals(anchored, 'acct-a', 'acct-b')[1][1];
+  wildBlow(anchored, 'acct-b', 'acct-a', { d: 1, held: FIST, rid: 'ffffffffff04' }, 10_300 + WILD_REF.mendMs + 1);
+  assert.equal(wildVitals(anchored, 'acct-a', 'acct-b')[1][1], kept, 'an anchored count mends by its own report alone');
+});
+
+test('SHARED-HEALTH (review): a carried count keeps the last report number it took, so the client\'s first word in the next cell keeps what its health did since (mutant: the number dropped)', () => {
+  const st = zone();
+  const b = st.fighters.get('acct-b').f.share;
+  b.heard = true; b.report = 7;
+  wildBlow(st, 'acct-a', 'acct-b', { d: 20, held: FIST, rid: 'ffffffffff05' }, 10_300);
+  const c = wildCarry(st, 'acct-b', 10_400);
+  assert.equal(c.rep, 7);
+  assert.equal(wildCarryOf(JSON.parse(JSON.stringify(c))).rep, 7);
+  const next = newWildRef();
+  wildZone(next, 'acct-b', { id: 'peer-b', lv: 10, carry: c }, true, at(1), 10_500);
+  assert.equal(next.fighters.get('acct-b').f.share.report, 7);
+});
+
+test('SHARED-HEALTH (review) THE HUB IS TOLD ONLY WHAT MOVED: a report that changes nothing in the zone count costs no fetch to the hub; one that lowers it does (mutant: the hub told on every report)', () => withZone(async ({ r, say, join, step }) => {
+  const b = await join('peer-0002', 1, { rc: 1, ci: RC });
+  await say(b, { k: 'zone', z: 1 });
+  step(300);
+  await r.raw(b, JSON.stringify({ t: 'vit', n: 1, s: 5000, seen: [] }));   // anchors the count at half: moves it
+  let puts = 0;
+  const put = r.room._wildCarryPut.bind(r.room);
+  r.room._wildCarryPut = (...args) => { puts++; return put(...args); };
+  const word = vits(b, 'h').at(-1);
+  step(300);
+  await r.raw(b, JSON.stringify({ t: 'vit', n: 2, s: 5000, seen: [[word.e, word.w]] }));
+  assert.equal(puts, 0, 'a report that moved nothing keeps nothing');
+  step(300);
+  await r.raw(b, JSON.stringify({ t: 'vit', n: 3, s: 4000, seen: [[word.e, word.w]] }));
+  assert.equal(puts, 1, 'a loss is kept at the hub');
 }));

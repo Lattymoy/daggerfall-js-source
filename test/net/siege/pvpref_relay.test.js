@@ -174,3 +174,20 @@ test('SHARED-HEALTH THE SIEGE\'S ROOM (2026-10-26, Integrity-Arc.md section 5): 
     assert.equal(vits(eye).length, 0, 'a spectator holds no pool');
   });
 });
+
+test('SHARED-HEALTH (review) THE SIEGE HEALS NOBODY BY REPORT: after a relay guard\'s blow (no player\'s, so no window opens) a report claiming whole is refused and the client told its count back; a loss reported is still taken (mutant: the siege pool not blocked)', async () => {
+  await withSiege(async ({ r, say, join }) => {
+    const b = await join('peer-0002', 2, { lv: 50 });
+    await say(b, { k: 'in' });
+    await r.raw(b, JSON.stringify({ t: 'vit', n: 1, s: 7500, seen: [] }));
+    const fighter = r.room._siege.fighters['acct-peer-0002'];
+    assert.equal(fighter.hp, 300);
+    fighter.hp = 100;   // a guard's blow: the referee's own change, no player's
+    const word = vits(b, 'h').at(-1);
+    await r.raw(b, JSON.stringify({ t: 'vit', n: 2, s: 10000, seen: [[word.e, word.w]] }));
+    assert.equal(fighter.hp, 100, 'no heal by report in a siege');
+    assert.equal(vits(b, 'h').at(-1).h, 100, 'and the client is told its count');
+    await r.raw(b, JSON.stringify({ t: 'vit', n: 3, s: 1000, seen: [[word.e, word.w]] }));
+    assert.equal(fighter.hp, 40, 'a loss is taken at once');
+  });
+});

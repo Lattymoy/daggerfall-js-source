@@ -107,6 +107,7 @@ function takeCarry(x, carry, now) {
   // SHARED-HEALTH: a count anchored in the last room is the player's health already - its next report is a loss or a
   // heal on it, never an anchor that could lift it back to whole
   if (carry.heard && x.f.share) x.f.share.heard = true;
+  if (x.f.share) x.f.share.report = carry.rep;   // the last report this count took: the client's first word here keeps what its health did since
   if (x.f.share) x.f.share.playerBlowAt = carry.pvpAt;   // and its no-heal window: a step into another cell is no way out of a fight
 }
 
@@ -116,7 +117,7 @@ function takeCarry(x, carry, now) {
 export function wildCarryOf(v) {
   if (!v || typeof v !== 'object' || !Number.isFinite(v.at) || !Number.isFinite(v.hp) || !Number.isFinite(v.max)) return null;
   const sea = v.sea && typeof v.sea === 'object' && Number.isFinite(v.sea.h) && Number.isFinite(v.sea.at) ? { h: Math.max(0, Math.min(1, v.sea.h)), at: v.sea.at } : null;
-  return { hp: Math.max(0, Math.trunc(v.hp)), max: Math.max(1, Math.trunc(v.max)), down: v.down === true, downAt: Number.isFinite(v.downAt) ? v.downAt : 0, at: v.at, heard: v.heard === true, pvpAt: Number.isFinite(v.pvpAt) ? v.pvpAt : 0, ...(sea ? { sea } : {}) };   // SHARED-HEALTH: `heard` - its count anchored to the player's health
+  return { hp: Math.max(0, Math.trunc(v.hp)), max: Math.max(1, Math.trunc(v.max)), down: v.down === true, downAt: Number.isFinite(v.downAt) ? v.downAt : 0, at: v.at, heard: v.heard === true, pvpAt: Number.isFinite(v.pvpAt) ? v.pvpAt : 0, rep: Number.isSafeInteger(v.rep) && v.rep >= 0 ? v.rep : 0, ...(sea ? { sea } : {}) };   // SHARED-HEALTH: `heard` - its count anchored to the player's health
 }
 
 /** INT9 (AUDIT): A FALL WAITING ON ITS PICK is kept in the room's storage under this prefix (a relay object that restarts
@@ -137,7 +138,7 @@ export function wildGone(st, sub, now) {
 }
 
 /** What a fighter CARRIES out of this room (the hub keeps it for the next room it stands in): its vitality and its fall. */
-export const wildCarry = (st, sub, now) => { const x = st.fighters.get(sub); return x ? { hp: Math.max(0, x.f.hp), max: x.f.max, down: x.down, downAt: Number.isFinite(x.downAt) ? x.downAt : 0, at: now, heard: x.f.share?.heard === true, pvpAt: x.f.share?.playerBlowAt ?? 0 } : null; };
+export const wildCarry = (st, sub, now) => { const x = st.fighters.get(sub); return x ? { hp: Math.max(0, x.f.hp), max: x.f.max, down: x.down, downAt: Number.isFinite(x.downAt) ? x.downAt : 0, at: now, heard: x.f.share?.heard === true, pvpAt: x.f.share?.playerBlowAt ?? 0, rep: x.f.share?.report ?? 0 } : null; };
 
 /** A FIGHTER'S POSE (`{ x, y, z }`, the world frame): believed at a run the referee allows (refereeStep, on the fighter's
  *  own carried allowance); past it - a gallop, a respawn, a teleport - believed too, and the fighter JUMPED: it strikes
@@ -149,6 +150,14 @@ export function wildPose(st, sub, p, now) {
   x.pose = { x: p.x, y: Number.isFinite(p.y) ? p.y : 0, z: p.z }; x.poseAt = now;
   return true;
 }
+
+/** A client before world270 never answers the ask or reports its health, so its count stays unheard: it keeps the zone's old
+ *  mend (whole again unstruck WILD_REF.mendMs and in the zone as long), or a struck player would lie at the lowered count
+ *  until it died. A count a report has anchored is the player's own health and mends by its own report alone. */
+const mendUnheard = (x, now) => {
+  if (x.down || x.f.share?.heard) return;
+  if (now - x.struckAt >= WILD_REF.mendMs && now - x.zoneAt >= WILD_REF.mendMs) x.f.hp = x.f.max;
+};
 
 /**
  * A BLOW OR A CAST in the zone - `by` and `to` accounts, `kin` the caller's wildKin over the two (one party or its truce,
@@ -168,6 +177,7 @@ export function wildBlow(st, by, to, { d = 0, r = SIEGE_HIT.Melee, held = null, 
   if (a.down || t.down) return { ok: false, dealt: 0, fell: false, fall: null, why: 'down' };
   if (kin) return { ok: false, dealt: 0, fell: false, fall: null, why: 'kin' };
   if (now - a.jumpAt < WILD_REF.jumpMs) return { ok: false, dealt: 0, fell: false, fall: null, why: 'jump' };
+  mendUnheard(a, now); mendUnheard(t, now);
   const res = r === SIEGE_HIT.Spell
     ? refereeCast(a.f, t.f, { from: a.pose, at: t.pose, d }, now)
     : refereeBlow(a.f, t.f, { from: a.pose, at: t.pose, held, d, r, wa }, now);

@@ -892,13 +892,18 @@ healing too - only mid-PvP.
   below 1 - the client's own death is its own word, as before. A report above it is a heal, and a fight between players
   heals nobody: refused for `PVP_HEAL_BLOCK_MS` (30 s, the old mend window) after a player's blow or harmful spell on
   the fighter, and for a duel's whole length - the client's health is pulled back to the count, so a potion drunk then
-  is spent for nothing. A siege's side-mate heal spells stand as before (the referee's own cast, never a report). Out of
-  a fight between players a heal is taken whole: a potion after a monster fight in the zone heals as it does anywhere.
-  A relay foe's blow (a siege's guard) opens no window. A count no report has anchored is told to nobody (its whole would heal the client to
+  is spent for nothing. A siege takes no heal by report at all, for its whole length as a duel does: every hurt in it is
+  the referee's, and a guard's blow opens no window of its own (review of PR 1335: a modified client reporting whole
+  after a guard's blow would have healed without limit). A siege's side-mate heal spells and the wave's rise stand as
+  before - the referee's own change, never a report. Out of a fight between players a heal in the zone is taken
+  whole: a potion after a monster fight in the zone heals as it does anywhere. A count no report has anchored is told to nobody (its whole would heal the client to
   full); the relay asks for a report where it makes or starts one again.
 - **NO FREE REFILL.** The zone's mend (whole again unstruck `WILD_REF.mendMs`) is gone. A count started again - a rise
   after a fall, a return after `WILD_REF.riseMs` away - waits for the player's report, which can lower it and never lift
-  it; a bar carried from another room keeps its anchor and its no-heal window (`wildCarry`'s `heard`, `pvpAt`).
+  it; a bar carried from another room keeps its anchor, its no-heal window and the last report it took (`wildCarry`'s
+  `heard`, `pvpAt`, `rep`). A client before world270 never answers the ask, so its count stays unheard and keeps the
+  zone's old mend (wildRef.js:"const mendUnheard") - a struck old client is whole again unstruck 30 s, as before; a
+  count a report has anchored never mends by itself.
 - **PER MODE.** The zone: a fall at none is a death, as before (forcePlayerDeath). A duel: its fall leaves the loser at
   1, a loss and never a death, and the bout's end heals nobody - the loser leaves hurt. A siege: a fall leaves the
   player at 1 until its wave, and the rise heals the player's own health whole (siegeRef.js:"the rise heals the player's

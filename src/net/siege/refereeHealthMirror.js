@@ -48,6 +48,7 @@ export function createRefereeHealthMirror({ read, write, send, now = () => Date.
   let lastSentShare = /** @type {number | null} */ (null);
   let lastSentAt = -Infinity;
   let asked = false;
+  let lastMax = /** @type {number | null} */ (null);
 
   /** Counts what my health did since the mirror last looked: a foe's blow, a potion - never the mirror's own write. */
   const observe = () => {
@@ -79,6 +80,8 @@ export function createRefereeHealthMirror({ read, write, send, now = () => Date.
   const mirror = {
     /** The host's frame: a report when one is owed. `active` - a refereed fight may hold me now. */
     frame(active) {
+      const { maxHealth } = read();
+      if (maxHealth !== lastMax) { base = null; lastMax = maxHealth; }   // a new maximum (a level-up, a spell) makes the old share baseline wrong
       if (!active && !asked) return;
       if (now() - lastSentAt < HEALTH_REPORT_MS) return;
       observe();
@@ -89,6 +92,7 @@ export function createRefereeHealthMirror({ read, write, send, now = () => Date.
     /** The relay's ask: a pool of mine was made or reset and waits for my share. */
     ask() {
       asked = true;
+      base = null;   // a pool made or started again: my share is my own health again, not the last pool's word
     },
     /**
      * The referee's word on my pool (net/wire.js validVitOut `k: 'h'`).

@@ -372,8 +372,8 @@
   {
     "name": "AUDIT-SEA-F1-hub-drops-the-ship",
     "file": "src/net/wild/wildRef.js",
-    "old": "at: v.at, heard: v.heard === true, pvpAt: Number.isFinite(v.pvpAt) ? v.pvpAt : 0, ...(sea ? { sea } : {}) };",
-    "new": "at: v.at, heard: v.heard === true, pvpAt: Number.isFinite(v.pvpAt) ? v.pvpAt : 0 };",
+    "old": "at: v.at, heard: v.heard === true, pvpAt: Number.isFinite(v.pvpAt) ? v.pvpAt : 0, rep: Number.isSafeInteger(v.rep) && v.rep >= 0 ? v.rep : 0, ...(sea ? { sea } : {}) };",
+    "new": "at: v.at, heard: v.heard === true, pvpAt: Number.isFinite(v.pvpAt) ? v.pvpAt : 0, rep: Number.isSafeInteger(v.rep) && v.rep >= 0 ? v.rep : 0 };",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]

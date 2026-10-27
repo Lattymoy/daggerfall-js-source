@@ -183,7 +183,6 @@ test('SHARED-HEALTH: A LONG FIGHT over an integer health - a hundred blows and r
     dealt += res.dealt;
     r.tell(word);
     r.later();
-    r.mirror.ask();   // a report every round, whatever moved
     r.roundTrip();
   }
   assert.equal(r.fighter.hp, 302 - dealt, 'the count is the blows alone');

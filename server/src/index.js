@@ -6760,7 +6760,7 @@ export class Room {
   /**
    * The pools this room's referees hold for an account: its open-zone fighter, its live duel's side, its siege fighter.
    * Never a Royal Tourney contender's: the tourney keeps its own count between bouts. Each `{ fighter, healsBlocked,
-   * kept }` - `healsBlocked` a duel's (no heal for its whole length), `kept` what the room does once the count has moved
+   * kept }` - `healsBlocked` a duel's or a siege's (no heal by report for its whole length), `kept` what the room does once the count has moved
    * (the zone's carry at the hub, a siege's checkpoint).
    */
   async _vitPools(sub, now) {
@@ -6774,7 +6774,7 @@ export class Room {
     if (bout) pools.push({ fighter: bout.a.sub === sub ? bout.a.f : bout.b.f, healsBlocked: true, kept: async () => {} });   // a duel heals nobody for its whole length
     const siege = this._siege;
     const siegeFighter = siege?.fighters?.[sub];
-    if (siegeFighter && siege.battle?.kind !== 'royal') pools.push({ fighter: siegeFighter, healsBlocked: false, kept: () => this._siegeSave(now, false) });
+    if (siegeFighter && siege.battle?.kind !== 'royal') pools.push({ fighter: siegeFighter, healsBlocked: true, kept: () => this._siegeSave(now, false) });   // a siege heals nobody by report either: its heals are the side-mates' spells and the wave's rise, the referee's own
     return pools;
   }
   /** A FIGHTER'S REPORT of its health (`vit`): taken into each pool this room holds for it, each count told back. */
@@ -6782,9 +6782,12 @@ export class Room {
     if (!this._spend(ws, now, vitGate, 'vitBucket', 'vitDrops', 'too many vit frames')) return;
     if (typeof a.sub !== 'string' || !a.sub) return;
     for (const pool of await this._vitPools(a.sub, now)) {
+      const hpBefore = pool.fighter.hp;
+      const wasUnheard = poolUnheard(pool.fighter);
       if (!takeHealthReport(pool.fighter, m, now, { healsBlocked: pool.healsBlocked })) continue;
       this._vitSay(a.sub, pool.fighter);
-      await pool.kept();
+      // what is kept (a hub fetch, a checkpoint) follows the count: a report that moved nothing keeps nothing
+      if (pool.fighter.hp !== hpBefore || wasUnheard) await pool.kept();
     }
   }
   /** A pool's count, to its fighter at its newest socket here - never a pool no report has anchored (poolWord). */

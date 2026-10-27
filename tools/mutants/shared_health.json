@@ -250,5 +250,55 @@
       "test/net/int9_wild_ref.test.js"
     ],
     "note": "The zone's free 30 s refill would come back - a second health pool beside the player's own."
+  },
+  {
+    "name": "SHARED-HEALTH-the-siege-pool-unblocked",
+    "file": "server/src/index.js",
+    "old": "healsBlocked: true, kept: () => this._siegeSave(now, false) });",
+    "new": "healsBlocked: false, kept: () => this._siegeSave(now, false) });",
+    "tests": [
+      "test/net/siege/pvpref_relay.test.js"
+    ],
+    "note": "A modified client could heal a siege fighter whole by report after a guard's blow."
+  },
+  {
+    "name": "SHARED-HEALTH-the-hub-told-on-every-report",
+    "file": "server/src/index.js",
+    "old": "      if (pool.fighter.hp !== hpBefore || wasUnheard) await pool.kept();",
+    "new": "      await pool.kept();",
+    "tests": [
+      "test/net/int9_wild_ref.test.js"
+    ],
+    "note": "Every report would cost the hub a fetch, even one that moved nothing."
+  },
+  {
+    "name": "SHARED-HEALTH-the-old-client-mend-dropped",
+    "file": "src/net/wild/wildRef.js",
+    "old": "  if (x.down || x.f.share?.heard) return;",
+    "new": "  return;",
+    "tests": [
+      "test/net/int9_wild_ref.test.js"
+    ],
+    "note": "A struck player on a client before world270 would never be whole again."
+  },
+  {
+    "name": "SHARED-HEALTH-the-mend-on-an-anchored-count",
+    "file": "src/net/wild/wildRef.js",
+    "old": "  if (x.down || x.f.share?.heard) return;",
+    "new": "  if (x.down) return;",
+    "tests": [
+      "test/net/int9_wild_ref.test.js"
+    ],
+    "note": "An anchored count would refill by itself - the second health pool again."
+  },
+  {
+    "name": "SHARED-HEALTH-the-carry-drops-the-report-number",
+    "file": "src/net/wild/wildRef.js",
+    "old": "  if (x.f.share) x.f.share.report = carry.rep;",
+    "new": "",
+    "tests": [
+      "test/net/int9_wild_ref.test.js"
+    ],
+    "note": "The first word in the next cell would overwrite what the player's health did since its last report."
   }
 ]
