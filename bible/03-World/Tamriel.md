@@ -767,7 +767,8 @@ traffic of its own.
 ### Pins
 
 - `test/world/rumarewater.test.js` (13): AUDIT BAY-LEFT F1's two (the sampler the kernel's on 11 slices, the classes,
-  the all-land slices, the memo kept past an eviction; imperialLand's compounds at the University's corner); the plan's mouth; the city's law; the ground about it (the mouth's bytes, the
+  the all-land slices, a mixed slice's fine water the
+  kernel's, the memo kept past an eviction; imperialLand's compounds at the University's corner); the plan's mouth; the city's law; the ground about it (the mouth's bytes, the
   basin and its ramp, the large map, GROUND_ROLL_VERSION); the city's land and its slices' rects; a capital at the sea's
   ground (the pond, a shore tile's one corner, the rim's sea and its floor, the outer edge, the sea's seam); the Imperial
   City's slices (its seams one height, a tile at a seam never read, the mouth's edge, the far shore's rise); the harbour;
@@ -790,7 +791,8 @@ traffic of its own.
   `test/server/discord_setup.test.js`).
 - Mutants: `tools/mutants/rumarewater.json` (49: 47 dead, and AUDIT BAY-LEFT F1's RW-F1-the-all-land-test-unread and
   RW-F1-the-outer-edge-the-law's equivalent - the first a fast path the grid answers the same, the second the outer edge's
-  law and kernel agreeing on the freeware's span - recorded `equivalent`). Re-aimed by content, all dead: `auditcaptsea.json`'s
+  law and kernel agreeing on the freeware's span - recorded `equivalent`); F1 re-aimed RW-BAKE-the-span's-class-the-bound's,
+  -the-fine-water-the-plain-sampler's and -the-coarse-water-the-plain-sampler's by content onto the cityBits reads (dead). Re-aimed by content, all dead: `auditcaptsea.json`'s
   ACS-B10-sea-at; `audittesa2c.json`'s AUDIT-TESA-II-C2-shore-on-its-land and -no-sea-flag; `audittesa2p.json`'s
   P12-open-sea-a-lake; `breathtaker.json`'s BREATHTAKER3-the-large-map-hashed-again; `fb1009_beyond.json`'s
   TV-BEYOND-planner-handed-no-beyond; `fb1014_inlandports.json`'s INLAND-PORTS-the-bounds-unasked; `nibensea.json`'s

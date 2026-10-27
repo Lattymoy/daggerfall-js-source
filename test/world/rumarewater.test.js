@@ -218,13 +218,13 @@ test('RUMARE-WATER the continent\'s bake: the city\'s span asked whole, its wate
   assert.equal(b.mapPixelHasFineWaterCells(2069, 660), false);
 });
 
-test('AUDIT BAY-LEFT F1 the city\'s water to the bake off its law: every vertex of every kind of slice the kernel\'s answer (generateSamples, the flatten, capitalSeaGround), with no kernel run; the isle and the far shore LAND, the lake SEA, a shore MIXED; the all-land test exact; the city\'s bits kept past an eviction (mutants: the span all mixed; the all-land test unread; a vertex the kernel\'s grid turned; the bits made again)', async () => {
+test('AUDIT BAY-LEFT F1 the city\'s water to the bake off its law: every vertex of every kind of slice the kernel\'s answer (generateSamples, the flatten, capitalSeaGround), with no kernel run; the isle and the far shore LAND, the lake SEA, a shore MIXED; the all-land test exact; a mixed slice\'s fine water the kernel\'s; the city\'s bits kept past an eviction (mutants: the span all mixed; the fine water the plain sampler\'s; the all-land test unread; a vertex the kernel\'s grid turned; the bits made again)', async () => {
   lakeBelow();
   const { rumareClass } = await import('../../src/world/tamrielWatersBake.js');
   const { rumareSliceAllLand, rumareSeaGrid } = await import('../../src/world/rumareWaters.js');
   const { generateSamples } = await import('../../src/world/terrain/terrainSampler.js');
   const { blendLocationTerrain } = await import('../../src/world/terrain/terrainTiles.js');
-  const { WATER_THRESHOLD, PIXEL_LAND, PIXEL_SEA, PIXEL_MIXED } = await import('../../src/world/deepWater/deepWatersBake.js');
+  const { WATER_THRESHOLD, PIXEL_LAND, PIXEL_SEA, PIXEL_MIXED, fineMaskBits } = await import('../../src/world/deepWater/deepWatersBake.js');
   const woods = groundWoods(rawWoods());
   const kernel = (px, py) => {
     const rect = rumareSliceRect(px, py, CAPITAL_RIM_TILES), S = generateSamples(woods, px, py), natural = Float32Array.from(S);
@@ -250,8 +250,12 @@ test('AUDIT BAY-LEFT F1 the city\'s water to the bake off its law: every vertex 
     if (all) assert.ok(rumareSeaGrid(px, py).every((v) => v === 0), 'and the grid agrees');
   }
   const b = new TamrielWatersBake({ woods });
+  for (const [px, py] of [[2069, 668], [2069, 646]]) {   // a mixed slice's fine water - the only slices the bake asks it of - the kernel's
+    const k = kernel(px, py);
+    assert.deepEqual([...b.fineBits(px, py)], [...fineMaskBits({ water: k, quick: (x, y) => (k(x, y) ? 1 : 0), exact: k })], `(${px}, ${py}) its fine water the kernel's`);
+  }
   b.seaBits(2069, 669);
-  const coarse = b._cityBits(2069, 669, 'coarse') ?? null, mixed = b._cityBits(2069, 668, 'coarse');
+  const coarse =b._cityBits(2069, 669, 'coarse') ?? null, mixed = b._cityBits(2069, 668, 'coarse');
   b.evictOutside(0, 0, 4);
   b.seaBits(2069, 669);
   assert.equal(b._cityBits(2069, 668, 'coarse'), mixed, 'a shore slice\'s bits kept past the eviction');
