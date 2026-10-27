@@ -11093,7 +11093,11 @@ and `test/systems/decor/decor2b.test.js` (the sale's line, the tap under a fligh
   open after the join, at a courier's arrival, shortly after a press whose own collect did not land (which says the
   piece is on its way, never "Bought" alone), and as a stall opens (its settle is the sweep). Each piece is collected
   once whoever asks: one realm act a delivery, guarded on it, a lost answer asked again with its own id (COLLECT-LANDED,
-  below). The pack says what came ("A purchase has arrived: ...", "... has come back from the market"). The
+  below). The pack says what came ("A purchase has arrived: ...", "... has come back from the market"). AUDIT RPT1026
+  (lane D): a press's `soon` asked while a sweep is under way is kept for that sweep's end, never cancelled by its clock
+  (D1); a clock ahead of the service's waits a minute for a courier the service still has on the road, never five
+  seconds at a time (D2); and a take-back kept unanswered has its piece collected by the settle that lands it, as a kept
+  buy's is (`marketBook.js` settle, D3). The
   board's Vendors tab lists the region's reachable traders, searched, a row setting the WAYPOINT
   (`systems/vendorWaypoint.js`) - a gold coin on both world maps (`ui/vendor/vendorMapMark.js`, apart from the map's one yellow
   mark, which stays the player's), the house named on the town map, the compass on the town from the street, a mark in
@@ -15451,8 +15455,8 @@ gold can now change hands the way a guild deposit or a house's price does - in t
   (`market-drakes-goods`), so the market is never the Bank's way round its daily cap and its spread. STRICTER THAN ASKED:
   Mac's "walled" named Drakes sales, writs and first-craft XP; gold's goods are kept from every station and craft too,
   so no path from a gold purchase to a Drakes-earning act needs its own guard (a default closed, not a list to keep).
-  RPT1026-MARKET STORES-SAID (private reports 2026-10-26: Arcane Essence and Cured Leather "not counted for selling on
-  the market ... and not shown when moving them to the guild storage"): the wall stands, and is said where a player
+  RPT1026-MARKET STORES-SAID (private reports 2026-10-26: Arcane Essence and Cured Leather in the Stores, missing from
+  the market's List form and from the guild Stores' Put in): the wall stands, and is said where a player
   looks - the List form names the Stores' units its currency may not take (a silver listing's gold-bought and loose
   ones, a gold listing's silver-bought and loose ones) and the guild Stores' Put in those the guild may not
   (`ui/storesWalled.js` walledText), each with its count and why; it offered only what may go and said nothing of the

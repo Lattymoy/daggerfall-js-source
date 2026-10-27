@@ -591,7 +591,20 @@ export function createMarketBook({ door, storage = null, character, now = () => 
           const c = await collectGood(dn, 'bought');   // RPT1026-MARKET ARRIVE: said as a purchase arrived
           if (c.ok) settled++; else refused.push(c.error);
         }
-        for (const c of k.cancels) if (here() && (await keptAct('cancels', c, () => door.cancel(me, c.listing, c.rid), mint, key)).ok) settled++;
+        for (const c of k.cancels) {
+          if (!here()) continue;
+          const r = await keptAct('cancels', c, () => door.cancel(me, c.listing, c.rid), mint, key);
+          if (!r.ok) continue;
+          settled++;
+          // AUDIT RPT1026 D3: a piece from a pack taken back (a trader's, the Goods') comes back by a delivery arrived at
+          // once - a kept cancel's is collected here, on the answer that names it, as a kept buy's is. The road this
+          // settle reads was read before the cancel landed, so the piece left the stall and waited on the service until
+          // another settle; `market-gone`: another door collected it, and it is in the pack
+          const dn = r.data?.delivery?.id;
+          if (!dn || !here()) continue;
+          const g = await collectGood(dn, 'returned');
+          if (g.ok) settled++; else if (g.error !== 'market-gone') refused.push(g.error);
+        }
         for (const c of k.collects) if (here() && (await keptAct('collects', c, () => door.collect(me, c.delivery, c.rid), mint, key)).ok) settled++;
         for (const d of state.road.filter((x) => x.kind === 'piece' && x.ready && x.character === me)) {
           if (!here() || keptOf(key).collects.some((c) => c.delivery === d.id)) continue;

@@ -1,6 +1,6 @@
-// RPT1026-MARKET STORES-SAID (private reports 2026-10-26: "new resources such as arcane essence and cured leather are not
-// counted for selling on the market ... the larger part of the resources is not shown in the sell list, and is not shown
-// when moving them to the guild storage either"). The walls are the service's and stand: a silver listing, a writ and the
+// RPT1026-MARKET STORES-SAID (private reports 2026-10-26: the Stores' newer materials, Arcane Essence and Cured Leather
+// among them, and most of the rest, missing from the market's List form and from the guild Stores' Put in; AUDIT RPT1026
+// D4: paraphrased, the report's own words were quoted here). The walls are the service's and stand: a silver listing, a writ and the
 // guild Stores take only own and silver-bought units (net/bagLaw.js WRIT_ORIGINS, GOLD-MARKET), a gold listing own and
 // gold-bought ones, and no market takes a station's loose units (BAG-CRAFT A1; FB1020h ESSENCE-LOOSE: a disenchant of a
 // piece made of loose goods). What changed is that the List form and the guild Stores now say what the Stores hold behind
